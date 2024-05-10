@@ -54400,7 +54400,7 @@ struct retro_core_options_v2 options_nl = {
 #define OPTION_VAL_USA_NO NULL
 #define OPTION_VAL_EUROPE_NO NULL
 #define OPTION_VAL_DEFAULT_NO NULL
-#define CORE_OPTION_NAME_LANGUAGE_LABEL_NO NULL
+#define CORE_OPTION_NAME_LANGUAGE_LABEL_NO "Språk"
 #define CORE_OPTION_NAME_LANGUAGE_INFO_0_NO NULL
 #define OPTION_VAL_JAPANESE_NO NULL
 #define OPTION_VAL_ENGLISH_NO NULL
@@ -54618,9 +54618,9 @@ struct retro_core_options_v2 options_nl = {
 #define OPTION_VAL_300_O45_NO NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_NO NULL
 #define OPTION_VAL_WHITE_NO NULL
-#define OPTION_VAL_RED_NO NULL
-#define OPTION_VAL_GREEN_NO NULL
-#define OPTION_VAL_BLUE_NO NULL
+#define OPTION_VAL_RED_NO "Rød"
+#define OPTION_VAL_GREEN_NO "Grønn"
+#define OPTION_VAL_BLUE_NO "Blå"
 #define CORE_OPTION_NAME_LIGHTGUN2_CROSSHAIR_LABEL_NO NULL
 #define CORE_OPTION_NAME_LIGHTGUN3_CROSSHAIR_LABEL_NO NULL
 #define CORE_OPTION_NAME_LIGHTGUN4_CROSSHAIR_LABEL_NO NULL
@@ -54676,7 +54676,7 @@ struct retro_core_options_v2 options_nl = {
 #define OPTION_VAL_LIGHT_CYAN_10_NO NULL
 #define OPTION_VAL_PURPLE_12_NO NULL
 #define OPTION_VAL_LIGHT_PURPLE_13_NO NULL
-#define OPTION_VAL_YELLOW_14_NO NULL
+#define OPTION_VAL_YELLOW_14_NO "Gul"
 #define OPTION_VAL_GRAY_15_NO NULL
 #define OPTION_VAL_LIGHT_PURPLE_2_16_NO NULL
 #define OPTION_VAL_LIGHT_GREEN_2_17_NO NULL
@@ -72500,7 +72500,7 @@ struct retro_core_options_v2 options_sv = {
 #define CATEGORY_INPUT_LABEL_TR "Girdi"
 #define CATEGORY_INPUT_INFO_0_TR "Oyun kolu ve light gun ayarlarını yapılandırın."
 #define CATEGORY_EXPANSIONS_LABEL_TR "Kontrolcü Genişletme Yuvaları"
-#define CATEGORY_EXPANSIONS_INFO_0_TR NULL
+#define CATEGORY_EXPANSIONS_INFO_0_TR "Her denetleyici genişletme yuvasına takılı cihazı (VMU, titreşim cihazı) seçin."
 #define CATEGORY_VMU_LABEL_TR "Görsel Bellek Birimi"
 #define CATEGORY_VMU_INFO_0_TR "Oyun başına VMU kayıt dosyaları ve ekrandaki VMU görünürlük ayarlarını yapılandırın."
 #define CORE_OPTION_NAME_REGION_LABEL_TR "Bölge"
@@ -72590,7 +72590,7 @@ struct retro_core_options_v2 options_sv = {
 #define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_TR "RTT (Dokuya Dönüştür) Önbelleğini Etkinleştir"
 #define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_TR "İşlenen dokuları GPU'dan VRAM'e geri kopyalayın. Bu seçenek normalde bunu gerektiren oyunlar için etkinleştirilir. Etkinleştirildiğinde, doku işleme yükseltme devre dışı bırakılır ve performans etkilenebilir."
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_TR "Görüş Açısı"
-#define CORE_OPTION_NAME_MIPMAPPING_INFO_0_TR NULL
+#define CORE_OPTION_NAME_MIPMAPPING_INFO_0_TR "Etkinleştirilen dokular daha uzakta göründüklerinde kendilerinin daha küçük benzerlerini kullanacakları zaman performansları artırabilir ve parıltıyı azaltabilirler."
 #define CORE_OPTION_NAME_FOG_LABEL_TR "Sis Efektleri"
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_TR "Hacim Değiştirici"
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_TR "Genellikle oyunlar tarafından nesne gölgeleri çizmek için kullanılan bir Dreamcast GPU özelliği. Bu normalde etkinleştirilmelidir - performansa olumsuz etkisi yok denilebilecek düzeydedir."
@@ -72615,8 +72615,8 @@ struct retro_core_options_v2 options_sv = {
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_INFO_0_TR "Yükseltilecek doku için azami boyut değerini seçin; eğer doku boyutu seçilen değerden yüksekse büyütülmeyecektir."
 #define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_TR "Yerel Derinlik Enterpolasyonu"
 #define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_TR "AMD GPU'larda doku bozulması ve derinlik sorunlarına yardımcı olur. Bazı durumlarda Intel GPU'lara da yardımcı olabilir."
-#define CORE_OPTION_NAME_FIX_UPSCALE_BLEEDING_EDGE_LABEL_TR NULL
-#define CORE_OPTION_NAME_FIX_UPSCALE_BLEEDING_EDGE_INFO_0_TR NULL
+#define CORE_OPTION_NAME_FIX_UPSCALE_BLEEDING_EDGE_LABEL_TR "Yükseltirken Doku Kenarlarını Düzelt"
+#define CORE_OPTION_NAME_FIX_UPSCALE_BLEEDING_EDGE_INFO_0_TR "Yükseltme işleminde doku bozulması durumunda yardımcı olur. Bunu devre dışı bırakmak, 2D oyunlarda (MVC2, CVS, KOF, vb.) yükseltme sırasında piksellerin çarpık olması durumunda yardımcı olabilir"
 #define CORE_OPTION_NAME_THREADED_RENDERING_LABEL_TR "Zorlu İşleme"
 #define CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_TR "GPU ve CPU'yu farklı iş parçacıklarında çalıştırır. Şiddetle tavsiye edilir."
 #define CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_TR "Kareyi Otomatik Atla"
@@ -72679,9 +72679,9 @@ struct retro_core_options_v2 options_sv = {
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_TR "Özel Dokular Yükle"
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_INFO_0_TR "'system/dc/textures/<game-id>/' klasöründe bulunan özel dokuları yükleyin."
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_TR "Dokuları Sakla"
-#define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_TR NULL
+#define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_TR "Oyun tarafından her yeni doku kullanıldığında, 'system/dc/texdump/<game-id>/' klasörüne .png dosyası olarak kaydedilecektir."
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_TR "Analog Çubuğu Ölü Bölge"
-#define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_INFO_0_TR NULL
+#define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_INFO_0_TR "İşlenmeye başlamadan önce analog çubuğu ne kadar itmeniz gerektiğini seçin."
 #define OPTION_VAL_0_TR "%0"
 #define OPTION_VAL_5_TR "%5"
 #define OPTION_VAL_10_TR "%10"
@@ -72690,9 +72690,9 @@ struct retro_core_options_v2 options_sv = {
 #define OPTION_VAL_25_TR "%25"
 #define OPTION_VAL_30_TR "%30"
 #define CORE_OPTION_NAME_TRIGGER_DEADZONE_LABEL_TR "Tetik Ölü Bölge"
-#define CORE_OPTION_NAME_TRIGGER_DEADZONE_INFO_0_TR NULL
+#define CORE_OPTION_NAME_TRIGGER_DEADZONE_INFO_0_TR "İşlenmeye başlamadan önce tetiğe ne kadar basmanız gerektiğini seçin."
 #define CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_TR "Dijital Tetikleyiciler"
-#define CORE_OPTION_NAME_DIGITAL_TRIGGERS_INFO_0_TR NULL
+#define CORE_OPTION_NAME_DIGITAL_TRIGGERS_INFO_0_TR "Etkinleştirildiğinde, tetikleyiciler normal düğmeler gibi davranacak, yani tamamen basılmış veya hiç basılmamış olarak, arada bir şey olmadan işlenecekler."
 #define CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_TR "Yayın Dijital Çıkışları"
 #define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_TR "TCP port 8000'de dijital çıkışları ve zorla geri bildirim durumunu yayınlayın. \"-output network\" MAME seçeneğiyle uyumludur."
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_TR "Light Gun Ayarlarını Göster"
@@ -72733,27 +72733,27 @@ struct retro_core_options_v2 options_sv = {
 #define CORE_OPTION_NAME_LIGHTGUN3_CROSSHAIR_LABEL_TR "Silah Artı Göstergesi 3 Görüntüle"
 #define CORE_OPTION_NAME_LIGHTGUN4_CROSSHAIR_LABEL_TR "Silah Artı Göstergesi 4 Görüntüle"
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_LABEL_TR "Genişletme Yuvası Cihaz A1"
-#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_INFO_0_TR NULL
+#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_INFO_0_TR "Genişletme yuvası A1 için takılı cihazı seçin (port A yuva 1)."
 #define OPTION_VAL_VMU_TR NULL
 #define OPTION_VAL_PURUPURU_TR "Titreşim Paketi"
 #define OPTION_VAL_NONE_TR "Yok"
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_LABEL_TR "Genişletme Yuvası Cihaz A2"
-#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_INFO_0_TR NULL
+#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_INFO_0_TR "Genişletme yuvası A2 için takılı cihazı seçin (port A yuva 2)."
 #define CORE_OPTION_NAME_DEVICE_PORT2_SLOT1_LABEL_TR "Genişletme Yuvası Cihaz B1"
-#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT1_INFO_0_TR NULL
+#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT1_INFO_0_TR "Genişletme yuvası B1 için takılı cihazı seçin (port B yuva 1)."
 #define CORE_OPTION_NAME_DEVICE_PORT2_SLOT2_LABEL_TR "Genişletme Yuvası Cihaz B2"
-#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT2_INFO_0_TR NULL
+#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT2_INFO_0_TR "Genişletme yuvası B2 için takılı cihazı seçin (port B yuva 2)."
 #define CORE_OPTION_NAME_DEVICE_PORT3_SLOT1_LABEL_TR "Genişletme Yuvası Cihaz C1"
-#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT1_INFO_0_TR NULL
+#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT1_INFO_0_TR "Genişletme yuvası C1 için takılı cihazı seçin (port C yuva 1)."
 #define CORE_OPTION_NAME_DEVICE_PORT3_SLOT2_LABEL_TR "Genişletme Yuvası Cihaz C2"
-#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT2_INFO_0_TR NULL
+#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT2_INFO_0_TR "Genişletme yuvası C2 için takılı cihazı seçin (port C yuva 2)."
 #define CORE_OPTION_NAME_DEVICE_PORT4_SLOT1_LABEL_TR "Genişletme Yuvası Cihaz D1"
-#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT1_INFO_0_TR NULL
+#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT1_INFO_0_TR "Genişletme yuvası D1 için takılı cihazı seçin (port D yuva 1)."
 #define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_LABEL_TR "Genişletme Yuvası Cihaz D2"
-#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_INFO_0_TR NULL
+#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_INFO_0_TR "Genişletme yuvası D2 için takılı cihazı seçin (port D yuva 2)."
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_TR "Oyun Başına Görsel Bellek Birimleri/Sistemleri (VMU)"
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CAT_TR "Oyun Başına VMU"
-#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_TR NULL
+#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_TR "Devre dışı bırakıldığında, tüm oyunlar RetroArch sistem dizininde bulunan en fazla 8 VMU kayıt dosyasını (A1/A2/B1/B2/C1/C2/D1/D2) paylaşır.\n\'VMU A1' ayarı, başlatılan her oyun için RetroArch dizin kaydına benzersiz bir VMU 'A1' dosyası oluşturur.\n\'Tüm VMU'' ayarları, başlatılan her oyun için en fazla 8 benzersiz VMU dosyası (A1/A2/B1/B2/C1/C2/D1/D2) oluşturur."
 #define OPTION_VAL_VMU_A1_TR NULL
 #define OPTION_VAL_ALL_VMUS_TR "Tüm VMU"
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_TR "Görsel Bellek Birimleri/Sistemleri (VMU) Sesleri"
