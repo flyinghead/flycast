@@ -317,6 +317,7 @@ const WidescreenCheat CheatManager::naomi_widescreen_cheats[] =
 		{ "KNIGHTS OF VALOUR  THE 7 SPIRITS", nullptr, { 0x475B70, 0x475B40 }, { 0x3F400000, 0x43F00000 } },
 		{ "Dolphin Blue", nullptr, { 0x3F2E2C, 0x3F2190, 0x3F2E6C, 0x3F215C },
 				{ 0x43B90000, 0x3FAA9FBE, 0x43B90000, 0x43F00000 } },
+		{ "FASTER THAN SPEED", nullptr, { 0x3488E0 }, { 0x3F400000 } }, // ftspeed
 		{ "METAL SLUG 6", nullptr, { 0xE93478, 0xE9347C }, { 0x3F400000, 0x3F8872B0 } },
 		{ "TOY FIGHTER", nullptr, { 0x133E58 }, { 0x43700000 } },
 		{ "LUPIN THE THIRD  -THE SHOOTING-", nullptr, { 0x045490 }, { 0x3F400000 } },
