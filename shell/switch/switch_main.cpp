@@ -21,6 +21,8 @@
 #include "emulator.h"
 #include "ui/mainui.h"
 #include "oslib/directory.h"
+#include <vector>
+#include <string>
 
 int main(int argc, char *argv[])
 {
@@ -58,4 +60,13 @@ void os_DoEvents()
 {
 }
 
+namespace hostfs
+{
+
+void saveScreenshot(const std::string& name, const std::vector<u8>& data)
+{
+	throw FlycastException("Not supported on Switch");
+}
+
+}
 #endif	//!LIBRETRO

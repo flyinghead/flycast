@@ -199,7 +199,7 @@ void saveScreenshot(const std::string& name, const std::vector<u8>& data)
 		StorageFolder^ folder = KnownFolders::PicturesLibrary;	// or SavedPictures?
 		if (folder == nullptr) {
 			INFO_LOG(COMMON, "KnownFolders::PicturesLibrary is null");
-			throw FlycastException();
+			throw FlycastException("Can't find Pictures library");
 		}
 		nowide::wstackstring wstr;
 		wchar_t *wname = wstr.convert(name.c_str());
@@ -220,7 +220,7 @@ void saveScreenshot(const std::string& name, const std::vector<u8>& data)
 	}
 	catch (COMException^ e) {
 		WARN_LOG(COMMON, "Save screenshot failed: %S", e->Message->Data());
-		throw FlycastException();
+		throw FlycastException("");
 	}
 }
 

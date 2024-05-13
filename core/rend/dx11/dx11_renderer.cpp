@@ -1384,8 +1384,12 @@ bool DX11Renderer::GetLastFrame(std::vector<u8>& data, int& width, int& height)
 
 	quad->draw(fbTextureView, samplers->getSampler(true), nullptr, -1.f, -1.f, 2.f, 2.f, config::Rotate90);
 
+#ifndef LIBRETRO
 	deviceContext->OMSetRenderTargets(1, &theDX11Context.getRenderTarget().get(), nullptr);
-
+#else
+	ID3D11RenderTargetView *nullView = nullptr;
+	deviceContext->OMSetRenderTargets(1, &nullView, nullptr);
+#endif
 	D3D11_TEXTURE2D_DESC desc;
 	dstTex->GetDesc(&desc);
 	desc.Usage = D3D11_USAGE_STAGING;
