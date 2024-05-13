@@ -550,10 +550,12 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 		settings.input.fastForwardMode = false;
 		if (!settings.content.path.empty())
 		{
+#ifndef LIBRETRO
 			if (config::GGPOEnable)
 				dc_loadstate(-1);
 			else if (config::AutoLoadState && !NaomiNetworkSupported() && !settings.naomi.multiboard)
 				dc_loadstate(config::SavestateSlot);
+#endif
 		}
 		EventManager::event(Event::Start);
 
@@ -612,9 +614,11 @@ void Emulator::unloadGame()
 	} catch (...) { }
 	if (state == Loaded || state == Error)
 	{
+#ifndef LIBRETRO
 		if (state == Loaded && config::AutoSaveState && !settings.content.path.empty()
 				&& !settings.naomi.multiboard && !config::GGPOEnable && !NaomiNetworkSupported())
-			dc_savestate(config::SavestateSlot);
+			gui_saveState(false);
+#endif
 		try {
 			dc_reset(true);
 		} catch (const FlycastException& e) {

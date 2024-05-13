@@ -29,6 +29,8 @@
 #include "imgui.h"
 #include "imgui_internal.h"
 #include "stdclass.h"
+#include "rend/osd.h"
+#include <stb_image.h>
 
 static std::string select_current_directory = "**home**";
 static std::vector<hostfs::FileInfo> subfolders;
@@ -691,13 +693,6 @@ void windowDragScroll()
 	}
 }
 
-ImTextureID ImguiTexture::getId() const
-{
-	if (path.empty())
-		return {};
-	return imguiDriver->getOrLoadTexture(path);
-}
-
 static void setUV(float ar, ImVec2& uv0, ImVec2& uv1)
 {
 	uv0 = { 0.f, 0.f };
@@ -715,46 +710,179 @@ static void setUV(float ar, ImVec2& uv0, ImVec2& uv1)
 	}
 }
 
-void ImguiTexture::draw(const ImVec2& size, const ImVec4& tint_col, const ImVec4& border_col) const
+void ImguiTexture::draw(const ImVec2& size, const ImVec4& tint_col, const ImVec4& border_col)
 {
 	ImTextureID id = getId();
 	if (id == ImTextureID{})
 		ImGui::Dummy(size);
 	else
 	{
-		float ar = imguiDriver->getAspectRatio(id);
+		const float ar = imguiDriver->getAspectRatio(id);
+		ImVec2 drawSize(size);
+		if (size.x == 0.f)
+			drawSize.x = size.y * ar;
+		else if (size.y == 0.f)
+			drawSize.y = size.x / ar;
 		ImVec2 uv0, uv1;
-		setUV(ar, uv0, uv1);
-		ImGui::Image(id, size, uv0, uv1, tint_col, border_col);
+		setUV(ar / drawSize.x * drawSize.y, uv0, uv1);
+		ImGui::Image(id, drawSize, uv0, uv1, tint_col, border_col);
 	}
 }
 
-void ImguiTexture::draw(ImDrawList *drawList, const ImVec2& pos, const ImVec2& size, float alpha) const
+void ImguiTexture::draw(ImDrawList *drawList, const ImVec2& pos, const ImVec2& size, float alpha)
 {
 	ImTextureID id = getId();
 	if (id == ImTextureID{})
 		return;
-	float ar = imguiDriver->getAspectRatio(id);
+	const float ar = imguiDriver->getAspectRatio(id);
 	ImVec2 uv0, uv1;
-	setUV(ar, uv0, uv1);
-	ImVec2 pos_b = pos + size;
+	setUV(ar / size.x * size.y, uv0, uv1);
 	u32 col = alphaOverride(0xffffff, alpha);
-	drawList->AddImage(id, pos, pos_b, uv0, uv1, col);
+	drawList->AddImage(id, pos, pos + size, uv0, uv1, col);
 }
 
 bool ImguiTexture::button(const char* str_id, const ImVec2& image_size, const std::string& title,
-		const ImVec4& bg_col, const ImVec4& tint_col) const
+		const ImVec4& bg_col, const ImVec4& tint_col)
 {
 	ImTextureID id = getId();
 	if (id == ImTextureID{})
 		return ImGui::Button(title.c_str(), image_size);
 	else
 	{
-		float ar = imguiDriver->getAspectRatio(id);
+		const float ar = imguiDriver->getAspectRatio(id);
+		const ImVec2 size = image_size - ImGui::GetStyle().FramePadding * 2;
 		ImVec2 uv0, uv1;
-		setUV(ar, uv0, uv1);
-		ImVec2 size = image_size - ImGui::GetStyle().FramePadding * 2;
+		setUV(ar / size.x * size.y, uv0, uv1);
 		return ImGui::ImageButton(str_id, id, size, uv0, uv1, bg_col, tint_col);
+	}
+}
+
+static u8 *loadImage(const std::string& path, int& width, int& height)
+{
+	FILE *file = nowide::fopen(path.c_str(), "rb");
+	if (file == nullptr)
+		return nullptr;
+
+	int channels;
+	stbi_set_flip_vertically_on_load(0);
+	u8 *imgData = stbi_load_from_file(file, &width, &height, &channels, STBI_rgb_alpha);
+	std::fclose(file);
+	return imgData;
+}
+
+int ImguiFileTexture::textureLoadCount;
+
+ImTextureID ImguiFileTexture::getId()
+{
+	if (path.empty())
+		return {};
+	ImTextureID id = imguiDriver->getTexture(path);
+	if (id == ImTextureID() && textureLoadCount < 10)
+	{
+		textureLoadCount++;
+		int width, height;
+		u8 *imgData = loadImage(path, width, height);
+		if (imgData != nullptr)
+		{
+			try {
+				id = imguiDriver->updateTextureAndAspectRatio(path, imgData, width, height, nearestSampling);
+			} catch (...) {
+				// vulkan can throw during resizing
+			}
+			free(imgData);
+		}
+	}
+	return id;
+}
+
+bool ImguiStateTexture::exists()
+{
+	std::string path = hostfs::getSavestatePath(config::SavestateSlot, false);
+	try {
+		hostfs::storage().getFileInfo(path);
+		return true;
+	} catch (...) {
+		return false;
+	}
+}
+
+ImTextureID ImguiStateTexture::getId()
+{
+	std::string path = hostfs::getSavestatePath(config::SavestateSlot, false);
+	ImTextureID texid = imguiDriver->getTexture(path);
+	if (texid == ImTextureID())
+	{
+		// load savestate info
+		std::vector<u8> pngData;
+		dc_getStateScreenshot(config::SavestateSlot, pngData);
+		if (pngData.empty())
+			return {};
+
+		int width, height, channels;
+		stbi_set_flip_vertically_on_load(0);
+		u8 *imgData = stbi_load_from_memory(&pngData[0], pngData.size(), &width, &height, &channels, STBI_rgb_alpha);
+		if (imgData != nullptr)
+		{
+			try {
+				texid = imguiDriver->updateTextureAndAspectRatio(path, imgData, width, height, nearestSampling);
+			} catch (...) {
+				// vulkan can throw during resizing
+			}
+			free(imgData);
+		}
+	}
+	return texid;
+}
+
+void ImguiStateTexture::invalidate()
+{
+	if (imguiDriver)
+	{
+		std::string path = hostfs::getSavestatePath(config::SavestateSlot, false);
+		imguiDriver->deleteTexture(path);
+	}
+}
+
+std::array<ImguiVmuTexture, 8> ImguiVmuTexture::Vmus { 0, 1, 2, 3, 4, 5, 6, 7 };
+constexpr float VMU_WIDTH = 96.f;
+constexpr float VMU_HEIGHT = 64.f;
+constexpr float VMU_PADDING = 8.f;
+
+ImTextureID ImguiVmuTexture::getId()
+{
+	if (!vmu_lcd_status[index])
+		return {};
+	if (idPath.empty())
+		idPath = ":vmu:" + std::to_string(index);
+	ImTextureID texid = imguiDriver->getTexture(idPath);
+	if (texid == ImTextureID() || vmuLastChanged != ::vmuLastChanged[index])
+	{
+		try {
+			texid = imguiDriver->updateTexture(idPath, (const u8 *)vmu_lcd_data[index], 48, 32, true);
+			vmuLastChanged = ::vmuLastChanged[index];
+		} catch (...) {
+		}
+	}
+	return texid;
+}
+
+void ImguiVmuTexture::displayVmus(const ImVec2& pos)
+{
+	const ScaledVec2 size(VMU_WIDTH, VMU_HEIGHT);
+	const float padding = uiScaled(VMU_PADDING);
+	ImDrawList *dl = ImGui::GetForegroundDrawList();
+	ImVec2 cpos(pos + ScaledVec2(2.f, 0));	// 96 pixels wide + 2 * 2 -> 100
+	for (int i = 0; i < 8; i++)
+	{
+		if (!vmu_lcd_status[i])
+			continue;
+
+		ImTextureID texid = Vmus[i].getId();
+		if (texid == ImTextureID())
+			continue;
+		ImVec2 pos_b = cpos + size;
+		dl->AddImage(texid, cpos, pos_b, ImVec2(0, 1), ImVec2(1, 0), 0x80ffffff);
+		cpos.y += size.y + padding;
 	}
 }
 
@@ -827,8 +955,9 @@ bool Toast::draw()
 		// Fade out
 		alpha = (std::cos((now - endTime) / (float)END_ANIM_TIME * (float)M_PI) + 1.f) / 2.f;
 
+	const ImVec2 displaySize(ImGui::GetIO().DisplaySize);
+	const float maxW = std::min(uiScaled(640.f), displaySize.x);
 	ImFont *regularFont = ImGui::GetFont();
-	const float maxW = uiScaled(640.f);
 	const ImVec2 titleSize = title.empty() ? ImVec2()
 			: largeFont->CalcTextSizeA(largeFont->FontSize, FLT_MAX, maxW, &title.front(), &title.back() + 1);
 	const ImVec2 msgSize = message.empty() ? ImVec2()
@@ -838,7 +967,6 @@ bool Toast::draw()
 	ImVec2 totalSize(std::max(titleSize.x, msgSize.x), titleSize.y + msgSize.y);
 	totalSize += padding * 2.f + spacing * (float)(!title.empty() && !message.empty());
 
-	const ImVec2 displaySize(ImGui::GetIO().DisplaySize);
 	ImVec2 pos(insetLeft, displaySize.y - totalSize.y);
 	if (now - startTime < START_ANIM_TIME)
 		// Slide up

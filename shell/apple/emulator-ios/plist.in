@@ -70,6 +70,8 @@
 	<true/>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Flycast requires microphone access to emulate the Dreamcast microphone</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Flycast can save screenshots to your Photo library.</string>
 	<key>UISupportsDocumentBrowser</key>
 	<true/>
 	<key>LSSupportsOpeningDocumentsInPlace</key>

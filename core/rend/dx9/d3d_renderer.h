@@ -116,6 +116,7 @@ struct D3DRenderer : public Renderer
 	void preReset();
 	void postReset();
 	void RenderFramebuffer(const FramebufferInfo& info) override;
+	bool GetLastFrame(std::vector<u8>& data, int& width, int& height) override;
 
 private:
 	enum ModifierVolumeMode { Xor, Or, Inclusion, Exclusion, ModeCount };

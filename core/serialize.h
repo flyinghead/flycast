@@ -87,29 +87,7 @@ public:
 		Exception(const char *msg) : std::runtime_error(msg) {}
 	};
 
-	Deserializer(const void *data, size_t limit, bool rollback = false)
-		: SerializeBase(limit, rollback), data((const u8 *)data)
-	{
-		if (!memcmp(data, "RASTATE\001", 8))
-		{
-			// RetroArch savestate: a 16-byte header is now added here because why not?
-			this->data += 16;
-			this->limit -= 16;
-		}
-		deserialize(_version);
-		if (_version < V16)
-			throw Exception("Unsupported version");
-		if (_version > Current)
-			throw Exception("Version too recent");
-
-		if(_version >= V42 && settings.platform.isConsole())
-		{
-			u32 ramSize;
-			deserialize(ramSize);
-			if (ramSize != settings.platform.ram_size)
-				throw Exception("Selected RAM Size doesn't match Save State");
-		}
-	}
+	Deserializer(const void *data, size_t limit, bool rollback = false);
 
 	template<typename T>
 	void deserialize(T& obj)
@@ -165,14 +143,7 @@ public:
 	Serializer()
 		: Serializer(nullptr, std::numeric_limits<size_t>::max(), false) {}
 
-	Serializer(void *data, size_t limit, bool rollback = false)
-		: SerializeBase(limit, rollback), data((u8 *)data)
-	{
-		Version v = Current;
-		serialize(v);
-		if (settings.platform.isConsole())
-			serialize(settings.platform.ram_size);
-	}
+	Serializer(void *data, size_t limit, bool rollback = false);
 
 	template<typename T>
 	void serialize(const T& obj)

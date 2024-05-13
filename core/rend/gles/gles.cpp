@@ -989,9 +989,11 @@ static void gl_create_resources()
 
 	findGLVersion();
 
+#ifndef LIBRETRO
 	if (gl.gl_major >= 3)
 		// will be used later. Better fail fast
 		verify(glGenVertexArrays != nullptr);
+#endif
 
 	//create vbos
 	gl.vbo.geometry = std::make_unique<GlBuffer>(GL_ARRAY_BUFFER);
@@ -1510,8 +1512,8 @@ bool OpenGLRenderer::Render()
 
 	if (!config::EmulateFramebuffer)
 	{
-		DrawOSD(false);
 		frameRendered = true;
+		DrawOSD(false);
 		renderVideoRouting();
 	}
 	

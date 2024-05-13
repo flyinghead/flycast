@@ -27,6 +27,7 @@
 #include <mutex>
 #include <utility>
 #include <vector>
+#include <time.h>
 
 void loadGameSpecificSettings();
 void SaveSettings();
@@ -35,10 +36,11 @@ int flycast_init(int argc, char* argv[]);
 void dc_reset(bool hard); // for tests only
 void flycast_term();
 void dc_exit();
-void dc_savestate(int index = 0);
+void dc_savestate(int index = 0, const u8 *pngData = nullptr, u32 pngSize = 0);
 void dc_loadstate(int index = 0);
 void dc_loadstate(Deserializer& deser);
-std::string dc_getStateUpdateDate(int index);
+time_t dc_getStateCreationDate(int index);
+void dc_getStateScreenshot(int index, std::vector<u8>& pngData);
 
 enum class Event {
 	Start,

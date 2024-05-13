@@ -1,5 +1,6 @@
 #pragma once
 #include "types.h"
+#include <vector>
 #if defined(__SWITCH__)
 #include <malloc.h>
 #endif
@@ -59,6 +60,7 @@ namespace hostfs
 	std::string getTextureDumpPath();
 
 	std::string getShaderCachePath(const std::string& filename);
+	void saveScreenshot(const std::string& name, const std::vector<u8>& data);
 }
 
 static inline void *allocAligned(size_t alignment, size_t size)

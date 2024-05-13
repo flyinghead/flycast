@@ -61,6 +61,7 @@ public:
 		set_button(DC_AXIS_LEFT, 13);			// J
 		set_button(DC_AXIS_RIGHT, 15);			// L
 		set_button(DC_BTN_D, 4);				// Q (Coin)
+		set_button(EMU_BTN_SCREENSHOT, 69);		// F12
 
 		dirty = false;
 	}

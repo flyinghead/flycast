@@ -17,6 +17,29 @@
 #include "serialize.h"
 #include <time.h>
 
+struct SavestateHeader
+{
+	void init()
+	{
+		memcpy(magic, MAGIC, sizeof(magic));
+		creationDate = time(nullptr);
+		version = Deserializer::Current;
+		pngSize = 0;
+	}
+
+	bool isValid() const {
+		return !memcmp(magic, MAGIC, sizeof(magic));
+	}
+
+	char magic[8];
+	u64 creationDate;
+	u32 version;
+	u32 pngSize;
+	// png data
+
+	static constexpr const char *MAGIC = "FLYSAVE1";
+};
+
 int flycast_init(int argc, char* argv[])
 {
 #if defined(TEST_AUTOMATION)
@@ -67,7 +90,7 @@ int flycast_init(int argc, char* argv[])
 void dc_exit()
 {
 	try {
-		emu.stop();
+		emu.unloadGame();
 	} catch (...) { }
 	mainui_stop();
 }
@@ -85,15 +108,15 @@ void SaveSettings()
 
 void flycast_term()
 {
-	os_DestroyWindow();
 	gui_cancel_load();
 	lua::term();
 	emu.term();
+	os_DestroyWindow();
 	gui_term();
 	os_TermInput();
 }
 
-void dc_savestate(int index)
+void dc_savestate(int index, const u8 *pngData, u32 pngSize)
 {
 	if (settings.network.online)
 		return;
@@ -113,10 +136,8 @@ void dc_savestate(int index)
 	dc_serialize(ser);
 
 	std::string filename = hostfs::getSavestatePath(index, true);
-#if 0
 	FILE *f = nowide::fopen(filename.c_str(), "wb");
-
-	if ( f == NULL )
+	if (f == nullptr)
 	{
 		WARN_LOG(SAVESTATE, "Failed to save state - could not open %s for writing", filename.c_str());
 		gui_display_notification("Cannot open save file", 5000);
@@ -124,31 +145,41 @@ void dc_savestate(int index)
     	return;
 	}
 
+	RZipFile zipFile;
+	SavestateHeader header;
+	header.init();
+	header.pngSize = pngSize;
+	if (std::fwrite(&header, sizeof(header), 1, f) != 1)
+		goto fail;
+	if (pngSize > 0 && std::fwrite(pngData, 1, pngSize, f) != pngSize)
+		goto fail;
+
+#if 0
+	// Uncompressed savestate
 	std::fwrite(data, 1, ser.size(), f);
 	std::fclose(f);
 #else
-	RZipFile zipFile;
-	if (!zipFile.Open(filename, true))
-	{
-		WARN_LOG(SAVESTATE, "Failed to save state - could not open %s for writing", filename.c_str());
-		gui_display_notification("Cannot open save file", 5000);
-		free(data);
-    	return;
-	}
+	if (!zipFile.Open(f, true))
+		goto fail;
 	if (zipFile.Write(data, ser.size()) != ser.size())
-	{
-		WARN_LOG(SAVESTATE, "Failed to save state - error writing %s", filename.c_str());
-		gui_display_notification("Error saving state", 5000);
-		zipFile.Close();
-		free(data);
-    	return;
-	}
+		goto fail;
 	zipFile.Close();
 #endif
 
 	free(data);
 	NOTICE_LOG(SAVESTATE, "Saved state to %s size %d", filename.c_str(), (int)ser.size());
 	gui_display_notification("State saved", 2000);
+	return;
+
+fail:
+	WARN_LOG(SAVESTATE, "Failed to save state - error writing %s", filename.c_str());
+	gui_display_notification("Error saving state", 5000);
+	if (zipFile.rawFile() != nullptr)
+		zipFile.Close();
+	else
+		std::fclose(f);
+	free(data);
+	// delete failed savestate?
 }
 
 void dc_loadstate(int index)
@@ -156,46 +187,54 @@ void dc_loadstate(int index)
 	if (settings.raHardcoreMode)
 		return;
 	u32 total_size = 0;
-	FILE *f = nullptr;
 
 	std::string filename = hostfs::getSavestatePath(index, false);
-	RZipFile zipFile;
-	if (zipFile.Open(filename, false))
+	FILE *f = nowide::fopen(filename.c_str(), "rb");
+	if (f == nullptr)
 	{
+		WARN_LOG(SAVESTATE, "Failed to load state - could not open %s for reading", filename.c_str());
+		gui_display_notification("Save state not found", 2000);
+		return;
+	}
+	SavestateHeader header;
+	if (std::fread(&header, sizeof(header), 1, f) == 1)
+	{
+		if (!header.isValid())
+			// seek to beginning of file if this isn't a valid header (legacy savestate)
+			std::fseek(f, 0, SEEK_SET);
+		else
+			// skip png data
+			std::fseek(f, header.pngSize, SEEK_CUR);
+	}
+	else {
+		// probably not a valid savestate but we'll fail later
+		std::fseek(f, 0, SEEK_SET);
+	}
+
+	if (index == -1 && config::GGPOEnable)
+	{
+		long pos = std::ftell(f);
+		MD5Sum().add(f)
+				.getDigest(settings.network.md5.savestate);
+		std::fseek(f, pos, SEEK_SET);
+	}
+	RZipFile zipFile;
+	if (zipFile.Open(f, false)) {
 		total_size = (u32)zipFile.Size();
-		if (index == -1 && config::GGPOEnable)
-		{
-			f = zipFile.rawFile();
-			long pos = std::ftell(f);
-			MD5Sum().add(f)
-					.getDigest(settings.network.md5.savestate);
-			std::fseek(f, pos, SEEK_SET);
-			f = nullptr;
-		}
 	}
 	else
 	{
-		f = nowide::fopen(filename.c_str(), "rb");
-
-		if ( f == NULL )
-		{
-			WARN_LOG(SAVESTATE, "Failed to load state - could not open %s for reading", filename.c_str());
-			gui_display_notification("Save state not found", 2000);
-			return;
-		}
-		if (index == -1 && config::GGPOEnable)
-			MD5Sum().add(f)
-					.getDigest(settings.network.md5.savestate);
+		long pos = std::ftell(f);
 		std::fseek(f, 0, SEEK_END);
-		total_size = (u32)std::ftell(f);
-		std::fseek(f, 0, SEEK_SET);
+		total_size = (u32)std::ftell(f) - pos;
+		std::fseek(f, pos, SEEK_SET);
 	}
 	void *data = malloc(total_size);
 	if (data == nullptr)
 	{
 		WARN_LOG(SAVESTATE, "Failed to load state - could not malloc %d bytes", total_size);
 		gui_display_notification("Failed to load state - memory full", 5000);
-		if (f != nullptr)
+		if (zipFile.rawFile() == nullptr)
 			std::fclose(f);
 		else
 			zipFile.Close();
@@ -203,14 +242,14 @@ void dc_loadstate(int index)
 	}
 
 	size_t read_size;
-	if (f == nullptr)
+	if (zipFile.rawFile() != nullptr)
 	{
 		read_size = zipFile.Read(data, total_size);
 		zipFile.Close();
 	}
 	else
 	{
-		read_size = fread(data, 1, total_size, f);
+		read_size = std::fread(data, 1, total_size, f);
 		std::fclose(f);
 	}
 	if (read_size != total_size)
@@ -226,6 +265,7 @@ void dc_loadstate(int index)
 		dc_loadstate(deser);
 	    NOTICE_LOG(SAVESTATE, "Loaded state ver %d from %s size %d", deser.version(), filename.c_str(), total_size);
 		if (deser.size() != total_size)
+			// Note: this isn't true for RA savestates
 			WARN_LOG(SAVESTATE, "Savestate size %d but only %d bytes used", total_size, (int)deser.size());
 	} catch (const Deserializer::Exception& e) {
 		ERROR_LOG(SAVESTATE, "%s", e.what());
@@ -235,25 +275,41 @@ void dc_loadstate(int index)
 	EventManager::event(Event::LoadState);
 }
 
-#ifdef _WIN32
-static struct tm *localtime_r(const time_t *_clock, struct tm *_result)
-{
-	return localtime_s(_result, _clock) ? nullptr : _result;
-}
-#endif
-
-std::string dc_getStateUpdateDate(int index)
+time_t dc_getStateCreationDate(int index)
 {
 	std::string filename = hostfs::getSavestatePath(index, false);
-	struct stat st;
-	if (flycast::stat(filename.c_str(), &st) != 0)
-		return {};
-	tm t;
-	if (localtime_r(&st.st_mtime, &t) == nullptr)
-		return {};
-	std::string s(32, '\0');
-	s.resize(snprintf(s.data(), 32, "%04d/%02d/%02d %02d:%02d:%02d", t.tm_year + 1900, t.tm_mon + 1, t.tm_mday, t.tm_hour, t.tm_min, t.tm_sec));
-	return s;
+	FILE *f = nowide::fopen(filename.c_str(), "rb");
+	if (f == nullptr)
+		return 0;
+	SavestateHeader header;
+	if (std::fread(&header, sizeof(header), 1, f) != 1 || !header.isValid())
+	{
+		std::fclose(f);
+		struct stat st;
+		if (flycast::stat(filename.c_str(), &st) == 0)
+			return st.st_mtime;
+		else
+			return 0;
+	}
+	std::fclose(f);
+	return (time_t)header.creationDate;
+}
+
+void dc_getStateScreenshot(int index, std::vector<u8>& pngData)
+{
+	pngData.clear();
+	std::string filename = hostfs::getSavestatePath(index, false);
+	FILE *f = nowide::fopen(filename.c_str(), "rb");
+	if (f == nullptr)
+		return;
+	SavestateHeader header;
+	if (std::fread(&header, sizeof(header), 1, f) == 1 && header.isValid() && header.pngSize != 0)
+	{
+		pngData.resize(header.pngSize);
+		if (std::fread(pngData.data(), 1, pngData.size(), f) != pngData.size())
+			pngData.clear();
+	}
+	std::fclose(f);
 }
 
 #endif

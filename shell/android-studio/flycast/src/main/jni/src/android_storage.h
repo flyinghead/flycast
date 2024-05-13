@@ -38,6 +38,7 @@ public:
 		jgetSubPath = env->GetMethodID(clazz, "getSubPath", "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;");
 		jgetFileInfo = env->GetMethodID(clazz, "getFileInfo", "(Ljava/lang/String;)Lcom/flycast/emulator/FileInfo;");
 		jaddStorage = env->GetMethodID(clazz, "addStorage", "(ZZ)V");
+		jsaveScreenshot = env->GetMethodID(clazz, "saveScreenshot", "(Ljava/lang/String;[B)V");
 	}
 
 	bool isKnownPath(const std::string& path) override {
@@ -137,6 +138,15 @@ public:
 		}
 	}
 
+	void saveScreenshot(const std::string& name, const std::vector<u8>& data)
+	{
+		jni::String jname(name);
+		jni::ByteArray jdata(data.size());
+		jdata.setData(&data[0]);
+		jni::env()->CallVoidMethod(jstorage, jsaveScreenshot, (jstring)jname, (jbyteArray)jdata);
+		checkException();
+	}
+
 private:
 	void checkException()
 	{
@@ -184,6 +194,7 @@ private:
 	jmethodID jaddStorage;
 	jmethodID jgetSubPath;
 	jmethodID jgetFileInfo;
+	jmethodID jsaveScreenshot;
 	// FileInfo accessors lazily initialized to avoid having to load the class
 	jmethodID jgetName = nullptr;
 	jmethodID jgetPath = nullptr;
@@ -199,6 +210,11 @@ Storage& customStorage()
 	if (!androidStorage)
 		androidStorage = std::make_unique<AndroidStorage>();
 	return *androidStorage;
+}
+
+void saveScreenshot(const std::string& name, const std::vector<u8>& data)
+{
+	return static_cast<AndroidStorage&>(customStorage()).saveScreenshot(name, data);
 }
 
 }	// namespace hostfs

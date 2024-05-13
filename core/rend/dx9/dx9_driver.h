@@ -97,7 +97,11 @@ public:
 		texture.imTexture.d3dTexture = texture.tex.get();
 		texture.imTexture.pointSampling = nearestSampling;
 
-	    return (ImTextureID)&texture;
+	    return (ImTextureID)&texture.imTexture;
+	}
+
+	void deleteTexture(const std::string& name) override {
+		textures.erase(name);
 	}
 
 private:

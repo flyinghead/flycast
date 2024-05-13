@@ -790,7 +790,7 @@ bool OpenGLRenderer::renderLastFrame()
 				-1.f, -1.f, 1.f, 0.f, 1.f,
 				-1.f,  1.f, 1.f, 0.f, 0.f,
 				 1.f, -1.f, 1.f, 1.f, 1.f,
-				 1.f, -1.f, 1.f, 1.f, 0.f,
+				 1.f,  1.f, 1.f, 1.f, 0.f,
 			};
 			sverts[0] = sverts[5] = -1.f + gl.ofbo.shiftX * 2.f / framebuffer->getWidth();
 			sverts[10] = sverts[15] = sverts[0] + 2;
@@ -814,6 +814,68 @@ bool OpenGLRenderer::renderLastFrame()
     	glBindFramebuffer(GL_FRAMEBUFFER, gl.ofbo.origFbo);
 #endif
 	}
+	return true;
+}
+
+bool OpenGLRenderer::GetLastFrame(std::vector<u8>& data, int& width, int& height)
+{
+	GlFramebuffer *framebuffer = gl.ofbo2.ready ? gl.ofbo2.framebuffer.get() : gl.ofbo.framebuffer.get();
+	if (framebuffer == nullptr)
+		return false;
+	width = framebuffer->getWidth();
+	height = framebuffer->getHeight();
+	if (config::Rotate90)
+		std::swap(width, height);
+	// We need square pixels for PNG
+	int w = gl.ofbo.aspectRatio * height;
+	if (width > w)
+		height = width / gl.ofbo.aspectRatio;
+	else
+		width = w;
+
+	GlFramebuffer dstFramebuffer(width, height, false, false);
+
+	glViewport(0, 0, width, height);
+	glcache.Disable(GL_BLEND);
+	verify(framebuffer->getTexture() != 0);
+	const float *vertices = nullptr;
+	if (config::Rotate90)
+	{
+		static float rvertices[4][5] = {
+			{ -1.f,  1.f, 1.f, 1.f, 0.f },
+			{ -1.f, -1.f, 1.f, 1.f, 1.f },
+			{  1.f,  1.f, 1.f, 0.f, 0.f },
+			{  1.f, -1.f, 1.f, 0.f, 1.f },
+		};
+		vertices = &rvertices[0][0];
+	}
+	drawQuad(framebuffer->getTexture(), config::Rotate90, false, vertices);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	data.resize(width * height * 3);
+	dstFramebuffer.bind(GL_READ_FRAMEBUFFER);
+	glPixelStorei(GL_PACK_ALIGNMENT, 1);
+	if (gl.is_gles)
+	{
+		// GL_RGB not supported
+		std::vector<u8> tmp(width * height * 4);
+		glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, tmp.data());
+		u8 *dst = data.data();
+		const u8 *src = tmp.data();
+		while (src <= &tmp.back())
+		{
+			*dst++ = *src++;
+			*dst++ = *src++;
+			*dst++ = *src++;
+			src++;
+		}
+	}
+	else {
+		glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, data.data());
+	}
+	restoreCurrentFramebuffer();
+	glCheck();
+
 	return true;
 }
 

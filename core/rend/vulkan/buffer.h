@@ -67,11 +67,11 @@ struct BufferData
 		allocation.UnmapMemory();
 	}
 
-	void *MapMemory()
+	void *MapMemory() const
 	{
 		return allocation.MapMemory();
 	}
-	void UnmapMemory()
+	void UnmapMemory() const
 	{
 		allocation.UnmapMemory();
 	}

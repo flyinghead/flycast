@@ -315,28 +315,22 @@ void glReadFramebuffer(const FramebufferInfo& info)
 GLuint init_output_framebuffer(int width, int height)
 {
 	if (gl.ofbo.framebuffer != nullptr
-			&& (width != gl.ofbo.framebuffer->getWidth() || height != gl.ofbo.framebuffer->getHeight()
-				// if the rotate90 setting has changed
-				|| (gl.gl_major >= 3 && (gl.ofbo.framebuffer->getTexture() == 0) == config::Rotate90)))
+			&& (width != gl.ofbo.framebuffer->getWidth() || height != gl.ofbo.framebuffer->getHeight()))
 	{
 		gl.ofbo.framebuffer.reset();
 	}
 
 	if (gl.ofbo.framebuffer == nullptr)
 	{
-		GLuint texture = 0;
-		if (config::Rotate90)
-		{
-			// Create a texture for rendering to
-			texture = glcache.GenTexture();
-			glcache.BindTexture(GL_TEXTURE_2D, texture);
+		// Create a texture for rendering to
+		GLuint texture = glcache.GenTexture();
+		glcache.BindTexture(GL_TEXTURE_2D, texture);
 
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
-			glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-			glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-			glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-			glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		}
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 		gl.ofbo.framebuffer = std::make_unique<GlFramebuffer>(width, height, true, texture);
 
 		glcache.Disable(GL_SCISSOR_TEST);

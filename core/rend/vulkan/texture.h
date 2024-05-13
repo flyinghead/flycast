@@ -212,9 +212,14 @@ public:
 
 	void Clear()
 	{
-		BaseTextureCache::Clear();
+		VulkanContext *context = VulkanContext::Instance();
 		for (auto& set : inFlightTextures)
+		{
+			for (Texture *tex : set)
+				tex->deferDeleteResource(context);
 			set.clear();
+		}
+		BaseTextureCache::Clear();
 	}
 
 private:

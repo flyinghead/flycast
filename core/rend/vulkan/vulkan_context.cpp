@@ -966,6 +966,7 @@ void VulkanContext::PresentFrame(vk::Image image, vk::ImageView imageView, const
 		try {
 			NewFrame();
 			auto overlayCmdBuffer = PrepareOverlay(config::FloatVMUs, true);
+			gui_draw_osd();
 
 			BeginRenderPass();
 
@@ -973,6 +974,7 @@ void VulkanContext::PresentFrame(vk::Image image, vk::ImageView imageView, const
 				DrawFrame(imageView, extent, aspectRatio);
 
 			DrawOverlay(settings.display.uiScale, config::FloatVMUs, true);
+			imguiDriver->renderDrawData(ImGui::GetDrawData(), false);
 			renderer->DrawOSD(false);
 			EndFrame(overlayCmdBuffer);
 			static_cast<BaseVulkanRenderer*>(renderer)->RenderVideoRouting();
@@ -1229,4 +1231,108 @@ VulkanContext::~VulkanContext()
 {
 	verify(contextInstance == this);
 	contextInstance = nullptr;
+}
+
+bool VulkanContext::GetLastFrame(std::vector<u8>& data, int& width, int& height)
+{
+	if (!lastFrameView)
+		return false;
+
+	width = lastFrameExtent.width;
+	height = lastFrameExtent.height;
+	if (config::Rotate90)
+		std::swap(width, height);
+	// We need square pixels for PNG
+	int w = lastFrameAR * height;
+	if (width > w)
+		height = width / lastFrameAR;
+	else
+		width = w;
+	// color attachment
+	FramebufferAttachment attachment(physicalDevice, *device);
+	attachment.Init(width, height, vk::Format::eR8G8B8A8Unorm, vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eTransferSrc, "screenshot");
+	// command buffer
+	vk::UniqueCommandBuffer commandBuffer = std::move(device->allocateCommandBuffersUnique(
+			vk::CommandBufferAllocateInfo(*commandPools.back(), vk::CommandBufferLevel::ePrimary, 1)).front());
+	commandBuffer->begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
+	// render pass
+	vk::AttachmentDescription attachmentDescription = vk::AttachmentDescription(vk::AttachmentDescriptionFlags(), vk::Format::eR8G8B8A8Unorm, vk::SampleCountFlagBits::e1,
+			vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eStore, vk::AttachmentLoadOp::eDontCare, vk::AttachmentStoreOp::eDontCare,
+			vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferSrcOptimal);
+	vk::AttachmentReference colorReference(0, vk::ImageLayout::eColorAttachmentOptimal);
+	vk::SubpassDescription subpass(vk::SubpassDescriptionFlags(), vk::PipelineBindPoint::eGraphics, nullptr, colorReference,
+			nullptr, nullptr);
+	vk::UniqueRenderPass renderPass = device->createRenderPassUnique(vk::RenderPassCreateInfo(vk::RenderPassCreateFlags(),
+    		attachmentDescription,	subpass));
+	// framebuffer
+	vk::ImageView imageView = attachment.GetImageView();
+	vk::UniqueFramebuffer framebuffer = device->createFramebufferUnique(vk::FramebufferCreateInfo(vk::FramebufferCreateFlags(),
+				*renderPass, imageView, width, height, 1));
+	vk::ClearValue clearValue;
+	commandBuffer->beginRenderPass(vk::RenderPassBeginInfo(*renderPass, *framebuffer, vk::Rect2D({0, 0}, {(u32)width, (u32)height}), clearValue),
+			vk::SubpassContents::eInline);
+
+	// Pipeline
+	QuadPipeline pipeline(true, config::Rotate90);
+	pipeline.Init(shaderManager.get(), *renderPass, 0);
+	pipeline.BindPipeline(*commandBuffer);
+
+	// Draw
+	QuadVertex vtx[] {
+		{ -1, -1, 0, 0, 0 },
+		{  1, -1, 0, 1, 0 },
+		{ -1,  1, 0, 0, 1 },
+		{  1,  1, 0, 1, 1 },
+	};
+
+	vk::Viewport viewport(0, 0, width, height);
+	commandBuffer->setViewport(0, viewport);
+	commandBuffer->setScissor(0, vk::Rect2D(vk::Offset2D(0, 0), vk::Extent2D(width, height)));
+	QuadDrawer drawer;
+	drawer.Init(&pipeline);
+	drawer.Draw(*commandBuffer, lastFrameView, vtx, false);
+	commandBuffer->endRenderPass();
+
+	// Copy back
+	vk::BufferImageCopy copyRegion(0, width, height, vk::ImageSubresourceLayers(vk::ImageAspectFlagBits::eColor, 0, 0, 1), vk::Offset3D(0, 0, 0),
+			vk::Extent3D(width, height, 1));
+	commandBuffer->copyImageToBuffer(attachment.GetImage(), vk::ImageLayout::eTransferSrcOptimal,
+			*attachment.GetBufferData()->buffer, copyRegion);
+
+	vk::BufferMemoryBarrier bufferMemoryBarrier(
+			vk::AccessFlagBits::eTransferWrite,
+			vk::AccessFlagBits::eHostRead,
+			VK_QUEUE_FAMILY_IGNORED,
+			VK_QUEUE_FAMILY_IGNORED,
+			*attachment.GetBufferData()->buffer,
+			0,
+			VK_WHOLE_SIZE);
+	commandBuffer->pipelineBarrier(vk::PipelineStageFlagBits::eTransfer,
+					vk::PipelineStageFlagBits::eHost, {}, nullptr, bufferMemoryBarrier, nullptr);
+	commandBuffer->end();
+
+	vk::UniqueFence fence = device->createFenceUnique(vk::FenceCreateInfo());
+	vk::SubmitInfo submitInfo(nullptr, nullptr, commandBuffer.get(), nullptr);
+	graphicsQueue.submit(submitInfo, *fence);
+
+	vk::Result res = device->waitForFences(fence.get(), true, UINT64_MAX);
+	if (res != vk::Result::eSuccess)
+		WARN_LOG(RENDERER, "VulkanContext::GetLastFrame: waitForFences failed %d", (int)res);
+
+	const u8 *img = (const u8 *)attachment.GetBufferData()->MapMemory();
+	data.clear();
+	data.reserve(width * height * 3);
+	for (int y = 0; y < height; y++)
+	{
+		for (int x = 0; x < width; x++)
+		{
+			data.push_back(*img++);
+			data.push_back(*img++);
+			data.push_back(*img++);
+			img++;
+		}
+	}
+	attachment.GetBufferData()->UnmapMemory();
+
+	return true;
 }

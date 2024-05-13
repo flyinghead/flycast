@@ -199,27 +199,70 @@ public:
 class ImguiTexture
 {
 public:
-	ImguiTexture() = default;
-	ImguiTexture(const std::string& path) : path(path) {}
-
 	void draw(const ImVec2& size, const ImVec4& tint_col = ImVec4(1, 1, 1, 1),
-			const ImVec4& border_col = ImVec4(0, 0, 0, 0)) const;
-	void draw(ImDrawList *drawList, const ImVec2& pos, const ImVec2& size, float alpha = 1.f) const;
+			const ImVec4& border_col = ImVec4(0, 0, 0, 0));
+	void draw(ImDrawList *drawList, const ImVec2& pos, const ImVec2& size, float alpha = 1.f);
 	bool button(const char* str_id, const ImVec2& image_size, const std::string& title = {}, const ImVec4& bg_col = ImVec4(0, 0, 0, 0),
-			const ImVec4& tint_col = ImVec4(1, 1, 1, 1)) const;
-
-	ImTextureID getId() const;
+			const ImVec4& tint_col = ImVec4(1, 1, 1, 1));
 
 	operator ImTextureID() {
 		return getId();
 	}
+	void setNearestSampling(bool nearestSampling) {
+		this->nearestSampling = nearestSampling;
+	}
 
-	bool operator==(const ImguiTexture& other) const {
+	virtual ImTextureID getId() = 0;
+	virtual ~ImguiTexture() = default;
+
+protected:
+	bool nearestSampling = false;
+};
+
+class ImguiFileTexture : public ImguiTexture
+{
+public:
+	ImguiFileTexture() = default;
+	ImguiFileTexture(const std::string& path) : ImguiTexture(), path(path) {}
+
+	bool operator==(const ImguiFileTexture& other) const {
 		return other.path == path;
+	}
+	ImTextureID getId() override;
+
+	static void resetLoadCount() {
+		textureLoadCount = 0;
 	}
 
 private:
 	std::string path;
+	static int textureLoadCount;
+};
+
+class ImguiStateTexture : public ImguiTexture
+{
+public:
+	ImTextureID getId() override;
+
+	bool exists();
+	void invalidate();
+};
+
+class ImguiVmuTexture : public ImguiTexture
+{
+public:
+	ImguiVmuTexture(int index = 0) : index(index) {}
+
+	// draw all active vmus in a single column at the given position
+	static void displayVmus(const ImVec2& pos);
+	ImTextureID getId() override;
+
+private:
+	int index = 0;
+	std::string idPath;
+	u64 vmuLastChanged = 0;
+
+	static std::array<ImguiVmuTexture, 8> Vmus;
 };
 
 static inline bool iconButton(const char *icon, const std::string& label, const ImVec2& size = {})

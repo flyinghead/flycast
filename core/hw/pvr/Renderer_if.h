@@ -1,6 +1,7 @@
 #pragma once
 #include "types.h"
 #include "ta_ctx.h"
+#include <vector>
 
 extern u32 FrameCount;
 
@@ -62,6 +63,9 @@ struct Renderer
 	virtual bool Render() = 0;
 	virtual void RenderFramebuffer(const FramebufferInfo& info) = 0;
 	virtual bool RenderLastFrame() { return false; }
+	// Get the last rendered frame pixel data in RGB format
+	// The returned image is rotated and scaled (upward orientation and square pixels)
+	virtual bool GetLastFrame(std::vector<u8>& data, int& width, int& height) { return false; }
 
 	virtual bool Present() { return true; }
 

@@ -51,10 +51,10 @@ private:
 	u64 startTime = 0;
 	u64 endTime = 0;
 	Type type = Type::None;
-	ImguiTexture image;
+	ImguiFileTexture image;
 	std::string text[3];
 	std::mutex mutex;
-	std::vector<ImguiTexture> challenges;
+	std::vector<ImguiFileTexture> challenges;
 	std::map<u32, std::string> leaderboards;
 };
 

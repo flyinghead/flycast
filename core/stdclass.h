@@ -9,6 +9,8 @@
 #include <mutex>
 #include <thread>
 #include <vector>
+#include <functional>
+#include <cassert>
 
 #ifdef __ANDROID__
 #include <sys/mman.h>
@@ -199,3 +201,39 @@ public:
 };
 
 u64 getTimeMs();
+
+class ThreadRunner
+{
+public:
+	void init() {
+		threadId = std::this_thread::get_id();
+	}
+	void runOnThread(std::function<void()> func)
+	{
+		if (threadId == std::this_thread::get_id()) {
+			func();
+		}
+		else {
+			LockGuard _(mutex);
+			tasks.push_back(func);
+		}
+	}
+	void execTasks()
+	{
+		assert(threadId == std::this_thread::get_id());
+		std::vector<std::function<void()>> localTasks;
+		{
+			LockGuard _(mutex);
+			std::swap(localTasks, tasks);
+		}
+		for (auto& func : localTasks)
+			func();
+	}
+
+private:
+	using LockGuard = std::lock_guard<std::mutex>;
+
+	std::thread::id threadId;
+	std::vector<std::function<void()>> tasks;
+	std::mutex mutex;
+};

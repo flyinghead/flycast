@@ -19,6 +19,7 @@
 */
 #import <Foundation/Foundation.h>
 
+#include <vector>
 #include <string>
 
 int darw_printf(const char* text,...)
@@ -44,4 +45,16 @@ std::string os_Locale(){
 
 std::string os_PrecomposedString(std::string string){
     return [[[NSString stringWithUTF8String:string.c_str()] precomposedStringWithCanonicalMapping] UTF8String];
+}
+
+namespace hostfs
+{
+
+void saveScreenshot(const std::string& name, const std::vector<u8>& data)
+{
+	NSData* imageData = [NSData dataWithBytes:&data[0] length:data.size()];
+	UIImage* pngImage = [UIImage imageWithData:imageData];
+	UIImageWriteToSavedPhotosAlbum(pngImage, nil, nil, nil);
+}
+
 }

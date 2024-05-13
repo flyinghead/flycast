@@ -69,6 +69,34 @@ OpenGLDriver::~OpenGLDriver()
 	ImGui_ImplOpenGL3_Shutdown();
 }
 
+void OpenGLDriver::reset()
+{
+	ImGuiDriver::reset();
+	for (auto& tex : vmu_lcd_tex_ids)
+		tex = ImTextureID{};
+	vmuLastChanged.fill({});
+}
+
+void OpenGLDriver::updateVmuTextures()
+{
+	for (int i = 0; i < 8; i++)
+	{
+		if (!vmu_lcd_status[i])
+			continue;
+
+		if (this->vmuLastChanged[i] != ::vmuLastChanged[i] || vmu_lcd_tex_ids[i] == ImTextureID())
+		{
+			try {
+				vmu_lcd_tex_ids[i] = updateTexture(":vmugl:" + std::to_string(i), (const u8 *)vmu_lcd_data[i], 48, 32, true);
+			} catch (...) {
+				 continue;
+			}
+			if (vmu_lcd_tex_ids[i] != ImTextureID())
+				this->vmuLastChanged[i] = ::vmuLastChanged[i];
+		}
+	}
+}
+
 void OpenGLDriver::displayVmus()
 {
 	if (!gameStarted)
@@ -189,4 +217,13 @@ ImTextureID OpenGLDriver::updateTexture(const std::string& name, const u8 *data,
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
 
     return textures[name] = (ImTextureID)(u64)texId;
+}
+
+void OpenGLDriver::deleteTexture(const std::string& name)
+{
+	auto it = textures.find(name);
+	if (it != textures.end()) {
+		glcache.DeleteTextures(1, (GLuint *)&it->second);
+		textures.erase(it);
+	}
 }

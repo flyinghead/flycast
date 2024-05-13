@@ -26,6 +26,7 @@ void gui_initFonts();
 void gui_open_settings();
 void gui_display_ui();
 void gui_display_notification(const char *msg, int duration, const char *details = nullptr);
+void gui_draw_osd();
 void gui_display_osd();
 void gui_display_profiler();
 void gui_open_onboarding();
@@ -49,8 +50,9 @@ void gui_error(const std::string& what);
 void gui_setOnScreenKeyboardCallback(void (*callback)(bool show));
 void gui_save();
 void gui_loadState();
-void gui_saveState();
+void gui_saveState(bool stopRestart = true);
 std::string gui_getCurGameBoxartUrl();
+void gui_takeScreenshot();
 
 enum class GuiState {
 	Closed,

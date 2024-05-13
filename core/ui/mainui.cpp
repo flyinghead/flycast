@@ -96,7 +96,7 @@ void mainui_loop()
 		if (imguiDriver == nullptr)
 			forceReinit = true;
 		else
-			imguiDriver->doPresent();
+			imguiDriver->present();
 
 		if (config::RendererType != currentRenderer || forceReinit)
 		{

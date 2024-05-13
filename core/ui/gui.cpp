@@ -50,6 +50,8 @@
 #include "gui_achievements.h"
 #include "IconsFontAwesome6.h"
 #include "oslib/storage.h"
+#include <stb_image_write.h>
+#include "hw/pvr/Renderer_if.h"
 #if defined(USE_SDL)
 #include "sdl/sdl.h"
 #endif
@@ -101,6 +103,7 @@ using LockGuard = std::lock_guard<std::recursive_mutex>;
 
 ImFont *largeFont;
 static Toast toast;
+static ThreadRunner uiThreadRunner;
 
 static void emuEventCallback(Event event, void *)
 {
@@ -190,12 +193,13 @@ void gui_initFonts()
 	static float uiScale;
 
 	verify(inited);
+	uiThreadRunner.init();
 
 #if !defined(TARGET_UWP) && !defined(__SWITCH__)
 	settings.display.uiScale = std::max(1.f, settings.display.dpi / 100.f * 0.75f);
    	// Limit scaling on small low-res screens
     if (settings.display.width <= 640 || settings.display.height <= 480)
-    	settings.display.uiScale = std::min(1.4f, settings.display.uiScale);
+    	settings.display.uiScale = std::min(1.2f, settings.display.uiScale);
 #endif
     settings.display.uiScale *= config::UIScaling / 100.f;
 	if (settings.display.uiScale == uiScale && ImGui::GetIO().Fonts->IsBuilt())
@@ -470,7 +474,6 @@ static void delayedKeysUp()
 
 static void gui_endFrame(bool gui_open)
 {
-    ImGui::Render();
     imguiDriver->renderDrawData(ImGui::GetDrawData(), gui_open);
     delayedKeysUp();
 }
@@ -581,6 +584,50 @@ static bool savestateAllowed()
 	return !settings.content.path.empty() && !settings.network.online && !settings.naomi.multiboard;
 }
 
+static void appendVectorData(void *context, void *data, int size)
+{
+	std::vector<u8>& v = *(std::vector<u8> *)context;
+	const u8 *bytes = (const u8 *)data;
+	v.insert(v.end(), bytes, bytes + size);
+}
+
+static void getScreenshot(std::vector<u8>& data)
+{
+	data.clear();
+	std::vector<u8> rawData;
+	int width, height;
+	if (renderer == nullptr || !renderer->GetLastFrame(rawData, width, height))
+		return;
+	stbi_flip_vertically_on_write(0);
+	stbi_write_png_to_func(appendVectorData, &data, width, height, 3, &rawData[0], 0);
+}
+
+#ifdef _WIN32
+static struct tm *localtime_r(const time_t *_clock, struct tm *_result)
+{
+	return localtime_s(_result, _clock) ? nullptr : _result;
+}
+#endif
+
+static std::string timeToString(time_t time)
+{
+	tm t;
+	if (localtime_r(&time, &t) == nullptr)
+		return {};
+	std::string s(32, '\0');
+	s.resize(snprintf(s.data(), 32, "%04d/%02d/%02d %02d:%02d:%02d", t.tm_year + 1900, t.tm_mon + 1, t.tm_mday, t.tm_hour, t.tm_min, t.tm_sec));
+	return s;
+}
+
+static void savestate()
+{
+	std::vector<u8> pngData;
+	getScreenshot(pngData);
+	dc_savestate(config::SavestateSlot, pngData.empty() ? nullptr : &pngData[0], pngData.size());
+	ImguiStateTexture savestatePic;
+	savestatePic.invalidate();
+}
+
 static void gui_display_commands()
 {
 	fullScreenWindow(false);
@@ -595,33 +642,38 @@ static void gui_display_commands()
 				(ImGui::GetContentRegionAvail().x - uiScaled(100 + 150) - ImGui::GetStyle().FramePadding.x * 2)
 				/ 2 / uiScaled(1));
 		float buttonWidth = 150.f;	// not scaled
-		bool lowW = ImGui::GetContentRegionAvail().x < (uiScaled(100 + buttonWidth * 3)
-				+ ImGui::GetStyle().FramePadding.x * 2 + ImGui::GetStyle().ItemSpacing.x * 2);
-		if (lowW)
+		bool lowWidth = ImGui::GetContentRegionAvail().x < uiScaled(100 + buttonWidth * 3)
+				+ ImGui::GetStyle().FramePadding.x * 2 + ImGui::GetStyle().ItemSpacing.x * 2;
+		if (lowWidth)
 			buttonWidth = std::min(150.f,
 					(ImGui::GetContentRegionAvail().x - ImGui::GetStyle().FramePadding.x * 2 - ImGui::GetStyle().ItemSpacing.x * 2)
 					/ 3 / uiScaled(1));
+		bool lowHeight = ImGui::GetContentRegionAvail().y < uiScaled(100 + 50 * 2 + buttonWidth * 3 / 4) + ImGui::GetTextLineHeightWithSpacing() * 2
+				+ ImGui::GetStyle().ItemSpacing.y * 2 + ImGui::GetStyle().WindowPadding.y;
 
 		GameMedia game;
 		game.path = settings.content.path;
 		game.fileName = settings.content.fileName;
 		GameBoxart art = boxart.getBoxart(game);
-		ImguiTexture tex(art.boxartPath);
+		ImguiFileTexture tex(art.boxartPath);
 		// TODO use placeholder image if not available
 		tex.draw(ScaledVec2(100, 100));
 
 		ImGui::SameLine();
-		ImGui::BeginChild("game_info", ScaledVec2(0, 100.f), ImGuiChildFlags_Border, ImGuiWindowFlags_None);
-		ImGui::PushFont(largeFont);
-		ImGui::Text("%s", art.name.c_str());
-		ImGui::PopFont();
+		if (!lowHeight)
 		{
-			ImguiStyleColor _(ImGuiCol_Text, ImVec4(0.75f, 0.75f, 0.75f, 1.f));
-			ImGui::TextWrapped("%s", art.fileName.c_str());
+			ImGui::BeginChild("game_info", ScaledVec2(0, 100.f), ImGuiChildFlags_Border, ImGuiWindowFlags_None);
+			ImGui::PushFont(largeFont);
+			ImGui::Text("%s", art.name.c_str());
+			ImGui::PopFont();
+			{
+				ImguiStyleColor _(ImGuiCol_Text, ImVec4(0.75f, 0.75f, 0.75f, 1.f));
+				ImGui::TextWrapped("%s", art.fileName.c_str());
+			}
+			ImGui::EndChild();
 		}
-		ImGui::EndChild();
 
-		if (lowW) {
+		if (lowWidth) {
 			ImGui::Columns(3, "buttons", false);
 		}
 		else
@@ -632,7 +684,7 @@ static void gui_display_commands()
 			ImGui::SetColumnWidth(2, uiScaled(columnWidth));
 			const ImVec2 vmuPos = ImGui::GetStyle().WindowPadding + ScaledVec2(0.f, 100.f)
 					+ ImVec2(insetLeft, ImGui::GetStyle().ItemSpacing.y);
-			imguiDriver->displayVmus(vmuPos);
+			ImguiVmuTexture::displayVmus(vmuPos);
 			ImGui::NextColumn();
 		}
 		ImguiStyleVar _1{ImGuiStyleVar_FramePadding, ScaledVec2(12.f, 3.f)};
@@ -657,6 +709,17 @@ static void gui_display_commands()
 			if (ImGui::Button(ICON_FA_TROPHY "  Achievements", ScaledVec2(buttonWidth, 50)) && achievements::isActive())
 				gui_setState(GuiState::Achievements);
 		}
+		// Barcode
+		if (card_reader::barcodeAvailable())
+		{
+			ImGui::Text("Barcode Card");
+			char cardBuf[64] {};
+			strncpy(cardBuf, card_reader::barcodeGetCard().c_str(), sizeof(cardBuf) - 1);
+			ImGui::SetNextItemWidth(uiScaled(buttonWidth));
+			if (ImGui::InputText("##barcode", cardBuf, sizeof(cardBuf), ImGuiInputTextFlags_None, nullptr, nullptr))
+				card_reader::barcodeSetCard(cardBuf);
+		}
+
 		ImGui::NextColumn();
 
 		// Insert/Eject Disk
@@ -674,6 +737,7 @@ static void gui_display_commands()
 		// Settings
 		if (ImGui::Button(ICON_FA_GEAR "  Settings", ScaledVec2(buttonWidth, 50)))
 			gui_setState(GuiState::Settings);
+
 		// Exit
 		if (ImGui::Button(commandLineStart ? ICON_FA_POWER_OFF "  Exit" : ICON_FA_POWER_OFF "  Close Game", ScaledVec2(buttonWidth, 50)))
 			gui_stop_game();
@@ -681,10 +745,12 @@ static void gui_display_commands()
 		ImGui::NextColumn();
 		{
 			DisabledScope _{!savestateAllowed()};
+			ImguiStateTexture savestatePic;
+			time_t savestateDate = dc_getStateCreationDate(config::SavestateSlot);
 
+			// Load State
 			{
-				DisabledScope _{settings.raHardcoreMode};
-				// Load State
+				DisabledScope _{settings.raHardcoreMode || savestateDate == 0};
 				if (ImGui::Button(ICON_FA_CLOCK_ROTATE_LEFT "  Load State", ScaledVec2(buttonWidth, 50)) && savestateAllowed())
 				{
 					gui_setState(GuiState::Closed);
@@ -696,7 +762,7 @@ static void gui_display_commands()
 			if (ImGui::Button(ICON_FA_DOWNLOAD "  Save State", ScaledVec2(buttonWidth, 50)) && savestateAllowed())
 			{
 				gui_setState(GuiState::Closed);
-				dc_savestate(config::SavestateSlot);
+				savestate();
 			}
 
 			{
@@ -720,30 +786,20 @@ static void gui_display_commands()
 			ImGui::SameLine(0, spacingW);
 			if (ImGui::ArrowButton("##next-slot", ImGuiDir_Right))
 			{
-				 if (config::SavestateSlot == 9)
-					 config::SavestateSlot = 0;
-				 else
+				if (config::SavestateSlot == 9)
+					config::SavestateSlot = 0;
+				else
 					config::SavestateSlot++;
-				 SaveSettings();
+				SaveSettings();
 			}
-			std::string date = dc_getStateUpdateDate(config::SavestateSlot);
 			{
 				ImVec4 gray(0.75f, 0.75f, 0.75f, 1.f);
-				if (date.empty())
+				if (savestateDate == 0)
 					ImGui::TextColored(gray, "Empty");
 				else
-					ImGui::TextColored(gray, "%s", date.c_str());
+					ImGui::TextColored(gray, "%s", timeToString(savestateDate).c_str());
 			}
-		}
-		// Barcode
-		if (card_reader::barcodeAvailable())
-		{
-			ImGui::NewLine();
-			ImGui::Text("Barcode Card");
-			char cardBuf[64] {};
-			strncpy(cardBuf, card_reader::barcodeGetCard().c_str(), sizeof(cardBuf) - 1);
-			if (ImGui::InputText("##barcode", cardBuf, sizeof(cardBuf), ImGuiInputTextFlags_None, nullptr, nullptr))
-				card_reader::barcodeSetCard(cardBuf);
+			savestatePic.draw(ScaledVec2(buttonWidth, 0.f));
 		}
 
 		ImGui::Columns(1, nullptr, false);
@@ -929,6 +985,7 @@ const Mapping dcButtons[] = {
 	{ EMU_BTN_LOADSTATE, "Load State" },
 	{ EMU_BTN_SAVESTATE, "Save State" },
 	{ EMU_BTN_BYPASS_KB, "Bypass Emulated Keyboard" },
+	{ EMU_BTN_SCREENSHOT, "Save Screenshot" },
 
 	{ EMU_BTN_NONE, nullptr }
 };
@@ -982,6 +1039,7 @@ const Mapping arcadeButtons[] = {
 	{ EMU_BTN_LOADSTATE, "Load State" },
 	{ EMU_BTN_SAVESTATE, "Save State" },
 	{ EMU_BTN_BYPASS_KB, "Bypass Emulated Keyboard" },
+	{ EMU_BTN_SCREENSHOT, "Save Screenshot" },
 
 	{ EMU_BTN_NONE, nullptr }
 };
@@ -3088,7 +3146,7 @@ static void gui_display_content()
 			{
 				GameMedia game;
 				GameBoxart art = boxart.getBoxartAndLoad(game);
-				ImguiTexture tex(art.boxartPath);
+				ImguiFileTexture tex(art.boxartPath);
 				pressed = gameImageButton(tex, "Dreamcast BIOS", responsiveBoxVec2, "Dreamcast BIOS");
 			}
 			else
@@ -3130,7 +3188,7 @@ static void gui_display_content()
 						// Put the image inside a child window so we can detect when it's fully clipped and doesn't need to be loaded
 						if (ImGui::BeginChild("img", ImVec2(0, 0), ImGuiChildFlags_AutoResizeX | ImGuiChildFlags_AutoResizeY, ImGuiWindowFlags_NavFlattened))
 						{
-							ImguiTexture tex(art.boxartPath);
+							ImguiFileTexture tex(art.boxartPath);
 							pressed = gameImageButton(tex, game.name, responsiveBoxVec2, gameName);
 						}
 						ImGui::EndChild();
@@ -3417,7 +3475,10 @@ void gui_display_ui()
 		break;
 	}
 	error_popup();
+    ImGui::Render();
 	gui_endFrame(gui_open);
+	uiThreadRunner.execTasks();
+	ImguiFileTexture::resetLoadCount();
 
 	if (gui_state == GuiState::Closed)
 		emu.start();
@@ -3447,7 +3508,7 @@ static std::string getFPSNotification()
 	return std::string(settings.input.fastForwardMode ? ">>" : "");
 }
 
-void gui_display_osd()
+void gui_draw_osd()
 {
 	if (gui_state == GuiState::VJoyEdit)
 		return;
@@ -3488,7 +3549,13 @@ void gui_display_osd()
 	}
 	if (!settings.raHardcoreMode)
 		lua::overlay();
+    ImGui::Render();
+	uiThreadRunner.execTasks();
+}
 
+void gui_display_osd()
+{
+	gui_draw_osd();
 	gui_endFrame(gui_is_open());
 }
 
@@ -3523,7 +3590,7 @@ void gui_display_profiler()
 	}
 
 	ImGui::End();
-
+    ImGui::Render();
 	gui_endFrame(true);
 #endif
 }
@@ -3604,17 +3671,22 @@ void gui_loadState()
 	}
 }
 
-void gui_saveState()
+void gui_saveState(bool stopRestart)
 {
 	const LockGuard lock(guiMutex);
 	if (gui_state == GuiState::Closed && savestateAllowed())
 	{
 		try {
-			emu.stop();
-			dc_savestate(config::SavestateSlot);
-			emu.start();
+			if (stopRestart)
+				emu.stop();
+			savestate();
+			if (stopRestart)
+				emu.start();
 		} catch (const FlycastException& e) {
-			gui_stop_game(e.what());
+			if (stopRestart)
+				gui_stop_game(e.what());
+			else
+				WARN_LOG(COMMON, "gui_saveState: %s", e.what());
 		}
 	}
 }
@@ -3639,6 +3711,33 @@ std::string gui_getCurGameBoxartUrl()
 	game.path = settings.content.path;
 	GameBoxart art = boxart.getBoxart(game);
 	return art.boxartUrl;
+}
+
+void gui_takeScreenshot()
+{
+	if (!game_started)
+		return;
+	uiThreadRunner.runOnThread([]() {
+		std::string date = timeToString(time(nullptr));
+		std::replace(date.begin(), date.end(), '/', '-');
+		std::replace(date.begin(), date.end(), ':', '-');
+		std::string name = "Flycast-" + date + ".png";
+
+		std::vector<u8> data;
+		getScreenshot(data);
+		if (data.empty()) {
+			gui_display_notification("No screenshot available", 2000);
+		}
+		else
+		{
+			try {
+				hostfs::saveScreenshot(name, data);
+				gui_display_notification("Screenshot saved", 2000, name.c_str());
+			} catch (const FlycastException& e) {
+				gui_display_notification("Error saving screenshot", 5000, e.what());
+			}
+		}
+	});
 }
 
 #ifdef TARGET_UWP

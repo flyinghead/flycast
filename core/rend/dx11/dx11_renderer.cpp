@@ -1345,6 +1345,86 @@ void DX11Renderer::writeFramebufferToVRAM()
 	WriteFramebuffer<2, 1, 0, 3>(width, height, (u8 *)tmp_buf.data(), texAddress, pvrrc.fb_W_CTRL, linestride, xClip, yClip);
 }
 
+bool DX11Renderer::GetLastFrame(std::vector<u8>& data, int& width, int& height)
+{
+	if (!frameRenderedOnce)
+		return false;
+
+	width = this->width;
+	height = this->height;
+	if (config::Rotate90)
+		std::swap(width, height);
+	// We need square pixels for PNG
+	int w = aspectRatio * height;
+	if (width > w)
+		height = width / aspectRatio;
+	else
+		width = w;
+
+	ComPtr<ID3D11Texture2D> dstTex;
+	ComPtr<ID3D11RenderTargetView> dstRenderTarget;
+	createTexAndRenderTarget(dstTex, dstRenderTarget, width, height);
+
+	ID3D11ShaderResourceView *nullResView = nullptr;
+	deviceContext->PSSetShaderResources(0, 1, &nullResView);
+	deviceContext->OMSetRenderTargets(1, &dstRenderTarget.get(), nullptr);
+	D3D11_VIEWPORT vp{};
+	vp.Width = (FLOAT)width;
+	vp.Height = (FLOAT)height;
+	vp.MinDepth = 0.f;
+	vp.MaxDepth = 1.f;
+	deviceContext->RSSetViewports(1, &vp);
+	const D3D11_RECT r = { 0, 0, (LONG)width, (LONG)height };
+	deviceContext->RSSetScissorRects(1, &r);
+	deviceContext->OMSetBlendState(blendStates.getState(false), nullptr, 0xffffffff);
+	deviceContext->GSSetShader(nullptr, nullptr, 0);
+	deviceContext->HSSetShader(nullptr, nullptr, 0);
+	deviceContext->DSSetShader(nullptr, nullptr, 0);
+	deviceContext->CSSetShader(nullptr, nullptr, 0);
+
+	quad->draw(fbTextureView, samplers->getSampler(true), nullptr, -1.f, -1.f, 2.f, 2.f, config::Rotate90);
+
+	deviceContext->OMSetRenderTargets(1, &theDX11Context.getRenderTarget().get(), nullptr);
+
+	D3D11_TEXTURE2D_DESC desc;
+	dstTex->GetDesc(&desc);
+	desc.Usage = D3D11_USAGE_STAGING;
+	desc.BindFlags = 0;
+	desc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+	desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+
+	ComPtr<ID3D11Texture2D> stagingTex;
+	HRESULT hr = device->CreateTexture2D(&desc, nullptr, &stagingTex.get());
+	if (FAILED(hr))
+	{
+		WARN_LOG(RENDERER, "Staging screenshot texture creation failed");
+		return false;
+	}
+	deviceContext->CopyResource(stagingTex, dstTex);
+
+	D3D11_MAPPED_SUBRESOURCE mappedSubres;
+	hr = deviceContext->Map(stagingTex, 0, D3D11_MAP_READ, 0, &mappedSubres);
+	if (FAILED(hr))
+	{
+		WARN_LOG(RENDERER, "Failed to map staging screenshot texture");
+		return false;
+	}
+	const u8* const src = (const u8 *)mappedSubres.pData;
+	for (int y = 0; y < height; y++)
+	{
+		const u8 *p = src + y * mappedSubres.RowPitch;
+		for (int x = 0; x < width; x++, p += 4)
+		{
+			data.push_back(p[2]);
+			data.push_back(p[1]);
+			data.push_back(p[0]);
+		}
+	}
+	deviceContext->Unmap(stagingTex, 0);
+
+	return true;
+}
+
 void DX11Renderer::renderVideoRouting()
 {
 #ifdef VIDEO_ROUTING

@@ -99,3 +99,59 @@ void dc_deserialize(Deserializer& deser)
 
 	DEBUG_LOG(SAVESTATE, "Loaded %d bytes", (u32)deser.size());
 }
+
+Deserializer::Deserializer(const void *data, size_t limit, bool rollback)
+	: SerializeBase(limit, rollback), data((const u8 *)data)
+{
+	if (!memcmp(data, "RASTATE\001", 8))
+	{
+		// RetroArch savestates now have several sections: MEM, ACHV, RPLY, etc.
+		const u8 *p = this->data + 8;
+		limit -= 8;
+		while (limit > 8)
+		{
+			const u8 *section = p;
+			u32 sectionSize = *(const u32 *)&p[4];
+			p += 8;
+			limit -= 8;
+			if (!memcmp(section, "MEM ", 4))
+			{
+				// That's the part we're interested in
+				this->data = p;
+				this->limit = sectionSize;
+				break;
+			}
+			sectionSize = (sectionSize + 7) & ~7;	// align to 8 bytes
+			if (limit < sectionSize) {
+				limit = 0;
+				break;
+			}
+			p += sectionSize;
+			limit -= sectionSize;
+		}
+		if (limit <= 8)
+			throw Exception("Can't find MEM section in RetroArch savestate");
+	}
+	deserialize(_version);
+	if (_version < V16)
+		throw Exception("Unsupported version");
+	if (_version > Current)
+		throw Exception("Version too recent");
+
+	if(_version >= V42 && settings.platform.isConsole())
+	{
+		u32 ramSize;
+		deserialize(ramSize);
+		if (ramSize != settings.platform.ram_size)
+			throw Exception("Selected RAM Size doesn't match Save State");
+	}
+}
+
+Serializer::Serializer(void *data, size_t limit, bool rollback)
+	: SerializeBase(limit, rollback), data((u8 *)data)
+{
+	Version v = Current;
+	serialize(v);
+	if (settings.platform.isConsole())
+		serialize(settings.platform.ram_size);
+}

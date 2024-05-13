@@ -1294,7 +1294,6 @@ if(NOT LIBRETRO)
 	target_sources(${PROJECT_NAME} PRIVATE
 			core/ui/game_scanner.cpp
 			core/ui/game_scanner.h
-			core/ui/imgui_driver.cpp
 			core/ui/imgui_driver.h
 			core/ui/gui.cpp
 			core/ui/gui.h

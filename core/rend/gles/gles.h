@@ -519,6 +519,7 @@ struct OpenGLRenderer : Renderer
 
 		return ret;
 	}
+	bool GetLastFrame(std::vector<u8>& data, int& width, int& height) override;
 
 	void DrawOSD(bool clear_screen) override;
 
@@ -570,7 +571,7 @@ protected:
 
 void initQuad();
 void termQuad();
-void drawQuad(GLuint texId, bool rotate = false, bool swapY = false, float *coords = nullptr);
+void drawQuad(GLuint texId, bool rotate = false, bool swapY = false, const float *coords = nullptr);
 
 extern const char* ShaderCompatSource;
 extern const char *VertexCompatShader;

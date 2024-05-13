@@ -30,54 +30,47 @@ public:
 		gui_initFonts();
 	}
 	virtual ~ImGuiDriver() = default;
-	virtual void reset();
+
+	virtual void reset() {
+		aspectRatios.clear();
+	}
 
 	virtual void newFrame() = 0;
 	virtual void renderDrawData(ImDrawData* drawData, bool gui_open) = 0;
 
 	virtual void displayVmus() {}		// TODO OpenGL only. Get rid of it
 	virtual void displayCrosshairs() {}	// same
-	// draw all active vmus in a single column at the given position
-	void displayVmus(const ImVec2& pos);
 
-	void doPresent() {
-		textureLoadCount = 0;
-		present();
-	}
-
+	virtual void present() = 0;
 	virtual void setFrameRendered() {}
 
-	float getAspectRatio(ImTextureID textureId) {
-		auto it = aspectRatios.find(textureId);
-		if (it != aspectRatios.end())
-			return it->second;
-		else
-			return 1;
-	}
-
-	ImTextureID getOrLoadTexture(const std::string& path, bool nearestSampling = false);
-
-protected:
 	virtual ImTextureID getTexture(const std::string& name) = 0;
 	virtual ImTextureID updateTexture(const std::string& name, const u8 *data, int width, int height, bool nearestSampling) = 0;
-	virtual void present() = 0;
-	void updateVmuTextures();
+	virtual void deleteTexture(const std::string& name) = 0;
 
-	ImTextureID vmu_lcd_tex_ids[8] {};
-	std::array<u64, 8> vmuLastChanged {};
-
-private:
 	ImTextureID updateTextureAndAspectRatio(const std::string& name, const u8 *data, int width, int height, bool nearestSampling)
 	{
-		textureLoadCount++;
 		ImTextureID textureId = updateTexture(name, data, width, height, nearestSampling);
 		if (textureId != ImTextureID())
 			aspectRatios[textureId] = (float)width / height;
 		return textureId;
 	}
 
-	std::unordered_map<ImTextureID, float> aspectRatios;
-	int textureLoadCount = 0;
+	float getAspectRatio(ImTextureID textureId)
+	{
+		auto it = aspectRatios.find(textureId);
+		if (it != aspectRatios.end())
+			return it->second;
+		else
+			return 1.f;
+	}
+	void updateAspectRatio(ImTextureID textureId, float aspectRatio) {
+		if (textureId != ImTextureID())
+			aspectRatios[textureId] = aspectRatio;
+	}
+
+private:
+	std::unordered_map<ImTextureID, float> aspectRatios;	// TODO move this out
 };
 
 extern std::unique_ptr<ImGuiDriver> imguiDriver;

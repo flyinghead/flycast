@@ -145,7 +145,7 @@ void termQuad()
 }
 
 // coords is an optional array of 20 floats (4 vertices with x,y,z,u,v each)
-void drawQuad(GLuint texId, bool rotate, bool swapY, float *coords)
+void drawQuad(GLuint texId, bool rotate, bool swapY, const float *coords)
 {
 	glcache.Disable(GL_SCISSOR_TEST);
 	glcache.Disable(GL_DEPTH_TEST);

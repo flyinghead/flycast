@@ -133,6 +133,27 @@ public:
 		return texId;
 	}
 
+	void deleteTexture(const std::string& name) override
+	{
+		auto it = textures.find(name);
+		if (it != textures.end())
+		{
+			class DescSetDeleter : public Deletable
+			{
+			public:
+				DescSetDeleter(VkDescriptorSet descSet) : descSet(descSet) {}
+				~DescSetDeleter() {
+					ImGui_ImplVulkan_RemoveTexture(descSet);
+				}
+				VkDescriptorSet descSet;
+			};
+			getContext()->addToFlight(new DescSetDeleter((VkDescriptorSet)it->second.textureId));
+			if (it->second.texture != nullptr)
+				it->second.texture->deferDeleteResource(getContext());
+			textures.erase(it);
+		}
+	}
+
 private:
 	struct VkTexture {
 		VkTexture() = default;

@@ -255,3 +255,14 @@ void os_VideoRoutingTermVk()
 	[syphonMtlServer release];
 	syphonMtlServer = NULL;
 }
+
+namespace hostfs
+{
+
+std::string getScreenshotsPath()
+{
+	NSArray *paths = NSSearchPathForDirectoriesInDomains(NSPicturesDirectory, NSUserDomainMask, YES);
+	return [[paths objectAtIndex:0] UTF8String];
+}
+
+}

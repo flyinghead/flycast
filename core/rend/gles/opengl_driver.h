@@ -33,6 +33,7 @@ public:
 	void newFrame() override;
 	void renderDrawData(ImDrawData* drawData, bool gui_open) override;
 	void present() override;
+	void reset() override;
 
 	void setFrameRendered() override {
 		frameRendered = true;
@@ -47,6 +48,7 @@ public:
 	}
 
 	ImTextureID updateTexture(const std::string& name, const u8 *data, int width, int height, bool nearestSampling) override;
+	void deleteTexture(const std::string& name) override;
 
 private:
 	void emuEvent(Event event)
@@ -66,8 +68,11 @@ private:
 	static void emuEventCallback(Event event, void *p) {
 		((OpenGLDriver *)p)->emuEvent(event);
 	}
+	void updateVmuTextures();
 
 	ImTextureID crosshairTexId = ImTextureID();
+	ImTextureID vmu_lcd_tex_ids[8] {};
+	std::array<u64, 8> vmuLastChanged {};
 	bool gameStarted = false;
 	bool frameRendered = false;
 	std::unordered_map<std::string, ImTextureID> textures;

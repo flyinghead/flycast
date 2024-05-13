@@ -92,6 +92,10 @@ public:
 	    return (ImTextureID)&texture.imTexture;
 	}
 
+	void deleteTexture(const std::string& name) override {
+		textures.erase(name);
+	}
+
 private:
 	struct Texture
 	{

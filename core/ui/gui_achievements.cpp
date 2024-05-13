@@ -77,7 +77,7 @@ void Notification::notify(Type type, const std::string& image, const std::string
 void Notification::showChallenge(const std::string& image)
 {
 	std::lock_guard<std::mutex> _(mutex);
-	ImguiTexture texture{ image };
+	ImguiFileTexture texture{ image };
 	if (std::find(challenges.begin(), challenges.end(), texture) != challenges.end())
 		return;
 	challenges.push_back(texture);
@@ -183,7 +183,7 @@ bool Notification::draw()
 		dl->AddRect(pos, pos + totalSize, borderCol, 0.f);
 
 		pos += padding;
-		for (const auto& img : challenges) {
+		for (auto& img : challenges) {
 			img.draw(dl, pos, size, alpha);
 			pos.x += hspacing + size.x;
 		}
@@ -283,7 +283,7 @@ void achievementList()
 		float w = ImGui::GetWindowContentRegionMax().x - ImGui::CalcTextSize("Close").x - ImGui::GetStyle().ItemSpacing.x * 2 - ImGui::GetStyle().WindowPadding.x
 				- uiScaled(80.f + 20.f * 2);	// image width and button frame padding
 		Game game = getCurrentGame();
-		ImguiTexture tex(game.image);
+		ImguiFileTexture tex(game.image);
 		tex.draw(ScaledVec2(80.f, 80.f));
 		ImGui::SameLine();
 		ImGui::BeginChild("game_info", ImVec2(w, uiScaled(80.f)), ImGuiChildFlags_None, ImGuiWindowFlags_None);
@@ -330,7 +330,7 @@ void achievementList()
 				ImGui::Unindent(uiScaled(10));
 			}
 			ImguiID _("achiev" + std::to_string(id++));
-			ImguiTexture tex(ach.image);
+			ImguiFileTexture tex(ach.image);
 			tex.draw(ScaledVec2(80.f, 80.f));
 			ImGui::SameLine();
 			ImGui::BeginChild(ImGui::GetID("ach_item"), ImVec2(0, 0), ImGuiChildFlags_AutoResizeY, ImGuiWindowFlags_None);
