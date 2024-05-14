@@ -447,7 +447,7 @@ static void luaRegister(lua_State *L)
 						gui_open_settings();
 				}))
 				.addFunction("exit", dc_exit)
-				.addFunction("displayNotification", gui_display_notification)
+				.addFunction("displayNotification", os_notify)
 			.endNamespace()
 
 	  		.beginNamespace("config")

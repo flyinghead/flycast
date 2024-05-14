@@ -37,7 +37,6 @@
 #include "network/ggpo.h"
 #include "hw/mem/mem_watch.h"
 #include "network/net_handshake.h"
-#include "ui/gui.h"
 #include "network/naomi_network.h"
 #include "serialize.h"
 #include "hw/pvr/pvr.h"
@@ -45,6 +44,9 @@
 #include "oslib/storage.h"
 #include "wsi/context.h"
 #include <chrono>
+#ifndef LIBRETRO
+#include "ui/gui.h"
+#endif
 
 settings_t settings;
 
@@ -489,7 +491,7 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 							nvmem::loadHle();
 							NOTICE_LOG(BOOT, "Did not load BIOS, using reios");
 							if (!config::UseReios && config::UseReios.isReadOnly())
-								gui_display_notification("This game requires a real BIOS", 15000);
+								os_notify("This game requires a real BIOS", 15000);
 						}
 					}
 					else
@@ -541,7 +543,7 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 		cheatManager.reset(settings.content.gameId);
 		if (cheatManager.isWidescreen())
 		{
-			gui_display_notification("Widescreen cheat activated", 2000);
+			os_notify("Widescreen cheat activated", 2000);
 			config::ScreenStretching.override(134);	// 4:3 -> 16:9
 		}
 		// reload settings so that all settings can be overridden

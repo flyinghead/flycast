@@ -128,7 +128,7 @@ void dc_savestate(int index, const u8 *pngData, u32 pngSize)
 	if (data == nullptr)
 	{
 		WARN_LOG(SAVESTATE, "Failed to save state - could not malloc %d bytes", (int)ser.size());
-		gui_display_notification("Save state failed - memory full", 5000);
+		os_notify("Save state failed - memory full", 5000);
     	return;
 	}
 
@@ -140,7 +140,7 @@ void dc_savestate(int index, const u8 *pngData, u32 pngSize)
 	if (f == nullptr)
 	{
 		WARN_LOG(SAVESTATE, "Failed to save state - could not open %s for writing", filename.c_str());
-		gui_display_notification("Cannot open save file", 5000);
+		os_notify("Cannot open save file", 5000);
 		free(data);
     	return;
 	}
@@ -168,12 +168,12 @@ void dc_savestate(int index, const u8 *pngData, u32 pngSize)
 
 	free(data);
 	NOTICE_LOG(SAVESTATE, "Saved state to %s size %d", filename.c_str(), (int)ser.size());
-	gui_display_notification("State saved", 2000);
+	os_notify("State saved", 2000);
 	return;
 
 fail:
 	WARN_LOG(SAVESTATE, "Failed to save state - error writing %s", filename.c_str());
-	gui_display_notification("Error saving state", 5000);
+	os_notify("Error saving state", 5000);
 	if (zipFile.rawFile() != nullptr)
 		zipFile.Close();
 	else
@@ -193,7 +193,7 @@ void dc_loadstate(int index)
 	if (f == nullptr)
 	{
 		WARN_LOG(SAVESTATE, "Failed to load state - could not open %s for reading", filename.c_str());
-		gui_display_notification("Save state not found", 2000);
+		os_notify("Save state not found", 2000);
 		return;
 	}
 	SavestateHeader header;
@@ -233,7 +233,7 @@ void dc_loadstate(int index)
 	if (data == nullptr)
 	{
 		WARN_LOG(SAVESTATE, "Failed to load state - could not malloc %d bytes", total_size);
-		gui_display_notification("Failed to load state - memory full", 5000);
+		os_notify("Failed to load state - memory full", 5000);
 		if (zipFile.rawFile() == nullptr)
 			std::fclose(f);
 		else
@@ -255,7 +255,7 @@ void dc_loadstate(int index)
 	if (read_size != total_size)
 	{
 		WARN_LOG(SAVESTATE, "Failed to load state - I/O error");
-		gui_display_notification("Failed to load state - I/O error", 5000);
+		os_notify("Failed to load state - I/O error", 5000);
 		free(data);
 		return;
 	}

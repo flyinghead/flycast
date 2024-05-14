@@ -216,19 +216,19 @@ static bool on_event(GGPOEvent *info)
 	switch (info->code) {
 	case GGPO_EVENTCODE_CONNECTED_TO_PEER:
 		INFO_LOG(NETWORK, "Connected to peer %d", info->u.connected.player);
-		gui_display_notification("Connected to peer", 2000);
+		os_notify("Connected to peer", 2000);
 		break;
 	case GGPO_EVENTCODE_SYNCHRONIZING_WITH_PEER:
 		INFO_LOG(NETWORK, "Synchronizing with peer %d", info->u.synchronizing.player);
-		gui_display_notification("Synchronizing with peer", 2000);
+		os_notify("Synchronizing with peer", 2000);
 		break;
 	case GGPO_EVENTCODE_SYNCHRONIZED_WITH_PEER:
 		INFO_LOG(NETWORK, "Synchronized with peer %d", info->u.synchronized.player);
-		gui_display_notification("Synchronized with peer", 2000);
+		os_notify("Synchronized with peer", 2000);
 		break;
 	case GGPO_EVENTCODE_RUNNING:
 		INFO_LOG(NETWORK, "Running");
-		gui_display_notification("Running", 2000);
+		os_notify("Running", 2000);
 		synchronized = true;
 		break;
 	case GGPO_EVENTCODE_DISCONNECTED_FROM_PEER:
@@ -242,11 +242,11 @@ static bool on_event(GGPOEvent *info)
 		break;
 	case GGPO_EVENTCODE_CONNECTION_INTERRUPTED:
 		INFO_LOG(NETWORK, "Connection interrupted with player %d", info->u.connection_interrupted.player);
-		gui_display_notification("Connection interrupted", 2000);
+		os_notify("Connection interrupted", 2000);
 		break;
 	case GGPO_EVENTCODE_CONNECTION_RESUMED:
 		INFO_LOG(NETWORK, "Connection resumed with player %d", info->u.connection_resumed.player);
-		gui_display_notification("Connection resumed", 2000);
+		os_notify("Connection resumed", 2000);
 		break;
 	}
 	return true;

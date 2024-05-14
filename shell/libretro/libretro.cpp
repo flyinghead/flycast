@@ -64,6 +64,7 @@
 #include "cfg/option.h"
 #include "version.h"
 #include "rend/transform_matrix.h"
+#include "oslib/oslib.h"
 
 constexpr char slash = path_default_slash_c();
 
@@ -196,7 +197,6 @@ static retro_rumble_interface rumble;
 static void refresh_devices(bool first_startup);
 static void init_disk_control_interface();
 static bool read_m3u(const char *file);
-void gui_display_notification(const char *msg, int duration, const char *details = nullptr);
 static void updateVibration(u32 port, float power, float inclination, u32 durationMs);
 
 static std::string game_data;
@@ -1189,7 +1189,7 @@ void retro_run()
 		}
 	} catch (const FlycastException& e) {
 		ERROR_LOG(COMMON, "%s", e.what());
-		gui_display_notification(e.what(), 5000);
+		os_notify(e.what(), 5000);
 		environ_cb(RETRO_ENVIRONMENT_SHUTDOWN, NULL);
 	}
 
@@ -1214,7 +1214,7 @@ static bool loadGame()
 		emu.loadGame(game_data.c_str());
 	} catch (const FlycastException& e) {
 		ERROR_LOG(BOOT, "%s", e.what());
-		gui_display_notification(e.what(), 5000);
+		os_notify(e.what(), 5000);
         retro_unload_game();
 		return false;
 	}
@@ -2031,7 +2031,7 @@ bool retro_load_game(const struct retro_game_info *game)
 	if (environ_cb(RETRO_ENVIRONMENT_GET_JIT_CAPABLE, &can_jit) && !can_jit) {
 		// jit is required both for performance and for audio. trying to run
 		// without the jit will cause a crash.
-		gui_display_notification("Cannot run without JIT", 5000);
+		os_notify("Cannot run without JIT", 5000);
 		return false;
 	}
 #endif
@@ -3702,10 +3702,10 @@ static bool read_m3u(const char *file)
 	return disk_index != 0;
 }
 
-void gui_display_notification(const char *msg, int duration, const char *details)
+void os_notify(const char *msg, int durationMs, const char *details)
 {
 	retro_message retromsg;
 	retromsg.msg = msg;
-	retromsg.frames = duration / 17;
+	retromsg.frames = durationMs / 17;
 	environ_cb(RETRO_ENVIRONMENT_SET_MESSAGE, &retromsg);
 }

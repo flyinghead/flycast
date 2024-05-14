@@ -30,7 +30,7 @@
 #include "serialize.h"
 #include "network/output.h"
 #include "hw/sh4/modules/modules.h"
-#include "ui/gui.h"
+#include "oslib/oslib.h"
 #include "printer.h"
 #include "hw/flashrom/x76f100.h"
 
@@ -512,7 +512,7 @@ struct DriveSimPipe : public SerialPort::Pipe
 				{
 					char message[16];
 					sprintf(message, "Speed: %3d", speed);
-					gui_display_notification(message, 1000);
+					os_notify(message, 1000);
 				}
 			}
 			buffer.clear();

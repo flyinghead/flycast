@@ -3033,16 +3033,16 @@ static void gui_display_settings()
     ImGui::End();
 }
 
-void gui_display_notification(const char *msg, int duration, const char *details)
+void os_notify(const char *msg, int durationMs, const char *details)
 {
 	if (gui_state != GuiState::Closed)
 	{
 		std::lock_guard<std::mutex> _{osd_message_mutex};
 		osd_message = msg;
-		osd_message_end = getTimeMs() + duration;
+		osd_message_end = getTimeMs() + durationMs;
 	}
 	else {
-		toast.show(msg, details != nullptr ? details : "", duration);
+		toast.show(msg, details != nullptr ? details : "", durationMs);
 	}
 }
 
@@ -3630,7 +3630,7 @@ void fatal_error(const char* text, ...)
     va_end(args);
     ERROR_LOG(COMMON, "%s", temp);
 
-    gui_display_notification("Fatal Error", 20000, temp);
+    os_notify("Fatal Error", 20000, temp);
 }
 
 extern bool subfolders_read;
@@ -3727,15 +3727,15 @@ void gui_takeScreenshot()
 		std::vector<u8> data;
 		getScreenshot(data);
 		if (data.empty()) {
-			gui_display_notification("No screenshot available", 2000);
+			os_notify("No screenshot available", 2000);
 		}
 		else
 		{
 			try {
 				hostfs::saveScreenshot(name, data);
-				gui_display_notification("Screenshot saved", 2000, name.c_str());
+				os_notify("Screenshot saved", 2000, name.c_str());
 			} catch (const FlycastException& e) {
-				gui_display_notification("Error saving screenshot", 5000, e.what());
+				os_notify("Error saving screenshot", 5000, e.what());
 			}
 		}
 	});

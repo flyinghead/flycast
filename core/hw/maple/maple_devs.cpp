@@ -7,7 +7,6 @@
 #include "oslib/oslib.h"
 #include "hw/aica/sgc_if.h"
 #include "cfg/option.h"
-#include "ui/gui.h"
 #include <zlib.h>
 #include <cerrno>
 #include <ctime>
@@ -1746,7 +1745,7 @@ struct RFIDReaderWriter : maple_base
 			cardLocked = false;
 			cardInserted = false;
 			NOTICE_LOG(MAPLE, "RFID card %d unlocked", player_num);
-			gui_display_notification("Card ejected", 2000);
+			os_notify("Card ejected", 2000);
 			return (MapleDeviceRV)0xfe;
 
 		case 0xB1:	// write to card

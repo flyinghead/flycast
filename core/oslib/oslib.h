@@ -15,6 +15,7 @@ void os_InstallFaultHandler();
 void os_UninstallFaultHandler();
 void os_RunInstance(int argc, const char *argv[]);
 void os_SetThreadName(const char *name);
+void os_notify(const char *msg, int durationMs = 2000, const char *details = nullptr);
 
 // raii thread name setter
 class ThreadName

@@ -20,7 +20,7 @@
 #include "stdclass.h"
 #include "printer.h"
 #include "serialize.h"
-#include "ui/gui.h"
+#include "oslib/oslib.h"
 #include <cassert>
 #include <memory>
 #include <vector>
@@ -827,10 +827,11 @@ private:
 			state = Default;
 			if (bitmapWriter && bitmapWriter->isDirty())
 			{
+				// TODO save to ~/Pictures instead
 				std::string s = get_writable_data_path(settings.content.gameId + "-results.png");
 				bitmapWriter->save(s);
 				bitmapWriter.reset();
-				gui_display_notification("Print out saved", 5000, s.c_str());
+				os_notify("Print out saved", 5000, s.c_str());
 				NOTICE_LOG(NAOMI, "%s", s.c_str());
 			}
 			break;
@@ -1197,7 +1198,7 @@ std::string get_writable_data_path(const std::string& s)
 	return "./" + s;
 }
 
-void gui_display_notification(char const*, int, char const*) {
+void os_notify(char const*, int, char const*) {
 }
 
 int main(int argc, char *argv[])
