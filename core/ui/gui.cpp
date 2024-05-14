@@ -591,11 +591,11 @@ static void appendVectorData(void *context, void *data, int size)
 	v.insert(v.end(), bytes, bytes + size);
 }
 
-static void getScreenshot(std::vector<u8>& data)
+static void getScreenshot(std::vector<u8>& data, int width = 0)
 {
 	data.clear();
 	std::vector<u8> rawData;
-	int width, height;
+	int height = 0;
 	if (renderer == nullptr || !renderer->GetLastFrame(rawData, width, height))
 		return;
 	stbi_flip_vertically_on_write(0);
@@ -621,8 +621,9 @@ static std::string timeToString(time_t time)
 
 static void savestate()
 {
+	// TODO save state async: png compression, savestate file compression/write
 	std::vector<u8> pngData;
-	getScreenshot(pngData);
+	getScreenshot(pngData, 640);
 	dc_savestate(config::SavestateSlot, pngData.empty() ? nullptr : &pngData[0], pngData.size());
 	ImguiStateTexture savestatePic;
 	savestatePic.invalidate();

@@ -246,6 +246,15 @@ public:
 
 	bool exists();
 	void invalidate();
+
+private:
+	struct LoadedPic
+	{
+		u8 *data;
+		int width;
+		int height;
+	};
+	static std::future<LoadedPic> asyncLoad;
 };
 
 class ImguiVmuTexture : public ImguiTexture

@@ -65,6 +65,8 @@ struct Renderer
 	virtual bool RenderLastFrame() { return false; }
 	// Get the last rendered frame pixel data in RGB format
 	// The returned image is rotated and scaled (upward orientation and square pixels)
+	// If both width and height are zero, the internal render resolution will be used.
+	// Otherwise either width or height will be used as the maximum width or height respectively.
 	virtual bool GetLastFrame(std::vector<u8>& data, int& width, int& height) { return false; }
 
 	virtual bool Present() { return true; }

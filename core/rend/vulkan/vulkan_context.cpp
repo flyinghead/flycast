@@ -1238,16 +1238,25 @@ bool VulkanContext::GetLastFrame(std::vector<u8>& data, int& width, int& height)
 	if (!lastFrameView)
 		return false;
 
-	width = lastFrameExtent.width;
-	height = lastFrameExtent.height;
-	if (config::Rotate90)
-		std::swap(width, height);
-	// We need square pixels for PNG
-	int w = lastFrameAR * height;
-	if (width > w)
+	if (width != 0) {
 		height = width / lastFrameAR;
+	}
+	else if (height != 0) {
+		width = lastFrameAR * height;
+	}
 	else
-		width = w;
+	{
+		width = lastFrameExtent.width;
+		height = lastFrameExtent.height;
+		if (config::Rotate90)
+			std::swap(width, height);
+		// We need square pixels for PNG
+		int w = lastFrameAR * height;
+		if (width > w)
+			height = width / lastFrameAR;
+		else
+			width = w;
+	}
 	// color attachment
 	FramebufferAttachment attachment(physicalDevice, *device);
 	attachment.Init(width, height, vk::Format::eR8G8B8A8Unorm, vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eTransferSrc, "screenshot");

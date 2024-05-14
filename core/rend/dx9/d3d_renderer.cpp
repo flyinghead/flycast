@@ -1427,16 +1427,25 @@ bool D3DRenderer::GetLastFrame(std::vector<u8>& data, int& width, int& height)
 	if (!frameRenderedOnce || !theDXContext.isReady())
 		return false;
 
-	width = this->width;
-	height = this->height;
-	if (config::Rotate90)
-		std::swap(width, height);
-	// We need square pixels for PNG
-	int w = aspectRatio * height;
-	if (width > w)
+	if (width != 0) {
 		height = width / aspectRatio;
+	}
+	else if (height != 0) {
+		width = aspectRatio * height;
+	}
 	else
-		width = w;
+	{
+		width = this->width;
+		height = this->height;
+		if (config::Rotate90)
+			std::swap(width, height);
+		// We need square pixels for PNG
+		int w = aspectRatio * height;
+		if (width > w)
+			height = width / aspectRatio;
+		else
+			width = w;
+	}
 
 	backbuffer.reset();
 	device->GetRenderTarget(0, &backbuffer.get());

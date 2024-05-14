@@ -795,6 +795,8 @@ ImTextureID ImguiFileTexture::getId()
 	return id;
 }
 
+std::future<ImguiStateTexture::LoadedPic> ImguiStateTexture::asyncLoad;
+
 bool ImguiStateTexture::exists()
 {
 	std::string path = hostfs::getSavestatePath(config::SavestateSlot, false);
@@ -810,28 +812,39 @@ ImTextureID ImguiStateTexture::getId()
 {
 	std::string path = hostfs::getSavestatePath(config::SavestateSlot, false);
 	ImTextureID texid = imguiDriver->getTexture(path);
-	if (texid == ImTextureID())
+	if (texid != ImTextureID())
+		return texid;
+	if (asyncLoad.valid())
 	{
+		if (asyncLoad.wait_for(std::chrono::seconds::zero()) == std::future_status::timeout)
+			return {};
+		LoadedPic loadedPic = asyncLoad.get();
+		if (loadedPic.data != nullptr)
+		{
+			try {
+				texid = imguiDriver->updateTextureAndAspectRatio(path, loadedPic.data, loadedPic.width, loadedPic.height, nearestSampling);
+			} catch (...) {
+				// vulkan can throw during resizing
+			}
+			free(loadedPic.data);
+		}
+		return texid;
+	}
+	asyncLoad = std::async(std::launch::async, []() {
+		LoadedPic loadedPic{};
 		// load savestate info
 		std::vector<u8> pngData;
 		dc_getStateScreenshot(config::SavestateSlot, pngData);
 		if (pngData.empty())
-			return {};
+			return loadedPic;
 
-		int width, height, channels;
+		int channels;
 		stbi_set_flip_vertically_on_load(0);
-		u8 *imgData = stbi_load_from_memory(&pngData[0], pngData.size(), &width, &height, &channels, STBI_rgb_alpha);
-		if (imgData != nullptr)
-		{
-			try {
-				texid = imguiDriver->updateTextureAndAspectRatio(path, imgData, width, height, nearestSampling);
-			} catch (...) {
-				// vulkan can throw during resizing
-			}
-			free(imgData);
-		}
-	}
-	return texid;
+		loadedPic.data = stbi_load_from_memory(&pngData[0], pngData.size(), &loadedPic.width, &loadedPic.height, &channels, STBI_rgb_alpha);
+
+		return loadedPic;
+	});
+	return {};
 }
 
 void ImguiStateTexture::invalidate()

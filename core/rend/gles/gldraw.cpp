@@ -822,16 +822,25 @@ bool OpenGLRenderer::GetLastFrame(std::vector<u8>& data, int& width, int& height
 	GlFramebuffer *framebuffer = gl.ofbo2.ready ? gl.ofbo2.framebuffer.get() : gl.ofbo.framebuffer.get();
 	if (framebuffer == nullptr)
 		return false;
-	width = framebuffer->getWidth();
-	height = framebuffer->getHeight();
-	if (config::Rotate90)
-		std::swap(width, height);
-	// We need square pixels for PNG
-	int w = gl.ofbo.aspectRatio * height;
-	if (width > w)
+	if (width != 0) {
 		height = width / gl.ofbo.aspectRatio;
+	}
+	else if (height != 0) {
+		width = gl.ofbo.aspectRatio * height;
+	}
 	else
-		width = w;
+	{
+		width = framebuffer->getWidth();
+		height = framebuffer->getHeight();
+		if (config::Rotate90)
+			std::swap(width, height);
+		// We need square pixels for PNG
+		int w = gl.ofbo.aspectRatio * height;
+		if (width > w)
+			height = width / gl.ofbo.aspectRatio;
+		else
+			width = w;
+	}
 
 	GlFramebuffer dstFramebuffer(width, height, false, false);
 
