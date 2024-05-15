@@ -745,38 +745,34 @@ static void check_dns_entries()
 
 	if (public_ip.addr == 0)
 	{
-		if (!dns_query_start)
+		u32 ip;
+		pico_string_to_ipv4(RESOLVER1_OPENDNS_COM, &ip);
+		pico_ip4 tmpdns { ip };
+		if (dns_query_start == 0)
 		{
 			dns_query_start = PICO_TIME_MS();
-			struct pico_ip4 tmpdns;
-			pico_string_to_ipv4(RESOLVER1_OPENDNS_COM, &tmpdns.addr);
 			get_host_by_name("myip.opendns.com", tmpdns);
+		}
+		else if (get_dns_answer(&public_ip, tmpdns) == 0)
+		{
+			dns_query_attempts = 0;
+			dns_query_start = 0;
+			char myip[16];
+			pico_ipv4_to_string(myip, public_ip.addr);
+			INFO_LOG(MODEM, "My IP is %s", myip);
 		}
 		else
 		{
-			struct pico_ip4 tmpdns;
-			pico_string_to_ipv4(RESOLVER1_OPENDNS_COM, &tmpdns.addr);
-			if (get_dns_answer(&public_ip, tmpdns) == 0)
+			if (PICO_TIME_MS() - dns_query_start > 1000)
 			{
-				dns_query_attempts = 0;
-				dns_query_start = 0;
-				char myip[16];
-				pico_ipv4_to_string(myip, public_ip.addr);
-				INFO_LOG(MODEM, "My IP is %s", myip);
-			}
-			else
-			{
-				if (PICO_TIME_MS() - dns_query_start > 1000)
+				if (++dns_query_attempts >= 5)
 				{
-					if (++dns_query_attempts >= 5)
-					{
-						public_ip.addr = 0xffffffff;	// Bogus but not null
-						dns_query_attempts = 0;
-					}
-					else
-						// Retry
-						dns_query_start = 0;
+					public_ip.addr = 0xffffffff;	// Bogus but not null
+					dns_query_attempts = 0;
 				}
+				else
+					// Retry
+					dns_query_start = 0;
 			}
 		}
 	}
