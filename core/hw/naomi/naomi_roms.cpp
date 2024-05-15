@@ -88,51 +88,51 @@ const BIOS_t BIOS[] =
 			//ROM_SYSTEM_BIOS( 1, "bios1",   "epr-21576g (Japan)" )
 			{ 0, "epr-21576g.ic27", 0x000000, 0x200000, 0xd2a1c6bf },
 			//ROM_SYSTEM_BIOS( 2, "bios2",   "epr-21576e (Japan)" )
-			//{ 0, "epr-21576e.ic27", 0x000000, 0x200000 },
+			//{ 0, "epr-21576e.ic27", 0x000000, 0x200000, 0x08c0add7 },
 			//ROM_SYSTEM_BIOS( 3, "bios3",   "epr-21576d (Japan)" )
-			//{ 0, "epr-21576d.ic27", 0x000000, 0x200000 },
+			//{ 0, "epr-21576d.ic27", 0x000000, 0x200000, 0x3b2afa7b },
 			//ROM_SYSTEM_BIOS( 4, "bios4",   "epr-21576c (Japan)" )
-			//{ 0, "epr-21576c.ic27", 0x000000, 0x200000 }, // BAD DUMP
+			//{ 0, "epr-21576c.ic27", 0x000000, 0x200000, 0x4599ad13 }, // BAD DUMP
 			//ROM_SYSTEM_BIOS( 5, "bios5",   "epr-21576b (Japan)" )
-			//{ 0, "epr-21576b.ic27", 0x000000, 0x200000 },
+			//{ 0, "epr-21576b.ic27", 0x000000, 0x200000, 0x755a6e07 },
 			//ROM_SYSTEM_BIOS( 6, "bios6",   "epr-21576a (Japan)" )
-			//{ 0, "epr-21576a.ic27", 0x000000, 0x200000 },
+			//{ 0, "epr-21576a.ic27", 0x000000, 0x200000, 0xcedfe439 },
 			//ROM_SYSTEM_BIOS( 7, "bios7",   "epr-21576 (Japan)" )
-			//{ 0, "epr-21576.ic27",  0x000000, 0x200000 },
+			//{ 0, "epr-21576.ic27",  0x000000, 0x200000, 0x9dad3495 },
 			//ROM_SYSTEM_BIOS( 8, "bios8",   "epr-21578h (Export)" )
 			{ 2, "epr-21578h.ic27", 0x000000, 0x200000, 0x7b452946 },
 			//ROM_SYSTEM_BIOS( 9, "bios9",   "epr-21578g (Export)" )
 			{ 2, "epr-21578g.ic27", 0x000000, 0x200000, 0x55413214 },
 			//ROM_SYSTEM_BIOS( 10, "bios10", "epr-21578f (Export)" )
-			//{ 2, "epr-21578f.ic27", 0x000000, 0x200000 },
+			//{ 2, "epr-21578f.ic27", 0x000000, 0x200000, 0x628a27fd },
 			//ROM_SYSTEM_BIOS( 11, "bios11", "epr-21578e (Export)" )
-			//{ 2, "epr-21578e.ic27", 0x000000, 0x200000 },
+			//{ 2, "epr-21578e.ic27", 0x000000, 0x200000, 0x087f09a3 },
 			//ROM_SYSTEM_BIOS( 12, "bios12", "epr-21578d (Export)" )
-			//{ 2, "epr-21578d.ic27", 0x000000, 0x200000 },
+			//{ 2, "epr-21578d.ic27", 0x000000, 0x200000, 0xdfd5f42a },
 			//ROM_SYSTEM_BIOS( 13, "bios13", "epr-21578a (Export)" )
-			//{ 2, "epr-21578a.ic27", 0x000000, 0x200000 },
+			//{ 2, "epr-21578a.ic27", 0x000000, 0x200000, 0x6c9aad83 },
 			//ROM_SYSTEM_BIOS( 14, "bios14", "epr-21577h (USA)" )
 			{ 1, "epr-21577h.ic27", 0x000000, 0x200000, 0xfdf17452 },
 			//ROM_SYSTEM_BIOS( 15, "bios15", "epr-21577g (USA)" )
 			{ 1, "epr-21577g.ic27", 0x000000, 0x200000, 0x25f64af7 },
 			//ROM_SYSTEM_BIOS( 16, "bios16", "epr-21577e (USA)" )
-			//{ 1, "epr-21577e.ic27", 0x000000, 0x200000 },
+			//{ 1, "epr-21577e.ic27", 0x000000, 0x200000, 0xcf36e97b },
 			//ROM_SYSTEM_BIOS( 17, "bios17", "epr-21577d (USA)" )
-			//{ 1, "epr-21577d.ic27", 0x000000, 0x200000 },
+			//{ 1, "epr-21577d.ic27", 0x000000, 0x200000, 0x60ddcbbe },
 			//ROM_SYSTEM_BIOS( 18, "bios18", "epr-21577a (USA)" )
-			//{ 1, "epr-21577a.ic27", 0x000000, 0x200000 },
+			//{ 1, "epr-21577a.ic27", 0x000000, 0x200000, 0x969dc491 },
 			//ROM_SYSTEM_BIOS( 19, "bios19", "epr-21579d (Korea)" )
 			{ 3, "epr-21579d.ic27", 0x000000, 0x200000, 0x33513691 },
 			//ROM_SYSTEM_BIOS( 20, "bios20", "epr-21579 (Korea)" )
-			//{ 3, "epr-21579.ic27",  0x000000, 0x200000 },
+			//{ 3, "epr-21579.ic27",  0x000000, 0x200000, 0x71f9c918 },
 			//ROM_SYSTEM_BIOS( 21, "bios21", "Set4 Dev BIOS" )
-			//{ 3, "boot_rom_64b8.ic606", 0x000000, 0x080000 },
+			//{ 3, "boot_rom_64b8.ic606", 0x000000, 0x080000, 0x7a50fab9 },
 			//ROM_SYSTEM_BIOS( 22, "bios22", "Dev BIOS v1.10" )
-			//{ 3, "develop110.ic27", 0x000000, 0x200000 },
+			//{ 3, "develop110.ic27", 0x000000, 0x200000, 0xde7cfdb0 },
 			//ROM_SYSTEM_BIOS( 23, "bios23", "Dev BIOS (Nov 1998)" )
-			//{ 3, "develop.ic27", 0x000000, 0x200000 },
+			//{ 3, "develop.ic27", 0x000000, 0x200000, 0x309a196a },
 			//ROM_SYSTEM_BIOS( 24, "bios24", "Development ROM Board" )
-			//{ 3, "zukinver0930.ic25", 0x000000, 0x200000 },
+			//{ 3, "zukinver0930.ic25", 0x000000, 0x200000, 0x58e17c23 },
 			//ROM_SYSTEM_BIOS( 25, "bios25", "epr-21576h (multi-region hack)" )
 			// The default dipswitch configuration selects Korea for the multiregion hacked BIOS
 			// See hw/maple/maple_jvs.cpp
@@ -175,6 +175,17 @@ const BIOS_t BIOS[] =
 			{ 1, "mb_eeprom_us.ic54s", 0x000, 0x800, 0x4186d7ab, EepromBE16 },
 			{ 2, "mb_eeprom_exp.ic54s", 0x000, 0x800, 0x947ddfad, EepromBE16 },
 		},
+	},
+	{
+		"naomi-jp-d",	// for marstv
+		{
+			//ROM_SYSTEM_BIOS( 3, "bios3",   "epr-21576d (Japan)" )
+			{ 0, "epr-21576d.ic27", 0x000000, 0x200000, 0x3b2afa7b },
+			{ 1, "epr-21576d.ic27", 0x000000, 0x200000, 0x3b2afa7b },
+			{ 2, "epr-21576d.ic27", 0x000000, 0x200000, 0x3b2afa7b },
+			{ 3, "epr-21576d.ic27", 0x000000, 0x200000, 0x3b2afa7b },
+		},
+		"naomi",
 	},
 	{
 		nullptr
@@ -2375,11 +2386,11 @@ const Game Games[] =
     // Mars TV (JPN)
     {
         "marstv",
-        NULL,
+		nullptr,
         "Mars TV",
         0x08000000,
         0x280b8ef5,
-        NULL,
+		"naomi-jp-d",
         M2,
         ROT0,
         {
@@ -2400,7 +2411,6 @@ const Game Games[] =
             { "mpr-22990.ic13s", 0x6800000, 0x800000 },
             { "mpr-22991.ic14s", 0x7000000, 0x800000 },
             { "mpr-22992.ic15s", 0x7800000, 0x800000 },
-            { NULL, 0, 0 },
         }
     },
     // Mazan: Flash of the Blade (MAZ2 Ver. A)

@@ -62,6 +62,7 @@ struct BIOS_t
 		u32 crc;
 		BlobType blob_type;
 	} blobs[MAX_GAME_FILES];
+	const char* filename;	// if different from name
 };
 extern const BIOS_t BIOS[];
 

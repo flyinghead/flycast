@@ -68,7 +68,7 @@ static bool loadBios(const char *filename, Archive *child_archive, Archive *pare
 
 	const BIOS_t *bios = &BIOS[biosid];
 
-	std::string arch_name(filename);
+	std::string arch_name(bios->filename != nullptr ? bios->filename : filename);
 	std::string path = hostfs::findNaomiBios(arch_name + ".zip");
 	if (path.empty())
 		path = hostfs::findNaomiBios(arch_name + ".7z");
@@ -123,6 +123,7 @@ static bool loadBios(const char *filename, Archive *child_archive, Archive *pare
 			break;
 		case EepromBE16:
 			{
+				// FIXME memory leak
 				naomi_default_eeprom = (u8 *)malloc(bios->blobs[romid].length);
 				if (naomi_default_eeprom == nullptr)
 					throw NaomiCartException("Memory allocation failed");
