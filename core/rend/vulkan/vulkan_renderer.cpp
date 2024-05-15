@@ -115,6 +115,7 @@ BaseTextureCacheData *BaseVulkanRenderer::GetTexture(TSP tsp, TCW tcw)
 
 void BaseVulkanRenderer::Process(TA_context* ctx)
 {
+	framebufferRendered = false;
 	if (KillTex)
 		textureCache.Clear();
 
@@ -127,6 +128,7 @@ void BaseVulkanRenderer::Process(TA_context* ctx)
 
 	ta_parse(ctx, true);
 
+	// TODO can't update fog or palette twice in multi render
 	CheckFogTexture();
 	CheckPaletteTexture();
 	texCommandBuffer.end();
@@ -293,7 +295,6 @@ bool BaseVulkanRenderer::presentFramebuffer()
 		return false;
 	GetContext()->PresentFrame(fbTexture->GetImage(), fbTexture->GetImageView(), fbTexture->getSize(),
 			getDCFramebufferAspectRatio());
-	framebufferRendered = false;
 	return true;
 }
 
@@ -319,10 +320,18 @@ public:
 	{
 		DEBUG_LOG(RENDERER, "VulkanRenderer::Term");
 		GetContext()->WaitIdle();
+		texCommandPool.Term(); // make sure all in-flight buffers are returned
 		screenDrawer.Term();
 		textureDrawer.Term();
 		samplerManager.term();
 		BaseVulkanRenderer::Term();
+	}
+
+	void Process(TA_context* ctx) override
+	{
+		if (ctx->rend.isRTT)
+			screenDrawer.EndRenderPass();
+		BaseVulkanRenderer::Process(ctx);
 	}
 
 	bool Render() override
@@ -345,7 +354,9 @@ public:
 			}
 
 			drawer->Draw(fogTexture.get(), paletteTexture.get());
-			drawer->EndRenderPass();
+			if (config::EmulateFramebuffer || pvrrc.isRTT)
+				// delay ending the render pass in case of multi render
+				drawer->EndRenderPass();
 
 			return !pvrrc.isRTT;
 		} catch (const vk::SystemError& e) {

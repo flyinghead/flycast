@@ -229,7 +229,7 @@ void Drawer::DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sor
 				break;
 			}
 		}
-		descriptorSets.bindPerPolyDescriptorSets(cmdBuffer, poly, index, *GetMainBuffer(0)->buffer, offset, offsets.lightsOffset,
+		descriptorSets.bindPerPolyDescriptorSets(cmdBuffer, poly, index, curMainBuffer, offset, offsets.lightsOffset,
 				listType == ListType_Punch_Through);
 	}
 	cmdBuffer.drawIndexed(count, 1, first, 0, 0);
@@ -278,8 +278,7 @@ void Drawer::DrawModVols(const vk::CommandBuffer& cmdBuffer, int first, int coun
 	if (count == 0 || pvrrc.modtrig.empty() || !config::ModifierVolumes)
 		return;
 
-	vk::Buffer buffer = GetMainBuffer(0)->buffer.get();
-	cmdBuffer.bindVertexBuffers(0, buffer, offsets.modVolOffset);
+	cmdBuffer.bindVertexBuffers(0, curMainBuffer, offsets.modVolOffset);
 	SetScissor(cmdBuffer, baseScissor);
 
 	ModifierVolumeParam* params = &pvrrc.global_param_mvo[first];
@@ -305,7 +304,7 @@ void Drawer::DrawModVols(const vk::CommandBuffer& cmdBuffer, int first, int coun
 			pipeline = pipelineManager->GetModifierVolumePipeline(ModVolMode::Xor, param.isp.CullMode, param.isNaomi2());	// XOR'ing (closed volume)
 
 		cmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
-		descriptorSets.bindPerPolyDescriptorSets(cmdBuffer, param, first + cmv, *GetMainBuffer(0)->buffer, offsets.naomi2ModVolOffset);
+		descriptorSets.bindPerPolyDescriptorSets(cmdBuffer, param, first + cmv, curMainBuffer, offsets.naomi2ModVolOffset);
 
 		cmdBuffer.draw(param.count * 3, 1, param.first * 3, 0);
 
@@ -318,7 +317,7 @@ void Drawer::DrawModVols(const vk::CommandBuffer& cmdBuffer, int first, int coun
 			mod_base = -1;
 		}
 	}
-	cmdBuffer.bindVertexBuffers(0, buffer, {0});
+	cmdBuffer.bindVertexBuffers(0, curMainBuffer, {0});
 
 	std::array<float, 5> pushConstants = { 1 - FPU_SHAD_SCALE.scale_factor / 256.f, 0, 0, 0, 0 };
 	cmdBuffer.pushConstants<float>(pipelineManager->GetPipelineLayout(), vk::ShaderStageFlagBits::eFragment, 0, pushConstants);
@@ -351,6 +350,7 @@ void Drawer::UploadMainBuffer(const VertexShaderUniforms& vertexUniforms, const 
 
 	BufferData *buffer = GetMainBuffer(packer.size());
 	packer.upload(*buffer);
+	curMainBuffer = buffer->buffer.get();
 }
 
 bool Drawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
@@ -393,14 +393,13 @@ bool Drawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 	UploadMainBuffer(vtxUniforms, fragUniforms);
 
 	// Update per-frame descriptor set and bind it
-	descriptorSets.updateUniforms(GetMainBuffer(0)->buffer.get(), (u32)offsets.vertexUniformOffset, (u32)offsets.fragmentUniformOffset,
+	descriptorSets.updateUniforms(curMainBuffer, (u32)offsets.vertexUniformOffset, (u32)offsets.fragmentUniformOffset,
 			fogTexture->GetImageView(), paletteTexture->GetImageView());
 	descriptorSets.bindPerFrameDescriptorSets(cmdBuffer);
 
 	// Bind vertex and index buffers
-	const vk::Buffer buffer = GetMainBuffer(0)->buffer.get();
-	cmdBuffer.bindVertexBuffers(0, buffer, {0});
-	cmdBuffer.bindIndexBuffer(buffer, offsets.indexOffset, vk::IndexType::eUint32);
+	cmdBuffer.bindVertexBuffers(0, curMainBuffer, {0});
+	cmdBuffer.bindIndexBuffer(curMainBuffer, offsets.indexOffset, vk::IndexType::eUint32);
 
 	// Make sure to push constants even if not used
 	std::array<float, 5> pushConstants = { 0, 0, 0, 0, 0 };
@@ -430,6 +429,7 @@ bool Drawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 			DrawList(cmdBuffer, ListType_Translucent, false, pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count);
 		previous_pass = current_pass;
     }
+    curMainBuffer = nullptr;
 
 	return !pvrrc.isRTT;
 }
@@ -464,7 +464,7 @@ vk::CommandBuffer TextureDrawer::BeginRenderPass()
 	vk::Device device = context->GetDevice();
 
 	NewImage();
-	vk::CommandBuffer commandBuffer = commandPool->Allocate();
+	vk::CommandBuffer commandBuffer = commandPool->Allocate(true);
 	commandBuffer.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
 
 	if (!depthAttachment || widthPow2 > depthAttachment->getExtent().width || heightPow2 > depthAttachment->getExtent().height)
@@ -614,7 +614,6 @@ void ScreenDrawer::Init(SamplerManager *samplerManager, ShaderManager *shaderMan
 		depthAttachment.reset();
 		transitionNeeded.clear();
 		clearNeeded.clear();
-		frameRendered = false;
 	}
 	this->viewport = viewport;
 	if (!depthAttachment)
@@ -707,36 +706,43 @@ void ScreenDrawer::Init(SamplerManager *samplerManager, ShaderManager *shaderMan
 
 vk::CommandBuffer ScreenDrawer::BeginRenderPass()
 {
-	NewImage();
-	vk::CommandBuffer commandBuffer = commandPool->Allocate();
-	commandBuffer.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
-
-	if (transitionNeeded[GetCurrentImage()])
+	if (!renderPassStarted)
 	{
-		setImageLayout(commandBuffer, colorAttachments[GetCurrentImage()]->GetImage(), vk::Format::eR8G8B8A8Unorm,
-				1, vk::ImageLayout::eUndefined,
-				config::EmulateFramebuffer ? vk::ImageLayout::eTransferSrcOptimal : vk::ImageLayout::eShaderReadOnlyOptimal);
-		transitionNeeded[GetCurrentImage()] = false;
-	}
+		NewImage();
+		frameRendered = false;
+		vk::CommandBuffer commandBuffer = commandPool->Allocate(true);
+		commandBuffer.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
 
-	vk::RenderPass renderPass = clearNeeded[GetCurrentImage()] || pvrrc.clearFramebuffer ? *renderPassClear : *renderPassLoad;
-	clearNeeded[GetCurrentImage()] = false;
-	const std::array<vk::ClearValue, 2> clear_colors = { vk::ClearColorValue(std::array<float, 4> { 0.f, 0.f, 0.f, 1.f }), vk::ClearDepthStencilValue { 0.f, 0 } };
-	commandBuffer.beginRenderPass(vk::RenderPassBeginInfo(renderPass, *framebuffers[GetCurrentImage()],
-			vk::Rect2D( { 0, 0 }, viewport), clear_colors), vk::SubpassContents::eInline);
-	commandBuffer.setViewport(0, vk::Viewport(0.0f, 0.0f, (float)viewport.width, (float)viewport.height, 1.0f, 0.0f));
+		if (transitionNeeded[GetCurrentImage()])
+		{
+			setImageLayout(commandBuffer, colorAttachments[GetCurrentImage()]->GetImage(), vk::Format::eR8G8B8A8Unorm,
+					1, vk::ImageLayout::eUndefined,
+					config::EmulateFramebuffer ? vk::ImageLayout::eTransferSrcOptimal : vk::ImageLayout::eShaderReadOnlyOptimal);
+			transitionNeeded[GetCurrentImage()] = false;
+		}
+
+		vk::RenderPass renderPass = clearNeeded[GetCurrentImage()] || pvrrc.clearFramebuffer ? *renderPassClear : *renderPassLoad;
+		clearNeeded[GetCurrentImage()] = false;
+		const std::array<vk::ClearValue, 2> clear_colors = { vk::ClearColorValue(std::array<float, 4> { 0.f, 0.f, 0.f, 1.f }), vk::ClearDepthStencilValue { 0.f, 0 } };
+		commandBuffer.beginRenderPass(vk::RenderPassBeginInfo(renderPass, *framebuffers[GetCurrentImage()],
+				vk::Rect2D( { 0, 0 }, viewport), clear_colors), vk::SubpassContents::eInline);
+		currentCommandBuffer = commandBuffer;
+		renderPassStarted = true;
+	}
+	currentCommandBuffer.setViewport(0, vk::Viewport(0.0f, 0.0f, (float)viewport.width, (float)viewport.height, 1.0f, 0.0f));
 
 	matrices.CalcMatrices(&pvrrc, viewport.width, viewport.height);
 
 	SetBaseScissor(viewport);
-	commandBuffer.setScissor(0, baseScissor);
-	currentCommandBuffer = commandBuffer;
+	currentCommandBuffer.setScissor(0, baseScissor);
 
-	return commandBuffer;
+	return currentCommandBuffer;
 }
 
 void ScreenDrawer::EndRenderPass()
 {
+	if (!renderPassStarted)
+		return;
 	currentCommandBuffer.endRenderPass();
 	if (config::EmulateFramebuffer)
 	{

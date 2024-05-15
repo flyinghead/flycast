@@ -52,6 +52,48 @@ protected:
 		}
 	}
 
+	BufferData* GetMainBuffer(u32 size, vk::BufferUsageFlags extraFlags = {})
+	{
+		const vk::BufferUsageFlags usageFlags
+			{ vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eUniformBuffer | extraFlags };
+		BufferData *buffer;
+		if (!mainBuffers.empty())
+		{
+			buffer = mainBuffers.back().release();
+			mainBuffers.pop_back();
+			if (buffer->bufferSize < size)
+			{
+				// FIXME vf4evob still complains about buffer in use after 2 frames. Due to swap chain size of 3
+				commandPool->addToFlight(new Deleter(buffer));
+				u32 newSize = (u32)buffer->bufferSize;
+				while (newSize < size)
+					newSize *= 2;
+				INFO_LOG(RENDERER, "Increasing main buffer size %zd -> %d", buffer->bufferSize, newSize);
+				buffer = new BufferData(newSize, usageFlags);
+			}
+		}
+		else {
+			buffer = new BufferData(std::max(512 * 1024u, size), usageFlags);
+		}
+
+		class BufferHolder : public Deletable
+		{
+		public:
+			BufferHolder(BufferData *buffer, BaseDrawer *drawer) : buffer(buffer), drawer(drawer) {}
+
+			~BufferHolder() override {
+				drawer->mainBuffers.emplace_back(buffer);
+			}
+
+		private:
+			BufferData *buffer;
+			BaseDrawer *drawer;
+		};
+		commandPool->addToFlight(new BufferHolder(buffer, this));
+
+		return buffer;
+	}
+
 	template<typename T>
 	T MakeFragmentUniforms()
 	{
@@ -167,6 +209,7 @@ protected:
 	vk::Rect2D currentScissor;
 	TransformMatrix<COORD_VULKAN> matrices;
 	CommandPool *commandPool = nullptr;
+	std::vector<std::unique_ptr<BufferData>> mainBuffers;
 };
 
 class Drawer : public BaseDrawer
@@ -181,7 +224,9 @@ public:
 	}
 
 	bool Draw(const Texture *fogTexture, const Texture *paletteTexture);
-	virtual void EndRenderPass() { renderPass++; }
+	virtual void EndRenderPass() {
+		renderPassStarted = false;
+	}
 	vk::CommandBuffer GetCurrentCommandBuffer() const { return currentCommandBuffer; }
 
 protected:
@@ -196,7 +241,6 @@ protected:
 			perStripSorting = config::PerStripSorting;
 			pipelineManager->Reset();
 		}
-		renderPass = 0;
 	}
 
 	void Init(SamplerManager *samplerManager, PipelineManager *pipelineManager)
@@ -209,29 +253,9 @@ protected:
 
 	int GetCurrentImage() const { return imageIndex; }
 
-	BufferData* GetMainBuffer(u32 size)
-	{
-		u32 bufferIndex = imageIndex + renderPass * GetSwapChainSize();
-		while (mainBuffers.size() <= bufferIndex)
-		{
-			mainBuffers.push_back(std::make_unique<BufferData>(std::max(512 * 1024u, size),
-					vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eUniformBuffer));
-		}
-		if (mainBuffers[bufferIndex]->bufferSize < size)
-		{
-			u32 newSize = (u32)mainBuffers[bufferIndex]->bufferSize;
-			while (newSize < size)
-				newSize *= 2;
-			INFO_LOG(RENDERER, "Increasing main buffer size %d -> %d", (u32)mainBuffers[bufferIndex]->bufferSize, newSize);
-			commandPool->addToFlight(new Deleter(mainBuffers[bufferIndex].release()));
-			mainBuffers[bufferIndex] = std::make_unique<BufferData>(newSize,
-					vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eUniformBuffer);
-		}
-		return mainBuffers[bufferIndex].get();
-	}
-
 	vk::CommandBuffer currentCommandBuffer;
 	SamplerManager *samplerManager = nullptr;
+	bool renderPassStarted = false;
 
 private:
 	void SortTriangles();
@@ -242,7 +266,6 @@ private:
 	void UploadMainBuffer(const VertexShaderUniforms& vertexUniforms, const FragmentShaderUniforms& fragmentUniforms);
 
 	int imageIndex = 0;
-	int renderPass = 0;
 	struct {
 		vk::DeviceSize indexOffset = 0;
 		vk::DeviceSize modVolOffset = 0;
@@ -256,7 +279,7 @@ private:
 		vk::DeviceSize lightsOffset = 0;
 	} offsets;
 	DescriptorSets descriptorSets;
-	std::vector<std::unique_ptr<BufferData>> mainBuffers;
+	vk::Buffer curMainBuffer;
 	PipelineManager *pipelineManager = nullptr;
 	bool perStripSorting = false;
 	bool dithering = false;
@@ -282,6 +305,7 @@ public:
 	void EndRenderPass() override;
 	bool PresentFrame()
 	{
+		EndRenderPass();
 		if (!frameRendered)
 			return false;
 		frameRendered = false;

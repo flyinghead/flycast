@@ -373,7 +373,7 @@ void VulkanContext::beginFrame(vk::Extent2D extent)
 	}
 	commandPool.BeginFrame();
 	const std::array<vk::ClearValue, 2> clear_colors = { getBorderColor(), vk::ClearDepthStencilValue{ 0.f, 0 } };
-	cmdBuffer = commandPool.Allocate();
+	cmdBuffer = commandPool.Allocate(true);
 	cmdBuffer.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
 	overlay->Prepare(cmdBuffer, true, true);
 

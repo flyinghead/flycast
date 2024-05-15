@@ -41,8 +41,8 @@ public:
 	}
 	void updateUniforms(vk::Buffer buffer, u32 vertexUniformOffset, u32 fragmentUniformOffset, vk::ImageView fogImageView, vk::ImageView paletteImageView)
 	{
-		if (!perFrameDescSet)
-			perFrameDescSet = perFrameAlloc.alloc();
+		perFrameDescSet = perFrameAlloc.alloc();
+		perPolyDescSets.clear();
 
 		std::vector<vk::DescriptorBufferInfo> bufferInfos;
 		bufferInfos.emplace_back(buffer, vertexUniformOffset, sizeof(VertexShaderUniforms));

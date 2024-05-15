@@ -95,8 +95,8 @@ public:
 			u32 polyParamsOffset, u32 polyParamsSize, vk::ImageView stencilImageView, vk::ImageView depthImageView,
 			vk::ImageView paletteImageView, OITBuffers *oitBuffers)
 	{
-		if (!perFrameDescSet)
-			perFrameDescSet = perFrameAlloc.alloc();
+		perFrameDescSet = perFrameAlloc.alloc();
+		perPolyDescSets.clear();
 
 		std::vector<vk::DescriptorBufferInfo> bufferInfos;
 		bufferInfos.emplace_back(buffer, vertexUniformOffset, sizeof(VertexShaderUniforms));
@@ -144,8 +144,7 @@ public:
 
 	void updateColorInputDescSet(int index, vk::ImageView colorImageView)
 	{
-		if (!colorInputDescSets[index])
-			colorInputDescSets[index] = colorInputAlloc.alloc();
+		colorInputDescSets[index] = colorInputAlloc.alloc();
 
 		vk::DescriptorImageInfo colorImageInfo(vk::Sampler(), colorImageView, vk::ImageLayout::eShaderReadOnlyOptimal);
 		vk::WriteDescriptorSet writeDescriptorSet(colorInputDescSets[index], 0, 0, vk::DescriptorType::eInputAttachment, colorImageInfo);
