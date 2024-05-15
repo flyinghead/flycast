@@ -90,7 +90,7 @@ void CommandPool::EndFrame()
 		{
 			for (size_t i = 0; i < len; i++)
 				if (lastBuffers[i] && !lastBuffers[i + 1]) {
-					std::swap(lastBuffers[i], lastBuffers[i + 1]);
+					std::vector<bool>::swap(lastBuffers[i], lastBuffers[i + 1]);
 					std::swap(commandBuffers[i], commandBuffers[i + 1]);
 				}
 			len--;
