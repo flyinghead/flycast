@@ -38,9 +38,6 @@ public:
 	virtual void newFrame() = 0;
 	virtual void renderDrawData(ImDrawData* drawData, bool gui_open) = 0;
 
-	virtual void displayVmus() {}		// TODO OpenGL only. Get rid of it
-	virtual void displayCrosshairs() {}	// same
-
 	virtual void present() = 0;
 	virtual void setFrameRendered() {}
 

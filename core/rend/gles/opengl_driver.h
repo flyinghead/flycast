@@ -18,7 +18,6 @@
 */
 #pragma once
 #include "ui/imgui_driver.h"
-#include "emulator.h"
 #include <unordered_map>
 
 class OpenGLDriver final : public ImGuiDriver
@@ -27,19 +26,16 @@ public:
 	OpenGLDriver();
 	~OpenGLDriver() override;
 
-	void displayVmus() override;
-	void displayCrosshairs() override;
-
 	void newFrame() override;
 	void renderDrawData(ImDrawData* drawData, bool gui_open) override;
 	void present() override;
-	void reset() override;
 
 	void setFrameRendered() override {
 		frameRendered = true;
 	}
 
-	ImTextureID getTexture(const std::string& name) override {
+	ImTextureID getTexture(const std::string& name) override
+	{
 		auto it = textures.find(name);
 		if (it != textures.end())
 			return it->second;
@@ -51,29 +47,6 @@ public:
 	void deleteTexture(const std::string& name) override;
 
 private:
-	void emuEvent(Event event)
-	{
-		switch (event)
-		{
-		case Event::Resume:
-			gameStarted = true;
-			break;
-		case Event::Terminate:
-			gameStarted = false;
-			break;
-		default:
-			break;
-		}
-	}
-	static void emuEventCallback(Event event, void *p) {
-		((OpenGLDriver *)p)->emuEvent(event);
-	}
-	void updateVmuTextures();
-
-	ImTextureID crosshairTexId = ImTextureID();
-	ImTextureID vmu_lcd_tex_ids[8] {};
-	std::array<u64, 8> vmuLastChanged {};
-	bool gameStarted = false;
 	bool frameRendered = false;
 	std::unordered_map<std::string, ImTextureID> textures;
 };

@@ -3538,9 +3538,6 @@ void gui_draw_osd()
 				dl->AddText(largeFont, largeFont->FontSize, pos, col, &message.front(), &message.back() + 1, maxW);
 			}
 		}
-	imguiDriver->displayCrosshairs();	// OpenGL only
-	if (config::FloatVMUs)
-		imguiDriver->displayVmus();		// OpenGL only
 
 	if (ggpo::active())
 	{

@@ -516,9 +516,9 @@ void termGLCommon()
 	gl.ofbo2.framebuffer.reset();
 	gl.fbscaling.framebuffer.reset();
 	gl.videorouting.framebuffer.reset();
+	termVmuLightgun();
 #ifdef LIBRETRO
 	postProcessor.term();
-	termVmuLightgun();
 #endif
 }
 
@@ -1122,21 +1122,9 @@ static void updatePaletteTexture(GLenum texture_slot)
 
 void OpenGLRenderer::DrawOSD(bool clear_screen)
 {
-#ifdef LIBRETRO
-	void DrawVmuTexture(u8 vmu_screen_number, int width, int height);
-	void DrawGunCrosshair(u8 port, int width, int height);
+	drawVmusAndCrosshairs(width, height);
 
-	if (settings.platform.isConsole())
-	{
-		for (int vmu_screen_number = 0 ; vmu_screen_number < 4 ; vmu_screen_number++)
-			if (vmu_lcd_status[vmu_screen_number * 2])
-				DrawVmuTexture(vmu_screen_number, width, height);
-	}
-
-	for (int lightgun_port = 0 ; lightgun_port < 4 ; lightgun_port++)
-		DrawGunCrosshair(lightgun_port, width, height);
-
-#else
+#ifndef LIBRETRO
 	gui_display_osd();
 #ifdef __ANDROID__
 	if (gl.OSD_SHADER.osd_tex == 0)

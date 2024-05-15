@@ -571,7 +571,7 @@ protected:
 
 void initQuad();
 void termQuad();
-void drawQuad(GLuint texId, bool rotate = false, bool swapY = false, const float *coords = nullptr);
+void drawQuad(GLuint texId, bool rotate = false, bool swapY = false, const float *coords = nullptr, const float *color = nullptr);
 
 extern const char* ShaderCompatSource;
 extern const char *VertexCompatShader;
@@ -586,7 +586,9 @@ public:
 	}
 };
 
+void drawVmusAndCrosshairs(int width, int height);
+void termVmuLightgun();
+
 #ifdef LIBRETRO
 extern "C" struct retro_hw_render_callback hw_render;
-void termVmuLightgun();
 #endif

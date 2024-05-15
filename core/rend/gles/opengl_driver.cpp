@@ -19,11 +19,9 @@
 #include "opengl_driver.h"
 #include "imgui_impl_opengl3.h"
 #include "wsi/gl_context.h"
-#include "rend/osd.h"
-#include "ui/gui.h"
-#include "ui/gui_util.h"
 #include "glcache.h"
 #include "gles.h"
+#include "hw/pvr/Renderer_if.h"
 
 #ifndef GL_CLAMP_TO_BORDER
 #define GL_CLAMP_TO_BORDER 0x812D
@@ -32,140 +30,20 @@
 #define GL_TEXTURE_BORDER_COLOR 0x1004
 #endif
 
-static constexpr int vmu_coords[8][2] = {
-		{ 0 , 0 },
-		{ 0 , 0 },
-		{ 1 , 0 },
-		{ 1 , 0 },
-		{ 0 , 1 },
-		{ 0 , 1 },
-		{ 1 , 1 },
-		{ 1 , 1 },
-};
-constexpr int VMU_WIDTH = 96;
-constexpr int VMU_HEIGHT = 64;
-constexpr int VMU_PADDING = 8;
-
 OpenGLDriver::OpenGLDriver()
 {
 	ImGui_ImplOpenGL3_Init();
-	EventManager::listen(Event::Resume, emuEventCallback, this);
-	EventManager::listen(Event::Terminate, emuEventCallback, this);
 }
 
 OpenGLDriver::~OpenGLDriver()
 {
-	EventManager::unlisten(Event::Resume, emuEventCallback, this);
-	EventManager::unlisten(Event::Terminate, emuEventCallback, this);
-
 	std::vector<GLuint> texIds;
-	texIds.reserve(1 + textures.size());
-	if (crosshairTexId != ImTextureID())
-		texIds.push_back((GLuint)(uintptr_t)crosshairTexId);
+	texIds.reserve(textures.size());
 	for (const auto& it : textures)
 		texIds.push_back((GLuint)(uintptr_t)it.second);
 	if (!texIds.empty())
 		glcache.DeleteTextures(texIds.size(), &texIds[0]);
 	ImGui_ImplOpenGL3_Shutdown();
-}
-
-void OpenGLDriver::reset()
-{
-	ImGuiDriver::reset();
-	for (auto& tex : vmu_lcd_tex_ids)
-		tex = ImTextureID{};
-	vmuLastChanged.fill({});
-}
-
-void OpenGLDriver::updateVmuTextures()
-{
-	for (int i = 0; i < 8; i++)
-	{
-		if (!vmu_lcd_status[i])
-			continue;
-
-		if (this->vmuLastChanged[i] != ::vmuLastChanged[i] || vmu_lcd_tex_ids[i] == ImTextureID())
-		{
-			try {
-				vmu_lcd_tex_ids[i] = updateTexture(":vmugl:" + std::to_string(i), (const u8 *)vmu_lcd_data[i], 48, 32, true);
-			} catch (...) {
-				 continue;
-			}
-			if (vmu_lcd_tex_ids[i] != ImTextureID())
-				this->vmuLastChanged[i] = ::vmuLastChanged[i];
-		}
-	}
-}
-
-void OpenGLDriver::displayVmus()
-{
-	if (!gameStarted)
-		return;
-	updateVmuTextures();
-	const ScaledVec2 size(VMU_WIDTH, VMU_HEIGHT);
-	const float padding = uiScaled(VMU_PADDING);
-	ImDrawList *dl = ImGui::GetForegroundDrawList();
-	for (int i = 0; i < 8; i++)
-	{
-		if (!vmu_lcd_status[i])
-			continue;
-
-		int x = vmu_coords[i][0];
-		int y = vmu_coords[i][1];
-		ImVec2 pos;
-		if (x == 0)
-			pos.x = padding;
-		else
-			pos.x = ImGui::GetIO().DisplaySize.x - size.x - padding;
-		if (y == 0)
-		{
-			pos.y = padding;
-			if (i & 1)
-				pos.y += size.y + padding;
-		}
-		else
-		{
-			pos.y = ImGui::GetIO().DisplaySize.y - size.y - padding;
-			if (i & 1)
-				pos.y -= size.y + padding;
-		}
-		ImVec2 pos_b = pos + size;
-		dl->AddImage(vmu_lcd_tex_ids[i], pos, pos_b, ImVec2(0, 1), ImVec2(1, 0), 0xC0ffffff);
-	}
-}
-
-void OpenGLDriver::displayCrosshairs()
-{
-	if (!gameStarted)
-		return;
-	if (!crosshairsNeeded())
-		return;
-
-	if (crosshairTexId == ImTextureID())
-		crosshairTexId = updateTexture("__crosshair", (const u8 *)getCrosshairTextureData(), 16, 16, true);
-
-	ImGui::SetNextWindowBgAlpha(0);
-	ImGui::SetNextWindowPos(ImVec2(0, 0));
-	ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize);
-
-	ImGui::Begin("xhair-window", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoInputs
-			| ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoFocusOnAppearing);
-	for (u32 i = 0; i < config::CrosshairColor.size(); i++)
-	{
-		if (config::CrosshairColor[i] == 0)
-			continue;
-		if (settings.platform.isConsole() && config::MapleMainDevices[i] != MDT_LightGun)
-			continue;
-
-		ImVec2 pos;
-		std::tie(pos.x, pos.y) = getCrosshairPosition(i);
-		pos.x -= (config::CrosshairSize * settings.display.uiScale) / 2.f;
-		pos.y += (config::CrosshairSize * settings.display.uiScale) / 2.f;
-		ImVec2 pos_b(pos.x + config::CrosshairSize * settings.display.uiScale, pos.y - config::CrosshairSize * settings.display.uiScale);
-
-		ImGui::GetWindowDrawList()->AddImage(crosshairTexId, pos, pos_b, ImVec2(0, 1), ImVec2(1, 0), config::CrosshairColor[i]);
-	}
-	ImGui::End();
 }
 
 void OpenGLDriver::newFrame()
@@ -175,6 +53,17 @@ void OpenGLDriver::newFrame()
 
 void OpenGLDriver::renderDrawData(ImDrawData* drawData, bool gui_open)
 {
+	if (gui_open)
+	{
+#ifndef TARGET_IPHONE
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+#endif
+		glcache.Disable(GL_SCISSOR_TEST);
+		glcache.ClearColor(0, 0, 0, 0);
+		glClear(GL_COLOR_BUFFER_BIT);
+		if (renderer != nullptr)
+			renderer->RenderLastFrame();
+	}
 	ImGui_ImplOpenGL3_RenderDrawData(drawData);
 	if (gui_open)
 		frameRendered = true;
