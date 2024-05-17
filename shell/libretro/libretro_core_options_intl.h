@@ -44322,7 +44322,7 @@ struct retro_core_options_v2 options_hu = {
 /* RETRO_LANGUAGE_ID */
 
 #define CATEGORY_SYSTEM_LABEL_ID "Sistem"
-#define CATEGORY_SYSTEM_INFO_0_ID NULL
+#define CATEGORY_SYSTEM_INFO_0_ID "Menyetel daerah, bahasa, BIOS, dan pengaturan peranti keras dasar."
 #define CATEGORY_VIDEO_LABEL_ID NULL
 #define CATEGORY_VIDEO_INFO_0_ID NULL
 #define CATEGORY_PERFORMANCE_LABEL_ID "Kinerja"
@@ -44348,9 +44348,9 @@ struct retro_core_options_v2 options_hu = {
 #define OPTION_VAL_FRENCH_ID "Bahasa Perancis"
 #define OPTION_VAL_SPANISH_ID "Bahasa Spanyol"
 #define OPTION_VAL_ITALIAN_ID "Bahasa Itali"
-#define CORE_OPTION_NAME_HLE_BIOS_LABEL_ID NULL
+#define CORE_OPTION_NAME_HLE_BIOS_LABEL_ID "BIOS HLE (Perlu Mulai Ulang)"
 #define CORE_OPTION_NAME_HLE_BIOS_INFO_0_ID "Paksa penggunaan BIOS emulasi tingkat tinggi."
-#define CORE_OPTION_NAME_BOOT_TO_BIOS_LABEL_ID "Boot ke BIOS (Perlu Dimulai Ulang)"
+#define CORE_OPTION_NAME_BOOT_TO_BIOS_LABEL_ID "Nyala ke BIOS (Perlu Mulai Ulang)"
 #define CORE_OPTION_NAME_BOOT_TO_BIOS_INFO_0_ID "Boot langsung ke menu BIOS Dreamcast."
 #define CORE_OPTION_NAME_ENABLE_DSP_LABEL_ID "Aktifkan DSP"
 #define CORE_OPTION_NAME_ENABLE_DSP_INFO_0_ID "Aktifkan emulasi DSP audio Dreamcast (pengolah sinyal digital). Perbaiki akurasi suara yang dihasilakan, tetapi tingkatkan persyaratan kinerja."
@@ -44359,7 +44359,7 @@ struct retro_core_options_v2 options_hu = {
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_ID NULL
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_ID NULL
 #define CORE_OPTION_NAME_EMULATE_BBA_LABEL_ID NULL
-#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_ID NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_ID "Mengemulasi adapter pita lebar eternet dan bukan modem. (Perlu Mulai Ulang)"
 #define CORE_OPTION_NAME_UPNP_LABEL_ID NULL
 #define CORE_OPTION_NAME_UPNP_INFO_0_ID NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_ID NULL
@@ -44427,9 +44427,9 @@ struct retro_core_options_v2 options_hu = {
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_ID NULL
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_ID NULL
 #define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_LABEL_ID "Pemfilteran Anisotropik"
-#define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_ID NULL
+#define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_ID "Meningkatkan mutu tekstur permukaan yang bersudut pandang serong di mata kamera. Opsi nilai tinggi lebih menguras GPU. Perubahan ini hanya berlaku setelah dimulai ulang."
 #define CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_ID NULL
-#define CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_ID NULL
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_ID "Pilihan mode saring tekstur. Ini bisa untuk memaksa mode saring tekstur tertentu pada semua tekstur agar berpenampilan lebih tajam (atau mulus) dibandingkan Bawaan. Opsi nilai selain Bawaan mungkin akan muncul masalah visual. Perubahan ini hanya berlaku setelah dimulai ulang."
 #define OPTION_VAL_1_ID NULL
 #define OPTION_VAL_2_ID NULL
 #define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_ID NULL
@@ -44439,7 +44439,7 @@ struct retro_core_options_v2 options_hu = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_LABEL_ID "Filter Pasca-pengolahan PowerVR2"
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_ID "Pasca-olah gambar yang dilukiskan untuk menyimulasikan efek dengan spesifik ke GPU PowerVR2 dan sinyal video analog."
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_ID "Penskalaan Naik Tekstur (xBRZ)"
-#define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_ID "Tingkatkan grafis seni piksel 2D tulisan tangan. Hanya bisa digunakan di pemainan terpikselisasi 2D."
+#define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_ID "Meningkatkan grafis seni piksel 2D karya tangan. Hanya bisa digunakan di pemainan piksel 2D."
 #define OPTION_VAL_2_O26_ID NULL
 #define OPTION_VAL_4_ID NULL
 #define OPTION_VAL_6_ID NULL
@@ -44457,7 +44457,7 @@ struct retro_core_options_v2 options_hu = {
 #define OPTION_VAL_MORE_ID NULL
 #define CORE_OPTION_NAME_FRAME_SKIPPING_LABEL_ID NULL
 #define CORE_OPTION_NAME_FRAME_SKIPPING_INFO_0_ID NULL
-#define CORE_OPTION_NAME_WIDESCREEN_CHEATS_LABEL_ID NULL
+#define CORE_OPTION_NAME_WIDESCREEN_CHEATS_LABEL_ID "Cheat Layar Lebar (Perlu Mulai Ulang)"
 #define CORE_OPTION_NAME_WIDESCREEN_CHEATS_INFO_0_ID NULL
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_LABEL_ID NULL
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_ID NULL
