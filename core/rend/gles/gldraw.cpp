@@ -1064,8 +1064,10 @@ void drawVmusAndCrosshairs(int width, int height)
 				drawVmuTexture(i, width, height);
 	}
 
-	for (int i = 0 ; i < 4 ; i++)
-		drawGunCrosshair(i, width, height);
+	if (crosshairsNeeded()) {
+		for (int i = 0 ; i < 4 ; i++)
+			drawGunCrosshair(i, width, height);
+	}
 	glCheck();
 }
 
