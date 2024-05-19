@@ -1,0 +1,17 @@
+[versions]
+agp = "8.4.1"
+appcompat = "1.3.1"
+commonsLang3 = "3.12.0"
+documentfile = "1.0.1"
+httpclient5 = "5.0.3"
+slf4jAndroid = "1.7.35"
+
+[libraries]
+appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
+commons-lang3 = { module = "org.apache.commons:commons-lang3", version.ref = "commonsLang3" }
+documentfile = { module = "androidx.documentfile:documentfile", version.ref = "documentfile" }
+httpclient5 = { module = "org.apache.httpcomponents.client5:httpclient5", version.ref = "httpclient5" }
+slf4j-android = { module = "org.slf4j:slf4j-android", version.ref = "slf4jAndroid" }
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
