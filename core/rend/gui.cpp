@@ -479,7 +479,7 @@ void gui_plot_render_time(int width, int height)
 void gui_open_settings()
 {
 	const LockGuard lock(guiMutex);
-	if (gui_state == GuiState::Closed && !settings.naomi.slave)
+	if (!settings.naomi.slave && (gui_state == GuiState::Closed || gui_state == GuiState::Debugger))
 	{
 		if (!ggpo::active())
 		{
