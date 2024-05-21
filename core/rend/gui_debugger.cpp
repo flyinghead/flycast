@@ -27,14 +27,20 @@
 #include "input/gamepad_device.h"
 #include "sh4asm/sh4asm_core/disas.h"
 
+#define DISAS_LINE_LEN 128
+#define DISASM_LEN 40
+
 static bool disasm_window_open = true;
 static bool memdump_window_open = false;
 static bool breakpoints_window_open = false;
 static bool sh4_window_open = true;
+static bool disasm_follow_pc = true;
+static u32 disasm_address = 0x0c000000;
 
-
-#define DISAS_LINE_LEN 128
 static char sh4_disas_line[DISAS_LINE_LEN];
+
+// TODO: Export a single function to render the debugger
+// TODO: Use camelCase for variable names
 
 static void disas_emit(char ch) {
 	size_t len = strlen(sh4_disas_line);
@@ -116,10 +122,12 @@ void gui_debugger_disasm()
 	ImGui::SetNextWindowPos(ScaledVec2(16, 110), ImGuiCond_FirstUseEver);
 	ImGui::SetNextWindowSize(ScaledVec2(440, 0), ImGuiCond_FirstUseEver);
 	
-	if (!ImGui::Begin("Disassembly", &disasm_window_open)) {
+	if (!ImGui::Begin("Disassembly", &disasm_window_open, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize)) {
 		ImGui::End();
 		return;
 	}
+
+	ImGui::Checkbox("Follow PC", &disasm_follow_pc);
 
 	// if (Sh4cntx.pc == 0x8C010000 || Sh4cntx.spc == 0x8C010000)
 	// {
@@ -135,9 +143,13 @@ void gui_debugger_disasm()
 	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(8,2));
 
 	u32 pcAddr = pc & 0x1fffffff;
-	for (size_t i = 0; i < 20; i++)
+	bool isPcOutsideDisasm = (pcAddr >= disasm_address + DISASM_LEN * 2) || pcAddr < disasm_address;
+	if (disasm_follow_pc && isPcOutsideDisasm)
+		disasm_address = pcAddr;
+
+	for (size_t i = 0; i < DISASM_LEN; i++)
 	{
-		const u32 addr = pcAddr + i * 2;
+		const u32 addr = (disasm_address & 0x1fffffff) + i * 2;
 
 		u16 instr = ReadMem16_nommu(addr);
 
@@ -196,7 +208,7 @@ void gui_debugger_memdump()
 
 	ImGui::SetNextWindowPos(ImVec2(600, 450), ImGuiCond_FirstUseEver);
 	ImGui::SetNextWindowSize(ScaledVec2(540, 0));
-	ImGui::Begin("Memory Dump", &memdump_window_open, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize);
+	ImGui::Begin("Memory Dump", &memdump_window_open, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
 
 	ImGui::PushItemWidth(80 * settings.display.uiScale);
 	static char patchAddressBuffer[8 + 1] = "";
@@ -321,7 +333,7 @@ void gui_debugger_breakpoints()
 
 	ImGui::SetNextWindowPos(ImVec2(700, 16), ImGuiCond_FirstUseEver);
 	ImGui::SetNextWindowSize(ScaledVec2(150, 0));
-	ImGui::Begin("Breakpoints", &breakpoints_window_open, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize);
+	ImGui::Begin("Breakpoints", &breakpoints_window_open, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
 
 	ImGui::PushItemWidth(80 * settings.display.uiScale);
 	static char bpBuffer[9] = "";
@@ -364,7 +376,7 @@ void gui_debugger_sh4()
 
 	ImGui::SetNextWindowPos(ImVec2(900, 16), ImGuiCond_FirstUseEver);
 	ImGui::SetNextWindowSize(ScaledVec2(260, 0));
-	ImGui::Begin("SH4", &sh4_window_open, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize);
+	ImGui::Begin("SH4", &sh4_window_open, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
 	ImGui::PushFont(defaultFont);
 
 	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(8,2));
