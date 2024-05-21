@@ -463,6 +463,22 @@ static InputDescriptors toukon4_inputs = INPUT_5_BUTTONS("X", "Y", "R", "A", "B"
 
 static InputDescriptors hmgeo_inputs = INPUT_4_BUTTONS("Fire", "Attack", "Jump", "Target");
 
+static InputDescriptors shootout_inputs = {
+	{
+		{ NAOMI_START_KEY, "START/MODE", NAOMI_BTN2_KEY },
+		{ NAOMI_BTN0_KEY, "TOP/VIEW" },				// !prize
+		{ NAOMI_BTN1_KEY, "BET", NAOMI_BTN6_KEY },	// prize only
+		{ NAOMI_BTN3_KEY, "CUE ROLLER" },			// only used by emulator. press to use cue roller instead of cue aim
+		{ NAOMI_UP_KEY, "ZOOM IN" },
+		{ NAOMI_DOWN_KEY, "ZOOM OUT" },
+		NAO_BASE_BTN_DESC
+	},
+	{
+		{ "CUE TIP U/D", Full, 1, true },
+		{ "CUE TIP L/R", Full, 0, true },
+	}
+};
+
 //
 // AtomisWave games
 //
@@ -604,7 +620,8 @@ static InputDescriptors kingrt66_inputs = {
 
 static InputDescriptors clubkart_inputs = {
 	{
-			{ NAOMI_DOWN_KEY, "VIEW" },
+			{ NAOMI_DOWN_KEY, "VIEW" },	// !prize (start is used instead)
+			{ NAOMI_BTN1_KEY, "BET" },	// prize only
 			NAO_START_DESC
 			NAO_BASE_BTN_DESC
 	},
@@ -698,5 +715,33 @@ static InputDescriptors drvsim_inputs = {
 			{ "Accelerator", Half, 4 },
 			{ "Brake", Half, 5 },
 			{ "Clutch", Full, 1 },
+	},
+};
+
+static InputDescriptors crackindj_inputs = {
+	{
+			NAO_START_DESC
+			NAO_BASE_BTN_DESC
+	},
+	{
+			{ "FADER", Full, 0, true },
+	},
+};
+
+static InputDescriptors shaktam_inputs = {
+	{
+			NAO_START_DESC
+			NAO_BASE_BTN_DESC
+			{ NAOMI_BTN0_KEY, "SHAKE L" },
+			{ NAOMI_BTN1_KEY, "SHAKE R" },
+			{ NAOMI_BTN2_KEY, "KNOCK", NAOMI_DOWN_KEY },
+			{ NAOMI_DOWN_KEY, "DOWN", NAOMI_LEFT_KEY },
+			{ NAOMI_UP_KEY, "UP", NAOMI_RIGHT_KEY },
+	},
+	{
+			{ "TAMBOURINE X", Full, 0 },
+			{ "TAMBOURINE Y", Full, 1 },
+			{ "", Full, 2 }, // unused but P2 starts at axis 4
+			{ "", Full, 3 }, // unused but P2 starts at axis 4
 	},
 };

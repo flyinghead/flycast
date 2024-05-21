@@ -2,10 +2,10 @@
 <html>
 <!-- This is an automatically generated file.  Do not edit.
    zip_open.mdoc -- open zip archive
-   Copyright (C) 2003-2019 Dieter Baron and Thomas Klausner
+   Copyright (C) 2003-2022 Dieter Baron and Thomas Klausner
   
    This file is part of libzip, a library to manipulate ZIP archives.
-   The authors can be contacted at <libzip@nih.at>
+   The authors can be contacted at <info@libzip.org>
   
    Redistribution and use in source and binary forms, with or without
    modification, are permitted provided that the following conditions
@@ -115,6 +115,26 @@ Upon successful completion <code class="Fn">zip_open</code>() and
   <var class="Ar">ze</var> to indicate the error.
 </section>
 <section class="Sh">
+<h1 class="Sh" id="EXAMPLES"><a class="permalink" href="#EXAMPLES">EXAMPLES</a></h1>
+Here's an example of how you could report errors during
+  <code class="Nm">zip_open</code>:
+<div class="Bd Pp">
+<pre>
+    zip_t *za;
+    int err;
+
+    if ((za = zip_open(name, 0, &amp;err)) == NULL) {
+        zip_error_t error;
+        zip_error_init_with_code(&amp;error, err);
+        fprintf(stderr, &quot;%s: cannot open zip archive '%s': %s\n&quot;,
+	        progname, name, zip_error_strerror(&amp;error));
+        zip_error_fini(&amp;error);
+        return -1;
+    }
+</pre>
+</div>
+</section>
+<section class="Sh">
 <h1 class="Sh" id="ERRORS"><a class="permalink" href="#ERRORS">ERRORS</a></h1>
 The archive specified by <var class="Ar">path</var> is opened unless:
 <dl class="Bl-tag">
@@ -144,6 +164,10 @@ The archive specified by <var class="Ar">path</var> is opened unless:
   <dd>The file specified by <var class="Ar">path</var> does not allow
     seeks.</dd>
 </dl>
+For newly created archives, <code class="Fn">zip_open</code>() does not try to
+  create the file; this is done when calling
+  <a class="Xr" href="zip_close.html">zip_close(3)</a> and any errors, like
+  missing write permissions, will be reported then.
 </section>
 <section class="Sh">
 <h1 class="Sh" id="SEE_ALSO"><a class="permalink" href="#SEE_ALSO">SEE
@@ -168,7 +192,7 @@ The archive specified by <var class="Ar">path</var> is opened unless:
 </div>
 <table class="foot">
   <tr>
-    <td class="foot-date">December 18, 2017</td>
+    <td class="foot-date">October 9, 2022</td>
     <td class="foot-os">NiH</td>
   </tr>
 </table>

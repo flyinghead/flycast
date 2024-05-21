@@ -7,6 +7,7 @@
 #include <unistd.h>
 
 #ifdef USE_UDEV
+#include <cstring>
 #include <libudev.h>
 #endif
 

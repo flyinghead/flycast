@@ -26,7 +26,6 @@
 #include <vector>
 
 class Texture;
-class TextureCache;
 
 class VulkanOverlay
 {
@@ -36,8 +35,8 @@ public:
 	void Init(QuadPipeline *pipeline);
 	void Term();
 
-	vk::CommandBuffer Prepare(vk::CommandPool commandPool, bool vmu, bool crosshair, TextureCache& textureCache);
-	void Prepare(vk::CommandBuffer commandBuffer, bool vmu, bool crosshair, TextureCache& textureCache);
+	vk::CommandBuffer Prepare(vk::CommandPool commandPool, bool vmu, bool crosshair);
+	void Prepare(vk::CommandBuffer commandBuffer, bool vmu, bool crosshair);
 	void Draw(vk::CommandBuffer commandBuffer, vk::Extent2D viewport, float scaling, bool vmu, bool crosshair);
 
 private:
@@ -46,6 +45,7 @@ private:
 	std::array<std::unique_ptr<Texture>, 8> vmuTextures;
 	std::vector<vk::UniqueCommandBuffer> commandBuffers;
 	std::array<std::unique_ptr<QuadDrawer>, 8> drawers;
+	std::array<u64, 8> vmuLastChanged {};
 	QuadPipeline *pipeline = nullptr;
 
 	std::unique_ptr<Texture> xhairTexture;

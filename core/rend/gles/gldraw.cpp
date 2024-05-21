@@ -4,7 +4,10 @@
 #include "rend/osd.h"
 #include "naomi2.h"
 #include "rend/transform_matrix.h"
+#ifdef LIBRETRO
 #include "postprocess.h"
+#include "vmu_xhair.h"
+#endif
 
 #include <memory>
 
@@ -71,7 +74,6 @@ const u32 SrcBlendGL[] =
 };
 
 PipelineShader* CurrentShader;
-u32 gcflip;
 
 void SetCull(u32 CullMode)
 {
@@ -106,15 +108,16 @@ static void SetBaseClipping()
 template <u32 Type, bool SortingEnabled>
 void SetGPState(const PolyParam* gp,u32 cflip=0)
 {
+	float trilinear_alpha;
 	if (gp->pcw.Texture && gp->tsp.FilterMode > 1 && Type != ListType_Punch_Through && gp->tcw.MipMapped == 1)
 	{
-		ShaderUniforms.trilinear_alpha = 0.25f * (gp->tsp.MipMapD & 0x3);
+		trilinear_alpha = 0.25f * (gp->tsp.MipMapD & 0x3);
 		if (gp->tsp.FilterMode == 2)
 			// Trilinear pass A
-			ShaderUniforms.trilinear_alpha = 1.f - ShaderUniforms.trilinear_alpha;
+			trilinear_alpha = 1.f - trilinear_alpha;
 	}
 	else
-		ShaderUniforms.trilinear_alpha = 1.f;
+		trilinear_alpha = 1.f;
 
 	bool color_clamp = gp->tsp.ColorClamp && (pvrrc.fog_clamp_min.full != 0 || pvrrc.fog_clamp_max.full != 0xffffffff);
 	int fog_ctrl = config::Fog ? gp->tsp.FogCtrl : 2;
@@ -122,7 +125,15 @@ void SetGPState(const PolyParam* gp,u32 cflip=0)
 	int clip_rect[4] = {};
 	TileClipping clipmode = GetTileClip(gp->tileclip, ViewportMatrix, clip_rect);
 	TextureCacheData *texture = (TextureCacheData *)gp->texture;
-	bool gpuPalette = texture != nullptr ? texture->gpuPalette : false;
+	int gpuPalette = texture == nullptr || !texture->gpuPalette ? 0
+			: gp->tsp.FilterMode + 1;
+	if (gpuPalette != 0)
+	{
+		if (config::TextureFiltering == 1)
+			gpuPalette = 1; // force nearest
+		else if (config::TextureFiltering == 2)
+			gpuPalette = 2; // force linear
+	}
 
 	CurrentShader = GetProgram(Type == ListType_Punch_Through ? true : false,
 								  clipmode == TileClipping::Inside,
@@ -135,20 +146,27 @@ void SetGPState(const PolyParam* gp,u32 cflip=0)
 								  gp->pcw.Gouraud,
 								  gp->tcw.PixelFmt == PixelBumpMap,
 								  color_clamp,
-								  ShaderUniforms.trilinear_alpha != 1.f,
+								  trilinear_alpha != 1.f,
 								  gpuPalette,
-								  gp->isNaomi2());
+								  gp->isNaomi2(),
+								  ShaderUniforms.dithering);
 	
 	glcache.UseProgram(CurrentShader->program);
 	if (CurrentShader->trilinear_alpha != -1)
-		glUniform1f(CurrentShader->trilinear_alpha, ShaderUniforms.trilinear_alpha);
-	if (gpuPalette)
+		glUniform1f(CurrentShader->trilinear_alpha, trilinear_alpha);
+	if (gpuPalette != 0)
 	{
+		int paletteIndex;
 		if (gp->tcw.PixelFmt == PixelPal4)
-			ShaderUniforms.palette_index = gp->tcw.PalSelect << 4;
+			paletteIndex = gp->tcw.PalSelect << 4;
 		else
-			ShaderUniforms.palette_index = (gp->tcw.PalSelect >> 4) << 8;
-		glUniform1i(CurrentShader->palette_index, ShaderUniforms.palette_index);
+			paletteIndex = (gp->tcw.PalSelect >> 4) << 8;
+		glUniform1i(CurrentShader->palette_index, paletteIndex);
+		if (gpuPalette == 2 && CurrentShader->texSize != -1)
+		{
+			float texSize[] { (float)texture->width, (float)texture->height };
+			glUniform2fv(CurrentShader->texSize, 1, texSize);
+		}
 	}
 
 	if (clipmode == TileClipping::Inside)
@@ -178,13 +196,14 @@ void SetGPState(const PolyParam* gp,u32 cflip=0)
 		SetTextureRepeatMode(GL_TEXTURE_WRAP_T, gp->tsp.ClampV, gp->tsp.FlipV);
 
 		bool nearest_filter;
-		if (config::TextureFiltering == 0) {
-			nearest_filter = gp->tsp.FilterMode == 0 || gpuPalette;
-		} else if (config::TextureFiltering == 1) {
+		if (gpuPalette != 0)
 			nearest_filter = true;
-		} else {
+		else if (config::TextureFiltering == 0)
+			nearest_filter = gp->tsp.FilterMode == 0;
+		else if (config::TextureFiltering == 1)
+			nearest_filter = true;
+		else
 			nearest_filter = false;
-		}
 
 		bool mipmapped = texture->IsMipmapped();
 
@@ -199,7 +218,7 @@ void SetGPState(const PolyParam* gp,u32 cflip=0)
 		{
 			//bilinear filtering
 			//PowerVR supports also trilinear via two passes, but we ignore that for now
-			glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, mipmapped ? GL_LINEAR_MIPMAP_NEAREST : GL_LINEAR);
+			glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, mipmapped  && Type != ListType_Punch_Through ? GL_LINEAR_MIPMAP_NEAREST : GL_LINEAR);
 			glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		}
 
@@ -215,7 +234,7 @@ void SetGPState(const PolyParam* gp,u32 cflip=0)
 				glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY,
 						std::min<float>(config::AnisotropicFiltering, gl.max_anisotropy));
 				// Set the recommended minification filter for best results
-				if (mipmapped)
+				if (mipmapped && Type != ListType_Punch_Through)
 					glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 			}
 			else
@@ -224,18 +243,13 @@ void SetGPState(const PolyParam* gp,u32 cflip=0)
 	}
 
 	// Apparently punch-through polys support blending, or at least some combinations
-	if (Type == ListType_Translucent || Type == ListType_Punch_Through)
-	{
-		glcache.Enable(GL_BLEND);
-		glcache.BlendFunc(SrcBlendGL[gp->tsp.SrcInstr],DstBlendGL[gp->tsp.DstInstr]);
-	}
-	else
-		glcache.Disable(GL_BLEND);
+	// Opaque polygons support blending in list continuations (wild guess)
+	glcache.Enable(GL_BLEND);
+	glcache.BlendFunc(SrcBlendGL[gp->tsp.SrcInstr],DstBlendGL[gp->tsp.DstInstr]);
 
 	//set cull mode !
 	//cflip is required when exploding triangles for triangle sorting
-	//gcflip is global clip flip, needed for when rendering to texture due to mirrored Y direction
-	SetCull(gp->isp.CullMode^cflip^gcflip);
+	SetCull(gp->isp.CullMode ^ cflip ^ 1);
 
 	//set Z mode, only if required
 	if (Type == ListType_Punch_Through || (Type == ListType_Translucent && SortingEnabled))
@@ -327,7 +341,7 @@ static void drawSorted(int first, int count, bool multipass)
 				// FIXME no clipping in modvol shader
 				//SetTileClip(gp->tileclip,true);
 
-				SetCull(params->isp.CullMode ^ gcflip);
+				SetCull(params->isp.CullMode ^ 1);
 
 				glDrawElements(GL_TRIANGLES, pvrrc.sortedTriangles[p].count, gl.index_type,
 						(GLvoid*)(gl.get_index_size() * pvrrc.sortedTriangles[p].first));
@@ -618,15 +632,13 @@ void DrawStrips()
 
 void OpenGLRenderer::RenderFramebuffer(const FramebufferInfo& info)
 {
+	initVideoRoutingFrameBuffer();
 	glReadFramebuffer(info);
 	saveCurrentFramebuffer();
 	getVideoShift(gl.ofbo.shiftX, gl.ofbo.shiftY);
 #ifdef LIBRETRO
-	if (config::PowerVR2Filter || gl.ofbo.shiftX != 0 || gl.ofbo.shiftY != 0)
-	{
-		glBindFramebuffer(GL_FRAMEBUFFER, postProcessor.getFramebuffer(gl.dcfb.width, gl.dcfb.height));
-		glcache.BindTexture(GL_TEXTURE_2D, gl.dcfb.tex);
-	}
+	glBindFramebuffer(GL_FRAMEBUFFER, postProcessor.getFramebuffer(gl.dcfb.width, gl.dcfb.height));
+	glcache.BindTexture(GL_TEXTURE_2D, gl.dcfb.tex);
 #else
 	if (gl.ofbo2.framebuffer != nullptr
 			&& (gl.dcfb.width != gl.ofbo2.framebuffer->getWidth() || gl.dcfb.height != gl.ofbo2.framebuffer->getHeight()))
@@ -655,17 +667,17 @@ void OpenGLRenderer::RenderFramebuffer(const FramebufferInfo& info)
 	else
 	{
 		glcache.Disable(GL_BLEND);
-		drawQuad(gl.dcfb.tex, false, true);
+		drawQuad(gl.dcfb.tex, false, false);
 	}
 #ifdef LIBRETRO
-	if (config::PowerVR2Filter || gl.ofbo.shiftX != 0 || gl.ofbo.shiftY != 0)
-		postProcessor.render(glsm_get_current_framebuffer());
+	postProcessor.render(glsm_get_current_framebuffer());
 #else
 	renderLastFrame();
 #endif
 
 	DrawOSD(false);
 	frameRendered = true;
+	renderVideoRouting();
 	restoreCurrentFramebuffer();
 }
 
@@ -697,7 +709,7 @@ void writeFramebufferToVRAM()
 			gl.fbscaling.framebuffer->bind();
 			glViewport(0, 0, scaledW, scaledH);
 			glcache.Disable(GL_SCISSOR_TEST);
-			glcache.ClearColor(1.f, 0.f, 0.f, 1.f);
+			glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
 			glClear(GL_COLOR_BUFFER_BIT);
 			glcache.BindTexture(GL_TEXTURE_2D, gl.ofbo.framebuffer->getTexture());
 			glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -776,19 +788,19 @@ bool OpenGLRenderer::renderLastFrame()
 		if (gl.ofbo.shiftX != 0 || gl.ofbo.shiftY != 0)
 		{
 			static float sverts[20] = {
-				-1.f,  1.f, 1.f, 0.f, 1.f,
-				-1.f, -1.f, 1.f, 0.f, 0.f,
-				 1.f,  1.f, 1.f, 1.f, 1.f,
-				 1.f, -1.f, 1.f, 1.f, 0.f,
+				-1.f, -1.f, 1.f, 0.f, 1.f,
+				-1.f,  1.f, 1.f, 0.f, 0.f,
+				 1.f, -1.f, 1.f, 1.f, 1.f,
+				 1.f,  1.f, 1.f, 1.f, 0.f,
 			};
 			sverts[0] = sverts[5] = -1.f + gl.ofbo.shiftX * 2.f / framebuffer->getWidth();
 			sverts[10] = sverts[15] = sverts[0] + 2;
-			sverts[1] = sverts[11] = 1.f - gl.ofbo.shiftY * 2.f / framebuffer->getHeight();
-			sverts[6] = sverts[16] = sverts[1] - 2;
+			sverts[1] = sverts[11] = -1.f - gl.ofbo.shiftY * 2.f / framebuffer->getHeight();
+			sverts[6] = sverts[16] = sverts[1] + 2;
 			vertices = sverts;
 		}
 		glcache.Disable(GL_BLEND);
-		drawQuad(framebuffer->getTexture(), config::Rotate90, false, vertices);
+		drawQuad(framebuffer->getTexture(), config::Rotate90, true, vertices);
 	}
 	else
 	{
@@ -797,8 +809,8 @@ bool OpenGLRenderer::renderLastFrame()
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, gl.ofbo.origFbo);
 		glcache.ClearColor(VO_BORDER_COL.red(), VO_BORDER_COL.green(), VO_BORDER_COL.blue(), 1.f);
 		glClear(GL_COLOR_BUFFER_BIT);
-		glBlitFramebuffer(-gl.ofbo.shiftX, gl.ofbo.shiftY, framebuffer->getWidth() - gl.ofbo.shiftX, framebuffer->getHeight() + gl.ofbo.shiftY,
-				dx, dy, settings.display.width - dx, settings.display.height - dy,
+		glBlitFramebuffer(-gl.ofbo.shiftX, -gl.ofbo.shiftY, framebuffer->getWidth() - gl.ofbo.shiftX, framebuffer->getHeight() - gl.ofbo.shiftY,
+				dx, settings.display.height - dy, settings.display.width - dx, dy,
 				GL_COLOR_BUFFER_BIT, config::TextureFiltering == 1 ? GL_NEAREST : GL_LINEAR);
     	glBindFramebuffer(GL_FRAMEBUFFER, gl.ofbo.origFbo);
 #endif
@@ -806,132 +818,164 @@ bool OpenGLRenderer::renderLastFrame()
 	return true;
 }
 
-#ifdef LIBRETRO
-#include "vmu_xhair.h"
-
-static GLuint vmuTextureId[4] {};
-static GLuint lightgunTextureId[4] {};
-
-static void updateVmuTexture(int vmu_screen_number)
+bool OpenGLRenderer::GetLastFrame(std::vector<u8>& data, int& width, int& height)
 {
-	if (vmuTextureId[vmu_screen_number] == 0)
-	{
-		vmuTextureId[vmu_screen_number] = glcache.GenTexture();
-		glcache.BindTexture(GL_TEXTURE_2D, vmuTextureId[vmu_screen_number]);
-		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	GlFramebuffer *framebuffer = gl.ofbo2.ready ? gl.ofbo2.framebuffer.get() : gl.ofbo.framebuffer.get();
+	if (framebuffer == nullptr)
+		return false;
+	if (width != 0) {
+		height = width / gl.ofbo.aspectRatio;
+	}
+	else if (height != 0) {
+		width = gl.ofbo.aspectRatio * height;
 	}
 	else
-		glcache.BindTexture(GL_TEXTURE_2D, vmuTextureId[vmu_screen_number]);
-
-
-	const u32 *data = vmu_lcd_data[vmu_screen_number * 2];
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, VMU_SCREEN_WIDTH, VMU_SCREEN_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-
-	vmu_lcd_changed[vmu_screen_number * 2] = false;
-}
-
-void DrawVmuTexture(u8 vmu_screen_number, int width, int height)
-{
-	constexpr float vmu_padding = 8.f;
-	float x = vmu_padding;
-	float y = vmu_padding;
-	float w = (float)VMU_SCREEN_WIDTH * vmu_screen_params[vmu_screen_number].vmu_screen_size_mult * 4.f / 3.f / gl.ofbo.aspectRatio;
-	float h = (float)VMU_SCREEN_HEIGHT * vmu_screen_params[vmu_screen_number].vmu_screen_size_mult;
-
-	if (vmu_lcd_changed[vmu_screen_number * 2] || vmuTextureId[vmu_screen_number] == 0)
-		updateVmuTexture(vmu_screen_number);
-
-	switch (vmu_screen_params[vmu_screen_number].vmu_screen_position)
 	{
-		case UPPER_LEFT:
-			break;
-		case UPPER_RIGHT:
-			x = width - x - w;
-			break;
-		case LOWER_LEFT:
-			y = height - y - h;
-			break;
-		case LOWER_RIGHT:
-			x = width - x - w;
-			y = height - y - h;
-			break;
+		width = framebuffer->getWidth();
+		height = framebuffer->getHeight();
+		if (config::Rotate90)
+			std::swap(width, height);
+		// We need square pixels for PNG
+		int w = gl.ofbo.aspectRatio * height;
+		if (width > w)
+			height = width / gl.ofbo.aspectRatio;
+		else
+			width = w;
 	}
-	float x1 = (x + w) * 2 / width - 1;
-	float y1 = -(y + h) * 2 / height + 1;
-	x = x * 2 / width - 1;
-	y = -y * 2 / height + 1;
-	float vertices[20] = {
-		x,  y1, 1.f, 0.f, 0.f,
-		x,  y,  1.f, 0.f, 1.f,
-		x1, y1, 1.f, 1.f, 0.f,
-		x1, y,  1.f, 1.f, 1.f,
-	};
-	glcache.Enable(GL_BLEND);
-	glcache.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	drawQuad(vmuTextureId[vmu_screen_number], false, false, vertices);
-}
 
-static void updateLightGunTexture(int port)
-{
-	s32 x,y ;
-	u8 temp_tex_buffer[LIGHTGUN_CROSSHAIR_SIZE*LIGHTGUN_CROSSHAIR_SIZE*4];
-	u8 *dst = temp_tex_buffer;
-	u8 *src = NULL ;
+	GlFramebuffer dstFramebuffer(width, height, false, false);
 
-	if (lightgunTextureId[port] == 0)
+	glViewport(0, 0, width, height);
+	glcache.Disable(GL_BLEND);
+	verify(framebuffer->getTexture() != 0);
+	const float *vertices = nullptr;
+	if (config::Rotate90)
 	{
-		lightgunTextureId[port] = glcache.GenTexture();
-		glcache.BindTexture(GL_TEXTURE_2D, lightgunTextureId[port]);
-		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		static float rvertices[4][5] = {
+			{ -1.f,  1.f, 1.f, 1.f, 0.f },
+			{ -1.f, -1.f, 1.f, 1.f, 1.f },
+			{  1.f,  1.f, 1.f, 0.f, 0.f },
+			{  1.f, -1.f, 1.f, 0.f, 1.f },
+		};
+		vertices = &rvertices[0][0];
 	}
-	else
-		glcache.BindTexture(GL_TEXTURE_2D, lightgunTextureId[port]);
+	drawQuad(framebuffer->getTexture(), config::Rotate90, false, vertices);
 
-	u8* colour = &( lightgun_palette[ lightgun_params[port].colour * 3 ] );
-
-	for ( y = LIGHTGUN_CROSSHAIR_SIZE-1 ; y >= 0 ; y--)
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	data.resize(width * height * 3);
+	dstFramebuffer.bind(GL_READ_FRAMEBUFFER);
+	glPixelStorei(GL_PACK_ALIGNMENT, 1);
+	if (gl.is_gles)
 	{
-		src = lightgun_img_crosshair + (y*LIGHTGUN_CROSSHAIR_SIZE) ;
-
-		for ( x = 0 ; x < LIGHTGUN_CROSSHAIR_SIZE ; x++)
+		// GL_RGB not supported
+		std::vector<u8> tmp(width * height * 4);
+		glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, tmp.data());
+		u8 *dst = data.data();
+		const u8 *src = tmp.data();
+		while (src <= &tmp.back())
 		{
-			if ( src[x] )
-			{
-				*dst++ = colour[0] ;
-				*dst++ = colour[1] ;
-				*dst++ = colour[2] ;
-				*dst++ = 0xFF ;
-			}
-			else
-			{
-				*dst++ = 0 ;
-				*dst++ = 0 ;
-				*dst++ = 0 ;
-				*dst++ = 0 ;
-			}
+			*dst++ = *src++;
+			*dst++ = *src++;
+			*dst++ = *src++;
+			src++;
 		}
 	}
+	else {
+		glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, data.data());
+	}
+	restoreCurrentFramebuffer();
+	glCheck();
 
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, LIGHTGUN_CROSSHAIR_SIZE, LIGHTGUN_CROSSHAIR_SIZE, 0, GL_RGBA, GL_UNSIGNED_BYTE, temp_tex_buffer);
-
-	lightgun_params[port].dirty = false;
+	return true;
 }
 
-void DrawGunCrosshair(u8 port, int width, int height)
+static GLuint vmuTextureId[8] {};
+static GLuint lightgunTextureId {};
+static u64 vmuLastUpdated[8] {};
+
+static void updateVmuTexture(int vmuIndex)
 {
-	if (lightgun_params[port].offscreen || lightgun_params[port].colour == 0)
+	if (vmuTextureId[vmuIndex] == 0)
+	{
+		vmuTextureId[vmuIndex] = glcache.GenTexture();
+		glcache.BindTexture(GL_TEXTURE_2D, vmuTextureId[vmuIndex]);
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	}
+	else
+		glcache.BindTexture(GL_TEXTURE_2D, vmuTextureId[vmuIndex]);
+
+	const u32 *data = vmu_lcd_data[vmuIndex];
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 48, 32, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+
+	vmuLastUpdated[vmuIndex] = vmuLastChanged[vmuIndex];
+}
+
+static void drawVmuTexture(u8 vmuIndex, int width, int height)
+{
+	const float *color = nullptr;
+#ifndef LIBRETRO
+	const float vmu_padding = 8.f * settings.display.uiScale;
+	const float w = 96.f * settings.display.uiScale;
+	const float h = 64.f * settings.display.uiScale;
+
+	float x;
+	float y;
+	if (vmuIndex & 2)
+		x = width - vmu_padding - w;
+	else
+		x = vmu_padding;
+	if (vmuIndex & 4)
+	{
+		y = height - vmu_padding - h;
+		if (vmuIndex & 1)
+			y -= vmu_padding + h;
+	}
+	else
+	{
+		y = vmu_padding;
+		if (vmuIndex & 1)
+			y += vmu_padding + h;
+	}
+	const float blend_factor[4] = { 0.75f, 0.75f, 0.75f, 0.75f };
+	color = blend_factor;
+#else
+	if (vmuIndex & 1)
 		return;
+	const float vmu_padding_x = 8.f * width / 640.f * 4.f / 3.f / gl.ofbo.aspectRatio;
+	const float vmu_padding_y = 8.f * height / 480.f;
+	const float w = (float)VMU_SCREEN_WIDTH * width / 640.f * 4.f / 3.f / gl.ofbo.aspectRatio
+			* vmu_screen_params[vmuIndex / 2].vmu_screen_size_mult;
+	const float h = (float)VMU_SCREEN_HEIGHT * height / 480.f
+			* vmu_screen_params[vmuIndex / 2].vmu_screen_size_mult;
 
-	float w = (float)LIGHTGUN_CROSSHAIR_SIZE * 4.f / 3.f / gl.ofbo.aspectRatio;
-	float h = (float)LIGHTGUN_CROSSHAIR_SIZE;
-	auto [x, y] = getCrosshairPosition(port);
-	x -= w / 2;
-	y -= h / 2;
+	float x;
+	float y;
 
-	if (lightgun_params[port].dirty || lightgunTextureId[port] == 0)
-		updateLightGunTexture(port);
+	switch (vmu_screen_params[vmuIndex / 2].vmu_screen_position)
+	{
+	case UPPER_LEFT:
+	default:
+		x = vmu_padding_x;
+		y = vmu_padding_y;
+		break;
+	case UPPER_RIGHT:
+		x = width - vmu_padding_x - w;
+		y = vmu_padding_y;
+		break;
+	case LOWER_LEFT:
+		x = vmu_padding_x;
+		y = height - vmu_padding_y - h;
+		break;
+	case LOWER_RIGHT:
+		x = width - vmu_padding_x - w;
+		y = height - vmu_padding_y - h;
+		break;
+	}
+#endif
+
+	if (vmuLastChanged[vmuIndex] != vmuLastUpdated[vmuIndex]  || vmuTextureId[vmuIndex] == 0)
+		updateVmuTexture(vmuIndex);
 
 	float x1 = (x + w) * 2 / width - 1;
 	float y1 = -(y + h) * 2 / height + 1;
@@ -944,17 +988,93 @@ void DrawGunCrosshair(u8 port, int width, int height)
 		x1, y,  1.f, 1.f, 1.f,
 	};
 	glcache.Enable(GL_BLEND);
-	glcache.BlendFunc(GL_SRC_ALPHA, GL_ONE);
-	drawQuad(lightgunTextureId[port], false, false, vertices);
-
 	glcache.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	drawQuad(vmuTextureId[vmuIndex], false, false, vertices, color);
+}
+
+static void updateLightGunTexture()
+{
+	if (lightgunTextureId == 0)
+	{
+		lightgunTextureId = glcache.GenTexture();
+		glcache.BindTexture(GL_TEXTURE_2D, lightgunTextureId);
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 16, 16, 0, GL_RGBA, GL_UNSIGNED_BYTE, getCrosshairTextureData());
+	}
+}
+
+static void drawGunCrosshair(u8 port, int width, int height)
+{
+	if (config::CrosshairColor[port] == 0)
+		return;
+	if (settings.platform.isConsole()
+			&& config::MapleMainDevices[port] != MDT_LightGun)
+		return;
+
+	auto [x, y] = getCrosshairPosition(port);
+#ifdef LIBRETRO
+	float halfWidth = lightgun_crosshair_size / 2.f / config::ScreenStretching * 100.f * config::RenderResolution / 480.f;
+	float halfHeight = lightgun_crosshair_size / 2.f * config::RenderResolution / 480.f;
+	x /= config::ScreenStretching / 100.f;
+#else
+	float halfWidth = config::CrosshairSize * settings.display.uiScale / 2.f;
+	float halfHeight = halfWidth;
+#endif
+
+	updateLightGunTexture();
+
+	float x1 = (x + halfWidth) * 2 / width - 1;
+	float y1 = -(y + halfHeight) * 2 / height + 1;
+	x = (x - halfWidth) * 2 / width - 1;
+	y = -(y - halfHeight) * 2 / height + 1;
+	float vertices[20] = {
+		x,  y1, 1.f, 0.f, 0.f,
+		x,  y,  1.f, 0.f, 1.f,
+		x1, y1, 1.f, 1.f, 0.f,
+		x1, y,  1.f, 1.f, 1.f,
+	};
+	const float color[4] = {
+			(config::CrosshairColor[port] & 0xff) / 255.f,
+			((config::CrosshairColor[port] >> 8) & 0xff) / 255.f,
+			((config::CrosshairColor[port] >> 16) & 0xff) / 255.f,
+			((config::CrosshairColor[port] >> 24) & 0xff) / 255.f
+	};
+	glcache.Enable(GL_BLEND);
+	glcache.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	drawQuad(lightgunTextureId, false, false, vertices, color);
+}
+
+void drawVmusAndCrosshairs(int width, int height)
+{
+#ifndef LIBRETRO
+	width = settings.display.width;
+	height = settings.display.height;
+	glViewport(0, 0, width, height);
+	glBindFramebuffer(GL_FRAMEBUFFER, gl.ofbo.origFbo);
+	const bool showVmus = config::FloatVMUs;
+#else
+	const bool showVmus = true;
+#endif
+
+	if (settings.platform.isConsole() && showVmus)
+	{
+		for (int i = 0; i < 8 ; i++)
+			if (vmu_lcd_status[i])
+				drawVmuTexture(i, width, height);
+	}
+
+	if (crosshairsNeeded()) {
+		for (int i = 0 ; i < 4 ; i++)
+			drawGunCrosshair(i, width, height);
+	}
+	glCheck();
 }
 
 void termVmuLightgun()
 {
 	glcache.DeleteTextures(std::size(vmuTextureId), vmuTextureId);
 	memset(vmuTextureId, 0, sizeof(vmuTextureId));
-	glcache.DeleteTextures(std::size(lightgunTextureId), lightgunTextureId);
-	memset(lightgunTextureId, 0, sizeof(lightgunTextureId));
+	glcache.DeleteTextures(1, &lightgunTextureId);
+	lightgunTextureId = 0;
 }
-#endif

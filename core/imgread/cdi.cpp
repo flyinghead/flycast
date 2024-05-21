@@ -135,7 +135,7 @@ Disc* cdi_parse(const char* file, std::vector<u8> *digest)
 				else
 				{
 					std::fseek(fsource, track.total_length * track.sector_size, SEEK_CUR);
-					rv->EndFAD=track.start_lba +track.total_length;
+					rv->EndFAD = track.start_lba + track.total_length - 1;
 				}
 				track.position = std::ftell(fsource);
 

@@ -6,97 +6,66 @@
 #include <memory>
 
 GlTextureCache TexCache;
+void (TextureCacheData::*TextureCacheData::uploadToGpu)(int, int, const u8 *, bool, bool) = &TextureCacheData::UploadToGPUGl2;
 
-static void readAsyncPixelBuffer(u32 addr);
-
-void TextureCacheData::UploadToGPU(int width, int height, const u8 *temp_tex_buffer, bool mipmapped, bool mipmapsIncluded)
+static void getOpenGLTexParams(TextureType texType, u32& bytesPerPixel, GLuint& gltype, GLuint& comps, GLuint& internalFormat)
 {
-	//upload to OpenGL !
-	glcache.BindTexture(GL_TEXTURE_2D, texID);
-	GLuint comps = tex_type == TextureType::_8 ? gl.single_channel_format : GL_RGBA;
-	GLuint gltype;
-	u32 bytes_per_pixel = 2;
-	switch (tex_type)
+	comps = GL_RGBA;
+	bytesPerPixel = 2;
+	switch (texType)
 	{
 	case TextureType::_5551:
 		gltype = GL_UNSIGNED_SHORT_5_5_5_1;
+		internalFormat = GL_RGB5_A1;
 		break;
 	case TextureType::_565:
 		gltype = GL_UNSIGNED_SHORT_5_6_5;
 		comps = GL_RGB;
+		internalFormat = GL_RGB565;
 		break;
 	case TextureType::_4444:
 		gltype = GL_UNSIGNED_SHORT_4_4_4_4;
+		internalFormat = GL_RGBA4;
 		break;
 	case TextureType::_8888:
-		bytes_per_pixel = 4;
+		bytesPerPixel = 4;
 		gltype = GL_UNSIGNED_BYTE;
+		internalFormat = GL_RGBA8;
 		break;
 	case TextureType::_8:
-		bytes_per_pixel = 1;
+		bytesPerPixel = 1;
 		gltype = GL_UNSIGNED_BYTE;
+		comps = gl.single_channel_format;
+		internalFormat = GL_R8;
 		break;
 	default:
 		die("Unsupported texture type");
-		gltype = 0;
 		break;
 	}
+}
+
+void TextureCacheData::UploadToGPUGl2(int width, int height, const u8 *temp_tex_buffer, bool mipmapped, bool mipmapsIncluded)
+{
+	if (texID == 0)
+		texID = glcache.GenTexture();
+	glcache.BindTexture(GL_TEXTURE_2D, texID);
+	GLuint comps;
+	GLuint gltype;
+	GLuint internalFormat;
+	u32 bytes_per_pixel;
+	getOpenGLTexParams(tex_type, bytes_per_pixel, gltype, comps, internalFormat);
+
 	if (mipmapsIncluded)
 	{
 		int mipmapLevels = 0;
 		int dim = width;
-		while (dim != 0)
-		{
+		while (dim != 0) {
 			mipmapLevels++;
 			dim >>= 1;
 		}
-#if !defined(GLES2) && (!defined(__APPLE__) || defined(TARGET_IPHONE))
-		// OpenGL 4.2 or GLES 3.0 min
-		if (gl.gl_major > 4 || (gl.gl_major == 4 && gl.gl_minor >= 2)
-				|| (gl.is_gles && gl.gl_major >= 3))
-		{
-			GLuint internalFormat;
-			switch (tex_type)
-			{
-			case TextureType::_5551:
-				internalFormat = GL_RGB5_A1;
-				break;
-			case TextureType::_565:
-				internalFormat = GL_RGB565;
-				break;
-			case TextureType::_4444:
-				internalFormat = GL_RGBA4;
-				break;
-			case TextureType::_8888:
-				internalFormat = GL_RGBA8;
-				break;
-			case TextureType::_8:
-				internalFormat = comps;
-				break;
-			default:
-				die("Unsupported texture format");
-				internalFormat = 0;
-				break;
-			}
-			if (Updates == 1)
-			{
-				glTexStorage2D(GL_TEXTURE_2D, mipmapLevels, internalFormat, width, height);
-				glCheck();
-			}
-			for (int i = 0; i < mipmapLevels; i++)
-			{
-				glTexSubImage2D(GL_TEXTURE_2D, mipmapLevels - i - 1, 0, 0, 1 << i, 1 << i, comps, gltype, temp_tex_buffer);
-				temp_tex_buffer += (1 << (2 * i)) * bytes_per_pixel;
-			}
-		}
-		else
-#endif
-		{
-			for (int i = 0; i < mipmapLevels; i++)
-			{
-				glTexImage2D(GL_TEXTURE_2D, mipmapLevels - i - 1, comps, 1 << i, 1 << i, 0, comps, gltype, temp_tex_buffer);
-				temp_tex_buffer += (1 << (2 * i)) * bytes_per_pixel;
-			}
+		for (int i = 0; i < mipmapLevels; i++) {
+			glTexImage2D(GL_TEXTURE_2D, mipmapLevels - i - 1, comps, 1 << i, 1 << i, 0, comps, gltype, temp_tex_buffer);
+			temp_tex_buffer += (1 << (2 * i)) * bytes_per_pixel;
 		}
 	}
 	else
@@ -105,16 +74,77 @@ void TextureCacheData::UploadToGPU(int width, int height, const u8 *temp_tex_buf
 		if (mipmapped)
 			glGenerateMipmap(GL_TEXTURE_2D);
 	}
+}
+
+void TextureCacheData::UploadToGPUGl4(int width, int height, const u8 *temp_tex_buffer, bool mipmapped, bool mipmapsIncluded)
+{
+#if !defined(GLES2) && (!defined(__APPLE__) || defined(TARGET_IPHONE))
+	GLuint comps;
+	GLuint gltype;
+	GLuint internalFormat;
+	u32 bytes_per_pixel;
+	getOpenGLTexParams(tex_type, bytes_per_pixel, gltype, comps, internalFormat);
+
+	int mipmapLevels = 1;
+	if (mipmapped)
+	{
+		mipmapLevels = 0;
+		int dim = width;
+		while (dim != 0) {
+			mipmapLevels++;
+			dim >>= 1;
+		}
+	}
+	if (texID == 0)
+	{
+		texID = glcache.GenTexture();
+		glcache.BindTexture(GL_TEXTURE_2D, texID);
+		glTexStorage2D(GL_TEXTURE_2D, mipmapLevels, internalFormat, width, height);
+	}
+	else {
+		glcache.BindTexture(GL_TEXTURE_2D, texID);
+	}
+	if (mipmapsIncluded)
+	{
+		for (int i = 0; i < mipmapLevels; i++) {
+			glTexSubImage2D(GL_TEXTURE_2D, mipmapLevels - i - 1, 0, 0, 1 << i, 1 << i, comps, gltype, temp_tex_buffer);
+			temp_tex_buffer += (1 << (2 * i)) * bytes_per_pixel;
+		}
+	}
+	else
+	{
+		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, comps, gltype, temp_tex_buffer);
+		if (mipmapped)
+			glGenerateMipmap(GL_TEXTURE_2D);
+	}
+#endif
+}
+
+void TextureCacheData::UploadToGPU(int width, int height, const u8 *temp_tex_buffer, bool mipmapped, bool mipmapsIncluded)
+{
+	((*this).*uploadToGpu)(width, height, temp_tex_buffer, mipmapped, mipmapsIncluded);
 	glCheck();
 }
 	
+void TextureCacheData::setUploadToGPUFlavor()
+{
+#if !defined(GLES2) && (!defined(__APPLE__) || defined(TARGET_IPHONE))
+	// OpenGL 4.2 or GLES 3.0 min
+	if (gl.gl_major > 4 || (gl.gl_major == 4 && gl.gl_minor >= 2)
+			|| (gl.is_gles && gl.gl_major >= 3))
+		uploadToGpu = &TextureCacheData::UploadToGPUGl4;
+#endif
+}
+
 bool TextureCacheData::Delete()
 {
 	if (!BaseTextureCacheData::Delete())
 		return false;
 
-	if (texID)
+	if (texID != 0) {
 		glcache.DeleteTextures(1, &texID);
+		texID = 0;
+	}
 
 	return true;
 }
@@ -160,31 +190,11 @@ GLuint BindRTT(bool withDepthBuffer)
 	DEBUG_LOG(RENDERER, "RTT packmode=%d stride=%d - %d x %d @ %06x", pvrrc.fb_W_CTRL.fb_packmode, pvrrc.fb_W_LINESTRIDE * 8,
 			fbw, fbh, texAddress);
 
-	if (gl.rtt.texAddress != ~0u)
-		readAsyncPixelBuffer(gl.rtt.texAddress);
-	gl.rtt.texAddress = texAddress;
-
 	gl.rtt.framebuffer.reset();
 
 	u32 fbw2;
 	u32 fbh2;
 	getRenderToTextureDimensions(fbw, fbh, fbw2, fbh2);
-
-#ifdef GL_PIXEL_PACK_BUFFER
-	if (gl.gl_major >= 3 && config::RenderToTextureBuffer)
-	{
-		if (gl.rtt.pbo == 0)
-			glGenBuffers(1, &gl.rtt.pbo);
-		u32 glSize = fbw2 * fbh2 * 4;
-		if (glSize > gl.rtt.pboSize)
-		{
-			glBindBuffer(GL_PIXEL_PACK_BUFFER, gl.rtt.pbo);
-			glBufferData(GL_PIXEL_PACK_BUFFER, glSize, 0, GL_STREAM_READ);
-			gl.rtt.pboSize = glSize;
-			glCheck();
-		}
-	}
-#endif
 
 	// Create a texture for rendering to
 	GLuint texture = glcache.GenTexture();
@@ -198,135 +208,74 @@ GLuint BindRTT(bool withDepthBuffer)
 	return gl.rtt.framebuffer->getFramebuffer();
 }
 
-constexpr u32 MAGIC_NUMBER = 0xbaadf00d;
-
 void ReadRTTBuffer()
 {
 	u32 w = pvrrc.getFramebufferWidth();
 	u32 h = pvrrc.getFramebufferHeight();
 
 	const u8 fb_packmode = pvrrc.fb_W_CTRL.fb_packmode;
+	const u32 tex_addr = pvrrc.fb_W_SOF1 & VRAM_MASK;
 
 	if (config::RenderToTextureBuffer)
 	{
-		u32 tex_addr = gl.rtt.texAddress;
 #ifdef TARGET_VIDEOCORE
 		// Remove all vram locks before calling glReadPixels
 		// (deadlock on rpi)
 		u32 size = w * h * 2;
-		u32 page_tex_addr = tex_addr & PAGE_MASK;
+		u32 page_tex_addr = tex_addr & ~PAGE_MASK;
 		u32 page_size = size + tex_addr - page_tex_addr;
 		page_size = ((page_size - 1) / PAGE_SIZE + 1) * PAGE_SIZE;
 		for (u32 page = page_tex_addr; page < page_tex_addr + page_size; page += PAGE_SIZE)
 			VramLockedWriteOffset(page);
 #endif
 
-#ifdef GL_PIXEL_PACK_BUFFER
-		if (gl.gl_major >= 3)
-			glBindBuffer(GL_PIXEL_PACK_BUFFER, gl.rtt.pbo);
-#endif
-
 		glPixelStorei(GL_PACK_ALIGNMENT, 1);
-		gl.rtt.width = w;
-		gl.rtt.height = h;
-		u16 *dst = gl.gl_major >= 3 ? nullptr : (u16 *)&vram[tex_addr];
 
-		gl.rtt.linestride = pvrrc.fb_W_LINESTRIDE * 8;
-		if (gl.rtt.linestride == 0)
-			gl.rtt.linestride = w * 2;
+		u16 *dst = (u16 *)&vram[tex_addr];
+
+		u32 linestride = pvrrc.fb_W_LINESTRIDE * 8;
+		if (linestride == 0)
+			linestride = w * 2;
 
 		GLint color_fmt, color_type;
 		glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_FORMAT, &color_fmt);
 		glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_TYPE, &color_type);
 
-		if (fb_packmode == 1 && gl.rtt.linestride == w * 2 && color_fmt == GL_RGB && color_type == GL_UNSIGNED_SHORT_5_6_5)
+		if (fb_packmode == 1 && linestride == w * 2 && color_fmt == GL_RGB && color_type == GL_UNSIGNED_SHORT_5_6_5)
 		{
-			gl.rtt.directXfer = true;
 			glReadPixels(0, 0, w, h, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, dst);
-			if (dst == nullptr)
-				*(u32 *)&vram[tex_addr] = MAGIC_NUMBER;
 		}
 		else
 		{
-			gl.rtt.directXfer = false;
-			if (gl.gl_major >= 3)
-			{
-				gl.rtt.fb_w_ctrl = pvrrc.fb_W_CTRL;
-				glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, 0);
-				*(u32 *)&vram[tex_addr] = MAGIC_NUMBER;
-			}
-			else
-			{
-				PixelBuffer<u32> tmp_buf;
-				tmp_buf.init(w, h);
+			PixelBuffer<u32> tmp_buf;
+			tmp_buf.init(w, h);
 
-				u8 *p = (u8 *)tmp_buf.data();
-				glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, p);
+			u8 *p = (u8 *)tmp_buf.data();
+			glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, p);
 
-				WriteTextureToVRam(w, h, p, dst, pvrrc.fb_W_CTRL, gl.rtt.linestride);
-				gl.rtt.texAddress = ~0;
-			}
+			WriteTextureToVRam(w, h, p, dst, pvrrc.fb_W_CTRL, linestride);
 		}
-#ifdef GL_PIXEL_PACK_BUFFER
-		glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
-#endif
 		glCheck();
 	}
 	else
 	{
-		//memset(&vram[gl.rtt.texAddress], 0, size);
+		//memset(&vram[tex_addr], 0, size);
 		if (w <= 1024 && h <= 1024)
 		{
-			TextureCacheData *texture_data = TexCache.getRTTexture(gl.rtt.texAddress, fb_packmode, w, h);
+			TextureCacheData *texture_data = TexCache.getRTTexture(tex_addr, fb_packmode, w, h);
 			glcache.DeleteTextures(1, &texture_data->texID);
 			texture_data->texID = gl.rtt.framebuffer->detachTexture();
 			texture_data->dirty = 0;
 			texture_data->unprotectVRam();
 		}
-		gl.rtt.texAddress = ~0;
 	}
 	glBindFramebuffer(GL_FRAMEBUFFER, gl.ofbo.origFbo);
 }
 
-static void readAsyncPixelBuffer(u32 addr)
-{
-#ifndef GLES2
-	if (!config::RenderToTextureBuffer || gl.rtt.pbo == 0)
-		return;
-
-	u32 tex_addr = gl.rtt.texAddress;
-	if (addr != tex_addr)
-		return;
-	gl.rtt.texAddress = ~0;
-
-	glBindBuffer(GL_PIXEL_PACK_BUFFER, gl.rtt.pbo);
-	u8 *ptr = (u8 *)glMapBufferRange(GL_PIXEL_PACK_BUFFER, 0, gl.rtt.pboSize, GL_MAP_READ_BIT);
-	if (ptr == nullptr)
-	{
-		WARN_LOG(RENDERER, "glMapBuffer failed");
-		return;
-	}
-	u16 *dst = (u16 *)&vram[tex_addr];
-	// Make sure the vram region hasn't been overwritten already, otherwise we skip the copy
-	// (Worms World Party intro)
-	if (*(u32 *)dst == MAGIC_NUMBER)
-	{
-		if (gl.rtt.directXfer)
-			// Can be read directly into vram
-			memcpy(dst, ptr, gl.rtt.width * gl.rtt.height * 2);
-		else
-			WriteTextureToVRam(gl.rtt.width, gl.rtt.height, ptr, dst, gl.rtt.fb_w_ctrl, gl.rtt.linestride);
-	}
-	glUnmapBuffer(GL_PIXEL_PACK_BUFFER);
-	glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
-#endif
-}
 BaseTextureCacheData *OpenGLRenderer::GetTexture(TSP tsp, TCW tcw)
 {
 	//lookup texture
 	TextureCacheData* tf = TexCache.getTextureCacheData(tsp, tcw);
-
-	readAsyncPixelBuffer(tf->sa_tex);
 
 	//update if needed
 	if (tf->NeedsUpdate())
@@ -337,7 +286,7 @@ BaseTextureCacheData *OpenGLRenderer::GetTexture(TSP tsp, TCW tcw)
 	else if (tf->IsCustomTextureAvailable())
 	{
 		TexCache.DeleteLater(tf->texID);
-		tf->texID = glcache.GenTexture();
+		tf->texID = 0;
 		tf->CheckCustomTexture();
 	}
 
@@ -366,28 +315,22 @@ void glReadFramebuffer(const FramebufferInfo& info)
 GLuint init_output_framebuffer(int width, int height)
 {
 	if (gl.ofbo.framebuffer != nullptr
-			&& (width != gl.ofbo.framebuffer->getWidth() || height != gl.ofbo.framebuffer->getHeight()
-				// if the rotate90 setting has changed
-				|| (gl.gl_major >= 3 && (gl.ofbo.framebuffer->getTexture() == 0) == config::Rotate90)))
+			&& (width != gl.ofbo.framebuffer->getWidth() || height != gl.ofbo.framebuffer->getHeight()))
 	{
 		gl.ofbo.framebuffer.reset();
 	}
 
 	if (gl.ofbo.framebuffer == nullptr)
 	{
-		GLuint texture = 0;
-		if (config::Rotate90)
-		{
-			// Create a texture for rendering to
-			texture = glcache.GenTexture();
-			glcache.BindTexture(GL_TEXTURE_2D, texture);
+		// Create a texture for rendering to
+		GLuint texture = glcache.GenTexture();
+		glcache.BindTexture(GL_TEXTURE_2D, texture);
 
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
-			glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-			glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-			glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-			glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		}
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 		gl.ofbo.framebuffer = std::make_unique<GlFramebuffer>(width, height, true, texture);
 
 		glcache.Disable(GL_SCISSOR_TEST);
@@ -425,9 +368,7 @@ GlFramebuffer::GlFramebuffer(int width, int height, bool withDepth, GLuint textu
 			// Use a renderbuffer and glBlitFramebuffer
 			glGenRenderbuffers(1, &colorBuffer);
 			glBindRenderbuffer(GL_RENDERBUFFER, colorBuffer);
-#ifdef GL_RGBA8
 			glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA8, width, height);
-#endif
 		}
 	}
 	makeFramebuffer(withDepth);
@@ -505,9 +446,7 @@ GlFramebuffer::GlFramebuffer(int width, int height, bool withDepth, bool withTex
 		// Use a renderbuffer and glBlitFramebuffer
 		glGenRenderbuffers(1, &colorBuffer);
 		glBindRenderbuffer(GL_RENDERBUFFER, colorBuffer);
-#ifdef GL_RGBA8
 		glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA8, width, height);
-#endif
 	}
 
 	makeFramebuffer(withDepth);

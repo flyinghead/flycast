@@ -6,7 +6,7 @@
 #include "types.h"
 #include "cfg/cfg.h"
 #include "x11.h"
-#include "rend/gui.h"
+#include "ui/gui.h"
 #include "input/gamepad.h"
 #include "input/mouse.h"
 #include "icon.h"
@@ -20,6 +20,8 @@
 #define DEFAULT_FULLSCREEN    false
 #define DEFAULT_WINDOW_WIDTH  640
 #define DEFAULT_WINDOW_HEIGHT   480
+
+static void x11_window_set_text(const char *text);
 
 static Window x11_win;
 Display *x11_disp;
@@ -278,16 +280,8 @@ void x11_window_create()
 
 		int depth = CopyFromParent;
 
-		XVisualInfo* x11Visual = nullptr;
-		Colormap     x11Colormap = 0;
-#if !defined(GLES)
-
-		if (!theGLContext.ChooseVisual(x11_disp, &x11Visual, &depth))
-			exit(1);
-		x11Colormap = XCreateColormap(x11_disp, RootWindow(x11_disp, x11Screen), x11Visual->visual, AllocNone);
-#else
 		int i32Depth = DefaultDepth(x11_disp, x11Screen);
-		x11Visual = new XVisualInfo;
+		XVisualInfo* x11Visual = new XVisualInfo;
 		if (!XMatchVisualInfo(x11_disp, x11Screen, i32Depth, TrueColor, x11Visual))
 		{
 			ERROR_LOG(RENDERER, "Error: Unable to acquire visual");
@@ -296,8 +290,8 @@ void x11_window_create()
 		}
 		// Gets the window parameters
 		Window sRootWindow = RootWindow(x11_disp, x11Screen);
-		x11Colormap = XCreateColormap(x11_disp, sRootWindow, x11Visual->visual, AllocNone);
-#endif
+		Colormap x11Colormap = XCreateColormap(x11_disp, sRootWindow, x11Visual->visual, AllocNone);
+
 		XSetWindowAttributes sWA;
 		sWA.colormap = x11Colormap;
 
@@ -326,11 +320,8 @@ void x11_window_create()
 		// Creates the X11 window
 		x11_win = XCreateWindow(x11_disp, RootWindow(x11_disp, x11Screen), 0, 0, x11_width, x11_height,
 			0, depth, InputOutput, x11Visual->visual, ui32Mask, &sWA);
-#if !defined(GLES)
-		XFree(x11Visual);
-#else
+
 		delete x11Visual;
-#endif
 
 		XSetWindowBackground(x11_disp, x11_win, 0);
 
@@ -367,7 +358,7 @@ void x11_window_create()
 	}
 }
 
-void x11_window_set_text(const char* text)
+static void x11_window_set_text(const char* text)
 {
 	if (x11_win)
 	{

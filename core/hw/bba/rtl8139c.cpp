@@ -51,6 +51,7 @@
 #include <zlib.h>
 #include "rtl8139c.h"
 #include "serialize.h"
+#include "hw/sh4/sh4_sched.h"
 
 /* debug RTL8139 card */
 //#define DEBUG_RTL8139 1
@@ -444,6 +445,8 @@ struct RTL8139State {
 
     MemoryRegion bar_io;
     MemoryRegion bar_mem;
+
+    int schedId;
 };
 
 static void rtl8139_set_next_tctr_time(RTL8139State *s);
@@ -899,6 +902,8 @@ static void rtl8139_reset_phy(RTL8139State *s)
     s->NWayExpansion = 0x0001; /* autonegotiation supported */
 
     s->CSCR = CSCR_F_LINK_100 | CSCR_HEART_BIT | CSCR_LD;
+
+	sh4_sched_request(s->schedId, 2000000); /* 10 ms */
 }
 
 void rtl8139_reset(RTL8139State *s)
@@ -2263,6 +2268,15 @@ static void rtl8139_timer(void *opaque)
 }
 #endif
 
+static int rtl8139_sched_callback(int tag, int cycles, int jitter, void *arg)
+{
+	RTL8139State *state = (RTL8139State *)arg;
+	state->IntrStatus |= RxUnderrun;	// Link change
+    rtl8139_update_irq(state);
+
+	return 0;
+}
+
 static void pci_rtl8139_uninit(PCIDevice *dev)
 {
 #ifdef RTL8139_TIMER
@@ -2315,6 +2329,7 @@ RTL8139State *rtl8139_init(NICConf *conf)
 	state->parent_obj.config = (uint8_t *)calloc(256, 1);
 	state->parent_obj.wmask = (uint8_t *)calloc(256, 1);
 	state->parent_obj.cmask = (uint8_t *)calloc(256, 1);
+	state->schedId = sh4_sched_register(0, rtl8139_sched_callback, state);
 	
 	return state;
 }
@@ -2322,6 +2337,7 @@ RTL8139State *rtl8139_init(NICConf *conf)
 void rtl8139_destroy(RTL8139State *state)
 {
 	pci_rtl8139_uninit(PCI_DEVICE(state));
+	sh4_sched_unregister(state->schedId);
 	free(state->parent_obj.config);
 	free(state->parent_obj.wmask);
 	free(state->parent_obj.cmask);
@@ -2390,6 +2406,8 @@ void rtl8139_serialize(RTL8139State *s, Serializer& ser)
 	ser << s->TCTR;
 	ser << s->TimerInt;
 	ser << s->TCTR_base;
+
+	sh4_sched_serialize(ser, s->schedId);
 }
 
 bool rtl8139_deserialize(RTL8139State *s, Deserializer& deser)
@@ -2454,6 +2472,9 @@ bool rtl8139_deserialize(RTL8139State *s, Deserializer& deser)
 	deser >> s->TCTR;
 	deser >> s->TimerInt;
 	deser >> s->TCTR_base;
+
+	if (deser.version() >= Deserializer::V38)
+		sh4_sched_deserialize(deser, s->schedId);
 
 	return s->bChipCmdState & CmdRxEnb;
 }

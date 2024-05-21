@@ -59,7 +59,7 @@ Disc* cue_parse(const char* file, std::vector<u8> *digest)
 	hostfs::FileInfo fileInfo = hostfs::storage().getFileInfo(file);
 	size_t cue_len = fileInfo.size;
 
-	char cue_data[64 * 1024] = { 0 };
+	char cue_data[64_KB] = { 0 };
 
 	if (cue_len >= sizeof(cue_data))
 	{

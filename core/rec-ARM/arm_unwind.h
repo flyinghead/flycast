@@ -17,9 +17,23 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #pragma once
-#include "oslib/oslib.h"
+#include "oslib/unwind_info.h"
+
+#ifdef _M_ARM
+#pragma push_macro("MemoryBarrier")
+#pragma push_macro("Yield")
+#undef MemoryBarrier
+#undef Yield
+#endif
+
 #include <aarch32/macro-assembler-aarch32.h>
 using namespace vixl::aarch32;
+
+#ifdef _M_ARM
+#pragma pop_macro("MemoryBarrier")
+#pragma pop_macro("Yield")
+#endif
+
 #include <map>
 
 class ArmUnwindInfo : public UnwindInfo

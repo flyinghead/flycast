@@ -15,29 +15,32 @@ bool reios_loadElf(const std::string& elf) {
 	std::fseek(f, 0, SEEK_END);
 	size_t size = std::ftell(f);
 
-	if (size > 16 * 1024 * 1024) {
+	if (size == 0 || size > 16_MB) {
 		std::fclose(f);
 		return false;
 	}
 
 	void* elfF = malloc(size);
-	memset(elfF, 0, size);
 
 	std::fseek(f, 0, SEEK_SET);
 	size_t nread = std::fread(elfF, 1, size, f);
 	std::fclose(f);
 
 	elf_t elfFile;
-
-	if (nread != size || elf_newFile(elfF, nread, &elfFile) != 0 || elf_checkFile(&elfFile) != 0)
+	if (nread != size || elf_newFile(elfF, nread, &elfFile) != 0)
 	{
-		free((void*)elfFile.elfFile);
+		free(elfF);
 		return false;
 	}
 
 	bool phys = false;
-	for (int i = 0; i < elf_getNumProgramHeaders(&elfFile); i++)
+	for (size_t i = 0; i < elf_getNumProgramHeaders(&elfFile); i++)
 	{
+		uint32_t type = elf_getProgramHeaderType(&elfFile, i);
+		if (type != PT_LOAD) {
+			DEBUG_LOG(REIOS, "Ignoring section %d type %d", (int)i, type);
+			continue;
+		}
 		// Load that section
 		uint64_t dest;
 		if (phys)
@@ -49,15 +52,15 @@ bool reios_loadElf(const std::string& elf) {
 		u8* ptr = GetMemPtr(dest, len);
 		if (ptr == NULL)
 		{
-			WARN_LOG(REIOS, "Invalid load address for section %d: %08lx", i, (long)dest);
+			WARN_LOG(REIOS, "Invalid load address for section %d: %08lx", (int)i, (long)dest);
 			continue;
 		}
-		DEBUG_LOG(REIOS, "Loading section %d to %08lx - %08lx", i, (long)dest, (long)(dest + len - 1));
+		DEBUG_LOG(REIOS, "Loading section %d to %08lx - %08lx", (int)i, (long)dest, (long)(dest + len - 1));
 		memcpy(ptr, src, len);
 		ptr += len;
 		memset(ptr, 0, elf_getProgramHeaderMemorySize(&elfFile, i) - len);
 	}
-	free((void*)elfFile.elfFile);
+	free(elfF);
 
 	return true;
 }

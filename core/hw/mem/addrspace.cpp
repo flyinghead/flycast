@@ -211,7 +211,7 @@ template<typename T>
 static T DYNACALL readMemNotMapped(u32 addresss)
 {
 	INFO_LOG(MEMORY, "[sh4]read%d from %08x, not mapped (default handler)", (int)sizeof(T), addresss);
-	return (u8)MEM_ERROR_RETURN_VALUE;
+	return (T)MEM_ERROR_RETURN_VALUE;
 }
 //default write hander
 template<typename T>
@@ -449,6 +449,7 @@ void initMappings()
 		virtmem::create_mappings(&mem_mappings[0], std::size(mem_mappings));
 
 		// Point buffers to actual data pointers
+		// This *must* be the first r/w mirror (switch)
 		aica::aica_ram.setRegion(&ram_base[0x20000000], ARAM_SIZE); // Points to the writable AICA addrspace
 		vram.setRegion(&ram_base[0x04000000], VRAM_SIZE); // Points to first vram mirror (writable and lockable)
 		mem_b.setRegion(&ram_base[0x0C000000], RAM_SIZE); // Main memory, first mirror
@@ -461,9 +462,9 @@ void initMappings()
 	mem_b.zero();
 	NOTICE_LOG(VMEM, "BASE %p RAM(%d MB) %p VRAM64(%d MB) %p ARAM(%d MB) %p",
 			ram_base,
-			RAM_SIZE / 1024 / 1024, &mem_b[0],
-			VRAM_SIZE / 1024 / 1024, &vram[0],
-			ARAM_SIZE / 1024 / 1024, &aica::aica_ram[0]);
+			(u32)(RAM_SIZE / 1_MB), &mem_b[0],
+			(u32)(VRAM_SIZE / 1_MB), &vram[0],
+			(u32)(ARAM_SIZE / 1_MB), &aica::aica_ram[0]);
 }
 
 void release()
@@ -483,6 +484,7 @@ void release()
 void protectVram(u32 addr, u32 size)
 {
 	addr &= VRAM_MASK;
+#ifndef __SWITCH__
 	if (virtmemEnabled())
 	{
 		virtmem::region_lock(ram_base + 0x04000000 + addr, size);	// P0
@@ -495,6 +497,7 @@ void protectVram(u32 addr, u32 size)
 		}
 	}
 	else
+#endif
 	{
 		virtmem::region_lock(&vram[addr], size);
 	}
@@ -503,6 +506,7 @@ void protectVram(u32 addr, u32 size)
 void unprotectVram(u32 addr, u32 size)
 {
 	addr &= VRAM_MASK;
+#ifndef __SWITCH__
 	if (virtmemEnabled())
 	{
 		virtmem::region_unlock(ram_base + 0x04000000 + addr, size);		// P0
@@ -515,6 +519,7 @@ void unprotectVram(u32 addr, u32 size)
 		}
 	}
 	else
+#endif
 	{
 		virtmem::region_unlock(&vram[addr], size);
 	}
@@ -522,6 +527,7 @@ void unprotectVram(u32 addr, u32 size)
 
 u32 getVramOffset(void *addr)
 {
+#ifndef __SWITCH__
 	if (virtmemEnabled())
 	{
 		ptrdiff_t offset = (u8*)addr - ram_base;
@@ -533,6 +539,7 @@ u32 getVramOffset(void *addr)
 		return offset & VRAM_MASK;
 	}
 	else
+#endif
 	{
 		ptrdiff_t offset = (u8*)addr - &vram[0];
 		if (offset < 0 || offset >= VRAM_SIZE)

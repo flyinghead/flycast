@@ -3,7 +3,7 @@
   Copyright (C) 1999-2020 Dieter Baron and Thomas Klausner
 
   This file is part of libzip, a library to manipulate ZIP archives.
-  The authors can be contacted at <libzip@nih.at>
+  The authors can be contacted at <info@libzip.org>
 
   Redistribution and use in source and binary forms, with or without
   modification, are permitted provided that the following conditions
@@ -39,6 +39,7 @@ static void utf16_make_tempname(char *buf, size_t len, const char *name, zip_uin
 static char *utf16_strdup(const char *string);
 
 /* clang-format off */
+DONT_WARN_INCOMPATIBLE_FN_PTR_BEGIN
 
 zip_win32_file_operations_t ops_utf16 = {
     utf16_allocate_tempname,
@@ -52,6 +53,7 @@ zip_win32_file_operations_t ops_utf16 = {
     utf16_strdup
 };
 
+DONT_WARN_INCOMPATIBLE_FN_PTR_END
 /* clang-format on */
 
 ZIP_EXTERN zip_source_t *
@@ -65,7 +67,7 @@ zip_source_win32w(zip_t *za, const wchar_t *fname, zip_uint64_t start, zip_int64
 
 ZIP_EXTERN zip_source_t *
 zip_source_win32w_create(const wchar_t *fname, zip_uint64_t start, zip_int64_t length, zip_error_t *error) {
-    if (fname == NULL || length < -1) {
+    if (fname == NULL || length < ZIP_LENGTH_UNCHECKED) {
         zip_error_set(error, ZIP_ER_INVAL, 0);
         return NULL;
     }
@@ -101,7 +103,7 @@ static HANDLE __stdcall utf16_create_file(const char *name, DWORD access, DWORD 
 
 static void
 utf16_make_tempname(char *buf, size_t len, const char *name, zip_uint32_t i) {
-    _snwprintf((wchar_t *)buf, len, L"%s.%08x", (const wchar_t *)name, i);
+    _snwprintf_s((wchar_t *)buf, len, len, L"%s.%08x", (const wchar_t *)name, i);
 }
 
 

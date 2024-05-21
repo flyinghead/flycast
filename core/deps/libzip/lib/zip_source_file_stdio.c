@@ -3,7 +3,7 @@
   Copyright (C) 2020 Dieter Baron and Thomas Klausner
 
   This file is part of libzip, a library to manipulate ZIP archives.
-  The authors can be contacted at <libzip@nih.at>
+  The authors can be contacted at <info@libzip.org>
 
   Redistribution and use in source and binary forms, with or without
   modification, are permitted provided that the following conditions
@@ -78,7 +78,7 @@ zip_source_filep(zip_t *za, FILE *file, zip_uint64_t start, zip_int64_t len) {
 
 ZIP_EXTERN zip_source_t *
 zip_source_filep_create(FILE *file, zip_uint64_t start, zip_int64_t length, zip_error_t *error) {
-    if (file == NULL || length < -1) {
+    if (file == NULL || length < ZIP_LENGTH_UNCHECKED) {
         zip_error_set(error, ZIP_ER_INVAL, 0);
         return NULL;
     }
@@ -175,34 +175,4 @@ _zip_stdio_op_tell(zip_source_file_context_t *ctx, void *f) {
     }
 
     return offset;
-}
-
-
-/*
- * fopen replacement that sets the close-on-exec flag
- * some implementations support an fopen 'e' flag for that,
- * but e.g. macOS doesn't.
- */
-FILE *
-_zip_fopen_close_on_exec(const char *name, bool writeable) {
-    int fd;
-    int flags;
-    FILE *fp;
-
-    flags = O_CLOEXEC;
-    if (writeable) {
-        flags |= O_RDWR;
-    }
-    else {
-        flags |= O_RDONLY;
-    }
-
-    /* mode argument needed on Windows */
-    if ((fd = open(name, flags, 0666)) < 0) {
-        return NULL;
-    }
-    if ((fp = fdopen(fd, writeable ? "r+b" : "rb")) == NULL) {
-        return NULL;
-    }
-    return fp;
 }

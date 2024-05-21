@@ -1,309 +1,357 @@
 //
-//  Copyright (c) 2012 Artyom Beilis (Tonkikh)
+// Copyright (c) 2012 Artyom Beilis (Tonkikh)
 //
-//  Distributed under the Boost Software License, Version 1.0. (See
-//  accompanying file LICENSE_1_0.txt or copy at
-//  http://www.boost.org/LICENSE_1_0.txt)
-//
-#ifndef NOWIDE_FSTREAM_INCLUDED_HPP
-#define NOWIDE_FSTREAM_INCLUDED_HPP
+// Distributed under the Boost Software License, Version 1.0.
+// https://www.boost.org/LICENSE_1_0.txt
 
-#include <iosfwd>
+#ifndef NOWIDE_FSTREAM_HPP_INCLUDED
+#define NOWIDE_FSTREAM_HPP_INCLUDED
+
 #include <nowide/config.hpp>
-#include <nowide/convert.hpp>
-#include <nowide/scoped_ptr.hpp>
-#include <fstream>
-#include <memory>
+#include <nowide/detail/is_path.hpp>
 #include <nowide/filebuf.hpp>
+#include <istream>
+#include <ostream>
+#include <utility>
 
-
-///
-/// \brief This namespace includes implementation of the standard library functios
-/// such that they accept UTF-8 strings on Windows. On other platforms it is just an alias
-/// of std namespace (i.e. not on Windows)
-///
 namespace nowide {
-#if !defined(NOWIDE_WINDOWS)  && !defined(NOWIDE_FSTREAM_TESTS) && !defined(NOWIDE_DOXYGEN)
+    /// \cond INTERNAL
+    namespace detail {
+        // clang-format off
+        struct StreamTypeIn
+        {
+            static std::ios_base::openmode mode() { return std::ios_base::in; }
+            static std::ios_base::openmode mode_modifier() { return mode(); }
+            template<typename CharType, typename Traits>
+            struct stream_base{
+                using type = std::basic_istream<CharType, Traits>;
+            };
+        };
+        struct StreamTypeOut
+        {
+            static std::ios_base::openmode mode() { return std::ios_base::out; }
+            static std::ios_base::openmode mode_modifier() { return mode(); }
+            template<typename CharType, typename Traits>
+            struct stream_base{
+                using type = std::basic_ostream<CharType, Traits>;
+            };
+        };
+        struct StreamTypeInOut
+        {
+            static std::ios_base::openmode mode() { return std::ios_base::in | std::ios_base::out; }
+            static std::ios_base::openmode mode_modifier() { return std::ios_base::openmode(); }
+            template<typename CharType, typename Traits>
+            struct stream_base{
+                using type = std::basic_iostream<CharType, Traits>;
+            };
+        };
+        // clang-format on
 
-    using std::basic_ifstream;
-    using std::basic_ofstream;
-    using std::basic_fstream;
-    using std::ifstream;
-    using std::ofstream;
-    using std::fstream;
+        /// Base class for all basic_*fstream classes
+        /// Contains basic_filebuf instance so its pointer can be used to construct basic_*stream
+        /// Provides common functions to reduce boilerplate code including inheriting from
+        /// the correct std::basic_[io]stream class and initializing it
+        /// \tparam T_StreamType One of StreamType* above.
+        ///         Class used instead of value, because openmode::operator| may not be constexpr
+        /// \tparam FileBufType Discriminator to force a differing ABI if depending on the contained filebuf
+        template<typename CharType,
+                 typename Traits,
+                 typename T_StreamType,
+                 int FileBufType = NOWIDE_USE_FILEBUF_REPLACEMENT>
+        class fstream_impl;
 
-#else
+    } // namespace detail
+    /// \endcond
+
     ///
     /// \brief Same as std::basic_ifstream<char> but accepts UTF-8 strings under Windows
     ///
-    template<typename CharType,typename Traits = std::char_traits<CharType> >
-    class basic_ifstream : public std::basic_istream<CharType,Traits>
+    /// Affected by #NOWIDE_USE_FILEBUF_REPLACEMENT and #NOWIDE_USE_WCHAR_OVERLOADS
+    template<typename CharType, typename Traits = std::char_traits<CharType>>
+    class basic_ifstream : public detail::fstream_impl<CharType, Traits, detail::StreamTypeIn>
     {
+        using fstream_impl = detail::fstream_impl<CharType, Traits, detail::StreamTypeIn>;
+
     public:
-        typedef basic_filebuf<CharType,Traits> internal_buffer_type;
-        typedef std::basic_istream<CharType,Traits> internal_stream_type;
+        basic_ifstream()
+        {}
 
-        basic_ifstream() : 
-            internal_stream_type(0)
+        explicit basic_ifstream(const char* file_name, std::ios_base::openmode mode = std::ios_base::in)
         {
-            buf_.reset(new internal_buffer_type());
-            std::ios::rdbuf(buf_.get());
+            open(file_name, mode);
         }
-        
-        explicit basic_ifstream(char const *file_name,std::ios_base::openmode mode = std::ios_base::in) : 
-            internal_stream_type(0) 
+#if NOWIDE_USE_WCHAR_OVERLOADS
+        explicit basic_ifstream(const wchar_t* file_name, std::ios_base::openmode mode = std::ios_base::in)
         {
-            buf_.reset(new internal_buffer_type());
-            std::ios::rdbuf(buf_.get());
-            open(file_name,mode);
+            open(file_name, mode);
         }
-        
-        explicit basic_ifstream(std::string const &file_name,std::ios_base::openmode mode = std::ios_base::in) : 
-            internal_stream_type(0) 
+#endif
+
+        explicit basic_ifstream(const std::string& file_name, std::ios_base::openmode mode = std::ios_base::in)
         {
-            buf_.reset(new internal_buffer_type());
-            std::ios::rdbuf(buf_.get());
-            open(file_name,mode);
+            open(file_name, mode);
         }
 
-        void open(char const *file_name,std::ios_base::openmode mode = std::ios_base::in)
+        template<typename Path>
+        explicit basic_ifstream(const Path& file_name,
+                                detail::enable_if_path_t<Path, std::ios_base::openmode> mode = std::ios_base::in)
         {
-            if(!buf_->open(file_name,mode | std::ios_base::in)) {
-                this->setstate(std::ios_base::failbit);
-            }
-            else {
-                this->clear();
-            }
+            open(file_name, mode);
         }
-
-        void open(std::string const &file_name,std::ios_base::openmode mode = std::ios_base::in)
+        using fstream_impl::open;
+        using fstream_impl::is_open;
+        using fstream_impl::close;
+        using fstream_impl::rdbuf;
+        using fstream_impl::swap;
+        basic_ifstream(const basic_ifstream&) = delete;
+        basic_ifstream& operator=(const basic_ifstream&) = delete;
+        basic_ifstream(basic_ifstream&& other) noexcept : fstream_impl(std::move(other))
+        {}
+        basic_ifstream& operator=(basic_ifstream&& rhs) noexcept
         {
-            if(!buf_->open(file_name,mode | std::ios_base::in)) {
-                this->setstate(std::ios_base::failbit);
-            }
-            else {
-                this->clear();
-            }
+            fstream_impl::operator=(std::move(rhs));
+            return *this;
         }
-
-        bool is_open()
-        {
-            return buf_->is_open();
-        }
-        bool is_open() const
-        {
-            return buf_->is_open();
-        }
-        void close()
-        {
-            if(!buf_->close())
-                this->setstate(std::ios_base::failbit);
-            else
-                this->clear();
-        }
-
-        internal_buffer_type *rdbuf() const
-        {
-            return buf_.get();
-        }
-        ~basic_ifstream()
-        {
-            buf_->close();
-        }
-            
-    private:
-        nowide::scoped_ptr<internal_buffer_type> buf_;
     };
 
     ///
     /// \brief Same as std::basic_ofstream<char> but accepts UTF-8 strings under Windows
     ///
-
-    template<typename CharType,typename Traits = std::char_traits<CharType> >
-    class basic_ofstream : public std::basic_ostream<CharType,Traits>
+    /// Affected by #NOWIDE_USE_FILEBUF_REPLACEMENT and #NOWIDE_USE_WCHAR_OVERLOADS
+    template<typename CharType, typename Traits = std::char_traits<CharType>>
+    class basic_ofstream : public detail::fstream_impl<CharType, Traits, detail::StreamTypeOut>
     {
+        using fstream_impl = detail::fstream_impl<CharType, Traits, detail::StreamTypeOut>;
+
     public:
-        typedef basic_filebuf<CharType,Traits> internal_buffer_type;
-        typedef std::basic_ostream<CharType,Traits> internal_stream_type;
-
-        basic_ofstream() : 
-            internal_stream_type(0)
+        basic_ofstream()
+        {}
+        explicit basic_ofstream(const char* file_name, std::ios_base::openmode mode = std::ios_base::out)
         {
-            buf_.reset(new internal_buffer_type());
-            std::ios::rdbuf(buf_.get());
+            open(file_name, mode);
+        }
+#if NOWIDE_USE_WCHAR_OVERLOADS
+        explicit basic_ofstream(const wchar_t* file_name, std::ios_base::openmode mode = std::ios_base::out)
+        {
+            open(file_name, mode);
+        }
+#endif
+        explicit basic_ofstream(const std::string& file_name, std::ios_base::openmode mode = std::ios_base::out)
+        {
+            open(file_name, mode);
+        }
+        template<typename Path>
+        explicit basic_ofstream(const Path& file_name,
+                                detail::enable_if_path_t<Path, std::ios_base::openmode> mode = std::ios_base::out)
+        {
+            open(file_name, mode);
         }
 
-        explicit basic_ofstream(char const *file_name,std::ios_base::openmode mode = std::ios_base::out) :
-            internal_stream_type(0)
+        using fstream_impl::open;
+        using fstream_impl::is_open;
+        using fstream_impl::close;
+        using fstream_impl::rdbuf;
+        using fstream_impl::swap;
+        basic_ofstream(const basic_ofstream&) = delete;
+        basic_ofstream& operator=(const basic_ofstream&) = delete;
+        basic_ofstream(basic_ofstream&& other) noexcept : fstream_impl(std::move(other))
+        {}
+        basic_ofstream& operator=(basic_ofstream&& rhs)
         {
-            buf_.reset(new internal_buffer_type());
-            std::ios::rdbuf(buf_.get());
-            open(file_name,mode);
+            fstream_impl::operator=(std::move(rhs));
+            return *this;
         }
-
-        explicit basic_ofstream(std::string const &file_name,std::ios_base::openmode mode = std::ios_base::out) :
-            internal_stream_type(0)
-        {
-            buf_.reset(new internal_buffer_type());
-            std::ios::rdbuf(buf_.get());
-            open(file_name,mode);
-        }
-
-        void open(char const *file_name,std::ios_base::openmode mode = std::ios_base::out)
-        {
-            if(!buf_->open(file_name,mode | std::ios_base::out)) {
-                this->setstate(std::ios_base::failbit);
-            }
-            else {
-                this->clear();
-            }
-        }
-
-        void open(std::string const &file_name,std::ios_base::openmode mode = std::ios_base::out)
-        {
-            if(!buf_->open(file_name,mode | std::ios_base::out)) {
-                this->setstate(std::ios_base::failbit);
-            }
-            else {
-                this->clear();
-            }
-        }
-
-        bool is_open()
-        {
-            return buf_->is_open();
-        }
-        bool is_open() const
-        {
-            return buf_->is_open();
-        }
-        void close()
-        {
-            if(!buf_->close())
-                this->setstate(std::ios_base::failbit);
-            else
-                this->clear();
-        }
-
-        internal_buffer_type *rdbuf() const
-        {
-            return buf_.get();
-        }
-        ~basic_ofstream()
-        {
-            buf_->close();
-        }
-            
-    private:
-        nowide::scoped_ptr<internal_buffer_type> buf_;
     };
 
+#ifdef NOWIDE_MSVC
+#pragma warning(push)
+#pragma warning(disable : 4250) // <class> : inherits <method> via dominance
+#endif
     ///
     /// \brief Same as std::basic_fstream<char> but accepts UTF-8 strings under Windows
     ///
-
-    template<typename CharType,typename Traits = std::char_traits<CharType> >
-    class basic_fstream : public std::basic_iostream<CharType,Traits>
+    /// Affected by #NOWIDE_USE_FILEBUF_REPLACEMENT and #NOWIDE_USE_WCHAR_OVERLOADS
+    template<typename CharType, typename Traits = std::char_traits<CharType>>
+    class basic_fstream : public detail::fstream_impl<CharType, Traits, detail::StreamTypeInOut>
     {
+        using fstream_impl = detail::fstream_impl<CharType, Traits, detail::StreamTypeInOut>;
+
     public:
-        typedef basic_filebuf<CharType,Traits> internal_buffer_type;
-        typedef std::basic_iostream<CharType,Traits> internal_stream_type;
-
-        basic_fstream() : 
-            internal_stream_type(0)
+        basic_fstream()
+        {}
+        explicit basic_fstream(const char* file_name,
+                               std::ios_base::openmode mode = std::ios_base::in | std::ios_base::out)
         {
-            buf_.reset(new internal_buffer_type());
-            std::ios::rdbuf(buf_.get());
+            open(file_name, mode);
+        }
+#if NOWIDE_USE_WCHAR_OVERLOADS
+        explicit basic_fstream(const wchar_t* file_name,
+                               std::ios_base::openmode mode = std::ios_base::in | std::ios_base::out)
+        {
+            open(file_name, mode);
+        }
+#endif
+        explicit basic_fstream(const std::string& file_name,
+                               std::ios_base::openmode mode = std::ios_base::in | std::ios_base::out)
+        {
+            open(file_name, mode);
+        }
+        template<typename Path>
+        explicit basic_fstream(const Path& file_name,
+                               detail::enable_if_path_t<Path, std::ios_base::openmode> mode = std::ios_base::in
+                                                                                              | std::ios_base::out)
+        {
+            open(file_name, mode);
         }
 
-        explicit basic_fstream(char const *file_name,std::ios_base::openmode mode = std::ios_base::out | std::ios_base::in) :
-            internal_stream_type(0)
+        using fstream_impl::open;
+        using fstream_impl::is_open;
+        using fstream_impl::close;
+        using fstream_impl::rdbuf;
+        using fstream_impl::swap;
+        basic_fstream(const basic_fstream&) = delete;
+        basic_fstream& operator=(const basic_fstream&) = delete;
+        basic_fstream(basic_fstream&& other) noexcept : fstream_impl(std::move(other))
+        {}
+        basic_fstream& operator=(basic_fstream&& rhs)
         {
-            buf_.reset(new internal_buffer_type());
-            std::ios::rdbuf(buf_.get());
-            open(file_name,mode);
+            fstream_impl::operator=(std::move(rhs));
+            return *this;
         }
-
-        explicit basic_fstream(std::string const &file_name,std::ios_base::openmode mode = std::ios_base::out | std::ios_base::in) :
-            internal_stream_type(0)
-        {
-            buf_.reset(new internal_buffer_type());
-            std::ios::rdbuf(buf_.get());
-            open(file_name,mode);
-        }
-
-        void open(char const *file_name,std::ios_base::openmode mode = std::ios_base::out | std::ios_base::out)
-        {
-            if(!buf_->open(file_name,mode)) {
-                this->setstate(std::ios_base::failbit);
-            }
-            else {
-                this->clear();
-            }
-        }
-
-        void open(std::string const &file_name,std::ios_base::openmode mode = std::ios_base::out | std::ios_base::out)
-        {
-            if(!buf_->open(file_name,mode)) {
-                this->setstate(std::ios_base::failbit);
-            }
-            else {
-                this->clear();
-            }
-        }
-
-        bool is_open()
-        {
-            return buf_->is_open();
-        }
-        bool is_open() const
-        {
-            return buf_->is_open();
-        }
-        void close()
-        {
-            if(!buf_->close())
-                this->setstate(std::ios_base::failbit);
-            else
-                this->clear();
-        }
-
-        internal_buffer_type *rdbuf() const
-        {
-            return buf_.get();
-        }
-        ~basic_fstream()
-        {
-            buf_->close();
-        }
-            
-    private:
-        nowide::scoped_ptr<internal_buffer_type> buf_;
     };
 
+    template<typename CharType, typename Traits>
+    void swap(basic_ifstream<CharType, Traits>& lhs, basic_ifstream<CharType, Traits>& rhs)
+    {
+        lhs.swap(rhs);
+    }
+    template<typename CharType, typename Traits>
+    void swap(basic_ofstream<CharType, Traits>& lhs, basic_ofstream<CharType, Traits>& rhs)
+    {
+        lhs.swap(rhs);
+    }
+    template<typename CharType, typename Traits>
+    void swap(basic_fstream<CharType, Traits>& lhs, basic_fstream<CharType, Traits>& rhs)
+    {
+        lhs.swap(rhs);
+    }
 
     ///
-    /// \brief Same as std::filebuf but accepts UTF-8 strings under Windows
+    /// Same as std::filebuf but accepts UTF-8 strings under Windows
     ///
-    typedef basic_filebuf<char> filebuf;
+    using filebuf = basic_filebuf<char>;
     ///
     /// Same as std::ifstream but accepts UTF-8 strings under Windows
+    /// and *\::filesystem::path on all systems
     ///
-    typedef basic_ifstream<char> ifstream;
+    using ifstream = basic_ifstream<char>;
     ///
     /// Same as std::ofstream but accepts UTF-8 strings under Windows
+    /// and *\::filesystem::path on all systems
     ///
-    typedef basic_ofstream<char> ofstream;
+    using ofstream = basic_ofstream<char>;
     ///
     /// Same as std::fstream but accepts UTF-8 strings under Windows
+    /// and *\::filesystem::path on all systems
     ///
-    typedef basic_fstream<char> fstream;
+    using fstream = basic_fstream<char>;
+
+    // Implementation
+    namespace detail {
+        /// Holds an instance of T
+        /// Required to make sure this is constructed first before passing it to sibling classes
+        template<typename T>
+        struct buf_holder
+        {
+            T buf_;
+        };
+        template<typename CharType, typename Traits, typename T_StreamType, int>
+        class fstream_impl : private buf_holder<basic_filebuf<CharType, Traits>>, // must be first due to init order
+                             public T_StreamType::template stream_base<CharType, Traits>::type
+        {
+            using internal_buffer_type = basic_filebuf<CharType, Traits>;
+            using base_buf_holder = buf_holder<internal_buffer_type>;
+            using stream_base = typename T_StreamType::template stream_base<CharType, Traits>::type;
+
+        public:
+            using stream_base::setstate;
+            using stream_base::clear;
+
+        protected:
+            using base_buf_holder::buf_;
+
+            fstream_impl() : stream_base(&buf_)
+            {}
+            fstream_impl(const fstream_impl&) = delete;
+            fstream_impl& operator=(const fstream_impl&) = delete;
+
+            // coverity[exn_spec_violation]
+            fstream_impl(fstream_impl&& other) noexcept :
+                base_buf_holder(std::move(other)), stream_base(std::move(other))
+            {
+                this->set_rdbuf(rdbuf());
+            }
+            fstream_impl& operator=(fstream_impl&& rhs) noexcept
+            {
+                base_buf_holder::operator=(std::move(rhs));
+                stream_base::operator=(std::move(rhs));
+                return *this;
+            }
+            void swap(fstream_impl& other)
+            {
+                stream_base::swap(other);
+                rdbuf()->swap(*other.rdbuf());
+            }
+
+            void open(const std::string& file_name, std::ios_base::openmode mode = T_StreamType::mode())
+            {
+                open(file_name.c_str(), mode);
+            }
+            template<typename Path>
+            detail::enable_if_path_t<Path, void> open(const Path& file_name,
+                                                      std::ios_base::openmode mode = T_StreamType::mode())
+            {
+                open(file_name.c_str(), mode);
+            }
+            void open(const char* file_name, std::ios_base::openmode mode = T_StreamType::mode())
+            {
+                if(!rdbuf()->open(file_name, mode | T_StreamType::mode_modifier()))
+                    setstate(std::ios_base::failbit);
+                else
+                    clear();
+            }
+#if NOWIDE_USE_WCHAR_OVERLOADS
+            void open(const wchar_t* file_name, std::ios_base::openmode mode = T_StreamType::mode())
+            {
+                if(!rdbuf()->open(file_name, mode | T_StreamType::mode_modifier()))
+                    setstate(std::ios_base::failbit);
+                else
+                    clear();
+            }
+#endif
+            bool is_open()
+            {
+                return rdbuf()->is_open();
+            }
+            bool is_open() const
+            {
+                return rdbuf()->is_open();
+            }
+            void close()
+            {
+                if(!rdbuf()->close())
+                    setstate(std::ios_base::failbit);
+            }
+
+            internal_buffer_type* rdbuf() const
+            {
+                return const_cast<internal_buffer_type*>(&buf_);
+            }
+        };
+#ifdef NOWIDE_MSVC
+#pragma warning(pop)
+#endif
+    } // namespace detail
+} // namespace nowide
 
 #endif
-} // nowide
-
-
-
-
-#endif
-// vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4

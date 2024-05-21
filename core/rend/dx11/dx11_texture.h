@@ -67,9 +67,9 @@ private:
 class Samplers
 {
 public:
-	ComPtr<ID3D11SamplerState> getSampler(bool linear, bool clampU = true, bool clampV = true, bool flipU = false, bool flipV = false)
+	ComPtr<ID3D11SamplerState> getSampler(bool linear, bool clampU = true, bool clampV = true, bool flipU = false, bool flipV = false, bool punchThrough = false)
 	{
-		int hash = (int)clampU | ((int)clampV << 1) | ((int)flipU << 2) | ((int)flipV << 3) | ((int)linear << 4);
+		int hash = (int)clampU | ((int)clampV << 1) | ((int)flipU << 2) | ((int)flipV << 3) | ((int)linear << 4) | ((int)punchThrough << 5);
 		auto& sampler = samplers[hash];
 		if (!sampler)
 		{
@@ -77,19 +77,23 @@ public:
 			D3D11_SAMPLER_DESC desc{};
 			if (linear)
 			{
-				if (config::AnisotropicFiltering > 1)
+				if (punchThrough)
+					desc.Filter = D3D11_FILTER_MIN_MAG_LINEAR_MIP_POINT;
+				else if (config::AnisotropicFiltering > 1)
 					desc.Filter = D3D11_FILTER_ANISOTROPIC;
 				else
 					desc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
 			}
-			else
+			else {
 				desc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
+			}
 			desc.AddressU = clampU ?  D3D11_TEXTURE_ADDRESS_CLAMP : flipU ? D3D11_TEXTURE_ADDRESS_MIRROR : D3D11_TEXTURE_ADDRESS_WRAP;
 			desc.AddressV = clampV ?  D3D11_TEXTURE_ADDRESS_CLAMP : flipV ? D3D11_TEXTURE_ADDRESS_MIRROR : D3D11_TEXTURE_ADDRESS_WRAP;
 			desc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
 			desc.ComparisonFunc = D3D11_COMPARISON_NEVER;
 			desc.MaxAnisotropy = config::AnisotropicFiltering;
 			desc.MaxLOD = D3D11_FLOAT32_MAX;
+			desc.MipLODBias = -1.5f;
 			createSampler(&desc, &sampler.get());
 		}
 		return sampler;

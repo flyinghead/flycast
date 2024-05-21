@@ -3,7 +3,8 @@
 	url = https://github.com/libsdl-org/SDL.git
 [submodule "core/deps/libchdr"]
 	path = core/deps/libchdr
-	url = https://github.com/flyinghead/libchdr.git
+	url = https://github.com/rtissera/libchdr.git
+	ignore = dirty
 [submodule "core/deps/luabridge"]
 	path = core/deps/luabridge
 	url = https://github.com/vinniefalco/LuaBridge.git
@@ -22,3 +23,18 @@
 [submodule "core/deps/oboe"]
 	path = core/deps/oboe
 	url = https://github.com/google/oboe.git
+[submodule "core/deps/Syphon"]
+	path = core/deps/Syphon
+	url = https://github.com/vkedwardli/Syphon-Framework.git
+[submodule "core/deps/Spout"]
+	path = core/deps/Spout
+	url = https://github.com/vkedwardli/Spout2.git
+[submodule "core/deps/discord-rpc"]
+	path = core/deps/discord-rpc
+	url = https://github.com/flyinghead/discord-rpc
+[submodule "core/deps/libadrenotools"]
+	path = core/deps/libadrenotools
+	url = https://github.com/bylaws/libadrenotools
+[submodule "core/deps/rcheevos"]
+	path = core/deps/rcheevos
+	url = https://github.com/RetroAchievements/rcheevos.git

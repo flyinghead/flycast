@@ -26,29 +26,39 @@
 class ZipArchive : public Archive
 {
 public:
-	ZipArchive() : zip(NULL) {}
 	~ZipArchive() override;
 
 	ArchiveFile* OpenFile(const char* name) override;
 	ArchiveFile* OpenFileByCrc(u32 crc) override;
 
-	bool Open(const void *data, size_t size);
-	ArchiveFile *OpenFirstFile();
-
-protected:
 	bool Open(FILE *file) override;
+	bool Open(const void *data, size_t size);
+
+	ArchiveFile *OpenFirstFile();
+	ArchiveFile *OpenFileByIndex(size_t index);
 
 private:
-	struct zip *zip;
+	zip_t *zip = nullptr;
 };
 
 class ZipArchiveFile : public ArchiveFile
 {
 public:
-	ZipArchiveFile(struct zip_file *zip_file) : zip_file(zip_file) {}
-	~ZipArchiveFile() override { zip_fclose(zip_file); }
+	ZipArchiveFile(zip_file_t *zip_file, size_t length, const char *name)
+		: zip_file(zip_file), _length(length), name(name) {}
+	~ZipArchiveFile() override {
+		zip_fclose(zip_file);
+	}
 	u32 Read(void* buffer, u32 length) override;
+	size_t length() override {
+		return _length;
+	}
+	const char *getName() override {
+		return name;
+	}
 
 private:
-	struct zip_file *zip_file;
+	zip_file_t *zip_file;
+	size_t _length;
+	const char *name;
 };

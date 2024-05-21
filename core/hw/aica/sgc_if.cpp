@@ -15,7 +15,7 @@
     along with reicast.  If not, see <https://www.gnu.org/licenses/>.
 
     Some PLFO and FEG code from Highly_Theoretical lib by Neill Corlett
-    (https://github.com/kode54/Highly_Theoretical)
+    (https://gitlab.com/kode54/highly_theoretical)
  */
 
 #include "sgc_if.h"
@@ -23,7 +23,7 @@
 #include "aica_if.h"
 #include "aica_mem.h"
 #include "dsp.h"
-#include "oslib/audiostream.h"
+#include "audio/audiostream.h"
 #include "hw/gdrom/gdrom_if.h"
 #include "cfg/option.h"
 #include "serialize.h"
@@ -45,10 +45,7 @@
 #define clip_verify(x)
 #endif
 
-namespace aica
-{
-
-namespace sgc
+namespace aica::sgc
 {
 //Sound generation, mixin, and channel regs emulation
 //x.15
@@ -77,19 +74,7 @@ static const double AEG_DSR_Time[64] =
 	920.0,790.0,690.0,550.0,460.0,390.0,340.0,270.0,230.0,200.0,170.0,140.0,110.0,98.0,85.0,68.0,57.0,49.0,43.0,34.0,
 	28.0,25.0,22.0,18.0,14.0,12.0,11.0,8.5,7.1,6.1,5.4,4.3,3.6,3.1
 };
-// These times come from the documentation but don't sound correct.
-// HT uses the AEG decay times instead and it sounds better.
-//static const double FEG_Time[] =
-//{
-//	-1, -1, 472800.0, 405200.0, 354400.0, 283600.0, 236400.0, 202800.0,
-//	177200.0, 142000.0, 118400.0, 101200.0, 88800.0, 70800.0, 59200.0, 50800.0,
-//	44400.0, 35600.0, 29600.0, 25200.0, 22000.0, 17600.0, 14800.0, 12800.0,
-//	11200.0, 8800.0, 7200.0, 6400.0, 5600.0, 4400.0, 3680.0, 3160.0,
-//	2760.0, 2220.0, 1840.0, 1560.0, 1360.0, 1080.0, 920.0, 800.0,
-//	680.0, 560.0, 440.0, 392.0, 340.0, 272.0, 228.0, 196.0,
-//	172.0, 158.0, 136.0, 100.0, 88.0, 72.0, 56.0, 48.0,
-//	44.0, 34.0, 28.0, 24.0, 22.0, 17.0, 14.0, 12.0
-//};
+
 static const float PLFOS_Scale[8] = { 0.f, 3.61f, 7.22f, 14.44f, 28.88f, 57.75f, 115.5f, 231.f };
 static int PLFO_Scales[8][256];
 
@@ -159,11 +144,95 @@ static void VolumePan(SampleType value, u32 vol, u32 pan, SampleType& outl, Samp
 	}
 }
 
-const DSP_OUT_VOL_REG *dsp_out_vol = (DSP_OUT_VOL_REG *)&aica_reg[0x2000];
-static int beepOn;
-static int beepPeriod;
-static int beepCounter;
-static SampleType beepValue;
+class VmuBeep
+{
+public:
+	void init()
+	{
+		active = false;
+		att = 256;
+		waveIdx.full = 0;
+		waveStep = 0;
+	}
+
+	void update(int period, int on)
+	{
+		if (on == 0 || period == 0 || on >= period) {
+			active = false;
+		}
+		else
+		{
+			// on (duty cycle) is ignored
+			active = true;
+			// 6 MHz clock
+			int freq = 6000000 / 6 / period;
+			waveStep = freq * 1024 / 2698;
+		}
+	}
+
+	SampleType getSample()
+	{
+		if (!active && att >= 256)
+			return 0;
+
+		waveIdx.full += waveStep;
+		waveIdx.ip %= std::size(wave);
+		int nextIdx = (waveIdx.ip + 1) % std::size(wave);
+		SampleType s = (FPMul(wave[waveIdx.ip], (int)(1024 - waveIdx.fp), 10) + FPMul(wave[nextIdx], (int)waveIdx.fp, 10)) * 2;
+
+		s = FPMul(s, tl_lut[att], 15);
+		if (active)
+			att = std::max(att - 2, 0);
+		else
+			att = std::min(att + 2, 256);
+		return s;
+	}
+
+	void serialize(Serializer& ser)
+	{
+		ser << active;
+		ser << att;
+		ser << waveIdx;
+		ser << waveStep;
+	}
+
+	void deserialize(Deserializer& deser)
+	{
+		if (deser.version() < Deserializer::V49)
+		{
+			if (deser.version() >= Deserializer::V22)
+			{
+				deser.skip<int>();	// beepOn
+				deser.skip<int>();	// beepPeriod
+				deser.skip<int>();	// beepCounter
+			}
+			init();
+		}
+		else
+		{
+			deser >> active;
+			deser >> att;
+			deser >> waveIdx;
+			deser >> waveStep;
+		}
+	}
+
+private:
+	bool active = false;
+	int att = 256;
+	fp_22_10 waveIdx {};
+	int waveStep = 0;
+
+	// 2698 Hz
+	static constexpr SampleType wave[] = {   503, -3519,
+		-7540, -8214, -8209, -8214, -8209, -5199, -1172,  2843,
+		 6873,  8207,  8214,  8209,  8212,  5866,  1840, -2175,
+		-6203, -8210, -8215, -8209, -8214, -6533, -2516,  1507,
+		 5526,  8212,  8210,  8212,  8210,  7206,  3187,  -841,
+		-4856, -8215, -8209, -8214, -8208, -7882, -3850,   162,
+		 4187,  8213,  8208,  8213,  8209,  8211,  4525 };
+};
+static VmuBeep beep;
 
 #pragma pack(push, 1)
 //All regs are 16b , aligned to 32b (upper bits 0?)
@@ -175,52 +244,52 @@ struct ChannelCommonData
 	u32 PCMS:2;
 	u32 LPCTL:1;
 	u32 SSCTL:1;
-	u32 res_1:3;
+	u32 :3;
 	u32 KYONB:1;
 	u32 KYONEX:1;
 
-	u32 pad_2:16;
+	u32 :16;
 
 	//+04 [1]
 	//SA (defined above)
 	u32 SA_low:16;
 
-	u32 pad_3:16;
+	u32 :16;
 
 	//+08 [2]
 	u32 LSA:16;
 
-	u32 pad_4:16;
+	u32 :16;
 
 	//+0C [3]
 	u32 LEA:16;
 
-	u32 pad_5:16;
+	u32 :16;
 
 	//+10 [4]
 	u32 AR:5;
-	u32 res_2:1;
+	u32 :1;
 	u32 D1R:5;
 	u32 D2R:5;
 
-	u32 pad_7:16;
+	u32 :16;
 
 	//+14 [5]
 	u32 RR:5;
 	u32 DL:5;
 	u32 KRS:4;
 	u32 LPSLNK:1;
-	u32 res_3:1;
+	u32 :1;
 
-	u32 pad_8:16;
+	u32 :16;
 
 	//+18[6]
 	u32 FNS:10;
-	u32 rez_8_1:1;
+	u32 :1;
 	u32 OCT:4;
-	u32 rez_8_2:1;
+	u32 :1;
 
-	u32 pad_9:16;
+	u32 :16;
 
 	//+1C	RE	LFOF[4:0]	PLFOWS	PLFOS[2:0]	ALFOWS	ALFOS[2:0]
 	u32 ALFOS:3;
@@ -232,80 +301,80 @@ struct ChannelCommonData
 	u32 LFOF:5;
 	u32 LFORE:1;
 
-	u32 pad_10:16;
+	u32 :16;
 
 	//+20	--	IMXL[3:0]	ISEL[3:0]
 	u32 ISEL:4;
 	u32 IMXL:4;
-	u32 rez_20_0:8;
+	u32 :8;
 
-	u32 pad_11:16;
+	u32 :16;
 
 	//+24	--	DISDL[3:0]	--	DIPAN[4:0]
 	u32 DIPAN:5;
-	u32 rez_24_0:3;
+	u32 :3;
 	
 	u32 DISDL:4;
-	u32 rez_24_1:4;
+	u32 :4;
 
-	u32 pad_12:16;
+	u32 :16;
 	
 
 	//+28	TL[7:0]	--	Q[4:0]
 	u32 Q:5;
 	u32 LPOFF:1;		// confirmed but not documented: 0: LPF enabled, 1: LPF disabled
 	u32 VOFF:1;			// unconfirmed: 0: attenuation enabled, 1: attenuation disabled (TL, AEG, ALFO)
-	u32 rez_28_0:1;
+	u32 :1;
 
 	u32 TL:8;
 
-	u32 pad_13:16;
+	u32 :16;
 
 	//+2C	--	FLV0[12:0]
 	u32 FLV0:13;
-	u32 rez_2C_0:3;
+	u32 :3;
 
-	u32 pad_14:16;
+	u32 :16;
 
 	//+30	--	FLV1[12:0]
 	u32 FLV1:13;
-	u32 rez_30_0:3;
+	u32 :3;
 	
-	u32 pad_15:16;
+	u32 :16;
 
 	//+34	--	FLV2[12:0]
 	u32 FLV2:13;
-	u32 rez_34_0:3;
+	u32 :3;
 	
-	u32 pad_16:16;
+	u32 :16;
 
 	//+38	--	FLV3[12:0]
 	u32 FLV3:13;
-	u32 rez_38_0:3;
+	u32 :3;
 	
-	u32 pad_17:16;
+	u32 :16;
 
 	//+3C	--	FLV4[12:0]
 	u32 FLV4:13;
-	u32 rez_3C_0:3;
+	u32 :3;
 	
-	u32 pad_18:16;
+	u32 :16;
 	
 	//+40	--	FAR[4:0]	--	FD1R[4:0]
 	u32 FD1R:5;
-	u32 rez_40_0:3;
+	u32 :3;
 	u32 FAR:5;
-	u32 rez_40_1:3;
+	u32 :3;
 
-	u32 pad_19:16;
+	u32 :16;
 
 	//+44	--	FD2R[4:0]	--	FRR[4:0]
 	u32 FRR:5;
-	u32 rez_44_0:3;
+	u32 :3;
 	u32 FD2R:5;
-	u32 rez_44_1:3;
+	u32 :3;
 
-	u32 pad_20:16;
+	u32 :16;
 };
 #pragma pack(pop)
 
@@ -491,11 +560,16 @@ struct ChannelEx
 			if (FEG.active)
 			{
 				u32 fv = FEG.GetValue();
-				s32 f = (((fv & 0xFF) | 0x100) << 4) >> ((fv >> 8) ^ 0x1F);
-				f = std::max(1, f);
-				sample = f * sample + (0x2000 - f + FEG.q) * FEG.prev1 - FEG.q * FEG.prev2;
-				sample >>= 13;
-				sample = std::clamp(sample, -32768, 32767);
+				s32 f = (((fv & 0x1FF) | 0x200) << 3) >> ((fv >> 9) ^ 0xF);
+				if (f == 0) {
+					sample = 0;
+				}
+				else
+				{
+					sample = f * sample + (0x2000 - f + FEG.q) * FEG.prev1 - FEG.q * FEG.prev2;
+					sample >>= 13;
+					sample = std::clamp(sample, -32768, 32767);
+				}
 				FEG.prev2 = FEG.prev1;
 				FEG.prev1 = sample;
 			}
@@ -589,32 +663,32 @@ struct ChannelEx
 		if (AEG.state != EG_Release)
 			return;
 
-		//if it was off then turn it on !
 		enable();
 
 		// reset AEG
 		SetAegState(EG_Attack);
 		AEG.SetValue(0x280);	// start value taken from HT
 
-		//reset FEG
+		// reset FEG
 		SetFegState(EG_Attack);
-		//set values and crap
 
+		// reset sampling state
+		CA = 0;
+		step.full = 0;
 
-		//Reset sampling state
-		CA=0;
-		step.full=0;
-
-		loop.looped=false;
+		loop.looped = false;
+		if (loop.LEA <= loop.LSA && ccd->LPCTL == 1)
+			// Legacy of Kain
+			loop.LEA = 0xffff;
 
 		adpcm.Reset(this);
 
 		StepStreamInitial(this);
-		key_printf("[%d] KEY_ON %s @ %f Hz, loop %d - AEG AR %d DC1R %d DC2V %d DC2R %d RR %d - KRS %d OCT %d FNS %d - PFLOS %d PFLOWS %d",
+		key_printf("[%d] KEY_ON %s @ %f Hz, loop %d - AEG AR %d DC1R %d DC2V %d DC2R %d RR %d - KRS %d OCT %d FNS %d - PFLOS %d PFLOWS %d - SA %x LSA %x LEA %x",
 				ChannelNumber, stream_names[ccd->PCMS], (44100.0 * update_rate) / 1024, ccd->LPCTL,
 				ccd->AR, ccd->D1R, ccd->DL << 5, ccd->D2R, ccd->RR,
-				ccd->KRS, ccd->OCT, ccd->FNS >> 9,
-				ccd->PLFOS, ccd->PLFOWS);
+				ccd->KRS, ccd->OCT, ccd->FNS,
+				ccd->PLFOS, ccd->PLFOWS, (int)(SA - &aica_ram[0]), ccd->LSA, ccd->LEA);
 	}
 
 	void KEY_OFF()
@@ -648,8 +722,8 @@ struct ChannelEx
 	//LSA,LEA
 	void UpdateLoop()
 	{
-		loop.LSA=ccd->LSA;
-		loop.LEA=ccd->LEA;
+		loop.LSA = ccd->LSA;
+		loop.LEA = ccd->LEA;
 	}
 
 	s32 EG_BaseRate()
@@ -825,6 +899,7 @@ struct ChannelEx
 		case 0x19://FNS,OCT
 			UpdatePitch();
 			UpdateAEG();
+			UpdateFEG();
 			break;
 
 		case 0x1C://ALFOS,ALFOWS,PLFOS
@@ -870,6 +945,11 @@ struct ChannelEx
 
 		}
 	} 
+
+	static void initAll() {
+		for (std::size_t i = 0; i < std::size(Chans); i++)
+			Chans[i].Init(i, aica_reg);
+	}
 };
 
 static SampleType DecodeADPCM(u32 sample,s32 prev,s32& quant)
@@ -1139,8 +1219,7 @@ void AegStep(ChannelEx* ch)
 		if (ch->AEG.GetValue() >= 0x3FF)
 		{
 			aeg_printf("[%d]AEG_step : EG_Release End @ %x", ch->ChannelNumber, ch->AEG.GetValue());
-			ch->AEG.SetValue(0x3FF); // TODO: mnn, should we do anything about it running wild ?
-			ch->disable(); // TODO: Is this ok here? It's a speed optimisation (since the channel is muted)
+			ch->AEG.SetValue(0x3FF);
 		}
 		break;
 	}
@@ -1191,6 +1270,34 @@ void FegStep(ChannelEx* ch)
 		feg_printf("[%d]FEG_step : Switching to next state: %d Freq %x", ch->ChannelNumber, (int)ch->FEG.state + 1, target >> EG_STEP_BITS);
 		ch->SetFegState((_EG_state)((int)ch->FEG.state + 1));
 	}
+}
+
+static u32 CalcEgSteps(float t)
+{
+	const double eg_allsteps = 1024 * (1 << EG_STEP_BITS) - 1;
+
+	if (t < 0)
+		return 0;
+	if (t == 0)
+		return (u32)eg_allsteps;
+
+	//44.1*ms = samples
+	double scnt = 44.1 * t;
+	double steps = eg_allsteps / scnt;
+	return (u32)lround(steps);
+}
+static u32 CalcAttackEgSteps(float t)
+{
+	if (t < 0)
+		return 0;
+	if (t == 0)
+		return 1 << AEG_ATTACK_SHIFT;
+
+	//44.1*ms = samples
+	double scnt = 44.1 * t;
+	double factor = (1.0 / (1.0 - 1.0 / pow(0x280, 1.0 / scnt))) * (1 << AEG_ATTACK_SHIFT);
+
+	return (u32)lround(factor);
 }
 
 static void staticinitialise()
@@ -1244,67 +1351,24 @@ static void staticinitialise()
 	PLFOWS_CALC[(int)LFOType::Square] = &CalcPlfo<LFOType::Square>;
 	PLFOWS_CALC[(int)LFOType::Triangle] = &CalcPlfo<LFOType::Triangle>;
 	PLFOWS_CALC[(int)LFOType::Random] = &CalcPlfo<LFOType::Random>;
-}
 
-ChannelEx ChannelEx::Chans[64];
-
-#define Chans ChannelEx::Chans
-
-static u32 CalcEgSteps(float t)
-{
-	const double eg_allsteps = 1024 * (1 << EG_STEP_BITS) - 1;
-
-	if (t < 0)
-		return 0;
-	if (t == 0)
-		return (u32)eg_allsteps;
-
-	//44.1*ms = samples
-	double scnt = 44.1 * t;
-	double steps = eg_allsteps / scnt;
-	return (u32)lround(steps);
-}
-static u32 CalcAttackEgSteps(float t)
-{
-	if (t < 0)
-		return 0;
-	if (t == 0)
-		return 1 << AEG_ATTACK_SHIFT;
-
-	//44.1*ms = samples
-	double scnt = 44.1 * t;
-	double factor = (1.0 / (1.0 - 1.0 / pow(0x280, 1.0 / scnt))) * (1 << AEG_ATTACK_SHIFT);
-
-	return (u32)lround(factor);
-}
-
-void init()
-{
-	staticinitialise();
-
-	for (std::size_t i = 0; i < std::size(volume_lut); i++)
-	{
-		volume_lut[i]=(s32)((1<<15)/pow(2.0,(15-i)/2.0));
-		if (i==0)
-			volume_lut[i]=0;
-	}
+	for (std::size_t i = 1; i < std::size(volume_lut); i++)
+		volume_lut[i] = (s32)((1 << 15) / pow(2.0, (15 - i) / 2.0));
 
 	for (int i = 0; i < 256; i++)
-		tl_lut[i]=(s32)((1<<15)/pow(2.0,i/16.0));
-
+		tl_lut[i] = (s32)((1 << 15) / pow(2.0, i / 16.0));
 	//tl entries 256 to 1023 are 0
-	for (int i=256;i<1024;i++)
-		tl_lut[i]=0;
 
-	for (int i=0;i<64;i++)
+	for (int i = 0; i < 64; i++)
 	{
 		AEG_ATT_SPS[i] = CalcAttackEgSteps(AEG_Attack_Time[i]);
-		AEG_DSR_SPS[i]=CalcEgSteps(AEG_DSR_Time[i]);
-		FEG_SPS[i] = CalcEgSteps(AEG_DSR_Time[i]);
-		//FEG_SPS[i] = CalcEgSteps(FEG_Time[i]);
+		AEG_DSR_SPS[i] = CalcEgSteps(AEG_DSR_Time[i]);
+		// The AEG range is 1024, while the FEG range is 8912.
+		// So decay times are x8 greater for FEG than AEG
+		// instead of x4 as mentioned in the doc.
+		// However it sounds better this way.
+		FEG_SPS[i] = AEG_DSR_SPS[i];
 	}
-	for (std::size_t i = 0; i < std::size(Chans); i++)
-		Chans[i].Init(i,aica_reg);
 
 	for (int s = 0; s < 8; s++)
 	{
@@ -1312,11 +1376,17 @@ void init()
 		for (int i = -128; i < 128; i++)
 			PLFO_Scales[s][i + 128] = (u32)((1 << 10) * powf(2.0f, limit * i / 128.0f / 1200.0f));
 	}
-	beepOn = 0;
-	beepPeriod = 0;
-	beepCounter = 0;
-	beepValue = 0;
+}
+static OnLoad staticInit(staticinitialise);
 
+ChannelEx ChannelEx::Chans[64];
+
+#define Chans ChannelEx::Chans
+
+void init()
+{
+	ChannelEx::initAll();
+	beep.init();
 	dsp::init();
 }
 
@@ -1387,42 +1457,7 @@ void ReadCommonReg(u32 reg,bool byte)
 
 void vmuBeep(int on, int period)
 {
-	if (on == 0 || period == 0 || on < period)
-	{
-		beepOn = 0;
-		beepPeriod = 0;
-	}
-	else
-	{
-		// The maple doc may be wrong on this. It looks like the raw values of T1LR and T1LC are set.
-		// So the period is (256 - T1LR) / (32768 / 6)
-		// and the duty cycle is (256 - T1LC) / (32768 / 6)
-		beepOn = (256 - on) * 8;
-		beepPeriod = (256 - period) * 8;
-		beepCounter = 0;
-	}
-}
-
-static SampleType vmuBeepSample()
-{
-	constexpr int Slope = 500;
-	if (beepPeriod == 0)
-	{
-		if (beepValue > 0)
-			beepValue = std::max(0, beepValue - Slope);
-		else if (beepValue < 0)
-			beepValue = std::min(0, beepValue + Slope);
-	}
-	else
-	{
-		if (beepCounter <= beepOn)
-			beepValue = std::min(16383, beepValue + Slope);
-		else
-			beepValue = std::max(-16384, beepValue - Slope);
-		beepCounter = (beepCounter + 1) % beepPeriod;
-	}
-
-	return beepValue;
+	beep.update(on, period);
 }
 
 constexpr int CDDA_SIZE = 2352 / 2;
@@ -1473,9 +1508,9 @@ void AICA_Sample()
 
 	if (config::VmuSound)
 	{
-		SampleType beep = vmuBeepSample();
-		mixl += beep;
-		mixr += beep;
+		SampleType b = beep.getSample();
+		mixl += b;
+		mixr += b;
 	}
 
 	//Mono !
@@ -1542,9 +1577,7 @@ void serialize(Serializer& ser)
 		ser << channel.lfo.state;
 		ser << channel.enabled;
 	}
-	ser << beepOn;
-	ser << beepPeriod;
-	ser << beepCounter;
+	beep.serialize(ser);
 	ser << cdda_sector;
 	ser << cdda_index;
 	ser << (u32)midiSendBuffer.size();
@@ -1594,18 +1627,7 @@ void deserialize(Deserializer& deser)
 		deser >> channel.enabled;
 		channel.quiet = false;
 	}
-	if (deser.version() >= Deserializer::V22)
-	{
-		deser >> beepOn;
-		deser >> beepPeriod;
-		deser >> beepCounter;
-	}
-	else
-	{
-		beepOn = 0;
-		beepPeriod = 0;
-		beepCounter = 0;
-	}
+	beep.deserialize(deser);
 	deser >> cdda_sector;
 	deser >> cdda_index;
 	midiSendBuffer.clear();
@@ -1622,5 +1644,4 @@ void deserialize(Deserializer& deser)
 	}
 }
 
-} // namespace sgc
-} // namespace aica
+} // namespace aica::sgc

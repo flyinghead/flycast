@@ -17,7 +17,7 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #pragma once
-#include "rend/boxart/http_client.h"
+#include "oslib/http_client.h"
 #include "jni_util.h"
 
 namespace http {
@@ -25,6 +25,7 @@ namespace http {
     static jobject HttpClient;
     static jmethodID openUrlMid;
     static jmethodID postMid;
+    static jmethodID postRawMid;
 
     void init() {
     }
@@ -35,11 +36,30 @@ namespace http {
         jni::ObjectArray<jni::ByteArray> contentOut(1);
         jni::ObjectArray<jni::String> contentTypeOut(1);
 
-        int httpStatus = jni::env()->CallIntMethod(HttpClient, openUrlMid, (jstring)jurl, (jobjectArray)contentOut,
-                                           (jobjectArray)contentTypeOut);
+        int httpStatus = jni::env()->CallIntMethod(HttpClient, openUrlMid,
+        		static_cast<jstring>(jurl),
+				static_cast<jobjectArray>(contentOut),
+        		static_cast<jobjectArray>(contentTypeOut));
 
         content = contentOut[0];
         contentType = contentTypeOut[0];
+
+        return httpStatus;
+    }
+
+    int post(const std::string &url, const char *payload, const char *contentType, std::vector<u8>& reply)
+    {
+        jni::String jurl(url);
+        jni::String jpayload(payload);
+        jni::String jcontentType(contentType);
+        jni::ObjectArray<jni::ByteArray> replyOut(1);
+
+        int httpStatus = jni::env()->CallIntMethod(HttpClient, postRawMid,
+        		static_cast<jstring>(jurl),
+				static_cast<jstring>(jpayload),
+				static_cast<jstring>(jcontentType),
+				static_cast<jobjectArray>(replyOut));
+        reply = replyOut[0];
 
         return httpStatus;
     }
@@ -58,7 +78,11 @@ namespace http {
         	contentTypes.setAt(i, fields[i].contentType);
         }
 
-        int httpStatus = jni::env()->CallIntMethod(HttpClient, postMid, (jstring)jurl, (jobjectArray)names, (jobjectArray)values, (jobjectArray)contentTypes);
+        int httpStatus = jni::env()->CallIntMethod(HttpClient, postMid,
+        		static_cast<jstring>(jurl),
+				static_cast<jobjectArray>(names),
+        		static_cast<jobjectArray>(values),
+				static_cast<jobjectArray>(contentTypes));
 
         return httpStatus;
     }
@@ -73,4 +97,5 @@ extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_HttpClient_nativ
     http::HttpClient = env->NewGlobalRef(obj);
     http::openUrlMid = env->GetMethodID(env->GetObjectClass(obj), "openUrl", "(Ljava/lang/String;[[B[Ljava/lang/String;)I");
     http::postMid = env->GetMethodID(env->GetObjectClass(obj), "post", "(Ljava/lang/String;[Ljava/lang/String;[Ljava/lang/String;[Ljava/lang/String;)I");
+    http::postRawMid = env->GetMethodID(env->GetObjectClass(obj), "post", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;[[B)I");
 }

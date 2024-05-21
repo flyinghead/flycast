@@ -25,7 +25,7 @@
 #include "rend/transform_matrix.h"
 #include "d3d_texture.h"
 #include "d3d_shaders.h"
-#include "rend/imgui_driver.h"
+#include "ui/imgui_driver.h"
 
 class RenderStateCache
 {
@@ -116,6 +116,7 @@ struct D3DRenderer : public Renderer
 	void preReset();
 	void postReset();
 	void RenderFramebuffer(const FramebufferInfo& info) override;
+	bool GetLastFrame(std::vector<u8>& data, int& width, int& height) override;
 
 private:
 	enum ModifierVolumeMode { Xor, Or, Inclusion, Exclusion, ModeCount };
@@ -136,7 +137,7 @@ private:
 	void drawModVols(int first, int count);
 	void setTexMode(D3DSAMPLERSTATETYPE state, u32 clamp, u32 mirror);
 	void setBaseScissor();
-	void prepareRttRenderTarget(u32 texAddress);
+	void prepareRttRenderTarget(u32 texAddress, int& vpWidth, int& vpHeight);
 	void readRttRenderTarget(u32 texAddress);
 	void writeFramebufferToVRAM();
 
@@ -175,5 +176,6 @@ private:
 	bool frameRenderedOnce = false;
 	int maxAnisotropy = 1;
 	float aspectRatio = 4.f / 3.f;
+	bool dithering = false;
 };
 

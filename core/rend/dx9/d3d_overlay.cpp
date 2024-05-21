@@ -20,7 +20,6 @@
 #include "rend/osd.h"
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
-#include <tuple>
 
 void D3DOverlay::drawQuad(const RECT& rect, D3DCOLOR color)
 {
@@ -51,8 +50,9 @@ void D3DOverlay::draw(u32 width, u32 height, bool vmu, bool crosshair)
 				texture.reset();
 				continue;
 			}
-			if (texture == nullptr || vmu_lcd_changed[i])
+			if (texture == nullptr || this->vmuLastChanged[i] != ::vmuLastChanged[i])
 			{
+				texture.reset();
 				device->CreateTexture(48, 32, 1, D3DUSAGE_DYNAMIC, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &texture.get(), 0);
 				D3DLOCKED_RECT rect;
 				if (SUCCEEDED(texture->LockRect(0, &rect, nullptr, 0)))
@@ -61,8 +61,8 @@ void D3DOverlay::draw(u32 width, u32 height, bool vmu, bool crosshair)
 					for (int y = 0; y < 32; y++)
 						memcpy(dst + y * rect.Pitch, vmu_lcd_data[i] + (31 - y) * 48, 48 * 4);
 					texture->UnlockRect(0);
+					this->vmuLastChanged[i] = ::vmuLastChanged[i];
 				}
-				vmu_lcd_changed[i] = false;
 			}
 			float x;
 			if (i & 2)
@@ -87,7 +87,7 @@ void D3DOverlay::draw(u32 width, u32 height, bool vmu, bool crosshair)
 			drawQuad(rect, D3DCOLOR_ARGB(192, 255, 255, 255));
 		}
 	}
-	if (crosshair)
+	if (crosshair && crosshairsNeeded())
 	{
 		if (!xhairTexture)
 		{
@@ -117,7 +117,7 @@ void D3DOverlay::draw(u32 width, u32 height, bool vmu, bool crosshair)
 				continue;
 
 			auto [x, y] = getCrosshairPosition(i);
-			float halfWidth = XHAIR_WIDTH * settings.display.uiScale / 2.f;
+			float halfWidth = config::CrosshairSize * settings.display.uiScale / 2.f;
 			RECT rect { (long) (x - halfWidth), (long) (y - halfWidth), (long) (x + halfWidth), (long) (y + halfWidth) };
 			D3DCOLOR color = (config::CrosshairColor[i] & 0xFF00FF00)
 					| ((config::CrosshairColor[i] >> 16) & 0xFF)

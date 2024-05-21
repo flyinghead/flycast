@@ -23,6 +23,7 @@
 #include <initguid.h>
 #include <devpkey.h>
 #include "hw/maple/maple_devs.h"
+#include "nowide/stackstring.hpp"
 
 #include <algorithm>
 #include <cstring>
@@ -379,11 +380,11 @@ static void findDevices()
 				    {
 						DEVPROPTYPE propType;
 						ULONG bufSize = 0;
-						if (CM_Get_Device_Interface_PropertyW(wname.c_str(), &DEVPKEY_Device_InstanceId, &propType, nullptr, &bufSize, 0) == CR_BUFFER_SMALL)
+						if (CM_Get_Device_Interface_PropertyW(wname.get(), &DEVPKEY_Device_InstanceId, &propType, nullptr, &bufSize, 0) == CR_BUFFER_SMALL)
 						{
 							std::vector<wchar_t> buf;
 							buf.resize(bufSize / sizeof(wchar_t));
-							if (CM_Get_Device_Interface_PropertyW(wname.c_str(), &DEVPKEY_Device_InstanceId, &propType, (PBYTE)buf.data(), &bufSize, 0) == CR_SUCCESS)
+							if (CM_Get_Device_Interface_PropertyW(wname.get(), &DEVPKEY_Device_InstanceId, &propType, (PBYTE)buf.data(), &bufSize, 0) == CR_SUCCESS)
 							{
 								// Locate the device using the device instance id
 								DEVINST devInst;
@@ -398,7 +399,7 @@ static void findDevices()
 										{
 											nowide::stackstring nwname;
 											if (nwname.convert(&buf[0]))
-												name = nwname.c_str();
+												name = nwname.get();
 										}
 									}
 								}
@@ -409,12 +410,9 @@ static void findDevices()
 						deviceId = deviceId.substr(8);
 					uniqueId = (device.dwType == RIM_TYPEMOUSE ? "raw_mouse_" : "raw_keyboard_") + deviceId;
 					if (name.empty())
-					{
-						name = deviceId;
-						if (name.length() > 17 && name.substr(0, 4) == "VID_" && name.substr(8, 5) == "&PID_")
-							name = name.substr(0, 17);
-						name = (device.dwType == RIM_TYPEMOUSE ? "Mouse " : "Keyboard ") + name;
-					}
+						name = device.dwType == RIM_TYPEMOUSE ? "Mouse" : "Keyboard";
+					size_t hash = deviceId.find('#');
+					name += " [" + deviceId.substr(0, hash) + "]";
 				}
 			}
 			uintptr_t handle = (uintptr_t)device.hDevice;

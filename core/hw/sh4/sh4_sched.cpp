@@ -24,6 +24,7 @@
 struct sched_list
 {
 	sh4_sched_callback* cb;
+	void *arg;
 	int tag;
 	int start;
 	int end;
@@ -70,9 +71,9 @@ void sh4_sched_ffts()
 	sh4_sched_ffb += Sh4cntx.sh4_sched_next;
 }
 
-int sh4_sched_register(int tag, sh4_sched_callback* ssc)
+int sh4_sched_register(int tag, sh4_sched_callback* ssc, void *arg)
 {
-	sched_list t{ ssc, tag, -1, -1};
+	sched_list t{ ssc, arg, tag, -1, -1};
 	for (sched_list& sched : sch_list)
 		if (sched.cb == nullptr)
 		{
@@ -137,6 +138,11 @@ void sh4_sched_request(int id, int cycles)
 	sh4_sched_ffts();
 }
 
+bool sh4_sched_is_scheduled(int id)
+{
+	return sch_list[id].end != -1;
+}
+
 /* Returns how much time has passed for this callback */
 static int sh4_sched_elapsed(sched_list& sched)
 {
@@ -157,7 +163,7 @@ static void handle_cb(sched_list& sched)
 	int jitter = elapsd - remain;
 
 	sched.end = -1;
-	int re_sch = sched.cb(sched.tag, remain, jitter);
+	int re_sch = sched.cb(sched.tag, remain, jitter, sched.arg);
 
 	if (re_sch > 0)
 		sh4_sched_request(&sched - &sch_list[0], std::max(0, re_sch - jitter));

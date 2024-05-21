@@ -25,9 +25,7 @@
 
 #include "stdclass.h"
 
-#ifdef BBA_PCAPNG_DUMP
-#include "oslib/oslib.h"
-#endif
+//#define BBA_PCAPNG_DUMP
 
 #ifdef __MINGW32__
 #define _POSIX_SOURCE
@@ -50,6 +48,7 @@ extern "C" {
 #include "miniupnp.h"
 #include "cfg/option.h"
 #include "emulator.h"
+#include "oslib/oslib.h"
 
 #include <map>
 #include <mutex>
@@ -137,12 +136,9 @@ struct socket_pair
 			len = r;
 			data = buf;
 		}
-		if (pico_sock->remote_port == short_be(5011) && len >= 5)
-		{
+		if (pico_sock->remote_port == short_be(5011) && len >= 5 && data[0] == 1)
 			// Visual Concepts sport games
-			if (buf[0] == 1)
-				memcpy(&buf[1], &pico_sock->local_addr.ip4.addr, 4);
-		}
+			memcpy((void *)&data[1], &pico_sock->local_addr.ip4.addr, 4);
 
 		int r2 = pico_socket_send(pico_sock, data, (int)len);
 		if (r2 < 0)
@@ -233,6 +229,10 @@ static GamePortList GamesPorts[] = {
 		{ "T22904N", "T7016D  50" },
 		{ },
 		{ 17219 },
+	},
+	{ // Driving Strikers online demo
+		{ "IND-161053" },
+		{ 30099 },
 	},
 
 	{ // Atomiswave
@@ -331,6 +331,9 @@ static void read_from_dc_socket(pico_socket *pico_sock, sock_t nat_sock)
 	int r = pico_socket_read(pico_sock, buf, sizeof(buf));
 	if (r > 0)
 	{
+		if (pico_sock->local_port == short_be(5011) && r >= 5 && buf[0] == 1)
+			// Visual Concepts sport games
+			memcpy(&buf[1], &public_ip.addr, 4);
 		if (send(nat_sock, buf, r, 0) < r)
 		{
 			perror("tcp_callback send");
@@ -491,6 +494,16 @@ static sock_t find_udp_socket(uint16_t src_port)
 #endif
 	int broadcastEnable = 1;
 	setsockopt(sockfd, SOL_SOCKET, SO_BROADCAST, (const char *)&broadcastEnable, sizeof(broadcastEnable));
+
+	// bind to same port if possible (Toy Racer)
+	sockaddr_in saddr;
+	socklen_t saddr_len = sizeof(saddr);
+	memset(&saddr, 0, sizeof(saddr));
+	saddr.sin_family = AF_INET;
+	saddr.sin_addr.s_addr = INADDR_ANY;
+	saddr.sin_port = src_port;
+	if (::bind(sockfd, (sockaddr *)&saddr, saddr_len) < 0)
+		perror("bind");
 
 	// FIXME Need to clean up at some point?
 	udp_sockets[src_port] = sockfd;
@@ -732,38 +745,34 @@ static void check_dns_entries()
 
 	if (public_ip.addr == 0)
 	{
-		if (!dns_query_start)
+		u32 ip;
+		pico_string_to_ipv4(RESOLVER1_OPENDNS_COM, &ip);
+		pico_ip4 tmpdns { ip };
+		if (dns_query_start == 0)
 		{
 			dns_query_start = PICO_TIME_MS();
-			struct pico_ip4 tmpdns;
-			pico_string_to_ipv4(RESOLVER1_OPENDNS_COM, &tmpdns.addr);
 			get_host_by_name("myip.opendns.com", tmpdns);
+		}
+		else if (get_dns_answer(&public_ip, tmpdns) == 0)
+		{
+			dns_query_attempts = 0;
+			dns_query_start = 0;
+			char myip[16];
+			pico_ipv4_to_string(myip, public_ip.addr);
+			INFO_LOG(MODEM, "My IP is %s", myip);
 		}
 		else
 		{
-			struct pico_ip4 tmpdns;
-			pico_string_to_ipv4(RESOLVER1_OPENDNS_COM, &tmpdns.addr);
-			if (get_dns_answer(&public_ip, tmpdns) == 0)
+			if (PICO_TIME_MS() - dns_query_start > 1000)
 			{
-				dns_query_attempts = 0;
-				dns_query_start = 0;
-				char myip[16];
-				pico_ipv4_to_string(myip, public_ip.addr);
-				INFO_LOG(MODEM, "My IP is %s", myip);
-			}
-			else
-			{
-				if (PICO_TIME_MS() - dns_query_start > 1000)
+				if (++dns_query_attempts >= 5)
 				{
-					if (++dns_query_attempts >= 5)
-					{
-						public_ip.addr = 0xffffffff;	// Bogus but not null
-						dns_query_attempts = 0;
-					}
-					else
-						// Retry
-						dns_query_start = 0;
+					public_ip.addr = 0xffffffff;	// Bogus but not null
+					dns_query_attempts = 0;
 				}
+				else
+					// Retry
+					dns_query_start = 0;
 			}
 		}
 	}
@@ -819,7 +828,6 @@ static pico_device *pico_eth_create()
     return eth;
 }
 
-//#define BBA_PCAPNG_DUMP
 static FILE *pcapngDump;
 
 static void dumpFrame(const u8 *frame, u32 size)
@@ -868,7 +876,7 @@ static void dumpFrame(const u8 *frame, u32 size)
 	fwrite(&roundedSize, sizeof(roundedSize), 1, pcapngDump);
 	u32 ifId = 0;
 	fwrite(&ifId, sizeof(ifId), 1, pcapngDump);
-	u64 now = (u64)(os_GetSeconds() * 1000000.0);
+	u64 now = getTimeMs() * 1000;
 	fwrite((u32 *)&now + 1, 4, 1, pcapngDump);
 	fwrite(&now, 4, 1, pcapngDump);
 	fwrite(&size, sizeof(size), 1, pcapngDump);
@@ -937,6 +945,7 @@ static void *pico_thread_func(void *)
 	std::future<MiniUPnP> upnp =
 		std::async(std::launch::async, [ports]() {
 			// Initialize miniupnpc and map network ports
+			ThreadName _("UPNP-init");
 			MiniUPnP upnp;
 			if (ports != nullptr && config::EnableUPnP)
 			{
@@ -1068,18 +1077,8 @@ static void *pico_thread_func(void *)
 		for (u32 i = 0; i < std::size(ports->udpPorts) && ports->udpPorts[i] != 0; i++)
 		{
 			uint16_t port = short_be(ports->udpPorts[i]);
-			sock_t sockfd = find_udp_socket(port);
-			saddr.sin_port = port;
-
-			if (::bind(sockfd, (sockaddr *)&saddr, saddr_len) < 0)
-			{
-				perror("bind");
-				closesocket(sockfd);
-				auto it = udp_sockets.find(port);
-				if (it != udp_sockets.end())
-					it->second = INVALID_SOCKET;
-				continue;
-			}
+			find_udp_socket(port);
+			// bind is done in find_udp_socket
 		}
 
 		for (u32 i = 0; i < std::size(ports->tcpPorts) && ports->tcpPorts[i] != 0; i++)
@@ -1141,7 +1140,7 @@ static void *pico_thread_func(void *)
 	return NULL;
 }
 
-static cThread pico_thread(pico_thread_func, NULL);
+static cThread pico_thread(pico_thread_func, nullptr, "PicoTCP");
 
 bool start_pico()
 {

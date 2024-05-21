@@ -34,16 +34,14 @@
 #include <sstream>
 #endif
 
-namespace aica
-{
-
-namespace arm
+namespace aica::arm
 {
 
 #define arm_printf(...) DEBUG_LOG(AICA_ARM, __VA_ARGS__)
 
 void (*arm_compilecode)();
 arm_mainloop_t arm_mainloop;
+extern u8 cpuBitsSet[256];
 
 namespace recompiler {
 
@@ -122,7 +120,6 @@ union ArmOpBits
 static_assert(sizeof(ArmOpBits) == sizeof(u32), "sizeof(ArmOpBits) == sizeof(u32)");
 
 static std::vector<ArmOp> block_ops;
-static u8 cpuBitsSet[256];
 
 //findfirstset -- used in LDM/STM handling
 #ifdef _MSC_VER
@@ -683,15 +680,6 @@ void init()
 #endif
 	verify(rc);
 
-	for (std::size_t i = 0; i < std::size(cpuBitsSet); i++)
-	{
-		int count = 0;
-		for (int j = 0; j < 8; j++)
-			if (i & (1 << j))
-				count++;
-
-		cpuBitsSet[i] = count;
-	}
 	flush();
 }
 
@@ -770,6 +758,5 @@ void avoidRaceCondition()
 	arm_Reg[CYCL_CNT].I = std::max((int)arm_Reg[CYCL_CNT].I, 50);
 }
 
-} // namespace arm
-} // namespace aica
+} // namespace aica::arm
 #endif // FEAT_AREC != DYNAREC_NONE

@@ -35,6 +35,8 @@ public:
 	InputMapping(const InputMapping& other) {
 		name = other.name;
 		dead_zone = other.dead_zone;
+		saturation = other.saturation;
+		rumblePower = other.rumblePower;
 		for (int port = 0; port < 4; port++)
 		{
 			buttons[port] = other.buttons[port];
@@ -44,6 +46,7 @@ public:
 
 	std::string name;
 	float dead_zone = 0.1f;
+	float saturation = 1.0f;
 	int rumblePower = 100;
 	int version = 3;
 

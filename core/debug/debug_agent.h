@@ -34,9 +34,6 @@
 #define SIGBUS 7
 #endif
 
-#define SWAP_32(a) ((((a) & 0xff) << 24)  | (((a) & 0xff00) << 8) | (((a) >> 8) & 0xff00) | (((a) >> 24) & 0xff))
-#define SWAP_16(a) ((((a) & 0x00ff) << 8) | (((a) & 0xff00) >> 8))
-
 const std::array<Sh4RegType, 59> Sh4RegList {
 		reg_r0,
 		reg_r1,
@@ -125,9 +122,9 @@ public:
 		for (u32 i = 0; i < Sh4RegList.size(); i++)
 		{
 			if (Sh4RegList[i] == reg_sr_status)
-				allregs[i] = SWAP_32(sh4_sr_GetFull());
+				allregs[i] = sh4_sr_GetFull();
 			else if (Sh4RegList[i] != NoReg)
-				allregs[i] = SWAP_32(*GetRegPtr(Sh4RegList[i]));
+				allregs[i] = *GetRegPtr(Sh4RegList[i]);
 		}
 		*regs = &allregs[0];
 		return allregs.size();
@@ -137,7 +134,7 @@ public:
 	{
 		for (u32 i = 0; i < Sh4RegList.size(); i++)
 			if (Sh4RegList[i] != NoReg)
-				*GetRegPtr(Sh4RegList[i]) = SWAP_32(regs[i]);
+				*GetRegPtr(Sh4RegList[i]) = regs[i];
 	}
 
 	u32 readReg(u32 regNum)
@@ -146,9 +143,9 @@ public:
 			return 0;
 		Sh4RegType reg = Sh4RegList[regNum];
 		if (reg == reg_sr_status)
-			return SWAP_32(sh4_sr_GetFull());
+			return sh4_sr_GetFull();
 		if (reg != NoReg)
-			return SWAP_32(*GetRegPtr(reg));
+			return *GetRegPtr(reg);
 		return 0;
 	}
 	void writeReg(u32 regNum, u32 value)
@@ -157,9 +154,9 @@ public:
 			return;
 		Sh4RegType reg = Sh4RegList[regNum];
 		if (reg == reg_sr_status)
-			sh4_sr_SetFull(SWAP_32(value));
+			sh4_sr_SetFull(value);
 		else if (reg != NoReg)
-			*GetRegPtr(reg) = SWAP_32(value);
+			*GetRegPtr(reg) = value;
 	}
 
 	const u8 *readMem(u32 addr, u32 len)
@@ -171,14 +168,14 @@ public:
 		{
 			if (len >= 4 && (addr & 3) == 0)
 			{
-				*(u32 *)p = SWAP_32(ReadMem32_nommu(addr));
+				*(u32 *)p = ReadMem32_nommu(addr);
 				addr += 4;
 				len -= 4;
 				p += 4;
 			}
 			else if (len >= 2 && (addr & 1) == 0)
 			{
-				*(u16 *)p = SWAP_16(ReadMem16_nommu(addr));
+				*(u16 *)p = ReadMem16_nommu(addr);
 				addr += 2;
 				len -= 2;
 				p += 2;
@@ -200,14 +197,14 @@ public:
 		{
 			if (len >= 4 && (addr & 3) == 0)
 			{
-				WriteMem32_nommu(addr, SWAP_32(*(u32 *)p));
+				WriteMem32_nommu(addr, *(u32 *)p);
 				addr += 4;
 				len -= 4;
 				p += 4;
 			}
 			else if (len >= 2 && (addr & 3) == 0)
 			{
-				WriteMem16_nommu(addr, SWAP_16(*(u16 *)p));
+				WriteMem16_nommu(addr, *(u16 *)p);
 				addr += 2;
 				len -= 2;
 				p += 2;

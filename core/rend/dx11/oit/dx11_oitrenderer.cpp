@@ -96,39 +96,52 @@ struct DX11OITRenderer : public DX11Renderer
 		return success;
 	}
 
-	void resize(int w, int h) override
+	void resizeInternal(u32 width, u32 height)
 	{
-		if (w == (int)width && h == (int)height && opaqueTex != nullptr)
-			return;
-		DX11Renderer::resize(w, h);
-		buffers.resize(w, h);
+		if (width > maxWidth || height > maxHeight || opaqueTex == nullptr)
+		{
+			maxWidth = std::max(maxWidth, width);
+			maxHeight = std::max(maxHeight, height);
+			buffers.resize(maxWidth, maxHeight);
 
-		createTexAndRenderTarget(opaqueTex, opaqueRenderTarget, width, height);
-		multipassTex.reset();
-		multipassRenderTarget.reset();
-		multipassTextureView.reset();
-		opaqueTextureView.reset();
-		D3D11_SHADER_RESOURCE_VIEW_DESC viewDesc{};
-		viewDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
-		viewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-		viewDesc.Texture2D.MipLevels = 1;
-		device->CreateShaderResourceView(opaqueTex, &viewDesc, &opaqueTextureView.get());
+			createTexAndRenderTarget(opaqueTex, opaqueRenderTarget, maxWidth, maxHeight);
+			multipassTex.reset();
+			multipassRenderTarget.reset();
+			multipassTextureView.reset();
+			opaqueTextureView.reset();
+			D3D11_SHADER_RESOURCE_VIEW_DESC viewDesc{};
+			viewDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+			viewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+			viewDesc.Texture2D.MipLevels = 1;
+			device->CreateShaderResourceView(opaqueTex, &viewDesc, &opaqueTextureView.get());
 
-		// For depth pass. Use a 32-bit format for depth to avoid loss of precision
-		createDepthTexAndView(depthStencilTex2, depthStencilView2, width, height, DXGI_FORMAT_R32G8X24_TYPELESS, D3D11_BIND_SHADER_RESOURCE);
-		stencilView.reset();
-		viewDesc.Format = DXGI_FORMAT_X32_TYPELESS_G8X24_UINT;
-		device->CreateShaderResourceView(depthStencilTex2, &viewDesc, &stencilView.get());
+			// For depth pass. Use a 32-bit format for depth to avoid loss of precision
+			createDepthTexAndView(depthStencilTex2, depthStencilView2, maxWidth, maxHeight, DXGI_FORMAT_R32G8X24_TYPELESS, D3D11_BIND_SHADER_RESOURCE);
+			stencilView.reset();
+			viewDesc.Format = DXGI_FORMAT_X32_TYPELESS_G8X24_UINT;
+			device->CreateShaderResourceView(depthStencilTex2, &viewDesc, &stencilView.get());
 
-		depthView.reset();
-		viewDesc.Format = DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS;
-		device->CreateShaderResourceView(depthStencilTex2, &viewDesc, &depthView.get());
+			depthView.reset();
+			viewDesc.Format = DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS;
+			device->CreateShaderResourceView(depthStencilTex2, &viewDesc, &depthView.get());
 
-		createDepthTexAndView(depthTex, depthTexView, width, height, DXGI_FORMAT_R32G8X24_TYPELESS);
+			createDepthTexAndView(depthTex, depthTexView, maxWidth, maxHeight, DXGI_FORMAT_R32G8X24_TYPELESS);
+		}
+		else if (!depthTex)
+			createDepthTexAndView(depthTex, depthTexView, maxWidth, maxHeight, DXGI_FORMAT_R32G8X24_TYPELESS);
 	}
 
-	void setRTTSize(int width, int height) override {
-		buffers.resize(width, height);
+	void resize(int width, int height) override
+	{
+		DX11Renderer::resize(width, height);
+		depthTexView.reset();
+		depthTex.reset();
+		resizeInternal(width, height);
+	}
+
+	void setRTTSize(int width, int height) override
+	{
+		resizeInternal(width, height);
 	}
 
 	void Term() override
@@ -144,6 +157,7 @@ struct DX11OITRenderer : public DX11Renderer
 		opaqueTex.reset();
 		shaders.term();
 		buffers.term();
+		maxWidth = maxHeight = 0;
 		DX11Renderer::Term();
 	}
 
@@ -166,7 +180,16 @@ struct DX11OITRenderer : public DX11Renderer
 
 		int clip_rect[4] = {};
 		TileClipping clipmode = GetTileClip(gp->tileclip, matrices.GetViewportMatrix(), clip_rect);
-		bool gpuPalette = gp->texture != nullptr ? gp->texture->gpuPalette : false;
+		int gpuPalette = gp->texture == nullptr || !gp->texture->gpuPalette ? 0
+				: gp->tsp.FilterMode + 1;
+		if (gpuPalette != 0)
+		{
+			if (config::TextureFiltering == 1)
+				gpuPalette = 1; // force nearest
+			else if (config::TextureFiltering == 2)
+				gpuPalette = 2; // force linear
+		}
+
 		// Two volumes mode only supported for OP and PT
 		bool two_volumes_mode = (gp->tsp1.full != (u32)-1) && Type != ListType_Translucent;
 		bool useTexture;
@@ -188,7 +211,6 @@ struct DX11OITRenderer : public DX11Renderer
 					gp->pcw.Gouraud,
 					useTexture,
 					clipmode == TileClipping::Inside,
-					false,
 					two_volumes_mode,
 					pass);
 		}
@@ -212,14 +234,13 @@ struct DX11OITRenderer : public DX11Renderer
 					gp->pcw.Gouraud,
 					Type == ListType_Punch_Through,
 					clipmode == TileClipping::Inside,
-					gp->pcw.Texture && gp->tsp.FilterMode == 0 && !gp->tsp.ClampU && !gp->tsp.ClampV && !gp->tsp.FlipU && !gp->tsp.FlipV,
 					two_volumes_mode,
 					pass);
 
 		}
 		deviceContext->PSSetShader(pixelShader, nullptr, 0);
 
-		if (gpuPalette)
+		if (gpuPalette != 0)
 		{
 			if (gp->tcw.PixelFmt == PixelPal4)
 				constants.paletteIndex = (float)(gp->tcw.PalSelect << 4);
@@ -272,13 +293,9 @@ struct DX11OITRenderer : public DX11Renderer
 		}
 
 		if (pass == DX11OITShaders::Color)
-		{
 			// Apparently punch-through polys support blending, or at least some combinations
-			if (Type == ListType_Translucent || Type == ListType_Punch_Through)
-				deviceContext->OMSetBlendState(blendStates.getState(true, gp->tsp.SrcInstr, gp->tsp.DstInstr), nullptr, 0xffffffff);
-			else
-				deviceContext->OMSetBlendState(blendStates.getState(false, gp->tsp.SrcInstr, gp->tsp.DstInstr), nullptr, 0xffffffff);
-		}
+			deviceContext->OMSetBlendState(blendStates.getState(true, gp->tsp.SrcInstr, gp->tsp.DstInstr), nullptr, 0xffffffff);
+
 		if (useTexture)
 		{
 			for (int i = 0; i < 2; i++)
@@ -290,13 +307,15 @@ struct DX11OITRenderer : public DX11Renderer
 				deviceContext->PSSetShaderResources(slot, 1, &texture->textureView.get());
 				TSP tsp = i == 0 ? gp->tsp : gp->tsp1;
 				bool linearFiltering;
-				if (config::TextureFiltering == 0)
-					linearFiltering = tsp.FilterMode != 0 && !gpuPalette;
+				if (gpuPalette != 0)
+					linearFiltering = false;
+				else if (config::TextureFiltering == 0)
+					linearFiltering = tsp.FilterMode != 0;
 				else if (config::TextureFiltering == 1)
 					linearFiltering = false;
 				else
 					linearFiltering = true;
-		        auto sampler = samplers->getSampler(linearFiltering, tsp.ClampU, tsp.ClampV, tsp.FlipU, tsp.FlipV);
+		        auto sampler = samplers->getSampler(linearFiltering, tsp.ClampU, tsp.ClampV, tsp.FlipU, tsp.FlipV, Type == ListType_Punch_Through);
 		        deviceContext->PSSetSamplers(slot, 1, &sampler.get());
 			}
 		}
@@ -305,7 +324,7 @@ struct DX11OITRenderer : public DX11Renderer
 
 		//set Z mode, only if required
 		int zfunc;
-		if (Type == ListType_Punch_Through || (pass == DX11OITShaders::Depth && SortingEnabled))
+		if (Type == ListType_Punch_Through || SortingEnabled)
 			zfunc = 6; // GEQ
 		else
 			zfunc = gp->isp.DepthMode;
@@ -452,7 +471,7 @@ struct DX11OITRenderer : public DX11Renderer
 
 		deviceContext->IASetInputLayout(finalInputLayout);
 		deviceContext->VSSetShader(shaders.getFinalVertexShader(), nullptr, 0);
-		deviceContext->PSSetShader(shaders.getFinalShader(), nullptr, 0);
+		deviceContext->PSSetShader(shaders.getFinalShader(dithering && lastPass), nullptr, 0);
 
 		deviceContext->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
 		deviceContext->Draw(4, 0);
@@ -512,9 +531,16 @@ struct DX11OITRenderer : public DX11Renderer
 		buffers.bind();
 		deviceContext->ClearDepthStencilView(depthTexView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 0.f, 0);
 		deviceContext->ClearDepthStencilView(depthStencilView2, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 0.f, 0);
+		if (pvrrc.clearFramebuffer && !pvrrc.isRTT)
+		{
+			float colors[4];
+			VO_BORDER_COL.getRGBColor(colors);
+			colors[3] = 1.f;
+			deviceContext->ClearRenderTargetView(opaqueRenderTarget, colors);
+		}
 
 		RenderPass previous_pass {};
-		int render_pass_count = (int)pvrrc.render_passes.size();
+		const int render_pass_count = (int)pvrrc.render_passes.size();
 		for (int render_pass = 0; render_pass < render_pass_count; render_pass++)
 		{
 			const RenderPass& current_pass = pvrrc.render_passes[render_pass];
@@ -539,7 +565,7 @@ struct DX11OITRenderer : public DX11Renderer
 
 			drawList<ListType_Opaque, false, DX11OITShaders::Depth>(pvrrc.global_param_op, previous_pass.op_count, op_count);
 			drawList<ListType_Punch_Through, false, DX11OITShaders::Depth>(pvrrc.global_param_pt, previous_pass.pt_count, pt_count);
-			drawModVols<false>(previous_pass.mvo_count, mvo_count, &pvrrc.global_param_mvo[0]);
+			drawModVols<false>(previous_pass.mvo_count, mvo_count, pvrrc.global_param_mvo.data());
 
 			//
 			// PASS 2: Render OP and PT to opaque render target
@@ -549,13 +575,13 @@ struct DX11OITRenderer : public DX11Renderer
 
 			drawList<ListType_Opaque, false, DX11OITShaders::Color>(pvrrc.global_param_op, previous_pass.op_count, op_count);
 			drawList<ListType_Punch_Through, false, DX11OITShaders::Color>(pvrrc.global_param_pt, previous_pass.pt_count, pt_count);
+		    deviceContext->PSSetShaderResources(4, 1, &nullView);
 
 			//
 			// PASS 3: Render TR to a-buffers
 			//
 			if (current_pass.autosort)
 			{
-			    deviceContext->PSSetShaderResources(4, 1, &nullView);
 				deviceContext->OMSetRenderTargetsAndUnorderedAccessViews(1, &opaqueRenderTarget.get(), depthTexView, 0, D3D11_KEEP_UNORDERED_ACCESS_VIEWS, nullptr, nullptr);
 			    deviceContext->PSSetShaderResources(4, 1, &depthView.get());
 			    // disable color writes
@@ -563,30 +589,30 @@ struct DX11OITRenderer : public DX11Renderer
 				drawList<ListType_Translucent, true, DX11OITShaders::OIT>(pvrrc.global_param_tr, previous_pass.tr_count, tr_count);
 				// unbind depth tex
 			    deviceContext->PSSetShaderResources(4, 1, &nullView);
-				if (render_pass < render_pass_count - 1)
-				{
-					//
-					// PASS 3b: Geometry pass with TR to update the depth for the next TA render pass
-					//
-					deviceContext->OMSetRenderTargetsAndUnorderedAccessViews(1, &opaqueRenderTarget.get(), depthStencilView2, 0, D3D11_KEEP_UNORDERED_ACCESS_VIEWS, nullptr, nullptr);
-					drawList<ListType_Translucent, true, DX11OITShaders::Depth>(pvrrc.global_param_tr, previous_pass.tr_count, tr_count);
-				}
 			    if (!theDX11Context.isIntel())
 			    {
 			    	// Intel Iris Plus 640 just crashes
 			    	if (current_pass.mv_op_tr_shared)
-			    		drawModVols<true>(previous_pass.mvo_count, mvo_count, &pvrrc.global_param_mvo[0]);
+			    		drawModVols<true>(previous_pass.mvo_count, mvo_count, pvrrc.global_param_mvo.data());
 			    	else
-			    		drawModVols<true>(previous_pass.mvo_tr_count, current_pass.mvo_tr_count - previous_pass.mvo_tr_count, &pvrrc.global_param_mvo_tr[0]);
+			    		drawModVols<true>(previous_pass.mvo_tr_count, current_pass.mvo_tr_count - previous_pass.mvo_tr_count, pvrrc.global_param_mvo_tr.data());
 			    }
 			}
 			else
 			{
-			    deviceContext->PSSetShaderResources(4, 1, &nullView);
+				deviceContext->OMSetRenderTargetsAndUnorderedAccessViews(1, &opaqueRenderTarget.get(), depthTexView, 0, D3D11_KEEP_UNORDERED_ACCESS_VIEWS, nullptr, nullptr);
 				drawList<ListType_Translucent, false, DX11OITShaders::Color>(pvrrc.global_param_tr, previous_pass.tr_count, tr_count);
 			}
 			if (render_pass < render_pass_count - 1)
 			{
+				//
+				// PASS 3b: Geometry pass with TR to update the depth for the next TA render pass
+				//
+				deviceContext->OMSetRenderTargetsAndUnorderedAccessViews(1, &opaqueRenderTarget.get(), depthStencilView2, 0, D3D11_KEEP_UNORDERED_ACCESS_VIEWS, nullptr, nullptr);
+				if (current_pass.autosort)
+					drawList<ListType_Translucent, true, DX11OITShaders::Depth>(pvrrc.global_param_tr, previous_pass.tr_count, tr_count);
+				else
+					drawList<ListType_Translucent, false, DX11OITShaders::Depth>(pvrrc.global_param_tr, previous_pass.tr_count, tr_count);
 				//
 				// PASS 3c: Render a-buffer to temporary texture
 				//
@@ -667,6 +693,7 @@ struct DX11OITRenderer : public DX11Renderer
 			deviceContext->OMSetRenderTargets(1, &theDX11Context.getRenderTarget().get(), nullptr);
 			displayFramebuffer();
 			DrawOSD(false);
+			renderVideoRouting();
 			theDX11Context.setFrameRendered();
 #else
 			ID3D11RenderTargetView *nullView = nullptr;
@@ -700,6 +727,8 @@ private:
 	ComPtr<ID3D11InputLayout> finalInputLayout;
 	ComPtr<ID3D11Buffer> vtxPolyConstants;
 	int64_t pixelBufferSize = 0;
+	u32 maxWidth = 0;
+	u32 maxHeight = 0;
 };
 
 Renderer *rend_OITDirectX11()

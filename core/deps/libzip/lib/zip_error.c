@@ -1,9 +1,9 @@
 /*
   zip_error.c -- zip_error_t helper functions
-  Copyright (C) 1999-2020 Dieter Baron and Thomas Klausner
+  Copyright (C) 1999-2021 Dieter Baron and Thomas Klausner
 
   This file is part of libzip, a library to manipulate ZIP archives.
-  The authors can be contacted at <libzip@nih.at>
+  The authors can be contacted at <info@libzip.org>
 
   Redistribution and use in source and binary forms, with or without
   modification, are permitted provided that the following conditions
@@ -67,23 +67,24 @@ zip_error_init_with_code(zip_error_t *error, int ze) {
     zip_error_init(error);
     error->zip_err = ze;
     switch (zip_error_system_type(error)) {
-    case ZIP_ET_SYS:
-        error->sys_err = errno;
-        break;
-
-    default:
-        error->sys_err = 0;
-        break;
+        case ZIP_ET_SYS:
+        case ZIP_ET_LIBZIP:
+            error->sys_err = errno;
+            break;
+            
+        default:
+            error->sys_err = 0;
+            break;
     }
 }
 
 
 ZIP_EXTERN int
 zip_error_system_type(const zip_error_t *error) {
-    if (error->zip_err < 0 || error->zip_err >= _zip_nerr_str)
+    if (error->zip_err < 0 || error->zip_err >= _zip_err_str_count)
         return ZIP_ET_NONE;
 
-    return _zip_err_type[error->zip_err];
+    return _zip_err_str[error->zip_err].type;
 }
 
 
@@ -131,7 +132,12 @@ zip_error_set(zip_error_t *err, int ze, int se) {
 
 
 void
-_zip_error_set_from_source(zip_error_t *err, zip_source_t *src) {
+zip_error_set_from_source(zip_error_t *err, zip_source_t *src) {
+    if (src == NULL) {
+        zip_error_set(err, ZIP_ER_INVAL, 0);
+        return;
+    }
+
     _zip_error_copy(err, zip_source_error(src));
 }
 

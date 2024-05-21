@@ -12,6 +12,7 @@
 #include <utility>
 
 extern const u8 *vq_codebook;
+constexpr int VQ_CODEBOOK_SIZE = 256 * 8;
 extern u32 palette_index;
 extern u32 palette16_ram[1024];
 extern u32 palette32_ram[1024];
@@ -162,6 +163,7 @@ struct UnpackerNop {
 		return word;
 	}
 };
+
 // ARGB1555 to RGBA5551
 struct Unpacker1555 {
 	using unpacked_type = u16;
@@ -169,6 +171,7 @@ struct Unpacker1555 {
 		return ((word >> 15) & 1) | (((word >> 10) & 0x1F) << 11)  | (((word >> 5) & 0x1F) << 6)  | (((word >> 0) & 0x1F) << 1);
 	}
 };
+
 // ARGB4444 to RGBA4444
 struct Unpacker4444 {
 	using unpacked_type = u16;
@@ -188,6 +191,7 @@ struct Unpacker1555_32 {
 				(word & 0x8000) ? 0xFF : 0);
 	}
 };
+
 template <typename Packer>
 struct Unpacker565_32 {
 	using unpacked_type = u32;
@@ -199,6 +203,7 @@ struct Unpacker565_32 {
 				0xFF);
 	}
 };
+
 template <typename Packer>
 struct Unpacker4444_32 {
 	using unpacked_type = u32;
@@ -210,6 +215,7 @@ struct Unpacker4444_32 {
 				(((word >> 12) & 0xF) << 4) | ((word >> 12) & 0xF));
 	}
 };
+
 // ARGB8888 to whatever
 template <typename Packer>
 struct Unpacker8888 {
@@ -441,7 +447,6 @@ void texture_TW(PixelBuffer<typename PixelConvertor::unpacked_type>* pb, const u
 template<class PixelConvertor>
 void texture_VQ(PixelBuffer<typename PixelConvertor::unpacked_type>* pb, const u8* p_in, u32 Width, u32 Height)
 {
-	p_in += 256 * 4 * 2;	// Skip VQ codebook
 	pb->amove(0, 0);
 
 	const u32 divider = PixelConvertor::xpp * PixelConvertor::ypp;
@@ -465,8 +470,6 @@ typedef void (*TexConvFP)(PixelBuffer<u16> *pb, const u8 *p_in, u32 width, u32 h
 typedef void (*TexConvFP8)(PixelBuffer<u8> *pb, const u8 *p_in, u32 width, u32 height);
 typedef void (*TexConvFP32)(PixelBuffer<u32> *pb, const u8 *p_in, u32 width, u32 height);
 
-//Planar
-constexpr TexConvFP tex565_PL = texture_PL<ConvertPlanar<UnpackerNop<u16>>>;
 //Twiddle
 constexpr TexConvFP tex565_TW = texture_TW<ConvertTwiddle<UnpackerNop<u16>>>;
 // Palette
@@ -490,11 +493,7 @@ namespace opengl {
 // OpenGL
 
 //Planar
-constexpr TexConvFP tex1555_PL = texture_PL<ConvertPlanar<Unpacker1555>>;
-constexpr TexConvFP tex4444_PL = texture_PL<ConvertPlanar<Unpacker4444>>;
-constexpr TexConvFP texBMP_PL = tex4444_PL;
 constexpr TexConvFP32 texYUV422_PL = texture_PL<ConvertPlanarYUV<RGBAPacker>>;
-
 constexpr TexConvFP32 tex565_PL32 = texture_PL<ConvertPlanar<Unpacker565_32<RGBAPacker>>>;
 constexpr TexConvFP32 tex1555_PL32 = texture_PL<ConvertPlanar<Unpacker1555_32<RGBAPacker>>>;
 constexpr TexConvFP32 tex4444_PL32 = texture_PL<ConvertPlanar<Unpacker4444_32<RGBAPacker>>>;
@@ -524,11 +523,7 @@ namespace directx {
 // DirectX
 
 //Planar
-constexpr TexConvFP tex1555_PL = texture_PL<ConvertPlanar<UnpackerNop<u16>>>;
-constexpr TexConvFP tex4444_PL = texture_PL<ConvertPlanar<UnpackerNop<u16>>>;
-constexpr TexConvFP texBMP_PL = tex4444_PL;
 constexpr TexConvFP32 texYUV422_PL = texture_PL<ConvertPlanarYUV<BGRAPacker>>;
-
 constexpr TexConvFP32 tex565_PL32 = texture_PL<ConvertPlanar<Unpacker565_32<BGRAPacker>>>;
 constexpr TexConvFP32 tex1555_PL32 = texture_PL<ConvertPlanar<Unpacker1555_32<BGRAPacker>>>;
 constexpr TexConvFP32 tex4444_PL32 = texture_PL<ConvertPlanar<Unpacker4444_32<BGRAPacker>>>;
@@ -583,10 +578,10 @@ public:
 		tsp = other.tsp;
 		tcw = other.tcw;
 		tex_type = other.tex_type;
-		sa_tex = other.sa_tex;
+		startAddress = other.startAddress;
 		dirty = other.dirty;
 		std::swap(lock_block, other.lock_block);
-		sa = other.sa;
+		mmStartAddress = other.mmStartAddress;
 		width = other.width;
 		height = other.height;
 		size = other.size;
@@ -597,6 +592,7 @@ public:
 		Updates = other.Updates;
 		palette_hash = other.palette_hash;
 		texture_hash = other.texture_hash;
+		old_vqtexture_hash = other.old_vqtexture_hash;
 		old_texture_hash = other.old_texture_hash;
 		std::swap(custom_image_data, other.custom_image_data);
 		custom_width = other.custom_width;
@@ -610,12 +606,12 @@ public:
 
 	// Decoded/filtered texture format
 	TextureType tex_type;
-	u32 sa_tex;			// texture data start address in vram
+	u32 startAddress;	// texture data start address in vram
 
 	u32 dirty;			// frame number at which texture was overwritten
 	vram_block* lock_block;
 
-	u32 sa;         	// pixel data start address of max level mipmap
+	u32 mmStartAddress; // pixel data start address of max level mipmap
 	u16 width, height;	// width & height of the texture
 	u32 size;       	// size in bytes of max level mipmap in vram
 
@@ -629,6 +625,7 @@ public:
 	//used for palette updates
 	u32 palette_hash;			// Palette hash at time of last update
 	u32 texture_hash;			// xxhash of texture data, used for custom textures
+	u32 old_vqtexture_hash;		// legacy hash for vq textures
 	u32 old_texture_hash;		// legacy hash
 	u8* custom_image_data;		// loaded custom image data
 	u32 custom_width;
@@ -685,12 +682,12 @@ public:
 	static bool IsGpuHandledPaletted(TSP tsp, TCW tcw)
 	{
 		// Some palette textures are handled on the GPU
-		// This is currently limited to textures using nearest filtering and not mipmapped.
+		// This is currently limited to textures using nearest or bilinear filtering and not mipmapped.
 		// Enabling texture upscaling or dumping also disables this mode.
 		return (tcw.PixelFmt == PixelPal4 || tcw.PixelFmt == PixelPal8)
 				&& config::TextureUpscale == 1
 				&& !config::DumpTextures
-				&& tsp.FilterMode == 0
+				&& tsp.FilterMode <= 1
 				&& !tcw.MipMapped
 				&& !tcw.VQ_Comp;
 	}
@@ -741,8 +738,8 @@ public:
 
 	Texture *getRTTexture(u32 address, u32 fb_packmode, u32 width, u32 height)
 	{
-		// TexAddr : (address), Reserved : 0, StrideSel : 0, ScanOrder : 1
-		TCW tcw{ { address >> 3, 0, 0, 1 } };
+		// TexAddr : (address), StrideSel : 0, ScanOrder : 1
+		TCW tcw{ { address >> 3, 0, 1 } };
 		switch (fb_packmode)
 		{
 		case 0:
@@ -801,10 +798,10 @@ protected:
 	// Only use TexU and TexV from TSP in the cache key
 	//     TexV : 7, TexU : 7
 	const TSP TSPTextureCacheMask = { { 7, 7 } };
-	//     TexAddr : 0x1FFFFF, Reserved : 0, StrideSel : 0, ScanOrder : 1, PixelFmt : 7, VQ_Comp : 1, MipMapped : 1
-	const TCW TCWTextureCacheMask = { { 0x1FFFFF, 0, 0, 1, 7, 1, 1 } };
+	//     TexAddr : 0x1FFFFF, StrideSel : 0, ScanOrder : 1, PixelFmt : 7, VQ_Comp : 1, MipMapped : 1
+	const TCW TCWTextureCacheMask = { { 0x1FFFFF, 0, 1, 7, 1, 1 } };
 	//     TexAddr : 0x1FFFFF, PalSelect : 0, PixelFmt : 7, VQ_Comp : 1, MipMapped : 1
-	const TCW TCWPalTextureCacheMask = { { 0x1FFFFF, 0, 0, 0, 7, 1, 1 } };
+	const TCW TCWPalTextureCacheMask = { { 0x1FFFFF, 0, 0, 7, 1, 1 } };
 };
 
 template<typename Packer = RGBAPacker>
@@ -829,6 +826,6 @@ static inline void MakeFogTexture(u8 *tex_data)
 	}
 }
 
-void dump_screenshot(u8 *buffer, u32 width, u32 height, bool alpha = false, u32 rowPitch = 0, bool invertY = true);
+void dump_screenshot(u8 *buffer, u32 width, u32 height, bool alpha = false, u32 rowPitch = 0, bool invertY = false);
 
 extern const std::array<f32, 16> D_Adjust_LoD_Bias;

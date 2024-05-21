@@ -69,6 +69,5 @@ void VMAllocator::Init(vk::PhysicalDevice physicalDevice, vk::Device device, vk:
 #endif
 
 	VkResult rc = vmaCreateAllocator(&allocatorInfo, &allocator);
-	if (rc != VK_SUCCESS)
-		vk::throwResultException((vk::Result)rc, "vmaCreateAllocator failed");
+	vk::resultCheck(static_cast<vk::Result>(rc), "vmaCreateAllocator failed");
 }

@@ -33,13 +33,13 @@ Option<int> Cable("Dreamcast.Cable", 3);			// TV Composite
 Option<int> Region("Dreamcast.Region", 1);			// USA
 Option<int> Broadcast("Dreamcast.Broadcast", 0);	// NTSC
 Option<int> Language("Dreamcast.Language", 1);		// English
-Option<bool> ForceWindowsCE("Dreamcast.ForceWindowsCE");
 Option<bool> AutoLoadState("Dreamcast.AutoLoadState");
 Option<bool> AutoSaveState("Dreamcast.AutoSaveState");
 Option<int, false> SavestateSlot("Dreamcast.SavestateSlot");
 Option<bool> ForceFreePlay("ForceFreePlay", true);
 Option<bool, false> FetchBoxart("FetchBoxart", true);
 Option<bool, false> BoxartDisplayMode("BoxartDisplayMode", true);
+Option<int, false> UIScaling("UIScaling", 100);
 
 // Sound
 
@@ -93,12 +93,13 @@ std::array<Option<int>, 4> CrosshairColor {
 	Option<int>("rend.CrossHairColor3"),
 	Option<int>("rend.CrossHairColor4"),
 };
+Option<int> CrosshairSize("rend.CrosshairSize", 40);
 Option<int> SkipFrame("ta.skip");
 Option<int> MaxThreads("pvr.MaxThreads", 3);
 Option<int> AutoSkipFrame("pvr.AutoSkipFrame", 0);
 Option<int> RenderResolution("rend.Resolution", 480);
 Option<bool> VSync("rend.vsync", true);
-Option<int64_t> PixelBufferSize("rend.PixelBufferSize", 512 * 1024 * 1024);
+Option<int64_t> PixelBufferSize("rend.PixelBufferSize", 512_MB);
 Option<int> AnisotropicFiltering("rend.AnisotropicFiltering", 1);
 Option<int> TextureFiltering("rend.TextureFiltering", 0); // Default
 Option<bool> ThreadedRendering("rend.ThreadedRendering", true);
@@ -106,6 +107,13 @@ Option<bool> DupeFrames("rend.DupeFrames", false);
 Option<int> PerPixelLayers("rend.PerPixelLayers", 32);
 Option<bool> NativeDepthInterpolation("rend.NativeDepthInterpolation", false);
 Option<bool> EmulateFramebuffer("rend.EmulateFramebuffer", false);
+Option<bool> FixUpscaleBleedingEdge("rend.FixUpscaleBleedingEdge", true);
+Option<bool> CustomGpuDriver("rend.CustomGpuDriver", false);
+#ifdef VIDEO_ROUTING
+Option<bool, false> VideoRouting("rend.VideoRouting", false);
+Option<bool, false> VideoRoutingScale("rend.VideoRoutingScale", false);
+Option<int, false> VideoRoutingVRes("rend.VideoRoutingVRes", 720);
+#endif
 
 // Misc
 
@@ -116,12 +124,14 @@ Option<int> GDBPort("Debug.GDBPort", debugger::DEFAULT_PORT);
 Option<bool> GDBWaitForConnection("Debug.GDBWaitForConnection");
 Option<bool> UseReios("UseReios");
 Option<bool> FastGDRomLoad("FastGDRomLoad", false);
+Option<bool> RamMod32MB("Dreamcast.RamMod32MB", false);
 
 Option<bool> OpenGlChecks("OpenGlChecks", false, "validate");
 
 Option<std::vector<std::string>, false> ContentPath("Dreamcast.ContentPath");
 Option<bool, false> HideLegacyNaomiRoms("Dreamcast.HideLegacyNaomiRoms", true);
 Option<bool, false> UploadCrashLogs("UploadCrashLogs", true);
+Option<bool, false> DiscordPresence("DiscordPresence", true);
 
 // Profiler
 Option<bool> ProfilerEnabled("Profiler.Enabled");
@@ -150,10 +160,7 @@ Option<bool> GGPOChatTimeoutToggle("GGPOChatTimeoutToggle", true, "network");
 Option<int> GGPOChatTimeout("GGPOChatTimeout", 10, "network");
 Option<bool> NetworkOutput("NetworkOutput", false, "network");
 Option<int> MultiboardSlaves("MultiboardSlaves", 1, "network");
-
-#ifdef SUPPORT_DISPMANX
-Option<bool> DispmanxMaintainAspect("maintain_aspect", true, "dispmanx");
-#endif
+Option<bool> BattleCableEnable("BattleCable", false, "network");
 
 #ifdef USE_OMX
 Option<int> OmxAudioLatency("audio_latency", 100, "omx");
@@ -192,5 +199,12 @@ Option<bool, false> UseRawInput("RawInput", false, "input");
 #ifdef USE_LUA
 Option<std::string, false> LuaFileName("LuaFileName", "flycast.lua");
 #endif
+
+// RetroAchievements
+
+Option<bool> EnableAchievements("Enabled", false, "achievements");
+Option<bool> AchievementsHardcoreMode("HardcoreMode", false, "achievements");
+OptionString AchievementsUserName("UserName", "", "achievements");
+OptionString AchievementsToken("Token", "", "achievements");
 
 } // namespace config

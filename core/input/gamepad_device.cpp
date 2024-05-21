@@ -19,8 +19,8 @@
 
 #include "gamepad_device.h"
 #include "cfg/cfg.h"
-#include "oslib/oslib.h"
-#include "rend/gui.h"
+#include "stdclass.h"
+#include "ui/gui.h"
 #include "emulator.h"
 #include "hw/maple/maple_devs.h"
 #include "mouse.h"
@@ -33,17 +33,17 @@
 
 // Gamepads
 u32 kcode[4] = { ~0u, ~0u, ~0u, ~0u };
-s8 joyx[4];
-s8 joyy[4];
-s8 joyrx[4];
-s8 joyry[4];
-u8 rt[4];
-u8 lt[4];
-s8 joy3x[4];
-s8 joy3y[4];
+s16 joyx[4];
+s16 joyy[4];
+s16 joyrx[4];
+s16 joyry[4];
+s16 joy3x[4];
+s16 joy3y[4];
+u16 rt[4];
+u16 lt[4];
+u16 lt2[4];
+u16 rt2[4];
 // Keyboards
-u8 lt2[4];
-u8 rt2[4];
 u8 kb_shift[MAPLE_PORTS];	// shift keys pressed (bitmask)
 u8 kb_key[MAPLE_PORTS][6];	// normal keys pressed
 
@@ -99,21 +99,25 @@ bool GamepadDevice::handleButtonInput(int port, DreamcastKey key, bool pressed)
 			if (pressed)
 				gui_saveState();
 			break;
+		case EMU_BTN_SCREENSHOT:
+			if (pressed)
+				gui_takeScreenshot();
+			break;
 		case DC_AXIS_LT:
 			if (port >= 0)
-				lt[port] = pressed ? 255 : 0;
+				lt[port] = pressed ? 0xffff : 0;
 			break;
 		case DC_AXIS_RT:
 			if (port >= 0)
-				rt[port] = pressed ? 255 : 0;
+				rt[port] = pressed ? 0xffff : 0;
 			break;
 		case DC_AXIS_LT2:
 			if (port >= 0)
-				lt2[port] = pressed ? 255 : 0;
+				lt2[port] = pressed ? 0xffff : 0;
 			break;
 		case DC_AXIS_RT2:
 			if (port >= 0)
-				rt2[port] = pressed ? 255 : 0;
+				rt2[port] = pressed ? 0xffff : 0;
 			break;
 		case DC_AXIS_UP:
 		case DC_AXIS_DOWN:
@@ -152,7 +156,7 @@ bool GamepadDevice::handleButtonInput(int port, DreamcastKey key, bool pressed)
 bool GamepadDevice::gamepad_btn_input(u32 code, bool pressed)
 {
 	if (_input_detected != nullptr && _detecting_button
-			&& os_GetSeconds() >= _detection_start_time && pressed)
+			&& getTimeMs() >= _detection_start_time && pressed)
 	{
 		_input_detected(code, false, false);
 		_input_detected = nullptr;
@@ -179,6 +183,26 @@ bool GamepadDevice::gamepad_btn_input(u32 code, bool pressed)
 	return rc;
 }
 
+static DreamcastKey getOppositeAxis(DreamcastKey key)
+{
+	switch (key)
+	{
+	case DC_AXIS_RIGHT: return DC_AXIS_LEFT;
+	case DC_AXIS_LEFT: return DC_AXIS_RIGHT;
+	case DC_AXIS_UP: return DC_AXIS_DOWN;
+	case DC_AXIS_DOWN: return DC_AXIS_UP;
+	case DC_AXIS2_RIGHT: return DC_AXIS2_LEFT;
+	case DC_AXIS2_LEFT: return DC_AXIS2_RIGHT;
+	case DC_AXIS2_UP: return DC_AXIS2_DOWN;
+	case DC_AXIS2_DOWN: return DC_AXIS2_UP;
+	case DC_AXIS3_RIGHT: return DC_AXIS3_LEFT;
+	case DC_AXIS3_LEFT: return DC_AXIS3_RIGHT;
+	case DC_AXIS3_UP: return DC_AXIS3_DOWN;
+	case DC_AXIS3_DOWN: return DC_AXIS3_UP;
+	default: return key;
+	}
+}
+
 //
 // value must be >= -32768 and <= 32767 for full axes
 // and 0 to 32767 for half axes/triggers
@@ -187,7 +211,7 @@ bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 {
 	bool positive = value >= 0;
 	if (_input_detected != NULL && _detecting_axis
-			&& os_GetSeconds() >= _detection_start_time && std::abs(value) >= 16384)
+			&& getTimeMs() >= _detection_start_time && std::abs(value) >= 16384)
 	{
 		_input_detected(code, true, positive);
 		_input_detected = nullptr;
@@ -202,80 +226,81 @@ bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 		{
 			//printf("T-AXIS %d Mapped to %d -> %d\n", key, value, std::min(std::abs(v) >> 7, 255));
 			if (key == DC_AXIS_LT)
-				lt[port] = std::min(std::abs(v) >> 7, 255);
+				lt[port] = std::min(std::abs(v) << 1, 0xffff);
 			else if (key == DC_AXIS_RT)
-				rt[port] = std::min(std::abs(v) >> 7, 255);
+				rt[port] = std::min(std::abs(v) << 1, 0xffff);
 			else if (key == DC_AXIS_LT2)
-				lt2[port] = std::min(std::abs(v) >> 7, 255);
+				lt2[port] = std::min(std::abs(v) << 1, 0xffff);
 			else if (key == DC_AXIS_RT2)
-				rt2[port] = std::min(std::abs(v) >> 7, 255);
+				rt2[port] = std::min(std::abs(v) << 1, 0xffff);
 			else
 				return false;
 		}
 		else if ((key & DC_BTN_GROUP_MASK) == DC_AXIS_STICKS) // Analog axes
 		{
 			//printf("AXIS %d Mapped to %d -> %d\n", key, value, v);
-			s8 *this_axis;
-			s8 *other_axis;
+			s16 *this_axis;
+			int otherAxisValue;
 			int axisDirection = -1;
 			switch (key)
 			{
 			case DC_AXIS_RIGHT:
 				axisDirection = 1;
-				//no break
+				[[fallthrough]];
 			case DC_AXIS_LEFT:
 				this_axis = &joyx[port];
-				other_axis = &joyy[port];
+				otherAxisValue = lastAxisValue[port][DC_AXIS_UP];
 				break;
 
 			case DC_AXIS_DOWN:
 				axisDirection = 1;
-				//no break
+				[[fallthrough]];
 			case DC_AXIS_UP:
 				this_axis = &joyy[port];
-				other_axis = &joyx[port];
+				otherAxisValue = lastAxisValue[port][DC_AXIS_LEFT];
 				break;
 
 			case DC_AXIS2_RIGHT:
 				axisDirection = 1;
-				//no break
+				[[fallthrough]];
 			case DC_AXIS2_LEFT:
 				this_axis = &joyrx[port];
-				other_axis = &joyry[port];
+				otherAxisValue = lastAxisValue[port][DC_AXIS2_UP];
 				break;
 
 			case DC_AXIS2_DOWN:
 				axisDirection = 1;
-				//no break
+				[[fallthrough]];
 			case DC_AXIS2_UP:
 				this_axis = &joyry[port];
-				other_axis = &joyrx[port];
+				otherAxisValue = lastAxisValue[port][DC_AXIS2_LEFT];
 				break;
 
 			case DC_AXIS3_RIGHT:
 				axisDirection = 1;
-				//no break
+				[[fallthrough]];
 			case DC_AXIS3_LEFT:
 				this_axis = &joy3x[port];
-				other_axis = &joy3y[port];
+				otherAxisValue = lastAxisValue[port][DC_AXIS3_UP];
 				break;
 
 			case DC_AXIS3_DOWN:
 				axisDirection = 1;
-				//no break
+				[[fallthrough]];
 			case DC_AXIS3_UP:
 				this_axis = &joy3y[port];
-				other_axis = &joy3x[port];
+				otherAxisValue = lastAxisValue[port][DC_AXIS3_LEFT];
 				break;
 
 			default:
 				return false;
 			}
-			// Lightgun with left analog stick
 			int& lastValue = lastAxisValue[port][key];
-			if (lastValue != v)
+			int& lastOpValue = lastAxisValue[port][getOppositeAxis(key)];
+			if (lastValue != v || lastOpValue != v)
 			{
-				lastValue = v;
+				lastValue = lastOpValue = v;
+				// Lightgun with left analog stick
 				if (key == DC_AXIS_RIGHT || key == DC_AXIS_LEFT)
 					mo_x_abs[port] = (std::abs(v) * axisDirection + 32768) * 639 / 65535;
 				else if (key == DC_AXIS_UP || key == DC_AXIS_DOWN)
@@ -283,20 +308,29 @@ bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 			}
 			// Radial dead zone
 			// FIXME compute both axes at the same time
-			v = std::min(127, std::abs(v >> 8));
-			if ((float)(v * v + *other_axis * *other_axis) < input_mapper->dead_zone * input_mapper->dead_zone * 128.f * 128.f)
+			const float nv = std::abs(v) / 32768.f;
+			const float r2 = nv * nv + otherAxisValue * otherAxisValue / 32768.f / 32768.f;
+			if (r2 < input_mapper->dead_zone * input_mapper->dead_zone || r2 == 0.f)
 			{
 				*this_axis = 0;
-				*other_axis = 0;
 			}
 			else
-				*this_axis = v * axisDirection;
+			{
+				float pdz = nv * input_mapper->dead_zone / std::sqrt(r2);
+				// there's a dead angular zone at 45° with saturation > 1 (both axes are saturated)
+				v = std::round((nv - pdz) / (1 - pdz) * 32768.f * input_mapper->saturation);
+				*this_axis = std::clamp(v * axisDirection, -32768, 32767);
+			}
 		}
 		else if (key != EMU_BTN_NONE && key <= DC_BTN_BITMAPPED_LAST) // Map triggers to digital buttons
 		{
 			//printf("B-AXIS %d Mapped to %d -> %d\n", key, value, v);
 			// TODO hysteresis?
-			if (std::abs(v) < 16384)
+			int threshold = 16384;
+			if (code == leftTrigger || code == rightTrigger )
+				threshold = 100;
+				
+			if (std::abs(v) < threshold)
 				kcode[port] |=  key; // button released
 			else
 				kcode[port] &= ~key; // button pressed
@@ -475,7 +509,7 @@ void GamepadDevice::detect_btn_input(input_detected_cb button_pressed)
 	_input_detected = button_pressed;
 	_detecting_button = true;
 	_detecting_axis = false;
-	_detection_start_time = os_GetSeconds() + 0.2;
+	_detection_start_time = getTimeMs() + 200;
 }
 
 void GamepadDevice::detect_axis_input(input_detected_cb axis_moved)
@@ -483,7 +517,7 @@ void GamepadDevice::detect_axis_input(input_detected_cb axis_moved)
 	_input_detected = axis_moved;
 	_detecting_button = false;
 	_detecting_axis = true;
-	_detection_start_time = os_GetSeconds() + 0.2;
+	_detection_start_time = getTimeMs() + 200;
 }
 
 void GamepadDevice::detectButtonOrAxisInput(input_detected_cb input_changed)
@@ -491,7 +525,7 @@ void GamepadDevice::detectButtonOrAxisInput(input_detected_cb input_changed)
 	_input_detected = input_changed;
 	_detecting_button = true;
 	_detecting_axis = true;
-	_detection_start_time = os_GetSeconds() + 0.2;
+	_detection_start_time = getTimeMs() + 200;
 }
 
 #ifdef TEST_AUTOMATION

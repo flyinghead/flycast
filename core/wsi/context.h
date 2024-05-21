@@ -33,6 +33,7 @@ public:
 	virtual void resize() {}
 	virtual std::string getDriverName() = 0;
 	virtual std::string getDriverVersion() = 0;
+	virtual bool isAMD() = 0;
 	virtual bool hasPerPixel() { return false; }
 
 	void setWindow(void *window, void *display = nullptr) {

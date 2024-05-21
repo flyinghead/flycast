@@ -27,6 +27,8 @@ class ArchiveFile
 public:
 	virtual ~ArchiveFile() = default;
 	virtual u32 Read(void *buffer, u32 length) = 0;
+	virtual size_t length() = 0;
+	virtual const char *getName() { return nullptr; }
 };
 
 class Archive

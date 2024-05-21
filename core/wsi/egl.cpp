@@ -39,6 +39,13 @@ bool EGLGraphicsContext::makeCurrent()
 
 bool EGLGraphicsContext::init()
 {
+	int version = gladLoaderLoadEGL(EGL_NO_DISPLAY);
+	if (version == 0) {
+		ERROR_LOG(RENDERER, "Failed to load libEGL.so");
+		return false;
+	}
+	NOTICE_LOG(RENDERER, "EGL version %d.%d", GLAD_VERSION_MAJOR(version), GLAD_VERSION_MINOR(version));
+
 	//try to get a display
 	display = eglGetDisplay((EGLNativeDisplayType)display);
 
@@ -53,6 +60,8 @@ bool EGLGraphicsContext::init()
 		ERROR_LOG(RENDERER, "EGL Error: eglInitialize failed");
 		return false;
 	}
+
+	gladLoaderLoadEGL(display);
 
 	if (surface == EGL_NO_SURFACE)
 	{
@@ -99,15 +108,15 @@ bool EGLGraphicsContext::init()
 		}
 		if (try_full_gl)
 		{
-			EGLint contextAttrs[] = { EGL_CONTEXT_MAJOR_VERSION_KHR, 3,
-									  EGL_CONTEXT_OPENGL_PROFILE_MASK_KHR, EGL_CONTEXT_OPENGL_COMPATIBILITY_PROFILE_BIT_KHR,
+			EGLint contextAttrs[] = { EGL_CONTEXT_MAJOR_VERSION, 3,
+									  EGL_CONTEXT_OPENGL_PROFILE_MASK, EGL_CONTEXT_OPENGL_COMPATIBILITY_PROFILE_BIT,
 									  EGL_NONE };
 			context = eglCreateContext(display, config,  EGL_NO_CONTEXT, contextAttrs);
 			if (context != EGL_NO_CONTEXT)
 			{
 				makeCurrent();
-				if (gl3wInit())
-					ERROR_LOG(RENDERER, "gl3wInit() failed");
+				if (!gladLoadGL((GLADloadfunc) eglGetProcAddress))
+					ERROR_LOG(RENDERER, "gladLoadGL() failed");
 			}
 		}
 #endif
@@ -129,21 +138,10 @@ bool EGLGraphicsContext::init()
 				return false;
 			}
 
-#ifdef GLES
-// EGL only supports runtime loading with android? TDB
-			load_gles_symbols();
-#else
 			makeCurrent();
-			if (gl3wInit())
-				INFO_LOG(RENDERER, "gl3wInit() failed");
-#endif
+			if (!gladLoadGLES2((GLADloadfunc) eglGetProcAddress))
+				ERROR_LOG(RENDERER, "gladLoadGLES2() failed");
 		}
-	}
-	else if (glGetError == NULL)
-	{
-		// Needed when the context is not created here (Android java mode, iOS)
-		// Broken atm
-		load_gles_symbols();
 	}
 
 	if (!makeCurrent())
@@ -171,13 +169,19 @@ bool EGLGraphicsContext::init()
 void EGLGraphicsContext::term()
 {
 	preTerm();
-	eglMakeCurrent(display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
-	if (context != EGL_NO_CONTEXT)
-		eglDestroyContext(display, context);
-	if (surface != EGL_NO_SURFACE)
-		eglDestroySurface(display, surface);
+
 	if (display != EGL_NO_DISPLAY)
+	{
+		eglMakeCurrent(display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+
+		if (context != EGL_NO_CONTEXT)
+			eglDestroyContext(display, context);
+
+		if (surface != EGL_NO_SURFACE)
+			eglDestroySurface(display, surface);
+
 		eglTerminate(display);
+	}
 
 	context = EGL_NO_CONTEXT;
 	surface = EGL_NO_SURFACE;

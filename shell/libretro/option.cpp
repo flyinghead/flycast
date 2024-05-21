@@ -32,7 +32,6 @@ Option<int> Cable("", 3);									// TV Composite
 Option<int> Region(CORE_OPTION_NAME "_region", 1);			// USA
 Option<int> Broadcast(CORE_OPTION_NAME "_broadcast", 0);	// NTSC
 Option<int> Language(CORE_OPTION_NAME "_language", 1);		// English
-Option<bool> ForceWindowsCE(CORE_OPTION_NAME "_force_wince");
 Option<bool> AutoLoadState("");
 Option<bool> AutoSaveState("");
 Option<int, false> SavestateSlot("");
@@ -70,7 +69,7 @@ Option<int> ScreenStretching("", 100);
 Option<bool> Fog(CORE_OPTION_NAME "_fog", true);
 Option<bool> FloatVMUs("");
 Option<bool> Rotate90("");
-Option<bool> PerStripSorting("rend.PerStripSorting");
+Option<bool> PerStripSorting("");
 Option<bool> DelayFrameSwapping(CORE_OPTION_NAME "_delay_frame_swapping");
 Option<bool> WidescreenGameHacks(CORE_OPTION_NAME "_widescreen_cheats");
 std::array<Option<int>, 4> CrosshairColor {
@@ -88,10 +87,11 @@ Option<bool> ThreadedRendering(CORE_OPTION_NAME "_threaded_rendering", true);
 Option<int> AnisotropicFiltering(CORE_OPTION_NAME "_anisotropic_filtering");
 Option<int> TextureFiltering(CORE_OPTION_NAME "_texture_filtering");
 Option<bool> PowerVR2Filter(CORE_OPTION_NAME "_pvr2_filtering");
-Option<int64_t> PixelBufferSize("", 512 * 1024 * 1024);
+Option<int64_t> PixelBufferSize("", 512_MB);
 IntOption PerPixelLayers(CORE_OPTION_NAME "_oit_layers");
 Option<bool> NativeDepthInterpolation(CORE_OPTION_NAME "_native_depth_interpolation");
 Option<bool> EmulateFramebuffer(CORE_OPTION_NAME "_emulate_framebuffer", false);
+Option<bool> FixUpscaleBleedingEdge(CORE_OPTION_NAME "_fix_upscale_bleeding_edge", true);
 
 // Misc
 
@@ -101,6 +101,7 @@ Option<bool> UseReios(CORE_OPTION_NAME "_hle_bios");
 
 Option<bool> OpenGlChecks("", false);
 Option<bool> FastGDRomLoad(CORE_OPTION_NAME "_gdrom_fast_loading", false);
+Option<bool> RamMod32MB(CORE_OPTION_NAME "_dc_32mb_mod", false);
 
 //Option<std::vector<std::string>, false> ContentPath("");
 //Option<bool, false> HideLegacyNaomiRoms("", true);
@@ -120,6 +121,7 @@ Option<bool> NetworkStats("", false);
 Option<int> GGPOAnalogAxes("", 0);
 Option<bool> NetworkOutput(CORE_OPTION_NAME "_network_output", false);
 Option<int> MultiboardSlaves("", 0);
+Option<bool> BattleCableEnable("", false);
 
 // Maple
 

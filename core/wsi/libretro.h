@@ -50,8 +50,15 @@
 class LibretroGraphicsContext : public GLGraphicsContext
 {
 public:
-	bool init() { findGLVersion(); return true; }
-	void term() override {}
+	bool init() {
+		postInit();
+		return true;
+	}
+
+	void term() override {
+		preTerm();
+	}
+
 	void swap() {}
 };
 

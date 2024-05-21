@@ -175,10 +175,12 @@ LogManager::~LogManager()
 // in the form 00:00:000.
 static std::string GetTimeFormatted()
 {
-	double now = os_GetSeconds();
-	u32 minutes = (u32)now / 60;
-	u32 seconds = (u32)now % 60;
-	u32 ms = (now - (u32)now) * 1000;
+	u64 now = getTimeMs();
+	u32 ms = (u32)(now % 1000);
+	now /= 1000;
+	u32 seconds = (u32)(now % 60);
+	now /= 60;
+	u32 minutes = (u32)now;
 	return StringFromFormat("%02d:%02d:%03d", minutes, seconds, ms);
 }
 

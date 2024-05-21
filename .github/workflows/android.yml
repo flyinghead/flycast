@@ -12,24 +12,22 @@ jobs:
           sudo apt-get update
           sudo apt-get -y install ccache libcurl4-openssl-dev ninja-build
 
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          submodules: true
+          submodules: recursive
+          
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'gradle'
 
-      - uses: actions/cache@v3
+      - uses: actions/cache@v4
         with:
           path: ~/.ccache
           key: android-ccache-${{ github.sha }}
           restore-keys: android-ccache-
-
-      - uses: actions/cache@v3
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: android-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: android-gradle-
 
       - name: Gradle
         working-directory: shell/android-studio
@@ -37,7 +35,7 @@ jobs:
         env:
           SENTRY_UPLOAD_URL: ${{ secrets.SENTRY_UPLOAD_URL }}
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: flycast-release.apk
           path: shell/android-studio/flycast/build/outputs/apk/release/flycast-release.apk
@@ -52,7 +50,7 @@ jobs:
       - name: Extract symbols
         run: |
           DUMP_SYMS=./core/deps/breakpad/bin/dump_syms
-          SO_DIR=shell/android-studio/flycast/build/intermediates/cmake/release/obj
+          SO_DIR=shell/android-studio/flycast/build/intermediates/merged_native_libs/release/mergeReleaseNativeLibs/out/lib
           for arch in arm64-v8a armeabi-v7a x86 x86_64 ; do
             $DUMP_SYMS $SO_DIR/$arch/libflycast.so > libflycast.so.sym
             BUILD_ID=`head -1 libflycast.so.sym | awk '{ print $4 }'`
@@ -62,7 +60,7 @@ jobs:
 
       - name: Configure AWS Credentials
         id: aws-credentials
-        uses: aws-actions/configure-aws-credentials@v2
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: AKIAJOZQS4H2PHQWYFCA
           aws-secret-access-key: ${{ secrets.S3_SECRET_KEY }}
@@ -74,7 +72,7 @@ jobs:
         if: ${{ steps.aws-credentials.outputs.aws-account-id != '' }}
 
       - name: Setup Sentry CLI
-        uses: mathieu-bour/setup-sentry-cli@v1
+        uses: mathieu-bour/setup-sentry-cli@v2
         env:
           SENTRY_TOKEN: ${{ secrets.SENTRY_TOKEN }}
         with:
@@ -82,6 +80,7 @@ jobs:
           token: ${{ env.SENTRY_TOKEN }}
           organization: flycast
           project: minidump
+          version: 2.21.2
         if: ${{ env.SENTRY_TOKEN != '' }}
       
       - name: Upload symbols to Sentry
@@ -89,7 +88,7 @@ jobs:
           VERSION=$(git describe --tags --always)
           sentry-cli releases new "$VERSION"
           sentry-cli releases set-commits "$VERSION" --auto
-          sentry-cli upload-dif symbols 
+          sentry-cli debug-files upload symbols
         shell: bash
         env:
           SENTRY_TOKEN: ${{ secrets.SENTRY_TOKEN }}

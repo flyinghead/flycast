@@ -28,14 +28,23 @@ void DX11Overlay::draw(u32 width, u32 height, bool vmu, bool crosshair)
 	deviceContext->RSSetScissorRects(1, &rect);
 	if (vmu)
 	{
+#ifndef LIBRETRO
 		float vmu_padding = 8.f * settings.display.uiScale;
 		float vmu_height = 70.f * settings.display.uiScale;
 		float vmu_width = 48.f / 32.f * vmu_height;
 
-#ifndef LIBRETRO
 		const float blend_factor[4] = { 0.75f, 0.75f, 0.75f, 0.75f };
 		deviceContext->OMSetBlendState(blendStates.getState(true, 8, 8), blend_factor, 0xffffffff);
 #else
+		float vmu_padding_x = 8.f * width / 640.f;
+		float vmu_padding_y = 8.f * height / 480.f;
+		float vmu_width = 48.f * width / 640.f;
+		float vmu_height = 32.f * height / 480.f;
+		if (config::Widescreen)
+		{
+			vmu_padding_x = vmu_padding_x / 4.f * 3.f;
+			vmu_width = vmu_width / 4.f * 3.f;
+		}
 		deviceContext->OMSetBlendState(blendStates.getState(true, 4, 5), nullptr, 0xffffffff);
 #endif
 
@@ -47,7 +56,7 @@ void DX11Overlay::draw(u32 width, u32 height, bool vmu, bool crosshair)
 				vmuTextures[i].reset();
 				continue;
 			}
-			if (vmuTextures[i] == nullptr || vmu_lcd_changed[i])
+			if (vmuTextures[i] == nullptr || this->vmuLastChanged[i] != ::vmuLastChanged[i])
 			{
 				vmuTextureViews[i].reset();
 				vmuTextures[i].reset();
@@ -73,8 +82,8 @@ void DX11Overlay::draw(u32 width, u32 height, bool vmu, bool crosshair)
 					for (int y = 0; y < 32; y++)
 						memcpy(&data[y * 48], &vmu_lcd_data[i][(31 - y) * 48], sizeof(u32) * 48);
 					deviceContext->UpdateSubresource(vmuTextures[i], 0, nullptr, data, 48 * 4, 48 * 4 * 32);
+					this->vmuLastChanged[i] = ::vmuLastChanged[i];
 				}
-				vmu_lcd_changed[i] = false;
 			}
 			float x, y;
 			float w = vmu_width;
@@ -88,20 +97,20 @@ void DX11Overlay::draw(u32 width, u32 height, bool vmu, bool crosshair)
 			{
 			case UPPER_LEFT:
 			default:
-				x = vmu_padding;
-				y = vmu_padding;
+				x = vmu_padding_x;
+				y = vmu_padding_y;
 				break;
 			case UPPER_RIGHT:
-				x = width - vmu_padding - w;
-				y = vmu_padding;
+				x = width - vmu_padding_x - w;
+				y = vmu_padding_y;
 				break;
 			case LOWER_LEFT:
-				x = vmu_padding;
-				y = height - vmu_padding - h;
+				x = vmu_padding_x;
+				y = height - vmu_padding_y - h;
 				break;
 			case LOWER_RIGHT:
-				x = width - vmu_padding - w;
-				y = height - vmu_padding - h;
+				x = width - vmu_padding_x - w;
+				y = height - vmu_padding_y - h;
 				break;
 			}
 #else
@@ -133,7 +142,7 @@ void DX11Overlay::draw(u32 width, u32 height, bool vmu, bool crosshair)
 			quad.draw(vmuTextureViews[i], samplers->getSampler(false));
 		}
 	}
-	if (crosshair)
+	if (crosshair && crosshairsNeeded())
 	{
 		if (!xhairTexture)
 		{
@@ -169,11 +178,11 @@ void DX11Overlay::draw(u32 width, u32 height, bool vmu, bool crosshair)
 
 			auto [x, y] = getCrosshairPosition(i);
 #ifdef LIBRETRO
-			float halfWidth = LIGHTGUN_CROSSHAIR_SIZE / 2.f / config::ScreenStretching * 100.f;
-			float halfHeight = LIGHTGUN_CROSSHAIR_SIZE / 2.f;
+			float halfWidth = lightgun_crosshair_size / 2.f / config::ScreenStretching * 100.f * config::RenderResolution / 480.f;
+			float halfHeight = lightgun_crosshair_size / 2.f * config::RenderResolution / 480.f;
 			x /= config::ScreenStretching / 100.f;
 #else
-			float halfWidth = XHAIR_WIDTH * settings.display.uiScale / 2.f;
+			float halfWidth = config::CrosshairSize * settings.display.uiScale / 2.f;
 			float halfHeight = halfWidth;
 #endif
 			D3D11_VIEWPORT vp{};

@@ -1,8 +1,8 @@
 #include "fc_profiler.h"
 #include "log/LogManager.h"
 #include "cfg/option.h"
-#include "imgui/imgui.h"
-#include "implot/implot.h"
+#include "imgui.h"
+#include "implot.h"
 #include <cassert>
 
 namespace fc_profiler

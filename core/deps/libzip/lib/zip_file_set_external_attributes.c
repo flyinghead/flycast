@@ -1,9 +1,9 @@
 /*
   zip_file_set_external_attributes.c -- set external attributes for entry
-  Copyright (C) 2013-2020 Dieter Baron and Thomas Klausner
+  Copyright (C) 2013-2021 Dieter Baron and Thomas Klausner
 
   This file is part of libzip, a library to manipulate ZIP archives.
-  The authors can be contacted at <libzip@nih.at>
+  The authors can be contacted at <info@libzip.org>
 
   Redistribution and use in source and binary forms, with or without
   modification, are permitted provided that the following conditions
@@ -45,6 +45,10 @@ zip_file_set_external_attributes(zip_t *za, zip_uint64_t idx, zip_flags_t flags,
 
     if (ZIP_IS_RDONLY(za)) {
         zip_error_set(&za->error, ZIP_ER_RDONLY, 0);
+        return -1;
+    }
+    if (ZIP_WANT_TORRENTZIP(za)) {
+        zip_error_set(&za->error, ZIP_ER_NOT_ALLOWED, 0);
         return -1;
     }
 

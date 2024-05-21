@@ -27,23 +27,24 @@
 #include "wsi/context.h"
 #include "commandpool.h"
 #include "overlay.h"
+#include <vector>
 
 static vk::Format findDepthFormat(vk::PhysicalDevice physicalDevice);
 
 class FramebufferAttachment;
-class TextureCache;
 
-class VulkanContext : public GraphicsContext
+class VulkanContext : public GraphicsContext, public FlightManager
 {
 public:
 	VulkanContext();
-	~VulkanContext();
+	~VulkanContext() override;
 
 	bool init(retro_hw_render_interface_vulkan *render_if);
 	void term() override;
 
 	u32 GetGraphicsQueueFamilyIndex() const { return retro_render_if->queue_index; }
 	void PresentFrame(vk::Image image, vk::ImageView imageView, const vk::Extent2D& extent, float aspectRatio);
+	bool GetLastFrame(std::vector<u8>& data, int& width, int& height) { return false; }
 
 	vk::PhysicalDevice GetPhysicalDevice() const { return physicalDevice; }
 	vk::Device GetDevice() const { return device; }
@@ -83,14 +84,24 @@ public:
 			+ "." + std::to_string(VK_API_VERSION_MINOR(props.driverVersion))
 			+ "." + std::to_string(VK_API_VERSION_PATCH(props.driverVersion));
 	}
+	bool isAMD() override {
+		return vendorID == VENDOR_ATI || vendorID == VENDOR_AMD;
+	}
 	vk::Format GetDepthFormat() const { return depthFormat; }
 	static VulkanContext *Instance() { return contextInstance; }
 	bool SupportsSamplerAnisotropy() const { return samplerAnisotropy; }
 	bool SupportsDedicatedAllocation() const { return dedicatedAllocationSupported; }
+	bool hasPerPixel() override { return fragmentStoresAndAtomics; }
 	const VMAllocator& GetAllocator() const { return allocator; }
 	vk::DeviceSize GetMaxMemoryAllocationSize() const { return maxMemoryAllocationSize; }
 	f32 GetMaxSamplerAnisotropy() const { return samplerAnisotropy ? maxSamplerAnisotropy : 1.f; }
 	u32 GetVendorID() const { return vendorID; }
+	void addToFlight(Deletable *object) override {
+		commandPool.addToFlight(object);
+	}
+#ifdef VK_DEBUG
+	void setObjectName(VkHandle object, vk::ObjectType objectType, const std::string& name) {}
+#endif
 
 	constexpr static int VENDOR_AMD = 0x1022;
 	// AMD GPU products use the ATI vendor Id
@@ -118,6 +129,7 @@ public:
 	bool samplerAnisotropy = false;
 	f32 maxSamplerAnisotropy = 0.f;
 	bool dedicatedAllocationSupported = false;
+	bool fragmentStoresAndAtomics = false;
 private:
 	u32 vendorID = 0;
 
@@ -143,8 +155,6 @@ private:
 	std::vector<vk::UniqueFramebuffer> framebuffers;
 	std::vector<std::unique_ptr<FramebufferAttachment>> colorAttachments;
 	std::unique_ptr<VulkanOverlay> overlay;
-	// only used to delay the destruction of overlay textures
-	std::unique_ptr<TextureCache> textureCache;
 
 	retro_vulkan_image retro_image;
 

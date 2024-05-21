@@ -20,6 +20,8 @@
 #include "../dx11context.h"
 #include "../dx11_naomi2.h"
 
+extern const char * const PixelShaderCommon;
+
 const char * const VertexShader = R"(
 #if pp_Gouraud == 1
 #define INTERPOLATION
@@ -114,6 +116,7 @@ cbuffer constantBuffer : register(b0)
 	float4 colorClampMax;
 	float4 FOG_COL_VERT;
 	float4 FOG_COL_RAM;
+	float4 ditherColorMax;
 	float fogDensity;
 	float shadowScale;
 	float alphaTestValue;
@@ -145,7 +148,7 @@ float getFragDepth(float z)
 #else
 	float w = 100000.0 * z;
 #endif
-	return log2(1.0 + w) / 34.0;
+	return log2(1.0 + max(w, -0.999999f)) / 34.0;
 }
 
 struct PolyParam {
@@ -274,13 +277,6 @@ const char * const PixelShader = R"(
 
 #include "oit_header.hlsl"
 
-#if pp_Gouraud == 1
-#define INTERPOLATION
-#else
-#define INTERPOLATION nointerpolation
-#endif
-
-#define PI 3.1415926f
 #define PASS_DEPTH 0
 #define PASS_COLOR 1
 #define PASS_OIT 2
@@ -291,28 +287,8 @@ const char * const PixelShader = R"(
 #define IF(x)
 #endif
 
-struct VertexIn 
-{
-	float4 pos : SV_POSITION;
-	float4 uv : TEXCOORD0;
-	INTERPOLATION float4 col : COLOR0;
-	INTERPOLATION float4 spec : COLOR1;
-	float2 uv1 : TEXCOORD1;
-	INTERPOLATION float4 col1 : COLOR2;
-	INTERPOLATION float4 spec1 : COLOR3;
-	nointerpolation uint index : BLENDINDICES0;
-};
-
-Texture2D texture0 : register(t0);
-sampler sampler0 : register(s0);
 Texture2D texture1 : register(t3);
 sampler sampler1 : register(s3);
-
-Texture2D paletteTexture : register(t1);
-sampler paletteSampler : register(s1);
-
-Texture2D fogTexture : register(t2);
-sampler fogSampler : register(s2);
 
 #if PASS == PASS_COLOR
 Texture2D<uint2> stencilTexture : register(t4);
@@ -340,41 +316,19 @@ cbuffer polyConstantBuffer : register(b1)
 	int ignore_tex_alpha1;
 };
 
-float fog_mode2(float w)
+#include "pixel_common.hlsl"
+
+struct VertexIn 
 {
-	float z = clamp(
-#if DIV_POS_Z == 1
-					fogDensity / w
-#else
-					fogDensity * w
-#endif
-									, 1.0f, 255.9999f);
-	float exp = floor(log2(z));
-	float m = z * 16.0f / pow(2.0, exp) - 16.0f;
-	float idx = floor(m) + exp * 16.0f + 0.5f;
-	float4 fogCoef = fogTexture.Sample(fogSampler, float2(idx / 128.0f, 0.75f - (m - floor(m)) / 2.0f));
-	return fogCoef.a;
-}
-
-float4 clampColor(float4 color)
-{
-#if FogClamping == 1
-	return clamp(color, colorClampMin, colorClampMax);
-#else
-	return color;
-#endif
-}
-
-#if pp_Palette == 1
-
-float4 palettePixel(Texture2D tex, sampler texSampler, float2 coords)
-{
-	uint colorIdx = int(floor(tex.Sample(texSampler, coords).a * 255.0f + 0.5f) + paletteIndex);
-    float2 c = float2((fmod(float(colorIdx), 32.0f) * 2.0f + 1.0f) / 64.0f, (float(colorIdx / 32) * 2.0f + 1.0f) / 64.0f);
-	return paletteTexture.Sample(paletteSampler, c);
-}
-
-#endif
+	float4 pos : SV_POSITION;
+	float4 uv : TEXCOORD0;
+	INTERPOLATION float4 col : COLOR0;
+	INTERPOLATION float4 spec : COLOR1;
+	float2 uv1 : TEXCOORD1;
+	INTERPOLATION float4 col1 : COLOR2;
+	INTERPOLATION float4 spec1 : COLOR3;
+	nointerpolation uint index : BLENDINDICES0;
+};
 
 struct PSO
 {
@@ -448,23 +402,24 @@ PSO main(in VertexIn inpix)
 			uv /= inpix.uv.w;
 		#endif
 
-		#if NearestWrapFix == 1
-			uv = min(fmod(uv, 1.f), 0.9997f);
-		#endif
 		float4 texcol;
 		#if pp_TwoVolumes == 1
 			if (area1)
 				#if pp_Palette == 0
 					texcol = texture1.Sample(sampler1, uv);
-				#else
+				#elif pp_Palette == 1
 					texcol = palettePixel(texture1, sampler1, uv);
+				#else
+					texcol = palettePixelBilinear(texture1, sampler1, uv);
 				#endif
 			else
 		#endif
 		#if pp_Palette == 0
 				texcol = texture0.Sample(sampler0, uv);
-		#else
+		#elif pp_Palette == 1
 				texcol = palettePixel(texture0, sampler0, uv);
+		#else
+				texcol = palettePixelBilinear(texture0, sampler0, uv);
 		#endif
 		#if pp_BumpMap == 1
 			float s = PI / 2.0f * (texcol.a * 15.0f * 16.0f + texcol.r * 15.0f) / 255.0f;
@@ -475,11 +430,6 @@ PSO main(in VertexIn inpix)
 			#if pp_IgnoreTexA==1 || pp_TwoVolumes == 1
 				IF(cur_ignore_tex_alpha)
 					texcol.a = 1.0f;
-			#endif
-			#if cp_AlphaTest == 1
-				if (alphaTestValue > texcol.a)
-					discard;
-				texcol.a = 1.0f;
 			#endif
 		#endif
 		#if pp_ShadInstr == 0 || pp_TwoVolumes == 1 // DECAL
@@ -523,6 +473,13 @@ PSO main(in VertexIn inpix)
 	#endif
 	
 	color *= trilinearAlpha;
+
+	#if cp_AlphaTest == 1
+		color.a = round(color.a * 255.0f) * 0.0039215688593685626983642578125; // 1 / 255
+		if (alphaTestValue > color.a)
+			discard;
+		color.a = 1.0f;
+	#endif
 
 	#if PASS == PASS_COLOR 
 		pso.col = color;
@@ -693,6 +650,19 @@ float4 resolveAlphaBlend(in float2 pos)
 		else
 			finalColor = result;
 	}
+#if DITHERING == 1
+	static const float ditherTable[16] = {
+		 0.9375f,  0.1875f,  0.75f,  0.0f,   
+		 0.4375f,  0.6875f,  0.25f,  0.5f,
+		 0.8125f,  0.0625f,  0.875f, 0.125f,
+		 0.3125f,  0.5625f,  0.375f, 0.625f	
+	};
+	float r = ditherTable[int(pos.y % 4.0f) * 4 + int(pos.x % 4.0f)] + 0.03125f; // why is this bias needed??
+	// 31 for 5-bit color, 63 for 6 bits, 15 for 4 bits
+	finalColor += r / ditherColorMax;
+	// avoid rounding
+	finalColor = floor(finalColor * 255.0f) / 255.0f;
+#endif
 
 	return finalColor;
 }
@@ -780,14 +750,19 @@ void main(in MVPixel inpix)
 }
 )";
 
-struct IncludeManager : public ID3DInclude
+struct OITIncludeManager : public ID3DInclude
 {
 	HRESULT STDMETHODCALLTYPE Open(D3D_INCLUDE_TYPE IncludeType, LPCSTR pFileName, LPCVOID pParentData, LPCVOID *ppData, UINT *pBytes) override
 	{
+		const char *src = nullptr;
 		if (!strcmp(pFileName, "oit_header.hlsl"))
+			src = OITShaderHeader;
+		else if (!strcmp(pFileName, "pixel_common.hlsl"))
+			src = PixelShaderCommon;
+		if (src != nullptr)
 		{
-			*ppData = OITShaderHeader;
-			*pBytes = (UINT)strlen(OITShaderHeader);
+			*ppData = src;
+			*pBytes = (UINT)strlen(src);
 			return S_OK;
 		}
 		return E_FAIL;
@@ -830,7 +805,6 @@ enum PixelMacroEnum {
 	MacroPalette,
 	MacroAlphaTest,
 	MacroClipInside,
-	MacroNearestWrapFix,
 	MacroPass
 };
 
@@ -850,14 +824,13 @@ static D3D_SHADER_MACRO PixelMacros[]
 	{ "pp_Palette", "0" },
 	{ "cp_AlphaTest", "0" },
 	{ "pp_ClipInside", "0" },
-	{ "NearestWrapFix", "0" },
 	{ "PASS", "0" },
 	{ nullptr, nullptr }
 };
 
 const ComPtr<ID3D11PixelShader>& DX11OITShaders::getShader(bool pp_Texture, bool pp_UseAlpha, bool pp_IgnoreTexA, u32 pp_ShadInstr,
 		bool pp_Offset, u32 pp_FogCtrl, bool pp_BumpMap, bool fog_clamping,
-		bool palette, bool gouraud, bool alphaTest, bool clipInside, bool nearestWrapFix, bool twoVolumes, Pass pass)
+		int palette, bool gouraud, bool alphaTest, bool clipInside, bool twoVolumes, Pass pass)
 {
 	bool divPosZ = !settings.platform.isNaomi2() && config::NativeDepthInterpolation;
 	const u32 hash = (int)pp_Texture
@@ -868,11 +841,10 @@ const ComPtr<ID3D11PixelShader>& DX11OITShaders::getShader(bool pp_Texture, bool
 			| (pp_FogCtrl << 6)
 			| ((int)pp_BumpMap << 8)
 			| ((int)fog_clamping << 9)
-			| ((int)palette << 10)
-			| ((int)gouraud << 11)
-			| ((int)alphaTest << 12)
-			| ((int)clipInside << 13)
-			| ((int)nearestWrapFix << 14)
+			| (palette << 10)
+			| ((int)gouraud << 12)
+			| ((int)alphaTest << 13)
+			| ((int)clipInside << 14)
 			| ((int)twoVolumes << 15)
 			| ((int)pass << 16)
 			| ((int)divPosZ << 18);
@@ -894,7 +866,6 @@ const ComPtr<ID3D11PixelShader>& DX11OITShaders::getShader(bool pp_Texture, bool
 		PixelMacros[MacroPalette].Definition = MacroValues[palette];
 		PixelMacros[MacroAlphaTest].Definition = MacroValues[alphaTest];
 		PixelMacros[MacroClipInside].Definition = MacroValues[clipInside];
-		PixelMacros[MacroNearestWrapFix].Definition = MacroValues[nearestWrapFix];
 		PixelMacros[MacroTwoVolumes].Definition = MacroValues[twoVolumes];
 		PixelMacros[MacroDivPosZ].Definition = MacroValues[divPosZ];
 		PixelMacros[MacroPass].Definition = MacroValues[pass];
@@ -976,26 +947,28 @@ const ComPtr<ID3D11PixelShader>& DX11OITShaders::getModVolShader()
 	return modVolShader;
 }
 
-const ComPtr<ID3D11PixelShader>& DX11OITShaders::getFinalShader()
+const ComPtr<ID3D11PixelShader>& DX11OITShaders::getFinalShader(bool dithering)
 {
 	if (maxLayers != config::PerPixelLayers)
 	{
-		finalShader.reset();
+		for (auto& shader : finalShaders)
+			shader.reset();
 		for (auto& shader : trModVolShaders)
 			shader.reset();
 		maxLayers = config::PerPixelLayers;
 	}
-	if (!finalShader)
+	if (!finalShaders[dithering])
 	{
 		const std::string maxLayers{ std::to_string(config::PerPixelLayers) };
 		D3D_SHADER_MACRO macros[]
 		{
 			{ "MAX_PIXELS_PER_FRAGMENT", maxLayers.c_str() },
+			{ "DITHERING", MacroValues[dithering] },
 			{ }
 		};
-		finalShader = compilePS(OITFinalShaderSource, "main", macros);
+		finalShaders[dithering] = compilePS(OITFinalShaderSource, "main", macros);
 	}
-	return finalShader;
+	return finalShaders[dithering];
 }
 
 const ComPtr<ID3D11VertexShader>& DX11OITShaders::getFinalVertexShader()
@@ -1010,7 +983,8 @@ const ComPtr<ID3D11PixelShader>& DX11OITShaders::getTrModVolShader(int type)
 {
 	if (maxLayers != config::PerPixelLayers)
 	{
-		finalShader.reset();
+		for (auto& shader : finalShaders)
+			shader.reset();
 		for (auto& shader : trModVolShaders)
 			shader.reset();
 		maxLayers = config::PerPixelLayers;
@@ -1041,7 +1015,7 @@ ComPtr<ID3DBlob> DX11OITShaders::compileShader(const char* source, const char* f
 	if (!lookupShader(hash, shaderBlob))
 	{
 		ComPtr<ID3DBlob> errorBlob;
-		IncludeManager includeManager;
+		OITIncludeManager includeManager;
 
 		if (FAILED(this->D3DCompile(source, strlen(source), nullptr, pDefines, &includeManager, function, profile, 0, 0, &shaderBlob.get(), &errorBlob.get())))
 			ERROR_LOG(RENDERER, "Shader compilation failed: %s", errorBlob->GetBufferPointer());

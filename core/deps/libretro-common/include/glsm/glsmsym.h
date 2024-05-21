@@ -200,6 +200,7 @@ RETRO_BEGIN_DECLS
 #define glGetShaderPrecisionFormat  rglGetShaderPrecisionFormat
 #define glClearDepthf               rglClearDepthf
 #define glPrimitiveRestartIndex		rglPrimitiveRestartIndex
+#define glHint                      rglHint
 
 const GLubyte* rglGetStringi(GLenum name, GLuint index);
 void rglTexBuffer(GLenum target, GLenum internalFormat, GLuint buffer);
@@ -508,6 +509,7 @@ void rglGetAttachedShaders(GLuint program, GLsizei maxCount, GLsizei *count, GLu
 void rglGetShaderPrecisionFormat(GLenum shaderType, GLenum precisionType, GLint *range, GLint *precision);
 void rglClearDepthf(GLfloat depth);
 void rglPrimitiveRestartIndex(GLuint index);
+void rglHint(GLenum target, GLenum mode);
 
 RETRO_END_DECLS
 

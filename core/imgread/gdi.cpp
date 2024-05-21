@@ -84,7 +84,7 @@ Disc* load_gdi(const char* file, std::vector<u8> *digest)
 		t.StartFAD = FADS + 150;
 		t.CTRL = CTRL;
 
-		if (SSIZE!=0)
+		if (SSIZE != 0)
 		{
 			std::string path = hostfs::storage().getSubPath(basepath, track_filename);
 			FILE *file = hostfs::storage().openFile(path, "rb");
@@ -96,9 +96,11 @@ Disc* load_gdi(const char* file, std::vector<u8> *digest)
 			if (digest != nullptr)
 				md5.add(file);
 			t.file = new RawTrackFile(file, OFFSET, t.StartFAD, SSIZE);
+			hostfs::FileInfo fileInfo = hostfs::storage().getFileInfo(path);
+			if ((fileInfo.size - OFFSET) % SSIZE != 0)
+				WARN_LOG(GDROM, "Warning: Size of track %s is not multiple of sector size %d", track_filename.c_str(), SSIZE);
+			t.EndFAD = t.StartFAD + (u32)(fileInfo.size - OFFSET) / SSIZE - 1;
 		}
-		if (!disc->tracks.empty())
-			disc->tracks.back().EndFAD = t.StartFAD - 1;
 		disc->tracks.push_back(t);
 	}
 

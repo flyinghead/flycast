@@ -1,10 +1,10 @@
 /*
   zip_algorithm_xz.c -- LZMA/XZ (de)compression routines
   Bazed on zip_algorithm_deflate.c -- deflate (de)compression routines
-  Copyright (C) 2017-2020 Dieter Baron and Thomas Klausner
+  Copyright (C) 2017-2021 Dieter Baron and Thomas Klausner
 
   This file is part of libzip, a library to manipulate ZIP archives.
-  The authors can be contacted at <libzip@nih.at>
+  The authors can be contacted at <info@libzip.org>
 
   Redistribution and use in source and binary forms, with or without
   modification, are permitted provided that the following conditions
@@ -104,13 +104,8 @@ maximum_compressed_size(zip_uint64_t uncompressed_size) {
 
 
 static void *
-allocate(bool compress, int compression_flags, zip_error_t *error, zip_uint16_t method) {
+allocate(bool compress, zip_uint32_t compression_flags, zip_error_t *error, zip_uint16_t method) {
     struct ctx *ctx;
-
-    if (compression_flags < 0) {
-        zip_error_set(error, ZIP_ER_INVAL, 0);
-        return NULL;
-    }
 
     if ((ctx = (struct ctx *)malloc(sizeof(*ctx))) == NULL) {
         zip_error_set(error, ZIP_ER_MEMORY, 0);
@@ -119,12 +114,16 @@ allocate(bool compress, int compression_flags, zip_error_t *error, zip_uint16_t 
 
     ctx->error = error;
     ctx->compress = compress;
-    ctx->compression_flags = (zip_uint32_t)compression_flags;
+    if (compression_flags <= 9) {
+        ctx->compression_flags = compression_flags;
+    } else {
+        ctx->compression_flags = 6; /* default value */
+    }
     ctx->compression_flags |= LZMA_PRESET_EXTREME;
     ctx->end_of_input = false;
     memset(ctx->header, 0, sizeof(ctx->header));
     ctx->header_bytes_offset = 0;
-    if (ZIP_CM_LZMA) {
+    if (method == ZIP_CM_LZMA) {
         ctx->header_state = INCOMPLETE;
     }
     else {
@@ -137,13 +136,13 @@ allocate(bool compress, int compression_flags, zip_error_t *error, zip_uint16_t 
 
 
 static void *
-compress_allocate(zip_uint16_t method, int compression_flags, zip_error_t *error) {
+compress_allocate(zip_uint16_t method, zip_uint32_t compression_flags, zip_error_t *error) {
     return allocate(true, compression_flags, error, method);
 }
 
 
 static void *
-decompress_allocate(zip_uint16_t method, int compression_flags, zip_error_t *error) {
+decompress_allocate(zip_uint16_t method, zip_uint32_t compression_flags, zip_error_t *error) {
     return allocate(false, compression_flags, error, method);
 }
 
@@ -224,7 +223,7 @@ start(void *ud, zip_stat_t *st, zip_file_attributes_t *attributes) {
         zip_error_set(ctx->error, map_error(ret), 0);
         return false;
     }
-    
+
     /* If general purpose bits 1 & 2 are both zero, write real uncompressed size in header. */
     if ((attributes->valid & ZIP_FILE_ATTRIBUTES_GENERAL_PURPOSE_BIT_FLAGS) && (attributes->general_purpose_bit_mask & 0x6) == 0x6 && (attributes->general_purpose_bit_flags & 0x06) == 0 && (st->valid & ZIP_STAT_SIZE)) {
         ctx->uncompresssed_size = st->size;
@@ -258,8 +257,8 @@ input(void *ud, zip_uint8_t *data, zip_uint64_t length) {
     /* For decompression of LZMA1: Have we read the full "lzma alone" header yet? */
     if (ctx->method == ZIP_CM_LZMA && !ctx->compress && ctx->header_state == INCOMPLETE) {
         /* if not, get more of the data */
-        zip_uint8_t got = ZIP_MIN(HEADER_BYTES_ZIP - ctx->header_bytes_offset, length);
-        memcpy(ctx->header + ctx->header_bytes_offset, data, got);
+        zip_uint8_t got = (zip_uint8_t)ZIP_MIN(HEADER_BYTES_ZIP - ctx->header_bytes_offset, length);
+        (void)memcpy_s(ctx->header + ctx->header_bytes_offset, sizeof(ctx->header) - ctx->header_bytes_offset, data, got);
         ctx->header_bytes_offset += got;
         length -= got;
         data += got;
@@ -314,6 +313,7 @@ end_of_input(void *ud) {
 static zip_compression_status_t
 process(void *ud, zip_uint8_t *data, zip_uint64_t *length) {
     struct ctx *ctx = (struct ctx *)ud;
+    uInt avail_out;
     lzma_ret ret;
     /* for compression of LZMA1 */
     if (ctx->method == ZIP_CM_LZMA && ctx->compress) {
@@ -335,8 +335,8 @@ process(void *ud, zip_uint8_t *data, zip_uint64_t *length) {
         }
         if (ctx->header_state == OUTPUT) {
             /* write header */
-            zip_uint8_t write_len = ZIP_MIN(HEADER_BYTES_ZIP - ctx->header_bytes_offset, *length);
-            memcpy(data, ctx->header + ctx->header_bytes_offset, write_len);
+            zip_uint8_t write_len = (zip_uint8_t)ZIP_MIN(HEADER_BYTES_ZIP - ctx->header_bytes_offset, *length);
+            (void)memcpy_s(data, *length, ctx->header + ctx->header_bytes_offset, write_len);
             ctx->header_bytes_offset += write_len;
             *length = write_len;
             if (ctx->header_bytes_offset == HEADER_BYTES_ZIP) {
@@ -346,11 +346,12 @@ process(void *ud, zip_uint8_t *data, zip_uint64_t *length) {
         }
     }
 
-    ctx->zstr.avail_out = (uInt)ZIP_MIN(UINT_MAX, *length);
+    avail_out = (uInt)ZIP_MIN(UINT_MAX, *length);
+    ctx->zstr.avail_out = avail_out;
     ctx->zstr.next_out = (Bytef *)data;
 
     ret = lzma_code(&ctx->zstr, ctx->end_of_input ? LZMA_FINISH : LZMA_RUN);
-    *length = *length - ctx->zstr.avail_out;
+    *length = avail_out - ctx->zstr.avail_out;
 
     switch (ret) {
     case LZMA_OK:

@@ -9,7 +9,6 @@
 #include "sh4_mmr.h"
 #include "hw/pvr/elan.h"
 #include "hw/pvr/pvr_mem.h"
-#include "cfg/option.h"
 #include "hw/mem/addrspace.h"
 #include "hw/sh4/modules/mmu.h"
 
@@ -156,22 +155,21 @@ void mem_map_default()
 	map_area4_init();
 	map_area5_init();
 	map_area6_init();
-	map_area7_init();
 
-	// 00-0C: 7 times the normal memmap mirrors
-	for (int i = 0; i < 7; i++)
+	// 00-E0: 8 times the normal memmap mirrors
+	for (int i = 0; i < 8; i++)
 	{
-		map_area0(i << 5); //Bios,Flahsrom,i/f regs,Ext. Device,Sound Ram
-		map_area1(i << 5); //VRAM
+		map_area0(i << 5); // Bios,Flahsrom,i/f regs,Ext. Device,Sound Ram
+		map_area1(i << 5); // VRAM
 		elan::vmem_map(i << 5); // Naomi2 Elan
-		map_area3(i << 5); //RAM
-		map_area4(i << 5); //TA
-		map_area5(i << 5); //Ext. Device
-		map_area6(i << 5); //Unassigned
-		map_area7(i << 5); //Sh4 Regs
+		map_area3(i << 5); // RAM
+		map_area4(i << 5); // TA
+		map_area5(i << 5); // Ext. Device
+		map_area6(i << 5); // Unassigned
 	}
+	map_area7(); // On Chip RAM
 
-	// E0: p4 region
+	// E0-FF: P4 region
 	map_p4();
 }
 void mem_Init()

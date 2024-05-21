@@ -67,7 +67,9 @@ float dithertable[16] = float[](
 void main()
 {
 	vec2 texcoord = vTexCoord;
+	texcoord.y = 1. - texcoord.y;
 	vec2 texcoord2 = vTexCoord;
+	texcoord2.y = 1. - texcoord2.y;
 	texcoord2.x *= float(TextureSize.x);
 	texcoord2.y *= float(TextureSize.y);
 	vec4 color = texture(Source, texcoord);
@@ -78,6 +80,7 @@ void main()
 	int taps = int(3);
 	float tap = (2.666f/float(taps)) / float(min(TextureSize.y, 720));
 	vec2 texcoord4  = vTexCoord;
+	texcoord4.y = 1. - texcoord4.y;
 	texcoord4.y -= tap * 2.f;
 	int bl;
 	vec4 ble = vec4(0.0);
@@ -136,6 +139,7 @@ void main()
 	int taps = 32;
 	float tap = 12.0/taps;
 	vec2 texcoord4  = vTexCoord;
+	texcoord4.y = 1. - texcoord4.y;
 	texcoord4.x = texcoord4.x + (2.0/640.0);
 	texcoord4.y = texcoord4.y;
 	vec4 blur1 = texture(Source, texcoord4);
@@ -251,9 +255,7 @@ void PostProcessor::term()
 {
 	framebuffer.reset();
 	vertexBuffer.reset();
-	vertexBufferShifted.reset();
 	vertexArray.term();
-	vertexArrayShifted.term();
 	PostProcessShader::term();
 	glCheck();
 }
@@ -281,7 +283,7 @@ void PostProcessor::render(GLuint output_fbo)
 
 	if (!config::PowerVR2Filter)
 	{
-		// Just handle shifting
+		// Just handle shifting and Y flipping
 		if (gl.gl_major < 3)
 		{
 			glBindFramebuffer(GL_FRAMEBUFFER, output_fbo);
@@ -291,15 +293,15 @@ void PostProcessor::render(GLuint output_fbo)
 			glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 			glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 			static float vertices[20] = {
-				-1.f,  1.f, 1.f, 0.f, 1.f,
-				-1.f, -1.f, 1.f, 0.f, 0.f,
-				 1.f,  1.f, 1.f, 1.f, 1.f,
-				 1.f, -1.f, 1.f, 1.f, 0.f,
+				-1.f, -1.f, 1.f, 0.f, 1.f,
+				-1.f,  1.f, 1.f, 0.f, 0.f,
+				 1.f, -1.f, 1.f, 1.f, 1.f,
+				 1.f,  1.f, 1.f, 1.f, 0.f,
 			};
 			vertices[0] = vertices[5] = -1.f + gl.ofbo.shiftX * 2.f / framebuffer->getWidth();
 			vertices[10] = vertices[15] = vertices[0] + 2;
-			vertices[1] = vertices[11] = 1.f - gl.ofbo.shiftY * 2.f / framebuffer->getHeight();
-			vertices[6] = vertices[16] = vertices[1] - 2;
+			vertices[1] = vertices[11] = -1.f - gl.ofbo.shiftY * 2.f / framebuffer->getHeight();
+			vertices[6] = vertices[16] = vertices[1] + 2;
 			glcache.Disable(GL_BLEND);
 			drawQuad(framebuffer->getTexture(), false, false, vertices);
 		}
@@ -310,8 +312,8 @@ void PostProcessor::render(GLuint output_fbo)
 			glBindFramebuffer(GL_DRAW_FRAMEBUFFER, output_fbo);
 			glcache.ClearColor(VO_BORDER_COL.red(), VO_BORDER_COL.green(), VO_BORDER_COL.blue(), 1.f);
 			glClear(GL_COLOR_BUFFER_BIT);
-			glBlitFramebuffer(-gl.ofbo.shiftX, gl.ofbo.shiftY, framebuffer->getWidth() - gl.ofbo.shiftX, framebuffer->getHeight() + gl.ofbo.shiftY,
-					0, 0, framebuffer->getWidth(), framebuffer->getHeight(),
+			glBlitFramebuffer(-gl.ofbo.shiftX, -gl.ofbo.shiftY, framebuffer->getWidth() - gl.ofbo.shiftX, framebuffer->getHeight() - gl.ofbo.shiftY,
+					0, framebuffer->getHeight(), framebuffer->getWidth(), 0,
 					GL_COLOR_BUFFER_BIT, GL_NEAREST);
 	    	glBindFramebuffer(GL_FRAMEBUFFER, output_fbo);
 #endif
@@ -319,28 +321,16 @@ void PostProcessor::render(GLuint output_fbo)
 		return;
 	}
 
-	PostProcessShader::select(FB_W_CTRL.fb_dither, SPG_CONTROL.interlace, FB_R_CTRL.vclk_div == 1 && SPG_CONTROL.interlace == 0);
-	if (gl.ofbo.shiftX != 0 || gl.ofbo.shiftY != 0)
-	{
-		if (vertexBufferShifted == nullptr)
-			vertexBufferShifted = std::make_unique<GlBuffer>(GL_ARRAY_BUFFER);
-		float vertices[] = {
-				-1,  1, 1,
-				-1, -1, 1,
-				 1,  1, 1,
-				 1, -1, 1,
-		};
-		vertices[0] = vertices[3] = -1.f + gl.ofbo.shiftX * 2.f / framebuffer->getWidth();
-		vertices[6] = vertices[9] = vertices[0] + 2;
-		vertices[1] = vertices[7] = 1.f - gl.ofbo.shiftY * 2.f / framebuffer->getHeight();
-		vertices[4] = vertices[10] = vertices[1] - 2;
-		vertexBufferShifted->update(vertices, sizeof(vertices));
-		vertexArrayShifted.bind(vertexBufferShifted.get());
-	}
+	if (_pvrrc == nullptr)
+		// Framebuffer render: no dithering
+		PostProcessShader::select(false,
+				SPG_CONTROL.interlace,
+				FB_R_CTRL.vclk_div == 1 && SPG_CONTROL.interlace == 0);
 	else
-	{
-		vertexArray.bind(vertexBuffer.get());
-	}
+		PostProcessShader::select(pvrrc.fb_W_CTRL.fb_dither == 1 && pvrrc.fb_W_CTRL.fb_packmode <= 3 && !config::EmulateFramebuffer,
+				SPG_CONTROL.interlace,
+				FB_R_CTRL.vclk_div == 1 && SPG_CONTROL.interlace == 0);
+	vertexArray.bind(vertexBuffer.get());
 
 	glBindFramebuffer(GL_FRAMEBUFFER, output_fbo);
 	glActiveTexture(GL_TEXTURE0);

@@ -52,6 +52,7 @@ const WidescreenCheat CheatManager::widescreen_cheats[] =
 		{ "T6801M",     nullptr,    { 0x042F3C }, { 0x4384BC09 } },		// Buggy Heat (JP)
 		{ "T46601D 05", nullptr,    { 0xBB3D14 }, { 0x440A7C9A } },		// Cannon Spike (PAL)
 		{ "T1215N",     nullptr,    { 0xBB3C74 }, { 0x440A7C9A } },		// Cannon Spike (USA)
+		{ "HDR-0115",	nullptr,	{ 0x10ACFC }, { 0x3F400000 } },		// Cardcaptor Sakura: Tomoyo no Video Daisakusen (JPN)
 		{ "T44901D 50", nullptr,    { 0xB0109C, 0xB010CC }, { 0x43F00000, 0x3F400000 } },	// Carrier (PAL)
 		{ "T5701N",     nullptr,    { 0xAFD93C, 0xAFD96C }, { 0x43F00000, 0x3F400000 } },	// Carrier (USA)
 		// Capcom vs. SNK Pro (JP)
@@ -264,6 +265,7 @@ const WidescreenCheat CheatManager::widescreen_cheats[] =
 		{ "T40206N",    nullptr,    { 0x43296C }, { 0x3F400000 } },	// Super Magnetic Neo (US)
 		{ "T40206D 50", nullptr,    { 0x43E34C }, { 0x3F400000 } },	// Super Magnetic Neo (EU)
 //		{ "T7014D  50", nullptr,    { 0xE2B234 }, { 0x3F800000 } },		// Super Runabout (PAL) doesn't work?
+		{ "T40216N",	nullptr,    { 0x45CE54 }, { 0x3F400000 } },		// Surf Rocket Racers (US)
 		{ "T17721D 50", nullptr,    { 0x45CED4 }, { 0x3F400000 } },		// Surf Rocket Racers (PAL) alt: 021EBF40 3F400000
 		{ "T17703D 50", nullptr,    { 0xCD8950 }, { 0x3F111111 } },		// Suzuki Alstare Extreme Racing
 		{ "T36807D 05", nullptr,    { 0x140F74, 0x140FA4 }, { 0x43FA0000, 0x3F400000 } },	// Sword of Bersek (PAL)
@@ -278,6 +280,7 @@ const WidescreenCheat CheatManager::widescreen_cheats[] =
 		{ "T40210D 50", nullptr,    { 0x21E4F8 }, { 0x43700000 } },		// Tokyo Highway Challenge 2 (PAL)
 		{ "xxxxxxxxxx", nullptr,    { 0x21DEF8 }, { 0x3F400000 } },		// Tokyo Street Racer 2 (USA)
 //		{ "T36804D05",  nullptr,    { 0xB75E28 }, { 0x3EC00000 } },		// Tomb Raider: The Last Revelation (UK) (PAL) clipping, use hex patch instead
+//		{ "T40205N",    nullptr,    { 0x160D80, 0x160D7C }, { 0xA, 0xA } },	// Tony Hawk's Pro Skater (USA) -> missing character on selection screen
 		{ "T13008D 05", nullptr,    { 0x1D7C20 }, { 0x3FA66666 } },		// Tony Hawk's Pro Skater 2 (PAL)
 		{ "T13006N",    nullptr,    { 0x1D77A0 }, { 0x3FA66666 } },		// Tony Hawk's Pro Skater 2 (USA)
 		{ "MK-5102050", nullptr,    { 0x0D592C }, { 0x3FD00000 } },		// Toy Commander (PAL)
@@ -347,6 +350,8 @@ const WidescreenCheat CheatManager::naomi_widescreen_cheats[] =
 		{ "GUN SPIKE", nullptr, { 0xBACD7C }, { 0x440A7C9A } },
 		{ " JAMBO SAFARI ------------", nullptr, { 0x2B1DE0 }, { 0x3FE38E39 } },
 		{ "SOUL SURFER IN JAPAN", nullptr, { 0x8962C8 }, { 0x3FE38E39 } },
+		{ "LOVE AND BERRY 3 EXP VER1.002", nullptr, { 0x3C16E4 }, { 0x3F400000 } },	// loveber3
+		{ "LOVE AND BERRY USA VER2.000", nullptr, { 0x4E92D0 }, { 0x3F400000 } },	// lovebery
 
 		{ nullptr },
 };
@@ -426,43 +431,33 @@ void CheatManager::reset(const std::string& gameId)
 		setActive(false);
 		this->gameId = gameId;
 #ifndef LIBRETRO
-		std::string cheatFile = cfgLoadStr("cheats", gameId, "");
-		if (!cheatFile.empty())
-			loadCheatFile(cheatFile);
+		if (!settings.raHardcoreMode)
+		{
+			std::string cheatFile = cfgLoadStr("cheats", gameId, "");
+			if (!cheatFile.empty())
+				loadCheatFile(cheatFile);
+		}
 #endif
+		size_t cheatCount = cheats.size();
 		if (gameId == "Fixed BOOT strapper")	// Extreme Hunting 2
 		{
-			setActive(true);
-			cheats.emplace_back(Cheat::Type::runNextIfEq, "skip netbd check ifeq", true, 32, 0x00067b04, 0);
-			cheats.back().builtIn = true;
-			cheats.emplace_back(Cheat::Type::setValue, "skip netbd check", true, 32, 0x00067b04, 1); // 1 skips initNetwork()
-			cheats.back().builtIn = true;
-			cheats.emplace_back(Cheat::Type::setValue, "skip netbd check 2", true, 16, 0x0009acc8, 0x0009); // not acceptable by main board
-			cheats.back().builtIn = true;
+			cheats.emplace_back(Cheat::Type::runNextIfEq, "skip netbd check ifeq", true, 32, 0x00067b04, 0, true);
+			cheats.emplace_back(Cheat::Type::setValue, "skip netbd check", true, 32, 0x00067b04, 1, true); // 1 skips initNetwork()
+			cheats.emplace_back(Cheat::Type::setValue, "skip netbd check 2", true, 16, 0x0009acc8, 0x0009, true); // not acceptable by main board
 			// ac010000 should be d202 9302, but is changed to 78c0 8c93
-			cheats.emplace_back(Cheat::Type::runNextIfEq, "fix boot ifeq", true, 32, 0x00010000, 0x8c9378c0);
-			cheats.back().builtIn = true;
-			cheats.emplace_back(Cheat::Type::setValue, "fix boot", true, 32, 0x00010000, 0x9302d202);
-			cheats.back().builtIn = true;
+			cheats.emplace_back(Cheat::Type::runNextIfEq, "fix boot ifeq", true, 32, 0x00010000, 0x8c9378c0, true);
+			cheats.emplace_back(Cheat::Type::setValue, "fix boot", true, 32, 0x00010000, 0x9302d202, true);
 		}
-		else if (gameId == "THE KING OF ROUTE66")
-		{
-			setActive(true);
-			cheats.emplace_back(Cheat::Type::setValue, "ignore drive error", true, 32, 0x00023ee0, 0x0009000B); // rts, nop
-			cheats.back().builtIn = true;
+		else if (gameId == "THE KING OF ROUTE66") {
+			cheats.emplace_back(Cheat::Type::setValue, "ignore drive error", true, 32, 0x00023ee0, 0x0009000B, true); // rts, nop
 		}
 		else if (gameId.substr(0, 8) == "MKG TKOB")
 		{
 			const auto& setMushikingCheats = [this](u32 addr) {
-				setActive(true);
-				cheats.emplace_back(Cheat::Type::setValue, "ignore rfid1 error", true, 32, addr, 0); // rfid[0].error = 0
-				cheats.back().builtIn = true;
-				cheats.emplace_back(Cheat::Type::setValue, "ignore rfid2 error", true, 32, addr + 0x48, 0); // rfid[1].error = 0
-				cheats.back().builtIn = true;
-				cheats.emplace_back(Cheat::Type::setValue, "ignore rfid1 status", true, 32, addr + 8, 0); // rfid[0].data18 = 0
-				cheats.back().builtIn = true;
-				cheats.emplace_back(Cheat::Type::setValue, "ignore rfid2 status", true, 32, addr + 0x50, 0); // rfid[1].data18 = 0
-				cheats.back().builtIn = true;
+				cheats.emplace_back(Cheat::Type::setValue, "ignore rfid1 error", true, 32, addr, 0, true); // rfid[0].error = 0
+				cheats.emplace_back(Cheat::Type::setValue, "ignore rfid2 error", true, 32, addr + 0x48, 0, true); // rfid[1].error = 0
+				cheats.emplace_back(Cheat::Type::setValue, "ignore rfid1 status", true, 32, addr + 8, 0, true); // rfid[0].data18 = 0
+				cheats.emplace_back(Cheat::Type::setValue, "ignore rfid2 status", true, 32, addr + 0x50, 0, true); // rfid[1].data18 = 0
 			};
 			if (gameId == "MKG TKOB 2 EXP VER1.001-")		// mushi2eo
 				setMushikingCheats(0x6fe1bc);
@@ -474,9 +469,32 @@ void CheatManager::reset(const std::string& gameId)
 				setMushikingCheats(0xb0e538);
 			else if (gameId == "MKG TKOB 2K3 2ND VER1.002-")// mushikeo
 				setMushikingCheats(0x4ad56c);
+			else if (gameId == "MKG TKOB 2K3 2ND KOR VER1.000-") // mushikk
+				setMushikingCheats(0x4ac9b8);
+			else if (gameId == "MKG TKOB 2K3 2ND CHN VER1.000-") // mushikc
+				setMushikingCheats(0x4aa9b8);
+			else if (gameId == "MKG TKOB 2 KOR VER1.000-")	// mushik2k
+				setMushikingCheats(0x706084);
 		}
+		else if (gameId == "T-8120N") {		// Dave Mirra BMX (US)
+			cheats.emplace_back(Cheat::Type::setValue, "fix main loop time", true, 32, 0x0030b8cc, 0x42040000, true); // 33.0 ms
+		}
+		else if (gameId == "T8120D  50") {	// Dave Mirra BMX (EU)
+			cheats.emplace_back(Cheat::Type::setValue, "fix main loop time", true, 32, 0x003011cc, 0x42200000, true); // 40.0 ms
+		}
+		else if (gameId == "MK-0100") {		// F355 US
+			cheats.emplace_back(Cheat::Type::setValue, "increase datapump timeout", true, 16, 0x00131668, 1000, true);
+		}
+		else if (gameId == "T8118D  50") {	// F355 EU
+			cheats.emplace_back(Cheat::Type::setValue, "increase datapump timeout", true, 16, 0x00135588, 1000, true);
+		}
+		else if (gameId == "SAMURAI SPIRITS 6" || gameId == "T0002M") {
+			cheats.emplace_back(Cheat::Type::setValue, "fix depth", true, 16, 0x0003e602, 0x0009, true); // nop (shift by 8 bits instead of 10)
+		}
+		if (cheats.size() > cheatCount)
+			setActive(true);
 	}
-	if (config::WidescreenGameHacks)
+	if (config::WidescreenGameHacks && !settings.raHardcoreMode)
 	{
 		if (settings.platform.isConsole())
 		{
@@ -560,11 +578,13 @@ void CheatManager::apply()
 				writeRam(address, widescreen_cheat->values[i], 32);
 		}
 	}
-	if (active && !settings.network.online)
+	if (active)
 	{
 		bool skipCheat = false;
 		for (const Cheat& cheat : cheats)
 		{
+			if (!cheat.builtIn && settings.network.online)
+				continue;
 			if (skipCheat) {
 				skipCheat = false;
 				continue;
@@ -645,7 +665,7 @@ static std::vector<u32> parseCodes(const std::string& s)
 			curCode += c;
 			if (curCode.length() == 8)
 			{
-				codes.push_back(strtol(curCode.c_str(), nullptr, 16));
+				codes.push_back(strtoul(curCode.c_str(), nullptr, 16));
 				curCode.clear();
 			}
 		}
@@ -656,7 +676,7 @@ static std::vector<u32> parseCodes(const std::string& s)
 	{
 		if (curCode.length() != 8)
 			throw FlycastException("Invalid cheat code");
-		codes.push_back(strtol(curCode.c_str(), nullptr, 16));
+		codes.push_back(strtoul(curCode.c_str(), nullptr, 16));
 	}
 
 	return codes;

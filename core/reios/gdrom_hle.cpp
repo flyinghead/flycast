@@ -109,7 +109,7 @@ static void read_sectors_to(u32 addr, u32 sector, u32 count)
 
 static void GDROM_HLE_ReadDMA()
 {
-	u32 fad = gd_hle_state.params[0];
+	u32 fad = gd_hle_state.params[0] & 0xffffff;
 	u32 nsect = gd_hle_state.params[1];
 	u32 buffer = gd_hle_state.params[2];
 	// params[3] 0
@@ -123,7 +123,7 @@ static void GDROM_HLE_ReadDMA()
 
 static void GDROM_HLE_ReadPIO()
 {
-	u32 fad = gd_hle_state.params[0];
+	u32 fad = gd_hle_state.params[0] & 0xffffff;
 	u32 nsect = gd_hle_state.params[1];
 	u32 buffer = gd_hle_state.params[2];
 	// params[3] seekAhead (wince) or 0
@@ -135,34 +135,34 @@ static void GDROM_HLE_ReadPIO()
 	gd_hle_state.result[3] = 0;
 }
 
-static void GDCC_HLE_GETSCD() {
+static void GDCC_HLE_GETSCD()
+{
 	u32 format = gd_hle_state.params[0];
 	u32 size = gd_hle_state.params[1];
 	u32 dest = gd_hle_state.params[2];
 	// params[3] 0
 
 	DEBUG_LOG(REIOS, "GDROM: GETSCD format %x size %x dest %08x", format, size, dest);
-
-	if (libGDR_GetDiscType() == Open || libGDR_GetDiscType() == NoDisk)
-	{
-		gd_hle_state.status = GDC_ERR;
-		gd_hle_state.result[0] = 6;	// GDC_ERR_UNITATTENTION
-		gd_hle_state.result[1] = 0;
-		gd_hle_state.result[2] = 0;
-		gd_hle_state.result[3] = 0;
-		return;
-	}
 	if (sns_asc != 0)
 	{
 		// Helps D2 detect the disk change
 		gd_hle_state.status = GDC_ERR;
 		gd_hle_state.result[0] = sns_key;
-		gd_hle_state.result[1] = sns_asc;
-		gd_hle_state.result[2] = 0x18;		// ?
-		gd_hle_state.result[3] = sns_ascq;	// ?
+		gd_hle_state.result[1] = sns_asc | (sns_ascq << 8);
+		gd_hle_state.result[2] = 0x18; // ?
+		gd_hle_state.result[3] = 0;
 		sns_key = 0;
 		sns_asc = 0;
 		sns_ascq = 0;
+		return;
+	}
+	if (SecNumber.Status != GD_BUSY && (libGDR_GetDiscType() == Open || libGDR_GetDiscType() == NoDisk))
+	{
+		gd_hle_state.status = GDC_ERR;
+		gd_hle_state.result[0] = 2;
+		gd_hle_state.result[1] = 0x3a;	// Media operation command was received but no media is inserted.
+		gd_hle_state.result[2] = 0;
+		gd_hle_state.result[3] = 0;
 		return;
 	}
 	if (cdda.status == cdda_t::Playing)
@@ -309,8 +309,8 @@ static void GD_HLE_Command(gd_command cc)
 
 	case GDCC_PLAY2:
 		{
-			cdda.StartAddr.FAD = gd_hle_state.params[0];
-			cdda.EndAddr.FAD = gd_hle_state.params[1];
+			cdda.StartAddr.FAD = gd_hle_state.params[0] & 0xffffff;
+			cdda.EndAddr.FAD = gd_hle_state.params[1] & 0xffffff;
 			cdda.repeats = gd_hle_state.params[2];
 			// params[3] debug (0)
 			DEBUG_LOG(REIOS, "GDROM: CMD PLAYSEC from %d to %d repeats %d", cdda.StartAddr.FAD, cdda.EndAddr.FAD, cdda.repeats);
@@ -337,7 +337,7 @@ static void GD_HLE_Command(gd_command cc)
 
 	case GDCC_SEEK:
 		DEBUG_LOG(REIOS, "GDROM: CMD SEEK");
-		cdda.CurrAddr.FAD = cdda.StartAddr.FAD = gd_hle_state.params[0];
+		cdda.CurrAddr.FAD = cdda.StartAddr.FAD = gd_hle_state.params[0] & 0xffffff;
 		// params[1] debug (0)
 		cdda.status = cdda_t::Paused;
 		SecNumber.Status = GD_PAUSE;
@@ -382,7 +382,7 @@ static void GD_HLE_Command(gd_command cc)
 
 	case GDCC_DMA_READ_REQ:
 		{
-			u32 sector = gd_hle_state.params[0];
+			u32 sector = gd_hle_state.params[0] & 0xffffff;
 			u32 num = gd_hle_state.params[1];
 
 			DEBUG_LOG(REIOS, "GDROM: CMD READ Sector=%d, Num=%d", sector, num);
@@ -509,7 +509,7 @@ static void GD_HLE_Command(gd_command cc)
 	case GDCC_MULTI_DMAREAD:
 	case GDCC_MULTI_PIOREAD:
 		{
-			u32 sector = gd_hle_state.params[0];
+			u32 sector = gd_hle_state.params[0] & 0xffffff;
 			u32 num = gd_hle_state.params[1];
 			// params[2] seekAhead (wince)
 			bool dma = cc == GDCC_MULTI_DMAREAD;
@@ -688,25 +688,34 @@ void gdrom_hle_op()
 				//
 				// Returns: 0 OK, -1 ERR, 1 BUSY, 2 COMPLETE, 3 CONTINUE
 				gd_drv_stat status;
-				u32 discType = libGDR_GetDiscType();
-				switch (discType)
+				u32 discType;
+				if (SecNumber.Status == GD_BUSY)
 				{
-				case Open:
-					status = GD_STAT_OPEN;
+					status = GD_STAT_BUSY;
 					discType = 0;
-					break;
-				case NoDisk:
-					status = GD_STAT_NODISC;
-					discType = 0;
-					break;
-				default:
-					if (gd_hle_state.status == GDC_CONTINUE || SecNumber.Status == GD_PLAY)
-						status = GD_STAT_PLAY;
-					else
-						status = GD_STAT_PAUSE;
-					if (memcmp(ip_meta.disk_type, "GD-ROM", sizeof(ip_meta.disk_type)) == 0)
-						discType = GdRom;
-					break;
+				}
+				else
+				{
+					discType = libGDR_GetDiscType();
+					switch (discType)
+					{
+					case Open:
+						status = GD_STAT_OPEN;
+						discType = 0;
+						break;
+					case NoDisk:
+						status = GD_STAT_NODISC;
+						discType = 0;
+						break;
+					default:
+						if (gd_hle_state.status == GDC_CONTINUE || SecNumber.Status == GD_PLAY)
+							status = GD_STAT_PLAY;
+						else
+							status = GD_STAT_PAUSE;
+						if (memcmp(ip_meta.disk_type, "GD-ROM", sizeof(ip_meta.disk_type)) == 0)
+							discType = GdRom;
+						break;
+					}
 				}
 				WriteMem32(r[4], (u32)status);
 				WriteMem32(r[4] + 4, discType);

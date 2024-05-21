@@ -531,7 +531,7 @@ static void DYNACALL ta_thd_data32_i(const simd256_t *data)
 		INFO_LOG(PVR, "Warning: data sent to TA prior to ListInit. Ignored");
 		return;
 	}
-	if (ta_tad.End() - ta_tad.thd_root >= TA_DATA_SIZE)
+	if (ta_tad.End() - ta_tad.thd_root >= (ptrdiff_t)TA_DATA_SIZE)
 	{
 		INFO_LOG(PVR, "Warning: TA data buffer overflow");
 		asic_RaiseInterrupt(holly_MATR_NOMEM);

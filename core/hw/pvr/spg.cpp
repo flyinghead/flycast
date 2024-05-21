@@ -1,13 +1,13 @@
-#include <array>
 #include "spg.h"
 #include "hw/holly/holly_intc.h"
 #include "hw/holly/sb.h"
 #include "hw/sh4/sh4_sched.h"
-#include "oslib/oslib.h"
 #include "hw/maple/maple_if.h"
 #include "serialize.h"
 #include "network/ggpo.h"
 #include "hw/pvr/Renderer_if.h"
+#include "stdclass.h"
+#include <array>
 
 #ifdef TEST_AUTOMATION
 #include "input/gamepad_device.h"
@@ -18,10 +18,10 @@
 static u32 clc_pvr_scanline;
 static u32 pvr_numscanlines = 512;
 static u32 prv_cur_scanline = -1;
-static u32 vblk_cnt;
 
 #if !defined(NDEBUG) || defined(DEBUGFAST)
-static float last_fps;
+static u32 vblk_cnt;
+static u64 last_fps;
 #endif
 
 // 27 mhz pixel clock
@@ -96,7 +96,7 @@ void rescheduleSPG()
 	sh4_sched_request(vblank_schid, getNextSpgInterrupt());
 }
 
-static int spg_line_sched(int tag, int cycles, int jitter)
+static int spg_line_sched(int tag, int cycles, int jitter, void *arg)
 {
 	clc_pvr_scanline += cycles + jitter;
 
@@ -156,17 +156,18 @@ static int spg_line_sched(int tag, int cycles, int jitter)
 
 			rend_vblank();
 
-			double now = os_GetSeconds() * 1000000.0;
+			u64 now = getTimeMs();
 			cpu_time_idx = (cpu_time_idx + 1) % cpu_cycles.size();
 			if (cpu_cycles[cpu_time_idx] != 0)
 			{
 				u32 cycle_span = (u32)(sh4_sched_now64() - cpu_cycles[cpu_time_idx]);
-				double time_span = now - real_times[cpu_time_idx];
-				double cpu_speed = ((double)cycle_span / time_span) / (SH4_MAIN_CLOCK / 100000000);
-				SH4FastEnough = cpu_speed >= 85.0;
+				u64 time_span = now - real_times[cpu_time_idx];
+				float cpu_speed = ((float)cycle_span / time_span) / (SH4_MAIN_CLOCK / 100000);
+				SH4FastEnough = cpu_speed >= 85.f;
 			}
-			else
+			else {
 				SH4FastEnough = false;
+			}
 			cpu_cycles[cpu_time_idx] = sh4_sched_now64();
 			real_times[cpu_time_idx] = now;
 
@@ -176,15 +177,15 @@ static int spg_line_sched(int tag, int cycles, int jitter)
 
 #if !defined(NDEBUG) || defined(DEBUGFAST)
 			vblk_cnt++;
-			if ((os_GetSeconds()-last_fps)>2)
+			if (getTimeMs() - last_fps >= 2000)
 			{
 				static int Last_FC;
-				double ts=os_GetSeconds()-last_fps;
-				double spd_fps=(FrameCount-Last_FC)/ts;
-				double spd_vbs=vblk_cnt/ts;
-				double spd_cpu=spd_vbs*Frame_Cycles;
-				spd_cpu/=1000000;	//mrhz kthx
-				double fullvbs=(spd_vbs/spd_cpu)*200;
+				double ts = ((double)getTimeMs() - last_fps) / 1000.0;
+				double spd_fps = (FrameCount - Last_FC) / ts;
+				double spd_vbs = vblk_cnt / ts;
+				double spd_cpu = spd_vbs * Frame_Cycles;
+				spd_cpu /= 1000000.0;	//mrhz kthx
+				double fullvbs = (spd_vbs / spd_cpu) * 200.0;
 
 				Last_FC=FrameCount;
 
@@ -193,16 +194,16 @@ static int spg_line_sched(int tag, int cycles, int jitter)
 				const char* mode=0;
 				const char* res=0;
 
-				res=SPG_CONTROL.interlace?"480i":"240p";
+				res = SPG_CONTROL.interlace ? "480i" : "240p";
 
-				if (SPG_CONTROL.NTSC==0 && SPG_CONTROL.PAL==1)
-					mode="PAL";
-				else if (SPG_CONTROL.NTSC==1 && SPG_CONTROL.PAL==0)
-					mode="NTSC";
+				if (SPG_CONTROL.isPAL())
+					mode = "PAL";
+				else if (SPG_CONTROL.isNTSC())
+					mode = "NTSC";
 				else
 				{
-					res=SPG_CONTROL.interlace?"480i":"480p";
-					mode="VGA";
+					res = SPG_CONTROL.interlace ? "480i" : "480p";
+					mode = "VGA";
 				}
 
 				double frames_done=spd_cpu/2;
@@ -210,13 +211,13 @@ static int spg_line_sched(int tag, int cycles, int jitter)
 
 				double full_rps = spd_fps + fskip / ts;
 
-				INFO_LOG(COMMON, "%s/%c - %4.2f - %4.2f - V: %4.2f (%.2f, %s%s%4.2f) R: %4.2f+%4.2f",
-					VER_SHORTNAME,'n',mspdf,spd_cpu*100/200,spd_vbs,
-					spd_vbs/full_rps,mode,res,fullvbs,
-					spd_fps,fskip/ts);
+				INFO_LOG(COMMON, "SPG - %4.2f - %4.2f - V: %4.2f (%.2f, %s%s%4.2f) R: %4.2f+%4.2f",
+					mspdf, spd_cpu * 100 / 200, spd_vbs,
+					spd_vbs / full_rps, mode, res, fullvbs,
+					spd_fps, fskip / ts);
 				
-				fskip=0;
-				last_fps=os_GetSeconds();
+				fskip = 0;
+				last_fps = getTimeMs();
 			}
 #endif
 		}
@@ -274,6 +275,9 @@ void spg_Reset(bool hard)
 	cpu_time_idx = 0;
 	cpu_cycles.fill(0);
 	real_times.fill(0.0);
+	maple_int_pending = false;
+	lightgun_line = 0xffff;
+	lightgun_hpos = 0;
 }
 
 void scheduleRenderDone(TA_context *cntx)
@@ -311,19 +315,11 @@ void spg_Deserialize(Deserializer& deser)
 	if (deser.version() < Deserializer::V30)
 		deser.skip<u32>(); // in_vblank
 	deser >> clc_pvr_scanline;
-	if (deser.version() >= Deserializer::V12)
-	{
-		deser >> maple_int_pending;
-		if (deser.version() >= Deserializer::V14)
-		{
-			deser >> pvr_numscanlines;
-			deser >> prv_cur_scanline;
-			deser >> Line_Cycles;
-			deser >> Frame_Cycles;
-			deser >> lightgun_line;
-			deser >> lightgun_hpos;
-		}
-	}
-	if (deser.version() < Deserializer::V14)
-		CalculateSync();
+	deser >> maple_int_pending;
+	deser >> pvr_numscanlines;
+	deser >> prv_cur_scanline;
+	deser >> Line_Cycles;
+	deser >> Frame_Cycles;
+	deser >> lightgun_line;
+	deser >> lightgun_hpos;
 }

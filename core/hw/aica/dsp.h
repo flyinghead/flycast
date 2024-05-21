@@ -2,10 +2,7 @@
 #include "types.h"
 #include "serialize.h"
 
-namespace aica
-{
-
-namespace dsp
+namespace aica::dsp
 {
 
 struct DSPState
@@ -54,6 +51,8 @@ struct DSPState
 		deser >> MDEC_CT;
 		deser.skip(33596 - 4096 * 8 - sizeof(TEMP) - sizeof(MEMS) - sizeof(MIXS) - 4 * 3 - 44,
 				Deserializer::V18);	// other dsp stuff
+		if (!deser.rollback())
+			dirty = true;
 	}
 };
 
@@ -104,5 +103,4 @@ void DecodeInst(const u32 *IPtr, Instruction *i);
 u16 DYNACALL PACK(s32 val);
 s32 DYNACALL UNPACK(u16 val);
 
-} // namespace dsp
-} // namespace aica
+} // namespace aica::dsp

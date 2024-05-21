@@ -18,7 +18,7 @@
 */
 #include "mouse.h"
 #include "cfg/option.h"
-#include "rend/gui.h"
+#include "ui/gui.h"
 
 // Mouse buttons
 // bit 0: Button C

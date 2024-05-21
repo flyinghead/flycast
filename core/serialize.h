@@ -19,28 +19,14 @@
 #pragma once
 #include "types.h"
 
+#include <cstring>
 #include <limits>
 
 class SerializeBase
 {
 public:
 	enum Version : int32_t {
-		V9_LIBRETRO = 8,
-		V10_LIBRETRO,
-		V11_LIBRETRO,
-		V12_LIBRETRO,
-		V13_LIBRETRO,
-		VLAST_LIBRETRO = V13_LIBRETRO,
-
-		V8 = 803,
-		V9,
-		V10,
-		V11,
-		V12,
-		V13,
-		V14,
-		V15,
-		V16,
+		V16 = 811,
 		V17,
 		V18,
 		V19,
@@ -62,7 +48,20 @@ public:
 		V35,
 		V36,
 		V37,
-		Current = V37,
+		V38,
+		V39,
+		V40,
+		V41,
+		V42,
+		V43,
+		V44,
+		V45,
+		V46,
+		V47,
+		V48,
+		V49,
+		V50,
+		Current = V50,
 
 		Next = Current + 1,
 	};
@@ -88,15 +87,7 @@ public:
 		Exception(const char *msg) : std::runtime_error(msg) {}
 	};
 
-	Deserializer(const void *data, size_t limit, bool rollback = false)
-		: SerializeBase(limit, rollback), data((const u8 *)data)
-	{
-		deserialize(_version);
-		if (_version < V9_LIBRETRO || (_version > V13_LIBRETRO && _version < V8))
-			throw Exception("Unsupported version");
-		if (_version > Current)
-			throw Exception("Version too recent");
-	}
+	Deserializer(const void *data, size_t limit, bool rollback = false);
 
 	template<typename T>
 	void deserialize(T& obj)
@@ -152,12 +143,7 @@ public:
 	Serializer()
 		: Serializer(nullptr, std::numeric_limits<size_t>::max(), false) {}
 
-	Serializer(void *data, size_t limit, bool rollback = false)
-		: SerializeBase(limit, rollback), data((u8 *)data)
-	{
-		Version v = Current;
-		serialize(v);
-	}
+	Serializer(void *data, size_t limit, bool rollback = false);
 
 	template<typename T>
 	void serialize(const T& obj)

@@ -33,5 +33,5 @@ void deserialize(Deserializer& deser);
 
 extern u8 *RAM;
 extern u32 ERAM_SIZE;
-constexpr u32 ERAM_SIZE_MAX = 32 * 1024 * 1024;
+constexpr u32 ERAM_SIZE_MAX = 32_MB;
 }

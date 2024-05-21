@@ -30,40 +30,33 @@
 #include "hw/sh4/sh4_sched.h"
 #include "hw/flashrom/nvmem.h"
 #include "cheats.h"
-#include "oslib/audiostream.h"
+#include "audio/audiostream.h"
 #include "debug/gdb_server.h"
 #include "hw/pvr/Renderer_if.h"
 #include "hw/arm7/arm7_rec.h"
 #include "network/ggpo.h"
 #include "hw/mem/mem_watch.h"
 #include "network/net_handshake.h"
-#include "rend/gui.h"
 #include "network/naomi_network.h"
 #include "serialize.h"
 #include "hw/pvr/pvr.h"
 #include "profiler/fc_profiler.h"
 #include "oslib/storage.h"
+#include "wsi/context.h"
 #include <chrono>
+#ifndef LIBRETRO
+#include "ui/gui.h"
+#endif
 
 settings_t settings;
-constexpr float WINCE_DEPTH_SCALE = 0.01f;
 
 static void loadSpecialSettings()
 {
 	std::string& prod_id = settings.content.gameId;
 	NOTICE_LOG(BOOT, "Game ID is [%s]", prod_id.c_str());
 
-	settings.input.lightgunGame = false;
-
 	if (settings.platform.isConsole())
 	{
-		if (ip_meta.isWindowsCE() || prod_id == "T26702N") // PBA Tour Bowling 2001
-		{
-			INFO_LOG(BOOT, "Enabling Extra depth scaling for Windows CE game");
-			config::ExtraDepthScale.override(WINCE_DEPTH_SCALE);
-			config::ForceWindowsCE.override(true);
-		}
-
 		// Tony Hawk's Pro Skater 2
 		if (prod_id == "T13008D 05" || prod_id == "T13006N"
 				// Tony Hawk's Pro Skater 1
@@ -94,7 +87,9 @@ static void loadSpecialSettings()
 				|| prod_id == "HDR-0078"
 				// JSR (EU)
 				|| prod_id == "MK-5105850"
-				// Worms World Party
+				// Worms World Party (US)
+				|| prod_id == "T22904N"
+				// Worms World Party (EU)
 				|| prod_id == "T7016D  50"
 				// Shenmue (US)
 				|| prod_id == "MK-51059"
@@ -103,7 +98,45 @@ static void loadSpecialSettings()
 				// Shenmue (JP)
 				|| prod_id == "HDR-0016"
 				// Izumo
-				|| prod_id == "T46902M")
+				|| prod_id == "T46902M"
+				// Cardcaptor Sakura
+				|| prod_id == "HDR-0115"
+				// Grandia II (US)
+				|| prod_id == "T17716N"
+				// Grandia II (EU)
+				|| prod_id == "T17715D"
+				// Grandia II (JP)
+				|| prod_id == "T4503M"
+				// Canvas: Sepia Iro no Motif
+				|| prod_id == "T20108M"
+				// Kimi ga Nozomu Eien
+				|| prod_id == "T47101M"
+				// Pro Mahjong Kiwame D
+				|| prod_id == "T16801M"
+				// Yoshia no Oka de Nekoronde...
+				|| prod_id == "T18704M"
+				// Tamakyuu (a.k.a. Tama-cue)
+				|| prod_id == "T20133M"
+				// Sakura Taisen 1
+				|| prod_id == "HDR-0072"
+				// Sakura Taisen 3
+				|| prod_id == "HDR-0152"
+				// Hundred Swords
+				|| prod_id == "HDR-0124"
+				// Musapey's Choco Marker
+				|| prod_id == "T23203M"
+				// Sister Princess Premium Edition
+				|| prod_id == "T27802M"
+				// Sentimental Graffiti
+				|| prod_id == "T20128M"
+				// Sentimental Graffiti 2
+				|| prod_id == "T20104M"
+				// Kanon
+				|| prod_id == "T20105M"
+				// Aikagi
+				|| prod_id == "T20130M"
+				// AIR
+				|| prod_id == "T20112M")
 		{
 			INFO_LOG(BOOT, "Enabling RTT Copy to VRAM for game %s", prod_id.c_str());
 			config::RenderToTextureBuffer.override(true);
@@ -118,19 +151,13 @@ static void loadSpecialSettings()
 		if (prod_id == "MK-51182")
 		{
 			INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s", prod_id.c_str());
-			config::ExtraDepthScale.override(1000000.f);	// Mali needs 1M, 10K is enough for others
+			config::ExtraDepthScale.override(1e8f);
 		}
-		// Re-Volt (US, EU)
-		else if (prod_id == "T-8109N" || prod_id == "T8107D  50")
+		// Re-Volt (US, EU, JP)
+		else if (prod_id == "T-8109N" || prod_id == "T8107D  50" || prod_id == "T-8101M")
 		{
 			INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s", prod_id.c_str());
 			config::ExtraDepthScale.override(100.f);
-		}
-		// Samurai Shodown 6 dc port
-		else if (prod_id == "T0002M")
-		{
-			INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s", prod_id.c_str());
-			config::ExtraDepthScale.override(1e26f);
 		}
 		// Test Drive V-Rally
 		else if (prod_id == "T15110N" || prod_id == "T15105D 50")
@@ -143,12 +170,6 @@ static void loadSpecialSettings()
 		{
 			INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s", prod_id.c_str());
 			config::ExtraDepthScale.override(1000.f);
-		}
-		// Re-Volt (JP)
-		else if (prod_id == "T-8101M")
-		{
-			INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s", prod_id.c_str());
-			config::ExtraDepthScale.override(100.f);
 		}
 
 		std::string areas(ip_meta.area_symbols, sizeof(ip_meta.area_symbols));
@@ -226,22 +247,37 @@ static void loadSpecialSettings()
 			NOTICE_LOG(BOOT, "Forcing real BIOS");
 			config::UseReios.override(false);
 		}
+		else if (prod_id == "T17708N"	// Stupid Invaders (US)
+			|| prod_id == "T17711D"		// Stupid Invaders (EU)
+			|| prod_id == "T46509M")	// Suika (JP)
+		{
+			NOTICE_LOG(BOOT, "Forcing HLE BIOS");
+			config::UseReios.override(true);
+		}
 		if (prod_id == "T-9707N"		// San Francisco Rush 2049 (US)
 			|| prod_id == "MK-51146"	// Sega Smash Pack - Volume 1
 			|| prod_id == "T-9702D-50"	// Hydro Thunder (PAL)
-			|| prod_id == "T41601N")	// Elemental Gimmick Gear (US)
+			|| prod_id == "T41601N"		// Elemental Gimmick Gear (US)
+			|| prod_id == "T-8116N"		// South Park Rally (US)
+			|| prod_id == "T1206N")		// JoJo's Bizarre Adventure (US)
 		{
 			NOTICE_LOG(BOOT, "Forcing NTSC broadcasting");
 			config::Broadcast.override(0);
 		}
-		else if (prod_id == "T-9709D-50")	// San Francisco Rush 2049 (EU)
+		else if (prod_id == "T-9709D-50"	// San Francisco Rush 2049 (EU)
+			|| prod_id == "T-8112D-50"		// South Park Rally (EU)
+			|| prod_id == "T7014D  50"		// Super Runabout (EU)
+			|| prod_id == "T10001D 50")		// MTV Sport - Skateboarding (PAL)
 		{
 			NOTICE_LOG(BOOT, "Forcing PAL broadcasting");
 			config::Broadcast.override(1);
 		}
 		if (prod_id == "T1102M"				// Densha de Go! 2
 				|| prod_id == "T00000A"		// The Ring of the Nibelungen (demo, hack)
-				|| prod_id == "T15124N 00")	// Worms Pinball (prototype)
+				|| prod_id == "T15124N 00"	// Worms Pinball (prototype)
+				|| prod_id == "T9503M"		// Eisei Meijin III
+				|| prod_id == "T5202M"		// Marionette Company
+				|| prod_id == "T5301M")		// World Neverland Plus
 		{
 			NOTICE_LOG(BOOT, "Forcing Full Framebuffer Emulation");
 			config::EmulateFramebuffer.override(true);
@@ -254,17 +290,15 @@ static void loadSpecialSettings()
 	}
 	else if (settings.platform.isArcade())
 	{
-		if (prod_id == "SAMURAI SPIRITS 6")
-		{
-			INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s", prod_id.c_str());
-			config::ExtraDepthScale.override(1e26f);
-		}
 		if (prod_id == "COSMIC SMASH IN JAPAN")
 		{
 			INFO_LOG(BOOT, "Enabling translucent depth multipass for game %s", prod_id.c_str());
 			config::TranslucentPolygonDepthMask.override(true);
 		}
-		if (prod_id == "BEACH SPIKERS JAPAN")
+		if (prod_id == "BEACH SPIKERS JAPAN"
+				|| prod_id == "CHOCO MARKER"
+				|| prod_id == "LOVE AND BERRY USA VER1.003"		// lovebero
+				|| prod_id == "LOVE AND BERRY USA VER2.000")	// lovebery
 		{
 			INFO_LOG(BOOT, "Enabling RTT Copy to VRAM for game %s", prod_id.c_str());
 			config::RenderToTextureBuffer.override(true);
@@ -273,126 +307,6 @@ static void loadSpecialSettings()
 		{
 			INFO_LOG(BOOT, "Disabling Free Play for game %s", prod_id.c_str());
 			config::ForceFreePlay.override(false);
-		}
-		// Input configuration
-		settings.input.JammaSetup = JVS::Default;
-		if (prod_id == "DYNAMIC GOLF"
-				|| prod_id == "SHOOTOUT POOL"
-				|| prod_id == "SHOOTOUT POOL MEDAL"
-				|| prod_id == "CRACKIN'DJ  ver JAPAN"
-				|| prod_id == "CRACKIN'DJ PART2  ver JAPAN"
-				|| prod_id == "KICK '4' CASH"
-				|| prod_id == "DRIVE")			// Waiwai drive
-		{
-			INFO_LOG(BOOT, "Enabling JVS rotary encoders for game %s", prod_id.c_str());
-			settings.input.JammaSetup = JVS::RotaryEncoders;
-		}
-		else if (prod_id == "POWER STONE 2 JAPAN"		// Naomi
-				|| prod_id == "GUILTY GEAR isuka"		// AW
-				|| prod_id == "Dirty Pigskin Football") // AW
-		{
-			INFO_LOG(BOOT, "Enabling 4-player setup for game %s", prod_id.c_str());
-			settings.input.JammaSetup = JVS::FourPlayers;
-		}
-		else if (prod_id == "SEGA MARINE FISHING JAPAN"
-					|| prod_id == "BASS FISHING SIMULATOR VER.A")	// AW
-		{
-			INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", prod_id.c_str());
-			settings.input.JammaSetup = JVS::SegaMarineFishing;
-		}
-		else if (prod_id == "RINGOUT 4X4 JAPAN"
-					|| prod_id == "VIRTUA ATHLETE"
-					|| prod_id == "ROYAL RUMBLE"
-					|| prod_id == "BEACH SPIKERS JAPAN"
-					|| prod_id == "MJ JAPAN")
-		{
-			INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", prod_id.c_str());
-			settings.input.JammaSetup = JVS::DualIOBoards4P;
-		}
-		else if (prod_id == "NINJA ASSAULT"
-					|| prod_id == "Sports Shooting USA"	// AW
-					|| prod_id == "SEGA CLAY CHALLENGE"	// AW
-					|| prod_id == "RANGER MISSION"		// AW
-					|| prod_id == "EXTREME HUNTING"		// AW
-					|| prod_id == "Fixed BOOT strapper")// Extreme hunting 2 (AW)
-		{
-			INFO_LOG(BOOT, "Enabling lightgun setup for game %s", prod_id.c_str());
-			settings.input.JammaSetup = JVS::LightGun;
-			settings.input.lightgunGame = true;
-		}
-		else if (prod_id == "MAZAN")
-		{
-			INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", prod_id.c_str());
-			settings.input.JammaSetup = JVS::Mazan;
-			settings.input.lightgunGame = true;
-		}
-		else if (prod_id == " BIOHAZARD  GUN SURVIVOR2")
-		{
-			INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", prod_id.c_str());
-			settings.input.JammaSetup = JVS::GunSurvivor;
-		}
-		else if (prod_id == "WORLD KICKS")
-		{
-			INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", prod_id.c_str());
-			settings.input.JammaSetup = JVS::WorldKicks;
-		}
-		else if (prod_id == "WORLD KICKS PCB")
-		{
-			INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", prod_id.c_str());
-			settings.input.JammaSetup = JVS::WorldKicksPCB;
-		}
-		else if (prod_id == "THE TYPING OF THE DEAD"
-				|| prod_id == " LUPIN THE THIRD  -THE TYPING-"
-				|| prod_id == "------La Keyboardxyu------")
-		{
-			INFO_LOG(BOOT, "Enabling keyboard for game %s", prod_id.c_str());
-			settings.input.JammaSetup = JVS::Keyboard;
-		}
-		else if (prod_id == "OUTTRIGGER     JAPAN")
-		{
-			INFO_LOG(BOOT, "Enabling JVS rotary encoders for game %s", prod_id.c_str());
-			settings.input.JammaSetup = JVS::OutTrigger;
-		}
-		else if (prod_id == "THE MAZE OF THE KINGS"
-				|| prod_id == " CONFIDENTIAL MISSION ---------"
-				|| prod_id == "DEATH CRIMSON OX"
-				|| prod_id.substr(0, 5) == "hotd2"	// House of the Dead 2
-				|| prod_id == "LUPIN THE THIRD  -THE SHOOTING-")
-		{
-			INFO_LOG(BOOT, "Enabling lightgun as analog setup for game %s", prod_id.c_str());
-			settings.input.JammaSetup = JVS::LightGunAsAnalog;
-			settings.input.lightgunGame = true;
-		}
-		else if (prod_id == "WAVE RUNNER GP")
-		{
-			INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", prod_id.c_str());
-			settings.input.JammaSetup = JVS::WaveRunnerGP;
-		}
-		else if (prod_id == "  18WHEELER")
-		{
-			INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", prod_id.c_str());
-			settings.input.JammaSetup = JVS::_18Wheeler;
-		}
-		else if (prod_id == "F355 CHALLENGE JAPAN")
-		{
-			INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", prod_id.c_str());
-			settings.input.JammaSetup = JVS::F355;
-		}
-		else if (prod_id == "INU NO OSANPO")	// Dog Walking
-		{
-			INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", prod_id.c_str());
-			settings.input.JammaSetup = JVS::DogWalking;
-		}
-		else if (prod_id == " TOUCH DE UNOH -------------" || prod_id == " TOUCH DE UNOH 2 -----------")
-		{
-			INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", prod_id.c_str());
-			settings.input.JammaSetup = JVS::TouchDeUno;
-			settings.input.lightgunGame = true;
-		}
-		else if (prod_id == "POKASUKA GHOST (JAPANESE)"	// Manic Panic Ghosts
-				|| prod_id == "TOUCH DE ZUNO (JAPAN)")
-		{
-			settings.input.lightgunGame = true;
 		}
 	}
 }
@@ -420,33 +334,40 @@ static void setPlatform(int platform)
 	switch (platform)
 	{
 	case DC_PLATFORM_DREAMCAST:
-		settings.platform.ram_size = 16 * 1024 * 1024;
-		settings.platform.vram_size = 8 * 1024 * 1024;
-		settings.platform.aram_size = 2 * 1024 * 1024;
-		settings.platform.bios_size = 2 * 1024 * 1024;
-		settings.platform.flash_size = 128 * 1024;
+		settings.platform.ram_size = config::RamMod32MB ? 32_MB : 16_MB;
+		settings.platform.vram_size = 8_MB;
+		settings.platform.aram_size = 2_MB;
+		settings.platform.bios_size = 2_MB;
+		settings.platform.flash_size = 128_KB;
 		break;
 	case DC_PLATFORM_NAOMI:
-		settings.platform.ram_size = 32 * 1024 * 1024;
-		settings.platform.vram_size = 16 * 1024 * 1024;
-		settings.platform.aram_size = 8 * 1024 * 1024;
-		settings.platform.bios_size = 2 * 1024 * 1024;
-		settings.platform.flash_size = 32 * 1024;	// battery-backed ram
+		settings.platform.ram_size = 32_MB;
+		settings.platform.vram_size = 16_MB;
+		settings.platform.aram_size = 8_MB;
+		settings.platform.bios_size = 2_MB;
+		settings.platform.flash_size = 32_KB;	// battery-backed ram
 		break;
 	case DC_PLATFORM_NAOMI2:
-		settings.platform.ram_size = 32 * 1024 * 1024;
-		settings.platform.vram_size = 16 * 1024 * 1024; // 2x16 MB VRAM, only 16 emulated
-		settings.platform.aram_size = 8 * 1024 * 1024;
-		settings.platform.bios_size = 2 * 1024 * 1024;
-		settings.platform.flash_size = 32 * 1024;	// battery-backed ram
-		elan::ERAM_SIZE = 32 * 1024 * 1024;
+		settings.platform.ram_size = 32_MB;
+		settings.platform.vram_size = 16_MB; // 2x16 MB VRAM, only 16 emulated
+		settings.platform.aram_size = 8_MB;
+		settings.platform.bios_size = 2_MB;
+		settings.platform.flash_size = 32_KB;	// battery-backed ram
+		elan::ERAM_SIZE = 32_MB;
 		break;
 	case DC_PLATFORM_ATOMISWAVE:
-		settings.platform.ram_size = 16 * 1024 * 1024;
-		settings.platform.vram_size = 8 * 1024 * 1024;
-		settings.platform.aram_size = 2 * 1024 * 1024;
-		settings.platform.bios_size = 128 * 1024;
-		settings.platform.flash_size = 128 * 1024;	// sram
+		settings.platform.ram_size = 16_MB;
+		settings.platform.vram_size = 8_MB;
+		settings.platform.aram_size = 2_MB;
+		settings.platform.bios_size = 128_KB;
+		settings.platform.flash_size = 128_KB;	// sram
+		break;
+	case DC_PLATFORM_SYSTEMSP:
+		settings.platform.ram_size = 32_MB;
+		settings.platform.vram_size = 16_MB;
+		settings.platform.aram_size = 8_MB;
+		settings.platform.bios_size = 2_MB;
+		settings.platform.flash_size = 128_KB;	// sram
 		break;
 	default:
 		die("Unsupported platform");
@@ -469,6 +390,7 @@ void Emulator::init()
 	// Default platform
 	setPlatform(DC_PLATFORM_DREAMCAST);
 
+	libGDR_init();
 	pvr::init();
 	aica::init();
 	mem_Init();
@@ -529,6 +451,8 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 			{
 				hostfs::FileInfo info = hostfs::storage().getFileInfo(settings.content.path);
 				settings.content.fileName = info.name;
+				if (settings.content.title.empty())
+					settings.content.title = get_file_basename(info.name);
 			}
 		}
 		else
@@ -567,7 +491,7 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 							nvmem::loadHle();
 							NOTICE_LOG(BOOT, "Did not load BIOS, using reios");
 							if (!config::UseReios && config::UseReios.isReadOnly())
-								gui_display_notification("This game requires a real BIOS", 15000);
+								os_notify("This game requires a real BIOS", 15000);
 						}
 					}
 					else
@@ -583,8 +507,11 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 				{
 					// Elf only supported with HLE BIOS
 					nvmem::loadHle();
+					InitDrive("");
 				}
 			}
+			if (settings.content.path.empty())
+				settings.content.title = "Dreamcast BIOS";
 
 			if (progress)
 				progress->progress = 1.0f;
@@ -605,10 +532,18 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 				// Must be done after the maple devices are created and EEPROM is accessible
 				naomi_cart_ConfigureEEPROM();
 		}
+#ifdef USE_RACHIEVEMENTS
+		// RA probably isn't expecting to travel back in the past so disable it
+		if (config::GGPOEnable)
+			config::EnableAchievements.override(false);
+		// Hardcore mode disables all cheats, under/overclocking, load state, lua and forces dynarec on
+		settings.raHardcoreMode = config::EnableAchievements && config::AchievementsHardcoreMode
+			&& !NaomiNetworkSupported();
+#endif
 		cheatManager.reset(settings.content.gameId);
 		if (cheatManager.isWidescreen())
 		{
-			gui_display_notification("Widescreen cheat activated", 1000);
+			os_notify("Widescreen cheat activated", 2000);
 			config::ScreenStretching.override(134);	// 4:3 -> 16:9
 		}
 		// reload settings so that all settings can be overridden
@@ -617,10 +552,12 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 		settings.input.fastForwardMode = false;
 		if (!settings.content.path.empty())
 		{
+#ifndef LIBRETRO
 			if (config::GGPOEnable)
 				dc_loadstate(-1);
 			else if (config::AutoLoadState && !NaomiNetworkSupported() && !settings.naomi.multiboard)
 				dc_loadstate(config::SavestateSlot);
+#endif
 		}
 		EventManager::event(Event::Start);
 
@@ -679,8 +616,11 @@ void Emulator::unloadGame()
 	} catch (...) { }
 	if (state == Loaded || state == Error)
 	{
-		if (state == Loaded && config::AutoSaveState && !settings.content.path.empty() && !settings.naomi.multiboard)
-			dc_savestate(config::SavestateSlot);
+#ifndef LIBRETRO
+		if (state == Loaded && config::AutoSaveState && !settings.content.path.empty()
+				&& !settings.naomi.multiboard && !config::GGPOEnable && !NaomiNetworkSupported())
+			gui_saveState(false);
+#endif
 		try {
 			dc_reset(true);
 		} catch (const FlycastException& e) {
@@ -692,6 +632,8 @@ void Emulator::unloadGame()
 		settings.content.path.clear();
 		settings.content.gameId.clear();
 		settings.content.fileName.clear();
+		settings.content.title.clear();
+		settings.platform.system = DC_PLATFORM_DREAMCAST;
 		state = Init;
 		EventManager::event(Event::Terminate);
 	}
@@ -709,10 +651,11 @@ void Emulator::term()
 		aica::term();
 		pvr::term();
 		mem_Term();
+		libGDR_term();
 
-		addrspace::release();
 		state = Terminated;
 	}
+	addrspace::release();
 }
 
 void Emulator::stop()
@@ -762,6 +705,10 @@ void Emulator::requestReset()
 
 void loadGameSpecificSettings()
 {
+	// Graphics context isn't available yet in libretro
+	if (GraphicsContext::Instance() != nullptr && GraphicsContext::Instance()->isAMD())
+		config::NativeDepthInterpolation.override(true);
+
 	if (settings.platform.isConsole())
 	{
 		reios_disk_id();
@@ -779,8 +726,13 @@ void loadGameSpecificSettings()
 	// Reload per-game settings
 	config::Settings::instance().load(true);
 
-	if (config::ForceWindowsCE)
-		config::ExtraDepthScale.override(WINCE_DEPTH_SCALE);
+	if (config::GGPOEnable || settings.raHardcoreMode)
+		config::Sh4Clock.override(200);
+	if (settings.raHardcoreMode)
+	{
+		config::WidescreenGameHacks.override(false);
+		config::DynarecEnabled.override(true);
+	}
 }
 
 void Emulator::step()
@@ -823,43 +775,39 @@ void dc_loadstate(Deserializer& deser)
 void Emulator::setNetworkState(bool online)
 {
 	if (settings.network.online != online)
+	{
+		settings.network.online = online;
 		DEBUG_LOG(NETWORK, "Network state %d", online);
-	settings.network.online = online;
+		if (online && settings.platform.isConsole()
+				&& config::Sh4Clock != 200)
+		{
+			config::Sh4Clock.override(200);
+			sh4_cpu.ResetCache();
+		}
+		EventManager::event(Event::Network);
+	}
 	settings.input.fastForwardMode &= !online;
 }
-
-EventManager EventManager::Instance;
 
 void EventManager::registerEvent(Event event, Callback callback, void *param)
 {
 	unregisterEvent(event, callback, param);
-	auto it = callbacks.find(event);
-	if (it != callbacks.end())
-		it->second.push_back(std::make_pair(callback, param));
-	else
-		callbacks.insert({ event, { std::make_pair(callback, param) } });
+	auto& vector = callbacks[static_cast<size_t>(event)];
+	vector.push_back(std::make_pair(callback, param));
 }
 
 void EventManager::unregisterEvent(Event event, Callback callback, void *param)
 {
-	auto it = callbacks.find(event);
-	if (it == callbacks.end())
-		return;
-
-	auto it2 = std::find(it->second.begin(), it->second.end(), std::make_pair(callback, param));
-	if (it2 == it->second.end())
-		return;
-
-	it->second.erase(it2);
+	auto& vector = callbacks[static_cast<size_t>(event)];
+	auto it = std::find(vector.begin(), vector.end(), std::make_pair(callback, param));
+	if (it != vector.end())
+		vector.erase(it);
 }
 
 void EventManager::broadcastEvent(Event event)
 {
-	auto it = callbacks.find(event);
-	if (it == callbacks.end())
-		return;
-
-	for (auto& pair : it->second)
+	auto& vector = callbacks[static_cast<size_t>(event)];
+	for (auto& pair : vector)
 		pair.first(event, pair.second);
 }
 
@@ -903,6 +851,7 @@ void Emulator::start()
 		Get_Sh4Interpreter(&sh4_cpu);
 		INFO_LOG(DYNAREC, "Using Interpreter");
 	}
+	setupPtyPipe();
 
 	memwatch::protect();
 
@@ -910,6 +859,7 @@ void Emulator::start()
 	{
 		const std::lock_guard<std::mutex> lock(mutex);
 		threadResult = std::async(std::launch::async, [this] {
+				ThreadName _("Flycast-emu");
 				InitAudio();
 
 				try {

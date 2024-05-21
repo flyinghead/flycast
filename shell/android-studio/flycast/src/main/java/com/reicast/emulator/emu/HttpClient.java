@@ -27,6 +27,7 @@ import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
 import org.apache.hc.core5.http.ContentType;
 import org.apache.hc.core5.http.HttpEntity;
+import org.apache.hc.core5.http.io.entity.StringEntity;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -77,6 +78,38 @@ public class HttpClient {
         return 500;
     }
 
+    public int post(String urlString, String payload, String contentType, byte[][] reply) {
+        try {
+            if (httpClient == null)
+                httpClient = HttpClients.createDefault();
+            HttpPost httpPost = new HttpPost(urlString);
+            httpPost.setEntity(new StringEntity(payload, contentType != null ? ContentType.create(contentType) : ContentType.APPLICATION_FORM_URLENCODED));
+            CloseableHttpResponse response = httpClient.execute(httpPost);
+            InputStream is = response.getEntity().getContent();
+
+            byte[] buffer = new byte[1024];
+            int length;
+
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            while ((length = is.read(buffer)) > 0) {
+                baos.write(buffer, 0, length);
+            }
+            is.close();
+            baos.close();
+            reply[0] = baos.toByteArray();
+
+            return response.getCode();
+        } catch (MalformedURLException e) {
+            Log.e("flycast", "Malformed URL", e);
+        } catch (IOException e) {
+            Log.e("flycast", "I/O error", e);
+        } catch (SecurityException e) {
+            Log.e("flycast", "Security error", e);
+        } catch (Throwable t) {
+            Log.e("flycast", "Unknown error", t);
+        }
+        return 500;
+    }
     public int post(String urlString, String[] fieldNames, String[] fieldValues, String[] contentTypes)
     {
         try {

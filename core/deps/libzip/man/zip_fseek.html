@@ -2,10 +2,10 @@
 <html>
 <!-- This is an automatically generated file.  Do not edit.
    zip_fseek.mdoc -- seek in file
-   Copyright (C) 2016-2017 Dieter Baron and Thomas Klausner
+   Copyright (C) 2016-2022 Dieter Baron and Thomas Klausner
   
    This file is part of libzip, a library to manipulate ZIP archives.
-   The authors can be contacted at <libzip@nih.at>
+   The authors can be contacted at <info@libzip.org>
   
    Redistribution and use in source and binary forms, with or without
    modification, are permitted provided that the following conditions
@@ -48,7 +48,8 @@
 <div class="manual-text">
 <section class="Sh">
 <h1 class="Sh" id="NAME"><a class="permalink" href="#NAME">NAME</a></h1>
-<code class="Nm">zip_fseek</code> &#x2014;
+<code class="Nm">zip_fseek</code>, <code class="Nm">zip_file_is_seekable</code>
+  &#x2014;
 <div class="Nd">seek in file</div>
 </section>
 <section class="Sh">
@@ -64,6 +65,10 @@ libzip (-lzip)
     *file</var>, <var class="Fa" style="white-space: nowrap;">zip_int64_t
     offset</var>, <var class="Fa" style="white-space: nowrap;">int
     whence</var>);</p>
+<p class="Pp"><var class="Ft">int</var>
+  <br/>
+  <code class="Fn">zip_file_is_seekable</code>(<var class="Fa" style="white-space: nowrap;">zip_file_t
+    *file</var>);</p>
 </section>
 <section class="Sh">
 <h1 class="Sh" id="DESCRIPTION"><a class="permalink" href="#DESCRIPTION">DESCRIPTION</a></h1>
@@ -71,13 +76,18 @@ The <code class="Fn">zip_fseek</code>() function seeks to the specified
   <var class="Ar">offset</var> relative to <var class="Ar">whence</var>, just
   like <a class="Xr" href="http://pubs.opengroup.org/onlinepubs/9699919799/functions/fseek.html">fseek(3)</a>.
 <p class="Pp"><code class="Nm">zip_fseek</code> only works on uncompressed
-    (stored) data. When called on compressed data it will return an error.</p>
+    (stored), unencrypted data. When called on compressed or encrypted data it
+    will return an error.</p>
+<p class="Pp">The <code class="Fn">zip_file_is_seekable</code>() function
+    returns 1 if a file is seekable.</p>
 </section>
 <section class="Sh">
 <h1 class="Sh" id="RETURN_VALUES"><a class="permalink" href="#RETURN_VALUES">RETURN
   VALUES</a></h1>
-If successful, <code class="Nm">zip_fseek</code> returns 0. Otherwise, -1 is
+If successful, <code class="Fn">zip_fseek</code>() returns 0. Otherwise, -1 is
   returned.
+<p class="Pp"><code class="Fn">zip_file_is_seekable</code>() returns 1 if a file
+    is seekable and 0 if not. On an invalid argument, it returns -1.</p>
 </section>
 <section class="Sh">
 <h1 class="Sh" id="SEE_ALSO"><a class="permalink" href="#SEE_ALSO">SEE
@@ -91,6 +101,7 @@ If successful, <code class="Nm">zip_fseek</code> returns 0. Otherwise, -1 is
 <section class="Sh">
 <h1 class="Sh" id="HISTORY"><a class="permalink" href="#HISTORY">HISTORY</a></h1>
 <code class="Fn">zip_fseek</code>() was added in libzip 1.2.0.
+  <code class="Fn">zip_file_is_seekable</code>() was added in libzip 1.9.0.
 </section>
 <section class="Sh">
 <h1 class="Sh" id="AUTHORS"><a class="permalink" href="#AUTHORS">AUTHORS</a></h1>
@@ -102,7 +113,7 @@ If successful, <code class="Nm">zip_fseek</code> returns 0. Otherwise, -1 is
 </div>
 <table class="foot">
   <tr>
-    <td class="foot-date">December 18, 2017</td>
+    <td class="foot-date">November 13, 2021</td>
     <td class="foot-os">NiH</td>
   </tr>
 </table>

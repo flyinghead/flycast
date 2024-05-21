@@ -27,24 +27,33 @@ public:
 	public:
 		virtual bool isDirectory() const = 0;
 		virtual ~Entry() = default;
+		const std::string& getName() const { return name; }
 
 	protected:
 		Entry(IsoFs *fs) : fs(fs) {}
 
 		IsoFs *fs;
+		std::string name;
+		u32 startFad = 0;
+		u32 len = 0;
+
+		friend class IsoFs;
 	};
 
 	class Directory final : public Entry
 	{
 	public:
 		bool isDirectory() const override { return true; }
-
 		Entry *getEntry(const std::string& name);
+		std::vector<Entry*> list();
 
 	private:
 		Directory(IsoFs *fs) : Entry(fs) {}
+		void reset();
+		Entry *nextEntry();
 
 		std::vector<u8> data;
+		u32 index = 0;
 
 		friend class IsoFs;
 	};
@@ -53,16 +62,11 @@ public:
 	{
 	public:
 		bool isDirectory() const override { return false; }
-
 		u32 getSize() const { return len; }
-
 		u32 read(u8 *buf, u32 size, u32 offset = 0) const;
 
 	private:
 		File(IsoFs *fs) : Entry(fs) {}
-
-		u32 startFad = 0;
-		u32 len = 0;
 
 		friend class IsoFs;
 	};

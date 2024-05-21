@@ -48,7 +48,7 @@ public:
 			D3D11_RASTERIZER_DESC desc{};
 			desc.FillMode = D3D11_FILL_SOLID;
 			desc.CullMode = D3D11_CULL_NONE;
-			desc.ScissorEnable = true;
+			desc.ScissorEnable = false;
 			desc.DepthClipEnable = true;
 			device->CreateRasterizerState(&desc, &rasterizerState.get());
 		}
@@ -109,10 +109,10 @@ public:
 		deviceContext->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
 		deviceContext->VSSetShader(rotate ? rotateVertexShader : vertexShader, nullptr, 0);
 		deviceContext->PSSetShader(pixelShader, nullptr, 0);
-
-		// TODO Scissor?
-		//const D3D11_RECT r = { (LONG)(pcmd->ClipRect.x - clip_off.x), (LONG)(pcmd->ClipRect.y - clip_off.y), (LONG)(pcmd->ClipRect.z - clip_off.x), (LONG)(pcmd->ClipRect.w - clip_off.y) };
-		//deviceContext->RSSetScissorRects(1, &r);
+		deviceContext->GSSetShader(nullptr, nullptr, 0);
+		deviceContext->HSSetShader(nullptr, nullptr, 0);
+		deviceContext->DSSetShader(nullptr, nullptr, 0);
+		deviceContext->CSSetShader(nullptr, nullptr, 0);
 
 		static const float white[] = { 1.f, 1.f, 1.f, 1.f };
 		if (color == nullptr)

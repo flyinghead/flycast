@@ -2360,7 +2360,11 @@ void * rglMapBuffer(	GLenum target, GLenum access)
    log_cb(RETRO_LOG_INFO, "glMapBuffer.\n");
 #endif
 #if defined(HAVE_OPENGLES)
+#ifdef glMapBufferOES
    return glMapBufferOES(target, access);
+#else
+   return NULL;
+#endif
 #else
    return glMapBuffer(target, access);
 #endif
@@ -2377,7 +2381,11 @@ GLboolean rglUnmapBuffer( 	GLenum target)
    log_cb(RETRO_LOG_INFO, "glUnmapBuffer.\n");
 #endif
 #if defined(HAVE_OPENGLES)
+#ifdef glUnmapBufferOES
    return glUnmapBufferOES(target);
+#else
+   return false;
+#endif
 #else
    return glUnmapBuffer(target);
 #endif
@@ -2733,6 +2741,14 @@ void rglPrimitiveRestartIndex(GLuint index)
 #if defined(HAVE_OPENGL)
    glPrimitiveRestartIndex(index);
 #endif
+}
+
+void rglHint(GLenum target, GLenum mode)
+{
+#ifdef GLSM_DEBUG
+   log_cb(RETRO_LOG_INFO, "glHint.\n");
+#endif
+   glHint(target, mode);
 }
 
 /* GLSM-side */

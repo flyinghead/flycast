@@ -117,7 +117,7 @@ public:
 			nowide::wstackstring wname;
 			if (wname.convert(entry.path.c_str()))
 			{
-				DWORD attr = GetFileAttributesW(wname.c_str());
+				DWORD attr = GetFileAttributesW(wname.get());
 				if (attr != INVALID_FILE_ATTRIBUTES)
 				{
 					if (attr & FILE_ATTRIBUTE_HIDDEN)
@@ -184,7 +184,8 @@ public:
 #ifndef _WIN32
 		struct stat st;
 		if (flycast::stat(path.c_str(), &st) != 0) {
-			INFO_LOG(COMMON, "Cannot stat file '%s' errno %d", path.c_str(), errno);
+			if (errno != ENOENT)
+				INFO_LOG(COMMON, "Cannot stat file '%s' errno %d", path.c_str(), errno);
 			throw StorageException("Cannot stat " + path);
 		}
 		info.isDirectory = S_ISDIR(st.st_mode);
@@ -194,7 +195,7 @@ public:
 		if (wname.convert(path.c_str()))
 		{
 			WIN32_FILE_ATTRIBUTE_DATA fileAttribs;
-			if (GetFileAttributesExW(wname.c_str(), GetFileExInfoStandard, &fileAttribs))
+			if (GetFileAttributesExW(wname.get(), GetFileExInfoStandard, &fileAttribs))
 			{
 				info.isDirectory = (fileAttribs.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
 				info.size = fileAttribs.nFileSizeLow + ((u64)fileAttribs.nFileSizeHigh << 32);

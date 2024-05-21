@@ -19,7 +19,7 @@
 #include "naomi_network.h"
 #include "hw/naomi/naomi_flashrom.h"
 #include "cfg/option.h"
-#include "rend/gui.h"
+#include "oslib/oslib.h"
 
 #include <chrono>
 #include <thread>
@@ -104,7 +104,7 @@ bool NaomiNetwork::startNetwork()
 
 			std::string notif = slaves.empty() ? "Waiting for players..."
 					: std::to_string(slaves.size()) + " player(s) connected. Waiting...";
-			gui_display_notification(notif.c_str(), timeout.count() * 2000);
+			os_notify(notif.c_str(), timeout.count() * 2000);
 
 			poll();
 
@@ -125,12 +125,12 @@ bool NaomiNetwork::startNetwork()
 
 			nextPeer = slaves[0].addr;
 
-			gui_display_notification("Starting game", 2000);
+			os_notify("Starting game", 2000);
 			SetNaomiNetworkConfig(0);
 
 			return true;
 		}
-		gui_display_notification("No player connected", 8000);
+		os_notify("No player connected", 8000);
 	}
 	else
 	{
@@ -164,7 +164,7 @@ bool NaomiNetwork::startNetwork()
 		}
 
 		NOTICE_LOG(NETWORK, "Connecting to server");
-		gui_display_notification("Connecting to server", 10000);
+		os_notify("Connecting to server", 10000);
 		steady_clock::time_point start_time = steady_clock::now();
 
 		while (!networkStopping && !_startNow && steady_clock::now() - start_time < timeout)
@@ -249,7 +249,7 @@ bool NaomiNetwork::receive(const sockaddr_in *addr, const Packet *packet, u32 si
 			nextPeer.sin_port = packet->sync.nextNodePort;
 			nextPeer.sin_addr.s_addr = packet->sync.nextNodeIp == 0 ? addr->sin_addr.s_addr : packet->sync.nextNodeIp;
 			std::string notif = "Connected as slot " + std::to_string(slotId);
-			gui_display_notification(notif.c_str(), 2000);
+			os_notify(notif.c_str(), 2000);
 		}
 		break;
 
@@ -325,8 +325,8 @@ void SetNaomiNetworkConfig(int node)
 	}
 	else if (gameId == "SPAWN JAPAN")
 	{
-		write_naomi_eeprom(0x44, node == -1 ? 0 : 1);	// network on
-		write_naomi_eeprom(0x30, node <= 0 ? 1 : 2);	// node id
+		write_naomi_eeprom(0x44, node == -1 ? 0
+				: node == 0 ? 1 : 2);
 	}
 	else if (gameId == "SPIKERS BATTLE JAPAN VERSION")
 	{
@@ -350,7 +350,7 @@ void SetNaomiNetworkConfig(int node)
 		write_naomi_flash(0x224, node == -1 ? 0 : 1);	// network on
 		write_naomi_flash(0x220, node == 0 ? 0 : 1);	// node id
 	}
-	else if (gameId == "CLUB KART IN JAPAN")
+	else if (gameId == "CLUB KART IN JAPAN" && settings.content.fileName.substr(0, 6) != "clubkp")
 	{
 		write_naomi_eeprom(0x34, node + 1); // also 03 = satellite
 	}
@@ -358,19 +358,20 @@ void SetNaomiNetworkConfig(int node)
 			|| gameId == "INITIAL D Ver.2"
 			|| gameId == "INITIAL D Ver.3")
 	{
-		write_naomi_eeprom(0x34, node == -1 ? 0x02 : node == 0 ? 0x12 : 0x22);
+		u8 b = read_naomi_eeprom(0x34) & 0xcf;
+		write_naomi_eeprom(0x34, (node == -1 ? 0x00 : node == 0 ? 0x10 : 0x20) | b);
 	}
 	else if (gameId == "THE KING OF ROUTE66")
 	{
-		write_naomi_eeprom(0x3d, node == -1 ? 0x44 : node == 0 ? 0x54 : 0x64);
+		u8 b = read_naomi_eeprom(0x3d) & 0xf;
+		write_naomi_eeprom(0x3d, (node == -1 ? 0x40 : node == 0 ? 0x50 : 0x60) | b);
 	}
 	else if (gameId == "MAXIMUM SPEED")
 	{
 		configure_maxspeed_flash(node != -1, node == 0);
 	}
-	else if (gameId == "F355 CHALLENGE JAPAN")
+	else if (gameId == "F355 CHALLENGE JAPAN" && settings.content.fileName != "f355")
 	{
-		// FIXME need default flash
 		write_naomi_flash(0x230, node == -1 ? 0 : node == 0 ? 1 : 2);
 		if (node != -1)
 			// car number (0 to 7)
@@ -392,6 +393,9 @@ bool NaomiNetworkSupported()
 		"SEGA DRIVING SIMULATOR"
 	};
 	if (!config::NetworkEnable)
+		return false;
+	if (settings.content.fileName.substr(0, 6) == "clubkp" || settings.content.fileName == "f355")
+		// Club Kart Prize and F355 (vanilla) don't support networking
 		return false;
 	for (auto game : games)
 		if (settings.content.gameId == game)

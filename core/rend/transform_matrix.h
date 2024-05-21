@@ -95,15 +95,9 @@ public:
 		return sidebarWidth;
 	}
 
-	glm::vec2 GetDreamcastViewport() const {
-		return dcViewport;
-	}
-
 	void CalcMatrices(const rend_context *renderingContext, int width = 0, int height = 0)
 	{
-		const int screenFlipY = (System == COORD_OPENGL  && !config::EmulateFramebuffer) || System == COORD_DIRECTX ? -1 : 1;
-		constexpr int rttFlipY = System == COORD_DIRECTX ? -1 : 1;
-		constexpr int framebufferFlipY = System == COORD_DIRECTX ? -1 : 1;
+		constexpr int flipY = System == COORD_DIRECTX ? -1 : 1;
 
 		renderViewport = { width == 0 ? settings.display.width : width, height == 0 ? settings.display.height : height };
 		this->renderingContext = renderingContext;
@@ -114,8 +108,8 @@ public:
 			if (renderingContext->scaler_ctl.hscale)
 				dcViewport.x *= 2;
 			dcViewport.y = (float)(renderingContext->fb_Y_CLIP.max - renderingContext->fb_Y_CLIP.min + 1);
-			normalMatrix = glm::translate(glm::vec3(-1, -rttFlipY, 0))
-				* glm::scale(glm::vec3(2.0f / dcViewport.x, 2.0f / dcViewport.y * rttFlipY, 1.f));
+			normalMatrix = glm::translate(glm::vec3(-1, -flipY, 0))
+				* glm::scale(glm::vec3(2.0f / dcViewport.x, 2.0f / dcViewport.y * flipY, 1.f));
 			scissorMatrix = normalMatrix;
 			sidebarWidth = 0;
 		}
@@ -140,9 +134,9 @@ public:
 			else
 				sidebarWidth = 0;
 			float x_coef = 2.0f / dcViewport.x;
-			float y_coef = 2.0f / dcViewport.y * screenFlipY;
+			float y_coef = 2.0f / dcViewport.y * flipY;
 
-			glm::mat4 trans = glm::translate(glm::vec3(-1 + 2 * sidebarWidth, -screenFlipY, 0));
+			glm::mat4 trans = glm::translate(glm::vec3(-1 + 2 * sidebarWidth, -flipY, 0));
 
 			normalMatrix = trans
 				* glm::scale(glm::vec3(x_coef, y_coef, 1.f));
@@ -152,15 +146,15 @@ public:
 		normalMatrix = glm::scale(glm::vec3(1, 1, 1 / config::ExtraDepthScale))
 				* normalMatrix;
 
-		glm::mat4 vp_trans = glm::translate(glm::vec3(1, framebufferFlipY, 0));
+		glm::mat4 vp_trans = glm::translate(glm::vec3(1, flipY, 0));
 		if (renderingContext->isRTT)
 		{
-			vp_trans = glm::scale(glm::vec3(dcViewport.x / 2, dcViewport.y / 2 * framebufferFlipY, 1.f))
+			vp_trans = glm::scale(glm::vec3(dcViewport.x / 2, dcViewport.y / 2 * flipY, 1.f))
 				* vp_trans;
 		}
 		else
 		{
-			vp_trans = glm::scale(glm::vec3(renderViewport.x / 2, renderViewport.y / 2 * framebufferFlipY, 1.f))
+			vp_trans = glm::scale(glm::vec3(renderViewport.x / 2, renderViewport.y / 2 * flipY, 1.f))
 				* vp_trans;
 		}
 		viewportMatrix = vp_trans * normalMatrix;
@@ -302,6 +296,7 @@ inline static void getVideoShift(float& x, float& y)
 			x = VO_STARTX.HStart - 0xae;
 			break;
 		case 851: // Naomi
+		case 850: // meltyb
 			x = VO_STARTX.HStart - 0xa5; // a0 for 15 kHz
 			break;
 		default:
@@ -324,6 +319,7 @@ inline static void getVideoShift(float& x, float& y)
 			y = VO_STARTY.VStart_field1 - 0x2e;
 			break;
 		case 529: // Naomi 31 kHz
+		case 528: // meltyb
 			y = VO_STARTY.VStart_field1 - 0x24;
 			break;
 		case 536: // Naomi 15 kHz 480i

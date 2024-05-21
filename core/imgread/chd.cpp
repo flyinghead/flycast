@@ -21,7 +21,7 @@ struct CHDDisc : Disc
 
 	void tryOpen(const char* file);
 
-	~CHDDisc()
+	~CHDDisc() override
 	{
 		delete[] hunk_mem;
 
@@ -189,7 +189,7 @@ void CHDDisc::tryOpen(const char* file)
 		Track t;
 		t.StartFAD = total_frames;
 		total_frames += frames;
-		t.EndFAD = total_frames - 1;
+		t.EndFAD = total_frames - 1 - padframes;
 		t.CTRL = strcmp(type,"AUDIO") == 0 ? 0 : 4;
 
 		u32 sectorSize = getSectorSize(type);

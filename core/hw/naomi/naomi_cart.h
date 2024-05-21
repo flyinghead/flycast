@@ -71,7 +71,7 @@ public:
 	virtual void SetKeyData(u8 *key_data) { }
 	virtual bool GetBootId(RomBootID *bootId) = 0;
 
-	const Game *game;
+	const Game *game = nullptr;
 
 protected:
 	u8* RomPtr;
@@ -123,7 +123,7 @@ public:
 	bool GetBootId(RomBootID *bootId) override;
 
 private:
-	u8 naomi_cart_ram[64 * 1024];
+	u8 naomi_cart_ram[64_KB];
 };
 
 class NaomiCartException : public FlycastException

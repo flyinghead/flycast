@@ -54,7 +54,7 @@
 #define _CRT_SECURE_NO_WARNINGS
 #endif
 
-#include "imgui/imgui.h"
+#include "imgui.h"
 #include "imgui_impl_opengl3.h"
 #include <stdio.h>
 #if defined(_MSC_VER) && _MSC_VER <= 1500 // MSVC 2008 or earlier
@@ -66,9 +66,7 @@
 #include "TargetConditionals.h"
 #endif
 
-#include "wsi/gl_context.h"
 #include "rend/gles/glcache.h"
-#include "hw/pvr/Renderer_if.h"
 
 // OpenGL Data
 static char         g_GlslVersionString[32] = "";
@@ -81,7 +79,6 @@ static unsigned int g_VboHandle = 0, g_ElementsHandle = 0;
 // Functions
 static bool ImGui_ImplOpenGL3_CreateDeviceObjects();
 static void ImGui_ImplOpenGL3_DestroyDeviceObjects();
-static void ImGui_ImplOpenGL3_DrawBackground();
 
 bool    ImGui_ImplOpenGL3_Init()
 {
@@ -114,7 +111,6 @@ void    ImGui_ImplOpenGL3_NewFrame()
 {
     if (!g_FontTexture)
         ImGui_ImplOpenGL3_CreateDeviceObjects();
-    ImGui_ImplOpenGL3_DrawBackground();
 }
 
 // OpenGL3 Render function.
@@ -191,9 +187,9 @@ void    ImGui_ImplOpenGL3_RenderDrawData(ImDrawData* draw_data)
     glEnableVertexAttribArray(g_AttribLocationPosition);
     glEnableVertexAttribArray(g_AttribLocationUV);
     glEnableVertexAttribArray(g_AttribLocationColor);
-    glVertexAttribPointer(g_AttribLocationPosition, 2, GL_FLOAT, GL_FALSE, sizeof(ImDrawVert), (GLvoid*)IM_OFFSETOF(ImDrawVert, pos));
-    glVertexAttribPointer(g_AttribLocationUV, 2, GL_FLOAT, GL_FALSE, sizeof(ImDrawVert), (GLvoid*)IM_OFFSETOF(ImDrawVert, uv));
-    glVertexAttribPointer(g_AttribLocationColor, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(ImDrawVert), (GLvoid*)IM_OFFSETOF(ImDrawVert, col));
+    glVertexAttribPointer(g_AttribLocationPosition, 2, GL_FLOAT, GL_FALSE, sizeof(ImDrawVert), (GLvoid*)offsetof(ImDrawVert, pos));
+    glVertexAttribPointer(g_AttribLocationUV, 2, GL_FLOAT, GL_FALSE, sizeof(ImDrawVert), (GLvoid*)offsetof(ImDrawVert, uv));
+    glVertexAttribPointer(g_AttribLocationColor, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(ImDrawVert), (GLvoid*)offsetof(ImDrawVert, col));
 
     // Draw
     ImVec2 pos = draw_data->DisplayPos;
@@ -488,16 +484,4 @@ static void ImGui_ImplOpenGL3_DestroyDeviceObjects()
     g_ShaderHandle = 0;
 
     ImGui_ImplOpenGL3_DestroyFontsTexture();
-}
-
-static void ImGui_ImplOpenGL3_DrawBackground()
-{
-#ifndef TARGET_IPHONE
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-#endif
-	glcache.Disable(GL_SCISSOR_TEST);
-	glcache.ClearColor(0, 0, 0, 0);
-	glClear(GL_COLOR_BUFFER_BIT);
-	if (renderer != nullptr)
-		renderer->RenderLastFrame();
 }

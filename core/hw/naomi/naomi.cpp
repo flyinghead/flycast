@@ -1,6 +1,19 @@
 /*
-	This file is a mix of my code, Zezu's, and duno wtf-else (most likely ElSemi's ?)
-*/
+	This file is part of Flycast.
+
+    Flycast is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 2 of the License, or
+    (at your option) any later version.
+
+    Flycast is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
+ */
 #include "types.h"
 #include "hw/holly/sb.h"
 #include "hw/sh4/sh4_mem.h"
@@ -17,318 +30,54 @@
 #include "serialize.h"
 #include "network/output.h"
 #include "hw/sh4/modules/modules.h"
-#include "rend/gui.h"
+#include "oslib/oslib.h"
 #include "printer.h"
+#include "hw/flashrom/x76f100.h"
 
 #include <algorithm>
 
 static NaomiM3Comm m3comm;
 Multiboard *multiboard;
 
-static const u32 BoardID = 0x980055AA;
-static u32 GSerialBuffer, BSerialBuffer;
-static int GBufPos, BBufPos;
-static int GState, BState;
-static int GOldClk, BOldClk;
-static int BControl, BCmd, BLastCmd;
-static int GControl, GCmd, GLastCmd;
-static int SerStep, SerStep2;
-
-/*
-El numero de serie solo puede contener:
-0-9		(0x30-0x39)
-A-H		(0x41-0x48)
-J-N		(0x4A-0x4E)
-P-Z		(0x50-0x5A)
-*/
-static u8 BSerial[]="\xB7"/*CRC1*/"\x19"/*CRC2*/"0123234437897584372973927387463782196719782697849162342198671923649";
-//static u8 BSerial[]="\x09\xa1                              0000000000000000\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"; // default from mame
-static u8 GSerial[]="\xB7"/*CRC1*/"\x19"/*CRC2*/"0123234437897584372973927387463782196719782697849162342198671923649";
+static X76F100SerialFlash mainSerialId;
+static X76F100SerialFlash romSerialId;
 
 static u8 midiTxBuf[4];
 static u32 midiTxBufIndex;
 
-static unsigned int ShiftCRC(unsigned int CRC,unsigned int rounds)
+static int dmaSchedId = -1;
+
+void NaomiBoardIDWrite(const u16 data)
 {
-	const unsigned int Magic=0x10210000;
-	unsigned int i;
-	for(i=0;i<rounds;++i)
-	{
-		if(CRC&0x80000000)
-			CRC=(CRC<<1)+Magic;
-		else
-			CRC=(CRC<<1);
-	}
-	return CRC;
-}
-
-static unsigned short CRCSerial(const u8 *Serial,unsigned int len)
-{
-	unsigned int CRC=0xDEBDEB00;
-	unsigned int i;
-
-	for(i=0;i<len;++i)
-	{
-		unsigned char c=Serial[i];
-		//CRC&=0xFFFFFF00;
-		CRC|=c;
-		CRC=ShiftCRC(CRC,8);
-	}
-	CRC=ShiftCRC(CRC,8);
-	return (u16)(CRC>>16);
-}
-
-void NaomiInit()
-{
-	u16 CRC;
-	CRC=CRCSerial(BSerial+2,0x2E);
-	BSerial[0]=(u8)(CRC>>8);
-	BSerial[1]=(u8)(CRC);
-
-	CRC=CRCSerial(GSerial+2,0x2E);
-	GSerial[0]=(u8)(CRC>>8);
-	GSerial[1]=(u8)(CRC);
-}
-
-void NaomiBoardIDWrite(const u16 Data)
-{
-	int Dat=Data&8;
-	int Clk=Data&4;
-	int Rst=Data&0x20;
-	int Sta=Data&0x10;
-	
-	if(Rst)
-	{
-		BState=0;
-		BBufPos=0;
-	}
-	
-	if(Clk!=BOldClk && !Clk)	//Falling Edge clock
-	{
-		//State change
-		if(BState==0 && Sta) 
-			BState=1;		
-		if(BState==1 && !Sta)
-			BState=2;
-
-		if((BControl&0xfff)==0xFF0)	//Command mode
-		{
-			BCmd<<=1;
-			if(Dat)
-				BCmd|=1;
-			else
-				BCmd&=0xfffffffe;
-		}
-
-		//State processing
-		if(BState==1)		//LoadBoardID
-		{
-			BSerialBuffer=BoardID;
-			BBufPos=0;		//??
-		}
-		if(BState==2)		//ShiftBoardID
-		{
-			BBufPos++;
-		}
-	}
-	BOldClk=Clk;
+	// bit 2: clock
+	// bit 3: data
+	// bit 4: reset (x76f100 only)
+	// bit 5: chip select
+	mainSerialId.writeCS(data & 0x20);
+	mainSerialId.writeRST(data & 0x10);
+	mainSerialId.writeSCL(data & 4);
+	mainSerialId.writeSDA(data & 8);
 }
 
 u16 NaomiBoardIDRead()
 {
-	if((BControl&0xff)==0xFE)
-		return 0xffff;
-	return (BSerialBuffer&(1<<(31-BBufPos)))?8:0;
+	// bit 0 indicates the eeprom is a X76F100, otherwise the BIOS expects an AT93C46
+	// bit 3 is xf76f100 SDA
+	// bit 4 is at93c46 DO
+	return (mainSerialId.readSDA() << 3) | 1;
 }
 
-static u32 AdaptByte(u8 val)
+void NaomiGameIDWrite(const u16 data)
 {
-	return val<<24;
-}
-
-void NaomiBoardIDWriteControl(const u16 Data)
-{
-	if((Data&0xfff)==0xF30 && BCmd!=BLastCmd)
-	{
-		if((BCmd&0x81)==0x81)
-		{
-			SerStep2=(BCmd>>1)&0x3f;
-
-			BSerialBuffer=0x00000000;	//First block contains CRC
-			BBufPos=0;
-		}
-		if((BCmd&0xff)==0x55)	//Load Offset 0
-		{
-			BState=2;
-			BBufPos=0;
-			BSerialBuffer=AdaptByte(BSerial[8*SerStep2])>>1;
-		}
-		if((BCmd&0xff)==0xAA)	//Load Offset 1
-		{
-			BState=2;
-			BBufPos=0;
-			BSerialBuffer=AdaptByte(BSerial[8*SerStep2+1]);
-		}
-		if((BCmd&0xff)==0x54)
-		{
-			BState=2;
-			BBufPos=0;
-			BSerialBuffer=AdaptByte(BSerial[8*SerStep2+2]);
-		}
-		if((BCmd&0xff)==0xA8)
-		{
-			BState=2;
-			BBufPos=0;
-			BSerialBuffer=AdaptByte(BSerial[8*SerStep2+3]);
-		}
-		if((BCmd&0xff)==0x50)
-		{
-			BState=2;
-			BBufPos=0;
-			BSerialBuffer=AdaptByte(BSerial[8*SerStep2+4]);
-		}
-		if((BCmd&0xff)==0xA0)
-		{
-			BState=2;
-			BBufPos=0;
-			BSerialBuffer=AdaptByte(BSerial[8*SerStep2+5]);
-		}
-		if((BCmd&0xff)==0x40)
-		{
-			BState=2;
-			BBufPos=0;
-			BSerialBuffer=AdaptByte(BSerial[8*SerStep2+6]);
-		}
-		if((BCmd&0xff)==0x80)
-		{
-			BState=2;
-			BBufPos=0;
-			BSerialBuffer=AdaptByte(BSerial[8*SerStep2+7]);
-		}
-		BLastCmd=BCmd;
-	}
-	BControl=Data;
-}
-
-static void NaomiGameIDProcessCmd()
-{
-	if(GCmd!=GLastCmd)
-	{
-		if((GCmd&0x81)==0x81)
-		{
-			SerStep=(GCmd>>1)&0x3f;
-
-			GSerialBuffer=0x00000000;	//First block contains CRC
-			GBufPos=0;
-		}
-		if((GCmd&0xff)==0x55)	//Load Offset 0
-		{
-			GState=2;
-			GBufPos=0;
-			GSerialBuffer=AdaptByte(GSerial[8*SerStep])>>0;
-		}
-		if((GCmd&0xff)==0xAA)	//Load Offset 1
-		{
-			GState=2;
-			GBufPos=0;
-			GSerialBuffer=AdaptByte(GSerial[8*SerStep+1]);
-		}
-		if((GCmd&0xff)==0x54)
-		{
-			GState=2;
-			GBufPos=0;
-			GSerialBuffer=AdaptByte(GSerial[8*SerStep+2]);
-		}
-		if((GCmd&0xff)==0xA8)
-		{
-			GState=2;
-			GBufPos=0;
-			GSerialBuffer=AdaptByte(GSerial[8*SerStep+3]);
-		}
-		if((GCmd&0xff)==0x50)
-		{
-			GState=2;
-			GBufPos=0;
-			GSerialBuffer=AdaptByte(GSerial[8*SerStep+4]);
-		}
-		if((GCmd&0xff)==0xA0)
-		{
-			GState=2;
-			GBufPos=0;
-			GSerialBuffer=AdaptByte(GSerial[8*SerStep+5]);
-		}
-		if((GCmd&0xff)==0x40)
-		{
-			GState=2;
-			GBufPos=0;
-			GSerialBuffer=AdaptByte(GSerial[8*SerStep+6]);
-		}
-		if((GCmd&0xff)==0x80)
-		{
-			GState=2;
-			GBufPos=0;
-			GSerialBuffer=AdaptByte(GSerial[8*SerStep+7]);
-		}
-		GLastCmd=GCmd;
-	}
-}
-
-
-void NaomiGameIDWrite(const u16 Data)
-{
-	int Dat=Data&0x01;	// mame: SDA
-	int Clk=Data&0x02;	// mame: SCL
-	int Rst=Data&0x04;	// mame: CS
-	int Sta=Data&0x08;	// mame: RST
-	int Cmd=Data&0x10;	// mame: unused...
-	
-	if(Rst)
-	{
-		GState=0;
-		GBufPos=0;
-	}
-	
-	if(Clk!=GOldClk && !Clk)	//Falling Edge clock
-	{
-		//State change
-		if(GState==0 && Sta) 
-			GState=1;		
-		if(GState==1 && !Sta)
-			GState=2;
-
-		//State processing
-		if(GState==1)		//LoadBoardID
-		{
-			GSerialBuffer=BoardID;
-			GBufPos=0;		//??
-		}
-		if(GState==2)		//ShiftBoardID
-			GBufPos++;
-
-		if(GControl!=Cmd && !Cmd)
-		{
-			NaomiGameIDProcessCmd();
-		}
-		GControl=Cmd;
-	}
-	if(Clk!=GOldClk && Clk)	//Rising Edge clock
-	{
-		if(Cmd)	//Command mode
-		{
-			GCmd<<=1;
-			if(Dat)
-				GCmd|=1;
-			else
-				GCmd&=0xfffffffe;
-			GControl=Cmd;
-		}
-	}
-	GOldClk=Clk;
+	romSerialId.writeCS(data & 4);
+	romSerialId.writeRST(data & 8);
+	romSerialId.writeSCL(data & 2);
+	romSerialId.writeSDA(data & 1);
 }
 
 u16 NaomiGameIDRead()
 {
-	return (GSerialBuffer&(1<<(31-GBufPos)))?1:0;
+	return romSerialId.readSDA() << 15;
 }
 
 static bool aw_ram_test_skipped = false;
@@ -362,43 +111,60 @@ void WriteMem_naomi(u32 address, u32 data, u32 size)
 		CurrentCartridge->WriteMem(address, data, size);
 }
 
+static int naomiDmaSched(int tag, int sch_cycl, int jitter, void *arg)
+{
+	u32 start = SB_GDSTAR & 0x1FFFFFE0;
+	u32 len = (SB_GDLEN + 31) & ~31;
+	SB_GDLEND = 0;
+	while (len > 0)
+	{
+		u32 block_len = len;
+		void* ptr = CurrentCartridge->GetDmaPtr(block_len);
+		if (block_len == 0)
+		{
+			INFO_LOG(NAOMI, "Aborted DMA transfer. Read past end of cart?");
+			for (u32 i = 0; i < len; i += 8, start += 8)
+				addrspace::write64(start, 0);
+			SB_GDLEND += len;
+			break;
+		}
+		WriteMemBlock_nommu_ptr(start, (u32*)ptr, block_len);
+		CurrentCartridge->AdvancePtr(block_len);
+		len -= block_len;
+		start += block_len;
+		SB_GDLEND += block_len;
+	}
+	SB_GDSTARD = start;
+	SB_GDST = 0;
+	asic_RaiseInterrupt(holly_GDROM_DMA);
+
+	return 0;
+}
+
 //Dma Start
 static void Naomi_DmaStart(u32 addr, u32 data)
 {
-	if ((data & 1) == 0)
+	if ((data & 1) == 0 || SB_GDST == 1)
 		return;
 	if (SB_GDEN == 0)
 	{
-		INFO_LOG(NAOMI, "Invalid (NAOMI)GD-DMA start, SB_GDEN=0. Ignoring it.");
+		INFO_LOG(NAOMI, "Invalid NAOMI-DMA start, SB_GDEN=0. Ignoring it.");
 		return;
 	}
 	
 	if (multiboard != nullptr && multiboard->dmaStart())
 	{
 	}
-	else if (!m3comm.DmaStart(addr, data) && CurrentCartridge != NULL)
+	else if (!m3comm.DmaStart(addr, data) && CurrentCartridge != nullptr)
 	{
 		DEBUG_LOG(NAOMI, "NAOMI-DMA start addr %08X len %d", SB_GDSTAR, SB_GDLEN);
 		verify(1 == SB_GDDIR);
-		u32 start = SB_GDSTAR & 0x1FFFFFE0;
-		u32 len = (SB_GDLEN + 31) & ~31;
-		SB_GDLEND = 0;
-		while (len > 0)
-		{
-			u32 block_len = len;
-			void* ptr = CurrentCartridge->GetDmaPtr(block_len);
-			if (block_len == 0)
-			{
-				INFO_LOG(NAOMI, "Aborted DMA transfer. Read past end of cart?");
-				break;
-			}
-			WriteMemBlock_nommu_ptr(start, (u32*)ptr, block_len);
-			CurrentCartridge->AdvancePtr(block_len);
-			len -= block_len;
-			start += block_len;
-			SB_GDLEND += block_len;
-		}
-		SB_GDSTARD = start;
+		SB_GDST = 1;
+		// Max G1 bus rate: 50 MHz x 16 bits
+		// SH4_access990312_e.xls: 14.4 MB/s from GD-ROM to system RAM
+		// Here: 7 MB/s
+		sh4_sched_request(dmaSchedId, std::min<int>(SB_GDLEN * 27, SH4_MAIN_CLOCK));
+		return;
 	}
 	else
 	{
@@ -414,15 +180,33 @@ static void Naomi_DmaEnable(u32 addr, u32 data)
 	SB_GDEN = data & 1;
 	if (SB_GDEN == 0 && SB_GDST == 1)
 	{
-		INFO_LOG(NAOMI, "(NAOMI)GD-DMA aborted");
+		INFO_LOG(NAOMI, "NAOMI-DMA aborted");
 		SB_GDST = 0;
+		sh4_sched_request(dmaSchedId, -1);
 	}
 }
 
 void naomi_reg_Init()
 {
-	NaomiInit();
 	networkOutput.init();
+
+	static const u8 romSerialData[0x84] = {
+		0x19, 0x00, 0xaa, 0x55,
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		0x69, 0x79, 0x68, 0x6b, 0x74, 0x6d, 0x68, 0x6d,
+		0xa1, 0x09, ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+		' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',  ' ', ' ', ' ', ' ',
+		'0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'
+	};
+	romSerialId.setData(romSerialData);
+	mainSerialId.setData(romSerialData);
+	if (dmaSchedId == -1)
+		dmaSchedId = sh4_sched_register(0, naomiDmaSched);
+}
+
+void setGameSerialId(const u8 *data)
+{
+	romSerialId.setData(data);
 }
 
 void naomi_reg_Term()
@@ -432,6 +216,9 @@ void naomi_reg_Term()
 	multiboard = nullptr;
 	m3comm.closeNetwork();
 	networkOutput.term();
+	if (dmaSchedId != -1)
+		sh4_sched_unregister(dmaSchedId);
+	dmaSchedId = -1;
 }
 
 void naomi_reg_Reset(bool hard)
@@ -440,24 +227,10 @@ void naomi_reg_Reset(bool hard)
 	hollyRegs.setWriteHandler<SB_GDEN_addr>(Naomi_DmaEnable);
 	SB_GDST = 0;
 	SB_GDEN = 0;
+	sh4_sched_request(dmaSchedId, -1);
 
 	aw_ram_test_skipped = false;
-	GSerialBuffer = 0;
-	BSerialBuffer = 0;
-	GBufPos = 0;
-	BBufPos = 0;
-	GState = 0;
-	BState = 0;
-	GOldClk = 0;
-	BOldClk = 0;
-	BControl = 0;
-	BCmd = 0;
-	BLastCmd = 0;
-	GControl = 0;
-	GCmd = 0;
-	GLastCmd = 0;
-	SerStep = 0;
-	SerStep2 = 0;
+
 	m3comm.closeNetwork();
 	if (hard)
 	{
@@ -470,6 +243,8 @@ void naomi_reg_Reset(bool hard)
 		if (settings.naomi.multiboard)
 			multiboard = new Multiboard();
 		networkOutput.reset();
+		mainSerialId.reset();
+		romSerialId.reset();
 	}
 	else if (multiboard != nullptr)
 		multiboard->reset();
@@ -587,24 +362,8 @@ static bool ffbCalibrating;
 
 void naomi_Serialize(Serializer& ser)
 {
-	ser << GSerialBuffer;
-	ser << BSerialBuffer;
-	ser << GBufPos;
-	ser << BBufPos;
-	ser << GState;
-	ser << BState;
-	ser << GOldClk;
-	ser << BOldClk;
-	ser << BControl;
-	ser << BCmd;
-	ser << BLastCmd;
-	ser << GControl;
-	ser << GCmd;
-	ser << GLastCmd;
-	ser << SerStep;
-	ser << SerStep2;
-	ser.serialize(BSerial, 69);
-	ser.serialize(GSerial, 69);
+	mainSerialId.serialize(ser);
+	romSerialId.serialize(ser);
 	ser << aw_maple_devs;
 	ser << coin_chute_time;
 	ser << aw_ram_test_skipped;
@@ -612,27 +371,36 @@ void naomi_Serialize(Serializer& ser)
 	ser << midiTxBufIndex;
 	// TODO serialize m3comm?
 	ser << ffbCalibrating;
+	sh4_sched_serialize(ser, dmaSchedId);
 }
 void naomi_Deserialize(Deserializer& deser)
 {
-	deser >> GSerialBuffer;
-	deser >> BSerialBuffer;
-	deser >> GBufPos;
-	deser >> BBufPos;
-	deser >> GState;
-	deser >> BState;
-	deser >> GOldClk;
-	deser >> BOldClk;
-	deser >> BControl;
-	deser >> BCmd;
-	deser >> BLastCmd;
-	deser >> GControl;
-	deser >> GCmd;
-	deser >> GLastCmd;
-	deser >> SerStep;
-	deser >> SerStep2;
-	deser.deserialize(BSerial, 69);
-	deser.deserialize(GSerial, 69);
+	if (deser.version() < Deserializer::V40)
+	{
+		deser.skip<u32>();	// GSerialBuffer
+		deser.skip<u32>();	// BSerialBuffer
+		deser.skip<int>();	// GBufPos
+		deser.skip<int>();	// BBufPos
+		deser.skip<int>();	// GState
+		deser.skip<int>();	// BState
+		deser.skip<int>();	// GOldClk
+		deser.skip<int>();	// BOldClk
+		deser.skip<int>();	// BControl
+		deser.skip<int>();	// BCmd
+		deser.skip<int>();	// BLastCmd
+		deser.skip<int>();	// GControl
+		deser.skip<int>();	// GCmd
+		deser.skip<int>();	// GLastCmd
+		deser.skip<int>();	// SerStep
+		deser.skip<int>();	// SerStep2
+		deser.skip(69);		// BSerial
+		deser.skip(69);		// GSerial
+	}
+	else
+	{
+		mainSerialId.deserialize(deser);
+		romSerialId.deserialize(deser);
+	}
 	if (deser.version() < Deserializer::V36)
 	{
 		deser.skip<u32>(); // reg_dimm_command;
@@ -641,10 +409,7 @@ void naomi_Deserialize(Deserializer& deser)
 		deser.skip<u32>(); // reg_dimm_parameterh;
 		deser.skip<u32>(); // reg_dimm_status;
 	}
-	if (deser.version() < Deserializer::V11)
-		deser.skip<u8>();
-	else if (deser.version() >= Deserializer::V14)
-		deser >> aw_maple_devs;
+	deser >> aw_maple_devs;
 	if (deser.version() >= Deserializer::V20)
 	{
 		deser >> coin_chute_time;
@@ -663,6 +428,8 @@ void naomi_Deserialize(Deserializer& deser)
 		deser >> ffbCalibrating;
 	else
 		ffbCalibrating = false;
+	if (deser.version() >= Deserializer::V45)
+		sh4_sched_deserialize(deser, dmaSchedId);
 }
 
 static void midiSend(u8 b1, u8 b2, u8 b3)
@@ -696,7 +463,7 @@ static void forceFeedbackMidiReceiver(u8 data)
 			if (NaomiGameInputs != nullptr)
 				direction = NaomiGameInputs->axes[0].inverted ? 1 : -1;
 
-			position = std::clamp(mapleInputState[0].fullAxes[0] * direction * 64.f + 8192.f, 0.f, 16383.f);
+			position = std::clamp(mapleInputState[0].fullAxes[0] * direction / 4.f + 8192.f, 0.f, 16383.f);
 		}
 		// required: b1 & 0x1f == 0x10 && b1 & 0x40 == 0
 		midiSend(0x90, ((int)position >> 7) & 0x7f, (int)position & 0x7f);
@@ -716,7 +483,7 @@ void initMidiForceFeedback()
 	aica::setMidiReceiver(forceFeedbackMidiReceiver);
 }
 
-struct DriveSimPipe : public SerialPipe
+struct DriveSimPipe : public SerialPort::Pipe
 {
 	void write(u8 data) override
 	{
@@ -745,7 +512,7 @@ struct DriveSimPipe : public SerialPipe
 				{
 					char message[16];
 					sprintf(message, "Speed: %3d", speed);
-					gui_display_notification(message, 1000);
+					os_notify(message, 1000);
 				}
 			}
 			buffer.clear();
@@ -773,7 +540,7 @@ void initDriveSimSerialPipe()
 	static DriveSimPipe pipe;
 
 	pipe.reset();
-	serial_setPipe(&pipe);
+	SCIFSerialPort::Instance().setPipe(&pipe);
 }
 
 G2PrinterConnection g2PrinterConnection;

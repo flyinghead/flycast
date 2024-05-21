@@ -15,16 +15,20 @@ namespace virtmem
 bool region_lock(void *start, size_t len)
 {
 	DWORD old;
-	if (!VirtualProtect(start, len, PAGE_READONLY, &old))
-		die("VirtualProtect failed ..\n");
+	if (!VirtualProtect(start, len, PAGE_READONLY, &old)) {
+		ERROR_LOG(VMEM, "VirtualProtect(%p, %x, RO) failed: %d", start, (u32)len, GetLastError());
+		die("VirtualProtect(ro) failed");
+	}
 	return true;
 }
 
 bool region_unlock(void *start, size_t len)
 {
 	DWORD old;
-	if (!VirtualProtect(start, len, PAGE_READWRITE, &old))
-		die("VirtualProtect failed ..\n");
+	if (!VirtualProtect(start, len, PAGE_READWRITE, &old)) {
+		ERROR_LOG(VMEM, "VirtualProtect(%p, %x, RW) failed: %d", start, (u32)len, GetLastError());
+		die("VirtualProtect(rw) failed");
+	}
 	return true;
 }
 
@@ -64,7 +68,7 @@ bool init(void **vmem_base_addr, void **sh4rcb_addr, size_t ramSize)
 	mem_handle = CreateFileMapping(INVALID_HANDLE_VALUE, 0, PAGE_READWRITE, 0, (DWORD)ramSize, 0);
 
 	// Now allocate the actual address space (it will be 64KB aligned on windows).
-	unsigned memsize = 512*1024*1024 + sizeof(Sh4RCB) + ARAM_SIZE_MAX;
+	unsigned memsize = 512_MB + sizeof(Sh4RCB) + ARAM_SIZE_MAX;
 	base_alloc = (char*)mem_region_reserve(NULL, memsize);
 
 	// Calculate pointers now
@@ -162,7 +166,7 @@ static void *prepare_jit_block_template(size_t size, Mapper mapper)
 	uintptr_t base_addr = reinterpret_cast<uintptr_t>(&init) & ~0xFFFFF;
 
 	// Probably safe to assume reicast code is <200MB (today seems to be <16MB on every platform I've seen).
-	for (uintptr_t i = 0; i < 1800 * 1024 * 1024; i += 1024 * 1024) {  // Some arbitrary step size.
+	for (uintptr_t i = 0; i < 1800_MB; i += 1_MB) {  // Some arbitrary step size.
 		uintptr_t try_addr_above = base_addr + i;
 		uintptr_t try_addr_below = base_addr - i;
 
@@ -268,9 +272,30 @@ void jit_set_exec(void* code, size_t size, bool enable)
 {
 #ifdef TARGET_UWP
 	DWORD old;
-	if (!VirtualProtect(code, size, enable ? PAGE_EXECUTE_READ : PAGE_READWRITE, &old))
-		die("VirtualProtect failed");
+	if (!VirtualProtect(code, size, enable ? PAGE_EXECUTE_READ : PAGE_READWRITE, &old)) {
+		ERROR_LOG(VMEM, "VirtualProtect(%p, %x, %s) failed: %d", code, (u32)size, enable ? "RX" : "RW", GetLastError());
+		die("VirtualProtect(rx/rw) failed");
+	}
 #endif
 }
+
+#if HOST_CPU == CPU_ARM64 || HOST_CPU == CPU_ARM
+static void Arm_Arm64_CacheFlush(void *start, void *end) {
+	if (start == end) {
+		return;
+	}
+
+	FlushInstructionCache(GetCurrentProcess(), start, (uintptr_t)end - (uintptr_t)start);
+}
+
+void flush_cache(void *icache_start, void *icache_end, void *dcache_start, void *dcache_end) {
+	Arm_Arm64_CacheFlush(dcache_start, dcache_end);
+
+	// Dont risk it and flush and invalidate icache&dcache for both ranges just in case.
+	if (icache_start != dcache_start) {
+		Arm_Arm64_CacheFlush(icache_start, icache_end);
+	}
+}
+#endif
 
 }	// namespace virtmem

@@ -8,9 +8,10 @@
 
 #include "descrambl.h"
 
+#include <cstring>
 #include <utility>
 
-#define MAXCHUNK (2048*1024)
+#define MAXCHUNK 2_MB
 
 static u32 seed;
 

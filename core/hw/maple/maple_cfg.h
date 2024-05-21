@@ -1,5 +1,6 @@
 #pragma once
 #include "types.h"
+#include <cstring>
 
 enum MapleDeviceType
 {
@@ -90,8 +91,8 @@ struct MapleInputState
 	}
 
 	u32 kcode = ~0;
-	u8 halfAxes[PJTI_Count];		// LT, RT, 2, 3
-	int8_t fullAxes[PJAI_Count];	// Left X, Y, Right X, Y, Other X, Other Y
+	u16 halfAxes[PJTI_Count];		// LT, RT, 2, 3
+	int16_t fullAxes[PJAI_Count];	// Left X, Y, Right X, Y, Other X, Other Y
 	u8 mouseButtons = ~0;
 	struct {
 		int x = -1;
@@ -110,7 +111,7 @@ struct MapleInputState
 extern MapleInputState mapleInputState[4];
 
 void mcfg_CreateDevices();
-void mcfg_DestroyDevices();
+void mcfg_DestroyDevices(bool full = true);
 void mcfg_SerializeDevices(Serializer& ser);
 void mcfg_DeserializeDevices(Deserializer& deser);
 
@@ -119,3 +120,6 @@ void push_vmu_screen(int bus_id, int bus_port, u8* buffer);
 void insertRfidCard(int playerNum);
 const u8 *getRfidCardData(int playerNum);
 void setRfidCardData(int playerNum, u8 *data);
+
+struct maple_naomi_jamma;
+maple_naomi_jamma *getMieDevice();

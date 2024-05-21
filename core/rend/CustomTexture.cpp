@@ -63,10 +63,10 @@ void CustomTexture::LoaderThread()
 				{
 					int width, height;
 					u8 *image_data = LoadCustomTexture(texture->texture_hash, width, height);
+					if (image_data == nullptr && texture->old_vqtexture_hash != 0)
+						image_data = LoadCustomTexture(texture->old_vqtexture_hash, width, height);
 					if (image_data == nullptr)
-					{
 						image_data = LoadCustomTexture(texture->old_texture_hash, width, height);
-					}
 					if (image_data != nullptr)
 					{
 						texture->custom_width = width;
@@ -280,7 +280,19 @@ void CustomTexture::DumpTexture(u32 hash, int w, int h, TextureType textype, voi
 	}
 
 	stbi_flip_vertically_on_write(1);
-	stbi_write_png(path.str().c_str(), w, h, STBI_rgb_alpha, dst_buffer, 0);
+	const auto& savefunc = [](void *context, void *data, int size) {
+		FILE *f = nowide::fopen((const char *)context, "wb");
+		if (f == nullptr)
+		{
+			WARN_LOG(RENDERER, "Dump texture: can't save to file %s: error %d", (const char *)context, errno);
+		}
+		else
+		{
+			fwrite(data, 1, size, f);
+			fclose(f);
+		}
+	};
+	stbi_write_png_to_func(savefunc, (void *)path.str().c_str(), w, h, STBI_rgb_alpha, dst_buffer, 0);
 
 	free(dst_buffer);
 }

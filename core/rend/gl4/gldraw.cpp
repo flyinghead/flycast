@@ -25,7 +25,6 @@
 #include <memory>
 
 static gl4PipelineShader* CurrentShader;
-extern u32 gcflip;
 GLuint geom_fbo;
 GLuint stencilTexId;
 GLuint opaqueTexId;
@@ -37,7 +36,7 @@ GLuint depthSaveTexId;
 static gl4PipelineShader *gl4GetProgram(bool cp_AlphaTest, bool pp_InsideClipping,
 							bool pp_Texture, bool pp_UseAlpha, bool pp_IgnoreTexA, u32 pp_ShadInstr, bool pp_Offset,
 							u32 pp_FogCtrl, bool pp_TwoVolumes, bool pp_Gouraud, bool pp_BumpMap, bool fog_clamping,
-							bool palette, bool naomi2, Pass pass)
+							int palette, bool naomi2, Pass pass)
 {
 	u32 rv=0;
 
@@ -53,7 +52,7 @@ static gl4PipelineShader *gl4GetProgram(bool cp_AlphaTest, bool pp_InsideClippin
 	rv <<= 1; rv |= (int)pp_Gouraud;
 	rv <<= 1; rv |= (int)pp_BumpMap;
 	rv <<= 1; rv |= (int)fog_clamping;
-	rv <<= 1; rv |= (int)palette;
+	rv <<= 2; rv |= palette;
 	rv <<= 1; rv |= (int)naomi2;
 	rv <<= 2; rv |= (int)pass;
 	rv <<= 1; rv |= (int)(!settings.platform.isNaomi2() && config::NativeDepthInterpolation);
@@ -118,10 +117,20 @@ static void SetGPState(const PolyParam* gp)
 
 	int clip_rect[4] = {};
 	TileClipping clipmode = GetTileClip(gp->tileclip, ViewportMatrix, clip_rect);
-	bool gpuPalette = false;
+	int gpuPalette = gp->texture == nullptr || !gp->texture->gpuPalette ? 0
+			: gp->tsp.FilterMode + 1;
+	if (gpuPalette != 0)
+	{
+		if (config::TextureFiltering == 1)
+			gpuPalette = 1; // force nearest
+		else if (config::TextureFiltering == 2)
+			gpuPalette = 2; // force linear
+	}
 
 	if (pass == Pass::Depth)
 	{
+		if (Type != ListType_Punch_Through)
+			gpuPalette = 0;
 		CurrentShader = gl4GetProgram(Type == ListType_Punch_Through ? true : false,
 				clipmode == TileClipping::Inside,
 				Type == ListType_Punch_Through ? gp->pcw.Texture : false,
@@ -134,7 +143,7 @@ static void SetGPState(const PolyParam* gp)
 				false,
 				false,
 				false,
-				false,
+				gpuPalette,
 				gp->isNaomi2(),
 				pass);
 	}
@@ -143,9 +152,7 @@ static void SetGPState(const PolyParam* gp)
 		// Two volumes mode only supported for OP and PT
 		bool two_volumes_mode = (gp->tsp1.full != (u32)-1) && Type != ListType_Translucent;
 		bool color_clamp = gp->tsp.ColorClamp && (pvrrc.fog_clamp_min.full != 0 || pvrrc.fog_clamp_max.full != 0xffffffff);
-
 		int fog_ctrl = config::Fog ? gp->tsp.FogCtrl : 2;
-		gpuPalette = gp->texture != nullptr ? gp->texture->gpuPalette : false;
 
 		CurrentShader = gl4GetProgram(Type == ListType_Punch_Through ? true : false,
 				clipmode == TileClipping::Inside,
@@ -165,7 +172,7 @@ static void SetGPState(const PolyParam* gp)
 	}
 	glcache.UseProgram(CurrentShader->program);
 
-	if (gpuPalette)
+	if (gpuPalette != 0)
 	{
 		if (gp->tcw.PixelFmt == PixelPal4)
 			gl4ShaderUniforms.palette_index = gp->tcw.PalSelect << 4;
@@ -179,7 +186,7 @@ static void SetGPState(const PolyParam* gp)
 	gl4ShaderUniforms.tcw1 = gp->tcw1;
 	gl4ShaderUniforms.Set(CurrentShader);
 
-	if (pass == Pass::Color && (Type == ListType_Translucent || Type == ListType_Punch_Through))
+	if (pass == Pass::Color)
 	{
 		glcache.Enable(GL_BLEND);
 		glcache.BlendFunc(SrcBlendGL[gp->tsp.SrcInstr], DstBlendGL[gp->tsp.DstInstr]);
@@ -224,13 +231,14 @@ static void SetGPState(const PolyParam* gp)
 				SetTextureRepeatMode(i, GL_TEXTURE_WRAP_T, tsp.ClampV, tsp.FlipV);
 
 				bool nearest_filter;
-				if (config::TextureFiltering == 0) {
-					nearest_filter = tsp.FilterMode == 0;
-				} else if (config::TextureFiltering == 1) {
+				if (gpuPalette != 0)
 					nearest_filter = true;
-				} else {
+				else if (config::TextureFiltering == 0)
+					nearest_filter = tsp.FilterMode == 0;
+				else if (config::TextureFiltering == 1)
+					nearest_filter = true;
+				else
 					nearest_filter = false;
-				}
 
 				bool mipmapped = gp->tcw.MipMapped != 0 && gp->tcw.ScanOrder == 0 && config::UseMipmaps;
 
@@ -245,7 +253,7 @@ static void SetGPState(const PolyParam* gp)
 				{
 					//bilinear filtering
 					//PowerVR supports also trilinear via two passes, but we ignore that for now
-					glSamplerParameteri(texSamplers[i], GL_TEXTURE_MIN_FILTER, mipmapped ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR);
+					glSamplerParameteri(texSamplers[i], GL_TEXTURE_MIN_FILTER, mipmapped && Type != ListType_Punch_Through ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR);
 					glSamplerParameteri(texSamplers[i], GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 				}
 
@@ -265,8 +273,7 @@ static void SetGPState(const PolyParam* gp)
 		glActiveTexture(GL_TEXTURE0);
 	}
 
-	//gcflip is global clip flip, needed for when rendering to texture due to mirrored Y direction
-	SetCull(gp->isp.CullMode ^ gcflip);
+	SetCull(gp->isp.CullMode ^ 1);
 
 	//set Z mode, only if required
 	if (Type == ListType_Punch_Through || (pass == Pass::Depth && SortingEnabled))
@@ -483,6 +490,28 @@ void gl4DrawStrips(GLuint output_fbo, int width, int height)
 {
 	checkOverflowAndReset();
 	glBindFramebuffer(GL_FRAMEBUFFER, geom_fbo);
+	if (!pvrrc.isRTT)
+	{
+		glcache.Disable(GL_SCISSOR_TEST);
+		glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+		if (pvrrc.clearFramebuffer)
+		{
+			// Clear framebuffer
+			glcache.ClearColor(VO_BORDER_COL.red(), VO_BORDER_COL.green(), VO_BORDER_COL.blue(), 1.f);
+			glClear(GL_COLOR_BUFFER_BIT);
+		}
+		else
+		{
+			// Copy previous framebuffer content (in case of partial render)
+			glBindFramebuffer(GL_DRAW_FRAMEBUFFER, geom_fbo);
+			glBindFramebuffer(GL_READ_FRAMEBUFFER, output_fbo);
+			glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+			glCheck();
+			glBindFramebuffer(GL_FRAMEBUFFER, geom_fbo);
+		}
+		if (gl4ShaderUniforms.base_clipping.enabled)
+			glcache.Enable(GL_SCISSOR_TEST);
+	}
 	if (texSamplers[0] == 0)
 		glGenSamplers(2, texSamplers);
 
@@ -688,7 +717,7 @@ void gl4DrawStrips(GLuint output_fbo, int width, int height)
 				glBindSampler(0, 0);
 				glcache.BindTexture(GL_TEXTURE_2D, opaqueTexId);
 
-				renderABuffer();
+				renderABuffer(false);
 
 				glcache.DeleteTextures(1, &opaqueTexId);
 				opaqueTexId = texId;
@@ -716,5 +745,5 @@ void gl4DrawStrips(GLuint output_fbo, int width, int height)
 	glActiveTexture(GL_TEXTURE0);
 	glBindSampler(0, 0);
 	glcache.BindTexture(GL_TEXTURE_2D, opaqueTexId);
-	renderABuffer();
+	renderABuffer(true);
 }

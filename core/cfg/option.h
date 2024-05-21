@@ -366,13 +366,13 @@ extern Option<int> Cable;		// 0 -> VGA, 1 -> VGA, 2 -> RGB, 3 -> TV Composite
 extern Option<int> Region;		// 0 -> JP, 1 -> USA, 2 -> EU, 3 -> default
 extern Option<int> Broadcast;	// 0 -> NTSC, 1 -> PAL, 2 -> PAL/M, 3 -> PAL/N, 4 -> default
 extern Option<int> Language;	// 0 -> JP, 1 -> EN, 2 -> DE, 3 -> FR, 4 -> SP, 5 -> IT, 6 -> default
-extern Option<bool> ForceWindowsCE;
 extern Option<bool> AutoLoadState;
 extern Option<bool> AutoSaveState;
 extern Option<int, false> SavestateSlot;
 extern Option<bool> ForceFreePlay;
 extern Option<bool, false> FetchBoxart;
 extern Option<bool, false> BoxartDisplayMode;
+extern Option<int, false> UIScaling;
 
 // Sound
 
@@ -412,14 +412,21 @@ extern Option<bool> VmuSound;
 
 class RendererOption : public Option<RenderType> {
 public:
-	RendererOption()
-#if defined(USE_DX11)
-		: Option<RenderType>("pvr.rend", RenderType::DirectX11) {}
-#elif defined(USE_DX9)
-		: Option<RenderType>("pvr.rend", RenderType::DirectX9) {}
+#ifdef LIBRETRO
+	RendererOption() : Option<RenderType>("",
 #else
-		: Option<RenderType>("pvr.rend", RenderType::OpenGL) {}
+	RendererOption() : Option<RenderType>("pvr.rend",
 #endif
+#if defined(USE_DX11)
+			RenderType::DirectX11
+#elif defined(USE_DX9)
+			RenderType::DirectX9
+#elif !defined(USE_OPENGL)
+			RenderType::Vulkan
+#else
+			RenderType::OpenGL
+#endif
+		) {}
 
 	RenderType& operator=(const RenderType& v) { set(v); return value; }
 
@@ -453,6 +460,7 @@ extern Option<bool> PerStripSorting;
 extern Option<bool> DelayFrameSwapping;	// Delay swapping frame until FB_R_SOF matches FB_W_SOF
 extern Option<bool> WidescreenGameHacks;
 extern std::array<Option<int>, 4> CrosshairColor;
+extern Option<int> CrosshairSize;
 extern Option<int> SkipFrame;
 extern Option<int> MaxThreads;
 extern Option<int> AutoSkipFrame;		// 0: none, 1: some, 2: more
@@ -465,6 +473,13 @@ extern Option<bool> ThreadedRendering;
 extern Option<bool> DupeFrames;
 extern Option<bool> NativeDepthInterpolation;
 extern Option<bool> EmulateFramebuffer;
+extern Option<bool> FixUpscaleBleedingEdge;
+extern Option<bool> CustomGpuDriver;
+#ifdef VIDEO_ROUTING
+extern Option<bool, false> VideoRouting;
+extern Option<bool, false> VideoRoutingScale;
+extern Option<int, false> VideoRoutingVRes;
+#endif
 
 // Misc
 
@@ -475,12 +490,14 @@ extern Option<int> GDBPort;
 extern Option<bool> GDBWaitForConnection;
 extern Option<bool> UseReios;
 extern Option<bool> FastGDRomLoad;
+extern Option<bool> RamMod32MB;
 
 extern Option<bool> OpenGlChecks;
 
 extern Option<std::vector<std::string>, false> ContentPath;
 extern Option<bool, false> HideLegacyNaomiRoms;
 extern Option<bool, false> UploadCrashLogs;
+extern Option<bool, false> DiscordPresence;
 
 // Profiling
 extern Option<bool> ProfilerEnabled;
@@ -509,10 +526,7 @@ extern Option<bool> GGPOChatTimeoutToggle;
 extern Option<int> GGPOChatTimeout;
 extern Option<bool> NetworkOutput;
 extern Option<int> MultiboardSlaves;
-
-#ifdef SUPPORT_DISPMANX
-extern Option<bool> DispmanxMaintainAspect;
-#endif
+extern Option<bool> BattleCableEnable;
 
 #ifdef USE_OMX
 extern Option<int> OmxAudioLatency;
@@ -535,5 +549,12 @@ constexpr bool UseRawInput = false;
 #ifdef USE_LUA
 extern Option<std::string, false> LuaFileName;
 #endif
+
+// RetroAchievements
+
+extern Option<bool> EnableAchievements;
+extern Option<bool> AchievementsHardcoreMode;
+extern OptionString AchievementsUserName;
+extern OptionString AchievementsToken;
 
 } // namespace config

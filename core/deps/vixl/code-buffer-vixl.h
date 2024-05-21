@@ -40,19 +40,16 @@ class CodeBuffer {
 
   explicit CodeBuffer(size_t capacity = kDefaultCapacity);
   CodeBuffer(byte* buffer, size_t capacity);
-  ~CodeBuffer();
+  ~CodeBuffer() VIXL_NEGATIVE_TESTING_ALLOW_EXCEPTION;
 
   void Reset();
 
-#ifdef VIXL_CODE_BUFFER_MMAP
+  // Make the buffer executable or writable. These states are mutually
+  // exclusive.
+  // Note that these require page-aligned memory blocks, which we can only
+  // guarantee with VIXL_CODE_BUFFER_MMAP.
   void SetExecutable();
   void SetWritable();
-#else
-  // These require page-aligned memory blocks, which we can only guarantee with
-  // mmap.
-  VIXL_NO_RETURN_IN_DEBUG_MODE void SetExecutable() { VIXL_UNIMPLEMENTED(); }
-  VIXL_NO_RETURN_IN_DEBUG_MODE void SetWritable() { VIXL_UNIMPLEMENTED(); }
-#endif
 
   ptrdiff_t GetOffsetFrom(ptrdiff_t offset) const {
     ptrdiff_t cursor_offset = cursor_ - buffer_;
@@ -127,8 +124,9 @@ class CodeBuffer {
   void Emit(T value) {
     VIXL_ASSERT(HasSpaceFor(sizeof(value)));
     dirty_ = true;
-    memcpy(cursor_, &value, sizeof(value));
-    cursor_ += sizeof(value);
+    byte* c = cursor_;
+    memcpy(c, &value, sizeof(value));
+    cursor_ = c + sizeof(value);
   }
 
   void UpdateData(size_t offset, const void* data, size_t size);
@@ -167,8 +165,8 @@ class CodeBuffer {
     *has_grown = is_full;
   }
   void EnsureSpaceFor(size_t amount) {
-    bool dummy;
-    EnsureSpaceFor(amount, &dummy);
+    bool placeholder;
+    EnsureSpaceFor(amount, &placeholder);
   }
 
  private:

@@ -23,9 +23,8 @@
 #include "input/keyboard_device.h"
 #include "input/mouse.h"
 #include "cfg/option.h"
+#include "oslib/oslib.h"
 #include <algorithm>
-
-void UpdateInputState();
 
 namespace ggpo
 {
@@ -35,7 +34,7 @@ bool inRollback;
 static void getLocalInput(MapleInputState inputState[4])
 {
 	if (!config::ThreadedRendering)
-		UpdateInputState();
+		os_UpdateInputState();
 	std::lock_guard<std::mutex> lock(relPosMutex);
 	for (int player = 0; player < 4; player++)
 	{
@@ -73,7 +72,8 @@ static void getLocalInput(MapleInputState inputState[4])
 #ifdef USE_GGPO
 #include "ggponet.h"
 #include "emulator.h"
-#include "rend/gui.h"
+#include "ui/gui.h"
+#include "ui/gui_util.h"
 #include "hw/mem/mem_watch.h"
 #include <string.h>
 #include <chrono>
@@ -81,7 +81,7 @@ static void getLocalInput(MapleInputState inputState[4])
 #include <mutex>
 #include <unordered_map>
 #include <numeric>
-#include "imgui/imgui.h"
+#include "imgui.h"
 #include "miniupnp.h"
 #include "hw/naomi/naomi_cart.h"
 
@@ -216,19 +216,19 @@ static bool on_event(GGPOEvent *info)
 	switch (info->code) {
 	case GGPO_EVENTCODE_CONNECTED_TO_PEER:
 		INFO_LOG(NETWORK, "Connected to peer %d", info->u.connected.player);
-		gui_display_notification("Connected to peer", 2000);
+		os_notify("Connected to peer", 2000);
 		break;
 	case GGPO_EVENTCODE_SYNCHRONIZING_WITH_PEER:
 		INFO_LOG(NETWORK, "Synchronizing with peer %d", info->u.synchronizing.player);
-		gui_display_notification("Synchronizing with peer", 2000);
+		os_notify("Synchronizing with peer", 2000);
 		break;
 	case GGPO_EVENTCODE_SYNCHRONIZED_WITH_PEER:
 		INFO_LOG(NETWORK, "Synchronized with peer %d", info->u.synchronized.player);
-		gui_display_notification("Synchronized with peer", 2000);
+		os_notify("Synchronized with peer", 2000);
 		break;
 	case GGPO_EVENTCODE_RUNNING:
 		INFO_LOG(NETWORK, "Running");
-		gui_display_notification("Running", 2000);
+		os_notify("Running", 2000);
 		synchronized = true;
 		break;
 	case GGPO_EVENTCODE_DISCONNECTED_FROM_PEER:
@@ -242,11 +242,11 @@ static bool on_event(GGPOEvent *info)
 		break;
 	case GGPO_EVENTCODE_CONNECTION_INTERRUPTED:
 		INFO_LOG(NETWORK, "Connection interrupted with player %d", info->u.connection_interrupted.player);
-		gui_display_notification("Connection interrupted", 2000);
+		os_notify("Connection interrupted", 2000);
 		break;
 	case GGPO_EVENTCODE_CONNECTION_RESUMED:
 		INFO_LOG(NETWORK, "Connection resumed with player %d", info->u.connection_resumed.player);
-		gui_display_notification("Connection resumed", 2000);
+		os_notify("Connection resumed", 2000);
 		break;
 	}
 	return true;
@@ -333,7 +333,7 @@ static bool save_game_state(unsigned char **buffer, int *len, int *checksum, int
 	verify(!sh4_cpu.IsCpuRunning());
 	lastSavedFrame = frame;
 	// TODO this is way too much memory
-	size_t allocSize = (settings.platform.isNaomi() ? 20 : 10) * 1024 * 1024;
+	size_t allocSize = settings.platform.isNaomi() ? 20_MB : 10_MB;
 	*buffer = (unsigned char *)malloc(allocSize);
 	if (*buffer == nullptr)
 	{
@@ -440,7 +440,7 @@ static void free_buffer(void *buffer)
 {
 	if (buffer != nullptr)
 	{
-		Deserializer deser(buffer, 1024 * 1024, true);
+		Deserializer deser(buffer, 1_MB, true);
 		int frame;
 		deser >> frame;
 		deltaStates.erase(frame);
@@ -510,9 +510,9 @@ void startSession(int localPort, int localPlayerNum)
 		mouseGame = false;
 		if (settings.input.lightgunGame)
 			absPointerPos = true;
-		else if (settings.input.JammaSetup == JVS::Keyboard)
+		else if (settings.input.keyboardGame)
 			keyboardGame = true;
-		else if (settings.input.JammaSetup == JVS::RotaryEncoders)
+		else if (settings.input.mouseGame)
 			mouseGame = true;
 		else if (NaomiGameInputs != nullptr)
 		{
@@ -642,9 +642,9 @@ void getInput(MapleInputState inputState[4])
 		state.kcode = ~inputs->kcode;
 		if (analogAxes > 0)
 		{
-			state.fullAxes[PJAI_X1] = inputs->u.analog.x;
+			state.fullAxes[PJAI_X1] = inputs->u.analog.x << 8;
 			if (analogAxes >= 2)
-				state.fullAxes[PJAI_Y1] = inputs->u.analog.y;
+				state.fullAxes[PJAI_Y1] = inputs->u.analog.y << 8;
 		}
 		else if (absPointerPos)
 		{
@@ -663,8 +663,8 @@ void getInput(MapleInputState inputState[4])
 			state.relPos.wheel = inputs->u.relPos.wheel;
 			state.mouseButtons = ~inputs->mouseButtons;
 		}
-		state.halfAxes[PJTI_R] = (state.kcode & BTN_TRIGGER_RIGHT) == 0 ? 255 : 0;
-		state.halfAxes[PJTI_L] = (state.kcode & BTN_TRIGGER_LEFT) == 0 ? 255 : 0;
+		state.halfAxes[PJTI_R] = (state.kcode & BTN_TRIGGER_RIGHT) == 0 ? 0xffff : 0;
+		state.halfAxes[PJTI_L] = (state.kcode & BTN_TRIGGER_LEFT) == 0 ? 0xffff : 0;
 	}
 }
 
@@ -706,14 +706,14 @@ bool nextFrame()
 	// may call save_game_state
 	do {
 		if (!config::ThreadedRendering)
-			UpdateInputState();
+			os_UpdateInputState();
 		Inputs inputs;
 		inputs.kcode = ~kcode[0];
-		if (rt[0] >= 64)
+		if (rt[0] >= 0x4000)
 			inputs.kcode |= BTN_TRIGGER_RIGHT;
 		else
 			inputs.kcode &= ~BTN_TRIGGER_RIGHT;
-		if (lt[0] >= 64)
+		if (lt[0] >= 0x4000)
 			inputs.kcode |= BTN_TRIGGER_LEFT;
 		else
 			inputs.kcode &= ~BTN_TRIGGER_LEFT;
@@ -721,9 +721,9 @@ bool nextFrame()
 		inputs.kbModifiers = 0;
 		if (analogAxes > 0)
 		{
-			inputs.u.analog.x = joyx[0];
+			inputs.u.analog.x = joyx[0] >> 8;
 			if (analogAxes >= 2)
-				inputs.u.analog.y = joyy[0];
+				inputs.u.analog.y = joyy[0] >> 8;
 		}
 		else if (absPointerPos)
 		{
@@ -783,6 +783,7 @@ std::future<bool> startNetwork()
 	synchronized = false;
 	return std::async(std::launch::async, []{
 		{
+			ThreadName _("GGPO-start");
 			std::lock_guard<std::recursive_mutex> lock(ggpoMutex);
 #ifdef SYNC_TEST
 			startSession(0, 0);
@@ -857,17 +858,17 @@ void displayStats()
 	GGPONetworkStats stats;
 	ggpo_get_network_stats(ggpoSession, remotePlayer, &stats);
 
-	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
-	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
+	ImguiStyleVar _(ImGuiStyleVar_WindowRounding, 0);
+	ImguiStyleVar _1(ImGuiStyleVar_WindowBorderSize, 0);
 	ImGui::SetNextWindowPos(ImVec2(10, 10));
-	ImGui::SetNextWindowSize(ImVec2(95 * settings.display.uiScale, 0));
+	ImGui::SetNextWindowSize(ScaledVec2(95, 0));
 	ImGui::SetNextWindowBgAlpha(0.7f);
 	ImGui::Begin("##ggpostats", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs);
-	ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(0.557f, 0.268f, 0.965f, 1.f));
+	ImguiStyleColor _2(ImGuiCol_PlotHistogram, ImVec4(0.557f, 0.268f, 0.965f, 1.f));
 
 	// Send Queue
 	ImGui::Text("Send Q");
-	ImGui::ProgressBar(stats.network.send_queue_len / 10.f, ImVec2(-1, 10.f * settings.display.uiScale), "");
+	ImGui::ProgressBar(stats.network.send_queue_len / 10.f, ImVec2(-1, uiScaled(10.f)), "");
 
 	// Frame Delay
 	ImGui::Text("Delay");
@@ -889,7 +890,7 @@ void displayStats()
 		// yellow
 	    ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(.9f, .9f, .1f, 1));
 	ImGui::Text("Predicted");
-	ImGui::ProgressBar(stats.sync.predicted_frames / 7.f, ImVec2(-1, 10.f * settings.display.uiScale), "");
+	ImGui::ProgressBar(stats.sync.predicted_frames / 7.f, ImVec2(-1, uiScaled(10.f)), "");
 	if (stats.sync.predicted_frames >= 5)
 		ImGui::PopStyleColor();
 
@@ -898,16 +899,14 @@ void displayStats()
 	if (timesync > 0)
 		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1, 0, 0, 1));
 	ImGui::Text("Behind");
-	ImGui::ProgressBar(0.5f + stats.timesync.local_frames_behind / 16.f, ImVec2(-1, 10.f * settings.display.uiScale), "");
+	ImGui::ProgressBar(0.5f + stats.timesync.local_frames_behind / 16.f, ImVec2(-1, uiScaled(10.f)), "");
 	if (timesync > 0)
 	{
 		ImGui::PopStyleColor();
 		timesyncOccurred--;
 	}
 
-	ImGui::PopStyleColor();
 	ImGui::End();
-	ImGui::PopStyleVar(2);
 }
 
 void endOfFrame()

@@ -20,11 +20,13 @@
 #include "dx11context.h"
 #include "hw/pvr/ta.h"
 #include "hw/pvr/pvr_mem.h"
-#include "rend/gui.h"
+#include "ui/gui.h"
 #include "rend/tileclip.h"
 #include "rend/sorter.h"
 
 #include <memory>
+
+void os_VideoRoutingTermDX();
 
 const D3D11_INPUT_ELEMENT_DESC MainLayout[]
 {
@@ -173,6 +175,9 @@ bool DX11Renderer::Init()
 void DX11Renderer::Term()
 {
 	NOTICE_LOG(RENDERER, "DX11 renderer terminating");
+#ifdef VIDEO_ROUTING
+	os_VideoRoutingTermDX();
+#endif
 	n2Helper.term();
 	vtxConstants.reset();
 	pxlConstants.reset();
@@ -185,6 +190,10 @@ void DX11Renderer::Term()
 	quad.reset();
 	deviceContext.reset();
 	device.reset();
+	vrStagingTexture.reset();
+	vrStagingTextureSRV.reset();
+	vrScaledTexture.reset();
+	vrScaledRenderTarget.reset();
 }
 
 void DX11Renderer::createDepthTexAndView(ComPtr<ID3D11Texture2D>& texture, ComPtr<ID3D11DepthStencilView>& view, int width, int height, DXGI_FORMAT format, UINT bindFlags)
@@ -361,19 +370,19 @@ void DX11Renderer::uploadGeometryBuffers()
 {
 	setFirstProvokingVertex(pvrrc);
 
-	size_t size = pvrrc.verts.size() * sizeof(decltype(pvrrc.verts[0]));
+	size_t size = pvrrc.verts.size() * sizeof(decltype(*pvrrc.verts.data()));
 	bool rc = ensureBufferSize(vertexBuffer, D3D11_BIND_VERTEX_BUFFER, vertexBufferSize, size);
 	verify(rc);
 	D3D11_MAPPED_SUBRESOURCE mappedSubres;
 	deviceContext->Map(vertexBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubres);
-	memcpy(mappedSubres.pData, &pvrrc.verts[0], size);
+	memcpy(mappedSubres.pData, pvrrc.verts.data(), size);
 	deviceContext->Unmap(vertexBuffer, 0);
 
-	size = pvrrc.idx.size() * sizeof(decltype(pvrrc.idx[0]));
+	size = pvrrc.idx.size() * sizeof(decltype(*pvrrc.idx.data()));
 	rc = ensureBufferSize(indexBuffer, D3D11_BIND_INDEX_BUFFER, indexBufferSize, size);
 	verify(rc);
 	deviceContext->Map(indexBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubres);
-	memcpy(mappedSubres.pData, &pvrrc.idx[0], size);
+	memcpy(mappedSubres.pData, pvrrc.idx.data(), size);
 	deviceContext->Unmap(indexBuffer, 0);
 
 	if (config::ModifierVolumes && !pvrrc.modtrig.empty())
@@ -411,6 +420,31 @@ void DX11Renderer::setupPixelShaderConstants()
 	// Punch-through alpha ref
 	pixelConstants.alphaTestValue = (PT_ALPHA_REF & 0xFF) / 255.0f;
 
+	// Dithering
+	dithering = config::EmulateFramebuffer && pvrrc.fb_W_CTRL.fb_dither && pvrrc.fb_W_CTRL.fb_packmode <= 3;
+	if (dithering)
+	{
+		switch (pvrrc.fb_W_CTRL.fb_packmode)
+		{
+		case 0: // 0555 KRGB 16 bit
+		case 3: // 1555 ARGB 16 bit
+			pixelConstants.ditherColorMax[0] = pixelConstants.ditherColorMax[1] = pixelConstants.ditherColorMax[2] = 31.f;
+			pixelConstants.ditherColorMax[3] = 255.f;
+			break;
+		case 1: // 565 RGB 16 bit
+			pixelConstants.ditherColorMax[0] = pixelConstants.ditherColorMax[2] = 31.f;
+			pixelConstants.ditherColorMax[1] = 63.f;
+			pixelConstants.ditherColorMax[3] = 255.f;
+			break;
+		case 2: // 4444 ARGB 16 bit
+			pixelConstants.ditherColorMax[0] = pixelConstants.ditherColorMax[1]
+				= pixelConstants.ditherColorMax[2] = pixelConstants.ditherColorMax[3] = 15.f;
+			break;
+		default:
+			break;
+		}
+	}
+
 	D3D11_MAPPED_SUBRESOURCE mappedSubres;
 	deviceContext->Map(pxlConstants, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubres);
 	memcpy(mappedSubres.pData, &pixelConstants, sizeof(pixelConstants));
@@ -430,6 +464,13 @@ bool DX11Renderer::Render()
 		resize(pvrrc.framebufferWidth, pvrrc.framebufferHeight);
 		deviceContext->OMSetRenderTargets(1, &fbRenderTarget.get(), depthTexView);
 		deviceContext->ClearDepthStencilView(depthTexView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 0.f, 0);
+		if (pvrrc.clearFramebuffer)
+		{
+			float colors[4];
+			VO_BORDER_COL.getRGBColor(colors);
+			colors[3] = 1.f;
+			deviceContext->ClearRenderTargetView(fbRenderTarget, colors);
+		}
 	}
 	configVertexShader();
 
@@ -460,6 +501,7 @@ bool DX11Renderer::Render()
 		deviceContext->OMSetRenderTargets(1, &theDX11Context.getRenderTarget().get(), nullptr);
 		displayFramebuffer();
 		DrawOSD(false);
+		renderVideoRouting();
 		theDX11Context.setFrameRendered();
 #else
 		ID3D11RenderTargetView *nullView = nullptr;
@@ -569,7 +611,15 @@ void DX11Renderer::setRenderState(const PolyParam *gp)
 	int clip_rect[4] = {};
 	TileClipping clipmode = GetTileClip(gp->tileclip, matrices.GetViewportMatrix(), clip_rect);
 	DX11Texture *texture = (DX11Texture *)gp->texture;
-	bool gpuPalette = texture != nullptr ? texture->gpuPalette : false;
+	int gpuPalette = texture == nullptr || !texture->gpuPalette ? 0
+			: gp->tsp.FilterMode + 1;
+	if (gpuPalette != 0)
+	{
+		if (config::TextureFiltering == 1)
+			gpuPalette = 1; // force nearest
+		else if (config::TextureFiltering == 2)
+			gpuPalette = 2; // force linear
+	}
 
 	ComPtr<ID3D11VertexShader> vertexShader = shaders->getVertexShader(gp->pcw.Gouraud, gp->isNaomi2());
 	deviceContext->VSSetShader(vertexShader, nullptr, 0);
@@ -587,10 +637,10 @@ void DX11Renderer::setRenderState(const PolyParam *gp)
 			gp->pcw.Gouraud,
 			Type == ListType_Punch_Through,
 			clipmode == TileClipping::Inside,
-			gp->pcw.Texture && gp->tsp.FilterMode == 0 && !gp->tsp.ClampU && !gp->tsp.ClampV && !gp->tsp.FlipU && !gp->tsp.FlipV);
+			dithering);
 	deviceContext->PSSetShader(pixelShader, nullptr, 0);
 
-	if (gpuPalette)
+	if (gpuPalette != 0)
 	{
 		if (gp->tcw.PixelFmt == PixelPal4)
 			constants.paletteIndex = (float)(gp->tcw.PalSelect << 4);
@@ -614,7 +664,7 @@ void DX11Renderer::setRenderState(const PolyParam *gp)
 			constants.clipTest[3] = (float)(clip_rect[1] + clip_rect[3]);
 		}
 	}
-	if (constants.trilinearAlpha != 1.f || gpuPalette || clipmode == TileClipping::Inside)
+	if (constants.trilinearAlpha != 1.f || gpuPalette != 0 || clipmode == TileClipping::Inside)
 	{
 		D3D11_MAPPED_SUBRESOURCE mappedSubres;
 		deviceContext->Map(pxlPolyConstants, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubres);
@@ -626,21 +676,20 @@ void DX11Renderer::setRenderState(const PolyParam *gp)
 	{
         deviceContext->PSSetShaderResources(0, 1, &texture->textureView.get());
 		bool linearFiltering;
-		if (config::TextureFiltering == 0)
-			linearFiltering = gp->tsp.FilterMode != 0 && !gpuPalette;
+		if (gpuPalette != 0)
+			linearFiltering = false;
+		else if (config::TextureFiltering == 0)
+			linearFiltering = gp->tsp.FilterMode != 0;
 		else if (config::TextureFiltering == 1)
 			linearFiltering = false;
 		else
 			linearFiltering = true;
-        auto sampler = samplers->getSampler(linearFiltering, gp->tsp.ClampU, gp->tsp.ClampV, gp->tsp.FlipU, gp->tsp.FlipV);
+        auto sampler = samplers->getSampler(linearFiltering, gp->tsp.ClampU, gp->tsp.ClampV, gp->tsp.FlipU, gp->tsp.FlipV, Type == ListType_Punch_Through);
         deviceContext->PSSetSamplers(0, 1, &sampler.get());
 	}
 
 	// Apparently punch-through polys support blending, or at least some combinations
-	if (Type == ListType_Translucent || Type == ListType_Punch_Through)
-		deviceContext->OMSetBlendState(blendStates.getState(true, gp->tsp.SrcInstr, gp->tsp.DstInstr), nullptr, 0xffffffff);
-	else
-		deviceContext->OMSetBlendState(blendStates.getState(false, gp->tsp.SrcInstr, gp->tsp.DstInstr), nullptr, 0xffffffff);
+	deviceContext->OMSetBlendState(blendStates.getState(true, gp->tsp.SrcInstr, gp->tsp.DstInstr), nullptr, 0xffffffff);
 
 	setCullMode(gp->isp.CullMode);
 
@@ -960,6 +1009,7 @@ void DX11Renderer::RenderFramebuffer(const FramebufferInfo& info)
 	deviceContext->OMSetRenderTargets(1, &theDX11Context.getRenderTarget().get(), nullptr);
 	displayFramebuffer();
 	DrawOSD(false);
+	renderVideoRouting();
 	theDX11Context.setFrameRendered();
 #else
 	ID3D11RenderTargetView *nullView = nullptr;
@@ -1024,10 +1074,10 @@ void DX11Renderer::setBaseScissor()
 		}
 		else
 		{
-			fWidth = (float)(pvrrc.fb_X_CLIP.max - pvrrc.fb_X_CLIP.min + 1);
-			fHeight = (float)(pvrrc.fb_Y_CLIP.max - pvrrc.fb_Y_CLIP.min + 1);
-			min_x = (float)pvrrc.fb_X_CLIP.min;
-			min_y = (float)pvrrc.fb_Y_CLIP.min;
+			min_x = (float)pvrrc.getFramebufferMinX();
+			min_y = (float)pvrrc.getFramebufferMinY();
+			fWidth = (float)pvrrc.getFramebufferWidth() - min_x;
+			fHeight = (float)pvrrc.getFramebufferHeight() - min_y;
 			if (config::RenderResolution > 480 && !config::RenderToTextureBuffer)
 			{
 				min_x *= config::RenderResolution / 480.f;
@@ -1225,9 +1275,10 @@ void DX11Renderer::writeFramebufferToVRAM()
 			viewDesc.Texture2D.MipLevels = 1;
 			device->CreateShaderResourceView(fbScaledTexture, &viewDesc, &fbScaledTextureView.get());
 		}
+		deviceContext->OMSetRenderTargets(1, &fbScaledRenderTarget.get(), nullptr);
 		D3D11_VIEWPORT vp{};
-		vp.Width = (FLOAT)width;
-		vp.Height = (FLOAT)height;
+		vp.Width = (FLOAT)scaledW;
+		vp.Height = (FLOAT)scaledH;
 		vp.MinDepth = 0.f;
 		vp.MaxDepth = 1.f;
 		deviceContext->RSSetViewports(1, &vp);
@@ -1292,6 +1343,181 @@ void DX11Renderer::writeFramebufferToVRAM()
 	yClip.min = std::min(yClip.min, height - 1);
 	yClip.max = std::min(yClip.max, height - 1);
 	WriteFramebuffer<2, 1, 0, 3>(width, height, (u8 *)tmp_buf.data(), texAddress, pvrrc.fb_W_CTRL, linestride, xClip, yClip);
+}
+
+bool DX11Renderer::GetLastFrame(std::vector<u8>& data, int& width, int& height)
+{
+	if (!frameRenderedOnce)
+		return false;
+
+	if (width != 0) {
+		height = width / aspectRatio;
+	}
+	else if (height != 0) {
+		width = aspectRatio * height;
+	}
+	else
+	{
+		width = this->width;
+		height = this->height;
+		if (config::Rotate90)
+			std::swap(width, height);
+		// We need square pixels for PNG
+		int w = aspectRatio * height;
+		if (width > w)
+			height = width / aspectRatio;
+		else
+			width = w;
+	}
+
+	ComPtr<ID3D11Texture2D> dstTex;
+	ComPtr<ID3D11RenderTargetView> dstRenderTarget;
+	createTexAndRenderTarget(dstTex, dstRenderTarget, width, height);
+
+	ID3D11ShaderResourceView *nullResView = nullptr;
+	deviceContext->PSSetShaderResources(0, 1, &nullResView);
+	deviceContext->OMSetRenderTargets(1, &dstRenderTarget.get(), nullptr);
+	D3D11_VIEWPORT vp{};
+	vp.Width = (FLOAT)width;
+	vp.Height = (FLOAT)height;
+	vp.MinDepth = 0.f;
+	vp.MaxDepth = 1.f;
+	deviceContext->RSSetViewports(1, &vp);
+	const D3D11_RECT r = { 0, 0, (LONG)width, (LONG)height };
+	deviceContext->RSSetScissorRects(1, &r);
+	deviceContext->OMSetBlendState(blendStates.getState(false), nullptr, 0xffffffff);
+	deviceContext->GSSetShader(nullptr, nullptr, 0);
+	deviceContext->HSSetShader(nullptr, nullptr, 0);
+	deviceContext->DSSetShader(nullptr, nullptr, 0);
+	deviceContext->CSSetShader(nullptr, nullptr, 0);
+
+	quad->draw(fbTextureView, samplers->getSampler(true), nullptr, -1.f, -1.f, 2.f, 2.f, config::Rotate90);
+
+#ifndef LIBRETRO
+	deviceContext->OMSetRenderTargets(1, &theDX11Context.getRenderTarget().get(), nullptr);
+#else
+	ID3D11RenderTargetView *nullView = nullptr;
+	deviceContext->OMSetRenderTargets(1, &nullView, nullptr);
+#endif
+	D3D11_TEXTURE2D_DESC desc;
+	dstTex->GetDesc(&desc);
+	desc.Usage = D3D11_USAGE_STAGING;
+	desc.BindFlags = 0;
+	desc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+	desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+
+	ComPtr<ID3D11Texture2D> stagingTex;
+	HRESULT hr = device->CreateTexture2D(&desc, nullptr, &stagingTex.get());
+	if (FAILED(hr))
+	{
+		WARN_LOG(RENDERER, "Staging screenshot texture creation failed");
+		return false;
+	}
+	deviceContext->CopyResource(stagingTex, dstTex);
+
+	D3D11_MAPPED_SUBRESOURCE mappedSubres;
+	hr = deviceContext->Map(stagingTex, 0, D3D11_MAP_READ, 0, &mappedSubres);
+	if (FAILED(hr))
+	{
+		WARN_LOG(RENDERER, "Failed to map staging screenshot texture");
+		return false;
+	}
+	const u8* const src = (const u8 *)mappedSubres.pData;
+	for (int y = 0; y < height; y++)
+	{
+		const u8 *p = src + y * mappedSubres.RowPitch;
+		for (int x = 0; x < width; x++, p += 4)
+		{
+			data.push_back(p[2]);
+			data.push_back(p[1]);
+			data.push_back(p[0]);
+		}
+	}
+	deviceContext->Unmap(stagingTex, 0);
+
+	return true;
+}
+
+void DX11Renderer::renderVideoRouting()
+{
+#ifdef VIDEO_ROUTING
+	if (config::VideoRouting)
+	{
+		extern void os_VideoRoutingPublishFrameTexture(ID3D11Texture2D* pTexture);
+		
+		ID3D11RenderTargetView* pRenderTargetView = theDX11Context.getRenderTarget().get();
+
+		// Backbuffer texture would be different after resizing, fetching new address everytime
+		ID3D11Resource* pResource = nullptr;
+		pRenderTargetView->GetResource(&pResource);
+		ID3D11Texture2D* backBufferTexture = nullptr;
+		pResource->QueryInterface(__uuidof(ID3D11Texture2D), (void**)&backBufferTexture);		
+		
+		if (config::VideoRoutingScale)
+		{
+			D3D11_TEXTURE2D_DESC bbDesc = {};
+			backBufferTexture->GetDesc(&bbDesc);
+			D3D11_TEXTURE2D_DESC vrsDesc = {};
+			if (vrStagingTexture)
+				vrStagingTexture->GetDesc(&vrsDesc);
+
+			// Window resized?
+			if (!vrStagingTexture || bbDesc.Width != vrsDesc.Width || bbDesc.Height != vrsDesc.Height)
+			{
+				vrStagingTexture.reset();
+				vrStagingTextureSRV.reset();
+
+				D3D11_TEXTURE2D_DESC srvDesc = bbDesc;
+				srvDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+				srvDesc.Usage = D3D11_USAGE_DEFAULT;
+				device->CreateTexture2D(&srvDesc, nullptr, &vrStagingTexture.get());
+
+				D3D11_SHADER_RESOURCE_VIEW_DESC viewDesc{};
+				viewDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+				viewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+				viewDesc.Texture2D.MipLevels = 1;
+				
+				device->CreateShaderResourceView(vrStagingTexture.get(), &viewDesc, &vrStagingTextureSRV.get());
+			}
+
+			// Scale down value changed?
+			D3D11_TEXTURE2D_DESC vrscDesc = {};
+			if (vrScaledTexture)
+				vrScaledTexture->GetDesc(&vrscDesc);
+			int targetWidth = config::VideoRoutingVRes * settings.display.width / settings.display.height;
+			if (!vrScaledTexture || (int)vrscDesc.Height != config::VideoRoutingVRes)
+			{
+
+				vrScaledTexture.reset();
+				vrScaledRenderTarget.reset();
+				createTexAndRenderTarget(vrScaledTexture, vrScaledRenderTarget, targetWidth, config::VideoRoutingVRes);
+			}
+			D3D11_VIEWPORT scaledViewPort{};
+			scaledViewPort.Width = targetWidth;
+			scaledViewPort.Height = config::VideoRoutingVRes;
+			scaledViewPort.MinDepth = 0.f;
+			scaledViewPort.MaxDepth = 1.f;
+
+			deviceContext->OMSetRenderTargets(1, &vrScaledRenderTarget.get(), nullptr);
+			deviceContext->RSSetViewports(1, &scaledViewPort);
+			deviceContext->CopyResource(vrStagingTexture.get(), backBufferTexture);
+			quad->draw(vrStagingTextureSRV, samplers->getSampler(true));
+			os_VideoRoutingPublishFrameTexture(vrScaledTexture);
+
+			deviceContext->OMSetRenderTargets(1, &theDX11Context.getRenderTarget().get(), nullptr);
+
+		} else {
+			os_VideoRoutingPublishFrameTexture(backBufferTexture);
+		}
+
+		backBufferTexture->Release();
+		pResource->Release();
+	}
+	else
+	{
+		os_VideoRoutingTermDX();
+	}
+#endif
 }
 
 Renderer *rend_DirectX11()

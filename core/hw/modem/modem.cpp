@@ -28,10 +28,7 @@
 #include "network/picoppp.h"
 #include "serialize.h"
 #include "cfg/option.h"
-
-#ifndef NDEBUG
-#include "oslib/oslib.h"
-#endif
+#include "stdclass.h"
 #include <cassert>
 
 #define MODEM_COUNTRY_RES 0
@@ -127,27 +124,27 @@ static u64 last_dial_time;
 static bool data_sent;
 
 #ifndef NDEBUG
-static double last_comm_stats;
+static u64 last_comm_stats;
 static int sent_bytes;
 static int recvd_bytes;
 static FILE *recv_fp;
 static FILE *sent_fp;
 #endif
 
-static int modem_sched_func(int tag, int cycles, int jitter)
+static int modem_sched_func(int tag, int cycles, int jitter, void *arg)
 {
 #ifndef NDEBUG
-	if (os_GetSeconds() - last_comm_stats >= 2)
+	if (getTimeMs() - last_comm_stats >= 2000)
 	{
 		if (last_comm_stats != 0)
 		{
-			DEBUG_LOG(MODEM, "Stats sent %d (%.2f kB/s) received %d (%.2f kB/s) TDBE %d RDBF %d\n", sent_bytes, sent_bytes / 2000.0,
+			DEBUG_LOG(MODEM, "Stats sent %d (%.2f kB/s) received %d (%.2f kB/s) TDBE %d RDBF %d", sent_bytes, sent_bytes / 2000.0,
 					recvd_bytes, recvd_bytes / 2000.0,
 					modem_regs.reg1e.TDBE, modem_regs.reg1e.RDBF);
 			sent_bytes = 0;
 			recvd_bytes = 0;
 		}
-		last_comm_stats = os_GetSeconds();
+		last_comm_stats = getTimeMs();
 	}
 #endif
 	int callback_cycles = 0;
@@ -286,6 +283,8 @@ static int modem_sched_func(int tag, int cycles, int jitter)
 			// This value is critical. Setting it too low will cause some sockets to stall.
 			// Check Sonic Adventure 2 and Samba de Amigo (PAL) integrated browsers.
 			// 143 us/bytes corresponds to 56K
+			// 57600 @ 10b: 174
+			// 38400 @ 10b: 260
 			callback_cycles = SH4_MAIN_CLOCK / 1000000 * 143;
 			modem_regs.reg1e.TDBE = 1;
 
@@ -626,7 +625,10 @@ static void ModemNormalWrite(u32 reg, u32 data)
 			{
 				modem_regs.reg1a.SFRES = 0;
 				LOG("Soft Reset SET && NEWC, executing reset and init");
+				modem_reset(0);
 				modem_reset(1);
+				modem_regs.reg1f.NEWC = 1;
+				modem_regs.ptr[0x20] = 0;
 			}
 			else
 			{
@@ -702,15 +704,13 @@ u32 ModemReadMem_A0_006(u32 addr, u32 size)
 
 		case MS_ST_CONTROLER:
 		case MS_ST_DSP:
-			if (reg==0x10)
-			{
-				modem_regs.reg1e.TDBE=0;
+		case MS_END_DSP:
+			if (reg == 0x10)
+				// don't reset TBDE to help kos modem self test
+				//modem_regs.reg1e.TDBE = 0;
 				return 0;
-			}
 			else
-			{
 				return modem_regs.ptr[reg];
-			}
 
 		case MS_RESETING:
 			return 0; //still reset

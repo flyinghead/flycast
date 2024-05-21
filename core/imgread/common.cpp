@@ -2,6 +2,8 @@
 #include "hw/gdrom/gdromv3.h"
 #include "cfg/option.h"
 #include "stdclass.h"
+#include "hw/sh4/sh4_sched.h"
+#include "serialize.h"
 
 Disc* chd_parse(const char* file, std::vector<u8> *digest);
 Disc* gdi_parse(const char* file, std::vector<u8> *digest);
@@ -9,8 +11,9 @@ Disc* cdi_parse(const char* file, std::vector<u8> *digest);
 Disc* cue_parse(const char* file, std::vector<u8> *digest);
 Disc* ioctl_parse(const char* file, std::vector<u8> *digest);
 
-u32 NullDriveDiscType;
+static u32 NullDriveDiscType;
 Disc* disc;
+static int schedId = -1;
 
 constexpr Disc* (*drivers[])(const char* path, std::vector<u8> *digest)
 {
@@ -23,7 +26,7 @@ constexpr Disc* (*drivers[])(const char* path, std::vector<u8> *digest)
 #endif
 };
 
-u8 q_subchannel[96];
+static u8 q_subchannel[96];
 
 static bool convertSector(u8* in_buff , u8* out_buff , int from , int to,int sector)
 {
@@ -90,7 +93,7 @@ Disc* OpenDisc(const std::string& path, std::vector<u8> *digest)
 			return disc;
 	}
 
-	return nullptr;
+	throw FlycastException("Unknown disk format");
 }
 
 static bool loadDisk(const std::string& path)
@@ -113,18 +116,27 @@ static bool loadDisk(const std::string& path)
 		INFO_LOG(GDROM, "gdrom: Failed to open image \"%s\"", path.c_str());
 		NullDriveDiscType = NoDisk;
 	}
-	libCore_gdrom_disc_change();
 
 	return disc != NULL;
 }
 
+static bool doDiscSwap(const std::string& path);
+
 bool InitDrive(const std::string& path)
 {
-	bool rc = DiscSwap(path);
-	// not needed at startup and confuses some games
-	sns_asc = 0;
-	sns_ascq = 0;
-	sns_key = 0;
+	bool rc = doDiscSwap(path);
+	if (rc && disc == nullptr)
+	{
+		// Drive is busy
+		sns_asc = 4;
+		sns_ascq = 1;
+		sns_key = 2;
+		SecNumber.Status = GD_BUSY;
+		sh4_sched_request(schedId, SH4_MAIN_CLOCK);
+	}
+	else {
+		gd_setdisc();
+	}
 
 	return rc;
 }
@@ -134,23 +146,14 @@ void DiscOpenLid()
 	TermDrive();
 	NullDriveDiscType = Open;
 	gd_setdisc();
-	sns_asc = 0x29;
-	sns_ascq = 0x00;
-	sns_key = 0x6;
 }
 
-bool DiscSwap(const std::string& path)
+static bool doDiscSwap(const std::string& path)
 {
-	// These Additional Sense Codes mean "The lid was closed"
-	sns_asc = 0x28;
-	sns_ascq = 0x00;
-	sns_key = 0x6;
-
 	if (path.empty())
 	{
 		TermDrive();
 		NullDriveDiscType = NoDisk;
-		gd_setdisc();
 		return true;
 	}
 
@@ -158,15 +161,14 @@ bool DiscSwap(const std::string& path)
 		return true;
 
 	NullDriveDiscType = NoDisk;
-	gd_setdisc();
-
 	return false;
 }
 
 void TermDrive()
 {
+	sh4_sched_request(schedId, -1);
 	delete disc;
-	disc = NULL;
+	disc = nullptr;
 }
 
 
@@ -223,8 +225,7 @@ void libGDR_GetToc(u32* to, DiskArea area)
 	to[100] = createTrackInfoFirstLast(disc->tracks[last_track - 1], last_track);
 
 	if (disc->type == GdRom && area == SingleDensity)
-		// use smaller LEADOUT
-		to[101] = createTrackInfo(disc->LeadOut, 13085);
+		to[101] = createTrackInfo(disc->LeadOut, disc->tracks[1].EndFAD + 1);
 	else
 		to[101] = createTrackInfo(disc->LeadOut, disc->LeadOut.StartFAD);
 
@@ -250,6 +251,18 @@ DiscType GuessDiscType(bool m1, bool m2, bool da)
 		return CdRom;
 }
 
+bool Disc::readSector(u32 FAD, u8 *dst, SectorFormat *sector_type, u8 *subcode, SubcodeFormat *subcode_type)
+{
+	for (size_t i = tracks.size(); i-- > 0; )
+	{
+		*subcode_type = SUBFMT_NONE;
+		if (tracks[i].Read(FAD, dst, sector_type, subcode, subcode_type))
+			return true;
+	}
+
+	return false;
+}
+
 void Disc::ReadSectors(u32 FAD, u32 count, u8* dst, u32 fmt, LoadProgress *progress)
 {
 	u8 temp[2448];
@@ -265,7 +278,7 @@ void Disc::ReadSectors(u32 FAD, u32 count, u8* dst, u32 fmt, LoadProgress *progr
 			progress->label = "Loading...";
 			progress->progress = (float)i / count;
 		}
-		if (ReadSector(FAD,temp,&secfmt,q_subchannel,&subfmt))
+		if (readSector(FAD, temp, &secfmt, q_subchannel, &subfmt))
 		{
 			//TODO: Proper sector conversions
 			if (secfmt==SECFMT_2352)
@@ -297,6 +310,7 @@ void Disc::ReadSectors(u32 FAD, u32 count, u8* dst, u32 fmt, LoadProgress *progr
 		else
 		{
 			WARN_LOG(GDROM, "Sector Read miss FAD: %d", FAD);
+			memset(dst, 0, fmt);
 		}
 		dst+=fmt;
 		FAD++;
@@ -310,8 +324,67 @@ void libGDR_ReadSubChannel(u8 * buff, u32 len)
 
 u32 libGDR_GetDiscType()
 {
-	if (disc)
+	// Pretend no disk is inserted if a disk swapping is in progress
+	if (!sh4_sched_is_scheduled(schedId) && disc != nullptr)
 		return disc->type;
 	else
 		return NullDriveDiscType;
+}
+
+static int discSwapCallback(int tag, int sch_cycl, int jitter, void *arg)
+{
+	if (disc != nullptr)
+		// The lid was closed
+		sns_asc = 0x28;
+	else
+		// No disc inserted at the time of power-on, reset or hard reset, or TOC cannot be read.
+		sns_asc = 0x29;
+	sns_ascq = 0;
+	sns_key = 6;
+	gd_setdisc();
+
+	return 0;
+}
+
+bool DiscSwap(const std::string& path)
+{
+	if (!doDiscSwap(path))
+		throw FlycastException("This media cannot be loaded");
+	EventManager::event(Event::DiskChange);
+	// Drive is busy after the lid was closed
+	sns_asc = 4;
+	sns_ascq = 1;
+	sns_key = 2;
+	SecNumber.Status = GD_BUSY;
+	sh4_sched_request(schedId, SH4_MAIN_CLOCK); // 1 s
+
+	return true;
+}
+
+void libGDR_init()
+{
+	verify(schedId == -1);
+	schedId = sh4_sched_register(0, discSwapCallback);
+}
+void libGDR_term()
+{
+	TermDrive();
+	sh4_sched_unregister(schedId);
+	schedId = -1;
+}
+
+void libGDR_serialize(Serializer& ser)
+{
+	ser << NullDriveDiscType;
+	ser << q_subchannel;
+	sh4_sched_serialize(ser, schedId);
+}
+void libGDR_deserialize(Deserializer& deser)
+{
+	deser >> NullDriveDiscType;
+	deser >> q_subchannel;
+	if (deser.version() >= Deserializer::V46)
+		sh4_sched_deserialize(deser, schedId);
+	else
+		sh4_sched_request(schedId, -1);
 }

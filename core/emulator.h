@@ -23,10 +23,11 @@
 
 #include <atomic>
 #include <future>
-#include <map>
+#include <array>
 #include <mutex>
 #include <utility>
 #include <vector>
+#include <time.h>
 
 void loadGameSpecificSettings();
 void SaveSettings();
@@ -35,9 +36,11 @@ int flycast_init(int argc, char* argv[]);
 void dc_reset(bool hard); // for tests only
 void flycast_term();
 void dc_exit();
-void dc_savestate(int index = 0);
+void dc_savestate(int index = 0, const u8 *pngData = nullptr, u32 pngSize = 0);
 void dc_loadstate(int index = 0);
 void dc_loadstate(Deserializer& deser);
+time_t dc_getStateCreationDate(int index);
+void dc_getStateScreenshot(int index, std::vector<u8>& pngData);
 
 enum class Event {
 	Start,
@@ -46,6 +49,9 @@ enum class Event {
 	Terminate,
 	LoadState,
 	VBlank,
+	Network,
+	DiskChange,
+	max = DiskChange
 };
 
 class EventManager
@@ -54,26 +60,29 @@ public:
 	using Callback = void (*)(Event, void *);
 
 	static void listen(Event event, Callback callback, void *param = nullptr) {
-		Instance.registerEvent(event, callback, param);
+		instance().registerEvent(event, callback, param);
 	}
 
 	static void unlisten(Event event, Callback callback, void *param = nullptr) {
-		Instance.unregisterEvent(event, callback, param);
+		instance().unregisterEvent(event, callback, param);
 	}
 
 	static void event(Event event) {
-		Instance.broadcastEvent(event);
+		instance().broadcastEvent(event);
 	}
 
 private:
 	EventManager() = default;
+	static EventManager& instance() {
+		static EventManager _instance;
+		return _instance;
+	}
 
 	void registerEvent(Event event, Callback callback, void *param);
 	void unregisterEvent(Event event, Callback callback, void *param);
 	void broadcastEvent(Event event);
 
-	static EventManager Instance;
-	std::map<Event, std::vector<std::pair<Callback, void *>>> callbacks;
+	std::array<std::vector<std::pair<Callback, void *>>, static_cast<size_t>(Event::max) + 1> callbacks;
 };
 
 struct LoadProgress

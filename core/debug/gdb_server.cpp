@@ -23,6 +23,7 @@
 #include "debug_agent.h"
 #include "network/net_platform.h"
 #include "cfg/option.h"
+#include "oslib/oslib.h"
 #include <stdexcept>
 #include <thread>
 #include <chrono>
@@ -140,6 +141,7 @@ private:
 
 	void serverThread()
 	{
+		ThreadName _("GdbServer");
 		while (!stopRequested)
 		{
 			fd_set fds;

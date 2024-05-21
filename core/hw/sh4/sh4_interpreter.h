@@ -1,6 +1,5 @@
 #pragma once
 #include "types.h"
-#include "sh4_if.h"
 
 #undef sh4op
 #define sh4op(str) void  DYNACALL str (u32 op)

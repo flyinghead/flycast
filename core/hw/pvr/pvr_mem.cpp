@@ -190,10 +190,19 @@ void YUV_deserialize(Deserializer& deser)
 	deser >> YUV_y_curr;
 	deser >> YUV_x_size;
 	deser >> YUV_y_size;
-	if (deser.version() >= Deserializer::V16)
-		deser >> YUV_index;
-	else
-		YUV_index = 0;
+	deser >> YUV_index;
+}
+
+void YUV_reset()
+{
+	memset(YUV_tempdata, 0, sizeof(YUV_tempdata));
+	YUV_dest = 0;
+	YUV_blockcount = 0;
+	YUV_x_curr = 0;
+	YUV_y_curr = 0;
+	YUV_x_size = 0;
+	YUV_y_size = 0;
+	YUV_index = 0;
 }
 
 //vram 32-64b

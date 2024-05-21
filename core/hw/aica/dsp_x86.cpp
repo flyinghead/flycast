@@ -33,7 +33,7 @@ namespace aica
 namespace dsp
 {
 
-alignas(4096) static u8 CodeBuffer[32 * 1024]
+alignas(4096) static u8 CodeBuffer[32_KB]
 #if defined(_WIN32)
 	;
 #elif defined(__unix__)

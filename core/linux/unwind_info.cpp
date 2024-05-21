@@ -20,7 +20,7 @@
 // Based on Asmjit unwind info registration and stack walking code for Windows, Linux and macOS
 // https://gist.github.com/dpjudas/925d5c4ffef90bd8114be3b465069fff
 #include "build.h"
-#include "oslib/oslib.h"
+#include "oslib/unwind_info.h"
 
 extern "C"
 {
@@ -95,6 +95,9 @@ constexpr int dwarfRegSP = 13;
 #endif
 
 #if HOST_CPU == CPU_X64 || HOST_CPU == CPU_ARM64 || HOST_CPU == CPU_X86 || (HOST_CPU == CPU_ARM && defined(__ANDROID__))
+
+#include <cstring>
+#include <vector>
 
 using ByteStream = std::vector<u8>;
 

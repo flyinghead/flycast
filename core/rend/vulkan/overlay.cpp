@@ -41,6 +41,7 @@ void VulkanOverlay::Init(QuadPipeline *pipeline)
 	}
 	xhairDrawer = std::make_unique<QuadDrawer>();
 	xhairDrawer->Init(pipeline);
+	vmuLastChanged.fill({});
 }
 
 void VulkanOverlay::Term()
@@ -65,7 +66,7 @@ std::unique_ptr<Texture> VulkanOverlay::createTexture(vk::CommandBuffer commandB
 	return texture;
 }
 
-void VulkanOverlay::Prepare(vk::CommandBuffer cmdBuffer, bool vmu, bool crosshair, TextureCache& textureCache)
+void VulkanOverlay::Prepare(vk::CommandBuffer cmdBuffer, bool vmu, bool crosshair)
 {
 	if (vmu)
 	{
@@ -76,18 +77,21 @@ void VulkanOverlay::Prepare(vk::CommandBuffer cmdBuffer, bool vmu, bool crosshai
 			{
 				if (texture)
 				{
-					textureCache.DestroyLater(texture.get());
+					texture->deferDeleteResource(VulkanContext::Instance());
 					texture.reset();
 				}
 				continue;
 			}
-			if (texture != nullptr && !vmu_lcd_changed[i])
+			if (texture != nullptr && ::vmuLastChanged[i] == this->vmuLastChanged[i])
 				continue;
 
 			if (texture)
-				textureCache.DestroyLater(texture.get());
+				texture->deferDeleteResource(VulkanContext::Instance());
 			texture = createTexture(cmdBuffer, 48, 32, (u8*)vmu_lcd_data[i]);
-			vmu_lcd_changed[i] = false;
+#ifdef VK_DEBUG
+			VulkanContext::Instance()->setObjectName((VkImageView)texture->GetImageView(), vk::ImageView::objectType, "VMU " + std::to_string(i));
+#endif
+			this->vmuLastChanged[i] = ::vmuLastChanged[i];
 		}
 	}
 	if (crosshair && !xhairTexture)
@@ -97,7 +101,7 @@ void VulkanOverlay::Prepare(vk::CommandBuffer cmdBuffer, bool vmu, bool crosshai
 	}
 }
 
-vk::CommandBuffer VulkanOverlay::Prepare(vk::CommandPool commandPool, bool vmu, bool crosshair, TextureCache& textureCache)
+vk::CommandBuffer VulkanOverlay::Prepare(vk::CommandPool commandPool, bool vmu, bool crosshair)
 {
 	VulkanContext *context = VulkanContext::Instance();
 	commandBuffers.resize(context->GetSwapChainSize());
@@ -106,7 +110,7 @@ vk::CommandBuffer VulkanOverlay::Prepare(vk::CommandPool commandPool, bool vmu, 
 			.front());
 	vk::CommandBuffer cmdBuffer = *commandBuffers[context->GetCurrentImageIndex()];
 	cmdBuffer.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
-	Prepare(cmdBuffer, vmu, crosshair, textureCache);
+	Prepare(cmdBuffer, vmu, crosshair);
 	cmdBuffer.end();
 
 	return cmdBuffer;
@@ -123,9 +127,21 @@ void VulkanOverlay::Draw(vk::CommandBuffer commandBuffer, vk::Extent2D viewport,
 
 	if (vmu)
 	{
+#ifndef LIBRETRO
 		f32 vmu_padding = 8.f * scaling;
 		f32 vmu_height = 32.f * scaling;
 		f32 vmu_width = 48.f * scaling;
+#else
+		f32 vmu_padding_x = 8.f * viewport.width / 640.f;
+		f32 vmu_padding_y = 8.f * viewport.height / 480.f;
+		f32 vmu_width = 48.f * viewport.width / 640.f;
+		f32 vmu_height = 32.f * viewport.height / 480.f;
+		if (config::Widescreen)
+		{
+			vmu_padding_x = vmu_padding_x / 4.f * 3.f;
+			vmu_width = vmu_width / 4.f * 3.f;
+		}
+#endif
 
 		pipeline->BindPipeline(commandBuffer);
 		const float *color = nullptr;
@@ -155,20 +171,20 @@ void VulkanOverlay::Draw(vk::CommandBuffer commandBuffer, vk::Extent2D viewport,
 			{
 			case UPPER_LEFT:
 			default:
-				x = vmu_padding;
-				y = vmu_padding;
+				x = vmu_padding_x;
+				y = vmu_padding_y;
 				break;
 			case UPPER_RIGHT:
-				x = viewport.width - vmu_padding - w;
-				y = vmu_padding;
+				x = viewport.width - vmu_padding_x - w;
+				y = vmu_padding_y;
 				break;
 			case LOWER_LEFT:
-				x = vmu_padding;
-				y = viewport.height - vmu_padding - h;
+				x = vmu_padding_x;
+				y = viewport.height - vmu_padding_y - h;
 				break;
 			case LOWER_RIGHT:
-				x = viewport.width - vmu_padding - w;
-				y = viewport.height - vmu_padding - h;
+				x = viewport.width - vmu_padding_x - w;
+				y = viewport.height - vmu_padding_y - h;
 				break;
 			}
 #else
@@ -210,12 +226,12 @@ void VulkanOverlay::Draw(vk::CommandBuffer commandBuffer, vk::Extent2D viewport,
 			auto [x, y] = getCrosshairPosition(i);
 
 #ifdef LIBRETRO
-			float w = LIGHTGUN_CROSSHAIR_SIZE * scaling / config::ScreenStretching * 100.f;
-			float h = LIGHTGUN_CROSSHAIR_SIZE * scaling;
+			float w = lightgun_crosshair_size * scaling / config::ScreenStretching * 100.f;
+			float h = lightgun_crosshair_size * scaling;
 			x /= config::ScreenStretching / 100.f;
 #else
-			float w = XHAIR_WIDTH * scaling;
-			float h = XHAIR_HEIGHT * scaling;
+			float w = config::CrosshairSize * scaling;
+			float h = config::CrosshairSize * scaling;
 #endif
 			x -= w / 2;
 			y -= h / 2;

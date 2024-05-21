@@ -18,6 +18,8 @@
  */
 #pragma once
 
+#include <cstring>
+
 class Settings {
 public:
 	void reset() {}
@@ -84,7 +86,7 @@ public:
 	}
 
 	void load() override {
-		if (!name.empty())
+		if (!name.empty() && !overridden)
 			set(doLoad(name));
 	}
 

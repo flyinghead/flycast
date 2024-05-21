@@ -459,7 +459,9 @@ void mmu_set_state()
 	setSqwHandler();
 }
 
+#ifdef FAST_MMU
 u32 mmuAddressLUT[0x100000];
+#endif
 
 void MMU_init()
 {
@@ -492,6 +494,7 @@ void MMU_reset()
 	memset(ITLB, 0, sizeof(ITLB));
 	mmu_set_state();
 	mmu_flush_table();
+	memset(sq_remap, 0, sizeof(sq_remap));
 }
 
 void MMU_term()
@@ -588,8 +591,6 @@ void mmu_deserialize(Deserializer& deser)
 	deser >> UTLB;
 	deser >> ITLB;
 
-	if (deser.version() >= Deserializer::V11
-			|| (deser.version() >= Deserializer::V11_LIBRETRO && deser.version() <= Deserializer::VLAST_LIBRETRO))
-		deser >> sq_remap;
+	deser >> sq_remap;
 	deser.skip(64 * 4, Deserializer::V23); // ITLB_LRU_USE
 }

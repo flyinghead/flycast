@@ -1,6 +1,7 @@
 #pragma once
 #include "types.h"
 #include "ta_ctx.h"
+#include <vector>
 
 extern u32 FrameCount;
 
@@ -8,7 +9,7 @@ bool rend_init_renderer();
 void rend_term_renderer();
 void rend_vblank();
 void rend_start_render();
-int rend_end_render(int tag, int cycles, int jitter);
+int rend_end_render(int tag, int cycles, int jitter, void *arg);
 void rend_cancel_emu_wait();
 bool rend_single_frame(const bool& enabled);
 void rend_swap_frame(u32 fb_r_sof1);
@@ -62,6 +63,11 @@ struct Renderer
 	virtual bool Render() = 0;
 	virtual void RenderFramebuffer(const FramebufferInfo& info) = 0;
 	virtual bool RenderLastFrame() { return false; }
+	// Get the last rendered frame pixel data in RGB format
+	// The returned image is rotated and scaled (upward orientation and square pixels)
+	// If both width and height are zero, the internal render resolution will be used.
+	// Otherwise either width or height will be used as the maximum width or height respectively.
+	virtual bool GetLastFrame(std::vector<u8>& data, int& width, int& height) { return false; }
 
 	virtual bool Present() { return true; }
 

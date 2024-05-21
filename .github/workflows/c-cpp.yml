@@ -18,23 +18,24 @@ jobs:
       matrix:
         config:
           - {name: i686-pc-windows-msvc, os: windows-latest, shell: cmd, arch: x86, cmakeArgs: -G Ninja, buildType: Release}
-          - {name: apple-darwin, os: macos-latest, shell: sh, cmakeArgs: -G Xcode -DAPPLE_BREAKPAD=ON, destDir: osx, buildType: RelWithDebInfo}
+          - {name: apple-darwin, os: macos-latest, shell: sh, cmakeArgs: -G Xcode -DAPPLE_BREAKPAD=ON -DUSE_DISCORD=ON, destDir: osx, buildType: RelWithDebInfo}
           - {name: apple-ios, os: macos-latest, shell: sh, cmakeArgs: -DCMAKE_SYSTEM_NAME=iOS -G Xcode, destDir: ios, buildType: Release}
-          - {name: x86_64-pc-linux-gnu, os: ubuntu-20.04, shell: sh, cmakeArgs: -G Ninja, destDir: linux, buildType: RelWithDebInfo}
-          - {name: x86_64-pc-windows-msvc, os: windows-latest, shell: cmd, arch: x64, cmakeArgs: -G Ninja, buildType: Release}
-          - {name: x86_64-w64-mingw32, os: windows-latest, shell: 'msys2 {0}', cmakeArgs: -G Ninja, destDir: win, buildType: RelWithDebInfo}
+          - {name: x86_64-pc-linux-gnu, os: ubuntu-20.04, shell: sh, cmakeArgs: -G Ninja -DUSE_DISCORD=ON, destDir: linux, buildType: RelWithDebInfo}
+          - {name: x86_64-pc-windows-msvc, os: windows-latest, shell: cmd, arch: x64, cmakeArgs: -G Ninja -DUSE_DISCORD=ON, buildType: Release}
+          - {name: x86_64-w64-mingw32, os: windows-latest, shell: 'msys2 {0}', cmakeArgs: -G Ninja -DUSE_DISCORD=ON, destDir: win, buildType: RelWithDebInfo}
           - {name: libretro-x86_64-pc-linux-gnu, os: ubuntu-latest, shell: sh, cmakeArgs: -DLIBRETRO=ON -DCMAKE_POSITION_INDEPENDENT_CODE=TRUE -G Ninja, buildType: Release}
           - {name: libretro-x86_64-w64-mingw32, os: windows-latest, shell: 'msys2 {0}', cmakeArgs: -DLIBRETRO=ON -G Ninja, buildType: Release}
 
     steps:
       - name: Set up build environment (macOS)
         run: |
+          sudo xcode-select -switch /Applications/Xcode_15.3.app
           # Unlink and re-link to prevent errors when github mac runner images install python outside of brew. See https://github.com/actions/setup-python/issues/577
           brew list -1 | grep python | while read formula; do brew unlink $formula; brew link --overwrite $formula; done
-          brew update
+          brew update || :
           brew install libao ldid ninja pulseaudio
-          VULKAN_VER=1.3.243.0 && aria2c https://sdk.lunarg.com/sdk/download/$VULKAN_VER/mac/vulkansdk-macos-$VULKAN_VER.dmg
-          hdiutil attach ./vulkansdk-macos-*.dmg
+          VULKAN_VER=1.3.261.1 && aria2c https://sdk.lunarg.com/sdk/download/$VULKAN_VER/mac/vulkansdk-macos-$VULKAN_VER.dmg
+          hdiutil attach ./vulkansdk-macos-*.dmg -mountpoint /Volumes/VulkanSDK
           sudo /Volumes/VulkanSDK/InstallVulkan.app/Contents/MacOS/InstallVulkan --root $HOME/VulkanSDK --accept-licenses --default-answer --confirm-command install
           hdiutil detach /Volumes/VulkanSDK
           echo "VULKAN_SDK=$HOME/VulkanSDK/macOS" >> $GITHUB_ENV
@@ -66,10 +67,10 @@ jobs:
           arch: ${{ matrix.config.arch }}
         if: matrix.config.shell == 'cmd'
 
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          submodules: true
+          submodules: recursive
 
       - name: Compile a universal OpenMP (macOS)
         run: HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=1 brew reinstall --build-from-source --formula ./shell/apple/libomp.rb
@@ -79,7 +80,7 @@ jobs:
         run: ./shell/apple/emulator-ios/OpenMP/build_ios_openmp.sh --disableSimulator
         if: matrix.config.name == 'apple-ios'
 
-      - uses: actions/cache@v3
+      - uses: actions/cache@v4
         with:
           path: ${{ env.CCACHE_DIR }}
           key: ccache-${{ matrix.config.name }}-${{ github.sha }}
@@ -125,7 +126,7 @@ jobs:
           rm artifact/bin/flycast
         if: matrix.config.name == 'x86_64-pc-linux-gnu'
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: flycast-${{ matrix.config.name }}
           path: artifact/bin
@@ -144,7 +145,7 @@ jobs:
 
       - name: Configure AWS Credentials
         id: aws-credentials
-        uses: aws-actions/configure-aws-credentials@v2
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: AKIAJOZQS4H2PHQWYFCA
           aws-secret-access-key: ${{ secrets.S3_SECRET_KEY }}
@@ -157,7 +158,7 @@ jobs:
         if: ${{ steps.aws-credentials.outputs.aws-account-id != '' }}
 
       - name: Setup Sentry CLI
-        uses: mathieu-bour/setup-sentry-cli@v1
+        uses: mathieu-bour/setup-sentry-cli@v2
         env:
           SENTRY_TOKEN: ${{ secrets.SENTRY_TOKEN }}
         with:
@@ -165,6 +166,7 @@ jobs:
           token: ${{ env.SENTRY_TOKEN }}
           organization: flycast
           project: minidump
+          version: 2.21.2
         if: ${{ env.SENTRY_TOKEN != '' }}
       
       - name: Upload symbols to Sentry (Windows, macOS, Linux)
@@ -172,7 +174,7 @@ jobs:
           VERSION=$(git describe --tags --always)
           sentry-cli releases new "$VERSION"
           sentry-cli releases set-commits "$VERSION" --auto
-          sentry-cli upload-dif symbols
+          sentry-cli debug-files upload symbols
         shell: bash
         env:
           SENTRY_TOKEN: ${{ secrets.SENTRY_TOKEN }}

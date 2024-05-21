@@ -14,11 +14,11 @@ void naomi_Deserialize(Deserializer& deser);
 u32  ReadMem_naomi(u32 Addr, u32 size);
 void WriteMem_naomi(u32 Addr, u32 data, u32 size);
 
-void NaomiBoardIDWrite(u16 Data);
-void NaomiBoardIDWriteControl(u16 Data);
+void NaomiBoardIDWrite(u16 data);
 u16 NaomiBoardIDRead();
 u16 NaomiGameIDRead();
-void NaomiGameIDWrite(u16 Data);
+void NaomiGameIDWrite(u16 data);
+void setGameSerialId(const u8 *data);
 
 void initMidiForceFeedback();
 void initDriveSimSerialPipe();

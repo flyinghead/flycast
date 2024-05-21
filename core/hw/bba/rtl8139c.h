@@ -21,6 +21,7 @@
 
 #include <climits>
 #include <cinttypes>
+#include <cstring>
 
 typedef u8 uint8_t;
 typedef u16 uint16_t;

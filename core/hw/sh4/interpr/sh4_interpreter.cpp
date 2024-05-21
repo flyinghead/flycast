@@ -118,8 +118,8 @@ static void Sh4_int_Reset(bool hard)
 	UpdateSR();
 
 	fpscr.full = 0x00040001;
-	old_fpscr=fpscr;
-	UpdateFPSCR();
+	old_fpscr = fpscr;
+
 	icache.Reset(hard);
 	ocache.Reset(hard);
 	sh4cycles.reset();

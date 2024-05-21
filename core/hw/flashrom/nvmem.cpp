@@ -22,9 +22,7 @@
 #include "hw/aica/aica_if.h"
 #include "reios/reios.h"
 #include "oslib/oslib.h"
-#include "archive/ZipArchive.h"
-#include <cmrc/cmrc.hpp>
-CMRC_DECLARE(flycast);
+#include "oslib/resources.h"
 
 extern bool bios_loaded;
 
@@ -47,7 +45,6 @@ static std::string getRomPrefix()
 	case DC_PLATFORM_ATOMISWAVE:
 		return "aw_";
 	default:
-		die("Unsupported platform");
 		return "";
 	}
 }
@@ -79,8 +76,7 @@ static void add_isp_to_nvmem(DCFlashChip *flash)
 		for (u32 i = FLASH_USER_INET + 5; i <= 0xbf; i++)
 			flash->WriteBlock(FLASH_PT_USER, i, block);
 
-		flash_isp1_block isp1;
-		memset(&isp1, 0, sizeof(isp1));
+		flash_isp1_block isp1{};
 		isp1._unknown[3] = 1;
 		memcpy(isp1.sega, "SEGA", 4);
 		strcpy(isp1.username, "flycast1");
@@ -92,13 +88,14 @@ static void add_isp_to_nvmem(DCFlashChip *flash)
 		memset(block, 0, sizeof(block));
 		flash->WriteBlock(FLASH_PT_USER, FLASH_USER_ISP1 + 1, block);
 		flash->WriteBlock(FLASH_PT_USER, FLASH_USER_ISP1 + 2, block);
+		strcpy((char *)block + 2, "flycast@gmail.com");
 		flash->WriteBlock(FLASH_PT_USER, FLASH_USER_ISP1 + 3, block);
+		memset(block, 0, sizeof(block));
 		flash->WriteBlock(FLASH_PT_USER, FLASH_USER_ISP1 + 4, block);
 		block[60] = 1;
 		flash->WriteBlock(FLASH_PT_USER, FLASH_USER_ISP1 + 5, block);
 
-		flash_isp2_block isp2;
-		memset(&isp2, 0, sizeof(isp2));
+		flash_isp2_block isp2{};
 		memcpy(isp2.sega, "SEGA", 4);
 		strcpy(isp2.username, "flycast2");
 		strcpy(isp2.password, "password");
@@ -191,47 +188,15 @@ static void fixUpDCFlash()
      		console_id[-1] = console_id[0xA0 - 1] = sum;
      		console_id[-2] = console_id[0xA0 - 2] = ~sum;
      	}
- 		// must be != 0xff
+ 		// machine_version: ff - VA0, fe - VA1, fd - VA2
+     	// must be != 0xff
  		console_id[7] = console_id[0xA0 + 7] = 0xfe;
 	}
 }
 
 static std::unique_ptr<u8[]> loadFlashResource(const std::string& name, size_t& size)
 {
-	try {
-		cmrc::embedded_filesystem fs = cmrc::flycast::get_filesystem();
-		std::string fname = "flash/" + name + ".zip";
-		if (fs.exists(fname))
-		{
-			cmrc::file zipFile = fs.open(fname);
-			ZipArchive zip;
-			if (zip.Open(zipFile.cbegin(), zipFile.size()))
-			{
-				std::unique_ptr<ArchiveFile> flashFile;
-				flashFile.reset(zip.OpenFirstFile());
-				if (flashFile != nullptr)
-				{
-					std::unique_ptr<u8[]> buffer = std::make_unique<u8[]>(size);
-					size = flashFile->Read(buffer.get(), size);
-
-					return buffer;
-				}
-			}
-		}
-		else
-		{
-			cmrc::file flashFile = fs.open("flash/" + name);
-			size = flashFile.size();
-			std::unique_ptr<u8[]> buffer = std::make_unique<u8[]>(size);
-
-			return buffer;
-		}
-		DEBUG_LOG(FLASHROM, "Default flash not found");
-	} catch (const std::system_error& e) {
-		DEBUG_LOG(FLASHROM, "Default flash not found: %s", e.what());
-	}
-	size = 0;
-	return nullptr;
+	return resource::load("flash/" + name, size);
 }
 
 static void loadDefaultAWBiosFlash()
@@ -377,6 +342,10 @@ void init()
 		sys_rom = new DCFlashChip(settings.platform.bios_size, settings.platform.bios_size / 2);
 		sys_nvmem = new SRamChip(settings.platform.flash_size);
 		break;
+	case DC_PLATFORM_SYSTEMSP:
+		sys_rom = new RomChip(settings.platform.bios_size);
+		sys_nvmem = new SRamChip(settings.platform.flash_size);
+		break;
 	}
 }
 
@@ -402,36 +371,8 @@ void serialize(Serializer& ser)
 
 void deserialize(Deserializer& deser)
 {
-	if (deser.version() <= Deserializer::VLAST_LIBRETRO)
-	{
-		deser.skip<u32>();	// size
-		deser.skip<u32>();	// mask
-
-		// Legacy libretro savestate
-		if (settings.platform.isArcade())
-			sys_nvmem->Deserialize(deser);
-
-		deser.skip<u32>(); // sys_nvmem/sys_rom->size
-		deser.skip<u32>(); // sys_nvmem/sys_rom->mask
-		if (settings.platform.isConsole())
-		{
-			sys_nvmem->Deserialize(deser);
-		}
-		else if (settings.platform.isAtomiswave())
-		{
-			deser >> static_cast<DCFlashChip*>(sys_rom)->state;
-			deser.deserialize(sys_rom->data, sys_rom->size);
-		}
-		else
-		{
-			deser.skip<u32>();
-		}
-	}
-	else
-	{
-		sys_rom->Deserialize(deser);
-		sys_nvmem->Deserialize(deser);
-	}
+	sys_rom->Deserialize(deser);
+	sys_nvmem->Deserialize(deser);
 }
 
 }

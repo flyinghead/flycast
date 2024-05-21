@@ -6,31 +6,16 @@ jobs:
   build:
     runs-on: windows-latest
 
-    env:
-      VCPKG_ROOT: ${{ github.workspace }}/vcpkg
-      VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/vcpkg/bincache
-
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
           submodules: true
 
-      - name: bootstrap vcpkg
-        run: |
-          git clone https://github.com/microsoft/vcpkg
-          mkdir vcpkg\bincache
-          vcpkg\bootstrap-vcpkg.bat
-
-      - uses: actions/cache@v3
-        with:
-          path: ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}
-          key: vcpkg-${{ hashFiles( 'vcpkg.json' ) }}
-
       - name: CMake
         run: |
-          cmake -B build -DCMAKE_BUILD_TYPE=Release -G "Visual Studio 17 2022" -A x64 -DCMAKE_SYSTEM_NAME=WindowsStore -DCMAKE_SYSTEM_VERSION=10.0.22000.0 -DCMAKE_TOOLCHAIN_FILE=%VCPKG_ROOT%\scripts\buildsystems\vcpkg.cmake
-          cmake --build build --config Release --parallel 2
+          cmake -B build -DCMAKE_BUILD_TYPE=Release -G "Visual Studio 17 2022" -A x64 -DCMAKE_SYSTEM_NAME=WindowsStore -DCMAKE_SYSTEM_VERSION=10.0.22000.0
+          cmake --build build --config Release -- /m
         shell: cmd
 
       - uses: ilammy/msvc-dev-cmd@v1
@@ -49,14 +34,14 @@ jobs:
         run: signtool sign /f shell\uwp\sign_cert.pfx /p '${{ secrets.SIGN_CERT_PWD }}' /v /fd SHA256 build\artifact\flycast.appx
         if: github.repository == 'flyinghead/flycast' && github.event_name == 'push'
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: flycast-uwp
           path: build/artifact
 
       - name: Configure AWS Credentials
         id: aws-credentials
-        uses: aws-actions/configure-aws-credentials@v2
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: AKIAJOZQS4H2PHQWYFCA
           aws-secret-access-key: ${{ secrets.S3_SECRET_KEY }}

@@ -1,9 +1,9 @@
 /*
  zip_source_remove.c -- remove empty archive
- Copyright (C) 2014-2020 Dieter Baron and Thomas Klausner
+ Copyright (C) 2014-2021 Dieter Baron and Thomas Klausner
 
  This file is part of libzip, a library to manipulate ZIP archives.
- The authors can be contacted at <libzip@nih.at>
+ The authors can be contacted at <info@libzip.org>
 
  Redistribution and use in source and binary forms, with or without
  modification, are permitted provided that the following conditions
@@ -37,6 +37,11 @@
 
 int
 zip_source_remove(zip_source_t *src) {
+    if (ZIP_SOURCE_IS_LAYERED(src)) {
+        zip_error_set(&src->error, ZIP_ER_OPNOTSUPP, 0);
+        return -1;
+    }
+
     if (src->write_state == ZIP_SOURCE_WRITE_REMOVED) {
         return 0;
     }

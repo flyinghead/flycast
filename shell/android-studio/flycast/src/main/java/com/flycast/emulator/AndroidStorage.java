@@ -24,17 +24,22 @@ import android.content.ContentUris;
 import android.content.CursorLoader;
 import android.content.Intent;
 import android.database.Cursor;
+import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
 import android.os.ParcelFileDescriptor;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
+import android.util.Log;
 
 import androidx.documentfile.provider.DocumentFile;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.List;
 
 public class AndroidStorage {
@@ -102,8 +107,6 @@ public class AndroidStorage {
                 List<String> comps = path.getPath();
                 if (comps.size() > 1)
                     return DocumentsContract.buildDocumentUriUsingTree(uri, comps.get(comps.size() - 2)).toString();
-                else
-                    return "";
             } catch (IllegalArgumentException e) {
                 // Happens for root storage uri:
                 // DocumentsContract: Failed to find path: Invalid URI: content://com.android.externalstorage.documents/tree/primary%3AFlycast
@@ -387,5 +390,36 @@ public class AndroidStorage {
         String result = cursor.getString(column_index);
         cursor.close();
         return result;
+    }
+
+    public void saveScreenshot(String name, byte data[])
+    {
+        File path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
+        File file = new File(path, name);
+
+        try {
+            // Make sure the Pictures directory exists.
+            path.mkdirs();
+
+            OutputStream os = new FileOutputStream(file);
+            try {
+                os.write(data);
+            } catch (IOException e) {
+                try { os.close(); } catch (IOException e1) {}
+                file.delete();
+                throw e;
+            }
+            os.close();
+
+            // Tell the media scanner about the new file so that it is
+            // immediately available to the user.
+            MediaScannerConnection.scanFile(activity,
+                    new String[] { file.toString() }, null, null);
+        } catch (IOException e) {
+            // Unable to create file, likely because external storage is
+            // not currently mounted.
+            Log.w("flycast", "saveScreenshot: Error writing " + file, e);
+            throw new RuntimeException(e.getMessage());
+        }
     }
 }

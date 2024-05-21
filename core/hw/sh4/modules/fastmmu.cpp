@@ -18,9 +18,9 @@
  */
 #include "mmu.h"
 #include "hw/sh4/sh4_if.h"
-#include "hw/sh4/sh4_interrupts.h"
 #include "hw/sh4/sh4_core.h"
 #include "types.h"
+#include "stdclass.h"
 
 #ifdef FAST_MMU
 
@@ -141,7 +141,7 @@ int main(int argc, char *argv[])
 	for (int i = 0; i < full_table_size; i++)
 	{
 		u32 sz = full_table[i].entry.Data.SZ1 * 2 + full_table[i].entry.Data.SZ0;
-		u32 mask = sz == 3 ? 1*1024*1024 : sz == 2 ? 64*1024 : sz == 1 ? 4*1024 : 1024;
+		u32 mask = sz == 3 ? 1_MB : sz == 2 ? 64_KB : sz == 1 ? 4_KB : 1_KB;
 		mask--;
 		addrs.push_back(((full_table[i].entry.Address.VPN << 10) & mmu_mask[sz]) | (random() * mask / RAND_MAX));
 		asids.push_back(full_table[i].entry.Address.ASID);
@@ -157,7 +157,7 @@ int main(int argc, char *argv[])
 		addrs.push_back(random());
 		asids.push_back(666);
 	}
-	double start = os_GetSeconds();
+	u64 start = getTimeMs();
 	int success = 0;
 	const int loops = 100000;
 	for (int i = 0; i < loops; i++)
@@ -171,8 +171,8 @@ int main(int argc, char *argv[])
 				success++;
 		}
 	}
-	double end = os_GetSeconds();
-	printf("Lookup time: %f ms. Success rate %f max_len %d\n", (end - start) * 1000.0 / addrs.size(), (double)success / addrs.size() / loops, 0/*max_length*/);
+	u64 end = getTimeMs();
+	printf("Lookup time: %f ms. Success rate %f max_len %d\n", ((double)end - start) / addrs.size(), (double)success / addrs.size() / loops, 0/*max_length*/);
 }
 #endif
 

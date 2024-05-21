@@ -1,3 +1,4 @@
+#pragma once
 #include <locale>
 
 #ifdef _WIN32

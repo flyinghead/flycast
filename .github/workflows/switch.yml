@@ -6,7 +6,7 @@ jobs:
   build:
     name: ${{ matrix.config.name }}
     runs-on: ubuntu-latest
-    container: devkitpro/devkita64:20220128
+    container: devkitpro/devkita64:latest
 
     strategy:
       matrix:
@@ -18,14 +18,17 @@ jobs:
       - name: Set up build environment
         run: |
           sudo apt-get update
-          sudo apt-get -y install awscli ccache ninja-build
+          sudo apt-get -y install awscli ccache
 
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
           submodules: true
 
-      - uses: actions/cache@v3
+      - name: Mark git repository as safe
+        run: git config --global --add safe.directory $PWD
+
+      - uses: actions/cache@v4
         with:
           path: ~/.ccache
           key: ccache-switch-${{ matrix.config.name }}-${{ github.sha }}
@@ -36,7 +39,7 @@ jobs:
           $DEVKITPRO/portlibs/switch/bin/aarch64-none-elf-cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=artifact -G Ninja ${{ matrix.config.cmakeArgs }}
           cmake --build build --config Release --target install
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: flycast-switch-${{ matrix.config.name }}
           path: artifact/bin
@@ -47,7 +50,7 @@ jobs:
 
       - name: Configure AWS Credentials
         id: aws-credentials
-        uses: aws-actions/configure-aws-credentials@v2
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: AKIAJOZQS4H2PHQWYFCA
           aws-secret-access-key: ${{ secrets.S3_SECRET_KEY }}

@@ -22,7 +22,9 @@
 namespace card_reader {
 
 void initdInit();
-void initdTerm();
+void derbyInit();
+void clubkInit();
+void term();
 
 void barcodeInit();
 void barcodeTerm();
@@ -31,5 +33,6 @@ std::string barcodeGetCard();
 void barcodeSetCard(const std::string& card);
 
 void insertCard(int playerNum);
+bool readerAvailable();
 
 }

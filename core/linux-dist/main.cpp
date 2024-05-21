@@ -3,10 +3,10 @@
 #endif
 #include "types.h"
 
-#if defined(__unix__) || defined(__SWITCH__)
+#if defined(__unix__)
 #include "log/LogManager.h"
 #include "emulator.h"
-#include "rend/mainui.h"
+#include "ui/mainui.h"
 #include "oslib/directory.h"
 #include "oslib/oslib.h"
 #include "stdclass.h"
@@ -16,14 +16,6 @@
 #include <unistd.h>
 #include <vector>
 
-#if defined(__SWITCH__)
-#include "nswitch.h"
-#endif
-
-#if defined(SUPPORT_DISPMANX)
-	#include "dispmanx.h"
-#endif
-
 #if defined(SUPPORT_X11)
 	#include "x11.h"
 #endif
@@ -32,49 +24,9 @@
 	#include "sdl/sdl.h"
 #endif
 
-#if defined(USE_EVDEV)
-	#include "evdev.h"
-#endif
-
 #ifdef USE_BREAKPAD
 #include "breakpad/client/linux/handler/exception_handler.h"
 #endif
-
-void os_SetupInput()
-{
-#if defined(USE_EVDEV)
-	input_evdev_init();
-#endif
-
-#if defined(SUPPORT_X11)
-	input_x11_init();
-#endif
-
-#if defined(USE_SDL)
-	input_sdl_init();
-#endif
-}
-
-void os_TermInput()
-{
-#if defined(USE_EVDEV)
-	input_evdev_close();
-#endif
-#if defined(USE_SDL)
-	input_sdl_quit();
-#endif
-}
-
-void UpdateInputState()
-{
-	#if defined(USE_EVDEV)
-		input_evdev_handle();
-	#endif
-
-	#if defined(USE_SDL)
-		input_sdl_handle();
-	#endif
-}
 
 void os_DoEvents()
 {
@@ -84,39 +36,12 @@ void os_DoEvents()
 	#endif
 }
 
-void os_SetWindowText(const char * text)
-{
-	#if defined(SUPPORT_X11)
-		x11_window_set_text(text);
-	#endif
-	#if defined(USE_SDL)
-		sdl_window_set_text(text);
-	#endif
-}
-
-void os_CreateWindow()
-{
-	#if defined(SUPPORT_DISPMANX)
-		dispmanx_window_create();
-	#endif
-	#if defined(SUPPORT_X11)
-		x11_window_create();
-	#endif
-	#if defined(USE_SDL)
-		sdl_window_create();
-	#endif
-}
-
 void common_linux_setup();
 
 // Find the user config directory.
 // $HOME/.config/flycast on linux
-std::string find_user_config_dir()
+static std::string find_user_config_dir()
 {
-#ifdef __SWITCH__
-	flycast::mkdir("/flycast", 0755);
-	return "/flycast/";
-#else
 	std::string xdg_home;
 	if (nowide::getenv("XDG_CONFIG_HOME") != nullptr)
 		// If XDG_CONFIG_HOME is set explicitly, we'll use that instead of $HOME/.config
@@ -140,17 +65,12 @@ std::string find_user_config_dir()
 	}
 	// Unable to detect config dir, use the current folder
 	return ".";
-#endif
 }
 
 // Find the user data directory.
 // $HOME/.local/share/flycast on linux
-std::string find_user_data_dir()
+static std::string find_user_data_dir()
 {
-#ifdef __SWITCH__
-	flycast::mkdir("/flycast/data", 0755);
-	return "/flycast/data/";
-#else
 	std::string xdg_home;
 	if (nowide::getenv("XDG_DATA_HOME") != nullptr)
 		// If XDG_DATA_HOME is set explicitly, we'll use that instead of $HOME/.local/share
@@ -174,10 +94,8 @@ std::string find_user_data_dir()
 	}
 	// Unable to detect data dir, use the current folder
 	return ".";
-#endif
 }
 
-#ifndef __SWITCH__
 static void addDirectoriesFromPath(std::vector<std::string>& dirs, const std::string& path, const std::string& suffix)
 {
 	std::string::size_type pos = 0;
@@ -193,7 +111,6 @@ static void addDirectoriesFromPath(std::vector<std::string>& dirs, const std::st
 	if (pos < path.length())
 		dirs.push_back(path.substr(pos) + suffix);
 }
-#endif
 
 // Find a file in the user and system config directories.
 // The following folders are checked in this order:
@@ -204,13 +121,10 @@ static void addDirectoriesFromPath(std::vector<std::string>& dirs, const std::st
 //   /etc/flycast/
 //   /etc/xdg/flycast/
 // .
-std::vector<std::string> find_system_config_dirs()
+static std::vector<std::string> find_system_config_dirs()
 {
 	std::vector<std::string> dirs;
 
-#ifdef __SWITCH__
-	dirs.push_back("/flycast/");
-#else
 	std::string xdg_home;
 	if (nowide::getenv("XDG_CONFIG_HOME") != nullptr)
 		// If XDG_CONFIG_HOME is set explicitly, we'll use that instead of $HOME/.config
@@ -235,7 +149,6 @@ std::vector<std::string> find_system_config_dirs()
 		dirs.push_back("/etc/flycast/"); // This isn't part of the XDG spec, but much more common than /etc/xdg/
 		dirs.push_back("/etc/xdg/flycast/");
 	}
-#endif
 	dirs.push_back("./");
 
 	return dirs;
@@ -252,13 +165,10 @@ std::vector<std::string> find_system_config_dirs()
 // <$FLYCAST_BIOS_PATH>
 // ./
 // ./data
-std::vector<std::string> find_system_data_dirs()
+static std::vector<std::string> find_system_data_dirs()
 {
 	std::vector<std::string> dirs;
 
-#ifdef __SWITCH__
-	dirs.push_back("/flycast/data/");
-#else
 	std::string xdg_home;
 	if (nowide::getenv("XDG_DATA_HOME") != nullptr)
 		// If XDG_DATA_HOME is set explicitly, we'll use that instead of $HOME/.local/share
@@ -288,7 +198,6 @@ std::vector<std::string> find_system_data_dirs()
 		std::string path = (std::string)nowide::getenv("FLYCAST_BIOS_PATH");
 		addDirectoriesFromPath(dirs, path, "/");
 	}
-#endif
 	dirs.push_back("./");
 	dirs.push_back("data/");
 
@@ -323,11 +232,6 @@ static bool dumpCallback(const google_breakpad::MinidumpDescriptor& descriptor, 
 int main(int argc, char* argv[])
 {
 	selfPath = argv[0];
-#if defined(__SWITCH__)
-	socketInitializeDefault();
-	nxlinkStdio();
-	//appletSetFocusHandlingMode(AppletFocusHandlingMode_NoSuspend);
-#endif
 #if defined(USE_BREAKPAD)
 	google_breakpad::MinidumpDescriptor descriptor("/tmp");
 	google_breakpad::ExceptionHandler eh(descriptor, nullptr, dumpCallback, nullptr, true, -1);
@@ -353,9 +257,7 @@ int main(int argc, char* argv[])
 	}
 #endif
 
-#if defined(__unix__)
 	common_linux_setup();
-#endif
 
 	if (flycast_init(argc, argv))
 		die("Flycast initialization failed\n");
@@ -366,29 +268,16 @@ int main(int argc, char* argv[])
 
 	mainui_loop();
 
-#if defined(SUPPORT_X11)
-	x11_window_destroy();
-#endif
-#if defined(USE_SDL)
-	sdl_window_destroy();
-#endif
-
 	flycast_term();
 	os_UninstallFaultHandler();
-
-#if defined(__SWITCH__)
-	socketExit();
-#endif
 
 	return 0;
 }
 
-#if defined(__unix__)
 [[noreturn]] void os_DebugBreak()
 {
 	raise(SIGTRAP);
 	std::abort();
 }
-#endif
 
-#endif // __unix__ || __SWITCH__
+#endif // __unix__

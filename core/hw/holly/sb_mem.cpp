@@ -11,6 +11,7 @@
 #include "hw/gdrom/gdrom_if.h"
 #include "hw/modem/modem.h"
 #include "hw/naomi/naomi.h"
+#include "hw/naomi/systemsp.h"
 #include "hw/pvr/pvr_mem.h"
 #include "hw/mem/addrspace.h"
 #include "hw/bba/bba.h"
@@ -62,21 +63,22 @@ T DYNACALL ReadMem_area0(u32 paddr)
 		break;
 	case 1:
 		// Flash memory
-		if (addr < 0x00200000 + settings.platform.flash_size)
-		{
-			if constexpr (Mirror)
+		if constexpr (System != DC_PLATFORM_SYSTEMSP)
+			if (addr < 0x00200000 + settings.platform.flash_size)
 			{
-				INFO_LOG(MEMORY, "Read from area0 Flash mirror [Unassigned], addr=%x", addr);
-				return 0;
+				if constexpr (Mirror)
+				{
+					INFO_LOG(MEMORY, "Read from area0 Flash mirror [Unassigned], addr=%x", addr);
+					return 0;
+				}
+				return nvmem::readFlash(addr, sz);
 			}
-			return nvmem::readFlash(addr, sz);
-		}
 		break;
 	case 2:
 		// GD-ROM / Naomi/AW cart
 		if (addr >= 0x005F7000 && addr <= 0x005F70FF)
 		{
-			if (System == DC_PLATFORM_DREAMCAST)
+			if constexpr (System == DC_PLATFORM_DREAMCAST)
 				return (T)ReadMem_gdrom(addr, sz);
 			else
 				return (T)ReadMem_naomi(addr, sz);
@@ -97,15 +99,14 @@ T DYNACALL ReadMem_area0(u32 paddr)
 		// MODEM
 		if (addr <= 0x006007FF)
 		{
-			if (System == DC_PLATFORM_DREAMCAST)
+			if constexpr (System == DC_PLATFORM_DREAMCAST)
 			{
 				if (!config::EmulateBBA)
 					return (T)ModemReadMem_A0_006(addr, sz);
 				else
 					return (T)0;
 			}
-			else
-			{
+			else if constexpr (System == DC_PLATFORM_ATOMISWAVE) {
 				return (T)libExtDevice_ReadMem_A0_006(addr, sz);
 			}
 		}
@@ -126,12 +127,17 @@ T DYNACALL ReadMem_area0(u32 paddr)
 
 	default:
 		// G2 Ext area
-		if (System == DC_PLATFORM_NAOMI || System == DC_PLATFORM_NAOMI2)
+		if constexpr (System == DC_PLATFORM_NAOMI || System == DC_PLATFORM_NAOMI2)
 			return (T)g2ext_readMem(addr, sz);
-		else if (config::EmulateBBA)
-			return (T)bba_ReadMem(addr, sz);
+		else if constexpr (System == DC_PLATFORM_SYSTEMSP)
+			return systemsp::readMemArea0<T>(addr);
 		else
-			return (T)0;
+		{
+			if (config::EmulateBBA)
+				return (T)bba_ReadMem(addr, sz);
+			else
+				return (T)0;
+		}
 	}
 	INFO_LOG(MEMORY, "Read from area0<%d> not implemented [Unassigned], addr=%x", sz, addr);
 	return 0;
@@ -151,7 +157,7 @@ void DYNACALL WriteMem_area0(u32 paddr, T data)
 		 // System/Boot ROM
 		if constexpr (!Mirror)
 		{
-			if (System == DC_PLATFORM_ATOMISWAVE)
+			if constexpr (System == DC_PLATFORM_ATOMISWAVE)
 			{
 				if (addr < 0x20000)
 				{
@@ -206,16 +212,16 @@ void DYNACALL WriteMem_area0(u32 paddr, T data)
 		// MODEM
 		if (/* addr >= 0x00600000) && */ addr <= 0x006007FF)
 		{
-			if (System == DC_PLATFORM_DREAMCAST)
+			if constexpr (System == DC_PLATFORM_DREAMCAST)
 			{
 				if (!config::EmulateBBA)
 					ModemWriteMem_A0_006(addr, data, sz);
+				return;
 			}
-			else
-			{
+			else if constexpr (System == DC_PLATFORM_ATOMISWAVE) {
 				libExtDevice_WriteMem_A0_006(addr, data, sz);
+				return;
 			}
-			return;
 		}
 		// AICA sound registers
 		if (addr >= 0x00700000 && addr <= 0x00707FFF)
@@ -240,10 +246,15 @@ void DYNACALL WriteMem_area0(u32 paddr, T data)
 
 	default:
 		// G2 Ext area
-		if (System == DC_PLATFORM_NAOMI || System == DC_PLATFORM_NAOMI2)
+		if constexpr (System == DC_PLATFORM_NAOMI || System == DC_PLATFORM_NAOMI2)
 			g2ext_writeMem(addr, data, sz);
-		else if (config::EmulateBBA)
-			bba_WriteMem(addr, data, sz);
+		else if constexpr (System == DC_PLATFORM_SYSTEMSP)
+			systemsp::writeMemArea0(addr, data);
+		else
+		{
+			if (config::EmulateBBA)
+				bba_WriteMem(addr, data, sz);
+		}
 		return;
 	}
 	INFO_LOG(MEMORY, "Write to area0_32 not implemented [Unassigned], addr=%x,data=%x,size=%d", addr, data, sz);
@@ -306,13 +317,15 @@ void map_area0_init()
 		area0_handler = registerHandler(DC_PLATFORM_ATOMISWAVE, false);
 		area0_mirror_handler = registerHandler(DC_PLATFORM_ATOMISWAVE, true);
 		break;
+	case DC_PLATFORM_SYSTEMSP:
+		area0_handler = registerHandler(DC_PLATFORM_SYSTEMSP, false);
+		area0_mirror_handler = registerHandler(DC_PLATFORM_SYSTEMSP, true);
+		break;
 	}
 #undef registerHandler
 }
 void map_area0(u32 base)
 {
-	verify(base<0xE0);
-
 	addrspace::mapHandler(area0_handler, 0x00 | base, 0x01 | base);
 	addrspace::mapHandler(area0_mirror_handler, 0x02 | base, 0x03 | base);
 
