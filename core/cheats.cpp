@@ -111,7 +111,7 @@ const WidescreenCheat CheatManager::widescreen_cheats[] =
 		{ "MK-5115450", nullptr,    { 0x3D3B10 }, { 0x43700000 } },		// Fighting Vipers 2 (PAL)
 		{ "HDR-0133",   nullptr,    { 0x3D3AF0 }, { 0x43700000 } },		// Fighting Vipers 2 (JP)
 		{ "T18805M",	nullptr,	{ 0x1A39C0 }, { 0x3F400000 } },		// Fire Pro Wrestling D (JP)
-		{ "MK-51114",   nullptr,    { 0x132DD8, 0xA26CA8, 0xA26738, 0xA275B8, 0xA26AD8, 0xA26908 },
+		{ "MK-51114",   "  E     ", { 0x132DD8, 0xA26CA8, 0xA26738, 0xA275B8, 0xA26AD8, 0xA26908 },
 				{ 0x3F400000, 0x3F400000, 0x3F400000, 0x3F400000, 0x3F400000, 0x3F400000 } },	// Floigan Bros. Ep. 1 (PAL)
 		{ "T34201M",    nullptr,    { 0x586290, 0x586260 }, { 0x3F400000, 0x43F00000 } },	// Frame Gride (JP)
 		{ "T-8113D-50", nullptr,    { 0x55A354 }, { 0x3FAAAAAB } },		// Fur Fighters (PAL)
