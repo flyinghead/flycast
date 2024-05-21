@@ -50,60 +50,48 @@ void gui_debugger_control()
 
 	bool running = emu.running();
 
-	if (!running)
-	{
-		ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
-		ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
-	}
-	if (ImGui::Button("Suspend"))
-	{
-		// config::DynarecEnabled = false;
-		debugAgent.interrupt();
-		// The debugger is rendered as GUI when the emulation is suspended.
-		gui_state = GuiState::Debugger;
-	}
-	if (!running)
-	{
-		ImGui::PopItemFlag();
-		ImGui::PopStyleVar();
-	}
-
-	if (running)
-	{
-		ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
-		ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
-	}
-
-	ImGui::SameLine();
-	ImGui::PushButtonRepeat(true);
-	if (ImGui::Button("Step"))
-	{
-		debugAgent.step();
-	}
-	ImGui::PopButtonRepeat();
-
-	ImGui::SameLine();
-	if (ImGui::Button("Resume"))
-	{
-		debugAgent.step();
-		emu.start();
-		// The debugger is rendered as OSD when the emulation is running.
-		gui_state = GuiState::Closed;
-	}
-	if (running)
-	{
-		ImGui::PopItemFlag();
-		ImGui::PopStyleVar();
-	}
-
-	ImGui::SameLine();
-	if (ImGui::Button("Close"))
-	{
-		gui_state = GuiState::Closed;
-		GamepadDevice::load_system_mappings();
-		if(!emu.running())
+	if (running) {
+		if (ImGui::Button("Suspend", ImVec2(80, 0)))
+		{
+			// config::DynarecEnabled = false;
+			debugAgent.interrupt();
+			// The debugger is rendered as GUI when the emulation is suspended.
+			gui_state = GuiState::Debugger;
+		}
+	} else {
+		if (ImGui::Button("Resume", ImVec2(80, 0)))
+		{
+			// config::DynarecEnabled = false;
+			// Step possible breakpoint in the next instruction
+			debugAgent.step();
 			emu.start();
+			// The debugger is rendered as OSD when the emulation is suspended.
+			gui_state = GuiState::Closed;
+		}
 	}
+
+	{
+		DisabledScope scope(running);
+		ImGui::SameLine();
+		ImGui::PushButtonRepeat(true);
+		if (ImGui::Button("Step Into"))
+		{
+			debugAgent.step();
+		}
+		ImGui::PopButtonRepeat();
+	}
+
+	// TODO: Implement step over and step out
+
+	// TODO: Decide if debugger should have an closed state
+	// ImGui::SameLine();
+	// if (ImGui::Button("Close"))
+	// {
+	// 	gui_state = GuiState::Closed;
+	// 	GamepadDevice::load_system_mappings();
+	// 	if(!emu.running())
+	// 		emu.start();
+	// }
 
 	ImGui::Checkbox("Disassembly", &disasm_window_open);
 
