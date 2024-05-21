@@ -2993,6 +2993,7 @@ void gui_display_ui()
 		gui_cheats();
 		break;
 	case GuiState::Debugger:
+		gui_debugger();
 		break;
 	default:
 		die("Unknown UI state");
@@ -3033,20 +3034,6 @@ void gui_display_osd()
 {
 	if (gui_state == GuiState::VJoyEdit)
 		return;
-	
-	if (gui_state == GuiState::Debugger)
-	{
-		gui_newFrame();
-		ImGui::NewFrame();
-
-		gui_debugger();
-
-		lua::overlay();
-
-		gui_endFrame(gui_is_open());
-
-		return;
-	}
 	std::string message = get_notification();
 	if (message.empty())
 		message = getFPSNotification();
@@ -3079,6 +3066,9 @@ void gui_display_osd()
 			chat.display();
 		}
 		lua::overlay();
+
+		if (config::DebuggerGuiEnabled)
+			gui_debugger();
 
 		gui_endFrame(gui_is_open());
 	}

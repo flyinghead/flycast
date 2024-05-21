@@ -59,6 +59,8 @@ void gui_debugger_control()
 	{
 		// config::DynarecEnabled = false;
 		debugAgent.interrupt();
+		// The debugger is rendered as GUI when the emulation is suspended.
+		gui_state = GuiState::Debugger;
 	}
 	if (!running)
 	{
@@ -85,6 +87,8 @@ void gui_debugger_control()
 	{
 		debugAgent.step();
 		emu.start();
+		// The debugger is rendered as OSD when the emulation is running.
+		gui_state = GuiState::Closed;
 	}
 	if (running)
 	{
