@@ -134,10 +134,10 @@ void gui_debugger_disasm()
 	ImGui::PushFont(defaultFont);
 	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(8,2));
 
-
+	u32 pcAddr = pc & 0x1fffffff;
 	for (size_t i = 0; i < 20; i++)
 	{
-		const u32 addr = (pc & 0x1fffffff) + i * 2;
+		const u32 addr = pcAddr + i * 2;
 
 		u16 instr = ReadMem16_nommu(addr);
 
@@ -168,7 +168,12 @@ void gui_debugger_disasm()
 
 		memset(sh4_disas_line, 0, sizeof(sh4_disas_line));
 		sh4asm_disas_inst(instr, disas_emit, addr);
-		//dasmbuf = decode(instr, pc);
+		if (addr == pcAddr) {
+			// TODO: Handle scaling
+			// TODO: Calculate rect size based on font size
+			ImVec2 p = ImGui::GetCursorScreenPos();
+			ImGui::GetWindowDrawList()->AddRectFilled(ImVec2(p.x - 2, p.y), ImVec2(p.x + 56, p.y + 16), IM_COL32(0, 128, 0, 255));
+		}
 		sprintf(buf, "%08X:", (u32) addr);
 		ImGui::Text("%s", buf);
 		ImGui::SameLine();
