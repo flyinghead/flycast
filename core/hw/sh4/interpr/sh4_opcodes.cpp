@@ -941,7 +941,7 @@ sh4op(i1100_0011_iiii_iiii)
 #else
 	debugAgent.debugTrap(Sh4Ex_Trap);
 #endif
-	emu.stop();
+	emu.stop(); // This causes a deadlock in the emu thread
 	throw debugger::Stop();
 	CCN_TRA = (GetImm8(op) << 2);
 	Do_Exception(next_pc, Sh4Ex_Trap);
