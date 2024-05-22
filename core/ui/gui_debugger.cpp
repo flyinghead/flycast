@@ -17,7 +17,6 @@
 	along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
  */
 #include "gui_debugger.h"
-
 #include "types.h"
 #include "debug/debug_agent.h"
 #include "emulator.h"
@@ -26,6 +25,11 @@
 #include "imgui/imgui.h"
 #include "input/gamepad_device.h"
 #include "sh4asm/sh4asm_core/disas.h"
+
+// TODO: Export a single function to render the debugger
+// TODO: Use camelCase for variable names
+// TODO: Add sh4asm as a submodule
+// TODO: Rename debugger clearly indicate that it is a Dreamcast (guest) debugger. (FC_DC_DEBUGGER?)
 
 #define DISAS_LINE_LEN 128
 #define DISASM_LEN 40
@@ -40,9 +44,6 @@ static bool disasm_follow_pc = true;
 static u32 disasm_address = 0x0c000000;
 
 static char sh4_disas_line[DISAS_LINE_LEN];
-
-// TODO: Export a single function to render the debugger
-// TODO: Use camelCase for variable names
 
 static void disas_emit(char ch) {
 	size_t len = strlen(sh4_disas_line);
