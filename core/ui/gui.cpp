@@ -1579,7 +1579,16 @@ static void gui_debug_tab()
 {
 	header("Debugging");
 	{
-		OptionCheckbox("Enable built-in debugger", config::DebuggerGuiEnabled);
+		{
+			DisabledScope scope(config::ThreadedRendering);
+
+			if (scope.isDisabled()) {
+				config::DebuggerGuiEnabled.reset();
+				ImGui::Text("Hint: To enable the built-in debugger, disable multi threaded emulation in the Advanced tab.");
+			}
+
+			OptionCheckbox("Enable built-in debugger", config::DebuggerGuiEnabled);
+		}
 	}
 #if !defined(NDEBUG) || defined(DEBUGFAST)
 	ImGui::Spacing();
@@ -3763,6 +3772,10 @@ bool __cdecl Concurrency::details::_Task_impl_base::_IsNonBlockingThread() {
 // TODO: Move to a separate file
 void gui_debugger()
 {
+	if (config::ThreadedRendering) {
+		return;
+	}
+
 	gui_debugger_control();
 
 	gui_debugger_disasm();
