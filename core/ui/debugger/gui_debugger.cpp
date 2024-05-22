@@ -1,5 +1,5 @@
 /*
-	Copyright 2023 flyinghead
+	Copyright 2024 lhs_azevedo, vkedwardli
 
 	This file is part of Flycast.
 
@@ -20,19 +20,15 @@
 #include "types.h"
 #include "debug/debug_agent.h"
 #include "emulator.h"
-#include "gui_util.h"
+#include "ui/gui_util.h"
 #include "hw/sh4/sh4_if.h"
 #include "imgui/imgui.h"
 #include "input/gamepad_device.h"
-#include "sh4asm/sh4asm_core/disas.h"
+#include "gui_debugger_disasm.h"
 
-// TODO: Export a single function to render the debugger
 // TODO: Use camelCase for variable names
 // TODO: Add sh4asm as a submodule
 // TODO: Rename debugger clearly indicate that it is a Dreamcast (guest) debugger. (FC_DC_DEBUGGER?)
-
-#define DISAS_LINE_LEN 128
-#define DISASM_LEN 40
 
 extern ImFont *monospaceFont;
 
@@ -40,19 +36,8 @@ static bool disasm_window_open = true;
 static bool memdump_window_open = false;
 static bool breakpoints_window_open = false;
 static bool sh4_window_open = true;
-static bool disasm_follow_pc = true;
-static u32 disasm_address = 0x0c000000;
 
-static char sh4_disas_line[DISAS_LINE_LEN];
-
-static void disas_emit(char ch) {
-	size_t len = strlen(sh4_disas_line);
-	if (len >= DISAS_LINE_LEN - 1)
-		return; // no more space
-	sh4_disas_line[len] = ch;
-}
-
-void gui_debugger_control()
+static void gui_debugger_control()
 {
 	ImGui::SetNextWindowPos(ScaledVec2(16, 16), ImGuiCond_FirstUseEver);
 	ImGui::Begin("Control", NULL, ImGuiWindowFlags_NoResize);
@@ -116,92 +101,10 @@ void gui_debugger_control()
 	ImGui::End();
 }
 
-void gui_debugger_disasm()
-{
-	if (!disasm_window_open) return;
-
-	u32 pc = *GetRegPtr(reg_nextpc);
-
-	ImGui::SetNextWindowPos(ScaledVec2(16, 110), ImGuiCond_FirstUseEver);
-	ImGui::SetNextWindowSize(ScaledVec2(440, 0), ImGuiCond_FirstUseEver);
-	
-	if (!ImGui::Begin("Disassembly", &disasm_window_open, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize)) {
-		ImGui::End();
-		return;
-	}
-
-	ImGui::Checkbox("Follow PC", &disasm_follow_pc);
-
-	// if (Sh4cntx.pc == 0x8C010000 || Sh4cntx.spc == 0x8C010000)
-	// {
-	// 	NOTICE_LOG(COMMON, "1ST_READ.bin entry");
-	// 	dc_stop();
-	// }
-
-	ImGui::PushFont(monospaceFont);
-	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(8,2));
-
-	u32 pcAddr = pc & 0x1fffffff;
-	bool isPcOutsideDisasm = (pcAddr >= disasm_address + DISASM_LEN * 2) || pcAddr < disasm_address;
-	if (disasm_follow_pc && isPcOutsideDisasm)
-		disasm_address = pcAddr;
-
-	for (size_t i = 0; i < DISASM_LEN; i++)
-	{
-		const u32 addr = (disasm_address & 0x1fffffff) + i * 2;
-
-		u16 instr = ReadMem16_nommu(addr);
-
-		auto it = debugAgent.breakpoints[DebugAgent::Breakpoint::Type::BP_TYPE_SOFTWARE_BREAK].find(addr);
-		const bool isBreakpoint = it != debugAgent.breakpoints[DebugAgent::Breakpoint::Type::BP_TYPE_SOFTWARE_BREAK].end();
-
-		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0,2));
-		if (isBreakpoint) {
-			ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 0, 0, 255));
-			ImGui::Text("B ");
-			if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0)) {
-				debugAgent.removeMatchpoint(DebugAgent::Breakpoint::BP_TYPE_SOFTWARE_BREAK, addr, 2);
-			}
-
-			ImGui::PopStyleColor();
-
-			instr = it->second.savedOp;
-		} else {
-			ImGui::Text("  ");
-			if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0)) {
-				debugAgent.insertMatchpoint(DebugAgent::Breakpoint::BP_TYPE_SOFTWARE_BREAK, addr, 2);
-			}
-		}
-		ImGui::SameLine();
-		ImGui::PopStyleVar();
-
-		char buf [64];
-
-		memset(sh4_disas_line, 0, sizeof(sh4_disas_line));
-		sh4asm_disas_inst(instr, disas_emit, addr);
-		if (addr == pcAddr) {
-			// TODO: Handle scaling
-			// TODO: Calculate rect size based on font size
-			ImVec2 p = ImGui::GetCursorScreenPos();
-			ImGui::GetWindowDrawList()->AddRectFilled(ImVec2(p.x - 2, p.y), ImVec2(p.x + 56, p.y + 16), IM_COL32(0, 128, 0, 255));
-		}
-		sprintf(buf, "%08X:", (u32) addr);
-		ImGui::Text("%s", buf);
-		ImGui::SameLine();
-		ImGui::TextDisabled("%04X", instr);
-		ImGui::SameLine();
-		ImGui::Text("%s", sh4_disas_line);
-	}
-
-	ImGui::PopFont();
-	ImGui::PopStyleVar();
-	ImGui::End();
-}
-
 u32 memoryDumpAddr = 0x0c010000;
 ImU32 vslider_value = 0x10000 / 16;
 
-void gui_debugger_memdump()
+static void gui_debugger_memdump()
 {
 	if (!memdump_window_open) return;
 
@@ -319,7 +222,7 @@ void gui_debugger_memdump()
 	ImGui::End();
 }
 
-void gui_debugger_breakpoints()
+static void gui_debugger_breakpoints()
 {
 	if (!breakpoints_window_open) return;
 
@@ -357,7 +260,7 @@ void gui_debugger_breakpoints()
 	ImGui::End();
 }
 
-void gui_debugger_sh4()
+static void gui_debugger_sh4()
 {
 	if (!sh4_window_open) return;
 
@@ -548,4 +451,23 @@ void gui_debugger_sh4()
 	ImGui::PopStyleVar();
 	ImGui::PopFont();
 	ImGui::End();
+}
+
+// TODO: Move to a separate file
+void gui_debugger()
+{
+	if (config::ThreadedRendering) {
+		return;
+	}
+
+	gui_debugger_control();
+
+	if (disasm_window_open)
+		gui_debugger_disasm();
+
+	gui_debugger_memdump();
+
+	gui_debugger_breakpoints();
+
+	gui_debugger_sh4();
 }

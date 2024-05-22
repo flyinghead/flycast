@@ -52,7 +52,7 @@
 #include "oslib/storage.h"
 #include <stb_image_write.h>
 #include "hw/pvr/Renderer_if.h"
-#include "gui_debugger.h"
+#include "debugger/gui_debugger.h"
 #if defined(USE_SDL)
 #include "sdl/sdl.h"
 #endif
@@ -3769,20 +3769,3 @@ bool __cdecl Concurrency::details::_Task_impl_base::_IsNonBlockingThread() {
 }
 #endif
 
-// TODO: Move to a separate file
-void gui_debugger()
-{
-	if (config::ThreadedRendering) {
-		return;
-	}
-
-	gui_debugger_control();
-
-	gui_debugger_disasm();
-
-	gui_debugger_memdump();
-
-	gui_debugger_breakpoints();
-
-	gui_debugger_sh4();
-}

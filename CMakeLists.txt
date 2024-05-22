@@ -1307,8 +1307,10 @@ if(NOT LIBRETRO)
 			core/ui/gui_cheats.cpp
 			core/ui/gui_util.cpp
 			core/ui/gui_util.h
-			core/ui/gui_debugger.cpp
-			core/ui/gui_debugger.h
+			core/ui/debugger/gui_debugger.cpp
+			core/ui/debugger/gui_debugger.h
+			core/ui/debugger/gui_debugger_disasm.cpp
+			core/ui/debugger/gui_debugger_disasm.h
 			core/ui/mainui.cpp
 			core/ui/mainui.h
 			core/ui/boxart/boxart.cpp
