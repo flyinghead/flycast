@@ -59,7 +59,8 @@ struct ImGui_ImplDX11_Data
     ID3D11PixelShader*          pPixelShader;
     ID3D11SamplerState*         pFontSampler;
 	ID3D11SamplerState*         pTextureSampler;
-    ID3D11ShaderResourceView*   pFontTextureView;
+	ID3D11SamplerState*         pPointSampler;
+	ImTextureDX11               FontTexture;
     ID3D11RasterizerState*      pRasterizerState;
     ID3D11BlendState*           pBlendState;
     ID3D11DepthStencilState*    pDepthStencilState;
@@ -279,11 +280,17 @@ void ImGui_ImplDX11_RenderDrawData(ImDrawData* draw_data)
                 ctx->RSSetScissorRects(1, &r);
 
                 // Bind texture, Draw
-                ID3D11ShaderResourceView* texture_srv = (ID3D11ShaderResourceView*)pcmd->GetTexID();
-				if (pcmd->TextureId != (ImTextureID)bd->pFontTextureView)
-					ctx->PSSetSamplers(0, 1, &bd->pTextureSampler);
+                ImTextureDX11 *tex = (ImTextureDX11 *)pcmd->GetTexID();
+				if (tex != &bd->FontTexture)
+				{
+					if (tex->pointSampling)
+						ctx->PSSetSamplers(0, 1, &bd->pPointSampler);
+					else
+						ctx->PSSetSamplers(0, 1, &bd->pTextureSampler);
+				}
 				else
 					ctx->PSSetSamplers(0, 1, &bd->pFontSampler);
+                ID3D11ShaderResourceView* texture_srv = tex->shaderResourceView;
                 ctx->PSSetShaderResources(0, 1, &texture_srv);
                 ctx->DrawIndexed(pcmd->ElemCount, pcmd->IdxOffset + global_idx_offset, pcmd->VtxOffset + global_vtx_offset);
             }
@@ -350,12 +357,12 @@ static void ImGui_ImplDX11_CreateFontsTexture()
         srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
         srvDesc.Texture2D.MipLevels = desc.MipLevels;
         srvDesc.Texture2D.MostDetailedMip = 0;
-        bd->pd3dDevice->CreateShaderResourceView(pTexture, &srvDesc, &bd->pFontTextureView);
+        bd->pd3dDevice->CreateShaderResourceView(pTexture, &srvDesc, &bd->FontTexture.shaderResourceView);
         pTexture->Release();
     }
 
     // Store our identifier
-    io.Fonts->SetTexID((ImTextureID)bd->pFontTextureView);
+    io.Fonts->SetTexID((ImTextureID)&bd->FontTexture);
 
     // Create texture samplers
     // (Bilinear sampling is required by default. Set 'io.Fonts->Flags |= ImFontAtlasFlags_NoBakedLines' or 'style.AntiAliasedLinesUseTex = false' to allow point/nearest sampling)
@@ -375,6 +382,9 @@ static void ImGui_ImplDX11_CreateFontsTexture()
 		desc.AddressU = D3D11_TEXTURE_ADDRESS_BORDER;
 		desc.AddressV = D3D11_TEXTURE_ADDRESS_BORDER;
 		bd->pd3dDevice->CreateSamplerState(&desc, &bd->pTextureSampler);
+
+        desc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
+		bd->pd3dDevice->CreateSamplerState(&desc, &bd->pPointSampler);
     }
 }
 
@@ -540,7 +550,13 @@ void    ImGui_ImplDX11_InvalidateDeviceObjects()
 
     if (bd->pFontSampler)           { bd->pFontSampler->Release(); bd->pFontSampler = nullptr; }
 	if (bd->pTextureSampler)        { bd->pTextureSampler->Release(); bd->pTextureSampler = nullptr; }
-	if (bd->pFontTextureView)       { bd->pFontTextureView->Release(); bd->pFontTextureView = nullptr; ImGui::GetIO().Fonts->SetTexID(0); } // We copied data->pFontTextureView to io.Fonts->TexID so let's clear that as well.
+	if (bd->pPointSampler)          { bd->pPointSampler->Release(); bd->pPointSampler = nullptr; }
+	if (bd->FontTexture.shaderResourceView) {
+		bd->FontTexture.shaderResourceView->Release();
+		bd->FontTexture.shaderResourceView = nullptr;
+		// We copied data->FontTexture.shaderResourceView to io.Fonts->TexID so let's clear that as well.
+		ImGui::GetIO().Fonts->SetTexID(0);
+	}
     if (bd->pIB)                    { bd->pIB->Release(); bd->pIB = nullptr; }
     if (bd->pVB)                    { bd->pVB->Release(); bd->pVB = nullptr; }
     if (bd->pBlendState)            { bd->pBlendState->Release(); bd->pBlendState = nullptr; }
@@ -603,7 +619,7 @@ void ImGui_ImplDX11_Shutdown()
 void ImGui_ImplDX11_NewFrame()
 {
     ImGui_ImplDX11_Data* bd = ImGui_ImplDX11_GetBackendData();
-    IM_ASSERT(bd != nullptr && "Did you call ImGui_ImplDX11_Init()?");
+    IM_ASSERT(bd != nullptr && "Context or backend not initialized! Did you call ImGui_ImplDX11_Init()?");
 
     if (!bd->pFontSampler)
         ImGui_ImplDX11_CreateDeviceObjects();

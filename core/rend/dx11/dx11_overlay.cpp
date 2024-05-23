@@ -56,7 +56,7 @@ void DX11Overlay::draw(u32 width, u32 height, bool vmu, bool crosshair)
 				vmuTextures[i].reset();
 				continue;
 			}
-			if (vmuTextures[i] == nullptr || vmu_lcd_changed[i])
+			if (vmuTextures[i] == nullptr || this->vmuLastChanged[i] != ::vmuLastChanged[i])
 			{
 				vmuTextureViews[i].reset();
 				vmuTextures[i].reset();
@@ -82,8 +82,8 @@ void DX11Overlay::draw(u32 width, u32 height, bool vmu, bool crosshair)
 					for (int y = 0; y < 32; y++)
 						memcpy(&data[y * 48], &vmu_lcd_data[i][(31 - y) * 48], sizeof(u32) * 48);
 					deviceContext->UpdateSubresource(vmuTextures[i], 0, nullptr, data, 48 * 4, 48 * 4 * 32);
+					this->vmuLastChanged[i] = ::vmuLastChanged[i];
 				}
-				vmu_lcd_changed[i] = false;
 			}
 			float x, y;
 			float w = vmu_width;

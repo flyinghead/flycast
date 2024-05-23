@@ -66,9 +66,7 @@
 #include "TargetConditionals.h"
 #endif
 
-#include "wsi/gl_context.h"
 #include "rend/gles/glcache.h"
-#include "hw/pvr/Renderer_if.h"
 
 // OpenGL Data
 static char         g_GlslVersionString[32] = "";
@@ -81,7 +79,6 @@ static unsigned int g_VboHandle = 0, g_ElementsHandle = 0;
 // Functions
 static bool ImGui_ImplOpenGL3_CreateDeviceObjects();
 static void ImGui_ImplOpenGL3_DestroyDeviceObjects();
-static void ImGui_ImplOpenGL3_DrawBackground();
 
 bool    ImGui_ImplOpenGL3_Init()
 {
@@ -114,7 +111,6 @@ void    ImGui_ImplOpenGL3_NewFrame()
 {
     if (!g_FontTexture)
         ImGui_ImplOpenGL3_CreateDeviceObjects();
-    ImGui_ImplOpenGL3_DrawBackground();
 }
 
 // OpenGL3 Render function.
@@ -488,16 +484,4 @@ static void ImGui_ImplOpenGL3_DestroyDeviceObjects()
     g_ShaderHandle = 0;
 
     ImGui_ImplOpenGL3_DestroyFontsTexture();
-}
-
-static void ImGui_ImplOpenGL3_DrawBackground()
-{
-#ifndef TARGET_IPHONE
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-#endif
-	glcache.Disable(GL_SCISSOR_TEST);
-	glcache.ClearColor(0, 0, 0, 0);
-	glClear(GL_COLOR_BUFFER_BIT);
-	if (renderer != nullptr)
-		renderer->RenderLastFrame();
 }

@@ -27,9 +27,7 @@
 #include <nowide/config.hpp>
 #include <nowide/convert.hpp>
 #include "cfg/option.h"
-#include "rend/gui.h"
-#else
-#include "rawinput.h"
+#include "ui/gui.h"
 #endif
 #include "oslib/oslib.h"
 #include "stdclass.h"
@@ -37,7 +35,7 @@
 #include "log/LogManager.h"
 #include "sdl/sdl.h"
 #include "emulator.h"
-#include "rend/mainui.h"
+#include "ui/mainui.h"
 #include "oslib/directory.h"
 #ifdef USE_BREAKPAD
 #include "breakpad/client/windows/handler/exception_handler.h"
@@ -50,26 +48,6 @@
 
 #include <windows.h>
 #include <windowsx.h>
-
-void os_SetupInput()
-{
-	input_sdl_init();
-
-#ifndef TARGET_UWP
-	if (config::UseRawInput)
-		rawinput::init();
-#endif
-}
-
-void os_TermInput()
-{
-	input_sdl_quit();
-
-#ifndef TARGET_UWP
-	if (config::UseRawInput)
-		rawinput::term();
-#endif
-}
 
 static void setupPath()
 {
@@ -108,23 +86,6 @@ static void setupPath()
 	SetEnvironmentVariable(L"HOMEPATH", localFolder->Path->Data());
 	SetEnvironmentVariable(L"HOMEDRIVE", nullptr);
 #endif
-}
-
-void UpdateInputState()
-{
-	FC_PROFILE_SCOPE;
-
-	input_sdl_handle();
-}
-
-void os_CreateWindow()
-{
-	sdl_window_create();
-}
-
-void os_SetWindowText(const char* text)
-{
-	sdl_window_set_text(text);
 }
 
 static void reserveBottomMemory()
@@ -433,8 +394,6 @@ int main(int argc, char* argv[])
 
 	mainui_loop();
 
-	sdl_window_destroy();
-
 	flycast_term();
 	os_UninstallFaultHandler();
 
@@ -506,6 +465,26 @@ void os_RunInstance(int argc, const char *argv[])
 	{
 		WARN_LOG(BOOT, "Cannot launch Flycast instance: error %d", GetLastError());
 	}
+}
+
+void os_SetThreadName(const char *name)
+{
+#ifndef TARGET_UWP
+	nowide::wstackstring wname;
+	if (wname.convert(name))
+	{
+		static HRESULT (*SetThreadDescription)(HANDLE, PCWSTR);
+		if (SetThreadDescription == nullptr)
+		{
+			// supported in Windows 10, version 1607 or Windows Server 2016
+			HINSTANCE libh = LoadLibraryW(L"KernelBase.dll");
+			if (libh != NULL)
+				SetThreadDescription = (HRESULT (*)(HANDLE, PCWSTR))GetProcAddress(libh, "SetThreadDescription");
+		}
+		if (SetThreadDescription != nullptr)
+			SetThreadDescription(GetCurrentThread(), wname.get());
+	}
+#endif
 }
 
 #ifdef VIDEO_ROUTING

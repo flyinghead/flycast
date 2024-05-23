@@ -53,12 +53,20 @@ public:
 	{
 		DEBUG_LOG(RENDERER, "OITVulkanRenderer::Term");
 		GetContext()->WaitIdle();
+		texCommandPool.Term();
 		screenDrawer.Term();
 		textureDrawer.Term();
 		oitBuffers.Term();
 		oitShaderManager.term();
 		samplerManager.term();
 		BaseVulkanRenderer::Term();
+	}
+
+	void Process(TA_context* ctx) override
+	{
+		if (ctx->rend.isRTT)
+			screenDrawer.EndFrame();
+		BaseVulkanRenderer::Process(ctx);
 	}
 
 	bool Render() override
@@ -81,7 +89,8 @@ public:
 			}
 
 			drawer->Draw(fogTexture.get(), paletteTexture.get());
-			drawer->EndFrame();
+			if (config::EmulateFramebuffer || pvrrc.isRTT)
+				drawer->EndFrame();
 
 			return !pvrrc.isRTT;
 		} catch (const vk::SystemError& e) {

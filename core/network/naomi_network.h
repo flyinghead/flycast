@@ -22,6 +22,7 @@
 #include "miniupnp.h"
 #include "cfg/option.h"
 #include "emulator.h"
+#include "oslib/oslib.h"
 
 #include <algorithm>
 #include <atomic>
@@ -44,6 +45,7 @@ public:
 		networkStopping = false;
 		_startNow = false;
 		return std::async(std::launch::async, [this] {
+			ThreadName _("NaomiNetwork-start");
 			bool res = startNetwork();
 			emu.setNetworkState(res);
 			return res;

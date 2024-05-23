@@ -30,7 +30,7 @@
 #include "serialize.h"
 #include "network/output.h"
 #include "hw/sh4/modules/modules.h"
-#include "rend/gui.h"
+#include "oslib/oslib.h"
 #include "printer.h"
 #include "hw/flashrom/x76f100.h"
 
@@ -409,10 +409,7 @@ void naomi_Deserialize(Deserializer& deser)
 		deser.skip<u32>(); // reg_dimm_parameterh;
 		deser.skip<u32>(); // reg_dimm_status;
 	}
-	if (deser.version() < Deserializer::V11)
-		deser.skip<u8>();
-	else if (deser.version() >= Deserializer::V14)
-		deser >> aw_maple_devs;
+	deser >> aw_maple_devs;
 	if (deser.version() >= Deserializer::V20)
 	{
 		deser >> coin_chute_time;
@@ -515,7 +512,7 @@ struct DriveSimPipe : public SerialPort::Pipe
 				{
 					char message[16];
 					sprintf(message, "Speed: %3d", speed);
-					gui_display_notification(message, 1000);
+					os_notify(message, 1000);
 				}
 			}
 			buffer.clear();

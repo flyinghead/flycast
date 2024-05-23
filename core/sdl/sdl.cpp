@@ -14,6 +14,7 @@
 #include "hw/maple/maple_devs.h"
 #include "sdl_gamepad.h"
 #include "sdl_keyboard.h"
+#include "sdl_keyboard_mac.h"
 #include "wsi/context.h"
 #include "emulator.h"
 #include "stdclass.h"
@@ -46,7 +47,7 @@ static bool gameRunning;
 static bool mouseCaptured;
 static std::string clipboardText;
 static std::string barcode;
-static double lastBarcodeTime;
+static u64 lastBarcodeTime;
 
 static KeyboardLayout detectKeyboardLayout();
 static bool handleBarcodeScanner(const SDL_Event& event);
@@ -88,6 +89,14 @@ static void sdl_close_joystick(SDL_JoystickID instance)
 		gamepad->close();
 }
 
+static void setWindowTitleGame()
+{
+	if (settings.naomi.slave)
+		SDL_SetWindowTitle(window, ("Flycast - Multiboard Slave " + cfgLoadStr("naomi", "BoardId", "")).c_str());
+	else
+		SDL_SetWindowTitle(window, ("Flycast - " + settings.content.title).c_str());
+}
+
 static void captureMouse(bool capture)
 {
 	if (window == nullptr || !gameRunning)
@@ -98,7 +107,7 @@ static void captureMouse(bool capture)
 			SDL_SetRelativeMouseMode(SDL_FALSE);
 		else
 			SDL_ShowCursor(SDL_ENABLE);
-		SDL_SetWindowTitle(window, "Flycast");
+		setWindowTitleGame();
 		mouseCaptured = false;
 	}
 	else
@@ -118,12 +127,15 @@ static void emuEventCallback(Event event, void *)
 {
 	switch (event)
 	{
+	case Event::Terminate:
+		SDL_SetWindowTitle(window, "Flycast");
+		break;
 	case Event::Pause:
 		gameRunning = false;
 		if (!config::UseRawInput)
 			SDL_SetRelativeMouseMode(SDL_FALSE);
 		SDL_ShowCursor(SDL_ENABLE);
-		SDL_SetWindowTitle(window, "Flycast");
+		setWindowTitleGame();
 		break;
 	case Event::Resume:
 		gameRunning = true;
@@ -160,7 +172,11 @@ static void checkRawInput()
 #else
 	if (!sdl_keyboard)
 	{
+#ifdef __APPLE__
+		sdl_keyboard = std::make_shared<SDLMacKeyboard>(0);
+#else
 		sdl_keyboard = std::make_shared<SDLKeyboardDevice>(0);
+#endif
 		GamepadDevice::Register(sdl_keyboard);
 	}
 #endif
@@ -199,6 +215,9 @@ void input_sdl_init()
 
 	SDL_SetRelativeMouseMode(SDL_FALSE);
 
+	// Event::Start is called on a background thread, so we can't use it to change the window title (macOS)
+	// However it's followed by Event::Resume which is fine.
+	EventManager::listen(Event::Terminate, emuEventCallback);
 	EventManager::listen(Event::Pause, emuEventCallback);
 	EventManager::listen(Event::Resume, emuEventCallback);
 
@@ -234,6 +253,9 @@ void input_sdl_init()
 
 void input_sdl_quit()
 {
+	EventManager::unlisten(Event::Terminate, emuEventCallback);
+	EventManager::unlisten(Event::Pause, emuEventCallback);
+	EventManager::unlisten(Event::Resume, emuEventCallback);
 	SDLGamepad::closeAllGamepads();
 	SDL_QuitSubSystem(SDL_INIT_JOYSTICK);
 }
@@ -538,12 +560,6 @@ void input_sdl_handle()
 				break;
 		}
 	}
-}
-
-void sdl_window_set_text(const char* text)
-{
-	if (window != nullptr)
-		SDL_SetWindowTitle(window, text);
 }
 
 static float hdpiScaling = 1.f;
@@ -1157,8 +1173,8 @@ static bool handleBarcodeScanner(const SDL_Event& event)
 			return false;
 		}
 	}
-	double now = os_GetSeconds();
-	if (!barcode.empty() && now - lastBarcodeTime >= 0.5)
+	u64 now = getTimeMs();
+	if (!barcode.empty() && now - lastBarcodeTime >= 500)
 	{
 		INFO_LOG(INPUT, "Barcode timeout");
 		barcode.clear();

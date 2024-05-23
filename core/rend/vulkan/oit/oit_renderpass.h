@@ -46,16 +46,20 @@ protected:
 		return vk::AttachmentDescription(vk::AttachmentDescriptionFlags(), vk::Format::eR8G8B8A8Unorm, vk::SampleCountFlagBits::e1,
 				loadClear ? vk::AttachmentLoadOp::eClear : vk::AttachmentLoadOp::eLoad, vk::AttachmentStoreOp::eStore,
 				vk::AttachmentLoadOp::eDontCare, vk::AttachmentStoreOp::eDontCare,
-				config::EmulateFramebuffer && last ? vk::ImageLayout::eTransferSrcOptimal : vk::ImageLayout::eShaderReadOnlyOptimal,
+				config::EmulateFramebuffer && initial ? vk::ImageLayout::eTransferSrcOptimal : vk::ImageLayout::eShaderReadOnlyOptimal,
 				config::EmulateFramebuffer && last ? vk::ImageLayout::eTransferSrcOptimal : vk::ImageLayout::eShaderReadOnlyOptimal);
 	}
 
 	virtual std::vector<vk::SubpassDependency> GetSubpassDependencies() const
 	{
-		std::vector<vk::SubpassDependency> deps;
-		deps.emplace_back(2, VK_SUBPASS_EXTERNAL, vk::PipelineStageFlagBits::eColorAttachmentOutput, vk::PipelineStageFlagBits::eFragmentShader,
-				vk::AccessFlagBits::eColorAttachmentWrite, vk::AccessFlagBits::eShaderRead, vk::DependencyFlagBits::eByRegion);
-		return deps;
+		if (config::EmulateFramebuffer)
+			return { { 2, VK_SUBPASS_EXTERNAL,
+					vk::PipelineStageFlagBits::eColorAttachmentOutput, vk::PipelineStageFlagBits::eTransfer | vk::PipelineStageFlagBits::eHost,
+					vk::AccessFlagBits::eColorAttachmentWrite, vk::AccessFlagBits::eTransferRead | vk::AccessFlagBits::eHostRead, vk::DependencyFlagBits::eByRegion } };
+		else
+			return { { 2, VK_SUBPASS_EXTERNAL,
+					vk::PipelineStageFlagBits::eColorAttachmentOutput, vk::PipelineStageFlagBits::eFragmentShader,
+					vk::AccessFlagBits::eColorAttachmentWrite, vk::AccessFlagBits::eShaderRead, vk::DependencyFlagBits::eByRegion } };
 	}
 
 private:
@@ -76,14 +80,12 @@ protected:
 
 	std::vector<vk::SubpassDependency> GetSubpassDependencies() const override
 	{
-		std::vector<vk::SubpassDependency> deps;
 		if (config::RenderToTextureBuffer)
-			deps.emplace_back(2, VK_SUBPASS_EXTERNAL,
+			return { { 2, VK_SUBPASS_EXTERNAL,
 					vk::PipelineStageFlagBits::eColorAttachmentOutput, vk::PipelineStageFlagBits::eTransfer | vk::PipelineStageFlagBits::eHost,
-					vk::AccessFlagBits::eColorAttachmentWrite, vk::AccessFlagBits::eTransferRead | vk::AccessFlagBits::eHostRead);
+					vk::AccessFlagBits::eColorAttachmentWrite, vk::AccessFlagBits::eTransferRead | vk::AccessFlagBits::eHostRead } };
 		else
-			deps.emplace_back(2, VK_SUBPASS_EXTERNAL, vk::PipelineStageFlagBits::eColorAttachmentOutput, vk::PipelineStageFlagBits::eFragmentShader,
-					vk::AccessFlagBits::eColorAttachmentWrite, vk::AccessFlagBits::eShaderRead);
-		return deps;
+			return { { 2, VK_SUBPASS_EXTERNAL, vk::PipelineStageFlagBits::eColorAttachmentOutput, vk::PipelineStageFlagBits::eFragmentShader,
+					vk::AccessFlagBits::eColorAttachmentWrite, vk::AccessFlagBits::eShaderRead } };
 	}
 };

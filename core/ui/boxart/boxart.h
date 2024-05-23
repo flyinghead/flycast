@@ -32,6 +32,7 @@ struct GameMedia;
 class Boxart
 {
 public:
+	GameBoxart getBoxartAndLoad(const GameMedia& media);
 	GameBoxart getBoxart(const GameMedia& media);
 	void saveDatabase(bool internal = false);
 

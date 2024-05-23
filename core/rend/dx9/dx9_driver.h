@@ -17,7 +17,7 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #pragma once
-#include "rend/imgui_driver.h"
+#include "ui/imgui_driver.h"
 #include "imgui_impl_dx9.h"
 #include "dxcontext.h"
 #include <unordered_map>
@@ -53,20 +53,21 @@ public:
 		frameRendered = true;
 	}
 
-	ImTextureID getTexture(const std::string& name) override {
+	ImTextureID getTexture(const std::string& name) override
+	{
 		auto it = textures.find(name);
 		if (it != textures.end())
-			return (ImTextureID)it->second.get();
+			return (ImTextureID)&it->second.imTexture;
 		else
 			return ImTextureID{};
 	}
 
-	ImTextureID updateTexture(const std::string& name, const u8 *data, int width, int height) override
+	ImTextureID updateTexture(const std::string& name, const u8 *data, int width, int height, bool nearestSampling) override
 	{
-		ComPtr<IDirect3DTexture9>& texture = textures[name];
-		texture.reset();
-		HRESULT hr = theDXContext.getDevice()->CreateTexture(width, height, 1, 0, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, &texture.get(), 0);
-		if (FAILED(hr) || !texture)
+		Texture& texture = textures[name];
+		texture.tex.reset();
+		HRESULT hr = theDXContext.getDevice()->CreateTexture(width, height, 1, 0, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, &texture.tex.get(), 0);
+		if (FAILED(hr) || !texture.tex)
 		{
 			WARN_LOG(RENDERER, "CreateTexture failed (%d x %d): error %x", width, height, hr);
 			textures.erase(name);
@@ -76,7 +77,7 @@ public:
 		width *= 4;
 
 		D3DLOCKED_RECT rect;
-		texture->LockRect(0, &rect, nullptr, 0);
+		texture.tex->LockRect(0, &rect, nullptr, 0);
 		u8 *dst = (u8 *)rect.pBits;
 		const u8 *src = data;
 		for (int y = 0; y < height; y++)
@@ -92,12 +93,23 @@ public:
 			dst += rect.Pitch;
 			src += width;
 		}
-		texture->UnlockRect(0);
+		texture.tex->UnlockRect(0);
+		texture.imTexture.d3dTexture = texture.tex.get();
+		texture.imTexture.pointSampling = nearestSampling;
 
-	    return (ImTextureID)texture.get();
+	    return (ImTextureID)&texture.imTexture;
+	}
+
+	void deleteTexture(const std::string& name) override {
+		textures.erase(name);
 	}
 
 private:
 	bool frameRendered = false;
-	std::unordered_map<std::string, ComPtr<IDirect3DTexture9>> textures;
+	struct Texture
+	{
+		ComPtr<IDirect3DTexture9> tex;
+		ImTextureDX9 imTexture;
+	};
+	std::unordered_map<std::string, Texture> textures;
 };

@@ -23,7 +23,7 @@
 #include <cmath>
 #include "input/gamepad_device.h"
 #include "input/mouse.h"
-#include "rend/gui.h"
+#include "ui/gui.h"
 
 enum IOSButton {
 	IOS_BTN_A = 1,
@@ -139,14 +139,14 @@ public:
 class IOSGamepad : public GamepadDevice
 {
 public:
-	IOSGamepad(int port, GCController *controller) : GamepadDevice(port, "iOS"), gcController(controller)
+	IOSGamepad(int port, GCController *controller, int index) : GamepadDevice(port, "iOS"), gcController(controller)
 	{
 		set_maple_port(port);
 		if (gcController.vendorName != nullptr)
 			_name = [gcController.vendorName UTF8String];
 		else
 			_name = "MFi Gamepad";
-		//_unique_id = ?
+		_unique_id = "ios-" + std::to_string(index);
 		INFO_LOG(INPUT, "iOS: Opened joystick %d: '%s'", port, _name.c_str());
 		loadMapping();
 		
@@ -459,8 +459,9 @@ public:
 			return;
 		if (controller.extendedGamepad == nullptr && controller.gamepad == nullptr)
 			return;
-		int port = std::min((int)controllers.size(), 3);
-		controllers[controller] = std::make_shared<IOSGamepad>(port, controller);
+		int index = (int)controllers.size();
+		int port = std::min(index, 3);
+		controllers[controller] = std::make_shared<IOSGamepad>(port, controller, index);
 		GamepadDevice::Register(controllers[controller]);
 	}
 

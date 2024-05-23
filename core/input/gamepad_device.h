@@ -177,7 +177,7 @@ private:
 	int _maple_port;
 	bool _detecting_button = false;
 	bool _detecting_axis = false;
-	double _detection_start_time = 0.0;
+	u64 _detection_start_time = 0;
 	input_detected_cb _input_detected;
 	bool _remappable;
 	u32 digitalToAnalogState[4];

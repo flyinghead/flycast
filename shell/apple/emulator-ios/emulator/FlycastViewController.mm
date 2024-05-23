@@ -33,7 +33,7 @@
 
 #include "types.h"
 #include "wsi/context.h"
-#include "rend/mainui.h"
+#include "ui/mainui.h"
 #include "emulator.h"
 #include "log/LogManager.h"
 #include "stdclass.h"
@@ -53,8 +53,6 @@ static __unsafe_unretained FlycastViewController *flycastViewController;
 std::map<GCController *, std::shared_ptr<IOSGamepad>> IOSGamepad::controllers;
 std::map<GCKeyboard *, std::shared_ptr<IOSKeyboard>> IOSKeyboard::keyboards;
 std::map<GCMouse *, std::shared_ptr<IOSMouse>> IOSMouse::mice;
-
-void common_linux_setup();
 
 static bool lockedPointer;
 static void updatePointerLock(Event event, void *)
@@ -210,7 +208,7 @@ static void updateAudioSession(Event event, void *)
 	}
 #endif
 
-	common_linux_setup();
+	os_InstallFaultHandler();
 
 	flycast_init(0, nullptr);
 	config::ContentPath.get().clear();
@@ -738,11 +736,11 @@ void pickIosFile()
 
 const char *getIosJitStatus()
 {
-	static double lastCheckTime;
-	if (!iosJitAuthorized && os_GetSeconds() - lastCheckTime > 10.0)
+	static u64 lastCheckTime;
+	if (!iosJitAuthorized && getTimeMs() - lastCheckTime > 10000)
 	{
 		[flycastViewController altKitStart];
-		lastCheckTime = os_GetSeconds();
+		lastCheckTime = getTimeMs();
 	}
 	return iosJitStatus.c_str();
 }

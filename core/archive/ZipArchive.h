@@ -31,11 +31,11 @@ public:
 	ArchiveFile* OpenFile(const char* name) override;
 	ArchiveFile* OpenFileByCrc(u32 crc) override;
 
-	bool Open(const void *data, size_t size);
-	ArchiveFile *OpenFirstFile();
-
-protected:
 	bool Open(FILE *file) override;
+	bool Open(const void *data, size_t size);
+
+	ArchiveFile *OpenFirstFile();
+	ArchiveFile *OpenFileByIndex(size_t index);
 
 private:
 	zip_t *zip = nullptr;
@@ -44,8 +44,8 @@ private:
 class ZipArchiveFile : public ArchiveFile
 {
 public:
-	ZipArchiveFile(zip_file_t *zip_file, size_t length)
-		: zip_file(zip_file), _length(length) {}
+	ZipArchiveFile(zip_file_t *zip_file, size_t length, const char *name)
+		: zip_file(zip_file), _length(length), name(name) {}
 	~ZipArchiveFile() override {
 		zip_fclose(zip_file);
 	}
@@ -53,8 +53,12 @@ public:
 	size_t length() override {
 		return _length;
 	}
+	const char *getName() override {
+		return name;
+	}
 
 private:
 	zip_file_t *zip_file;
 	size_t _length;
+	const char *name;
 };

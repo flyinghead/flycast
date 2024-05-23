@@ -711,8 +711,8 @@ struct OpenGL4Renderer : OpenGLRenderer
 
 		if (!config::EmulateFramebuffer)
 		{
-			DrawOSD(false);
 			frameRendered = true;
+			DrawOSD(false);
 			renderVideoRouting();
 		}
 		restoreCurrentFramebuffer();
@@ -729,23 +729,13 @@ struct OpenGL4Renderer : OpenGLRenderer
 
 	bool renderFrame(int width, int height);
 
-#ifdef LIBRETRO
 	void DrawOSD(bool clearScreen) override
 	{
-		void DrawVmuTexture(u8 vmu_screen_number, int width, int height);
-		void DrawGunCrosshair(u8 port, int width, int height);
-
-		if (settings.platform.isConsole())
-		{
-			for (int vmu_screen_number = 0 ; vmu_screen_number < 4 ; vmu_screen_number++)
-				if (vmu_lcd_status[vmu_screen_number * 2])
-					DrawVmuTexture(vmu_screen_number, width, height);
-		}
-
-		for (int lightgun_port = 0 ; lightgun_port < 4 ; lightgun_port++)
-			DrawGunCrosshair(lightgun_port, width, height);
-	}
+		drawVmusAndCrosshairs(width, height);
+#ifndef LIBRETRO
+		gui_display_osd();
 #endif
+	}
 };
 
 //setup

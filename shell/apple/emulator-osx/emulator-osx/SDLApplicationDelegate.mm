@@ -9,7 +9,7 @@
 #include "emulator.h"
 #include <sys/param.h> /* for MAXPATHLEN */
 #include <unistd.h>
-#include "rend/gui.h"
+#include "ui/gui.h"
 #include "oslib/oslib.h"
 
 #ifdef USE_BREAKPAD

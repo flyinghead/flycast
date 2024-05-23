@@ -18,6 +18,7 @@
 #ifndef IMGUI_DISABLE
 
 struct IDirect3DDevice9;
+struct IDirect3DTexture9;
 
 IMGUI_IMPL_API bool     ImGui_ImplDX9_Init(IDirect3DDevice9* device);
 IMGUI_IMPL_API void     ImGui_ImplDX9_Shutdown();
@@ -27,5 +28,12 @@ IMGUI_IMPL_API void     ImGui_ImplDX9_RenderDrawData(ImDrawData* draw_data);
 // Use if you want to reset your rendering device without losing Dear ImGui state.
 IMGUI_IMPL_API bool     ImGui_ImplDX9_CreateDeviceObjects();
 IMGUI_IMPL_API void     ImGui_ImplDX9_InvalidateDeviceObjects();
+
+// ImTextureID should be a pointer to this struct
+struct ImTextureDX9
+{
+	IDirect3DTexture9 *d3dTexture;
+	bool pointSampling;
+};
 
 #endif // #ifndef IMGUI_DISABLE

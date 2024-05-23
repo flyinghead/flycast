@@ -26,9 +26,6 @@
 #include "stdclass.h"
 
 //#define BBA_PCAPNG_DUMP
-#ifdef BBA_PCAPNG_DUMP
-#include "oslib/oslib.h"
-#endif
 
 #ifdef __MINGW32__
 #define _POSIX_SOURCE
@@ -51,6 +48,7 @@ extern "C" {
 #include "miniupnp.h"
 #include "cfg/option.h"
 #include "emulator.h"
+#include "oslib/oslib.h"
 
 #include <map>
 #include <mutex>
@@ -765,38 +763,34 @@ static void check_dns_entries()
 
 	if (public_ip.addr == 0)
 	{
-		if (!dns_query_start)
+		u32 ip;
+		pico_string_to_ipv4(RESOLVER1_OPENDNS_COM, &ip);
+		pico_ip4 tmpdns { ip };
+		if (dns_query_start == 0)
 		{
 			dns_query_start = PICO_TIME_MS();
-			struct pico_ip4 tmpdns;
-			pico_string_to_ipv4(RESOLVER1_OPENDNS_COM, &tmpdns.addr);
 			get_host_by_name("myip.opendns.com", tmpdns);
+		}
+		else if (get_dns_answer(&public_ip, tmpdns) == 0)
+		{
+			dns_query_attempts = 0;
+			dns_query_start = 0;
+			char myip[16];
+			pico_ipv4_to_string(myip, public_ip.addr);
+			INFO_LOG(MODEM, "My IP is %s", myip);
 		}
 		else
 		{
-			struct pico_ip4 tmpdns;
-			pico_string_to_ipv4(RESOLVER1_OPENDNS_COM, &tmpdns.addr);
-			if (get_dns_answer(&public_ip, tmpdns) == 0)
+			if (PICO_TIME_MS() - dns_query_start > 1000)
 			{
-				dns_query_attempts = 0;
-				dns_query_start = 0;
-				char myip[16];
-				pico_ipv4_to_string(myip, public_ip.addr);
-				INFO_LOG(MODEM, "My IP is %s", myip);
-			}
-			else
-			{
-				if (PICO_TIME_MS() - dns_query_start > 1000)
+				if (++dns_query_attempts >= 5)
 				{
-					if (++dns_query_attempts >= 5)
-					{
-						public_ip.addr = 0xffffffff;	// Bogus but not null
-						dns_query_attempts = 0;
-					}
-					else
-						// Retry
-						dns_query_start = 0;
+					public_ip.addr = 0xffffffff;	// Bogus but not null
+					dns_query_attempts = 0;
 				}
+				else
+					// Retry
+					dns_query_start = 0;
 			}
 		}
 	}
@@ -900,7 +894,7 @@ static void dumpFrame(const u8 *frame, u32 size)
 	fwrite(&roundedSize, sizeof(roundedSize), 1, pcapngDump);
 	u32 ifId = 0;
 	fwrite(&ifId, sizeof(ifId), 1, pcapngDump);
-	u64 now = (u64)(os_GetSeconds() * 1000000.0);
+	u64 now = getTimeMs() * 1000;
 	fwrite((u32 *)&now + 1, 4, 1, pcapngDump);
 	fwrite(&now, 4, 1, pcapngDump);
 	fwrite(&size, sizeof(size), 1, pcapngDump);
@@ -969,6 +963,7 @@ static void *pico_thread_func(void *)
 	std::future<MiniUPnP> upnp =
 		std::async(std::launch::async, [ports]() {
 			// Initialize miniupnpc and map network ports
+			ThreadName _("UPNP-init");
 			MiniUPnP upnp;
 			if (ports != nullptr && config::EnableUPnP)
 			{
@@ -1163,7 +1158,7 @@ static void *pico_thread_func(void *)
 	return NULL;
 }
 
-static cThread pico_thread(pico_thread_func, NULL);
+static cThread pico_thread(pico_thread_func, nullptr, "PicoTCP");
 
 bool start_pico()
 {

@@ -249,8 +249,7 @@ static void deserializeContext(Deserializer& deser, TA_context **pctx)
 	tad_context& tad = (*pctx)->tad;
 	deser.deserialize(tad.thd_root, size);
 	tad.thd_data = tad.thd_root + size;
-	if ((deser.version() >= Deserializer::V12 && deser.version() < Deserializer::V26)
-			|| (deser.version() >= Deserializer::V12_LIBRETRO && deser.version() <= Deserializer::VLAST_LIBRETRO))
+	if (deser.version() < Deserializer::V26)
 	{
 		u32 render_pass_count;
 		deser >> render_pass_count;

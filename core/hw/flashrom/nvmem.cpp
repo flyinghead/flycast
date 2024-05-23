@@ -76,8 +76,7 @@ static void add_isp_to_nvmem(DCFlashChip *flash)
 		for (u32 i = FLASH_USER_INET + 5; i <= 0xbf; i++)
 			flash->WriteBlock(FLASH_PT_USER, i, block);
 
-		flash_isp1_block isp1;
-		memset(&isp1, 0, sizeof(isp1));
+		flash_isp1_block isp1{};
 		isp1._unknown[3] = 1;
 		memcpy(isp1.sega, "SEGA", 4);
 		strcpy(isp1.username, "flycast1");
@@ -96,8 +95,7 @@ static void add_isp_to_nvmem(DCFlashChip *flash)
 		block[60] = 1;
 		flash->WriteBlock(FLASH_PT_USER, FLASH_USER_ISP1 + 5, block);
 
-		flash_isp2_block isp2;
-		memset(&isp2, 0, sizeof(isp2));
+		flash_isp2_block isp2{};
 		memcpy(isp2.sega, "SEGA", 4);
 		strcpy(isp2.username, "flycast2");
 		strcpy(isp2.password, "password");
@@ -373,36 +371,8 @@ void serialize(Serializer& ser)
 
 void deserialize(Deserializer& deser)
 {
-	if (deser.version() <= Deserializer::VLAST_LIBRETRO)
-	{
-		deser.skip<u32>();	// size
-		deser.skip<u32>();	// mask
-
-		// Legacy libretro savestate
-		if (settings.platform.isArcade())
-			sys_nvmem->Deserialize(deser);
-
-		deser.skip<u32>(); // sys_nvmem/sys_rom->size
-		deser.skip<u32>(); // sys_nvmem/sys_rom->mask
-		if (settings.platform.isConsole())
-		{
-			sys_nvmem->Deserialize(deser);
-		}
-		else if (settings.platform.isAtomiswave())
-		{
-			deser >> static_cast<DCFlashChip*>(sys_rom)->state;
-			deser.deserialize(sys_rom->data, sys_rom->size);
-		}
-		else
-		{
-			deser.skip<u32>();
-		}
-	}
-	else
-	{
-		sys_rom->Deserialize(deser);
-		sys_nvmem->Deserialize(deser);
-	}
+	sys_rom->Deserialize(deser);
+	sys_nvmem->Deserialize(deser);
 }
 
 }

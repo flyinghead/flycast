@@ -38,10 +38,11 @@ static const char* FragmentShader = R"(
 in mediump vec2 vtx_uv;
 
 uniform sampler2D tex;
+uniform mediump vec4 tint;
 
 void main()
 {
-	gl_FragColor = texture(tex, vtx_uv);
+	gl_FragColor = tint * texture(tex, vtx_uv);
 }
 )";
 
@@ -63,7 +64,9 @@ protected:
 };
 
 static GLuint shader;
+static GLint tintUniform;
 static GLuint rot90shader;
+static GLint rot90TintUniform;
 static QuadVertexArray quadVertexArray;
 static QuadVertexArray quadVertexArraySwapY;
 static std::unique_ptr<GlBuffer> quadBuffer;
@@ -88,11 +91,13 @@ void initQuad()
 		shader = gl_CompileAndLink(vertexShader.generate().c_str(), fragmentGlsl.c_str());
 		GLint tex = glGetUniformLocation(shader, "tex");
 		glUniform1i(tex, 0);	// texture 0
+		tintUniform = glGetUniformLocation(shader, "tint");
 
 		vertexShader.setConstant("ROTATE", 1);
 		rot90shader = gl_CompileAndLink(vertexShader.generate().c_str(), fragmentGlsl.c_str());
 		tex = glGetUniformLocation(rot90shader, "tex");
 		glUniform1i(tex, 0);	// texture 0
+		rot90TintUniform = glGetUniformLocation(rot90shader, "tint");
 	}
 	if (quadIndexBuffer == nullptr)
 	{
@@ -145,7 +150,7 @@ void termQuad()
 }
 
 // coords is an optional array of 20 floats (4 vertices with x,y,z,u,v each)
-void drawQuad(GLuint texId, bool rotate, bool swapY, float *coords)
+void drawQuad(GLuint texId, bool rotate, bool swapY, const float *coords, const float *color)
 {
 	glcache.Disable(GL_SCISSOR_TEST);
 	glcache.Disable(GL_DEPTH_TEST);
@@ -156,6 +161,12 @@ void drawQuad(GLuint texId, bool rotate, bool swapY, float *coords)
 
 	glActiveTexture(GL_TEXTURE0);
 	glcache.BindTexture(GL_TEXTURE_2D, texId);
+
+	if (color == nullptr) {
+		static constexpr float white[4] { 1.f, 1.f, 1.f, 1.f };
+		color = white;
+	}
+	glUniform4fv(rotate ? rot90TintUniform : tintUniform, 1, color);
 
 	if (coords == nullptr)
 	{

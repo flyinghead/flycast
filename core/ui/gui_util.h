@@ -24,11 +24,13 @@
 #include "imgui_internal.h"
 #include "gui.h"
 #include "emulator.h"
+#include "oslib/oslib.h"
 
 #include <algorithm>
 #include <chrono>
 #include <future>
 #include <string>
+#include <mutex>
 
 typedef bool (*StringCallback)(bool cancelled, std::string selection);
 
@@ -58,16 +60,6 @@ static inline void centerNextWindow()
 			ImGuiCond_Always, ImVec2(0.5f, 0.5f));
 }
 
-static inline bool operator==(const ImVec2& l, const ImVec2& r)
-{
-	return l.x == r.x && l.y == r.y;
-}
-
-static inline bool operator!=(const ImVec2& l, const ImVec2& r)
-{
-	return !(l == r);
-}
-
 void fullScreenWindow(bool modal);
 void windowDragScroll();
 
@@ -78,6 +70,7 @@ public:
 	{
 		progress.reset();
 		future = std::async(std::launch::async, [this, path] {
+			ThreadName _("GameLoader");
 			emu.loadGame(path.c_str(), &progress);
 		});
 	}
@@ -117,31 +110,21 @@ private:
 	std::future<void> future;
 };
 
+static inline float uiScaled(float f) {
+	return f * settings.display.uiScale;
+}
+
 struct ScaledVec2 : public ImVec2
 {
 	ScaledVec2()
 		: ImVec2() {}
 	ScaledVec2(float x, float y)
-		: ImVec2(x * settings.display.uiScale, y * settings.display.uiScale) {}
+		: ImVec2(uiScaled(x), uiScaled(y)) {}
 };
 
 inline static ImVec2 min(const ImVec2& l, const ImVec2& r) {
 	return ImVec2(std::min(l.x, r.x), std::min(l.y, r.y));
 }
-inline static ImVec2 operator+(const ImVec2& l, const ImVec2& r) {
-	return ImVec2(l.x + r.x, l.y + r.y);
-}
-inline static ImVec2 operator-(const ImVec2& l, const ImVec2& r) {
-	return ImVec2(l.x - r.x, l.y - r.y);
-}
-inline static ImVec2 operator*(const ImVec2& v, float f) {
-	return ImVec2(v.x * f, v.y * f);
-}
-inline static ImVec2 operator/(const ImVec2& v, float f) {
-	return ImVec2(v.x / f, v.y / f);
-}
-
-u8 *loadImage(const std::string& path, int& width, int& height);
 
 class DisabledScope
 {
@@ -171,3 +154,159 @@ private:
 };
 
 bool BeginListBox(const char* label, const ImVec2& size_arg = ImVec2(0, 0), ImGuiWindowFlags windowFlags = 0);
+
+class ImguiID
+{
+public:
+	ImguiID(const std::string& id)
+		: ImguiID(id.c_str()) {}
+	ImguiID(const char *id) {
+		ImGui::PushID(id);
+	}
+	~ImguiID() {
+		ImGui::PopID();
+	}
+};
+
+class ImguiStyleVar
+{
+public:
+	ImguiStyleVar(ImGuiStyleVar idx, const ImVec2& val) {
+		ImGui::PushStyleVar(idx, val);
+	}
+	ImguiStyleVar(ImGuiStyleVar idx, float val) {
+		ImGui::PushStyleVar(idx, val);
+	}
+	~ImguiStyleVar() {
+		ImGui::PopStyleVar();
+	}
+};
+
+class ImguiStyleColor
+{
+public:
+	ImguiStyleColor(ImGuiCol idx, const ImVec4& col) {
+		ImGui::PushStyleColor(idx, col);
+	}
+	ImguiStyleColor(ImGuiCol idx, ImU32 col) {
+		ImGui::PushStyleColor(idx, col);
+	}
+	~ImguiStyleColor() {
+		ImGui::PopStyleColor();
+	}
+};
+
+class ImguiTexture
+{
+public:
+	void draw(const ImVec2& size, const ImVec4& tint_col = ImVec4(1, 1, 1, 1),
+			const ImVec4& border_col = ImVec4(0, 0, 0, 0));
+	void draw(ImDrawList *drawList, const ImVec2& pos, const ImVec2& size, float alpha = 1.f);
+	bool button(const char* str_id, const ImVec2& image_size, const std::string& title = {}, const ImVec4& bg_col = ImVec4(0, 0, 0, 0),
+			const ImVec4& tint_col = ImVec4(1, 1, 1, 1));
+
+	operator ImTextureID() {
+		return getId();
+	}
+	void setNearestSampling(bool nearestSampling) {
+		this->nearestSampling = nearestSampling;
+	}
+
+	virtual ImTextureID getId() = 0;
+	virtual ~ImguiTexture() = default;
+
+protected:
+	bool nearestSampling = false;
+};
+
+class ImguiFileTexture : public ImguiTexture
+{
+public:
+	ImguiFileTexture() = default;
+	ImguiFileTexture(const std::string& path) : ImguiTexture(), path(path) {}
+
+	bool operator==(const ImguiFileTexture& other) const {
+		return other.path == path;
+	}
+	ImTextureID getId() override;
+
+	static void resetLoadCount() {
+		textureLoadCount = 0;
+	}
+
+private:
+	std::string path;
+	static int textureLoadCount;
+};
+
+class ImguiStateTexture : public ImguiTexture
+{
+public:
+	ImTextureID getId() override;
+
+	bool exists();
+	void invalidate();
+
+private:
+	struct LoadedPic
+	{
+		u8 *data;
+		int width;
+		int height;
+	};
+	static std::future<LoadedPic> asyncLoad;
+};
+
+class ImguiVmuTexture : public ImguiTexture
+{
+public:
+	ImguiVmuTexture(int index = 0) : index(index) {}
+
+	// draw all active vmus in a single column at the given position
+	static void displayVmus(const ImVec2& pos);
+	ImTextureID getId() override;
+
+private:
+	int index = 0;
+	std::string idPath;
+	u64 vmuLastChanged = 0;
+
+	static std::array<ImguiVmuTexture, 8> Vmus;
+};
+
+static inline bool iconButton(const char *icon, const std::string& label, const ImVec2& size = {})
+{
+	ImguiStyleVar _{ImGuiStyleVar_ButtonTextAlign, ImVec2(0.f, 0.5f)};	// left aligned
+	std::string s(5 + label.size(), '\0');
+	s.resize(sprintf(s.data(), "%s  %s", icon, label.c_str()));
+	return ImGui::Button(s.c_str(), size);
+}
+
+static inline float iconButtonWidth(const char *icon, const std::string& label)
+{
+	// TODO avoid doing stuff twice
+	std::string s(5 + label.size(), '\0');
+	s.resize(sprintf(s.data(), "%s  %s", icon, label.c_str()));
+	return ImGui::CalcTextSize(s.c_str()).x + ImGui::GetStyle().FramePadding.x * 2;
+}
+
+static inline ImU32 alphaOverride(ImU32 color, float alpha) {
+	return (color & ~IM_COL32_A_MASK) | (IM_F32_TO_INT8_SAT(alpha) << IM_COL32_A_SHIFT);
+}
+
+class Toast
+{
+public:
+	void show(const std::string& title, const std::string& message, u32 durationMs);
+	bool draw();
+
+private:
+	static constexpr u64 START_ANIM_TIME = 500;
+	static constexpr u64 END_ANIM_TIME = 1000;
+
+	std::string title;
+	std::string message;
+	u64 startTime = 0;
+	u64 endTime = 0;
+	std::mutex mutex;
+};

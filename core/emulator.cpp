@@ -37,7 +37,6 @@
 #include "network/ggpo.h"
 #include "hw/mem/mem_watch.h"
 #include "network/net_handshake.h"
-#include "rend/gui.h"
 #include "network/naomi_network.h"
 #include "serialize.h"
 #include "hw/pvr/pvr.h"
@@ -45,6 +44,9 @@
 #include "oslib/storage.h"
 #include "wsi/context.h"
 #include <chrono>
+#ifndef LIBRETRO
+#include "ui/gui.h"
+#endif
 
 settings_t settings;
 
@@ -449,6 +451,8 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 			{
 				hostfs::FileInfo info = hostfs::storage().getFileInfo(settings.content.path);
 				settings.content.fileName = info.name;
+				if (settings.content.title.empty())
+					settings.content.title = get_file_basename(info.name);
 			}
 		}
 		else
@@ -487,7 +491,7 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 							nvmem::loadHle();
 							NOTICE_LOG(BOOT, "Did not load BIOS, using reios");
 							if (!config::UseReios && config::UseReios.isReadOnly())
-								gui_display_notification("This game requires a real BIOS", 15000);
+								os_notify("This game requires a real BIOS", 15000);
 						}
 					}
 					else
@@ -506,6 +510,8 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 					InitDrive("");
 				}
 			}
+			if (settings.content.path.empty())
+				settings.content.title = "Dreamcast BIOS";
 
 			if (progress)
 				progress->progress = 1.0f;
@@ -526,10 +532,18 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 				// Must be done after the maple devices are created and EEPROM is accessible
 				naomi_cart_ConfigureEEPROM();
 		}
+#ifdef USE_RACHIEVEMENTS
+		// RA probably isn't expecting to travel back in the past so disable it
+		if (config::GGPOEnable)
+			config::EnableAchievements.override(false);
+		// Hardcore mode disables all cheats, under/overclocking, load state, lua and forces dynarec on
+		settings.raHardcoreMode = config::EnableAchievements && config::AchievementsHardcoreMode
+			&& !NaomiNetworkSupported();
+#endif
 		cheatManager.reset(settings.content.gameId);
 		if (cheatManager.isWidescreen())
 		{
-			gui_display_notification("Widescreen cheat activated", 1000);
+			os_notify("Widescreen cheat activated", 2000);
 			config::ScreenStretching.override(134);	// 4:3 -> 16:9
 		}
 		// reload settings so that all settings can be overridden
@@ -538,10 +552,12 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 		settings.input.fastForwardMode = false;
 		if (!settings.content.path.empty())
 		{
+#ifndef LIBRETRO
 			if (config::GGPOEnable)
 				dc_loadstate(-1);
 			else if (config::AutoLoadState && !NaomiNetworkSupported() && !settings.naomi.multiboard)
 				dc_loadstate(config::SavestateSlot);
+#endif
 		}
 		EventManager::event(Event::Start);
 
@@ -600,9 +616,11 @@ void Emulator::unloadGame()
 	} catch (...) { }
 	if (state == Loaded || state == Error)
 	{
+#ifndef LIBRETRO
 		if (state == Loaded && config::AutoSaveState && !settings.content.path.empty()
 				&& !settings.naomi.multiboard && !config::GGPOEnable && !NaomiNetworkSupported())
-			dc_savestate(config::SavestateSlot);
+			gui_saveState(false);
+#endif
 		try {
 			dc_reset(true);
 		} catch (const FlycastException& e) {
@@ -614,6 +632,7 @@ void Emulator::unloadGame()
 		settings.content.path.clear();
 		settings.content.gameId.clear();
 		settings.content.fileName.clear();
+		settings.content.title.clear();
 		settings.platform.system = DC_PLATFORM_DREAMCAST;
 		state = Init;
 		EventManager::event(Event::Terminate);
@@ -686,6 +705,10 @@ void Emulator::requestReset()
 
 void loadGameSpecificSettings()
 {
+	// Graphics context isn't available yet in libretro
+	if (GraphicsContext::Instance() != nullptr && GraphicsContext::Instance()->isAMD())
+		config::NativeDepthInterpolation.override(true);
+
 	if (settings.platform.isConsole())
 	{
 		reios_disk_id();
@@ -703,8 +726,13 @@ void loadGameSpecificSettings()
 	// Reload per-game settings
 	config::Settings::instance().load(true);
 
-	if (config::GGPOEnable)
+	if (config::GGPOEnable || settings.raHardcoreMode)
 		config::Sh4Clock.override(200);
+	if (settings.raHardcoreMode)
+	{
+		config::WidescreenGameHacks.override(false);
+		config::DynarecEnabled.override(true);
+	}
 }
 
 void Emulator::step()
@@ -755,42 +783,30 @@ void Emulator::setNetworkState(bool online)
 			config::Sh4Clock.override(200);
 			sh4_cpu.ResetCache();
 		}
+		EventManager::event(Event::Network);
 	}
 	settings.input.fastForwardMode &= !online;
 }
 
-EventManager EventManager::Instance;
-
 void EventManager::registerEvent(Event event, Callback callback, void *param)
 {
 	unregisterEvent(event, callback, param);
-	auto it = callbacks.find(event);
-	if (it != callbacks.end())
-		it->second.push_back(std::make_pair(callback, param));
-	else
-		callbacks.insert({ event, { std::make_pair(callback, param) } });
+	auto& vector = callbacks[static_cast<size_t>(event)];
+	vector.push_back(std::make_pair(callback, param));
 }
 
 void EventManager::unregisterEvent(Event event, Callback callback, void *param)
 {
-	auto it = callbacks.find(event);
-	if (it == callbacks.end())
-		return;
-
-	auto it2 = std::find(it->second.begin(), it->second.end(), std::make_pair(callback, param));
-	if (it2 == it->second.end())
-		return;
-
-	it->second.erase(it2);
+	auto& vector = callbacks[static_cast<size_t>(event)];
+	auto it = std::find(vector.begin(), vector.end(), std::make_pair(callback, param));
+	if (it != vector.end())
+		vector.erase(it);
 }
 
 void EventManager::broadcastEvent(Event event)
 {
-	auto it = callbacks.find(event);
-	if (it == callbacks.end())
-		return;
-
-	for (auto& pair : it->second)
+	auto& vector = callbacks[static_cast<size_t>(event)];
+	for (auto& pair : vector)
 		pair.first(event, pair.second);
 }
 
@@ -842,6 +858,7 @@ void Emulator::start()
 	{
 		const std::lock_guard<std::mutex> lock(mutex);
 		threadResult = std::async(std::launch::async, [this] {
+				ThreadName _("Flycast-emu");
 				InitAudio();
 
 				try {

@@ -21,6 +21,7 @@
 #include "gui.h"
 #include <memory>
 #include <unordered_map>
+#include <array>
 
 class ImGuiDriver
 {
@@ -30,36 +31,43 @@ public:
 	}
 	virtual ~ImGuiDriver() = default;
 
+	virtual void reset() {
+		aspectRatios.clear();
+	}
+
 	virtual void newFrame() = 0;
 	virtual void renderDrawData(ImDrawData* drawData, bool gui_open) = 0;
-
-	virtual void displayVmus() {}
-	virtual void displayCrosshairs() {}
 
 	virtual void present() = 0;
 	virtual void setFrameRendered() {}
 
 	virtual ImTextureID getTexture(const std::string& name) = 0;
-	virtual ImTextureID updateTexture(const std::string& name, const u8 *data, int width, int height) = 0;
+	virtual ImTextureID updateTexture(const std::string& name, const u8 *data, int width, int height, bool nearestSampling) = 0;
+	virtual void deleteTexture(const std::string& name) = 0;
 
-	ImTextureID updateTextureAndAspectRatio(const std::string& name, const u8 *data, int width, int height)
+	ImTextureID updateTextureAndAspectRatio(const std::string& name, const u8 *data, int width, int height, bool nearestSampling)
 	{
-		ImTextureID textureId = updateTexture(name, data, width, height);
+		ImTextureID textureId = updateTexture(name, data, width, height, nearestSampling);
 		if (textureId != ImTextureID())
 			aspectRatios[textureId] = (float)width / height;
 		return textureId;
 	}
 
-	float getAspectRatio(ImTextureID textureId) {
+	float getAspectRatio(ImTextureID textureId)
+	{
 		auto it = aspectRatios.find(textureId);
 		if (it != aspectRatios.end())
 			return it->second;
 		else
-			return 1;
+			return 1.f;
+	}
+	void updateAspectRatio(ImTextureID textureId, float aspectRatio) {
+		if (textureId != ImTextureID())
+			aspectRatios[textureId] = aspectRatio;
 	}
 
 private:
-	std::unordered_map<ImTextureID, float> aspectRatios;
+	std::unordered_map<ImTextureID, float> aspectRatios;	// TODO move this out
 };
 
 extern std::unique_ptr<ImGuiDriver> imguiDriver;

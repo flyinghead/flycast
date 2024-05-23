@@ -51,10 +51,14 @@ template<typename T>
 class Deleter : public Deletable
 {
 public:
-	Deleter(T *p) : p(p) {}
+	Deleter() = delete;
+	explicit Deleter(T& o) : o(o) {}
+	Deleter(T&& o) : o(std::move(o)) {}
 	~Deleter() override {
-		delete p;
+		if constexpr (std::is_pointer_v<T>)
+			delete o;
 	}
+
 private:
-	T *p;
+	T o;
 };

@@ -688,8 +688,8 @@ private:
 			return false;
 		}
 
-		double now = os_GetSeconds();
-		if (!barcode.empty() && now - lastBarcodeTime >= 0.5)
+		u64 now = getTimeMs();
+		if (!barcode.empty() && now - lastBarcodeTime >= 500)
 		{
 			INFO_LOG(INPUT, "Barcode timeout");
 			barcode.clear();
@@ -721,5 +721,5 @@ private:
 
 	int modifiers = 0;
 	std::string barcode;
-	double lastBarcodeTime = 0.0;
+	u64 lastBarcodeTime = 0;
 };

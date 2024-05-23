@@ -169,18 +169,3 @@ void os_UninstallFaultHandler()
 #endif
 	SetUnhandledExceptionFilter(prevExceptionHandler);
 }
-
-double os_GetSeconds()
-{
-	static double qpfd = []() {
-		LARGE_INTEGER qpf;
-		QueryPerformanceFrequency(&qpf);
-		return 1.0 / qpf.QuadPart; }();
-
-	LARGE_INTEGER time_now;
-
-	QueryPerformanceCounter(&time_now);
-	static LARGE_INTEGER time_now_base = time_now;
-
-	return (time_now.QuadPart - time_now_base.QuadPart) * qpfd;
-}

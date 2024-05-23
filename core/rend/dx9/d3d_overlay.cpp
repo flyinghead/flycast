@@ -50,7 +50,7 @@ void D3DOverlay::draw(u32 width, u32 height, bool vmu, bool crosshair)
 				texture.reset();
 				continue;
 			}
-			if (texture == nullptr || vmu_lcd_changed[i])
+			if (texture == nullptr || this->vmuLastChanged[i] != ::vmuLastChanged[i])
 			{
 				texture.reset();
 				device->CreateTexture(48, 32, 1, D3DUSAGE_DYNAMIC, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &texture.get(), 0);
@@ -61,8 +61,8 @@ void D3DOverlay::draw(u32 width, u32 height, bool vmu, bool crosshair)
 					for (int y = 0; y < 32; y++)
 						memcpy(dst + y * rect.Pitch, vmu_lcd_data[i] + (31 - y) * 48, 48 * 4);
 					texture->UnlockRect(0);
+					this->vmuLastChanged[i] = ::vmuLastChanged[i];
 				}
-				vmu_lcd_changed[i] = false;
 			}
 			float x;
 			if (i & 2)

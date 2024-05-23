@@ -21,7 +21,8 @@
 #ifdef USE_LUA
 #include <lua.hpp>
 #include <LuaBridge/LuaBridge.h>
-#include "rend/gui.h"
+#include "ui/gui.h"
+#include "ui/gui_util.h"
 #include "hw/mem/addrspace.h"
 #include "cfg/option.h"
 #include "emulator.h"
@@ -43,7 +44,7 @@ using lock_guard = std::lock_guard<std::recursive_mutex>;
 
 static void emuEventCallback(Event event, void *)
 {
-	if (L == nullptr)
+	if (L == nullptr || settings.raHardcoreMode)
 		return;
 	lock_guard lock(mutex);
 	try {
@@ -70,6 +71,12 @@ static void emuEventCallback(Event event, void *)
 			break;
 		case Event::VBlank:
 			key = "vblank";
+			break;
+		case Event::Network:
+			key = "network";
+			break;
+		case Event::DiskChange:
+			key = "diskChange";
 			break;
 		}
 		if (v[key].isFunction())
@@ -363,7 +370,7 @@ static void beginWindow(const char *title, int x, int y, int w, int h)
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
 	ImGui::SetNextWindowPos(ImVec2(x, y));
-	ImGui::SetNextWindowSize(ImVec2(w * settings.display.uiScale, h * settings.display.uiScale));
+	ImGui::SetNextWindowSize(ScaledVec2(w, h));
 	ImGui::SetNextWindowBgAlpha(0.7f);
 	ImGui::Begin(title, NULL, ImGuiWindowFlags_AlwaysAutoResize |  ImGuiWindowFlags_NoNavInputs | ImGuiWindowFlags_NoNavFocus);
 	ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(0.557f, 0.268f, 0.965f, 1.f));
@@ -389,7 +396,7 @@ static void uiTextRightAligned(const std::string& text)
 
 static void uiBargraph(float v)
 {
-	ImGui::ProgressBar(v, ImVec2(-1, 10.f * settings.display.uiScale), "");
+	ImGui::ProgressBar(v, ImVec2(-1, uiScaled(10.f)), "");
 }
 
 static int uiButton(lua_State *L)
@@ -440,7 +447,7 @@ static void luaRegister(lua_State *L)
 						gui_open_settings();
 				}))
 				.addFunction("exit", dc_exit)
-				.addFunction("displayNotification", gui_display_notification)
+				.addFunction("displayNotification", os_notify)
 			.endNamespace()
 
 	  		.beginNamespace("config")
@@ -619,6 +626,7 @@ void init()
     EventManager::listen(Event::Terminate, emuEventCallback);
     EventManager::listen(Event::LoadState, emuEventCallback);
     EventManager::listen(Event::VBlank, emuEventCallback);
+    EventManager::listen(Event::Network, emuEventCallback);
 
 	doExec(initFile);
 }
@@ -633,6 +641,7 @@ void term()
     EventManager::unlisten(Event::Terminate, emuEventCallback);
     EventManager::unlisten(Event::LoadState, emuEventCallback);
     EventManager::unlisten(Event::VBlank, emuEventCallback);
+    EventManager::unlisten(Event::Network, emuEventCallback);
 	lua_close(L);
 	L = nullptr;
 }

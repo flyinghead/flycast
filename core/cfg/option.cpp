@@ -108,6 +108,7 @@ Option<int> PerPixelLayers("rend.PerPixelLayers", 32);
 Option<bool> NativeDepthInterpolation("rend.NativeDepthInterpolation", false);
 Option<bool> EmulateFramebuffer("rend.EmulateFramebuffer", false);
 Option<bool> FixUpscaleBleedingEdge("rend.FixUpscaleBleedingEdge", true);
+Option<bool> CustomGpuDriver("rend.CustomGpuDriver", false);
 #ifdef VIDEO_ROUTING
 Option<bool, false> VideoRouting("rend.VideoRouting", false);
 Option<bool, false> VideoRoutingScale("rend.VideoRoutingScale", false);
@@ -130,6 +131,7 @@ Option<bool> OpenGlChecks("OpenGlChecks", false, "validate");
 Option<std::vector<std::string>, false> ContentPath("Dreamcast.ContentPath");
 Option<bool, false> HideLegacyNaomiRoms("Dreamcast.HideLegacyNaomiRoms", true);
 Option<bool, false> UploadCrashLogs("UploadCrashLogs", true);
+Option<bool, false> DiscordPresence("DiscordPresence", true);
 
 // Profiler
 Option<bool> ProfilerEnabled("Profiler.Enabled");
@@ -156,10 +158,6 @@ Option<int> GGPOChatTimeout("GGPOChatTimeout", 10, "network");
 Option<bool> NetworkOutput("NetworkOutput", false, "network");
 Option<int> MultiboardSlaves("MultiboardSlaves", 1, "network");
 Option<bool> BattleCableEnable("BattleCable", false, "network");
-
-#ifdef SUPPORT_DISPMANX
-Option<bool> DispmanxMaintainAspect("maintain_aspect", true, "dispmanx");
-#endif
 
 #ifdef USE_OMX
 Option<int> OmxAudioLatency("audio_latency", 100, "omx");
@@ -198,5 +196,12 @@ Option<bool, false> UseRawInput("RawInput", false, "input");
 #ifdef USE_LUA
 Option<std::string, false> LuaFileName("LuaFileName", "flycast.lua");
 #endif
+
+// RetroAchievements
+
+Option<bool> EnableAchievements("Enabled", false, "achievements");
+Option<bool> AchievementsHardcoreMode("HardcoreMode", false, "achievements");
+OptionString AchievementsUserName("UserName", "", "achievements");
+OptionString AchievementsToken("Token", "", "achievements");
 
 } // namespace config

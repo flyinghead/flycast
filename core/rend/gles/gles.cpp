@@ -2,7 +2,7 @@
 #include "gles.h"
 #include "hw/pvr/ta.h"
 #ifndef LIBRETRO
-#include "rend/gui.h"
+#include "ui/gui.h"
 #else
 #include "rend/gles/postprocess.h"
 #include "vmu_xhair.h"
@@ -516,9 +516,9 @@ void termGLCommon()
 	gl.ofbo2.framebuffer.reset();
 	gl.fbscaling.framebuffer.reset();
 	gl.videorouting.framebuffer.reset();
+	termVmuLightgun();
 #ifdef LIBRETRO
 	postProcessor.term();
-	termVmuLightgun();
 #endif
 }
 
@@ -989,9 +989,11 @@ static void gl_create_resources()
 
 	findGLVersion();
 
+#ifndef LIBRETRO
 	if (gl.gl_major >= 3)
 		// will be used later. Better fail fast
 		verify(glGenVertexArrays != nullptr);
+#endif
 
 	//create vbos
 	gl.vbo.geometry = std::make_unique<GlBuffer>(GL_ARRAY_BUFFER);
@@ -1120,21 +1122,9 @@ static void updatePaletteTexture(GLenum texture_slot)
 
 void OpenGLRenderer::DrawOSD(bool clear_screen)
 {
-#ifdef LIBRETRO
-	void DrawVmuTexture(u8 vmu_screen_number, int width, int height);
-	void DrawGunCrosshair(u8 port, int width, int height);
+	drawVmusAndCrosshairs(width, height);
 
-	if (settings.platform.isConsole())
-	{
-		for (int vmu_screen_number = 0 ; vmu_screen_number < 4 ; vmu_screen_number++)
-			if (vmu_lcd_status[vmu_screen_number * 2])
-				DrawVmuTexture(vmu_screen_number, width, height);
-	}
-
-	for (int lightgun_port = 0 ; lightgun_port < 4 ; lightgun_port++)
-		DrawGunCrosshair(lightgun_port, width, height);
-
-#else
+#ifndef LIBRETRO
 	gui_display_osd();
 #ifdef __ANDROID__
 	if (gl.OSD_SHADER.osd_tex == 0)
@@ -1510,8 +1500,8 @@ bool OpenGLRenderer::Render()
 
 	if (!config::EmulateFramebuffer)
 	{
-		DrawOSD(false);
 		frameRendered = true;
+		DrawOSD(false);
 		renderVideoRouting();
 	}
 	

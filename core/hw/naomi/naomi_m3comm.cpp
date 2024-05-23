@@ -30,7 +30,7 @@
 #include "hw/sh4/sh4_mem.h"
 #include "network/naomi_network.h"
 #include "emulator.h"
-#include "rend/gui.h"
+#include "oslib/oslib.h"
 
 #include <chrono>
 #include <memory>
@@ -72,7 +72,7 @@ void NaomiM3Comm::closeNetwork()
 
 void NaomiM3Comm::connectNetwork()
 {
-	gui_display_notification("Network started", 5000);
+	os_notify("Network started", 5000);
 	packet_number = 0;
 	slot_count = naomiNetwork.getSlotCount();
 	slot_id = naomiNetwork.getSlotId();

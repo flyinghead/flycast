@@ -64,6 +64,7 @@
 #include "cfg/option.h"
 #include "version.h"
 #include "rend/transform_matrix.h"
+#include "oslib/oslib.h"
 
 constexpr char slash = path_default_slash_c();
 
@@ -125,6 +126,9 @@ static bool platformIsDreamcast = true;
 static bool platformIsArcade = false;
 static bool threadedRenderingEnabled = true;
 static bool oitEnabled = false;
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
+static bool perPixelChecked = false;
+#endif
 static bool autoSkipFrameEnabled = false;
 #ifdef _OPENMP
 static bool textureUpscaleEnabled = false;
@@ -193,7 +197,6 @@ static retro_rumble_interface rumble;
 static void refresh_devices(bool first_startup);
 static void init_disk_control_interface();
 static bool read_m3u(const char *file);
-void gui_display_notification(const char *msg, int duration);
 static void updateVibration(u32 port, float power, float inclination, u32 durationMs);
 
 static std::string game_data;
@@ -218,7 +221,6 @@ static std::vector<std::string> disk_paths;
 static std::vector<std::string> disk_labels;
 static bool disc_tray_open = false;
 
-void UpdateInputState();
 static bool set_variable_visibility(void);
 
 void retro_set_video_refresh(retro_video_refresh_t cb)
@@ -1013,7 +1015,7 @@ static void update_variables(bool first_startup)
 										| 0xff000000;
 
 		vmu_lcd_status[i * 2] = false;
-		vmu_lcd_changed[i * 2] = true;
+		vmuLastChanged[i * 2] = getTimeMs();
 		vmu_screen_params[i].vmu_screen_position = UPPER_LEFT;
 		vmu_screen_params[i].vmu_screen_size_mult = 1;
 		vmu_screen_params[i].vmu_pixel_on_R = VMU_SCREEN_COLOR_MAP[VMU_DEFAULT_ON].r;
@@ -1167,7 +1169,7 @@ void retro_run()
 		emu.start();
 
 	poll_cb();
-	UpdateInputState();
+	os_UpdateInputState();
 	bool fastforward = false;
 	if (environ_cb(RETRO_ENVIRONMENT_GET_FASTFORWARDING, &fastforward))
 		settings.input.fastForwardMode = fastforward;
@@ -1187,7 +1189,7 @@ void retro_run()
 		}
 	} catch (const FlycastException& e) {
 		ERROR_LOG(COMMON, "%s", e.what());
-		gui_display_notification(e.what(), 5000);
+		os_notify(e.what(), 5000);
 		environ_cb(RETRO_ENVIRONMENT_SHUTDOWN, NULL);
 	}
 
@@ -1212,7 +1214,7 @@ static bool loadGame()
 		emu.loadGame(game_data.c_str());
 	} catch (const FlycastException& e) {
 		ERROR_LOG(BOOT, "%s", e.what());
-		gui_display_notification(e.what(), 5000);
+		os_notify(e.what(), 5000);
         retro_unload_game();
 		return false;
 	}
@@ -1241,6 +1243,42 @@ void retro_reset()
 	emu.start();
 }
 
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
+void check_per_pixel_opt(void)
+{
+	// Check if per-pixel is supported, if not we hide the option
+	if (!GraphicsContext::Instance()->hasPerPixel())
+	{
+		for (unsigned i = 0; option_defs_us[i].key != NULL; i++)
+		{
+			// Looking for the alpha sorting core option...
+			if (!strcmp(option_defs_us[i].key, CORE_OPTION_NAME "_alpha_sorting"))
+			{
+				for (unsigned j = 0; option_defs_us[i].values[j].value != NULL; j++)
+				{
+					// ... then for the per-pixel choice...
+					if (!strcmp(option_defs_us[i].values[j].value, "per-pixel (accurate)"))
+					{
+						// ... null it out...
+						option_defs_us[i].values[j] = { NULL, NULL };
+
+						// ... and finally refresh core options.
+						bool optionCategoriesSupported = false;
+						libretro_set_core_options(environ_cb, &optionCategoriesSupported);
+						categoriesSupported |= optionCategoriesSupported;
+
+						break;
+					}
+				}
+				break;
+			}
+		}
+		NOTICE_LOG(RENDERER, "Current renderer does not support 'Per-Pixel' Alpha Sorting.");
+	}
+	perPixelChecked = true;
+}
+#endif
+
 #if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES)
 static void context_reset()
 {
@@ -1251,6 +1289,10 @@ static void context_reset()
 	rend_term_renderer();
 	theGLContext.init();
 	rend_init_renderer();
+#ifdef HAVE_OIT
+	if (!perPixelChecked)
+		check_per_pixel_opt();
+#endif
 }
 
 static void context_destroy()
@@ -1812,6 +1854,8 @@ static void retro_vk_context_reset()
 	theVulkanContext.init((retro_hw_render_interface_vulkan *)vulkan);
 	rend_term_renderer();
 	rend_init_renderer();
+	if (!perPixelChecked)
+		check_per_pixel_opt();
 }
 
 static void retro_vk_context_destroy()
@@ -1946,6 +1990,8 @@ static void dx11_context_reset()
 	else if (config::RendererType != RenderType::DirectX11_OIT)
 		config::RendererType = RenderType::DirectX11;
 	rend_init_renderer();
+	if (!perPixelChecked)
+		check_per_pixel_opt();
 }
 
 static void dx11_context_destroy()
@@ -1985,7 +2031,7 @@ bool retro_load_game(const struct retro_game_info *game)
 	if (environ_cb(RETRO_ENVIRONMENT_GET_JIT_CAPABLE, &can_jit) && !can_jit) {
 		// jit is required both for performance and for audio. trying to run
 		// without the jit will cause a crash.
-		gui_display_notification("Cannot run without JIT", 5000);
+		os_notify("Cannot run without JIT", 5000);
 		return false;
 	}
 #endif
@@ -2455,11 +2501,6 @@ void retro_rend_present()
 		is_dupe = false;
 }
 
-static uint32_t get_time_ms()
-{
-   return (uint32_t)(os_GetSeconds() * 1000.0);
-}
-
 static void get_analog_stick( retro_input_state_t input_state_cb,
                        int player_index,
                        int stick,
@@ -2916,14 +2957,14 @@ static void UpdateInputState(u32 port)
 	}
 	if (rumble.set_rumble_state != NULL && vib_stop_time[port] > 0)
 	{
-		if (get_time_ms() >= vib_stop_time[port])
+		if (getTimeMs() >= vib_stop_time[port])
 		{
 			vib_stop_time[port] = 0;
 			rumble.set_rumble_state(port, RETRO_RUMBLE_STRONG, 0);
 		}
 		else if (vib_delta[port] > 0.0)
 		{
-			u32 rem_time = vib_stop_time[port] - get_time_ms();
+			u32 rem_time = vib_stop_time[port] - getTimeMs();
 			rumble.set_rumble_state(port, RETRO_RUMBLE_STRONG, 65535 * vib_strength[port] * rem_time * vib_delta[port]);
 		}
 	}
@@ -3315,7 +3356,7 @@ static void UpdateInputState(u32 port)
 	}
 }
 
-void UpdateInputState()
+void os_UpdateInputState()
 {
 	UpdateInputState(0);
 	UpdateInputState(1);
@@ -3331,7 +3372,7 @@ static void updateVibration(u32 port, float power, float inclination, u32 durati
 	vib_strength[port] = power;
 
 	rumble.set_rumble_state(port, RETRO_RUMBLE_STRONG, (u16)(65535 * power));
-	vib_stop_time[port] = get_time_ms() + durationMs;
+	vib_stop_time[port] = getTimeMs() + durationMs;
 	vib_delta[port] = inclination;
 }
 
@@ -3661,12 +3702,10 @@ static bool read_m3u(const char *file)
 	return disk_index != 0;
 }
 
-void gui_display_notification(const char *msg, int duration)
+void os_notify(const char *msg, int durationMs, const char *details)
 {
 	retro_message retromsg;
 	retromsg.msg = msg;
-	retromsg.frames = duration / 17;
+	retromsg.frames = durationMs / 17;
 	environ_cb(RETRO_ENVIRONMENT_SET_MESSAGE, &retromsg);
 }
-
-void os_RunInstance(int argc, const char *argv[]) { }

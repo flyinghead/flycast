@@ -17,9 +17,8 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
  */
 #include "gamesdb.h"
-#include "http_client.h"
+#include "oslib/http_client.h"
 #include "stdclass.h"
-#include "oslib/oslib.h"
 #include "emulator.h"
 
 #define APIKEY "3fcc5e726a129924972be97abfd577ac5311f8f12398a9d9bcb5a377d4656fa8"
@@ -74,9 +73,9 @@ void TheGamesDb::copyFile(const std::string& from, const std::string& to)
 
 json TheGamesDb::httpGet(const std::string& url)
 {
-	if (os_GetSeconds() < blackoutPeriod)
+	if (getTimeMs() < blackoutPeriod)
 		throw std::runtime_error("");
-	blackoutPeriod = 0.0;
+	blackoutPeriod = 0;
 
 	DEBUG_LOG(COMMON, "TheGameDb: GET %s", url.c_str());
 	std::vector<u8> receivedData;
@@ -84,9 +83,9 @@ json TheGamesDb::httpGet(const std::string& url)
 	bool success = http::success(status);
 	if (status == 403)
 		// hit rate-limit cap
-		blackoutPeriod = os_GetSeconds() + 60.0;
+		blackoutPeriod = getTimeMs() + 60 * 1000;
 	else if (!success)
-		blackoutPeriod = os_GetSeconds() + 1.0;
+		blackoutPeriod = getTimeMs() + 1000;
 	if (!success || receivedData.empty())
 		throw std::runtime_error("http error");
 
@@ -226,12 +225,14 @@ void TheGamesDb::parseBoxart(GameBoxart& item, const json& j, int gameId)
 			{
 				copyFile(cached->second, filename);
 				item.setBoxartPath(filename);
+				item.boxartUrl = url;
 			}
 			else
 			{
 				if (downloadImage(url, filename))
 				{
 					item.setBoxartPath(filename);
+					item.boxartUrl = url;
 					boxartCache[url] = filename;
 				}
 			}
@@ -321,7 +322,8 @@ void TheGamesDb::scrape(GameBoxart& item)
 		return;
 	fetchPlatforms();
 
-	if (!item.uniqueId.empty())
+	// Ignore default disk ids used by kos and katana
+	if (!item.uniqueId.empty() && item.uniqueId != "T0000" && item.uniqueId != "T0000M")
 	{
 		std::string url = makeUrl("Games/ByGameUniqueID") + "&fields=overview,uids&include=boxart&filter%5Bplatform%5D="
 			+ std::to_string(dreamcastPlatformId) + "&uid=" + http::urlEncode(item.uniqueId);
@@ -379,7 +381,7 @@ void TheGamesDb::fetchByUids(std::vector<GameBoxart>& items)
 
 void TheGamesDb::scrape(std::vector<GameBoxart>& items)
 {
-	if (os_GetSeconds() < blackoutPeriod)
+	if (getTimeMs() < blackoutPeriod)
 		throw std::runtime_error("");
 	blackoutPeriod = 0.0;
 
@@ -394,8 +396,11 @@ void TheGamesDb::scrape(std::vector<GameBoxart>& items)
 			else if (item.gamePath.empty())
 			{
 				std::string localPath = makeUniqueFilename("dreamcast_logo_grey.png");
-				if (downloadImage("https://flyinghead.github.io/flycast-builds/dreamcast_logo_grey.png", localPath))
+				std::string biosArtUrl{ "https://flyinghead.github.io/flycast-builds/dreamcast_logo_grey.png" };
+				if (downloadImage(biosArtUrl, localPath)) {
 					item.setBoxartPath(localPath);
+					item.boxartUrl = biosArtUrl;
+				}
 			}
 			item.scraped = true;
 		}

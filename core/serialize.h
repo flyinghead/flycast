@@ -26,22 +26,7 @@ class SerializeBase
 {
 public:
 	enum Version : int32_t {
-		V9_LIBRETRO = 8,
-		V10_LIBRETRO,
-		V11_LIBRETRO,
-		V12_LIBRETRO,
-		V13_LIBRETRO,
-		VLAST_LIBRETRO = V13_LIBRETRO,
-
-		V8 = 803,
-		V9,
-		V10,
-		V11,
-		V12,
-		V13,
-		V14,
-		V15,
-		V16,
+		V16 = 811,
 		V17,
 		V18,
 		V19,
@@ -74,7 +59,9 @@ public:
 		V46,
 		V47,
 		V48,
-		Current = V48,
+		V49,
+		V50,
+		Current = V50,
 
 		Next = Current + 1,
 	};
@@ -100,30 +87,7 @@ public:
 		Exception(const char *msg) : std::runtime_error(msg) {}
 	};
 
-	Deserializer(const void *data, size_t limit, bool rollback = false)
-		: SerializeBase(limit, rollback), data((const u8 *)data)
-	{
-		if (!memcmp(data, "RASTATE\001", 8))
-		{
-			// RetroArch savestate: a 16-byte header is now added here because why not?
-			this->data += 16;
-			this->limit -= 16;
-		}
-		deserialize(_version);
-		if (_version < V9_LIBRETRO || (_version > V13_LIBRETRO && _version < V8))
-			throw Exception("Unsupported version");
-		if (_version > Current)
-			throw Exception("Version too recent");
-
-		if(_version >= V42 && settings.platform.isConsole())
-		{
-			u32 ramSize;
-			deserialize(ramSize);
-			if (ramSize != settings.platform.ram_size) {
-				throw Exception("Selected RAM Size doesn't match Save State");
-		}
-	}
-	}
+	Deserializer(const void *data, size_t limit, bool rollback = false);
 
 	template<typename T>
 	void deserialize(T& obj)
@@ -179,14 +143,7 @@ public:
 	Serializer()
 		: Serializer(nullptr, std::numeric_limits<size_t>::max(), false) {}
 
-	Serializer(void *data, size_t limit, bool rollback = false)
-		: SerializeBase(limit, rollback), data((u8 *)data)
-	{
-		Version v = Current;
-		serialize(v);
-		if (settings.platform.isConsole())
-			serialize(settings.platform.ram_size);
-	}
+	Serializer(void *data, size_t limit, bool rollback = false);
 
 	template<typename T>
 	void serialize(const T& obj)

@@ -64,6 +64,7 @@ bool DX11Context::init(bool keepCurrentWindow)
 	ComPtr<IDXGIFactory6> dxgiFactory6;
 	ComPtr<IDXGIAdapter> dxgiAdapter;
 	HRESULT hr;
+	allowTearing = false;
 	hr = CreateDXGIFactory1(__uuidof(IDXGIFactory1), (void **)&dxgiFactory.get());
 	if (SUCCEEDED(hr))
 	{
@@ -71,6 +72,10 @@ bool DX11Context::init(bool keepCurrentWindow)
 		if (dxgiFactory6) 
 		{
 			dxgiFactory6->EnumAdapterByGpuPreference(0, DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE, __uuidof(IDXGIAdapter), (void **)&dxgiAdapter.get());
+			UINT tearing;
+			if (SUCCEEDED(dxgiFactory6->CheckFeatureSupport(DXGI_FEATURE_PRESENT_ALLOW_TEARING, &tearing,
+			                                                 sizeof(tearing))) && tearing != 0)
+				allowTearing = true;
 			dxgiFactory6.reset();
 		}
 	}
@@ -127,6 +132,8 @@ bool DX11Context::init(bool keepCurrentWindow)
 		desc.BufferCount = 2;
 		desc.SampleDesc.Count = 1;
 		desc.AlphaMode = DXGI_ALPHA_MODE_IGNORE;
+		if (allowTearing)
+			desc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING;
 
 #ifdef TARGET_UWP
 		desc.Width = settings.display.width;
@@ -157,6 +164,8 @@ bool DX11Context::init(bool keepCurrentWindow)
 		desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
 		desc.SampleDesc.Count = 1;
 		desc.SampleDesc.Quality = 0;
+		if (allowTearing)
+			desc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING;
 
 		hr = dxgiFactory->CreateSwapChain(pDevice, &desc, &swapchain.get());
 	}
@@ -221,26 +230,23 @@ void DX11Context::Present()
 	frameRendered = false;
 	bool swapOnVSync = !settings.input.fastForwardMode && config::VSync;
 	HRESULT hr;
-	if (!swapchain)
-	{
+	if (!swapchain) {
 		hr = DXGI_ERROR_DEVICE_RESET;
 	}
-	else if (swapOnVSync)
-	{
+	else if (swapOnVSync) {
 		int swapInterval = std::min(4, std::max(1, (int)(settings.display.refreshRate / 60)));
 		hr = swapchain->Present(swapInterval, 0);
 	}
-	else
-	{
-		hr = swapchain->Present(0, DXGI_PRESENT_DO_NOT_WAIT);
+	else {
+		hr = swapchain->Present(0, allowTearing ? DXGI_PRESENT_ALLOW_TEARING : DXGI_PRESENT_DO_NOT_WAIT);
 	}
-	if (hr == DXGI_ERROR_DEVICE_REMOVED || hr == DXGI_ERROR_DEVICE_RESET)
-	{
+	if (hr == DXGI_ERROR_DEVICE_REMOVED || hr == DXGI_ERROR_DEVICE_RESET) {
 		WARN_LOG(RENDERER, "Present failed: device removed/reset");
 		handleDeviceLost();
 	}
-	else if (hr != DXGI_ERROR_WAS_STILL_DRAWING && FAILED(hr))
+	else if (hr != DXGI_ERROR_WAS_STILL_DRAWING && FAILED(hr)) {
 		WARN_LOG(RENDERER, "Present failed %x", hr);
+	}
 }
 
 void DX11Context::EndImGuiFrame()
@@ -260,10 +266,6 @@ void DX11Context::EndImGuiFrame()
 			if (crosshairsNeeded() || config::FloatVMUs)
 				overlay.draw(settings.display.width, settings.display.height, config::FloatVMUs, true);
 		}
-		else
-		{
-			overlay.draw(settings.display.width, settings.display.height, true, false);
-		}
 		ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 	}
 	frameRendered = true;
@@ -279,9 +281,9 @@ void DX11Context::resize()
 		pDeviceContext->OMSetRenderTargets(1, &nullRTV, nullptr);
 		renderTargetView.reset();
 #ifdef TARGET_UWP
-		HRESULT hr = swapchain->ResizeBuffers(2, settings.display.width, settings.display.height, DXGI_FORMAT_R8G8B8A8_UNORM, 0);
+		HRESULT hr = swapchain->ResizeBuffers(2, settings.display.width, settings.display.height, DXGI_FORMAT_R8G8B8A8_UNORM, allowTearing ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0);
 #else
-		HRESULT hr = swapchain->ResizeBuffers(0, 0, 0, DXGI_FORMAT_UNKNOWN, DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH);
+		HRESULT hr = swapchain->ResizeBuffers(0, 0, 0, DXGI_FORMAT_UNKNOWN, DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH | (allowTearing ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0));
 		if (hr == DXGI_ERROR_DEVICE_REMOVED || hr == DXGI_ERROR_DEVICE_RESET)
 		{
 			handleDeviceLost();

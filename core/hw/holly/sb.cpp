@@ -14,6 +14,7 @@
 #include "emulator.h"
 #include "hw/bba/bba.h"
 #include "serialize.h"
+#include <map>
 
 u32 sb_regs[0x540];
 HollyRegisters hollyRegs;
@@ -704,18 +705,7 @@ void sb_serialize(Serializer& ser)
 
 void sb_deserialize(Deserializer& deser)
 {
-	if (deser.version() <= Deserializer::VLAST_LIBRETRO)
-	{
-		for (u32& reg : sb_regs)
-		{
-			deser.skip<u32>(); // regs.data[i].flags
-			deser >> reg;
-		}
-	}
-	else
-	{
-		deser >> sb_regs;
-	}
+	deser >> sb_regs;
 	if (deser.version() < Deserializer::V33)
 		deser >> SB_ISTNRM;
 	if (deser.version() >= Deserializer::V24)
@@ -729,9 +719,6 @@ void sb_deserialize(Deserializer& deser)
 			deser.skip<u32>(); // SB_FFST_rc;
 			deser.skip<u32>(); // SB_FFST;
 		}
-		if (deser.version() >= Deserializer::V15)
-			deser >> SB_ADST;
-		else
-			SB_ADST = 0;
+		deser >> SB_ADST;
 	}
 }

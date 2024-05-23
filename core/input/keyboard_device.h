@@ -20,7 +20,7 @@
 #include "types.h"
 #include "cfg/option.h"
 #include "gamepad_device.h"
-#include "rend/gui.h"
+#include "ui/gui.h"
 #include <memory>
 
 extern u8 kb_key[4][6];	// normal keys pressed
@@ -61,6 +61,7 @@ public:
 		set_button(DC_AXIS_LEFT, 13);			// J
 		set_button(DC_AXIS_RIGHT, 15);			// L
 		set_button(DC_BTN_D, 4);				// Q (Coin)
+		set_button(EMU_BTN_SCREENSHOT, 69);		// F12
 
 		dirty = false;
 	}

@@ -19,7 +19,7 @@
 #include "naomi_network.h"
 #include "hw/naomi/naomi_flashrom.h"
 #include "cfg/option.h"
-#include "rend/gui.h"
+#include "oslib/oslib.h"
 
 #include <chrono>
 #include <thread>
@@ -104,7 +104,7 @@ bool NaomiNetwork::startNetwork()
 
 			std::string notif = slaves.empty() ? "Waiting for players..."
 					: std::to_string(slaves.size()) + " player(s) connected. Waiting...";
-			gui_display_notification(notif.c_str(), timeout.count() * 2000);
+			os_notify(notif.c_str(), timeout.count() * 2000);
 
 			poll();
 
@@ -125,12 +125,12 @@ bool NaomiNetwork::startNetwork()
 
 			nextPeer = slaves[0].addr;
 
-			gui_display_notification("Starting game", 2000);
+			os_notify("Starting game", 2000);
 			SetNaomiNetworkConfig(0);
 
 			return true;
 		}
-		gui_display_notification("No player connected", 8000);
+		os_notify("No player connected", 8000);
 	}
 	else
 	{
@@ -164,7 +164,7 @@ bool NaomiNetwork::startNetwork()
 		}
 
 		NOTICE_LOG(NETWORK, "Connecting to server");
-		gui_display_notification("Connecting to server", 10000);
+		os_notify("Connecting to server", 10000);
 		steady_clock::time_point start_time = steady_clock::now();
 
 		while (!networkStopping && !_startNow && steady_clock::now() - start_time < timeout)
@@ -249,7 +249,7 @@ bool NaomiNetwork::receive(const sockaddr_in *addr, const Packet *packet, u32 si
 			nextPeer.sin_port = packet->sync.nextNodePort;
 			nextPeer.sin_addr.s_addr = packet->sync.nextNodeIp == 0 ? addr->sin_addr.s_addr : packet->sync.nextNodeIp;
 			std::string notif = "Connected as slot " + std::to_string(slotId);
-			gui_display_notification(notif.c_str(), 2000);
+			os_notify(notif.c_str(), 2000);
 		}
 		break;
 

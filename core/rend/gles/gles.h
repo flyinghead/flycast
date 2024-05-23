@@ -7,7 +7,7 @@
 #include "glcache.h"
 #include "rend/shader_util.h"
 #ifndef LIBRETRO
-#include "rend/imgui_driver.h"
+#include "ui/imgui_driver.h"
 #endif
 
 #include <unordered_map>
@@ -519,6 +519,7 @@ struct OpenGLRenderer : Renderer
 
 		return ret;
 	}
+	bool GetLastFrame(std::vector<u8>& data, int& width, int& height) override;
 
 	void DrawOSD(bool clear_screen) override;
 
@@ -570,7 +571,7 @@ protected:
 
 void initQuad();
 void termQuad();
-void drawQuad(GLuint texId, bool rotate = false, bool swapY = false, float *coords = nullptr);
+void drawQuad(GLuint texId, bool rotate = false, bool swapY = false, const float *coords = nullptr, const float *color = nullptr);
 
 extern const char* ShaderCompatSource;
 extern const char *VertexCompatShader;
@@ -585,7 +586,9 @@ public:
 	}
 };
 
+void drawVmusAndCrosshairs(int width, int height);
+void termVmuLightgun();
+
 #ifdef LIBRETRO
 extern "C" struct retro_hw_render_callback hw_render;
-void termVmuLightgun();
 #endif

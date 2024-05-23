@@ -21,7 +21,6 @@
 #include "hw/sh4/modules/modules.h"
 #include "hw/maple/maple_cfg.h"
 #include "hw/maple/maple_devs.h"
-#include "rend/gui.h"
 #include <deque>
 #include <memory>
 #include <cerrno>
@@ -288,7 +287,7 @@ protected:
 		case CARD_EJECT:
 			NOTICE_LOG(NAOMI, "Card ejected");
 			if (cardInserted)
-				gui_display_notification("Card ejected", 2000);
+				os_notify("Card ejected", 2000);
 			cardInserted = false;
 			status1 = getStatus1();
 			break;
@@ -582,7 +581,7 @@ private:
 		case CARD_EJECT:
 			NOTICE_LOG(NAOMI, "Card ejected");
 			if (cardInserted)
-				gui_display_notification("Card ejected", 2000);
+				os_notify("Card ejected", 2000);
 			cardInserted = false;
 			break;
 		case CARD_NEW:

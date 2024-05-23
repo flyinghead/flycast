@@ -38,6 +38,7 @@ struct GameBoxart
 
 	std::string gamePath;
 	std::string boxartPath;
+	std::string boxartUrl;
 
 	bool parsed = false;
 	bool scraped = false;
@@ -56,6 +57,7 @@ struct GameBoxart
 			{ "release_date", releaseDate },
 			{ "overview", overview },
 			{ "boxart_path", boxartPath },
+			{ "boxart_url", boxartUrl },
 			{ "parsed", parsed },
 			{ "scraped", scraped },
 		};
@@ -84,6 +86,7 @@ struct GameBoxart
 		loadProperty(releaseDate, j, "release_date");
 		loadProperty(overview, j, "overview");
 		loadProperty(boxartPath, j, "boxart_path");
+		loadProperty(boxartUrl, j, "boxart_url");
 		loadProperty(parsed, j, "parsed");
 		loadProperty(scraped, j, "scraped");
 	}

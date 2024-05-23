@@ -10,6 +10,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <vector>
+#include <chrono>
 
 #ifdef _WIN32
 	#include <algorithm>
@@ -130,7 +131,10 @@ bool make_directory(const std::string& path)
 void cThread::Start()
 {
 	verify(!thread.joinable());
-	thread = std::thread(entry, param);
+	thread = std::thread([this]() {
+		ThreadName _(name);
+		entry(param);
+	});
 }
 
 void cThread::WaitToEnd()
@@ -207,4 +211,13 @@ void RamRegion::free()
 	if (ownsMemory)
 		freeAligned(data);
 	data = nullptr;
+}
+
+u64 getTimeMs()
+{
+	using the_clock = std::chrono::steady_clock;
+	std::chrono::time_point<the_clock> now = the_clock::now();
+	static std::chrono::time_point<the_clock> start = now;
+
+	return std::chrono::duration_cast<std::chrono::milliseconds>(now - start).count();
 }

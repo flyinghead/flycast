@@ -23,14 +23,11 @@
 
 const u8 RZipHeader[8] = { '#', 'R', 'Z', 'I', 'P', 'v', 1, '#' };
 
-bool RZipFile::Open(const std::string& path, bool write)
+bool RZipFile::Open(FILE *file, bool write)
 {
-	verify(file == nullptr);
-	this->write = write;
-
-	file = nowide::fopen(path.c_str(), write ? "wb" : "rb");
-	if (file == nullptr)
-		return false;
+	verify(this->file == nullptr);
+	verify(file != nullptr);
+	startOffset = std::ftell(file);
 	if (!write)
 	{
 		u8 header[sizeof(RZipHeader)];
@@ -39,7 +36,7 @@ bool RZipFile::Open(const std::string& path, bool write)
 			|| std::fread(&maxChunkSize, sizeof(maxChunkSize), 1, file) != 1
 			|| std::fread(&size, sizeof(size), 1, file) != 1)
 		{
-			Close();
+			std::fseek(file, startOffset, SEEK_SET);
 			return false;
 		}
 		// savestates created on 32-bit platforms used to have a 32-bit size
@@ -59,11 +56,24 @@ bool RZipFile::Open(const std::string& path, bool write)
 			|| std::fwrite(&maxChunkSize, sizeof(maxChunkSize), 1, file) != 1
 			|| std::fwrite(&size, sizeof(size), 1, file) != 1)
 		{
-			Close();
+			std::fseek(file, startOffset, SEEK_SET);
 			return false;
 		}
 	}
+	this->write = write;
+	this->file = file;
+	return true;
+}
 
+bool RZipFile::Open(const std::string& path, bool write)
+{
+	FILE *f = nowide::fopen(path.c_str(), write ? "wb" : "rb");
+	if (f == nullptr)
+		return false;
+	if (!Open(f, write)) {
+		Close();
+		return false;
+	}
 	return true;
 }
 
@@ -73,7 +83,7 @@ void RZipFile::Close()
 	{
 		if (write)
 		{
-			std::fseek(file, sizeof(RZipHeader) + sizeof(maxChunkSize), SEEK_SET);
+			std::fseek(file, startOffset + sizeof(RZipHeader) + sizeof(maxChunkSize), SEEK_SET);
 			std::fwrite(&size, sizeof(size), 1, file);
 		}
 		std::fclose(file);

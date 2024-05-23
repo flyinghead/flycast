@@ -28,10 +28,7 @@
 #include "network/picoppp.h"
 #include "serialize.h"
 #include "cfg/option.h"
-
-#ifndef NDEBUG
-#include "oslib/oslib.h"
-#endif
+#include "stdclass.h"
 #include <cassert>
 
 #define MODEM_COUNTRY_RES 0
@@ -127,7 +124,7 @@ static u64 last_dial_time;
 static bool data_sent;
 
 #ifndef NDEBUG
-static double last_comm_stats;
+static u64 last_comm_stats;
 static int sent_bytes;
 static int recvd_bytes;
 static FILE *recv_fp;
@@ -137,7 +134,7 @@ static FILE *sent_fp;
 static int modem_sched_func(int tag, int cycles, int jitter, void *arg)
 {
 #ifndef NDEBUG
-	if (os_GetSeconds() - last_comm_stats >= 2)
+	if (getTimeMs() - last_comm_stats >= 2000)
 	{
 		if (last_comm_stats != 0)
 		{
@@ -147,7 +144,7 @@ static int modem_sched_func(int tag, int cycles, int jitter, void *arg)
 			sent_bytes = 0;
 			recvd_bytes = 0;
 		}
-		last_comm_stats = os_GetSeconds();
+		last_comm_stats = getTimeMs();
 	}
 #endif
 	int callback_cycles = 0;

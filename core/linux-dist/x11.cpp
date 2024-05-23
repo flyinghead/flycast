@@ -6,7 +6,7 @@
 #include "types.h"
 #include "cfg/cfg.h"
 #include "x11.h"
-#include "rend/gui.h"
+#include "ui/gui.h"
 #include "input/gamepad.h"
 #include "input/mouse.h"
 #include "icon.h"
@@ -20,6 +20,8 @@
 #define DEFAULT_FULLSCREEN    false
 #define DEFAULT_WINDOW_WIDTH  640
 #define DEFAULT_WINDOW_HEIGHT   480
+
+static void x11_window_set_text(const char *text);
 
 static Window x11_win;
 Display *x11_disp;
@@ -356,7 +358,7 @@ void x11_window_create()
 	}
 }
 
-void x11_window_set_text(const char* text)
+static void x11_window_set_text(const char* text)
 {
 	if (x11_win)
 	{

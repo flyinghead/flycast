@@ -28,6 +28,7 @@ public:
 	~RZipFile() { Close(); }
 
 	bool Open(const std::string& path, bool write);
+	bool Open(FILE *file, bool write);
 	void Close();
 	size_t Size() const { return size; }
 	size_t Read(void *data, size_t length);
@@ -42,4 +43,5 @@ private:
 	u32 chunkSize = 0;
 	u32 chunkIndex = 0;
 	bool write = false;
+	long startOffset = 0;
 };

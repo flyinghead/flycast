@@ -25,10 +25,11 @@
 #include "types.h"
 #include "stdclass.h"
 #include "oslib/storage.h"
+#include "imgui_driver.h"
 #include "imgui.h"
 #include "imgui_internal.h"
-#define STBI_ONLY_JPEG
-#define STBI_ONLY_PNG
+#include "stdclass.h"
+#include "rend/osd.h"
 #include <stb_image.h>
 
 static std::string select_current_directory = "**home**";
@@ -37,6 +38,7 @@ static std::vector<hostfs::FileInfo> folderFiles;
 bool subfolders_read;
 
 extern int insetLeft, insetRight, insetTop, insetBottom;
+extern ImFont *largeFont;
 void error_popup();
 
 namespace hostfs
@@ -51,7 +53,7 @@ void select_file_popup(const char *prompt, StringCallback callback,
 		bool selectFile, const std::string& selectExtension)
 {
 	fullScreenWindow(true);
-	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
+	ImguiStyleVar _(ImGuiStyleVar_WindowRounding, 0);
 
 	if (ImGui::BeginPopup(prompt, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize ))
 	{
@@ -105,51 +107,48 @@ void select_file_popup(const char *prompt, StringCallback callback,
 			title = select_current_directory;
 
 		ImGui::Text("%s", title.c_str());
-		ImGui::BeginChild(ImGui::GetID("dir_list"), ImVec2(0, - 30 * settings.display.uiScale - ImGui::GetStyle().ItemSpacing.y),
+		ImGui::BeginChild(ImGui::GetID("dir_list"), ImVec2(0, - uiScaled(30) - ImGui::GetStyle().ItemSpacing.y),
 				ImGuiChildFlags_Border, ImGuiWindowFlags_DragScrolling | ImGuiWindowFlags_NavFlattened);
-
-		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ScaledVec2(8, 20));
-
-		if (!select_current_directory.empty() && select_current_directory != "/")
 		{
-			if (ImGui::Selectable(".. Up to Parent Directory"))
-			{
-				subfolders_read = false;
-				select_current_directory = hostfs::storage().getParentPath(select_current_directory);
-			}
-		}
+			ImguiStyleVar _(ImGuiStyleVar_ItemSpacing, ScaledVec2(8, 20));
 
-		for (const auto& entry : subfolders)
-		{
-			if (ImGui::Selectable(entry.name.c_str()))
+			if (!select_current_directory.empty() && select_current_directory != "/")
 			{
-				subfolders_read = false;
-				select_current_directory = entry.path;
+				if (ImGui::Selectable(".. Up to Parent Directory"))
+				{
+					subfolders_read = false;
+					select_current_directory = hostfs::storage().getParentPath(select_current_directory);
+				}
 			}
-		}
-        ImGui::PushStyleColor(ImGuiCol_Text, { 1, 1, 1, selectFile ? 1.f : 0.3f });
-        for (const auto& entry : folderFiles)
-        {
-        	if (selectFile)
-        	{
-    			if (ImGui::Selectable(entry.name.c_str()))
-    			{
-    				subfolders_read = false;
-    				if (callback(false, entry.path))
-    					ImGui::CloseCurrentPopup();
-    			}
-        	}
-        	else
-        	{
-        		ImGui::Text("%s", entry.name.c_str());
-        	}
-        }
-        ImGui::PopStyleColor();
-        
-        scrollWhenDraggingOnVoid();
-        windowDragScroll();
 
-		ImGui::PopStyleVar();
+			for (const auto& entry : subfolders)
+			{
+				if (ImGui::Selectable(entry.name.c_str()))
+				{
+					subfolders_read = false;
+					select_current_directory = entry.path;
+				}
+			}
+			ImguiStyleColor _1(ImGuiCol_Text, { 1, 1, 1, selectFile ? 1.f : 0.3f });
+			for (const auto& entry : folderFiles)
+			{
+				if (selectFile)
+				{
+					if (ImGui::Selectable(entry.name.c_str()))
+					{
+						subfolders_read = false;
+						if (callback(false, entry.path))
+							ImGui::CloseCurrentPopup();
+					}
+				}
+				else
+				{
+					ImGui::Text("%s", entry.name.c_str());
+				}
+			}
+			scrollWhenDraggingOnVoid();
+			windowDragScroll();
+		}
 		ImGui::EndChild();
 		if (!selectFile)
 		{
@@ -172,7 +171,6 @@ void select_file_popup(const char *prompt, StringCallback callback,
 		error_popup();
 		ImGui::EndPopup();
 	}
-	ImGui::PopStyleVar();
 }
 
 // See https://github.com/ocornut/imgui/issues/3379
@@ -520,25 +518,24 @@ template bool OptionSlider(const char *name, config::Option<int, false>& option,
 bool OptionArrowButtons(const char *name, config::Option<int>& option, int min, int max, const char *help, const char *format)
 {
 	const float innerSpacing = ImGui::GetStyle().ItemInnerSpacing.x;
-	ImGui::PushStyleVar(ImGuiStyleVar_ButtonTextAlign, ImVec2(0.f, 0.5f)); // Left
-	ImGui::PushStyleColor(ImGuiCol_Button, ImGui::GetStyle().Colors[ImGuiCol_FrameBg]);
-	float width = ImGui::CalcItemWidth() - innerSpacing * 2.0f - ImGui::GetFrameHeight() * 2.0f;
-	std::string id = "##" + std::string(name);
-	ImGui::PushStyleVar(ImGuiStyleVar_DisabledAlpha, 1.0f);
-	ImGui::BeginDisabled();
-	int size = snprintf(nullptr, 0, format, (int)option);
-	std::string value;
-	if (size >= 0)
+	const std::string id = "##" + std::string(name);
 	{
-		value.resize(size + 1);
-		snprintf(value.data(), size + 1, format, (int)option);
-		value.resize(size);
+		ImguiStyleVar _(ImGuiStyleVar_ButtonTextAlign, ImVec2(0.f, 0.5f)); // Left
+		ImguiStyleColor _1(ImGuiCol_Button, ImGui::GetStyle().Colors[ImGuiCol_FrameBg]);
+		const float width = ImGui::CalcItemWidth() - innerSpacing * 2.0f - ImGui::GetFrameHeight() * 2.0f;
+		ImguiStyleVar _2(ImGuiStyleVar_DisabledAlpha, 1.0f);
+		ImGui::BeginDisabled();
+		int size = snprintf(nullptr, 0, format, (int)option);
+		std::string value;
+		if (size >= 0)
+		{
+			value.resize(size + 1);
+			snprintf(value.data(), size + 1, format, (int)option);
+			value.resize(size);
+		}
+		ImGui::ButtonEx((value + id).c_str(), ImVec2(width, 0));
+		ImGui::EndDisabled();
 	}
-	ImGui::ButtonEx((value + id).c_str(), ImVec2(width, 0));
-	ImGui::EndDisabled();
-	ImGui::PopStyleVar();
-	ImGui::PopStyleColor();
-	ImGui::PopStyleVar();
 
 	ImGui::SameLine(0.0f, innerSpacing);
 	ImGui::PushButtonRepeat(true);
@@ -614,8 +611,8 @@ void fullScreenWindow(bool modal)
 {
 	if (!modal)
 	{
-		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
-		ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
+		ImguiStyleVar _(ImGuiStyleVar_WindowRounding, 0);
+		ImguiStyleVar _1(ImGuiStyleVar_WindowBorderSize, 0);
 
 		if (insetLeft > 0)
 		{
@@ -645,7 +642,6 @@ void fullScreenWindow(bool modal)
 			ImGui::Begin("##insetBottom", NULL, ImGuiWindowFlags_NoDecoration);
 			ImGui::End();
 		}
-		ImGui::PopStyleVar(2);
 	}
 	ImGui::SetNextWindowPos(ImVec2(insetLeft, insetTop));
 	ImGui::SetNextWindowSize(ImVec2(ImGui::GetIO().DisplaySize.x - insetLeft - insetRight, ImGui::GetIO().DisplaySize.y - insetTop - insetBottom));
@@ -697,7 +693,71 @@ void windowDragScroll()
 	}
 }
 
-u8 *loadImage(const std::string& path, int& width, int& height)
+static void setUV(float ar, ImVec2& uv0, ImVec2& uv1)
+{
+	uv0 = { 0.f, 0.f };
+	uv1 = { 1.f, 1.f };
+	if (ar > 1)
+	{
+		uv0.y = -(ar - 1) / 2;
+		uv1.y = 1 + (ar - 1) / 2;
+	}
+	else if (ar != 0)
+	{
+		ar = 1 / ar;
+		uv0.x = -(ar - 1) / 2;
+		uv1.x = 1 + (ar - 1) / 2;
+	}
+}
+
+void ImguiTexture::draw(const ImVec2& size, const ImVec4& tint_col, const ImVec4& border_col)
+{
+	ImTextureID id = getId();
+	if (id == ImTextureID{})
+		ImGui::Dummy(size);
+	else
+	{
+		const float ar = imguiDriver->getAspectRatio(id);
+		ImVec2 drawSize(size);
+		if (size.x == 0.f)
+			drawSize.x = size.y * ar;
+		else if (size.y == 0.f)
+			drawSize.y = size.x / ar;
+		ImVec2 uv0, uv1;
+		setUV(ar / drawSize.x * drawSize.y, uv0, uv1);
+		ImGui::Image(id, drawSize, uv0, uv1, tint_col, border_col);
+	}
+}
+
+void ImguiTexture::draw(ImDrawList *drawList, const ImVec2& pos, const ImVec2& size, float alpha)
+{
+	ImTextureID id = getId();
+	if (id == ImTextureID{})
+		return;
+	const float ar = imguiDriver->getAspectRatio(id);
+	ImVec2 uv0, uv1;
+	setUV(ar / size.x * size.y, uv0, uv1);
+	u32 col = alphaOverride(0xffffff, alpha);
+	drawList->AddImage(id, pos, pos + size, uv0, uv1, col);
+}
+
+bool ImguiTexture::button(const char* str_id, const ImVec2& image_size, const std::string& title,
+		const ImVec4& bg_col, const ImVec4& tint_col)
+{
+	ImTextureID id = getId();
+	if (id == ImTextureID{})
+		return ImGui::Button(title.c_str(), image_size);
+	else
+	{
+		const float ar = imguiDriver->getAspectRatio(id);
+		const ImVec2 size = image_size - ImGui::GetStyle().FramePadding * 2;
+		ImVec2 uv0, uv1;
+		setUV(ar / size.x * size.y, uv0, uv1);
+		return ImGui::ImageButton(str_id, id, size, uv0, uv1, bg_col, tint_col);
+	}
+}
+
+static u8 *loadImage(const std::string& path, int& width, int& height)
 {
 	FILE *file = nowide::fopen(path.c_str(), "rb");
 	if (file == nullptr)
@@ -708,6 +768,135 @@ u8 *loadImage(const std::string& path, int& width, int& height)
 	u8 *imgData = stbi_load_from_file(file, &width, &height, &channels, STBI_rgb_alpha);
 	std::fclose(file);
 	return imgData;
+}
+
+int ImguiFileTexture::textureLoadCount;
+
+ImTextureID ImguiFileTexture::getId()
+{
+	if (path.empty())
+		return {};
+	ImTextureID id = imguiDriver->getTexture(path);
+	if (id == ImTextureID() && textureLoadCount < 10)
+	{
+		textureLoadCount++;
+		int width, height;
+		u8 *imgData = loadImage(path, width, height);
+		if (imgData != nullptr)
+		{
+			try {
+				id = imguiDriver->updateTextureAndAspectRatio(path, imgData, width, height, nearestSampling);
+			} catch (...) {
+				// vulkan can throw during resizing
+			}
+			free(imgData);
+		}
+	}
+	return id;
+}
+
+std::future<ImguiStateTexture::LoadedPic> ImguiStateTexture::asyncLoad;
+
+bool ImguiStateTexture::exists()
+{
+	std::string path = hostfs::getSavestatePath(config::SavestateSlot, false);
+	try {
+		hostfs::storage().getFileInfo(path);
+		return true;
+	} catch (...) {
+		return false;
+	}
+}
+
+ImTextureID ImguiStateTexture::getId()
+{
+	std::string path = hostfs::getSavestatePath(config::SavestateSlot, false);
+	ImTextureID texid = imguiDriver->getTexture(path);
+	if (texid != ImTextureID())
+		return texid;
+	if (asyncLoad.valid())
+	{
+		if (asyncLoad.wait_for(std::chrono::seconds::zero()) == std::future_status::timeout)
+			return {};
+		LoadedPic loadedPic = asyncLoad.get();
+		if (loadedPic.data != nullptr)
+		{
+			try {
+				texid = imguiDriver->updateTextureAndAspectRatio(path, loadedPic.data, loadedPic.width, loadedPic.height, nearestSampling);
+			} catch (...) {
+				// vulkan can throw during resizing
+			}
+			free(loadedPic.data);
+		}
+		return texid;
+	}
+	asyncLoad = std::async(std::launch::async, []() {
+		LoadedPic loadedPic{};
+		// load savestate info
+		std::vector<u8> pngData;
+		dc_getStateScreenshot(config::SavestateSlot, pngData);
+		if (pngData.empty())
+			return loadedPic;
+
+		int channels;
+		stbi_set_flip_vertically_on_load(0);
+		loadedPic.data = stbi_load_from_memory(&pngData[0], pngData.size(), &loadedPic.width, &loadedPic.height, &channels, STBI_rgb_alpha);
+
+		return loadedPic;
+	});
+	return {};
+}
+
+void ImguiStateTexture::invalidate()
+{
+	if (imguiDriver)
+	{
+		std::string path = hostfs::getSavestatePath(config::SavestateSlot, false);
+		imguiDriver->deleteTexture(path);
+	}
+}
+
+std::array<ImguiVmuTexture, 8> ImguiVmuTexture::Vmus { 0, 1, 2, 3, 4, 5, 6, 7 };
+constexpr float VMU_WIDTH = 96.f;
+constexpr float VMU_HEIGHT = 64.f;
+constexpr float VMU_PADDING = 8.f;
+
+ImTextureID ImguiVmuTexture::getId()
+{
+	if (!vmu_lcd_status[index])
+		return {};
+	if (idPath.empty())
+		idPath = ":vmu:" + std::to_string(index);
+	ImTextureID texid = imguiDriver->getTexture(idPath);
+	if (texid == ImTextureID() || vmuLastChanged != ::vmuLastChanged[index])
+	{
+		try {
+			texid = imguiDriver->updateTexture(idPath, (const u8 *)vmu_lcd_data[index], 48, 32, true);
+			vmuLastChanged = ::vmuLastChanged[index];
+		} catch (...) {
+		}
+	}
+	return texid;
+}
+
+void ImguiVmuTexture::displayVmus(const ImVec2& pos)
+{
+	const ScaledVec2 size(VMU_WIDTH, VMU_HEIGHT);
+	const float padding = uiScaled(VMU_PADDING);
+	ImDrawList *dl = ImGui::GetForegroundDrawList();
+	ImVec2 cpos(pos + ScaledVec2(2.f, 0));	// 96 pixels wide + 2 * 2 -> 100
+	for (int i = 0; i < 8; i++)
+	{
+		if (!vmu_lcd_status[i])
+			continue;
+
+		ImTextureID texid = Vmus[i].getId();
+		if (texid == ImTextureID())
+			continue;
+		ImVec2 pos_b = cpos + size;
+		dl->AddImage(texid, cpos, pos_b, ImVec2(0, 1), ImVec2(1, 0), 0x80ffffff);
+		cpos.y += size.y + padding;
+	}
 }
 
 // Custom version of ImGui::BeginListBox that allows passing window flags
@@ -750,4 +939,69 @@ bool BeginListBox(const char* label, const ImVec2& size_arg, ImGuiWindowFlags wi
 
     BeginChild(id, frame_bb.GetSize(), ImGuiChildFlags_FrameStyle, windowFlags);
     return true;
+}
+
+void Toast::show(const std::string& title, const std::string& message, u32 durationMs)
+{
+	const u64 now = getTimeMs();
+	std::lock_guard<std::mutex> _{mutex};
+	// no start anim if still visible
+	if (now > endTime + END_ANIM_TIME)
+		startTime = getTimeMs();
+	endTime = now + durationMs;
+	this->title = title;
+	this->message = message;
+}
+
+bool Toast::draw()
+{
+	const u64 now = getTimeMs();
+	std::lock_guard<std::mutex> _{mutex};
+	if (now > endTime + END_ANIM_TIME) {
+		title.clear();
+		message.clear();
+	}
+	if (title.empty() && message.empty())
+		return false;
+	float alpha = 1.f;
+	if (now > endTime)
+		// Fade out
+		alpha = (std::cos((now - endTime) / (float)END_ANIM_TIME * (float)M_PI) + 1.f) / 2.f;
+
+	const ImVec2 displaySize(ImGui::GetIO().DisplaySize);
+	const float maxW = std::min(uiScaled(640.f), displaySize.x);
+	ImFont *regularFont = ImGui::GetFont();
+	const ImVec2 titleSize = title.empty() ? ImVec2()
+			: largeFont->CalcTextSizeA(largeFont->FontSize, FLT_MAX, maxW, &title.front(), &title.back() + 1);
+	const ImVec2 msgSize = message.empty() ? ImVec2()
+			: regularFont->CalcTextSizeA(regularFont->FontSize, FLT_MAX, maxW, &message.front(), &message.back() + 1);
+	const ScaledVec2 padding(5.f, 4.f);
+	const ScaledVec2 spacing(0.f, 2.f);
+	ImVec2 totalSize(std::max(titleSize.x, msgSize.x), titleSize.y + msgSize.y);
+	totalSize += padding * 2.f + spacing * (float)(!title.empty() && !message.empty());
+
+	ImVec2 pos(insetLeft, displaySize.y - totalSize.y);
+	if (now - startTime < START_ANIM_TIME)
+		// Slide up
+		pos.y += totalSize.y * (std::cos((now - startTime) / (float)START_ANIM_TIME * (float)M_PI) + 1.f) / 2.f;
+	ImDrawList *dl = ImGui::GetForegroundDrawList();
+	const ImU32 bg_col = alphaOverride(ImGui::GetColorU32(ImGuiCol_WindowBg), alpha / 2.f);
+	dl->AddRectFilled(pos, pos + totalSize, bg_col, 0.f);
+	const ImU32 col = alphaOverride(ImGui::GetColorU32(ImGuiCol_Border), alpha);
+	dl->AddRect(pos, pos + totalSize, col, 0.f);
+
+	pos += padding;
+	if (!title.empty())
+	{
+		const ImU32 col = alphaOverride(ImGui::GetColorU32(ImGuiCol_Text), alpha);
+		dl->AddText(largeFont, largeFont->FontSize, pos, col, &title.front(), &title.back() + 1, maxW);
+		pos.y += spacing.y + titleSize.y;
+	}
+	if (!message.empty())
+	{
+		const ImU32 col = alphaOverride(0xFF00FFFF, alpha);	// yellow
+		dl->AddText(regularFont, regularFont->FontSize, pos, col, &message.front(), &message.back() + 1, maxW);
+	}
+
+	return true;
 }

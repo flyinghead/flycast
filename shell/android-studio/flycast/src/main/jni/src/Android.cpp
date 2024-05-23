@@ -6,13 +6,13 @@
 #include "hw/naomi/naomi_cart.h"
 #include "audio/audiostream.h"
 #include "imgread/common.h"
-#include "rend/gui.h"
+#include "ui/gui.h"
 #include "rend/osd.h"
 #include "cfg/cfg.h"
 #include "log/LogManager.h"
 #include "wsi/context.h"
 #include "emulator.h"
-#include "rend/mainui.h"
+#include "ui/mainui.h"
 #include "cfg/option.h"
 #include "stdclass.h"
 #include "oslib/oslib.h"
@@ -99,26 +99,7 @@ void os_DoEvents()
 {
 }
 
-void os_CreateWindow()
-{
-}
-
-void UpdateInputState()
-{
-}
-
 void common_linux_setup();
-
-void os_SetupInput()
-{
-}
-void os_TermInput()
-{
-}
-
-void os_SetWindowText(char const *Text)
-{
-}
 
 #if defined(USE_BREAKPAD)
 static bool dumpCallback(const google_breakpad::MinidumpDescriptor& descriptor, void* context, bool succeeded)
@@ -211,7 +192,7 @@ extern "C" JNIEXPORT jstring JNICALL Java_com_reicast_emulator_emu_JNIdc_initEnv
         else
         {
 			static std::string crashPath;
-			static cThread uploadThread(uploadCrashThread, &crashPath);
+			static cThread uploadThread(uploadCrashThread, &crashPath, "SentryUpload");
 			crashPath = get_writable_config_path("");
 			uploadThread.Start();
         }
@@ -337,7 +318,7 @@ static void *render_thread_func(void *)
     return NULL;
 }
 
-static cThread render_thread(render_thread_func, NULL);
+static cThread render_thread(render_thread_func, nullptr, "Flycast-rend");
 
 extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_rendinitNative(JNIEnv * env, jobject obj, jobject surface, jint width, jint height)
 {
@@ -652,4 +633,20 @@ extern "C" void abort_message(const char* format, ...)
 
 	ERROR_LOG(BOOT, "%s", buffer);
 	abort();
+}
+
+std::string getNativeLibraryPath()
+{
+	JNIEnv *env = jni::env();
+	jmethodID getNativeLibDir = env->GetMethodID(env->GetObjectClass(g_activity), "getNativeLibDir", "()Ljava/lang/String;");
+	jni::String nativeLibDir(jni::env()->CallObjectMethod(g_activity, getNativeLibDir));
+	return nativeLibDir;
+}
+
+std::string getFilesPath()
+{
+	JNIEnv *env = jni::env();
+	jmethodID getInternalFilesDir = env->GetMethodID(env->GetObjectClass(g_activity), "getInternalFilesDir", "()Ljava/lang/String;");
+	jni::String filesDir(jni::env()->CallObjectMethod(g_activity, getInternalFilesDir));
+	return filesDir;
 }

@@ -21,7 +21,7 @@
 #include "stdclass.h"
 #include "oslib/oslib.h"
 #include "emulator.h"
-#include "rend/mainui.h"
+#include "ui/mainui.h"
 #include <future>
 
 int darw_printf(const char* text, ...)
@@ -47,10 +47,6 @@ int darw_printf(const char* text, ...)
     return 0;
 }
 
-void os_SetWindowText(const char * text) {
-    puts(text);
-}
-
 void os_DoEvents() {
 #if defined(USE_SDL)
 	NSMenuItem *editMenuItem = [[NSApp mainMenu] itemAtIndex:1];
@@ -58,43 +54,6 @@ void os_DoEvents() {
 #endif
 }
 
-void UpdateInputState() {
-#if defined(USE_SDL)
-	input_sdl_handle();
-#endif
-}
-
-void os_CreateWindow() {
-#ifdef DEBUG
-    int ret = task_set_exception_ports(
-                                       mach_task_self(),
-                                       EXC_MASK_BAD_ACCESS,
-                                       MACH_PORT_NULL,
-                                       EXCEPTION_DEFAULT,
-                                       0);
-    
-    if (ret != KERN_SUCCESS) {
-        printf("task_set_exception_ports: %s\n", mach_error_string(ret));
-    }
-#endif
-	sdl_window_create();
-}
-
-void os_SetupInput()
-{
-#if defined(USE_SDL)
-	input_sdl_init();
-#endif
-}
-
-void os_TermInput()
-{
-#if defined(USE_SDL)
-	input_sdl_quit();
-#endif
-}
-
-void common_linux_setup();
 static int emu_flycast_init();
 
 static void emu_flycast_term()
@@ -172,7 +131,6 @@ extern "C" int SDL_main(int argc, char *argv[])
 
 	mainui_loop();
 
-	sdl_window_destroy();
 	emu_flycast_term();
 	os_UninstallFaultHandler();
 
@@ -182,7 +140,7 @@ extern "C" int SDL_main(int argc, char *argv[])
 static int emu_flycast_init()
 {
 	LogManager::Init();
-	common_linux_setup();
+	os_InstallFaultHandler();
 	NSArray *arguments = [[NSProcessInfo processInfo] arguments];
 	unsigned long argc = [arguments count];
 	char **argv = (char **)malloc(argc * sizeof(char*));
@@ -201,6 +159,19 @@ static int emu_flycast_init()
 	for (unsigned long i = 0; i < paramCount; i++)
 		free(argv[i]);
 	free(argv);
+
+#if defined(DEBUG) || defined(DEBUGFAST)
+    int ret = task_set_exception_ports(
+                                       mach_task_self(),
+                                       EXC_MASK_BAD_ACCESS,
+                                       MACH_PORT_NULL,
+                                       EXCEPTION_DEFAULT,
+                                       0);
+    
+    if (ret != KERN_SUCCESS) {
+        printf("task_set_exception_ports: %s\n", mach_error_string(ret));
+    }
+#endif
 	
 	return rc;
 }
@@ -283,4 +254,15 @@ void os_VideoRoutingTermVk()
 	[syphonMtlServer stop];
 	[syphonMtlServer release];
 	syphonMtlServer = NULL;
+}
+
+namespace hostfs
+{
+
+std::string getScreenshotsPath()
+{
+	NSArray *paths = NSSearchPathForDirectoriesInDomains(NSPicturesDirectory, NSUserDomainMask, YES);
+	return [[paths objectAtIndex:0] UTF8String];
+}
+
 }

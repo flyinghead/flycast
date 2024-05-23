@@ -20,7 +20,7 @@
 #include "hw/pvr/ta.h"
 #include "hw/pvr/pvr_mem.h"
 #include "rend/tileclip.h"
-#include "rend/gui.h"
+#include "ui/gui.h"
 #include "rend/sorter.h"
 
 const u32 DstBlendGL[]
@@ -1420,6 +1420,105 @@ void D3DRenderer::writeFramebufferToVRAM()
 	yClip.min = std::min(yClip.min, height - 1);
 	yClip.max = std::min(yClip.max, height - 1);
 	WriteFramebuffer<2, 1, 0, 3>(width, height, (u8 *)tmp_buf.data(), texAddress, pvrrc.fb_W_CTRL, linestride, xClip, yClip);
+}
+
+bool D3DRenderer::GetLastFrame(std::vector<u8>& data, int& width, int& height)
+{
+	if (!frameRenderedOnce || !theDXContext.isReady())
+		return false;
+
+	if (width != 0) {
+		height = width / aspectRatio;
+	}
+	else if (height != 0) {
+		width = aspectRatio * height;
+	}
+	else
+	{
+		width = this->width;
+		height = this->height;
+		if (config::Rotate90)
+			std::swap(width, height);
+		// We need square pixels for PNG
+		int w = aspectRatio * height;
+		if (width > w)
+			height = width / aspectRatio;
+		else
+			width = w;
+	}
+
+	backbuffer.reset();
+	device->GetRenderTarget(0, &backbuffer.get());
+
+	// Target texture and surface
+	ComPtr<IDirect3DTexture9> target;
+	device->CreateTexture(width, height, 1, D3DUSAGE_RENDERTARGET, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &target.get(), NULL);
+	ComPtr<IDirect3DSurface9> surface;
+	target->GetSurfaceLevel(0, &surface.get());
+	device->SetRenderTarget(0, surface);
+	// Draw
+	devCache.SetRenderState(D3DRS_SCISSORTESTENABLE, FALSE);
+	device->SetPixelShader(NULL);
+	device->SetVertexShader(NULL);
+	device->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE);
+	device->SetRenderState(D3DRS_ZENABLE, FALSE);
+	device->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
+	device->SetRenderState(D3DRS_ALPHATESTENABLE, FALSE);
+	device->SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_LINEAR);
+	device->SetSamplerState(0, D3DSAMP_MAGFILTER, D3DTEXF_LINEAR);
+
+	glm::mat4 identity = glm::identity<glm::mat4>();
+	glm::mat4 projection = glm::translate(glm::vec3(-1.f / width, 1.f / height, 0));
+	if (config::Rotate90)
+		projection *= glm::rotate((float)M_PI_2, glm::vec3(0, 0, 1));
+
+	device->SetTransform(D3DTS_WORLD, (const D3DMATRIX *)&identity[0][0]);
+	device->SetTransform(D3DTS_VIEW, (const D3DMATRIX *)&identity[0][0]);
+	device->SetTransform(D3DTS_PROJECTION, (const D3DMATRIX *)&projection[0][0]);
+
+	device->SetFVF(D3DFVF_XYZ | D3DFVF_TEX1);
+	D3DVIEWPORT9 viewport{};
+	viewport.Width = width;
+	viewport.Height = height;
+	viewport.MaxZ = 1;
+	bool rc = SUCCEEDED(device->SetViewport(&viewport));
+	verify(rc);
+	float coords[] {
+		-1,  1, 0.5f,  0, 0,
+		-1, -1, 0.5f,  0, 1,
+		 1,  1, 0.5f,  1, 0,
+		 1, -1, 0.5f,  1, 1,
+	};
+	device->SetTexture(0, framebufferTexture);
+	device->DrawPrimitiveUP(D3DPT_TRIANGLESTRIP, 2, coords, sizeof(float) * 5);
+
+	// Copy back
+	ComPtr<IDirect3DSurface9> offscreenSurface;
+	rc = SUCCEEDED(device->CreateOffscreenPlainSurface(width, height, D3DFMT_A8R8G8B8, D3DPOOL_SYSTEMMEM, &offscreenSurface.get(), nullptr));
+	verify(rc);
+	rc = SUCCEEDED(device->GetRenderTargetData(surface, offscreenSurface));
+	verify(rc);
+
+	D3DLOCKED_RECT rect;
+	RECT lockRect { 0, 0, (long)width, (long)height };
+	rc = SUCCEEDED(offscreenSurface->LockRect(&rect, &lockRect, D3DLOCK_READONLY));
+	verify(rc);
+	data.clear();
+	data.reserve(width * height * 3);
+	for (int y = 0; y < height; y++)
+	{
+		const u8 *src = (const u8 *)rect.pBits + y * rect.Pitch;
+		for (int x = 0; x < width; x++, src += 4)
+		{
+			data.push_back(src[2]);
+			data.push_back(src[1]);
+			data.push_back(src[0]);
+		}
+	}
+	rc = SUCCEEDED(offscreenSurface->UnlockRect());
+	device->SetRenderTarget(0, backbuffer);
+
+	return true;
 }
 
 Renderer* rend_DirectX9()

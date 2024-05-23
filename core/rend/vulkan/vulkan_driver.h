@@ -17,7 +17,7 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #pragma once
-#include "rend/imgui_driver.h"
+#include "ui/imgui_driver.h"
 #include "imgui_impl_vulkan.h"
 #include "vulkan_context.h"
 #include "texture.h"
@@ -26,10 +26,18 @@
 class VulkanDriver final : public ImGuiDriver
 {
 public:
-	~VulkanDriver() {
+	void reset() override
+	{
+		ImGuiDriver::reset();
 		textures.clear();
 		linearSampler.reset();
+		pointSampler.reset();
 		ImGui_ImplVulkan_Shutdown();
+		justStarted = true;
+	}
+
+	~VulkanDriver() {
+		reset();
 	}
 
 	void newFrame() override {
@@ -44,32 +52,25 @@ public:
 		try {
 			bool rendering = context->IsRendering();
 			if (!rendering)
-			{
-				if (context->recreateSwapChainIfNeeded())
-					return;
-				context->NewFrame();
-			}
-			vk::CommandBuffer vmuCmdBuffer{};
+				context->NewFrame(); // may reset this driver
 			if (!rendering || newFrameStarted)
 			{
-				vmuCmdBuffer = getContext()->PrepareOverlay(true, false);
 				context->BeginRenderPass();
 				context->PresentLastFrame();
-				context->DrawOverlay(settings.display.uiScale, true, false);
 			}
 			if (!justStarted)
 				// Record Imgui Draw Data and draw funcs into command buffer
 				ImGui_ImplVulkan_RenderDrawData(drawData, (VkCommandBuffer)getCommandBuffer());
 			justStarted = false;
 			if (!rendering || newFrameStarted)
-				context->EndFrame(vmuCmdBuffer);
+				context->EndFrame();
 			newFrameStarted = false;
 		} catch (const InvalidVulkanContext& err) {
 		}
 	}
 
 	void present() override {
-		getContext()->Present(); // may destroy this driver
+		getContext()->Present(); // may reset this driver
 	}
 
 	ImTextureID getTexture(const std::string& name) override {
@@ -80,26 +81,47 @@ public:
 			return ImTextureID{};
 	}
 
-	ImTextureID updateTexture(const std::string& name, const u8 *data, int width, int height) override
+	ImTextureID updateTexture(const std::string& name, const u8 *data, int width, int height, bool nearestSampling) override
 	{
 		VkTexture vkTex(std::make_unique<Texture>());
 		vkTex.texture->tex_type = TextureType::_8888;
 		vkTex.texture->SetCommandBuffer(getCommandBuffer());
 		vkTex.texture->UploadToGPU(width, height, data, false);
 		vkTex.texture->SetCommandBuffer(nullptr);
-		if (!linearSampler)
+		VkSampler sampler;
+		if (nearestSampling)
 		{
-			linearSampler = getContext()->GetDevice().createSamplerUnique(
-					vk::SamplerCreateInfo(vk::SamplerCreateFlags(),
-							vk::Filter::eLinear, vk::Filter::eLinear,
-							vk::SamplerMipmapMode::eLinear,
-							vk::SamplerAddressMode::eClampToBorder,
-							vk::SamplerAddressMode::eClampToBorder,
-							vk::SamplerAddressMode::eClampToEdge, 0.0f, false,
-							0.f, false, vk::CompareOp::eNever, 0.0f, VK_LOD_CLAMP_NONE,
-							vk::BorderColor::eFloatTransparentBlack));
+			if (!pointSampler)
+			{
+				pointSampler = getContext()->GetDevice().createSamplerUnique(
+						vk::SamplerCreateInfo(vk::SamplerCreateFlags(),
+								vk::Filter::eNearest, vk::Filter::eNearest,
+								vk::SamplerMipmapMode::eNearest,
+								vk::SamplerAddressMode::eClampToBorder,
+								vk::SamplerAddressMode::eClampToBorder,
+								vk::SamplerAddressMode::eClampToEdge, 0.0f, false,
+								0.f, false, vk::CompareOp::eNever, 0.0f, VK_LOD_CLAMP_NONE,
+								vk::BorderColor::eFloatTransparentBlack));
+			}
+			sampler = (VkSampler)*pointSampler;
 		}
-		ImTextureID texId = vkTex.textureId = ImGui_ImplVulkan_AddTexture((VkSampler)*linearSampler, (VkImageView)vkTex.texture->GetImageView(),
+		else
+		{
+			if (!linearSampler)
+			{
+				linearSampler = getContext()->GetDevice().createSamplerUnique(
+						vk::SamplerCreateInfo(vk::SamplerCreateFlags(),
+								vk::Filter::eLinear, vk::Filter::eLinear,
+								vk::SamplerMipmapMode::eLinear,
+								vk::SamplerAddressMode::eClampToBorder,
+								vk::SamplerAddressMode::eClampToBorder,
+								vk::SamplerAddressMode::eClampToEdge, 0.0f, false,
+								0.f, false, vk::CompareOp::eNever, 0.0f, VK_LOD_CLAMP_NONE,
+								vk::BorderColor::eFloatTransparentBlack));
+			}
+			sampler = (VkSampler)*linearSampler;
+		}
+		ImTextureID texId = vkTex.textureId = ImGui_ImplVulkan_AddTexture(sampler, (VkImageView)vkTex.texture->GetImageView(),
 				VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 		// TODO update existing texture
 		//auto it = textures.find(name);
@@ -109,6 +131,27 @@ public:
 		textures[name] = std::move(vkTex);
 
 		return texId;
+	}
+
+	void deleteTexture(const std::string& name) override
+	{
+		auto it = textures.find(name);
+		if (it != textures.end())
+		{
+			class DescSetDeleter : public Deletable
+			{
+			public:
+				DescSetDeleter(VkDescriptorSet descSet) : descSet(descSet) {}
+				~DescSetDeleter() {
+					ImGui_ImplVulkan_RemoveTexture(descSet);
+				}
+				VkDescriptorSet descSet;
+			};
+			getContext()->addToFlight(new DescSetDeleter((VkDescriptorSet)it->second.textureId));
+			if (it->second.texture != nullptr)
+				it->second.texture->deferDeleteResource(getContext());
+			textures.erase(it);
+		}
 	}
 
 private:
@@ -140,6 +183,7 @@ private:
 
 	std::unordered_map<std::string, VkTexture> textures;
 	vk::UniqueSampler linearSampler;
+	vk::UniqueSampler pointSampler;
 	bool newFrameStarted = false;
 	bool justStarted = true;
 };

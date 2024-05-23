@@ -130,12 +130,7 @@ std::string getTextureDumpPath()
 
 }
 
-void dc_savestate(int index = 0)
-{
-	die("unsupported");
+#ifdef _WIN32
+void os_SetThreadName(const char *name) {
 }
-
-void dc_loadstate(int index = 0)
-{
-	die("unsupported");
-}
+#endif

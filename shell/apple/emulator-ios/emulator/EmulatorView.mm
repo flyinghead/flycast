@@ -20,7 +20,7 @@
 #import "EmulatorView.h"
 
 #include "types.h"
-#include "rend/gui.h"
+#include "ui/gui.h"
 #include "ios_gamepad.h"
 
 @implementation EmulatorView {

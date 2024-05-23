@@ -86,6 +86,7 @@ private:
 	ComPtr<ID3D11RenderTargetView> renderTargetView;
 	bool overlayOnly = false;
 	DX11Overlay overlay;
+	bool allowTearing = false;
 	bool swapOnVSync = false;
 	bool frameRendered = false;
 	std::string adapterDesc;

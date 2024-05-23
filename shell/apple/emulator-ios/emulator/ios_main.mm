@@ -18,10 +18,9 @@
 	along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #import <Foundation/Foundation.h>
-
+#include "types.h"
+#include <vector>
 #include <string>
-#include <mach/task.h>
-#include <mach/mach_init.h>
 
 int darw_printf(const char* text,...)
 {
@@ -40,28 +39,22 @@ int darw_printf(const char* text,...)
 void os_DoEvents() {
 }
 
-void os_SetWindowText(const char* t) {
-}
-
-void os_CreateWindow() {
-    if (getppid() != 1) {
-        /* Make LLDB ignore EXC_BAD_ACCESS for debugging */
-        task_set_exception_ports(mach_task_self(), EXC_MASK_BAD_ACCESS, MACH_PORT_NULL, EXCEPTION_DEFAULT, 0);
-    }
-}
-
-void UpdateInputState() {
-}
-
-void os_SetupInput() {
-}
-void os_TermInput() {
-}
-
 std::string os_Locale(){
     return [[[NSLocale preferredLanguages] objectAtIndex:0] UTF8String];
 }
 
 std::string os_PrecomposedString(std::string string){
     return [[[NSString stringWithUTF8String:string.c_str()] precomposedStringWithCanonicalMapping] UTF8String];
+}
+
+namespace hostfs
+{
+
+void saveScreenshot(const std::string& name, const std::vector<u8>& data)
+{
+	NSData* imageData = [NSData dataWithBytes:&data[0] length:data.size()];
+	UIImage* pngImage = [UIImage imageWithData:imageData];
+	UIImageWriteToSavedPhotosAlbum(pngImage, nil, nil, nil);
+}
+
 }

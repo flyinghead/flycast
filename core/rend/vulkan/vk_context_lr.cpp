@@ -126,7 +126,7 @@ bool VkCreateDevice(retro_vulkan_context* context, VkInstance instance, VkPhysic
 
 	vk::PhysicalDeviceFeatures supportedFeatures;
 	physicalDevice.getFeatures(&supportedFeatures);
-	bool fragmentStoresAndAtomics = supportedFeatures.fragmentStoresAndAtomics;
+	VulkanContext::Instance()->fragmentStoresAndAtomics = supportedFeatures.fragmentStoresAndAtomics;
 	VulkanContext::Instance()->samplerAnisotropy = supportedFeatures.samplerAnisotropy;
 
 	// Enable VK_KHR_dedicated_allocation if available
@@ -157,7 +157,7 @@ bool VkCreateDevice(retro_vulkan_context* context, VkInstance instance, VkPhysic
 			vk::DeviceQueueCreateInfo(vk::DeviceQueueCreateFlags(), context->presentation_queue_family_index, 1, &queuePriority),
 	};
 	vk::PhysicalDeviceFeatures features(*required_features);
-	if (fragmentStoresAndAtomics)
+	if (VulkanContext::Instance()->fragmentStoresAndAtomics)
 		features.fragmentStoresAndAtomics = true;
 	if (VulkanContext::Instance()->samplerAnisotropy)
 		features.samplerAnisotropy = true;
@@ -373,7 +373,7 @@ void VulkanContext::beginFrame(vk::Extent2D extent)
 	}
 	commandPool.BeginFrame();
 	const std::array<vk::ClearValue, 2> clear_colors = { getBorderColor(), vk::ClearDepthStencilValue{ 0.f, 0 } };
-	cmdBuffer = commandPool.Allocate();
+	cmdBuffer = commandPool.Allocate(true);
 	cmdBuffer.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
 	overlay->Prepare(cmdBuffer, true, true);
 

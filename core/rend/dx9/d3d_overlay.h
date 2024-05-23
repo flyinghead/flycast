@@ -28,6 +28,7 @@ class D3DOverlay
 public:
 	void init(const ComPtr<IDirect3DDevice9>& device) {
 		this->device = device;
+		vmuLastChanged.fill({});
 	}
 
 	void term() {
@@ -45,11 +46,12 @@ private:
 
 	struct Vertex
 	{
-	    float    pos[3];
-	    float    uv[2];
+	    float pos[3];
+	    float uv[2];
 	};
 
 	ComPtr<IDirect3DDevice9> device;
 	ComPtr<IDirect3DTexture9> xhairTexture;
 	std::array<ComPtr<IDirect3DTexture9>, 8> vmuTextures;
+	std::array<u64, 8> vmuLastChanged {};
 };

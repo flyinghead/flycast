@@ -80,9 +80,6 @@ inline static void JITWriteProtect(bool enabled) {
 
 #include "log/Log.h"
 
-#define VER_EMUNAME		"Flycast"
-#define VER_SHORTNAME	VER_EMUNAME
-
 #ifndef _MSC_VER
 #define stricmp strcasecmp
 #endif
@@ -178,6 +175,7 @@ struct settings_t
 		std::string path;
 		std::string gameId;
 		std::string fileName;
+		std::string title;
 	} content;
 
 	struct {
@@ -212,7 +210,7 @@ struct settings_t
 		int drivingSimSlave;
 	} naomi;
 
-	bool disableRenderer;
+	bool raHardcoreMode;
 };
 
 extern settings_t settings;

@@ -1,7 +1,7 @@
 #pragma once
 #include "input/gamepad_device.h"
 #include "input/mouse.h"
-#include "oslib/oslib.h"
+#include "stdclass.h"
 #include "sdl.h"
 
 template<bool Arcade = false, bool Gamepad = false>
@@ -208,6 +208,7 @@ public:
 #endif
 
 		hasAnalogStick = SDL_JoystickNumAxes(sdl_joystick) > 0;
+		set_maple_port(maple_port);
 	}
 
 	bool gamepad_axis_input(u32 code, int value) override
@@ -215,6 +216,12 @@ public:
 		if (code == leftTrigger || code == rightTrigger)
 			value = (u16)(value + 32768) / 2;
 		return GamepadDevice::gamepad_axis_input(code, value);
+	}
+
+	void set_maple_port(int port) override
+	{
+		GamepadDevice::set_maple_port(port);
+		SDL_JoystickSetPlayerIndex(sdl_joystick, port <= 3 ? port : -1);
 	}
 
 	u16 getRumbleIntensity(float power)	{
@@ -226,7 +233,7 @@ public:
 		if (rumbleEnabled)
 		{
 			vib_inclination = inclination * power;
-			vib_stop_time = os_GetSeconds() + duration_ms / 1000.0;
+			vib_stop_time = getTimeMs() + duration_ms;
 
 			u16 intensity = getRumbleIntensity(power);
 			SDL_JoystickRumble(sdl_joystick, intensity, intensity, duration_ms);
@@ -238,7 +245,7 @@ public:
 			return;
 		if (vib_inclination > 0)
 		{
-			int rem_time = (vib_stop_time - os_GetSeconds()) * 1000;
+			int rem_time = vib_stop_time - getTimeMs();
 			if (rem_time <= 0)
 				vib_inclination = 0;
 			else
@@ -411,7 +418,7 @@ public:
 	}
 
 protected:
-	double vib_stop_time = 0;
+	u64 vib_stop_time = 0;
 	SDL_JoystickID sdl_joystick_instance;
 
 private:

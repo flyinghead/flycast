@@ -35,6 +35,7 @@ public:
 		this->deviceContext = deviceContext;
 		this->samplers = samplers;
 		quad.init(device, deviceContext, shaders);
+		vmuLastChanged.fill({});
 	}
 
 	void term()
@@ -60,6 +61,7 @@ private:
 	ComPtr<ID3D11ShaderResourceView> xhairTextureView;
 	std::array<ComPtr<ID3D11Texture2D>, 8> vmuTextures;
 	std::array<ComPtr<ID3D11ShaderResourceView>, 8> vmuTextureViews;
+	std::array<u64, 8> vmuLastChanged {};
 	Quad quad;
 	Samplers *samplers;
 	BlendStates blendStates;

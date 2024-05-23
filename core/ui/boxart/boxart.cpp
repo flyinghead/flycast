@@ -19,9 +19,24 @@
 #include "boxart.h"
 #include "gamesdb.h"
 #include "../game_scanner.h"
+#include "oslib/oslib.h"
+#include "cfg/option.h"
 #include <chrono>
 
 GameBoxart Boxart::getBoxart(const GameMedia& media)
+{
+	loadDatabase();
+	GameBoxart boxart;
+	{
+		std::lock_guard<std::mutex> guard(mutex);
+		auto it = games.find(media.fileName);
+		if (it != games.end())
+			boxart = it->second;
+	}
+	return boxart;
+}
+
+GameBoxart Boxart::getBoxartAndLoad(const GameMedia& media)
 {
 	loadDatabase();
 	GameBoxart boxart;
@@ -62,6 +77,7 @@ void Boxart::fetchBoxart()
 	if (toFetch.empty())
 		return;
 	fetching = std::async(std::launch::async, [this]() {
+		ThreadName _("BoxArt-scraper");
 		if (offlineScraper == nullptr)
 		{
 			offlineScraper = std::unique_ptr<Scraper>(new OfflineScraper());

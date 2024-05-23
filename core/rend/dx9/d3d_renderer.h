@@ -25,7 +25,7 @@
 #include "rend/transform_matrix.h"
 #include "d3d_texture.h"
 #include "d3d_shaders.h"
-#include "rend/imgui_driver.h"
+#include "ui/imgui_driver.h"
 
 class RenderStateCache
 {
@@ -116,6 +116,7 @@ struct D3DRenderer : public Renderer
 	void preReset();
 	void postReset();
 	void RenderFramebuffer(const FramebufferInfo& info) override;
+	bool GetLastFrame(std::vector<u8>& data, int& width, int& height) override;
 
 private:
 	enum ModifierVolumeMode { Xor, Or, Inclusion, Exclusion, ModeCount };

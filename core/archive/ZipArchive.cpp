@@ -47,7 +47,7 @@ ArchiveFile* ZipArchive::OpenFile(const char* name)
 		return nullptr;
 	zip_stat_t stat;
 	zip_stat(zip, name, 0, &stat);
-	return new ZipArchiveFile(zip_file, stat.size);
+	return new ZipArchiveFile(zip_file, stat.size, stat.name);
 }
 
 static zip_file *zip_fopen_by_crc(zip_t *za, u32 crc, int flags, zip_uint64_t& index)
@@ -77,7 +77,7 @@ ArchiveFile* ZipArchive::OpenFileByCrc(u32 crc)
 	zip_stat_t stat;
 	zip_stat_index(zip, index, 0, &stat);
 
-	return new ZipArchiveFile(zip_file, stat.size);
+	return new ZipArchiveFile(zip_file, stat.size, stat.name);
 }
 
 u32 ZipArchiveFile::Read(void* buffer, u32 length)
@@ -104,5 +104,15 @@ ArchiveFile *ZipArchive::OpenFirstFile()
 		return nullptr;
 	zip_stat_t stat;
 	zip_stat_index(zip, 0, 0, &stat);
-	return new ZipArchiveFile(zipFile, stat.size);
+	return new ZipArchiveFile(zipFile, stat.size, stat.name);
+}
+
+ArchiveFile *ZipArchive::OpenFileByIndex(size_t index)
+{
+	zip_file_t *zipFile = zip_fopen_index(zip, index, 0);
+	if (zipFile == nullptr)
+		return nullptr;
+	zip_stat_t stat;
+	zip_stat_index(zip, index, 0, &stat);
+	return new ZipArchiveFile(zipFile, stat.size, stat.name);
 }

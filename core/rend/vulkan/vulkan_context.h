@@ -38,6 +38,7 @@ public:
 #include "rend/TexCache.h"
 #include "overlay.h"
 #include "wsi/context.h"
+#include <vector>
 
 struct ImDrawData;
 
@@ -60,6 +61,7 @@ public:
 	void Present() noexcept;
 	void PresentFrame(vk::Image image, vk::ImageView imageView, const vk::Extent2D& extent, float aspectRatio) noexcept;
 	void PresentLastFrame();
+	bool GetLastFrame(std::vector<u8>& data, int& width, int& height);
 
 	vk::PhysicalDevice GetPhysicalDevice() const { return physicalDevice; }
 	vk::Device GetDevice() const { return *device; }

@@ -48,7 +48,7 @@ struct ImGui_ImplDX9_Data
     LPDIRECT3DDEVICE9           pd3dDevice;
     LPDIRECT3DVERTEXBUFFER9     pVB;
     LPDIRECT3DINDEXBUFFER9      pIB;
-    LPDIRECT3DTEXTURE9          FontTexture;
+    ImTextureDX9                FontTexture;
     int                         VertexBufferSize;
     int                         IndexBufferSize;
 
@@ -244,17 +244,30 @@ void ImGui_ImplDX9_RenderDrawData(ImDrawData* draw_data)
 
                 // Apply Scissor/clipping rectangle, Bind texture, Draw
                 const RECT r = { (LONG)clip_min.x, (LONG)clip_min.y, (LONG)clip_max.x, (LONG)clip_max.y };
-                const LPDIRECT3DTEXTURE9 texture = (LPDIRECT3DTEXTURE9)pcmd->GetTexID();
+                const ImTextureDX9 *tex = (const ImTextureDX9 *)pcmd->GetTexID();
+                const LPDIRECT3DTEXTURE9 texture = tex->d3dTexture;
                 bd->pd3dDevice->SetTexture(0, texture);
-				if (texture != bd->FontTexture)
+				if (tex != &bd->FontTexture)
 				{
 					bd->pd3dDevice->SetSamplerState(0, D3DSAMP_ADDRESSU, D3DTADDRESS_BORDER);
 					bd->pd3dDevice->SetSamplerState(0, D3DSAMP_ADDRESSV, D3DTADDRESS_BORDER);
+					if (tex->pointSampling)
+					{
+					    bd->pd3dDevice->SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_POINT);
+					    bd->pd3dDevice->SetSamplerState(0, D3DSAMP_MAGFILTER, D3DTEXF_POINT);
+					}
+					else
+					{
+					    bd->pd3dDevice->SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_LINEAR);
+					    bd->pd3dDevice->SetSamplerState(0, D3DSAMP_MAGFILTER, D3DTEXF_LINEAR);
+					}
 				}
 				else
 				{
 					bd->pd3dDevice->SetSamplerState(0, D3DSAMP_ADDRESSU, D3DTADDRESS_WRAP);
 					bd->pd3dDevice->SetSamplerState(0, D3DSAMP_ADDRESSV, D3DTADDRESS_WRAP);
+				    bd->pd3dDevice->SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_LINEAR);
+				    bd->pd3dDevice->SetSamplerState(0, D3DSAMP_MAGFILTER, D3DTEXF_LINEAR);
 				}
                 bd->pd3dDevice->SetScissorRect(&r);
                 bd->pd3dDevice->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, pcmd->VtxOffset + global_vtx_offset, 0, (UINT)cmd_list->VtxBuffer.Size, pcmd->IdxOffset + global_idx_offset, pcmd->ElemCount / 3);
@@ -338,18 +351,18 @@ static bool ImGui_ImplDX9_CreateFontsTexture()
 #endif
 
     // Upload texture to graphics system
-    bd->FontTexture = nullptr;
-    if (bd->pd3dDevice->CreateTexture(width, height, 1, D3DUSAGE_DYNAMIC, rgba_support ? D3DFMT_A8B8G8R8 : D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &bd->FontTexture, nullptr) < 0)
+    bd->FontTexture.d3dTexture = nullptr;
+    if (bd->pd3dDevice->CreateTexture(width, height, 1, D3DUSAGE_DYNAMIC, rgba_support ? D3DFMT_A8B8G8R8 : D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &bd->FontTexture.d3dTexture, nullptr) < 0)
         return false;
     D3DLOCKED_RECT tex_locked_rect;
-    if (bd->FontTexture->LockRect(0, &tex_locked_rect, nullptr, 0) != D3D_OK)
+    if (bd->FontTexture.d3dTexture->LockRect(0, &tex_locked_rect, nullptr, 0) != D3D_OK)
         return false;
     for (int y = 0; y < height; y++)
         memcpy((unsigned char*)tex_locked_rect.pBits + (size_t)tex_locked_rect.Pitch * y, pixels + (size_t)width * bytes_per_pixel * y, (size_t)width * bytes_per_pixel);
-    bd->FontTexture->UnlockRect(0);
+    bd->FontTexture.d3dTexture->UnlockRect(0);
 
     // Store our identifier
-    io.Fonts->SetTexID((ImTextureID)bd->FontTexture);
+    io.Fonts->SetTexID((ImTextureID)&bd->FontTexture);
 
 #ifndef IMGUI_USE_BGRA_PACKED_COLOR
     if (!rgba_support && io.Fonts->TexPixelsUseColors)
@@ -376,15 +389,21 @@ void ImGui_ImplDX9_InvalidateDeviceObjects()
         return;
     if (bd->pVB) { bd->pVB->Release(); bd->pVB = nullptr; }
     if (bd->pIB) { bd->pIB->Release(); bd->pIB = nullptr; }
-    if (bd->FontTexture) { bd->FontTexture->Release(); bd->FontTexture = nullptr; ImGui::GetIO().Fonts->SetTexID(0); } // We copied bd->pFontTextureView to io.Fonts->TexID so let's clear that as well.
+    if (bd->FontTexture.d3dTexture)
+    {
+    	bd->FontTexture.d3dTexture->Release();
+    	bd->FontTexture.d3dTexture = nullptr;
+    	// We copied bd->FontTexture to io.Fonts->TexID so let's clear that as well.
+    	ImGui::GetIO().Fonts->SetTexID(0);
+    }
 }
 
 void ImGui_ImplDX9_NewFrame()
 {
     ImGui_ImplDX9_Data* bd = ImGui_ImplDX9_GetBackendData();
-    IM_ASSERT(bd != nullptr && "Did you call ImGui_ImplDX9_Init()?");
+    IM_ASSERT(bd != nullptr && "Context or backend not initialized! Did you call ImGui_ImplDX9_Init()?");
 
-    if (!bd->FontTexture)
+    if (!bd->FontTexture.d3dTexture)
         ImGui_ImplDX9_CreateDeviceObjects();
 }
 

@@ -17,7 +17,7 @@
 	along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #import <Foundation/Foundation.h>
-#include "rend/boxart/http_client.h"
+#include "oslib/http_client.h"
 
 namespace http {
 
@@ -43,6 +43,40 @@ int get(const std::string& url, std::vector<u8>& content, std::string& contentTy
 	content.clear();
 	content.insert(content.begin(), (const u8 *)[data bytes], (const u8 *)[data bytes] + [data length]);
 	
+	return [httpResponse statusCode];
+}
+
+int post(const std::string& url, const char *payload, const char *contentType, std::vector<u8>& reply)
+{
+	NSString *nsurl = [NSString stringWithCString:url.c_str() 
+                                         encoding:[NSString defaultCStringEncoding]];
+	NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:nsurl]];
+	[request setHTTPMethod:@"POST"];
+	[request setCachePolicy:NSURLRequestReloadIgnoringLocalCacheData];
+	[request setHTTPShouldHandleCookies:NO];
+	
+	size_t payloadSize = strlen(payload);
+	[request setHTTPBody:[NSData dataWithBytes:payload length:payloadSize]];
+	NSString *postLength = [NSString stringWithFormat:@"%ld", (unsigned long)payloadSize];
+    [request setValue:postLength forHTTPHeaderField:@"Content-Length"];
+    NSString *nscontentType = contentType != nullptr ? [NSString stringWithCString:contentType 
+                                         encoding:[NSString defaultCStringEncoding]]
+    	: @"application/x-www-form-urlencoded";
+    [request setValue:nscontentType forHTTPHeaderField:@"Content-Type"];
+    
+	NSURLResponse *response = nil;
+	NSError *error = nil;
+	NSData *data = [NSURLConnection sendSynchronousRequest:request
+                          returningResponse:&response
+                                      error:&error];
+	if (error != nil)
+		return 500;
+
+	NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *)response; 
+		
+	reply.clear();
+	reply.insert(reply.begin(), (const u8 *)[data bytes], (const u8 *)[data bytes] + [data length]);
+
 	return [httpResponse statusCode];
 }
 

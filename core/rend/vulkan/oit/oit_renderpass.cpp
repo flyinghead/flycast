@@ -22,15 +22,16 @@
 
 vk::UniqueRenderPass RenderPasses::MakeRenderPass(bool initial, bool last, bool loadClear)
 {
+	vk::AttachmentDescription attach0 = GetAttachment0Description(initial, last, loadClear);
     std::array<vk::AttachmentDescription, 4> attachmentDescriptions = {
     		// Swap chain image
-    		GetAttachment0Description(initial, last, loadClear),
+    		attach0,
 			// OP+PT color attachment
 			vk::AttachmentDescription(vk::AttachmentDescriptionFlags(), vk::Format::eR8G8B8A8Unorm, vk::SampleCountFlagBits::e1,
 					initial ? vk::AttachmentLoadOp::eClear : vk::AttachmentLoadOp::eLoad,
 					last ? vk::AttachmentStoreOp::eDontCare : vk::AttachmentStoreOp::eStore,
 					vk::AttachmentLoadOp::eDontCare, vk::AttachmentStoreOp::eDontCare,
-					initial ? vk::ImageLayout::eUndefined : vk::ImageLayout::eShaderReadOnlyOptimal, vk::ImageLayout::eShaderReadOnlyOptimal),
+					initial ? vk::ImageLayout::eUndefined : attach0.initialLayout, attach0.finalLayout),
 			// OP+PT depth attachment
 			vk::AttachmentDescription(vk::AttachmentDescriptionFlags(), GetContext()->GetDepthFormat(), vk::SampleCountFlagBits::e1,
 					initial ? vk::AttachmentLoadOp::eClear : vk::AttachmentLoadOp::eLoad,

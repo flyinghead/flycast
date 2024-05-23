@@ -18,11 +18,11 @@ jobs:
       matrix:
         config:
           - {name: i686-pc-windows-msvc, os: windows-latest, shell: cmd, arch: x86, cmakeArgs: -G Ninja, buildType: Release}
-          - {name: apple-darwin, os: macos-latest, shell: sh, cmakeArgs: -G Xcode -DAPPLE_BREAKPAD=ON, destDir: osx, buildType: RelWithDebInfo}
+          - {name: apple-darwin, os: macos-latest, shell: sh, cmakeArgs: -G Xcode -DAPPLE_BREAKPAD=ON -DUSE_DISCORD=ON, destDir: osx, buildType: RelWithDebInfo}
           - {name: apple-ios, os: macos-latest, shell: sh, cmakeArgs: -DCMAKE_SYSTEM_NAME=iOS -G Xcode, destDir: ios, buildType: Release}
-          - {name: x86_64-pc-linux-gnu, os: ubuntu-20.04, shell: sh, cmakeArgs: -G Ninja, destDir: linux, buildType: RelWithDebInfo}
-          - {name: x86_64-pc-windows-msvc, os: windows-latest, shell: cmd, arch: x64, cmakeArgs: -G Ninja, buildType: Release}
-          - {name: x86_64-w64-mingw32, os: windows-latest, shell: 'msys2 {0}', cmakeArgs: -G Ninja, destDir: win, buildType: RelWithDebInfo}
+          - {name: x86_64-pc-linux-gnu, os: ubuntu-20.04, shell: sh, cmakeArgs: -G Ninja -DUSE_DISCORD=ON, destDir: linux, buildType: RelWithDebInfo}
+          - {name: x86_64-pc-windows-msvc, os: windows-latest, shell: cmd, arch: x64, cmakeArgs: -G Ninja -DUSE_DISCORD=ON, buildType: Release}
+          - {name: x86_64-w64-mingw32, os: windows-latest, shell: 'msys2 {0}', cmakeArgs: -G Ninja -DUSE_DISCORD=ON, destDir: win, buildType: RelWithDebInfo}
           - {name: libretro-x86_64-pc-linux-gnu, os: ubuntu-latest, shell: sh, cmakeArgs: -DLIBRETRO=ON -DCMAKE_POSITION_INDEPENDENT_CODE=TRUE -G Ninja, buildType: Release}
           - {name: libretro-x86_64-w64-mingw32, os: windows-latest, shell: 'msys2 {0}', cmakeArgs: -DLIBRETRO=ON -G Ninja, buildType: Release}
 
@@ -70,7 +70,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          submodules: true
+          submodules: recursive
 
       - name: Compile a universal OpenMP (macOS)
         run: HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=1 brew reinstall --build-from-source --formula ./shell/apple/libomp.rb

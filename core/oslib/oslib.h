@@ -1,19 +1,34 @@
 #pragma once
 #include "types.h"
+#include <vector>
 #if defined(__SWITCH__)
 #include <malloc.h>
 #endif
 
-void os_SetWindowText(const char* text);
-double os_GetSeconds();
-
 void os_DoEvents();
 void os_CreateWindow();
+void os_DestroyWindow();
 void os_SetupInput();
 void os_TermInput();
+void os_UpdateInputState();
 void os_InstallFaultHandler();
 void os_UninstallFaultHandler();
 void os_RunInstance(int argc, const char *argv[]);
+void os_SetThreadName(const char *name);
+void os_notify(const char *msg, int durationMs = 2000, const char *details = nullptr);
+
+// raii thread name setter
+class ThreadName
+{
+public:
+	ThreadName(const char *name) {
+		os_SetThreadName(name);
+	}
+	~ThreadName() {
+		// default name
+		os_SetThreadName("flycast");
+	}
+};
 
 #ifdef _MSC_VER
 #include <intrin.h>
@@ -46,6 +61,7 @@ namespace hostfs
 	std::string getTextureDumpPath();
 
 	std::string getShaderCachePath(const std::string& filename);
+	void saveScreenshot(const std::string& name, const std::vector<u8>& data);
 }
 
 static inline void *allocAligned(size_t alignment, size_t size)

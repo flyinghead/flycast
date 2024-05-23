@@ -45,6 +45,7 @@ private:
 	std::array<std::unique_ptr<Texture>, 8> vmuTextures;
 	std::vector<vk::UniqueCommandBuffer> commandBuffers;
 	std::array<std::unique_ptr<QuadDrawer>, 8> drawers;
+	std::array<u64, 8> vmuLastChanged {};
 	QuadPipeline *pipeline = nullptr;
 
 	std::unique_ptr<Texture> xhairTexture;

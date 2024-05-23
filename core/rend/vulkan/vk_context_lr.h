@@ -27,6 +27,7 @@
 #include "wsi/context.h"
 #include "commandpool.h"
 #include "overlay.h"
+#include <vector>
 
 static vk::Format findDepthFormat(vk::PhysicalDevice physicalDevice);
 
@@ -43,6 +44,7 @@ public:
 
 	u32 GetGraphicsQueueFamilyIndex() const { return retro_render_if->queue_index; }
 	void PresentFrame(vk::Image image, vk::ImageView imageView, const vk::Extent2D& extent, float aspectRatio);
+	bool GetLastFrame(std::vector<u8>& data, int& width, int& height) { return false; }
 
 	vk::PhysicalDevice GetPhysicalDevice() const { return physicalDevice; }
 	vk::Device GetDevice() const { return device; }
@@ -89,6 +91,7 @@ public:
 	static VulkanContext *Instance() { return contextInstance; }
 	bool SupportsSamplerAnisotropy() const { return samplerAnisotropy; }
 	bool SupportsDedicatedAllocation() const { return dedicatedAllocationSupported; }
+	bool hasPerPixel() override { return fragmentStoresAndAtomics; }
 	const VMAllocator& GetAllocator() const { return allocator; }
 	vk::DeviceSize GetMaxMemoryAllocationSize() const { return maxMemoryAllocationSize; }
 	f32 GetMaxSamplerAnisotropy() const { return samplerAnisotropy ? maxSamplerAnisotropy : 1.f; }
@@ -126,6 +129,7 @@ public:
 	bool samplerAnisotropy = false;
 	f32 maxSamplerAnisotropy = 0.f;
 	bool dedicatedAllocationSupported = false;
+	bool fragmentStoresAndAtomics = false;
 private:
 	u32 vendorID = 0;
 

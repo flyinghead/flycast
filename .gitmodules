@@ -29,3 +29,12 @@
 [submodule "core/deps/Spout"]
 	path = core/deps/Spout
 	url = https://github.com/vkedwardli/Spout2.git
+[submodule "core/deps/discord-rpc"]
+	path = core/deps/discord-rpc
+	url = https://github.com/flyinghead/discord-rpc
+[submodule "core/deps/libadrenotools"]
+	path = core/deps/libadrenotools
+	url = https://github.com/bylaws/libadrenotools
+[submodule "core/deps/rcheevos"]
+	path = core/deps/rcheevos
+	url = https://github.com/RetroAchievements/rcheevos.git
