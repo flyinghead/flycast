@@ -25,11 +25,15 @@
 #include "sh4asm/sh4asm_core/disas.h"
 #include "types.h"
 
+#define DC_RAM_BASE 0x0c000000
+#define BYTES_PER_INSTRUCTION 2
 #define DISASM_LINE_LEN 128
+
+#define IM_MAX(A, B)            (((A) >= (B)) ? (A) : (B))
 
 extern ImFont *monospaceFont;
 
-static u32 disasmAddress = 0x0c000000;
+static u32 disasmAddress = DC_RAM_BASE;
 static bool followPc = true;
 static char sh4DisasmLine[DISASM_LINE_LEN];
 
@@ -50,9 +54,7 @@ void gui_debugger_disasm()
 	ImGui::SetNextWindowPos(ScaledVec2(16, 110), ImGuiCond_FirstUseEver);
 	ImGui::SetNextWindowSize(ScaledVec2(440, 600), ImGuiCond_FirstUseEver);
 	ImGui::SetNextWindowSizeConstraints(ScaledVec2(-1, 200), ScaledVec2(-1, FLT_MAX));
-
-	//ImGui::Begin("Disassembly", NULL, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
-		ImGui::Begin("Disassembly", NULL, ImGuiWindowFlags_NoCollapse);
+	ImGui::Begin("Disassembly", NULL, ImGuiWindowFlags_NoCollapse);
 
 	{
 		DisabledScope scope(running);
@@ -60,17 +62,24 @@ void gui_debugger_disasm()
 	}
 
 	ImGui::PushFont(monospaceFont);
-	//ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(8, 2));
 
+	// Render disassembly table
 	if (!ImGui::BeginTable("DisassemblyTable", 4, ImGuiTableFlags_SizingFixedFit))
 		return;
 
 	ImGuiTable *table = ImGui::GetCurrentTable();
 	ImGui::TableSetupColumn("bp", ImGuiTableColumnFlags_WidthFixed, 9.0f);
 
+	bool shouldResetDisasmAddress = false;
 	for (rowIndex = 0; ; rowIndex++)
 	{
 		const u32 addr = (disasmAddress & 0x1fffffff) + rowIndex * 2;
+
+		// If we are out of bounds, stop drawing
+		if ((addr - DC_RAM_BASE) >= RAM_SIZE) {
+			shouldResetDisasmAddress = true;
+			break;
+		}
 
 		u16 instr = ReadMem16_nommu(addr);
 
@@ -134,12 +143,59 @@ void gui_debugger_disasm()
 			break;
 	}
 	ImGui::EndTable();
+	bool isTableHovered = ImGui::IsItemHovered();
 
-	bool isPcOutsideDisasm = (pcAddr >= disasmAddress + rowIndex * 2) || pcAddr < disasmAddress;
+	// Draw scrollbar
+	// TODO: Extract scrollbar drawing to a separate function
+	size_t numRowsTotal = RAM_SIZE / BYTES_PER_INSTRUCTION;
+	ImRect outerRect = table->OuterRect;
+	ImRect innerRect = table->InnerRect;
+	float borderSize = 0;
+	float scrollbarWidth = ImGui::GetStyle().ScrollbarSize;
+	ImRect bb = ImRect(
+		IM_MAX(outerRect.Min.x, outerRect.Max.x - borderSize - scrollbarWidth),
+		innerRect.Min.y,
+		outerRect.Max.x,
+		innerRect.Max.y
+	);
+
+	size_t rowCount = rowIndex + 1;
+	ImS64 scrollPosition = (disasmAddress - DC_RAM_BASE) / 2;
+	bool wheelScrolled = false;
+	bool scrollbarScrolled = ImGui::ScrollbarEx(
+		bb,
+		ImGui::GetID("DisassemblyScrollBar"),
+		ImGuiAxis_Y,
+		&scrollPosition,
+		rowCount,
+		numRowsTotal,
+		ImDrawFlags_RoundCornersNone
+	);
+
+	// Update disasm address based on scrollbar position
+	if (scrollbarScrolled) {
+		disasmAddress = DC_RAM_BASE + scrollPosition * 2;
+	} else if (isTableHovered) {
+		ImS64 wheel = ImGui::GetIO().MouseWheel;
+		if (wheel != 0) {
+			disasmAddress += wheel * -1;
+			wheelScrolled = true;
+		}
+	}
+
+
+	bool isPcOutsideDisasm = (pcAddr >= disasmAddress + rowCount * 2) || pcAddr < disasmAddress;
+	// Stop following the PC if the user scrolled the PC out of view
+	if (isPcOutsideDisasm && (wheelScrolled || scrollbarScrolled))
+		followPc = false;
+	// Follow PC when stepping
 	if (!running && followPc && isPcOutsideDisasm)
 		disasmAddress = pcAddr;
+	// Ensure disasm address doesn't go out of bounds
+	if (disasmAddress <= DC_RAM_BASE || shouldResetDisasmAddress)
+		// FIXME: Scrolling past the end of the disassembly table resets PC to the beginning
+		disasmAddress = DC_RAM_BASE;
 
 	ImGui::PopFont();
-	//ImGui::PopStyleVar();
 	ImGui::End();
 }
