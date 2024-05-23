@@ -25,10 +25,7 @@
 #include "sh4asm/sh4asm_core/disas.h"
 #include "types.h"
 
-// TODO: Fix delay slot stepping
-
 #define DISASM_LINE_LEN 128
-#define DISASM_LEN 40
 
 extern ImFont *monospaceFont;
 
@@ -46,70 +43,103 @@ static void disas_emit(char ch) {
 void gui_debugger_disasm()
 {
 	u32 pc = *GetRegPtr(reg_nextpc);
+	u32 pcAddr = pc & 0x1fffffff;
+	size_t rowIndex = 0;
+	bool running = emu.running();
 
 	ImGui::SetNextWindowPos(ScaledVec2(16, 110), ImGuiCond_FirstUseEver);
-	ImGui::SetNextWindowSize(ScaledVec2(440, 0), ImGuiCond_FirstUseEver);
+	ImGui::SetNextWindowSize(ScaledVec2(440, 600), ImGuiCond_FirstUseEver);
+	ImGui::SetNextWindowSizeConstraints(ScaledVec2(-1, 200), ScaledVec2(-1, FLT_MAX));
 
-	ImGui::Begin("Disassembly", NULL, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
+	//ImGui::Begin("Disassembly", NULL, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
+		ImGui::Begin("Disassembly", NULL, ImGuiWindowFlags_NoCollapse);
 
-	ImGui::Checkbox("Follow PC", &followPc);
+	{
+		DisabledScope scope(running);
+		ImGui::Checkbox("Follow PC", &followPc);
+	}
 
 	ImGui::PushFont(monospaceFont);
-	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(8,2));
+	//ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(8, 2));
 
-	u32 pcAddr = pc & 0x1fffffff;
-	bool isPcOutsideDisasm = (pcAddr >= disasmAddress + DISASM_LEN * 2) || pcAddr < disasmAddress;
-	if (followPc && isPcOutsideDisasm)
-		disasmAddress = pcAddr;
+	if (!ImGui::BeginTable("DisassemblyTable", 4, ImGuiTableFlags_SizingFixedFit))
+		return;
 
-	for (size_t i = 0; i < DISASM_LEN; i++)
+	ImGuiTable *table = ImGui::GetCurrentTable();
+	ImGui::TableSetupColumn("bp", ImGuiTableColumnFlags_WidthFixed, 9.0f);
+
+	for (rowIndex = 0; ; rowIndex++)
 	{
-		const u32 addr = (disasmAddress & 0x1fffffff) + i * 2;
+		const u32 addr = (disasmAddress & 0x1fffffff) + rowIndex * 2;
 
 		u16 instr = ReadMem16_nommu(addr);
 
 		auto it = debugAgent.breakpoints[DebugAgent::Breakpoint::Type::BP_TYPE_SOFTWARE_BREAK].find(addr);
-		const bool isBreakpoint = it != debugAgent.breakpoints[DebugAgent::Breakpoint::Type::BP_TYPE_SOFTWARE_BREAK].end();
+		const bool hasBreakpoint = it != debugAgent.breakpoints[DebugAgent::Breakpoint::Type::BP_TYPE_SOFTWARE_BREAK].end();
 
-		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0,2));
-		if (isBreakpoint) {
-			ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 0, 0, 255));
-			ImGui::Text("B ");
-			if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0)) {
-				debugAgent.removeMatchpoint(DebugAgent::Breakpoint::BP_TYPE_SOFTWARE_BREAK, addr, 2);
-			}
-
-			ImGui::PopStyleColor();
-
+		if (hasBreakpoint)
 			instr = it->second.savedOp;
-		} else {
-			ImGui::Text("  ");
-			if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0)) {
-				debugAgent.insertMatchpoint(DebugAgent::Breakpoint::BP_TYPE_SOFTWARE_BREAK, addr, 2);
-			}
-		}
-		ImGui::SameLine();
-		ImGui::PopStyleVar();
 
-		char buf [64];
+		ImVec2 mousePos = ImGui::GetMousePos();
 
+		ImGui::TableNextRow(0);
+		ImGui::TableNextColumn();
+
+		// Deffer breakpoint drawing because we don't know the cell height yet.
+		ImGui::TableNextColumn();
+
+		char buf[64];
 		memset(sh4DisasmLine, 0, sizeof(sh4DisasmLine));
 		sh4asm_disas_inst(instr, disas_emit, addr);
-		if (addr == pcAddr) {
-			// TODO: Handle scaling
-			// TODO: Calculate rect size based on font size
-			ImVec2 p = ImGui::GetCursorScreenPos();
-			ImGui::GetWindowDrawList()->AddRectFilled(ImVec2(p.x - 2, p.y), ImVec2(p.x + 56, p.y + 16), IM_COL32(0, 128, 0, 255));
-		}
-		sprintf(buf, "%08X:", (u32) addr);
+
+		if (!running && addr == pcAddr)
+			ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, IM_COL32(0, 128, 0, 255));
+
+		sprintf(buf, "%08X:", (u32)addr);
 		ImGui::Text("%s", buf);
-		ImGui::SameLine();
+
+		ImGui::TableNextColumn();
 		ImGui::TextDisabled("%04X", instr);
-		ImGui::SameLine();
+		
+		ImGui::TableNextColumn();
 		ImGui::Text("%s", sh4DisasmLine);
+
+		// Render breakpoint icon
+		ImRect bpCellRect = ImGui::TableGetCellBgRect(table, 0);
+		bool isBreakpointCellHovered = bpCellRect.Contains(mousePos);
+		bool isBreakpointCellClicked = isBreakpointCellHovered && ImGui::IsMouseClicked(ImGuiMouseButton_Left);
+		// Assume breakpoint color
+		ImU32 bpColor = 0;
+		if (hasBreakpoint)
+			bpColor = IM_COL32(255, 0, 0, 255);
+		else if (isBreakpointCellHovered)
+			bpColor = IM_COL32(127, 0, 0, 255);
+
+		if (bpColor) {
+			// Draw breakpoint in center of cell
+			ImVec2 center = bpCellRect.GetCenter();
+			ImVec2 bpPos = ImVec2(center.x, center.y);
+			ImGui::GetForegroundDrawList()->AddCircleFilled(bpPos, 4, bpColor);
+		}
+
+		if (isBreakpointCellClicked) {
+			if (hasBreakpoint)
+				debugAgent.removeMatchpoint(DebugAgent::Breakpoint::BP_TYPE_SOFTWARE_BREAK, addr, 2);
+			else
+				debugAgent.insertMatchpoint(DebugAgent::Breakpoint::BP_TYPE_SOFTWARE_BREAK, addr, 2);
+		}
+
+		// If there is no more space, stop drawing
+		if (ImGui::GetContentRegionAvail().y < bpCellRect.GetHeight() + 2.0f)
+			break;
 	}
+	ImGui::EndTable();
+
+	bool isPcOutsideDisasm = (pcAddr >= disasmAddress + rowIndex * 2) || pcAddr < disasmAddress;
+	if (!running && followPc && isPcOutsideDisasm)
+		disasmAddress = pcAddr;
 
 	ImGui::PopFont();
-	ImGui::PopStyleVar();
+	//ImGui::PopStyleVar();
 	ImGui::End();
 }
