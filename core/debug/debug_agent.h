@@ -101,10 +101,17 @@ public:
 	void step()
 	{
 		bool restoreBreakpoint = removeMatchpoint(Breakpoint::BP_TYPE_SOFTWARE_BREAK, Sh4cntx.pc, 2);
+		bool restoreDelaySlotBreakpoint = false;
+		if (isDelayedBranch(Sh4cntx.pc))
+			restoreDelaySlotBreakpoint = removeMatchpoint(Breakpoint::BP_TYPE_SOFTWARE_BREAK, Sh4cntx.pc + 2, 2);
 		u32 savedPc = Sh4cntx.pc;
+
 		emu.step();
+
 		if (restoreBreakpoint)
 			insertMatchpoint(Breakpoint::BP_TYPE_SOFTWARE_BREAK, savedPc, 2);
+		if (restoreDelaySlotBreakpoint)
+			insertMatchpoint(Breakpoint::BP_TYPE_SOFTWARE_BREAK, savedPc + 2, 2);
 	}
 
 	void stepRange(u32 from, u32 to)
@@ -340,6 +347,52 @@ public:
 
 	std::map<u32, Breakpoint> breakpoints[Breakpoint::Type::BP_TYPE_COUNT];
 	std::vector<std::pair<u32, u32>> stack;
+
+private:
+	bool isDelayedBranch(u32 pc)
+	{
+		u16 instruction = ReadMem16_nommu(pc);
+		u16 opcode;
+
+		opcode = instruction & 0xf0ff;
+		switch (opcode)
+		{
+		case 0x0023: // braf <REG_N>
+		case 0x0003: // bsrf <REG_N>
+			return true;
+		}
+
+		if (instruction == 0x002b) // rte
+			return true;
+		if (instruction == 0x000b) // rts
+			return true;
+
+		opcode = instruction & 0xff00;
+		switch (opcode)
+		{
+		case 0x8f00: // bf.s <bdisp8>
+		case 0x8d00: // bt.s <bdisp8>
+			return true;
+		}
+
+		opcode = instruction & 0xf000;
+		switch (opcode)
+		{
+		case 0xa000: // bra <bdisp12>
+		case 0xb000: // bsr <bdisp12>
+			return true;
+		}
+
+		opcode = instruction & 0xf0ff;
+		switch (opcode)
+		{
+		case 0x402b: // jmp @<REG_N>
+		case 0x400b: // jsr @<REG_N>
+			return true;
+		}
+
+		return false;
+	}
 };
 
 extern DebugAgent debugAgent;
