@@ -44,6 +44,7 @@ static void disas_emit(char ch) {
 	sh4DisasmLine[len] = ch;
 }
 
+// TODO: Extract into smaller functions
 void gui_debugger_disasm()
 {
 	u32 pc = *GetRegPtr(reg_nextpc);

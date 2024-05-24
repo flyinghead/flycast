@@ -465,7 +465,6 @@ static void gui_debugger_sh4()
 	ImGui::End();
 }
 
-// TODO: Move to a separate file
 void gui_debugger()
 {
 	if (config::ThreadedRendering) {
