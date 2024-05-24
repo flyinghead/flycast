@@ -48,7 +48,7 @@ Get fresh builds for your system [**on the builds page**](https://flyinghead.git
 
 ### Build instructions:
 ```
-$ git clone --recursive https://github.com/flyinghead/flycast.git`
+$ git clone --recursive https://github.com/flyinghead/flycast.git
 $ cd flycast
 $ mkdir build && cd build
 $ cmake ..
