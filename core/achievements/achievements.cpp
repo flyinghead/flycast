@@ -32,12 +32,13 @@
 #include <cassert>
 #include <rc_client.h>
 #include <rc_hash.h>
-#include <future>
 #include <unordered_map>
 #include <sstream>
 #include <atomic>
 #include <utility>
 #include <xxhash.h>
+#include <thread>
+#include <functional>
 
 namespace achievements
 {
@@ -72,6 +73,8 @@ private:
 	std::string getOrDownloadImage(const char *url);
 	std::pair<std::string, bool> getCachedImage(const char *url);
 	void diskChange();
+	void asyncTask(std::function<void()> f);
+	void backgroundThread();
 
 	static void clientLoginWithTokenCallback(int result, const char *error_message, rc_client_t *client, void *userdata);
 	static void clientLoginWithPasswordCallback(int result, const char *error_message, rc_client_t *client, void *userdata);
@@ -103,12 +106,14 @@ private:
 	bool active = false;
 	bool paused = false;
 	std::string lastError;
-	std::future<void> asyncServerCall;
-	cResetEvent resetEvent;
 	std::string cachePath;
 	std::unordered_map<u64, std::string> cacheMap;
 	std::mutex cacheMutex;
-	std::future<void> asyncImageDownload;
+	std::vector<std::function<void()>> tasks;
+	std::mutex taskMutex;
+	std::thread taskThread;
+	cResetEvent resetEvent;
+	bool threadRunning = false;
 };
 
 bool init() {
@@ -176,6 +181,32 @@ Achievements::~Achievements()
 	term();
 }
 
+void Achievements::asyncTask(std::function<void()> f)
+{
+	{
+		std::lock_guard<std::mutex> _(taskMutex);
+		tasks.emplace_back(f);
+	}
+	resetEvent.Set();
+}
+
+void Achievements::backgroundThread()
+{
+	ThreadName _("RA-background");
+	while (threadRunning)
+	{
+		if (!resetEvent.Wait(1000) && active && paused)
+			rc_client_idle(rc_client);
+		std::vector<std::function<void()>> localTasks;
+		{
+			std::lock_guard<std::mutex> _(taskMutex);
+			std::swap(tasks, localTasks);
+		}
+		for (auto& f : localTasks)
+			f();
+	}
+}
+
 bool Achievements::init()
 {
 	if (rc_client != nullptr)
@@ -191,6 +222,8 @@ bool Achievements::init()
 	//rc_client_set_unofficial_enabled(rc_client, 0);
 	//rc_client_set_spectator_mode_enabled(rc_client, 0);
 	loadCache();
+	threadRunning = true;
+	taskThread = std::thread(&Achievements::backgroundThread, this);
 
 	if (!config::AchievementsUserName.get().empty() && !config::AchievementsToken.get().empty())
 	{
@@ -304,8 +337,10 @@ void Achievements::term()
 	if (rc_client == nullptr)
 		return;
 	unloadGame();
-	if (asyncImageDownload.valid())
-		asyncImageDownload.get();
+	threadRunning = false;
+	resetEvent.Set();
+	if (taskThread.joinable())
+		taskThread.join();
 	rc_client_destroy(rc_client);
 	rc_client = nullptr;
 }
@@ -313,14 +348,16 @@ void Achievements::term()
 void Achievements::authenticationSuccess(const rc_client_user_t *user)
 {
 	NOTICE_LOG(COMMON, "RA Login successful: token %s", config::AchievementsToken.get().c_str());
-	char url[512];
-	int rc = rc_client_user_get_image_url(user, url, sizeof(url));
-	if (rc == RC_OK)
-	{
-		std::string image = getOrDownloadImage(url);
-		std::string text = "User " + config::AchievementsUserName.get() + " authenticated";
-		notifier.notify(Notification::Login, image, text);
-	}
+	asyncTask([this, user]() {
+		char url[512];
+		int rc = rc_client_user_get_image_url(user, url, sizeof(url));
+		if (rc == RC_OK)
+		{
+			std::string image = getOrDownloadImage(url);
+			std::string text = "User " + config::AchievementsUserName.get() + " authenticated";
+			notifier.notify(Notification::Login, image, text);
+		}
+	});
 	loggedOn = true;
 	if (!settings.content.fileName.empty()) // TODO better test?
 		loadGame();
@@ -432,33 +469,19 @@ void Achievements::clientServerCall(const rc_api_request_t *request, rc_client_s
 	std::string contentType;
 	if (request->content_type != nullptr)
 		contentType = request->content_type;
-	const auto& callServer = [url, contentType, payload, callback, callback_data]()
-		{
-			ThreadName _("Flycast-RA");
-			int rc;
-			std::vector<u8> reply;
-			if (!payload.empty())
-				rc = http::post(url, payload.c_str(), contentType.empty() ? nullptr : contentType.c_str(), reply);
-			else
-				rc = http::get(url, reply);
-			rc_api_server_response_t rr;
-			rr.http_status_code = rc;	// TODO RC_API_SERVER_RESPONSE_RETRYABLE_CLIENT_ERROR if connection fails?
-			rr.body_length = reply.size();
-			rr.body = (const char *)reply.data();
-			callback(&rr, callback_data);
-		};
-	if (achievements->asyncServerCall.valid())
-	{
-		if (achievements->asyncServerCall.wait_for(std::chrono::seconds::zero()) == std::future_status::timeout)
-		{
-			INFO_LOG(COMMON, "Async server call already in progress");
-			// process synchronously
-			callServer();
-			return;
-		}
-		achievements->asyncServerCall.get();
-	}
-	achievements->asyncServerCall = std::async(std::launch::async, callServer);
+	achievements->asyncTask([url, contentType, payload, callback, callback_data]() {
+		int rc;
+		std::vector<u8> reply;
+		if (!payload.empty())
+			rc = http::post(url, payload.c_str(), contentType.empty() ? nullptr : contentType.c_str(), reply);
+		else
+			rc = http::get(url, reply);
+		rc_api_server_response_t rr;
+		rr.http_status_code = rc;	// TODO RC_API_SERVER_RESPONSE_RETRYABLE_CLIENT_ERROR if connection fails?
+		rr.body_length = reply.size();
+		rr.body = (const char *)reply.data();
+		callback(&rr, callback_data);
+	});
 }
 
 static void handleServerError(const rc_client_server_error_t* error)
@@ -559,39 +582,46 @@ void Achievements::handleUnlockEvent(const rc_client_event_t *event)
 	assert(cheevo != nullptr);
 
 	INFO_LOG(COMMON, "RA: Achievement %s (%u) for game %s unlocked", cheevo->title, cheevo->id, settings.content.title.c_str());
-
-	char url[512];
-	int rc = rc_client_achievement_get_image_url(cheevo, cheevo->state, url, sizeof(url));
-	if (rc == RC_OK)
-	{
-		std::string image = getOrDownloadImage(url);
-		std::string text = "Achievement " + std::string(cheevo->title) + " unlocked!";
-		notifier.notify(Notification::Login, image, text, cheevo->description);
-	}
+	asyncTask([this, cheevo]() {
+		char url[512];
+		int rc = rc_client_achievement_get_image_url(cheevo, cheevo->state, url, sizeof(url));
+		if (rc == RC_OK)
+		{
+			std::string image = getOrDownloadImage(url);
+			std::string text = "Achievement " + std::string(cheevo->title) + " unlocked!";
+			notifier.notify(Notification::Login, image, text, cheevo->description);
+		}
+	});
 }
 
 void Achievements::handleAchievementChallengeIndicatorShowEvent(const rc_client_event_t *event)
 {
-	INFO_LOG(COMMON, "RA: Challenge: %s", event->achievement->title);
-	char url[128];
-	int rc = rc_client_achievement_get_image_url(event->achievement, RC_CLIENT_ACHIEVEMENT_STATE_UNLOCKED, url, sizeof(url));
-	if (rc == RC_OK)
-	{
-		std::string image = getOrDownloadImage(url);
-		notifier.showChallenge(image);
-	}
+	const rc_client_achievement_t* cheevo = event->achievement;
+	INFO_LOG(COMMON, "RA: Challenge: %s", cheevo->title);
+	asyncTask([this, cheevo]() {
+		char url[128];
+		int rc = rc_client_achievement_get_image_url(cheevo, RC_CLIENT_ACHIEVEMENT_STATE_UNLOCKED, url, sizeof(url));
+		if (rc == RC_OK)
+		{
+			std::string image = getOrDownloadImage(url);
+			notifier.showChallenge(image);
+		}
+	});
 }
 
 void Achievements::handleAchievementChallengeIndicatorHideEvent(const rc_client_event_t *event)
 {
-	INFO_LOG(COMMON, "RA: Challenge hidden: %s", event->achievement->title);
-	char url[128];
-	int rc = rc_client_achievement_get_image_url(event->achievement, RC_CLIENT_ACHIEVEMENT_STATE_UNLOCKED, url, sizeof(url));
-	if (rc == RC_OK)
-	{
-		std::string image = getOrDownloadImage(url);
-		notifier.hideChallenge(image);
-	}
+	const rc_client_achievement_t* cheevo = event->achievement;
+	INFO_LOG(COMMON, "RA: Challenge hidden: %s", cheevo->title);
+	asyncTask([this, cheevo]() {
+		char url[128];
+		int rc = rc_client_achievement_get_image_url(cheevo, RC_CLIENT_ACHIEVEMENT_STATE_UNLOCKED, url, sizeof(url));
+		if (rc == RC_OK)
+		{
+			std::string image = getOrDownloadImage(url);
+			notifier.hideChallenge(image);
+		}
+	});
 }
 
 void Achievements::handleLeaderboardStarted(const rc_client_event_t *event)
@@ -637,17 +667,19 @@ void Achievements::handleUpdateLeaderboardTracker(const rc_client_event_t *event
 void Achievements::handleGameCompleted(const rc_client_event_t *event)
 {
 	const rc_client_game_t* game = rc_client_get_game_info(rc_client);
-	std::string image;
-	char url[128];
-	if (rc_client_game_get_image_url(game, url, sizeof(url)) == RC_OK)
-		image = getOrDownloadImage(url);
-	std::string text1 = (rc_client_get_hardcore_enabled(rc_client) ? "Mastered " : "Completed ") + std::string(game->title);
-	rc_client_user_game_summary_t summary;
-	rc_client_get_user_game_summary(rc_client, &summary);
-	std::stringstream ss;
-	ss << summary.num_unlocked_achievements << " achievements, " << summary.points_unlocked << " points";
-	std::string text3 = rc_client_get_user_info(rc_client)->display_name;
-	notifier.notify(Notification::Mastery, image, text1, ss.str(), text3);
+	asyncTask([this, game]() {
+		std::string image;
+		char url[128];
+		if (rc_client_game_get_image_url(game, url, sizeof(url)) == RC_OK)
+			image = getOrDownloadImage(url);
+		std::string text1 = (rc_client_get_hardcore_enabled(rc_client) ? "Mastered " : "Completed ") + std::string(game->title);
+		rc_client_user_game_summary_t summary;
+		rc_client_get_user_game_summary(rc_client, &summary);
+		std::stringstream ss;
+		ss << summary.num_unlocked_achievements << " achievements, " << summary.points_unlocked << " points";
+		std::string text3 = rc_client_get_user_info(rc_client)->display_name;
+		notifier.notify(Notification::Mastery, image, text1, ss.str(), text3);
+	});
 }
 
 void Achievements::handleShowAchievementProgress(const rc_client_event_t *event)
@@ -660,11 +692,14 @@ void Achievements::handleHideAchievementProgress(const rc_client_event_t *event)
 }
 void Achievements::handleUpdateAchievementProgress(const rc_client_event_t *event)
 {
-	char url[128];
-	std::string image;
-	if (rc_client_achievement_get_image_url(event->achievement, RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE, url, sizeof(url)) == RC_OK)
-		image = getOrDownloadImage(url);
-	notifier.notify(Notification::Progress, image, event->achievement->measured_progress);
+	const rc_client_achievement_t* cheevo = event->achievement;
+	asyncTask([this, cheevo]() {
+		char url[128];
+		std::string image;
+		if (rc_client_achievement_get_image_url(cheevo, RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE, url, sizeof(url)) == RC_OK)
+			image = getOrDownloadImage(url);
+		notifier.notify(Notification::Progress, image, cheevo->measured_progress);
+	});
 }
 
 static Disc *hashDisk;
@@ -753,31 +788,13 @@ std::string Achievements::getGameHash()
 	return hash;
 }
 
-void Achievements::pauseGame()
-{
+void Achievements::pauseGame() {
 	paused = true;
-	if (active)
-	{
-		resetEvent.Reset();
-		if (asyncServerCall.valid())
-			asyncServerCall.get();
-		asyncServerCall = std::async(std::launch::async, [this]() {
-			while (paused)
-			{
-				resetEvent.Wait(1000);
-				if (paused)
-					rc_client_idle(rc_client);
-			}
-		});
-	}
 }
 
 void Achievements::resumeGame()
 {
 	paused = false;
-	resetEvent.Set();
-	if (asyncServerCall.valid())
-		asyncServerCall.get();
 	if (config::EnableAchievements)
 	{
 		loadGame();
@@ -884,20 +901,22 @@ void Achievements::gameLoaded(int result, const char *errorMessage)
 		settings.raHardcoreMode = false;
 	else
 		settings.raHardcoreMode = (bool)rc_client_get_hardcore_enabled(rc_client);
-	std::string image;
-	char url[512];
-	if (rc_client_game_get_image_url(info, url, sizeof(url)) == RC_OK)
-		image = getOrDownloadImage(url);
-	rc_client_user_game_summary_t summary;
-	rc_client_get_user_game_summary(rc_client, &summary);
-	std::string text;
-	if (summary.num_core_achievements > 0)
-		text = "You have " + std::to_string(summary.num_unlocked_achievements)
-				+ " of " + std::to_string(summary.num_core_achievements) + " achievements unlocked.";
-	else
-		text = "This game has no achievements.";
-	std::string text2 = settings.raHardcoreMode ? "Hardcore Mode" : "";
-	notifier.notify(Notification::Login, image, info->title, text, text2);
+	asyncTask([this, info]() {
+		std::string image;
+		char url[512];
+		if (rc_client_game_get_image_url(info, url, sizeof(url)) == RC_OK)
+			image = getOrDownloadImage(url);
+		rc_client_user_game_summary_t summary;
+		rc_client_get_user_game_summary(rc_client, &summary);
+		std::string text;
+		if (summary.num_core_achievements > 0)
+			text = "You have " + std::to_string(summary.num_unlocked_achievements)
+					+ " of " + std::to_string(summary.num_core_achievements) + " achievements unlocked.";
+		else
+			text = "This game has no achievements.";
+		std::string text2 = settings.raHardcoreMode ? "Hardcore Mode" : "";
+		notifier.notify(Notification::Login, image, info->title, text, text2);
+	});
 }
 
 void Achievements::unloadGame()
@@ -906,9 +925,6 @@ void Achievements::unloadGame()
 		return;
 	active = false;
 	paused = false;
-	resetEvent.Set();
-	if (asyncServerCall.valid())
-		asyncServerCall.get();
 	EventManager::unlisten(Event::VBlank, emuEventCallback, this);
 	rc_client_unload_game(rc_client);
 	settings.raHardcoreMode = false;
@@ -951,22 +967,9 @@ Game Achievements::getCurrentGame()
 	{
 		bool cached;
 		std::tie(image, cached) = getCachedImage(url);
-		if (!cached)
-		{
-			if (asyncImageDownload.valid())
-			{
-				if (asyncImageDownload.wait_for(std::chrono::seconds::zero()) == std::future_status::timeout)
-					INFO_LOG(COMMON, "Async image download already in progress");
-				else
-					asyncImageDownload.get();
-			}
-			if (!asyncImageDownload.valid())
-			{
-				std::string surl = url;
-				asyncImageDownload = std::async(std::launch::async, [this, surl]() {
-					getOrDownloadImage(surl.c_str());
-				});
-			}
+		if (!cached) {
+			std::string surl = url;
+			asyncTask([this, surl]() { getOrDownloadImage(surl.c_str()); });
 		}
 	}
 	rc_client_user_game_summary_t summary;
@@ -1005,22 +1008,10 @@ std::vector<Achievement> Achievements::getAchievementList()
 	}
 	rc_client_destroy_achievement_list(list);
 	if (!uncachedImages.empty())
-	{
-		if (asyncImageDownload.valid())
-		{
-			if (asyncImageDownload.wait_for(std::chrono::seconds::zero()) == std::future_status::timeout)
-				INFO_LOG(COMMON, "Async image download already in progress");
-			else
-				asyncImageDownload.get();
-		}
-		if (!asyncImageDownload.valid())
-		{
-			asyncImageDownload = std::async(std::launch::async, [this, uncachedImages]() {
-				for (const std::string& url : uncachedImages)
-					getOrDownloadImage(url.c_str());
-			});
-		}
-	}
+		asyncTask([this, uncachedImages]() {
+			for (const std::string& url : uncachedImages)
+				getOrDownloadImage(url.c_str());
+		});
 
 	return achievements;
 }
