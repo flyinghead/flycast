@@ -824,7 +824,7 @@ struct retro_core_option_v2_definition option_defs_ar[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
    {
       CORE_OPTION_NAME "_detect_vsync_swap_interval",
@@ -2188,7 +2188,7 @@ struct retro_core_options_v2 options_ar = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_AST NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_AST NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_AST NULL
-#define OPTION_VAL_2_O26_AST NULL
+#define OPTION_VAL_2_O26_AST "x2"
 #define OPTION_VAL_4_AST "x4"
 #define OPTION_VAL_6_AST "x6"
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_AST NULL
@@ -2836,7 +2836,7 @@ struct retro_core_option_v2_definition option_defs_ast[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
    {
       CORE_OPTION_NAME "_detect_vsync_swap_interval",
@@ -4085,7 +4085,7 @@ struct retro_core_options_v2 options_ast = {
 #define CATEGORY_SYSTEM_INFO_0_BE NULL
 #define CATEGORY_VIDEO_LABEL_BE "Відэа"
 #define CATEGORY_VIDEO_INFO_0_BE NULL
-#define CATEGORY_PERFORMANCE_LABEL_BE NULL
+#define CATEGORY_PERFORMANCE_LABEL_BE "Прадукцыйнасць"
 #define CATEGORY_PERFORMANCE_INFO_0_BE NULL
 #define CATEGORY_HACKS_LABEL_BE NULL
 #define CATEGORY_HACKS_INFO_0_BE NULL
@@ -4096,23 +4096,23 @@ struct retro_core_options_v2 options_ast = {
 #define CATEGORY_VMU_LABEL_BE NULL
 #define CATEGORY_VMU_INFO_0_BE NULL
 #define CORE_OPTION_NAME_REGION_LABEL_BE "Рэгіён"
-#define OPTION_VAL_JAPAN_BE NULL
-#define OPTION_VAL_USA_BE NULL
-#define OPTION_VAL_EUROPE_BE NULL
+#define OPTION_VAL_JAPAN_BE "Японія"
+#define OPTION_VAL_USA_BE "ЗША"
+#define OPTION_VAL_EUROPE_BE "Еўропа"
 #define OPTION_VAL_DEFAULT_BE NULL
 #define CORE_OPTION_NAME_LANGUAGE_LABEL_BE "Мова"
 #define CORE_OPTION_NAME_LANGUAGE_INFO_0_BE NULL
-#define OPTION_VAL_JAPANESE_BE NULL
-#define OPTION_VAL_ENGLISH_BE NULL
-#define OPTION_VAL_GERMAN_BE NULL
-#define OPTION_VAL_FRENCH_BE NULL
-#define OPTION_VAL_SPANISH_BE NULL
-#define OPTION_VAL_ITALIAN_BE NULL
+#define OPTION_VAL_JAPANESE_BE "Японская"
+#define OPTION_VAL_ENGLISH_BE "Англійская"
+#define OPTION_VAL_GERMAN_BE "Нямецкая"
+#define OPTION_VAL_FRENCH_BE "Французская"
+#define OPTION_VAL_SPANISH_BE "Іспанская"
+#define OPTION_VAL_ITALIAN_BE "Італьянская"
 #define CORE_OPTION_NAME_HLE_BIOS_LABEL_BE NULL
 #define CORE_OPTION_NAME_HLE_BIOS_INFO_0_BE NULL
 #define CORE_OPTION_NAME_BOOT_TO_BIOS_LABEL_BE NULL
 #define CORE_OPTION_NAME_BOOT_TO_BIOS_INFO_0_BE NULL
-#define CORE_OPTION_NAME_ENABLE_DSP_LABEL_BE NULL
+#define CORE_OPTION_NAME_ENABLE_DSP_LABEL_BE "Уключыць DSP"
 #define CORE_OPTION_NAME_ENABLE_DSP_INFO_0_BE NULL
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_BE NULL
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_BE NULL
@@ -4120,10 +4120,10 @@ struct retro_core_options_v2 options_ast = {
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_BE NULL
 #define CORE_OPTION_NAME_EMULATE_BBA_LABEL_BE NULL
 #define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_BE NULL
-#define CORE_OPTION_NAME_UPNP_LABEL_BE NULL
+#define CORE_OPTION_NAME_UPNP_LABEL_BE "Уключыць UPnP"
 #define CORE_OPTION_NAME_UPNP_INFO_0_BE NULL
-#define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_BE NULL
-#define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_BE NULL
+#define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_BE "Унутраная раздзяляльнасць"
+#define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_BE "Змяніць раздзяляльнасць рэндэрынгу."
 #define OPTION_VAL_320X240_BE "320x240 (напалову)"
 #define OPTION_VAL_640X480_BE "640x480 (родная)"
 #define OPTION_VAL_800X600_BE NULL
@@ -4154,16 +4154,16 @@ struct retro_core_options_v2 options_ast = {
 #define CORE_OPTION_NAME_CABLE_TYPE_LABEL_BE NULL
 #define CORE_OPTION_NAME_CABLE_TYPE_INFO_0_BE NULL
 #define OPTION_VAL_VGA_BE NULL
-#define OPTION_VAL_TV_RGB_BE NULL
+#define OPTION_VAL_TV_RGB_BE "ТБ (RGB)"
 #define OPTION_VAL_TV_COMPOSITE_BE NULL
 #define CORE_OPTION_NAME_BROADCAST_LABEL_BE NULL
 #define OPTION_VAL_NTSC_BE NULL
-#define OPTION_VAL_PAL_BE NULL
-#define OPTION_VAL_PAL_N_BE NULL
-#define OPTION_VAL_PAL_M_BE NULL
+#define OPTION_VAL_PAL_BE "PAL (свет)"
+#define OPTION_VAL_PAL_N_BE "PAL-N (Аргенціна, Парагвай, Уругвай)"
+#define OPTION_VAL_PAL_M_BE "PAL-M (Бразілія)"
 #define CORE_OPTION_NAME_SCREEN_ROTATION_LABEL_BE "Арыентацыя экрана"
-#define OPTION_VAL_HORIZONTAL_BE NULL
-#define OPTION_VAL_VERTICAL_BE NULL
+#define OPTION_VAL_HORIZONTAL_BE "Гарызантальная"
+#define OPTION_VAL_VERTICAL_BE "Вертыкальная"
 #define CORE_OPTION_NAME_ALPHA_SORTING_LABEL_BE NULL
 #define CORE_OPTION_NAME_ALPHA_SORTING_INFO_0_BE NULL
 #define OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_BE NULL
@@ -4171,10 +4171,10 @@ struct retro_core_options_v2 options_ast = {
 #define OPTION_VAL_PER_PIXEL_ACCURATE_BE NULL
 #define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_BE NULL
 #define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_INFO_0_BE NULL
-#define OPTION_VAL_512MB_BE NULL
-#define OPTION_VAL_1GB_BE NULL
-#define OPTION_VAL_2GB_BE NULL
-#define OPTION_VAL_4GB_BE NULL
+#define OPTION_VAL_512MB_BE "512 МБ"
+#define OPTION_VAL_1GB_BE "1 ГБ"
+#define OPTION_VAL_2GB_BE "2 ГБ"
+#define OPTION_VAL_4GB_BE "4 ГБ"
 #define CORE_OPTION_NAME_OIT_LAYERS_LABEL_BE NULL
 #define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_BE NULL
 #define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_BE NULL
@@ -4227,60 +4227,60 @@ struct retro_core_options_v2 options_ast = {
 #define CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_BE NULL
 #define CORE_OPTION_NAME_SH4CLOCK_LABEL_BE NULL
 #define CORE_OPTION_NAME_SH4CLOCK_INFO_0_BE NULL
-#define OPTION_VAL_100_BE NULL
-#define OPTION_VAL_110_BE NULL
-#define OPTION_VAL_120_BE NULL
-#define OPTION_VAL_130_BE NULL
-#define OPTION_VAL_140_BE NULL
-#define OPTION_VAL_150_BE NULL
-#define OPTION_VAL_160_BE NULL
-#define OPTION_VAL_170_BE NULL
-#define OPTION_VAL_180_BE NULL
-#define OPTION_VAL_190_BE NULL
-#define OPTION_VAL_200_BE NULL
-#define OPTION_VAL_210_BE NULL
-#define OPTION_VAL_220_BE NULL
-#define OPTION_VAL_230_BE NULL
-#define OPTION_VAL_240_BE NULL
-#define OPTION_VAL_250_BE NULL
-#define OPTION_VAL_260_BE NULL
-#define OPTION_VAL_270_BE NULL
-#define OPTION_VAL_280_BE NULL
-#define OPTION_VAL_290_BE NULL
-#define OPTION_VAL_300_BE NULL
-#define OPTION_VAL_310_BE NULL
-#define OPTION_VAL_320_BE NULL
-#define OPTION_VAL_330_BE NULL
-#define OPTION_VAL_340_BE NULL
-#define OPTION_VAL_350_BE NULL
-#define OPTION_VAL_360_BE NULL
-#define OPTION_VAL_370_BE NULL
-#define OPTION_VAL_380_BE NULL
-#define OPTION_VAL_390_BE NULL
-#define OPTION_VAL_400_BE NULL
-#define OPTION_VAL_410_BE NULL
-#define OPTION_VAL_420_BE NULL
-#define OPTION_VAL_430_BE NULL
-#define OPTION_VAL_440_BE NULL
-#define OPTION_VAL_450_BE NULL
-#define OPTION_VAL_460_BE NULL
-#define OPTION_VAL_470_BE NULL
-#define OPTION_VAL_480_BE NULL
-#define OPTION_VAL_490_BE NULL
-#define OPTION_VAL_500_BE NULL
+#define OPTION_VAL_100_BE "100 МГц"
+#define OPTION_VAL_110_BE "110 МГц"
+#define OPTION_VAL_120_BE "120 МГц"
+#define OPTION_VAL_130_BE "130 МГц"
+#define OPTION_VAL_140_BE "140 МГц"
+#define OPTION_VAL_150_BE "150 МГц"
+#define OPTION_VAL_160_BE "160 МГц"
+#define OPTION_VAL_170_BE "170 МГц"
+#define OPTION_VAL_180_BE "180 МГц"
+#define OPTION_VAL_190_BE "190 МГц"
+#define OPTION_VAL_200_BE "200 МГц"
+#define OPTION_VAL_210_BE "210 МГц"
+#define OPTION_VAL_220_BE "220 МГц"
+#define OPTION_VAL_230_BE "230 МГц"
+#define OPTION_VAL_240_BE "240 МГц"
+#define OPTION_VAL_250_BE "250 МГц"
+#define OPTION_VAL_260_BE "260 МГц"
+#define OPTION_VAL_270_BE "270 МГц"
+#define OPTION_VAL_280_BE "280 МГц"
+#define OPTION_VAL_290_BE "290 МГц"
+#define OPTION_VAL_300_BE "300 МГц"
+#define OPTION_VAL_310_BE "310 МГц"
+#define OPTION_VAL_320_BE "320 МГц"
+#define OPTION_VAL_330_BE "330 МГц"
+#define OPTION_VAL_340_BE "340 МГц"
+#define OPTION_VAL_350_BE "350 МГц"
+#define OPTION_VAL_360_BE "360 МГц"
+#define OPTION_VAL_370_BE "370 МГц"
+#define OPTION_VAL_380_BE "380 МГц"
+#define OPTION_VAL_390_BE "390 МГц"
+#define OPTION_VAL_400_BE "400 МГц"
+#define OPTION_VAL_410_BE "410 МГц"
+#define OPTION_VAL_420_BE "420 МГц"
+#define OPTION_VAL_430_BE "430 МГц"
+#define OPTION_VAL_440_BE "440 МГц"
+#define OPTION_VAL_450_BE "450 МГц"
+#define OPTION_VAL_460_BE "460 МГц"
+#define OPTION_VAL_470_BE "470 МГц"
+#define OPTION_VAL_480_BE "480 МГц"
+#define OPTION_VAL_490_BE "490 МГц"
+#define OPTION_VAL_500_BE "500 МГц"
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_BE NULL
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_INFO_0_BE NULL
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_BE NULL
 #define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_BE NULL
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_BE NULL
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_INFO_0_BE NULL
-#define OPTION_VAL_0_BE NULL
-#define OPTION_VAL_5_BE NULL
-#define OPTION_VAL_10_BE NULL
-#define OPTION_VAL_15_BE NULL
-#define OPTION_VAL_20_BE NULL
-#define OPTION_VAL_25_BE NULL
-#define OPTION_VAL_30_BE NULL
+#define OPTION_VAL_0_BE "0 %"
+#define OPTION_VAL_5_BE "5 %"
+#define OPTION_VAL_10_BE "10 %"
+#define OPTION_VAL_15_BE "15 %"
+#define OPTION_VAL_20_BE "20 %"
+#define OPTION_VAL_25_BE "25 %"
+#define OPTION_VAL_30_BE "30 %"
 #define CORE_OPTION_NAME_TRIGGER_DEADZONE_LABEL_BE NULL
 #define CORE_OPTION_NAME_TRIGGER_DEADZONE_INFO_0_BE NULL
 #define CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_BE NULL
@@ -4290,32 +4290,32 @@ struct retro_core_options_v2 options_ast = {
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_BE NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_BE NULL
 #define CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_BE "Маштабаванне прыцэлу пісталета"
-#define OPTION_VAL_50_BE NULL
-#define OPTION_VAL_60_BE NULL
-#define OPTION_VAL_70_BE NULL
-#define OPTION_VAL_80_BE NULL
-#define OPTION_VAL_90_BE NULL
-#define OPTION_VAL_100_O45_BE NULL
-#define OPTION_VAL_110_O45_BE NULL
-#define OPTION_VAL_120_O45_BE NULL
-#define OPTION_VAL_130_O45_BE NULL
-#define OPTION_VAL_140_O45_BE NULL
-#define OPTION_VAL_150_O45_BE NULL
-#define OPTION_VAL_160_O45_BE NULL
-#define OPTION_VAL_170_O45_BE NULL
-#define OPTION_VAL_180_O45_BE NULL
-#define OPTION_VAL_190_O45_BE NULL
-#define OPTION_VAL_200_O45_BE NULL
-#define OPTION_VAL_210_O45_BE NULL
-#define OPTION_VAL_220_O45_BE NULL
-#define OPTION_VAL_230_O45_BE NULL
-#define OPTION_VAL_240_O45_BE NULL
-#define OPTION_VAL_250_O45_BE NULL
-#define OPTION_VAL_260_O45_BE NULL
-#define OPTION_VAL_270_O45_BE NULL
-#define OPTION_VAL_280_O45_BE NULL
-#define OPTION_VAL_290_O45_BE NULL
-#define OPTION_VAL_300_O45_BE NULL
+#define OPTION_VAL_50_BE "50 %"
+#define OPTION_VAL_60_BE "60 %"
+#define OPTION_VAL_70_BE "70 %"
+#define OPTION_VAL_80_BE "80 %"
+#define OPTION_VAL_90_BE "90 %"
+#define OPTION_VAL_100_O45_BE "100 %"
+#define OPTION_VAL_110_O45_BE "110 %"
+#define OPTION_VAL_120_O45_BE "120 %"
+#define OPTION_VAL_130_O45_BE "130 %"
+#define OPTION_VAL_140_O45_BE "140 %"
+#define OPTION_VAL_150_O45_BE "150 %"
+#define OPTION_VAL_160_O45_BE "160 %"
+#define OPTION_VAL_170_O45_BE "170 %"
+#define OPTION_VAL_180_O45_BE "180 %"
+#define OPTION_VAL_190_O45_BE "190 %"
+#define OPTION_VAL_200_O45_BE "200 %"
+#define OPTION_VAL_210_O45_BE "210 %"
+#define OPTION_VAL_220_O45_BE "220 %"
+#define OPTION_VAL_230_O45_BE "230 %"
+#define OPTION_VAL_240_O45_BE "240 %"
+#define OPTION_VAL_250_O45_BE "250 %"
+#define OPTION_VAL_260_O45_BE "260 %"
+#define OPTION_VAL_270_O45_BE "270 %"
+#define OPTION_VAL_280_O45_BE "280 %"
+#define OPTION_VAL_290_O45_BE "290 %"
+#define OPTION_VAL_300_O45_BE "300 %"
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_BE NULL
 #define OPTION_VAL_WHITE_BE NULL
 #define OPTION_VAL_RED_BE "Чырвоная"
@@ -4392,7 +4392,7 @@ struct retro_core_options_v2 options_ast = {
 #define OPTION_VAL_LIGHT_YELLOW_2_27_BE NULL
 #define CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_BE NULL
 #define CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_BE NULL
-#define OPTION_VAL_40_BE NULL
+#define OPTION_VAL_40_BE "40 %"
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_BE NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_BE NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_BE NULL
@@ -4848,7 +4848,7 @@ struct retro_core_option_v2_definition option_defs_be[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
    {
       CORE_OPTION_NAME "_detect_vsync_swap_interval",
@@ -6860,7 +6860,7 @@ struct retro_core_option_v2_definition option_defs_bg[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
    {
       CORE_OPTION_NAME "_detect_vsync_swap_interval",
@@ -8872,7 +8872,7 @@ struct retro_core_option_v2_definition option_defs_ca[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
    {
       CORE_OPTION_NAME "_detect_vsync_swap_interval",
@@ -10236,7 +10236,7 @@ struct retro_core_options_v2 options_ca = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_CHS NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_CHS NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_CHS NULL
-#define OPTION_VAL_2_O26_CHS NULL
+#define OPTION_VAL_2_O26_CHS "2 倍"
 #define OPTION_VAL_4_CHS "4 倍"
 #define OPTION_VAL_6_CHS NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_CHS NULL
@@ -10884,7 +10884,7 @@ struct retro_core_option_v2_definition option_defs_chs[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
    {
       CORE_OPTION_NAME "_detect_vsync_swap_interval",
@@ -12248,7 +12248,7 @@ struct retro_core_options_v2 options_chs = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_CHT NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_CHT NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_CHT NULL
-#define OPTION_VAL_2_O26_CHT NULL
+#define OPTION_VAL_2_O26_CHT "2倍"
 #define OPTION_VAL_4_CHT "4倍"
 #define OPTION_VAL_6_CHT "6倍"
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_CHT NULL
@@ -12896,7 +12896,7 @@ struct retro_core_option_v2_definition option_defs_cht[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
    {
       CORE_OPTION_NAME "_detect_vsync_swap_interval",
@@ -14908,7 +14908,7 @@ struct retro_core_option_v2_definition option_defs_cs[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
    {
       CORE_OPTION_NAME "_detect_vsync_swap_interval",
@@ -16920,7 +16920,7 @@ struct retro_core_option_v2_definition option_defs_cy[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
    {
       CORE_OPTION_NAME "_detect_vsync_swap_interval",
@@ -18932,7 +18932,7 @@ struct retro_core_option_v2_definition option_defs_da[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
    {
       CORE_OPTION_NAME "_detect_vsync_swap_interval",
@@ -20391,27 +20391,27 @@ struct retro_core_options_v2 options_da = {
 #define OPTION_VAL_70_DE "70 %"
 #define OPTION_VAL_80_DE "80 %"
 #define OPTION_VAL_90_DE "90 %"
-#define OPTION_VAL_100_O45_DE NULL
-#define OPTION_VAL_110_O45_DE NULL
-#define OPTION_VAL_120_O45_DE NULL
-#define OPTION_VAL_130_O45_DE NULL
-#define OPTION_VAL_140_O45_DE NULL
-#define OPTION_VAL_150_O45_DE NULL
-#define OPTION_VAL_160_O45_DE NULL
-#define OPTION_VAL_170_O45_DE NULL
-#define OPTION_VAL_180_O45_DE NULL
-#define OPTION_VAL_190_O45_DE NULL
-#define OPTION_VAL_200_O45_DE NULL
-#define OPTION_VAL_210_O45_DE NULL
-#define OPTION_VAL_220_O45_DE NULL
-#define OPTION_VAL_230_O45_DE NULL
-#define OPTION_VAL_240_O45_DE NULL
-#define OPTION_VAL_250_O45_DE NULL
-#define OPTION_VAL_260_O45_DE NULL
-#define OPTION_VAL_270_O45_DE NULL
-#define OPTION_VAL_280_O45_DE NULL
-#define OPTION_VAL_290_O45_DE NULL
-#define OPTION_VAL_300_O45_DE NULL
+#define OPTION_VAL_100_O45_DE "100 %"
+#define OPTION_VAL_110_O45_DE "110 %"
+#define OPTION_VAL_120_O45_DE "120 %"
+#define OPTION_VAL_130_O45_DE "130 %"
+#define OPTION_VAL_140_O45_DE "140 %"
+#define OPTION_VAL_150_O45_DE "150 %"
+#define OPTION_VAL_160_O45_DE "160 %"
+#define OPTION_VAL_170_O45_DE "170 %"
+#define OPTION_VAL_180_O45_DE "180 %"
+#define OPTION_VAL_190_O45_DE "190 %"
+#define OPTION_VAL_200_O45_DE "200 %"
+#define OPTION_VAL_210_O45_DE "210 %"
+#define OPTION_VAL_220_O45_DE "220 %"
+#define OPTION_VAL_230_O45_DE "230 %"
+#define OPTION_VAL_240_O45_DE "240 %"
+#define OPTION_VAL_250_O45_DE "250 %"
+#define OPTION_VAL_260_O45_DE "260 %"
+#define OPTION_VAL_270_O45_DE "270 %"
+#define OPTION_VAL_280_O45_DE "280 %"
+#define OPTION_VAL_290_O45_DE "290 %"
+#define OPTION_VAL_300_O45_DE "300 %"
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_DE "Anzeige Pistolen-Fadenkreuz 1"
 #define OPTION_VAL_WHITE_DE "Weiß"
 #define OPTION_VAL_RED_DE "Rot"
@@ -20944,7 +20944,7 @@ struct retro_core_option_v2_definition option_defs_de[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
    {
       CORE_OPTION_NAME "_detect_vsync_swap_interval",
@@ -22956,7 +22956,7 @@ struct retro_core_option_v2_definition option_defs_el[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
    {
       CORE_OPTION_NAME "_detect_vsync_swap_interval",
@@ -24968,7 +24968,7 @@ struct retro_core_option_v2_definition option_defs_en[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
    {
       CORE_OPTION_NAME "_detect_vsync_swap_interval",
@@ -26980,7 +26980,7 @@ struct retro_core_option_v2_definition option_defs_eo[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
    {
       CORE_OPTION_NAME "_detect_vsync_swap_interval",
@@ -28439,27 +28439,27 @@ struct retro_core_options_v2 options_eo = {
 #define OPTION_VAL_70_ES "70 %"
 #define OPTION_VAL_80_ES "80 %"
 #define OPTION_VAL_90_ES "90 %"
-#define OPTION_VAL_100_O45_ES NULL
-#define OPTION_VAL_110_O45_ES NULL
-#define OPTION_VAL_120_O45_ES NULL
-#define OPTION_VAL_130_O45_ES NULL
-#define OPTION_VAL_140_O45_ES NULL
-#define OPTION_VAL_150_O45_ES NULL
-#define OPTION_VAL_160_O45_ES NULL
-#define OPTION_VAL_170_O45_ES NULL
-#define OPTION_VAL_180_O45_ES NULL
-#define OPTION_VAL_190_O45_ES NULL
-#define OPTION_VAL_200_O45_ES NULL
-#define OPTION_VAL_210_O45_ES NULL
-#define OPTION_VAL_220_O45_ES NULL
-#define OPTION_VAL_230_O45_ES NULL
-#define OPTION_VAL_240_O45_ES NULL
-#define OPTION_VAL_250_O45_ES NULL
-#define OPTION_VAL_260_O45_ES NULL
-#define OPTION_VAL_270_O45_ES NULL
-#define OPTION_VAL_280_O45_ES NULL
-#define OPTION_VAL_290_O45_ES NULL
-#define OPTION_VAL_300_O45_ES NULL
+#define OPTION_VAL_100_O45_ES "100 %"
+#define OPTION_VAL_110_O45_ES "110 %"
+#define OPTION_VAL_120_O45_ES "120 %"
+#define OPTION_VAL_130_O45_ES "130 %"
+#define OPTION_VAL_140_O45_ES "140 %"
+#define OPTION_VAL_150_O45_ES "150 %"
+#define OPTION_VAL_160_O45_ES "160 %"
+#define OPTION_VAL_170_O45_ES "170 %"
+#define OPTION_VAL_180_O45_ES "180 %"
+#define OPTION_VAL_190_O45_ES "190 %"
+#define OPTION_VAL_200_O45_ES "200 %"
+#define OPTION_VAL_210_O45_ES "210 %"
+#define OPTION_VAL_220_O45_ES "220 %"
+#define OPTION_VAL_230_O45_ES "230 %"
+#define OPTION_VAL_240_O45_ES "240 %"
+#define OPTION_VAL_250_O45_ES "250 %"
+#define OPTION_VAL_260_O45_ES "260 %"
+#define OPTION_VAL_270_O45_ES "270 %"
+#define OPTION_VAL_280_O45_ES "280 %"
+#define OPTION_VAL_290_O45_ES "290 %"
+#define OPTION_VAL_300_O45_ES "300 %"
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_ES "Mostrar punto de mira del arma 1"
 #define OPTION_VAL_WHITE_ES "Blanco"
 #define OPTION_VAL_RED_ES "Rojo"
@@ -28992,7 +28992,7 @@ struct retro_core_option_v2_definition option_defs_es[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
    {
       CORE_OPTION_NAME "_detect_vsync_swap_interval",
@@ -31004,7 +31004,7 @@ struct retro_core_option_v2_definition option_defs_fa[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
    {
       CORE_OPTION_NAME "_detect_vsync_swap_interval",
@@ -32463,27 +32463,27 @@ struct retro_core_options_v2 options_fa = {
 #define OPTION_VAL_70_FI "70 %"
 #define OPTION_VAL_80_FI "80 %"
 #define OPTION_VAL_90_FI "90 %"
-#define OPTION_VAL_100_O45_FI NULL
-#define OPTION_VAL_110_O45_FI NULL
-#define OPTION_VAL_120_O45_FI NULL
-#define OPTION_VAL_130_O45_FI NULL
-#define OPTION_VAL_140_O45_FI NULL
-#define OPTION_VAL_150_O45_FI NULL
-#define OPTION_VAL_160_O45_FI NULL
-#define OPTION_VAL_170_O45_FI NULL
-#define OPTION_VAL_180_O45_FI NULL
-#define OPTION_VAL_190_O45_FI NULL
-#define OPTION_VAL_200_O45_FI NULL
-#define OPTION_VAL_210_O45_FI NULL
-#define OPTION_VAL_220_O45_FI NULL
-#define OPTION_VAL_230_O45_FI NULL
-#define OPTION_VAL_240_O45_FI NULL
-#define OPTION_VAL_250_O45_FI NULL
-#define OPTION_VAL_260_O45_FI NULL
-#define OPTION_VAL_270_O45_FI NULL
-#define OPTION_VAL_280_O45_FI NULL
-#define OPTION_VAL_290_O45_FI NULL
-#define OPTION_VAL_300_O45_FI NULL
+#define OPTION_VAL_100_O45_FI "100 %"
+#define OPTION_VAL_110_O45_FI "110 %"
+#define OPTION_VAL_120_O45_FI "120 %"
+#define OPTION_VAL_130_O45_FI "130 %"
+#define OPTION_VAL_140_O45_FI "140 %"
+#define OPTION_VAL_150_O45_FI "150 %"
+#define OPTION_VAL_160_O45_FI "160 %"
+#define OPTION_VAL_170_O45_FI "170 %"
+#define OPTION_VAL_180_O45_FI "180 %"
+#define OPTION_VAL_190_O45_FI "190 %"
+#define OPTION_VAL_200_O45_FI "200 %"
+#define OPTION_VAL_210_O45_FI "210 %"
+#define OPTION_VAL_220_O45_FI "220 %"
+#define OPTION_VAL_230_O45_FI "230 %"
+#define OPTION_VAL_240_O45_FI "240 %"
+#define OPTION_VAL_250_O45_FI "250 %"
+#define OPTION_VAL_260_O45_FI "260 %"
+#define OPTION_VAL_270_O45_FI "270 %"
+#define OPTION_VAL_280_O45_FI "280 %"
+#define OPTION_VAL_290_O45_FI "290 %"
+#define OPTION_VAL_300_O45_FI "300 %"
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_FI NULL
 #define OPTION_VAL_WHITE_FI "Valkoinen"
 #define OPTION_VAL_RED_FI "Punainen"
@@ -33016,7 +33016,7 @@ struct retro_core_option_v2_definition option_defs_fi[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
    {
       CORE_OPTION_NAME "_detect_vsync_swap_interval",
@@ -34380,7 +34380,7 @@ struct retro_core_options_v2 options_fi = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_FR "Post-traitement de l'image rendue pour simuler les effets spécifiques au processeur graphique PowerVR2 et aux signaux vidéo analogiques."
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_FR "Agrandissement des textures (xBRZ)"
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_FR "Améliorer les graphismes en pixels 2D dessinés à la main. Devrait être utilisé uniquement avec les jeux en 2D pixelisés."
-#define OPTION_VAL_2_O26_FR NULL
+#define OPTION_VAL_2_O26_FR "x2"
 #define OPTION_VAL_4_FR "x4"
 #define OPTION_VAL_6_FR "x6"
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_FR "Facteur maximal du filtre d'agrandissement de textures"
@@ -35028,7 +35028,7 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
    {
       CORE_OPTION_NAME "_detect_vsync_swap_interval",
@@ -37040,7 +37040,7 @@ struct retro_core_option_v2_definition option_defs_gl[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
    {
       CORE_OPTION_NAME "_detect_vsync_swap_interval",
@@ -39052,7 +39052,7 @@ struct retro_core_option_v2_definition option_defs_he[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
    {
       CORE_OPTION_NAME "_detect_vsync_swap_interval",
@@ -41064,7 +41064,7 @@ struct retro_core_option_v2_definition option_defs_hr[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
    {
       CORE_OPTION_NAME "_detect_vsync_swap_interval",
@@ -43076,7 +43076,7 @@ struct retro_core_option_v2_definition option_defs_hu[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
    {
       CORE_OPTION_NAME "_detect_vsync_swap_interval",
@@ -45088,7 +45088,7 @@ struct retro_core_option_v2_definition option_defs_id[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
    {
       CORE_OPTION_NAME "_detect_vsync_swap_interval",
@@ -47100,7 +47100,7 @@ struct retro_core_option_v2_definition option_defs_it[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
    {
       CORE_OPTION_NAME "_detect_vsync_swap_interval",
@@ -49112,7 +49112,7 @@ struct retro_core_option_v2_definition option_defs_ja[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
    {
       CORE_OPTION_NAME "_detect_vsync_swap_interval",
@@ -51124,7 +51124,7 @@ struct retro_core_option_v2_definition option_defs_ko[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
    {
       CORE_OPTION_NAME "_detect_vsync_swap_interval",
@@ -53136,7 +53136,7 @@ struct retro_core_option_v2_definition option_defs_nl[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
    {
       CORE_OPTION_NAME "_detect_vsync_swap_interval",
@@ -55148,7 +55148,7 @@ struct retro_core_option_v2_definition option_defs_no[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
    {
       CORE_OPTION_NAME "_detect_vsync_swap_interval",
@@ -57160,7 +57160,7 @@ struct retro_core_option_v2_definition option_defs_or[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
    {
       CORE_OPTION_NAME "_detect_vsync_swap_interval",
@@ -59172,7 +59172,7 @@ struct retro_core_option_v2_definition option_defs_pl[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
    {
       CORE_OPTION_NAME "_detect_vsync_swap_interval",
@@ -61184,7 +61184,7 @@ struct retro_core_option_v2_definition option_defs_pt_br[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
    {
       CORE_OPTION_NAME "_detect_vsync_swap_interval",
@@ -63196,7 +63196,7 @@ struct retro_core_option_v2_definition option_defs_pt_pt[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
    {
       CORE_OPTION_NAME "_detect_vsync_swap_interval",
@@ -65208,7 +65208,7 @@ struct retro_core_option_v2_definition option_defs_ru[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
    {
       CORE_OPTION_NAME "_detect_vsync_swap_interval",
@@ -67220,7 +67220,7 @@ struct retro_core_option_v2_definition option_defs_sk[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
    {
       CORE_OPTION_NAME "_detect_vsync_swap_interval",
@@ -69232,7 +69232,7 @@ struct retro_core_option_v2_definition option_defs_sr[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
    {
       CORE_OPTION_NAME "_detect_vsync_swap_interval",
@@ -71244,7 +71244,7 @@ struct retro_core_option_v2_definition option_defs_sv[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
    {
       CORE_OPTION_NAME "_detect_vsync_swap_interval",
@@ -72703,27 +72703,27 @@ struct retro_core_options_v2 options_sv = {
 #define OPTION_VAL_70_TR "%70"
 #define OPTION_VAL_80_TR "%80"
 #define OPTION_VAL_90_TR "%90"
-#define OPTION_VAL_100_O45_TR NULL
-#define OPTION_VAL_110_O45_TR NULL
-#define OPTION_VAL_120_O45_TR NULL
-#define OPTION_VAL_130_O45_TR NULL
-#define OPTION_VAL_140_O45_TR NULL
-#define OPTION_VAL_150_O45_TR NULL
-#define OPTION_VAL_160_O45_TR NULL
-#define OPTION_VAL_170_O45_TR NULL
-#define OPTION_VAL_180_O45_TR NULL
-#define OPTION_VAL_190_O45_TR NULL
-#define OPTION_VAL_200_O45_TR NULL
-#define OPTION_VAL_210_O45_TR NULL
-#define OPTION_VAL_220_O45_TR NULL
-#define OPTION_VAL_230_O45_TR NULL
-#define OPTION_VAL_240_O45_TR NULL
-#define OPTION_VAL_250_O45_TR NULL
-#define OPTION_VAL_260_O45_TR NULL
-#define OPTION_VAL_270_O45_TR NULL
-#define OPTION_VAL_280_O45_TR NULL
-#define OPTION_VAL_290_O45_TR NULL
-#define OPTION_VAL_300_O45_TR NULL
+#define OPTION_VAL_100_O45_TR "%100"
+#define OPTION_VAL_110_O45_TR "%110"
+#define OPTION_VAL_120_O45_TR "%120"
+#define OPTION_VAL_130_O45_TR "%130"
+#define OPTION_VAL_140_O45_TR "%140"
+#define OPTION_VAL_150_O45_TR "%150"
+#define OPTION_VAL_160_O45_TR "%160"
+#define OPTION_VAL_170_O45_TR "%170"
+#define OPTION_VAL_180_O45_TR "%180"
+#define OPTION_VAL_190_O45_TR "%190"
+#define OPTION_VAL_200_O45_TR "%200"
+#define OPTION_VAL_210_O45_TR "%210"
+#define OPTION_VAL_220_O45_TR "%220"
+#define OPTION_VAL_230_O45_TR "%230"
+#define OPTION_VAL_240_O45_TR "%240"
+#define OPTION_VAL_250_O45_TR "%250"
+#define OPTION_VAL_260_O45_TR "%260"
+#define OPTION_VAL_270_O45_TR "%270"
+#define OPTION_VAL_280_O45_TR "%280"
+#define OPTION_VAL_290_O45_TR "%290"
+#define OPTION_VAL_300_O45_TR "%300"
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_TR "Silah Artı Göstergesi 1 Görüntüle"
 #define OPTION_VAL_WHITE_TR "Beyaz"
 #define OPTION_VAL_RED_TR "Kırmızı"
@@ -73256,7 +73256,7 @@ struct retro_core_option_v2_definition option_defs_tr[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
    {
       CORE_OPTION_NAME "_detect_vsync_swap_interval",
@@ -75268,7 +75268,7 @@ struct retro_core_option_v2_definition option_defs_uk[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
    {
       CORE_OPTION_NAME "_detect_vsync_swap_interval",
@@ -77280,7 +77280,7 @@ struct retro_core_option_v2_definition option_defs_val[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
    {
       CORE_OPTION_NAME "_detect_vsync_swap_interval",
@@ -79292,7 +79292,7 @@ struct retro_core_option_v2_definition option_defs_vn[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
    {
       CORE_OPTION_NAME "_detect_vsync_swap_interval",
