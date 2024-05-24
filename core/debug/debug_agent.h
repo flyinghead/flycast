@@ -89,6 +89,7 @@ public:
 		u32 addr = 0;
 		u16 type = 0;
 		u16 savedOp = 0;
+		bool enabled = true;
 	};
 
 	void doContinue(u32 pc = 1)
@@ -256,6 +257,38 @@ public:
 		return true;
 	}
 
+	bool enableMatchpoint(Breakpoint::Type type, u32 addr, u32 len)
+	{
+		// TODO: Review address cleaning responsability
+		addr &= 0x1fffffff;
+		if (type == Breakpoint::BP_TYPE_SOFTWARE_BREAK && len != 2) {
+			WARN_LOG(COMMON, "insertMatchpoint: length != 2: %d", len);
+			return false;
+		}
+		auto it = breakpoints[type].find(addr);
+		if (it == breakpoints[type].end())
+			return false;
+		it->second.enabled = true;
+		WriteMem16_nommu(addr, 0xC308);	// trapa #0x20
+		return true;
+	}
+
+	bool disableMatchpoint(Breakpoint::Type type, u32 addr, u32 len)
+	{
+		// TODO: Review address cleaning respons
+		addr &= 0x1fffffff;
+		if (type == Breakpoint::BP_TYPE_SOFTWARE_BREAK && len != 2) {
+			WARN_LOG(COMMON, "removeMatchpoint: length != 2: %d", len);
+			return false;
+		}
+		auto it = breakpoints[type].find(addr);
+		if (it == breakpoints[type].end())
+			return false;
+		it->second.enabled = false;
+		WriteMem16_nommu(addr, it->second.savedOp);
+		return true;
+	}
+
 	u32 interrupt()
 	{
 		//config::DynarecEnabled = false;
@@ -342,6 +375,24 @@ public:
 	void subroutineCall();
 
 	void subroutineReturn();
+
+	/*
+	 * Deletes overwritten breakpoints.
+	 */
+	void eraseOverwrittenMatchPoints()
+	{
+		auto& bp_map = breakpoints[Breakpoint::BP_TYPE_SOFTWARE_BREAK];
+
+		for (auto it = bp_map.begin(); it != bp_map.end();)
+		{
+			const auto& [address, breakpoint] = *it;
+			if (breakpoint.enabled && (ReadMem16_nommu(address) != 0xC308)) {
+				it = bp_map.erase(it);
+				continue;
+			}
+			++it;
+		}
+	}
 
 	u32 exception = 0;
 

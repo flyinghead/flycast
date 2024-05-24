@@ -77,16 +77,6 @@ static void gui_debugger_control()
 
 	// TODO: Implement step over and step out
 
-	// TODO: Decide if debugger should have an closed state
-	// ImGui::SameLine();
-	// if (ImGui::Button("Close"))
-	// {
-	// 	gui_state = GuiState::Closed;
-	// 	GamepadDevice::load_system_mappings();
-	// 	if(!emu.running())
-	// 		emu.start();
-	// }
-
 	ImGui::Checkbox("Disassembly", &disasm_window_open);
 
 	ImGui::SameLine();
@@ -224,35 +214,59 @@ static void gui_debugger_memdump()
 
 static void gui_debugger_breakpoints()
 {
+	debugAgent.eraseOverwrittenMatchPoints();
+
 	if (!breakpoints_window_open) return;
 
 	ImGui::SetNextWindowPos(ImVec2(700, 16), ImGuiCond_FirstUseEver);
-	ImGui::SetNextWindowSize(ScaledVec2(150, 0));
+	ImGui::SetNextWindowSize(ScaledVec2(152, 0));
 	ImGui::Begin("Breakpoints", &breakpoints_window_open, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
 
-	ImGui::PushItemWidth(80 * settings.display.uiScale);
+	ImGui::PushItemWidth(ImGui::CalcTextSize("00000000").x + ImGui::GetStyle().FramePadding.x * 2);
+	ImGui::AlignTextToFramePadding();
+	ImGui::Text("0x");
+	ImGui::SameLine(0, 2);
 	static char bpBuffer[9] = "";
 	ImGui::InputTextWithHint("##bpAddr", "Address", bpBuffer, 9, ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_CharsUppercase);
-	ImGui::PopItemWidth();
 
 	ImGui::SameLine();
 	if (ImGui::Button("Add"))
 	{
 		char* tmp;
 		long bpaddr = strtoul(bpBuffer, &tmp, 16);
+		printf("Adding breakpoint at 0x%08x\n", (u32) bpaddr);
 		debugAgent.insertMatchpoint(DebugAgent::Breakpoint::BP_TYPE_SOFTWARE_BREAK, (u32) bpaddr, 2);
 	}
 
 	ImGui::PushFont(monospaceFont);
 	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(8,2));
 
-	auto it = debugAgent.breakpoints[DebugAgent::Breakpoint::Type::BP_TYPE_SOFTWARE_BREAK].begin();
-
-	while (it != debugAgent.breakpoints[DebugAgent::Breakpoint::Type::BP_TYPE_SOFTWARE_BREAK].end())
 	{
-		ImGui::Text("0x%08x", it->first);
+		float windowWidth = ImGui::GetWindowContentRegionMax().x;
+		DebugAgent::Breakpoint *breakpointToDelete = nullptr;
+		for (auto& [address, breakpoint] : debugAgent.breakpoints[DebugAgent::Breakpoint::Type::BP_TYPE_SOFTWARE_BREAK])
+		{
+			ImGui::PushID(address);
+			if (ImGui::Checkbox("##breakpoint", &breakpoint.enabled)) {
+				if (breakpoint.enabled)
+					debugAgent.enableMatchpoint(DebugAgent::Breakpoint::BP_TYPE_SOFTWARE_BREAK, address, 2);
+				else
+					debugAgent.disableMatchpoint(DebugAgent::Breakpoint::Type::BP_TYPE_SOFTWARE_BREAK, address, 2);
+			}
+			// ImGui::Checkbox("##breakpoint", &breakpoint.enabled);
+			ImGui::SameLine();
+			ImGui::Text("0x%08x", address);
 
-		it++;
+			// Delete button
+			ImGui::SameLine(windowWidth - ImGui::CalcTextSize("X").x - ImGui::GetStyle().FramePadding.x * 2);
+			ImGui::PushStyleColor(ImGuiCol_Button, 0);
+			if (ImGui::Button("X"))
+				breakpointToDelete = &breakpoint;
+			ImGui::PopStyleColor();
+			ImGui::PopID();
+		}
+		if (breakpointToDelete)
+			debugAgent.removeMatchpoint(DebugAgent::Breakpoint::Type::BP_TYPE_SOFTWARE_BREAK, breakpointToDelete->addr, 2);
 	}
 
 	ImGui::PopStyleVar();

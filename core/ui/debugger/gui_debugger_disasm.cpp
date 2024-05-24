@@ -82,12 +82,15 @@ void gui_debugger_disasm()
 		}
 
 		u16 instr = ReadMem16_nommu(addr);
+		const DebugAgent::Breakpoint *breakpoint = nullptr;
 
 		auto it = debugAgent.breakpoints[DebugAgent::Breakpoint::Type::BP_TYPE_SOFTWARE_BREAK].find(addr);
 		const bool hasBreakpoint = it != debugAgent.breakpoints[DebugAgent::Breakpoint::Type::BP_TYPE_SOFTWARE_BREAK].end();
 
-		if (hasBreakpoint)
-			instr = it->second.savedOp;
+		if (hasBreakpoint) {
+			breakpoint = &it->second;
+			instr = breakpoint->savedOp;
+		}
 
 		ImVec2 mousePos = ImGui::GetMousePos();
 
@@ -117,11 +120,12 @@ void gui_debugger_disasm()
 		ImRect bpCellRect = ImGui::TableGetCellBgRect(table, 0);
 		bool isBreakpointCellHovered = bpCellRect.Contains(mousePos);
 		bool isBreakpointCellClicked = isBreakpointCellHovered && ImGui::IsMouseClicked(ImGuiMouseButton_Left);
-		// Assume breakpoint color
 		ImU32 bpColor = 0;
-		if (hasBreakpoint)
+		if (hasBreakpoint) {
 			bpColor = IM_COL32(255, 0, 0, 255);
-		else if (isBreakpointCellHovered)
+			if (!breakpoint->enabled)
+				bpColor = IM_COL32(100, 100, 100, 255);
+		} else if (isBreakpointCellHovered)
 			bpColor = IM_COL32(127, 0, 0, 255);
 
 		if (bpColor) {
