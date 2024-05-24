@@ -26,16 +26,14 @@
 #include "input/gamepad_device.h"
 #include "gui_debugger_disasm.h"
 
-// TODO: Use camelCase for variable names
 // TODO: Add sh4asm as a submodule
-// TODO: Rename debugger clearly indicate that it is a Dreamcast (guest) debugger. (FC_DC_DEBUGGER?)
 
 extern ImFont *monospaceFont;
 
-static bool disasm_window_open = true;
-static bool memdump_window_open = false;
-static bool breakpoints_window_open = false;
-static bool sh4_window_open = true;
+static bool disasmWindowOpen = true;
+static bool memdumpWindowOpen = false;
+static bool breakpointsWindowOpen = false;
+static bool sh4WindowOpen = true;
 
 static void gui_debugger_control()
 {
@@ -77,16 +75,16 @@ static void gui_debugger_control()
 
 	// TODO: Implement step over and step out
 
-	ImGui::Checkbox("Disassembly", &disasm_window_open);
+	ImGui::Checkbox("Disassembly", &disasmWindowOpen);
 
 	ImGui::SameLine();
-	ImGui::Checkbox("Memory Dump", &memdump_window_open);
+	ImGui::Checkbox("Memory Dump", &memdumpWindowOpen);
 
 	ImGui::SameLine();
-	ImGui::Checkbox("SH4", &sh4_window_open);
+	ImGui::Checkbox("SH4", &sh4WindowOpen);
 
 	ImGui::SameLine();
-	ImGui::Checkbox("Breakpoints", &breakpoints_window_open);
+	ImGui::Checkbox("Breakpoints", &breakpointsWindowOpen);
 
 	ImGui::End();
 }
@@ -96,11 +94,11 @@ ImU32 vslider_value = 0x10000 / 16;
 
 static void gui_debugger_memdump()
 {
-	if (!memdump_window_open) return;
+	if (!memdumpWindowOpen) return;
 
 	ImGui::SetNextWindowPos(ImVec2(600, 450), ImGuiCond_FirstUseEver);
 	ImGui::SetNextWindowSize(ScaledVec2(540, 0));
-	ImGui::Begin("Memory Dump", &memdump_window_open, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
+	ImGui::Begin("Memory Dump", &memdumpWindowOpen, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
 
 	ImGui::PushItemWidth(80 * settings.display.uiScale);
 	static char patchAddressBuffer[8 + 1] = "";
@@ -216,11 +214,11 @@ static void gui_debugger_breakpoints()
 {
 	debugAgent.eraseOverwrittenMatchPoints();
 
-	if (!breakpoints_window_open) return;
+	if (!breakpointsWindowOpen) return;
 
 	ImGui::SetNextWindowPos(ImVec2(700, 16), ImGuiCond_FirstUseEver);
 	ImGui::SetNextWindowSize(ScaledVec2(152, 0));
-	ImGui::Begin("Breakpoints", &breakpoints_window_open, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
+	ImGui::Begin("Breakpoints", &breakpointsWindowOpen, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
 
 	ImGui::PushItemWidth(ImGui::CalcTextSize("00000000").x + ImGui::GetStyle().FramePadding.x * 2);
 	ImGui::AlignTextToFramePadding();
@@ -276,11 +274,11 @@ static void gui_debugger_breakpoints()
 
 static void gui_debugger_sh4()
 {
-	if (!sh4_window_open) return;
+	if (!sh4WindowOpen) return;
 
 	ImGui::SetNextWindowPos(ImVec2(900, 16), ImGuiCond_FirstUseEver);
 	ImGui::SetNextWindowSize(ScaledVec2(260, 0));
-	ImGui::Begin("SH4", &sh4_window_open, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
+	ImGui::Begin("SH4", &sh4WindowOpen, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
 	ImGui::PushFont(monospaceFont);
 
 	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(8,2));
@@ -476,7 +474,7 @@ void gui_debugger()
 
 	gui_debugger_control();
 
-	if (disasm_window_open)
+	if (disasmWindowOpen)
 		gui_debugger_disasm();
 
 	gui_debugger_memdump();
