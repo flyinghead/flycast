@@ -225,6 +225,7 @@ const WidescreenCheat CheatManager::widescreen_cheats[] =
 		{ "T8104D  58", nullptr,    { 0x2C03F8 }, { 0x44558000 } },		// Shadow Man (PAL)
 		{ "T-8106N",    nullptr,    { 0x2C03F4 }, { 0x3F400000 } },		// Shadow Man (USA)
 		{ "MK-51048",   nullptr,    { 0x4AA4DC, 0x2B4E30 }, { 0x3F400000, 0x3F400000 } },	// Seaman (USA)
+		{ "MK-51053",   nullptr,    { 0x5630CC }, { 0x3F400000 } },		// Sega GT (USA)	
 		{ "MK-5105350", nullptr,    { 0x5D613C }, { 0x3F400000 } },		// Sega GT (PAL)
 		{ "MK-51096",   nullptr,    { 0x495050 }, { 0x43700000 } },		// Sega Marine Fishing (USA)
 //		{ "MK-51019",   nullptr,    { 0xB83A48 }, { 0x3F400000 } },		// Sega Rally 2 (USA) not working?
