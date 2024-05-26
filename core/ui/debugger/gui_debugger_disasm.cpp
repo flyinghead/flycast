@@ -22,8 +22,9 @@
 #include "hw/sh4/sh4_if.h"
 #include "hw/sh4/sh4_mem.h"
 #include "imgui/imgui.h"
-#include "sh4asm/sh4asm_core/disas.h"
 #include "types.h"
+#include "capstone/capstone.h"
+#include <unordered_set>
 
 #define DC_RAM_BASE 0x0c000000
 #define BYTES_PER_INSTRUCTION 2
@@ -35,13 +36,75 @@ extern ImFont *monospaceFont;
 
 static u32 disasmAddress = DC_RAM_BASE;
 static bool followPc = true;
-static char sh4DisasmLine[DISASM_LINE_LEN];
+static std::unordered_set<unsigned int> branchIntructions = {
+	SH_INS_BF_S,
+	SH_INS_BF,
+	SH_INS_BRA,
+	SH_INS_BRAF,
+	SH_INS_BSR,
+	SH_INS_BSRF,
+	SH_INS_BT_S,
+	SH_INS_BT,
+	SH_INS_JMP,
+	SH_INS_JSR,
+	SH_INS_RTS,
+};
+static std::unordered_set<unsigned int> logicalIntructions = {
+	SH_INS_AND,
+	SH_INS_BAND,
+	SH_INS_NOT,
+	SH_INS_OR,
+	SH_INS_BOR,
+	SH_INS_TAS,
+	SH_INS_TST,
+	SH_INS_XOR,
+	SH_INS_BXOR,
+};
+static std::unordered_set<unsigned int> arithmeticIntructions = {
+	SH_INS_ADD_r,
+	SH_INS_ADD,
+	SH_INS_ADDC,
+	SH_INS_ADDV,
+	SH_INS_CMP_EQ,
+	SH_INS_CMP_HS,
+	SH_INS_CMP_GE,
+	SH_INS_CMP_HI,
+	SH_INS_CMP_GT,
+	SH_INS_CMP_PZ,
+	SH_INS_CMP_PL,
+	SH_INS_CMP_STR,
+	SH_INS_DIV1,
+	SH_INS_DIV0S,
+	SH_INS_DIV0U,
+	SH_INS_DMULS_L,
+	SH_INS_DMULU_L,
+	SH_INS_DT,
+	SH_INS_EXTS_B,
+	SH_INS_EXTS_W,
+	SH_INS_EXTU_B,
+	SH_INS_EXTU_W,
+	SH_INS_MAC_L,
+	SH_INS_MAC_W,
+	SH_INS_MUL_L,
+	SH_INS_MULS_W,
+	SH_INS_MULU_W,
+	SH_INS_NEG,
+	SH_INS_NEGC,
+	SH_INS_SUB,
+	SH_INS_SUBC,
+	SH_INS_SUBV,
+};
 
-static void disas_emit(char ch) {
-	size_t len = strlen(sh4DisasmLine);
-	if (len >= DISASM_LINE_LEN - 1)
-		return; // no more space
-	sh4DisasmLine[len] = ch;
+static void pushMnemonicColor(cs_insn *instruction);
+
+/**
+ * Custom wrapper for cs_disasm_iter that does not modify arguments.
+ */
+static bool fc_disasm_iter(csh handle, const uint8_t *code, uint64_t address, cs_insn *insn)
+{
+	const uint8_t *codeLocal = code;
+	size_t instructionSize = 2;
+	return cs_disasm_iter(handle, &codeLocal, &instructionSize, &address, insn);
 }
 
 // TODO: Extract into smaller functions
@@ -64,9 +127,19 @@ void gui_debugger_disasm()
 
 	ImGui::PushFont(monospaceFont);
 
+	// TODO: Capstone doesn't need to be initialized every frame
+	csh capstoneHandle;
+	if (cs_open(CS_ARCH_SH, (cs_mode) (CS_MODE_LITTLE_ENDIAN | CS_MODE_SH4 | CS_MODE_SHFPU), &capstoneHandle) != CS_ERR_OK) {
+		ERROR_LOG(COMMON, "Failed to open Capstone: %s", cs_strerror(cs_errno(capstoneHandle)));
+		return;
+	}
+	cs_option(capstoneHandle, CS_OPT_DETAIL, CS_OPT_ON);
+	cs_insn *insn = cs_malloc(capstoneHandle);
+
 	// Render disassembly table
 	if (!ImGui::BeginTable("DisassemblyTable", 4, ImGuiTableFlags_SizingFixedFit))
 		return;
+	ImGui::PushStyleColor(ImGuiCol_Text, (ImVec4)ImColor::HSV(0, 0, .9));
 
 	ImGuiTable *table = ImGui::GetCurrentTable();
 	ImGui::TableSetupColumn("bp", ImGuiTableColumnFlags_WidthFixed, 9.0f);
@@ -82,6 +155,7 @@ void gui_debugger_disasm()
 			break;
 		}
 
+		const u8* code = GetMemPtr(addr, 0);
 		u16 instr = ReadMem16_nommu(addr);
 		const DebugAgent::Breakpoint *breakpoint = nullptr;
 
@@ -101,21 +175,27 @@ void gui_debugger_disasm()
 		// Deffer breakpoint drawing because we don't know the cell height yet.
 		ImGui::TableNextColumn();
 
-		char buf[64];
-		memset(sh4DisasmLine, 0, sizeof(sh4DisasmLine));
-		sh4asm_disas_inst(instr, disas_emit, addr);
-
 		if (!running && addr == pcAddr)
 			ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, IM_COL32(0, 128, 0, 255));
 
-		sprintf(buf, "%08X:", (u32)addr);
-		ImGui::Text("%s", buf);
+		ImGui::Text("%08X", (u32) addr);
 
 		ImGui::TableNextColumn();
 		ImGui::TextDisabled("%04X", instr);
-		
+
 		ImGui::TableNextColumn();
-		ImGui::Text("%s", sh4DisasmLine);
+
+		if (!fc_disasm_iter(capstoneHandle, code, addr, insn)) {
+			ImGui::TextDisabled("Invalid instruction");
+		} else {
+			pushMnemonicColor(insn);
+			ImGui::Text("%-8s", insn->mnemonic);
+			ImGui::PopStyleColor();
+
+			ImGui::SameLine();
+			ImGui::Text("%s", insn->op_str);
+
+		}
 
 		// Render breakpoint icon
 		ImRect bpCellRect = ImGui::TableGetCellBgRect(table, 0);
@@ -147,6 +227,8 @@ void gui_debugger_disasm()
 		if (ImGui::GetContentRegionAvail().y < bpCellRect.GetHeight() + 2.0f)
 			break;
 	}
+
+	ImGui::PopStyleColor();
 	ImGui::EndTable();
 	bool isTableHovered = ImGui::IsItemHovered();
 
@@ -201,6 +283,26 @@ void gui_debugger_disasm()
 		// FIXME: Scrolling past the end of the disassembly table resets PC to the beginning
 		disasmAddress = DC_RAM_BASE;
 
+	// TODO: Capstone doesn't need to be initialized every frame
+	if (capstoneHandle)
+		cs_close(&capstoneHandle);
+
 	ImGui::PopFont();
 	ImGui::End();
+}
+
+static void pushMnemonicColor(cs_insn *instruction)
+{
+	if (branchIntructions.find(instruction->id) != branchIntructions.end())
+		return ImGui::PushStyleColor(ImGuiCol_Text, (ImVec4)ImColor::HSV(305 / 360.0, .4, .85));
+
+	if (logicalIntructions.find(instruction->id) != branchIntructions.end())
+		return ImGui::PushStyleColor(ImGuiCol_Text, (ImVec4)ImColor::HSV(25 / 360.0, .3, 1));
+	if (arithmeticIntructions.find(instruction->id) != branchIntructions.end())
+		return ImGui::PushStyleColor(ImGuiCol_Text, (ImVec4)ImColor::HSV(25 / 360.0, .3, 1));
+
+	if (instruction->id == SH_INS_NOP)
+		return ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetColorU32(ImGuiCol_TextDisabled));
+
+	return ImGui::PushStyleColor(ImGuiCol_Text, (ImVec4)ImColor::HSV(0, 0, .9));
 }

@@ -1829,6 +1829,14 @@ if(NOT LIBRETRO)
 	endif()
 endif()
 
+if(NOT LIBRETRO)
+	set(CAPSTONE_ARCHITECTURE_DEFAULT OFF CACHE BOOL "" FORCE)
+	set(CAPSTONE_SH_SUPPORT ON CACHE BOOL "" FORCE)
+	add_subdirectory(core/deps/capstone EXCLUDE_FROM_ALL)
+	target_include_directories(${PROJECT_NAME} PRIVATE core/deps/capstone/include)
+	target_link_libraries(${PROJECT_NAME} PRIVATE capstone)
+endif()
+
 if(BUILD_TESTING)
 	target_sources(${PROJECT_NAME} PRIVATE
 			core/deps/gtest/src/gtest-all.cc
