@@ -75,9 +75,13 @@ static void gui_debugger_control()
 
 	// TODO: Implement step over and step out
 
-	ImGui::SameLine();
-	if (ImGui::Button("Reset"))
-		emu.requestReset();
+	{
+		// FIXME: Allow reset while running
+		DisabledScope scope(!running);
+		ImGui::SameLine();
+		if (ImGui::Button("Reset"))
+			emu.requestReset();
+	}
 
 	ImGui::Checkbox("Disassembly", &disasmWindowOpen);
 
