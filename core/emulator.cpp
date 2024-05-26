@@ -691,8 +691,11 @@ void Emulator::stop()
 		nvmem::saveFiles();
 		EventManager::event(Event::Pause);
 
+#ifndef LIBRETRO
 		if (config::DebuggerGuiEnabled)
 			gui_setState(GuiState::Debugger);
+#endif
+
 #endif
 	}
 }
