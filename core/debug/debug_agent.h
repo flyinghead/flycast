@@ -101,10 +101,15 @@ public:
 
 	void step()
 	{
-		bool restoreBreakpoint = removeMatchpoint(Breakpoint::BP_TYPE_SOFTWARE_BREAK, Sh4cntx.pc, 2);
+		bool restoreBreakpoint = false; // removeMatchpoint(Breakpoint::BP_TYPE_SOFTWARE_BREAK, Sh4cntx.pc, 2);
 		bool restoreDelaySlotBreakpoint = false;
-		if (isDelayedBranch(Sh4cntx.pc))
+
+		if (hasEnabledMatchPoint(Breakpoint::BP_TYPE_SOFTWARE_BREAK, Sh4cntx.pc))
+			restoreBreakpoint = removeMatchpoint(Breakpoint::BP_TYPE_SOFTWARE_BREAK, Sh4cntx.pc, 2);
+
+		if (isDelayedBranch(Sh4cntx.pc) && hasEnabledMatchPoint(Breakpoint::BP_TYPE_SOFTWARE_BREAK, Sh4cntx.pc + 2))
 			restoreDelaySlotBreakpoint = removeMatchpoint(Breakpoint::BP_TYPE_SOFTWARE_BREAK, Sh4cntx.pc + 2, 2);
+
 		u32 savedPc = Sh4cntx.pc;
 
 		emu.step();
@@ -225,6 +230,14 @@ public:
 			}
 		}
 	}
+
+	bool hasEnabledMatchPoint(Breakpoint::Type type, u32 addr)
+	{
+		addr &= 0x1fffffff;
+		auto it = breakpoints[type].find(addr);
+		return it != breakpoints[type].end() && it->second.enabled;
+	}
+
 	bool insertMatchpoint(Breakpoint::Type type, u32 addr, u32 len)
 	{
 		// TODO: Review address cleaning responsability
