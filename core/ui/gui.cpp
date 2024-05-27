@@ -515,12 +515,15 @@ void gui_open_settings()
 	{
 		if (!ggpo::active())
 		{
-			HideOSD();
-			try {
-				emu.stop();
-				gui_setState(GuiState::Commands);
-			} catch (const FlycastException& e) {
-				gui_stop_game(e.what());
+			if (achievements::canPause())
+			{
+				HideOSD();
+				try {
+					emu.stop();
+					gui_setState(GuiState::Commands);
+				} catch (const FlycastException& e) {
+					gui_stop_game(e.what());
+				}
 			}
 		}
 		else
@@ -1285,18 +1288,19 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 						hitbox = true;
 				}
 				ImGui::NewLine();
-				ImguiStyleVar _(ImGuiStyleVar_ItemSpacing, ImVec2(uiScaled(20), ImGui::GetStyle().ItemSpacing.y));
-				ImguiStyleVar _1(ImGuiStyleVar_FramePadding, ScaledVec2(10, 10));
-				if (ImGui::Button("Yes"))
 				{
-					gamepad->resetMappingToDefault(arcade_button_mode, !hitbox);
-					gamepad->save_mapping(map_system);
-					ImGui::CloseCurrentPopup();
+	 				ImguiStyleVar _(ImGuiStyleVar_ItemSpacing, ImVec2(uiScaled(20), ImGui::GetStyle().ItemSpacing.y));
+					ImguiStyleVar _1(ImGuiStyleVar_FramePadding, ScaledVec2(10, 10));
+					if (ImGui::Button("Yes"))
+					{
+						gamepad->resetMappingToDefault(arcade_button_mode, !hitbox);
+						gamepad->save_mapping(map_system);
+						ImGui::CloseCurrentPopup();
+					}
+					ImGui::SameLine();
+					if (ImGui::Button("No"))
+						ImGui::CloseCurrentPopup();
 				}
-				ImGui::SameLine();
-				if (ImGui::Button("No"))
-					ImGui::CloseCurrentPopup();
-
 				ImGui::EndPopup();
 			}
 		}
@@ -1842,10 +1846,13 @@ static void gui_settings_general()
 						}
 					}
 				}
-				if (ImGui::Button("Login", ScaledVec2(100, 0)) && !futureLogin.valid())
 				{
-					futureLogin = achievements::login(config::AchievementsUserName.get().c_str(), password);
-					memset(password, 0, sizeof(password));
+					DisabledScope _(config::AchievementsUserName.get().empty() || password[0] == '\0');
+					if (ImGui::Button("Login", ScaledVec2(100, 0)) && !futureLogin.valid())
+					{
+						futureLogin = achievements::login(config::AchievementsUserName.get().c_str(), password);
+						memset(password, 0, sizeof(password));
+					}
 				}
 			}
 		}
@@ -3354,55 +3361,56 @@ static void gui_display_loadscreen()
 	centerNextWindow();
 	ImGui::SetNextWindowSize(ScaledVec2(330, 180));
 
-    ImGui::Begin("##loading", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize);
+    if (ImGui::Begin("##loading", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize))
+    {
+		ImguiStyleVar _(ImGuiStyleVar_FramePadding, ScaledVec2(20, 10));
+		ImGui::AlignTextToFramePadding();
+		ImGui::SetCursorPosX(uiScaled(20.f));
+		try {
+			const char *label = gameLoader.getProgress().label;
+			if (label == nullptr)
+			{
+				if (gameLoader.ready())
+					label = "Starting...";
+				else
+					label = "Loading...";
+			}
 
-    ImguiStyleVar _(ImGuiStyleVar_FramePadding, ScaledVec2(20, 10));
-    ImGui::AlignTextToFramePadding();
-    ImGui::SetCursorPosX(uiScaled(20.f));
-	try {
-		const char *label = gameLoader.getProgress().label;
-		if (label == nullptr)
-		{
 			if (gameLoader.ready())
-				label = "Starting...";
-			else
-				label = "Loading...";
-		}
-
-		if (gameLoader.ready())
-		{
-			if (NetworkHandshake::instance != nullptr)
 			{
-				networkStatus = NetworkHandshake::instance->start();
-				gui_setState(GuiState::NetworkStart);
+				if (NetworkHandshake::instance != nullptr)
+				{
+					networkStatus = NetworkHandshake::instance->start();
+					gui_setState(GuiState::NetworkStart);
+				}
+				else
+				{
+					gui_setState(GuiState::Closed);
+					ImGui::Text("%s", label);
+				}
 			}
 			else
 			{
-				gui_setState(GuiState::Closed);
 				ImGui::Text("%s", label);
-			}
-		}
-		else
-		{
-			ImGui::Text("%s", label);
-			{
-				ImguiStyleColor _(ImGuiCol_PlotHistogram, ImVec4(0.557f, 0.268f, 0.965f, 1.f));
-				ImGui::ProgressBar(gameLoader.getProgress().progress, ImVec2(-1, uiScaled(20.f)), "");
-			}
+				{
+					ImguiStyleColor _(ImGuiCol_PlotHistogram, ImVec4(0.557f, 0.268f, 0.965f, 1.f));
+					ImGui::ProgressBar(gameLoader.getProgress().progress, ImVec2(-1, uiScaled(20.f)), "");
+				}
 
-			float currentwidth = ImGui::GetContentRegionAvail().x;
-			ImGui::SetCursorPosX((currentwidth - uiScaled(100.f)) / 2.f + ImGui::GetStyle().WindowPadding.x);
-			ImGui::SetCursorPosY(uiScaled(126.f));
-			if (ImGui::Button("Cancel", ScaledVec2(100.f, 0)))
-				gameLoader.cancel();
-		}
-	} catch (const FlycastException& ex) {
-		ERROR_LOG(BOOT, "%s", ex.what());
+				float currentwidth = ImGui::GetContentRegionAvail().x;
+				ImGui::SetCursorPosX((currentwidth - uiScaled(100.f)) / 2.f + ImGui::GetStyle().WindowPadding.x);
+				ImGui::SetCursorPosY(uiScaled(126.f));
+				if (ImGui::Button("Cancel", ScaledVec2(100.f, 0)))
+					gameLoader.cancel();
+			}
+		} catch (const FlycastException& ex) {
+			ERROR_LOG(BOOT, "%s", ex.what());
 #ifdef TEST_AUTOMATION
-		die("Game load failed");
+			die("Game load failed");
 #endif
-		gui_stop_game(ex.what());
-	}
+			gui_stop_game(ex.what());
+		}
+    }
     ImGui::End();
 }
 

@@ -56,6 +56,7 @@ public:
 	bool isActive() const { return active; }
 	Game getCurrentGame();
 	std::vector<Achievement> getAchievementList();
+	bool canPause();
 	void serialize(Serializer& ser);
 	void deserialize(Deserializer& deser);
 
@@ -146,6 +147,10 @@ Game getCurrentGame() {
 
 std::vector<Achievement> getAchievementList() {
 	return Achievements::Instance().getAchievementList();
+}
+
+bool canPause() {
+	return Achievements::Instance().canPause();
 }
 
 void serialize(Serializer& ser) {
@@ -380,8 +385,9 @@ std::future<void> Achievements::login(const char* username, const char* password
 {
 	init();
 	std::promise<void> *promise = new std::promise<void>();
+	auto future = promise->get_future();
 	rc_client_begin_login_with_password(rc_client, username, password, clientLoginWithPasswordCallback, promise);
-	return promise->get_future();
+	return future;
 }
 
 void Achievements::clientLoginWithPasswordCallback(int result, const char *error_message, rc_client_t *client,
@@ -1014,6 +1020,17 @@ std::vector<Achievement> Achievements::getAchievementList()
 		});
 
 	return achievements;
+}
+
+bool Achievements::canPause()
+{
+	if (!active)
+		return true;
+	u32 frames;
+	int rc = rc_client_can_pause(rc_client, &frames);
+	if (rc == 0)
+		DEBUG_LOG(COMMON, "Pause allowed in %d frames", frames);
+	return (bool)rc;
 }
 
 void Achievements::serialize(Serializer& ser)
