@@ -329,7 +329,9 @@ void gui_initFonts()
 	verify(data != nullptr);
 	const float largeFontSize = uiScaled(21.f);
 	largeFont = io.Fonts->AddFontFromMemoryTTF(data.release(), dataSize, largeFontSize, nullptr, ranges);
-	monospaceFont = io.Fonts->AddFontDefault();
+	ImFontConfig defaultFontCfg;
+	defaultFontCfg.SizePixels = uiScaled(13.0f);
+	monospaceFont = io.Fonts->AddFontDefault(&defaultFontCfg);
     NOTICE_LOG(RENDERER, "Screen DPI is %.0f, size %d x %d. Scaling by %.2f", settings.display.dpi, settings.display.width, settings.display.height, settings.display.uiScale);
 }
 

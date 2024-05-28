@@ -43,7 +43,7 @@ static void gui_debugger_control()
 	bool running = emu.running();
 
 	if (running) {
-		if (ImGui::Button("Suspend", ImVec2(80, 0)))
+		if (ImGui::Button("Suspend", ScaledVec2(80, 0)))
 		{
 			// config::DynarecEnabled = false;
 			debugAgent.interrupt();
@@ -51,7 +51,7 @@ static void gui_debugger_control()
 			gui_state = GuiState::Debugger;
 		}
 	} else {
-		if (ImGui::Button("Resume", ImVec2(80, 0)))
+		if (ImGui::Button("Resume", ScaledVec2(80, 0)))
 		{
 			// config::DynarecEnabled = false;
 			// Step possible breakpoint in the next instruction
@@ -104,7 +104,7 @@ static void gui_debugger_memdump()
 {
 	if (!memdumpWindowOpen) return;
 
-	ImGui::SetNextWindowPos(ImVec2(600, 450), ImGuiCond_FirstUseEver);
+	ImGui::SetNextWindowPos(ScaledVec2(600, 450), ImGuiCond_FirstUseEver);
 	ImGui::SetNextWindowSize(ScaledVec2(540, 0));
 	ImGui::Begin("Memory Dump", &memdumpWindowOpen, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
 
@@ -141,7 +141,7 @@ static void gui_debugger_memdump()
 	}
 
 	ImGui::PushFont(monospaceFont);
-	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(8,2));
+	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ScaledVec2(8,2));
 
 	char hexbuf[256];
 
@@ -188,8 +188,8 @@ static void gui_debugger_memdump()
 	const ImU64 max = (RAM_SIZE / 0x10);
 
 	float sliderHeight = ImGui::GetCursorPosY() - dumpTopPosY;
-	ImGui::SetCursorPos(ImVec2(ImGui::GetWindowWidth()-20, dumpTopPosY));
-	if (ImGui::VSliderScalar("##scroll", ImVec2(20, sliderHeight), ImGuiDataType_U32, &vslider_value, &max, &min, "", ImGuiSliderFlags_NoInput))
+	ImGui::SetCursorPos(ImVec2(ImGui::GetWindowWidth()-uiScaled(20), dumpTopPosY));
+	if (ImGui::VSliderScalar("##scroll", ImVec2(uiScaled(20), sliderHeight), ImGuiDataType_U32, &vslider_value, &max, &min, "", ImGuiSliderFlags_NoInput))
 	{
 		memoryDumpAddr = 0x0c000000 + vslider_value * 0x10;
 	}
@@ -224,7 +224,7 @@ static void gui_debugger_breakpoints()
 
 	if (!breakpointsWindowOpen) return;
 
-	ImGui::SetNextWindowPos(ImVec2(700, 16), ImGuiCond_FirstUseEver);
+	ImGui::SetNextWindowPos(ScaledVec2(700, 16), ImGuiCond_FirstUseEver);
 	ImGui::SetNextWindowSize(ScaledVec2(152, 0));
 	ImGui::Begin("Breakpoints", &breakpointsWindowOpen, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
 
@@ -245,7 +245,7 @@ static void gui_debugger_breakpoints()
 	}
 
 	ImGui::PushFont(monospaceFont);
-	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(8,2));
+	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ScaledVec2(8,2));
 
 	{
 		float windowWidth = ImGui::GetWindowContentRegionMax().x;
@@ -284,12 +284,12 @@ static void gui_debugger_sh4()
 {
 	if (!sh4WindowOpen) return;
 
-	ImGui::SetNextWindowPos(ImVec2(900, 16), ImGuiCond_FirstUseEver);
+	ImGui::SetNextWindowPos(ScaledVec2(900, 16), ImGuiCond_FirstUseEver);
 	ImGui::SetNextWindowSize(ScaledVec2(260, 0));
 	ImGui::Begin("SH4", &sh4WindowOpen, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
 	ImGui::PushFont(monospaceFont);
 
-	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(8,2));
+	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ScaledVec2(8,2));
 
 	u32 pc = *GetRegPtr(reg_nextpc);
 
