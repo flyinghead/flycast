@@ -1,0 +1,119 @@
+diff --git a/MCInst.c b/MCInst.c
+index 933327a46..fbebf70f9 100644
+--- a/MCInst.c
++++ b/MCInst.c
+@@ -136,7 +136,7 @@ bool MCOperand_isInst(const MCOperand *op)
+ /// getReg - Returns the register number.
+ unsigned MCOperand_getReg(const MCOperand *op)
+ {
+-	return op->RegVal;
++	return (unsigned)op->RegVal;
+ }
+ 
+ /// setReg - Set the register number.
+diff --git a/MCInstPrinter.c b/MCInstPrinter.c
+index 5dbe7323d..528ae3765 100644
+--- a/MCInstPrinter.c
++++ b/MCInstPrinter.c
+@@ -200,7 +200,7 @@ unsigned int binsearch_IndexTypeEncoding(const struct IndexType *index, size_t s
+ 			// and return the first one.
+ 			while (m > 0 && encoding == index[m - 1].encoding)
+ 				--m;
+-			return m;
++			return (unsigned int)m;
+ 		}
+ 
+ 		if (encoding < index[m].encoding)
+@@ -238,7 +238,7 @@ unsigned int binsearch_IndexTypeStrEncoding(const struct IndexTypeStr *index, si
+ 			// and return the first one.
+ 			while (m > 0 && (strcmp(name, index[m - 1].name) == 0))
+ 				--m;
+-			return m;
++			return (unsigned int)m;
+ 		}
+ 
+ 		if (strcmp(name, index[m].name) < 0)
+diff --git a/arch/SH/SHDisassembler.c b/arch/SH/SHDisassembler.c
+index 8f788096b..4692ff440 100644
+--- a/arch/SH/SHDisassembler.c
++++ b/arch/SH/SHDisassembler.c
+@@ -1103,7 +1103,7 @@ static bool op##insn(uint16_t code, uint64_t address, MCInst *MI, \
+ 	if (dsp >= 0x80)						\
+ 		dsp = -256 + dsp;					\
+ 	MCInst_setOpcode(MI, SH_INS_##insn);				\
+-	set_mem(info, SH_OP_MEM_PCR, SH_REG_INVALID, address + 4 + dsp * 2, \
++	set_mem(info, SH_OP_MEM_PCR, SH_REG_INVALID, (uint32_t)address + 4 + dsp * 2, \
+ 		0, detail);						\
+ 	if (detail)							\
+ 		set_groups(detail, 2, SH_GRP_JUMP, SH_GRP_BRANCH_RELATIVE); \
+@@ -1124,7 +1124,7 @@ static bool op##insn(uint16_t code, uint64_t address, MCInst *MI, \
+ 	if (!(mode & CS_MODE_SHDSP))					\
+ 		return MCDisassembler_Fail;				\
+ 	MCInst_setOpcode(MI, SH_INS_##insn);				\
+-	set_mem(info, SH_OP_MEM_PCR, SH_REG_INVALID, address + 4 + dsp * 2, \
++	set_mem(info, SH_OP_MEM_PCR, SH_REG_INVALID, (uint32_t)address + 4 + dsp * 2, \
+ 		0, detail);						\
+ 	return MCDisassembler_Success;\
+ }
+@@ -1182,7 +1182,7 @@ static bool opMOV_pc(uint16_t code, uint64_t address, MCInst *MI, cs_mode mode,
+ 	MCInst_setOpcode(MI, SH_INS_MOV);
+ 	if (sz == 32)
+ 		address &= ~3;
+-	set_mem(info, SH_OP_MEM_PCR, SH_REG_INVALID, address + 4 + dsp,
++	set_mem(info, SH_OP_MEM_PCR, SH_REG_INVALID, (uint32_t)address + 4 + dsp,
+ 		sz, detail);
+ 	set_reg(info, SH_REG_R0 + r, write, detail);
+ 	return MCDisassembler_Success;
+@@ -1196,7 +1196,7 @@ static bool op##insn(uint16_t code, uint64_t address, MCInst *MI, \
+ 	if (dsp >= 0x800)						\
+ 		dsp = -0x1000 + dsp;					\
+ 	MCInst_setOpcode(MI, SH_INS_##insn);				\
+-	set_mem(info, SH_OP_MEM_PCR, SH_REG_INVALID, address + 4 + dsp * 2, \
++	set_mem(info, SH_OP_MEM_PCR, SH_REG_INVALID, (uint32_t)address + 4 + dsp * 2, \
+ 		0, detail);						\
+ 	if (detail)							\
+ 		set_groups(detail, 2, grp, SH_GRP_BRANCH_RELATIVE);	\
+@@ -1235,7 +1235,7 @@ static bool opMOVA(uint16_t code, uint64_t address, MCInst *MI, cs_mode mode,
+ {
+ 	int dsp = (code & 0x00ff) * 4;
+ 	MCInst_setOpcode(MI, SH_INS_MOVA);
+-	set_mem(info, SH_OP_MEM_PCR, SH_REG_INVALID, (address & ~3) + 4 + dsp,
++	set_mem(info, SH_OP_MEM_PCR, SH_REG_INVALID, (uint32_t)(address & ~3) + 4 + dsp,
+ 		0, detail);
+ 	set_reg(info, SH_REG_R0, write, detail);
+ 	return MCDisassembler_Success;
+@@ -2188,7 +2188,7 @@ bool SH_getInstruction(csh ud, const uint8_t *code, size_t code_len,
+ 	}
+ 	memset(info, 0, sizeof(sh_info));
+ 	if (sh_disassemble(code, MI, address, handle->mode,
+-			   size, code_len, info, detail) == MCDisassembler_Fail) {
++			   size, (int)code_len, info, detail) == MCDisassembler_Fail) {
+ 		*size = 0;
+ 		return MCDisassembler_Fail;
+ 	} else {
+diff --git a/arch/SH/SHInstPrinter.c b/arch/SH/SHInstPrinter.c
+index 207083540..feeb1a644 100644
+--- a/arch/SH/SHInstPrinter.c
++++ b/arch/SH/SHInstPrinter.c
+@@ -393,7 +393,7 @@ void SH_printInst(MCInst* MI, SStream* O, void* PrinterInfo)
+ 			SStream_concat0(O, s_reg_names[info->op.operands[i].reg]);
+ 			break;
+ 		case SH_OP_IMM:
+-			imm = info->op.operands[i].imm;
++			imm = (int)info->op.operands[i].imm;
+ 			SStream_concat(O, "#%d", imm);
+ 			break;
+ 		case SH_OP_MEM:
+diff --git a/utils.c b/utils.c
+index bd5fcf561..25a5926b3 100644
+--- a/utils.c
++++ b/utils.c
+@@ -120,7 +120,7 @@ void append_to_str_lower(char *str, size_t str_size, const char *src) {
+ 		return;
+ 	}
+ 
+-	int i = dest - str;
++	int i = (int)(dest - str);
+ 	for (int j = 0; (i < str_size) && (j < strlen(src)); ++i, ++j) {
+ 		str[i] = tolower(src[j]);
+ 	}

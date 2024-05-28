@@ -1835,6 +1835,16 @@ if(NOT LIBRETRO)
 	add_subdirectory(core/deps/capstone EXCLUDE_FROM_ALL)
 	target_include_directories(${PROJECT_NAME} PRIVATE core/deps/capstone/include)
 	target_link_libraries(${PROJECT_NAME} PRIVATE capstone)
+	if(APPLE)
+		find_package(Patch)
+		set(CAPSTONE_PATCH "${CMAKE_CURRENT_SOURCE_DIR}/shell/apple/capstone.patch")
+		add_custom_target(
+			CAPSTONE_PATCH_TARGET
+			COMMAND ${Patch_EXECUTABLE} -p1 --forward -i ${CAPSTONE_PATCH} -d ${CMAKE_CURRENT_SOURCE_DIR}/core/deps/capstone || true
+  			COMMENT "Applying patch: ${CAPSTONE_PATCH}"
+		)
+		ADD_DEPENDENCIES(capstone CAPSTONE_PATCH_TARGET)
+	endif()
 endif()
 
 if(BUILD_TESTING)
