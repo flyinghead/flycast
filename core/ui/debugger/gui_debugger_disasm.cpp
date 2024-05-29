@@ -34,7 +34,7 @@
 
 extern ImFont *monospaceFont;
 
-static u32 disasmAddress = DC_RAM_BASE;
+static u32 disasmAddress = 0x0c010000;
 static bool followPc = true;
 static std::unordered_set<unsigned int> branchIntructions = {
 	SH_INS_BF_S,
@@ -155,7 +155,6 @@ void gui_debugger_disasm()
 			break;
 		}
 
-		const u8* code = GetMemPtr(addr, 0);
 		u16 instr = ReadMem16_nommu(addr);
 		const DebugAgent::Breakpoint *breakpoint = nullptr;
 
