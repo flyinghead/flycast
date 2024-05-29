@@ -95,7 +95,7 @@ static std::unordered_set<unsigned int> arithmeticIntructions = {
 	SH_INS_SUBV,
 };
 
-static void pushMnemonicColor(cs_insn *instruction);
+static void drawMnemonic(cs_insn *instruction);
 
 /**
  * Custom wrapper for cs_disasm_iter that does not modify arguments.
@@ -167,17 +167,23 @@ void gui_debugger_disasm()
 		}
 
 		ImVec2 mousePos = ImGui::GetMousePos();
+		bool shouldHighlightRow = !running && addr == pcAddr;
 
 		ImGui::TableNextRow(0);
 		ImGui::TableNextColumn();
-
 		// Deffer breakpoint drawing because we don't know the cell height yet.
+
+		if (shouldHighlightRow)
+			ImGui::TableSetBgColor(ImGuiTableBgTarget_RowBg0, ImGui::GetColorU32(ImGuiCol_TableRowBgAlt));
 		ImGui::TableNextColumn();
 
-		if (!running && addr == pcAddr)
-			ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, IM_COL32(0, 128, 0, 255));
-
+		if (shouldHighlightRow) {
+			ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, IM_COL32(0x92, 0xee, 0x61, 255));
+			ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetColorU32(ImGuiCol_WindowBg));
+		}
 		ImGui::Text("%08X", (u32) addr);
+		if (shouldHighlightRow)
+			ImGui::PopStyleColor();
 
 		ImGui::TableNextColumn();
 		ImGui::TextDisabled("%04X", instr);
@@ -187,13 +193,9 @@ void gui_debugger_disasm()
 		if (!disasmInstruction(capstoneHandle, instr, addr, insn)) {
 			ImGui::TextDisabled("Invalid instruction");
 		} else {
-			pushMnemonicColor(insn);
-			ImGui::Text("%-8s", insn->mnemonic);
-			ImGui::PopStyleColor();
-
+			drawMnemonic(insn);
 			ImGui::SameLine();
 			ImGui::Text("%s", insn->op_str);
-
 		}
 
 		// Render breakpoint icon
@@ -290,18 +292,19 @@ void gui_debugger_disasm()
 	ImGui::End();
 }
 
-static void pushMnemonicColor(cs_insn *instruction)
+static void drawMnemonic(cs_insn *instruction)
 {
 	if (branchIntructions.find(instruction->id) != branchIntructions.end())
-		return ImGui::PushStyleColor(ImGuiCol_Text, (ImVec4)ImColor::HSV(305 / 360.0, .4, .85));
+		ImGui::PushStyleColor(ImGuiCol_Text, (ImVec4)ImColor::HSV(305 / 360.0, .4, .85));
+	else if (logicalIntructions.find(instruction->id) != branchIntructions.end())
+		ImGui::PushStyleColor(ImGuiCol_Text, (ImVec4)ImColor::HSV(25 / 360.0, .3, 1));
+	else if (arithmeticIntructions.find(instruction->id) != branchIntructions.end())
+		ImGui::PushStyleColor(ImGuiCol_Text, (ImVec4)ImColor::HSV(25 / 360.0, .3, 1));
+	else if (instruction->id == SH_INS_NOP)
+		ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetColorU32(ImGuiCol_TextDisabled));
+	else
+		ImGui::PushStyleColor(ImGuiCol_Text, (ImVec4)ImColor::HSV(0, 0, .9));
 
-	if (logicalIntructions.find(instruction->id) != branchIntructions.end())
-		return ImGui::PushStyleColor(ImGuiCol_Text, (ImVec4)ImColor::HSV(25 / 360.0, .3, 1));
-	if (arithmeticIntructions.find(instruction->id) != branchIntructions.end())
-		return ImGui::PushStyleColor(ImGuiCol_Text, (ImVec4)ImColor::HSV(25 / 360.0, .3, 1));
-
-	if (instruction->id == SH_INS_NOP)
-		return ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetColorU32(ImGuiCol_TextDisabled));
-
-	return ImGui::PushStyleColor(ImGuiCol_Text, (ImVec4)ImColor::HSV(0, 0, .9));
+	ImGui::Text("%-8s", instruction->mnemonic);
+	ImGui::PopStyleColor();
 }
