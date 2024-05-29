@@ -100,11 +100,11 @@ static void pushMnemonicColor(cs_insn *instruction);
 /**
  * Custom wrapper for cs_disasm_iter that does not modify arguments.
  */
-static bool fc_disasm_iter(csh handle, const uint8_t *code, uint64_t address, cs_insn *insn)
+static bool disasmInstruction(csh handle, u16 code, uint64_t address, cs_insn *insn)
 {
-	const uint8_t *codeLocal = code;
+	u16 *codePtr = &code;
 	size_t instructionSize = 2;
-	return cs_disasm_iter(handle, &codeLocal, &instructionSize, &address, insn);
+	return cs_disasm_iter(handle, (const u8 **) &codePtr, &instructionSize, &address, insn);
 }
 
 // TODO: Extract into smaller functions
@@ -185,7 +185,7 @@ void gui_debugger_disasm()
 
 		ImGui::TableNextColumn();
 
-		if (!fc_disasm_iter(capstoneHandle, code, addr, insn)) {
+		if (!disasmInstruction(capstoneHandle, instr, addr, insn)) {
 			ImGui::TextDisabled("Invalid instruction");
 		} else {
 			pushMnemonicColor(insn);
