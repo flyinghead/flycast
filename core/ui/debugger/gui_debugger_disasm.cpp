@@ -239,7 +239,7 @@ void gui_debugger_disasm()
 			// Draw breakpoint in center of cell
 			ImVec2 center = bpCellRect.GetCenter();
 			ImVec2 bpPos = ImVec2(center.x, center.y);
-			ImGui::GetForegroundDrawList()->AddCircleFilled(bpPos, 4, bpColor);
+			ImGui::GetForegroundDrawList()->AddCircleFilled(bpPos, uiScaled(4), bpColor);
 		}
 
 		if (isBreakpointCellClicked) {
