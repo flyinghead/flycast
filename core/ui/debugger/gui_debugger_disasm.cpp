@@ -250,13 +250,16 @@ void gui_debugger_disasm()
 		}
 
 		// If there is no more space, stop drawing
-		if (ImGui::GetContentRegionAvail().y < bpCellRect.GetHeight() + 2.0f)
+		// TODO: Calculate the bottom bar height instead of hardcoding it, or
+		// TODO: Clip the last table row
+		if (ImGui::GetContentRegionAvail().y < uiScaled(44))
 			break;
 	}
 
 	ImGui::PopStyleColor();
 	ImGui::EndTable();
 	bool isTableHovered = ImGui::IsItemHovered();
+	ImGui::PopFont();
 
 	// Draw scrollbar
 	// TODO: Extract scrollbar drawing to a separate function
@@ -293,6 +296,19 @@ void gui_debugger_disasm()
 			disasmAddress += wheel * -1;
 	}
 
+	ImGui::Separator();
+
+	// Use dense layout
+	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(style.FramePadding.x, 0));
+
+	// TODO: Use key bindings instead
+	if (ImGui::Button("Page Up"))
+		disasmAddress -= rowCount * 2;
+	ImGui::SameLine();
+	if (ImGui::Button("Page Down"))
+		disasmAddress += rowCount * 2;
+	ImGui::PopStyleVar();
+
 	bool isPcOutsideDisasm = (pcAddr >= disasmAddress + rowCount * 2) || pcAddr < disasmAddress;
 
 	// Follow PC when stepping
@@ -307,7 +323,6 @@ void gui_debugger_disasm()
 	if (capstoneHandle)
 		cs_close(&capstoneHandle);
 
-	ImGui::PopFont();
 	ImGui::End();
 
 	lastPc = pc;
