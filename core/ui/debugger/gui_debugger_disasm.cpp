@@ -35,6 +35,7 @@
 extern ImFont *monospaceFont;
 
 static u32 disasmAddress = 0x0c010000;
+static u32 lastPc = 0;
 static bool followPc = true;
 static std::unordered_set<unsigned int> branchIntructions = {
 	SH_INS_BF_S,
@@ -96,6 +97,7 @@ static std::unordered_set<unsigned int> arithmeticIntructions = {
 };
 
 static void drawMnemonic(cs_insn *instruction);
+static void goTo(u32 address);
 
 /**
  * Custom wrapper for cs_disasm_iter that does not modify arguments.
@@ -111,21 +113,45 @@ static bool disasmInstruction(csh handle, u16 code, uint64_t address, cs_insn *i
 void gui_debugger_disasm()
 {
 	u32 pc = *GetRegPtr(reg_nextpc);
+	bool pcChanged = pc != lastPc;
 	u32 pcAddr = pc & 0x1fffffff;
 	size_t rowIndex = 0;
 	bool running = emu.running();
+	ImGuiStyle &style = ImGui::GetStyle();
 
 	ImGui::SetNextWindowPos(ScaledVec2(16, 110), ImGuiCond_FirstUseEver);
 	ImGui::SetNextWindowSize(ScaledVec2(440, 600), ImGuiCond_FirstUseEver);
 	ImGui::SetNextWindowSizeConstraints(ScaledVec2(-1, 200), ScaledVec2(-1, FLT_MAX));
 	ImGui::Begin("Disassembly", NULL, ImGuiWindowFlags_NoCollapse);
 
+	// Draw upper bar
 	{
-		DisabledScope scope(running);
-		ImGui::Checkbox("Follow PC", &followPc);
+		// Use dense layout
+		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(style.FramePadding.x, 0));
+
+		// Go to address
+		static u32 gotoAddress = disasmAddress;
+		ImGui::PushItemWidth(ImGui::CalcTextSize("00000000").x + style.FramePadding.x * 2);
+		ImGui::InputScalar("##gotoAddress", ImGuiDataType_U32, &gotoAddress, NULL, NULL, "%08X", ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_CharsUppercase);
+		ImGui::PopItemWidth();
+		ImGui::SameLine();
+		if (ImGui::Button("Go"))
+			goTo(gotoAddress);
+
+		// Follow PC
+		{
+			DisabledScope scope(running);
+			ImGui::SameLine(0, ImGui::GetStyle().ItemSpacing.x * 2);
+			ImGui::Checkbox("Follow PC", &followPc);
+		}
+
+		ImGui::PopStyleVar();
 	}
 
-	ImGui::PushFont(monospaceFont);
+	// Draw disassembly table
+	ImGui::Separator();
+	if (!ImGui::BeginTable("DisassemblyTable", 4, ImGuiTableFlags_SizingFixedFit))
+		return;
 
 	// TODO: Capstone doesn't need to be initialized every frame
 	csh capstoneHandle;
@@ -136,9 +162,7 @@ void gui_debugger_disasm()
 	cs_option(capstoneHandle, CS_OPT_DETAIL, CS_OPT_ON);
 	cs_insn *insn = cs_malloc(capstoneHandle);
 
-	// Render disassembly table
-	if (!ImGui::BeginTable("DisassemblyTable", 4, ImGuiTableFlags_SizingFixedFit))
-		return;
+	ImGui::PushFont(monospaceFont);
 	ImGui::PushStyleColor(ImGuiCol_Text, (ImVec4)ImColor::HSV(0, 0, .9));
 
 	ImGuiTable *table = ImGui::GetCurrentTable();
@@ -249,7 +273,6 @@ void gui_debugger_disasm()
 
 	size_t rowCount = rowIndex + 1;
 	ImS64 scrollPosition = (disasmAddress - DC_RAM_BASE) / 2;
-	bool wheelScrolled = false;
 	bool scrollbarScrolled = ImGui::ScrollbarEx(
 		bb,
 		ImGui::GetID("DisassemblyScrollBar"),
@@ -265,19 +288,14 @@ void gui_debugger_disasm()
 		disasmAddress = DC_RAM_BASE + scrollPosition * 2;
 	} else if (isTableHovered) {
 		ImS64 wheel = ImGui::GetIO().MouseWheel;
-		if (wheel != 0) {
+		if (wheel != 0)
 			disasmAddress += wheel * -1;
-			wheelScrolled = true;
-		}
 	}
 
-
 	bool isPcOutsideDisasm = (pcAddr >= disasmAddress + rowCount * 2) || pcAddr < disasmAddress;
-	// Stop following the PC if the user scrolled the PC out of view
-	if (isPcOutsideDisasm && (wheelScrolled || scrollbarScrolled))
-		followPc = false;
+
 	// Follow PC when stepping
-	if (!running && followPc && isPcOutsideDisasm)
+	if (!running && followPc && pcChanged && isPcOutsideDisasm)
 		disasmAddress = pcAddr;
 	// Ensure disasm address doesn't go out of bounds
 	if (disasmAddress <= DC_RAM_BASE || shouldResetDisasmAddress)
@@ -290,6 +308,8 @@ void gui_debugger_disasm()
 
 	ImGui::PopFont();
 	ImGui::End();
+
+	lastPc = pc;
 }
 
 static void drawMnemonic(cs_insn *instruction)
@@ -307,4 +327,10 @@ static void drawMnemonic(cs_insn *instruction)
 
 	ImGui::Text("%-8s", instruction->mnemonic);
 	ImGui::PopStyleColor();
+}
+
+static void goTo(u32 address)
+{
+	// Ignore modifier bits and align to 2 bytes
+	disasmAddress = address & 0x1ffffffe;
 }
