@@ -3080,7 +3080,7 @@ static void gameTooltip(const std::string& tip)
 
 static bool gameImageButton(ImguiTexture& texture, const std::string& tooltip, ImVec2 size, const std::string& gameName)
 {
-	bool pressed = texture.button("", size, gameName);
+	bool pressed = texture.button("##imagebutton", size, gameName);
 	gameTooltip(tooltip);
 
     return pressed;
