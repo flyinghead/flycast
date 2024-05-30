@@ -233,7 +233,7 @@ public:
 
 	bool hasEnabledMatchPoint(Breakpoint::Type type, u32 addr)
 	{
-		addr &= 0x1fffffff;
+		addr &= 0x1ffffffe;
 		auto it = breakpoints[type].find(addr);
 		return it != breakpoints[type].end() && it->second.enabled;
 	}
@@ -241,7 +241,7 @@ public:
 	bool insertMatchpoint(Breakpoint::Type type, u32 addr, u32 len)
 	{
 		// TODO: Review address cleaning responsability
-		addr &= 0x1fffffff;
+		addr &= 0x1ffffffe;
 		if (type == Breakpoint::BP_TYPE_SOFTWARE_BREAK && len != 2) {
 			WARN_LOG(COMMON, "insertMatchpoint: length != 2: %d", len);
 			return false;
@@ -256,7 +256,7 @@ public:
 	}
 	bool removeMatchpoint(Breakpoint::Type type, u32 addr, u32 len)
 	{
-		addr &= 0x1fffffff;
+		addr &= 0x1ffffffe;
 		if (type == Breakpoint::BP_TYPE_SOFTWARE_BREAK && len != 2) {
 			WARN_LOG(COMMON, "removeMatchpoint: length != 2: %d", len);
 			return false;
@@ -271,7 +271,7 @@ public:
 
 	bool enableMatchpoint(Breakpoint::Type type, u32 addr, u32 len)
 	{
-		addr &= 0x1fffffff;
+		addr &= 0x1ffffffe;
 		if (type == Breakpoint::BP_TYPE_SOFTWARE_BREAK && len != 2) {
 			WARN_LOG(COMMON, "insertMatchpoint: length != 2: %d", len);
 			return false;
@@ -286,7 +286,7 @@ public:
 
 	bool disableMatchpoint(Breakpoint::Type type, u32 addr, u32 len)
 	{
-		addr &= 0x1fffffff;
+		addr &= 0x1ffffffe;
 		if (type == Breakpoint::BP_TYPE_SOFTWARE_BREAK && len != 2) {
 			WARN_LOG(COMMON, "removeMatchpoint: length != 2: %d", len);
 			return false;

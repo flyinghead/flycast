@@ -130,9 +130,10 @@ void gui_debugger_disasm()
 		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(style.FramePadding.x, 0));
 
 		// Go to address
+		// TODO: Extract InputAddress function
 		static u32 gotoAddress = disasmAddress;
 		ImGui::PushItemWidth(ImGui::CalcTextSize("00000000").x + style.FramePadding.x * 2);
-		ImGui::InputScalar("##gotoAddress", ImGuiDataType_U32, &gotoAddress, NULL, NULL, "%08X", ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_CharsUppercase);
+		ImGui::InputScalar("##gotoAddress", ImGuiDataType_U32, &gotoAddress, NULL, NULL, "%08X", ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_CharsUppercase | ImGuiInputTextFlags_NoHorizontalScroll);
 		ImGui::PopItemWidth();
 		ImGui::SameLine();
 		if (ImGui::Button("Go"))

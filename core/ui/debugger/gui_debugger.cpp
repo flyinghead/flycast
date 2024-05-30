@@ -228,22 +228,17 @@ static void gui_debugger_breakpoints()
 	ImGui::SetNextWindowSize(ScaledVec2(152, 0));
 	ImGui::Begin("Breakpoints", &breakpointsWindowOpen, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
 
+	static u32 bpaddr = 0x8c010000;
+	// TODO: Extract InputAddress function
 	ImGui::PushItemWidth(ImGui::CalcTextSize("00000000").x + ImGui::GetStyle().FramePadding.x * 2);
-	ImGui::AlignTextToFramePadding();
-	ImGui::Text("0x");
-	ImGui::SameLine(0, 2);
-	static char bpBuffer[9] = "";
-	ImGui::InputTextWithHint("##bpAddr", "Address", bpBuffer, 9, ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_CharsUppercase);
+	ImGui::InputScalar("##bpddress", ImGuiDataType_U32, &bpaddr, NULL, NULL, "%08X", ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_CharsUppercase | ImGuiInputTextFlags_NoHorizontalScroll);
 	ImGui::PopItemWidth();
 
 	ImGui::SameLine();
 	if (ImGui::Button("Add"))
-	{
-		char* tmp;
-		long bpaddr = strtoul(bpBuffer, &tmp, 16);
-		printf("Adding breakpoint at 0x%08x\n", (u32) bpaddr);
 		debugAgent.insertMatchpoint(DebugAgent::Breakpoint::BP_TYPE_SOFTWARE_BREAK, (u32) bpaddr, 2);
-	}
+
+	ImGui::Separator();
 
 	ImGui::PushFont(monospaceFont);
 	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ScaledVec2(8,2));
