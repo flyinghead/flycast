@@ -234,6 +234,7 @@ static void gui_debugger_breakpoints()
 	ImGui::SameLine(0, 2);
 	static char bpBuffer[9] = "";
 	ImGui::InputTextWithHint("##bpAddr", "Address", bpBuffer, 9, ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_CharsUppercase);
+	ImGui::PopItemWidth();
 
 	ImGui::SameLine();
 	if (ImGui::Button("Add"))
