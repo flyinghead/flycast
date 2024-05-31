@@ -18,6 +18,7 @@
 */
 #include "oslib/http_client.h"
 #include "stdclass.h"
+#include <windows.h>
 
 namespace http {
 
@@ -104,7 +105,7 @@ int post(const std::string& url, const char *payload, const char *contentType, s
 	{
 		Uri^ uri = ref new Uri(ref new String(wurl.get()));
 		HttpStringContent^ content = ref new HttpStringContent(ref new String(wpayload.get()));
-		content->Headers->ContentLength = strlen(payload);
+		content->Headers->ContentLength = ref new Box<UINT64>(strlen(payload));
 		if (contentType != nullptr)
 			content->Headers->ContentType = ref new HttpMediaTypeHeaderValue(ref new String(wcontentType.get()));
 
