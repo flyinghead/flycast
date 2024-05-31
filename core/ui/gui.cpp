@@ -3086,6 +3086,42 @@ static bool gameImageButton(ImguiTexture& texture, const std::string& tooltip, I
     return pressed;
 }
 
+#ifdef TARGET_UWP
+void gui_load_game()
+{
+	using namespace Windows::Storage;
+	using namespace Concurrency;
+
+	auto picker = ref new Pickers::FileOpenPicker();
+	picker->ViewMode = Pickers::PickerViewMode::List;
+
+	picker->FileTypeFilter->Append(".chd");
+	picker->FileTypeFilter->Append(".gdi");
+	picker->FileTypeFilter->Append(".cue");
+	picker->FileTypeFilter->Append(".cdi");
+	picker->FileTypeFilter->Append(".zip");
+	picker->FileTypeFilter->Append(".7z");
+	picker->FileTypeFilter->Append(".elf");
+	if (!config::HideLegacyNaomiRoms)
+	{
+		picker->FileTypeFilter->Append(".bin");
+		picker->FileTypeFilter->Append(".lst");
+		picker->FileTypeFilter->Append(".dat");
+	}
+	picker->SuggestedStartLocation = Pickers::PickerLocationId::DocumentsLibrary;
+
+	create_task(picker->PickSingleFileAsync()).then([](StorageFile ^file) {
+		if (file)
+		{
+			NOTICE_LOG(COMMON, "Picked file: %S", file->Path->Data());
+			nowide::stackstring path;
+			if (path.convert(file->Path->Data()))
+				gui_start_game(path.get());
+		}
+	});
+}
+#endif
+
 static void gui_display_content()
 {
 	fullScreenWindow(false);
@@ -3110,7 +3146,6 @@ static void gui_display_content()
     if (gui_state != GuiState::SelectDisk)
     {
 #ifdef TARGET_UWP
-    	void gui_load_game();
 		ImGui::SameLine(ImGui::GetContentRegionMax().x - settingsBtnW
 				- ImGui::GetStyle().FramePadding.x * 2.0f  - ImGui::GetStyle().ItemSpacing.x - ImGui::CalcTextSize("Load...").x);
 		if (ImGui::Button("Load..."))

@@ -188,7 +188,11 @@ elseif(ANDROID)
 	target_compile_options(${PROJECT_NAME} PRIVATE -fno-stack-protector)
 	set(CMAKE_ANDROID_STL_TYPE "c++_static")
 elseif(WIN32)
-	add_executable(${PROJECT_NAME} WIN32 core/emulator.cpp)
+	if(BUILD_TESTING)
+		add_executable(${PROJECT_NAME} core/emulator.cpp)
+	else()
+		add_executable(${PROJECT_NAME} WIN32 core/emulator.cpp)
+	endif()
 	if(CMAKE_GENERATOR MATCHES "Visual Studio")
 		if(NOT CMAKE_VS_GLOBALS MATCHES "(^|;)UseMultiToolTask=")
 			list(APPEND CMAKE_VS_GLOBALS UseMultiToolTask=true)
@@ -425,7 +429,7 @@ if(NOT LIBRETRO)
 		endif()
 
 		# SDL2::SDL2main may or may not be available. It is e.g. required by Windows GUI applications
-		if(TARGET SDL2::SDL2main)
+		if(TARGET SDL2::SDL2main AND NOT BUILD_TESTING)
 			# It has an implicit dependency on SDL2 functions, so it MUST be added before SDL2::SDL2 (or SDL2::SDL2-static)
 			target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2main)
 		endif()
@@ -1804,11 +1808,13 @@ if(NOT LIBRETRO)
 					core/deps/SDL/src/main/winrt/SDL2-WinRTResources.rc)
 			target_sources(${PROJECT_NAME} PRIVATE
 				${ResourceFiles}
-				core/deps/SDL/src/main/winrt/SDL_winrt_main_NonXAML.cpp
 				shell/uwp/http_client.cpp)
+			if(NOT BUILD_TESTING)
+				target_sources(${PROJECT_NAME} PRIVATE core/deps/SDL/src/main/winrt/SDL_winrt_main_NonXAML.cpp)
+			endif()
 			set_target_properties(${PROJECT_NAME} PROPERTIES RESOURCE "${ResourceFiles}")
 		else()
-			if("x86" IN_LIST ARCHITECTURE OR "x86_64" IN_LIST ARCHITECTURE)
+			if(NOT BUILD_TESTING AND ("x86" IN_LIST ARCHITECTURE OR "x86_64" IN_LIST ARCHITECTURE))
 				target_include_directories(${PROJECT_NAME} PRIVATE core/deps/Spout/SPOUTSDK/SpoutGL)
 				target_include_directories(${PROJECT_NAME} PRIVATE core/deps/Spout/SPOUTSDK/SpoutDirectX/SpoutDX)
 				SET(SPOUT_BUILD_CMT OFF CACHE BOOL "For Visual Studio - build /MT to link runtime libraries" FORCE)
@@ -1827,9 +1833,13 @@ if(NOT LIBRETRO)
 endif()
 
 if(BUILD_TESTING)
-	target_sources(${PROJECT_NAME} PRIVATE
-			core/deps/gtest/src/gtest-all.cc
-			core/deps/gtest/src/gtest_main.cc)
+	option(BUILD_GMOCK "Builds the googlemock subproject" OFF)
+	option(INSTALL_GTEST "Enable installation of googletest. (Projects embedding googletest may want to turn this OFF.)" OFF)
+	if(WIN32)
+		set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+	endif()
+	add_subdirectory(core/deps/googletest EXCLUDE_FROM_ALL)
+	target_link_libraries(${PROJECT_NAME} PRIVATE gtest_main)
 
 	target_sources(${PROJECT_NAME} PRIVATE
 			tests/src/CheatManagerTest.cpp

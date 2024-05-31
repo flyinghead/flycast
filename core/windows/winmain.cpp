@@ -243,41 +243,6 @@ static bool dumpCallback(const wchar_t* dump_path,
 #endif
 
 #ifdef TARGET_UWP
-
-void gui_load_game()
-{
-	using namespace Windows::Storage;
-	using namespace Concurrency;
-
-	auto picker = ref new Pickers::FileOpenPicker();
-	picker->ViewMode = Pickers::PickerViewMode::List;
-
-	picker->FileTypeFilter->Append(".chd");
-	picker->FileTypeFilter->Append(".gdi");
-	picker->FileTypeFilter->Append(".cue");
-	picker->FileTypeFilter->Append(".cdi");
-	picker->FileTypeFilter->Append(".zip");
-	picker->FileTypeFilter->Append(".7z");
-	picker->FileTypeFilter->Append(".elf");
-	if (!config::HideLegacyNaomiRoms)
-	{
-		picker->FileTypeFilter->Append(".bin");
-		picker->FileTypeFilter->Append(".lst");
-		picker->FileTypeFilter->Append(".dat");
-	}
-	picker->SuggestedStartLocation = Pickers::PickerLocationId::DocumentsLibrary;
-
-	create_task(picker->PickSingleFileAsync()).then([](StorageFile ^file) {
-		if (file)
-		{
-			NOTICE_LOG(COMMON, "Picked file: %S", file->Path->Data());
-			nowide::stackstring path;
-			if (path.convert(file->Path->Data()))
-				gui_start_game(path.get());
-		}
-	});
-}
-
 namespace nowide {
 
 FILE *fopen(char const *file_name, char const *mode)
