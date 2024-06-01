@@ -115,12 +115,12 @@ void gui_debugger_disasm()
 	u32 pc = *GetRegPtr(reg_nextpc);
 	bool pcChanged = pc != lastPc;
 	u32 pcAddr = pc & 0x1fffffff;
-	size_t rowIndex = 0;
+	size_t rowIdx = 0;
 	bool running = emu.running();
 	ImGuiStyle &style = ImGui::GetStyle();
 
 	ImGui::SetNextWindowPos(ScaledVec2(16, 110), ImGuiCond_FirstUseEver);
-	ImGui::SetNextWindowSize(ScaledVec2(440, 600), ImGuiCond_FirstUseEver);
+	ImGui::SetNextWindowSize(ScaledVec2(440, 602), ImGuiCond_FirstUseEver);
 	ImGui::SetNextWindowSizeConstraints(ScaledVec2(-1, 200), ScaledVec2(-1, FLT_MAX));
 	ImGui::Begin("Disassembly", NULL, ImGuiWindowFlags_NoCollapse);
 
@@ -151,7 +151,16 @@ void gui_debugger_disasm()
 
 	// Draw disassembly table
 	ImGui::Separator();
-	if (!ImGui::BeginTable("DisassemblyTable", 4, ImGuiTableFlags_SizingFixedFit))
+
+	ImGui::PushFont(monospaceFont);
+
+	float footerHeight = ImGui::GetTextLineHeight() + style.ItemSpacing.y * 3;
+	float avaliableHeight = ImGui::GetContentRegionAvail().y - footerHeight;
+	float rowHeight = ImGui::GetTextLineHeight() + style.CellPadding.y * 2;
+	unsigned int rowCount = std::ceil(avaliableHeight / rowHeight);
+	unsigned int unclipedRowCount = std::floor(avaliableHeight / rowHeight);
+
+	if (!ImGui::BeginTable("DisassemblyTable", 4, ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_NoHostExtendY, ImVec2(0, -footerHeight)))
 		return;
 
 	// TODO: Capstone doesn't need to be initialized every frame
@@ -163,16 +172,15 @@ void gui_debugger_disasm()
 	cs_option(capstoneHandle, CS_OPT_DETAIL, CS_OPT_ON);
 	cs_insn *insn = cs_malloc(capstoneHandle);
 
-	ImGui::PushFont(monospaceFont);
 	ImGui::PushStyleColor(ImGuiCol_Text, (ImVec4)ImColor::HSV(0, 0, .9));
 
 	ImGuiTable *table = ImGui::GetCurrentTable();
 	ImGui::TableSetupColumn("bp", ImGuiTableColumnFlags_WidthFixed, 9.0f);
 
 	bool shouldResetDisasmAddress = false;
-	for (rowIndex = 0; ; rowIndex++)
+	for (rowIdx = 0; rowIdx < rowCount; rowIdx++)
 	{
-		const u32 addr = (disasmAddress & 0x1fffffff) + rowIndex * 2;
+		const u32 addr = (disasmAddress & 0x1fffffff) + rowIdx * 2;
 
 		// If we are out of bounds, stop drawing
 		if ((addr - DC_RAM_BASE) >= RAM_SIZE) {
@@ -183,6 +191,14 @@ void gui_debugger_disasm()
 		u16 instr = ReadMem16_nommu(addr);
 		const DebugAgent::Breakpoint *breakpoint = nullptr;
 
+
+		ImVec2 mousePos = ImGui::GetMousePos();
+		bool shouldHighlightRow = !running && addr == pcAddr;
+
+		ImGui::TableNextRow(0, rowHeight);
+		ImGui::TableNextColumn();
+
+		// Render breakpoint icon
 		auto it = debugAgent.breakpoints[DebugAgent::Breakpoint::Type::BP_TYPE_SOFTWARE_BREAK].find(addr);
 		const bool hasBreakpoint = it != debugAgent.breakpoints[DebugAgent::Breakpoint::Type::BP_TYPE_SOFTWARE_BREAK].end();
 
@@ -190,13 +206,30 @@ void gui_debugger_disasm()
 			breakpoint = &it->second;
 			instr = breakpoint->savedOp;
 		}
+		ImRect bpCellRect = ImGui::TableGetCellBgRect(table, 0);
+		bool isBreakpointCellHovered = bpCellRect.Contains(mousePos);
+		bool isBreakpointCellClicked = isBreakpointCellHovered && ImGui::IsMouseClicked(ImGuiMouseButton_Left);
+		ImU32 bpColor = 0;
+		if (hasBreakpoint) {
+			bpColor = IM_COL32(255, 0, 0, 255);
+			if (!breakpoint->enabled)
+				bpColor = IM_COL32(100, 100, 100, 255);
+		} else if (isBreakpointCellHovered)
+			bpColor = IM_COL32(127, 0, 0, 255);
 
-		ImVec2 mousePos = ImGui::GetMousePos();
-		bool shouldHighlightRow = !running && addr == pcAddr;
+		if (bpColor) {
+			// Draw breakpoint in center of cell
+			ImVec2 center = bpCellRect.GetCenter();
+			ImVec2 bpPos = ImVec2(center.x, center.y + uiScaled(1));
+			ImGui::GetForegroundDrawList()->AddCircleFilled(bpPos, uiScaled(4), bpColor);
+		}
 
-		ImGui::TableNextRow(0);
-		ImGui::TableNextColumn();
-		// Deffer breakpoint drawing because we don't know the cell height yet.
+		if (isBreakpointCellClicked) {
+			if (hasBreakpoint)
+				debugAgent.removeMatchpoint(DebugAgent::Breakpoint::BP_TYPE_SOFTWARE_BREAK, addr, 2);
+			else
+				debugAgent.insertMatchpoint(DebugAgent::Breakpoint::BP_TYPE_SOFTWARE_BREAK, addr, 2);
+		}
 
 		if (shouldHighlightRow)
 			ImGui::TableSetBgColor(ImGuiTableBgTarget_RowBg0, ImGui::GetColorU32(ImGuiCol_TableRowBgAlt));
@@ -222,44 +255,12 @@ void gui_debugger_disasm()
 			ImGui::SameLine();
 			ImGui::Text("%s", insn->op_str);
 		}
-
-		// Render breakpoint icon
-		ImRect bpCellRect = ImGui::TableGetCellBgRect(table, 0);
-		bool isBreakpointCellHovered = bpCellRect.Contains(mousePos);
-		bool isBreakpointCellClicked = isBreakpointCellHovered && ImGui::IsMouseClicked(ImGuiMouseButton_Left);
-		ImU32 bpColor = 0;
-		if (hasBreakpoint) {
-			bpColor = IM_COL32(255, 0, 0, 255);
-			if (!breakpoint->enabled)
-				bpColor = IM_COL32(100, 100, 100, 255);
-		} else if (isBreakpointCellHovered)
-			bpColor = IM_COL32(127, 0, 0, 255);
-
-		if (bpColor) {
-			// Draw breakpoint in center of cell
-			ImVec2 center = bpCellRect.GetCenter();
-			ImVec2 bpPos = ImVec2(center.x, center.y);
-			ImGui::GetForegroundDrawList()->AddCircleFilled(bpPos, uiScaled(4), bpColor);
-		}
-
-		if (isBreakpointCellClicked) {
-			if (hasBreakpoint)
-				debugAgent.removeMatchpoint(DebugAgent::Breakpoint::BP_TYPE_SOFTWARE_BREAK, addr, 2);
-			else
-				debugAgent.insertMatchpoint(DebugAgent::Breakpoint::BP_TYPE_SOFTWARE_BREAK, addr, 2);
-		}
-
-		// If there is no more space, stop drawing
-		// TODO: Calculate the bottom bar height instead of hardcoding it, or
-		// TODO: Clip the last table row
-		if (ImGui::GetContentRegionAvail().y < uiScaled(44))
-			break;
 	}
 
 	ImGui::PopStyleColor();
 	ImGui::EndTable();
-	bool isTableHovered = ImGui::IsItemHovered();
 	ImGui::PopFont();
+	bool isTableHovered = ImGui::IsItemHovered();
 
 	// Draw scrollbar
 	// TODO: Extract scrollbar drawing to a separate function
@@ -275,14 +276,13 @@ void gui_debugger_disasm()
 		innerRect.Max.y
 	);
 
-	size_t rowCount = rowIndex + 1;
 	ImS64 scrollPosition = (disasmAddress - DC_RAM_BASE) / 2;
 	bool scrollbarScrolled = ImGui::ScrollbarEx(
 		bb,
 		ImGui::GetID("DisassemblyScrollBar"),
 		ImGuiAxis_Y,
 		&scrollPosition,
-		rowCount,
+		unclipedRowCount,
 		numRowsTotal,
 		ImDrawFlags_RoundCornersNone
 	);
@@ -303,13 +303,14 @@ void gui_debugger_disasm()
 
 	// TODO: Use key bindings instead
 	if (ImGui::Button("Page Up"))
-		disasmAddress -= rowCount * 2;
+		disasmAddress -= unclipedRowCount * 2;
 	ImGui::SameLine();
 	if (ImGui::Button("Page Down"))
-		disasmAddress += rowCount * 2;
+		disasmAddress += unclipedRowCount * 2;
+
 	ImGui::PopStyleVar();
 
-	bool isPcOutsideDisasm = (pcAddr >= disasmAddress + rowCount * 2) || pcAddr < disasmAddress;
+	bool isPcOutsideDisasm = (pcAddr >= disasmAddress + unclipedRowCount * 2) || pcAddr < disasmAddress;
 
 	// Follow PC when stepping
 	if (!running && followPc && pcChanged && isPcOutsideDisasm)
