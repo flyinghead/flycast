@@ -1,4 +1,4 @@
-package com.reicast.emulator.emu;
+package com.flycast.emulator.emu;
 
 import android.media.AudioFormat;
 import android.media.AudioManager;

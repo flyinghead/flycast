@@ -1,4 +1,4 @@
-package com.reicast.emulator.periph;
+package com.flycast.emulator.periph;
 
 import android.content.Context;
 import android.content.SharedPreferences;

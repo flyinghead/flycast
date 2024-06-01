@@ -1,4 +1,4 @@
-package com.reicast.emulator.periph;
+package com.flycast.emulator.periph;
 
 import android.media.AudioFormat;
 import android.media.AudioRecord;

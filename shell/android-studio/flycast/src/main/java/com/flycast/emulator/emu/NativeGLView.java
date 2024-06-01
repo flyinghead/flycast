@@ -1,4 +1,4 @@
-package com.reicast.emulator.emu;
+package com.flycast.emulator.emu;
 
 import android.annotation.TargetApi;
 import android.content.Context;
@@ -17,8 +17,8 @@ import android.view.View;
 import android.view.WindowInsets;
 import android.view.WindowManager;
 
-import com.reicast.emulator.Emulator;
-import com.reicast.emulator.periph.InputDeviceManager;
+import com.flycast.emulator.Emulator;
+import com.flycast.emulator.periph.InputDeviceManager;
 
 public class NativeGLView extends SurfaceView implements SurfaceHolder.Callback {
     private boolean surfaceReady = false;

@@ -1,4 +1,4 @@
-package com.reicast.emulator.emu;
+package com.flycast.emulator.emu;
 
 import android.content.Context;
 import android.content.res.Configuration;
@@ -11,9 +11,9 @@ import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
 
-import com.reicast.emulator.Emulator;
-import com.reicast.emulator.periph.InputDeviceManager;
-import com.reicast.emulator.periph.VJoy;
+import com.flycast.emulator.Emulator;
+import com.flycast.emulator.periph.InputDeviceManager;
+import com.flycast.emulator.periph.VJoy;
 
 public class VirtualJoystickDelegate {
     private VibratorThread vibratorThread;

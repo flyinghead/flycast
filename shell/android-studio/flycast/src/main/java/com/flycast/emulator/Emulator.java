@@ -1,4 +1,4 @@
-package com.reicast.emulator;
+package com.flycast.emulator;
 
 import android.app.Application;
 import android.content.Context;
@@ -9,8 +9,8 @@ import android.util.Log;
 
 import androidx.appcompat.app.AppCompatDelegate;
 
-import com.reicast.emulator.config.Config;
-import com.reicast.emulator.emu.JNIdc;
+import com.flycast.emulator.config.Config;
+import com.flycast.emulator.emu.JNIdc;
 
 public class Emulator extends Application {
     private static Context context;

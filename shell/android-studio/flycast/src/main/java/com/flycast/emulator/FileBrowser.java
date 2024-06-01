@@ -1,4 +1,4 @@
-package com.reicast.emulator;
+package com.flycast.emulator;
 
 import org.apache.commons.lang3.StringUtils;
 
