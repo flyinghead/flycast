@@ -83,6 +83,8 @@ static void ImGui_ImplOpenGL3_DestroyDeviceObjects();
 bool    ImGui_ImplOpenGL3_Init()
 {
     ImGuiIO& io = ImGui::GetIO();
+    IMGUI_CHECKVERSION();
+
     io.BackendRendererName = "imgui_impl_opengl3";
 
     // Store GLSL version string so we can refer to it later in case we recreate shaders. Note: GLSL version is NOT the same as GL version. Leave this to NULL if unsure.
