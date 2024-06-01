@@ -90,6 +90,7 @@ public:
 		u16 type = 0;
 		u16 savedOp = 0;
 		bool enabled = true;
+		bool singleShot = false;
 	};
 
 	void doContinue(u32 pc = 1)
@@ -254,6 +255,7 @@ public:
 		WriteMem16_nommu(addr, 0xC308);	// trapa #0x20
 		return true;
 	}
+
 	bool removeMatchpoint(Breakpoint::Type type, u32 addr, u32 len)
 	{
 		addr &= 0x1ffffffe;
@@ -299,6 +301,19 @@ public:
 		return true;
 	}
 
+	Breakpoint *findMatchpoint(Breakpoint::Type type, u32 addr, u32 len)
+	{
+		addr &= 0x1ffffffe;
+		if (type == Breakpoint::BP_TYPE_SOFTWARE_BREAK && len != 2) {
+			WARN_LOG(COMMON, "removeMatchpoint: length != 2: %d", len);
+			return nullptr;
+		}
+		auto it = breakpoints[type].find(addr);
+		if (it == breakpoints[type].end())
+			return nullptr;
+		return &it->second;
+	}
+
 	u32 interrupt()
 	{
 		//config::DynarecEnabled = false;
@@ -312,6 +327,8 @@ public:
 	{
 		exception = findException(event);
 		Sh4cntx.pc -= 2;	// FIXME delay slot
+		if (breakpoints[Breakpoint::BP_TYPE_SOFTWARE_BREAK].find(Sh4cntx.pc & 0x1fffffff)->second.singleShot)
+			removeMatchpoint(Breakpoint::BP_TYPE_SOFTWARE_BREAK, Sh4cntx.pc, 2);
 	}
 
 	void postDebugTrap()
@@ -402,6 +419,36 @@ public:
 			}
 			++it;
 		}
+	}
+
+	bool hasEnabledSoftwareBreakpoint(u32 addr)
+	{
+		return hasEnabledMatchPoint(Breakpoint::BP_TYPE_SOFTWARE_BREAK, addr);
+	}
+
+	bool insertSoftwareBreakpoint(u32 addr)
+	{
+		return insertMatchpoint(Breakpoint::BP_TYPE_SOFTWARE_BREAK, addr, 2);
+	}
+
+	bool removeSoftwareBreakpoint(u32 addr)
+	{
+		return removeMatchpoint(Breakpoint::BP_TYPE_SOFTWARE_BREAK, addr, 2);
+	}
+
+	bool enableSoftwareBreakpoint(u32 addr)
+	{
+		return enableMatchpoint(Breakpoint::BP_TYPE_SOFTWARE_BREAK, addr, 2);
+	}
+
+	bool disableSoftwareBreakpoint(u32 addr)
+	{
+		return disableMatchpoint(Breakpoint::BP_TYPE_SOFTWARE_BREAK, addr, 2);
+	}
+
+	Breakpoint *findSoftwareBreakpoint(u32 addr)
+	{
+		return findMatchpoint(Breakpoint::BP_TYPE_SOFTWARE_BREAK, addr, 2);
 	}
 
 	u32 exception = 0;

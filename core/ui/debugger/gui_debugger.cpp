@@ -73,7 +73,38 @@ static void gui_debugger_control()
 		ImGui::PopButtonRepeat();
 	}
 
-	// TODO: Implement step over and step out
+	{
+		DisabledScope scope(running);
+		ImGui::SameLine();
+		ImGui::PushButtonRepeat(true);
+		if (ImGui::Button("Step Over"))
+		{
+			// If is subroutine instruction
+			u16 instruction = ReadMem16_nommu(Sh4cntx.pc);
+			if (debugAgent.hasEnabledSoftwareBreakpoint(Sh4cntx.pc))
+				instruction = debugAgent.findSoftwareBreakpoint(Sh4cntx.pc)->savedOp;
+
+			if ((instruction & 0xf000) == 0xb000 // bsr
+				|| (instruction & 0xf0ff) == 0x0003 // bsrf
+				|| (instruction & 0xf0ff) == 0x400b) // jsr
+			{
+				if (debugAgent.insertSoftwareBreakpoint(Sh4cntx.pc + 4)) {
+					debugAgent.findSoftwareBreakpoint(Sh4cntx.pc + 4)->singleShot = true;
+					// Step possible breakpoint in the next instruction
+					debugAgent.step();
+					emu.start();
+					// The debugger is rendered as OSD when the emulation is suspended.
+					gui_state = GuiState::Closed;
+				}
+			}
+			else {
+				debugAgent.step();
+			}
+		}
+		ImGui::PopButtonRepeat();
+	}
+
+	// TODO: Implement step out
 
 	{
 		// FIXME: Allow reset while running
@@ -248,6 +279,9 @@ static void gui_debugger_breakpoints()
 		DebugAgent::Breakpoint *breakpointToDelete = nullptr;
 		for (auto& [address, breakpoint] : debugAgent.breakpoints[DebugAgent::Breakpoint::Type::BP_TYPE_SOFTWARE_BREAK])
 		{
+			if (breakpoint.singleShot)
+				continue;
+
 			ImGui::PushID(address);
 			if (ImGui::Checkbox("##breakpoint", &breakpoint.enabled)) {
 				if (breakpoint.enabled)
