@@ -53,11 +53,15 @@ bool isLoggedOn();
 bool isActive();
 Game getCurrentGame();
 std::vector<Achievement> getAchievementList();
+bool canPause();
 
 #else
 
 static inline bool isActive() {
 	return false;
+}
+static inline bool canPause() {
+	return true;
 }
 
 #endif

@@ -16,7 +16,7 @@
     You should have received a copy of the GNU General Public License
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
-package com.reicast.emulator.emu;
+package com.flycast.emulator.emu;
 
 import android.util.Log;
 

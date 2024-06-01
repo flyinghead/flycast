@@ -1,4 +1,4 @@
-package com.reicast.emulator;
+package com.flycast.emulator;
 
 import android.content.Context;
 import android.os.Bundle;
@@ -16,10 +16,10 @@ import android.widget.RelativeLayout;
 
 import androidx.annotation.Nullable;
 
-import com.reicast.emulator.emu.JNIdc;
-import com.reicast.emulator.emu.NativeGLView;
-import com.reicast.emulator.periph.InputDeviceManager;
-import com.reicast.emulator.periph.VJoy;
+import com.flycast.emulator.emu.JNIdc;
+import com.flycast.emulator.emu.NativeGLView;
+import com.flycast.emulator.periph.InputDeviceManager;
+import com.flycast.emulator.periph.VJoy;
 
 public final class NativeGLActivity extends BaseGLActivity {
 

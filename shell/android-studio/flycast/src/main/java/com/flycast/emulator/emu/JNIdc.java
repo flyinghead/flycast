@@ -1,9 +1,9 @@
-package com.reicast.emulator.emu;
+package com.flycast.emulator.emu;
 
 import android.view.Surface;
 
-import com.reicast.emulator.Emulator;
-import com.reicast.emulator.periph.SipEmulator;
+import com.flycast.emulator.Emulator;
+import com.flycast.emulator.periph.SipEmulator;
 
 public final class JNIdc
 {

@@ -1,4 +1,4 @@
-package com.reicast.emulator.periph;
+package com.flycast.emulator.periph;
 
 import android.content.Context;
 import android.hardware.input.InputManager;
@@ -7,7 +7,7 @@ import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.view.InputDevice;
 
-import com.reicast.emulator.Emulator;
+import com.flycast.emulator.Emulator;
 
 import java.util.ArrayList;
 import java.util.List;

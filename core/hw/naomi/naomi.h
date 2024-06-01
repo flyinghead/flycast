@@ -20,8 +20,17 @@ u16 NaomiGameIDRead();
 void NaomiGameIDWrite(u16 data);
 void setGameSerialId(const u8 *data);
 
-void initMidiForceFeedback();
 void initDriveSimSerialPipe();
+
+namespace midiffb {
+
+void init();
+void reset();
+void term();
+void serialize(Serializer& ser);
+void deserialize(Deserializer& deser);
+
+}
 
 u32  libExtDevice_ReadMem_A0_006(u32 addr, u32 size);
 void libExtDevice_WriteMem_A0_006(u32 addr, u32 data, u32 size);

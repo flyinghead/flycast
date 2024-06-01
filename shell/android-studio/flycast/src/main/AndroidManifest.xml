@@ -36,7 +36,7 @@
         android:required="false" />
 
     <application
-        android:name="com.reicast.emulator.Emulator"
+        android:name="com.flycast.emulator.Emulator"
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
         android:theme="@android:style/Theme.NoTitleBar.Fullscreen"
@@ -50,14 +50,15 @@
 
         <meta-data android:name="android.max_aspect" android:value="2.1" />
         <activity
-            android:name="com.reicast.emulator.NativeGLActivity"
+            android:name="com.flycast.emulator.NativeGLActivity"
             android:configChanges="orientation|navigation|screenSize|screenLayout|uiMode|keyboard|keyboardHidden"
             android:screenOrientation="sensorLandscape"
             android:exported="true"
             android:theme="@style/Theme.AppCompat.NoActionBar"/>
         <activity-alias
-            android:name="com.reicast.emulator.MainActivity"
-            android:targetActivity="com.reicast.emulator.NativeGLActivity">
+            android:name="com.flycast.emulator.MainActivity"
+            android:targetActivity="com.flycast.emulator.NativeGLActivity"
+			android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

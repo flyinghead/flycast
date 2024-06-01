@@ -38,6 +38,9 @@
 [submodule "core/deps/rcheevos"]
 	path = core/deps/rcheevos
 	url = https://github.com/RetroAchievements/rcheevos.git
+[submodule "core/deps/googletest"]
+	path = core/deps/googletest
+	url = https://github.com/google/googletest.git
 [submodule "core/deps/capstone"]
 	path = core/deps/capstone
 	url = https://github.com/capstone-engine/capstone

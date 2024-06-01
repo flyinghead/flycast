@@ -1,4 +1,4 @@
-package com.reicast.emulator;
+package com.flycast.emulator;
 
 import android.Manifest;
 import android.app.Activity;
@@ -27,12 +27,12 @@ import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 
 import com.flycast.emulator.AndroidStorage;
-import com.reicast.emulator.config.Config;
-import com.reicast.emulator.emu.AudioBackend;
-import com.reicast.emulator.emu.HttpClient;
-import com.reicast.emulator.emu.JNIdc;
-import com.reicast.emulator.periph.InputDeviceManager;
-import com.reicast.emulator.periph.SipEmulator;
+import com.flycast.emulator.config.Config;
+import com.flycast.emulator.emu.AudioBackend;
+import com.flycast.emulator.emu.HttpClient;
+import com.flycast.emulator.emu.JNIdc;
+import com.flycast.emulator.periph.InputDeviceManager;
+import com.flycast.emulator.periph.SipEmulator;
 
 import java.io.File;
 import java.util.ArrayList;
