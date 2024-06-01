@@ -86,11 +86,11 @@ void dc_deserialize(Deserializer& deser)
 	naomi_Deserialize(deser);
 
 	deser >> config::Broadcast.get();
-	verify(config::Broadcast <= 4);
+	verify(config::Broadcast >= 0 && config::Broadcast <= 4);
 	deser >> config::Cable.get();
-	verify(config::Cable <= 3);
+	verify(config::Cable >= 0 && config::Cable <= 3);
 	deser >> config::Region.get();
-	verify(config::Region <= 3);
+	verify(config::Region >= 0 && config::Region <= 3);
 
 	naomi_cart_deserialize(deser);
 	gd_hle_state.Deserialize(deser);

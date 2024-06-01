@@ -186,11 +186,29 @@ static GamePortList GamesPorts[] = {
 		{ "MK-51037", "HDR-0106" },
 		{ 12079, 20675 },
 	},
+	{ // Dee Dee Planet
+		{ "HDR-0041" },
+		{ 9879 },
+	},
+	{ // Driving Strikers online demo
+		{ "IND-161053" },
+		{ 30099 },
+	},
+	{ // Floigan Bros
+		{ "MK-51114" },
+		{},
+		{ 37001 },
+	},
+	{ // Internet Game Pack
+		{ "MK-51138" },
+		{ 5656 },
+		{ 5011, 10500, 10501, 10502, 10503 },
+	},
 	{ // NBA 2K1,2K2 / NFL 2K1,2K2 / NCAA 2K2
-		{ "MK-51063", "HDR-0150",					// NBA 2K1
-		  "MK-51178", "HDR-0197", "MK-5117850",   // NBA 2K2
-		  "MK-51062", "HDR-0144",					// NFL 2K1
-		  "MK-51168", "HDR-0196",					// NFL 2K2
+		{ "MK-51063", "HDR-0150",				// NBA 2K1
+		  "MK-51178", "HDR-0197", "MK-5117850",	// NBA 2K2
+		  "MK-51062", "HDR-0144",				// NFL 2K1
+		  "MK-51168", "HDR-0196",				// NFL 2K2
 		  "MK-51176" },							// NCAA 2K2
 		{ 5502, 5503, 5656 },
 		{ 5011, 6666 },
@@ -215,6 +233,10 @@ static GamePortList GamesPorts[] = {
 		{ 7648, 1285, 1028 },
 		{ },
 	},
+	{ // Sega Tetris
+		{ "HDR-0073" },
+		{ 20675, 12079 },
+	},
 	{ // StarLancer
 		{ "T40209N", "T17723D 05" },
 		{ 2300, 6500, 47624 }, // FIXME 2300-2400 ?
@@ -229,10 +251,6 @@ static GamePortList GamesPorts[] = {
 		{ "T22904N", "T7016D  50" },
 		{ },
 		{ 17219 },
-	},
-	{ // Driving Strikers online demo
-		{ "IND-161053" },
-		{ 30099 },
 	},
 
 	{ // Atomiswave

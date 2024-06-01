@@ -824,7 +824,7 @@ struct retro_core_option_v2_definition option_defs_ar[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
    {
       CORE_OPTION_NAME "_detect_vsync_swap_interval",
@@ -2188,7 +2188,7 @@ struct retro_core_options_v2 options_ar = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_AST NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_AST NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_AST NULL
-#define OPTION_VAL_2_O26_AST NULL
+#define OPTION_VAL_2_O26_AST "x2"
 #define OPTION_VAL_4_AST "x4"
 #define OPTION_VAL_6_AST "x6"
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_AST NULL
@@ -2836,7 +2836,7 @@ struct retro_core_option_v2_definition option_defs_ast[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
    {
       CORE_OPTION_NAME "_detect_vsync_swap_interval",
@@ -4085,7 +4085,7 @@ struct retro_core_options_v2 options_ast = {
 #define CATEGORY_SYSTEM_INFO_0_BE NULL
 #define CATEGORY_VIDEO_LABEL_BE "Відэа"
 #define CATEGORY_VIDEO_INFO_0_BE NULL
-#define CATEGORY_PERFORMANCE_LABEL_BE NULL
+#define CATEGORY_PERFORMANCE_LABEL_BE "Прадукцыйнасць"
 #define CATEGORY_PERFORMANCE_INFO_0_BE NULL
 #define CATEGORY_HACKS_LABEL_BE NULL
 #define CATEGORY_HACKS_INFO_0_BE NULL
@@ -4096,23 +4096,23 @@ struct retro_core_options_v2 options_ast = {
 #define CATEGORY_VMU_LABEL_BE NULL
 #define CATEGORY_VMU_INFO_0_BE NULL
 #define CORE_OPTION_NAME_REGION_LABEL_BE "Рэгіён"
-#define OPTION_VAL_JAPAN_BE NULL
-#define OPTION_VAL_USA_BE NULL
-#define OPTION_VAL_EUROPE_BE NULL
+#define OPTION_VAL_JAPAN_BE "Японія"
+#define OPTION_VAL_USA_BE "ЗША"
+#define OPTION_VAL_EUROPE_BE "Еўропа"
 #define OPTION_VAL_DEFAULT_BE NULL
 #define CORE_OPTION_NAME_LANGUAGE_LABEL_BE "Мова"
 #define CORE_OPTION_NAME_LANGUAGE_INFO_0_BE NULL
-#define OPTION_VAL_JAPANESE_BE NULL
-#define OPTION_VAL_ENGLISH_BE NULL
-#define OPTION_VAL_GERMAN_BE NULL
-#define OPTION_VAL_FRENCH_BE NULL
-#define OPTION_VAL_SPANISH_BE NULL
-#define OPTION_VAL_ITALIAN_BE NULL
+#define OPTION_VAL_JAPANESE_BE "Японская"
+#define OPTION_VAL_ENGLISH_BE "Англійская"
+#define OPTION_VAL_GERMAN_BE "Нямецкая"
+#define OPTION_VAL_FRENCH_BE "Французская"
+#define OPTION_VAL_SPANISH_BE "Іспанская"
+#define OPTION_VAL_ITALIAN_BE "Італьянская"
 #define CORE_OPTION_NAME_HLE_BIOS_LABEL_BE NULL
 #define CORE_OPTION_NAME_HLE_BIOS_INFO_0_BE NULL
 #define CORE_OPTION_NAME_BOOT_TO_BIOS_LABEL_BE NULL
 #define CORE_OPTION_NAME_BOOT_TO_BIOS_INFO_0_BE NULL
-#define CORE_OPTION_NAME_ENABLE_DSP_LABEL_BE NULL
+#define CORE_OPTION_NAME_ENABLE_DSP_LABEL_BE "Уключыць DSP"
 #define CORE_OPTION_NAME_ENABLE_DSP_INFO_0_BE NULL
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_BE NULL
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_BE NULL
@@ -4120,10 +4120,10 @@ struct retro_core_options_v2 options_ast = {
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_BE NULL
 #define CORE_OPTION_NAME_EMULATE_BBA_LABEL_BE NULL
 #define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_BE NULL
-#define CORE_OPTION_NAME_UPNP_LABEL_BE NULL
+#define CORE_OPTION_NAME_UPNP_LABEL_BE "Уключыць UPnP"
 #define CORE_OPTION_NAME_UPNP_INFO_0_BE NULL
-#define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_BE NULL
-#define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_BE NULL
+#define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_BE "Унутраная раздзяляльнасць"
+#define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_BE "Змяніць раздзяляльнасць рэндэрынгу."
 #define OPTION_VAL_320X240_BE "320x240 (напалову)"
 #define OPTION_VAL_640X480_BE "640x480 (родная)"
 #define OPTION_VAL_800X600_BE NULL
@@ -4154,16 +4154,16 @@ struct retro_core_options_v2 options_ast = {
 #define CORE_OPTION_NAME_CABLE_TYPE_LABEL_BE NULL
 #define CORE_OPTION_NAME_CABLE_TYPE_INFO_0_BE NULL
 #define OPTION_VAL_VGA_BE NULL
-#define OPTION_VAL_TV_RGB_BE NULL
+#define OPTION_VAL_TV_RGB_BE "ТБ (RGB)"
 #define OPTION_VAL_TV_COMPOSITE_BE NULL
 #define CORE_OPTION_NAME_BROADCAST_LABEL_BE NULL
 #define OPTION_VAL_NTSC_BE NULL
-#define OPTION_VAL_PAL_BE NULL
-#define OPTION_VAL_PAL_N_BE NULL
-#define OPTION_VAL_PAL_M_BE NULL
+#define OPTION_VAL_PAL_BE "PAL (свет)"
+#define OPTION_VAL_PAL_N_BE "PAL-N (Аргенціна, Парагвай, Уругвай)"
+#define OPTION_VAL_PAL_M_BE "PAL-M (Бразілія)"
 #define CORE_OPTION_NAME_SCREEN_ROTATION_LABEL_BE "Арыентацыя экрана"
-#define OPTION_VAL_HORIZONTAL_BE NULL
-#define OPTION_VAL_VERTICAL_BE NULL
+#define OPTION_VAL_HORIZONTAL_BE "Гарызантальная"
+#define OPTION_VAL_VERTICAL_BE "Вертыкальная"
 #define CORE_OPTION_NAME_ALPHA_SORTING_LABEL_BE NULL
 #define CORE_OPTION_NAME_ALPHA_SORTING_INFO_0_BE NULL
 #define OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_BE NULL
@@ -4171,10 +4171,10 @@ struct retro_core_options_v2 options_ast = {
 #define OPTION_VAL_PER_PIXEL_ACCURATE_BE NULL
 #define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_BE NULL
 #define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_INFO_0_BE NULL
-#define OPTION_VAL_512MB_BE NULL
-#define OPTION_VAL_1GB_BE NULL
-#define OPTION_VAL_2GB_BE NULL
-#define OPTION_VAL_4GB_BE NULL
+#define OPTION_VAL_512MB_BE "512 МБ"
+#define OPTION_VAL_1GB_BE "1 ГБ"
+#define OPTION_VAL_2GB_BE "2 ГБ"
+#define OPTION_VAL_4GB_BE "4 ГБ"
 #define CORE_OPTION_NAME_OIT_LAYERS_LABEL_BE NULL
 #define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_BE NULL
 #define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_BE NULL
@@ -4227,60 +4227,60 @@ struct retro_core_options_v2 options_ast = {
 #define CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_BE NULL
 #define CORE_OPTION_NAME_SH4CLOCK_LABEL_BE NULL
 #define CORE_OPTION_NAME_SH4CLOCK_INFO_0_BE NULL
-#define OPTION_VAL_100_BE NULL
-#define OPTION_VAL_110_BE NULL
-#define OPTION_VAL_120_BE NULL
-#define OPTION_VAL_130_BE NULL
-#define OPTION_VAL_140_BE NULL
-#define OPTION_VAL_150_BE NULL
-#define OPTION_VAL_160_BE NULL
-#define OPTION_VAL_170_BE NULL
-#define OPTION_VAL_180_BE NULL
-#define OPTION_VAL_190_BE NULL
-#define OPTION_VAL_200_BE NULL
-#define OPTION_VAL_210_BE NULL
-#define OPTION_VAL_220_BE NULL
-#define OPTION_VAL_230_BE NULL
-#define OPTION_VAL_240_BE NULL
-#define OPTION_VAL_250_BE NULL
-#define OPTION_VAL_260_BE NULL
-#define OPTION_VAL_270_BE NULL
-#define OPTION_VAL_280_BE NULL
-#define OPTION_VAL_290_BE NULL
-#define OPTION_VAL_300_BE NULL
-#define OPTION_VAL_310_BE NULL
-#define OPTION_VAL_320_BE NULL
-#define OPTION_VAL_330_BE NULL
-#define OPTION_VAL_340_BE NULL
-#define OPTION_VAL_350_BE NULL
-#define OPTION_VAL_360_BE NULL
-#define OPTION_VAL_370_BE NULL
-#define OPTION_VAL_380_BE NULL
-#define OPTION_VAL_390_BE NULL
-#define OPTION_VAL_400_BE NULL
-#define OPTION_VAL_410_BE NULL
-#define OPTION_VAL_420_BE NULL
-#define OPTION_VAL_430_BE NULL
-#define OPTION_VAL_440_BE NULL
-#define OPTION_VAL_450_BE NULL
-#define OPTION_VAL_460_BE NULL
-#define OPTION_VAL_470_BE NULL
-#define OPTION_VAL_480_BE NULL
-#define OPTION_VAL_490_BE NULL
-#define OPTION_VAL_500_BE NULL
+#define OPTION_VAL_100_BE "100 МГц"
+#define OPTION_VAL_110_BE "110 МГц"
+#define OPTION_VAL_120_BE "120 МГц"
+#define OPTION_VAL_130_BE "130 МГц"
+#define OPTION_VAL_140_BE "140 МГц"
+#define OPTION_VAL_150_BE "150 МГц"
+#define OPTION_VAL_160_BE "160 МГц"
+#define OPTION_VAL_170_BE "170 МГц"
+#define OPTION_VAL_180_BE "180 МГц"
+#define OPTION_VAL_190_BE "190 МГц"
+#define OPTION_VAL_200_BE "200 МГц"
+#define OPTION_VAL_210_BE "210 МГц"
+#define OPTION_VAL_220_BE "220 МГц"
+#define OPTION_VAL_230_BE "230 МГц"
+#define OPTION_VAL_240_BE "240 МГц"
+#define OPTION_VAL_250_BE "250 МГц"
+#define OPTION_VAL_260_BE "260 МГц"
+#define OPTION_VAL_270_BE "270 МГц"
+#define OPTION_VAL_280_BE "280 МГц"
+#define OPTION_VAL_290_BE "290 МГц"
+#define OPTION_VAL_300_BE "300 МГц"
+#define OPTION_VAL_310_BE "310 МГц"
+#define OPTION_VAL_320_BE "320 МГц"
+#define OPTION_VAL_330_BE "330 МГц"
+#define OPTION_VAL_340_BE "340 МГц"
+#define OPTION_VAL_350_BE "350 МГц"
+#define OPTION_VAL_360_BE "360 МГц"
+#define OPTION_VAL_370_BE "370 МГц"
+#define OPTION_VAL_380_BE "380 МГц"
+#define OPTION_VAL_390_BE "390 МГц"
+#define OPTION_VAL_400_BE "400 МГц"
+#define OPTION_VAL_410_BE "410 МГц"
+#define OPTION_VAL_420_BE "420 МГц"
+#define OPTION_VAL_430_BE "430 МГц"
+#define OPTION_VAL_440_BE "440 МГц"
+#define OPTION_VAL_450_BE "450 МГц"
+#define OPTION_VAL_460_BE "460 МГц"
+#define OPTION_VAL_470_BE "470 МГц"
+#define OPTION_VAL_480_BE "480 МГц"
+#define OPTION_VAL_490_BE "490 МГц"
+#define OPTION_VAL_500_BE "500 МГц"
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_BE NULL
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_INFO_0_BE NULL
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_BE NULL
 #define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_BE NULL
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_BE NULL
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_INFO_0_BE NULL
-#define OPTION_VAL_0_BE NULL
-#define OPTION_VAL_5_BE NULL
-#define OPTION_VAL_10_BE NULL
-#define OPTION_VAL_15_BE NULL
-#define OPTION_VAL_20_BE NULL
-#define OPTION_VAL_25_BE NULL
-#define OPTION_VAL_30_BE NULL
+#define OPTION_VAL_0_BE "0 %"
+#define OPTION_VAL_5_BE "5 %"
+#define OPTION_VAL_10_BE "10 %"
+#define OPTION_VAL_15_BE "15 %"
+#define OPTION_VAL_20_BE "20 %"
+#define OPTION_VAL_25_BE "25 %"
+#define OPTION_VAL_30_BE "30 %"
 #define CORE_OPTION_NAME_TRIGGER_DEADZONE_LABEL_BE NULL
 #define CORE_OPTION_NAME_TRIGGER_DEADZONE_INFO_0_BE NULL
 #define CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_BE NULL
@@ -4290,32 +4290,32 @@ struct retro_core_options_v2 options_ast = {
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_BE NULL
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_BE NULL
 #define CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_BE "Маштабаванне прыцэлу пісталета"
-#define OPTION_VAL_50_BE NULL
-#define OPTION_VAL_60_BE NULL
-#define OPTION_VAL_70_BE NULL
-#define OPTION_VAL_80_BE NULL
-#define OPTION_VAL_90_BE NULL
-#define OPTION_VAL_100_O45_BE NULL
-#define OPTION_VAL_110_O45_BE NULL
-#define OPTION_VAL_120_O45_BE NULL
-#define OPTION_VAL_130_O45_BE NULL
-#define OPTION_VAL_140_O45_BE NULL
-#define OPTION_VAL_150_O45_BE NULL
-#define OPTION_VAL_160_O45_BE NULL
-#define OPTION_VAL_170_O45_BE NULL
-#define OPTION_VAL_180_O45_BE NULL
-#define OPTION_VAL_190_O45_BE NULL
-#define OPTION_VAL_200_O45_BE NULL
-#define OPTION_VAL_210_O45_BE NULL
-#define OPTION_VAL_220_O45_BE NULL
-#define OPTION_VAL_230_O45_BE NULL
-#define OPTION_VAL_240_O45_BE NULL
-#define OPTION_VAL_250_O45_BE NULL
-#define OPTION_VAL_260_O45_BE NULL
-#define OPTION_VAL_270_O45_BE NULL
-#define OPTION_VAL_280_O45_BE NULL
-#define OPTION_VAL_290_O45_BE NULL
-#define OPTION_VAL_300_O45_BE NULL
+#define OPTION_VAL_50_BE "50 %"
+#define OPTION_VAL_60_BE "60 %"
+#define OPTION_VAL_70_BE "70 %"
+#define OPTION_VAL_80_BE "80 %"
+#define OPTION_VAL_90_BE "90 %"
+#define OPTION_VAL_100_O45_BE "100 %"
+#define OPTION_VAL_110_O45_BE "110 %"
+#define OPTION_VAL_120_O45_BE "120 %"
+#define OPTION_VAL_130_O45_BE "130 %"
+#define OPTION_VAL_140_O45_BE "140 %"
+#define OPTION_VAL_150_O45_BE "150 %"
+#define OPTION_VAL_160_O45_BE "160 %"
+#define OPTION_VAL_170_O45_BE "170 %"
+#define OPTION_VAL_180_O45_BE "180 %"
+#define OPTION_VAL_190_O45_BE "190 %"
+#define OPTION_VAL_200_O45_BE "200 %"
+#define OPTION_VAL_210_O45_BE "210 %"
+#define OPTION_VAL_220_O45_BE "220 %"
+#define OPTION_VAL_230_O45_BE "230 %"
+#define OPTION_VAL_240_O45_BE "240 %"
+#define OPTION_VAL_250_O45_BE "250 %"
+#define OPTION_VAL_260_O45_BE "260 %"
+#define OPTION_VAL_270_O45_BE "270 %"
+#define OPTION_VAL_280_O45_BE "280 %"
+#define OPTION_VAL_290_O45_BE "290 %"
+#define OPTION_VAL_300_O45_BE "300 %"
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_BE NULL
 #define OPTION_VAL_WHITE_BE NULL
 #define OPTION_VAL_RED_BE "Чырвоная"
@@ -4392,7 +4392,7 @@ struct retro_core_options_v2 options_ast = {
 #define OPTION_VAL_LIGHT_YELLOW_2_27_BE NULL
 #define CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_BE NULL
 #define CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_BE NULL
-#define OPTION_VAL_40_BE NULL
+#define OPTION_VAL_40_BE "40 %"
 #define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_BE NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_BE NULL
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_BE NULL
@@ -4848,7 +4848,7 @@ struct retro_core_option_v2_definition option_defs_be[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
    {
       CORE_OPTION_NAME "_detect_vsync_swap_interval",
@@ -6860,7 +6860,7 @@ struct retro_core_option_v2_definition option_defs_bg[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
    {
       CORE_OPTION_NAME "_detect_vsync_swap_interval",
@@ -8872,7 +8872,7 @@ struct retro_core_option_v2_definition option_defs_ca[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
    {
       CORE_OPTION_NAME "_detect_vsync_swap_interval",
@@ -10236,7 +10236,7 @@ struct retro_core_options_v2 options_ca = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_CHS NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_CHS NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_CHS NULL
-#define OPTION_VAL_2_O26_CHS NULL
+#define OPTION_VAL_2_O26_CHS "2 倍"
 #define OPTION_VAL_4_CHS "4 倍"
 #define OPTION_VAL_6_CHS NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_CHS NULL
@@ -10884,7 +10884,7 @@ struct retro_core_option_v2_definition option_defs_chs[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
    {
       CORE_OPTION_NAME "_detect_vsync_swap_interval",
@@ -12248,7 +12248,7 @@ struct retro_core_options_v2 options_chs = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_CHT NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_CHT NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_CHT NULL
-#define OPTION_VAL_2_O26_CHT NULL
+#define OPTION_VAL_2_O26_CHT "2倍"
 #define OPTION_VAL_4_CHT "4倍"
 #define OPTION_VAL_6_CHT "6倍"
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_CHT NULL
@@ -12896,7 +12896,7 @@ struct retro_core_option_v2_definition option_defs_cht[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
    {
       CORE_OPTION_NAME "_detect_vsync_swap_interval",
@@ -14908,7 +14908,7 @@ struct retro_core_option_v2_definition option_defs_cs[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
    {
       CORE_OPTION_NAME "_detect_vsync_swap_interval",
@@ -16920,7 +16920,7 @@ struct retro_core_option_v2_definition option_defs_cy[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
    {
       CORE_OPTION_NAME "_detect_vsync_swap_interval",
@@ -18932,7 +18932,7 @@ struct retro_core_option_v2_definition option_defs_da[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
    {
       CORE_OPTION_NAME "_detect_vsync_swap_interval",
@@ -20391,27 +20391,27 @@ struct retro_core_options_v2 options_da = {
 #define OPTION_VAL_70_DE "70 %"
 #define OPTION_VAL_80_DE "80 %"
 #define OPTION_VAL_90_DE "90 %"
-#define OPTION_VAL_100_O45_DE NULL
-#define OPTION_VAL_110_O45_DE NULL
-#define OPTION_VAL_120_O45_DE NULL
-#define OPTION_VAL_130_O45_DE NULL
-#define OPTION_VAL_140_O45_DE NULL
-#define OPTION_VAL_150_O45_DE NULL
-#define OPTION_VAL_160_O45_DE NULL
-#define OPTION_VAL_170_O45_DE NULL
-#define OPTION_VAL_180_O45_DE NULL
-#define OPTION_VAL_190_O45_DE NULL
-#define OPTION_VAL_200_O45_DE NULL
-#define OPTION_VAL_210_O45_DE NULL
-#define OPTION_VAL_220_O45_DE NULL
-#define OPTION_VAL_230_O45_DE NULL
-#define OPTION_VAL_240_O45_DE NULL
-#define OPTION_VAL_250_O45_DE NULL
-#define OPTION_VAL_260_O45_DE NULL
-#define OPTION_VAL_270_O45_DE NULL
-#define OPTION_VAL_280_O45_DE NULL
-#define OPTION_VAL_290_O45_DE NULL
-#define OPTION_VAL_300_O45_DE NULL
+#define OPTION_VAL_100_O45_DE "100 %"
+#define OPTION_VAL_110_O45_DE "110 %"
+#define OPTION_VAL_120_O45_DE "120 %"
+#define OPTION_VAL_130_O45_DE "130 %"
+#define OPTION_VAL_140_O45_DE "140 %"
+#define OPTION_VAL_150_O45_DE "150 %"
+#define OPTION_VAL_160_O45_DE "160 %"
+#define OPTION_VAL_170_O45_DE "170 %"
+#define OPTION_VAL_180_O45_DE "180 %"
+#define OPTION_VAL_190_O45_DE "190 %"
+#define OPTION_VAL_200_O45_DE "200 %"
+#define OPTION_VAL_210_O45_DE "210 %"
+#define OPTION_VAL_220_O45_DE "220 %"
+#define OPTION_VAL_230_O45_DE "230 %"
+#define OPTION_VAL_240_O45_DE "240 %"
+#define OPTION_VAL_250_O45_DE "250 %"
+#define OPTION_VAL_260_O45_DE "260 %"
+#define OPTION_VAL_270_O45_DE "270 %"
+#define OPTION_VAL_280_O45_DE "280 %"
+#define OPTION_VAL_290_O45_DE "290 %"
+#define OPTION_VAL_300_O45_DE "300 %"
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_DE "Anzeige Pistolen-Fadenkreuz 1"
 #define OPTION_VAL_WHITE_DE "Weiß"
 #define OPTION_VAL_RED_DE "Rot"
@@ -20944,7 +20944,7 @@ struct retro_core_option_v2_definition option_defs_de[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
    {
       CORE_OPTION_NAME "_detect_vsync_swap_interval",
@@ -22956,7 +22956,7 @@ struct retro_core_option_v2_definition option_defs_el[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
    {
       CORE_OPTION_NAME "_detect_vsync_swap_interval",
@@ -24968,7 +24968,7 @@ struct retro_core_option_v2_definition option_defs_en[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
    {
       CORE_OPTION_NAME "_detect_vsync_swap_interval",
@@ -26980,7 +26980,7 @@ struct retro_core_option_v2_definition option_defs_eo[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
    {
       CORE_OPTION_NAME "_detect_vsync_swap_interval",
@@ -28439,27 +28439,27 @@ struct retro_core_options_v2 options_eo = {
 #define OPTION_VAL_70_ES "70 %"
 #define OPTION_VAL_80_ES "80 %"
 #define OPTION_VAL_90_ES "90 %"
-#define OPTION_VAL_100_O45_ES NULL
-#define OPTION_VAL_110_O45_ES NULL
-#define OPTION_VAL_120_O45_ES NULL
-#define OPTION_VAL_130_O45_ES NULL
-#define OPTION_VAL_140_O45_ES NULL
-#define OPTION_VAL_150_O45_ES NULL
-#define OPTION_VAL_160_O45_ES NULL
-#define OPTION_VAL_170_O45_ES NULL
-#define OPTION_VAL_180_O45_ES NULL
-#define OPTION_VAL_190_O45_ES NULL
-#define OPTION_VAL_200_O45_ES NULL
-#define OPTION_VAL_210_O45_ES NULL
-#define OPTION_VAL_220_O45_ES NULL
-#define OPTION_VAL_230_O45_ES NULL
-#define OPTION_VAL_240_O45_ES NULL
-#define OPTION_VAL_250_O45_ES NULL
-#define OPTION_VAL_260_O45_ES NULL
-#define OPTION_VAL_270_O45_ES NULL
-#define OPTION_VAL_280_O45_ES NULL
-#define OPTION_VAL_290_O45_ES NULL
-#define OPTION_VAL_300_O45_ES NULL
+#define OPTION_VAL_100_O45_ES "100 %"
+#define OPTION_VAL_110_O45_ES "110 %"
+#define OPTION_VAL_120_O45_ES "120 %"
+#define OPTION_VAL_130_O45_ES "130 %"
+#define OPTION_VAL_140_O45_ES "140 %"
+#define OPTION_VAL_150_O45_ES "150 %"
+#define OPTION_VAL_160_O45_ES "160 %"
+#define OPTION_VAL_170_O45_ES "170 %"
+#define OPTION_VAL_180_O45_ES "180 %"
+#define OPTION_VAL_190_O45_ES "190 %"
+#define OPTION_VAL_200_O45_ES "200 %"
+#define OPTION_VAL_210_O45_ES "210 %"
+#define OPTION_VAL_220_O45_ES "220 %"
+#define OPTION_VAL_230_O45_ES "230 %"
+#define OPTION_VAL_240_O45_ES "240 %"
+#define OPTION_VAL_250_O45_ES "250 %"
+#define OPTION_VAL_260_O45_ES "260 %"
+#define OPTION_VAL_270_O45_ES "270 %"
+#define OPTION_VAL_280_O45_ES "280 %"
+#define OPTION_VAL_290_O45_ES "290 %"
+#define OPTION_VAL_300_O45_ES "300 %"
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_ES "Mostrar punto de mira del arma 1"
 #define OPTION_VAL_WHITE_ES "Blanco"
 #define OPTION_VAL_RED_ES "Rojo"
@@ -28992,7 +28992,7 @@ struct retro_core_option_v2_definition option_defs_es[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
    {
       CORE_OPTION_NAME "_detect_vsync_swap_interval",
@@ -31004,7 +31004,7 @@ struct retro_core_option_v2_definition option_defs_fa[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
    {
       CORE_OPTION_NAME "_detect_vsync_swap_interval",
@@ -32463,27 +32463,27 @@ struct retro_core_options_v2 options_fa = {
 #define OPTION_VAL_70_FI "70 %"
 #define OPTION_VAL_80_FI "80 %"
 #define OPTION_VAL_90_FI "90 %"
-#define OPTION_VAL_100_O45_FI NULL
-#define OPTION_VAL_110_O45_FI NULL
-#define OPTION_VAL_120_O45_FI NULL
-#define OPTION_VAL_130_O45_FI NULL
-#define OPTION_VAL_140_O45_FI NULL
-#define OPTION_VAL_150_O45_FI NULL
-#define OPTION_VAL_160_O45_FI NULL
-#define OPTION_VAL_170_O45_FI NULL
-#define OPTION_VAL_180_O45_FI NULL
-#define OPTION_VAL_190_O45_FI NULL
-#define OPTION_VAL_200_O45_FI NULL
-#define OPTION_VAL_210_O45_FI NULL
-#define OPTION_VAL_220_O45_FI NULL
-#define OPTION_VAL_230_O45_FI NULL
-#define OPTION_VAL_240_O45_FI NULL
-#define OPTION_VAL_250_O45_FI NULL
-#define OPTION_VAL_260_O45_FI NULL
-#define OPTION_VAL_270_O45_FI NULL
-#define OPTION_VAL_280_O45_FI NULL
-#define OPTION_VAL_290_O45_FI NULL
-#define OPTION_VAL_300_O45_FI NULL
+#define OPTION_VAL_100_O45_FI "100 %"
+#define OPTION_VAL_110_O45_FI "110 %"
+#define OPTION_VAL_120_O45_FI "120 %"
+#define OPTION_VAL_130_O45_FI "130 %"
+#define OPTION_VAL_140_O45_FI "140 %"
+#define OPTION_VAL_150_O45_FI "150 %"
+#define OPTION_VAL_160_O45_FI "160 %"
+#define OPTION_VAL_170_O45_FI "170 %"
+#define OPTION_VAL_180_O45_FI "180 %"
+#define OPTION_VAL_190_O45_FI "190 %"
+#define OPTION_VAL_200_O45_FI "200 %"
+#define OPTION_VAL_210_O45_FI "210 %"
+#define OPTION_VAL_220_O45_FI "220 %"
+#define OPTION_VAL_230_O45_FI "230 %"
+#define OPTION_VAL_240_O45_FI "240 %"
+#define OPTION_VAL_250_O45_FI "250 %"
+#define OPTION_VAL_260_O45_FI "260 %"
+#define OPTION_VAL_270_O45_FI "270 %"
+#define OPTION_VAL_280_O45_FI "280 %"
+#define OPTION_VAL_290_O45_FI "290 %"
+#define OPTION_VAL_300_O45_FI "300 %"
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_FI NULL
 #define OPTION_VAL_WHITE_FI "Valkoinen"
 #define OPTION_VAL_RED_FI "Punainen"
@@ -33016,7 +33016,7 @@ struct retro_core_option_v2_definition option_defs_fi[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
    {
       CORE_OPTION_NAME "_detect_vsync_swap_interval",
@@ -34380,7 +34380,7 @@ struct retro_core_options_v2 options_fi = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_FR "Post-traitement de l'image rendue pour simuler les effets spécifiques au processeur graphique PowerVR2 et aux signaux vidéo analogiques."
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_FR "Agrandissement des textures (xBRZ)"
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_FR "Améliorer les graphismes en pixels 2D dessinés à la main. Devrait être utilisé uniquement avec les jeux en 2D pixelisés."
-#define OPTION_VAL_2_O26_FR NULL
+#define OPTION_VAL_2_O26_FR "x2"
 #define OPTION_VAL_4_FR "x4"
 #define OPTION_VAL_6_FR "x6"
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_FR "Facteur maximal du filtre d'agrandissement de textures"
@@ -35028,7 +35028,7 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
    {
       CORE_OPTION_NAME "_detect_vsync_swap_interval",
@@ -36273,51 +36273,51 @@ struct retro_core_options_v2 options_fr = {
 
 /* RETRO_LANGUAGE_GL */
 
-#define CATEGORY_SYSTEM_LABEL_GL NULL
-#define CATEGORY_SYSTEM_INFO_0_GL NULL
+#define CATEGORY_SYSTEM_LABEL_GL "Sistema"
+#define CATEGORY_SYSTEM_INFO_0_GL "Configure a rexión, o idioma, a BIOS e a configuración do hardware base."
 #define CATEGORY_VIDEO_LABEL_GL "Vídeo"
-#define CATEGORY_VIDEO_INFO_0_GL NULL
-#define CATEGORY_PERFORMANCE_LABEL_GL NULL
-#define CATEGORY_PERFORMANCE_INFO_0_GL NULL
+#define CATEGORY_VIDEO_INFO_0_GL "Configure a resolución, a transparencia independente da orde e os axustes de efectos visuais."
+#define CATEGORY_PERFORMANCE_LABEL_GL "Rendemento"
+#define CATEGORY_PERFORMANCE_INFO_0_GL "Configure as opcións de renderizado en fíos e omitir marcos."
 #define CATEGORY_HACKS_LABEL_GL "Hacks de emulación"
-#define CATEGORY_HACKS_INFO_0_GL NULL
+#define CATEGORY_HACKS_INFO_0_GL "Configura substitucións de pantalla panorámica, velocidade de carga de GD-ROM e configuración de substitución de texturas."
 #define CATEGORY_INPUT_LABEL_GL "Entrada"
-#define CATEGORY_INPUT_INFO_0_GL NULL
-#define CATEGORY_EXPANSIONS_LABEL_GL NULL
-#define CATEGORY_EXPANSIONS_INFO_0_GL NULL
-#define CATEGORY_VMU_LABEL_GL NULL
-#define CATEGORY_VMU_INFO_0_GL NULL
-#define CORE_OPTION_NAME_REGION_LABEL_GL NULL
-#define OPTION_VAL_JAPAN_GL NULL
+#define CATEGORY_INPUT_INFO_0_GL "Configura a configuración do gamepad e da pistola lixeira."
+#define CATEGORY_EXPANSIONS_LABEL_GL "Ranuras de expansión do controlador"
+#define CATEGORY_EXPANSIONS_INFO_0_GL "Seleccione o dispositivo (VMU, dispositivo rumble) conectado a cada ranura de expansión do controlador."
+#define CATEGORY_VMU_LABEL_GL "Unidade de Memoria Visual"
+#define CATEGORY_VMU_INFO_0_GL "Configura os ficheiros de gardar VMU por xogo e os axustes de visibilidade da VMU en pantalla."
+#define CORE_OPTION_NAME_REGION_LABEL_GL "Rexión"
+#define OPTION_VAL_JAPAN_GL "Xapón"
 #define OPTION_VAL_USA_GL NULL
-#define OPTION_VAL_EUROPE_GL NULL
-#define OPTION_VAL_DEFAULT_GL NULL
-#define CORE_OPTION_NAME_LANGUAGE_LABEL_GL NULL
-#define CORE_OPTION_NAME_LANGUAGE_INFO_0_GL NULL
-#define OPTION_VAL_JAPANESE_GL NULL
-#define OPTION_VAL_ENGLISH_GL NULL
-#define OPTION_VAL_GERMAN_GL NULL
-#define OPTION_VAL_FRENCH_GL NULL
-#define OPTION_VAL_SPANISH_GL NULL
-#define OPTION_VAL_ITALIAN_GL NULL
-#define CORE_OPTION_NAME_HLE_BIOS_LABEL_GL NULL
+#define OPTION_VAL_EUROPE_GL "Europa"
+#define OPTION_VAL_DEFAULT_GL "Por defecto"
+#define CORE_OPTION_NAME_LANGUAGE_LABEL_GL "Idioma"
+#define CORE_OPTION_NAME_LANGUAGE_INFO_0_GL "Cambia o idioma que usa a BIOS e os xogos que conteñan varios idiomas."
+#define OPTION_VAL_JAPANESE_GL "Xaponés"
+#define OPTION_VAL_ENGLISH_GL "Inglés"
+#define OPTION_VAL_GERMAN_GL "Alemán"
+#define OPTION_VAL_FRENCH_GL "Francés"
+#define OPTION_VAL_SPANISH_GL "Español"
+#define OPTION_VAL_ITALIAN_GL "Italiano"
+#define CORE_OPTION_NAME_HLE_BIOS_LABEL_GL "BIOS HLE (reinicio necesario)"
 #define CORE_OPTION_NAME_HLE_BIOS_INFO_0_GL "Forza o uso de emulación BIOS de alto nivel."
 #define CORE_OPTION_NAME_BOOT_TO_BIOS_LABEL_GL "Arranca na BIOS (requírese reiniciar)"
 #define CORE_OPTION_NAME_BOOT_TO_BIOS_INFO_0_GL "Arranca directamente no menú da BIOS de Dreamcast."
-#define CORE_OPTION_NAME_ENABLE_DSP_LABEL_GL NULL
-#define CORE_OPTION_NAME_ENABLE_DSP_INFO_0_GL NULL
-#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_GL NULL
-#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_GL NULL
-#define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_GL NULL
-#define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_GL NULL
-#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_GL NULL
-#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_GL NULL
-#define CORE_OPTION_NAME_UPNP_LABEL_GL NULL
-#define CORE_OPTION_NAME_UPNP_INFO_0_GL NULL
+#define CORE_OPTION_NAME_ENABLE_DSP_LABEL_GL "Activar DSP"
+#define CORE_OPTION_NAME_ENABLE_DSP_INFO_0_GL "Activa a emulación do DSP de audio (procesador de sinal dixital) do Dreamcast. Mellora a precisión do son xerado, pero aumenta os requisitos de rendemento."
+#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_GL "Permitir botóns de servizo de Arcade"
+#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_GL "Activa o botón SERVICE para xogos de arcade para entrar na configuración do armario."
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_GL "Configura NAOMI Games Para Xogar de Balde"
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_GL "Modifica a configuración de moedas do xogo para xogar libremente."
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_GL "Emulación de adaptador de banda ancha"
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_GL "Emule o adaptador de banda ancha ethernet en lugar do módem. (Reiniciar obrigatorio)"
+#define CORE_OPTION_NAME_UPNP_LABEL_GL "Activar UPnP"
+#define CORE_OPTION_NAME_UPNP_INFO_0_GL "Use UPnP para configurar automaticamente o seu enrutador de Internet para xogos en liña."
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_GL "Resolución interna"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_GL "Modificar a resolución do renderizado."
-#define OPTION_VAL_320X240_GL NULL
-#define OPTION_VAL_640X480_GL NULL
+#define OPTION_VAL_320X240_GL "320 x 240 (a metade)"
+#define OPTION_VAL_640X480_GL "640 x 480 (nativo)"
 #define OPTION_VAL_800X600_GL NULL
 #define OPTION_VAL_960X720_GL NULL
 #define OPTION_VAL_1024X768_GL NULL
@@ -36343,51 +36343,51 @@ struct retro_core_options_v2 options_fr = {
 #define OPTION_VAL_11520X8640_GL NULL
 #define OPTION_VAL_12160X9120_GL NULL
 #define OPTION_VAL_12800X9600_GL NULL
-#define CORE_OPTION_NAME_CABLE_TYPE_LABEL_GL NULL
-#define CORE_OPTION_NAME_CABLE_TYPE_INFO_0_GL NULL
+#define CORE_OPTION_NAME_CABLE_TYPE_LABEL_GL "Tipo de cable"
+#define CORE_OPTION_NAME_CABLE_TYPE_INFO_0_GL "O tipo de sinal de saída. 'TV (Composite)' é o máis soportado."
 #define OPTION_VAL_VGA_GL NULL
 #define OPTION_VAL_TV_RGB_GL NULL
-#define OPTION_VAL_TV_COMPOSITE_GL NULL
-#define CORE_OPTION_NAME_BROADCAST_LABEL_GL NULL
+#define OPTION_VAL_TV_COMPOSITE_GL "TV (composto)"
+#define CORE_OPTION_NAME_BROADCAST_LABEL_GL "Estándar de emisión"
 #define OPTION_VAL_NTSC_GL NULL
-#define OPTION_VAL_PAL_GL NULL
-#define OPTION_VAL_PAL_N_GL NULL
-#define OPTION_VAL_PAL_M_GL NULL
+#define OPTION_VAL_PAL_GL "PAL (Mundo)"
+#define OPTION_VAL_PAL_N_GL "PAL-N (Arxentina, Paraguai, Uruguai)"
+#define OPTION_VAL_PAL_M_GL "PAL-M (Brasil)"
 #define CORE_OPTION_NAME_SCREEN_ROTATION_LABEL_GL "Orientación da Pantalla"
 #define OPTION_VAL_HORIZONTAL_GL NULL
 #define OPTION_VAL_VERTICAL_GL NULL
 #define CORE_OPTION_NAME_ALPHA_SORTING_LABEL_GL "Clasificación Alpha"
-#define CORE_OPTION_NAME_ALPHA_SORTING_INFO_0_GL NULL
+#define CORE_OPTION_NAME_ALPHA_SORTING_INFO_0_GL "Seleccione como se ordenan os polígonos transparentes."
 #define OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_GL "Por franxa (rápido, menos preciso)"
 #define OPTION_VAL_PER_TRIANGLE_NORMAL_GL "Por triángulo (normal)"
-#define OPTION_VAL_PER_PIXEL_ACCURATE_GL NULL
-#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_GL NULL
+#define OPTION_VAL_PER_PIXEL_ACCURATE_GL "Por píxel (preciso, pero máis lento)"
+#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_GL "Tamaño do búfer de píxeles de acumulación"
 #define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_INFO_0_GL "É posible que se precisen valores máis altos para que as resolucións máis altas saian correctamente."
 #define OPTION_VAL_512MB_GL NULL
 #define OPTION_VAL_1GB_GL NULL
 #define OPTION_VAL_2GB_GL NULL
 #define OPTION_VAL_4GB_GL NULL
-#define CORE_OPTION_NAME_OIT_LAYERS_LABEL_GL NULL
-#define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_GL NULL
-#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_GL NULL
-#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_GL NULL
+#define CORE_OPTION_NAME_OIT_LAYERS_LABEL_GL "Máximo de capas transparentes"
+#define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_GL "Poden ser necesarios valores máis altos para escenas complexas."
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_GL "Emulación completa de framebuffer"
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_GL "Activa a emulación completa de framebuffer na VRAM. Isto é útil para xogos que len ou escriben directamente o framebuffer na VRAM. Cando está activada, a resolución interna é obrigada a 640 x 480 e o rendemento pode verse gravemente afectado."
 #define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_GL "Activa o buffer RTT (Render To Texture)"
-#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_GL NULL
-#define CORE_OPTION_NAME_MIPMAPPING_LABEL_GL NULL
-#define CORE_OPTION_NAME_MIPMAPPING_INFO_0_GL NULL
-#define CORE_OPTION_NAME_FOG_LABEL_GL NULL
-#define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_GL NULL
-#define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_GL NULL
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_GL "Copia texturas renderizadas de volta da GPU á VRAM. Esta opción normalmente está habilitada para xogos que o requiran. Cando se activa, a ampliación da renderización de texturas está desactivada e o rendemento pode verse afectado."
+#define CORE_OPTION_NAME_MIPMAPPING_LABEL_GL "Mapeo mip"
+#define CORE_OPTION_NAME_MIPMAPPING_INFO_0_GL "Cando as texturas activadas usarán unha versión máis pequena de si mesmas cando aparezan máis lonxe, pode aumentar o rendemento e reducir o brillo."
+#define CORE_OPTION_NAME_FOG_LABEL_GL "Efectos néboa"
+#define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_GL "Modificador de volume"
+#define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_GL "Unha función GPU de Dreamcast que normalmente usan os xogos para debuxar sombras de obxectos. Normalmente debería estar activado: o impacto no rendemento adoita ser mínimo ou insignificante."
 #define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_LABEL_GL "Filtrado anisotrópico"
-#define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_GL NULL
+#define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_GL "Mellora a calidade das texturas en superficies que están en ángulos de visión oblicuos con respecto á cámara. Os valores máis altos son máis esixentes na GPU. Os cambios nesta configuración só se aplican despois de reiniciar."
 #define CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_GL "Filtrado de Texturas"
-#define CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_GL NULL
-#define OPTION_VAL_1_GL NULL
-#define OPTION_VAL_2_GL NULL
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_GL "O modo de filtrado de texturas a usar. Isto pódese usar para forzar un determinado modo de filtrado de texturas en todas as texturas para obter unha aparencia máis nítida (ou máis suave) que a predeterminada. Os valores distintos do predeterminado poden causar varios problemas de renderización. Os cambios nesta configuración só se aplican despois de reiniciar."
+#define OPTION_VAL_1_GL "Forza: Veciño máis próximo"
+#define OPTION_VAL_2_GL "Forza lineal"
 #define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_GL "Intercambio de fotogramas con retardo"
 #define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_GL "Útil para evitar o parpadeo nas pantallas ou os vídeos con fallos. Non recomendado en plataformas lentas."
-#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_GL NULL
-#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_GL NULL
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_GL "Detectar cambios na taxa de Fotogramas"
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_GL "Notificar a interface cando cambie a velocidade de fotogramas interna (por exemplo, de 60 fps a 30 fps). Mellora o ritmo de cadros nos xogos que se executan a 30 ou 20 fps bloqueados, pero que debería desactivarse para xogos con velocidades de cadros desbloqueadas (inestables) (por exemplo, Ecco the Dolphin, Unreal Tournament). Nota: Non está dispoñible cando se activa \"Saltar marco automático\"."
 #define CORE_OPTION_NAME_PVR2_FILTERING_LABEL_GL "Filtrado de postprocesado PowerVR2"
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_GL "Postproceso da imaxe renderizada para simular efectos específicos da PowerVR2 GPU e os sinais analóxicos de vídeo."
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_GL "Aumento das texturas (xBRZ)"
@@ -36396,11 +36396,11 @@ struct retro_core_options_v2 options_fr = {
 #define OPTION_VAL_4_GL NULL
 #define OPTION_VAL_6_GL NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_GL "Aumento da escala das texturas. Tamaño filtrado"
-#define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_INFO_0_GL NULL
-#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_GL NULL
-#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_GL NULL
-#define CORE_OPTION_NAME_FIX_UPSCALE_BLEEDING_EDGE_LABEL_GL NULL
-#define CORE_OPTION_NAME_FIX_UPSCALE_BLEEDING_EDGE_INFO_0_GL NULL
+#define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_INFO_0_GL "Seleccione un valor de tamaño máximo para unha textura a escalar, se o tamaño da textura é superior ao valor seleccionado, non se ampliará."
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_GL "Interpolación de profundidade nativa"
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_GL "Axuda coa corrupción da textura e os problemas de profundidade nas GPU AMD. Tamén pode axudar ás GPU Intel nalgúns casos."
+#define CORE_OPTION_NAME_FIX_UPSCALE_BLEEDING_EDGE_LABEL_GL "Corrixir Bleeding Edge de luxo"
+#define CORE_OPTION_NAME_FIX_UPSCALE_BLEEDING_EDGE_INFO_0_GL "Axuda co caso de sangramento da textura ao aumentar a escala. Desactivalo pode axudar se os píxeles se deforman ao aumentar a escala en xogos en 2D (MVC2, CVS, KOF, etc.)"
 #define CORE_OPTION_NAME_THREADED_RENDERING_LABEL_GL "Renderizado de fíos"
 #define CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_GL "Fai funcionar a GPU e a CPU en fíos diferentes. Altamente recomendado."
 #define CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_GL "Salto de fotograma automático"
@@ -36409,16 +36409,16 @@ struct retro_core_options_v2 options_fr = {
 #define OPTION_VAL_MORE_GL "Máximo"
 #define CORE_OPTION_NAME_FRAME_SKIPPING_LABEL_GL "Salto de fotogramas"
 #define CORE_OPTION_NAME_FRAME_SKIPPING_INFO_0_GL "Especifica o número de fotogramas para saltar entre cada fotograma que é mostrado."
-#define CORE_OPTION_NAME_WIDESCREEN_CHEATS_LABEL_GL NULL
-#define CORE_OPTION_NAME_WIDESCREEN_CHEATS_INFO_0_GL NULL
-#define CORE_OPTION_NAME_WIDESCREEN_HACK_LABEL_GL NULL
-#define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_GL NULL
-#define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_GL NULL
-#define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_GL NULL
+#define CORE_OPTION_NAME_WIDESCREEN_CHEATS_LABEL_GL "Trucos de pantalla ancha (necesario reiniciar)"
+#define CORE_OPTION_NAME_WIDESCREEN_CHEATS_INFO_0_GL "Activa trucos que permiten que determinados xogos se mostren en formato de pantalla panorámica."
+#define CORE_OPTION_NAME_WIDESCREEN_HACK_LABEL_GL "Corte de pantalla ancha"
+#define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_GL "Debuxa xeometría fóra da relación de aspecto normal de 4:3. Pode producir fallas gráficas nas áreas reveladas."
+#define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_GL "Carga rápida de GD-ROM (inexacta)"
+#define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_GL "Acelera a carga de GD-ROM."
 #define CORE_OPTION_NAME_DC_32MB_MOD_LABEL_GL NULL
-#define CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_GL NULL
-#define CORE_OPTION_NAME_SH4CLOCK_LABEL_GL NULL
-#define CORE_OPTION_NAME_SH4CLOCK_INFO_0_GL NULL
+#define CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_GL "Activa 32 MB de RAM Mod para Dreamcast. Pode afectar á compatibilidade"
+#define CORE_OPTION_NAME_SH4CLOCK_LABEL_GL "CPU SH4 under/overclock"
+#define CORE_OPTION_NAME_SH4CLOCK_INFO_0_GL "Cambia o reloxo da CPU principal do SH4 dos 200 MHz predeterminados. O underclocking pode axudar a ralentizar as plataformas. O overclocking pode aumentar a velocidade de fotogramas nalgúns xogos. Use con precaución."
 #define OPTION_VAL_100_GL NULL
 #define OPTION_VAL_110_GL NULL
 #define OPTION_VAL_120_GL NULL
@@ -36461,11 +36461,11 @@ struct retro_core_options_v2 options_fr = {
 #define OPTION_VAL_490_GL NULL
 #define OPTION_VAL_500_GL NULL
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_GL "Carga as texturas personalizadas"
-#define CORE_OPTION_NAME_CUSTOM_TEXTURES_INFO_0_GL NULL
+#define CORE_OPTION_NAME_CUSTOM_TEXTURES_INFO_0_GL "Carga texturas personalizadas situadas no cartafol \"system/dc/textures/<game-id>/\"."
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_GL "Texturas de volcado"
-#define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_GL NULL
-#define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_GL NULL
-#define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_INFO_0_GL NULL
+#define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_GL "Cada vez que o xogo use unha textura nova, gardarase como ficheiro .png no cartafol 'system/dc/texdump/<game-id>/'."
+#define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_GL "Zona morta stick analóxico"
+#define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_INFO_0_GL "Selecciona ata onde tes que empuxar o stick analóxico antes de que comece a procesarse."
 #define OPTION_VAL_0_GL NULL
 #define OPTION_VAL_5_GL NULL
 #define OPTION_VAL_10_GL NULL
@@ -36473,15 +36473,15 @@ struct retro_core_options_v2 options_fr = {
 #define OPTION_VAL_20_GL NULL
 #define OPTION_VAL_25_GL NULL
 #define OPTION_VAL_30_GL NULL
-#define CORE_OPTION_NAME_TRIGGER_DEADZONE_LABEL_GL NULL
-#define CORE_OPTION_NAME_TRIGGER_DEADZONE_INFO_0_GL NULL
-#define CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_GL NULL
-#define CORE_OPTION_NAME_DIGITAL_TRIGGERS_INFO_0_GL NULL
-#define CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_GL NULL
-#define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_GL NULL
-#define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_GL NULL
-#define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_GL NULL
-#define CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_GL NULL
+#define CORE_OPTION_NAME_TRIGGER_DEADZONE_LABEL_GL "Activar zona morta"
+#define CORE_OPTION_NAME_TRIGGER_DEADZONE_INFO_0_GL "Seleccione canto ten que premer o gatillo antes de comezar a procesarse."
+#define CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_GL "Disparadores dixitais"
+#define CORE_OPTION_NAME_DIGITAL_TRIGGERS_INFO_0_GL "Cando estean activados, os disparadores actuarán como botóns normais, o que significa que se procesarán como totalmente presionados ou sen presionar nada, sen intermediarios."
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_GL "Saídas dixitais de emisión"
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_GL "Saídas dixitais de transmisión e estado de retroalimentación forzada no porto TCP 8000. Compatible coa opción MAME \"-output network\"."
+#define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_GL "Mostrar a configuración da arma lixeira"
+#define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_GL "Activa a configuración das opcións de visualización do punto de mira de pistola lixeira. NOTA: É posible que teña que cambiar o menú rápido para que esta configuración teña efecto."
+#define CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_GL "Escala do tamaño da mira de pistola"
 #define OPTION_VAL_50_GL NULL
 #define OPTION_VAL_60_GL NULL
 #define OPTION_VAL_70_GL NULL
@@ -36508,44 +36508,44 @@ struct retro_core_options_v2 options_fr = {
 #define OPTION_VAL_280_O45_GL NULL
 #define OPTION_VAL_290_O45_GL NULL
 #define OPTION_VAL_300_O45_GL NULL
-#define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_GL NULL
+#define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_GL "Pantalla Gun Crosshair 1"
 #define OPTION_VAL_WHITE_GL "Branco"
 #define OPTION_VAL_RED_GL "Vermello"
 #define OPTION_VAL_GREEN_GL "Verde"
 #define OPTION_VAL_BLUE_GL "Azul"
-#define CORE_OPTION_NAME_LIGHTGUN2_CROSSHAIR_LABEL_GL NULL
-#define CORE_OPTION_NAME_LIGHTGUN3_CROSSHAIR_LABEL_GL NULL
-#define CORE_OPTION_NAME_LIGHTGUN4_CROSSHAIR_LABEL_GL NULL
-#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_LABEL_GL NULL
-#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_INFO_0_GL NULL
+#define CORE_OPTION_NAME_LIGHTGUN2_CROSSHAIR_LABEL_GL "Pantalla Gun Crosshair 2"
+#define CORE_OPTION_NAME_LIGHTGUN3_CROSSHAIR_LABEL_GL "Pantalla Gun Crosshair 3"
+#define CORE_OPTION_NAME_LIGHTGUN4_CROSSHAIR_LABEL_GL "Pantalla Gun Crosshair 4"
+#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_LABEL_GL "Dispositivo no ranura de expansión A1"
+#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_INFO_0_GL "Seleccione o dispositivo conectado ao slot de expansión A1 (porto A slot 1)."
 #define OPTION_VAL_VMU_GL NULL
-#define OPTION_VAL_PURUPURU_GL NULL
+#define OPTION_VAL_PURUPURU_GL "Paquete de vibracións"
 #define OPTION_VAL_NONE_GL "Ningún"
-#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_LABEL_GL NULL
-#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_INFO_0_GL NULL
-#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT1_LABEL_GL NULL
-#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT1_INFO_0_GL NULL
-#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT2_LABEL_GL NULL
-#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT2_INFO_0_GL NULL
-#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT1_LABEL_GL NULL
-#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT1_INFO_0_GL NULL
-#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT2_LABEL_GL NULL
-#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT2_INFO_0_GL NULL
-#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT1_LABEL_GL NULL
-#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT1_INFO_0_GL NULL
-#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_LABEL_GL NULL
-#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_INFO_0_GL NULL
+#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_LABEL_GL "Dispositivo no slot de expansión A2"
+#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_INFO_0_GL "Seleccione o dispositivo conectado ao slot de expansión A2 (porto A slot 2)."
+#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT1_LABEL_GL "Dispositivo no slot de expansión B1"
+#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT1_INFO_0_GL "Seleccione o dispositivo conectado ao slot de expansión B1 (port B slot 1)."
+#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT2_LABEL_GL "Dispositivo no slot de expansión B2"
+#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT2_INFO_0_GL "Seleccione o dispositivo conectado á ranura de expansión B2 (rañura do porto B 2)."
+#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT1_LABEL_GL "Dispositivo no slot de expansión C1"
+#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT1_INFO_0_GL "Seleccione o dispositivo conectado ao slot de expansión C1 (port C slot 1)."
+#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT2_LABEL_GL "Dispositivo no slot de expansión C2"
+#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT2_INFO_0_GL "Seleccione o dispositivo conectado ao slot de expansión C2 (port C slot 2)."
+#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT1_LABEL_GL "Dispositivo na ranura de expansión D1"
+#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT1_INFO_0_GL "Seleccione o dispositivo conectado ao slot de expansión D1 (port D1 slot)."
+#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_LABEL_GL "Dispositivo na ranura de expansión D2"
+#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_INFO_0_GL "Seleccione o dispositivo conectado ao slot de expansión D2 (port D2 slot)."
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_GL "Unidades/sistemas de memoria visual (VMU) por xogo"
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CAT_GL "VMUs por xogo"
-#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_GL NULL
+#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_GL "Cando está desactivado, todos os xogos comparten ata 8 ficheiros de gardado VMU (A1/A2/B1/B2/C1/C2/D1/D2) situados no directorio do sistema de RetroArch.\n\A configuración \"VMU A1\" crea un ficheiro VMU \"A1\" único no directorio de gardado de RetroArch para cada xogo que se inicia.\n\A configuración \"Todas as VMU\" crea ata 8 ficheiros VMU únicos (A1/A2/B1/B2/C1/C2/D1/D2) para cada xogo que se inicia."
 #define OPTION_VAL_VMU_A1_GL NULL
 #define OPTION_VAL_ALL_VMUS_GL "Todas as VMU"
-#define CORE_OPTION_NAME_VMU_SOUND_LABEL_GL NULL
-#define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_GL NULL
-#define CORE_OPTION_NAME_VMU_SOUND_INFO_0_GL NULL
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_GL "Sons de sistemas/unidades de memoria visual (VMU)"
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_GL "Sons VMU"
+#define CORE_OPTION_NAME_VMU_SOUND_INFO_0_GL "Cando está activado, reprodúcense os pitidos VMU."
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_GL "Amosa as opcións de pantalla da Unidade/Sistema de Memoria visual (VMU)"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_GL "Amosa as opcións de pantalla da VMU"
-#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_GL NULL
+#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_GL "Activa a configuración da visibilidade, tamaño, posición e cor da pantalla LCD VMU emulada. NOTA: É posible que teña que cambiar o menú rápido para que esta configuración teña efecto."
 #define CORE_OPTION_NAME_VMU1_SCREEN_DISPLAY_LABEL_GL "Pantalla 1 da VMU"
 #define CORE_OPTION_NAME_VMU1_SCREEN_POSITION_LABEL_GL "Posición da pantalla 1 VMU"
 #define OPTION_VAL_UPPER_LEFT_GL "Superior esquerda"
@@ -37040,7 +37040,7 @@ struct retro_core_option_v2_definition option_defs_gl[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
    {
       CORE_OPTION_NAME "_detect_vsync_swap_interval",
@@ -39052,7 +39052,7 @@ struct retro_core_option_v2_definition option_defs_he[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
    {
       CORE_OPTION_NAME "_detect_vsync_swap_interval",
@@ -41064,7 +41064,7 @@ struct retro_core_option_v2_definition option_defs_hr[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
    {
       CORE_OPTION_NAME "_detect_vsync_swap_interval",
@@ -43076,7 +43076,7 @@ struct retro_core_option_v2_definition option_defs_hu[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
    {
       CORE_OPTION_NAME "_detect_vsync_swap_interval",
@@ -44322,7 +44322,7 @@ struct retro_core_options_v2 options_hu = {
 /* RETRO_LANGUAGE_ID */
 
 #define CATEGORY_SYSTEM_LABEL_ID "Sistem"
-#define CATEGORY_SYSTEM_INFO_0_ID NULL
+#define CATEGORY_SYSTEM_INFO_0_ID "Menyetel daerah, bahasa, BIOS, dan pengaturan peranti keras dasar."
 #define CATEGORY_VIDEO_LABEL_ID NULL
 #define CATEGORY_VIDEO_INFO_0_ID NULL
 #define CATEGORY_PERFORMANCE_LABEL_ID "Kinerja"
@@ -44348,9 +44348,9 @@ struct retro_core_options_v2 options_hu = {
 #define OPTION_VAL_FRENCH_ID "Bahasa Perancis"
 #define OPTION_VAL_SPANISH_ID "Bahasa Spanyol"
 #define OPTION_VAL_ITALIAN_ID "Bahasa Itali"
-#define CORE_OPTION_NAME_HLE_BIOS_LABEL_ID NULL
+#define CORE_OPTION_NAME_HLE_BIOS_LABEL_ID "BIOS HLE (Perlu Mulai Ulang)"
 #define CORE_OPTION_NAME_HLE_BIOS_INFO_0_ID "Paksa penggunaan BIOS emulasi tingkat tinggi."
-#define CORE_OPTION_NAME_BOOT_TO_BIOS_LABEL_ID "Boot ke BIOS (Perlu Dimulai Ulang)"
+#define CORE_OPTION_NAME_BOOT_TO_BIOS_LABEL_ID "Nyala ke BIOS (Perlu Mulai Ulang)"
 #define CORE_OPTION_NAME_BOOT_TO_BIOS_INFO_0_ID "Boot langsung ke menu BIOS Dreamcast."
 #define CORE_OPTION_NAME_ENABLE_DSP_LABEL_ID "Aktifkan DSP"
 #define CORE_OPTION_NAME_ENABLE_DSP_INFO_0_ID "Aktifkan emulasi DSP audio Dreamcast (pengolah sinyal digital). Perbaiki akurasi suara yang dihasilakan, tetapi tingkatkan persyaratan kinerja."
@@ -44359,7 +44359,7 @@ struct retro_core_options_v2 options_hu = {
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_ID NULL
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_ID NULL
 #define CORE_OPTION_NAME_EMULATE_BBA_LABEL_ID NULL
-#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_ID NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_ID "Mengemulasi adapter pita lebar eternet dan bukan modem. (Perlu Mulai Ulang)"
 #define CORE_OPTION_NAME_UPNP_LABEL_ID NULL
 #define CORE_OPTION_NAME_UPNP_INFO_0_ID NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_ID NULL
@@ -44427,9 +44427,9 @@ struct retro_core_options_v2 options_hu = {
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_ID NULL
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_ID NULL
 #define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_LABEL_ID "Pemfilteran Anisotropik"
-#define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_ID NULL
+#define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_ID "Meningkatkan mutu tekstur permukaan yang bersudut pandang serong di mata kamera. Opsi nilai tinggi lebih menguras GPU. Perubahan ini hanya berlaku setelah dimulai ulang."
 #define CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_ID NULL
-#define CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_ID NULL
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_ID "Pilihan mode saring tekstur. Ini bisa untuk memaksa mode saring tekstur tertentu pada semua tekstur agar berpenampilan lebih tajam (atau mulus) dibandingkan Bawaan. Opsi nilai selain Bawaan mungkin akan muncul masalah visual. Perubahan ini hanya berlaku setelah dimulai ulang."
 #define OPTION_VAL_1_ID NULL
 #define OPTION_VAL_2_ID NULL
 #define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_ID NULL
@@ -44439,7 +44439,7 @@ struct retro_core_options_v2 options_hu = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_LABEL_ID "Filter Pasca-pengolahan PowerVR2"
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_ID "Pasca-olah gambar yang dilukiskan untuk menyimulasikan efek dengan spesifik ke GPU PowerVR2 dan sinyal video analog."
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_ID "Penskalaan Naik Tekstur (xBRZ)"
-#define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_ID "Tingkatkan grafis seni piksel 2D tulisan tangan. Hanya bisa digunakan di pemainan terpikselisasi 2D."
+#define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_ID "Meningkatkan grafis seni piksel 2D karya tangan. Hanya bisa digunakan di pemainan piksel 2D."
 #define OPTION_VAL_2_O26_ID NULL
 #define OPTION_VAL_4_ID NULL
 #define OPTION_VAL_6_ID NULL
@@ -44457,7 +44457,7 @@ struct retro_core_options_v2 options_hu = {
 #define OPTION_VAL_MORE_ID NULL
 #define CORE_OPTION_NAME_FRAME_SKIPPING_LABEL_ID NULL
 #define CORE_OPTION_NAME_FRAME_SKIPPING_INFO_0_ID NULL
-#define CORE_OPTION_NAME_WIDESCREEN_CHEATS_LABEL_ID NULL
+#define CORE_OPTION_NAME_WIDESCREEN_CHEATS_LABEL_ID "Cheat Layar Lebar (Perlu Mulai Ulang)"
 #define CORE_OPTION_NAME_WIDESCREEN_CHEATS_INFO_0_ID NULL
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_LABEL_ID NULL
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_ID NULL
@@ -45088,7 +45088,7 @@ struct retro_core_option_v2_definition option_defs_id[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
    {
       CORE_OPTION_NAME "_detect_vsync_swap_interval",
@@ -47100,7 +47100,7 @@ struct retro_core_option_v2_definition option_defs_it[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
    {
       CORE_OPTION_NAME "_detect_vsync_swap_interval",
@@ -49112,7 +49112,7 @@ struct retro_core_option_v2_definition option_defs_ja[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
    {
       CORE_OPTION_NAME "_detect_vsync_swap_interval",
@@ -51124,7 +51124,7 @@ struct retro_core_option_v2_definition option_defs_ko[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
    {
       CORE_OPTION_NAME "_detect_vsync_swap_interval",
@@ -53136,7 +53136,7 @@ struct retro_core_option_v2_definition option_defs_nl[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
    {
       CORE_OPTION_NAME "_detect_vsync_swap_interval",
@@ -54400,7 +54400,7 @@ struct retro_core_options_v2 options_nl = {
 #define OPTION_VAL_USA_NO NULL
 #define OPTION_VAL_EUROPE_NO NULL
 #define OPTION_VAL_DEFAULT_NO NULL
-#define CORE_OPTION_NAME_LANGUAGE_LABEL_NO NULL
+#define CORE_OPTION_NAME_LANGUAGE_LABEL_NO "Språk"
 #define CORE_OPTION_NAME_LANGUAGE_INFO_0_NO NULL
 #define OPTION_VAL_JAPANESE_NO NULL
 #define OPTION_VAL_ENGLISH_NO NULL
@@ -54618,9 +54618,9 @@ struct retro_core_options_v2 options_nl = {
 #define OPTION_VAL_300_O45_NO NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_NO NULL
 #define OPTION_VAL_WHITE_NO NULL
-#define OPTION_VAL_RED_NO NULL
-#define OPTION_VAL_GREEN_NO NULL
-#define OPTION_VAL_BLUE_NO NULL
+#define OPTION_VAL_RED_NO "Rød"
+#define OPTION_VAL_GREEN_NO "Grønn"
+#define OPTION_VAL_BLUE_NO "Blå"
 #define CORE_OPTION_NAME_LIGHTGUN2_CROSSHAIR_LABEL_NO NULL
 #define CORE_OPTION_NAME_LIGHTGUN3_CROSSHAIR_LABEL_NO NULL
 #define CORE_OPTION_NAME_LIGHTGUN4_CROSSHAIR_LABEL_NO NULL
@@ -54676,7 +54676,7 @@ struct retro_core_options_v2 options_nl = {
 #define OPTION_VAL_LIGHT_CYAN_10_NO NULL
 #define OPTION_VAL_PURPLE_12_NO NULL
 #define OPTION_VAL_LIGHT_PURPLE_13_NO NULL
-#define OPTION_VAL_YELLOW_14_NO NULL
+#define OPTION_VAL_YELLOW_14_NO "Gul"
 #define OPTION_VAL_GRAY_15_NO NULL
 #define OPTION_VAL_LIGHT_PURPLE_2_16_NO NULL
 #define OPTION_VAL_LIGHT_GREEN_2_17_NO NULL
@@ -55148,7 +55148,7 @@ struct retro_core_option_v2_definition option_defs_no[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
    {
       CORE_OPTION_NAME "_detect_vsync_swap_interval",
@@ -57160,7 +57160,7 @@ struct retro_core_option_v2_definition option_defs_or[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
    {
       CORE_OPTION_NAME "_detect_vsync_swap_interval",
@@ -59172,7 +59172,7 @@ struct retro_core_option_v2_definition option_defs_pl[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
    {
       CORE_OPTION_NAME "_detect_vsync_swap_interval",
@@ -61184,7 +61184,7 @@ struct retro_core_option_v2_definition option_defs_pt_br[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
    {
       CORE_OPTION_NAME "_detect_vsync_swap_interval",
@@ -63196,7 +63196,7 @@ struct retro_core_option_v2_definition option_defs_pt_pt[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
    {
       CORE_OPTION_NAME "_detect_vsync_swap_interval",
@@ -65208,7 +65208,7 @@ struct retro_core_option_v2_definition option_defs_ru[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
    {
       CORE_OPTION_NAME "_detect_vsync_swap_interval",
@@ -67220,7 +67220,7 @@ struct retro_core_option_v2_definition option_defs_sk[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
    {
       CORE_OPTION_NAME "_detect_vsync_swap_interval",
@@ -69232,7 +69232,7 @@ struct retro_core_option_v2_definition option_defs_sr[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
    {
       CORE_OPTION_NAME "_detect_vsync_swap_interval",
@@ -71244,7 +71244,7 @@ struct retro_core_option_v2_definition option_defs_sv[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
    {
       CORE_OPTION_NAME "_detect_vsync_swap_interval",
@@ -72500,7 +72500,7 @@ struct retro_core_options_v2 options_sv = {
 #define CATEGORY_INPUT_LABEL_TR "Girdi"
 #define CATEGORY_INPUT_INFO_0_TR "Oyun kolu ve light gun ayarlarını yapılandırın."
 #define CATEGORY_EXPANSIONS_LABEL_TR "Kontrolcü Genişletme Yuvaları"
-#define CATEGORY_EXPANSIONS_INFO_0_TR NULL
+#define CATEGORY_EXPANSIONS_INFO_0_TR "Her denetleyici genişletme yuvasına takılı cihazı (VMU, titreşim cihazı) seçin."
 #define CATEGORY_VMU_LABEL_TR "Görsel Bellek Birimi"
 #define CATEGORY_VMU_INFO_0_TR "Oyun başına VMU kayıt dosyaları ve ekrandaki VMU görünürlük ayarlarını yapılandırın."
 #define CORE_OPTION_NAME_REGION_LABEL_TR "Bölge"
@@ -72590,7 +72590,7 @@ struct retro_core_options_v2 options_sv = {
 #define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_TR "RTT (Dokuya Dönüştür) Önbelleğini Etkinleştir"
 #define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_TR "İşlenen dokuları GPU'dan VRAM'e geri kopyalayın. Bu seçenek normalde bunu gerektiren oyunlar için etkinleştirilir. Etkinleştirildiğinde, doku işleme yükseltme devre dışı bırakılır ve performans etkilenebilir."
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_TR "Görüş Açısı"
-#define CORE_OPTION_NAME_MIPMAPPING_INFO_0_TR NULL
+#define CORE_OPTION_NAME_MIPMAPPING_INFO_0_TR "Etkinleştirilen dokular daha uzakta göründüklerinde kendilerinin daha küçük benzerlerini kullanacakları zaman performansları artırabilir ve parıltıyı azaltabilirler."
 #define CORE_OPTION_NAME_FOG_LABEL_TR "Sis Efektleri"
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_TR "Hacim Değiştirici"
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_TR "Genellikle oyunlar tarafından nesne gölgeleri çizmek için kullanılan bir Dreamcast GPU özelliği. Bu normalde etkinleştirilmelidir - performansa olumsuz etkisi yok denilebilecek düzeydedir."
@@ -72615,8 +72615,8 @@ struct retro_core_options_v2 options_sv = {
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_INFO_0_TR "Yükseltilecek doku için azami boyut değerini seçin; eğer doku boyutu seçilen değerden yüksekse büyütülmeyecektir."
 #define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_TR "Yerel Derinlik Enterpolasyonu"
 #define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_TR "AMD GPU'larda doku bozulması ve derinlik sorunlarına yardımcı olur. Bazı durumlarda Intel GPU'lara da yardımcı olabilir."
-#define CORE_OPTION_NAME_FIX_UPSCALE_BLEEDING_EDGE_LABEL_TR NULL
-#define CORE_OPTION_NAME_FIX_UPSCALE_BLEEDING_EDGE_INFO_0_TR NULL
+#define CORE_OPTION_NAME_FIX_UPSCALE_BLEEDING_EDGE_LABEL_TR "Yükseltirken Doku Kenarlarını Düzelt"
+#define CORE_OPTION_NAME_FIX_UPSCALE_BLEEDING_EDGE_INFO_0_TR "Yükseltme işleminde doku bozulması durumunda yardımcı olur. Bunu devre dışı bırakmak, 2D oyunlarda (MVC2, CVS, KOF, vb.) yükseltme sırasında piksellerin çarpık olması durumunda yardımcı olabilir"
 #define CORE_OPTION_NAME_THREADED_RENDERING_LABEL_TR "Zorlu İşleme"
 #define CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_TR "GPU ve CPU'yu farklı iş parçacıklarında çalıştırır. Şiddetle tavsiye edilir."
 #define CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_TR "Kareyi Otomatik Atla"
@@ -72679,9 +72679,9 @@ struct retro_core_options_v2 options_sv = {
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_TR "Özel Dokular Yükle"
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_INFO_0_TR "'system/dc/textures/<game-id>/' klasöründe bulunan özel dokuları yükleyin."
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_TR "Dokuları Sakla"
-#define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_TR NULL
+#define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_TR "Oyun tarafından her yeni doku kullanıldığında, 'system/dc/texdump/<game-id>/' klasörüne .png dosyası olarak kaydedilecektir."
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_TR "Analog Çubuğu Ölü Bölge"
-#define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_INFO_0_TR NULL
+#define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_INFO_0_TR "İşlenmeye başlamadan önce analog çubuğu ne kadar itmeniz gerektiğini seçin."
 #define OPTION_VAL_0_TR "%0"
 #define OPTION_VAL_5_TR "%5"
 #define OPTION_VAL_10_TR "%10"
@@ -72690,9 +72690,9 @@ struct retro_core_options_v2 options_sv = {
 #define OPTION_VAL_25_TR "%25"
 #define OPTION_VAL_30_TR "%30"
 #define CORE_OPTION_NAME_TRIGGER_DEADZONE_LABEL_TR "Tetik Ölü Bölge"
-#define CORE_OPTION_NAME_TRIGGER_DEADZONE_INFO_0_TR NULL
+#define CORE_OPTION_NAME_TRIGGER_DEADZONE_INFO_0_TR "İşlenmeye başlamadan önce tetiğe ne kadar basmanız gerektiğini seçin."
 #define CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_TR "Dijital Tetikleyiciler"
-#define CORE_OPTION_NAME_DIGITAL_TRIGGERS_INFO_0_TR NULL
+#define CORE_OPTION_NAME_DIGITAL_TRIGGERS_INFO_0_TR "Etkinleştirildiğinde, tetikleyiciler normal düğmeler gibi davranacak, yani tamamen basılmış veya hiç basılmamış olarak, arada bir şey olmadan işlenecekler."
 #define CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_TR "Yayın Dijital Çıkışları"
 #define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_TR "TCP port 8000'de dijital çıkışları ve zorla geri bildirim durumunu yayınlayın. \"-output network\" MAME seçeneğiyle uyumludur."
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_TR "Light Gun Ayarlarını Göster"
@@ -72703,27 +72703,27 @@ struct retro_core_options_v2 options_sv = {
 #define OPTION_VAL_70_TR "%70"
 #define OPTION_VAL_80_TR "%80"
 #define OPTION_VAL_90_TR "%90"
-#define OPTION_VAL_100_O45_TR NULL
-#define OPTION_VAL_110_O45_TR NULL
-#define OPTION_VAL_120_O45_TR NULL
-#define OPTION_VAL_130_O45_TR NULL
-#define OPTION_VAL_140_O45_TR NULL
-#define OPTION_VAL_150_O45_TR NULL
-#define OPTION_VAL_160_O45_TR NULL
-#define OPTION_VAL_170_O45_TR NULL
-#define OPTION_VAL_180_O45_TR NULL
-#define OPTION_VAL_190_O45_TR NULL
-#define OPTION_VAL_200_O45_TR NULL
-#define OPTION_VAL_210_O45_TR NULL
-#define OPTION_VAL_220_O45_TR NULL
-#define OPTION_VAL_230_O45_TR NULL
-#define OPTION_VAL_240_O45_TR NULL
-#define OPTION_VAL_250_O45_TR NULL
-#define OPTION_VAL_260_O45_TR NULL
-#define OPTION_VAL_270_O45_TR NULL
-#define OPTION_VAL_280_O45_TR NULL
-#define OPTION_VAL_290_O45_TR NULL
-#define OPTION_VAL_300_O45_TR NULL
+#define OPTION_VAL_100_O45_TR "%100"
+#define OPTION_VAL_110_O45_TR "%110"
+#define OPTION_VAL_120_O45_TR "%120"
+#define OPTION_VAL_130_O45_TR "%130"
+#define OPTION_VAL_140_O45_TR "%140"
+#define OPTION_VAL_150_O45_TR "%150"
+#define OPTION_VAL_160_O45_TR "%160"
+#define OPTION_VAL_170_O45_TR "%170"
+#define OPTION_VAL_180_O45_TR "%180"
+#define OPTION_VAL_190_O45_TR "%190"
+#define OPTION_VAL_200_O45_TR "%200"
+#define OPTION_VAL_210_O45_TR "%210"
+#define OPTION_VAL_220_O45_TR "%220"
+#define OPTION_VAL_230_O45_TR "%230"
+#define OPTION_VAL_240_O45_TR "%240"
+#define OPTION_VAL_250_O45_TR "%250"
+#define OPTION_VAL_260_O45_TR "%260"
+#define OPTION_VAL_270_O45_TR "%270"
+#define OPTION_VAL_280_O45_TR "%280"
+#define OPTION_VAL_290_O45_TR "%290"
+#define OPTION_VAL_300_O45_TR "%300"
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_TR "Silah Artı Göstergesi 1 Görüntüle"
 #define OPTION_VAL_WHITE_TR "Beyaz"
 #define OPTION_VAL_RED_TR "Kırmızı"
@@ -72733,27 +72733,27 @@ struct retro_core_options_v2 options_sv = {
 #define CORE_OPTION_NAME_LIGHTGUN3_CROSSHAIR_LABEL_TR "Silah Artı Göstergesi 3 Görüntüle"
 #define CORE_OPTION_NAME_LIGHTGUN4_CROSSHAIR_LABEL_TR "Silah Artı Göstergesi 4 Görüntüle"
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_LABEL_TR "Genişletme Yuvası Cihaz A1"
-#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_INFO_0_TR NULL
+#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_INFO_0_TR "Genişletme yuvası A1 için takılı cihazı seçin (port A yuva 1)."
 #define OPTION_VAL_VMU_TR NULL
 #define OPTION_VAL_PURUPURU_TR "Titreşim Paketi"
 #define OPTION_VAL_NONE_TR "Yok"
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_LABEL_TR "Genişletme Yuvası Cihaz A2"
-#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_INFO_0_TR NULL
+#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_INFO_0_TR "Genişletme yuvası A2 için takılı cihazı seçin (port A yuva 2)."
 #define CORE_OPTION_NAME_DEVICE_PORT2_SLOT1_LABEL_TR "Genişletme Yuvası Cihaz B1"
-#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT1_INFO_0_TR NULL
+#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT1_INFO_0_TR "Genişletme yuvası B1 için takılı cihazı seçin (port B yuva 1)."
 #define CORE_OPTION_NAME_DEVICE_PORT2_SLOT2_LABEL_TR "Genişletme Yuvası Cihaz B2"
-#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT2_INFO_0_TR NULL
+#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT2_INFO_0_TR "Genişletme yuvası B2 için takılı cihazı seçin (port B yuva 2)."
 #define CORE_OPTION_NAME_DEVICE_PORT3_SLOT1_LABEL_TR "Genişletme Yuvası Cihaz C1"
-#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT1_INFO_0_TR NULL
+#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT1_INFO_0_TR "Genişletme yuvası C1 için takılı cihazı seçin (port C yuva 1)."
 #define CORE_OPTION_NAME_DEVICE_PORT3_SLOT2_LABEL_TR "Genişletme Yuvası Cihaz C2"
-#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT2_INFO_0_TR NULL
+#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT2_INFO_0_TR "Genişletme yuvası C2 için takılı cihazı seçin (port C yuva 2)."
 #define CORE_OPTION_NAME_DEVICE_PORT4_SLOT1_LABEL_TR "Genişletme Yuvası Cihaz D1"
-#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT1_INFO_0_TR NULL
+#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT1_INFO_0_TR "Genişletme yuvası D1 için takılı cihazı seçin (port D yuva 1)."
 #define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_LABEL_TR "Genişletme Yuvası Cihaz D2"
-#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_INFO_0_TR NULL
+#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_INFO_0_TR "Genişletme yuvası D2 için takılı cihazı seçin (port D yuva 2)."
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_TR "Oyun Başına Görsel Bellek Birimleri/Sistemleri (VMU)"
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CAT_TR "Oyun Başına VMU"
-#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_TR NULL
+#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_TR "Devre dışı bırakıldığında, tüm oyunlar RetroArch sistem dizininde bulunan en fazla 8 VMU kayıt dosyasını (A1/A2/B1/B2/C1/C2/D1/D2) paylaşır.\n\'VMU A1' ayarı, başlatılan her oyun için RetroArch dizin kaydına benzersiz bir VMU 'A1' dosyası oluşturur.\n\'Tüm VMU'' ayarları, başlatılan her oyun için en fazla 8 benzersiz VMU dosyası (A1/A2/B1/B2/C1/C2/D1/D2) oluşturur."
 #define OPTION_VAL_VMU_A1_TR NULL
 #define OPTION_VAL_ALL_VMUS_TR "Tüm VMU"
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_TR "Görsel Bellek Birimleri/Sistemleri (VMU) Sesleri"
@@ -73256,7 +73256,7 @@ struct retro_core_option_v2_definition option_defs_tr[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
    {
       CORE_OPTION_NAME "_detect_vsync_swap_interval",
@@ -75268,7 +75268,7 @@ struct retro_core_option_v2_definition option_defs_uk[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
    {
       CORE_OPTION_NAME "_detect_vsync_swap_interval",
@@ -77280,7 +77280,7 @@ struct retro_core_option_v2_definition option_defs_val[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
    {
       CORE_OPTION_NAME "_detect_vsync_swap_interval",
@@ -79292,7 +79292,7 @@ struct retro_core_option_v2_definition option_defs_vn[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
    {
       CORE_OPTION_NAME "_detect_vsync_swap_interval",

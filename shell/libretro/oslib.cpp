@@ -130,7 +130,7 @@ std::string getTextureDumpPath()
 
 }
 
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__APPLE__)
 void os_SetThreadName(const char *name) {
 }
 #endif
