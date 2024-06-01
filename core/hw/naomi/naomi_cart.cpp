@@ -654,7 +654,7 @@ void naomi_cart_LoadRom(const std::string& path, const std::string& fileName, Lo
 				|| gameId == "INITIAL D CYCRAFT")
 		{
 			card_reader::initdInit();
-			initMidiForceFeedback();
+			midiffb::init();
 		}
 		else if (gameId == "MAXIMUM SPEED" || gameId == "FASTER THAN SPEED")
 		{
@@ -665,7 +665,7 @@ void naomi_cart_LoadRom(const std::string& path, const std::string& fileName, Lo
 				|| gameId == "SEGA DRIVING SIMULATOR")
 		{
 			if (settings.naomi.drivingSimSlave == 0)
-				initMidiForceFeedback();
+				midiffb::init();
 			if (romName == "clubkrt" || romName == "clubkrto"
 					|| romName == "clubkrta" || romName == "clubkrtc")
 				card_reader::clubkInit();
