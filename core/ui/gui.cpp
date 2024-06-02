@@ -3561,6 +3561,8 @@ void gui_draw_osd()
 
 void gui_display_osd()
 {
+	if (gui_state == GuiState::VJoyEdit)
+		return;
 	gui_draw_osd();
 	gui_endFrame(gui_is_open());
 }
