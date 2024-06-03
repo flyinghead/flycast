@@ -2149,8 +2149,11 @@ static void gui_settings_video()
 			ImGui::NextColumn();
 #endif
 #ifdef USE_DX9
-			ImGui::RadioButton("DirectX 9", &renderApi, 2);
-			ImGui::NextColumn();
+			{
+				DisabledScope _(settings.platform.isNaomi2());
+				ImGui::RadioButton("DirectX 9", &renderApi, 2);
+				ImGui::NextColumn();
+			}
 #endif
 #ifdef USE_DX11
 			ImGui::RadioButton("DirectX 11", &renderApi, 3);
