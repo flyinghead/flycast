@@ -321,8 +321,10 @@ public:
 			effect.periodic.period = 40; 				// 25 Hz
 			effect.periodic.magnitude = intensity / 4;	// scale by an additional 0.5 to soften it
 			effect.periodic.length = duration_ms;
-			SDL_HapticUpdateEffect(haptic, sineEffectId, &effect);
-			SDL_HapticRunEffect(haptic, sineEffectId, 1);
+			if (SDL_HapticUpdateEffect(haptic, sineEffectId, &effect) != 0)
+				WARN_LOG(INPUT, "SDL_HapticUpdateEffect sine failed: %s", SDL_GetError());
+			if (SDL_HapticRunEffect(haptic, sineEffectId, 1) != 0)
+				WARN_LOG(INPUT, "SDL_HapticRunEffect sine failed: %s", SDL_GetError());
 		}
 		else {
 			SDL_JoystickRumble(sdl_joystick, intensity, intensity, duration_ms);
@@ -369,8 +371,10 @@ public:
 		effect.constant.direction.dir[0] = torque < 0 ? -1 : 1;	// west/cw if torque < 0
 		effect.constant.length = SDL_HAPTIC_INFINITY;
 		effect.constant.level = std::abs(torque) * 32767.f * rumblePower / 100.f;
-		SDL_HapticUpdateEffect(haptic, constEffectId, &effect);
-		SDL_HapticRunEffect(haptic, constEffectId, 1);
+		if (SDL_HapticUpdateEffect(haptic, constEffectId, &effect) != 0)
+			WARN_LOG(INPUT, "SDL_HapticUpdateEffect torque failed: %s", SDL_GetError());
+		if (SDL_HapticRunEffect(haptic, constEffectId, 1) != 0)
+			WARN_LOG(INPUT, "SDL_HapticRunEffect torque failed: %s", SDL_GetError());
 	}
 
 	void stopHaptic()
@@ -402,8 +406,10 @@ public:
 			effect.condition.left_sat[0] = effect.condition.right_sat[0] = (saturation * rumblePower / 100.f) * 0xffff;
 			// how fast to increase the force
 			effect.condition.left_coeff[0] = effect.condition.right_coeff[0] = speed * 0x7fff;
-			SDL_HapticUpdateEffect(haptic, springEffectId, &effect);
-			SDL_HapticRunEffect(haptic, springEffectId, 1);
+			if (SDL_HapticUpdateEffect(haptic, springEffectId, &effect) != 0)
+				WARN_LOG(INPUT, "SDL_HapticUpdateEffect spring failed: %s", SDL_GetError());
+			if (SDL_HapticRunEffect(haptic, springEffectId, 1) != 0)
+				WARN_LOG(INPUT, "SDL_HapticRunEffect spring failed: %s", SDL_GetError());
 		}
 	}
 
@@ -419,8 +425,10 @@ public:
 		effect.condition.left_sat[0] = effect.condition.right_sat[0] = (param * rumblePower / 100.f) * 0xffff;
 		// how fast to increase the force
 		effect.condition.left_coeff[0] = effect.condition.right_coeff[0] = speed * 0x7fff;
-		SDL_HapticUpdateEffect(haptic, damperEffectId, &effect);
-		SDL_HapticRunEffect(haptic, damperEffectId, 1);
+		if (SDL_HapticUpdateEffect(haptic, damperEffectId, &effect) != 0)
+			WARN_LOG(INPUT, "SDL_HapticUpdateEffect damper failed: %s", SDL_GetError());
+		if (SDL_HapticRunEffect(haptic, damperEffectId, 1) != 0)
+			WARN_LOG(INPUT, "SDL_HapticRunEffect damper failed: %s", SDL_GetError());
 	}
 
 	void close()
