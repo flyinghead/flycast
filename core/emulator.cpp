@@ -287,6 +287,12 @@ static void loadSpecialSettings()
 			NOTICE_LOG(BOOT, "Forcing English Language");
 			config::Language.override(1);
 		}
+		if (prod_id == "T-9701N"			// Mortal Kombat (US)
+				|| prod_id == "T9701D")		// Mortal Kombat (EU)
+		{
+			NOTICE_LOG(BOOT, "Disabling Native Depth Interpolation");
+			config::NativeDepthInterpolation.override(false);
+		}
 	}
 	else if (settings.platform.isArcade())
 	{
@@ -307,6 +313,10 @@ static void loadSpecialSettings()
 		{
 			INFO_LOG(BOOT, "Disabling Free Play for game %s", prod_id.c_str());
 			config::ForceFreePlay.override(false);
+		}
+		if (prod_id == "VIRTUAL-ON ORATORIO TANGRAM") {
+			INFO_LOG(BOOT, "Forcing Japan region for game %s", prod_id.c_str());
+			config::Region.override(0);
 		}
 	}
 }
@@ -705,10 +715,6 @@ void Emulator::requestReset()
 
 void loadGameSpecificSettings()
 {
-	// Graphics context isn't available yet in libretro
-	if (GraphicsContext::Instance() != nullptr && GraphicsContext::Instance()->isAMD())
-		config::NativeDepthInterpolation.override(true);
-
 	if (settings.platform.isConsole())
 	{
 		reios_disk_id();
