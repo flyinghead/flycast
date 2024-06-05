@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>application-identifier</key>
-	<string>com.flyinghead.Flycast</string>
+	<string>io.github.flyinghead.flycast</string>
 	<key>get-task-allow</key>
 	<true/>
 </dict>

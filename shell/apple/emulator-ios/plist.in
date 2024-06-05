@@ -89,7 +89,7 @@
 			<string>Owner</string>
 			<key>LSItemContentTypes</key>
 			<array>
-				<string>com.flyinghead.flycast.disk-image</string>
+				<string>io.github.flyinghead.flycast.disk-image</string>
 			</array>
 		</dict>
 		<dict>
@@ -115,7 +115,7 @@
 			<key>UTTypeDescription</key>
 			<string>Disk image</string>
 			<key>UTTypeIdentifier</key>
-			<string>com.flyinghead.flycast.disk-image</string>
+			<string>io.github.flyinghead.flycast.disk-image</string>
 			<key>UTTypeTagSpecification</key>
 			<dict>
 				<key>public.filename-extension</key>

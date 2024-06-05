@@ -469,7 +469,7 @@ bool checkTryDebug()
 	}];
 
 	dispatch_queue_attr_t attrs = dispatch_queue_attr_make_with_qos_class(DISPATCH_QUEUE_SERIAL, QOS_CLASS_UTILITY, DISPATCH_QUEUE_PRIORITY_DEFAULT);
-	self.monitorQueue = dispatch_queue_create("com.flycast.network-monitor", attrs);
+	self.monitorQueue = dispatch_queue_create("io.github.flyinghead.flycast.network-monitor", attrs);
 	self.monitor = nw_path_monitor_create();
 	nw_path_monitor_set_queue(self.monitor, self.monitorQueue);
 	nw_path_monitor_set_update_handler(self.monitor, ^(nw_path_t _Nonnull path) {
@@ -693,7 +693,7 @@ bool checkTryDebug()
 /*
 - (void)pickIosFile
 {
-	UIDocumentPickerViewController *picker = [[UIDocumentPickerViewController alloc] initWithDocumentTypes:@[@"com.flyinghead.flycast.disk-image", @"com.pkware.zip-archive"] inMode:UIDocumentPickerModeOpen];
+	UIDocumentPickerViewController *picker = [[UIDocumentPickerViewController alloc] initWithDocumentTypes:@[@"io.github.flyinghead.flycast.disk-image", @"com.pkware.zip-archive"] inMode:UIDocumentPickerModeOpen];
 	picker.delegate = self;
 	picker.allowsMultipleSelection = true;
 	
