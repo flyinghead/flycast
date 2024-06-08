@@ -171,6 +171,12 @@ static void loadSpecialSettings()
 			INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s", prod_id.c_str());
 			config::ExtraDepthScale.override(1000.f);
 		}
+		// Capcom vs. SNK - Millennium Fight 2000 Pro
+		else if (prod_id == "T1247M")
+		{
+			INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s", prod_id.c_str());
+			config::ExtraDepthScale.override(10000.f);
+		}
 
 		std::string areas(ip_meta.area_symbols, sizeof(ip_meta.area_symbols));
 		bool region_usa = areas.find('U') != std::string::npos;
@@ -317,6 +323,11 @@ static void loadSpecialSettings()
 		if (prod_id == "VIRTUAL-ON ORATORIO TANGRAM") {
 			INFO_LOG(BOOT, "Forcing Japan region for game %s", prod_id.c_str());
 			config::Region.override(0);
+		}
+		if (prod_id == "CAPCOM VS SNK  JAPAN")
+		{
+			INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s", prod_id.c_str());
+			config::ExtraDepthScale.override(10000.f);
 		}
 	}
 }
