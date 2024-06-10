@@ -1,0 +1,72 @@
+name: PlayStation Vita CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    name: ${{ matrix.config.name }}
+    runs-on: ubuntu-latest
+    container: vitasdk/vitasdk:latest
+
+    strategy:
+      matrix:
+        config:
+          - {name: standalone, destDir: vita}
+
+    steps:
+      - name: Set up build environment
+        run: |
+          apk add --no-cache aws-cli ccache git ninja
+          vdpm curl libzip openssl SceShaccCgExt vitaShaRK taihen zlib
+          git clone -b exceptions_mprotect --depth 1 https://github.com/bythos14/kubridge.git
+          cmake -S kubridge -B kubridge_build -G Ninja -DCMAKE_TOOLCHAIN_FILE=${VITASDK}/share/vita.toolchain.cmake -DCMAKE_BUILD_TYPE=Release
+          cmake --build kubridge_build --config Release --target kubridge_all
+          cmake --install kubridge_build
+          git clone --depth 1 https://github.com/Rinnegatamante/vitaGL.git
+          make -C vitaGL HAVE_WRAPPED_ALLOCATORS=1 HAVE_SHADER_CACHE=1 NO_DEBUG=1 -j4 install
+          git clone -b vitagl --depth 1 https://github.com/Northfear/SDL.git
+          cmake -S SDL -B SDL_build -G Ninja -DCMAKE_TOOLCHAIN_FILE=${VITASDK}/share/vita.toolchain.cmake -DCMAKE_BUILD_TYPE=Release -DVIDEO_VITA_VGL=ON
+          cmake --build SDL_build --config Release
+          cmake --install SDL_build
+
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: true
+
+      - name: Mark git repository as safe
+        run: git config --global --add safe.directory $PWD
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.ccache
+          key: ccache-vita-${{ matrix.config.name }}-${{ github.sha }}
+          restore-keys: ccache-vita-${{ matrix.config.name }}-
+
+      - name: CMake
+        run: |
+          cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=$VITASDK/share/vita.toolchain.cmake -G Ninja ${{ matrix.config.cmakeArgs }}
+          cmake --build build --config Release --target Flycast.vpk-vpk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: flycast-vita-${{ matrix.config.name }}
+          path: build/flycast
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: flycast-vita-${{ matrix.config.name }}.vpk
+          path: build/Flycast.vpk
+
+      - name: Configure AWS Credentials
+        id: aws-credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: AKIAJOZQS4H2PHQWYFCA
+          aws-secret-access-key: ${{ secrets.S3_SECRET_KEY }}
+          aws-region: us-east-2
+        if: github.repository == 'flyinghead/flycast' && github.event_name == 'push' && matrix.config.destDir != ''
+
+      - name: Upload to S3
+        run: aws s3 sync artifact/bin s3://flycast-builds/${{ matrix.config.destDir }}/${GITHUB_REF#refs/}-$GITHUB_SHA --acl public-read --follow-symlinks
+        if: ${{ steps.aws-credentials.outputs.aws-account-id != '' }}

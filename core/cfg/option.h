@@ -359,6 +359,11 @@ extern Option<bool> DynarecEnabled;
 #ifndef LIBRETRO
 extern Option<int> Sh4Clock;
 #endif
+#ifdef __vita__
+extern Option<int> DynarecSmcChecks;
+extern Option<bool> FastSorting;
+extern Option<bool> UseSimpleShaders;
+#endif
 
 // General
 
