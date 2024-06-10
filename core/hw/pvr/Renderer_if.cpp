@@ -285,7 +285,7 @@ static void rend_create_renderer()
 	case RenderType::OpenGL:
 		renderer = rend_GLES2();
 		break;
-#if !defined(GLES) && !defined(__APPLE__)
+#if !defined(GLES) && !defined(__APPLE__) && !defined(__vita__)
 	case RenderType::OpenGL_OIT:
 		renderer = rend_GL4();
 		break;
