@@ -51,6 +51,11 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: flycast-vita-${{ matrix.config.name }}
+          path: build/flycast
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: flycast-vita-${{ matrix.config.name }}.vpk
           path: build/Flycast.vpk
 
       - name: Configure AWS Credentials
