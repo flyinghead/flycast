@@ -100,9 +100,11 @@ public:
 
 			bool isDir = false;
 #ifndef _WIN32
+#ifndef __vita__
 			if (direntry->d_type == DT_DIR)
 				isDir = true;
 			else if (direntry->d_type == DT_UNKNOWN || direntry->d_type == DT_LNK)
+#endif
 			{
 				struct stat st;
 				if (flycast::stat(entry.path.c_str(), &st) != 0)
