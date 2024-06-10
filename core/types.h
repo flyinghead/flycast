@@ -259,7 +259,12 @@ constexpr size_t operator""_GB(unsigned long long  x)
 	return 1024 * 1024 * 1024 * x;
 }
 
+#ifndef __vita__
 constexpr u32 RAM_SIZE_MAX = 32_MB;
 constexpr u32 VRAM_SIZE_MAX = 16_MB;
+#else // Vita does not target Atomiswave/Naomi
+constexpr u32 RAM_SIZE_MAX = 16_MB;
+constexpr u32 VRAM_SIZE_MAX = 8_MB;
+#endif
 constexpr u32 ARAM_SIZE_MAX = 8_MB;
 
