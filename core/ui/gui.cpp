@@ -3682,7 +3682,7 @@ void gui_loadState()
 void gui_saveState(bool stopRestart)
 {
 	const LockGuard lock(guiMutex);
-	if (gui_state == GuiState::Closed && savestateAllowed())
+	if ((gui_state == GuiState::Closed || !stopRestart) && savestateAllowed())
 	{
 		try {
 			if (stopRestart)
