@@ -769,11 +769,6 @@ static void gui_display_commands()
 				savestate();
 			}
 
-			{
-				// Help with navigation with gamepad/keyboard
-				ImguiStyleVar _{ImGuiStyleVar_ItemSpacing, ImVec2(0.f, 2.f)};
-				ImGui::Spacing();
-			}
 			// Slot #
 			if (ImGui::ArrowButton("##prev-slot", ImGuiDir_Left))
 			{
@@ -2604,7 +2599,7 @@ static void gui_settings_network()
 		else if (config::BattleCableEnable)
 			netType = 3;
 		ImGui::Columns(4, "networkType", false);
-		ImGui::RadioButton("Disabled", &netType, 0);
+		ImGui::RadioButton("Disabled##network", &netType, 0);
 		ImGui::NextColumn();
 		ImGui::RadioButton("GGPO", &netType, 1);
 		ImGui::SameLine(0, style.ItemInnerSpacing.x);
@@ -2651,7 +2646,7 @@ static void gui_settings_network()
 				"Sets Frame Delay, advisable for sessions with ping >100 ms");
 
 			ImGui::Text("Left Thumbstick:");
-			OptionRadioButton<int>("Disabled", config::GGPOAnalogAxes, 0, "Left thumbstick not used");
+			OptionRadioButton<int>("Disabled##analogaxis", config::GGPOAnalogAxes, 0, "Left thumbstick not used");
 			ImGui::SameLine();
 			OptionRadioButton<int>("Horizontal", config::GGPOAnalogAxes, 1, "Use the left thumbstick horizontal axis only");
 			ImGui::SameLine();
@@ -2721,7 +2716,7 @@ static void gui_settings_network()
 	ImGui::Spacing();
 	header("Multiboard Screens");
 	{
-		//OptionRadioButton<int>("Disabled", config::MultiboardSlaves, 0, "Multiboard disabled (when optional)");
+		//OptionRadioButton<int>("Disabled##multiboard", config::MultiboardSlaves, 0, "Multiboard disabled (when optional)");
 		OptionRadioButton<int>("1 (Twin)", config::MultiboardSlaves, 1, "One screen configuration (F355 Twin)");
 		ImGui::SameLine();
 		OptionRadioButton<int>("3 (Deluxe)", config::MultiboardSlaves, 2, "Three screens configuration");
