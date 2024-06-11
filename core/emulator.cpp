@@ -324,7 +324,7 @@ static void loadSpecialSettings()
 			INFO_LOG(BOOT, "Forcing Japan region for game %s", prod_id.c_str());
 			config::Region.override(0);
 		}
-		if (prod_id == "CAPCOM VS SNK  JAPAN")
+		if (prod_id == "CAPCOM VS SNK PRO  JAPAN")
 		{
 			INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s", prod_id.c_str());
 			config::ExtraDepthScale.override(10000.f);
