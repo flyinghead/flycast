@@ -135,7 +135,7 @@ public:
 		if (mmu_enabled() && block->has_fpu_op)
 		{
 			Xbyak::Label fpu_enabled;
-			mov(rax, (uintptr_t)&sr);
+			mov(rax, (uintptr_t)&sr.status);
 			test(dword[rax], 0x8000);			// test SR.FD bit
 			jz(fpu_enabled);
 			mov(call_regs[0], block->vaddr);	// pc

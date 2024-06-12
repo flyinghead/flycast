@@ -167,9 +167,6 @@ bool SSAOptimizer::ExecuteConstOp(shil_opcode* op)
 		case shop_swaplb:
 			rd = shil_opcl_swaplb::f1::impl(rs1);
 			break;
-		case shop_swap:
-			rd = shil_opcl_swap::f1::impl(rs1);
-			break;
 		case shop_seteq:
 			rd = shil_opcl_seteq::f1::impl(rs1, rs2);
 			break;

@@ -362,7 +362,7 @@ sh4op(i1111_nnnn_0111_1101)
 	u32 n = GetN(op);
 	if (fpscr.PR==0)
 	{
-		fr[n] = (float)(1/sqrtf(fr[n]));
+		fr[n] = sqrtf(1.f / fr[n]);
 		CHECK_FPU_32(fr[n]);
 	}
 	else
@@ -406,23 +406,12 @@ sh4op(i1111_nnmm_1110_1101)
 	int m=(GetN(op)&0x3)<<2;
 	if (fpscr.PR == 0)
 	{
-#if HOST_CPU == CPU_X86 || HOST_CPU == CPU_X64
-		// multiplications are done with 28 bits of precision (53 - 25) and the final sum at 30 bits
 		double idp = (double)fr[n + 0] * fr[m + 0];
 		idp += (double)fr[n + 1] * fr[m + 1];
 		idp += (double)fr[n + 2] * fr[m + 2];
 		idp += (double)fr[n + 3] * fr[m + 3];
 
 		fr[n + 3] = fixNaN((float)idp);
-#else
-		float rv = fr[n + 0] * fr[m + 0];
-		rv += fr[n + 1] * fr[m + 1];
-		rv += fr[n + 2] * fr[m + 2];
-		rv += fr[n + 3] * fr[m + 3];
-
-		CHECK_FPU_32(rv);
-		fr[n + 3] = rv;
-#endif
 	}
 	else
 	{
@@ -521,7 +510,7 @@ sh4op(i1111_nnnn_0110_1101)
 	}
 	else
 	{
-		setDRn(op, fixNaN64(sqrt(getDRn(op))));
+		setDRn(op, fixNaN64(std::sqrt(getDRn(op))));
 	}
 }
 
@@ -567,7 +556,7 @@ sh4op(i1111_nnnn_mmmm_1110)
 		u32 n = GetN(op);
 		u32 m = GetM(op);
 
-		fr[n] =(f32) ((f64)fr[n]+(f64)fr[0] * (f64)fr[m]);
+		fr[n] = std::fma(fr[0], fr[m], fr[n]);
 		CHECK_FPU_32(fr[n]);
 	}
 	else
@@ -591,7 +580,6 @@ sh4op(i1111_nn01_1111_1101)
 
 	if (fpscr.PR==0)
 	{
-#if HOST_CPU == CPU_X86 || HOST_CPU == CPU_X64
 		double v1 = (double)xf[0]  * fr[n + 0] +
 					(double)xf[4]  * fr[n + 1] +
 					(double)xf[8]  * fr[n + 2] +
@@ -616,39 +604,6 @@ sh4op(i1111_nn01_1111_1101)
 		fr[n + 1] = fixNaN((float)v2);
 		fr[n + 2] = fixNaN((float)v3);
 		fr[n + 3] = fixNaN((float)v4);
-#else
-		float v1, v2, v3, v4;
-
-		v1 = xf[0]  * fr[n + 0] +
-			 xf[4]  * fr[n + 1] +
-			 xf[8]  * fr[n + 2] +
-			 xf[12] * fr[n + 3];
-
-		v2 = xf[1]  * fr[n + 0] +
-			 xf[5]  * fr[n + 1] +
-			 xf[9]  * fr[n + 2] +
-			 xf[13] * fr[n + 3];
-
-		v3 = xf[2]  * fr[n + 0] +
-			 xf[6]  * fr[n + 1] +
-			 xf[10] * fr[n + 2] +
-			 xf[14] * fr[n + 3];
-
-		v4 = xf[3]  * fr[n + 0] +
-			 xf[7]  * fr[n + 1] +
-			 xf[11] * fr[n + 2] +
-			 xf[15] * fr[n + 3];
-
-		CHECK_FPU_32(v1);
-		CHECK_FPU_32(v2);
-		CHECK_FPU_32(v3);
-		CHECK_FPU_32(v4);
-
-		fr[n + 0] = v1;
-		fr[n + 1] = v2;
-		fr[n + 2] = v3;
-		fr[n + 3] = v4;
-#endif
 	}
 	else
 	{

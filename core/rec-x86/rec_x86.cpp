@@ -108,7 +108,7 @@ void X86Compiler::compile(RuntimeBlockInfo* block, bool force_checks, bool optim
 	if (mmu_enabled() && block->has_fpu_op)
 	{
 		Xbyak::Label fpu_enabled;
-		mov(eax, dword[&sr]);
+		mov(eax, dword[&sr.status]);
 		test(eax, 0x8000);			// test SR.FD bit
 		jz(fpu_enabled);
 		push(Sh4Ex_FpuDisabled);	// exception code

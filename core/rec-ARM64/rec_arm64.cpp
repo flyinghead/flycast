@@ -879,9 +879,9 @@ public:
 				break;
 
 			case shop_fsrra:
-				Fsqrt(s0, regalloc.MapVRegister(op.rs1));
 				Fmov(s1, 1.f);
-				Fdiv(regalloc.MapVRegister(op.rd), s1, s0);
+				Fdiv(s0, s1, regalloc.MapVRegister(op.rs1));
+				Fsqrt(regalloc.MapVRegister(op.rd), s0);
 				break;
 
 			case shop_fsetgt:
@@ -907,6 +907,7 @@ public:
 				}
 				break;
 
+			/* fall back to the canonical implementations for better precision
 			case shop_fipr:
 				Add(x9, x28, sh4_context_mem_operand(op.rs1.reg_ptr()).GetOffset());
 				Ld1(v0.V4S(), MemOperand(x9));
@@ -937,6 +938,7 @@ public:
 				Add(x9, x28, sh4_context_mem_operand(op.rd.reg_ptr()).GetOffset());
 				St1(v5.V4S(), MemOperand(x9));
 				break;
+			*/
 
 			case shop_frswap:
 				Add(x9, x28, sh4_context_mem_operand(op.rs1.reg_ptr()).GetOffset());
@@ -1077,13 +1079,11 @@ public:
 		switch (size)
 		{
 		case 1:
-			GenCallRuntime(addrspace::read8);
-			Sxtb(w0, w0);
+			GenCallRuntime(addrspace::read8SX32);
 			break;
 
 		case 2:
-			GenCallRuntime(addrspace::read16);
-			Sxth(w0, w0);
+			GenCallRuntime(addrspace::read16SX32);
 			break;
 
 		case 4:
@@ -1497,7 +1497,7 @@ public:
 		// w0: vaddr, w1: addr
 		checkBlockFpu = GetCursorAddress<DynaCode *>();
 		Label fpu_enabled;
-		Ldr(w10, sh4_context_mem_operand(&sr));
+		Ldr(w10, sh4_context_mem_operand(&sr.status));
 		Tbz(w10, 15, &fpu_enabled);			// test SR.FD bit
 
 		Mov(w1, Sh4Ex_FpuDisabled);	// exception code
