@@ -98,6 +98,15 @@ void select_file_popup(const char *prompt, StringCallback callback,
 			std::sort(folderFiles.begin(), folderFiles.end());
 			subfolders_read = true;
 		}
+		if (prompt != nullptr) {
+			ImguiStyleVar _(ImGuiStyleVar_ButtonTextAlign, ImVec2(0.f, 0.5f)); // Left
+			ImguiStyleVar _1(ImGuiStyleVar_DisabledAlpha, 1.0f);
+			ImGui::BeginDisabled();
+			ImGui::PushFont(largeFont);
+			ImGui::ButtonEx(prompt, ImVec2(-1, 0));
+			ImGui::PopFont();
+			ImGui::EndDisabled();
+		}
 		std::string title;
 		if (!error_message.empty())
 			title = error_message;
