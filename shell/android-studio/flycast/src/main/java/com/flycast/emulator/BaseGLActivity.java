@@ -3,6 +3,7 @@ package com.flycast.emulator;
 import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -26,7 +27,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 
-import com.flycast.emulator.AndroidStorage;
 import com.flycast.emulator.config.Config;
 import com.flycast.emulator.emu.AudioBackend;
 import com.flycast.emulator.emu.HttpClient;
@@ -35,6 +35,9 @@ import com.flycast.emulator.periph.InputDeviceManager;
 import com.flycast.emulator.periph.SipEmulator;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -91,8 +94,21 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
         OuyaController.init(this);
         new HttpClient().nativeInit();
 
-        String home_directory = prefs.getString(Config.pref_home, "");
-        String result = JNIdc.initEnvironment((Emulator)getApplicationContext(), getFilesDir().getAbsolutePath(), home_directory,
+        String homeDir = prefs.getString(Config.pref_home, "");
+        // Check that home dir is valid, migrate if needed
+        String newHome = checkHomeDirectory(homeDir);
+        if (newHome != null) {
+            if (!newHome.equals(homeDir))
+                prefs.edit().putString(Config.pref_home, newHome).apply();
+            finishCreation();
+        }
+        Log.i("flycast", "BaseGLActivity.onCreate done");
+    }
+
+    protected void finishCreation()
+    {
+        String homeDir = prefs.getString(Config.pref_home, getDefaultHomeDir());
+        String result = JNIdc.initEnvironment((Emulator)getApplicationContext(), getFilesDir().getAbsolutePath(), homeDir,
                 Locale.getDefault().toString());
         if (result != null) {
             AlertDialog.Builder dlgAlert  = new AlertDialog.Builder(this);
@@ -158,7 +174,7 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
                     pendingIntentUrl = gameUri.toString();
             }
         }
-        Log.i("flycast", "BaseGLActivity.onCreate done");
+        Log.i("flycast", "BaseGLActivity.finishCreation done");
     }
 
     private void setStorageDirectories()
@@ -393,6 +409,132 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
                 requestRecordAudioPermission();
         }
 
+    }
+
+    private String getDefaultHomeDir()
+    {
+        return getExternalFilesDir(null).getAbsolutePath();
+    }
+
+    private String checkHomeDirectory(String homeDir)
+    {
+        if (homeDir.isEmpty())
+            // home dir not set: use default
+            return getDefaultHomeDir();
+        if (homeDir.startsWith(getDefaultHomeDir()))
+            // home dir is ok
+            return homeDir;
+        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P)
+            // no need to migrate on Android 9 or earlier
+            return homeDir;
+        // Only ask to migrate once
+        String migrationPref = "legacy-storage-migration-done";
+        if (prefs.getBoolean(migrationPref, false))
+            return homeDir;
+        // Ask the user if he wants to migrate
+        AlertDialog.Builder dlgAlert  = new AlertDialog.Builder(this);
+        dlgAlert.setMessage("The current Flycast home folder will be inaccessible in future versions.\n\n"
+                + "Do you want to move config and save files to a valid location?");
+        dlgAlert.setTitle("Migrate Home");
+        dlgAlert.setPositiveButton("Yes",
+                (dialog, id) -> BaseGLActivity.this.migrateHome(homeDir));
+        dlgAlert.setNegativeButton("No",
+                (dialog, id) -> BaseGLActivity.this.finishCreation());
+        dlgAlert.setIcon(android.R.drawable.ic_dialog_alert);
+        dlgAlert.setCancelable(false);
+        dlgAlert.create().show();
+        // Don't ask again
+        prefs.edit().putBoolean(migrationPref, true).apply();
+
+        return null;
+    }
+
+    private boolean migrationThreadCancelled = false;
+    private void migrateHome(String oldHome)
+    {
+        File source = new File(oldHome);
+        File dest = new File(getDefaultHomeDir());
+        ProgressDialog progress = ProgressDialog.show(this, "Migrating", "Moving files to their new home",
+                true, true, dialogInterface -> migrationThreadCancelled = true);
+        progress.show();
+
+        migrationThreadCancelled = false;
+        Thread thread = new Thread(new Runnable() {
+            private void moveFile(File file, File toDir)
+            {
+                //Log.d("flycast", "Moving " + file.getAbsolutePath() + " to " + toDir.getAbsolutePath());
+                try {
+                    File dest = new File(toDir, file.getName());
+                    // file.renameTo(dest) doesn't seem to work
+                    FileInputStream in = new FileInputStream(file);
+                    FileOutputStream out = new FileOutputStream(dest);
+                    byte[] buf = new byte[8192];
+                    while (true) {
+                        int len = in.read(buf);
+                        if (len == -1)
+                            break;
+                        out.write(buf, 0, len);
+                    }
+                    out.close();
+                    in.close();
+                    file.delete();
+                } catch (IOException e) {
+                    Log.e("flycast", "Error moving " + file.getAbsolutePath(), e);
+                }
+            }
+
+            private void moveDir(File from, File to)
+            {
+                //Log.d("flycast", "Moving dir " + from.getAbsolutePath() + " to " + to.getAbsolutePath());
+                if (!from.exists())
+                    return;
+                File[] files = from.listFiles();
+                if (files == null) {
+                    Log.e("flycast", "Can't list content of " + from.getAbsolutePath());
+                    return;
+                }
+                for (File file : files)
+                {
+                    if (migrationThreadCancelled)
+                        break;
+                    if (file.isFile())
+                        moveFile(file, to);
+                    else if (file.isDirectory() && !file.getName().equals("boxart")) {
+                        File subDir = new File(to, file.getName());
+                        subDir.mkdir();
+                        moveDir(file, subDir);
+                    }
+                }
+                from.delete();
+            }
+
+            private void migrate()
+            {
+                moveFile(new File(source, "emu.cfg"), dest);
+                if (migrationThreadCancelled)
+                    return;
+                File mappings = new File(dest, "mappings");
+                mappings.mkdirs();
+                moveDir(new File(source, "mappings"), mappings);
+                if (migrationThreadCancelled)
+                    return;
+                File data = new File(dest, "data");
+                data.mkdirs();
+                moveDir(new File(source, "data"), data);
+            }
+
+            @Override
+            public void run()
+            {
+                migrate();
+                runOnUiThread(() -> {
+                    prefs.edit().putString(Config.pref_home, getDefaultHomeDir()).apply();
+                    progress.dismiss();
+                    BaseGLActivity.this.finishCreation();
+                });
+            }
+            });
+        thread.start();
     }
 
     // Called from native code
