@@ -40,6 +40,7 @@ CustomStorage& customStorage()
 		std::string getParentPath(const std::string& path) override { die("Not implemented"); }
 		std::string getSubPath(const std::string& reference, const std::string& relative) override { die("Not implemented"); }
 		FileInfo getFileInfo(const std::string& path) override { die("Not implemented"); }
+		bool exists(const std::string& path) override { die("Not implemented"); }
 		void addStorage(bool isDirectory, bool writeAccess, void (*callback)(bool cancelled, std::string selectedPath)) override {
 			die("Not implemented");
 		}
@@ -218,6 +219,23 @@ public:
 		return info;
 	}
 
+	bool exists(const std::string& path) override
+	{
+#ifndef _WIN32
+		struct stat st;
+		return flycast::stat(path.c_str(), &st) == 0;
+#else // _WIN32
+		nowide::wstackstring wname;
+		if (wname.convert(path.c_str()))
+		{
+			WIN32_FILE_ATTRIBUTE_DATA fileAttribs;
+			if (GetFileAttributesExW(wname.get(), GetFileExInfoStandard, &fileAttribs))
+				return true;
+		}
+		return false;
+#endif
+	}
+
 private:
 	std::vector<FileInfo> listRoots()
 	{
@@ -317,6 +335,14 @@ FileInfo AllStorage::getFileInfo(const std::string& path)
 		return customStorage().getFileInfo(path);
 	else
 		return stdStorage.getFileInfo(path);
+}
+
+bool AllStorage::exists(const std::string& path)
+{
+	if (customStorage().isKnownPath(path))
+		return customStorage().exists(path);
+	else
+		return stdStorage.exists(path);
 }
 
 std::string AllStorage::getDefaultDirectory()

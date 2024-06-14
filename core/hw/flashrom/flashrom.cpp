@@ -17,10 +17,11 @@
 #include "flashrom.h"
 #include "oslib/oslib.h"
 #include "stdclass.h"
+#include "oslib/storage.h"
 
 bool MemChip::Load(const std::string& file)
 {
-	FILE *f = nowide::fopen(file.c_str(), "rb");
+	FILE *f = hostfs::storage().openFile(file, "rb");
 	if (f)
 	{
 		bool rv = std::fread(data + write_protect_size, 1, size - write_protect_size, f) == size - write_protect_size;

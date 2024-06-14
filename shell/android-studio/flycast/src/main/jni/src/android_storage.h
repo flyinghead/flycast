@@ -37,6 +37,7 @@ public:
 		jgetParentUri = env->GetMethodID(clazz, "getParentUri", "(Ljava/lang/String;)Ljava/lang/String;");
 		jgetSubPath = env->GetMethodID(clazz, "getSubPath", "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;");
 		jgetFileInfo = env->GetMethodID(clazz, "getFileInfo", "(Ljava/lang/String;)Lcom/flycast/emulator/FileInfo;");
+		jexists = env->GetMethodID(clazz, "exists", "(Ljava/lang/String;)Z");
 		jaddStorage = env->GetMethodID(clazz, "addStorage", "(ZZ)V");
 		jsaveScreenshot = env->GetMethodID(clazz, "saveScreenshot", "(Ljava/lang/String;[B)V");
 	}
@@ -119,6 +120,18 @@ public:
 		return fromJavaFileInfo(jinfo);
 	}
 
+	bool exists(const std::string& uri) override
+	{
+		jni::String juri(uri);
+		bool ret = jni::env()->CallBooleanMethod(jstorage, jexists, (jstring)juri);
+		try {
+			checkException();
+			return ret;
+		} catch (...) {
+			return false;
+		}
+	}
+
 	void addStorage(bool isDirectory, bool writeAccess, void (*callback)(bool cancelled, std::string selectedPath)) override
 	{
 		jni::env()->CallVoidMethod(jstorage, jaddStorage, isDirectory, writeAccess);
@@ -194,6 +207,7 @@ private:
 	jmethodID jaddStorage;
 	jmethodID jgetSubPath;
 	jmethodID jgetFileInfo;
+	jmethodID jexists;
 	jmethodID jsaveScreenshot;
 	// FileInfo accessors lazily initialized to avoid having to load the class
 	jmethodID jgetName = nullptr;

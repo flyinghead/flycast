@@ -809,12 +809,7 @@ std::future<ImguiStateTexture::LoadedPic> ImguiStateTexture::asyncLoad;
 bool ImguiStateTexture::exists()
 {
 	std::string path = hostfs::getSavestatePath(config::SavestateSlot, false);
-	try {
-		hostfs::storage().getFileInfo(path);
-		return true;
-	} catch (...) {
-		return false;
-	}
+	return hostfs::storage().exists(path);
 }
 
 ImTextureID ImguiStateTexture::getId()

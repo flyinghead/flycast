@@ -52,6 +52,7 @@ public:
 	virtual std::string getParentPath(const std::string& path) = 0;
 	virtual std::string getSubPath(const std::string& reference, const std::string& subpath) = 0;
 	virtual FileInfo getFileInfo(const std::string& path) = 0;
+	virtual bool exists(const std::string& path) = 0;
 
 	virtual ~Storage() = default;
 };
@@ -72,6 +73,7 @@ public:
 	std::string getParentPath(const std::string& path) override;
 	std::string getSubPath(const std::string& reference, const std::string& subpath) override;
 	FileInfo getFileInfo(const std::string& path) override;
+	bool exists(const std::string& path) override;
 	std::string getDefaultDirectory();
 };
 

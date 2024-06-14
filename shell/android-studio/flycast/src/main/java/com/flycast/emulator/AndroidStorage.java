@@ -126,15 +126,17 @@ public class AndroidStorage {
     }
 
     public String getSubPath(String reference, String relative) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT)
+        {
             Uri refUri = Uri.parse(reference);
-            String docId = DocumentsContract.getDocumentId(refUri);
-            String ret;
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
-                ret = DocumentsContract.buildDocumentUriUsingTree(refUri, docId + "/" + relative).toString();
-            else
-                ret = DocumentsContract.buildDocumentUri(refUri.getAuthority(), docId + "/" + relative).toString();
-            return ret;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                String docId = DocumentsContract.getTreeDocumentId(refUri);
+                return DocumentsContract.buildDocumentUriUsingTree(refUri, docId + "/" + relative).toString();
+            }
+            else {
+                String docId = DocumentsContract.getDocumentId(refUri);
+                return DocumentsContract.buildDocumentUri(refUri.getAuthority(), docId + "/" + relative).toString();
+            }
         }
         else {
             throw new UnsupportedOperationException("getSubPath unsupported");
@@ -143,6 +145,7 @@ public class AndroidStorage {
 
     public FileInfo getFileInfo(String uriString) throws FileNotFoundException {
         Uri uri = Uri.parse(uriString);
+        // FIXME >= Build.VERSION_CODES.LOLLIPOP
         DocumentFile docFile = DocumentFile.fromTreeUri(activity, uri);
         if (!docFile.exists())
             throw new FileNotFoundException(uriString);
@@ -154,6 +157,30 @@ public class AndroidStorage {
         info.setWritable(docFile.canWrite());
 
         return info;
+    }
+
+    public boolean exists(String uriString)
+    {
+        Uri uri = Uri.parse(uriString);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            if (!DocumentsContract.isDocumentUri(activity, uri))
+            {
+                String documentId = DocumentsContract.getTreeDocumentId(uri);
+                uri = DocumentsContract.buildDocumentUriUsingTree(uri, documentId);
+            }
+        }
+        Cursor cursor = null;
+        try {
+            cursor = activity.getContentResolver().query(uri, new String[]{ DocumentsContract.Document.COLUMN_DISPLAY_NAME },
+                    null, null, null);
+            boolean ret = cursor != null && cursor.moveToNext();
+            return ret;
+        } catch (Exception e) {
+            return false;
+        } finally {
+            if (cursor != null)
+                cursor.close();
+        }
     }
 
     public void addStorage(boolean isDirectory, boolean writeAccess) {
