@@ -29,6 +29,12 @@ jobs:
           key: android-ccache-${{ github.sha }}
           restore-keys: android-ccache-
 
+      - name: Bump version code
+        uses: chkfung/android-version-actions@v1.2.2
+        with:
+          gradlePath: shell/android-studio/flycast/build.gradle 
+          versionCode: ${{ github.run_number }}
+
       - name: Gradle
         working-directory: shell/android-studio
         run: ./gradlew bundleRelease --parallel
@@ -36,7 +42,8 @@ jobs:
           SENTRY_UPLOAD_URL: ${{ secrets.SENTRY_UPLOAD_URL }}
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
 
-      - uses: r0adkll/upload-google-play@v1.1.3
+      - name: Upload to Google Play
+        uses: r0adkll/upload-google-play@v1.1.3
         with:
           serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
           packageName: com.flycast.emulator
