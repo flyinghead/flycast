@@ -41,7 +41,7 @@ jobs:
           serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
           packageName: com.flycast.emulator
           releaseFiles: shell/android-studio/flycast/build/outputs/bundle/release/flycast-release.aab
-          track: qa
+          track: internal
           status: draft
 
       - name: Build dump_syms
