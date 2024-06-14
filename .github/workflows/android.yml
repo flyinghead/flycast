@@ -34,6 +34,7 @@ jobs:
         run: ./gradlew bundleRelease --parallel
         env:
           SENTRY_UPLOAD_URL: ${{ secrets.SENTRY_UPLOAD_URL }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
 
       - uses: r0adkll/upload-google-play@v1.1.3
         with:
