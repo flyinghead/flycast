@@ -49,13 +49,19 @@ android {
         debug {
             storeFile file("../debug.keystore")
         }
+        release {
+            storeFile file("../playstore.jks")
+            storePassword System.getenv("ANDROID_KEYSTORE_PASSWORD")
+            keyAlias 'uploadkey'
+            keyPassword System.getenv("ANDROID_KEYSTORE_PASSWORD")
+        }
     }
 
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            signingConfig signingConfigs.debug
+            signingConfig signingConfigs.release
         }
     }
     compileOptions {
