@@ -1708,16 +1708,7 @@ static void gui_settings_general()
         	if (ImGui::Button("X"))
         		to_delete = i;
         }
-#ifdef __ANDROID__
-        ImguiStyleVar _(ImGuiStyleVar_FramePadding, ScaledVec2(24, 3));
-        if (ImGui::Button("Add"))
-        {
-        	hostfs::addStorage(true, false, [](bool cancelled, std::string selection) {
-    			if (!cancelled)
-    				addContentPath(selection);
-        	});
-        }
-#else
+
         const char *title = "Select a Content Directory";
         select_file_popup(title, [](bool cancelled, std::string selection) {
 			if (!cancelled)
@@ -1725,6 +1716,17 @@ static void gui_settings_general()
 			return true;
         });
         ImguiStyleVar _(ImGuiStyleVar_FramePadding, ScaledVec2(24, 3));
+#ifdef __ANDROID__
+        if (ImGui::Button("Add"))
+        {
+        	bool supported = hostfs::addStorage(true, false, [](bool cancelled, std::string selection) {
+    			if (!cancelled)
+    				addContentPath(selection);
+        		});
+        	if (!supported)
+        		ImGui::OpenPopup(title);
+        }
+#else
         if (ImGui::Button("Add"))
         	ImGui::OpenPopup(title);
 #endif

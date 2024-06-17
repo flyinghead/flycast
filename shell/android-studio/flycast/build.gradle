@@ -43,6 +43,7 @@ android {
             // avoid Error: Google Play requires that apps target API level 31 or higher.
             abortOnError false
         }
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
     signingConfigs {
@@ -92,4 +93,9 @@ dependencies {
     implementation libs.slf4j.android
     implementation fileTree(dir: 'libs', include: ['*.aar', '*.jar'], exclude: [])
     implementation libs.documentfile
+
+    androidTestImplementation 'androidx.test:runner:1.5.0'
+    androidTestImplementation 'androidx.test:rules:1.5.0'
+    androidTestImplementation 'androidx.test:core:1.5.0'
+    androidTestImplementation 'junit:junit:4.12'
 }

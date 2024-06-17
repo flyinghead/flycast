@@ -38,7 +38,7 @@ public:
 		jgetSubPath = env->GetMethodID(clazz, "getSubPath", "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;");
 		jgetFileInfo = env->GetMethodID(clazz, "getFileInfo", "(Ljava/lang/String;)Lcom/flycast/emulator/FileInfo;");
 		jexists = env->GetMethodID(clazz, "exists", "(Ljava/lang/String;)Z");
-		jaddStorage = env->GetMethodID(clazz, "addStorage", "(ZZ)V");
+		jaddStorage = env->GetMethodID(clazz, "addStorage", "(ZZ)Z");
 		jsaveScreenshot = env->GetMethodID(clazz, "saveScreenshot", "(Ljava/lang/String;[B)V");
 	}
 
@@ -132,11 +132,13 @@ public:
 		}
 	}
 
-	void addStorage(bool isDirectory, bool writeAccess, void (*callback)(bool cancelled, std::string selectedPath)) override
+	bool addStorage(bool isDirectory, bool writeAccess, void (*callback)(bool cancelled, std::string selectedPath)) override
 	{
-		jni::env()->CallVoidMethod(jstorage, jaddStorage, isDirectory, writeAccess);
+		bool ret = jni::env()->CallBooleanMethod(jstorage, jaddStorage, isDirectory, writeAccess);
 		checkException();
-		addStorageCallback = callback;
+		if (ret)
+			addStorageCallback = callback;
+		return ret;
 	}
 
 	void doStorageCallback(jstring path)
@@ -182,6 +184,7 @@ private:
 		info.isDirectory = env->CallBooleanMethod(jinfo, jisDirectory);
 		info.isWritable = env->CallBooleanMethod(jinfo, jisWritable);
 		info.size = env->CallLongMethod(jinfo, jgetSize);
+		info.updateTime = env->CallLongMethod(jinfo, jgetUpdateTime);
 
 		return info;
 	}
@@ -198,6 +201,7 @@ private:
 		jisDirectory = env->GetMethodID(infoClass, "isDirectory", "()Z");
 		jisWritable = env->GetMethodID(infoClass, "isWritable", "()Z");
 		jgetSize = env->GetMethodID(infoClass, "getSize", "()J");
+		jgetUpdateTime = env->GetMethodID(infoClass, "getUpdateTime", "()J");
 	}
 
 	jobject jstorage;
@@ -215,6 +219,7 @@ private:
 	jmethodID jisDirectory = nullptr;
 	jmethodID jisWritable = nullptr;
 	jmethodID jgetSize = nullptr;
+	jmethodID jgetUpdateTime = nullptr;
 	void (*addStorageCallback)(bool cancelled, std::string selectedPath);
 };
 

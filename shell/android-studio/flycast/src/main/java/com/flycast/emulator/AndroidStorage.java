@@ -18,8 +18,8 @@
 */
 package com.flycast.emulator;
 
-import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.CursorLoader;
 import android.content.Intent;
@@ -40,6 +40,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.List;
 
 public class AndroidStorage {
@@ -62,7 +63,8 @@ public class AndroidStorage {
     public native void init();
     public native void addStorageCallback(String path);
 
-    public void onAddStorageResult(Intent data) {
+    public void onAddStorageResult(Intent data)
+    {
         Uri uri = data == null ? null : data.getData();
         if (uri == null) {
             // Cancelled
@@ -71,14 +73,13 @@ public class AndroidStorage {
         else {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT)
                 activity.getContentResolver().takePersistableUriPermission(uri, storageIntentPerms);
-            /* Use the uri path now to avoid issues when targeting sdk 30+ in the future
-            String realPath = getRealPath(uri);
-            // when targeting sdk 30+ (android 11+) using the real path doesn't work (empty content) -> *must* use the uri
-            int targetSdkVersion = activity.getApplication().getApplicationInfo().targetSdkVersion;
-            if (realPath != null && targetSdkVersion <= Build.VERSION_CODES.Q)
-                addStorageCallback(realPath);
-            else
-            */
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+                String realPath = getRealPath(uri);
+                if (realPath != null) {
+                    addStorageCallback(realPath);
+                    return;
+                }
+            }
             addStorageCallback(uri.toString());
         }
     }
@@ -88,18 +89,53 @@ public class AndroidStorage {
         return pfd.detachFd();
     }
 
-    public FileInfo[] listContent(String uri) {
-        DocumentFile docFile = DocumentFile.fromTreeUri(activity, Uri.parse(uri));
-        DocumentFile kids[] = docFile.listFiles();
-        FileInfo ret[] = new FileInfo[kids.length];
-        for (int i = 0; i < kids.length; i++) {
-            ret[i] = new FileInfo();
-            ret[i].setName(kids[i].getName());
-            ret[i].setPath(kids[i].getUri().toString());
-            ret[i].setDirectory(kids[i].isDirectory());
+    public FileInfo[] listContent(String uri)
+    {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP)
+            throw new UnsupportedOperationException("listContent unsupported");
+        Uri treeUri = Uri.parse(uri);
+        String documentId;
+        if (DocumentsContract.isDocumentUri(activity, treeUri))
+            documentId = DocumentsContract.getDocumentId(treeUri);
+        else
+            documentId = DocumentsContract.getTreeDocumentId(treeUri);
+        Uri docUri = DocumentsContract.buildDocumentUriUsingTree(treeUri, documentId);
+        final Uri childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(docUri,
+                DocumentsContract.getDocumentId(docUri));
+        final ArrayList<FileInfo> results = new ArrayList<>();
+
+        Cursor c = null;
+        try {
+            final ContentResolver resolver = activity.getContentResolver();
+            c = resolver.query(childrenUri, new String[] {
+                    DocumentsContract.Document.COLUMN_DOCUMENT_ID,
+                    DocumentsContract.Document.COLUMN_DISPLAY_NAME,
+                    DocumentsContract.Document.COLUMN_MIME_TYPE }, null, null, null);
+            while (c.moveToNext())
+            {
+                final String childId = c.getString(0);
+                final Uri childUri = DocumentsContract.buildDocumentUriUsingTree(docUri, childId);
+                FileInfo info = new FileInfo();
+                info.setPath(childUri.toString());
+                info.setName(c.getString(1));
+                info.setDirectory(DocumentsContract.Document.MIME_TYPE_DIR.equals(c.getString(2)));
+                results.add(info);
+            }
+        } catch (Exception e) {
+            Log.w("Flycast", "Failed query: " + e);
+            throw new RuntimeException(e);
+        } finally {
+            if (c != null) {
+                try {
+                    c.close();
+                } catch (RuntimeException rethrown) {
+                    throw rethrown;
+                } catch (Exception ignored) {
+                }
+            }
         }
-        return ret;
-    }
+        return results.toArray(new FileInfo[results.size()]);
+     }
 
     public String getParentUri(String uriString) throws FileNotFoundException {
         if (uriString.isEmpty())
@@ -125,27 +161,27 @@ public class AndroidStorage {
             return uriString.substring(0, i);
     }
 
-    public String getSubPath(String reference, String relative) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT)
-        {
-            Uri refUri = Uri.parse(reference);
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                String docId = DocumentsContract.getTreeDocumentId(refUri);
-                return DocumentsContract.buildDocumentUriUsingTree(refUri, docId + "/" + relative).toString();
-            }
-            else {
-                String docId = DocumentsContract.getDocumentId(refUri);
-                return DocumentsContract.buildDocumentUri(refUri.getAuthority(), docId + "/" + relative).toString();
-            }
-        }
-        else {
+    public String getSubPath(String reference, String relative)
+    {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT)
             throw new UnsupportedOperationException("getSubPath unsupported");
+        Uri refUri = Uri.parse(reference);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            String docId;
+            if (DocumentsContract.isDocumentUri(activity, refUri))
+                docId = DocumentsContract.getDocumentId(refUri);
+            else
+                docId = DocumentsContract.getTreeDocumentId(refUri);
+            return DocumentsContract.buildDocumentUriUsingTree(refUri, docId + "/" + relative).toString();
         }
+        String docId = DocumentsContract.getDocumentId(refUri);
+        return DocumentsContract.buildDocumentUri(refUri.getAuthority(), docId + "/" + relative).toString();
     }
 
-    public FileInfo getFileInfo(String uriString) throws FileNotFoundException {
+    public FileInfo getFileInfo(String uriString) throws FileNotFoundException
+    {
         Uri uri = Uri.parse(uriString);
-        // FIXME >= Build.VERSION_CODES.LOLLIPOP
+        // FIXME < Build.VERSION_CODES.LOLLIPOP
         DocumentFile docFile = DocumentFile.fromTreeUri(activity, uri);
         if (!docFile.exists())
             throw new FileNotFoundException(uriString);
@@ -155,6 +191,7 @@ public class AndroidStorage {
         info.setDirectory(docFile.isDirectory());
         info.setSize(docFile.length());
         info.setWritable(docFile.canWrite());
+        info.setUpdateTime(docFile.lastModified() / 1000);
 
         return info;
     }
@@ -183,7 +220,10 @@ public class AndroidStorage {
         }
     }
 
-    public void addStorage(boolean isDirectory, boolean writeAccess) {
+    public boolean addStorage(boolean isDirectory, boolean writeAccess)
+    {
+        if (isDirectory && Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP)
+            return false;
         Intent intent = new Intent(isDirectory ? Intent.ACTION_OPEN_DOCUMENT_TREE : Intent.ACTION_OPEN_DOCUMENT);
         if (!isDirectory) {
             intent.addCategory(Intent.CATEGORY_OPENABLE);
@@ -196,6 +236,8 @@ public class AndroidStorage {
         storageIntentPerms = Intent.FLAG_GRANT_READ_URI_PERMISSION | (writeAccess ? Intent.FLAG_GRANT_WRITE_URI_PERMISSION : 0);
         intent.addFlags(Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION | storageIntentPerms);
         activity.startActivityForResult(intent, ADD_STORAGE_ACTIVITY_REQUEST);
+
+        return true;
     }
 
     private String getRealPath(final Uri uri) {
@@ -207,14 +249,15 @@ public class AndroidStorage {
 
     // From https://github.com/HBiSoft/PickiT
     // Copyright (c) [2020] [HBiSoft]
-    @SuppressLint("NewApi")
     String getRealPathFromURI_API19(final Uri uri)
     {
         final boolean isKitKat = Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT;
 
-        if (isKitKat && (DocumentsContract.isDocumentUri(activity, uri) || DocumentsContract.isTreeUri(uri))) {
-            final boolean isTree = DocumentsContract.isTreeUri(uri);
-            if (isExternalStorageDocument(uri)) {
+        final boolean isTree = Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && DocumentsContract.isTreeUri(uri);
+        if (isKitKat && (DocumentsContract.isDocumentUri(activity, uri) || isTree))
+        {
+            if (isExternalStorageDocument(uri))
+            {
                 final String docId = isTree ? DocumentsContract.getTreeDocumentId(uri) : DocumentsContract.getDocumentId(uri);
                 final String[] split = docId.split(":");
                 final String type = split[0];

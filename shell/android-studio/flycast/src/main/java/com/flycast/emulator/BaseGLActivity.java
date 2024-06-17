@@ -193,6 +193,11 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
         JNIdc.setExternalStorageDirectories(pathList.toArray());
     }
 
+    // Testing
+    public AndroidStorage getStorage() {
+        return storage;
+    }
+
     @Override
     protected void onDestroy() {
         super.onDestroy();
