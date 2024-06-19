@@ -364,7 +364,7 @@ void Achievements::term()
 
 void Achievements::authenticationSuccess(const rc_client_user_t *user)
 {
-	NOTICE_LOG(COMMON, "RA Login successful: token %s", config::AchievementsToken.get().c_str());
+	NOTICE_LOG(COMMON, "RA Login successful");
 	asyncTask([this, user]() {
 		char url[512];
 		int rc = rc_client_user_get_image_url(user, url, sizeof(url));
