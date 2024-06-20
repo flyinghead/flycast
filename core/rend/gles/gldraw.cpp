@@ -861,9 +861,7 @@ bool OpenGLRenderer::GetLastFrame(std::vector<u8>& data, int& width, int& height
 	}
 	drawQuad(framebuffer->getTexture(), config::Rotate90, false, vertices);
 
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	data.resize(width * height * 3);
-	dstFramebuffer.bind(GL_READ_FRAMEBUFFER);
 	glPixelStorei(GL_PACK_ALIGNMENT, 1);
 	if (gl.is_gles)
 	{
