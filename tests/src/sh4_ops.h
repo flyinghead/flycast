@@ -847,7 +847,14 @@ protected:
 		ASSERT_EQ(sr().T, 0u);
 		AssertState();
 
-		// TODO div1 :P
+		// div1 with Rn == Rm
+		ClearRegs();
+		sr().T = sr().M = 1;
+		r(7) = 0xb1e12951;
+		PrepareOp(0x3774);					// div1 r7, r7
+		RunOp();
+		ASSERT_EQ(r(7), 0x15a37bf4);
+		AssertState();
 
 		ClearRegs();
 		r(7) = 1000000000;
