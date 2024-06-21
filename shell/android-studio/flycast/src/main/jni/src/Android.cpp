@@ -511,7 +511,7 @@ extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_periph_InputDeviceMa
 }
 
 extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_periph_InputDeviceManager_joystickAdded(JNIEnv *env, jobject obj, jint id, jstring name,
-		jint maple_port, jstring junique_id, jintArray fullAxes, jintArray halfAxes)
+		jint maple_port, jstring junique_id, jintArray fullAxes, jintArray halfAxes, jboolean hasRumble)
 {
     std::string joyname = jni::String(name, false);
     std::string unique_id = jni::String(junique_id, false);
@@ -520,6 +520,7 @@ extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_periph_InputDeviceMa
 
     std::shared_ptr<AndroidGamepadDevice> gamepad = std::make_shared<AndroidGamepadDevice>(maple_port, id, joyname.c_str(), unique_id.c_str(), full, half);
     AndroidGamepadDevice::AddAndroidGamepad(gamepad);
+    gamepad->setRumbleEnabled(hasRumble);
 }
 extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_periph_InputDeviceManager_joystickRemoved(JNIEnv *env, jobject obj, jint id)
 {

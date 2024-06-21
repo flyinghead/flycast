@@ -2,18 +2,15 @@ package com.flycast.emulator.emu;
 
 import android.content.Context;
 import android.content.res.Configuration;
-import android.os.Build;
 import android.os.Handler;
-import android.os.VibrationEffect;
-import android.os.Vibrator;
 import android.view.InputDevice;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
 
-import com.flycast.emulator.Emulator;
 import com.flycast.emulator.periph.InputDeviceManager;
 import com.flycast.emulator.periph.VJoy;
+import com.flycast.emulator.periph.VibratorThread;
 
 public class VirtualJoystickDelegate {
     private VibratorThread vibratorThread;
@@ -41,19 +38,15 @@ public class VirtualJoystickDelegate {
         this.view = view;
         this.context = view.getContext();
 
-        vibratorThread = new VibratorThread(context);
-        vibratorThread.start();
+        vibratorThread = VibratorThread.getInstance();
 
         readCustomVjoyValues();
         scaleGestureDetector = new ScaleGestureDetector(context, new OscOnScaleGestureListener());
     }
 
     public void stop() {
-        vibratorThread.stopVibrator();
-        try {
-            vibratorThread.join();
-        } catch (InterruptedException e) {
-        }
+        vibratorThread.stopThread();
+        vibratorThread = null;
     }
 
     public void readCustomVjoyValues() {
@@ -231,7 +224,7 @@ public class VirtualJoystickDelegate {
                                     // Not for analog
                                     if (vjoy[j][5] == 0)
                                         if (!editVjoyMode) {
-                                            vibratorThread.vibrate();
+                                            vibratorThread.click();
                                         }
                                     vjoy[j][5] = 2;
                                 }
@@ -404,58 +397,6 @@ public class VirtualJoystickDelegate {
         @Override
         public void onScaleEnd(ScaleGestureDetector detector) {
             selectedVjoyElement = -1;
-        }
-    }
-
-    private class VibratorThread extends Thread
-    {
-        private Vibrator vibrator;
-        private boolean vibrate = false;
-        private boolean stopping = false;
-
-        VibratorThread(Context context) {
-            vibrator = (Vibrator)context.getSystemService(Context.VIBRATOR_SERVICE);
-        }
-
-        @Override
-        public void run() {
-            while (!stopping) {
-                boolean doVibrate;
-                synchronized (this) {
-                    doVibrate = false;
-                    try {
-                        this.wait();
-                    } catch (InterruptedException e) {
-                    }
-                    if (vibrate) {
-                        doVibrate = true;
-                        vibrate = false;
-                    }
-                }
-                if (doVibrate) {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                        vibrator.vibrate(VibrationEffect.createOneShot(Emulator.vibrationDuration, VibrationEffect.DEFAULT_AMPLITUDE));
-                    } else {
-                        vibrator.vibrate(Emulator.vibrationDuration);
-                    }
-                }
-            }
-        }
-
-        public void stopVibrator() {
-            synchronized (this) {
-                stopping = true;
-                notify();
-            }
-        }
-
-        public void vibrate() {
-            if (Emulator.vibrationDuration > 0) {
-                synchronized (this) {
-                    vibrate = true;
-                    notify();
-                }
-            }
         }
     }
 }

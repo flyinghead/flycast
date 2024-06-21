@@ -106,7 +106,6 @@ public:
 		if (id == VIRTUAL_GAMEPAD_ID)
 		{
 			input_mapper = std::make_shared<IdentityInputMapping>();
-			rumbleEnabled = true;
 			// hasAnalogStick = true; // TODO has an analog stick but input mapping isn't persisted
 		}
 		else
@@ -310,9 +309,14 @@ public:
 
 	void rumble(float power, float inclination, u32 duration_ms) override
     {
+		power *= rumblePower / 100.f;
         jboolean has_vibrator = jni::env()->CallBooleanMethod(input_device_manager, input_device_manager_rumble, android_id, power, inclination, duration_ms);
         rumbleEnabled = has_vibrator;
     }
+	void setRumbleEnabled(bool rumbleEnabled) {
+		this->rumbleEnabled = rumbleEnabled;
+	}
+
 	bool is_virtual_gamepad() override { return android_id == VIRTUAL_GAMEPAD_ID; }
 
 	bool hasHalfAxis(int axis) const { return std::find(halfAxes.begin(), halfAxes.end(), axis) != halfAxes.end(); }
