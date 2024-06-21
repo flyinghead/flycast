@@ -54,6 +54,7 @@ void select_file_popup(const char *prompt, StringCallback callback,
 {
 	fullScreenWindow(true);
 	ImguiStyleVar _(ImGuiStyleVar_WindowRounding, 0);
+	ImguiStyleVar _1(ImGuiStyleVar_FramePadding, ImVec2(4, 3)); // default
 
 	if (ImGui::BeginPopup(prompt, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize ))
 	{
@@ -123,7 +124,7 @@ void select_file_popup(const char *prompt, StringCallback callback,
 
 			if (!select_current_directory.empty() && select_current_directory != "/")
 			{
-				if (ImGui::Selectable(".. Up to Parent Directory"))
+				if (ImGui::Selectable(".. Up to Parent Folder"))
 				{
 					subfolders_read = false;
 					select_current_directory = hostfs::storage().getParentPath(select_current_directory);
@@ -161,7 +162,7 @@ void select_file_popup(const char *prompt, StringCallback callback,
 		ImGui::EndChild();
 		if (!selectFile)
 		{
-			if (ImGui::Button("Select Current Directory", ScaledVec2(0, 30)))
+			if (ImGui::Button("Select Current Folder", ScaledVec2(0, 30)))
 			{
 				if (callback(false, select_current_directory))
 				{
@@ -1008,4 +1009,34 @@ bool Toast::draw()
 	}
 
 	return true;
+}
+
+std::string middleEllipsis(const std::string& s, float width)
+{
+	float tw = ImGui::CalcTextSize(s.c_str()).x;
+	if (tw <= width)
+		return s;
+	std::string ellipsis;
+	char buf[5];
+	ImTextCharToUtf8(buf, ImGui::GetFont()->EllipsisChar);
+	for (int i = 0; i < ImGui::GetFont()->EllipsisCharCount; i++)
+		ellipsis += buf;
+
+	int l = s.length() / 2;
+	int d = l;
+
+	while (true)
+	{
+		std::string ss = s.substr(0, l / 2) + ellipsis + s.substr(s.length() - l / 2 - (l & 1));
+		tw = ImGui::CalcTextSize(ss.c_str()).x;
+		if (tw == width)
+			return ss;
+		d /= 2;
+		if (d == 0)
+			return ss;
+		if (tw > width)
+			l -= d;
+		else
+			l += d;
+	}
 }

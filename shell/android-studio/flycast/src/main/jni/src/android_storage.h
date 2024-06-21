@@ -40,6 +40,8 @@ public:
 		jexists = env->GetMethodID(clazz, "exists", "(Ljava/lang/String;)Z");
 		jaddStorage = env->GetMethodID(clazz, "addStorage", "(ZZ)Z");
 		jsaveScreenshot = env->GetMethodID(clazz, "saveScreenshot", "(Ljava/lang/String;[B)V");
+		jimportHomeDirectory = env->GetMethodID(clazz, "importHomeDirectory", "()V");
+		jexportHomeDirectory = env->GetMethodID(clazz, "exportHomeDirectory", "()V");
 	}
 
 	bool isKnownPath(const std::string& path) override {
@@ -162,6 +164,16 @@ public:
 		checkException();
 	}
 
+	void importHomeDirectory() {
+		jni::env()->CallVoidMethod(jstorage, jimportHomeDirectory);
+		checkException();
+	}
+
+	void exportHomeDirectory() {
+		jni::env()->CallVoidMethod(jstorage, jexportHomeDirectory);
+		checkException();
+	}
+
 private:
 	void checkException()
 	{
@@ -213,6 +225,8 @@ private:
 	jmethodID jgetFileInfo;
 	jmethodID jexists;
 	jmethodID jsaveScreenshot;
+	jmethodID jexportHomeDirectory;
+	jmethodID jimportHomeDirectory;
 	// FileInfo accessors lazily initialized to avoid having to load the class
 	jmethodID jgetName = nullptr;
 	jmethodID jgetPath = nullptr;
@@ -236,6 +250,14 @@ void saveScreenshot(const std::string& name, const std::vector<u8>& data)
 	return static_cast<AndroidStorage&>(customStorage()).saveScreenshot(name, data);
 }
 
+void importHomeDirectory() {
+	static_cast<AndroidStorage&>(customStorage()).importHomeDirectory();
+}
+
+void exportHomeDirectory() {
+	static_cast<AndroidStorage&>(customStorage()).exportHomeDirectory();
+}
+
 }	// namespace hostfs
 
 extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_AndroidStorage_addStorageCallback(JNIEnv *env, jobject obj, jstring path)
@@ -246,4 +268,15 @@ extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_AndroidStorage_addSt
 extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_AndroidStorage_init(JNIEnv *env, jobject jstorage)
 {
 	static_cast<hostfs::AndroidStorage&>(hostfs::customStorage()).init(env, jstorage);
+}
+
+extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_AndroidStorage_reloadConfig(JNIEnv *env)
+{
+	if (cfgOpen())
+	{
+		const RenderType render = config::RendererType;
+		config::Settings::instance().load(false);
+		// Make sure the renderer type doesn't change mid-flight
+		config::RendererType = render;
+	}
 }

@@ -557,8 +557,18 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == AndroidStorage.ADD_STORAGE_ACTIVITY_REQUEST)
-            storage.onAddStorageResult(data);
+        switch (requestCode)
+        {
+            case AndroidStorage.ADD_STORAGE_ACTIVITY_REQUEST:
+                storage.onAddStorageResult(data);
+                break;
+            case AndroidStorage.IMPORT_HOME_ACTIVITY_REQUEST:
+                storage.onImportHomeResult(data);
+                break;
+            case AndroidStorage.EXPORT_HOME_ACTIVITY_REQUEST:
+                storage.onExportHomeResult(data);
+                break;
+        }
     }
 
     private static native void register(BaseGLActivity activity);

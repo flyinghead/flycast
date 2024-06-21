@@ -39,12 +39,15 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
 public class AndroidStorage {
     public static final int ADD_STORAGE_ACTIVITY_REQUEST = 15012010;
+    public static final int EXPORT_HOME_ACTIVITY_REQUEST = 15012011;
+    public static final int IMPORT_HOME_ACTIVITY_REQUEST = 15012012;
 
     private Activity activity;
 
@@ -62,6 +65,7 @@ public class AndroidStorage {
 
     public native void init();
     public native void addStorageCallback(String path);
+    public native void reloadConfig();
 
     public void onAddStorageResult(Intent data)
     {
@@ -87,6 +91,30 @@ public class AndroidStorage {
     public int openFile(String uri, String mode) throws FileNotFoundException {
         ParcelFileDescriptor pfd = activity.getContentResolver().openFileDescriptor(Uri.parse(uri), mode);
         return pfd.detachFd();
+    }
+
+    public InputStream openInputStream(String uri) throws FileNotFoundException {
+        return activity.getContentResolver().openInputStream(Uri.parse(uri));
+    }
+    public OutputStream openOutputStream(String parent, String name) throws FileNotFoundException {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP)
+            throw new UnsupportedOperationException("not supported");
+        Uri uri = Uri.parse(parent);
+        String subpath = getSubPath(parent, name);
+        if (!exists(subpath)) {
+            String documentId;
+            if (DocumentsContract.isDocumentUri(activity, uri))
+                documentId = DocumentsContract.getDocumentId(uri);
+            else
+                documentId = DocumentsContract.getTreeDocumentId(uri);
+            uri = DocumentsContract.buildDocumentUriUsingTree(uri, documentId);
+            uri = DocumentsContract.createDocument(activity.getContentResolver(), uri,
+                    "application/octet-stream", name);
+        }
+        else {
+            uri = Uri.parse(subpath);
+        }
+        return activity.getContentResolver().openOutputStream(uri);
     }
 
     public FileInfo[] listContent(String uri)
@@ -220,6 +248,22 @@ public class AndroidStorage {
         }
     }
 
+    public String mkdir(String parent, String name) throws FileNotFoundException
+    {
+        Uri parentUri = Uri.parse(parent);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            if (!DocumentsContract.isDocumentUri(activity, parentUri)) {
+                String documentId = DocumentsContract.getTreeDocumentId(parentUri);
+                parentUri = DocumentsContract.buildDocumentUriUsingTree(parentUri, documentId);
+            }
+            Uri newDirUri = DocumentsContract.createDocument(activity.getContentResolver(), parentUri, DocumentsContract.Document.MIME_TYPE_DIR, name);
+            return newDirUri.toString();
+        }
+        File dir = new File(parent, name);
+        dir.mkdir();
+        return dir.getAbsolutePath();
+    }
+
     public boolean addStorage(boolean isDirectory, boolean writeAccess)
     {
         if (isDirectory && Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP)
@@ -231,7 +275,7 @@ public class AndroidStorage {
             intent = Intent.createChooser(intent, "Select a cheat file");
         }
         else {
-            intent = Intent.createChooser(intent, "Select a content directory");
+            intent = Intent.createChooser(intent, "Select a content folder");
         }
         storageIntentPerms = Intent.FLAG_GRANT_READ_URI_PERMISSION | (writeAccess ? Intent.FLAG_GRANT_WRITE_URI_PERMISSION : 0);
         intent.addFlags(Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION | storageIntentPerms);
@@ -495,5 +539,42 @@ public class AndroidStorage {
             Log.w("flycast", "saveScreenshot: Error writing " + file, e);
             throw new RuntimeException(e.getMessage());
         }
+    }
+
+    public void exportHomeDirectory()
+    {
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
+        intent = Intent.createChooser(intent, "Select an export folder");
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+        activity.startActivityForResult(intent, EXPORT_HOME_ACTIVITY_REQUEST);
+    }
+
+    public void onExportHomeResult(Intent data)
+    {
+        Uri uri = data == null ? null : data.getData();
+        if (uri == null)
+            // Cancelled
+            return;
+        HomeMover mover = new HomeMover(activity, this);
+        mover.copyHome(activity.getExternalFilesDir(null).toURI().toString(), uri.toString(), "Exporting home folder");
+    }
+
+    public void importHomeDirectory()
+    {
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
+        intent = Intent.createChooser(intent, "Select an import folder");
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        activity.startActivityForResult(intent, IMPORT_HOME_ACTIVITY_REQUEST);
+    }
+
+    public void onImportHomeResult(Intent data)
+    {
+        Uri uri = data == null ? null : data.getData();
+        if (uri == null)
+            // Cancelled
+            return;
+        HomeMover mover = new HomeMover(activity, this);
+        mover.setReloadConfigOnCompletion(true);
+        mover.copyHome(uri.toString(), activity.getExternalFilesDir(null).toURI().toString(), "Importing home folder");
     }
 }
