@@ -1442,6 +1442,7 @@ sh4op(i0011_nnnn_mmmm_0100)
 	const u8 old_q = sr.Q;
 	sr.Q = (u8)((0x80000000 & r[n]) != 0);
 
+	const u32 old_rm = r[m];
 	r[n] <<= 1;
 	r[n] |= sr.T;
 
@@ -1451,13 +1452,13 @@ sh4op(i0011_nnnn_mmmm_0100)
 	{
 		if (sr.M == 0)
 		{
-			r[n] -= r[m];
+			r[n] -= old_rm;
 			bool tmp1 = r[n] > old_rn;
 			sr.Q = sr.Q ^ tmp1;
 		}
 		else
 		{
-			r[n] += r[m];
+			r[n] += old_rm;
 			bool tmp1 = r[n] < old_rn;
 			sr.Q = !sr.Q ^ tmp1;
 		}
@@ -1466,13 +1467,13 @@ sh4op(i0011_nnnn_mmmm_0100)
 	{
 		if (sr.M == 0)
 		{
-			r[n] += r[m];
+			r[n] += old_rm;
 			bool tmp1 = r[n] < old_rn;
 			sr.Q = sr.Q ^ tmp1;
 		}
 		else
 		{
-			r[n] -= r[m];
+			r[n] -= old_rm;
 			bool tmp1 = r[n] > old_rn;
 			sr.Q = !sr.Q ^ tmp1;
 		}

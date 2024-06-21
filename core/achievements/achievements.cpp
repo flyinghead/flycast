@@ -75,6 +75,8 @@ private:
 	std::pair<std::string, bool> getCachedImage(const char *url);
 	void diskChange();
 	void asyncTask(std::function<void()> f);
+	void startThread();
+	void stopThread();
 	void backgroundThread();
 
 	static void clientLoginWithTokenCallback(int result, const char *error_message, rc_client_t *client, void *userdata);
@@ -195,6 +197,20 @@ void Achievements::asyncTask(std::function<void()> f)
 	resetEvent.Set();
 }
 
+void Achievements::startThread()
+{
+	threadRunning = true;
+	taskThread = std::thread(&Achievements::backgroundThread, this);
+}
+
+void Achievements::stopThread()
+{
+	threadRunning = false;
+	resetEvent.Set();
+	if (taskThread.joinable())
+		taskThread.join();
+}
+
 void Achievements::backgroundThread()
 {
 	ThreadName _("RA-background");
@@ -227,8 +243,7 @@ bool Achievements::init()
 	//rc_client_set_unofficial_enabled(rc_client, 0);
 	//rc_client_set_spectator_mode_enabled(rc_client, 0);
 	loadCache();
-	threadRunning = true;
-	taskThread = std::thread(&Achievements::backgroundThread, this);
+	startThread();
 
 	if (!config::AchievementsUserName.get().empty() && !config::AchievementsToken.get().empty())
 	{
@@ -342,17 +357,14 @@ void Achievements::term()
 	if (rc_client == nullptr)
 		return;
 	unloadGame();
-	threadRunning = false;
-	resetEvent.Set();
-	if (taskThread.joinable())
-		taskThread.join();
+	stopThread();
 	rc_client_destroy(rc_client);
 	rc_client = nullptr;
 }
 
 void Achievements::authenticationSuccess(const rc_client_user_t *user)
 {
-	NOTICE_LOG(COMMON, "RA Login successful: token %s", config::AchievementsToken.get().c_str());
+	NOTICE_LOG(COMMON, "RA Login successful");
 	asyncTask([this, user]() {
 		char url[512];
 		int rc = rc_client_user_get_image_url(user, url, sizeof(url));
@@ -932,6 +944,9 @@ void Achievements::unloadGame()
 	active = false;
 	paused = false;
 	EventManager::unlisten(Event::VBlank, emuEventCallback, this);
+	// wait for all async tasks before unloading the game
+	stopThread();
+	startThread();
 	rc_client_unload_game(rc_client);
 	settings.raHardcoreMode = false;
 }
