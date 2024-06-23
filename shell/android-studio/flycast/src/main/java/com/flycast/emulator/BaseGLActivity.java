@@ -427,6 +427,9 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
         if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P)
             // no need to migrate on Android 9 or earlier
             return homeDir;
+        // migration disabled for now
+        return homeDir;
+        /*
         // Only ask to migrate once
         String migrationPref = "legacy-storage-migration-done";
         if (prefs.getBoolean(migrationPref, false))
@@ -447,6 +450,7 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
         prefs.edit().putBoolean(migrationPref, true).apply();
 
         return null;
+         */
     }
 
     private boolean migrationThreadCancelled = false;
