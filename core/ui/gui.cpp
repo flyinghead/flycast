@@ -604,23 +604,6 @@ static void getScreenshot(std::vector<u8>& data, int width = 0)
 	stbi_write_png_to_func(appendVectorData, &data, width, height, 3, &rawData[0], 0);
 }
 
-#ifdef _WIN32
-static struct tm *localtime_r(const time_t *_clock, struct tm *_result)
-{
-	return localtime_s(_result, _clock) ? nullptr : _result;
-}
-#endif
-
-static std::string timeToString(time_t time)
-{
-	tm t;
-	if (localtime_r(&time, &t) == nullptr)
-		return {};
-	std::string s(32, '\0');
-	s.resize(snprintf(s.data(), 32, "%04d/%02d/%02d %02d:%02d:%02d", t.tm_year + 1900, t.tm_mon + 1, t.tm_mday, t.tm_hour, t.tm_min, t.tm_sec));
-	return s;
-}
-
 static void savestate()
 {
 	// TODO save state async: png compression, savestate file compression/write
@@ -795,7 +778,7 @@ static void gui_display_commands()
 				if (savestateDate == 0)
 					ImGui::TextColored(gray, "Empty");
 				else
-					ImGui::TextColored(gray, "%s", timeToString(savestateDate).c_str());
+					ImGui::TextColored(gray, "%s", timeToISO8601(savestateDate).c_str());
 			}
 			savestatePic.draw(ScaledVec2(buttonWidth, 0.f));
 		}
@@ -3764,7 +3747,7 @@ void gui_takeScreenshot()
 	if (!game_started)
 		return;
 	uiThreadRunner.runOnThread([]() {
-		std::string date = timeToString(time(nullptr));
+		std::string date = timeToISO8601(time(nullptr));
 		std::replace(date.begin(), date.end(), '/', '-');
 		std::replace(date.begin(), date.end(), ':', '-');
 		std::string name = "Flycast-" + date + ".png";

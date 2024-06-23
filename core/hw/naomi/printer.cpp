@@ -341,6 +341,11 @@ public:
 	{
 		if (page.empty())
 			return false;
+		const auto& appendData = [](void *context, void *data, int size) {
+			std::vector<u8>& v = *(std::vector<u8> *)context;
+			v.insert(v.end(), (u8 *)data, (u8 *)data + size);
+		};
+		stbi_flip_vertically_on_write(0);
 		if (settings.content.gameId.substr(0, 4) == "F355")
 		{
 			u8 *data = nullptr;
@@ -383,15 +388,29 @@ public:
 						*p = 0xff000000;
 					p++;
 				}
-				stbi_write_png(filename.c_str(), printerWidth, lines, 4, data, printerWidth * 4);
+				std::vector<u8> pngData;
+				stbi_write_png_to_func(appendData, &pngData, printerWidth, lines, 4, data, printerWidth * 4);
 				stbi_image_free(data);
+				try {
+					hostfs::saveScreenshot(filename, pngData);
+				} catch (const FlycastException& e) {
+					ERROR_LOG(NAOMI, "Error saving print out: %s", e.what());
+					return false;
+				}
 
 				return true;
 			}
 		}
 		for (u8& b : page)
 			b = 0xff - b;
-		stbi_write_png(filename.c_str(), printerWidth, lines, 1, &page[0], printerWidth);
+		std::vector<u8> pngData;
+		stbi_write_png_to_func(appendData, &pngData, printerWidth, lines, 1, &page[0], printerWidth);
+		try {
+			hostfs::saveScreenshot(filename, pngData);
+		} catch (const FlycastException& e) {
+			ERROR_LOG(NAOMI, "Error saving print out: %s", e.what());
+			return false;
+		}
 		return true;
 	}
 
@@ -827,12 +846,16 @@ private:
 			state = Default;
 			if (bitmapWriter && bitmapWriter->isDirty())
 			{
-				// TODO save to ~/Pictures instead
-				std::string s = get_writable_data_path(settings.content.gameId + "-results.png");
-				bitmapWriter->save(s);
+				std::string date = timeToISO8601(time(nullptr));
+				std::replace(date.begin(), date.end(), '/', '-');
+				std::replace(date.begin(), date.end(), ':', '-');
+				std::string s = settings.content.gameId + " - " + date + ".png";
+				const bool success = bitmapWriter->save(s);
 				bitmapWriter.reset();
-				os_notify("Print out saved", 5000, s.c_str());
-				NOTICE_LOG(NAOMI, "%s", s.c_str());
+				if (success) {
+					os_notify("Print out saved", 5000, s.c_str());
+					NOTICE_LOG(NAOMI, "%s", s.c_str());
+				}
 			}
 			break;
 		case 'K': // Set Kanji mode
