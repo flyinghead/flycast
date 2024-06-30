@@ -38,7 +38,7 @@ be attempted as the source port.
 If ipv6 is not 0, IPv6 is used instead of IPv4 for the discovery process.
 .IP "void freeUPNPDevlist(struct UPNPDev * devlist);"
 free the list returned by upnpDiscover().
-.IP "int UPNP_GetValidIGD(struct UPNPDev * devlist, struct UPNPUrls * urls, struct IGDdatas * data, char * lanaddr, int lanaddrlen);"
+.IP "int UPNP_GetValidIGD(struct UPNPDev * devlist, struct UPNPUrls * urls, struct IGDdatas * data, char * lanaddr, int lanaddrlen, char * wanaddr, int wanaddrlen);"
 browse the list of device returned by upnpDiscover(), find
 a live UPnP internet gateway device and fill structures passed as arguments
 with data used for UPNP methods invocation.

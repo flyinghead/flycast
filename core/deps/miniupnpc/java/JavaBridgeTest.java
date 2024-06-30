@@ -15,6 +15,7 @@ public class JavaBridgeTest {
         UPNPUrls urls = new UPNPUrls();
         IGDdatas data = new IGDdatas();
         ByteBuffer lanaddr = ByteBuffer.allocate(16);
+        ByteBuffer wanaddr = ByteBuffer.allocate(16);
         ByteBuffer intClient = ByteBuffer.allocate(16);
         ByteBuffer intPort = ByteBuffer.allocate(6);
         ByteBuffer desc = ByteBuffer.allocate(80);
@@ -35,7 +36,7 @@ public class JavaBridgeTest {
             for (UPNPDev device = devlist; device != null; device = device.pNext) {
                 System.out.println("desc: " + device.descURL.getString(0) + " st: " + device.st.getString(0));
             }
-            if ((i = miniupnpc.UPNP_GetValidIGD(devlist, urls, data, lanaddr, 16)) != 0) {
+            if ((i = miniupnpc.UPNP_GetValidIGD(devlist, urls, data, lanaddr, 16, wanaddr, 16)) != 0) {
                 switch (i) {
                     case 1:
                         System.out.println("Found valid IGD : " + urls.controlURL.getString(0));

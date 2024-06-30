@@ -189,7 +189,8 @@ int main(int argc, char * * argv)
 			free_device(dev_array);
 		}
 	} else {
-		printf("no device found.\n");
+		fprintf(stderr,"No UPnP devices found\n");
+		return 1;
 	}
 
 	return 0;

@@ -1,12 +1,12 @@
-cmake_minimum_required(VERSION 3.12 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.14 FATAL_ERROR)
 
 project (miniupnpc
-         VERSION 2.2.5
+         VERSION 2.2.8
          DESCRIPTION "UPnP IGD client lightweight library"
          HOMEPAGE_URL https://miniupnp.tuxfamily.org/
          LANGUAGES C)
 
-set (MINIUPNPC_API_VERSION 17)
+set (MINIUPNPC_API_VERSION 18)
 
 option (UPNPC_BUILD_STATIC "Build static library" TRUE)
 option (UPNPC_BUILD_SHARED "Build shared library" TRUE)
@@ -31,6 +31,7 @@ endif ()
 if (NOT WIN32)
   target_compile_definitions(miniupnpc-private INTERFACE
     MINIUPNPC_SET_SOCKET_TIMEOUT
+    MINIUPNPC_GET_SRC_ADDR
     _BSD_SOURCE _DEFAULT_SOURCE)
   if (NOT APPLE AND NOT CMAKE_SYSTEM_NAME MATCHES ".*BSD" AND NOT CMAKE_SYSTEM_NAME STREQUAL "SunOS")
     # add_definitions (-D_POSIX_C_SOURCE=200112L)
@@ -40,7 +41,10 @@ if (NOT WIN32)
     target_compile_definitions(miniupnpc-private INTERFACE _NETBSD_SOURCE)
   endif ()
 else ()
-  target_compile_definitions(miniupnpc-private INTERFACE _WIN32_WINNT=0x0501) # XP or higher for getnameinfo and friends
+  set (MINIUPNPC_TARGET_WINDOWS_VERSION "0x0501" CACHE STRING "Minimum target Windows version as hex string") # XP or higher for getnameinfo and friends
+  if (MINIUPNPC_TARGET_WINDOWS_VERSION)
+    target_compile_definitions(miniupnpc-private INTERFACE _WIN32_WINNT=${MINIUPNPC_TARGET_WINDOWS_VERSION})
+  endif ()
 endif ()
 
 if (APPLE)
@@ -136,8 +140,13 @@ if (UPNPC_BUILD_STATIC)
     add_executable (upnpc-static src/upnpc.c)
     target_link_libraries (upnpc-static PRIVATE libminiupnpc-static)
     target_include_directories(upnpc-static PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+
+    add_executable (upnp-listdevices-static src/listdevices.c)
+    target_link_libraries (upnp-listdevices-static PRIVATE libminiupnpc-static)
+    target_include_directories(upnp-listdevices-static PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+
     if (NOT UPNPC_NO_INSTALL)
-      install (TARGETS upnpc-static
+      install (TARGETS upnpc-static upnp-listdevices-static
                RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
     endif()
   endif ()
@@ -177,19 +186,16 @@ if (UPNPC_BUILD_SHARED)
     add_executable (upnpc-shared src/upnpc.c)
     target_link_libraries (upnpc-shared PRIVATE libminiupnpc-shared)
     target_include_directories(upnpc-shared PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+
+    add_executable (upnp-listdevices-shared src/listdevices.c)
+    target_link_libraries (upnp-listdevices-shared PRIVATE libminiupnpc-shared)
+    target_include_directories(upnp-listdevices-shared PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+
     if (NOT UPNPC_NO_INSTALL)
-      install (TARGETS upnpc-shared
+      install (TARGETS upnpc-shared upnp-listdevices-shared
                RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
     endif()
   endif ()
-
-  add_executable (listdevices src/listdevices.c)
-  target_link_libraries (listdevices PRIVATE libminiupnpc-shared)
-  target_include_directories(listdevices PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
-  if (NOT UPNPC_NO_INSTALL)
-    install (TARGETS listdevices
-             RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
-  endif()
 endif ()
 
 if (UPNPC_BUILD_TESTS)
@@ -240,7 +246,9 @@ if (UPNPC_BUILD_TESTS)
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
   target_link_libraries (testportlistingparse PRIVATE miniupnpc-tests)
 
-  add_executable (minihttptestserver src/minihttptestserver.c)
+  if (NOT WIN32)
+    add_executable (minihttptestserver src/minihttptestserver.c)
+  endif()
 
 # set (UPNPC_INSTALL_TARGETS ${UPNPC_INSTALL_TARGETS} testminixml minixmlvalid testupnpreplyparse testigddescparse testminiwget)
   include(CTest)
@@ -248,10 +256,12 @@ if (UPNPC_BUILD_TESTS)
            COMMAND minixmlvalid)
   add_test(NAME validateminiwget
            COMMAND ${CMAKE_SOURCE_DIR}/testminiwget.sh)
-  set_property(TEST validateminiwget
-               PROPERTY ENVIRONMENT
-               TESTSERVER=${CMAKE_BINARY_DIR}/minihttptestserver
-               TESTMINIWGET=${CMAKE_BINARY_DIR}/testminiwget)
+  if (NOT WIN32)
+    set_property(TEST validateminiwget
+                 PROPERTY ENVIRONMENT
+                 TESTSERVER=${CMAKE_BINARY_DIR}/minihttptestserver
+                 TESTMINIWGET=${CMAKE_BINARY_DIR}/testminiwget)
+  endif()
   add_test(NAME validateupnpreplyparse
            COMMAND ${CMAKE_SOURCE_DIR}/testupnpreplyparse.sh
            WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})

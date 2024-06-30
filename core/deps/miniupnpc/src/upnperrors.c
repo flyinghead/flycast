@@ -1,4 +1,4 @@
-/* $Id: upnperrors.c,v 1.11 2023/05/29 21:59:15 nanard Exp $ */
+/* $Id: upnperrors.c,v 1.12 2023/06/26 23:19:28 nanard Exp $ */
 /* vim: tabstop=4 shiftwidth=4 noexpandtab
  * Project : miniupnp
  * Author : Thomas BERNARD
@@ -93,7 +93,7 @@ const char * strupnperror(int err)
 		s = "InvalidLayer2Address";
 		break;
 	case 709:
-		s = "NoPacketSent";
+		s = "NoTrafficReceived";
 		break;
 	case 713:
 		s = "SpecifiedArrayIndexInvalid";
@@ -121,6 +121,24 @@ const char * strupnperror(int err)
 		break;
 	case 727:
 		s = "ExternalPortOnlySupportsWildcard";
+		break;
+	case 728:
+		s = "NoPortMapsAvailable";
+		break;
+	case 729:
+		s = "ConflictWithOtherMechanisms";
+		break;
+	case 730:
+		s = "PortMappingNotFound";
+		break;
+	case 731:
+		s = "ReadOnly";
+		break;
+	case 732:
+		s = "WildCardNotPermittedInIntPort";
+		break;
+	case 733:
+		s = "InconsistentParameters";
 		break;
 	default:
 		s = "UnknownError";

@@ -2,6 +2,11 @@ $Id: apiversions.txt,v 1.9 2016/01/24 17:24:36 nanard Exp $
 
 Differences in API between miniUPnPc versions
 
+API version 18
+  change UPNP_GetValidIGD() prototype and return values
+  updated macro :
+    #define MINIUPNPC_API_VERSION 18
+
 API version 17
   change struct UPNPDev
   move getHTTPResponse() to miniwget_private.h

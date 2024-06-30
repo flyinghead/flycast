@@ -1,7 +1,7 @@
-# $Id: Makefile.mingw,v 1.21 2015/09/18 12:45:16 nanard Exp $
+# $Id: Makefile.mingw,v 1.36 2024/01/04 01:29:56 nanard Exp $
 # Miniupnp project.
 # http://miniupnp.free.fr/ or https://miniupnp.tuxfamily.org/
-# (c) 2005-2020 Thomas Bernard
+# (c) 2005-2024 Thomas Bernard
 # This Makefile is made for MinGW
 #
 # To cross compile on a *nix machine :
@@ -41,7 +41,7 @@ OBJS=miniwget.o minixml.o igd_desc_parse.o minisoap.o \
      upnpdev.o addr_is_reserved.o
 OBJSDLL=$(addprefix dll-, $(OBJS)) winres.o
 BINARIES=upnpc-static.exe upnpc-shared.exe \
-         listdevices-static.exe listdevices-shared.exe \
+         upnp-listdevices-static.exe upnp-listdevices-shared.exe \
          miniupnpc.dll libminiupnpc.a \
          testminixml.exe
 ifneq ($(GITHUB_SHA),)
@@ -86,6 +86,7 @@ libminiupnpc.a:	$(OBJS)
 pythonmodule:	libminiupnpc.a
 	$(PYTHON) setupmingw32.py build $(SETUP_COMPILER_FLAG)
 	$(PYTHON) setupmingw32.py install --skip-build
+	$(PYTHON) setupmingw32.py sdist
 	$(PYTHON) setupmingw32.py bdist_wheel --skip-build
 
 miniupnpc.dll:	miniupnpc.def $(OBJSDLL)
@@ -111,6 +112,12 @@ dll-%.o:	$(SRCDIR)/%.c
 	$(CC) -static -o $@ $^ $(LDLIBS)
 
 %-shared.exe:	%-shared.o miniupnpc.lib
+	$(CC) -o $@ $^ $(LDLIBS)
+
+upnp-listdevices-static.exe:	listdevices.o libminiupnpc.a
+	$(CC) -static -o $@ $^ $(LDLIBS)
+
+upnp-listdevices-shared.exe:	listdevices-shared.o miniupnpc.lib
 	$(CC) -o $@ $^ $(LDLIBS)
 
 # To make miniupnpcstrings.h from miniupnpcstrings.h.in we either
