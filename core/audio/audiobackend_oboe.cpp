@@ -91,6 +91,7 @@ public:
 				->setFormat(oboe::AudioFormat::I16)
 				->setChannelCount(oboe::ChannelCount::Stereo)
 				->setSampleRate(44100)
+				->setSampleRateConversionQuality(oboe::SampleRateConversionQuality::High)
 				->setFramesPerCallback(SAMPLE_COUNT)
 				->setDataCallback(&audioCallback)
 				->setErrorCallback(&errorCallback)

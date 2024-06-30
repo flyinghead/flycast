@@ -221,3 +221,20 @@ u64 getTimeMs()
 
 	return std::chrono::duration_cast<std::chrono::milliseconds>(now - start).count();
 }
+
+#ifdef _WIN32
+static struct tm *localtime_r(const time_t *_clock, struct tm *_result)
+{
+	return localtime_s(_result, _clock) ? nullptr : _result;
+}
+#endif
+
+std::string timeToISO8601(time_t time)
+{
+	tm t;
+	if (localtime_r(&time, &t) == nullptr)
+		return {};
+	std::string s(32, '\0');
+	s.resize(snprintf(s.data(), 32, "%04d/%02d/%02d %02d:%02d:%02d", t.tm_year + 1900, t.tm_mon + 1, t.tm_mday, t.tm_hour, t.tm_min, t.tm_sec));
+	return s;
+}

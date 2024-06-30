@@ -11,6 +11,7 @@
 #include <vector>
 #include <functional>
 #include <cassert>
+#include <time.h>
 
 #ifdef __ANDROID__
 #include <sys/mman.h>
@@ -201,6 +202,7 @@ public:
 };
 
 u64 getTimeMs();
+std::string timeToISO8601(time_t time);
 
 class ThreadRunner
 {

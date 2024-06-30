@@ -371,9 +371,14 @@ static InputDescriptors f355_inputs = {
 
 			// manual gear shift on P2 DPad
 			//   L   R
-			// U 2   1
-			//   4   3
-			// D 6   5
+			// U 1 3 5
+			// D 2 4 6
+			{ NAOMI_BTN2_KEY, "GEAR 1", 0, NAOMI_UP_KEY | NAOMI_LEFT_KEY },
+			{ NAOMI_BTN3_KEY, "GEAR 2", 0, NAOMI_DOWN_KEY | NAOMI_LEFT_KEY },
+			{ NAOMI_BTN4_KEY, "GEAR 3", 0, NAOMI_UP_KEY },
+			{ NAOMI_BTN5_KEY, "GEAR 4", 0, NAOMI_DOWN_KEY },
+			{ NAOMI_BTN6_KEY, "GEAR 5", 0, NAOMI_UP_KEY | NAOMI_RIGHT_KEY },
+			{ NAOMI_BTN7_KEY, "GEAR 6", 0, NAOMI_DOWN_KEY | NAOMI_RIGHT_KEY },
 
 			NAO_START_DESC
 			NAO_BASE_BTN_DESC
@@ -382,7 +387,7 @@ static InputDescriptors f355_inputs = {
 			{ "HANDLE", Full, 0 },
 			{ "ACCEL", Half, 4 },
 			{ "BRAKE", Half, 5 },
-			{ "CLUTCH", Full, 2 },	// Deluxe only
+			{ "CLUTCH", Half, 6 },	// Deluxe only
 	  },
 };
 
