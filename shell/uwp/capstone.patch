@@ -1,0 +1,19 @@
+diff --git a/arch/SH/SHDisassembler.c b/arch/SH/SHDisassembler.c
+index 8f788096..00078306 100644
+--- a/arch/SH/SHDisassembler.c
++++ b/arch/SH/SHDisassembler.c
+@@ -1460,12 +1460,12 @@ static bool decode_long(uint32_t code, uint64_t address, MCInst *MI,
+ 			// movi20s #imm,
+ 			imm <<= 8;
+ 			if (imm >= 1 << 27)
+-				imm = -((1 << 28) - imm);
++				imm |= ~((1 << 28) - 1);
+ 			insn = SH_INS_MOVI20S;
+ 		} else {
+ 			// MOVI20
+ 			if (imm >= 1 << 19)
+-				imm = -((1 << 20) - imm);
++				imm |= ~((1 << 20) - 1);
+ 			insn = SH_INS_MOVI20;
+ 		}
+ 		set_imm(info, 0, imm);

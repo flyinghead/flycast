@@ -505,6 +505,9 @@ extern Option<bool> ProfilerDrawToGUI;
 extern Option<bool> ProfilerOutputTTY;
 extern Option<float> ProfilerFrameWarningTime;
 
+// Gui Debugger
+extern Option<bool> DebuggerGuiEnabled;
+
 // Network
 
 extern Option<bool> NetworkEnable;

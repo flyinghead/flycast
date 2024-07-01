@@ -52,6 +52,7 @@
 #include "oslib/storage.h"
 #include <stb_image_write.h>
 #include "hw/pvr/Renderer_if.h"
+#include "debugger/gui_debugger.h"
 #if defined(USE_SDL)
 #include "sdl/sdl.h"
 #endif
@@ -102,6 +103,7 @@ static std::recursive_mutex guiMutex;
 using LockGuard = std::lock_guard<std::recursive_mutex>;
 
 ImFont *largeFont;
+ImFont *monospaceFont;
 static Toast toast;
 static ThreadRunner uiThreadRunner;
 
@@ -326,7 +328,9 @@ void gui_initFonts()
 	verify(data != nullptr);
 	const float largeFontSize = uiScaled(21.f);
 	largeFont = io.Fonts->AddFontFromMemoryTTF(data.release(), dataSize, largeFontSize, nullptr, ranges);
-
+	ImFontConfig defaultFontCfg;
+	defaultFontCfg.SizePixels = uiScaled(13.0f);
+	monospaceFont = io.Fonts->AddFontDefault(&defaultFontCfg);
     NOTICE_LOG(RENDERER, "Screen DPI is %.0f, size %d x %d. Scaling by %.2f", settings.display.dpi, settings.display.width, settings.display.height, settings.display.uiScale);
 }
 
@@ -510,7 +514,7 @@ void gui_plot_render_time(int width, int height)
 void gui_open_settings()
 {
 	const LockGuard lock(guiMutex);
-	if (gui_state == GuiState::Closed && !settings.naomi.slave)
+	if (!settings.naomi.slave && (gui_state == GuiState::Closed || gui_state == GuiState::Debugger))
 	{
 		if (!ggpo::active())
 		{
@@ -1557,6 +1561,21 @@ static void contentpath_warning_popup()
 
 static void gui_debug_tab()
 {
+	header("Debugging");
+	{
+		{
+			DisabledScope scope(config::ThreadedRendering);
+
+			if (scope.isDisabled()) {
+				config::DebuggerGuiEnabled.reset();
+				ImGui::Text("Hint: To enable the built-in debugger, disable multi threaded emulation in the Advanced tab.");
+			}
+
+			OptionCheckbox("Enable built-in debugger", config::DebuggerGuiEnabled);
+		}
+	}
+#if !defined(NDEBUG) || defined(DEBUGFAST)
+	ImGui::Spacing();
 	header("Logging");
 	{
 		LogManager *logManager = LogManager::GetInstance();
@@ -1587,6 +1606,7 @@ static void gui_debug_tab()
 			ImGui::EndCombo();
 		}
 	}
+#endif
 #if FC_PROFILER
 	ImGui::Spacing();
 	header("Profiling");
@@ -3003,14 +3023,12 @@ static void gui_display_settings()
 			gui_settings_advanced();
 			ImGui::EndTabItem();
 		}
-#if !defined(NDEBUG) || defined(DEBUGFAST) || FC_PROFILER
 		if (ImGui::BeginTabItem(ICON_FA_BUG " Debug"))
 		{
 			ImguiStyleVar _(ImGuiStyleVar_FramePadding, normal_padding);
 			gui_debug_tab();
 			ImGui::EndTabItem();
 		}
-#endif
 		if (ImGui::BeginTabItem(ICON_FA_CIRCLE_INFO " About"))
 		{
 			ImguiStyleVar _(ImGuiStyleVar_FramePadding, normal_padding);
@@ -3495,6 +3513,9 @@ void gui_display_ui()
 	case GuiState::Cheats:
 		gui_cheats();
 		break;
+	case GuiState::Debugger:
+		gui_debugger();
+		break;
 	case GuiState::Achievements:
 #ifdef USE_RACHIEVEMENTS
 		achievements::achievementList();
@@ -3576,6 +3597,8 @@ void gui_draw_osd()
 	}
 	if (!settings.raHardcoreMode)
 		lua::overlay();
+	if (config::DebuggerGuiEnabled)
+		gui_debugger();
     ImGui::Render();
 	uiThreadRunner.execTasks();
 }
@@ -3778,3 +3801,4 @@ bool __cdecl Concurrency::details::_Task_impl_base::_IsNonBlockingThread() {
 	return false;
 }
 #endif
+

@@ -3,6 +3,7 @@
 */
 #include "types.h"
 
+#include "emulator.h"
 #include "hw/sh4/sh4_interpreter.h"
 #include "hw/sh4/sh4_mem.h"
 #include "hw/sh4/sh4_mmr.h"
@@ -11,6 +12,8 @@
 #include "hw/sh4/sh4_interrupts.h"
 #include "debug/gdb_server.h"
 #include "hw/sh4/dyna/decoder.h"
+#include "debug/debug_agent.h"
+
 
 #ifdef STRICT_MODE
 #include "hw/sh4/sh4_cache.h"
@@ -926,7 +929,13 @@ sh4op(i1011_iiii_iiii_iiii)
 sh4op(i1100_0011_iiii_iiii)
 {
 	WARN_LOG(INTERPRETER, "TRAP #%X", GetImm8(op));
+#ifdef GDB_SERVER
 	debugger::debugTrap(Sh4Ex_Trap);
+#else
+	debugAgent.debugTrap(Sh4Ex_Trap);
+#endif
+	emu.stop(); // This causes a deadlock in the emu thread
+	throw debugger::Stop();
 	CCN_TRA = (GetImm8(op) << 2);
 	Do_Exception(next_pc, Sh4Ex_Trap);
 }

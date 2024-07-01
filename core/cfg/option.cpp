@@ -139,6 +139,9 @@ Option<bool> ProfilerDrawToGUI("Profiler.DrawGUI");
 Option<bool> ProfilerOutputTTY("Profiler.OutputTTY");
 Option<float> ProfilerFrameWarningTime("Profiler.FrameWarningTime", 1.0f / 55.0f);
 
+// Debugger
+Option<bool> DebuggerGuiEnabled("DebuggerGui.Enabled", false);
+
 // Network
 
 Option<bool> NetworkEnable("Enable", false, "network");

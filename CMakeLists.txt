@@ -1289,6 +1289,9 @@ target_sources(${PROJECT_NAME} PRIVATE
 		core/stdclass.cpp
 		core/stdclass.h
 		core/types.h
+		core/debug/debug_agent.cpp
+		core/debug/debug_agent.h
+		core/debug/gdb_server.cpp
 		core/debug/gdb_server.h)
 
 target_sources(${PROJECT_NAME} PRIVATE
@@ -1316,6 +1319,10 @@ if(NOT LIBRETRO)
 			core/ui/gui_cheats.cpp
 			core/ui/gui_util.cpp
 			core/ui/gui_util.h
+			core/ui/debugger/gui_debugger.cpp
+			core/ui/debugger/gui_debugger.h
+			core/ui/debugger/gui_debugger_disasm.cpp
+			core/ui/debugger/gui_debugger_disasm.h
 			core/ui/mainui.cpp
 			core/ui/mainui.h
 			core/ui/boxart/boxart.cpp
@@ -1833,6 +1840,24 @@ if(NOT LIBRETRO)
 			target_sources(${PROJECT_NAME} PRIVATE shell/windows/flycast.rc)
 			target_link_libraries(${PROJECT_NAME} PRIVATE dsound winmm ws2_32 wsock32 xinput9_1_0 cfgmgr32 wininet)
 		endif()
+	endif()
+endif()
+
+if(NOT LIBRETRO)
+	set(CAPSTONE_ARCHITECTURE_DEFAULT OFF CACHE BOOL "" FORCE)
+	set(CAPSTONE_SH_SUPPORT ON CACHE BOOL "" FORCE)
+	add_subdirectory(core/deps/capstone EXCLUDE_FROM_ALL)
+	target_include_directories(${PROJECT_NAME} PRIVATE core/deps/capstone/include)
+	target_link_libraries(${PROJECT_NAME} PRIVATE capstone)
+	if(WINDOWS_STORE)
+		find_package(Patch)
+		set(CAPSTONE_PATCH "${CMAKE_CURRENT_SOURCE_DIR}/shell/uwp/capstone.patch")
+		add_custom_target(
+			CAPSTONE_PATCH_TARGET
+			COMMAND ${Patch_EXECUTABLE} -p1 --forward -i ${CAPSTONE_PATCH} -d ${CMAKE_CURRENT_SOURCE_DIR}/core/deps/capstone || true
+  			COMMENT "Applying patch: ${CAPSTONE_PATCH}"
+		)
+		ADD_DEPENDENCIES(capstone CAPSTONE_PATCH_TARGET)
 	endif()
 endif()
 

@@ -52,6 +52,7 @@ void gui_loadState();
 void gui_saveState(bool stopRestart = true);
 std::string gui_getCurGameBoxartUrl();
 void gui_takeScreenshot();
+void gui_debugger();
 
 enum class GuiState {
 	Closed,
@@ -66,6 +67,7 @@ enum class GuiState {
 	NetworkStart,
 	Cheats,
 	Achievements,
+	Debugger,
 };
 extern GuiState gui_state;
 

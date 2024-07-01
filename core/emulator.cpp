@@ -711,6 +711,12 @@ void Emulator::stop()
 		TermAudio();
 		nvmem::saveFiles();
 		EventManager::event(Event::Pause);
+
+#ifndef LIBRETRO
+		if (config::DebuggerGuiEnabled)
+			gui_setState(GuiState::Debugger);
+#endif
+
 #endif
 	}
 }
@@ -757,6 +763,9 @@ void Emulator::step()
 	// FIXME single thread is better
 	singleStep = true;
 	start();
+	// start() does not runs the emulation when running in single thread mode.
+	if (!config::ThreadedRendering)
+		run();
 	stop();
 }
 

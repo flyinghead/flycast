@@ -89,6 +89,8 @@ public:
 		u32 addr = 0;
 		u16 type = 0;
 		u16 savedOp = 0;
+		bool enabled = true;
+		bool singleShot = false;
 	};
 
 	void doContinue(u32 pc = 1)
@@ -100,11 +102,23 @@ public:
 
 	void step()
 	{
-		bool restoreBreakpoint = removeMatchpoint(Breakpoint::BP_TYPE_SOFTWARE_BREAK, Sh4cntx.pc, 2);
+		bool restoreBreakpoint = false; // removeMatchpoint(Breakpoint::BP_TYPE_SOFTWARE_BREAK, Sh4cntx.pc, 2);
+		bool restoreDelaySlotBreakpoint = false;
+
+		if (hasEnabledMatchPoint(Breakpoint::BP_TYPE_SOFTWARE_BREAK, Sh4cntx.pc))
+			restoreBreakpoint = removeMatchpoint(Breakpoint::BP_TYPE_SOFTWARE_BREAK, Sh4cntx.pc, 2);
+
+		if (isDelayedBranch(Sh4cntx.pc) && hasEnabledMatchPoint(Breakpoint::BP_TYPE_SOFTWARE_BREAK, Sh4cntx.pc + 2))
+			restoreDelaySlotBreakpoint = removeMatchpoint(Breakpoint::BP_TYPE_SOFTWARE_BREAK, Sh4cntx.pc + 2, 2);
+
 		u32 savedPc = Sh4cntx.pc;
+
 		emu.step();
+
 		if (restoreBreakpoint)
 			insertMatchpoint(Breakpoint::BP_TYPE_SOFTWARE_BREAK, savedPc, 2);
+		if (restoreDelaySlotBreakpoint)
+			insertMatchpoint(Breakpoint::BP_TYPE_SOFTWARE_BREAK, savedPc + 2, 2);
 	}
 
 	void stepRange(u32 from, u32 to)
@@ -217,8 +231,18 @@ public:
 			}
 		}
 	}
+
+	bool hasEnabledMatchPoint(Breakpoint::Type type, u32 addr)
+	{
+		addr &= 0x1ffffffe;
+		auto it = breakpoints[type].find(addr);
+		return it != breakpoints[type].end() && it->second.enabled;
+	}
+
 	bool insertMatchpoint(Breakpoint::Type type, u32 addr, u32 len)
 	{
+		// TODO: Review address cleaning responsability
+		addr &= 0x1ffffffe;
 		if (type == Breakpoint::BP_TYPE_SOFTWARE_BREAK && len != 2) {
 			WARN_LOG(COMMON, "insertMatchpoint: length != 2: %d", len);
 			return false;
@@ -231,8 +255,10 @@ public:
 		WriteMem16_nommu(addr, 0xC308);	// trapa #0x20
 		return true;
 	}
+
 	bool removeMatchpoint(Breakpoint::Type type, u32 addr, u32 len)
 	{
+		addr &= 0x1ffffffe;
 		if (type == Breakpoint::BP_TYPE_SOFTWARE_BREAK && len != 2) {
 			WARN_LOG(COMMON, "removeMatchpoint: length != 2: %d", len);
 			return false;
@@ -245,9 +271,52 @@ public:
 		return true;
 	}
 
+	bool enableMatchpoint(Breakpoint::Type type, u32 addr, u32 len)
+	{
+		addr &= 0x1ffffffe;
+		if (type == Breakpoint::BP_TYPE_SOFTWARE_BREAK && len != 2) {
+			WARN_LOG(COMMON, "insertMatchpoint: length != 2: %d", len);
+			return false;
+		}
+		auto it = breakpoints[type].find(addr);
+		if (it == breakpoints[type].end())
+			return false;
+		it->second.enabled = true;
+		WriteMem16_nommu(addr, 0xC308);	// trapa #0x20
+		return true;
+	}
+
+	bool disableMatchpoint(Breakpoint::Type type, u32 addr, u32 len)
+	{
+		addr &= 0x1ffffffe;
+		if (type == Breakpoint::BP_TYPE_SOFTWARE_BREAK && len != 2) {
+			WARN_LOG(COMMON, "removeMatchpoint: length != 2: %d", len);
+			return false;
+		}
+		auto it = breakpoints[type].find(addr);
+		if (it == breakpoints[type].end())
+			return false;
+		it->second.enabled = false;
+		WriteMem16_nommu(addr, it->second.savedOp);
+		return true;
+	}
+
+	Breakpoint *findMatchpoint(Breakpoint::Type type, u32 addr, u32 len)
+	{
+		addr &= 0x1ffffffe;
+		if (type == Breakpoint::BP_TYPE_SOFTWARE_BREAK && len != 2) {
+			WARN_LOG(COMMON, "removeMatchpoint: length != 2: %d", len);
+			return nullptr;
+		}
+		auto it = breakpoints[type].find(addr);
+		if (it == breakpoints[type].end())
+			return nullptr;
+		return &it->second;
+	}
+
 	u32 interrupt()
 	{
-		config::DynarecEnabled = false;
+		//config::DynarecEnabled = false;
 		exception = SIGINT;
 		emu.stop();
 		return exception;
@@ -258,6 +327,8 @@ public:
 	{
 		exception = findException(event);
 		Sh4cntx.pc -= 2;	// FIXME delay slot
+		if (breakpoints[Breakpoint::BP_TYPE_SOFTWARE_BREAK].find(Sh4cntx.pc & 0x1fffffff)->second.singleShot)
+			removeMatchpoint(Breakpoint::BP_TYPE_SOFTWARE_BREAK, Sh4cntx.pc, 2);
 	}
 
 	void postDebugTrap()
@@ -328,20 +399,108 @@ public:
 			return nullptr;
 	}
 
-	void subroutineCall()
+	void subroutineCall();
+
+	void subroutineReturn();
+
+	/*
+	 * Deletes overwritten breakpoints.
+	 */
+	void eraseOverwrittenMatchPoints()
 	{
-		subroutineReturn();
-		stack.push_back(std::make_pair(Sh4cntx.pc, Sh4cntx.r[15]));
+		auto& bp_map = breakpoints[Breakpoint::BP_TYPE_SOFTWARE_BREAK];
+
+		for (auto it = bp_map.begin(); it != bp_map.end();)
+		{
+			const auto& [address, breakpoint] = *it;
+			if (breakpoint.enabled && (ReadMem16_nommu(address) != 0xC308)) {
+				it = bp_map.erase(it);
+				continue;
+			}
+			++it;
+		}
 	}
 
-	void subroutineReturn()
+	bool hasEnabledSoftwareBreakpoint(u32 addr)
 	{
-		while (!stack.empty() && Sh4cntx.r[15] >= stack.back().second)
-			stack.pop_back();
+		return hasEnabledMatchPoint(Breakpoint::BP_TYPE_SOFTWARE_BREAK, addr);
+	}
+
+	bool insertSoftwareBreakpoint(u32 addr)
+	{
+		return insertMatchpoint(Breakpoint::BP_TYPE_SOFTWARE_BREAK, addr, 2);
+	}
+
+	bool removeSoftwareBreakpoint(u32 addr)
+	{
+		return removeMatchpoint(Breakpoint::BP_TYPE_SOFTWARE_BREAK, addr, 2);
+	}
+
+	bool enableSoftwareBreakpoint(u32 addr)
+	{
+		return enableMatchpoint(Breakpoint::BP_TYPE_SOFTWARE_BREAK, addr, 2);
+	}
+
+	bool disableSoftwareBreakpoint(u32 addr)
+	{
+		return disableMatchpoint(Breakpoint::BP_TYPE_SOFTWARE_BREAK, addr, 2);
+	}
+
+	Breakpoint *findSoftwareBreakpoint(u32 addr)
+	{
+		return findMatchpoint(Breakpoint::BP_TYPE_SOFTWARE_BREAK, addr, 2);
 	}
 
 	u32 exception = 0;
 
 	std::map<u32, Breakpoint> breakpoints[Breakpoint::Type::BP_TYPE_COUNT];
 	std::vector<std::pair<u32, u32>> stack;
+
+private:
+	bool isDelayedBranch(u32 pc)
+	{
+		u16 instruction = ReadMem16_nommu(pc);
+		u16 opcode;
+
+		opcode = instruction & 0xf0ff;
+		switch (opcode)
+		{
+		case 0x0023: // braf <REG_N>
+		case 0x0003: // bsrf <REG_N>
+			return true;
+		}
+
+		if (instruction == 0x002b) // rte
+			return true;
+		if (instruction == 0x000b) // rts
+			return true;
+
+		opcode = instruction & 0xff00;
+		switch (opcode)
+		{
+		case 0x8f00: // bf.s <bdisp8>
+		case 0x8d00: // bt.s <bdisp8>
+			return true;
+		}
+
+		opcode = instruction & 0xf000;
+		switch (opcode)
+		{
+		case 0xa000: // bra <bdisp12>
+		case 0xb000: // bsr <bdisp12>
+			return true;
+		}
+
+		opcode = instruction & 0xf0ff;
+		switch (opcode)
+		{
+		case 0x402b: // jmp @<REG_N>
+		case 0x400b: // jsr @<REG_N>
+			return true;
+		}
+
+		return false;
+	}
 };
+
+extern DebugAgent debugAgent;
