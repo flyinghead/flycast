@@ -24393,7 +24393,7 @@ struct retro_core_options_v2 options_el = {
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_EN NULL
 #define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_EN NULL
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_EN "Analogue Stick Dead-zone"
-#define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_INFO_0_EN NULL
+#define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_INFO_0_EN "Select how far you have to push the analogue stick before it starts being processed."
 #define OPTION_VAL_0_EN NULL
 #define OPTION_VAL_5_EN NULL
 #define OPTION_VAL_10_EN NULL
