@@ -70,13 +70,8 @@ static void gui_debugger_control()
 		{
 			debugAgent.step();
 		}
-		ImGui::PopButtonRepeat();
-	}
 
-	{
-		DisabledScope scope(running);
 		ImGui::SameLine();
-		ImGui::PushButtonRepeat(true);
 		if (ImGui::Button("Step Over"))
 		{
 			// If is subroutine instruction
@@ -99,6 +94,19 @@ static void gui_debugger_control()
 			}
 			else {
 				debugAgent.step();
+			}
+		}
+
+		ImGui::SameLine();
+		if (ImGui::Button("Step Out"))
+		{
+			if (debugAgent.insertSoftwareBreakpoint(Sh4cntx.pr)) {
+				debugAgent.findSoftwareBreakpoint(Sh4cntx.pr)->singleShot = true;
+				// Step possible breakpoint in the next instruction
+				debugAgent.step();
+				emu.start();
+				// The debugger is rendered as OSD when the emulation is suspended.
+				gui_state = GuiState::Closed;
 			}
 		}
 		ImGui::PopButtonRepeat();
