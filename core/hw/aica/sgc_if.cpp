@@ -1513,13 +1513,9 @@ void AICA_Sample()
 		mixr += b;
 	}
 
-	//Mono !
+	// Mono
 	if (CommonData->Mono)
-	{
-		//Yay for mono =P
-		mixl+=mixr;
-		mixr=mixl;
-	}
+		mixl = mixr = FPs(mixl + mixr, 1);
 	
 	//MVOL !
 	//we want to make sure mix* is *At least* 23 bits wide here, so 64 bit mul !
