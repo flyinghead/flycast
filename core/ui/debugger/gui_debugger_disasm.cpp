@@ -175,7 +175,7 @@ void gui_debugger_disasm()
 	ImGui::PushStyleColor(ImGuiCol_Text, (ImVec4)ImColor::HSV(0, 0, .9));
 
 	ImGuiTable *table = ImGui::GetCurrentTable();
-	ImGui::TableSetupColumn("bp", ImGuiTableColumnFlags_WidthFixed, 9.0f);
+	ImGui::TableSetupColumn("bp", ImGuiTableColumnFlags_WidthFixed, uiScaled(9.0f));
 
 	bool shouldResetDisasmAddress = false;
 	for (rowIdx = 0; rowIdx < rowCount; rowIdx++)
@@ -223,7 +223,7 @@ void gui_debugger_disasm()
 
 		if (isBreakpointCellClicked) {
 			if (shouldDrawBreakpoint)
-				debugAgent.removeSoftwareBreakpoint(addr);
+				debugAgent.removeBreakpoint(addr);
 			else
 				debugAgent.insertSoftwareBreakpoint(addr);
 		}

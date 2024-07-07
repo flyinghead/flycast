@@ -309,10 +309,10 @@ private:
 				writeMemBin(packet);
 				break;
 			case 'z':	// Remove a breakpoint/watchpoint.
-				removeMatchpoint(packet);
+				removeBreakpoint(packet);
 				break;
 			case 'Z':	// Insert a breakpoint/watchpoint.
-				insertMatchpoint(packet);
+				insertBreakpoint(packet);
 				break;
 			case 3:
 				interrupt();
@@ -692,18 +692,18 @@ private:
 		}
 	}
 
-	void insertMatchpoint(const std::string& pkt)
+	void insertBreakpoint(const std::string& pkt)
 	{
 		u32 type;
 		u32 addr;
 		u32 len;
 		if (sscanf(pkt.c_str(), "Z%1d,%x,%1d", &type, &addr, &len) != 3) {
-			WARN_LOG(COMMON, "insertMatchpoint: unknown packet: %s", pkt.c_str());
+			WARN_LOG(COMMON, "insertBreakpoint: unknown packet: %s", pkt.c_str());
 			sendPacket("E01");
 		}
 		switch (type) {
 			case DebugAgent::Breakpoint::BP_TYPE_SOFTWARE_BREAK:		// soft bp
-		    	if (agent.insertMatchpoint(DebugAgent::Breakpoint::BP_TYPE_SOFTWARE_BREAK,
+		    	if (agent.insertBreakpoint(DebugAgent::Breakpoint::BP_TYPE_SOFTWARE_BREAK,
 		    			addr, len))
 		    		sendPacket("OK");
 		    	else
@@ -727,18 +727,18 @@ private:
 		}
 	}
 
-	void removeMatchpoint(const std::string& pkt)
+	void removeBreakpoint(const std::string& pkt)
 	{
 		u32 type;
 		u32 addr;
 		u32 len;
 		if (sscanf(pkt.c_str(), "z%1d,%x,%1d", &type, &addr, &len) != 3) {
-			WARN_LOG(COMMON, "removeMatchpoint: unknown packet: %s", pkt.c_str());
+			WARN_LOG(COMMON, "removeBreakpoint: unknown packet: %s", pkt.c_str());
 			sendPacket("E01");
 		}
 		switch (type) {
 		    case 0:		// soft bp
-		    	if (agent.removeMatchpoint(DebugAgent::Breakpoint::BP_TYPE_SOFTWARE_BREAK,
+		    	if (agent.removeBreakpoint(DebugAgent::Breakpoint::BP_TYPE_SOFTWARE_BREAK,
 		    			addr, len))
 		    		sendPacket("OK");
 		    	else

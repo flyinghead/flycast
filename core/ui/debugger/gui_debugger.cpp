@@ -77,14 +77,14 @@ static void gui_debugger_control()
 			// If is subroutine instruction
 			u16 instruction = ReadMem16_nommu(Sh4cntx.pc);
 			if (debugAgent.hasEnabledSoftwareBreakpoint(Sh4cntx.pc))
-				instruction = debugAgent.findSoftwareBreakpoint(Sh4cntx.pc)->savedOp;
+				instruction = debugAgent.findBreakpoint(Sh4cntx.pc)->savedOp;
 
 			if ((instruction & 0xf000) == 0xb000 // bsr
 				|| (instruction & 0xf0ff) == 0x0003 // bsrf
 				|| (instruction & 0xf0ff) == 0x400b) // jsr
 			{
 				if (debugAgent.insertSoftwareBreakpoint(Sh4cntx.pc + 4)) {
-					debugAgent.findSoftwareBreakpoint(Sh4cntx.pc + 4)->singleShot = true;
+					debugAgent.findBreakpoint(Sh4cntx.pc + 4)->singleShot = true;
 					// Step possible breakpoint in the next instruction
 					debugAgent.step();
 					emu.start();
@@ -101,7 +101,7 @@ static void gui_debugger_control()
 		if (ImGui::Button("Step Out"))
 		{
 			if (debugAgent.insertSoftwareBreakpoint(Sh4cntx.pr)) {
-				debugAgent.findSoftwareBreakpoint(Sh4cntx.pr)->singleShot = true;
+				debugAgent.findBreakpoint(Sh4cntx.pr)->singleShot = true;
 				// Step possible breakpoint in the next instruction
 				debugAgent.step();
 				emu.start();
@@ -161,7 +161,7 @@ static void gui_debugger_memdump()
 		char* tmp;
 		long patchAddress = strtoul(patchAddressBuffer, &tmp, 16);
 		long patchWord = strtoul(patchWordBuffer, &tmp, 16);
-		// debugAgent.insertMatchpoint(0, (u32) patchAddress, 2);
+		// debugAgent.insertBreakpoint(0, (u32) patchAddress, 2);
 		WriteMem16_nommu(patchAddress, patchWord);
 	}
 
@@ -259,13 +259,15 @@ static void gui_debugger_memdump()
 
 static void gui_debugger_breakpoints()
 {
-	debugAgent.eraseOverwrittenMatchPoints();
+	// TODO: This won't be needed when memory breakpoints are implemented.
+	debugAgent.disableOverwrittenBreakpoints();
 
 	if (!breakpointsWindowOpen) return;
 
 	ImGui::SetNextWindowPos(ScaledVec2(700, 16), ImGuiCond_FirstUseEver);
-	ImGui::SetNextWindowSize(ScaledVec2(152, 0));
+	ImGui::SetNextWindowSize(ScaledVec2(304, 0));
 	ImGui::Begin("Breakpoints", &breakpointsWindowOpen, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
+	ImGui::PushFont(monospaceFont);
 
 	static u32 bpaddr = 0x8c010000;
 	// TODO: Extract InputAddress function
@@ -274,46 +276,97 @@ static void gui_debugger_breakpoints()
 	ImGui::PopItemWidth();
 
 	ImGui::SameLine();
+	ImGui::SetNextItemWidth(ImGui::GetFrameHeight() + ImGui::CalcTextSize("Execute").x + ImGui::GetStyle().FramePadding.x * 2.0f);
+	const char* bp_options[] = { "Execute", "Write", "Read", "Access" };
+	const DebugAgent::Breakpoint::Type bp_types[] = {
+		DebugAgent::Breakpoint::BP_TYPE_SOFTWARE_BREAK,
+		DebugAgent::Breakpoint::BP_TYPE_WRITE_WATCHPOINT,
+		DebugAgent::Breakpoint::BP_TYPE_READ_WATCHPOINT,
+		DebugAgent::Breakpoint::BP_TYPE_ACCESS_WATCHPOINT
+	};
+	static int selected_bp_type = 0;
+	const char* bp_preview = bp_options[selected_bp_type];
+	if (ImGui::BeginCombo("##combo", bp_preview))
+	{
+		for (int n = 0; n < IM_ARRAYSIZE(bp_options); n++)
+		{
+			const bool is_selected = (selected_bp_type == n);
+			if (ImGui::Selectable(bp_options[n], is_selected))
+				selected_bp_type = n;
+
+			// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+			if (is_selected)
+				ImGui::SetItemDefaultFocus();
+		}
+		ImGui::EndCombo();
+	}
+
+	ImGui::SameLine();
 	if (ImGui::Button("Add"))
-		debugAgent.insertMatchpoint(DebugAgent::Breakpoint::BP_TYPE_SOFTWARE_BREAK, (u32) bpaddr, 2);
+		debugAgent.insertBreakpoint(bp_types[selected_bp_type], (u32) bpaddr, 2);
 
 	ImGui::Separator();
 
-	ImGui::PushFont(monospaceFont);
-	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ScaledVec2(8,2));
+	//ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ScaledVec2(8,2));
 
+	ImGui::BeginTable("##breakpoints", 4);
 	{
-		float windowWidth = ImGui::GetWindowContentRegionMax().x;
+		ImGui::TableSetupColumn("Enabled", ImGuiTableColumnFlags_WidthFixed, ImGui::GetFrameHeight());
+		//float windowWidth = ImGui::GetWindowContentRegionMax().x;
 		DebugAgent::Breakpoint *breakpointToDelete = nullptr;
-		for (auto& [address, breakpoint] : debugAgent.breakpoints[DebugAgent::Breakpoint::Type::BP_TYPE_SOFTWARE_BREAK])
+		for (auto& [address, breakpoint] : debugAgent.breakpoints)
 		{
+			ImGui::PushID(address);
+
+			ImGui::TableNextRow();
+			ImGui::TableNextColumn();
+
 			if (breakpoint.singleShot)
 				continue;
 
-			ImGui::PushID(address);
 			if (ImGui::Checkbox("##breakpoint", &breakpoint.enabled)) {
 				if (breakpoint.enabled)
-					debugAgent.enableMatchpoint(DebugAgent::Breakpoint::BP_TYPE_SOFTWARE_BREAK, address, 2);
+					debugAgent.enableBreakpoint(address);
 				else
-					debugAgent.disableMatchpoint(DebugAgent::Breakpoint::Type::BP_TYPE_SOFTWARE_BREAK, address, 2);
+					debugAgent.disableBreakpoint(address);
 			}
-			// ImGui::Checkbox("##breakpoint", &breakpoint.enabled);
-			ImGui::SameLine();
+
+			ImGui::TableNextColumn();
 			ImGui::Text("0x%08x", address);
 
-			// Delete button
-			ImGui::SameLine(windowWidth - ImGui::CalcTextSize("X").x - ImGui::GetStyle().FramePadding.x * 2);
+			ImGui::TableNextColumn();
+			switch (breakpoint.type)
+			{
+				case DebugAgent::Breakpoint::BP_TYPE_SOFTWARE_BREAK:
+					ImGui::Text("Exec");
+					break;
+				// BP_TYPE_HARDWARE_BREAK,
+				case DebugAgent::Breakpoint::BP_TYPE_WRITE_WATCHPOINT:
+					ImGui::Text("Write");
+					break;
+				case DebugAgent::Breakpoint::BP_TYPE_READ_WATCHPOINT:
+					ImGui::Text("Read");
+					break;
+				case DebugAgent::Breakpoint::BP_TYPE_ACCESS_WATCHPOINT:
+					ImGui::Text("Access");
+					break;
+			}
+
+			ImGui::TableNextColumn();
 			ImGui::PushStyleColor(ImGuiCol_Button, 0);
 			if (ImGui::Button("X"))
 				breakpointToDelete = &breakpoint;
 			ImGui::PopStyleColor();
+
 			ImGui::PopID();
 		}
-		if (breakpointToDelete)
-			debugAgent.removeMatchpoint(DebugAgent::Breakpoint::Type::BP_TYPE_SOFTWARE_BREAK, breakpointToDelete->addr, 2);
-	}
 
-	ImGui::PopStyleVar();
+		if (breakpointToDelete)
+			debugAgent.removeBreakpoint(breakpointToDelete->addr);
+	}
+	ImGui::EndTable();
+
+	// ImGui::PopStyleVar();
 	ImGui::PopFont();
 	ImGui::End();
 }

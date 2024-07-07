@@ -166,6 +166,10 @@ public:
 	 */
 	void vblank();
 
+	bool isStepping() {
+		return singleStep;
+	}
+
 private:
 	bool checkStatus(bool wait = false);
 	void runInternal();

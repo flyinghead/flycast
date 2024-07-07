@@ -86,8 +86,10 @@ public:
 
 		Breakpoint() = default;
 		Breakpoint(u16 type, u32 addr) : addr(addr), type(type) { }
+		Breakpoint(u16 type, u32 addr, u32 len) : addr(addr), type(type), len(len) { }
 		u32 addr = 0;
 		u16 type = 0;
+		u32 len = 0;
 		u16 savedOp = 0;
 		bool enabled = true;
 		bool singleShot = false;
@@ -102,32 +104,32 @@ public:
 
 	void step()
 	{
-		bool restoreBreakpoint = false; // removeMatchpoint(Breakpoint::BP_TYPE_SOFTWARE_BREAK, Sh4cntx.pc, 2);
+		bool restoreBreakpoint = false; // removeBreakpoint(Breakpoint::BP_TYPE_SOFTWARE_BREAK, Sh4cntx.pc, 2);
 		bool restoreDelaySlotBreakpoint = false;
 
-		if (hasEnabledMatchPoint(Breakpoint::BP_TYPE_SOFTWARE_BREAK, Sh4cntx.pc))
-			restoreBreakpoint = removeMatchpoint(Breakpoint::BP_TYPE_SOFTWARE_BREAK, Sh4cntx.pc, 2);
+		if (hasEnabledSoftwareBreakpoint(Sh4cntx.pc))
+			restoreBreakpoint = removeBreakpoint(Sh4cntx.pc);
 
-		if (isDelayedBranch(Sh4cntx.pc) && hasEnabledMatchPoint(Breakpoint::BP_TYPE_SOFTWARE_BREAK, Sh4cntx.pc + 2))
-			restoreDelaySlotBreakpoint = removeMatchpoint(Breakpoint::BP_TYPE_SOFTWARE_BREAK, Sh4cntx.pc + 2, 2);
+		if (isDelayedBranch(Sh4cntx.pc) && hasEnabledSoftwareBreakpoint(Sh4cntx.pc + 2))
+			restoreDelaySlotBreakpoint = removeBreakpoint(Sh4cntx.pc);
 
 		u32 savedPc = Sh4cntx.pc;
 
 		emu.step();
 
 		if (restoreBreakpoint)
-			insertMatchpoint(Breakpoint::BP_TYPE_SOFTWARE_BREAK, savedPc, 2);
+			insertSoftwareBreakpoint(savedPc);
 		if (restoreDelaySlotBreakpoint)
-			insertMatchpoint(Breakpoint::BP_TYPE_SOFTWARE_BREAK, savedPc + 2, 2);
+			insertSoftwareBreakpoint(savedPc + 2);
 	}
 
 	void stepRange(u32 from, u32 to)
 	{
-		bool restoreBreakpoint = removeMatchpoint(Breakpoint::BP_TYPE_SOFTWARE_BREAK, Sh4cntx.pc, 2);
+		bool restoreBreakpoint = removeBreakpoint(Sh4cntx.pc);
 		u32 savedPc = Sh4cntx.pc;
 		emu.stepRange(from, to);
 		if (restoreBreakpoint)
-			insertMatchpoint(Breakpoint::BP_TYPE_SOFTWARE_BREAK, savedPc, 2);
+			insertBreakpoint(Breakpoint::BP_TYPE_SOFTWARE_BREAK, savedPc, 2);
 	}
 
 	int readAllRegs(u32 **regs)
@@ -232,86 +234,144 @@ public:
 		}
 	}
 
-	bool hasEnabledMatchPoint(Breakpoint::Type type, u32 addr)
+	bool hasEnabledSoftwareBreakpoint(u32 addr)
 	{
 		addr &= 0x1ffffffe;
-		auto it = breakpoints[type].find(addr);
-		return it != breakpoints[type].end() && it->second.enabled;
+		auto it = breakpoints.find(addr);
+		return it != breakpoints.end() && it->second.enabled && it->second.type == Breakpoint::BP_TYPE_SOFTWARE_BREAK;
 	}
 
-	bool insertMatchpoint(Breakpoint::Type type, u32 addr, u32 len)
+	bool insertBreakpoint(Breakpoint::Type type, u32 addr, u32 len)
 	{
 		// TODO: Review address cleaning responsability
 		addr &= 0x1ffffffe;
-		if (type == Breakpoint::BP_TYPE_SOFTWARE_BREAK && len != 2) {
-			WARN_LOG(COMMON, "insertMatchpoint: length != 2: %d", len);
+
+		if (breakpoints.find(addr) != breakpoints.end()) {
+			WARN_LOG(COMMON, "insertBreakpoint: breakpoint already exists at 0x%08X", addr);
 			return false;
 		}
-		// TODO other matchpoint types
-		if (breakpoints[type].find(addr) != breakpoints[type].end())
-			return true;
-		breakpoints[type][addr] = Breakpoint(type, addr);
-		breakpoints[type][addr].savedOp = ReadMem16_nommu(addr);
-		WriteMem16_nommu(addr, 0xC308);	// trapa #0x20
+
+		switch (type)
+		{
+			case Breakpoint::BP_TYPE_SOFTWARE_BREAK:
+				if (len != 2) {
+					WARN_LOG(COMMON, "insertBreakpoint: length != 2: %d", len);
+					return false;
+				}
+
+				breakpoints[addr] = Breakpoint(type, addr, len);
+				breakpoints[addr].savedOp = ReadMem16_nommu(addr);
+				WriteMem16_nommu(addr, 0xC308);	// trapa #0x20
+				break;
+
+			case Breakpoint::BP_TYPE_WRITE_WATCHPOINT:
+			case Breakpoint::BP_TYPE_READ_WATCHPOINT:
+			case Breakpoint::BP_TYPE_ACCESS_WATCHPOINT:
+				if (len != 2 && len != 4 && len != 8) {
+					WARN_LOG(COMMON, "insertBreakpoint: Unsupported length: %d", len);
+					return false;
+				}
+
+				breakpoints[addr] = Breakpoint(type, addr, len);
+				break;
+
+			default:
+				break;
+		}
+		
 		return true;
 	}
 
-	bool removeMatchpoint(Breakpoint::Type type, u32 addr, u32 len)
+	bool insertSoftwareBreakpoint(u32 addr)
 	{
-		addr &= 0x1ffffffe;
-		if (type == Breakpoint::BP_TYPE_SOFTWARE_BREAK && len != 2) {
-			WARN_LOG(COMMON, "removeMatchpoint: length != 2: %d", len);
-			return false;
+		return insertBreakpoint(Breakpoint::BP_TYPE_SOFTWARE_BREAK, addr, 2);
+	}
+
+	bool removeBreakpoint(u32 addr)
+	{
+		Breakpoint *bp = findBreakpoint(addr);
+
+		switch (bp->type)
+		{
+			case Breakpoint::BP_TYPE_SOFTWARE_BREAK:
+				WriteMem16_nommu(addr, bp->savedOp);
+				break;
 		}
-		auto it = breakpoints[type].find(addr);
-		if (it == breakpoints[type].end())
-			return false;
-		WriteMem16_nommu(addr, it->second.savedOp);
-		breakpoints[type].erase(it);
+
+		breakpoints.erase(addr);
 		return true;
 	}
 
-	bool enableMatchpoint(Breakpoint::Type type, u32 addr, u32 len)
+	bool enableBreakpoint(u32 addr)
 	{
-		addr &= 0x1ffffffe;
-		if (type == Breakpoint::BP_TYPE_SOFTWARE_BREAK && len != 2) {
-			WARN_LOG(COMMON, "insertMatchpoint: length != 2: %d", len);
+		Breakpoint *bp = findBreakpoint(addr);
+		if (bp == nullptr)
 			return false;
-		}
-		auto it = breakpoints[type].find(addr);
-		if (it == breakpoints[type].end())
-			return false;
-		it->second.enabled = true;
-		WriteMem16_nommu(addr, 0xC308);	// trapa #0x20
+
+		bp->enabled = true;
+
+		if (bp->type == Breakpoint::Type::BP_TYPE_SOFTWARE_BREAK)
+			WriteMem16_nommu(addr, 0xC308);	// trapa #0x20
+
 		return true;
 	}
 
-	bool disableMatchpoint(Breakpoint::Type type, u32 addr, u32 len)
+	bool disableBreakpoint(u32 addr)
 	{
-		addr &= 0x1ffffffe;
-		if (type == Breakpoint::BP_TYPE_SOFTWARE_BREAK && len != 2) {
-			WARN_LOG(COMMON, "removeMatchpoint: length != 2: %d", len);
+		Breakpoint *bp = findBreakpoint(addr);
+		if (bp == nullptr)
 			return false;
-		}
-		auto it = breakpoints[type].find(addr);
-		if (it == breakpoints[type].end())
-			return false;
-		it->second.enabled = false;
-		WriteMem16_nommu(addr, it->second.savedOp);
+
+		bp->enabled = false;
+
+		if (bp->type == Breakpoint::Type::BP_TYPE_SOFTWARE_BREAK)
+			WriteMem16_nommu(addr, bp->savedOp);
 		return true;
 	}
 
-	Breakpoint *findMatchpoint(Breakpoint::Type type, u32 addr, u32 len)
+	Breakpoint *findBreakpoint(u32 addr)
 	{
 		addr &= 0x1ffffffe;
-		if (type == Breakpoint::BP_TYPE_SOFTWARE_BREAK && len != 2) {
-			WARN_LOG(COMMON, "removeMatchpoint: length != 2: %d", len);
-			return nullptr;
-		}
-		auto it = breakpoints[type].find(addr);
-		if (it == breakpoints[type].end())
+		auto it = breakpoints.find(addr);
+		if (it == breakpoints.end())
 			return nullptr;
 		return &it->second;
+	}
+
+	Breakpoint *findSoftwareBreakpoint(u32 addr)
+	{
+		Breakpoint *bp = findBreakpoint(addr);
+		if (bp == nullptr || bp->type != Breakpoint::BP_TYPE_SOFTWARE_BREAK)
+			return nullptr;
+		return bp;
+	}
+
+	bool checkMemoryRead(u32 addr)
+	{
+		if (emu.isStepping())
+			return false;
+		Breakpoint *bp = findBreakpoint(addr);
+		if (bp == nullptr)
+			return false;
+		if (bp->type != Breakpoint::BP_TYPE_READ_WATCHPOINT && bp->type != Breakpoint::BP_TYPE_ACCESS_WATCHPOINT)
+			return false;
+		if (!bp->enabled)
+			return false;
+		return true;
+	}
+
+	bool checkMemoryWrite(u32 addr)
+	{
+		if (emu.isStepping())
+			return false;
+		Breakpoint *bp = findBreakpoint(addr);
+		if (bp == nullptr)
+			return false;
+		if (bp->type != Breakpoint::BP_TYPE_WRITE_WATCHPOINT && bp->type != Breakpoint::BP_TYPE_ACCESS_WATCHPOINT)
+			return false;
+		if (!bp->enabled)
+			return false;
+		return true;
 	}
 
 	u32 interrupt()
@@ -327,8 +387,15 @@ public:
 	{
 		exception = findException(event);
 		Sh4cntx.pc -= 2;	// FIXME delay slot
-		if (breakpoints[Breakpoint::BP_TYPE_SOFTWARE_BREAK].find(Sh4cntx.pc & 0x1fffffff)->second.singleShot)
-			removeMatchpoint(Breakpoint::BP_TYPE_SOFTWARE_BREAK, Sh4cntx.pc, 2);
+		Breakpoint *bp = findBreakpoint(Sh4cntx.pc);
+		if (bp != nullptr && bp->singleShot)
+			removeBreakpoint(Sh4cntx.pc);
+	}
+
+	// called on the emu thread
+	void memoryBreakpointHit(u32 addr)
+	{
+		Sh4cntx.pc -= 2;	// FIXME delay slot
 	}
 
 	void postDebugTrap()
@@ -404,56 +471,24 @@ public:
 	void subroutineReturn();
 
 	/*
-	 * Deletes overwritten breakpoints.
+	 * Disables overwritten breakpoints.
+	 * @TODO: This won't be needed when memory breakpoints are implemented.
 	 */
-	void eraseOverwrittenMatchPoints()
+	void disableOverwrittenBreakpoints()
 	{
-		auto& bp_map = breakpoints[Breakpoint::BP_TYPE_SOFTWARE_BREAK];
-
-		for (auto it = bp_map.begin(); it != bp_map.end();)
+		for (auto& [address, breakpoint] : breakpoints)
 		{
-			const auto& [address, breakpoint] = *it;
-			if (breakpoint.enabled && (ReadMem16_nommu(address) != 0xC308)) {
-				it = bp_map.erase(it);
-				continue;
+			u16 opcode = ReadMem16_nommu(address);
+			if (breakpoint.type == Breakpoint::Type::BP_TYPE_SOFTWARE_BREAK && opcode != 0xC308) {
+				breakpoint.savedOp = opcode;
+				breakpoint.enabled = false;
 			}
-			++it;
 		}
-	}
-
-	bool hasEnabledSoftwareBreakpoint(u32 addr)
-	{
-		return hasEnabledMatchPoint(Breakpoint::BP_TYPE_SOFTWARE_BREAK, addr);
-	}
-
-	bool insertSoftwareBreakpoint(u32 addr)
-	{
-		return insertMatchpoint(Breakpoint::BP_TYPE_SOFTWARE_BREAK, addr, 2);
-	}
-
-	bool removeSoftwareBreakpoint(u32 addr)
-	{
-		return removeMatchpoint(Breakpoint::BP_TYPE_SOFTWARE_BREAK, addr, 2);
-	}
-
-	bool enableSoftwareBreakpoint(u32 addr)
-	{
-		return enableMatchpoint(Breakpoint::BP_TYPE_SOFTWARE_BREAK, addr, 2);
-	}
-
-	bool disableSoftwareBreakpoint(u32 addr)
-	{
-		return disableMatchpoint(Breakpoint::BP_TYPE_SOFTWARE_BREAK, addr, 2);
-	}
-
-	Breakpoint *findSoftwareBreakpoint(u32 addr)
-	{
-		return findMatchpoint(Breakpoint::BP_TYPE_SOFTWARE_BREAK, addr, 2);
 	}
 
 	u32 exception = 0;
 
-	std::map<u32, Breakpoint> breakpoints[Breakpoint::Type::BP_TYPE_COUNT];
+	std::map<u32, Breakpoint> breakpoints;
 	std::vector<std::pair<u32, u32>> stack;
 
 private:
