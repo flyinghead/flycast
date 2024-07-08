@@ -202,12 +202,16 @@ public:
 			}
 			else
 			{
-				INFO_LOG(COMMON, "Cannot get attrbutes of '%s' error 0x%x", path.c_str(), GetLastError());
+				const int error = GetLastError();
+				if (error != ERROR_FILE_NOT_FOUND && error != ERROR_PATH_NOT_FOUND)
+					INFO_LOG(COMMON, "Cannot get attributes of '%s' error 0x%x", path.c_str(), error);
+				_set_errno(error);
 				throw StorageException("Cannot get attributes of " + path);
 			}
 		}
 		else
 		{
+			_set_errno(EINVAL);
 			throw StorageException("Invalid file name " + path);
 		}
 #endif

@@ -71,11 +71,15 @@ public class AndroidStorage {
         else {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT)
                 activity.getContentResolver().takePersistableUriPermission(uri, storageIntentPerms);
+            /* Use the uri path now to avoid issues when targeting sdk 30+ in the future
             String realPath = getRealPath(uri);
-            if (realPath != null)
+            // when targeting sdk 30+ (android 11+) using the real path doesn't work (empty content) -> *must* use the uri
+            int targetSdkVersion = activity.getApplication().getApplicationInfo().targetSdkVersion;
+            if (realPath != null && targetSdkVersion <= Build.VERSION_CODES.Q)
                 addStorageCallback(realPath);
             else
-                addStorageCallback(uri.toString());
+            */
+            addStorageCallback(uri.toString());
         }
     }
 
@@ -160,7 +164,7 @@ public class AndroidStorage {
             intent = Intent.createChooser(intent, "Select a cheat file");
         }
         else {
-            intent = Intent.createChooser(intent, "Select a directory");
+            intent = Intent.createChooser(intent, "Select a content directory");
         }
         storageIntentPerms = Intent.FLAG_GRANT_READ_URI_PERMISSION | (writeAccess ? Intent.FLAG_GRANT_WRITE_URI_PERMISSION : 0);
         intent.addFlags(Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION | storageIntentPerms);

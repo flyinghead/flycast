@@ -132,13 +132,12 @@ void gui_init()
 		return;
 	inited = true;
 
-	// Setup Dear ImGui context
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 #if FC_PROFILER
 	ImPlot::CreateContext();
 #endif
-	ImGuiIO& io = ImGui::GetIO(); (void)io;
+	ImGuiIO& io = ImGui::GetIO();
 	io.BackendFlags |= ImGuiBackendFlags_HasGamepad;
 
 	io.IniFilename = NULL;
@@ -609,23 +608,6 @@ static void getScreenshot(std::vector<u8>& data, int width = 0)
 	stbi_write_png_to_func(appendVectorData, &data, width, height, 3, &rawData[0], 0);
 }
 
-#ifdef _WIN32
-static struct tm *localtime_r(const time_t *_clock, struct tm *_result)
-{
-	return localtime_s(_result, _clock) ? nullptr : _result;
-}
-#endif
-
-static std::string timeToString(time_t time)
-{
-	tm t;
-	if (localtime_r(&time, &t) == nullptr)
-		return {};
-	std::string s(32, '\0');
-	s.resize(snprintf(s.data(), 32, "%04d/%02d/%02d %02d:%02d:%02d", t.tm_year + 1900, t.tm_mon + 1, t.tm_mday, t.tm_hour, t.tm_min, t.tm_sec));
-	return s;
-}
-
 static void savestate()
 {
 	// TODO save state async: png compression, savestate file compression/write
@@ -773,11 +755,6 @@ static void gui_display_commands()
 				savestate();
 			}
 
-			{
-				// Help with navigation with gamepad/keyboard
-				ImguiStyleVar _{ImGuiStyleVar_ItemSpacing, ImVec2(0.f, 2.f)};
-				ImGui::Spacing();
-			}
 			// Slot #
 			if (ImGui::ArrowButton("##prev-slot", ImGuiDir_Left))
 			{
@@ -805,7 +782,7 @@ static void gui_display_commands()
 				if (savestateDate == 0)
 					ImGui::TextColored(gray, "Empty");
 				else
-					ImGui::TextColored(gray, "%s", timeToString(savestateDate).c_str());
+					ImGui::TextColored(gray, "%s", timeToISO8601(savestateDate).c_str());
 			}
 			savestatePic.draw(ScaledVec2(buttonWidth, 0.f));
 		}
@@ -1566,8 +1543,9 @@ static void contentpath_warning_popup()
     if (show_contentpath_selection)
     {
         scanner.stop();
-        ImGui::OpenPopup("Select Directory");
-        select_file_popup("Select Directory", [](bool cancelled, std::string selection)
+        const char *title = "Select a Content Directory";
+        ImGui::OpenPopup(title);
+        select_file_popup(title, [](bool cancelled, std::string selection)
         {
             show_contentpath_selection = false;
             if (!cancelled)
@@ -1728,8 +1706,8 @@ static void gui_settings_general()
         	if (ImGui::Button("X"))
         		to_delete = i;
         }
-        ImguiStyleVar _(ImGuiStyleVar_FramePadding, ScaledVec2(24, 3));
 #ifdef __ANDROID__
+        ImguiStyleVar _(ImGuiStyleVar_FramePadding, ScaledVec2(24, 3));
         if (ImGui::Button("Add"))
         {
         	hostfs::addStorage(true, false, [](bool cancelled, std::string selection) {
@@ -1738,13 +1716,15 @@ static void gui_settings_general()
         	});
         }
 #else
-        if (ImGui::Button("Add"))
-        	ImGui::OpenPopup("Select Directory");
-        select_file_popup("Select Directory", [](bool cancelled, std::string selection) {
+        const char *title = "Select a Content Directory";
+        select_file_popup(title, [](bool cancelled, std::string selection) {
 			if (!cancelled)
 				addContentPath(selection);
 			return true;
         });
+        ImguiStyleVar _(ImGuiStyleVar_FramePadding, ScaledVec2(24, 3));
+        if (ImGui::Button("Add"))
+        	ImGui::OpenPopup(title);
 #endif
         ImGui::SameLine();
 		if (ImGui::Button("Rescan Content"))
@@ -2169,8 +2149,11 @@ static void gui_settings_video()
 			ImGui::NextColumn();
 #endif
 #ifdef USE_DX9
-			ImGui::RadioButton("DirectX 9", &renderApi, 2);
-			ImGui::NextColumn();
+			{
+				DisabledScope _(settings.platform.isNaomi2());
+				ImGui::RadioButton("DirectX 9", &renderApi, 2);
+				ImGui::NextColumn();
+			}
 #endif
 #ifdef USE_DX11
 			ImGui::RadioButton("DirectX 11", &renderApi, 3);
@@ -2624,7 +2607,7 @@ static void gui_settings_network()
 		else if (config::BattleCableEnable)
 			netType = 3;
 		ImGui::Columns(4, "networkType", false);
-		ImGui::RadioButton("Disabled", &netType, 0);
+		ImGui::RadioButton("Disabled##network", &netType, 0);
 		ImGui::NextColumn();
 		ImGui::RadioButton("GGPO", &netType, 1);
 		ImGui::SameLine(0, style.ItemInnerSpacing.x);
@@ -2671,7 +2654,7 @@ static void gui_settings_network()
 				"Sets Frame Delay, advisable for sessions with ping >100 ms");
 
 			ImGui::Text("Left Thumbstick:");
-			OptionRadioButton<int>("Disabled", config::GGPOAnalogAxes, 0, "Left thumbstick not used");
+			OptionRadioButton<int>("Disabled##analogaxis", config::GGPOAnalogAxes, 0, "Left thumbstick not used");
 			ImGui::SameLine();
 			OptionRadioButton<int>("Horizontal", config::GGPOAnalogAxes, 1, "Use the left thumbstick horizontal axis only");
 			ImGui::SameLine();
@@ -2741,7 +2724,7 @@ static void gui_settings_network()
 	ImGui::Spacing();
 	header("Multiboard Screens");
 	{
-		//OptionRadioButton<int>("Disabled", config::MultiboardSlaves, 0, "Multiboard disabled (when optional)");
+		//OptionRadioButton<int>("Disabled##multiboard", config::MultiboardSlaves, 0, "Multiboard disabled (when optional)");
 		OptionRadioButton<int>("1 (Twin)", config::MultiboardSlaves, 1, "One screen configuration (F355 Twin)");
 		ImGui::SameLine();
 		OptionRadioButton<int>("3 (Deluxe)", config::MultiboardSlaves, 2, "Three screens configuration");
@@ -2877,27 +2860,7 @@ static void gui_settings_about()
 #if defined(__ANDROID__) && HOST_CPU == CPU_ARM64 && USE_VULKAN
 	if (isVulkan(config::RendererType))
 	{
-		ImguiStyleVar _(ImGuiStyleVar_FramePadding, ScaledVec2(20, 10));
-		if (config::CustomGpuDriver)
-		{
-			std::string name, description, vendor, version;
-			if (getCustomGpuDriverInfo(name, description, vendor, version))
-			{
-				ImGui::Text("Custom Driver:");
-				ImGui::Indent();
-				ImGui::Text("%s - %s", name.c_str(), description.c_str());
-				ImGui::Text("%s - %s", vendor.c_str(), version.c_str());
-				ImGui::Unindent();
-			}
-
-			if (ImGui::Button("Use Default Driver")) {
-				config::CustomGpuDriver = false;
-				ImGui::OpenPopup("Reset Vulkan");
-			}
-		}
-		else if (ImGui::Button("Upload Custom Driver"))
-	    	ImGui::OpenPopup("Select custom GPU driver");
-
+		const char *fileSelectTitle = "Select a custom GPU driver";
 		static bool driverDirty;
 		const auto& callback = [](bool cancelled, std::string selection) {
 			if (!cancelled) {
@@ -2912,30 +2875,53 @@ static void gui_settings_about()
 			}
 			return true;
 		};
-		select_file_popup("Select custom GPU driver", callback, true, "zip");
 
-		if (driverDirty) {
-			ImGui::OpenPopup("Reset Vulkan");
-			driverDirty = false;
-		}
-
-		ImguiStyleVar _1(ImGuiStyleVar_WindowPadding, ScaledVec2(20, 20));
-		if (ImGui::BeginPopupModal("Reset Vulkan", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar))
 		{
-			ImGui::Text("Do you want to reset Vulkan to use new driver?");
-			ImGui::NewLine();
-			ImguiStyleVar _(ImGuiStyleVar_ItemSpacing, ImVec2(uiScaled(20), ImGui::GetStyle().ItemSpacing.y));
-			ImguiStyleVar _1(ImGuiStyleVar_FramePadding, ScaledVec2(10, 10));
-			if (ImGui::Button("Yes"))
+			ImguiStyleVar _(ImGuiStyleVar_FramePadding, ScaledVec2(20, 10));
+			if (config::CustomGpuDriver)
 			{
-				mainui_reinit();
-				ImGui::CloseCurrentPopup();
+				std::string name, description, vendor, version;
+				if (getCustomGpuDriverInfo(name, description, vendor, version))
+				{
+					ImGui::Text("Custom Driver:");
+					ImGui::Indent();
+					ImGui::Text("%s - %s", name.c_str(), description.c_str());
+					ImGui::Text("%s - %s", vendor.c_str(), version.c_str());
+					ImGui::Unindent();
+				}
+
+				if (ImGui::Button("Use Default Driver")) {
+					config::CustomGpuDriver = false;
+					ImGui::OpenPopup("Reset Vulkan");
+				}
 			}
-			ImGui::SameLine();
-			if (ImGui::Button("No"))
-				ImGui::CloseCurrentPopup();
-			ImGui::EndPopup();
+			else if (ImGui::Button("Upload Custom Driver"))
+				ImGui::OpenPopup(fileSelectTitle);
+
+			if (driverDirty) {
+				ImGui::OpenPopup("Reset Vulkan");
+				driverDirty = false;
+			}
+
+			ImguiStyleVar _1(ImGuiStyleVar_WindowPadding, ScaledVec2(20, 20));
+			if (ImGui::BeginPopupModal("Reset Vulkan", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar))
+			{
+				ImGui::Text("Do you want to reset Vulkan to use new driver?");
+				ImGui::NewLine();
+				ImguiStyleVar _(ImGuiStyleVar_ItemSpacing, ImVec2(uiScaled(20), ImGui::GetStyle().ItemSpacing.y));
+				ImguiStyleVar _1(ImGuiStyleVar_FramePadding, ScaledVec2(10, 10));
+				if (ImGui::Button("Yes"))
+				{
+					mainui_reinit();
+					ImGui::CloseCurrentPopup();
+				}
+				ImGui::SameLine();
+				if (ImGui::Button("No"))
+					ImGui::CloseCurrentPopup();
+				ImGui::EndPopup();
+			}
 		}
+		select_file_popup(fileSelectTitle, callback, true, "zip");
 	}
 #endif
 }
@@ -3317,20 +3303,19 @@ static bool systemdir_selected_callback(bool cancelled, std::string selection)
 			return false;
 		}
 	}
-	else
+	// We might be able to create a directory but not a file. Because ... android
+	// So let's test to be sure.
+	std::string testPath = data_path + "writetest.txt";
+	FILE *file = fopen(testPath.c_str(), "w");
+	if (file == nullptr)
 	{
-		// Test
-		std::string testPath = data_path + "writetest.txt";
-		FILE *file = fopen(testPath.c_str(), "w");
-		if (file == nullptr)
-		{
-			WARN_LOG(BOOT, "Cannot write in the 'data' directory");
-			gui_error("Invalid selection:\nFlycast cannot write to this directory.");
-			return false;
-		}
-		fclose(file);
-		unlink(testPath.c_str());
+		WARN_LOG(BOOT, "Cannot write in the 'data' directory");
+		gui_error("Invalid selection:\nFlycast cannot write to this directory.");
+		return false;
 	}
+	fclose(file);
+	unlink(testPath.c_str());
+
 	set_user_config_dir(selection);
 	add_system_data_dir(selection);
 	set_user_data_dir(data_path);
@@ -3353,8 +3338,9 @@ static bool systemdir_selected_callback(bool cancelled, std::string selection)
 
 static void gui_display_onboarding()
 {
-	ImGui::OpenPopup("Select System Directory");
-	select_file_popup("Select System Directory", &systemdir_selected_callback);
+	const char *title = "Select Flycast Home Directory";
+	ImGui::OpenPopup(title);
+	select_file_popup(title, &systemdir_selected_callback);
 }
 
 static std::future<bool> networkStatus;
@@ -3619,6 +3605,8 @@ void gui_draw_osd()
 
 void gui_display_osd()
 {
+	if (gui_state == GuiState::VJoyEdit)
+		return;
 	gui_draw_osd();
 	gui_endFrame(gui_is_open());
 }
@@ -3738,7 +3726,7 @@ void gui_loadState()
 void gui_saveState(bool stopRestart)
 {
 	const LockGuard lock(guiMutex);
-	if (gui_state == GuiState::Closed && savestateAllowed())
+	if ((gui_state == GuiState::Closed || !stopRestart) && savestateAllowed())
 	{
 		try {
 			if (stopRestart)
@@ -3782,7 +3770,7 @@ void gui_takeScreenshot()
 	if (!game_started)
 		return;
 	uiThreadRunner.runOnThread([]() {
-		std::string date = timeToString(time(nullptr));
+		std::string date = timeToISO8601(time(nullptr));
 		std::replace(date.begin(), date.end(), '/', '-');
 		std::replace(date.begin(), date.end(), ':', '-');
 		std::string name = "Flycast-" + date + ".png";

@@ -210,85 +210,82 @@ public:
 		rumbleEnabled = (SDL_JoystickRumble(sdl_joystick, 1, 1, 1) != -1);
 #endif
 
-		if (SDL_JoystickGetType(sdl_joystick) == SDL_JOYSTICK_TYPE_WHEEL)
+		// Open the haptic interface
+		haptic = SDL_HapticOpenFromJoystick(sdl_joystick);
+		if (haptic != nullptr)
 		{
-			// Open the haptic interface
-			haptic = SDL_HapticOpenFromJoystick(sdl_joystick);
-			if (haptic != nullptr)
+			// Query supported haptic effects for force-feedback
+			u32 hapq = SDL_HapticQuery(haptic);
+			INFO_LOG(INPUT, "SDL_HapticQuery: supported: %x", hapq);
+			if ((hapq & SDL_HAPTIC_SINE) != 0 && SDL_JoystickGetType(sdl_joystick) == SDL_JOYSTICK_TYPE_WHEEL)
 			{
-				// Query supported haptic effects for force-feedback
-				u32 hapq = SDL_HapticQuery(haptic);
-				INFO_LOG(INPUT, "SDL_HapticQuery: supported: %x", hapq);
-				if (hapq & SDL_HAPTIC_SINE)
+				SDL_HapticEffect effect{};
+				effect.type = SDL_HAPTIC_SINE;
+				effect.periodic.direction.type = SDL_HAPTIC_CARTESIAN;
+				effect.periodic.direction.dir[0] = -1;	// west
+				effect.periodic.period = 40; 			// 25 Hz
+				effect.periodic.magnitude = 0x7fff;
+				effect.periodic.length = SDL_HAPTIC_INFINITY;
+				sineEffectId = SDL_HapticNewEffect(haptic, &effect);
+				if (sineEffectId != -1)
 				{
-					SDL_HapticEffect effect{};
-					effect.type = SDL_HAPTIC_SINE;
-					effect.periodic.direction.type = SDL_HAPTIC_CARTESIAN;
-					effect.periodic.direction.dir[0] = -1;	// west
-					effect.periodic.period = 40; 			// 25 Hz
-					effect.periodic.magnitude = 0x7fff;
-					effect.periodic.length = SDL_HAPTIC_INFINITY;
-					sineEffectId = SDL_HapticNewEffect(haptic, &effect);
-					if (sineEffectId != -1)
-					{
-						rumbleEnabled = true;
-						hapticRumble = true;
-						NOTICE_LOG(INPUT, "wheel %d: haptic sine supported", sdl_joystick_instance);
-					}
+					rumbleEnabled = true;
+					hapticRumble = true;
+					NOTICE_LOG(INPUT, "wheel %d: haptic sine supported", sdl_joystick_instance);
 				}
-				if (hapq & SDL_HAPTIC_AUTOCENTER)
-				{
-					SDL_HapticSetAutocenter(haptic, 0);
-					hasAutocenter = true;
-					NOTICE_LOG(INPUT, "wheel %d: haptic autocenter supported", sdl_joystick_instance);
-				}
-				if (hapq & SDL_HAPTIC_GAIN)
-					SDL_HapticSetGain(haptic, 100);
-				if (hapq & SDL_HAPTIC_CONSTANT)
-				{
-					SDL_HapticEffect effect{};
-					effect.type = SDL_HAPTIC_CONSTANT;
-					effect.constant.direction.type = SDL_HAPTIC_CARTESIAN;
-					effect.constant.direction.dir[0] = -1;	// west, updated when used
-					effect.constant.length = SDL_HAPTIC_INFINITY;
-					effect.constant.delay = 0;
-					effect.constant.level = 0; // updated when used
-					constEffectId = SDL_HapticNewEffect(haptic, &effect);
-					if (constEffectId != -1)
-						NOTICE_LOG(INPUT, "wheel %d: haptic constant supported", sdl_joystick_instance);
-				}
-				if (hapq & SDL_HAPTIC_SPRING)
-				{
-					SDL_HapticEffect effect{};
-					effect.type = SDL_HAPTIC_SPRING;
-					effect.condition.length = SDL_HAPTIC_INFINITY;
-					effect.condition.direction.type = SDL_HAPTIC_CARTESIAN;	// not used but required!
-					// effect level at full deflection
-					effect.condition.left_sat[0] = effect.condition.right_sat[0] = 0xffff;
-					// how fast to increase the force
-					effect.condition.left_coeff[0] = effect.condition.right_coeff[0] = 0x7fff;
-					springEffectId = SDL_HapticNewEffect(haptic, &effect);
-					if (springEffectId != -1)
-						NOTICE_LOG(INPUT, "wheel %d: haptic spring supported", sdl_joystick_instance);
-				}
-				if (hapq & SDL_HAPTIC_DAMPER)
-				{
-					SDL_HapticEffect effect{};
-					effect.type = SDL_HAPTIC_DAMPER;
-					effect.condition.length = SDL_HAPTIC_INFINITY;
-					effect.condition.direction.type = SDL_HAPTIC_CARTESIAN;	// not used but required!
-					// max effect level
-					effect.condition.left_sat[0] = effect.condition.right_sat[0] = 0xffff;
-					// how fast to increase the force
-					effect.condition.left_coeff[0] = effect.condition.right_coeff[0] = 0x7fff;
-					damperEffectId = SDL_HapticNewEffect(haptic, &effect);
-					if (damperEffectId != -1)
-						NOTICE_LOG(INPUT, "wheel %d: haptic damper supported", sdl_joystick_instance);
-				}
-				if (sineEffectId == -1 && constEffectId == -1 && damperEffectId == -1 && springEffectId == -1) {
-					SDL_HapticClose(haptic);
-					haptic = nullptr;
-				}
+			}
+			if (hapq & SDL_HAPTIC_AUTOCENTER)
+			{
+				SDL_HapticSetAutocenter(haptic, 0);
+				hasAutocenter = true;
+				NOTICE_LOG(INPUT, "wheel %d: haptic autocenter supported", sdl_joystick_instance);
+			}
+			if (hapq & SDL_HAPTIC_GAIN)
+				SDL_HapticSetGain(haptic, 100);
+			if (hapq & SDL_HAPTIC_CONSTANT)
+			{
+				SDL_HapticEffect effect{};
+				effect.type = SDL_HAPTIC_CONSTANT;
+				effect.constant.direction.type = SDL_HAPTIC_CARTESIAN;
+				effect.constant.direction.dir[0] = -1;	// west, updated when used
+				effect.constant.length = SDL_HAPTIC_INFINITY;
+				effect.constant.delay = 0;
+				effect.constant.level = 0; // updated when used
+				constEffectId = SDL_HapticNewEffect(haptic, &effect);
+				if (constEffectId != -1)
+					NOTICE_LOG(INPUT, "wheel %d: haptic constant supported", sdl_joystick_instance);
+			}
+			if (hapq & SDL_HAPTIC_SPRING)
+			{
+				SDL_HapticEffect effect{};
+				effect.type = SDL_HAPTIC_SPRING;
+				effect.condition.length = SDL_HAPTIC_INFINITY;
+				effect.condition.direction.type = SDL_HAPTIC_CARTESIAN;	// not used but required!
+				// effect level at full deflection
+				effect.condition.left_sat[0] = effect.condition.right_sat[0] = 0xffff;
+				// how fast to increase the force
+				effect.condition.left_coeff[0] = effect.condition.right_coeff[0] = 0x7fff;
+				springEffectId = SDL_HapticNewEffect(haptic, &effect);
+				if (springEffectId != -1)
+					NOTICE_LOG(INPUT, "wheel %d: haptic spring supported", sdl_joystick_instance);
+			}
+			if (hapq & SDL_HAPTIC_DAMPER)
+			{
+				SDL_HapticEffect effect{};
+				effect.type = SDL_HAPTIC_DAMPER;
+				effect.condition.length = SDL_HAPTIC_INFINITY;
+				effect.condition.direction.type = SDL_HAPTIC_CARTESIAN;	// not used but required!
+				// max effect level
+				effect.condition.left_sat[0] = effect.condition.right_sat[0] = 0xffff;
+				// how fast to increase the force
+				effect.condition.left_coeff[0] = effect.condition.right_coeff[0] = 0x7fff;
+				damperEffectId = SDL_HapticNewEffect(haptic, &effect);
+				if (damperEffectId != -1)
+					NOTICE_LOG(INPUT, "wheel %d: haptic damper supported", sdl_joystick_instance);
+			}
+			if (sineEffectId == -1 && constEffectId == -1 && damperEffectId == -1 && springEffectId == -1 && !hasAutocenter) {
+				SDL_HapticClose(haptic);
+				haptic = nullptr;
 			}
 		}
 	}
@@ -450,6 +447,7 @@ public:
 			haptic = nullptr;
 			rumbleEnabled = false;
 			hapticRumble = false;
+			hasAutocenter = false;
 		}
 		if (sdl_controller != nullptr)
 			SDL_GameControllerClose(sdl_controller);

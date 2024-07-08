@@ -25,7 +25,6 @@ extern bool palette_updated;
 extern u32 detwiddle[2][11][1024];
 
 void palette_update();
-void forcePaletteUpdate();
 
 template<class pixel_type>
 class PixelBuffer

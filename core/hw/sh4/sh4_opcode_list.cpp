@@ -80,9 +80,9 @@ static u64 dec_MRd(DecParam d,DecParam s,u32 sz) { return dec_Fill(DM_ReadM,d,s,
 //d= reg to read from
 static u64 dec_MWt(DecParam d,DecParam s,u32 sz) { return dec_Fill(DM_WriteM,d,s,shop_writem,sz); }
 
-sh4_opcodelistentry missing_opcode = {dec_illegalOp, iNotImplemented, 0, 0, ReadWritePC, "missing", 0, 0, CO, 1 };
+static sh4_opcodelistentry missing_opcode = {dec_illegalOp, iNotImplemented, 0, 0, ReadWritePC, "missing", 0, 0, CO, 1 };
 
-sh4_opcodelistentry opcodes[]=
+static sh4_opcodelistentry opcodes[]=
 {
 	//HLE
 	{0, reios_trap, Mask_none, REIOS_OPCODE, Branch_dir, "reios_trap", 100, 100, CO, 1 },
@@ -344,7 +344,7 @@ sh4_opcodelistentry opcodes[]=
 	{0,0,0,0,ReadWritePC}//Branch in order to stop the block and save PC ect :)
 };
 
-void BuildOpcodeTables()
+static void BuildOpcodeTables()
 {
 
 	for (int i=0;i<0x10000;i++)

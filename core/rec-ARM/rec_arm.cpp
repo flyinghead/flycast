@@ -1933,8 +1933,8 @@ void Arm32Assembler::compileOp(RuntimeBlockInfo* block, shil_opcode* op, bool op
 
 		case shop_fsrra:
 			Vmov(s1, 1.f);
-			Vsqrt(s0, reg.mapFReg(op->rs1));
-			Vdiv(reg.mapFReg(op->rd), s1, s0);
+			Vdiv(s0, s1, reg.mapFReg(op->rs1));
+			Vsqrt(reg.mapFReg(op->rd), s0);
 			break;
 
 		case shop_fsetgt:
@@ -1986,7 +1986,6 @@ void Arm32Assembler::compileOp(RuntimeBlockInfo* block, shil_opcode* op, bool op
 
 		case shop_fipr:
 			{
-				
 				QRegister _r1 = q0;
 				QRegister _r2 = q0;
 

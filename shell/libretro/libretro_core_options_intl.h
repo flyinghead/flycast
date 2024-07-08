@@ -30252,18 +30252,18 @@ struct retro_core_options_v2 options_es = {
 #define CATEGORY_VMU_LABEL_FA NULL
 #define CATEGORY_VMU_INFO_0_FA NULL
 #define CORE_OPTION_NAME_REGION_LABEL_FA "منطقه"
-#define OPTION_VAL_JAPAN_FA NULL
-#define OPTION_VAL_USA_FA NULL
-#define OPTION_VAL_EUROPE_FA NULL
-#define OPTION_VAL_DEFAULT_FA NULL
+#define OPTION_VAL_JAPAN_FA "ژاپن"
+#define OPTION_VAL_USA_FA "ایالات متحده آمریکا"
+#define OPTION_VAL_EUROPE_FA "اروپا"
+#define OPTION_VAL_DEFAULT_FA "پیش‌فرض"
 #define CORE_OPTION_NAME_LANGUAGE_LABEL_FA "زبان"
 #define CORE_OPTION_NAME_LANGUAGE_INFO_0_FA NULL
-#define OPTION_VAL_JAPANESE_FA NULL
-#define OPTION_VAL_ENGLISH_FA NULL
-#define OPTION_VAL_GERMAN_FA NULL
-#define OPTION_VAL_FRENCH_FA NULL
-#define OPTION_VAL_SPANISH_FA NULL
-#define OPTION_VAL_ITALIAN_FA NULL
+#define OPTION_VAL_JAPANESE_FA "ژاپنی"
+#define OPTION_VAL_ENGLISH_FA "انگلیسی"
+#define OPTION_VAL_GERMAN_FA "آلمانی"
+#define OPTION_VAL_FRENCH_FA "فرانسوی"
+#define OPTION_VAL_SPANISH_FA "اسپانیایی"
+#define OPTION_VAL_ITALIAN_FA "ایتالیایی"
 #define CORE_OPTION_NAME_HLE_BIOS_LABEL_FA NULL
 #define CORE_OPTION_NAME_HLE_BIOS_INFO_0_FA NULL
 #define CORE_OPTION_NAME_BOOT_TO_BIOS_LABEL_FA NULL
@@ -44362,10 +44362,10 @@ struct retro_core_options_v2 options_hu = {
 #define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_ID "Mengemulasi adapter pita lebar eternet dan bukan modem. (Perlu Mulai Ulang)"
 #define CORE_OPTION_NAME_UPNP_LABEL_ID NULL
 #define CORE_OPTION_NAME_UPNP_INFO_0_ID NULL
-#define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_ID NULL
+#define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_ID "Resolusi Internal"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_ID "Modifikasi resolusi pelukisan."
 #define OPTION_VAL_320X240_ID NULL
-#define OPTION_VAL_640X480_ID NULL
+#define OPTION_VAL_640X480_ID "640x480 (Lokal)"
 #define OPTION_VAL_800X600_ID NULL
 #define OPTION_VAL_960X720_ID NULL
 #define OPTION_VAL_1024X768_ID NULL
@@ -44426,24 +44426,24 @@ struct retro_core_options_v2 options_hu = {
 #define CORE_OPTION_NAME_FOG_LABEL_ID NULL
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_ID NULL
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_ID NULL
-#define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_LABEL_ID "Pemfilteran Anisotropik"
+#define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_LABEL_ID "Penyaringan Anisotropic"
 #define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_ID "Meningkatkan mutu tekstur permukaan yang bersudut pandang serong di mata kamera. Opsi nilai tinggi lebih menguras GPU. Perubahan ini hanya berlaku setelah dimulai ulang."
-#define CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_ID NULL
-#define CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_ID "Pilihan mode saring tekstur. Ini bisa untuk memaksa mode saring tekstur tertentu pada semua tekstur agar berpenampilan lebih tajam (atau mulus) dibandingkan Bawaan. Opsi nilai selain Bawaan mungkin akan muncul masalah visual. Perubahan ini hanya berlaku setelah dimulai ulang."
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_ID "Penyaringan Tekstur"
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_ID "Pilihan mode saring tekstur. Ini dapat memaksa mode saring tekstur tertentu pada semua tekstur agar berpenampilan lebih tajam (atau mulus) dibandingkan Bawaan. Opsi nilai selain Bawaan mungkin akan muncul masalah visual. Perubahan ini hanya berlaku setelah dimulai ulang."
 #define OPTION_VAL_1_ID NULL
 #define OPTION_VAL_2_ID NULL
 #define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_ID NULL
 #define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_ID NULL
 #define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_ID NULL
 #define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_ID NULL
-#define CORE_OPTION_NAME_PVR2_FILTERING_LABEL_ID "Filter Pasca-pengolahan PowerVR2"
-#define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_ID "Pasca-olah gambar yang dilukiskan untuk menyimulasikan efek dengan spesifik ke GPU PowerVR2 dan sinyal video analog."
+#define CORE_OPTION_NAME_PVR2_FILTERING_LABEL_ID "Saring Pasca-pengolahan PowerVR2"
+#define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_ID "Memasca-olah gambar yang di-render untuk meniru efek seperti di GPU PowerVR2 dan sinyal video analog."
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_ID "Penskalaan Naik Tekstur (xBRZ)"
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_ID "Meningkatkan grafis seni piksel 2D karya tangan. Hanya bisa digunakan di pemainan piksel 2D."
 #define OPTION_VAL_2_O26_ID NULL
 #define OPTION_VAL_4_ID NULL
 #define OPTION_VAL_6_ID NULL
-#define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_ID "Ukuran Terfilter Maks. Penskalaan Naik"
+#define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_ID "Ukuran Saring Maks. Tekstur Naik Skala"
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_INFO_0_ID NULL
 #define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_ID NULL
 #define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_ID NULL
@@ -44510,7 +44510,7 @@ struct retro_core_options_v2 options_hu = {
 #define OPTION_VAL_500_ID NULL
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_ID NULL
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_INFO_0_ID NULL
-#define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_ID NULL
+#define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_ID "Dump Tekstur"
 #define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_ID NULL
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_ID NULL
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_INFO_0_ID NULL
@@ -44557,7 +44557,7 @@ struct retro_core_options_v2 options_hu = {
 #define OPTION_VAL_290_O45_ID NULL
 #define OPTION_VAL_300_O45_ID NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_ID NULL
-#define OPTION_VAL_WHITE_ID NULL
+#define OPTION_VAL_WHITE_ID "Putih"
 #define OPTION_VAL_RED_ID NULL
 #define OPTION_VAL_GREEN_ID NULL
 #define OPTION_VAL_BLUE_ID NULL
@@ -44607,14 +44607,14 @@ struct retro_core_options_v2 options_hu = {
 #define CORE_OPTION_NAME_VMU1_PIXEL_ON_COLOR_LABEL_ID NULL
 #define OPTION_VAL_DEFAULT_ON_00_ID NULL
 #define OPTION_VAL_DEFAULT_OFF_01_ID NULL
-#define OPTION_VAL_BLACK_02_ID NULL
+#define OPTION_VAL_BLACK_02_ID "Hitam"
 #define OPTION_VAL_LIGHT_BLUE_04_ID NULL
 #define OPTION_VAL_CYAN_06_ID NULL
 #define OPTION_VAL_CYAN_BLUE_07_ID NULL
 #define OPTION_VAL_LIGHT_GREEN_08_ID NULL
 #define OPTION_VAL_CYAN_GREEN_09_ID NULL
 #define OPTION_VAL_LIGHT_CYAN_10_ID NULL
-#define OPTION_VAL_PURPLE_12_ID NULL
+#define OPTION_VAL_PURPLE_12_ID "Ungu"
 #define OPTION_VAL_LIGHT_PURPLE_13_ID NULL
 #define OPTION_VAL_YELLOW_14_ID NULL
 #define OPTION_VAL_GRAY_15_ID NULL
@@ -44626,7 +44626,7 @@ struct retro_core_options_v2 options_hu = {
 #define OPTION_VAL_MAGENTA_21_ID NULL
 #define OPTION_VAL_LIGHT_PURPLE_3_22_ID NULL
 #define OPTION_VAL_LIGHT_ORANGE_23_ID NULL
-#define OPTION_VAL_ORANGE_24_ID NULL
+#define OPTION_VAL_ORANGE_24_ID "Oranye"
 #define OPTION_VAL_LIGHT_PURPLE_4_25_ID NULL
 #define OPTION_VAL_LIGHT_YELLOW_26_ID NULL
 #define OPTION_VAL_LIGHT_YELLOW_2_27_ID NULL

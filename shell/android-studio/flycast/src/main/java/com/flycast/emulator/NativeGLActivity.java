@@ -35,28 +35,36 @@ public final class NativeGLActivity extends BaseGLActivity {
 
         super.onCreate(savedInstanceState);
 
+        Log.i("flycast", "NativeGLActivity.onCreate done");
+    }
+
+    protected void finishCreation()
+    {
+        super.finishCreation();
         // Create the actual GL view
         mView = new NativeGLView(this);
         mLayout = new RelativeLayout(this);
         mLayout.addView(mView);
 
         setContentView(mLayout);
-        Log.i("flycast", "NativeGLActivity.onCreate done");
+        Log.i("flycast", "NativeGLActivity.finishCreation done");
     }
 
     @Override
     protected void doPause() {
-        mView.pause();
+        if (mView != null)
+            mView.pause();
     }
 
     @Override
     protected void doResume() {
-        mView.resume();
+    	if (mView != null)
+	        mView.resume();
     }
 
     @Override
     public boolean isSurfaceReady() {
-        return mView.isSurfaceReady();
+        return mView != null && mView.isSurfaceReady();
     }
 
     // Called from native code

@@ -141,7 +141,6 @@ bool D3DRenderer::Init()
 	success &= SUCCEEDED(device->CreateTexture(32, 32, 1, D3DUSAGE_DYNAMIC, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &paletteTexture.get(), 0));
 	success &= SUCCEEDED(device->CreateTexture(128, 2, 1, D3DUSAGE_DYNAMIC, D3DFMT_A8, D3DPOOL_DEFAULT, &fogTexture.get(), 0));
 	fog_needs_update = true;
-	forcePaletteUpdate();
 
 	if (!success)
 	{
@@ -202,7 +201,7 @@ void D3DRenderer::postReset()
 	rc = SUCCEEDED(device->CreateTexture(128, 2, 1, D3DUSAGE_DYNAMIC, D3DFMT_A8, D3DPOOL_DEFAULT, &fogTexture.get(), 0));
 	verify(rc);
 	fog_needs_update = true;
-	forcePaletteUpdate();
+	palette_updated = true;
 }
 
 void D3DRenderer::Term()

@@ -164,12 +164,6 @@ void palette_update()
 		pal_hash_256[i] = XXH32(&PALETTE_RAM[i << 8], 256 * 4, 7);
 }
 
-void forcePaletteUpdate()
-{
-	pal_needs_update = true;
-}
-
-
 static std::vector<vram_block*> VramLocks[VRAM_SIZE_MAX / PAGE_SIZE];
 
 //List functions
@@ -845,6 +839,7 @@ void BaseTextureCacheData::CheckCustomTexture()
 
 void BaseTextureCacheData::SetDirectXColorOrder(bool enabled) {
 	pvrTexInfo = enabled ? directx::pvrTexInfo : opengl::pvrTexInfo;
+	pal_needs_update = true;
 }
 
 template<typename Packer>

@@ -136,7 +136,11 @@ static void loadSpecialSettings()
 				// Aikagi
 				|| prod_id == "T20130M"
 				// AIR
-				|| prod_id == "T20112M")
+				|| prod_id == "T20112M"
+				// Cool Boarders Burrrn (JP)
+				|| prod_id == "T36901M"
+				// Castle Fantasia - Seima Taisen (JP)
+				|| prod_id == "T46901M")
 		{
 			INFO_LOG(BOOT, "Enabling RTT Copy to VRAM for game %s", prod_id.c_str());
 			config::RenderToTextureBuffer.override(true);
@@ -170,6 +174,12 @@ static void loadSpecialSettings()
 		{
 			INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s", prod_id.c_str());
 			config::ExtraDepthScale.override(1000.f);
+		}
+		// Capcom vs. SNK - Millennium Fight 2000 Pro
+		else if (prod_id == "T1247M")
+		{
+			INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s", prod_id.c_str());
+			config::ExtraDepthScale.override(10000.f);
 		}
 
 		std::string areas(ip_meta.area_symbols, sizeof(ip_meta.area_symbols));
@@ -249,7 +259,8 @@ static void loadSpecialSettings()
 		}
 		else if (prod_id == "T17708N"	// Stupid Invaders (US)
 			|| prod_id == "T17711D"		// Stupid Invaders (EU)
-			|| prod_id == "T46509M")	// Suika (JP)
+			|| prod_id == "T46509M"		// Suika (JP)
+			|| prod_id == "T36901M")	// Cool Boarders Burrrn (JP)
 		{
 			NOTICE_LOG(BOOT, "Forcing HLE BIOS");
 			config::UseReios.override(true);
@@ -287,6 +298,12 @@ static void loadSpecialSettings()
 			NOTICE_LOG(BOOT, "Forcing English Language");
 			config::Language.override(1);
 		}
+		if (prod_id == "T-9701N"			// Mortal Kombat (US)
+				|| prod_id == "T9701D")		// Mortal Kombat (EU)
+		{
+			NOTICE_LOG(BOOT, "Disabling Native Depth Interpolation");
+			config::NativeDepthInterpolation.override(false);
+		}
 	}
 	else if (settings.platform.isArcade())
 	{
@@ -307,6 +324,15 @@ static void loadSpecialSettings()
 		{
 			INFO_LOG(BOOT, "Disabling Free Play for game %s", prod_id.c_str());
 			config::ForceFreePlay.override(false);
+		}
+		if (prod_id == "VIRTUAL-ON ORATORIO TANGRAM") {
+			INFO_LOG(BOOT, "Forcing Japan region for game %s", prod_id.c_str());
+			config::Region.override(0);
+		}
+		if (prod_id == "CAPCOM VS SNK PRO  JAPAN")
+		{
+			INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s", prod_id.c_str());
+			config::ExtraDepthScale.override(10000.f);
 		}
 	}
 }
@@ -711,10 +737,6 @@ void Emulator::requestReset()
 
 void loadGameSpecificSettings()
 {
-	// Graphics context isn't available yet in libretro
-	if (GraphicsContext::Instance() != nullptr && GraphicsContext::Instance()->isAMD())
-		config::NativeDepthInterpolation.override(true);
-
 	if (settings.platform.isConsole())
 	{
 		reios_disk_id();

@@ -160,7 +160,6 @@ bool DX11Renderer::Init()
 	n2Helper.init(device, deviceContext);
 
 	fog_needs_update = true;
-	forcePaletteUpdate();
 
 	if (!success)
 	{
