@@ -150,8 +150,11 @@ void GameScanner::fetch_game_list()
 				if (!running)
 					break;
 			}
+			std::string dcbios = hostfs::findFlash("dc_", "%bios.bin;%boot.bin");
 			{
 				LockGuard _(mutex);
+				if (!dcbios.empty())
+					game_list.insert(game_list.begin(), { "Dreamcast BIOS" });
 				game_list.insert(game_list.end(), arcade_game_list.begin(), arcade_game_list.end());
 			}
 			if (running)

@@ -3197,25 +3197,6 @@ static void gui_display_content()
 			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ScaledVec2(8, 20));
 
 		int counter = 0;
-		if (gui_state != GuiState::SelectDisk && filter.PassFilter("Dreamcast BIOS"))
-		{
-			ImguiID _("bios");
-			bool pressed;
-			if (config::BoxartDisplayMode)
-			{
-				GameMedia game;
-				GameBoxart art = boxart.getBoxartAndLoad(game);
-				ImguiFileTexture tex(art.boxartPath);
-				pressed = gameImageButton(tex, "Dreamcast BIOS", responsiveBoxVec2, "Dreamcast BIOS");
-			}
-			else
-			{
-				pressed = ImGui::Selectable("Dreamcast BIOS");
-			}
-			if (pressed)
-				gui_start_game("");
-			counter++;
-		}
 		bool gameListEmpty = false;
 		{
 			scanner.get_mutex().lock();
@@ -3229,6 +3210,9 @@ static void gui_display_content()
 							&& extension != "cdi" && extension != "cue")
 						// Only dreamcast disks
 						continue;
+					if (game.path.empty())
+						// Dreamcast BIOS isn't a disk
+						continue;
 				}
 				std::string gameName = game.name;
 				GameBoxart art;
@@ -3239,7 +3223,7 @@ static void gui_display_content()
 				}
 				if (filter.PassFilter(gameName.c_str()))
 				{
-					ImguiID _(game.path.c_str());
+					ImguiID _(game.path.empty() ? "bios" : game.path);
 					bool pressed = false;
 					if (config::BoxartDisplayMode)
 					{
