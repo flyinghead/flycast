@@ -19,6 +19,9 @@
 #include "oslib/oslib.h"
 #include "stdclass.h"
 #include "file/file_path.h"
+#ifndef _WIN32
+#include <unistd.h>
+#endif
 
 const char *retro_get_system_directory();
 
@@ -126,6 +129,27 @@ std::string getTextureDumpPath()
 {
 	return std::string(game_dir_no_slash) + std::string(path_default_slash())
 			+ "texdump" + std::string(path_default_slash());
+}
+
+std::string getScreenshotsPath()
+{
+	// Unfortunately retroarch doesn't expose its "screenshots" path
+	return std::string(retro_get_system_directory()) + "/dc";
+}
+
+void saveScreenshot(const std::string& name, const std::vector<u8>& data)
+{
+	std::string path = getScreenshotsPath();
+	path += "/" + name;
+	FILE *f = nowide::fopen(path.c_str(), "wb");
+	if (f == nullptr)
+		throw FlycastException(path);
+	if (std::fwrite(&data[0], data.size(), 1, f) != 1) {
+		std::fclose(f);
+		unlink(path.c_str());
+		throw FlycastException(path);
+	}
+	std::fclose(f);
 }
 
 }

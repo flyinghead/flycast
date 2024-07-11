@@ -128,10 +128,22 @@ std::string getSavestatePath(int index, bool writable)
 	state_file = state_file + index_str + ".state";
 	if (index == -1)
 		state_file += ".net";
-	if (writable)
+
+	static std::string lastFile;
+	static std::string lastPath;
+
+	if (writable) {
+		lastFile.clear();
 		return get_writable_data_path(state_file);
+	}
 	else
-		return get_readonly_data_path(state_file);
+	{
+		if (lastFile != state_file) {
+			lastFile = state_file;
+			lastPath = get_readonly_data_path(state_file);
+		}
+		return lastPath;
+	}
 }
 
 std::string getShaderCachePath(const std::string& filename)

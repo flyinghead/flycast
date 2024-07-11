@@ -1,9 +1,3 @@
 <resources>
-
     <string name="app_name" translatable="false">Flycast</string>
-
-    <string name="app_site" translatable="false">reicast.com</string>
-
-    <string name="flavor" translatable="false">dreamcast</string>
-
 </resources>

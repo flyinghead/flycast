@@ -130,13 +130,12 @@ void gui_init()
 		return;
 	inited = true;
 
-	// Setup Dear ImGui context
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 #if FC_PROFILER
 	ImPlot::CreateContext();
 #endif
-	ImGuiIO& io = ImGui::GetIO(); (void)io;
+	ImGuiIO& io = ImGui::GetIO();
 	io.BackendFlags |= ImGuiBackendFlags_HasGamepad;
 
 	io.IniFilename = NULL;
@@ -605,23 +604,6 @@ static void getScreenshot(std::vector<u8>& data, int width = 0)
 	stbi_write_png_to_func(appendVectorData, &data, width, height, 3, &rawData[0], 0);
 }
 
-#ifdef _WIN32
-static struct tm *localtime_r(const time_t *_clock, struct tm *_result)
-{
-	return localtime_s(_result, _clock) ? nullptr : _result;
-}
-#endif
-
-static std::string timeToString(time_t time)
-{
-	tm t;
-	if (localtime_r(&time, &t) == nullptr)
-		return {};
-	std::string s(32, '\0');
-	s.resize(snprintf(s.data(), 32, "%04d/%02d/%02d %02d:%02d:%02d", t.tm_year + 1900, t.tm_mon + 1, t.tm_mday, t.tm_hour, t.tm_min, t.tm_sec));
-	return s;
-}
-
 static void savestate()
 {
 	// TODO save state async: png compression, savestate file compression/write
@@ -796,7 +778,7 @@ static void gui_display_commands()
 				if (savestateDate == 0)
 					ImGui::TextColored(gray, "Empty");
 				else
-					ImGui::TextColored(gray, "%s", timeToString(savestateDate).c_str());
+					ImGui::TextColored(gray, "%s", timeToISO8601(savestateDate).c_str());
 			}
 			savestatePic.draw(ScaledVec2(buttonWidth, 0.f));
 		}
@@ -1557,8 +1539,9 @@ static void contentpath_warning_popup()
     if (show_contentpath_selection)
     {
         scanner.stop();
-        ImGui::OpenPopup("Select Directory");
-        select_file_popup("Select Directory", [](bool cancelled, std::string selection)
+        const char *title = "Select a Content Directory";
+        ImGui::OpenPopup(title);
+        select_file_popup(title, [](bool cancelled, std::string selection)
         {
             show_contentpath_selection = false;
             if (!cancelled)
@@ -1703,8 +1686,8 @@ static void gui_settings_general()
         	if (ImGui::Button("X"))
         		to_delete = i;
         }
-        ImguiStyleVar _(ImGuiStyleVar_FramePadding, ScaledVec2(24, 3));
 #ifdef __ANDROID__
+        ImguiStyleVar _(ImGuiStyleVar_FramePadding, ScaledVec2(24, 3));
         if (ImGui::Button("Add"))
         {
         	hostfs::addStorage(true, false, [](bool cancelled, std::string selection) {
@@ -1713,13 +1696,15 @@ static void gui_settings_general()
         	});
         }
 #else
-        if (ImGui::Button("Add"))
-        	ImGui::OpenPopup("Select Directory");
-        select_file_popup("Select Directory", [](bool cancelled, std::string selection) {
+        const char *title = "Select a Content Directory";
+        select_file_popup(title, [](bool cancelled, std::string selection) {
 			if (!cancelled)
 				addContentPath(selection);
 			return true;
         });
+        ImguiStyleVar _(ImGuiStyleVar_FramePadding, ScaledVec2(24, 3));
+        if (ImGui::Button("Add"))
+        	ImGui::OpenPopup(title);
 #endif
         ImGui::SameLine();
 		if (ImGui::Button("Rescan Content"))
@@ -2144,8 +2129,11 @@ static void gui_settings_video()
 			ImGui::NextColumn();
 #endif
 #ifdef USE_DX9
-			ImGui::RadioButton("DirectX 9", &renderApi, 2);
-			ImGui::NextColumn();
+			{
+				DisabledScope _(settings.platform.isNaomi2());
+				ImGui::RadioButton("DirectX 9", &renderApi, 2);
+				ImGui::NextColumn();
+			}
 #endif
 #ifdef USE_DX11
 			ImGui::RadioButton("DirectX 11", &renderApi, 3);
@@ -2852,27 +2840,7 @@ static void gui_settings_about()
 #if defined(__ANDROID__) && HOST_CPU == CPU_ARM64 && USE_VULKAN
 	if (isVulkan(config::RendererType))
 	{
-		ImguiStyleVar _(ImGuiStyleVar_FramePadding, ScaledVec2(20, 10));
-		if (config::CustomGpuDriver)
-		{
-			std::string name, description, vendor, version;
-			if (getCustomGpuDriverInfo(name, description, vendor, version))
-			{
-				ImGui::Text("Custom Driver:");
-				ImGui::Indent();
-				ImGui::Text("%s - %s", name.c_str(), description.c_str());
-				ImGui::Text("%s - %s", vendor.c_str(), version.c_str());
-				ImGui::Unindent();
-			}
-
-			if (ImGui::Button("Use Default Driver")) {
-				config::CustomGpuDriver = false;
-				ImGui::OpenPopup("Reset Vulkan");
-			}
-		}
-		else if (ImGui::Button("Upload Custom Driver"))
-	    	ImGui::OpenPopup("Select custom GPU driver");
-
+		const char *fileSelectTitle = "Select a custom GPU driver";
 		static bool driverDirty;
 		const auto& callback = [](bool cancelled, std::string selection) {
 			if (!cancelled) {
@@ -2887,30 +2855,53 @@ static void gui_settings_about()
 			}
 			return true;
 		};
-		select_file_popup("Select custom GPU driver", callback, true, "zip");
 
-		if (driverDirty) {
-			ImGui::OpenPopup("Reset Vulkan");
-			driverDirty = false;
-		}
-
-		ImguiStyleVar _1(ImGuiStyleVar_WindowPadding, ScaledVec2(20, 20));
-		if (ImGui::BeginPopupModal("Reset Vulkan", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar))
 		{
-			ImGui::Text("Do you want to reset Vulkan to use new driver?");
-			ImGui::NewLine();
-			ImguiStyleVar _(ImGuiStyleVar_ItemSpacing, ImVec2(uiScaled(20), ImGui::GetStyle().ItemSpacing.y));
-			ImguiStyleVar _1(ImGuiStyleVar_FramePadding, ScaledVec2(10, 10));
-			if (ImGui::Button("Yes"))
+			ImguiStyleVar _(ImGuiStyleVar_FramePadding, ScaledVec2(20, 10));
+			if (config::CustomGpuDriver)
 			{
-				mainui_reinit();
-				ImGui::CloseCurrentPopup();
+				std::string name, description, vendor, version;
+				if (getCustomGpuDriverInfo(name, description, vendor, version))
+				{
+					ImGui::Text("Custom Driver:");
+					ImGui::Indent();
+					ImGui::Text("%s - %s", name.c_str(), description.c_str());
+					ImGui::Text("%s - %s", vendor.c_str(), version.c_str());
+					ImGui::Unindent();
+				}
+
+				if (ImGui::Button("Use Default Driver")) {
+					config::CustomGpuDriver = false;
+					ImGui::OpenPopup("Reset Vulkan");
+				}
 			}
-			ImGui::SameLine();
-			if (ImGui::Button("No"))
-				ImGui::CloseCurrentPopup();
-			ImGui::EndPopup();
+			else if (ImGui::Button("Upload Custom Driver"))
+				ImGui::OpenPopup(fileSelectTitle);
+
+			if (driverDirty) {
+				ImGui::OpenPopup("Reset Vulkan");
+				driverDirty = false;
+			}
+
+			ImguiStyleVar _1(ImGuiStyleVar_WindowPadding, ScaledVec2(20, 20));
+			if (ImGui::BeginPopupModal("Reset Vulkan", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar))
+			{
+				ImGui::Text("Do you want to reset Vulkan to use new driver?");
+				ImGui::NewLine();
+				ImguiStyleVar _(ImGuiStyleVar_ItemSpacing, ImVec2(uiScaled(20), ImGui::GetStyle().ItemSpacing.y));
+				ImguiStyleVar _1(ImGuiStyleVar_FramePadding, ScaledVec2(10, 10));
+				if (ImGui::Button("Yes"))
+				{
+					mainui_reinit();
+					ImGui::CloseCurrentPopup();
+				}
+				ImGui::SameLine();
+				if (ImGui::Button("No"))
+					ImGui::CloseCurrentPopup();
+				ImGui::EndPopup();
+			}
 		}
+		select_file_popup(fileSelectTitle, callback, true, "zip");
 	}
 #endif
 }
@@ -3075,11 +3066,47 @@ static void gameTooltip(const std::string& tip)
 
 static bool gameImageButton(ImguiTexture& texture, const std::string& tooltip, ImVec2 size, const std::string& gameName)
 {
-	bool pressed = texture.button("", size, gameName);
+	bool pressed = texture.button("##imagebutton", size, gameName);
 	gameTooltip(tooltip);
 
     return pressed;
 }
+
+#ifdef TARGET_UWP
+void gui_load_game()
+{
+	using namespace Windows::Storage;
+	using namespace Concurrency;
+
+	auto picker = ref new Pickers::FileOpenPicker();
+	picker->ViewMode = Pickers::PickerViewMode::List;
+
+	picker->FileTypeFilter->Append(".chd");
+	picker->FileTypeFilter->Append(".gdi");
+	picker->FileTypeFilter->Append(".cue");
+	picker->FileTypeFilter->Append(".cdi");
+	picker->FileTypeFilter->Append(".zip");
+	picker->FileTypeFilter->Append(".7z");
+	picker->FileTypeFilter->Append(".elf");
+	if (!config::HideLegacyNaomiRoms)
+	{
+		picker->FileTypeFilter->Append(".bin");
+		picker->FileTypeFilter->Append(".lst");
+		picker->FileTypeFilter->Append(".dat");
+	}
+	picker->SuggestedStartLocation = Pickers::PickerLocationId::DocumentsLibrary;
+
+	create_task(picker->PickSingleFileAsync()).then([](StorageFile ^file) {
+		if (file)
+		{
+			NOTICE_LOG(COMMON, "Picked file: %S", file->Path->Data());
+			nowide::stackstring path;
+			if (path.convert(file->Path->Data()))
+				gui_start_game(path.get());
+		}
+	});
+}
+#endif
 
 static void gui_display_content()
 {
@@ -3105,7 +3132,6 @@ static void gui_display_content()
     if (gui_state != GuiState::SelectDisk)
     {
 #ifdef TARGET_UWP
-    	void gui_load_game();
 		ImGui::SameLine(ImGui::GetContentRegionMax().x - settingsBtnW
 				- ImGui::GetStyle().FramePadding.x * 2.0f  - ImGui::GetStyle().ItemSpacing.x - ImGui::CalcTextSize("Load...").x);
 		if (ImGui::Button("Load..."))
@@ -3259,20 +3285,19 @@ static bool systemdir_selected_callback(bool cancelled, std::string selection)
 			return false;
 		}
 	}
-	else
+	// We might be able to create a directory but not a file. Because ... android
+	// So let's test to be sure.
+	std::string testPath = data_path + "writetest.txt";
+	FILE *file = fopen(testPath.c_str(), "w");
+	if (file == nullptr)
 	{
-		// Test
-		std::string testPath = data_path + "writetest.txt";
-		FILE *file = fopen(testPath.c_str(), "w");
-		if (file == nullptr)
-		{
-			WARN_LOG(BOOT, "Cannot write in the 'data' directory");
-			gui_error("Invalid selection:\nFlycast cannot write to this directory.");
-			return false;
-		}
-		fclose(file);
-		unlink(testPath.c_str());
+		WARN_LOG(BOOT, "Cannot write in the 'data' directory");
+		gui_error("Invalid selection:\nFlycast cannot write to this directory.");
+		return false;
 	}
+	fclose(file);
+	unlink(testPath.c_str());
+
 	set_user_config_dir(selection);
 	add_system_data_dir(selection);
 	set_user_data_dir(data_path);
@@ -3295,8 +3320,9 @@ static bool systemdir_selected_callback(bool cancelled, std::string selection)
 
 static void gui_display_onboarding()
 {
-	ImGui::OpenPopup("Select System Directory");
-	select_file_popup("Select System Directory", &systemdir_selected_callback);
+	const char *title = "Select Flycast Home Directory";
+	ImGui::OpenPopup(title);
+	select_file_popup(title, &systemdir_selected_callback);
 }
 
 static std::future<bool> networkStatus;
@@ -3721,7 +3747,7 @@ void gui_takeScreenshot()
 	if (!game_started)
 		return;
 	uiThreadRunner.runOnThread([]() {
-		std::string date = timeToString(time(nullptr));
+		std::string date = timeToISO8601(time(nullptr));
 		std::replace(date.begin(), date.end(), '/', '-');
 		std::replace(date.begin(), date.end(), ':', '-');
 		std::string name = "Flycast-" + date + ".png";

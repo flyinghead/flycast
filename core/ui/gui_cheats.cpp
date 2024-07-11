@@ -86,6 +86,7 @@ void gui_cheats()
     ImGui::Begin("##main", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar
     		| ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize);
 
+	const char *title = "Select a cheat file";
     {
 		ImguiStyleVar _(ImGuiStyleVar_FramePadding, ScaledVec2(20, 8));
 		ImGui::AlignTextToFramePadding();
@@ -103,12 +104,7 @@ void gui_cheats()
 			hostfs::addStorage(false, true, cheatFileSelected);
 #else
 		if (ImGui::Button("Load"))
-			ImGui::OpenPopup("Select cheat file");
-		select_file_popup("Select cheat file", [](bool cancelled, std::string selection)
-			{
-				cheatFileSelected(cancelled, selection);
-				return true;
-			}, true, "cht");
+			ImGui::OpenPopup(title);
 #endif
 
 		ImGui::SameLine();
@@ -117,6 +113,11 @@ void gui_cheats()
 
 		ImGui::Unindent(uiScaled(10));
     }
+	select_file_popup(title, [](bool cancelled, std::string selection)
+		{
+			cheatFileSelected(cancelled, selection);
+			return true;
+		}, true, "cht");
 
 	ImGui::BeginChild(ImGui::GetID("cheats"), ImVec2(0, 0), ImGuiChildFlags_Border, ImGuiWindowFlags_DragScrolling | ImGuiWindowFlags_NavFlattened);
     {

@@ -16,8 +16,6 @@
 #include "hw/sh4/sh4_cache.h"
 #endif
 
-#define iNimp cpu_iNimp
-
 //Read Mem macros
 
 #define ReadMemU32(to,addr) to=ReadMem32(addr)
@@ -41,11 +39,6 @@
 #define WriteMemBOU8(addr,offset,data)  WriteMemU8(addr+offset,data)
 
 // 0xxx
-void cpu_iNimp(u32 op, const char* info)
-{
-	ERROR_LOG(INTERPRETER, "Unimplemented opcode: %08X next_pc: %08X pr: %08X msg: %s", op, next_pc, pr, info);
-	die("iNimp reached\n");
-}
 
 //stc GBR,<REG_N>
 sh4op(i0000_nnnn_0001_0010)
@@ -1449,6 +1442,7 @@ sh4op(i0011_nnnn_mmmm_0100)
 	const u8 old_q = sr.Q;
 	sr.Q = (u8)((0x80000000 & r[n]) != 0);
 
+	const u32 old_rm = r[m];
 	r[n] <<= 1;
 	r[n] |= sr.T;
 
@@ -1458,13 +1452,13 @@ sh4op(i0011_nnnn_mmmm_0100)
 	{
 		if (sr.M == 0)
 		{
-			r[n] -= r[m];
+			r[n] -= old_rm;
 			bool tmp1 = r[n] > old_rn;
 			sr.Q = sr.Q ^ tmp1;
 		}
 		else
 		{
-			r[n] += r[m];
+			r[n] += old_rm;
 			bool tmp1 = r[n] < old_rn;
 			sr.Q = !sr.Q ^ tmp1;
 		}
@@ -1473,13 +1467,13 @@ sh4op(i0011_nnnn_mmmm_0100)
 	{
 		if (sr.M == 0)
 		{
-			r[n] += r[m];
+			r[n] += old_rm;
 			bool tmp1 = r[n] < old_rn;
 			sr.Q = sr.Q ^ tmp1;
 		}
 		else
 		{
-			r[n] -= r[m];
+			r[n] -= old_rm;
 			bool tmp1 = r[n] > old_rn;
 			sr.Q = !sr.Q ^ tmp1;
 		}

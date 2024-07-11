@@ -20,7 +20,5 @@
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
 
--keep class com.reicast.** {*;}
--keepclassmembers class com.reicast.** {*;}
 -keep class com.flycast.** {*;}
 -keepclassmembers class com.flycast.** {*;}

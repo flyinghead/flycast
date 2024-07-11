@@ -537,19 +537,18 @@ protected:
 			break;
 
 		case shop_fsrra:
-			// RSQRTSS has an |error| <= 1.5*2^-12 where the SH4 FSRRA needs |error| <= 2^-21
-			sqrtss(xmm0, mapXRegister(op.rs1));
 			if (ArchX64)
 			{
 				mov(eax, 0x3f800000);	// 1.0
-				movd(mapXRegister(op.rd), eax);
+				movd(xmm0, eax);
 			}
 			else
 			{
 				static float one = 1.f;
-				movss(mapXRegister(op.rd), dword[&one]);
+				movss(xmm0, dword[&one]);
 			}
-			divss(mapXRegister(op.rd), xmm0);
+			divss(xmm0, mapXRegister(op.rs1));
+			sqrtss(mapXRegister(op.rd), xmm0);
 			break;
 
 		case shop_fsetgt:

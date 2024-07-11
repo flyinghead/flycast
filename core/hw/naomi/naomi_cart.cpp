@@ -81,12 +81,7 @@ static bool loadBios(const char *filename, Archive *child_archive, Archive *pare
 
 	for (int romid = 0; bios->blobs[romid].filename != nullptr; romid++)
 	{
-		if (region == -1)
-		{
-			region = bios->blobs[romid].region;
-			config::Region.override(region);
-		}
-		else if (bios->blobs[romid].region != (u32)region)
+		if (region != -1 && bios->blobs[romid].region != (u32)region)
 			continue;
 
 		std::unique_ptr<ArchiveFile> file;
@@ -119,6 +114,8 @@ static bool loadBios(const char *filename, Archive *child_archive, Archive *pare
 					md5.add(biosData + bios->blobs[romid].offset, bios->blobs[romid].length);
 				DEBUG_LOG(NAOMI, "Mapped %s: %x bytes at %07x", bios->blobs[romid].filename, read, bios->blobs[romid].offset);
 				found_region = true;
+				if (region == -1)
+					config::Region.override(bios->blobs[romid].region);
 			}
 			break;
 		case EepromBE16:
@@ -654,7 +651,7 @@ void naomi_cart_LoadRom(const std::string& path, const std::string& fileName, Lo
 				|| gameId == "INITIAL D CYCRAFT")
 		{
 			card_reader::initdInit();
-			initMidiForceFeedback();
+			midiffb::init();
 		}
 		else if (gameId == "MAXIMUM SPEED" || gameId == "FASTER THAN SPEED")
 		{
@@ -665,7 +662,7 @@ void naomi_cart_LoadRom(const std::string& path, const std::string& fileName, Lo
 				|| gameId == "SEGA DRIVING SIMULATOR")
 		{
 			if (settings.naomi.drivingSimSlave == 0)
-				initMidiForceFeedback();
+				midiffb::init();
 			if (romName == "clubkrt" || romName == "clubkrto"
 					|| romName == "clubkrta" || romName == "clubkrtc")
 				card_reader::clubkInit();

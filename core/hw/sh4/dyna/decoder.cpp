@@ -508,6 +508,8 @@ static void dec_param(DecParam p,shil_param& r1,shil_param& r2, u32 op)
 			u32 shft=p-PRM_RN_D4_x1;
 			r1=mk_regi(reg_r0+GetN(op));
 			r2=mk_imm(GetImm4(op)<<shft);
+			if (r2.imm_value() == 0)
+				r2 = shil_param();
 		}
 		break;
 
@@ -523,6 +525,8 @@ static void dec_param(DecParam p,shil_param& r1,shil_param& r2, u32 op)
 			u32 shft=p-PRM_RM_D4_x1;
 			r1=mk_regi(reg_r0+GetM(op));
 			r2=mk_imm(GetImm4(op)<<shft);
+			if (r2.imm_value() == 0)
+				r2 = shil_param();
 		}
 		break;
 
@@ -538,6 +542,8 @@ static void dec_param(DecParam p,shil_param& r1,shil_param& r2, u32 op)
 			u32 shft=p-PRM_GBR_D8_x1;
 			r1=mk_regi(reg_gbr);
 			r2=mk_imm(GetImm8(op)<<shft);
+			if (r2.imm_value() == 0)
+				r2 = shil_param();
 		}
 		break;
 
@@ -979,7 +985,7 @@ bool dec_DecodeBlock(RuntimeBlockInfo* rbi,u32 max_cycles)
 					blk->guest_opcodes++;
 					dec_updateBlockCycles(blk, op);
 
-					if (OpDesc[op]->IsFloatingPoint())
+					if (!blk->has_fpu_op && OpDesc[op]->IsFloatingPoint())
 					{
 						if (sr.FD == 1)
 						{

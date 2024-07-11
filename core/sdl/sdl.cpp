@@ -51,6 +51,9 @@ static u64 lastBarcodeTime;
 
 static KeyboardLayout detectKeyboardLayout();
 static bool handleBarcodeScanner(const SDL_Event& event);
+void sdl_stopHaptic(int port);
+static void pauseHaptic();
+static void resumeHaptic();
 
 static struct SDLDeInit
 {
@@ -64,6 +67,8 @@ static struct SDLDeInit
 
 static void sdl_open_joystick(int index)
 {
+	if (settings.naomi.slave)
+		return;
 	SDL_Joystick *pJoystick = SDL_JoystickOpen(index);
 
 	if (pJoystick == NULL)
@@ -84,6 +89,8 @@ static void sdl_open_joystick(int index)
 
 static void sdl_close_joystick(SDL_JoystickID instance)
 {
+	if (settings.naomi.slave)
+		return;
 	std::shared_ptr<SDLGamepad> gamepad = SDLGamepad::GetSDLGamepad(instance);
 	if (gamepad != NULL)
 		gamepad->close();
@@ -129,6 +136,7 @@ static void emuEventCallback(Event event, void *)
 	{
 	case Event::Terminate:
 		SDL_SetWindowTitle(window, "Flycast");
+		sdl_stopHaptic(0);
 		break;
 	case Event::Pause:
 		gameRunning = false;
@@ -136,13 +144,14 @@ static void emuEventCallback(Event event, void *)
 			SDL_SetRelativeMouseMode(SDL_FALSE);
 		SDL_ShowCursor(SDL_ENABLE);
 		setWindowTitleGame();
+		pauseHaptic();
 		break;
 	case Event::Resume:
 		gameRunning = true;
 		captureMouse(mouseCaptured);
 		if (window_fullscreen && !mouseCaptured)
 			SDL_ShowCursor(SDL_DISABLE);
-
+		resumeHaptic();
 		break;
 	default:
 		break;
@@ -212,6 +221,8 @@ void input_sdl_init()
 			die("SDL: error initializing Joystick subsystem");
 	}
 	sdlDeInit.initialized = true;
+	if (SDL_WasInit(SDL_INIT_HAPTIC) == 0)
+		SDL_InitSubSystem(SDL_INIT_HAPTIC);
 
 	SDL_SetRelativeMouseMode(SDL_FALSE);
 
@@ -257,10 +268,11 @@ void input_sdl_quit()
 	EventManager::unlisten(Event::Pause, emuEventCallback);
 	EventManager::unlisten(Event::Resume, emuEventCallback);
 	SDLGamepad::closeAllGamepads();
-	SDL_QuitSubSystem(SDL_INIT_JOYSTICK);
+	SDL_QuitSubSystem(SDL_INIT_JOYSTICK | SDL_INIT_HAPTIC);
 }
 
-inline void SDLMouse::setAbsPos(int x, int y) {
+inline void SDLMouse::setAbsPos(int x, int y)
+{
 	int width, height;
 	SDL_GetWindowSize(window, &width, &height);
 	if (width != 0 && height != 0)
@@ -1203,3 +1215,86 @@ static bool handleBarcodeScanner(const SDL_Event& event)
 
 	return true;
 }
+
+static float torque;
+static float springSat;
+static float springSpeed;
+static float damperParam;
+static float damperSpeed;
+
+void sdl_setTorque(int port, float torque)
+{
+	::torque = torque;
+	if (gameRunning)
+		SDLGamepad::SetTorque(port, torque);
+}
+
+void sdl_setSpring(int port, float saturation, float speed)
+{
+	springSat = saturation;
+	springSpeed = speed;
+	SDLGamepad::SetSpring(port, saturation, speed);
+}
+
+void sdl_setDamper(int port, float param, float speed)
+{
+	damperParam = param;
+	damperSpeed = speed;
+	SDLGamepad::SetDamper(port, param, speed);
+}
+
+void sdl_stopHaptic(int port)
+{
+	torque = 0.f;
+	springSat = 0.f;
+	springSpeed = 0.f;
+	damperParam = 0.f;
+	damperSpeed = 0.f;
+	SDLGamepad::StopHaptic(port);
+}
+
+void pauseHaptic() {
+	SDLGamepad::SetTorque(0, 0.f);
+}
+
+void resumeHaptic() {
+	SDLGamepad::SetTorque(0, torque);
+}
+
+#if 0
+#include "ui/gui_util.h"
+
+void sdl_displayHapticStats()
+{
+	ImguiStyleVar _(ImGuiStyleVar_WindowRounding, 0);
+	ImguiStyleVar _1(ImGuiStyleVar_WindowBorderSize, 0);
+	ImGui::SetNextWindowPos(ImVec2(10, 10));
+	ImGui::SetNextWindowSize(ScaledVec2(120, 0));
+	ImGui::SetNextWindowBgAlpha(0.7f);
+	ImGui::Begin("##ggpostats", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs);
+	ImguiStyleColor _2(ImGuiCol_PlotHistogram, ImVec4(0.557f, 0.268f, 0.965f, 1.f));
+
+	ImGui::Text("Torque");
+	char s[32];
+	snprintf(s, sizeof(s), "%.1f", torque);
+	ImGui::ProgressBar(0.5f + torque / 2.f, ImVec2(-1, 0), s);
+
+	ImGui::Text("Spring Sat");
+	snprintf(s, sizeof(s), "%.1f", springSat);
+	ImGui::ProgressBar(springSat, ImVec2(-1, 0), s);
+
+	ImGui::Text("Spring Speed");
+	snprintf(s, sizeof(s), "%.1f", springSpeed);
+	ImGui::ProgressBar(springSpeed, ImVec2(-1, 0), s);
+
+	ImGui::Text("Damper Param");
+	snprintf(s, sizeof(s), "%.1f", damperParam);
+	ImGui::ProgressBar(damperParam, ImVec2(-1, 0), s);
+
+	ImGui::Text("Damper Speed");
+	snprintf(s, sizeof(s), "%.1f", damperSpeed);
+	ImGui::ProgressBar(damperSpeed, ImVec2(-1, 0), s);
+
+	ImGui::End();
+}
+#endif

@@ -70,6 +70,7 @@ public:
 
 		for (shil_opcode& op : block->oplist)
 		{
+			// FIXME shop_ifb should be assumed to increase versions too? (increment all reg_versions[])
 			AddVersionToOperand(op.rs1, false);
 			AddVersionToOperand(op.rs2, false);
 			AddVersionToOperand(op.rs3, false);
@@ -212,26 +213,18 @@ private:
 			}
 			else if (op.op == shop_readm || op.op == shop_writem)
 			{
-				if (op.rs1.is_imm())
+				if (op.rs1.is_imm() && !op.rs3.is_reg())
 				{
-					if (op.rs3.is_imm())
-					{
-						// Merge base addr and offset
+					// Merge base addr and offset
+					if (op.rs3.is_imm()) {
 						op.rs1._imm += op.rs3.imm_value();
 						op.rs3.type = FMT_NULL;
-					}
-					else if (op.rs3.is_reg())
-					{
-						// Swap rs1 and rs3 so that rs1 is never an immediate operand
-						shil_param t = op.rs1;
-						op.rs1 = op.rs3;
-						op.rs3 = t;
 					}
 
 					// If we know the address to read and it's in the same memory page(s) as the block
 					// and if those pages are read-only, then we can directly read the memory at compile time
 					// and propagate the read value as a constant.
-					if (op.rs1.is_imm() && op.op == shop_readm  && block->read_only
+					if (op.op == shop_readm  && block->read_only
 							&& (op.rs1._imm >> 12) >= (block->vaddr >> 12)
 							&& (op.rs1._imm >> 12) <= ((block->vaddr + block->sh4_code_size - 1) >> 12)
 							&& op.size <= 4)
@@ -262,6 +255,15 @@ private:
 							constprop_values[RegValue(op.rd)] = v;
 						}
 					}
+				}
+				else
+				{
+					if (op.rs1.is_imm() && op.rs3.is_reg())
+						// Swap rs1 and rs3 so that rs1 is never an immediate operand
+						std::swap(op.rs1, op.rs3);
+					if (op.rs3.is_imm() && op.rs3.imm_value() == 0)
+						// 0 displacement has no effect
+						op.rs3.type = FMT_NULL;
 				}
 			}
 			else if (ExecuteConstOp(&op))
@@ -440,9 +442,9 @@ private:
 		for (size_t opnum = 0; opnum < block->oplist.size(); opnum++)
 		{
 			shil_opcode& op = block->oplist[opnum];
-			if (op.rs2.is_imm())
+			if (op.rs2.is_imm() || op.rs2.is_null())
 			{
-				if (op.rs2.imm_value() == 0)
+				if (op.rs2.is_null() || op.rs2.imm_value() == 0)
 				{
 					// a & 0 == 0
 					// a * 0 == 0
@@ -590,10 +592,15 @@ private:
 					defnum = opnum;
 
 				// find alias redef
-				if (DefinesHigherVersion(op->rd, alias.second) && aliasdef == (size_t)-1)
-					aliasdef = opnum;
-				else if (DefinesHigherVersion(op->rd2, alias.second) && aliasdef == (size_t)-1)
-					aliasdef = opnum;
+				if (aliasdef == (size_t)-1)
+				{
+					if (DefinesHigherVersion(op->rd, alias.second))
+						aliasdef = opnum;
+					else if (DefinesHigherVersion(op->rd2, alias.second))
+						aliasdef = opnum;
+					else if (op->op == shop_ifb)
+						aliasdef = opnum;
+				}
 
 				// find last use
 				if (UsesRegValue(op->rs1, alias.first))

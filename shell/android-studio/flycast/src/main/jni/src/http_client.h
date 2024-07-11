@@ -92,7 +92,7 @@ namespace http {
 
 }
 
-extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_HttpClient_nativeInit(JNIEnv *env, jobject obj)
+extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_emu_HttpClient_nativeInit(JNIEnv *env, jobject obj)
 {
     http::HttpClient = env->NewGlobalRef(obj);
     http::openUrlMid = env->GetMethodID(env->GetObjectClass(obj), "openUrl", "(Ljava/lang/String;[[B[Ljava/lang/String;)I");
