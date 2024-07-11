@@ -376,7 +376,7 @@ if(USE_OPENMP)
 				message("-- Found OpenMP.xcframework: ${OPENMP_FRAMEWORK} (Linking static library before CMake support linking xcframework)")
 				target_link_libraries(${PROJECT_NAME} PRIVATE ${OPENMP_FRAMEWORK})
 				target_include_directories(${PROJECT_NAME} PRIVATE ${OPENMP_XCFRAMEWORK}/ios-arm64_arm64e/OpenMP.framework/Versions/A/Headers)
-				set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Xclang -fopenmp")
+				target_compile_options(${PROJECT_NAME} PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-Xclang -fopenmp>)
 			endif()
 		else()
 			message("-- Could NOT find OpenMP.xcframework, compile it using shell/apple/emulator-ios/OpenMP/build_ios_openmp.sh")
@@ -1649,7 +1649,7 @@ if(NOT LIBRETRO)
 					shell/apple/emulator-ios/emulator/iCade-iOS/iCadeReaderView.h
 					shell/apple/emulator-ios/emulator/iCade-iOS/iCadeReaderView.m
 					shell/apple/emulator-ios/emulator/iCade-iOS/iCadeState.h)
-			set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fobjc-arc -fmodules")
+			target_compile_options(${PROJECT_NAME} PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-fobjc-arc -fmodules>)
 			set_source_files_properties(shell/apple/emulator-ios/emulator/FlycastViewController.mm PROPERTIES COMPILE_OPTIONS -fcxx-modules)
 			set_source_files_properties(shell/apple/emulator-ios/emulator/iCade-iOS/iCadeReaderView.m PROPERTIES COMPILE_OPTIONS -fno-objc-arc)
 
