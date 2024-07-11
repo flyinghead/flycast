@@ -13,7 +13,7 @@ jobs:
         architecture: [ arm64, x86-64 ]
         include:
           - operating_system: freebsd
-            version: '14.0'
+            version: '14.1'
             pkginstall: sudo pkg install -y alsa-lib ccache cmake evdev-proto git libao libevdev libudev-devd libzip miniupnpc ninja pkgconf pulseaudio sdl2
           - operating_system: netbsd
             version: '10.0'
@@ -36,7 +36,7 @@ jobs:
           key: ccache-${{ matrix.operating_system }}-${{ matrix.architecture }}-${{ github.sha }}
           restore-keys: ccache-${{ matrix.operating_system }}-${{ matrix.architecture }}-
 
-      - uses: cross-platform-actions/action@v0.24.0
+      - uses: cross-platform-actions/action@v0.25.0
         with:
           operating_system: ${{ matrix.operating_system }}
           architecture: ${{ matrix.architecture }}
