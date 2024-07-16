@@ -16,6 +16,8 @@ Join us on our [**Discord server**](https://discord.gg/X8YWP8w) for a chat.
 
 ## Install
 
+### Android ![android](https://flyinghead.github.io/flycast-builds/android.jpg)
+Install Flycast from [**Google Play**](https://play.google.com/store/apps/details?id=com.flycast.emulator).
 ### Flatpak (Linux ![ubuntu logo](https://flyinghead.github.io/flycast-builds/ubuntu.png))
 
 1. [Set up Flatpak](https://www.flatpak.org/setup/).
