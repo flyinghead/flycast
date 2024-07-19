@@ -2101,7 +2101,7 @@ struct retro_core_options_v2 options_ar = {
 #define CORE_OPTION_NAME_BOOT_TO_BIOS_LABEL_AST NULL
 #define CORE_OPTION_NAME_BOOT_TO_BIOS_INFO_0_AST NULL
 #define CORE_OPTION_NAME_ENABLE_DSP_LABEL_AST "Activar el DSP"
-#define CORE_OPTION_NAME_ENABLE_DSP_INFO_0_AST "Activa la emulación del procesador de señal dixital (DSP) d'audiu de Dreamcast. Ameyora la precisión del soníu xeneráu mas aumenta los requirimientos."
+#define CORE_OPTION_NAME_ENABLE_DSP_INFO_0_AST "Activa la emulación del procesador de señal dixital (DSP) d'audiu de Dreamcast. Ameyora la precisión del soníu xeneráu mas aumenta los requirimientos de rindimientu."
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_AST NULL
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_AST NULL
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_AST NULL
@@ -2111,7 +2111,7 @@ struct retro_core_options_v2 options_ar = {
 #define CORE_OPTION_NAME_UPNP_LABEL_AST NULL
 #define CORE_OPTION_NAME_UPNP_INFO_0_AST NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_AST "Resolución interna"
-#define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_AST "Modifica la resolución del renderizáu."
+#define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_AST "Modifica la resolución de la renderización."
 #define OPTION_VAL_320X240_AST NULL
 #define OPTION_VAL_640X480_AST NULL
 #define OPTION_VAL_800X600_AST NULL
@@ -2143,11 +2143,11 @@ struct retro_core_options_v2 options_ar = {
 #define CORE_OPTION_NAME_CABLE_TYPE_INFO_0_AST NULL
 #define OPTION_VAL_VGA_AST NULL
 #define OPTION_VAL_TV_RGB_AST NULL
-#define OPTION_VAL_TV_COMPOSITE_AST "TV (Compuestu)"
+#define OPTION_VAL_TV_COMPOSITE_AST "TV (compuestu)"
 #define CORE_OPTION_NAME_BROADCAST_LABEL_AST NULL
 #define OPTION_VAL_NTSC_AST NULL
 #define OPTION_VAL_PAL_AST NULL
-#define OPTION_VAL_PAL_N_AST "PAL-N (Arxentina, Paraguái, Uruguái)"
+#define OPTION_VAL_PAL_N_AST "PAL-N (Arxentina, Paraguái y Uruguái)"
 #define OPTION_VAL_PAL_M_AST "PAL-M (Brasil)"
 #define CORE_OPTION_NAME_SCREEN_ROTATION_LABEL_AST "Orientación de la pantalla"
 #define OPTION_VAL_HORIZONTAL_AST NULL
@@ -2184,7 +2184,7 @@ struct retro_core_options_v2 options_ar = {
 #define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_AST NULL
 #define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_AST NULL
 #define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_AST NULL
-#define CORE_OPTION_NAME_PVR2_FILTERING_LABEL_AST "Filtru del posprocesamientu de PowerVR2"
+#define CORE_OPTION_NAME_PVR2_FILTERING_LABEL_AST NULL
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_AST NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_AST NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_AST NULL
@@ -2337,8 +2337,8 @@ struct retro_core_options_v2 options_ar = {
 #define OPTION_VAL_VMU_A1_AST NULL
 #define OPTION_VAL_ALL_VMUS_AST "Toles VMUs"
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_AST NULL
-#define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_AST NULL
-#define CORE_OPTION_NAME_VMU_SOUND_INFO_0_AST NULL
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_AST "Soníos de la VMU"
+#define CORE_OPTION_NAME_VMU_SOUND_INFO_0_AST "Cuando s'activa esta opción, reprodúcense los pitíos de la VMU."
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_AST NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_AST NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_AST NULL
