@@ -146,14 +146,12 @@ void Boxart::fetchBoxart()
 				}
 			}
 		}
-		saveDatabase(true);
+		saveDatabase();
 	});
 }
 
-void Boxart::saveDatabase(bool internal)
+void Boxart::saveDatabase()
 {
-	if (!internal && fetching.valid())
-		fetching.get();
 	if (!databaseDirty)
 		return;
 	std::string db_name = getSaveDirectory() + DB_NAME;
@@ -215,4 +213,10 @@ void Boxart::loadDatabase()
 	} catch (const json::exception& e) {
 		WARN_LOG(COMMON, "Corrupted database file: %s", e.what());
 	}
+}
+
+void Boxart::term()
+{
+	if (fetching.valid())
+		fetching.get();
 }

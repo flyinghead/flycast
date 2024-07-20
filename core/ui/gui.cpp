@@ -3681,7 +3681,7 @@ void gui_term()
 	    EventManager::unlisten(Event::Resume, emuEventCallback);
 	    EventManager::unlisten(Event::Start, emuEventCallback);
 	    EventManager::unlisten(Event::Terminate, emuEventCallback);
-		gui_save();
+	    boxart.term();
 	}
 }
 
@@ -3715,11 +3715,6 @@ static void reset_vmus()
 void gui_error(const std::string& what)
 {
 	error_msg = what;
-}
-
-void gui_save()
-{
-	boxart.saveDatabase();
 }
 
 void gui_loadState()

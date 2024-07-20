@@ -290,7 +290,6 @@ extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_emu_JNIdc_pause(JNIE
 		if (config::AutoSaveState)
 			dc_savestate(config::SavestateSlot);
 	}
-	gui_save();
 }
 
 extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_emu_JNIdc_resume(JNIEnv *env,jobject obj)

@@ -34,10 +34,11 @@ class Boxart
 public:
 	GameBoxart getBoxartAndLoad(const GameMedia& media);
 	GameBoxart getBoxart(const GameMedia& media);
-	void saveDatabase(bool internal = false);
+	void term();
 
 private:
 	void loadDatabase();
+	void saveDatabase();
 	std::string getSaveDirectory() const {
 		return get_writable_data_path("/boxart/");
 	}
