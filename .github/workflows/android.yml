@@ -50,7 +50,6 @@ jobs:
           releaseFiles: shell/android-studio/flycast/build/outputs/bundle/release/flycast-release.aab
           track: internal
           status: draft
-          changesNotSentForReview: true
 
       - name: Build dump_syms
         working-directory: core/deps/breakpad
