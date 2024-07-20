@@ -19,9 +19,11 @@
 package com.flycast.emulator;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.CursorLoader;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
 import android.media.MediaScannerConnection;
@@ -76,7 +78,27 @@ public class AndroidStorage {
         }
         else {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT)
-                activity.getContentResolver().takePersistableUriPermission(uri, storageIntentPerms);
+            {
+                try {
+                    activity.getContentResolver().takePersistableUriPermission(uri, storageIntentPerms);
+                } catch (SecurityException e) {
+                    Log.w("Flycast", "takePersistableUriPermission failed", e);
+                    AlertDialog.Builder dlgAlert  = new AlertDialog.Builder(activity);
+                    dlgAlert.setMessage("Can't get permissions to access this folder.\nPlease select a different one.");
+                    dlgAlert.setTitle("Storage Error");
+                    dlgAlert.setPositiveButton("Ok",
+                            new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog,int id) {
+                                    addStorageCallback(null);
+                                }
+                            });
+                    dlgAlert.setIcon(android.R.drawable.ic_dialog_alert);
+                    dlgAlert.setCancelable(false);
+                    dlgAlert.create().show();
+                    return;
+                }
+            }
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
                 String realPath = getRealPath(uri);
                 if (realPath != null) {

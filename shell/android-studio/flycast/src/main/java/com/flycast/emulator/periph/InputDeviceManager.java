@@ -61,7 +61,7 @@ public final class InputDeviceManager implements InputManager.InputDeviceListene
     @Override
     public void onInputDeviceAdded(int i) {
         InputDevice device = InputDevice.getDevice(i);
-        if ((device.getSources() & InputDevice.SOURCE_CLASS_BUTTON) == InputDevice.SOURCE_CLASS_BUTTON) {
+        if (device != null && (device.getSources() & InputDevice.SOURCE_CLASS_BUTTON) == InputDevice.SOURCE_CLASS_BUTTON) {
             int port = 0;
             if ((device.getSources() & InputDevice.SOURCE_CLASS_JOYSTICK) == InputDevice.SOURCE_CLASS_JOYSTICK) {
                 port = this.maple_port == 3 ? 3 : this.maple_port++;

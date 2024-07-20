@@ -55,8 +55,13 @@ public class HomeMover {
             File f = getFile(parent);
             if (f != null)
                 return new File(f, kid).toURI().toString();
-            else
-                return storage.getSubPath(parent, kid);
+            else {
+                try {
+                    return storage.getSubPath(parent, kid);
+                } catch (RuntimeException e) {
+                    return null;
+                }
+            }
         }
 
         public FileInfo[] listContent(String folder)
@@ -97,6 +102,8 @@ public class HomeMover {
         }
 
         public boolean exists(String path) {
+            if (path == null)
+                return false;
             File file = getFile(path);
             if (file != null)
                 return file.exists();
@@ -139,6 +146,8 @@ public class HomeMover {
         Thread thread = new Thread(new Runnable() {
             private void copyFile(String path, String name, String toDir)
             {
+                if (path == null)
+                    return;
                 //Log.d("flycast", "Copying " + path + " to " + toDir);
                 try {
                     InputStream in = wrapper.openInputStream(path);

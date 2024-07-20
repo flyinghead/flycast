@@ -270,7 +270,10 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
     }
     @Override
     public boolean onGenericMotionEvent(MotionEvent event) {
-        if ((event.getSource() & InputDevice.SOURCE_CLASS_JOYSTICK) == InputDevice.SOURCE_CLASS_JOYSTICK && event.getAction() == MotionEvent.ACTION_MOVE) {
+        if ((event.getSource() & InputDevice.SOURCE_CLASS_JOYSTICK) == InputDevice.SOURCE_CLASS_JOYSTICK
+                && event.getAction() == MotionEvent.ACTION_MOVE
+                && event.getDevice() != null)
+        {
             List<InputDevice.MotionRange> axes = event.getDevice().getMotionRanges();
             boolean rc = false;
             for (InputDevice.MotionRange range : axes)
@@ -416,9 +419,11 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
 
     }
 
-    private String getDefaultHomeDir()
-    {
-        return getExternalFilesDir(null).getAbsolutePath();
+    private String getDefaultHomeDir() {
+        File dir = getExternalFilesDir(null);
+        if (dir == null)
+            dir = getFilesDir();
+        return dir.getAbsolutePath();
     }
 
     private String checkHomeDirectory(String homeDir)
