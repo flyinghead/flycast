@@ -29,7 +29,6 @@ jobs:
     steps:
       - name: Set up build environment (macOS)
         run: |
-          sudo xcode-select -switch /Applications/Xcode_15.3.app
           # Unlink and re-link to prevent errors when github mac runner images install python outside of brew. See https://github.com/actions/setup-python/issues/577
           brew list -1 | grep python | while read formula; do brew unlink $formula; brew link --overwrite $formula; done
           brew update || :
