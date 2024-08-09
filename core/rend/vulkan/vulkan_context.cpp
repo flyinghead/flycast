@@ -173,11 +173,11 @@ bool VulkanContext::InitInstance(const char** extensions, uint32_t extensions_co
 		//layer_names.push_back("VK_LAYER_ARM_AGA");
 #ifdef VK_DEBUG
 #ifndef __ANDROID__
-		vext.push_back("VK_EXT_debug_utils");
-		vext.push_back("VK_EXT_debug_report");
+		vext.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+		vext.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
 		layer_names.push_back("VK_LAYER_KHRONOS_validation");
 #else
-		vext.push_back("VK_EXT_debug_report");	// NDK <= 19?
+		vext.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);	// NDK <= 19?
 		layer_names.push_back("VK_LAYER_GOOGLE_threading");
 		layer_names.push_back("VK_LAYER_LUNARG_parameter_validation");
 		layer_names.push_back("VK_LAYER_LUNARG_core_validation");
@@ -398,10 +398,14 @@ bool VulkanContext::InitDevice()
 				deviceExtensions.push_back(VK_KHR_DEDICATED_ALLOCATION_EXTENSION_NAME);
 				dedicatedAllocationSupported = true;
 			}
-			else if (!strcmp(property.extensionName, "VK_KHR_portability_subset"))
-				deviceExtensions.push_back("VK_KHR_portability_subset");
-			else if (!strcmp(property.extensionName, "VK_EXT_metal_objects"))
-				deviceExtensions.push_back("VK_EXT_metal_objects");
+#ifdef VK_ENABLE_BETA_EXTENSIONS
+			else if (!strcmp(property.extensionName, VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME))
+				deviceExtensions.push_back(VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME);
+#endif
+#ifdef VK_USE_PLATFORM_METAL_EXT
+			else if (!strcmp(property.extensionName, VK_EXT_METAL_OBJECTS_EXTENSION_NAME))
+				deviceExtensions.push_back(VK_EXT_METAL_OBJECTS_EXTENSION_NAME);
+#endif
 #ifdef VK_DEBUG
 			else if (!strcmp(property.extensionName, VK_EXT_DEBUG_MARKER_EXTENSION_NAME))
 			{
@@ -737,17 +741,15 @@ bool VulkanContext::init()
     SDL_Vulkan_GetInstanceExtensions((SDL_Window *)window, &extensionsCount, NULL);
     extensions.resize(extensionsCount + extensions.size());
     SDL_Vulkan_GetInstanceExtensions((SDL_Window *)window, &extensionsCount, &extensions[extensions.size() - extensionsCount]);
-#elif defined(_WIN32)
+#elif defined(VK_USE_PLATFORM_WIN32_KHR)
     extern void CreateMainWindow();
     CreateMainWindow();
 	extensions.push_back(VK_KHR_WIN32_SURFACE_EXTENSION_NAME);
-#elif defined(VK_USE_PLATFORM_IOS_MVK)
-	extensions.push_back(VK_MVK_IOS_SURFACE_EXTENSION_NAME);
 #elif defined(VK_USE_PLATFORM_METAL_EXT)
 	extensions.push_back(VK_EXT_METAL_SURFACE_EXTENSION_NAME);
-#elif defined(SUPPORT_X11)
+#elif defined(VK_USE_PLATFORM_XLIB_KHR)
 	extensions.push_back(VK_KHR_XLIB_SURFACE_EXTENSION_NAME);
-#elif defined(__ANDROID__)
+#elif defined(VK_USE_PLATFORM_ANDROID_KHR)
 	extensions.push_back(VK_KHR_ANDROID_SURFACE_EXTENSION_NAME);
 #endif
 	if (!InitInstance(&extensions[0], extensions.size())) {
@@ -772,18 +774,15 @@ bool VulkanContext::init()
 		settings.display.dpi = roundf(std::max(hdpi, vdpi));
 
 	sdl_fix_steamdeck_dpi(sdlWin);
-#elif defined(_WIN32)
+#elif defined(VK_USE_PLATFORM_WIN32_KHR)
 	vk::Win32SurfaceCreateInfoKHR createInfo(vk::Win32SurfaceCreateFlagsKHR(), GetModuleHandle(NULL), (HWND)window);
 	surface = instance->createWin32SurfaceKHRUnique(createInfo);
-#elif defined(SUPPORT_X11)
+#elif defined(VK_USE_PLATFORM_XLIB_KHR)
 	vk::XlibSurfaceCreateInfoKHR createInfo(vk::XlibSurfaceCreateFlagsKHR(), (Display*)display, (Window)window);
 	surface = instance->createXlibSurfaceKHRUnique(createInfo);
-#elif defined(__ANDROID__)
+#elif defined(VK_USE_PLATFORM_ANDROID_KHR)
 	vk::AndroidSurfaceCreateInfoKHR createInfo(vk::AndroidSurfaceCreateFlagsKHR(), (struct ANativeWindow*)window);
 	surface = instance->createAndroidSurfaceKHRUnique(createInfo);
-#elif defined(VK_USE_PLATFORM_IOS_MVK)
-	vk::IOSSurfaceCreateInfoMVK createInfo(vk::IOSSurfaceCreateFlagsMVK(), window);
-	surface = instance->createIOSSurfaceMVKUnique(createInfo);
 #elif defined(VK_USE_PLATFORM_METAL_EXT)
 	vk::MetalSurfaceCreateInfoEXT createInfo(vk::MetalSurfaceCreateFlagsEXT(), window);
 	surface = instance->createMetalSurfaceEXTUnique(createInfo);

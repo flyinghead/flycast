@@ -1,4 +1,4 @@
-#ifndef __ANDROID__
+#if !defined(__ANDROID__) && !defined(__APPLE__)
 #include <cstdlib>
 
 [[noreturn]] void os_DebugBreak()

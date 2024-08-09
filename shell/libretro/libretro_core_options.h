@@ -1768,7 +1768,7 @@ struct retro_core_options_v2 *options_intl[RETRO_LANGUAGE_LAST] = {
    &options_nl,      /* RETRO_LANGUAGE_DUTCH */
    &options_pt_br,   /* RETRO_LANGUAGE_PORTUGUESE_BRAZIL */
    &options_pt_pt,   /* RETRO_LANGUAGE_PORTUGUESE_PORTUGAL */
-   &options_ru,      /* RETRO_LANGUAGE_RUSSIAN */
+   NULL,             /* RETRO_LANGUAGE_RUSSIAN */
    &options_ko,      /* RETRO_LANGUAGE_KOREAN */
    &options_cht,     /* RETRO_LANGUAGE_CHINESE_TRADITIONAL */
    &options_chs,     /* RETRO_LANGUAGE_CHINESE_SIMPLIFIED */
