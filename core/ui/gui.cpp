@@ -3774,11 +3774,15 @@ std::string gui_getCurGameBoxartUrl()
 	return art.boxartUrl;
 }
 
+void gui_runOnUiThread(std::function<void()> function) {
+	uiThreadRunner.runOnThread(function);
+}
+
 void gui_takeScreenshot()
 {
 	if (!game_started)
 		return;
-	uiThreadRunner.runOnThread([]() {
+	gui_runOnUiThread([]() {
 		std::string date = timeToISO8601(time(nullptr));
 		std::replace(date.begin(), date.end(), '/', '-');
 		std::replace(date.begin(), date.end(), ':', '-');

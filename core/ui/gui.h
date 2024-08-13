@@ -20,6 +20,7 @@
 #include "types.h"
 
 #include <string>
+#include <functional>
 
 void gui_init();
 void gui_initFonts();
@@ -51,6 +52,7 @@ void gui_loadState();
 void gui_saveState(bool stopRestart = true);
 std::string gui_getCurGameBoxartUrl();
 void gui_takeScreenshot();
+void gui_runOnUiThread(std::function<void()> function);
 
 enum class GuiState {
 	Closed,
