@@ -176,7 +176,7 @@ public:
 		}
 		recordStream->requestStart();
 		NOTICE_LOG(AUDIO, "Oboe recorder started. stream capacity: %d frames",
-				stream->getBufferCapacityInFrames());
+				recordStream->getBufferCapacityInFrames());
 
 		return true;
 	}
