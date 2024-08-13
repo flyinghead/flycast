@@ -82,9 +82,12 @@ std::string findFlash(const std::string& prefix, const std::string& names)
 			return fullpath;
 		for (const auto& path : config::ContentPath.get())
 		{
-			fullpath = hostfs::storage().getSubPath(path, name);
-			if (hostfs::storage().exists(fullpath))
-				return fullpath;
+			try {
+				fullpath = hostfs::storage().getSubPath(path, name);
+				if (hostfs::storage().exists(fullpath))
+					return fullpath;
+			} catch (const hostfs::StorageException& e) {
+			}
 		}
 
 		start = semicolon;

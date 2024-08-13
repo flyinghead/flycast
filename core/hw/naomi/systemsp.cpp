@@ -2088,12 +2088,18 @@ void SystemSpCart::Init(LoadProgress *progress, std::vector<u8> *digest)
 	{
 		std::string parent = hostfs::storage().getParentPath(settings.content.path);
 		std::string gdrom_path = get_file_basename(settings.content.fileName) + "/" + std::string(mediaName) + ".chd";
-		gdrom_path = hostfs::storage().getSubPath(parent, gdrom_path);
-		chd = openChd(gdrom_path);
+		try {
+			gdrom_path = hostfs::storage().getSubPath(parent, gdrom_path);
+			chd = openChd(gdrom_path);
+		} catch (const FlycastException& e) {
+		}
 		if (parentName != nullptr && chd == nullptr)
 		{
-			std::string gdrom_parent_path = hostfs::storage().getSubPath(parent, std::string(parentName) + "/" + std::string(mediaName) + ".chd");
-			chd = openChd(gdrom_parent_path);
+			try {
+				std::string gdrom_parent_path = hostfs::storage().getSubPath(parent, std::string(parentName) + "/" + std::string(mediaName) + ".chd");
+				chd = openChd(gdrom_parent_path);
+			} catch (const FlycastException& e) {
+			}
 		}
 		if (chd == nullptr)
 			throw NaomiCartException("SystemSP: Cannot open CompactFlash file " + gdrom_path);
