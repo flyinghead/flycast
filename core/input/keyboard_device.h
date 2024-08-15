@@ -21,6 +21,7 @@
 #include "cfg/option.h"
 #include "gamepad_device.h"
 #include "ui/gui.h"
+#include "hw/maple/maple_devs.h"
 #include <memory>
 
 extern u8 kb_key[4][6];	// normal keys pressed
