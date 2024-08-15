@@ -36,6 +36,7 @@ public class VibratorThread extends Thread {
     private VibrationEffect clickEffect = null;
     int clickDuration = 0;
     private static VibratorThread INSTANCE = null;
+    private static final int LEGACY_VIBRATION_DURATION = 20; // ms
 
     public static VibratorThread getInstance() {
         synchronized (VibratorThread.class) {
@@ -52,7 +53,11 @@ public class VibratorThread extends Thread {
     private Vibrator getVibrator(int i)
     {
         if (i == InputDeviceManager.VIRTUAL_GAMEPAD_ID) {
-            return (Vibrator) Emulator.getAppContext().getSystemService(Context.VIBRATOR_SERVICE);
+            if (Emulator.vibrationPower > 0)
+                return (Vibrator) Emulator.getAppContext().getSystemService(Context.VIBRATOR_SERVICE);
+            else
+                // vibration disabled
+                return null;
         }
         else {
             InputDevice device = InputDevice.getDevice(i);
@@ -111,7 +116,7 @@ public class VibratorThread extends Thread {
     }
 
     public void click() {
-        if (Emulator.vibrationDuration > 0) {
+        if (Emulator.vibrationPower > 0) {
             synchronized (this) {
                 click = true;
                 notify();
@@ -126,17 +131,16 @@ public class VibratorThread extends Thread {
             return;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
         {
-            if (clickEffect == null || clickDuration != Emulator.vibrationDuration)
+            if (clickEffect == null)
             {
-                clickDuration = Emulator.vibrationDuration;
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
                     clickEffect = VibrationEffect.createPredefined(VibrationEffect.EFFECT_HEAVY_CLICK);
                 else
-                    clickEffect = VibrationEffect.createOneShot(clickDuration, VibrationEffect.DEFAULT_AMPLITUDE);
+                    clickEffect = VibrationEffect.createOneShot(LEGACY_VIBRATION_DURATION, VibrationEffect.DEFAULT_AMPLITUDE);
             }
             vibrator.vibrate(clickEffect);
         } else {
-            vibrator.vibrate(Emulator.vibrationDuration);
+            vibrator.vibrate(LEGACY_VIBRATION_DURATION);
         }
     }
 
@@ -144,8 +148,7 @@ public class VibratorThread extends Thread {
     {
         // FIXME possible race condition
         synchronized (this) {
-            if (nextRumbleUpdate == 0)
-                nextRumbleUpdate = System.currentTimeMillis() + 16667;
+            nextRumbleUpdate = 1;
             notify();
         }
     }

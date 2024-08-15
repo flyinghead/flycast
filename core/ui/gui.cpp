@@ -1441,7 +1441,7 @@ static void gamepadSettingsPopup(const std::shared_ptr<GamepadDevice>& gamepad)
 		if (gamepad->is_virtual_gamepad())
 		{
 			header("Haptic");
-			OptionSlider("Power", config::VirtualGamepadVibration, 0, 60, "Haptic feedback power");
+			OptionSlider("Power", config::VirtualGamepadVibration, 0, 100, "Haptic feedback power", "%d%%");
 		}
 		else if (gamepad->is_rumble_enabled())
 		{

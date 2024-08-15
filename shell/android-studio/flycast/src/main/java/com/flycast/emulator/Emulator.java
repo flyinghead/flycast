@@ -22,7 +22,7 @@ public class Emulator extends Application {
     public static final int MDT_Microphone = 2;
     public static final int MDT_None = 8;
 
-    public static int vibrationDuration = 20;
+    public static int vibrationPower = 80;
 
     public static int[] maple_devices = {
             MDT_None,
@@ -42,7 +42,7 @@ public class Emulator extends Application {
      *
      */
     public void getConfigurationPrefs() {
-        Emulator.vibrationDuration = JNIdc.getVirtualGamepadVibration();
+        Emulator.vibrationPower = JNIdc.getVirtualGamepadVibration();
         JNIdc.getControllers(maple_devices, maple_expansion_devices);
     }
 
@@ -54,7 +54,7 @@ public class Emulator extends Application {
     {
         Log.i("flycast", "SaveAndroidSettings: saving preferences");
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        Emulator.vibrationDuration = JNIdc.getVirtualGamepadVibration();
+        Emulator.vibrationPower = JNIdc.getVirtualGamepadVibration();
         JNIdc.getControllers(maple_devices, maple_expansion_devices);
 
         prefs.edit()

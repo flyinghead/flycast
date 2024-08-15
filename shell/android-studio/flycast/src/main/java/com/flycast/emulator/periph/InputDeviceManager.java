@@ -105,12 +105,31 @@ public final class InputDeviceManager implements InputManager.InputDeviceListene
         }
     }
 
+    private void vibrate(Vibrator vibrator, long duration_ms, float power)
+    {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            int ipow = Math.min((int)(power * 255), 255);
+            if (ipow >= 1)
+                vibrator.vibrate(VibrationEffect.createOneShot(duration_ms, ipow));
+            else
+                vibrator.cancel();
+        }
+        else
+            vibrator.vibrate(duration_ms);
+    }
+
     // Called from native code
+    // returns false if the device has no vibrator
     private boolean rumble(int i, float power, float inclination, int duration_ms)
     {
         Vibrator vibrator = getVibrator(i);
         if (vibrator == null)
             return false;
+        if (i == VIRTUAL_GAMEPAD_ID) {
+            if (Emulator.vibrationPower == 0)
+                return true;
+            power *= Emulator.vibrationPower / 100.f;
+        }
 
         VibrationParams params;
         synchronized (this) {
@@ -120,25 +139,15 @@ public final class InputDeviceManager implements InputManager.InputDeviceListene
                 vibParams.put(i, params);
             }
         }
-        if (power == 0) {
-            if (params.power != 0)
-                vibrator.cancel();
-        } else {
-            if (inclination > 0) {
-                params.inclination = inclination * power;
-                params.stopTime = System.currentTimeMillis() + duration_ms;
-            }
-            else {
-                params.inclination = 0;
-            }
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
-                vibrator.vibrate(VibrationEffect.createOneShot(duration_ms, (int)(power * 255)));
-            else
-                vibrator.vibrate(duration_ms);
+        if (power != 0) {
+            params.stopTime = System.currentTimeMillis() + duration_ms;
             if (inclination > 0)
-                VibratorThread.getInstance().setVibrating();
+                params.inclination = inclination * power;
+            else
+                params.inclination = 0;
         }
         params.power = power;
+        VibratorThread.getInstance().setVibrating();
 
         return true;
     }
@@ -164,19 +173,19 @@ public final class InputDeviceManager implements InputManager.InputDeviceListene
         synchronized (this) {
             params = vibParams.get(i);
         }
-        if (vibrator == null || params == null || params.power == 0 || params.inclination == 0)
+        if (vibrator == null || params == null)
             return false;
         long remTime = params.stopTime - System.currentTimeMillis();
-        if (remTime <= 0) {
+        if (remTime <= 0 || params.power == 0) {
             params.power = 0;
             params.inclination = 0;
             vibrator.cancel();
             return false;
         }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
-            vibrator.vibrate(VibrationEffect.createOneShot(remTime, (int)(params.inclination * remTime * 255)));
+        if (params.inclination > 0)
+            vibrate(vibrator, remTime, params.inclination * remTime);
         else
-            vibrator.vibrate(remTime);
+            vibrate(vibrator, remTime, params.power);
         return true;
     }
 
