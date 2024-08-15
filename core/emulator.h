@@ -179,7 +179,7 @@ private:
 		Terminated,
 	};
 	State state = Uninitialized;
-	std::future<void> threadResult;
+	std::shared_future<void> threadResult;
 	bool resetRequested = false;
 	bool singleStep = false;
 	u64 startTime = 0;
