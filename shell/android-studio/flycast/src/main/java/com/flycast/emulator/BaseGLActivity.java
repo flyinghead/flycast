@@ -138,10 +138,11 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
             //Log.i("flycast", "External storage legacy: " + (externalStorageLegacy ? "preserved" : "lost"));
         }
         if (!storagePermissionGranted) {
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M)
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M || !externalStorageLegacy)
                 // No permission needed before Android 6
+                // Permissions only needed in legacy external storage mode
                 storagePermissionGranted = true;
-            else if (externalStorageLegacy) {
+            else {
                 Log.i("flycast", "Asking for external storage permission");
                 ActivityCompat.requestPermissions(this,
                         new String[]{
@@ -431,7 +432,8 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
         if (homeDir.isEmpty())
             // home dir not set: use default
             return getDefaultHomeDir();
-        if (homeDir.startsWith(getDefaultHomeDir()))
+        // must account for the fact that homeDir may be on internal storage but external storage is now available
+        if (homeDir.startsWith(getDefaultHomeDir()) || homeDir.startsWith(getFilesDir().getAbsolutePath()))
             // home dir is ok
             return homeDir;
         if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P)
