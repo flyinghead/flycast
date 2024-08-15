@@ -17,6 +17,7 @@ import android.view.View;
 import android.view.WindowInsets;
 import android.view.WindowManager;
 
+import com.flycast.emulator.BaseGLActivity;
 import com.flycast.emulator.Emulator;
 import com.flycast.emulator.periph.InputDeviceManager;
 
@@ -126,7 +127,9 @@ public class NativeGLView extends SurfaceView implements SurfaceHolder.Callback 
         Log.i("flycast", "NativeGLView.surfaceChanged: " + w + "x" + h);
         surfaceReady = true;
         JNIdc.rendinitNative(surfaceHolder.getSurface(), w, h);
-        Emulator.getCurrentActivity().handleStateChange(false);
+        BaseGLActivity activity = Emulator.getCurrentActivity();
+        if (activity != null)
+            activity.handleStateChange(false);
     }
 
     @Override
@@ -134,7 +137,9 @@ public class NativeGLView extends SurfaceView implements SurfaceHolder.Callback 
         Log.i("flycast", "NativeGLView.surfaceDestroyed");
         surfaceReady = false;
         JNIdc.rendinitNative(null, 0, 0);
-        Emulator.getCurrentActivity().handleStateChange(true);
+        BaseGLActivity activity = Emulator.getCurrentActivity();
+        if (activity != null)
+            activity.handleStateChange(true);
     }
 
     public boolean isSurfaceReady() {
