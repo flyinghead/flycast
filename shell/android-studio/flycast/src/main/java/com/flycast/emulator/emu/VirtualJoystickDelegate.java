@@ -342,10 +342,8 @@ public class VirtualJoystickDelegate {
                 }
                 else
                 {
-                    MotionEvent.PointerCoords pointerCoords = new MotionEvent.PointerCoords();
-                    event.getPointerCoords(0, pointerCoords);
-                    mouse_pos[0] = Math.round(pointerCoords.x);
-                    mouse_pos[1] = Math.round(pointerCoords.y);
+                    mouse_pos[0] = Math.round(event.getX());
+                    mouse_pos[1] = Math.round(event.getY());
                     mouse_btns = MotionEvent.BUTTON_PRIMARY;    // Mouse left button down
                 }
                 break;
@@ -353,10 +351,8 @@ public class VirtualJoystickDelegate {
             case MotionEvent.ACTION_MOVE:
                 if (event.getPointerCount() == 1)
                 {
-                    MotionEvent.PointerCoords pointerCoords = new MotionEvent.PointerCoords();
-                    event.getPointerCoords(0, pointerCoords);
-                    mouse_pos[0] = Math.round(pointerCoords.x);
-                    mouse_pos[1] = Math.round(pointerCoords.y);
+                    mouse_pos[0] = Math.round(event.getX());
+                    mouse_pos[1] = Math.round(event.getY());
                 }
                 break;
         }
@@ -365,7 +361,7 @@ public class VirtualJoystickDelegate {
         InputDeviceManager.getInstance().virtualGamepadEvent(rv, joyx, joyy, left_trigger, right_trigger, fastForward);
         // Only register the mouse event if no virtual gamepad button is down
         if ((!editVjoyMode && rv == 0xFFFFFFFF && left_trigger == 0 && right_trigger == 0 && joyx == 0 && joyy == 0 && !fastForward)
-		|| JNIdc.guiIsOpen())
+                || JNIdc.guiIsOpen())
             InputDeviceManager.getInstance().mouseEvent(mouse_pos[0], mouse_pos[1], mouse_btns);
         return(true);
     }
