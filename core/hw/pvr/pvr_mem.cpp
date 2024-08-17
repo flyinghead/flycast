@@ -219,7 +219,7 @@ template u32 pvr_read32p<u32>(u32 addr);
 template float pvr_read32p<float>(u32 addr);
 
 //write
-template<typename T, bool Internal = false>
+template<typename T, bool Internal>
 void DYNACALL pvr_write32p(u32 addr, T data)
 {
 	if constexpr (!Internal && sizeof(T) == 1)
