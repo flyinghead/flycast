@@ -20,7 +20,7 @@ void YUV_reset();
 
 // 32-bit vram path handlers
 template<typename T> T DYNACALL pvr_read32p(u32 addr);
-template<typename T> void DYNACALL pvr_write32p(u32 addr, T data);
+template<typename T, bool Internal = false> void DYNACALL pvr_write32p(u32 addr, T data);
 // Area 4 handlers
 template<typename T, bool upper> T DYNACALL pvr_read_area4(u32 addr);
 template<typename T, bool upper> void DYNACALL pvr_write_area4(u32 addr, T data);
