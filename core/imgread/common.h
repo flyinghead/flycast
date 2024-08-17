@@ -233,7 +233,8 @@ struct RawTrackFile : TrackFile
 			*sector_type=SECFMT_2448_MODE2;
 		else
 		{
-			verify(false);
+			WARN_LOG(GDROM, "Unsupported sector size %d", fmt);
+			return false;
 		}
 
 		std::fseek(file, offset + FAD * fmt, SEEK_SET);
