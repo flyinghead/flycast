@@ -7,7 +7,7 @@
  * This file is part of the w64 mingw-runtime package.
  * No warranty is given; refer to the file DISCLAIMER.PD within this package.
  */
-#ifdef __GNUC__
+#if defined(__GNUC__) && !defined(__clang__)
 #include <errno.h>
 #include <stdint.h>
 #include <time.h>
