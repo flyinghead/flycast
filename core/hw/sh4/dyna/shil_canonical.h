@@ -973,18 +973,7 @@ shil_opc_end()
 
 //shop_fsrra
 shil_opc(fsrra)
-shil_canonical
-(
-f32,f1,(float fn),
-
-	return std::sqrt(1.f / fn);
-)
-shil_compile
-(
-	shil_cf_arg_f32(rs1);
-	shil_cf(f1);
-	shil_cf_rv_f32(rd);
-)
+UN_OP_F(1/sqrtf)
 shil_opc_end()
 
 

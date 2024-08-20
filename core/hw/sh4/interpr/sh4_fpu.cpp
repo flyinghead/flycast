@@ -362,7 +362,7 @@ sh4op(i1111_nnnn_0111_1101)
 	u32 n = GetN(op);
 	if (fpscr.PR==0)
 	{
-		fr[n] = sqrtf(1.f / fr[n]);
+		fr[n] = 1.f / sqrtf(fr[n]);
 		CHECK_FPU_32(fr[n]);
 	}
 	else

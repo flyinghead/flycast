@@ -879,9 +879,9 @@ public:
 				break;
 
 			case shop_fsrra:
+				Fsqrt(s0, regalloc.MapVRegister(op.rs1));
 				Fmov(s1, 1.f);
-				Fdiv(s0, s1, regalloc.MapVRegister(op.rs1));
-				Fsqrt(regalloc.MapVRegister(op.rd), s0);
+				Fdiv(regalloc.MapVRegister(op.rd), s1, s0);
 				break;
 
 			case shop_fsetgt:

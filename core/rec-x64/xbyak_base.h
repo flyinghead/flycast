@@ -537,18 +537,18 @@ protected:
 			break;
 
 		case shop_fsrra:
+			sqrtss(xmm0, mapXRegister(op.rs1));
 			if (ArchX64)
 			{
 				mov(eax, 0x3f800000);	// 1.0
-				movd(xmm0, eax);
+				movd(mapXRegister(op.rd), eax);
 			}
 			else
 			{
 				static float one = 1.f;
-				movss(xmm0, dword[&one]);
+				movss(mapXRegister(op.rd), dword[&one]);
 			}
-			divss(xmm0, mapXRegister(op.rs1));
-			sqrtss(mapXRegister(op.rd), xmm0);
+			divss(mapXRegister(op.rd), xmm0);
 			break;
 
 		case shop_fsetgt:
