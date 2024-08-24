@@ -181,9 +181,12 @@ void naomi_cart_LoadBios(const char *filename)
 	std::unique_ptr<Archive> parent_archive;
 	if (game->parent_name != nullptr)
 	{
-		std::string parentPath = hostfs::storage().getParentPath(filename);
-		parentPath = hostfs::storage().getSubPath(parentPath, game->parent_name);
-		parent_archive.reset(OpenArchive(parentPath));
+		try {
+			std::string parentPath = hostfs::storage().getParentPath(filename);
+			parentPath = hostfs::storage().getSubPath(parentPath, game->parent_name);
+			parent_archive.reset(OpenArchive(parentPath));
+		} catch (const FlycastException& e) {
+		}
 	}
 
 	const char *bios = "naomi";
@@ -219,8 +222,11 @@ static void loadMameRom(const std::string& path, const std::string& fileName, Lo
 	if (game->parent_name != nullptr)
 	{
 		std::string parentPath = hostfs::storage().getParentPath(path);
-		parentPath = hostfs::storage().getSubPath(parentPath, game->parent_name);
-		parent_archive.reset(OpenArchive(parentPath));
+		try {
+			parentPath = hostfs::storage().getSubPath(parentPath, game->parent_name);
+			parent_archive.reset(OpenArchive(parentPath));
+		} catch (const FlycastException& e) {
+		}
 		if (parent_archive != nullptr)
 			INFO_LOG(NAOMI, "Opened %s", game->parent_name);
 		else

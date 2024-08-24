@@ -29,11 +29,18 @@ jobs:
           key: android-ccache-${{ github.sha }}
           restore-keys: android-ccache-
 
+      - name: Bump version code
+        uses: chkfung/android-version-actions@v1.2.2
+        with:
+          gradlePath: shell/android-studio/flycast/build.gradle 
+          versionCode: ${{ github.run_number }}
+
       - name: Gradle
         working-directory: shell/android-studio
-        run: ./gradlew assembleRelease --parallel
+        run: ./gradlew assembleRelease bundleRelease --parallel
         env:
           SENTRY_UPLOAD_URL: ${{ secrets.SENTRY_UPLOAD_URL }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
 
       - uses: actions/upload-artifact@v4
         with:
@@ -68,7 +75,9 @@ jobs:
         if: github.repository == 'flyinghead/flycast' && github.event_name == 'push'
 
       - name: Upload to S3
-        run: aws s3 sync shell/android-studio/flycast/build/outputs/apk/release s3://flycast-builds/android/${GITHUB_REF#refs/}-$GITHUB_SHA --acl public-read --exclude='*.json' --follow-symlinks
+        run: |
+          cp shell/android-studio/flycast/build/outputs/bundle/release/*.aab shell/android-studio/flycast/build/outputs/apk/release/
+          aws s3 sync shell/android-studio/flycast/build/outputs/apk/release s3://flycast-builds/android/${GITHUB_REF#refs/}-$GITHUB_SHA --acl public-read --exclude='*.json' --follow-symlinks
         if: ${{ steps.aws-credentials.outputs.aws-account-id != '' }}
 
       - name: Setup Sentry CLI

@@ -75,7 +75,9 @@ static void addCheat()
 static void cheatFileSelected(bool cancelled, std::string path)
 {
 	if (!cancelled)
-		cheatManager.loadCheatFile(path);
+		gui_runOnUiThread([path]() {
+			cheatManager.loadCheatFile(path);
+		});
 }
 
 void gui_cheats()

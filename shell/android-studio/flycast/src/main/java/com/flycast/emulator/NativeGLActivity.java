@@ -147,13 +147,11 @@ public final class NativeGLActivity extends BaseGLActivity {
         }
     }
 
-    // Called from native code
-    public void showTextInput(int x, int y, int w, int h) {
+    private void showTextInput(int x, int y, int w, int h) {
         // Transfer the task to the main thread as a Runnable
         handler.post(new ShowTextInputTask(x, y, w, h));
     }
 
-    // Called from native code
     public void hideTextInput() {
         Log.d("flycast", "hideTextInput " + (mTextEdit != null ? "mTextEdit != null" : ""));
         if (mTextEdit != null) {
@@ -177,15 +175,22 @@ public final class NativeGLActivity extends BaseGLActivity {
     }
 
     // Called from native code
-    public boolean isScreenKeyboardShown() {
-        if (mTextEdit == null)
-            return false;
+    public void showScreenKeyboard(boolean show) {
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+                if (!show && (mTextEdit == null || !mScreenKeyboardShown))
+                    return;
 
-        if (!mScreenKeyboardShown)
-            return false;
-
-        InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-        return imm.isAcceptingText();
+                InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                if (show != imm.isAcceptingText()) {
+                    if (show)
+                        showTextInput(0, 0, 16, 100);
+                    else
+                        hideTextInput();
+                }
+            }
+        });
     }
 }
 

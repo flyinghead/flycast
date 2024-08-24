@@ -19,13 +19,13 @@ def getSentryUrl = { ->
 android {
     namespace 'com.flycast.emulator'
     ndkVersion '23.2.8568313'
-    compileSdk 29
+    compileSdk 33
 
     defaultConfig {
         applicationId "com.flycast.emulator"
         minSdk 16
         //noinspection ExpiredTargetSdkVersion
-        targetSdk 29
+        targetSdk 33
         versionCode 8
         versionName getVersionName()
         vectorDrawables.useSupportLibrary = true
@@ -43,11 +43,18 @@ android {
             // avoid Error: Google Play requires that apps target API level 31 or higher.
             abortOnError false
         }
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
     signingConfigs {
         debug {
             storeFile file("../debug.keystore")
+        }
+        release {
+            storeFile file("../playstore.jks")
+            storePassword System.getenv("ANDROID_KEYSTORE_PASSWORD")
+            keyAlias 'uploadkey'
+            keyPassword System.getenv("ANDROID_KEYSTORE_PASSWORD")
         }
     }
 
@@ -55,7 +62,7 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            signingConfig signingConfigs.debug
+            signingConfig signingConfigs.release
         }
     }
     compileOptions {
@@ -86,4 +93,9 @@ dependencies {
     implementation libs.slf4j.android
     implementation fileTree(dir: 'libs', include: ['*.aar', '*.jar'], exclude: [])
     implementation libs.documentfile
+
+    androidTestImplementation 'androidx.test:runner:1.5.0'
+    androidTestImplementation 'androidx.test:rules:1.5.0'
+    androidTestImplementation 'androidx.test:core:1.5.0'
+    androidTestImplementation 'junit:junit:4.12'
 }

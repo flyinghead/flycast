@@ -494,9 +494,9 @@ void GDCartridge::device_start(LoadProgress *progress, std::vector<u8> *digest)
 		u8 buffer[2048];
 		std::string parent = hostfs::storage().getParentPath(settings.content.path);
 		std::string gdrom_path = get_file_basename(settings.content.fileName) + "/" + gdrom_name;
-		gdrom_path = hostfs::storage().getSubPath(parent, gdrom_path);
 		std::unique_ptr<Disc> gdrom;
 		try {
+			gdrom_path = hostfs::storage().getSubPath(parent, gdrom_path);
 			gdrom = std::unique_ptr<Disc>(OpenDisc(gdrom_path + ".chd", digest));
 		}
 		catch (const FlycastException& e)
@@ -504,8 +504,8 @@ void GDCartridge::device_start(LoadProgress *progress, std::vector<u8> *digest)
 			WARN_LOG(NAOMI, "Opening chd failed: %s", e.what());
 			if (gdrom_parent_name != nullptr)
 			{
-				std::string gdrom_parent_path = hostfs::storage().getSubPath(parent, std::string(gdrom_parent_name) + "/" + gdrom_name);
 				try {
+					std::string gdrom_parent_path = hostfs::storage().getSubPath(parent, std::string(gdrom_parent_name) + "/" + gdrom_name);
 					gdrom = std::unique_ptr<Disc>(OpenDisc(gdrom_parent_path + ".chd", digest));
 				} catch (const FlycastException& e) {
 					WARN_LOG(NAOMI, "Opening parent chd failed: %s", e.what());

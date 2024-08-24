@@ -766,7 +766,6 @@ static int suspendEventFilter(void *userdata, SDL_Event *event)
 {
 	if (event->type == SDL_APP_WILLENTERBACKGROUND)
 	{
-		gui_save();
 		if (gameRunning)
 		{
 			try {

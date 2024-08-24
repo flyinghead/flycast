@@ -944,15 +944,20 @@ void Emulator::start()
 bool Emulator::checkStatus(bool wait)
 {
 	try {
-		const std::lock_guard<std::mutex> lock(mutex);
+		std::unique_lock<std::mutex> lock(mutex);
 		if (threadResult.valid())
 		{
-			if (!wait)
-			{
-				auto result = threadResult.wait_for(std::chrono::seconds(0));
+			lock.unlock();
+			auto localResult = threadResult;
+			if (wait) {
+				localResult.wait();
+			}
+			else {
+				auto result = localResult.wait_for(std::chrono::seconds(0));
 				if (result == std::future_status::timeout)
 					return true;
 			}
+			lock.lock();
 			threadResult.get();
 		}
 		return false;

@@ -8,6 +8,7 @@
 #include "ui/gui.h"
 #include "oslib/oslib.h"
 #include "oslib/directory.h"
+#include "oslib/storage.h"
 #include "debug/gdb_server.h"
 #include "archive/rzip.h"
 #include "ui/mainui.h"
@@ -16,6 +17,9 @@
 #include "stdclass.h"
 #include "serialize.h"
 #include <time.h>
+
+static std::string lastStateFile;
+static time_t lastStateTime;
 
 struct SavestateHeader
 {
@@ -121,6 +125,8 @@ void dc_savestate(int index, const u8 *pngData, u32 pngSize)
 	if (settings.network.online)
 		return;
 
+	lastStateFile.clear();
+
 	Serializer ser;
 	dc_serialize(ser);
 
@@ -189,7 +195,7 @@ void dc_loadstate(int index)
 	u32 total_size = 0;
 
 	std::string filename = hostfs::getSavestatePath(index, false);
-	FILE *f = nowide::fopen(filename.c_str(), "rb");
+	FILE *f = hostfs::storage().openFile(filename, "rb");
 	if (f == nullptr)
 	{
 		WARN_LOG(SAVESTATE, "Failed to load state - could not open %s for reading", filename.c_str());
@@ -278,28 +284,39 @@ void dc_loadstate(int index)
 time_t dc_getStateCreationDate(int index)
 {
 	std::string filename = hostfs::getSavestatePath(index, false);
-	FILE *f = nowide::fopen(filename.c_str(), "rb");
-	if (f == nullptr)
-		return 0;
-	SavestateHeader header;
-	if (std::fread(&header, sizeof(header), 1, f) != 1 || !header.isValid())
+	if (filename != lastStateFile)
 	{
-		std::fclose(f);
-		struct stat st;
-		if (flycast::stat(filename.c_str(), &st) == 0)
-			return st.st_mtime;
+		lastStateFile = filename;
+		FILE *f = hostfs::storage().openFile(filename, "rb");
+		if (f == nullptr)
+			lastStateTime = 0;
 		else
-			return 0;
+		{
+			SavestateHeader header;
+			if (std::fread(&header, sizeof(header), 1, f) != 1 || !header.isValid())
+			{
+				std::fclose(f);
+				try {
+					hostfs::FileInfo fileInfo = hostfs::storage().getFileInfo(filename);
+					lastStateTime = fileInfo.updateTime;
+				} catch (...) {
+					lastStateTime = 0;
+				}
+			}
+			else {
+				std::fclose(f);
+				lastStateTime = (time_t)header.creationDate;
+			}
+		}
 	}
-	std::fclose(f);
-	return (time_t)header.creationDate;
+	return lastStateTime;
 }
 
 void dc_getStateScreenshot(int index, std::vector<u8>& pngData)
 {
 	pngData.clear();
 	std::string filename = hostfs::getSavestatePath(index, false);
-	FILE *f = nowide::fopen(filename.c_str(), "rb");
+	FILE *f = hostfs::storage().openFile(filename, "rb");
 	if (f == nullptr)
 		return;
 	SavestateHeader header;

@@ -1441,7 +1441,7 @@ static void gamepadSettingsPopup(const std::shared_ptr<GamepadDevice>& gamepad)
 		if (gamepad->is_virtual_gamepad())
 		{
 			header("Haptic");
-			OptionSlider("Power", config::VirtualGamepadVibration, 0, 60, "Haptic feedback power");
+			OptionSlider("Power", config::VirtualGamepadVibration, 0, 100, "Haptic feedback power", "%d%%");
 		}
 		else if (gamepad->is_rumble_enabled())
 		{
@@ -1539,7 +1539,7 @@ static void contentpath_warning_popup()
     if (show_contentpath_selection)
     {
         scanner.stop();
-        const char *title = "Select a Content Directory";
+        const char *title = "Select a Content Folder";
         ImGui::OpenPopup(title);
         select_file_popup(title, [](bool cancelled, std::string selection)
         {
@@ -1610,15 +1610,42 @@ static void gui_debug_tab()
 #endif
 }
 
-static void addContentPath(const std::string& path)
+static void addContentPathCallback(const std::string& path)
 {
 	auto& contentPath = config::ContentPath.get();
 	if (std::count(contentPath.begin(), contentPath.end(), path) == 0)
 	{
 		scanner.stop();
 		contentPath.push_back(path);
+		if (gui_state == GuiState::Main)
+			// when adding content path from empty game list
+			SaveSettings();
 		scanner.refresh();
 	}
+}
+
+static void addContentPath(bool start)
+{
+    const char *title = "Select a Content Folder";
+    select_file_popup(title, [](bool cancelled, std::string selection) {
+		if (!cancelled)
+			addContentPathCallback(selection);
+		return true;
+    });
+#ifdef __ANDROID__
+    if (start)
+    {
+    	bool supported = hostfs::addStorage(true, false, [](bool cancelled, std::string selection) {
+    		if (!cancelled)
+    			addContentPathCallback(selection);
+    	});
+    	if (!supported)
+    		ImGui::OpenPopup(title);
+    }
+#else
+    if (start)
+    	ImGui::OpenPopup(title);
+#endif
 }
 
 static float calcComboWidth(const char *biggestLabel) {
@@ -1672,7 +1699,7 @@ static void gui_settings_general()
     ImVec2 size;
     size.x = 0.0f;
     size.y = (ImGui::GetTextLineHeightWithSpacing() + ImGui::GetStyle().FramePadding.y * 2.f)
-    				* (config::ContentPath.get().size() + 1) ;//+ ImGui::GetStyle().FramePadding.y * 2.f;
+    				* (config::ContentPath.get().size() + 1);
 
     if (BeginListBox("Content Location", size, ImGuiWindowFlags_NavFlattened))
     {
@@ -1681,33 +1708,21 @@ static void gui_settings_general()
         {
         	ImguiID _(config::ContentPath.get()[i].c_str());
             ImGui::AlignTextToFramePadding();
-        	ImGui::Text("%s", config::ContentPath.get()[i].c_str());
-        	ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("X").x - ImGui::GetStyle().FramePadding.x);
-        	if (ImGui::Button("X"))
+            float maxW = ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(ICON_FA_TRASH_CAN).x - ImGui::GetStyle().FramePadding.x * 2
+            		 - ImGui::GetStyle().ItemSpacing.x;
+            std::string s = middleEllipsis(config::ContentPath.get()[i], maxW);
+        	ImGui::Text("%s", s.c_str());
+        	ImGui::SameLine(0, maxW - ImGui::CalcTextSize(s.c_str()).x + ImGui::GetStyle().ItemSpacing.x);
+        	if (ImGui::Button(ICON_FA_TRASH_CAN))
         		to_delete = i;
         }
-#ifdef __ANDROID__
+
         ImguiStyleVar _(ImGuiStyleVar_FramePadding, ScaledVec2(24, 3));
-        if (ImGui::Button("Add"))
-        {
-        	hostfs::addStorage(true, false, [](bool cancelled, std::string selection) {
-    			if (!cancelled)
-    				addContentPath(selection);
-        	});
-        }
-#else
-        const char *title = "Select a Content Directory";
-        select_file_popup(title, [](bool cancelled, std::string selection) {
-			if (!cancelled)
-				addContentPath(selection);
-			return true;
-        });
-        ImguiStyleVar _(ImGuiStyleVar_FramePadding, ScaledVec2(24, 3));
-        if (ImGui::Button("Add"))
-        	ImGui::OpenPopup(title);
-#endif
+        const bool addContent = ImGui::Button("Add");
+        addContentPath(addContent);
         ImGui::SameLine();
-		if (ImGui::Button("Rescan Content"))
+
+        if (ImGui::Button("Rescan Content"))
 			scanner.refresh();
         scrollWhenDraggingOnVoid();
 
@@ -1720,31 +1735,40 @@ static void gui_settings_general()
     	}
     }
     ImGui::SameLine();
-    ShowHelpMarker("The directories where your games are stored");
+    ShowHelpMarker("The folders where your games are stored");
 
     size.y = ImGui::GetTextLineHeightWithSpacing() * 1.25f + ImGui::GetStyle().FramePadding.y * 2.0f;
 
 #if defined(__linux__) && !defined(__ANDROID__)
-    if (BeginListBox("Data Directory", size, ImGuiWindowFlags_NavFlattened))
+    if (BeginListBox("Data Folder", size, ImGuiWindowFlags_NavFlattened))
     {
     	ImGui::AlignTextToFramePadding();
-        ImGui::Text("%s", get_writable_data_path("").c_str());
+    	float w = ImGui::GetContentRegionAvail().x - ImGui::GetStyle().FramePadding.x;
+    	std::string s = middleEllipsis(get_writable_data_path(""), w);
+        ImGui::Text("%s", s.c_str());
         ImGui::EndListBox();
     }
     ImGui::SameLine();
-    ShowHelpMarker("The directory containing BIOS files, as well as saved VMUs and states");
+    ShowHelpMarker("The folder containing BIOS files, as well as saved VMUs and states");
 #else
-    if (BeginListBox("Home Directory", size, ImGuiWindowFlags_NavFlattened))
+#if defined(__ANDROID__) || defined(TARGET_MAC)
+    size.y += ImGui::GetTextLineHeightWithSpacing() * 1.25f;
+#endif
+    if (BeginListBox("Home Folder", size, ImGuiWindowFlags_NavFlattened))
     {
     	ImGui::AlignTextToFramePadding();
-        ImGui::Text("%s", get_writable_config_path("").c_str());
+    	float w = ImGui::GetContentRegionAvail().x - ImGui::GetStyle().FramePadding.x;
+    	std::string s = middleEllipsis(get_writable_config_path(""), w);
+        ImGui::Text("%s", s.c_str());
+        ImguiStyleVar _(ImGuiStyleVar_FramePadding, ScaledVec2(24, 3));
 #ifdef __ANDROID__
-        ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Change").x - ImGui::GetStyle().FramePadding.x);
-        if (ImGui::Button("Change"))
-        	gui_setState(GuiState::Onboarding);
+        if (ImGui::Button("Import"))
+        	hostfs::importHomeDirectory();
+        ImGui::SameLine();
+        if (ImGui::Button("Export"))
+        	hostfs::exportHomeDirectory();
 #endif
 #ifdef TARGET_MAC
-        ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Reveal in Finder").x - ImGui::GetStyle().FramePadding.x);
         if (ImGui::Button("Reveal in Finder"))
         {
             char temp[512];
@@ -1755,9 +1779,15 @@ static void gui_settings_general()
         ImGui::EndListBox();
     }
     ImGui::SameLine();
-    ShowHelpMarker("The directory where Flycast saves configuration files and VMUs. BIOS files should be in a subfolder named \"data\"");
+    ShowHelpMarker("The folder where Flycast saves configuration files and VMUs. BIOS files should be in a subfolder named \"data\"");
 #endif // !linux
-#endif // !TARGET_IPHONE
+#else // TARGET_IPHONE
+    {
+    	ImguiStyleVar _(ImGuiStyleVar_FramePadding, ScaledVec2(24, 3));
+		if (ImGui::Button("Rescan Content"))
+			scanner.refresh();
+    }
+#endif
 
 	OptionCheckbox("Box Art Game List", config::BoxartDisplayMode,
 			"Display game cover art in the game list.");
@@ -2768,7 +2798,7 @@ static void gui_settings_advanced()
 	{
 		ImGui::InputText("Lua Filename", &config::LuaFileName.get(), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
 		ImGui::SameLine();
-		ShowHelpMarker("Specify lua filename to use. Should be located in Flycast config directory. Defaults to flycast.lua when empty.");
+		ShowHelpMarker("Specify lua filename to use. Should be located in Flycast config folder. Defaults to flycast.lua when empty.");
 	}
 #endif
 }
@@ -3167,27 +3197,10 @@ static void gui_display_content()
 			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ScaledVec2(8, 20));
 
 		int counter = 0;
-		if (gui_state != GuiState::SelectDisk && filter.PassFilter("Dreamcast BIOS"))
-		{
-			ImguiID _("bios");
-			bool pressed;
-			if (config::BoxartDisplayMode)
-			{
-				GameMedia game;
-				GameBoxart art = boxart.getBoxartAndLoad(game);
-				ImguiFileTexture tex(art.boxartPath);
-				pressed = gameImageButton(tex, "Dreamcast BIOS", responsiveBoxVec2, "Dreamcast BIOS");
-			}
-			else
-			{
-				pressed = ImGui::Selectable("Dreamcast BIOS");
-			}
-			if (pressed)
-				gui_start_game("");
-			counter++;
-		}
+		bool gameListEmpty = false;
 		{
 			scanner.get_mutex().lock();
+			gameListEmpty = scanner.get_game_list().empty();
 			for (const auto& game : scanner.get_game_list())
 			{
 				if (gui_state == GuiState::SelectDisk)
@@ -3196,6 +3209,9 @@ static void gui_display_content()
 					if (extension != "gdi" && extension != "chd"
 							&& extension != "cdi" && extension != "cue")
 						// Only dreamcast disks
+						continue;
+					if (game.path.empty())
+						// Dreamcast BIOS isn't a disk
 						continue;
 				}
 				std::string gameName = game.name;
@@ -3207,7 +3223,7 @@ static void gui_display_content()
 				}
 				if (filter.PassFilter(gameName.c_str()))
 				{
-					ImguiID _(game.path.c_str());
+					ImguiID _(game.path.empty() ? "bios" : game.path);
 					bool pressed = false;
 					if (config::BoxartDisplayMode)
 					{
@@ -3256,7 +3272,28 @@ static void gui_display_content()
 			}
 			scanner.get_mutex().unlock();
 		}
+		bool addContent = false;
+#if !defined(TARGET_IPHONE)
+		if (gameListEmpty && gui_state != GuiState::SelectDisk)
+		{
+			const char *label = "Your game list is empty";
+			// center horizontally
+			const float w = largeFont->CalcTextSizeA(largeFont->FontSize, FLT_MAX, -1.f, label).x + ImGui::GetStyle().FramePadding.x * 2;
+			ImGui::SameLine((ImGui::GetContentRegionMax().x - w) / 2);
+			if (ImGui::BeginChild("empty", ImVec2(0, 0), ImGuiChildFlags_AutoResizeX | ImGuiChildFlags_AutoResizeY, ImGuiWindowFlags_NavFlattened))
+			{
+				ImGui::PushFont(largeFont);
+				ImGui::NewLine();
+				ImGui::Text("%s", label);
+				ImguiStyleVar _(ImGuiStyleVar_FramePadding, ScaledVec2(20, 8));
+				addContent = ImGui::Button("Add Game Folder");
+				ImGui::PopFont();
+			}
+			ImGui::EndChild();
+		}
+#endif
         ImGui::PopStyleVar();
+        addContentPath(addContent);
     }
     scrollWhenDraggingOnVoid();
     windowDragScroll();
@@ -3281,7 +3318,7 @@ static bool systemdir_selected_callback(bool cancelled, std::string selection)
 		if (!make_directory(data_path))
 		{
 			WARN_LOG(BOOT, "Cannot create 'data' directory: %s", data_path.c_str());
-			gui_error("Invalid selection:\nFlycast cannot write to this directory.");
+			gui_error("Invalid selection:\nFlycast cannot write to this folder.");
 			return false;
 		}
 	}
@@ -3292,7 +3329,7 @@ static bool systemdir_selected_callback(bool cancelled, std::string selection)
 	if (file == nullptr)
 	{
 		WARN_LOG(BOOT, "Cannot write in the 'data' directory");
-		gui_error("Invalid selection:\nFlycast cannot write to this directory.");
+		gui_error("Invalid selection:\nFlycast cannot write to this folder.");
 		return false;
 	}
 	fclose(file);
@@ -3320,7 +3357,7 @@ static bool systemdir_selected_callback(bool cancelled, std::string selection)
 
 static void gui_display_onboarding()
 {
-	const char *title = "Select Flycast Home Directory";
+	const char *title = "Select Flycast Home Folder";
 	ImGui::OpenPopup(title);
 	select_file_popup(title, &systemdir_selected_callback);
 }
@@ -3644,7 +3681,7 @@ void gui_term()
 	    EventManager::unlisten(Event::Resume, emuEventCallback);
 	    EventManager::unlisten(Event::Start, emuEventCallback);
 	    EventManager::unlisten(Event::Terminate, emuEventCallback);
-		gui_save();
+	    boxart.term();
 	}
 }
 
@@ -3678,11 +3715,6 @@ static void reset_vmus()
 void gui_error(const std::string& what)
 {
 	error_msg = what;
-}
-
-void gui_save()
-{
-	boxart.saveDatabase();
 }
 
 void gui_loadState()
@@ -3742,11 +3774,15 @@ std::string gui_getCurGameBoxartUrl()
 	return art.boxartUrl;
 }
 
+void gui_runOnUiThread(std::function<void()> function) {
+	uiThreadRunner.runOnThread(function);
+}
+
 void gui_takeScreenshot()
 {
 	if (!game_started)
 		return;
-	uiThreadRunner.runOnThread([]() {
+	gui_runOnUiThread([]() {
 		std::string date = timeToISO8601(time(nullptr));
 		std::replace(date.begin(), date.end(), '/', '-');
 		std::replace(date.begin(), date.end(), ':', '-');

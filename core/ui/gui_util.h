@@ -310,3 +310,5 @@ private:
 	u64 endTime = 0;
 	std::mutex mutex;
 };
+
+std::string middleEllipsis(const std::string& s, float width);

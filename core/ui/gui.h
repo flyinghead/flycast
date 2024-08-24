@@ -20,6 +20,7 @@
 #include "types.h"
 
 #include <string>
+#include <functional>
 
 void gui_init();
 void gui_initFonts();
@@ -47,11 +48,11 @@ void gui_stop_game(const std::string& message = "");
 void gui_start_game(const std::string& path);
 void gui_error(const std::string& what);
 void gui_setOnScreenKeyboardCallback(void (*callback)(bool show));
-void gui_save();
 void gui_loadState();
 void gui_saveState(bool stopRestart = true);
 std::string gui_getCurGameBoxartUrl();
 void gui_takeScreenshot();
+void gui_runOnUiThread(std::function<void()> function);
 
 enum class GuiState {
 	Closed,

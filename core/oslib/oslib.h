@@ -62,6 +62,11 @@ namespace hostfs
 
 	std::string getShaderCachePath(const std::string& filename);
 	void saveScreenshot(const std::string& name, const std::vector<u8>& data);
+
+#ifdef __ANDROID__
+	void importHomeDirectory();
+	void exportHomeDirectory();
+#endif
 }
 
 static inline void *allocAligned(size_t alignment, size_t size)
