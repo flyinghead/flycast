@@ -725,6 +725,10 @@ public:
 		}
 	}
 
+	void setTokyoBusMode(bool enable) {
+		tokyoBus = enable;
+	}
+
 protected:
 	u8 process(u8 in) override
 	{
@@ -758,7 +762,7 @@ protected:
 			break;
 
 		case 0xf1:
-			out = 0x10; // needed by f355
+			out = 0x10; // needed by f355 and tokyobus
 			break;
 
 		case 0xfa:
@@ -779,20 +783,31 @@ protected:
 			{
 				if (in >= 0x40 && in <= 0x7f)
 				{
-					// Spring
-					// bits 0-3 sets the strength of the spring effect
-					// bits 4-5 selects a table scaling the effect given the deflection:
-					//     (from the f355 rom EPR-21867)
-					//     0: large deadzone then abrupt scaling (0 (* 129), 10, 20, 30, 40, 50, 60, 70, 7F)
-					//     used by 18wheeler in game but with a different rom (TODO reveng)
-					//     other tables scale linearly:
-					//     1: light speed (96 steps from 0 to 7f)
-					//     2: medium speed (48 steps, default)
-					//     3: high speed (32 steps)
-					springSat = (in & 0xf) / 15.f * motorPower;
-					const int speedSel = (in >> 4) & 3;
-					springSpeed = speedSel == 3 ? 1.f : speedSel == 2 ? 0.67f : speedSel == 1 ? 0.33f : 0.67f;
-					haptic::setSpring(0, springSat, springSpeed);
+					if (tokyoBus)
+					{
+						if (in <= 0x4a)
+							// heavy: 4a
+							// normal: 47
+							// light: 44
+							motorPower = (in & 0xf) / 10.f;
+					}
+					else
+					{
+						// Spring
+						// bits 0-3 sets the strength of the spring effect
+						// bits 4-5 selects a table scaling the effect given the deflection:
+						//     (from the f355 rom EPR-21867)
+						//     0: large deadzone then abrupt scaling (0 (* 129), 10, 20, 30, 40, 50, 60, 70, 7F)
+						//     used by 18wheeler in game but with a different rom (TODO reveng)
+						//     other tables scale linearly:
+						//     1: light speed (96 steps from 0 to 7f)
+						//     2: medium speed (48 steps, default)
+						//     3: high speed (32 steps)
+						springSat = (in & 0xf) / 15.f * motorPower;
+						const int speedSel = (in >> 4) & 3;
+						springSpeed = speedSel == 3 ? 1.f : speedSel == 2 ? 0.67f : speedSel == 1 ? 0.33f : 0.67f;
+						haptic::setSpring(0, springSat, springSpeed);
+					}
 				}
 				else if (in >= 0x80 && in <= 0xbf)
 				{
@@ -841,6 +856,7 @@ private:
 	float springSpeed = 0.f;
 	float torque = 0.f;
 	float damper = 0.f;
+	bool tokyoBus = false;
 };
 
 // 18 Wheeler: fake the drive board and limit the wheel analog value
@@ -1283,10 +1299,12 @@ maple_naomi_jamma::maple_naomi_jamma()
 			INFO_LOG(MAPLE, "Enabling specific JVS setup for game %s", gameId.c_str());
 			io_boards.push_back(std::make_unique<jvs_837_13844_18wheeler>(1, this));
 		}
-		else if (gameId == "F355 CHALLENGE JAPAN")
+		else if (gameId == "F355 CHALLENGE JAPAN" || gameId == "TOKYO BUS GUIDE")
 		{
 			INFO_LOG(MAPLE, "Enabling specific JVS setup for game %s", gameId.c_str());
 			io_boards.push_back(std::make_unique<jvs_837_13844_racing>(1, this));
+			if (gameId == "TOKYO BUS GUIDE")
+				static_cast<jvs_837_13844_racing *>(io_boards.back().get())->setTokyoBusMode(true);
 		}
 		else if (gameId.substr(0, 8) == "MKG TKOB"
 				|| gameId.substr(0, 9) == "MUSHIKING"
