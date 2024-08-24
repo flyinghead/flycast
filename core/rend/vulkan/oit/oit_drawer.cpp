@@ -264,9 +264,14 @@ void OITDrawer::UploadMainBuffer(const OITDescriptorSets::VertexShaderUniforms& 
 vk::Framebuffer OITTextureDrawer::getFramebuffer(int renderPass, int renderPassCount)
 {
 	if (renderPass < renderPassCount - 1)
-		return *tempFramebuffers[(renderPassCount - 1 - renderPass) % 2];
-	else
+	{
+		framebufferIndex = (renderPassCount - renderPass) % 2;
+		return *tempFramebuffers[framebufferIndex];
+	}
+	else {
+		framebufferIndex = 0;
 		return *framebuffer;
+	}
 }
 
 bool OITDrawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
@@ -467,10 +472,11 @@ void OITDrawer::MakeBuffers(int width, int height, vk::ImageUsageFlags colorUsag
 {
 	oitBuffers->Init(width, height);
 
-	if (width <= maxWidth && height <= maxHeight)
+	if (width <= maxWidth && height <= maxHeight && colorUsage == currentBufferUsage)
 		return;
 	maxWidth = std::max(maxWidth, width);
 	maxHeight = std::max(maxHeight, height);
+	currentBufferUsage = colorUsage;
 
 	for (auto& framebuffer : tempFramebuffers) {
 		if (framebuffer)

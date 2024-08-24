@@ -82,7 +82,7 @@ protected:
 
 	void MakeBuffers(int width, int height, vk::ImageUsageFlags colorUsage = {});
 	virtual vk::Framebuffer getFramebuffer(int renderPass, int renderPassCount) = 0;
-	virtual int getFramebufferIndex() { return 0; }
+	int getFramebufferIndex() { return framebufferIndex; }
 
 	vk::Rect2D viewport;
 	std::array<std::unique_ptr<FramebufferAttachment>, 2> colorAttachments;
@@ -92,6 +92,7 @@ protected:
 	std::vector<bool> clearNeeded;
 	int maxWidth = 0;
 	int maxHeight = 0;
+	int framebufferIndex = 0;
 
 private:
 	void DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool autosort, Pass pass,
@@ -128,6 +129,7 @@ private:
 	OITDescriptorSets descriptorSets;
 	vk::Buffer curMainBuffer;
 	bool dithering = false;
+	vk::ImageUsageFlags currentBufferUsage {};
 };
 
 class OITScreenDrawer : public OITDrawer
@@ -186,7 +188,6 @@ public:
 
 protected:
 	vk::Framebuffer getFramebuffer(int renderPass, int renderPassCount) override;
-	int getFramebufferIndex() override { return framebufferIndex; }
 
 private:
 	void MakeFramebuffers(const vk::Extent2D& viewport);
@@ -195,7 +196,6 @@ private:
 	bool frameRendered = false;
 	float aspectRatio = 0.f;
 	bool frameStarted = false;
-	int framebufferIndex = 0;
 };
 
 class OITTextureDrawer : public OITDrawer

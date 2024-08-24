@@ -31,7 +31,7 @@ vk::UniqueRenderPass RenderPasses::MakeRenderPass(bool initial, bool last, bool 
 					initial ? vk::AttachmentLoadOp::eClear : vk::AttachmentLoadOp::eLoad,
 					last ? vk::AttachmentStoreOp::eDontCare : vk::AttachmentStoreOp::eStore,
 					vk::AttachmentLoadOp::eDontCare, vk::AttachmentStoreOp::eDontCare,
-					initial ? vk::ImageLayout::eUndefined : attach0.initialLayout, attach0.finalLayout),
+					initial ? vk::ImageLayout::eUndefined : attach0.finalLayout, attach0.finalLayout), // initial layout is eUndefined for rtt, so use final layout instead
 			// OP+PT depth attachment
 			vk::AttachmentDescription(vk::AttachmentDescriptionFlags(), GetContext()->GetDepthFormat(), vk::SampleCountFlagBits::e1,
 					initial ? vk::AttachmentLoadOp::eClear : vk::AttachmentLoadOp::eLoad,
