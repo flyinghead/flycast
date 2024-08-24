@@ -145,38 +145,38 @@ static void loadSpecialSettings()
 			INFO_LOG(BOOT, "Enabling RTT Copy to VRAM for game %s", prod_id.c_str());
 			config::RenderToTextureBuffer.override(true);
 		}
+		// Cosmic Smash
 		if (prod_id == "HDR-0176" || prod_id == "RDC-0057")
 		{
 			INFO_LOG(BOOT, "Enabling translucent depth multipass for game %s", prod_id.c_str());
-			// Cosmic Smash
 			config::TranslucentPolygonDepthMask.override(true);
 		}
-		// NHL 2K2
-		if (prod_id == "MK-51182")
+		// Extra Depth Scaling
+		if (prod_id == "MK-51182")			// NHL 2K2
 		{
 			INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s", prod_id.c_str());
 			config::ExtraDepthScale.override(1e8f);
 		}
-		// Re-Volt (US, EU, JP)
-		else if (prod_id == "T-8109N" || prod_id == "T8107D  50" || prod_id == "T-8101M")
+		else if (prod_id == "T-8109N"		// Re-Volt (US, EU, JP)
+				|| prod_id == "T8107D  50"
+				|| prod_id == "T-8101M")
 		{
 			INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s", prod_id.c_str());
 			config::ExtraDepthScale.override(100.f);
 		}
-		// Test Drive V-Rally
-		else if (prod_id == "T15110N" || prod_id == "T15105D 50")
+		else if (prod_id == "T15110N"		// Test Drive V-Rally
+				|| prod_id == "T15105D 50")
 		{
 			INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s", prod_id.c_str());
 			config::ExtraDepthScale.override(0.1f);
 		}
-		// South Park Rally
-		else if (prod_id == "T-8116N" || prod_id == "T-8112D-50")
+		else if (prod_id == "T-8116N"		// South Park Rally
+				|| prod_id == "T-8112D-50")
 		{
 			INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s", prod_id.c_str());
 			config::ExtraDepthScale.override(1000.f);
 		}
-		// Capcom vs. SNK - Millennium Fight 2000 Pro
-		else if (prod_id == "T1247M")
+		else if (prod_id == "T1247M")		// Capcom vs. SNK - Millennium Fight 2000 Pro
 		{
 			INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s", prod_id.c_str());
 			config::ExtraDepthScale.override(10000.f);
@@ -303,6 +303,37 @@ static void loadSpecialSettings()
 		{
 			NOTICE_LOG(BOOT, "Disabling Native Depth Interpolation");
 			config::NativeDepthInterpolation.override(false);
+		}
+		// Per-pixel transparent layers
+		int layers = 0;
+		if (prod_id == "MK-51011"			// Time Stalkers (US)
+				|| prod_id == "MK-5101153")	// Time Stalkers (EU)
+			layers = 72;
+		else if (prod_id == "T13001N"		// Blue Stinger (US)
+				|| prod_id == "HDR-0003"	// Blue Stinger (JP)
+				|| prod_id == "T13001D-05"	// Blue Stinger (EU)
+				|| prod_id == "T13001D 18")	// Blue Stinger (DE)
+			layers = 80;
+		else if (prod_id == "T2102M")		// Panzer Front
+			layers = 64;
+		else if (prod_id == "T2106M")		// L.O.L. Lack of Love
+			layers = 48;
+		else if (prod_id == "T1212M")		// Gaiamaster - Kessen! Seikioh Densetsu
+			layers = 96;
+		else if (prod_id == "T-9707N"		// San Francisco Rush 2049 (US)
+				|| prod_id == "T-9709D-50"	// San Francisco Rush 2049 (EU)
+				|| prod_id == "T17721N"		// Conflict Zone (US)
+				|| prod_id == "T46604D")	// Conflict Zone (EU)
+			layers = 152;
+		else if (prod_id == "MK-51033"		// ECCO the Dolphin (US)
+				|| prod_id == "MK-5103350"	// ECCO the Dolphin (EU)
+				|| prod_id == "HDR-0103")	// ECCO the Dolphin (JP)
+			layers = 96;
+		else if (prod_id == "T40203N")		// Draconus: Cult of the Wyrm
+			layers = 80;
+		if (layers != 0) {
+			NOTICE_LOG(BOOT, "Forcing %d transparent layers", layers);
+			config::PerPixelLayers.override(layers);
 		}
 	}
 	else if (settings.platform.isArcade())
