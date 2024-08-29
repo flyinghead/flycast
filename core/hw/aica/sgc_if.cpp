@@ -528,6 +528,7 @@ struct ChannelEx
 		enabled=false;
 		SetAegState(EG_Release);
 		AEG.SetValue(0x3FF);
+		CA = 0;
 	}
 
 	void enable()
@@ -854,8 +855,8 @@ struct ChannelEx
 	{
 		switch (offset)
 		{
-		case 0x00:
-		case 0x01:
+		case 0x00: // PCMS, SA
+		case 0x01: // KYONEX, KYONB, SSCTL, LPCTL, PCMS
 			UpdateStreamStep();
 			if (offset == 0 || size == 2)
 				UpdateSA();
@@ -872,8 +873,8 @@ struct ChannelEx
 			}
 			break;
 
-		case 0x04:
-		case 0x05:
+		case 0x04: // SA
+		case 0x05: // SA
 			UpdateSA();
 			break;
 
@@ -1219,7 +1220,7 @@ void AegStep(ChannelEx* ch)
 		if (ch->AEG.GetValue() >= 0x3FF)
 		{
 			aeg_printf("[%d]AEG_step : EG_Release End @ %x", ch->ChannelNumber, ch->AEG.GetValue());
-			ch->AEG.SetValue(0x3FF);
+			ch->disable();
 		}
 		break;
 	}
@@ -1440,8 +1441,8 @@ void ReadCommonReg(u32 reg,bool byte)
 				CommonData->EG = aeg; //AEG is only 10 bits, FEG is 13 bits
 			CommonData->SGC=Chans[chan].AEG.state;
 
-			if (! (byte && reg==0x2810))
-				Chans[chan].loop.looped=0;
+			if (!byte || reg == 0x2811)
+				Chans[chan].loop.looped = 0;
 		}
 		break;
 	case 0x2814: //CA
