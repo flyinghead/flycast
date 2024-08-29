@@ -18,7 +18,7 @@ jobs:
       matrix:
         config:
           - {name: i686-pc-windows-msvc, os: windows-latest, shell: cmd, arch: x86, cmakeArgs: -G Ninja, buildType: Release}
-          - {name: apple-darwin, os: macos-latest, shell: sh, cmakeArgs: -G Xcode -DAPPLE_BREAKPAD=ON -DUSE_DISCORD=ON, destDir: osx, buildType: RelWithDebInfo}
+          - {name: apple-darwin, os: macos-latest, shell: sh, cmakeArgs: -G Xcode -DUSE_DISCORD=ON, destDir: osx, buildType: RelWithDebInfo}
           - {name: apple-ios, os: macos-latest, shell: sh, cmakeArgs: -DCMAKE_SYSTEM_NAME=iOS -G Xcode, destDir: ios, buildType: Release}
           - {name: x86_64-pc-linux-gnu, os: ubuntu-20.04, shell: sh, cmakeArgs: -G Ninja -DUSE_DISCORD=ON, destDir: linux, buildType: RelWithDebInfo}
           - {name: x86_64-pc-windows-msvc, os: windows-latest, shell: cmd, arch: x64, cmakeArgs: -G Ninja -DUSE_DISCORD=ON, buildType: Release}
