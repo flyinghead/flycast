@@ -470,6 +470,8 @@ void CheatManager::reset(const std::string& gameId)
 				setMushikingCheats(0x4ad7ec);
 			else if (gameId == "MKG TKOB 4 JPN VER2.000-")	// mushik4e
 				setMushikingCheats(0xb0e538);
+			else if (gameId == "MKG TKOB 4 TWN VER1.000-")	// mushik4t
+				setMushikingCheats(0xb198f0);
 			else if (gameId == "MKG TKOB 2K3 2ND VER1.002-")// mushikeo
 				setMushikingCheats(0x4ad56c);
 			else if (gameId == "MKG TKOB 2K3 2ND KOR VER1.000-") // mushikk
