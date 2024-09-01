@@ -2267,7 +2267,7 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 									}
 									else
 									{
-										axis_value =  read_analog_axis(player_num, axisDesc.axis, axisDesc.inverted);
+										axis_value = read_analog_axis(player_num, axisDesc.axis, axisDesc.inverted);
 									}
 								}
 								else
@@ -2280,6 +2280,11 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 								axis_value = read_analog_axis(player_num, player_axis, false);
 							}
 							LOGJVS("%d:%4x ", axis, axis_value);
+							// Strangely, the least significant byte appears to be handled as signed,
+							// so we compensate when it's negative.
+							// This might overflow but the value is still read correctly.
+							if (axis_value & 0x80)
+								axis_value += 0x100;
 							JVS_OUT(axis_value >> 8);
 							JVS_OUT(axis_value);
 						}
