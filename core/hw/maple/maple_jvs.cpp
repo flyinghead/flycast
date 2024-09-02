@@ -2282,7 +2282,8 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 							LOGJVS("%d:%4x ", axis, axis_value);
 							// Strangely, the least significant byte appears to be handled as signed,
 							// so we compensate when it's negative.
-							// This might overflow but the value is still read correctly.
+							// Avoid overflow (wild riders)
+							axis_value = std::min<u16>(0xff7f, axis_value);
 							if (axis_value & 0x80)
 								axis_value += 0x100;
 							JVS_OUT(axis_value >> 8);
