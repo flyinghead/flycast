@@ -1784,6 +1784,7 @@ struct RFIDReaderWriter : maple_base
 				}
 				DEBUG_LOG(MAPLE, "RFID decrement %d", counter);
 				cardData[19 - counter]--;
+				saveCard();
 				w32(getStatus());
 				return (MapleDeviceRV)0xfe;
 			}
