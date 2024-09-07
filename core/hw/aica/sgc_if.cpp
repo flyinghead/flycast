@@ -612,9 +612,12 @@ struct ChannelEx
 			clip_verify((s64)sample*oDsp>=0);
 
 			StepAEG(this);
-			StepFEG(this);
-			StepStream(this);
-			lfo.Step(this);
+			if (enabled)
+			{
+				StepFEG(this);
+				StepStream(this);
+				lfo.Step(this);
+			}
 			return true;
 		}
 	}
