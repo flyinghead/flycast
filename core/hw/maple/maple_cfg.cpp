@@ -241,6 +241,10 @@ static void createNaomiDevices()
 	{
 		mcfg_Create(MDT_RFIDReaderWriter, 1, 5, 0);
 		mcfg_Create(MDT_RFIDReaderWriter, 2, 5, 1);
+		if (gameId.substr(0, 8) == "MKG TKOB") {
+			insertRfidCard(0);
+			insertRfidCard(1);
+		}
 	}
 	else
 	{

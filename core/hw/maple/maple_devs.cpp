@@ -1729,21 +1729,22 @@ struct RFIDReaderWriter : maple_base
 			DEBUG_LOG(MAPLE, "RFID card read (data? %d)", d4Seen);
 			w32(getStatus());
 			if (!d4Seen)
-				w32(0x12345678);	// arbitrary value (unknown)
+				// serial0 and serial1 only
+				wptr(cardData, 8);
 			else
 				wptr(cardData, sizeof(cardData));
 			return (MapleDeviceRV)0xfe;
 
 		case 0xD9:	// lock card
-			w32(getStatus());
 			cardLocked = true;
+			w32(getStatus());
 			INFO_LOG(MAPLE, "RFID card %d locked", player_num);
 			return (MapleDeviceRV)0xfe;
 
 		case 0xDA:	// unlock card
-			w32(getStatus());
 			cardLocked = false;
 			cardInserted = false;
+			w32(getStatus());
 			NOTICE_LOG(MAPLE, "RFID card %d unlocked", player_num);
 			os_notify("Card ejected", 2000);
 			return (MapleDeviceRV)0xfe;
@@ -1757,6 +1758,34 @@ struct RFIDReaderWriter : maple_base
 				DEBUG_LOG(MAPLE, "RFID card write: offset 0x%x len %d", offset, (int)size);
 				rptr(cardData + offset, std::min(size, sizeof(cardData) - offset));
 				saveCard();
+				return (MapleDeviceRV)0xfe;
+			}
+
+		case 0xD1:	// decrement counter
+			{
+				int counter = r8();
+				switch (counter) {
+				case 0x03:
+					counter = 0;
+					break;
+				case 0x0c:
+					counter = 1;
+					break;
+				case 0x30:
+					counter = 2;
+					break;
+				case 0xc0:
+					counter = 3;
+					break;
+				default:
+					WARN_LOG(MAPLE, "Unknown counter selector %x", counter);
+					counter = 0;
+					break;
+				}
+				DEBUG_LOG(MAPLE, "RFID decrement %d", counter);
+				cardData[19 - counter]--;
+				saveCard();
+				w32(getStatus());
 				return (MapleDeviceRV)0xfe;
 			}
 
@@ -1795,24 +1824,62 @@ struct RFIDReaderWriter : maple_base
 		FILE *fp = nowide::fopen(path.c_str(), "rb");
 		if (fp == nullptr)
 		{
-			static u8 blankCard[128] = {
-					0x10,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   4,0x6c,   0,   0,
-					   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
-					   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
-					   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
-					   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
-					   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
-					   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
-					   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,0xff
-			};
-			// Generate random bytes used by vf4 vanilla to make the card id
-			srand(time(0));
-			blankCard[2] = rand() & 0xff;
-			blankCard[4] = rand() & 0xff;
-			blankCard[5] = rand() & 0xff;
-			blankCard[6] = rand() & 0xff;
-			blankCard[7] = rand() & 0xff;
-			memcpy(cardData, blankCard, sizeof(blankCard));
+			if (settings.content.gameId.substr(0, 8) == "MKG TKOB")
+			{
+				constexpr u8 MUSHIKING_CHIP_DATA[128] = {
+					0x12, 0x34, 0x56, 0x78, // Serial No.0
+					0x31, 0x00, 0x86, 0x07, // Serial No.1
+					0x00, 0x00, 0x00, 0x00, // Key
+					0x04, 0xf6, 0x00, 0xAA, // Extend  Extend  Access  Mode
+					0x23, 0xFF, 0xFF, 0xFF, // Counter4  Counter3  Counter2  Counter1
+					0x00, 0x00, 0x00, 0x00, // User Data (first set date: day bits 0-4, month bits 5-8, year bits 9-... + 2000)
+					0x00, 0x00, 0x00, 0x00, // User Data
+					0x00, 0x00, 0x00, 0x00, // User Data
+					0x00, 0x00, 0x00, 0x00, // User Data
+					0x00, 0x00, 0x00, 0x00, // User Data
+					0x00, 0x00, 0x00, 0x00, // User Data
+					0x23, 0xFF, 0xFF, 0xFF, // User Data (max counters)
+				};
+				memcpy(cardData, MUSHIKING_CHIP_DATA, sizeof(MUSHIKING_CHIP_DATA));
+				for (int i = 0; i < 8; i++)
+					cardData[i] = rand() & 0xff;
+				u32 mask = 0;
+				if (settings.content.gameId == "MKG TKOB 2 JPN VER2.001-"			// mushik2e
+						|| settings.content.gameId == "MKG TKOB 4 JPN VER2.000-")	// mushik4e
+					mask = 0x40;
+				cardData[4] &= ~0xc0;
+				cardData[4] |= mask;
+
+				u32 serial1 = (cardData[4] << 24) | (cardData[5] << 16) | (cardData[6] << 8) | cardData[7];
+				u32 key = ~serial1;
+				key = ((key >> 4) & 0x0f0f0f0f)
+					  | ((key << 4) & 0xf0f0f0f0);
+				cardData[8] = key >> 24;
+				cardData[9] = key >> 16;
+				cardData[10] = key >> 8;
+				cardData[11] = key;
+			}
+			else
+			{
+				constexpr u8 VF4_CARD_DATA[128] = {
+						0x10,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   4,0x6c,   0,   0,
+						   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+						   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+						   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+						   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+						   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+						   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+						   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,0xff
+				};
+				memcpy(cardData, VF4_CARD_DATA, sizeof(VF4_CARD_DATA));
+				// Generate random bytes used by vf4 vanilla to make the card id
+				srand(time(0));
+				cardData[2] = rand() & 0xff;
+				cardData[4] = rand() & 0xff;
+				cardData[5] = rand() & 0xff;
+				cardData[6] = rand() & 0xff;
+				cardData[7] = rand() & 0xff;
+			}
 			INFO_LOG(NAOMI, "Card P%d initialized", player_num + 1);
 		}
 		else

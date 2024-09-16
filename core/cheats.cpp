@@ -454,31 +454,6 @@ void CheatManager::reset(const std::string& gameId)
 		else if (gameId == "THE KING OF ROUTE66") {
 			cheats.emplace_back(Cheat::Type::setValue, "ignore drive error", true, 32, 0x00023ee0, 0x0009000B, true); // rts, nop
 		}
-		else if (gameId.substr(0, 8) == "MKG TKOB")
-		{
-			const auto& setMushikingCheats = [this](u32 addr) {
-				cheats.emplace_back(Cheat::Type::setValue, "ignore rfid1 error", true, 32, addr, 0, true); // rfid[0].error = 0
-				cheats.emplace_back(Cheat::Type::setValue, "ignore rfid2 error", true, 32, addr + 0x48, 0, true); // rfid[1].error = 0
-				cheats.emplace_back(Cheat::Type::setValue, "ignore rfid1 status", true, 32, addr + 8, 0, true); // rfid[0].data18 = 0
-				cheats.emplace_back(Cheat::Type::setValue, "ignore rfid2 status", true, 32, addr + 0x50, 0, true); // rfid[1].data18 = 0
-			};
-			if (gameId == "MKG TKOB 2 EXP VER1.001-")		// mushi2eo
-				setMushikingCheats(0x6fe1bc);
-			else if (gameId == "MKG TKOB 2 JPN VER2.001-")	// mushik2e
-				setMushikingCheats(0x6ffe54);
-			else if (gameId == "MKG TKOB 2K3 2ND VER1.003-")// mushike
-				setMushikingCheats(0x4ad7ec);
-			else if (gameId == "MKG TKOB 4 JPN VER2.000-")	// mushik4e
-				setMushikingCheats(0xb0e538);
-			else if (gameId == "MKG TKOB 2K3 2ND VER1.002-")// mushikeo
-				setMushikingCheats(0x4ad56c);
-			else if (gameId == "MKG TKOB 2K3 2ND KOR VER1.000-") // mushikk
-				setMushikingCheats(0x4ac9b8);
-			else if (gameId == "MKG TKOB 2K3 2ND CHN VER1.000-") // mushikc
-				setMushikingCheats(0x4aa9b8);
-			else if (gameId == "MKG TKOB 2 KOR VER1.000-")	// mushik2k
-				setMushikingCheats(0x706084);
-		}
 		else if (gameId == "T-8120N") {		// Dave Mirra BMX (US)
 			cheats.emplace_back(Cheat::Type::setValue, "fix main loop time", true, 32, 0x0030b8cc, 0x42040000, true); // 33.0 ms
 		}

@@ -138,9 +138,10 @@ public:
 	void Init(SamplerManager *samplerManager, OITShaderManager *shaderManager, OITBuffers *oitBuffers,
 			const vk::Extent2D& viewport)
 	{
-		if (!screenPipelineManager)
+		if (!screenPipelineManager) {
 			screenPipelineManager = std::make_unique<OITPipelineManager>();
-		screenPipelineManager->Init(shaderManager, oitBuffers);
+			screenPipelineManager->Init(shaderManager, oitBuffers);
+		}
 		OITDrawer::Init(samplerManager, screenPipelineManager.get(), oitBuffers);
 
 		MakeFramebuffers(viewport);

@@ -2492,7 +2492,7 @@ const Game Games[] =
 		nullptr,
 		// no free play with eeprom
     },
-    // Mushiking The King Of Beetles - Mushiking IV / V / VI (World)
+    // Mushiking The King Of Beetles 2004 Second (Japan)
     {
         "mushi2k4",
         NULL,
@@ -4725,7 +4725,7 @@ const Game Games[] =
             { NULL, 0, 0 },
         }
     },
-    // MushiKing II - The King Of Beetle II ENG (Ver. 1.001)
+    // Mushiking The King Of Beetles - Mushiking II / III / III+ (World, Ver. 2.001)
     {
         "mushik2e",
         NULL,
@@ -4749,6 +4749,7 @@ const Game Games[] =
     },
     // Mushiking The King Of Beetles - Mushiking IV / V / VI (World)
     // change game version (4/5/6): in BACKUP DATA CLEAR menu hold P1 and P2 buttons 1 for 3 seconds, then change version number in appeared menu and select YES(CLEAR)
+	// ~equivalent of Japanese 2K6 versions
     {
         "mushik4e",
         NULL,
@@ -4759,14 +4760,31 @@ const Game Games[] =
         M4,
         ROT0,
         {
-            { "fpr-24417.ic8", 0x0000000, 0x4000000 },
-            { "fpr-24418.ic9", 0x4000000, 0x4000000 },
+            { "fpr-24417.ic8", 0x0000000, 0x4000000, 0x01278cbb },
+            { "fpr-24418.ic9", 0x4000000, 0x4000000, 0x7c8d7687 },
 
             //ROM_REGION( 0x800, "pic_readout", 0 )
-            //ROM_LOAD( "317-0437-com.ic3", 0, 0x800, CRC(3b6fcee8) SHA1(65fbdd3b8c61a4b5ccb6389b25483a7ecdc0794d) )
-            { "317-0437-com.ic3", 0, 0x800,  0x0000000, Key },
+            { "317-0437-com.ic3", 0, 0x800,  0x3b6fcee8, Key },
+        }
+    },
+	// Mushiking The King Of Beetles - Mushiking IV / V / VI (Taiwan)
+    // change game version (4/5/6): in BACKUP DATA CLEAR menu hold P1 and P2 buttons 1 for 3 seconds, then change version number in appeared menu and select YES(CLEAR)
+	// ~equivalent of Japanese 2K6 versions
+    {
+        "mushik4t",
+        "mushik4e",
+        "Mushiking The King Of Beetles - Mushiking IV / V / VI (Taiwan)",
+        0x8000000,
+        0x5502,
+        "naomi",
+        M4,
+        ROT0,
+        {
+            { "fpr-24420.ic8", 0x0000000, 0x4000000, 0x4a44a604 },
+            { "fpr-24421.ic9", 0x4000000, 0x4000000, 0xaf137021 },	// BAD DUMP
 
-            { NULL, 0, 0 },
+            //ROM_REGION( 0x800, "pic_readout", 0 )
+            { "317-0437-com.ic3", 0, 0x800,  0x3b6fcee8, Key },
         }
     },
 	{

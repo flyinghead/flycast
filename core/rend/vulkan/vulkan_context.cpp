@@ -694,13 +694,16 @@ void VulkanContext::CreateSwapChain()
 
 	    framebuffers.reserve(imageViews.size());
 	    drawFences.reserve(imageViews.size());
-	    renderCompleteSemaphores.reserve(imageViews.size());
-	    imageAcquiredSemaphores.reserve(imageViews.size());
 	    for (auto const& view : imageViews)
 	    {
 	    	framebuffers.push_back(device->createFramebufferUnique(vk::FramebufferCreateInfo(vk::FramebufferCreateFlags(), *renderPass,
 	    			view.get(), width, height, 1)));
 	    	drawFences.push_back(device->createFenceUnique(vk::FenceCreateInfo(vk::FenceCreateFlagBits::eSignaled)));
+	    }
+	    renderCompleteSemaphores.reserve(imageViews.size() + 1);
+	    imageAcquiredSemaphores.reserve(imageViews.size() + 1);
+	    for (unsigned i = 0; i < imageViews.size() + 1; i++)
+	    {
 	    	renderCompleteSemaphores.push_back(device->createSemaphoreUnique(vk::SemaphoreCreateInfo()));
 	    	imageAcquiredSemaphores.push_back(device->createSemaphoreUnique(vk::SemaphoreCreateInfo()));
 	    }
@@ -865,14 +868,14 @@ void VulkanContext::Present() noexcept
 			DoSwapAutomation();
 			vk::Result res = presentQueue.presentKHR(vk::PresentInfoKHR(1, &(*renderCompleteSemaphores[currentSemaphore]), 1, &(*swapChain), &currentImage));
 			(void)res;
-			currentSemaphore = (currentSemaphore + 1) % imageViews.size();
+			currentSemaphore = (currentSemaphore + 1) % renderCompleteSemaphores.size();
 
 			if (lastFrameView && IsValid() && !gui_is_open())
 				for (int i = 1; i < swapInterval; i++)
 				{
 					PresentFrame(vk::Image(), lastFrameView, lastFrameExtent, lastFrameAR);
 					res = presentQueue.presentKHR(vk::PresentInfoKHR(1, &(*renderCompleteSemaphores[currentSemaphore]), 1, &(*swapChain), &currentImage));
-					currentSemaphore = (currentSemaphore + 1) % imageViews.size();
+					currentSemaphore = (currentSemaphore + 1) % renderCompleteSemaphores.size();
 				}
 		} catch (const vk::SystemError& e) {
 			// Happens when resizing the window
