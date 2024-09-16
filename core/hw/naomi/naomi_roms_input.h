@@ -716,10 +716,11 @@ static InputDescriptors drvsim_inputs = {
 			// WIPER-HI
 	},
 	{
-			{ "Master", Full, 0, true },
+			{ "", Full, ~0u, true },	// Master audio volume
 			{ "Accelerator", Half, 4 },
 			{ "Brake", Half, 5 },
-			{ "Clutch", Full, 1 },
+			{ "Clutch", Half, 6 },
+			{ "Wheel", Full, 0, true },	// only read via ffb board, not jvs
 	},
 };
 
