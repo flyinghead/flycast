@@ -41,6 +41,8 @@ import java.nio.charset.Charset;
 public class HttpClient {
     private CloseableHttpClient httpClient;
 
+    static { System.loadLibrary("flycast"); }
+
     // Called from native code
     public int openUrl(String url_string, byte[][] content, String[] contentType)
     {

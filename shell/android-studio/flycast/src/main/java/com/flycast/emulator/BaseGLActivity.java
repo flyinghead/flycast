@@ -87,10 +87,7 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
         }
         prefs = PreferenceManager.getDefaultSharedPreferences(this);
 
-        Emulator app = (Emulator)getApplicationContext();
-        app.getConfigurationPrefs();
         Emulator.setCurrentActivity(this);
-
         OuyaController.init(this);
         new HttpClient().nativeInit();
 
@@ -129,6 +126,8 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
             return;
         }
         Log.i("flycast", "Environment initialized");
+        Emulator app = (Emulator)getApplicationContext();
+        app.getConfigurationPrefs();
         storage = new AndroidStorage(this);
         setStorageDirectories();
 
