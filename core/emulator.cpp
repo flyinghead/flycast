@@ -278,7 +278,8 @@ static void loadSpecialSettings()
 		else if (prod_id == "T-9709D-50"	// San Francisco Rush 2049 (EU)
 			|| prod_id == "T-8112D-50"		// South Park Rally (EU)
 			|| prod_id == "T7014D  50"		// Super Runabout (EU)
-			|| prod_id == "T10001D 50")		// MTV Sport - Skateboarding (PAL)
+			|| prod_id == "T10001D 50"		// MTV Sport - Skateboarding (PAL)
+			|| prod_id == "MK-5101050")		// Snow Surfers
 		{
 			NOTICE_LOG(BOOT, "Forcing PAL broadcasting");
 			config::Broadcast.override(1);
@@ -331,6 +332,14 @@ static void loadSpecialSettings()
 			layers = 96;
 		else if (prod_id == "T40203N")		// Draconus: Cult of the Wyrm
 			layers = 80;
+		else if (prod_id == "T40212N"		// Soldier of Fortune (US)
+				|| prod_id == "T17726D 50")	// Soldier of Fortune (EU)
+			layers = 86;
+		else if (prod_id == "T44102N")		// BANG! Gunship Elite
+			layers = 100;
+		else if (prod_id == "T12502N"		// MDK 2 (US)
+				|| prod_id == "T12501D 50")	// MDK 2 (EU)
+			layers = 200;
 		if (layers != 0) {
 			NOTICE_LOG(BOOT, "Forcing %d transparent layers", layers);
 			config::PerPixelLayers.override(layers);
