@@ -232,8 +232,14 @@ public class AndroidStorage {
     {
         Uri uri = Uri.parse(uriString);
         // FIXME < Build.VERSION_CODES.LOLLIPOP
-        DocumentFile docFile = DocumentFile.fromTreeUri(activity, uri);
-        if (!docFile.exists())
+        DocumentFile docFile = null;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            if (DocumentsContract.isDocumentUri(activity, uri))
+                docFile = DocumentFile.fromSingleUri(activity, uri);
+            else
+                docFile = DocumentFile.fromTreeUri(activity, uri);
+        }
+        if (docFile == null || !docFile.exists())
             throw new FileNotFoundException(uriString);
         FileInfo info = new FileInfo();
         info.setPath(uriString);
