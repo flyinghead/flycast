@@ -19,13 +19,13 @@ def getSentryUrl = { ->
 android {
     namespace 'com.flycast.emulator'
     ndkVersion '23.2.8568313'
-    compileSdk 33
+    compileSdk 34
 
     defaultConfig {
         applicationId "com.flycast.emulator"
         minSdk 16
         //noinspection ExpiredTargetSdkVersion
-        targetSdk 33
+        targetSdk 34
         versionCode 8
         versionName getVersionName()
         vectorDrawables.useSupportLibrary = true
