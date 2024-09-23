@@ -42,8 +42,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-import tv.ouya.console.api.OuyaController;
-
 import static android.content.res.Configuration.HARDKEYBOARDHIDDEN_NO;
 import static android.view.View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
 import static android.view.WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS;
@@ -95,7 +93,6 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
         prefs = PreferenceManager.getDefaultSharedPreferences(this);
 
         Emulator.setCurrentActivity(this);
-        OuyaController.init(this);
         new HttpClient().nativeInit();
 
         String homeDir = prefs.getString(Config.pref_home, "");
