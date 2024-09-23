@@ -70,6 +70,13 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        if (!(getApplicationContext() instanceof Emulator)) {
+            // app is in restricted mode, kill it
+            // See https://medium.com/@pablobaxter/what-happened-to-my-subclass-android-application-924c91bafcac
+            handler.post(() -> System.exit(0));
+            finish();
+            return;
+        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             // Set the navigation bar color to 0 to avoid left over when it fades out on Android 10
             Window window = getWindow();

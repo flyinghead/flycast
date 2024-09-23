@@ -46,7 +46,8 @@
         android:hardwareAccelerated="true"
         android:appCategory="game"
         android:isGame="true"
-		android:requestLegacyExternalStorage="true">
+		android:requestLegacyExternalStorage="true"
+		android:allowBackup="false">
 
         <meta-data android:name="android.max_aspect" android:value="2.1" />
         <activity
