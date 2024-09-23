@@ -275,6 +275,14 @@ extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_emu_JNIdc_setupMic(J
     stopRecordingMid = env->GetMethodID(env->GetObjectClass(sipemu),"stopRecording","()V");
 }
 
+static void *savestateThreadFunc(void *)
+{
+	dc_savestate(config::SavestateSlot);
+	return nullptr;
+}
+
+static cThread savestateThread(savestateThreadFunc, nullptr, "Flycast-save");
+
 extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_emu_JNIdc_pause(JNIEnv *env,jobject obj)
 {
 	if (config::GGPOEnable)
@@ -285,20 +293,25 @@ extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_emu_JNIdc_pause(JNIE
 	else if (game_started && stopEmu())
 	{
 		game_started = true; // restart when resumed
-		if (config::AutoSaveState)
-			dc_savestate(config::SavestateSlot);
+		if (config::AutoSaveState) {
+			savestateThread.WaitToEnd();
+			savestateThread.Start();
+		}
 	}
 }
 
 extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_emu_JNIdc_resume(JNIEnv *env,jobject obj)
 {
-    if (game_started)
+    if (game_started) {
+		savestateThread.WaitToEnd();
         emu.start();
+    }
 }
 
 extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_emu_JNIdc_stop(JNIEnv *env,jobject obj)
 {
 	stopEmu();
+	savestateThread.WaitToEnd();
 	gui_stop_game();
 }
 
@@ -306,13 +319,13 @@ static void *render_thread_func(void *)
 {
 	initRenderApi(g_window);
 
-	mainui_loop();
+	mainui_loop(false);
 
 	termRenderApi();
 	ANativeWindow_release(g_window);
-    g_window = NULL;
+    g_window = nullptr;
 
-    return NULL;
+    return nullptr;
 }
 
 static cThread render_thread(render_thread_func, nullptr, "Flycast-rend");
@@ -321,7 +334,7 @@ extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_emu_JNIdc_rendinitNa
 {
 	if (render_thread.thread.joinable())
 	{
-		if (surface == NULL)
+		if (surface == nullptr)
 		{
 			mainui_stop();
 	        render_thread.WaitToEnd();
@@ -333,9 +346,10 @@ extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_emu_JNIdc_rendinitNa
 		    mainui_reinit();
 		}
 	}
-	else if (surface != NULL)
+	else if (surface != nullptr)
 	{
         g_window = ANativeWindow_fromSurface(env, surface);
+        mainui_start();
         render_thread.Start();
 	}
 }
