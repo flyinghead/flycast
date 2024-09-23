@@ -661,6 +661,7 @@ void Emulator::runInternal()
 			{
 				nvmem::saveFiles();
 				dc_reset(false);
+				sh4_cpu.Start();
 			}
 		} while (resetRequested);
 	}
@@ -868,6 +869,8 @@ void Emulator::run()
 	verify(state == Running);
 	startTime = sh4_sched_now64();
 	renderTimeout = false;
+	if (!singleStep && stepRangeTo == 0)
+		sh4_cpu.Start();
 	try {
 		runInternal();
 		if (ggpo::active())
@@ -910,6 +913,7 @@ void Emulator::start()
 	if (config::ThreadedRendering)
 	{
 		const std::lock_guard<std::mutex> lock(mutex);
+		sh4_cpu.Start();
 		threadResult = std::async(std::launch::async, [this] {
 				ThreadName _("Flycast-emu");
 				InitAudio();

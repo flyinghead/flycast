@@ -101,7 +101,6 @@ static void recSh4_ClearCache()
 
 static void recSh4_Run()
 {
-	sh4_int_bCpuRun = true;
 	RestoreHostRoundingMode();
 
 	u8 *sh4_dyna_rcb = (u8 *)&Sh4cntx + sizeof(Sh4cntx);
@@ -341,6 +340,11 @@ void* DYNACALL rdv_LinkBlock(u8* code,u32 dpc)
 	return (void*)rv;
 }
 
+static void recSh4_Start()
+{
+	sh4Interp.Start();
+}
+
 static void recSh4_Stop()
 {
 	sh4Interp.Stop();
@@ -409,6 +413,7 @@ static bool recSh4_IsCpuRunning()
 void Get_Sh4Recompiler(sh4_if* cpu)
 {
 	cpu->Run = recSh4_Run;
+	cpu->Start = recSh4_Start;
 	cpu->Stop = recSh4_Stop;
 	cpu->Step = recSh4_Step;
 	cpu->Reset = recSh4_Reset;

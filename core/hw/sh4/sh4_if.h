@@ -122,59 +122,60 @@ enum Sh4RegType
 	NoReg=-1
 };
 
-//Varius sh4 registers
+// SR (status register)
 
 union sr_status_t
 {
 	struct
 	{
-		u32 T_h     : 1;//<<0
-		u32 S       : 1;//<<1
-		u32 rsvd0   : 2;//<<2
-		u32 IMASK   : 4;//<<4
-		u32 Q       : 1;//<<8
-		u32 M       : 1;//<<9
-		u32 rsvd1   : 5;//<<10
-		u32 FD      : 1;//<<15
-		u32 rsvd2   : 12;//<<16
-		u32 BL      : 1;//<<28
-		u32 RB      : 1;//<<29
-		u32 MD      : 1;//<<20
-		u32 rsvd3   : 1;//<<31
+		u32 T_h     : 1;
+		u32 S       : 1;
+		u32         : 2;
+		u32 IMASK   : 4;
+		u32 Q       : 1;
+		u32 M       : 1;
+		u32         : 5;
+		u32 FD      : 1;
+		u32         : 12;
+		u32 BL      : 1;
+		u32 RB      : 1;
+		u32 MD      : 1;
+		u32         : 1;
 	};
 	u32 status;
 };
 
 #define STATUS_MASK 0x700083F2
 
-//Status register bitfield
+// Status register with isolated T bit.
+// Used in place of the normal SR bitfield so that the T bit can be
+// handled as a regular register. This simplifies dynarec implementations.
 struct sr_t
 {
 	union
 	{
 		struct
 		{
-			u32 T_h     : 1;//<<0
-			u32 S       : 1;//<<1
-			u32 rsvd0   : 2;//<<2
-			u32 IMASK   : 4;//<<4
-			u32 Q       : 1;//<<8
-			u32 M       : 1;//<<9
-			u32 rsvd1   : 5;//<<10
-			u32 FD      : 1;//<<15
-			u32 rsvd2   : 12;//<<16
-			u32 BL      : 1;//<<28
-			u32 RB      : 1;//<<29
-			u32 MD      : 1;//<<20
-			u32 rsvd3   : 1;//<<31
+			u32 T_h     : 1;
+			u32 S       : 1;
+			u32         : 2;
+			u32 IMASK   : 4;
+			u32 Q       : 1;
+			u32 M       : 1;
+			u32         : 5;
+			u32 FD      : 1;
+			u32         : 12;
+			u32 BL      : 1;
+			u32 RB      : 1;
+			u32 MD      : 1;
+			u32         : 1;
 		};
 		u32 status;
 	};
 	u32 T;
-
 };
 
-//FPSCR (fpu status and control register) bitfield
+// FPSCR (fpu status and control register)
 struct fpscr_t
 {
 	union
@@ -203,13 +204,7 @@ struct fpscr_t
 			u32 PR         : 1;
 			u32 SZ         : 1;
 			u32 FR         : 1;
-			u32 pad        : 10;
-		};
-		struct
-		{
-			u32 _nil   : 2+1+1+1+1+4+8+1;
-			u32 PR_SZ : 2;
-			u32 nilz  : 11;
+			u32            : 10;
 		};
 	};
 };
@@ -217,6 +212,7 @@ struct fpscr_t
 //sh4 interface
 struct sh4_if
 {
+	void (*Start)();
 	void (*Run)();
 	void (*Stop)();
 	void (*Step)();
@@ -272,6 +268,7 @@ struct alignas(64) Sh4Context
 		u64 raw[64-8];
 	};
 };
+static_assert(sizeof(Sh4Context) == 448, "Invalid Sh4Context size");
 
 struct alignas(32) SQBuffer {
 	u8 data[32];
