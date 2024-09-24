@@ -30,6 +30,11 @@
 #include <array>
 #include <memory>
 
+#define CRACKINDJ_TRAKTOR
+#ifdef CRACKINDJ_TRAKTOR
+#include "sdl/hid.h"
+#endif
+
 #define LOGJVS(...) DEBUG_LOG(JVS, __VA_ARGS__)
 
 u8 *EEPROM;
@@ -236,6 +241,9 @@ protected:
 				networkOutput.output(name.c_str(), (newOutput >> i) & 1);
 			}
 		digOutput = newOutput;
+#ifdef CRACKINDJ_TRAKTOR
+		hidOutput(*data & 0x80, *data & 8, *data & 0x20, *data & 0x40, *data & 4);
+#endif
 	}
 
 	virtual void read_lightgun(int playerNum, u32 buttons, u16& x, u16& y)
@@ -482,6 +490,7 @@ protected:
 	{
 		jvs_io_board& outputBoard = *parent->io_boards[1];
 		bool turntableOn = outputBoard.getDigitalOutput() & 0x10;
+#ifndef CRACKINDJ_TRAKTOR
 		switch (channel)
 		{
 			case 0:	// Left turntable
@@ -497,11 +506,28 @@ protected:
 			default:
 				return 0;
 		}
+#else
+		if (channel != 0 && channel != 2)
+			return 0;
+		channel /= 2;
+		rotary[channel] -= jogWheelsDelta[channel];
+		if (turntableOn && !jogWheelsTouched[channel])
+			// should be around 10, possibly a bit less to match real hw (based on yt videos)
+			// half a turn should skip 3 to 4 tunes (more like 4?)
+			// currently half turn -> 7
+			rotary[channel] -= 10;
+		//printf("wheel[%d] %d motor %d\n", channel, rotary[channel], turntableOn);
+		jogWheelsDelta[channel] = 0;
+		return rotary[channel];
+#endif
 	}
 
 private:
 	s16 motorRotation[2]{};
 	s16 lastRel[2]{};
+#ifdef CRACKINDJ_TRAKTOR
+	s16 rotary[2] {};
+#endif
 };
 
 // Sega Marine Fishing, 18 Wheeler (TODO)
@@ -1978,6 +2004,10 @@ void maple_naomi_jamma::deserialize(Deserializer& deser)
 
 u16 jvs_io_board::read_analog_axis(int player_num, int player_axis, bool inverted)
 {
+#ifdef CRACKINDJ_TRAKTOR
+	if (player_num == 0 && player_axis == 0)
+		return (2048 - std::clamp<int>(crossFader, -2030, 2030)) * 16;
+#endif
 	u16 v;
 	if (player_axis >= 0 && player_axis < 4)
 		v = mapleInputState[player_num].fullAxes[player_axis] + 0x8000;

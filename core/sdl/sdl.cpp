@@ -31,6 +31,7 @@
 #include "switch_gamepad.h"
 #endif
 #include <unordered_map>
+#include "hid.h"
 
 static SDL_Window* window = NULL;
 static u32 windowFlags;
@@ -225,6 +226,7 @@ void input_sdl_init()
 		SDL_InitSubSystem(SDL_INIT_HAPTIC);
 
 	SDL_SetRelativeMouseMode(SDL_FALSE);
+	hidInit();
 
 	// Event::Start is called on a background thread, so we can't use it to change the window title (macOS)
 	// However it's followed by Event::Resume which is fine.
@@ -269,6 +271,7 @@ void input_sdl_quit()
 	EventManager::unlisten(Event::Resume, emuEventCallback);
 	SDLGamepad::closeAllGamepads();
 	SDL_QuitSubSystem(SDL_INIT_JOYSTICK | SDL_INIT_HAPTIC);
+	hidTerm();
 }
 
 inline void SDLMouse::setAbsPos(int x, int y)
@@ -293,6 +296,7 @@ static std::shared_ptr<SDLMouse> getMouse(u64 mouseId)
 void input_sdl_handle()
 {
 	SDLGamepad::UpdateRumble();
+	hidInput();
 
 	SDL_Event event;
 	while (SDL_PollEvent(&event))
