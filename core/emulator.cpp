@@ -978,16 +978,17 @@ bool Emulator::render()
 
 	if (!config::ThreadedRendering)
 	{
-		if (state != Running)
-			return false;
-		run();
 		if (stopRequested)
 		{
 			stopRequested = false;
 			TermAudio();
 			nvmem::saveFiles();
 			EventManager::event(Event::Pause);
+			return false;
 		}
+		if (state != Running)
+			return false;
+		run();
 		// TODO if stopping due to a user request, no frame has been rendered
 		return !renderTimeout;
 	}
