@@ -93,8 +93,7 @@ void mainui_loop(bool forceStart)
 	{
 		fc_profiler::startThread("main");
 
-		if (!mainui_rend_frame())
-			continue;
+		mainui_rend_frame();
 		if (imguiDriver == nullptr)
 			forceReinit = true;
 		else
