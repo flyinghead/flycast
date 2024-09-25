@@ -132,6 +132,8 @@ ComPtr<ID3D11RenderTargetView>& DX11Context::getRenderTarget(int width, int heig
 
 void DX11Context::presentFrame(ComPtr<ID3D11ShaderResourceView>& textureView, int width, int height)
 {
+	ID3D11ShaderResourceView *nullSRView = nullptr;
+	pDeviceContext->PSSetShaderResources(0, 1, &nullSRView);
 	ComPtr<ID3D11RenderTargetView> renderTarget = getRenderTarget(width, height);
 	pDeviceContext->OMSetRenderTargets(1, &renderTarget.get(), nullptr);
 
@@ -160,7 +162,11 @@ void DX11Context::presentFrame(ComPtr<ID3D11ShaderResourceView>& textureView, in
 
 	ID3D11RenderTargetView *nullView = nullptr;
 	pDeviceContext->OMSetRenderTargets(1, &nullView, nullptr);
-	pDeviceContext->PSSetShaderResources(0, 1, &this->textureView.get());
+}
+
+void DX11Context::present()
+{
+	pDeviceContext->PSSetShaderResources(0, 1, &textureView.get());
 }
 
 #endif

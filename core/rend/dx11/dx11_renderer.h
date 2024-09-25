@@ -46,6 +46,8 @@ struct DX11Renderer : public Renderer
 		frameRendered = false;
 #ifndef LIBRETRO
 		imguiDriver->setFrameRendered();
+#else
+		theDX11Context.present();
 #endif
 		return true;
 	}

@@ -35,6 +35,7 @@ class DX11Context : public GraphicsContext
 public:
 	bool init(ID3D11Device *device, ID3D11DeviceContext *deviceContext, pD3DCompile D3DCompile, D3D_FEATURE_LEVEL featureLevel);
 	void term() override;
+	void present();
 
 	const ComPtr<ID3D11Device>& getDevice() const { return pDevice; }
 	const ComPtr<ID3D11DeviceContext>& getDeviceContext() const { return pDeviceContext; }
@@ -88,6 +89,7 @@ private:
 	int renderTargetHeight = 0;
 	BlendStates blendStates;
 	std::unique_ptr<Quad> quad;
+	ComPtr<ID3D11RasterizerState> rasterizerState;
 
 	D3D_FEATURE_LEVEL featureLevel{};
 	bool supportedTexFormats[5] {}; // indexed by TextureType enum
