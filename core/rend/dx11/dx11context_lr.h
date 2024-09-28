@@ -89,7 +89,6 @@ private:
 	int renderTargetHeight = 0;
 	BlendStates blendStates;
 	std::unique_ptr<Quad> quad;
-	ComPtr<ID3D11RasterizerState> rasterizerState;
 
 	D3D_FEATURE_LEVEL featureLevel{};
 	bool supportedTexFormats[5] {}; // indexed by TextureType enum

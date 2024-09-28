@@ -743,6 +743,7 @@ void wDivide(inout vec4 vpos)
 void main()
 {
 	vec4 vpos = n2Uniform.mvMat * in_pos;
+	vpos.z = min(vpos.z, -0.001);
 	vpos = n2Uniform.projMat * vpos;
 	wDivide(vpos);
 

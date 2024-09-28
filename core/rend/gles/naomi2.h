@@ -22,7 +22,7 @@
 class N2VertexSource : public OpenGlSource
 {
 public:
-	N2VertexSource(bool gouraud, bool geometryOnly, bool texture);
+	N2VertexSource(bool gouraud, bool modifierVolume, bool texture);
 };
 
 template<typename ShaderType>

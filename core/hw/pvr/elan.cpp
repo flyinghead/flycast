@@ -983,7 +983,7 @@ public:
 				tri.x2 * curMatrix[0][2] + tri.y2 * curMatrix[1][2] + tri.z2 * curMatrix[2][2] + curMatrix[3][2]
 			};
 			dist = -dist - nearPlane;
-			ModTriangle newTri;
+			ModTriangle newTri[2];
 			int n = sutherlandHodgmanClip(dist, tri, newTri);
 			switch (n)
 			{
@@ -993,9 +993,10 @@ public:
 			case 3:
 				ta_add_triangle(tri);
 				break;
-			case 4:
+			case 5:
 				ta_add_triangle(tri);
-				ta_add_triangle(newTri);
+				ta_add_triangle(newTri[0]);
+				ta_add_triangle(newTri[1]);
 				break;
 			}
 		}
@@ -1016,86 +1017,78 @@ private:
 	}
 
 	// Clip the triangle 'trig' with respect to the provided distances to the clipping plane.
-	int sutherlandHodgmanClip(glm::vec3& dist, ModTriangle& trig, ModTriangle& newTrig)
+	int sutherlandHodgmanClip(glm::vec3& dist, ModTriangle& trig, ModTriangle *newTrig)
 	{
 		constexpr float clipEpsilon = 0.f; //0.00001;
 		constexpr float clipEpsilon2 = 0.f; //0.01;
 
-		if (!glm::any(glm::greaterThanEqual(dist , glm::vec3(clipEpsilon2))))
-			// all clipped
-			return 0;
+		if (!glm::any(glm::greaterThanEqual(dist , glm::vec3(clipEpsilon2)))) {
+			// all clipped: leave it alone as it will be projected onto the near plane in the shader
+			return 3;
+		}
 		if (glm::all(glm::greaterThanEqual(dist , glm::vec3(-clipEpsilon))))
 			// none clipped
 			return 3;
 
-		// There are either 1 or 2 vertices above the clipping plane.
+		// There are either 1 or 2 vertices above the clipping plane. Tesselate into 3 triangles along the plane.
 		glm::bvec3 above = glm::greaterThanEqual(dist, glm::vec3(0.f));
-		bool nextIsAbove;
 		glm::vec3 v0(trig.x0, trig.y0, trig.z0);
 		glm::vec3 v1(trig.x1, trig.y1, trig.z1);
 		glm::vec3 v2(trig.x2, trig.y2, trig.z2);
-		glm::vec3 v3;
-		// Find the CCW-most vertex above the plane.
-		if (above[1] && !above[0])
+		glm::vec3 v3, v4;
+		// Find the lonely vertex on one side of the plane
+		if (above[0] == above[2])
 		{
-			// Cycle once CCW. Use v3 as a temp
-			nextIsAbove = above[2];
+			// this is vertex 1 so cycle CCW
 			v3 = v0;
 			v0 = v1;
 			v1 = v2;
 			v2 = v3;
 			dist = glm::vec3(dist.y, dist.z, dist.x);
 		}
-		else if (above[2] && !above[1])
+		else if (above[0] == above[1])
 		{
-			// Cycle once CW. Use v3 as a temp.
-			nextIsAbove = above[0];
+			// this is vertex 2 so cycle CW
 			v3 = v2;
 			v2 = v1;
 			v1 = v0;
 			v0 = v3;
 			dist = glm::vec3(dist.z, dist.x, dist.y);
 		}
-		else
-			nextIsAbove = above[1];
+		v3 = intersect(v0, dist[0], v1, dist[1]);
+		v4 = intersect(v0, dist[0], v2, dist[2]);
+		// v0 v3 v4
 		trig.x0 = v0.x;
 		trig.y0 = v0.y;
 		trig.z0 = v0.z;
-		// We always need to clip v2-v0.
-		v3 = intersect(v0, dist[0], v2, dist[2]);
-		if (nextIsAbove)
-		{
-			v2 = intersect(v1, dist[1], v2, dist[2]);
-			trig.x1 = v1.x;
-			trig.y1 = v1.y;
-			trig.z1 = v1.z;
-			trig.x2 = v2.x;
-			trig.y2 = v2.y;
-			trig.z2 = v2.z;
-			newTrig.x0 = v0.x;
-			newTrig.y0 = v0.y;
-			newTrig.z0 = v0.z;
-			newTrig.x1 = v2.x;
-			newTrig.y1 = v2.y;
-			newTrig.z1 = v2.z;
-			newTrig.x2 = v3.x;
-			newTrig.y2 = v3.y;
-			newTrig.z2 = v3.z;
+		trig.x1 = v3.x;
+		trig.y1 = v3.y;
+		trig.z1 = v3.z;
+		trig.x2 = v4.x;
+		trig.y2 = v4.y;
+		trig.z2 = v4.z;
+		// v3 v1 v4
+		newTrig[0].x0 = v3.x;
+		newTrig[0].y0 = v3.y;
+		newTrig[0].z0 = v3.z;
+		newTrig[0].x1 = v1.x;
+		newTrig[0].y1 = v1.y;
+		newTrig[0].z1 = v1.z;
+		newTrig[0].x2 = v4.x;
+		newTrig[0].y2 = v4.y;
+		newTrig[0].z2 = v4.z;
+		// v2 v4 v1
+		newTrig[1].x0 = v2.x;
+		newTrig[1].y0 = v2.y;
+		newTrig[1].z0 = v2.z;
+		newTrig[1].x1 = v4.x;
+		newTrig[1].y1 = v4.y;
+		newTrig[1].z1 = v4.z;
+		newTrig[1].x2 = v1.x;
+		newTrig[1].y2 = v1.y;
+		newTrig[1].z2 = v1.z;
 
-			return 4;
-		}
-		else
-		{
-			v1 = intersect(v0, dist[0], v1, dist[1]);
-			trig.x1 = v1.x;
-			trig.y1 = v1.y;
-			trig.z1 = v1.z;
-			trig.x2 = v3.x;
-			trig.y2 = v3.y;
-			trig.z2 = v3.z;
-
-			return 3;
-		}
+		return 5;
 	}
 
 	bool enabled;
@@ -1327,15 +1320,15 @@ static void sendPolygon(ICHList *list)
 	case ICHList::VTX_TYPE_V:
 		{
 			N2_VERTEX *vtx = (N2_VERTEX *)((u8 *)list + sizeof(ICHList));
-			if (!isBetweenNearAndFar(vtx, list->vtxCount, needClipping))
-				break;
 			int listType = ta_get_list_type();
 			if (listType == -1)
 				listType = list->pcw.listType;
 			if (listType & 1)
-				sendMVPolygon(list, vtx, needClipping);
+				sendMVPolygon(list, vtx, true);
 			else
 			{
+				if (!isBetweenNearAndFar(vtx, list->vtxCount, needClipping))
+					break;
 				PolyParam pp{};
 				pp.pcw.Shadow = list->pcw.shadow;
 				pp.pcw.Texture = 0;
@@ -1356,15 +1349,15 @@ static void sendPolygon(ICHList *list)
 	case ICHList::VTX_TYPE_VU:
 		{
 			N2_VERTEX_VU *vtx = (N2_VERTEX_VU *)((u8 *)list + sizeof(ICHList));
-			if (!isBetweenNearAndFar(vtx, list->vtxCount, needClipping))
-				break;
 			int listType = ta_get_list_type();
 			if (listType == -1)
 				listType = list->pcw.listType;
 			if (listType  & 1)
-				sendMVPolygon(list, vtx, needClipping);
+				sendMVPolygon(list, vtx, true);
 			else
 			{
+				if (!isBetweenNearAndFar(vtx, list->vtxCount, needClipping))
+					break;
 				PolyParam pp{};
 				pp.pcw.Shadow = list->pcw.shadow;
 				pp.pcw.Texture = list->pcw.texture;

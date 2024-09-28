@@ -781,6 +781,7 @@ enum VertexMacroEnum {
 	MacroDivPosZ,
 	MacroPositionOnly,
 	MacroLightOn,
+	MacroModifierVolume,
 };
 
 static D3D_SHADER_MACRO VertexMacros[]
@@ -790,6 +791,7 @@ static D3D_SHADER_MACRO VertexMacros[]
 	{ "DIV_POS_Z", "0" },
 	{ "POSITION_ONLY", "0" },
 	{ "LIGHT_ON", "1" },
+	{ "MODIFIER_VOLUME", "0" },
 	{ nullptr, nullptr }
 };
 
@@ -900,6 +902,7 @@ const ComPtr<ID3D11VertexShader>& DX11OITShaders::getVertexShader(bool gouraud, 
 			VertexMacros[MacroPositionOnly].Definition = MacroValues[positionOnly];
 			VertexMacros[MacroTwoVolumes].Definition = MacroValues[twoVolumes];
 			VertexMacros[MacroLightOn].Definition = MacroValues[lightOn];
+			VertexMacros[MacroModifierVolume].Definition = MacroValues[false];
 			std::string source(DX11N2VertexShader);
 			if (!positionOnly && lightOn)
 				source += std::string("\n") + DX11N2ColorShader;
@@ -927,6 +930,7 @@ const ComPtr<ID3D11VertexShader>& DX11OITShaders::getMVVertexShader(bool naomi2)
 			VertexMacros[MacroPositionOnly].Definition = MacroValues[true];
 			VertexMacros[MacroTwoVolumes].Definition = MacroValues[false];
 			VertexMacros[MacroLightOn].Definition = MacroValues[false];
+			VertexMacros[MacroModifierVolume].Definition = MacroValues[true];
 			mvVertexShader = compileVS(DX11N2VertexShader, "main", VertexMacros);
 		}
 	}
@@ -1058,6 +1062,7 @@ ComPtr<ID3DBlob> DX11OITShaders::getVertexShaderBlob()
 	// FIXME code dup
 	VertexMacros[MacroPositionOnly].Definition = MacroValues[false];
 	VertexMacros[MacroTwoVolumes].Definition = MacroValues[true];
+	VertexMacros[MacroModifierVolume].Definition = MacroValues[false];
 	std::string source(DX11N2VertexShader);
 	source += std::string("\n") + DX11N2ColorShader;
 	return compileShader(source.c_str(), "main", "vs_5_0", VertexMacros);
@@ -1069,6 +1074,7 @@ ComPtr<ID3DBlob> DX11OITShaders::getMVVertexShaderBlob()
 	VertexMacros[MacroGouraud].Definition = MacroValues[false];
 	VertexMacros[MacroPositionOnly].Definition = MacroValues[true];
 	VertexMacros[MacroTwoVolumes].Definition = MacroValues[false];
+	VertexMacros[MacroModifierVolume].Definition = MacroValues[true];
 	return compileShader(DX11N2VertexShader, "main", "vs_5_0", VertexMacros);
 }
 

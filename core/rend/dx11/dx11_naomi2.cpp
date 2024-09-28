@@ -131,7 +131,9 @@ VertexOut main(in VertexIn vin)
 	#endif
 	vo.index = uint(polyNumber) + vin.vertexId;
 #endif
-
+#if MODIFIER_VOLUME == 1
+	vo.pos.z = min(vo.pos.z, -0.001f);
+#endif
 	vo.pos = mul(projMat, vo.pos);
 
 	vo.pos = float4(vo.pos.xy / vo.pos.w, 1.f / vo.pos.w, 1.f);

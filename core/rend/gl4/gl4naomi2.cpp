@@ -34,6 +34,7 @@ N2Vertex4Source::N2Vertex4Source(const gl4PipelineShader* shader) : OpenGl4Sourc
 {
 	addConstant("OIT_RENDER");
 	addConstant("DIV_POS_Z", false);
+	addConstant("MODIFIER_VOLUME", 0);
 	if (shader == nullptr)
 	{
 		addConstant("POSITION_ONLY", 1);

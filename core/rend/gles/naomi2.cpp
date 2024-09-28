@@ -121,6 +121,9 @@ void main()
 			computeEnvMap(vtx_uv.xy, vpos.xyz, vnorm);
 	#endif
 #endif
+#if MODIFIER_VOLUME == 1
+	vpos.z = min(vpos.z, -0.001);
+#endif
 
 	vpos = projMat * vpos;
 	wDivide(vpos);
@@ -348,17 +351,18 @@ void computeBumpMap(inout vec4 color0, vec4 color1, vec3 position, vec3 normal, 
 
 )";
 
-N2VertexSource::N2VertexSource(bool gouraud, bool geometryOnly, bool texture) : OpenGlSource()
+N2VertexSource::N2VertexSource(bool gouraud, bool modifierVolume, bool texture) : OpenGlSource()
 {
-	addConstant("pp_Gouraud", gouraud);
-	addConstant("POSITION_ONLY", geometryOnly);
+	addConstant("pp_Gouraud", (int)gouraud);
+	addConstant("POSITION_ONLY", (int)modifierVolume);
 	addConstant("pp_TwoVolumes", 0);
 	addConstant("pp_Texture", (int)texture);
 	addConstant("LIGHT_ON", 1);
+	addConstant("MODIFIER_VOLUME", (int)modifierVolume);
 
 	addSource(VertexCompatShader);
 	addSource(GouraudSource);
-	if (!geometryOnly)
+	if (!modifierVolume)
 		addSource(N2ColorShader);
 	addSource(N2VertexShader);
 }

@@ -642,6 +642,7 @@ static void create_modvol_shader()
 	gl4.modvol_shader.ndcMat = glGetUniformLocation(gl4.modvol_shader.program, "ndcMat");
 
 	N2Vertex4Source n2VertexShader;
+	n2VertexShader.setConstant("MODIFIER_VOLUME", true);
 	fragmentShader.setConstant("DIV_POS_Z", false);
 	gl4.n2ModVolShader.program = gl_CompileAndLink(n2VertexShader.generate().c_str(), fragmentShader.generate().c_str());
 	gl4.n2ModVolShader.ndcMat = glGetUniformLocation(gl4.n2ModVolShader.program, "ndcMat");
