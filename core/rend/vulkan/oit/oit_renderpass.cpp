@@ -89,6 +89,10 @@ vk::UniqueRenderPass RenderPasses::MakeRenderPass(bool initial, bool last, bool 
     		vk::AccessFlagBits::eInputAttachmentRead | vk::AccessFlagBits::eShaderRead,
 			vk::AccessFlagBits::eDepthStencilAttachmentRead | vk::AccessFlagBits::eDepthStencilAttachmentWrite,
 			vk::DependencyFlagBits::eByRegion);
+    dependencies.emplace_back(1, 1, vk::PipelineStageFlagBits::eFragmentShader, vk::PipelineStageFlagBits::eFragmentShader,
+    		vk::AccessFlagBits::eShaderRead | vk::AccessFlagBits::eShaderWrite,
+			vk::AccessFlagBits::eShaderRead | vk::AccessFlagBits::eShaderWrite,
+			vk::DependencyFlagBits::eByRegion);
     dependencies.emplace_back(2, 2, vk::PipelineStageFlagBits::eFragmentShader, vk::PipelineStageFlagBits::eFragmentShader,
     		vk::AccessFlagBits::eShaderRead | vk::AccessFlagBits::eShaderWrite,
 			vk::AccessFlagBits::eShaderRead | vk::AccessFlagBits::eShaderWrite,

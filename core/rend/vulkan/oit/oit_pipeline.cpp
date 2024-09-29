@@ -336,7 +336,7 @@ void OITPipelineManager::CreateClearPipeline()
 	  &pipelineDynamicStateCreateInfo,            // pDynamicState
 	  *pipelineLayout,                            // layout
 	  renderPasses->GetRenderPass(true, true),    // renderPass
-	  2                                           // subpass
+	  1                                           // subpass
 	);
 
 	clearPipeline = GetContext()->GetDevice().createGraphicsPipelineUnique(GetContext()->GetPipelineCache(), graphicsPipelineCreateInfo).value;

@@ -401,11 +401,21 @@ bool OITDrawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 		DrawList(cmdBuffer, ListType_Punch_Through, false, Pass::Color, pvrrc.global_param_pt, previous_pass.pt_count, current_pass.pt_count);
 
 		// TR
-		if (current_pass.autosort)
+		if (firstFrameAfterInit)
 		{
-			if (!firstFrameAfterInit)
-				DrawList(cmdBuffer, ListType_Translucent, true, Pass::OIT, pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count);
+			// Clear abuffers
+			cmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipelineManager->GetClearPipeline());
+			quadBuffer->Bind(cmdBuffer);
+			quadBuffer->Draw(cmdBuffer);
+
+			vk::MemoryBarrier memoryBarrier(vk::AccessFlagBits::eShaderWrite, vk::AccessFlagBits::eShaderRead);
+			cmdBuffer.pipelineBarrier(vk::PipelineStageFlagBits::eFragmentShader, vk::PipelineStageFlagBits::eFragmentShader,
+					vk::DependencyFlagBits::eByRegion, memoryBarrier, nullptr, nullptr);
+			cmdBuffer.bindVertexBuffers(0, curMainBuffer, {0});
+			firstFrameAfterInit = false;
 		}
+		if (current_pass.autosort)
+			DrawList(cmdBuffer, ListType_Translucent, true, Pass::OIT, pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count);
 		else
 			DrawList(cmdBuffer, ListType_Translucent, false, Pass::Color, pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count);
 
@@ -423,19 +433,6 @@ bool OITDrawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 		}
 		SetScissor(cmdBuffer, baseScissor);
 
-		if (firstFrameAfterInit)
-		{
-			// missing the transparent stuff on the first frame cuz I'm lazy
-			// Clear
-			cmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipelineManager->GetClearPipeline());
-			quadBuffer->Bind(cmdBuffer);
-			quadBuffer->Draw(cmdBuffer);
-
-			vk::MemoryBarrier memoryBarrier(vk::AccessFlagBits::eShaderWrite, vk::AccessFlagBits::eShaderRead);
-			cmdBuffer.pipelineBarrier(vk::PipelineStageFlagBits::eFragmentShader, vk::PipelineStageFlagBits::eFragmentShader,
-					vk::DependencyFlagBits::eByRegion, memoryBarrier, nullptr, nullptr);
-			firstFrameAfterInit = false;
-		}
 		// Tr modifier volumes
 		if (GetContext()->GetVendorID() != VulkanContext::VENDOR_QUALCOMM)	// Adreno bug
 		{
