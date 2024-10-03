@@ -290,14 +290,14 @@ inline static void getVideoShift(float& x, float& y)
 	switch (SPG_LOAD.hcount)
 	{
 		case 857: // NTSC, VGA
-			x = VO_STARTX.HStart - (vga ? 0xa8 : 0xa4);
+			x = (int)VO_STARTX.HStart - (vga ? 0xa8 : 0xa4);
 			break;
 		case 863: // PAL
-			x = VO_STARTX.HStart - 0xae;
+			x = (int)VO_STARTX.HStart - 0xae;
 			break;
 		case 851: // Naomi
 		case 850: // meltyb
-			x = VO_STARTX.HStart - 0xa5; // a0 for 15 kHz
+			x = (int)VO_STARTX.HStart - 0xa5; // a0 for 15 kHz
 			break;
 		default:
 			x = 0;
@@ -307,24 +307,24 @@ inline static void getVideoShift(float& x, float& y)
 	switch (SPG_LOAD.vcount)
 	{
 		case 524: // NTSC, VGA
-			y = VO_STARTY.VStart_field1 - (vga ? 0x28 : 0x12);
+			y = (int)VO_STARTY.VStart_field1 - (vga ? 0x28 : 0x12);
 			break;
 		case 262: // NTSC 240p
-			y = VO_STARTY.VStart_field1 - 0x11;
+			y = (int)VO_STARTY.VStart_field1 - 0x11;
 			break;
 		case 624: // PAL
-			y = VO_STARTY.VStart_field1 - 0x2d;
+			y = (int)VO_STARTY.VStart_field1 - 0x2d;
 			break;
 		case 312: // PAL 240p
-			y = VO_STARTY.VStart_field1 - 0x2e;
+			y = (int)VO_STARTY.VStart_field1 - 0x2e;
 			break;
 		case 529: // Naomi 31 kHz
 		case 528: // meltyb
-			y = VO_STARTY.VStart_field1 - 0x24;
+			y = (int)VO_STARTY.VStart_field1 - 0x24;
 			break;
 		case 536: // Naomi 15 kHz 480i
 		case 268: // Naomi 15 kHz 240p
-			y = VO_STARTY.VStart_field1 - 0x17; // 16 for 240p
+			y = (int)VO_STARTY.VStart_field1 - 0x17; // 16 for 240p
 			break;
 		default:
 			y = 0;
