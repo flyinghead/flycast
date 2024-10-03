@@ -315,7 +315,11 @@ static void loadSpecialSettings()
 				|| prod_id == "T13001D-05"	// Blue Stinger (EU)
 				|| prod_id == "T13001D 18")	// Blue Stinger (DE)
 			layers = 80;
-		else if (prod_id == "T2102M")		// Panzer Front
+		else if (prod_id == "T2102M"		// Panzer Front
+				|| prod_id == "T-8118N"		// Spirit of Speed (US)
+				|| prod_id == "T-8117D-50"	// Spirit of Speed (EU)
+				|| prod_id == "T13002N"		// Vigilante 8 (US)
+				|| prod_id == "T13002D")	// Vigilante 8 (EU)
 			layers = 64;
 		else if (prod_id == "T2106M")		// L.O.L. Lack of Love
 			layers = 48;
@@ -340,6 +344,20 @@ static void loadSpecialSettings()
 		else if (prod_id == "T12502N"		// MDK 2 (US)
 				|| prod_id == "T12501D 50")	// MDK 2 (EU)
 			layers = 200;
+		else if (prod_id == "T9708D  50")	// Army Men
+			layers = 173;
+		else if (prod_id == "MK-51038"		// Zombie Revenge (US)
+				|| prod_id == "MK-5103850"	// Zombie Revenge (EU)
+				|| prod_id == "HDR-0026"	// Zombie Revenge (JP)
+				|| prod_id == "36801N"		// Fighting Force 2 (US)
+				|| prod_id == "36802D 80"	// Fighting Force 2 (PAL, en-fr)
+				|| prod_id == "36802D 18")	// Fighting Force 2 (PAL, de)
+			layers = 116;
+		else if (prod_id == "T15112N")		// Demolition Racer (US)
+			layers = 44;
+		else if (prod_id == "T1208N"		// Tech Romancer (US)
+				|| prod_id == "T7009D50")	// Tech Romancer (EU)
+			layers = 56;
 		if (layers != 0) {
 			NOTICE_LOG(BOOT, "Forcing %d transparent layers", layers);
 			config::PerPixelLayers.override(layers);
