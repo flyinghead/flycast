@@ -41,7 +41,8 @@ CustomStorage& customStorage()
 		std::string getSubPath(const std::string& reference, const std::string& relative) override { die("Not implemented"); }
 		FileInfo getFileInfo(const std::string& path) override { die("Not implemented"); }
 		bool exists(const std::string& path) override { die("Not implemented"); }
-		bool addStorage(bool isDirectory, bool writeAccess, void (*callback)(bool cancelled, std::string selectedPath)) override {
+		bool addStorage(bool isDirectory, bool writeAccess, const std::string& description,
+				void (*callback)(bool cancelled, std::string selectedPath)) override {
 			die("Not implemented");
 		}
 	};
@@ -392,9 +393,10 @@ AllStorage& storage()
 	return storage;
 }
 
-bool addStorage(bool isDirectory, bool writeAccess, void (*callback)(bool cancelled, std::string selectedPath))
+bool addStorage(bool isDirectory, bool writeAccess, const std::string& description,
+		void (*callback)(bool cancelled, std::string selectedPath))
 {
-	return customStorage().addStorage(isDirectory, writeAccess, callback);
+	return customStorage().addStorage(isDirectory, writeAccess, description, callback);
 }
 
 }

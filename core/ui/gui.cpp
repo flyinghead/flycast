@@ -1635,7 +1635,7 @@ static void addContentPath(bool start)
 #ifdef __ANDROID__
     if (start)
     {
-    	bool supported = hostfs::addStorage(true, false, [](bool cancelled, std::string selection) {
+    	bool supported = hostfs::addStorage(true, false, title, [](bool cancelled, std::string selection) {
     		if (!cancelled)
     			addContentPathCallback(selection);
     	});
@@ -2870,7 +2870,6 @@ static void gui_settings_about()
 #if defined(__ANDROID__) && HOST_CPU == CPU_ARM64 && USE_VULKAN
 	if (isVulkan(config::RendererType))
 	{
-		const char *fileSelectTitle = "Select a custom GPU driver";
 		static bool driverDirty;
 		const auto& callback = [](bool cancelled, std::string selection) {
 			if (!cancelled) {
@@ -2883,7 +2882,6 @@ static void gui_settings_about()
 					config::CustomGpuDriver = false;
 				}
 			}
-			return true;
 		};
 
 		{
@@ -2906,7 +2904,7 @@ static void gui_settings_about()
 				}
 			}
 			else if (ImGui::Button("Upload Custom Driver"))
-				ImGui::OpenPopup(fileSelectTitle);
+				hostfs::addStorage(false, false, "Select a Zip file", callback);
 
 			if (driverDirty) {
 				ImGui::OpenPopup("Reset Vulkan");
@@ -2931,7 +2929,6 @@ static void gui_settings_about()
 				ImGui::EndPopup();
 			}
 		}
-		select_file_popup(fileSelectTitle, callback, true, "zip");
 	}
 #endif
 }

@@ -38,7 +38,7 @@ public:
 		jgetSubPath = env->GetMethodID(clazz, "getSubPath", "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;");
 		jgetFileInfo = env->GetMethodID(clazz, "getFileInfo", "(Ljava/lang/String;)Lcom/flycast/emulator/FileInfo;");
 		jexists = env->GetMethodID(clazz, "exists", "(Ljava/lang/String;)Z");
-		jaddStorage = env->GetMethodID(clazz, "addStorage", "(ZZ)Z");
+		jaddStorage = env->GetMethodID(clazz, "addStorage", "(ZZLjava/lang/String;)Z");
 		jsaveScreenshot = env->GetMethodID(clazz, "saveScreenshot", "(Ljava/lang/String;[B)V");
 		jimportHomeDirectory = env->GetMethodID(clazz, "importHomeDirectory", "()V");
 		jexportHomeDirectory = env->GetMethodID(clazz, "exportHomeDirectory", "()V");
@@ -134,9 +134,11 @@ public:
 		}
 	}
 
-	bool addStorage(bool isDirectory, bool writeAccess, void (*callback)(bool cancelled, std::string selectedPath)) override
+	bool addStorage(bool isDirectory, bool writeAccess, const std::string& description,
+			void (*callback)(bool cancelled, std::string selectedPath)) override
 	{
-		bool ret = jni::env()->CallBooleanMethod(jstorage, jaddStorage, isDirectory, writeAccess);
+		jni::String jdesc(description);
+		bool ret = jni::env()->CallBooleanMethod(jstorage, jaddStorage, isDirectory, writeAccess, (jstring)jdesc);
 		checkException();
 		if (ret)
 			addStorageCallback = callback;

@@ -26,6 +26,7 @@
 using namespace nlohmann;
 #include "archive/ZipArchive.h"
 #include "oslib/directory.h"
+#include "oslib/storage.h"
 #include "stdclass.h"
 
 std::string getNativeLibraryPath();
@@ -147,7 +148,7 @@ bool getCustomGpuDriverInfo(std::string& name, std::string& description, std::st
 
 void uploadCustomGpuDriver(const std::string& zipPath)
 {
-	FILE *zipf = nowide::fopen(zipPath.c_str(), "rb");
+	FILE *zipf = hostfs::storage().openFile(zipPath, "r");
 	if (zipf == nullptr)
 		throw FlycastException("Can't open zip file");
 	ZipArchive archive;

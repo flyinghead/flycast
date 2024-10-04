@@ -292,7 +292,7 @@ public class AndroidStorage {
         return dir.getAbsolutePath();
     }
 
-    public boolean addStorage(boolean isDirectory, boolean writeAccess)
+    public boolean addStorage(boolean isDirectory, boolean writeAccess, String description)
     {
         if (isDirectory && Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP)
             return false;
@@ -300,11 +300,8 @@ public class AndroidStorage {
         if (!isDirectory) {
             intent.addCategory(Intent.CATEGORY_OPENABLE);
             intent.setType("application/*");
-            intent = Intent.createChooser(intent, "Select a cheat file");
         }
-        else {
-            intent = Intent.createChooser(intent, "Select a content folder");
-        }
+        intent = Intent.createChooser(intent, description);
         storageIntentPerms = Intent.FLAG_GRANT_READ_URI_PERMISSION | (writeAccess ? Intent.FLAG_GRANT_WRITE_URI_PERMISSION : 0);
         intent.addFlags(Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION | storageIntentPerms);
         activity.startActivityForResult(intent, ADD_STORAGE_ACTIVITY_REQUEST);
