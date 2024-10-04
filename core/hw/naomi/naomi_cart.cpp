@@ -221,8 +221,8 @@ static void loadMameRom(const std::string& path, const std::string& fileName, Lo
 	std::unique_ptr<Archive> parent_archive;
 	if (game->parent_name != nullptr)
 	{
-		std::string parentPath = hostfs::storage().getParentPath(path);
 		try {
+			std::string parentPath = hostfs::storage().getParentPath(path);
 			parentPath = hostfs::storage().getSubPath(parentPath, game->parent_name);
 			parent_archive.reset(OpenArchive(parentPath));
 		} catch (const FlycastException& e) {
@@ -230,7 +230,7 @@ static void loadMameRom(const std::string& path, const std::string& fileName, Lo
 		if (parent_archive != nullptr)
 			INFO_LOG(NAOMI, "Opened %s", game->parent_name);
 		else
-			WARN_LOG(NAOMI, "Parent not found: %s", parentPath.c_str());
+			WARN_LOG(NAOMI, "Parent not found: %s", game->parent_name);
 
 	}
 

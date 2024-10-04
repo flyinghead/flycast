@@ -94,8 +94,8 @@ std::string get_readonly_data_path(const std::string& filename)
 			return filepath;
 	}
 	// Try the game directory
-	std::string parent = hostfs::storage().getParentPath(settings.content.path);
 	try {
+		std::string parent = hostfs::storage().getParentPath(settings.content.path);
 		std::string filepath = hostfs::storage().getSubPath(parent, filename);
 		if (hostfs::storage().exists(filepath))
 			return filepath;
