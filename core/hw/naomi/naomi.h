@@ -21,6 +21,7 @@ void NaomiGameIDWrite(u16 data);
 void setGameSerialId(const u8 *data);
 
 void initDriveSimSerialPipe();
+void Naomi_setDmaDelay();
 
 namespace midiffb {
 

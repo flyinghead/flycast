@@ -698,6 +698,7 @@ void naomi_cart_LoadRom(const std::string& path, const std::string& fileName, Lo
 		{
 			hopper::init();
 		}
+		Naomi_setDmaDelay();
 
 #ifdef NAOMI_MULTIBOARD
 		// Not a multiboard game but needs the same desktop environment

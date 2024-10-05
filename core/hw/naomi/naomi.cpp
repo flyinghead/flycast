@@ -44,6 +44,7 @@ static X76F100SerialFlash mainSerialId;
 static X76F100SerialFlash romSerialId;
 
 static int dmaSchedId = -1;
+static int dmaXferDelay = 10;	// cart dma xfer speed, in cycles/byte (default 20 MB/s)
 
 void NaomiBoardIDWrite(const u16 data)
 {
@@ -162,8 +163,8 @@ static void Naomi_DmaStart(u32 addr, u32 data)
 		SB_GDLEND = 0;
 		// Max G1 bus rate: 50 MHz x 16 bits
 		// SH4_access990312_e.xls: 14.4 MB/s from GD-ROM to system RAM
-		// Here: 7 MB/s
-		sh4_sched_request(dmaSchedId, std::min<int>(SB_GDLEN * 27, SH4_MAIN_CLOCK));
+		// Here: 20 MB/s
+		sh4_sched_request(dmaSchedId, std::min<int>(SB_GDLEN * dmaXferDelay, SH4_MAIN_CLOCK));
 		return;
 	}
 	else
@@ -174,6 +175,14 @@ static void Naomi_DmaStart(u32 addr, u32 data)
 	asic_RaiseInterrupt(holly_GDROM_DMA);
 }
 
+void Naomi_setDmaDelay()
+{
+	if (settings.content.gameId == "FORCE FIVE")
+		// 7 MB/s
+		dmaXferDelay = 27;
+	else
+		dmaXferDelay = 10;
+}
 
 static void Naomi_DmaEnable(u32 addr, u32 data)
 {
