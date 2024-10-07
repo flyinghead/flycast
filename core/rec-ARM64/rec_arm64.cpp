@@ -35,13 +35,13 @@ using namespace vixl::aarch64;
 
 #include "hw/sh4/sh4_mmr.h"
 #include "hw/sh4/sh4_interrupts.h"
+#include "arm64_unwind.h"
 #include "hw/sh4/sh4_core.h"
 #include "hw/sh4/dyna/ngen.h"
 #include "hw/sh4/sh4_mem.h"
 #include "hw/sh4/sh4_rom.h"
 #include "arm64_regalloc.h"
 #include "hw/mem/addrspace.h"
-#include "arm64_unwind.h"
 #include "oslib/virtmem.h"
 
 #undef do_sqw_nommu
