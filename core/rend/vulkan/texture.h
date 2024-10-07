@@ -69,13 +69,14 @@ public:
 private:
 	void Init(u32 width, u32 height, vk::Format format ,u32 dataSize, bool mipmapped, bool mipmapsIncluded);
 	void SetImage(u32 size, const void *data, bool isNew, bool genMipmaps);
-	void CreateImage(vk::ImageTiling tiling, const vk::ImageUsageFlags& usage, vk::ImageLayout initialLayout,
-			const vk::ImageAspectFlags& aspectMask);
+	void CreateImage(vk::ImageTiling tiling, vk::ImageUsageFlags usage, vk::ImageLayout initialLayout,
+			vk::ImageAspectFlags aspectMask);
 	void GenerateMipmaps();
 
 	vk::Format format = vk::Format::eUndefined;
 	vk::Extent2D extent;
 	u32 mipmapLevels = 1;
+	vk::ImageUsageFlags usageFlags;
 	bool needsStaging = false;
 	std::unique_ptr<BufferData> stagingBufferData;
 	vk::CommandBuffer commandBuffer;

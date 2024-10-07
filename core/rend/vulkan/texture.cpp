@@ -229,9 +229,10 @@ void Texture::Init(u32 width, u32 height, vk::Format format, u32 dataSize, bool 
 	CreateImage(imageTiling, usageFlags, initialLayout, vk::ImageAspectFlagBits::eColor);
 }
 
-void Texture::CreateImage(vk::ImageTiling tiling, const vk::ImageUsageFlags& usage, vk::ImageLayout initialLayout,
-		const vk::ImageAspectFlags& aspectMask)
+void Texture::CreateImage(vk::ImageTiling tiling, vk::ImageUsageFlags usage, vk::ImageLayout initialLayout,
+		vk::ImageAspectFlags aspectMask)
 {
+	this->usageFlags = usage;
 	vk::ImageCreateInfo imageCreateInfo(vk::ImageCreateFlags(), vk::ImageType::e2D, format, vk::Extent3D(extent, 1), mipmapLevels, 1,
 										vk::SampleCountFlagBits::e1, tiling, usage,
 										vk::SharingMode::eExclusive, nullptr, initialLayout);

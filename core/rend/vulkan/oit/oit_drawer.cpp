@@ -579,13 +579,15 @@ vk::CommandBuffer OITTextureDrawer::NewFrame()
 		}
 		textureCache->SetInFlight(texture);
 
+		constexpr vk::ImageUsageFlags imageUsage = vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled;
 		if (!texture->image || texture->format != vk::Format::eR8G8B8A8Unorm
-				|| texture->extent.width != widthPow2 || texture->extent.height != heightPow2)
+				|| texture->extent.width != widthPow2 || texture->extent.height != heightPow2
+				|| (texture->usageFlags & imageUsage) != imageUsage)
 		{
 			texture->extent = vk::Extent2D(widthPow2, heightPow2);
 			texture->format = vk::Format::eR8G8B8A8Unorm;
 			texture->needsStaging = true;
-			texture->CreateImage(vk::ImageTiling::eOptimal, vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled,
+			texture->CreateImage(vk::ImageTiling::eOptimal, imageUsage,
 					vk::ImageLayout::eUndefined, vk::ImageAspectFlagBits::eColor);
 			colorImageCurrentLayout = vk::ImageLayout::eUndefined;
 		}
