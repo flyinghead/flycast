@@ -251,8 +251,8 @@ void Texture::CreateImage(vk::ImageTiling tiling, vk::ImageUsageFlags usage, vk:
 #ifdef VK_DEBUG
 	char name[128];
 	sprintf(name, "texture @ %x", startAddress);
-	VulkanContext::Instance()->setObjectName((VkImage)image.get(), vk::Image::objectType, name);
-	VulkanContext::Instance()->setObjectName((VkImageView)imageView.get(), vk::ImageView::objectType, name);
+	VulkanContext::Instance()->setObjectName(image.get(), name);
+	VulkanContext::Instance()->setObjectName(imageView.get(), name);
 #endif
 }
 
@@ -444,7 +444,7 @@ void FramebufferAttachment::Init(u32 width, u32 height, vk::Format format, const
 	image = device.createImageUnique(imageCreateInfo);
 #ifdef VK_DEBUG
 	if (!name.empty())
-		VulkanContext::Instance()->setObjectName((VkImage)image.get(), vk::Image::objectType, name);
+		VulkanContext::Instance()->setObjectName(image.get(), name);
 #endif
 
 	VmaAllocationCreateInfo allocCreateInfo = { VmaAllocationCreateFlags(), VmaMemoryUsage::VMA_MEMORY_USAGE_GPU_ONLY };
@@ -459,7 +459,7 @@ void FramebufferAttachment::Init(u32 width, u32 height, vk::Format format, const
 		imageView = device.createImageViewUnique(imageViewCreateInfo);
 #ifdef VK_DEBUG
 		if (!name.empty())
-			VulkanContext::Instance()->setObjectName((VkImageView)imageView.get(), vk::ImageView::objectType, name);
+			VulkanContext::Instance()->setObjectName(imageView.get(), name);
 #endif
 
 		if ((usage & vk::ImageUsageFlagBits::eDepthStencilAttachment) && (usage & vk::ImageUsageFlagBits::eInputAttachment))
@@ -469,7 +469,7 @@ void FramebufferAttachment::Init(u32 width, u32 height, vk::Format format, const
 			stencilView = device.createImageViewUnique(imageViewCreateInfo);
 #ifdef VK_DEBUG
 			if (!name.empty())
-				VulkanContext::Instance()->setObjectName((VkImageView)stencilView.get(), vk::ImageView::objectType, name);
+				VulkanContext::Instance()->setObjectName(stencilView.get(), name);
 #endif
 		}
 	}
