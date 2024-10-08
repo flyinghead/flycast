@@ -207,25 +207,51 @@ bool VulkanContext::InitInstance(const char** extensions, uint32_t extensions_co
 #endif
 #endif
 
-		const auto devices = instance->enumeratePhysicalDevices();
+		auto devices = instance->enumeratePhysicalDevices();
 		if (devices.empty())
 		{
 			ERROR_LOG(RENDERER, "Vulkan error: no physical devices found");
 			return false;
 		}
 
-		// Choose a discrete gpu if there's one, otherwise just pick the first one
-		physicalDevice = nullptr;
-		for (const auto& phyDev : devices)
-		{
-			if (phyDev.getProperties().deviceType == vk::PhysicalDeviceType::eDiscreteGpu)
+		// The order of physical-devices provided by the driver should be somewhat preserved with stable-partitions/stable-sorts
+
+
+		// Prefer GPUs that support fragmentStoresAndAtomics
+		std::stable_partition(
+			devices.begin(), devices.end(),
+			[](const vk::PhysicalDevice& physicalDevice) -> bool
 			{
-				physicalDevice = phyDev;
-				break;
+				return !!physicalDevice.getFeatures().fragmentStoresAndAtomics;
 			}
-		}
-		if (!physicalDevice)
-			physicalDevice = devices.front();
+		);
+
+		// Prefer GPUs that support optimal R5G5B5/R5G6B5A1/R4G4B4A4
+		const auto supportsOptimalFormat = [](vk::Format format)
+		{
+			return [format](const vk::PhysicalDevice& physicalDevice) -> bool
+			{
+				const vk::FormatProperties formatProperties = physicalDevice.getFormatProperties(format);
+				return (formatProperties.optimalTilingFeatures & vk::FormatFeatureFlagBits::eSampledImage)
+					&& (formatProperties.optimalTilingFeatures & vk::FormatFeatureFlagBits::eBlitDst)
+					&& (formatProperties.optimalTilingFeatures & vk::FormatFeatureFlagBits::eBlitSrc);
+			};
+		};
+		std::stable_partition(devices.begin(), devices.end(), supportsOptimalFormat(vk::Format::eR5G6B5UnormPack16));
+		std::stable_partition(devices.begin(), devices.end(), supportsOptimalFormat(vk::Format::eR5G5B5A1UnormPack16));
+		std::stable_partition(devices.begin(), devices.end(), supportsOptimalFormat(vk::Format::eR4G4B4A4UnormPack16));
+
+		// Finally, prefer Discrete GPUs
+		std::stable_partition(
+			devices.begin(), devices.end(),
+			[](const vk::PhysicalDevice& physicalDevice) -> bool
+			{
+				return physicalDevice.getProperties().deviceType == vk::PhysicalDeviceType::eDiscreteGpu;
+			}
+		);
+
+		// Top of the device-list is the _most_ qualified GPU
+		physicalDevice = devices.front();
 
 		vk::PhysicalDeviceProperties properties = physicalDevice.getProperties();
 		if (vulkan11 && properties.apiVersion >= VK_API_VERSION_1_1)
