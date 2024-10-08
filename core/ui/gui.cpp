@@ -1486,13 +1486,15 @@ void error_popup()
 		{
 			ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + uiScaled(400.f));
 			ImGui::TextWrapped("%s", error_msg.c_str());
-			ImguiStyleVar _(ImGuiStyleVar_FramePadding, ScaledVec2(16, 3));
-			float currentwidth = ImGui::GetContentRegionAvail().x;
-			ImGui::SetCursorPosX((currentwidth - uiScaled(80.f)) / 2.f + ImGui::GetStyle().WindowPadding.x);
-			if (ImGui::Button("OK", ScaledVec2(80.f, 0)))
 			{
-				error_msg.clear();
-				ImGui::CloseCurrentPopup();
+				ImguiStyleVar _(ImGuiStyleVar_FramePadding, ScaledVec2(16, 3));
+				float currentwidth = ImGui::GetContentRegionAvail().x;
+				ImGui::SetCursorPosX((currentwidth - uiScaled(80.f)) / 2.f + ImGui::GetStyle().WindowPadding.x);
+				if (ImGui::Button("OK", ScaledVec2(80.f, 0)))
+				{
+					error_msg.clear();
+					ImGui::CloseCurrentPopup();
+				}
 			}
 			ImGui::SetItemDefaultFocus();
 			ImGui::PopTextWrapPos();
@@ -1513,25 +1515,27 @@ static void contentpath_warning_popup()
         {
             ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + uiScaled(400.f));
             ImGui::TextWrapped("  Scanned %d folders but no game can be found!  ", scanner.empty_folders_scanned);
-            ImguiStyleVar _(ImGuiStyleVar_FramePadding, ScaledVec2(16, 3));
-            float currentwidth = ImGui::GetContentRegionAvail().x;
-            ImGui::SetCursorPosX((currentwidth - uiScaled(100.f)) / 2.f + ImGui::GetStyle().WindowPadding.x - uiScaled(55.f));
-            if (ImGui::Button("Reselect", ScaledVec2(100.f, 0)))
-            {
-            	scanner.content_path_looks_incorrect = false;
-                ImGui::CloseCurrentPopup();
-                show_contentpath_selection = true;
-            }
+			{
+				ImguiStyleVar _(ImGuiStyleVar_FramePadding, ScaledVec2(16, 3));
+				float currentwidth = ImGui::GetContentRegionAvail().x;
+				ImGui::SetCursorPosX((currentwidth - uiScaled(100.f)) / 2.f + ImGui::GetStyle().WindowPadding.x - uiScaled(55.f));
+				if (ImGui::Button("Reselect", ScaledVec2(100.f, 0)))
+				{
+					scanner.content_path_looks_incorrect = false;
+					ImGui::CloseCurrentPopup();
+					show_contentpath_selection = true;
+				}
 
-            ImGui::SameLine();
-            ImGui::SetCursorPosX((currentwidth - uiScaled(100.f)) / 2.f + ImGui::GetStyle().WindowPadding.x + uiScaled(55.f));
-            if (ImGui::Button("Cancel", ScaledVec2(100.f, 0)))
-            {
-            	scanner.content_path_looks_incorrect = false;
-                ImGui::CloseCurrentPopup();
-                scanner.stop();
-                config::ContentPath.get().clear();
-            }
+				ImGui::SameLine();
+				ImGui::SetCursorPosX((currentwidth - uiScaled(100.f)) / 2.f + ImGui::GetStyle().WindowPadding.x + uiScaled(55.f));
+				if (ImGui::Button("Cancel", ScaledVec2(100.f, 0)))
+				{
+					scanner.content_path_looks_incorrect = false;
+					ImGui::CloseCurrentPopup();
+					scanner.stop();
+					config::ContentPath.get().clear();
+				}
+			}
             ImGui::SetItemDefaultFocus();
             ImGui::EndPopup();
         }
