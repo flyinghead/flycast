@@ -216,6 +216,20 @@ bool VulkanContext::InitInstance(const char** extensions, uint32_t extensions_co
 
 		// The order of physical-devices provided by the driver should be somewhat preserved with stable-partitions/stable-sorts
 
+		// Prefer GPUs that support optimal R5G5B5/R5G6B5A1/R4G4B4A4
+		const auto supportsOptimalFormat = [](vk::Format format)
+			{
+				return [format](const vk::PhysicalDevice& physicalDevice) -> bool
+					{
+						const vk::FormatProperties formatProperties = physicalDevice.getFormatProperties(format);
+						return (formatProperties.optimalTilingFeatures & vk::FormatFeatureFlagBits::eSampledImage)
+							&& (formatProperties.optimalTilingFeatures & vk::FormatFeatureFlagBits::eBlitDst)
+							&& (formatProperties.optimalTilingFeatures & vk::FormatFeatureFlagBits::eBlitSrc);
+					};
+			};
+		std::stable_partition(devices.begin(), devices.end(), supportsOptimalFormat(vk::Format::eR5G6B5UnormPack16));
+		std::stable_partition(devices.begin(), devices.end(), supportsOptimalFormat(vk::Format::eR5G5B5A1UnormPack16));
+		std::stable_partition(devices.begin(), devices.end(), supportsOptimalFormat(vk::Format::eR4G4B4A4UnormPack16));
 
 		// Prefer GPUs that support fragmentStoresAndAtomics
 		std::stable_partition(
@@ -225,21 +239,6 @@ bool VulkanContext::InitInstance(const char** extensions, uint32_t extensions_co
 				return !!physicalDevice.getFeatures().fragmentStoresAndAtomics;
 			}
 		);
-
-		// Prefer GPUs that support optimal R5G5B5/R5G6B5A1/R4G4B4A4
-		const auto supportsOptimalFormat = [](vk::Format format)
-		{
-			return [format](const vk::PhysicalDevice& physicalDevice) -> bool
-			{
-				const vk::FormatProperties formatProperties = physicalDevice.getFormatProperties(format);
-				return (formatProperties.optimalTilingFeatures & vk::FormatFeatureFlagBits::eSampledImage)
-					&& (formatProperties.optimalTilingFeatures & vk::FormatFeatureFlagBits::eBlitDst)
-					&& (formatProperties.optimalTilingFeatures & vk::FormatFeatureFlagBits::eBlitSrc);
-			};
-		};
-		std::stable_partition(devices.begin(), devices.end(), supportsOptimalFormat(vk::Format::eR5G6B5UnormPack16));
-		std::stable_partition(devices.begin(), devices.end(), supportsOptimalFormat(vk::Format::eR5G5B5A1UnormPack16));
-		std::stable_partition(devices.begin(), devices.end(), supportsOptimalFormat(vk::Format::eR4G4B4A4UnormPack16));
 
 		// Finally, prefer Discrete GPUs
 		std::stable_partition(
