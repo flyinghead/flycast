@@ -121,11 +121,12 @@ public:
 	}
 
 #ifdef VK_DEBUG
-	void setObjectName(VkHandle object, vk::ObjectType objectType, const std::string& name)
+	template<typename HandleType, typename = std::enable_if_t<vk::isVulkanHandleType<HandleType>::value>>
+	void setObjectName(const HandleType& object, const std::string& name)
 	{
 		vk::DebugUtilsObjectNameInfoEXT nameInfo {};
-		nameInfo.objectType = objectType;
-		nameInfo.objectHandle = (uint64_t)object;
+		nameInfo.objectType = HandleType::objectType;
+		nameInfo.objectHandle = reinterpret_cast<uint64_t>(static_cast<typename HandleType::NativeType>(object));
 		nameInfo.pObjectName = name.c_str();
 		if (device) {
 			vk::Result e = device->setDebugUtilsObjectNameEXT(&nameInfo);

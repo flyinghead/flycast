@@ -100,7 +100,10 @@ public:
 		commandPool.addToFlight(object);
 	}
 #ifdef VK_DEBUG
-	void setObjectName(VkHandle object, vk::ObjectType objectType, const std::string& name) {}
+	template<typename HandleType, typename = std::enable_if_t<vk::isVulkanHandleType<HandleType>::value>>
+	void setObjectName(const HandleType& object, const std::string& name)
+	{
+	}
 #endif
 
 	constexpr static int VENDOR_AMD = 0x1022;
