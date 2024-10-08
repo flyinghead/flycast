@@ -165,9 +165,9 @@ void *M4Cartridge::GetDmaPtr(u32 &size)
 	if (cfi_mode) {
 		u32 fpr_num = m4id & 0x7f;
 
-		if (((rom_cur_address >> 26) & 0x07) < fpr_num) {
+		if (((DmaOffset >> 26) & 0x07) < fpr_num) {
 			size = std::min(size, 2u);
-			return &cfidata[rom_cur_address & 0xffff];
+			return &cfidata[DmaOffset & 0xffff];
 		}
 	}
 
@@ -184,9 +184,8 @@ void *M4Cartridge::GetDmaPtr(u32 &size)
 	}
 	if (encryption)
 	{
-		size = std::min(size, (u32)sizeof(buffer));
+		size = std::min(size, buffer_actual_size);
 		return buffer;
-
 	}
 	else
 	{
@@ -207,17 +206,18 @@ void M4Cartridge::AdvancePtr(u32 size)
 {
 	if (encryption)
 	{
-		if (size < buffer_actual_size)
-		{
+		if (size < buffer_actual_size) {
 			memmove(buffer, buffer + size, buffer_actual_size - size);
 			buffer_actual_size -= size;
 		}
-		else
+		else {
 			buffer_actual_size = 0;
+		}
 		enc_fill();
 	}
-	else
-		rom_cur_address += size;
+	else {
+		NaomiCartridge::AdvancePtr(size);
+	}
 }
 
 void M4Cartridge::enc_reset()

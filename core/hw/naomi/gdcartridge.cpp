@@ -631,13 +631,6 @@ void *GDCartridge::GetDmaPtr(u32 &size)
 	return dimm_data + dimm_cur_address;
 }
 
-void GDCartridge::AdvancePtr(u32 size)
-{
-	dimm_cur_address += size;
-	if(dimm_cur_address >= dimm_data_size)
-		dimm_cur_address %= dimm_data_size;
-}
-
 bool GDCartridge::Read(u32 offset, u32 size, void *dst)
 {
 	if (dimm_data == NULL)

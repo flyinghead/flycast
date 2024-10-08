@@ -112,9 +112,9 @@ void WriteMem_naomi(u32 address, u32 data, u32 size)
 
 static int naomiDmaSched(int tag, int sch_cycl, int jitter, void *arg)
 {
-	u32 start = SB_GDSTAR & 0x1FFFFFE0;
-	u32 len = (SB_GDLEN + 31) & ~31;
-	SB_GDLEND = 0;
+	u32 start = SB_GDSTARD;
+	u32 len = std::min<int>(((SB_GDLEN + 31) & ~31) - SB_GDLEND, 1024);
+	SB_GDLEND += len;
 	while (len > 0)
 	{
 		u32 block_len = len;
@@ -124,20 +124,23 @@ static int naomiDmaSched(int tag, int sch_cycl, int jitter, void *arg)
 			INFO_LOG(NAOMI, "Aborted DMA transfer. Read past end of cart?");
 			for (u32 i = 0; i < len; i += 8, start += 8)
 				addrspace::write64(start, 0);
-			SB_GDLEND += len;
 			break;
 		}
 		WriteMemBlock_nommu_ptr(start, (u32*)ptr, block_len);
 		CurrentCartridge->AdvancePtr(block_len);
 		len -= block_len;
 		start += block_len;
-		SB_GDLEND += block_len;
 	}
 	SB_GDSTARD = start;
-	SB_GDST = 0;
-	asic_RaiseInterrupt(holly_GDROM_DMA);
-
-	return 0;
+	if (SB_GDLEN <= SB_GDLEND)
+	{
+		SB_GDST = 0;
+		asic_RaiseInterrupt(holly_GDROM_DMA);
+		return 0;
+	}
+	else {
+		return std::min<int>(SB_GDLEN - SB_GDLEND, 1024) * dmaXferDelay;
+	}
 }
 
 //Dma Start
@@ -156,7 +159,7 @@ static void Naomi_DmaStart(u32 addr, u32 data)
 	}
 	else if (!m3comm.DmaStart(addr, data) && CurrentCartridge != nullptr)
 	{
-		DEBUG_LOG(NAOMI, "NAOMI-DMA start addr %08X len %d", SB_GDSTAR, SB_GDLEN);
+		DEBUG_LOG(NAOMI, "NAOMI-DMA start addr %08X len %x", SB_GDSTAR, SB_GDLEN);
 		verify(1 == SB_GDDIR);
 		SB_GDST = 1;
 		SB_GDSTARD = SB_GDSTAR & 0x1FFFFFE0;
@@ -164,7 +167,7 @@ static void Naomi_DmaStart(u32 addr, u32 data)
 		// Max G1 bus rate: 50 MHz x 16 bits
 		// SH4_access990312_e.xls: 14.4 MB/s from GD-ROM to system RAM
 		// Here: 20 MB/s
-		sh4_sched_request(dmaSchedId, std::min<int>(SB_GDLEN * dmaXferDelay, SH4_MAIN_CLOCK));
+		sh4_sched_request(dmaSchedId, std::min<int>(SB_GDLEN, 1024) * dmaXferDelay);
 		return;
 	}
 	else
