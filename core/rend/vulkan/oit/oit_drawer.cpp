@@ -431,7 +431,6 @@ bool OITDrawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 			cmdBuffer.clearAttachments(vk::ClearAttachment(vk::ImageAspectFlagBits::eColor, 0, clear_colors[0]),
 					vk::ClearRect(viewport, 0, 1));
 		}
-		SetScissor(cmdBuffer, baseScissor);
 
 		// Tr modifier volumes
 		if (GetContext()->GetVendorID() != VulkanContext::VENDOR_QUALCOMM)	// Adreno bug
@@ -442,6 +441,7 @@ bool OITDrawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 				DrawModifierVolumes<true>(cmdBuffer, previous_pass.mvo_tr_count, current_pass.mvo_tr_count - previous_pass.mvo_tr_count, pvrrc.global_param_mvo_tr.data());
 		}
 
+		SetScissor(cmdBuffer, viewport);
 		vk::Pipeline pipeline = pipelineManager->GetFinalPipeline(dithering && finalPass);
 		cmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
 		quadBuffer->Bind(cmdBuffer);
