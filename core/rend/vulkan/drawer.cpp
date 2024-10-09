@@ -200,7 +200,7 @@ void Drawer::DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sor
 
 	if (tileClip == TileClipping::Inside || trilinearAlpha != 1.f || gpuPalette != 0)
 	{
-		std::array<float, 6> pushConstants = {
+		const std::array<float, 6> pushConstants = {
 				(float)scissorRect.offset.x,
 				(float)scissorRect.offset.y,
 				(float)scissorRect.offset.x + (float)scissorRect.extent.width,
@@ -336,7 +336,7 @@ void Drawer::DrawModVols(const vk::CommandBuffer& cmdBuffer, int first, int coun
 	}
 	cmdBuffer.bindVertexBuffers(0, curMainBuffer, {0});
 
-	std::array<float, 5> pushConstants = { 1 - FPU_SHAD_SCALE.scale_factor / 256.f, 0, 0, 0, 0 };
+	const std::array<float, 6> pushConstants = { 1 - FPU_SHAD_SCALE.scale_factor / 256.f, 0, 0, 0, 0, 0 };
 	cmdBuffer.pushConstants<float>(pipelineManager->GetPipelineLayout(), vk::ShaderStageFlagBits::eFragment, 0, pushConstants);
 
 	pipeline = pipelineManager->GetModifierVolumePipeline(ModVolMode::Final, 0, false);
@@ -430,7 +430,7 @@ bool Drawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 	cmdBuffer.bindIndexBuffer(curMainBuffer, offsets.indexOffset, vk::IndexType::eUint32);
 
 	// Make sure to push constants even if not used
-	std::array<float, 5> pushConstants = { 0, 0, 0, 0, 0 };
+	const std::array<float, 6> pushConstants = { 0, 0, 0, 0, 0, 0 };
 	cmdBuffer.pushConstants<float>(pipelineManager->GetPipelineLayout(), vk::ShaderStageFlagBits::eFragment, 0, pushConstants);
 
 	RenderPass previous_pass{};
