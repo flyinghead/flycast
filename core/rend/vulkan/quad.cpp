@@ -137,7 +137,7 @@ void QuadPipeline::Init(ShaderManager *shaderManager, vk::RenderPass renderPass,
 						vk::SamplerAddressMode::eClampToEdge,
 						vk::SamplerAddressMode::eClampToEdge,
 						vk::SamplerAddressMode::eClampToEdge, 0.0f, false,
-						16.0f, false, vk::CompareOp::eNever, 0.0f, 0.0f,
+						16.0f, false, vk::CompareOp::eNever, 0.0f, vk::LodClampNone,
 						vk::BorderColor::eFloatOpaqueBlack));
 	}
 	if (!nearestSampler)
@@ -149,7 +149,7 @@ void QuadPipeline::Init(ShaderManager *shaderManager, vk::RenderPass renderPass,
 						vk::SamplerAddressMode::eClampToEdge,
 						vk::SamplerAddressMode::eClampToEdge,
 						vk::SamplerAddressMode::eClampToEdge, 0.0f, false,
-						16.0f, false, vk::CompareOp::eNever, 0.0f, 0.0f,
+						16.0f, false, vk::CompareOp::eNever, 0.0f, vk::LodClampNone,
 						vk::BorderColor::eFloatOpaqueBlack));
 	}
 	if (this->renderPass != renderPass)

@@ -100,7 +100,7 @@ public:
 								vk::SamplerAddressMode::eClampToBorder,
 								vk::SamplerAddressMode::eClampToBorder,
 								vk::SamplerAddressMode::eClampToEdge, 0.0f, false,
-								0.f, false, vk::CompareOp::eNever, 0.0f, VK_LOD_CLAMP_NONE,
+								0.f, false, vk::CompareOp::eNever, 0.0f, vk::LodClampNone,
 								vk::BorderColor::eFloatTransparentBlack));
 			}
 			sampler = (VkSampler)*pointSampler;
@@ -116,7 +116,7 @@ public:
 								vk::SamplerAddressMode::eClampToBorder,
 								vk::SamplerAddressMode::eClampToBorder,
 								vk::SamplerAddressMode::eClampToEdge, 0.0f, false,
-								0.f, false, vk::CompareOp::eNever, 0.0f, VK_LOD_CLAMP_NONE,
+								0.f, false, vk::CompareOp::eNever, 0.0f, vk::LodClampNone,
 								vk::BorderColor::eFloatTransparentBlack));
 			}
 			sampler = (VkSampler)*linearSampler;

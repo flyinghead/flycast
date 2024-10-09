@@ -398,7 +398,7 @@ public:
 					vk::SamplerCreateInfo(vk::SamplerCreateFlags(), vk::Filter::eLinear, vk::Filter::eLinear,
 										vk::SamplerMipmapMode::eLinear, vk::SamplerAddressMode::eClampToEdge, vk::SamplerAddressMode::eClampToEdge,
 										vk::SamplerAddressMode::eClampToEdge, 0.0f, false, 16.0f, false,
-										vk::CompareOp::eNever, 0.0f, 0.0f, vk::BorderColor::eFloatOpaqueBlack));
+										vk::CompareOp::eNever, 0.0f, vk::LodClampNone, vk::BorderColor::eFloatOpaqueBlack));
 		}
 		if (this->renderPass != renderPass)
 		{
