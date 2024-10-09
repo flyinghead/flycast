@@ -92,6 +92,7 @@ public:
 	bool SupportsSamplerAnisotropy() const { return samplerAnisotropy; }
 	bool SupportsDedicatedAllocation() const { return dedicatedAllocationSupported; }
 	bool hasPerPixel() override { return fragmentStoresAndAtomics; }
+	bool hasProvokingVertex() { return provokingVertexSupported; }
 	const VMAllocator& GetAllocator() const { return allocator; }
 	vk::DeviceSize GetMaxMemoryAllocationSize() const { return maxMemoryAllocationSize; }
 	f32 GetMaxSamplerAnisotropy() const { return samplerAnisotropy ? maxSamplerAnisotropy : 1.f; }
@@ -129,10 +130,11 @@ private:
 	bool optimalTilingSupported1555 = false;
 	bool optimalTilingSupported4444 = false;
 public:
+	bool fragmentStoresAndAtomics = false;
 	bool samplerAnisotropy = false;
 	f32 maxSamplerAnisotropy = 0.f;
 	bool dedicatedAllocationSupported = false;
-	bool fragmentStoresAndAtomics = false;
+	bool provokingVertexSupported = false;
 private:
 	u32 vendorID = 0;
 
