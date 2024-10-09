@@ -158,10 +158,9 @@ bool VulkanContext::InitInstance(const char** extensions, uint32_t extensions_co
 		bool vulkan11 = false;
 		if (VULKAN_HPP_DEFAULT_DISPATCHER.vkEnumerateInstanceVersion != nullptr)
 		{
-			u32 apiVersion = vk::enumerateInstanceVersion();
+			const u32 apiVersion = vk::enumerateInstanceVersion();
 
-			vulkan11 = VK_API_VERSION_MAJOR(apiVersion) > 1
-					|| (VK_API_VERSION_MAJOR(apiVersion) == 1 && VK_API_VERSION_MINOR(apiVersion) >= 1);
+			vulkan11 = (apiVersion >= VK_API_VERSION_1_1);
 		}
 
 		vk::ApplicationInfo applicationInfo("Flycast", 1, "Flycast", 1, vulkan11 ? VK_API_VERSION_1_1 : VK_API_VERSION_1_0);
