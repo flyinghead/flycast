@@ -125,7 +125,6 @@ protected:
 
 	static void reset()
 	{
-		tileclip_val = 0;
 		memset(FaceBaseColor, 0xff, sizeof(FaceBaseColor));
 		memset(FaceOffsColor, 0xff, sizeof(FaceOffsColor));
 		memset(FaceBaseColor1, 0xff, sizeof(FaceBaseColor1));
@@ -398,7 +397,7 @@ strip_end:
 
 				//32B
 			case ParamType_User_Tile_Clip:
-				SetTileClip(data->data_32[3] & 63, data->data_32[4] & 31, data->data_32[5] & 63, data->data_32[6] & 31);
+				setClipRect(data->data_32[3] & 63, data->data_32[4] & 31, data->data_32[5] & 63, data->data_32[6] & 31);
 				data += SZ32;
 				break;
 
@@ -414,7 +413,7 @@ strip_end:
 				//PolyType :32B/64B
 			case ParamType_Polygon_or_Modifier_Volume:
 				{
-					TileClipMode(data->pcw.User_Clip);
+					setClipMode(data->pcw.User_Clip);
 					//Yep , C++ IS lame & limited
 					#include "ta_const_df.h"
 					if (CurrentList == ListType_None && !startList(data->pcw.ListType))
@@ -466,7 +465,7 @@ strip_end:
 				//32B
 				//Sets Sprite info , and switches to ta_sprite_data function
 			case ParamType_Sprite:
-				TileClipMode(data->pcw.User_Clip);
+				setClipMode(data->pcw.User_Clip);
 				if (CurrentList != ListType_None || startList(data->pcw.ListType))
 				{
 					VertexDataFP = ta_sprite_data;
@@ -502,23 +501,25 @@ public:
 	{
 		TaCmd = ta_main;
 		BaseTAParser::reset();
+		setClipRect(0, 0, 39, 14);
+		setClipMode(0);
 	}
 
 private:
-	static void SetTileClip(u32 xmin,u32 ymin,u32 xmax,u32 ymax)
+	static void setClipRect(u32 xmin, u32 ymin, u32 xmax, u32 ymax)
 	{
-		u32 rv=tileclip_val & 0xF0000000;
-		rv|=xmin; //6 bits
-		rv|=xmax<<6; //6 bits
-		rv|=ymin<<12; //5 bits
-		rv|=ymax<<17; //5 bits
-		tileclip_val=rv;
+		u32 rv = tileclip_val & 0xF0000000;
+		rv |= xmin; 		// 6 bits
+		rv |= xmax << 6;	// 6 bits
+		rv |= ymin << 12;	// 5 bits
+		rv |= ymax << 17;	// 5 bits
+		tileclip_val = rv;
 	}
 
-	static void TileClipMode(u32 mode)
+	static void setClipMode(u32 mode)
 	{
 		//Group_En bit seems ignored, thanks p1pkin
-		tileclip_val=(tileclip_val&(~0xF0000000)) | (mode<<28);
+		tileclip_val = (tileclip_val & ~0xF0000000) | (mode << 28);
 	}
 
 	//Polys  -- update code on sprites if that gets updated too --

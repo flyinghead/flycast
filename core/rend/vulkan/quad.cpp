@@ -23,6 +23,19 @@
 
 #include <memory>
 
+namespace {
+	size_t hashQuadVertex(const QuadVertex& vertex)
+	{
+		size_t seed = 0;
+		seed ^= std::hash<float>{}(vertex.x) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+		seed ^= std::hash<float>{}(vertex.y) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+		seed ^= std::hash<float>{}(vertex.z) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+		seed ^= std::hash<float>{}(vertex.u) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+		seed ^= std::hash<float>{}(vertex.v) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+		return seed;
+	}
+}
+
 static VulkanContext *GetContext()
 {
 	return VulkanContext::Instance();
@@ -169,7 +182,7 @@ void QuadDrawer::Init(QuadPipeline *pipeline)
 		descSet.reset();
 }
 
-void QuadDrawer::Draw(vk::CommandBuffer commandBuffer, vk::ImageView imageView, QuadVertex vertices[], bool nearestFilter, const float *color)
+void QuadDrawer::Draw(vk::CommandBuffer commandBuffer, vk::ImageView imageView, QuadVertex vertices[4], bool nearestFilter, const float *color)
 {
 	VulkanContext *context = GetContext();
 	auto &descSet = descriptorSets[context->GetCurrentImageIndex()];
@@ -197,4 +210,14 @@ void QuadDrawer::Draw(vk::CommandBuffer commandBuffer, vk::ImageView imageView, 
 	}
 	commandBuffer.pushConstants(pipeline->GetPipelineLayout(), vk::ShaderStageFlagBits::eFragment, 0, sizeof(float) * 4, color);
 	buffer->Draw(commandBuffer);
+}
+
+size_t QuadBuffer::hashQuadVertexData(QuadVertex vertices[4]) const
+{
+	size_t seed = 0;
+	seed ^= hashQuadVertex(vertices[0]) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+	seed ^= hashQuadVertex(vertices[1]) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+	seed ^= hashQuadVertex(vertices[2]) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+	seed ^= hashQuadVertex(vertices[3]) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+	return seed;
 }

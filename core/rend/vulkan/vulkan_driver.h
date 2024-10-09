@@ -99,7 +99,7 @@ public:
 								vk::SamplerMipmapMode::eNearest,
 								vk::SamplerAddressMode::eClampToBorder,
 								vk::SamplerAddressMode::eClampToBorder,
-								vk::SamplerAddressMode::eClampToEdge, 0.0f, false,
+								vk::SamplerAddressMode::eClampToBorder, 0.0f, false,
 								0.f, false, vk::CompareOp::eNever, 0.0f, vk::LodClampNone,
 								vk::BorderColor::eFloatTransparentBlack));
 			}
@@ -115,7 +115,7 @@ public:
 								vk::SamplerMipmapMode::eLinear,
 								vk::SamplerAddressMode::eClampToBorder,
 								vk::SamplerAddressMode::eClampToBorder,
-								vk::SamplerAddressMode::eClampToEdge, 0.0f, false,
+								vk::SamplerAddressMode::eClampToBorder, 0.0f, false,
 								0.f, false, vk::CompareOp::eNever, 0.0f, vk::LodClampNone,
 								vk::BorderColor::eFloatTransparentBlack));
 			}

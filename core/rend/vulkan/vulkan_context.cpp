@@ -407,49 +407,47 @@ bool VulkanContext::InitDevice()
 		else
 			DEBUG_LOG(RENDERER, "Using distinct Graphics and Present queue families");
 
-		// Enable VK_KHR_dedicated_allocation if available
-		bool getMemReq2Supported = false;
-		dedicatedAllocationSupported = false;
-		std::vector<const char *> deviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
-		for (const auto& property : physicalDevice.enumerateDeviceExtensionProperties())
+
+		std::set<std::string> supportedExtensions;
+
+		const auto deviceExtensionProperties = physicalDevice.enumerateDeviceExtensionProperties();
+		for (const auto& property : deviceExtensionProperties)
 		{
-			if (!strcmp(property.extensionName, VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME))
+			supportedExtensions.insert(property.extensionName);
+		}
+
+		std::vector<const char*> enabledExtensions;
+
+		const auto tryAddDeviceExtension = [&supportedExtensions = std::as_const(supportedExtensions), &enabledExtensions]
+		(std::string_view extensionName) -> bool
+		{
+			if (supportedExtensions.count(extensionName.data()))
 			{
-				deviceExtensions.push_back(VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME);
-				getMemReq2Supported = true;
+				enabledExtensions.push_back(extensionName.data());
+				NOTICE_LOG(RENDERER, "Device extension enabled: %s", extensionName.data());
+				return true;
 			}
-			else if (!strcmp(property.extensionName, VK_KHR_DEDICATED_ALLOCATION_EXTENSION_NAME))
-			{
-				deviceExtensions.push_back(VK_KHR_DEDICATED_ALLOCATION_EXTENSION_NAME);
-				dedicatedAllocationSupported = true;
-			}
+			NOTICE_LOG(RENDERER, "Device extension unavailable: %s", extensionName.data());
+			return false;
+		};
+
+		// Required swapchain extension
+		tryAddDeviceExtension(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
+
+		// Enable VK_KHR_dedicated_allocation if available
+		const bool getMemReq2Supported = tryAddDeviceExtension(VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME);
+		dedicatedAllocationSupported = tryAddDeviceExtension(VK_KHR_DEDICATED_ALLOCATION_EXTENSION_NAME);
+		dedicatedAllocationSupported &= getMemReq2Supported;
+
 #ifdef VK_ENABLE_BETA_EXTENSIONS
-			else if (!strcmp(property.extensionName, VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME))
-				deviceExtensions.push_back(VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME);
+		tryAddDeviceExtension(VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME);
 #endif
 #ifdef VK_USE_PLATFORM_METAL_EXT
-			else if (!strcmp(property.extensionName, VK_EXT_METAL_OBJECTS_EXTENSION_NAME))
-				deviceExtensions.push_back(VK_EXT_METAL_OBJECTS_EXTENSION_NAME);
+		tryAddDeviceExtension(VK_EXT_METAL_OBJECTS_EXTENSION_NAME);
 #endif
 #ifdef VK_DEBUG
-			else if (!strcmp(property.extensionName, VK_EXT_DEBUG_MARKER_EXTENSION_NAME))
-			{
-				NOTICE_LOG(RENDERER, "Debug extension %s available", property.extensionName.data());
-				deviceExtensions.push_back(VK_EXT_DEBUG_MARKER_EXTENSION_NAME);
-			}
-			else if(!strcmp(property.extensionName, VK_EXT_DEBUG_REPORT_EXTENSION_NAME))
-			{
-				NOTICE_LOG(RENDERER, "Debug extension %s available", property.extensionName.data());
-				deviceExtensions.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
-			}
-			else if (!strcmp(property.extensionName, VK_EXT_DEBUG_UTILS_EXTENSION_NAME))
-			{
-				NOTICE_LOG(RENDERER, "Debug extension %s available", property.extensionName.data());
-				deviceExtensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
-			}
+		tryAddDeviceExtension(VK_EXT_DEBUG_MARKER_EXTENSION_NAME);
 #endif
-		}
-		dedicatedAllocationSupported &= getMemReq2Supported;
 
 		// create a UniqueDevice
 		float queuePriority = 1.0f;
@@ -460,7 +458,7 @@ bool VulkanContext::InitDevice()
 		if (samplerAnisotropy)
 			features.samplerAnisotropy = true;
 		device = physicalDevice.createDeviceUnique(vk::DeviceCreateInfo(vk::DeviceCreateFlags(), deviceQueueCreateInfo,
-				nullptr, deviceExtensions, &features));
+				nullptr, enabledExtensions, &features));
 
 #if VULKAN_HPP_DISPATCH_LOADER_DYNAMIC == 1
 		VULKAN_HPP_DEFAULT_DISPATCHER.init(*device);
@@ -924,7 +922,7 @@ void VulkanContext::Present() noexcept
 
 void VulkanContext::DrawFrame(vk::ImageView imageView, const vk::Extent2D& extent, float aspectRatio)
 {
-	QuadVertex vtx[] {
+	QuadVertex vtx[4] {
 		{ -1, -1, 0, 0, 0 },
 		{  1, -1, 0, 1, 0 },
 		{ -1,  1, 0, 0, 1 },
@@ -1314,7 +1312,7 @@ bool VulkanContext::GetLastFrame(std::vector<u8>& data, int& width, int& height)
 	pipeline.BindPipeline(*commandBuffer);
 
 	// Draw
-	QuadVertex vtx[] {
+	QuadVertex vtx[4] {
 		{ -1, -1, 0, 0, 0 },
 		{  1, -1, 0, 1, 0 },
 		{ -1,  1, 0, 0, 1 },
