@@ -28,6 +28,9 @@
 void OITDrawer::DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool autosort, Pass pass,
 		const PolyParam& poly, u32 first, u32 count)
 {
+	static const float scopeColor[4] = { 0.25f, 0.50f, 0.25f, 1.0f };
+	CommandBufferDebugScope _(cmdBuffer, "DrawPoly(OIT)", scopeColor);
+
 	vk::Rect2D scissorRect;
 	TileClipping tileClip = SetTileClip(poly.tileclip, scissorRect);
 	if (tileClip == TileClipping::Outside)
@@ -133,6 +136,10 @@ void OITDrawer::DrawList(const vk::CommandBuffer& cmdBuffer, u32 listType, bool 
 {
 	if (first == last)
 		return;
+
+	static const float scopeColor[4] = { 0.50f, 0.25f, 0.50f, 1.0f };
+	CommandBufferDebugScope _(cmdBuffer, "DrawList(OIT)", scopeColor);
+
 	const PolyParam *pp_end = polys.data() + last;
 	for (const PolyParam *pp = &polys[first]; pp != pp_end; pp++)
 		if (pp->count > 2)
@@ -144,6 +151,9 @@ void OITDrawer::DrawModifierVolumes(const vk::CommandBuffer& cmdBuffer, int firs
 {
 	if (count == 0 || pvrrc.modtrig.empty() || !config::ModifierVolumes)
 		return;
+
+	static const float scopeColor[4] = { 0.75f, 0.25f, 0.25f, 1.0f };
+	CommandBufferDebugScope _(cmdBuffer, "DrawModVols(OIT)", scopeColor);
 
 	cmdBuffer.bindVertexBuffers(0, curMainBuffer, offsets.modVolOffset);
 	SetScissor(cmdBuffer, baseScissor);
@@ -277,6 +287,9 @@ vk::Framebuffer OITTextureDrawer::getFramebuffer(int renderPass, int renderPassC
 bool OITDrawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 {
 	vk::CommandBuffer cmdBuffer = NewFrame();
+
+	static const float scopeColor[4] = { 0.75f, 0.75f, 0.75f, 1.0f };
+	CommandBufferDebugScope _(cmdBuffer, "Draw(OIT)", scopeColor);
 
 	if (needAttachmentTransition)
 	{

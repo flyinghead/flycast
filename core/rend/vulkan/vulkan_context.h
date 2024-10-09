@@ -21,6 +21,8 @@
 #pragma once
 
 #ifdef USE_VULKAN
+#include "vulkan.h"
+
 #include <stdexcept>
 
 class InvalidVulkanContext : public std::runtime_error {
@@ -28,11 +30,61 @@ public:
 	InvalidVulkanContext() : std::runtime_error("Invalid Vulkan context") {}
 };
 
+// RAII utility-object for adding debug-scopes to command buffers
+#ifdef VK_DEBUG
+class CommandBufferDebugScope {
+private:
+	const vk::CommandBuffer commandBuffer;
+
+public:
+	CommandBufferDebugScope(
+		vk::CommandBuffer targetCommandBuffer,
+		std::string_view scopeName, const float scopeColor[4]
+	) : commandBuffer(targetCommandBuffer)
+	{
+		vk::DebugUtilsLabelEXT label{};
+		label.pLabelName = scopeName.data();
+		std::copy_n(scopeColor, 4, label.color.data());
+		commandBuffer.beginDebugUtilsLabelEXT(label);
+	}
+
+	void operator()(std::string_view scopeName, const float scopeColor[4]) const
+	{
+		vk::DebugUtilsLabelEXT label{};
+		label.pLabelName = scopeName.data();
+		std::copy_n(scopeColor, 4, label.color.data());
+		commandBuffer.insertDebugUtilsLabelEXT(label);
+	}
+
+	~CommandBufferDebugScope()
+	{
+		commandBuffer.endDebugUtilsLabelEXT();
+	}
+};
+#else
+class CommandBufferDebugScope {
+public:
+	CommandBufferDebugScope(
+		vk::CommandBuffer targetCommandBuffer,
+		std::string_view scopeName, const float scopeColor[4]
+	)
+	{
+	}
+
+	void operator()(std::string_view scopeName, const float scopeColor[4]) const
+	{
+	}
+
+	~CommandBufferDebugScope()
+	{
+	}
+};
+#endif
+
 #ifdef LIBRETRO
 #include "vk_context_lr.h"
 #else
 
-#include "vulkan.h"
 #include "vmallocator.h"
 #include "quad.h"
 #include "rend/TexCache.h"

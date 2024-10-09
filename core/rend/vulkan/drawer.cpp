@@ -82,6 +82,9 @@ void BaseDrawer::SetBaseScissor(const vk::Extent2D& viewport)
 
 void BaseDrawer::scaleAndWriteFramebuffer(vk::CommandBuffer commandBuffer, FramebufferAttachment *finalFB)
 {
+	static const float scopeColor[4] = { 0.25f, 0.25f, 0.25f, 0.25f };
+	CommandBufferDebugScope _(commandBuffer, "scaleAndWriteFramebuffer", scopeColor);
+
 	u32 width = (pvrrc.ta_GLOB_TILE_CLIP.tile_x_num + 1) * 32;
 	u32 height = (pvrrc.ta_GLOB_TILE_CLIP.tile_y_num + 1) * 32;
 
@@ -162,6 +165,9 @@ void BaseDrawer::scaleAndWriteFramebuffer(vk::CommandBuffer commandBuffer, Frame
 
 void Drawer::DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sortTriangles, const PolyParam& poly, u32 first, u32 count)
 {
+	static const float scopeColor[4] = { 0.25f, 0.50f, 0.25f, 1.0f };
+	CommandBufferDebugScope _(cmdBuffer, "DrawPoly", scopeColor);
+
 	vk::Rect2D scissorRect;
 	TileClipping tileClip = SetTileClip(poly.tileclip, scissorRect);
 	if (tileClip == TileClipping::Outside)
@@ -239,6 +245,10 @@ void Drawer::DrawSorted(const vk::CommandBuffer& cmdBuffer, const std::vector<So
 {
 	if (first == last)
 		return;
+
+	static const float scopeColor[4] = { 0.25f, 0.50f, 0.50f, 1.0f };
+	CommandBufferDebugScope _(cmdBuffer, "DrawSorted", scopeColor);
+
 	for (u32 idx = first; idx < last; idx++)
 		DrawPoly(cmdBuffer, ListType_Translucent, true, pvrrc.global_param_tr[polys[idx].polyIndex], polys[idx].first, polys[idx].count);
 	if (multipass && config::TranslucentPolygonDepthMask)
@@ -267,6 +277,10 @@ void Drawer::DrawList(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sor
 {
 	if (first == last)
 		return;
+
+	static const float scopeColor[4] = { 0.50f, 0.25f, 0.50f, 1.0f };
+	CommandBufferDebugScope _(cmdBuffer, "DrawList", scopeColor);
+
 	const PolyParam *pp_end = polys.data() + last;
 	for (const PolyParam *pp = &polys[first]; pp != pp_end; pp++)
 		if (pp->count > 2)
@@ -277,6 +291,9 @@ void Drawer::DrawModVols(const vk::CommandBuffer& cmdBuffer, int first, int coun
 {
 	if (count == 0 || pvrrc.modtrig.empty() || !config::ModifierVolumes)
 		return;
+
+	static const float scopeColor[4] = { 0.75f, 0.25f, 0.25f, 1.0f };
+	CommandBufferDebugScope _(cmdBuffer, "DrawModVols", scopeColor);
 
 	cmdBuffer.bindVertexBuffers(0, curMainBuffer, offsets.modVolOffset);
 	SetScissor(cmdBuffer, baseScissor);
@@ -383,6 +400,9 @@ bool Drawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 	currentScissor = vk::Rect2D();
 
 	vk::CommandBuffer cmdBuffer = BeginRenderPass();
+
+	static const float scopeColor[4] = { 0.75f, 0.75f, 0.75f, 1.0f };
+	CommandBufferDebugScope _(cmdBuffer, "Draw", scopeColor);
 
 	setFirstProvokingVertex(pvrrc);
 

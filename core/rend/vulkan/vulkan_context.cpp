@@ -938,6 +938,10 @@ void VulkanContext::DrawFrame(vk::ImageView imageView, const vk::Extent2D& exten
 	vtx[2].y = vtx[3].y = vtx[0].y + 2;
 
 	vk::CommandBuffer commandBuffer = GetCurrentCommandBuffer();
+
+	static const float scopeColor[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+	CommandBufferDebugScope _(commandBuffer, "DrawFrame", scopeColor);
+
 	if (config::Rotate90)
 		quadRotatePipeline->BindPipeline(commandBuffer);
 	else
@@ -1291,6 +1295,10 @@ bool VulkanContext::GetLastFrame(std::vector<u8>& data, int& width, int& height)
 	vk::UniqueCommandBuffer commandBuffer = std::move(device->allocateCommandBuffersUnique(
 			vk::CommandBufferAllocateInfo(*commandPools.back(), vk::CommandBufferLevel::ePrimary, 1)).front());
 	commandBuffer->begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
+
+	static const float scopeColor[4] = { 1.0f, 1.0f, 0.0f, 1.0f };
+	CommandBufferDebugScope _(commandBuffer.get(), "GetLastFrame", scopeColor);
+
 	// render pass
 	vk::AttachmentDescription attachmentDescription = vk::AttachmentDescription(vk::AttachmentDescriptionFlags(), vk::Format::eR8G8B8A8Unorm, vk::SampleCountFlagBits::e1,
 			vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eStore, vk::AttachmentLoadOp::eDontCare, vk::AttachmentStoreOp::eDontCare,

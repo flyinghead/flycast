@@ -59,8 +59,13 @@ public:
 				context->PresentLastFrame();
 			}
 			if (!justStarted)
+			{
+				const vk::CommandBuffer targetCommandBuffer = getCommandBuffer();
+				static const float scopeColor[4] = {0.26f, 0.59f, 0.98f, 0.31f};
+				CommandBufferDebugScope _(targetCommandBuffer, "ImGui", scopeColor);
 				// Record Imgui Draw Data and draw funcs into command buffer
 				ImGui_ImplVulkan_RenderDrawData(drawData, (VkCommandBuffer)getCommandBuffer());
+			}
 			justStarted = false;
 			if (!rendering || newFrameStarted)
 				context->EndFrame();
