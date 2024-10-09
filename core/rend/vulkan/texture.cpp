@@ -25,6 +25,9 @@
 
 void setImageLayout(vk::CommandBuffer const& commandBuffer, vk::Image image, vk::Format format, u32 mipmapLevels, vk::ImageLayout oldImageLayout, vk::ImageLayout newImageLayout)
 {
+	static const float scopeColor[4] = { 0.75f, 0.75f, 0.0f, 1.0f };
+	CommandBufferDebugScope _(commandBuffer, "setImageLayout", scopeColor);
+
 	vk::AccessFlags sourceAccessMask;
 	switch (oldImageLayout)
 	{
@@ -260,6 +263,9 @@ void Texture::SetImage(u32 srcSize, const void *srcData, bool isNew, bool genMip
 {
 	verify((bool)commandBuffer);
 
+	static const float scopeColor[4] = { 1.0f, 1.0f, 0.0f, 1.0f };
+	CommandBufferDebugScope _(commandBuffer, "SetImage", scopeColor);
+
 	if (!isNew && !needsStaging)
 		setImageLayout(commandBuffer, image.get(), format, mipmapLevels, vk::ImageLayout::eShaderReadOnlyOptimal, vk::ImageLayout::eGeneral);
 
@@ -354,6 +360,9 @@ void Texture::SetImage(u32 srcSize, const void *srcData, bool isNew, bool genMip
 
 void Texture::GenerateMipmaps()
 {
+	static const float scopeColor[4] = { 0.75f, 0.75f, 0.0f, 1.0f };
+	CommandBufferDebugScope _(commandBuffer, "GenerateMipmaps", scopeColor);
+
 	u32 mipWidth = extent.width;
 	u32 mipHeight = extent.height;
 	vk::ImageMemoryBarrier barrier(vk::AccessFlagBits::eTransferWrite, vk::AccessFlagBits::eTransferRead,

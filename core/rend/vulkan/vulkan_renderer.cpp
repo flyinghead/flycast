@@ -170,6 +170,10 @@ void BaseVulkanRenderer::DrawOSD(bool clear_screen)
 		}
 
 		const vk::CommandBuffer cmdBuffer = GetContext()->GetCurrentCommandBuffer();
+
+		static const float scopeColor[4] = { 0.0f, 1.0f, 0.0f, 1.0f };
+		CommandBufferDebugScope _(cmdBuffer, "DrawOSD", scopeColor);
+
 		cmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, osdPipeline.GetPipeline());
 
 		osdPipeline.BindDescriptorSets(cmdBuffer);
@@ -203,25 +207,30 @@ void BaseVulkanRenderer::RenderFramebuffer(const FramebufferInfo& info)
 
 	fbCommandPool.BeginFrame();
 	vk::CommandBuffer commandBuffer = fbCommandPool.Allocate();
+
 	commandBuffer.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
 	curTexture->SetCommandBuffer(commandBuffer);
-
-	if (info.fb_r_ctrl.fb_enable == 0 || info.vo_control.blank_video == 1)
 	{
-		// Video output disabled
-		u8 rgba[] { (u8)info.vo_border_col._red, (u8)info.vo_border_col._green, (u8)info.vo_border_col._blue, 255 };
-		curTexture->UploadToGPU(1, 1, rgba, false);
-	}
-	else
-	{
-		PixelBuffer<u32> pb;
-		int width;
-		int height;
-		ReadFramebuffer(info, pb, width, height);
+		static const float scopeColor[4] = { 0.0f, 1.0f, 0.0f, 1.0f };
+		CommandBufferDebugScope _(commandBuffer, "RenderFramebuffer", scopeColor);
 
-		curTexture->UploadToGPU(width, height, (u8*)pb.data(), false);
-	}
+		if (info.fb_r_ctrl.fb_enable == 0 || info.vo_control.blank_video == 1)
+		{
+			// Video output disabled
+			u8 rgba[]{ (u8)info.vo_border_col._red, (u8)info.vo_border_col._green, (u8)info.vo_border_col._blue, 255 };
+			curTexture->UploadToGPU(1, 1, rgba, false);
+		}
+		else
+		{
+			PixelBuffer<u32> pb;
+			int width;
+			int height;
+			ReadFramebuffer(info, pb, width, height);
 
+			curTexture->UploadToGPU(width, height, (u8*)pb.data(), false);
+		}
+
+	}
 	curTexture->SetCommandBuffer(nullptr);
 	commandBuffer.end();
 	fbCommandPool.EndFrame();
