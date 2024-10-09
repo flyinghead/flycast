@@ -329,7 +329,7 @@ void VulkanContext::PresentFrame(vk::Image image, vk::ImageView imageView, const
 	getVideoShift(shiftX, shiftY);
 
 	beginFrame(extent);
-	QuadVertex vtx[] {
+	QuadVertex vtx[4] {
 		{ -1, -1, 0, 0, 0 },
 		{  1, -1, 0, 1, 0 },
 		{ -1,  1, 0, 0, 1 },

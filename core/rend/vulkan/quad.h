@@ -50,11 +50,12 @@ public:
 		commandBuffer.draw(4, 1, 0, 0);
 	}
 
-	void Update(QuadVertex vertices[] = nullptr)
+	void Update(QuadVertex vertices[4] = nullptr)
 	{
 		if (vertices == nullptr)
 		{
-			static QuadVertex defaultVtx[] {
+			static QuadVertex defaultVtx[4]
+			{
 				{ -1.f, -1.f, 0.f, 0.f, 0.f },
 				{  1.f, -1.f, 0.f, 1.f, 0.f },
 				{ -1.f,  1.f, 0.f, 0.f, 1.f },
@@ -62,10 +63,24 @@ public:
 			};
 			vertices = defaultVtx;
 		};
+
+		const size_t quadVerticesHash = hashQuadVertexData(vertices);;
+		if (quadVerticesHash == lastUploadHash)
+		{
+			// data already uploaded
+			return;
+		}
+
+		// new data to upload, update hash
+		lastUploadHash = quadVerticesHash;
 		buffer->upload(sizeof(QuadVertex) * 4, vertices);
+
 	}
 private:
 	std::unique_ptr<BufferData> buffer;
+
+	size_t hashQuadVertexData(QuadVertex vertices[4]) const;
+	size_t lastUploadHash = 0;
 };
 
 class QuadPipeline
@@ -119,7 +134,7 @@ public:
 	QuadDrawer& operator=(const QuadDrawer &) = delete;
 
 	void Init(QuadPipeline *pipeline);
-	void Draw(vk::CommandBuffer commandBuffer, vk::ImageView imageView, QuadVertex vertices[] = nullptr, bool nearestFilter = false, const float *color = nullptr);
+	void Draw(vk::CommandBuffer commandBuffer, vk::ImageView imageView, QuadVertex vertices[4] = nullptr, bool nearestFilter = false, const float *color = nullptr);
 private:
 	QuadPipeline *pipeline = nullptr;
 	std::unique_ptr<QuadBuffer> buffer;

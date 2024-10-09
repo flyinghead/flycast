@@ -924,7 +924,7 @@ void VulkanContext::Present() noexcept
 
 void VulkanContext::DrawFrame(vk::ImageView imageView, const vk::Extent2D& extent, float aspectRatio)
 {
-	QuadVertex vtx[] {
+	QuadVertex vtx[4] {
 		{ -1, -1, 0, 0, 0 },
 		{  1, -1, 0, 1, 0 },
 		{ -1,  1, 0, 0, 1 },
@@ -1314,7 +1314,7 @@ bool VulkanContext::GetLastFrame(std::vector<u8>& data, int& width, int& height)
 	pipeline.BindPipeline(*commandBuffer);
 
 	// Draw
-	QuadVertex vtx[] {
+	QuadVertex vtx[4] {
 		{ -1, -1, 0, 0, 0 },
 		{  1, -1, 0, 1, 0 },
 		{ -1,  1, 0, 0, 1 },
