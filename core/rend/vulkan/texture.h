@@ -125,6 +125,11 @@ public:
 		const vk::SamplerAddressMode vRepeat = tsp.ClampV ? vk::SamplerAddressMode::eClampToEdge
 				: tsp.FlipV ? vk::SamplerAddressMode::eMirroredRepeat : vk::SamplerAddressMode::eRepeat;
 
+		// The W-axis is unused for 2D textures
+		// Try to keep all three of the wrapping-modes the same by just repeating vRepeat for wRepeat
+		// BestPractices-Arm-vkCreateSampler-different-wrapping-modes
+		const vk::SamplerAddressMode wRepeat = vRepeat;
+
 		const bool anisotropicFiltering = config::AnisotropicFiltering > 1 && VulkanContext::Instance()->SupportsSamplerAnisotropy()
 				&& filter == vk::Filter::eLinear && !punchThrough;
 #ifndef __APPLE__
@@ -137,7 +142,7 @@ public:
 		return samplers.emplace(
 					std::make_pair(samplerHash, VulkanContext::Instance()->GetDevice().createSamplerUnique(
 						vk::SamplerCreateInfo(vk::SamplerCreateFlags(), filter, filter,
-							mipmapMode, uRepeat, vRepeat, vk::SamplerAddressMode::eClampToEdge, mipLodBias,
+							mipmapMode, uRepeat, vRepeat, wRepeat, mipLodBias,
 							anisotropicFiltering, std::min((float)config::AnisotropicFiltering, VulkanContext::Instance()->GetMaxSamplerAnisotropy()),
 							false, vk::CompareOp::eNever,
 							0.0f, vk::LodClampNone, vk::BorderColor::eFloatOpaqueBlack)))).first->second.get();
