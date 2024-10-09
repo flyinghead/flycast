@@ -12,7 +12,7 @@ assignees: ''
 
 Platform / OS / Hardware: 
 
-Github hash: 
+Flycast version: 
 
 Hardware: 
 
