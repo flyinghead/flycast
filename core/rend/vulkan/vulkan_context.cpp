@@ -158,10 +158,9 @@ bool VulkanContext::InitInstance(const char** extensions, uint32_t extensions_co
 		bool vulkan11 = false;
 		if (VULKAN_HPP_DEFAULT_DISPATCHER.vkEnumerateInstanceVersion != nullptr)
 		{
-			u32 apiVersion = vk::enumerateInstanceVersion();
+			const u32 apiVersion = vk::enumerateInstanceVersion();
 
-			vulkan11 = VK_API_VERSION_MAJOR(apiVersion) > 1
-					|| (VK_API_VERSION_MAJOR(apiVersion) == 1 && VK_API_VERSION_MINOR(apiVersion) >= 1);
+			vulkan11 = (apiVersion >= VK_API_VERSION_1_1);
 		}
 
 		vk::ApplicationInfo applicationInfo("Flycast", 1, "Flycast", 1, vulkan11 ? VK_API_VERSION_1_1 : VK_API_VERSION_1_0);
@@ -290,11 +289,6 @@ bool VulkanContext::InitInstance(const char** extensions, uint32_t extensions_co
 			optimalTilingSupported4444 = true;
 		else
 			NOTICE_LOG(RENDERER, "eR4G4B4A4UnormPack16 not supported for optimal tiling");
-		const auto features = physicalDevice.getFeatures();
-		fragmentStoresAndAtomics = !!features.fragmentStoresAndAtomics;
-		samplerAnisotropy = !!features.samplerAnisotropy;
-		if (!fragmentStoresAndAtomics)
-			NOTICE_LOG(RENDERER, "Fragment stores & atomic not supported: no per-pixel sorting");
 
 		ShaderCompiler::Init();
 
@@ -358,6 +352,8 @@ bool VulkanContext::InitDevice()
 		return false;
 	try
 	{
+		const vk::PhysicalDeviceProperties physicalDeviceProperties = physicalDevice.getProperties();
+
 		std::vector<vk::QueueFamilyProperties> queueFamilyProperties = physicalDevice.getQueueFamilyProperties();
 #ifdef VK_DEBUG
 		std::for_each(queueFamilyProperties.begin(), queueFamilyProperties.end(),
@@ -434,11 +430,6 @@ bool VulkanContext::InitDevice()
 		// Required swapchain extension
 		tryAddDeviceExtension(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
 
-		// Enable VK_KHR_dedicated_allocation if available
-		const bool getMemReq2Supported = tryAddDeviceExtension(VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME);
-		dedicatedAllocationSupported = tryAddDeviceExtension(VK_KHR_DEDICATED_ALLOCATION_EXTENSION_NAME);
-		dedicatedAllocationSupported &= getMemReq2Supported;
-
 #ifdef VK_ENABLE_BETA_EXTENSIONS
 		tryAddDeviceExtension(VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME);
 #endif
@@ -449,16 +440,80 @@ bool VulkanContext::InitDevice()
 		tryAddDeviceExtension(VK_EXT_DEBUG_MARKER_EXTENSION_NAME);
 #endif
 
+		// Enable VK_KHR_dedicated_allocation if available
+		if (physicalDeviceProperties.apiVersion >= VK_API_VERSION_1_1)
+		{
+			// Core in Vulkan 1.1
+			dedicatedAllocationSupported = true;
+		}
+		else
+		{
+			const bool getMemReq2Supported = tryAddDeviceExtension(VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME);
+			if (getMemReq2Supported)
+			{
+				dedicatedAllocationSupported = tryAddDeviceExtension(VK_KHR_DEDICATED_ALLOCATION_EXTENSION_NAME);
+			}
+		}
+
+		// Check for VK_KHR_get_physical_device_properties2
+		// Core as of Vulkan 1.1
+		const bool getPhysicalDeviceProperties2Supported =
+			(physicalDeviceProperties.apiVersion >= VK_API_VERSION_1_1)
+			? true : tryAddDeviceExtension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
+
+		if (getPhysicalDeviceProperties2Supported)
+		{
+			// Enable VK_EXT_provoking_vertex if available
+			provokingVertexSupported = tryAddDeviceExtension(VK_EXT_PROVOKING_VERTEX_EXTENSION_NAME);
+		}
+		
+		// Get device features
+
+		vk::PhysicalDeviceFeatures2 featuresChain{};
+		vk::PhysicalDeviceFeatures& features = featuresChain.features;
+
+		vk::PhysicalDeviceProvokingVertexFeaturesEXT provokingVertexFeatures{};
+		if (provokingVertexSupported)
+		{
+			featuresChain.pNext = &provokingVertexFeatures;
+		}
+		
+		// Get the physical device's features
+		if (getPhysicalDeviceProperties2Supported && featuresChain.pNext)
+		{
+			physicalDevice.getFeatures2(&featuresChain);
+		}
+		else
+		{
+			physicalDevice.getFeatures(&features);
+		}
+
+		if (provokingVertexSupported)
+		{
+			provokingVertexSupported &= provokingVertexFeatures.provokingVertexLast;
+		}
+
+		samplerAnisotropy = features.samplerAnisotropy;
+		fragmentStoresAndAtomics = features.fragmentStoresAndAtomics;
+		if (!fragmentStoresAndAtomics)
+			NOTICE_LOG(RENDERER, "Fragment stores & atomic not supported: no per-pixel sorting");
+
 		// create a UniqueDevice
 		float queuePriority = 1.0f;
 		vk::DeviceQueueCreateInfo deviceQueueCreateInfo(vk::DeviceQueueCreateFlags(), graphicsQueueIndex, 1, &queuePriority);
-		vk::PhysicalDeviceFeatures features;
-		if (fragmentStoresAndAtomics)
-			features.fragmentStoresAndAtomics = true;
-		if (samplerAnisotropy)
-			features.samplerAnisotropy = true;
-		device = physicalDevice.createDeviceUnique(vk::DeviceCreateInfo(vk::DeviceCreateFlags(), deviceQueueCreateInfo,
+
+		if (getPhysicalDeviceProperties2Supported)
+		{
+			vk::DeviceCreateInfo deviceCreateInfo(vk::DeviceCreateFlags(), deviceQueueCreateInfo,
+				nullptr, enabledExtensions);
+			deviceCreateInfo.pNext = &featuresChain;
+			device = physicalDevice.createDeviceUnique(deviceCreateInfo);
+		}
+		else
+		{
+			device = physicalDevice.createDeviceUnique(vk::DeviceCreateInfo(vk::DeviceCreateFlags(), deviceQueueCreateInfo,
 				nullptr, enabledExtensions, &features));
+		}
 
 #if VULKAN_HPP_DISPATCH_LOADER_DYNAMIC == 1
 		VULKAN_HPP_DEFAULT_DISPATCHER.init(*device);
