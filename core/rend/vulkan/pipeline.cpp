@@ -67,6 +67,17 @@ void PipelineManager::CreateModVolPipeline(ModVolMode mode, int cullMode, bool n
 	  0.0f,                                         // depthBiasSlopeFactor
 	  1.0f                                          // lineWidth
 	);
+
+	// Dreamcast uses the last vertex as the provoking vertex, but Vulkan uses the first.
+	// Utilize VK_EXT_provoking_vertex when available to set the provoking vertex to be the
+	// last vertex
+	vk::PipelineRasterizationProvokingVertexStateCreateInfoEXT provokingVertexInfo{};
+	if (GetContext()->hasProvokingVertex())
+	{
+		provokingVertexInfo.provokingVertexMode = vk::ProvokingVertexModeEXT::eLastVertex;
+		pipelineRasterizationStateCreateInfo.pNext = &provokingVertexInfo;
+	}
+
 	vk::PipelineMultisampleStateCreateInfo pipelineMultisampleStateCreateInfo;
 
 	// Depth and stencil
