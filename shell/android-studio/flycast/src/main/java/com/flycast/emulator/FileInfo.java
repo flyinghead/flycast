@@ -59,9 +59,18 @@ public class FileInfo {
         this.size = size;
     }
 
+    public long getUpdateTime() {
+        return updateTime;
+    }
+
+    public void setUpdateTime(long updateTime) {
+        this.updateTime = updateTime;
+    }
+
     String name;
     String path;
     boolean isDirectory;
     boolean isWritable;
     long size;
+    long updateTime;
 }

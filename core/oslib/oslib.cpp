@@ -78,13 +78,16 @@ std::string findFlash(const std::string& prefix, const std::string& names)
 			name = name.replace(percent, 1, prefix);
 
 		std::string fullpath = get_readonly_data_path(name);
-		if (file_exists(fullpath))
+		if (hostfs::storage().exists(fullpath))
 			return fullpath;
 		for (const auto& path : config::ContentPath.get())
 		{
-			fullpath = path + "/" + name;
-			if (file_exists(fullpath))
-				return fullpath;
+			try {
+				fullpath = hostfs::storage().getSubPath(path, name);
+				if (hostfs::storage().exists(fullpath))
+					return fullpath;
+			} catch (const hostfs::StorageException& e) {
+			}
 		}
 
 		start = semicolon;
@@ -103,14 +106,14 @@ std::string getFlashSavePath(const std::string& prefix, const std::string& name)
 std::string findNaomiBios(const std::string& name)
 {
 	std::string fullpath = get_readonly_data_path(name);
-	if (file_exists(fullpath))
+	if (hostfs::storage().exists(fullpath))
 		return fullpath;
 	for (const auto& path : config::ContentPath.get())
 	{
 		try {
 			fullpath = hostfs::storage().getSubPath(path, name);
-			hostfs::storage().getFileInfo(fullpath);
-			return fullpath;
+			if (hostfs::storage().exists(fullpath))
+				return fullpath;
 		} catch (const hostfs::StorageException& e) {
 		}
 	}

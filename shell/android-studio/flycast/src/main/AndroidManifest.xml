@@ -46,7 +46,8 @@
         android:hardwareAccelerated="true"
         android:appCategory="game"
         android:isGame="true"
-		android:requestLegacyExternalStorage="true">
+		android:requestLegacyExternalStorage="true"
+		android:allowBackup="false">
 
         <meta-data android:name="android.max_aspect" android:value="2.1" />
         <activity
@@ -62,7 +63,6 @@
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
-                <category android:name="tv.ouya.intent.category.GAME" />
                 <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
             </intent-filter>
 			<intent-filter>

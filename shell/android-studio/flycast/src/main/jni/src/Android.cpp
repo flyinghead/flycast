@@ -71,9 +71,7 @@ static jobject g_activity;
 static jmethodID VJoyStartEditingMID;
 static jmethodID VJoyStopEditingMID;
 static jmethodID VJoyResetEditingMID;
-static jmethodID showTextInputMid;
-static jmethodID hideTextInputMid;
-static jmethodID isScreenKeyboardShownMid;
+static jmethodID showScreenKeyboardMid;
 static jmethodID onGameStateChangeMid;
 
 static void emuEventCallback(Event event, void *)
@@ -277,6 +275,14 @@ extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_emu_JNIdc_setupMic(J
     stopRecordingMid = env->GetMethodID(env->GetObjectClass(sipemu),"stopRecording","()V");
 }
 
+static void *savestateThreadFunc(void *)
+{
+	dc_savestate(config::SavestateSlot);
+	return nullptr;
+}
+
+static cThread savestateThread(savestateThreadFunc, nullptr, "Flycast-save");
+
 extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_emu_JNIdc_pause(JNIEnv *env,jobject obj)
 {
 	if (config::GGPOEnable)
@@ -287,21 +293,25 @@ extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_emu_JNIdc_pause(JNIE
 	else if (game_started && stopEmu())
 	{
 		game_started = true; // restart when resumed
-		if (config::AutoSaveState)
-			dc_savestate(config::SavestateSlot);
+		if (config::AutoSaveState) {
+			savestateThread.WaitToEnd();
+			savestateThread.Start();
+		}
 	}
-	gui_save();
 }
 
 extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_emu_JNIdc_resume(JNIEnv *env,jobject obj)
 {
-    if (game_started)
+    if (game_started) {
+		savestateThread.WaitToEnd();
         emu.start();
+    }
 }
 
 extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_emu_JNIdc_stop(JNIEnv *env,jobject obj)
 {
 	stopEmu();
+	savestateThread.WaitToEnd();
 	gui_stop_game();
 }
 
@@ -309,13 +319,13 @@ static void *render_thread_func(void *)
 {
 	initRenderApi(g_window);
 
-	mainui_loop();
+	mainui_loop(false);
 
 	termRenderApi();
 	ANativeWindow_release(g_window);
-    g_window = NULL;
+    g_window = nullptr;
 
-    return NULL;
+    return nullptr;
 }
 
 static cThread render_thread(render_thread_func, nullptr, "Flycast-rend");
@@ -324,7 +334,7 @@ extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_emu_JNIdc_rendinitNa
 {
 	if (render_thread.thread.joinable())
 	{
-		if (surface == NULL)
+		if (surface == nullptr)
 		{
 			mainui_stop();
 	        render_thread.WaitToEnd();
@@ -336,9 +346,10 @@ extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_emu_JNIdc_rendinitNa
 		    mainui_reinit();
 		}
 	}
-	else if (surface != NULL)
+	else if (surface != nullptr)
 	{
         g_window = ANativeWindow_fromSurface(env, surface);
+        mainui_start();
         render_thread.Start();
 	}
 }
@@ -496,22 +507,13 @@ extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_periph_InputDeviceMa
     keyboard = std::make_shared<AndroidKeyboard>();
     GamepadDevice::Register(keyboard);
     gui_setOnScreenKeyboardCallback([](bool show) {
-    	if (g_activity == nullptr)
-    		return;
-        JNIEnv *env = jni::env();
-        if (show != env->CallBooleanMethod(g_activity, isScreenKeyboardShownMid))
-        {
-            INFO_LOG(INPUT, "show/hide keyboard %d", show);
-            if (show)
-                env->CallVoidMethod(g_activity, showTextInputMid, 0, 0, 16, 100);
-            else
-                env->CallVoidMethod(g_activity, hideTextInputMid);
-        }
+    	if (g_activity != nullptr)
+    		jni::env()->CallVoidMethod(g_activity, showScreenKeyboardMid, show);
     });
 }
 
 extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_periph_InputDeviceManager_joystickAdded(JNIEnv *env, jobject obj, jint id, jstring name,
-		jint maple_port, jstring junique_id, jintArray fullAxes, jintArray halfAxes)
+		jint maple_port, jstring junique_id, jintArray fullAxes, jintArray halfAxes, jboolean hasRumble)
 {
     std::string joyname = jni::String(name, false);
     std::string unique_id = jni::String(junique_id, false);
@@ -520,6 +522,7 @@ extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_periph_InputDeviceMa
 
     std::shared_ptr<AndroidGamepadDevice> gamepad = std::make_shared<AndroidGamepadDevice>(maple_port, id, joyname.c_str(), unique_id.c_str(), full, half);
     AndroidGamepadDevice::AddAndroidGamepad(gamepad);
+    gamepad->setRumbleEnabled(hasRumble);
 }
 extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_periph_InputDeviceManager_joystickRemoved(JNIEnv *env, jobject obj, jint id)
 {
@@ -582,20 +585,19 @@ extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_periph_InputDeviceMa
 
 extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_BaseGLActivity_register(JNIEnv *env, jobject obj, jobject activity)
 {
-    if (g_activity != NULL)
-    {
+    if (g_activity != nullptr) {
         env->DeleteGlobalRef(g_activity);
-        g_activity = NULL;
+        g_activity = nullptr;
     }
-    if (activity != NULL) {
+    if (activity != nullptr)
+    {
         g_activity = env->NewGlobalRef(activity);
-        VJoyStartEditingMID = env->GetMethodID(env->GetObjectClass(activity), "VJoyStartEditing", "()V");
-        VJoyStopEditingMID = env->GetMethodID(env->GetObjectClass(activity), "VJoyStopEditing", "(Z)V");
-        VJoyResetEditingMID = env->GetMethodID(env->GetObjectClass(activity), "VJoyResetEditing", "()V");
-        showTextInputMid = env->GetMethodID(env->GetObjectClass(activity), "showTextInput", "(IIII)V");
-        hideTextInputMid = env->GetMethodID(env->GetObjectClass(activity), "hideTextInput", "()V");
-        isScreenKeyboardShownMid = env->GetMethodID(env->GetObjectClass(activity), "isScreenKeyboardShown", "()Z");
-        onGameStateChangeMid = env->GetMethodID(env->GetObjectClass(activity), "onGameStateChange", "(Z)V");
+        jclass actClass = env->GetObjectClass(activity);
+        VJoyStartEditingMID = env->GetMethodID(actClass, "VJoyStartEditing", "()V");
+        VJoyStopEditingMID = env->GetMethodID(actClass, "VJoyStopEditing", "(Z)V");
+        VJoyResetEditingMID = env->GetMethodID(actClass, "VJoyResetEditing", "()V");
+        showScreenKeyboardMid = env->GetMethodID(actClass, "showScreenKeyboard", "(Z)V");
+        onGameStateChangeMid = env->GetMethodID(actClass, "onGameStateChange", "(Z)V");
     }
 }
 

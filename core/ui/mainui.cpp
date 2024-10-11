@@ -81,10 +81,11 @@ void mainui_term()
 	rend_term_renderer();
 }
 
-void mainui_loop()
+void mainui_loop(bool forceStart)
 {
 	ThreadName _("Flycast-rend");
-	mainui_enabled = true;
+	if (forceStart)
+		mainui_enabled = true;
 	mainui_init();
 	RenderType currentRenderer = config::RendererType;
 
@@ -114,6 +115,11 @@ void mainui_loop()
 	}
 
 	mainui_term();
+}
+
+void mainui_start()
+{
+	mainui_enabled = true;
 }
 
 void mainui_stop()

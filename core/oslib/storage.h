@@ -27,14 +27,18 @@ namespace hostfs
 struct FileInfo
 {
 	FileInfo() = default;
-	FileInfo(const std::string& name, const std::string& path, bool isDirectory, size_t size = 0, bool isWritable = false)
-		: name(name), path(path), isDirectory(isDirectory), size(size), isWritable(isWritable) {}
+	FileInfo(const std::string& name, const std::string& path, bool isDirectory,
+			size_t size = 0, bool isWritable = false, u64 updateTime = 0)
+		: name(name), path(path), isDirectory(isDirectory), size(size),
+		  isWritable(isWritable), updateTime(updateTime) {
+	}
 
 	std::string name;
 	std::string path;
 	bool isDirectory = false;
 	size_t size = 0;
 	bool isWritable = false;
+	u64 updateTime = 0;
 };
 
 class StorageException : public FlycastException
@@ -52,6 +56,7 @@ public:
 	virtual std::string getParentPath(const std::string& path) = 0;
 	virtual std::string getSubPath(const std::string& reference, const std::string& subpath) = 0;
 	virtual FileInfo getFileInfo(const std::string& path) = 0;
+	virtual bool exists(const std::string& path) = 0;
 
 	virtual ~Storage() = default;
 };
@@ -59,7 +64,8 @@ public:
 class CustomStorage : public Storage
 {
 public:
-	virtual void addStorage(bool isDirectory, bool writeAccess, void (*callback)(bool cancelled, std::string selectedPath)) = 0;
+	virtual bool addStorage(bool isDirectory, bool writeAccess, const std::string& description,
+			void (*callback)(bool cancelled, std::string selectedPath)) = 0;
 };
 
 class AllStorage : public Storage
@@ -72,11 +78,13 @@ public:
 	std::string getParentPath(const std::string& path) override;
 	std::string getSubPath(const std::string& reference, const std::string& subpath) override;
 	FileInfo getFileInfo(const std::string& path) override;
+	bool exists(const std::string& path) override;
 	std::string getDefaultDirectory();
 };
 
 AllStorage& storage();
-void addStorage(bool isDirectory, bool writeAccess, void (*callback)(bool cancelled, std::string selectedPath));
+bool addStorage(bool isDirectory, bool writeAccess, const std::string& description,
+		void (*callback)(bool cancelled, std::string selectedPath));
 
 // iterate depth-first over the files contained in a folder hierarchy
 class DirectoryTree

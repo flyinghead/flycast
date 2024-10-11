@@ -37,8 +37,11 @@ public:
 		jgetParentUri = env->GetMethodID(clazz, "getParentUri", "(Ljava/lang/String;)Ljava/lang/String;");
 		jgetSubPath = env->GetMethodID(clazz, "getSubPath", "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;");
 		jgetFileInfo = env->GetMethodID(clazz, "getFileInfo", "(Ljava/lang/String;)Lcom/flycast/emulator/FileInfo;");
-		jaddStorage = env->GetMethodID(clazz, "addStorage", "(ZZ)V");
+		jexists = env->GetMethodID(clazz, "exists", "(Ljava/lang/String;)Z");
+		jaddStorage = env->GetMethodID(clazz, "addStorage", "(ZZLjava/lang/String;)Z");
 		jsaveScreenshot = env->GetMethodID(clazz, "saveScreenshot", "(Ljava/lang/String;[B)V");
+		jimportHomeDirectory = env->GetMethodID(clazz, "importHomeDirectory", "()V");
+		jexportHomeDirectory = env->GetMethodID(clazz, "exportHomeDirectory", "()V");
 	}
 
 	bool isKnownPath(const std::string& path) override {
@@ -119,11 +122,27 @@ public:
 		return fromJavaFileInfo(jinfo);
 	}
 
-	void addStorage(bool isDirectory, bool writeAccess, void (*callback)(bool cancelled, std::string selectedPath)) override
+	bool exists(const std::string& uri) override
 	{
-		jni::env()->CallVoidMethod(jstorage, jaddStorage, isDirectory, writeAccess);
+		jni::String juri(uri);
+		bool ret = jni::env()->CallBooleanMethod(jstorage, jexists, (jstring)juri);
+		try {
+			checkException();
+			return ret;
+		} catch (...) {
+			return false;
+		}
+	}
+
+	bool addStorage(bool isDirectory, bool writeAccess, const std::string& description,
+			void (*callback)(bool cancelled, std::string selectedPath)) override
+	{
+		jni::String jdesc(description);
+		bool ret = jni::env()->CallBooleanMethod(jstorage, jaddStorage, isDirectory, writeAccess, (jstring)jdesc);
 		checkException();
-		addStorageCallback = callback;
+		if (ret)
+			addStorageCallback = callback;
+		return ret;
 	}
 
 	void doStorageCallback(jstring path)
@@ -144,6 +163,16 @@ public:
 		jni::ByteArray jdata(data.size());
 		jdata.setData(&data[0]);
 		jni::env()->CallVoidMethod(jstorage, jsaveScreenshot, (jstring)jname, (jbyteArray)jdata);
+		checkException();
+	}
+
+	void importHomeDirectory() {
+		jni::env()->CallVoidMethod(jstorage, jimportHomeDirectory);
+		checkException();
+	}
+
+	void exportHomeDirectory() {
+		jni::env()->CallVoidMethod(jstorage, jexportHomeDirectory);
 		checkException();
 	}
 
@@ -169,6 +198,7 @@ private:
 		info.isDirectory = env->CallBooleanMethod(jinfo, jisDirectory);
 		info.isWritable = env->CallBooleanMethod(jinfo, jisWritable);
 		info.size = env->CallLongMethod(jinfo, jgetSize);
+		info.updateTime = env->CallLongMethod(jinfo, jgetUpdateTime);
 
 		return info;
 	}
@@ -185,6 +215,7 @@ private:
 		jisDirectory = env->GetMethodID(infoClass, "isDirectory", "()Z");
 		jisWritable = env->GetMethodID(infoClass, "isWritable", "()Z");
 		jgetSize = env->GetMethodID(infoClass, "getSize", "()J");
+		jgetUpdateTime = env->GetMethodID(infoClass, "getUpdateTime", "()J");
 	}
 
 	jobject jstorage;
@@ -194,13 +225,17 @@ private:
 	jmethodID jaddStorage;
 	jmethodID jgetSubPath;
 	jmethodID jgetFileInfo;
+	jmethodID jexists;
 	jmethodID jsaveScreenshot;
+	jmethodID jexportHomeDirectory;
+	jmethodID jimportHomeDirectory;
 	// FileInfo accessors lazily initialized to avoid having to load the class
 	jmethodID jgetName = nullptr;
 	jmethodID jgetPath = nullptr;
 	jmethodID jisDirectory = nullptr;
 	jmethodID jisWritable = nullptr;
 	jmethodID jgetSize = nullptr;
+	jmethodID jgetUpdateTime = nullptr;
 	void (*addStorageCallback)(bool cancelled, std::string selectedPath);
 };
 
@@ -217,6 +252,14 @@ void saveScreenshot(const std::string& name, const std::vector<u8>& data)
 	return static_cast<AndroidStorage&>(customStorage()).saveScreenshot(name, data);
 }
 
+void importHomeDirectory() {
+	static_cast<AndroidStorage&>(customStorage()).importHomeDirectory();
+}
+
+void exportHomeDirectory() {
+	static_cast<AndroidStorage&>(customStorage()).exportHomeDirectory();
+}
+
 }	// namespace hostfs
 
 extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_AndroidStorage_addStorageCallback(JNIEnv *env, jobject obj, jstring path)
@@ -227,4 +270,15 @@ extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_AndroidStorage_addSt
 extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_AndroidStorage_init(JNIEnv *env, jobject jstorage)
 {
 	static_cast<hostfs::AndroidStorage&>(hostfs::customStorage()).init(env, jstorage);
+}
+
+extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_AndroidStorage_reloadConfig(JNIEnv *env)
+{
+	if (cfgOpen())
+	{
+		const RenderType render = config::RendererType;
+		config::Settings::instance().load(false);
+		// Make sure the renderer type doesn't change mid-flight
+		config::RendererType = render;
+	}
 }

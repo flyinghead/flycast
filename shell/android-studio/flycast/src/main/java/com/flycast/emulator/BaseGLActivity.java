@@ -42,8 +42,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-import tv.ouya.console.api.OuyaController;
-
 import static android.content.res.Configuration.HARDKEYBOARDHIDDEN_NO;
 import static android.view.View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
 import static android.view.WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS;
@@ -70,6 +68,13 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        if (!(getApplicationContext() instanceof Emulator)) {
+            // app is in restricted mode, kill it
+            // See https://medium.com/@pablobaxter/what-happened-to-my-subclass-android-application-924c91bafcac
+            handler.post(() -> System.exit(0));
+            finish();
+            return;
+        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             // Set the navigation bar color to 0 to avoid left over when it fades out on Android 10
             Window window = getWindow();
@@ -87,11 +92,7 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
         }
         prefs = PreferenceManager.getDefaultSharedPreferences(this);
 
-        Emulator app = (Emulator)getApplicationContext();
-        app.getConfigurationPrefs();
         Emulator.setCurrentActivity(this);
-
-        OuyaController.init(this);
         new HttpClient().nativeInit();
 
         String homeDir = prefs.getString(Config.pref_home, "");
@@ -129,6 +130,8 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
             return;
         }
         Log.i("flycast", "Environment initialized");
+        Emulator app = (Emulator)getApplicationContext();
+        app.getConfigurationPrefs();
         storage = new AndroidStorage(this);
         setStorageDirectories();
 
@@ -138,10 +141,11 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
             //Log.i("flycast", "External storage legacy: " + (externalStorageLegacy ? "preserved" : "lost"));
         }
         if (!storagePermissionGranted) {
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M)
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M || !externalStorageLegacy)
                 // No permission needed before Android 6
+                // Permissions only needed in legacy external storage mode
                 storagePermissionGranted = true;
-            else if (externalStorageLegacy) {
+            else {
                 Log.i("flycast", "Asking for external storage permission");
                 ActivityCompat.requestPermissions(this,
                         new String[]{
@@ -191,6 +195,11 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
         if (storage != null)
             storage.setStorageDirectories(pathList);
         JNIdc.setExternalStorageDirectories(pathList.toArray());
+    }
+
+    // Testing
+    public AndroidStorage getStorage() {
+        return storage;
     }
 
     @Override
@@ -265,7 +274,10 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
     }
     @Override
     public boolean onGenericMotionEvent(MotionEvent event) {
-        if ((event.getSource() & InputDevice.SOURCE_CLASS_JOYSTICK) == InputDevice.SOURCE_CLASS_JOYSTICK && event.getAction() == MotionEvent.ACTION_MOVE) {
+        if ((event.getSource() & InputDevice.SOURCE_CLASS_JOYSTICK) == InputDevice.SOURCE_CLASS_JOYSTICK
+                && event.getAction() == MotionEvent.ACTION_MOVE
+                && event.getDevice() != null)
+        {
             List<InputDevice.MotionRange> axes = event.getDevice().getMotionRanges();
             boolean rc = false;
             for (InputDevice.MotionRange range : axes)
@@ -411,9 +423,11 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
 
     }
 
-    private String getDefaultHomeDir()
-    {
-        return getExternalFilesDir(null).getAbsolutePath();
+    private String getDefaultHomeDir() {
+        File dir = getExternalFilesDir(null);
+        if (dir == null)
+            dir = getFilesDir();
+        return dir.getAbsolutePath();
     }
 
     private String checkHomeDirectory(String homeDir)
@@ -421,7 +435,8 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
         if (homeDir.isEmpty())
             // home dir not set: use default
             return getDefaultHomeDir();
-        if (homeDir.startsWith(getDefaultHomeDir()))
+        // must account for the fact that homeDir may be on internal storage but external storage is now available
+        if (homeDir.startsWith(getDefaultHomeDir()) || homeDir.startsWith(getFilesDir().getAbsolutePath()))
             // home dir is ok
             return homeDir;
         if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P)
@@ -556,8 +571,18 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == AndroidStorage.ADD_STORAGE_ACTIVITY_REQUEST)
-            storage.onAddStorageResult(data);
+        switch (requestCode)
+        {
+            case AndroidStorage.ADD_STORAGE_ACTIVITY_REQUEST:
+                storage.onAddStorageResult(data);
+                break;
+            case AndroidStorage.IMPORT_HOME_ACTIVITY_REQUEST:
+                storage.onImportHomeResult(data);
+                break;
+            case AndroidStorage.EXPORT_HOME_ACTIVITY_REQUEST:
+                storage.onExportHomeResult(data);
+                break;
+        }
     }
 
     private static native void register(BaseGLActivity activity);

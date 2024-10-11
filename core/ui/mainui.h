@@ -24,6 +24,7 @@ extern u32 MainFrameCount;
 bool mainui_rend_frame();
 void mainui_init();
 void mainui_term();
-void mainui_loop();
+void mainui_loop(bool forceStart = true);
+void mainui_start();
 void mainui_stop();
 void mainui_reinit();

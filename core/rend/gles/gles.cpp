@@ -1175,7 +1175,8 @@ void OpenGLRenderer::DrawOSD(bool clear_screen)
 			glDrawArrays(GL_TRIANGLE_STRIP, i * 4, 4);
 
 		glCheck();
-		imguiDriver->setFrameRendered();
+		if (clear_screen)
+			imguiDriver->setFrameRendered();
 	}
 #endif
 #endif

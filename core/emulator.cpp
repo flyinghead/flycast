@@ -688,6 +688,7 @@ void Emulator::runInternal()
 			{
 				nvmem::saveFiles();
 				dc_reset(false);
+				sh4_cpu.Start();
 			}
 		} while (resetRequested);
 	}
@@ -895,6 +896,8 @@ void Emulator::run()
 	verify(state == Running);
 	startTime = sh4_sched_now64();
 	renderTimeout = false;
+	if (!singleStep && stepRangeTo == 0)
+		sh4_cpu.Start();
 	try {
 		runInternal();
 		if (ggpo::active())
@@ -937,6 +940,7 @@ void Emulator::start()
 	if (config::ThreadedRendering)
 	{
 		const std::lock_guard<std::mutex> lock(mutex);
+		sh4_cpu.Start();
 		threadResult = std::async(std::launch::async, [this] {
 				ThreadName _("Flycast-emu");
 				InitAudio();
@@ -971,15 +975,20 @@ void Emulator::start()
 bool Emulator::checkStatus(bool wait)
 {
 	try {
-		const std::lock_guard<std::mutex> lock(mutex);
+		std::unique_lock<std::mutex> lock(mutex);
 		if (threadResult.valid())
 		{
-			if (!wait)
-			{
-				auto result = threadResult.wait_for(std::chrono::seconds(0));
+			lock.unlock();
+			auto localResult = threadResult;
+			if (wait) {
+				localResult.wait();
+			}
+			else {
+				auto result = localResult.wait_for(std::chrono::seconds(0));
 				if (result == std::future_status::timeout)
 					return true;
 			}
+			lock.lock();
 			threadResult.get();
 		}
 		return false;
@@ -996,16 +1005,17 @@ bool Emulator::render()
 
 	if (!config::ThreadedRendering)
 	{
-		if (state != Running)
-			return false;
-		run();
 		if (stopRequested)
 		{
 			stopRequested = false;
 			TermAudio();
 			nvmem::saveFiles();
 			EventManager::event(Event::Pause);
+			return false;
 		}
+		if (state != Running)
+			return false;
+		run();
 		// TODO if stopping due to a user request, no frame has been rendered
 		return !renderTimeout;
 	}

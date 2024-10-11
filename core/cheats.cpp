@@ -377,6 +377,17 @@ void CheatManager::setActive(bool active)
 void CheatManager::loadCheatFile(const std::string& filename)
 {
 #ifndef LIBRETRO
+	try {
+		hostfs::FileInfo fileInfo = hostfs::storage().getFileInfo(filename);
+		if (fileInfo.size >= 1_MB) {
+			WARN_LOG(COMMON, "Cheat file '%s' is too big", filename.c_str());
+			return;
+		}
+	} catch (const hostfs::StorageException& e) {
+		WARN_LOG(COMMON, "Cannot find cheat file '%s': %s", filename.c_str(), e.what());
+		return;
+	}
+
 	FILE* cheatfile = hostfs::storage().openFile(filename, "r");
 	if (cheatfile == nullptr)
 	{
@@ -421,7 +432,8 @@ void CheatManager::loadCheatFile(const std::string& filename)
 	}
 	setActive(!cheats.empty());
 	INFO_LOG(COMMON, "%d cheats loaded", (int)cheats.size());
-	cfgSaveStr("cheats", gameId, filename);
+	if (!cheats.empty())
+		cfgSaveStr("cheats", gameId, filename);
 #endif
 }
 

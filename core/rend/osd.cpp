@@ -26,10 +26,12 @@
 
 #include <stb_image.h>
 
+#ifndef LIBRETRO
+
 #define OSD_TEX_W 512
 #define OSD_TEX_H 256
 
-#if defined(__ANDROID__) && !defined(LIBRETRO)
+#ifdef __ANDROID__
 extern float vjoy_pos[15][8];
 #else
 
@@ -74,7 +76,7 @@ static void DrawButton(const float xy[8], u32 state)
 	OSDVertex vtx;
 
 	vtx.r = vtx.g = vtx.b = (0x7F - 0x40 * state / 255) * vjoy_pos[VJOY_VISIBLE][0];
-	vtx.a = 0xA0 * vjoy_pos[VJOY_VISIBLE][4];
+	vtx.a = (100 - config::VirtualGamepadTransparency) * 0xff / 100 * vjoy_pos[VJOY_VISIBLE][4];
 	vjoy_pos[VJOY_VISIBLE][4] += (vjoy_pos[VJOY_VISIBLE][0] - vjoy_pos[VJOY_VISIBLE][4]) / 2;
 
 	vtx.x = xy[0]; vtx.y = xy[1];
@@ -172,6 +174,7 @@ u8 *loadOSDButtons(int &width, int &height)
 	}
 	return image_data;
 }
+#endif	// LIBRETRO
 
 u32 vmu_lcd_data[8][48 * 32];
 bool vmu_lcd_status[8];

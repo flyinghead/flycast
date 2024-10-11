@@ -47,7 +47,6 @@ static u16 ReadNexOp()
 
 static void Sh4_int_Run()
 {
-	sh4_int_bCpuRun = true;
 	RestoreHostRoundingMode();
 
 	try {
@@ -72,6 +71,11 @@ static void Sh4_int_Run()
 	}
 
 	sh4_int_bCpuRun = false;
+}
+
+static void Sh4_int_Start()
+{
+	sh4_int_bCpuRun = true;
 }
 
 static void Sh4_int_Stop()
@@ -206,6 +210,7 @@ static void Sh4_int_Term()
 
 void Get_Sh4Interpreter(sh4_if* cpu)
 {
+	cpu->Start = Sh4_int_Start;
 	cpu->Run = Sh4_int_Run;
 	cpu->Stop = Sh4_int_Stop;
 	cpu->Step = Sh4_int_Step;
