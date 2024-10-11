@@ -55,6 +55,8 @@ void VMAllocator::Init(vk::PhysicalDevice physicalDevice, vk::Device device, vk:
 		allocatorInfo.flags |= VMA_ALLOCATOR_CREATE_KHR_DEDICATED_ALLOCATION_BIT;
 
 	allocatorInfo.physicalDevice = (VkPhysicalDevice)physicalDevice;
+	// Top-out at vulkan 1.1
+	allocatorInfo.vulkanApiVersion = (physicalDevice.getProperties().apiVersion >= VK_API_VERSION_1_1) ? VK_API_VERSION_1_1 : VK_API_VERSION_1_0;
 	allocatorInfo.device = (VkDevice)device;
 	allocatorInfo.instance = (VkInstance)instance;
 #if !defined(NDEBUG) || defined(DEBUGFAST)

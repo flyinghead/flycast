@@ -341,7 +341,15 @@ bool OITDrawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 	bool firstFrameAfterInit = oitBuffers->isFirstFrameAfterInit();
 	oitBuffers->OnNewFrame(cmdBuffer);
 
-	setFirstProvokingVertex(pvrrc);
+	if (VulkanContext::Instance()->hasProvokingVertex())
+	{
+		// Pipelines are using VK_EXT_provoking_vertex, no need to
+		// re-order vertices
+	}
+	else
+	{
+		setFirstProvokingVertex(pvrrc);
+	}
 
 	// Upload vertex and index buffers
 	UploadMainBuffer(vtxUniforms, fragUniforms);

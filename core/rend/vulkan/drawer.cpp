@@ -404,7 +404,15 @@ bool Drawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 	static const float scopeColor[4] = { 0.75f, 0.75f, 0.75f, 1.0f };
 	CommandBufferDebugScope _(cmdBuffer, "Draw", scopeColor);
 
-	setFirstProvokingVertex(pvrrc);
+	if (VulkanContext::Instance()->hasProvokingVertex())
+	{
+		// Pipelines are using VK_EXT_provoking_vertex, no need to
+		// re-order vertices
+	}
+	else
+	{
+		setFirstProvokingVertex(pvrrc);
+	}
 
 	// Upload vertex and index buffers
 	VertexShaderUniforms vtxUniforms;
