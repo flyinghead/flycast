@@ -4347,7 +4347,7 @@ struct retro_core_options_v2 options_ast = {
 #define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_INFO_0_BE "Выбар прылады, уключанай у слот пашырэння D2 (порт D слот 2)."
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_BE "Асобныя візуальныя карты памяці (VMU) для гульняў"
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CAT_BE "VMU для кожнай гульні"
-#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_BE "Калі выключана, усе гульні выкарыстоўваюць да 8 файлаў захаванняў VMU (A1/A2/B1/B2/C1/C2/D1/D2), размешчаных у сістэмным каталогу RetroArch.\n\Пры значэнні 'VMU A1' для кожнай запушчанай гульні ствараецца ўнікальны файл VMU 'A1' у каталогу захаванняў RetroArch.\n\Налада 'Усе VMU' стварае да 8 унікальных файлаў VMU (A1/A2/B1/B2/C1/C2/D1/D2) для кожнай запушчанай гульні."
+#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_BE NULL
 #define OPTION_VAL_VMU_A1_BE NULL
 #define OPTION_VAL_ALL_VMUS_BE "Усе VMU"
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_BE "Гукавыя сігналы візуальных карт памяці (VMU)"
@@ -10386,7 +10386,7 @@ struct retro_core_options_v2 options_ca = {
 #define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_INFO_0_CHS "选择插入扩展槽 D2 (端口 D 槽位 2) 的设备."
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CHS "每个游戏的记忆卡掌机/系统 (VMU)"
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CAT_CHS "每个游戏 VMU"
-#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_CHS "禁用时, 所有游戏共享位于 RetroArch 系统目录中的 4 个 VMU 存档文件 (A1, B1, C1, D1).\n\'VMU A1' 为每个启动的游戏在 RetroArch 存档目录中创建一个 VMU 'A1' 存档文件.\n\'全部 VMU' 为每个启动的游戏创建 4 个 VMU 存档文件 (A1, B1, C1, D1)."
+#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_CHS NULL
 #define OPTION_VAL_VMU_A1_CHS NULL
 #define OPTION_VAL_ALL_VMUS_CHS "全部 VMU"
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_CHS "Visual Memory Units/系统 (VMU) 声音"
@@ -20451,7 +20451,7 @@ struct retro_core_options_v2 options_da = {
 #define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_INFO_0_DE "Das Gerät auswählen, das im Erweiterungsslot D2 angeschlossen ist (Port D Slot 2)."
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_DE "Visual Memory Units/Systeme (VMU) pro Spiel"
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CAT_DE "VMUs pro Spiel"
-#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_DE "Wenn deaktiviert, teilen sich alle Spiele bis zu 8 VMU-Speicherdateien (A1, B1, C1, D1) im Systemverzeichnis von RetroArch.\n\Die Einstellung „VMU A1“ erzeugt für jedes Spiel, das gestartet wird, eine eindeutige VMU-„A1“-Datei im Speicherverzeichnis von RetroArch.\n\Die Einstellung „Alle VMUs“ erzeugt 8 eindeutige VMU-Dateien (A1, B1, C1, D1) für jedes Spiel, das gestartet wird."
+#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_DE NULL
 #define OPTION_VAL_VMU_A1_DE NULL
 #define OPTION_VAL_ALL_VMUS_DE "Alle VMUs"
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_DE NULL
@@ -28503,7 +28503,7 @@ struct retro_core_options_v2 options_eo = {
 #define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_INFO_0_ES "Selecciona el dispositivo conectado al puerto de expansión D2 (puerto de mando D, ranura 2)."
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_ES "Separar Visual Memory (VMU) por juego"
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CAT_ES "VMUs individuales para cada juego"
-#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_ES "Al desactivar esta opción, todos los juegos compartirán ocho archivos de guardado de VMU (A1/A2/B1/B2/C1/C2/D1/D2) que se encontrarán en el directorio del sistema de RetroArch.\n\El ajuste «VMU A1» creará un archivo único de la VMU A1 en el directorio de guardados de RetroArch para cada juego que se ejecute.\n\«Todas las VMU» creará ocho archivos VMU únicos (A1/A2/B1/B2/C1/C2/D1/D2) para cada juego que se ejecute."
+#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_ES "Al desactivar esta opción, todos los juegos compartirán ocho archivos de guardado de VMU (A1/A2/B1/B2/C1/C2/D1/D2) que se encontrarán en la carpeta del sistema de RetroArch.\n\El ajuste «VMU A1» creará un archivo único de la VMU A1 en la carpeta de guardados de RetroArch para cada juego que se ejecute.\n\«Todas las VMU» creará ocho archivos VMU únicos (A1/A2/B1/B2/C1/C2/D1/D2) para cada juego que se ejecute."
 #define OPTION_VAL_VMU_A1_ES NULL
 #define OPTION_VAL_ALL_VMUS_ES "Todas las VMUs"
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_ES "Sonidos de las Visual Memory (VMU)"
@@ -32307,9 +32307,9 @@ struct retro_core_options_v2 options_fa = {
 #define CORE_OPTION_NAME_UPNP_LABEL_FI "Käytä UPnP:tä"
 #define CORE_OPTION_NAME_UPNP_INFO_0_FI "Käytä UPnP:tä Internet-reitittimen määrittämiseksi verkkopelejä varten."
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_FI "Sisäinen resoluutio"
-#define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_FI NULL
-#define OPTION_VAL_320X240_FI NULL
-#define OPTION_VAL_640X480_FI NULL
+#define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_FI "Muokkaa renderöintitarkkuutta."
+#define OPTION_VAL_320X240_FI "320x240 (Puolikas)"
+#define OPTION_VAL_640X480_FI "640x480 (Natiivi)"
 #define OPTION_VAL_800X600_FI NULL
 #define OPTION_VAL_960X720_FI NULL
 #define OPTION_VAL_1024X768_FI NULL
@@ -34542,7 +34542,7 @@ struct retro_core_options_v2 options_fi = {
 #define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_INFO_0_FR "Sélectionner le périphérique branché dans le port d'extension D2 (port D emplacement 2)."
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_FR "Unités/systèmes de mémoire visuelle par jeu (VMU)"
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CAT_FR "VMU par jeu"
-#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_FR "Lorsque cette option est désactivée, tous les jeux partagent jusqu'à 8 fichiers de sauvegarde VMU (A1/A2/B1/B2/C1/D1/D1/D2) situés dans le dossier system de RetroArch.\n\Le réglage 'VMU A1' crée un fichier VMU 'A1' unique dans le dossier de sauvegarde de RetroArch pour chaque jeu qui est lancé.\n\Le réglage 'Toutes les VMU' crée jusqu'à 8 fichiers VMU uniques (A1/A2/B1/B2/C1/C2/D1/D2) pour chaque jeu qui est lancé."
+#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_FR NULL
 #define OPTION_VAL_VMU_A1_FR NULL
 #define OPTION_VAL_ALL_VMUS_FR "Tous les VMU"
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_FR "Sons des unités/systèmes de mémoire visuelle (VMU)"
@@ -36555,7 +36555,7 @@ struct retro_core_options_v2 options_fr = {
 #define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_INFO_0_GL "Seleccione o dispositivo conectado ao slot de expansión D2 (port D2 slot)."
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_GL "Unidades/sistemas de memoria visual (VMU) por xogo"
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CAT_GL "VMUs por xogo"
-#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_GL "Cando está desactivado, todos os xogos comparten ata 8 ficheiros de gardado VMU (A1/A2/B1/B2/C1/C2/D1/D2) situados no directorio do sistema de RetroArch.\n\A configuración \"VMU A1\" crea un ficheiro VMU \"A1\" único no directorio de gardado de RetroArch para cada xogo que se inicia.\n\A configuración \"Todas as VMU\" crea ata 8 ficheiros VMU únicos (A1/A2/B1/B2/C1/C2/D1/D2) para cada xogo que se inicia."
+#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_GL NULL
 #define OPTION_VAL_VMU_A1_GL NULL
 #define OPTION_VAL_ALL_VMUS_GL "Todas as VMU"
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_GL "Sons de sistemas/unidades de memoria visual (VMU)"
@@ -42594,7 +42594,7 @@ struct retro_core_options_v2 options_hr = {
 #define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_INFO_0_HU "A D2 bővítőhelybe csatlakoztatott eszköz (D csatlakozó, 2. hely)."
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_HU "Játékonként külön Visual Memory Unit/System (VMU)"
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CAT_HU "Játékonként külön VMU"
-#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_HU "Kikapcsolva minden játék ugyanazt a legfeljebb 8 VMU mentés fájlt (A1/A2/B1/B2/C1/C2/D1/D2) használja a RetroArch rendszerkönyvtárban. \"VMU A1\" beállításnál minden elindított játéknak külön VMU \"A1\" fájlt hoz létre. \"Minden VMU\" beállításnál minden elindított játéknak legfeljebb 8 külön VMU fájlt (A1/A2/B1/B2/C1/C2/D1/D2) hoz létre."
+#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_HU NULL
 #define OPTION_VAL_VMU_A1_HU NULL
 #define OPTION_VAL_ALL_VMUS_HU "Minden VMU"
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_HU "A Visual Memory Unit / System (VMU) hangjai"
@@ -46620,7 +46620,7 @@ struct retro_core_options_v2 options_id = {
 #define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_INFO_0_IT "Selezionare il dispositivo collegato allo slot di espansione D2 (porta D slot 2)."
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_IT "Visual Memory Units/Sistemi per Gioco (VMU)"
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CAT_IT "VMU per gioco"
-#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_IT "Se disabilitato, tutti i giochi condividono fino a 8 file VMU di salvataggio (A1/A2/B1/B2/C1/C2/D1/D2) situati nella directory di sistema di RetroArch.\n\L'impostazione 'VMU A1' crea un file VMU 'A1' unico nella directory di salvataggio di RetroArch, per ogni gioco che viene lanciato.\n\L'impostazione 'All VMUs' crea fino a 8 file VMU unici (A1/A2/B1/B2/C1/C2/D1/D2) per ogni gioco che viene lanciato."
+#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_IT NULL
 #define OPTION_VAL_VMU_A1_IT NULL
 #define OPTION_VAL_ALL_VMUS_IT "Tutte Le VMU"
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_IT "Suoni Delle Unità Di Memoria Visiva/Sistemi (VMU)"
@@ -48633,7 +48633,7 @@ struct retro_core_options_v2 options_it = {
 #define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_INFO_0_JA "拡張スロット D2 (ポート D スロット 2) に接続するデバイスを選択します。"
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_JA "ゲームごとのビジュアルメモリユニット/システム (VMU)"
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CAT_JA "ゲームごとの VMU"
-#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_JA "有効にすると、すべてのゲームは RetroArch のシステムディレクトリにある最大 8 つの VMU セーブファイル (A1/A2/B1/B2/C1/C2/D1/D2) を共有します。\n[VMU A1] に設定すると、RetroArch のセーブディレクトリに起動したゲームごとに固有の VMU [A1] ファイルが作成されます。\n[すべての VMU] に設定すると、起動したゲームごとに最大 8 つの VMU ファイル (A1/A2/B1/B2/C1/C2/D1/D2) が作成されます。"
+#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_JA NULL
 #define OPTION_VAL_VMU_A1_JA NULL
 #define OPTION_VAL_ALL_VMUS_JA "すべての VMU"
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_JA "ビジュアルメモリユニット/システム (VMU) サウンド"
@@ -50646,7 +50646,7 @@ struct retro_core_options_v2 options_ja = {
 #define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_INFO_0_KO "확장 슬롯 D2(포트 D 슬롯 2)에 연결할 장치를 선택합니다."
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_KO "게임당 별도 Visual Memory Units/Systems(VMU) 사용"
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CAT_KO "게임당 별도 VMU 사용"
-#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_KO "비활성화할 경우, 모든 게임이 RetroArch의 시스템 디렉토리에 저장된 최대 8개의 VMU 저장 파일(A1/A2/B1/B2/C1/C2/D1/D2)을 공유합니다.\n\ 'VMU A1' 옵션은 RetroArch의 저장 디렉토리에 게임 하나 당 하나의 VMU 'A1' 파일을 생성합니다.\n\ '모든 VMU'는 게임 하나 당 최대 8개의 VMU 파일(A1/A2/B1/B2/C1/C2/D1/D2)을 생성합니다."
+#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_KO NULL
 #define OPTION_VAL_VMU_A1_KO NULL
 #define OPTION_VAL_ALL_VMUS_KO "전체 VMU"
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_KO "비주얼 메모리 유닛/시스템 (VMU) 사운드"
@@ -58698,7 +58698,7 @@ struct retro_core_options_v2 options_or = {
 #define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_INFO_0_PL NULL
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_PL NULL
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CAT_PL NULL
-#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_PL NULL
+#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_PL "Gdy wyłączone, wszystkie gry udostępniają do 8 plików zapisów VMU (A1/A2/B1/B2/C1/C2/D1/D2) znajdujących się w folderze systemowym RetroArch.\n\Ustawienie 'VMU A1' tworzy unikalny plik VMU 'A1' w folderze zapisów RetroArcha dla każdej uruchomionej gry.\n\Ustawienie 'Wszystkie VMU' tworzy do 8 unikalnych plików VMU (A1/A2/B1/B2/C1/C2/D1/D2/D2) dla każdej uruchomionej gry."
 #define OPTION_VAL_VMU_A1_PL NULL
 #define OPTION_VAL_ALL_VMUS_PL NULL
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_PL NULL
@@ -60711,7 +60711,7 @@ struct retro_core_options_v2 options_pl = {
 #define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_INFO_0_PT_BR "Define o dispositivo conectado no encaixe de expansão D2 (porta D, compartimento 2)."
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_PT_BR "VMU por jogo"
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CAT_PT_BR "VMU por jogo"
-#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_PT_BR "\"DESLIGADO\": todos os jogos compartilham até 8 arquivos de salvamento (A1/A2/B1/B2/C1/C2/D1/D2), localizados no diretório de sistema do RetroArch.\n\"VMU A1\": cria um único arquivo para todos os jogos.\n\"Todos os VMU\": cria até 8 arquivos (A1/A2/B1/B2/C1/C2/D1/D2) para cada jogo."
+#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_PT_BR NULL
 #define OPTION_VAL_VMU_A1_PT_BR NULL
 #define OPTION_VAL_ALL_VMUS_PT_BR "Todos os VMU"
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_PT_BR "Som do VMU"
@@ -64737,7 +64737,7 @@ struct retro_core_options_v2 options_pt_pt = {
 #define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_INFO_0_RU "Выбор устройства, включенного в слот расширения D2 (порт D слот 2)."
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_RU "Отдельные визуальные карты памяти (VMU) для игр"
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CAT_RU "VMU для каждой игры"
-#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_RU "Если выключено, все игры используют до 8 файлов сохранений VMU (A1/A2/B1/B2/C1/C2/D1/D2), расположенных в системном каталоге RetroArch. При значении 'VMU A1' для каждой запущенной игры создаётся уникальный файл VMU 'A1' в каталоге сохранений RetroArch. Настройка 'Все VMU' создаёт до 8 уникальных файлов VMU (A1/A2/B1/B2/C1/C2/D1/D2) для каждой запущенной игры."
+#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_RU NULL
 #define OPTION_VAL_VMU_A1_RU NULL
 #define OPTION_VAL_ALL_VMUS_RU "Все VMU"
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_RU "Звуковые сигналы визуальных карт памяти (VMU)"
@@ -72789,7 +72789,7 @@ struct retro_core_options_v2 options_sv = {
 #define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_INFO_0_TR "Genişletme yuvası D2 için takılı cihazı seçin (port D yuva 2)."
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_TR "Oyun Başına Görsel Bellek Birimleri/Sistemleri (VMU)"
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CAT_TR "Oyun Başına VMU"
-#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_TR "Devre dışı bırakıldığında, tüm oyunlar RetroArch sistem dizininde bulunan en fazla 8 VMU kayıt dosyasını (A1/A2/B1/B2/C1/C2/D1/D2) paylaşır.\n\'VMU A1' ayarı, başlatılan her oyun için RetroArch dizin kaydına benzersiz bir VMU 'A1' dosyası oluşturur.\n\'Tüm VMU'' ayarları, başlatılan her oyun için en fazla 8 benzersiz VMU dosyası (A1/A2/B1/B2/C1/C2/D1/D2) oluşturur."
+#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_TR NULL
 #define OPTION_VAL_VMU_A1_TR NULL
 #define OPTION_VAL_ALL_VMUS_TR "Tüm VMU"
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_TR "Görsel Bellek Birimleri/Sistemleri (VMU) Sesleri"
