@@ -37,11 +37,11 @@ layout (push_constant) uniform constants
 } pushConstants;
 
 layout (location = 0) in vec4         in_pos;
-layout (location = 1) in uvec4        in_base;
-layout (location = 2) in uvec4        in_offs;
+layout (location = 1) in vec4        in_base;
+layout (location = 2) in vec4        in_offs;
 layout (location = 3) in mediump vec2 in_uv;
-layout (location = 4) in uvec4        in_base1;						// New for OIT, only for OP/PT with 2-volume
-layout (location = 5) in uvec4        in_offs1;
+layout (location = 4) in vec4        in_base1;						// New for OIT, only for OP/PT with 2-volume
+layout (location = 5) in vec4        in_offs1;
 layout (location = 6) in mediump vec2 in_uv1;
 
 layout (location = 0) INTERPOLATION out highp vec4 vtx_base;
@@ -59,11 +59,11 @@ void main()
 	vpos /= vpos.z;
 	vpos.z = vpos.w;
 #endif
-	vtx_base = vec4(in_base) / 255.0;
-	vtx_offs = vec4(in_offs) / 255.0;
+	vtx_base = in_base;
+	vtx_offs = in_offs;
 	vtx_uv = vec3(in_uv, vpos.z);
-	vtx_base1 = vec4(in_base1) / 255.0;
-	vtx_offs1 = vec4(in_offs1) / 255.0;
+	vtx_base1 = in_base1;
+	vtx_offs1 = in_offs1;
 	vtx_uv1 = in_uv1;
 #if pp_Gouraud == 1 && DIV_POS_Z != 1
 	vtx_base *= vpos.z;
@@ -638,11 +638,11 @@ layout (push_constant) uniform constants
 } pushConstants;
 
 layout (location = 0) in vec4         in_pos;
-layout (location = 1) in uvec4        in_base;
-layout (location = 2) in uvec4        in_offs;
+layout (location = 1) in vec4        in_base;
+layout (location = 2) in vec4        in_offs;
 layout (location = 3) in mediump vec2 in_uv;
-layout (location = 4) in uvec4        in_base1;
-layout (location = 5) in uvec4        in_offs1;
+layout (location = 4) in vec4        in_base1;
+layout (location = 5) in vec4        in_offs1;
 layout (location = 6) in mediump vec2 in_uv1;
 layout (location = 7) in vec3         in_normal;
 
@@ -677,16 +677,16 @@ void wDivide(inout vec4 vpos)
 void main()
 {
 	vec4 vpos = n2Uniform.mvMat * in_pos;
-	vtx_base = vec4(in_base) / 255.0;
-	vtx_offs = vec4(in_offs) / 255.0;
+	vtx_base = in_base;
+	vtx_offs = in_offs;
 
 	#if LIGHT_ON == 1
 	vec3 vnorm = normalize(mat3(n2Uniform.normalMat) * in_normal);
 	#endif
 
 	#if pp_TwoVolumes == 1
-		vtx_base1 = vec4(in_base1) / 255.0;
-		vtx_offs1 = vec4(in_offs1) / 255.0;
+		vtx_base1 = in_base1;
+		vtx_offs1 = in_offs1;
 		vtx_uv1 = in_uv1;
 		#if LIGHT_ON == 1
 			// FIXME need offset0 and offset1 for bump maps
