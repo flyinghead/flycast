@@ -286,7 +286,7 @@ private:
 		return cullMode | ((int)naomi2 << 2) | ((int)(!settings.platform.isNaomi2() && config::NativeDepthInterpolation) << 3);
 	}
 
-	vk::PipelineVertexInputStateCreateInfo GetMainVertexInputStateCreateInfo(bool full = true) const
+	vk::PipelineVertexInputStateCreateInfo GetMainVertexInputStateCreateInfo(bool full = true, bool naomi2 = false) const
 	{
 		// Vertex input state
 		static const vk::VertexInputBindingDescription vertexBindingDescriptions[] =
@@ -305,12 +305,33 @@ private:
 		{
 				vk::VertexInputAttributeDescription(0, 0, vk::Format::eR32G32B32Sfloat, offsetof(Vertex, x)),	// pos
 		};
+
+
+		const vk::VertexInputAttributeDescription* attributeDescription = vertexInputLightAttributeDescriptions;
+		u32 attributeDescriptionSize = std::size(vertexInputLightAttributeDescriptions);
+
+		if (full)
+		{
+			attributeDescription = vertexInputAttributeDescriptions;
+
+			if (naomi2)
+			{
+				attributeDescriptionSize = std::size(vertexInputAttributeDescriptions);
+			}
+			else
+			{
+				// naomi2 normal not needed
+				attributeDescriptionSize = std::size(vertexInputAttributeDescriptions) - 1;
+			}
+		}
+		
+
+
 		return vk::PipelineVertexInputStateCreateInfo(
 				vk::PipelineVertexInputStateCreateFlags(),
-				std::size(vertexBindingDescriptions),
-				vertexBindingDescriptions,
-				full ? std::size(vertexInputAttributeDescriptions) : std::size(vertexInputLightAttributeDescriptions),
-				full ? vertexInputAttributeDescriptions : vertexInputLightAttributeDescriptions);
+				std::size(vertexBindingDescriptions), vertexBindingDescriptions,
+				attributeDescriptionSize, attributeDescription
+		);
 	}
 
 	void CreatePipeline(u32 listType, bool sortTriangles, const PolyParam& pp, int gpuPalette, bool dithering);
