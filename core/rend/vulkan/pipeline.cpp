@@ -454,7 +454,7 @@ void OSDPipeline::CreatePipeline()
 	static const vk::VertexInputBindingDescription vertexInputBindingDescription(0, sizeof(OSDVertex));
 	static const std::array<vk::VertexInputAttributeDescription, 3> vertexInputAttributeDescriptions = {
 			vk::VertexInputAttributeDescription(0, 0, vk::Format::eR32G32Sfloat, offsetof(OSDVertex, x)),	// pos
-			vk::VertexInputAttributeDescription(1, 0, vk::Format::eR8G8B8A8Uint, offsetof(OSDVertex, r)),	// color
+			vk::VertexInputAttributeDescription(1, 0, vk::Format::eR8G8B8A8Unorm, offsetof(OSDVertex, r)),	// color
 			vk::VertexInputAttributeDescription(2, 0, vk::Format::eR32G32Sfloat, offsetof(OSDVertex, u)),	// tex coord
 	};
 	vk::PipelineVertexInputStateCreateInfo vertexInputStateCreateInfo(
