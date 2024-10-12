@@ -159,7 +159,8 @@ static void loadSpecialSettings()
 		}
 		else if (prod_id == "T-8109N"		// Re-Volt (US, EU, JP)
 				|| prod_id == "T8107D  50"
-				|| prod_id == "T-8101M")
+				|| prod_id == "T-8101M"
+				|| prod_id ==  "DR001")		// Sturmwind
 		{
 			INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s", prod_id.c_str());
 			config::ExtraDepthScale.override(100.f);
