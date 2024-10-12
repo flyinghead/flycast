@@ -31,7 +31,7 @@ void PipelineManager::CreateModVolPipeline(ModVolMode mode, int cullMode, bool n
 
 	if (mode == ModVolMode::Final)
 	{
-		pipelineVertexInputStateCreateInfo = GetMainVertexInputStateCreateInfo(false);
+		pipelineVertexInputStateCreateInfo = GetMainVertexInputStateCreateInfo(false, naomi2);
 		pipelineInputAssemblyStateCreateInfo = vk::PipelineInputAssemblyStateCreateInfo(vk::PipelineInputAssemblyStateCreateFlags(),
 				vk::PrimitiveTopology::eTriangleStrip);
 	}
@@ -172,7 +172,7 @@ void PipelineManager::CreateModVolPipeline(ModVolMode mode, int cullMode, bool n
 void PipelineManager::CreateDepthPassPipeline(int cullMode, bool naomi2)
 {
 	// Vertex input state
-	vk::PipelineVertexInputStateCreateInfo pipelineVertexInputStateCreateInfo = GetMainVertexInputStateCreateInfo(false);
+	vk::PipelineVertexInputStateCreateInfo pipelineVertexInputStateCreateInfo = GetMainVertexInputStateCreateInfo(false, false);
 	// Input assembly state
 	vk::PipelineInputAssemblyStateCreateInfo pipelineInputAssemblyStateCreateInfo
 	(
@@ -284,7 +284,7 @@ void PipelineManager::CreateDepthPassPipeline(int cullMode, bool naomi2)
 
 void PipelineManager::CreatePipeline(u32 listType, bool sortTriangles, const PolyParam& pp, int gpuPalette, bool dithering)
 {
-	vk::PipelineVertexInputStateCreateInfo pipelineVertexInputStateCreateInfo = GetMainVertexInputStateCreateInfo();
+	vk::PipelineVertexInputStateCreateInfo pipelineVertexInputStateCreateInfo = GetMainVertexInputStateCreateInfo(true, pp.isNaomi2());
 
 	// Input assembly state
 	vk::PipelineInputAssemblyStateCreateInfo pipelineInputAssemblyStateCreateInfo;
