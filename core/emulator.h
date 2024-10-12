@@ -165,6 +165,11 @@ public:
 	 * Called internally on vblank.
 	 */
 	void vblank();
+	/**
+	 * Restart the cpu iff the emu is still running
+	 * Returns true if the cpu was started
+	 */
+	bool restartCpu();
 
 private:
 	bool checkStatus(bool wait = false);

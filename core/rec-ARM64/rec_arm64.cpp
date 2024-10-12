@@ -43,6 +43,7 @@ using namespace vixl::aarch64;
 #include "arm64_regalloc.h"
 #include "hw/mem/addrspace.h"
 #include "oslib/virtmem.h"
+#include "emulator.h"
 
 #undef do_sqw_nommu
 
@@ -2213,8 +2214,8 @@ public:
 				generate_mainloop();
 
 				::mainloop(v_cntx);
-				if (restarting)
-					p_sh4rcb->cntx.CpuRunning = 1;
+				if (restarting && !emu.restartCpu())
+					restarting = false;
 			} while (restarting);
 		} catch (const SH4ThrownException&) {
 			ERROR_LOG(DYNAREC, "SH4ThrownException in mainloop");

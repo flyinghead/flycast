@@ -688,7 +688,8 @@ void Emulator::runInternal()
 			{
 				nvmem::saveFiles();
 				dc_reset(false);
-				sh4_cpu.Start();
+				if (!restartCpu())
+					resetRequested = false;
 			}
 		} while (resetRequested);
 	}
@@ -750,9 +751,12 @@ void Emulator::stop()
 	// Avoid race condition with GGPO restarting the sh4 for a new frame
 	if (config::GGPOEnable)
 		NetworkHandshake::term();
-	// must be updated after GGPO is stopped since it may run some rollback frames
-	state = Loaded;
-	sh4_cpu.Stop();
+	{
+		const std::lock_guard<std::mutex> _(mutex);
+		// must be updated after GGPO is stopped since it may run some rollback frames
+		state = Loaded;
+		sh4_cpu.Stop();
+	}
 	if (config::ThreadedRendering)
 	{
 		rend_cancel_emu_wait();
@@ -1037,6 +1041,15 @@ void Emulator::vblank()
 		ggpo::endOfFrame();
 	else if (!config::ThreadedRendering)
 		sh4_cpu.Stop();
+}
+
+bool Emulator::restartCpu()
+{
+	const std::lock_guard<std::mutex> _(mutex);
+	if (state != Running)
+		return false;
+	sh4_cpu.Start();
+	return true;
 }
 
 Emulator emu;

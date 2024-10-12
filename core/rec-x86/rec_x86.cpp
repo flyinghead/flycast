@@ -27,6 +27,7 @@
 #include "hw/sh4/sh4_mem.h"
 #include "hw/mem/addrspace.h"
 #include "oslib/unwind_info.h"
+#include "emulator.h"
 
 static void (*mainloop)();
 static void (*ngen_FailedToFindBlock_)();
@@ -900,8 +901,8 @@ public:
 				generate_mainloop();
 
 				::mainloop();
-				if (restarting)
-					p_sh4rcb->cntx.CpuRunning = 1;
+				if (restarting && !emu.restartCpu())
+					restarting = false;
 			} while (restarting);
 		} catch (const SH4ThrownException& e) {
 			ERROR_LOG(DYNAREC, "SH4ThrownException in mainloop %x pc %x", e.expEvn, e.epc);

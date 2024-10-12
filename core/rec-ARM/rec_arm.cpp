@@ -50,6 +50,7 @@ using namespace vixl::aarch32;
 #include "cfg/option.h"
 #include "arm_unwind.h"
 #include "oslib/virtmem.h"
+#include "emulator.h"
 
 //#define CANONICALTEST
 
@@ -428,8 +429,8 @@ public:
 			generate_mainloop();
 
 			::mainloop(context);
-			if (restarting)
-				p_sh4rcb->cntx.CpuRunning = 1;
+			if (restarting && !emu.restartCpu())
+				restarting = false;
 		} while (restarting);
 	}
 
