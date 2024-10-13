@@ -396,7 +396,7 @@ void main()
 
 static const char OSDVertexShaderSource[] = R"(
 layout (location = 0) in vec4 inPos;
-layout (location = 1) in uvec4 inColor;
+layout (location = 1) in vec4 inColor;
 layout (location = 2) in vec2 inUV;
 layout (location = 0) out lowp vec4 outColor;
 layout (location = 1) out mediump vec2 outUV;
@@ -659,8 +659,8 @@ layout (std140, set = 0, binding = 0) uniform VertexShaderUniforms
 } uniformBuffer;
 
 layout (location = 0) in vec4         in_pos;
-layout (location = 1) in uvec4        in_base;
-layout (location = 2) in uvec4        in_offs;
+layout (location = 1) in vec4         in_base;
+layout (location = 2) in vec4         in_offs;
 layout (location = 3) in mediump vec2 in_uv;
 layout (location = 4) in vec3         in_normal;
 
