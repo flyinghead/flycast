@@ -56,22 +56,40 @@ bool atomiswaveForceFeedback;
 
 static bool loadBios(const char *filename, Archive *child_archive, Archive *parent_archive, int region)
 {
+	std::string path;
+	std::string biosName;
+	if (settings.naomi.slave)
+	{
+		// extract basename of bios
+		biosName = get_file_basename(filename);
+		size_t idx = get_last_slash_pos(biosName);
+		if (idx != std::string::npos)
+			biosName = biosName.substr(idx + 1);
+		path = filename;
+	}
+	else
+	{
+		biosName = filename;
+	}
 	int biosid = 0;
 	for (; BIOS[biosid].name != nullptr; biosid++)
-		if (!stricmp(BIOS[biosid].name, filename))
+		if (!stricmp(BIOS[biosid].name, biosName.c_str()))
 			break;
 	if (BIOS[biosid].name == nullptr)
 	{
-		WARN_LOG(NAOMI, "Unknown BIOS %s", filename);
+		WARN_LOG(NAOMI, "Unknown BIOS %s", biosName.c_str());
 		return false;
 	}
 
 	const BIOS_t *bios = &BIOS[biosid];
 
-	std::string arch_name(bios->filename != nullptr ? bios->filename : filename);
-	std::string path = hostfs::findNaomiBios(arch_name + ".zip");
 	if (path.empty())
-		path = hostfs::findNaomiBios(arch_name + ".7z");
+	{
+		std::string arch_name(bios->filename != nullptr ? bios->filename : filename);
+		path = hostfs::findNaomiBios(arch_name + ".zip");
+		if (path.empty())
+			path = hostfs::findNaomiBios(arch_name + ".7z");
+	}
 	DEBUG_LOG(NAOMI, "Loading BIOS from %s", path.c_str());
 	std::unique_ptr<Archive> bios_archive(OpenArchive(path));
 
