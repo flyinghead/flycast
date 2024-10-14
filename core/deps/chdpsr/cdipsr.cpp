@@ -38,7 +38,7 @@ unsigned long track_mode;
 /////////////////////////////////////////////////////////////////////////////
 
 
-void CDI_read_track (FILE *fsource, image_s *image, track_s *track)
+bool CDI_read_track (FILE *fsource, image_s *image, track_s *track)
 {
 
      unsigned char TRACK_START_MARK[10] = { 0, 0, 0x01, 0, 0, 0, 0xFF, 0xFF, 0xFF, 0xFF };
@@ -49,10 +49,16 @@ void CDI_read_track (FILE *fsource, image_s *image, track_s *track)
             fseek(fsource, 8, SEEK_CUR); // extra data (DJ 3.00.780 and up)
 
          fread(&current_start_mark, 10, 1, fsource);
-         if (memcmp(TRACK_START_MARK, current_start_mark, 10)) printf( "Unsupported format: Could not find the track start mark");
+         if (memcmp(TRACK_START_MARK, current_start_mark, 10)) {
+        	 printf("CDI_read_track: Unsupported format: Could not find the track start mark\n");
+        	 return false;
+         }
 
          fread(&current_start_mark, 10, 1, fsource);
-         if (memcmp(TRACK_START_MARK, current_start_mark, 10)) printf(  "Unsupported format: Could not find the track start mark");
+         if (memcmp(TRACK_START_MARK, current_start_mark, 10)) {
+        	 printf("CDI_read_track: Unsupported format: Could not find the track start mark\n");
+        	 return false;
+         }
 
          fseek(fsource, 4, SEEK_CUR);
          fread(&track->filename_length, 1, 1, fsource);
@@ -80,20 +86,25 @@ void CDI_read_track (FILE *fsource, image_s *image, track_s *track)
                case 1 : track->sector_size = 2336; break;
                case 2 : track->sector_size = 2352; break;
                case 4 : track->sector_size = 2448; break;
-               default: printf("Unsupported sector size. value %ld\n", track->sector_size_value);
-               		break;
+               default:
+            	   printf("CDI_read_track: Unsupported sector size. value %ld\n", track->sector_size_value);
+               	   return false;
                }
 
-         if (track->mode > 2) printf( "Unsupported format: Track mode not supported");
+         if (track->mode > 2) {
+        	 printf("CDI_read_track: Unsupported format: Track mode not supported\n");
+        	 return false;
+         }
 
          fseek(fsource, 29, SEEK_CUR);
          if (image->version != CDI_V2)
-            {
+         {
             fseek(fsource, 5, SEEK_CUR);
             fread(&temp_value, 4, 1, fsource);
             if (temp_value == 0xffffffff)
                 fseek(fsource, 78, SEEK_CUR); // extra data (DJ 3.00.780 and up)
-            }
+         }
+         return true;
 }
 
 
@@ -104,9 +115,9 @@ void CDI_skip_next_session (FILE *fsource, image_s *image)
      if (image->version != CDI_V2) fseek(fsource, 1, SEEK_CUR);
 }
 
-void CDI_get_tracks (FILE *fsource, image_s *image)
+bool CDI_get_tracks (FILE *fsource, image_s *image)
 {
-     fread(&image->tracks, 2, 1, fsource);
+     return fread(&image->tracks, 2, 1, fsource) == 1;
 }
 
 bool CDI_init (FILE *fsource, image_s *image, const char *fsourcename)
@@ -121,8 +132,9 @@ bool CDI_init (FILE *fsource, image_s *image, const char *fsourcename)
 	}
 
 	fseek(fsource, image->length-8, SEEK_SET);
-	fread(&image->version, 4, 1, fsource);
-	fread(&image->header_offset, 4, 1, fsource);
+	if (fread(&image->version, 4, 1, fsource) != 1
+			|| fread(&image->header_offset, 4, 1, fsource) != 1)
+		return false;
 
 	if ((image->version != CDI_V2 && image->version != CDI_V3 && image->version != CDI_V35)
 			|| image->header_offset == 0)
@@ -133,7 +145,7 @@ bool CDI_init (FILE *fsource, image_s *image, const char *fsourcename)
 	return true;
 }
 
-void CDI_get_sessions (FILE *fsource, image_s *image)
+bool CDI_get_sessions (FILE *fsource, image_s *image)
 {
 #ifndef DEBUG_CDI
      if (image->version == CDI_V35)
@@ -144,6 +156,6 @@ void CDI_get_sessions (FILE *fsource, image_s *image)
 #else
      fseek(fsource, 0L, SEEK_SET);
 #endif
-     fread(&image->sessions, 2, 1, fsource);
+     return fread(&image->sessions, 2, 1, fsource) == 1;
 }
 

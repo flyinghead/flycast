@@ -38,9 +38,9 @@ typedef struct track_s
 
 unsigned long ask_type(FILE *fsource, long header_position);
 bool CDI_init(FILE *fsource, image_s *image, const char *fsourcename);
-void CDI_get_sessions(FILE *fsource, image_s *image);
-void CDI_get_tracks(FILE *fsource, image_s *image);
-void CDI_read_track(FILE *fsource, image_s *image, track_s *track);
+bool CDI_get_sessions(FILE *fsource, image_s *image);
+bool CDI_get_tracks(FILE *fsource, image_s *image);
+bool CDI_read_track(FILE *fsource, image_s *image, track_s *track);
 void CDI_skip_next_session(FILE *fsource, image_s *image);
 
 #endif
