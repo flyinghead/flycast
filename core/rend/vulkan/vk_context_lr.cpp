@@ -216,21 +216,18 @@ bool VkCreateDevice(retro_vulkan_context* context, VkInstance instance, VkPhysic
 			vk::DeviceQueueCreateInfo(vk::DeviceQueueCreateFlags(), context->queue_family_index, 1, &queuePriority),
 			vk::DeviceQueueCreateInfo(vk::DeviceQueueCreateFlags(), context->presentation_queue_family_index, 1, &queuePriority),
 	};
-
-
-	vk::Device newDevice{};
-	if (getPhysicalDeviceProperties2Supported)
-	{
-		vk::DeviceCreateInfo deviceCreateInfo(vk::DeviceCreateFlags(), deviceQueueCreateInfo,
-			nullptr, enabledExtensions);
-		deviceCreateInfo.pNext = &featuresChain;
-		newDevice = physicalDevice.createDevice(deviceCreateInfo);
-	}
+	bool singleQueue = context->queue_family_index == context->presentation_queue_family_index;
+	vk::DeviceCreateInfo deviceCreateInfo;
+	if (singleQueue)
+		deviceCreateInfo = vk::DeviceCreateInfo(vk::DeviceCreateFlags(), deviceQueueCreateInfo[0], nullptr, enabledExtensions);
 	else
-	{
-		newDevice = physicalDevice.createDevice(vk::DeviceCreateInfo(vk::DeviceCreateFlags(), deviceQueueCreateInfo,
-			nullptr, enabledExtensions, &features));
-	}
+		deviceCreateInfo = vk::DeviceCreateInfo(vk::DeviceCreateFlags(), deviceQueueCreateInfo, nullptr, enabledExtensions);
+
+	if (getPhysicalDeviceProperties2Supported)
+		deviceCreateInfo.pNext = &featuresChain;
+	else
+		deviceCreateInfo.setPEnabledFeatures(&features);
+	vk::Device newDevice = physicalDevice.createDevice(deviceCreateInfo);
 
 	context->device = (VkDevice)newDevice;
 #if VULKAN_HPP_DISPATCH_LOADER_DYNAMIC == 1
