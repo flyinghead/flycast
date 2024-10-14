@@ -13,7 +13,7 @@
 template<class T, int N> class RingBuffer
 {
 public:
-   RingBuffer<T, N>() : 
+   RingBuffer() : 
       _head(0),
       _tail(0),
       _size(0) {
