@@ -326,6 +326,27 @@ void DX11Renderer::Process(TA_context* ctx)
 	ta_parse(ctx, true);
 }
 
+void DX11Renderer::resetContextState()
+{
+	// Reset device context state. Very much needed for libretro where current state is unknown.
+	deviceContext->OMSetRenderTargetsAndUnorderedAccessViews(0, nullptr, nullptr, 0, 0, nullptr, nullptr);
+	deviceContext->PSSetShader(nullptr, nullptr, 0);
+	deviceContext->GSSetShader(nullptr, nullptr, 0);
+	deviceContext->HSSetShader(nullptr, nullptr, 0);
+	deviceContext->DSSetShader(nullptr, nullptr, 0);
+	deviceContext->CSSetShader(nullptr, nullptr, 0);
+	deviceContext->VSSetShader(nullptr, nullptr, 0);
+	ID3D11ShaderResourceView *nullview[D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT] {};
+	deviceContext->CSSetShaderResources(0, D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT, nullview);
+	deviceContext->DSSetShaderResources(0, D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT, nullview);
+	deviceContext->GSSetShaderResources(0, D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT, nullview);
+	deviceContext->HSSetShaderResources(0, D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT, nullview);
+	deviceContext->PSSetShaderResources(0, D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT, nullview);
+	deviceContext->VSSetShaderResources(0, D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT, nullview);
+	deviceContext->SetPredication(nullptr, false);
+	deviceContext->SOSetTargets(0, nullptr, nullptr);
+}
+
 void DX11Renderer::configVertexShader()
 {
 	matrices.CalcMatrices(&pvrrc, width, height);
@@ -359,10 +380,6 @@ void DX11Renderer::configVertexShader()
 	memcpy(mappedSubres.pData, &constant, sizeof(constant));
 	deviceContext->Unmap(vtxConstants, 0);
 	deviceContext->VSSetConstantBuffers(0, 1, &vtxConstants.get());
-	deviceContext->GSSetShader(nullptr, nullptr, 0);
-	deviceContext->HSSetShader(nullptr, nullptr, 0);
-	deviceContext->DSSetShader(nullptr, nullptr, 0);
-	deviceContext->CSSetShader(nullptr, nullptr, 0);
 }
 
 void DX11Renderer::uploadGeometryBuffers()
@@ -454,9 +471,7 @@ void DX11Renderer::setupPixelShaderConstants()
 
 bool DX11Renderer::Render()
 {
-	// make sure to unbind the framebuffer view before setting it as render target
-	ID3D11ShaderResourceView *nullView = nullptr;
-    deviceContext->PSSetShaderResources(0, 1, &nullView);
+	resetContextState();
 	bool is_rtt = pvrrc.isRTT;
 	if (!is_rtt)
 	{
@@ -1201,26 +1216,27 @@ void DX11Renderer::readRttRenderTarget(u32 texAddress)
 
 void DX11Renderer::updatePaletteTexture()
 {
-	if (!palette_updated)
-		return;
-	palette_updated = false;
-
-	deviceContext->UpdateSubresource(paletteTexture, 0, nullptr, palette32_ram, 32 * sizeof(u32), 32 * sizeof(u32) * 32);
-
+	if (palette_updated)
+	{
+		palette_updated = false;
+		deviceContext->UpdateSubresource(paletteTexture, 0, nullptr, palette32_ram, 32 * sizeof(u32), 32 * sizeof(u32) * 32);
+	}
     deviceContext->PSSetShaderResources(1, 1, &paletteTextureView.get());
     deviceContext->PSSetSamplers(1, 1, &samplers->getSampler(false).get());
 }
 
 void DX11Renderer::updateFogTexture()
 {
-	if (!fog_needs_update || !config::Fog)
+	if (!config::Fog)
 		return;
-	fog_needs_update = false;
-	u8 temp_tex_buffer[256];
-	MakeFogTexture(temp_tex_buffer);
+	if (fog_needs_update)
+	{
+		fog_needs_update = false;
+		u8 temp_tex_buffer[256];
+		MakeFogTexture(temp_tex_buffer);
 
-	deviceContext->UpdateSubresource(fogTexture, 0, nullptr, temp_tex_buffer, 128, 128 * 2);
-
+		deviceContext->UpdateSubresource(fogTexture, 0, nullptr, temp_tex_buffer, 128, 128 * 2);
+	}
     deviceContext->PSSetShaderResources(2, 1, &fogTextureView.get());
     deviceContext->PSSetSamplers(2, 1, &samplers->getSampler(true).get());
 }

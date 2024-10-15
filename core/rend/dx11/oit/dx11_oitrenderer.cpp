@@ -649,6 +649,7 @@ struct DX11OITRenderer : public DX11Renderer
 
 	bool Render() override
 	{
+		resetContextState();
 		bool is_rtt = pvrrc.isRTT;
 
 		if (!is_rtt)

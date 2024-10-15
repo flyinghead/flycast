@@ -101,6 +101,7 @@ protected:
 	virtual void setRTTSize(int width, int height) {}
 	void writeFramebufferToVRAM();
 	void renderVideoRouting();
+	void resetContextState();
 
 	ComPtr<ID3D11Device> device;
 	ComPtr<ID3D11DeviceContext> deviceContext;
