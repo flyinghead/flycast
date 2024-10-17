@@ -1813,6 +1813,11 @@ static void gui_settings_general()
 	if (OptionCheckbox("Hide Legacy Naomi Roms", config::HideLegacyNaomiRoms,
 			"Hide .bin, .dat and .lst files from the content browser"))
 		scanner.refresh();
+#ifdef __ANDROID__
+	OptionCheckbox("Use SAF File Picker", config::UseSafFilePicker,
+			"Use Android Storage Access Framework file picker to select folders and files. Ignored on Android 10 and later.");
+#endif
+
 	ImGui::Text("Automatic State:");
 	OptionCheckbox("Load", config::AutoLoadState,
 			"Load the last saved state of the game when starting");
@@ -2809,6 +2814,24 @@ static void gui_settings_advanced()
 #endif
 }
 
+#if defined(__ANDROID__) && HOST_CPU == CPU_ARM64 && USE_VULKAN
+static bool driverDirty;
+
+static void customDriverCallback(bool cancelled, std::string selection)
+{
+	if (!cancelled) {
+		try {
+			uploadCustomGpuDriver(selection);
+			config::CustomGpuDriver = true;
+			driverDirty = true;
+		} catch (const FlycastException& e) {
+			gui_error(e.what());
+			config::CustomGpuDriver = false;
+		}
+	}
+}
+#endif
+
 static void gui_settings_about()
 {
     header("Flycast");
@@ -2876,20 +2899,7 @@ static void gui_settings_about()
 #if defined(__ANDROID__) && HOST_CPU == CPU_ARM64 && USE_VULKAN
 	if (isVulkan(config::RendererType))
 	{
-		static bool driverDirty;
-		const auto& callback = [](bool cancelled, std::string selection) {
-			if (!cancelled) {
-				try {
-					uploadCustomGpuDriver(selection);
-					config::CustomGpuDriver = true;
-					driverDirty = true;
-				} catch (const FlycastException& e) {
-					gui_error(e.what());
-					config::CustomGpuDriver = false;
-				}
-			}
-		};
-
+		const char *fileSelectTitle = "Select a custom GPU driver";
 		{
 			ImguiStyleVar _(ImGuiStyleVar_FramePadding, ScaledVec2(20, 10));
 			if (config::CustomGpuDriver)
@@ -2909,8 +2919,10 @@ static void gui_settings_about()
 					ImGui::OpenPopup("Reset Vulkan");
 				}
 			}
-			else if (ImGui::Button("Upload Custom Driver"))
-				hostfs::addStorage(false, false, "Select a Zip file", callback);
+			else if (ImGui::Button("Upload Custom Driver")) {
+				if (!hostfs::addStorage(false, false, fileSelectTitle, customDriverCallback))
+					ImGui::OpenPopup(fileSelectTitle);
+			}
 
 			if (driverDirty) {
 				ImGui::OpenPopup("Reset Vulkan");
@@ -2935,6 +2947,10 @@ static void gui_settings_about()
 				ImGui::EndPopup();
 			}
 		}
+		select_file_popup(fileSelectTitle, [](bool cancelled, std::string selection) {
+				customDriverCallback(cancelled, selection);
+				return true;
+			}, true, "zip");
 	}
 #endif
 }

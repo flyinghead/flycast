@@ -42,6 +42,7 @@ public:
 		jsaveScreenshot = env->GetMethodID(clazz, "saveScreenshot", "(Ljava/lang/String;[B)V");
 		jimportHomeDirectory = env->GetMethodID(clazz, "importHomeDirectory", "()V");
 		jexportHomeDirectory = env->GetMethodID(clazz, "exportHomeDirectory", "()V");
+		jrequiresSafFilePicker = env->GetMethodID(clazz, "requiresSafFilePicker", "()Z");
 	}
 
 	bool isKnownPath(const std::string& path) override {
@@ -137,6 +138,8 @@ public:
 	bool addStorage(bool isDirectory, bool writeAccess, const std::string& description,
 			void (*callback)(bool cancelled, std::string selectedPath)) override
 	{
+		if (!config::UseSafFilePicker && !jni::env()->CallBooleanMethod(jstorage, jrequiresSafFilePicker))
+			return false;
 		jni::String jdesc(description);
 		bool ret = jni::env()->CallBooleanMethod(jstorage, jaddStorage, isDirectory, writeAccess, (jstring)jdesc);
 		checkException();
@@ -229,6 +232,7 @@ private:
 	jmethodID jsaveScreenshot;
 	jmethodID jexportHomeDirectory;
 	jmethodID jimportHomeDirectory;
+	jmethodID jrequiresSafFilePicker;
 	// FileInfo accessors lazily initialized to avoid having to load the class
 	jmethodID jgetName = nullptr;
 	jmethodID jgetPath = nullptr;

@@ -103,7 +103,10 @@ void gui_cheats()
 		ImGui::SameLine();
 #ifdef __ANDROID__
 		if (ImGui::Button("Load"))
-			hostfs::addStorage(false, true, title, cheatFileSelected);
+		{
+			if (!hostfs::addStorage(false, true, title, cheatFileSelected))
+				ImGui::OpenPopup(title);
+		}
 #else
 		if (ImGui::Button("Load"))
 			ImGui::OpenPopup(title);

@@ -20,6 +20,7 @@ package com.flycast.emulator;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.ActivityNotFoundException;
 import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.CursorLoader;
@@ -304,7 +305,33 @@ public class AndroidStorage {
         intent = Intent.createChooser(intent, description);
         storageIntentPerms = Intent.FLAG_GRANT_READ_URI_PERMISSION | (writeAccess ? Intent.FLAG_GRANT_WRITE_URI_PERMISSION : 0);
         intent.addFlags(Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION | storageIntentPerms);
-        activity.startActivityForResult(intent, ADD_STORAGE_ACTIVITY_REQUEST);
+        try {
+            activity.startActivityForResult(intent, ADD_STORAGE_ACTIVITY_REQUEST);
+        } catch (ActivityNotFoundException aex) {
+            Log.w("flycast", "Unable to start file/folder picker", aex);
+            activity.runOnUiThread(new Runnable() {
+                public void run() {
+                    String message;
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
+                        // Android 10+ requires SAF
+                        message = "No appropriate file manager was found on your device.\n"
+                                + "Please install a Storage Access Framework compatible file manager";
+                    else
+                        message = "No appropriate file manager was found on your device.\n"
+                                + "Please install a file manager or try to disable 'Use SAF File Picker' in the general settings";
+                    new AlertDialog.Builder(activity)
+                            .setTitle("File Manager not found")
+                            .setMessage(message)
+                            .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int id) {
+                                    addStorageCallback(null);
+                                }
+                            })
+                            .show();
+                }
+            });
+        }
 
         return true;
     }
@@ -601,5 +628,10 @@ public class AndroidStorage {
         HomeMover mover = new HomeMover(activity, this);
         mover.setReloadConfigOnCompletion(true);
         mover.copyHome(uri.toString(), activity.getExternalFilesDir(null).toURI().toString(), "Importing home folder");
+    }
+
+    public boolean requiresSafFilePicker() {
+        // Android 10+ requires ASS
+        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q;
     }
 }
