@@ -140,7 +140,11 @@ static void loadSpecialSettings()
 				// Cool Boarders Burrrn (JP)
 				|| prod_id == "T36901M"
 				// Castle Fantasia - Seima Taisen (JP)
-				|| prod_id == "T46901M")
+				|| prod_id == "T46901M"
+				// Silent Scope (US)
+				|| prod_id == "T9507N"
+				// Silent Scope (EU)
+				|| prod_id == "T9505D")
 		{
 			INFO_LOG(BOOT, "Enabling RTT Copy to VRAM for game %s", prod_id.c_str());
 			config::RenderToTextureBuffer.override(true);
