@@ -11661,7 +11661,7 @@ static bool ImGui::NavScoreItem(ImGuiNavItemData* result)
     // Compute distance between boxes
     // FIXME-NAV: Introducing biases for vertical navigation, needs to be removed.
     float dbx = NavScoreItemDistInterval(cand.Min.x, cand.Max.x, curr.Min.x, curr.Max.x);
-    float dby = cand.Min.y == curr.Max.y || cand.Max.y == curr.Min.y
+    float dby = ImFabs(cand.Min.y - curr.Max.y) < 1 || ImFabs(cand.Max.y - curr.Min.y) < 1
         // Scale down on Y to keep using box-distance for vertically touching items
         ? NavScoreItemDistInterval(ImLerp(cand.Min.y, cand.Max.y, 0.2f), ImLerp(cand.Min.y, cand.Max.y, 0.8f), ImLerp(curr.Min.y, curr.Max.y, 0.2f), ImLerp(curr.Min.y, curr.Max.y, 0.8f))
     	: NavScoreItemDistInterval(cand.Min.y, cand.Max.y, curr.Min.y, curr.Max.y);
