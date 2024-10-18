@@ -4347,7 +4347,7 @@ struct retro_core_options_v2 options_ast = {
 #define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_INFO_0_BE "Выбар прылады, уключанай у слот пашырэння D2 (порт D слот 2)."
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_BE "Асобныя візуальныя карты памяці (VMU) для гульняў"
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CAT_BE "VMU для кожнай гульні"
-#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_BE NULL
+#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_BE "Калі выключана, усе гульні выкарыстоўваюць да 8 файлаў захавання VMU (A1/A2/B1/B2/C1/C2/D1/D2), размешчаных у сістэмнай тэчцы RetroArch.\nНалада 'VMU A1' стварае на кожную запушчаную гульню ўнікальны файл VMU 'A1' у тэчцы захавання RetroArch.\nНалада 'Усе VMU' стварае да 8 унікальных файлаў VMU (A1/A2/B1/B2/C1/C2/D1/D2) на кожную запушчаную гульню."
 #define OPTION_VAL_VMU_A1_BE NULL
 #define OPTION_VAL_ALL_VMUS_BE "Усе VMU"
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_BE "Гукавыя сігналы візуальных карт памяці (VMU)"
@@ -8127,7 +8127,7 @@ struct retro_core_options_v2 options_bg = {
 #define OPTION_VAL_JAPAN_CA NULL
 #define OPTION_VAL_USA_CA NULL
 #define OPTION_VAL_EUROPE_CA NULL
-#define OPTION_VAL_DEFAULT_CA NULL
+#define OPTION_VAL_DEFAULT_CA "Per defecte"
 #define CORE_OPTION_NAME_LANGUAGE_LABEL_CA "Llengua"
 #define CORE_OPTION_NAME_LANGUAGE_INFO_0_CA NULL
 #define OPTION_VAL_JAPANESE_CA NULL
@@ -8216,7 +8216,7 @@ struct retro_core_options_v2 options_bg = {
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_CA NULL
 #define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_LABEL_CA NULL
 #define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_CA NULL
-#define CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_CA NULL
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_CA "Filtratge de textures"
 #define CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_CA NULL
 #define OPTION_VAL_1_CA NULL
 #define OPTION_VAL_2_CA NULL
@@ -8298,7 +8298,7 @@ struct retro_core_options_v2 options_bg = {
 #define OPTION_VAL_500_CA NULL
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_CA NULL
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_INFO_0_CA NULL
-#define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_CA NULL
+#define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_CA "Abocar textures"
 #define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_CA NULL
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_CA NULL
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_INFO_0_CA NULL
@@ -8345,10 +8345,10 @@ struct retro_core_options_v2 options_bg = {
 #define OPTION_VAL_290_O45_CA NULL
 #define OPTION_VAL_300_O45_CA NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_CA NULL
-#define OPTION_VAL_WHITE_CA NULL
-#define OPTION_VAL_RED_CA NULL
-#define OPTION_VAL_GREEN_CA NULL
-#define OPTION_VAL_BLUE_CA NULL
+#define OPTION_VAL_WHITE_CA "Blanc"
+#define OPTION_VAL_RED_CA "Vermell"
+#define OPTION_VAL_GREEN_CA "Verd"
+#define OPTION_VAL_BLUE_CA "Blau"
 #define CORE_OPTION_NAME_LIGHTGUN2_CROSSHAIR_LABEL_CA NULL
 #define CORE_OPTION_NAME_LIGHTGUN3_CROSSHAIR_LABEL_CA NULL
 #define CORE_OPTION_NAME_LIGHTGUN4_CROSSHAIR_LABEL_CA NULL
@@ -8395,16 +8395,16 @@ struct retro_core_options_v2 options_bg = {
 #define CORE_OPTION_NAME_VMU1_PIXEL_ON_COLOR_LABEL_CA NULL
 #define OPTION_VAL_DEFAULT_ON_00_CA NULL
 #define OPTION_VAL_DEFAULT_OFF_01_CA NULL
-#define OPTION_VAL_BLACK_02_CA NULL
+#define OPTION_VAL_BLACK_02_CA "Negre"
 #define OPTION_VAL_LIGHT_BLUE_04_CA NULL
-#define OPTION_VAL_CYAN_06_CA NULL
+#define OPTION_VAL_CYAN_06_CA "Cian"
 #define OPTION_VAL_CYAN_BLUE_07_CA NULL
 #define OPTION_VAL_LIGHT_GREEN_08_CA NULL
 #define OPTION_VAL_CYAN_GREEN_09_CA NULL
 #define OPTION_VAL_LIGHT_CYAN_10_CA NULL
-#define OPTION_VAL_PURPLE_12_CA NULL
+#define OPTION_VAL_PURPLE_12_CA "Lila"
 #define OPTION_VAL_LIGHT_PURPLE_13_CA NULL
-#define OPTION_VAL_YELLOW_14_CA NULL
+#define OPTION_VAL_YELLOW_14_CA "Groc"
 #define OPTION_VAL_GRAY_15_CA NULL
 #define OPTION_VAL_LIGHT_PURPLE_2_16_CA NULL
 #define OPTION_VAL_LIGHT_GREEN_2_17_CA NULL
@@ -8414,7 +8414,7 @@ struct retro_core_options_v2 options_bg = {
 #define OPTION_VAL_MAGENTA_21_CA NULL
 #define OPTION_VAL_LIGHT_PURPLE_3_22_CA NULL
 #define OPTION_VAL_LIGHT_ORANGE_23_CA NULL
-#define OPTION_VAL_ORANGE_24_CA NULL
+#define OPTION_VAL_ORANGE_24_CA "Taronja"
 #define OPTION_VAL_LIGHT_PURPLE_4_25_CA NULL
 #define OPTION_VAL_LIGHT_YELLOW_26_CA NULL
 #define OPTION_VAL_LIGHT_YELLOW_2_27_CA NULL
@@ -10386,7 +10386,7 @@ struct retro_core_options_v2 options_ca = {
 #define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_INFO_0_CHS "选择插入扩展槽 D2 (端口 D 槽位 2) 的设备."
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CHS "每个游戏的记忆卡掌机/系统 (VMU)"
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CAT_CHS "每个游戏 VMU"
-#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_CHS NULL
+#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_CHS "禁用时, 所有游戏共享位于 RetroArch 系统目录中的 8 个 VMU 存档文件 (A1/A2/B1/B2/C1/C2/D1/D2).\n'VMU A1' 为每个启动的游戏在 RetroArch 存档目录中创建一个 VMU 'A1' 存档文件.\n'全部 VMU' 为每个启动的游戏创建 8 个 VMU 存档文件 (A1/A2/B1/B2/C1/C2/D1/D2)."
 #define OPTION_VAL_VMU_A1_CHS NULL
 #define OPTION_VAL_ALL_VMUS_CHS "全部 VMU"
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_CHS "Visual Memory Units/系统 (VMU) 声音"
@@ -20451,7 +20451,7 @@ struct retro_core_options_v2 options_da = {
 #define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_INFO_0_DE "Das Gerät auswählen, das im Erweiterungsslot D2 angeschlossen ist (Port D Slot 2)."
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_DE "Visual Memory Units/Systeme (VMU) pro Spiel"
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CAT_DE "VMUs pro Spiel"
-#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_DE NULL
+#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_DE "Wenn deaktiviert, teilen alle Spiele bis zu 8 VMU-Speicherdateien (A1/A2/B1/B2/C1/C2/D1/D2) im Systemverzeichnis von RetroArch.\nDie Einstellung „VMU A1“ erzeugt für jedes Spiel, das gestartet wird, eine einzigartige VMU-„A1“-Datei im Speicherverzeichnis von RetroArch.\nDie Einstellung „Alle VMUs“ erzeugt bis zu 8 einzigartige VMU-Dateien (A1/A2/B1/B2/C1/C2/D1/D2) für jedes Spiel, das gestartet wird."
 #define OPTION_VAL_VMU_A1_DE NULL
 #define OPTION_VAL_ALL_VMUS_DE "Alle VMUs"
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_DE NULL
@@ -34542,7 +34542,7 @@ struct retro_core_options_v2 options_fi = {
 #define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_INFO_0_FR "Sélectionner le périphérique branché dans le port d'extension D2 (port D emplacement 2)."
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_FR "Unités/systèmes de mémoire visuelle par jeu (VMU)"
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CAT_FR "VMU par jeu"
-#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_FR NULL
+#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_FR "Lorsque cette option est désactivée, tous les jeux partagent jusqu'à 8 fichiers de sauvegarde VMU (A1/A2/B1/B2/C1/D1/D1/D2) situés dans le dossier system de RetroArch.\nLe réglage 'VMU A1' crée un fichier VMU 'A1' unique dans le dossier de sauvegarde de RetroArch pour chaque jeu qui est lancé.\nLe réglage 'Toutes les VMU' crée jusqu'à 8 fichiers VMU uniques (A1/A2/B1/B2/C1/C2/D1/D2) pour chaque jeu qui est lancé."
 #define OPTION_VAL_VMU_A1_FR NULL
 #define OPTION_VAL_ALL_VMUS_FR "Tous les VMU"
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_FR "Sons des unités/systèmes de mémoire visuelle (VMU)"
@@ -46620,7 +46620,7 @@ struct retro_core_options_v2 options_id = {
 #define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_INFO_0_IT "Selezionare il dispositivo collegato allo slot di espansione D2 (porta D slot 2)."
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_IT "Visual Memory Units/Sistemi per Gioco (VMU)"
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CAT_IT "VMU per gioco"
-#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_IT NULL
+#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_IT "Se disabilitato, tutti i giochi condividono fino a 8 file VMU di salvataggio (A1/A2/B1/B2/C1/C2/D1/D2) situati nella cartella di sistema di RetroArch.\n\L'impostazione 'VMU A1' crea un file VMU 'A1' unico nella cartella di salvataggio di RetroArch, per ogni gioco che viene lanciato.\n\L'impostazione 'All VMUs' crea fino a 8 file VMU unici (A1/A2/B1/B2/C1/C2/D1/D2) per ogni gioco che viene lanciato."
 #define OPTION_VAL_VMU_A1_IT NULL
 #define OPTION_VAL_ALL_VMUS_IT "Tutte Le VMU"
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_IT "Suoni Delle Unità Di Memoria Visiva/Sistemi (VMU)"
@@ -58698,7 +58698,7 @@ struct retro_core_options_v2 options_or = {
 #define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_INFO_0_PL NULL
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_PL NULL
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CAT_PL NULL
-#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_PL "Gdy wyłączone, wszystkie gry udostępniają do 8 plików zapisów VMU (A1/A2/B1/B2/C1/C2/D1/D2) znajdujących się w folderze systemowym RetroArch.\nUstawienie 'VMU A1' tworzy unikalny plik VMU 'A1' w folderze zapisów RetroArcha dla każdej uruchomionej gry.\nUstawienie 'Wszystkie VMU' tworzy do 8 unikalnych plików VMU (A1/A2/B1/B2/C1/C2/D1/D2/D2) dla każdej uruchomionej gry."
+#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_PL "Gdy wyłączone, wszystkie gry udostępniają do 8 plików zapisów VMU (A1/A2/B1/B2/C1/C2/D1/D2) znajdujących się w folderze systemowym RetroArch.\n\Ustawienie 'VMU A1' tworzy unikalny plik VMU 'A1' w folderze zapisów RetroArcha dla każdej uruchomionej gry.\n\Ustawienie 'Wszystkie VMU' tworzy do 8 unikalnych plików VMU (A1/A2/B1/B2/C1/C2/D1/D2/D2) dla każdej uruchomionej gry."
 #define OPTION_VAL_VMU_A1_PL NULL
 #define OPTION_VAL_ALL_VMUS_PL NULL
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_PL NULL
@@ -60711,7 +60711,7 @@ struct retro_core_options_v2 options_pl = {
 #define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_INFO_0_PT_BR "Define o dispositivo conectado no encaixe de expansão D2 (porta D, compartimento 2)."
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_PT_BR "VMU por jogo"
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CAT_PT_BR "VMU por jogo"
-#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_PT_BR NULL
+#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_PT_BR "\"DESLIGADO\": todos os jogos compartilham até 8 arquivos de salvamento (A1/A2/B1/B2/C1/C2/D1/D2), localizados na pasta de sistema do RetroArch.\n\"VMU A1\": cria um único arquivo para todos os jogos.\n\"Todos os VMU\": cria até 8 arquivos (A1/A2/B1/B2/C1/C2/D1/D2) para cada jogo."
 #define OPTION_VAL_VMU_A1_PT_BR NULL
 #define OPTION_VAL_ALL_VMUS_PT_BR "Todos os VMU"
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_PT_BR "Som do VMU"
@@ -72789,7 +72789,7 @@ struct retro_core_options_v2 options_sv = {
 #define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_INFO_0_TR "Genişletme yuvası D2 için takılı cihazı seçin (port D yuva 2)."
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_TR "Oyun Başına Görsel Bellek Birimleri/Sistemleri (VMU)"
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CAT_TR "Oyun Başına VMU"
-#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_TR NULL
+#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_TR "Devre dışı bırakıldığında, tüm oyunlar RetroArch sistem klasöründe bulunan en fazla 8 VMU kayıt dosyasını (A1/A2/B1/B2/C1/C2/D1/D2) paylaşır.\n'VMU A1' ayarı, başlatılan her oyun için RetroArch kayıt klasörüne benzersiz bir VMU 'A1' dosyası oluşturur.\n'Tüm VMU'' ayarları, başlatılan her oyun için en fazla 8 benzersiz VMU dosyası (A1/A2/B1/B2/C1/C2/D1/D2) oluşturur."
 #define OPTION_VAL_VMU_A1_TR NULL
 #define OPTION_VAL_ALL_VMUS_TR "Tüm VMU"
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_TR "Görsel Bellek Birimleri/Sistemleri (VMU) Sesleri"
