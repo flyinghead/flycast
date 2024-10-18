@@ -1768,11 +1768,14 @@ static void gui_settings_general()
         ImGui::Text("%s", s.c_str());
         ImguiStyleVar _(ImGuiStyleVar_FramePadding, ScaledVec2(24, 3));
 #ifdef __ANDROID__
-        if (ImGui::Button("Import"))
-        	hostfs::importHomeDirectory();
-        ImGui::SameLine();
-        if (ImGui::Button("Export"))
-        	hostfs::exportHomeDirectory();
+        {
+        	DisabledScope _(!config::UseSafFilePicker);
+			if (ImGui::Button("Import"))
+				hostfs::importHomeDirectory();
+			ImGui::SameLine();
+			if (ImGui::Button("Export"))
+				hostfs::exportHomeDirectory();
+        }
 #endif
 #ifdef TARGET_MAC
         if (ImGui::Button("Reveal in Finder"))

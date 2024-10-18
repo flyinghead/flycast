@@ -35,19 +35,13 @@ public final class NativeGLActivity extends BaseGLActivity {
 
         super.onCreate(savedInstanceState);
 
-        Log.i("flycast", "NativeGLActivity.onCreate done");
-    }
-
-    protected void finishCreation()
-    {
-        super.finishCreation();
         // Create the actual GL view
         mView = new NativeGLView(this);
         mLayout = new RelativeLayout(this);
         mLayout.addView(mView);
 
         setContentView(mLayout);
-        Log.i("flycast", "NativeGLActivity.finishCreation done");
+        Log.i("flycast", "NativeGLActivity.onCreate done");
     }
 
     @Override
