@@ -46620,7 +46620,7 @@ struct retro_core_options_v2 options_id = {
 #define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_INFO_0_IT "Selezionare il dispositivo collegato allo slot di espansione D2 (porta D slot 2)."
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_IT "Visual Memory Units/Sistemi per Gioco (VMU)"
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CAT_IT "VMU per gioco"
-#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_IT "Se disabilitato, tutti i giochi condividono fino a 8 file VMU di salvataggio (A1/A2/B1/B2/C1/C2/D1/D2) situati nella cartella di sistema di RetroArch.\n\L'impostazione 'VMU A1' crea un file VMU 'A1' unico nella cartella di salvataggio di RetroArch, per ogni gioco che viene lanciato.\n\L'impostazione 'All VMUs' crea fino a 8 file VMU unici (A1/A2/B1/B2/C1/C2/D1/D2) per ogni gioco che viene lanciato."
+#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_IT "Se disabilitato, tutti i giochi condividono fino a 8 file VMU di salvataggio (A1/A2/B1/B2/C1/C2/D1/D2) situati nella cartella di sistema di RetroArch.\nL'impostazione 'VMU A1' crea un file VMU 'A1' unico nella cartella di salvataggio di RetroArch, per ogni gioco che viene lanciato.\nL'impostazione 'All VMUs' crea fino a 8 file VMU unici (A1/A2/B1/B2/C1/C2/D1/D2) per ogni gioco che viene lanciato."
 #define OPTION_VAL_VMU_A1_IT NULL
 #define OPTION_VAL_ALL_VMUS_IT "Tutte Le VMU"
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_IT "Suoni Delle Unità Di Memoria Visiva/Sistemi (VMU)"
@@ -58698,7 +58698,7 @@ struct retro_core_options_v2 options_or = {
 #define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_INFO_0_PL NULL
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_PL NULL
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CAT_PL NULL
-#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_PL "Gdy wyłączone, wszystkie gry udostępniają do 8 plików zapisów VMU (A1/A2/B1/B2/C1/C2/D1/D2) znajdujących się w folderze systemowym RetroArch.\n\Ustawienie 'VMU A1' tworzy unikalny plik VMU 'A1' w folderze zapisów RetroArcha dla każdej uruchomionej gry.\n\Ustawienie 'Wszystkie VMU' tworzy do 8 unikalnych plików VMU (A1/A2/B1/B2/C1/C2/D1/D2/D2) dla każdej uruchomionej gry."
+#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_PL "Gdy wyłączone, wszystkie gry udostępniają do 8 plików zapisów VMU (A1/A2/B1/B2/C1/C2/D1/D2) znajdujących się w folderze systemowym RetroArch.\nUstawienie 'VMU A1' tworzy unikalny plik VMU 'A1' w folderze zapisów RetroArcha dla każdej uruchomionej gry.\nUstawienie 'Wszystkie VMU' tworzy do 8 unikalnych plików VMU (A1/A2/B1/B2/C1/C2/D1/D2/D2) dla każdej uruchomionej gry."
 #define OPTION_VAL_VMU_A1_PL NULL
 #define OPTION_VAL_ALL_VMUS_PL NULL
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_PL NULL
