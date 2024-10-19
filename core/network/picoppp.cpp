@@ -756,11 +756,19 @@ static int modem_set_speed(pico_device *dev, uint32_t speed)
     return 0;
 }
 
+static uint32_t dns_query_start;
+static uint32_t dns_query_attempts;
+
+static void reset_dns_entries()
+{
+	dns_query_attempts = 0;
+	dns_query_start = 0;
+	public_ip.addr = 0;
+	afo_ip.addr = 0;
+}
+
 static void check_dns_entries()
 {
-    static uint32_t dns_query_start = 0;
-    static uint32_t dns_query_attempts = 0;
-
 	if (public_ip.addr == 0)
 	{
 		u32 ip;
@@ -787,6 +795,8 @@ static void check_dns_entries()
 				{
 					public_ip.addr = 0xffffffff;	// Bogus but not null
 					dns_query_attempts = 0;
+					dns_query_start = 0;
+					WARN_LOG(MODEM, "Can't resolve my IP");
 				}
 				else
 					// Retry
@@ -796,7 +806,7 @@ static void check_dns_entries()
 	}
 	else if (afo_ip.addr == 0)
 	{
-		if (!dns_query_start)
+		if (dns_query_start == 0)
 		{
 			dns_query_start = PICO_TIME_MS();
 			get_host_by_name("auriga.segasoft.com", dnsaddr);	// Alien Front Online server
@@ -821,6 +831,7 @@ static void check_dns_entries()
 						pico_string_to_ipv4("146.185.135.179", &addr);	// Default address
 						memcpy(&afo_ip.addr, &addr, sizeof(addr));
 						dns_query_attempts = 0;
+						WARN_LOG(MODEM, "Can't resolve auriga.segasoft.com. Using default 146.185.135.179");
 					}
 					else
 						// Retry
@@ -995,12 +1006,33 @@ static void *pico_thread_func(void *)
 		out_buffer_lock.unlock();
     }
 
-	u32 addr;
-	pico_string_to_ipv4(config::DNS.get().c_str(), &addr);
-	memcpy(&dnsaddr.addr, &addr, sizeof(addr));
+    // Find DNS ip address
+	{
+		std::string dnsName = config::DNS;
+		if (dnsName == "46.101.91.123")
+			// override legacy default with current one
+			dnsName = "dns.flyca.st";
+		hostent *hp = gethostbyname(dnsName.c_str());
+		if (hp != nullptr && hp->h_length > 0)
+		{
+			memcpy(&dnsaddr.addr, hp->h_addr_list[0], sizeof(dnsaddr.addr));
+			char s[17];
+			pico_ipv4_to_string(s, dnsaddr.addr);
+			NOTICE_LOG(MODEM, "%s IP is %s", dnsName.c_str(), s);
+		}
+		else
+		{
+			u32 addr;
+			pico_string_to_ipv4("46.101.91.123", &addr);
+			dnsaddr.addr = addr;
+			WARN_LOG(MODEM, "Can't resolve dns.flyca.st. Using default 46.101.91.123");
+		}
+	}
+	reset_dns_entries();
 
 	// Create ppp/eth device
 	const bool usingPPP = !config::EmulateBBA;
+	u32 addr;
 	if (usingPPP)
 	{
 		// PPP

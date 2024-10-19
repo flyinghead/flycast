@@ -110,7 +110,7 @@ Option<bool> RamMod32MB(CORE_OPTION_NAME "_dc_32mb_mod", false);
 
 Option<bool> NetworkEnable("", false);
 Option<bool> ActAsServer("", false);
-OptionString DNS("", "46.101.91.123");
+OptionString DNS("", "dns.flyca.st");
 OptionString NetworkServer("", "");
 Option<int> LocalPort("", 0);
 Option<bool> EmulateBBA(CORE_OPTION_NAME "_emulate_bba", false);

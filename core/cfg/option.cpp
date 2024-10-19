@@ -146,7 +146,7 @@ Option<float> ProfilerFrameWarningTime("Profiler.FrameWarningTime", 1.0f / 55.0f
 
 Option<bool> NetworkEnable("Enable", false, "network");
 Option<bool> ActAsServer("ActAsServer", false, "network");
-OptionString DNS("DNS", "46.101.91.123", "network");
+OptionString DNS("DNS", "dns.flyca.st", "network");
 OptionString NetworkServer("server", "", "network");
 Option<int> LocalPort("LocalPort", NaomiNetwork::SERVER_PORT, "network");
 Option<bool> EmulateBBA("EmulateBBA", false, "network");
