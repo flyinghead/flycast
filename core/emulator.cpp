@@ -987,8 +987,8 @@ bool Emulator::checkStatus(bool wait)
 		std::unique_lock<std::mutex> lock(mutex);
 		if (threadResult.valid())
 		{
+            auto localResult = threadResult;
 			lock.unlock();
-			auto localResult = threadResult;
 			if (wait) {
 				localResult.wait();
 			}
@@ -997,8 +997,7 @@ bool Emulator::checkStatus(bool wait)
 				if (result == std::future_status::timeout)
 					return true;
 			}
-			lock.lock();
-			threadResult.get();
+			localResult.get();
 		}
 		return false;
 	} catch (...) {
