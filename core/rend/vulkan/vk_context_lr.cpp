@@ -24,6 +24,7 @@
 #include "oslib/oslib.h"
 #include "rend/transform_matrix.h"
 #include "texture.h"
+#include <set>
 
 #if VULKAN_HPP_DISPATCH_LOADER_DYNAMIC == 1
 VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
