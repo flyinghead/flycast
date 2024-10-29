@@ -821,7 +821,7 @@ void Achievements::pauseGame() {
 void Achievements::resumeGame()
 {
 	paused = false;
-	if (config::EnableAchievements)
+	if (config::EnableAchievements && !settings.naomi.slave)
 	{
 		loadGame();
 		if (settings.raHardcoreMode && !config::AchievementsHardcoreMode)
