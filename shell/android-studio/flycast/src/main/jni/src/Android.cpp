@@ -652,3 +652,14 @@ std::string getFilesPath()
 	jni::String filesDir(jni::env()->CallObjectMethod(g_activity, getInternalFilesDir));
 	return filesDir;
 }
+
+void dc_exit()
+{
+	settings.content.path.clear();
+	if (g_activity != nullptr)
+	{
+		JNIEnv *env = jni::env();
+		jmethodID finishAffinity = env->GetMethodID(env->GetObjectClass(g_activity), "finishAffinity", "()V");
+		jni::env()->CallVoidMethod(g_activity, finishAffinity);
+	}
+}

@@ -91,6 +91,7 @@ int flycast_init(int argc, char* argv[])
 	return 0;
 }
 
+#ifndef __ANDROID__
 void dc_exit()
 {
 	try {
@@ -98,6 +99,7 @@ void dc_exit()
 	} catch (...) { }
 	mainui_stop();
 }
+#endif
 
 void SaveSettings()
 {
