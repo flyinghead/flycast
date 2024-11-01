@@ -42594,7 +42594,7 @@ struct retro_core_options_v2 options_hr = {
 #define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_INFO_0_HU "A D2 bővítőhelybe csatlakoztatott eszköz (D csatlakozó, 2. hely)."
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_HU "Játékonként külön Visual Memory Unit/System (VMU)"
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CAT_HU "Játékonként külön VMU"
-#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_HU NULL
+#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_HU "Kikapcsolva minden játék ugyanazt a legfeljebb 8 VMU mentés fájlt (A1/A2/B1/B2/C1/C2/D1/D2) használja a RetroArch rendszerkönyvtárban.\n\"VMU A1\" beállításnál minden elindított játéknak külön VMU \"A1\" fájlt hoz létre.\n\"Minden VMU\" beállításnál minden elindított játéknak legfeljebb 8 külön VMU fájlt (A1/A2/B1/B2/C1/C2/D1/D2) hoz létre."
 #define OPTION_VAL_VMU_A1_HU NULL
 #define OPTION_VAL_ALL_VMUS_HU "Minden VMU"
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_HU "A Visual Memory Unit / System (VMU) hangjai"
@@ -50646,7 +50646,7 @@ struct retro_core_options_v2 options_ja = {
 #define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_INFO_0_KO "확장 슬롯 D2(포트 D 슬롯 2)에 연결할 장치를 선택합니다."
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_KO "게임당 별도 Visual Memory Units/Systems(VMU) 사용"
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CAT_KO "게임당 별도 VMU 사용"
-#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_KO "비활성화할 경우, 모든 게임이 RetroArch의 시스템 폴더에 저장된 최대 8개의 VMU 저장 파일(A1/A2/B1/B2/C1/C2/D1/D2)을 공유합니다.\n 'VMU A1' 옵션은 RetroArch의 저장 폴더에 게임 하나 당 하나의 VMU 'A1' 파일을 생성합니다.\n '모든 VMU'는 게임 하나 당 최대 8개의 VMU 파일(A1/A2/B1/B2/C1/C2/D1/D2)을 생성합니다."
+#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_KO "비활성화할 경우, 모든 게임이 RetroArch의 시스템 폴더에 저장된 최대 8개의 VMU 저장 파일(A1/A2/B1/B2/C1/C2/D1/D2)을 공유합니다.\n'VMU A1' 옵션은 RetroArch의 저장 폴더에 게임 하나 당 하나의 VMU 'A1' 파일을 생성합니다.\n'모든 VMU'는 게임 하나 당 최대 8개의 VMU 파일(A1/A2/B1/B2/C1/C2/D1/D2)을 생성합니다."
 #define OPTION_VAL_VMU_A1_KO NULL
 #define OPTION_VAL_ALL_VMUS_KO "전체 VMU"
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_KO "비주얼 메모리 유닛/시스템 (VMU) 사운드"
