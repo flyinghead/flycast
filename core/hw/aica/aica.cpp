@@ -82,11 +82,11 @@ static bool UpdateSh4Ints()
 
 AicaTimer timers[3];
 int aica_schid = -1;
-const int AICA_TICK = 145125;	// 44.1 KHz / 32
+constexpr int AICA_TICK = 4535;		// 44.1 KHz
 
 static int AicaUpdate(int tag, int cycles, int jitter, void *arg)
 {
-	arm::run(32);
+	arm::run(1);
 
 	return AICA_TICK;
 }
