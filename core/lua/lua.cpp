@@ -229,6 +229,12 @@ static void setMapleType(int bus, int type, lua_State *L)
 	case MDT_Mouse:
 	case MDT_LightGun:
 	case MDT_TwinStick:
+	case MDT_MaracasController:
+	case MDT_FishingController:
+	case MDT_PopnMusicController:
+	case MDT_RacingController:
+	case MDT_DenshaDeGoController:
+	case MDT_SegaControllerXL:
 	case MDT_None:
 		config::MapleMainDevices[bus - 1] = (MapleDeviceType)type;
 		maple_ReconnectDevices();

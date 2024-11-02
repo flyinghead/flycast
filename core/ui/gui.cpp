@@ -811,6 +811,7 @@ const char *maple_device_types[] =
 	"Pop'n Music controller",
 	"Racing Controller",
 	"Densha de Go! Controller",
+	"Full Controller",
 //	"Dreameye",
 };
 
@@ -848,8 +849,10 @@ static const char *maple_device_name(MapleDeviceType type)
 		return maple_device_types[10];
 	case MDT_DenshaDeGoController:
 		return maple_device_types[11];
+	case MDT_SegaControllerXL:
+		return maple_device_types[12];
 	case MDT_Dreameye:
-//		return maple_device_types[12];
+//		return maple_device_types[13];
 	case MDT_None:
 	default:
 		return maple_device_types[0];
@@ -883,6 +886,8 @@ static MapleDeviceType maple_device_type_from_index(int idx)
 	case 11:
 		return MDT_DenshaDeGoController;
 	case 12:
+		return MDT_SegaControllerXL;
+	case 13:
 		return MDT_Dreameye;
 	case 0:
 	default:
@@ -2022,6 +2027,7 @@ static void gui_settings_controls(bool& maple_devices_changed)
 				int port_count = 0;
 				switch (config::MapleMainDevices[bus]) {
 					case MDT_SegaController:
+					case MDT_SegaControllerXL:
 						port_count = 2;
 						break;
 					case MDT_LightGun:

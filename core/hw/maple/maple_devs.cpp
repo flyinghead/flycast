@@ -978,7 +978,15 @@ struct maple_sega_purupuru : maple_base
 			//2
 			w16(0x0640);	// 160 mA
 
-			return cmd == MDC_DeviceRequest ? MDRS_DeviceStatus : MDRS_DeviceStatusAll;
+			if (cmd == MDC_AllStatusReq)
+			{
+				const char *extra = "Version 1.000,1998/11/10,315-6211-AH   ,Vibration Motor:1,Fm:4 - 30Hz,Pow:7     ";
+				wptr(extra, strlen(extra));
+				return MDRS_DeviceStatusAll;
+			}
+			else {
+				return MDRS_DeviceStatus;
+			}
 
 			//get last vibration
 		case MDCF_GetCondition:
@@ -1598,6 +1606,51 @@ struct maple_densha_controller: maple_sega_controller
 	}
 };
 
+struct FullController : maple_sega_controller
+{
+	u32 get_capabilities() override
+	{
+		// byte 0: 0  0  0  0  0  0  0  0
+		// byte 1: 0  0  a5 a4 a3 a2 a1 a0
+		// byte 2: R2 L2 D2 U2 D  X  Y  Z
+		// byte 3: R  L  D  U  St A  B  C
+		return 0xffff3f00;	// 6 axes, all buttons
+	}
+
+	u16 getButtonState(const PlainJoystickState &pjs) override
+	{
+		u32 kcode = pjs.kcode;
+		mutualExclusion(kcode, DC_DPAD_UP | DC_DPAD_DOWN);
+		mutualExclusion(kcode, DC_DPAD_LEFT | DC_DPAD_RIGHT);
+		mutualExclusion(kcode, DC_DPAD2_UP | DC_DPAD2_DOWN);
+		mutualExclusion(kcode, DC_DPAD2_LEFT | DC_DPAD2_RIGHT);
+		return kcode;
+	}
+
+	u32 getAnalogAxis(int index, const PlainJoystickState &pjs) override
+	{
+		if (index == 4 || index == 5)
+		{
+			// Limit the magnitude of the analog axes to 128
+			s8 xaxis = pjs.joy[PJAI_X2] - 128;
+			s8 yaxis = pjs.joy[PJAI_Y2] - 128;
+			limit_joystick_magnitude<128>(xaxis, yaxis);
+			if (index == 4)
+				return xaxis + 128;
+			else
+				return yaxis + 128;
+		}
+		return maple_sega_controller::getAnalogAxis(index, pjs);
+	}
+
+	const char *get_device_name() override {
+		return "Dreamcast Controller XL";
+	}
+
+	MapleDeviceType get_device_type() override {
+		return MDT_SegaControllerXL;
+	}
+};
 
 // Emulates a 838-14245-92 maple to RS232 converter
 // wired to a 838-14243 RFID reader/writer (apparently Saxa HW210)
@@ -1981,84 +2034,38 @@ const u8 *getRfidCardData(int playerNum)
 
 maple_device* maple_Create(MapleDeviceType type)
 {
-	maple_device* rv=0;
 	switch(type)
 	{
 	case MDT_SegaController:
 		if (!settings.platform.isAtomiswave())
-			rv = new maple_sega_controller();
+			return new maple_sega_controller();
 		else
-			rv = new maple_atomiswave_controller();
-		break;
-
-	case MDT_Microphone:
-		rv=new maple_microphone();
-		break;
-
-	case MDT_SegaVMU:
-		rv = new maple_sega_vmu();
-		break;
-
-	case MDT_PurupuruPack:
-		rv = new maple_sega_purupuru();
-		break;
-
-	case MDT_Keyboard:
-		rv = new maple_keyboard();
-		break;
-
-	case MDT_Mouse:
-		rv = new maple_mouse();
-		break;
-
+			return new maple_atomiswave_controller();
+	case MDT_Microphone:		return new maple_microphone();
+	case MDT_SegaVMU:			return new maple_sega_vmu();
+	case MDT_PurupuruPack:		return new maple_sega_purupuru();
+	case MDT_Keyboard:			return new maple_keyboard();
+	case MDT_Mouse:				return new maple_mouse();
 	case MDT_LightGun:
 		if (!settings.platform.isAtomiswave())
-			rv = new maple_lightgun();
+			return new maple_lightgun();
 		else
-			rv = new atomiswave_lightgun();
-		break;
-
-	case MDT_NaomiJamma:
-		rv = new maple_naomi_jamma();
-		break;
-
-	case MDT_TwinStick:
-		rv = new maple_sega_twinstick();
-		break;
-
-	case MDT_AsciiStick:
-		rv = new maple_ascii_stick();
-		break;
-
-	case MDT_MaracasController:
-		rv = new maple_maracas_controller();
-		break;
-
-	case MDT_FishingController:
-		rv = new maple_fishing_controller();
-		break;
-
-	case MDT_PopnMusicController:
-		rv = new maple_popnmusic_controller();
-		break;
-
-	case MDT_RacingController:
-		rv = new maple_racing_controller();
-		break;
-
-	case MDT_DenshaDeGoController:
-		rv = new maple_densha_controller();
-		break;
-
-	case MDT_RFIDReaderWriter:
-		rv = new RFIDReaderWriter();
-		break;
+			return new atomiswave_lightgun();
+	case MDT_NaomiJamma:		return new maple_naomi_jamma();
+	case MDT_TwinStick:			return new maple_sega_twinstick();
+	case MDT_AsciiStick:		return new maple_ascii_stick();
+	case MDT_MaracasController:	return new maple_maracas_controller();
+	case MDT_FishingController:	return new maple_fishing_controller();
+	case MDT_PopnMusicController:	return new maple_popnmusic_controller();
+	case MDT_RacingController:	return new maple_racing_controller();
+	case MDT_DenshaDeGoController:	return new maple_densha_controller();
+	case MDT_SegaControllerXL:	return new FullController();
+	case MDT_RFIDReaderWriter:	return new RFIDReaderWriter();
 
 	default:
 		ERROR_LOG(MAPLE, "Invalid device type %d", type);
 		die("Invalid maple device type");
 		break;
 	}
-
-	return rv;
+	return nullptr;
 }

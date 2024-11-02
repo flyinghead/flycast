@@ -76,6 +76,7 @@ constexpr char slash = path_default_slash_c();
 #define RETRO_DEVICE_POPNMUSIC				RETRO_DEVICE_SUBCLASS( RETRO_DEVICE_JOYPAD, 6 )
 #define RETRO_DEVICE_RACING					RETRO_DEVICE_SUBCLASS( RETRO_DEVICE_JOYPAD, 7 )
 #define RETRO_DEVICE_DENSHA					RETRO_DEVICE_SUBCLASS( RETRO_DEVICE_JOYPAD, 8 )
+#define RETRO_DEVICE_FULL_CONTROLLER		RETRO_DEVICE_SUBCLASS( RETRO_DEVICE_JOYPAD, 9 )
 
 #define RETRO_ENVIRONMENT_RETROARCH_START_BLOCK 0x800000
 
@@ -294,13 +295,13 @@ void retro_set_environment(retro_environment_t cb)
 			{ "Pop'n Music",		RETRO_DEVICE_POPNMUSIC },
 			{ "Race Controller",	RETRO_DEVICE_RACING },
 			{ "Densha de Go!",		RETRO_DEVICE_DENSHA },
-			{ 0 },
+			{ "Full Controller",	RETRO_DEVICE_FULL_CONTROLLER },
 	};
 	static const struct retro_controller_info ports[] = {
-			{ ports_default,  13 },
-			{ ports_default,  13 },
-			{ ports_default,  13 },
-			{ ports_default,  13 },
+			{ ports_default,  std::size(ports_default) },
+			{ ports_default,  std::size(ports_default) },
+			{ ports_default,  std::size(ports_default) },
+			{ ports_default,  std::size(ports_default) },
 			{ 0 },
 	};
 	environ_cb(RETRO_ENVIRONMENT_SET_CONTROLLER_INFO, (void*)ports);
@@ -573,13 +574,15 @@ static bool set_variable_visibility(void)
 					|| config::MapleMainDevices[i] == MDT_LightGun
 					|| config::MapleMainDevices[i] == MDT_TwinStick
 					|| config::MapleMainDevices[i] == MDT_AsciiStick
-					|| config::MapleMainDevices[i] == MDT_RacingController);
+					|| config::MapleMainDevices[i] == MDT_RacingController
+					|| config::MapleMainDevices[i] == MDT_SegaControllerXL);
 
 			snprintf(key, sizeof(key), CORE_OPTION_NAME "_device_port%d_slot1", i + 1);
 			environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
 
-			// Only the regular controller has 2 expansion slots
-			option_display.visible = platformIsDreamcast && config::MapleMainDevices[i] == MDT_SegaController;
+			// Only the regular controller (and the XL version) has 2 expansion slots
+			option_display.visible = platformIsDreamcast
+					&& (config::MapleMainDevices[i] == MDT_SegaController || config::MapleMainDevices[i] == MDT_SegaControllerXL);
 
 			snprintf(key, sizeof(key), CORE_OPTION_NAME "_device_port%d_slot2", i + 1);
 			environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
@@ -946,12 +949,13 @@ static void update_variables(bool first_startup)
 					|| config::MapleMainDevices[i] == MDT_LightGun
 					|| config::MapleMainDevices[i] == MDT_TwinStick
 					|| config::MapleMainDevices[i] == MDT_AsciiStick
-					|| config::MapleMainDevices[i] == MDT_RacingController)
+					|| config::MapleMainDevices[i] == MDT_RacingController
+					|| config::MapleMainDevices[i] == MDT_SegaControllerXL)
 			{
 				for (int slot = 0; slot < 2; slot++)
 				{
 					// Only regular controller has a 2nd slot
-					if (slot == 1 && config::MapleMainDevices[i] != MDT_SegaController)
+					if (slot == 1 && config::MapleMainDevices[i] != MDT_SegaController && config::MapleMainDevices[i] != MDT_SegaControllerXL)
 					{
 						config::MapleExpansionDevices[i][1] = MDT_None;
 						continue;
@@ -1321,7 +1325,7 @@ static uint32_t map_gamepad_button(unsigned device, unsigned id)
 	{
 			/* JOYPAD_B      */ DC_BTN_A,
 			/* JOYPAD_Y      */ DC_BTN_X,
-			/* JOYPAD_SELECT */ 0,
+			/* JOYPAD_SELECT */ DC_BTN_D,
 			/* JOYPAD_START  */ DC_BTN_START,
 			/* JOYPAD_UP     */ DC_DPAD_UP,
 			/* JOYPAD_DOWN   */ DC_DPAD_DOWN,
@@ -1329,6 +1333,8 @@ static uint32_t map_gamepad_button(unsigned device, unsigned id)
 			/* JOYPAD_RIGHT  */ DC_DPAD_RIGHT,
 			/* JOYPAD_A      */ DC_BTN_B,
 			/* JOYPAD_X      */ DC_BTN_Y,
+			/* JOYPAD_L      */ DC_BTN_C,
+			/* JOYPAD_R      */ DC_BTN_Z,
 	};
 
 	static const uint32_t dc_lg_joymap[] =
@@ -1803,6 +1809,28 @@ static void set_input_descriptors()
 				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L,     "C" };
 				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L2,    "D" };
 				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START, "Start" };
+				break;
+
+			case MDT_SegaControllerXL:
+				// No DPad2
+				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,  "D-Pad Left" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,    "D-Pad Up" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN,  "D-Pad Down" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT, "D-Pad Right" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B,     "A" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A,     "B" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X,     "Y" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y,     "X" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L,     "C" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R,     "Z" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT,"D" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L2,    "L Trigger" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R2,    "R Trigger" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START, "Start" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_X, "Analog X" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_Y, "Analog Y" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_X, "R. Analog X" };
+				desc[descriptor_index++] = { i, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_Y, "R. Analog Y" };
 				break;
 
 			default:
@@ -2444,6 +2472,9 @@ void retro_set_controller_port_device(unsigned in_port, unsigned device)
 			case RETRO_DEVICE_DENSHA:
 				config::MapleMainDevices[in_port] = MDT_DenshaDeGoController;
 				break;
+			case RETRO_DEVICE_FULL_CONTROLLER:
+				config::MapleMainDevices[in_port] = MDT_SegaControllerXL;
+				break;
 			default:
 				config::MapleMainDevices[in_port] = MDT_None;
 				break;
@@ -2974,15 +3005,17 @@ static void UpdateInputState(u32 port)
 	switch (config::MapleMainDevices[port])
 	{
 	case MDT_SegaController:
+	case MDT_SegaControllerXL:
 		{
 			int16_t ret = getBitmask(port, RETRO_DEVICE_JOYPAD);
 
 			// -- buttons
-			for (int id = RETRO_DEVICE_ID_JOYPAD_B; id <= RETRO_DEVICE_ID_JOYPAD_X; ++id)
+			for (int id = RETRO_DEVICE_ID_JOYPAD_B; id <= RETRO_DEVICE_ID_JOYPAD_R; ++id)
 				setDeviceButtonStateFromBitmap(ret, port, RETRO_DEVICE_JOYPAD, id);
 
-			// -- analog stick
-			get_analog_stick( input_cb, port, RETRO_DEVICE_INDEX_ANALOG_LEFT, &(joyx[port]), &(joyy[port]) );
+			// -- analog sticks
+			get_analog_stick(input_cb, port, RETRO_DEVICE_INDEX_ANALOG_LEFT, &joyx[port], &joyy[port]);
+			get_analog_stick(input_cb, port, RETRO_DEVICE_INDEX_ANALOG_RIGHT, &joyrx[port], &joyry[port]);
 
 			// -- triggers
 			if ( digital_triggers )

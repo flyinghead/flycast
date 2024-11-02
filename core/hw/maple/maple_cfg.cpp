@@ -319,7 +319,8 @@ static void createDreamcastDevices()
 		switch (config::MapleMainDevices[bus])
 		{
 		case MDT_SegaController:
-			mcfg_Create(MDT_SegaController, bus, 5);
+		case MDT_SegaControllerXL:
+			mcfg_Create(config::MapleMainDevices[bus], bus, 5);
 			if (config::MapleExpansionDevices[bus][0] != MDT_None)
 				mcfg_Create(config::MapleExpansionDevices[bus][0], bus, 0);
 			if (config::MapleExpansionDevices[bus][1] != MDT_None)

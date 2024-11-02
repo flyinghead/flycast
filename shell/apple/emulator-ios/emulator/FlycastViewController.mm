@@ -92,6 +92,7 @@ static void updateAudioSession(Event event, void *)
 			switch (config::MapleMainDevices[bus])
 			{
 				case MDT_SegaController:
+				case MDT_SegaControllerXL:
 					for (int port = 0; port < 2; port++)
 						if (config::MapleExpansionDevices[bus][port] == MDT_Microphone)
 							hasMicrophone = true;
@@ -99,6 +100,7 @@ static void updateAudioSession(Event event, void *)
 				case MDT_LightGun:
 				case MDT_AsciiStick:
 				case MDT_TwinStick:
+				case MDT_RacingController:
 					if (config::MapleExpansionDevices[bus][0] == MDT_Microphone)
 						hasMicrophone = true;
 					break;
