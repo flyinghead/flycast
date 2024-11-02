@@ -1664,6 +1664,7 @@ static void getRegionTileClipping(u32& xmin, u32& xmax, u32& ymin, u32& ymax)
 	getRegionTileAddrAndSize(addr, tile_size);
 
 	RegionArrayTile tile;
+	int maxTiles = 3000;
 	do {
 		tile.full = pvr_read32p<u32>(addr);
 		xmin = std::min(xmin, tile.X);
@@ -1671,7 +1672,9 @@ static void getRegionTileClipping(u32& xmin, u32& xmax, u32& ymin, u32& ymax)
 		ymin = std::min(ymin, tile.Y);
 		ymax = std::max(ymax, tile.Y);
 		addr += tile_size;
-	} while (!tile.LastRegion);
+	} while (!tile.LastRegion && --maxTiles >= 0);
+	if (maxTiles < 0)
+		WARN_LOG(PVR, "getRegionTileClipping overflow");
 
 	xmin *= 32;
 	xmax *= 32;
