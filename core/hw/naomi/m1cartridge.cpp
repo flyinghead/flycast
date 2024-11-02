@@ -39,7 +39,6 @@ void M1Cartridge::AdvancePtr(u32 size)
 			has_history = true;
 			buffer_actual_size = 0;
 		}
-		enc_fill();
 	}
 	else
 		NaomiCartridge::AdvancePtr(size);
@@ -147,11 +146,13 @@ void M1Cartridge::Serialize(Serializer& ser) const
 void M1Cartridge::Deserialize(Deserializer& deser)
 {
 	deser >> buffer;
+	deser.skip(32768 - sizeof(buffer), Deserializer::V52);
 	deser >> dict;
 	deser >> hist;
 	deser >> avail_val;
 	deser >> rom_cur_address;
 	deser >> buffer_actual_size;
+	buffer_actual_size = std::min<u32>(buffer_actual_size, sizeof(buffer));
 	deser >> avail_bits;
 	deser >> stream_ended;
 	deser >> has_history;

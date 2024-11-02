@@ -321,8 +321,10 @@ void M4Cartridge::Serialize(Serializer& ser) const
 void M4Cartridge::Deserialize(Deserializer& deser)
 {
 	deser >> buffer;
+	deser.skip(32768 - sizeof(buffer), Deserializer::V52);
 	deser >> rom_cur_address;
 	deser >> buffer_actual_size;
+	buffer_actual_size = std::min<u32>(buffer_actual_size, sizeof(buffer));
 	deser >> iv;
 	deser >> counter;
 	deser >> encryption;
