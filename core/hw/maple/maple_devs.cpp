@@ -5,6 +5,7 @@
 #include "hw/pvr/spg.h"
 #include "audio/audiostream.h"
 #include "oslib/oslib.h"
+#include "oslib/storage.h"
 #include "hw/aica/sgc_if.h"
 #include "cfg/option.h"
 #include <zlib.h>
@@ -361,10 +362,25 @@ struct maple_sega_vmu: maple_base
 				break;
 			}
 	}
+	
+	bool fullSave()
+	{
+		if (file == nullptr)
+			return false;
+		if (std::fseek(file, 0, SEEK_SET) != 0) {
+			ERROR_LOG(MAPLE, "VMU %s: I/O error", logical_port);
+			return false;
+		}
+		if (std::fwrite(flash_data, sizeof(flash_data), 1, file) != 1) {
+			ERROR_LOG(MAPLE, "Failed to write the VMU %s to disk", logical_port);
+			return false;
+		}
+		return true;
+	}
 
 	void initializeVmu()
 	{
-		INFO_LOG(MAPLE, "Initialising empty VMU...");
+		INFO_LOG(MAPLE, "Initialising empty VMU %s...", logical_port);
 
 		uLongf dec_sz = sizeof(flash_data);
 		int rv = uncompress(flash_data, &dec_sz, vmu_default, sizeof(vmu_default));
@@ -372,34 +388,44 @@ struct maple_sega_vmu: maple_base
 		verify(rv == Z_OK);
 		verify(dec_sz == sizeof(flash_data));
 
-		if (file != nullptr)
-		{
-			if (std::fwrite(flash_data, sizeof(flash_data), 1, file) != 1)
-				WARN_LOG(MAPLE, "Failed to write the VMU to disk");
-			if (std::fseek(file, 0, SEEK_SET) != 0)
-				WARN_LOG(MAPLE, "VMU: I/O error");
-		}
+		fullSave();
 	}
 
 	void OnSetup() override
 	{
 		memset(flash_data, 0, sizeof(flash_data));
 		memset(lcd_data, 0, sizeof(lcd_data));
-		std::string apath = hostfs::getVmuPath(logical_port);
-
-		file = nowide::fopen(apath.c_str(), "rb+");
-		if (file == nullptr)
-		{
-			INFO_LOG(MAPLE, "Unable to open VMU save file \"%s\", creating new file", apath.c_str());
-			file = nowide::fopen(apath.c_str(), "wb+");
-			if (file == nullptr)
-				ERROR_LOG(MAPLE, "Failed to create VMU save file \"%s\"", apath.c_str());
-			initializeVmu();
-		}
-
-		if (file != nullptr)
-			if (std::fread(flash_data, sizeof(flash_data), 1, file) != 1)
-				WARN_LOG(MAPLE, "Failed to read the VMU from disk");
+		
+        // Load existing vmu file if found
+        std::string rpath = hostfs::getVmuPath(logical_port, false);
+		// this might be a storage url
+		FILE *rfile = hostfs::storage().openFile(rpath, "rb");
+        if (rfile == nullptr) {
+            INFO_LOG(MAPLE, "Unable to open VMU file \"%s\", creating new file", rpath.c_str());
+        }
+        else
+        {
+            if (std::fread(flash_data, sizeof(flash_data), 1, rfile) != 1)
+                WARN_LOG(MAPLE, "Failed to read the VMU file \"%s\" from disk", rpath.c_str());
+            std::fclose(rfile);
+        }
+        // Open or create the vmu file to save to
+        std::string wpath = hostfs::getVmuPath(logical_port, true);
+        file = nowide::fopen(wpath.c_str(), "rb+");
+        if (file == nullptr)
+        {
+            file = nowide::fopen(wpath.c_str(), "wb+");
+			if (file == nullptr) {
+                ERROR_LOG(MAPLE, "Failed to create VMU save file \"%s\"", wpath.c_str());
+			}
+			else if (rfile != nullptr)
+			{
+				// VMU file is being renamed so save it fully now
+				// and delete the old file
+				if (fullSave())
+					nowide::remove(rpath.c_str());
+			}
+        }
 
 		u8 sum = 0;
 		for (u32 i = 0; i < sizeof(flash_data); i++)
