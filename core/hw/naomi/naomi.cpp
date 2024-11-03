@@ -180,8 +180,9 @@ static void Naomi_DmaStart(u32 addr, u32 data)
 
 void Naomi_setDmaDelay()
 {
-	if (settings.content.gameId == "FORCE FIVE")
-		// 7 MB/s
+	if (settings.platform.isAtomiswave() || settings.content.gameId == "FORCE FIVE"
+			|| settings.content.gameId == "KENJU")
+		// 7 MB/s for Atomiwave games and conversions
 		dmaXferDelay = 27;
 	else
 		dmaXferDelay = 10;
