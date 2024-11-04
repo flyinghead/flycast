@@ -332,10 +332,11 @@ u8 vmu_default[] = {
 
 struct maple_sega_vmu: maple_base
 {
-	FILE* file;
+	FILE *file = nullptr;
 	u8 flash_data[128_KB];
 	u8 lcd_data[192];
 	u8 lcd_data_decoded[48*32];
+	bool fullSaveNeeded = false;
 
 	MapleDeviceType get_device_type() override
 	{
@@ -361,6 +362,7 @@ struct maple_sega_vmu: maple_base
 				config->SetImage(lcd_data_decoded);
 				break;
 			}
+		fullSaveNeeded = true;
 	}
 	
 	bool fullSave()
@@ -375,6 +377,7 @@ struct maple_sega_vmu: maple_base
 			ERROR_LOG(MAPLE, "Failed to write the VMU %s to disk", logical_port);
 			return false;
 		}
+		fullSaveNeeded = false;
 		return true;
 	}
 
@@ -434,6 +437,7 @@ struct maple_sega_vmu: maple_base
 		if (sum == 0)
 			// This means the existing VMU file is completely empty and needs to be recreated
 			initializeVmu();
+		fullSaveNeeded = false;
 	}
 
 	~maple_sega_vmu() override
@@ -659,17 +663,19 @@ struct maple_sega_vmu: maple_base
 
 						if (file != nullptr)
 						{
-							if (std::fseek(file, write_adr, SEEK_SET) != 0
+							if (fullSaveNeeded) {
+								if (!fullSave())
+									return MDRE_FileError;
+							}
+							else if (std::fseek(file, write_adr, SEEK_SET) != 0
 									|| std::fwrite(&flash_data[write_adr], write_len, 1, file) != 1)
 							{
-								WARN_LOG(MAPLE, "Failed to save VMU %s: I/O error", logical_port);
+								ERROR_LOG(MAPLE, "Failed to save VMU %s: I/O error", logical_port);
 								return MDRE_FileError; // I/O error
 							}
-							std::fflush(file);
 						}
-						else
-						{
-							INFO_LOG(MAPLE, "Failed to save VMU %s data", logical_port);
+						else {
+							WARN_LOG(MAPLE, "Failed to save VMU %s data", logical_port);
 						}
 						return MDRS_DeviceReply;
 					}
