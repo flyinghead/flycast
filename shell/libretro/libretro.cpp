@@ -205,7 +205,7 @@ static char game_dir[1024];
 char game_dir_no_slash[1024];
 char vmu_dir_no_slash[PATH_MAX];
 char content_name[PATH_MAX];
-static char g_roms_dir[PATH_MAX];
+char g_roms_dir[PATH_MAX];
 static std::mutex mtx_serialization;
 static bool gl_ctx_resetting = false;
 static bool is_dupe;
