@@ -48,7 +48,7 @@ protected:
 			r(i) = REG_MAGIC;
 		for (int i = 0; i < 32; i++)
 			*(u32 *)&ctx->xffr[i] = REG_MAGIC;
-		sh4_sr_SetFull(0x700000F0);
+		sr().setFull(0x700000F0);
 		mac() = 0;
 		gbr() = REG_MAGIC;
 		checkedRegs.clear();
@@ -78,16 +78,16 @@ protected:
 	u32& mach() { return ctx->mac.l; }
 	u32& macl() { return ctx->mac.h; }
 	sr_t& sr() { return ctx->sr; }
-	f32& fr(int regNum) { checkedRegs.insert((u32 *)&ctx->xffr[regNum + 16]); return ctx->xffr[regNum + 16]; }
+	f32& fr(int regNum) { checkedRegs.insert((u32 *)&ctx->fr(regNum)); return ctx->fr(regNum); }
 	double getDr(int regNum) {
-		checkedRegs.insert((u32 *)&ctx->xffr[regNum * 2 + 16]);
-		checkedRegs.insert((u32 *)&ctx->xffr[regNum * 2 + 1 + 16]);
-		return GetDR(regNum);
+		checkedRegs.insert((u32 *)&ctx->fr(regNum * 2));
+		checkedRegs.insert((u32 *)&ctx->fr(regNum * 2 + 1));
+		return ctx->getDR(regNum);
 	}
 	void setDr(int regNum, double d) {
-		checkedRegs.insert((u32 *)&ctx->xffr[regNum * 2 + 16]);
-		checkedRegs.insert((u32 *)&ctx->xffr[regNum * 2 + 1 + 16]);
-		SetDR(regNum, d);
+		checkedRegs.insert((u32 *)&ctx->fr(regNum * 2));
+		checkedRegs.insert((u32 *)&ctx->fr(regNum * 2 + 1));
+		ctx->setDR(regNum, d);
 	}
 
 	Sh4Context *ctx;

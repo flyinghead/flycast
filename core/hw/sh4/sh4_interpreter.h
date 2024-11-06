@@ -38,5 +38,4 @@ void ExecuteDelayslot_RTE();
 
 #define SH4_TIMESLICE 448	// at 112 Bangai-O doesn't start. 224 is ok
 
-int UpdateSystem();
 int UpdateSystem_INTC();

@@ -16,13 +16,13 @@ static u32 GetM(u32 op) {
 }
 
 static double getDRn(u32 op) {
-	return GetDR((op >> 9) & 7);
+	return p_sh4rcb->cntx.getDR((op >> 9) & 7);
 }
 static double getDRm(u32 op) {
-	return GetDR((op >> 5) & 7);
+	return p_sh4rcb->cntx.getDR((op >> 5) & 7);
 }
 static void setDRn(u32 op, double d) {
-	SetDR((op >> 9) & 7, d);
+	p_sh4rcb->cntx.setDR((op >> 9) & 7, d);
 }
 
 static void iNimp(const char *str);

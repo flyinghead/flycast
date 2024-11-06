@@ -117,7 +117,7 @@ static void Sh4_int_Reset(bool hard)
 	gbr=ssr=spc=sgr=dbr=vbr=0;
 	mac.full=pr=fpul=0;
 
-	sh4_sr_SetFull(0x700000F0);
+	sr.setFull(0x700000F0);
 	old_sr.status=sr.status;
 	UpdateSR();
 
@@ -163,7 +163,7 @@ void ExecuteDelayslot_RTE()
 		// instruction execution. The STC and STC.L SR instructions access all SR bits after modification.
 		u32 op = ReadNexOp();
 		// Now restore all SR bits
-		sh4_sr_SetFull(ssr);
+		sr.setFull(ssr);
 		// And execute
 		ExecuteOpcode(op);
 	} catch (const SH4ThrownException&) {
@@ -175,18 +175,12 @@ void ExecuteDelayslot_RTE()
 }
 
 // every SH4_TIMESLICE cycles
-int UpdateSystem()
+int UpdateSystem_INTC()
 {
 	Sh4cntx.sh4_sched_next -= SH4_TIMESLICE;
 	if (Sh4cntx.sh4_sched_next < 0)
 		sh4_sched_tick(SH4_TIMESLICE);
-
-	return Sh4cntx.interrupt_pend;
-}
-
-int UpdateSystem_INTC()
-{
-	if (UpdateSystem())
+	if (Sh4cntx.interrupt_pend)
 		return UpdateINTC();
 	else
 		return 0;

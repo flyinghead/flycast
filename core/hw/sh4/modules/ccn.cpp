@@ -7,6 +7,7 @@
 #include "hw/sh4/sh4_mmr.h"
 #include "hw/sh4/sh4_core.h"
 #include "hw/sh4/sh4_cache.h"
+#include "cfg/option.h"
 
 CCNRegisters ccn;
 
@@ -82,6 +83,7 @@ static void CCN_CCR_write(u32 addr, u32 value)
 static u32 CPU_VERSION_read(u32 addr)
 {
 	return 0x040205c1;	// this is what a real SH7091 in a Dreamcast returns - the later Naomi BIOSes check and care!
+	// 0x040204d0 on a PAL VA1 dreamcast, also works
 }
 
 static u32 CCN_PRR_read(u32 addr)

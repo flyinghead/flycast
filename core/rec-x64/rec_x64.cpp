@@ -20,6 +20,7 @@ using namespace Xbyak::util;
 #include "xbyak_base.h"
 #include "oslib/unwind_info.h"
 #include "oslib/virtmem.h"
+#include "cfg/option.h"
 
 static void (*mainloop)();
 static void (*handleException)();

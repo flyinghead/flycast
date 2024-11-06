@@ -1,7 +1,6 @@
 #pragma once
 #include "types.h"
 #include "sh4_if.h"
-#include "cfg/option.h"
 
 #define r Sh4cntx.r
 #define r_bank Sh4cntx.r_bank
@@ -33,68 +32,6 @@ bool UpdateSR();
 void RestoreHostRoundingMode();
 void setDefaultRoundingMode();
 
-union DoubleReg
-{
-	f64 dbl;
-	f32 sgl[2];
-};
-
-static inline f64 GetDR(u32 n)
-{
-#ifdef TRACE
-	if (n>7)
-		INFO_LOG(SH4, "DR_r INDEX OVERRUN %d >7", n);
-#endif
-	DoubleReg t;
-
-	t.sgl[1]=fr[(n<<1) + 0];
-	t.sgl[0]=fr[(n<<1) + 1];
-
-	return t.dbl;
-}
-
-static inline f64 GetXD(u32 n)
-{
-#ifdef TRACE
-	if (n>7)
-		INFO_LOG(SH4, "XD_r INDEX OVERRUN %d >7", n);
-#endif
-	DoubleReg t;
-
-	t.sgl[1]=xf[(n<<1) + 0];
-	t.sgl[0]=xf[(n<<1) + 1];
-
-	return t.dbl;
-}
-
-static inline void SetDR(u32 n,f64 val)
-{
-#ifdef TRACE
-	if (n>7)
-		INFO_LOG(SH4, "DR_w INDEX OVERRUN %d >7", n);
-#endif
-	DoubleReg t;
-	t.dbl=val;
-
-
-	fr[(n<<1) | 1]=t.sgl[0];
-	fr[(n<<1) | 0]=t.sgl[1];
-}
-
-static inline void SetXD(u32 n,f64 val)
-{
-#ifdef TRACE
-	if (n>7)
-		INFO_LOG(SH4, "XD_w INDEX OVERRUN %d >7", n);
-#endif
-
-	DoubleReg t;
-	t.dbl=val;
-
-	xf[(n<<1) | 1]=t.sgl[0];
-	xf[(n<<1) | 0]=t.sgl[1];
-}
-
 struct SH4ThrownException
 {
 	SH4ThrownException(u32 epc, Sh4ExceptionCode expEvn) : epc(epc), expEvn(expEvn) { }
@@ -117,20 +54,13 @@ static inline void AdjustDelaySlotException(SH4ThrownException& ex)
 		ex.expEvn = Sh4Ex_SlotIllegalInstr;
 }
 
-// The SH4 sets the signaling bit to 0 for qNaN (unlike all recent CPUs). Some games rely on this.
+// The SH4 sets the signaling bit to 0 for qNaN (unlike all recent CPUs).
 static inline f32 fixNaN(f32 f)
 {
 #ifdef STRICT_MODE
 	u32& hex = *(u32 *)&f;
-#ifdef __FAST_MATH__
-	// fast-math
-	if ((hex & 0x7fffffff) > 0x7f800000)
+	if (std::isnan(f))
 		hex = 0x7fbfffff;
-#else
-	// no fast-math
-	if (f != f)
-		hex = 0x7fbfffff;
-#endif
 #endif
 	return f;
 }
@@ -139,15 +69,8 @@ static inline f64 fixNaN64(f64 f)
 {
 #ifdef STRICT_MODE
 	u64& hex = *(u64 *)&f;
-#ifdef __FAST_MATH__
-	// fast-math
-	if ((hex & 0x7fffffffffffffffll) > 0x7ff0000000000000ll)
+	if (std::isnan(f))
 		hex = 0x7ff7ffffffffffffll;
-#else
-	// no fast-math
-	if (f != f)
-		hex = 0x7ff7ffffffffffffll;
-#endif
 #endif
 	return f;
 }

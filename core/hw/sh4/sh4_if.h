@@ -1,6 +1,7 @@
 #pragma once
 #include "types.h"
 #include "stdclass.h"
+#include <cassert>
 
 enum Sh4RegType
 {
@@ -275,6 +276,53 @@ struct alignas(64) Sh4Context
 			int cycle_counter;
 		};
 		u64 raw[64-8];
+	};
+
+	f32& fr(int idx) {
+		assert(idx >= 0 && idx <= 15);
+		return xffr[idx + 16];
+	}
+	f32& xf(int idx) {
+		assert(idx >= 0 && idx <= 15);
+		return xffr[idx];
+	}
+	u32& fr_hex(int idx) {
+		assert(idx >= 0 && idx <= 15);
+		return reinterpret_cast<u32&>(fr(idx));
+	}
+	u64& dr_hex(int idx) {
+		assert(idx >= 0 && idx <= 7);
+		return *reinterpret_cast<u64 *>(&fr(idx * 2));
+	}
+	u64& xd_hex(int idx) {
+		assert(idx >= 0 && idx <= 7);
+		return *reinterpret_cast<u64 *>(&xf(idx * 2));
+	}
+
+	f64 getDR(u32 n)
+	{
+		assert(n <= 7);
+		DoubleReg t;
+		t.sgl[1] = fr(n * 2);
+		t.sgl[0] = fr(n * 2 + 1);
+
+		return t.dbl;
+	}
+
+	void setDR(u32 n, f64 val)
+	{
+		assert(n <= 7);
+		DoubleReg t;
+		t.dbl = val;
+		fr(n * 2) = t.sgl[1];
+		fr(n * 2 + 1) = t.sgl[0];
+	}
+
+private:
+	union DoubleReg
+	{
+		f64 dbl;
+		f32 sgl[2];
 	};
 };
 static_assert(sizeof(Sh4Context) == 448, "Invalid Sh4Context size");
