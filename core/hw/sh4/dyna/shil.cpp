@@ -5,28 +5,54 @@
 #include "hw/sh4/sh4_mmr.h"
 
 #include "ngen.h"
-#include "hw/sh4/sh4_core.h"
-
-#define SHIL_MODE 1
-#include "shil_canonical.h"
-
-#define SHIL_MODE 4
-#include "shil_canonical.h"
-
-//#define SHIL_MODE 2
-//#include "shil_canonical.h"
-
-#if FEAT_SHREC != DYNAREC_NONE
-#define SHIL_MODE 3
-#include "shil_canonical.h"
-#endif
-
 #include "ssa.h"
 
 void AnalyseBlock(RuntimeBlockInfo* blk)
 {
 	SSAOptimizer optim(blk);
 	optim.Optimize();
+}
+
+u32 getRegOffset(Sh4RegType reg)
+{
+	if (reg >= reg_r0 && reg <= reg_r15)
+		return offsetof(Sh4Context, r[reg - reg_r0]);
+	if (reg >= reg_r0_Bank && reg <= reg_r7_Bank)
+		return offsetof(Sh4Context, r_bank[reg - reg_r0_Bank]);
+	if (reg >= reg_fr_0 && reg <= reg_fr_15)
+		return offsetof(Sh4Context, xffr[reg - reg_fr_0 + 16]);
+	if (reg >= reg_xf_0 && reg <= reg_xf_15)
+		return offsetof(Sh4Context, xffr[reg - reg_xf_0]);
+	switch (reg)
+	{
+	case reg_gbr: return offsetof(Sh4Context, gbr);
+	case reg_vbr: return offsetof(Sh4Context, vbr);
+	case reg_ssr: return offsetof(Sh4Context, ssr);
+	case reg_spc: return offsetof(Sh4Context, spc);
+	case reg_sgr: return offsetof(Sh4Context, sgr);
+	case reg_dbr: return offsetof(Sh4Context, dbr);
+	case reg_mach: return offsetof(Sh4Context, mac.h);
+	case reg_macl: return offsetof(Sh4Context, mac.l);
+	case reg_pr: return offsetof(Sh4Context, pr);
+	case reg_fpul: return offsetof(Sh4Context, fpul);
+	case reg_nextpc: return offsetof(Sh4Context, pc);
+	case reg_sr_status: return offsetof(Sh4Context, sr.status);
+	case reg_sr_T: return offsetof(Sh4Context, sr.T);
+	case reg_old_fpscr: return offsetof(Sh4Context, old_fpscr.full);
+	case reg_fpscr: return offsetof(Sh4Context, fpscr.full);
+	case reg_pc_dyn: return offsetof(Sh4Context, jdyn);
+	case reg_temp: return offsetof(Sh4Context, temp_reg);
+	// TODO case reg_sq_buffer: return offsetof(Sh4Context, sq_buffer);
+	default:
+		ERROR_LOG(SH4, "Unknown register ID %d", reg);
+		die("Invalid reg");
+		return 0;
+	}
+}
+
+u32* GetRegPtr(u32 reg)
+{
+	return (u32 *)((u8 *)&p_sh4rcb->cntx + getRegOffset((Sh4RegType)reg));
 }
 
 std::string name_reg(Sh4RegType reg)
@@ -118,6 +144,22 @@ static std::string dissasm_param(const shil_param& prm, bool comma)
 
 	return ss.str();
 }
+
+#include "hw/sh4/sh4_core.h"
+
+#define SHIL_MODE 1
+#include "shil_canonical.h"
+
+#define SHIL_MODE 4
+#include "shil_canonical.h"
+
+//#define SHIL_MODE 2
+//#include "shil_canonical.h"
+
+#if FEAT_SHREC != DYNAREC_NONE
+#define SHIL_MODE 3
+#include "shil_canonical.h"
+#endif
 
 std::string shil_opcode::dissasm() const
 {

@@ -170,14 +170,14 @@ public:
 
 	void loadSh4Reg(Register Rt, u32 Sh4_Reg)
 	{
-		const int shRegOffs = (u8*)GetRegPtr(Sh4_Reg) - (u8*)&p_sh4rcb->cntx - sizeof(Sh4cntx);
+		const int shRegOffs = getRegOffset((Sh4RegType)Sh4_Reg) - sizeof(Sh4Context);
 
 		Ldr(Rt, MemOperand(r8, shRegOffs));
 	}
 
 	void storeSh4Reg(Register Rt, u32 Sh4_Reg)
 	{
-		const int shRegOffs = (u8*)GetRegPtr(Sh4_Reg) - (u8*)&p_sh4rcb->cntx - sizeof(Sh4cntx);
+		const int shRegOffs = getRegOffset((Sh4RegType)Sh4_Reg) - sizeof(Sh4Context);
 
 		Str(Rt, MemOperand(r8, shRegOffs));
 	}
@@ -393,13 +393,13 @@ void arm_reg_alloc::Writeback(u32 reg, int nreg)
 
 void arm_reg_alloc::Preload_FPU(u32 reg, int nreg)
 {
-	const s32 shRegOffs = (u8*)GetRegPtr(reg) - (u8*)&p_sh4rcb->cntx - sizeof(Sh4cntx);
+	const s32 shRegOffs = getRegOffset((Sh4RegType)reg) - sizeof(Sh4Context);
 
 	ass.Vldr(SRegister(nreg), MemOperand(r8, shRegOffs));
 }
 void arm_reg_alloc::Writeback_FPU(u32 reg, int nreg)
 {
-	const s32 shRegOffs = (u8*)GetRegPtr(reg) - (u8*)&p_sh4rcb->cntx - sizeof(Sh4cntx);
+	const s32 shRegOffs = getRegOffset((Sh4RegType)reg) - sizeof(Sh4Context);
 
 	ass.Vstr(SRegister(nreg), MemOperand(r8, shRegOffs));
 }
@@ -649,7 +649,7 @@ void Arm32Assembler::canonCall(const shil_opcode *op, void *function)
 		if (ccParam.type == CPT_ptr && prm.count() == 2 && reg.IsAllocf(prm) && (op->rd._reg == prm._reg || op->rd2._reg == prm._reg))
 		{
 			// fsca rd param is a pointer to a 64-bit reg so reload the regs if allocated
-			const int shRegOffs = (u8*)GetRegPtr(prm._reg) - (u8*)&p_sh4rcb->cntx - sizeof(Sh4cntx);
+			const int shRegOffs = prm.reg_nofs();
 			Vldr(reg.mapFReg(prm, 0), MemOperand(r8, shRegOffs));
 			Vldr(reg.mapFReg(prm, 1), MemOperand(r8, shRegOffs + 4));
 		}
