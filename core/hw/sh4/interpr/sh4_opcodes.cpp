@@ -1875,7 +1875,7 @@ sh4op(i0100_nnnn_0001_1011)
 sh4op(i0000_nnnn_0000_0010)//0002
 {
 	u32 n = GetN(op);
-	r[n] = sh4_sr_GetFull();
+	r[n] = sr.getFull();
 }
 
  //sts FPSCR,<REG_N>
@@ -1897,7 +1897,7 @@ sh4op(i0100_nnnn_0110_0010)
 sh4op(i0100_nnnn_0000_0011)
 {
 	u32 n = GetN(op);
-	WriteMemU32(r[n] - 4, sh4_sr_GetFull());
+	WriteMemU32(r[n] - 4, sr.getFull());
 	r[n] -= 4;
 }
 
@@ -1920,7 +1920,7 @@ sh4op(i0100_nnnn_0000_0111)
 	u32 sr_t;
 	ReadMemU32(sr_t,r[n]);
 
-	sh4_sr_SetFull(sr_t);
+	sr.setFull(sr_t);
 	r[n] += 4;
 	if (UpdateSR())
 		UpdateINTC();
@@ -1938,7 +1938,7 @@ sh4op(i0100_nnnn_0110_1010)
 sh4op(i0100_nnnn_0000_1110)
 {
 	u32 n = GetN(op);
-	sh4_sr_SetFull(r[n]);
+	sr.setFull(r[n]);
 	if (UpdateSR())
 		UpdateINTC();
 }

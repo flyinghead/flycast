@@ -122,7 +122,7 @@ public:
 		for (u32 i = 0; i < Sh4RegList.size(); i++)
 		{
 			if (Sh4RegList[i] == reg_sr_status)
-				allregs[i] = sh4_sr_GetFull();
+				allregs[i] = p_sh4rcb->cntx.sr.getFull();
 			else if (Sh4RegList[i] != NoReg)
 				allregs[i] = *GetRegPtr(Sh4RegList[i]);
 		}
@@ -143,7 +143,7 @@ public:
 			return 0;
 		Sh4RegType reg = Sh4RegList[regNum];
 		if (reg == reg_sr_status)
-			return sh4_sr_GetFull();
+			return p_sh4rcb->cntx.sr.getFull();
 		if (reg != NoReg)
 			return *GetRegPtr(reg);
 		return 0;
@@ -154,7 +154,7 @@ public:
 			return;
 		Sh4RegType reg = Sh4RegList[regNum];
 		if (reg == reg_sr_status)
-			sh4_sr_SetFull(value);
+			p_sh4rcb->cntx.sr.setFull(value);
 		else if (reg != NoReg)
 			*GetRegPtr(reg) = value;
 	}

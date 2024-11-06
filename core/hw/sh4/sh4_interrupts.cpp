@@ -185,7 +185,7 @@ static void Do_Interrupt(Sh4ExceptionCode intEvn)
 {
 	CCN_INTEVT = intEvn;
 
-	ssr = sh4_sr_GetFull();
+	ssr = sr.getFull();
 	spc = next_pc;
 	sgr = r[15];
 	sr.BL = 1;
@@ -204,7 +204,7 @@ void Do_Exception(u32 epc, Sh4ExceptionCode expEvn)
 		throw FlycastException("Fatal: SH4 exception when blocked");
 	CCN_EXPEVT = expEvn;
 
-	ssr = sh4_sr_GetFull();
+	ssr = sr.getFull();
 	spc = epc;
 	sgr = r[15];
 	sr.BL = 1;

@@ -95,9 +95,6 @@ static void dec_End(u32 dst, BlockEndType flags, bool delaySlot)
 		verify(state.JumpAddr != NullAddress);
 }
 
-#define SR_STATUS_MASK STATUS_MASK
-#define SR_T_MASK 1
-
 static u32 dec_jump_simm8(u32 op)
 {
 	return state.cpu.rpc + GetSImm8(op)*2 + 4;
@@ -114,8 +111,8 @@ static u32 dec_set_pr()
 }
 static void dec_write_sr(shil_param src)
 {
-	Emit(shop_and,mk_reg(reg_sr_status),src,mk_imm(SR_STATUS_MASK));
-	Emit(shop_and,mk_reg(reg_sr_T),src,mk_imm(SR_T_MASK));
+	Emit(shop_and, mk_reg(reg_sr_status), src, mk_imm(sr_t::MASK));
+	Emit(shop_and, mk_reg(reg_sr_T), src, mk_imm(1));
 }
 //bf <bdisp8>
 sh4dec(i1000_1011_iiii_iiii)

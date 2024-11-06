@@ -145,8 +145,6 @@ union sr_status_t
 	u32 status;
 };
 
-#define STATUS_MASK 0x700083F2
-
 // Status register with isolated T bit.
 // Used in place of the normal SR bitfield so that the T bit can be
 // handled as a regular register. This simplifies dynarec implementations.
@@ -173,6 +171,17 @@ struct sr_t
 		u32 status;
 	};
 	u32 T;
+
+	static constexpr u32 MASK = 0x700083F2;
+
+	u32 getFull() const {
+		return (status & MASK) | T;
+	}
+
+	void setFull(u32 v) {
+		status = v & MASK;
+		T = v & 1;
+	}
 };
 
 // FPSCR (fpu status and control register)
@@ -299,17 +308,6 @@ struct alignas(PAGE_SIZE) Sh4RCB
 };
 
 extern Sh4RCB* p_sh4rcb;
-
-static inline u32 sh4_sr_GetFull()
-{
-	return (p_sh4rcb->cntx.sr.status & STATUS_MASK) | p_sh4rcb->cntx.sr.T;
-}
-
-static inline void sh4_sr_SetFull(u32 value)
-{
-	p_sh4rcb->cntx.sr.status=value & STATUS_MASK;
-	p_sh4rcb->cntx.sr.T=value&1;
-}
 
 #define do_sqw_nommu sh4rcb.do_sqw_nommu
 
