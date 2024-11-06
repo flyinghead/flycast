@@ -100,7 +100,7 @@
 #endif
 #endif
 
-#if !defined(LIBRETRO) && !defined(TARGET_NO_EXCEPTIONS)
+#if !defined(LIBRETRO)
 #define USE_GGPO
 #endif
 

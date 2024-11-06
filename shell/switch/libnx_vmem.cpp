@@ -283,8 +283,6 @@ void release_jit_block(void *code_area1, void *code_area2, size_t size)
 
 } // namespace virtmem
 
-#ifndef TARGET_NO_EXCEPTIONS
-
 #include <ucontext.h>
 void fault_handler(int sn, siginfo_t * si, void *segfault_ctx);
 
@@ -325,7 +323,6 @@ void __libnx_exception_handler(ThreadExceptionDump *ctx)
 	context_switch_aarch64(ptr);
 }
 }
-#endif	// TARGET_NO_EXCEPTIONS
 
 #ifndef LIBRETRO
 [[noreturn]] void os_DebugBreak()

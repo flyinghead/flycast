@@ -385,11 +385,9 @@ bool reserve()
 	if (ram_base != nullptr)
 		return true;
 
-	// Use vmem only if settings mandate so, and if we have proper exception handlers.
-#if !defined(TARGET_NO_EXCEPTIONS)
+	// Use vmem only if settings mandate so.
 	if (!settings.dynarec.disable_nvmem)
 		virtmem::init((void**)&ram_base, (void**)&p_sh4rcb, RAM_SIZE_MAX + VRAM_SIZE_MAX + ARAM_SIZE_MAX + elan::ERAM_SIZE_MAX);
-#endif
 	return true;
 }
 
