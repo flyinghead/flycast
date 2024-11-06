@@ -378,7 +378,7 @@ public:
 					}
 					else
 					{
-						mov(call_regs64[1], (uintptr_t)p_sh4rcb->cntx.sq_buffer);
+						mov(call_regs64[1], (uintptr_t)&p_sh4rcb->cntx);
 						mov(rax, (size_t)&do_sqw_nommu);
 						saveXmmRegisters();
 						call(qword[rax]);

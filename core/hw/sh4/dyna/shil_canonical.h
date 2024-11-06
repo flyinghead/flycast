@@ -802,7 +802,7 @@ void,f1,(u32 r1),
 shil_canonical
 (
 void,f2,(u32 r1),
-	if ((r1>>26) == 0x38) do_sqw_nommu(r1, p_sh4rcb->cntx.sq_buffer);
+	if ((r1>>26) == 0x38) do_sqw_nommu(r1, &p_sh4rcb->cntx);
 )
 
 shil_compile

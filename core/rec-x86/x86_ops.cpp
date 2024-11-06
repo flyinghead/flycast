@@ -526,7 +526,7 @@ void X86Compiler::genOpcode(RuntimeBlockInfo* block, bool optimise, shil_opcode&
 			}
 			else
 			{
-				mov(edx, (size_t)sh4rcb.cntx.sq_buffer);
+				mov(edx, (size_t)&sh4rcb.cntx);
 				freezeXMM();
 				call(dword[&do_sqw_nommu]);
 				thawXMM();

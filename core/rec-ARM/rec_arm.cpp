@@ -1806,7 +1806,7 @@ void Arm32Assembler::compileOp(RuntimeBlockInfo* block, shil_opcode* op, bool op
 				else
 				{
 					Ldr(r2, MemOperand(r8, rcbOffset(do_sqw_nommu)));
-					Sub(r1, r8, -getRegOffset(reg_sq_buffer) + sizeof(Sh4Context));
+					Sub(r1, r8, sizeof(Sh4Context));
 					Blx(cc, r2);
 				}
 			}

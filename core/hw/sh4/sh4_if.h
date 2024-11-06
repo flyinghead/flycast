@@ -216,7 +216,7 @@ static_assert(sizeof(Sh4Context) == 512, "Invalid Sh4Context size");
 void setSqwHandler();
 void DYNACALL do_sqw_mmu(u32 dst);
 
-typedef void DYNACALL sqw_fp(u32 dst, const SQBuffer *sqb);
+typedef void DYNACALL SQWriteFunc(u32 dst, Sh4Context *ctx);
 
 #define FPCB_SIZE (RAM_SIZE_MAX/2)
 #define FPCB_MASK (FPCB_SIZE -1)
@@ -232,7 +232,7 @@ struct alignas(PAGE_SIZE) Sh4RCB
 {
 	void* fpcb[FPCB_SIZE];
 	u8 _pad[FPCB_PAD - sizeof(Sh4Context) - sizeof(void *)];
-	sqw_fp* do_sqw_nommu;
+	SQWriteFunc *do_sqw_nommu;
 	Sh4Context cntx;
 };
 

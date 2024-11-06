@@ -1154,7 +1154,7 @@ sh4op(i0000_nnnn_1000_0011)
 		if (CCN_MMUCR.AT)
 			do_sqw_mmu(Dest);
 		else
-			do_sqw_nommu(Dest, p_sh4rcb->cntx.sq_buffer);
+			do_sqw_nommu(Dest, &p_sh4rcb->cntx);
 	}
 	else
 	{

@@ -22,7 +22,7 @@
 static u32 CCN_QACR_TR[2];
 
 template<bool mmu_on>
-void DYNACALL do_sqw(u32 Dest, const SQBuffer *sqb)
+void DYNACALL do_sqw(u32 Dest, Sh4Context *ctx)
 {
 	u32 Address;
 
@@ -43,40 +43,45 @@ void DYNACALL do_sqw(u32 Dest, const SQBuffer *sqb)
 
 	if (((Address >> 26) & 7) != 4)//Area 4
 	{
-		const SQBuffer *sq = &sqb[(Dest >> 5) & 1];
+		const SQBuffer *sq = &ctx->sq_buffer[(Dest >> 5) & 1];
 		WriteMemBlock_nommu_sq(Address, sq);
 	}
 	else
 	{
-		TAWriteSQ(Address, sqb);
+		TAWriteSQ(Address, ctx->sq_buffer);	// TODO pass the correct SQBuffer instead of letting TAWriteSQ deal with it
 	}
 }
 
 void DYNACALL do_sqw_mmu(u32 dst) {
-	do_sqw<true>(dst, p_sh4rcb->cntx.sq_buffer);
+	do_sqw<true>(dst, &p_sh4rcb->cntx);
 }
 
-static void DYNACALL do_sqw_simplemmu(u32 dst, const SQBuffer *sqb) {
-	do_sqw<true>(dst, sqb);
+static void DYNACALL do_sqw_simplemmu(u32 dst, Sh4Context *ctx) {
+	do_sqw<true>(dst, ctx);
 }
 
 //yes, this micro optimization makes a difference
-static void DYNACALL do_sqw_nommu_area_3(u32 dst, const SQBuffer *sqb)
+static void DYNACALL do_sqw_nommu_area_3(u32 dst, Sh4Context *ctx)
 {
-	SQBuffer *pmem = (SQBuffer *)((u8 *)sqb + sizeof(Sh4RCB::cntx) + 0x0C000000);
+	SQBuffer *pmem = (SQBuffer *)((u8 *)ctx + sizeof(Sh4Context) + 0x0C000000);
 	pmem += (dst & (RAM_SIZE_MAX - 1)) >> 5;
-	*pmem = sqb[(dst >> 5) & 1];
+	*pmem = ctx->sq_buffer[(dst >> 5) & 1];
 }
 
-static void DYNACALL do_sqw_nommu_area_3_nonvmem(u32 dst, const SQBuffer *sqb)
+static void DYNACALL do_sqw_nommu_area_3_nonvmem(u32 dst, Sh4Context *ctx)
 {
 	u8* pmem = &mem_b[0];
 
-	memcpy((SQBuffer *)&pmem[dst & (RAM_MASK - 0x1F)], &sqb[(dst >> 5) & 1], sizeof(SQBuffer));
+	memcpy((SQBuffer *)&pmem[dst & (RAM_MASK - 0x1F)], &ctx->sq_buffer[(dst >> 5) & 1], sizeof(SQBuffer));
 }
 
-static void DYNACALL do_sqw_nommu_full(u32 dst, const SQBuffer *sqb) {
-	do_sqw<false>(dst, sqb);
+static void DYNACALL do_sqw_nommu_full(u32 dst, Sh4Context *ctx) {
+	do_sqw<false>(dst, ctx);
+}
+
+static void DYNACALL sqWriteTA(u32 dst, Sh4Context *ctx)
+{
+	TAWriteSQ(dst, ctx->sq_buffer);
 }
 
 void setSqwHandler()
@@ -101,7 +106,7 @@ void setSqwHandler()
 			break;
 
 		case 4:
-			do_sqw_nommu = &TAWriteSQ;
+			do_sqw_nommu = &sqWriteTA;
 			break;
 
 		default:

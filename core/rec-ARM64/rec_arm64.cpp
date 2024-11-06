@@ -798,7 +798,7 @@ public:
 					{
 						Sub(x9, x28, offsetof(Sh4RCB, cntx) - offsetof(Sh4RCB, do_sqw_nommu));
 						Ldr(x9, MemOperand(x9));
-						Add(x1, x28, getRegOffset(reg_sq_buffer));
+						Mov(x1, x28);
 						Blr(x9);
 					}
 					Bind(&not_sqw);
