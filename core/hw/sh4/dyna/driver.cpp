@@ -371,7 +371,7 @@ static void recSh4_Init()
 	bm_Init();
 	
 	if (addrspace::virtmemEnabled())
-		verify(&mem_b[0] == ((u8*)p_sh4rcb->sq_buffer + 512 + 0x0C000000));
+		verify(&mem_b[0] == ((u8*)p_sh4rcb->cntx.sq_buffer + 512 + 0x0C000000));
 
 	// Call the platform-specific magic to make the pages RWX
 	CodeCache = nullptr;

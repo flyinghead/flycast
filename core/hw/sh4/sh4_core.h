@@ -40,11 +40,6 @@ struct SH4ThrownException
 	Sh4ExceptionCode expEvn;
 };
 
-static inline void RaiseFPUDisableException()
-{
-	throw SH4ThrownException(next_pc - 2, Sh4Ex_FpuDisabled);
-}
-
 static inline void AdjustDelaySlotException(SH4ThrownException& ex)
 {
 	ex.epc -= 2;

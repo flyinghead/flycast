@@ -1806,7 +1806,7 @@ void Arm32Assembler::compileOp(RuntimeBlockInfo* block, shil_opcode* op, bool op
 				else
 				{
 					Ldr(r2, MemOperand(r8, rcbOffset(do_sqw_nommu)));
-					Sub(r1, r8, -rcbOffset(sq_buffer));
+					Sub(r1, r8, -getRegOffset(reg_sq_buffer) + sizeof(Sh4Context));
 					Blx(cc, r2);
 				}
 			}
@@ -2513,7 +2513,7 @@ void Arm32Assembler::genMainLoop()
 				And(r1, r0, 0x3F);
 				Add(r1, r1, r8);
 				jump((void *)&addrspace::write64, ne);
-				Strd(r2, r3, MemOperand(r1, rcbOffset(sq_buffer)));
+				Strd(r2, r3, MemOperand(r1, getRegOffset(reg_sq_buffer) - sizeof(Sh4Context)));
 			}
 			else
 			{
@@ -2524,7 +2524,7 @@ void Arm32Assembler::genMainLoop()
 				if (reg != 0)
 					Mov(ne, r0, Register(reg));
 				jump((void *)&addrspace::write32, ne);
-				Str(r1, MemOperand(r3, rcbOffset(sq_buffer)));
+				Str(r1, MemOperand(r3, getRegOffset(reg_sq_buffer) - sizeof(Sh4Context)));
 			}
 			Bx(lr);
 		}

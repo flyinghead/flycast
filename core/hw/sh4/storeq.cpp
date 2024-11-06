@@ -53,7 +53,7 @@ void DYNACALL do_sqw(u32 Dest, const SQBuffer *sqb)
 }
 
 void DYNACALL do_sqw_mmu(u32 dst) {
-	do_sqw<true>(dst, sq_both);
+	do_sqw<true>(dst, p_sh4rcb->cntx.sq_buffer);
 }
 
 static void DYNACALL do_sqw_simplemmu(u32 dst, const SQBuffer *sqb) {
@@ -63,7 +63,7 @@ static void DYNACALL do_sqw_simplemmu(u32 dst, const SQBuffer *sqb) {
 //yes, this micro optimization makes a difference
 static void DYNACALL do_sqw_nommu_area_3(u32 dst, const SQBuffer *sqb)
 {
-	SQBuffer *pmem = (SQBuffer *)((u8 *)sqb + sizeof(Sh4RCB::sq_buffer) + sizeof(Sh4RCB::cntx) + 0x0C000000);
+	SQBuffer *pmem = (SQBuffer *)((u8 *)sqb + sizeof(Sh4RCB::cntx) + 0x0C000000);
 	pmem += (dst & (RAM_SIZE_MAX - 1)) >> 5;
 	*pmem = sqb[(dst >> 5) & 1];
 }

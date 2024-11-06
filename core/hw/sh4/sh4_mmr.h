@@ -9,8 +9,6 @@
 void map_area7();
 void map_p4();
 
-#define sq_both (sh4rcb.sq_buffer)
-
 void sh4_mmr_init();
 void sh4_mmr_reset(bool hard);
 void sh4_mmr_term();

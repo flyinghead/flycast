@@ -139,12 +139,12 @@ void X86Compiler::genMemHandlers()
 					and_(ecx, 0x3F);
 
 					if (size == MemSize::S32)
-						mov(dword[(size_t)p_sh4rcb->sq_buffer + ecx], edx);
+						mov(dword[(size_t)p_sh4rcb->cntx.sq_buffer + ecx], edx);
 					else if (size >= MemSize::F32)
 					{
-						movss(dword[(size_t)p_sh4rcb->sq_buffer + ecx], xmm0);
+						movss(dword[(size_t)p_sh4rcb->cntx.sq_buffer + ecx], xmm0);
 						if (size == MemSize::F64)
-							movss(dword[((size_t)p_sh4rcb->sq_buffer + 4) + ecx], xmm1);
+							movss(dword[((size_t)p_sh4rcb->cntx.sq_buffer + 4) + ecx], xmm1);
 					}
 					ret();
 					L(no_sqw);
@@ -526,7 +526,7 @@ void X86Compiler::genOpcode(RuntimeBlockInfo* block, bool optimise, shil_opcode&
 			}
 			else
 			{
-				mov(edx, (size_t)sh4rcb.sq_buffer);
+				mov(edx, (size_t)sh4rcb.cntx.sq_buffer);
 				freezeXMM();
 				call(dword[&do_sqw_nommu]);
 				thawXMM();

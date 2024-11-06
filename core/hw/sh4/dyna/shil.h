@@ -122,7 +122,7 @@ enum Sh4RegType
 	regv_xmtrx,
 	regv_fmtrx,
 
-	//reg_sq_buffer,
+	reg_sq_buffer,
 
 	NoReg=-1
 };

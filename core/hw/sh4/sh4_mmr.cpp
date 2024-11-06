@@ -615,7 +615,7 @@ void sh4_mmr_reset(bool hard)
 	ubc.reset();
 
 	MMU_reset();
-	memset(p_sh4rcb->sq_buffer, 0, sizeof(p_sh4rcb->sq_buffer));
+	memset(p_sh4rcb->cntx.sq_buffer, 0, sizeof(p_sh4rcb->cntx.sq_buffer));
 }
 
 void sh4_mmr_term()
@@ -646,10 +646,10 @@ void map_area7()
 void map_p4()
 {
 	// Store Queues -- Write only 32bit
-	addrspace::mapBlock(p_sh4rcb->sq_buffer, 0xE0, 0xE0, 63);
-	addrspace::mapBlock(p_sh4rcb->sq_buffer, 0xE1, 0xE1, 63);
-	addrspace::mapBlock(p_sh4rcb->sq_buffer, 0xE2, 0xE2, 63);
-	addrspace::mapBlock(p_sh4rcb->sq_buffer, 0xE3, 0xE3, 63);
+	addrspace::mapBlock(p_sh4rcb->cntx.sq_buffer, 0xE0, 0xE0, 63);
+	addrspace::mapBlock(p_sh4rcb->cntx.sq_buffer, 0xE1, 0xE1, 63);
+	addrspace::mapBlock(p_sh4rcb->cntx.sq_buffer, 0xE2, 0xE2, 63);
+	addrspace::mapBlock(p_sh4rcb->cntx.sq_buffer, 0xE3, 0xE3, 63);
 
 	// sh4 IC, OC and TLB arrays
 	addrspace::handler p4arrays_handler = addrspaceRegisterHandlerTemplate(ReadMem_P4, WriteMem_P4);
@@ -685,8 +685,6 @@ void serialize(Serializer& ser)
 
 	interrupts_serialize(ser);
 
-	ser << (*p_sh4rcb).sq_buffer;
-
 	ser << (*p_sh4rcb).cntx;
 
 	sh4_sched_serialize(ser);
@@ -720,8 +718,6 @@ void deserialize(Deserializer& deser)
 		deser.skip<int>();		// do_sqw index
 	CCN_QACR_write<0>(0, CCN_QACR0.reg_data);
 	CCN_QACR_write<1>(0, CCN_QACR1.reg_data);
-
-	deser >> (*p_sh4rcb).sq_buffer;
 
 	deser >> (*p_sh4rcb).cntx;
 	if (deser.version() >= Deserializer::V19 && deser.version() < Deserializer::V21)

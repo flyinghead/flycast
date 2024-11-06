@@ -798,7 +798,7 @@ public:
 					{
 						Sub(x9, x28, offsetof(Sh4RCB, cntx) - offsetof(Sh4RCB, do_sqw_nommu));
 						Ldr(x9, MemOperand(x9));
-						Sub(x1, x28, offsetof(Sh4RCB, cntx) - offsetof(Sh4RCB, sq_buffer));
+						Add(x1, x28, getRegOffset(reg_sq_buffer));
 						Blr(x9);
 					}
 					Bind(&not_sqw);
@@ -1557,7 +1557,7 @@ public:
 		Cmp(x7, 0x38);
 		GenBranchRuntime(addrspace::write32, Condition::ne);
 		And(x0, x0, 0x3f);
-		Sub(x7, x0, sizeof(Sh4RCB::sq_buffer), LeaveFlags);
+		Sub(x7, x0, sizeof(Sh4Context::sq_buffer), LeaveFlags);
 		Str(w1, MemOperand(x28, x7));
 		Ret();
 
@@ -1567,7 +1567,7 @@ public:
 		Cmp(x7, 0x38);
 		GenBranchRuntime(addrspace::write64, Condition::ne);
 		And(x0, x0, 0x3f);
-		Sub(x7, x0, sizeof(Sh4RCB::sq_buffer), LeaveFlags);
+		Sub(x7, x0, sizeof(Sh4Context::sq_buffer), LeaveFlags);
 		Str(x1, MemOperand(x28, x7));
 		Ret();
 

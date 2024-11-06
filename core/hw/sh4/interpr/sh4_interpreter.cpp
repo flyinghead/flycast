@@ -28,7 +28,7 @@ Sh4Cycles sh4cycles(CPU_RATIO);
 static void ExecuteOpcode(u16 op)
 {
 	if (sr.FD == 1 && OpDesc[op]->IsFloatingPoint())
-		RaiseFPUDisableException();
+		throw SH4ThrownException(next_pc - 2, Sh4Ex_FpuDisabled);
 	OpPtr[op](op);
 	sh4cycles.executeCycles(op);
 }
@@ -191,8 +191,6 @@ static void sh4_int_resetcache() {
 
 static void Sh4_int_Init()
 {
-	static_assert(sizeof(Sh4cntx) == 448, "Invalid Sh4Cntx size");
-
 	memset(&p_sh4rcb->cntx, 0, sizeof(p_sh4rcb->cntx));
 }
 

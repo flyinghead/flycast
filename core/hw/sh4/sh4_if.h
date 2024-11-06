@@ -115,12 +115,18 @@ struct sh4_if
 
 extern sh4_if sh4_cpu;
 
+struct alignas(32) SQBuffer {
+	u8 data[32];
+};
+
 struct alignas(64) Sh4Context
 {
 	union
 	{
 		struct
 		{
+			SQBuffer sq_buffer[2];
+
 			f32 xffr[32];
 			u32 r[16];
 
@@ -155,7 +161,7 @@ struct alignas(64) Sh4Context
 			u32 temp_reg;
 			int cycle_counter;
 		};
-		u64 raw[64-8];
+		u64 raw[64];
 	};
 
 	f32& fr(int idx) {
@@ -205,11 +211,7 @@ private:
 		f32 sgl[2];
 	};
 };
-static_assert(sizeof(Sh4Context) == 448, "Invalid Sh4Context size");
-
-struct alignas(32) SQBuffer {
-	u8 data[32];
-};
+static_assert(sizeof(Sh4Context) == 512, "Invalid Sh4Context size");
 
 void setSqwHandler();
 void DYNACALL do_sqw_mmu(u32 dst);
@@ -229,9 +231,8 @@ typedef void DYNACALL sqw_fp(u32 dst, const SQBuffer *sqb);
 struct alignas(PAGE_SIZE) Sh4RCB
 {
 	void* fpcb[FPCB_SIZE];
-	u8 _pad[FPCB_PAD - sizeof(Sh4Context) - sizeof(SQBuffer) * 2 - sizeof(void *)];
+	u8 _pad[FPCB_PAD - sizeof(Sh4Context) - sizeof(void *)];
 	sqw_fp* do_sqw_nommu;
-	SQBuffer sq_buffer[2];
 	Sh4Context cntx;
 };
 

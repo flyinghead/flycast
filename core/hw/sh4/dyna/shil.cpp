@@ -42,7 +42,7 @@ u32 getRegOffset(Sh4RegType reg)
 	case reg_fpscr: return offsetof(Sh4Context, fpscr.full);
 	case reg_pc_dyn: return offsetof(Sh4Context, jdyn);
 	case reg_temp: return offsetof(Sh4Context, temp_reg);
-	// TODO case reg_sq_buffer: return offsetof(Sh4Context, sq_buffer);
+	case reg_sq_buffer: return offsetof(Sh4Context, sq_buffer);
 	default:
 		ERROR_LOG(SH4, "Unknown register ID %d", reg);
 		die("Invalid reg");

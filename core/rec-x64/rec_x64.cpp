@@ -378,7 +378,7 @@ public:
 					}
 					else
 					{
-						mov(call_regs64[1], (uintptr_t)sq_both);
+						mov(call_regs64[1], (uintptr_t)p_sh4rcb->cntx.sq_buffer);
 						mov(rax, (size_t)&do_sqw_nommu);
 						saveXmmRegisters();
 						call(qword[rax]);
@@ -1160,7 +1160,7 @@ private:
 						shr(r9d, 26);
 						cmp(r9d, 0x38);
 						jne(no_sqw);
-						mov(rax, (uintptr_t)p_sh4rcb->sq_buffer);
+						mov(rax, (uintptr_t)p_sh4rcb->cntx.sq_buffer);
 						and_(call_regs[0], 0x3F);
 
 						if (size == MemSize::S32)
