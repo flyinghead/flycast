@@ -120,6 +120,16 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
             return;
         }
         Log.i("flycast", "Environment initialized");
+        if ("marble".equals(Build.DEVICE) || "marblein".equals(Build.DEVICE)
+                || "garnet".equals(Build.DEVICE) || "XIG05".equals(Build.DEVICE))
+        {
+            // Disable omp affinity for POCO F5 and Redmi Note 12 Turbo (marble, marblein)
+            // and Redmi Note 13 Pro 5G and POCO X6 5G (garnet, XIG05)
+            // because it crashes with ndk 27.1 / clang 18.x
+            // See https://github.com/android/ndk/issues/1180
+            Log.i("flycast", "Disabling OpenMP thread affinity for device " + Build.DEVICE);
+            JNIdc.disableOmpAffinity();
+        }
         Emulator app = (Emulator)getApplicationContext();
         app.getConfigurationPrefs();
         storage = new AndroidStorage(this);
