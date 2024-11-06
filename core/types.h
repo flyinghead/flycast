@@ -162,11 +162,6 @@ struct settings_t
 
 	struct
 	{
-		bool disable_nvmem;
-	} dynarec;
-
-	struct
-	{
 		bool muteAudio;
 	} aica;
 

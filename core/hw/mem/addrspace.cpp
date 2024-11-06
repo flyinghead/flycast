@@ -385,9 +385,7 @@ bool reserve()
 	if (ram_base != nullptr)
 		return true;
 
-	// Use vmem only if settings mandate so.
-	if (!settings.dynarec.disable_nvmem)
-		virtmem::init((void**)&ram_base, (void**)&p_sh4rcb, RAM_SIZE_MAX + VRAM_SIZE_MAX + ARAM_SIZE_MAX + elan::ERAM_SIZE_MAX);
+	virtmem::init((void**)&ram_base, (void**)&p_sh4rcb, RAM_SIZE_MAX + VRAM_SIZE_MAX + ARAM_SIZE_MAX + elan::ERAM_SIZE_MAX);
 	return true;
 }
 
