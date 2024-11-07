@@ -339,7 +339,12 @@ void SCIFSerialPort::SCFCR2_write(u16 data)
 // SCBRR2 - Bit Rate Register
 void SCIFSerialPort::SCBRR2_write(u32 addr, u8 data)
 {
-	SCIF_SCBRR2 = data;
+	// Mimic 8-bit overflow manually: -94 could become 4294967202 with 32-bit overflow in macOS arm64
+	if (static_cast<s8>(data) < 0)
+		SCIF_SCBRR2 = static_cast<s8>(data) + 256;
+	else
+		SCIF_SCBRR2 = data;
+	
 	Instance().updateBaudRate();
 }
 
