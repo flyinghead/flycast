@@ -1109,10 +1109,12 @@ public:
 		switch (size)
 		{
 		case 1:
+			Uxtb(w1, w1);
 			GenCallRuntime(addrspace::write8);
 			break;
 
 		case 2:
+			Uxth(w1, w1);
 			GenCallRuntime(addrspace::write16);
 			break;
 
@@ -1977,6 +1979,10 @@ private:
 			}
 			else
 			{
+				if (op.size == 1)
+					Uxtb(w1, w1);
+				else if (op.size == 2)
+					Uxth(w1, w1);
 				GenCallRuntime((void (*)())ptr);
 			}
 		}
