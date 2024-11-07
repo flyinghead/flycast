@@ -237,7 +237,7 @@ private:
 		{
 			presented = true;
 			if (!config::ThreadedRendering && !ggpo::active())
-				sh4_cpu.Stop();
+				emu.getSh4Executor()->Stop();
 #ifdef LIBRETRO
 			retro_rend_present();
 #endif
@@ -321,7 +321,7 @@ bool rend_init_renderer()
 	rendererEnabled = true;
 	if (renderer == nullptr)
 		rend_create_renderer();
-	bool success = renderer->Init();
+	bool success = renderer != nullptr && renderer->Init();
 	if (!success) {
 		delete renderer;
 		renderer = rend_norend();

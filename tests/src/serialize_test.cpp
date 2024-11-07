@@ -13,7 +13,7 @@ protected:
 		if (!addrspace::reserve())
 			die("addrspace::reserve failed");
 		emu.init();
-		dc_reset(true);
+		emu.dc_reset(true);
 	}
 };
 

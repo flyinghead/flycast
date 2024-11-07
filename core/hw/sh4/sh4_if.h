@@ -100,20 +100,20 @@ struct fpscr_t
 };
 
 //sh4 interface
-struct sh4_if
+class Sh4Executor
 {
-	void (*Start)();
-	void (*Run)();
-	void (*Stop)();
-	void (*Step)();
-	void (*Reset)(bool hard);
-	void (*Init)();
-	void (*Term)();
-	void (*ResetCache)();
-	bool (*IsCpuRunning)();
+public:
+	virtual ~Sh4Executor() {}
+	virtual void Run() = 0;
+	virtual void Start() = 0;
+	virtual void Stop() = 0;
+	virtual void Step() = 0;
+	virtual void Reset(bool hard) = 0;
+	virtual void Init() = 0;
+	virtual void Term() = 0;
+	virtual void ResetCache() = 0;
+	virtual bool IsCpuRunning() = 0;
 };
-
-extern sh4_if sh4_cpu;
 
 struct alignas(32) SQBuffer {
 	u8 data[32];
@@ -235,6 +235,7 @@ struct alignas(PAGE_SIZE) Sh4RCB
 	SQWriteFunc *do_sqw_nommu;
 	Sh4Context cntx;
 };
+static_assert((sizeof(Sh4RCB) % PAGE_SIZE) == 0, "sizeof(Sh4RCB) not multiple of PAGE_SIZE");
 
 extern Sh4RCB* p_sh4rcb;
 
@@ -244,8 +245,8 @@ extern Sh4RCB* p_sh4rcb;
 #define Sh4cntx (sh4rcb.cntx)
 
 //Get an interface to sh4 interpreter
-void Get_Sh4Interpreter(sh4_if* cpu);
-void Get_Sh4Recompiler(sh4_if* cpu);
+Sh4Executor *Get_Sh4Interpreter();
+Sh4Executor *Get_Sh4Recompiler();
 
 enum Sh4ExceptionCode : u16
 {

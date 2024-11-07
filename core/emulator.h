@@ -33,12 +33,10 @@ void loadGameSpecificSettings();
 void SaveSettings();
 
 int flycast_init(int argc, char* argv[]);
-void dc_reset(bool hard); // for tests only
 void flycast_term();
 void dc_exit();
 void dc_savestate(int index = 0, const u8 *pngData = nullptr, u32 pngSize = 0);
 void dc_loadstate(int index = 0);
-void dc_loadstate(Deserializer& deser);
 time_t dc_getStateCreationDate(int index);
 void dc_getStateScreenshot(int index, std::vector<u8>& pngData);
 
@@ -97,6 +95,8 @@ struct LoadProgress
 	std::atomic<const char *> label;
 	std::atomic<float> progress;
 };
+
+class Sh4Executor;
 
 class Emulator
 {
@@ -170,6 +170,14 @@ public:
 	 * Returns true if the cpu was started
 	 */
 	bool restartCpu();
+	/*
+	 * Load the machine state from the passed deserializer
+	 */
+	void loadstate(Deserializer& deser);
+
+	Sh4Executor *getSh4Executor();
+
+	void dc_reset(bool hard); // for tests only
 
 private:
 	bool checkStatus(bool wait = false);
@@ -193,6 +201,8 @@ private:
 	u32 stepRangeTo = 0;
 	bool stopRequested = false;
 	std::mutex mutex;
+	Sh4Executor *interpreter = nullptr;
+	Sh4Executor *recompiler = nullptr;
 };
 extern Emulator emu;
 

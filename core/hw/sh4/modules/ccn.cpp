@@ -8,6 +8,7 @@
 #include "hw/sh4/sh4_core.h"
 #include "hw/sh4/sh4_cache.h"
 #include "cfg/option.h"
+#include "emulator.h"
 
 CCNRegisters ccn;
 
@@ -54,7 +55,7 @@ static void CCN_MMUCR_write(u32 addr, u32 value)
 	{
 		//printf("<*******>MMU Enabled , ONLY SQ remaps work<*******>\n");
 		mmu_set_state();
-		sh4_cpu.ResetCache();
+		emu.getSh4Executor()->ResetCache();
 	}
 }
 

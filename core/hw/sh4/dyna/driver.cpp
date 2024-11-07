@@ -40,9 +40,9 @@ ptrdiff_t cc_rx_offset;
 
 static std::unordered_set<u32> smc_hotspots;
 
-static sh4_if sh4Interp;
 static Sh4CodeBuffer codeBuffer;
 Sh4Dynarec *sh4Dynarec;
+Sh4Recompiler *Sh4Recompiler::Instance;
 
 void *Sh4CodeBuffer::get()
 {
@@ -83,14 +83,14 @@ void Sh4CodeBuffer::reset(bool temporary)
 		lastAddr = 0;
 }
 
-static void clear_temp_cache(bool full)
+void Sh4Recompiler::clear_temp_cache(bool full)
 {
 	//printf("recSh4:Temp Code Cache clear at %08X\n", curr_pc);
 	codeBuffer.reset(true);
 	bm_ResetTempCache(full);
 }
 
-static void recSh4_ClearCache()
+void Sh4Recompiler::ResetCache()
 {
 	INFO_LOG(DYNAREC, "recSh4:Dynarec Cache clear at %08X free space %d", next_pc, codeBuffer.getFreeSpace());
 	codeBuffer.reset(false);
@@ -99,7 +99,7 @@ static void recSh4_ClearCache()
 	clear_temp_cache(true);
 }
 
-static void recSh4_Run()
+void Sh4Recompiler::Run()
 {
 	RestoreHostRoundingMode();
 
@@ -108,7 +108,7 @@ static void recSh4_Run()
 	
 	sh4Dynarec->mainloop(sh4_dyna_rcb);
 
-	sh4_int_bCpuRun = false;
+	ctx->CpuRunning = false;
 }
 
 void AnalyseBlock(RuntimeBlockInfo* blk);
@@ -171,7 +171,7 @@ DynarecCodeEntryPtr rdv_CompilePC(u32 blockcheck_failures)
 	const u32 pc = next_pc;
 
 	if (codeBuffer.getFreeSpace() < 32_KB || pc == 0x8c0000e0 || pc == 0xac010000 || pc == 0xac008300)
-		recSh4_ClearCache();
+		Sh4Recompiler::Instance->ResetCache();
 
 	RuntimeBlockInfo* rbi = sh4Dynarec->allocateBlock();
 
@@ -185,7 +185,7 @@ DynarecCodeEntryPtr rdv_CompilePC(u32 blockcheck_failures)
 	{
 		codeBuffer.useTempBuffer(true);
 		if (codeBuffer.getFreeSpace() < 32_KB)
-			clear_temp_cache(false);
+			Sh4Recompiler::Instance->clear_temp_cache(false);
 		rbi->temp_block = true;
 		if (rbi->read_only)
 			INFO_LOG(DYNAREC, "WARNING: temp block %x (%x) is protected!", rbi->vaddr, rbi->addr);
@@ -248,7 +248,7 @@ DynarecCodeEntryPtr DYNACALL rdv_BlockCheckFail(u32 addr)
 	else
 	{
 		next_pc = addr;
-		recSh4_ClearCache();
+		Sh4Recompiler::Instance->ResetCache();
 	}
 	return (DynarecCodeEntryPtr)CC_RW2RX(rdv_CompilePC(blockcheck_failures));
 }
@@ -340,34 +340,18 @@ void* DYNACALL rdv_LinkBlock(u8* code,u32 dpc)
 	return (void*)rv;
 }
 
-static void recSh4_Start()
+void Sh4Recompiler::Reset(bool hard)
 {
-	sh4Interp.Start();
-}
-
-static void recSh4_Stop()
-{
-	sh4Interp.Stop();
-}
-
-static void recSh4_Step()
-{
-	sh4Interp.Step();
-}
-
-static void recSh4_Reset(bool hard)
-{
-	sh4Interp.Reset(hard);
-	recSh4_ClearCache();
+	super::Reset(hard);
+	ResetCache();
 	if (hard)
 		bm_Reset();
 }
 
-static void recSh4_Init()
+void Sh4Recompiler::Init()
 {
-	INFO_LOG(DYNAREC, "recSh4 Init");
-	Get_Sh4Interpreter(&sh4Interp);
-	sh4Interp.Init();
+	INFO_LOG(DYNAREC, "Sh4Recompiler::Init");
+	super::Init();
 	bm_Init();
 	
 	if (addrspace::virtmemEnabled())
@@ -389,9 +373,9 @@ static void recSh4_Init()
 	bm_ResetCache();
 }
 
-static void recSh4_Term()
+void Sh4Recompiler::Term()
 {
-	INFO_LOG(DYNAREC, "recSh4 Term");
+	INFO_LOG(DYNAREC, "Sh4Recompiler::Term");
 #ifdef FEAT_NO_RWX_PAGES
 	if (CodeCache != nullptr)
 		virtmem::release_jit_block(CodeCache, (u8 *)CodeCache + cc_rx_offset, FULL_SIZE);
@@ -402,25 +386,12 @@ static void recSh4_Term()
 	CodeCache = nullptr;
 	TempCodeCache = nullptr;
 	bm_Term();
-	sh4Interp.Term();
+	super::Term();
 }
 
-static bool recSh4_IsCpuRunning()
+Sh4Executor *Get_Sh4Recompiler()
 {
-	return sh4Interp.IsCpuRunning();
-}
-
-void Get_Sh4Recompiler(sh4_if* cpu)
-{
-	cpu->Run = recSh4_Run;
-	cpu->Start = recSh4_Start;
-	cpu->Stop = recSh4_Stop;
-	cpu->Step = recSh4_Step;
-	cpu->Reset = recSh4_Reset;
-	cpu->Init = recSh4_Init;
-	cpu->Term = recSh4_Term;
-	cpu->IsCpuRunning = recSh4_IsCpuRunning;
-	cpu->ResetCache = recSh4_ClearCache;
+	return new Sh4Recompiler();
 }
 
 static bool translateAddress(u32 addr, int size, u32 access, u32& outAddr, RuntimeBlockInfo* block)

@@ -1,7 +1,7 @@
-#ifndef SH4_SCHED_H
-#define SH4_SCHED_H
-
+#pragma once
 #include "types.h"
+
+#define SH4_TIMESLICE 448	// at 112 Bangai-O doesn't start. 224 is ok
 
 /*
 	tag, as passed on sh4_sched_register
@@ -53,5 +53,3 @@ void sh4_sched_serialize(Serializer& ser);
 void sh4_sched_deserialize(Deserializer& deser);
 void sh4_sched_serialize(Serializer& ser, int id);
 void sh4_sched_deserialize(Deserializer& deser, int id);
-
-#endif //SH4_SCHED_H

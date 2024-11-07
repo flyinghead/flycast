@@ -380,8 +380,6 @@ bool bm_lockedWrite(u8* address)
 
 bool reserve()
 {
-	static_assert((sizeof(Sh4RCB) % PAGE_SIZE) == 0, "sizeof(Sh4RCB) not multiple of PAGE_SIZE");
-
 	if (ram_base != nullptr)
 		return true;
 

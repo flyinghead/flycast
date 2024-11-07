@@ -25,7 +25,6 @@
 #define xf_hex ((u32*)xf)
 #define dr_hex ((u64*)fr)
 #define xd_hex ((u64*)xf)
-#define sh4_int_bCpuRun Sh4cntx.CpuRunning
 
 void UpdateFPSCR();
 bool UpdateSR();

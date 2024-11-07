@@ -3,6 +3,7 @@
 #pragma once
 #include "blockmanager.h"
 #include "oslib/host_context.h"
+#include "../sh4_interpreter.h"
 
 // When NO_RWX is enabled there's two address-spaces, one executable and
 // one writtable. The emitter and most of the code in rec-* will work with
@@ -121,3 +122,25 @@ public:
 };
 
 extern Sh4Dynarec *sh4Dynarec;
+
+class Sh4Recompiler : public Sh4Interpreter
+{
+	using super = Sh4Interpreter;
+
+public:
+	Sh4Recompiler() {
+		Instance = this;
+	}
+	~Sh4Recompiler() {
+		Instance = nullptr;
+	}
+	void Run() override;
+	void ResetCache() override;
+	void Reset(bool hard) override;
+	void Init() override;
+	void Term() override;
+
+	void clear_temp_cache(bool full);
+
+	static Sh4Recompiler *Instance;
+};

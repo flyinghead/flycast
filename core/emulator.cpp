@@ -47,6 +47,8 @@
 #ifndef LIBRETRO
 #include "ui/gui.h"
 #endif
+#include "hw/sh4/sh4_interpreter.h"
+#include "hw/sh4/dyna/ngen.h"
 
 settings_t settings;
 
@@ -400,7 +402,7 @@ static void loadSpecialSettings()
 	}
 }
 
-void dc_reset(bool hard)
+void Emulator::dc_reset(bool hard)
 {
 	if (hard)
 	{
@@ -411,7 +413,7 @@ void dc_reset(bool hard)
 	sh4_sched_reset(hard);
 	pvr::reset(hard);
 	aica::reset(hard);
-	sh4_cpu.Reset(true);
+	getSh4Executor()->Reset(true);
 	mem_Reset(hard);
 }
 
@@ -487,20 +489,26 @@ void Emulator::init()
 
 	// the recompiler may start generating code at this point and needs a fully configured machine
 #if FEAT_SHREC != DYNAREC_NONE
-	Get_Sh4Recompiler(&sh4_cpu);
-	sh4_cpu.Init();		// Also initialize the interpreter
+	recompiler = Get_Sh4Recompiler();
+	recompiler->Init();
 	if(config::DynarecEnabled)
-	{
 		INFO_LOG(DYNAREC, "Using Recompiler");
-	}
 	else
 #endif
-	{
-		Get_Sh4Interpreter(&sh4_cpu);
-		sh4_cpu.Init();
 		INFO_LOG(INTERPRETER, "Using Interpreter");
-	}
+	interpreter = Get_Sh4Interpreter();
+	interpreter->Init();
 	state = Init;
+}
+
+Sh4Executor *Emulator::getSh4Executor()
+{
+#if FEAT_SHREC != DYNAREC_NONE
+	if(config::DynarecEnabled)
+		return recompiler;
+	else
+#endif
+		return interpreter;
 }
 
 int getGamePlatform(const std::string& filename)
@@ -671,13 +679,13 @@ void Emulator::runInternal()
 {
 	if (singleStep)
 	{
-		sh4_cpu.Step();
+		getSh4Executor()->Step();
 		singleStep = false;
 	}
 	else if(stepRangeTo != 0)
 	{
 		while (Sh4cntx.pc >= stepRangeFrom && Sh4cntx.pc <= stepRangeTo)
-			sh4_cpu.Step();
+			getSh4Executor()->Step();
 
 		stepRangeFrom = 0;
 		stepRangeTo = 0;
@@ -687,7 +695,7 @@ void Emulator::runInternal()
 		do {
 			resetRequested = false;
 
-			sh4_cpu.Run();
+			getSh4Executor()->Run();
 
 			if (resetRequested)
 			{
@@ -736,7 +744,18 @@ void Emulator::term()
 	if (state == Init)
 	{
 		debugger::term();
-		sh4_cpu.Term();
+		if (interpreter != nullptr)
+		{
+			interpreter->Term();
+			delete interpreter;
+			interpreter = nullptr;
+		}
+		if (recompiler != nullptr)
+		{
+			recompiler->Term();
+			delete recompiler;
+			recompiler = nullptr;
+		}
 		custom_texture.Terminate();	// lr: avoid deadlock on exit (win32)
 		reios_term();
 		aica::term();
@@ -760,7 +779,7 @@ void Emulator::stop()
 		const std::lock_guard<std::mutex> _(mutex);
 		// must be updated after GGPO is stopped since it may run some rollback frames
 		state = Loaded;
-		sh4_cpu.Stop();
+		getSh4Executor()->Stop();
 	}
 	if (config::ThreadedRendering)
 	{
@@ -794,7 +813,7 @@ void Emulator::requestReset()
 	resetRequested = true;
 	if (config::GGPOEnable)
 		NetworkHandshake::term();
-	sh4_cpu.Stop();
+	getSh4Executor()->Stop();
 }
 
 void loadGameSpecificSettings()
@@ -841,7 +860,7 @@ void Emulator::stepRange(u32 from, u32 to)
 	stop();
 }
 
-void dc_loadstate(Deserializer& deser)
+void Emulator::loadstate(Deserializer& deser)
 {
 	custom_texture.Terminate();
 #if FEAT_AREC == DYNAREC_JIT
@@ -857,7 +876,7 @@ void dc_loadstate(Deserializer& deser)
 	dc_deserialize(deser);
 
 	mmu_set_state();
-	sh4_cpu.ResetCache();
+	getSh4Executor()->ResetCache();
 	KillTex = true;
 }
 
@@ -871,7 +890,7 @@ void Emulator::setNetworkState(bool online)
 				&& config::Sh4Clock != 200)
 		{
 			config::Sh4Clock.override(200);
-			sh4_cpu.ResetCache();
+			getSh4Executor()->ResetCache();
 		}
 		EventManager::event(Event::Network);
 	}
@@ -906,7 +925,7 @@ void Emulator::run()
 	startTime = sh4_sched_now64();
 	renderTimeout = false;
 	if (!singleStep && stepRangeTo == 0)
-		sh4_cpu.Start();
+		getSh4Executor()->Start();
 	try {
 		runInternal();
 		if (ggpo::active())
@@ -914,7 +933,7 @@ void Emulator::run()
 	} catch (...) {
 		setNetworkState(false);
 		state = Error;
-		sh4_cpu.Stop();
+		getSh4Executor()->Stop();
 		EventManager::event(Event::Pause);
 		throw;
 	}
@@ -930,18 +949,6 @@ void Emulator::start()
 	if (config::GGPOEnable && config::ThreadedRendering)
 		// Not supported with GGPO
 		config::EmulateFramebuffer.override(false);
-#if FEAT_SHREC != DYNAREC_NONE
-	if (config::DynarecEnabled)
-	{
-		Get_Sh4Recompiler(&sh4_cpu);
-		INFO_LOG(DYNAREC, "Using Recompiler");
-	}
-	else
-#endif
-	{
-		Get_Sh4Interpreter(&sh4_cpu);
-		INFO_LOG(DYNAREC, "Using Interpreter");
-	}
 	setupPtyPipe();
 
 	memwatch::protect();
@@ -949,7 +956,7 @@ void Emulator::start()
 	if (config::ThreadedRendering)
 	{
 		const std::lock_guard<std::mutex> lock(mutex);
-		sh4_cpu.Start();
+		getSh4Executor()->Start();
 		threadResult = std::async(std::launch::async, [this] {
 				ThreadName _("Flycast-emu");
 				InitAudio();
@@ -966,7 +973,7 @@ void Emulator::start()
 					TermAudio();
 				} catch (...) {
 					setNetworkState(false);
-					sh4_cpu.Stop();
+					getSh4Executor()->Stop();
 					TermAudio();
 					throw;
 				}
@@ -1044,7 +1051,7 @@ void Emulator::vblank()
 	if (ggpo::active())
 		ggpo::endOfFrame();
 	else if (!config::ThreadedRendering)
-		sh4_cpu.Stop();
+		getSh4Executor()->Stop();
 }
 
 bool Emulator::restartCpu()
@@ -1052,7 +1059,7 @@ bool Emulator::restartCpu()
 	const std::lock_guard<std::mutex> _(mutex);
 	if (state != Running)
 		return false;
-	sh4_cpu.Start();
+	getSh4Executor()->Start();
 	return true;
 }
 

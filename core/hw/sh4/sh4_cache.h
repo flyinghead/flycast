@@ -221,6 +221,7 @@ private:
 	}
 
 	std::array<cache_line, 256> lines;
+	Sh4Cycles sh4cycles;
 };
 
 extern Sh4ICache icache;
@@ -589,6 +590,7 @@ private:
 	// TODO serialize
 	u64 writeBackBufferCycles = 0;
 	u64 writeThroughBufferCycles = 0;
+	Sh4Cycles sh4cycles;
 };
 
 extern Sh4OCache ocache;

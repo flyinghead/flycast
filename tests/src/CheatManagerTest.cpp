@@ -287,7 +287,7 @@ cheats = "2"
 	mgr.reset("TESTSUB8");
 	mgr.loadCheatFile("test.cht");
 	mem_map_default();
-	dc_reset(true);
+	emu.dc_reset(true);
 
 	mgr.enableCheat(0, true);
 	WriteMem8_nommu(0x8c010000, 0xFA);

@@ -10,7 +10,6 @@
 #endif
 
 Sh4RCB* p_sh4rcb;
-sh4_if  sh4_cpu;
 
 static void ChangeGPR()
 {

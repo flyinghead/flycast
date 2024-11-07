@@ -2362,7 +2362,7 @@ bool retro_unserialize(const void * data, size_t size)
 
 	try {
 		Deserializer deser(data, size);
-		dc_loadstate(deser);
+		emu.loadstate(deser);
 	    retro_audio_flush_buffer();
 		if (!first_run)
 			emu.start();

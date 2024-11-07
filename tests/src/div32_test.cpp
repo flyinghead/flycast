@@ -111,7 +111,7 @@ protected:
 		if (!addrspace::reserve())
 			die("addrspace::reserve failed");
 		emu.init();
-		dc_reset(true);
+		emu.dc_reset(true);
 	}
 
 	void div32s(u32 n1, u32 n2, u32 n3)

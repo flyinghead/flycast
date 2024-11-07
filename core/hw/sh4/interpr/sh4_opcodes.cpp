@@ -11,6 +11,7 @@
 #include "hw/sh4/sh4_interrupts.h"
 #include "debug/gdb_server.h"
 #include "hw/sh4/dyna/decoder.h"
+#include "emulator.h"
 
 #ifdef STRICT_MODE
 #include "hw/sh4/sh4_cache.h"
@@ -802,12 +803,16 @@ sh4op(i0000_0000_0010_1000)
 	mac.full=0;
 }
 
+static void executeDelaySlot() {
+	static_cast<Sh4Interpreter *>(emu.getSh4Executor())->ExecuteDelayslot();
+}
+
 //braf <REG_N>
 sh4op(i0000_nnnn_0010_0011)
 {
 	u32 n = GetN(op);
 	u32 newpc = r[n] + next_pc + 2;//
-	ExecuteDelayslot();	//WARN : r[n] can change here
+	executeDelaySlot();	//WARN : r[n] can change here
 	next_pc = newpc;
 }
 //bsrf <REG_N>
@@ -817,7 +822,7 @@ sh4op(i0000_nnnn_0000_0011)
 	u32 newpc = r[n] + next_pc +2;
 	u32 newpr = next_pc + 2;
 	
-	ExecuteDelayslot(); //WARN : pr and r[n] can change here
+	executeDelaySlot(); //WARN : pr and r[n] can change here
 	
 	pr = newpr;
 	next_pc = newpc;
@@ -829,7 +834,7 @@ sh4op(i0000_nnnn_0000_0011)
 sh4op(i0000_0000_0010_1011)
 {
 	u32 newpc = spc;
-	ExecuteDelayslot_RTE();
+	static_cast<Sh4Interpreter *>(emu.getSh4Executor())->ExecuteDelayslot_RTE();
 	next_pc = newpc;
 	if (UpdateSR())
 		UpdateINTC();
@@ -841,7 +846,7 @@ sh4op(i0000_0000_0010_1011)
 sh4op(i0000_0000_0000_1011)
 {
 	u32 newpc=pr;
-	ExecuteDelayslot(); //WARN : pr can change here
+	executeDelaySlot(); //WARN : pr can change here
 	next_pc=newpc;
 	debugger::subroutineReturn();
 }
@@ -868,7 +873,7 @@ sh4op(i1000_1111_iiii_iiii)
 	{
 		//delay 1 instruction
 		u32 newpc=branch_target_s8(op);
-		ExecuteDelayslot();
+		executeDelaySlot();
 		next_pc = newpc;
 	}
 }
@@ -892,7 +897,7 @@ sh4op(i1000_1101_iiii_iiii)
 	{
 		//delay 1 instruction
 		u32 newpc=branch_target_s8(op);
-		ExecuteDelayslot();
+		executeDelaySlot();
 		next_pc = newpc;
 	}
 }
@@ -906,7 +911,7 @@ u32 branch_target_s12(u32 op)
 sh4op(i1010_iiii_iiii_iiii)
 {
 	u32 newpc = branch_target_s12(op);
-	ExecuteDelayslot();
+	executeDelaySlot();
 	next_pc=newpc;
 }
 
@@ -915,7 +920,7 @@ sh4op(i1011_iiii_iiii_iiii)
 {
 	u32 newpr = next_pc + 2; //return after delayslot
 	u32 newpc = branch_target_s12(op);
-	ExecuteDelayslot();
+	executeDelaySlot();
 
 	pr = newpr;
 	next_pc = newpc;
@@ -937,7 +942,7 @@ sh4op(i0100_nnnn_0010_1011)
 	u32 n = GetN(op);
 
 	u32 newpc=r[n];
-	ExecuteDelayslot(); //r[n] can change here
+	executeDelaySlot(); //r[n] can change here
 	next_pc=newpc;
 }
 
@@ -948,7 +953,7 @@ sh4op(i0100_nnnn_0000_1011)
 
 	u32 newpr = next_pc + 2;   //return after delayslot
 	u32 newpc= r[n];
-	ExecuteDelayslot(); //r[n]/pr can change here
+	executeDelaySlot(); //r[n]/pr can change here
 
 	pr = newpr;
 	next_pc = newpc;

@@ -91,7 +91,7 @@ protected:
 	}
 
 	Sh4Context *ctx;
-	sh4_if sh4;
+	Sh4Executor *sh4;
 	std::set<u32 *> checkedRegs;
 	static constexpr u32 START_PC = 0xAC000000;
 
