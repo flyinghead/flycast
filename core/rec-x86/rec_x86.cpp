@@ -109,14 +109,14 @@ void X86Compiler::compile(RuntimeBlockInfo* block, bool force_checks, bool optim
 	if (mmu_enabled() && block->has_fpu_op)
 	{
 		Xbyak::Label fpu_enabled;
-		mov(eax, dword[&sr.status]);
+		mov(eax, dword[&Sh4cntx.sr.status]);
 		test(eax, 0x8000);			// test SR.FD bit
 		jz(fpu_enabled);
 		push(Sh4Ex_FpuDisabled);	// exception code
 		push(block->vaddr);			// pc
 		call((void (*)())Do_Exception);
 		add(esp, 8);
-		mov(ecx, dword[&next_pc]);
+		mov(ecx, dword[&Sh4cntx.pc]);
 		jmp((const void *)no_update);
 		L(fpu_enabled);
 	}
@@ -298,16 +298,16 @@ u32 X86Compiler::relinkBlock(RuntimeBlockInfo* block)
 	case BET_DynamicIntr:
 		if (block->BlockType == BET_StaticIntr)
 		{
-			mov(dword[&next_pc], block->NextBlock);
+			mov(dword[&Sh4cntx.pc], block->NextBlock);
 		}
 		else
 		{
 			mov(eax, dword[GetRegPtr(reg_pc_dyn)]);
-			mov(dword[&next_pc], eax);
+			mov(dword[&Sh4cntx.pc], eax);
 		}
 		call(UpdateINTC);
 
-		mov(ecx, dword[&next_pc]);
+		mov(ecx, dword[&Sh4cntx.pc]);
 		jmp((const void *)no_update);
 
 		break;
@@ -459,14 +459,14 @@ void X86Compiler::genMainloop()
 	}
 	else
 	{
-		mov(dword[&next_pc], ecx);
+		mov(dword[&Sh4cntx.pc], ecx);
 		call((void *)bm_GetCodeByVAddr);
 		jmp(eax);
 	}
 
 //cleanup:
 	L(cleanup);
-	mov(dword[&next_pc], ecx);
+	mov(dword[&Sh4cntx.pc], ecx);
 #ifndef _WIN32
 	// 16-byte alignment
 	add(esp, 12);
@@ -569,7 +569,7 @@ void X86Compiler::genMainloop()
 		Xbyak::Label jumpblockLabel;
 		cmp(eax, 0);
 		jne(jumpblockLabel);
-		mov(ecx, dword[&next_pc]);
+		mov(ecx, dword[&Sh4cntx.pc]);
 		jmp(no_updateLabel);
 		L(jumpblockLabel);
 	}
@@ -810,7 +810,7 @@ void X86Compiler::checkBlock(bool smc_checks, RuntimeBlockInfo* block)
 
 	if (mmu_enabled())
 	{
-		mov(eax, dword[&next_pc]);
+		mov(eax, dword[&Sh4cntx.pc]);
 		cmp(eax, block->vaddr);
 		jne(reinterpret_cast<const void*>(ngen_blockcheckfail));
 	}

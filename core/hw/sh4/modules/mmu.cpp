@@ -85,7 +85,7 @@ void ITLB_Sync(u32 entry)
 template<typename F>
 static void mmuException(MmuError mmu_error, u32 address, u32 am, F raise)
 {
-	printf_mmu("MMU exception -> pc = 0x%X : ", next_pc);
+	printf_mmu("MMU exception -> pc = 0x%X : ", Sh4cntx.pc);
 	CCN_TEA = address;
 	CCN_PTEH.VPN = address >> 10;
 
@@ -156,7 +156,7 @@ static void mmuException(MmuError mmu_error, u32 address, u32 am, F raise)
 	mmuException(mmu_error, address, am, [](Sh4ExceptionCode event) {
 		debugger::debugTrap(event);	// FIXME CCN_TEA and CCN_PTEH have been updated already
 
-		throw SH4ThrownException(next_pc - 2, event);
+		throw SH4ThrownException(Sh4cntx.pc - 2, event);
 	});
 	die("Unknown mmu_error");
 }
@@ -165,7 +165,7 @@ static void mmuException(MmuError mmu_error, u32 address, u32 am, F raise)
 void DoMMUException(u32 address, MmuError mmu_error, u32 access_type)
 {
 	mmuException(mmu_error, address, access_type, [](Sh4ExceptionCode event) {
-		Do_Exception(next_pc, event);
+		Do_Exception(Sh4cntx.pc, event);
 	});
 }
 
@@ -179,7 +179,7 @@ bool mmu_match(u32 va, CCN_PTEH_type Address, CCN_PTEL_type Data)
 
 	if ((((Address.VPN << 10) & mask) == (va & mask)))
 	{
-		bool needAsidMatch = Data.SH == 0 && (sr.MD == 0 || CCN_MMUCR.SV == 0);
+		bool needAsidMatch = Data.SH == 0 && (Sh4cntx.sr.MD == 0 || CCN_MMUCR.SV == 0);
 
 		if (!needAsidMatch || Address.ASID == CCN_PTEH.ASID)
 			return true;
@@ -231,7 +231,7 @@ template<u32 translation_type>
 MmuError mmu_full_SQ(u32 va, u32& rv)
 {
 
-	if ((va & 3) || (CCN_MMUCR.SQMD == 1 && sr.MD == 0))
+	if ((va & 3) || (CCN_MMUCR.SQMD == 1 && Sh4cntx.sr.MD == 0))
 		//here, or after ?
 		return MmuError::BADADDR;
 
@@ -250,7 +250,7 @@ MmuError mmu_full_SQ(u32 va, u32& rv)
 		u32 md = entry->Data.PR >> 1;
 
 		//Priv mode protection
-		if (md == 0 && sr.MD == 0)
+		if (md == 0 && Sh4cntx.sr.MD == 0)
 			return MmuError::PROTECTED;
 
 		//Write Protection (Lock or FW)
@@ -287,7 +287,7 @@ MmuError mmu_data_translation(u32 va, u32& rv)
 		}
 	}
 
-	if (sr.MD == 0 && (va & 0x80000000) != 0)
+	if (Sh4cntx.sr.MD == 0 && (va & 0x80000000) != 0)
 		//if on kernel, and not SQ addr -> error
 		return MmuError::BADADDR;
 
@@ -326,7 +326,7 @@ MmuError mmu_data_translation(u32 va, u32& rv)
 
 	//0X  & User mode-> protection violation
 	//Priv mode protection
-	if (md == 0 && sr.MD == 0)
+	if (md == 0 && Sh4cntx.sr.MD == 0)
 		return MmuError::PROTECTED;
 
 	//X0 -> read olny
@@ -351,7 +351,7 @@ template MmuError mmu_data_translation<MMU_TT_DWRITE>(u32 va, u32& rv);
 
 MmuError mmu_instruction_translation(u32 va, u32& rv)
 {
-	if (sr.MD == 0 && (va & 0x80000000) != 0)
+	if (Sh4cntx.sr.MD == 0 && (va & 0x80000000) != 0)
 		// User mode on kernel address
 		return MmuError::BADADDR;
 
@@ -375,7 +375,7 @@ MmuError mmu_instruction_translation(u32 va, u32& rv)
 
 	//0X  & User mode-> protection violation
 	//Priv mode protection
-	if (md == 0 && sr.MD == 0)
+	if (md == 0 && Sh4cntx.sr.MD == 0)
 		return MmuError::PROTECTED;
 
 	return MmuError::NONE;
@@ -396,7 +396,7 @@ retry_ITLB_Match:
 
 		if ((((entry.Address.VPN << 10) & mask) == (va & mask)))
 		{
-			bool needAsidMatch = entry.Data.SH == 0 && (sr.MD == 0 || CCN_MMUCR.SV == 0);
+			bool needAsidMatch = entry.Data.SH == 0 && (Sh4cntx.sr.MD == 0 || CCN_MMUCR.SV == 0);
 
 			if (!needAsidMatch || entry.Address.ASID == CCN_PTEH.ASID)
 			{

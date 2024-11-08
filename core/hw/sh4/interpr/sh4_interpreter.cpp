@@ -16,12 +16,13 @@
 
 Sh4ICache icache;
 Sh4OCache ocache;
+Sh4Interpreter *Sh4Interpreter::Instance;
 
 void Sh4Interpreter::ExecuteOpcode(u16 op)
 {
-	if (sr.FD == 1 && OpDesc[op]->IsFloatingPoint())
+	if (ctx->sr.FD == 1 && OpDesc[op]->IsFloatingPoint())
 		throw SH4ThrownException(ctx->pc - 2, Sh4Ex_FpuDisabled);
-	OpPtr[op](op);
+	OpPtr[op](ctx, op);
 	sh4cycles.executeCycles(op);
 }
 
@@ -39,6 +40,7 @@ u16 Sh4Interpreter::ReadNexOp()
 
 void Sh4Interpreter::Run()
 {
+	Instance = this;
 	RestoreHostRoundingMode();
 
 	try {
@@ -63,6 +65,7 @@ void Sh4Interpreter::Run()
 	}
 
 	ctx->CpuRunning = false;
+	Instance = nullptr;
 }
 
 void Sh4Interpreter::Start()
@@ -78,6 +81,7 @@ void Sh4Interpreter::Stop()
 void Sh4Interpreter::Step()
 {
 	verify(!ctx->CpuRunning);
+	Instance = this;
 
 	RestoreHostRoundingMode();
 	try {
@@ -89,6 +93,7 @@ void Sh4Interpreter::Step()
 		sh4cycles.addCycles(5 * CPU_RATIO);
 	} catch (const debugger::Stop&) {
 	}
+	Instance = nullptr;
 }
 
 void Sh4Interpreter::Reset(bool hard)
@@ -103,18 +108,18 @@ void Sh4Interpreter::Reset(bool hard)
 	}
 	ctx->pc = 0xA0000000;
 
-	memset(r, 0, sizeof(r));
-	memset(r_bank, 0, sizeof(r_bank));
+	memset(ctx->r, 0, sizeof(ctx->r));
+	memset(ctx->r_bank, 0, sizeof(ctx->r_bank));
 
-	gbr = ssr = spc = sgr = dbr = vbr = 0;
-	mac.full = pr = fpul = 0;
+	ctx->gbr = ctx->ssr = ctx->spc = ctx->sgr = ctx->dbr = ctx->vbr = 0;
+	ctx->mac.full = ctx->pr = ctx->fpul = 0;
 
-	sr.setFull(0x700000F0);
-	old_sr.status = sr.status;
+	ctx->sr.setFull(0x700000F0);
+	ctx->old_sr.status = ctx->sr.status;
 	UpdateSR();
 
-	fpscr.full = 0x00040001;
-	old_fpscr = fpscr;
+	ctx->fpscr.full = 0x00040001;
+	ctx->old_fpscr = ctx->fpscr;
 
 	icache.Reset(hard);
 	ocache.Reset(hard);
@@ -155,7 +160,7 @@ void Sh4Interpreter::ExecuteDelayslot_RTE()
 		// instruction execution. The STC and STC.L SR instructions access all SR bits after modification.
 		u32 op = ReadNexOp();
 		// Now restore all SR bits
-		sr.setFull(ssr);
+		ctx->sr.setFull(ctx->ssr);
 		// And execute
 		ExecuteOpcode(op);
 	} catch (const SH4ThrownException&) {

@@ -363,7 +363,7 @@ static bool wince_resolve_address(u32 va, TLB_Entry &entry)
 		u32 paddr = *(u32 *)&mem_b[(page_group + page) & ram_mask];
 		if (paddr & 0x80000000)
 		{
-			u32 whatever = *(u32 *)&mem_b[(r_bank[4] + 0x14) & ram_mask];
+			u32 whatever = *(u32 *)&mem_b[(p_sh4rcb->cntx.r_bank[4] + 0x14) & ram_mask];
 			if (whatever != *(u32 *)&mem_b[paddr & ram_mask])
 			{
 				paddr += 12;

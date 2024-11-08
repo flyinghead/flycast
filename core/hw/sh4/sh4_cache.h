@@ -21,7 +21,7 @@
 #include "types.h"
 #include "sh4_mem.h"
 #include "modules/mmu.h"
-#include "hw/sh4/sh4_core.h"
+#include "hw/sh4/sh4_if.h"
 #include "serialize.h"
 #include "sh4_cycles.h"
 
@@ -177,7 +177,7 @@ private:
 			return MmuError::BADADDR;
 
 		const u32 area = address >> 29;
-		const bool userMode = sr.MD == 0;
+		const bool userMode = p_sh4rcb->cntx.sr.MD == 0;
 
 		if (userMode)
 		{
@@ -515,7 +515,7 @@ private:
 			return lookup;
 		}
 		const u32 area = address >> 29;
-		const bool userMode = sr.MD == 0;
+		const bool userMode = p_sh4rcb->cntx.sr.MD == 0;
 
 		// kernel mem protected in user mode
 		if (userMode && (address & 0x80000000))

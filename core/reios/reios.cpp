@@ -15,8 +15,7 @@
 #include "gdrom_hle.h"
 #include "descrambl.h"
 
-#include "hw/sh4/sh4_core.h"
-#undef r
+#include "hw/sh4/sh4_if.h"
 #include "hw/sh4/sh4_mem.h"
 #include "hw/holly/sb.h"
 #include "hw/naomi/naomi_cart.h"
@@ -475,25 +474,26 @@ static void reios_setup_state(u32 boot_addr)
 	*/
 
 	//Setup registers to imitate a normal boot
-	p_sh4rcb->cntx.r[15] = 0x8d000000;
+	Sh4Context& ctx = p_sh4rcb->cntx;
+	ctx.r[15] = 0x8d000000;
 
-	gbr = 0x8c000000;
-	ssr = 0x40000001;
-	spc = 0x8c000776;
-	sgr = 0x8d000000;
-	dbr = 0x8c000010;
-	vbr = 0x8c000000;
-	pr = 0xac00043c;
-	fpul = 0x00000000;
-	next_pc = boot_addr;
+	ctx.gbr = 0x8c000000;
+	ctx.ssr = 0x40000001;
+	ctx.spc = 0x8c000776;
+	ctx.sgr = 0x8d000000;
+	ctx.dbr = 0x8c000010;
+	ctx.vbr = 0x8c000000;
+	ctx.pr = 0xac00043c;
+	ctx.fpul = 0x00000000;
+	ctx.pc = boot_addr;
 
-	sr.status = 0x400000f0;
-	sr.T = 1;
+	ctx.sr.status = 0x400000f0;
+	ctx.sr.T = 1;
 
-	old_sr.status = 0x400000f0;
+	ctx.old_sr.status = 0x400000f0;
 
-	fpscr.full = 0x00040001;
-	old_fpscr.full = 0x00040001;
+	ctx.fpscr.full = 0x00040001;
+	ctx.old_fpscr.full = 0x00040001;
 }
 
 static void reios_setup_naomi(u32 boot_addr) {
@@ -581,40 +581,41 @@ static void reios_setup_naomi(u32 boot_addr) {
 	*/
 
 	//Setup registers to imitate a normal boot
-	p_sh4rcb->cntx.r[0] = 0x0c021000;
-	p_sh4rcb->cntx.r[1] = 0x0c01f820;
-	p_sh4rcb->cntx.r[2] = 0xa0710004;
-	p_sh4rcb->cntx.r[3] = 0x0c01f130;
-	p_sh4rcb->cntx.r[4] = 0x5bfccd08;
-	p_sh4rcb->cntx.r[5] = 0xa05f7000;
-	p_sh4rcb->cntx.r[6] = 0xa05f7008;
-	p_sh4rcb->cntx.r[7] = 0x00000007;
-	p_sh4rcb->cntx.r[8] = 0x00000000;
-	p_sh4rcb->cntx.r[9] = 0x00002000;
-	p_sh4rcb->cntx.r[10] = 0xffffffff;
-	p_sh4rcb->cntx.r[11] = 0x0c0e0000;
-	p_sh4rcb->cntx.r[12] = 0x00000000;
-	p_sh4rcb->cntx.r[13] = 0x00000000;
-	p_sh4rcb->cntx.r[14] = 0x00000000;
-	p_sh4rcb->cntx.r[15] = 0x0cc00000;
+	Sh4Context& ctx = p_sh4rcb->cntx;
+	ctx.r[0] = 0x0c021000;
+	ctx.r[1] = 0x0c01f820;
+	ctx.r[2] = 0xa0710004;
+	ctx.r[3] = 0x0c01f130;
+	ctx.r[4] = 0x5bfccd08;
+	ctx.r[5] = 0xa05f7000;
+	ctx.r[6] = 0xa05f7008;
+	ctx.r[7] = 0x00000007;
+	ctx.r[8] = 0x00000000;
+	ctx.r[9] = 0x00002000;
+	ctx.r[10] = 0xffffffff;
+	ctx.r[11] = 0x0c0e0000;
+	ctx.r[12] = 0x00000000;
+	ctx.r[13] = 0x00000000;
+	ctx.r[14] = 0x00000000;
+	ctx.r[15] = 0x0cc00000;
 
-	gbr = 0x0c2abcc0;
-	ssr = 0x60000000;
-	spc = 0x0c041738;
-	sgr = 0x0cbfffb0;
-	dbr = 0x00000fff;
-	vbr = 0x0c000000;
-	pr = 0xac0195ee;
-	fpul = 0x000001e0;
-	next_pc = boot_addr;
+	ctx.gbr = 0x0c2abcc0;
+	ctx.ssr = 0x60000000;
+	ctx.spc = 0x0c041738;
+	ctx.sgr = 0x0cbfffb0;
+	ctx.dbr = 0x00000fff;
+	ctx.vbr = 0x0c000000;
+	ctx.pr = 0xac0195ee;
+	ctx.fpul = 0x000001e0;
+	ctx.pc = boot_addr;
 
-	sr.status = 0x60000000;
-	sr.T = 1;
+	ctx.sr.status = 0x60000000;
+	ctx.sr.T = 1;
 
-	old_sr.status = 0x60000000;
+	ctx.old_sr.status = 0x60000000;
 
-	fpscr.full = 0x00040001;
-	old_fpscr.full = 0x00040001;
+	ctx.fpscr.full = 0x00040001;
+	ctx.old_fpscr.full = 0x00040001;
 }
 
 static void reios_boot()
@@ -694,9 +695,10 @@ static const std::map<u32, hook_fp*> hooks = {
 		{ SYSCALL_ADDR(dc_bios_entrypoint_gd2), gdrom_hle_op },
 };
 
-void DYNACALL reios_trap(u32 op) {
+void DYNACALL reios_trap(Sh4Context *ctx, u32 op)
+{
 	verify(op == REIOS_OPCODE);
-	u32 pc = next_pc - 2;
+	u32 pc = ctx->pc - 2;
 
 	u32 mapd = SYSCALL_ADDR(pc);
 
@@ -711,8 +713,8 @@ void DYNACALL reios_trap(u32 op) {
 	it->second();
 
 	// Return from syscall, except if pc was modified
-	if (pc == next_pc - 2)
-		next_pc = pr;
+	if (pc == ctx->pc - 2)
+		ctx->pc = ctx->pr;
 }
 
 bool reios_init()

@@ -1,10 +1,11 @@
 #pragma once
 #include "types.h"
+#include "sh4_if.h"
 #include <cstring>
 
-#define sh4op(str) void  DYNACALL str (u32 op)
+#define sh4op(str) void  DYNACALL str (Sh4Context *ctx, u32 op)
 
-typedef void (DYNACALL OpCallFP) (u32 op);
+typedef void (DYNACALL OpCallFP) (Sh4Context *ctx, u32 op);
 extern OpCallFP* OpPtr[0x10000];
 
 typedef void OpDissasmFP(char* out,const char* const FormatString,u32 pc,u16 opcode);

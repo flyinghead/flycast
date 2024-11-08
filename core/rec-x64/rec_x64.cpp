@@ -77,10 +77,10 @@ static void handle_sh4_exception(SH4ThrownException& ex, u32 pc)
 	handleException();
 }
 
-static void interpreter_fallback(u16 op, OpCallFP *oph, u32 pc)
+static void interpreter_fallback(Sh4Context *ctx, u16 op, OpCallFP *oph, u32 pc)
 {
 	try {
-		oph(op);
+		oph(ctx, op);
 	} catch (SH4ThrownException& ex) {
 		handle_sh4_exception(ex, pc);
 	}
@@ -136,7 +136,7 @@ public:
 		if (mmu_enabled() && block->has_fpu_op)
 		{
 			Xbyak::Label fpu_enabled;
-			mov(rax, (uintptr_t)&sr.status);
+			mov(rax, (uintptr_t)&p_sh4rcb->cntx.sr.status);
 			test(dword[rax], 0x8000);			// test SR.FD bit
 			jz(fpu_enabled);
 			mov(call_regs[0], block->vaddr);	// pc
@@ -161,18 +161,19 @@ public:
 			case shop_ifb:
 				if (mmu_enabled())
 				{
-					mov(call_regs64[1], reinterpret_cast<uintptr_t>(*OpDesc[op.rs3._imm]->oph));	// op handler
-					mov(call_regs[2], block->vaddr + op.guest_offs - (op.delay_slot ? 1 : 0));	// pc
+					mov(call_regs64[2], reinterpret_cast<uintptr_t>(*OpDesc[op.rs3._imm]->oph));	// op handler
+					mov(call_regs[3], block->vaddr + op.guest_offs - (op.delay_slot ? 1 : 0));	// pc
 				}
 
 				if (op.rs1._imm)
 				{
-					mov(rax, (size_t)&next_pc);
+					mov(rax, (size_t)&p_sh4rcb->cntx.pc);
 					mov(dword[rax], op.rs2._imm);
 				}
 
-				mov(call_regs[0], op.rs3._imm);
-					
+				mov(call_regs[1], op.rs3._imm);
+				mov(call_regs64[0], (uintptr_t)&p_sh4rcb->cntx);
+
 				if (!mmu_enabled())
 					GenCall(OpDesc[op.rs3._imm]->oph);
 				else
@@ -471,7 +472,7 @@ public:
 		regalloc.Cleanup();
 		current_opid = -1;
 
-		mov(rax, (size_t)&next_pc);
+		mov(rax, (size_t)&p_sh4rcb->cntx.pc);
 
 		switch (block->BlockType) {
 
@@ -493,7 +494,7 @@ public:
 				if (block->has_jcond)
 					mov(rdx, (size_t)&Sh4cntx.jdyn);
 				else
-					mov(rdx, (size_t)&sr.T);
+					mov(rdx, (size_t)&Sh4cntx.sr.T);
 
 				cmp(dword[rdx], block->BlockType & 1);
 				Xbyak::Label branch_not_taken;
@@ -1057,7 +1058,7 @@ private:
 		// same at compile and run times.
 		if (mmu_enabled())
 		{
-			mov(rax, (uintptr_t)&next_pc);
+			mov(rax, (uintptr_t)&p_sh4rcb->cntx.pc);
 			cmp(dword[rax], block->vaddr);
 			jne(reinterpret_cast<const void*>(&ngen_blockcheckfail));
 		}

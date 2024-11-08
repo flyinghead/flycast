@@ -92,7 +92,7 @@ void Sh4Recompiler::clear_temp_cache(bool full)
 
 void Sh4Recompiler::ResetCache()
 {
-	INFO_LOG(DYNAREC, "recSh4:Dynarec Cache clear at %08X free space %d", next_pc, codeBuffer.getFreeSpace());
+	INFO_LOG(DYNAREC, "recSh4:Dynarec Cache clear at %08X free space %d", Sh4cntx.pc, codeBuffer.getFreeSpace());
 	codeBuffer.reset(false);
 	bm_ResetCache();
 	smc_hotspots.clear();
@@ -168,14 +168,14 @@ bool RuntimeBlockInfo::Setup(u32 rpc,fpscr_t rfpu_cfg)
 
 DynarecCodeEntryPtr rdv_CompilePC(u32 blockcheck_failures)
 {
-	const u32 pc = next_pc;
+	const u32 pc = Sh4cntx.pc;
 
 	if (codeBuffer.getFreeSpace() < 32_KB || pc == 0x8c0000e0 || pc == 0xac010000 || pc == 0xac008300)
 		Sh4Recompiler::Instance->ResetCache();
 
 	RuntimeBlockInfo* rbi = sh4Dynarec->allocateBlock();
 
-	if (!rbi->Setup(pc, fpscr))
+	if (!rbi->Setup(pc, Sh4cntx.fpscr))
 	{
 		delete rbi;
 		return nullptr;
@@ -204,16 +204,16 @@ DynarecCodeEntryPtr rdv_CompilePC(u32 blockcheck_failures)
 
 DynarecCodeEntryPtr DYNACALL rdv_FailedToFindBlock_pc()
 {
-	return rdv_FailedToFindBlock(next_pc);
+	return rdv_FailedToFindBlock(Sh4cntx.pc);
 }
 
 DynarecCodeEntryPtr DYNACALL rdv_FailedToFindBlock(u32 pc)
 {
 	//DEBUG_LOG(DYNAREC, "rdv_FailedToFindBlock %08x", pc);
-	next_pc=pc;
+	Sh4cntx.pc=pc;
 	DynarecCodeEntryPtr code = rdv_CompilePC(0);
 	if (code == NULL)
-		code = bm_GetCodeByVAddr(next_pc);
+		code = bm_GetCodeByVAddr(Sh4cntx.pc);
 	else
 		code = (DynarecCodeEntryPtr)CC_RW2RX(code);
 	return code;
@@ -247,7 +247,7 @@ DynarecCodeEntryPtr DYNACALL rdv_BlockCheckFail(u32 addr)
 	}
 	else
 	{
-		next_pc = addr;
+		Sh4cntx.pc = addr;
 		Sh4Recompiler::Instance->ResetCache();
 	}
 	return (DynarecCodeEntryPtr)CC_RW2RX(rdv_CompilePC(blockcheck_failures));
@@ -255,7 +255,7 @@ DynarecCodeEntryPtr DYNACALL rdv_BlockCheckFail(u32 addr)
 
 DynarecCodeEntryPtr rdv_FindOrCompile()
 {
-	DynarecCodeEntryPtr rv = bm_GetCodeByVAddr(next_pc);  // Returns exec addr
+	DynarecCodeEntryPtr rv = bm_GetCodeByVAddr(Sh4cntx.pc);  // Returns exec addr
 	if (rv == ngen_FailedToFindBlock)
 		rv = (DynarecCodeEntryPtr)CC_RW2RX(rdv_CompilePC(0));  // Returns rw addr
 	
@@ -281,20 +281,20 @@ void* DYNACALL rdv_LinkBlock(u8* code,u32 dpc)
 	if (bcls == BET_CLS_Static)
 	{
 		if (rbi->BlockType == BET_StaticIntr)
-			next_pc = rbi->NextBlock;
+			Sh4cntx.pc = rbi->NextBlock;
 		else
-			next_pc = rbi->BranchBlock;
+			Sh4cntx.pc = rbi->BranchBlock;
 	}
 	else if (bcls == BET_CLS_Dynamic)
 	{
-		next_pc = dpc;
+		Sh4cntx.pc = dpc;
 	}
 	else if (bcls == BET_CLS_COND)
 	{
 		if (dpc)
-			next_pc = rbi->BranchBlock;
+			Sh4cntx.pc = rbi->BranchBlock;
 		else
-			next_pc = rbi->NextBlock;
+			Sh4cntx.pc = rbi->NextBlock;
 	}
 
 	DynarecCodeEntryPtr rv = rdv_FindOrCompile();  // Returns rx ptr
@@ -313,17 +313,17 @@ void* DYNACALL rdv_LinkBlock(u8* code,u32 dpc)
 			}
 			else if (rbi->relink_data == 0)
 			{
-				rbi->pBranchBlock = bm_GetBlock(next_pc).get();
+				rbi->pBranchBlock = bm_GetBlock(Sh4cntx.pc).get();
 				rbi->pBranchBlock->AddRef(rbi);
 			}
 		}
 		else
 		{
-			RuntimeBlockInfo* nxt = bm_GetBlock(next_pc).get();
+			RuntimeBlockInfo* nxt = bm_GetBlock(Sh4cntx.pc).get();
 
-			if (rbi->BranchBlock == next_pc)
+			if (rbi->BranchBlock == Sh4cntx.pc)
 				rbi->pBranchBlock = nxt;
-			if (rbi->NextBlock == next_pc)
+			if (rbi->NextBlock == Sh4cntx.pc)
 				rbi->pNextBlock = nxt;
 
 			nxt->AddRef(rbi);
@@ -334,7 +334,7 @@ void* DYNACALL rdv_LinkBlock(u8* code,u32 dpc)
 	}
 	else
 	{
-		INFO_LOG(DYNAREC, "null RBI: from %08X to %08X -- unlinked stale block -- code %p next %p", rbi->vaddr, next_pc, code, rv);
+		INFO_LOG(DYNAREC, "null RBI: from %08X to %08X -- unlinked stale block -- code %p next %p", rbi->vaddr, Sh4cntx.pc, code, rv);
 	}
 	
 	return (void*)rv;

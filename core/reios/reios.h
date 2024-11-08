@@ -9,7 +9,8 @@ void reios_reset(u8* rom);
 
 void reios_term();
 
-void DYNACALL reios_trap(u32 op);
+struct Sh4Context;
+void DYNACALL reios_trap(Sh4Context *ctx, u32 op);
 
 void reios_disk_id();
 

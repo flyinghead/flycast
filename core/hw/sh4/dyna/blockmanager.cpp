@@ -65,8 +65,8 @@ DynarecCodeEntryPtr DYNACALL bm_GetCodeByVAddr(u32 addr)
 #ifdef USE_WINCE_HACK
 		case 0xfffffde7: // GetTickCount
 			// This should make this syscall faster
-			r[0] = sh4_sched_now64() * 1000 / SH4_MAIN_CLOCK;
-			next_pc = pr;
+			Sh4cntx.r[0] = sh4_sched_now64() * 1000 / SH4_MAIN_CLOCK;
+			Sh4cntx.pc = Sh4cntx.pr;
 			Sh4cntx.cycle_counter -= 100;
 			break;
 
@@ -75,11 +75,11 @@ DynarecCodeEntryPtr DYNACALL bm_GetCodeByVAddr(u32 addr)
 				bool isRam;
 				u64 *ptr;
 				u32 paddr;
-				if (rdv_writeMemImmediate(r[4], sizeof(u64), (void*&)ptr, isRam, paddr) && isRam)
+				if (rdv_writeMemImmediate(Sh4cntx.r[4], sizeof(u64), (void*&)ptr, isRam, paddr) && isRam)
 				{
 					*ptr = sh4_sched_now64() >> 4;
-					r[0] = 1;
-					next_pc = pr;
+					Sh4cntx.r[0] = 1;
+					Sh4cntx.pc = Sh4cntx.pr;
 					Sh4cntx.cycle_counter -= 100;
 				}
 				else
@@ -94,7 +94,7 @@ DynarecCodeEntryPtr DYNACALL bm_GetCodeByVAddr(u32 addr)
 			Do_Exception(addr, Sh4Ex_AddressErrorRead);
 			break;
 		}
-		addr = next_pc;
+		addr = Sh4cntx.pc;
 	}
 
 	u32 paddr;
@@ -102,7 +102,7 @@ DynarecCodeEntryPtr DYNACALL bm_GetCodeByVAddr(u32 addr)
 	if (rv != MmuError::NONE)
 	{
 		DoMMUException(addr, rv, MMU_TT_IREAD);
-		mmu_instruction_translation(next_pc, paddr);
+		mmu_instruction_translation(Sh4cntx.pc, paddr);
 	}
 
 	return bm_GetCode(paddr);
@@ -472,7 +472,7 @@ void bm_RamWriteAccess(u32 addr)
 		std::vector<RuntimeBlockInfo*> list_copy;
 		list_copy.insert(list_copy.begin(), block_list.begin(), block_list.end());
 		if (!list_copy.empty())
-			DEBUG_LOG(DYNAREC, "bm_RamWriteAccess write access to %08x pc %08x", addr, next_pc);
+			DEBUG_LOG(DYNAREC, "bm_RamWriteAccess write access to %08x pc %08x", addr, Sh4cntx.pc);
 		for (auto& block : list_copy)
 			bm_DiscardBlock(block);
 		verify(block_list.empty());

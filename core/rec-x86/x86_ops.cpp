@@ -298,10 +298,10 @@ static void DYNACALL handle_sh4_exception(SH4ThrownException& ex, u32 pc)
 	std::abort();
 }
 
-static void DYNACALL interpreter_fallback(u16 op, OpCallFP *oph, u32 pc)
+static void DYNACALL interpreter_fallback(Sh4Context *ctx, u16 op, OpCallFP *oph, u32 pc)
 {
 	try {
-		oph(op);
+		oph(ctx, op);
 	} catch (SH4ThrownException& ex) {
 		handle_sh4_exception(ex, pc);
 	}
@@ -323,12 +323,13 @@ void X86Compiler::genOpcode(RuntimeBlockInfo* block, bool optimise, shil_opcode&
 	case shop_ifb:
 		if (mmu_enabled())
 		{
-			mov(edx, reinterpret_cast<uintptr_t>(*OpDesc[op.rs3._imm]->oph));	// op handler
+			push(reinterpret_cast<uintptr_t>(*OpDesc[op.rs3._imm]->oph));	// op handler
 			push(block->vaddr + op.guest_offs - (op.delay_slot ? 1 : 0));	// pc
 		}
 		if (op.rs1.is_imm() && op.rs1.imm_value())
-			mov(dword[&next_pc], op.rs2.imm_value());
-		mov(ecx, op.rs3.imm_value());
+			mov(dword[&Sh4cntx.pc], op.rs2.imm_value());
+        mov(ecx, (uintptr_t)&Sh4cntx);
+		mov(edx, op.rs3.imm_value());
 		if (!mmu_enabled())
 			genCall(OpDesc[op.rs3.imm_value()]->oph);
 		else

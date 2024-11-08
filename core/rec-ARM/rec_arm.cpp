@@ -1176,10 +1176,10 @@ void Arm32Assembler::genMmuLookup(RuntimeBlockInfo* block, const shil_opcode& op
 	}
 }
 
-static void interpreter_fallback(u16 op, OpCallFP *oph, u32 pc)
+static void interpreter_fallback(Sh4Context *ctx, u16 op, OpCallFP *oph, u32 pc)
 {
 	try {
-		oph(op);
+		oph(ctx, op);
 	} catch (SH4ThrownException& ex) {
 		if (pc & 1)
 		{
@@ -1515,15 +1515,16 @@ void Arm32Assembler::compileOp(RuntimeBlockInfo* block, shil_opcode* op, bool op
 				storeSh4Reg(r1, reg_nextpc);
 			}
 
-			Mov(r0, op->rs3._imm);
+			Sub(r0, r8, sizeof(Sh4Context));
+			Mov(r1, op->rs3._imm);
 			if (!mmu_enabled())
 			{
 				call((void *)OpPtr[op->rs3._imm]);
 			}
 			else
 			{
-				Mov(r1, reinterpret_cast<uintptr_t>(*OpDesc[op->rs3._imm]->oph));	// op handler
-				Mov(r2, block->vaddr + op->guest_offs - (op->delay_slot ? 1 : 0));	// pc
+				Mov(r2, reinterpret_cast<uintptr_t>(*OpDesc[op->rs3._imm]->oph));	// op handler
+				Mov(r3, block->vaddr + op->guest_offs - (op->delay_slot ? 1 : 0));	// pc
 				call((void *)interpreter_fallback);
 			}
 			break;

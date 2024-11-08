@@ -661,6 +661,7 @@ shil_opc(div1)
 shil_canonical
 (
 u64,f1,(u32 a, s32 b, u32 T),
+	sr_t& sr = Sh4cntx.sr;
 	bool qxm = sr.Q ^ sr.M;
 	sr.Q = (int)a < 0;
 	a = (a << 1) | T;

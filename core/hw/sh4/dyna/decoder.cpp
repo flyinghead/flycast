@@ -984,11 +984,11 @@ bool dec_DecodeBlock(RuntimeBlockInfo* rbi,u32 max_cycles)
 
 					if (!blk->has_fpu_op && OpDesc[op]->IsFloatingPoint())
 					{
-						if (sr.FD == 1)
+						if (Sh4cntx.sr.FD == 1)
 						{
 							// We need to know FPSCR to compile the block, so let the exception handler run first
 							// as it may change the fp registers
-							Do_Exception(next_pc, Sh4Ex_FpuDisabled);
+							Do_Exception(Sh4cntx.pc, Sh4Ex_FpuDisabled);
 							return false;
 						}
 						blk->has_fpu_op = true;

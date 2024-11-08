@@ -18,6 +18,8 @@ public:
 	void ExecuteDelayslot_RTE();
 	Sh4Context *getContext() { return ctx; }
 
+	static Sh4Interpreter *Instance;
+
 protected:
 	Sh4Context *ctx = nullptr;
 

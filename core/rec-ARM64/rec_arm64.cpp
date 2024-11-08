@@ -87,10 +87,10 @@ static void jitWriteProtect(Sh4CodeBuffer &codeBuffer, bool enable)
 #endif
 }
 
-static void interpreter_fallback(u16 op, OpCallFP *oph, u32 pc)
+static void interpreter_fallback(Sh4Context *ctx, u16 op, OpCallFP *oph, u32 pc)
 {
 	try {
-		oph(op);
+		oph(ctx, op);
 	} catch (SH4ThrownException& ex) {
 		if (pc & 1)
 		{
@@ -287,18 +287,19 @@ public:
 				if (op.rs1._imm)	// if NeedPC()
 				{
 					Mov(w10, op.rs2._imm);
-					Str(w10, sh4_context_mem_operand(&next_pc));
+					Str(w10, sh4_context_mem_operand(&Sh4cntx.pc));
 				}
-				Mov(w0, op.rs3._imm);
 
+				Mov(x0, x28);
+				Mov(w1, op.rs3._imm);
 				if (!mmu_enabled())
 				{
 					GenCallRuntime(OpDesc[op.rs3._imm]->oph);
 				}
 				else
 				{
-					Mov(x1, reinterpret_cast<uintptr_t>(*OpDesc[op.rs3._imm]->oph));	// op handler
-					Mov(w2, block->vaddr + op.guest_offs - (op.delay_slot ? 1 : 0));	// pc
+					Mov(x2, reinterpret_cast<uintptr_t>(*OpDesc[op.rs3._imm]->oph));	// op handler
+					Mov(w3, block->vaddr + op.guest_offs - (op.delay_slot ? 1 : 0));	// pc
 
 					GenCallRuntime(interpreter_fallback);
 				}
@@ -1162,7 +1163,7 @@ public:
 #endif
 				{
 					Mov(w29, block->BranchBlock);
-					Str(w29, sh4_context_mem_operand(&next_pc));
+					Str(w29, sh4_context_mem_operand(&Sh4cntx.pc));
 					GenBranch(arm64_no_update);
 				}
 			}
@@ -1178,7 +1179,7 @@ public:
 				if (block->has_jcond)
 					Ldr(w11, sh4_context_mem_operand(&Sh4cntx.jdyn));
 				else
-					Ldr(w11, sh4_context_mem_operand(&sr.T));
+					Ldr(w11, sh4_context_mem_operand(&Sh4cntx.sr.T));
 
 				Cmp(w11, block->BlockType & 1);
 
@@ -1206,7 +1207,7 @@ public:
 #endif
 					{
 						Mov(w29, block->BranchBlock);
-						Str(w29, sh4_context_mem_operand(&next_pc));
+						Str(w29, sh4_context_mem_operand(&Sh4cntx.pc));
 						GenBranch(arm64_no_update);
 					}
 				}
@@ -1234,7 +1235,7 @@ public:
 #endif
 					{
 						Mov(w29, block->NextBlock);
-						Str(w29, sh4_context_mem_operand(&next_pc));
+						Str(w29, sh4_context_mem_operand(&Sh4cntx.pc));
 						GenBranch(arm64_no_update);
 					}
 				}
@@ -1246,7 +1247,7 @@ public:
 		case BET_DynamicRet:
 			// next_pc = *jdyn;
 
-			Str(w29, sh4_context_mem_operand(&next_pc));
+			Str(w29, sh4_context_mem_operand(&Sh4cntx.pc));
 			if (!mmu_enabled())
 			{
 				// TODO Call no_update instead (and check CpuRunning less frequently?)
@@ -1275,11 +1276,11 @@ public:
 				Mov(w29, block->NextBlock);
 			// else next_pc = *jdyn (already in w29)
 
-			Str(w29, sh4_context_mem_operand(&next_pc));
+			Str(w29, sh4_context_mem_operand(&Sh4cntx.pc));
 
 			GenCallRuntime(UpdateINTC);
 
-			Ldr(w29, sh4_context_mem_operand(&next_pc));
+			Ldr(w29, sh4_context_mem_operand(&Sh4cntx.pc));
 			GenBranch(arm64_no_update);
 
 			break;
@@ -1498,12 +1499,12 @@ public:
 		// w0: vaddr, w1: addr
 		checkBlockFpu = GetCursorAddress<DynaCode *>();
 		Label fpu_enabled;
-		Ldr(w10, sh4_context_mem_operand(&sr.status));
+		Ldr(w10, sh4_context_mem_operand(&Sh4cntx.sr.status));
 		Tbz(w10, 15, &fpu_enabled);			// test SR.FD bit
 
 		Mov(w1, Sh4Ex_FpuDisabled);	// exception code
 		GenCallRuntime(Do_Exception);
-		Ldr(w29, sh4_context_mem_operand(&next_pc));
+		Ldr(w29, sh4_context_mem_operand(&Sh4cntx.pc));
 		B(&no_update);
 		Bind(&fpu_enabled);
 		// fallthrough
