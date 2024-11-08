@@ -9,7 +9,6 @@
 #include "hw/sh4/sh4_mem.h"
 #include "hw/sh4/sh4_sched.h"
 #include "hw/sh4/sh4_core.h"
-#undef r
 
 #include "gdrom_hle.h"
 #include "hw/gdrom/gdromv3.h"

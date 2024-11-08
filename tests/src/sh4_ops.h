@@ -23,14 +23,6 @@
 #include "types.h"
 #include "hw/sh4/sh4_if.h"
 #include "hw/mem/addrspace.h"
-#include "hw/sh4/sh4_core.h"
-#undef r
-#undef fr
-#undef sr
-#undef mac
-#undef gbr
-#undef fpscr
-#undef fpul
 
 constexpr u32 REG_MAGIC = 0xbaadf00d;
 
