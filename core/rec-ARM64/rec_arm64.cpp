@@ -1557,8 +1557,7 @@ public:
 		Cmp(x7, 0x38);
 		GenBranchRuntime(addrspace::write32, Condition::ne);
 		And(x0, x0, 0x3f);
-		Sub(x7, x0, sizeof(Sh4Context::sq_buffer), LeaveFlags);
-		Str(w1, MemOperand(x28, x7));
+		Str(w1, MemOperand(x28, x0));
 		Ret();
 
 		Label writeStoreQueue64Label;
@@ -1567,8 +1566,7 @@ public:
 		Cmp(x7, 0x38);
 		GenBranchRuntime(addrspace::write64, Condition::ne);
 		And(x0, x0, 0x3f);
-		Sub(x7, x0, sizeof(Sh4Context::sq_buffer), LeaveFlags);
-		Str(x1, MemOperand(x28, x7));
+		Str(x1, MemOperand(x28, x0));
 		Ret();
 
 		FinalizeCode();
