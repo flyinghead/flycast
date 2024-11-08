@@ -11,6 +11,7 @@
 #include "hw/pvr/pvr_mem.h"
 #include "hw/mem/addrspace.h"
 #include "hw/sh4/modules/mmu.h"
+#include "cfg/option.h"
 
 #ifdef STRICT_MODE
 #include "sh4_cache.h"

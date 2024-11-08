@@ -12,7 +12,6 @@
 #include "serialize.h"
 #include "sh4_interrupts.h"
 #include "sh4_sched.h"
-#include "sh4_interpreter.h"
 
 #include <array>
 #include <map>

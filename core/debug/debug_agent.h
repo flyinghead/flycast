@@ -21,7 +21,7 @@
 #include "emulator.h"
 #include "hw/sh4/sh4_if.h"
 #include "hw/sh4/sh4_mem.h"
-#include "hw/sh4/sh4_interpreter.h"
+#include "hw/sh4/dyna/shil.h"
 #include "cfg/option.h"
 #include <array>
 #include <signal.h>

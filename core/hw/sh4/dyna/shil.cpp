@@ -15,14 +15,22 @@ void AnalyseBlock(RuntimeBlockInfo* blk)
 
 u32 getRegOffset(Sh4RegType reg)
 {
-	if (reg >= reg_r0 && reg <= reg_r15)
-		return offsetof(Sh4Context, r[reg - reg_r0]);
-	if (reg >= reg_r0_Bank && reg <= reg_r7_Bank)
-		return offsetof(Sh4Context, r_bank[reg - reg_r0_Bank]);
-	if (reg >= reg_fr_0 && reg <= reg_fr_15)
-		return offsetof(Sh4Context, xffr[reg - reg_fr_0 + 16]);
-	if (reg >= reg_xf_0 && reg <= reg_xf_15)
-		return offsetof(Sh4Context, xffr[reg - reg_xf_0]);
+	if (reg >= reg_r0 && reg <= reg_r15) {
+		const size_t regofs = (reg - reg_r0) * sizeof(u32);
+		return offsetof(Sh4Context, r[0]) + regofs;
+	}
+	if (reg >= reg_r0_Bank && reg <= reg_r7_Bank) {
+		const size_t regofs = (reg - reg_r0_Bank) * sizeof(u32);
+		return offsetof(Sh4Context, r_bank[0]) + regofs;
+	}
+	if (reg >= reg_fr_0 && reg <= reg_fr_15) {
+		const size_t regofs = (reg - reg_fr_0) * sizeof(float);
+		return offsetof(Sh4Context, xffr[16]) + regofs;
+	}
+	if (reg >= reg_xf_0 && reg <= reg_xf_15) {
+		const size_t regofs = (reg - reg_xf_0) * sizeof(float);
+		return offsetof(Sh4Context, xffr[0]) + regofs;
+	}
 	switch (reg)
 	{
 	case reg_gbr: return offsetof(Sh4Context, gbr);

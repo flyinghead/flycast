@@ -35,5 +35,3 @@ private:
 	static constexpr int CPU_RATIO = 8;
 #endif
 };
-
-int UpdateSystem_INTC();

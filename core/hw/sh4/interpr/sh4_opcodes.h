@@ -1,6 +1,6 @@
 #pragma once
 #include "types.h"
-#include "../sh4_interpreter.h"
+#include "hw/sh4/sh4_opcode_list.h"
 
 /* Opcodes :) */
 

@@ -22,7 +22,6 @@
 
 #include "rec_x86.h"
 #include "hw/sh4/sh4_core.h"
-#include "hw/sh4/sh4_interpreter.h"
 #include "hw/sh4/sh4_interrupts.h"
 #include "hw/sh4/sh4_mem.h"
 #include "hw/mem/addrspace.h"

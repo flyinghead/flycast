@@ -1,7 +1,9 @@
 #pragma once
 #include "types.h"
 #include "sh4_if.h"
+#include <cmath>
 
+int UpdateSystem_INTC();
 void UpdateFPSCR();
 bool UpdateSR();
 void RestoreHostRoundingMode();

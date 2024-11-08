@@ -46,21 +46,21 @@ bool UpdateSR()
 static u32 old_rm = 0xFF;
 static u32 old_dn = 0xFF;
 
-static void setHostRoundingMode()
+static void setHostRoundingMode(u32 roundingMode, u32 denorm2zero)
 {
-	if (old_rm != Sh4cntx.fpscr.RM || old_dn != Sh4cntx.fpscr.DN)
+	if (old_rm != roundingMode || old_dn != denorm2zero)
 	{
-		old_rm = Sh4cntx.fpscr.RM;
-		old_dn = Sh4cntx.fpscr.DN;
+		old_rm = roundingMode;
+		old_dn = denorm2zero;
         
         //Correct rounding is required by some games (SOTB, etc)
 #ifdef _MSC_VER
-        if (Sh4cntx.fpscr.RM == 1)  //if round to 0 , set the flag
+        if (roundingMode == 1)	// if round to 0 , set the flag
             _controlfp(_RC_CHOP, _MCW_RC);
         else
             _controlfp(_RC_NEAR, _MCW_RC);
         
-        if (Sh4cntx.fpscr.DN)     //denormals are considered 0
+        if (denorm2zero == 1)	// denormals are considered 0
             _controlfp(_DN_FLUSH, _MCW_DN);
         else
             _controlfp(_DN_SAVE, _MCW_DN);
@@ -70,20 +70,20 @@ static void setHostRoundingMode()
 
             u32 temp=0x1f80;	//no flush to zero && round to nearest
 
-			if (Sh4cntx.fpscr.RM==1)  //if round to 0 , set the flag
+			if (roundingMode==1)	// if round to 0 , set the flag
 				temp|=(3<<13);
 
-			if (Sh4cntx.fpscr.DN)     //denormals are considered 0
+			if (denorm2zero == 1)	// denormals are considered 0
 				temp|=(1<<15);
 			asm("ldmxcsr %0" : : "m"(temp));
     #elif HOST_CPU==CPU_ARM
 		static const unsigned int offMask = 0x04086060;
 		unsigned int onMask = 0x02000000;
 
-		if (Sh4cntx.fpscr.RM == 1)  //if round to 0 , set the flag
+		if (roundingMode == 1)
 			onMask |= 3 << 22;
 
-		if (Sh4cntx.fpscr.DN)
+		if (denorm2zero == 1)
 			onMask |= 1 << 24;
 
 		#ifdef __ANDROID__
@@ -109,10 +109,10 @@ static void setHostRoundingMode()
 		static const unsigned long off_mask = 0x04080000;
         unsigned long on_mask = 0x02000000;    // DN=1 Any operation involving one or more NaNs returns the Default NaN
 
-        if (Sh4cntx.fpscr.RM == 1)		// if round to 0, set the flag
+        if (roundingMode == 1)
         	on_mask |= 3 << 22;
 
-        if (Sh4cntx.fpscr.DN)
+        if (denorm2zero == 1)
         	on_mask |= 1 << 24;	// flush denormalized numbers to zero
 
         asm volatile
@@ -140,23 +140,17 @@ void UpdateFPSCR()
 		ChangeFP(); // FPU bank change
 
 	Sh4cntx.old_fpscr = Sh4cntx.fpscr;
-	setHostRoundingMode();
+	setHostRoundingMode(p_sh4rcb->cntx.fpscr.RM, p_sh4rcb->cntx.fpscr.DN);
 }
 
 void RestoreHostRoundingMode()
 {
 	old_rm = 0xFF;
 	old_dn = 0xFF;
-	setHostRoundingMode();
+	setHostRoundingMode(p_sh4rcb->cntx.fpscr.RM, p_sh4rcb->cntx.fpscr.DN);
 }
 
 void setDefaultRoundingMode()
 {
-	u32 savedRM = Sh4cntx.fpscr.RM;
-	u32 savedDN = Sh4cntx.fpscr.DN;
-	Sh4cntx.fpscr.RM = 0;
-	Sh4cntx.fpscr.DN = 0;
-	setHostRoundingMode();
-	Sh4cntx.fpscr.RM = savedRM;
-	Sh4cntx.fpscr.DN = savedDN;
+	setHostRoundingMode(0, 0);
 }

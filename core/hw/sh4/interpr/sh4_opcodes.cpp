@@ -3,7 +3,6 @@
 */
 #include "types.h"
 
-#include "hw/sh4/sh4_interpreter.h"
 #include "hw/sh4/sh4_mem.h"
 #include "hw/sh4/sh4_mmr.h"
 #include "hw/sh4/sh4_core.h"
@@ -1123,7 +1122,7 @@ sh4op(i0000_0000_0011_1000)
 sh4op(i0000_nnnn_1001_0011)
 {
 #ifdef STRICT_MODE
-	ocache.WriteBack(r[GetN(op)], false, true);
+	ocache.WriteBack(ctx->r[GetN(op)], false, true);
 #endif
 }
 
@@ -1131,7 +1130,7 @@ sh4op(i0000_nnnn_1001_0011)
 sh4op(i0000_nnnn_1010_0011)
 {
 #ifdef STRICT_MODE
-	ocache.WriteBack(r[GetN(op)], true, true);
+	ocache.WriteBack(ctx->r[GetN(op)], true, true);
 #endif
 }
 
@@ -1139,7 +1138,7 @@ sh4op(i0000_nnnn_1010_0011)
 sh4op(i0000_nnnn_1011_0011)
 {
 #ifdef STRICT_MODE
-	ocache.WriteBack(r[GetN(op)], true, false);
+	ocache.WriteBack(ctx->r[GetN(op)], true, false);
 #endif
 }
 
