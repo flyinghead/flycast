@@ -35,7 +35,7 @@ int darw_printf(const char* text, ...)
     
     NSString* log = [NSString stringWithCString:temp encoding: NSUTF8StringEncoding];
     NSDictionary<NSString *, NSString *>* env = [[NSProcessInfo processInfo] environment];
-    static bool isXcode = [env[@"OS_ACTIVITY_DT_MODE"] boolValue] || [env[@"COMMAND_MODE"] isEqualToString:@"unix2003"];
+    static bool isXcode = [env[@"OS_ACTIVITY_DT_MODE"] boolValue] || [env[@"COMMAND_MODE"] isEqualToString:@"unix2003"] || [env[@"TERM"] isEqualToString:@"dumb"];
 	
     if (isXcode) // Xcode console does not support colors
     {
