@@ -307,10 +307,10 @@ static void DYNACALL interpreter_fallback(Sh4Context *ctx, u16 op, OpCallFP *oph
 	}
 }
 
-static void DYNACALL do_sqw_mmu_no_ex(u32 addr, u32 pc)
+static void DYNACALL do_sqw_mmu_no_ex(u32 addr, Sh4Context *ctx, u32 pc)
 {
 	try {
-		do_sqw_mmu(addr);
+		ctx->doSqWrite(addr, ctx);
 	} catch (SH4ThrownException& ex) {
 		handle_sh4_exception(ex, pc);
 	}
@@ -487,7 +487,8 @@ void X86Compiler::genOpcode(RuntimeBlockInfo* block, bool optimise, shil_opcode&
 		genCallCdecl(UpdateSR);
 		break;
 	case shop_sync_fpscr:
-		genCallCdecl(UpdateFPSCR);
+		mov(ecx, (uintptr_t)&sh4ctx);
+		genCall(Sh4Context::UpdateFPSCR);
 		break;
 
 	case shop_pref:
@@ -520,16 +521,16 @@ void X86Compiler::genOpcode(RuntimeBlockInfo* block, bool optimise, shil_opcode&
 
 				mov(ecx, rn);
 			}
+			mov(edx, (size_t)&sh4rcb.cntx);
 			if (mmu_enabled())
 			{
-				mov(edx, block->vaddr + op.guest_offs - (op.delay_slot ? 1 : 0));	// pc
+				push(block->vaddr + op.guest_offs - (op.delay_slot ? 1 : 0));	// pc
 				genCall(do_sqw_mmu_no_ex);
 			}
 			else
 			{
-				mov(edx, (size_t)&sh4rcb.cntx);
 				freezeXMM();
-				call(dword[&do_sqw_nommu]);
+				call(dword[&sh4ctx.doSqWrite]);
 				thawXMM();
 			}
 			L(no_sqw);

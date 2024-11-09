@@ -487,7 +487,7 @@ sh4op(i1111_1011_1111_1101)
 {
  	ctx->fpscr.FR = 1 - ctx->fpscr.FR;
 
-	UpdateFPSCR();
+	Sh4Context::UpdateFPSCR(ctx);
 }
 
 //fschg

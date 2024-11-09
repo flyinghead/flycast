@@ -16,11 +16,6 @@ static void ChangeGPR()
 	std::swap((u32 (&)[8])Sh4cntx.r, Sh4cntx.r_bank);
 }
 
-static void ChangeFP()
-{
-	std::swap((f32 (&)[16])Sh4cntx.xffr, *(f32 (*)[16])&Sh4cntx.xffr[16]);
-}
-
 //called when sr is changed and we must check for reg banks etc.
 //returns true if interrupt pending
 bool UpdateSR()
@@ -134,13 +129,14 @@ static void setHostRoundingMode(u32 roundingMode, u32 denorm2zero)
 }
 
 //called when fpscr is changed and we must check for reg banks etc..
-void UpdateFPSCR()
+void DYNACALL Sh4Context::UpdateFPSCR(Sh4Context *ctx)
 {
-	if (Sh4cntx.fpscr.FR != Sh4cntx.old_fpscr.FR)
-		ChangeFP(); // FPU bank change
+	if (ctx->fpscr.FR != ctx->old_fpscr.FR)
+		// FPU bank change
+		std::swap((f32 (&)[16])ctx->xffr, *(f32 (*)[16])&ctx->xffr[16]);
 
-	Sh4cntx.old_fpscr = Sh4cntx.fpscr;
-	setHostRoundingMode(p_sh4rcb->cntx.fpscr.RM, p_sh4rcb->cntx.fpscr.DN);
+	ctx->old_fpscr = ctx->fpscr;
+	setHostRoundingMode(ctx->fpscr.RM, ctx->fpscr.DN);
 }
 
 void RestoreHostRoundingMode()

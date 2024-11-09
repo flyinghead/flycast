@@ -42,13 +42,14 @@ extern void (*ngen_FailedToFindBlock)();
 //Canonical callback interface
 enum CanonicalParamType
 {
-	CPT_u32,
-	CPT_u32rv,
-	CPT_u64rvL,
-	CPT_u64rvH,
-	CPT_f32,
-	CPT_f32rv,
-	CPT_ptr,
+	CPT_u32,	// u32 param
+	CPT_u32rv,	// u32 return value
+	CPT_u64rvL,	// u64 return value lsb
+	CPT_u64rvH,	// u64 return value msb
+	CPT_f32,	// f32 param
+	CPT_f32rv,	// f32 return value
+	CPT_ptr,	// register pointer
+	CPT_sh4ctx,	// Sh4Context pointer
 };
 
 bool rdv_readMemImmediate(u32 addr, int size, void*& ptr, bool& isRam, u32& physAddr, RuntimeBlockInfo* block = nullptr);

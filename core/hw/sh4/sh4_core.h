@@ -4,7 +4,6 @@
 #include <cmath>
 
 int UpdateSystem_INTC();
-void UpdateFPSCR();
 bool UpdateSR();
 void RestoreHostRoundingMode();
 void setDefaultRoundingMode();

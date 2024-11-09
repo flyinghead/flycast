@@ -1150,10 +1150,7 @@ sh4op(i0000_nnnn_1000_0011)
 
 	if ((Dest >> 26) == 0x38) // Store Queue
 	{
-		if (CCN_MMUCR.AT)
-			do_sqw_mmu(Dest);
-		else
-			do_sqw_nommu(Dest, ctx);
+		ctx->doSqWrite(Dest, ctx);
 	}
 	else
 	{
@@ -1888,7 +1885,7 @@ sh4op(i0100_nnnn_0110_0110)
 	u32 n = GetN(op);
 
 	ReadMemU32(ctx->fpscr.full, ctx->r[n]);
-	UpdateFPSCR();
+	Sh4Context::UpdateFPSCR(ctx);
 	ctx->r[n] += 4;
 }
 
@@ -1911,7 +1908,7 @@ sh4op(i0100_nnnn_0110_1010)
 {
 	u32 n = GetN(op);
 	ctx->fpscr.full = ctx->r[n];
-	UpdateFPSCR();
+	Sh4Context::UpdateFPSCR(ctx);
 }
 
 //ldc <REG_N>,SR

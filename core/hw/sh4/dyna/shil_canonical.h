@@ -34,6 +34,7 @@
 	#define shil_cf_arg_u32(x) sh4Dynarec->canonParam(op, &op->x, CPT_u32);
 	#define shil_cf_arg_f32(x) sh4Dynarec->canonParam(op, &op->x, CPT_f32);
 	#define shil_cf_arg_ptr(x) sh4Dynarec->canonParam(op, &op->x, CPT_ptr);
+	#define shil_cf_arg_sh4ctx() sh4Dynarec->canonParam(op, nullptr, CPT_sh4ctx);
 	#define shil_cf_rv_u32(x) sh4Dynarec->canonParam(op, &op->x, CPT_u32rv);
 	#define shil_cf_rv_f32(x) sh4Dynarec->canonParam(op, &op->x, CPT_f32rv);
 	#define shil_cf_rv_u64(x) sh4Dynarec->canonParam(op, &op->rd, CPT_u64rvL); sh4Dynarec->canonParam(op, &op->rd2, CPT_u64rvH);
@@ -227,11 +228,12 @@ shil_opc_end()
 shil_opc(sync_fpscr)
 shil_canonical
 (
-void, f1, (),
-	UpdateFPSCR();
+void, f1, (Sh4Context *ctx),
+	Sh4Context::UpdateFPSCR(ctx);
 )
 shil_compile
 (
+	shil_cf_arg_sh4ctx();
 	shil_cf(f1);
 )
 shil_opc_end()
@@ -660,8 +662,8 @@ shil_opc_end()
 shil_opc(div1)
 shil_canonical
 (
-u64,f1,(u32 a, s32 b, u32 T),
-	sr_t& sr = Sh4cntx.sr;
+u64,f1,(u32 a, s32 b, u32 T, Sh4Context *ctx),
+	sr_t& sr = ctx->sr;
 	bool qxm = sr.Q ^ sr.M;
 	sr.Q = (int)a < 0;
 	a = (a << 1) | T;
@@ -675,6 +677,7 @@ u64,f1,(u32 a, s32 b, u32 T),
 )
 shil_compile
 (
+	shil_cf_arg_sh4ctx();
 	shil_cf_arg_u32(rs3);
 	shil_cf_arg_u32(rs2);
 	shil_cf_arg_u32(rs1);
@@ -796,27 +799,15 @@ shil_opc_end()
 shil_opc(pref)
 shil_canonical
 (
-void,f1,(u32 r1),
-	if ((r1>>26) == 0x38) do_sqw_mmu(r1);
-)
-
-shil_canonical
-(
-void,f2,(u32 r1),
-	if ((r1>>26) == 0x38) do_sqw_nommu(r1, &p_sh4rcb->cntx);
+void,f1,(u32 r1, Sh4Context *ctx),
+	if ((r1 >> 26) == 0x38) ctx->doSqWrite(r1, ctx);
 )
 
 shil_compile
 (
+	shil_cf_arg_sh4ctx();
 	shil_cf_arg_u32(rs1);
-	if (CCN_MMUCR.AT)
-	{
-		shil_cf(f1);
-	}
-	else
-	{
-		shil_cf(f2);
-	}
+	shil_cf(f1);
 )
 
 shil_opc_end()

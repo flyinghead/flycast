@@ -365,6 +365,12 @@ void X86Compiler::ngen_CC_param(const shil_opcode& op, const shil_param& param, 
 			unwinder.allocStackPtr(getCurr(), 4);
 			break;
 
+		case CPT_sh4ctx:
+			push((uintptr_t)&sh4ctx);
+			CC_stackSize += 4;
+			unwinder.allocStackPtr(getCurr(), 4);
+			break;
+
 		// store from EAX
 		case CPT_u64rvL:
 		case CPT_u32rv:

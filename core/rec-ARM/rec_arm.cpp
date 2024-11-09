@@ -89,8 +89,8 @@ extern "C" char *stpcpy(char *dst, char const *src)
 }
 #endif
 
-#undef do_sqw_nommu
 #define rcbOffset(x) (-sizeof(Sh4RCB) + offsetof(Sh4RCB, x))
+#define ctxOffset(x) (-sizeof(Sh4Context) + offsetof(Sh4Context, x))
 
 struct DynaRBI : RuntimeBlockInfo
 {
@@ -590,6 +590,7 @@ void Arm32Assembler::canonParam(const shil_opcode *op, const shil_param *par, Ca
 		case CPT_u32:
 		case CPT_ptr:
 		case CPT_f32:
+		case CPT_sh4ctx:
 			{
 				CC_PS t = { tp, par };
 				CC_pars.push_back(t);
@@ -613,6 +614,10 @@ void Arm32Assembler::canonCall(const shil_opcode *op, void *function)
 		if (param.type == CPT_ptr)
 		{
 			Mov(rd, (u32)param.par->reg_ptr());
+		}
+		else if (param.type == CPT_sh4ctx)
+		{
+			Mov(rd, reinterpret_cast<uintptr_t>(&sh4ctx));
 		}
 		else
 		{
@@ -1198,10 +1203,10 @@ static void interpreter_fallback(Sh4Context *ctx, u16 op, OpCallFP *oph, u32 pc)
 	}
 }
 
-static void do_sqw_mmu_no_ex(u32 addr, u32 pc)
+static void do_sqw_mmu_no_ex(u32 addr, Sh4Context *ctx, u32 pc)
 {
 	try {
-		do_sqw_mmu(addr);
+		ctx->doSqWrite(addr, ctx);
 	} catch (SH4ThrownException& ex) {
 		if (pc & 1)
 		{
@@ -1680,6 +1685,11 @@ void Arm32Assembler::compileOp(RuntimeBlockInfo* block, shil_opcode* op, bool op
 			call((void *)UpdateSR);
 			break;
 
+		case shop_sync_fpscr:
+			Sub(r0, r8, sizeof(Sh4Context));
+			call((void *)Sh4Context::UpdateFPSCR);
+			break;
+
 		case shop_test:
 		case shop_seteq:
 		case shop_setge:
@@ -1805,15 +1815,15 @@ void Arm32Assembler::compileOp(RuntimeBlockInfo* block, shil_opcode* op, bool op
 					cc = al;
 				}
 
+				Sub(r1, r8, sizeof(Sh4Context));
 				if (mmu_enabled())
 				{
-					Mov(r1, block->vaddr + op->guest_offs - (op->delay_slot ? 1 : 0));	// pc
+					Mov(r2, block->vaddr + op->guest_offs - (op->delay_slot ? 1 : 0));	// pc
 					call((void *)do_sqw_mmu_no_ex, cc);
 				}
 				else
 				{
-					Ldr(r2, MemOperand(r8, rcbOffset(do_sqw_nommu)));
-					Sub(r1, r8, sizeof(Sh4Context));
+					Ldr(r2, MemOperand(r8, ctxOffset(doSqWrite)));
 					Blx(cc, r2);
 				}
 			}
@@ -2187,7 +2197,7 @@ void Arm32Assembler::compile(RuntimeBlockInfo* block, bool force_checks, bool op
 	}
 
 	//scheduler
-	Ldr(r1, MemOperand(r8, rcbOffset(cntx.cycle_counter)));
+	Ldr(r1, MemOperand(r8, ctxOffset(cycle_counter)));
 	Cmp(r1, 0);
 	Label cyclesRemaining;
 	B(pl, &cyclesRemaining);
@@ -2205,7 +2215,7 @@ void Arm32Assembler::compile(RuntimeBlockInfo* block, bool force_checks, bool op
 	{
 		Sub(r1, r1, cycles);
 	}
-	Str(r1, MemOperand(r8, rcbOffset(cntx.cycle_counter)));
+	Str(r1, MemOperand(r8, ctxOffset(cycle_counter)));
 
 	//compile the block's opcodes
 	shil_opcode* op;
@@ -2373,7 +2383,7 @@ void Arm32Assembler::genMainLoop()
 		Ldr(r8, MemOperand(sp));					// r8: context
 		Mov(r9, (uintptr_t)mmuAddressLUT);			// r9: mmu LUT
 	}
-	Ldr(r4, MemOperand(r8, rcbOffset(cntx.pc)));	// r4: pc
+	Ldr(r4, MemOperand(r8, ctxOffset(pc)));			// r4: pc
 	B(&no_updateLabel);								// Go to mainloop !
 	// this code is here for fall-through behavior of do_iter
 	Label do_iter;
@@ -2381,9 +2391,9 @@ void Arm32Assembler::genMainLoop()
 // intc_sched: r0 is pc, r1 is cycle_counter
 	intc_sched = GetCursorAddress<const void *>();
 	Add(r1, r1, SH4_TIMESLICE);
-	Str(r1, MemOperand(r8, rcbOffset(cntx.cycle_counter)));
-	Str(r0, MemOperand(r8, rcbOffset(cntx.pc)));
-	Ldr(r0, MemOperand(r8, rcbOffset(cntx.CpuRunning)));
+	Str(r1, MemOperand(r8, ctxOffset(cycle_counter)));
+	Str(r0, MemOperand(r8, ctxOffset(pc)));
+	Ldr(r0, MemOperand(r8, ctxOffset(CpuRunning)));
 	Cmp(r0, 0);
 	B(eq, &cleanup);
 	Mov(r4, lr);
@@ -2391,17 +2401,17 @@ void Arm32Assembler::genMainLoop()
 	Cmp(r0, 0);
 	B(ne, &do_iter);
 	Mov(lr, r4);
-	Ldr(r0, MemOperand(r8, rcbOffset(cntx.cycle_counter)));
+	Ldr(r0, MemOperand(r8, ctxOffset(cycle_counter)));
 	Bx(lr);
 // do_iter:
 	Bind(&do_iter);
-	Ldr(r4, MemOperand(r8, rcbOffset(cntx.pc)));
+	Ldr(r4, MemOperand(r8, ctxOffset(pc)));
 
 // no_update:
 	no_update = GetCursorAddress<const void *>();
 	Bind(&no_updateLabel);
 	// next_pc _MUST_ be on r4
-	Ldr(r0, MemOperand(r8, rcbOffset(cntx.CpuRunning)));
+	Ldr(r0, MemOperand(r8, ctxOffset(CpuRunning)));
 	Cmp(r0, 0);
 	B(eq, &cleanup);
 

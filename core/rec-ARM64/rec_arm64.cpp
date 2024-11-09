@@ -45,8 +45,6 @@ using namespace vixl::aarch64;
 #include "oslib/virtmem.h"
 #include "emulator.h"
 
-#undef do_sqw_nommu
-
 struct DynaRBI : RuntimeBlockInfo
 {
 	DynaRBI(Sh4Context& sh4ctx, Sh4CodeBuffer& codeBuffer)
@@ -105,10 +103,10 @@ static void interpreter_fallback(Sh4Context *ctx, u16 op, OpCallFP *oph, u32 pc)
 	}
 }
 
-static void do_sqw_mmu_no_ex(u32 addr, u32 pc)
+static void do_sqw_mmu_no_ex(u32 addr, Sh4Context *ctx, u32 pc)
 {
 	try {
-		do_sqw_mmu(addr);
+		ctx->doSqWrite(addr, ctx);
 	} catch (SH4ThrownException& ex) {
 		if (pc & 1)
 		{
@@ -394,7 +392,8 @@ public:
 				GenCallRuntime(UpdateSR);
 				break;
 			case shop_sync_fpscr:
-				GenCallRuntime(UpdateFPSCR);
+				Mov(x0, x28);
+				GenCallRuntime(Sh4Context::UpdateFPSCR);
 				break;
 
 			case shop_swaplb:
@@ -792,17 +791,15 @@ public:
 							Mov(w0, regalloc.MapRegister(op.rs1));
 					}
 
+					Mov(x1, x28);
 					if (mmu_enabled())
 					{
-						Mov(w1, block->vaddr + op.guest_offs - (op.delay_slot ? 1 : 0));	// pc
-
+						Mov(w2, block->vaddr + op.guest_offs - (op.delay_slot ? 1 : 0));	// pc
 						GenCallRuntime(do_sqw_mmu_no_ex);
 					}
 					else
 					{
-						Sub(x9, x28, offsetof(Sh4RCB, cntx) - offsetof(Sh4RCB, do_sqw_nommu));
-						Ldr(x9, MemOperand(x9));
-						Mov(x1, x28);
+						Ldr(x9, sh4_context_mem_operand(&sh4ctx.doSqWrite));
 						Blr(x9);
 					}
 					Bind(&not_sqw);
@@ -984,7 +981,7 @@ public:
 		CC_pars.clear();
 	}
 
-	void canonParam(const shil_opcode& op, const shil_param& prm, CanonicalParamType tp)
+	void canonParam(const shil_opcode& op, const shil_param *prm, CanonicalParamType tp)
 	{
 		switch (tp)
 		{
@@ -992,24 +989,25 @@ public:
 		case CPT_u32:
 		case CPT_ptr:
 		case CPT_f32:
+		case CPT_sh4ctx:
 		{
-			CC_PS t = { tp, &prm };
+			CC_PS t = { tp, prm };
 			CC_pars.push_back(t);
 		}
 		break;
 
 		case CPT_u64rvL:
 		case CPT_u32rv:
-			host_reg_to_shil_param(prm, w0);
+			host_reg_to_shil_param(*prm, w0);
 			break;
 
 		case CPT_u64rvH:
 			Lsr(x10, x0, 32);
-			host_reg_to_shil_param(prm, w10);
+			host_reg_to_shil_param(*prm, w10);
 			break;
 
 		case CPT_f32rv:
-			host_reg_to_shil_param(prm, s0);
+			host_reg_to_shil_param(*prm, s0);
 			break;
 		}
 	}
@@ -1027,10 +1025,8 @@ public:
 			switch (CC_pars[i].type)
 			{
 			// push the params
-
 			case CPT_u32:
 				shil_param_to_host_reg(prm, *call_regs[regused++]);
-
 				break;
 
 			case CPT_f32:
@@ -1047,8 +1043,12 @@ public:
 				verify(prm.is_reg());
 				// push the ptr itself
 				Mov(*call_regs64[regused++], reinterpret_cast<uintptr_t>(prm.reg_ptr()));
-
 				break;
+
+			case CPT_sh4ctx:
+				Mov(*call_regs64[regused++], reinterpret_cast<uintptr_t>(&sh4ctx));
+				break;
+
 			case CPT_u32rv:
 			case CPT_u64rvL:
 			case CPT_u64rvH:
@@ -2246,7 +2246,7 @@ public:
 
 	void canonParam(const shil_opcode *op, const shil_param *par, CanonicalParamType tp) override
 	{
-		compiler->canonParam(*op, *par, tp);
+		compiler->canonParam(*op, par, tp);
 	}
 
 	void canonCall(const shil_opcode *op, void *function) override

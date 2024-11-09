@@ -86,10 +86,10 @@ static void interpreter_fallback(Sh4Context *ctx, u16 op, OpCallFP *oph, u32 pc)
 	}
 }
 
-static void do_sqw_mmu_no_ex(u32 addr, u32 pc)
+static void do_sqw_mmu_no_ex(u32 addr, Sh4Context *ctx, u32 pc)
 {
 	try {
-		do_sqw_mmu(addr);
+		ctx->doSqWrite(addr, ctx);
 	} catch (SH4ThrownException& ex) {
 		handle_sh4_exception(ex, pc);
 	}
@@ -296,7 +296,8 @@ public:
 				GenCall(UpdateSR);
 				break;
 			case shop_sync_fpscr:
-				GenCall(UpdateFPSCR);
+				mov(call_regs64[0], (uintptr_t)&sh4ctx);
+				GenCall(Sh4Context::UpdateFPSCR);
 				break;
 
 			case shop_negc:
@@ -371,16 +372,15 @@ public:
 
 						mov(call_regs[0], rn);
 					}
+					mov(call_regs64[1], (uintptr_t)&sh4ctx);
 					if (mmu_enabled())
 					{
-						mov(call_regs[1], block->vaddr + op.guest_offs - (op.delay_slot ? 1 : 0));	// pc
-
+						mov(call_regs[2], block->vaddr + op.guest_offs - (op.delay_slot ? 1 : 0));	// pc
 						GenCall(do_sqw_mmu_no_ex);
 					}
 					else
 					{
-						mov(call_regs64[1], (uintptr_t)&sh4ctx);
-						mov(rax, (size_t)&do_sqw_nommu);
+						mov(rax, (size_t)&sh4ctx.doSqWrite);
 						saveXmmRegisters();
 						call(qword[rax]);
 						restoreXmmRegisters();
@@ -551,35 +551,36 @@ public:
 		CC_pars.clear();
 	}
 
-	void canonParam(const shil_opcode& op, const shil_param& prm, CanonicalParamType tp) {
+	void canonParam(const shil_opcode& op, const shil_param *prm, CanonicalParamType tp) {
 		switch (tp)
 		{
 
 		case CPT_u32:
 		case CPT_ptr:
 		case CPT_f32:
+		case CPT_sh4ctx:
 		{
-			CC_PS t = { tp, &prm };
+			CC_PS t = { tp, prm };
 			CC_pars.push_back(t);
+			break;
 		}
-		break;
 
 		// store from EAX
 		case CPT_u64rvL:
 		case CPT_u32rv:
 			mov(rcx, rax);
-			host_reg_to_shil_param(prm, ecx);
+			host_reg_to_shil_param(*prm, ecx);
 			break;
 
 		case CPT_u64rvH:
 			// assuming CPT_u64rvL has just been called
 			shr(rcx, 32);
-			host_reg_to_shil_param(prm, ecx);
+			host_reg_to_shil_param(*prm, ecx);
 			break;
 
 		// store from xmm0
 		case CPT_f32rv:
-			host_reg_to_shil_param(prm, xmm0);
+			host_reg_to_shil_param(*prm, xmm0);
 			break;
 		}
 	}
@@ -608,6 +609,10 @@ public:
 			case CPT_ptr:
 				verify(prm.is_reg());
 				mov(call_regs64[regused++], (size_t)prm.reg_ptr());
+				break;
+
+			case CPT_sh4ctx:
+				mov(call_regs64[regused++], (uintptr_t)&sh4ctx);
 				break;
 
             default:
@@ -1351,7 +1356,7 @@ public:
 	}
 
 	void canonParam(const shil_opcode* op, const shil_param* par, CanonicalParamType tp) override {
-		ccCompiler->canonParam(*op, *par, tp);
+		ccCompiler->canonParam(*op, par, tp);
 	}
 
 	void canonCall(const shil_opcode* op, void* function) override {

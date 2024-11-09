@@ -119,6 +119,10 @@ struct alignas(32) SQBuffer {
 	u8 data[32];
 };
 
+void setSqwHandler();
+struct Sh4Context;
+typedef void DYNACALL SQWriteFunc(u32 dst, Sh4Context *ctx);
+
 struct alignas(64) Sh4Context
 {
 	union
@@ -160,6 +164,8 @@ struct alignas(64) Sh4Context
 
 			u32 temp_reg;
 			int cycle_counter;
+
+			SQWriteFunc *doSqWrite;
 		};
 		u64 raw[64];
 	};
@@ -204,6 +210,8 @@ struct alignas(64) Sh4Context
 		fr(n * 2 + 1) = t.sgl[0];
 	}
 
+	static void DYNACALL UpdateFPSCR(Sh4Context *ctx);
+
 private:
 	union DoubleReg
 	{
@@ -213,11 +221,6 @@ private:
 };
 static_assert(sizeof(Sh4Context) == 512, "Invalid Sh4Context size");
 
-void setSqwHandler();
-void DYNACALL do_sqw_mmu(u32 dst);
-
-typedef void DYNACALL SQWriteFunc(u32 dst, Sh4Context *ctx);
-
 #define FPCB_SIZE (RAM_SIZE_MAX/2)
 #define FPCB_MASK (FPCB_SIZE -1)
 #if HOST_CPU == CPU_ARM
@@ -226,21 +229,17 @@ typedef void DYNACALL SQWriteFunc(u32 dst, Sh4Context *ctx);
 // want to be an i8r4 value that can be substracted in one op (such as 0x4100000)
 #define FPCB_PAD 0x100000
 #else
-#define FPCB_PAD 0x10000
+#define FPCB_PAD PAGE_SIZE
 #endif
 struct alignas(PAGE_SIZE) Sh4RCB
 {
 	void* fpcb[FPCB_SIZE];
-	u8 _pad[FPCB_PAD - sizeof(Sh4Context) - sizeof(void *)];
-	SQWriteFunc *do_sqw_nommu;
+	u8 _pad[FPCB_PAD - sizeof(Sh4Context)];
 	Sh4Context cntx;
 };
 static_assert((sizeof(Sh4RCB) % PAGE_SIZE) == 0, "sizeof(Sh4RCB) not multiple of PAGE_SIZE");
 
 extern Sh4RCB* p_sh4rcb;
-
-#define do_sqw_nommu sh4rcb.do_sqw_nommu
-
 #define sh4rcb (*p_sh4rcb)
 #define Sh4cntx (sh4rcb.cntx)
 
