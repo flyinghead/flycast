@@ -69,11 +69,13 @@ void X86RegAlloc::Writeback_FPU(u32 reg, s8 nreg)
 
 struct DynaRBI : RuntimeBlockInfo
 {
-	DynaRBI(Sh4CodeBuffer *codeBuffer) : codeBuffer(codeBuffer) {}
+	DynaRBI(Sh4Context& sh4ctx, Sh4CodeBuffer& codeBuffer)
+	: sh4ctx(sh4ctx), codeBuffer(codeBuffer) {}
 	u32 Relink() override;
 
 private:
-	Sh4CodeBuffer *codeBuffer;
+	Sh4Context& sh4ctx;
+	Sh4CodeBuffer& codeBuffer;
 };
 
 
@@ -108,26 +110,26 @@ void X86Compiler::compile(RuntimeBlockInfo* block, bool force_checks, bool optim
 	if (mmu_enabled() && block->has_fpu_op)
 	{
 		Xbyak::Label fpu_enabled;
-		mov(eax, dword[&Sh4cntx.sr.status]);
+		mov(eax, dword[&sh4ctx.sr.status]);
 		test(eax, 0x8000);			// test SR.FD bit
 		jz(fpu_enabled);
 		push(Sh4Ex_FpuDisabled);	// exception code
 		push(block->vaddr);			// pc
 		call((void (*)())Do_Exception);
 		add(esp, 8);
-		mov(ecx, dword[&Sh4cntx.pc]);
+		mov(ecx, dword[&sh4ctx.pc]);
 		jmp((const void *)no_update);
 		L(fpu_enabled);
 	}
 
-	mov(eax, dword[&Sh4cntx.cycle_counter]);
+	mov(eax, dword[&sh4ctx.cycle_counter]);
 	test(eax, eax);
 	Xbyak::Label no_up;
 	jg(no_up);
 	mov(ecx, block->vaddr);
 	call((const void *)intc_sched);
 	L(no_up);
-	sub(dword[&Sh4cntx.cycle_counter], block->guest_cycles);
+	sub(dword[&sh4ctx.cycle_counter], block->guest_cycles);
 
 	regalloc.doAlloc(block);
 
@@ -297,16 +299,16 @@ u32 X86Compiler::relinkBlock(RuntimeBlockInfo* block)
 	case BET_DynamicIntr:
 		if (block->BlockType == BET_StaticIntr)
 		{
-			mov(dword[&Sh4cntx.pc], block->NextBlock);
+			mov(dword[&sh4ctx.pc], block->NextBlock);
 		}
 		else
 		{
 			mov(eax, dword[GetRegPtr(reg_pc_dyn)]);
-			mov(dword[&Sh4cntx.pc], eax);
+			mov(dword[&sh4ctx.pc], eax);
 		}
 		call(UpdateINTC);
 
-		mov(ecx, dword[&Sh4cntx.pc]);
+		mov(ecx, dword[&sh4ctx.pc]);
 		jmp((const void *)no_update);
 
 		break;
@@ -323,7 +325,7 @@ u32 X86Compiler::relinkBlock(RuntimeBlockInfo* block)
 
 u32 DynaRBI::Relink()
 {
-	X86Compiler *compiler = new X86Compiler(*codeBuffer, (u8*)code + relink_offset);
+	X86Compiler *compiler = new X86Compiler(sh4ctx, codeBuffer, (u8*)code + relink_offset);
 	u32 codeSize = compiler->relinkBlock(this);
 	delete compiler;
 
@@ -439,14 +441,14 @@ void X86Compiler::genMainloop()
 	Xbyak::Label longjmpLabel;
 	L(longjmpLabel);
 
-	mov(ecx, dword[&Sh4cntx.pc]);
+	mov(ecx, dword[&sh4ctx.pc]);
 
 	//next_pc _MUST_ be on ecx
 	Xbyak::Label cleanup;
 //no_update:
 	Xbyak::Label no_updateLabel;
 	L(no_updateLabel);
-	mov(edx, dword[&Sh4cntx.CpuRunning]);
+	mov(edx, dword[&sh4ctx.CpuRunning]);
 	cmp(edx, 0);
 	jz(cleanup);
 	if (!mmu_enabled())
@@ -458,14 +460,14 @@ void X86Compiler::genMainloop()
 	}
 	else
 	{
-		mov(dword[&Sh4cntx.pc], ecx);
+		mov(dword[&sh4ctx.pc], ecx);
 		call((void *)bm_GetCodeByVAddr);
 		jmp(eax);
 	}
 
 //cleanup:
 	L(cleanup);
-	mov(dword[&Sh4cntx.pc], ecx);
+	mov(dword[&sh4ctx.pc], ecx);
 #ifndef _WIN32
 	// 16-byte alignment
 	add(esp, 12);
@@ -481,7 +483,7 @@ void X86Compiler::genMainloop()
 	Xbyak::Label do_iter;
 	L(do_iter);
 	add(esp, 4);	// pop intc_sched() return address
-	mov(ecx, dword[&Sh4cntx.pc]);
+	mov(ecx, dword[sh4ctx.pc]);
 	jmp(no_updateLabel);
 
 //ngen_LinkBlock_Shared_stub:
@@ -503,8 +505,8 @@ void X86Compiler::genMainloop()
 	unwinder.endProlog(0);
 	Xbyak::Label intc_schedLabel;
 	L(intc_schedLabel);
-	add(dword[&Sh4cntx.cycle_counter], SH4_TIMESLICE);
-	mov(dword[&Sh4cntx.pc], ecx);
+	add(dword[&sh4ctx.cycle_counter], SH4_TIMESLICE);
+	mov(dword[&sh4ctx.pc], ecx);
 	call((void *)UpdateSystem_INTC);
 	cmp(eax, 0);
 	jnz(do_iter);
@@ -525,7 +527,7 @@ void X86Compiler::genMainloop()
 //ngen_LinkBlock_Generic_stub:
 	Xbyak::Label ngen_LinkBlock_Generic_label;
 	L(ngen_LinkBlock_Generic_label);
-	mov(edx, dword[&Sh4cntx.jdyn]);
+	mov(edx, dword[&sh4ctx.jdyn]);
 	jmp(ngen_LinkBlock_Shared_stub);
 
 	genMemHandlers();
@@ -568,7 +570,7 @@ void X86Compiler::genMainloop()
 		Xbyak::Label jumpblockLabel;
 		cmp(eax, 0);
 		jne(jumpblockLabel);
-		mov(ecx, dword[&Sh4cntx.pc]);
+		mov(ecx, dword[&sh4ctx.pc]);
 		jmp(no_updateLabel);
 		L(jumpblockLabel);
 	}
@@ -809,7 +811,7 @@ void X86Compiler::checkBlock(bool smc_checks, RuntimeBlockInfo* block)
 
 	if (mmu_enabled())
 	{
-		mov(eax, dword[&Sh4cntx.pc]);
+		mov(eax, dword[&sh4ctx.pc]);
 		cmp(eax, block->vaddr);
 		jne(reinterpret_cast<const void*>(ngen_blockcheckfail));
 	}
@@ -842,8 +844,9 @@ public:
 		sh4Dynarec = this;
 	}
 
-	void init(Sh4CodeBuffer& codeBuffer) override
+	void init(Sh4Context& sh4ctx, Sh4CodeBuffer& codeBuffer) override
 	{
+		this->sh4ctx = &sh4ctx;
 		this->codeBuffer = &codeBuffer;
 	}
 
@@ -857,7 +860,7 @@ public:
 		if (::mainloop != nullptr)
 			return;
 
-		compiler = new X86Compiler(*codeBuffer);
+		compiler = new X86Compiler(*sh4ctx, *codeBuffer);
 
 		try {
 			compiler->genMainloop();
@@ -876,10 +879,10 @@ public:
 		::mainloop = nullptr;
 		unwinder.clear();
 
-		if (p_sh4rcb->cntx.CpuRunning)
+		if (sh4ctx->CpuRunning)
 		{
 			// Force the dynarec out of mainloop() to regenerate it
-			p_sh4rcb->cntx.CpuRunning = 0;
+			sh4ctx->CpuRunning = 0;
 			restarting = true;
 		}
 		else
@@ -889,7 +892,7 @@ public:
 	RuntimeBlockInfo* allocateBlock() override
 	{
 		generate_mainloop();
-		return new DynaRBI(codeBuffer);
+		return new DynaRBI(*sh4ctx, *codeBuffer);
 	}
 
 	void mainloop(void* v_cntx) override
@@ -911,7 +914,7 @@ public:
 
 	void compile(RuntimeBlockInfo* block, bool smc_checks, bool optimise) override
 	{
-		compiler = new X86Compiler(*codeBuffer);
+		compiler = new X86Compiler(*sh4ctx, *codeBuffer);
 
 		try {
 			compiler->compile(block, smc_checks, optimise);
@@ -928,7 +931,7 @@ public:
 			// init() not called yet
 			return false;
 		u8 *rewriteAddr = *(u8 **)context.esp - 5;
-		X86Compiler *compiler = new X86Compiler(*codeBuffer, rewriteAddr);
+		X86Compiler *compiler = new X86Compiler(*sh4ctx, *codeBuffer, rewriteAddr);
 		bool rv = compiler->rewriteMemAccess(context);
 		delete compiler;
 
@@ -956,6 +959,7 @@ public:
 	}
 
 private:
+	Sh4Context *sh4ctx = nullptr;
 	Sh4CodeBuffer *codeBuffer = nullptr;
 	X86Compiler *compiler = nullptr;
 	bool restarting = false;

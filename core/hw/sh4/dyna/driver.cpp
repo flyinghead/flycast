@@ -92,7 +92,7 @@ void Sh4Recompiler::clear_temp_cache(bool full)
 
 void Sh4Recompiler::ResetCache()
 {
-	INFO_LOG(DYNAREC, "recSh4:Dynarec Cache clear at %08X free space %d", Sh4cntx.pc, codeBuffer.getFreeSpace());
+	INFO_LOG(DYNAREC, "recSh4:Dynarec Cache clear at %08X free space %d", getContext()->pc, codeBuffer.getFreeSpace());
 	codeBuffer.reset(false);
 	bm_ResetCache();
 	smc_hotspots.clear();
@@ -103,12 +103,13 @@ void Sh4Recompiler::Run()
 {
 	RestoreHostRoundingMode();
 
-	u8 *sh4_dyna_rcb = (u8 *)&Sh4cntx + sizeof(Sh4cntx);
-	INFO_LOG(DYNAREC, "cntx // fpcb offset: %td // pc offset: %td // pc %08X", (u8*)&sh4rcb.fpcb - sh4_dyna_rcb, (u8*)&sh4rcb.cntx.pc - sh4_dyna_rcb, sh4rcb.cntx.pc);
+	u8 *sh4_dyna_rcb = (u8 *)getContext() + sizeof(Sh4cntx);
+	INFO_LOG(DYNAREC, "cntx // fpcb offset: %td // pc offset: %td // pc %08X", (u8*)&sh4rcb.fpcb - sh4_dyna_rcb,
+			(u8*)&getContext()->pc - sh4_dyna_rcb, getContext()->pc);
 	
 	sh4Dynarec->mainloop(sh4_dyna_rcb);
 
-	ctx->CpuRunning = false;
+	getContext()->CpuRunning = false;
 }
 
 void AnalyseBlock(RuntimeBlockInfo* blk);
@@ -355,7 +356,7 @@ void Sh4Recompiler::Init()
 	bm_Init();
 	
 	if (addrspace::virtmemEnabled())
-		verify(&mem_b[0] == ((u8*)p_sh4rcb->cntx.sq_buffer + 512 + 0x0C000000));
+		verify(&mem_b[0] == ((u8*)getContext()->sq_buffer + sizeof(Sh4Context) + 0x0C000000));
 
 	// Call the platform-specific magic to make the pages RWX
 	CodeCache = nullptr;
@@ -369,7 +370,7 @@ void Sh4Recompiler::Init()
 	verify(CodeCache != nullptr);
 
 	TempCodeCache = CodeCache + CODE_SIZE;
-	sh4Dynarec->init(codeBuffer);
+	sh4Dynarec->init(*getContext(), codeBuffer);
 	bm_ResetCache();
 }
 

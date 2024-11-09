@@ -94,10 +94,12 @@ extern "C" char *stpcpy(char *dst, char const *src)
 
 struct DynaRBI : RuntimeBlockInfo
 {
-	DynaRBI(Sh4CodeBuffer& codeBuffer) : codeBuffer(codeBuffer) {}
+	DynaRBI(Sh4Context& sh4ctx, Sh4CodeBuffer& codeBuffer)
+	: sh4ctx(sh4ctx), codeBuffer(codeBuffer) {}
 	u32 Relink() override;
 
 	Register T_reg;
+	Sh4Context& sh4ctx;
 	Sh4CodeBuffer& codeBuffer;
 };
 
@@ -157,8 +159,10 @@ class Arm32Assembler : public MacroAssembler
 	using BinaryOP = void (MacroAssembler::*)(Register, Register, const Operand&);
 
 public:
-	Arm32Assembler(Sh4CodeBuffer& codeBuffer) : MacroAssembler((u8 *)codeBuffer.get(), codeBuffer.getFreeSpace(), A32), codeBuffer(codeBuffer), reg(*this) {}
-	Arm32Assembler(Sh4CodeBuffer& codeBuffer, u8 *buffer, size_t size) : MacroAssembler(buffer, size, A32), codeBuffer(codeBuffer), reg(*this) {}
+	Arm32Assembler(Sh4Context& sh4ctx, Sh4CodeBuffer& codeBuffer)
+	: MacroAssembler((u8 *)codeBuffer.get(), codeBuffer.getFreeSpace(), A32), sh4ctx(sh4ctx), codeBuffer(codeBuffer), reg(*this) {}
+	Arm32Assembler(Sh4Context& sh4ctx, Sh4CodeBuffer& codeBuffer, u8 *buffer, size_t size)
+	: MacroAssembler(buffer, size, A32), sh4ctx(sh4ctx), codeBuffer(codeBuffer), reg(*this) {}
 
 	void compile(RuntimeBlockInfo* block, bool force_checks, bool optimise);
 	void rewrite(Register raddr, Register rt, SRegister ft, DRegister fd, bool write, bool is_sq, mem_op_type optp);
@@ -367,6 +371,7 @@ private:
 	void genMmuLookup(RuntimeBlockInfo* block, const shil_opcode& op, u32 write, Register& raddr);
 	void compileOp(RuntimeBlockInfo* block, shil_opcode* op, bool optimise);
 
+	Sh4Context& sh4ctx;
 	Sh4CodeBuffer& codeBuffer;
 	arm_reg_alloc reg;
 	struct CC_PS
@@ -416,7 +421,7 @@ public:
 		sh4Dynarec = this;
 	}
 
-	void init(Sh4CodeBuffer& codeBuffer) override;
+	void init(Sh4Context& sh4ctx, Sh4CodeBuffer& codeBuffer) override;
 	void reset() override;
 	RuntimeBlockInfo *allocateBlock() override;
 	void handleException(host_context_t &context) override;
@@ -435,7 +440,7 @@ public:
 	}
 
 	void compile(RuntimeBlockInfo* block, bool smc_check, bool optimise) override {
-		ass = new Arm32Assembler(*codeBuffer);
+		ass = new Arm32Assembler(*sh4ctx, *codeBuffer);
 		ass->compile(block, smc_check, optimise);
 		delete ass;
 		ass = nullptr;
@@ -457,6 +462,7 @@ public:
 private:
 	void generate_mainloop();
 
+	Sh4Context *sh4ctx = nullptr;
 	Sh4CodeBuffer *codeBuffer = nullptr;
 	bool restarting = false;
 	Arm32Assembler *ass = nullptr;
@@ -465,7 +471,7 @@ static Arm32Dynarec instance;
 
 u32 DynaRBI::Relink()
 {
-	Arm32Assembler ass(codeBuffer, (u8 *)code + relink_offset, host_code_size - relink_offset);
+	Arm32Assembler ass(sh4ctx, codeBuffer, (u8 *)code + relink_offset, host_code_size - relink_offset);
 
 	u32 size = ass.relinkBlock(this);
 
@@ -846,7 +852,7 @@ bool Arm32Dynarec::rewrite(host_context_t& context, void *faultAddress)
 	// ignore last 2 bits zeroed to avoid sigbus errors
 	verify(fault_offs == 0 || (fault_offs & ~3) == (sh4_addr & 0x1FFFFFFC));
 
-	ass = new Arm32Assembler(*codeBuffer, (u8 *)ptr, 12);
+	ass = new Arm32Assembler(*sh4ctx, *codeBuffer, (u8 *)ptr, 12);
 	ass->rewrite(raddr, rt, ft, fd, !read, is_sq, optp);
 	delete ass;
 	ass = nullptr;
@@ -2251,10 +2257,10 @@ void Arm32Dynarec::reset()
 	::mainloop = nullptr;
 	unwinder.clear();
 
-	if (p_sh4rcb->cntx.CpuRunning)
+	if (sh4ctx->CpuRunning)
 	{
 		// Force the dynarec out of mainloop() to regenerate it
-		p_sh4rcb->cntx.CpuRunning = 0;
+		sh4ctx->CpuRunning = 0;
 		restarting = true;
 	}
 	else
@@ -2267,7 +2273,7 @@ void Arm32Dynarec::generate_mainloop()
 		return;
 
 	INFO_LOG(DYNAREC, "Generating main loop");
-	Arm32Assembler ass(*codeBuffer);
+	Arm32Assembler ass(*sh4ctx, *codeBuffer);
 
 	ass.genMainLoop();
 }
@@ -2541,7 +2547,7 @@ void Arm32Assembler::genMainLoop()
 	INFO_LOG(DYNAREC, "readm helpers: up to %p", GetCursorAddress<void *>());
 }
 
-void Arm32Dynarec::init(Sh4CodeBuffer& codeBuffer)
+void Arm32Dynarec::init(Sh4Context& sh4ctx, Sh4CodeBuffer& codeBuffer)
 {
 	INFO_LOG(DYNAREC, "Initializing the ARM32 dynarec");
 
@@ -2563,6 +2569,7 @@ void Arm32Dynarec::init(Sh4CodeBuffer& codeBuffer)
 	ccmap[shop_setab] = hi;
 	ccnmap[shop_setab] = ls;
 
+	this->sh4ctx = &sh4ctx;
 	this->codeBuffer = &codeBuffer;
 }
 
@@ -2574,6 +2581,6 @@ void Arm32Dynarec::handleException(host_context_t &context)
 RuntimeBlockInfo* Arm32Dynarec::allocateBlock()
 {
 	generate_mainloop(); // FIXME why is this needed?
-	return new DynaRBI(*codeBuffer);
+	return new DynaRBI(*sh4ctx, *codeBuffer);
 };
 #endif

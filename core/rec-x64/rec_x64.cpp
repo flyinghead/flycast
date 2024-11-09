@@ -121,8 +121,8 @@ public:
 	using BaseCompiler = BaseXbyakRec<BlockCompiler, true>;
 	friend class BaseXbyakRec<BlockCompiler, true>;
 
-	BlockCompiler(Sh4CodeBuffer& codeBuffer) : BaseCompiler(codeBuffer), regalloc(this) { }
-	BlockCompiler(Sh4CodeBuffer& codeBuffer, u8 *code_ptr) : BaseCompiler(codeBuffer, code_ptr), regalloc(this) { }
+	BlockCompiler(Sh4Context& sh4ctx, Sh4CodeBuffer& codeBuffer) : BaseCompiler(sh4ctx, codeBuffer), regalloc(this) { }
+	BlockCompiler(Sh4Context& sh4ctx, Sh4CodeBuffer& codeBuffer, u8 *code_ptr) : BaseCompiler(sh4ctx, codeBuffer, code_ptr), regalloc(this) { }
 
 	void compile(RuntimeBlockInfo* block, bool force_checks, bool optimise)
 	{
@@ -136,7 +136,7 @@ public:
 		if (mmu_enabled() && block->has_fpu_op)
 		{
 			Xbyak::Label fpu_enabled;
-			mov(rax, (uintptr_t)&p_sh4rcb->cntx.sr.status);
+			mov(rax, (uintptr_t)&sh4ctx.sr.status);
 			test(dword[rax], 0x8000);			// test SR.FD bit
 			jz(fpu_enabled);
 			mov(call_regs[0], block->vaddr);	// pc
@@ -145,7 +145,7 @@ public:
 			jmp(exit_block, T_NEAR);
 			L(fpu_enabled);
 		}
-		mov(rax, (uintptr_t)&p_sh4rcb->cntx.cycle_counter);
+		mov(rax, (uintptr_t)&sh4ctx.cycle_counter);
 		sub(dword[rax], block->guest_cycles);
 
 		regalloc.DoAlloc(block);
@@ -167,12 +167,12 @@ public:
 
 				if (op.rs1._imm)
 				{
-					mov(rax, (size_t)&p_sh4rcb->cntx.pc);
+					mov(rax, (size_t)&sh4ctx.pc);
 					mov(dword[rax], op.rs2._imm);
 				}
 
 				mov(call_regs[1], op.rs3._imm);
-				mov(call_regs64[0], (uintptr_t)&p_sh4rcb->cntx);
+				mov(call_regs64[0], (uintptr_t)&sh4ctx);
 
 				if (!mmu_enabled())
 					GenCall(OpDesc[op.rs3._imm]->oph);
@@ -379,7 +379,7 @@ public:
 					}
 					else
 					{
-						mov(call_regs64[1], (uintptr_t)&p_sh4rcb->cntx);
+						mov(call_regs64[1], (uintptr_t)&sh4ctx);
 						mov(rax, (size_t)&do_sqw_nommu);
 						saveXmmRegisters();
 						call(qword[rax]);
@@ -472,7 +472,7 @@ public:
 		regalloc.Cleanup();
 		current_opid = -1;
 
-		mov(rax, (size_t)&p_sh4rcb->cntx.pc);
+		mov(rax, (size_t)&sh4ctx.pc);
 
 		switch (block->BlockType) {
 
@@ -492,9 +492,9 @@ public:
 				mov(dword[rax], block->NextBlock);
 
 				if (block->has_jcond)
-					mov(rdx, (size_t)&Sh4cntx.jdyn);
+					mov(rdx, (size_t)&sh4ctx.jdyn);
 				else
-					mov(rdx, (size_t)&Sh4cntx.sr.T);
+					mov(rdx, (size_t)&sh4ctx.sr.T);
 
 				cmp(dword[rdx], block->BlockType & 1);
 				Xbyak::Label branch_not_taken;
@@ -509,7 +509,7 @@ public:
 		case BET_DynamicCall:
 		case BET_DynamicRet:
 			//next_pc = *jdyn;
-			mov(rdx, (size_t)&Sh4cntx.jdyn);
+			mov(rdx, (size_t)&sh4ctx.jdyn);
 			mov(edx, dword[rdx]);
 			mov(dword[rax], edx);
 			break;
@@ -518,7 +518,7 @@ public:
 		case BET_StaticIntr:
 			if (block->BlockType == BET_DynamicIntr) {
 				//next_pc = *jdyn;
-				mov(rdx, (size_t)&Sh4cntx.jdyn);
+				mov(rdx, (size_t)&sh4ctx.jdyn);
 				mov(edx, dword[rdx]);
 				mov(dword[rax], edx);
 			}
@@ -684,7 +684,7 @@ public:
 		Xbyak::Label run_loop;
 		L(run_loop);
 		Xbyak::Label end_run_loop;
-		mov(rax, (size_t)&p_sh4rcb->cntx.CpuRunning);
+		mov(rax, (size_t)&sh4ctx.CpuRunning);
 		mov(edx, dword[rax]);
 
 		test(edx, edx);
@@ -693,11 +693,11 @@ public:
 	//slice_loop:
 		Xbyak::Label slice_loop;
 		L(slice_loop);
-		mov(rax, (size_t)&p_sh4rcb->cntx.pc);
+		mov(rax, (size_t)&sh4ctx.pc);
 		mov(call_regs[0], dword[rax]);
 		call(bm_GetCodeByVAddr);
 		call(rax);
-		mov(rax, (uintptr_t)&p_sh4rcb->cntx.cycle_counter);
+		mov(rax, (uintptr_t)&sh4ctx.cycle_counter);
 		mov(ecx, dword[rax]);
 		test(ecx, ecx);
 		jg(slice_loop);
@@ -1058,7 +1058,7 @@ private:
 		// same at compile and run times.
 		if (mmu_enabled())
 		{
-			mov(rax, (uintptr_t)&p_sh4rcb->cntx.pc);
+			mov(rax, (uintptr_t)&sh4ctx.pc);
 			cmp(dword[rax], block->vaddr);
 			jne(reinterpret_cast<const void*>(&ngen_blockcheckfail));
 		}
@@ -1161,7 +1161,7 @@ private:
 						shr(r9d, 26);
 						cmp(r9d, 0x38);
 						jne(no_sqw);
-						mov(rax, (uintptr_t)p_sh4rcb->cntx.sq_buffer);
+						mov(rax, (uintptr_t)sh4ctx.sq_buffer);
 						and_(call_regs[0], 0x3F);
 
 						if (size == MemSize::S32)
@@ -1318,7 +1318,7 @@ public:
 		size_t protSize = codeBuffer->getFreeSpace();
 		virtmem::jit_set_exec(protStart, protSize, false);
 
-		ccCompiler = new BlockCompiler(*codeBuffer);
+		ccCompiler = new BlockCompiler(*sh4ctx, *codeBuffer);
 		try {
 			ccCompiler->compile(block, smc_checks, optimise);
 		} catch (const Xbyak::Error& e) {
@@ -1329,8 +1329,9 @@ public:
 		virtmem::jit_set_exec(protStart, protSize, true);
 	}
 
-	void init(Sh4CodeBuffer& codeBuffer) override
+	void init(Sh4Context& sh4ctx, Sh4CodeBuffer& codeBuffer) override
 	{
+		this->sh4ctx = &sh4ctx;
 		this->codeBuffer = &codeBuffer;
 	}
 
@@ -1370,7 +1371,7 @@ public:
 		virtmem::jit_set_exec(protStart, protSize, false);
 
 		u8 *retAddr = *(u8 **)context.rsp - 5;
-		BlockCompiler compiler(*codeBuffer, retAddr);
+		BlockCompiler compiler(*sh4ctx, *codeBuffer, retAddr);
 		bool rc = false;
 		try {
 			rc = compiler.rewriteMemAccess(context);
@@ -1397,7 +1398,7 @@ public:
 		size_t protSize = codeBuffer->getFreeSpace();
 		virtmem::jit_set_exec(protStart, protSize, false);
 
-		BlockCompiler compiler(*codeBuffer);
+		BlockCompiler compiler(*sh4ctx, *codeBuffer);
 		try {
 			compiler.genMainloop();
 		} catch (const Xbyak::Error& e) {
@@ -1407,6 +1408,7 @@ public:
 	}
 
 private:
+	Sh4Context *sh4ctx = nullptr;
 	Sh4CodeBuffer *codeBuffer = nullptr;
 	BlockCompiler *ccCompiler = nullptr;
 };

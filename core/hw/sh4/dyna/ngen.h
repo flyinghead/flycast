@@ -85,7 +85,7 @@ class Sh4Dynarec
 {
 public:
 	// Initialize the dynarec, which should keep a reference to the passed code buffer to generate code later.
-	virtual void init(Sh4CodeBuffer& codeBuffer) = 0;
+	virtual void init(Sh4Context& sh4ctx, Sh4CodeBuffer& codeBuffer) = 0;
 	// Compile the given block.
 	// If smc_checks is true, add self-modifying code detection.
 	// If optimize is true, use fast memory accesses if possible, that will be rewritten if they fail.

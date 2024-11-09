@@ -27,24 +27,28 @@ class Sh4Cycles
 public:
 	Sh4Cycles(int cpuRatio = 1) : cpuRatio(cpuRatio) {}
 
+	void init(Sh4Context *ctx) {
+		this->ctx = ctx;
+	}
+
 	void executeCycles(u16 op)
 	{
-		Sh4cntx.cycle_counter -= countCycles(op);
+		ctx->cycle_counter -= countCycles(op);
 	}
 
 	void addCycles(int cycles) const
 	{
-		Sh4cntx.cycle_counter -= cycles;
+		ctx->cycle_counter -= cycles;
 	}
 
 	void addReadAccessCycles(u32 addr, u32 size) const
 	{
-		Sh4cntx.cycle_counter -= readAccessCycles(addr, size);
+		ctx->cycle_counter -= readAccessCycles(addr, size);
 	}
 
 	void addWriteAccessCycles(u32 addr, u32 size) const
 	{
-		Sh4cntx.cycle_counter -= writeAccessCycles(addr, size);
+		ctx->cycle_counter -= writeAccessCycles(addr, size);
 	}
 
 	int countCycles(u16 op);
@@ -55,8 +59,8 @@ public:
 		memOps = 0;
 	}
 
-	static u64 now() {
-		return sh4_sched_now64() + SH4_TIMESLICE - Sh4cntx.cycle_counter;
+	u64 now() {
+		return sh4_sched_now64() + SH4_TIMESLICE - ctx->cycle_counter;
 	}
 
 	int readAccessCycles(u32 addr, u32 size) const {
@@ -76,4 +80,5 @@ private:
 	sh4_eu lastUnit = CO;
 	const int cpuRatio;
 	int memOps = 0;
+	Sh4Context *ctx = nullptr;
 };

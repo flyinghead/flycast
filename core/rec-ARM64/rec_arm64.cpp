@@ -49,10 +49,12 @@ using namespace vixl::aarch64;
 
 struct DynaRBI : RuntimeBlockInfo
 {
-	DynaRBI(Sh4CodeBuffer& codeBuffer) : codeBuffer(codeBuffer) {}
+	DynaRBI(Sh4Context& sh4ctx, Sh4CodeBuffer& codeBuffer)
+	: sh4ctx(sh4ctx), codeBuffer(codeBuffer) {}
 	u32 Relink() override;
 
 private:
+	Sh4Context& sh4ctx;
 	Sh4CodeBuffer& codeBuffer;
 };
 
@@ -126,10 +128,11 @@ class Arm64Assembler : public MacroAssembler
 	typedef void (MacroAssembler::*Arm64Fop_RRR)(const VRegister&, const VRegister&, const VRegister&);
 
 public:
-	Arm64Assembler(Sh4CodeBuffer& codeBuffer) : Arm64Assembler(codeBuffer, codeBuffer.get()) {
-	}
+	Arm64Assembler(Sh4Context& sh4ctx, Sh4CodeBuffer& codeBuffer)
+	: Arm64Assembler(sh4ctx, codeBuffer, codeBuffer.get()) { }
 
-	Arm64Assembler(Sh4CodeBuffer& codeBuffer, void *buffer) : MacroAssembler((u8 *)buffer, codeBuffer.getFreeSpace()), regalloc(this), codeBuffer(codeBuffer)
+	Arm64Assembler(Sh4Context& sh4ctx, Sh4CodeBuffer& codeBuffer, void *buffer)
+	: MacroAssembler((u8 *)buffer, codeBuffer.getFreeSpace()), regalloc(this), sh4ctx(sh4ctx), codeBuffer(codeBuffer)
 	{
 		call_regs.push_back((const WRegister*)&w0);
 		call_regs.push_back((const WRegister*)&w1);
@@ -264,7 +267,7 @@ public:
 		regalloc.DoAlloc(block);
 
 		// scheduler
-		Ldr(w1, sh4_context_mem_operand(&Sh4cntx.cycle_counter));
+		Ldr(w1, sh4_context_mem_operand(&sh4ctx.cycle_counter));
 		Cmp(w1, 0);
 		Label cycles_remaining;
 		B(&cycles_remaining, pl);
@@ -274,7 +277,7 @@ public:
 		Bind(&cycles_remaining);
 
 		Sub(w1, w1, block->guest_cycles);
-		Str(w1, sh4_context_mem_operand(&Sh4cntx.cycle_counter));
+		Str(w1, sh4_context_mem_operand(&sh4ctx.cycle_counter));
 
 		for (size_t i = 0; i < block->oplist.size(); i++)
 		{
@@ -287,7 +290,7 @@ public:
 				if (op.rs1._imm)	// if NeedPC()
 				{
 					Mov(w10, op.rs2._imm);
-					Str(w10, sh4_context_mem_operand(&Sh4cntx.pc));
+					Str(w10, sh4_context_mem_operand(&sh4ctx.pc));
 				}
 
 				Mov(x0, x28);
@@ -1069,7 +1072,7 @@ public:
 
 	MemOperand sh4_context_mem_operand(void *p)
 	{
-		u32 offset = (u8*)p - (u8*)&p_sh4rcb->cntx;
+		u32 offset = (u8*)p - (u8*)&sh4ctx;
 		verify((offset & 3) == 0 && offset <= 16380);	// FIXME 64-bit regs need multiple of 8 up to 32760
 		return MemOperand(x28, offset);
 	}
@@ -1163,7 +1166,7 @@ public:
 #endif
 				{
 					Mov(w29, block->BranchBlock);
-					Str(w29, sh4_context_mem_operand(&Sh4cntx.pc));
+					Str(w29, sh4_context_mem_operand(&sh4ctx.pc));
 					GenBranch(arm64_no_update);
 				}
 			}
@@ -1177,9 +1180,9 @@ public:
 				//   next_pc = branch_pc_value;
 
 				if (block->has_jcond)
-					Ldr(w11, sh4_context_mem_operand(&Sh4cntx.jdyn));
+					Ldr(w11, sh4_context_mem_operand(&sh4ctx.jdyn));
 				else
-					Ldr(w11, sh4_context_mem_operand(&Sh4cntx.sr.T));
+					Ldr(w11, sh4_context_mem_operand(&sh4ctx.sr.T));
 
 				Cmp(w11, block->BlockType & 1);
 
@@ -1207,7 +1210,7 @@ public:
 #endif
 					{
 						Mov(w29, block->BranchBlock);
-						Str(w29, sh4_context_mem_operand(&Sh4cntx.pc));
+						Str(w29, sh4_context_mem_operand(&sh4ctx.pc));
 						GenBranch(arm64_no_update);
 					}
 				}
@@ -1235,7 +1238,7 @@ public:
 #endif
 					{
 						Mov(w29, block->NextBlock);
-						Str(w29, sh4_context_mem_operand(&Sh4cntx.pc));
+						Str(w29, sh4_context_mem_operand(&sh4ctx.pc));
 						GenBranch(arm64_no_update);
 					}
 				}
@@ -1247,7 +1250,7 @@ public:
 		case BET_DynamicRet:
 			// next_pc = *jdyn;
 
-			Str(w29, sh4_context_mem_operand(&Sh4cntx.pc));
+			Str(w29, sh4_context_mem_operand(&sh4ctx.pc));
 			if (!mmu_enabled())
 			{
 				// TODO Call no_update instead (and check CpuRunning less frequently?)
@@ -1276,11 +1279,11 @@ public:
 				Mov(w29, block->NextBlock);
 			// else next_pc = *jdyn (already in w29)
 
-			Str(w29, sh4_context_mem_operand(&Sh4cntx.pc));
+			Str(w29, sh4_context_mem_operand(&sh4ctx.pc));
 
 			GenCallRuntime(UpdateINTC);
 
-			Ldr(w29, sh4_context_mem_operand(&Sh4cntx.pc));
+			Ldr(w29, sh4_context_mem_operand(&sh4ctx.pc));
 			GenBranch(arm64_no_update);
 
 			break;
@@ -1450,21 +1453,21 @@ public:
 
 		Bind(&intc_sched);	// w0 is pc, w1 is cycle_counter
 
-		Str(w0, sh4_context_mem_operand(&Sh4cntx.pc));
+		Str(w0, sh4_context_mem_operand(&sh4ctx.pc));
 		// Add timeslice to cycle counter
 		Add(w1, w1, SH4_TIMESLICE);
-		Str(w1, sh4_context_mem_operand(&Sh4cntx.cycle_counter));
-		Ldr(w0, sh4_context_mem_operand(&Sh4cntx.CpuRunning));
+		Str(w1, sh4_context_mem_operand(&sh4ctx.cycle_counter));
+		Ldr(w0, sh4_context_mem_operand(&sh4ctx.CpuRunning));
 		Cbz(w0, &end_mainloop);
 		Mov(x29, lr);				// Save link register in case we return
 		GenCallRuntime(UpdateSystem_INTC);
 		Cbnz(w0, &do_interrupts);
 		Mov(lr, x29);
-		Ldr(w0, sh4_context_mem_operand(&Sh4cntx.cycle_counter));
+		Ldr(w0, sh4_context_mem_operand(&sh4ctx.cycle_counter));
 		Ret();
 
 		Bind(&do_interrupts);
-		Ldr(w29, sh4_context_mem_operand(&Sh4cntx.pc));
+		Ldr(w29, sh4_context_mem_operand(&sh4ctx.pc));
 		B(&no_update);
 
 		Bind(&end_mainloop);
@@ -1499,12 +1502,12 @@ public:
 		// w0: vaddr, w1: addr
 		checkBlockFpu = GetCursorAddress<DynaCode *>();
 		Label fpu_enabled;
-		Ldr(w10, sh4_context_mem_operand(&Sh4cntx.sr.status));
+		Ldr(w10, sh4_context_mem_operand(&sh4ctx.sr.status));
 		Tbz(w10, 15, &fpu_enabled);			// test SR.FD bit
 
 		Mov(w1, Sh4Ex_FpuDisabled);	// exception code
 		GenCallRuntime(Do_Exception);
-		Ldr(w29, sh4_context_mem_operand(&Sh4cntx.pc));
+		Ldr(w29, sh4_context_mem_operand(&sh4ctx.pc));
 		B(&no_update);
 		Bind(&fpu_enabled);
 		// fallthrough
@@ -1513,7 +1516,7 @@ public:
 		// MMU Block check (no fpu)
 		// w0: vaddr, w1: addr
 		checkBlockNoFpu = GetCursorAddress<DynaCode *>();
-		Ldr(w2, sh4_context_mem_operand(&Sh4cntx.pc));
+		Ldr(w2, sh4_context_mem_operand(&sh4ctx.pc));
 		Cmp(w2, w0);
 		Mov(w0, w1);
 		B(&blockCheckFailLabel, ne);
@@ -2174,6 +2177,7 @@ private:
 	RuntimeBlockInfo* block = NULL;
 	const int read_memory_rewrite_size = 5;	// ubfx, add, ldr for fast access. calling a handler can use more than 3 depending on offset
 	const int write_memory_rewrite_size = 5; // ubfx, add, str
+	Sh4Context& sh4ctx;
 	Sh4CodeBuffer& codeBuffer;
 };
 
@@ -2184,9 +2188,10 @@ public:
 		sh4Dynarec = this;
 	}
 
-	void init(Sh4CodeBuffer& codeBuffer) override
+	void init(Sh4Context& sh4ctx, Sh4CodeBuffer& codeBuffer) override
 	{
 		INFO_LOG(DYNAREC, "Initializing the ARM64 dynarec");
+		this->sh4ctx = &sh4ctx;
 		this->codeBuffer = &codeBuffer;
 	}
 
@@ -2195,10 +2200,10 @@ public:
 		unwinder.clear();
 		::mainloop = nullptr;
 
-		if (p_sh4rcb->cntx.CpuRunning)
+		if (sh4ctx->CpuRunning)
 		{
 			// Force the dynarec out of mainloop() to regenerate it
-			p_sh4rcb->cntx.CpuRunning = 0;
+			sh4ctx->CpuRunning = 0;
 			restarting = true;
 		}
 		else
@@ -2226,7 +2231,7 @@ public:
 	{
 		verify(codeBuffer->getFreeSpace() >= 16 * 1024);
 
-		compiler = new Arm64Assembler(*codeBuffer);
+		compiler = new Arm64Assembler(*sh4ctx, *codeBuffer);
 
 		compiler->compileBlock(block, smc_checks, optimise);
 
@@ -2257,7 +2262,7 @@ public:
 		if (::mainloop != nullptr)
 			return;
 		jitWriteProtect(*codeBuffer, false);
-		compiler = new Arm64Assembler(*codeBuffer);
+		compiler = new Arm64Assembler(*sh4ctx, *codeBuffer);
 
 		compiler->GenMainloop();
 
@@ -2269,7 +2274,7 @@ public:
 	RuntimeBlockInfo* allocateBlock() override
 	{
 		generate_mainloop();
-		return new DynaRBI(*codeBuffer);
+		return new DynaRBI(*sh4ctx, *codeBuffer);
 	}
 
 	void handleException(host_context_t &context) override
@@ -2340,7 +2345,7 @@ public:
 
 		// Skip the preceding ops (add, ubfx)
 		u32 *code_rewrite = code_ptr - 2;
-		Arm64Assembler *assembler = new Arm64Assembler(*codeBuffer, code_rewrite);
+		Arm64Assembler *assembler = new Arm64Assembler(*sh4ctx, *codeBuffer, code_rewrite);
 		if (is_read)
 			assembler->GenReadMemorySlow(size);
 		else if (!is_read && size >= 4 && (context.x0 >> 26) == 0x38)
@@ -2358,6 +2363,7 @@ public:
 private:
 	Arm64Assembler* compiler = nullptr;
 	bool restarting = false;
+	Sh4Context *sh4ctx = nullptr;
 	Sh4CodeBuffer *codeBuffer = nullptr;
 };
 
@@ -2368,7 +2374,7 @@ u32 DynaRBI::Relink()
 #ifndef NO_BLOCK_LINKING
 	//printf("DynaRBI::Relink %08x\n", this->addr);
 	jitWriteProtect(codeBuffer, false);
-	Arm64Assembler *compiler = new Arm64Assembler(codeBuffer, (u8 *)this->code + this->relink_offset);
+	Arm64Assembler *compiler = new Arm64Assembler(sh4ctx, codeBuffer, (u8 *)this->code + this->relink_offset);
 
 	u32 code_size = compiler->RelinkBlock(this);
 	compiler->Finalize(true);

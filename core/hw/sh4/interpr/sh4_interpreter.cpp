@@ -187,6 +187,9 @@ void Sh4Interpreter::Init()
 {
 	ctx = &p_sh4rcb->cntx;
 	memset(ctx, 0, sizeof(*ctx));
+	sh4cycles.init(ctx);
+	icache.init(ctx);
+	ocache.init(ctx);
 }
 
 void Sh4Interpreter::Term()

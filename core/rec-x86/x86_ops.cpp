@@ -139,12 +139,12 @@ void X86Compiler::genMemHandlers()
 					and_(ecx, 0x3F);
 
 					if (size == MemSize::S32)
-						mov(dword[(size_t)p_sh4rcb->cntx.sq_buffer + ecx], edx);
+						mov(dword[(size_t)sh4ctx.sq_buffer + ecx], edx);
 					else if (size >= MemSize::F32)
 					{
-						movss(dword[(size_t)p_sh4rcb->cntx.sq_buffer + ecx], xmm0);
+						movss(dword[(size_t)sh4ctx.sq_buffer + ecx], xmm0);
 						if (size == MemSize::F64)
-							movss(dword[((size_t)p_sh4rcb->cntx.sq_buffer + 4) + ecx], xmm1);
+							movss(dword[((size_t)sh4ctx.sq_buffer + 4) + ecx], xmm1);
 					}
 					ret();
 					L(no_sqw);
@@ -327,8 +327,8 @@ void X86Compiler::genOpcode(RuntimeBlockInfo* block, bool optimise, shil_opcode&
 			push(block->vaddr + op.guest_offs - (op.delay_slot ? 1 : 0));	// pc
 		}
 		if (op.rs1.is_imm() && op.rs1.imm_value())
-			mov(dword[&Sh4cntx.pc], op.rs2.imm_value());
-        mov(ecx, (uintptr_t)&Sh4cntx);
+			mov(dword[&sh4ctx.pc], op.rs2.imm_value());
+        mov(ecx, (uintptr_t)&sh4ctx);
 		mov(edx, op.rs3.imm_value());
 		if (!mmu_enabled())
 			genCall(OpDesc[op.rs3.imm_value()]->oph);

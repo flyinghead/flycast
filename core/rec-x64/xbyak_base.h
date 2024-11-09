@@ -28,8 +28,9 @@ template<typename T, bool ArchX64>
 class BaseXbyakRec : public Xbyak::CodeGenerator
 {
 protected:
-	BaseXbyakRec(Sh4CodeBuffer& codeBuffer) : BaseXbyakRec(codeBuffer, (u8 *)codeBuffer.get()) { }
-	BaseXbyakRec(Sh4CodeBuffer& codeBuffer, u8 *code_ptr) : Xbyak::CodeGenerator(codeBuffer.getFreeSpace(), code_ptr), codeBuffer(codeBuffer) { }
+	BaseXbyakRec(Sh4Context& sh4ctx, Sh4CodeBuffer& codeBuffer) : BaseXbyakRec(sh4ctx, codeBuffer, (u8 *)codeBuffer.get()) { }
+	BaseXbyakRec(Sh4Context& sh4ctx, Sh4CodeBuffer& codeBuffer, u8 *code_ptr)
+	: Xbyak::CodeGenerator(codeBuffer.getFreeSpace(), code_ptr), sh4ctx(sh4ctx), codeBuffer(codeBuffer) { }
 
 	using BinaryOp = void (BaseXbyakRec::*)(const Xbyak::Operand&, const Xbyak::Operand&);
 	using BinaryFOp = void (BaseXbyakRec::*)(const Xbyak::Xmm&, const Xbyak::Operand&);
@@ -773,6 +774,7 @@ protected:
 		}
 	}
 
+	Sh4Context& sh4ctx;
 	Sh4CodeBuffer& codeBuffer;
 
 private:

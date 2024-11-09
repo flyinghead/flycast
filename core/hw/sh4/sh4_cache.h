@@ -55,6 +55,11 @@ static bool translatedArea(u32 area)
 class Sh4ICache
 {
 public:
+	void init(Sh4Context *ctx) {
+		this->ctx = ctx;
+		sh4cycles.init(ctx);
+	}
+
 	u16 ReadMem(u32 address)
 	{
 		bool cacheOn = false;
@@ -177,7 +182,7 @@ private:
 			return MmuError::BADADDR;
 
 		const u32 area = address >> 29;
-		const bool userMode = p_sh4rcb->cntx.sr.MD == 0;
+		const bool userMode = ctx->sr.MD == 0;
 
 		if (userMode)
 		{
@@ -222,6 +227,7 @@ private:
 
 	std::array<cache_line, 256> lines;
 	Sh4Cycles sh4cycles;
+	Sh4Context *ctx = nullptr;
 };
 
 extern Sh4ICache icache;
@@ -232,6 +238,11 @@ extern Sh4ICache icache;
 class Sh4OCache
 {
 public:
+	void init(Sh4Context *ctx) {
+		this->ctx = ctx;
+		sh4cycles.init(ctx);
+	}
+
 	template<class T>
 	T ReadMem(u32 address)
 	{
@@ -515,7 +526,7 @@ private:
 			return lookup;
 		}
 		const u32 area = address >> 29;
-		const bool userMode = p_sh4rcb->cntx.sr.MD == 0;
+		const bool userMode = ctx->sr.MD == 0;
 
 		// kernel mem protected in user mode
 		if (userMode && (address & 0x80000000))
@@ -591,6 +602,7 @@ private:
 	u64 writeBackBufferCycles = 0;
 	u64 writeThroughBufferCycles = 0;
 	Sh4Cycles sh4cycles;
+	Sh4Context *ctx = nullptr;
 };
 
 extern Sh4OCache ocache;
