@@ -182,7 +182,7 @@ u32 X86Compiler::relinkBlock(RuntimeBlockInfo* block)
 
 			mov(ecx, block->NextBlock);
 
-			cmp(dword[GetRegPtr(block->has_jcond ? reg_pc_dyn : reg_sr_T)], (u32)block->BlockType & 1);
+			cmp(dword[block->has_jcond ? &sh4ctx.jdyn : &sh4ctx.sr.T], (u32)block->BlockType & 1);
 			Xbyak::Label branch_not_taken;
 
 			jne(branch_not_taken, T_SHORT);
@@ -195,7 +195,7 @@ u32 X86Compiler::relinkBlock(RuntimeBlockInfo* block)
 	case BET_DynamicCall:
 	case BET_DynamicRet:
 		//next_pc = *jdyn;
-		mov(ecx, dword[GetRegPtr(reg_pc_dyn)]);
+		mov(ecx, dword[&sh4ctx.jdyn]);
 		break;
 
 	case BET_DynamicIntr:
@@ -203,16 +203,16 @@ u32 X86Compiler::relinkBlock(RuntimeBlockInfo* block)
 		if (block->BlockType == BET_DynamicIntr)
 		{
 			//next_pc = *jdyn;
-			mov(ecx, dword[GetRegPtr(reg_pc_dyn)]);
-			mov(dword[&next_pc], ecx);
+			mov(ecx, dword[&sh4ctx.jdyn]);
+			mov(dword[&sh4ctx.pc], ecx);
 		}
 		else
 		{
 			//next_pc = next_pc_value;
-			mov(dword[&next_pc], block->NextBlock);
+			mov(dword[&sh4ctx.pc], block->NextBlock);
 		}
 		call(UpdateINTC);
-		mov(ecx, dword[&next_pc]);
+		mov(ecx, dword[&sh4ctx.pc]);
 		break;
 
 	default:
@@ -227,7 +227,7 @@ u32 X86Compiler::relinkBlock(RuntimeBlockInfo* block)
 	{
 	case BET_Cond_0:
 	case BET_Cond_1:
-		cmp(dword[GetRegPtr(block->has_jcond ? reg_pc_dyn : reg_sr_T)], (u32)block->BlockType & 1);
+		cmp(dword[block->has_jcond ? &sh4ctx.jdyn : &sh4ctx.sr.T], (u32)block->BlockType & 1);
 
 		if (mmu_enabled())
 		{
@@ -269,7 +269,7 @@ u32 X86Compiler::relinkBlock(RuntimeBlockInfo* block)
 	case BET_DynamicRet:
 	case BET_DynamicCall:
 	case BET_DynamicJump:
-		mov(ecx, dword[GetRegPtr(reg_pc_dyn)]);
+		mov(ecx, dword[&sh4ctx.jdyn]);
 		jmp((const void *)no_update);
 
 		break;
@@ -303,7 +303,7 @@ u32 X86Compiler::relinkBlock(RuntimeBlockInfo* block)
 		}
 		else
 		{
-			mov(eax, dword[GetRegPtr(reg_pc_dyn)]);
+			mov(eax, dword[&sh4ctx.jdyn]);
 			mov(dword[&sh4ctx.pc], eax);
 		}
 		call(UpdateINTC);
@@ -360,7 +360,7 @@ void X86Compiler::ngen_CC_param(const shil_opcode& op, const shil_param& param, 
 		//push the ptr itself
 		case CPT_ptr:
 			verify(param.is_reg());
-			push((uintptr_t)param.reg_ptr());
+			push((uintptr_t)param.reg_ptr(sh4ctx));
 			CC_stackSize += 4;
 			unwinder.allocStackPtr(getCurr(), 4);
 			break;
@@ -384,8 +384,8 @@ void X86Compiler::ngen_CC_param(const shil_opcode& op, const shil_param& param, 
 
 		// store from ST(0)
 		case CPT_f32rv:
-			fstp(dword[param.reg_ptr()]);
-			movss(regalloc.MapXRegister(param), dword[param.reg_ptr()]);
+			fstp(dword[param.reg_ptr(sh4ctx)]);
+			movss(regalloc.MapXRegister(param), dword[param.reg_ptr(sh4ctx)]);
 			break;
 	}
 }
@@ -460,7 +460,7 @@ void X86Compiler::genMainloop()
 	if (!mmu_enabled())
 	{
 		mov(esi, ecx);	// save sh4 pc in ESI, used below if FPCB is still empty for this address
-		mov(eax, (size_t)&p_sh4rcb->fpcb[0]);
+		mov(eax, (uintptr_t)&sh4ctx + sizeof(Sh4Context) - sizeof(Sh4RCB) + offsetof(Sh4RCB, fpcb));	// address of fpcb[0]
 		and_(ecx, RAM_SIZE_MAX - 2);
 		jmp(dword[eax + ecx * 2]);
 	}
@@ -627,7 +627,7 @@ bool X86Compiler::genReadMemImmediate(const shil_opcode& op, RuntimeBlockInfo* b
 			else
 			{
 				movsx(eax, byte[ptr]);
-				mov(dword[op.rd.reg_ptr()], eax);
+				mov(dword[op.rd.reg_ptr(sh4ctx)], eax);
 			}
 			break;
 
@@ -637,7 +637,7 @@ bool X86Compiler::genReadMemImmediate(const shil_opcode& op, RuntimeBlockInfo* b
 			else
 			{
 				movsx(eax, word[ptr]);
-				mov(dword[op.rd.reg_ptr()], eax);
+				mov(dword[op.rd.reg_ptr(sh4ctx)], eax);
 			}
 			break;
 
@@ -649,7 +649,7 @@ bool X86Compiler::genReadMemImmediate(const shil_opcode& op, RuntimeBlockInfo* b
 			else
 			{
 				mov(eax, dword[ptr]);
-				mov(dword[op.rd.reg_ptr()], eax);
+				mov(dword[op.rd.reg_ptr(sh4ctx)], eax);
 			}
 			break;
 
@@ -662,7 +662,7 @@ bool X86Compiler::genReadMemImmediate(const shil_opcode& op, RuntimeBlockInfo* b
 			else
 			{
 				movq(xmm0, qword[ptr]);
-				movq(qword[op.rd.reg_ptr()], xmm0);
+				movq(qword[op.rd.reg_ptr(sh4ctx)], xmm0);
 			}
 			break;
 
@@ -681,11 +681,11 @@ bool X86Compiler::genReadMemImmediate(const shil_opcode& op, RuntimeBlockInfo* b
 			// Need to call the handler twice
 			mov(ecx, addr);
 			genCall((void (DYNACALL *)())ptr);
-			mov(dword[op.rd.reg_ptr()], eax);
+			mov(dword[op.rd.reg_ptr(sh4ctx)], eax);
 
 			mov(ecx, addr + 4);
 			genCall((void (DYNACALL *)())ptr);
-			mov(dword[op.rd.reg_ptr() + 1], eax);
+			mov(dword[op.rd.reg_ptr(sh4ctx) + 1], eax);
 		}
 		else
 		{
@@ -749,7 +749,7 @@ bool X86Compiler::genWriteMemImmediate(const shil_opcode& op, RuntimeBlockInfo* 
 				mov(byte[ptr], (u8)op.rs2.imm_value());
 			else
 			{
-				mov(al, byte[op.rs2.reg_ptr()]);
+				mov(al, byte[op.rs2.reg_ptr(sh4ctx)]);
 				mov(byte[ptr], al);
 			}
 			break;
@@ -761,7 +761,7 @@ bool X86Compiler::genWriteMemImmediate(const shil_opcode& op, RuntimeBlockInfo* 
 				mov(word[ptr], (u16)op.rs2.imm_value());
 			else
 			{
-				mov(cx, word[op.rs2.reg_ptr()]);
+				mov(cx, word[op.rs2.reg_ptr(sh4ctx)]);
 				mov(word[ptr], cx);
 			}
 			break;
@@ -775,7 +775,7 @@ bool X86Compiler::genWriteMemImmediate(const shil_opcode& op, RuntimeBlockInfo* 
 				mov(dword[ptr], op.rs2.imm_value());
 			else
 			{
-				mov(ecx, dword[op.rs2.reg_ptr()]);
+				mov(ecx, dword[op.rs2.reg_ptr(sh4ctx)]);
 				mov(dword[ptr], ecx);
 			}
 			break;
@@ -788,7 +788,7 @@ bool X86Compiler::genWriteMemImmediate(const shil_opcode& op, RuntimeBlockInfo* 
 			}
 			else
 			{
-				movq(xmm0, qword[op.rs2.reg_ptr()]);
+				movq(xmm0, qword[op.rs2.reg_ptr(sh4ctx)]);
 				movq(qword[ptr], xmm0);
 			}
 			break;

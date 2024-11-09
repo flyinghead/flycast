@@ -64,7 +64,7 @@ static void ngen_blockcheckfail(u32 pc) {
 	rdv_BlockCheckFail(pc);
 }
 
-static void handle_sh4_exception(SH4ThrownException& ex, u32 pc)
+static void handle_sh4_exception(Sh4Context *ctx, SH4ThrownException& ex, u32 pc)
 {
 	if (pc & 1)
 	{
@@ -73,7 +73,7 @@ static void handle_sh4_exception(SH4ThrownException& ex, u32 pc)
 		pc--;
 	}
 	Do_Exception(pc, ex.expEvn);
-	p_sh4rcb->cntx.cycle_counter += 4;	// probably more is needed
+	ctx->cycle_counter += 4;	// probably more is needed
 	handleException();
 }
 
@@ -82,7 +82,7 @@ static void interpreter_fallback(Sh4Context *ctx, u16 op, OpCallFP *oph, u32 pc)
 	try {
 		oph(ctx, op);
 	} catch (SH4ThrownException& ex) {
-		handle_sh4_exception(ex, pc);
+		handle_sh4_exception(ctx, ex, pc);
 	}
 }
 
@@ -91,7 +91,7 @@ static void do_sqw_mmu_no_ex(u32 addr, Sh4Context *ctx, u32 pc)
 	try {
 		ctx->doSqWrite(addr, ctx);
 	} catch (SH4ThrownException& ex) {
-		handle_sh4_exception(ex, pc);
+		handle_sh4_exception(ctx, ex, pc);
 	}
 }
 
@@ -187,9 +187,9 @@ public:
 				verify(op.rs1.is_r64f());
 
 #if ALLOC_F64 == false
-				mov(rax, (uintptr_t)op.rs1.reg_ptr());
+				mov(rax, (uintptr_t)op.rs1.reg_ptr(sh4ctx));
 				mov(rax, qword[rax]);
-				mov(rcx, (uintptr_t)op.rd.reg_ptr());
+				mov(rcx, (uintptr_t)op.rd.reg_ptr(sh4ctx));
 				mov(qword[rcx], rax);
 #else
 				Xbyak::Xmm rd0 = regalloc.MapXRegister(op.rd, 0);
@@ -226,7 +226,7 @@ public:
 							add(call_regs[0], regalloc.MapRegister(op.rs3));
 						else
 						{
-							mov(rax, (uintptr_t)op.rs3.reg_ptr());
+							mov(rax, (uintptr_t)op.rs3.reg_ptr(sh4ctx));
 							add(call_regs[0], dword[rax]);
 						}
 					}
@@ -238,7 +238,7 @@ public:
 #if ALLOC_F64 == false
 					if (size == MemSize::S64)
 					{
-						mov(rcx, (uintptr_t)op.rd.reg_ptr());
+						mov(rcx, (uintptr_t)op.rd.reg_ptr(sh4ctx));
 						mov(qword[rcx], rax);
 					}
 					else
@@ -263,7 +263,7 @@ public:
 							add(call_regs[0], regalloc.MapRegister(op.rs3));
 						else
 						{
-							mov(rax, (uintptr_t)op.rs3.reg_ptr());
+							mov(rax, (uintptr_t)op.rs3.reg_ptr(sh4ctx));
 							add(call_regs[0], dword[rax]);
 						}
 					}
@@ -272,7 +272,7 @@ public:
 #if ALLOC_F64 == false
 					if (op.size == 8)
 					{
-						mov(rax, (uintptr_t)op.rs2.reg_ptr());
+						mov(rax, (uintptr_t)op.rs2.reg_ptr(sh4ctx));
 						mov(call_regs64[1], qword[rax]);
 					}
 					else
@@ -361,7 +361,7 @@ public:
 						}
 						else
 						{
-							mov(rax, (uintptr_t)op.rs1.reg_ptr());
+							mov(rax, (uintptr_t)op.rs1.reg_ptr(sh4ctx));
 							mov(eax, dword[rax]);
 							rn = eax;
 						}
@@ -390,8 +390,8 @@ public:
 				break;
 
 			case shop_frswap:
-				mov(rax, (uintptr_t)op.rs1.reg_ptr());
-				mov(rcx, (uintptr_t)op.rd.reg_ptr());
+				mov(rax, (uintptr_t)op.rs1.reg_ptr(sh4ctx));
+				mov(rcx, (uintptr_t)op.rd.reg_ptr(sh4ctx));
 				if (cpu.has(Cpu::tAVX512F))
 				{
 					vmovaps(zmm0, zword[rax]);
@@ -608,7 +608,7 @@ public:
 				//push the ptr itself
 			case CPT_ptr:
 				verify(prm.is_reg());
-				mov(call_regs64[regused++], (size_t)prm.reg_ptr());
+				mov(call_regs64[regused++], (size_t)prm.reg_ptr(sh4ctx));
 				break;
 
 			case CPT_sh4ctx:
@@ -627,9 +627,9 @@ public:
 			const shil_param& prm = *ccParam.prm;
 			if (ccParam.type == CPT_ptr && prm.count() == 2 && regalloc.IsAllocf(prm) && (op.rd._reg == prm._reg || op.rd2._reg == prm._reg)) {
 				// fsca rd param is a pointer to a 64-bit reg so reload the regs if allocated
-				mov(rax, (size_t)GetRegPtr(prm._reg));
+				mov(rax, (size_t)GetRegPtr(sh4ctx, prm._reg));
 				movss(regalloc.MapXRegister(prm, 0), dword[rax]);
-				mov(rax, (size_t)GetRegPtr(prm._reg + 1));
+				mov(rax, (size_t)GetRegPtr(sh4ctx, prm._reg + 1));
 				movss(regalloc.MapXRegister(prm, 1), dword[rax]);
 			}
 		}
@@ -638,22 +638,22 @@ public:
 
 	void RegPreload(u32 reg, Xbyak::Operand::Code nreg)
 	{
-		mov(rax, (size_t)GetRegPtr(reg));
+		mov(rax, (size_t)GetRegPtr(sh4ctx, reg));
 		mov(Xbyak::Reg32(nreg), dword[rax]);
 	}
 	void RegWriteback(u32 reg, Xbyak::Operand::Code nreg)
 	{
-		mov(rax, (size_t)GetRegPtr(reg));
+		mov(rax, (size_t)GetRegPtr(sh4ctx, reg));
 		mov(dword[rax], Xbyak::Reg32(nreg));
 	}
 	void RegPreload_FPU(u32 reg, s8 nreg)
 	{
-		mov(rax, (size_t)GetRegPtr(reg));
+		mov(rax, (size_t)GetRegPtr(sh4ctx, reg));
 		movss(Xbyak::Xmm(nreg), dword[rax]);
 	}
 	void RegWriteback_FPU(u32 reg, s8 nreg)
 	{
-		mov(rax, (size_t)GetRegPtr(reg));
+		mov(rax, (size_t)GetRegPtr(sh4ctx, reg));
 		movss(dword[rax], Xbyak::Xmm(nreg));
 	}
 
@@ -867,7 +867,7 @@ private:
 				else
 				{
 					movsx(eax, byte[rax]);
-					mov(rcx, (uintptr_t)op.rd.reg_ptr());
+					mov(rcx, (uintptr_t)op.rd.reg_ptr(sh4ctx));
 					mov(dword[rcx], eax);
 				}
 				break;
@@ -878,7 +878,7 @@ private:
 				else
 				{
 					movsx(eax, word[rax]);
-					mov(rcx, (uintptr_t)op.rd.reg_ptr());
+					mov(rcx, (uintptr_t)op.rd.reg_ptr(sh4ctx));
 					mov(dword[rcx], eax);
 				}
 				break;
@@ -891,7 +891,7 @@ private:
 				else
 				{
 					mov(eax, dword[rax]);
-					mov(rcx, (uintptr_t)op.rd.reg_ptr());
+					mov(rcx, (uintptr_t)op.rd.reg_ptr(sh4ctx));
 					mov(dword[rcx], eax);
 				}
 				break;
@@ -899,7 +899,7 @@ private:
 			case 8:
 #if ALLOC_F64 == false
 				mov(rcx, qword[rax]);
-				mov(rax, (uintptr_t)op.rd.reg_ptr());
+				mov(rax, (uintptr_t)op.rd.reg_ptr(sh4ctx));
 				mov(qword[rax], rcx);
 #else
 				movd(regalloc.MapXRegister(op.rd, 0), dword[rax]);
@@ -921,7 +921,7 @@ private:
 				mov(call_regs[0], addr);
 				GenCall((void (*)())ptr);
 #if ALLOC_F64 == false
-				mov(rcx, (size_t)op.rd.reg_ptr());
+				mov(rcx, (size_t)op.rd.reg_ptr(sh4ctx));
 				mov(dword[rcx], eax);
 #else
 				movd(regalloc.MapXRegister(op.rd, 0), eax);
@@ -930,7 +930,7 @@ private:
 				mov(call_regs[0], addr + 4);
 				GenCall((void (*)())ptr);
 #if ALLOC_F64 == false
-				mov(rcx, (size_t)op.rd.reg_ptr() + 4);
+				mov(rcx, (size_t)op.rd.reg_ptr(sh4ctx) + 4);
 				mov(dword[rcx], eax);
 #else
 				movd(regalloc.MapXRegister(op.rd, 1), eax);
@@ -990,7 +990,7 @@ private:
 					mov(byte[rax], (u8)op.rs2._imm);
 				else
 				{
-					mov(rcx, (uintptr_t)op.rs2.reg_ptr());
+					mov(rcx, (uintptr_t)op.rs2.reg_ptr(sh4ctx));
 					mov(cl, byte[rcx]);
 					mov(byte[rax], cl);
 				}
@@ -1003,7 +1003,7 @@ private:
 					mov(word[rax], (u16)op.rs2._imm);
 				else
 				{
-					mov(rcx, (uintptr_t)op.rs2.reg_ptr());
+					mov(rcx, (uintptr_t)op.rs2.reg_ptr(sh4ctx));
 					mov(cx, word[rcx]);
 					mov(word[rax], cx);
 				}
@@ -1018,7 +1018,7 @@ private:
 					mov(dword[rax], op.rs2._imm);
 				else
 				{
-					mov(rcx, (uintptr_t)op.rs2.reg_ptr());
+					mov(rcx, (uintptr_t)op.rs2.reg_ptr(sh4ctx));
 					mov(ecx, dword[rcx]);
 					mov(dword[rax], ecx);
 				}
@@ -1026,7 +1026,7 @@ private:
 
 			case 8:
 #if ALLOC_F64 == false
-				mov(rcx, (uintptr_t)op.rs2.reg_ptr());
+				mov(rcx, (uintptr_t)op.rs2.reg_ptr(sh4ctx));
 				mov(rcx, qword[rcx]);
 				mov(qword[rax], rcx);
 #else

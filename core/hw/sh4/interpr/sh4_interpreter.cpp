@@ -41,7 +41,7 @@ u16 Sh4Interpreter::ReadNexOp()
 void Sh4Interpreter::Run()
 {
 	Instance = this;
-	RestoreHostRoundingMode();
+	ctx->restoreHostRoundingMode();
 
 	try {
 		do
@@ -83,7 +83,7 @@ void Sh4Interpreter::Step()
 	verify(!ctx->CpuRunning);
 	Instance = this;
 
-	RestoreHostRoundingMode();
+	ctx->restoreHostRoundingMode();
 	try {
 		u32 op = ReadNexOp();
 		ExecuteOpcode(op);

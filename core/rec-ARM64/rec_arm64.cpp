@@ -212,7 +212,7 @@ public:
 				Add(*ret_reg, regalloc.MapRegister(op.rs1), op.rs3._imm);
 			else
 			{
-				Ldr(*ret_reg, sh4_context_mem_operand(op.rs1.reg_ptr()));
+				Ldr(*ret_reg, sh4_context_mem_operand(op.rs1._reg));
 				Add(*ret_reg, *ret_reg, op.rs3._imm);
 			}
 		}
@@ -222,8 +222,8 @@ public:
 				Add(*ret_reg, regalloc.MapRegister(op.rs1), regalloc.MapRegister(op.rs3));
 			else
 			{
-				Ldr(*ret_reg, sh4_context_mem_operand(op.rs1.reg_ptr()));
-				Ldr(w8, sh4_context_mem_operand(op.rs3.reg_ptr()));
+				Ldr(*ret_reg, sh4_context_mem_operand(op.rs1._reg));
+				Ldr(w8, sh4_context_mem_operand(op.rs3._reg));
 				Add(*ret_reg, *ret_reg, w8);
 			}
 		}
@@ -242,7 +242,7 @@ public:
 			}
 			else
 			{
-				Ldr(*ret_reg, sh4_context_mem_operand(op.rs1.reg_ptr()));
+				Ldr(*ret_reg, sh4_context_mem_operand(op.rs1._reg));
 			}
 		}
 		else
@@ -782,7 +782,7 @@ public:
 							Lsr(w1, regalloc.MapRegister(op.rs1), 26);
 						else
 						{
-							Ldr(w0, sh4_context_mem_operand(op.rs1.reg_ptr()));
+							Ldr(w0, sh4_context_mem_operand(op.rs1._reg));
 							Lsr(w1, w0, 26);
 						}
 						Cmp(w1, 0x38);
@@ -905,17 +905,17 @@ public:
 				else
 				{
 					Ldr(x2, MemOperand(x1));
-					Str(x2, sh4_context_mem_operand(op.rd.reg_ptr()));
+					Str(x2, sh4_context_mem_operand(op.rd._reg));
 				}
 				break;
 
 			/* fall back to the canonical implementations for better precision
 			case shop_fipr:
-				Add(x9, x28, sh4_context_mem_operand(op.rs1.reg_ptr()).GetOffset());
+				Add(x9, x28, op.rs1.reg_offset());
 				Ld1(v0.V4S(), MemOperand(x9));
 				if (op.rs1._reg != op.rs2._reg)
 				{
-					Add(x9, x28, sh4_context_mem_operand(op.rs2.reg_ptr()).GetOffset());
+					Add(x9, x28, op.rs2.reg_offset());
 					Ld1(v1.V4S(), MemOperand(x9));
 					Fmul(v0.V4S(), v0.V4S(), v1.V4S());
 				}
@@ -926,9 +926,9 @@ public:
 				break;
 
 			case shop_ftrv:
-				Add(x9, x28, sh4_context_mem_operand(op.rs1.reg_ptr()).GetOffset());
+				Add(x9, x28, op.rs1.reg_offset());
 				Ld1(v0.V4S(), MemOperand(x9));
-				Add(x9, x28, sh4_context_mem_operand(op.rs2.reg_ptr()).GetOffset());
+				Add(x9, x28, op.rs2.reg_offset());
 				Ld1(v1.V4S(), MemOperand(x9, 16, PostIndex));
 				Ld1(v2.V4S(), MemOperand(x9, 16, PostIndex));
 				Ld1(v3.V4S(), MemOperand(x9, 16, PostIndex));
@@ -937,14 +937,14 @@ public:
 				Fmla(v5.V4S(), v2.V4S(), s0, 1);
 				Fmla(v5.V4S(), v3.V4S(), s0, 2);
 				Fmla(v5.V4S(), v4.V4S(), s0, 3);
-				Add(x9, x28, sh4_context_mem_operand(op.rd.reg_ptr()).GetOffset());
+				Add(x9, x28, op.rd.reg_offset());
 				St1(v5.V4S(), MemOperand(x9));
 				break;
 			*/
 
 			case shop_frswap:
-				Add(x9, x28, sh4_context_mem_operand(op.rs1.reg_ptr()).GetOffset());
-				Add(x10, x28, sh4_context_mem_operand(op.rd.reg_ptr()).GetOffset());
+				Add(x9, x28, op.rs1.reg_offset());
+				Add(x10, x28, op.rd.reg_offset());
 				Ld4(v0.V2D(), v1.V2D(), v2.V2D(), v3.V2D(), MemOperand(x9));
 				Ld4(v4.V2D(), v5.V2D(), v6.V2D(), v7.V2D(), MemOperand(x10));
 				St4(v4.V2D(), v5.V2D(), v6.V2D(), v7.V2D(), MemOperand(x9));
@@ -1042,7 +1042,7 @@ public:
 			case CPT_ptr:
 				verify(prm.is_reg());
 				// push the ptr itself
-				Mov(*call_regs64[regused++], reinterpret_cast<uintptr_t>(prm.reg_ptr()));
+				Mov(*call_regs64[regused++], reinterpret_cast<uintptr_t>(prm.reg_ptr(sh4ctx)));
 				break;
 
 			case CPT_sh4ctx:
@@ -1064,8 +1064,8 @@ public:
 			if (ccParam.type == CPT_ptr && prm.count() == 2 && regalloc.IsAllocf(prm) && (op->rd._reg == prm._reg || op->rd2._reg == prm._reg))
 			{
 				// fsca rd param is a pointer to a 64-bit reg so reload the regs if allocated
-				Ldr(regalloc.MapVRegister(prm, 0), sh4_context_mem_operand(GetRegPtr(prm._reg)));
-				Ldr(regalloc.MapVRegister(prm, 1), sh4_context_mem_operand(GetRegPtr(prm._reg + 1)));
+				Ldr(regalloc.MapVRegister(prm, 0), sh4_context_mem_operand(prm._reg));
+				Ldr(regalloc.MapVRegister(prm, 1), sh4_context_mem_operand((Sh4RegType)(prm._reg + 1)));
 			}
 		}
 	}
@@ -1073,6 +1073,12 @@ public:
 	MemOperand sh4_context_mem_operand(void *p)
 	{
 		u32 offset = (u8*)p - (u8*)&sh4ctx;
+		verify((offset & 3) == 0 && offset <= 16380);	// FIXME 64-bit regs need multiple of 8 up to 32760
+		return MemOperand(x28, offset);
+	}
+	MemOperand sh4_context_mem_operand(Sh4RegType reg)
+	{
+		u32 offset = getRegOffset(reg);
 		verify((offset & 3) == 0 && offset <= 16380);	// FIXME 64-bit regs need multiple of 8 up to 32760
 		return MemOperand(x28, offset);
 	}
@@ -1785,9 +1791,9 @@ private:
 					break;
 				}
 				if (op.size == 8)
-					Str(x1, sh4_context_mem_operand(op.rd.reg_ptr()));
+					Str(x1, sh4_context_mem_operand(op.rd._reg));
 				else
-					Str(w1, sh4_context_mem_operand(op.rd.reg_ptr()));
+					Str(w1, sh4_context_mem_operand(op.rd._reg));
 			}
 		}
 		else
@@ -1801,14 +1807,14 @@ private:
 				if (regalloc.IsAllocf(op.rd))
 					Fmov(regalloc.MapVRegister(op.rd, 0), w0);
 				else
-					Str(w0, sh4_context_mem_operand(op.rd.reg_ptr()));
+					Str(w0, sh4_context_mem_operand(op.rd._reg));
 
 				Mov(w0, addr + 4);
 				GenCallRuntime((void (*)())ptr);
 				if (regalloc.IsAllocf(op.rd))
 					Fmov(regalloc.MapVRegister(op.rd, 1), w0);
 				else
-					Str(w0, sh4_context_mem_operand((u8*)op.rd.reg_ptr() + 4));
+					Str(w0, sh4_context_mem_operand((Sh4RegType)(op.rd._reg + 1)));
 			}
 			else
 			{
@@ -2100,14 +2106,14 @@ private:
 		{
 			if (param.is_r64f() && !regalloc.IsAllocf(param))
 			{
-				Ldr(reg, sh4_context_mem_operand(param.reg_ptr()));
+				Ldr(reg, sh4_context_mem_operand(param._reg));
 			}
 			else if (param.is_r32f() || param.is_r64f())
 			{
 				if (regalloc.IsAllocf(param))
 					Fmov(reg.W(), regalloc.MapVRegister(param, 0));
 				else
-					Ldr(reg.W(), sh4_context_mem_operand(param.reg_ptr()));
+					Ldr(reg.W(), sh4_context_mem_operand(param._reg));
 				if (param.is_r64f())
 				{
 					Fmov(w15, regalloc.MapVRegister(param, 1));
@@ -2119,7 +2125,7 @@ private:
 				if (regalloc.IsAllocg(param))
 					Mov(reg.W(), regalloc.MapRegister(param));
 				else
-					Ldr(reg.W(), sh4_context_mem_operand(param.reg_ptr()));
+					Ldr(reg.W(), sh4_context_mem_operand(param._reg));
 			}
 		}
 		else
@@ -2141,7 +2147,7 @@ private:
 			}
 			else
 			{
-				Str((const Register&)reg, sh4_context_mem_operand(param.reg_ptr()));
+				Str((const Register&)reg, sh4_context_mem_operand(param._reg));
 			}
 		}
 		else if (regalloc.IsAllocg(param))
@@ -2160,7 +2166,7 @@ private:
 		}
 		else
 		{
-			Str(reg, sh4_context_mem_operand(param.reg_ptr()));
+			Str(reg, sh4_context_mem_operand(param._reg));
 		}
 	}
 
@@ -2389,18 +2395,18 @@ u32 DynaRBI::Relink()
 
 void Arm64RegAlloc::Preload(u32 reg, eReg nreg)
 {
-	assembler->Ldr(Register(nreg, 32), assembler->sh4_context_mem_operand(GetRegPtr(reg)));
+	assembler->Ldr(Register(nreg, 32), assembler->sh4_context_mem_operand((Sh4RegType)reg));
 }
 void Arm64RegAlloc::Writeback(u32 reg, eReg nreg)
 {
-	assembler->Str(Register(nreg, 32), assembler->sh4_context_mem_operand(GetRegPtr(reg)));
+	assembler->Str(Register(nreg, 32), assembler->sh4_context_mem_operand((Sh4RegType)reg));
 }
 void Arm64RegAlloc::Preload_FPU(u32 reg, eFReg nreg)
 {
-	assembler->Ldr(VRegister(nreg, 32), assembler->sh4_context_mem_operand(GetRegPtr(reg)));
+	assembler->Ldr(VRegister(nreg, 32), assembler->sh4_context_mem_operand((Sh4RegType)reg));
 }
 void Arm64RegAlloc::Writeback_FPU(u32 reg, eFReg nreg)
 {
-	assembler->Str(VRegister(nreg, 32), assembler->sh4_context_mem_operand(GetRegPtr(reg)));
+	assembler->Str(VRegister(nreg, 32), assembler->sh4_context_mem_operand((Sh4RegType)reg));
 }
 #endif	// FEAT_SHREC == DYNAREC_JIT

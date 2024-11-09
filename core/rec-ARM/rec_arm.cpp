@@ -613,7 +613,7 @@ void Arm32Assembler::canonCall(const shil_opcode *op, void *function)
 		CC_PS& param = CC_pars[i];
 		if (param.type == CPT_ptr)
 		{
-			Mov(rd, (u32)param.par->reg_ptr());
+			Mov(rd, (u32)param.par->reg_ptr(sh4ctx));
 		}
 		else if (param.type == CPT_sh4ctx)
 		{

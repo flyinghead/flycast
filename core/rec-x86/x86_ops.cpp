@@ -283,7 +283,7 @@ void X86Compiler::genMmuLookup(RuntimeBlockInfo* block, const shil_opcode& op, u
 }
 
 [[noreturn]]
-static void DYNACALL handle_sh4_exception(SH4ThrownException& ex, u32 pc)
+static void DYNACALL handle_sh4_exception(Sh4Context *ctx, SH4ThrownException& ex, u32 pc)
 {
 	if (pc & 1)
 	{
@@ -292,7 +292,7 @@ static void DYNACALL handle_sh4_exception(SH4ThrownException& ex, u32 pc)
 		pc--;
 	}
 	Do_Exception(pc, ex.expEvn);
-	p_sh4rcb->cntx.cycle_counter += 4;	// probably more is needed
+	ctx->cycle_counter += 4;	// probably more is needed
 	X86Compiler::handleException();
 	// not reached
 	std::abort();
@@ -303,7 +303,7 @@ static void DYNACALL interpreter_fallback(Sh4Context *ctx, u16 op, OpCallFP *oph
 	try {
 		oph(ctx, op);
 	} catch (SH4ThrownException& ex) {
-		handle_sh4_exception(ex, pc);
+		handle_sh4_exception(ctx, ex, pc);
 	}
 }
 
@@ -312,7 +312,7 @@ static void DYNACALL do_sqw_mmu_no_ex(u32 addr, Sh4Context *ctx, u32 pc)
 	try {
 		ctx->doSqWrite(addr, ctx);
 	} catch (SH4ThrownException& ex) {
-		handle_sh4_exception(ex, pc);
+		handle_sh4_exception(ctx, ex, pc);
 	}
 }
 
@@ -346,8 +346,8 @@ void X86Compiler::genOpcode(RuntimeBlockInfo* block, bool optimise, shil_opcode&
 		movss(regalloc.MapXRegister(op.rd, 1), regalloc.MapXRegister(op.rs1, 1));
 #else
 		verify(!regalloc.IsAllocAny(op.rd));
-		movq(xmm0, qword[op.rs1.reg_ptr()]);
-		movq(qword[op.rd.reg_ptr()], xmm0);
+		movq(xmm0, qword[op.rs1.reg_ptr(sh4ctx)]);
+		movq(qword[op.rd.reg_ptr(sh4ctx)], xmm0);
 #endif
 		break;
 
@@ -363,7 +363,7 @@ void X86Compiler::genOpcode(RuntimeBlockInfo* block, bool optimise, shil_opcode&
 				else if (regalloc.IsAllocg(op.rs3))
 					add(ecx, regalloc.MapRegister(op.rs3));
 				else
-					add(ecx, dword[op.rs3.reg_ptr()]);
+					add(ecx, dword[op.rs3.reg_ptr(sh4ctx)]);
 			}
 
 			int memOpSize;
@@ -410,8 +410,8 @@ void X86Compiler::genOpcode(RuntimeBlockInfo* block, bool optimise, shil_opcode&
 				else
 				{
 					verify(!regalloc.IsAllocAny(op.rd));
-					movss(dword[op.rd.reg_ptr()], xmm0);
-					movss(dword[op.rd.reg_ptr() + 1], xmm1);
+					movss(dword[op.rd.reg_ptr(sh4ctx)], xmm0);
+					movss(dword[op.rd.reg_ptr(sh4ctx) + 1], xmm1);
 				}
 			}
 		}
@@ -428,7 +428,7 @@ void X86Compiler::genOpcode(RuntimeBlockInfo* block, bool optimise, shil_opcode&
 				else if (regalloc.IsAllocg(op.rs3))
 					add(ecx, regalloc.MapRegister(op.rs3));
 				else
-					add(ecx, dword[op.rs3.reg_ptr()]);
+					add(ecx, dword[op.rs3.reg_ptr(sh4ctx)]);
 			}
 
 			int memOpSize;
@@ -464,8 +464,8 @@ void X86Compiler::genOpcode(RuntimeBlockInfo* block, bool optimise, shil_opcode&
 				}
 				else
 				{
-					movd(xmm0, dword[op.rs2.reg_ptr()]);
-					movd(xmm1, dword[op.rs2.reg_ptr() + 1]);
+					movd(xmm0, dword[op.rs2.reg_ptr(sh4ctx)]);
+					movd(xmm1, dword[op.rs2.reg_ptr(sh4ctx) + 1]);
 				}
 			}
 			const u8 *start = getCurr();
@@ -511,7 +511,7 @@ void X86Compiler::genOpcode(RuntimeBlockInfo* block, bool optimise, shil_opcode&
 				}
 				else
 				{
-					mov(eax, dword[op.rs1.reg_ptr()]);
+					mov(eax, dword[op.rs1.reg_ptr(sh4ctx)]);
 					rn = eax;
 				}
 				mov(ecx, rn);
@@ -521,7 +521,7 @@ void X86Compiler::genOpcode(RuntimeBlockInfo* block, bool optimise, shil_opcode&
 
 				mov(ecx, rn);
 			}
-			mov(edx, (size_t)&sh4rcb.cntx);
+			mov(edx, (uintptr_t)&sh4ctx);
 			if (mmu_enabled())
 			{
 				push(block->vaddr + op.guest_offs - (op.delay_slot ? 1 : 0));	// pc
@@ -549,8 +549,8 @@ void X86Compiler::genOpcode(RuntimeBlockInfo* block, bool optimise, shil_opcode&
 		break;
 
 	case shop_frswap:
-		mov(eax, (uintptr_t)op.rs1.reg_ptr());
-		mov(ecx, (uintptr_t)op.rd.reg_ptr());
+		mov(eax, (uintptr_t)op.rs1.reg_ptr(sh4ctx));
+		mov(ecx, (uintptr_t)op.rd.reg_ptr(sh4ctx));
 		for (int i = 0; i < 4; i++)
 		{
 			movaps(xmm0, xword[eax + (i * 16)]);

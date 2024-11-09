@@ -7,6 +7,7 @@
 #include "serialize.h"
 #include "hw/holly/holly_intc.h"
 #include "hw/sh4/sh4_if.h"
+#include "hw/sh4/sh4_core.h"
 #include "profiler/fc_profiler.h"
 #include "network/ggpo.h"
 
@@ -90,15 +91,12 @@ public:
 		}
 		else
 		{
-			void setDefaultRoundingMode();
-			void RestoreHostRoundingMode();
-
 			setDefaultRoundingMode();
 			// drain the queue after switching to !threaded rendering
 			while (!queue.empty())
 				waitAndExecute();
 			execute(msg);
-			RestoreHostRoundingMode();
+			Sh4cntx.restoreHostRoundingMode();
 		}
 	}
 

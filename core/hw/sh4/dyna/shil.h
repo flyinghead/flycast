@@ -128,7 +128,7 @@ enum Sh4RegType
 };
 
 u32 getRegOffset(Sh4RegType reg);
-u32* GetRegPtr(u32 reg);
+u32* GetRegPtr(Sh4Context& ctx, u32 reg);
 
 enum shil_param_type
 {
@@ -231,7 +231,8 @@ struct shil_param
 
 	bool is_imm_s8() const { return is_imm() && (int8_t)_imm == (int32_t)_imm; }
 
-	u32* reg_ptr() const { verify(is_reg()); return GetRegPtr(_reg); }
+	u32* reg_ptr(Sh4Context& ctx) const { verify(is_reg()); return GetRegPtr(ctx, _reg); }
+	u32  reg_offset() const { verify(is_reg()); return getRegOffset(_reg); }
 	s32  reg_nofs() const { verify(is_reg()); return (int)getRegOffset(_reg) - sizeof(Sh4Context); }
 	u32  reg_aofs() const { return -reg_nofs(); }
 

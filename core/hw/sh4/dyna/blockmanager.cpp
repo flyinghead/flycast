@@ -40,7 +40,7 @@ static bm_Map blkmap;
 u32 protected_blocks;
 u32 unprotected_blocks;
 
-#define FPCA(x) ((DynarecCodeEntryPtr&)sh4rcb.fpcb[(x>>1)&FPCB_MASK])
+#define FPCA(x) ((DynarecCodeEntryPtr&)p_sh4rcb->fpcb[(x>>1)&FPCB_MASK])
 
 // addr must be a physical address
 // This returns an executable address

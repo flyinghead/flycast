@@ -211,6 +211,7 @@ struct alignas(64) Sh4Context
 	}
 
 	static void DYNACALL UpdateFPSCR(Sh4Context *ctx);
+	void restoreHostRoundingMode();
 
 private:
 	union DoubleReg
@@ -240,8 +241,7 @@ struct alignas(PAGE_SIZE) Sh4RCB
 static_assert((sizeof(Sh4RCB) % PAGE_SIZE) == 0, "sizeof(Sh4RCB) not multiple of PAGE_SIZE");
 
 extern Sh4RCB* p_sh4rcb;
-#define sh4rcb (*p_sh4rcb)
-#define Sh4cntx (sh4rcb.cntx)
+#define Sh4cntx (p_sh4rcb->cntx)
 
 //Get an interface to sh4 interpreter
 Sh4Executor *Get_Sh4Interpreter();

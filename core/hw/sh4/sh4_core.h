@@ -5,7 +5,6 @@
 
 int UpdateSystem_INTC();
 bool UpdateSR();
-void RestoreHostRoundingMode();
 void setDefaultRoundingMode();
 
 struct SH4ThrownException

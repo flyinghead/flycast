@@ -50,22 +50,22 @@ public:
 	void regPreload(u32 reg, Xbyak::Operand::Code nreg)
 	{
 		DEBUG_LOG(DYNAREC, "RegPreload reg %d -> %s", reg, Xbyak::Reg32(nreg).toString());
-		mov(Xbyak::Reg32(nreg), dword[GetRegPtr(reg)]);
+		mov(Xbyak::Reg32(nreg), dword[GetRegPtr(sh4ctx, reg)]);
 	}
 	void regWriteback(u32 reg, Xbyak::Operand::Code nreg)
 	{
 		DEBUG_LOG(DYNAREC, "RegWriteback reg %d <- %s", reg, Xbyak::Reg32(nreg).toString());
-		mov(dword[GetRegPtr(reg)], Xbyak::Reg32(nreg));
+		mov(dword[GetRegPtr(sh4ctx, reg)], Xbyak::Reg32(nreg));
 	}
 	void regPreload_FPU(u32 reg, s8 nreg)
 	{
 		DEBUG_LOG(DYNAREC, "RegPreload_FPU reg %d -> xmm%d", reg, nreg);
-		movss(Xbyak::Xmm(nreg), dword[GetRegPtr(reg)]);
+		movss(Xbyak::Xmm(nreg), dword[GetRegPtr(sh4ctx, reg)]);
 	}
 	void regWriteback_FPU(u32 reg, s8 nreg)
 	{
 		DEBUG_LOG(DYNAREC, "RegWriteback_FPU reg %d <- xmm%d", reg, nreg);
-		movss(dword[GetRegPtr(reg)], Xbyak::Xmm(nreg));
+		movss(dword[GetRegPtr(sh4ctx, reg)], Xbyak::Xmm(nreg));
 	}
 
 	void genMainloop();

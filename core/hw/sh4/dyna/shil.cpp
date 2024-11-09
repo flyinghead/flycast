@@ -58,9 +58,9 @@ u32 getRegOffset(Sh4RegType reg)
 	}
 }
 
-u32* GetRegPtr(u32 reg)
+u32* GetRegPtr(Sh4Context& ctx, u32 reg)
 {
-	return (u32 *)((u8 *)&p_sh4rcb->cntx + getRegOffset((Sh4RegType)reg));
+	return (u32 *)((u8 *)&ctx + getRegOffset((Sh4RegType)reg));
 }
 
 std::string name_reg(Sh4RegType reg)

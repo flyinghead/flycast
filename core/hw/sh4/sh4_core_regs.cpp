@@ -139,11 +139,11 @@ void DYNACALL Sh4Context::UpdateFPSCR(Sh4Context *ctx)
 	setHostRoundingMode(ctx->fpscr.RM, ctx->fpscr.DN);
 }
 
-void RestoreHostRoundingMode()
+void Sh4Context::restoreHostRoundingMode()
 {
 	old_rm = 0xFF;
 	old_dn = 0xFF;
-	setHostRoundingMode(p_sh4rcb->cntx.fpscr.RM, p_sh4rcb->cntx.fpscr.DN);
+	setHostRoundingMode(fpscr.RM, fpscr.DN);
 }
 
 void setDefaultRoundingMode()
