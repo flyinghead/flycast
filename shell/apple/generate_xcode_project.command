@@ -31,7 +31,7 @@ if [[ -z "${VULKAN_SDK}" ]]; then
     fi
 fi
 
-cmake -B build -DCMAKE_BUILD_TYPE=Release $option -DCMAKE_XCODE_GENERATE_SCHEME=YES -G "Xcode"
+cmake -B build -DCMAKE_BUILD_TYPE=Release $option -DUSE_BREAKPAD=NO -DCMAKE_XCODE_GENERATE_SCHEME=YES -G "Xcode"
 
 nl=$'\n'
 /usr/bin/sed -i '' -E "s/launchStyle/customLLDBInitFile = \"\$(SRCROOT)\/shell\/apple\/\\${lldbinitfolder}\/LLDBInitFile\"\\${nl}launchStyle/g" build/flycast.xcodeproj/xcshareddata/xcschemes/flycast.xcscheme
