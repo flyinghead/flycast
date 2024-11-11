@@ -298,6 +298,8 @@ public:
 		framebuffers.clear();
 		colorAttachments.clear();
 		depthAttachment.reset();
+		transitionNeeded.clear();
+		clearNeeded.clear();
 		Drawer::Term();
 	}
 
@@ -333,6 +335,7 @@ private:
 	std::vector<bool> clearNeeded;
 	bool frameRendered = false;
 	float aspectRatio = 0.f;
+	bool emulateFramebuffer = false;
 };
 
 class TextureDrawer : public Drawer

@@ -636,6 +636,7 @@ void TextureDrawer::EndRenderPass()
 
 void ScreenDrawer::Init(SamplerManager *samplerManager, ShaderManager *shaderManager, const vk::Extent2D& viewport)
 {
+	emulateFramebuffer = config::EmulateFramebuffer;
 	this->shaderManager = shaderManager;
 	if (this->viewport != viewport)
 	{
@@ -747,7 +748,7 @@ vk::CommandBuffer ScreenDrawer::BeginRenderPass()
 		{
 			setImageLayout(commandBuffer, colorAttachments[GetCurrentImage()]->GetImage(), vk::Format::eR8G8B8A8Unorm,
 					1, vk::ImageLayout::eUndefined,
-					config::EmulateFramebuffer ? vk::ImageLayout::eTransferSrcOptimal : vk::ImageLayout::eShaderReadOnlyOptimal);
+					emulateFramebuffer ? vk::ImageLayout::eTransferSrcOptimal : vk::ImageLayout::eShaderReadOnlyOptimal);
 			transitionNeeded[GetCurrentImage()] = false;
 		}
 
@@ -774,7 +775,7 @@ void ScreenDrawer::EndRenderPass()
 	if (!renderPassStarted)
 		return;
 	currentCommandBuffer.endRenderPass();
-	if (config::EmulateFramebuffer)
+	if (emulateFramebuffer)
 	{
 		scaleAndWriteFramebuffer(currentCommandBuffer, colorAttachments[GetCurrentImage()].get());
 	}
