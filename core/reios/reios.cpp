@@ -501,7 +501,7 @@ static void reios_setup_naomi(u32 boot_addr) {
 		SR 0x60000000 0x00000001
 		FPSRC 0x00040001
 
-		-		xffr	0x13e1fe40	float [32]
+		-		xf,fr	0x13e1fe40	float [32]
 		[0x0]	1.00000000	float
 		[0x1]	0.000000000	float
 		[0x2]	0.000000000	float

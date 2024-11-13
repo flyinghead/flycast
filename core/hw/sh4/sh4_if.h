@@ -103,7 +103,7 @@ struct fpscr_t
 class Sh4Executor
 {
 public:
-	virtual ~Sh4Executor() {}
+	virtual ~Sh4Executor() = default;
 	virtual void Run() = 0;
 	virtual void Start() = 0;
 	virtual void Stop() = 0;
@@ -131,7 +131,8 @@ struct alignas(64) Sh4Context
 		{
 			SQBuffer sq_buffer[2];
 
-			f32 xffr[32];
+			float xf[16];
+			float fr[16];
 			u32 r[16];
 
 			union
@@ -170,44 +171,36 @@ struct alignas(64) Sh4Context
 		u64 raw[64];
 	};
 
-	f32& fr(int idx) {
-		assert(idx >= 0 && idx <= 15);
-		return xffr[idx + 16];
-	}
-	f32& xf(int idx) {
-		assert(idx >= 0 && idx <= 15);
-		return xffr[idx];
-	}
 	u32& fr_hex(int idx) {
 		assert(idx >= 0 && idx <= 15);
-		return reinterpret_cast<u32&>(fr(idx));
+		return reinterpret_cast<u32&>(fr[idx]);
 	}
 	u64& dr_hex(int idx) {
 		assert(idx >= 0 && idx <= 7);
-		return *reinterpret_cast<u64 *>(&fr(idx * 2));
+		return *reinterpret_cast<u64 *>(&fr[idx * 2]);
 	}
 	u64& xd_hex(int idx) {
 		assert(idx >= 0 && idx <= 7);
-		return *reinterpret_cast<u64 *>(&xf(idx * 2));
+		return *reinterpret_cast<u64 *>(&xf[idx * 2]);
 	}
 
-	f64 getDR(u32 n)
+	double getDR(u32 n)
 	{
 		assert(n <= 7);
 		DoubleReg t;
-		t.sgl[1] = fr(n * 2);
-		t.sgl[0] = fr(n * 2 + 1);
+		t.sgl[1] = fr[n * 2];
+		t.sgl[0] = fr[n * 2 + 1];
 
 		return t.dbl;
 	}
 
-	void setDR(u32 n, f64 val)
+	void setDR(u32 n, double val)
 	{
 		assert(n <= 7);
 		DoubleReg t;
 		t.dbl = val;
-		fr(n * 2) = t.sgl[1];
-		fr(n * 2 + 1) = t.sgl[0];
+		fr[n * 2] = t.sgl[1];
+		fr[n * 2 + 1] = t.sgl[0];
 	}
 
 	static void DYNACALL UpdateFPSCR(Sh4Context *ctx);
@@ -216,8 +209,8 @@ struct alignas(64) Sh4Context
 private:
 	union DoubleReg
 	{
-		f64 dbl;
-		f32 sgl[2];
+		double dbl;
+		float sgl[2];
 	};
 };
 static_assert(sizeof(Sh4Context) == 512, "Invalid Sh4Context size");
@@ -230,7 +223,8 @@ static_assert(sizeof(Sh4Context) == 512, "Invalid Sh4Context size");
 // want to be an i8r4 value that can be substracted in one op (such as 0x4100000)
 #define FPCB_PAD 0x100000
 #else
-#define FPCB_PAD PAGE_SIZE
+// For other systems we could use PAGE_SIZE, except on windows that has a 64 KB granularity for memory mapping
+#define FPCB_PAD 64_KB
 #endif
 struct alignas(PAGE_SIZE) Sh4RCB
 {

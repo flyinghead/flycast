@@ -25,11 +25,11 @@ u32 getRegOffset(Sh4RegType reg)
 	}
 	if (reg >= reg_fr_0 && reg <= reg_fr_15) {
 		const size_t regofs = (reg - reg_fr_0) * sizeof(float);
-		return offsetof(Sh4Context, xffr[16]) + regofs;
+		return offsetof(Sh4Context, fr[0]) + regofs;
 	}
 	if (reg >= reg_xf_0 && reg <= reg_xf_15) {
 		const size_t regofs = (reg - reg_xf_0) * sizeof(float);
-		return offsetof(Sh4Context, xffr[0]) + regofs;
+		return offsetof(Sh4Context, xf[0]) + regofs;
 	}
 	switch (reg)
 	{

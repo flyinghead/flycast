@@ -34,8 +34,8 @@ sh4op(i1111_nnnn_mmmm_0000)
 	{
 		u32 n = GetN(op);
 		u32 m = GetM(op);
-		ctx->fr(n) += ctx->fr(m);
-		CHECK_FPU_32(ctx->fr(n));
+		ctx->fr[n] += ctx->fr[m];
+		CHECK_FPU_32(ctx->fr[n]);
 	}
 	else
 	{
@@ -53,8 +53,8 @@ sh4op(i1111_nnnn_mmmm_0001)
 		u32 n = GetN(op);
 		u32 m = GetM(op);
 
-		ctx->fr(n) -= ctx->fr(m);
-		CHECK_FPU_32(ctx->fr(n));
+		ctx->fr[n] -= ctx->fr[m];
+		CHECK_FPU_32(ctx->fr[n]);
 	}
 	else
 	{
@@ -70,8 +70,8 @@ sh4op(i1111_nnnn_mmmm_0010)
 	{
 		u32 n = GetN(op);
 		u32 m = GetM(op);
-		ctx->fr(n) *= ctx->fr(m);
-		CHECK_FPU_32(ctx->fr(n));
+		ctx->fr[n] *= ctx->fr[m];
+		CHECK_FPU_32(ctx->fr[n]);
 	}
 	else
 	{
@@ -88,9 +88,9 @@ sh4op(i1111_nnnn_mmmm_0011)
 		u32 n = GetN(op);
 		u32 m = GetM(op);
 
-		ctx->fr(n) /= ctx->fr(m);
+		ctx->fr[n] /= ctx->fr[m];
 
-		CHECK_FPU_32(ctx->fr(n));
+		CHECK_FPU_32(ctx->fr[n]);
 	}
 	else
 	{
@@ -107,7 +107,7 @@ sh4op(i1111_nnnn_mmmm_0100)
 		u32 n = GetN(op);
 		u32 m = GetM(op);
 
-		ctx->sr.T = ctx->fr(m) == ctx->fr(n);
+		ctx->sr.T = ctx->fr[m] == ctx->fr[n];
 	}
 	else
 	{
@@ -122,7 +122,7 @@ sh4op(i1111_nnnn_mmmm_0101)
 		u32 n = GetN(op);
 		u32 m = GetM(op);
 
-		if (ctx->fr(n) > ctx->fr(m))
+		if (ctx->fr[n] > ctx->fr[m])
 			ctx->sr.T = 1;
 		else
 			ctx->sr.T = 0;
@@ -281,7 +281,7 @@ sh4op(i1111_nnnn_mmmm_1100)
 	{
 		u32 n = GetN(op);
 		u32 m = GetM(op);
-		ctx->fr(n) = ctx->fr(m);
+		ctx->fr[n] = ctx->fr[m];
 	}
 	else
 	{
@@ -339,14 +339,14 @@ sh4op(i1111_nnn0_1111_1101)
 	#ifdef NATIVE_FSCA
 			float rads = pi_index / (65536.0f / 2) * float(M_PI);
 
-			ctx->fr(n + 0) = sinf(rads);
-			ctx->fr(n + 1) = cosf(rads);
+			ctx->fr[n + 0] = sinf(rads);
+			ctx->fr[n + 1] = cosf(rads);
 
-			CHECK_FPU_32(ctx->fr(n));
-			CHECK_FPU_32(ctx->fr(n + 1));
+			CHECK_FPU_32(ctx->fr[n]);
+			CHECK_FPU_32(ctx->fr[n + 1]);
 	#else
-			ctx->fr(n + 0) = sin_table[pi_index].u[0];
-			ctx->fr(n + 1) = sin_table[pi_index].u[1];
+			ctx->fr[n + 0] = sin_table[pi_index].u[0];
+			ctx->fr[n + 1] = sin_table[pi_index].u[1];
 	#endif
 
 	}
@@ -360,8 +360,8 @@ sh4op(i1111_nnnn_0111_1101)
 	u32 n = GetN(op);
 	if (ctx->fpscr.PR==0)
 	{
-		ctx->fr(n) = 1.f / sqrtf(ctx->fr(n));
-		CHECK_FPU_32(ctx->fr(n));
+		ctx->fr[n] = 1.f / sqrtf(ctx->fr[n]);
+		CHECK_FPU_32(ctx->fr[n]);
 	}
 	else
 		iNimp("FSRRA : Double precision mode");
@@ -404,12 +404,12 @@ sh4op(i1111_nnmm_1110_1101)
 	int m=(GetN(op)&0x3)<<2;
 	if (ctx->fpscr.PR == 0)
 	{
-		double idp = (double)ctx->fr(n + 0) * ctx->fr(m + 0);
-		idp += (double)ctx->fr(n + 1) * ctx->fr(m + 1);
-		idp += (double)ctx->fr(n + 2) * ctx->fr(m + 2);
-		idp += (double)ctx->fr(n + 3) * ctx->fr(m + 3);
+		double idp = (double)ctx->fr[n + 0] * ctx->fr[m + 0];
+		idp += (double)ctx->fr[n + 1] * ctx->fr[m + 1];
+		idp += (double)ctx->fr[n + 2] * ctx->fr[m + 2];
+		idp += (double)ctx->fr[n + 3] * ctx->fr[m + 3];
 
-		ctx->fr(n + 3) = fixNaN((float)idp);
+		ctx->fr[n + 3] = fixNaN((float)idp);
 	}
 	else
 	{
@@ -425,7 +425,7 @@ sh4op(i1111_nnnn_1000_1101)
 
 	u32 n = GetN(op);
 
-	ctx->fr(n) = 0.0f;
+	ctx->fr[n] = 0.0f;
 
 }
 
@@ -437,7 +437,7 @@ sh4op(i1111_nnnn_1001_1101)
 
 	u32 n = GetN(op);
 
-	ctx->fr(n) = 1.0f;
+	ctx->fr[n] = 1.0f;
 }
 
 //flds <FREG_N>,FPUL
@@ -461,7 +461,7 @@ sh4op(i1111_nnnn_0010_1101)
 	if (ctx->fpscr.PR == 0)
 	{
 		u32 n = GetN(op);
-		ctx->fr(n) = (float)(int)ctx->fpul;
+		ctx->fr[n] = (float)(int)ctx->fpul;
 	}
 	else
 	{
@@ -503,8 +503,8 @@ sh4op(i1111_nnnn_0110_1101)
 	{
 		u32 n = GetN(op);
 
-		ctx->fr(n) = sqrtf(ctx->fr(n));
-		CHECK_FPU_32(ctx->fr(n));
+		ctx->fr[n] = sqrtf(ctx->fr[n]);
+		CHECK_FPU_32(ctx->fr[n]);
 	}
 	else
 	{
@@ -519,14 +519,14 @@ sh4op(i1111_nnnn_0011_1101)
 	if (ctx->fpscr.PR == 0)
 	{
 		u32 n = GetN(op);
-		ctx->fpul = (u32)(s32)ctx->fr(n);
+		ctx->fpul = (u32)(s32)ctx->fr[n];
 
 		if ((s32)ctx->fpul > 0x7fffff80)
 			ctx->fpul = 0x7fffffff;
 		// Intel CPUs convert out of range float numbers to 0x80000000. Manually set the correct sign
-		else if (ctx->fpul == 0x80000000 && ctx->fr(n) == ctx->fr(n))
+		else if (ctx->fpul == 0x80000000 && ctx->fr[n] == ctx->fr[n])
 		{
-			if (*(int *)&ctx->fr(n) > 0) // Using integer math to avoid issues with Inf and NaN
+			if (*(int *)&ctx->fr[n] > 0) // Using integer math to avoid issues with Inf and NaN
 				ctx->fpul--;
 		}
 	}
@@ -554,8 +554,8 @@ sh4op(i1111_nnnn_mmmm_1110)
 		u32 n = GetN(op);
 		u32 m = GetM(op);
 
-		ctx->fr(n) = std::fma(ctx->fr(0), ctx->fr(m), ctx->fr(n));
-		CHECK_FPU_32(ctx->fr(n));
+		ctx->fr[n] = std::fma(ctx->fr[0], ctx->fr[m], ctx->fr[n]);
+		CHECK_FPU_32(ctx->fr[n]);
 	}
 	else
 	{
@@ -578,30 +578,30 @@ sh4op(i1111_nn01_1111_1101)
 
 	if (ctx->fpscr.PR==0)
 	{
-		double v1 = (double)ctx->xf(0)  * ctx->fr(n + 0) +
-					(double)ctx->xf(4)  * ctx->fr(n + 1) +
-					(double)ctx->xf(8)  * ctx->fr(n + 2) +
-					(double)ctx->xf(12) * ctx->fr(n + 3);
+		double v1 = (double)ctx->xf[0]  * ctx->fr[n + 0] +
+					(double)ctx->xf[4]  * ctx->fr[n + 1] +
+					(double)ctx->xf[8]  * ctx->fr[n + 2] +
+					(double)ctx->xf[12] * ctx->fr[n + 3];
 
-		double v2 = (double)ctx->xf(1)  * ctx->fr(n + 0) +
-					(double)ctx->xf(5)  * ctx->fr(n + 1) +
-					(double)ctx->xf(9)  * ctx->fr(n + 2) +
-					(double)ctx->xf(13) * ctx->fr(n + 3);
+		double v2 = (double)ctx->xf[1]  * ctx->fr[n + 0] +
+					(double)ctx->xf[5]  * ctx->fr[n + 1] +
+					(double)ctx->xf[9]  * ctx->fr[n + 2] +
+					(double)ctx->xf[13] * ctx->fr[n + 3];
 
-		double v3 = (double)ctx->xf(2)  * ctx->fr(n + 0) +
-					(double)ctx->xf(6)  * ctx->fr(n + 1) +
-					(double)ctx->xf(10) * ctx->fr(n + 2) +
-					(double)ctx->xf(14) * ctx->fr(n + 3);
+		double v3 = (double)ctx->xf[2]  * ctx->fr[n + 0] +
+					(double)ctx->xf[6]  * ctx->fr[n + 1] +
+					(double)ctx->xf[10] * ctx->fr[n + 2] +
+					(double)ctx->xf[14] * ctx->fr[n + 3];
 
-		double v4 = (double)ctx->xf(3)  * ctx->fr(n + 0) +
-					(double)ctx->xf(7)  * ctx->fr(n + 1) +
-					(double)ctx->xf(11) * ctx->fr(n + 2) +
-					(double)ctx->xf(15) * ctx->fr(n + 3);
+		double v4 = (double)ctx->xf[3]  * ctx->fr[n + 0] +
+					(double)ctx->xf[7]  * ctx->fr[n + 1] +
+					(double)ctx->xf[11] * ctx->fr[n + 2] +
+					(double)ctx->xf[15] * ctx->fr[n + 3];
 
-		ctx->fr(n + 0) = fixNaN((float)v1);
-		ctx->fr(n + 1) = fixNaN((float)v2);
-		ctx->fr(n + 2) = fixNaN((float)v3);
-		ctx->fr(n + 3) = fixNaN((float)v4);
+		ctx->fr[n + 0] = fixNaN((float)v1);
+		ctx->fr[n + 1] = fixNaN((float)v2);
+		ctx->fr[n + 2] = fixNaN((float)v3);
+		ctx->fr[n + 3] = fixNaN((float)v4);
 	}
 	else
 	{

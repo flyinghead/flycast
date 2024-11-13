@@ -2007,14 +2007,14 @@ void Arm32Assembler::compileOp(RuntimeBlockInfo* block, shil_opcode* op, bool op
 				QRegister _r1 = q0;
 				QRegister _r2 = q0;
 
-				Sub(r0, r8, op->rs1.reg_aofs());
-				if (op->rs2.reg_aofs() == op->rs1.reg_aofs())
+				Sub(r0, r8, -op->rs1.reg_nofs());
+				if (op->rs2.reg_nofs() == op->rs1.reg_nofs())
 				{
 					Vldm(r0, NO_WRITE_BACK, DRegisterList(d0, 2));
 				}
 				else
 				{
-					Sub(r1, r8, op->rs2.reg_aofs());
+					Sub(r1, r8, -op->rs2.reg_nofs());
 					Vldm(r0, NO_WRITE_BACK, DRegisterList(d0, 2));
 					Vldm(r1, NO_WRITE_BACK, DRegisterList(d2, 2));
 					_r2 = q1;
@@ -2039,12 +2039,12 @@ void Arm32Assembler::compileOp(RuntimeBlockInfo* block, shil_opcode* op, bool op
 		case shop_ftrv:
 			{
 				Register rdp = r1;
-				Sub(r2, r8, op->rs2.reg_aofs());
-				Sub(r1, r8, op->rs1.reg_aofs());
-				if (op->rs1.reg_aofs() != op->rd.reg_aofs())
+				Sub(r2, r8, -op->rs2.reg_nofs());
+				Sub(r1, r8, -op->rs1.reg_nofs());
+				if (op->rs1.reg_nofs() != op->rd.reg_nofs())
 				{
 					rdp = r0;
-					Sub(r0, r8, op->rd.reg_aofs());
+					Sub(r0, r8, -op->rd.reg_nofs());
 				}
 	
 #if 1
@@ -2100,8 +2100,8 @@ void Arm32Assembler::compileOp(RuntimeBlockInfo* block, shil_opcode* op, bool op
 			break;
 
 		case shop_frswap:
-			Sub(r0, r8, op->rs1.reg_aofs());
-			Sub(r1, r8, op->rd.reg_aofs());
+			Sub(r0, r8, -op->rs1.reg_nofs());
+			Sub(r1, r8, -op->rd.reg_nofs());
 			//Assumes no FPU reg alloc here
 			//frswap touches all FPU regs, so all spans should be clear here ..
 			Vldm(r1, NO_WRITE_BACK, DRegisterList(d0, 8));

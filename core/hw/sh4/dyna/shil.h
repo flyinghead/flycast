@@ -234,7 +234,6 @@ struct shil_param
 	u32* reg_ptr(Sh4Context& ctx) const { verify(is_reg()); return GetRegPtr(ctx, _reg); }
 	u32  reg_offset() const { verify(is_reg()); return getRegOffset(_reg); }
 	s32  reg_nofs() const { verify(is_reg()); return (int)getRegOffset(_reg) - sizeof(Sh4Context); }
-	u32  reg_aofs() const { return -reg_nofs(); }
 
 	u32 imm_value() const { verify(is_imm()); return _imm; }
 

@@ -133,7 +133,7 @@ void DYNACALL Sh4Context::UpdateFPSCR(Sh4Context *ctx)
 {
 	if (ctx->fpscr.FR != ctx->old_fpscr.FR)
 		// FPU bank change
-		std::swap((f32 (&)[16])ctx->xffr, *(f32 (*)[16])&ctx->xffr[16]);
+		std::swap(ctx->xf, ctx->fr);
 
 	ctx->old_fpscr = ctx->fpscr;
 	setHostRoundingMode(ctx->fpscr.RM, ctx->fpscr.DN);
