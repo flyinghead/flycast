@@ -33,7 +33,6 @@ const char *SERVER_NAME = "vfnet.flyca.st";
 
 NetDimm::NetDimm(u32 size) : GDCartridge(size)
 {
-	schedId = sh4_sched_register(0, schedCallback, this);
 	if (serverIp == 0)
 	{
 		hostent *hp = gethostbyname(SERVER_NAME);
@@ -44,84 +43,11 @@ NetDimm::NetDimm(u32 size) : GDCartridge(size)
 	}
 }
 
-NetDimm::~NetDimm()
-{
-	sh4_sched_unregister(schedId);
-}
-
 void NetDimm::Init(LoadProgress *progress, std::vector<u8> *digest)
 {
 	GDCartridge::Init(progress, digest);
 	dimmBufferOffset = dimm_data_size - 16_MB;
 	finalTuned = strcmp(game->name, "vf4tuned") == 0;
-}
-
-u32 NetDimm::ReadMem(u32 address, u32 size)
-{
-	switch (address)
-	{
-	case NAOMI_DIMM_COMMAND:
-		DEBUG_LOG(NAOMI, "DIMM COMMAND read -> %x", dimm_command);
-		return dimm_command;
-	case NAOMI_DIMM_OFFSETL:
-		DEBUG_LOG(NAOMI, "DIMM OFFSETL read -> %x", dimm_offsetl);
-		return dimm_offsetl;
-	case NAOMI_DIMM_PARAMETERL:
-		DEBUG_LOG(NAOMI, "DIMM PARAMETERL read -> %x", dimm_parameterl);
-		return dimm_parameterl;
-	case NAOMI_DIMM_PARAMETERH:
-		DEBUG_LOG(NAOMI, "DIMM PARAMETERH read -> %x", dimm_parameterh);
-		return dimm_parameterh;
-	case NAOMI_DIMM_STATUS:
-		{
-			u32 rc =  DIMM_STATUS & ~(((SB_ISTEXT >> 3) & 1) << 8);
-			static u32 lastRc;
-			if (rc != lastRc)
-				DEBUG_LOG(NAOMI, "DIMM STATUS read -> %x", rc);
-			lastRc = rc;
-			return rc;
-		}
-	default:
-		return GDCartridge::ReadMem(address, size);
-	}
-}
-
-void NetDimm::WriteMem(u32 address, u32 data, u32 size)
-{
-	switch (address)
-	{
-	case NAOMI_DIMM_COMMAND:
-		dimm_command = data;
-		DEBUG_LOG(NAOMI, "DIMM COMMAND Write<%d>: %x", size, data);
-		return;
-
-	case NAOMI_DIMM_OFFSETL:
-		dimm_offsetl = data;
-		DEBUG_LOG(NAOMI, "DIMM OFFSETL Write<%d>: %x", size, data);
-		return;
-	case NAOMI_DIMM_PARAMETERL:
-		dimm_parameterl = data;
-		DEBUG_LOG(NAOMI, "DIMM PARAMETERL Write<%d>: %x", size, data);
-		return;
-	case NAOMI_DIMM_PARAMETERH:
-		dimm_parameterh = data;
-		DEBUG_LOG(NAOMI, "DIMM PARAMETERH Write<%d>: %x", size, data);
-		return;
-
-	case NAOMI_DIMM_STATUS:
-		DEBUG_LOG(NAOMI, "DIMM STATUS Write<%d>: %x", size, data);
-		if (data & 0x100)
-			// write 0 seems ignored
-			asic_CancelInterrupt(holly_EXP_PCI);
-		if ((data & 1) == 0)
-			// irq to dimm
-			process();
-		return;
-
-	default:
-		GDCartridge::WriteMem(address, data, size);
-		return;
-	}
 }
 
 bool NetDimm::Write(u32 offset, u32 size, u32 data)
@@ -135,11 +61,6 @@ bool NetDimm::Write(u32 offset, u32 size, u32 data)
 		memcpy(&dimm_data[addr], &data, std::min(size, dimm_data_size - addr));
 	}
 	return true;
-}
-
-int NetDimm::schedCallback(int tag, int sch_cycl, int jitter, void *arg)
-{
-	return ((NetDimm *)arg)->schedCallback();
 }
 
 int NetDimm::schedCallback()
@@ -356,16 +277,6 @@ int NetDimm::schedCallback()
 	return SH4_MAIN_CLOCK;
 }
 
-void NetDimm::returnToNaomi(bool failed, u16 offsetl, u32 parameter)
-{
-	dimm_command = ((dimm_command & 0x7e00) + 0x400) | (failed ? 0xff : 0x4);
-	dimm_offsetl = offsetl;
-	dimm_parameterh = parameter >> 16;
-	dimm_parameterl = parameter;
-	verify(((SB_ISTEXT >> 3) & 1) == 0);
-	asic_RaiseInterrupt(holly_EXP_PCI);
-}
-
 void NetDimm::systemCmd(int cmd)
 {
 	switch (cmd)
@@ -386,6 +297,8 @@ void NetDimm::systemCmd(int cmd)
 			addrspace::write32(0xc01fc04, (3 << 16) | 0x70000000 | (dimmBufferOffset >> 20));	// dimm board config 1 x 512 MB
 		else if (dimm_data_size == 256_MB)
 			addrspace::write32(0xc01fc04, (2 << 16) | 0x70000000 | (dimmBufferOffset >> 20));	// dimm board config 1 x 256 MB
+		else if (dimm_data_size == 128_MB)
+			addrspace::write32(0xc01fc04, (1 << 16) | 0x70000000 | (dimmBufferOffset >> 20));	// dimm board config 1 x 128 MB
 		else
 			die("Unsupported dimm mem size");
 		addrspace::write32(0xc01fc0c, 0x3170000 | 0x264);		// fw version | 100/264/364?
@@ -397,10 +310,14 @@ void NetDimm::systemCmd(int cmd)
 		addrspace::write32(0xc01fc24, 0x3e000a);
 		addrspace::write32(0xc01fc28, 0x18077f);
 		addrspace::write32(0xc01fc2c, 0x10014);
-		// PIC16?
-		//addrspace::write32(0xc01fc40, .);
-		// ...
-		//addrspace::write32(0xc01fc54, .);
+		// DIMM board serial Id
+		{
+			const u32 *serial = (u32 *)(getGameSerialId() + 0x20);	// get only the serial id
+			addrspace::write32(0xc01fc40, *serial++);
+			addrspace::write32(0xc01fc44, *serial++);
+			addrspace::write32(0xc01fc48, *serial++);
+			addrspace::write32(0xc01fc4c, *serial++);
+		}
 		addrspace::write32(0xc01fc18, 0x10002);	// net mode (2 or 4 is mobile), bit 16 dhcp?
 		// network order
 		addrspace::write32(0xc01fc60, htonl(0xc0a80101));	// ip address (192.168.1.1)
@@ -810,20 +727,10 @@ void NetDimm::process()
 		netCmd(cmd);
 		break;
 	default:
-		WARN_LOG(NAOMI, "Unknown DIMM command group %d cmd %x\n", cmdGroup, cmd);
+		WARN_LOG(NAOMI, "Unknown DIMM command group %d cmd %x", cmdGroup, cmd);
 		returnToNaomi(true, 0, -1);
 		break;
 	}
-}
-
-void NetDimm::Serialize(Serializer &ser) const
-{
-	GDCartridge::Serialize(ser);
-	ser << dimm_command;
-	ser << dimm_offsetl;
-	ser << dimm_parameterl;
-	ser << dimm_parameterh;
-	sh4_sched_serialize(ser, schedId);
 }
 
 void NetDimm::Deserialize(Deserializer &deser)
@@ -831,8 +738,9 @@ void NetDimm::Deserialize(Deserializer &deser)
 	GDCartridge::Deserialize(deser);
 	for (Socket& socket : sockets)
 		socket.close();
-	if (deser.version() >= Deserializer::V36)
+	if (deser.version() >= Deserializer::V36 && deser.version() < Deserializer::V53)
 	{
+		// moved to parent class in v53
 		deser >> dimm_command;
 		deser >> dimm_offsetl;
 		deser >> dimm_parameterl;

@@ -14,6 +14,13 @@
 #include "stdclass.h"
 #include "emulator.h"
 #include "oslib/storage.h"
+#include "naomi_regs.h"
+#include "hw/holly/sb.h"
+#include "hw/holly/holly_intc.h"
+#include "hw/mem/addrspace.h"
+#include "serialize.h"
+#include "hw/sh4/sh4_sched.h"
+#include "naomi.h"
 
 /*
 
@@ -641,4 +648,236 @@ bool GDCartridge::Read(u32 offset, u32 size, void *dst)
 	u32 addr = offset & (dimm_data_size-1);
 	memcpy(dst, &dimm_data[addr], std::min(size, dimm_data_size - addr));
 	return true;
+}
+
+GDCartridge::GDCartridge(u32 size) : NaomiCartridge(size)
+{
+	schedId = sh4_sched_register(0, [](int tag, int sch_cycl, int jitter, void *arg){
+		return ((GDCartridge *)arg)->schedCallback();
+	}, this);
+}
+
+GDCartridge::~GDCartridge()
+{
+	free(dimm_data);
+	sh4_sched_unregister(schedId);
+}
+
+u32 GDCartridge::ReadMem(u32 address, u32 size)
+{
+	switch (address)
+	{
+	case NAOMI_DIMM_COMMAND:
+		DEBUG_LOG(NAOMI, "DIMM COMMAND read -> %x", dimm_command);
+		return dimm_command;
+	case NAOMI_DIMM_OFFSETL:
+		DEBUG_LOG(NAOMI, "DIMM OFFSETL read -> %x", dimm_offsetl);
+		return dimm_offsetl;
+	case NAOMI_DIMM_PARAMETERL:
+		DEBUG_LOG(NAOMI, "DIMM PARAMETERL read -> %x", dimm_parameterl);
+		return dimm_parameterl;
+	case NAOMI_DIMM_PARAMETERH:
+		DEBUG_LOG(NAOMI, "DIMM PARAMETERH read -> %x", dimm_parameterh);
+		return dimm_parameterh;
+	case NAOMI_DIMM_STATUS:
+		{
+			u32 rc =  DIMM_STATUS & ~(((SB_ISTEXT >> 3) & 1) << 8);
+			static u32 lastRc;
+			if (rc != lastRc)
+				DEBUG_LOG(NAOMI, "DIMM STATUS read -> %x", rc);
+			lastRc = rc;
+			return rc;
+		}
+	default:
+		return NaomiCartridge::ReadMem(address, size);
+	}
+}
+
+void GDCartridge::WriteMem(u32 address, u32 data, u32 size)
+{
+	switch (address)
+	{
+	case NAOMI_DIMM_COMMAND:
+		dimm_command = data;
+		DEBUG_LOG(NAOMI, "DIMM COMMAND Write<%d>: %x", size, data);
+		return;
+
+	case NAOMI_DIMM_OFFSETL:
+		dimm_offsetl = data;
+		DEBUG_LOG(NAOMI, "DIMM OFFSETL Write<%d>: %x", size, data);
+		return;
+	case NAOMI_DIMM_PARAMETERL:
+		dimm_parameterl = data;
+		DEBUG_LOG(NAOMI, "DIMM PARAMETERL Write<%d>: %x", size, data);
+		return;
+	case NAOMI_DIMM_PARAMETERH:
+		dimm_parameterh = data;
+		DEBUG_LOG(NAOMI, "DIMM PARAMETERH Write<%d>: %x", size, data);
+		return;
+
+	case NAOMI_DIMM_STATUS:
+		DEBUG_LOG(NAOMI, "DIMM STATUS Write<%d>: %x", size, data);
+		if (data & 0x100)
+			// write 0 seems ignored
+			asic_CancelInterrupt(holly_EXP_PCI);
+		if ((data & 1) == 0)
+			// irq to dimm
+			process();
+		return;
+
+	default:
+		NaomiCartridge::WriteMem(address, data, size);
+		return;
+	}
+}
+
+void GDCartridge::process()
+{
+	INFO_LOG(NAOMI, "NetDIMM cmd %04x sock %d offset %04x paramh/l %04x %04x", (dimm_command >> 9) & 0x3f,
+			dimm_command & 0xff, dimm_offsetl, dimm_parameterh, dimm_parameterl);
+
+	int cmdGroup = (dimm_command >> 13) & 3;
+	int cmd = (dimm_command >> 9) & 0xf;
+	switch (cmdGroup)
+	{
+	case 0:	// system commands
+		systemCmd(cmd);
+		break;
+	case 1: // network commands
+		WARN_LOG(NAOMI, "Network command received cmd %x. Need full NetDIMM?", cmd);
+		returnToNaomi(true, 0, -1);
+		break;
+	default:
+		WARN_LOG(NAOMI, "Unknown DIMM command group %d cmd %x", cmdGroup, cmd);
+		returnToNaomi(true, 0, -1);
+		break;
+	}
+}
+
+void GDCartridge::returnToNaomi(bool failed, u16 offsetl, u32 parameter)
+{
+	dimm_command = ((dimm_command & 0x7e00) + 0x400) | (failed ? 0xff : 0x4);
+	dimm_offsetl = offsetl;
+	dimm_parameterh = parameter >> 16;
+	dimm_parameterl = parameter;
+	verify(((SB_ISTEXT >> 3) & 1) == 0);
+	asic_RaiseInterrupt(holly_EXP_PCI);
+}
+
+void GDCartridge::systemCmd(int cmd)
+{
+	switch (cmd)
+	{
+	case 0xf:	// startup
+		INFO_LOG(NAOMI, "NetDIMM startup");
+		// bit 16,17: dimm0 size (none, 128, 256, 512)
+		// bit 18,19: dimm1 size
+		// bit 28: network enabled (network settings appear in bios menu)
+		// bit 29: set
+		// bit 30: gd-rom connected
+		// bit 31: mobile/ppp network?
+		// (| 30, 70, F0, 1F0, 3F0, 7F0)
+		// | offset >> 20 (dimm buffers offset @ size - 16MB)
+		// offset = (64MB << 0-5) - 16MB
+		// vf4 forces this value to 0f000000 (256MB) if != 1f000000 (512MB)
+		if (dimm_data_size == 512_MB)
+			addrspace::write32(0xc01fc04, (3 << 16) | 0x60000000 | (dimm_data_size >> 20));	// dimm board config 1 x 512 MB
+		else if (dimm_data_size == 256_MB)
+			addrspace::write32(0xc01fc04, (2 << 16) | 0x60000000 | (dimm_data_size >> 20));	// dimm board config 1 x 256 MB
+		else
+			addrspace::write32(0xc01fc04, (1 << 16) | 0x60000000 | (dimm_data_size >> 20));	// dimm board config 1 x 128 MB
+		addrspace::write32(0xc01fc0c, 0x1020000 | 0x264);		// fw version 1.02
+		// DIMM board serial Id
+		{
+			const u32 *serial = (u32 *)(getGameSerialId() + 0x20);	// get only the serial id
+			addrspace::write32(0xc01fc40, *serial++);
+			addrspace::write32(0xc01fc44, *serial++);
+			addrspace::write32(0xc01fc48, *serial++);
+			addrspace::write32(0xc01fc4c, *serial++);
+		}
+		// SET_BASE_ADDRESS(0c000000, 0)
+		dimm_command = 0x8600;
+		dimm_offsetl = 0;
+		dimm_parameterl = 0;
+		dimm_parameterh = 0x0c00;
+		asic_RaiseInterrupt(holly_EXP_PCI);
+		sh4_sched_request(schedId, SH4_MAIN_CLOCK);
+
+		break;
+
+	case 0:		// nop
+	case 1:		// control read
+	case 3:		// set base address
+	case 4:		// peek8
+	case 5:		// peek16
+	case 6:		// peek32
+	case 8:		// poke8
+	case 9:		// poke16
+	case 10:	// poke32
+		// These are callbacks from naomi
+		INFO_LOG(NAOMI, "System callback command %x", cmd);
+		break;
+
+	default:
+		WARN_LOG(NAOMI, "Unknown system command %x", cmd);
+		break;
+	}
+}
+
+void GDCartridge::Serialize(Serializer &ser) const
+{
+	NaomiCartridge::Serialize(ser);
+	ser << dimm_command;
+	ser << dimm_offsetl;
+	ser << dimm_parameterl;
+	ser << dimm_parameterh;
+	sh4_sched_serialize(ser, schedId);
+}
+
+void GDCartridge::Deserialize(Deserializer &deser)
+{
+	NaomiCartridge::Deserialize(deser);
+	if (deser.version() >= Deserializer::V53)
+	{
+		deser >> dimm_command;
+		deser >> dimm_offsetl;
+		deser >> dimm_parameterl;
+		deser >> dimm_parameterh;
+		sh4_sched_deserialize(deser, schedId);
+	}
+}
+
+int GDCartridge::schedCallback()
+{
+	if (SB_ISTEXT & 8)	// holly_EXP_PCI
+		return SH4_MAIN_CLOCK;
+
+	// regularly peek the test request address
+	peek<u32>(0xc01fc08);
+	asic_RaiseInterrupt(holly_EXP_PCI);
+
+	u32 testRequest = addrspace::read32(0xc01fc08);
+	if (testRequest & 1)
+	{
+		// bios dimm (fake) test
+		addrspace::write32(0xc01fc08, testRequest & ~1);
+		bool isMem;
+		char *p = (char *)addrspace::writeConst(0xc01fd00, isMem, 4);
+		strcpy(p, "CHECKING DIMM BD");
+		p = (char *)addrspace::writeConst(0xc01fd10, isMem, 4);
+		strcpy(p, "DIMM0 - GOOD");
+		p = (char *)addrspace::writeConst(0xc01fd20, isMem, 4);
+		strcpy(p, "DIMM1 - GOOD");
+		p = (char *)addrspace::writeConst(0xc01fd30, isMem, 4);
+		strcpy(p, "--- COMPLETED---");
+		addrspace::write32(0xc01fc0c, 0x0102a264);
+	}
+	else if (testRequest != 0)
+	{
+		addrspace::write32(0xc01fc08, 0);
+		addrspace::write32(0xc01fc0c, 0x03170100);
+		INFO_LOG(NAOMI, "TEST REQUEST %x", testRequest);
+	}
+
+	return SH4_MAIN_CLOCK;
 }

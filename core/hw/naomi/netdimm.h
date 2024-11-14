@@ -24,23 +24,18 @@ class NetDimm : public GDCartridge
 {
 public:
 	NetDimm(u32 size);
-	~NetDimm() override;
 
 	void Init(LoadProgress *progress = nullptr, std::vector<u8> *digest = nullptr) override;
 
-	u32 ReadMem(u32 address, u32 size) override;
-	void WriteMem(u32 address, u32 data, u32 size) override;
-
 	bool Write(u32 offset, u32 size, u32 data) override;
 
-	void Serialize(Serializer &ser) const override;
 	void Deserialize(Deserializer &deser) override;
 
+protected:
+	void process() override;
+	int schedCallback() override;
+
 private:
-	void returnToNaomi(bool failed, u16 offsetl, u32 parameter);
-	static int schedCallback(int tag, int sch_cycl, int jitter, void *arg);
-	int schedCallback();
-	void process();
 	void systemCmd(int cmd);
 	void netCmd(int cmd);
 
@@ -67,29 +62,6 @@ private:
 		dimm_parameterh = value >> 16;
 	}
 
-	template<typename T>
-	void peek(u32 address)
-	{
-		static_assert(sizeof(T) == 1 || sizeof(T) == 2 || sizeof(T) == 4);
-		int size;
-		switch (sizeof(T))
-		{
-		case 1:
-			size = 4;
-			break;
-		case 2:
-			size = 5;
-			break;
-		case 4:
-			size = 6;
-			break;
-		}
-		dimm_command = ((address >> 16) & 0x1ff) | (size << 9) | 0x8000;
-		dimm_offsetl = address & 0xffff;
-		dimm_parameterl = 0;
-		dimm_parameterh = 0;
-	}
-
 	sock_t getSocket(int idx)
 	{
 		if (idx < 1 || idx > (int)sockets.size())
@@ -104,13 +76,6 @@ private:
 				return true;
 		return false;
 	}
-
-	u16 dimm_command;
-	u16 dimm_offsetl;
-	u16 dimm_parameterl;
-	u16 dimm_parameterh;
-	static constexpr u16 DIMM_STATUS = 0x111;
-	int schedId;
 
 	struct Socket {
 		Socket() = default;

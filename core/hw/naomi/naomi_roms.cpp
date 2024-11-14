@@ -143,6 +143,43 @@ const BIOS_t BIOS[] =
 		}
 	},
 	{
+		"naomidev",
+		{
+			//ROM_SYSTEM_BIOS( 21, "bios21", "Set4 Dev BIOS" )
+			//{ 0, "boot_rom_64b8.ic606", 0x000000, 0x080000, 0x7a50fab9 },
+			//ROM_SYSTEM_BIOS( 22, "bios22", "Dev BIOS v1.10" )
+			{ 0, "develop110.ic27", 0x000000, 0x200000, 0xde7cfdb0 },
+			//ROM_SYSTEM_BIOS( 23, "bios23", "Dev BIOS (Nov 1998)" )
+			//{ 0, "develop.ic27", 0x000000, 0x200000, 0x309a196a },
+		},
+		"naomi",
+	},
+	{
+		"naomigd",
+		{
+			//ROM_SYSTEM_BIOS( 2, "bios2", "epr-21576h (Japan)" )
+			{ 0, "epr-21576h.ic27", 0x000000, 0x200000, 0xd4895685 },
+			//ROM_SYSTEM_BIOS( 1, "bios1", "epr-21576g (Japan)" )
+			{ 0, "epr-21576g.ic27", 0x000000, 0x200000, 0xd2a1c6bf },
+			//ROM_SYSTEM_BIOS( 0, "bios0", "epr-21576e (Japan)" )
+			{ 0, "epr-21576e.ic27", 0x000000, 0x200000, 0x08c0add7 },
+
+			//ROM_SYSTEM_BIOS( 3, "bios3", "epr-21578h (Export)" )
+			{ 2, "epr-21578h.ic27", 0x000000, 0x200000, 0x7b452946 },
+			//ROM_SYSTEM_BIOS( 4, "bios4", "epr-21578g (Export)" )
+			{ 2, "epr-21578g.ic27", 0x000000, 0x200000, 0x55413214 },
+			//ROM_SYSTEM_BIOS( 5, "bios5", "epr-21578e (Export)" )
+			{ 2, "epr-21578e.ic27", 0x000000, 0x200000, 0x087f09a3 },
+
+			//ROM_SYSTEM_BIOS( 6, "bios6", "epr-21577h (USA)" )
+			{ 1, "epr-21577h.ic27", 0x000000, 0x200000, 0xfdf17452 },
+			//ROM_SYSTEM_BIOS( 7, "bios7", "epr-21577g (USA)" )
+			{ 1, "epr-21577g.ic27", 0x000000, 0x200000, 0x25f64af7 },
+			//ROM_SYSTEM_BIOS( 8, "bios8", "epr-21577e (USA)" )
+			{ 1, "epr-21577e.ic27", 0x000000, 0x200000, 0xcf36e97b },
+		},
+	},
+	{
 		"naomi2",
 		{
 			// epr-23605c (Japan)
@@ -205,7 +242,7 @@ const Game Games[] =
         "Giant Gram 2000",
         0x0b000000,
         0x7f805c3f,
-        NULL,
+        "naomi",
         M1,
         ROT0,
         {

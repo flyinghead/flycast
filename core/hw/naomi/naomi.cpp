@@ -217,9 +217,18 @@ void naomi_reg_Init()
 		dmaSchedId = sh4_sched_register(0, naomiDmaSched);
 }
 
+// Sets the full content of the rom board serial eeprom (132 bytes)
+// including response to reset and read/write passwords.
 void setGameSerialId(const u8 *data)
 {
 	romSerialId.setData(data);
+}
+
+// Return the protected data from the rom board serial eeprom (112 bytes)
+// excluding response to reset and passwords.
+const u8 *getGameSerialId()
+{
+	return romSerialId.getProtectedData();
 }
 
 void naomi_reg_Term()

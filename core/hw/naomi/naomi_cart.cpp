@@ -291,7 +291,9 @@ static void loadMameRom(const std::string& path, const std::string& fileName, Lo
 		case GD:
 			{
 				GDCartridge *gdcart;
-				if (strncmp(game->name, "vf4", 3) == 0)
+				if (strncmp(game->name, "vf4", 3) == 0
+						|| strcmp(game->name, "mj1") == 0
+						|| strncmp(game->name, "wccf", 4) == 0)
 					gdcart = new NetDimm(game->size);
 				else
 					gdcart = new GDCartridge(game->size);
@@ -1060,7 +1062,9 @@ void NaomiCartridge::WriteMem(u32 address, u32 data, u32 size)
 	}
 	if (multiboard != nullptr)
 		multiboard->writeG1(address, size, data);
-	else
+	else if (address != NAOMI_MBOARD_DATA_addr
+			&& address != NAOMI_MBOARD_OFFSET_addr
+			&& address != NAOMI_MBOARD_STATUS_addr)
 		DEBUG_LOG(NAOMI, "naomiCart::WriteMem<%d>: unknown %08x <= %x", size, address, data);
 }
 
