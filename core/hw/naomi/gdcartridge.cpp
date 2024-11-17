@@ -21,6 +21,7 @@
 #include "serialize.h"
 #include "hw/sh4/sh4_sched.h"
 #include "naomi.h"
+#include <algorithm>
 
 /*
 
@@ -455,6 +456,7 @@ void GDCartridge::device_start(LoadProgress *progress, std::vector<u8> *digest)
 		dimm_data = NULL;
 	}
 	dimm_data_size = 0;
+	loadedSegments.clear();
 
 	char name[128];
 	memset(name,'\0',128);
@@ -501,7 +503,6 @@ void GDCartridge::device_start(LoadProgress *progress, std::vector<u8> *digest)
 		u8 buffer[2048];
 		std::string parent = hostfs::storage().getParentPath(settings.content.path);
 		std::string gdrom_path = get_file_basename(settings.content.fileName) + "/" + gdrom_name;
-		std::unique_ptr<Disc> gdrom;
 		try {
 			gdrom_path = hostfs::storage().getSubPath(parent, gdrom_path);
 			gdrom = std::unique_ptr<Disc>(OpenDisc(gdrom_path + ".chd", digest));
@@ -536,7 +537,7 @@ void GDCartridge::device_start(LoadProgress *progress, std::vector<u8> *digest)
 		// directory
 		u8 dir_sector[2048];
 		// find data of file
-		u32 file_start, file_size;
+		u32 file_size;
 
 		if (netpic == 0) {
 			u32 dir = ((buffer[0x2 + 0] << 0) |
@@ -596,29 +597,36 @@ void GDCartridge::device_start(LoadProgress *progress, std::vector<u8> *digest)
 			if (dimm_data_size != file_rounded_size)
 				memset(dimm_data + file_rounded_size, 0, dimm_data_size - file_rounded_size);
 
-			// read encrypted data into dimm_data
-			u32 sectors = file_rounded_size / 2048;
-			read_gdrom(gdrom.get(), file_start, dimm_data, sectors, progress);
+			loadedSegments.resize(dimm_data_size / SEGMENT_SIZE);
+			std::fill(loadedSegments.begin() + (file_rounded_size + SEGMENT_SIZE - 1) / SEGMENT_SIZE,
+					loadedSegments.end(), true);
 
-			// decrypt loaded data
-			u32 des_subkeys[32];
 			des_generate_subkeys(rev64(key), des_subkeys);
-
-			for (u32 i = 0; i < file_rounded_size; i += 8)
-			{
-				if ((i & 0xfff) == 0 && progress != nullptr)
-				{
-					if (progress->cancelled)
-						throw LoadCancelledException();
-					progress->label = "Decrypting...";
-					progress->progress = (float)(i + 8) / file_rounded_size;
-				}
-				*(u64 *)(dimm_data + i) = des_encrypt_decrypt<true>(*(u64 *)(dimm_data + i), des_subkeys);
-			}
 		}
 
 		if (!dimm_data)
 			throw NaomiCartException("Naomi GDROM: Could not find the file to decrypt.");
+	}
+}
+
+void GDCartridge::loadSegments(u32 offset, u32 size)
+{
+	const u32 lastSegment = (offset + size - 1) / SEGMENT_SIZE;
+	for (u32 segment = offset / SEGMENT_SIZE; segment <= lastSegment; segment++)
+	{
+		if (loadedSegments[segment])
+			continue;
+		DEBUG_LOG(NAOMI, "Loading segment %d", segment);
+		// load data
+		read_gdrom(gdrom.get(), file_start + (segment * SEGMENT_SIZE) / 2048,
+				dimm_data + segment * SEGMENT_SIZE,
+				SEGMENT_SIZE / 2048,
+				nullptr);
+		// decrypt loaded data
+		u64 *pData = (u64 *)(dimm_data + segment * SEGMENT_SIZE);
+		for (u32 i = 0; i < SEGMENT_SIZE; i += 8, pData++)
+			*pData = des_encrypt_decrypt<true>(*pData, des_subkeys);
+		loadedSegments[segment] = true;
 	}
 }
 
@@ -635,6 +643,7 @@ void *GDCartridge::GetDmaPtr(u32 &size)
 	}
 	dimm_cur_address = DmaOffset & (dimm_data_size-1);
 	size = std::min(size, dimm_data_size - dimm_cur_address);
+	loadSegments(dimm_cur_address, size);
 	return dimm_data + dimm_cur_address;
 }
 
@@ -645,8 +654,10 @@ bool GDCartridge::Read(u32 offset, u32 size, void *dst)
 		*(u32 *)dst = 0;
 		return true;
 	}
-	u32 addr = offset & (dimm_data_size-1);
-	memcpy(dst, &dimm_data[addr], std::min(size, dimm_data_size - addr));
+	u32 addr = offset & (dimm_data_size - 1);
+	size = std::min(size, dimm_data_size - addr);
+	loadSegments(addr, size);
+	memcpy(dst, &dimm_data[addr], size);
 	return true;
 }
 
