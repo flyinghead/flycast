@@ -32,11 +32,7 @@ void OITDrawer::DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool 
 	CommandBufferDebugScope _(cmdBuffer, "DrawPoly(OIT)", scopeColor);
 
 	vk::Rect2D scissorRect;
-	TileClipping tileClip = SetTileClip(poly.tileclip, scissorRect);
-	if (tileClip == TileClipping::Outside)
-		SetScissor(cmdBuffer, scissorRect);
-	else
-		SetScissor(cmdBuffer, baseScissor);
+	SetTileClip(cmdBuffer, poly.tileclip, scissorRect);
 
 	float trilinearAlpha = 1.f;
 	if (poly.tsp.FilterMode > 1 && poly.pcw.Texture && listType != ListType_Punch_Through && poly.tcw.MipMapped == 1)

@@ -105,6 +105,20 @@ static void SetBaseClipping()
 		glcache.Disable(GL_SCISSOR_TEST);
 }
 
+static TileClipping setTileClip(u32 tileclip, int clip_rect[4])
+{
+	TileClipping clipmode = GetTileClip(tileclip, ViewportMatrix, clip_rect);
+	if (clipmode == TileClipping::Outside)
+	{
+		glcache.Enable(GL_SCISSOR_TEST);
+		glcache.Scissor(clip_rect[0], clip_rect[1], clip_rect[2], clip_rect[3]);
+	}
+	else {
+		SetBaseClipping();
+	}
+	return clipmode;
+}
+
 template <u32 Type, bool SortingEnabled>
 void SetGPState(const PolyParam* gp,u32 cflip=0)
 {
@@ -123,7 +137,7 @@ void SetGPState(const PolyParam* gp,u32 cflip=0)
 	int fog_ctrl = config::Fog ? gp->tsp.FogCtrl : 2;
 
 	int clip_rect[4] = {};
-	TileClipping clipmode = GetTileClip(gp->tileclip, ViewportMatrix, clip_rect);
+	TileClipping clipmode = setTileClip(gp->tileclip, clip_rect);
 	TextureCacheData *texture = (TextureCacheData *)gp->texture;
 	int gpuPalette = texture == nullptr || !texture->gpuPalette ? 0
 			: gp->tsp.FilterMode + 1;
@@ -172,13 +186,6 @@ void SetGPState(const PolyParam* gp,u32 cflip=0)
 	if (clipmode == TileClipping::Inside)
 		glUniform4f(CurrentShader->pp_ClipTest, (float)clip_rect[0], (float)clip_rect[1],
 				(float)(clip_rect[0] + clip_rect[2]), (float)(clip_rect[1] + clip_rect[3]));
-	if (clipmode == TileClipping::Outside)
-	{
-		glcache.Enable(GL_SCISSOR_TEST);
-		glcache.Scissor(clip_rect[0], clip_rect[1], clip_rect[2], clip_rect[3]);
-	}
-	else
-		SetBaseClipping();
 
 	if (config::ModifierVolumes)
 	{
@@ -534,6 +541,9 @@ void DrawModVols(int first, int count)
 		{
 			glcache.UseProgram(gl.modvol_shader.program);
 		}
+		int clip_rect[4];
+		setTileClip(param.tileclip, clip_rect);
+		// TODO inside clipping
 
 		u32 mv_mode = param.isp.DepthMode;
 

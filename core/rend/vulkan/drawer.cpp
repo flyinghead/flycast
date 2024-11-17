@@ -22,7 +22,7 @@
 #include "hw/pvr/pvr_mem.h"
 #include "rend/sorter.h"
 
-TileClipping BaseDrawer::SetTileClip(u32 val, vk::Rect2D& clipRect)
+TileClipping BaseDrawer::SetTileClip(vk::CommandBuffer cmdBuffer, u32 val, vk::Rect2D& clipRect)
 {
 	int rect[4] = {};
 	TileClipping clipmode = ::GetTileClip(val, matrices.GetViewportMatrix(), rect);
@@ -33,6 +33,10 @@ TileClipping BaseDrawer::SetTileClip(u32 val, vk::Rect2D& clipRect)
 		clipRect.extent.width = rect[2];
 		clipRect.extent.height = rect[3];
 	}
+	if (clipmode == TileClipping::Outside)
+		SetScissor(cmdBuffer, clipRect);
+	else
+		SetScissor(cmdBuffer, baseScissor);
 
 	return clipmode;
 }
@@ -169,11 +173,7 @@ void Drawer::DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sor
 	CommandBufferDebugScope _(cmdBuffer, "DrawPoly", scopeColor);
 
 	vk::Rect2D scissorRect;
-	TileClipping tileClip = SetTileClip(poly.tileclip, scissorRect);
-	if (tileClip == TileClipping::Outside)
-		SetScissor(cmdBuffer, scissorRect);
-	else
-		SetScissor(cmdBuffer, baseScissor);
+	TileClipping tileClip = SetTileClip(cmdBuffer, poly.tileclip, scissorRect);
 
 	float trilinearAlpha = 1.f;
 	if (poly.tsp.FilterMode > 1 && poly.pcw.Texture && listType != ListType_Punch_Through && poly.tcw.MipMapped == 1)
@@ -263,11 +263,7 @@ void Drawer::DrawSorted(const vk::CommandBuffer& cmdBuffer, const std::vector<So
 			vk::Pipeline pipeline = pipelineManager->GetDepthPassPipeline(polyParam.isp.CullMode, polyParam.isNaomi2());
 			cmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
 			vk::Rect2D scissorRect;
-			TileClipping tileClip = SetTileClip(polyParam.tileclip, scissorRect);
-			if (tileClip == TileClipping::Outside)
-				SetScissor(cmdBuffer, scissorRect);
-			else
-				SetScissor(cmdBuffer, baseScissor);
+			SetTileClip(cmdBuffer, polyParam.tileclip, scissorRect);
 			cmdBuffer.drawIndexed(param.count, 1, pvrrc.idx.size() + param.first, 0, 0);
 		}
 	}
@@ -296,7 +292,6 @@ void Drawer::DrawModVols(const vk::CommandBuffer& cmdBuffer, int first, int coun
 	CommandBufferDebugScope _(cmdBuffer, "DrawModVols", scopeColor);
 
 	cmdBuffer.bindVertexBuffers(0, curMainBuffer, offsets.modVolOffset);
-	SetScissor(cmdBuffer, baseScissor);
 
 	ModifierVolumeParam* params = &pvrrc.global_param_mvo[first];
 
@@ -322,6 +317,9 @@ void Drawer::DrawModVols(const vk::CommandBuffer& cmdBuffer, int first, int coun
 
 		cmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
 		descriptorSets.bindPerPolyDescriptorSets(cmdBuffer, param, first + cmv, curMainBuffer, offsets.naomi2ModVolOffset);
+		vk::Rect2D scissorRect;
+		SetTileClip(cmdBuffer, param.tileclip, scissorRect);
+		// TODO inside clipping
 
 		cmdBuffer.draw(param.count * 3, 1, param.first * 3, 0);
 

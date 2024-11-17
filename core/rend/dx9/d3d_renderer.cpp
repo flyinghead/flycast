@@ -19,7 +19,6 @@
 #include "d3d_renderer.h"
 #include "hw/pvr/ta.h"
 #include "hw/pvr/pvr_mem.h"
-#include "rend/tileclip.h"
 #include "ui/gui.h"
 #include "rend/sorter.h"
 
@@ -336,6 +335,25 @@ inline void D3DRenderer::setTexMode(D3DSAMPLERSTATETYPE state, u32 clamp, u32 mi
 	}
 }
 
+TileClipping D3DRenderer::setTileClip(u32 tileclip, int clip_rect[4])
+{
+	TileClipping clipmode = GetTileClip(tileclip, matrices.GetViewportMatrix(), clip_rect);
+	if (clipmode == TileClipping::Outside)
+	{
+		devCache.SetRenderState(D3DRS_SCISSORTESTENABLE, TRUE);
+		RECT rect { clip_rect[0], clip_rect[1], clip_rect[0] + clip_rect[2], clip_rect[1] + clip_rect[3] };
+		// TODO cache
+		device->SetScissorRect(&rect);
+	}
+	else
+	{
+		devCache.SetRenderState(D3DRS_SCISSORTESTENABLE, scissorEnable);
+		if (scissorEnable)
+			device->SetScissorRect(&scissorRect);
+	}
+	return clipmode;
+}
+
 template <u32 Type, bool SortingEnabled>
 void D3DRenderer::setGPState(const PolyParam *gp)
 {
@@ -354,7 +372,7 @@ void D3DRenderer::setGPState(const PolyParam *gp)
 	int fog_ctrl = config::Fog ? gp->tsp.FogCtrl : 2;
 
 	int clip_rect[4] = {};
-	TileClipping clipmode = GetTileClip(gp->tileclip, matrices.GetViewportMatrix(), clip_rect);
+	TileClipping clipmode = setTileClip(gp->tileclip, clip_rect);
 	D3DTexture *texture = (D3DTexture *)gp->texture;
 	int gpuPalette = texture == nullptr || !texture->gpuPalette ? 0
 			: gp->tsp.FilterMode + 1;
@@ -400,23 +418,10 @@ void D3DRenderer::setGPState(const PolyParam *gp)
 	devCache.SetVertexShader(shaders.getVertexShader(gp->pcw.Gouraud));
 	devCache.SetRenderState(D3DRS_SHADEMODE, gp->pcw.Gouraud == 1 ? D3DSHADE_GOURAUD : D3DSHADE_FLAT);
 
-	if (clipmode == TileClipping::Outside)
+	if (clipmode == TileClipping::Inside)
 	{
-		devCache.SetRenderState(D3DRS_SCISSORTESTENABLE, TRUE);
-		RECT rect { clip_rect[0], clip_rect[1], clip_rect[0] + clip_rect[2], clip_rect[1] + clip_rect[3] };
-		// TODO cache
-		device->SetScissorRect(&rect);
-	}
-	else
-	{
-		devCache.SetRenderState(D3DRS_SCISSORTESTENABLE, scissorEnable);
-		if (scissorEnable)
-			device->SetScissorRect(&scissorRect);
-		if (clipmode == TileClipping::Inside)
-		{
-			float f[] = { (float)clip_rect[0], (float)clip_rect[1], (float)(clip_rect[0] + clip_rect[2]), (float)(clip_rect[1] + clip_rect[3]) };
-			device->SetPixelShaderConstantF(4, f, 1);
-		}
+		float f[] = { (float)clip_rect[0], (float)clip_rect[1], (float)(clip_rect[0] + clip_rect[2]), (float)(clip_rect[1] + clip_rect[3]) };
+		device->SetPixelShaderConstantF(4, f, 1);
 	}
 
 	const u32 stencil = (gp->pcw.Shadow != 0) ? 0x80 : 0;
@@ -706,6 +711,10 @@ void D3DRenderer::drawModVols(int first, int count)
 			setMVS_Mode(Or, param.isp);		// OR'ing (open volume or quad)
 		else
 			setMVS_Mode(Xor, param.isp);	// XOR'ing (closed volume)
+
+		int clip_rect[4] = {};
+		setTileClip(param.tileclip, clip_rect);
+		//TODO inside clipping
 
 		device->DrawPrimitive(D3DPT_TRIANGLELIST, param.first * 3, param.count);
 

@@ -112,6 +112,7 @@ struct ModifierVolumeParam
 	u32 first;
 	u32 count;
 	ISP_Modvol isp;
+	u32 tileclip;
 
 	int mvMatrix;
 	int projMatrix;
@@ -121,6 +122,7 @@ struct ModifierVolumeParam
 		first = 0;
 		count = 0;
 		isp.full = 0;
+		tileclip = 0;
 		mvMatrix = -1;
 		projMatrix = -1;
 	}
