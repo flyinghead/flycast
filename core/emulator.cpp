@@ -51,6 +51,7 @@
 #include "hw/sh4/dyna/ngen.h"
 
 settings_t settings;
+constexpr char const *BIOS_TITLE = "Dreamcast BIOS";
 
 static void loadSpecialSettings()
 {
@@ -573,14 +574,14 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 				// Boot BIOS
 				if (!nvmem::loadFiles())
 					throw FlycastException("No BIOS file found in " + hostfs::getFlashSavePath("", ""));
-				InitDrive("");
+				gdr::initDrive("");
 			}
 			else
 			{
 				std::string extension = get_file_extension(settings.content.path);
 				if (extension != "elf")
 				{
-					if (InitDrive(settings.content.path))
+					if (gdr::initDrive(settings.content.path))
 					{
 						loadGameSpecificSettings();
 						if (config::UseReios || !nvmem::loadFiles())
@@ -597,18 +598,18 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 						settings.content.path.clear();
 						if (!nvmem::loadFiles())
 							throw FlycastException("This media cannot be loaded");
-						InitDrive("");
+						gdr::initDrive("");
 					}
 				}
 				else
 				{
 					// Elf only supported with HLE BIOS
 					nvmem::loadHle();
-					InitDrive("");
+					gdr::initDrive("");
 				}
 			}
 			if (settings.content.path.empty())
-				settings.content.title = "Dreamcast BIOS";
+				settings.content.title = BIOS_TITLE;
 
 			if (progress)
 				progress->progress = 1.0f;
@@ -1061,6 +1062,45 @@ bool Emulator::restartCpu()
 		return false;
 	getSh4Executor()->Start();
 	return true;
+}
+
+void Emulator::insertGdrom(const std::string& path)
+{
+	if (settings.platform.isArcade())
+		return;
+	gdr::insertDisk(path);
+	diskChange();
+}
+
+void Emulator::openGdrom()
+{
+	if (settings.platform.isArcade())
+		return;
+	gdr::openLid();
+	diskChange();
+}
+
+void Emulator::diskChange()
+{
+	config::Settings::instance().reset();
+	config::Settings::instance().load(false);
+	if (!settings.content.path.empty())
+	{
+		hostfs::FileInfo info = hostfs::storage().getFileInfo(settings.content.path);
+		settings.content.fileName = info.name;
+		loadGameSpecificSettings();
+	}
+	else
+	{
+		settings.content.fileName.clear();
+		settings.content.gameId.clear();
+		settings.content.title = BIOS_TITLE;
+	}
+	cheatManager.reset(settings.content.gameId);
+	if (cheatManager.isWidescreen())
+		config::ScreenStretching.override(134);	// 4:3 -> 16:9
+	custom_texture.Terminate();
+	EventManager::event(Event::DiskChange);
 }
 
 Emulator emu;

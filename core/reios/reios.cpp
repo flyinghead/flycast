@@ -26,6 +26,7 @@
 #include "imgread/isofs.h"
 #include "hw/sh4/sh4_mmr.h"
 #include "oslib/resources.h"
+#include "oslib/oslib.h"
 
 #include <map>
 
@@ -133,7 +134,7 @@ ip_meta_t ip_meta;
 
 void reios_disk_id()
 {
-	if (libGDR_GetDiscType() == Open || libGDR_GetDiscType() == NoDisk)
+	if (!gdr::isLoaded())
 	{
 		memset(&ip_meta, 0, sizeof(ip_meta));
 		return;
@@ -351,8 +352,17 @@ static void reios_sys_misc()
 		break;
 
 	case 1:	// Exit to BIOS menu
-		WARN_LOG(REIOS, "SYS_MISC 1");
-		throw FlycastException("Reboot to BIOS");
+		{
+			WARN_LOG(REIOS, "SYS_MISC 1");
+			if (gdr::isLoaded()) {
+				// just restart the game
+				p_sh4rcb->cntx.pc = 0xa0000000;
+				os_notify("Reboot to BIOS", 5000);
+			}
+			else {
+				throw FlycastException("Reboot to BIOS");
+			}
+		}
 		break;
 
 	case 2:	// check disk

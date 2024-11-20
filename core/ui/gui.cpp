@@ -709,14 +709,14 @@ static void gui_display_commands()
 		ImGui::NextColumn();
 
 		// Insert/Eject Disk
-		const char *disk_label = libGDR_GetDiscType() == Open ? ICON_FA_COMPACT_DISC "  Insert Disk" : ICON_FA_COMPACT_DISC "  Eject Disk";
+		const char *disk_label = gdr::isOpen() ? ICON_FA_COMPACT_DISC "  Insert Disk" : ICON_FA_COMPACT_DISC "  Eject Disk";
 		if (ImGui::Button(disk_label, ScaledVec2(buttonWidth, 50)))
 		{
-			if (libGDR_GetDiscType() == Open) {
+			if (gdr::isOpen()) {
 				gui_setState(GuiState::SelectDisk);
 			}
 			else {
-				DiscOpenLid();
+				emu.openGdrom();
 				gui_setState(GuiState::Closed);
 			}
 		}
@@ -3272,11 +3272,15 @@ static void gui_display_content()
 					}
 					if (pressed)
 					{
+						if (!config::BoxartDisplayMode)
+							art = boxart.getBoxart(game);
+						settings.content.title = art.name;
+						if (settings.content.title.empty() || settings.content.title == game.fileName)
+							settings.content.title = get_file_basename(game.fileName);
 						if (gui_state == GuiState::SelectDisk)
 						{
-							settings.content.path = game.path;
 							try {
-								DiscSwap(game.path);
+								emu.insertGdrom(game.path);
 								gui_setState(GuiState::Closed);
 							} catch (const FlycastException& e) {
 								gui_error(e.what());
@@ -3284,11 +3288,6 @@ static void gui_display_content()
 						}
 						else
 						{
-							if (!config::BoxartDisplayMode)
-								art = boxart.getBoxart(game);
-							settings.content.title = art.name;
-							if (settings.content.title.empty() || settings.content.title == game.fileName)
-								settings.content.title = get_file_basename(game.fileName);
 							std::string gamePath(game.path);
 							scanner.get_mutex().unlock();
 							gui_start_game(gamePath);

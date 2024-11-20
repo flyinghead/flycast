@@ -60,10 +60,16 @@ enum DiskArea
 	DoubleDensity
 };
 
-bool InitDrive(const std::string& path);
-void TermDrive();
-bool DiscSwap(const std::string& path);
-void DiscOpenLid();
+namespace gdr {
+
+bool initDrive(const std::string& path);
+void termDrive();
+void insertDisk(const std::string& path);
+void openLid();
+bool isOpen();
+bool isLoaded();
+
+}
 
 struct Session
 {

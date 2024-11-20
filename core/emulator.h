@@ -174,6 +174,14 @@ public:
 	 * Load the machine state from the passed deserializer
 	 */
 	void loadstate(Deserializer& deser);
+	/**
+	 * Insert a new media in the GD-ROM drive.
+	 */
+	void insertGdrom(const std::string& path);
+	/**
+	 * Open the GD-ROM drive lid.
+	 */
+	void openGdrom();
 
 	Sh4Executor *getSh4Executor();
 
@@ -182,6 +190,7 @@ public:
 private:
 	bool checkStatus(bool wait = false);
 	void runInternal();
+	void diskChange();
 
 	enum State {
 		Uninitialized = 0,

@@ -1326,7 +1326,7 @@ void gdrom_reg_Reset(bool hard)
 		memcpy(GD_HardwareInfo.drive_info, "SE      ", sizeof(GD_HardwareInfo.drive_info));
 		memcpy(GD_HardwareInfo.system_version, "Rev 6.43", sizeof(GD_HardwareInfo.system_version));
 		memcpy(GD_HardwareInfo.system_date, "990408", sizeof(GD_HardwareInfo.system_date));
-		TermDrive();
+		gdr::termDrive();
 	}
 	SB_GDST = 0;
 	SB_GDEN = 0;

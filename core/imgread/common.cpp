@@ -96,9 +96,11 @@ Disc* OpenDisc(const std::string& path, std::vector<u8> *digest)
 	throw FlycastException("Unknown disk format");
 }
 
+namespace gdr {
+
 static bool loadDisk(const std::string& path)
 {
-	TermDrive();
+	termDrive();
 
 	//try all drivers
 	std::vector<u8> digest;
@@ -122,7 +124,8 @@ static bool loadDisk(const std::string& path)
 
 static bool doDiscSwap(const std::string& path);
 
-bool InitDrive(const std::string& path)
+
+bool initDrive(const std::string& path)
 {
 	bool rc = doDiscSwap(path);
 	if (rc && disc == nullptr)
@@ -141,9 +144,10 @@ bool InitDrive(const std::string& path)
 	return rc;
 }
 
-void DiscOpenLid()
+void openLid()
 {
-	TermDrive();
+	settings.content.path.clear();
+	termDrive();
 	NullDriveDiscType = Open;
 	gd_setdisc();
 }
@@ -152,7 +156,7 @@ static bool doDiscSwap(const std::string& path)
 {
 	if (path.empty())
 	{
-		TermDrive();
+		termDrive();
 		NullDriveDiscType = NoDisk;
 		return true;
 	}
@@ -164,13 +168,22 @@ static bool doDiscSwap(const std::string& path)
 	return false;
 }
 
-void TermDrive()
+void termDrive()
 {
 	sh4_sched_request(schedId, -1);
 	delete disc;
 	disc = nullptr;
 }
 
+bool isOpen() {
+	return disc == nullptr && NullDriveDiscType == Open;
+}
+
+bool isLoaded() {
+	return disc != nullptr;
+}
+
+}	// namespace gdr
 
 //
 //convert our nice toc struct to dc's native one :)
@@ -346,19 +359,22 @@ static int discSwapCallback(int tag, int sch_cycl, int jitter, void *arg)
 	return 0;
 }
 
-bool DiscSwap(const std::string& path)
+namespace gdr
+{
+
+void insertDisk(const std::string& path)
 {
 	if (!doDiscSwap(path))
 		throw FlycastException("This media cannot be loaded");
-	EventManager::event(Event::DiskChange);
+	settings.content.path = path;
 	// Drive is busy after the lid was closed
 	sns_asc = 4;
 	sns_ascq = 1;
 	sns_key = 2;
 	SecNumber.Status = GD_BUSY;
 	sh4_sched_request(schedId, SH4_MAIN_CLOCK); // 1 s
+}
 
-	return true;
 }
 
 void libGDR_init()
@@ -368,7 +384,7 @@ void libGDR_init()
 }
 void libGDR_term()
 {
-	TermDrive();
+	gdr::termDrive();
 	sh4_sched_unregister(schedId);
 	schedId = -1;
 }

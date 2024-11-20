@@ -49,21 +49,16 @@
 #include "emulator.h"
 #include "hw/sh4/sh4_mem.h"
 #include "hw/sh4/sh4_sched.h"
-#include "hw/sh4/dyna/blockmanager.h"
 #include "keyboard_map.h"
 #include "hw/maple/maple_cfg.h"
 #include "hw/maple/maple_if.h"
-#include "hw/maple/maple_cfg.h"
-#include "hw/pvr/spg.h"
 #include "hw/naomi/naomi_cart.h"
 #include "hw/naomi/card_reader.h"
-#include "imgread/common.h"
 #include "LogManager.h"
 #include "cheats.h"
 #include "rend/osd.h"
 #include "cfg/option.h"
 #include "version.h"
-#include "rend/transform_matrix.h"
 #include "oslib/oslib.h"
 
 constexpr char slash = path_default_slash_c();
@@ -3519,13 +3514,14 @@ static bool retro_set_eject_state(bool ejected)
 	disc_tray_open = ejected;
 	if (ejected)
 	{
-		DiscOpenLid();
+		emu.openGdrom();
 		return true;
 	}
 	else
 	{
 		try {
-			return DiscSwap(disk_paths[disk_index]);
+			emu.insertGdrom(disk_paths[disk_index]);
+			return true;
 		} catch (const FlycastException& e) {
 			ERROR_LOG(GDROM, "%s", e.what());
 			return false;
@@ -3546,19 +3542,19 @@ static unsigned retro_get_image_index()
 static bool retro_set_image_index(unsigned index)
 {
 	disk_index = index;
-	if (disk_index >= disk_paths.size())
-	{
-		// No disk in drive
-		settings.content.path.clear();
-		return true;
-	}
-	settings.content.path = disk_paths[index];
-
-	if (disc_tray_open)
-		return true;
-
 	try {
-		return DiscSwap(settings.content.path);
+		if (disk_index >= disk_paths.size())
+		{
+			// No disk in drive
+			emu.insertGdrom("");
+			return true;
+		}
+
+		if (disc_tray_open)
+			return true;
+
+		emu.insertGdrom(disk_paths[index]);
+		return true;
 	} catch (const FlycastException& e) {
 		ERROR_LOG(GDROM, "%s", e.what());
 		return false;
