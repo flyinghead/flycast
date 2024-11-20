@@ -52,6 +52,8 @@
 #include "keyboard_map.h"
 #include "hw/maple/maple_cfg.h"
 #include "hw/maple/maple_if.h"
+#include "hw/pvr/pvr_regs.h"
+#include "hw/pvr/Renderer_if.h"
 #include "hw/naomi/naomi_cart.h"
 #include "hw/naomi/card_reader.h"
 #include "LogManager.h"
