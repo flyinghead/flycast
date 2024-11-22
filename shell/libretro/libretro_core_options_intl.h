@@ -70546,7 +70546,7 @@ struct retro_core_options_v2 options_sr = {
 #define CORE_OPTION_NAME_ENABLE_DSP_LABEL_SV "Aktivera DSP"
 #define CORE_OPTION_NAME_ENABLE_DSP_INFO_0_SV "Aktivera emulering av Dreamcasts ljud-DSP (digital signal processor). Förbättrar noggrannheten i genererat ljud, men ökar prestandakraven."
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_SV NULL
-#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_SV NULL
+#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_SV "Aktiverar SERVICE-knapp för arkadspel för att ange kabinettinställningar."
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_SV "Ställ in NAOMI-spel till Free Play"
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_SV "Ändra spelets myntinställningar till free play."
 #define CORE_OPTION_NAME_EMULATE_BBA_LABEL_SV "Emulering av bredbandsadapter"
