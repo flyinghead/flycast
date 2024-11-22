@@ -1,12 +1,12 @@
 #include "types.h"
 #include "hw/maple/maple_cfg.h"
-#include "rend/osd.h"
 #include "hw/maple/maple_devs.h"
 #include "hw/maple/maple_if.h"
 #include "hw/naomi/naomi_cart.h"
 #include "audio/audiostream.h"
 #include "imgread/common.h"
 #include "ui/gui.h"
+#include "ui/gui_android.h"
 #include "rend/osd.h"
 #include "cfg/cfg.h"
 #include "log/LogManager.h"
@@ -56,8 +56,6 @@ extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_emu_JNIdc_screenChar
 
 std::shared_ptr<AndroidMouse> mouse;
 std::shared_ptr<AndroidKeyboard> keyboard;
-
-float vjoy_pos[15][8];
 
 static bool game_started;
 
@@ -356,18 +354,17 @@ extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_emu_JNIdc_rendinitNa
 
 extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_emu_JNIdc_vjoy(JNIEnv * env, jobject obj,int id,float x, float y, float w, float h)
 {
-    if (id < std::size(vjoy_pos))
-    {
-        vjoy_pos[id][0] = x;
-        vjoy_pos[id][1] = y;
-        vjoy_pos[id][2] = w;
-        vjoy_pos[id][3] = h;
-    }
+    vgamepad::setPosition(static_cast<vgamepad::ControlId>(id), x, y, w, h);
 }
 
-extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_emu_JNIdc_hideOsd(JNIEnv * env, jobject obj)
+extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_emu_JNIdc_showVirtualGamepad(JNIEnv * env, jobject obj)
 {
-    HideOSD();
+    vgamepad::show();
+}
+
+extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_emu_JNIdc_hideVirtualGamepad(JNIEnv * env, jobject obj)
+{
+    vgamepad::hide();
 }
 
 extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_emu_JNIdc_getControllers(JNIEnv *env, jobject obj, jintArray controllers, jobjectArray peripherals)
@@ -601,19 +598,19 @@ extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_BaseGLActivity_regis
     }
 }
 
-void vjoy_start_editing()
+namespace vgamepad
 {
+
+void startEditing() {
 	jni::env()->CallVoidMethod(g_activity, VJoyStartEditingMID);
 }
-
-void vjoy_reset_editing()
-{
+void resetEditing() {
     jni::env()->CallVoidMethod(g_activity, VJoyResetEditingMID);
 }
-
-void vjoy_stop_editing(bool canceled)
-{
+void stopEditing(bool canceled) {
     jni::env()->CallVoidMethod(g_activity, VJoyStopEditingMID, canceled);
+}
+
 }
 
 void enableNetworkBroadcast(bool enable)

@@ -111,7 +111,6 @@ struct D3DRenderer : public Renderer
 		frameRendered = false;
 		return true;
 	}
-	void DrawOSD(bool clear_screen) override;
 	BaseTextureCacheData *GetTexture(TSP tsp, TCW tcw) override;
 	void preReset();
 	void postReset();
@@ -140,6 +139,7 @@ private:
 	void prepareRttRenderTarget(u32 texAddress, int& vpWidth, int& vpHeight);
 	void readRttRenderTarget(u32 texAddress);
 	void writeFramebufferToVRAM();
+	void drawOSD();
 
 	RenderStateCache devCache;
 	ComPtr<IDirect3DDevice9> device;

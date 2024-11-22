@@ -331,14 +331,13 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         if (event.getRepeatCount() == 0) {
             if (keyCode == KeyEvent.KEYCODE_BACK) {
-                if (!JNIdc.guiIsOpen()) {
-                    showMenu();
-                    return true;
-                }
-                else if (JNIdc.guiIsContentBrowser()) {
+                if (JNIdc.guiIsContentBrowser()) {
                     finish();
-                    return true;
                 }
+                else {
+                    showMenu();
+                }
+                return true;
             }
             if (InputDeviceManager.getInstance().joystickButtonEvent(event.getDeviceId(), keyCode, true))
                 return true;

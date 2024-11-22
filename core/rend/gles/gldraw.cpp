@@ -1,5 +1,6 @@
 #include "glcache.h"
 #include "gles.h"
+#include "quad.h"
 #include "rend/tileclip.h"
 #include "rend/osd.h"
 #include "naomi2.h"
@@ -667,7 +668,7 @@ void OpenGLRenderer::RenderFramebuffer(const FramebufferInfo& info)
 	else
 	{
 		glcache.Disable(GL_BLEND);
-		drawQuad(gl.dcfb.tex, false, false);
+		gl.quad->draw(gl.dcfb.tex, false, false);
 	}
 #ifdef LIBRETRO
 	postProcessor.render(glsm_get_current_framebuffer());
@@ -675,7 +676,7 @@ void OpenGLRenderer::RenderFramebuffer(const FramebufferInfo& info)
 	renderLastFrame();
 #endif
 
-	DrawOSD(false);
+	drawOSD();
 	frameRendered = true;
 	renderVideoRouting();
 	restoreCurrentFramebuffer();
@@ -715,7 +716,7 @@ void writeFramebufferToVRAM()
 			glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 			glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 			glcache.Disable(GL_BLEND);
-			drawQuad(gl.ofbo.framebuffer->getTexture(), false);
+			gl.quad->draw(gl.ofbo.framebuffer->getTexture(), false);
 		}
 		else
 		{
@@ -800,7 +801,7 @@ bool OpenGLRenderer::renderLastFrame()
 			vertices = sverts;
 		}
 		glcache.Disable(GL_BLEND);
-		drawQuad(framebuffer->getTexture(), config::Rotate90, true, vertices);
+		gl.quad->draw(framebuffer->getTexture(), config::Rotate90, true, vertices);
 	}
 	else
 	{
@@ -859,7 +860,7 @@ bool OpenGLRenderer::GetLastFrame(std::vector<u8>& data, int& width, int& height
 		};
 		vertices = &rvertices[0][0];
 	}
-	drawQuad(framebuffer->getTexture(), config::Rotate90, false, vertices);
+	gl.quad->draw(framebuffer->getTexture(), config::Rotate90, false, vertices);
 
 	data.resize(width * height * 3);
 	glPixelStorei(GL_PACK_ALIGNMENT, 1);
@@ -987,7 +988,7 @@ static void drawVmuTexture(u8 vmuIndex, int width, int height)
 	};
 	glcache.Enable(GL_BLEND);
 	glcache.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	drawQuad(vmuTextureId[vmuIndex], false, false, vertices, color);
+	gl.quad->draw(vmuTextureId[vmuIndex], false, false, vertices, color);
 }
 
 static void updateLightGunTexture()
@@ -1040,7 +1041,7 @@ static void drawGunCrosshair(u8 port, int width, int height)
 	};
 	glcache.Enable(GL_BLEND);
 	glcache.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	drawQuad(lightgunTextureId, false, false, vertices, color);
+	gl.quad->draw(lightgunTextureId, false, false, vertices, color);
 }
 
 void drawVmusAndCrosshairs(int width, int height)

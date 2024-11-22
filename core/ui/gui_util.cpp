@@ -751,6 +751,16 @@ void ImguiTexture::draw(ImDrawList *drawList, const ImVec2& pos, const ImVec2& s
 	drawList->AddImage(id, pos, pos + size, uv0, uv1, col);
 }
 
+void ImguiTexture::draw(ImDrawList *drawList, const ImVec2& pos, const ImVec2& size,
+		const ImVec2& uv0, const ImVec2& uv1, const ImVec4& color)
+{
+	ImTextureID id = getId();
+	if (id == ImTextureID{})
+		return;
+	u32 col = ImGui::ColorConvertFloat4ToU32(color);
+	drawList->AddImage(id, pos, pos + size, uv0, uv1, col);
+}
+
 bool ImguiTexture::button(const char* str_id, const ImVec2& image_size, const std::string& title,
 		const ImVec4& bg_col, const ImVec4& tint_col)
 {

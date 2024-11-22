@@ -250,7 +250,7 @@ public:
 	void virtual_gamepad_event(int kcode, int joyx, int joyy, int lt, int rt, bool fastForward)
 	{
 		// No virtual gamepad when the GUI is open: touch events only
-		if (gui_is_open())
+		if (gui_is_open() && gui_state != GuiState::VJoyEdit)
 		{
 			kcode = 0xffffffff;
 			joyx = joyy = rt = lt = 0;

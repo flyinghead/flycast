@@ -53,7 +53,6 @@ struct DX11Renderer : public Renderer
 	}
 
 	bool RenderLastFrame() override;
-	void DrawOSD(bool clear_screen) override;
 	BaseTextureCacheData *GetTexture(TSP tsp, TCW tcw) override;
 	bool GetLastFrame(std::vector<u8>& data, int& width, int& height) override;
 
@@ -102,6 +101,7 @@ protected:
 	void writeFramebufferToVRAM();
 	void renderVideoRouting();
 	void resetContextState();
+	void drawOSD();
 
 	ComPtr<ID3D11Device> device;
 	ComPtr<ID3D11DeviceContext> deviceContext;

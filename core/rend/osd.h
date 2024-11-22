@@ -18,21 +18,6 @@
 
 #include "types.h"
 #include "cfg/option.h"
-#include <vector>
-
-#define VJOY_VISIBLE 14
-
-struct OSDVertex
-{
-	float x, y;
-	float u, v;
-	u8 r, g, b, a;
-};
-
-const std::vector<OSDVertex>& GetOSDVertices();
-
-u8 *loadOSDButtons(int &width, int &height);
-void HideOSD();
 
 // VMUs
 extern u32 vmu_lcd_data[8][48 * 32];

@@ -56,8 +56,8 @@
 #include "sdl/sdl.h"
 #endif
 
-#ifdef __ANDROID__
 #include "gui_android.h"
+#ifdef __ANDROID__
 #if HOST_CPU == CPU_ARM64 && USE_VULKAN
 #include "rend/vulkan/adreno.h"
 #endif
@@ -516,7 +516,7 @@ void gui_open_settings()
 		{
 			if (achievements::canPause())
 			{
-				HideOSD();
+				vgamepad::hide();
 				try {
 					emu.stop();
 					gui_setState(GuiState::Commands);
@@ -532,6 +532,7 @@ void gui_open_settings()
 	}
 	else if (gui_state == GuiState::VJoyEdit)
 	{
+		vgamepad::stopEditing(false);
 		gui_setState(GuiState::VJoyEditCommands);
 	}
 	else if (gui_state == GuiState::Loading)
@@ -1960,7 +1961,7 @@ static void gui_settings_controls(bool& maple_devices_changed)
 				{
 					if (ImGui::Button("Edit Layout"))
 					{
-						vjoy_start_editing();
+						vgamepad::startEditing();
 						gui_setState(GuiState::VJoyEdit);
 					}
 				}
@@ -3504,7 +3505,7 @@ void gui_display_ui()
 	FC_PROFILE_SCOPE;
 	const LockGuard lock(guiMutex);
 
-	if (gui_state == GuiState::Closed || gui_state == GuiState::VJoyEdit)
+	if (gui_state == GuiState::Closed)
 		return;
 	if (gui_state == GuiState::Main)
 	{
@@ -3541,11 +3542,10 @@ void gui_display_ui()
 		gui_display_onboarding();
 		break;
 	case GuiState::VJoyEdit:
+		vgamepad::draw();
 		break;
 	case GuiState::VJoyEditCommands:
-#ifdef __ANDROID__
-		gui_display_vjoy_commands();
-#endif
+		vgamepad::displayCommands();
 		break;
 	case GuiState::SelectDisk:
 		gui_display_content();
@@ -3604,8 +3604,6 @@ static std::string getFPSNotification()
 
 void gui_draw_osd()
 {
-	if (gui_state == GuiState::VJoyEdit)
-		return;
 	gui_newFrame();
 	ImGui::NewFrame();
 
@@ -3640,14 +3638,13 @@ void gui_draw_osd()
 	}
 	if (!settings.raHardcoreMode)
 		lua::overlay();
+	vgamepad::draw();
     ImGui::Render();
 	uiThreadRunner.execTasks();
 }
 
 void gui_display_osd()
 {
-	if (gui_state == GuiState::VJoyEdit)
-		return;
 	gui_draw_osd();
 	gui_endFrame(gui_is_open());
 }

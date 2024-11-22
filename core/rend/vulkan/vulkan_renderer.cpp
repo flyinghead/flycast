@@ -22,38 +22,12 @@
 #include "vulkan_renderer.h"
 #include "drawer.h"
 #include "hw/pvr/ta.h"
-#include "rend/osd.h"
 #include "rend/transform_matrix.h"
 
 bool BaseVulkanRenderer::BaseInit(vk::RenderPass renderPass, int subpass)
 {
 	texCommandPool.Init();
 	fbCommandPool.Init();
-
-#if defined(__ANDROID__) && !defined(LIBRETRO)
-	if (!vjoyTexture)
-	{
-		int w, h;
-		u8 *image_data = loadOSDButtons(w, h);
-		texCommandPool.BeginFrame();
-		vjoyTexture = std::make_unique<Texture>();
-		vjoyTexture->tex_type = TextureType::_8888;
-		vk::CommandBuffer cmdBuffer = texCommandPool.Allocate();
-		cmdBuffer.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
-		vjoyTexture->SetCommandBuffer(cmdBuffer);
-		vjoyTexture->UploadToGPU(w, h, image_data, false);
-		vjoyTexture->SetCommandBuffer(nullptr);
-		cmdBuffer.end();
-		texCommandPool.EndFrame();
-		delete [] image_data;
-		osdPipeline.Init(&shaderManager, vjoyTexture->GetImageView(), GetContext()->GetRenderPass());
-	}
-	if (!osdBuffer)
-	{
-		osdBuffer = std::make_unique<BufferData>(sizeof(OSDVertex) * VJOY_VISIBLE * 4,
-								vk::BufferUsageFlagBits::eVertexBuffer);
-	}
-#endif
 	quadPipeline = std::make_unique<QuadPipeline>(false, false);
 	quadPipeline->Init(&shaderManager, renderPass, subpass);
 	framebufferDrawer = std::make_unique<QuadDrawer>();
@@ -71,9 +45,6 @@ void BaseVulkanRenderer::Term()
 #endif
 	framebufferDrawer.reset();
 	quadPipeline.reset();
-	osdBuffer.reset();
-	osdPipeline.Term();
-	vjoyTexture.reset();
 	textureCache.Clear();
 	fogTexture = nullptr;
 	paletteTexture = nullptr;
@@ -138,58 +109,6 @@ void BaseVulkanRenderer::ReInitOSD()
 {
 	texCommandPool.Init();
 	fbCommandPool.Init();
-#if defined(__ANDROID__) && !defined(LIBRETRO)
-	osdPipeline.Init(&shaderManager, vjoyTexture->GetImageView(), GetContext()->GetRenderPass());
-#endif
-}
-
-void BaseVulkanRenderer::DrawOSD(bool clear_screen)
-{
-#ifndef LIBRETRO
-	if (!vjoyTexture)
-		return;
-	try {
-		if (clear_screen)
-		{
-			GetContext()->NewFrame();
-			GetContext()->BeginRenderPass();
-			GetContext()->PresentLastFrame();
-		}
-		const float dc2s_scale_h = settings.display.height / 480.0f;
-		const float sidebarWidth =  (settings.display.width - dc2s_scale_h * 640.0f) / 2;
-
-		std::vector<OSDVertex> osdVertices = GetOSDVertices();
-		const float x1 = 2.0f / (settings.display.width / dc2s_scale_h);
-		const float y1 = 2.0f / 480;
-		const float x2 = 1 - 2 * sidebarWidth / settings.display.width;
-		const float y2 = 1;
-		for (OSDVertex& vtx : osdVertices)
-		{
-			vtx.x = vtx.x * x1 - x2;
-			vtx.y = vtx.y * y1 - y2;
-		}
-
-		const vk::CommandBuffer cmdBuffer = GetContext()->GetCurrentCommandBuffer();
-
-		static const float scopeColor[4] = { 0.0f, 1.0f, 0.0f, 1.0f };
-		CommandBufferDebugScope _(cmdBuffer, "DrawOSD", scopeColor);
-
-		cmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, osdPipeline.GetPipeline());
-
-		osdPipeline.BindDescriptorSets(cmdBuffer);
-		const vk::Viewport viewport(0, 0, (float)settings.display.width, (float)settings.display.height, 0, 1.f);
-		cmdBuffer.setViewport(0, viewport);
-		const vk::Rect2D scissor({ 0, 0 }, { (u32)settings.display.width, (u32)settings.display.height });
-		cmdBuffer.setScissor(0, scissor);
-		osdBuffer->upload((u32)(osdVertices.size() * sizeof(OSDVertex)), osdVertices.data());
-		cmdBuffer.bindVertexBuffers(0, osdBuffer->buffer.get(), {0});
-		for (u32 i = 0; i < (u32)osdVertices.size(); i += 4)
-			cmdBuffer.draw(4, 1, i, 0);
-		if (clear_screen)
-			GetContext()->EndFrame();
-	} catch (const InvalidVulkanContext&) {
-	}
-#endif
 }
 
 void BaseVulkanRenderer::RenderFramebuffer(const FramebufferInfo& info)

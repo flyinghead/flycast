@@ -20,10 +20,10 @@ public class VirtualJoystickDelegate {
     private ScaleGestureDetector scaleGestureDetector;
 
     private Handler handler = new Handler();
-    private Runnable hideOsdRunnable = new Runnable() {
+    private Runnable hideVGamepadRunnable = new Runnable() {
         @Override
         public void run() {
-            JNIdc.hideOsd();
+            JNIdc.hideVirtualGamepad();
         }
     };
 
@@ -169,10 +169,10 @@ public class VirtualJoystickDelegate {
         if ((event.getSource() & InputDevice.SOURCE_TOUCHSCREEN) != InputDevice.SOURCE_TOUCHSCREEN)
         	// Ignore real mice, trackballs, etc.
             return false;
-        JNIdc.show_osd();
-        this.handler.removeCallbacks(hideOsdRunnable);
+        JNIdc.showVirtualGamepad();
+        this.handler.removeCallbacks(hideVGamepadRunnable);
         if (!editVjoyMode)
-            this.handler.postDelayed(hideOsdRunnable, 10000);
+            this.handler.postDelayed(hideVGamepadRunnable, 10000);
 
         scaleGestureDetector.onTouchEvent(event);
 
@@ -186,7 +186,7 @@ public class VirtualJoystickDelegate {
         int aid = event.getActionMasked();
         int pid = event.getActionIndex();
 
-        if (!JNIdc.guiIsOpen()) {
+        if (!JNIdc.guiIsOpen() || editVjoyMode) {
             if (editVjoyMode && selectedVjoyElement != VJoy.ELEM_NONE && aid == MotionEvent.ACTION_MOVE && !scaleGestureDetector.isInProgress()) {
                 float x = (event.getX() - tx) / scl;
                 float y = (event.getY() - ty) / scl;
@@ -360,8 +360,8 @@ public class VirtualJoystickDelegate {
         int joyy = get_anal(11, 1);
         InputDeviceManager.getInstance().virtualGamepadEvent(rv, joyx, joyy, left_trigger, right_trigger, fastForward);
         // Only register the mouse event if no virtual gamepad button is down
-        if ((!editVjoyMode && rv == 0xFFFFFFFF && left_trigger == 0 && right_trigger == 0 && joyx == 0 && joyy == 0 && !fastForward)
-                || JNIdc.guiIsOpen())
+        if (!editVjoyMode && ((rv == 0xFFFFFFFF && left_trigger == 0 && right_trigger == 0 && joyx == 0 && joyy == 0 && !fastForward)
+                || JNIdc.guiIsOpen()))
             InputDeviceManager.getInstance().mouseEvent(mouse_pos[0], mouse_pos[1], mouse_btns);
         return(true);
     }
@@ -370,7 +370,7 @@ public class VirtualJoystickDelegate {
         this.editVjoyMode = editVjoyMode;
         selectedVjoyElement = -1;
         if (editVjoyMode)
-            this.handler.removeCallbacks(hideOsdRunnable);
+            this.handler.removeCallbacks(hideVGamepadRunnable);
         resetEditMode();
     }
 

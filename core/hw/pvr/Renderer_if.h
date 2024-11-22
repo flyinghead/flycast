@@ -71,8 +71,6 @@ struct Renderer
 
 	virtual bool Present() { return true; }
 
-	virtual void DrawOSD(bool clear_screen) { }
-
 	virtual BaseTextureCacheData *GetTexture(TSP tsp, TCW tcw) { return nullptr; }
 };
 

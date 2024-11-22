@@ -19,10 +19,10 @@
 #include "gl4.h"
 #include "rend/gles/glcache.h"
 #include "rend/transform_matrix.h"
-#include "rend/osd.h"
 #include "glsl.h"
 #include "gl4naomi2.h"
 #include "rend/gles/naomi2.h"
+#include "rend/gles/quad.h"
 
 #ifdef LIBRETRO
 #include "rend/gles/postprocess.h"
@@ -670,7 +670,7 @@ static void gl_create_resources()
 	}
 	GlVertexArray::unbind();
 
-	initQuad();
+	gl.quad = std::make_unique<GlQuadDrawer>();
 	glCheck();
 }
 
@@ -713,7 +713,7 @@ struct OpenGL4Renderer : OpenGLRenderer
 		if (!config::EmulateFramebuffer)
 		{
 			frameRendered = true;
-			DrawOSD(false);
+			drawOSD();
 			renderVideoRouting();
 		}
 		restoreCurrentFramebuffer();
@@ -729,14 +729,6 @@ struct OpenGL4Renderer : OpenGLRenderer
 	}
 
 	bool renderFrame(int width, int height);
-
-	void DrawOSD(bool clearScreen) override
-	{
-		drawVmusAndCrosshairs(width, height);
-#ifndef LIBRETRO
-		gui_display_osd();
-#endif
-	}
 };
 
 //setup

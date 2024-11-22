@@ -41,12 +41,9 @@ bool mainui_rend_frame()
 	os_DoEvents();
 	os_UpdateInputState();
 
-	if (gui_is_open() || gui_state == GuiState::VJoyEdit)
+	if (gui_is_open())
 	{
 		gui_display_ui();
-		// TODO refactor android vjoy out of renderer
-		if (gui_state == GuiState::VJoyEdit && renderer != nullptr)
-			renderer->DrawOSD(true);
 #ifndef TARGET_IPHONE
 		std::this_thread::sleep_for(std::chrono::milliseconds(16));
 #endif

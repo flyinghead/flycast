@@ -1059,7 +1059,6 @@ void VulkanContext::PresentFrame(vk::Image image, vk::ImageView imageView, const
 
 			DrawOverlay(settings.display.uiScale, config::FloatVMUs, true);
 			imguiDriver->renderDrawData(ImGui::GetDrawData(), false);
-			renderer->DrawOSD(false);
 			EndFrame(overlayCmdBuffer);
 			static_cast<BaseVulkanRenderer*>(renderer)->RenderVideoRouting();
 			

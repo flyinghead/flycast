@@ -300,7 +300,7 @@ void D3DRenderer::RenderFramebuffer(const FramebufferInfo& info)
 
 	aspectRatio = getDCFramebufferAspectRatio();
 	displayFramebuffer();
-	DrawOSD(false);
+	drawOSD();
 	frameRendered = true;
 	frameRenderedOnce = true;
 	theDXContext.setFrameRendered();
@@ -1167,7 +1167,7 @@ bool D3DRenderer::Render()
 	{
 		aspectRatio = getOutputFramebufferAspectRatio();
 		displayFramebuffer();
-		DrawOSD(false);
+		drawOSD();
 		frameRendered = true;
 		frameRenderedOnce = true;
 		theDXContext.setFrameRendered();
@@ -1330,9 +1330,9 @@ void D3DRenderer::updateFogTexture()
 	device->SetSamplerState(2, D3DSAMP_MAGFILTER, D3DTEXF_LINEAR);
 }
 
-void D3DRenderer::DrawOSD(bool clear_screen)
+void D3DRenderer::drawOSD()
 {
-	theDXContext.setOverlay(!clear_screen);
+	theDXContext.setOverlay(true);
 	gui_display_osd();
 	theDXContext.setOverlay(false);
 }

@@ -20,7 +20,6 @@
 #include "rend/gles/glcache.h"
 #include "rend/gles/naomi2.h"
 #include "rend/tileclip.h"
-#include "rend/osd.h"
 
 #include <memory>
 

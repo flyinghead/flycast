@@ -64,7 +64,7 @@ public final class NativeGLActivity extends BaseGLActivity {
     // Called from native code
     private void VJoyStartEditing() {
         vjoy_d_cached = VJoy.readCustomVjoyValues(getApplicationContext());
-        JNIdc.show_osd();
+        JNIdc.showVirtualGamepad();
         mView.setEditVjoyMode(true);
     }
     // Called from native code

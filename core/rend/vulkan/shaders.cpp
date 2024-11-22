@@ -394,33 +394,6 @@ void main()
 }
 )";
 
-static const char OSDVertexShaderSource[] = R"(
-layout (location = 0) in vec4 inPos;
-layout (location = 1) in vec4 inColor;
-layout (location = 2) in vec2 inUV;
-layout (location = 0) out lowp vec4 outColor;
-layout (location = 1) out mediump vec2 outUV;
-
-void main() 
-{
-	outColor = inColor;
-	outUV = inUV;
-	gl_Position = inPos;
-}
-)";
-
-static const char OSDFragmentShaderSource[] = R"(
-layout (binding = 0) uniform sampler2D tex;
-layout (location = 0) in lowp vec4 inColor;
-layout (location = 1) in mediump vec2 inUV;
-layout (location = 0) out vec4 FragColor;
-
-void main() 
-{
-	FragColor = inColor * texture(tex, inUV);
-}
-)";
-
 extern const char N2LightShaderSource[] = R"(
 
 layout (std140, set = 1, binding = 2) uniform N2VertexShaderUniforms
@@ -824,14 +797,4 @@ vk::UniqueShaderModule ShaderManager::compileQuadFragmentShader(bool ignoreTexAl
 	src.addConstant("IGNORE_TEX_ALPHA", (int)ignoreTexAlpha)
 			.addSource(QuadFragmentShaderSource);
 	return ShaderCompiler::Compile(vk::ShaderStageFlagBits::eFragment,src.generate());
-}
-
-vk::UniqueShaderModule ShaderManager::compileOSDVertexShader()
-{
-	return ShaderCompiler::Compile(vk::ShaderStageFlagBits::eVertex, VulkanSource().addSource(OSDVertexShaderSource).generate());
-}
-
-vk::UniqueShaderModule ShaderManager::compileOSDFragmentShader()
-{
-	return ShaderCompiler::Compile(vk::ShaderStageFlagBits::eFragment, VulkanSource().addSource(OSDFragmentShaderSource).generate());
 }

@@ -31,8 +31,6 @@ public final class JNIdc
 	public static native boolean guiIsContentBrowser();
 	public static native void guiSetInsets(int left, int right, int top, int bottom);
 
-	public static void show_osd() {
-		JNIdc.vjoy(14, 1, 0, 0, 0);
-	}
-	public static native void hideOsd();
+	public static native void showVirtualGamepad();
+	public static native void hideVirtualGamepad();
 }

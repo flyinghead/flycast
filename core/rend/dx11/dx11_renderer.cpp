@@ -514,7 +514,7 @@ bool DX11Renderer::Render()
 #ifndef LIBRETRO
 		deviceContext->OMSetRenderTargets(1, &theDX11Context.getRenderTarget().get(), nullptr);
 		displayFramebuffer();
-		DrawOSD(false);
+		drawOSD();
 		renderVideoRouting();
 		theDX11Context.setFrameRendered();
 #else
@@ -1022,7 +1022,7 @@ void DX11Renderer::RenderFramebuffer(const FramebufferInfo& info)
 
 	deviceContext->OMSetRenderTargets(1, &theDX11Context.getRenderTarget().get(), nullptr);
 	displayFramebuffer();
-	DrawOSD(false);
+	drawOSD();
 	renderVideoRouting();
 	theDX11Context.setFrameRendered();
 #else
@@ -1241,10 +1241,10 @@ void DX11Renderer::updateFogTexture()
     deviceContext->PSSetSamplers(2, 1, &samplers->getSampler(true).get());
 }
 
-void DX11Renderer::DrawOSD(bool clear_screen)
+void DX11Renderer::drawOSD()
 {
 #ifndef LIBRETRO
-	theDX11Context.setOverlay(!clear_screen);
+	theDX11Context.setOverlay(true);
 	gui_display_osd();
 	theDX11Context.setOverlay(false);
 #endif
