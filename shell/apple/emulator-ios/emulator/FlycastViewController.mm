@@ -29,6 +29,7 @@
 #import <dlfcn.h>
 
 #import "PadViewController.h"
+#import "EditPadViewController.h"
 #import "EmulatorView.h"
 
 #include "types.h"
@@ -149,6 +150,7 @@ static void updateAudioSession(Event event, void *)
 
 @property (strong, nonatomic) EAGLContext *context;
 @property (strong, nonatomic) PadViewController *padController;
+@property (strong, nonatomic) EditPadViewController *editPadController;
 
 @property (nonatomic) iCadeReaderView* iCadeReader;
 @property (nonatomic, strong) id gamePadConnectObserver;
@@ -218,6 +220,7 @@ static void updateAudioSession(Event event, void *)
 
 #if !TARGET_OS_TV
 	self.padController = [[PadViewController alloc] initWithNibName:@"PadViewController" bundle:nil];
+	self.editPadController = [[EditPadViewController alloc] initWithNibName:@"EditPadViewController" bundle:nil];
 #endif
 	
     self.context = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES3];
@@ -296,6 +299,12 @@ static void updateAudioSession(Event event, void *)
 	self.padController.view.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
 	if (IOSGamepad::controllerConnected())
 		[self.padController hideController];
+
+	[self addChildViewController:self.editPadController];
+	self.editPadController.view.frame = self.view.bounds;
+	self.editPadController.view.translatesAutoresizingMaskIntoConstraints = YES;
+	self.editPadController.view.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+	[self.editPadController hideController];
 #endif
 
     self.iCadeReader = [[iCadeReaderView alloc] init];
@@ -682,6 +691,13 @@ bool checkTryDebug()
 - (void)glkView:(GLKView *)view drawInRect:(CGRect)rect
 {
 #if !TARGET_OS_TV
+	if ((gui_state == GuiState::VJoyEdit) != [self.editPadController isControllerVisible])
+	{
+		if (gui_state == GuiState::VJoyEdit)
+			[self.editPadController showController:self.view];
+		else
+			[self.editPadController hideController];
+	}
 	if (emu.running() != [self.padController isControllerVisible] && !IOSGamepad::controllerConnected())
 	{
 		if (emu.running())

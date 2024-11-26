@@ -1,6 +1,5 @@
 /*
-	Copyright 2021 flyinghead
-	Copyright (c) 2015 reicast. All rights reserved.
+	Copyright 2024 flyinghead
 
 	This file is part of Flycast.
 
@@ -17,15 +16,16 @@
 	You should have received a copy of the GNU General Public License
 	along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
-//
-//  Created by Lounge Katt on 8/25/15.
-//
+#pragma once
 #import <UIKit/UIKit.h>
 
-@interface PadViewController : UIViewController
+@interface EditPadViewController : UIViewController
 
 - (void) showController:(UIView *)parentView;
 - (void) hideController;
 - (BOOL) isControllerVisible;
+- (IBAction)handlePan:(UIPanGestureRecognizer *)recognizer;
+- (IBAction)handlePinch:(UIPinchGestureRecognizer *)recognizer;
+- (IBAction)handleTap:(UITapGestureRecognizer *)recognizer;
 
 @end

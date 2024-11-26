@@ -11,6 +11,8 @@ std::string cfgLoadStr(const std::string& section, const std::string& key, const
 void cfgSaveStr(const std::string& section, const std::string& key, const std::string& value);
 void cfgSaveBool(const std::string& section, const std::string& key, bool value);
 bool cfgLoadBool(const std::string& section, const std::string& key, bool def);
+void cfgSaveFloat(const std::string& section, const std::string& key, float value);
+float cfgLoadFloat(const std::string& section, const std::string& key, float def);
 void cfgSetVirtual(const std::string& section, const std::string& key, const std::string& value);
 bool cfgIsVirtual(const std::string& section, const std::string& key);
 

@@ -1029,7 +1029,7 @@ if(NOT LIBRETRO)
 		fonts/Roboto-Medium.ttf.zip
 		fonts/Roboto-Regular.ttf.zip
 		fonts/fa-solid-900.ttf.zip)
-	if(ANDROID)
+	if(ANDROID OR IOS)
 		cmrc_add_resources(flycast-resources
 			WHENCE resources
 			resources/picture/buttons.png)
@@ -1641,6 +1641,8 @@ if(NOT LIBRETRO)
 					shell/apple/emulator-ios/emulator/FlycastViewController.mm
 					shell/apple/emulator-ios/emulator/PadViewController.h
 					shell/apple/emulator-ios/emulator/PadViewController.mm
+					shell/apple/emulator-ios/emulator/EditPadViewController.h
+					shell/apple/emulator-ios/emulator/EditPadViewController.mm
 					shell/apple/emulator-ios/emulator/EmulatorView.h
 					shell/apple/emulator-ios/emulator/EmulatorView.mm
 					shell/apple/emulator-ios/emulator/main.m
@@ -1655,7 +1657,8 @@ if(NOT LIBRETRO)
 				shell/apple/emulator-ios/emulator/Images.xcassets
 				shell/apple/emulator-ios/emulator/FlycastStoryboard.storyboard
 				shell/apple/emulator-ios/emulator/LaunchScreen.storyboard
-				shell/apple/emulator-ios/emulator/PadViewController.xib)
+				shell/apple/emulator-ios/emulator/PadViewController.xib
+				shell/apple/emulator-ios/emulator/EditPadViewController.xib)
 			target_sources(${PROJECT_NAME} PRIVATE ${IOS_RESOURCES})
 			source_group("Resources" FILES ${IOS_RESOURCES})
 			set_source_files_properties(${IOS_RESOURCES} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")

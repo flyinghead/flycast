@@ -23,6 +23,7 @@ namespace vgamepad
 {
 enum ControlId
 {
+	None = -1,
 	Left,
 	Up,
 	Right,
@@ -38,30 +39,58 @@ enum ControlId
 	AnalogStick,
 	FastForward,
 
-	_Count
+	LeftUp,
+	RightUp,
+	LeftDown,
+	RightDown,
+	
+	_Count,
+	_VisibleCount = FastForward + 1,
 };
 
-#ifdef __ANDROID__
+enum Element
+{
+	Elem_None = -1,
+	Elem_DPad,
+	Elem_Buttons,
+	Elem_Start,
+	Elem_LT,
+	Elem_RT,
+	Elem_Analog,
+	Elem_FForward,
+};
 
-void setPosition(ControlId id, float x, float y, float w, float h);
+#if defined(__ANDROID__) || defined(TARGET_IPHONE)
+
+void setPosition(ControlId id, float x, float y, float w = 0.f, float h = 0.f);	// Legacy android
 void show();
 void hide();
 void draw();
 void startEditing();
+void pauseEditing();
 void stopEditing(bool canceled);
 void resetEditing();
 void displayCommands();
 
+ControlId hitTest(float x, float y);
+u32 controlToDcKey(ControlId control);
+void setAnalogStick(float x, float y);
+float getControlWidth(ControlId);
+
+void applyUiScale();
+Element layoutHitTest(float x, float y);
+void translateElement(Element element, float dx, float dy);
+void scaleElement(Element element, float factor);
+
 #else
 
-void setPosition(ControlId id, float x, float y, float w, float h) {}
 void show() {}
 void hide() {}
 void draw() {}
 void startEditing() {}
-void stopEditing(bool canceled) {}
-void resetEditing() {}
+void pauseEditing() {}
 void displayCommands() {}
+void applyUiScale() {}
 
 #endif
 }	// namespace vgamepad

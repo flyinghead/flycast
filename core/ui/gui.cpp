@@ -328,6 +328,7 @@ void gui_initFonts()
 	largeFont = io.Fonts->AddFontFromMemoryTTF(data.release(), dataSize, largeFontSize, nullptr, ranges);
 
     NOTICE_LOG(RENDERER, "Screen DPI is %.0f, size %d x %d. Scaling by %.2f", settings.display.dpi, settings.display.width, settings.display.height, settings.display.uiScale);
+	vgamepad::applyUiScale();
 }
 
 void gui_keyboard_input(u16 wc)
@@ -532,7 +533,9 @@ void gui_open_settings()
 	}
 	else if (gui_state == GuiState::VJoyEdit)
 	{
-		vgamepad::stopEditing(false);
+		vgamepad::pauseEditing();
+		// iOS: force a touch up event to make up for the one eaten by the tap gesture recognizer
+		mouseButtons &= ~1;
 		gui_setState(GuiState::VJoyEditCommands);
 	}
 	else if (gui_state == GuiState::Loading)
@@ -1446,8 +1449,10 @@ static void gamepadSettingsPopup(const std::shared_ptr<GamepadDevice>& gamepad)
 		ImGui::NewLine();
 		if (gamepad->is_virtual_gamepad())
 		{
+#ifdef __ANDROID__
 			header("Haptic");
 			OptionSlider("Power", config::VirtualGamepadVibration, 0, 100, "Haptic feedback power", "%d%%");
+#endif
 			header("View");
 			OptionSlider("Transparency", config::VirtualGamepadTransparency, 0, 100, "Virtual gamepad buttons transparency", "%d%%");
 		}
@@ -1956,7 +1961,7 @@ static void gui_settings_controls(bool& maple_devices_changed)
 
 				controller_mapping_popup(gamepad);
 
-#ifdef __ANDROID__
+#if defined(__ANDROID__) || defined(TARGET_IPHONE)
 				if (gamepad->is_virtual_gamepad())
 				{
 					if (ImGui::Button("Edit Layout"))
@@ -1967,10 +1972,7 @@ static void gui_settings_controls(bool& maple_devices_changed)
 				}
 #endif
 				if (gamepad->is_rumble_enabled() || gamepad->has_analog_stick()
-#ifdef __ANDROID__
-					|| gamepad->is_virtual_gamepad()
-#endif
-					)
+					|| gamepad->is_virtual_gamepad())
 				{
 					ImGui::SameLine(0, uiScaled(16));
 					if (ImGui::Button("Settings"))

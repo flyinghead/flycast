@@ -604,6 +604,9 @@ namespace vgamepad
 void startEditing() {
 	jni::env()->CallVoidMethod(g_activity, VJoyStartEditingMID);
 }
+void pauseEditing() {
+	stopEditing(false);
+}
 void resetEditing() {
     jni::env()->CallVoidMethod(g_activity, VJoyResetEditingMID);
 }
