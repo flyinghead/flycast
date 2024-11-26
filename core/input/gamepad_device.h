@@ -160,6 +160,7 @@ private:
 	{
 		if (port < 0)
 			return;
+		Lock _(rampMutex);
 		DigAnalog axis = key == DcNegDir ? NegDir : PosDir;
 		if (pressed)
 			digitalToAnalogState[port] |= axis;
@@ -188,9 +189,12 @@ private:
 	u64 lastAnalogUpdate = 0;
 	u32 rampAnalogState[4] {};
 	static constexpr float AnalogRamp = 32767.f / 100.f;		// 100 ms ramp time
+	std::mutex rampMutex;
 
 	static std::vector<std::shared_ptr<GamepadDevice>> _gamepads;
 	static std::mutex _gamepads_mutex;
+
+	using Lock = std::lock_guard<std::mutex>;
 };
 
 #ifdef TEST_AUTOMATION

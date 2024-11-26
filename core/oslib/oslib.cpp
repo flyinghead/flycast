@@ -371,7 +371,6 @@ void os_UpdateInputState()
 {
 	FC_PROFILE_SCOPE;
 
-	// FIXME threading (android) this will be called on the render thread, events are on the main app thread
 	GamepadDevice::RampAnalog();
 #if defined(USE_SDL)
 	input_sdl_handle();
