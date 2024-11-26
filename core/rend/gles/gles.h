@@ -311,6 +311,7 @@ struct gl_ctx
 	bool border_clamp_supported;
 	bool prim_restart_supported;
 	bool prim_restart_fixed_supported;
+	bool bogusBlitFramebuffer;
 
 	size_t get_index_size() { return index_type == GL_UNSIGNED_INT ? sizeof(u32) : sizeof(u16); }
 };

@@ -285,7 +285,7 @@ void PostProcessor::render(GLuint output_fbo)
 	if (!config::PowerVR2Filter)
 	{
 		// Just handle shifting and Y flipping
-		if (gl.gl_major < 3)
+		if (gl.bogusBlitFramebuffer)
 		{
 			glBindFramebuffer(GL_FRAMEBUFFER, output_fbo);
 			glViewport(0, 0, framebuffer->getWidth(), framebuffer->getHeight());

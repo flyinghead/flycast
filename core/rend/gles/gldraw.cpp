@@ -705,7 +705,7 @@ void writeFramebufferToVRAM()
 		if (gl.fbscaling.framebuffer == nullptr)
 			gl.fbscaling.framebuffer = std::make_unique<GlFramebuffer>(scaledW, scaledH);
 
-		if (gl.gl_major < 3)
+		if (gl.bogusBlitFramebuffer)
 		{
 			gl.fbscaling.framebuffer->bind();
 			glViewport(0, 0, scaledW, scaledH);
@@ -777,7 +777,7 @@ bool OpenGLRenderer::renderLastFrame()
 	else
 		dx = (int)roundf(settings.display.width * (1 - renderAR / screenAR) / 2.f);
 
-	if (gl.gl_major < 3 || config::Rotate90)
+	if (gl.bogusBlitFramebuffer || config::Rotate90)
 	{
 		glViewport(dx, dy, settings.display.width - dx * 2, settings.display.height - dy * 2);
 		glBindFramebuffer(GL_FRAMEBUFFER, gl.ofbo.origFbo);

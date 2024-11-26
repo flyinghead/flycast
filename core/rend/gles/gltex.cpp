@@ -459,3 +459,70 @@ GlFramebuffer::~GlFramebuffer()
 	glcache.DeleteTextures(1, &texture);
 	glDeleteRenderbuffers(1, &colorBuffer);
 }
+
+bool testBlitFramebuffer()
+{
+#ifdef GLES2
+	return false;
+#else
+	GLint ofbo = 0;
+	glGetIntegerv(GL_FRAMEBUFFER_BINDING, (GLint *)&ofbo);
+
+	GLuint texture = glcache.GenTexture();
+	glcache.BindTexture(GL_TEXTURE_2D, texture);
+
+	u32 data[32 * 32];
+	// Lower half is red
+	for (int i = 0; i < 16 * 32; i++)
+		data[i] = 0xFF0000FF;
+	// Upper half is green
+	for (int i = 16 * 32; i < 32 * 32; i++)
+		data[i] = 0xFF00FF00;   // green
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 32, 32, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+	GlFramebuffer src(32, 32, false, texture);
+
+	GlFramebuffer dest(32, 64, false, true);
+
+	src.bind(GL_READ_FRAMEBUFFER);
+	GLenum error = glCheckFramebufferStatus(GL_READ_FRAMEBUFFER);
+	if (error != GL_FRAMEBUFFER_COMPLETE) {
+		WARN_LOG(RENDERER, "testBlitFramebuffer: Source framebuffer error %x", error);
+		return false;
+	}
+	dest.bind(GL_DRAW_FRAMEBUFFER);
+	error = glCheckFramebufferStatus(GL_DRAW_FRAMEBUFFER);
+	if (error != GL_FRAMEBUFFER_COMPLETE) {
+		WARN_LOG(RENDERER, "testBlitFramebuffer: Destination framebuffer error %x", error);
+		return false;
+	}
+
+	glcache.Disable(GL_SCISSOR_TEST);
+	glcache.ClearColor(0, 0, 0, 1);
+	glClear(GL_COLOR_BUFFER_BIT);
+	// Apple A8X chokes on negative coordinates
+	// Many mobile GPUs don't support dstY0 > dstY1 and the resulting image is flipped vertically
+	glBlitFramebuffer(0, -1, 32, 31, 0, 64, 32, 0, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+
+	u32 outdata[32 * 64];
+	dest.bind(GL_READ_FRAMEBUFFER);
+	glPixelStorei(GL_PACK_ALIGNMENT, 1);
+	glReadPixels(0, 0, 32, 64, GL_RGBA, GL_UNSIGNED_BYTE, outdata);
+	glBindFramebuffer(GL_FRAMEBUFFER, ofbo);
+	error = glGetError();
+	if (error != GL_NO_ERROR) {
+		WARN_LOG(RENDERER, "testBlitFramebuffer: OpenGL error %x", error);
+		return false;
+	}
+	// Now lower half should be green (except last line due to srcY0 == -1)
+	if (outdata[32 * 2] != 0xFF00FF00) {    // green
+		WARN_LOG(RENDERER, "testBlitFramebuffer: Expected 0xFF00FF00 but was %08x", outdata[0]);
+		return false;
+	}
+	// And upper half should be red
+	if (outdata[31 * 64 - 1] != 0xFF0000FF) {       // red
+		WARN_LOG(RENDERER, "testBlitFramebuffer: Expected 0xFF0000FF but was %08x", outdata[32 * 64 - 1]);
+		return false;
+	}
+	return true;
+#endif
+}

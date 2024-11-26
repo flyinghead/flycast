@@ -498,6 +498,8 @@ static void gles_term()
 	gl_delete_shaders();
 }
 
+bool testBlitFramebuffer();
+
 void findGLVersion()
 {
 	gl.index_type = GL_UNSIGNED_INT;
@@ -602,6 +604,17 @@ void findGLVersion()
 	NOTICE_LOG(RENDERER, "Vendor '%s' Renderer '%s' Version '%s'", vendor, renderer, glGetString(GL_VERSION));
 	while (glGetError() != GL_NO_ERROR)
 		;
+	gl.bogusBlitFramebuffer = true;	// not supported in GL/GLES 2
+#ifndef GLES2
+	if (gl.gl_major >= 3)
+	{
+		gl.bogusBlitFramebuffer = !testBlitFramebuffer();
+		if (gl.bogusBlitFramebuffer)
+			WARN_LOG(RENDERER, "glBlitFramebuffer is bogus. Using quad drawer instead");
+		else
+			NOTICE_LOG(RENDERER, "glBlitFramebuffer test successful");
+	}
+#endif
 }
 
 struct ShaderUniforms_t ShaderUniforms;
