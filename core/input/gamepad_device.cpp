@@ -584,6 +584,82 @@ void GamepadDevice::SaveMaplePorts()
 	}
 }
 
+s16 (&GamepadDevice::getTargetArray(DigAnalog axis))[4]
+{
+	switch (axis)
+	{
+	case DIGANA_LEFT:
+	case DIGANA_RIGHT:
+		return joyx;
+	case DIGANA_UP:;
+	case DIGANA_DOWN:
+		return joyy;
+	case DIGANA2_LEFT:
+	case DIGANA2_RIGHT:
+		return joyrx;
+	case DIGANA2_UP:
+	case DIGANA2_DOWN:
+		return joyry;
+	case DIGANA3_LEFT:
+	case DIGANA3_RIGHT:
+		return joy3x;
+	case DIGANA3_UP:
+	case DIGANA3_DOWN:
+		return joy3y;
+	default:
+		die("unknown axis");
+	}
+}
+
+void GamepadDevice::rampAnalog()
+{
+	if (lastAnalogUpdate == 0)
+		// also used as a flag that no analog ramping is needed on this device (yet)
+		return;
+
+	const u64 now = getTimeMs();
+	const int delta = std::round(static_cast<float>(now - lastAnalogUpdate) * AnalogRamp);
+	lastAnalogUpdate = now;
+	for (unsigned port = 0; port < std::size(digitalToAnalogState); port++)
+	{
+		for (int axis = 0; axis < 12; axis += 2)	// 3 sticks with 2 axes each
+		{
+			DigAnalog negDir = static_cast<DigAnalog>(1 << axis);
+			if ((rampAnalogState[port] & negDir) == 0)
+				// axis not active
+				continue;
+			DigAnalog posDir = static_cast<DigAnalog>(1 << (axis + 1));
+			const int socd = digitalToAnalogState[port] & (negDir | posDir);
+			s16& axisValue = getTargetArray(negDir)[port];
+			if (socd != 0 && socd != (negDir | posDir))
+			{
+				// One axis is pressed => ramp up
+				if (socd == posDir)
+					axisValue = std::min(32767, axisValue + delta);
+				else
+					axisValue = std::max(-32768, axisValue - delta);
+			}
+			else
+			{
+				// No axis is pressed (or both) => ramp down
+				if (axisValue > 0)
+					axisValue = std::max(0, axisValue - delta);
+				else if (axisValue < 0)
+					axisValue = std::min(0, axisValue + delta);
+				else
+					rampAnalogState[port] &= ~negDir;
+			}
+		}
+	}
+}
+
+void GamepadDevice::RampAnalog()
+{
+	std::lock_guard<std::mutex> _(_gamepads_mutex);
+	for (auto& gamepad : _gamepads)
+		gamepad->rampAnalog();
+}
+
 #ifdef TEST_AUTOMATION
 #include "cfg/option.h"
 static bool replay_inited;

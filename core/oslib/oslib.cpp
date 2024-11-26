@@ -40,6 +40,7 @@
 #include <shlobj.h>
 #endif
 #include "profiler/fc_profiler.h"
+#include "input/gamepad_device.h"
 
 namespace hostfs
 {
@@ -370,12 +371,12 @@ void os_UpdateInputState()
 {
 	FC_PROFILE_SCOPE;
 
+	// FIXME threading (android) this will be called on the render thread, events are on the main app thread
+	GamepadDevice::RampAnalog();
 #if defined(USE_SDL)
 	input_sdl_handle();
-#else
-	#if defined(USE_EVDEV)
-		input_evdev_handle();
-	#endif
+#elif defined(USE_EVDEV)
+	input_evdev_handle();
 #endif
 }
 
