@@ -486,7 +486,7 @@ if(NOT LIBRETRO)
 endif()
 
 find_package(PkgConfig)
-if(PKG_CONFIG_FOUND AND USE_HOST_LIBCHDR AND NOT LIBRETRO)
+if(PKG_CONFIG_FOUND AND USE_HOST_LIBCHDR)
 	pkg_check_modules(LIBCHDR IMPORTED_TARGET libchdr)
 	target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::LIBCHDR)
 else()
