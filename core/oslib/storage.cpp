@@ -42,7 +42,7 @@ CustomStorage& customStorage()
 		FileInfo getFileInfo(const std::string& path) override { die("Not implemented"); }
 		bool exists(const std::string& path) override { die("Not implemented"); }
 		bool addStorage(bool isDirectory, bool writeAccess, const std::string& description,
-				void (*callback)(bool cancelled, std::string selectedPath)) override {
+				void (*callback)(bool cancelled, std::string selectedPath), const std::string& mimeType) override {
 			die("Not implemented");
 		}
 	};
@@ -394,9 +394,9 @@ AllStorage& storage()
 }
 
 bool addStorage(bool isDirectory, bool writeAccess, const std::string& description,
-		void (*callback)(bool cancelled, std::string selectedPath))
+		void (*callback)(bool cancelled, std::string selectedPath), const std::string& mimeType)
 {
-	return customStorage().addStorage(isDirectory, writeAccess, description, callback);
+	return customStorage().addStorage(isDirectory, writeAccess, description, callback, mimeType);
 }
 
 }

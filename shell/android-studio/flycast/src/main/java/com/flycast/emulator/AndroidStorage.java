@@ -293,14 +293,17 @@ public class AndroidStorage {
         return dir.getAbsolutePath();
     }
 
-    public boolean addStorage(boolean isDirectory, boolean writeAccess, String description)
+    public boolean addStorage(boolean isDirectory, boolean writeAccess, String description, String mimeType)
     {
         if (isDirectory && Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP)
             return false;
         Intent intent = new Intent(isDirectory ? Intent.ACTION_OPEN_DOCUMENT_TREE : Intent.ACTION_OPEN_DOCUMENT);
         if (!isDirectory) {
             intent.addCategory(Intent.CATEGORY_OPENABLE);
-            intent.setType("application/*");
+            if (!mimeType.isEmpty())
+                intent.setType(mimeType);
+            else
+                intent.setType("application/*");
         }
         intent = Intent.createChooser(intent, description);
         storageIntentPerms = Intent.FLAG_GRANT_READ_URI_PERMISSION | (writeAccess ? Intent.FLAG_GRANT_WRITE_URI_PERMISSION : 0);
