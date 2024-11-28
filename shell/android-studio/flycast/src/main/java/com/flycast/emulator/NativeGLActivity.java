@@ -90,6 +90,9 @@ public final class NativeGLActivity extends BaseGLActivity {
             }
         });
     }
+    private void VJoyEnableControls(boolean[] state) {
+        mView.enableVjoy(state);
+    }
 
     // On-screen keyboard borrowed from SDL core android code
     class ShowTextInputTask implements Runnable {

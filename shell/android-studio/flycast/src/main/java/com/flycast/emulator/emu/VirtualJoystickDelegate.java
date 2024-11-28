@@ -12,6 +12,8 @@ import com.flycast.emulator.periph.InputDeviceManager;
 import com.flycast.emulator.periph.VJoy;
 import com.flycast.emulator.periph.VibratorThread;
 
+import java.util.Arrays;
+
 public class VirtualJoystickDelegate {
     private VibratorThread vibratorThread;
 
@@ -28,6 +30,7 @@ public class VirtualJoystickDelegate {
     };
 
     private float[][] vjoy_d_custom;
+    private boolean[] vjoy_enabled;
 
     private static final float[][] vjoy = VJoy.baseVJoy();
 
@@ -41,6 +44,8 @@ public class VirtualJoystickDelegate {
         vibratorThread = VibratorThread.getInstance();
 
         readCustomVjoyValues();
+        vjoy_enabled = new boolean[VJoy.VJoyCount + 4]; // include diagonals
+        Arrays.fill(vjoy_enabled, true);
         scaleGestureDetector = new ScaleGestureDetector(context, new OscOnScaleGestureListener());
     }
 
@@ -215,62 +220,63 @@ public class VirtualJoystickDelegate {
                         continue;
                     for (int j = 0; j < vjoy.length; j++)
                     {
-                        if (x > vjoy[j][0] && x <= (vjoy[j][0] + vjoy[j][2]))
+                        if (!editVjoyMode && !vjoy_enabled[j])
+                            continue;
+                        if (x > vjoy[j][0] && x <= (vjoy[j][0] + vjoy[j][2])
+                            && y > vjoy[j][1] && y <= (vjoy[j][1] + vjoy[j][3]))
                         {
-                            if (y > vjoy[j][1] && y <= (vjoy[j][1] + vjoy[j][3]))
-                            {
-                                if (vjoy[j][4] >= VJoy.BTN_RTRIG) {
-                                    // Not for analog
-                                    if (vjoy[j][5] == 0)
-                                        if (!editVjoyMode) {
-                                            vibratorThread.click();
-                                        }
-                                    vjoy[j][5] = 2;
+                            if (vjoy[j][4] >= VJoy.BTN_RTRIG) {
+                                // Not for analog
+                                if (vjoy[j][5] == 0)
+                                    if (!editVjoyMode) {
+                                        vibratorThread.click();
+                                    }
+                                vjoy[j][5] = 2;
+                            }
+
+
+                            if (vjoy[j][4] == VJoy.BTN_ANARING) {
+                                if (editVjoyMode) {
+                                    selectedVjoyElement = VJoy.ELEM_ANALOG;
+                                    resetEditMode();
+                                } else {
+                                    vjoy[j + 1][0] = x - vjoy[j + 1][2] / 2;
+                                    vjoy[j + 1][1] = y - vjoy[j + 1][3] / 2;
+
+                                    JNIdc.vjoy(j + 1, vjoy[j + 1][0], vjoy[j + 1][1], vjoy[j + 1][2], vjoy[j + 1][3]);
+                                    anal_id = event.getPointerId(i);
                                 }
-
-
-                                if (vjoy[j][4] == VJoy.BTN_ANARING) {
+                            } else if (vjoy[j][4] != VJoy.BTN_ANAPOINT) {
+                                if (vjoy[j][4] == VJoy.BTN_LTRIG) {
                                     if (editVjoyMode) {
-                                        selectedVjoyElement = VJoy.ELEM_ANALOG;
+                                        selectedVjoyElement = VJoy.ELEM_LTRIG;
                                         resetEditMode();
                                     } else {
-                                        vjoy[j + 1][0] = x - vjoy[j + 1][2] / 2;
-                                        vjoy[j + 1][1] = y - vjoy[j + 1][3] / 2;
-
-                                        JNIdc.vjoy(j + 1, vjoy[j + 1][0], vjoy[j + 1][1], vjoy[j + 1][2], vjoy[j + 1][3]);
-                                        anal_id = event.getPointerId(i);
+                                        left_trigger = 255;
+                                        lt_id = event.getPointerId(i);
                                     }
-                                } else if (vjoy[j][4] != VJoy.BTN_ANAPOINT) {
-                                    if (vjoy[j][4] == VJoy.BTN_LTRIG) {
-                                        if (editVjoyMode) {
-                                            selectedVjoyElement = VJoy.ELEM_LTRIG;
-                                            resetEditMode();
-                                        } else {
-                                            left_trigger = 255;
-                                            lt_id = event.getPointerId(i);
-                                        }
-                                    } else if (vjoy[j][4] == VJoy.BTN_RTRIG) {
-                                        if (editVjoyMode) {
-                                            selectedVjoyElement = VJoy.ELEM_RTRIG;
-                                            resetEditMode();
-                                        } else {
-                                            right_trigger = 255;
-                                            rt_id = event.getPointerId(i);
-                                        }
+                                } else if (vjoy[j][4] == VJoy.BTN_RTRIG) {
+                                    if (editVjoyMode) {
+                                        selectedVjoyElement = VJoy.ELEM_RTRIG;
+                                        resetEditMode();
                                     } else {
-                                        if (editVjoyMode) {
-                                            selectedVjoyElement = getElementIdFromButtonId(j);
-                                            resetEditMode();
-                                        } else if (vjoy[j][4] == VJoy.key_CONT_FFORWARD)
-                                            fastForward = true;
-                                        else
-                                            rv &= ~(int)vjoy[j][4];
+                                        right_trigger = 255;
+                                        rt_id = event.getPointerId(i);
                                     }
+                                } else {
+                                    if (editVjoyMode) {
+                                        selectedVjoyElement = getElementIdFromButtonId(j);
+                                        resetEditMode();
+                                    } else if (vjoy[j][4] == VJoy.key_CONT_FFORWARD)
+                                        fastForward = true;
+                                    else
+                                        rv &= ~(int)vjoy[j][4];
                                 }
                             }
                         }
                     }
-                } else {
+                } else if (vjoy_enabled[11]) {
+                    // Analog stick
                     if (x < vjoy[11][0])
                         x = vjoy[11][0];
                     else if (x > (vjoy[11][0] + vjoy[11][2]))
@@ -369,9 +375,15 @@ public class VirtualJoystickDelegate {
     public void setEditVjoyMode(boolean editVjoyMode) {
         this.editVjoyMode = editVjoyMode;
         selectedVjoyElement = -1;
-        if (editVjoyMode)
+        if (editVjoyMode) {
             this.handler.removeCallbacks(hideVGamepadRunnable);
+            Arrays.fill(vjoy_enabled, true);
+        }
         resetEditMode();
+    }
+
+    public void enableVjoy(boolean[] state) {
+        vjoy_enabled = state;
     }
 
     private class OscOnScaleGestureListener extends

@@ -186,4 +186,7 @@ public class NativeGLView extends SurfaceView implements SurfaceHolder.Callback 
     public void setEditVjoyMode(boolean editVjoyMode) {
         vjoyDelegate.setEditVjoyMode(editVjoyMode);
     }
+    public void enableVjoy(boolean[] state) {
+        vjoyDelegate.enableVjoy(state);
+    }
 }

@@ -22,14 +22,16 @@
 #include "gui.h"
 #include "stdclass.h"
 #include "imgui.h"
-#include "gui_util.h"
 #include "rend/osd.h"
 #include "imgui_driver.h"
 #include "input/gamepad.h"
 #include "input/gamepad_device.h"
+#include "oslib/storage.h"
 #include "oslib/resources.h"
 #include "cfg/cfg.h"
 #include "input/gamepad.h"
+#include "hw/naomi/naomi_cart.h"
+#include "hw/maple/maple_devs.h"
 #include <stb_image.h>
 
 namespace vgamepad
@@ -47,12 +49,14 @@ struct Control
 	ImVec2 size;
 	ImVec2 uv0;
 	ImVec2 uv1;
+	bool disabled = false;
 };
 static Control Controls[_Count];
 static bool Visible = true;
 static float AlphaTrans = 1.f;
 static ImVec2 StickPos;	// analog stick position [-1, 1]
 constexpr char const *BTN_PATH = "picture/buttons.png";
+constexpr char const *CFG_SECTION = "vgamepad";
 
 void displayCommands()
 {
@@ -83,58 +87,74 @@ void displayCommands()
     ImGui::End();
 }
 
-static u8 *loadOSDButtons(int &width, int &height)
+static bool loadOSDButtons(const std::string& path)
 {
-	int n;
-	stbi_set_flip_vertically_on_load(1);
-
-	FILE *file = nowide::fopen(get_readonly_data_path("buttons.png").c_str(), "rb");
+	if (path.empty())
+		return false;
+	FILE *file = hostfs::storage().openFile(path, "rb");
 	if (file == nullptr)
-		// also try the home folder (android)
-		file = nowide::fopen(get_readonly_config_path("buttons.png").c_str(), "rb");
-	u8 *image_data = nullptr;
-	if (file != nullptr)
-	{
-		image_data = stbi_load_from_file(file, &width, &height, &n, STBI_rgb_alpha);
-		std::fclose(file);
-	}
+		return false;
+
+	stbi_set_flip_vertically_on_load(1);
+    int width, height, n;
+	u8 *image_data = stbi_load_from_file(file, &width, &height, &n, STBI_rgb_alpha);
+	std::fclose(file);
 	if (image_data == nullptr)
-	{
-		size_t size;
-		std::unique_ptr<u8[]> data = resource::load(BTN_PATH, size);
-		image_data = stbi_load_from_memory(data.get(), (int)size, &width, &height, &n, STBI_rgb_alpha);
-	}
-	return image_data;
+		return false;
+    try {
+        imguiDriver->updateTexture(BTN_PATH, image_data, width, height, false);
+    } catch (...) {
+        // vulkan can throw during resizing
+    }
+    free(image_data);
+
+    return true;
 }
 
-class ImguiVGamepadTexture : public ImguiTexture
+static ImTextureID loadOSDButtons()
 {
-public:
-	ImTextureID getId() override
-	{
-		ImTextureID id = imguiDriver->getTexture(BTN_PATH);
-		if (id == ImTextureID())
-		{
-			int width, height;
-			u8 *imgData = loadOSDButtons(width, height);
-			if (imgData != nullptr)
-			{
-				try {
-					id = imguiDriver->updateTextureAndAspectRatio(BTN_PATH, imgData, width, height, nearestSampling);
-				} catch (...) {
-					// vulkan can throw during resizing
-				}
-				free(imgData);
-			}
-		}
+	ImTextureID id{};
+	// custom image
+	std::string path = cfgLoadStr(CFG_SECTION, "image", "");
+	if (loadOSDButtons(path))
 		return id;
-	}
-};
+	// legacy buttons.png in data folder
+	if (loadOSDButtons(get_readonly_data_path("buttons.png")))
+		return id;
+	// also try the home folder (android)
+	if (loadOSDButtons(get_readonly_config_path("buttons.png")))
+		return id;
+	// default in resource
+	size_t size;
+	std::unique_ptr<u8[]> data = resource::load(BTN_PATH, size);
+	stbi_set_flip_vertically_on_load(1);
+	int width, height, n;
+	u8 *image_data = stbi_load_from_memory(data.get(), (int)size, &width, &height, &n, STBI_rgb_alpha);
+    if (image_data != nullptr)
+    {
+        try {
+            id = imguiDriver->updateTexture(BTN_PATH, image_data, width, height, false);
+        } catch (...) {
+            // vulkan can throw during resizing
+        }
+        free(image_data);
+    }
+    return id;
+}
 
-constexpr float vjoy_sz[2][14] = {
-	// L  U  R  D   X  Y  B  A  St  LT RT  Ana Stck FF
-	{ 64,64,64,64, 64,64,64,64, 64, 90,90, 128, 64, 64 },
-	{ 64,64,64,64, 64,64,64,64, 64, 64,64, 128, 64, 64 },
+ImTextureID ImguiVGamepadTexture::getId()
+{
+	ImTextureID id = imguiDriver->getTexture(BTN_PATH);
+	if (id == ImTextureID())
+		id = loadOSDButtons();
+
+	return id;
+}
+
+constexpr float vjoy_sz[2][_Count] = {
+	// L  U  R  D   X  Y  B  A  St  LT RT  Ana Stck FF   LU RU LD RD
+	{ 64,64,64,64, 64,64,64,64, 64, 90,90, 128, 64, 64,  64,64,64,64 },
+	{ 64,64,64,64, 64,64,64,64, 64, 64,64, 128, 64, 64,  64,64,64,64 },
 };
 
 constexpr float OSD_TEX_W = 512.f;
@@ -186,8 +206,9 @@ void setPosition(ControlId id, float x, float y, float w, float h)
 ControlId hitTest(float x, float y)
 {
 	for (const auto& control : Controls)
-		if (x >= control.pos.x && x < control.pos.x + control.size.x
-			&& y >= control.pos.y && y < control.pos.y + control.size.y)
+		if (!control.disabled
+				&& x >= control.pos.x && x < control.pos.x + control.size.x
+				&& y >= control.pos.y && y < control.pos.y + control.size.y)
 			return static_cast<ControlId>(&control - &Controls[0]);
 	return None;
 }
@@ -227,6 +248,8 @@ float getControlWidth(ControlId control) {
 
 static void drawButtonDim(ImDrawList *drawList, const Control& control, int state)
 {
+	if (control.disabled)
+		return;
 	float scale_h = settings.display.height / 480.f;
 	float offs_x = (settings.display.width - scale_h * 640.f) / 2.f;
 	ImVec2 pos = control.pos * scale_h;
@@ -284,7 +307,7 @@ void draw()
 }
 
 static float getUIScale() {
-	// scale is 1.1@ for a 320 dpi screen of height 750
+	// scale is 1.1 for a 320 dpi screen of height 750
 	return 1.1f * 750.f / settings.display.height * settings.display.dpi / 320.f;
 }
 
@@ -300,15 +323,15 @@ struct LayoutElement
 
 	void load()
 	{
-		x = cfgLoadFloat(SECTION, name + "_x", x);
-		y = cfgLoadFloat(SECTION, name + "_y", y);
-		scale = cfgLoadFloat(SECTION, name + "_scale", scale);
+		x = cfgLoadFloat(CFG_SECTION, name + "_x", x);
+		y = cfgLoadFloat(CFG_SECTION, name + "_y", y);
+		scale = cfgLoadFloat(CFG_SECTION, name + "_scale", scale);
 	}
 	void save() const
 	{
-		cfgSaveFloat(SECTION, name + "_x", x);
-		cfgSaveFloat(SECTION, name + "_y", y);
-		cfgSaveFloat(SECTION, name + "_scale", scale);
+		cfgSaveFloat(CFG_SECTION, name + "_x", x);
+		cfgSaveFloat(CFG_SECTION, name + "_y", y);
+		cfgSaveFloat(CFG_SECTION, name + "_scale", scale);
 	}
 
 	bool hitTest(float nx, float ny) const {
@@ -342,8 +365,6 @@ struct LayoutElement
 		else
 			y = 1.f - h + dy / 480.f * uiscale;
 	}
-
-	static constexpr char const *SECTION = "vgamepad";
 };
 static LayoutElement Layout[] {
 	{ "dpad",      32.f, -24.f, 192.f, 192.f },
@@ -476,9 +497,210 @@ void scaleElement(Element element, float factor)
 	translateElement(element, -dx, -dy);
 }
 
+void loadImage(const std::string& path)
+{
+	if (path.empty()) {
+		cfgSaveStr(CFG_SECTION, "image", "");
+		loadOSDButtons();
+	}
+	else if (loadOSDButtons(path)) {
+		cfgSaveStr(CFG_SECTION, "image", path);
+	}
+}
+
+void enableAllControls()
+{
+	for (auto& control : Controls)
+		control.disabled = false;
+}
+
+static void disableControl(ControlId ctrlId)
+{
+	Controls[ctrlId].disabled = true;
+	switch (ctrlId)
+	{
+	case Left:
+		Controls[LeftUp].disabled = true;
+		Controls[LeftDown].disabled = true;
+		break;
+	case Right:
+		Controls[RightUp].disabled = true;
+		Controls[RightDown].disabled = true;
+		break;
+	case Up:
+		Controls[LeftUp].disabled = true;
+		Controls[RightUp].disabled = true;
+		break;
+	case Down:
+		Controls[LeftDown].disabled = true;
+		Controls[RightDown].disabled = true;
+		break;
+	case AnalogArea:
+	case AnalogStick:
+		Controls[AnalogArea].disabled = true;
+		Controls[AnalogStick].disabled = true;
+		break;
+	default:
+		break;
+	}
+}
+
+void startGame()
+{
+	enableAllControls();
+	if (settings.platform.isConsole())
+	{
+		switch (config::MapleMainDevices[0])
+		{
+		case MDT_LightGun:
+			// TODO enable mouse?
+			disableControl(AnalogArea);
+			disableControl(LeftTrigger);
+			disableControl(RightTrigger);
+			disableControl(A);
+			disableControl(X);
+			disableControl(Y);
+			break;
+		case MDT_AsciiStick:
+			// TODO add CZ
+			disableControl(AnalogArea);
+			disableControl(LeftTrigger);
+			disableControl(RightTrigger);
+			break;
+		case MDT_PopnMusicController:
+			// TODO add C btn
+			disableControl(AnalogArea);
+			disableControl(LeftTrigger);
+			disableControl(RightTrigger);
+			break;
+		case MDT_RacingController:
+			disableControl(X);
+			disableControl(Y);
+			break;
+		default:
+			break;
+		}
+	}
+	else
+	{
+		// arcade game
+		// FIXME RT is used as mod key for coin, test, service (ABX)
+		// FIXME RT and LT are buttons 4 & 5 in arcade mode
+		// TODO insert card button for card games
+		if (NaomiGameInputs != nullptr)
+		{
+			bool fullAnalog = false;
+			bool rt = false;
+			bool lt = false;
+			for (const auto& axis : NaomiGameInputs->axes)
+			{
+				if (axis.name == nullptr)
+					break;
+				switch (axis.axis)
+				{
+				case 0:
+				case 1:
+					fullAnalog = true;
+					break;
+				case 4:
+					rt = true;
+					break;
+				case 5:
+					lt = true;
+					break;
+				}
+			}
+			if (!fullAnalog)
+				disableControl(AnalogArea);
+			u32 usedButtons = 0;
+			for (const auto& button : NaomiGameInputs->buttons)
+			{
+				if (button.name == nullptr)
+					break;
+				usedButtons |= button.source;
+			}
+			if (settings.platform.isAtomiswave())
+			{
+				// button order: A B X Y RT
+				/* these ones are always needed for now
+				if ((usedButtons & AWAVE_BTN0_KEY) == 0)
+					disableControl(A);
+				if ((usedButtons & AWAVE_BTN1_KEY) == 0)
+					disableControl(B);
+				if ((usedButtons & AWAVE_BTN2_KEY) == 0)
+					disableControl(X);
+				if ((usedButtons & AWAVE_BTN4_KEY) == 0 && !rt)
+					disableControl(RightTrigger);
+				*/
+				if ((usedButtons & AWAVE_BTN3_KEY) == 0)
+					disableControl(Y);
+				if (!lt)
+					disableControl(LeftTrigger);
+				if ((usedButtons & AWAVE_UP_KEY) == 0)
+					disableControl(Up);
+				if ((usedButtons & AWAVE_DOWN_KEY) == 0)
+					disableControl(Down);
+				if ((usedButtons & AWAVE_LEFT_KEY) == 0)
+					disableControl(Left);
+				if ((usedButtons & AWAVE_RIGHT_KEY) == 0)
+					disableControl(Right);
+			}
+			else
+			{
+				/* these ones are always needed for now
+				if ((usedButtons & NAOMI_BTN0_KEY) == 0)
+					disableControl(A);
+				if ((usedButtons & NAOMI_BTN1_KEY) == 0)
+					disableControl(B);
+				if ((usedButtons & NAOMI_BTN2_KEY) == 0)
+					// C
+					disableControl(X);
+				if ((usedButtons & NAOMI_BTN4_KEY) == 0 && !rt)
+					// Y
+					disableControl(RightTrigger);
+				*/
+				if ((usedButtons & NAOMI_BTN3_KEY) == 0)
+					// X
+					disableControl(Y);
+				if ((usedButtons & NAOMI_BTN5_KEY) == 0 && !lt)
+					// Z
+					disableControl(LeftTrigger);
+				if ((usedButtons & NAOMI_UP_KEY) == 0)
+					disableControl(Up);
+				if ((usedButtons & NAOMI_DOWN_KEY) == 0)
+					disableControl(Down);
+				if ((usedButtons & NAOMI_LEFT_KEY) == 0)
+					disableControl(Left);
+				if ((usedButtons & NAOMI_RIGHT_KEY) == 0)
+					disableControl(Right);
+			}
+		}
+		else if (settings.input.lightgunGame)
+		{
+			disableControl(Y);
+			disableControl(AnalogArea);
+			disableControl(LeftTrigger);
+			disableControl(Up);
+			disableControl(Down);
+			disableControl(Left);
+			disableControl(Right);
+		}
+		else
+		{
+			// all analog games *should* have an input description
+			disableControl(AnalogArea);
+		}
+	}
+	bool enabledState[_Count];
+	for (int i = 0; i < _Count; i++)
+		enabledState[i] = !Controls[i].disabled;
+	setEnabledControls(enabledState);
+}
+
 #ifndef __ANDROID__
 
 void startEditing() {
+	enableAllControls();
 	show();
 }
 
@@ -497,7 +719,10 @@ void resetEditing() {
 	resetLayout();
 }
 
+void setEnabledControls(bool enabled[_Count]) {
+}
+
 #endif
 }	// namespace vgamepad
 
-#endif // __ANDROID__
+#endif // __ANDROID__ || TARGET_IPHONE

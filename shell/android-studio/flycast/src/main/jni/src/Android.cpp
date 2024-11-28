@@ -69,6 +69,7 @@ static jobject g_activity;
 static jmethodID VJoyStartEditingMID;
 static jmethodID VJoyStopEditingMID;
 static jmethodID VJoyResetEditingMID;
+static jmethodID VJoyEnableControlsMID;
 static jmethodID showScreenKeyboardMid;
 static jmethodID onGameStateChangeMid;
 
@@ -593,6 +594,7 @@ extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_BaseGLActivity_regis
         VJoyStartEditingMID = env->GetMethodID(actClass, "VJoyStartEditing", "()V");
         VJoyStopEditingMID = env->GetMethodID(actClass, "VJoyStopEditing", "(Z)V");
         VJoyResetEditingMID = env->GetMethodID(actClass, "VJoyResetEditing", "()V");
+        VJoyEnableControlsMID = env->GetMethodID(actClass, "VJoyEnableControls", "([Z)V");
         showScreenKeyboardMid = env->GetMethodID(actClass, "showScreenKeyboard", "(Z)V");
         onGameStateChangeMid = env->GetMethodID(actClass, "onGameStateChange", "(Z)V");
     }
@@ -602,6 +604,7 @@ namespace vgamepad
 {
 
 void startEditing() {
+	enableAllControls();
 	jni::env()->CallVoidMethod(g_activity, VJoyStartEditingMID);
 }
 void pauseEditing() {
@@ -612,6 +615,13 @@ void resetEditing() {
 }
 void stopEditing(bool canceled) {
     jni::env()->CallVoidMethod(g_activity, VJoyStopEditingMID, canceled);
+}
+
+void setEnabledControls(bool enabled[_Count])
+{
+	jni::BooleanArray jb{_Count};
+	jb.setData(enabled, 0, _Count);
+    jni::env()->CallVoidMethod(g_activity, VJoyEnableControlsMID, (jbooleanArray)jb);
 }
 
 }

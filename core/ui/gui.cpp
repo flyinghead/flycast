@@ -111,6 +111,7 @@ static void emuEventCallback(Event event, void *)
 	{
 	case Event::Resume:
 		game_started = true;
+		vgamepad::startGame();
 		break;
 	case Event::Start:
 		GamepadDevice::load_system_mappings();
@@ -1400,13 +1401,21 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 	}
 }
 
+static void gamepadPngFileSelected(bool cancelled, std::string path)
+{
+	if (!cancelled)
+		gui_runOnUiThread([path]() {
+			vgamepad::loadImage(path);
+		});
+}
+
 static void gamepadSettingsPopup(const std::shared_ptr<GamepadDevice>& gamepad)
 {
 	centerNextWindow();
 	ImGui::SetNextWindowSize(min(ImGui::GetIO().DisplaySize, ScaledVec2(450.f, 300.f)));
 
 	ImguiStyleVar _(ImGuiStyleVar_WindowRounding, 0);
-	if (ImGui::BeginPopupModal("Gamepad Settings", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove))
+	if (ImGui::BeginPopupModal("Gamepad Settings", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_DragScrolling))
 	{
 		if (ImGui::Button("Done", ScaledVec2(100, 30)))
 		{
@@ -1449,12 +1458,38 @@ static void gamepadSettingsPopup(const std::shared_ptr<GamepadDevice>& gamepad)
 		ImGui::NewLine();
 		if (gamepad->is_virtual_gamepad())
 		{
-#ifdef __ANDROID__
-			header("Haptic");
-			OptionSlider("Power", config::VirtualGamepadVibration, 0, 100, "Haptic feedback power", "%d%%");
-#endif
+			if (gamepad->is_rumble_enabled()) {
+				header("Haptic");
+				OptionSlider("Power", config::VirtualGamepadVibration, 0, 100, "Haptic feedback power", "%d%%");
+			}
 			header("View");
 			OptionSlider("Transparency", config::VirtualGamepadTransparency, 0, 100, "Virtual gamepad buttons transparency", "%d%%");
+
+#if defined(__ANDROID__) || defined(TARGET_IPHONE)
+			vgamepad::ImguiVGamepadTexture tex;
+			ImGui::Image(tex.getId(), ScaledVec2(300, 112.5f), ImVec2(0, 1), ImVec2(1, 0.25f));
+#endif
+			const char *gamepadPngTitle = "Select a PNG file";
+			if (ImGui::Button("Choose Image...", ScaledVec2(150, 30)))
+#ifdef __ANDROID__
+			{
+				if (!hostfs::addStorage(false, false, gamepadPngTitle, gamepadPngFileSelected, "image/png"))
+					ImGui::OpenPopup(gamepadPngTitle);
+			}
+#else
+			{
+				ImGui::OpenPopup(gamepadPngTitle);
+			}
+#endif
+			ImGui::SameLine();
+			if (ImGui::Button("Use Default", ScaledVec2(150, 30)))
+				vgamepad::loadImage("");
+
+			select_file_popup(gamepadPngTitle, [](bool cancelled, std::string selection)
+				{
+					gamepadPngFileSelected(cancelled, selection);
+					return true;
+				}, true, "png");
 		}
 		else if (gamepad->is_rumble_enabled())
 		{
@@ -1483,6 +1518,8 @@ static void gamepadSettingsPopup(const std::shared_ptr<GamepadDevice>& gamepad)
 			ShowHelpMarker("Value sent to the game at 100% thumbstick deflection. "
 					"Values greater than 100% will saturate before full deflection of the thumbstick.");
 		}
+	    scrollWhenDraggingOnVoid();
+	    windowDragScroll();
 		ImGui::EndPopup();
 	}
 }
@@ -2996,6 +3033,7 @@ static void gui_display_settings()
     		{
     			maple_ReconnectDevices();
     			reset_vmus();
+    			vgamepad::startGame();
     		}
     	}
        	SaveSettings();

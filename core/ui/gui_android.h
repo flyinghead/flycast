@@ -18,6 +18,7 @@
  */
 #pragma once
 #include "types.h"
+#include "gui_util.h"
 
 namespace vgamepad
 {
@@ -60,9 +61,17 @@ enum Element
 	Elem_FForward,
 };
 
+class ImguiVGamepadTexture : public ImguiTexture
+{
+public:
+	ImTextureID getId() override;
+};
+
 #if defined(__ANDROID__) || defined(TARGET_IPHONE)
 
 void setPosition(ControlId id, float x, float y, float w = 0.f, float h = 0.f);	// Legacy android
+void setEnabledControls(bool enabled[_Count]);	// Legacy android
+void enableAllControls();
 void show();
 void hide();
 void draw();
@@ -71,6 +80,8 @@ void pauseEditing();
 void stopEditing(bool canceled);
 void resetEditing();
 void displayCommands();
+void loadImage(const std::string& path);
+void startGame();
 
 ControlId hitTest(float x, float y);
 u32 controlToDcKey(ControlId control);
@@ -91,6 +102,8 @@ void startEditing() {}
 void pauseEditing() {}
 void displayCommands() {}
 void applyUiScale() {}
+void loadImage(const std::string& path) {}
+void startGame() {}
 
 #endif
 }	// namespace vgamepad
