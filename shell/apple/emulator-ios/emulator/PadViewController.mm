@@ -23,7 +23,7 @@
 #import "PadViewController.h"
 #include "ios_gamepad.h"
 #include "cfg/cfg.h"
-#include "ui/gui_android.h"
+#include "ui/vgamepad.h"
 
 @interface PadViewController () {
 	UITouch *joyTouch;

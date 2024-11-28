@@ -6,7 +6,7 @@
 #include "audio/audiostream.h"
 #include "imgread/common.h"
 #include "ui/gui.h"
-#include "ui/gui_android.h"
+#include "ui/vgamepad.h"
 #include "rend/osd.h"
 #include "cfg/cfg.h"
 #include "log/LogManager.h"

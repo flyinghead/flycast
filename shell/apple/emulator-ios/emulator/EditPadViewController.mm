@@ -19,7 +19,7 @@
 #import "EditPadViewController.h"
 #include "types.h"
 #include "ui/gui.h"
-#include "ui/gui_android.h"
+#include "ui/vgamepad.h"
 #include "cfg/cfg.h"
 
 @interface EditPadViewController () {

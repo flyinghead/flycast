@@ -56,7 +56,7 @@
 #include "sdl/sdl.h"
 #endif
 
-#include "gui_android.h"
+#include "vgamepad.h"
 #ifdef __ANDROID__
 #if HOST_CPU == CPU_ARM64 && USE_VULKAN
 #include "rend/vulkan/adreno.h"

@@ -18,7 +18,7 @@
  */
 #if defined(__ANDROID__) || defined(TARGET_IPHONE)
 
-#include "gui_android.h"
+#include "vgamepad.h"
 #include "gui.h"
 #include "stdclass.h"
 #include "imgui.h"
@@ -516,6 +516,12 @@ void enableAllControls()
 
 static void disableControl(ControlId ctrlId)
 {
+#ifdef TARGET_IPHONE
+	if (ctrlId == Up || ctrlId == Down)
+		// Needed to pause the emulator
+		return;
+#endif
+
 	Controls[ctrlId].disabled = true;
 	switch (ctrlId)
 	{

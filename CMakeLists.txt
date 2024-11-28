@@ -1310,8 +1310,8 @@ if(NOT LIBRETRO)
 			core/ui/gui.cpp
 			core/ui/gui.h
 			core/ui/gui_achievements.cpp
-			core/ui/gui_android.cpp
-			core/ui/gui_android.h
+			core/ui/vgamepad.cpp
+			core/ui/vgamepad.h
 			core/ui/gui_chat.h
 			core/ui/gui_cheats.cpp
 			core/ui/gui_util.cpp
