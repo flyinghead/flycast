@@ -261,6 +261,16 @@ static InputDescriptors ninjaslt_inputs = {
 	  },
 };
 
+static InputDescriptors mazan_inputs = {
+	  {
+			{ NAOMI_BTN0_KEY, "TRIGGER" },
+			{ NAOMI_UP_KEY, "SELECT UP" },
+			{ NAOMI_DOWN_KEY, "SELECT DOWN" },
+			NAO_START_DESC
+			NAO_BASE_BTN_DESC
+	  },
+};
+
 static InputDescriptors vonot_inputs = {
 	  {
 			{ NAOMI_UP_KEY, "L UP" },
@@ -483,6 +493,8 @@ static InputDescriptors shootout_inputs = {
 		{ "CUE TIP L/R", Full, 0, true },
 	}
 };
+
+static InputDescriptors vf4_inputs = INPUT_3_BUTTONS("PUNCH", "KICK", "GUARD");
 
 //
 // AtomisWave games

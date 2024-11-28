@@ -2475,8 +2475,7 @@ const Game Games[] =
             { "maz1ma8.4d",  0x8000000, 0x1000000, 0xd46c9f40 },
         },
 		nullptr,
-        // ENTER, START BUTTON
-		nullptr,
+		&mazan_inputs,
 		// no free play with eeprom
     },
     // Mazan: Flash of the Blade (US, MAZ3 Ver.A)
@@ -2501,7 +2500,7 @@ const Game Games[] =
             { "maz1ma8.4d",  0x8000000, 0x1000000, 0xd46c9f40 },
         },
 		nullptr,
-		nullptr,
+		&mazan_inputs,
 		// no free play with eeprom
     },
     // Mazan: Flash of the Blade (Japan, MAZ1 Ver.A)
@@ -2526,7 +2525,7 @@ const Game Games[] =
             { "maz1ma8.4d",  0x8000000, 0x1000000, 0xd46c9f40 },
         },
 		nullptr,
-		nullptr,
+		&mazan_inputs,
 		// no free play with eeprom
     },
     // Mushiking The King Of Beetles 2004 Second (Japan)
@@ -7273,7 +7272,9 @@ const Game Games[] =
 			{ "mpr-23782.ic9",  0x8800000, 0x1000000, 0x4f72e901 },
 			{ "mpr-23783.ic10", 0x9800000, 0x1000000, 0xc8d4f6f9 },
 			{ "mpr-23784.ic11", 0xa800000, 0x1000000, 0xf74f2fee },
-        }
+        },
+		nullptr,
+		&vf4_inputs,
     },
     {
     	"kingrt66",
@@ -7396,7 +7397,7 @@ const Game Games[] =
             { "copy",            0x400000,  0xc00000, 0x00000000, Copy, 0x1000000 },
         },
 		nullptr,
-		nullptr,
+		&vf4_inputs,
 		vf4evo_eeprom_dump,
     },
     {
@@ -7765,7 +7766,7 @@ const Game Games[] =
 			{ "317-0314-com.pic", 0, 0x4000, 0xfa0b6c70 },
 		},
 		"gds-0012",
-		nullptr,
+		&vf4_inputs,
 		vf4_eeprom_dump
     },
     {
@@ -7781,7 +7782,7 @@ const Game Games[] =
 			{ "317-0314-com.pic", 0, 0x4000, 0xfa0b6c70 },
 		},
 		"gds-0012b",
-		nullptr,
+		&vf4_inputs,
 		vf4_eeprom_dump
     },
     {
@@ -7797,7 +7798,7 @@ const Game Games[] =
 			{ "317-0314-com.pic", 0, 0x4000, 0xfa0b6c70 },
 		},
 		"gds-0012c",
-		nullptr,
+		&vf4_inputs,
 		vf4_eeprom_dump
     },
     {
@@ -7857,7 +7858,7 @@ const Game Games[] =
 			{ "317-0338-jpn.pic", 0, 0x4000, 0xb177ba7d },
 		},
 		"gds-0024c",
-		nullptr,
+		&vf4_inputs,
 		vf4evo_eeprom_dump,
     },
     {
@@ -7873,7 +7874,7 @@ const Game Games[] =
 			{ "317-0338-jpn.pic", 0, 0x4000, 0xb177ba7d },
 		},
 		"gds-0024b",
-		nullptr,
+		&vf4_inputs,
 		vf4evo_eeprom_dump,
     },
     {
@@ -7889,7 +7890,7 @@ const Game Games[] =
 			{ "317-0338-jpn.pic", 0, 0x4000, 0xb177ba7d },
 		},
 		"gds-0024a",
-		nullptr,
+		&vf4_inputs,
 		vf4evo_eeprom_dump,
     },
     {
@@ -8070,7 +8071,7 @@ const Game Games[] =
 			{ "317-0387-com.pic", 0, 0x4000, 0x8728aeaa },
 		},
 		"gds-0036f",
-		nullptr,
+		&vf4_inputs,
 		vf4tuned_eeprom_dump,
     },
     {
@@ -8086,7 +8087,7 @@ const Game Games[] =
 			{ "317-0387-com.pic", 0, 0x4000, 0x8728aeaa },
 		},
 		"gds-0036d",
-		nullptr,
+		&vf4_inputs,
 		vf4tuned_eeprom_dump,
     },
     {
@@ -8102,7 +8103,7 @@ const Game Games[] =
 			{ "317-0387-com.pic", 0, 0x4000, 0x8728aeaa },
 		},
 		"gds-0036a",
-		nullptr,
+		&vf4_inputs,
 		vf4tuned_eeprom_dump,
     },
     {
