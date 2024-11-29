@@ -70545,7 +70545,7 @@ struct retro_core_options_v2 options_sr = {
 #define CORE_OPTION_NAME_BOOT_TO_BIOS_INFO_0_SV "Starta direkt i Dreamcast BIOS-menyn."
 #define CORE_OPTION_NAME_ENABLE_DSP_LABEL_SV "Aktivera DSP"
 #define CORE_OPTION_NAME_ENABLE_DSP_INFO_0_SV "Aktivera emulering av Dreamcasts ljud-DSP (digital signal processor). Förbättrar noggrannheten i genererat ljud, men ökar prestandakraven."
-#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_SV NULL
+#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_SV "Tillåt knappar för arkadservice"
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_SV "Aktiverar SERVICE-knapp för arkadspel för att ange kabinettinställningar."
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_SV "Ställ in NAOMI-spel till Free Play"
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_SV "Ändra spelets myntinställningar till free play."
@@ -70595,8 +70595,8 @@ struct retro_core_options_v2 options_sr = {
 #define CORE_OPTION_NAME_SCREEN_ROTATION_LABEL_SV "Skärmorientering"
 #define OPTION_VAL_HORIZONTAL_SV "Horisontell"
 #define OPTION_VAL_VERTICAL_SV "Vertikal"
-#define CORE_OPTION_NAME_ALPHA_SORTING_LABEL_SV "Alfa sortering"
-#define CORE_OPTION_NAME_ALPHA_SORTING_INFO_0_SV NULL
+#define CORE_OPTION_NAME_ALPHA_SORTING_LABEL_SV "Alfasortering"
+#define CORE_OPTION_NAME_ALPHA_SORTING_INFO_0_SV "Välj hur transparenta polygoner sorteras."
 #define OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_SV "Per-Strip (snabbast, minst noggrann)"
 #define OPTION_VAL_PER_TRIANGLE_NORMAL_SV "Per-Triangel (normal)"
 #define OPTION_VAL_PER_PIXEL_ACCURATE_SV "Per-Pixel (noggrann, men långsammast)"
@@ -70642,7 +70642,7 @@ struct retro_core_options_v2 options_sr = {
 #define CORE_OPTION_NAME_FIX_UPSCALE_BLEEDING_EDGE_INFO_0_SV NULL
 #define CORE_OPTION_NAME_THREADED_RENDERING_LABEL_SV "Trådad rendering"
 #define CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_SV "Kör GPU och CPU på olika trådar. Starkt rekommenderat."
-#define CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_SV "Skippa bildrutor automatiskt"
+#define CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_SV "Hoppa över bildrutor automatiskt"
 #define CORE_OPTION_NAME_AUTO_SKIP_FRAME_INFO_0_SV "Hoppa automatiskt över bildrutor när emuleringen går långsamt. Observera!: Denna inställning gäller endast när \"Trådad Rendering\" är aktiverad."
 #define OPTION_VAL_SOME_SV NULL
 #define OPTION_VAL_MORE_SV "Maximalt"
@@ -70712,11 +70712,11 @@ struct retro_core_options_v2 options_sr = {
 #define OPTION_VAL_20_SV NULL
 #define OPTION_VAL_25_SV NULL
 #define OPTION_VAL_30_SV NULL
-#define CORE_OPTION_NAME_TRIGGER_DEADZONE_LABEL_SV "Utlös dödzonen"
+#define CORE_OPTION_NAME_TRIGGER_DEADZONE_LABEL_SV "Dödläge för avtryckare"
 #define CORE_OPTION_NAME_TRIGGER_DEADZONE_INFO_0_SV NULL
-#define CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_SV "Digitala utlösare"
+#define CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_SV "Digitala avtryckare"
 #define CORE_OPTION_NAME_DIGITAL_TRIGGERS_INFO_0_SV NULL
-#define CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_SV "Digitala utgångar för sändning"
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_SV "Sänd ut digitala utgångar"
 #define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_SV "Sänd digitala utgångar och force-feedbackstatus på TCP-port 8000. Kompatibelt med MAME-alternativet \"-output network\"."
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_SV "Visa ljuspistolinställningar"
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_SV "Aktivera konfiguration av alternativ för ljuspistolens hårkors. OBS!: Snabbmenyn kan behöva aktiveras och avaktiveras för att denna inställning ska träda i kraft."
