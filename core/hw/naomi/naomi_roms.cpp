@@ -5309,7 +5309,7 @@ const Game Games[] =
         "gdl-0010",
 		// SHOT, CHANGE
 		nullptr,
-		ikaruga_eeprom_dump,
+		nullptr,
     },
     // Jingi Storm - The Arcade (Japan)
     {
