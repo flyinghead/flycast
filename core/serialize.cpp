@@ -10,7 +10,7 @@
 #include "hw/pvr/pvr.h"
 #include "hw/sh4/sh4_sched.h"
 #include "hw/sh4/sh4_mmr.h"
-#include "reios/gdrom_hle.h"
+#include "reios/reios.h"
 #include "hw/naomi/naomi.h"
 #include "hw/naomi/naomi_cart.h"
 #include "hw/bba/bba.h"
@@ -50,7 +50,7 @@ void dc_serialize(Serializer& ser)
 	ser << config::Region.get();
 
 	naomi_cart_serialize(ser);
-	gd_hle_state.Serialize(ser);
+	reios_serialize(ser);
 	achievements::serialize(ser);
 
 	DEBUG_LOG(SAVESTATE, "Saved %d bytes", (u32)ser.size());
@@ -93,7 +93,7 @@ void dc_deserialize(Deserializer& deser)
 	verify(config::Region >= 0 && config::Region <= 3);
 
 	naomi_cart_deserialize(deser);
-	gd_hle_state.Deserialize(deser);
+	reios_deserialize(deser);
 	achievements::deserialize(deser);
 	sh4_sched_ffts();
 

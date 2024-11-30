@@ -727,13 +727,7 @@ void DYNACALL reios_trap(Sh4Context *ctx, u32 op)
 		ctx->pc = ctx->pr;
 }
 
-bool reios_init()
-{
-	return true;
-}
-
-void reios_set_flash(MemChip* flash)
-{
+void reios_set_flash(MemChip* flash) {
 	flashrom = flash;
 }
 
@@ -763,8 +757,5 @@ void reios_reset(u8* rom)
 	std::unique_ptr<u8[]> fontData = resource::load("fonts/biosfont.bin", size);
 	memcpy(pFont, fontData.get(), size);
 
-	gd_hle_state = {};
-}
-
-void reios_term() {
+	gdrom_hle_reset();
 }
