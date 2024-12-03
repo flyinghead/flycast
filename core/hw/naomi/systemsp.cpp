@@ -988,8 +988,37 @@ protected:
 		u64 startTime = 0;
 	};
 
-	void getInputState() {
+	void getInputState()
+	{
 		ggpo::getInput(mapleInputState);
+		if (NaomiGameInputs != nullptr)
+		{
+			for (const ButtonDescriptor& bd : NaomiGameInputs->buttons)
+			{
+				if (bd.name == nullptr)
+					break;
+				if (bd.target != 0)
+				{
+					// remap P1 -> P1 and P2 -> P2
+					if ((mapleInputState[0].kcode & bd.source) == 0)
+						mapleInputState[0].kcode &= ~bd.target;
+					if ((mapleInputState[1].kcode & bd.source) == 0)
+						mapleInputState[1].kcode &= ~bd.target;
+				}
+				else if (bd.p2_target != 0)
+				{
+					// remap P1 -> P2
+					if ((mapleInputState[0].kcode & bd.source) == 0)
+						mapleInputState[1].kcode &= ~bd.p2_target;
+				}
+				else if (bd.p1_target != 0)
+				{
+					// remap P2 -> P1
+					if ((mapleInputState[1].kcode & bd.source) == 0)
+						mapleInputState[0].kcode &= ~bd.p1_target;
+				}
+			}
+		}
 	}
 
 	MapleInputState mapleInputState[4];

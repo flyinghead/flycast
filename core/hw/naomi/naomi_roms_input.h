@@ -496,6 +496,15 @@ static InputDescriptors shootout_inputs = {
 
 static InputDescriptors vf4_inputs = INPUT_3_BUTTONS("PUNCH", "KICK", "GUARD");
 
+static InputDescriptors mushik_inputs = {
+	{
+		{ NAOMI_BTN0_KEY, "HIT" },
+		{ NAOMI_BTN1_KEY, "PINCH" },
+		{ NAOMI_BTN2_KEY, "THROW" },
+		NAO_BASE_BTN_DESC
+	},
+};
+
 //
 // AtomisWave games
 //
@@ -761,5 +770,26 @@ static InputDescriptors shaktam_inputs = {
 			{ "TAMBOURINE Y", Full, 1 },
 			{ "", Full, 2 }, // unused but P2 starts at axis 4
 			{ "", Full, 3 }, // unused but P2 starts at axis 4
+	},
+};
+
+//
+// System SP games
+//
+
+static InputDescriptors dinok_inputs = {
+	{
+		{ DC_BTN_A, "ROCK" },
+		{ DC_BTN_B, "SCISSORS" },
+		{ DC_BTN_C, "PAPER" },
+		NAO_BASE_BTN_DESC
+	},
+};
+
+static InputDescriptors lovebery_inputs = {
+	{
+		{ DC_BTN_A, "P1 BUTTON" },
+		{ DC_BTN_B, "P2 BUTTON", 0, DC_BTN_A },
+		NAO_BASE_BTN_DESC
 	},
 };

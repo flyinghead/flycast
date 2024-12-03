@@ -361,11 +361,11 @@ const Game Games[] =
     // Mushiking The King Of Beetle (2K3 2ND, World)
     {
         "mushike",
-        NULL,
+        nullptr,
         "Mushiking The King Of Beetle (2K3 2ND Ver. 1.003-, World)",
         0x4000000,
         0x3892fb3a,
-        NULL,
+        "naomi",
         M1,
         ROT0,
         {
@@ -388,9 +388,9 @@ const Game Games[] =
             // note: this dump from "empty/dead" Management Chip with no game run count left
             //ROM_REGION( 0x80, "rf_tag", 0 )
             //{ "mushi_type1.bin", 0, 0x80, CRC(8f36572b) SHA1(87e00e56d07a961e9180c7da02e35f7fd216dbae) )
-
-            { NULL, 0, 0 },
-        }
+        },
+		nullptr,
+		&mushik_inputs,
     },
     // Quiz Ah Megamisama (JPN, USA, EXP, KOR, AUS)
     {
@@ -649,7 +649,7 @@ const Game Games[] =
         "Mushiking The King Of Beetle (2K3 2ND Ver. 1.002-, World)",
         0x04000000,
         0x3892fb3a,
-        NULL,
+        "naomi",
         M1,
         ROT0,
         {
@@ -672,9 +672,9 @@ const Game Games[] =
             // note: this dump from "empty/dead" Management Chip with no game run count left
             //ROM_REGION( 0x80, "rf_tag", 0 )
             //{ "mushi_type1.bin", 0, 0x80, CRC(8f36572b) SHA1(87e00e56d07a961e9180c7da02e35f7fd216dbae) )
-
-            { NULL, 0, 0 },
-        }
+        },
+		nullptr,
+		&mushik_inputs,
     },
 	// Mushiking The King Of Beetle (2K3 2ND Ver. 1.000-, Korea)
     {
@@ -683,7 +683,7 @@ const Game Games[] =
         "Mushiking The King Of Beetle (2K3 2ND Ver. 1.000-, Korea)",
         0x04000000,
         0x3892fb3a,
-        nullptr,
+        "naomi",
         M1,
         ROT0,
         {
@@ -695,7 +695,9 @@ const Game Games[] =
             { "opr-24270.ic21s",     0x3000000, 0x0800000,  0x02a513ad, InterleavedWord },
             { "opr-24271.ic22",      0x3000002, 0x0800000,  0x7e5c745c, InterleavedWord },
             { "copy",                0x0400000, 0x0c00000,  0, Copy, 0x1000000 },
-        }
+        },
+		nullptr,
+		&mushik_inputs,
     },
 	// Mushiking The King Of Beetle (2K3 2ND Ver. 1.000-, China)
     {
@@ -704,13 +706,15 @@ const Game Games[] =
         "Mushiking The King Of Beetle (2K3 2ND Ver. 1.000-, China)",
         0x04000000,
         0x5501,
-        nullptr,
+        "naomi",
         M4,
         ROT0,
         {
         	{ "ic8.bin", 0x00000000, 0x04000000, 0x5edc61fb },
             { "317-0437-com.ic3", 0, 0x800, 0x3b6fcee8, Key },
-        }
+        },
+		nullptr,
+		&mushik_inputs,
     },
 	// Mushiking The King Of Beetles - Mushiking II / III / III+ (Ver. 1.000-) (Korea)
 	// require rev.H Korea BIOS, not dumped
@@ -720,14 +724,16 @@ const Game Games[] =
         "Mushiking The King Of Beetles - Mushiking II / III / III+ (Ver. 1.000-) (Korea)",
 		0x08000000,
         0x5502,
-        nullptr,
+        "naomi",
         M4,
         ROT0,
         {
         	{ "fpr-24355.ic8", 0x00000000, 0x04000000, 0x8bd89229 },
         	{ "fpr-24356.ic9", 0x04000000, 0x04000000, 0xed649c81 },
             { "317-0437-com.ic3", 0, 0x800, 0x3b6fcee8, Key },
-        }
+        },
+		nullptr,
+		&mushik_inputs,
     },
     // Naomi M2/M3 Roms
     // 18 Wheeler (deluxe) (Rev A)
@@ -2531,11 +2537,11 @@ const Game Games[] =
     // Mushiking The King Of Beetles 2004 Second (Japan)
     {
         "mushi2k4",
-        NULL,
+        nullptr,
         "Mushiking The King Of Beetles 2004 Second (Japan)",
         0x5800000,
         0xffffffff, // not populated
-        NULL,
+        "naomi",
         M2,
         ROT0,
         {
@@ -2545,17 +2551,18 @@ const Game Games[] =
             { "mpr-24244.ic3",  0x02800000, 0x01000000 },
             { "mpr-24245.ic4",  0x03800000, 0x01000000 },
             { "mpr-24246.ic5",  0x04800000, 0x01000000 },
-            { NULL, 0, 0 },
-        }
+        },
+		nullptr,
+		&mushik_inputs,
     },
     // Mushiking The King Of Beetles 2005 First (Japan)
     {
         "mushi2k5",
-        NULL,
+        nullptr,
         "Mushiking The King Of Beetles 2005 First (Japan)",
         0x7800000,
         0xffffffff, // not populated
-        NULL,
+        "naomi",
         M2,
         ROT0,
         {
@@ -2567,8 +2574,9 @@ const Game Games[] =
             { "mpr-24280.ic5",  0x4800000, 0x1000000, 0x00000000 },
             { "mpr-24281.ic6",  0x5800000, 0x1000000, 0x00000000 },
             { "mpr-24282.ic7",  0x6800000, 0x1000000, 0x00000000 },
-            { NULL, 0, 0 },
-        }
+        },
+		nullptr,
+		&mushik_inputs,
     },
     // Mushiking The King Of Beetle (MUSHIUSA '04 1ST, Prototype)
     {
@@ -2577,7 +2585,7 @@ const Game Games[] =
         "Mushiking The King Of Beetle (MUSHIUSA '04 1ST, Prototype)",
         0x07800000,
         0xffffffff, // not populated
-        NULL,
+        "naomi",
         M2,
         ROT0,
         {
@@ -2588,8 +2596,9 @@ const Game Games[] =
             { "rom5.ic5s", 0x2800000, 0x800000, 0x7076a50e },
             { "rom6.ic6s", 0x3000000, 0x800000, 0xd7143066 },
             { "rom7.ic7s", 0x3800000, 0x800000, 0x98839bab },
-            { NULL, 0, 0 },
-        }
+        },
+		nullptr,
+		&mushik_inputs,
     },
     // Marvel vs. Capcom 2 New Age of Heroes (USA, Rev A)
     {
@@ -4758,13 +4767,14 @@ const Game Games[] =
             { "fpr-24333.ic8", 0x0000000, 0x4000000 },
             { "fpr-24334.ic9", 0x4000000, 0x4000000 },
             { "317-0437-com.ic3", 0, 0x800,  0x0000000, Key },
-            { NULL, 0, 0 },
-        }
+        },
+		nullptr,
+		&mushik_inputs,
     },
     // Mushiking The King Of Beetles - Mushiking II / III / III+ (World, Ver. 2.001)
     {
         "mushik2e",
-        NULL,
+        nullptr,
         "Mushiking The King Of Beetles - Mushiking II / III / III+ (World, Ver. 2.001)",
         0x8000000,
         0x5582,
@@ -4779,16 +4789,16 @@ const Game Games[] =
             //ROM_REGION( 0x800, "pic_readout", 0 )
             //ROM_LOAD( "317-0437-com.ic3", 0, 0x800, CRC(3b6fcee8) SHA1(65fbdd3b8c61a4b5ccb6389b25483a7ecdc0794d) )
             { "317-0437-com.ic3", 0, 0x800,  0x0000000, Key },
-
-            { NULL, 0, 0 },
-        }
+        },
+		nullptr,
+		&mushik_inputs,
     },
     // Mushiking The King Of Beetles - Mushiking IV / V / VI (World)
     // change game version (4/5/6): in BACKUP DATA CLEAR menu hold P1 and P2 buttons 1 for 3 seconds, then change version number in appeared menu and select YES(CLEAR)
 	// ~equivalent of Japanese 2K6 versions
     {
         "mushik4e",
-        NULL,
+        nullptr,
         "Mushiking The King Of Beetles - Mushiking IV / V / VI (World)",
         0x8000000,
         0x5502,
@@ -4801,7 +4811,9 @@ const Game Games[] =
 
             //ROM_REGION( 0x800, "pic_readout", 0 )
             { "317-0437-com.ic3", 0, 0x800,  0x3b6fcee8, Key },
-        }
+        },
+		nullptr,
+		&mushik_inputs,
     },
 	// Mushiking The King Of Beetles - Mushiking IV / V / VI (Taiwan)
     // change game version (4/5/6): in BACKUP DATA CLEAR menu hold P1 and P2 buttons 1 for 3 seconds, then change version number in appeared menu and select YES(CLEAR)
@@ -4821,7 +4833,9 @@ const Game Games[] =
 
             //ROM_REGION( 0x800, "pic_readout", 0 )
             { "317-0437-com.ic3", 0, 0x800,  0x3b6fcee8, Key },
-        }
+        },
+		nullptr,
+		&mushik_inputs,
     },
 	{
 		"mushi2k61",
@@ -4838,6 +4852,8 @@ const Game Games[] =
 
             { "317-0444-jpn.ic3", 0, 0x800,  0x6ded35a2, Key },
 		},
+		nullptr,
+		&mushik_inputs,
 	},
 	{
 		"mushi2k62",
@@ -4854,6 +4870,8 @@ const Game Games[] =
 
             { "317-0444-jpn.ic3", 0, 0x800,  0x6ded35a2, Key },
 		},
+		nullptr,
+		&mushik_inputs,
 	},
     // Pokasuka Ghost *** BAD DUMP ***
     {
@@ -8213,6 +8231,8 @@ const Game Games[] =
 			{ "ic69s", 0x07000000, 0x01000000, 0xc78e46c2 },
 			{ "317-0408-com.ic15", 0, 0x800, 0xf77c49dc, Key },
 		},
+		nullptr,
+		&dinok_inputs,
 	},
 	{
 		"galilfac",
@@ -8282,6 +8302,8 @@ const Game Games[] =
 			{ "ic63",  0x04000000, 0x4000000, 0xd3870287 },
 			{ "317-0446-com.ic15", 0, 0x800, 0x9e519dc6, Key },
 		},
+		nullptr,
+		&lovebery_inputs,
 	},
 	{
 		"lovebero",
@@ -8297,6 +8319,8 @@ const Game Games[] =
 			{ "ic63",  0x04000000, 0x4000000, 0xd3870287 },
 			{ "317-0446-com.ic15", 0, 0x800, 0x9e519dc6, Key },
 		},
+		nullptr,
+		&lovebery_inputs,
 	},
     {
     	"magicpop",
@@ -8440,6 +8464,7 @@ const Game Games[] =
 			{ "317-0408-com.ic15", 0, 0x800, 0xf77c49dc, Key },
 		},
 		"mda-c0021",
+		&dinok_inputs,
 	},
 	{
 		// Dinosaur King - D-Team VS. the Alpha Fortress (Export, Ver 2.500)
@@ -8455,6 +8480,7 @@ const Game Games[] =
 			{ "317-0408-com.ic15", 0, 0x800, 0xf77c49dc, Key },
 		},
 		"mda-c0047",
+		&dinok_inputs,
 	},
 	{
 		// Konglongwang - D-Kids VS Alpha Yaosai (China, Ver 2.501)
@@ -8471,6 +8497,7 @@ const Game Games[] =
 			{ "317-0408-com.ic15", 0, 0x800, 0xf77c49dc, Key },
 		},
 		"mda-c0081",
+		&dinok_inputs,
 	},
 	{
 		// Kodai Ouja Kyouryuu King - Mezame yo! Arata-naru Chikara!! (Japan, Ver 4.000)
@@ -8487,6 +8514,7 @@ const Game Games[] =
 			{ "317-0408-com.ic15", 0, 0x800, 0xf77c49dc, Key },
 		},
 		"mda-c0061",
+		&dinok_inputs,
 	},
     {
     	// Heat Up Hockey Image (Ver.1.003R)
@@ -8532,6 +8560,7 @@ const Game Games[] =
 			{ "317-0446-com.ic15", 0, 0x800, 0x9e519dc6, Key },
         },
 		"mda-c0042",
+		&lovebery_inputs,
     },
     {
     	// Love And Berry - 3rd-5th Collection (China, Ver 1.001)
@@ -8548,6 +8577,7 @@ const Game Games[] =
 			{ "317-0446-com.ic15", 0, 0x800, 0x9e519dc6, Key },
         },
 		"mda-c0071",
+		&lovebery_inputs,
     },
     {
     	"tetgiano",
