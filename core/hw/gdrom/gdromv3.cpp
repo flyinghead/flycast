@@ -134,6 +134,7 @@ void DmaBuffer::deserialize(Deserializer& deser)
 		deser >> index;
 		deser >> size;
 		deser >> cache;
+		deser.skip(2352 * 16);
 	}
 	else
 	{
