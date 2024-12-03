@@ -18,12 +18,7 @@ public final class JNIdc
 
 	public static native void rendinitNative(Surface surface, int w, int h);
 
-	public static native void vjoy(int id, float x, float y, float w, float h);
-
-	public static native void getControllers(int[] controllers, int[][] peripherals);
-
 	public static native void setupMic(SipEmulator sip);
-	public static native int getVirtualGamepadVibration();
 
 	public static native void screenCharacteristics(float screenDpi, float refreshRate);
 	public static native void guiOpenSettings();
@@ -31,6 +26,4 @@ public final class JNIdc
 	public static native boolean guiIsContentBrowser();
 	public static native void guiSetInsets(int left, int right, int top, int bottom);
 
-	public static native void showVirtualGamepad();
-	public static native void hideVirtualGamepad();
 }

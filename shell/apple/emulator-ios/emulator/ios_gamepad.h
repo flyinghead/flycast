@@ -23,6 +23,7 @@
 #include <cmath>
 #include "input/gamepad_device.h"
 #include "input/mouse.h"
+#include "input/virtual_gamepad.h"
 #include "ui/gui.h"
 
 enum IOSButton {
@@ -480,110 +481,30 @@ private:
 	static std::map<GCController *, std::shared_ptr<IOSGamepad>> controllers;
 };
 
-class IOSVirtualGamepad : public GamepadDevice
+class IOSVirtualGamepad : public VirtualGamepad
 {
 public:
-	IOSVirtualGamepad() : GamepadDevice(0, "iOS", false) {
-		_name = "Virtual Gamepad";
-		_unique_id = "ios-virtual-gamepad";
-		input_mapper = std::make_shared<IdentityInputMapping>();
-		//hasAnalogStick = true;	// TODO has an analog stick but input mapping isn't persisted
+	IOSVirtualGamepad() : VirtualGamepad("iOS") {
 	}
 
-	bool is_virtual_gamepad() override { return true; }
-
-	std::shared_ptr<InputMapping> getDefaultMapping() override {
-		return std::make_shared<DefaultIOSMapping<>>();
-	}
-
-	bool gamepad_btn_input(u32 code, bool pressed) override
+	bool handleButtonInput(u32& state, u32 key, bool pressed) override
 	{
-		if (pressed)
-			buttonState |= code;
-		else
-			buttonState &= ~code;
-		switch (code)
+		if (!pressed
+				|| (key != DC_DPAD_UP && key != DC_DPAD_DOWN && key != DC_DPAD_LEFT && key != DC_DPAD_RIGHT))
+			return false;
+		if (((state | key) & (DC_DPAD_UP | DC_DPAD_DOWN)) == (DC_DPAD_UP | DC_DPAD_DOWN)
+			|| ((state | key) & (DC_DPAD_LEFT | DC_DPAD_RIGHT)) == (DC_DPAD_LEFT | DC_DPAD_RIGHT))
 		{
-			case DC_AXIS_LT:
-				gamepad_axis_input(DC_AXIS_LT, pressed ? 0x7fff : 0);
-				if (settings.platform.isArcade())
-					GamepadDevice::gamepad_btn_input(DC_BTN_Z, pressed);	// btn5
-				return true;
-			case DC_AXIS_RT:
-				if (!pressed && maple_port() >= 0 && maple_port() <= 3)
-					kcode[maple_port()] |= DC_DPAD2_UP | DC_BTN_D | DC_DPAD2_DOWN;
-				gamepad_axis_input(DC_AXIS_RT, pressed ? 0x7fff : 0);
-				if (settings.platform.isArcade())
-					GamepadDevice::gamepad_btn_input(DC_BTN_Y, pressed);	// btn4
-				return true;
-			default:
-				if ((buttonState & (DC_DPAD_UP | DC_DPAD_DOWN)) == (DC_DPAD_UP | DC_DPAD_DOWN)
-					|| (buttonState & (DC_DPAD_LEFT | DC_DPAD_RIGHT)) == (DC_DPAD_LEFT | DC_DPAD_RIGHT))
-				{
-					GamepadDevice::gamepad_btn_input(DC_DPAD_UP, false);
-					GamepadDevice::gamepad_btn_input(DC_DPAD_DOWN, false);
-					GamepadDevice::gamepad_btn_input(DC_DPAD_LEFT, false);
-					GamepadDevice::gamepad_btn_input(DC_DPAD_RIGHT, false);
-					buttonState = 0;
-					gui_open_settings();
-					return true;
-				}
-				if (settings.platform.isArcade() && maple_port() >= 0 && maple_port() <= 3)
-				{
-					u32& keycode = kcode[maple_port()];
-					if ((buttonState & DC_AXIS_RT) != 0)
-					{
-						switch (code) {
-							case DC_BTN_A:
-								// RT + A -> D (coin)
-								keycode = pressed ? keycode & ~DC_BTN_D : keycode | DC_BTN_D;
-								break;
-							case DC_BTN_B:
-								// RT + B -> Service
-								keycode = pressed ? keycode & ~DC_DPAD2_UP : keycode | DC_DPAD2_UP;
-								break;
-							case DC_BTN_X:
-								// RT + X -> Test
-								keycode = pressed ? keycode & ~DC_DPAD2_DOWN : keycode | DC_DPAD2_DOWN;
-								break;
-							default:
-								break;
-						}
-					}
-					// arcade mapping: X -> btn2, Y -> btn3
-					if (code == DC_BTN_X)
-						code = DC_BTN_C; // btn2
-					if (code == DC_BTN_Y)
-						code = DC_BTN_X;  // btn3
-				}
-				switch (code)
-				{
-					case DC_DPAD_UP | DC_DPAD_RIGHT:
-						GamepadDevice::gamepad_btn_input(DC_DPAD_UP, pressed);
-						code = DC_DPAD_RIGHT;
-						break;
-					case DC_DPAD_DOWN | DC_DPAD_RIGHT:
-						GamepadDevice::gamepad_btn_input(DC_DPAD_DOWN, pressed);
-						code = DC_DPAD_RIGHT;
-						break;
-					case DC_DPAD_DOWN | DC_DPAD_LEFT:
-						GamepadDevice::gamepad_btn_input(DC_DPAD_DOWN, pressed);
-						code = DC_DPAD_LEFT;
-						break;
-					case DC_DPAD_UP | DC_DPAD_LEFT:
-						GamepadDevice::gamepad_btn_input(DC_DPAD_UP, pressed);
-						code = DC_DPAD_LEFT;
-						break;
-					default:
-						break;
-				}
-
-				return GamepadDevice::gamepad_btn_input(code, pressed);
+			gamepad_btn_input(DC_DPAD_UP, false);
+			gamepad_btn_input(DC_DPAD_DOWN, false);
+			gamepad_btn_input(DC_DPAD_LEFT, false);
+			gamepad_btn_input(DC_DPAD_RIGHT, false);
+			state = 0;
+			gui_open_settings();
+			return true;
 		}
+		return false;
 	}
-
-private:
-	u32 buttonState = 0;
 };
 
 class IOSTouchMouse : public SystemMouse

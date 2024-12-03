@@ -107,7 +107,7 @@ public:
 	bool isNull() const { return object == nullptr; }
 	operator jobject() const { return object; }
 
-	Class getClass() const;
+	inline Class getClass() const;
 
 	template<typename T>
 	T globalRef() {

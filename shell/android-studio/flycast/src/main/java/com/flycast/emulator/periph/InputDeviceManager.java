@@ -24,6 +24,8 @@ public final class InputDeviceManager implements InputManager.InputDeviceListene
     private InputManager inputManager;
     private int maple_port = 0;
 
+    private boolean hasTouchscreen = false;
+
     private static class VibrationParams {
         float power;
         float inclination;
@@ -39,9 +41,10 @@ public final class InputDeviceManager implements InputManager.InputDeviceListene
     public void startListening(Context applicationContext)
     {
         maple_port = 0;
-        if (applicationContext.getPackageManager().hasSystemFeature("android.hardware.touchscreen"))
-            joystickAdded(VIRTUAL_GAMEPAD_ID, "Virtual Gamepad", 0, "virtual_gamepad_uid",
-                    new int[0], new int[0], getVibrator(VIRTUAL_GAMEPAD_ID) != null);
+        hasTouchscreen = applicationContext.getPackageManager().hasSystemFeature("android.hardware.touchscreen");
+        if (hasTouchscreen)
+            joystickAdded(VIRTUAL_GAMEPAD_ID, null, 0, null,
+                    null, null, getVibrator(VIRTUAL_GAMEPAD_ID) != null);
         int[] ids = InputDevice.getDeviceIds();
         for (int id : ids)
             onInputDeviceAdded(id);
@@ -202,12 +205,18 @@ public final class InputDeviceManager implements InputManager.InputDeviceListene
         }
     }
 
+    public boolean hasTouchscreen() {
+        return hasTouchscreen;
+    }
+
     public static InputDeviceManager getInstance() {
         return INSTANCE;
     }
 
     public native void init();
-    public native void virtualGamepadEvent(int kcode, int joyx, int joyy, int lt, int rt, boolean fastForward);
+    public native void virtualReleaseAll();
+    public native void virtualJoystick(float x, float y);
+    public native void virtualButtonInput(int key, boolean pressed);
     public native boolean joystickButtonEvent(int id, int button, boolean pressed);
     public native boolean joystickAxisEvent(int id, int button, int value);
     public native void mouseEvent(int xpos, int ypos, int buttons);
@@ -216,4 +225,5 @@ public final class InputDeviceManager implements InputManager.InputDeviceListene
     private native void joystickRemoved(int id);
     public native boolean keyboardEvent(int key, boolean pressed);
     public native void keyboardText(int c);
+    public static native boolean isMicPluggedIn();
 }

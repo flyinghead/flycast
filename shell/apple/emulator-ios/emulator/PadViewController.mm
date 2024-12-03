@@ -65,7 +65,7 @@
 
 - (void)hideController
 {
-	[self resetTouch];
+	[self resetAnalog];
 	[hideTimer invalidate];
 	[self.view removeFromSuperview];
 }
@@ -89,12 +89,10 @@
 	vgamepad::hide();
 }
 
-- (void)resetTouch
+- (void)resetAnalog
 {
 	joyTouch = nil;
-	virtualGamepad->gamepad_axis_input(DC_AXIS_LEFT, 0);
-	virtualGamepad->gamepad_axis_input(DC_AXIS_UP, 0);
-	vgamepad::setAnalogStick(0, 0);
+	virtualGamepad->joystickInput(0, 0);
 }
 
 static CGPoint translateCoords(const CGPoint& pos, const CGSize& size)
@@ -114,20 +112,20 @@ static CGPoint translateCoords(const CGPoint& pos, const CGSize& size)
 		CGPoint point = [touch locationInView:self.view];
 		point = translateCoords(point, self.view.bounds.size);
 		vgamepad::ControlId control = vgamepad::hitTest(point.x, point.y);
-		if (joyTouch == nil && control == vgamepad::AnalogArea)
+		if (joyTouch == nil && (control == vgamepad::AnalogArea || control == vgamepad::AnalogStick))
 		{
-			[self resetTouch];
+			[self resetAnalog];
 			joyTouch = touch;
 			joyBias = point;
 			continue;
 		}
 		NSValue *key = [NSValue valueWithPointer:(const void *)touch];
 		if (control != vgamepad::None && control != vgamepad::AnalogArea
-				&& touchToButton[key] == nil)
+				&& control != vgamepad::AnalogStick && touchToButton[key] == nil)
 		{
 			touchToButton[key] = [NSNumber numberWithInt:control];
 			// button down
-			virtualGamepad->gamepad_btn_input(vgamepad::controlToDcKey(control), true);
+			virtualGamepad->buttonInput(control, true);
 		}
 	}
 	[super touchesBegan:touches withEvent:event];
@@ -138,7 +136,7 @@ static CGPoint translateCoords(const CGPoint& pos, const CGSize& size)
 	for (UITouch *touch in touches)
 	{
 		if (touch == joyTouch) {
-			[self resetTouch];
+			[self resetAnalog];
 			continue;
 		}
 		NSValue *key = [NSValue valueWithPointer:(const void *)touch];
@@ -146,7 +144,7 @@ static CGPoint translateCoords(const CGPoint& pos, const CGSize& size)
 		if (control != nil) {
 			[touchToButton removeObjectForKey:key];
 			// button up
-			virtualGamepad->gamepad_btn_input(vgamepad::controlToDcKey((vgamepad::ControlId)control.intValue), false);
+			virtualGamepad->buttonInput(static_cast<vgamepad::ControlId>(control.intValue), false);
 		}
 	}
 	[super touchesEnded:touches withEvent:event];
@@ -166,17 +164,7 @@ static CGPoint translateCoords(const CGPoint& pos, const CGSize& size)
 			double sz = vgamepad::getControlWidth(vgamepad::AnalogStick);
 			point.x = std::max<CGFloat>(std::min<CGFloat>(1.0, point.x / sz), -1.0);
 			point.y = std::max<CGFloat>(std::min<CGFloat>(1.0, point.y / sz), -1.0);
-			vgamepad::setAnalogStick(point.x, point.y);
-			point.x *= 32767.0;
-			point.y *= 32767.0;
-			if (point.x >= 0)
-				virtualGamepad->gamepad_axis_input(DC_AXIS_RIGHT, (int)std::round(point.x));
-			else
-				virtualGamepad->gamepad_axis_input(DC_AXIS_LEFT, -(int)std::round(point.x));
-			if (point.y >= 0)
-				virtualGamepad->gamepad_axis_input(DC_AXIS_DOWN, (int)std::round(point.y));
-			else
-				virtualGamepad->gamepad_axis_input(DC_AXIS_UP, -(int)std::round(point.y));
+			virtualGamepad->joystickInput(point.x, point.y);
 			continue;
 		}
 		vgamepad::ControlId control = vgamepad::hitTest(point.x, point.y);
@@ -186,10 +174,10 @@ static CGPoint translateCoords(const CGPoint& pos, const CGSize& size)
 			continue;
 		if (prevControl != nil && prevControl.intValue != vgamepad::None && prevControl.intValue != vgamepad::AnalogArea) {
 			// button up
-			virtualGamepad->gamepad_btn_input(vgamepad::controlToDcKey((vgamepad::ControlId)prevControl.intValue), false);
+			virtualGamepad->buttonInput(static_cast<vgamepad::ControlId>(prevControl.intValue), false);
 		}
 		// button down
-		virtualGamepad->gamepad_btn_input(vgamepad::controlToDcKey(control), true);
+		virtualGamepad->buttonInput(control, true);
 		touchToButton[key] = [NSNumber numberWithInt:control];
 	}
 	[super touchesMoved:touches withEvent:event];
@@ -199,7 +187,7 @@ static CGPoint translateCoords(const CGPoint& pos, const CGSize& size)
 {
 	for (UITouch *touch in touches) {
 		if (touch == joyTouch) {
-			[self resetTouch];
+			[self resetAnalog];
 			continue;
 		}
 		NSValue *key = [NSValue valueWithPointer:(const void *)touch];
@@ -207,7 +195,7 @@ static CGPoint translateCoords(const CGPoint& pos, const CGSize& size)
 		if (control != nil) {
 			[touchToButton removeObjectForKey:key];
 			// button up
-			virtualGamepad->gamepad_btn_input(vgamepad::controlToDcKey((vgamepad::ControlId)control.intValue), false);
+			virtualGamepad->buttonInput(static_cast<vgamepad::ControlId>(control.intValue), false);
 		}
 	}
 	[super touchesCancelled:touches withEvent:event];

@@ -31,13 +31,12 @@
 #include "cfg/cfg.h"
 #include "input/gamepad.h"
 #include "hw/naomi/naomi_cart.h"
+#include "hw/naomi/card_reader.h"
 #include "hw/maple/maple_devs.h"
 #include <stb_image.h>
 
 namespace vgamepad
 {
-
-static void loadLayout();
 
 struct Control
 {
@@ -53,9 +52,11 @@ struct Control
 };
 static Control Controls[_Count];
 static bool Visible = true;
+static bool serviceMode;
 static float AlphaTrans = 1.f;
 static ImVec2 StickPos;	// analog stick position [-1, 1]
 constexpr char const *BTN_PATH = "picture/buttons.png";
+constexpr char const *BTN_PATH_ARCADE = "picture/buttons-arcade.png";
 constexpr char const *CFG_SECTION = "vgamepad";
 
 void displayCommands()
@@ -87,6 +88,14 @@ void displayCommands()
     ImGui::End();
 }
 
+static const char *getButtonsResPath() {
+	return settings.platform.isConsole() ? BTN_PATH : BTN_PATH_ARCADE;
+}
+
+static const char *getButtonsCfgName() {
+	return settings.platform.isConsole() ? "image" : "image_arcade";
+}
+
 static bool loadOSDButtons(const std::string& path)
 {
 	if (path.empty())
@@ -102,7 +111,7 @@ static bool loadOSDButtons(const std::string& path)
 	if (image_data == nullptr)
 		return false;
     try {
-        imguiDriver->updateTexture(BTN_PATH, image_data, width, height, false);
+        imguiDriver->updateTexture(getButtonsResPath(), image_data, width, height, false);
     } catch (...) {
         // vulkan can throw during resizing
     }
@@ -115,25 +124,28 @@ static ImTextureID loadOSDButtons()
 {
 	ImTextureID id{};
 	// custom image
-	std::string path = cfgLoadStr(CFG_SECTION, "image", "");
+	std::string path = cfgLoadStr(CFG_SECTION, getButtonsCfgName(), "");
 	if (loadOSDButtons(path))
 		return id;
-	// legacy buttons.png in data folder
-	if (loadOSDButtons(get_readonly_data_path("buttons.png")))
-		return id;
-	// also try the home folder (android)
-	if (loadOSDButtons(get_readonly_config_path("buttons.png")))
-		return id;
+	if (settings.platform.isConsole())
+	{
+		// legacy buttons.png in data folder
+		if (loadOSDButtons(get_readonly_data_path("buttons.png")))
+			return id;
+		// also try the home folder (android)
+		if (loadOSDButtons(get_readonly_config_path("buttons.png")))
+			return id;
+	}
 	// default in resource
 	size_t size;
-	std::unique_ptr<u8[]> data = resource::load(BTN_PATH, size);
+	std::unique_ptr<u8[]> data = resource::load(getButtonsResPath(), size);
 	stbi_set_flip_vertically_on_load(1);
 	int width, height, n;
 	u8 *image_data = stbi_load_from_memory(data.get(), (int)size, &width, &height, &n, STBI_rgb_alpha);
     if (image_data != nullptr)
     {
         try {
-            id = imguiDriver->updateTexture(BTN_PATH, image_data, width, height, false);
+            id = imguiDriver->updateTexture(getButtonsResPath(), image_data, width, height, false);
         } catch (...) {
             // vulkan can throw during resizing
         }
@@ -144,42 +156,100 @@ static ImTextureID loadOSDButtons()
 
 ImTextureID ImguiVGamepadTexture::getId()
 {
-	ImTextureID id = imguiDriver->getTexture(BTN_PATH);
+	ImTextureID id = imguiDriver->getTexture(getButtonsResPath());
 	if (id == ImTextureID())
 		id = loadOSDButtons();
 
 	return id;
 }
 
-constexpr float vjoy_sz[2][_Count] = {
-	// L  U  R  D   X  Y  B  A  St  LT RT  Ana Stck FF   LU RU LD RD
-	{ 64,64,64,64, 64,64,64,64, 64, 90,90, 128, 64, 64,  64,64,64,64 },
-	{ 64,64,64,64, 64,64,64,64, 64, 64,64, 128, 64, 64,  64,64,64,64 },
+constexpr float vjoy_tex[_Count][4] = {
+	// L
+	{   0,   0,  64,  64 },
+	// U
+	{  64,   0,  64,  64 },
+	// R
+	{ 128,   0,  64,  64 },
+	// D
+	{ 192,   0,  64,  64 },
+	// Y, btn3
+	{ 256,   0,  64,  64 },
+	// X, btn2
+	{ 320,   0,  64,  64 },
+	// B, btn1
+	{ 384,   0,  64,  64 },
+	// A, btn0
+	{ 448,   0,  64,  64 },
+
+	// Start
+	{   0,  64,  64,  64 },
+	// LT
+	{  64,  64,  90,  64 },
+	// RT
+	{ 154,  64,  90,  64 },
+	// Analog
+	{ 244,  64, 128, 128 },
+	// Stick
+	{ 372,  64,  64,  64 },
+	// Fast forward
+	{ 436,  64,  64,  64 },
+
+	// C, btn4
+	{   0, 128,  64,  64 },
+	// Z, btn5
+	{  64, 128,  64,  64 },
+
+	// service mode
+	{   0, 192,  64,  64 },
+	// insert card
+	{  64, 192,  64,  64 },
+
+	// Special controls
+	// service
+	{ 128, 128,  64,  64 },
+	// coin
+	{ 384, 128,  64,  64 },
+	// test
+	{ 448, 128,  64,  64 },
 };
+
+static ImVec2 coinUV0, coinUV1;
+static ImVec2 serviceUV0, serviceUV1;
+static ImVec2 testUV0, testUV1;
 
 constexpr float OSD_TEX_W = 512.f;
 constexpr float OSD_TEX_H = 256.f;
 
 static void setUV()
 {
-	float u = 0;
-	float v = 0;
 	int i = 0;
 
 	for (auto& control : Controls)
 	{
-		control.uv0.x = (u + 1) / OSD_TEX_W;
-		control.uv0.y = 1.f - (v + 1) / OSD_TEX_H;
-		control.uv1.x = (u + vjoy_sz[0][i] - 1) / OSD_TEX_W;
-		control.uv1.y = 1.f - (v + vjoy_sz[1][i] - 1) / OSD_TEX_H;
-
-		u += vjoy_sz[0][i];
-		if (u >= OSD_TEX_W) {
-			u -= OSD_TEX_W;
-			v += vjoy_sz[1][i];
-		}
+		control.uv0.x = (vjoy_tex[i][0] + 1) / OSD_TEX_W;
+		control.uv0.y = 1.f - (vjoy_tex[i][1] + 1) / OSD_TEX_H;
+		control.uv1.x = (vjoy_tex[i][0] + vjoy_tex[i][2] - 1) / OSD_TEX_W;
+		control.uv1.y = 1.f - (vjoy_tex[i][1] + vjoy_tex[i][3] - 1) / OSD_TEX_H;
 		i++;
+		if (i >= _VisibleCount)
+			break;
 	}
+	serviceUV0.x = (vjoy_tex[i][0] + 1) / OSD_TEX_W;
+	serviceUV0.y = 1.f - (vjoy_tex[i][1] + 1) / OSD_TEX_H;
+	serviceUV1.x = (vjoy_tex[i][0] + vjoy_tex[i][2] - 1) / OSD_TEX_W;
+	serviceUV1.y = 1.f - (vjoy_tex[i][1] + vjoy_tex[i][3] - 1) / OSD_TEX_H;
+	i++;
+	coinUV0.x = (vjoy_tex[i][0] + 1) / OSD_TEX_W;
+	coinUV0.y = 1.f - (vjoy_tex[i][1] + 1) / OSD_TEX_H;
+	coinUV1.x = (vjoy_tex[i][0] + vjoy_tex[i][2] - 1) / OSD_TEX_W;
+	coinUV1.y = 1.f - (vjoy_tex[i][1] + vjoy_tex[i][3] - 1) / OSD_TEX_H;
+	i++;
+	testUV0.x = (vjoy_tex[i][0] + 1) / OSD_TEX_W;
+	testUV0.y = 1.f - (vjoy_tex[i][1] + 1) / OSD_TEX_H;
+	testUV1.x = (vjoy_tex[i][0] + vjoy_tex[i][2] - 1) / OSD_TEX_W;
+	testUV1.y = 1.f - (vjoy_tex[i][1] + vjoy_tex[i][3] - 1) / OSD_TEX_H;
+	i++;
+
 }
 static OnLoad _(&setUV);
 
@@ -189,18 +259,6 @@ void show() {
 
 void hide() {
 	Visible = false;
-}
-
-void setPosition(ControlId id, float x, float y, float w, float h)
-{
-	verify(id >= 0 && id < _VisibleCount);
-	auto& control = Controls[id];
-	control.pos.x = x;
-	control.pos.y = y;
-	if (w != 0)
-		control.size.x = w;
-	if (h != 0)
-		control.size.y = h;
 }
 
 ControlId hitTest(float x, float y)
@@ -215,16 +273,17 @@ ControlId hitTest(float x, float y)
 
 u32 controlToDcKey(ControlId control)
 {
+	const bool arcade = settings.platform.isArcade();
 	switch (control)
 	{
 		case Left: return DC_DPAD_LEFT;
 		case Up: return DC_DPAD_UP;
 		case Right: return DC_DPAD_RIGHT;
 		case Down: return DC_DPAD_DOWN;
-		case X: return DC_BTN_X;
-		case Y: return DC_BTN_Y;
-		case B: return DC_BTN_B;
-		case A: return DC_BTN_A;
+		case X: return serviceMode ? DC_DPAD2_DOWN : arcade ? DC_BTN_C : DC_BTN_X;
+		case Y: return arcade ? DC_BTN_X : DC_BTN_Y;
+		case B: return serviceMode ? DC_DPAD2_UP : DC_BTN_B;
+		case A: return serviceMode ? DC_BTN_D : DC_BTN_A;
 		case Start: return DC_BTN_START;
 		case LeftTrigger: return DC_AXIS_LT;
 		case RightTrigger: return DC_AXIS_RT;
@@ -233,6 +292,11 @@ u32 controlToDcKey(ControlId control)
 		case RightUp: return DC_DPAD_RIGHT | DC_DPAD_UP;
 		case LeftDown: return DC_DPAD_LEFT | DC_DPAD_DOWN;
 		case RightDown: return DC_DPAD_RIGHT | DC_DPAD_DOWN;
+		// Arcade
+		case Btn4: return DC_BTN_Y;
+		case Btn5: return DC_BTN_Z;
+		case InsertCard: return DC_BTN_INSERT_CARD;
+		case ServiceMode: return EMU_BTN_SRVMODE;
 		default: return 0;
 	}
 }
@@ -246,6 +310,19 @@ float getControlWidth(ControlId control) {
 	return Controls[control].size.x;	
 }
 
+void toggleServiceMode()
+{
+	serviceMode = !serviceMode;
+	if (serviceMode) {
+		Controls[A].disabled = false;
+		Controls[B].disabled = false;
+		Controls[X].disabled = false;
+	}
+	else {
+		startGame();
+	}
+}
+
 static void drawButtonDim(ImDrawList *drawList, const Control& control, int state)
 {
 	if (control.disabled)
@@ -255,15 +332,37 @@ static void drawButtonDim(ImDrawList *drawList, const Control& control, int stat
 	ImVec2 pos = control.pos * scale_h;
 	ImVec2 size = control.size * scale_h;
 	pos.x += offs_x;
-	if (static_cast<ControlId>(&control - &Controls[0]) == AnalogStick)
+	ControlId controlId = static_cast<ControlId>(&control - &Controls[0]);
+	if (controlId == AnalogStick)
 		pos += StickPos * size;
 
 	float col = (0.5f - 0.25f * state / 255) * AlphaTrans;
 	float alpha = (100.f - config::VirtualGamepadTransparency) / 100.f * AlphaTrans;
 	ImVec4 color(col, col, col, alpha);
 
+	const ImVec2* uv0 = &control.uv0;
+	const ImVec2* uv1 = &control.uv1;
+	if (serviceMode)
+		switch (controlId)
+		{
+		case A:
+			uv0 = &coinUV0;
+			uv1 = &coinUV1;
+			break;
+		case B:
+			uv0 = &serviceUV0;
+			uv1 = &serviceUV1;
+			break;
+		case X:
+			uv0 = &testUV0;
+			uv1 = &testUV1;
+			break;
+		default:
+			break;
+		}
+
     ImguiVGamepadTexture tex;
-	tex.draw(drawList, pos, size, control.uv0, control.uv1, color);
+	tex.draw(drawList, pos, size, *uv0, *uv1, color);
 }
 
 static void drawButton(ImDrawList *drawList, const Control& control, bool state) {
@@ -272,7 +371,6 @@ static void drawButton(ImDrawList *drawList, const Control& control, bool state)
 
 void draw()
 {
-#ifndef __ANDROID__
 	if (Controls[Left].pos.x == 0.f)
 	{
 		loadLayout();
@@ -280,7 +378,6 @@ void draw()
 			// mark done
 			Controls[Left].pos.x = 1e-12f;
 	}
-#endif
 		
 	ImDrawList *drawList = ImGui::GetBackgroundDrawList();
 	drawButton(drawList, Controls[Left], kcode[0] & DC_DPAD_LEFT);
@@ -288,10 +385,10 @@ void draw()
 	drawButton(drawList, Controls[Right], kcode[0] & DC_DPAD_RIGHT);
 	drawButton(drawList, Controls[Down], kcode[0] & DC_DPAD_DOWN);
 
-	drawButton(drawList, Controls[X], kcode[0] & (settings.platform.isConsole() ? DC_BTN_X : DC_BTN_C));
+	drawButton(drawList, Controls[X], kcode[0] & (serviceMode ? DC_DPAD2_DOWN : settings.platform.isConsole() ? DC_BTN_X : DC_BTN_C));
 	drawButton(drawList, Controls[Y], kcode[0] & (settings.platform.isConsole() ? DC_BTN_Y : DC_BTN_X));
-	drawButton(drawList, Controls[B], kcode[0] & DC_BTN_B);
-	drawButton(drawList, Controls[A], kcode[0] & DC_BTN_A);
+	drawButton(drawList, Controls[B], kcode[0] & (serviceMode ? DC_DPAD2_UP : DC_BTN_B));
+	drawButton(drawList, Controls[A], kcode[0] & (serviceMode ? DC_BTN_D : DC_BTN_A));
 
 	drawButton(drawList, Controls[Start], kcode[0] & DC_BTN_START);
 
@@ -303,6 +400,12 @@ void draw()
 	drawButton(drawList, Controls[AnalogStick], false);
 
 	drawButton(drawList, Controls[FastForward], false);
+
+	drawButton(drawList, Controls[Btn4], kcode[0] & DC_BTN_Y);
+	drawButton(drawList, Controls[Btn5], kcode[0] & DC_BTN_Z);
+	drawButton(drawList, Controls[ServiceMode], !serviceMode);
+	drawButton(drawList, Controls[InsertCard], kcode[0] & DC_BTN_INSERT_CARD);
+
 	AlphaTrans += ((float)Visible - AlphaTrans) / 2;
 }
 
@@ -349,6 +452,7 @@ struct LayoutElement
 
 	void reset()
 	{
+		applyUiScale();
 		scale = 1.f;
 		const float dcw = 480.f * (float)settings.display.width / settings.display.height;
 		const float uiscale = getUIScale();
@@ -374,6 +478,11 @@ static LayoutElement Layout[] {
 	{ "RT",       -32.f,-240.f,  90.f,  64.f },
 	{ "analog",    40.f,-320.f, 128.f, 128.f },
 	{ "fforward", -24.f,  24.f,  64.f,  64.f },
+
+	{ "btn4",     -24.f,-216.f,  64.f,  64.f },
+	{ "btn5",    -152.f,-216.f,  64.f,  64.f },
+	{ "service",  -24.f,  96.f,  64.f,  64.f },
+	{ "inscard",   40.f,-250.f,  64.f,  64.f },
 };
 
 static void applyLayout()
@@ -440,6 +549,26 @@ static void applyLayout()
 	scale = Layout[Elem_FForward].scale * uiscale;
 	Controls[FastForward].pos =  { Layout[Elem_FForward].x * dcw - dx, Layout[Elem_FForward].y * 480.f };
 	Controls[FastForward].size = { Layout[Elem_FForward].dw * scale, Layout[Elem_FForward].dh * scale };
+
+	// ARCADE
+	// Button 4
+	scale = Layout[Elem_Btn4].scale * uiscale;
+	Controls[Btn4].pos =  { Layout[Elem_Btn4].x * dcw - dx, Layout[Elem_Btn4].y * 480.f };
+	Controls[Btn4].size = { Layout[Elem_Btn4].dw * scale, Layout[Elem_Btn4].dh * scale };
+	// Button 5
+	scale = Layout[Elem_Btn5].scale * uiscale;
+	Controls[Btn5].pos =  { Layout[Elem_Btn5].x * dcw - dx, Layout[Elem_Btn5].y * 480.f };
+	Controls[Btn5].size = { Layout[Elem_Btn5].dw * scale, Layout[Elem_Btn5].dh * scale };
+
+	// Service Mode
+	scale = Layout[Elem_ServiceMode].scale * uiscale;
+	Controls[ServiceMode].pos =  { Layout[Elem_ServiceMode].x * dcw - dx, Layout[Elem_ServiceMode].y * 480.f };
+	Controls[ServiceMode].size = { Layout[Elem_ServiceMode].dw * scale, Layout[Elem_ServiceMode].dh * scale };
+
+	// Insert Card
+	scale = Layout[Elem_InsertCard].scale * uiscale;
+	Controls[InsertCard].pos =  { Layout[Elem_InsertCard].x * dcw - dx, Layout[Elem_InsertCard].y * 480.f };
+	Controls[InsertCard].size = { Layout[Elem_InsertCard].dw * scale, Layout[Elem_InsertCard].dh * scale };
 }
 
 void applyUiScale() {
@@ -447,7 +576,7 @@ void applyUiScale() {
 		element.applyUiScale();
 }
 
-static void loadLayout()
+void loadLayout()
 {
 	for (auto& element : Layout) {
 		element.reset();
@@ -456,7 +585,7 @@ static void loadLayout()
 	applyLayout();
 }
 
-static void saveLayout()
+void saveLayout()
 {
 	cfgSetAutoSave(false);
 	for (auto& element : Layout)
@@ -500,11 +629,11 @@ void scaleElement(Element element, float factor)
 void loadImage(const std::string& path)
 {
 	if (path.empty()) {
-		cfgSaveStr(CFG_SECTION, "image", "");
+		cfgSaveStr(CFG_SECTION, getButtonsCfgName(), "");
 		loadOSDButtons();
 	}
 	else if (loadOSDButtons(path)) {
-		cfgSaveStr(CFG_SECTION, "image", path);
+		cfgSaveStr(CFG_SECTION, getButtonsCfgName(), path);
 	}
 }
 
@@ -554,8 +683,13 @@ static void disableControl(ControlId ctrlId)
 void startGame()
 {
 	enableAllControls();
+	serviceMode = false;
 	if (settings.platform.isConsole())
 	{
+		disableControl(Btn4);
+		disableControl(Btn5);
+		disableControl(ServiceMode);
+		disableControl(InsertCard);
 		switch (config::MapleMainDevices[0])
 		{
 		case MDT_LightGun:
@@ -590,9 +724,17 @@ void startGame()
 	else
 	{
 		// arcade game
-		// FIXME RT is used as mod key for coin, test, service (ABX)
-		// FIXME RT and LT are buttons 4 & 5 in arcade mode
-		// TODO insert card button for card games
+		if (!card_reader::readerAvailable())
+			disableControl(InsertCard);
+		if (settings.platform.isAtomiswave()) {
+			disableControl(Btn5);
+		}
+		else if (settings.platform.isSystemSP())
+		{
+			disableControl(Y);
+			disableControl(Btn4);
+			disableControl(Btn5);
+		}
 		if (NaomiGameInputs != nullptr)
 		{
 			bool fullAnalog = false;
@@ -618,6 +760,14 @@ void startGame()
 			}
 			if (!fullAnalog)
 				disableControl(AnalogArea);
+			if (!lt)
+				disableControl(LeftTrigger);
+			else
+				disableControl(Btn5);
+			if (!rt)
+				disableControl(RightTrigger);
+			else
+				disableControl(Btn4);
 			u32 usedButtons = 0;
 			for (const auto& button : NaomiGameInputs->buttons)
 			{
@@ -627,21 +777,17 @@ void startGame()
 			}
 			if (settings.platform.isAtomiswave())
 			{
-				// button order: A B X Y RT
-				/* these ones are always needed for now
+				// button order: A B X Y B4
 				if ((usedButtons & AWAVE_BTN0_KEY) == 0)
 					disableControl(A);
 				if ((usedButtons & AWAVE_BTN1_KEY) == 0)
 					disableControl(B);
 				if ((usedButtons & AWAVE_BTN2_KEY) == 0)
 					disableControl(X);
-				if ((usedButtons & AWAVE_BTN4_KEY) == 0 && !rt)
-					disableControl(RightTrigger);
-				*/
 				if ((usedButtons & AWAVE_BTN3_KEY) == 0)
 					disableControl(Y);
-				if (!lt)
-					disableControl(LeftTrigger);
+				if ((usedButtons & AWAVE_BTN4_KEY) == 0)
+					disableControl(Btn4);
 				if ((usedButtons & AWAVE_UP_KEY) == 0)
 					disableControl(Up);
 				if ((usedButtons & AWAVE_DOWN_KEY) == 0)
@@ -650,10 +796,30 @@ void startGame()
 					disableControl(Left);
 				if ((usedButtons & AWAVE_RIGHT_KEY) == 0)
 					disableControl(Right);
+				if ((usedButtons & AWAVE_START_KEY) == 0)
+					disableControl(Start);
+			}
+			else if (settings.platform.isSystemSP())
+			{
+				if ((usedButtons & DC_BTN_A) == 0)
+					disableControl(A);
+				if ((usedButtons & DC_BTN_B) == 0)
+					disableControl(B);
+				if ((usedButtons & DC_BTN_C) == 0)
+					disableControl(X);
+				if ((usedButtons & DC_DPAD_UP) == 0)
+					disableControl(Up);
+				if ((usedButtons & DC_DPAD_DOWN) == 0)
+					disableControl(Down);
+				if ((usedButtons & DC_DPAD_LEFT) == 0)
+					disableControl(Left);
+				if ((usedButtons & DC_DPAD_RIGHT) == 0)
+					disableControl(Right);
+				if ((usedButtons & DC_BTN_START) == 0)
+					disableControl(Start);
 			}
 			else
 			{
-				/* these ones are always needed for now
 				if ((usedButtons & NAOMI_BTN0_KEY) == 0)
 					disableControl(A);
 				if ((usedButtons & NAOMI_BTN1_KEY) == 0)
@@ -661,16 +827,15 @@ void startGame()
 				if ((usedButtons & NAOMI_BTN2_KEY) == 0)
 					// C
 					disableControl(X);
-				if ((usedButtons & NAOMI_BTN4_KEY) == 0 && !rt)
-					// Y
-					disableControl(RightTrigger);
-				*/
 				if ((usedButtons & NAOMI_BTN3_KEY) == 0)
 					// X
 					disableControl(Y);
-				if ((usedButtons & NAOMI_BTN5_KEY) == 0 && !lt)
+				if ((usedButtons & NAOMI_BTN4_KEY) == 0)
+					// Y
+					disableControl(Btn4);
+				if ((usedButtons & NAOMI_BTN5_KEY) == 0)
 					// Z
-					disableControl(LeftTrigger);
+					disableControl(Btn5);
 				if ((usedButtons & NAOMI_UP_KEY) == 0)
 					disableControl(Up);
 				if ((usedButtons & NAOMI_DOWN_KEY) == 0)
@@ -679,28 +844,41 @@ void startGame()
 					disableControl(Left);
 				if ((usedButtons & NAOMI_RIGHT_KEY) == 0)
 					disableControl(Right);
+				if ((usedButtons & NAOMI_START_KEY) == 0)
+					disableControl(Start);
 			}
-		}
-		else if (settings.input.lightgunGame)
-		{
-			disableControl(Y);
-			disableControl(AnalogArea);
-			disableControl(LeftTrigger);
-			disableControl(Up);
-			disableControl(Down);
-			disableControl(Left);
-			disableControl(Right);
 		}
 		else
 		{
-			// all analog games *should* have an input description
-			disableControl(AnalogArea);
+			if (settings.input.lightgunGame)
+			{
+				// TODO enable mouse?
+				disableControl(A);
+				disableControl(X);
+				disableControl(Y);
+				disableControl(Btn4);
+				disableControl(Btn5);
+				disableControl(AnalogArea);
+				disableControl(LeftTrigger);
+				disableControl(RightTrigger);
+				disableControl(Up);
+				disableControl(Down);
+				disableControl(Left);
+				disableControl(Right);
+			}
+			else
+			{
+				// all analog games *should* have an input description
+				disableControl(AnalogArea);
+				disableControl(LeftTrigger);
+				disableControl(RightTrigger);
+			}
 		}
 	}
-	bool enabledState[_Count];
-	for (int i = 0; i < _Count; i++)
-		enabledState[i] = !Controls[i].disabled;
-	setEnabledControls(enabledState);
+}
+
+void resetEditing() {
+	resetLayout();
 }
 
 #ifndef __ANDROID__
@@ -719,13 +897,6 @@ void stopEditing(bool canceled)
 		loadLayout();
 	else
 		saveLayout();
-}
-
-void resetEditing() {
-	resetLayout();
-}
-
-void setEnabledControls(bool enabled[_Count]) {
 }
 
 #endif

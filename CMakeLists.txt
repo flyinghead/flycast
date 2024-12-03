@@ -1032,7 +1032,8 @@ if(NOT LIBRETRO)
 	if(ANDROID OR IOS)
 		cmrc_add_resources(flycast-resources
 			WHENCE resources
-			resources/picture/buttons.png)
+			resources/picture/buttons.png
+			resources/picture/buttons-arcade.png)
 	endif()
 endif()
 
@@ -1617,6 +1618,10 @@ if(NOT LIBRETRO)
 		target_sources(${PROJECT_NAME} PRIVATE
 			shell/android-studio/flycast/src/main/jni/src/Android.cpp
 			shell/android-studio/flycast/src/main/jni/src/android_gamepad.h
+			shell/android-studio/flycast/src/main/jni/src/android_storage.h
+			shell/android-studio/flycast/src/main/jni/src/http_client.h
+			shell/android-studio/flycast/src/main/jni/src/jni_util.h
+			shell/android-studio/flycast/src/main/jni/src/android_input.cpp
 			shell/android-studio/flycast/src/main/jni/src/android_keyboard.h)
 
 		target_link_libraries(${PROJECT_NAME} PRIVATE android log)

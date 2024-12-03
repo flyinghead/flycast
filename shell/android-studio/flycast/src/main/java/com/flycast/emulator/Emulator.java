@@ -10,7 +10,8 @@ import android.util.Log;
 import androidx.appcompat.app.AppCompatDelegate;
 
 import com.flycast.emulator.config.Config;
-import com.flycast.emulator.emu.JNIdc;
+import com.flycast.emulator.emu.VGamepad;
+import com.flycast.emulator.periph.InputDeviceManager;
 
 public class Emulator extends Application {
     private static Context context;
@@ -18,32 +19,14 @@ public class Emulator extends Application {
     private WifiManager wifiManager = null;
     private WifiManager.MulticastLock multicastLock = null;
 
-    // see MapleDeviceType in hw/maple/maple_devs.h
-    public static final int MDT_Microphone = 2;
-    public static final int MDT_None = 8;
-
     public static int vibrationPower = 80;
-
-    public static int[] maple_devices = {
-            MDT_None,
-            MDT_None,
-            MDT_None,
-            MDT_None
-    };
-    public static int[][] maple_expansion_devices = {
-        { MDT_None, MDT_None },
-        { MDT_None, MDT_None },
-        { MDT_None, MDT_None },
-        { MDT_None, MDT_None },
-    };
 
     /**
      * Load the settings from native code
      *
      */
     public void getConfigurationPrefs() {
-        Emulator.vibrationPower = JNIdc.getVirtualGamepadVibration();
-        JNIdc.getControllers(maple_devices, maple_expansion_devices);
+        Emulator.vibrationPower = VGamepad.getVibrationPower();
     }
 
     /**
@@ -54,24 +37,15 @@ public class Emulator extends Application {
     {
         Log.i("flycast", "SaveAndroidSettings: saving preferences");
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        Emulator.vibrationPower = JNIdc.getVirtualGamepadVibration();
-        JNIdc.getControllers(maple_devices, maple_expansion_devices);
+        Emulator.vibrationPower = VGamepad.getVibrationPower();
 
         prefs.edit()
                 .putString(Config.pref_home, homeDirectory).apply();
 
-        if (micPluggedIn() && currentActivity instanceof BaseGLActivity) {
+        if (InputDeviceManager.isMicPluggedIn() && currentActivity instanceof BaseGLActivity) {
+            Log.i("flycast", "SaveAndroidSettings: MIC PLUGGED IN");
             ((BaseGLActivity)currentActivity).requestRecordAudioPermission();
         }
-    }
-
-    public static boolean micPluggedIn() {
-        JNIdc.getControllers(maple_devices, maple_expansion_devices);
-        for (int[] maple_expansion_device : maple_expansion_devices)
-            if (maple_expansion_device[0] == MDT_Microphone
-                    || maple_expansion_device[1] == MDT_Microphone)
-                return true;
-        return false;
     }
 
     @Override

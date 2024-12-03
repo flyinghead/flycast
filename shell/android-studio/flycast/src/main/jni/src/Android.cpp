@@ -1,12 +1,8 @@
 #include "types.h"
-#include "hw/maple/maple_cfg.h"
-#include "hw/maple/maple_devs.h"
-#include "hw/maple/maple_if.h"
 #include "hw/naomi/naomi_cart.h"
 #include "audio/audiostream.h"
 #include "imgread/common.h"
 #include "ui/gui.h"
-#include "ui/vgamepad.h"
 #include "rend/osd.h"
 #include "cfg/cfg.h"
 #include "log/LogManager.h"
@@ -39,23 +35,13 @@ namespace jni
 	thread_local JVMAttacher jvm_attacher;
 }
 
-#include "android_gamepad.h"
-#include "android_keyboard.h"
 #include "http_client.h"
-
-extern "C" JNIEXPORT jint JNICALL Java_com_flycast_emulator_emu_JNIdc_getVirtualGamepadVibration(JNIEnv *env, jobject obj)
-{
-    return (jint)config::VirtualGamepadVibration;
-}
 
 extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_emu_JNIdc_screenCharacteristics(JNIEnv *env, jobject obj, jfloat screenDpi, jfloat refreshRate)
 {
 	settings.display.dpi = screenDpi;
 	settings.display.refreshRate = refreshRate;
 }
-
-std::shared_ptr<AndroidMouse> mouse;
-std::shared_ptr<AndroidKeyboard> keyboard;
 
 static bool game_started;
 
@@ -65,12 +51,10 @@ jmethodID saveAndroidSettingsMid;
 static ANativeWindow *g_window = 0;
 
 // Activity
-static jobject g_activity;
-static jmethodID VJoyStartEditingMID;
-static jmethodID VJoyStopEditingMID;
-static jmethodID VJoyResetEditingMID;
-static jmethodID VJoyEnableControlsMID;
-static jmethodID showScreenKeyboardMid;
+jobject g_activity;
+extern jmethodID VJoyStartEditingMID;
+extern jmethodID VJoyStopEditingMID;
+extern jmethodID showScreenKeyboardMid;
 static jmethodID onGameStateChangeMid;
 
 static void emuEventCallback(Event event, void *)
@@ -353,42 +337,6 @@ extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_emu_JNIdc_rendinitNa
 	}
 }
 
-extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_emu_JNIdc_vjoy(JNIEnv * env, jobject obj,int id,float x, float y, float w, float h)
-{
-    vgamepad::setPosition(static_cast<vgamepad::ControlId>(id), x, y, w, h);
-}
-
-extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_emu_JNIdc_showVirtualGamepad(JNIEnv * env, jobject obj)
-{
-    vgamepad::show();
-}
-
-extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_emu_JNIdc_hideVirtualGamepad(JNIEnv * env, jobject obj)
-{
-    vgamepad::hide();
-}
-
-extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_emu_JNIdc_getControllers(JNIEnv *env, jobject obj, jintArray controllers, jobjectArray peripherals)
-{
-	// might be called before JNIdc.initEnvironment()
-    if (g_jvm == NULL)
-        env->GetJavaVM(&g_jvm);
-
-	jni::IntArray jcontrollers(controllers, false);
-	std::vector<int> devs;
-	for (u32 i = 0; i < config::MapleMainDevices.size(); i++)
-		devs.push_back((MapleDeviceType)config::MapleMainDevices[i]);
-	jcontrollers.setData(devs.data());
-
-	jni::ObjectArray<jni::IntArray> jperipherals(peripherals, false);
-    int obj_len = jperipherals.size();
-    for (int i = 0; i < obj_len; ++i)
-    {
-    	std::vector<int> devs { (MapleDeviceType)config::MapleExpansionDevices[i][0], (MapleDeviceType)config::MapleExpansionDevices[i][1] };
-    	jperipherals[i].setData(devs.data());
-    }
-}
-
 extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_emu_JNIdc_guiOpenSettings(JNIEnv *env, jobject obj)
 {
     gui_open_settings();
@@ -495,92 +443,6 @@ void SaveAndroidSettings()
     jni::env()->CallVoidMethod(g_emulator, saveAndroidSettingsMid, (jstring)homeDirectory);
 }
 
-extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_periph_InputDeviceManager_init(JNIEnv *env, jobject obj)
-{
-    input_device_manager = env->NewGlobalRef(obj);
-    input_device_manager_rumble = env->GetMethodID(env->GetObjectClass(obj), "rumble", "(IFFI)Z");
-    // FIXME Don't connect it by default or any screen touch will register as button A press
-    mouse = std::make_shared<AndroidMouse>(-1);
-    GamepadDevice::Register(mouse);
-    keyboard = std::make_shared<AndroidKeyboard>();
-    GamepadDevice::Register(keyboard);
-    gui_setOnScreenKeyboardCallback([](bool show) {
-    	if (g_activity != nullptr)
-    		jni::env()->CallVoidMethod(g_activity, showScreenKeyboardMid, show);
-    });
-}
-
-extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_periph_InputDeviceManager_joystickAdded(JNIEnv *env, jobject obj, jint id, jstring name,
-		jint maple_port, jstring junique_id, jintArray fullAxes, jintArray halfAxes, jboolean hasRumble)
-{
-    std::string joyname = jni::String(name, false);
-    std::string unique_id = jni::String(junique_id, false);
-    std::vector<int> full = jni::IntArray(fullAxes, false);
-    std::vector<int> half = jni::IntArray(halfAxes, false);
-
-    std::shared_ptr<AndroidGamepadDevice> gamepad = std::make_shared<AndroidGamepadDevice>(maple_port, id, joyname.c_str(), unique_id.c_str(), full, half);
-    AndroidGamepadDevice::AddAndroidGamepad(gamepad);
-    gamepad->setRumbleEnabled(hasRumble);
-}
-extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_periph_InputDeviceManager_joystickRemoved(JNIEnv *env, jobject obj, jint id)
-{
-    std::shared_ptr<AndroidGamepadDevice> device = AndroidGamepadDevice::GetAndroidGamepad(id);
-    if (device != NULL)
-        AndroidGamepadDevice::RemoveAndroidGamepad(device);
-}
-
-extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_periph_InputDeviceManager_virtualGamepadEvent(JNIEnv *env, jobject obj, jint kcode, jint joyx, jint joyy, jint lt, jint rt, jboolean fastForward)
-{
-    std::shared_ptr<AndroidGamepadDevice> device = AndroidGamepadDevice::GetAndroidGamepad(AndroidGamepadDevice::VIRTUAL_GAMEPAD_ID);
-    if (device != NULL)
-        device->virtual_gamepad_event(kcode, joyx, joyy, lt, rt, fastForward);
-}
-
-extern "C" JNIEXPORT jboolean JNICALL Java_com_flycast_emulator_periph_InputDeviceManager_joystickButtonEvent(JNIEnv *env, jobject obj, jint id, jint key, jboolean pressed)
-{
-    std::shared_ptr<AndroidGamepadDevice> device = AndroidGamepadDevice::GetAndroidGamepad(id);
-    if (device != NULL)
-        return device->gamepad_btn_input(key, pressed);
-    else
-    	return false;
-
-}
-
-extern "C" JNIEXPORT jboolean JNICALL Java_com_flycast_emulator_periph_InputDeviceManager_keyboardEvent(JNIEnv *env, jobject obj, jint key, jboolean pressed)
-{
-       keyboard->input(key, pressed);
-       return true;
-}
-
-extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_periph_InputDeviceManager_keyboardText(JNIEnv *env, jobject obj, jint c)
-{
-       gui_keyboard_input((u16)c);
-}
-
-static std::map<std::pair<jint, jint>, jint> previous_axis_values;
-
-extern "C" JNIEXPORT jboolean JNICALL Java_com_flycast_emulator_periph_InputDeviceManager_joystickAxisEvent(JNIEnv *env, jobject obj, jint id, jint key, jint value)
-{
-    std::shared_ptr<AndroidGamepadDevice> device = AndroidGamepadDevice::GetAndroidGamepad(id);
-    if (device != nullptr)
-    	return device->gamepad_axis_input(key, value);
-    else
-    	return false;
-}
-
-extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_periph_InputDeviceManager_mouseEvent(JNIEnv *env, jobject obj, jint xpos, jint ypos, jint buttons)
-{
-	mouse->setAbsPos(xpos, ypos, settings.display.width, settings.display.height);
-	mouse->setButton(Mouse::LEFT_BUTTON, (buttons & 1) != 0);
-	mouse->setButton(Mouse::RIGHT_BUTTON, (buttons & 2) != 0);
-	mouse->setButton(Mouse::MIDDLE_BUTTON, (buttons & 4) != 0);
-}
-
-extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_periph_InputDeviceManager_mouseScrollEvent(JNIEnv *env, jobject obj, jint scrollValue)
-{
-    mouse->setWheel(scrollValue);
-}
-
 extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_BaseGLActivity_register(JNIEnv *env, jobject obj, jobject activity)
 {
     if (g_activity != nullptr) {
@@ -592,38 +454,10 @@ extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_BaseGLActivity_regis
         g_activity = env->NewGlobalRef(activity);
         jclass actClass = env->GetObjectClass(activity);
         VJoyStartEditingMID = env->GetMethodID(actClass, "VJoyStartEditing", "()V");
-        VJoyStopEditingMID = env->GetMethodID(actClass, "VJoyStopEditing", "(Z)V");
-        VJoyResetEditingMID = env->GetMethodID(actClass, "VJoyResetEditing", "()V");
-        VJoyEnableControlsMID = env->GetMethodID(actClass, "VJoyEnableControls", "([Z)V");
+        VJoyStopEditingMID = env->GetMethodID(actClass, "VJoyStopEditing", "()V");
         showScreenKeyboardMid = env->GetMethodID(actClass, "showScreenKeyboard", "(Z)V");
         onGameStateChangeMid = env->GetMethodID(actClass, "onGameStateChange", "(Z)V");
     }
-}
-
-namespace vgamepad
-{
-
-void startEditing() {
-	enableAllControls();
-	jni::env()->CallVoidMethod(g_activity, VJoyStartEditingMID);
-}
-void pauseEditing() {
-	stopEditing(false);
-}
-void resetEditing() {
-    jni::env()->CallVoidMethod(g_activity, VJoyResetEditingMID);
-}
-void stopEditing(bool canceled) {
-    jni::env()->CallVoidMethod(g_activity, VJoyStopEditingMID, canceled);
-}
-
-void setEnabledControls(bool enabled[_Count])
-{
-	jni::BooleanArray jb{_Count};
-	jb.setData(enabled, 0, _Count);
-    jni::env()->CallVoidMethod(g_activity, VJoyEnableControlsMID, (jbooleanArray)jb);
-}
-
 }
 
 void enableNetworkBroadcast(bool enable)

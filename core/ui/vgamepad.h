@@ -40,13 +40,18 @@ enum ControlId
 	AnalogStick,
 	FastForward,
 
+	Btn4,
+	Btn5,
+	ServiceMode,
+	InsertCard,
+
 	LeftUp,
 	RightUp,
 	LeftDown,
 	RightDown,
 	
 	_Count,
-	_VisibleCount = FastForward + 1,
+	_VisibleCount = LeftUp,
 };
 
 enum Element
@@ -59,6 +64,10 @@ enum Element
 	Elem_RT,
 	Elem_Analog,
 	Elem_FForward,
+	Elem_Btn4,
+	Elem_Btn5,
+	Elem_ServiceMode,
+	Elem_InsertCard,
 };
 
 class ImguiVGamepadTexture : public ImguiTexture
@@ -69,8 +78,6 @@ public:
 
 #if defined(__ANDROID__) || defined(TARGET_IPHONE)
 
-void setPosition(ControlId id, float x, float y, float w = 0.f, float h = 0.f);	// Legacy android
-void setEnabledControls(bool enabled[_Count]);	// Legacy android
 void enableAllControls();
 void show();
 void hide();
@@ -87,11 +94,14 @@ ControlId hitTest(float x, float y);
 u32 controlToDcKey(ControlId control);
 void setAnalogStick(float x, float y);
 float getControlWidth(ControlId);
+void toggleServiceMode();
 
 void applyUiScale();
 Element layoutHitTest(float x, float y);
 void translateElement(Element element, float dx, float dy);
 void scaleElement(Element element, float factor);
+void loadLayout();
+void saveLayout();
 
 #else
 

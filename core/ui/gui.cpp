@@ -1467,7 +1467,7 @@ static void gamepadSettingsPopup(const std::shared_ptr<GamepadDevice>& gamepad)
 
 #if defined(__ANDROID__) || defined(TARGET_IPHONE)
 			vgamepad::ImguiVGamepadTexture tex;
-			ImGui::Image(tex.getId(), ScaledVec2(300, 112.5f), ImVec2(0, 1), ImVec2(1, 0.25f));
+			ImGui::Image(tex.getId(), ScaledVec2(300.f, 150.f), ImVec2(0, 1), ImVec2(1, 0));
 #endif
 			const char *gamepadPngTitle = "Select a PNG file";
 			if (ImGui::Button("Choose Image...", ScaledVec2(150, 30)))
