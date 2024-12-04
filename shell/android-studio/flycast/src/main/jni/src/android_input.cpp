@@ -27,10 +27,8 @@ std::shared_ptr<AndroidKeyboard> keyboard;
 std::shared_ptr<AndroidVirtualGamepad> virtualGamepad;
 
 extern jobject g_activity;
-jmethodID VJoyStartEditingMID;
-jmethodID VJoyStopEditingMID;
-jmethodID VJoyEnableControlsMID;
 jmethodID showScreenKeyboardMid;
+jmethodID setVGamepadEditModeMid;
 
 //
 // VGamepad
@@ -75,25 +73,8 @@ extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_emu_VGamepad_transla
 namespace vgamepad
 {
 
-void startEditing()
-{
-	// FIXME code dup with vgamepad.cpp
-	enableAllControls();
-	show();
-	jni::env()->CallVoidMethod(g_activity, VJoyStartEditingMID);
-}
-void pauseEditing() {
-	// needed? could be used by iOS to avoid relying on gui state
-	jni::env()->CallVoidMethod(g_activity, VJoyStopEditingMID);
-}
-void stopEditing(bool canceled)
-{
-	// FIXME code dup with vgamepad.cpp
-	jni::env()->CallVoidMethod(g_activity, VJoyStopEditingMID);
-	if (canceled)
-		loadLayout();
-	else
-		saveLayout();
+void setEditMode(bool editing) {
+	jni::env()->CallVoidMethod(g_activity, setVGamepadEditModeMid, editing);
 }
 
 }

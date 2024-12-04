@@ -173,13 +173,13 @@ public class NativeGLView extends SurfaceView implements SurfaceHolder.Callback 
         }
     }
 
-    public void setEditVjoyMode(boolean editVjoyMode)
+    public void setVGamepadEditMode(boolean editing)
     {
         if (!InputDeviceManager.getInstance().hasTouchscreen())
             return;
-        if (editVjoyMode && !(vjoyDelegate instanceof EditVirtualJoystickDelegate))
+        if (editing && !(vjoyDelegate instanceof EditVirtualJoystickDelegate))
             vjoyDelegate = new EditVirtualJoystickDelegate(this);
-        else if (!editVjoyMode && !(vjoyDelegate instanceof VirtualJoystickDelegate))
+        else if (!editing && !(vjoyDelegate instanceof VirtualJoystickDelegate))
             vjoyDelegate = new VirtualJoystickDelegate(this);
     }
 

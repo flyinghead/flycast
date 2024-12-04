@@ -52,10 +52,9 @@ static ANativeWindow *g_window = 0;
 
 // Activity
 jobject g_activity;
-extern jmethodID VJoyStartEditingMID;
-extern jmethodID VJoyStopEditingMID;
 extern jmethodID showScreenKeyboardMid;
 static jmethodID onGameStateChangeMid;
+extern jmethodID setVGamepadEditModeMid;
 
 static void emuEventCallback(Event event, void *)
 {
@@ -453,10 +452,9 @@ extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_BaseGLActivity_regis
     {
         g_activity = env->NewGlobalRef(activity);
         jclass actClass = env->GetObjectClass(activity);
-        VJoyStartEditingMID = env->GetMethodID(actClass, "VJoyStartEditing", "()V");
-        VJoyStopEditingMID = env->GetMethodID(actClass, "VJoyStopEditing", "()V");
         showScreenKeyboardMid = env->GetMethodID(actClass, "showScreenKeyboard", "(Z)V");
         onGameStateChangeMid = env->GetMethodID(actClass, "onGameStateChange", "(Z)V");
+        setVGamepadEditModeMid = env->GetMethodID(actClass, "setVGamepadEditMode", "(Z)V");
     }
 }
 

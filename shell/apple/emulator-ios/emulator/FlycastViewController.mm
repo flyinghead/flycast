@@ -44,7 +44,6 @@
 #include "ios_mouse.h"
 #include "oslib/oslib.h"
 
-//@import AltKit;
 #import "AltKit-Swift.h"
 
 static std::string iosJitStatus;
@@ -691,13 +690,6 @@ bool checkTryDebug()
 - (void)glkView:(GLKView *)view drawInRect:(CGRect)rect
 {
 #if !TARGET_OS_TV
-	if ((gui_state == GuiState::VJoyEdit) != [self.editPadController isControllerVisible])
-	{
-		if (gui_state == GuiState::VJoyEdit)
-			[self.editPadController showController:self.view];
-		else
-			[self.editPadController hideController];
-	}
 	if (emu.running() != [self.padController isControllerVisible] && !IOSGamepad::controllerConnected())
 	{
 		if (emu.running())
@@ -708,6 +700,20 @@ bool checkTryDebug()
 #endif
 	mainui_rend_frame();
 }
+
+- (void)setVGamepadEditMode:(BOOL)editing
+{
+#if !TARGET_OS_TV
+	if (editing != [self.editPadController isControllerVisible])
+	{
+		if (editing)
+			[self.editPadController showController:self.view];
+		else
+			[self.editPadController hideController];
+	}
+#endif
+}
+
 /*
 - (void)pickIosFile
 {
@@ -761,4 +767,13 @@ const char *getIosJitStatus()
 		lastCheckTime = getTimeMs();
 	}
 	return iosJitStatus.c_str();
+}
+
+namespace vgamepad
+{
+
+void setEditMode(bool editing) {
+	[flycastViewController setVGamepadEditMode:editing];
+}
+
 }

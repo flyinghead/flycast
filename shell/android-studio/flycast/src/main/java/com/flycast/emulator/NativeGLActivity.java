@@ -71,20 +71,11 @@ public final class NativeGLActivity extends BaseGLActivity {
     }
 
     // Called from native code
-    private void VJoyStartEditing() {
+    public void setVGamepadEditMode(boolean editing) {
         handler.post(new Runnable() {
             @Override
             public void run() {
-                mView.setEditVjoyMode(true);
-            }
-        });
-    }
-    // Called from native code
-    private void VJoyStopEditing() {
-        handler.post(new Runnable() {
-            @Override
-            public void run() {
-                mView.setEditVjoyMode(false);
+                mView.setVGamepadEditMode(editing);
             }
         });
     }

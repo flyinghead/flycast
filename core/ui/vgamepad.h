@@ -78,13 +78,12 @@ public:
 
 #if defined(__ANDROID__) || defined(TARGET_IPHONE)
 
-void enableAllControls();
 void show();
 void hide();
 void draw();
 void startEditing();
 void pauseEditing();
-void stopEditing(bool canceled);
+void setEditMode(bool editing);
 void resetEditing();
 void displayCommands();
 void loadImage(const std::string& path);
@@ -100,8 +99,6 @@ void applyUiScale();
 Element layoutHitTest(float x, float y);
 void translateElement(Element element, float dx, float dy);
 void scaleElement(Element element, float factor);
-void loadLayout();
-void saveLayout();
 
 #else
 

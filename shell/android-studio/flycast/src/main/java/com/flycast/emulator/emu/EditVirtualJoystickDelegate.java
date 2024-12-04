@@ -48,8 +48,10 @@ public class EditVirtualJoystickDelegate implements TouchEventHandler
     public boolean onTouchEvent(MotionEvent event, int width, int height)
     {
         scaleGestureDetector.onTouchEvent(event);
-        if (scaleGestureDetector.isInProgress())
+        if (scaleGestureDetector.isInProgress()) {
+            currentElement = -1;
             return true;
+        }
 
         int actionMasked = event.getActionMasked();
         int actionIndex = event.getActionIndex();
@@ -64,7 +66,7 @@ public class EditVirtualJoystickDelegate implements TouchEventHandler
                 lastX = event.getX(actionIndex) / view.getWidth();
                 lastY = event.getY(actionIndex) / view.getHeight();
                 currentElement = VGamepad.layoutHitTest(lastX, lastY);
-                return currentElement != -1;
+                return true; // must return true if we want the scale gesture detector to work
 
             case MotionEvent.ACTION_MOVE:
                 if (currentElement != -1 && event.getPointerCount() == 1)

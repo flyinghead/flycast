@@ -37,6 +37,8 @@
 
 namespace vgamepad
 {
+static void stopEditing(bool canceled);
+static void loadLayout();
 
 struct Control
 {
@@ -576,7 +578,7 @@ void applyUiScale() {
 		element.applyUiScale();
 }
 
-void loadLayout()
+static void loadLayout()
 {
 	for (auto& element : Layout) {
 		element.reset();
@@ -585,7 +587,7 @@ void loadLayout()
 	applyLayout();
 }
 
-void saveLayout()
+static void saveLayout()
 {
 	cfgSetAutoSave(false);
 	for (auto& element : Layout)
@@ -637,7 +639,7 @@ void loadImage(const std::string& path)
 	}
 }
 
-void enableAllControls()
+static void enableAllControls()
 {
 	for (auto& control : Controls)
 		control.disabled = false;
@@ -881,25 +883,26 @@ void resetEditing() {
 	resetLayout();
 }
 
-#ifndef __ANDROID__
-
-void startEditing() {
+void startEditing()
+{
 	enableAllControls();
 	show();
+	setEditMode(true);
 }
 
 void pauseEditing() {
+	setEditMode(false);
 }
 
-void stopEditing(bool canceled)
+static void stopEditing(bool canceled)
 {
+	setEditMode(false);
 	if (canceled)
 		loadLayout();
 	else
 		saveLayout();
 }
 
-#endif
 }	// namespace vgamepad
 
 #endif // __ANDROID__ || TARGET_IPHONE
