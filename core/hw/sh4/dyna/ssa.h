@@ -294,7 +294,7 @@ private:
 				}
 				else if ((r2 & 0x1F) == 0)
 				{
-					if (op.op == shop_shl)
+					if (op.op == shop_shld)
 						// rd = 0
 						ReplaceByMov32(op, 0);
 					else
