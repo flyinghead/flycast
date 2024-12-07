@@ -144,7 +144,9 @@ static void loadSpecialSettings()
 				// Silent Scope (US)
 				|| prod_id == "T9507N"
 				// Silent Scope (EU)
-				|| prod_id == "T9505D")
+				|| prod_id == "T9505D"
+				// Pro Pinball - Trilogy (EU)
+				|| prod_id == "T30701D 50")
 		{
 			INFO_LOG(BOOT, "Enabling RTT Copy to VRAM for game %s", prod_id.c_str());
 			config::RenderToTextureBuffer.override(true);
