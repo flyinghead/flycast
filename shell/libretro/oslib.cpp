@@ -28,6 +28,7 @@ const char *retro_get_system_directory();
 extern char game_dir_no_slash[1024];
 extern char vmu_dir_no_slash[PATH_MAX];
 extern char content_name[PATH_MAX];
+extern char g_roms_dir[PATH_MAX];
 extern unsigned per_content_vmus;
 extern std::string arcadeFlashPath;
 
@@ -116,10 +117,14 @@ std::string findNaomiBios(const std::string& name)
 {
 	std::string basepath(game_dir_no_slash);
 	basepath += path_default_slash() + name;
-	if (file_exists(basepath))
-		return basepath;
-	else
-		return "";
+	if (!file_exists(basepath))
+	{
+		// File not found in system dir, try game dir instead
+		basepath = g_roms_dir + name;
+		if (!file_exists(basepath))
+			return "";
+	}
+	return basepath;
 }
 
 std::string getSavestatePath(int index, bool writable)

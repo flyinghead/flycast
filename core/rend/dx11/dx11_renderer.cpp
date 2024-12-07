@@ -21,7 +21,6 @@
 #include "hw/pvr/ta.h"
 #include "hw/pvr/pvr_mem.h"
 #include "ui/gui.h"
-#include "rend/tileclip.h"
 #include "rend/sorter.h"
 
 #include <memory>
@@ -605,6 +604,19 @@ void DX11Renderer::setCullMode(int mode)
 	deviceContext->RSSetState(rasterizer);
 }
 
+TileClipping DX11Renderer::setTileClip(u32 tileclip, int clip_rect[4])
+{
+	TileClipping clipmode = GetTileClip(tileclip, matrices.GetViewportMatrix(), clip_rect);
+	if (clipmode == TileClipping::Outside) {
+		RECT rect { clip_rect[0], clip_rect[1], clip_rect[0] + clip_rect[2], clip_rect[1] + clip_rect[3] };
+		deviceContext->RSSetScissorRects(1, &rect);
+	}
+	else {
+		deviceContext->RSSetScissorRects(1, &scissorRect);
+	}
+	return clipmode;
+}
+
 template <u32 Type, bool SortingEnabled>
 void DX11Renderer::setRenderState(const PolyParam *gp)
 {
@@ -623,7 +635,7 @@ void DX11Renderer::setRenderState(const PolyParam *gp)
 	int fog_ctrl = config::Fog ? gp->tsp.FogCtrl : 2;
 
 	int clip_rect[4] = {};
-	TileClipping clipmode = GetTileClip(gp->tileclip, matrices.GetViewportMatrix(), clip_rect);
+	TileClipping clipmode = setTileClip(gp->tileclip, clip_rect);
 	DX11Texture *texture = (DX11Texture *)gp->texture;
 	int gpuPalette = texture == nullptr || !texture->gpuPalette ? 0
 			: gp->tsp.FilterMode + 1;
@@ -662,21 +674,12 @@ void DX11Renderer::setRenderState(const PolyParam *gp)
 			constants.paletteIndex = (float)((gp->tcw.PalSelect >> 4) << 8);
 	}
 
-	if (clipmode == TileClipping::Outside)
+	if (clipmode == TileClipping::Inside)
 	{
-		RECT rect { clip_rect[0], clip_rect[1], clip_rect[0] + clip_rect[2], clip_rect[1] + clip_rect[3] };
-		deviceContext->RSSetScissorRects(1, &rect);
-	}
-	else
-	{
-		deviceContext->RSSetScissorRects(1, &scissorRect);
-		if (clipmode == TileClipping::Inside)
-		{
-			constants.clipTest[0] = (float)clip_rect[0];
-			constants.clipTest[1] = (float)clip_rect[1];
-			constants.clipTest[2] = (float)(clip_rect[0] + clip_rect[2]);
-			constants.clipTest[3] = (float)(clip_rect[1] + clip_rect[3]);
-		}
+		constants.clipTest[0] = (float)clip_rect[0];
+		constants.clipTest[1] = (float)clip_rect[1];
+		constants.clipTest[2] = (float)(clip_rect[0] + clip_rect[2]);
+		constants.clipTest[3] = (float)(clip_rect[1] + clip_rect[3]);
 	}
 	if (constants.trilinearAlpha != 1.f || gpuPalette != 0 || clipmode == TileClipping::Inside)
 	{
@@ -827,7 +830,6 @@ void DX11Renderer::drawModVols(int first, int count)
 
 	deviceContext->PSSetShader(shaders->getModVolShader(), nullptr, 0);
 
-	deviceContext->RSSetScissorRects(1, &scissorRect);
 	setCullMode(0);
 
 	const ModifierVolumeParam *params = &pvrrc.global_param_mvo[first];
@@ -858,6 +860,10 @@ void DX11Renderer::drawModVols(int first, int count)
 		else
 			// XOR'ing (closed volume)
 			deviceContext->OMSetDepthStencilState(depthStencilStates.getMVState(DepthStencilStates::Xor), 0);
+
+		int clip_rect[4] = {};
+		setTileClip(param.tileclip, clip_rect);
+		// TODO inside clipping
 
 		if (param.count > 0)
 		{

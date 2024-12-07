@@ -165,8 +165,8 @@ const WidescreenCheat CheatManager::widescreen_cheats[] =
 				{ 0x43F00000, 0x3F400000, 0x3F800000 } },					// Napple Tale: Arsia in Daydream (JP)
 //crash		{ "MK-51178",   nullptr,    { 0x23AF00, 0x23B160, 0x144D40, 0x2105B4, 0x705B40 },
 //				{ 0xBFAAAAAB, 0xBFAAAAAB, 0xBFAAAAAB, 0xBFAAAAAB, 0x44558000 } },	// NBA 2K2
-		{ "T9504M",     nullptr,    { 0xCDE848, 0xCDE844 }, { 0x3F400000, 0x3FA00000 } },	// Nightmare Creatures II (USA)
-		{ "T-9502D-50", nullptr,    { 0xBDE9B0, 0xBDE9C4 }, { 0x3F400000, 0x3FA00000 } },	// Nightmare Creatures II (PAL)
+//		{ "T9504M",     nullptr,    { 0xCDE848, 0xCDE844 }, { 0x3F400000, 0x3FA00000 } },	// Nightmare Creatures II (USA)
+//		{ "T-9502D-50", nullptr,    { 0xBDE9B0, 0xBDE9C4 }, { 0x3F400000, 0x3FA00000 } },	// Nightmare Creatures II (PAL)
 		{ "MK-5110250", nullptr,    { 0x87B5A4 }, { 0x43700000 } },		// Outtrigger (PAL)
 		{ "HDR-0118",   nullptr,    { 0x83E284 }, { 0x43700000 } },		// Outtrigger (JP)
 		{ "T15103D 50", nullptr,    { 0x1EEE78 }, { 0x3F400000 } },		// PenPen (PAL)

@@ -27,6 +27,7 @@
 #include "dx11_shaders.h"
 #include "dx11_renderstate.h"
 #include "dx11_naomi2.h"
+#include "rend/tileclip.h"
 #ifndef LIBRETRO
 #include "dx11_driver.h"
 #endif
@@ -102,6 +103,7 @@ protected:
 	void renderVideoRouting();
 	void resetContextState();
 	void drawOSD();
+	TileClipping setTileClip(u32 val, int clip_rect[4]);
 
 	ComPtr<ID3D11Device> device;
 	ComPtr<ID3D11DeviceContext> deviceContext;

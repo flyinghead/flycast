@@ -233,8 +233,12 @@ static GamePortList GamesPorts[] = {
 		{ 7648, 1285, 1028 },
 		{ },
 	},
-	{ // Sega Tetris
-		{ "HDR-0073" },
+	{
+		{
+			"HDR-0073"				// Sega Tetris
+			"GENERIC", "T44501M"	// Golf Shiyouyo 2
+									// (the dreamcastlive patched versions are id'ed as GENERIC)
+		},
 		{ 20675, 12079 },
 	},
 	{ // StarLancer

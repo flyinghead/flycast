@@ -241,7 +241,7 @@ void dc_loadstate(int index)
 	if (data == nullptr)
 	{
 		WARN_LOG(SAVESTATE, "Failed to load state - could not malloc %d bytes", total_size);
-		os_notify("Failed to load state - memory full", 5000);
+		os_notify("Failed to load state", 5000, "Not enough memory");
 		if (zipFile.rawFile() == nullptr)
 			std::fclose(f);
 		else
@@ -263,7 +263,7 @@ void dc_loadstate(int index)
 	if (read_size != total_size)
 	{
 		WARN_LOG(SAVESTATE, "Failed to load state - I/O error");
-		os_notify("Failed to load state - I/O error", 5000);
+		os_notify("Failed to load state", 5000, "I/O error");
 		free(data);
 		return;
 	}
@@ -277,6 +277,7 @@ void dc_loadstate(int index)
 			WARN_LOG(SAVESTATE, "Savestate size %d but only %d bytes used", total_size, (int)deser.size());
 	} catch (const Deserializer::Exception& e) {
 		ERROR_LOG(SAVESTATE, "%s", e.what());
+		os_notify("Failed to load state", 5000, e.what());
 	}
 
 	free(data);

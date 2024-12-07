@@ -1119,6 +1119,7 @@ private:
 		p->isp.full = param->isp.full;
 		p->isp.VolumeLast = param->pcw.Volume != 0;
 		p->first = vd_rc.modtrig.size();
+		p->tileclip = tileclip_val;
 	}
 
 	static void AppendModVolVertexA(TA_ModVolA* mvv)

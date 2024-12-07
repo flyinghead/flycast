@@ -26,6 +26,7 @@
 #include "d3d_texture.h"
 #include "d3d_shaders.h"
 #include "ui/imgui_driver.h"
+#include "rend/tileclip.h"
 
 class RenderStateCache
 {
@@ -140,6 +141,7 @@ private:
 	void readRttRenderTarget(u32 texAddress);
 	void writeFramebufferToVRAM();
 	void drawOSD();
+	TileClipping setTileClip(u32 tileclip, int rect[4]);
 
 	RenderStateCache devCache;
 	ComPtr<IDirect3DDevice9> device;

@@ -311,15 +311,21 @@ public:
 		const u16 intensity = getRumbleIntensity(power);
 		if (hapticRumble)
 		{
-			SDL_HapticEffect effect{};
-			effect.type = SDL_HAPTIC_SINE;
-			effect.periodic.direction.type = SDL_HAPTIC_CARTESIAN;
-			effect.periodic.direction.dir[0] = (vib_stop_time & 1) ? -1 : 1;	// west or east randomly
-			effect.periodic.period = 40; 				// 25 Hz
-			effect.periodic.magnitude = intensity / 4;	// scale by an additional 0.5 to soften it
-			effect.periodic.length = duration_ms;
-			SDL_HapticUpdateEffect(haptic, sineEffectId, &effect);
-			SDL_HapticRunEffect(haptic, sineEffectId, 1);
+			if (intensity != 0 && duration_ms != 0)
+			{
+				SDL_HapticEffect effect{};
+				effect.type = SDL_HAPTIC_SINE;
+				effect.periodic.direction.type = SDL_HAPTIC_CARTESIAN;
+				effect.periodic.direction.dir[0] = (vib_stop_time & 1) ? -1 : 1;	// west or east randomly
+				effect.periodic.period = 40; 				// 25 Hz
+				effect.periodic.magnitude = intensity / 4;	// scale by an additional 0.5 to soften it
+				effect.periodic.length = duration_ms;
+				SDL_HapticUpdateEffect(haptic, sineEffectId, &effect);
+				SDL_HapticRunEffect(haptic, sineEffectId, 1);
+			}
+			else {
+				SDL_HapticStopEffect(haptic, sineEffectId);
+			}
 		}
 		else {
 			SDL_JoystickRumble(sdl_joystick, intensity, intensity, duration_ms);
@@ -360,14 +366,20 @@ public:
 	{
 		if (haptic == nullptr || constEffectId == -1)
 			return;
-		SDL_HapticEffect effect{};
-		effect.type = SDL_HAPTIC_CONSTANT;
-		effect.constant.direction.type = SDL_HAPTIC_CARTESIAN;
-		effect.constant.direction.dir[0] = torque < 0 ? -1 : 1;	// west/cw if torque < 0
-		effect.constant.length = SDL_HAPTIC_INFINITY;
-		effect.constant.level = std::abs(torque) * 32767.f * rumblePower / 100.f;
-		SDL_HapticUpdateEffect(haptic, constEffectId, &effect);
-		SDL_HapticRunEffect(haptic, constEffectId, 1);
+		if (torque != 0.f && rumblePower != 0)
+		{
+			SDL_HapticEffect effect{};
+			effect.type = SDL_HAPTIC_CONSTANT;
+			effect.constant.direction.type = SDL_HAPTIC_CARTESIAN;
+			effect.constant.direction.dir[0] = torque < 0 ? -1 : 1;	// west/cw if torque < 0
+			effect.constant.length = SDL_HAPTIC_INFINITY;
+			effect.constant.level = std::abs(torque) * 32767.f * rumblePower / 100.f;
+			SDL_HapticUpdateEffect(haptic, constEffectId, &effect);
+			SDL_HapticRunEffect(haptic, constEffectId, 1);
+		}
+		else {
+			SDL_HapticStopEffect(haptic, constEffectId);
+		}
 	}
 
 	void stopHaptic()
@@ -378,29 +390,43 @@ public:
 			if (hasAutocenter)
 				SDL_HapticSetAutocenter(haptic, 0);
 		}
+		if (!hapticRumble)
+			rumble(0, 0, 0);
 	}
 
 	void setSpring(float saturation, float speed)
 	{
 		if (haptic == nullptr)
 			return;
-		if (springEffectId == -1) {
+		if (springEffectId == -1)
+		{
 			// Spring not supported so use autocenter if available
 			if (hasAutocenter)
-				SDL_HapticSetAutocenter(haptic, saturation * rumblePower);
+			{
+				if (speed != 0.f)
+					SDL_HapticSetAutocenter(haptic, saturation * rumblePower);
+				else
+					SDL_HapticSetAutocenter(haptic, 0);
+			}
 		}
 		else
 		{
-			SDL_HapticEffect effect{};
-			effect.type = SDL_HAPTIC_SPRING;
-			effect.condition.length = SDL_HAPTIC_INFINITY;
-			effect.condition.direction.type = SDL_HAPTIC_CARTESIAN;
-			// effect level at full deflection
-			effect.condition.left_sat[0] = effect.condition.right_sat[0] = (saturation * rumblePower / 100.f) * 0xffff;
-			// how fast to increase the force
-			effect.condition.left_coeff[0] = effect.condition.right_coeff[0] = speed * 0x7fff;
-			SDL_HapticUpdateEffect(haptic, springEffectId, &effect);
-			SDL_HapticRunEffect(haptic, springEffectId, 1);
+			if (saturation != 0.f && speed != 0.f && rumblePower != 0)
+			{
+				SDL_HapticEffect effect{};
+				effect.type = SDL_HAPTIC_SPRING;
+				effect.condition.length = SDL_HAPTIC_INFINITY;
+				effect.condition.direction.type = SDL_HAPTIC_CARTESIAN;
+				// effect level at full deflection
+				effect.condition.left_sat[0] = effect.condition.right_sat[0] = (saturation * rumblePower / 100.f) * 0xffff;
+				// how fast to increase the force
+				effect.condition.left_coeff[0] = effect.condition.right_coeff[0] = speed * 0x7fff;
+				SDL_HapticUpdateEffect(haptic, springEffectId, &effect);
+				SDL_HapticRunEffect(haptic, springEffectId, 1);
+			}
+			else {
+				SDL_HapticStopEffect(haptic, springEffectId);
+			}
 		}
 	}
 
@@ -408,16 +434,22 @@ public:
 	{
 		if (haptic == nullptr || damperEffectId == -1)
 			return;
-		SDL_HapticEffect effect{};
-		effect.type = SDL_HAPTIC_DAMPER;
-		effect.condition.length = SDL_HAPTIC_INFINITY;
-		effect.condition.direction.type = SDL_HAPTIC_CARTESIAN;
-		// max effect level
-		effect.condition.left_sat[0] = effect.condition.right_sat[0] = (param * rumblePower / 100.f) * 0xffff;
-		// how fast to increase the force
-		effect.condition.left_coeff[0] = effect.condition.right_coeff[0] = speed * 0x7fff;
-		SDL_HapticUpdateEffect(haptic, damperEffectId, &effect);
-		SDL_HapticRunEffect(haptic, damperEffectId, 1);
+		if (param != 0.f && speed != 0.f && rumblePower != 0)
+		{
+			SDL_HapticEffect effect{};
+			effect.type = SDL_HAPTIC_DAMPER;
+			effect.condition.length = SDL_HAPTIC_INFINITY;
+			effect.condition.direction.type = SDL_HAPTIC_CARTESIAN;
+			// max effect level
+			effect.condition.left_sat[0] = effect.condition.right_sat[0] = (param * rumblePower / 100.f) * 0xffff;
+			// how fast to increase the force
+			effect.condition.left_coeff[0] = effect.condition.right_coeff[0] = speed * 0x7fff;
+			SDL_HapticUpdateEffect(haptic, damperEffectId, &effect);
+			SDL_HapticRunEffect(haptic, damperEffectId, 1);
+		}
+		else {
+			SDL_HapticStopEffect(haptic, damperEffectId);
+		}
 	}
 
 	void close()
@@ -601,31 +633,29 @@ public:
 		while (!sdl_gamepads.empty())
 			sdl_gamepads.begin()->second->close();
 	}
-	static void UpdateRumble()
-	{
-		for (auto& pair : sdl_gamepads)
-			pair.second->update_rumble();
+	static void UpdateRumble() {
+		for (auto &[k, gamepad] : sdl_gamepads)
+			gamepad->update_rumble();
 	}
 
+	template<typename Func, typename... Args>
+	static void applyToPort(int port, Func func, Args&&... args)
+	{
+		for (auto &[k, gamepad] : sdl_gamepads)
+			if (gamepad->maple_port() == port)
+				((*gamepad).*func)(std::forward<Args>(args)...);
+	}
 	static void SetTorque(int port, float torque) {
-		for (auto& pair : sdl_gamepads)
-			if (pair.second->maple_port() == port)
-				pair.second->setTorque(torque);
+		applyToPort(port, &SDLGamepad::setTorque, torque);
 	}
 	static void SetSpring(int port, float saturation, float speed) {
-		for (auto& pair : sdl_gamepads)
-			if (pair.second->maple_port() == port)
-				pair.second->setSpring(saturation, speed);
+		applyToPort(port, &SDLGamepad::setSpring, saturation, speed);
 	}
 	static void SetDamper(int port, float param, float speed) {
-		for (auto& pair : sdl_gamepads)
-			if (pair.second->maple_port() == port)
-				pair.second->setDamper(param, speed);
+		applyToPort(port, &SDLGamepad::setDamper, param, speed);
 	}
 	static void StopHaptic(int port) {
-		for (auto& pair : sdl_gamepads)
-			if (pair.second->maple_port() == port)
-				pair.second->stopHaptic();
+		applyToPort(port, &SDLGamepad::stopHaptic);
 	}
 
 protected:

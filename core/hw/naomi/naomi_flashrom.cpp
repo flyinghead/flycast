@@ -162,7 +162,9 @@ static bool initEeprom(const RomBootID *bootId)
 	if (bootId->coinFlag[0][0] == 1)
 	{
 		// ROM-specific defaults
-		write_naomi_eeprom(2, bootId->coinFlag[0][1] | (((bootId->coinFlag[0][1] & 2) ^ 2) << 3));
+		// bit 0: vertical mode
+		// bit 1: disable advertise audio (set by ikaruga and shangril, ignored to avoid bug reports)
+		write_naomi_eeprom(2, (bootId->coinFlag[0][1] & 1) | 0x10);
 		if (bootId->coinFlag[0][2] == 1) // individual coin chute
 			write_naomi_eeprom(8, read_naomi_eeprom(8) | 1);
 		write_naomi_eeprom(9, bootId->coinFlag[0][3] - 1);

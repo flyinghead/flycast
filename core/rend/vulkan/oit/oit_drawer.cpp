@@ -32,11 +32,7 @@ void OITDrawer::DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool 
 	CommandBufferDebugScope _(cmdBuffer, "DrawPoly(OIT)", scopeColor);
 
 	vk::Rect2D scissorRect;
-	TileClipping tileClip = SetTileClip(poly.tileclip, scissorRect);
-	if (tileClip == TileClipping::Outside)
-		SetScissor(cmdBuffer, scissorRect);
-	else
-		SetScissor(cmdBuffer, baseScissor);
+	SetTileClip(cmdBuffer, poly.tileclip, scissorRect);
 
 	float trilinearAlpha = 1.f;
 	if (poly.tsp.FilterMode > 1 && poly.pcw.Texture && listType != ListType_Punch_Through && poly.tcw.MipMapped == 1)
@@ -296,9 +292,8 @@ bool OITDrawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 		needAttachmentTransition = false;
 		// Not convinced that this is really needed but it makes validation layers happy
 		for (auto& attachment : colorAttachments)
-			// FIXME should be eTransferSrcOptimal if fullFB (screen) or copy to vram (rtt) -> 1 validation error at startup
 			setImageLayout(cmdBuffer, attachment->GetImage(), vk::Format::eR8G8B8A8Unorm, 1,
-					vk::ImageLayout::eUndefined, vk::ImageLayout::eShaderReadOnlyOptimal);
+					vk::ImageLayout::eUndefined, getAttachmentInitialLayout());
 		for (auto& attachment : depthAttachments)
 			setImageLayout(cmdBuffer, attachment->GetImage(), GetContext()->GetDepthFormat(), 1,
 					vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthStencilReadOnlyOptimal);
@@ -556,7 +551,7 @@ void OITScreenDrawer::MakeFramebuffers(const vk::Extent2D& viewport)
 	// make sure all attachments have the same dimensions
 	maxWidth = 0;
 	maxHeight = 0;
-	MakeBuffers(viewport.width, viewport.height, config::EmulateFramebuffer ? vk::ImageUsageFlagBits::eTransferSrc : vk::ImageUsageFlagBits::eSampled);
+	MakeBuffers(viewport.width, viewport.height, emulateFramebuffer ? vk::ImageUsageFlagBits::eTransferSrc : vk::ImageUsageFlagBits::eSampled);
 
 	clearNeeded = { true, true };
 }

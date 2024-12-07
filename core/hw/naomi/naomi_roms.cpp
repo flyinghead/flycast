@@ -5001,7 +5001,7 @@ const Game Games[] =
     // Azumanga Daioh Puzzle Bobble
     {
         "azumanga",
-        NULL,
+        nullptr,
         "Azumanga Daioh Puzzle Bobble",
         0x4000,
         0,
@@ -5009,15 +5009,14 @@ const Game Games[] =
         GD,
         ROT0,
         {
-            { "317-5091-jpn.pic", 0, 0x4000 },
-            { NULL, 0, 0 },
+            { "317-5091-jpn.pic", 0, 0x4000, 0xb71ede16 },
         },
         "gdl-0018",
     },
     // Border Down (Rev A)
     {
         "bdrdown",
-        NULL,
+		nullptr,
         "Border Down",
         0x4000,
         0,
@@ -5025,9 +5024,8 @@ const Game Games[] =
         GD,
         ROT0,
         {
-            { "317-5097-jpn.pic", 0, 0x4000 },
-            { "bdrdown-default-eeprom.bin", 0, 0x80,  0x0000000, Eeprom },
-            { NULL, 0, 0 },
+            { "317-5097-jpn.pic", 0, 0x4000, 0x16d2a748 },
+            { "bdrdown-default-eeprom.bin", 0, 0x80,  0x5b19727c, Eeprom },
         },
         "gdl-0023a",
 		// SHOT, LASER, SPEED
@@ -5035,7 +5033,7 @@ const Game Games[] =
     // Chaos Field (Japan)
     {
         "cfield",
-        NULL,
+		nullptr,
         "Chaos Field",
         0x4000,
         0,
@@ -5043,9 +5041,8 @@ const Game Games[] =
         GD,
         ROT0,
         {
-            { "317-5102-com.pic", 0, 0x4000 },
-            { "cfield-default-eeprom.bin", 0, 0x80,  0x0000000, Eeprom },
-            { NULL, 0, 0 },
+            { "317-5102-com.pic", 0, 0x4000, 0x8f1d8387 },
+            { "cfield-default-eeprom.bin", 0, 0x80,  0xa7acb6bf, Eeprom },
         },
         "gdl-0025",
 		// TRG1/2/3
@@ -5053,7 +5050,7 @@ const Game Games[] =
     // Musapey's Choco Marker (Rev A)
     {
         "chocomk",
-        NULL,
+		nullptr,
         "Musapey's Choco Marker (Rev A)",
         0x4000,
         0,
@@ -5061,8 +5058,7 @@ const Game Games[] =
         GD,
         ROT0,
         {
-            { "317-5085-jpn.pic", 0, 0x4000 },
-            { NULL, 0, 0 },
+            { "317-5085-jpn.pic", 0, 0x4000, 0x677fd544 },
         },
         "gdl-0014a",
 		// BUTTON A/B
@@ -5070,7 +5066,7 @@ const Game Games[] =
     // Cleopatra Fortune Plus
     {
         "cleoftp",
-        NULL,
+		nullptr,
         "Cleopatra Fortune Plus",
         0x4000,
         0,
@@ -5078,8 +5074,7 @@ const Game Games[] =
         GD,
         ROT0,
         {
-            { "317-5083-com.pic", 0, 0x4000 },
-            { NULL, 0, 0 },
+            { "317-5083-com.pic", 0, 0x4000, 0x096a0fc2 },
         },
         "gdl-0012",
 		// BUTTON 1/2
@@ -5087,7 +5082,7 @@ const Game Games[] =
     // Confidential Mission
     {
         "confmiss",
-        NULL,
+		nullptr,
         "Confidential Mission",
         0x4000,
         0,
@@ -5095,8 +5090,7 @@ const Game Games[] =
         GD,
         ROT0,
         {
-            { "317-0298-com.pic",  0, 0x4000 },
-            { NULL, 0, 0 },
+            { "317-0298-com.pic",  0, 0x4000, 0x15971bf6 },
         },
         "gds-0001",
 		nullptr,
@@ -5105,7 +5099,7 @@ const Game Games[] =
     // Capcom vs. SNK Millennium Fight 2000 Pro (Japan)
     {
         "cvsgd",
-        NULL,
+		nullptr,
         "Capcom vs. SNK Millennium Fight 2000 Pro (Japan)",
         0x4000,
         0,
@@ -5113,8 +5107,7 @@ const Game Games[] =
         GD,
         ROT0,
         {
-            { "317-5076-jpn.pic", 0, 0x4000 },
-            { NULL, 0, 0 },
+            { "317-5076-jpn.pic", 0, 0x4000, 0x7c125b10 },
         },
         "gdl-0004",
 		&capcom_4btn_inputs,
@@ -5125,7 +5118,7 @@ const Game Games[] =
     // with Japan BIOS will be shown 010705, likely forgot / was not cared to update it
     {
         "cvs2",
-        NULL,
+		nullptr,
         "Capcom vs. SNK 2 Mark Of The Millennium 2001 (USA)",
         0x4000,
         0,
@@ -5133,8 +5126,7 @@ const Game Games[] =
         GD,
         ROT0,
         {
-            { "317-5078-com.pic", 0, 0x4000 },
-            { NULL, 0, 0 },
+            { "317-5078-com.pic", 0, 0x4000, 0xe7bb621d },
         },
         "gdl-0008",
         &capcom_6btn_inputs,
@@ -5152,8 +5144,7 @@ const Game Games[] =
         GD,
         ROT0,
         {
-            { "317-5078-com.pic", 0, 0x4000 },
-            { NULL, 0, 0 },
+            { "317-5078-com.pic", 0, 0x4000, 0xe7bb621d },
         },
         "gdl-0007a",
         &capcom_6btn_inputs,
@@ -5162,7 +5153,7 @@ const Game Games[] =
     // Dragon Treasure (Rev B)
     {
         "dragntr",
-        NULL,
+		nullptr,
         "Dragon Treasure (Rev B)",
         0x4000,
         0,
@@ -5170,9 +5161,8 @@ const Game Games[] =
         GD,
         ROT0,
         {
-            { "317-0363-com.pic", 0, 0x4000 },
-            //{ "317-0364-com.pic", 0, 0x4000 },
-            { NULL, 0, 0 },
+            { "317-0363-com.pic", 0, 0x4000, 0xffecccf8 },
+            //{ "317-0364-com.pic", 0, 0x4000, 0x82975008 },
         },
         "gds-0030b",
     },
@@ -5187,16 +5177,15 @@ const Game Games[] =
         GD,
         ROT0,
         {
-            { "317-0363-com.pic", 0, 0x4000 },
-            //{ "317-0364-com.pic", 0, 0x4000 },
-            { NULL, 0, 0 },
+            { "317-0363-com.pic", 0, 0x4000, 0xffecccf8 },
+            //{ "317-0364-com.pic", 0, 0x4000, 0x82975008 },
         },
         "gds-0030a",
     },
     // Dragon Treasure 2 (Rev A)
     {
         "dragntr2",
-        NULL,
+		nullptr,
         "Dragon Treasure 2 (Rev A)",
         0x4000,
         0,
@@ -5204,16 +5193,15 @@ const Game Games[] =
         GD,
         ROT0,
         {
-            { "317-0389-com.pic", 0, 0x4000 },
-            //{ "317-0390-com.pic", 0, 0x4000 },
-            { NULL, 0, 0 },
+            { "317-0389-com.pic", 0, 0x4000, 0x35c511f9 },
+            //{ "317-0390-com.pic", 0, 0x4000, 0x92183b60 },
         },
         "gds-0037a",
     },
     // Dragon Treasure 3 (Rev A)
     {
         "dragntr3",
-        NULL,
+		nullptr,
         "Dragon Treasure 3 (Rev A)",
         0x4000,
         0,
@@ -5221,16 +5209,15 @@ const Game Games[] =
         GD,
         ROT0,
         {
-            { "317-0426-jpn.pic", 0, 0x4000 },
-            //{ "317-0390-com.pic", 0, 0x4000 },
-            { NULL, 0, 0 },
+            { "317-0426-jpn.pic", 0, 0x4000, 0x8df4d33a },
+            //{ "317-0390-com.pic", 0, 0x4000, 0x92183b60 },
         },
         "gds-0041a",
     },
     // Virtua Golf / Dynamic Golf (Rev A)
     {
         "dygolf",
-        NULL,
+		nullptr,
         "Virtua Golf / Dynamic Golf",
         0x4000,
         0,
@@ -5238,15 +5225,14 @@ const Game Games[] =
         GD,
         ROT0,
         {
-            { "317-0308-com.pic", 0, 0x4000 },
-            { NULL, 0, 0 },
+            { "317-0308-com.pic", 0, 0x4000, 0x5e1ef2c4 },
         },
         "gds-0009a",
     },
     // Guilty Gear XX
     {
         "ggxx",
-        NULL,
+		nullptr,
         "Guilty Gear XX",
         0x4000,
         0,
@@ -5254,8 +5240,7 @@ const Game Games[] =
         GD,
         ROT0,
         {
-            { "317-5082-com.pic", 0, 0x4000 },
-            { NULL, 0, 0 },
+            { "317-5082-com.pic", 0, 0x4000, 0x1b41189b },
         },
         "gdl-0011",
 		&guilty_gear_inputs,
@@ -5263,7 +5248,7 @@ const Game Games[] =
     // Guilty Gear XX Accent Core (Japan)
     {
         "ggxxac",
-        NULL,
+		nullptr,
         "Guilty Gear XX Accent Core",
         0x4000,
         0,
@@ -5271,8 +5256,7 @@ const Game Games[] =
         GD,
         ROT0,
         {
-            { "317-5126-jpn.pic", 0, 0x4000 },
-            { NULL, 0, 0 },
+            { "317-5126-jpn.pic", 0, 0x4000, 0x87c44284 },
         },
         "gdl-0041",
 		&guilty_gear_inputs,
@@ -5281,7 +5265,7 @@ const Game Games[] =
     // Guilty Gear XX #Reload (Japan, Rev A)
     {
         "ggxxrl",
-        NULL,
+		nullptr,
         "Guilty Gear XX #Reload (Rev A)",
         0x4000,
         0,
@@ -5289,8 +5273,7 @@ const Game Games[] =
         GD,
         ROT0,
         {
-            { "317-5092-jpn.pic", 0, 0x4000 },
-            { NULL, 0, 0 },
+            { "317-5092-jpn.pic", 0, 0x4000, 0x7ad7b541 },
         },
         "gdl-0019a",
 		&guilty_gear_inputs,
@@ -5306,8 +5289,7 @@ const Game Games[] =
         GD,
         ROT0,
         {
-            { "317-5092-jpn.pic" , 0, 0x4000 },
-            { NULL, 0, 0 },
+            { "317-5092-jpn.pic" , 0, 0x4000, 0x7ad7b541 },
         },
         "gdl-0019",
 		&guilty_gear_inputs,
@@ -5315,7 +5297,7 @@ const Game Games[] =
     // Guilty Gear XX Slash (Japan, Rev A)
     {
         "ggxxsla",
-        NULL,
+		nullptr,
         "Guilty Gear XX Slash (Rev A)",
         0x4000,
         0,
@@ -5323,8 +5305,7 @@ const Game Games[] =
         GD,
         ROT0,
         {
-            { "317-5111-jpn.pic", 0, 0x4000 },
-            { NULL, 0, 0 },
+            { "317-5111-jpn.pic", 0, 0x4000, 0x96bcbd42 },
         },
         "gdl-0033a",
 		&guilty_gear_inputs,
@@ -5333,7 +5314,7 @@ const Game Games[] =
     // Mobile Suit Gundam: Federation vs. Zeon
     {
         "gundmgd",
-        NULL,
+		nullptr,
         "Mobile Suit Gundam: Federation vs. Zeon",
         0x4000,
         0,
@@ -5341,9 +5322,8 @@ const Game Games[] =
         GD,
         ROT0,
         {
-            { "317-5069-com.pic", 0, 0x4000 },
-            //{ "gundmgd-default-eeprom.bin", 0, 0x80,  0x0000000, Eeprom },
-            { NULL, 0, 0 },
+            { "317-5069-com.pic", 0, 0x4000, 0x44d0b242 },
+            //{ "gundmgd-default-eeprom.bin", 0, 0x80,  0xdc80fa1e, Eeprom },
         },
         "gdl-0001",
 		&shot1234_inputs,
@@ -5352,7 +5332,7 @@ const Game Games[] =
     // Mobile Suit Gundam: Federation vs. Zeon DX (USA, Japan)
     {
         "gundmxgd",
-        NULL,
+		nullptr,
         "Mobile Suit Gundam: Federation vs. Zeon DX",
         0x4000,
         0,
@@ -5360,9 +5340,8 @@ const Game Games[] =
         GD,
         ROT0,
         {
-            { "317-5079-com.pic", 0, 0x4000 },
-            //{ "gundmxgd-default-eeprom.bin", 0, 0x80,  0x0000000, Eeprom },
-            { NULL, 0, 0 },
+            { "317-5079-com.pic", 0, 0x4000, 0x8f9fb55d },
+            //{ "gundmxgd-default-eeprom.bin", 0, 0x80,  0xdc0e8d45, Eeprom },
         },
         "gdl-0006",
 		&shot1234_inputs,
@@ -5371,7 +5350,7 @@ const Game Games[] =
     // Ikaruga
     {
         "ikaruga",
-        NULL,
+		nullptr,
         "Ikaruga",
         0x4000,
         0,
@@ -5379,18 +5358,17 @@ const Game Games[] =
         GD,
         ROT270,
         {
-            { "317-5081-jpn.pic", 0, 0x4000 },
-            { NULL, 0, 0 },
+            { "317-5081-jpn.pic", 0, 0x4000, 0x72ca4579 },
         },
         "gdl-0010",
 		// SHOT, CHANGE
 		nullptr,
-		ikaruga_eeprom_dump,
+		nullptr,
     },
     // Jingi Storm - The Arcade (Japan)
     {
         "jingystm",
-        NULL,
+		nullptr,
         "Jingi Storm - The Arcade",
         0x4000,
         0,
@@ -5398,8 +5376,7 @@ const Game Games[] =
         GD,
         ROT0,
         {
-            { "317-5122-jpn.pic", 0, 0x4000 },
-            { NULL, 0, 0 },
+            { "317-5122-jpn.pic", 0, 0x4000, 0x88983220 },
         },
         "gdl-0037",
 		// GUARD, PUNCH, KICK
@@ -5409,7 +5386,7 @@ const Game Games[] =
     // Karous (Japan)
     {
         "karous",
-        NULL,
+		nullptr,
         "Karous",
         0x4000,
         0,
@@ -5417,9 +5394,8 @@ const Game Games[] =
         GD,
         ROT270,
         {
-            { "317-5125-com.pic", 0, 0x4000 },
-            { "karous-default-eeprom.bin", 0, 0x80,  0x0000000, Eeprom },
-            { NULL, 0, 0 },
+            { "317-5125-com.pic", 0, 0x4000, 0x918efc4f },
+            { "karous-default-eeprom.bin", 0, 0x80,  0xb017451c, Eeprom },
         },
         "gdl-0040",
 		// SHOT, SWORD, SPECIAL same as radirgy
@@ -5427,7 +5403,7 @@ const Game Games[] =
     // La Keyboard
     {
         "keyboard",
-        NULL,
+		nullptr,
         "La Keyboard",
         0x4000,
         0,
@@ -5435,16 +5411,15 @@ const Game Games[] =
         GD,
         ROT0,
         {
-            { "317-0323-com.pic", 0, 0x4000 },
-            { "keyboard-default-eeprom.bin", 0, 0x80,  0x0000000, Eeprom },
-            { NULL, 0, 0 },
+            { "317-0323-com.pic", 0, 0x4000, 0xc8854ef2 },
+            { "keyboard-default-eeprom.bin", 0, 0x80,  0x9262fc90, Eeprom },
         },
         "gds-0017",
     },
     // Kurukuru Chameleon (Japan)
     {
         "kurucham",
-        NULL,
+		nullptr,
         "Kurukuru Chameleon",
         0x4000,
         0,
@@ -5452,15 +5427,14 @@ const Game Games[] =
         GD,
         ROT0,
         {
-            { "317-5115-jpn.pic", 0, 0x4000 },
-            { NULL, 0, 0 },
+            { "317-5115-jpn.pic", 0, 0x4000, 0xe5435e85 },
         },
         "gdl-0034",
     },
     // Lupin The Third - The Shooting (Rev A)
     {
         "lupinsho",
-        NULL,
+		nullptr,
         "Lupin The Third - The Shooting (Rev A)",
         0x4000,
         0,
@@ -5468,8 +5442,7 @@ const Game Games[] =
         GD,
         ROT0,
         {
-            { "317-0325-jpn.pic", 0, 0x4000 },
-            { NULL, 0, 0 },
+            { "317-0325-jpn.pic", 0, 0x4000, 0xf71cb2fc },
         },
         "gds-0018a",
 		nullptr,
@@ -5486,8 +5459,7 @@ const Game Games[] =
         GD,
         ROT0,
         {
-            { "317-0325-jpn.pic", 0, 0x4000 },
-            { NULL, 0, 0 },
+            { "317-0325-jpn.pic", 0, 0x4000, 0xf71cb2fc },
         },
         "gds-0018",
 		nullptr,
@@ -5496,7 +5468,7 @@ const Game Games[] =
     // Lupin The Third - The Typing (Rev A)
     {
         "luptype",
-        NULL,
+		nullptr,
         "Lupin The Third - The Typing",
         0x4000,
         0,
@@ -5504,8 +5476,7 @@ const Game Games[] =
         GD,
         ROT0,
         {
-            { "317-0332-jpn.pic", 0, 0x4000 },
-            { NULL, 0, 0 },
+            { "317-0332-jpn.pic", 0, 0x4000, 0x43e78ecf },
         },
         "gds-0021a",
 		nullptr,
@@ -5514,7 +5485,7 @@ const Game Games[] =
     // Melty Blood Act Cadenza Version B2 (Japan)
     {
         "meltyb",
-        NULL,
+		nullptr,
         "Melty Blood Act Cadenza (Ver. B2)",
         0x4000,
         0,
@@ -5522,8 +5493,7 @@ const Game Games[] =
         GD,
         ROT0,
         {
-            { "317-5124-jpn.pic", 0, 0x4000 },
-            { NULL, 0, 0 },
+            { "317-5124-jpn.pic", 0, 0x4000, 0xad162bfa },
         },
         "gdl-0039a",
 		&meltyb_inputs,
@@ -5532,7 +5502,7 @@ const Game Games[] =
     // Melty Blood Act Cadenza Ver. A (Japan)
     {
         "meltybld",
-        NULL,
+		nullptr,
         "Melty Blood Act Cadenza (Ver. A)",
         0x4000,
         0,
@@ -5540,8 +5510,7 @@ const Game Games[] =
         GD,
         ROT0,
         {
-            { "317-5104-jpn.pic", 0, 0x4000 },
-            { NULL, 0, 0 },
+            { "317-5104-jpn.pic", 0, 0x4000, 0xafa5e709 },
         },
         "gdl-0028c",
 		&meltyb_inputs,
@@ -5558,8 +5527,7 @@ const Game Games[] =
         GD,
         ROT0,
         {
-            { "317-5104-jpn.pic", 0, 0x4000 },
-            { NULL, 0, 0 },
+            { "317-5104-jpn.pic", 0, 0x4000, 0xafa5e709 },
         },
         "gdl-0028",
 		&meltyb_inputs,
@@ -5576,8 +5544,7 @@ const Game Games[] =
         GD,
         ROT0,
         {
-            { "317-5124-jpn.pic", 0, 0x4000 },
-            { NULL, 0, 0 },
+            { "317-5124-jpn.pic", 0, 0x4000, 0xad162bfa },
         },
         "gdl-0039",
 		&meltyb_inputs,
@@ -5586,7 +5553,7 @@ const Game Games[] =
     // Moeru Casinyo (Japan)
     {
         "moeru",
-        NULL,
+		nullptr,
         "Moeru Casinyo",
         0x4000,
         0,
@@ -5594,16 +5561,15 @@ const Game Games[] =
         GD,
         ROT0,
         {
-            { "317-5084-jpn.pic", 0, 0x4000 },
-            { "moeru-default-eeprom.bin", 0, 0x80,  0x0000000, Eeprom },
-            { NULL, 0, 0 },
+            { "317-5084-jpn.pic", 0, 0x4000, 0xdb7dac1e },
+            { "moeru-default-eeprom.bin", 0, 0x80,  0x50ca079f, Eeprom },
         },
         "gdl-0013",
     },
     // The Maze of the Kings
     {
         "mok",
-        NULL,
+		nullptr,
         "The Maze of the Kings",
         0x4000,
         0,
@@ -5611,8 +5577,7 @@ const Game Games[] =
         GD,
         ROT0,
         {
-            { "317-0333-com.pic", 0, 0x4000 },
-            { NULL, 0, 0 },
+            { "317-0333-com.pic", 0, 0x4000, 0x15fb7792 },
         },
         "gds-0022",
 		nullptr,
@@ -5621,7 +5586,7 @@ const Game Games[] =
     // Monkey Ball
     {
         "monkeyba",
-        NULL,
+		nullptr,
         "Monkey Ball",
         0x4000,
         0,
@@ -5629,8 +5594,7 @@ const Game Games[] =
         GD,
         ROT0,
         {
-            { "317-0307-com.pic", 0, 0x4000 },
-            { NULL, 0, 0 },
+            { "317-0307-com.pic", 0, 0x4000, 0x4046de19 },
         },
         "gds-0008",
         &monkeyba_inputs,
@@ -5639,7 +5603,7 @@ const Game Games[] =
     // Psyvariar 2 - The Will To Fabricate (Japan)
     {
         "psyvar2",
-        NULL,
+		nullptr,
         "Psyvariar 2 - The Will To Fabricate",
         0x4000,
         0,
@@ -5647,9 +5611,8 @@ const Game Games[] =
         GD,
         ROT270,
         {
-            { "317-5100-jpn.pic", 0, 0x4000 },
-            // { "psyvar2-default-eeprom.bin", 0, 0x80,  0x0000000, Eeprom },
-            { NULL, 0, 0 },
+            { "317-5100-jpn.pic", 0, 0x4000, 0xf37a1dbe },
+            // { "psyvar2-default-eeprom.bin", 0, 0x80, 0x9d8661f3, Eeprom },
         },
         "gdl-0024",
 		// SHOT, BOMB
@@ -5659,7 +5622,7 @@ const Game Games[] =
     // Puyo Pop Fever (World)
     {
         "puyofev",
-        NULL,
+		nullptr,
         "Puyo Pop Fever (World)",
         0x4000,
         0,
@@ -5667,9 +5630,8 @@ const Game Games[] =
         GD,
         ROT0,
         {
-            { "317-0375-com.pic", 0, 0x4000 },
-            // { "puyofev-default-eeprom.bin", 0, 0x80,  0x0000000, Eeprom },
-            { NULL, 0, 0 },
+            { "317-0375-com.pic", 0, 0x4000, 0x52b56b52 },
+            // { "puyofev-default-eeprom.bin", 0, 0x80, 0x42e5fd40, Eeprom },
         },
         "gds-0034",
 		nullptr,
@@ -5686,9 +5648,8 @@ const Game Games[] =
         GD,
         ROT0,
         {
-            { "317-0375-com.pic", 0, 0x4000 },
-            // { "puyofev-default-eeprom.bin", 0, 0x80,  0x0000000, Eeprom },
-            { NULL, 0, 0 },
+            { "317-0375-com.pic", 0, 0x4000, 0x52b56b52 },
+            // { "puyofev-default-eeprom.bin", 0, 0x80, 0x42e5fd40, Eeprom },
         },
         "gds-0031",
 		nullptr,
@@ -5728,8 +5689,6 @@ const Game Games[] =
 				{ "ic37s.bin", 0x0b000000, 0x800000, 0xfc89454c, InterleavedWord },
 				{ "ic38s.bin", 0x0b000002, 0x800000, 0x86954476, InterleavedWord },
 	            { "copy",      0x00400000, 0xc00000, 0x0000000, Copy, 0x1000000 },
-
-				{ NULL, 0, 0, 0x00000000 },
 		},
 		nullptr,
 		nullptr,
@@ -5738,7 +5697,7 @@ const Game Games[] =
     // Quiz Keitai Q mode
     {
         "quizqgd",
-        NULL,
+		nullptr,
         "Quiz Keitai Q mode",
         0x4000,
         0,
@@ -5746,16 +5705,15 @@ const Game Games[] =
         GD,
         ROT270,
         {
-            { "317-5090-jpn.pic", 0, 0x4000 },
-            { "quizqgd-default-eeprom.bin", 0, 0x80,  0x0000000, Eeprom },
-            { NULL, 0, 0 },
+            { "317-5090-jpn.pic", 0, 0x4000, 0x141cced2 },
+            { "quizqgd-default-eeprom.bin", 0, 0x80, 0x46c10aa3, Eeprom },
         },
         "gdl-0017",
     },
     // Radirgy (Japan, Rev A)
     {
         "radirgy",
-        NULL,
+		nullptr,
         "Radirgy (Rev A)",
         0x4000,
         0,
@@ -5763,9 +5721,8 @@ const Game Games[] =
         GD,
         ROT270,
         {
-            { "317-5110-jpn.pic", 0, 0x4000 },
-            { "radirgy-default-eeprom.bin", 0, 0x80,  0x0000000, Eeprom },
-            { NULL, 0, 0 },
+            { "317-5110-jpn.pic", 0, 0x4000, 0x829d06e2 },
+            { "radirgy-default-eeprom.bin", 0, 0x80, 0x8d60a282, Eeprom },
         },
         "gdl-0032a",
 		// SHOT, SWORD, SPECIAL same as karous
@@ -5781,16 +5738,15 @@ const Game Games[] =
         GD,
         ROT270,
         {
-            { "317-5110-jpn.pic", 0, 0x4000 },
-            { "radirgy-default-eeprom.bin", 0, 0x80,  0x0000000, Eeprom },
-            { NULL, 0, 0 },
+            { "317-5110-jpn.pic", 0, 0x4000, 0x829d06e2 },
+            { "radirgy-default-eeprom.bin", 0, 0x80, 0x8d60a282, Eeprom },
         },
         "gdl-0032",
     },
     // Senko No Ronde (Japan, Rev A)
     {
         "senko",
-        NULL,
+		nullptr,
         "Senko no Ronde (Rev A)",
         0x4000,
         0,
@@ -5798,9 +5754,8 @@ const Game Games[] =
         GD,
         ROT0,
         {
-            { "317-5107-jpn.pic", 0, 0x4000 },
-            // { "senko-default-eeprom.bin", 0, 0x80,  0x0000000, Eeprom },
-            { NULL, 0, 0 },
+            { "317-5107-jpn.pic", 0, 0x4000, 0x6bc3fad0 },
+            // { "senko-default-eeprom.bin", 0, 0x80, 0xb3d3be09, Eeprom },
         },
         "gdl-0030a",
 		nullptr,
@@ -5817,9 +5772,8 @@ const Game Games[] =
         GD,
         ROT0,
         {
-            { "317-5107-jpn.pic", 0, 0x4000 },
-            // { "senkoo-default-eeprom.bin", 0, 0x80,  0x0000000, Eeprom },
-            { NULL, 0, 0 },
+            { "317-5107-jpn.pic", 0, 0x4000, 0x6bc3fad0 },
+            // { "senkoo-default-eeprom.bin", 0, 0x80, 0xa2203a7f, Eeprom },
         },
         "gdl-0030",
 		nullptr,
@@ -5828,7 +5782,7 @@ const Game Games[] =
     // Senko No Ronde Special (Export, Japan)
     {
         "senkosp",
-        NULL,
+		nullptr,
         "Senko no Ronde Special",
         0x4000,
         0,
@@ -5836,8 +5790,7 @@ const Game Games[] =
         GD,
         ROT0,
         {
-            { "317-5123-com.pic", 0, 0x4000 },
-            { NULL, 0, 0 },
+            { "317-5123-com.pic", 0, 0x4000, 0x7340df6e },
         },
         "gdl-0038",
 		&senkosp_inputs,
@@ -5846,7 +5799,7 @@ const Game Games[] =
     // Street Fighter Zero 3 Upper (Japan)
     {
         "sfz3ugd",
-        NULL,
+		nullptr,
         "Street Fighter Zero 3 Upper",
         0x4000,
         0,
@@ -5854,9 +5807,8 @@ const Game Games[] =
         GD,
         ROT0,
         {
-            { "317-5072-com.pic", 0, 0x4000 },
-            // { "sfz3ugd-default-eeprom.bin", 0, 0x80,  0x0000000, Eeprom },
-            { NULL, 0, 0 },
+            { "317-5072-com.pic", 0, 0x4000, 0x3238ba01 },
+            // { "sfz3ugd-default-eeprom.bin", 0, 0x80, 0x699dd01b, Eeprom },
         },
         "gdl-0002",
         &capcom_6btn_inputs,
@@ -5865,7 +5817,7 @@ const Game Games[] =
     // Shakatto Tambourine (Rev B)
     {
         "shaktam",
-        NULL,
+		nullptr,
         "Shakatto Tambourine (Rev B)",
         0x4000,
         0,
@@ -5873,8 +5825,7 @@ const Game Games[] =
         GD,
         ROT0,
         {
-            { "317-0299-com.pic", 0, 0x4000 },
-            { NULL, 0, 0 },
+            { "317-0299-com.pic", 0, 0x4000, 0x9e1a8971 },
         },
         "gds-0002b",
 		&shaktam_inputs,
@@ -5882,7 +5833,7 @@ const Game Games[] =
     // Shakatto Tambourine Cho Powerup Chu (2K1 AUT)
     {
         "shaktamb",
-        NULL,
+		nullptr,
         "Shakatto Tambourine Cho Powerup Chu (2K1 AUT)",
         0x4000,
         0,
@@ -5890,8 +5841,7 @@ const Game Games[] =
         GD,
         ROT0,
         {
-            { "317-0321-com.pic", 0, 0x4000 },
-            { NULL, 0, 0 },
+            { "317-0321-com.pic", 0, 0x4000, 0x81519e71 },
         },
         "gds-0016",
 		&shaktam_inputs,
@@ -5899,7 +5849,7 @@ const Game Games[] =
     // Shakatto Tambourine Motto Norinori Shinkyoku Tsuika (2K1 SPR)
     {
         "shaktmsp",
-        NULL,
+		nullptr,
         "Shakatto Tambourine Motto Norinori Shinkyoku Tsuika (2K1 SPR)",
         0x4000,
         0,
@@ -5907,8 +5857,7 @@ const Game Games[] =
         GD,
         ROT0,
         {
-            { "317-0315-com.pic", 0, 0x4000 },
-            { NULL, 0, 0 },
+            { "317-0315-com.pic", 0, 0x4000, 0xc225b08b },
         },
         "gds-0013",
 		&shaktam_inputs,
@@ -5916,7 +5865,7 @@ const Game Games[] =
     // Shikigami No Shiro II / The Castle of Shikigami II
     {
         "shikgam2",
-        NULL,
+		nullptr,
         "Shikigami no Shiro II / The Castle of Shikigami II",
         0x4000,
         0,
@@ -5924,16 +5873,15 @@ const Game Games[] =
         GD,
         ROT270,
         {
-            { "317-5095-jpn.pic", 0, 0x4000 },
-            { "shikgam2-default-eeprom.bin", 0, 0x80,  0x0000000, Eeprom },
-            { NULL, 0, 0 },
+            { "317-5095-jpn.pic", 0, 0x4000, 0x7c25cb5c },
+            { "shikgam2-default-eeprom.bin", 0, 0x80, 0x5fb60e27, Eeprom },
         },
         "gdl-0021",
     },
     // Slashout
     {
         "slashout",
-        NULL,
+		nullptr,
         "Slashout",
         0x4000,
         0,
@@ -5941,8 +5889,7 @@ const Game Games[] =
         GD,
         ROT0,
         {
-            { "317-0302-com.pic",  0, 0x4000 },
-            { NULL, 0, 0 },
+            { "317-0302-com.pic",  0, 0x4000, 0xfa290329 },
         },
         "gds-0004",
 		&slashout_inputs,
@@ -5951,7 +5898,7 @@ const Game Games[] =
     // Spikers Battle
     {
         "spkrbtl",
-        NULL,
+		nullptr,
         "Spikers Battle",
         0x4000,
         0,
@@ -5959,17 +5906,16 @@ const Game Games[] =
         GD,
         ROT0,
         {
-            { "317-0303-com.pic", 0, 0x4000 },
-            { NULL, 0, 0 },
+            { "317-0303-com.pic", 0, 0x4000, 0xb42999dd },
         },
         "gds-0005",
-		NULL, // BEAT, CHARGE ,JUMP, SHIFT
+		nullptr, // BEAT, CHARGE ,JUMP, SHIFT
 		spkrbtl_eeprom_dump
     },
     // Sports Jam
     {
         "sprtjam",
-        NULL,
+		nullptr,
         "Sports Jam",
         0x4000,
         0,
@@ -5977,8 +5923,7 @@ const Game Games[] =
         GD,
         ROT0,
         {
-            { "317-0300-com.pic", 0, 0x4000 },
-            { NULL, 0, 0 },
+            { "317-0300-com.pic", 0, 0x4000, 0x19a97214 },
         },
         "gds-0003",
 		&shot12_inputs,
@@ -5986,7 +5931,7 @@ const Game Games[] =
     // Super Shanghai 2005 (Japan, Rev A)
     {
         "ss2005",
-        NULL,
+		nullptr,
         "Super Shanghai 2005 (Rev A)",
         0x4000,
         0,
@@ -5994,9 +5939,8 @@ const Game Games[] =
         GD,
         ROT0,
         {
-            { "317-5108-jpn.pic", 0, 0x4000 },
-            { "ss2005-default-eeprom.bin", 0, 0x80,  0x0000000, Eeprom },
-            { NULL, 0, 0 },
+            { "317-5108-jpn.pic", 0, 0x4000, 0x4fa7dede },
+            { "ss2005-default-eeprom.bin", 0, 0x80, 0x26bd9003, Eeprom },
         },
         "gdl-0031a",
     },
@@ -6011,16 +5955,15 @@ const Game Games[] =
         GD,
         ROT0,
         {
-            { "317-5108-jpn.pic", 0, 0x4000 },
-            { "ss2005-default-eeprom.bin", 0, 0x80,  0x0000000, Eeprom },
-            { NULL, 0, 0 },
+            { "317-5108-jpn.pic", 0, 0x4000, 0x4fa7dede },
+            { "ss2005-default-eeprom.bin", 0, 0x80, 0x26bd9003, Eeprom },
         },
         "gdl-0031",
     },
     // Doki Doki Idol Star Seeker
     {
         "starseek",
-        NULL,
+		nullptr,
         "Doki Doki Idol Star Seeker",
         0x4000,
         0,
@@ -6028,15 +5971,14 @@ const Game Games[] =
         GD,
         ROT0,
         {
-            { "317-5077-jpn.pic", 0, 0x4000 },
-            { NULL, 0, 0 },
+            { "317-5077-jpn.pic", 0, 0x4000, 0x19f8d4d0 },
         },
         "gdl-0005",
     },
     // Noukone Puzzle Takoron (Japan)
     {
         "takoron",
-        NULL,
+		nullptr,
         "Noukone Puzzle Takoron",
         0x4000,
         0,
@@ -6044,15 +5986,14 @@ const Game Games[] =
         GD,
         ROT0,
         {
-            { "317-5127-jpn.pic", 0, 0x4000 },
-            { NULL, 0, 0 },
+            { "317-5127-jpn.pic", 0, 0x4000, 0x870c55eb },
         },
         "gdl-0042",
     },
     // Tetris Kiwamemichi (Japan)
     {
         "tetkiwam",
-        NULL,
+		nullptr,
         "Tetris Kiwamemichi",
         0x4000,
         0,
@@ -6060,16 +6001,15 @@ const Game Games[] =
         GD,
         ROT0,
         {
-            { "317-5093-jpn.pic", 0, 0x4000 },
-            { "tetkiwam-default-eeprom.bin", 0, 0x80,  0x0000000, Eeprom },
-            { NULL, 0, 0 },
+            { "317-5093-jpn.pic", 0, 0x4000, 0xa61e1e2a },
+            { "tetkiwam-default-eeprom.bin", 0, 0x80, 0x843f2a99, Eeprom },
         },
         "gdl-0020",
     },
     // Trigger Heart Exelica Ver.A (Japan)
     {
         "trgheart",
-        NULL,
+		nullptr,
         "Trigger Heart Exelica (Ver. A)",
         0x4000,
         0,
@@ -6077,9 +6017,8 @@ const Game Games[] =
         GD,
         ROT270,
         {
-            { "317-5121-jpn.pic", 0, 0x4000 },
-            // { "trgheart-default-eeprom.bin", 0, 0x80,  0x0000000, Eeprom },
-            { NULL, 0, 0 },
+            { "317-5121-jpn.pic", 0, 0x4000, 0xcdb9b179 },
+            // { "trgheart-default-eeprom.bin", 0, 0x80, 0x7faff313, Eeprom },
         },
         "gdl-0036a",
 		// SHOT, ANCHOR, BOMB
@@ -6097,9 +6036,8 @@ const Game Games[] =
         GD,
         ROT270,
         {
-            { "317-5121-jpn.pic", 0, 0x4000 },
-            // { "trgheart-default-eeprom.bin", 0, 0x80,  0x0000000, Eeprom },
-            { NULL, 0, 0 },
+            { "317-5121-jpn.pic", 0, 0x4000, 0xcdb9b179 },
+            // { "trgheart-default-eeprom.bin", 0, 0x80, 0x7faff313, Eeprom },
         },
         "gdl-0036",
 		nullptr,
@@ -6108,7 +6046,7 @@ const Game Games[] =
     // Trizeal (Japan)
     {
         "trizeal",
-        NULL,
+		nullptr,
         "Trizeal",
         0x4000,
         0,
@@ -6116,9 +6054,8 @@ const Game Games[] =
         GD,
         ROT270,
         {
-            { "317-5103-jpn.pic", 0, 0x4000 },
-            // { "trizeal-default-eeprom.bin", 0, 0x80,  0x0000000, Eeprom },
-            { NULL, 0, 0 },
+            { "317-5103-jpn.pic", 0, 0x4000, 0x93feaff4 },
+            // { "trizeal-default-eeprom.bin", 0, 0x80, 0xac0847ce, Eeprom },
         },
         "gdl-0026",
 		// PUSH1/2/3
@@ -6128,7 +6065,7 @@ const Game Games[] =
     // Under Defeat (Japan)
     {
         "undefeat",
-        NULL,
+		nullptr,
         "Under Defeat",
         0x4000,
         0,
@@ -6136,8 +6073,8 @@ const Game Games[] =
         GD,
         ROT270,
         {
-            { "317-5117-jpn.pic", 0, 0x4000 },
-			// { "undefeat-default-eeprom.bin", 0, 0x80,  0x0000000, Eeprom },
+            { "317-5117-jpn.pic", 0, 0x4000, 0x61e65ca8 },
+			// { "undefeat-default-eeprom.bin", 0, 0x80, 0x9d2b071c, Eeprom },
         },
         "gdl-0035",
 		// SHOT, BOMB
@@ -6147,7 +6084,7 @@ const Game Games[] =
     // Usagi - Yamashiro Mahjong Hen (Japan)
     {
         "usagiym",
-        NULL,
+		nullptr,
         "Usagi - Yamashiro Mahjong Hen",
         0x4000,
         0,
@@ -6155,16 +6092,15 @@ const Game Games[] =
         GD,
         ROT0,
         {
-            { "317-5096-jpn.pic", 0, 0x4000 },
-            { "usagiym-default-eeprom.bin", 0, 0x80,  0x0000000, Eeprom },
-            { NULL, 0, 0 },
+            { "317-5096-jpn.pic", 0, 0x4000, 0x2d16887b },
+            { "usagiym-default-eeprom.bin", 0, 0x80, 0x1fbdf0ca, Eeprom },
         },
         "gdl-0022",
     },
     // Virtua Athletics / Virtua Athlete
     {
         "vathlete",
-        NULL,
+		nullptr,
         "Virtua Athletics / Virtua Athlete",
         0x4000,
         0,
@@ -6172,8 +6108,7 @@ const Game Games[] =
         GD,
         ROT0,
         {
-            { "317-0330-com.pic", 0, 0x4000 },
-            { NULL, 0, 0 },
+            { "317-0330-com.pic", 0, 0x4000, 0x33ccf2d1 },
         },
         "gds-0019",
 		// RUN1, ACTION, RUN2
@@ -6181,7 +6116,7 @@ const Game Games[] =
     // Virtua Tennis 2 / Power Smash 2 (Rev A)
     {
         "vtennis2",
-        NULL,
+		nullptr,
         "Virtua Tennis 2 / Power Smash 2",
         0x4000,
         0,
@@ -6189,8 +6124,7 @@ const Game Games[] =
         GD,
         ROT0,
         {
-            { "317-0318-com.pic", 0, 0x4000 },
-            { NULL, 0, 0 },
+            { "317-0318-com.pic", 0, 0x4000, 0x83de4047 },
         },
         "gds-0015a",
 		nullptr,
@@ -6199,7 +6133,7 @@ const Game Games[] =
     // Virtua Tennis / Power Smash
     {
         "vtennisg",
-        NULL,
+		nullptr,
         "Virtua Tennis / Power Smash",
         0x4000,
         0,
@@ -6207,8 +6141,7 @@ const Game Games[] =
         GD,
         ROT0,
         {
-            { "317-0312-com.pic", 0, 0x4000 },
-            { NULL, 0, 0 },
+            { "317-0312-com.pic", 0, 0x4000, 0x7213684e },
         },
         "gds-0011",
         &shot12_inputs,
@@ -6217,7 +6150,7 @@ const Game Games[] =
     // World Series Baseball / Super Major League
     {
         "wsbbgd",
-        NULL,
+		nullptr,
         "World Series Baseball / Super Major League",
         0x4000,
         0,
@@ -6225,8 +6158,7 @@ const Game Games[] =
         GD,
         ROT0,
         {
-            { "317-0309-com.pic", 0, 0x4000 },
-            { NULL, 0, 0 },
+            { "317-0309-com.pic", 0, 0x4000, 0x62d760bf },
         },
         "gds-0010",
 		&wsbb_inputs,
@@ -6235,7 +6167,7 @@ const Game Games[] =
     // uses CRP-1231 card RW connected via 838-13661 RS422/RS232C converter BD, and 2x JVS I/O boards (or one special I/O ?).
     {
         "mj1",
-        NULL,
+		nullptr,
         "Sega Yonin Uchi Mahjong MJ (Update Disc Ver.1.008, Japan) (CDP-10002B)",
         0x4000,
         0,
@@ -6243,8 +6175,7 @@ const Game Games[] =
         GD,
         ROT0,
         {
-            { "317-0352-jpn.pic", 0, 0x4000 },
-            { NULL, 0, 0 },
+            { "317-0352-jpn.pic", 0, 0x4000, 0xc2c45f9c },
         },
         "cdp-10002b",
     },
@@ -6421,7 +6352,7 @@ const Game Games[] =
     // Animal Basket (24 Jan 2005)
     {
         "anmlbskt",
-        NULL,
+        nullptr,
         "Animal Basket",
         0x4000000,
         0x45,
@@ -6429,11 +6360,10 @@ const Game Games[] =
         AW,
         ROT270,
         {
-            { "vm2001f01.u3",  0x0000000, 0x800000 },
-            { "vm2001f01.u4",  0x1000000, 0x800000 },
-            { "vm2001f01.u2",  0x1800000, 0x800000 },
-            { "vm2001f01.u15", 0x2000000, 0x800000 },
-            { NULL, 0, 0 },
+            { "vm2001f01.u3",  0x0000000, 0x800000, 0x4fb33380 },
+            { "vm2001f01.u4",  0x1000000, 0x800000, 0x7cb2e7c3 },
+            { "vm2001f01.u2",  0x1800000, 0x800000, 0x386070a1 },
+            { "vm2001f01.u15", 0x2000000, 0x800000, 0x2bb1be28 },
         }
     },
     // Animal Basket (19 Jan 2005)
@@ -6447,18 +6377,17 @@ const Game Games[] =
         AW,
         ROT270,
         {
-            { "u3",  0x0000000, 0x1000000 },
-            { "u1",  0x1000000, 0x1000000 },
-            { "u4",  0x2000000, 0x1000000 },
-            { "u2",  0x3000000, 0x1000000 },
+            { "u3",  0x0000000, 0x1000000, 0xcd082af3 },
+            { "u1",  0x1000000, 0x1000000, 0x4a2a01d3 },
+            { "u4",  0x2000000, 0x1000000, 0x646e9773 },
+            { "u2",  0x3000000, 0x1000000, 0xb9162d97 },
             // U14-U17 not populated
-            { NULL, 0, 0 },
         }
     },
     // Sega Bass Fishing Challenge (Version A)
     {
         "basschal",
-        NULL,
+        nullptr,
         "Sega Bass Fishing Challenge (Ver. A)",
         0x8000000,
         0x2a,
@@ -6466,15 +6395,14 @@ const Game Games[] =
         AW,
         ROT0,
         {
-            { "vera.u3",      0x00000000, 0x01000000 },
-            { "vera.u1",      0x01000000, 0x01000000 },
-            { "vera.u4",      0x02000000, 0x01000000 },
-            { "vera.u2",      0x03000000, 0x01000000 },
-            { "vera.u15",     0x04000000, 0x01000000 },
-            { "vera.u17",     0x05000000, 0x01000000 },
-            { "vera.u14",     0x06000000, 0x01000000 },
-            { "vera.u16",     0x07000000, 0x01000000 },
-            { NULL, 0, 0 },
+            { "vera.u3",      0x00000000, 0x01000000, 0x8cbec9d7 },
+            { "vera.u1",      0x01000000, 0x01000000, 0xcfef27e5 },
+            { "vera.u4",      0x02000000, 0x01000000, 0xbd1f13aa },
+            { "vera.u2",      0x03000000, 0x01000000, 0x0a463c37 },
+            { "vera.u15",     0x04000000, 0x01000000, 0xe588afd1 },
+            { "vera.u17",     0x05000000, 0x01000000, 0xd78389a4 },
+            { "vera.u14",     0x06000000, 0x01000000, 0x35df044f },
+            { "vera.u16",     0x07000000, 0x01000000, 0x3590072d },
         }
     },
     // Sega Bass Fishing Challenge
@@ -6488,21 +6416,20 @@ const Game Games[] =
         AW,
         ROT0,
         {
-            { "610-0811.u3",  0x00000000, 0x01000000 },
-            { "610-0811.u1",  0x01000000, 0x01000000 },
-            { "vera.u4",      0x02000000, 0x01000000 },
-            { "610-0811.u2",  0x03000000, 0x01000000 },
-            { "610-0811.u15", 0x04000000, 0x01000000 },
-            { "610-0811.u17", 0x05000000, 0x01000000 },
-            { "610-0811.u14", 0x06000000, 0x01000000 },
-            { "vera.u16",     0x07000000, 0x01000000 },
-            { NULL, 0, 0 },
+            { "610-0811.u3",  0x00000000, 0x01000000, 0xef31abe7 },
+            { "610-0811.u1",  0x01000000, 0x01000000, 0x44c3cf90 },
+            { "vera.u4",      0x02000000, 0x01000000, 0xbd1f13aa },
+            { "610-0811.u2",  0x03000000, 0x01000000, 0x1c61ed69 },
+            { "610-0811.u15", 0x04000000, 0x01000000, 0xe8f02238 },
+            { "610-0811.u17", 0x05000000, 0x01000000, 0xdb799f5a },
+            { "610-0811.u14", 0x06000000, 0x01000000, 0xf2769383 },
+            { "vera.u16",     0x07000000, 0x01000000, 0x3590072d },
         }
     },
     // Block Pong-Pong
     {
         "blokpong",
-        NULL,
+        nullptr,
         "Block Pong-Pong",
         0x4000000,
         0x45,
@@ -6510,21 +6437,19 @@ const Game Games[] =
         AW,
         ROT270,
         {
-            { "u3", 0x0000000, 0x1000000 },
-            { "u1", 0x1000000, 0x1000000 },
-            { "u4", 0x2000000, 0x1000000 },
-            //ROM_LOAD( "u2",  0x3000000, 0x1000000, CRC(b9162d97) SHA1(7f561617fa0538da554ad6f6c4d6a20e739491dc) ) // garbage data not used by this game, match anmlbskta U2
+            { "u3", 0x0000000, 0x1000000, 0xdebaf8bd },
+            { "u1", 0x1000000, 0x1000000, 0xca097a3f },
+            { "u4", 0x2000000, 0x1000000, 0xd235dd29 },
+			//{ "u2",  0x3000000, 0x1000000, 0xb9162d97 }, // garbage data not used by this game, match anmlbskta U2
             // U14-U17 not populated
-
-            { NULL, 0, 0 },
         },
-        NULL,
+        nullptr,
         &blokpong_inputs,
     },
     // Sega Clay Challenge
     {
         "claychal",
-        NULL,
+		nullptr,
         "Sega Clay Challenge",
         0x8000100,
         0x2a,
@@ -6532,21 +6457,20 @@ const Game Games[] =
         AW,
         ROT0,
         {
-            { "608-2161.u3",  0x0000000, 0x1000100 },
-            { "608-2161.u1",  0x1000000, 0x1000100 },
-            { "608-2161.u4",  0x2000000, 0x1000100 },
-            { "608-2161.u2",  0x3000000, 0x1000100 },
-            { "608-2161.u15", 0x4000000, 0x1000100 },
-            { "608-2161.u17", 0x5000000, 0x1000100 },
-            { "608-2161.u14", 0x6000000, 0x1000100 },
-            { "608-2161.u16", 0x7000000, 0x1000100 },
-            { NULL, 0, 0 },
+            { "608-2161.u3",  0x0000000, 0x1000100, 0x5bb65194 },
+            { "608-2161.u1",  0x1000000, 0x1000100, 0x526fc1af },
+            { "608-2161.u4",  0x2000000, 0x1000100, 0x55f4e762 },
+            { "608-2161.u2",  0x3000000, 0x1000100, 0xc40dae68 },
+            { "608-2161.u15", 0x4000000, 0x1000100, 0xb82dcb0a },
+            { "608-2161.u17", 0x5000000, 0x1000100, 0x2f973eb4 },
+            { "608-2161.u14", 0x6000000, 0x1000100, 0x2e7d966f },
+            { "608-2161.u16", 0x7000000, 0x1000100, 0x14f8ca87 },
         }
     },
     // Demolish Fist
     {
         "demofist",
-        NULL,
+        nullptr,
         "Demolish Fist",
         0x8000000,
         0x90,
@@ -6554,23 +6478,22 @@ const Game Games[] =
         AW,
         ROT0,
         {
-            { "ax0601p01.ic18", 0x0000000, 0x0800000 },
-            { "ax0601m01.ic11", 0x1000000, 0x1000000 },
-            { "ax0602m01.ic12", 0x2000000, 0x1000000 },
-            { "ax0603m01.ic13", 0x3000000, 0x1000000 },
-            { "ax0604m01.ic14", 0x4000000, 0x1000000 },
-            { "ax0605m01.ic15", 0x5000000, 0x1000000 },
-            { "ax0606m01.ic16", 0x6000000, 0x1000000 },
-            { "ax0607m01.ic17", 0x7000000, 0x1000000 },
-            { NULL, 0, 0 },
+            { "ax0601p01.ic18", 0x0000000, 0x0800000, 0x0efb38ad },
+            { "ax0601m01.ic11", 0x1000000, 0x1000000, 0x12fda2c7 },
+            { "ax0602m01.ic12", 0x2000000, 0x1000000, 0xaea61fdf },
+            { "ax0603m01.ic13", 0x3000000, 0x1000000, 0xd5879d35 },
+            { "ax0604m01.ic14", 0x4000000, 0x1000000, 0xa7b09048 },
+            { "ax0605m01.ic15", 0x5000000, 0x1000000, 0x18d8437e },
+            { "ax0606m01.ic16", 0x6000000, 0x1000000, 0x42c81617 },
+            { "ax0607m01.ic17", 0x7000000, 0x1000000, 0x96e5aa84 },
         },
-        NULL,
+        nullptr,
         &demofist_inputs,
     },
     // Dirty Pigskin Football
     {
         "dirtypig",
-        NULL,
+		nullptr,
         "Dirty Pigskin Football",
         0x8000000,
         0x2a,
@@ -6578,21 +6501,20 @@ const Game Games[] =
         AW,
         ROT0,
         {
-            { "695-0014.u3",  0x0000000, 0x1000000 },
-            { "695-0014.u1",  0x1000000, 0x1000000 },
-            { "695-0014.u4",  0x2000000, 0x1000000 },
-            { "695-0014.u2",  0x3000000, 0x1000000 },
-            { "695-0014.u15", 0x4000000, 0x1000000 },
-            { "695-0014.u17", 0x5000000, 0x1000000 },
-            { "695-0014.u14", 0x6000000, 0x1000000 },
-            { "695-0014.u16", 0x7000000, 0x1000000 },
-            { NULL, 0, 0 },
+            { "695-0014.u3",  0x0000000, 0x1000000, 0x9fdd7d07 },
+            { "695-0014.u1",  0x1000000, 0x1000000, 0xa91d2fcb },
+            { "695-0014.u4",  0x2000000, 0x1000000, 0x3342f237 },
+            { "695-0014.u2",  0x3000000, 0x1000000, 0x4d82152f },
+            { "695-0014.u15", 0x4000000, 0x1000000, 0xd239a549 },
+            { "695-0014.u17", 0x5000000, 0x1000000, 0x16bb5992 },
+            { "695-0014.u14", 0x6000000, 0x1000000, 0x55470242 },
+            { "695-0014.u16", 0x7000000, 0x1000000, 0x730180a4 },
         }
     },
     // Dolphin Blue
     {
         "dolphin",
-        NULL,
+        nullptr,
         "Dolphin Blue",
         0x8000000,
         0x40,
@@ -6600,21 +6522,20 @@ const Game Games[] =
         AW,
         ROT0,
         {
-            { "ax0401p01.ic18", 0x0000000, 0x0800000 },
-            { "ax0401m01.ic11", 0x1000000, 0x1000000 },
-            { "ax0402m01.ic12", 0x2000000, 0x1000000 },
-            { "ax0403m01.ic13", 0x3000000, 0x1000000 },
-            { "ax0404m01.ic14", 0x4000000, 0x1000000 },
-            { "ax0405m01.ic15", 0x5000000, 0x1000000 },
-            { NULL, 0, 0 },
+            { "ax0401p01.ic18", 0x0000000, 0x0800000, 0x195d6328 },
+            { "ax0401m01.ic11", 0x1000000, 0x1000000, 0x5e5dca57 },
+            { "ax0402m01.ic12", 0x2000000, 0x1000000, 0x77dd4771 },
+            { "ax0403m01.ic13", 0x3000000, 0x1000000, 0x911d0674 },
+            { "ax0404m01.ic14", 0x4000000, 0x1000000, 0xf82a4ca3 },
+            { "ax0405m01.ic15", 0x5000000, 0x1000000, 0xb88298d7 },
         },
-        NULL,
+        nullptr,
         &dolphin_inputs,
     },
     // Fist Of The North Star
     {
         "fotns",
-        NULL,
+        nullptr,
         "Fist Of The North Star",
         0x8000000,
         0xc2,
@@ -6622,15 +6543,14 @@ const Game Games[] =
         AW,
         ROT0,
         {
-            { "ax1901p01.ic18", 0x0000000, 0x0800000 },
-            { "ax1901m01.ic11", 0x1000000, 0x1000000 },
-            { "ax1902m01.ic12", 0x2000000, 0x1000000 },
-            { "ax1903m01.ic13", 0x3000000, 0x1000000 },
-            { "ax1904m01.ic14", 0x4000000, 0x1000000 },
-            { "ax1905m01.ic15", 0x5000000, 0x1000000 },
-            { "ax1906m01.ic16", 0x6000000, 0x1000000 },
-            { "ax1907m01.ic17", 0x7000000, 0x1000000 },
-            { NULL, 0, 0 },
+            { "ax1901p01.ic18", 0x0000000, 0x0800000, 0xa06998b0 },
+            { "ax1901m01.ic11", 0x1000000, 0x1000000, 0xff5a1642 },
+            { "ax1902m01.ic12", 0x2000000, 0x1000000, 0xd9aae8a9 },
+            { "ax1903m01.ic13", 0x3000000, 0x1000000, 0x1711b23d },
+            { "ax1904m01.ic14", 0x4000000, 0x1000000, 0x443bfb26 },
+            { "ax1905m01.ic15", 0x5000000, 0x1000000, 0xeb1cada0 },
+            { "ax1906m01.ic16", 0x6000000, 0x1000000, 0xfe6da168 },
+            { "ax1907m01.ic17", 0x7000000, 0x1000000, 0x9d3a0520 },
         },
 		nullptr,
 		&fotns_inputs,
@@ -6638,7 +6558,7 @@ const Game Games[] =
     // Faster Than Speed
     {
         "ftspeed",
-        NULL,
+		nullptr,
         "Faster Than Speed",
         0x9000000,
         0x6b,
@@ -6646,22 +6566,21 @@ const Game Games[] =
         AW,
         ROT0,
         {
-            { "ax1701p01.ic18", 0x0000000, 0x0800000 },
-            { "ax1701m01.ic11", 0x1000000, 0x1000000 },
-            { "ax1702m01.ic12", 0x2000000, 0x1000000 },
-            { "ax1703m01.ic13", 0x3000000, 0x1000000 },
-            { "ax1704m01.ic14", 0x4000000, 0x1000000 },
-            { "ax1705m01.ic15", 0x5000000, 0x1000000 },
-            { "ax1706m01.ic16", 0x6000000, 0x1000000 },
-            { NULL, 0, 0 },
+            { "ax1701p01.ic18", 0x0000000, 0x0800000, 0x480cade7 },
+            { "ax1701m01.ic11", 0x1000000, 0x1000000, 0x7dcdc784 },
+            { "ax1702m01.ic12", 0x2000000, 0x1000000, 0x06c9bf85 },
+            { "ax1703m01.ic13", 0x3000000, 0x1000000, 0x8f8e0224 },
+            { "ax1704m01.ic14", 0x4000000, 0x1000000, 0xfbb4bb16 },
+            { "ax1705m01.ic15", 0x5000000, 0x1000000, 0x996f68e1 },
+            { "ax1706m01.ic16", 0x6000000, 0x1000000, 0x804b2eb2 },
         },
-        NULL,
+		nullptr,
         &ftspeed_inputs,
     },
     // Guilty Gear Isuka
     {
         "ggisuka",
-        NULL,
+		nullptr,
         "Guilty Gear Isuka",
         0x9000000,
         0xed,
@@ -6669,16 +6588,15 @@ const Game Games[] =
         AW,
         ROT0,
         {
-            { "ax1201p01.ic18", 0x0000000, 0x0800000 },
-            { "ax1201m01.ic10", 0x0800000, 0x1000000 },
-            { "ax1202m01.ic11", 0x1000000, 0x1000000 },
-            { "ax1203m01.ic12", 0x2000000, 0x1000000 },
-            { "ax1204m01.ic13", 0x3000000, 0x1000000 },
-            { "ax1205m01.ic14", 0x4000000, 0x1000000 },
-            { "ax1206m01.ic15", 0x5000000, 0x1000000 },
-            { "ax1207m01.ic16", 0x6000000, 0x1000000 },
-            { "ax1208m01.ic17", 0x7000000, 0x1000000 },
-            { NULL, 0, 0 },
+            { "ax1201p01.ic18", 0x0000000, 0x0800000, 0x0a78d52c },
+            { "ax1201m01.ic10", 0x0800000, 0x1000000, 0xdf96ce30 },
+            { "ax1202m01.ic11", 0x1000000, 0x1000000, 0xdfc6fd67 },
+            { "ax1203m01.ic12", 0x2000000, 0x1000000, 0xbf623df9 },
+            { "ax1204m01.ic13", 0x3000000, 0x1000000, 0xc80c3930 },
+            { "ax1205m01.ic14", 0x4000000, 0x1000000, 0xe99a269d },
+            { "ax1206m01.ic15", 0x5000000, 0x1000000, 0x807ab795 },
+            { "ax1207m01.ic16", 0x6000000, 0x1000000, 0x6636d1b8 },
+            { "ax1208m01.ic17", 0x7000000, 0x1000000, 0x38bda476 },
         },
         nullptr,
 		&guilty_gear_aw_inputs,
@@ -6686,7 +6604,7 @@ const Game Games[] =
     // Guilty Gear X ver. 1.5
     {
         "ggx15",
-        NULL,
+		nullptr,
         "Guilty Gear X ver. 1.5",
         0x8000000,
         0xc9,
@@ -6694,23 +6612,22 @@ const Game Games[] =
         AW,
         ROT0,
         {
-            { "ax0801p01.ic18", 0x0000000, 0x0800000 },
-            { "ax0801m01.ic11", 0x1000000, 0x1000000 },
-            { "ax0802m01.ic12", 0x2000000, 0x1000000 },
-            { "ax0803m01.ic13", 0x3000000, 0x1000000 },
-            { "ax0804m01.ic14", 0x4000000, 0x1000000 },
-            { "ax0805m01.ic15", 0x5000000, 0x1000000 },
-            { "ax0806m01.ic16", 0x6000000, 0x1000000 },
-            { "ax0807m01.ic17", 0x7000000, 0x1000000 },
-            { NULL, 0, 0 },
+            { "ax0801p01.ic18", 0x0000000, 0x0800000, 0xd920c6bb },
+            { "ax0801m01.ic11", 0x1000000, 0x1000000, 0x61879b2d },
+            { "ax0802m01.ic12", 0x2000000, 0x1000000, 0xc0ff124d },
+            { "ax0803m01.ic13", 0x3000000, 0x1000000, 0x4400c89a },
+            { "ax0804m01.ic14", 0x4000000, 0x1000000, 0x70f58ab4 },
+            { "ax0805m01.ic15", 0x5000000, 0x1000000, 0x72740e45 },
+            { "ax0806m01.ic16", 0x6000000, 0x1000000, 0x3bf8ecba },
+            { "ax0807m01.ic17", 0x7000000, 0x1000000, 0xe397dd79 },
         },
-        NULL,
+		nullptr,
         &ggx15_inputs,
     },
     // The King of Fighters Neowave
     {
         "kofnw",
-        NULL,
+		nullptr,
         "The King of Fighters Neowave",
         0x8000000,
         0x99,
@@ -6718,16 +6635,15 @@ const Game Games[] =
         AW,
         ROT0,
         {
-            { "ax2201en_p01.ic18", 0x0000000, 0x0800000 },
-            { "ax2201m01.ic11",    0x1000000, 0x1000000 },
-            { "ax2202m01.ic12",    0x2000000, 0x1000000 },
-            { "ax2203m01.ic13",    0x3000000, 0x1000000 },
-            { "ax2204m01.ic14",    0x4000000, 0x1000000 },
-            { "ax2205m01.ic15",    0x5000000, 0x1000000 },
-            { "ax2206m01.ic16",    0x6000000, 0x1000000 },
-            { NULL, 0, 0 },
+            { "ax2201en_p01.ic18", 0x0000000, 0x0800000, 0x27aab918 },
+            { "ax2201m01.ic11",    0x1000000, 0x1000000, 0x22ea665b },
+            { "ax2202m01.ic12",    0x2000000, 0x1000000, 0x7fad1bea },
+            { "ax2203m01.ic13",    0x3000000, 0x1000000, 0x78986ca4 },
+            { "ax2204m01.ic14",    0x4000000, 0x1000000, 0x6ffbeb04 },
+            { "ax2205m01.ic15",    0x5000000, 0x1000000, 0x2851b791 },
+            { "ax2206m01.ic16",    0x6000000, 0x1000000, 0xe53eb965 },
         },
-        NULL,
+		nullptr,
         &kofnw_inputs,
     },
     // The King of Fighters Neowave (Japan)
@@ -6741,23 +6657,22 @@ const Game Games[] =
         AW,
         ROT0,
         {
-            { "ax2201jp_p01.ic18", 0x0000000, 0x0800000 },
+            { "ax2201jp_p01.ic18", 0x0000000, 0x0800000, 0xecc4a5c7 },
             // these are taken from the above set, game *seems* to work fine with these
-            { "ax2201m01.ic11", 0x1000000, 0x1000000 },
-            { "ax2202m01.ic12", 0x2000000, 0x1000000 },
-            { "ax2203m01.ic13", 0x3000000, 0x1000000 },
-            { "ax2204m01.ic14", 0x4000000, 0x1000000 },
-            { "ax2205m01.ic15", 0x5000000, 0x1000000 },
-            { "ax2206m01.ic16", 0x6000000, 0x1000000 },
-            { NULL, 0, 0 },
+            { "ax2201m01.ic11",    0x1000000, 0x1000000, 0x22ea665b },
+            { "ax2202m01.ic12",    0x2000000, 0x1000000, 0x7fad1bea },
+            { "ax2203m01.ic13",    0x3000000, 0x1000000, 0x78986ca4 },
+            { "ax2204m01.ic14",    0x4000000, 0x1000000, 0x6ffbeb04 },
+            { "ax2205m01.ic15",    0x5000000, 0x1000000, 0x2851b791 },
+            { "ax2206m01.ic16",    0x6000000, 0x1000000, 0xe53eb965 },
         },
-        NULL,
+		nullptr,
         &kofnw_inputs,
     },
     // The King of Fighters XI
     {
         "kofxi",
-        NULL,
+		nullptr,
         "The King of Fighters XI",
         0x14000000,
         0xd3,
@@ -6765,23 +6680,22 @@ const Game Games[] =
         AW,
         ROT0,
         {
-            { "ax3201p01.fmem1", 0x00000000, 0x0800000 },
-            { "ax3201m01.mrom1", 0x02000000, 0x2000000 },
-            { "ax3202m01.mrom2", 0x04000000, 0x2000000 },
-            { "ax3203m01.mrom3", 0x06000000, 0x2000000 },
-            { "ax3204m01.mrom4", 0x0a000000, 0x2000000 },
-            { "ax3205m01.mrom5", 0x0c000000, 0x2000000 },
-            { "ax3206m01.mrom6", 0x0e000000, 0x2000000 },
-            { "ax3207m01.mrom7", 0x12000000, 0x2000000 },
-            { NULL, 0, 0 },
+            { "ax3201p01.fmem1", 0x00000000, 0x0800000, 0x6dbdd71b },
+            { "ax3201m01.mrom1", 0x02000000, 0x2000000, 0x7f9d6af9},
+            { "ax3202m01.mrom2", 0x04000000, 0x2000000, 0x1ae40afa },
+            { "ax3203m01.mrom3", 0x06000000, 0x2000000, 0x8c5e3bfd },
+            { "ax3204m01.mrom4", 0x0a000000, 0x2000000, 0xba97f80c },
+            { "ax3205m01.mrom5", 0x0c000000, 0x2000000, 0x3c747067 },
+            { "ax3206m01.mrom6", 0x0e000000, 0x2000000, 0xcb81e5f5 },
+            { "ax3207m01.mrom7", 0x12000000, 0x2000000, 0x164f6329 },
         },
-        NULL,
+		nullptr,
         &kofxi_inputs,
     },
     // Knights of Valour - The Seven Spirits
     {
         "kov7sprt",
-        NULL,
+		nullptr,
         "Knights of Valour - The Seven Spirits",
         0x8000000,
         0x35,
@@ -6789,23 +6703,22 @@ const Game Games[] =
         AW,
         ROT0,
         {
-            { "ax1301p01.ic18", 0x0000000, 0x0800000 },
-            { "ax1301m01.ic11", 0x1000000, 0x1000000 },
-            { "ax1301m02.ic12", 0x2000000, 0x1000000 },
-            { "ax1301m03.ic13", 0x3000000, 0x1000000 },
-            { "ax1301m04.ic14", 0x4000000, 0x1000000 },
-            { "ax1301m05.ic15", 0x5000000, 0x1000000 },
-            { "ax1301m06.ic16", 0x6000000, 0x1000000 },
-            { "ax1301m07.ic17", 0x7000000, 0x1000000 },
-            { NULL, 0, 0 },
+            { "ax1301p01.ic18", 0x0000000, 0x0800000, 0x6833a334 },
+            { "ax1301m01.ic11", 0x1000000, 0x1000000, 0x58ae7ca1 },
+            { "ax1301m02.ic12", 0x2000000, 0x1000000, 0x871ea03f },
+            { "ax1301m03.ic13", 0x3000000, 0x1000000, 0xabc328bc },
+            { "ax1301m04.ic14", 0x4000000, 0x1000000, 0x25a176d1 },
+            { "ax1301m05.ic15", 0x5000000, 0x1000000, 0xe6573a93 },
+            { "ax1301m06.ic16", 0x6000000, 0x1000000, 0xcb8cacb4 },
+            { "ax1301m07.ic17", 0x7000000, 0x1000000, 0x0ca92213 },
         },
-        NULL,
+		nullptr,
         &kov7sprt_inputs,
     },
     // Maximum Speed
     {
         "maxspeed",
-        NULL,
+		nullptr,
         "Maximum Speed",
         0x9000000,
         0x55,
@@ -6813,21 +6726,20 @@ const Game Games[] =
         AW,
         ROT0,
         {
-            { "ax0501p01.ic18", 0x0000000, 0x0800000 },
-            { "ax0501m01.ic11", 0x1000000, 0x1000000 },
-            { "ax0502m01.ic12", 0x2000000, 0x1000000 },
-            { "ax0503m01.ic13", 0x3000000, 0x1000000 },
-            { "ax0504m01.ic14", 0x4000000, 0x1000000 },
-            { "ax0505m01.ic15", 0x5000000, 0x1000000 },
-            { NULL, 0, 0 },
+            { "ax0501p01.ic18", 0x0000000, 0x0800000, 0xe1651867 },
+            { "ax0501m01.ic11", 0x1000000, 0x1000000, 0x4a847a59 },
+            { "ax0502m01.ic12", 0x2000000, 0x1000000, 0x2580237f },
+            { "ax0503m01.ic13", 0x3000000, 0x1000000, 0xe5a3766b },
+            { "ax0504m01.ic14", 0x4000000, 0x1000000, 0x7955b55a },
+            { "ax0505m01.ic15", 0x5000000, 0x1000000, 0xe8ccc660 },
         },
-        NULL,
+		nullptr,
         &maxspeed_inputs
     },
     // Metal Slug 6
     {
         "mslug6",
-        NULL,
+		nullptr,
         "Metal Slug 6",
         0xc000000,
         0x82,
@@ -6835,12 +6747,11 @@ const Game Games[] =
         AW,
         ROT0,
         {
-            { "ax3001p01.fmem1", 0x0000000, 0x0800000 },
-            { "ax3001m01.mrom1", 0x2000000, 0x2000000 },
-            { "ax3002m01.mrom2", 0x4000000, 0x2000000 },
-            { "ax3003m01.mrom3", 0x6000000, 0x2000000 },
-            { "ax3004m01.mrom4", 0xa000000, 0x2000000 },
-            { NULL, 0, 0 },
+            { "ax3001p01.fmem1", 0x0000000, 0x0800000, 0xaf67dbce },
+            { "ax3001m01.mrom1", 0x2000000, 0x2000000, 0xe56417ee },
+            { "ax3002m01.mrom2", 0x4000000, 0x2000000, 0x1be3bbc1 },
+            { "ax3003m01.mrom3", 0x6000000, 0x2000000, 0x4fe37370 },
+            { "ax3004m01.mrom4", 0xa000000, 0x2000000, 0x2f4c4c6f },
         },
 		nullptr,
 		&mslug6_inputs,
@@ -6848,7 +6759,7 @@ const Game Games[] =
     // NeoGeo Battle Coliseum
     {
         "ngbc",
-        NULL,
+		nullptr,
         "NeoGeo Battle Coliseum",
         0x14000000,
         0xa0,
@@ -6856,17 +6767,16 @@ const Game Games[] =
         AW,
         ROT0,
         {
-            { "ax3301en_p01.fmem1", 0x00000000, 0x0800000 },
-            { "ax3301m01.mrom1",    0x02000000, 0x2000000 },
-            { "ax3302m01.mrom2",    0x04000000, 0x2000000 },
-            { "ax3303m01.mrom3",    0x06000000, 0x2000000 },
-            { "ax3304m01.mrom4",    0x0a000000, 0x2000000 },
-            { "ax3305m01.mrom5",    0x0c000000, 0x2000000 },
-            { "ax3306m01.mrom6",    0x0e000000, 0x2000000 },
-            { "ax3307m01.mrom7",    0x12000000, 0x2000000 },
-            { NULL, 0, 0 },
+            { "ax3301en_p01.fmem1", 0x00000000, 0x0800000, 0xf7e24e67 },
+            { "ax3301m01.mrom1",    0x02000000, 0x2000000, 0xe6013de9 },
+            { "ax3302m01.mrom2",    0x04000000, 0x2000000, 0xf7cfef6c },
+            { "ax3303m01.mrom3",    0x06000000, 0x2000000, 0x0cdf8647 },
+            { "ax3304m01.mrom4",    0x0a000000, 0x2000000, 0x2f031db0 },
+            { "ax3305m01.mrom5",    0x0c000000, 0x2000000, 0xf6668aaa },
+            { "ax3306m01.mrom6",    0x0e000000, 0x2000000, 0x5cf32fbd },
+            { "ax3307m01.mrom7",    0x12000000, 0x2000000, 0x26d9da53 },
         },
-        NULL,
+        nullptr,
         &ngbc_inputs,
     },
     // NeoGeo Battle Coliseum (Japan)
@@ -6880,23 +6790,22 @@ const Game Games[] =
         AW,
         ROT0,
         {
-            { "ax3301p01.fmem1", 0x00000000, 0x0800000 },
-            { "ax3301m01.mrom1", 0x02000000, 0x2000000 },
-            { "ax3302m01.mrom2", 0x04000000, 0x2000000 },
-            { "ax3303m01.mrom3", 0x06000000, 0x2000000 },
-            { "ax3304m01.mrom4", 0x0a000000, 0x2000000 },
-            { "ax3305m01.mrom5", 0x0c000000, 0x2000000 },
-            { "ax3306m01.mrom6", 0x0e000000, 0x2000000 },
-            { "ax3307m01.mrom7", 0x12000000, 0x2000000 },
-            { NULL, 0, 0 },
+            { "ax3301p01.fmem1", 0x00000000, 0x0800000, 0x6dd78275 },
+            { "ax3301m01.mrom1", 0x02000000, 0x2000000, 0xe6013de9 },
+            { "ax3302m01.mrom2", 0x04000000, 0x2000000, 0xf7cfef6c },
+            { "ax3303m01.mrom3", 0x06000000, 0x2000000, 0x0cdf8647 },
+            { "ax3304m01.mrom4", 0x0a000000, 0x2000000, 0x2f031db0 },
+            { "ax3305m01.mrom5", 0x0c000000, 0x2000000, 0xf6668aaa },
+            { "ax3306m01.mrom6", 0x0e000000, 0x2000000, 0x5cf32fbd },
+            { "ax3307m01.mrom7", 0x12000000, 0x2000000, 0x26d9da53 },
         },
-        NULL,
+		nullptr,
         &ngbc_inputs,
     },
     // Ranger Mission
     {
         "rangrmsn",
-        NULL,
+        nullptr,
         "Ranger Mission",
         0x8000000,
         0x88,
@@ -6904,19 +6813,18 @@ const Game Games[] =
         AW,
         ROT0,
         {
-            { "ax1601p01.ic18", 0x0000000, 0x0800000 },
-            { "ax1601m01.ic11", 0x1000000, 0x1000000 },
-            { "ax1602m01.ic12", 0x2000000, 0x1000000 },
-            { "ax1603m01.ic13", 0x3000000, 0x1000000 },
-            { "ax1604m01.ic14", 0x4000000, 0x1000000 },
-            { "ax1605m01.ic15", 0x5000000, 0x1000000 },
-            { NULL, 0, 0 },
+            { "ax1601p01.ic18", 0x0000000, 0x0800000, 0x00a74fbb },
+            { "ax1601m01.ic11", 0x1000000, 0x1000000, 0xf34eed33 },
+            { "ax1602m01.ic12", 0x2000000, 0x1000000, 0xa7d59efb },
+            { "ax1603m01.ic13", 0x3000000, 0x1000000, 0x7c0aa241 },
+            { "ax1604m01.ic14", 0x4000000, 0x1000000, 0xd2369144 },
+            { "ax1605m01.ic15", 0x5000000, 0x1000000, 0x0c11c1f9 },
         }
     },
     // The Rumble Fish
     {
         "rumblef",
-        NULL,
+        nullptr,
         "The Rumble Fish",
         0x8000000,
         0xaa,
@@ -6924,15 +6832,14 @@ const Game Games[] =
         AW,
         ROT0,
         {
-            { "ax1801p01.ic18", 0x0000000, 0x0800000 },
-            { "ax1801m01.ic11", 0x1000000, 0x1000000 },
-            { "ax1802m01.ic12", 0x2000000, 0x1000000 },
-            { "ax1803m01.ic13", 0x3000000, 0x1000000 },
-            { "ax1804m01.ic14", 0x4000000, 0x1000000 },
-            { "ax1805m01.ic15", 0x5000000, 0x1000000 },
-            { "ax1806m01.ic16", 0x6000000, 0x1000000 },
-            { "ax1807m01.ic17", 0x7000000, 0x1000000 },
-            { NULL, 0, 0 },
+            { "ax1801p01.ic18", 0x0000000, 0x0800000, 0x2f7fb163 },
+            { "ax1801m01.ic11", 0x1000000, 0x1000000, 0xc38aa61c },
+            { "ax1802m01.ic12", 0x2000000, 0x1000000, 0x72e0ebc8 },
+            { "ax1803m01.ic13", 0x3000000, 0x1000000, 0xd0f59d98 },
+            { "ax1804m01.ic14", 0x4000000, 0x1000000, 0x15595cba },
+            { "ax1805m01.ic15", 0x5000000, 0x1000000, 0x3d3f8e0d },
+            { "ax1806m01.ic16", 0x6000000, 0x1000000, 0xac2751bb },
+            { "ax1807m01.ic17", 0x7000000, 0x1000000, 0x3b2fbdb0 },
         },
 		nullptr,
 		&rumblef_inputs,
@@ -6948,23 +6855,22 @@ const Game Games[] =
         AW,
         ROT0,
         {
-            { "ic12", 0x00000000, 0x00800000 },
-            { "ic13", 0x00800000, 0x00800000 },
-            { "ic14", 0x01000000, 0x00800000 },
-            { "ic15", 0x01800000, 0x00800000 },
-            { "ic16", 0x02000000, 0x00800000 },
-            { "ic17", 0x02800000, 0x00800000 },
-            { "ic18", 0x03000000, 0x00800000 },
-            { "ic19", 0x03800000, 0x00800000 },
-            { "ic20", 0x04000000, 0x00800000 },
-            { "ic21", 0x04800000, 0x00800000 },
-            { "ic22", 0x05000000, 0x00800000 },
-            { "ic23", 0x05800000, 0x00800000 },
-            { "ic24", 0x06000000, 0x00800000 },
-            { "ic25", 0x06800000, 0x00800000 },
-            { "ic26", 0x07000000, 0x00800000 },
+            { "ic12", 0x00000000, 0x00800000, 0x79866072 },
+            { "ic13", 0x00800000, 0x00800000, 0x5630bc83 },
+            { "ic14", 0x01000000, 0x00800000, 0xbcd49846 },
+            { "ic15", 0x01800000, 0x00800000, 0x61257cfb },
+            { "ic16", 0x02000000, 0x00800000, 0xc2eb7c61 },
+            { "ic17", 0x02800000, 0x00800000, 0xdcf673d3 },
+            { "ic18", 0x03000000, 0x00800000, 0x72c066bb },
+            { "ic19", 0x03800000, 0x00800000, 0xb20bf301 },
+            { "ic20", 0x04000000, 0x00800000, 0xd27e7393 },
+            { "ic21", 0x04800000, 0x00800000, 0xc2da1ecf },
+            { "ic22", 0x05000000, 0x00800000, 0x730e0e1c },
+            { "ic23", 0x05800000, 0x00800000, 0xd93afcac },
+            { "ic24", 0x06000000, 0x00800000, 0x262d97b9 },
+            { "ic25", 0x06800000, 0x00800000, 0xe45cf169 },
+            { "ic26", 0x07000000, 0x00800000, 0x6421720d },
             // IC27 populated, empty
-            { NULL, 0, 0 },
         },
 		nullptr,
 		&rumblef_inputs,
@@ -6972,7 +6878,7 @@ const Game Games[] =
     // The Rumble Fish 2
     {
         "rumblef2",
-        NULL,
+		nullptr,
         "The Rumble Fish 2",
         0xe000000,
         0x07,
@@ -6980,13 +6886,12 @@ const Game Games[] =
         AW,
         ROT0,
         {
-            { "ax3401p01.fmem1", 0x0000000, 0x0800000 },
-            { "ax3401m01.mrom1", 0x2000000, 0x2000000 },
-            { "ax3402m01.mrom2", 0x4000000, 0x2000000 },
-            { "ax3403m01.mrom3", 0x6000000, 0x2000000 },
-            { "ax3404m01.mrom4", 0xa000000, 0x2000000 },
-            { "ax3405m01.mrom5", 0xc000000, 0x2000000 },
-            { NULL, 0, 0 },
+            { "ax3401p01.fmem1", 0x0000000, 0x0800000, 0xa33601cf },
+            { "ax3401m01.mrom1", 0x2000000, 0x2000000, 0x60894d4c },
+            { "ax3402m01.mrom2", 0x4000000, 0x2000000, 0xe4224cc9 },
+            { "ax3403m01.mrom3", 0x6000000, 0x2000000, 0x081c0edb },
+            { "ax3404m01.mrom4", 0xa000000, 0x2000000, 0xa426b443 },
+            { "ax3405m01.mrom5", 0xc000000, 0x2000000, 0x4766ce56 },
         },
 		nullptr,
 		&rumblef_inputs,
@@ -7002,23 +6907,22 @@ const Game Games[] =
         AW,
         ROT0,
         {
-            { "ic12", 0x00000000, 0x00800000 },
-            { "ic13", 0x00800000, 0x00800000 },
-            { "ic14", 0x01000000, 0x00800000 },
-            { "ic15", 0x01800000, 0x00800000 },
-            { "ic16", 0x02000000, 0x00800000 },
-            { "ic17", 0x02800000, 0x00800000 },
-            { "ic18", 0x03000000, 0x00800000 },
-            { "ic19", 0x03800000, 0x00800000 },
-            { "ic20", 0x04000000, 0x00800000 },
-            { "ic21", 0x04800000, 0x00800000 },
-            { "ic22", 0x05000000, 0x00800000 },
-            { "ic23", 0x05800000, 0x00800000 },
-            { "ic24", 0x06000000, 0x00800000 },
-            { "ic25", 0x06800000, 0x00800000 },
-            { "ic26", 0x07000000, 0x00800000 },
+            { "ic12", 0x00000000, 0x00800000, 0x1a0e74ab },
+            { "ic13", 0x00800000, 0x00800000, 0x5630bc83 },
+            { "ic14", 0x01000000, 0x00800000, 0x7fcfc59c },
+            { "ic15", 0x01800000, 0x00800000, 0xeee00692 },
+            { "ic16", 0x02000000, 0x00800000, 0xcd029db9 },
+            { "ic17", 0x02800000, 0x00800000, 0x223a5b58 },
+            { "ic18", 0x03000000, 0x00800000, 0x5e2d2f67 },
+            { "ic19", 0x03800000, 0x00800000, 0x3cfb2adc },
+            { "ic20", 0x04000000, 0x00800000, 0x2c216a05 },
+            { "ic21", 0x04800000, 0x00800000, 0x79540865 },
+            { "ic22", 0x05000000, 0x00800000, 0xc91d95a0 },
+            { "ic23", 0x05800000, 0x00800000, 0x5c39ca18 },
+            { "ic24", 0x06000000, 0x00800000, 0x858d2775 },
+            { "ic25", 0x06800000, 0x00800000, 0x975d35fb },
+            { "ic26", 0x07000000, 0x00800000, 0xff9a2c4c },
             // IC27 populated, empty
-            { NULL, 0, 0 },
         },
 		nullptr,
 		&rumblef_inputs,
@@ -7026,7 +6930,7 @@ const Game Games[] =
     // Net Select: Salaryman Kintaro
     {
         "salmankt",
-        NULL,
+		nullptr,
         "Net Select: Salaryman Kintaro",
         0x9000000,
         0x77,
@@ -7034,21 +6938,20 @@ const Game Games[] =
         AW,
         ROT0,
         {
-            { "ax1401p01.ic18", 0x0000000, 0x0800000 },
-            { "ax1401m01.ic11", 0x1000000, 0x1000000 },
-            { "ax1402m01.ic12", 0x2000000, 0x1000000 },
-            { "ax1403m01.ic13", 0x3000000, 0x1000000 },
-            { "ax1404m01.ic14", 0x4000000, 0x1000000 },
-            { "ax1405m01.ic15", 0x5000000, 0x1000000 },
-            { "ax1406m01.ic16", 0x6000000, 0x1000000 },
-            { "ax1407m01.ic17", 0x7000000, 0x1000000 },
-            { NULL, 0, 0 },
+            { "ax1401p01.ic18", 0x0000000, 0x0800000, 0x28d779e0 },
+            { "ax1401m01.ic11", 0x1000000, 0x1000000, 0xfd7af845 },
+            { "ax1402m01.ic12", 0x2000000, 0x1000000, 0xf6006f85 },
+            { "ax1403m01.ic13", 0x3000000, 0x1000000, 0x074f7c4b },
+            { "ax1404m01.ic14", 0x4000000, 0x1000000, 0xaf4e3829 },
+            { "ax1405m01.ic15", 0x5000000, 0x1000000, 0xb548446f },
+            { "ax1406m01.ic16", 0x6000000, 0x1000000, 0x437673e6 },
+            { "ax1407m01.ic17", 0x7000000, 0x1000000, 0x6b6acc0a },
         }
     },
     // Samurai Shodown VI / Samurai Spirits Tenkaichi Kenkakuden
     {
         "samsptk",
-        NULL,
+		nullptr,
         "Samurai Shodown VI",
         0x14000000,
         0x1d,
@@ -7056,23 +6959,22 @@ const Game Games[] =
         AW,
         ROT0,
         {
-            { "ax2901p01.fmem1", 0x00000000, 0x0800000 },
-            { "ax2901m01.mrom1", 0x02000000, 0x2000000 },
-            { "ax2902m01.mrom2", 0x04000000, 0x2000000 },
-            { "ax2903m01.mrom3", 0x06000000, 0x2000000 },
-            { "ax2904m01.mrom4", 0x0a000000, 0x2000000 },
-            { "ax2905m01.mrom5", 0x0c000000, 0x2000000 },
-            { "ax2906m01.mrom6", 0x0e000000, 0x2000000 },
-            { "ax2907m01.mrom7", 0x12000000, 0x2000000 },
-            { NULL, 0, 0 },
+            { "ax2901p01.fmem1", 0x00000000, 0x0800000, 0x58e0030b },
+            { "ax2901m01.mrom1", 0x02000000, 0x2000000, 0xdbbbd90d },
+            { "ax2902m01.mrom2", 0x04000000, 0x2000000, 0xa3bd7890 },
+            { "ax2903m01.mrom3", 0x06000000, 0x2000000, 0x56f50fdd },
+            { "ax2904m01.mrom4", 0x0a000000, 0x2000000, 0x8a3ae175 },
+            { "ax2905m01.mrom5", 0x0c000000, 0x2000000, 0x429877ba },
+            { "ax2906m01.mrom6", 0x0e000000, 0x2000000, 0xcb95298d },
+            { "ax2907m01.mrom7", 0x12000000, 0x2000000, 0x48015081 },
         },
-        NULL,
+		nullptr,
         &samsptk_inputs,
     },
     // Sports Shooting USA
     {
         "sprtshot",
-        NULL,
+        nullptr,
         "Sports Shooting USA",
         0x8000000,
         0x64,
@@ -7080,18 +6982,17 @@ const Game Games[] =
         AW,
         ROT0,
         {
-            { "ax0101p01.ic18", 0x0000000, 0x0800000 },
-            { "ax0101m01.ic11", 0x1000000, 0x1000000 },
-            { "ax0102m01.ic12", 0x2000000, 0x1000000 },
-            { "ax0103m01.ic13", 0x3000000, 0x1000000 },
-            { "ax0104m01.ic14", 0x4000000, 0x1000000 },
-            { NULL, 0, 0 },
+            { "ax0101p01.ic18", 0x0000000, 0x0800000, 0xb3642b5d },
+            { "ax0101m01.ic11", 0x1000000, 0x1000000, 0x1e39184d },
+            { "ax0102m01.ic12", 0x2000000, 0x1000000, 0x700764d1 },
+            { "ax0103m01.ic13", 0x3000000, 0x1000000, 0x6144e7a8 },
+            { "ax0104m01.ic14", 0x4000000, 0x1000000, 0xccb72150 },
         }
     },
     // Sushi Bar
     {
         "sushibar",
-        NULL,
+		nullptr,
         "Sushi Bar",
         0x8000000,
         0x25,
@@ -7099,13 +7000,13 @@ const Game Games[] =
         AW,
         ROT0,
         {
-            { "ic12", 0x00000000, 0x00800000 },
-            { "ic14", 0x01000000, 0x00800000 },
-            { "ic15", 0x01800000, 0x00800000 },
-            { "ic16", 0x02000000, 0x00800000 },
-            { "ic17", 0x02800000, 0x00800000 },
-            { "ic18", 0x03000000, 0x00800000 },
-            { NULL, 0, 0 },
+            { "ic12", 0x00000000, 0x00800000, 0x06a2ed58 },
+			// IC 13 populated, empty
+            { "ic14", 0x01000000, 0x00800000, 0x4860f944 },
+            { "ic15", 0x01800000, 0x00800000, 0x7113506c },
+            { "ic16", 0x02000000, 0x00800000, 0x77e8e39e },
+            { "ic17", 0x02800000, 0x00800000, 0x0eba54ea },
+            { "ic18", 0x03000000, 0x00800000, 0xb9957c76 },
         }
     },
     // Net Select Horse Racing: Victory Furlong"
@@ -7120,6 +7021,8 @@ const Game Games[] =
         ROT0,
         {
             { "ax2001p01.ic18", 0x0000000, 0x0800000, 0x17ea9aa9 },
+			// same as above except for Customer ID, included for reference
+			// { "ax2001p01_alt.ic18", 0x0000000, 0x0800000, 0x845399dd },
             { "ax2001m01.ic11", 0x1000000, 0x1000000, 0x64460b24 },
             { "ax2002m01.ic12", 0x2000000, 0x1000000, 0xd4da357f },
             { "ax2003m01.ic13", 0x3000000, 0x1000000, 0xaa1e1246 },
@@ -7132,7 +7035,7 @@ const Game Games[] =
     // WaiWai Drive
     {
         "waidrive",
-        NULL,
+		nullptr,
         "WaiWai Drive",
         0x4000000,
         0x45,
@@ -7140,15 +7043,19 @@ const Game Games[] =
         AW,
         ROT270,
         {
-            { "u3", 0x0000000, 0x1000000 },
-            { "u1", 0x1000000, 0x1000000 },
-            { NULL, 0, 0 },
+            { "u3", 0x0000000, 0x1000000, 0x7acfb499 },
+            { "u1", 0x1000000, 0x1000000, 0xb3c1c3bb },
+			// garbage data not used by this game, match anmlbskta U4
+			//{ "u4",  0x2000000, 0x1000000, 0x646e9773 },
+			// garbage data not used by this game, match anmlbskta U2
+			//{ "u2",  0x3000000, 0x1000000, 0xb9162d97 },
+			// U14-U17 not populated
         }
     },
     // Extreme Hunting
     {
         "xtrmhunt",
-        NULL,
+        nullptr,
         "Extreme Hunting",
         0x8000000,
         0xe4,
@@ -7156,19 +7063,19 @@ const Game Games[] =
         AW,
         ROT0,
         {
-            { "ax2401p01.ic18", 0x0000000, 0x0800000 },
-            { "ax2401m01.ic11", 0x1000000, 0x1000000 },
-            { "ax2402m01.ic12", 0x2000000, 0x1000000 },
-            { "ax2403m01.ic13", 0x3000000, 0x1000000 },
-            { "ax2404m01.ic14", 0x4000000, 0x1000000 },
-            { "ax2405m01.ic15", 0x5000000, 0x1000000 },
-            { "ax2406m01.ic16", 0x6000000, 0x1000000 },
+            { "ax2401p01.ic18", 0x0000000, 0x0800000, 0x8e2a11f5 },
+            { "ax2401m01.ic11", 0x1000000, 0x1000000, 0x76dbc286 },
+            { "ax2402m01.ic12", 0x2000000, 0x1000000, 0xcd590ea2 },
+            { "ax2403m01.ic13", 0x3000000, 0x1000000, 0x06f62eb5 },
+            { "ax2404m01.ic14", 0x4000000, 0x1000000, 0x759ef5cb },
+            { "ax2405m01.ic15", 0x5000000, 0x1000000, 0x940d77f1 },
+            { "ax2406m01.ic16", 0x6000000, 0x1000000, 0xcbcf2c5d },
         }
     },
     // Extreme Hunting 2
     {
         "xtrmhnt2",
-        NULL,
+        nullptr,
         "Extreme Hunting 2",
         0x8000000,
         0x2a,
@@ -7176,20 +7083,18 @@ const Game Games[] =
         AW,
         ROT0,
         {
-            { "610-0752.u3",    0x0000000, 0x1000000 },
-            { "610-0752.u1",    0x1000000, 0x1000000 },
-            { "610-0752.u4",    0x2000000, 0x1000000 },
-            { "610-0752.u2",    0x3000000, 0x1000000 },
-            { "610-0752.u15",   0x4000000, 0x1000000 },
-            { "610-0752.u17",   0x5000000, 0x1000000 },
-            { "610-0752.u14",   0x6000000, 0x1000000 },
-            { "610-0752.u16",   0x7000000, 0x1000000 },
+            { "610-0752.u3",    0x0000000, 0x1000000, 0xbab6182e },
+            { "610-0752.u1",    0x1000000, 0x1000000, 0x3086bc47 },
+            { "610-0752.u4",    0x2000000, 0x1000000, 0x9787f145 },
+            { "610-0752.u2",    0x3000000, 0x1000000, 0xd3a88b31 },
+            { "610-0752.u15",   0x4000000, 0x1000000, 0x864a6342 },
+            { "610-0752.u17",   0x5000000, 0x1000000, 0xa79fb1fa },
+            { "610-0752.u14",   0x6000000, 0x1000000, 0xce83bcc7 },
+            { "610-0752.u16",   0x7000000, 0x1000000, 0x8ac71c76 },
 
             //ROM_REGION( 0x1400000, "network", 0)    // network board
             //ROM_LOAD( "fpr-24330a.ic2", 0x000000, 0x400000, CRC(8d89877e) SHA1(6caafc49114eb0358e217bc2d1a3ab58a93c8d19) )
             //ROM_LOAD( "flash128.ic4s", 0x400000, 0x1000000, CRC(866ed675) SHA1(2c4c06935b7ab1876e640cede51713b841833567) )
-
-            { NULL, 0, 0 },
         }
     },
 	//

@@ -276,7 +276,8 @@ void saveScreenshot(const std::string& name, const std::vector<u8>& data)
 static std::string getScreenshotsPath()
 {
 	wchar_t *screenshotPath;
-	if (FAILED(SHGetKnownFolderPath(FOLDERID_Screenshots, KF_FLAG_DEFAULT, NULL, &screenshotPath)))
+	if (FAILED(SHGetKnownFolderPath(FOLDERID_Screenshots, KF_FLAG_CREATE, NULL, &screenshotPath))
+			&& FAILED(SHGetKnownFolderPath(FOLDERID_Pictures, KF_FLAG_CREATE, NULL, &screenshotPath)))
 		return get_writable_config_path("");
 	nowide::stackstring path;
 	std::string ret;

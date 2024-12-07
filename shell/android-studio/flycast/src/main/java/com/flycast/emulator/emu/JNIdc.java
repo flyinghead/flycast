@@ -15,6 +15,7 @@ public final class JNIdc
 	public static native void pause();
 	public static native void resume();
 	public static native void stop();
+	public static native void disableOmpAffinity();
 
 	public static native void rendinitNative(Surface surface, int w, int h);
 

@@ -39,7 +39,7 @@ public:
 
 protected:
 	VulkanContext *GetContext() const { return VulkanContext::Instance(); }
-	TileClipping SetTileClip(u32 val, vk::Rect2D& clipRect);
+	TileClipping SetTileClip(vk::CommandBuffer cmdBuffer, u32 val, vk::Rect2D& clipRect);
 	void SetBaseScissor(const vk::Extent2D& viewport = vk::Extent2D());
 	void scaleAndWriteFramebuffer(vk::CommandBuffer commandBuffer, FramebufferAttachment *finalFB);
 
@@ -298,6 +298,8 @@ public:
 		framebuffers.clear();
 		colorAttachments.clear();
 		depthAttachment.reset();
+		transitionNeeded.clear();
+		clearNeeded.clear();
 		Drawer::Term();
 	}
 
@@ -333,6 +335,7 @@ private:
 	std::vector<bool> clearNeeded;
 	bool frameRendered = false;
 	float aspectRatio = 0.f;
+	bool emulateFramebuffer = false;
 };
 
 class TextureDrawer : public Drawer

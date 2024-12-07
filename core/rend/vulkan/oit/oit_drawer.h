@@ -83,6 +83,7 @@ protected:
 	void MakeBuffers(int width, int height, vk::ImageUsageFlags colorUsage = {});
 	virtual vk::Framebuffer getFramebuffer(int renderPass, int renderPassCount) = 0;
 	int getFramebufferIndex() { return framebufferIndex; }
+	virtual vk::ImageLayout getAttachmentInitialLayout() = 0;
 
 	vk::Rect2D viewport;
 	std::array<std::unique_ptr<FramebufferAttachment>, 2> colorAttachments;
@@ -138,6 +139,7 @@ public:
 	void Init(SamplerManager *samplerManager, OITShaderManager *shaderManager, OITBuffers *oitBuffers,
 			const vk::Extent2D& viewport)
 	{
+		emulateFramebuffer = config::EmulateFramebuffer;
 		if (!screenPipelineManager) {
 			screenPipelineManager = std::make_unique<OITPipelineManager>();
 			screenPipelineManager->Init(shaderManager, oitBuffers);
@@ -160,7 +162,7 @@ public:
 		if (!frameStarted)
 			return;
 		frameStarted = false;
-		if (config::EmulateFramebuffer) {
+		if (emulateFramebuffer) {
 			scaleAndWriteFramebuffer(currentCommandBuffer, colorAttachments[framebufferIndex].get());
 		}
 		else
@@ -189,6 +191,9 @@ public:
 
 protected:
 	vk::Framebuffer getFramebuffer(int renderPass, int renderPassCount) override;
+	vk::ImageLayout getAttachmentInitialLayout() override {
+		return emulateFramebuffer ? vk::ImageLayout::eTransferSrcOptimal : vk::ImageLayout::eShaderReadOnlyOptimal;
+	}
 
 private:
 	void MakeFramebuffers(const vk::Extent2D& viewport);
@@ -197,6 +202,7 @@ private:
 	bool frameRendered = false;
 	float aspectRatio = 0.f;
 	bool frameStarted = false;
+	bool emulateFramebuffer = false;
 };
 
 class OITTextureDrawer : public OITDrawer
@@ -225,6 +231,9 @@ public:
 protected:
 	vk::CommandBuffer NewFrame() override;
 	vk::Framebuffer getFramebuffer(int renderPass, int renderPassCount) override;
+	vk::ImageLayout getAttachmentInitialLayout() override {
+		return config::RenderToTextureBuffer ? vk::ImageLayout::eTransferSrcOptimal : vk::ImageLayout::eShaderReadOnlyOptimal;
+	}
 
 private:
 	u32 textureAddr = 0;
