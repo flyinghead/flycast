@@ -285,14 +285,7 @@ private:
 			{
 				// Replace shld/shad with shl/shr/sar
 				u32 r2 = op.rs2.imm_value();
-				if ((r2 & 0x80000000) == 0)
-				{
-					// rd = r1 << (r2 & 0x1F)
-					op.op = shop_shl;
-					op.rs2._imm = r2 & 0x1F;
-					stats.constant_ops_replaced++;
-				}
-				else if ((r2 & 0x1F) == 0)
+				if ((r2 & 0x1F) == 0)
 				{
 					if (op.op == shop_shld)
 						// rd = 0
@@ -304,6 +297,13 @@ private:
 						op.rs2._imm = 31;
 						stats.constant_ops_replaced++;
 					}
+				}
+				else if ((r2 & 0x80000000) == 0)
+				{
+					// rd = r1 << (r2 & 0x1F)
+					op.op = shop_shl;
+					op.rs2._imm = r2 & 0x1F;
+					stats.constant_ops_replaced++;
 				}
 				else
 				{
