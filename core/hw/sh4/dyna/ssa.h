@@ -285,32 +285,36 @@ private:
 			{
 				// Replace shld/shad with shl/shr/sar
 				u32 r2 = op.rs2.imm_value();
-				if ((r2 & 0x1F) == 0)
+				if (r2 != 0)	// r2 == 0 is nop, handled in SimplifyExpressionPass()
 				{
-					if (op.op == shop_shld)
-						// rd = 0
-						ReplaceByMov32(op, 0);
-					else
+					if ((r2 & 0x1F) == 0)
 					{
-						// rd = r1 >> 31;
-						op.op = shop_sar;
-						op.rs2._imm = 31;
+						if (op.op == shop_shld) {
+							// rd = 0
+							ReplaceByMov32(op, 0);
+						}
+						else
+						{
+							// rd = r1 >> 31
+							op.op = shop_sar;
+							op.rs2._imm = 31;
+							stats.constant_ops_replaced++;
+						}
+					}
+					else if ((r2 & 0x80000000) == 0)
+					{
+						// rd = r1 << (r2 & 0x1F)
+						op.op = shop_shl;
+						op.rs2._imm = r2 & 0x1F;
 						stats.constant_ops_replaced++;
 					}
-				}
-				else if ((r2 & 0x80000000) == 0)
-				{
-					// rd = r1 << (r2 & 0x1F)
-					op.op = shop_shl;
-					op.rs2._imm = r2 & 0x1F;
-					stats.constant_ops_replaced++;
-				}
-				else
-				{
-					// rd = r1 >> ((~r2 & 0x1F) + 1)
-					op.op = op.op == shop_shad ? shop_sar : shop_shr;
-					op.rs2._imm = (~r2 & 0x1F) + 1;
-					stats.constant_ops_replaced++;
+					else
+					{
+						// rd = r1 >> ((~r2 & 0x1F) + 1)
+						op.op = op.op == shop_shad ? shop_sar : shop_shr;
+						op.rs2._imm = (~r2 & 0x1F) + 1;
+						stats.constant_ops_replaced++;
+					}
 				}
 			}
 		}
