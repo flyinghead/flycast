@@ -30,15 +30,25 @@
 						 { NAOMI_TEST_KEY, "" }, \
 						 { NAOMI_SERVICE_KEY, "" },
 #define NAO_START_DESC { NAOMI_START_KEY, "" },
+#define NAO_DPAD_DESC	{ NAOMI_UP_KEY, "" },		\
+						{ NAOMI_DOWN_KEY, "" },		\
+						{ NAOMI_LEFT_KEY, "" },		\
+						{ NAOMI_RIGHT_KEY, "" },	\
+
+#define INPUT_1_BUTTON(btn0) {			\
+	{									\
+		{ NAOMI_BTN0_KEY, btn0 },		\
+		NAO_DPAD_DESC					\
+		NAO_START_DESC					\
+		NAO_BASE_BTN_DESC				\
+	}									\
+}
 
 #define INPUT_2_BUTTONS(btn0, btn1) {	\
 	{									\
 		{ NAOMI_BTN0_KEY, btn0 },		\
 		{ NAOMI_BTN1_KEY, btn1 },		\
-		{ NAOMI_UP_KEY, "" },			\
-		{ NAOMI_DOWN_KEY, "" },		\
-		{ NAOMI_LEFT_KEY, "" },		\
-		{ NAOMI_RIGHT_KEY, "" },	\
+		NAO_DPAD_DESC					\
 		NAO_START_DESC					\
 		NAO_BASE_BTN_DESC				\
 	}									\
@@ -49,10 +59,7 @@
 		{ NAOMI_BTN0_KEY, btn0 },		\
 		{ NAOMI_BTN1_KEY, btn1 },		\
 		{ NAOMI_BTN2_KEY, btn2 },		\
-		{ NAOMI_UP_KEY, "" },			\
-		{ NAOMI_DOWN_KEY, "" },		\
-		{ NAOMI_LEFT_KEY, "" },		\
-		{ NAOMI_RIGHT_KEY, "" },	\
+		NAO_DPAD_DESC					\
 		NAO_START_DESC					\
 		NAO_BASE_BTN_DESC				\
 	}									\
@@ -64,10 +71,7 @@
 		{ NAOMI_BTN1_KEY, btn1 },		\
 		{ NAOMI_BTN2_KEY, btn2 },		\
 		{ NAOMI_BTN3_KEY, btn3 },		\
-		{ NAOMI_UP_KEY, "" },			\
-		{ NAOMI_DOWN_KEY, "" },		\
-		{ NAOMI_LEFT_KEY, "" },		\
-		{ NAOMI_RIGHT_KEY, "" },	\
+		NAO_DPAD_DESC					\
 		NAO_START_DESC					\
 		NAO_BASE_BTN_DESC				\
 	}									\
@@ -80,14 +84,17 @@
 		{ NAOMI_BTN2_KEY, btn2 },		\
 		{ NAOMI_BTN3_KEY, btn3 },		\
 		{ NAOMI_BTN5_KEY, btn4, NAOMI_BTN4_KEY },		\
-		{ NAOMI_UP_KEY, "" },			\
-		{ NAOMI_DOWN_KEY, "" },		\
-		{ NAOMI_LEFT_KEY, "" },		\
-		{ NAOMI_RIGHT_KEY, "" },	\
+		NAO_DPAD_DESC					\
 		NAO_START_DESC					\
 		NAO_BASE_BTN_DESC				\
 	}									\
 }
+
+static InputDescriptors service_btns_inputs = {
+	{
+		NAO_BASE_BTN_DESC
+	}
+};
 
 static InputDescriptors _18wheelr_inputs = {
 	  {
@@ -145,10 +152,7 @@ static InputDescriptors capcom_4btn_inputs = {
 			{ NAOMI_BTN1_KEY, "HEAVY PUNCH" },
 			{ NAOMI_BTN3_KEY, "LIGHT KICK" },
 			{ NAOMI_BTN4_KEY, "HEAVY KICK" },
-			{ NAOMI_UP_KEY, "" },
-			{ NAOMI_DOWN_KEY, "" },
-			{ NAOMI_LEFT_KEY, "" },
-			{ NAOMI_RIGHT_KEY, "" },
+			NAO_DPAD_DESC					\
 			NAO_START_DESC
 			NAO_BASE_BTN_DESC
 	  },
@@ -162,10 +166,7 @@ static InputDescriptors capcom_6btn_inputs = {
 			{ NAOMI_BTN3_KEY, "LIGHT KICK" },
 			{ NAOMI_BTN4_KEY, "MEDIUM KICK" },
 			{ NAOMI_BTN5_KEY, "HEAVY KICK" },
-			{ NAOMI_UP_KEY, "" },
-			{ NAOMI_DOWN_KEY, "" },
-			{ NAOMI_LEFT_KEY, "" },
-			{ NAOMI_RIGHT_KEY, "" },
+			NAO_DPAD_DESC					\
 			NAO_START_DESC
 			NAO_BASE_BTN_DESC
 	  },
@@ -193,9 +194,10 @@ static InputDescriptors toyfight_inputs = INPUT_3_BUTTONS("Punch", "Kick", "Dodg
 
 static InputDescriptors ausfache_inputs = INPUT_3_BUTTONS("Weak Attack", "Medium Attack", "Strong Attack");
 
-static InputDescriptors trigger_inputs = {
+static InputDescriptors lightgun_inputs = {
 	  {
 			{ NAOMI_BTN0_KEY, "TRIGGER" },
+			{ NAOMI_RELOAD_KEY, "" },
 			NAO_START_DESC
 			NAO_BASE_BTN_DESC
 	  },
@@ -241,10 +243,7 @@ static InputDescriptors mvsc2_inputs = {
 			{ NAOMI_BTN3_KEY, "LIGHT KICK" },
 			{ NAOMI_BTN4_KEY, "STRONG KICK" },
 			{ NAOMI_BTN5_KEY, "ASSIST B" },
-			{ NAOMI_UP_KEY, "" },
-			{ NAOMI_DOWN_KEY, "" },
-			{ NAOMI_LEFT_KEY, "" },
-			{ NAOMI_RIGHT_KEY, "" },
+			NAO_DPAD_DESC					\
 			NAO_START_DESC
 			NAO_BASE_BTN_DESC
 	  },
@@ -255,6 +254,7 @@ static InputDescriptors ninjaslt_inputs = {
 			{ NAOMI_BTN2_KEY, "ENTER", NAOMI_BTN0_KEY },
 			{ NAOMI_START_KEY, "", NAOMI_BTN2_KEY, 0, NAOMI_BTN3_KEY },
 			{ NAOMI_BTN0_KEY, "TRIGGER", NAOMI_BTN4_KEY, 0, NAOMI_BTN5_KEY },
+			{ NAOMI_RELOAD_KEY, "" },
 			{ NAOMI_UP_KEY, "SELECT UP" },
 			{ NAOMI_DOWN_KEY, "SELECT DOWN" },
 			NAO_BASE_BTN_DESC
@@ -301,7 +301,7 @@ static InputDescriptors pstone2_inputs = INPUT_3_BUTTONS("Punch", "Jump", "Attac
 
 static InputDescriptors shot1234_inputs = INPUT_4_BUTTONS("SHOT1", "SHOT2", "SHOT3", "SHOT4");
 
-static InputDescriptors radirgyn_inputs = INPUT_3_BUTTONS("SHOOT", "SWORD", "SHIELD/SPECIAL");
+static InputDescriptors radirgy_inputs = INPUT_3_BUTTONS("SHOOT", "SWORD", "SHIELD/SPECIAL");
 
 static InputDescriptors mamonoro_inputs = INPUT_2_BUTTONS("SHOOT", "SPECIAL");
 
@@ -406,10 +406,7 @@ static InputDescriptors zombie_inputs = {
 			{ NAOMI_BTN0_KEY, "L" },
 			{ NAOMI_BTN1_KEY, "R" },
 			{ NAOMI_BTN2_KEY, "G" },
-			{ NAOMI_UP_KEY, "" },
-			{ NAOMI_DOWN_KEY, "" },
-			{ NAOMI_LEFT_KEY, "" },
-			{ NAOMI_RIGHT_KEY, "" },
+			NAO_DPAD_DESC					\
 			NAO_START_DESC
 			NAO_BASE_BTN_DESC
 	  },
@@ -470,6 +467,7 @@ static InputDescriptors guilty_gear_inputs = INPUT_5_BUTTONS("KICK", "SLASH", "H
 
 static InputDescriptors ggx_inputs = INPUT_4_BUTTONS("PUNCH", "KICK", "SLASH", "HSLASH");
 
+static InputDescriptors senko_inputs = INPUT_3_BUTTONS("ACTION", "MAIN", "SUB");
 static InputDescriptors senkosp_inputs = INPUT_5_BUTTONS("MAIN", "SUB", "MAIN+SUB", "ACTION", "OVER DRIVE");
 
 static InputDescriptors meltyb_inputs = INPUT_5_BUTTONS("LAttack", "MAttack", "HAttack", "Guard", "Quick Action");
@@ -496,6 +494,34 @@ static InputDescriptors shootout_inputs = {
 
 static InputDescriptors vf4_inputs = INPUT_3_BUTTONS("PUNCH", "KICK", "GUARD");
 
+static InputDescriptors crackindj_inputs = {
+	{
+			NAO_START_DESC
+			NAO_BASE_BTN_DESC
+	},
+	{
+			{ "FADER", Full, 0, true },
+	},
+};
+
+static InputDescriptors shaktam_inputs = {
+	{
+			NAO_START_DESC
+			NAO_BASE_BTN_DESC
+			{ NAOMI_BTN0_KEY, "SHAKE L" },
+			{ NAOMI_BTN1_KEY, "SHAKE R" },
+			{ NAOMI_BTN2_KEY, "KNOCK", NAOMI_DOWN_KEY },
+			{ NAOMI_DOWN_KEY, "DOWN", NAOMI_LEFT_KEY },
+			{ NAOMI_UP_KEY, "UP", NAOMI_RIGHT_KEY },
+	},
+	{
+			{ "TAMBOURINE X", Full, 0 },
+			{ "TAMBOURINE Y", Full, 1 },
+			{ "", Full, 2 }, // unused but P2 starts at axis 4
+			{ "", Full, 3 }, // unused but P2 starts at axis 4
+	},
+};
+
 static InputDescriptors mushik_inputs = {
 	{
 		{ NAOMI_BTN0_KEY, "HIT" },
@@ -505,6 +531,98 @@ static InputDescriptors mushik_inputs = {
 	},
 };
 
+static InputDescriptors csmash_inputs = INPUT_2_BUTTONS("SMASH", "JUMP");
+static InputDescriptors otrigger_inputs = INPUT_3_BUTTONS("TRIGGER", "CHANGE", "JUMP");
+static InputDescriptors puyoda_inputs = INPUT_1_BUTTON("STAR");
+static InputDescriptors sgtetris_inputs = INPUT_2_BUTTONS("SW1", "SW2");
+static InputDescriptors virnba_inputs = INPUT_2_BUTTONS("PASS", "SHOOT");
+static InputDescriptors vs2_2k_inputs = INPUT_3_BUTTONS("LONG PASS", "SHOOT", "SHORT PASS");
+static InputDescriptors wwfroyal_inputs = INPUT_3_BUTTONS("ATTACK", "GRAPPLE", "SUPPORT");
+static InputDescriptors asndynmt_inputs = INPUT_3_BUTTONS("PUNCH", "KICK", "JUMP");
+static InputDescriptors illvelo_inputs = INPUT_3_BUTTONS("SHOT", "DOLL", "SPECIAL");
+static InputDescriptors rhytngk_inputs = INPUT_2_BUTTONS("SHOT A", "SHOT B");
+static InputDescriptors sl2007_inputs = INPUT_3_BUTTONS("PUSH 1", "PUSH 2", "PUSH 3");
+static InputDescriptors azumanga_inputs = INPUT_1_BUTTON("BUTTON A");
+static InputDescriptors bdrdown_inputs = INPUT_3_BUTTONS("SHOT", "LASER", "SPEED");
+static InputDescriptors cfield_inputs = INPUT_3_BUTTONS("TRG1", "TRG2", "TRG3");
+static InputDescriptors button12_inputs = INPUT_2_BUTTONS("BUTTON 1", "BUTTON 2");
+static InputDescriptors ikaruga_inputs = INPUT_2_BUTTONS("SHOT", "CHANGE");
+static InputDescriptors jingystm_inputs = INPUT_3_BUTTONS("GUARD", "PUNCH", "KICK");
+static InputDescriptors psyvariar_inputs = INPUT_2_BUTTONS("SHOT", "BOMB");
+static InputDescriptors puyofev_inputs = INPUT_2_BUTTONS("ROTATE1", "ROTATE2");
+static InputDescriptors spkrbtl_inputs = INPUT_4_BUTTONS("BEAT", "CHARGE", "JUMP", "SHIFT");
+static InputDescriptors trgheart_inputs = INPUT_3_BUTTONS("SHOT", "ANCHOR", "BOMB");
+static InputDescriptors vathlete_inputs = INPUT_3_BUTTONS("RUN1", "ACTION", "RUN2");
+
+static InputDescriptors samba_inputs = {
+	{
+		{ NAOMI_BTN0_KEY, "MARACAS R" },
+		{ NAOMI_BTN1_KEY, "MARACAS L" },
+		NAO_START_DESC
+		NAO_BASE_BTN_DESC
+	},
+	{
+		{ "MARACAS R X", Full, 0 },
+		{ "MARACAS R Y", Full, 1 },
+		{ "MARACAS L X", Full, 2 },
+		{ "MARACAS L Y", Full, 3 },
+	}
+};
+
+static InputDescriptors wldkicks_inputs = {
+	{
+		{ NAOMI_BTN0_KEY, "BUTTON" },
+		{ NAOMI_BTN3_KEY, "ENTER" },	// service mode
+		{ NAOMI_UP_KEY, "" },			// service mode
+		{ NAOMI_DOWN_KEY, "" },			// service mode
+		NAO_BASE_BTN_DESC
+	},
+	{
+		{ "STICK L/R", Full, 0 },	// P1
+		{ "STICK U/D", Full, 1 },
+		{ "", Full, 2 },			// P2
+		{ "", Full, 3 },
+		{ "", Full, 4 },			// P3
+		{ "", Full, 5 },
+		{ "", Full, 6 },			// P4
+		{ "", Full, 7 },
+		{ "KICK", Full, 8 },		// P1	FIXME need to set Full here to have read_analog_axis() called but not seen as trigger
+		{ "", Full, 9 },			// P2
+		{ "", Full, 10 },			// P3
+		{ "", Full, 11 },			// P4
+	}
+};
+static InputDescriptors wldkickspcb_inputs = {
+	{
+		{ NAOMI_BTN0_KEY, "CHANGE" },	// original label: C BUTTON
+		NAO_START_DESC
+		NAO_BASE_BTN_DESC
+	},
+	{
+		{ "STICK L/R", Full, 0 },
+		{ "STICK U/D", Full, 1 },
+		{ "", Full, 2 },
+//		{ "", Full, 3 },
+		{ "BALL", Half, 4 },	// this is wrong, just to indicate RT is used
+	}
+};
+
+static InputDescriptors dygolf_inputs = {
+	{
+		NAO_DPAD_DESC
+		NAO_START_DESC
+		NAO_BASE_BTN_DESC
+	}
+};
+
+static InputDescriptors kick4csh_inputs = {
+	{
+		{ NAOMI_BTN1_KEY, "VIEW" },
+		{ NAOMI_BTN2_KEY, "CHANCE" },
+		{ NAOMI_START_KEY, "START/DECIDE" },
+		NAO_BASE_BTN_DESC
+	}
+};
 //
 // AtomisWave games
 //
@@ -513,6 +631,11 @@ static InputDescriptors mushik_inputs = {
 						 { AWAVE_TEST_KEY, "" }, \
 						 { AWAVE_SERVICE_KEY, "" },
 #define AW_START_DESC { AWAVE_START_KEY, "" },
+#define AW_DPAD_DESC	{ AWAVE_UP_KEY, "" },		\
+						{ AWAVE_DOWN_KEY, "" },		\
+						{ AWAVE_LEFT_KEY, "" },		\
+						{ AWAVE_RIGHT_KEY, "" },
+
 
 #define AW_5_BUTTONS(btn0, btn1, btn2, btn3, btn4) {	\
 	{									\
@@ -521,10 +644,7 @@ static InputDescriptors mushik_inputs = {
 		{ AWAVE_BTN2_KEY, btn2 },		\
 		{ AWAVE_BTN3_KEY, btn3 },		\
 		{ AWAVE_BTN4_KEY, btn4 },		\
-		{ AWAVE_UP_KEY, "" },			\
-		{ AWAVE_DOWN_KEY, "" },		\
-		{ AWAVE_LEFT_KEY, "" },		\
-		{ AWAVE_RIGHT_KEY, "" },	\
+		AW_DPAD_DESC					\
 		AW_START_DESC					\
 		AW_BASE_BTN_DESC				\
 	}									\
@@ -536,10 +656,7 @@ static InputDescriptors mushik_inputs = {
 		{ AWAVE_BTN1_KEY, btn1 },		\
 		{ AWAVE_BTN2_KEY, btn2 },		\
 		{ AWAVE_BTN3_KEY, btn3 },		\
-		{ AWAVE_UP_KEY, "" },			\
-		{ AWAVE_DOWN_KEY, "" },		\
-		{ AWAVE_LEFT_KEY, "" },		\
-		{ AWAVE_RIGHT_KEY, "" },	\
+		AW_DPAD_DESC					\
 		AW_START_DESC					\
 		AW_BASE_BTN_DESC				\
 	}									\
@@ -550,10 +667,7 @@ static InputDescriptors mushik_inputs = {
 		{ AWAVE_BTN0_KEY, btn0 },		\
 		{ AWAVE_BTN1_KEY, btn1 },		\
 		{ AWAVE_BTN2_KEY, btn2 },		\
-		{ AWAVE_UP_KEY, "" },			\
-		{ AWAVE_DOWN_KEY, "" },		\
-		{ AWAVE_LEFT_KEY, "" },		\
-		{ AWAVE_RIGHT_KEY, "" },	\
+		AW_DPAD_DESC					\
 		AW_START_DESC					\
 		AW_BASE_BTN_DESC				\
 	}									\
@@ -624,6 +738,32 @@ static InputDescriptors fotns_inputs = AW_5_BUTTONS("LP", "HP", "BOOST", "LK", "
 static InputDescriptors mslug6_inputs = AW_5_BUTTONS("SHOOT", "JUMP", "GRENADE", "METAL SLUG ATTACK", "SWITCH WEAPONS");
 
 static InputDescriptors rumblef_inputs = AW_5_BUTTONS("LP", "SP", "Dodge", "LK", "SK");
+
+static InputDescriptors basschal_inputs = {
+	{
+		{ AWAVE_BTN0_KEY, "ROTATE LEFT" },
+		{ AWAVE_BTN1_KEY, "ROTATE RIGHT" },
+		{ AWAVE_LEFT_KEY, "LEFT POINT" },
+		{ AWAVE_RIGHT_KEY, "RIGHT POINT" },
+		AW_START_DESC
+		AW_BASE_BTN_DESC
+	},
+};
+
+static InputDescriptors aw_lightgun_inputs = {
+	{
+		{ AWAVE_BTN0_KEY, "TRIGGER" },
+		{ AWAVE_BTN1_KEY, "PUMP" },
+		AW_START_DESC
+		AW_BASE_BTN_DESC
+	},
+};
+
+static InputDescriptors aw_shot123_inputs = AW_3_BUTTONS("SHOT1", "SHOT2", "SHOT3");
+
+//
+// Naomi 2
+//
 
 static InputDescriptors kingrt66_inputs = {
 	{
@@ -745,33 +885,7 @@ static InputDescriptors drvsim_inputs = {
 	},
 };
 
-static InputDescriptors crackindj_inputs = {
-	{
-			NAO_START_DESC
-			NAO_BASE_BTN_DESC
-	},
-	{
-			{ "FADER", Full, 0, true },
-	},
-};
-
-static InputDescriptors shaktam_inputs = {
-	{
-			NAO_START_DESC
-			NAO_BASE_BTN_DESC
-			{ NAOMI_BTN0_KEY, "SHAKE L" },
-			{ NAOMI_BTN1_KEY, "SHAKE R" },
-			{ NAOMI_BTN2_KEY, "KNOCK", NAOMI_DOWN_KEY },
-			{ NAOMI_DOWN_KEY, "DOWN", NAOMI_LEFT_KEY },
-			{ NAOMI_UP_KEY, "UP", NAOMI_RIGHT_KEY },
-	},
-	{
-			{ "TAMBOURINE X", Full, 0 },
-			{ "TAMBOURINE Y", Full, 1 },
-			{ "", Full, 2 }, // unused but P2 starts at axis 4
-			{ "", Full, 3 }, // unused but P2 starts at axis 4
-	},
-};
+static InputDescriptors beachspi_inputs = INPUT_2_BUTTONS("A", "B");
 
 //
 // System SP games
@@ -790,6 +904,19 @@ static InputDescriptors lovebery_inputs = {
 	{
 		{ DC_BTN_A, "P1 BUTTON" },
 		{ DC_BTN_B, "P2 BUTTON", 0, DC_BTN_A },
+		NAO_BASE_BTN_DESC
+	},
+};
+
+static InputDescriptors tetgiant_inputs = {
+	{
+		{ DC_BTN_A, "BUTTON L" },
+		{ DC_BTN_B, "BUTTON R" },
+		{ DC_DPAD_UP, "" },
+		{ DC_DPAD_DOWN, "" },
+		{ DC_DPAD_LEFT, "" },
+		{ DC_DPAD_RIGHT, "" },
+		{ DC_BTN_START, "" },
 		NAO_BASE_BTN_DESC
 	},
 };

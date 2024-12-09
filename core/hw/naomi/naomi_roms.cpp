@@ -275,7 +275,7 @@ const Game Games[] =
     // Kick '4' Cash (Export)
     {
         "kick4csh",
-        NULL,
+		nullptr,
         "Kick '4' Cash (Export)",
         0x9000000,
         0x820857c9,
@@ -305,25 +305,22 @@ const Game Games[] =
             //ROM_REGION(0x200, "some_eeprom", 0)
             //ROM_LOAD( "25lc040.ic13s", 0, 0x200, CRC(1576366a) SHA1(3e8bf3dbc8a248a6863242b78d5c6e53a869e951) )
 
-            // TODO Need emulation of 837-14438 board on serial port
             //ROM_REGION(0x220000, "hopper_board", 0)
             //ROM_LOAD( "fpr-24150.ic6",   0x0000000, 0x200000, CRC(3845c34c) SHA1(027b17bac64482ee152773d5fab30fcbc6e2bcb7) ) // SH4 code
             //ROM_LOAD( "6372a.ic3",       0x0200000, 0x020000, CRC(f30839ad) SHA1(ea1a32c4da1ed9745300bcdd7964a7c0964e3221) ) // FPGA config
-
-            { NULL, 0, 0 },
         },
-        NULL,
-        NULL,
+		nullptr,
+		&kick4csh_inputs,
         kick4csh_eeprom_dump
     },
     // Marvel vs. Capcom 2 New Age of Heroes (Export, Korea, Rev A)
     {
         "mvsc2",
-        NULL,
+		nullptr,
         "Marvel vs. Capcom 2 New Age of Heroes (Export, Korea)",
         0x08800000,
         0xc18b6e7c,
-        NULL,
+		"naomi",
         M1,
         ROT0,
         {
@@ -351,10 +348,8 @@ const Game Games[] =
 
             //ROM_REGION(0x200, "some_eeprom", 0)
             //ROM_LOAD( "25lc040.ic13s", 0x000000, 0x200, CRC(dc449637) SHA1(6cab09f61be1498271a36bff6a114a4eeeb00e1a) )
-
-            { NULL, 0, 0 },
         },
-        NULL,
+		nullptr,
         &mvsc2_inputs,
 		mvsc2_eeprom_dump,
     },
@@ -420,7 +415,6 @@ const Game Games[] =
             { "mpr-23224.ic30s", 0x7000002, 0x0800000,  0x0000000, InterleavedWord },
             { "mpr-23225.ic31",  0x8000000, 0x0800000,  0x0000000, InterleavedWord },
             { "mpr-23226.ic32s", 0x8000002, 0x0800000,  0x0000000, InterleavedWord },
-            { NULL, 0, 0 },
         }
     },
     // Shootout Pool
@@ -534,11 +528,9 @@ const Game Games[] =
 
             //ROM_REGION(0x200, "some_eeprom", 0)
             //ROM_LOAD( "25lc040.ic13s", 0, 0x200, CRC(6291605c) SHA1(44f757da4814b08108d1a4f431c9a39c38acecb2) )
-
-            { NULL, 0, 0 },
         },
 		nullptr,
-		nullptr,
+		&service_btns_inputs,
 		tduno2_eeprom_dump,
     },
     // Virtua Tennis 2 / Power Smash 2 (Rev A)
@@ -572,7 +564,6 @@ const Game Games[] =
             { "mpr-22323.ic33",  0x9000000, 0x800000,  0x0000000, InterleavedWord },
             { "mpr-22324.ic34s", 0x9000002, 0x800000,  0x0000000, InterleavedWord },
             { "copy",             0x0400000, 0xc00000,  0x0000000, Copy, 0x1000000 }, // changed
-            { NULL, 0, 0 },
         },
         nullptr,
         &shot12_inputs
@@ -768,7 +759,6 @@ const Game Games[] =
             { "mpr-22181.ic18s", 0x9000000, 0x800000 },
             { "mpr-22182.ic19s", 0x9800000, 0x800000 },
             { "mpr-22183.ic20s", 0xa000000, 0x800000 },
-            { NULL, 0, 0 },
         },
         NULL,
         &_18wheelr_inputs,
@@ -820,8 +810,6 @@ const Game Games[] =
             // 18 Wheeler motor controller 838-13992, code is for a TMPZ84C015 which is Z80 compatible
             //ROM_REGION( 0x10000, "motorio", ROMREGION_ERASEFF)
             //ROM_LOAD( "epr-23000.ic8", 0x000000, 0x010000, CRC(e3b162f7) SHA1(52c7ad759c3c4a3148764e14d77ba5006bc8af48) )
-
-            { NULL, 0, 0 },
         },
         NULL,
         &_18wheelr_inputs,
@@ -873,8 +861,6 @@ const Game Games[] =
             // 18 Wheeler motor controller 838-13992, code is for a TMPZ84C015 which is Z80 compatible
             //ROM_REGION( 0x10000, "motorio", ROMREGION_ERASEFF)
             //ROM_LOAD( "epr-23000.ic8", 0x000000, 0x010000, CRC(e3b162f7) SHA1(52c7ad759c3c4a3148764e14d77ba5006bc8af48) )
-
-            { NULL, 0, 0 },
         },
         NULL,
         &_18wheelr_inputs,
@@ -923,8 +909,6 @@ const Game Games[] =
             // 18 Wheeler motor controller 838-13992, code is for a TMPZ84C015 which is Z80 compatible
             //ROM_REGION( 0x10000, "motorio", ROMREGION_ERASEFF)
             //ROM_LOAD( "epr-23000.ic8", 0x000000, 0x010000, CRC(e3b162f7) SHA1(52c7ad759c3c4a3148764e14d77ba5006bc8af48) )
-
-            { NULL, 0, 0 },
         },
         NULL,
         &_18wheelr_inputs,
@@ -972,8 +956,6 @@ const Game Games[] =
 
             // 840-0023    2000     317-0273-COM   Naomi
             //ROM_PARAMETER( ":rom_board:segam2crypt:key", "2807cf54" )
-
-            { NULL, 0, 0 },
         },
         NULL,
         &_18wheelr_inputs, // no issue with wheel range on this version
@@ -1034,7 +1016,6 @@ const Game Games[] =
             { "mpr-21736.ic9",   0x4800000, 0x800000 },
             { "mpr-21737.ic10",  0x5000000, 0x800000 },
             { "mpr-21738.ic11",  0x5800000, 0x800000 },
-            { NULL, 0, 0 },
         },
         NULL,
         &alpilot_inputs,
@@ -1058,7 +1039,6 @@ const Game Games[] =
             { "mpr-23583.ic3",   0x2800000, 0x1000000 },
             { "mpr-23584.ic4",   0x3800000, 0x1000000 },
             { "mpr-23585.ic5",   0x4800000, 0x1000000 },
-            { NULL, 0, 0 },
         },
         NULL,
         &alienfnt_inputs,
@@ -1081,7 +1061,6 @@ const Game Games[] =
             { "mpr-23583.ic3",   0x2800000, 0x1000000 },
             { "mpr-23584.ic4",   0x3800000, 0x1000000 },
             { "mpr-23585.ic5",   0x4800000, 0x1000000 },
-            { NULL, 0, 0 },
         },
         NULL,
         &alienfnt_inputs,
@@ -1254,7 +1233,6 @@ const Game Games[] =
             { "mpr-21681.ic13s", 0x6800000, 0x800000 },
             { "mpr-21682.ic14s", 0x7000000, 0x800000 },
             { "mpr-21683.ic15s", 0x7800000, 0x800000 },
-            { NULL, 0, 0 },
         },
         NULL,
         &crzytaxi_inputs,
@@ -1280,9 +1258,9 @@ const Game Games[] =
             { "mpr-23425.ic6",   0x3000000, 0x0800000 },
             { "mpr-23426.ic7",   0x3800000, 0x0800000 },
             { "mpr-23427.ic8",   0x4000000, 0x0800000 },
-            { NULL, 0, 0 },
-        }
-        // SMASH, JUMP, udlr
+        },
+		nullptr,
+		&csmash_inputs,
     },
     // Cosmic Smash
     {
@@ -1304,8 +1282,9 @@ const Game Games[] =
             { "mpr-23425.ic6",  0x3000000, 0x0800000 },
             { "mpr-23426.ic7",  0x3800000, 0x0800000 },
             { "mpr-23427.ic8",  0x4000000, 0x0800000 },
-            { NULL, 0, 0 },
-        }
+        },
+		nullptr,
+		&csmash_inputs,
     },
     // Cannon Spike / Gun Spike
     {
@@ -1331,7 +1310,6 @@ const Game Games[] =
             { "mpr-23207.ic10",  0x5000000, 0x0800000 },
             { "mpr-23208.ic11",  0x5800000, 0x0800000 },
             { "mpr-23209.ic12s", 0x6000000, 0x0800000 },
-            { NULL, 0, 0 },
         },
         NULL,
         &cspike_inputs
@@ -1358,10 +1336,9 @@ const Game Games[] =
             { "mpr-23521.ic8",   0x4000000, 0x0800000 },
             { "mpr-23522.ic9",   0x4800000, 0x0800000 },
             { "mpr-23523.ic10",  0x5000000, 0x0800000 },
-            { NULL, 0, 0 },
         },
         NULL,
-        &trigger_inputs
+        &lightgun_inputs
     },
     // Death Crimson OX (USA)
     {
@@ -1385,10 +1362,9 @@ const Game Games[] =
 			{ "mpr-23521.ic8", 0x4000000, 0x0800000, 0xcf8674b8 },
 			{ "mpr-23522.ic9", 0x4800000, 0x0800000, 0x7ae6716e },
 			{ "mpr-23523.ic10",0x5000000, 0x0800000, 0xc91efb67 },
-
         },
         NULL,
-        &trigger_inputs
+        &lightgun_inputs
     },
     // Death Crimson OX
     {
@@ -1412,10 +1388,9 @@ const Game Games[] =
             { "mpr-23521.ic8",  0x4000000, 0x0800000 },
             { "mpr-23522.ic9",  0x4800000, 0x0800000 },
             { "mpr-23523.ic10", 0x5000000, 0x0800000 },
-            { NULL, 0, 0 },
         },
         NULL,
-        &trigger_inputs
+        &lightgun_inputs
     },
     // Derby Owners Club 2000 (Rev A)
     {
@@ -1799,7 +1774,6 @@ const Game Games[] =
             { "mpr-22138.ic17s", 0x8800000, 0x0800000 },
             { "mpr-22139.ic18s", 0x9000000, 0x0800000 },
             { "mpr-22140.ic19s", 0x9800000, 0x0800000 },
-            { NULL, 0, 0 },
         },
 		nullptr,
 		&wsbb_inputs,
@@ -1838,7 +1812,6 @@ const Game Games[] =
             { "mpr-21572.ic19s", 0x9800000, 0x0800000 },
             { "mpr-21573.ic20s", 0xa000000, 0x0800000 },
             { "mpr-21574.ic21s", 0xa800000, 0x0800000 },
-            { NULL, 0, 0 },
         },
 		nullptr,
 		&wsbb_inputs,
@@ -1882,8 +1855,6 @@ const Game Games[] =
             //ROM_REGION( 0x10000, "drivebd", 0 ) // drive board ROM
             //ROM_LOAD( "epr-21867p.bin", 0x000000, 0x010000, CRC(6143b911) SHA1(360ebc53696da7a29e6404376c82947563274835) ) // prototype preview
             //ROM_LOAD( "epr-21867.bin", 0x000000, 0x010000, CRC(4f93a2a0) SHA1(875907e7fcfc44850e2c60c12268ac61c742f217) )
-
-            { NULL, 0, 0 },
         },
 		nullptr,
 		&f355_inputs,
@@ -1923,7 +1894,6 @@ const Game Games[] =
             { "mpr-22845.ic19s", 0x9800000, 0x800000, 0x3327aed1 },
             { "mpr-22846.ic20s", 0xa000000, 0x800000, 0xd4148f39 },
             { "mpr-22847.ic21s", 0xa800000, 0x800000, 0x955ad42e },
-            { NULL, 0, 0 },
         },
 		nullptr,
 		&f355_inputs,
@@ -1963,7 +1933,6 @@ const Game Games[] =
             { "rom19.ic19s",     0x9800000, 0x800000, 0x3327aed1 },
             { "rom20.ic20s",     0xa000000, 0x800000, 0xd4148f39 },
             { "rom21.ic21s",     0xa800000, 0x800000, 0x955ad42e },
-            { NULL, 0, 0 },
         },
 		nullptr,
 		&f355_inputs,
@@ -2004,7 +1973,6 @@ const Game Games[] =
             { "mpr-23396.ic19s", 0x9800000, 0x800000 },
             { "mpr-23397.ic20s", 0xa000000, 0x800000 },
             { "mpr-23398.ic21s", 0xa800000, 0x800000 },
-            { NULL, 0, 0 },
         },
 		nullptr,
 		&f355_inputs,
@@ -2036,7 +2004,6 @@ const Game Games[] =
             { "mpr-21829.ic9",  0x4800000, 0x0800000 },
             { "mpr-21830.ic10", 0x5000000, 0x0800000 },
             { "mpr-21831.ic11", 0x5800000, 0x0800000 },
-            { NULL, 0, 0 },
         },
 		nullptr,
         &giant_gram_inputs,
@@ -2067,7 +2034,6 @@ const Game Games[] =
             { "mpr-23353.ic12s", 0x6000000, 0x0800000 },
             { "mpr-23354.ic13s", 0x6800000, 0x0800000 },
             { "mpr-23355.ic14s", 0x7000000, 0x0800000 },
-            { NULL, 0, 0 },
         },
 		nullptr,
 		&ggx_inputs,
@@ -2095,7 +2061,6 @@ const Game Games[] =
             { "mpr-23635.ic8",  0x7800000, 0x1000000 },
             { "mpr-23636.ic9",  0x8800000, 0x1000000 },
             { "mpr-23637.ic10", 0x9800000, 0x1000000 },
-            { NULL, 0, 0 },
         },
         NULL,
         &shot1234_inputs,
@@ -2127,7 +2092,6 @@ const Game Games[] =
             { "bhf1ma13.6n",  0xd000000, 0x1000000 },
             { "bhf1ma14.6m",  0xe000000, 0x1000000 },
             { "bhf1ma15.6l",  0xf000000, 0x1000000 },
-            { NULL, 0, 0 },
         },
         NULL,
         &gunsur2_inputs,
@@ -2159,7 +2123,6 @@ const Game Games[] =
             { "bhf1ma13.6n",  0xd000000, 0x1000000 },
             { "bhf1ma14.6m",  0xe000000, 0x1000000 },
             { "bhf1ma15.6l",  0xf000000, 0x1000000 },
-            { NULL, 0, 0 },
         },
         NULL,
         &gunsur2_inputs,
@@ -2183,7 +2146,6 @@ const Game Games[] =
             { "mpr-22273.ic3", 0x2800000, 0x1000000 },
             { "mpr-22274.ic4", 0x3800000, 0x1000000 },
             { "mpr-22275.ic5", 0x4800000, 0x1000000 },
-            { NULL, 0, 0 },
         },
         nullptr,
         &shot12_inputs,
@@ -2211,7 +2173,6 @@ const Game Games[] =
             { "mpr-23713.ic9",   0x4800000, 0x0800000 },
             { "mpr-23714.ic10",  0x5000000, 0x0800000 },
             { "mpr-23715.ic11",  0x5800000, 0x0800000 },
-            { NULL, 0, 0 },
         },
         NULL,
 		&hmgeo_inputs,
@@ -2250,10 +2211,9 @@ const Game Games[] =
             { "mpr-21403.ic18s", 0x9000000, 0x800000 },
             { "mpr-21404.ic19s", 0x9800000, 0x800000 },
             { "mpr-21405.ic20s", 0xa000000, 0x800000 },
-            { NULL, 0, 0 },
         },
 		nullptr,
-		nullptr,
+		&lightgun_inputs,
 		// no free play with eeprom
     },
     // The House of the Dead 2
@@ -2289,10 +2249,9 @@ const Game Games[] =
             { "mpr-21403.ic18s", 0x9000000, 0x800000 },
             { "mpr-21404.ic19s", 0x9800000, 0x800000 },
             { "mpr-21405.ic20s", 0xa000000, 0x800000 },
-            { NULL, 0, 0 },
         },
 		nullptr,
-		nullptr,
+		&lightgun_inputs,
 		// no free play with eeprom
     },
     // The House of the Dead 2 (Export)
@@ -2328,10 +2287,9 @@ const Game Games[] =
             { "mpr-21403.ic18s", 0x9000000, 0x800000 },
             { "mpr-21404.ic19s", 0x9800000, 0x800000 },
             { "mpr-21405.ic20s", 0xa000000, 0x800000 },
-            { NULL, 0, 0 },
         },
 		nullptr,
-		nullptr,
+		&lightgun_inputs,
 		// no free play with eeprom
     },
     // The House of the Dead 2 (prototype)
@@ -2370,7 +2328,7 @@ const Game Games[] =
             { "rom21.ic21s",     0xa800000, 0x800000, 0x256603d7 },
         },
 		nullptr,
-		nullptr,
+		&lightgun_inputs,
 		// no free play with eeprom
     },
     // Inu No Osanpo / Dog Walking (Japan, Export, Rev A)
@@ -2401,7 +2359,6 @@ const Game Games[] =
             { "rom14.ic14s",     0x7000000, 0x800000 },
             { "rom15.ic15s",     0x7800000, 0x800000 },
             { "rom16.ic16s",     0x8000000, 0x800000 },
-            { NULL, 0, 0 },
         }
     },
     // Jambo! Safari (Rev A)
@@ -2424,7 +2381,6 @@ const Game Games[] =
             { "mpr-22823.ic6",  0x3000000, 0x800000 },
             { "mpr-22824.ic7",  0x3800000, 0x800000 },
             { "mpr-22825.ic8",  0x4000000, 0x800000 },
-            { NULL, 0, 0 },
         },
         NULL,
         &jambo_inputs
@@ -2457,7 +2413,9 @@ const Game Games[] =
             { "mpr-22990.ic13s", 0x6800000, 0x800000 },
             { "mpr-22991.ic14s", 0x7000000, 0x800000 },
             { "mpr-22992.ic15s", 0x7800000, 0x800000 },
-        }
+        },
+		nullptr,
+		nullptr,	// TODO
     },
     // Mazan: Flash of the Blade (MAZ2 Ver. A)
     {
@@ -2629,7 +2587,6 @@ const Game Games[] =
 
             //ROM_REGION(0x84, "some_eeprom", 0)
             //ROM_LOAD("sflash.ic37", 0x000000, 0x000084, CRC(37a66f3c) SHA1(df6cd2cdc2813caa5da4dc9f171998485bcbdc44))
-            { NULL, 0, 0 },
         },
         NULL,
         &mvsc2_inputs,
@@ -2660,7 +2617,6 @@ const Game Games[] =
             { "nja1ma10.4b",     0xa000000, 0x1000000 },
             //ROM_REGION( 0x20000, "jyu_io", 0 )  // H8/3334-based I/O board ROM, eventually should be separated out
             //ROM_LOAD( "jyu1_prg0a.ic3", 0x000000, 0x020000, CRC(aec4dbc1) SHA1(bddd4f345baf7f594998a39c09da18b3834f0ac2) )
-            { NULL, 0, 0 },
         },
         NULL,
         &ninjaslt_inputs,
@@ -2692,7 +2648,6 @@ const Game Games[] =
 
             //ROM_REGION( 0x20000, "jyu_io", 0 )  // H8/3334-based I/O board ROM, eventually should be separated out
             //ROM_LOAD( "jyu1_prg0a.ic3", 0x000000, 0x020000, CRC(aec4dbc1) SHA1(bddd4f345baf7f594998a39c09da18b3834f0ac2) )
-            { NULL, 0, 0 },
         },
         NULL,
         &ninjaslt_inputs,
@@ -2724,8 +2679,6 @@ const Game Games[] =
 
             //ROM_REGION( 0x20000, "jyu_io", 0 )  // H8/3334-based I/O board ROM, eventually should be separated out
             //ROM_LOAD( "jyu1_prg0a.ic3", 0x000000, 0x020000, CRC(aec4dbc1) SHA1(bddd4f345baf7f594998a39c09da18b3834f0ac2) )
-
-            { NULL, 0, 0 },
         },
         NULL,
         &ninjaslt_inputs,
@@ -2757,8 +2710,6 @@ const Game Games[] =
 
             //ROM_REGION( 0x20000, "jyu_io", 0 )  // H8/3334-based I/O board ROM, eventually should be separated out
             //ROM_LOAD( "jyu1_prg0a.ic3", 0x000000, 0x020000, CRC(aec4dbc1) SHA1(bddd4f345baf7f594998a39c09da18b3834f0ac2) )
-
-            { NULL, 0, 0 },
         },
         NULL,
         &ninjaslt_inputs,
@@ -2781,7 +2732,6 @@ const Game Games[] =
             { "mpr-24056.ic3",  0x2800000, 0x1000000 },
             { "mpr-24057.ic4",  0x3800000, 0x1000000 },
             { "mpr-24058.ic5",  0x4800000, 0x1000000 },
-            { NULL, 0, 0 },
         }
     },
     // OutTrigger (JPN, USA, EXP, KOR, AUS)
@@ -2817,12 +2767,9 @@ const Game Games[] =
             { "mpr-22160.ic19s",0x9800000, 0x0800000 },
             //ROM_REGION( 0x10000, "io_board", 0)
             //ROM_LOAD("epr-22084.ic3", 0x0000, 0x10000, CRC(18cf58bb) SHA1(1494f8215231929e41bbe2a133658d01882fbb0f) )
-
-            { NULL, 0, 0 },
         },
 		nullptr,
-        // TRIGGER, CHANGE, JUMP
-		nullptr,
+		&otrigger_inputs,
 		otrigger_eeprom_dump,
     },
     // Moero! Justice Gakuen (JPN) / Project Justice (USA, EXP, KOR, AUS) (Rev A)
@@ -2848,7 +2795,6 @@ const Game Games[] =
             { "mpr-23545.ic9",   0x8800000, 0x1000000 },
             { "mpr-23546.ic10",  0x9800000, 0x1000000 },
             { "mpr-23547.ic11",  0xa800000, 0x1000000 },
-            { NULL, 0, 0 },
         },
 		nullptr,
 		&capcom_4btn_inputs,
@@ -2874,7 +2820,6 @@ const Game Games[] =
             { "mpr-21594.ic6", 0x3000000, 0x0800000 },
             { "mpr-21595.ic7", 0x3800000, 0x0800000 },
             { "mpr-21596.ic8", 0x4000000, 0x0800000 },
-            { NULL, 0, 0 },
         },
 		nullptr,
 		&pstone_inputs,
@@ -2900,7 +2845,6 @@ const Game Games[] =
             { "mpr-23124.ic7", 0x3800000, 0x0800000 },
             { "mpr-23125.ic8", 0x4000000, 0x0800000 },
             { "mpr-23126.ic9", 0x4800000, 0x0800000 },
-            { NULL, 0, 0 },
         },
 		nullptr,
 		&pstone2_inputs,
@@ -2926,7 +2870,6 @@ const Game Games[] =
             { "07.ic8",  0x3800000, 0x0800000 },
             { "08.ic9",  0x4000000, 0x0800000 },
             { "09.ic10", 0x4800000, 0x0800000 },
-            { NULL, 0, 0 },
         },
 		nullptr,
 		&pstone2_inputs,
@@ -2963,8 +2906,9 @@ const Game Games[] =
             { "mpr-22203.ic18s", 0x9000000, 0x800000 },
             { "mpr-22204.ic19s", 0x9800000, 0x800000 },
             { "mpr-22205.ic20s", 0xa000000, 0x800000 },
-            { NULL, 0, 0 },
-        }
+        },
+		nullptr,
+		&puyoda_inputs,
     },
     // Ring Out 4x4 (Rev A)
     {
@@ -2988,7 +2932,6 @@ const Game Games[] =
             { "mpr-21768.ic8",  0x4000000, 0x800000 },
             { "mpr-21769.ic9",  0x4800000, 0x800000 },
             { "mpr-21770.ic10", 0x5000000, 0x800000 },
-            { NULL, 0, 0 },
         },
         NULL,
 		&ringout_inputs,
@@ -3015,7 +2958,6 @@ const Game Games[] =
             { "mpr-21768.ic8",  0x4000000, 0x800000 },
             { "mpr-21769.ic9",  0x4800000, 0x800000 },
             { "mpr-21770.ic10", 0x5000000, 0x800000 },
-            { NULL, 0, 0 },
         },
         NULL,
 		&ringout_inputs,
@@ -3048,8 +2990,9 @@ const Game Games[] =
             { "mpr-22963.ic14s",0x7000000, 0x0800000 },
             { "mpr-22964.ic15s",0x7800000, 0x0800000 },
             { "mpr-22965.ic16s",0x8000000, 0x0800000 },
-            { NULL, 0, 0 },
-        }
+        },
+		nullptr,
+		&samba_inputs,
     },
     // Samba De Amigo (Rev A)
     {
@@ -3079,8 +3022,9 @@ const Game Games[] =
             { "mpr-22963.ic14s", 0x7000000, 0x0800000 },
             { "mpr-22964.ic15s", 0x7800000, 0x0800000 },
             { "mpr-22965.ic16s", 0x8000000, 0x0800000 },
-            { NULL, 0, 0 },
-        }
+        },
+		nullptr,
+		&samba_inputs,
     },
     // Samba De Amigo (USA, prototype)
     {
@@ -3108,8 +3052,9 @@ const Game Games[] =
             { "rom12.ic12s",     0x06000000, 0x00800000 },
             { "rom13.ic13s",     0x06800000, 0x00800000 },
             { "rom14.ic14s",     0x07000000, 0x00800000 },
-            { NULL, 0, 0 },
-        }
+        },
+		nullptr,
+		&samba_inputs,
     },
     //Samba de Amigo ver. 2000 (Japan)
     {
@@ -3134,8 +3079,9 @@ const Game Games[] =
             { "mpr-23597.ic9",  0x08800000, 0x1000000 },
             { "mpr-23598.ic10", 0x09800000, 0x1000000 },
             { "mpr-23599.ic11", 0x0a800000, 0x1000000 },
-            { NULL, 0, 0 },
-        }
+        },
+		nullptr,
+		&samba_inputs,
     },
     // Sega Tetris
     {
@@ -3156,9 +3102,9 @@ const Game Games[] =
             {  "mpr-22913.ic4", 0x2000000, 0x800000 },
             {  "mpr-22914.ic5", 0x2800000, 0x800000 },
             {  "mpr-22915.ic6", 0x3000000, 0x800000 },
-            { NULL, 0, 0 },
-        }
-        // SW1/2
+        },
+		nullptr,
+		&sgtetris_inputs,
     },
     // Dengen Tenshi Taisen Janshi Shangri-la (JPN, USA, EXP, KOR, AUS)
     {
@@ -3184,7 +3130,6 @@ const Game Games[] =
             { "mpr-22070.ic10",  0x5000000, 0x0800000 },
             { "mpr-22071.ic11",  0x5800000, 0x0800000 },
             { "mpr-22072.ic12s", 0x6000000, 0x0800000 },
-            { NULL, 0, 0 },
         }
     },
     // Star Horse (satellite)
@@ -3209,8 +3154,6 @@ const Game Games[] =
 
             //ROM_REGION(0x84, "some_eeprom", 0)
             //ROM_LOAD( "sflash.ic46",   0x000000, 0x000084, CRC(4929e940) SHA1(f8c4277ca0ae5e36b2eed033cc731b8fc4fccafc) )
-
-            { NULL, 0, 0 },
         }
     },
     // Star Horse (live and backup)
@@ -3247,8 +3190,6 @@ const Game Games[] =
 
             //ROM_REGION(0x84, "some_eeprom", 0)
             //ROM_LOAD( "sflash.ic37",   0x000000, 0x000084, CRC(1557297e) SHA1(41e8a7a8eaf5076b124d378afdf97e328d100e72) )
-
-            { NULL, 0, 0 },
         }
     },
     // Star Horse (main screens)
@@ -3270,8 +3211,6 @@ const Game Games[] =
 
             //ROM_REGION(0x84, "some_eeprom", 0)
             //ROM_LOAD( "sflash.ic46",   0x000000, 0x000084, CRC(951684e4) SHA1(0beaf5827064252293223b946c04b8698e7207bb) )
-
-            { NULL, 0, 0 },
         }
     },
     // Star Horse Progress (satellite, Rev A)
@@ -3293,7 +3232,6 @@ const Game Games[] =
             { "mpr-24127.ic5",   0x4800000, 0x1000000 },
             { "mpr-24128.ic6",   0x5800000, 0x1000000 },
             { "mpr-24129.ic7",   0x6800000, 0x1000000 },
-            { NULL, 0, 0 },
         }
     },
     // Star Horse Progress (backup data)
@@ -3312,8 +3250,6 @@ const Game Games[] =
 
             //ROM_REGION(0x84, "some_eeprom", 0)
             //ROM_LOAD( "sflash.ic37",   0x000000, 0x000084, CRC(fe8f8f5c) SHA1(839461ab736e0228dec7e2512e1692d6ecc4e664) )
-
-            { NULL, 0, 0 },
         }
     },
     // Star Horse Progress (live, Rev A)
@@ -3339,7 +3275,6 @@ const Game Games[] =
             { "mpr-24116.ic9",   0x08800000, 0x01000000 },
             { "mpr-24117.ic10",  0x09800000, 0x01000000 },
             { "mpr-24118.ic11",  0x0a800000, 0x01000000 },
-            { NULL, 0, 0 },
         }
     },
     // Star Horse Progress (main screens)
@@ -3360,7 +3295,6 @@ const Game Games[] =
             { "mpr-24091.ic4",   0x03800000, 0x01000000 },
             { "mpr-24092.ic5",   0x04800000, 0x01000000 },
             { "mpr-24093.ic6",   0x05800000, 0x01000000 },
-            { NULL, 0, 0 },
         }
     },
     // Star Horse Progress (sound & backup)
@@ -3381,7 +3315,6 @@ const Game Games[] =
             { "mpr-24101.ic4",   0x03800000, 0x01000000 },
             { "mpr-24102.ic5",   0x04800000, 0x01000000 },
             { "mpr-24103.ic6",   0x05800000, 0x01000000 },
-            { NULL, 0, 0 },
         }
     },
     // Star Horse 2001 (satellite, Rev B)
@@ -3403,7 +3336,6 @@ const Game Games[] =
             { "mpr-23744.ic5",   0x04800000, 0x01000000 },
             { "mpr-23745.ic6",   0x05800000, 0x01000000 },
             { "mpr-23746.ic7",   0x06800000, 0x01000000 },
-            { NULL, 0, 0 },
         }
     },
     // Star Horse 2002 (main screens)
@@ -3523,7 +3455,6 @@ const Game Games[] =
             { "mpr-22056.ic19s", 0x9800000, 0x800000 },
             { "mpr-22057.ic20s", 0xa000000, 0x800000 },
             { "mpr-22058.ic21s", 0xa800000, 0x800000 },
-            { NULL, 0, 0 },
         },
 		NULL,
 		&wsbb_inputs,
@@ -3557,7 +3488,6 @@ const Game Games[] =
             { "mpr-23338.ic15s",0x7800000, 0x0800000 },
             { "mpr-23339.ic16s",0x8000000, 0x0800000 },
             { "mpr-23340.ic17s",0x8800000, 0x0800000 },
-            { NULL, 0, 0 },
         },
 		NULL,
 		&slashout_inputs,
@@ -3587,7 +3517,6 @@ const Game Games[] =
             { "mpr-22217.ic10",  0x5000000, 0x0800000 },
             { "mpr-22218.ic11",  0x5800000, 0x0800000 },
             { "mpr-22219.ic12s", 0x6000000, 0x0800000 },
-            { NULL, 0, 0 },
         },
 		NULL,
 		&marine_fishing_inputs,
@@ -3614,7 +3543,6 @@ const Game Games[] =
             { "mpr-22974.ic8",   0x4000000, 0x0800000 },
             { "mpr-22975.ic9",   0x4800000, 0x0800000 },
             { "mpr-22976.ic10",  0x5000000, 0x0800000 },
-            { NULL, 0, 0 },
         },
         NULL,
 		&shot1234_inputs,
@@ -3652,7 +3580,6 @@ const Game Games[] =
             { "mpr-23319.ic18s", 0x9000000, 0x800000 },
             { "mpr-23320.ic19s", 0x9800000, 0x800000 },
             { "mpr-23321.ic20s", 0xa000000, 0x800000 },
-            { NULL, 0, 0 },
         },
 		nullptr,
 		&sstrkfgt_inputs,
@@ -3691,7 +3618,6 @@ const Game Games[] =
             { "mpr-23319.ic18s", 0x9000000, 0x800000 },
             { "mpr-23320.ic19s", 0x9800000, 0x800000 },
             { "mpr-23321.ic20s", 0xa000000, 0x800000 },
-            { NULL, 0, 0 },
         },
 		nullptr,
 		&sstrkfgt_inputs,
@@ -3725,7 +3651,6 @@ const Game Games[] =
             { "mpr-21991.ic12s",0x6000000, 0x0800000 },
             { "mpr-21992.ic13s",0x6800000, 0x0800000 },
             { "mpr-21993.ic14s",0x7000000, 0x0400000 },
-            { NULL, 0, 0 },
         }
     },
     // Touch de Uno! / Unou Nouryoku Check Machine (Japan)
@@ -3753,7 +3678,7 @@ const Game Games[] =
 			{ "x76f100.ic37", 0x000000, 0x000084, 0xc79251d5, Eeprom },
         },
 		nullptr,
-		nullptr,
+		&service_btns_inputs,
 		tduno_eeprom_dump,
     },
 	// Tokyo Bus (Rev A)
@@ -3786,7 +3711,6 @@ const Game Games[] =
 			{ "rom16.ic16s",     0x8000000, 0x0800000 },
 			{ "rom17.ic17s",     0x8800000, 0x0800000 },
 			{ "rom18.ic18s",     0x9000000, 0x0800000 },
-            { NULL, 0, 0 },
 		},
 		NULL,
 		&tokyobus_inputs,
@@ -3825,7 +3749,6 @@ const Game Games[] =
             { "mpr-23019.ic19s", 0x9800000, 0x0800000 },
             { "mpr-23020.ic20s", 0xa000000, 0x0800000 },
             // IC21s not populated
-            { NULL, 0, 0 },
         },
 		nullptr,
 		nullptr,
@@ -3864,7 +3787,6 @@ const Game Games[] =
             { "mpr-23019.ic19s", 0x9800000, 0x0800000 },
             { "mpr-23020.ic20s", 0xa000000, 0x0800000 },
             // IC21S not populated
-            { NULL, 0, 0 },
         },
 		nullptr,
 		nullptr,
@@ -3898,7 +3820,6 @@ const Game Games[] =
             { "trf1ma13.6n", 0xd000000, 0x1000000 },
             { "trf1ma14.6m", 0xe000000, 0x1000000 },
             { "trf1ma15.6l", 0xf000000, 0x1000000 },
-            { NULL, 0, 0 },
         },
 		nullptr,
 		&toukon4_inputs,
@@ -3925,7 +3846,6 @@ const Game Games[] =
             { "mpr-22032.ic8", 0x4000000, 0x0800000 },
             { "mpr-22033.ic9", 0x4800000, 0x0800000 },
             { "mpr-22034.ic10",0x5000000, 0x0800000 },
-            { NULL, 0, 0 },
         },
 		nullptr,
 		&toyfight_inputs,
@@ -3964,9 +3884,9 @@ const Game Games[] =
             { "mpr-22946.ic19s", 0x9800000, 0x0800000 },
             { "mpr-22947.ic20s", 0xa000000, 0x0800000 },
             { "mpr-22948.ic21s", 0xa800000, 0x0800000 },
-            { NULL, 0, 0 },
-        }
-        // PASS, SHOOT
+        },
+		nullptr,
+		&virnba_inputs,
     },
     // Virtua NBA
     {
@@ -4001,8 +3921,9 @@ const Game Games[] =
             { "mpr-22946.ic19s", 0x9800000, 0x0800000 },
             { "mpr-22947.ic20s", 0xa000000, 0x0800000 },
             { "mpr-22948.ic21s", 0xa800000, 0x0800000 },
-            { NULL, 0, 0 },
-        }
+        },
+		nullptr,
+		&virnba_inputs,
     },
     // Virtua NBA (prototype)
     {
@@ -4038,6 +3959,8 @@ const Game Games[] =
 			{ "rom20.ic20s",     0xa000000, 0x0800000, 0x9a08015e },
 			{ "rom21.ic21s",     0xa800000, 0x0800000, 0x194594f2 },
         },
+		nullptr,
+		&virnba_inputs,
     },
     // Virtua NBA (prototype, 15.11)
     {
@@ -4072,8 +3995,9 @@ const Game Games[] =
             { "rom19.ic19s",     0x9800000, 0x0800000 },
             { "rom20.ic20s",     0xa000000, 0x0800000 },
             { "rom21.ic21s",     0xa800000, 0x0800000 },
-            { NULL, 0, 0 },
-        }
+        },
+		nullptr,
+		&virnba_inputs,
     },
     // Virtual On Oratorio Tangram M.S.B.S. ver5.66 2000 Edition
     {
@@ -4100,7 +4024,6 @@ const Game Games[] =
             { "mpr-23192.ic11",  0x5800000, 0x800000 },
             { "mpr-23193.ic12s", 0x6000000, 0x800000 },
             { "mpr-23194.ic13s", 0x6800000, 0x800000 },
-            { NULL, 0, 0 },
         },
         NULL,
         &vonot_inputs,
@@ -4133,9 +4056,9 @@ const Game Games[] =
             { "mpr-21921.ic13s",0x6800000, 0x0800000 },
             { "mpr-21922.ic14s",0x7000000, 0x0800000 },
             { "mpr-21923.ic15s",0x7800000, 0x0400000 },
-            { NULL, 0, 0 },
-        }
-        // LONG PASS, SHOOT, SHORT PASS
+        },
+		nullptr,
+		&vs2_2k_inputs,
     },
     // Virtua Striker 2 Ver. 2000
     {
@@ -4164,8 +4087,9 @@ const Game Games[] =
             { "mpr-21921.ic13s", 0x6800000, 0x0800000 },
             { "mpr-21922.ic14s", 0x7000000, 0x0800000 },
             { "mpr-21923.ic15s", 0x7800000, 0x0400000 },
-            { NULL, 0, 0 },
-        }
+        },
+		nullptr,
+		&vs2_2k_inputs,
     },
     // Virtua Tennis (USA, EXP, KOR, AUS) / Power Smash (JPN)
     {
@@ -4190,7 +4114,6 @@ const Game Games[] =
             { "mpr-22924.ic9", 0x4800000, 0x0800000 },
             { "mpr-22925.ic10",0x5000000, 0x0800000 },
             { "mpr-22926.ic11",0x5800000, 0x0800000 },
-            { NULL, 0, 0 },
         },
 		nullptr,
         &shot12_inputs,
@@ -4214,7 +4137,6 @@ const Game Games[] =
             { "mpr-23722.ic4",  0x3800000, 0x1000000 },
             { "mpr-23723.ic5",  0x4800000, 0x1000000 },
             { "mpr-23724.ic6",  0x5800000, 0x1000000 },
-            { NULL, 0, 0 },
         },
 		NULL,
 		&wrungp_inputs,
@@ -4243,8 +4165,6 @@ const Game Games[] =
             // 838-12801 DRIVE BD WAVERUNNER
             //ROM_REGION( 0x10000, "motorio", ROMREGION_ERASEFF)
             //ROM_LOAD( "epr-19250.ic8", 0x000000, 0x010000, CRC(542d3836) SHA1(128cb0bfaf05791d219437653002f6bb948a4ad5) )
-
-            { NULL, 0, 0 },
         },
 		NULL,
 		&wrungp_inputs,
@@ -4272,9 +4192,9 @@ const Game Games[] =
             { "wk1ma8.4e",   0x8000000, 0x1000000 },
             { "wk1ma9.4d",   0x9000000, 0x1000000 },
             { "wk1ma10.4c",  0xa000000, 0x1000000 },
-            { NULL, 0, 0 },
-        }
-        // BUTTON, (n/a, n/a, ENTER)
+        },
+		nullptr,
+		&wldkicks_inputs,	// TODO some default eeprom/nvram would help
     },
     // World Kicks (Japan, WK1 Ver.A)
     {
@@ -4298,8 +4218,9 @@ const Game Games[] =
             { "wk1ma8.4e",   0x8000000, 0x1000000 },
             { "wk1ma9.4d",   0x9000000, 0x1000000 },
             { "wk1ma10.4c",  0xa000000, 0x1000000 },
-            { NULL, 0, 0 },
-        }
+        },
+		nullptr,
+		&wldkicks_inputs,
     },
     // World Kicks (US, WK3 Ver.A)
     {
@@ -4323,8 +4244,9 @@ const Game Games[] =
             { "wk1ma8.4e",  0x8000000, 0x1000000 },
             { "wk1ma9.4d",  0x9000000, 0x1000000 },
             { "wk1ma10.4c", 0xa000000, 0x1000000 },
-            { NULL, 0, 0 },
-        }
+        },
+		nullptr,
+		&wldkicks_inputs,
     },
     // World Kicks PCB (Japan, WKC1 Ver.A)
     {
@@ -4348,8 +4270,9 @@ const Game Games[] =
             { "wk1ma8.4e",   0x8000000, 0x1000000 },
             { "wk1ma9.4d",   0x9000000, 0x1000000 },
             { "wk1ma10.4c",  0xa000000, 0x1000000 },
-            { NULL, 0, 0 },
-        }
+        },
+		nullptr,
+		&wldkickspcb_inputs,	// TODO some default eeprom/nvram would help
     },
     // World Kicks PCB (World, WKC2 Ver.A)
     {
@@ -4373,9 +4296,9 @@ const Game Games[] =
             { "wk1ma8.4e",   0x8000000, 0x1000000 },
             { "wk1ma9.4d",   0x9000000, 0x1000000 },
             { "wk1ma10.4c",  0xa000000, 0x1000000 },
-            { NULL, 0, 0 },
-        }
-        // C BUTTON
+        },
+		nullptr,
+		&wldkickspcb_inputs,
     },
     // WWF Royal Rumble (JPN, USA, EXP, KOR, AUS)
     {
@@ -4397,9 +4320,9 @@ const Game Games[] =
             { "mpr-22267.ic6",  0x5800000, 0x1000000 },
             { "mpr-22268.ic7",  0x6800000, 0x1000000 },
             { "mpr-22269.ic8",  0x7800000, 0x1000000 },
-            { NULL, 0, 0 },
-        }
-        // ATTACK, GRAPPLE, SUPPORT
+        },
+		nullptr,
+		&wwfroyal_inputs,
     },
     // Zero Gunner 2
     {
@@ -4418,7 +4341,6 @@ const Game Games[] =
             { "mpr-23686.ic3",  0x2800000, 0x1000000 },
             { "mpr-23687.ic4",  0x3800000, 0x1000000 },
             { "mpr-23688.ic5",  0x4800000, 0x1000000 },
-            { NULL, 0, 0 },
         },
         nullptr,
 		&shot12_inputs,
@@ -4455,7 +4377,6 @@ const Game Games[] =
             { "mpr-21724.ic17s", 0x8800000, 0x0800000 },
             { "mpr-21725.ic18s", 0x9000000, 0x0800000 },
             { "mpr-21726.ic19s", 0x9800000, 0x0800000 },
-            { NULL, 0, 0 },
         },
 		NULL,
 		&zombie_inputs,
@@ -4493,7 +4414,6 @@ const Game Games[] =
             { "mpr-21724.ic17s",0x8800000, 0x0800000 },
             { "mpr-21725.ic18s",0x9000000, 0x0800000 },
             { "mpr-21726.ic19s",0x9800000, 0x0800000 },
-            { NULL, 0, 0 },
         },
 		NULL,
 		&zombie_inputs,
@@ -4535,8 +4455,9 @@ const Game Games[] =
 			{ "rom9.ic9s",   0x04800000, 0x00800000, 0x032cca1a },
 			{ "rom10.ic10s", 0x05000000, 0x00800000, 0x6d094477 },
 			{ "rom11.ic11s", 0x05800000, 0x00800000, 0x6c803ca0 },
-			// ic 12-21 populated, empty
 		},
+		nullptr,
+		&dygolf_inputs,
     },
 	// Nittere Shiki! Mirai Yosou Studio / NTV Future Forecast Studio (Japan)
     {
@@ -4589,9 +4510,7 @@ const Game Games[] =
             { "ic9.bin", 0x4000000, 0x4000000 },
             // IC10 and IC11 Populated, Empty
             { "317-05130-jpn.ic3", 0, 0x800,  0x0000000, Key },
-            { NULL, 0, 0 },
         },
-        // ATTACK1/2/3
 		nullptr,
 		&ausfache_inputs,
 		ausfache_eeprom_dump,
@@ -4612,9 +4531,9 @@ const Game Games[] =
             { "fpr-24384.ic10", 0x8000000, 0x4000000, 0x2e9116c4 },
             { "fpr-24385.ic11", 0xc000000, 0x4000000, 0x2b79f45d },
             { "317-0495-com.ic3", 0, 0x800, 0xc229a59b, Key },
-            { NULL, 0, 0 },
-        }
-        // PUNCH, KICK, JUMP
+        },
+		nullptr,
+		&asndynmt_inputs,
     },
     // Asian Dynamite / Dynamite Deka EX (older)
     {
@@ -4632,10 +4551,9 @@ const Game Games[] =
             { "fpr-24384.ic10", 0x8000000, 0x4000000, 0x2e9116c4 },
             { "fpr-24385.ic11", 0xc000000, 0x4000000, 0x2b79f45d },
             { "317-0495-com.ic3", 0, 0x800, 0xc229a59b, Key },
-
-            { NULL, 0, 0 },
-        }
-        // PUNCH, KICK, JUMP
+        },
+		nullptr,
+		&asndynmt_inputs,
     },
     // Illvelo (Illmatic Envelope) (Japan)
     {
@@ -4652,10 +4570,9 @@ const Game Games[] =
             { "fpr-24438.ic9",  0x4000000, 0x4000000 },
             { "fpr-24439.ic10", 0x8000000, 0x4000000 },
             { "317-5131-jpn.ic3", 0, 0x800,  0x0000000, Key },
-            { NULL, 0, 0 },
         },
-        NULL,
-        NULL, // SHOT/DOLL/SPECIAL
+		nullptr,
+		&illvelo_inputs,
         illvelo_eeprom_dump
     },
     // Manic Panic Ghosts! *** BAD DUMP ***
@@ -4698,10 +4615,9 @@ const Game Games[] =
             { "ic9.bin",  0x4000000, 0x4000000 },
             { "ic10.bin", 0x8000000, 0x4000000 },
             { "317-5132-jpn.ic3", 0, 0x800,  0x0000000, Key },
-            { NULL, 0, 0 },
         },
         NULL,
-        &mamonoro_inputs, // SHOT(A)/(B)
+        &mamonoro_inputs,
         mamonoro_eeprom_dump
     },
     // Melty Blood Actress Again Version A (Japan, Rev A)
@@ -4723,7 +4639,6 @@ const Game Games[] =
             { "ic12.bin",      0x10000000, 0x4000000 },
             { "ic13.bin",      0x14000000, 0x4000000 },
             { "317-5133-jpn.ic3", 0, 0x800,  0x0000000, Key }, // pic_readout
-            { NULL, 0, 0 },
         },
         nullptr,
 		&meltyb_inputs,
@@ -4747,7 +4662,6 @@ const Game Games[] =
             { "ic12.bin",      0x10000000, 0x4000000 },
             { "ic13.bin",      0x14000000, 0x4000000 },
             { "317-5133-jpn.ic3", 0, 0x800,  0x0000000, Key }, // pic_readout
-            { NULL, 0, 0 },
         },
         nullptr,
 		&meltyb_inputs,
@@ -4912,11 +4826,9 @@ const Game Games[] =
             { "ic8.bin", 0x0000000, 0x4000000 },
             { "ic9.bin", 0x4000000, 0x4000000 },
             { "317-5138-jpn.ic3", 0, 0x800,  0x0000000, Key },
-            { NULL, 0, 0 },
         },
         NULL,
-        &radirgyn_inputs,
-        // SHOT (A)/(B)/(C)
+        &radirgy_inputs,
     },
     // Rhythm Tengoku
     {
@@ -4934,9 +4846,9 @@ const Game Games[] =
             { "fpr-24425.ic10", 0x08000000, 0x4000000 },
             { "fpr-24426.ic11", 0x0c000000, 0x4000000 },
             { "317-0503-jpn.ic3", 0, 0x800,  0x0000000, Key },
-            { NULL, 0, 0 },
-        }
-        // SHOT A/B
+        },
+		nullptr,
+		&rhytngk_inputs,
     },
     // Shooting Love 2007 (Japan)
     {
@@ -4954,10 +4866,9 @@ const Game Games[] =
             { "fpr-24415.ic10", 0x8000000, 0x4000000 },
             { "fpr-24416.ic11", 0xc000000, 0x4000000 },
             { "317-5129-jpn.ic3", 0, 0x800,  0x0000000, Key },
-            { NULL, 0, 0 },
         },
-        NULL,
-        NULL, // PUSH1/2/3
+		nullptr,
+		&sl2007_inputs,
         sl2007_eeprom_dump
     },
     // Touch De Zunou (Rev A) *** BAD DUMP ***
@@ -4977,8 +4888,9 @@ const Game Games[] =
             //ROM_REGION( 0x800, "pic_readout", 0 )
             //ROM_LOAD( "317-0435-jpn.ic3", 0, 0x800, BAD_DUMP CRC(b553d900) SHA1(ed1c3c2053f2c0e98cb5c4d99f93143a66c29e5c) )
             { "317-0435-jpn.ic3", 0, 0x800,  0x0000000, Key },
-            { NULL, 0, 0 },
-        }
+        },
+		nullptr,
+		nullptr,
     },
     // Star Horse Progress Returns (satellite)
     {
@@ -4993,7 +4905,6 @@ const Game Games[] =
         {
             { "fpr-24489.ic8",  0x00000000, 0x4000000 },
             { "fpr-24490.ic9",  0x04000000, 0x4000000 },
-            { NULL, 0, 0 },
         }
     },
     // Naomi GD Roms
@@ -5012,7 +4923,8 @@ const Game Games[] =
             { "317-5091-jpn.pic", 0, 0x4000, 0xb71ede16 },
         },
         "gdl-0018",
-    },
+		&azumanga_inputs,
+	},
     // Border Down (Rev A)
     {
         "bdrdown",
@@ -5028,7 +4940,7 @@ const Game Games[] =
             { "bdrdown-default-eeprom.bin", 0, 0x80,  0x5b19727c, Eeprom },
         },
         "gdl-0023a",
-		// SHOT, LASER, SPEED
+		&bdrdown_inputs,
     },
     // Chaos Field (Japan)
     {
@@ -5045,7 +4957,7 @@ const Game Games[] =
             { "cfield-default-eeprom.bin", 0, 0x80,  0xa7acb6bf, Eeprom },
         },
         "gdl-0025",
-		// TRG1/2/3
+		&cfield_inputs,
     },
     // Musapey's Choco Marker (Rev A)
     {
@@ -5061,7 +4973,7 @@ const Game Games[] =
             { "317-5085-jpn.pic", 0, 0x4000, 0x677fd544 },
         },
         "gdl-0014a",
-		// BUTTON A/B
+		&button12_inputs,
     },
     // Cleopatra Fortune Plus
     {
@@ -5077,7 +4989,7 @@ const Game Games[] =
             { "317-5083-com.pic", 0, 0x4000, 0x096a0fc2 },
         },
         "gdl-0012",
-		// BUTTON 1/2
+		&button12_inputs,
     },
     // Confidential Mission
     {
@@ -5093,7 +5005,7 @@ const Game Games[] =
             { "317-0298-com.pic",  0, 0x4000, 0x15971bf6 },
         },
         "gds-0001",
-		nullptr,
+		&lightgun_inputs,
 		confmiss_eeprom_dump,
     },
     // Capcom vs. SNK Millennium Fight 2000 Pro (Japan)
@@ -5228,6 +5140,7 @@ const Game Games[] =
             { "317-0308-com.pic", 0, 0x4000, 0x5e1ef2c4 },
         },
         "gds-0009a",
+		&dygolf_inputs,
     },
     // Guilty Gear XX
     {
@@ -5361,8 +5274,7 @@ const Game Games[] =
             { "317-5081-jpn.pic", 0, 0x4000, 0x72ca4579 },
         },
         "gdl-0010",
-		// SHOT, CHANGE
-		nullptr,
+		&ikaruga_inputs,
 		nullptr,
     },
     // Jingi Storm - The Arcade (Japan)
@@ -5379,8 +5291,7 @@ const Game Games[] =
             { "317-5122-jpn.pic", 0, 0x4000, 0x88983220 },
         },
         "gdl-0037",
-		// GUARD, PUNCH, KICK
-		nullptr,
+		&jingystm_inputs,
 		jingystm_eeprom_dump,
     },
     // Karous (Japan)
@@ -5398,7 +5309,7 @@ const Game Games[] =
             { "karous-default-eeprom.bin", 0, 0x80,  0xb017451c, Eeprom },
         },
         "gdl-0040",
-		// SHOT, SWORD, SPECIAL same as radirgy
+		&radirgy_inputs,
     },
     // La Keyboard
     {
@@ -5430,6 +5341,7 @@ const Game Games[] =
             { "317-5115-jpn.pic", 0, 0x4000, 0xe5435e85 },
         },
         "gdl-0034",
+		nullptr,	// TODO
     },
     // Lupin The Third - The Shooting (Rev A)
     {
@@ -5445,7 +5357,7 @@ const Game Games[] =
             { "317-0325-jpn.pic", 0, 0x4000, 0xf71cb2fc },
         },
         "gds-0018a",
-		nullptr,
+		&lightgun_inputs,
 		lupinsho_eeprom_dump,
     },
     // Lupin The Third - The Shooting
@@ -5462,7 +5374,7 @@ const Game Games[] =
             { "317-0325-jpn.pic", 0, 0x4000, 0xf71cb2fc },
         },
         "gds-0018",
-		nullptr,
+		&lightgun_inputs,
 		lupinsho_eeprom_dump,
     },
     // Lupin The Third - The Typing (Rev A)
@@ -5565,6 +5477,7 @@ const Game Games[] =
             { "moeru-default-eeprom.bin", 0, 0x80,  0x50ca079f, Eeprom },
         },
         "gdl-0013",
+		nullptr,	// TODO
     },
     // The Maze of the Kings
     {
@@ -5580,7 +5493,7 @@ const Game Games[] =
             { "317-0333-com.pic", 0, 0x4000, 0x15fb7792 },
         },
         "gds-0022",
-		nullptr,
+		&lightgun_inputs,
 		mok_eeprom_dump,
     },
     // Monkey Ball
@@ -5615,8 +5528,7 @@ const Game Games[] =
             // { "psyvar2-default-eeprom.bin", 0, 0x80, 0x9d8661f3, Eeprom },
         },
         "gdl-0024",
-		// SHOT, BOMB
-		nullptr,
+		&psyvariar_inputs,
 		psyvar2_eeprom_dump,
     },
     // Puyo Pop Fever (World)
@@ -5634,7 +5546,7 @@ const Game Games[] =
             // { "puyofev-default-eeprom.bin", 0, 0x80, 0x42e5fd40, Eeprom },
         },
         "gds-0034",
-		nullptr,
+		&puyofev_inputs,
 		puyofev_eeprom_dump,
     },
     // Puyo Puyo Fever (Japan)
@@ -5652,7 +5564,7 @@ const Game Games[] =
             // { "puyofev-default-eeprom.bin", 0, 0x80, 0x42e5fd40, Eeprom },
         },
         "gds-0031",
-		nullptr,
+		&puyofev_inputs,
 		puyofev_eeprom_dump,
     },
 	// Puyo Puyo Fever (Prototype)
@@ -5691,7 +5603,7 @@ const Game Games[] =
 	            { "copy",      0x00400000, 0xc00000, 0x0000000, Copy, 0x1000000 },
 		},
 		nullptr,
-		nullptr,
+		&puyofev_inputs,
 		puyofev_eeprom_dump,
 	},
     // Quiz Keitai Q mode
@@ -5709,6 +5621,7 @@ const Game Games[] =
             { "quizqgd-default-eeprom.bin", 0, 0x80, 0x46c10aa3, Eeprom },
         },
         "gdl-0017",
+		nullptr,	// TODO
     },
     // Radirgy (Japan, Rev A)
     {
@@ -5725,7 +5638,7 @@ const Game Games[] =
             { "radirgy-default-eeprom.bin", 0, 0x80, 0x8d60a282, Eeprom },
         },
         "gdl-0032a",
-		// SHOT, SWORD, SPECIAL same as karous
+		&radirgy_inputs,
     },
     // Radirgy (Japan)
     {
@@ -5742,6 +5655,7 @@ const Game Games[] =
             { "radirgy-default-eeprom.bin", 0, 0x80, 0x8d60a282, Eeprom },
         },
         "gdl-0032",
+		&radirgy_inputs,
     },
     // Senko No Ronde (Japan, Rev A)
     {
@@ -5758,7 +5672,7 @@ const Game Games[] =
             // { "senko-default-eeprom.bin", 0, 0x80, 0xb3d3be09, Eeprom },
         },
         "gdl-0030a",
-		nullptr,
+		&senko_inputs,
 		senko_eeprom_dump,
     },
     // Senko No Ronde (Japan)
@@ -5776,7 +5690,7 @@ const Game Games[] =
             // { "senkoo-default-eeprom.bin", 0, 0x80, 0xa2203a7f, Eeprom },
         },
         "gdl-0030",
-		nullptr,
+		&senko_inputs,
 		senko_eeprom_dump,
     },
     // Senko No Ronde Special (Export, Japan)
@@ -5877,6 +5791,7 @@ const Game Games[] =
             { "shikgam2-default-eeprom.bin", 0, 0x80, 0x5fb60e27, Eeprom },
         },
         "gdl-0021",
+		&sl2007_inputs,
     },
     // Slashout
     {
@@ -5909,7 +5824,7 @@ const Game Games[] =
             { "317-0303-com.pic", 0, 0x4000, 0xb42999dd },
         },
         "gds-0005",
-		nullptr, // BEAT, CHARGE ,JUMP, SHIFT
+		&spkrbtl_inputs,
 		spkrbtl_eeprom_dump
     },
     // Sports Jam
@@ -6021,8 +5936,7 @@ const Game Games[] =
             // { "trgheart-default-eeprom.bin", 0, 0x80, 0x7faff313, Eeprom },
         },
         "gdl-0036a",
-		// SHOT, ANCHOR, BOMB
-		nullptr,
+		&trgheart_inputs,
 		trgheart_eeprom_dump,
     },
     // Trigger Heart Exelica (Japan)
@@ -6040,7 +5954,7 @@ const Game Games[] =
             // { "trgheart-default-eeprom.bin", 0, 0x80, 0x7faff313, Eeprom },
         },
         "gdl-0036",
-		nullptr,
+		&trgheart_inputs,
 		trgheart_eeprom_dump,
     },
     // Trizeal (Japan)
@@ -6058,8 +5972,7 @@ const Game Games[] =
             // { "trizeal-default-eeprom.bin", 0, 0x80, 0xac0847ce, Eeprom },
         },
         "gdl-0026",
-		// PUSH1/2/3
-		nullptr,
+		&sl2007_inputs,
 		trizeal_eeprom_dump,
     },
     // Under Defeat (Japan)
@@ -6077,8 +5990,7 @@ const Game Games[] =
 			// { "undefeat-default-eeprom.bin", 0, 0x80, 0x9d2b071c, Eeprom },
         },
         "gdl-0035",
-		// SHOT, BOMB
-		nullptr,
+		&psyvariar_inputs,
 		undefeat_eeprom_dump,
     },
     // Usagi - Yamashiro Mahjong Hen (Japan)
@@ -6111,7 +6023,7 @@ const Game Games[] =
             { "317-0330-com.pic", 0, 0x4000, 0x33ccf2d1 },
         },
         "gds-0019",
-		// RUN1, ACTION, RUN2
+		&vathlete_inputs,
     },
     // Virtua Tennis 2 / Power Smash 2 (Rev A)
     {
@@ -6127,7 +6039,7 @@ const Game Games[] =
             { "317-0318-com.pic", 0, 0x4000, 0x83de4047 },
         },
         "gds-0015a",
-		nullptr,
+        &shot12_inputs,
 		vtennis2_eeprom_dump,
     },
     // Virtua Tennis / Power Smash
@@ -6403,7 +6315,9 @@ const Game Games[] =
             { "vera.u17",     0x05000000, 0x01000000, 0xd78389a4 },
             { "vera.u14",     0x06000000, 0x01000000, 0x35df044f },
             { "vera.u16",     0x07000000, 0x01000000, 0x3590072d },
-        }
+        },
+		nullptr,
+		&basschal_inputs,
     },
     // Sega Bass Fishing Challenge
     {
@@ -6424,7 +6338,9 @@ const Game Games[] =
             { "610-0811.u17", 0x05000000, 0x01000000, 0xdb799f5a },
             { "610-0811.u14", 0x06000000, 0x01000000, 0xf2769383 },
             { "vera.u16",     0x07000000, 0x01000000, 0x3590072d },
-        }
+        },
+		nullptr,
+		&basschal_inputs,
     },
     // Block Pong-Pong
     {
@@ -6465,7 +6381,9 @@ const Game Games[] =
             { "608-2161.u17", 0x5000000, 0x1000100, 0x2f973eb4 },
             { "608-2161.u14", 0x6000000, 0x1000100, 0x2e7d966f },
             { "608-2161.u16", 0x7000000, 0x1000100, 0x14f8ca87 },
-        }
+        },
+		nullptr,
+		&aw_lightgun_inputs,
     },
     // Demolish Fist
     {
@@ -6509,7 +6427,9 @@ const Game Games[] =
             { "695-0014.u17", 0x5000000, 0x1000000, 0x16bb5992 },
             { "695-0014.u14", 0x6000000, 0x1000000, 0x55470242 },
             { "695-0014.u16", 0x7000000, 0x1000000, 0x730180a4 },
-        }
+        },
+		nullptr,
+		&aw_shot123_inputs,
     },
     // Dolphin Blue
     {
@@ -6819,7 +6739,9 @@ const Game Games[] =
             { "ax1603m01.ic13", 0x3000000, 0x1000000, 0x7c0aa241 },
             { "ax1604m01.ic14", 0x4000000, 0x1000000, 0xd2369144 },
             { "ax1605m01.ic15", 0x5000000, 0x1000000, 0x0c11c1f9 },
-        }
+        },
+		nullptr,
+		&aw_lightgun_inputs,
     },
     // The Rumble Fish
     {
@@ -6946,7 +6868,9 @@ const Game Games[] =
             { "ax1405m01.ic15", 0x5000000, 0x1000000, 0xb548446f },
             { "ax1406m01.ic16", 0x6000000, 0x1000000, 0x437673e6 },
             { "ax1407m01.ic17", 0x7000000, 0x1000000, 0x6b6acc0a },
-        }
+        },
+		nullptr,
+		nullptr,	// TODO
     },
     // Samurai Shodown VI / Samurai Spirits Tenkaichi Kenkakuden
     {
@@ -6987,7 +6911,9 @@ const Game Games[] =
             { "ax0102m01.ic12", 0x2000000, 0x1000000, 0x700764d1 },
             { "ax0103m01.ic13", 0x3000000, 0x1000000, 0x6144e7a8 },
             { "ax0104m01.ic14", 0x4000000, 0x1000000, 0xccb72150 },
-        }
+        },
+		nullptr,
+		&aw_lightgun_inputs,	// PUMP is mercury sensor when gun is pointing down
     },
     // Sushi Bar
     {
@@ -7045,11 +6971,6 @@ const Game Games[] =
         {
             { "u3", 0x0000000, 0x1000000, 0x7acfb499 },
             { "u1", 0x1000000, 0x1000000, 0xb3c1c3bb },
-			// garbage data not used by this game, match anmlbskta U4
-			//{ "u4",  0x2000000, 0x1000000, 0x646e9773 },
-			// garbage data not used by this game, match anmlbskta U2
-			//{ "u2",  0x3000000, 0x1000000, 0xb9162d97 },
-			// U14-U17 not populated
         }
     },
     // Extreme Hunting
@@ -7070,7 +6991,9 @@ const Game Games[] =
             { "ax2404m01.ic14", 0x4000000, 0x1000000, 0x759ef5cb },
             { "ax2405m01.ic15", 0x5000000, 0x1000000, 0x940d77f1 },
             { "ax2406m01.ic16", 0x6000000, 0x1000000, 0xcbcf2c5d },
-        }
+        },
+		nullptr,
+		&aw_lightgun_inputs,
     },
     // Extreme Hunting 2
     {
@@ -7095,7 +7018,9 @@ const Game Games[] =
             //ROM_REGION( 0x1400000, "network", 0)    // network board
             //ROM_LOAD( "fpr-24330a.ic2", 0x000000, 0x400000, CRC(8d89877e) SHA1(6caafc49114eb0358e217bc2d1a3ab58a93c8d19) )
             //ROM_LOAD( "flash128.ic4s", 0x400000, 0x1000000, CRC(866ed675) SHA1(2c4c06935b7ab1876e640cede51713b841833567) )
-        }
+        },
+		nullptr,
+		&aw_lightgun_inputs,
     },
 	//
 	// Naomi 2
@@ -7122,7 +7047,9 @@ const Game Games[] =
 			{ "mpr-23660.ic9",  0x8800000, 0x1000000, 0xe49e65f5 },
 			{ "mpr-23661.ic10", 0x9800000, 0x1000000, 0x7d44dc74 },
 			{ "mpr-23662.ic11", 0xa800000, 0x0800000, 0xd6ef7d68 },
-        }
+        },
+		nullptr,
+		&vs2_2k_inputs,
     },
 	{
 		"vstrik3c",
@@ -7146,7 +7073,9 @@ const Game Games[] =
 			{ "mpr-23660.ic9",   0x8800000, 0x1000000, 0xe49e65f5 },
 			{ "mpr-23661.ic10",  0x9800000, 0x1000000, 0x7d44dc74 },
 			{ "mpr-23662.ic11",  0xa800000, 0x0800000, 0xd6ef7d68 },
-		}
+		},
+		nullptr,
+		&vs2_2k_inputs,
 	},
     {
     	"wldrider",
@@ -7675,6 +7604,7 @@ const Game Games[] =
 			{ "317-0304-com.bin", 0, 0x4000, 0x8e82d17a },
 		},
 		"gds-0006",
+		&vs2_2k_inputs,
     },
     {
     	"vf4o",
@@ -7737,6 +7667,7 @@ const Game Games[] =
 			{ "317-0317-com.pic", 0, 0x4000, 0xef65fe73 },
 		},
 		"gds-0014",
+		&beachspi_inputs,
     },
     {
     	"initd",
@@ -8323,6 +8254,8 @@ const Game Games[] =
 			{ "ic63", 0x04000000, 0x4000000, 0xcb946213 },
 			{ "317-0604-com.ic15", 0, 0x800, 0xa46dfd47, Key },
         },
+		nullptr,
+		&tetgiant_inputs,
     },
     {
     	"unomedal",
@@ -8497,6 +8430,7 @@ const Game Games[] =
 			{ "317-0604-com.ic15", 0, 0x800, 0xa46dfd47, Key },
         },
 		"mda-c0076",
+		&tetgiant_inputs,
     },
 	{
 		nullptr

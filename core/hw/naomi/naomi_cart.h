@@ -171,7 +171,7 @@ struct AxisDescriptor
 struct InputDescriptors
 {
    ButtonDescriptor buttons[18];
-   AxisDescriptor axes[8];
+   AxisDescriptor axes[16];
 };
 
 extern InputDescriptors *NaomiGameInputs;
