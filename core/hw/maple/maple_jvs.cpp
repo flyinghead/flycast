@@ -190,6 +190,15 @@ protected:
 				continue;
 			if (keycode & NAOMI_RELOAD_KEY)
 				keycode |= NAOMI_BTN0_KEY;
+			if (lightgun_as_analog && (keycode & NAOMI_BTN0_KEY))
+			{
+				const MapleInputState& inputState = mapleInputState[player];
+				if (inputState.absPos.x < 0 || inputState.absPos.x > 639
+						|| inputState.absPos.y < 0 || inputState.absPos.y > 479
+						|| (keycode & NAOMI_RELOAD_KEY)) {
+					keycode |= NAOMI_BTN1_KEY;	// offscreen sensor, not used by deathcox
+				}
+			}
 
 			// P1 mapping (only for P2)
 			if (player == 1)
@@ -271,6 +280,7 @@ protected:
 	u32 output_count = 0;
 	bool init_in_progress = false;
 	maple_naomi_jamma *parent;
+	u8 first_player;
 
 private:
 	void init_mappings()
@@ -302,7 +312,6 @@ private:
 	}
 
 	u8 node_id;
-	u8 first_player;
 
 	std::array<u32, 32> cur_mapping;
 	std::array<u32, 32> p1_mapping;
@@ -1095,15 +1104,16 @@ protected:
 	void read_digital_in(const u32 *buttons, u32 *v) override
 	{
 		jvs_io_board::read_digital_in(buttons, v);
-		for (u32 player = 0; player < player_count; player++)
+		for (u32 player = first_player; player < first_player + player_count && player < 4; player++)
 		{
 			u8 trigger = mapleInputState[player].halfAxes[PJTI_R] >> 10;
+			const u32 idx = player - first_player;
 					// Ball button
-			v[player] = ((trigger & 0x20) << 3) | ((trigger & 0x10) << 5) | ((trigger & 0x08) << 7)
+			v[idx] = ((trigger & 0x20) << 3) | ((trigger & 0x10) << 5) | ((trigger & 0x08) << 7)
 					| ((trigger & 0x04) << 9) | ((trigger & 0x02) << 11) | ((trigger & 0x01) << 13)
 					// other buttons
-					| (v[player] & (NAOMI_SERVICE_KEY | NAOMI_TEST_KEY | NAOMI_START_KEY))
-					| ((v[player] & NAOMI_BTN0_KEY) >> 4);		// remap button4 to button0 (change button)
+					| (v[idx] & (NAOMI_SERVICE_KEY | NAOMI_TEST_KEY | NAOMI_START_KEY))
+					| ((v[idx] & NAOMI_BTN0_KEY) >> 4);		// remap button4 to button0 (change button)
 		}
 	}
 
@@ -1120,17 +1130,31 @@ protected:
 		return std::min(0xff, 0x80 - axis_y) << 8;
 	}
 
-	u16 read_analog_axis(int player_num, int player_axis, bool inverted) override {
+	u16 read_analog_axis(int player_num, int player_axis, bool inverted) override
+	{
 		switch (player_axis)
 		{
+		// P1
 		case 0:
-			return read_joystick_x(0);
+			return read_joystick_x(player_num + 0);
 		case 1:
-			return read_joystick_y(0);
+			return read_joystick_y(player_num + 0);
+		// P2 & P4
 		case 4:
-			return read_joystick_x(1);
+			return read_joystick_x(player_num + 1);
 		case 5:
-			return read_joystick_y(1);
+			return read_joystick_y(player_num + 1);
+		// P3
+		case 8:
+			if (player_num == 0)
+				return read_joystick_x(player_num + 2);
+			else
+				return 0x8000;
+		case 9:
+			if (player_num == 0)
+				return read_joystick_y(player_num + 2);
+			else
+				return 0x8000;
 		default:
 			return 0x8000;
 		}
