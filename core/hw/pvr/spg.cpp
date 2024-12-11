@@ -235,7 +235,7 @@ static int spg_line_sched(int tag, int cycles, int jitter, void *arg)
 
 void read_lightgun_position(int x, int y)
 {
-	static u8 flip;
+	static u32 flip;
 	maple_int_pending = true;
 	if (y < 0 || y >= 480 || x < 0 || x >= 640)
 	{
@@ -245,9 +245,11 @@ void read_lightgun_position(int x, int y)
 	else
 	{
 		lightgun_line = y / (SPG_CONTROL.interlace ? 2 : 1) + SPG_VBLANK_INT.vblank_out_interrupt_line_number;
-		// For some reason returning the same position twice makes it register off screen
-		lightgun_hpos = (x + 286) ^ flip;
-		flip ^= 1;
+		// For some reason returning the same position twice makes it register off screen.
+		// Atomiswave Clay Challenge wants more wiggle than others for shots to register.
+		lightgun_line ^= (flip >> 1) & 1;
+		lightgun_hpos = (x + 286) ^ (flip & 1);
+		flip++;
 	}
 }
 
