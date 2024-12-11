@@ -166,10 +166,22 @@ private:
 			}
 			if (rc == 2)
 			{
-				if (data[0] != 'D')
+				if (data[0] != 'D') {
 					ERROR_LOG(NETWORK, "Unexpected packet '%c'", data[0]);
+				}
 				else
+				{
 					rxBuffer.push_back(data[1]);
+					if (!dataReceived)
+					{
+						dataReceived = true;
+						char name[INET_ADDRSTRLEN];
+						inet_ntop(AF_INET, &addr.sin_addr, name, sizeof(name));
+						std::string s(name);
+						s += ":" + std::to_string(htons(addr.sin_port));
+						os_notify("Network connected", 5000, s.c_str());
+					}
+				}
 			}
 			else if (rc == 1)
 			{
@@ -249,6 +261,7 @@ private:
 	std::deque<u32> rxBuffer;
 	sockaddr_in peerAddress{};
 	u64 lastPoll = 0;
+	bool dataReceived = false;
 };
 
 class BattleCableHandshake : public NetworkHandshake
