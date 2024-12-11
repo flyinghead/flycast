@@ -72,6 +72,7 @@ SHLIBS=(
 	libsqlite3.so.0
 	libcrypt.so.1
 	libbsd.so.0
+	libcdio.so.18
 )
 
 if [ ! -f appimagetool-x86_64.AppImage ]; then

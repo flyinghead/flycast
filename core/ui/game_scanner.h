@@ -26,11 +26,13 @@
 #include <unordered_map>
 #include <unordered_set>
 
-struct GameMedia {
+struct GameMedia
+{
 	std::string name;		// Display name
 	std::string path;		// Full path to rom. May be an encoded uri
 	std::string fileName;	// Last component of the path, decoded
 	std::string gameName;	// for arcade games only, description from the rom list
+	bool device = false;	// Corresponds to a physical cdrom device
 };
 
 class GameScanner

@@ -9,7 +9,7 @@ Disc* chd_parse(const char* file, std::vector<u8> *digest);
 Disc* gdi_parse(const char* file, std::vector<u8> *digest);
 Disc* cdi_parse(const char* file, std::vector<u8> *digest);
 Disc* cue_parse(const char* file, std::vector<u8> *digest);
-Disc* ioctl_parse(const char* file, std::vector<u8> *digest);
+Disc *cdio_parse(const char *file, std::vector<u8> *digest);
 
 static u32 NullDriveDiscType;
 Disc* disc;
@@ -21,8 +21,8 @@ constexpr Disc* (*drivers[])(const char* path, std::vector<u8> *digest)
 	gdi_parse,
 	cdi_parse,
 	cue_parse,
-#if defined(_WIN32) && !defined(TARGET_UWP)
-	ioctl_parse,
+#ifdef USE_LIBCDIO
+	cdio_parse,
 #endif
 };
 
@@ -278,7 +278,7 @@ bool Disc::readSector(u32 FAD, u8 *dst, SectorFormat *sector_type, u8 *subcode, 
 
 void Disc::ReadSectors(u32 FAD, u32 count, u8* dst, u32 fmt, LoadProgress *progress)
 {
-	u8 temp[2448];
+	u8 temp[2352];
 	SectorFormat secfmt;
 	SubcodeFormat subfmt;
 

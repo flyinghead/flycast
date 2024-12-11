@@ -76,6 +76,7 @@ option(ENABLE_GDB_SERVER "Build with GDB debugging support" OFF)
 option(ENABLE_DC_PROFILER "Build with support for target machine (SH4) profiler" OFF)
 option(ENABLE_FC_PROFILER "Build with support for host app (Flycast) profiler" OFF)
 option(USE_DISCORD "Use Discord Presence API" OFF)
+option(USE_LIBCDIO "Use libcdio for CDROM access" OFF)
 
 if(IOS AND NOT LIBRETRO)
 	set(USE_VULKAN OFF CACHE BOOL "Force vulkan off" FORCE)
@@ -672,6 +673,23 @@ if(NOT LIBZIP_FOUND OR NINTENDO_SWITCH)
 	target_link_libraries(${PROJECT_NAME} PRIVATE libzip::zip)
 endif()
 
+if(USE_LIBCDIO)
+	if(PKG_CONFIG_FOUND)
+		pkg_check_modules(CDIO IMPORTED_TARGET libcdio)
+		if(CDIO_FOUND)
+			target_compile_definitions(${PROJECT_NAME} PRIVATE USE_LIBCDIO)
+			target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::CDIO)
+		endif()
+	endif()
+	if(NOT CDIO_FOUND)
+		find_package(libcdio)
+		if(TARGET libcdio::libcdio)
+			target_compile_definitions(${PROJECT_NAME} PRIVATE USE_LIBCDIO)
+			target_link_libraries(${PROJECT_NAME} PRIVATE libcdio::libcdio)
+		endif()
+	endif()
+endif()
+
 if(WIN32)
 	target_include_directories(${PROJECT_NAME} PRIVATE core/deps/dirent)
 endif()
@@ -1062,13 +1080,13 @@ endif()
 
 target_sources(${PROJECT_NAME} PRIVATE
 		core/imgread/cdi.cpp
+		core/imgread/cdio.cpp
 		core/imgread/chd.cpp
 		core/imgread/common.cpp
 		core/imgread/common.h
 		core/imgread/cue.cpp
 		core/imgread/gdi.cpp
 		core/imgread/ImgReader.cpp
-		core/imgread/ioctl.cpp
 		core/imgread/iso9660.h
 		core/imgread/isofs.cpp
 		core/imgread/isofs.h)

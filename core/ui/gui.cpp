@@ -3275,7 +3275,7 @@ static void gui_display_content()
 				if (gui_state == GuiState::SelectDisk)
 				{
 					std::string extension = get_file_extension(game.path);
-					if (extension != "gdi" && extension != "chd"
+					if (!game.device && extension != "gdi" && extension != "chd"
 							&& extension != "cdi" && extension != "cue")
 						// Only dreamcast disks
 						continue;
@@ -3285,7 +3285,7 @@ static void gui_display_content()
 				}
 				std::string gameName = game.name;
 				GameBoxart art;
-				if (config::BoxartDisplayMode)
+				if (config::BoxartDisplayMode && !game.device)
 				{
 					art = boxart.getBoxartAndLoad(game);
 					gameName = art.name;

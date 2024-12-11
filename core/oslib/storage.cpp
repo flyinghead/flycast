@@ -194,24 +194,43 @@ public:
 		info.size = st.st_size;
 		info.updateTime = st.st_mtime;
 #else // _WIN32
+		std::string lpath(path);
+		if (path.length() == 2 && isalpha(path[0]) && path[1] == ':')
+			/* D: -> \\.\D:\ */
+			lpath = "\\\\.\\" + path + "\\";
+		else if (path.substr(0, 4) == "\\\\.\\" && path.length() == 6)
+			/* \\.\D: -> \\.\D:\ */
+			lpath += "\\";
 		nowide::wstackstring wname;
-		if (wname.convert(path.c_str()))
+		if (wname.convert(lpath.c_str()))
 		{
-			WIN32_FILE_ATTRIBUTE_DATA fileAttribs;
-			if (GetFileAttributesExW(wname.get(), GetFileExInfoStandard, &fileAttribs))
+			if (lpath.substr(0, 4) == "\\\\.\\")
 			{
-				info.isDirectory = (fileAttribs.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
-				info.size = fileAttribs.nFileSizeLow + ((u64)fileAttribs.nFileSizeHigh << 32);
-				u64 t = ((u64)fileAttribs.ftLastWriteTime.dwHighDateTime << 32) | fileAttribs.ftLastWriteTime.dwLowDateTime;
-				info.updateTime = t / 10000000 - 11644473600LL;	// 100-nano to secs minus (unix epoch - windows epoch)
+				// Win32 device namespace
+				UINT type = GetDriveTypeW(wname.get());
+				if (type != DRIVE_CDROM)
+					throw StorageException("Invalid device " + lpath.substr(4, 2));
+				info.isDirectory = false;
+				info.isWritable = false;
 			}
 			else
 			{
-				const int error = GetLastError();
-				if (error != ERROR_FILE_NOT_FOUND && error != ERROR_PATH_NOT_FOUND)
-					INFO_LOG(COMMON, "Cannot get attributes of '%s' error 0x%x", path.c_str(), error);
-				_set_errno(error);
-				throw StorageException("Cannot get attributes of " + path);
+				WIN32_FILE_ATTRIBUTE_DATA fileAttribs;
+				if (GetFileAttributesExW(wname.get(), GetFileExInfoStandard, &fileAttribs))
+				{
+					info.isDirectory = (fileAttribs.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
+					info.size = fileAttribs.nFileSizeLow + ((u64)fileAttribs.nFileSizeHigh << 32);
+					u64 t = ((u64)fileAttribs.ftLastWriteTime.dwHighDateTime << 32) | fileAttribs.ftLastWriteTime.dwLowDateTime;
+					info.updateTime = t / 10000000 - 11644473600LL;	// 100-nano to secs minus (unix epoch - windows epoch)
+				}
+				else
+				{
+					const int error = GetLastError();
+					if (error != ERROR_FILE_NOT_FOUND && error != ERROR_PATH_NOT_FOUND)
+						INFO_LOG(COMMON, "Cannot get attributes of '%s' error 0x%x", lpath.c_str(), error);
+					_set_errno(error);
+					throw StorageException("Cannot get attributes of " + lpath);
+				}
 			}
 		}
 		else

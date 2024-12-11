@@ -63,6 +63,7 @@ namespace hostfs
 	std::string getShaderCachePath(const std::string& filename);
 	void saveScreenshot(const std::string& name, const std::vector<u8>& data);
 
+	const std::vector<std::string>& getCdromDrives();
 #ifdef __ANDROID__
 	void importHomeDirectory();
 	void exportHomeDirectory();

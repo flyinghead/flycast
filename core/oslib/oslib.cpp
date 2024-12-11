@@ -315,6 +315,13 @@ void saveScreenshot(const std::string& name, const std::vector<u8>& data)
 
 #endif
 
+#ifndef USE_LIBCDIO
+const std::vector<std::string>& getCdromDrives() {
+	static std::vector<std::string> empty;
+	return empty;
+}
+#endif
+
 } // namespace hostfs
 
 void os_CreateWindow()
