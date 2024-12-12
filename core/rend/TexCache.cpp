@@ -304,20 +304,21 @@ struct PvrTexInfo
 	TexConvFP32 PL32;
 	TexConvFP32 TW32;
 	TexConvFP32 VQ32;
+	TexConvFP32 PLVQ32;
 	// Conversion to 8 bpp (palette)
 	TexConvFP8 TW8;
 };
 
 #define TEX_CONV_TABLE \
 const PvrTexInfo pvrTexInfo[8] = \
-{	/* name     bpp Final format			   Twiddled	 VQ				Planar(32b)    Twiddled(32b)  VQ (32b)      Palette (8b)	*/	\
-	{"1555", 	16,	TextureType::_5551,        tex1555_TW,  tex1555_VQ,    tex1555_PL32,  tex1555_TW32,  tex1555_VQ32, nullptr },			\
-	{"565", 	16, TextureType::_565,         tex565_TW,   tex565_VQ,     tex565_PL32,   tex565_TW32,   tex565_VQ32,  nullptr },	    	\
-	{"4444", 	16, TextureType::_4444,        tex4444_TW,  tex4444_VQ,    tex4444_PL32,  tex4444_TW32,  tex4444_VQ32, nullptr },	    	\
-	{"yuv", 	16, TextureType::_8888,        nullptr,     nullptr,       texYUV422_PL,  texYUV422_TW,  texYUV422_VQ, nullptr },			\
-	{"bumpmap", 16, TextureType::_4444,        texBMP_TW,	 texBMP_VQ,     tex4444_PL32,  tex4444_TW32,  tex4444_VQ32, nullptr },			\
-	{"pal4", 	4,	TextureType::_5551,		   texPAL4_TW,  texPAL4_VQ,    nullptr,       texPAL4_TW32,  texPAL4_VQ32, texPAL4PT_TW },		\
-	{"pal8", 	8,	TextureType::_5551,		   texPAL8_TW,  texPAL8_VQ,    nullptr,       texPAL8_TW32,  texPAL8_VQ32, texPAL8PT_TW },		\
+{	/* name     bpp Final format               Twiddled     VQ             Planar(32b)    Twiddled(32b)  VQ (32b)      PL VQ (32b)     Palette (8b)	*/	\
+	{"1555", 	16,	TextureType::_5551,        tex1555_TW,  tex1555_VQ,    tex1555_PL32,  tex1555_TW32,  tex1555_VQ32, tex1555_PLVQ32, nullptr },			\
+	{"565", 	16, TextureType::_565,         tex565_TW,   tex565_VQ,     tex565_PL32,   tex565_TW32,   tex565_VQ32,  tex565_PLVQ32,  nullptr },	    	\
+	{"4444", 	16, TextureType::_4444,        tex4444_TW,  tex4444_VQ,    tex4444_PL32,  tex4444_TW32,  tex4444_VQ32, tex4444_PLVQ32, nullptr },	    	\
+	{"yuv", 	16, TextureType::_8888,        nullptr,     nullptr,       texYUV422_PL,  texYUV422_TW,  texYUV422_VQ, texYUV422_PLVQ, nullptr },			\
+	{"bumpmap", 16, TextureType::_4444,        texBMP_TW,	texBMP_VQ,     tex4444_PL32,  tex4444_TW32,  tex4444_VQ32, tex4444_PLVQ32, nullptr },			\
+	{"pal4", 	4,	TextureType::_5551,        texPAL4_TW,  texPAL4_VQ,    nullptr,       texPAL4_TW32,  texPAL4_VQ32, nullptr,        texPAL4PT_TW },		\
+	{"pal8", 	8,	TextureType::_5551,        texPAL8_TW,  texPAL8_VQ,    nullptr,       texPAL8_TW32,  texPAL8_VQ32, nullptr,        texPAL8PT_TW },		\
 	{"ns/1555", 0},	                                                                                                                        \
 }
 
@@ -486,11 +487,6 @@ BaseTextureCacheData::BaseTextureCacheData(TSP tsp, TCW tcw)
 	if (tcw.ScanOrder && tex->PL32 != nullptr)
 	{
 		//Texture is stored 'planar' in memory, no deswizzle is needed
-		if (tcw.VQ_Comp != 0)
-		{
-			WARN_LOG(RENDERER, "Warning: planar texture with VQ set (invalid)");
-			this->tcw.VQ_Comp = 0;
-		}
 		if (tcw.MipMapped != 0)
 		{
 			WARN_LOG(RENDERER, "Warning: planar texture with mipmaps (invalid)");
@@ -508,9 +504,20 @@ BaseTextureCacheData::BaseTextureCacheData(TSP tsp, TCW tcw)
 
 		//Call the format specific conversion code
 		texconv = nullptr;
-		texconv32 = tex->PL32;
-		//calculate the size, in bytes, for the locking
-		size = stride * height * tex->bpp / 8;
+		if (tcw.VQ_Comp != 0)
+		{
+			// VQ
+			texconv32 = tex->PLVQ32;
+			mmStartAddress += VQ_CODEBOOK_SIZE;
+			size = stride * height / 4;
+		}
+		else
+		{
+			// Normal
+			texconv32 = tex->PL32;
+			//calculate the size, in bytes, for the locking
+			size = stride * height * tex->bpp / 8;
+		}
 	}
 	else
 	{

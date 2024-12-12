@@ -421,6 +421,26 @@ void texture_PL(PixelBuffer<typename PixelConvertor::unpacked_type>* pb, const u
 }
 
 template<class PixelConvertor>
+void texture_PLVQ(PixelBuffer<typename PixelConvertor::unpacked_type>* pb, const u8* p_in, u32 width, u32 height)
+{
+	pb->amove(0, 0);
+
+	height /= PixelConvertor::ypp;
+	width /= PixelConvertor::xpp;
+
+	for (u32 y = 0; y < height; y++)
+	{
+		for (u32 x = 0; x < width; x++)
+		{
+			u8 p = *p_in++;
+			PixelConvertor::Convert(pb, &vq_codebook[p * 8]);
+			pb->rmovex(PixelConvertor::xpp);
+		}
+		pb->rmovey(PixelConvertor::ypp);
+	}
+}
+
+template<class PixelConvertor>
 void texture_TW(PixelBuffer<typename PixelConvertor::unpacked_type>* pb, const u8* p_in, u32 Width, u32 Height)
 {
 	pb->amove(0, 0);
@@ -497,6 +517,11 @@ constexpr TexConvFP32 tex565_PL32 = texture_PL<ConvertPlanar<Unpacker565_32<RGBA
 constexpr TexConvFP32 tex1555_PL32 = texture_PL<ConvertPlanar<Unpacker1555_32<RGBAPacker>>>;
 constexpr TexConvFP32 tex4444_PL32 = texture_PL<ConvertPlanar<Unpacker4444_32<RGBAPacker>>>;
 
+constexpr TexConvFP32 texYUV422_PLVQ = texture_PLVQ<ConvertPlanarYUV<RGBAPacker>>;
+constexpr TexConvFP32 tex565_PLVQ32 = texture_PLVQ<ConvertPlanar<Unpacker565_32<RGBAPacker>>>;
+constexpr TexConvFP32 tex1555_PLVQ32 = texture_PLVQ<ConvertPlanar<Unpacker1555_32<RGBAPacker>>>;
+constexpr TexConvFP32 tex4444_PLVQ32 = texture_PLVQ<ConvertPlanar<Unpacker4444_32<RGBAPacker>>>;
+
 //Twiddle
 constexpr TexConvFP tex1555_TW = texture_TW<ConvertTwiddle<Unpacker1555>>;
 constexpr TexConvFP tex4444_TW = texture_TW<ConvertTwiddle<Unpacker4444>>;
@@ -526,6 +551,11 @@ constexpr TexConvFP32 texYUV422_PL = texture_PL<ConvertPlanarYUV<BGRAPacker>>;
 constexpr TexConvFP32 tex565_PL32 = texture_PL<ConvertPlanar<Unpacker565_32<BGRAPacker>>>;
 constexpr TexConvFP32 tex1555_PL32 = texture_PL<ConvertPlanar<Unpacker1555_32<BGRAPacker>>>;
 constexpr TexConvFP32 tex4444_PL32 = texture_PL<ConvertPlanar<Unpacker4444_32<BGRAPacker>>>;
+
+constexpr TexConvFP32 texYUV422_PLVQ = texture_PLVQ<ConvertPlanarYUV<BGRAPacker>>;
+constexpr TexConvFP32 tex565_PLVQ32 = texture_PLVQ<ConvertPlanar<Unpacker565_32<BGRAPacker>>>;
+constexpr TexConvFP32 tex1555_PLVQ32 = texture_PLVQ<ConvertPlanar<Unpacker1555_32<BGRAPacker>>>;
+constexpr TexConvFP32 tex4444_PLVQ32 = texture_PLVQ<ConvertPlanar<Unpacker4444_32<BGRAPacker>>>;
 
 //Twiddle
 constexpr TexConvFP tex1555_TW = texture_TW<ConvertTwiddle<UnpackerNop<u16>>>;
