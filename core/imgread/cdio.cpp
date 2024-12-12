@@ -89,14 +89,21 @@ struct CdioDrive : public Disc
 		if (!devices.empty())
 		{
 			// If the list isn't empty, check that an entry exists for the current path
+			std::string lpath(path);
+#ifdef _WIN32
+			if (lpath.substr(0, 4) != "\\\\.\\")
+				lpath = "\\\\.\\" + lpath;
+#endif
 			bool found = false;
 			for (const std::string& dev : devices)
-				if (dev == path) {
+				if (dev == lpath) {
 					found = true;
 					break;
 				}
-			if (!found)
+			if (!found) {
+				WARN_LOG(GDROM, "%s isn't a CD device", path);
 				return false;
+			}
 		}
 		pCdio = cdio_open(path, DRIVER_DEVICE);
 		if (pCdio == nullptr) {

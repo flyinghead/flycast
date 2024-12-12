@@ -680,7 +680,7 @@ if(USE_LIBCDIO)
 			target_compile_definitions(${PROJECT_NAME} PRIVATE USE_LIBCDIO)
 			if(MINGW)
 				# Force static link
-				target_link_libraries(${PROJECT_NAME} PRIVATE "-l:libcdio.a -l:libiconv.a")
+				target_link_libraries(${PROJECT_NAME} PRIVATE "-l:libcdio.a -l:libiconv.a -lwinmm")
 			else()
 				target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::CDIO)
 			endif()
