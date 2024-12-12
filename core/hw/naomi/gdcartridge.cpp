@@ -445,7 +445,7 @@ void GDCartridge::find_file(const char *name, const u8 *dir_sector, u32 &file_st
 
 void GDCartridge::read_gdrom(Disc *gdrom, u32 sector, u8* dst, u32 count, LoadProgress *progress)
 {
-	gdrom->ReadSectors(sector + 150, count, dst, 2048, progress);
+	gdrom->ReadSectors(sector + 150, count, dst, 2048, false, progress);
 }
 
 void GDCartridge::device_start(LoadProgress *progress, std::vector<u8> *digest)

@@ -65,32 +65,39 @@ GD_HardwareInfo_t GD_HardwareInfo;
 
 void libCore_CDDA_Sector(s16* sector)
 {
-	//silence ! :p
 	if (cdda.status == cdda_t::Playing)
 	{
-		libGDR_ReadSector((u8*)sector,cdda.CurrAddr.FAD,1,2352);
-		cdda.CurrAddr.FAD++;
-		if (cdda.CurrAddr.FAD >= cdda.EndAddr.FAD)
+		if (libGDR_ReadSector((u8*)sector, cdda.CurrAddr.FAD, 1, 2352, true) == 0)
 		{
-			if (cdda.repeats==0)
+			// Stop
+			cdda.CurrAddr.FAD--;	// should stay on the last sector read (reported by subcode with cdda status=terminated)
+			cdda.status = cdda_t::Terminated;
+			SecNumber.Status = GD_PAUSE;
+			memset(sector, 0, 2352);
+		}
+		else
+		{
+			cdda.CurrAddr.FAD++;
+			if (cdda.CurrAddr.FAD >= cdda.EndAddr.FAD)
 			{
-				//stop
-				cdda.status = cdda_t::Terminated;
-				SecNumber.Status = GD_PAUSE;
-			}
-			else
-			{
-				//Repeat ;)
-				if (cdda.repeats!=0xf)
-					cdda.repeats--;
-
-				cdda.CurrAddr.FAD=cdda.StartAddr.FAD;
+				if (cdda.repeats == 0)
+				{
+					// Stop
+					cdda.status = cdda_t::Terminated;
+					SecNumber.Status = GD_PAUSE;
+				}
+				else
+				{
+					// Repeat
+					if (cdda.repeats != 15)
+						cdda.repeats--;
+					cdda.CurrAddr.FAD = cdda.StartAddr.FAD;
+				}
 			}
 		}
 	}
-	else
-	{
-		memset(sector,0,2352);
+	else {
+		memset(sector, 0, 2352);
 	}
 }
 

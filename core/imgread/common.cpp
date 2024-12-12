@@ -205,10 +205,14 @@ static u32 createTrackInfoFirstLast(const Track& track, u32 tracknum)
 	return createTrackInfo(track, tracknum << 16);
 }
 
-void libGDR_ReadSector(u8 *buff, u32 startSector, u32 sectorCount, u32 sectorSize)
+u32 libGDR_ReadSector(u8 *buff, u32 startSector, u32 sectorCount, u32 sectorSize, bool stopOnMiss)
 {
 	if (disc != nullptr)
-		disc->ReadSectors(startSector, sectorCount, buff, sectorSize);
+		return disc->ReadSectors(startSector, sectorCount, buff, sectorSize, stopOnMiss);
+	if (stopOnMiss)
+		return 0;
+	memset(buff, 0, sectorCount * sectorSize);
+	return sectorCount;
 }
 
 void libGDR_GetToc(u32* to, DiskArea area)
@@ -276,13 +280,13 @@ bool Disc::readSector(u32 FAD, u8 *dst, SectorFormat *sector_type, u8 *subcode, 
 	return false;
 }
 
-void Disc::ReadSectors(u32 FAD, u32 count, u8* dst, u32 fmt, LoadProgress *progress)
+u32 Disc::ReadSectors(u32 FAD, u32 count, u8* dst, u32 fmt, bool stopOnMiss, LoadProgress *progress)
 {
 	u8 temp[2352];
 	SectorFormat secfmt;
 	SubcodeFormat subfmt;
 
-	for (u32 i = 1; i <= count; i++)
+	for (u32 i = 0; i < count; i++)
 	{
 		if (progress != nullptr)
 		{
@@ -291,43 +295,40 @@ void Disc::ReadSectors(u32 FAD, u32 count, u8* dst, u32 fmt, LoadProgress *progr
 			progress->label = "Loading...";
 			progress->progress = (float)i / count;
 		}
-		if (readSector(FAD, temp, &secfmt, q_subchannel, &subfmt))
-		{
-			//TODO: Proper sector conversions
-			if (secfmt==SECFMT_2352)
-			{
-				convertSector(temp,dst,2352,fmt,FAD);
-			}
-			else if (fmt == 2048 && secfmt==SECFMT_2336_MODE2)
-				memcpy(dst,temp+8,2048);
-			else if (fmt==2048 && (secfmt==SECFMT_2048_MODE1 || secfmt==SECFMT_2048_MODE2_FORM1 ))
-			{
-				memcpy(dst,temp,2048);
-			}
-			else if (fmt==2352 && (secfmt==SECFMT_2048_MODE1 || secfmt==SECFMT_2048_MODE2_FORM1 ))
-			{
-				INFO_LOG(GDROM, "GDR:fmt=2352;secfmt=2048");
-				memcpy(dst,temp,2048);
-			}
-			else if (fmt==2048 && secfmt==SECFMT_2448_MODE2)
-			{
-				// Pier Solar and the Great Architects
-				convertSector(temp, dst, 2448, fmt, FAD);
-			}
-			else
-			{
-				WARN_LOG(GDROM, "ERROR: UNABLE TO CONVERT SECTOR. THIS IS FATAL. Format: %d Sector format: %d", fmt, secfmt);
-				//verify(false);
-			}
-		}
-		else
+		if (!readSector(FAD, temp, &secfmt, q_subchannel, &subfmt))
 		{
 			WARN_LOG(GDROM, "Sector Read miss FAD: %d", FAD);
-			memset(dst, 0, fmt);
+			if (stopOnMiss)
+				return i;
+			memset(temp, 0, sizeof(temp));
+			secfmt = SECFMT_2352;
 		}
-		dst+=fmt;
+
+		//TODO: Proper sector conversions
+		if (secfmt == SECFMT_2352) {
+			convertSector(temp, dst, 2352, fmt, FAD);
+		}
+		else if (fmt == 2048 && secfmt == SECFMT_2336_MODE2) {
+			memcpy(dst, temp + 8, 2048);
+		}
+		else if (fmt == 2048 && (secfmt == SECFMT_2048_MODE1 || secfmt == SECFMT_2048_MODE2_FORM1)) {
+			memcpy(dst, temp, 2048);
+		}
+		else if (fmt == 2352 && (secfmt == SECFMT_2048_MODE1 || secfmt == SECFMT_2048_MODE2_FORM1 )) {
+			INFO_LOG(GDROM, "GDR:fmt=2352;secfmt=2048");
+			memcpy(dst, temp, 2048);
+		}
+		else if (fmt == 2048 && secfmt == SECFMT_2448_MODE2) {
+			// Pier Solar and the Great Architects
+			convertSector(temp, dst, 2448, fmt, FAD);
+		}
+		else {
+			WARN_LOG(GDROM, "ERROR: UNABLE TO CONVERT SECTOR. THIS IS FATAL. Format: %d Sector format: %d", fmt, secfmt);
+		}
+		dst += fmt;
 		FAD++;
 	}
+	return count;
 }
 
 void libGDR_ReadSubChannel(u8 * buff, u32 len)
