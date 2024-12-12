@@ -3248,6 +3248,13 @@ static void gui_display_content()
 		if (iconButton(ICON_FA_GEAR, "Settings"))
 			gui_setState(GuiState::Settings);
     }
+    else
+    {
+		ImGui::SameLine(ImGui::GetContentRegionMax().x
+				- ImGui::GetStyle().FramePadding.x * 2.0f - ImGui::CalcTextSize("Cancel").x);
+		if (ImGui::Button("Cancel"))
+			gui_setState(GuiState::Commands);
+    }
     ImGui::PopStyleVar();
 
     scanner.fetch_game_list();
