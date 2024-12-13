@@ -57,8 +57,8 @@ static SceUID vmem_block = -1;
 bool init(void **vmem_base_addr, void **sh4rcb_addr, size_t ramSize)
 {
 
-	// Now try to allocate a contiguous piece of memory.
-	reserved_size = 512 * 1024 * 1024 + ALIGN(sizeof(Sh4RCB), PAGE_SIZE) + ARAM_SIZE_MAX;
+	// Now try to allocate a contiguous piece of memory. Extra 8MB is for ARAM mapping at 0x20000000
+	reserved_size = 512 * 1024 * 1024 + ALIGN(sizeof(Sh4RCB), PAGE_SIZE) + 8_MB;
 	reserved_base = nullptr;
 	reserved_block = kuKernelMemReserve(&reserved_base, reserved_size, SCE_KERNEL_MEMBLOCK_TYPE_USER_RW);
 	verify(reserved_block >= 0);
