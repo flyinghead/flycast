@@ -132,7 +132,7 @@ LogManager::LogManager()
 	SetLogLevel(static_cast<LogTypes::LOG_LEVELS>(verbosity));
 	if (cfgLoadBool("log", "LogToFile", false))
 	{
-#if defined(__ANDROID__) || defined(__APPLE__) || defined(TARGET_UWP)
+#if defined(__ANDROID__) || defined(__APPLE__) || defined(TARGET_UWP) || defined(__vita__)
 		std::string logPath = get_writable_data_path("flycast.log");
 #else
 		std::string logPath = "flycast.log";
