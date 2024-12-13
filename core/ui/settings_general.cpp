@@ -25,6 +25,11 @@
 #include "achievements/achievements.h"
 #include "imgui_stdlib.h"
 
+#ifdef __vita__
+extern bool folder_reset;
+extern bool subfolders_read;
+#endif
+
 static void addContentPathCallback(const std::string& path)
 {
 	auto& contentPath = config::ContentPath.get();
@@ -41,6 +46,52 @@ static void addContentPathCallback(const std::string& path)
 
 void addContentPath(bool start)
 {
+#ifdef __vita__
+	ImguiStyleVar _(ImGuiStyleVar_FramePadding, ScaledVec2(24, 3));
+	if (ImGui::Button("Add from ux0:")) {
+		folder_reset = true;
+		subfolders_read = false;
+		ImGui::OpenPopup("Select Directory 1");
+	}
+	select_file_popup("Select Directory 1", [](bool cancelled, std::string selection) {
+		if (!cancelled)
+			addContentPathCallback(selection);
+		return true;
+	}, false, "", "ux0:/");
+	ImGui::SameLine();
+	if (ImGui::Button("Add from uma0:")) {
+		folder_reset = true;
+		subfolders_read = false;
+		ImGui::OpenPopup("Select Directory 2");
+	}
+	select_file_popup("Select Directory 2", [](bool cancelled, std::string selection) {
+		if (!cancelled)
+			addContentPathCallback(selection);
+		return true;
+	}, false, "", "uma0:/");
+	ImGui::SameLine();
+	if (ImGui::Button("Add from imc0:")) {
+		folder_reset = true;
+		subfolders_read = false;
+		ImGui::OpenPopup("Select Directory 3");
+	}
+	select_file_popup("Select Directory 3", [](bool cancelled, std::string selection) {
+		if (!cancelled)
+			addContentPathCallback(selection);
+		return true;
+	}, false, "", "imc0:/");
+	ImGui::SameLine();
+	if (ImGui::Button("Add from xmc0:")) {
+		folder_reset = true;
+		subfolders_read = false;
+		ImGui::OpenPopup("Select Directory 4");
+	}
+	select_file_popup("Select Directory 4", [](bool cancelled, std::string selection) {
+		if (!cancelled)
+			addContentPathCallback(selection);
+		return true;
+	}, false, "", "xmc0:/");
+#else
     const char *title = "Select a Content Folder";
     select_file_popup(title, [](bool cancelled, std::string selection) {
 		if (!cancelled)
@@ -60,6 +111,7 @@ void addContentPath(bool start)
 #else
     if (start)
     	ImGui::OpenPopup(title);
+#endif
 #endif
 }
 

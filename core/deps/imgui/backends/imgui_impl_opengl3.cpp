@@ -89,6 +89,9 @@ bool    ImGui_ImplOpenGL3_Init()
 
     // Store GLSL version string so we can refer to it later in case we recreate shaders. Note: GLSL version is NOT the same as GL version. Leave this to NULL if unsure.
     const char* glsl_version;
+#ifdef __vita__
+	glsl_version = "";
+#else
     if (theGLContext.isGLES())
     	glsl_version = "#version 100";		// OpenGL ES 2.0
     else
@@ -96,6 +99,7 @@ bool    ImGui_ImplOpenGL3_Init()
     	glsl_version = "#version 140";		// OpenGL 3.1
 #else
     	glsl_version = "#version 130";		// OpenGL 3.0
+#endif
 #endif
     IM_ASSERT((int)strlen(glsl_version) + 2 < IM_ARRAYSIZE(g_GlslVersionString));
     strcpy(g_GlslVersionString, glsl_version);
@@ -250,8 +254,10 @@ static bool ImGui_ImplOpenGL3_CreateFontsTexture()
     glcache.BindTexture(GL_TEXTURE_2D, g_FontTexture);
     glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+#ifndef __vita__
     if (theGLContext.getMajorVersion() >= 3)
     	glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+#endif
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
 
     // Store our identifier
@@ -310,6 +316,43 @@ static bool ImGui_ImplOpenGL3_CreateDeviceObjects()
 {
     // Parse GLSL version string
     int glsl_version = 130;
+#ifdef __vita__
+	const GLchar* vertex_shader_glsl_120 = "";
+
+    const GLchar* vertex_shader_glsl_130 =
+        "uniform float4x4 ProjMtx;\n"
+        "void main(\n"
+		"float2 Position,\n"
+		"float2 UV,\n"
+        "float4 Color,\n"
+        "float2 out Frag_UV : TEXCOORD0,\n"
+        "float4 out Frag_Color : COLOR,\n"
+		"float4 out gl_Position : 	POSITION\n"
+		") {\n"
+        "    Frag_UV = UV;\n"
+        "    Frag_Color = Color;\n"
+        "    gl_Position = mul(float4(Position.xy, 0, 1), ProjMtx);\n"
+        "}\n";
+
+    const GLchar* vertex_shader_glsl_300_es = "";
+
+    const GLchar* vertex_shader_glsl_410_core = "";
+
+    const GLchar* fragment_shader_glsl_120 = "";
+
+    const GLchar* fragment_shader_glsl_130 =
+        "uniform sampler2D tex;\n"
+        "float4 main(\n"
+		"float2 Frag_UV : TEXCOORD0,\n"
+		"float4 Frag_Color : COLOR\n"
+		") {\n"
+        "    return Frag_Color * tex2D(tex, Frag_UV);\n"
+        "}\n";
+
+    const GLchar* fragment_shader_glsl_300_es = "";
+
+    const GLchar* fragment_shader_glsl_410_core = "";
+#else
     sscanf(g_GlslVersionString, "#version %d", &glsl_version);
 
     const GLchar* vertex_shader_glsl_120 =
@@ -411,6 +454,7 @@ static bool ImGui_ImplOpenGL3_CreateDeviceObjects()
         "{\n"
         "    Out_Color = Frag_Color * texture(Texture, Frag_UV.st);\n"
         "}\n";
+#endif
 
     // Select shaders matching our GLSL versions
     const GLchar* vertex_shader = NULL;
@@ -455,12 +499,18 @@ static bool ImGui_ImplOpenGL3_CreateDeviceObjects()
     glLinkProgram(g_ShaderHandle);
     CheckProgram(g_ShaderHandle, "shader program");
 
+#ifndef __vita__
     glDetachShader(g_ShaderHandle, vert_handle);
     glDetachShader(g_ShaderHandle, frag_handle);
+#endif
     glDeleteShader(vert_handle);
     glDeleteShader(frag_handle);
 
+#ifdef __vita__
+    g_AttribLocationTex = glGetUniformLocation(g_ShaderHandle, "tex");
+#else
     g_AttribLocationTex = glGetUniformLocation(g_ShaderHandle, "Texture");
+#endif
     g_AttribLocationProjMtx = glGetUniformLocation(g_ShaderHandle, "ProjMtx");
     g_AttribLocationPosition = glGetAttribLocation(g_ShaderHandle, "Position");
     g_AttribLocationUV = glGetAttribLocation(g_ShaderHandle, "UV");
