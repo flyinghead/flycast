@@ -212,19 +212,16 @@ void VulkanOverlay::Draw(vk::CommandBuffer commandBuffer, vk::Extent2D viewport,
 			drawers[i]->Draw(commandBuffer, vmuTextures[i]->GetImageView(), vtx, true, color);
 		}
 	}
-	if (crosshair && crosshairsNeeded())
+	if (crosshair)
 	{
 		pipeline->BindPipeline(commandBuffer);
 		bool imageViewBound = false;
 		for (size_t i = 0; i < config::CrosshairColor.size(); i++)
 		{
-			if (config::CrosshairColor[i] == 0)
-				continue;
-			if (settings.platform.isConsole() && config::MapleMainDevices[i] != MDT_LightGun)
+			if (!crosshairNeeded(i))
 				continue;
 
 			auto [x, y] = getCrosshairPosition(i);
-
 #ifdef LIBRETRO
 			float w = lightgun_crosshair_size * scaling / config::ScreenStretching * 100.f;
 			float h = lightgun_crosshair_size * scaling;

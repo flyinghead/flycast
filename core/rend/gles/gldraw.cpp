@@ -1015,12 +1015,6 @@ static void updateLightGunTexture()
 
 static void drawGunCrosshair(u8 port, int width, int height)
 {
-	if (config::CrosshairColor[port] == 0)
-		return;
-	if (settings.platform.isConsole()
-			&& config::MapleMainDevices[port] != MDT_LightGun)
-		return;
-
 	auto [x, y] = getCrosshairPosition(port);
 #ifdef LIBRETRO
 	float halfWidth = lightgun_crosshair_size / 2.f / config::ScreenStretching * 100.f * config::RenderResolution / 480.f;
@@ -1073,10 +1067,9 @@ void drawVmusAndCrosshairs(int width, int height)
 				drawVmuTexture(i, width, height);
 	}
 
-	if (crosshairsNeeded()) {
-		for (int i = 0 ; i < 4 ; i++)
+	for (int i = 0 ; i < 4 ; i++)
+		if (crosshairNeeded(i))
 			drawGunCrosshair(i, width, height);
-	}
 	glCheck();
 }
 
