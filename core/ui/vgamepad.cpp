@@ -273,34 +273,55 @@ ControlId hitTest(float x, float y)
 	return None;
 }
 
-u32 controlToDcKey(ControlId control)
+static u32 buttonMap[_Count] {
+	DC_DPAD_LEFT,
+	DC_DPAD_UP,
+	DC_DPAD_RIGHT,
+	DC_DPAD_DOWN,
+	DC_BTN_X,
+	DC_BTN_Y,
+	DC_BTN_B,
+	DC_BTN_A,
+	DC_BTN_START,
+	DC_AXIS_LT,
+	DC_AXIS_RT,
+	0,			// not used: analog area
+	0,			// not used: analog stick
+	EMU_BTN_FFORWARD,
+	DC_BTN_Y,	// button 4
+	DC_BTN_Z,	// button 5
+	EMU_BTN_SRVMODE,
+	DC_BTN_INSERT_CARD,
+	DC_DPAD_LEFT | DC_DPAD_UP,
+	DC_DPAD_RIGHT | DC_DPAD_UP,
+	DC_DPAD_LEFT | DC_DPAD_DOWN,
+	DC_DPAD_RIGHT | DC_DPAD_DOWN,
+};
+
+void setButtonMap()
 {
 	const bool arcade = settings.platform.isArcade();
-	switch (control)
+	if (serviceMode)
 	{
-		case Left: return DC_DPAD_LEFT;
-		case Up: return DC_DPAD_UP;
-		case Right: return DC_DPAD_RIGHT;
-		case Down: return DC_DPAD_DOWN;
-		case X: return serviceMode ? DC_DPAD2_DOWN : arcade ? DC_BTN_C : DC_BTN_X;
-		case Y: return arcade ? DC_BTN_X : DC_BTN_Y;
-		case B: return serviceMode ? DC_DPAD2_UP : DC_BTN_B;
-		case A: return serviceMode ? DC_BTN_D : DC_BTN_A;
-		case Start: return DC_BTN_START;
-		case LeftTrigger: return DC_AXIS_LT;
-		case RightTrigger: return DC_AXIS_RT;
-		case FastForward: return EMU_BTN_FFORWARD;
-		case LeftUp: return DC_DPAD_LEFT | DC_DPAD_UP;
-		case RightUp: return DC_DPAD_RIGHT | DC_DPAD_UP;
-		case LeftDown: return DC_DPAD_LEFT | DC_DPAD_DOWN;
-		case RightDown: return DC_DPAD_RIGHT | DC_DPAD_DOWN;
-		// Arcade
-		case Btn4: return DC_BTN_Y;
-		case Btn5: return DC_BTN_Z;
-		case InsertCard: return DC_BTN_INSERT_CARD;
-		case ServiceMode: return EMU_BTN_SRVMODE;
-		default: return 0;
+		buttonMap[A] = DC_BTN_D;
+		buttonMap[B] = DC_DPAD2_UP;
+		buttonMap[X] = DC_DPAD2_DOWN;
 	}
+	else
+	{
+		buttonMap[A] = DC_BTN_A;
+		buttonMap[B] = DC_BTN_B;
+		buttonMap[X] = arcade ? DC_BTN_C : DC_BTN_X;
+	}
+	buttonMap[Y] = arcade ? DC_BTN_X : DC_BTN_Y;
+}
+
+u32 controlToDcKey(ControlId control)
+{
+	if (control >= Left && control < _Count)
+		return buttonMap[control];
+	else
+		return 0;
 }
 
 void setAnalogStick(float x, float y) {
@@ -315,10 +336,12 @@ float getControlWidth(ControlId control) {
 void toggleServiceMode()
 {
 	serviceMode = !serviceMode;
-	if (serviceMode) {
+	if (serviceMode)
+	{
 		Controls[A].disabled = false;
 		Controls[B].disabled = false;
 		Controls[X].disabled = false;
+		setButtonMap();
 	}
 	else {
 		startGame();
@@ -382,17 +405,17 @@ void draw()
 	}
 		
 	ImDrawList *drawList = ImGui::GetBackgroundDrawList();
-	drawButton(drawList, Controls[Left], kcode[0] & DC_DPAD_LEFT);
-	drawButton(drawList, Controls[Up], kcode[0] & DC_DPAD_UP);
-	drawButton(drawList, Controls[Right], kcode[0] & DC_DPAD_RIGHT);
-	drawButton(drawList, Controls[Down], kcode[0] & DC_DPAD_DOWN);
+	drawButton(drawList, Controls[Left], kcode[0] & buttonMap[Left]);
+	drawButton(drawList, Controls[Up], kcode[0] & buttonMap[Up]);
+	drawButton(drawList, Controls[Right], kcode[0] & buttonMap[Right]);
+	drawButton(drawList, Controls[Down], kcode[0] & buttonMap[Down]);
 
-	drawButton(drawList, Controls[X], kcode[0] & (serviceMode ? DC_DPAD2_DOWN : settings.platform.isConsole() ? DC_BTN_X : DC_BTN_C));
-	drawButton(drawList, Controls[Y], kcode[0] & (settings.platform.isConsole() ? DC_BTN_Y : DC_BTN_X));
-	drawButton(drawList, Controls[B], kcode[0] & (serviceMode ? DC_DPAD2_UP : DC_BTN_B));
-	drawButton(drawList, Controls[A], kcode[0] & (serviceMode ? DC_BTN_D : DC_BTN_A));
+	drawButton(drawList, Controls[X], kcode[0] & buttonMap[X]);
+	drawButton(drawList, Controls[Y], kcode[0] & buttonMap[Y]);
+	drawButton(drawList, Controls[B], kcode[0] & buttonMap[B]);
+	drawButton(drawList, Controls[A], kcode[0] & buttonMap[A]);
 
-	drawButton(drawList, Controls[Start], kcode[0] & DC_BTN_START);
+	drawButton(drawList, Controls[Start], kcode[0] & buttonMap[Start]);
 
 	drawButtonDim(drawList, Controls[LeftTrigger], lt[0] >> 8);
 
@@ -403,10 +426,10 @@ void draw()
 
 	drawButton(drawList, Controls[FastForward], false);
 
-	drawButton(drawList, Controls[Btn4], kcode[0] & DC_BTN_Y);
-	drawButton(drawList, Controls[Btn5], kcode[0] & DC_BTN_Z);
+	drawButton(drawList, Controls[Btn4], kcode[0] & buttonMap[Btn4]);
+	drawButton(drawList, Controls[Btn5], kcode[0] & buttonMap[Btn5]);
 	drawButton(drawList, Controls[ServiceMode], !serviceMode);
-	drawButton(drawList, Controls[InsertCard], kcode[0] & DC_BTN_INSERT_CARD);
+	drawButton(drawList, Controls[InsertCard], kcode[0] & buttonMap[InsertCard]);
 
 	AlphaTrans += ((float)Visible - AlphaTrans) / 2;
 }
@@ -686,6 +709,7 @@ void startGame()
 {
 	enableAllControls();
 	serviceMode = false;
+	setButtonMap();
 	if (settings.platform.isConsole())
 	{
 		disableControl(Btn4);
@@ -780,7 +804,7 @@ void startGame()
 			if (settings.platform.isAtomiswave())
 			{
 				// button order: A B X Y B4
-				if ((usedButtons & AWAVE_BTN0_KEY) == 0)
+				if ((usedButtons & AWAVE_BTN0_KEY) == 0 || settings.input.lightgunGame)
 					disableControl(A);
 				if ((usedButtons & AWAVE_BTN1_KEY) == 0)
 					disableControl(B);
@@ -822,10 +846,15 @@ void startGame()
 			}
 			else
 			{
-				if ((usedButtons & NAOMI_BTN0_KEY) == 0)
+				if ((usedButtons & NAOMI_BTN0_KEY) == 0 || settings.input.lightgunGame)
 					disableControl(A);
-				if ((usedButtons & NAOMI_BTN1_KEY) == 0)
+				if ((usedButtons & (NAOMI_BTN1_KEY | NAOMI_RELOAD_KEY)) == 0)
 					disableControl(B);
+				else if (settings.input.lightgunGame
+						&& (usedButtons & NAOMI_RELOAD_KEY) != 0
+						&& (usedButtons & NAOMI_BTN1_KEY) == 0)
+					// Remap button 1 to reload for lightgun games that need it
+					buttonMap[B] = DC_BTN_RELOAD;
 				if ((usedButtons & NAOMI_BTN2_KEY) == 0)
 					// C
 					disableControl(X);

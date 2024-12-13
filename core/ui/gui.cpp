@@ -3033,7 +3033,6 @@ static void gui_display_settings()
     		{
     			maple_ReconnectDevices();
     			reset_vmus();
-    			vgamepad::startGame();
     		}
     	}
        	SaveSettings();
