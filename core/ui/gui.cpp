@@ -2804,6 +2804,7 @@ static void gui_settings_network()
 
 static void gui_settings_advanced()
 {
+#if FEAT_SHREC != DYNAREC_NONE
     header("CPU Mode");
     {
 		ImGui::Columns(2, "cpu_modes", false);
@@ -2819,6 +2820,7 @@ static void gui_settings_advanced()
 				"%d MHz");
     }
 	ImGui::Spacing();
+#endif
     header("Other");
     {
     	OptionCheckbox("HLE BIOS", config::UseReios, "Force high-level BIOS emulation");

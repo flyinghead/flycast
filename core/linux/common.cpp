@@ -51,11 +51,11 @@ void fault_handler(int sn, siginfo_t * si, void *segfault_ctx)
 	// texture protection in VRAM
 	if (VramLockedWrite((u8*)si->si_addr))
 		return;
+#if FEAT_SHREC == DYNAREC_JIT
 	// FPCB jump table protection
 	if (addrspace::bm_lockedWrite((u8*)si->si_addr))
 		return;
 
-#if FEAT_SHREC == DYNAREC_JIT
 	// fast mem access rewriting
 	host_context_t ctx;
 	context_from_segfault(&ctx, segfault_ctx);

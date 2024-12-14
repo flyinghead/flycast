@@ -1,11 +1,10 @@
-#include <sstream>
-
 #include "types.h"
+#if FEAT_SHREC != DYNAREC_NONE
 #include "hw/sh4/sh4_mem.h"
 #include "hw/sh4/sh4_mmr.h"
-
 #include "ngen.h"
 #include "ssa.h"
+#include <sstream>
 
 void AnalyseBlock(RuntimeBlockInfo* blk)
 {
@@ -180,3 +179,5 @@ const char* shil_opcode_name(int op)
 {
 	return shilop_str[op];
 }
+
+#endif	// FEAT_SHREC != DYNAREC_NONE

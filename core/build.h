@@ -42,6 +42,11 @@
 	#define HOST_CPU CPU_GENERIC
 #endif
 
+#if defined(TARGET_IPHONE) && !defined(__aarch64__)
+// iOS simulator
+#define TARGET_NO_REC
+#endif
+
 #if defined(TARGET_NO_REC)
 #define FEAT_SHREC DYNAREC_NONE
 #define FEAT_AREC DYNAREC_NONE

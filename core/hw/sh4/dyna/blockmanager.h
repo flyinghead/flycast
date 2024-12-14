@@ -84,15 +84,31 @@ void bm_Init();
 void bm_Term();
 
 void bm_vmem_pagefill(void** ptr,u32 size_bytes);
-bool bm_RamWriteAccess(void *p);
-void bm_RamWriteAccess(u32 addr);
 static inline bool bm_IsRamPageProtected(u32 addr)
 {
 	extern bool unprotected_pages[RAM_SIZE_MAX/PAGE_SIZE];
 	addr &= RAM_MASK;
 	return !unprotected_pages[addr / PAGE_SIZE];
 }
+
+#if FEAT_SHREC != DYNAREC_NONE
+
+bool bm_RamWriteAccess(void *p);
+void bm_RamWriteAccess(u32 addr);
 void bm_LockPage(u32 addr, u32 size = PAGE_SIZE);
 void bm_UnlockPage(u32 addr, u32 size = PAGE_SIZE);
 u32 bm_getRamOffset(void *p);
 
+#else
+
+inline static bool bm_RamWriteAccess(void *p) {
+	return false;
+}
+inline static void bm_RamWriteAccess(u32 addr) {}
+inline static void bm_LockPage(u32 addr, u32 size = PAGE_SIZE) {}
+inline static void bm_UnlockPage(u32 addr, u32 size = PAGE_SIZE) {}
+inline static u32 bm_getRamOffset(void *p) {
+	return 0;
+}
+
+#endif
