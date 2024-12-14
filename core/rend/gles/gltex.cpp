@@ -1,7 +1,6 @@
 #include "glcache.h"
 #include "gles.h"
 #include "hw/pvr/pvr_mem.h"
-#include "rend/TexCache.h"
 
 #include <memory>
 

@@ -1,10 +1,24 @@
+/*
+	This file is part of Flycast.
+
+    Flycast is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 2 of the License, or
+    (at your option) any later version.
+
+    Flycast is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
+*/
 #include "TexCache.h"
-#include "CustomTexture.h"
 #include "deps/xbrz/xbrz.h"
 #include "hw/pvr/pvr_mem.h"
 #include "hw/mem/addrspace.h"
 
-#include <algorithm>
 #include <mutex>
 #include <xxhash.h>
 
@@ -12,155 +26,12 @@
 #include <omp.h>
 #endif
 
-const u8 *vq_codebook;
-u32 palette_index;
-u32 palette16_ram[1024];
-u32 palette32_ram[1024];
-u32 pal_hash_256[4];
-u32 pal_hash_16[64];
 extern bool pal_needs_update;
 
 // Rough approximation of LoD bias from D adjust param, only used to increase LoD
 const std::array<f32, 16> D_Adjust_LoD_Bias = {
 		0.f, -4.f, -2.f, -1.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f
 };
-
-u32 detwiddle[2][11][1024];
-//input : address in the yyyyyxxxxx format
-//output : address in the xyxyxyxy format
-//U : x resolution , V : y resolution
-//twiddle works on 64b words
-
-
-static u32 twiddle_slow(u32 x,u32 y,u32 x_sz,u32 y_sz)
-{
-	u32 rv=0;//low 2 bits are directly passed  -> needs some misc stuff to work.However
-			 //Pvr internally maps the 64b banks "as if" they were twiddled :p
-
-	u32 sh=0;
-	x_sz>>=1;
-	y_sz>>=1;
-	while(x_sz!=0 || y_sz!=0)
-	{
-		if (y_sz)
-		{
-			u32 temp=y&1;
-			rv|=temp<<sh;
-
-			y_sz>>=1;
-			y>>=1;
-			sh++;
-		}
-		if (x_sz)
-		{
-			u32 temp=x&1;
-			rv|=temp<<sh;
-
-			x_sz>>=1;
-			x>>=1;
-			sh++;
-		}
-	}	
-	return rv;
-}
-
-static void BuildTwiddleTables()
-{
-	for (u32 s = 0; s < 11; s++)
-	{
-		u32 x_sz = 1024;
-		u32 y_sz = 1 << s;
-		for (u32 i = 0; i < x_sz; i++)
-		{
-			detwiddle[0][s][i] = twiddle_slow(i, 0, x_sz, y_sz);
-			detwiddle[1][s][i] = twiddle_slow(0, i, y_sz, x_sz);
-		}
-	}
-}
-
-static OnLoad btt(&BuildTwiddleTables);
-
-void palette_update()
-{
-	if (!pal_needs_update)
-		return;
-	pal_needs_update = false;
-	rend_updatePalette();
-
-	if (!isDirectX(config::RendererType))
-	{
-		switch(PAL_RAM_CTRL&3)
-		{
-		case 0:
-			for (int i=0;i<1024;i++)
-			{
-				palette16_ram[i] = Unpacker1555::unpack(PALETTE_RAM[i]);
-				palette32_ram[i] = Unpacker1555_32<RGBAPacker>::unpack(PALETTE_RAM[i]);
-			}
-			break;
-
-		case 1:
-			for (int i=0;i<1024;i++)
-			{
-				palette16_ram[i] = UnpackerNop<u16>::unpack(PALETTE_RAM[i]);
-				palette32_ram[i] = Unpacker565_32<RGBAPacker>::unpack(PALETTE_RAM[i]);
-			}
-			break;
-
-		case 2:
-			for (int i=0;i<1024;i++)
-			{
-				palette16_ram[i] = Unpacker4444::unpack(PALETTE_RAM[i]);
-				palette32_ram[i] = Unpacker4444_32<RGBAPacker>::unpack(PALETTE_RAM[i]);
-			}
-			break;
-
-		case 3:
-			for (int i=0;i<1024;i++)
-				palette32_ram[i] = Unpacker8888<RGBAPacker>::unpack(PALETTE_RAM[i]);
-			break;
-		}
-	}
-	else
-	{
-		switch(PAL_RAM_CTRL&3)
-		{
-
-		case 0:
-			for (int i=0;i<1024;i++)
-			{
-				palette16_ram[i] = UnpackerNop<u16>::unpack(PALETTE_RAM[i]);
-				palette32_ram[i] = Unpacker1555_32<BGRAPacker>::unpack(PALETTE_RAM[i]);
-			}
-			break;
-
-		case 1:
-			for (int i=0;i<1024;i++)
-			{
-				palette16_ram[i] = UnpackerNop<u16>::unpack(PALETTE_RAM[i]);
-				palette32_ram[i] = Unpacker565_32<BGRAPacker>::unpack(PALETTE_RAM[i]);
-			}
-			break;
-
-		case 2:
-			for (int i=0;i<1024;i++)
-			{
-				palette16_ram[i] = UnpackerNop<u16>::unpack(PALETTE_RAM[i]);
-				palette32_ram[i] = Unpacker4444_32<BGRAPacker>::unpack(PALETTE_RAM[i]);
-			}
-			break;
-
-		case 3:
-			for (int i=0;i<1024;i++)
-				palette32_ram[i] = UnpackerNop<u32>::unpack(PALETTE_RAM[i]);
-			break;
-		}
-	}
-	for (std::size_t i = 0; i < std::size(pal_hash_16); i++)
-		pal_hash_16[i] = XXH32(&PALETTE_RAM[i << 4], 16 * 4, 7);
-	for (std::size_t i = 0; i < std::size(pal_hash_256); i++)
-		pal_hash_256[i] = XXH32(&PALETTE_RAM[i << 8], 256 * 4, 7);
-}
 
 static std::vector<vram_block*> VramLocks[VRAM_SIZE_MAX / PAGE_SIZE];
 
@@ -289,45 +160,6 @@ void UpscalexBRZ(int factor, u32* source, u32* dest, int width, int height, bool
 	xbrz::scale(factor, source, dest, width, height, has_alpha ? xbrz::ColorFormat::ARGB : xbrz::ColorFormat::RGB, xbrz_cfg);
 #endif
 }
-
-struct PvrTexInfo
-{
-	const char* name;
-	int bpp;        //4/8 for pal. 16 for yuv, rgb, argb
-	TextureType type;
-	// Conversion to 16 bpp
-	TexConvFP TW;
-	TexConvFP VQ;
-	// Conversion to 32 bpp
-	TexConvFP32 PL32;
-	TexConvFP32 TW32;
-	TexConvFP32 VQ32;
-	TexConvFP32 PLVQ32;
-	// Conversion to 8 bpp (palette)
-	TexConvFP8 TW8;
-};
-
-#define TEX_CONV_TABLE \
-const PvrTexInfo pvrTexInfo[8] = \
-{	/* name     bpp Final format               Twiddled     VQ             Planar(32b)    Twiddled(32b)  VQ (32b)      PL VQ (32b)     Palette (8b)	*/	\
-	{"1555", 	16,	TextureType::_5551,        tex1555_TW,  tex1555_VQ,    tex1555_PL32,  tex1555_TW32,  tex1555_VQ32, tex1555_PLVQ32, nullptr },			\
-	{"565", 	16, TextureType::_565,         tex565_TW,   tex565_VQ,     tex565_PL32,   tex565_TW32,   tex565_VQ32,  tex565_PLVQ32,  nullptr },	    	\
-	{"4444", 	16, TextureType::_4444,        tex4444_TW,  tex4444_VQ,    tex4444_PL32,  tex4444_TW32,  tex4444_VQ32, tex4444_PLVQ32, nullptr },	    	\
-	{"yuv", 	16, TextureType::_8888,        nullptr,     nullptr,       texYUV422_PL,  texYUV422_TW,  texYUV422_VQ, texYUV422_PLVQ, nullptr },			\
-	{"bumpmap", 16, TextureType::_4444,        texBMP_TW,	texBMP_VQ,     tex4444_PL32,  tex4444_TW32,  tex4444_VQ32, tex4444_PLVQ32, nullptr },			\
-	{"pal4", 	4,	TextureType::_5551,        texPAL4_TW,  texPAL4_VQ,    nullptr,       texPAL4_TW32,  texPAL4_VQ32, nullptr,        texPAL4PT_TW },		\
-	{"pal8", 	8,	TextureType::_5551,        texPAL8_TW,  texPAL8_VQ,    nullptr,       texPAL8_TW32,  texPAL8_VQ32, nullptr,        texPAL8PT_TW },		\
-	{"ns/1555", 0},	                                                                                                                        \
-}
-
-namespace opengl {
-	TEX_CONV_TABLE;
-}
-namespace directx {
-	TEX_CONV_TABLE;
-}
-#undef TEX_CONV_TABLE
-static const PvrTexInfo *pvrTexInfo = opengl::pvrTexInfo;
 
 extern const u32 VQMipPoint[11] =
 {

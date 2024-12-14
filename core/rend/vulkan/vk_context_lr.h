@@ -22,7 +22,7 @@
 #include "vulkan.h"
 #include "vmallocator.h"
 #include "quad.h"
-#include "rend/TexCache.h"
+#include "rend/texconv.h"
 #include "libretro_vulkan.h"
 #include "wsi/context.h"
 #include "commandpool.h"

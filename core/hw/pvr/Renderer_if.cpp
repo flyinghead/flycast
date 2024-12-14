@@ -1,6 +1,6 @@
 #include "Renderer_if.h"
 #include "spg.h"
-#include "rend/TexCache.h"
+#include "rend/texconv.h"
 #include "rend/transform_matrix.h"
 #include "cfg/option.h"
 #include "emulator.h"

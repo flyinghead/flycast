@@ -20,6 +20,7 @@
 */
 #pragma once
 #include "../vulkan_context.h"
+#include "cfg/option.h"
 
 class RenderPasses
 {

@@ -1348,6 +1348,8 @@ target_sources(${PROJECT_NAME} PRIVATE
 		core/rend/tileclip.h
 		core/rend/TexCache.cpp
 		core/rend/TexCache.h
+		core/rend/texconv.cpp
+		core/rend/texconv.h
 		core/rend/norend/norend.cpp)
 if(NOT LIBRETRO)
 	target_sources(${PROJECT_NAME} PRIVATE

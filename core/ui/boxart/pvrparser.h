@@ -18,7 +18,8 @@
  */
 #pragma once
 #include "types.h"
-#include "rend/TexCache.h"
+#include "rend/texconv.h"
+#include "hw/pvr/ta_structs.h"
 
 extern const u32 VQMipPoint[11];
 extern const u32 OtherMipPoint[11];

@@ -8,7 +8,6 @@
 #include "rend/gles/postprocess.h"
 #include "vmu_xhair.h"
 #endif
-#include "rend/TexCache.h"
 #include "rend/transform_matrix.h"
 #include "wsi/gl_context.h"
 #include "emulator.h"
