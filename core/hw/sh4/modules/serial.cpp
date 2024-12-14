@@ -440,6 +440,7 @@ void SCIFSerialPort::deserialize(Deserializer& deser)
 		statusLastRead = 0;
 		transmitting = false;
 	}
+	SCIF_SCBRR2 &= 0xff;	// work around previous issues with dynarecs
 	updateBaudRate();
 }
 
