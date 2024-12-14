@@ -3436,14 +3436,28 @@ static void gui_display_onboarding()
 	select_file_popup(title, &systemdir_selected_callback);
 }
 
+static void drawBoxartBackground()
+{
+	GameMedia game;
+	game.path = settings.content.path;
+	game.fileName = settings.content.fileName;
+	GameBoxart art = boxart.getBoxart(game);
+	ImguiFileTexture tex(art.boxartPath);
+	ImDrawList *dl = ImGui::GetBackgroundDrawList();
+	tex.draw(dl, ImVec2(0, 0), ImVec2(settings.display.width, settings.display.height), 1.f);
+}
+
 static std::future<bool> networkStatus;
 
 static void gui_network_start()
 {
+	drawBoxartBackground();
 	centerNextWindow();
-	ImGui::SetNextWindowSize(ScaledVec2(330, 180));
+	ImGui::SetNextWindowSize(ScaledVec2(330, 0));
+	ImGui::SetNextWindowBgAlpha(0.8f);
+	ImguiStyleVar _1(ImGuiStyleVar_WindowPadding, ScaledVec2(20, 20));
 
-	ImGui::Begin("##network", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize);
+	ImGui::Begin("##network", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_AlwaysAutoResize);
 
 	ImguiStyleVar _(ImGuiStyleVar_FramePadding, ScaledVec2(20, 10));
 	ImGui::AlignTextToFramePadding();
@@ -3471,7 +3485,6 @@ static void gui_network_start()
 
 	float currentwidth = ImGui::GetContentRegionAvail().x;
 	ImGui::SetCursorPosX((currentwidth - uiScaled(100.f)) / 2.f + ImGui::GetStyle().WindowPadding.x);
-	ImGui::SetCursorPosY(uiScaled(126.f));
 	if (ImGui::Button("Cancel", ScaledVec2(100.f, 0)) && NetworkHandshake::instance != nullptr)
 	{
 		NetworkHandshake::instance->stop();
@@ -3490,10 +3503,13 @@ static void gui_network_start()
 
 static void gui_display_loadscreen()
 {
+	drawBoxartBackground();
 	centerNextWindow();
-	ImGui::SetNextWindowSize(ScaledVec2(330, 180));
+	ImGui::SetNextWindowSize(ScaledVec2(330, 0));
+	ImGui::SetNextWindowBgAlpha(0.8f);
+	ImguiStyleVar _(ImGuiStyleVar_WindowPadding, ScaledVec2(20, 20));
 
-    if (ImGui::Begin("##loading", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize))
+    if (ImGui::Begin("##loading", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_AlwaysAutoResize))
     {
 		ImguiStyleVar _(ImGuiStyleVar_FramePadding, ScaledVec2(20, 10));
 		ImGui::AlignTextToFramePadding();
@@ -3531,7 +3547,6 @@ static void gui_display_loadscreen()
 
 				float currentwidth = ImGui::GetContentRegionAvail().x;
 				ImGui::SetCursorPosX((currentwidth - uiScaled(100.f)) / 2.f + ImGui::GetStyle().WindowPadding.x);
-				ImGui::SetCursorPosY(uiScaled(126.f));
 				if (ImGui::Button("Cancel", ScaledVec2(100.f, 0)))
 					gameLoader.cancel();
 			}
