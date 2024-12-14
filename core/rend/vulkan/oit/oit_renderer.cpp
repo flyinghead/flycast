@@ -105,6 +105,7 @@ public:
 
 	bool Present() override
 	{
+		clearLastFrame = false;
 		if (config::EmulateFramebuffer || framebufferRendered)
 			return presentFramebuffer();
 		else

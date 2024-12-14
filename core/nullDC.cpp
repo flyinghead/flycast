@@ -281,7 +281,6 @@ void dc_loadstate(int index)
 	}
 
 	free(data);
-	EventManager::event(Event::LoadState);
 }
 
 time_t dc_getStateCreationDate(int index)

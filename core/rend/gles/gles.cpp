@@ -982,7 +982,7 @@ bool OpenGLRenderer::Init()
 		u32 dst[16];
 		UpscalexBRZ(2, src, dst, 2, 2, false);
 	}
-	fog_needs_update = true;
+	updateFogTable = true;
 	TextureCacheData::SetDirectXColorOrder(false);
 	TextureCacheData::setUploadToGPUFlavor();
 
@@ -1049,19 +1049,19 @@ void OpenGLRenderer::Process(TA_context* ctx)
 	if (gl.gl_major < 3 && settings.platform.isNaomi2())
 		throw FlycastException("OpenGL ES 3.0+ required for Naomi 2");
 
-	if (KillTex)
+	if (resetTextureCache) {
 		TexCache.Clear();
+		resetTextureCache = false;
+	}
 	TexCache.Cleanup();
 
-	if (fog_needs_update && config::Fog)
-	{
-		fog_needs_update = false;
+	if (updateFogTable && config::Fog) {
+		updateFogTable = false;
 		updateFogTexture((u8 *)FOG_TABLE, getFogTextureSlot(), gl.single_channel_format);
 	}
-	if (palette_updated)
-	{
+	if (updatePalette) {
 		updatePaletteTexture(getPaletteTextureSlot());
-		palette_updated = false;
+		updatePalette = false;
 	}
 	ta_parse(ctx, gl.prim_restart_fixed_supported || gl.prim_restart_supported);
 }

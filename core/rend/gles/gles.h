@@ -502,6 +502,8 @@ struct OpenGLRenderer : Renderer
 
 	bool RenderLastFrame() override
 	{
+		if (clearLastFrame)
+			return false;
 		saveCurrentFramebuffer();
 		bool ret = renderLastFrame();
 		restoreCurrentFramebuffer();
@@ -519,6 +521,7 @@ struct OpenGLRenderer : Renderer
 #ifndef LIBRETRO
 		imguiDriver->setFrameRendered();
 #endif
+		clearLastFrame = false;
 		frameRendered = false;
 		return true;
 	}

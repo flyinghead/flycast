@@ -763,7 +763,7 @@ bool OpenGL4Renderer::Init()
 		u32 dst[16];
 		UpscalexBRZ(2, src, dst, 2, 2, false);
 	}
-	fog_needs_update = true;
+	updateFogTable = true;
 	TextureCacheData::SetDirectXColorOrder(false);
 	TextureCacheData::setUploadToGPUFlavor();
 

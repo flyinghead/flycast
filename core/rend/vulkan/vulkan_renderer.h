@@ -41,6 +41,9 @@ public:
 	void RenderFramebuffer(const FramebufferInfo& info) override;
 	void RenderVideoRouting();
 
+	bool RenderLastFrame() override {
+		return !clearLastFrame;
+	}
 	bool GetLastFrame(std::vector<u8>& data, int& width, int& height) override {
 		return GetContext()->GetLastFrame(data, width, height);
 	}

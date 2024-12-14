@@ -87,8 +87,10 @@ BaseTextureCacheData *BaseVulkanRenderer::GetTexture(TSP tsp, TCW tcw)
 void BaseVulkanRenderer::Process(TA_context* ctx)
 {
 	framebufferRendered = false;
-	if (KillTex)
+	if (resetTextureCache) {
 		textureCache.Clear();
+		resetTextureCache = false;
+	}
 
 	texCommandPool.BeginFrame();
 	textureCache.SetCurrentIndex(texCommandPool.GetIndex());
@@ -184,11 +186,11 @@ void BaseVulkanRenderer::CheckFogTexture()
 	{
 		fogTexture = std::make_unique<Texture>();
 		fogTexture->tex_type = TextureType::_8;
-		fog_needs_update = true;
+		updateFogTable = true;
 	}
-	if (!fog_needs_update || !config::Fog)
+	if (!updateFogTable || !config::Fog)
 		return;
-	fog_needs_update = false;
+	updateFogTable = false;
 	u8 texData[256];
 	MakeFogTexture(texData);
 
@@ -199,15 +201,14 @@ void BaseVulkanRenderer::CheckFogTexture()
 
 void BaseVulkanRenderer::CheckPaletteTexture()
 {
-	if (!paletteTexture)
-	{
+	if (!paletteTexture) {
 		paletteTexture = std::make_unique<Texture>();
 		paletteTexture->tex_type = TextureType::_8888;
-		palette_updated = true;
 	}
-	if (!palette_updated)
+	else if (!updatePalette) {
 		return;
-	palette_updated = false;
+	}
+	updatePalette = false;
 
 	paletteTexture->SetCommandBuffer(texCommandBuffer);
 	paletteTexture->UploadToGPU(1024, 1, (u8 *)palette32_ram, false);
@@ -299,6 +300,7 @@ public:
 
 	bool Present() override
 	{
+		clearLastFrame = false;
 		if (config::EmulateFramebuffer || framebufferRendered)
 			return presentFramebuffer();
 		else

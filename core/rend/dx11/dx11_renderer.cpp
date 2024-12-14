@@ -158,7 +158,7 @@ bool DX11Renderer::Init()
 	quad->init(device, deviceContext, shaders);
 	n2Helper.init(device, deviceContext);
 
-	fog_needs_update = true;
+	updateFogTable = true;
 
 	if (!success)
 	{
@@ -318,8 +318,10 @@ BaseTextureCacheData *DX11Renderer::GetTexture(TSP tsp, TCW tcw)
 
 void DX11Renderer::Process(TA_context* ctx)
 {
-	if (KillTex)
+	if (resetTextureCache) {
 		texCache.Clear();
+		resetTextureCache = false;
+	}
 	texCache.Cleanup();
 
 	ta_parse(ctx, true);
@@ -936,7 +938,7 @@ void DX11Renderer::drawStrips()
 
 bool DX11Renderer::RenderLastFrame()
 {
-	if (!frameRenderedOnce)
+	if (!frameRenderedOnce || clearLastFrame)
 		return false;
 	displayFramebuffer();
 	return true;
@@ -1222,9 +1224,9 @@ void DX11Renderer::readRttRenderTarget(u32 texAddress)
 
 void DX11Renderer::updatePaletteTexture()
 {
-	if (palette_updated)
+	if (updatePalette)
 	{
-		palette_updated = false;
+		updatePalette = false;
 		deviceContext->UpdateSubresource(paletteTexture, 0, nullptr, palette32_ram, 32 * sizeof(u32), 32 * sizeof(u32) * 32);
 	}
     deviceContext->PSSetShaderResources(1, 1, &paletteTextureView.get());
@@ -1235,9 +1237,9 @@ void DX11Renderer::updateFogTexture()
 {
 	if (!config::Fog)
 		return;
-	if (fog_needs_update)
+	if (updateFogTable)
 	{
-		fog_needs_update = false;
+		updateFogTable = false;
 		u8 temp_tex_buffer[256];
 		MakeFogTexture(temp_tex_buffer);
 

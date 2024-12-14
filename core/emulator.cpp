@@ -880,7 +880,7 @@ void Emulator::loadstate(Deserializer& deser)
 
 	mmu_set_state();
 	getSh4Executor()->ResetCache();
-	KillTex = true;
+	EventManager::event(Event::LoadState);
 }
 
 void Emulator::setNetworkState(bool online)

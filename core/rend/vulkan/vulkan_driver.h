@@ -56,7 +56,8 @@ public:
 			if (!rendering || newFrameStarted)
 			{
 				context->BeginRenderPass();
-				context->PresentLastFrame();
+				if (renderer->RenderLastFrame())
+					context->PresentLastFrame();
 			}
 			if (!justStarted)
 			{

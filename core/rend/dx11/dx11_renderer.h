@@ -45,6 +45,7 @@ struct DX11Renderer : public Renderer
 		if (!frameRendered)
 			return false;
 		frameRendered = false;
+		clearLastFrame = false;
 #ifndef LIBRETRO
 		imguiDriver->setFrameRendered();
 #else

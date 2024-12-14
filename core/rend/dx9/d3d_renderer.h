@@ -110,6 +110,7 @@ struct D3DRenderer : public Renderer
 			return false;
 		imguiDriver->setFrameRendered();
 		frameRendered = false;
+		clearLastFrame = false;
 		return true;
 	}
 	BaseTextureCacheData *GetTexture(TSP tsp, TCW tcw) override;

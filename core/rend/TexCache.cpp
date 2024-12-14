@@ -14,12 +14,10 @@
 
 const u8 *vq_codebook;
 u32 palette_index;
-bool KillTex=false;
 u32 palette16_ram[1024];
 u32 palette32_ram[1024];
 u32 pal_hash_256[4];
 u32 pal_hash_16[64];
-bool palette_updated;
 extern bool pal_needs_update;
 
 // Rough approximation of LoD bias from D adjust param, only used to increase LoD
@@ -87,7 +85,7 @@ void palette_update()
 	if (!pal_needs_update)
 		return;
 	pal_needs_update = false;
-	palette_updated = true;
+	rend_updatePalette();
 
 	if (!isDirectX(config::RendererType))
 	{
