@@ -506,14 +506,3 @@ public:
 		return false;
 	}
 };
-
-class IOSTouchMouse : public SystemMouse
-{
-public:
-    IOSTouchMouse() : SystemMouse("iOS")
-    {
-        _unique_id = "ios_mouse";
-        _name = "Touchscreen (Mouse)";
-        loadMapping();
-    }
-};

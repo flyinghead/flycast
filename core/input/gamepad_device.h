@@ -93,13 +93,21 @@ public:
 	}
 
 	static void Register(const std::shared_ptr<GamepadDevice>& gamepad);
-
 	static void Unregister(const std::shared_ptr<GamepadDevice>& gamepad);
-
 	static int GetGamepadCount();
 	static std::shared_ptr<GamepadDevice> GetGamepad(int index);
 	static void SaveMaplePorts();
 	static void RampAnalog();
+
+	template<typename T>
+	static std::shared_ptr<T> GetGamepad()
+	{
+		Lock _(_gamepads_mutex);
+		for (const auto& gamepad : _gamepads)
+			if (dynamic_cast<T*>(gamepad.get()) != nullptr)
+				return std::dynamic_pointer_cast<T>(gamepad);
+		return {};
+	}
 
 	static void load_system_mappings();
 	bool find_mapping(int system = settings.platform.system);

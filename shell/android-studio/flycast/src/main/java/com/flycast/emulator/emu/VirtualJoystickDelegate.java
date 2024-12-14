@@ -74,7 +74,7 @@ public class VirtualJoystickDelegate implements TouchEventHandler
             case MotionEvent.ACTION_CANCEL:
                 mousePid = -1;
                 mouseButtons = 0;
-                InputDeviceManager.getInstance().mouseEvent(mousePos[0], mousePos[1], mouseButtons);
+                InputDeviceManager.getInstance().touchMouseEvent(mousePos[0], mousePos[1], mouseButtons);
                 return true;
 
             case MotionEvent.ACTION_POINTER_DOWN:
@@ -85,7 +85,7 @@ public class VirtualJoystickDelegate implements TouchEventHandler
                     mousePos[0] = Math.round(event.getX(actionIndex));
                     mousePos[1] = Math.round(event.getY(actionIndex));
                     mouseButtons = MotionEvent.BUTTON_PRIMARY;    // Mouse left button down
-                    InputDeviceManager.getInstance().mouseEvent(mousePos[0], mousePos[1], mouseButtons);
+                    InputDeviceManager.getInstance().touchMouseEvent(mousePos[0], mousePos[1], mouseButtons);
                     return true;
                 }
                 return false;
@@ -96,7 +96,7 @@ public class VirtualJoystickDelegate implements TouchEventHandler
                     if (event.getPointerId(i) == mousePid) {
                         mousePos[0] = Math.round(event.getX(i));
                         mousePos[1] = Math.round(event.getY(i));
-                        InputDeviceManager.getInstance().mouseEvent(mousePos[0], mousePos[1], mouseButtons);
+                        InputDeviceManager.getInstance().touchMouseEvent(mousePos[0], mousePos[1], mouseButtons);
                         break;
                     }
                 }
@@ -108,7 +108,7 @@ public class VirtualJoystickDelegate implements TouchEventHandler
                     mousePos[0] = Math.round(event.getX(actionIndex));
                     mousePos[1] = Math.round(event.getY(actionIndex));
                     mouseButtons = 0;
-                    InputDeviceManager.getInstance().mouseEvent(mousePos[0], mousePos[1], mouseButtons);
+                    InputDeviceManager.getInstance().touchMouseEvent(mousePos[0], mousePos[1], mouseButtons);
                     return true;
                 }
                 break;
@@ -168,7 +168,7 @@ public class VirtualJoystickDelegate implements TouchEventHandler
                 // Release the mouse too
                 mousePid = -1;
                 mouseButtons = 0;
-                InputDeviceManager.getInstance().mouseEvent(mousePos[0], mousePos[1], mouseButtons);
+                InputDeviceManager.getInstance().touchMouseEvent(mousePos[0], mousePos[1], mouseButtons);
                 // Then fall through
             case MotionEvent.ACTION_POINTER_DOWN:
             {

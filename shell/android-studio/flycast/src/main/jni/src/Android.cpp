@@ -17,6 +17,7 @@
 #endif
 #include "jni_util.h"
 #include "android_storage.h"
+#include "http_client.h"
 
 #include <android/log.h>
 #include <android/native_window.h>
@@ -34,8 +35,6 @@ namespace jni
 {
 	thread_local JVMAttacher jvm_attacher;
 }
-
-#include "http_client.h"
 
 extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_emu_JNIdc_screenCharacteristics(JNIEnv *env, jobject obj, jfloat screenDpi, jfloat refreshRate)
 {

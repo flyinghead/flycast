@@ -23,6 +23,7 @@
 #include "hw/maple/maple_if.h"
 
 std::shared_ptr<AndroidMouse> mouse;
+std::shared_ptr<TouchMouse> touchMouse;
 std::shared_ptr<AndroidKeyboard> keyboard;
 std::shared_ptr<AndroidVirtualGamepad> virtualGamepad;
 
@@ -96,11 +97,6 @@ extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_periph_InputDeviceMa
 {
 	input_device_manager = env->NewGlobalRef(obj);
 	input_device_manager_rumble = env->GetMethodID(env->GetObjectClass(obj), "rumble", "(IFFI)Z");
-	// FIXME Don't connect it by default or any screen touch will register as button A press
-	mouse = std::make_shared<AndroidMouse>(-1);
-	GamepadDevice::Register(mouse);
-	keyboard = std::make_shared<AndroidKeyboard>();
-	GamepadDevice::Register(keyboard);
 	gui_setOnScreenKeyboardCallback([](bool show) {
 		if (g_activity != nullptr)
 			jni::env()->CallVoidMethod(g_activity, showScreenKeyboardMid, show);
@@ -110,9 +106,14 @@ extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_periph_InputDeviceMa
 extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_periph_InputDeviceManager_joystickAdded(JNIEnv *env, jobject obj,
 		jint id, jstring name, jint maple_port, jstring junique_id, jintArray fullAxes, jintArray halfAxes, jboolean hasRumble)
 {
-	if (id == AndroidVirtualGamepad::GAMEPAD_ID) {
+	if (id == 0)
+		return;
+	if (id == AndroidVirtualGamepad::GAMEPAD_ID)
+	{
 		virtualGamepad = std::make_shared<AndroidVirtualGamepad>(hasRumble);
 		GamepadDevice::Register(virtualGamepad);
+		touchMouse = std::make_shared<TouchMouse>();
+		GamepadDevice::Register(touchMouse);
 	}
 	else
 	{
@@ -130,9 +131,12 @@ extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_periph_InputDeviceMa
 extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_periph_InputDeviceManager_joystickRemoved(JNIEnv *env, jobject obj,
 		jint id)
 {
-	if (id == AndroidVirtualGamepad::GAMEPAD_ID) {
+	if (id == AndroidVirtualGamepad::GAMEPAD_ID)
+	{
 		GamepadDevice::Unregister(virtualGamepad);
 		virtualGamepad.reset();
+		GamepadDevice::Unregister(touchMouse);
+		touchMouse.reset();
 	}
 	else {
 		std::shared_ptr<AndroidGamepadDevice> device = AndroidGamepadDevice::GetAndroidGamepad(id);
@@ -169,7 +173,12 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_flycast_emulator_periph_InputDevi
 }
 
 extern "C" JNIEXPORT jboolean JNICALL Java_com_flycast_emulator_periph_InputDeviceManager_keyboardEvent(JNIEnv *env, jobject obj,
-		jint key, jboolean pressed) {
+		jint key, jboolean pressed)
+{
+	if (keyboard == nullptr) {
+		keyboard = std::make_shared<AndroidKeyboard>();
+		GamepadDevice::Register(keyboard);
+	}
 	keyboard->input(key, pressed);
 	return true;
 }
@@ -191,9 +200,18 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_flycast_emulator_periph_InputDevi
 		return false;
 }
 
+static void createMouse()
+{
+	if (mouse == nullptr) {
+		mouse = std::make_shared<AndroidMouse>(touchMouse == nullptr ? 0 : 1);
+		GamepadDevice::Register(mouse);
+	}
+}
+
 extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_periph_InputDeviceManager_mouseEvent(JNIEnv *env, jobject obj,
 		jint xpos, jint ypos, jint buttons)
 {
+	createMouse();
 	mouse->setAbsPos(xpos, ypos, settings.display.width, settings.display.height);
 	mouse->setButton(Mouse::LEFT_BUTTON, (buttons & 1) != 0);
 	mouse->setButton(Mouse::RIGHT_BUTTON, (buttons & 2) != 0);
@@ -201,6 +219,17 @@ extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_periph_InputDeviceMa
 }
 
 extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_periph_InputDeviceManager_mouseScrollEvent(JNIEnv *env, jobject obj,
-		jint scrollValue) {
+		jint scrollValue)
+{
+	createMouse();
 	mouse->setWheel(scrollValue);
+}
+
+extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_periph_InputDeviceManager_touchMouseEvent(JNIEnv *env, jobject obj,
+		jint xpos, jint ypos, jint buttons)
+{
+	touchMouse->setAbsPos(xpos, ypos, settings.display.width, settings.display.height);
+	touchMouse->setButton(Mouse::LEFT_BUTTON, (buttons & 1) != 0);
+	touchMouse->setButton(Mouse::RIGHT_BUTTON, (buttons & 2) != 0);
+	touchMouse->setButton(Mouse::MIDDLE_BUTTON, (buttons & 4) != 0);
 }

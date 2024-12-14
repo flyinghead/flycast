@@ -411,7 +411,7 @@ public:
 class AndroidVirtualGamepad : public VirtualGamepad
 {
 public:
-	AndroidVirtualGamepad(bool rumbleEnabled) : VirtualGamepad("Android") {
+	AndroidVirtualGamepad(bool rumbleEnabled) : VirtualGamepad("Flycast") {
 		this->rumbleEnabled = rumbleEnabled;
 	}
 

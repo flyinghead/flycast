@@ -30,6 +30,7 @@
 #include "oslib/resources.h"
 #include "cfg/cfg.h"
 #include "input/gamepad.h"
+#include "input/mouse.h"
 #include "hw/naomi/naomi_cart.h"
 #include "hw/naomi/card_reader.h"
 #include "hw/maple/maple_devs.h"
@@ -710,6 +711,7 @@ void startGame()
 	enableAllControls();
 	serviceMode = false;
 	setButtonMap();
+	bool enableTouchMouse = false;
 	if (settings.platform.isConsole())
 	{
 		disableControl(Btn4);
@@ -719,7 +721,7 @@ void startGame()
 		switch (config::MapleMainDevices[0])
 		{
 		case MDT_LightGun:
-			// TODO enable mouse?
+			enableTouchMouse = true;
 			disableControl(AnalogArea);
 			disableControl(LeftTrigger);
 			disableControl(RightTrigger);
@@ -878,12 +880,14 @@ void startGame()
 				if ((usedButtons & NAOMI_START_KEY) == 0)
 					disableControl(Start);
 			}
+			if (settings.input.lightgunGame)
+				enableTouchMouse = true;
 		}
 		else
 		{
 			if (settings.input.lightgunGame)
 			{
-				// TODO enable mouse?
+				enableTouchMouse = true;
 				disableControl(A);
 				disableControl(X);
 				disableControl(Y);
@@ -904,6 +908,18 @@ void startGame()
 				disableControl(LeftTrigger);
 				disableControl(RightTrigger);
 			}
+		}
+	}
+	std::shared_ptr<TouchMouse> touchMouse = GamepadDevice::GetGamepad<TouchMouse>();
+	if (touchMouse != nullptr)
+	{
+		if (enableTouchMouse) {
+			if (touchMouse->maple_port() == -1)
+				touchMouse->set_maple_port(0);
+		}
+		else {
+			if (touchMouse->maple_port() == 0)
+				touchMouse->set_maple_port(-1);
 		}
 	}
 }
