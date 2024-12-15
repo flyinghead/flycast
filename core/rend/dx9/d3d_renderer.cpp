@@ -302,6 +302,7 @@ void D3DRenderer::RenderFramebuffer(const FramebufferInfo& info)
 	drawOSD();
 	frameRendered = true;
 	frameRenderedOnce = true;
+	clearLastFrame = false;
 	theDXContext.setFrameRendered();
 }
 
@@ -1181,6 +1182,7 @@ bool D3DRenderer::Render()
 		drawOSD();
 		frameRendered = true;
 		frameRenderedOnce = true;
+		clearLastFrame = false;
 		theDXContext.setFrameRendered();
 	}
 

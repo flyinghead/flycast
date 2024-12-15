@@ -525,6 +525,7 @@ bool DX11Renderer::Render()
 #endif
 		frameRendered = true;
 		frameRenderedOnce = true;
+		clearLastFrame = false;
 	}
 
 	return !is_rtt;
@@ -1040,6 +1041,7 @@ void DX11Renderer::RenderFramebuffer(const FramebufferInfo& info)
 #endif
 	frameRendered = true;
 	frameRenderedOnce = true;
+	clearLastFrame = false;
 }
 
 void DX11Renderer::setBaseScissor()

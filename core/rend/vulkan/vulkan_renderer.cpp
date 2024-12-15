@@ -86,7 +86,11 @@ BaseTextureCacheData *BaseVulkanRenderer::GetTexture(TSP tsp, TCW tcw)
 
 void BaseVulkanRenderer::Process(TA_context* ctx)
 {
-	framebufferRendered = false;
+	if (!ctx->rend.isRTT) {
+		framebufferRendered = false;
+		if (!config::EmulateFramebuffer)
+			clearLastFrame = false;
+	}
 	if (resetTextureCache) {
 		textureCache.Clear();
 		resetTextureCache = false;
@@ -156,6 +160,7 @@ void BaseVulkanRenderer::RenderFramebuffer(const FramebufferInfo& info)
 	commandBuffer.end();
 	fbCommandPool.EndFrame();
 	framebufferRendered = true;
+	clearLastFrame = false;
 }
 
 void BaseVulkanRenderer::RenderVideoRouting()
@@ -300,7 +305,8 @@ public:
 
 	bool Present() override
 	{
-		clearLastFrame = false;
+		if (clearLastFrame)
+			return false;
 		if (config::EmulateFramebuffer || framebufferRendered)
 			return presentFramebuffer();
 		else

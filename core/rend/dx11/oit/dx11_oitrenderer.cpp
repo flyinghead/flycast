@@ -694,6 +694,7 @@ struct DX11OITRenderer : public DX11Renderer
 #endif
 			frameRendered = true;
 			frameRenderedOnce = true;
+			clearLastFrame = false;
 		}
 
 		return !is_rtt;

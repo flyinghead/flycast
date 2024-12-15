@@ -688,6 +688,7 @@ void OpenGLRenderer::RenderFramebuffer(const FramebufferInfo& info)
 
 	drawOSD();
 	frameRendered = true;
+	clearLastFrame = false;
 	renderVideoRouting();
 	restoreCurrentFramebuffer();
 }

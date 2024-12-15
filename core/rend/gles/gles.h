@@ -516,12 +516,11 @@ struct OpenGLRenderer : Renderer
 
 	bool Present() override
 	{
-		if (!frameRendered)
+		if (!frameRendered || clearLastFrame)
 			return false;
 #ifndef LIBRETRO
 		imguiDriver->setFrameRendered();
 #endif
-		clearLastFrame = false;
 		frameRendered = false;
 		return true;
 	}

@@ -42,10 +42,9 @@ struct DX11Renderer : public Renderer
 
 	bool Present() override
 	{
-		if (!frameRendered)
+		if (!frameRendered || clearLastFrame)
 			return false;
 		frameRendered = false;
-		clearLastFrame = false;
 #ifndef LIBRETRO
 		imguiDriver->setFrameRendered();
 #else
