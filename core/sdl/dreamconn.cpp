@@ -43,15 +43,15 @@ struct MapleMsg
 
 	bool send(sock_t sock) {
 		u32 sz = getDataSize() + 4;
-		return ::write(sock, this, sz) == sz;
+		return ::send(sock, this, sz, 0) == sz;
 	}
 	bool receive(sock_t sock)
 	{
-		if (::read(sock, this, 4) != 4)
+		if (::recv(sock, this, 4, 0) != 4)
 			return false;
 		if (getDataSize() == 0)
 			return true;
-		return ::read(sock, data, getDataSize()) == getDataSize();
+		return ::recv(sock, data, getDataSize(), 0) == getDataSize();
 	}
 };
 static_assert(sizeof(MapleMsg) == 1028);
@@ -108,7 +108,7 @@ void DreamConn::disconnect()
 bool DreamConn::send(const u8* data, int size)
 {
 	if (VALID(sock))
-		return write(sock, data, size) == size;
+		return ::send(sock, data, size, 0) == size;
 	else
 		return false;
 }
