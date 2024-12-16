@@ -2101,3 +2101,70 @@ maple_device* maple_Create(MapleDeviceType type)
 	}
 	return nullptr;
 }
+
+#if defined(_WIN32) && !defined(TARGET_UWP) && defined(USE_SDL) && !defined(LIBRETRO)
+#include "sdl/dreamconn.h"
+
+struct DreamConnVmu : public maple_sega_vmu
+{
+	DreamConn& dreamconn;
+
+	DreamConnVmu(DreamConn& dreamconn) : dreamconn(dreamconn) {
+	}
+
+	u32 dma(u32 cmd) override
+	{
+		if (cmd == MDCF_BlockWrite && *(u32 *)dma_buffer_in == MFID_2_LCD)
+			// send the raw maple msg
+			dreamconn.send(dma_buffer_in - 4, dma_count_in + 4);
+		return maple_sega_vmu::dma(cmd);
+	}
+};
+
+struct DreamConnPurupuru : public maple_sega_purupuru
+{
+	DreamConn& dreamconn;
+
+	DreamConnPurupuru(DreamConn& dreamconn) : dreamconn(dreamconn) {
+	}
+
+	u32 dma(u32 cmd) override
+	{
+		switch (cmd)
+		{
+		case MDCF_BlockWrite:
+			dreamconn.send(dma_buffer_in - 4, dma_count_in + 4);
+			break;
+
+		case MDCF_SetCondition:
+			dreamconn.send(dma_buffer_in - 4, dma_count_in + 4);
+			break;
+		}
+		return maple_sega_purupuru::dma(cmd);
+	}
+};
+
+void createDreamConnDevices(DreamConn& dreamconn)
+{
+	const int bus = dreamconn.getBus();
+	if (dreamconn.hasVmu() && dynamic_cast<DreamConnVmu*>(MapleDevices[bus][0]) == nullptr)
+	{
+		delete MapleDevices[bus][0];
+		DreamConnVmu *dev = new DreamConnVmu(dreamconn);
+		dev->Setup((bus << 6) | 1);
+		dev->config = new MapleConfigMap(dev);
+		dev->OnSetup();
+		MapleDevices[bus][0] = dev;
+	}
+	if (dreamconn.hasRumble() && dynamic_cast<DreamConnPurupuru*>(MapleDevices[bus][1]) == nullptr)
+	{
+		delete MapleDevices[bus][1];
+		DreamConnPurupuru *dev = new DreamConnPurupuru(dreamconn);
+		dev->Setup((bus << 6) | 2);
+		dev->config = new MapleConfigMap(dev);
+		dev->OnSetup();
+		MapleDevices[bus][1] = dev;
+	}
+}
+
+#endif

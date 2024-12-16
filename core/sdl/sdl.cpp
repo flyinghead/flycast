@@ -30,6 +30,7 @@
 #include "nswitch.h"
 #include "switch_gamepad.h"
 #endif
+#include "dreamconn.h"
 #include <unordered_map>
 
 static SDL_Window* window = NULL;
@@ -48,6 +49,7 @@ static bool mouseCaptured;
 static std::string clipboardText;
 static std::string barcode;
 static u64 lastBarcodeTime;
+static std::unique_ptr<DreamConn> dreamconns[4];
 
 static KeyboardLayout detectKeyboardLayout();
 static bool handleBarcodeScanner(const SDL_Event& event);
@@ -260,10 +262,18 @@ void input_sdl_init()
 	if (settings.input.keyboardLangId == KeyboardLayout::US)
 		settings.input.keyboardLangId = detectKeyboardLayout();
 	barcode.clear();
+	for (unsigned i = 0; i < std::size(dreamconns); i++)
+	{
+		std::string key = "DreamConn" + std::to_string(i);
+		if (cfgLoadBool("input", key.c_str(), false))
+			dreamconns[i] = std::make_unique<DreamConn>(i);
+	}
 }
 
 void input_sdl_quit()
 {
+	for (auto& dc : dreamconns)
+		dc.reset();
 	EventManager::unlisten(Event::Terminate, emuEventCallback);
 	EventManager::unlisten(Event::Pause, emuEventCallback);
 	EventManager::unlisten(Event::Resume, emuEventCallback);
