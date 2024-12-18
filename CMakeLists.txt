@@ -219,6 +219,10 @@ else()
 	add_executable(${PROJECT_NAME} core/emulator.cpp)
 endif()
 
+set_target_properties(${PROJECT_NAME} PROPERTIES 
+		CMAKE_CXX_STANDARD 20
+		CMAKE_CXX_STANDARD_REQUIRED ON)
+
 if(WINDOWS_STORE)
 	set(USE_OPENGL OFF)
 	set(USE_VULKAN OFF)
