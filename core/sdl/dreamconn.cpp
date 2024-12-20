@@ -20,41 +20,42 @@
 
 #if defined(_WIN32) && !defined(TARGET_UWP)
 #include "hw/maple/maple_devs.h"
+#include <SDL.h>
+#include <iomanip>
+#include <sstream>
 
-void createDreamConnDevices(DreamConn& dreamconn);
+void createDreamConnDevices(std::shared_ptr<DreamConn> dreamconn, bool gameStart);
 
-struct MapleMsg
+bool MapleMsg::send(sock_t sock) const
 {
-	u8 command;
-	u8 destAP;
-	u8 originAP;
-	u8 size;
-	u8 data[1024];
+	std::ostringstream out;
+	out.fill('0');
+	out << std::hex << std::uppercase
+		<< std::setw(2) << (u32)command << " "
+		<< std::setw(2) << (u32)destAP << " "
+		<< std::setw(2) << (u32)originAP << " "
+		<< std::setw(2) << (u32)size;
+	const u32 sz = getDataSize();
+	for (u32 i = 0; i < sz; i++)
+		out << " " << std::setw(2) << (u32)data[i];
+	out << "\r\n";
+	std::string s = out.str();
+	return ::send(sock, s.c_str(), s.length(), 0) == (int)s.length();
+}
 
-	u32 getDataSize() const {
-		return size * 4;
-	}
-
-	template<typename T>
-	void setData(const T& p) {
-		memcpy(data, &p, sizeof(T));
-		this->size = (sizeof(T) + 3) / 4;
-	}
-
-	bool send(sock_t sock) {
-		u32 sz = getDataSize() + 4;
-		return ::send(sock, (const char *)this, sz, 0) == sz;
-	}
-	bool receive(sock_t sock)
-	{
-		if (::recv(sock, (char *)this, 4, 0) != 4)
-			return false;
-		if (getDataSize() == 0)
-			return true;
-		return ::recv(sock, (char *)data, getDataSize(), 0) == getDataSize();
-	}
-};
-static_assert(sizeof(MapleMsg) == 1028);
+bool MapleMsg::receive(sock_t sock)
+{
+	std::string str(11, ' ');
+	if (::recv(sock, (char *)str.data(), str.length(), 0) != (int)str.length())
+		return false;
+	sscanf(str.c_str(), "%hhx %hhx %hhx %hhx", &command, &destAP, &originAP, &size);
+	str = std::string(getDataSize() * 3 + 2, ' ');
+	if (::recv(sock, (char *)str.data(), str.length(), 0) != (int)str.length())
+		return false;
+	for (unsigned i = 0; i < getDataSize(); i++)
+		sscanf(&str[i * 3 + 1], "%hhx", &data[i]);
+	return true;
+}
 
 void DreamConn::connect()
 {
@@ -91,13 +92,10 @@ void DreamConn::connect()
 	}
 	expansionDevs = msg.originAP & 0x1f;
 	NOTICE_LOG(INPUT, "Connected to DreamConn[%d]: VMU:%d, Rumble Pack:%d", bus, hasVmu(), hasRumble());
-
-	EventManager::listen(Event::Resume, handleEvent, this);
 }
 
 void DreamConn::disconnect()
 {
-	EventManager::unlisten(Event::Resume, handleEvent, this);
 	if (VALID(sock)) {
 		NOTICE_LOG(INPUT, "Disconnected from DreamConn[%d]", bus);
 		closesocket(sock);
@@ -105,16 +103,54 @@ void DreamConn::disconnect()
 	sock = INVALID_SOCKET;
 }
 
-bool DreamConn::send(const u8* data, int size)
+bool DreamConn::send(const MapleMsg& msg)
 {
 	if (VALID(sock))
-		return ::send(sock, (const char *)data, size, 0) == size;
+		return msg.send(sock);
 	else
 		return false;
 }
 
-void DreamConn::handleEvent(Event event, void *arg) {
-	createDreamConnDevices(*static_cast<DreamConn*>(arg));
+bool DreamConnGamepad::isDreamConn(int deviceIndex)
+{
+	char guid_str[33] {};
+	SDL_JoystickGetGUIDString(SDL_JoystickGetDeviceGUID(deviceIndex), guid_str, sizeof(guid_str));
+	NOTICE_LOG(INPUT, "GUID: %s VID:%c%c%c%c PID:%c%c%c%c", guid_str,
+			guid_str[10], guid_str[11], guid_str[8], guid_str[9],
+			guid_str[18], guid_str[19], guid_str[16], guid_str[17]);
+	// DreamConn VID:4457 PID:4443
+	return memcmp("5744000043440000", guid_str + 8, 16) == 0;
+}
+
+DreamConnGamepad::DreamConnGamepad(int maple_port, int joystick_idx, SDL_Joystick* sdl_joystick)
+	: SDLGamepad(maple_port, joystick_idx, sdl_joystick)
+{
+	EventManager::listen(Event::Start, handleEvent, this);
+	EventManager::listen(Event::LoadState, handleEvent, this);
+}
+
+DreamConnGamepad::~DreamConnGamepad() {
+	EventManager::unlisten(Event::Start, handleEvent, this);
+	EventManager::unlisten(Event::LoadState, handleEvent, this);
+}
+
+void DreamConnGamepad::set_maple_port(int port)
+{
+	if (port < 0 || port >= 4) {
+		dreamconn.reset();
+	}
+	else if (dreamconn == nullptr || dreamconn->getBus() != port) {
+		dreamconn.reset();
+		dreamconn = std::make_shared<DreamConn>(port);
+	}
+	SDLGamepad::set_maple_port(port);
+}
+
+void DreamConnGamepad::handleEvent(Event event, void *arg)
+{
+	DreamConnGamepad *gamepad = static_cast<DreamConnGamepad*>(arg);
+	if (gamepad->dreamconn != nullptr)
+		createDreamConnDevices(gamepad->dreamconn, event == Event::Start);
 }
 
 #else
@@ -124,4 +160,15 @@ void DreamConn::connect() {
 void DreamConn::disconnect() {
 }
 
+bool DreamConnGamepad::isDreamConn(int deviceIndex) {
+	return false;
+}
+DreamConnGamepad::DreamConnGamepad(int maple_port, int joystick_idx, SDL_Joystick* sdl_joystick)
+	: SDLGamepad(maple_port, joystick_idx, sdl_joystick) {
+}
+DreamConnGamepad::~DreamConnGamepad() {
+}
+void DreamConnGamepad::set_maple_port(int port) {
+	SDLGamepad::set_maple_port(port);
+}
 #endif

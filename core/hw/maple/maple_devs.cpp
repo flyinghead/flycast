@@ -32,15 +32,19 @@ const char* maple_densha_controller_name    = "TAITO 001 Controller";
 const char* maple_sega_brand = "Produced By or Under License From SEGA ENTERPRISES,LTD.";
 
 //fill in the info
-void maple_device::Setup(u32 port, int playerNum)
+void maple_device::Setup(u32 bus, u32 port, int playerNum)
 {
-	maple_port = port;
-	bus_port = maple_GetPort(port);
-	bus_id = maple_GetBusId(port);
+	maple_port = (bus << 6) | (1 << port);
+	bus_port = port;
+	bus_id = bus;
 	logical_port[0] = 'A' + bus_id;
 	logical_port[1] = bus_port == 5 ? 'x' : '1' + bus_port;
 	logical_port[2] = 0;
 	player_num = playerNum == -1 ? bus_id : playerNum;
+
+	config = new MapleConfigMap(this);
+	OnSetup();
+	MapleDevices[bus][port] = this;
 }
 maple_device::~maple_device()
 {
@@ -683,7 +687,7 @@ struct maple_sega_vmu: maple_base
 					case MFID_2_LCD:
 					{
 						DEBUG_LOG(MAPLE, "VMU %s LCD write", logical_port);
-						r32();
+						r32();	// PT, phase, block#
 						rptr(lcd_data,192);
 
 						u8 white=0xff,black=0x00;
@@ -1719,7 +1723,7 @@ struct RFIDReaderWriter : maple_base
 		u32 resp = Dma(command, &buffer_in[1], buffer_in_len - 4, &buffer_out[1], outlen);
 
 		if (reci & 0x20)
-			reci |= maple_GetAttachedDevices(maple_GetBusId(reci));
+			reci |= maple_GetAttachedDevices(bus_id);
 
 		verify(u8(outlen / 4) * 4 == outlen);
 		buffer_out[0] = (resp << 0 ) | (reci << 8) | (send << 16) | ((outlen / 4) << 24);
@@ -2107,63 +2111,94 @@ maple_device* maple_Create(MapleDeviceType type)
 
 struct DreamConnVmu : public maple_sega_vmu
 {
-	DreamConn& dreamconn;
+	std::shared_ptr<DreamConn> dreamconn;
 
-	DreamConnVmu(DreamConn& dreamconn) : dreamconn(dreamconn) {
+	DreamConnVmu(std::shared_ptr<DreamConn> dreamconn) : dreamconn(dreamconn) {
 	}
 
 	u32 dma(u32 cmd) override
 	{
 		if (cmd == MDCF_BlockWrite && *(u32 *)dma_buffer_in == MFID_2_LCD)
+		{
 			// send the raw maple msg
-			dreamconn.send(dma_buffer_in - 4, dma_count_in + 4);
+			const MapleMsg *msg = reinterpret_cast<const MapleMsg*>(dma_buffer_in - 4);
+			dreamconn->send(*msg);
+		}
 		return maple_sega_vmu::dma(cmd);
+	}
+
+	void copy(maple_sega_vmu *other)
+	{
+		memcpy(flash_data, other->flash_data, sizeof(flash_data));
+		memcpy(lcd_data, other->lcd_data, sizeof(lcd_data));
+		memcpy(lcd_data_decoded, other->lcd_data_decoded, sizeof(lcd_data_decoded));
+		fullSaveNeeded = other->fullSaveNeeded;
+	}
+
+	void updateScreen()
+	{
+		MapleMsg msg;
+		msg.command = MDCF_BlockWrite;
+		msg.destAP = maple_port;
+		msg.originAP = bus_id << 6;
+		msg.size = 2 + sizeof(lcd_data) / 4;
+		*(u32 *)&msg.data[0] = MFID_2_LCD;
+		*(u32 *)&msg.data[4] = 0;	// PT, phase, block#
+		memcpy(&msg.data[8], lcd_data, sizeof(lcd_data));
+		dreamconn->send(msg);
 	}
 };
 
 struct DreamConnPurupuru : public maple_sega_purupuru
 {
-	DreamConn& dreamconn;
+	std::shared_ptr<DreamConn> dreamconn;
 
-	DreamConnPurupuru(DreamConn& dreamconn) : dreamconn(dreamconn) {
+	DreamConnPurupuru(std::shared_ptr<DreamConn> dreamconn) : dreamconn(dreamconn) {
 	}
 
 	u32 dma(u32 cmd) override
 	{
+		const MapleMsg *msg = reinterpret_cast<const MapleMsg*>(dma_buffer_in - 4);
 		switch (cmd)
 		{
 		case MDCF_BlockWrite:
-			dreamconn.send(dma_buffer_in - 4, dma_count_in + 4);
+			dreamconn->send(*msg);
 			break;
-
 		case MDCF_SetCondition:
-			dreamconn.send(dma_buffer_in - 4, dma_count_in + 4);
+			dreamconn->send(*msg);
 			break;
 		}
 		return maple_sega_purupuru::dma(cmd);
 	}
 };
 
-void createDreamConnDevices(DreamConn& dreamconn)
+void createDreamConnDevices(std::shared_ptr<DreamConn> dreamconn, bool gameStart)
 {
-	const int bus = dreamconn.getBus();
-	if (dreamconn.hasVmu() && dynamic_cast<DreamConnVmu*>(MapleDevices[bus][0]) == nullptr)
+	const int bus = dreamconn->getBus();
+	if (dreamconn->hasVmu())
 	{
-		delete MapleDevices[bus][0];
-		DreamConnVmu *dev = new DreamConnVmu(dreamconn);
-		dev->Setup((bus << 6) | 1);
-		dev->config = new MapleConfigMap(dev);
-		dev->OnSetup();
-		MapleDevices[bus][0] = dev;
+		maple_device *dev = MapleDevices[bus][0];
+		if (gameStart || (dev != nullptr && dev->get_device_type() == MDT_SegaVMU))
+		{
+			DreamConnVmu *vmu = new DreamConnVmu(dreamconn);
+			vmu->Setup(bus, 0);
+			if (!gameStart) {
+				// if loading a state, copy data from the regular vmu and send a screen update
+				vmu->copy(static_cast<maple_sega_vmu*>(dev));
+				vmu->updateScreen();
+			}
+			delete dev;
+		}
 	}
-	if (dreamconn.hasRumble() && dynamic_cast<DreamConnPurupuru*>(MapleDevices[bus][1]) == nullptr)
+	if (dreamconn->hasRumble())
 	{
-		delete MapleDevices[bus][1];
-		DreamConnPurupuru *dev = new DreamConnPurupuru(dreamconn);
-		dev->Setup((bus << 6) | 2);
-		dev->config = new MapleConfigMap(dev);
-		dev->OnSetup();
-		MapleDevices[bus][1] = dev;
+		maple_device *dev = MapleDevices[bus][1];
+		if (gameStart || (dev != nullptr && dev->get_device_type() == MDT_PurupuruPack))
+		{
+			delete dev;
+			DreamConnPurupuru *rumble = new DreamConnPurupuru(dreamconn);
+			rumble->Setup(bus, 1);
+		}
 	}
 }
 

@@ -215,10 +215,7 @@ static void mcfg_Create(MapleDeviceType type, u32 bus, u32 port, s32 player_num 
 {
 	delete MapleDevices[bus][port];
 	maple_device* dev = maple_Create(type);
-	dev->Setup(maple_GetAddress(bus, port), player_num);
-	dev->config = new MapleConfigMap(dev);
-	dev->OnSetup();
-	MapleDevices[bus][port] = dev;
+	dev->Setup(bus, port, player_num);
 }
 
 static void createNaomiDevices()

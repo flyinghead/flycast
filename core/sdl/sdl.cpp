@@ -39,6 +39,7 @@ static u32 windowFlags;
 #define WINDOW_WIDTH  640
 #define WINDOW_HEIGHT  480
 
+std::map<SDL_JoystickID, std::shared_ptr<SDLGamepad>> SDLGamepad::sdl_gamepads;
 static std::unordered_map<u64, std::shared_ptr<SDLMouse>> sdl_mice;
 static std::shared_ptr<SDLKeyboardDevice> sdl_keyboard;
 static bool window_fullscreen;
@@ -49,7 +50,6 @@ static bool mouseCaptured;
 static std::string clipboardText;
 static std::string barcode;
 static u64 lastBarcodeTime;
-static std::unique_ptr<DreamConn> dreamconns[4];
 
 static KeyboardLayout detectKeyboardLayout();
 static bool handleBarcodeScanner(const SDL_Event& event);
@@ -82,7 +82,11 @@ static void sdl_open_joystick(int index)
 #ifdef __SWITCH__
 		std::shared_ptr<SDLGamepad> gamepad = std::make_shared<SwitchGamepad>(index < MAPLE_PORTS ? index : -1, index, pJoystick);
 #else
-		std::shared_ptr<SDLGamepad> gamepad = std::make_shared<SDLGamepad>(index < MAPLE_PORTS ? index : -1, index, pJoystick);
+		std::shared_ptr<SDLGamepad> gamepad;
+		if (DreamConnGamepad::isDreamConn(index))
+			gamepad = std::make_shared<DreamConnGamepad>(index < MAPLE_PORTS ? index : -1, index, pJoystick);
+		else
+			gamepad = std::make_shared<SDLGamepad>(index < MAPLE_PORTS ? index : -1, index, pJoystick);
 #endif
 		SDLGamepad::AddSDLGamepad(gamepad);
 	} catch (const FlycastException& e) {
@@ -262,18 +266,10 @@ void input_sdl_init()
 	if (settings.input.keyboardLangId == KeyboardLayout::US)
 		settings.input.keyboardLangId = detectKeyboardLayout();
 	barcode.clear();
-	for (unsigned i = 0; i < std::size(dreamconns); i++)
-	{
-		std::string key = "DreamConn" + std::to_string(i);
-		if (cfgLoadBool("input", key.c_str(), false))
-			dreamconns[i] = std::make_unique<DreamConn>(i);
-	}
 }
 
 void input_sdl_quit()
 {
-	for (auto& dc : dreamconns)
-		dc.reset();
 	EventManager::unlisten(Event::Terminate, emuEventCallback);
 	EventManager::unlisten(Event::Pause, emuEventCallback);
 	EventManager::unlisten(Event::Resume, emuEventCallback);

@@ -20,8 +20,31 @@
 #include "types.h"
 #include "network/net_platform.h"
 #include "emulator.h"
+#include "sdl_gamepad.h"
 
-// TODO Need a way to detect DreamConn+ controllers
+struct MapleMsg
+{
+	u8 command;
+	u8 destAP;
+	u8 originAP;
+	u8 size;
+	u8 data[1024];
+
+	u32 getDataSize() const {
+		return size * 4;
+	}
+
+	template<typename T>
+	void setData(const T& p) {
+		memcpy(data, &p, sizeof(T));
+		this->size = (sizeof(T) + 3) / 4;
+	}
+
+	bool send(sock_t sock) const;
+	bool receive(sock_t sock);
+};
+static_assert(sizeof(MapleMsg) == 1028);
+
 class DreamConn
 {
 	const int bus;
@@ -37,7 +60,7 @@ public:
 		disconnect();
 	}
 
-	bool send(const u8* data, int size);
+	bool send(const MapleMsg& msg);
 
 	int getBus() const {
 		return bus;
@@ -52,5 +75,19 @@ public:
 private:
 	void connect();
 	void disconnect();
+};
+
+class DreamConnGamepad : public SDLGamepad
+{
+public:
+	DreamConnGamepad(int maple_port, int joystick_idx, SDL_Joystick* sdl_joystick);
+	~DreamConnGamepad();
+
+	void set_maple_port(int port) override;
+	static bool isDreamConn(int deviceIndex);
+
+private:
 	static void handleEvent(Event event, void *arg);
+
+	std::shared_ptr<DreamConn> dreamconn;
 };
