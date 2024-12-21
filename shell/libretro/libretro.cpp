@@ -27,6 +27,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include "nswitch.h"
+#elif defined(__linux__) || defined(__FreeBSD__)
+#include <stdlib.h>
 #endif
 
 #include <sys/stat.h>
@@ -348,6 +350,11 @@ void retro_init()
 	if (!addrspace::reserve())
 		ERROR_LOG(VMEM, "Cannot reserve memory space");
 
+#if defined(__linux__) || defined(__FreeBSD__)
+	// SDL evdev keyboard driver installs a SIGSEGV signal handler by default, which replaces flycast's one.
+	// Make sure to avoid this if SDL is initialized after the core (which happens).
+	setenv("SDL_NO_SIGNAL_HANDLERS", "1", 1);
+#endif
 	os_InstallFaultHandler();
 	MapleConfigMap::UpdateVibration = updateVibration;
 
