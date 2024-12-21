@@ -53,7 +53,7 @@ void (*EntryPoints[ARAM_SIZE_MAX / 4])();
 static u8 *ARM7_TCB;
 #elif defined(__OpenBSD__)
 alignas(4096) static u8 ARM7_TCB[ICacheSize] __attribute__((section(".openbsd.mutable")));
-#elif defined(__unix__) || defined(__SWITCH__)
+#elif defined(__unix__) || defined(__SWITCH__) || defined(__vita__)
 alignas(4096) static u8 ARM7_TCB[ICacheSize] __attribute__((section(".text")));
 #elif defined(__APPLE__)
 alignas(4096) static u8 ARM7_TCB[ICacheSize] __attribute__((section("__TEXT, .text")));
