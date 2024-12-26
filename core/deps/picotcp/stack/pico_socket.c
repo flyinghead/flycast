@@ -473,6 +473,8 @@ static void socket_garbage_collect(pico_time now, void *arg)
     struct pico_socket *s = (struct pico_socket *) arg;
     IGNORE_PARAMETER(now);
 
+    if (s->wakeup)
+    	s->wakeup(PICO_SOCK_EV_DEL, s);
     socket_clean_queues(s);
     PICO_FREE(s);
 }

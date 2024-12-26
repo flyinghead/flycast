@@ -170,6 +170,7 @@ struct pico_ip_mreq_source {
 #define PICO_SOCK_EV_CLOSE 8u
 #define PICO_SOCK_EV_FIN 0x10u
 #define PICO_SOCK_EV_ERR 0x80u
+#define PICO_SOCK_EV_DEL 0x100u
 
 struct pico_msginfo {
     struct pico_device *dev;
