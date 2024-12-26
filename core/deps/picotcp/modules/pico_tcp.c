@@ -826,6 +826,8 @@ static void tcp_rcv_sack(struct pico_socket_tcp *t, uint8_t *opt, int len)
 static int tcpopt_len_check(uint32_t *idx, uint8_t len, uint8_t expected)
 {
     if (len != expected) {
+        if (len < 2)
+            return -1;
         *idx = *idx + len - 2;
         return -1;
     }
