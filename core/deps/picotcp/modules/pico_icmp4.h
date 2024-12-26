@@ -92,7 +92,7 @@ PACKED_STRUCT_DEF pico_icmp4_hdr {
 #define  PICO_ICMP_MASKREPLY    18
 
 #define  PICO_ICMP_MAXTYPE    18
-
+#define  PICO_ICMP_MAXCOOKIE    65528
 
 #define  PICO_ICMP_UNREACH_NET          0
 #define  PICO_ICMP_UNREACH_HOST          1
