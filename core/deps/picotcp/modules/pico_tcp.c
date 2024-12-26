@@ -2803,7 +2803,7 @@ static uint8_t invalid_flags(struct pico_socket *s, uint8_t flags)
         { /* PICO_SOCKET_STATE_TCP_UNDEF      */ 0, },
         { /* PICO_SOCKET_STATE_TCP_CLOSED     */ 0, },
         { /* PICO_SOCKET_STATE_TCP_LISTEN     */ PICO_TCP_SYN, PICO_TCP_SYN | PICO_TCP_PSH },
-        { /* PICO_SOCKET_STATE_TCP_SYN_SENT   */ PICO_TCP_SYNACK, PICO_TCP_RST, PICO_TCP_RSTACK},
+        { /* PICO_SOCKET_STATE_TCP_SYN_SENT   */ PICO_TCP_SYNACK, PICO_TCP_RST, PICO_TCP_RSTACK, PICO_TCP_SYNACK | PICO_TCP_PSH },
         { /* PICO_SOCKET_STATE_TCP_SYN_RECV   */ PICO_TCP_SYN, PICO_TCP_ACK, PICO_TCP_PSH, PICO_TCP_PSHACK, PICO_TCP_FINACK, PICO_TCP_FINPSHACK, PICO_TCP_RST},
         { /* PICO_SOCKET_STATE_TCP_ESTABLISHED*/ PICO_TCP_SYN, PICO_TCP_SYNACK, PICO_TCP_ACK, PICO_TCP_PSH, PICO_TCP_PSHACK, PICO_TCP_FIN, PICO_TCP_FINACK, PICO_TCP_FINPSHACK, PICO_TCP_RST, PICO_TCP_RSTACK},
         { /* PICO_SOCKET_STATE_TCP_CLOSE_WAIT */ PICO_TCP_SYNACK, PICO_TCP_ACK, PICO_TCP_PSH, PICO_TCP_PSHACK, PICO_TCP_FIN, PICO_TCP_FINACK, PICO_TCP_FINPSHACK, PICO_TCP_RST},
@@ -2889,7 +2889,9 @@ int pico_tcp_input(struct pico_socket *s, struct pico_frame *f)
     }
     else if (flags == PICO_TCP_SYN || flags == (PICO_TCP_SYN | PICO_TCP_PSH)) {
         tcp_action_call(action->syn, s, f);
-    } else if (flags == (PICO_TCP_SYN | PICO_TCP_ACK)) {
+    } else if (flags == (PICO_TCP_SYN | PICO_TCP_ACK)
+    	// Windows CE / DirectPlay sets the PSH flag on SYN|ACK packets, which is normally invalid
+    	|| flags == (PICO_TCP_SYN | PICO_TCP_ACK | PICO_TCP_PSH)) {
         tcp_action_call(action->synack, s, f);
     } else {
         ret = tcp_action_by_flags(action, s, f, flags);
