@@ -295,7 +295,7 @@ static int pico_ethernet_ipv6_dst(struct pico_frame *f, struct pico_eth *const d
 
 /* Ethernet send, first attempt: try our own address.
  * Returns 0 if the packet is not for us.
- * Returns 1 if the packet is cloned to our own receive queue, so the caller can discard the original frame.
+ * Returns 1 if the packet is cloned to our own receive queue and the original frame is dicarded.
  * */
 static int32_t pico_ethsend_local(struct pico_frame *f, struct pico_eth_hdr *hdr)
 {
@@ -308,7 +308,9 @@ static int32_t pico_ethsend_local(struct pico_frame *f, struct pico_eth_hdr *hdr
         dbg("sending out packet destined for our own mac\n");
         if (pico_ethernet_receive(clone) < 0) {
             dbg("pico_ethernet_receive() failed\n");
+            return 0;
         }
+        pico_frame_discard(f);
         return 1;
     }
 
@@ -317,13 +319,12 @@ static int32_t pico_ethsend_local(struct pico_frame *f, struct pico_eth_hdr *hdr
 
 /* Ethernet send, second attempt: try bcast.
  * Returns 0 if the packet is not bcast, so it will be handled somewhere else.
- * Returns 1 if the packet is handled by the pico_device_broadcast() function, so it can be discarded.
+ * Returns 1 if the packet is handled by the pico_device_broadcast() function and is discarded.
  * */
 static int32_t pico_ethsend_bcast(struct pico_frame *f)
 {
     if (IS_LIMITED_BCAST(f)) {
-        (void)pico_device_broadcast(f); /* We can discard broadcast even if it's not sent. */
-        return 1;
+    	return (pico_device_broadcast(f) > 0); // Return 1 on success, ret > 0
     }
 
     return 0;
