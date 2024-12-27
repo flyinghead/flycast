@@ -1494,6 +1494,16 @@ if(APPLE AND USE_METAL)
 	target_include_directories(${PROJECT_NAME} PRIVATE core/deps/metal-cpp)
 	target_link_libraries(${PROJECT_NAME} PRIVATE "-framework Metal -framework QuartzCore -framework CoreGraphics")
 
+	target_compile_definitions(${PROJECT_NAME} PRIVATE USE_METAL HAVE_METAL)
+	target_sources(${PROJECT_NAME} PRIVATE
+			core/rend/metal/metal_renderer.h
+			core/rend/metal/metal_renderer.cpp
+			core/rend/metal/metal_context.h
+			core/rend/metal/metal_context.cpp
+			core/rend/metal/metal_shaders.h
+			core/rend/metal/metal_shaders.cpp
+			core/rend/metal/metal_texture.h
+			core/rend/metal/metal_texture.cpp)
 endif()
 
 if(WIN32 AND USE_DX9 AND NOT LIBRETRO AND NOT WINDOWS_STORE AND ("x86" IN_LIST ARCHITECTURE OR "x86_64" IN_LIST ARCHITECTURE))

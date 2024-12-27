@@ -87,6 +87,11 @@ void initRenderApi(void *window, void *display)
 			return;
 	}
 #endif
+#ifdef USE_METAL
+	if (isMetal(config::RendererType)) {
+
+	}
+#endif
 	die("Cannot initialize the graphics API");
 }
 
