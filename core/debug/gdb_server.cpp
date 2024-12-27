@@ -21,20 +21,140 @@
 #ifdef GDB_SERVER
 #include "gdb_server.h"
 #include "debug_agent.h"
-#include "network/net_platform.h"
 #include "cfg/option.h"
 #include "oslib/oslib.h"
+#include "util/shared_this.h"
+#include <asio.hpp>
 #include <stdexcept>
 #include <thread>
 #include <chrono>
-#include <mutex>
 #include <cassert>
-
-#define MAX_PACKET_LEN 4096
+#include <memory>
 
 namespace debugger {
 
-static void emuEventCallback(Event event, void *);
+constexpr u32 MAX_PACKET_LEN = 4096;
+
+static u8 unpack(char c)
+{
+	c = std::tolower(c);
+	if (c <= '9')
+		return c - '0';
+	else
+		return c - 'a' + 10;
+}
+
+u32 unpack(const char *s, int l)
+{
+	u32 r = 0;
+	for (int i = 0; i < l && *s != '\0'; i += 2, s += 2) {
+		r |= (unpack(s[0]) << 4 | unpack(s[1])) << (i * 4);
+	}
+	return r;
+}
+
+class GdbServer;
+
+class Connection : public SharedThis<Connection>
+{
+public:
+	asio::ip::tcp::socket& getSocket() {
+		return socket;
+	}
+
+	void start() {
+		asio::async_read_until(socket, asio::dynamic_string_buffer(message, MAX_PACKET_LEN), packetMatcher,
+				std::bind(&Connection::handlePacket, shared_from_this(),
+								asio::placeholders::error,
+								asio::placeholders::bytes_transferred));
+	}
+
+private:
+	Connection(GdbServer& server, asio::io_context& io_context)
+		: server(server), io_context(io_context), socket(io_context) {
+	}
+
+	using iterator = asio::buffers_iterator<asio::const_buffers_1>;
+
+	std::pair<iterator, bool>
+	static packetMatcher(iterator begin, iterator end)
+	{
+		if (begin == end)
+			return std::make_pair(begin, false);
+		iterator i = begin;
+		if (*i == '\03')
+			// break
+			return std::make_pair(i + 1, true);
+		if (*i != '$') {
+			// unexpected, or ack/nack ('+', '-')
+			return std::make_pair(i + 1, true);
+		}
+		++i;
+		while (i != end && *i != '#')
+			++i;
+		if (i + 3 <= end)
+			// 2 chars for CRC
+			return std::make_pair(i + 3, true);
+
+		return std::make_pair(begin, false);
+	}
+
+	void handlePacket(const std::error_code& ec, size_t len);
+
+	void send(const std::string& msg)
+	{
+		if (msg.empty())
+			start();
+		else
+			asio::async_write(socket, asio::buffer(msg),
+				std::bind(&Connection::writeDone, shared_from_this(),
+						asio::placeholders::error,
+						asio::placeholders::bytes_transferred));
+
+	}
+
+	void writeDone(const std::error_code& ec, size_t len)
+	{
+		if (ec)
+			WARN_LOG(COMMON, "Write error: %s", ec.message().c_str());
+		else
+			start();
+	}
+
+	GdbServer& server;
+	asio::io_context& io_context;
+	asio::ip::tcp::socket socket;
+	std::string message;
+	friend super;
+};
+
+class TcpAcceptor
+{
+public:
+	TcpAcceptor(GdbServer& server, asio::io_context& io_context, u16 port)
+		: server(server), io_context(io_context),
+		  acceptor(asio::ip::tcp::acceptor(io_context,
+				asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port)))
+	{
+		asio::socket_base::reuse_address option(true);
+		acceptor.set_option(option);
+		start();
+	}
+
+private:
+	void start()
+	{
+		Connection::Ptr newConnection = Connection::create(server, io_context);
+
+		acceptor.async_accept(newConnection->getSocket(),
+				std::bind(&TcpAcceptor::handleAccept, this, newConnection, asio::placeholders::error));
+	}
+	void handleAccept(Connection::Ptr newConnection, const std::error_code& error);
+
+	GdbServer& server;
+	asio::io_context& io_context;
+	asio::ip::tcp::acceptor acceptor;
+};
 
 class GdbServer
 {
@@ -45,61 +165,24 @@ public:
 
 	void init(int port)
 	{
-		if (VALID(serverSocket))
-			return;
-
-		serverSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-		if (!VALID(serverSocket))
-			throw Error("gdb: Cannot create server socket");
-
-		int option = 1;
-		setsockopt(serverSocket, SOL_SOCKET, SO_REUSEADDR, (const char *)&option, sizeof(option));
-
-		struct sockaddr_in serveraddr;
-		memset(&serveraddr, 0, sizeof(serveraddr));
-		serveraddr.sin_family = AF_INET;
-		serveraddr.sin_port = htons(port);
-
-		if (::bind(serverSocket, (struct sockaddr *)&serveraddr, sizeof(serveraddr)) < 0)
-		{
-			closesocket(serverSocket);
-			throw Error("gdb: bind() failed");
-		}
-		if (::listen(serverSocket, 5) < 0)
-		{
-			closesocket(serverSocket);
-			throw Error("gdb: listen() failed");
-		}
-		EventManager::listen(Event::Resume, emuEventCallback);
-		EventManager::listen(Event::Terminate, emuEventCallback);
-
-		initialised = true;
+		this->port = port;
+		EventManager::listen(Event::Resume, emuEventCallback, this);
+		EventManager::listen(Event::Terminate, emuEventCallback, this);
 	}
 
 	void term()
 	{
-		if (!initialised)
-			return;
-		EventManager::unlisten(Event::Resume, emuEventCallback);
-		EventManager::unlisten(Event::Terminate, emuEventCallback);
+		EventManager::unlisten(Event::Resume, emuEventCallback, this);
+		EventManager::unlisten(Event::Terminate, emuEventCallback, this);
 		stop();
-		if (VALID(clientSocket))
-		{
-			closesocket(clientSocket);
-			clientSocket = INVALID_SOCKET;
-		}
-		if (VALID(serverSocket))
-		{
-			closesocket(serverSocket);
-			serverSocket = INVALID_SOCKET;
-		}
 	}
 
 	void run()
 	{
-		if (!initialised || thread.joinable())
+		if (thread.joinable())
 			return;
 		DEBUG_LOG(COMMON, "GdbServer starting");
+		io_context = std::make_unique<asio::io_context>();
 		thread = std::thread(&GdbServer::serverThread, this);
 		if (config::GDBWaitForConnection)
 		{
@@ -110,19 +193,18 @@ public:
 
 	void stop()
 	{
-		if (!initialised)
-			return;
 		if (thread.joinable())
 		{
 			DEBUG_LOG(COMMON, "GdbServer stopping");
 			agent.resetAgent();
-			stopRequested = true;
+			io_context->stop();
 			thread.join();
+			io_context.reset();
 		}
 	}
 
 	bool isRunning() const {
-		return initialised && thread.joinable();
+		return thread.joinable();
 	}
 
 	// called on the emu thread
@@ -142,69 +224,19 @@ private:
 	void serverThread()
 	{
 		ThreadName _("GdbServer");
-		while (!stopRequested)
+		try
 		{
-			fd_set fds;
-			FD_ZERO(&fds);
-			sock_t max_fd = serverSocket;
-			FD_SET(serverSocket, &fds);
-			if (VALID(clientSocket))
-			{
-				max_fd = std::max(max_fd, clientSocket);
-				FD_SET(clientSocket, &fds);
-			}
-			timeval tv;
-			tv.tv_sec = 0;
-			tv.tv_usec = 100 * 1000;
-			if (::select(max_fd + 1, &fds, nullptr, nullptr, &tv) > 0)
-			{
-				if (FD_ISSET(serverSocket, &fds))
-				{
-					try {
-						acceptClientConnection();
-					} catch (const Error& e) {
-						ERROR_LOG(COMMON, "%s", e.what());
-						closesocket(serverSocket);
-						serverSocket = INVALID_SOCKET;
-						break;
-					}
-				}
-				else if (FD_ISSET(clientSocket, &fds))
-				{
-					readCommand();
-				}
-			}
+			TcpAcceptor server(*this, *io_context, port);
+			io_context->run();
 		}
-		if (VALID(clientSocket))
+		catch (const std::exception& e)
 		{
-			closesocket(clientSocket);
-			clientSocket = INVALID_SOCKET;
+			ERROR_LOG(COMMON, "Gdb server exception: %s", e.what());
 		}
 		attached = false;
-		stopRequested = false;
 	}
 
-	void acceptClientConnection()
-	{
-		if (VALID(clientSocket))
-			closesocket(clientSocket);
-		sockaddr_in src_addr{};
-		socklen_t addr_len = sizeof(src_addr);
-		clientSocket = ::accept(serverSocket, (sockaddr *)&src_addr, &addr_len);
-		if (!VALID(clientSocket))
-		{
-			if (get_last_error() != L_EAGAIN && get_last_error() != L_EWOULDBLOCK)
-				throw Error("accept failed");
-		}
-		else
-		{
-			NOTICE_LOG(NETWORK, "gdb: client connection");
-			attached = true;
-			agentInterrupt();
-		}
-	}
-
-	void readCommand()
+	std::string handleCommand(const std::string& packet)
 	{
         try {
 			if (postDebugTrapNeeded)
@@ -216,21 +248,21 @@ private:
 					throw Error(e.what());
 				}
 			}
-			std::string packet = recvPacket();
 			if (packet.empty())
-				return;
+				return "";
 
 			DEBUG_LOG(NETWORK, "gdb: recv %s", packet.c_str());
+			std::vector<std::string> replies;
 			switch (packet[0])
 			{
 			case '!':	// Enable extended mode
-				sendPacket("OK");
+				replies.push_back("OK");
 				break;
 			case '?':	// Sent when connection is first established to query the reason the target halted
-				reportException();
+				replies.push_back(reportException());
 				break;
 			case 'A':	// Initialized argv[] array passed into program. not supported
-				sendPacket("E01");
+				replies.push_back("E01");
 				break;;
 			case 'b':	// Change the serial line speed to baud. deprecated
 				break;
@@ -238,53 +270,59 @@ private:
 				break;
 			case 'c':	// Continue at addr, which is the address to resume.
 						// If addr is omitted, resume at current address
-				sendContinue(packet);
+				doContinue(packet);
 				break;
 			case 'C':	// Continue with signal sig
-				sendContinue(packet);
+				doContinue(packet);
 				break;
 			case 'd':	// Toggle debug flag. deprecated
 				break;
 			case 'D':	// Detach GDB from the remote system
-				sendPacket("OK");
+				replies.push_back("OK");
 				agent.detach();
 				break;
 			case 'F':	// File-I/O protocol extension not currently supported
 				break;;
 			case 'g':	// Read general registers
-				readAllRegs();
+				replies.push_back(readAllRegs());
 				break;
 			case 'G':	// Write general registers
-				writeAllRegs(packet);
+				replies.push_back(writeAllRegs(packet));
 				break;
 			case 'H':	// Set thread for subsequent operations
-				sendPacket("OK");
+				replies.push_back("OK");
 				break;
 			case 'i':	// Step the remote target by a single clock cycle
 			case 'I':	// Signal, then cycle step
 				// not supported
-				sendPacket("");
+				replies.push_back("");
 				break;
 			case 'k':	// Kill request. Stop process/system
 				agent.kill();
 				break;
 			case 'm':	// Read length addressable memory units
-				readMem(packet);
+				replies.push_back(readMem(packet));
 				break;
 			case 'M':	// Write length addressable memory units
-				writeMem(packet);
+				replies.push_back(writeMem(packet));
 				break;
 			case 'p':	// Read the value of register
-				readReg(packet);
+				replies.push_back(readReg(packet));
 				break;
 			case 'P':	// Write register
-				writeReg(packet);
+				replies.push_back(writeReg(packet));
 				break;
 			case 'q':	// General query packets
-				query(packet);
+				{
+					auto v = query(packet);
+					replies.insert(replies.end(), v.begin(), v.end());
+				}
 				break;
 			case 'Q':	// General set packets
-				set(packet);
+				{
+					auto v = set(packet);
+					replies.insert(replies.end(), v.begin(), v.end());
+				}
 				break;
 			case 'r':	// Reset the entire system. Deprecated (use 'R' instead)
 				break;
@@ -292,52 +330,78 @@ private:
 				restart();
 				break;
 			case 's':	// Single step
-				step(EXCEPT_NONE);
+				replies.push_back(step(EXCEPT_NONE));
 				break;
 			case 'S':	// Step with signal
-				step();
+				replies.push_back(step());
 				break;
 			case 't':	// Search backwards. unsupported
 				break;
 			case 'T':	// Find out if the thread is alive
-				sendPacket("OK");
+				replies.push_back("OK");
 				break;
 			case 'v':	// 'v' packets to control execution
-				vpacket(packet);
+				{
+					auto v = vpacket(packet);
+					replies.insert(replies.end(), v.begin(), v.end());
+				}
 				break;
 			case 'X':	// Write binary data to memory
-				writeMemBin(packet);
+				replies.push_back(writeMemBin(packet));
 				break;
 			case 'z':	// Remove a breakpoint/watchpoint.
-				removeMatchpoint(packet);
+				replies.push_back(removeMatchpoint(packet));
 				break;
 			case 'Z':	// Insert a breakpoint/watchpoint.
-				insertMatchpoint(packet);
+				replies.push_back(insertMatchpoint(packet));
 				break;
 			case 3:
-				interrupt();
+				replies.push_back(interrupt());
 				break;
 			default:
 				// Unknown commands are ignored
 				WARN_LOG(COMMON, "Unknown gdb command: %s", packet.c_str());
 				break;;
 			}
+			std::string data;
+			for (const std::string& pkt : replies)
+			{
+				data.push_back('$');
+				u8 checksum = 0;
+				for (char c : pkt)
+				{
+					if (c == '$' || c == '#' || c == '*' || c == '}')
+					{
+						c ^= 0x20;
+						checksum += (u8)'}';
+						data.push_back('}');
+					}
+					checksum += (u8)c;
+					data.push_back(c);
+				}
+				data.push_back('#');
+				char s[9];
+				sprintf(s, "%02x", checksum);
+				data += s;
+			}
+			DEBUG_LOG(NETWORK, "gdb: sent %s", data.c_str());
+
+			return data;
 		} catch (const Error& e) {
 			ERROR_LOG(COMMON, "%s", e.what());
-			closesocket(clientSocket);
-			clientSocket = INVALID_SOCKET;
 			attached = false;
+			throw e;
 		}
 	}
 
-	void reportException()
+	std::string reportException()
 	{
 		char s[4];
 		sprintf(s, "S%02X", agent.currentException());
-		sendPacket(s);
+		return s;
 	}
 
-	void sendContinue(const std::string& pkt)
+	void doContinue(const std::string& pkt)
 	{
 		if (pkt[0] != 'c') {
 			WARN_LOG(COMMON, "Continue with signal not supported");
@@ -359,35 +423,34 @@ private:
 		}
 	}
 
-	void readAllRegs()
+	std::string readAllRegs()
 	{
 		u32 *regs;
 		int c = agent.readAllRegs(&regs);
 		std::string outpkt;
 		for (int i = 0; i < c; i++)
 			outpkt += pack(regs[i]);
-		sendPacket(outpkt);
+		return outpkt;
 	}
 
-	void writeAllRegs(const std::string& pkt)
+	std::string writeAllRegs(const std::string& pkt)
 	{
 		std::vector<u32> regs;
 		for (auto it = pkt.begin() + 1; it <= pkt.end() - 8; it += 8)
 			regs.push_back(unpack(&*it, 8));
 
 		agent.writeAllRegs(regs);
-		sendPacket("OK");
+		return "OK";
 	}
 
-	void readMem(const std::string& pkt)
+	std::string readMem(const std::string& pkt)
 	{
 		u32 addr;
 		u32 len;
 		if (sscanf(pkt.c_str(), "m%x,%x:", &addr, &len) != 2)
 		{
 			WARN_LOG(COMMON, "readMem: invalid packet %s", pkt.c_str());
-			sendPacket("E01");
-			return;
+			return "E01";
 		}
 		const u8 *mem = agent.readMem(addr, len);
 		std::string outpkt;
@@ -397,18 +460,17 @@ private:
 			sprintf(s,"%02x", mem[i]);
 			outpkt += s;
 		}
-		sendPacket(outpkt);
+		return outpkt;
 	}
 
-	void writeMem(const std::string& pkt)
+	std::string writeMem(const std::string& pkt)
 	{
 		u32 addr;
 		u32 len;
 		if (sscanf(pkt.c_str(), "M%x,%x:", &addr, &len) != 2)
 		{
 			WARN_LOG(COMMON, "writeMem: invalid packet %s", pkt.c_str());
-			sendPacket("E01");
-			return;
+			return "E01";
 		}
 		std::vector<u8> data(len);
 		const char *p = &pkt[pkt.find(':')] + 1;
@@ -419,18 +481,17 @@ private:
 			data[i] = (u8)b;
 		}
 		agent.writeMem(addr, data);
-		sendPacket("OK");
+		return "OK";
 	}
 
-	void writeMemBin(const std::string& pkt)
+	std::string writeMemBin(const std::string& pkt)
 	{
 		u32 addr;
 		u32 len;
 		if (sscanf(pkt.c_str(), "X%x,%x:", &addr, &len) != 2)
 		{
 			WARN_LOG(COMMON, "writeMemBin invalid command: %s", pkt.c_str());
-			sendPacket("E01");
-			return;
+			return "E01";
 		}
 		const char *p = &pkt[pkt.find(':')] + 1;
 		std::vector<u8> data;
@@ -445,64 +506,62 @@ private:
 			data.push_back(b);
 		}
 		agent.writeMem(addr, data);
-		sendPacket("OK");
+		return "OK";
 	}
 
-	void readReg(const std::string& pkt)
+	std::string readReg(const std::string& pkt)
 	{
 		u32 regNum;
 		if (sscanf(pkt.c_str(), "p%x", &regNum) != 1)
 		{
 			WARN_LOG(COMMON, "readReg: invalid packet %s", pkt.c_str());
-			sendPacket("E01");
-			return;
+			return "E01";
 		}
 		u32 v = agent.readReg(regNum);
-		sendPacket(pack(v));
+		return pack(v);
 	}
 
-	void writeReg(const std::string& pkt)
+	std::string writeReg(const std::string& pkt)
 	{
 		u32 regNum;
 		char vstr[9];
 		if (sscanf(pkt.c_str(), "P%x=%8s", &regNum, vstr) != 2)
 		{
 			WARN_LOG(COMMON, "writeReg: invalid packet %s", pkt.c_str());
-			sendPacket("E01");
-			return;
+			return "E01";
 		}
 		agent.writeReg(regNum, unpack(vstr, 8));
-		sendPacket("OK");
+		return "OK";
 	}
 
-	void query(const std::string& pkt)
+	std::vector<std::string> query(const std::string& pkt)
 	{
 		if (pkt == "qC")
 			// Return the current thread ID. 0 is "any thread"
-			sendPacket("QC0.01");
+			return { "QC0.01" };
 		else if (pkt.rfind("qCRC", 0) == 0)
 		{
 			WARN_LOG(COMMON, "CRC compute not supported %s", pkt.c_str());
-			sendPacket("E01");
+			return { "E01" };
 		}
 		else if (pkt == "qfThreadInfo")
 			// Obtain a list of all active thread IDs (first call)
-			sendPacket("m0");
+			return { "m0" };
 		else if (pkt == "qsThreadInfo")
 			// Obtain a list of all active thread IDs (subsequent calls -> 'l' == end of list)
-			sendPacket("l");
+			return { "l" };
 		else if (pkt.rfind("qGetTLSAddr:", 0) == 0)
 			// Fetch the address associated with thread local storage
-			sendPacket("");
+			return { "" };
 		else if (pkt.rfind("qL", 0) == 0)
 			// Obtain thread information. deprecated
-			sendPacket("qM001");
+			return { "qM001" };
 		else if (pkt == "qOffsets")
 			// Get section offsets. Not supported
-			sendPacket("");
+			return { "" };
 		else if (pkt.rfind("qP", 0) == 0)
 			// Returns information on thread. deprecated
-			sendPacket("");
+			return { "" };
 		else if (pkt.rfind("qRcmd,", 0) == 0)
 		{
 			std::string customCmd;
@@ -535,10 +594,10 @@ private:
 					}
 				}
 				*r = 0;
-				sendPacket(reply);
+				return { reply };
 			}
 			else
-				sendPacket("");
+				return { "" };
 		}
 		else if (pkt.rfind("qSupported", 0) == 0)
 		{
@@ -546,43 +605,43 @@ private:
 			// and query the stub for features it supports
 			char qsupported[128];
 			snprintf(qsupported, 128, "PacketSize=%i;vContSupported+", MAX_PACKET_LEN);
-			sendPacket(qsupported);
+			return { qsupported };
 		}
 		else if (pkt.rfind("qSymbol:", 0) == 0)
 			// Notify the target that GDB is prepared to serve symbol lookup requests
-			sendPacket("OK");
+			return { "OK" };
 		else if (pkt.rfind("qThreadExtraInfo,", 0) == 0)
 		{
 			// Obtain from the target OS a printable string description of thread attributes
 			char s[19];
 			sprintf(s, "%02x%02x%02x%02x%02x%02x%02x%02x%02x", 'R', 'u', 'n', 'n', 'a', 'b', 'l', 'e', 0);
-			sendPacket(std::string(s, 18));
+			return { std::string(s, 18) };
 		}
 		else if (pkt.rfind("qXfer:", 0) == 0)
 			// Read uninterpreted bytes from the target’s special data area identified by the keyword object
-			sendPacket("");
+			return { "" };
 		else if (pkt.rfind("qAttached", 0) == 0)
 			// Return an indication of whether the remote server attached to an existing process
 			// or created a new process
-			sendPacket("1");  // existing process
+			return { "1" };  // existing process
 		else if (pkt.rfind("qTfV", 0) == 0)
 			// request data about trace state variables
-			sendPacket("");
+			return { "" };
 		else if (pkt.rfind("qTfP", 0) == 0)
 			// request data about tracepoints
-			sendPacket("");
+			return { "" };
 		else if (pkt.rfind("qTStatus", 0) == 0)
 			// Ask the stub if there is a trace experiment running right now
-			sendPacket("");
-		else
-			WARN_LOG(COMMON, "query not supported %s", pkt.c_str());
+			return { "" };
+		WARN_LOG(COMMON, "query not supported %s", pkt.c_str());
+		return {};
 	}
 
-	void set(const std::string& pkt)
+	std::vector<std::string> set(const std::string& pkt)
 	{
 		if (pkt.rfind("QPassSignals:", 0) == 0)
 			// Passing signals not supported
-			sendPacket("");
+			return { "" };
 		else if (pkt.rfind("QTDP", 0) == 0
 				|| pkt.rfind("QFrame", 0) == 0
 				|| pkt.rfind("QTStart", 0) == 0
@@ -590,210 +649,184 @@ private:
 				|| pkt.rfind("QTinit", 0) == 0
 				|| pkt.rfind("QTro", 0) == 0)
 			// No tracepoint feature supported
-			sendPacket("");
-		else
-			WARN_LOG(COMMON, "set not supported %s", pkt.c_str());
+			return { "" };
+		WARN_LOG(COMMON, "set not supported %s", pkt.c_str());
+		return {};
 	}
 
-	void vpacket(const std::string& pkt)
+	std::vector<std::string> vpacket(const std::string& pkt)
 	{
 		if (pkt.rfind("vAttach;", 0) == 0)
-			sendPacket("S05");
+			return { "S05" };
 		else if (pkt.rfind("vCont?", 0) == 0)
 			// supported vCont actions - (c)ontinue, (C)ontinue with signal, (s)tep, (S)tep with signal, (r)ange-step
-			sendPacket("vCont;c;C;s;S;t;r");
+			return { "vCont;c;C;s;S;t;r" };
 		else if (pkt.rfind("vCont", 0) == 0)
 		{
 			std::string vContCmd = pkt.substr(strlen("vCont;"));
+			std::vector<std::string> replies;
 			switch (vContCmd[0])
 			{
 			case 'c':
 			case 'C':
-				sendContinue(vContCmd);
-				break;
+				doContinue(vContCmd);
+				return {};
 			case 's':
-				step(EXCEPT_NONE);
-				break;
+				return { step(EXCEPT_NONE) };
 			case 'S':
-				step();
+				replies.push_back(step());
+				[[fallthrough]];
 			case 'r':
 			{
 				u32 from, to;
 				if (sscanf(vContCmd.c_str(), "r%x,%x", &from, &to) == 2)
 				{
-					stepRange(from, to);
+					auto v = stepRange(from, to);
+					replies.insert(replies.end(), v.begin(), v.end());
 				}
 				else
 				{
 					WARN_LOG(COMMON, "Unsupported vCont:r format %s", pkt.c_str());
-					sendContinue("c");
+					doContinue("c");
 				}
-
-				break;
+				return replies;
 			}
 			default:
 				WARN_LOG(COMMON, "vCont action not supported %s", pkt.c_str());
+				return {};
 			}
 		}
 		else if (pkt.rfind("vFile:", 0) == 0)
 			// not supported
-			sendPacket("");
+			return { "" };
 		else if (pkt.rfind("vFlashErase:", 0) == 0)
 			// not supported
-			sendPacket("E01");
+			return { "E01" };
 		else if (pkt.rfind("vFlashWrite:", 0) == 0)
 			// not supported
-			sendPacket("E01");
+			return { "E01" };
 		else if (pkt.rfind("vFlashDone:", 0) == 0)
 			// not supported
-			sendPacket("E01");
+			return { "E01" };
 		else if (pkt.rfind("vRun;", 0) == 0)
 		{
 			if (pkt != "vRun;")
 				WARN_LOG(COMMON, "unexpected vRun args ignored: %s", pkt.c_str());
 			agent.restart();
-			sendPacket("S05");
+			return { "S05" };
 		}
 		else if (pkt.rfind("vKill", 0) == 0)
 		{
-			sendPacket("OK");
 			agent.kill();
+			return { "OK" };
 		}
 		else
 		{
 			WARN_LOG(COMMON, "unknown v packet: %s", pkt.c_str());
-			sendPacket("");
+			return { "" };
 		}
 	}
 
-	void restart()
-	{
+	void restart() {
 		agent.restart();
 	}
 
-	void step(u32 what = 0)
+	std::string step(u32 what = 0)
 	{
 		try {
 			agent.step();
-			sendPacket("S05");
+			return "S05";
 		} catch (const FlycastException& e) {
 			throw Error(e.what());
 		}
 	}
 
-	void stepRange(u32 from, u32 to)
+	std::vector<std::string> stepRange(u32 from, u32 to)
 	{
 		try {
-			sendPacket("OK");
 			agent.stepRange(from, to);
-			sendPacket("S05");
+			return { "OK", "S05" };
 		} catch (const FlycastException& e) {
 			throw Error(e.what());
 		}
 	}
 
-	void insertMatchpoint(const std::string& pkt)
+	std::string insertMatchpoint(const std::string& pkt)
 	{
 		u32 type;
 		u32 addr;
 		u32 len;
 		if (sscanf(pkt.c_str(), "Z%1d,%x,%1d", &type, &addr, &len) != 3) {
 			WARN_LOG(COMMON, "insertMatchpoint: unknown packet: %s", pkt.c_str());
-			sendPacket("E01");
+			return "E01";
 		}
 		switch (type) {
 			case DebugAgent::Breakpoint::BP_TYPE_SOFTWARE_BREAK:		// soft bp
 		    	if (agent.insertMatchpoint(DebugAgent::Breakpoint::BP_TYPE_SOFTWARE_BREAK,
 		    			addr, len))
-		    		sendPacket("OK");
+		    		return "OK";
 		    	else
-		    		sendPacket("E01");
+		    		return "E01";
 		    	break;
 		    case DebugAgent::Breakpoint::BP_TYPE_HARDWARE_BREAK:		// hardware bp
-		    	sendPacket("");
+		    	return "";
 		    	break;
 		    case DebugAgent::Breakpoint::BP_TYPE_WRITE_WATCHPOINT:	// write watchpoint
-		    	sendPacket("");
+		    	return "";
 		    	break;
 		    case DebugAgent::Breakpoint::BP_TYPE_READ_WATCHPOINT:		// read watchpoint
-		    	sendPacket("");
+		    	return "";
 		    	break;
 		    case DebugAgent::Breakpoint::BP_TYPE_ACCESS_WATCHPOINT:	// access watchpoint
-		    	sendPacket("");
+		    	return "";
 		    	break;
 		    default:
-		    	sendPacket("");
+		    	return "";
 		    	break;
 		}
 	}
 
-	void removeMatchpoint(const std::string& pkt)
+	std::string removeMatchpoint(const std::string& pkt)
 	{
 		u32 type;
 		u32 addr;
 		u32 len;
 		if (sscanf(pkt.c_str(), "z%1d,%x,%1d", &type, &addr, &len) != 3) {
 			WARN_LOG(COMMON, "removeMatchpoint: unknown packet: %s", pkt.c_str());
-			sendPacket("E01");
+			return "E01";
 		}
 		switch (type) {
 		    case 0:		// soft bp
 		    	if (agent.removeMatchpoint(DebugAgent::Breakpoint::BP_TYPE_SOFTWARE_BREAK,
 		    			addr, len))
-		    		sendPacket("OK");
+		    		return "OK";
 		    	else
-		    		sendPacket("E01");
+		    		return "E01";
 		    	break;
 		    case 1:		// hardware bp
-		    	sendPacket("");
+		    	return "";
 		    	break;
 		    case 2:		// write watchpoint
-		    	sendPacket("");
+		    	return "";
 		    	break;
 		    case 3:		// read watchpoint
-		    	sendPacket("");
+		    	return "";
 		    	break;
 		    case 4:		// access watchpoint
-		    	sendPacket("");
+		    	return "";
 		    	break;
 		    default:
-		    	sendPacket("");
+		    	return "";
 		    	break;
 		}
 	}
 
-	void interrupt()
+	std::string interrupt()
 	{
 		u32 signal = agentInterrupt();
 		char s[10];
 		sprintf(s, "S%02x", signal);
-		sendPacket(s);
-	}
-
-	char recvChar()
-	{
-		char c;
-		int rc = ::recv(clientSocket, &c, 1, 0);
-		if (rc <= 0)
-			throw Error("gdb: I/O error");
-		return c;
-	}
-
-	void sendChar(char c)
-	{
-		std::unique_lock<std::mutex> lock(outMutex);
-		int rc = ::send(clientSocket, &c, 1, 0);
-		if (rc <= 0)
-			throw Error("gdb: I/O error");
-	}
-
-	u8 unpack(char c)
-	{
-		c = std::tolower(c);
-		if (c <= '9')
-			return c - '0';
-		else
-			return c - 'a' + 10;
+		return s;
 	}
 
 	char packnb(u8 b)
@@ -811,97 +844,9 @@ private:
 		return s;
 	}
 
-	std::string pack(u32 v)
-	{
+	std::string pack(u32 v) {
 		return packb(v & 0xff) + packb((v >> 8) & 0xff)
 				+ packb((v >> 16) & 0xff) + packb((v >> 24) & 0xff);
-	}
-
-	u32 unpack(const char *s, int l)
-	{
-		u32 r = 0;
-		for (int i = 0; i < l && *s != '\0'; i += 2, s += 2)
-		{
-			r |= (unpack(s[0]) << 4 | unpack(s[1])) << (i * 4);
-		}
-		return r;
-	}
-
-	std::string recvPacket()
-	{
-		std::string pkt;
-		// look for start character ('$') or BREAK
-		char c = recvChar();
-		if (c == 3)
-			return std::string("\03");
-		if (c != '$')
-			return pkt;
-
-		// read until '#'
-		u8 checksum = 0;
-		while (!stopRequested)
-		{
-			c = recvChar();
-			if (c == '$')
-			{
-				checksum = 0;
-				pkt.clear();
-
-				continue;
-			}
-
-			if (c == '#')
-				break;
-
-			checksum += (u8)c;
-			pkt.push_back(c);
-		}
-		if (stopRequested)
-		{
-			pkt.clear();
-			return pkt;
-		}
-		u8 recvchk = unpack(recvChar()) << 4;
-		recvchk |= unpack(recvChar());
-
-		// If the checksums don't match print a warning, and put the
-		// negative ack back to the client. Otherwise put a positive ack.
-		if (checksum != recvchk)
-		{
-			sendChar('-');	// Failed checksum
-			return "";
-		}
-		else
-		{
-			sendChar('+');	// Successful transfer
-			return pkt;
-		}
-	}
-
-	void sendPacket(const std::string& pkt)
-	{	DEBUG_LOG(NETWORK, "gdb: sending pkt");
-		std::unique_lock<std::mutex> lock(outMutex);
-		std::string data{'$'};
-		u8 checksum = 0;
-		for (char c : pkt)
-		{
-			if (c == '$' || c == '#' || c == '*' || c == '}')
-			{
-				c ^= 0x20;
-				checksum += (u8)'}';
-				data.push_back('}');
-			}
-			checksum += (u8)c;
-			data.push_back(c);
-		}
-		data.push_back('#');
-		char s[9];
-		sprintf(s, "%02x", checksum);
-		data += s;
-		DEBUG_LOG(NETWORK, "gdb: sent %s", data.c_str());
-		int ret = ::send(clientSocket, data.c_str(), data.length(), 0);
-		if (ret < (int)data.length())
-			throw Error("I/O error");
 	}
 
 	u32 agentInterrupt()
@@ -913,19 +858,94 @@ private:
 		}
 	}
 
-	bool initialised = false;
-	bool stopRequested = false;
+	void clientConnected() {
+		attached = true;
+		agentInterrupt();
+	}
+
+	static void emuEventCallback(Event event, void *arg)
+	{
+		GdbServer *gdbServer = static_cast<GdbServer*>(arg);
+		switch (event)
+		{
+		case Event::Resume:
+			try {
+				if (!gdbServer->isRunning())
+					gdbServer->run();
+			} catch (const GdbServer::Error& e) {
+				ERROR_LOG(COMMON, "%s", e.what());
+			}
+			break;
+		case Event::Terminate:
+			gdbServer->stop();
+			break;
+		default:
+			break;
+		}
+	}
+
 	bool attached = false;
 	bool postDebugTrapNeeded = false;
-	sock_t serverSocket = INVALID_SOCKET;
-	sock_t clientSocket = INVALID_SOCKET;
 	std::thread thread;
-	std::mutex outMutex;
+	std::unique_ptr<asio::io_context> io_context;
+	int port = DEFAULT_PORT;
+	friend class TcpAcceptor;
+	friend class Connection;
+
 public:
 	DebugAgent agent;
 };
 
 static GdbServer gdbServer;
+
+void TcpAcceptor::handleAccept(Connection::Ptr newConnection, const std::error_code& error)
+{
+	if (!error) {
+		server.clientConnected();
+		newConnection->start();
+	}
+	start();
+}
+
+void Connection::handlePacket(const std::error_code& ec, size_t len)
+{
+	std::string msg = message.substr(0, len);
+	message = message.substr(len);
+	if (ec || len == 0)
+	{
+		// terminate the connection
+		if (ec != asio::error::eof && ec != asio::error::operation_aborted)
+			WARN_LOG(NETWORK, "Read error %s", ec.message().c_str());
+		return;
+	}
+	try {
+		if (msg[0] == '\03') {	// break
+			send(server.handleCommand(msg));
+			return;
+		}
+		if (msg[0] != '$') {
+			// Ignore unexpected chars
+			send("");
+			return;
+		}
+		u8 cksum = 0;
+		for (unsigned i = 1; i < len - 3; i++)
+			cksum += (u8)msg[i];
+		if (cksum != (unpack(msg[len - 2]) << 4 | unpack(msg[len - 1]))) {
+			// Invalid checksum
+			WARN_LOG(COMMON, "Connection::handlePacket: invalid checksum: [%s]", msg.c_str());
+			send("-");
+		}
+		else {
+			// Positive ack
+			std::string reply = "+";
+			reply += server.handleCommand(msg.substr(1, msg.length() - 4));
+			send(reply);
+		}
+	} catch (...) {
+		// terminate the connection
+	}
+}
 
 void init(int port)
 {
@@ -950,26 +970,6 @@ void subroutineCall()
 void subroutineReturn()
 {
 	gdbServer.agent.subroutineReturn();
-}
-
-static void emuEventCallback(Event event, void *)
-{
-	switch (event)
-	{
-	case Event::Resume:
-		try {
-			if (!gdbServer.isRunning())
-				gdbServer.run();
-		} catch (const GdbServer::Error& e) {
-			ERROR_LOG(COMMON, "%s", e.what());
-		}
-		break;
-	case Event::Terminate:
-		gdbServer.stop();
-		break;
-	default:
-		break;
-	}
 }
 
 }
