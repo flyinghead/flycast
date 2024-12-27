@@ -2118,11 +2118,15 @@ struct DreamConnVmu : public maple_sega_vmu
 
 	u32 dma(u32 cmd) override
 	{
-		if (cmd == MDCF_BlockWrite && *(u32 *)dma_buffer_in == MFID_2_LCD)
+		if (dma_count_in >= 4)
 		{
-			// send the raw maple msg
-			const MapleMsg *msg = reinterpret_cast<const MapleMsg*>(dma_buffer_in - 4);
-			dreamconn->send(*msg);
+			const u32 functionId = *(u32 *)dma_buffer_in;
+			if ((cmd == MDCF_BlockWrite && functionId == MFID_2_LCD)				// LCD screen
+					|| (cmd == MDCF_SetCondition && functionId == MFID_3_Clock))	// Buzzer
+			{
+				const MapleMsg *msg = reinterpret_cast<const MapleMsg*>(dma_buffer_in - 4);
+				dreamconn->send(*msg);
+			}
 		}
 		return maple_sega_vmu::dma(cmd);
 	}
@@ -2158,15 +2162,9 @@ struct DreamConnPurupuru : public maple_sega_purupuru
 
 	u32 dma(u32 cmd) override
 	{
-		const MapleMsg *msg = reinterpret_cast<const MapleMsg*>(dma_buffer_in - 4);
-		switch (cmd)
-		{
-		case MDCF_BlockWrite:
+		if (cmd == MDCF_BlockWrite || cmd == MDCF_SetCondition) {
+			const MapleMsg *msg = reinterpret_cast<const MapleMsg*>(dma_buffer_in - 4);
 			dreamconn->send(*msg);
-			break;
-		case MDCF_SetCondition:
-			dreamconn->send(*msg);
-			break;
 		}
 		return maple_sega_purupuru::dma(cmd);
 	}

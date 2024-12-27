@@ -18,9 +18,10 @@
  */
 #pragma once
 #include "types.h"
-#include "network/net_platform.h"
 #include "emulator.h"
 #include "sdl_gamepad.h"
+#include <asio.hpp>
+#include <istream>
 
 struct MapleMsg
 {
@@ -40,15 +41,15 @@ struct MapleMsg
 		this->size = (sizeof(T) + 3) / 4;
 	}
 
-	bool send(sock_t sock) const;
-	bool receive(sock_t sock);
+	bool send(std::ostream& stream) const;
+	bool receive(std::istream& stream);
 };
 static_assert(sizeof(MapleMsg) == 1028);
 
 class DreamConn
 {
 	const int bus;
-	sock_t sock = INVALID_SOCKET;
+	asio::ip::tcp::iostream iostream;
 	u8 expansionDevs = 0;
 	static constexpr u16 BASE_PORT = 37393;
 
