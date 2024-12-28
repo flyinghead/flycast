@@ -20,6 +20,7 @@
 
 #ifdef USE_DREAMCONN
 #include "hw/maple/maple_devs.h"
+#include "ui/gui.h"
 #include <cfg/option.h>
 #include <SDL.h>
 #include <asio.hpp>
@@ -156,6 +157,47 @@ void DreamConnGamepad::handleEvent(Event event, void *arg)
 		createDreamConnDevices(gamepad->dreamconn, event == Event::Start);
 }
 
+bool DreamConnGamepad::gamepad_btn_input(u32 code, bool pressed)
+{
+	if (!is_detecting_input() && input_mapper)
+	{
+		DreamcastKey key = input_mapper->get_button_id(0, code);
+		if (key == DC_BTN_START) {
+			startPressed = pressed;
+			checkKeyCombo();
+		}
+	}
+	else {
+		startPressed = false;
+	}
+	return SDLGamepad::gamepad_btn_input(code, pressed);
+}
+
+bool DreamConnGamepad::gamepad_axis_input(u32 code, int value)
+{
+	if (!is_detecting_input())
+	{
+		if (code == leftTrigger) {
+			ltrigPressed = value > 0;
+			checkKeyCombo();
+		}
+		else if (code == rightTrigger) {
+			rtrigPressed = value > 0;
+			checkKeyCombo();
+		}
+	}
+	else {
+		ltrigPressed = false;
+		rtrigPressed = false;
+	}
+	return SDLGamepad::gamepad_axis_input(code, value);
+}
+
+void DreamConnGamepad::checkKeyCombo() {
+	if (ltrigPressed && rtrigPressed && startPressed)
+		gui_open_settings();
+}
+
 #else
 
 void DreamConn::connect() {
@@ -173,5 +215,11 @@ DreamConnGamepad::~DreamConnGamepad() {
 }
 void DreamConnGamepad::set_maple_port(int port) {
 	SDLGamepad::set_maple_port(port);
+}
+bool DreamConnGamepad::gamepad_btn_input(u32 code, bool pressed) {
+	return SDLGamepad::gamepad_btn_input(code, pressed);
+}
+bool DreamConnGamepad::gamepad_axis_input(u32 code, int value) {
+	return SDLGamepad::gamepad_axis_input(code, value);
 }
 #endif
