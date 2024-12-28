@@ -42,9 +42,15 @@
 	#define HOST_CPU CPU_GENERIC
 #endif
 
-#if defined(TARGET_IPHONE) && !defined(__aarch64__)
+#if defined(__APPLE__)
+#include "TargetConditionals.h"
+#if defined(TARGET_OS_SIMULATOR)
 // iOS simulator
 #define TARGET_NO_REC
+#endif
+#if defined(TARGET_MAC) && HOST_CPU == CPU_ARM64
+#define TARGET_ARM_MAC
+#endif
 #endif
 
 #if defined(TARGET_NO_REC)
