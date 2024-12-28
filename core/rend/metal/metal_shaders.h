@@ -63,6 +63,8 @@ struct FragmentShaderParams
 class MetalShaders
 {
 public:
+    MetalShaders(MTL::Device *device);
+
     MTL::Function *GetVertexShader(const VertexShaderParams& params) { return getShader(vertexShaders, params); }
 
     void term()
@@ -78,10 +80,20 @@ public:
         }
 
         fragmentShaders.clear();
+
+        vertexShaderLibrary->release();
+        fragmentShaderLibrary->release();
+
+        vertexShaderConstants->release();
+        fragmentShaderConstants->release();
     }
 
 private:
-    MTL::Device device;
+    MTL::Device *device;
+    MTL::Library *vertexShaderLibrary;
+    MTL::Library *fragmentShaderLibrary;
+    MTL::FunctionConstantValues *vertexShaderConstants;
+    MTL::FunctionConstantValues *fragmentShaderConstants;
 
     template<typename T>
     MTL::Function *getShader(std::map<u32, MTL::Function*> &map, T params)

@@ -79,3 +79,69 @@ vertex VertexOut vs_main(VertexIn in [[stage_in]], constant VertexShaderUniforms
     return out;
 }
 )";
+
+MetalShaders::MetalShaders(MTL::Device *device) {
+    this->device = device;
+
+    NS::Error *error = nullptr;
+    fragmentShaderLibrary = device->newLibrary(NS::String::string(FragmentShaderSource, NS::UTF8StringEncoding), nullptr, &error);
+    fragmentShaderConstants = MTL::FunctionConstantValues::alloc()->init();
+
+    if (!fragmentShaderLibrary) {
+        ERROR_LOG(RENDERER, "%s", error->localizedDescription()->utf8String());
+        assert(false);
+    }
+
+    vertexShaderLibrary = device->newLibrary(NS::String::string(VertexShaderSource, NS::UTF8StringEncoding), nullptr, &error);
+    vertexShaderConstants = MTL::FunctionConstantValues::alloc()->init();
+
+    if (!vertexShaderLibrary) {
+        ERROR_LOG(RENDERER, "%s", error->localizedDescription()->utf8String());
+        assert(false);
+    }
+}
+
+MTL::Function *MetalShaders::compileShader(const VertexShaderParams &params) {
+    vertexShaderConstants->setConstantValue(&params.gouraud, MTL::DataTypeBool, static_cast<NS::UInteger>(0));
+    vertexShaderConstants->setConstantValue(&params.divPosZ, MTL::DataTypeBool, 1);
+
+    NS::Error *error = nullptr;
+
+    MTL::Function *function = vertexShaderLibrary->newFunction(NS::String::string("vs_main", NS::UTF8StringEncoding), &vertexShaderConstants, &error);
+
+    if (!function) {
+        ERROR_LOG(RENDERER, "%s", error->localizedDescription()->utf8String());
+        assert(false);
+    }
+
+    return function;
+}
+
+MTL::Function *MetalShaders::compileShader(const FragmentShaderParams &params) {
+    vertexShaderConstants->setConstantValue(&params.alphaTest, MTL::DataTypeBool, static_cast<NS::UInteger>(0));
+    vertexShaderConstants->setConstantValue(&params.insideClipTest, MTL::DataTypeBool, 1);
+    vertexShaderConstants->setConstantValue(&params.useAlpha, MTL::DataTypeBool, 2);
+    vertexShaderConstants->setConstantValue(&params.texture, MTL::DataTypeBool, 3);
+    vertexShaderConstants->setConstantValue(&params.ignoreTexAlpha, MTL::DataTypeBool, 4);
+    vertexShaderConstants->setConstantValue(&params.shaderInstr, MTL::DataTypeInt, 5);
+    vertexShaderConstants->setConstantValue(&params.offset, MTL::DataTypeBool, 6);
+    vertexShaderConstants->setConstantValue(&params.fog, MTL::DataTypeInt, 7);
+    vertexShaderConstants->setConstantValue(&params.gouraud, MTL::DataTypeBool, 8);
+    vertexShaderConstants->setConstantValue(&params.bumpmap, MTL::DataTypeBool, 9);
+    vertexShaderConstants->setConstantValue(&params.clamping, MTL::DataTypeBool, 10);
+    vertexShaderConstants->setConstantValue(&params.trilinear, MTL::DataTypeBool, 11);
+    vertexShaderConstants->setConstantValue(&params.palette, MTL::DataTypeInt, 12);
+    vertexShaderConstants->setConstantValue(&params.divPosZ, MTL::DataTypeBool, 13);
+    vertexShaderConstants->setConstantValue(&params.dithering, MTL::DataTypeBool, 14);
+
+    NS::Error *error = nullptr;
+
+    MTL::Function *function = fragmentShaderLibrary->newFunction(NS::String::string("fs_main", NS::UTF8StringEncoding), &vertexShaderConstants, &error);
+
+    if (!function) {
+        ERROR_LOG(RENDERER, "%s", error->localizedDescription()->utf8String());
+        assert(false);
+    }
+
+    return function;
+}
