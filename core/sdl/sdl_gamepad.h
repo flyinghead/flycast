@@ -303,8 +303,12 @@ public:
 		SDL_JoystickSetPlayerIndex(sdl_joystick, port <= 3 ? port : -1);
 	}
 
-	u16 getRumbleIntensity(float power)	{
-		return (u16)std::min(power * 65535.f / std::pow(1.06f, 100.f - rumblePower), 65535.f);
+	u16 getRumbleIntensity(float power)
+	{
+		if (rumblePower == 0)
+			return 0;
+		else
+			return (u16)std::min(power * 65535.f / std::pow(1.06f, 100.f - rumblePower), 65535.f);
 	}
 	void doRumble(float power, u32 duration_ms)
 	{
@@ -389,6 +393,7 @@ public:
 			SDL_HapticStopAll(haptic);
 			if (hasAutocenter)
 				SDL_HapticSetAutocenter(haptic, 0);
+			vib_inclination = 0;
 		}
 		if (!hapticRumble)
 			rumble(0, 0, 0);

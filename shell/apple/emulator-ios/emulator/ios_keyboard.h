@@ -11,7 +11,7 @@
 class API_AVAILABLE(ios(14.0)) IOSKeyboard : public KeyboardDevice
 {
 public:
-    IOSKeyboard(int port, GCKeyboard *keyboard) : KeyboardDevice(port, "iOS", false), gcKeyboard(keyboard)
+    IOSKeyboard(int port, GCKeyboard *keyboard) : KeyboardDevice(port, "iOS"), gcKeyboard(keyboard)
     {
         set_maple_port(port);
         loadMapping();
