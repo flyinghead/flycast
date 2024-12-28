@@ -20,8 +20,10 @@
 #include "types.h"
 #include "emulator.h"
 #include "sdl_gamepad.h"
+#if defined(_WIN32) && !defined(TARGET_UWP)
+#define USE_DREAMCONN 1
 #include <asio.hpp>
-#include <istream>
+#endif
 
 struct MapleMsg
 {
@@ -40,16 +42,15 @@ struct MapleMsg
 		memcpy(data, &p, sizeof(T));
 		this->size = (sizeof(T) + 3) / 4;
 	}
-
-	bool send(std::ostream& stream) const;
-	bool receive(std::istream& stream);
 };
 static_assert(sizeof(MapleMsg) == 1028);
 
 class DreamConn
 {
 	const int bus;
+#ifdef USE_DREAMCONN
 	asio::ip::tcp::iostream iostream;
+#endif
 	u8 expansionDevs = 0;
 	static constexpr u16 BASE_PORT = 37393;
 

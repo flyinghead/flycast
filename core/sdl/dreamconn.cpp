@@ -18,39 +18,46 @@
  */
 #include "dreamconn.h"
 
-#if defined(_WIN32) && !defined(TARGET_UWP)
+#ifdef USE_DREAMCONN
 #include "hw/maple/maple_devs.h"
 #include <cfg/option.h>
 #include <SDL.h>
+#include <asio.hpp>
 #include <iomanip>
+#include <sstream>
 
 void createDreamConnDevices(std::shared_ptr<DreamConn> dreamconn, bool gameStart);
 
-bool MapleMsg::send(std::ostream& stream) const
+static bool sendMsg(const MapleMsg& msg, asio::ip::tcp::iostream& stream)
 {
-	stream.fill('0');
-	stream << std::hex << std::uppercase
-		<< std::setw(2) << (u32)command << " "
-		<< std::setw(2) << (u32)destAP << " "
-		<< std::setw(2) << (u32)originAP << " "
-		<< std::setw(2) << (u32)size;
-	const u32 sz = getDataSize();
+	std::ostringstream s;
+	s.fill('0');
+	s << std::hex << std::uppercase
+		<< std::setw(2) << (u32)msg.command << " "
+		<< std::setw(2) << (u32)msg.destAP << " "
+		<< std::setw(2) << (u32)msg.originAP << " "
+		<< std::setw(2) << (u32)msg.size;
+	const u32 sz = msg.getDataSize();
 	for (u32 i = 0; i < sz; i++)
-		stream << " " << std::setw(2) << (u32)data[i];
-	stream << "\r\n";
-	return !stream.fail();
+		s << " " << std::setw(2) << (u32)msg.data[i];
+	s << "\r\n";
+
+	asio::ip::tcp::socket& sock = static_cast<asio::ip::tcp::socket&>(stream.socket());
+	asio::error_code ec;
+	asio::write(sock, asio::buffer(s.str()), ec);
+	return !ec;
 }
 
-bool MapleMsg::receive(std::istream& stream)
+static bool receiveMsg(MapleMsg& msg, std::istream& stream)
 {
 	std::string response;
 	if (!std::getline(stream, response))
 		return false;
-	sscanf(response.c_str(), "%hhx %hhx %hhx %hhx", &command, &destAP, &originAP, &size);
-	if ((getDataSize() - 1) * 3 + 13 >= response.length())
+	sscanf(response.c_str(), "%hhx %hhx %hhx %hhx", &msg.command, &msg.destAP, &msg.originAP, &msg.size);
+	if ((msg.getDataSize() - 1) * 3 + 13 >= response.length())
 		return false;
-	for (unsigned i = 0; i < getDataSize(); i++)
-		sscanf(&response[i * 3 + 12], "%hhx", &data[i]);
+	for (unsigned i = 0; i < msg.getDataSize(); i++)
+		sscanf(&response[i * 3 + 12], "%hhx", &msg.data[i]);
 	return !stream.fail();
 }
 
@@ -69,13 +76,13 @@ void DreamConn::connect()
 	msg.destAP = (bus << 6) | 0x20;
 	msg.originAP = bus << 6;
 	msg.setData(MFID_0_Input);
-	if (!msg.send(iostream))
+	if (!sendMsg(msg, iostream))
 	{
 		WARN_LOG(INPUT, "DreamConn[%d] communication failed", bus);
 		disconnect();
 		return;
 	}
-	if (!msg.receive(iostream)) {
+	if (!receiveMsg(msg, iostream)) {
 		WARN_LOG(INPUT, "DreamConn[%d] read timeout", bus);
 		disconnect();
 		return;
@@ -99,7 +106,7 @@ bool DreamConn::send(const MapleMsg& msg)
 {
 	if (!iostream)
 		return false;
-	if (!msg.send(iostream)) {
+	if (!sendMsg(msg, iostream)) {
 		WARN_LOG(INPUT, "DreamConn[%d] send failed: %s", bus, iostream.error().message().c_str());
 		return false;
 	}
