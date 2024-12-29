@@ -19,17 +19,20 @@ public:
 
 	u32 push(const void* frame, u32 samples, bool wait) override
 	{
-		if (wait)
+		if (wait && last_time.time_since_epoch() != the_clock::duration::zero())
 		{
-			if (last_time.time_since_epoch() != the_clock::duration::zero())
-			{
-				auto fduration = std::chrono::nanoseconds(1000000000L * samples / 44100);
-				auto duration = fduration - (the_clock::now() - last_time);
+			auto fduration = std::chrono::nanoseconds(1'000'000'000LL * samples / 44100);
+			auto duration = fduration - (the_clock::now() - last_time);
+			if (duration > std::chrono::nanoseconds::zero())
 				std::this_thread::sleep_for(duration);
-				last_time += fduration;
-			}
-			else
+			if (duration < -std::chrono::milliseconds(67))
+				// if ~4 frames ahead, reset time (fast forward detection)
 				last_time = the_clock::now();
+			else
+				last_time += fduration;
+		}
+		else {
+			last_time = the_clock::now();
 		}
 		return 1;
 	}

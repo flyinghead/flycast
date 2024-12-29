@@ -24,11 +24,6 @@
 
 @interface PadViewController : UIViewController
 
-@property (weak, nonatomic) IBOutlet UIImageView *joystick;
-@property (weak, nonatomic) IBOutlet UIImageView *joystickBackground;
-@property (weak, nonatomic) IBOutlet NSLayoutConstraint *joyXConstraint;
-@property (weak, nonatomic) IBOutlet NSLayoutConstraint *joyYConstraint;
-
 - (void) showController:(UIView *)parentView;
 - (void) hideController;
 - (BOOL) isControllerVisible;

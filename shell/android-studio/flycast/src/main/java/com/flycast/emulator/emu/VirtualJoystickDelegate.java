@@ -1,397 +1,273 @@
+/*
+	Copyright 2024 flyinghead
+
+	This file is part of Flycast.
+
+    Flycast is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 2 of the License, or
+    (at your option) any later version.
+
+    Flycast is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
+*/
 package com.flycast.emulator.emu;
 
 import android.content.Context;
-import android.content.res.Configuration;
 import android.os.Handler;
-import android.view.InputDevice;
 import android.view.MotionEvent;
-import android.view.ScaleGestureDetector;
 import android.view.View;
 
 import com.flycast.emulator.periph.InputDeviceManager;
-import com.flycast.emulator.periph.VJoy;
 import com.flycast.emulator.periph.VibratorThread;
 
-public class VirtualJoystickDelegate {
+import java.util.HashMap;
+import java.util.Map;
+
+public class VirtualJoystickDelegate implements TouchEventHandler
+{
+    private static final int CTLID_ANARING = 11;
+    private static final int CTLID_ANASTICK = 12;
+
     private VibratorThread vibratorThread;
-
-    private boolean editVjoyMode = false;
-    private int selectedVjoyElement = VJoy.ELEM_NONE;
-    private ScaleGestureDetector scaleGestureDetector;
-
     private Handler handler = new Handler();
-    private Runnable hideOsdRunnable = new Runnable() {
+    private Runnable hideVGamepadRunnable = new Runnable() {
         @Override
         public void run() {
-            JNIdc.hideOsd();
+            VGamepad.hide();
         }
     };
-
-    private float[][] vjoy_d_custom;
-
-    private static final float[][] vjoy = VJoy.baseVJoy();
-
     private Context context;
     private View view;
+    private int joyPointerId = -1;
+    private float joyBiasX, joyBiasY;
+    private Map<Integer, Integer> pidToControlId = new HashMap<>();
+    private int mouseButtons = 0;
+    private int[] mousePos = { -32768, -32768 };
+    private int mousePid = -1;
 
     public VirtualJoystickDelegate(View view) {
         this.view = view;
         this.context = view.getContext();
 
         vibratorThread = VibratorThread.getInstance();
-
-        readCustomVjoyValues();
-        scaleGestureDetector = new ScaleGestureDetector(context, new OscOnScaleGestureListener());
     }
 
+    @Override
     public void stop() {
         vibratorThread.stopThread();
         vibratorThread = null;
     }
 
-    public void readCustomVjoyValues() {
-        vjoy_d_custom = VJoy.readCustomVjoyValues(context);
-    }
-
-    public void restoreCustomVjoyValues(float[][] vjoy_d_cached) {
-        vjoy_d_custom = vjoy_d_cached;
-        VJoy.writeCustomVjoyValues(vjoy_d_cached, context);
-
-        resetEditMode();
-        view.requestLayout();
-    }
-
-    private void reset_analog()
+    private boolean touchMouseEvent(MotionEvent event)
     {
-
-        int j=11;
-        vjoy[j+1][0]=vjoy[j][0]+vjoy[j][2]/2-vjoy[j+1][2]/2;
-        vjoy[j+1][1]=vjoy[j][1]+vjoy[j][3]/2-vjoy[j+1][3]/2;
-        JNIdc.vjoy(j+1, vjoy[j+1][0], vjoy[j+1][1], vjoy[j+1][2], vjoy[j+1][3]);
-    }
-
-    private int get_anal(int j, int axis)
-    {
-        return (int) (((vjoy[j+1][axis]+vjoy[j+1][axis+2]/2) - vjoy[j][axis] - vjoy[j][axis+2]/2)*254/vjoy[j][axis+2]);
-    }
-
-    private float vbase(float p, float m, float scl)
-    {
-        return (int) ( m - (m -p)*scl);
-    }
-
-    private float vbase(float p, float scl)
-    {
-        return (int) (p*scl );
-    }
-
-    private boolean isTablet() {
-        return (context.getResources().getConfiguration().screenLayout
-                & Configuration.SCREENLAYOUT_SIZE_MASK)
-                >= Configuration.SCREENLAYOUT_SIZE_LARGE;
-    }
-
-    public void layout(int width, int height)
-    {
-        //dcpx/cm = dcpx/px * px/cm
-        float magic = isTablet() ? 0.8f : 0.7f;
-        float scl = 480.0f / height * context.getResources().getDisplayMetrics().density * magic;
-        float scl_dc = height / 480.0f;
-        float tx = (width - 640.0f * scl_dc) / 2 / scl_dc;
-
-        float a_x = -tx + 24 * scl;
-        float a_y = -24 * scl;
-
-        // Not sure how this can happen
-        if (vjoy_d_custom == null)
-            return;
-
-        float[][] vjoy_d = VJoy.getVjoy_d(vjoy_d_custom);
-
-        for (int i=0;i<vjoy.length;i++)
-        {
-        	// FIXME this hack causes the slight "jump" when first moving a screen-centered button
-            if (vjoy_d[i][0] == 288)
-                vjoy[i][0] = vjoy_d[i][0];
-            else if (vjoy_d[i][0]-vjoy_d_custom[getElementIdFromButtonId(i)][0] < 320)
-                vjoy[i][0] = a_x + vbase(vjoy_d[i][0],scl);
-            else
-                vjoy[i][0] = -a_x + vbase(vjoy_d[i][0],640,scl);
-
-            vjoy[i][1] = a_y + vbase(vjoy_d[i][1],480,scl);
-
-            vjoy[i][2] = vbase(vjoy_d[i][2],scl);
-            vjoy[i][3] = vbase(vjoy_d[i][3],scl);
-        }
-
-        for (int i=0;i<VJoy.VJoyCount;i++)
-            JNIdc.vjoy(i,vjoy[i][0],vjoy[i][1],vjoy[i][2],vjoy[i][3]);
-
-        reset_analog();
-        VJoy.writeCustomVjoyValues(vjoy_d_custom, context);
-    }
-
-    private int anal_id=-1, lt_id=-1, rt_id=-1;
-
-    public void resetEditMode() {
-        editLastX = 0;
-        editLastY = 0;
-    }
-
-    private static int getElementIdFromButtonId(int buttonId) {
-        if (buttonId <= 3)
-            return VJoy.ELEM_DPAD; // DPAD
-        else if (buttonId <= 7)
-            return VJoy.ELEM_BUTTONS; // X, Y, B, A Buttons
-        else if (buttonId == 8)
-            return VJoy.ELEM_START; // Start
-        else if (buttonId == 9)
-            return VJoy.ELEM_LTRIG; // Left Trigger
-        else if (buttonId == 10)
-            return VJoy.ELEM_RTRIG; // Right Trigger
-        else if (buttonId <= 12)
-            return VJoy.ELEM_ANALOG; // Analog
-        else if (buttonId == 13)
-            return VJoy.ELEM_FFORWARD; // Fast-forward
-        else
-            return VJoy.ELEM_DPAD; // DPAD diagonals
-    }
-
-    private static int left_trigger = 0;
-    private static int right_trigger = 0;
-    private static int[] mouse_pos = { -32768, -32768 };
-    private static int mouse_btns = 0;
-
-    private float editLastX = 0, editLastY = 0;
-
-    public boolean onTouchEvent(MotionEvent event, int width, int height)
-    {
-        if ((event.getSource() & InputDevice.SOURCE_TOUCHSCREEN) != InputDevice.SOURCE_TOUCHSCREEN)
-        	// Ignore real mice, trackballs, etc.
-            return false;
-        JNIdc.show_osd();
-        this.handler.removeCallbacks(hideOsdRunnable);
-        if (!editVjoyMode)
-            this.handler.postDelayed(hideOsdRunnable, 10000);
-
-        scaleGestureDetector.onTouchEvent(event);
-
-        float ty = 0.0f;
-        float scl = height / 480.0f;
-        float tx = (width - 640.0f * scl) / 2;
-
-        int rv = 0xFFFFFFFF;
-        boolean fastForward = false;
-
-        int aid = event.getActionMasked();
-        int pid = event.getActionIndex();
-
-        if (!JNIdc.guiIsOpen()) {
-            if (editVjoyMode && selectedVjoyElement != VJoy.ELEM_NONE && aid == MotionEvent.ACTION_MOVE && !scaleGestureDetector.isInProgress()) {
-                float x = (event.getX() - tx) / scl;
-                float y = (event.getY() - ty) / scl;
-
-                if (editLastX != 0 && editLastY != 0) {
-                    float deltaX = x - editLastX;
-                    float deltaY = y - editLastY;
-
-                    vjoy_d_custom[selectedVjoyElement][0] += isTablet() ? deltaX * 2 : deltaX;
-                    vjoy_d_custom[selectedVjoyElement][1] += isTablet() ? deltaY * 2 : deltaY;
-
-                    view.requestLayout();
-                }
-
-                editLastX = x;
-                editLastY = y;
-
-                return true;
-            }
-
-            for (int i = 0; i < event.getPointerCount(); i++) {
-                float x = (event.getX(i) - tx) / scl;
-                float y = (event.getY(i) - ty) / scl;
-                if (anal_id != event.getPointerId(i)) {
-                    if (aid == MotionEvent.ACTION_POINTER_UP && pid == i)
-                        continue;
-                    for (int j = 0; j < vjoy.length; j++)
-                    {
-                        if (x > vjoy[j][0] && x <= (vjoy[j][0] + vjoy[j][2]))
-                        {
-                            if (y > vjoy[j][1] && y <= (vjoy[j][1] + vjoy[j][3]))
-                            {
-                                if (vjoy[j][4] >= VJoy.BTN_RTRIG) {
-                                    // Not for analog
-                                    if (vjoy[j][5] == 0)
-                                        if (!editVjoyMode) {
-                                            vibratorThread.click();
-                                        }
-                                    vjoy[j][5] = 2;
-                                }
-
-
-                                if (vjoy[j][4] == VJoy.BTN_ANARING) {
-                                    if (editVjoyMode) {
-                                        selectedVjoyElement = VJoy.ELEM_ANALOG;
-                                        resetEditMode();
-                                    } else {
-                                        vjoy[j + 1][0] = x - vjoy[j + 1][2] / 2;
-                                        vjoy[j + 1][1] = y - vjoy[j + 1][3] / 2;
-
-                                        JNIdc.vjoy(j + 1, vjoy[j + 1][0], vjoy[j + 1][1], vjoy[j + 1][2], vjoy[j + 1][3]);
-                                        anal_id = event.getPointerId(i);
-                                    }
-                                } else if (vjoy[j][4] != VJoy.BTN_ANAPOINT) {
-                                    if (vjoy[j][4] == VJoy.BTN_LTRIG) {
-                                        if (editVjoyMode) {
-                                            selectedVjoyElement = VJoy.ELEM_LTRIG;
-                                            resetEditMode();
-                                        } else {
-                                            left_trigger = 255;
-                                            lt_id = event.getPointerId(i);
-                                        }
-                                    } else if (vjoy[j][4] == VJoy.BTN_RTRIG) {
-                                        if (editVjoyMode) {
-                                            selectedVjoyElement = VJoy.ELEM_RTRIG;
-                                            resetEditMode();
-                                        } else {
-                                            right_trigger = 255;
-                                            rt_id = event.getPointerId(i);
-                                        }
-                                    } else {
-                                        if (editVjoyMode) {
-                                            selectedVjoyElement = getElementIdFromButtonId(j);
-                                            resetEditMode();
-                                        } else if (vjoy[j][4] == VJoy.key_CONT_FFORWARD)
-                                            fastForward = true;
-                                        else
-                                            rv &= ~(int)vjoy[j][4];
-                                    }
-                                }
-                            }
-                        }
-                    }
-                } else {
-                    if (x < vjoy[11][0])
-                        x = vjoy[11][0];
-                    else if (x > (vjoy[11][0] + vjoy[11][2]))
-                        x = vjoy[11][0] + vjoy[11][2];
-
-                    if (y < vjoy[11][1])
-                        y = vjoy[11][1];
-                    else if (y > (vjoy[11][1] + vjoy[11][3]))
-                        y = vjoy[11][1] + vjoy[11][3];
-
-                    int j = 11;
-                    vjoy[j + 1][0] = x - vjoy[j + 1][2] / 2;
-                    vjoy[j + 1][1] = y - vjoy[j + 1][3] / 2;
-
-                    JNIdc.vjoy(j + 1, vjoy[j + 1][0], vjoy[j + 1][1], vjoy[j + 1][2], vjoy[j + 1][3]);
-
-                }
-            }
-
-            for (int j = 0; j < vjoy.length; j++) {
-                if (vjoy[j][5] == 2)
-                    vjoy[j][5] = 1;
-                else if (vjoy[j][5] == 1)
-                    vjoy[j][5] = 0;
-            }
-        }
-
-        switch(aid)
+        int actionMasked = event.getActionMasked();
+        int actionIndex = event.getActionIndex();
+        switch (actionMasked)
         {
             case MotionEvent.ACTION_UP:
             case MotionEvent.ACTION_CANCEL:
-                selectedVjoyElement = -1;
-                reset_analog();
-                anal_id = -1;
-                rv = 0xFFFFFFFF;
-                fastForward = false;
-                right_trigger = 0;
-                left_trigger = 0;
-                lt_id = -1;
-                rt_id = -1;
-                for (int j= 0 ;j < vjoy.length; j++)
-                    vjoy[j][5] = 0;
-                mouse_btns = 0;
-                break;
-
-            case MotionEvent.ACTION_POINTER_UP:
-                if (event.getPointerId(event.getActionIndex())==anal_id)
-                {
-                    reset_analog();
-                    anal_id = -1;
-                }
-                else if (event.getPointerId(event.getActionIndex())==lt_id)
-                {
-                    left_trigger = 0;
-                    lt_id = -1;
-                }
-                else if (event.getPointerId(event.getActionIndex())==rt_id)
-                {
-                    right_trigger = 0;
-                    rt_id = -1;
-                }
-                break;
+                mousePid = -1;
+                mouseButtons = 0;
+                InputDeviceManager.getInstance().touchMouseEvent(mousePos[0], mousePos[1], mouseButtons);
+                return true;
 
             case MotionEvent.ACTION_POINTER_DOWN:
             case MotionEvent.ACTION_DOWN:
-                if (event.getPointerCount() != 1)
+                if (mousePid == -1 || actionMasked == MotionEvent.ACTION_DOWN)
                 {
-                    mouse_btns = 0;
+                    mousePid = event.getPointerId(actionIndex);
+                    mousePos[0] = Math.round(event.getX(actionIndex));
+                    mousePos[1] = Math.round(event.getY(actionIndex));
+                    mouseButtons = MotionEvent.BUTTON_PRIMARY;    // Mouse left button down
+                    InputDeviceManager.getInstance().touchMouseEvent(mousePos[0], mousePos[1], mouseButtons);
+                    return true;
                 }
-                else
-                {
-                    mouse_pos[0] = Math.round(event.getX());
-                    mouse_pos[1] = Math.round(event.getY());
-                    mouse_btns = MotionEvent.BUTTON_PRIMARY;    // Mouse left button down
-                }
-                break;
+                return false;
 
             case MotionEvent.ACTION_MOVE:
-                if (event.getPointerCount() == 1)
+                for (int i = 0; i < event.getPointerCount(); i++)
                 {
-                    mouse_pos[0] = Math.round(event.getX());
-                    mouse_pos[1] = Math.round(event.getY());
+                    if (event.getPointerId(i) == mousePid) {
+                        mousePos[0] = Math.round(event.getX(i));
+                        mousePos[1] = Math.round(event.getY(i));
+                        InputDeviceManager.getInstance().touchMouseEvent(mousePos[0], mousePos[1], mouseButtons);
+                        break;
+                    }
                 }
                 break;
+            case MotionEvent.ACTION_POINTER_UP:
+                if (event.getPointerId(actionIndex) == mousePid)
+                {
+                    mousePid = -1;
+                    mousePos[0] = Math.round(event.getX(actionIndex));
+                    mousePos[1] = Math.round(event.getY(actionIndex));
+                    mouseButtons = 0;
+                    InputDeviceManager.getInstance().touchMouseEvent(mousePos[0], mousePos[1], mouseButtons);
+                    return true;
+                }
+                break;
+            default:
+                break;
         }
-        int joyx = get_anal(11, 0);
-        int joyy = get_anal(11, 1);
-        InputDeviceManager.getInstance().virtualGamepadEvent(rv, joyx, joyy, left_trigger, right_trigger, fastForward);
-        // Only register the mouse event if no virtual gamepad button is down
-        if ((!editVjoyMode && rv == 0xFFFFFFFF && left_trigger == 0 && right_trigger == 0 && joyx == 0 && joyy == 0 && !fastForward)
-                || JNIdc.guiIsOpen())
-            InputDeviceManager.getInstance().mouseEvent(mouse_pos[0], mouse_pos[1], mouse_btns);
-        return(true);
+
+        return false;
     }
 
-    public void setEditVjoyMode(boolean editVjoyMode) {
-        this.editVjoyMode = editVjoyMode;
-        selectedVjoyElement = -1;
-        if (editVjoyMode)
-            this.handler.removeCallbacks(hideOsdRunnable);
-        resetEditMode();
+    static class Point
+    {
+        Point() {
+            this.x = 0.f;
+            this.y = 0.f;
+        }
+        Point(float x, float y) {
+            this.x = x;
+            this.y = y;
+        }
+        float x;
+        float y;
     }
 
-    private class OscOnScaleGestureListener extends
-            ScaleGestureDetector.SimpleOnScaleGestureListener {
+    static Point translateCoords(Point pos, Point size)
+    {
+        float hscale = 480.f / size.y;
+        Point p = new Point();
+        p.y = pos.y * hscale;
+        p.x = (pos.x - (size.x - 640.f / hscale) / 2.f) * hscale;
+        return p;
+    }
 
-        @Override
-        public boolean onScale(ScaleGestureDetector detector) {
-            if (editVjoyMode && selectedVjoyElement != -1) {
-                vjoy_d_custom[selectedVjoyElement][2] *= detector.getScaleFactor();
-                view.requestLayout();
+    @Override
+    public boolean onTouchEvent(MotionEvent event, int width, int height)
+    {
+        if (JNIdc.guiIsOpen())
+            return touchMouseEvent(event);
+        show();
 
-                return true;
+        int actionIndex = event.getActionIndex();
+        switch (event.getActionMasked())
+        {
+            case MotionEvent.ACTION_UP:
+            case MotionEvent.ACTION_CANCEL:
+                // Release all
+                pidToControlId.clear();
+                joyPointerId = -1;
+                InputDeviceManager.getInstance().virtualReleaseAll();
+                break;
+
+            case MotionEvent.ACTION_DOWN:
+                // First release all
+                pidToControlId.clear();
+                joyPointerId = -1;
+                InputDeviceManager.getInstance().virtualReleaseAll();
+                // Release the mouse too
+                mousePid = -1;
+                mouseButtons = 0;
+                InputDeviceManager.getInstance().touchMouseEvent(mousePos[0], mousePos[1], mouseButtons);
+                // Then fall through
+            case MotionEvent.ACTION_POINTER_DOWN:
+            {
+                Point p = new Point(event.getX(actionIndex), event.getY(actionIndex));
+                p = translateCoords(p, new Point(width, height));
+                int control = VGamepad.hitTest(p.x, p.y);
+                if (control != -1)
+                {
+                    int pid = event.getPointerId(actionIndex);
+                    if (control == CTLID_ANARING || control == CTLID_ANASTICK)
+                    {
+                         if (joyPointerId == -1)
+                         {
+                             // Analog stick down
+                             joyPointerId = pid;
+                             joyBiasX = p.x;
+                             joyBiasY = p.y;
+                             InputDeviceManager.getInstance().virtualJoystick(0, 0);
+                             return true;
+                         }
+                    }
+                    else
+                    {
+                        // Button down
+                        InputDeviceManager.getInstance().virtualButtonInput(control, true);
+                        pidToControlId.put(pid, control);
+                        vibratorThread.click();
+                        return true;
+                    }
+                }
+                break;
             }
 
-            return false;
-        }
+            case MotionEvent.ACTION_MOVE:
+                for (int i = 0; i < event.getPointerCount(); i++)
+                {
+                    int pid = event.getPointerId(i);
+                    Point p = new Point(event.getX(i), event.getY(i));
+                    p = translateCoords(p, new Point(width, height));
+                    if (joyPointerId == pid)
+                    {
+                        // Analog stick
+                        float dx = p.x - joyBiasX;
+                        float dy = p.y - joyBiasY;
+                        float sz = VGamepad.getControlWidth(CTLID_ANASTICK);
+                        dx = Math.max(Math.min(1.f, dx / sz), -1.f);
+                        dy = Math.max(Math.min(1.f, dy / sz), -1.f);
+                        InputDeviceManager.getInstance().virtualJoystick(dx, dy);
+                        continue;
+                    }
+                    // Buttons
+                    int control = VGamepad.hitTest(p.x, p.y);
+                    int oldControl = pidToControlId.containsKey(pid) ? pidToControlId.get(pid) : -1;
+                    if (oldControl == control)
+                        // same button still pressed, or none at all
+                        continue;
+                    if (oldControl != -1) {
+                        // Previous button up
+                        InputDeviceManager.getInstance().virtualButtonInput(oldControl, false);
+                        pidToControlId.remove(pid);
+                    }
+                    if (control != -1 && control != CTLID_ANARING && control != CTLID_ANASTICK)
+                    {
+                        // New button down
+                        InputDeviceManager.getInstance().virtualButtonInput(control, true);
+                        pidToControlId.put(pid, control);
+                        vibratorThread.click();
+                    }
+                }
+                break;
 
-        @Override
-        public void onScaleEnd(ScaleGestureDetector detector) {
-            selectedVjoyElement = -1;
+            case MotionEvent.ACTION_POINTER_UP:
+            {
+                int pid = event.getPointerId(actionIndex);
+                if (joyPointerId == pid)
+                {
+                    // Analog up
+                    InputDeviceManager.getInstance().virtualJoystick(0, 0);
+                    joyPointerId = -1;
+                    return true;
+                }
+                if (pidToControlId.containsKey(pid))
+                {
+                    // Button up
+                    int controlId = pidToControlId.get(pid);
+                    InputDeviceManager.getInstance().virtualButtonInput(controlId, false);
+                    return true;
+                }
+                break;
+            }
         }
+        return touchMouseEvent(event);
+    }
+
+    @Override
+    public void show()
+    {
+        VGamepad.show();
+        this.handler.removeCallbacks(hideVGamepadRunnable);
+        this.handler.postDelayed(hideVGamepadRunnable, 10000);
     }
 }

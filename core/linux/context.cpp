@@ -8,7 +8,7 @@
 		#define __USE_GNU 1
 	#endif
 
-	#if !defined(TARGET_NO_EXCEPTIONS) && !defined(__OpenBSD__)
+	#if !defined(__OpenBSD__)
 		#include <ucontext.h>
 	#endif
 
@@ -39,7 +39,6 @@ static void bicopy(Tctx& ctx, Tseg& seg)
 template<bool ToSegfault>
 static void context_segfault(host_context_t* hostctx, void* segfault_ctx)
 {
-#if !defined(TARGET_NO_EXCEPTIONS)
 #if HOST_CPU == CPU_ARM
 	#if defined(__FreeBSD__)
 		bicopy<ToSegfault>(hostctx->pc, MCTX(.__gregs[_REG_PC]));
@@ -133,8 +132,6 @@ static void context_segfault(host_context_t* hostctx, void* segfault_ctx)
 #else
 	#error Unsupported HOST_CPU
 #endif
-	#endif
-	
 }
 
 void context_from_segfault(host_context_t* hostctx, void* segfault_ctx) {

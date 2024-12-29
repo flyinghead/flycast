@@ -30,6 +30,7 @@
 #include "nswitch.h"
 #include "switch_gamepad.h"
 #endif
+#include "dreamconn.h"
 #include <unordered_map>
 
 static SDL_Window* window = NULL;
@@ -38,6 +39,7 @@ static u32 windowFlags;
 #define WINDOW_WIDTH  640
 #define WINDOW_HEIGHT  480
 
+std::map<SDL_JoystickID, std::shared_ptr<SDLGamepad>> SDLGamepad::sdl_gamepads;
 static std::unordered_map<u64, std::shared_ptr<SDLMouse>> sdl_mice;
 static std::shared_ptr<SDLKeyboardDevice> sdl_keyboard;
 static bool window_fullscreen;
@@ -80,7 +82,11 @@ static void sdl_open_joystick(int index)
 #ifdef __SWITCH__
 		std::shared_ptr<SDLGamepad> gamepad = std::make_shared<SwitchGamepad>(index < MAPLE_PORTS ? index : -1, index, pJoystick);
 #else
-		std::shared_ptr<SDLGamepad> gamepad = std::make_shared<SDLGamepad>(index < MAPLE_PORTS ? index : -1, index, pJoystick);
+		std::shared_ptr<SDLGamepad> gamepad;
+		if (DreamConnGamepad::isDreamConn(index))
+			gamepad = std::make_shared<DreamConnGamepad>(index < MAPLE_PORTS ? index : -1, index, pJoystick);
+		else
+			gamepad = std::make_shared<SDLGamepad>(index < MAPLE_PORTS ? index : -1, index, pJoystick);
 #endif
 		SDLGamepad::AddSDLGamepad(gamepad);
 	} catch (const FlycastException& e) {

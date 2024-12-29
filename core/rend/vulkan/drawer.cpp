@@ -638,9 +638,14 @@ void ScreenDrawer::Init(SamplerManager *samplerManager, ShaderManager *shaderMan
 	this->shaderManager = shaderManager;
 	if (this->viewport != viewport)
 	{
-		framebuffers.clear();
-		colorAttachments.clear();
-		depthAttachment.reset();
+		if (!framebuffers.empty()) {
+			verify(commandPool != nullptr);
+			commandPool->addToFlight(new Deleter(std::move(framebuffers)));
+		}
+		if (!colorAttachments.empty())
+			commandPool->addToFlight(new Deleter(std::move(colorAttachments)));
+		if (depthAttachment)
+			commandPool->addToFlight(new Deleter(depthAttachment.release()));
 		transitionNeeded.clear();
 		clearNeeded.clear();
 	}

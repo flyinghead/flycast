@@ -16,7 +16,7 @@
     You should have received a copy of the GNU General Public License
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
-#include "gles.h"
+#include "quad.h"
 
 static const char* VertexShader = R"(
 in highp vec3 in_pos;
@@ -46,68 +46,34 @@ void main()
 }
 )";
 
-class QuadVertexArray final : public GlVertexArray
+GlQuadDrawer::GlQuadDrawer()
 {
-protected:
-	void defineVtxAttribs() override
-	{
-		glEnableVertexAttribArray(VERTEX_POS_ARRAY);
-		glVertexAttribPointer(VERTEX_POS_ARRAY, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 5, (void*)0);
-		glEnableVertexAttribArray(VERTEX_UV_ARRAY);
-		glVertexAttribPointer(VERTEX_UV_ARRAY, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 5, (void*)(sizeof(float) * 3));
-		glDisableVertexAttribArray(VERTEX_COL_BASE_ARRAY);
-		glDisableVertexAttribArray(VERTEX_COL_OFFS_ARRAY);
-		glDisableVertexAttribArray(VERTEX_COL_BASE1_ARRAY);
-		glDisableVertexAttribArray(VERTEX_COL_OFFS1_ARRAY);
-		glDisableVertexAttribArray(VERTEX_UV1_ARRAY);
-	}
-};
+	OpenGlSource fragmentShader;
+	fragmentShader.addSource(PixelCompatShader)
+			.addSource(FragmentShader);
+	OpenGlSource vertexShader;
+	vertexShader.addConstant("ROTATE", 0)
+			.addSource(VertexCompatShader)
+			.addSource(VertexShader);
 
-static GLuint shader;
-static GLint tintUniform;
-static GLuint rot90shader;
-static GLint rot90TintUniform;
-static QuadVertexArray quadVertexArray;
-static QuadVertexArray quadVertexArraySwapY;
-static std::unique_ptr<GlBuffer> quadBuffer;
-static std::unique_ptr<GlBuffer> quadBufferSwapY;
-static std::unique_ptr<GlBuffer> quadIndexBuffer;
-static std::unique_ptr<GlBuffer> quadBufferCustom;
-static QuadVertexArray quadVertexArrayCustom;
+	const std::string fragmentGlsl = fragmentShader.generate();
+	shader = gl_CompileAndLink(vertexShader.generate().c_str(), fragmentGlsl.c_str());
+	GLint tex = glGetUniformLocation(shader, "tex");
+	glUniform1i(tex, 0);	// texture 0
+	tintUniform = glGetUniformLocation(shader, "tint");
 
-void initQuad()
-{
-	if (shader == 0)
-	{
-		OpenGlSource fragmentShader;
-		fragmentShader.addSource(PixelCompatShader)
-				.addSource(FragmentShader);
-		OpenGlSource vertexShader;
-		vertexShader.addConstant("ROTATE", 0)
-				.addSource(VertexCompatShader)
-				.addSource(VertexShader);
+	vertexShader.setConstant("ROTATE", 1);
+	rot90shader = gl_CompileAndLink(vertexShader.generate().c_str(), fragmentGlsl.c_str());
+	tex = glGetUniformLocation(rot90shader, "tex");
+	glUniform1i(tex, 0);	// texture 0
+	rot90TintUniform = glGetUniformLocation(rot90shader, "tint");
 
-		const std::string fragmentGlsl = fragmentShader.generate();
-		shader = gl_CompileAndLink(vertexShader.generate().c_str(), fragmentGlsl.c_str());
-		GLint tex = glGetUniformLocation(shader, "tex");
-		glUniform1i(tex, 0);	// texture 0
-		tintUniform = glGetUniformLocation(shader, "tint");
+	quadIndexBuffer = std::make_unique<GlBuffer>(GL_ELEMENT_ARRAY_BUFFER, GL_STATIC_DRAW);
+	static const GLushort indices[] = { 0, 1, 2, 1, 3 };
+	quadIndexBuffer->update(indices, sizeof(indices));
 
-		vertexShader.setConstant("ROTATE", 1);
-		rot90shader = gl_CompileAndLink(vertexShader.generate().c_str(), fragmentGlsl.c_str());
-		tex = glGetUniformLocation(rot90shader, "tex");
-		glUniform1i(tex, 0);	// texture 0
-		rot90TintUniform = glGetUniformLocation(rot90shader, "tint");
-	}
-	if (quadIndexBuffer == nullptr)
+	quadBuffer = std::make_unique<GlBuffer>(GL_ARRAY_BUFFER, GL_STATIC_DRAW);
 	{
-		quadIndexBuffer = std::make_unique<GlBuffer>(GL_ELEMENT_ARRAY_BUFFER, GL_STATIC_DRAW);
-		static const GLushort indices[] = { 0, 1, 2, 1, 3 };
-		quadIndexBuffer->update(indices, sizeof(indices));
-	}
-	if (quadBuffer == nullptr)
-	{
-		quadBuffer = std::make_unique<GlBuffer>(GL_ARRAY_BUFFER, GL_STATIC_DRAW);
 		float vertices[4][5] = {
 			{ -1.f,  1.f, 1.f, 0.f, 1.f },
 			{ -1.f, -1.f, 1.f, 0.f, 0.f },
@@ -116,9 +82,8 @@ void initQuad()
 		};
 		quadBuffer->update(vertices, sizeof(vertices));
 	}
-	if (quadBufferSwapY == nullptr)
+	quadBufferSwapY = std::make_unique<GlBuffer>(GL_ARRAY_BUFFER, GL_STATIC_DRAW);
 	{
-		quadBufferSwapY = std::make_unique<GlBuffer>(GL_ARRAY_BUFFER, GL_STATIC_DRAW);
 		float vertices[4][5] = {
 			{ -1.f,  1.f, 1.f, 0.f, 0.f },
 			{ -1.f, -1.f, 1.f, 0.f, 1.f },
@@ -127,12 +92,11 @@ void initQuad()
 		};
 		quadBufferSwapY->update(vertices, sizeof(vertices));
 	}
-	if (quadBufferCustom == nullptr)
-		quadBufferCustom = std::make_unique<GlBuffer>(GL_ARRAY_BUFFER);
+	quadBufferCustom = std::make_unique<GlBuffer>(GL_ARRAY_BUFFER);
 	glCheck();
 }
 
-void termQuad()
+GlQuadDrawer::~GlQuadDrawer()
 {
 	quadIndexBuffer.reset();
 	quadBuffer.reset();
@@ -149,8 +113,7 @@ void termQuad()
 	rot90shader = 0;
 }
 
-// coords is an optional array of 20 floats (4 vertices with x,y,z,u,v each)
-void drawQuad(GLuint texId, bool rotate, bool swapY, const float *coords, const float *color)
+void GlQuadDrawer::draw(GLuint texId, bool rotate, bool swapY, const float *coords, const float *color)
 {
 	glcache.Disable(GL_SCISSOR_TEST);
 	glcache.Disable(GL_DEPTH_TEST);

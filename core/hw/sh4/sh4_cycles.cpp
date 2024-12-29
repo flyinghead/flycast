@@ -17,6 +17,74 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #include "sh4_cycles.h"
+#include "modules/mmu.h"
+
+int Sh4Cycles::countCycles(u16 op)
+{
+	sh4_opcodelistentry *opcode = OpDesc[op];
+	int cycles = 0;
+#ifndef STRICT_MODE
+	static const bool isMemOp[45] {
+		false,
+		false,
+		true,	// all mem moves, ldtlb, sts.l FPUL/FPSCR, @-Rn, lds.l @Rn+,FPUL
+		true,	// gbr-based load/store
+		false,
+		true,	// tst.b #<imm8>, @(R0,GBR)
+		true,	// and/or/xor.b #<imm8>, @(R0,GBR)
+		true,	// tas.b @Rn
+		false,
+		false,
+		false,
+		false,
+		true,	// movca.l R0, @Rn
+		false,
+		false,
+		false,
+		false,
+		true,	// ldc.l @Rn+, VBR/SPC/SSR/Rn_Bank/DBR
+		true,	// ldc.l @Rn+, GBR/SGR
+		true,	// ldc.l @Rn+, SR
+		false,
+		false,
+		true,	// stc.l DBR/SR/GBR/VBR/SSR/SPC/Rn_Bank, @-Rn
+		true,	// stc.l SGR, @-Rn
+		false,
+		true,	// lds.l @Rn+, PR
+		false,
+		true,	// sts.l PR, @-Rn
+		false,
+		true,	// lds.l @Rn+, MACH/MACL
+		false,
+		true,	// sts.l MACH/MACL, @-Rn
+		false,
+		true,	// lds.l @Rn+,FPSCR
+		false,
+		true,	// mac.wl @Rm+,@Rn+
+	};
+	if (isMemOp[opcode->ex_type])
+	{
+		if (++memOps < 4)
+			cycles = mmu_enabled() ? 5 : 2;
+	}
+	// TODO only for mem read?
+#endif
+
+	if (lastUnit == CO
+			|| opcode->unit == CO
+			|| (lastUnit == opcode->unit && lastUnit != MT))
+	{
+		// cannot run in parallel
+		lastUnit = opcode->unit;
+		cycles += opcode->IssueCycles;
+	}
+	else
+	{
+		// can run in parallel
+		lastUnit = CO;
+	}
+	return cycles * cpuRatio;
+}
 
 // TODO additional wait cycles depending on area?:
 // Area       Wait cycles (not including external wait)

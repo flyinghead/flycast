@@ -126,7 +126,6 @@ private:
 	SamplerManager *samplerManager = nullptr;
 	OITBuffers *oitBuffers = nullptr;
 	bool needAttachmentTransition = false;
-	bool needDepthTransition = false;
 	OITDescriptorSets descriptorSets;
 	vk::Buffer curMainBuffer;
 	bool dithering = false;

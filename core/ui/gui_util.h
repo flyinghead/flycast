@@ -201,7 +201,9 @@ class ImguiTexture
 public:
 	void draw(const ImVec2& size, const ImVec4& tint_col = ImVec4(1, 1, 1, 1),
 			const ImVec4& border_col = ImVec4(0, 0, 0, 0));
-	void draw(ImDrawList *drawList, const ImVec2& pos, const ImVec2& size, float alpha = 1.f);
+	void draw(ImDrawList *drawList, const ImVec2& pos, const ImVec2& size, float alpha);
+	void draw(ImDrawList *drawList, const ImVec2& pos, const ImVec2& size,
+			const ImVec2& uv0 = ImVec2(0, 0), const ImVec2& uv1 = ImVec2(1, 1), const ImVec4& color = ImVec4(1, 1, 1, 1));
 	bool button(const char* str_id, const ImVec2& image_size, const std::string& title = {}, const ImVec4& bg_col = ImVec4(0, 0, 0, 0),
 			const ImVec4& tint_col = ImVec4(1, 1, 1, 1));
 

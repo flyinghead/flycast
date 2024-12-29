@@ -20,6 +20,7 @@ using namespace Xbyak::util;
 #include "xbyak_base.h"
 #include "oslib/unwind_info.h"
 #include "oslib/virtmem.h"
+#include "cfg/option.h"
 
 static void (*mainloop)();
 static void (*handleException)();
@@ -63,7 +64,7 @@ static void ngen_blockcheckfail(u32 pc) {
 	rdv_BlockCheckFail(pc);
 }
 
-static void handle_sh4_exception(SH4ThrownException& ex, u32 pc)
+static void handle_sh4_exception(Sh4Context *ctx, SH4ThrownException& ex, u32 pc)
 {
 	if (pc & 1)
 	{
@@ -72,25 +73,25 @@ static void handle_sh4_exception(SH4ThrownException& ex, u32 pc)
 		pc--;
 	}
 	Do_Exception(pc, ex.expEvn);
-	p_sh4rcb->cntx.cycle_counter += 4;	// probably more is needed
+	ctx->cycle_counter += 4;	// probably more is needed
 	handleException();
 }
 
-static void interpreter_fallback(u16 op, OpCallFP *oph, u32 pc)
+static void interpreter_fallback(Sh4Context *ctx, u16 op, OpCallFP *oph, u32 pc)
 {
 	try {
-		oph(op);
+		oph(ctx, op);
 	} catch (SH4ThrownException& ex) {
-		handle_sh4_exception(ex, pc);
+		handle_sh4_exception(ctx, ex, pc);
 	}
 }
 
-static void do_sqw_mmu_no_ex(u32 addr, u32 pc)
+static void do_sqw_mmu_no_ex(u32 addr, Sh4Context *ctx, u32 pc)
 {
 	try {
-		do_sqw_mmu(addr);
+		ctx->doSqWrite(addr, ctx);
 	} catch (SH4ThrownException& ex) {
-		handle_sh4_exception(ex, pc);
+		handle_sh4_exception(ctx, ex, pc);
 	}
 }
 
@@ -120,8 +121,8 @@ public:
 	using BaseCompiler = BaseXbyakRec<BlockCompiler, true>;
 	friend class BaseXbyakRec<BlockCompiler, true>;
 
-	BlockCompiler(Sh4CodeBuffer& codeBuffer) : BaseCompiler(codeBuffer), regalloc(this) { }
-	BlockCompiler(Sh4CodeBuffer& codeBuffer, u8 *code_ptr) : BaseCompiler(codeBuffer, code_ptr), regalloc(this) { }
+	BlockCompiler(Sh4Context& sh4ctx, Sh4CodeBuffer& codeBuffer) : BaseCompiler(sh4ctx, codeBuffer), regalloc(this) { }
+	BlockCompiler(Sh4Context& sh4ctx, Sh4CodeBuffer& codeBuffer, u8 *code_ptr) : BaseCompiler(sh4ctx, codeBuffer, code_ptr), regalloc(this) { }
 
 	void compile(RuntimeBlockInfo* block, bool force_checks, bool optimise)
 	{
@@ -135,7 +136,7 @@ public:
 		if (mmu_enabled() && block->has_fpu_op)
 		{
 			Xbyak::Label fpu_enabled;
-			mov(rax, (uintptr_t)&sr.status);
+			mov(rax, (uintptr_t)&sh4ctx.sr.status);
 			test(dword[rax], 0x8000);			// test SR.FD bit
 			jz(fpu_enabled);
 			mov(call_regs[0], block->vaddr);	// pc
@@ -144,7 +145,7 @@ public:
 			jmp(exit_block, T_NEAR);
 			L(fpu_enabled);
 		}
-		mov(rax, (uintptr_t)&p_sh4rcb->cntx.cycle_counter);
+		mov(rax, (uintptr_t)&sh4ctx.cycle_counter);
 		sub(dword[rax], block->guest_cycles);
 
 		regalloc.DoAlloc(block);
@@ -160,18 +161,19 @@ public:
 			case shop_ifb:
 				if (mmu_enabled())
 				{
-					mov(call_regs64[1], reinterpret_cast<uintptr_t>(*OpDesc[op.rs3._imm]->oph));	// op handler
-					mov(call_regs[2], block->vaddr + op.guest_offs - (op.delay_slot ? 1 : 0));	// pc
+					mov(call_regs64[2], reinterpret_cast<uintptr_t>(*OpDesc[op.rs3._imm]->oph));	// op handler
+					mov(call_regs[3], block->vaddr + op.guest_offs - (op.delay_slot ? 1 : 0));	// pc
 				}
 
 				if (op.rs1._imm)
 				{
-					mov(rax, (size_t)&next_pc);
+					mov(rax, (size_t)&sh4ctx.pc);
 					mov(dword[rax], op.rs2._imm);
 				}
 
-				mov(call_regs[0], op.rs3._imm);
-					
+				mov(call_regs[1], op.rs3._imm);
+				mov(call_regs64[0], (uintptr_t)&sh4ctx);
+
 				if (!mmu_enabled())
 					GenCall(OpDesc[op.rs3._imm]->oph);
 				else
@@ -185,9 +187,9 @@ public:
 				verify(op.rs1.is_r64f());
 
 #if ALLOC_F64 == false
-				mov(rax, (uintptr_t)op.rs1.reg_ptr());
+				mov(rax, (uintptr_t)op.rs1.reg_ptr(sh4ctx));
 				mov(rax, qword[rax]);
-				mov(rcx, (uintptr_t)op.rd.reg_ptr());
+				mov(rcx, (uintptr_t)op.rd.reg_ptr(sh4ctx));
 				mov(qword[rcx], rax);
 #else
 				Xbyak::Xmm rd0 = regalloc.MapXRegister(op.rd, 0);
@@ -224,7 +226,7 @@ public:
 							add(call_regs[0], regalloc.MapRegister(op.rs3));
 						else
 						{
-							mov(rax, (uintptr_t)op.rs3.reg_ptr());
+							mov(rax, (uintptr_t)op.rs3.reg_ptr(sh4ctx));
 							add(call_regs[0], dword[rax]);
 						}
 					}
@@ -236,7 +238,7 @@ public:
 #if ALLOC_F64 == false
 					if (size == MemSize::S64)
 					{
-						mov(rcx, (uintptr_t)op.rd.reg_ptr());
+						mov(rcx, (uintptr_t)op.rd.reg_ptr(sh4ctx));
 						mov(qword[rcx], rax);
 					}
 					else
@@ -261,7 +263,7 @@ public:
 							add(call_regs[0], regalloc.MapRegister(op.rs3));
 						else
 						{
-							mov(rax, (uintptr_t)op.rs3.reg_ptr());
+							mov(rax, (uintptr_t)op.rs3.reg_ptr(sh4ctx));
 							add(call_regs[0], dword[rax]);
 						}
 					}
@@ -270,7 +272,7 @@ public:
 #if ALLOC_F64 == false
 					if (op.size == 8)
 					{
-						mov(rax, (uintptr_t)op.rs2.reg_ptr());
+						mov(rax, (uintptr_t)op.rs2.reg_ptr(sh4ctx));
 						mov(call_regs64[1], qword[rax]);
 					}
 					else
@@ -294,7 +296,8 @@ public:
 				GenCall(UpdateSR);
 				break;
 			case shop_sync_fpscr:
-				GenCall(UpdateFPSCR);
+				mov(call_regs64[0], (uintptr_t)&sh4ctx);
+				GenCall(Sh4Context::UpdateFPSCR);
 				break;
 
 			case shop_negc:
@@ -358,7 +361,7 @@ public:
 						}
 						else
 						{
-							mov(rax, (uintptr_t)op.rs1.reg_ptr());
+							mov(rax, (uintptr_t)op.rs1.reg_ptr(sh4ctx));
 							mov(eax, dword[rax]);
 							rn = eax;
 						}
@@ -369,16 +372,15 @@ public:
 
 						mov(call_regs[0], rn);
 					}
+					mov(call_regs64[1], (uintptr_t)&sh4ctx);
 					if (mmu_enabled())
 					{
-						mov(call_regs[1], block->vaddr + op.guest_offs - (op.delay_slot ? 1 : 0));	// pc
-
+						mov(call_regs[2], block->vaddr + op.guest_offs - (op.delay_slot ? 1 : 0));	// pc
 						GenCall(do_sqw_mmu_no_ex);
 					}
 					else
 					{
-						mov(call_regs64[1], (uintptr_t)sq_both);
-						mov(rax, (size_t)&do_sqw_nommu);
+						mov(rax, (size_t)&sh4ctx.doSqWrite);
 						saveXmmRegisters();
 						call(qword[rax]);
 						restoreXmmRegisters();
@@ -388,8 +390,8 @@ public:
 				break;
 
 			case shop_frswap:
-				mov(rax, (uintptr_t)op.rs1.reg_ptr());
-				mov(rcx, (uintptr_t)op.rd.reg_ptr());
+				mov(rax, (uintptr_t)op.rs1.reg_ptr(sh4ctx));
+				mov(rcx, (uintptr_t)op.rd.reg_ptr(sh4ctx));
 				if (cpu.has(Cpu::tAVX512F))
 				{
 					vmovaps(zmm0, zword[rax]);
@@ -470,7 +472,7 @@ public:
 		regalloc.Cleanup();
 		current_opid = -1;
 
-		mov(rax, (size_t)&next_pc);
+		mov(rax, (size_t)&sh4ctx.pc);
 
 		switch (block->BlockType) {
 
@@ -490,9 +492,9 @@ public:
 				mov(dword[rax], block->NextBlock);
 
 				if (block->has_jcond)
-					mov(rdx, (size_t)&Sh4cntx.jdyn);
+					mov(rdx, (size_t)&sh4ctx.jdyn);
 				else
-					mov(rdx, (size_t)&sr.T);
+					mov(rdx, (size_t)&sh4ctx.sr.T);
 
 				cmp(dword[rdx], block->BlockType & 1);
 				Xbyak::Label branch_not_taken;
@@ -507,7 +509,7 @@ public:
 		case BET_DynamicCall:
 		case BET_DynamicRet:
 			//next_pc = *jdyn;
-			mov(rdx, (size_t)&Sh4cntx.jdyn);
+			mov(rdx, (size_t)&sh4ctx.jdyn);
 			mov(edx, dword[rdx]);
 			mov(dword[rax], edx);
 			break;
@@ -516,7 +518,7 @@ public:
 		case BET_StaticIntr:
 			if (block->BlockType == BET_DynamicIntr) {
 				//next_pc = *jdyn;
-				mov(rdx, (size_t)&Sh4cntx.jdyn);
+				mov(rdx, (size_t)&sh4ctx.jdyn);
 				mov(edx, dword[rdx]);
 				mov(dword[rax], edx);
 			}
@@ -549,35 +551,36 @@ public:
 		CC_pars.clear();
 	}
 
-	void canonParam(const shil_opcode& op, const shil_param& prm, CanonicalParamType tp) {
+	void canonParam(const shil_opcode& op, const shil_param *prm, CanonicalParamType tp) {
 		switch (tp)
 		{
 
 		case CPT_u32:
 		case CPT_ptr:
 		case CPT_f32:
+		case CPT_sh4ctx:
 		{
-			CC_PS t = { tp, &prm };
+			CC_PS t = { tp, prm };
 			CC_pars.push_back(t);
+			break;
 		}
-		break;
 
 		// store from EAX
 		case CPT_u64rvL:
 		case CPT_u32rv:
 			mov(rcx, rax);
-			host_reg_to_shil_param(prm, ecx);
+			host_reg_to_shil_param(*prm, ecx);
 			break;
 
 		case CPT_u64rvH:
 			// assuming CPT_u64rvL has just been called
 			shr(rcx, 32);
-			host_reg_to_shil_param(prm, ecx);
+			host_reg_to_shil_param(*prm, ecx);
 			break;
 
 		// store from xmm0
 		case CPT_f32rv:
-			host_reg_to_shil_param(prm, xmm0);
+			host_reg_to_shil_param(*prm, xmm0);
 			break;
 		}
 	}
@@ -605,7 +608,11 @@ public:
 				//push the ptr itself
 			case CPT_ptr:
 				verify(prm.is_reg());
-				mov(call_regs64[regused++], (size_t)prm.reg_ptr());
+				mov(call_regs64[regused++], (size_t)prm.reg_ptr(sh4ctx));
+				break;
+
+			case CPT_sh4ctx:
+				mov(call_regs64[regused++], (uintptr_t)&sh4ctx);
 				break;
 
             default:
@@ -620,9 +627,9 @@ public:
 			const shil_param& prm = *ccParam.prm;
 			if (ccParam.type == CPT_ptr && prm.count() == 2 && regalloc.IsAllocf(prm) && (op.rd._reg == prm._reg || op.rd2._reg == prm._reg)) {
 				// fsca rd param is a pointer to a 64-bit reg so reload the regs if allocated
-				mov(rax, (size_t)GetRegPtr(prm._reg));
+				mov(rax, (size_t)GetRegPtr(sh4ctx, prm._reg));
 				movss(regalloc.MapXRegister(prm, 0), dword[rax]);
-				mov(rax, (size_t)GetRegPtr(prm._reg + 1));
+				mov(rax, (size_t)GetRegPtr(sh4ctx, prm._reg + 1));
 				movss(regalloc.MapXRegister(prm, 1), dword[rax]);
 			}
 		}
@@ -631,22 +638,22 @@ public:
 
 	void RegPreload(u32 reg, Xbyak::Operand::Code nreg)
 	{
-		mov(rax, (size_t)GetRegPtr(reg));
+		mov(rax, (size_t)GetRegPtr(sh4ctx, reg));
 		mov(Xbyak::Reg32(nreg), dword[rax]);
 	}
 	void RegWriteback(u32 reg, Xbyak::Operand::Code nreg)
 	{
-		mov(rax, (size_t)GetRegPtr(reg));
+		mov(rax, (size_t)GetRegPtr(sh4ctx, reg));
 		mov(dword[rax], Xbyak::Reg32(nreg));
 	}
 	void RegPreload_FPU(u32 reg, s8 nreg)
 	{
-		mov(rax, (size_t)GetRegPtr(reg));
+		mov(rax, (size_t)GetRegPtr(sh4ctx, reg));
 		movss(Xbyak::Xmm(nreg), dword[rax]);
 	}
 	void RegWriteback_FPU(u32 reg, s8 nreg)
 	{
-		mov(rax, (size_t)GetRegPtr(reg));
+		mov(rax, (size_t)GetRegPtr(sh4ctx, reg));
 		movss(dword[rax], Xbyak::Xmm(nreg));
 	}
 
@@ -682,7 +689,7 @@ public:
 		Xbyak::Label run_loop;
 		L(run_loop);
 		Xbyak::Label end_run_loop;
-		mov(rax, (size_t)&p_sh4rcb->cntx.CpuRunning);
+		mov(rax, (size_t)&sh4ctx.CpuRunning);
 		mov(edx, dword[rax]);
 
 		test(edx, edx);
@@ -691,11 +698,11 @@ public:
 	//slice_loop:
 		Xbyak::Label slice_loop;
 		L(slice_loop);
-		mov(rax, (size_t)&p_sh4rcb->cntx.pc);
+		mov(rax, (size_t)&sh4ctx.pc);
 		mov(call_regs[0], dword[rax]);
 		call(bm_GetCodeByVAddr);
 		call(rax);
-		mov(rax, (uintptr_t)&p_sh4rcb->cntx.cycle_counter);
+		mov(rax, (uintptr_t)&sh4ctx.cycle_counter);
 		mov(ecx, dword[rax]);
 		test(ecx, ecx);
 		jg(slice_loop);
@@ -860,7 +867,7 @@ private:
 				else
 				{
 					movsx(eax, byte[rax]);
-					mov(rcx, (uintptr_t)op.rd.reg_ptr());
+					mov(rcx, (uintptr_t)op.rd.reg_ptr(sh4ctx));
 					mov(dword[rcx], eax);
 				}
 				break;
@@ -871,7 +878,7 @@ private:
 				else
 				{
 					movsx(eax, word[rax]);
-					mov(rcx, (uintptr_t)op.rd.reg_ptr());
+					mov(rcx, (uintptr_t)op.rd.reg_ptr(sh4ctx));
 					mov(dword[rcx], eax);
 				}
 				break;
@@ -884,7 +891,7 @@ private:
 				else
 				{
 					mov(eax, dword[rax]);
-					mov(rcx, (uintptr_t)op.rd.reg_ptr());
+					mov(rcx, (uintptr_t)op.rd.reg_ptr(sh4ctx));
 					mov(dword[rcx], eax);
 				}
 				break;
@@ -892,7 +899,7 @@ private:
 			case 8:
 #if ALLOC_F64 == false
 				mov(rcx, qword[rax]);
-				mov(rax, (uintptr_t)op.rd.reg_ptr());
+				mov(rax, (uintptr_t)op.rd.reg_ptr(sh4ctx));
 				mov(qword[rax], rcx);
 #else
 				movd(regalloc.MapXRegister(op.rd, 0), dword[rax]);
@@ -914,7 +921,7 @@ private:
 				mov(call_regs[0], addr);
 				GenCall((void (*)())ptr);
 #if ALLOC_F64 == false
-				mov(rcx, (size_t)op.rd.reg_ptr());
+				mov(rcx, (size_t)op.rd.reg_ptr(sh4ctx));
 				mov(dword[rcx], eax);
 #else
 				movd(regalloc.MapXRegister(op.rd, 0), eax);
@@ -923,7 +930,7 @@ private:
 				mov(call_regs[0], addr + 4);
 				GenCall((void (*)())ptr);
 #if ALLOC_F64 == false
-				mov(rcx, (size_t)op.rd.reg_ptr() + 4);
+				mov(rcx, (size_t)op.rd.reg_ptr(sh4ctx) + 4);
 				mov(dword[rcx], eax);
 #else
 				movd(regalloc.MapXRegister(op.rd, 1), eax);
@@ -983,7 +990,7 @@ private:
 					mov(byte[rax], (u8)op.rs2._imm);
 				else
 				{
-					mov(rcx, (uintptr_t)op.rs2.reg_ptr());
+					mov(rcx, (uintptr_t)op.rs2.reg_ptr(sh4ctx));
 					mov(cl, byte[rcx]);
 					mov(byte[rax], cl);
 				}
@@ -996,7 +1003,7 @@ private:
 					mov(word[rax], (u16)op.rs2._imm);
 				else
 				{
-					mov(rcx, (uintptr_t)op.rs2.reg_ptr());
+					mov(rcx, (uintptr_t)op.rs2.reg_ptr(sh4ctx));
 					mov(cx, word[rcx]);
 					mov(word[rax], cx);
 				}
@@ -1011,7 +1018,7 @@ private:
 					mov(dword[rax], op.rs2._imm);
 				else
 				{
-					mov(rcx, (uintptr_t)op.rs2.reg_ptr());
+					mov(rcx, (uintptr_t)op.rs2.reg_ptr(sh4ctx));
 					mov(ecx, dword[rcx]);
 					mov(dword[rax], ecx);
 				}
@@ -1019,7 +1026,7 @@ private:
 
 			case 8:
 #if ALLOC_F64 == false
-				mov(rcx, (uintptr_t)op.rs2.reg_ptr());
+				mov(rcx, (uintptr_t)op.rs2.reg_ptr(sh4ctx));
 				mov(rcx, qword[rcx]);
 				mov(qword[rax], rcx);
 #else
@@ -1056,7 +1063,7 @@ private:
 		// same at compile and run times.
 		if (mmu_enabled())
 		{
-			mov(rax, (uintptr_t)&next_pc);
+			mov(rax, (uintptr_t)&sh4ctx.pc);
 			cmp(dword[rax], block->vaddr);
 			jne(reinterpret_cast<const void*>(&ngen_blockcheckfail));
 		}
@@ -1159,7 +1166,7 @@ private:
 						shr(r9d, 26);
 						cmp(r9d, 0x38);
 						jne(no_sqw);
-						mov(rax, (uintptr_t)p_sh4rcb->sq_buffer);
+						mov(rax, (uintptr_t)sh4ctx.sq_buffer);
 						and_(call_regs[0], 0x3F);
 
 						if (size == MemSize::S32)
@@ -1316,7 +1323,7 @@ public:
 		size_t protSize = codeBuffer->getFreeSpace();
 		virtmem::jit_set_exec(protStart, protSize, false);
 
-		ccCompiler = new BlockCompiler(*codeBuffer);
+		ccCompiler = new BlockCompiler(*sh4ctx, *codeBuffer);
 		try {
 			ccCompiler->compile(block, smc_checks, optimise);
 		} catch (const Xbyak::Error& e) {
@@ -1327,8 +1334,9 @@ public:
 		virtmem::jit_set_exec(protStart, protSize, true);
 	}
 
-	void init(Sh4CodeBuffer& codeBuffer) override
+	void init(Sh4Context& sh4ctx, Sh4CodeBuffer& codeBuffer) override
 	{
+		this->sh4ctx = &sh4ctx;
 		this->codeBuffer = &codeBuffer;
 	}
 
@@ -1348,7 +1356,7 @@ public:
 	}
 
 	void canonParam(const shil_opcode* op, const shil_param* par, CanonicalParamType tp) override {
-		ccCompiler->canonParam(*op, *par, tp);
+		ccCompiler->canonParam(*op, par, tp);
 	}
 
 	void canonCall(const shil_opcode* op, void* function) override {
@@ -1368,7 +1376,7 @@ public:
 		virtmem::jit_set_exec(protStart, protSize, false);
 
 		u8 *retAddr = *(u8 **)context.rsp - 5;
-		BlockCompiler compiler(*codeBuffer, retAddr);
+		BlockCompiler compiler(*sh4ctx, *codeBuffer, retAddr);
 		bool rc = false;
 		try {
 			rc = compiler.rewriteMemAccess(context);
@@ -1395,7 +1403,7 @@ public:
 		size_t protSize = codeBuffer->getFreeSpace();
 		virtmem::jit_set_exec(protStart, protSize, false);
 
-		BlockCompiler compiler(*codeBuffer);
+		BlockCompiler compiler(*sh4ctx, *codeBuffer);
 		try {
 			compiler.genMainloop();
 		} catch (const Xbyak::Error& e) {
@@ -1405,6 +1413,7 @@ public:
 	}
 
 private:
+	Sh4Context *sh4ctx = nullptr;
 	Sh4CodeBuffer *codeBuffer = nullptr;
 	BlockCompiler *ccCompiler = nullptr;
 };

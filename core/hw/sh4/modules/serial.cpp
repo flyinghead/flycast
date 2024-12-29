@@ -120,7 +120,6 @@ void SCIFSerialPort::rxSched()
 			}
 		}
 	}
-	// TODO fifo might have been emptied since last rx
 	else if (!rxFifo.empty())
 	{
 		setStatusBit(DR);
@@ -192,6 +191,8 @@ void SCIFSerialPort::writeStatus(u16 data)
 		data |= RDF;
 	if (isTDFE())
 		data |= TDFE;
+	if (!rxFifo.empty())
+		data |= DR;
 	SCIF_LOG("SCIF_SCFSR2.reset %s%s%s%s%s%s%s%s",
 			(data & ER)   ? "" : "ER ",
 			(data & TEND) ? "" : "TEND ",
@@ -439,6 +440,7 @@ void SCIFSerialPort::deserialize(Deserializer& deser)
 		statusLastRead = 0;
 		transmitting = false;
 	}
+	SCIF_SCBRR2 &= 0xff;	// work around previous issues with dynarecs
 	updateBaudRate();
 }
 

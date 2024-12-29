@@ -139,7 +139,7 @@ bool D3DRenderer::Init()
 	success &= (bool)shaders.getVertexShader(true);
 	success &= SUCCEEDED(device->CreateTexture(32, 32, 1, D3DUSAGE_DYNAMIC, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &paletteTexture.get(), 0));
 	success &= SUCCEEDED(device->CreateTexture(128, 2, 1, D3DUSAGE_DYNAMIC, D3DFMT_A8, D3DPOOL_DEFAULT, &fogTexture.get(), 0));
-	fog_needs_update = true;
+	updateFogTable = true;
 
 	if (!success)
 	{
@@ -199,8 +199,8 @@ void D3DRenderer::postReset()
 	verify(rc);
 	rc = SUCCEEDED(device->CreateTexture(128, 2, 1, D3DUSAGE_DYNAMIC, D3DFMT_A8, D3DPOOL_DEFAULT, &fogTexture.get(), 0));
 	verify(rc);
-	fog_needs_update = true;
-	palette_updated = true;
+	updateFogTable = true;
+	updatePalette = true;
 }
 
 void D3DRenderer::Term()
@@ -299,9 +299,10 @@ void D3DRenderer::RenderFramebuffer(const FramebufferInfo& info)
 
 	aspectRatio = getDCFramebufferAspectRatio();
 	displayFramebuffer();
-	DrawOSD(false);
+	drawOSD();
 	frameRendered = true;
 	frameRenderedOnce = true;
+	clearLastFrame = false;
 	theDXContext.setFrameRendered();
 }
 
@@ -315,8 +316,10 @@ void D3DRenderer::Process(TA_context* ctx)
 	if (settings.platform.isNaomi2())
 		throw FlycastException("DirectX 9 doesn't support Naomi 2 games. Select a different graphics API");
 
-	if (KillTex)
+	if (resetTextureCache) {
 		texCache.Clear();
+		resetTextureCache = false;
+	}
 	texCache.Cleanup();
 
 	ta_parse(ctx, false);
@@ -1176,9 +1179,10 @@ bool D3DRenderer::Render()
 	{
 		aspectRatio = getOutputFramebufferAspectRatio();
 		displayFramebuffer();
-		DrawOSD(false);
+		drawOSD();
 		frameRendered = true;
 		frameRenderedOnce = true;
+		clearLastFrame = false;
 		theDXContext.setFrameRendered();
 	}
 
@@ -1279,7 +1283,7 @@ void D3DRenderer::displayFramebuffer()
 
 bool D3DRenderer::RenderLastFrame()
 {
-	if (!frameRenderedOnce || !theDXContext.isReady())
+	if (clearLastFrame || !frameRenderedOnce || !theDXContext.isReady())
 		return false;
 	backbuffer.reset();
 	bool rc = SUCCEEDED(device->GetRenderTarget(0, &backbuffer.get()));
@@ -1292,9 +1296,9 @@ bool D3DRenderer::RenderLastFrame()
 
 void D3DRenderer::updatePaletteTexture()
 {
-	if (!palette_updated)
+	if (!updatePalette)
 		return;
-	palette_updated = false;
+	updatePalette = false;
 
 	D3DLOCKED_RECT rect;
 	bool rc = SUCCEEDED(paletteTexture->LockRect(0, &rect, nullptr, 0));
@@ -1316,9 +1320,9 @@ void D3DRenderer::updatePaletteTexture()
 
 void D3DRenderer::updateFogTexture()
 {
-	if (!fog_needs_update || !config::Fog)
+	if (!updateFogTable || !config::Fog)
 		return;
-	fog_needs_update = false;
+	updateFogTable = false;
 	u8 temp_tex_buffer[256];
 	MakeFogTexture(temp_tex_buffer);
 
@@ -1339,9 +1343,9 @@ void D3DRenderer::updateFogTexture()
 	device->SetSamplerState(2, D3DSAMP_MAGFILTER, D3DTEXF_LINEAR);
 }
 
-void D3DRenderer::DrawOSD(bool clear_screen)
+void D3DRenderer::drawOSD()
 {
-	theDXContext.setOverlay(!clear_screen);
+	theDXContext.setOverlay(true);
 	gui_display_osd();
 	theDXContext.setOverlay(false);
 }

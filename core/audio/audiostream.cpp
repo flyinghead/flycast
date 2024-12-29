@@ -1,5 +1,8 @@
 #include "audiostream.h"
 #include "cfg/option.h"
+#include "emulator.h"
+
+static void registerForEvents();
 
 struct SoundFrame { s16 l; s16 r; };
 
@@ -60,6 +63,7 @@ void WriteSample(s16 r, s16 l)
 
 void InitAudio()
 {
+	registerForEvents();
 	TermAudio();
 
 	std::string slug = config::AudioBackend;
@@ -138,3 +142,19 @@ void StopAudioRecording()
 		currentBackend->termRecord();
 	audio_recording_started = false;
 }
+
+static void registerForEvents()
+{
+	static bool done;
+	if (done)
+		return;
+	done = true;
+	// Empty the audio buffer when loading a state or terminating the game
+	const auto& callback = [](Event, void *) {
+		writePtr = 0;
+	};
+	EventManager::listen(Event::Terminate, callback);
+	EventManager::listen(Event::LoadState, callback);
+}
+
+

@@ -31,7 +31,7 @@
 #endif
 #endif
 
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(USE_LIBCDIO)   // libcdio has its equivalent version
 #undef fopen
 
 void *fopen_utf8(const char * filename, const char * mode)

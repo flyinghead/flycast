@@ -196,10 +196,7 @@ void DXContext::EndImGuiFrame()
 		if (SUCCEEDED(pDevice->BeginScene()))
 		{
 			if (overlayOnly)
-			{
-				if (crosshairsNeeded() || config::FloatVMUs)
-					overlay.draw(settings.display.width, settings.display.height, config::FloatVMUs, true);
-			}
+				overlay.draw(settings.display.width, settings.display.height, config::FloatVMUs, true);
 			ImGui_ImplDX9_RenderDrawData(ImGui::GetDrawData());
 			pDevice->EndScene();
 		}

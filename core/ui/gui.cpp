@@ -56,8 +56,8 @@
 #include "sdl/sdl.h"
 #endif
 
+#include "vgamepad.h"
 #ifdef __ANDROID__
-#include "gui_android.h"
 #if HOST_CPU == CPU_ARM64 && USE_VULKAN
 #include "rend/vulkan/adreno.h"
 #endif
@@ -111,6 +111,7 @@ static void emuEventCallback(Event event, void *)
 	{
 	case Event::Resume:
 		game_started = true;
+		vgamepad::startGame();
 		break;
 	case Event::Start:
 		GamepadDevice::load_system_mappings();
@@ -328,6 +329,7 @@ void gui_initFonts()
 	largeFont = io.Fonts->AddFontFromMemoryTTF(data.release(), dataSize, largeFontSize, nullptr, ranges);
 
     NOTICE_LOG(RENDERER, "Screen DPI is %.0f, size %d x %d. Scaling by %.2f", settings.display.dpi, settings.display.width, settings.display.height, settings.display.uiScale);
+	vgamepad::applyUiScale();
 }
 
 void gui_keyboard_input(u16 wc)
@@ -516,7 +518,7 @@ void gui_open_settings()
 		{
 			if (achievements::canPause())
 			{
-				HideOSD();
+				vgamepad::hide();
 				try {
 					emu.stop();
 					gui_setState(GuiState::Commands);
@@ -532,6 +534,9 @@ void gui_open_settings()
 	}
 	else if (gui_state == GuiState::VJoyEdit)
 	{
+		vgamepad::pauseEditing();
+		// iOS: force a touch up event to make up for the one eaten by the tap gesture recognizer
+		mouseButtons &= ~1;
 		gui_setState(GuiState::VJoyEditCommands);
 	}
 	else if (gui_state == GuiState::Loading)
@@ -709,14 +714,14 @@ static void gui_display_commands()
 		ImGui::NextColumn();
 
 		// Insert/Eject Disk
-		const char *disk_label = libGDR_GetDiscType() == Open ? ICON_FA_COMPACT_DISC "  Insert Disk" : ICON_FA_COMPACT_DISC "  Eject Disk";
+		const char *disk_label = gdr::isOpen() ? ICON_FA_COMPACT_DISC "  Insert Disk" : ICON_FA_COMPACT_DISC "  Eject Disk";
 		if (ImGui::Button(disk_label, ScaledVec2(buttonWidth, 50)))
 		{
-			if (libGDR_GetDiscType() == Open) {
+			if (gdr::isOpen()) {
 				gui_setState(GuiState::SelectDisk);
 			}
 			else {
-				DiscOpenLid();
+				emu.openGdrom();
 				gui_setState(GuiState::Closed);
 			}
 		}
@@ -811,6 +816,7 @@ const char *maple_device_types[] =
 	"Pop'n Music controller",
 	"Racing Controller",
 	"Densha de Go! Controller",
+	"Full Controller",
 //	"Dreameye",
 };
 
@@ -848,8 +854,10 @@ static const char *maple_device_name(MapleDeviceType type)
 		return maple_device_types[10];
 	case MDT_DenshaDeGoController:
 		return maple_device_types[11];
+	case MDT_SegaControllerXL:
+		return maple_device_types[12];
 	case MDT_Dreameye:
-//		return maple_device_types[12];
+//		return maple_device_types[13];
 	case MDT_None:
 	default:
 		return maple_device_types[0];
@@ -883,6 +891,8 @@ static MapleDeviceType maple_device_type_from_index(int idx)
 	case 11:
 		return MDT_DenshaDeGoController;
 	case 12:
+		return MDT_SegaControllerXL;
+	case 13:
 		return MDT_Dreameye;
 	case 0:
 	default:
@@ -1391,13 +1401,21 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 	}
 }
 
+static void gamepadPngFileSelected(bool cancelled, std::string path)
+{
+	if (!cancelled)
+		gui_runOnUiThread([path]() {
+			vgamepad::loadImage(path);
+		});
+}
+
 static void gamepadSettingsPopup(const std::shared_ptr<GamepadDevice>& gamepad)
 {
 	centerNextWindow();
 	ImGui::SetNextWindowSize(min(ImGui::GetIO().DisplaySize, ScaledVec2(450.f, 300.f)));
 
 	ImguiStyleVar _(ImGuiStyleVar_WindowRounding, 0);
-	if (ImGui::BeginPopupModal("Gamepad Settings", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove))
+	if (ImGui::BeginPopupModal("Gamepad Settings", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_DragScrolling))
 	{
 		if (ImGui::Button("Done", ScaledVec2(100, 30)))
 		{
@@ -1440,10 +1458,38 @@ static void gamepadSettingsPopup(const std::shared_ptr<GamepadDevice>& gamepad)
 		ImGui::NewLine();
 		if (gamepad->is_virtual_gamepad())
 		{
-			header("Haptic");
-			OptionSlider("Power", config::VirtualGamepadVibration, 0, 100, "Haptic feedback power", "%d%%");
+			if (gamepad->is_rumble_enabled()) {
+				header("Haptic");
+				OptionSlider("Power", config::VirtualGamepadVibration, 0, 100, "Haptic feedback power", "%d%%");
+			}
 			header("View");
 			OptionSlider("Transparency", config::VirtualGamepadTransparency, 0, 100, "Virtual gamepad buttons transparency", "%d%%");
+
+#if defined(__ANDROID__) || defined(TARGET_IPHONE)
+			vgamepad::ImguiVGamepadTexture tex;
+			ImGui::Image(tex.getId(), ScaledVec2(300.f, 150.f), ImVec2(0, 1), ImVec2(1, 0));
+#endif
+			const char *gamepadPngTitle = "Select a PNG file";
+			if (ImGui::Button("Choose Image...", ScaledVec2(150, 30)))
+#ifdef __ANDROID__
+			{
+				if (!hostfs::addStorage(false, false, gamepadPngTitle, gamepadPngFileSelected, "image/png"))
+					ImGui::OpenPopup(gamepadPngTitle);
+			}
+#else
+			{
+				ImGui::OpenPopup(gamepadPngTitle);
+			}
+#endif
+			ImGui::SameLine();
+			if (ImGui::Button("Use Default", ScaledVec2(150, 30)))
+				vgamepad::loadImage("");
+
+			select_file_popup(gamepadPngTitle, [](bool cancelled, std::string selection)
+				{
+					gamepadPngFileSelected(cancelled, selection);
+					return true;
+				}, true, "png");
 		}
 		else if (gamepad->is_rumble_enabled())
 		{
@@ -1472,6 +1518,8 @@ static void gamepadSettingsPopup(const std::shared_ptr<GamepadDevice>& gamepad)
 			ShowHelpMarker("Value sent to the game at 100% thumbstick deflection. "
 					"Values greater than 100% will saturate before full deflection of the thumbstick.");
 		}
+	    scrollWhenDraggingOnVoid();
+	    windowDragScroll();
 		ImGui::EndPopup();
 	}
 }
@@ -1950,21 +1998,18 @@ static void gui_settings_controls(bool& maple_devices_changed)
 
 				controller_mapping_popup(gamepad);
 
-#ifdef __ANDROID__
+#if defined(__ANDROID__) || defined(TARGET_IPHONE)
 				if (gamepad->is_virtual_gamepad())
 				{
 					if (ImGui::Button("Edit Layout"))
 					{
-						vjoy_start_editing();
+						vgamepad::startEditing();
 						gui_setState(GuiState::VJoyEdit);
 					}
 				}
 #endif
 				if (gamepad->is_rumble_enabled() || gamepad->has_analog_stick()
-#ifdef __ANDROID__
-					|| gamepad->is_virtual_gamepad()
-#endif
-					)
+					|| gamepad->is_virtual_gamepad())
 				{
 					ImGui::SameLine(0, uiScaled(16));
 					if (ImGui::Button("Settings"))
@@ -2022,6 +2067,7 @@ static void gui_settings_controls(bool& maple_devices_changed)
 				int port_count = 0;
 				switch (config::MapleMainDevices[bus]) {
 					case MDT_SegaController:
+					case MDT_SegaControllerXL:
 						port_count = 2;
 						break;
 					case MDT_LightGun:
@@ -2758,6 +2804,7 @@ static void gui_settings_network()
 
 static void gui_settings_advanced()
 {
+#if FEAT_SHREC != DYNAREC_NONE
     header("CPU Mode");
     {
 		ImGui::Columns(2, "cpu_modes", false);
@@ -2773,6 +2820,7 @@ static void gui_settings_advanced()
 				"%d MHz");
     }
 	ImGui::Spacing();
+#endif
     header("Other");
     {
     	OptionCheckbox("HLE BIOS", config::UseReios, "Force high-level BIOS emulation");
@@ -3201,6 +3249,13 @@ static void gui_display_content()
 		if (iconButton(ICON_FA_GEAR, "Settings"))
 			gui_setState(GuiState::Settings);
     }
+    else
+    {
+		ImGui::SameLine(ImGui::GetContentRegionMax().x
+				- ImGui::GetStyle().FramePadding.x * 2.0f - ImGui::CalcTextSize("Cancel").x);
+		if (ImGui::Button("Cancel"))
+			gui_setState(GuiState::Commands);
+    }
     ImGui::PopStyleVar();
 
     scanner.fetch_game_list();
@@ -3228,7 +3283,7 @@ static void gui_display_content()
 				if (gui_state == GuiState::SelectDisk)
 				{
 					std::string extension = get_file_extension(game.path);
-					if (extension != "gdi" && extension != "chd"
+					if (!game.device && extension != "gdi" && extension != "chd"
 							&& extension != "cdi" && extension != "cue")
 						// Only dreamcast disks
 						continue;
@@ -3238,7 +3293,7 @@ static void gui_display_content()
 				}
 				std::string gameName = game.name;
 				GameBoxart art;
-				if (config::BoxartDisplayMode)
+				if (config::BoxartDisplayMode && !game.device)
 				{
 					art = boxart.getBoxartAndLoad(game);
 					gameName = art.name;
@@ -3266,11 +3321,15 @@ static void gui_display_content()
 					}
 					if (pressed)
 					{
+						if (!config::BoxartDisplayMode)
+							art = boxart.getBoxart(game);
+						settings.content.title = art.name;
+						if (settings.content.title.empty() || settings.content.title == game.fileName)
+							settings.content.title = get_file_basename(game.fileName);
 						if (gui_state == GuiState::SelectDisk)
 						{
-							settings.content.path = game.path;
 							try {
-								DiscSwap(game.path);
+								emu.insertGdrom(game.path);
 								gui_setState(GuiState::Closed);
 							} catch (const FlycastException& e) {
 								gui_error(e.what());
@@ -3278,11 +3337,6 @@ static void gui_display_content()
 						}
 						else
 						{
-							if (!config::BoxartDisplayMode)
-								art = boxart.getBoxart(game);
-							settings.content.title = art.name;
-							if (settings.content.title.empty() || settings.content.title == game.fileName)
-								settings.content.title = get_file_basename(game.fileName);
 							std::string gamePath(game.path);
 							scanner.get_mutex().unlock();
 							gui_start_game(gamePath);
@@ -3384,14 +3438,28 @@ static void gui_display_onboarding()
 	select_file_popup(title, &systemdir_selected_callback);
 }
 
+static void drawBoxartBackground()
+{
+	GameMedia game;
+	game.path = settings.content.path;
+	game.fileName = settings.content.fileName;
+	GameBoxart art = boxart.getBoxart(game);
+	ImguiFileTexture tex(art.boxartPath);
+	ImDrawList *dl = ImGui::GetBackgroundDrawList();
+	tex.draw(dl, ImVec2(0, 0), ImVec2(settings.display.width, settings.display.height), 1.f);
+}
+
 static std::future<bool> networkStatus;
 
 static void gui_network_start()
 {
+	drawBoxartBackground();
 	centerNextWindow();
-	ImGui::SetNextWindowSize(ScaledVec2(330, 180));
+	ImGui::SetNextWindowSize(ScaledVec2(330, 0));
+	ImGui::SetNextWindowBgAlpha(0.8f);
+	ImguiStyleVar _1(ImGuiStyleVar_WindowPadding, ScaledVec2(20, 20));
 
-	ImGui::Begin("##network", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize);
+	ImGui::Begin("##network", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_AlwaysAutoResize);
 
 	ImguiStyleVar _(ImGuiStyleVar_FramePadding, ScaledVec2(20, 10));
 	ImGui::AlignTextToFramePadding();
@@ -3419,7 +3487,6 @@ static void gui_network_start()
 
 	float currentwidth = ImGui::GetContentRegionAvail().x;
 	ImGui::SetCursorPosX((currentwidth - uiScaled(100.f)) / 2.f + ImGui::GetStyle().WindowPadding.x);
-	ImGui::SetCursorPosY(uiScaled(126.f));
 	if (ImGui::Button("Cancel", ScaledVec2(100.f, 0)) && NetworkHandshake::instance != nullptr)
 	{
 		NetworkHandshake::instance->stop();
@@ -3438,10 +3505,13 @@ static void gui_network_start()
 
 static void gui_display_loadscreen()
 {
+	drawBoxartBackground();
 	centerNextWindow();
-	ImGui::SetNextWindowSize(ScaledVec2(330, 180));
+	ImGui::SetNextWindowSize(ScaledVec2(330, 0));
+	ImGui::SetNextWindowBgAlpha(0.8f);
+	ImguiStyleVar _(ImGuiStyleVar_WindowPadding, ScaledVec2(20, 20));
 
-    if (ImGui::Begin("##loading", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize))
+    if (ImGui::Begin("##loading", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_AlwaysAutoResize))
     {
 		ImguiStyleVar _(ImGuiStyleVar_FramePadding, ScaledVec2(20, 10));
 		ImGui::AlignTextToFramePadding();
@@ -3479,7 +3549,6 @@ static void gui_display_loadscreen()
 
 				float currentwidth = ImGui::GetContentRegionAvail().x;
 				ImGui::SetCursorPosX((currentwidth - uiScaled(100.f)) / 2.f + ImGui::GetStyle().WindowPadding.x);
-				ImGui::SetCursorPosY(uiScaled(126.f));
 				if (ImGui::Button("Cancel", ScaledVec2(100.f, 0)))
 					gameLoader.cancel();
 			}
@@ -3499,7 +3568,7 @@ void gui_display_ui()
 	FC_PROFILE_SCOPE;
 	const LockGuard lock(guiMutex);
 
-	if (gui_state == GuiState::Closed || gui_state == GuiState::VJoyEdit)
+	if (gui_state == GuiState::Closed)
 		return;
 	if (gui_state == GuiState::Main)
 	{
@@ -3536,11 +3605,10 @@ void gui_display_ui()
 		gui_display_onboarding();
 		break;
 	case GuiState::VJoyEdit:
+		vgamepad::draw();
 		break;
 	case GuiState::VJoyEditCommands:
-#ifdef __ANDROID__
-		gui_display_vjoy_commands();
-#endif
+		vgamepad::displayCommands();
 		break;
 	case GuiState::SelectDisk:
 		gui_display_content();
@@ -3599,8 +3667,6 @@ static std::string getFPSNotification()
 
 void gui_draw_osd()
 {
-	if (gui_state == GuiState::VJoyEdit)
-		return;
 	gui_newFrame();
 	ImGui::NewFrame();
 
@@ -3635,14 +3701,13 @@ void gui_draw_osd()
 	}
 	if (!settings.raHardcoreMode)
 		lua::overlay();
+	vgamepad::draw();
     ImGui::Render();
 	uiThreadRunner.execTasks();
 }
 
 void gui_display_osd()
 {
-	if (gui_state == GuiState::VJoyEdit)
-		return;
 	gui_draw_osd();
 	gui_endFrame(gui_is_open());
 }

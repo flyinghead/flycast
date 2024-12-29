@@ -23,12 +23,14 @@
 #import "PadViewController.h"
 #include "ios_gamepad.h"
 #include "cfg/cfg.h"
+#include "ui/vgamepad.h"
 
 @interface PadViewController () {
 	UITouch *joyTouch;
 	CGPoint joyBias;
 	std::shared_ptr<IOSVirtualGamepad> virtualGamepad;
 	NSMutableDictionary *touchToButton;
+	NSTimer *hideTimer;
 }
 
 @end
@@ -58,11 +60,13 @@
 		[alert addAction:defaultAction];
 	}
 	[parentView addSubview:self.view];
+	[self startHideTimer];
 }
 
 - (void)hideController
 {
-	[self resetTouch];
+	[self resetAnalog];
+	[hideTimer invalidate];
 	[self.view removeFromSuperview];
 }
 
@@ -70,109 +74,146 @@
 	return self.view.window != nil;
 }
 
-- (void)resetTouch
+-(void)startHideTimer
+{
+	[hideTimer invalidate];
+	hideTimer = [NSTimer scheduledTimerWithTimeInterval:10
+												 target:self
+											   selector:@selector(hideTimer)
+											   userInfo:nil
+												repeats:NO];
+	vgamepad::show();
+}
+
+-(void)hideTimer {
+	vgamepad::hide();
+}
+
+- (void)resetAnalog
 {
 	joyTouch = nil;
-	self.joyXConstraint.constant = 0;
-	self.joyYConstraint.constant = 0;
-	virtualGamepad->gamepad_axis_input(IOS_AXIS_LX, 0);
-	virtualGamepad->gamepad_axis_input(IOS_AXIS_LY, 0);
+	virtualGamepad->joystickInput(0, 0);
+}
+
+static CGPoint translateCoords(const CGPoint& pos, const CGSize& size)
+{
+	CGFloat hscale = 480.0 / size.height;
+	CGPoint p;
+	p.y = pos.y * hscale;
+	p.x = (pos.x - (size.width - 640.0 / hscale) / 2.0) * hscale;
+	return p;
 }
 
 - (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event;
 {
-	for (UITouch *touch in touches) {
-		if (joyTouch == nil) {
-			CGPoint loc = [touch locationInView:self.joystickBackground];
-			if ([self.joystickBackground pointInside:loc withEvent:event]) {
-				joyTouch = touch;
-				joyBias = loc;
-				virtualGamepad->gamepad_axis_input(IOS_AXIS_LX, 0);
-				virtualGamepad->gamepad_axis_input(IOS_AXIS_LY, 0);
-				continue;
-			}
-		}
+	bool forwardEvent = true;
+	[self startHideTimer];
+	for (UITouch *touch in touches)
+	{
 		CGPoint point = [touch locationInView:self.view];
-		UIView *touchedView = [self.view hitTest:point withEvent:nil];
+		point = translateCoords(point, self.view.bounds.size);
+		vgamepad::ControlId control = vgamepad::hitTest(point.x, point.y);
+		if (joyTouch == nil && (control == vgamepad::AnalogArea || control == vgamepad::AnalogStick))
+		{
+			[self resetAnalog];
+			joyTouch = touch;
+			joyBias = point;
+			forwardEvent = false;
+			continue;
+		}
 		NSValue *key = [NSValue valueWithPointer:(const void *)touch];
-		if (touchedView.tag != 0 && touchToButton[key] == nil) {
-			touchToButton[key] = touchedView;
+		if (control != vgamepad::None && control != vgamepad::AnalogArea
+				&& control != vgamepad::AnalogStick && touchToButton[key] == nil)
+		{
+			touchToButton[key] = [NSNumber numberWithInt:control];
 			// button down
-			virtualGamepad->gamepad_btn_input((u32)touchedView.tag, true);
+			virtualGamepad->buttonInput(control, true);
+			forwardEvent = false;
 		}
 	}
-	[super touchesBegan:touches withEvent:event];
+	if (forwardEvent)
+		[super touchesBegan:touches withEvent:event];
 }
 
 - (void)touchesEnded:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event;
 {
-	for (UITouch *touch in touches) {
+	bool forwardEvent = true;
+	for (UITouch *touch in touches)
+	{
 		if (touch == joyTouch) {
-			[self resetTouch];
+			[self resetAnalog];
+			forwardEvent = false;
 			continue;
 		}
 		NSValue *key = [NSValue valueWithPointer:(const void *)touch];
-		UIView *button = touchToButton[key];
-		if (button != nil) {
+		NSNumber *control = touchToButton[key];
+		if (control != nil) {
 			[touchToButton removeObjectForKey:key];
 			// button up
-			virtualGamepad->gamepad_btn_input((u32)button.tag, false);
+			virtualGamepad->buttonInput(static_cast<vgamepad::ControlId>(control.intValue), false);
+			forwardEvent = false;
 		}
 	}
-	[super touchesEnded:touches withEvent:event];
+	if (forwardEvent)
+		[super touchesEnded:touches withEvent:event];
 }
 
 - (void)touchesMoved:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event;
 {
-	for (UITouch *touch in touches) {
-		if (touch == joyTouch) {
-			CGPoint pos = [touch locationInView:[self joystickBackground]];
-			pos.x -= joyBias.x;
-			pos.y -= joyBias.y;
-			pos.x = std::max<CGFloat>(std::min<CGFloat>(25.0, pos.x), -25.0);
-			pos.y = std::max<CGFloat>(std::min<CGFloat>(25.0, pos.y), -25.0);
-			self.joyXConstraint.constant = pos.x;
-			self.joyYConstraint.constant = pos.y;
-			virtualGamepad->gamepad_axis_input(IOS_AXIS_LX, (s8)std::round(pos.x * 32767.0 / 25.0));
-			virtualGamepad->gamepad_axis_input(IOS_AXIS_LY, (s8)std::round(pos.y * 32767.0 / 25.0));
+	bool forwardEvent = true;
+	[self startHideTimer];
+	for (UITouch *touch in touches)
+	{
+		CGPoint point = [touch locationInView:self.view];
+		point = translateCoords(point, self.view.bounds.size);
+		if (touch == joyTouch)
+		{
+			point.x -= joyBias.x;
+			point.y -= joyBias.y;
+			double sz = vgamepad::getControlWidth(vgamepad::AnalogStick);
+			point.x = std::max<CGFloat>(std::min<CGFloat>(1.0, point.x / sz), -1.0);
+			point.y = std::max<CGFloat>(std::min<CGFloat>(1.0, point.y / sz), -1.0);
+			virtualGamepad->joystickInput(point.x, point.y);
+			forwardEvent = false;
 			continue;
 		}
-		CGPoint point = [touch locationInView:self.view];
-		UIView *touchedView = [self.view hitTest:point withEvent:nil];
+		vgamepad::ControlId control = vgamepad::hitTest(point.x, point.y);
 		NSValue *key = [NSValue valueWithPointer:(const void *)touch];
-		UIView *button = touchToButton[key];
-		if (button != nil && touchedView.tag != button.tag) {
+		NSNumber *prevControl = touchToButton[key];
+		if (prevControl.intValue == control)
+			continue;
+		if (prevControl != nil && prevControl.intValue != vgamepad::None && prevControl.intValue != vgamepad::AnalogArea) {
 			// button up
-			virtualGamepad->gamepad_btn_input((u32)button.tag, false);
-			touchToButton[key] = touchedView;
-			// button down
-			virtualGamepad->gamepad_btn_input((u32)touchedView.tag, true);
+			virtualGamepad->buttonInput(static_cast<vgamepad::ControlId>(prevControl.intValue), false);
 		}
-		else if (button == nil && touchedView.tag != 0)
-		{
-			touchToButton[key] = touchedView;
-			// button down
-			virtualGamepad->gamepad_btn_input((u32)touchedView.tag, true);
-		}
+		// button down
+		virtualGamepad->buttonInput(control, true);
+		touchToButton[key] = [NSNumber numberWithInt:control];
+		forwardEvent = false;
 	}
-	[super touchesMoved:touches withEvent:event];
+	if (forwardEvent)
+		[super touchesMoved:touches withEvent:event];
 }
 
 - (void)touchesCancelled:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event;
 {
+	bool forwardEvent = true;
 	for (UITouch *touch in touches) {
 		if (touch == joyTouch) {
-			[self resetTouch];
+			[self resetAnalog];
+			forwardEvent = false;
 			continue;
 		}
 		NSValue *key = [NSValue valueWithPointer:(const void *)touch];
-		UIView *button = touchToButton[key];
-		if (button != nil) {
+		NSNumber *control = touchToButton[key];
+		if (control != nil) {
 			[touchToButton removeObjectForKey:key];
 			// button up
-			virtualGamepad->gamepad_btn_input((u32)button.tag, false);
+			virtualGamepad->buttonInput(static_cast<vgamepad::ControlId>(control.intValue), false);
+			forwardEvent = false;
 		}
 	}
-	[super touchesCancelled:touches withEvent:event];
+	if (forwardEvent)
+		[super touchesCancelled:touches withEvent:event];
 }
 @end

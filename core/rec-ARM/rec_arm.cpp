@@ -89,15 +89,17 @@ extern "C" char *stpcpy(char *dst, char const *src)
 }
 #endif
 
-#undef do_sqw_nommu
 #define rcbOffset(x) (-sizeof(Sh4RCB) + offsetof(Sh4RCB, x))
+#define ctxOffset(x) (-sizeof(Sh4Context) + offsetof(Sh4Context, x))
 
 struct DynaRBI : RuntimeBlockInfo
 {
-	DynaRBI(Sh4CodeBuffer& codeBuffer) : codeBuffer(codeBuffer) {}
+	DynaRBI(Sh4Context& sh4ctx, Sh4CodeBuffer& codeBuffer)
+	: sh4ctx(sh4ctx), codeBuffer(codeBuffer) {}
 	u32 Relink() override;
 
 	Register T_reg;
+	Sh4Context& sh4ctx;
 	Sh4CodeBuffer& codeBuffer;
 };
 
@@ -157,8 +159,10 @@ class Arm32Assembler : public MacroAssembler
 	using BinaryOP = void (MacroAssembler::*)(Register, Register, const Operand&);
 
 public:
-	Arm32Assembler(Sh4CodeBuffer& codeBuffer) : MacroAssembler((u8 *)codeBuffer.get(), codeBuffer.getFreeSpace(), A32), codeBuffer(codeBuffer), reg(*this) {}
-	Arm32Assembler(Sh4CodeBuffer& codeBuffer, u8 *buffer, size_t size) : MacroAssembler(buffer, size, A32), codeBuffer(codeBuffer), reg(*this) {}
+	Arm32Assembler(Sh4Context& sh4ctx, Sh4CodeBuffer& codeBuffer)
+	: MacroAssembler((u8 *)codeBuffer.get(), codeBuffer.getFreeSpace(), A32), sh4ctx(sh4ctx), codeBuffer(codeBuffer), reg(*this) {}
+	Arm32Assembler(Sh4Context& sh4ctx, Sh4CodeBuffer& codeBuffer, u8 *buffer, size_t size)
+	: MacroAssembler(buffer, size, A32), sh4ctx(sh4ctx), codeBuffer(codeBuffer), reg(*this) {}
 
 	void compile(RuntimeBlockInfo* block, bool force_checks, bool optimise);
 	void rewrite(Register raddr, Register rt, SRegister ft, DRegister fd, bool write, bool is_sq, mem_op_type optp);
@@ -170,14 +174,14 @@ public:
 
 	void loadSh4Reg(Register Rt, u32 Sh4_Reg)
 	{
-		const int shRegOffs = (u8*)GetRegPtr(Sh4_Reg) - (u8*)&p_sh4rcb->cntx - sizeof(Sh4cntx);
+		const int shRegOffs = getRegOffset((Sh4RegType)Sh4_Reg) - sizeof(Sh4Context);
 
 		Ldr(Rt, MemOperand(r8, shRegOffs));
 	}
 
 	void storeSh4Reg(Register Rt, u32 Sh4_Reg)
 	{
-		const int shRegOffs = (u8*)GetRegPtr(Sh4_Reg) - (u8*)&p_sh4rcb->cntx - sizeof(Sh4cntx);
+		const int shRegOffs = getRegOffset((Sh4RegType)Sh4_Reg) - sizeof(Sh4Context);
 
 		Str(Rt, MemOperand(r8, shRegOffs));
 	}
@@ -367,6 +371,7 @@ private:
 	void genMmuLookup(RuntimeBlockInfo* block, const shil_opcode& op, u32 write, Register& raddr);
 	void compileOp(RuntimeBlockInfo* block, shil_opcode* op, bool optimise);
 
+	Sh4Context& sh4ctx;
 	Sh4CodeBuffer& codeBuffer;
 	arm_reg_alloc reg;
 	struct CC_PS
@@ -393,13 +398,13 @@ void arm_reg_alloc::Writeback(u32 reg, int nreg)
 
 void arm_reg_alloc::Preload_FPU(u32 reg, int nreg)
 {
-	const s32 shRegOffs = (u8*)GetRegPtr(reg) - (u8*)&p_sh4rcb->cntx - sizeof(Sh4cntx);
+	const s32 shRegOffs = getRegOffset((Sh4RegType)reg) - sizeof(Sh4Context);
 
 	ass.Vldr(SRegister(nreg), MemOperand(r8, shRegOffs));
 }
 void arm_reg_alloc::Writeback_FPU(u32 reg, int nreg)
 {
-	const s32 shRegOffs = (u8*)GetRegPtr(reg) - (u8*)&p_sh4rcb->cntx - sizeof(Sh4cntx);
+	const s32 shRegOffs = getRegOffset((Sh4RegType)reg) - sizeof(Sh4Context);
 
 	ass.Vstr(SRegister(nreg), MemOperand(r8, shRegOffs));
 }
@@ -416,7 +421,7 @@ public:
 		sh4Dynarec = this;
 	}
 
-	void init(Sh4CodeBuffer& codeBuffer) override;
+	void init(Sh4Context& sh4ctx, Sh4CodeBuffer& codeBuffer) override;
 	void reset() override;
 	RuntimeBlockInfo *allocateBlock() override;
 	void handleException(host_context_t &context) override;
@@ -435,7 +440,7 @@ public:
 	}
 
 	void compile(RuntimeBlockInfo* block, bool smc_check, bool optimise) override {
-		ass = new Arm32Assembler(*codeBuffer);
+		ass = new Arm32Assembler(*sh4ctx, *codeBuffer);
 		ass->compile(block, smc_check, optimise);
 		delete ass;
 		ass = nullptr;
@@ -457,6 +462,7 @@ public:
 private:
 	void generate_mainloop();
 
+	Sh4Context *sh4ctx = nullptr;
 	Sh4CodeBuffer *codeBuffer = nullptr;
 	bool restarting = false;
 	Arm32Assembler *ass = nullptr;
@@ -465,7 +471,7 @@ static Arm32Dynarec instance;
 
 u32 DynaRBI::Relink()
 {
-	Arm32Assembler ass(codeBuffer, (u8 *)code + relink_offset, host_code_size - relink_offset);
+	Arm32Assembler ass(sh4ctx, codeBuffer, (u8 *)code + relink_offset, host_code_size - relink_offset);
 
 	u32 size = ass.relinkBlock(this);
 
@@ -584,6 +590,7 @@ void Arm32Assembler::canonParam(const shil_opcode *op, const shil_param *par, Ca
 		case CPT_u32:
 		case CPT_ptr:
 		case CPT_f32:
+		case CPT_sh4ctx:
 			{
 				CC_PS t = { tp, par };
 				CC_pars.push_back(t);
@@ -606,7 +613,11 @@ void Arm32Assembler::canonCall(const shil_opcode *op, void *function)
 		CC_PS& param = CC_pars[i];
 		if (param.type == CPT_ptr)
 		{
-			Mov(rd, (u32)param.par->reg_ptr());
+			Mov(rd, (u32)param.par->reg_ptr(sh4ctx));
+		}
+		else if (param.type == CPT_sh4ctx)
+		{
+			Mov(rd, reinterpret_cast<uintptr_t>(&sh4ctx));
 		}
 		else
 		{
@@ -649,7 +660,7 @@ void Arm32Assembler::canonCall(const shil_opcode *op, void *function)
 		if (ccParam.type == CPT_ptr && prm.count() == 2 && reg.IsAllocf(prm) && (op->rd._reg == prm._reg || op->rd2._reg == prm._reg))
 		{
 			// fsca rd param is a pointer to a 64-bit reg so reload the regs if allocated
-			const int shRegOffs = (u8*)GetRegPtr(prm._reg) - (u8*)&p_sh4rcb->cntx - sizeof(Sh4cntx);
+			const int shRegOffs = prm.reg_nofs();
 			Vldr(reg.mapFReg(prm, 0), MemOperand(r8, shRegOffs));
 			Vldr(reg.mapFReg(prm, 1), MemOperand(r8, shRegOffs + 4));
 		}
@@ -846,7 +857,7 @@ bool Arm32Dynarec::rewrite(host_context_t& context, void *faultAddress)
 	// ignore last 2 bits zeroed to avoid sigbus errors
 	verify(fault_offs == 0 || (fault_offs & ~3) == (sh4_addr & 0x1FFFFFFC));
 
-	ass = new Arm32Assembler(*codeBuffer, (u8 *)ptr, 12);
+	ass = new Arm32Assembler(*sh4ctx, *codeBuffer, (u8 *)ptr, 12);
 	ass->rewrite(raddr, rt, ft, fd, !read, is_sq, optp);
 	delete ass;
 	ass = nullptr;
@@ -1176,10 +1187,10 @@ void Arm32Assembler::genMmuLookup(RuntimeBlockInfo* block, const shil_opcode& op
 	}
 }
 
-static void interpreter_fallback(u16 op, OpCallFP *oph, u32 pc)
+static void interpreter_fallback(Sh4Context *ctx, u16 op, OpCallFP *oph, u32 pc)
 {
 	try {
-		oph(op);
+		oph(ctx, op);
 	} catch (SH4ThrownException& ex) {
 		if (pc & 1)
 		{
@@ -1192,10 +1203,10 @@ static void interpreter_fallback(u16 op, OpCallFP *oph, u32 pc)
 	}
 }
 
-static void do_sqw_mmu_no_ex(u32 addr, u32 pc)
+static void do_sqw_mmu_no_ex(u32 addr, Sh4Context *ctx, u32 pc)
 {
 	try {
-		do_sqw_mmu(addr);
+		ctx->doSqWrite(addr, ctx);
 	} catch (SH4ThrownException& ex) {
 		if (pc & 1)
 		{
@@ -1515,15 +1526,16 @@ void Arm32Assembler::compileOp(RuntimeBlockInfo* block, shil_opcode* op, bool op
 				storeSh4Reg(r1, reg_nextpc);
 			}
 
-			Mov(r0, op->rs3._imm);
+			Sub(r0, r8, sizeof(Sh4Context));
+			Mov(r1, op->rs3._imm);
 			if (!mmu_enabled())
 			{
 				call((void *)OpPtr[op->rs3._imm]);
 			}
 			else
 			{
-				Mov(r1, reinterpret_cast<uintptr_t>(*OpDesc[op->rs3._imm]->oph));	// op handler
-				Mov(r2, block->vaddr + op->guest_offs - (op->delay_slot ? 1 : 0));	// pc
+				Mov(r2, reinterpret_cast<uintptr_t>(*OpDesc[op->rs3._imm]->oph));	// op handler
+				Mov(r3, block->vaddr + op->guest_offs - (op->delay_slot ? 1 : 0));	// pc
 				call((void *)interpreter_fallback);
 			}
 			break;
@@ -1673,6 +1685,11 @@ void Arm32Assembler::compileOp(RuntimeBlockInfo* block, shil_opcode* op, bool op
 			call((void *)UpdateSR);
 			break;
 
+		case shop_sync_fpscr:
+			Sub(r0, r8, sizeof(Sh4Context));
+			call((void *)Sh4Context::UpdateFPSCR);
+			break;
+
 		case shop_test:
 		case shop_seteq:
 		case shop_setge:
@@ -1798,15 +1815,15 @@ void Arm32Assembler::compileOp(RuntimeBlockInfo* block, shil_opcode* op, bool op
 					cc = al;
 				}
 
+				Sub(r1, r8, sizeof(Sh4Context));
 				if (mmu_enabled())
 				{
-					Mov(r1, block->vaddr + op->guest_offs - (op->delay_slot ? 1 : 0));	// pc
+					Mov(r2, block->vaddr + op->guest_offs - (op->delay_slot ? 1 : 0));	// pc
 					call((void *)do_sqw_mmu_no_ex, cc);
 				}
 				else
 				{
-					Ldr(r2, MemOperand(r8, rcbOffset(do_sqw_nommu)));
-					Sub(r1, r8, -rcbOffset(sq_buffer));
+					Ldr(r2, MemOperand(r8, ctxOffset(doSqWrite)));
 					Blx(cc, r2);
 				}
 			}
@@ -1990,14 +2007,14 @@ void Arm32Assembler::compileOp(RuntimeBlockInfo* block, shil_opcode* op, bool op
 				QRegister _r1 = q0;
 				QRegister _r2 = q0;
 
-				Sub(r0, r8, op->rs1.reg_aofs());
-				if (op->rs2.reg_aofs() == op->rs1.reg_aofs())
+				Sub(r0, r8, -op->rs1.reg_nofs());
+				if (op->rs2.reg_nofs() == op->rs1.reg_nofs())
 				{
 					Vldm(r0, NO_WRITE_BACK, DRegisterList(d0, 2));
 				}
 				else
 				{
-					Sub(r1, r8, op->rs2.reg_aofs());
+					Sub(r1, r8, -op->rs2.reg_nofs());
 					Vldm(r0, NO_WRITE_BACK, DRegisterList(d0, 2));
 					Vldm(r1, NO_WRITE_BACK, DRegisterList(d2, 2));
 					_r2 = q1;
@@ -2022,12 +2039,12 @@ void Arm32Assembler::compileOp(RuntimeBlockInfo* block, shil_opcode* op, bool op
 		case shop_ftrv:
 			{
 				Register rdp = r1;
-				Sub(r2, r8, op->rs2.reg_aofs());
-				Sub(r1, r8, op->rs1.reg_aofs());
-				if (op->rs1.reg_aofs() != op->rd.reg_aofs())
+				Sub(r2, r8, -op->rs2.reg_nofs());
+				Sub(r1, r8, -op->rs1.reg_nofs());
+				if (op->rs1.reg_nofs() != op->rd.reg_nofs())
 				{
 					rdp = r0;
-					Sub(r0, r8, op->rd.reg_aofs());
+					Sub(r0, r8, -op->rd.reg_nofs());
 				}
 	
 #if 1
@@ -2083,8 +2100,8 @@ void Arm32Assembler::compileOp(RuntimeBlockInfo* block, shil_opcode* op, bool op
 			break;
 
 		case shop_frswap:
-			Sub(r0, r8, op->rs1.reg_aofs());
-			Sub(r1, r8, op->rd.reg_aofs());
+			Sub(r0, r8, -op->rs1.reg_nofs());
+			Sub(r1, r8, -op->rd.reg_nofs());
 			//Assumes no FPU reg alloc here
 			//frswap touches all FPU regs, so all spans should be clear here ..
 			Vldm(r1, NO_WRITE_BACK, DRegisterList(d0, 8));
@@ -2180,7 +2197,7 @@ void Arm32Assembler::compile(RuntimeBlockInfo* block, bool force_checks, bool op
 	}
 
 	//scheduler
-	Ldr(r1, MemOperand(r8, rcbOffset(cntx.cycle_counter)));
+	Ldr(r1, MemOperand(r8, ctxOffset(cycle_counter)));
 	Cmp(r1, 0);
 	Label cyclesRemaining;
 	B(pl, &cyclesRemaining);
@@ -2198,7 +2215,7 @@ void Arm32Assembler::compile(RuntimeBlockInfo* block, bool force_checks, bool op
 	{
 		Sub(r1, r1, cycles);
 	}
-	Str(r1, MemOperand(r8, rcbOffset(cntx.cycle_counter)));
+	Str(r1, MemOperand(r8, ctxOffset(cycle_counter)));
 
 	//compile the block's opcodes
 	shil_opcode* op;
@@ -2250,10 +2267,10 @@ void Arm32Dynarec::reset()
 	::mainloop = nullptr;
 	unwinder.clear();
 
-	if (p_sh4rcb->cntx.CpuRunning)
+	if (sh4ctx->CpuRunning)
 	{
 		// Force the dynarec out of mainloop() to regenerate it
-		p_sh4rcb->cntx.CpuRunning = 0;
+		sh4ctx->CpuRunning = 0;
 		restarting = true;
 	}
 	else
@@ -2266,7 +2283,7 @@ void Arm32Dynarec::generate_mainloop()
 		return;
 
 	INFO_LOG(DYNAREC, "Generating main loop");
-	Arm32Assembler ass(*codeBuffer);
+	Arm32Assembler ass(*sh4ctx, *codeBuffer);
 
 	ass.genMainLoop();
 }
@@ -2366,7 +2383,7 @@ void Arm32Assembler::genMainLoop()
 		Ldr(r8, MemOperand(sp));					// r8: context
 		Mov(r9, (uintptr_t)mmuAddressLUT);			// r9: mmu LUT
 	}
-	Ldr(r4, MemOperand(r8, rcbOffset(cntx.pc)));	// r4: pc
+	Ldr(r4, MemOperand(r8, ctxOffset(pc)));			// r4: pc
 	B(&no_updateLabel);								// Go to mainloop !
 	// this code is here for fall-through behavior of do_iter
 	Label do_iter;
@@ -2374,9 +2391,9 @@ void Arm32Assembler::genMainLoop()
 // intc_sched: r0 is pc, r1 is cycle_counter
 	intc_sched = GetCursorAddress<const void *>();
 	Add(r1, r1, SH4_TIMESLICE);
-	Str(r1, MemOperand(r8, rcbOffset(cntx.cycle_counter)));
-	Str(r0, MemOperand(r8, rcbOffset(cntx.pc)));
-	Ldr(r0, MemOperand(r8, rcbOffset(cntx.CpuRunning)));
+	Str(r1, MemOperand(r8, ctxOffset(cycle_counter)));
+	Str(r0, MemOperand(r8, ctxOffset(pc)));
+	Ldr(r0, MemOperand(r8, ctxOffset(CpuRunning)));
 	Cmp(r0, 0);
 	B(eq, &cleanup);
 	Mov(r4, lr);
@@ -2384,17 +2401,17 @@ void Arm32Assembler::genMainLoop()
 	Cmp(r0, 0);
 	B(ne, &do_iter);
 	Mov(lr, r4);
-	Ldr(r0, MemOperand(r8, rcbOffset(cntx.cycle_counter)));
+	Ldr(r0, MemOperand(r8, ctxOffset(cycle_counter)));
 	Bx(lr);
 // do_iter:
 	Bind(&do_iter);
-	Ldr(r4, MemOperand(r8, rcbOffset(cntx.pc)));
+	Ldr(r4, MemOperand(r8, ctxOffset(pc)));
 
 // no_update:
 	no_update = GetCursorAddress<const void *>();
 	Bind(&no_updateLabel);
 	// next_pc _MUST_ be on r4
-	Ldr(r0, MemOperand(r8, rcbOffset(cntx.CpuRunning)));
+	Ldr(r0, MemOperand(r8, ctxOffset(CpuRunning)));
 	Cmp(r0, 0);
 	B(eq, &cleanup);
 
@@ -2513,7 +2530,7 @@ void Arm32Assembler::genMainLoop()
 				And(r1, r0, 0x3F);
 				Add(r1, r1, r8);
 				jump((void *)&addrspace::write64, ne);
-				Strd(r2, r3, MemOperand(r1, rcbOffset(sq_buffer)));
+				Strd(r2, r3, MemOperand(r1, getRegOffset(reg_sq_buffer) - sizeof(Sh4Context)));
 			}
 			else
 			{
@@ -2524,7 +2541,7 @@ void Arm32Assembler::genMainLoop()
 				if (reg != 0)
 					Mov(ne, r0, Register(reg));
 				jump((void *)&addrspace::write32, ne);
-				Str(r1, MemOperand(r3, rcbOffset(sq_buffer)));
+				Str(r1, MemOperand(r3, getRegOffset(reg_sq_buffer) - sizeof(Sh4Context)));
 			}
 			Bx(lr);
 		}
@@ -2540,7 +2557,7 @@ void Arm32Assembler::genMainLoop()
 	INFO_LOG(DYNAREC, "readm helpers: up to %p", GetCursorAddress<void *>());
 }
 
-void Arm32Dynarec::init(Sh4CodeBuffer& codeBuffer)
+void Arm32Dynarec::init(Sh4Context& sh4ctx, Sh4CodeBuffer& codeBuffer)
 {
 	INFO_LOG(DYNAREC, "Initializing the ARM32 dynarec");
 
@@ -2562,6 +2579,7 @@ void Arm32Dynarec::init(Sh4CodeBuffer& codeBuffer)
 	ccmap[shop_setab] = hi;
 	ccnmap[shop_setab] = ls;
 
+	this->sh4ctx = &sh4ctx;
 	this->codeBuffer = &codeBuffer;
 }
 
@@ -2573,6 +2591,6 @@ void Arm32Dynarec::handleException(host_context_t &context)
 RuntimeBlockInfo* Arm32Dynarec::allocateBlock()
 {
 	generate_mainloop(); // FIXME why is this needed?
-	return new DynaRBI(*codeBuffer);
+	return new DynaRBI(*sh4ctx, *codeBuffer);
 };
 #endif

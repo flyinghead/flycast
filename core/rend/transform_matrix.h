@@ -19,7 +19,7 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #pragma once
-#include "TexCache.h"
+#include "hw/pvr/Renderer_if.h"
 #include "hw/pvr/ta_ctx.h"
 #include "cfg/option.h"
 

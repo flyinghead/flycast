@@ -270,7 +270,7 @@ void dc_loadstate(int index)
 
 	try {
 		Deserializer deser(data, total_size);
-		dc_loadstate(deser);
+		emu.loadstate(deser);
 	    NOTICE_LOG(SAVESTATE, "Loaded state ver %d from %s size %d", deser.version(), filename.c_str(), total_size);
 		if (deser.size() != total_size)
 			// Note: this isn't true for RA savestates
@@ -281,7 +281,6 @@ void dc_loadstate(int index)
 	}
 
 	free(data);
-	EventManager::event(Event::LoadState);
 }
 
 time_t dc_getStateCreationDate(int index)

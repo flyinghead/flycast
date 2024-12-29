@@ -20,6 +20,7 @@
 #pragma once
 #include "types.h"
 #include "mapping.h"
+#include "stdclass.h"
 
 #include <map>
 #include <memory>
@@ -92,12 +93,21 @@ public:
 	}
 
 	static void Register(const std::shared_ptr<GamepadDevice>& gamepad);
-
 	static void Unregister(const std::shared_ptr<GamepadDevice>& gamepad);
-
 	static int GetGamepadCount();
 	static std::shared_ptr<GamepadDevice> GetGamepad(int index);
 	static void SaveMaplePorts();
+	static void RampAnalog();
+
+	template<typename T>
+	static std::shared_ptr<T> GetGamepad()
+	{
+		Lock _(_gamepads_mutex);
+		for (const auto& gamepad : _gamepads)
+			if (dynamic_cast<T*>(gamepad.get()) != nullptr)
+				return std::dynamic_pointer_cast<T>(gamepad);
+		return {};
+	}
 
 	static void load_system_mappings();
 	bool find_mapping(int system = settings.platform.system);
@@ -158,20 +168,19 @@ private:
 	{
 		if (port < 0)
 			return;
+		Lock _(rampMutex);
 		DigAnalog axis = key == DcNegDir ? NegDir : PosDir;
 		if (pressed)
 			digitalToAnalogState[port] |= axis;
 		else
 			digitalToAnalogState[port] &= ~axis;
-		const u32 socd = digitalToAnalogState[port] & (NegDir | PosDir);
-		if (socd == 0 || socd == (NegDir | PosDir))
-			joystick = 0;
-		else if (socd == NegDir)
-			joystick = -32768;
-		else
-			joystick = 32767;
-
+		rampAnalogState[port] |= NegDir;
+		if (lastAnalogUpdate == 0)
+			lastAnalogUpdate = getTimeMs();
 	}
+
+	s16 (&getTargetArray(DigAnalog axis))[4];
+	void rampAnalog();
 
 	std::string _api_name;
 	int _maple_port;
@@ -184,9 +193,16 @@ private:
 	std::map<DreamcastKey, int> lastAxisValue[4];
 	bool perGameMapping = false;
 	bool instanceMapping = false;
-	
+
+	u64 lastAnalogUpdate = 0;
+	u32 rampAnalogState[4] {};
+	static constexpr float AnalogRamp = 32767.f / 100.f;		// 100 ms ramp time
+	std::mutex rampMutex;
+
 	static std::vector<std::shared_ptr<GamepadDevice>> _gamepads;
 	static std::mutex _gamepads_mutex;
+
+	using Lock = std::lock_guard<std::mutex>;
 };
 
 #ifdef TEST_AUTOMATION

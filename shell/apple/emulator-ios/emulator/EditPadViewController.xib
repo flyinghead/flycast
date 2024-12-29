@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="17701" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES">
+    <device id="retina5_9" orientation="landscape" appearance="light"/>
+    <dependencies>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="17703"/>
+        <capability name="Safe area layout guides" minToolsVersion="9.0"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <objects>
+        <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner" customClass="EditPadViewController">
+            <connections>
+                <outlet property="view" destination="iN0-l3-epB" id="AbL-BF-hAf"/>
+            </connections>
+        </placeholder>
+        <placeholder placeholderIdentifier="IBFirstResponder" id="-2" customClass="UIResponder"/>
+        <view multipleTouchEnabled="YES" alpha="0.5" contentMode="scaleToFill" id="iN0-l3-epB">
+            <rect key="frame" x="0.0" y="0.0" width="812" height="375"/>
+            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+            <viewLayoutGuide key="safeArea" id="vUN-kp-3ea"/>
+            <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+            <gestureRecognizers/>
+            <connections>
+                <outletCollection property="gestureRecognizers" destination="Fgc-1A-M5p" appends="YES" id="tIJ-ng-Qrk"/>
+                <outletCollection property="gestureRecognizers" destination="egs-kM-Vyx" appends="YES" id="Hrl-gr-gmJ"/>
+                <outletCollection property="gestureRecognizers" destination="uBH-B5-GOx" appends="YES" id="Qvl-Ci-YAY"/>
+            </connections>
+            <point key="canvasLocation" x="68" y="4"/>
+        </view>
+        <panGestureRecognizer minimumNumberOfTouches="1" id="Fgc-1A-M5p">
+            <connections>
+                <action selector="handlePan:" destination="-1" id="pfo-wn-2Qn"/>
+            </connections>
+        </panGestureRecognizer>
+        <pinchGestureRecognizer id="egs-kM-Vyx">
+            <connections>
+                <action selector="handlePinch:" destination="-1" id="wuB-i9-x8t"/>
+            </connections>
+        </pinchGestureRecognizer>
+        <tapGestureRecognizer numberOfTapsRequired="2" id="uBH-B5-GOx">
+            <connections>
+                <action selector="handleTap:" destination="-1" id="P2u-p8-qr1"/>
+            </connections>
+        </tapGestureRecognizer>
+    </objects>
+</document>

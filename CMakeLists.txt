@@ -76,6 +76,7 @@ option(ENABLE_GDB_SERVER "Build with GDB debugging support" OFF)
 option(ENABLE_DC_PROFILER "Build with support for target machine (SH4) profiler" OFF)
 option(ENABLE_FC_PROFILER "Build with support for host app (Flycast) profiler" OFF)
 option(USE_DISCORD "Use Discord Presence API" OFF)
+option(USE_LIBCDIO "Use libcdio for CDROM access" OFF)
 
 if(IOS AND NOT LIBRETRO)
 	set(USE_VULKAN OFF CACHE BOOL "Force vulkan off" FORCE)
@@ -264,7 +265,7 @@ if(NOT "${SENTRY_UPLOAD_URL}" STREQUAL "")
 	target_compile_definitions(${PROJECT_NAME} PRIVATE SENTRY_UPLOAD="${SENTRY_UPLOAD_URL}")
 endif()
 
-target_include_directories(${PROJECT_NAME} PRIVATE core core/deps core/deps/stb core/deps/json)
+target_include_directories(${PROJECT_NAME} PRIVATE core core/deps core/deps/stb core/deps/json core/deps/asio/asio/include)
 if(LIBRETRO)
 	target_include_directories(${PROJECT_NAME} PRIVATE shell/libretro)
 endif()
@@ -460,7 +461,14 @@ if(NOT LIBRETRO)
 		endif()
 
 		target_compile_definitions(${PROJECT_NAME} PRIVATE USE_SDL USE_SDL_AUDIO)
-		target_sources(${PROJECT_NAME} PRIVATE core/sdl/sdl.cpp core/sdl/sdl.h core/sdl/sdl_gamepad.h core/sdl/sdl_keyboard.h)
+		target_sources(${PROJECT_NAME} PRIVATE
+			core/sdl/sdl.cpp
+			core/sdl/sdl.h
+			core/sdl/sdl_gamepad.h
+			core/sdl/sdl_keyboard.h
+			core/sdl/sdl_keyboard_mac.h
+			core/sdl/dreamconn.cpp
+			core/sdl/dreamconn.h)
 
 		if((UNIX AND NOT APPLE) OR NINTENDO_SWITCH)
 			find_package(CURL REQUIRED)
@@ -670,6 +678,28 @@ if(NOT LIBZIP_FOUND OR NINTENDO_SWITCH)
 	option(LIBZIP_DO_INSTALL "Install libzip and the related files" OFF)
 	add_subdirectory(core/deps/libzip EXCLUDE_FROM_ALL)
 	target_link_libraries(${PROJECT_NAME} PRIVATE libzip::zip)
+endif()
+
+if(USE_LIBCDIO)
+	if(PKG_CONFIG_FOUND)
+		pkg_check_modules(CDIO IMPORTED_TARGET libcdio)
+		if(CDIO_FOUND)
+			target_compile_definitions(${PROJECT_NAME} PRIVATE USE_LIBCDIO)
+			if(MINGW)
+				# Force static link
+				target_link_libraries(${PROJECT_NAME} PRIVATE "-l:libcdio.a -l:libiconv.a -lwinmm")
+			else()
+				target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::CDIO)
+			endif()
+		endif()
+	endif()
+	if(NOT CDIO_FOUND)
+		find_package(libcdio)
+		if(TARGET libcdio::libcdio)
+			target_compile_definitions(${PROJECT_NAME} PRIVATE USE_LIBCDIO)
+			target_link_libraries(${PROJECT_NAME} PRIVATE libcdio::libcdio)
+		endif()
+	endif()
 endif()
 
 if(WIN32)
@@ -1052,22 +1082,23 @@ if(NOT LIBRETRO)
 		fonts/Roboto-Medium.ttf.zip
 		fonts/Roboto-Regular.ttf.zip
 		fonts/fa-solid-900.ttf.zip)
-	if(ANDROID)
+	if(ANDROID OR IOS)
 		cmrc_add_resources(flycast-resources
 			WHENCE resources
-			resources/picture/buttons.png)
+			resources/picture/buttons.png
+			resources/picture/buttons-arcade.png)
 	endif()
 endif()
 
 target_sources(${PROJECT_NAME} PRIVATE
 		core/imgread/cdi.cpp
+		core/imgread/cdio.cpp
 		core/imgread/chd.cpp
 		core/imgread/common.cpp
 		core/imgread/common.h
 		core/imgread/cue.cpp
 		core/imgread/gdi.cpp
 		core/imgread/ImgReader.cpp
-		core/imgread/ioctl.cpp
 		core/imgread/iso9660.h
 		core/imgread/isofs.cpp
 		core/imgread/isofs.h)
@@ -1324,6 +1355,8 @@ target_sources(${PROJECT_NAME} PRIVATE
 		core/rend/tileclip.h
 		core/rend/TexCache.cpp
 		core/rend/TexCache.h
+		core/rend/texconv.cpp
+		core/rend/texconv.h
 		core/rend/norend/norend.cpp)
 if(NOT LIBRETRO)
 	target_sources(${PROJECT_NAME} PRIVATE
@@ -1333,8 +1366,8 @@ if(NOT LIBRETRO)
 			core/ui/gui.cpp
 			core/ui/gui.h
 			core/ui/gui_achievements.cpp
-			core/ui/gui_android.cpp
-			core/ui/gui_android.h
+			core/ui/vgamepad.cpp
+			core/ui/vgamepad.h
 			core/ui/gui_chat.h
 			core/ui/gui_cheats.cpp
 			core/ui/gui_util.cpp
@@ -1640,6 +1673,10 @@ if(NOT LIBRETRO)
 		target_sources(${PROJECT_NAME} PRIVATE
 			shell/android-studio/flycast/src/main/jni/src/Android.cpp
 			shell/android-studio/flycast/src/main/jni/src/android_gamepad.h
+			shell/android-studio/flycast/src/main/jni/src/android_storage.h
+			shell/android-studio/flycast/src/main/jni/src/http_client.h
+			shell/android-studio/flycast/src/main/jni/src/jni_util.h
+			shell/android-studio/flycast/src/main/jni/src/android_input.cpp
 			shell/android-studio/flycast/src/main/jni/src/android_keyboard.h)
 
 		target_link_libraries(${PROJECT_NAME} PRIVATE android log)
@@ -1664,6 +1701,8 @@ if(NOT LIBRETRO)
 					shell/apple/emulator-ios/emulator/FlycastViewController.mm
 					shell/apple/emulator-ios/emulator/PadViewController.h
 					shell/apple/emulator-ios/emulator/PadViewController.mm
+					shell/apple/emulator-ios/emulator/EditPadViewController.h
+					shell/apple/emulator-ios/emulator/EditPadViewController.mm
 					shell/apple/emulator-ios/emulator/EmulatorView.h
 					shell/apple/emulator-ios/emulator/EmulatorView.mm
 					shell/apple/emulator-ios/emulator/main.m
@@ -1678,7 +1717,8 @@ if(NOT LIBRETRO)
 				shell/apple/emulator-ios/emulator/Images.xcassets
 				shell/apple/emulator-ios/emulator/FlycastStoryboard.storyboard
 				shell/apple/emulator-ios/emulator/LaunchScreen.storyboard
-				shell/apple/emulator-ios/emulator/PadViewController.xib)
+				shell/apple/emulator-ios/emulator/PadViewController.xib
+				shell/apple/emulator-ios/emulator/EditPadViewController.xib)
 			target_sources(${PROJECT_NAME} PRIVATE ${IOS_RESOURCES})
 			source_group("Resources" FILES ${IOS_RESOURCES})
 			set_source_files_properties(${IOS_RESOURCES} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")

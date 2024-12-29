@@ -87,35 +87,32 @@ void D3DOverlay::draw(u32 width, u32 height, bool vmu, bool crosshair)
 			drawQuad(rect, D3DCOLOR_ARGB(192, 255, 255, 255));
 		}
 	}
-	if (crosshair && crosshairsNeeded())
+	if (crosshair)
 	{
-		if (!xhairTexture)
-		{
-			const u32* texData = getCrosshairTextureData();
-			device->CreateTexture(16, 16, 1, 0, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, &xhairTexture.get(), 0);
-			D3DLOCKED_RECT rect;
-			if (SUCCEEDED(xhairTexture->LockRect(0, &rect, nullptr, 0)))
-			{
-				if (rect.Pitch == 16 * sizeof(u32))
-					memcpy(rect.pBits, texData, 16 * 16 * sizeof(u32));
-				else
-				{
-					u8 *dst = (u8 *) rect.pBits;
-					for (int y = 0; y < 16; y++)
-						memcpy(dst + y * rect.Pitch, texData + y * 16, 16 * sizeof(u32));
-				}
-				xhairTexture->UnlockRect(0);
-			}
-		}
-		device->SetTexture(0, xhairTexture);
 		for (u32 i = 0; i < config::CrosshairColor.size(); i++)
 		{
-			if (config::CrosshairColor[i] == 0)
-				continue;
-			if (settings.platform.isConsole()
-					&& config::MapleMainDevices[i] != MDT_LightGun)
+			if (!crosshairNeeded(i))
 				continue;
 
+			if (!xhairTexture)
+			{
+				const u32* texData = getCrosshairTextureData();
+				device->CreateTexture(16, 16, 1, 0, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, &xhairTexture.get(), 0);
+				D3DLOCKED_RECT rect;
+				if (SUCCEEDED(xhairTexture->LockRect(0, &rect, nullptr, 0)))
+				{
+					if (rect.Pitch == 16 * sizeof(u32))
+						memcpy(rect.pBits, texData, 16 * 16 * sizeof(u32));
+					else
+					{
+						u8 *dst = (u8 *) rect.pBits;
+						for (int y = 0; y < 16; y++)
+							memcpy(dst + y * rect.Pitch, texData + y * 16, 16 * sizeof(u32));
+					}
+					xhairTexture->UnlockRect(0);
+				}
+			}
+			device->SetTexture(0, xhairTexture);
 			auto [x, y] = getCrosshairPosition(i);
 			float halfWidth = config::CrosshairSize * settings.display.uiScale / 2.f;
 			RECT rect { (long) (x - halfWidth), (long) (y - halfWidth), (long) (x + halfWidth), (long) (y + halfWidth) };

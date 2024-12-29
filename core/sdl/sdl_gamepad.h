@@ -681,8 +681,6 @@ private:
 	int damperEffectId = -1;
 };
 
-std::map<SDL_JoystickID, std::shared_ptr<SDLGamepad>> SDLGamepad::sdl_gamepads;
-
 class SDLMouse : public Mouse
 {
 public:

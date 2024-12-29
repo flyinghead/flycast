@@ -30,8 +30,6 @@ extern "C" char __start__;
 #define siginfo_t switch_siginfo_t
 #endif // __SWITCH__
 
-#if !defined(TARGET_NO_EXCEPTIONS)
-
 void context_from_segfault(host_context_t* hctx, void* segfault_ctx);
 void context_to_segfault(host_context_t* hctx, void* segfault_ctx);
 
@@ -53,11 +51,11 @@ void fault_handler(int sn, siginfo_t * si, void *segfault_ctx)
 	// texture protection in VRAM
 	if (VramLockedWrite((u8*)si->si_addr))
 		return;
+#if FEAT_SHREC == DYNAREC_JIT
 	// FPCB jump table protection
 	if (addrspace::bm_lockedWrite((u8*)si->si_addr))
 		return;
 
-#if FEAT_SHREC == DYNAREC_JIT
 	// fast mem access rewriting
 	host_context_t ctx;
 	context_from_segfault(&ctx, segfault_ctx);
@@ -109,16 +107,6 @@ void os_UninstallFaultHandler()
 	sigaction(SIGBUS, &next_bus_handler, nullptr);
 #endif
 }
-
-#else  // !defined(TARGET_NO_EXCEPTIONS)
-
-void os_InstallFaultHandler()
-{
-}
-void os_UninstallFaultHandler()
-{
-}
-#endif // !defined(TARGET_NO_EXCEPTIONS)
 
 #if !defined(__unix__) && !defined(LIBRETRO) && !defined(__SWITCH__)
 [[noreturn]] void os_DebugBreak()

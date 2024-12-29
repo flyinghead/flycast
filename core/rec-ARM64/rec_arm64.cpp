@@ -45,14 +45,14 @@ using namespace vixl::aarch64;
 #include "oslib/virtmem.h"
 #include "emulator.h"
 
-#undef do_sqw_nommu
-
 struct DynaRBI : RuntimeBlockInfo
 {
-	DynaRBI(Sh4CodeBuffer& codeBuffer) : codeBuffer(codeBuffer) {}
+	DynaRBI(Sh4Context& sh4ctx, Sh4CodeBuffer& codeBuffer)
+	: sh4ctx(sh4ctx), codeBuffer(codeBuffer) {}
 	u32 Relink() override;
 
 private:
+	Sh4Context& sh4ctx;
 	Sh4CodeBuffer& codeBuffer;
 };
 
@@ -87,10 +87,10 @@ static void jitWriteProtect(Sh4CodeBuffer &codeBuffer, bool enable)
 #endif
 }
 
-static void interpreter_fallback(u16 op, OpCallFP *oph, u32 pc)
+static void interpreter_fallback(Sh4Context *ctx, u16 op, OpCallFP *oph, u32 pc)
 {
 	try {
-		oph(op);
+		oph(ctx, op);
 	} catch (SH4ThrownException& ex) {
 		if (pc & 1)
 		{
@@ -103,10 +103,10 @@ static void interpreter_fallback(u16 op, OpCallFP *oph, u32 pc)
 	}
 }
 
-static void do_sqw_mmu_no_ex(u32 addr, u32 pc)
+static void do_sqw_mmu_no_ex(u32 addr, Sh4Context *ctx, u32 pc)
 {
 	try {
-		do_sqw_mmu(addr);
+		ctx->doSqWrite(addr, ctx);
 	} catch (SH4ThrownException& ex) {
 		if (pc & 1)
 		{
@@ -126,10 +126,11 @@ class Arm64Assembler : public MacroAssembler
 	typedef void (MacroAssembler::*Arm64Fop_RRR)(const VRegister&, const VRegister&, const VRegister&);
 
 public:
-	Arm64Assembler(Sh4CodeBuffer& codeBuffer) : Arm64Assembler(codeBuffer, codeBuffer.get()) {
-	}
+	Arm64Assembler(Sh4Context& sh4ctx, Sh4CodeBuffer& codeBuffer)
+	: Arm64Assembler(sh4ctx, codeBuffer, codeBuffer.get()) { }
 
-	Arm64Assembler(Sh4CodeBuffer& codeBuffer, void *buffer) : MacroAssembler((u8 *)buffer, codeBuffer.getFreeSpace()), regalloc(this), codeBuffer(codeBuffer)
+	Arm64Assembler(Sh4Context& sh4ctx, Sh4CodeBuffer& codeBuffer, void *buffer)
+	: MacroAssembler((u8 *)buffer, codeBuffer.getFreeSpace()), regalloc(this), sh4ctx(sh4ctx), codeBuffer(codeBuffer)
 	{
 		call_regs.push_back((const WRegister*)&w0);
 		call_regs.push_back((const WRegister*)&w1);
@@ -211,7 +212,7 @@ public:
 				Add(*ret_reg, regalloc.MapRegister(op.rs1), op.rs3._imm);
 			else
 			{
-				Ldr(*ret_reg, sh4_context_mem_operand(op.rs1.reg_ptr()));
+				Ldr(*ret_reg, sh4_context_mem_operand(op.rs1._reg));
 				Add(*ret_reg, *ret_reg, op.rs3._imm);
 			}
 		}
@@ -221,8 +222,8 @@ public:
 				Add(*ret_reg, regalloc.MapRegister(op.rs1), regalloc.MapRegister(op.rs3));
 			else
 			{
-				Ldr(*ret_reg, sh4_context_mem_operand(op.rs1.reg_ptr()));
-				Ldr(w8, sh4_context_mem_operand(op.rs3.reg_ptr()));
+				Ldr(*ret_reg, sh4_context_mem_operand(op.rs1._reg));
+				Ldr(w8, sh4_context_mem_operand(op.rs3._reg));
 				Add(*ret_reg, *ret_reg, w8);
 			}
 		}
@@ -241,7 +242,7 @@ public:
 			}
 			else
 			{
-				Ldr(*ret_reg, sh4_context_mem_operand(op.rs1.reg_ptr()));
+				Ldr(*ret_reg, sh4_context_mem_operand(op.rs1._reg));
 			}
 		}
 		else
@@ -264,7 +265,7 @@ public:
 		regalloc.DoAlloc(block);
 
 		// scheduler
-		Ldr(w1, sh4_context_mem_operand(&Sh4cntx.cycle_counter));
+		Ldr(w1, sh4_context_mem_operand(&sh4ctx.cycle_counter));
 		Cmp(w1, 0);
 		Label cycles_remaining;
 		B(&cycles_remaining, pl);
@@ -274,7 +275,7 @@ public:
 		Bind(&cycles_remaining);
 
 		Sub(w1, w1, block->guest_cycles);
-		Str(w1, sh4_context_mem_operand(&Sh4cntx.cycle_counter));
+		Str(w1, sh4_context_mem_operand(&sh4ctx.cycle_counter));
 
 		for (size_t i = 0; i < block->oplist.size(); i++)
 		{
@@ -287,18 +288,19 @@ public:
 				if (op.rs1._imm)	// if NeedPC()
 				{
 					Mov(w10, op.rs2._imm);
-					Str(w10, sh4_context_mem_operand(&next_pc));
+					Str(w10, sh4_context_mem_operand(&sh4ctx.pc));
 				}
-				Mov(w0, op.rs3._imm);
 
+				Mov(x0, x28);
+				Mov(w1, op.rs3._imm);
 				if (!mmu_enabled())
 				{
 					GenCallRuntime(OpDesc[op.rs3._imm]->oph);
 				}
 				else
 				{
-					Mov(x1, reinterpret_cast<uintptr_t>(*OpDesc[op.rs3._imm]->oph));	// op handler
-					Mov(w2, block->vaddr + op.guest_offs - (op.delay_slot ? 1 : 0));	// pc
+					Mov(x2, reinterpret_cast<uintptr_t>(*OpDesc[op.rs3._imm]->oph));	// op handler
+					Mov(w3, block->vaddr + op.guest_offs - (op.delay_slot ? 1 : 0));	// pc
 
 					GenCallRuntime(interpreter_fallback);
 				}
@@ -390,7 +392,8 @@ public:
 				GenCallRuntime(UpdateSR);
 				break;
 			case shop_sync_fpscr:
-				GenCallRuntime(UpdateFPSCR);
+				Mov(x0, x28);
+				GenCallRuntime(Sh4Context::UpdateFPSCR);
 				break;
 
 			case shop_swaplb:
@@ -779,7 +782,7 @@ public:
 							Lsr(w1, regalloc.MapRegister(op.rs1), 26);
 						else
 						{
-							Ldr(w0, sh4_context_mem_operand(op.rs1.reg_ptr()));
+							Ldr(w0, sh4_context_mem_operand(op.rs1._reg));
 							Lsr(w1, w0, 26);
 						}
 						Cmp(w1, 0x38);
@@ -788,17 +791,15 @@ public:
 							Mov(w0, regalloc.MapRegister(op.rs1));
 					}
 
+					Mov(x1, x28);
 					if (mmu_enabled())
 					{
-						Mov(w1, block->vaddr + op.guest_offs - (op.delay_slot ? 1 : 0));	// pc
-
+						Mov(w2, block->vaddr + op.guest_offs - (op.delay_slot ? 1 : 0));	// pc
 						GenCallRuntime(do_sqw_mmu_no_ex);
 					}
 					else
 					{
-						Sub(x9, x28, offsetof(Sh4RCB, cntx) - offsetof(Sh4RCB, do_sqw_nommu));
-						Ldr(x9, MemOperand(x9));
-						Sub(x1, x28, offsetof(Sh4RCB, cntx) - offsetof(Sh4RCB, sq_buffer));
+						Ldr(x9, sh4_context_mem_operand(&sh4ctx.doSqWrite));
 						Blr(x9);
 					}
 					Bind(&not_sqw);
@@ -904,17 +905,17 @@ public:
 				else
 				{
 					Ldr(x2, MemOperand(x1));
-					Str(x2, sh4_context_mem_operand(op.rd.reg_ptr()));
+					Str(x2, sh4_context_mem_operand(op.rd._reg));
 				}
 				break;
 
 			/* fall back to the canonical implementations for better precision
 			case shop_fipr:
-				Add(x9, x28, sh4_context_mem_operand(op.rs1.reg_ptr()).GetOffset());
+				Add(x9, x28, op.rs1.reg_offset());
 				Ld1(v0.V4S(), MemOperand(x9));
 				if (op.rs1._reg != op.rs2._reg)
 				{
-					Add(x9, x28, sh4_context_mem_operand(op.rs2.reg_ptr()).GetOffset());
+					Add(x9, x28, op.rs2.reg_offset());
 					Ld1(v1.V4S(), MemOperand(x9));
 					Fmul(v0.V4S(), v0.V4S(), v1.V4S());
 				}
@@ -925,9 +926,9 @@ public:
 				break;
 
 			case shop_ftrv:
-				Add(x9, x28, sh4_context_mem_operand(op.rs1.reg_ptr()).GetOffset());
+				Add(x9, x28, op.rs1.reg_offset());
 				Ld1(v0.V4S(), MemOperand(x9));
-				Add(x9, x28, sh4_context_mem_operand(op.rs2.reg_ptr()).GetOffset());
+				Add(x9, x28, op.rs2.reg_offset());
 				Ld1(v1.V4S(), MemOperand(x9, 16, PostIndex));
 				Ld1(v2.V4S(), MemOperand(x9, 16, PostIndex));
 				Ld1(v3.V4S(), MemOperand(x9, 16, PostIndex));
@@ -936,14 +937,14 @@ public:
 				Fmla(v5.V4S(), v2.V4S(), s0, 1);
 				Fmla(v5.V4S(), v3.V4S(), s0, 2);
 				Fmla(v5.V4S(), v4.V4S(), s0, 3);
-				Add(x9, x28, sh4_context_mem_operand(op.rd.reg_ptr()).GetOffset());
+				Add(x9, x28, op.rd.reg_offset());
 				St1(v5.V4S(), MemOperand(x9));
 				break;
 			*/
 
 			case shop_frswap:
-				Add(x9, x28, sh4_context_mem_operand(op.rs1.reg_ptr()).GetOffset());
-				Add(x10, x28, sh4_context_mem_operand(op.rd.reg_ptr()).GetOffset());
+				Add(x9, x28, op.rs1.reg_offset());
+				Add(x10, x28, op.rd.reg_offset());
 				Ld4(v0.V2D(), v1.V2D(), v2.V2D(), v3.V2D(), MemOperand(x9));
 				Ld4(v4.V2D(), v5.V2D(), v6.V2D(), v7.V2D(), MemOperand(x10));
 				St4(v4.V2D(), v5.V2D(), v6.V2D(), v7.V2D(), MemOperand(x9));
@@ -980,7 +981,7 @@ public:
 		CC_pars.clear();
 	}
 
-	void canonParam(const shil_opcode& op, const shil_param& prm, CanonicalParamType tp)
+	void canonParam(const shil_opcode& op, const shil_param *prm, CanonicalParamType tp)
 	{
 		switch (tp)
 		{
@@ -988,24 +989,25 @@ public:
 		case CPT_u32:
 		case CPT_ptr:
 		case CPT_f32:
+		case CPT_sh4ctx:
 		{
-			CC_PS t = { tp, &prm };
+			CC_PS t = { tp, prm };
 			CC_pars.push_back(t);
 		}
 		break;
 
 		case CPT_u64rvL:
 		case CPT_u32rv:
-			host_reg_to_shil_param(prm, w0);
+			host_reg_to_shil_param(*prm, w0);
 			break;
 
 		case CPT_u64rvH:
 			Lsr(x10, x0, 32);
-			host_reg_to_shil_param(prm, w10);
+			host_reg_to_shil_param(*prm, w10);
 			break;
 
 		case CPT_f32rv:
-			host_reg_to_shil_param(prm, s0);
+			host_reg_to_shil_param(*prm, s0);
 			break;
 		}
 	}
@@ -1023,10 +1025,8 @@ public:
 			switch (CC_pars[i].type)
 			{
 			// push the params
-
 			case CPT_u32:
 				shil_param_to_host_reg(prm, *call_regs[regused++]);
-
 				break;
 
 			case CPT_f32:
@@ -1042,9 +1042,13 @@ public:
 			case CPT_ptr:
 				verify(prm.is_reg());
 				// push the ptr itself
-				Mov(*call_regs64[regused++], reinterpret_cast<uintptr_t>(prm.reg_ptr()));
-
+				Mov(*call_regs64[regused++], reinterpret_cast<uintptr_t>(prm.reg_ptr(sh4ctx)));
 				break;
+
+			case CPT_sh4ctx:
+				Mov(*call_regs64[regused++], reinterpret_cast<uintptr_t>(&sh4ctx));
+				break;
+
 			case CPT_u32rv:
 			case CPT_u64rvL:
 			case CPT_u64rvH:
@@ -1060,15 +1064,21 @@ public:
 			if (ccParam.type == CPT_ptr && prm.count() == 2 && regalloc.IsAllocf(prm) && (op->rd._reg == prm._reg || op->rd2._reg == prm._reg))
 			{
 				// fsca rd param is a pointer to a 64-bit reg so reload the regs if allocated
-				Ldr(regalloc.MapVRegister(prm, 0), sh4_context_mem_operand(GetRegPtr(prm._reg)));
-				Ldr(regalloc.MapVRegister(prm, 1), sh4_context_mem_operand(GetRegPtr(prm._reg + 1)));
+				Ldr(regalloc.MapVRegister(prm, 0), sh4_context_mem_operand(prm._reg));
+				Ldr(regalloc.MapVRegister(prm, 1), sh4_context_mem_operand((Sh4RegType)(prm._reg + 1)));
 			}
 		}
 	}
 
 	MemOperand sh4_context_mem_operand(void *p)
 	{
-		u32 offset = (u8*)p - (u8*)&p_sh4rcb->cntx;
+		u32 offset = (u8*)p - (u8*)&sh4ctx;
+		verify((offset & 3) == 0 && offset <= 16380);	// FIXME 64-bit regs need multiple of 8 up to 32760
+		return MemOperand(x28, offset);
+	}
+	MemOperand sh4_context_mem_operand(Sh4RegType reg)
+	{
+		u32 offset = getRegOffset(reg);
 		verify((offset & 3) == 0 && offset <= 16380);	// FIXME 64-bit regs need multiple of 8 up to 32760
 		return MemOperand(x28, offset);
 	}
@@ -1164,7 +1174,7 @@ public:
 #endif
 				{
 					Mov(w29, block->BranchBlock);
-					Str(w29, sh4_context_mem_operand(&next_pc));
+					Str(w29, sh4_context_mem_operand(&sh4ctx.pc));
 					GenBranch(arm64_no_update);
 				}
 			}
@@ -1178,9 +1188,9 @@ public:
 				//   next_pc = branch_pc_value;
 
 				if (block->has_jcond)
-					Ldr(w11, sh4_context_mem_operand(&Sh4cntx.jdyn));
+					Ldr(w11, sh4_context_mem_operand(&sh4ctx.jdyn));
 				else
-					Ldr(w11, sh4_context_mem_operand(&sr.T));
+					Ldr(w11, sh4_context_mem_operand(&sh4ctx.sr.T));
 
 				Cmp(w11, block->BlockType & 1);
 
@@ -1208,7 +1218,7 @@ public:
 #endif
 					{
 						Mov(w29, block->BranchBlock);
-						Str(w29, sh4_context_mem_operand(&next_pc));
+						Str(w29, sh4_context_mem_operand(&sh4ctx.pc));
 						GenBranch(arm64_no_update);
 					}
 				}
@@ -1236,7 +1246,7 @@ public:
 #endif
 					{
 						Mov(w29, block->NextBlock);
-						Str(w29, sh4_context_mem_operand(&next_pc));
+						Str(w29, sh4_context_mem_operand(&sh4ctx.pc));
 						GenBranch(arm64_no_update);
 					}
 				}
@@ -1248,7 +1258,7 @@ public:
 		case BET_DynamicRet:
 			// next_pc = *jdyn;
 
-			Str(w29, sh4_context_mem_operand(&next_pc));
+			Str(w29, sh4_context_mem_operand(&sh4ctx.pc));
 			if (!mmu_enabled())
 			{
 				// TODO Call no_update instead (and check CpuRunning less frequently?)
@@ -1277,11 +1287,11 @@ public:
 				Mov(w29, block->NextBlock);
 			// else next_pc = *jdyn (already in w29)
 
-			Str(w29, sh4_context_mem_operand(&next_pc));
+			Str(w29, sh4_context_mem_operand(&sh4ctx.pc));
 
 			GenCallRuntime(UpdateINTC);
 
-			Ldr(w29, sh4_context_mem_operand(&next_pc));
+			Ldr(w29, sh4_context_mem_operand(&sh4ctx.pc));
 			GenBranch(arm64_no_update);
 
 			break;
@@ -1451,21 +1461,21 @@ public:
 
 		Bind(&intc_sched);	// w0 is pc, w1 is cycle_counter
 
-		Str(w0, sh4_context_mem_operand(&Sh4cntx.pc));
+		Str(w0, sh4_context_mem_operand(&sh4ctx.pc));
 		// Add timeslice to cycle counter
 		Add(w1, w1, SH4_TIMESLICE);
-		Str(w1, sh4_context_mem_operand(&Sh4cntx.cycle_counter));
-		Ldr(w0, sh4_context_mem_operand(&Sh4cntx.CpuRunning));
+		Str(w1, sh4_context_mem_operand(&sh4ctx.cycle_counter));
+		Ldr(w0, sh4_context_mem_operand(&sh4ctx.CpuRunning));
 		Cbz(w0, &end_mainloop);
 		Mov(x29, lr);				// Save link register in case we return
 		GenCallRuntime(UpdateSystem_INTC);
 		Cbnz(w0, &do_interrupts);
 		Mov(lr, x29);
-		Ldr(w0, sh4_context_mem_operand(&Sh4cntx.cycle_counter));
+		Ldr(w0, sh4_context_mem_operand(&sh4ctx.cycle_counter));
 		Ret();
 
 		Bind(&do_interrupts);
-		Ldr(w29, sh4_context_mem_operand(&Sh4cntx.pc));
+		Ldr(w29, sh4_context_mem_operand(&sh4ctx.pc));
 		B(&no_update);
 
 		Bind(&end_mainloop);
@@ -1500,12 +1510,12 @@ public:
 		// w0: vaddr, w1: addr
 		checkBlockFpu = GetCursorAddress<DynaCode *>();
 		Label fpu_enabled;
-		Ldr(w10, sh4_context_mem_operand(&sr.status));
+		Ldr(w10, sh4_context_mem_operand(&sh4ctx.sr.status));
 		Tbz(w10, 15, &fpu_enabled);			// test SR.FD bit
 
 		Mov(w1, Sh4Ex_FpuDisabled);	// exception code
 		GenCallRuntime(Do_Exception);
-		Ldr(w29, sh4_context_mem_operand(&next_pc));
+		Ldr(w29, sh4_context_mem_operand(&sh4ctx.pc));
 		B(&no_update);
 		Bind(&fpu_enabled);
 		// fallthrough
@@ -1514,7 +1524,7 @@ public:
 		// MMU Block check (no fpu)
 		// w0: vaddr, w1: addr
 		checkBlockNoFpu = GetCursorAddress<DynaCode *>();
-		Ldr(w2, sh4_context_mem_operand(&Sh4cntx.pc));
+		Ldr(w2, sh4_context_mem_operand(&sh4ctx.pc));
 		Cmp(w2, w0);
 		Mov(w0, w1);
 		B(&blockCheckFailLabel, ne);
@@ -1559,8 +1569,7 @@ public:
 		Cmp(x7, 0x38);
 		GenBranchRuntime(addrspace::write32, Condition::ne);
 		And(x0, x0, 0x3f);
-		Sub(x7, x0, sizeof(Sh4RCB::sq_buffer), LeaveFlags);
-		Str(w1, MemOperand(x28, x7));
+		Str(w1, MemOperand(x28, x0));
 		Ret();
 
 		Label writeStoreQueue64Label;
@@ -1569,8 +1578,7 @@ public:
 		Cmp(x7, 0x38);
 		GenBranchRuntime(addrspace::write64, Condition::ne);
 		And(x0, x0, 0x3f);
-		Sub(x7, x0, sizeof(Sh4RCB::sq_buffer), LeaveFlags);
-		Str(x1, MemOperand(x28, x7));
+		Str(x1, MemOperand(x28, x0));
 		Ret();
 
 		FinalizeCode();
@@ -1785,9 +1793,9 @@ private:
 					break;
 				}
 				if (op.size == 8)
-					Str(x1, sh4_context_mem_operand(op.rd.reg_ptr()));
+					Str(x1, sh4_context_mem_operand(op.rd._reg));
 				else
-					Str(w1, sh4_context_mem_operand(op.rd.reg_ptr()));
+					Str(w1, sh4_context_mem_operand(op.rd._reg));
 			}
 		}
 		else
@@ -1801,14 +1809,14 @@ private:
 				if (regalloc.IsAllocf(op.rd))
 					Fmov(regalloc.MapVRegister(op.rd, 0), w0);
 				else
-					Str(w0, sh4_context_mem_operand(op.rd.reg_ptr()));
+					Str(w0, sh4_context_mem_operand(op.rd._reg));
 
 				Mov(w0, addr + 4);
 				GenCallRuntime((void (*)())ptr);
 				if (regalloc.IsAllocf(op.rd))
 					Fmov(regalloc.MapVRegister(op.rd, 1), w0);
 				else
-					Str(w0, sh4_context_mem_operand((u8*)op.rd.reg_ptr() + 4));
+					Str(w0, sh4_context_mem_operand((Sh4RegType)(op.rd._reg + 1)));
 			}
 			else
 			{
@@ -2104,14 +2112,14 @@ private:
 		{
 			if (param.is_r64f() && !regalloc.IsAllocf(param))
 			{
-				Ldr(reg, sh4_context_mem_operand(param.reg_ptr()));
+				Ldr(reg, sh4_context_mem_operand(param._reg));
 			}
 			else if (param.is_r32f() || param.is_r64f())
 			{
 				if (regalloc.IsAllocf(param))
 					Fmov(reg.W(), regalloc.MapVRegister(param, 0));
 				else
-					Ldr(reg.W(), sh4_context_mem_operand(param.reg_ptr()));
+					Ldr(reg.W(), sh4_context_mem_operand(param._reg));
 				if (param.is_r64f())
 				{
 					Fmov(w15, regalloc.MapVRegister(param, 1));
@@ -2123,7 +2131,7 @@ private:
 				if (regalloc.IsAllocg(param))
 					Mov(reg.W(), regalloc.MapRegister(param));
 				else
-					Ldr(reg.W(), sh4_context_mem_operand(param.reg_ptr()));
+					Ldr(reg.W(), sh4_context_mem_operand(param._reg));
 			}
 		}
 		else
@@ -2145,7 +2153,7 @@ private:
 			}
 			else
 			{
-				Str((const Register&)reg, sh4_context_mem_operand(param.reg_ptr()));
+				Str((const Register&)reg, sh4_context_mem_operand(param._reg));
 			}
 		}
 		else if (regalloc.IsAllocg(param))
@@ -2164,7 +2172,7 @@ private:
 		}
 		else
 		{
-			Str(reg, sh4_context_mem_operand(param.reg_ptr()));
+			Str(reg, sh4_context_mem_operand(param._reg));
 		}
 	}
 
@@ -2181,6 +2189,7 @@ private:
 	RuntimeBlockInfo* block = NULL;
 	const int read_memory_rewrite_size = 5;	// ubfx, add, ldr for fast access. calling a handler can use more than 3 depending on offset
 	const int write_memory_rewrite_size = 5; // ubfx, add, str
+	Sh4Context& sh4ctx;
 	Sh4CodeBuffer& codeBuffer;
 };
 
@@ -2191,9 +2200,10 @@ public:
 		sh4Dynarec = this;
 	}
 
-	void init(Sh4CodeBuffer& codeBuffer) override
+	void init(Sh4Context& sh4ctx, Sh4CodeBuffer& codeBuffer) override
 	{
 		INFO_LOG(DYNAREC, "Initializing the ARM64 dynarec");
+		this->sh4ctx = &sh4ctx;
 		this->codeBuffer = &codeBuffer;
 	}
 
@@ -2202,10 +2212,10 @@ public:
 		unwinder.clear();
 		::mainloop = nullptr;
 
-		if (p_sh4rcb->cntx.CpuRunning)
+		if (sh4ctx->CpuRunning)
 		{
 			// Force the dynarec out of mainloop() to regenerate it
-			p_sh4rcb->cntx.CpuRunning = 0;
+			sh4ctx->CpuRunning = 0;
 			restarting = true;
 		}
 		else
@@ -2233,7 +2243,7 @@ public:
 	{
 		verify(codeBuffer->getFreeSpace() >= 16 * 1024);
 
-		compiler = new Arm64Assembler(*codeBuffer);
+		compiler = new Arm64Assembler(*sh4ctx, *codeBuffer);
 
 		compiler->compileBlock(block, smc_checks, optimise);
 
@@ -2248,7 +2258,7 @@ public:
 
 	void canonParam(const shil_opcode *op, const shil_param *par, CanonicalParamType tp) override
 	{
-		compiler->canonParam(*op, *par, tp);
+		compiler->canonParam(*op, par, tp);
 	}
 
 	void canonCall(const shil_opcode *op, void *function) override
@@ -2264,7 +2274,7 @@ public:
 		if (::mainloop != nullptr)
 			return;
 		jitWriteProtect(*codeBuffer, false);
-		compiler = new Arm64Assembler(*codeBuffer);
+		compiler = new Arm64Assembler(*sh4ctx, *codeBuffer);
 
 		compiler->GenMainloop();
 
@@ -2276,7 +2286,7 @@ public:
 	RuntimeBlockInfo* allocateBlock() override
 	{
 		generate_mainloop();
-		return new DynaRBI(*codeBuffer);
+		return new DynaRBI(*sh4ctx, *codeBuffer);
 	}
 
 	void handleException(host_context_t &context) override
@@ -2347,7 +2357,7 @@ public:
 
 		// Skip the preceding ops (add, ubfx)
 		u32 *code_rewrite = code_ptr - 2;
-		Arm64Assembler *assembler = new Arm64Assembler(*codeBuffer, code_rewrite);
+		Arm64Assembler *assembler = new Arm64Assembler(*sh4ctx, *codeBuffer, code_rewrite);
 		if (is_read)
 			assembler->GenReadMemorySlow(size);
 		else if (!is_read && size >= 4 && (context.x0 >> 26) == 0x38)
@@ -2365,6 +2375,7 @@ public:
 private:
 	Arm64Assembler* compiler = nullptr;
 	bool restarting = false;
+	Sh4Context *sh4ctx = nullptr;
 	Sh4CodeBuffer *codeBuffer = nullptr;
 };
 
@@ -2375,7 +2386,7 @@ u32 DynaRBI::Relink()
 #ifndef NO_BLOCK_LINKING
 	//printf("DynaRBI::Relink %08x\n", this->addr);
 	jitWriteProtect(codeBuffer, false);
-	Arm64Assembler *compiler = new Arm64Assembler(codeBuffer, (u8 *)this->code + this->relink_offset);
+	Arm64Assembler *compiler = new Arm64Assembler(sh4ctx, codeBuffer, (u8 *)this->code + this->relink_offset);
 
 	u32 code_size = compiler->RelinkBlock(this);
 	compiler->Finalize(true);
@@ -2390,18 +2401,18 @@ u32 DynaRBI::Relink()
 
 void Arm64RegAlloc::Preload(u32 reg, eReg nreg)
 {
-	assembler->Ldr(Register(nreg, 32), assembler->sh4_context_mem_operand(GetRegPtr(reg)));
+	assembler->Ldr(Register(nreg, 32), assembler->sh4_context_mem_operand((Sh4RegType)reg));
 }
 void Arm64RegAlloc::Writeback(u32 reg, eReg nreg)
 {
-	assembler->Str(Register(nreg, 32), assembler->sh4_context_mem_operand(GetRegPtr(reg)));
+	assembler->Str(Register(nreg, 32), assembler->sh4_context_mem_operand((Sh4RegType)reg));
 }
 void Arm64RegAlloc::Preload_FPU(u32 reg, eFReg nreg)
 {
-	assembler->Ldr(VRegister(nreg, 32), assembler->sh4_context_mem_operand(GetRegPtr(reg)));
+	assembler->Ldr(VRegister(nreg, 32), assembler->sh4_context_mem_operand((Sh4RegType)reg));
 }
 void Arm64RegAlloc::Writeback_FPU(u32 reg, eFReg nreg)
 {
-	assembler->Str(VRegister(nreg, 32), assembler->sh4_context_mem_operand(GetRegPtr(reg)));
+	assembler->Str(VRegister(nreg, 32), assembler->sh4_context_mem_operand((Sh4RegType)reg));
 }
 #endif	// FEAT_SHREC == DYNAREC_JIT

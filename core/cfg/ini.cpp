@@ -47,6 +47,11 @@ bool ConfigEntry::get_bool()
 	}
 }
 
+float ConfigEntry::get_float()
+{
+	return atof(this->value.c_str());
+}
+
 /* ConfigSection */
 
 bool ConfigSection::has_entry(const std::string& name)
@@ -192,6 +197,15 @@ bool ConfigFile::get_bool(const std::string& section_name, const std::string& en
 	}
 }
 
+float ConfigFile::get_float(const std::string& section_name, const std::string& entry_name, float default_value)
+{
+	ConfigEntry* entry = get_entry(section_name, entry_name);
+	if (entry == nullptr)
+		return default_value;
+	else
+		return entry->get_float();
+}
+
 void ConfigFile::set(const std::string& section_name, const std::string& entry_name, const std::string& value, bool is_virtual)
 {
 	ConfigSection* section = this->get_section(section_name, is_virtual);
@@ -220,6 +234,13 @@ void ConfigFile::set_bool(const std::string& section_name, const std::string& en
 {
 	std::string str_value = (value ? "yes" : "no");
 	this->set(section_name, entry_name, str_value, is_virtual);
+}
+
+void ConfigFile::set_float(const std::string& section_name, const std::string& entry_name, float value, bool is_virtual)
+{
+	std::stringstream str_value;
+	str_value << value;
+	this->set(section_name, entry_name, str_value.str(), is_virtual);
 }
 
 void ConfigFile::parse(FILE* file)

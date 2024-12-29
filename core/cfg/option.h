@@ -202,11 +202,7 @@ protected:
 	std::enable_if_t<std::is_same_v<float, U>, T>
 	doLoad(const std::string& section, const std::string& name) const
 	{
-		std::string strValue = cfgLoadStr(section, name, "");
-		if (strValue.empty())
-			return value;
-		else
-			return (float)atof(strValue.c_str());
+		return cfgLoadFloat(section, name, value);
 	}
 
 	template <typename U = T>
@@ -301,9 +297,7 @@ protected:
 	std::enable_if_t<std::is_same_v<float, U>>
 	doSave(const std::string& section, const std::string& name) const
 	{
-		char buf[64];
-		snprintf(buf, sizeof(buf), "%f", value);
-		cfgSaveStr(section, name, buf);
+		cfgSaveFloat(section, name, value);
 	}
 
 	template <typename U = T>

@@ -62,6 +62,11 @@ public:
 		memcpy(this->data, &data[index], sizeof(this->data));
 	}
 
+	const u8 *getProtectedData() const
+	{
+		return data;
+	}
+
 	void serialize(Serializer& ser) const;
 	void deserialize(Deserializer& deser);
 

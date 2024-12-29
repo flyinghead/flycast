@@ -10,6 +10,7 @@
 
 static void div1(u32& r1, u32 r2)
 {
+	sr_t& sr = Sh4cntx.sr;
 	const u8 old_q = sr.Q;
 	sr.Q = (u8)((0x80000000 & r1) != 0);
 
@@ -53,6 +54,7 @@ static void div1(u32& r1, u32 r2)
 
 static void div32s_slow(u32& r1, u32 r2, u32& r3)
 {
+	sr_t& sr = Sh4cntx.sr;
 	sr.Q = r3 >> 31;
 	sr.M = r2 >> 31;
 	sr.T = sr.Q ^ sr.M;
@@ -68,6 +70,7 @@ static void div32s_slow(u32& r1, u32 r2, u32& r3)
 
 static void div32s_fast(u32& r1, u32 r2, u32& r3)
 {
+	sr_t& sr = Sh4cntx.sr;
 	sr.T = (r3 ^ r2) & 0x80000000;
 	u64 rv = shil_opcl_div32s::f1::impl(r1, r2, r3);
 	r1 = (u32)rv;
@@ -80,6 +83,7 @@ static void div32s_fast(u32& r1, u32 r2, u32& r3)
 
 static void div32u_fast(u32& r1, u32 r2, u32& r3)
 {
+	sr_t& sr = Sh4cntx.sr;
 	u64 rv = shil_opcl_div32u::f1::impl(r1, r2, r3);
 	r1 = (u32)rv;
 	r3 = rv >> 32;
@@ -90,6 +94,7 @@ static void div32u_fast(u32& r1, u32 r2, u32& r3)
 
 static void div32u_slow(u32& r1, u32 r2, u32& r3)
 {
+	sr_t& sr = Sh4cntx.sr;
 	sr.Q = 0;
 	sr.M = 0;
 	sr.T = 0;
@@ -111,7 +116,7 @@ protected:
 		if (!addrspace::reserve())
 			die("addrspace::reserve failed");
 		emu.init();
-		dc_reset(true);
+		emu.dc_reset(true);
 	}
 
 	void div32s(u32 n1, u32 n2, u32 n3)

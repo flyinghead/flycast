@@ -26,6 +26,7 @@ public:
 	{
 		if (encryption)
 		{
+			enc_fill();
 			size = std::min(size, (u32)sizeof(buffer));
 			return buffer;
 		}
@@ -48,7 +49,6 @@ protected:
 			//printf("M1 ENCRYPTION ON @ %08x\n", dma_offset);
 			encryption = true;
 			enc_reset();
-			enc_fill();
 		}
 		else
 			encryption = false;
@@ -100,7 +100,7 @@ private:
 
 	u16 actel_id;
 
-	u8 buffer[32768];
+	u8 buffer[1024];
 	u8 dict[111], hist[2];
 	u64 avail_val;
 	u32 rom_cur_address, buffer_actual_size, avail_bits;

@@ -18,21 +18,6 @@
 
 #include "types.h"
 #include "cfg/option.h"
-#include <vector>
-
-#define VJOY_VISIBLE 14
-
-struct OSDVertex
-{
-	float x, y;
-	float u, v;
-	u8 r, g, b, a;
-};
-
-const std::vector<OSDVertex>& GetOSDVertices();
-
-u8 *loadOSDButtons(int &width, int &height);
-void HideOSD();
 
 // VMUs
 extern u32 vmu_lcd_data[8][48 * 32];
@@ -45,14 +30,23 @@ void push_vmu_screen(int bus_id, int bus_port, u8* buffer);
 const u32 *getCrosshairTextureData();
 std::pair<float, float> getCrosshairPosition(int playerNum);
 
-static inline bool crosshairsNeeded()
+static inline bool crosshairNeeded(int port)
 {
-	if (config::CrosshairColor[0] == 0 && config::CrosshairColor[1] == 0
-			&& config::CrosshairColor[2] == 0 && config::CrosshairColor[3] == 0)
+	if (port < 0 || port >= 4)
 		return false;
-	if (settings.platform.isArcade() && !settings.input.lightgunGame)
-		// not a lightgun game
+	if (config::CrosshairColor[port] == 0)
 		return false;
+	if (settings.platform.isArcade())
+	{
+		// Arcade game: only for lightgun games and P1 or P2 (no known 4-player lightgun or touchscreen game for now)
+		if (!settings.input.lightgunGame || (port >= 2 && !settings.input.fourPlayerGames))
+			return false;
+	}
+	else {
+		// Console game
+		if (config::MapleMainDevices[port] != MDT_LightGun)
+			return false;
+	}
 	return true;
 }
 

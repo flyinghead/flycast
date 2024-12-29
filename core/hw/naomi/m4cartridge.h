@@ -69,7 +69,7 @@ private:
 	u16 subkey2 = 0;
 	u16 one_round[0x10000];
 
-	u8 buffer[32768];
+	u8 buffer[2048];
 	u32 rom_cur_address, buffer_actual_size;
 	u16 iv;
 	u8 counter;
@@ -80,6 +80,8 @@ private:
 	void enc_init();
 	void enc_fill();
 	u16 decrypt_one_round(u16 word, u16 subkey);
+
+	static_assert(sizeof(RomBootID) <= sizeof(buffer));
 };
 
 #endif /* CORE_HW_NAOMI_M4CARTRIDGE_H_ */

@@ -47,7 +47,7 @@ u32 static inline bitscanrev(u32 v)
 
 namespace hostfs
 {
-	std::string getVmuPath(const std::string& port);
+	std::string getVmuPath(const std::string& port, bool save);
 
 	std::string getArcadeFlashPath();
 
@@ -63,6 +63,7 @@ namespace hostfs
 	std::string getShaderCachePath(const std::string& filename);
 	void saveScreenshot(const std::string& name, const std::vector<u8>& data);
 
+	const std::vector<std::string>& getCdromDrives();
 #ifdef __ANDROID__
 	void importHomeDirectory();
 	void exportHomeDirectory();

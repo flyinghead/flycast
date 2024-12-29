@@ -18,13 +18,15 @@
  */
 #pragma once
 
-#include "TexCache.h"
+#include "texconv.h"
 #include "stdclass.h"
 
 #include <string>
 #include <vector>
 #include <map>
 #include <mutex>
+
+class BaseTextureCacheData;
 
 class CustomTexture {
 public:

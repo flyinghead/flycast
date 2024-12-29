@@ -107,7 +107,7 @@ public:
 	bool isNull() const { return object == nullptr; }
 	operator jobject() const { return object; }
 
-	Class getClass() const;
+	inline Class getClass() const;
 
 	template<typename T>
 	T globalRef() {
@@ -249,13 +249,91 @@ public:
 	}
 };
 
-class ByteArray : public Array
-{
-public:
-	using jtype = jbyteArray;
+class ByteArray;
+class IntArray;
+class ShortArray;
+class BooleanArray;
 
-	ByteArray(jobject array = nullptr, bool ownRef = true, bool globalRef = false) : Array(array, ownRef, globalRef) { }
-	ByteArray(ByteArray &&other) : Array(std::move(other)) {}
+namespace detail
+{
+// Use a traits type and specializations to define types needed in the base CRTP template.
+template <typename T> struct JniArrayTraits;
+template <> struct JniArrayTraits<ByteArray> {
+   using jtype = jbyteArray;
+   using ctype = u8;
+   using vtype = ctype;
+   static constexpr char const * JNISignature = "[B";
+};
+template <> struct JniArrayTraits<IntArray> {
+   using jtype = jintArray;
+   using ctype = int;
+   using vtype = ctype;
+   static constexpr char const * JNISignature = "[I";
+};
+template <> struct JniArrayTraits<ShortArray> {
+   using jtype = jshortArray;
+   using ctype = short;
+   using vtype = ctype;
+   static constexpr char const * JNISignature = "[S";
+};
+template <> struct JniArrayTraits<BooleanArray> {
+   using jtype = jbooleanArray;
+   using ctype = bool;
+   using vtype = u8;	// avoid std::vector<bool> abomination
+   static constexpr char const * JNISignature = "[Z";
+};
+}
+
+template<typename Derived>
+class PrimitiveArray : public Array
+{
+	using ctype = typename detail::JniArrayTraits<Derived>::ctype;
+	using vtype = typename detail::JniArrayTraits<Derived>::vtype;
+
+public:
+	using jtype = typename detail::JniArrayTraits<Derived>::jtype;
+
+	PrimitiveArray(jobject array = nullptr, bool ownRef = true, bool globalRef = false) : Array(array, ownRef, globalRef) { }
+	PrimitiveArray(PrimitiveArray &&other) : Array(std::move(other)) {}
+
+	operator jtype() const { return static_cast<jtype>(object); }
+
+	void getData(ctype *dst, size_t first = 0, size_t len = 0) const
+	{
+		if (len == 0)
+			len = size();
+		if (len != 0)
+			static_cast<Derived const *>(this)->getJavaArrayRegion(object, first, len, dst);
+	}
+
+	void setData(const ctype *src, size_t first = 0, size_t len = 0)
+	{
+		if (len == 0)
+			len = size();
+		static_cast<Derived *>(this)->setJavaArrayRegion(object, first, len, src);
+	}
+
+	operator std::vector<vtype>() const
+	{
+		std::vector<vtype> v;
+		v.resize(size());
+		getData(static_cast<ctype *>(v.data()));
+		return v;
+	}
+
+	static Class getClass() {
+		return Class(env()->FindClass(detail::JniArrayTraits<Derived>::JNISignature));
+	}
+};
+
+class ByteArray : public PrimitiveArray<ByteArray>
+{
+	using super = PrimitiveArray<ByteArray>;
+	friend super;
+
+public:
+	ByteArray(jobject array = nullptr, bool ownRef = true, bool globalRef = false) : super(array, ownRef, globalRef) { }
+	ByteArray(ByteArray &&other) : super(std::move(other)) {}
 	explicit ByteArray(size_t size) : ByteArray() {
 		object = env()->NewByteArray(size);
 	}
@@ -264,41 +342,24 @@ public:
 		return (ByteArray&)Object::operator=(other);
 	}
 
-	operator jbyteArray() const { return (jbyteArray)object; }
-
-	void getData(u8 *dst, size_t first = 0, size_t len = 0) const {
-		if (len == 0)
-			len = size();
-		if (len != 0)
-			env()->GetByteArrayRegion((jbyteArray)object, first, len, (jbyte *)dst);
+protected:
+	void getJavaArrayRegion(jobject object, size_t first, size_t len, u8 *dst) const {
+		env()->GetByteArrayRegion((jbyteArray)object, first, len, (jbyte *)dst);
 	}
 
-	void setData(const u8 *src, size_t first = 0, size_t len = 0) {
-		if (len == 0)
-			len = size();
-		env()->SetByteArrayRegion((jbyteArray)object, first, len, (const jbyte *)src);
-	}
-
-	operator std::vector<u8>() const
-	{
-		std::vector<u8> v;
-		v.resize(size());
-		getData(v.data());
-		return v;
-	}
-
-	static Class getClass() {
-		return Class(env()->FindClass("[B"));
+	void setJavaArrayRegion(jobject object, size_t first, size_t len, const u8 *dst) {
+		env()->SetByteArrayRegion((jbyteArray)object, first, len, (const jbyte *)dst);
 	}
 };
 
-class IntArray : public Array
+class IntArray : public PrimitiveArray<IntArray>
 {
-public:
-	using jtype = jintArray;
+	using super = PrimitiveArray<IntArray>;
+	friend super;
 
-	IntArray(jobject array = nullptr, bool ownRef = true, bool globalRef = false) : Array(array, ownRef, globalRef) { }
-	IntArray(IntArray &&other) : Array(std::move(other)) {}
+public:
+	IntArray(jobject array = nullptr, bool ownRef = true, bool globalRef = false) : super(array, ownRef, globalRef) { }
+	IntArray(IntArray &&other) : super(std::move(other)) {}
 	explicit IntArray(size_t size) : IntArray() {
 		object = env()->NewIntArray(size);
 	}
@@ -307,41 +368,24 @@ public:
 		return (IntArray&)Object::operator=(other);
 	}
 
-	operator jintArray() const { return (jintArray)object; }
-
-	void getData(int *dst, size_t first = 0, size_t len = 0) const {
-		if (len == 0)
-			len = size();
-		if (len != 0)
-			env()->GetIntArrayRegion((jintArray)object, first, len, (jint *)dst);
+protected:
+	void getJavaArrayRegion(jobject object, size_t first, size_t len, int *dst) const {
+		env()->GetIntArrayRegion((jintArray)object, first, len, (jint *)dst);
 	}
 
-	void setData(const int *src, size_t first = 0, size_t len = 0) {
-		if (len == 0)
-			len = size();
-		env()->SetIntArrayRegion((jintArray)object, first, len, (const jint *)src);
-	}
-
-	operator std::vector<int>() const
-	{
-		std::vector<int> v;
-		v.resize(size());
-		getData(v.data());
-		return v;
-	}
-
-	static Class getClass() {
-		return Class(env()->FindClass("[I"));
+	void setJavaArrayRegion(jobject object, size_t first, size_t len, const int *dst) {
+		env()->SetIntArrayRegion((jintArray)object, first, len, (const jint *)dst);
 	}
 };
 
-class ShortArray : public Array
+class ShortArray : public PrimitiveArray<ShortArray>
 {
-public:
-	using jtype = jshortArray;
+	using super = PrimitiveArray<ShortArray>;
+	friend super;
 
-	ShortArray(jobject array = nullptr, bool ownRef = true, bool globalRef = false) : Array(array, ownRef, globalRef) { }
-	ShortArray(ShortArray &&other) : Array(std::move(other)) {}
+public:
+	ShortArray(jobject array = nullptr, bool ownRef = true, bool globalRef = false) : super(array, ownRef, globalRef) { }
+	ShortArray(ShortArray &&other) : super(std::move(other)) {}
 	explicit ShortArray(size_t size) : ShortArray() {
 		object = env()->NewShortArray(size);
 	}
@@ -350,23 +394,39 @@ public:
 		return (ShortArray&)Object::operator=(other);
 	}
 
-	operator jshortArray() const { return (jshortArray)object; }
-
-	void getData(short *dst, size_t first = 0, size_t len = 0) {
-		if (len == 0)
-			len = size();
-		if (len != 0)
-			env()->GetShortArrayRegion((jshortArray)object, first, len, (jshort *)dst);
+protected:
+	void getJavaArrayRegion(jobject object, size_t first, size_t len, short *dst) const {
+		env()->GetShortArrayRegion((jshortArray)object, first, len, (jshort *)dst);
 	}
 
-	void setData(const short *src, size_t first = 0, size_t len = 0) {
-		if (len == 0)
-			len = size();
-		env()->SetShortArrayRegion((jshortArray)object, first, len, (const jshort *)src);
+	void setJavaArrayRegion(jobject object, size_t first, size_t len, const short *dst) {
+		env()->SetShortArrayRegion((jshortArray)object, first, len, (const jshort *)dst);
+	}
+};
+
+class BooleanArray : public PrimitiveArray<BooleanArray>
+{
+	using super = PrimitiveArray<BooleanArray>;
+	friend super;
+
+public:
+	BooleanArray(jobject array = nullptr, bool ownRef = true, bool globalRef = false) : super(array, ownRef, globalRef) { }
+	BooleanArray(BooleanArray &&other) : super(std::move(other)) {}
+	explicit BooleanArray(size_t size) : BooleanArray() {
+		object = env()->NewBooleanArray(size);
 	}
 
-	static Class getClass() {
-		return Class(env()->FindClass("[S"));
+	BooleanArray& operator=(const BooleanArray& other) {
+		return (BooleanArray&)Object::operator=(other);
+	}
+
+protected:
+	void getJavaArrayRegion(jobject object, size_t first, size_t len, bool *dst) const {
+		env()->GetBooleanArrayRegion((jbooleanArray)object, first, len, (jboolean *)dst);
+	}
+
+	void setJavaArrayRegion(jobject object, size_t first, size_t len, const bool *dst) {
+		env()->SetBooleanArrayRegion((jbooleanArray)object, first, len, (const jboolean *)dst);
 	}
 };
 

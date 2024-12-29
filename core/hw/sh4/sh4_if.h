@@ -1,126 +1,7 @@
 #pragma once
 #include "types.h"
 #include "stdclass.h"
-
-enum Sh4RegType
-{
-	//GPRs
-	reg_r0,
-	reg_r1,
-	reg_r2,
-	reg_r3,
-	reg_r4,
-	reg_r5,
-	reg_r6,
-	reg_r7,
-	reg_r8,
-	reg_r9,
-	reg_r10,
-	reg_r11,
-	reg_r12,
-	reg_r13,
-	reg_r14,
-	reg_r15,
-
-	//FPU, bank 0
-	reg_fr_0,
-	reg_fr_1,
-	reg_fr_2,
-	reg_fr_3,
-	reg_fr_4,
-	reg_fr_5,
-	reg_fr_6,
-	reg_fr_7,
-	reg_fr_8,
-	reg_fr_9,
-	reg_fr_10,
-	reg_fr_11,
-	reg_fr_12,
-	reg_fr_13,
-	reg_fr_14,
-	reg_fr_15,
-
-	//FPU, bank 1
-	reg_xf_0,
-	reg_xf_1,
-	reg_xf_2,
-	reg_xf_3,
-	reg_xf_4,
-	reg_xf_5,
-	reg_xf_6,
-	reg_xf_7,
-	reg_xf_8,
-	reg_xf_9,
-	reg_xf_10,
-	reg_xf_11,
-	reg_xf_12,
-	reg_xf_13,
-	reg_xf_14,
-	reg_xf_15,
-
-	//GPR Interrupt bank
-	reg_r0_Bank,
-	reg_r1_Bank,
-	reg_r2_Bank,
-	reg_r3_Bank,
-	reg_r4_Bank,
-	reg_r5_Bank,
-	reg_r6_Bank,
-	reg_r7_Bank,
-
-	//Misc regs
-	reg_gbr,
-	reg_ssr,
-	reg_spc,
-	reg_sgr,
-	reg_dbr,
-	reg_vbr,
-	reg_mach,
-	reg_macl,
-	reg_pr,
-	reg_fpul,
-	reg_nextpc,
-	reg_sr_status,     //Only the status bits
-	reg_sr_T,          //Only T
-	reg_old_fpscr,
-	reg_fpscr,
-	
-	reg_pc_dyn,        //Write only, for dynarec only (dynamic block exit address)
-	reg_temp,
-
-	sh4_reg_count,
-
-	/*
-		These are virtual registers, used by the dynarec decoder
-	*/
-	regv_dr_0,
-	regv_dr_2,
-	regv_dr_4,
-	regv_dr_6,
-	regv_dr_8,
-	regv_dr_10,
-	regv_dr_12,
-	regv_dr_14,
-
-	regv_xd_0,
-	regv_xd_2,
-	regv_xd_4,
-	regv_xd_6,
-	regv_xd_8,
-	regv_xd_10,
-	regv_xd_12,
-	regv_xd_14,
-
-	regv_fv_0,
-	regv_fv_4,
-	regv_fv_8,
-	regv_fv_12,
-
-	regv_xmtrx,
-	regv_fmtrx,
-
-	NoReg=-1
-};
+#include <cassert>
 
 // SR (status register)
 
@@ -144,8 +25,6 @@ union sr_status_t
 	};
 	u32 status;
 };
-
-#define STATUS_MASK 0x700083F2
 
 // Status register with isolated T bit.
 // Used in place of the normal SR bitfield so that the T bit can be
@@ -173,6 +52,17 @@ struct sr_t
 		u32 status;
 	};
 	u32 T;
+
+	static constexpr u32 MASK = 0x700083F2;
+
+	u32 getFull() const {
+		return (status & MASK) | T;
+	}
+
+	void setFull(u32 v) {
+		status = v & MASK;
+		T = v & 1;
+	}
 };
 
 // FPSCR (fpu status and control register)
@@ -210,20 +100,28 @@ struct fpscr_t
 };
 
 //sh4 interface
-struct sh4_if
+class Sh4Executor
 {
-	void (*Start)();
-	void (*Run)();
-	void (*Stop)();
-	void (*Step)();
-	void (*Reset)(bool hard);
-	void (*Init)();
-	void (*Term)();
-	void (*ResetCache)();
-	bool (*IsCpuRunning)();
+public:
+	virtual ~Sh4Executor() = default;
+	virtual void Run() = 0;
+	virtual void Start() = 0;
+	virtual void Stop() = 0;
+	virtual void Step() = 0;
+	virtual void Reset(bool hard) = 0;
+	virtual void Init() = 0;
+	virtual void Term() = 0;
+	virtual void ResetCache() = 0;
+	virtual bool IsCpuRunning() = 0;
 };
 
-extern sh4_if sh4_cpu;
+struct alignas(32) SQBuffer {
+	u8 data[32];
+};
+
+void setSqwHandler();
+struct Sh4Context;
+typedef void DYNACALL SQWriteFunc(u32 dst, Sh4Context *ctx);
 
 struct alignas(64) Sh4Context
 {
@@ -231,7 +129,10 @@ struct alignas(64) Sh4Context
 	{
 		struct
 		{
-			f32 xffr[32];
+			SQBuffer sq_buffer[2];
+
+			float xf[16];
+			float fr[16];
 			u32 r[16];
 
 			union
@@ -264,20 +165,55 @@ struct alignas(64) Sh4Context
 
 			u32 temp_reg;
 			int cycle_counter;
+
+			SQWriteFunc *doSqWrite;
 		};
-		u64 raw[64-8];
+		u64 raw[64];
+	};
+
+	u32& fr_hex(int idx) {
+		assert(idx >= 0 && idx <= 15);
+		return reinterpret_cast<u32&>(fr[idx]);
+	}
+	u64& dr_hex(int idx) {
+		assert(idx >= 0 && idx <= 7);
+		return *reinterpret_cast<u64 *>(&fr[idx * 2]);
+	}
+	u64& xd_hex(int idx) {
+		assert(idx >= 0 && idx <= 7);
+		return *reinterpret_cast<u64 *>(&xf[idx * 2]);
+	}
+
+	double getDR(u32 n)
+	{
+		assert(n <= 7);
+		DoubleReg t;
+		t.sgl[1] = fr[n * 2];
+		t.sgl[0] = fr[n * 2 + 1];
+
+		return t.dbl;
+	}
+
+	void setDR(u32 n, double val)
+	{
+		assert(n <= 7);
+		DoubleReg t;
+		t.dbl = val;
+		fr[n * 2] = t.sgl[1];
+		fr[n * 2 + 1] = t.sgl[0];
+	}
+
+	static void DYNACALL UpdateFPSCR(Sh4Context *ctx);
+	void restoreHostRoundingMode();
+
+private:
+	union DoubleReg
+	{
+		double dbl;
+		float sgl[2];
 	};
 };
-static_assert(sizeof(Sh4Context) == 448, "Invalid Sh4Context size");
-
-struct alignas(32) SQBuffer {
-	u8 data[32];
-};
-
-void setSqwHandler();
-void DYNACALL do_sqw_mmu(u32 dst);
-
-typedef void DYNACALL sqw_fp(u32 dst, const SQBuffer *sqb);
+static_assert(sizeof(Sh4Context) == 512, "Invalid Sh4Context size");
 
 #define FPCB_SIZE (RAM_SIZE_MAX/2)
 #define FPCB_MASK (FPCB_SIZE -1)
@@ -287,40 +223,23 @@ typedef void DYNACALL sqw_fp(u32 dst, const SQBuffer *sqb);
 // want to be an i8r4 value that can be substracted in one op (such as 0x4100000)
 #define FPCB_PAD 0x100000
 #else
-#define FPCB_PAD 0x10000
+// For other systems we could use PAGE_SIZE, except on windows that has a 64 KB granularity for memory mapping
+#define FPCB_PAD 64_KB
 #endif
 struct alignas(PAGE_SIZE) Sh4RCB
 {
 	void* fpcb[FPCB_SIZE];
-	u8 _pad[FPCB_PAD - sizeof(Sh4Context) - sizeof(SQBuffer) * 2 - sizeof(void *)];
-	sqw_fp* do_sqw_nommu;
-	SQBuffer sq_buffer[2];
+	u8 _pad[FPCB_PAD - sizeof(Sh4Context)];
 	Sh4Context cntx;
 };
+static_assert((sizeof(Sh4RCB) % PAGE_SIZE) == 0, "sizeof(Sh4RCB) not multiple of PAGE_SIZE");
 
 extern Sh4RCB* p_sh4rcb;
-
-static inline u32 sh4_sr_GetFull()
-{
-	return (p_sh4rcb->cntx.sr.status & STATUS_MASK) | p_sh4rcb->cntx.sr.T;
-}
-
-static inline void sh4_sr_SetFull(u32 value)
-{
-	p_sh4rcb->cntx.sr.status=value & STATUS_MASK;
-	p_sh4rcb->cntx.sr.T=value&1;
-}
-
-#define do_sqw_nommu sh4rcb.do_sqw_nommu
-
-#define sh4rcb (*p_sh4rcb)
-#define Sh4cntx (sh4rcb.cntx)
+#define Sh4cntx (p_sh4rcb->cntx)
 
 //Get an interface to sh4 interpreter
-void Get_Sh4Interpreter(sh4_if* cpu);
-void Get_Sh4Recompiler(sh4_if* cpu);
-
-u32* GetRegPtr(u32 reg);
+Sh4Executor *Get_Sh4Interpreter();
+Sh4Executor *Get_Sh4Recompiler();
 
 enum Sh4ExceptionCode : u16
 {

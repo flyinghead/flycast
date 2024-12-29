@@ -13,14 +13,14 @@ jobs:
         architecture: [ arm64, x86-64 ]
         include:
           - operating_system: freebsd
-            version: '14.1'
-            pkginstall: sudo pkg install -y alsa-lib ccache cmake evdev-proto git libao libevdev libudev-devd libzip lua54 miniupnpc ninja pkgconf pulseaudio sdl2
+            version: '14.2'
+            pkginstall: sudo pkg install -y alsa-lib ccache cmake evdev-proto git libao libevdev libudev-devd libzip lua54 miniupnpc ninja pkgconf pulseaudio sdl2 libcdio
           - operating_system: netbsd
             version: '10.0'
-            pkginstall: sudo pkgin update && sudo pkgin -y install alsa-lib ccache cmake gcc12 git libao libzip lua54 miniupnpc ninja-build pkgconf pulseaudio SDL2 && export PATH=/usr/pkg/gcc12/bin:$PATH
+            pkginstall: sudo pkgin update && sudo pkgin -y install alsa-lib ccache cmake gcc12 git libao libzip lua54 miniupnpc ninja-build pkgconf pulseaudio SDL2 libcdio && export PATH=/usr/pkg/gcc12/bin:$PATH
           - operating_system: openbsd
-            version: '7.5'
-            pkginstall: sudo pkg_add ccache cmake git libao libzip miniupnpc ninja pkgconf pulseaudio sdl2
+            version: '7.6'
+            pkginstall: sudo pkg_add ccache cmake git libao libzip miniupnpc ninja pkgconf pulseaudio sdl2 libcdio
         exclude:
           - architecture: arm64
 
@@ -36,7 +36,7 @@ jobs:
           key: ccache-${{ matrix.operating_system }}-${{ matrix.architecture }}-${{ github.sha }}
           restore-keys: ccache-${{ matrix.operating_system }}-${{ matrix.architecture }}-
 
-      - uses: cross-platform-actions/action@v0.25.0
+      - uses: cross-platform-actions/action@v0.26.0
         with:
           operating_system: ${{ matrix.operating_system }}
           architecture: ${{ matrix.architecture }}
@@ -44,5 +44,5 @@ jobs:
           environment_variables: CCACHE_DIR
           run: |
             ${{ matrix.pkginstall }}
-            cmake -B build -DCMAKE_BUILD_TYPE=Release -G Ninja
+            cmake -B build -DUSE_LIBCDIO=ON -DCMAKE_BUILD_TYPE=Release -G Ninja
             cmake --build build --config Release

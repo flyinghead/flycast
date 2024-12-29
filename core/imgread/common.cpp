@@ -9,7 +9,7 @@ Disc* chd_parse(const char* file, std::vector<u8> *digest);
 Disc* gdi_parse(const char* file, std::vector<u8> *digest);
 Disc* cdi_parse(const char* file, std::vector<u8> *digest);
 Disc* cue_parse(const char* file, std::vector<u8> *digest);
-Disc* ioctl_parse(const char* file, std::vector<u8> *digest);
+Disc *cdio_parse(const char *file, std::vector<u8> *digest);
 
 static u32 NullDriveDiscType;
 Disc* disc;
@@ -21,8 +21,8 @@ constexpr Disc* (*drivers[])(const char* path, std::vector<u8> *digest)
 	gdi_parse,
 	cdi_parse,
 	cue_parse,
-#if defined(_WIN32) && !defined(TARGET_UWP)
-	ioctl_parse,
+#ifdef USE_LIBCDIO
+	cdio_parse,
 #endif
 };
 
@@ -96,9 +96,11 @@ Disc* OpenDisc(const std::string& path, std::vector<u8> *digest)
 	throw FlycastException("Unknown disk format");
 }
 
+namespace gdr {
+
 static bool loadDisk(const std::string& path)
 {
-	TermDrive();
+	termDrive();
 
 	//try all drivers
 	std::vector<u8> digest;
@@ -122,7 +124,8 @@ static bool loadDisk(const std::string& path)
 
 static bool doDiscSwap(const std::string& path);
 
-bool InitDrive(const std::string& path)
+
+bool initDrive(const std::string& path)
 {
 	bool rc = doDiscSwap(path);
 	if (rc && disc == nullptr)
@@ -141,9 +144,10 @@ bool InitDrive(const std::string& path)
 	return rc;
 }
 
-void DiscOpenLid()
+void openLid()
 {
-	TermDrive();
+	settings.content.path.clear();
+	termDrive();
 	NullDriveDiscType = Open;
 	gd_setdisc();
 }
@@ -152,7 +156,7 @@ static bool doDiscSwap(const std::string& path)
 {
 	if (path.empty())
 	{
-		TermDrive();
+		termDrive();
 		NullDriveDiscType = NoDisk;
 		return true;
 	}
@@ -164,13 +168,22 @@ static bool doDiscSwap(const std::string& path)
 	return false;
 }
 
-void TermDrive()
+void termDrive()
 {
 	sh4_sched_request(schedId, -1);
 	delete disc;
 	disc = nullptr;
 }
 
+bool isOpen() {
+	return disc == nullptr && NullDriveDiscType == Open;
+}
+
+bool isLoaded() {
+	return disc != nullptr;
+}
+
+}	// namespace gdr
 
 //
 //convert our nice toc struct to dc's native one :)
@@ -192,10 +205,14 @@ static u32 createTrackInfoFirstLast(const Track& track, u32 tracknum)
 	return createTrackInfo(track, tracknum << 16);
 }
 
-void libGDR_ReadSector(u8 *buff, u32 startSector, u32 sectorCount, u32 sectorSize)
+u32 libGDR_ReadSector(u8 *buff, u32 startSector, u32 sectorCount, u32 sectorSize, bool stopOnMiss)
 {
 	if (disc != nullptr)
-		disc->ReadSectors(startSector, sectorCount, buff, sectorSize);
+		return disc->ReadSectors(startSector, sectorCount, buff, sectorSize, stopOnMiss);
+	if (stopOnMiss)
+		return 0;
+	memset(buff, 0, sectorCount * sectorSize);
+	return sectorCount;
 }
 
 void libGDR_GetToc(u32* to, DiskArea area)
@@ -263,13 +280,13 @@ bool Disc::readSector(u32 FAD, u8 *dst, SectorFormat *sector_type, u8 *subcode, 
 	return false;
 }
 
-void Disc::ReadSectors(u32 FAD, u32 count, u8* dst, u32 fmt, LoadProgress *progress)
+u32 Disc::ReadSectors(u32 FAD, u32 count, u8* dst, u32 fmt, bool stopOnMiss, LoadProgress *progress)
 {
-	u8 temp[2448];
+	u8 temp[2352];
 	SectorFormat secfmt;
 	SubcodeFormat subfmt;
 
-	for (u32 i = 1; i <= count; i++)
+	for (u32 i = 0; i < count; i++)
 	{
 		if (progress != nullptr)
 		{
@@ -278,43 +295,40 @@ void Disc::ReadSectors(u32 FAD, u32 count, u8* dst, u32 fmt, LoadProgress *progr
 			progress->label = "Loading...";
 			progress->progress = (float)i / count;
 		}
-		if (readSector(FAD, temp, &secfmt, q_subchannel, &subfmt))
-		{
-			//TODO: Proper sector conversions
-			if (secfmt==SECFMT_2352)
-			{
-				convertSector(temp,dst,2352,fmt,FAD);
-			}
-			else if (fmt == 2048 && secfmt==SECFMT_2336_MODE2)
-				memcpy(dst,temp+8,2048);
-			else if (fmt==2048 && (secfmt==SECFMT_2048_MODE1 || secfmt==SECFMT_2048_MODE2_FORM1 ))
-			{
-				memcpy(dst,temp,2048);
-			}
-			else if (fmt==2352 && (secfmt==SECFMT_2048_MODE1 || secfmt==SECFMT_2048_MODE2_FORM1 ))
-			{
-				INFO_LOG(GDROM, "GDR:fmt=2352;secfmt=2048");
-				memcpy(dst,temp,2048);
-			}
-			else if (fmt==2048 && secfmt==SECFMT_2448_MODE2)
-			{
-				// Pier Solar and the Great Architects
-				convertSector(temp, dst, 2448, fmt, FAD);
-			}
-			else
-			{
-				WARN_LOG(GDROM, "ERROR: UNABLE TO CONVERT SECTOR. THIS IS FATAL. Format: %d Sector format: %d", fmt, secfmt);
-				//verify(false);
-			}
-		}
-		else
+		if (!readSector(FAD, temp, &secfmt, q_subchannel, &subfmt))
 		{
 			WARN_LOG(GDROM, "Sector Read miss FAD: %d", FAD);
-			memset(dst, 0, fmt);
+			if (stopOnMiss)
+				return i;
+			memset(temp, 0, sizeof(temp));
+			secfmt = SECFMT_2352;
 		}
-		dst+=fmt;
+
+		//TODO: Proper sector conversions
+		if (secfmt == SECFMT_2352) {
+			convertSector(temp, dst, 2352, fmt, FAD);
+		}
+		else if (fmt == 2048 && secfmt == SECFMT_2336_MODE2) {
+			memcpy(dst, temp + 8, 2048);
+		}
+		else if (fmt == 2048 && (secfmt == SECFMT_2048_MODE1 || secfmt == SECFMT_2048_MODE2_FORM1)) {
+			memcpy(dst, temp, 2048);
+		}
+		else if (fmt == 2352 && (secfmt == SECFMT_2048_MODE1 || secfmt == SECFMT_2048_MODE2_FORM1 )) {
+			INFO_LOG(GDROM, "GDR:fmt=2352;secfmt=2048");
+			memcpy(dst, temp, 2048);
+		}
+		else if (fmt == 2048 && secfmt == SECFMT_2448_MODE2) {
+			// Pier Solar and the Great Architects
+			convertSector(temp, dst, 2448, fmt, FAD);
+		}
+		else {
+			WARN_LOG(GDROM, "ERROR: UNABLE TO CONVERT SECTOR. THIS IS FATAL. Format: %d Sector format: %d", fmt, secfmt);
+		}
+		dst += fmt;
 		FAD++;
 	}
+	return count;
 }
 
 void libGDR_ReadSubChannel(u8 * buff, u32 len)
@@ -346,19 +360,22 @@ static int discSwapCallback(int tag, int sch_cycl, int jitter, void *arg)
 	return 0;
 }
 
-bool DiscSwap(const std::string& path)
+namespace gdr
+{
+
+void insertDisk(const std::string& path)
 {
 	if (!doDiscSwap(path))
 		throw FlycastException("This media cannot be loaded");
-	EventManager::event(Event::DiskChange);
+	settings.content.path = path;
 	// Drive is busy after the lid was closed
 	sns_asc = 4;
 	sns_ascq = 1;
 	sns_key = 2;
 	SecNumber.Status = GD_BUSY;
 	sh4_sched_request(schedId, SH4_MAIN_CLOCK); // 1 s
+}
 
-	return true;
 }
 
 void libGDR_init()
@@ -368,7 +385,7 @@ void libGDR_init()
 }
 void libGDR_term()
 {
-	TermDrive();
+	gdr::termDrive();
 	sh4_sched_unregister(schedId);
 	schedId = -1;
 }

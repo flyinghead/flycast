@@ -7,6 +7,8 @@
 #include "hw/sh4/sh4_mmr.h"
 #include "hw/sh4/sh4_core.h"
 #include "hw/sh4/sh4_cache.h"
+#include "cfg/option.h"
+#include "emulator.h"
 
 CCNRegisters ccn;
 
@@ -53,7 +55,7 @@ static void CCN_MMUCR_write(u32 addr, u32 value)
 	{
 		//printf("<*******>MMU Enabled , ONLY SQ remaps work<*******>\n");
 		mmu_set_state();
-		sh4_cpu.ResetCache();
+		emu.getSh4Executor()->ResetCache();
 	}
 }
 
@@ -63,14 +65,14 @@ static void CCN_CCR_write(u32 addr, u32 value)
 	temp.reg_data = value & 0x89AF;
 
 	if (temp.ICI) {
-		DEBUG_LOG(SH4, "Sh4: i-cache invalidation %08X", curr_pc);
+		DEBUG_LOG(SH4, "Sh4: i-cache invalidation %08X", Sh4cntx.pc);
 		//Shikigami No Shiro II uses ICI frequently
 		if (!config::DynarecEnabled)
 			icache.Invalidate();
 		temp.ICI = 0;
 	}
 	if (temp.OCI) {
-		DEBUG_LOG(SH4, "Sh4: o-cache invalidation %08X", curr_pc);
+		DEBUG_LOG(SH4, "Sh4: o-cache invalidation %08X", Sh4cntx.pc);
 		if (!config::DynarecEnabled)
 			ocache.Invalidate();
 		temp.OCI = 0;
@@ -82,6 +84,7 @@ static void CCN_CCR_write(u32 addr, u32 value)
 static u32 CPU_VERSION_read(u32 addr)
 {
 	return 0x040205c1;	// this is what a real SH7091 in a Dreamcast returns - the later Naomi BIOSes check and care!
+	// 0x040204d0 on a PAL VA1 dreamcast, also works
 }
 
 static u32 CCN_PRR_read(u32 addr)

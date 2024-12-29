@@ -164,26 +164,89 @@ struct packet_cmd_t
 	};
 };
 
-//Buffer for sector reads [dma]
-struct read_buff_t
+class DmaBuffer
 {
-	u32 cache_index;
-	u32 cache_size;
-	u8 cache[2352 * 32];
-};
+public:
+	DmaBuffer() {
+		clear();
+	}
+	bool isEmpty() const {
+		return size == 0;
+	}
+	u32 getSize() const {
+		return size;
+	}
+	void clear() {
+		size = 0;
+		index = 0;
+	}
 
-//pio buffer
-struct pio_buff_t
-{
-	gd_states next_state;
+	// Fill the cache with up to NSECT sectors if empty, using the passed read parameters
+	void fill(read_params_t& params);
+	// Return a pointer to the cache and advance the index by len bytes. len *must* be <= getSize()
+	const u8 *read(u32 len);
+	void serialize(Serializer& ser) const;
+	void deserialize(Deserializer& deser);
+
+private:
+	static constexpr u32 NSECT = 16;
 	u32 index;
 	u32 size;
-	u16 data[0x10000>>1]; //64 kb
+	u8 cache[2352 * NSECT] {};
 };
 
-struct ata_cmd_t
+class PioBuffer
 {
-	u8 command;
+public:
+	PioBuffer() {
+		clear();
+	}
+	bool isEmpty() const {
+		return size == 0;
+	}
+	// Returns true if the buffer has reached its capacity and can't be read from or written to
+	bool atEnd() const {
+		return index == size;
+	}
+	// in bytes
+	u32 getSize() const {
+		return size * sizeof(u16);
+	}
+	void clear()
+	{
+		next_state = gds_waitcmd;
+		size = 0;
+		index = 0;
+	}
+	u16 read() {
+		return _data[index++];
+	}
+	const u16 *data() const {
+		return _data;
+	}
+	void write(u16 v) {
+		_data[index++] = v;
+	}
+	// Returns a pointer to fill the buffer and sets its size. Index is reset.
+	u16 *fill(u32 size) {
+		resetSize(size);
+		return &_data[0];
+	}
+	// Sets the buffer capacity and resets the index.
+	void resetSize(u32 size) {
+		this->index = 0;
+		this->size = size / sizeof(u16);
+	}
+	void serialize(Serializer& ser) const;
+	void deserialize(Deserializer& deser);
+
+	gd_states next_state;
+	static constexpr u32 Capacity = 64_KB;
+
+private:
+	u32 index;
+	u32 size;
+	u16 _data[Capacity / 2] {};
 };
 
 struct cdda_t

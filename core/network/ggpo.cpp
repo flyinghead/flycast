@@ -330,7 +330,7 @@ static bool load_game_state(unsigned char *buffer, int len)
  */
 static bool save_game_state(unsigned char **buffer, int *len, int *checksum, int frame)
 {
-	verify(!sh4_cpu.IsCpuRunning());
+	verify(!emu.getSh4Executor()->IsCpuRunning());
 	lastSavedFrame = frame;
 	// TODO this is way too much memory
 	size_t allocSize = settings.platform.isNaomi() ? 20_MB : 10_MB;
@@ -914,7 +914,7 @@ void endOfFrame()
 	if (active())
 	{
 		_endOfFrame = true;
-		sh4_cpu.Stop();
+		emu.getSh4Executor()->Stop();
 	}
 }
 

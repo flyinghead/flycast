@@ -1,42 +1,37 @@
 #pragma once
 #include "types.h"
+#include "sh4_cycles.h"
 
-#undef sh4op
-#define sh4op(str) void  DYNACALL str (u32 op)
-typedef void (DYNACALL OpCallFP) (u32 op);
-
-enum OpcodeType
+class Sh4Interpreter : public Sh4Executor
 {
-	//basic
-	Normal       = 0,   // Heh , nothing special :P
-	ReadsPC      = 1,   // PC must be set upon calling it
-	WritesPC     = 2,   // It will write PC (branch)
-	Delayslot    = 4,   // Has a delayslot opcode , valid only when WritesPC is set
+public:
+	void Run() override;
+	void ResetCache() override  {}
+	void Start() override;
+	void Stop() override;
+	void Step() override;
+	void Reset(bool hard) override;
+	void Init() override;
+	void Term() override;
+	bool IsCpuRunning() override;
+	void ExecuteDelayslot();
+	void ExecuteDelayslot_RTE();
+	Sh4Context *getContext() { return ctx; }
 
-	WritesSR     = 8,   // Writes to SR , and UpdateSR needs to be called
-	WritesFPSCR  = 16,  // Writes to FPSCR , and UpdateSR needs to be called
-	Invalid      = 128, // Invalid
+	static Sh4Interpreter *Instance;
 
-	UsesFPU      = 2048, // Floating point op
-	FWritesFPSCR = UsesFPU | WritesFPSCR,
+protected:
+	Sh4Context *ctx = nullptr;
 
-	// Heh, not basic :P
-	ReadWritePC  = ReadsPC|WritesPC,     // Read and writes pc :P
-	WritesSRRWPC = WritesSR|ReadsPC|WritesPC,
+private:
+	void ExecuteOpcode(u16 op);
+	u16 ReadNexOp();
 
-	// Branches (not delay slot):
-	Branch_dir   = ReadWritePC,          // Direct (eg , pc=r[xx]) -- this one is ReadWritePC b/c the delayslot may use pc ;)
-	Branch_rel   = ReadWritePC,          // Relative (rg pc+=10);
-
-	// Delay slot
-	Branch_dir_d = Delayslot|Branch_dir, // Direct (eg , pc=r[xx])
-	Branch_rel_d = Delayslot|Branch_rel, // Relative (rg pc+=10);
+	Sh4Cycles sh4cycles{CPU_RATIO};
+	// SH4 underclock factor when using the interpreter so that it's somewhat usable
+#ifdef STRICT_MODE
+	static constexpr int CPU_RATIO = 1;
+#else
+	static constexpr int CPU_RATIO = 8;
+#endif
 };
-
-void ExecuteDelayslot();
-void ExecuteDelayslot_RTE();
-
-#define SH4_TIMESLICE 448	// at 112 Bangai-O doesn't start. 224 is ok
-
-int UpdateSystem();
-int UpdateSystem_INTC();

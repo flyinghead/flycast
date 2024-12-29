@@ -16,8 +16,8 @@ struct RuntimeBlockInfo
 	bool Setup(u32 pc,fpscr_t fpu_cfg);
 
 	u32 addr;
-	DynarecCodeEntryPtr code;
 	u32 vaddr;
+	DynarecCodeEntryPtr code;
 
 	u32 host_code_size;	//in bytes
 	u32 sh4_code_size; //in bytes
@@ -27,8 +27,8 @@ struct RuntimeBlockInfo
 	u32 guest_opcodes;
 	u32 host_opcodes;	// set by host code generator, optional
 	bool has_fpu_op;
-	u32 blockcheck_failures;
 	bool temp_block;
+	u32 blockcheck_failures;
 
 	u32 BranchBlock; //if not 0xFFFFFFFF then jump target
 	u32 NextBlock;   //if not 0xFFFFFFFF then next block (by position)
@@ -42,8 +42,11 @@ struct RuntimeBlockInfo
 
 	BlockEndType BlockType;
 	bool has_jcond;
+	bool read_only;
 
 	std::vector<shil_opcode> oplist;
+	//predecessors references
+	std::vector<RuntimeBlockInfoPtr> pre_refs;
 
 	bool containsCode(const void *ptr)
 	{
@@ -56,16 +59,11 @@ struct RuntimeBlockInfo
 		return 0;
 	}
 	
-	//predecessors references
-	std::vector<RuntimeBlockInfoPtr> pre_refs;
-
 	void AddRef(const RuntimeBlockInfoPtr& other);
 	void RemRef(const RuntimeBlockInfoPtr& other);
 
 	void Discard();
 	void SetProtectedFlags();
-
-	bool read_only;
 };
 
 void bm_WriteBlockMap(const std::string& file);
@@ -86,15 +84,31 @@ void bm_Init();
 void bm_Term();
 
 void bm_vmem_pagefill(void** ptr,u32 size_bytes);
-bool bm_RamWriteAccess(void *p);
-void bm_RamWriteAccess(u32 addr);
 static inline bool bm_IsRamPageProtected(u32 addr)
 {
 	extern bool unprotected_pages[RAM_SIZE_MAX/PAGE_SIZE];
 	addr &= RAM_MASK;
 	return !unprotected_pages[addr / PAGE_SIZE];
 }
+
+#if FEAT_SHREC != DYNAREC_NONE
+
+bool bm_RamWriteAccess(void *p);
+void bm_RamWriteAccess(u32 addr);
 void bm_LockPage(u32 addr, u32 size = PAGE_SIZE);
 void bm_UnlockPage(u32 addr, u32 size = PAGE_SIZE);
 u32 bm_getRamOffset(void *p);
 
+#else
+
+inline static bool bm_RamWriteAccess(void *p) {
+	return false;
+}
+inline static void bm_RamWriteAccess(u32 addr) {}
+inline static void bm_LockPage(u32 addr, u32 size = PAGE_SIZE) {}
+inline static void bm_UnlockPage(u32 addr, u32 size = PAGE_SIZE) {}
+inline static u32 bm_getRamOffset(void *p) {
+	return 0;
+}
+
+#endif

@@ -10,6 +10,7 @@ import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Display;
 import android.view.DisplayCutout;
+import android.view.InputDevice;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -24,11 +25,7 @@ import com.flycast.emulator.periph.InputDeviceManager;
 public class NativeGLView extends SurfaceView implements SurfaceHolder.Callback {
     private boolean surfaceReady = false;
     private boolean paused = false;
-    VirtualJoystickDelegate vjoyDelegate;
-
-    public void restoreCustomVjoyValues(float[][] vjoy_d_cached) {
-        vjoyDelegate.restoreCustomVjoyValues(vjoy_d_cached);
-    }
+    private TouchEventHandler vjoyDelegate = null;
 
     public NativeGLView(Context context) {
         this(context, null);
@@ -63,20 +60,21 @@ public class NativeGLView extends SurfaceView implements SurfaceHolder.Callback 
     @Override
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
-        vjoyDelegate = new VirtualJoystickDelegate(this);
+        if (InputDeviceManager.getInstance().hasTouchscreen())
+            vjoyDelegate = new VirtualJoystickDelegate(this);
     }
 
     @Override
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
-        vjoyDelegate.stop();
+        if (vjoyDelegate != null)
+            vjoyDelegate.stop();
     }
 
     @Override
     protected void onLayout(boolean changed, int left, int top, int right, int bottom)
     {
         super.onLayout(changed, left, top, right, bottom);
-        vjoyDelegate.layout(getWidth(), getHeight());
         DisplayMetrics dm = getContext().getResources().getDisplayMetrics();
 
         Display d;
@@ -101,10 +99,6 @@ public class NativeGLView extends SurfaceView implements SurfaceHolder.Callback 
         }
     }
 
-    public void resetEditMode() {
-        vjoyDelegate.resetEditMode();
-    }
-
     @Override
     public boolean onTouchEvent(final MotionEvent event)
     {
@@ -113,13 +107,13 @@ public class NativeGLView extends SurfaceView implements SurfaceHolder.Callback 
             InputDeviceManager.getInstance().mouseEvent(Math.round(event.getX()), Math.round(event.getY()), event.getButtonState());
             return true;
         }
-        else
+        if (vjoyDelegate != null && (event.getSource() & InputDevice.SOURCE_TOUCHSCREEN) == InputDevice.SOURCE_TOUCHSCREEN)
             return vjoyDelegate.onTouchEvent(event, getWidth(), getHeight());
+        return false;
     }
 
     @Override
     public void surfaceCreated(SurfaceHolder surfaceHolder) {
-
     }
 
     @Override
@@ -179,11 +173,18 @@ public class NativeGLView extends SurfaceView implements SurfaceHolder.Callback 
         }
     }
 
-    public void readCustomVjoyValues() {
-        vjoyDelegate.readCustomVjoyValues();
+    public void setVGamepadEditMode(boolean editing)
+    {
+        if (!InputDeviceManager.getInstance().hasTouchscreen())
+            return;
+        if (editing && !(vjoyDelegate instanceof EditVirtualJoystickDelegate))
+            vjoyDelegate = new EditVirtualJoystickDelegate(this);
+        else if (!editing && !(vjoyDelegate instanceof VirtualJoystickDelegate))
+            vjoyDelegate = new VirtualJoystickDelegate(this);
     }
 
-    public void setEditVjoyMode(boolean editVjoyMode) {
-        vjoyDelegate.setEditVjoyMode(editVjoyMode);
+    public void showVGamepad() {
+        if (vjoyDelegate != null)
+            vjoyDelegate.show();
     }
 }

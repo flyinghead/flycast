@@ -10,35 +10,29 @@
 #endif
 
 Sh4RCB* p_sh4rcb;
-sh4_if  sh4_cpu;
 
 static void ChangeGPR()
 {
-	std::swap((u32 (&)[8])r, r_bank);
-}
-
-static void ChangeFP()
-{
-	std::swap((f32 (&)[16])Sh4cntx.xffr, *(f32 (*)[16])&Sh4cntx.xffr[16]);
+	std::swap((u32 (&)[8])Sh4cntx.r, Sh4cntx.r_bank);
 }
 
 //called when sr is changed and we must check for reg banks etc.
 //returns true if interrupt pending
 bool UpdateSR()
 {
-	if (sr.MD)
+	if (Sh4cntx.sr.MD)
 	{
-		if (old_sr.RB != sr.RB)
+		if (Sh4cntx.old_sr.RB != Sh4cntx.sr.RB)
 			ChangeGPR();//bank change
 	}
 	else
 	{
-		if (old_sr.RB)
+		if (Sh4cntx.old_sr.RB)
 			ChangeGPR();//switch
 	}
 
-	old_sr.status = sr.status;
-	old_sr.RB &= sr.MD;
+	Sh4cntx.old_sr.status = Sh4cntx.sr.status;
+	Sh4cntx.old_sr.RB &= Sh4cntx.sr.MD;
 
 	return SRdecode();
 }
@@ -47,21 +41,21 @@ bool UpdateSR()
 static u32 old_rm = 0xFF;
 static u32 old_dn = 0xFF;
 
-static void setHostRoundingMode()
+static void setHostRoundingMode(u32 roundingMode, u32 denorm2zero)
 {
-	if (old_rm != fpscr.RM || old_dn != fpscr.DN)
+	if (old_rm != roundingMode || old_dn != denorm2zero)
 	{
-		old_rm = fpscr.RM;
-		old_dn = fpscr.DN;
+		old_rm = roundingMode;
+		old_dn = denorm2zero;
         
         //Correct rounding is required by some games (SOTB, etc)
 #ifdef _MSC_VER
-        if (fpscr.RM == 1)  //if round to 0 , set the flag
+        if (roundingMode == 1)	// if round to 0 , set the flag
             _controlfp(_RC_CHOP, _MCW_RC);
         else
             _controlfp(_RC_NEAR, _MCW_RC);
         
-        if (fpscr.DN)     //denormals are considered 0
+        if (denorm2zero == 1)	// denormals are considered 0
             _controlfp(_DN_FLUSH, _MCW_DN);
         else
             _controlfp(_DN_SAVE, _MCW_DN);
@@ -71,20 +65,20 @@ static void setHostRoundingMode()
 
             u32 temp=0x1f80;	//no flush to zero && round to nearest
 
-			if (fpscr.RM==1)  //if round to 0 , set the flag
+			if (roundingMode==1)	// if round to 0 , set the flag
 				temp|=(3<<13);
 
-			if (fpscr.DN)     //denormals are considered 0
+			if (denorm2zero == 1)	// denormals are considered 0
 				temp|=(1<<15);
 			asm("ldmxcsr %0" : : "m"(temp));
     #elif HOST_CPU==CPU_ARM
 		static const unsigned int offMask = 0x04086060;
 		unsigned int onMask = 0x02000000;
 
-		if (fpscr.RM == 1)  //if round to 0 , set the flag
+		if (roundingMode == 1)
 			onMask |= 3 << 22;
 
-		if (fpscr.DN)
+		if (denorm2zero == 1)
 			onMask |= 1 << 24;
 
 		#ifdef __ANDROID__
@@ -110,10 +104,10 @@ static void setHostRoundingMode()
 		static const unsigned long off_mask = 0x04080000;
         unsigned long on_mask = 0x02000000;    // DN=1 Any operation involving one or more NaNs returns the Default NaN
 
-        if (fpscr.RM == 1)		// if round to 0, set the flag
+        if (roundingMode == 1)
         	on_mask |= 3 << 22;
 
-        if (fpscr.DN)
+        if (denorm2zero == 1)
         	on_mask |= 1 << 24;	// flush denormalized numbers to zero
 
         asm volatile
@@ -135,131 +129,24 @@ static void setHostRoundingMode()
 }
 
 //called when fpscr is changed and we must check for reg banks etc..
-void UpdateFPSCR()
+void DYNACALL Sh4Context::UpdateFPSCR(Sh4Context *ctx)
 {
-	if (fpscr.FR !=old_fpscr.FR)
-		ChangeFP(); // FPU bank change
+	if (ctx->fpscr.FR != ctx->old_fpscr.FR)
+		// FPU bank change
+		std::swap(ctx->xf, ctx->fr);
 
-	old_fpscr=fpscr;
-	setHostRoundingMode();
+	ctx->old_fpscr = ctx->fpscr;
+	setHostRoundingMode(ctx->fpscr.RM, ctx->fpscr.DN);
 }
 
-void RestoreHostRoundingMode()
+void Sh4Context::restoreHostRoundingMode()
 {
 	old_rm = 0xFF;
 	old_dn = 0xFF;
-	setHostRoundingMode();
+	setHostRoundingMode(fpscr.RM, fpscr.DN);
 }
 
 void setDefaultRoundingMode()
 {
-	u32 savedRM = fpscr.RM;
-	u32 savedDN = fpscr.DN;
-	fpscr.RM = 0;
-	fpscr.DN = 0;
-	setHostRoundingMode();
-	fpscr.RM = savedRM;
-	fpscr.DN = savedDN;
-}
-
-static u32* Sh4_int_GetRegisterPtr(Sh4RegType reg)
-{
-	if ((reg>=reg_r0) && (reg<=reg_r15))
-	{
-		return &r[reg-reg_r0];
-	}
-	else if ((reg>=reg_r0_Bank) && (reg<=reg_r7_Bank))
-	{
-		return &r_bank[reg-reg_r0_Bank];
-	}
-	else if ((reg>=reg_fr_0) && (reg<=reg_fr_15))
-	{
-		return &fr_hex[reg-reg_fr_0];
-	}
-	else if ((reg>=reg_xf_0) && (reg<=reg_xf_15))
-	{
-		return &xf_hex[reg-reg_xf_0];
-	}
-	else
-	{
-		switch(reg)
-		{
-		case reg_gbr :
-			return &gbr;
-			break;
-		case reg_vbr :
-			return &vbr;
-			break;
-
-		case reg_ssr :
-			return &ssr;
-			break;
-
-		case reg_spc :
-			return &spc;
-			break;
-
-		case reg_sgr :
-			return &sgr;
-			break;
-
-		case reg_dbr :
-			return &dbr;
-			break;
-
-		case reg_mach :
-			return &mac.h;
-			break;
-
-		case reg_macl :
-			return &mac.l;
-			break;
-
-		case reg_pr :
-			return &pr;
-			break;
-
-		case reg_fpul :
-			return &fpul;
-			break;
-
-
-		case reg_nextpc :
-			return &next_pc;
-			break;
-
-		case reg_sr_status :
-			return &sr.status;
-			break;
-
-		case reg_sr_T :
-			return &sr.T;
-			break;
-
-		case reg_old_fpscr :
-			return &old_fpscr.full;
-			break;
-
-		case reg_fpscr :
-			return &fpscr.full;
-			break;
-
-		case reg_pc_dyn:
-			return &Sh4cntx.jdyn;
-
-		case reg_temp:
-			return &Sh4cntx.temp_reg;
-
-		default:
-			ERROR_LOG(SH4, "Unknown register ID %d", reg);
-			die("Invalid reg");
-			return 0;
-			break;
-		}
-	}
-}
-
-u32* GetRegPtr(u32 reg)
-{
-	return Sh4_int_GetRegisterPtr((Sh4RegType)reg);
+	setHostRoundingMode(0, 0);
 }

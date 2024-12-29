@@ -87,7 +87,7 @@ public:
 
 #include "vmallocator.h"
 #include "quad.h"
-#include "rend/TexCache.h"
+#include "rend/texconv.h"
 #include "overlay.h"
 #include "wsi/context.h"
 #include <vector>

@@ -158,7 +158,7 @@ bool DX11Renderer::Init()
 	quad->init(device, deviceContext, shaders);
 	n2Helper.init(device, deviceContext);
 
-	fog_needs_update = true;
+	updateFogTable = true;
 
 	if (!success)
 	{
@@ -318,8 +318,10 @@ BaseTextureCacheData *DX11Renderer::GetTexture(TSP tsp, TCW tcw)
 
 void DX11Renderer::Process(TA_context* ctx)
 {
-	if (KillTex)
+	if (resetTextureCache) {
 		texCache.Clear();
+		resetTextureCache = false;
+	}
 	texCache.Cleanup();
 
 	ta_parse(ctx, true);
@@ -513,7 +515,7 @@ bool DX11Renderer::Render()
 #ifndef LIBRETRO
 		deviceContext->OMSetRenderTargets(1, &theDX11Context.getRenderTarget().get(), nullptr);
 		displayFramebuffer();
-		DrawOSD(false);
+		drawOSD();
 		renderVideoRouting();
 		theDX11Context.setFrameRendered();
 #else
@@ -523,6 +525,7 @@ bool DX11Renderer::Render()
 #endif
 		frameRendered = true;
 		frameRenderedOnce = true;
+		clearLastFrame = false;
 	}
 
 	return !is_rtt;
@@ -936,7 +939,7 @@ void DX11Renderer::drawStrips()
 
 bool DX11Renderer::RenderLastFrame()
 {
-	if (!frameRenderedOnce)
+	if (!frameRenderedOnce || clearLastFrame)
 		return false;
 	displayFramebuffer();
 	return true;
@@ -1028,7 +1031,7 @@ void DX11Renderer::RenderFramebuffer(const FramebufferInfo& info)
 
 	deviceContext->OMSetRenderTargets(1, &theDX11Context.getRenderTarget().get(), nullptr);
 	displayFramebuffer();
-	DrawOSD(false);
+	drawOSD();
 	renderVideoRouting();
 	theDX11Context.setFrameRendered();
 #else
@@ -1038,6 +1041,7 @@ void DX11Renderer::RenderFramebuffer(const FramebufferInfo& info)
 #endif
 	frameRendered = true;
 	frameRenderedOnce = true;
+	clearLastFrame = false;
 }
 
 void DX11Renderer::setBaseScissor()
@@ -1222,9 +1226,9 @@ void DX11Renderer::readRttRenderTarget(u32 texAddress)
 
 void DX11Renderer::updatePaletteTexture()
 {
-	if (palette_updated)
+	if (updatePalette)
 	{
-		palette_updated = false;
+		updatePalette = false;
 		deviceContext->UpdateSubresource(paletteTexture, 0, nullptr, palette32_ram, 32 * sizeof(u32), 32 * sizeof(u32) * 32);
 	}
     deviceContext->PSSetShaderResources(1, 1, &paletteTextureView.get());
@@ -1235,9 +1239,9 @@ void DX11Renderer::updateFogTexture()
 {
 	if (!config::Fog)
 		return;
-	if (fog_needs_update)
+	if (updateFogTable)
 	{
-		fog_needs_update = false;
+		updateFogTable = false;
 		u8 temp_tex_buffer[256];
 		MakeFogTexture(temp_tex_buffer);
 
@@ -1247,10 +1251,10 @@ void DX11Renderer::updateFogTexture()
     deviceContext->PSSetSamplers(2, 1, &samplers->getSampler(true).get());
 }
 
-void DX11Renderer::DrawOSD(bool clear_screen)
+void DX11Renderer::drawOSD()
 {
 #ifndef LIBRETRO
-	theDX11Context.setOverlay(!clear_screen);
+	theDX11Context.setOverlay(true);
 	gui_display_osd();
 	theDX11Context.setOverlay(false);
 #endif

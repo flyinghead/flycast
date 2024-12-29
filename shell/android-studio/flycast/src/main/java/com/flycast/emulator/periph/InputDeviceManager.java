@@ -11,8 +11,10 @@ import com.flycast.emulator.Emulator;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.lang3.ArrayUtils;
 
@@ -24,12 +26,15 @@ public final class InputDeviceManager implements InputManager.InputDeviceListene
     private InputManager inputManager;
     private int maple_port = 0;
 
+    private boolean hasTouchscreen = false;
+
     private static class VibrationParams {
         float power;
         float inclination;
         long stopTime;
     }
     private Map<Integer, VibrationParams> vibParams = new HashMap<>();
+    private Set<Integer> knownDevices = new HashSet<>();
 
     public InputDeviceManager()
     {
@@ -39,12 +44,10 @@ public final class InputDeviceManager implements InputManager.InputDeviceListene
     public void startListening(Context applicationContext)
     {
         maple_port = 0;
-        if (applicationContext.getPackageManager().hasSystemFeature("android.hardware.touchscreen"))
-            joystickAdded(VIRTUAL_GAMEPAD_ID, "Virtual Gamepad", 0, "virtual_gamepad_uid",
-                    new int[0], new int[0], getVibrator(VIRTUAL_GAMEPAD_ID) != null);
-        int[] ids = InputDevice.getDeviceIds();
-        for (int id : ids)
-            onInputDeviceAdded(id);
+        hasTouchscreen = applicationContext.getPackageManager().hasSystemFeature("android.hardware.touchscreen");
+        if (hasTouchscreen)
+            joystickAdded(VIRTUAL_GAMEPAD_ID, null, 0, null,
+                    null, null, getVibrator(VIRTUAL_GAMEPAD_ID) != null);
         inputManager = (InputManager)applicationContext.getSystemService(Context.INPUT_SERVICE);
         inputManager.registerInputDeviceListener(this, null);
     }
@@ -60,25 +63,6 @@ public final class InputDeviceManager implements InputManager.InputDeviceListene
 
     @Override
     public void onInputDeviceAdded(int i) {
-        InputDevice device = InputDevice.getDevice(i);
-        if (device != null && (device.getSources() & InputDevice.SOURCE_CLASS_BUTTON) == InputDevice.SOURCE_CLASS_BUTTON) {
-            int port = 0;
-            if ((device.getSources() & InputDevice.SOURCE_CLASS_JOYSTICK) == InputDevice.SOURCE_CLASS_JOYSTICK) {
-                port = this.maple_port == 3 ? 3 : this.maple_port++;
-            }
-            List<InputDevice.MotionRange> axes = device.getMotionRanges();
-            List<Integer> fullAxes = new ArrayList<>();
-            List<Integer> halfAxes = new ArrayList<>();
-            for (InputDevice.MotionRange range : axes) {
-                if (range.getMin() == 0)
-                    halfAxes.add(range.getAxis());
-                else
-                    fullAxes.add(range.getAxis());
-            }
-            joystickAdded(i, device.getName(), port, device.getDescriptor(),
-                    ArrayUtils.toPrimitive(fullAxes.toArray(new Integer[0])), ArrayUtils.toPrimitive(halfAxes.toArray(new Integer[0])),
-                    getVibrator(i) != null);
-        }
     }
 
     @Override
@@ -86,6 +70,7 @@ public final class InputDeviceManager implements InputManager.InputDeviceListene
         if (maple_port > 0)
             maple_port--;
         joystickRemoved(i);
+        knownDevices.remove(i);
     }
 
     @Override
@@ -202,18 +187,67 @@ public final class InputDeviceManager implements InputManager.InputDeviceListene
         }
     }
 
+    public boolean hasTouchscreen() {
+        return hasTouchscreen;
+    }
+
+    private boolean createDevice(int id)
+    {
+        if (id == 0)
+            return false;
+        if (knownDevices.contains(id))
+            return true;
+        InputDevice device = InputDevice.getDevice(id);
+        if (device == null || (device.getSources() & InputDevice.SOURCE_CLASS_BUTTON) != InputDevice.SOURCE_CLASS_BUTTON)
+            return false;
+        int port = 0;
+        if ((device.getSources() & InputDevice.SOURCE_CLASS_JOYSTICK) == InputDevice.SOURCE_CLASS_JOYSTICK) {
+            port = this.maple_port == 3 ? 3 : this.maple_port++;
+        }
+        List<InputDevice.MotionRange> axes = device.getMotionRanges();
+        List<Integer> fullAxes = new ArrayList<>();
+        List<Integer> halfAxes = new ArrayList<>();
+        for (InputDevice.MotionRange range : axes) {
+            if (range.getMin() == 0)
+                halfAxes.add(range.getAxis());
+            else
+                fullAxes.add(range.getAxis());
+        }
+        joystickAdded(id, device.getName(), port, device.getDescriptor(),
+                ArrayUtils.toPrimitive(fullAxes.toArray(new Integer[0])), ArrayUtils.toPrimitive(halfAxes.toArray(new Integer[0])),
+                getVibrator(id) != null);
+        knownDevices.add(id);
+        return true;
+    }
+    public boolean buttonEvent(int id, int button, boolean pressed)
+    {
+        if (!createDevice(id))
+            return false;
+        return joystickButtonEvent(id, button, pressed);
+    }
+    public boolean axisEvent(int id, int button, int value)
+    {
+        if (!createDevice(id))
+            return false;
+        return joystickAxisEvent(id, button, value);
+    }
+
     public static InputDeviceManager getInstance() {
         return INSTANCE;
     }
 
     public native void init();
-    public native void virtualGamepadEvent(int kcode, int joyx, int joyy, int lt, int rt, boolean fastForward);
-    public native boolean joystickButtonEvent(int id, int button, boolean pressed);
-    public native boolean joystickAxisEvent(int id, int button, int value);
+    public native void virtualReleaseAll();
+    public native void virtualJoystick(float x, float y);
+    public native void virtualButtonInput(int key, boolean pressed);
+    private native boolean joystickButtonEvent(int id, int button, boolean pressed);
+    private native boolean joystickAxisEvent(int id, int button, int value);
     public native void mouseEvent(int xpos, int ypos, int buttons);
     public native void mouseScrollEvent(int scrollValue);
+    public native void touchMouseEvent(int xpos, int ypos, int buttons);
     private native void joystickAdded(int id, String name, int maple_port, String uniqueId, int[] fullAxes, int[] halfAxes, boolean rumbleEnabled);
     private native void joystickRemoved(int id);
     public native boolean keyboardEvent(int key, boolean pressed);
     public native void keyboardText(int c);
+    public static native boolean isMicPluggedIn();
 }

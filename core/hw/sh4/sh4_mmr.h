@@ -9,8 +9,6 @@
 void map_area7();
 void map_p4();
 
-#define sq_both (sh4rcb.sq_buffer)
-
 void sh4_mmr_init();
 void sh4_mmr_reset(bool hard);
 void sh4_mmr_term();
@@ -1142,12 +1140,12 @@ union SCIF_SCSMR2_type
 {
 	struct
 	{
-		u32 CKS           : 2;
+		u32 CKS           : 2;	// Clock Select
 		u32               : 1;
-		u32 STOP          : 1;
-		u32 OE_paritymode : 1;
-		u32 PE            : 1;
-		u32 CHR           : 1;
+		u32 STOP          : 1;	// Stop Bit Length
+		u32 OE_paritymode : 1;	// Parity Mode
+		u32 PE            : 1;	// Parity Enable
+		u32 CHR           : 1;	// Character Length
 		u32               : 9;
 		//16
 	};
@@ -1165,13 +1163,13 @@ union SCIF_SCSCR2_type
 	struct
 	{
 		u32       : 1;
-		u32 CKE1  : 1;
+		u32 CKE1  : 1;	// Clock Enable 1
 		u32       : 1;
-		u32 REIE  : 1;
-		u32 RE    : 1;
-		u32 TE    : 1;
-		u32 RIE   : 1;
-		u32 TIE   : 1;
+		u32 REIE  : 1;	// Receive Error Interrupt Enable
+		u32 RE    : 1;	// Receive Enable
+		u32 TE    : 1;	// Transmit Enable
+		u32 RIE   : 1;	// Receive Interrupt Enable
+		u32 TIE   : 1;	// Transmit Interrupt Enable
 		//8
 		u32       : 8;
 		//16
@@ -1188,17 +1186,17 @@ union SCIF_SCFSR2_type
 {
 	struct
 	{
-		u32 DR   : 1;
-		u32 RDF  : 1;
-		u32 PER  : 1;
-		u32 FER  : 1;
-		u32 BRK  : 1;
-		u32 TDFE : 1;
-		u32 TEND : 1;
-		u32 ER   : 1;
+		u32 DR   : 1;	// Receive Data Ready
+		u32 RDF  : 1;	// Receive FIFO Data Full
+		u32 PER  : 1;	// Parity Error
+		u32 FER  : 1;	// Framing Error
+		u32 BRK  : 1;	// Break Detect
+		u32 TDFE : 1;	// Transmit FIFO Data Empty
+		u32 TEND : 1;	// Transmit End
+		u32 ER   : 1;	// Receive Error
 		//8
-		u32 FERn : 4;
-		u32 PERn : 4;
+		u32 FERn : 4;	// Number of Framing Errors
+		u32 PERn : 4;	// Number of Parity Errors
 		//16
 	};
 	u16 full;
@@ -1213,12 +1211,12 @@ union SCIF_SCFCR2_type
 {
 	struct
 	{
-		u32 LOOP  : 1;
-		u32 RFRST : 1;
-		u32 TFRST : 1;
-		u32 MCE   : 1;
-		u32 TTRG  : 2;
-		u32 RTRG  : 2;
+		u32 LOOP  : 1;	// Loopback Test
+		u32 RFRST : 1;	// Receive FIFO Data Register Reset
+		u32 TFRST : 1;	// Transmit FIFO Data Register Reset
+		u32 MCE   : 1;	// Modem Control Enable
+		u32 TTRG  : 2;	// Transmit FIFO Data Number Trigger
+		u32 RTRG  : 2;	// Receive FIFO Data Number Trigger
 		//8
 		u32       : 8;
 		//16
@@ -1227,16 +1225,16 @@ union SCIF_SCFCR2_type
 };
 #define SCIF_SCFCR2 SH4IO_REG_T(SCIF, SCFCR2)
 
-//Read OLNY
+//Read ONLY
 //SCIF SCFDR2 0xFFE8001C 0x1FE8001C 16 0x0000 0x0000 Held Held Pclk
 union SCIF_SCFDR2_type
 {
 	struct
 	{
-		u32 R     : 5;
+		u32 R     : 5;	// Number of received data bytes
 		u32       : 3;
 		//8
-		u32 T     : 5;
+		u32 T     : 5;	// Number of untransmitted data bytes
 		u32       : 3;
 		//16
 	};
@@ -1248,13 +1246,13 @@ union SCIF_SCSPTR2_type
 {
 	struct
 	{
-		u32 SPB2DT : 1;
-		u32 SPB2IO : 1;
+		u32 SPB2DT : 1;	// Serial Port Break Data
+		u32 SPB2IO : 1;	// Serial Port Break I/O
 		u32        : 2;
-		u32 CTSDT  : 1;
-		u32 CTSIO  : 1;
-		u32 RTSDT  : 1;
-		u32 RTSIO  : 1;
+		u32 CTSDT  : 1;	// Serial Port CTS Port Data
+		u32 CTSIO  : 1;	// Serial Port CTS Port I/O
+		u32 RTSDT  : 1;	// Serial Port RTS Port Data
+		u32 RTSIO  : 1;	// Serial Port RTS Port I/O
 		//8
 		u32        : 8;
 		//16
@@ -1268,7 +1266,7 @@ union SCIF_SCLSR2_type
 {
 	struct
 	{
-		u32 ORER  : 1;
+		u32 ORER  : 1;	// Overrun Error
 		u32       :15;
 		//16
 	};

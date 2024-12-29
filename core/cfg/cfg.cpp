@@ -130,3 +130,12 @@ void cfgSetAutoSave(bool autoSave)
 	if (autoSave)
 		saveConfigFile();
 }
+
+void cfgSaveFloat(const std::string& section, const std::string& key, float value)
+{
+	cfgdb.set_float(section, key, value);
+}
+float cfgLoadFloat(const std::string& section, const std::string& key, float def)
+{
+	return cfgdb.get_float(section, key, def);
+}

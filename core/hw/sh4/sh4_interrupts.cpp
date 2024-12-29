@@ -141,10 +141,10 @@ void SIIDRebuild()
 //Decode SR.IMSK into a interrupt mask, update and return the interrupt state
 bool SRdecode()
 {
-	if (sr.BL)
+	if (Sh4cntx.sr.BL)
 		decoded_srimask=~0xFFFFFFFF;
 	else
-		decoded_srimask=~InterruptLevelBit[sr.IMASK];
+		decoded_srimask=~InterruptLevelBit[Sh4cntx.sr.IMASK];
 
 	recalc_pending_itrs();
 	return Sh4cntx.interrupt_pend;
@@ -185,14 +185,14 @@ static void Do_Interrupt(Sh4ExceptionCode intEvn)
 {
 	CCN_INTEVT = intEvn;
 
-	ssr = sh4_sr_GetFull();
-	spc = next_pc;
-	sgr = r[15];
-	sr.BL = 1;
-	sr.MD = 1;
-	sr.RB = 1;
+	Sh4cntx.ssr = Sh4cntx.sr.getFull();
+	Sh4cntx.spc = Sh4cntx.pc;
+	Sh4cntx.sgr = Sh4cntx.r[15];
+	Sh4cntx.sr.BL = 1;
+	Sh4cntx.sr.MD = 1;
+	Sh4cntx.sr.RB = 1;
 	UpdateSR();
-	next_pc = vbr + 0x600;
+	Sh4cntx.pc = Sh4cntx.vbr + 0x600;
 	debugger::subroutineCall();
 }
 
@@ -200,19 +200,19 @@ void Do_Exception(u32 epc, Sh4ExceptionCode expEvn)
 {
 	assert((expEvn >= Sh4Ex_TlbMissRead && expEvn <= Sh4Ex_SlotIllegalInstr)
 			|| expEvn == Sh4Ex_FpuDisabled || expEvn == Sh4Ex_SlotFpuDisabled || expEvn == Sh4Ex_UserBreak);
-	if (sr.BL != 0)
+	if (Sh4cntx.sr.BL != 0)
 		throw FlycastException("Fatal: SH4 exception when blocked");
 	CCN_EXPEVT = expEvn;
 
-	ssr = sh4_sr_GetFull();
-	spc = epc;
-	sgr = r[15];
-	sr.BL = 1;
-	sr.MD = 1;
-	sr.RB = 1;
+	Sh4cntx.ssr = Sh4cntx.sr.getFull();
+	Sh4cntx.spc = epc;
+	Sh4cntx.sgr = Sh4cntx.r[15];
+	Sh4cntx.sr.BL = 1;
+	Sh4cntx.sr.MD = 1;
+	Sh4cntx.sr.RB = 1;
 	UpdateSR();
 
-	next_pc = vbr + (expEvn == Sh4Ex_TlbMissRead || expEvn == Sh4Ex_TlbMissWrite ? 0x400 : 0x100);
+	Sh4cntx.pc = Sh4cntx.vbr + (expEvn == Sh4Ex_TlbMissRead || expEvn == Sh4Ex_TlbMissWrite ? 0x400 : 0x100);
 	debugger::subroutineCall();
 
 	//printf("RaiseException: from pc %08x to %08x, event %x\n", epc, next_pc, expEvn);

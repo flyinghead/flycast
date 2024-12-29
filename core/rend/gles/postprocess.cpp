@@ -20,6 +20,7 @@
 #include "postprocess.h"
 
 #ifdef LIBRETRO
+#include "quad.h"
 #include <array>
 
 PostProcessor postProcessor;
@@ -284,7 +285,7 @@ void PostProcessor::render(GLuint output_fbo)
 	if (!config::PowerVR2Filter)
 	{
 		// Just handle shifting and Y flipping
-		if (gl.gl_major < 3)
+		if (gl.bogusBlitFramebuffer)
 		{
 			glBindFramebuffer(GL_FRAMEBUFFER, output_fbo);
 			glViewport(0, 0, framebuffer->getWidth(), framebuffer->getHeight());
@@ -303,7 +304,7 @@ void PostProcessor::render(GLuint output_fbo)
 			vertices[1] = vertices[11] = -1.f - gl.ofbo.shiftY * 2.f / framebuffer->getHeight();
 			vertices[6] = vertices[16] = vertices[1] + 2;
 			glcache.Disable(GL_BLEND);
-			drawQuad(framebuffer->getTexture(), false, false, vertices);
+			gl.quad->draw(framebuffer->getTexture(), false, false, vertices);
 		}
 		else
 		{

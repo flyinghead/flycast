@@ -481,6 +481,15 @@ void CheatManager::reset(const std::string& gameId)
 		else if (gameId == "SAMURAI SPIRITS 6" || gameId == "T0002M") {
 			cheats.emplace_back(Cheat::Type::setValue, "fix depth", true, 16, 0x0003e602, 0x0009, true); // nop (shift by 8 bits instead of 10)
 		}
+		else if (gameId == "T-8107N") {	// Fur Fighters (US)
+			// force logging on to use more cycles
+			cheats.emplace_back(Cheat::Type::setValue, "enable logging", true, 32, 0x00314248, 1, true);
+		}
+		else if (gameId == "T-8113D-50") {	// Fur Fighters (EU)
+			// force logging on to use more cycles
+			cheats.emplace_back(Cheat::Type::setValue, "enable logging", true, 32, 0x00314228, 1, true);
+		}
+
 		if (cheats.size() > cheatCount)
 			setActive(true);
 	}

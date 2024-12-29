@@ -40,22 +40,54 @@
 #include <shlobj.h>
 #endif
 #include "profiler/fc_profiler.h"
+#include "input/gamepad_device.h"
 
 namespace hostfs
 {
 
-std::string getVmuPath(const std::string& port)
+std::string getVmuPath(const std::string& port, bool save)
 {
-	if (port == "A1" && config::PerGameVmu && !settings.content.path.empty())
-		return get_game_save_prefix() + "_vmu_save_A1.bin";
+	if (port == "A1" && config::PerGameVmu)
+	{
+		if (settings.platform.isConsole() && !settings.content.gameId.empty())
+		{
+			constexpr std::string_view INVALID_CHARS { " /\\:*?|<>" };
+			std::string vmuName = settings.content.gameId;
+			for (char &c: vmuName)
+				if (INVALID_CHARS.find(c) != INVALID_CHARS.npos)
+					c = '_';
+			vmuName += "_vmu_save_A1.bin";
+			std::string wpath = get_writable_data_path(vmuName);
+            if (save || file_exists(wpath))
+            	return wpath;
+            std::string rpath = get_readonly_data_path(vmuName);
+            if (hostfs::storage().exists(rpath))
+            	return rpath;
+            if (!settings.content.path.empty())
+            {
+            	// Legacy path using the rom file name
+            	rpath = get_game_save_prefix() + "_vmu_save_A1.bin";
+            	if (file_exists(rpath))
+            		return rpath;
+            }
+            return wpath;
+		}
+		if (!settings.content.path.empty())
+			return get_game_save_prefix() + "_vmu_save_A1.bin";
+	}
 
-	char tempy[512];
-	sprintf(tempy, "vmu_save_%s.bin", port.c_str());
+	std::string vmuName = "vmu_save_" + port + ".bin";
+	std::string wpath = get_writable_data_path(vmuName);
+	if (save || file_exists(wpath))
+		return wpath;
+	std::string rpath = get_readonly_data_path(vmuName);
+	if (hostfs::storage().exists(rpath))
+		return rpath;
 	// VMU saves used to be stored in .reicast, not in .reicast/data
-	std::string apath = get_writable_config_path(tempy);
-	if (!file_exists(apath))
-		apath = get_writable_data_path(tempy);
-	return apath;
+	rpath = get_readonly_config_path(vmuName);
+	if (file_exists(rpath))
+		return rpath;
+	return wpath;
 }
 
 std::string getArcadeFlashPath()
@@ -283,6 +315,13 @@ void saveScreenshot(const std::string& name, const std::vector<u8>& data)
 
 #endif
 
+#ifndef USE_LIBCDIO
+const std::vector<std::string>& getCdromDrives() {
+	static std::vector<std::string> empty;
+	return empty;
+}
+#endif
+
 } // namespace hostfs
 
 void os_CreateWindow()
@@ -340,12 +379,11 @@ void os_UpdateInputState()
 {
 	FC_PROFILE_SCOPE;
 
+	GamepadDevice::RampAnalog();
 #if defined(USE_SDL)
 	input_sdl_handle();
-#else
-	#if defined(USE_EVDEV)
-		input_evdev_handle();
-	#endif
+#elif defined(USE_EVDEV)
+	input_evdev_handle();
 #endif
 }
 

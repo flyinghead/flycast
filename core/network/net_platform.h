@@ -29,7 +29,7 @@
 #define INADDR_NONE 0xffffffff
 #endif
 #ifndef INET_ADDRSTRLEN
-#define INET_ADDRSTRLEN sizeof(struct sockaddr_in)
+#define INET_ADDRSTRLEN 16
 #endif
 #define SOL_TCP 6 // Shrug
 #else

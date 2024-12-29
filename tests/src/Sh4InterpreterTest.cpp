@@ -28,9 +28,10 @@ protected:
 			die("addrspace::reserve failed");
 		emu.init();
 		mem_map_default();
-		dc_reset(true);
+		emu.dc_reset(true);
 		ctx = &p_sh4rcb->cntx;
-		Get_Sh4Interpreter(&sh4);
+		sh4 = Get_Sh4Interpreter();
+		sh4->Init();
 	}
 	void PrepareOp(u16 op, u16 op2 = 0, u16 op3 = 0) override
 	{
@@ -45,7 +46,7 @@ protected:
 	{
 		ctx->pc = START_PC;
 		for (int i = 0; i < numOp; i++)
-			sh4.Step();
+			sh4->Step();
 	}
 };
 

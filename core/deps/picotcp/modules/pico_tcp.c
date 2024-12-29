@@ -826,6 +826,8 @@ static void tcp_rcv_sack(struct pico_socket_tcp *t, uint8_t *opt, int len)
 static int tcpopt_len_check(uint32_t *idx, uint8_t len, uint8_t expected)
 {
     if (len != expected) {
+        if (len < 2)
+            return -1;
         *idx = *idx + len - 2;
         return -1;
     }
@@ -880,7 +882,7 @@ static inline void tcp_parse_option_timestamp(struct pico_socket_tcp *t, struct 
     t->ts_nxt = long_be(tsval);
 }
 
-static void tcp_parse_options(struct pico_frame *f)
+static int tcp_parse_options(struct pico_frame *f)
 {
     struct pico_socket_tcp *t = (struct pico_socket_tcp *)f->sock;
     uint8_t *opt = f->transport_hdr + PICO_SIZE_TCPHDR;
@@ -896,6 +898,10 @@ static void tcp_parse_options(struct pico_frame *f)
 
         if (f->payload && ((opt + i) > f->payload))
             break;
+
+        if (len == 0) {
+            return -1;
+        }
 
         tcp_dbg_options("Received option '%d', len = %d \n", type, len);
         switch (type) {
@@ -924,6 +930,7 @@ static void tcp_parse_options(struct pico_frame *f)
             i = i + len - 2;
         }
     }
+    return 0;
 }
 
 static inline void tcp_send_add_tcpflags(struct pico_socket_tcp *ts, struct pico_frame *f)
@@ -1755,7 +1762,8 @@ static int tcp_data_in(struct pico_socket *s, struct pico_frame *f)
     (void)hdr;
 
     if (((hdr->len & 0xf0u) >> 2u) <= f->transport_len) {
-        tcp_parse_options(f);
+        if (tcp_parse_options(f) < 0)
+            return -1;
         f->payload = f->transport_hdr + ((hdr->len & 0xf0u) >> 2u);
         f->payload_len = payload_len;
         tcp_dbg("TCP> Received segment. (exp: %x got: %x)\n", t->rcv_nxt, SEQN(f));
@@ -2130,7 +2138,8 @@ static int tcp_ack(struct pico_socket *s, struct pico_frame *f)
     tcp_ack_dbg(s, f);
 #endif
 
-    tcp_parse_options(f);
+    if (tcp_parse_options(f) < 0)
+        return -1;
     t->recv_wnd = short_be(hdr->rwnd);
 
     acked = (uint16_t)tcp_ack_advance_una(t, f, &acked_timestamp);
@@ -2446,7 +2455,8 @@ static int tcp_syn(struct pico_socket *s, struct pico_frame *f)
     f->sock = &new->sock;
     mtu = (uint16_t)pico_socket_get_mss(&new->sock);
     new->mss = (uint16_t)(mtu - PICO_SIZE_TCPHDR);
-    tcp_parse_options(f);
+    if (tcp_parse_options(f) < 0)
+        return -1;
     new->tcpq_in.max_size = PICO_DEFAULT_SOCKETQ;
     new->tcpq_out.max_size = PICO_DEFAULT_SOCKETQ;
     new->tcpq_hold.max_size = 2u * mtu;
@@ -2793,7 +2803,7 @@ static uint8_t invalid_flags(struct pico_socket *s, uint8_t flags)
         { /* PICO_SOCKET_STATE_TCP_UNDEF      */ 0, },
         { /* PICO_SOCKET_STATE_TCP_CLOSED     */ 0, },
         { /* PICO_SOCKET_STATE_TCP_LISTEN     */ PICO_TCP_SYN, PICO_TCP_SYN | PICO_TCP_PSH },
-        { /* PICO_SOCKET_STATE_TCP_SYN_SENT   */ PICO_TCP_SYNACK, PICO_TCP_RST, PICO_TCP_RSTACK},
+        { /* PICO_SOCKET_STATE_TCP_SYN_SENT   */ PICO_TCP_SYNACK, PICO_TCP_RST, PICO_TCP_RSTACK, PICO_TCP_SYNACK | PICO_TCP_PSH },
         { /* PICO_SOCKET_STATE_TCP_SYN_RECV   */ PICO_TCP_SYN, PICO_TCP_ACK, PICO_TCP_PSH, PICO_TCP_PSHACK, PICO_TCP_FINACK, PICO_TCP_FINPSHACK, PICO_TCP_RST},
         { /* PICO_SOCKET_STATE_TCP_ESTABLISHED*/ PICO_TCP_SYN, PICO_TCP_SYNACK, PICO_TCP_ACK, PICO_TCP_PSH, PICO_TCP_PSHACK, PICO_TCP_FIN, PICO_TCP_FINACK, PICO_TCP_FINPSHACK, PICO_TCP_RST, PICO_TCP_RSTACK},
         { /* PICO_SOCKET_STATE_TCP_CLOSE_WAIT */ PICO_TCP_SYNACK, PICO_TCP_ACK, PICO_TCP_PSH, PICO_TCP_PSHACK, PICO_TCP_FIN, PICO_TCP_FINACK, PICO_TCP_FINPSHACK, PICO_TCP_RST},
@@ -2864,6 +2874,11 @@ int pico_tcp_input(struct pico_socket *s, struct pico_frame *f)
 //    tcp_dbg("[sam] TCP> s->state >> 8 = %u\n", s->state >> 8);
     tcp_dbg("[tcp input] socket: %p state: %d <-- local port:%u remote port: %u seq: 0x%08x ack: 0x%08x flags: 0x%02x t_len: %u, hdr: %u payload: %d\n", s, s->state >> 8, short_be(hdr->trans.dport), short_be(hdr->trans.sport), SEQN(f), ACKN(f), hdr->flags, f->transport_len, (hdr->len & 0xf0) >> 2, f->payload_len );
 
+    if ((f->payload + f->payload_len) > (f->buffer + f->buffer_len)) {
+        tcp_dbg("TCP> Invalid payload len %04x\n", f->payload_len);
+        pico_frame_discard(f);
+        return -1;
+    }
     /* This copy of the frame has the current socket as owner */
     f->sock = s;
     s->timestamp = TCP_TIME;
@@ -2874,7 +2889,9 @@ int pico_tcp_input(struct pico_socket *s, struct pico_frame *f)
     }
     else if (flags == PICO_TCP_SYN || flags == (PICO_TCP_SYN | PICO_TCP_PSH)) {
         tcp_action_call(action->syn, s, f);
-    } else if (flags == (PICO_TCP_SYN | PICO_TCP_ACK)) {
+    } else if (flags == (PICO_TCP_SYN | PICO_TCP_ACK)
+    	// Windows CE / DirectPlay sets the PSH flag on SYN|ACK packets, which is normally invalid
+    	|| flags == (PICO_TCP_SYN | PICO_TCP_ACK | PICO_TCP_PSH)) {
         tcp_action_call(action->synack, s, f);
     } else {
         ret = tcp_action_by_flags(action, s, f, flags);

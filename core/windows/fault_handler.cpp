@@ -128,9 +128,11 @@ static LONG WINAPI exceptionHandler(EXCEPTION_POINTERS *ep)
 	// texture protection in VRAM
 	if (VramLockedWrite(address))
 		return EXCEPTION_CONTINUE_EXECUTION;
+#if FEAT_SHREC == DYNAREC_JIT
 	// FPCB jump table protection
 	if (addrspace::bm_lockedWrite(address))
 		return EXCEPTION_CONTINUE_EXECUTION;
+#endif
 
 	host_context_t context;
 	readContext(ep, context);

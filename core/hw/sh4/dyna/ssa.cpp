@@ -18,6 +18,8 @@
     You should have received a copy of the GNU General Public License
     along with reicast.  If not, see <https://www.gnu.org/licenses/>.
  */
+#include "build.h"
+#if FEAT_SHREC != DYNAREC_NONE
 #include "blockmanager.h"
 #include "ssa.h"
 
@@ -369,3 +371,4 @@ bool SSAOptimizer::ExecuteConstOp(shil_opcode* op)
 		return false;
 	}
 }
+#endif	// FEAT_SHREC != DYNAREC_NONE

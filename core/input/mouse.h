@@ -104,3 +104,15 @@ public:
 	void setButton(Button button, bool pressed);
 	void setWheel(int delta);
 };
+
+class TouchMouse : public SystemMouse
+{
+public:
+	TouchMouse() : SystemMouse("Flycast", -1)
+	{
+		_name = "Touch Mouse";
+		_unique_id = "touch_mouse";
+		loadMapping();
+	}
+};
+

@@ -38,7 +38,7 @@ public:
 		jgetSubPath = env->GetMethodID(clazz, "getSubPath", "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;");
 		jgetFileInfo = env->GetMethodID(clazz, "getFileInfo", "(Ljava/lang/String;)Lcom/flycast/emulator/FileInfo;");
 		jexists = env->GetMethodID(clazz, "exists", "(Ljava/lang/String;)Z");
-		jaddStorage = env->GetMethodID(clazz, "addStorage", "(ZZLjava/lang/String;)Z");
+		jaddStorage = env->GetMethodID(clazz, "addStorage", "(ZZLjava/lang/String;Ljava/lang/String;)Z");
 		jsaveScreenshot = env->GetMethodID(clazz, "saveScreenshot", "(Ljava/lang/String;[B)V");
 		jimportHomeDirectory = env->GetMethodID(clazz, "importHomeDirectory", "()V");
 		jexportHomeDirectory = env->GetMethodID(clazz, "exportHomeDirectory", "()V");
@@ -136,12 +136,13 @@ public:
 	}
 
 	bool addStorage(bool isDirectory, bool writeAccess, const std::string& description,
-			void (*callback)(bool cancelled, std::string selectedPath)) override
+			void (*callback)(bool cancelled, std::string selectedPath), const std::string& mimeType) override
 	{
 		if (!config::UseSafFilePicker && !jni::env()->CallBooleanMethod(jstorage, jrequiresSafFilePicker))
 			return false;
 		jni::String jdesc(description);
-		bool ret = jni::env()->CallBooleanMethod(jstorage, jaddStorage, isDirectory, writeAccess, (jstring)jdesc);
+		jni::String jmimeType(mimeType);
+		bool ret = jni::env()->CallBooleanMethod(jstorage, jaddStorage, isDirectory, writeAccess, (jstring)jdesc, (jstring)jmimeType);
 		checkException();
 		if (ret)
 			addStorageCallback = callback;

@@ -20,7 +20,6 @@
 */
 #include "pipeline.h"
 #include "hw/pvr/Renderer_if.h"
-#include "rend/osd.h"
 
 void PipelineManager::CreateModVolPipeline(ModVolMode mode, int cullMode, bool naomi2)
 {
@@ -435,80 +434,4 @@ void PipelineManager::CreatePipeline(u32 listType, bool sortTriangles, const Pol
 
 	pipelines[hash(listType, sortTriangles, &pp, gpuPalette, dithering)] = GetContext()->GetDevice().createGraphicsPipelineUnique(GetContext()->GetPipelineCache(),
 			graphicsPipelineCreateInfo).value;
-}
-
-void OSDPipeline::CreatePipeline()
-{
-	// Vertex input state
-	static const vk::VertexInputBindingDescription vertexInputBindingDescription(0, sizeof(OSDVertex));
-	static const std::array<vk::VertexInputAttributeDescription, 3> vertexInputAttributeDescriptions = {
-			vk::VertexInputAttributeDescription(0, 0, vk::Format::eR32G32Sfloat, offsetof(OSDVertex, x)),	// pos
-			vk::VertexInputAttributeDescription(1, 0, vk::Format::eR8G8B8A8Unorm, offsetof(OSDVertex, r)),	// color
-			vk::VertexInputAttributeDescription(2, 0, vk::Format::eR32G32Sfloat, offsetof(OSDVertex, u)),	// tex coord
-	};
-	vk::PipelineVertexInputStateCreateInfo vertexInputStateCreateInfo(
-				vk::PipelineVertexInputStateCreateFlags(),
-				vertexInputBindingDescription,
-				vertexInputAttributeDescriptions);
-
-	// Input assembly state
-	vk::PipelineInputAssemblyStateCreateInfo pipelineInputAssemblyStateCreateInfo(vk::PipelineInputAssemblyStateCreateFlags(), vk::PrimitiveTopology::eTriangleStrip);
-
-	// Viewport and scissor states
-	vk::PipelineViewportStateCreateInfo pipelineViewportStateCreateInfo(vk::PipelineViewportStateCreateFlags(), 1, nullptr, 1, nullptr);
-
-	// Rasterization and multisample states
-	vk::PipelineRasterizationStateCreateInfo pipelineRasterizationStateCreateInfo;
-	pipelineRasterizationStateCreateInfo.lineWidth = 1.0;
-	vk::PipelineMultisampleStateCreateInfo pipelineMultisampleStateCreateInfo;
-
-	// Depth and stencil
-	vk::PipelineDepthStencilStateCreateInfo pipelineDepthStencilStateCreateInfo;
-
-	// Color flags and blending
-	vk::PipelineColorBlendAttachmentState pipelineColorBlendAttachmentState(
-			true,								// blendEnable
-			vk::BlendFactor::eSrcAlpha,			// srcColorBlendFactor
-			vk::BlendFactor::eOneMinusSrcAlpha, // dstColorBlendFactor
-			vk::BlendOp::eAdd,					// colorBlendOp
-			vk::BlendFactor::eSrcAlpha,			// srcAlphaBlendFactor
-			vk::BlendFactor::eOneMinusSrcAlpha, // dstAlphaBlendFactor
-			vk::BlendOp::eAdd,					// alphaBlendOp
-			vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG
-						| vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA
-	);
-	vk::PipelineColorBlendStateCreateInfo pipelineColorBlendStateCreateInfo
-	(
-	  vk::PipelineColorBlendStateCreateFlags(),   // flags
-	  false,                                      // logicOpEnable
-	  vk::LogicOp::eNoOp,                         // logicOp
-	  pipelineColorBlendAttachmentState,         // attachments
-	  { { 1.0f, 1.0f, 1.0f, 1.0f } }              // blendConstants
-	);
-
-	std::array<vk::DynamicState, 2> dynamicStates = { vk::DynamicState::eViewport, vk::DynamicState::eScissor };
-	vk::PipelineDynamicStateCreateInfo pipelineDynamicStateCreateInfo(vk::PipelineDynamicStateCreateFlags(), dynamicStates);
-
-	std::array<vk::PipelineShaderStageCreateInfo, 2> stages = {
-			vk::PipelineShaderStageCreateInfo(vk::PipelineShaderStageCreateFlags(), vk::ShaderStageFlagBits::eVertex, shaderManager->GetOSDVertexShader(), "main"),
-			vk::PipelineShaderStageCreateInfo(vk::PipelineShaderStageCreateFlags(), vk::ShaderStageFlagBits::eFragment, shaderManager->GetOSDFragmentShader(), "main"),
-	};
-	vk::GraphicsPipelineCreateInfo graphicsPipelineCreateInfo
-	(
-	  vk::PipelineCreateFlags(),                  // flags
-	  stages,                                     // stages
-	  &vertexInputStateCreateInfo,			      // pVertexInputState
-	  &pipelineInputAssemblyStateCreateInfo,      // pInputAssemblyState
-	  nullptr,                                    // pTessellationState
-	  &pipelineViewportStateCreateInfo,           // pViewportState
-	  &pipelineRasterizationStateCreateInfo,      // pRasterizationState
-	  &pipelineMultisampleStateCreateInfo,        // pMultisampleState
-	  &pipelineDepthStencilStateCreateInfo,       // pDepthStencilState
-	  &pipelineColorBlendStateCreateInfo,         // pColorBlendState
-	  &pipelineDynamicStateCreateInfo,            // pDynamicState
-	  *pipelineLayout,                            // layout
-	  renderPass                                  // renderPass
-	);
-
-	pipeline = GetContext()->GetDevice().createGraphicsPipelineUnique(GetContext()->GetPipelineCache(), graphicsPipelineCreateInfo).value;
 }

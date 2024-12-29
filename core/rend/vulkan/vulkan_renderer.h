@@ -38,10 +38,12 @@ public:
 	BaseTextureCacheData *GetTexture(TSP tsp, TCW tcw) override;
 	void Process(TA_context* ctx) override;
 	void ReInitOSD();
-	void DrawOSD(bool clear_screen) override;
 	void RenderFramebuffer(const FramebufferInfo& info) override;
 	void RenderVideoRouting();
 
+	bool RenderLastFrame() override {
+		return !clearLastFrame;
+	}
 	bool GetLastFrame(std::vector<u8>& data, int& width, int& height) override {
 		return GetContext()->GetLastFrame(data, width, height);
 	}
@@ -67,9 +69,6 @@ protected:
 	CommandPool texCommandPool;
 	std::vector<std::unique_ptr<Texture>> framebufferTextures;
 	int framebufferTexIndex = 0;
-	OSDPipeline osdPipeline;
-	std::unique_ptr<Texture> vjoyTexture;
-	std::unique_ptr<BufferData> osdBuffer;
 	TextureCache textureCache;
 	vk::Extent2D viewport;
 	vk::CommandBuffer texCommandBuffer;

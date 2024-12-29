@@ -21,7 +21,6 @@
 #include "pvr_regs.h"
 #include "Renderer_if.h"
 #include "ta_ctx.h"
-#include "rend/TexCache.h"
 #include "serialize.h"
 #include "pvr_mem.h"
 #include "elan.h"
@@ -31,7 +30,6 @@ extern u8 ta_fsm[2049];	//[2048] stores the current state
 extern u32 ta_fsm_cl;
 extern u32 taRenderPass;
 // pvr_regs.cpp
-extern bool fog_needs_update;
 extern bool pal_needs_update;
 
 namespace pvr
@@ -39,7 +37,6 @@ namespace pvr
 
 void reset(bool hard)
 {
-	KillTex = true;
 	Regs_Reset(hard);
 	spg_Reset(hard);
 	if (hard)
@@ -92,7 +89,7 @@ void deserialize(Deserializer& deser)
 	YUV_deserialize(deser);
 
 	deser >> pvr_regs;
-	fog_needs_update = true;
+	rend_updateFogTable();
 
 	spg_Deserialize(deser);
 

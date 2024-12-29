@@ -65,7 +65,7 @@ class CustomStorage : public Storage
 {
 public:
 	virtual bool addStorage(bool isDirectory, bool writeAccess, const std::string& description,
-			void (*callback)(bool cancelled, std::string selectedPath)) = 0;
+			void (*callback)(bool cancelled, std::string selectedPath), const std::string& mimeType) = 0;
 };
 
 class AllStorage : public Storage
@@ -84,7 +84,7 @@ public:
 
 AllStorage& storage();
 bool addStorage(bool isDirectory, bool writeAccess, const std::string& description,
-		void (*callback)(bool cancelled, std::string selectedPath));
+		void (*callback)(bool cancelled, std::string selectedPath), const std::string& mimeType = {});
 
 // iterate depth-first over the files contained in a folder hierarchy
 class DirectoryTree

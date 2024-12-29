@@ -21,7 +21,7 @@
 #include "emulator.h"
 #include "hw/sh4/sh4_if.h"
 #include "hw/sh4/sh4_mem.h"
-#include "hw/sh4/sh4_interpreter.h"
+#include "hw/sh4/dyna/shil.h"
 #include "cfg/option.h"
 #include <array>
 #include <signal.h>
@@ -122,9 +122,9 @@ public:
 		for (u32 i = 0; i < Sh4RegList.size(); i++)
 		{
 			if (Sh4RegList[i] == reg_sr_status)
-				allregs[i] = sh4_sr_GetFull();
+				allregs[i] = Sh4cntx.sr.getFull();
 			else if (Sh4RegList[i] != NoReg)
-				allregs[i] = *GetRegPtr(Sh4RegList[i]);
+				allregs[i] = *GetRegPtr(Sh4cntx, Sh4RegList[i]);
 		}
 		*regs = &allregs[0];
 		return allregs.size();
@@ -134,7 +134,7 @@ public:
 	{
 		for (u32 i = 0; i < Sh4RegList.size(); i++)
 			if (Sh4RegList[i] != NoReg)
-				*GetRegPtr(Sh4RegList[i]) = regs[i];
+				*GetRegPtr(Sh4cntx, Sh4RegList[i]) = regs[i];
 	}
 
 	u32 readReg(u32 regNum)
@@ -143,9 +143,9 @@ public:
 			return 0;
 		Sh4RegType reg = Sh4RegList[regNum];
 		if (reg == reg_sr_status)
-			return sh4_sr_GetFull();
+			return Sh4cntx.sr.getFull();
 		if (reg != NoReg)
-			return *GetRegPtr(reg);
+			return *GetRegPtr(Sh4cntx, reg);
 		return 0;
 	}
 	void writeReg(u32 regNum, u32 value)
@@ -154,9 +154,9 @@ public:
 			return;
 		Sh4RegType reg = Sh4RegList[regNum];
 		if (reg == reg_sr_status)
-			sh4_sr_SetFull(value);
+			Sh4cntx.sr.setFull(value);
 		else if (reg != NoReg)
-			*GetRegPtr(reg) = value;
+			*GetRegPtr(Sh4cntx, reg) = value;
 	}
 
 	const u8 *readMem(u32 addr, u32 len)

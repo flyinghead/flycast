@@ -16,10 +16,8 @@ import android.widget.RelativeLayout;
 
 import androidx.annotation.Nullable;
 
-import com.flycast.emulator.emu.JNIdc;
 import com.flycast.emulator.emu.NativeGLView;
 import com.flycast.emulator.periph.InputDeviceManager;
-import com.flycast.emulator.periph.VJoy;
 
 public final class NativeGLActivity extends BaseGLActivity {
 
@@ -61,32 +59,23 @@ public final class NativeGLActivity extends BaseGLActivity {
         return mView != null && mView.isSurfaceReady();
     }
 
-    // Called from native code
-    private void VJoyStartEditing() {
-        vjoy_d_cached = VJoy.readCustomVjoyValues(getApplicationContext());
-        JNIdc.show_osd();
-        mView.setEditVjoyMode(true);
-    }
-    // Called from native code
-    private void VJoyResetEditing() {
-        VJoy.resetCustomVjoyValues(getApplicationContext());
-        mView.readCustomVjoyValues();
-        mView.resetEditMode();
-        handler.post(new Runnable() {
-            @Override
+    @Override
+    public void onGameStateChange(boolean started) {
+        super.onGameStateChange(started);
+        runOnUiThread(new Runnable() {
             public void run() {
-                mView.requestLayout();
+                if (started)
+                    mView.showVGamepad();
             }
         });
     }
+
     // Called from native code
-    private void VJoyStopEditing(final boolean canceled) {
+    public void setVGamepadEditMode(boolean editing) {
         handler.post(new Runnable() {
             @Override
             public void run() {
-                if (canceled)
-                    mView.restoreCustomVjoyValues(vjoy_d_cached);
-                mView.setEditVjoyMode(false);
+                mView.setVGamepadEditMode(editing);
             }
         });
     }

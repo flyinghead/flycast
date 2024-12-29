@@ -1,12 +1,13 @@
 #include "Renderer_if.h"
 #include "spg.h"
-#include "rend/TexCache.h"
+#include "rend/texconv.h"
 #include "rend/transform_matrix.h"
 #include "cfg/option.h"
 #include "emulator.h"
 #include "serialize.h"
 #include "hw/holly/holly_intc.h"
 #include "hw/sh4/sh4_if.h"
+#include "hw/sh4/sh4_core.h"
 #include "profiler/fc_profiler.h"
 #include "network/ggpo.h"
 
@@ -90,15 +91,12 @@ public:
 		}
 		else
 		{
-			void setDefaultRoundingMode();
-			void RestoreHostRoundingMode();
-
 			setDefaultRoundingMode();
 			// drain the queue after switching to !threaded rendering
 			while (!queue.empty())
 				waitAndExecute();
 			execute(msg);
-			RestoreHostRoundingMode();
+			Sh4cntx.restoreHostRoundingMode();
 		}
 	}
 
@@ -237,7 +235,7 @@ private:
 		{
 			presented = true;
 			if (!config::ThreadedRendering && !ggpo::active())
-				sh4_cpu.Stop();
+				emu.getSh4Executor()->Stop();
 #ifdef LIBRETRO
 			retro_rend_present();
 #endif
@@ -321,7 +319,7 @@ bool rend_init_renderer()
 	rendererEnabled = true;
 	if (renderer == nullptr)
 		rend_create_renderer();
-	bool success = renderer->Init();
+	bool success = renderer != nullptr && renderer->Init();
 	if (!success) {
 		delete renderer;
 		renderer = rend_norend();

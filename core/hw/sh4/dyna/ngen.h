@@ -3,6 +3,7 @@
 #pragma once
 #include "blockmanager.h"
 #include "oslib/host_context.h"
+#include "../sh4_interpreter.h"
 
 // When NO_RWX is enabled there's two address-spaces, one executable and
 // one writtable. The emitter and most of the code in rec-* will work with
@@ -41,13 +42,14 @@ extern void (*ngen_FailedToFindBlock)();
 //Canonical callback interface
 enum CanonicalParamType
 {
-	CPT_u32,
-	CPT_u32rv,
-	CPT_u64rvL,
-	CPT_u64rvH,
-	CPT_f32,
-	CPT_f32rv,
-	CPT_ptr,
+	CPT_u32,	// u32 param
+	CPT_u32rv,	// u32 return value
+	CPT_u64rvL,	// u64 return value lsb
+	CPT_u64rvH,	// u64 return value msb
+	CPT_f32,	// f32 param
+	CPT_f32rv,	// f32 return value
+	CPT_ptr,	// register pointer
+	CPT_sh4ctx,	// Sh4Context pointer
 };
 
 bool rdv_readMemImmediate(u32 addr, int size, void*& ptr, bool& isRam, u32& physAddr, RuntimeBlockInfo* block = nullptr);
@@ -84,7 +86,7 @@ class Sh4Dynarec
 {
 public:
 	// Initialize the dynarec, which should keep a reference to the passed code buffer to generate code later.
-	virtual void init(Sh4CodeBuffer& codeBuffer) = 0;
+	virtual void init(Sh4Context& sh4ctx, Sh4CodeBuffer& codeBuffer) = 0;
 	// Compile the given block.
 	// If smc_checks is true, add self-modifying code detection.
 	// If optimize is true, use fast memory accesses if possible, that will be rewritten if they fail.
@@ -121,3 +123,25 @@ public:
 };
 
 extern Sh4Dynarec *sh4Dynarec;
+
+class Sh4Recompiler : public Sh4Interpreter
+{
+	using super = Sh4Interpreter;
+
+public:
+	Sh4Recompiler() {
+		Instance = this;
+	}
+	~Sh4Recompiler() {
+		Instance = nullptr;
+	}
+	void Run() override;
+	void ResetCache() override;
+	void Reset(bool hard) override;
+	void Init() override;
+	void Term() override;
+
+	void clear_temp_cache(bool full);
+
+	static Sh4Recompiler *Instance;
+};

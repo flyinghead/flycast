@@ -1,5 +1,6 @@
 #pragma once
 #include "serialize.h"
+#include "cfg/option.h"
 
 #define SYSCALL_GDROM			0x00
 
@@ -69,9 +70,8 @@ enum misc_command {
 	MISC_SETVECTOR
 };
 
-void gdrom_hle_init();
-void gdrom_hle_term();
 void gdrom_hle_op();
+void gdrom_hle_reset();
 
 typedef enum : int32_t {
     GDC_ERR = -1,
@@ -83,66 +83,6 @@ typedef enum : int32_t {
     GDC_RET1,
     GDC_RET2
 } gd_return_value;
-
-struct gdrom_hle_state_t
-{
-	gdrom_hle_state_t() : params{}, result{} {}
-
-	u32 last_request_id = 0xFFFFFFFF;
-	u32 next_request_id = 2;
-	gd_return_value status = GDC_OK;
-	gd_command command = GDCC_NONE;
-	u32 params[4];
-	u32 result[4];
-	u32 cur_sector = 0;
-	u32 multi_read_sector = 0;
-	u32 multi_read_offset = 0;
-	u32 multi_read_count = 0;
-	u32 multi_read_total = 0;
-	u32 multi_callback = 0;
-	u32 multi_callback_arg = 0;
-	bool dma_trans_ended = false;
-	u64 xfer_end_time = 0;
-	
-	void Serialize(Serializer& ser)
-	{
-		ser << last_request_id;
-		ser << next_request_id;
-		ser << status;
-		ser << command;
-		ser << params;
-		ser << result;
-		ser << cur_sector;
-		ser << multi_read_sector;
-		ser << multi_read_offset;
-		ser << multi_read_count;
-		ser << multi_read_total;
-		ser << multi_callback;
-		ser << multi_callback_arg;
-		ser << dma_trans_ended;
-		ser << xfer_end_time;
-
-	}
-	void Deserialize(Deserializer& deser)
-	{
-		deser >> last_request_id;
-		deser >> next_request_id;
-		deser >> status;
-		deser >> command;
-		deser >> params;
-		deser >> result;
-		deser >> cur_sector;
-		deser >> multi_read_sector;
-		deser >> multi_read_offset;
-		deser >> multi_read_count;
-		deser >> multi_read_total;
-		deser >> multi_callback;
-		deser >> multi_callback_arg;
-		deser >> dma_trans_ended;
-		deser >> xfer_end_time;
-	}
-};
-extern gdrom_hle_state_t gd_hle_state;
 
 // status for GDROM_GET_DRV_STAT
 enum gd_drv_stat {

@@ -124,6 +124,14 @@ static void maple_SB_MDSTAR_Write(u32 addr, u32 data)
 }
 #endif
 
+static u32 getPort(u32 addr)
+{
+	for (int i = 0; i < 6; i++)
+		if ((1 << i) & addr)
+			return i;
+	return 5;
+}
+
 static void maple_DoDma()
 {
 	verify(SB_MDEN & 1);
@@ -202,8 +210,8 @@ static void maple_DoDma()
 			//Number of additional words in frame 
 			u32 inlen = (frame_header >> 24) & 0xFF;
 
-			u32 port = maple_GetPort(reci);
-			u32 bus = maple_GetBusId(reci);
+			u32 port = getPort(reci);
+			u32 bus = reci >> 6;
 
 			if (MapleDevices[bus][5] && MapleDevices[bus][port])
 			{

@@ -451,6 +451,7 @@ int32_t pico_device_broadcast(struct pico_frame *f)
 {
     struct pico_tree_node *index;
     int32_t ret = -1;
+    int sent = 0;
 
     pico_tree_foreach(index, &Device_tree)
     {
@@ -463,14 +464,28 @@ int32_t pico_device_broadcast(struct pico_frame *f)
                 break;
 
             copy->dev = dev;
-            copy->dev->send(copy->dev, copy->start, (int)copy->len);
+            ret = copy->dev->send(copy->dev, copy->start, (int)copy->len);
+            /* FIXME: If a device driver returns zero (which means the device
+             * driver is currently busy) there is no means to retry the
+             * broadcast operation later. */
             pico_frame_discard(copy);
         }
         else
         {
             ret = f->dev->send(f->dev, f->start, (int)f->len);
+            /* FIXME: If a device driver returns zero (which means the device
+             * driver is currently busy) there is no means to retry the
+             * broadcast operation later. */
+        }
+
+        /* FIXME: If at least one device driver was able to sent the frame on
+         * the wire, the broadcast operation will be considered successful. */
+        if (ret > 0) {
+            sent = 1;
         }
     }
+    ret = sent ? f->len : -1;
+    pico_frame_discard(f);
     return ret;
 }
 

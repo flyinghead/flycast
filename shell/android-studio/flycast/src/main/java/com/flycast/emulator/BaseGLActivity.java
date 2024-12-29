@@ -49,7 +49,6 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
     private static final int AUDIO_PERM_REQUEST = 1002;
 
     protected SharedPreferences prefs;
-    protected float[][] vjoy_d_cached;    // Used for VJoy editing
     private AudioBackend audioBackend;
     protected Handler handler = new Handler();
     private boolean audioPermissionRequested = false;
@@ -270,7 +269,7 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
 
     private boolean processJoystickInput(MotionEvent event, int axis) {
         float v = event.getAxisValue(axis);
-        return InputDeviceManager.getInstance().joystickAxisEvent(event.getDeviceId(), axis, (int)Math.round(v * 32767.f));
+        return InputDeviceManager.getInstance().axisEvent(event.getDeviceId(), axis, (int)Math.round(v * 32767.f));
     }
     @Override
     public boolean onGenericMotionEvent(MotionEvent event) {
@@ -284,29 +283,29 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
                 if (range.getAxis() == MotionEvent.AXIS_HAT_X) {
                     float v = event.getAxisValue(MotionEvent.AXIS_HAT_X);
                     if (v == -1.0) {
-                        rc |= InputDeviceManager.getInstance().joystickButtonEvent(event.getDeviceId(), KeyEvent.KEYCODE_DPAD_LEFT, true);
-                        InputDeviceManager.getInstance().joystickButtonEvent(event.getDeviceId(), KeyEvent.KEYCODE_DPAD_RIGHT, false);
+                        rc |= InputDeviceManager.getInstance().buttonEvent(event.getDeviceId(), KeyEvent.KEYCODE_DPAD_LEFT, true);
+                        InputDeviceManager.getInstance().buttonEvent(event.getDeviceId(), KeyEvent.KEYCODE_DPAD_RIGHT, false);
                     }
                     else if (v == 1.0) {
-                        InputDeviceManager.getInstance().joystickButtonEvent(event.getDeviceId(), KeyEvent.KEYCODE_DPAD_LEFT, false);
-                        rc |= InputDeviceManager.getInstance().joystickButtonEvent(event.getDeviceId(), KeyEvent.KEYCODE_DPAD_RIGHT, true);
+                        InputDeviceManager.getInstance().buttonEvent(event.getDeviceId(), KeyEvent.KEYCODE_DPAD_LEFT, false);
+                        rc |= InputDeviceManager.getInstance().buttonEvent(event.getDeviceId(), KeyEvent.KEYCODE_DPAD_RIGHT, true);
                     } else {
-                        InputDeviceManager.getInstance().joystickButtonEvent(event.getDeviceId(), KeyEvent.KEYCODE_DPAD_LEFT, false);
-                        InputDeviceManager.getInstance().joystickButtonEvent(event.getDeviceId(), KeyEvent.KEYCODE_DPAD_RIGHT, false);
+                        InputDeviceManager.getInstance().buttonEvent(event.getDeviceId(), KeyEvent.KEYCODE_DPAD_LEFT, false);
+                        InputDeviceManager.getInstance().buttonEvent(event.getDeviceId(), KeyEvent.KEYCODE_DPAD_RIGHT, false);
                     }
                 }
                 else if (range.getAxis() == MotionEvent.AXIS_HAT_Y) {
                     float v = event.getAxisValue(MotionEvent.AXIS_HAT_Y);
                     if (v == -1.0) {
-                        rc |= InputDeviceManager.getInstance().joystickButtonEvent(event.getDeviceId(), KeyEvent.KEYCODE_DPAD_UP, true);
-                        InputDeviceManager.getInstance().joystickButtonEvent(event.getDeviceId(), KeyEvent.KEYCODE_DPAD_DOWN, false);
+                        rc |= InputDeviceManager.getInstance().buttonEvent(event.getDeviceId(), KeyEvent.KEYCODE_DPAD_UP, true);
+                        InputDeviceManager.getInstance().buttonEvent(event.getDeviceId(), KeyEvent.KEYCODE_DPAD_DOWN, false);
                     }
                     else if (v == 1.0) {
-                        InputDeviceManager.getInstance().joystickButtonEvent(event.getDeviceId(), KeyEvent.KEYCODE_DPAD_UP, false);
-                        rc |= InputDeviceManager.getInstance().joystickButtonEvent(event.getDeviceId(), KeyEvent.KEYCODE_DPAD_DOWN, true);
+                        InputDeviceManager.getInstance().buttonEvent(event.getDeviceId(), KeyEvent.KEYCODE_DPAD_UP, false);
+                        rc |= InputDeviceManager.getInstance().buttonEvent(event.getDeviceId(), KeyEvent.KEYCODE_DPAD_DOWN, true);
                     } else {
-                        InputDeviceManager.getInstance().joystickButtonEvent(event.getDeviceId(), KeyEvent.KEYCODE_DPAD_UP, false);
-                        InputDeviceManager.getInstance().joystickButtonEvent(event.getDeviceId(), KeyEvent.KEYCODE_DPAD_DOWN, false);
+                        InputDeviceManager.getInstance().buttonEvent(event.getDeviceId(), KeyEvent.KEYCODE_DPAD_UP, false);
+                        InputDeviceManager.getInstance().buttonEvent(event.getDeviceId(), KeyEvent.KEYCODE_DPAD_DOWN, false);
                     }
                 }
                 else
@@ -330,7 +329,7 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
 
     @Override
     public boolean onKeyUp(int keyCode, KeyEvent event) {
-        if (InputDeviceManager.getInstance().joystickButtonEvent(event.getDeviceId(), keyCode, false))
+        if (InputDeviceManager.getInstance().buttonEvent(event.getDeviceId(), keyCode, false))
             return true;
         if (hasKeyboard && InputDeviceManager.getInstance().keyboardEvent(keyCode, false))
             return true;
@@ -341,16 +340,15 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         if (event.getRepeatCount() == 0) {
             if (keyCode == KeyEvent.KEYCODE_BACK) {
-                if (!JNIdc.guiIsOpen()) {
-                    showMenu();
-                    return true;
-                }
-                else if (JNIdc.guiIsContentBrowser()) {
+                if (JNIdc.guiIsContentBrowser()) {
                     finish();
-                    return true;
                 }
+                else {
+                    showMenu();
+                }
+                return true;
             }
-            if (InputDeviceManager.getInstance().joystickButtonEvent(event.getDeviceId(), keyCode, true))
+            if (InputDeviceManager.getInstance().buttonEvent(event.getDeviceId(), keyCode, true))
                 return true;
 
             if (hasKeyboard) {
@@ -417,7 +415,7 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
             }
 
             //setup mic
-            if (Emulator.micPluggedIn())
+            if (InputDeviceManager.isMicPluggedIn())
                 requestRecordAudioPermission();
         }
 

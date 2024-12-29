@@ -56,7 +56,8 @@ public:
 			if (!rendering || newFrameStarted)
 			{
 				context->BeginRenderPass();
-				context->PresentLastFrame();
+				if (renderer->RenderLastFrame())
+					context->PresentLastFrame();
 			}
 			if (!justStarted)
 			{
@@ -88,6 +89,9 @@ public:
 
 	ImTextureID updateTexture(const std::string& name, const u8 *data, int width, int height, bool nearestSampling) override
 	{
+		if (justStarted)
+			// give it some more time
+			return {};
 		VkTexture vkTex(std::make_unique<Texture>());
 		vkTex.texture->tex_type = TextureType::_8888;
 		vkTex.texture->SetCommandBuffer(getCommandBuffer());

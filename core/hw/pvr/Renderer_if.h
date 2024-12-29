@@ -1,6 +1,7 @@
 #pragma once
 #include "types.h"
 #include "ta_ctx.h"
+#include "emulator.h"
 #include <vector>
 
 extern u32 FrameCount;
@@ -22,6 +23,8 @@ void rend_enable_renderer(bool enabled);
 bool rend_is_enabled();
 void rend_serialize(Serializer& ser);
 void rend_deserialize(Deserializer& deser);
+static void rend_updatePalette();
+static void rend_updateFogTable();
 
 ///////
 extern TA_context* _pvrrc;
@@ -54,7 +57,14 @@ struct FramebufferInfo
 
 struct Renderer
 {
-	virtual ~Renderer() = default;
+	Renderer() {
+		EventManager::listen(Event::Terminate, onEvent, this);
+		EventManager::listen(Event::LoadState, onEvent, this);
+	}
+	virtual ~Renderer() {
+		EventManager::unlisten(Event::Terminate, onEvent, this);
+		EventManager::unlisten(Event::LoadState, onEvent, this);
+	}
 
 	virtual bool Init() = 0;
 	virtual void Term() = 0;
@@ -71,9 +81,26 @@ struct Renderer
 
 	virtual bool Present() { return true; }
 
-	virtual void DrawOSD(bool clear_screen) { }
-
 	virtual BaseTextureCacheData *GetTexture(TSP tsp, TCW tcw) { return nullptr; }
+
+protected:
+	bool resetTextureCache = false;
+	bool clearLastFrame = false;
+	bool updatePalette = true;
+	bool updateFogTable = true;
+
+private:
+	static void onEvent(Event event, void *arg)
+	{
+		Renderer *renderer = static_cast<Renderer*>(arg);
+		renderer->resetTextureCache = true;
+		renderer->updatePalette = true;
+		renderer->updateFogTable = true;
+		if (event == Event::Terminate)
+			renderer->clearLastFrame = true;
+	}
+	friend void rend_updatePalette();
+	friend void rend_updateFogTable();
 };
 
 extern Renderer* renderer;
@@ -83,3 +110,11 @@ extern u32 fb_watch_addr_end;
 extern bool fb_dirty;
 
 void check_framebuffer_write();
+static inline void rend_updatePalette() {
+	if (renderer != nullptr)
+		renderer->updatePalette = true;
+}
+static inline void rend_updateFogTable() {
+	if (renderer != nullptr)
+		renderer->updateFogTable = true;
+}

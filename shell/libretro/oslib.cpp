@@ -35,21 +35,35 @@ extern std::string arcadeFlashPath;
 namespace hostfs
 {
 
-std::string getVmuPath(const std::string& port)
+std::string getVmuPath(const std::string& port, bool save)
 {
-   char filename[PATH_MAX + 8];
-
-   if ((per_content_vmus == 1 && port == "A1")
-		   || per_content_vmus == 2)
-   {
-      sprintf(filename, "%s.%s.bin", content_name, port.c_str());
-      return std::string(vmu_dir_no_slash) + std::string(path_default_slash()) + filename;
-   }
-   else
-   {
-      sprintf(filename, "vmu_save_%s.bin", port.c_str());
-      return std::string(game_dir_no_slash) + std::string(path_default_slash()) + filename;
-   }
+	if ((per_content_vmus == 1 && port == "A1")
+			|| per_content_vmus == 2)
+	{
+		std::string vmuDir = vmu_dir_no_slash + std::string(path_default_slash());
+		if (settings.platform.isConsole() && !settings.content.gameId.empty())
+		{
+			constexpr std::string_view INVALID_CHARS { " /\\:*?|<>" };
+			std::string vmuName = settings.content.gameId;
+			for (char &c: vmuName)
+				if (INVALID_CHARS.find(c) != INVALID_CHARS.npos)
+					c = '_';
+			vmuName += "." + port + ".bin";
+			std::string wpath = vmuDir + vmuName;
+			if (save || file_exists(wpath.c_str()))
+				return wpath;
+			// Legacy path with rom name
+			std::string rpath = vmuDir + std::string(content_name) + "." + port + ".bin";
+			if (file_exists(rpath.c_str()))
+				return rpath;
+			else
+				return wpath;
+		}
+		return vmuDir + std::string(content_name) + "." + port + ".bin";
+	}
+	else {
+		return std::string(game_dir_no_slash) + std::string(path_default_slash()) + "vmu_save_" + port + ".bin";
+	}
 }
 
 std::string getArcadeFlashPath()

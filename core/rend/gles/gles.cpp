@@ -1,5 +1,6 @@
 #include "glcache.h"
 #include "gles.h"
+#include "quad.h"
 #include "hw/pvr/ta.h"
 #ifndef LIBRETRO
 #include "ui/gui.h"
@@ -7,8 +8,6 @@
 #include "rend/gles/postprocess.h"
 #include "vmu_xhair.h"
 #endif
-#include "rend/osd.h"
-#include "rend/TexCache.h"
 #include "rend/transform_matrix.h"
 #include "wsi/gl_context.h"
 #include "emulator.h"
@@ -395,42 +394,7 @@ void main()
 }
 )";
 
-const char* OSD_VertexShader = R"(
-uniform highp vec4      scale;
-
-in highp vec4    in_pos;
-in lowp vec4     in_base;
-in mediump vec2  in_uv;
-
-out lowp vec4 vtx_base;
-out mediump vec2 vtx_uv;
-
-void main()
-{
-	vtx_base = in_base;
-	vtx_uv = in_uv;
-	highp vec4 vpos = in_pos;
-	
-	vpos.w = 1.0;
-	vpos.z = vpos.w;
-	vpos.xy = vpos.xy * scale.xy - scale.zw; 
-	gl_Position = vpos;
-}
-)";
-
-const char* OSD_Shader = R"(
-in lowp vec4 vtx_base;
-in mediump vec2 vtx_uv;
-
-uniform sampler2D tex;
-void main()
-{
-	gl_FragColor = vtx_base * texture(tex, vtx_uv);
-}
-)";
-
 void os_VideoRoutingTermGL();
-static void gl_free_osd_resources();
 
 GLCache glcache;
 gl_ctx gl;
@@ -499,7 +463,7 @@ void termGLCommon()
 #ifdef VIDEO_ROUTING
 	os_VideoRoutingTermGL();
 #endif
-	termQuad();
+	gl.quad.reset();
 
 	// palette, fog
 	glcache.DeleteTextures(1, &fogTextureId);
@@ -509,7 +473,6 @@ void termGLCommon()
 	// RTT
 	gl.rtt.framebuffer.reset();
 
-	gl_free_osd_resources();
 	gl.ofbo.framebuffer.reset();
 	glcache.DeleteTextures(1, &gl.dcfb.tex);
 	gl.dcfb.tex = 0;
@@ -533,6 +496,8 @@ static void gles_term()
 
 	gl_delete_shaders();
 }
+
+bool testBlitFramebuffer();
 
 void findGLVersion()
 {
@@ -638,6 +603,17 @@ void findGLVersion()
 	NOTICE_LOG(RENDERER, "Vendor '%s' Renderer '%s' Version '%s'", vendor, renderer, glGetString(GL_VERSION));
 	while (glGetError() != GL_NO_ERROR)
 		;
+	gl.bogusBlitFramebuffer = true;	// not supported in GL/GLES 2
+#ifndef GLES2
+	if (gl.gl_major >= 3)
+	{
+		gl.bogusBlitFramebuffer = !testBlitFramebuffer();
+		if (gl.bogusBlitFramebuffer)
+			WARN_LOG(RENDERER, "glBlitFramebuffer is bogus. Using quad drawer instead");
+		else
+			NOTICE_LOG(RENDERER, "glBlitFramebuffer test successful");
+	}
+#endif
 }
 
 struct ShaderUniforms_t ShaderUniforms;
@@ -890,66 +866,6 @@ bool CompilePipelineShader(PipelineShader* s)
 	return true;
 }
 
-void OSDVertexArray::defineVtxAttribs()
-{
-	glEnableVertexAttribArray(VERTEX_POS_ARRAY);
-	glVertexAttribPointer(VERTEX_POS_ARRAY, 2, GL_FLOAT, GL_FALSE, sizeof(OSDVertex), (void*)offsetof(OSDVertex, x));
-
-	glEnableVertexAttribArray(VERTEX_COL_BASE_ARRAY);
-	glVertexAttribPointer(VERTEX_COL_BASE_ARRAY, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(OSDVertex), (void*)offsetof(OSDVertex, r));
-
-	glEnableVertexAttribArray(VERTEX_UV_ARRAY);
-	glVertexAttribPointer(VERTEX_UV_ARRAY, 2, GL_FLOAT, GL_FALSE, sizeof(OSDVertex), (void*)offsetof(OSDVertex, u));
-
-	glDisableVertexAttribArray(VERTEX_COL_OFFS_ARRAY);
-}
-
-#ifdef __ANDROID__
-static void gl_load_osd_resources()
-{
-	OpenGlSource vertexSource;
-	vertexSource.addSource(VertexCompatShader)
-			.addSource(OSD_VertexShader);
-	OpenGlSource fragmentSource;
-	fragmentSource.addSource(PixelCompatShader)
-			.addSource(OSD_Shader);
-
-	gl.OSD_SHADER.program = gl_CompileAndLink(vertexSource.generate().c_str(), fragmentSource.generate().c_str());
-	gl.OSD_SHADER.scale = glGetUniformLocation(gl.OSD_SHADER.program, "scale");
-	glUniform1i(glGetUniformLocation(gl.OSD_SHADER.program, "tex"), 0);		//bind osd texture to slot 0
-
-	if (gl.OSD_SHADER.osd_tex == 0)
-	{
-		int width, height;
-		u8 *image_data = loadOSDButtons(width, height);
-		//Now generate the OpenGL texture object
-		gl.OSD_SHADER.osd_tex = glcache.GenTexture();
-		glcache.BindTexture(GL_TEXTURE_2D, gl.OSD_SHADER.osd_tex);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, (GLvoid *)image_data);
-		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-
-		delete[] image_data;
-	}
-	gl.OSD_SHADER.geometry = std::make_unique<GlBuffer>(GL_ARRAY_BUFFER);
-}
-#endif
-
-static void gl_free_osd_resources()
-{
-	if (gl.OSD_SHADER.program != 0)
-	{
-		glcache.DeleteProgram(gl.OSD_SHADER.program);
-		gl.OSD_SHADER.program = 0;
-	}
-
-    if (gl.OSD_SHADER.osd_tex != 0) {
-        glcache.DeleteTextures(1, &gl.OSD_SHADER.osd_tex);
-        gl.OSD_SHADER.osd_tex = 0;
-    }
-    gl.OSD_SHADER.geometry.reset();
-	gl.OSD_SHADER.vao.term();
-}
-
 static void create_modvol_shader()
 {
 	if (gl.modvol_shader.program != 0)
@@ -1000,7 +916,7 @@ static void gl_create_resources()
 	gl.vbo.modvols = std::make_unique<GlBuffer>(GL_ARRAY_BUFFER);
 	gl.vbo.idxs = std::make_unique<GlBuffer>(GL_ELEMENT_ARRAY_BUFFER);
 
-	initQuad();
+	gl.quad = std::make_unique<GlQuadDrawer>();
 }
 
 GLuint gl_CompileShader(const char* shader,GLuint type);
@@ -1065,7 +981,7 @@ bool OpenGLRenderer::Init()
 		u32 dst[16];
 		UpscalexBRZ(2, src, dst, 2, 2, false);
 	}
-	fog_needs_update = true;
+	updateFogTable = true;
 	TextureCacheData::SetDirectXColorOrder(false);
 	TextureCacheData::setUploadToGPUFlavor();
 
@@ -1119,68 +1035,12 @@ static void updatePaletteTexture(GLenum texture_slot)
 	glActiveTexture(GL_TEXTURE0);
 }
 
-void OpenGLRenderer::DrawOSD(bool clear_screen)
+void OpenGLRenderer::drawOSD()
 {
 	drawVmusAndCrosshairs(width, height);
-
 #ifndef LIBRETRO
 	gui_display_osd();
-#ifdef __ANDROID__
-	if (gl.OSD_SHADER.osd_tex == 0)
-		gl_load_osd_resources();
-	if (gl.OSD_SHADER.osd_tex != 0)
-	{
-		glcache.Disable(GL_SCISSOR_TEST);
-		glViewport(0, 0, settings.display.width, settings.display.height);
-
-		if (clear_screen)
-		{
-			glcache.ClearColor(0.7f, 0.7f, 0.7f, 1.f);
-			glClear(GL_COLOR_BUFFER_BIT);
-			renderLastFrame();
-			glViewport(0, 0, settings.display.width, settings.display.height);
-		}
-
-		glcache.UseProgram(gl.OSD_SHADER.program);
-
-		float scale_h = settings.display.height / 480.f;
-		float offs_x = (settings.display.width - scale_h * 640.f) / 2.f;
-		float scale[4];
-		scale[0] = 2.f / (settings.display.width / scale_h);
-		scale[1]= -2.f / 480.f;
-		scale[2]= 1.f - 2.f * offs_x / settings.display.width;
-		scale[3]= -1.f;
-		glUniform4fv(gl.OSD_SHADER.scale, 1, scale);
-
-		glActiveTexture(GL_TEXTURE0);
-		glcache.BindTexture(GL_TEXTURE_2D, gl.OSD_SHADER.osd_tex);
-
-		glBindFramebuffer(GL_FRAMEBUFFER, gl.ofbo.origFbo);
-
-		const std::vector<OSDVertex>& osdVertices = GetOSDVertices();
-		gl.OSD_SHADER.geometry->update(osdVertices.data(), osdVertices.size() * sizeof(OSDVertex));
-		gl.OSD_SHADER.vao.bind(gl.OSD_SHADER.geometry.get());
-
-		glcache.Enable(GL_BLEND);
-		glcache.Disable(GL_DEPTH_TEST);
-		glcache.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-		glcache.DepthMask(false);
-		glcache.DepthFunc(GL_ALWAYS);
-
-		glcache.Disable(GL_CULL_FACE);
-		int dfa = osdVertices.size() / 4;
-
-		for (int i = 0; i < dfa; i++)
-			glDrawArrays(GL_TRIANGLE_STRIP, i * 4, 4);
-
-		glCheck();
-		if (clear_screen)
-			imguiDriver->setFrameRendered();
-	}
 #endif
-#endif
-	GlVertexArray::unbind();
 }
 
 void OpenGLRenderer::Process(TA_context* ctx)
@@ -1188,19 +1048,19 @@ void OpenGLRenderer::Process(TA_context* ctx)
 	if (gl.gl_major < 3 && settings.platform.isNaomi2())
 		throw FlycastException("OpenGL ES 3.0+ required for Naomi 2");
 
-	if (KillTex)
+	if (resetTextureCache) {
 		TexCache.Clear();
+		resetTextureCache = false;
+	}
 	TexCache.Cleanup();
 
-	if (fog_needs_update && config::Fog)
-	{
-		fog_needs_update = false;
+	if (updateFogTable && config::Fog) {
+		updateFogTable = false;
 		updateFogTexture((u8 *)FOG_TABLE, getFogTextureSlot(), gl.single_channel_format);
 	}
-	if (palette_updated)
-	{
+	if (updatePalette) {
 		updatePaletteTexture(getPaletteTextureSlot());
-		palette_updated = false;
+		updatePalette = false;
 	}
 	ta_parse(ctx, gl.prim_restart_fixed_supported || gl.prim_restart_supported);
 }
@@ -1501,10 +1361,10 @@ bool OpenGLRenderer::Render()
 	if (!config::EmulateFramebuffer)
 	{
 		frameRendered = true;
-		DrawOSD(false);
+		clearLastFrame = false;
+		drawOSD();
 		renderVideoRouting();
 	}
-	
 	restoreCurrentFramebuffer();
 
 	return true;

@@ -433,8 +433,8 @@ void VulkanContext::beginFrame(vk::Extent2D extent)
 		vk::Extent2D caExtent = colorAttachments[currentImage]->getExtent();
 		if (extent != caExtent)
 		{
-			colorAttachments[currentImage].reset();
-			framebuffers[currentImage].reset();
+			addToFlight(new Deleter(std::move(colorAttachments[currentImage])));
+			addToFlight(new Deleter(std::move(framebuffers[currentImage])));
 		}
 	}
 	commandPool.BeginFrame();

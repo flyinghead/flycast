@@ -19,6 +19,7 @@ u16 NaomiBoardIDRead();
 u16 NaomiGameIDRead();
 void NaomiGameIDWrite(u16 data);
 void setGameSerialId(const u8 *data);
+const u8 *getGameSerialId();
 
 void initDriveSimSerialPipe();
 void Naomi_setDmaDelay();
@@ -60,7 +61,7 @@ static inline u32 g2ext_readMem(u32 addr, u32 size)
 	if (multiboard != nullptr)
 		return multiboard->readG2Ext(addr, size);
 
-	INFO_LOG(NAOMI, "Unhandled G2 Ext read<%d> at %x", size, addr);
+	DEBUG_LOG(NAOMI, "Unhandled G2 Ext read<%d> at %x", size, addr);
 	return 0;
 }
 
@@ -71,5 +72,5 @@ static inline void g2ext_writeMem(u32 addr, u32 data, u32 size)
 	else if (multiboard != nullptr)
 		multiboard->writeG2Ext(addr, size, data);
 	else
-		INFO_LOG(NAOMI, "Unhandled G2 Ext write<%d> at %x: %x", size, addr, data);
+		DEBUG_LOG(NAOMI, "Unhandled G2 Ext write<%d> at %x: %x", size, addr, data);
 }

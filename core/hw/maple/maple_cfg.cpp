@@ -215,10 +215,7 @@ static void mcfg_Create(MapleDeviceType type, u32 bus, u32 port, s32 player_num 
 {
 	delete MapleDevices[bus][port];
 	maple_device* dev = maple_Create(type);
-	dev->Setup(maple_GetAddress(bus, port), player_num);
-	dev->config = new MapleConfigMap(dev);
-	dev->OnSetup();
-	MapleDevices[bus][port] = dev;
+	dev->Setup(bus, port, player_num);
 }
 
 static void createNaomiDevices()
@@ -319,7 +316,8 @@ static void createDreamcastDevices()
 		switch (config::MapleMainDevices[bus])
 		{
 		case MDT_SegaController:
-			mcfg_Create(MDT_SegaController, bus, 5);
+		case MDT_SegaControllerXL:
+			mcfg_Create(config::MapleMainDevices[bus], bus, 5);
 			if (config::MapleExpansionDevices[bus][0] != MDT_None)
 				mcfg_Create(config::MapleExpansionDevices[bus][0], bus, 0);
 			if (config::MapleExpansionDevices[bus][1] != MDT_None)
@@ -403,12 +401,6 @@ void mcfg_CreateDevices()
 	default:
 		die("Unknown system");
 		break;
-	}
-	if (settings.platform.isArcade() && !settings.input.fourPlayerGames)
-	{
-		// No known 4-player lightgun/touchscreen game so far
-		config::CrosshairColor[2].override(0);
-		config::CrosshairColor[3].override(0);
 	}
 	vmuDigest();
 }

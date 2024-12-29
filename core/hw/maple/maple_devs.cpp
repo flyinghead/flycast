@@ -5,6 +5,7 @@
 #include "hw/pvr/spg.h"
 #include "audio/audiostream.h"
 #include "oslib/oslib.h"
+#include "oslib/storage.h"
 #include "hw/aica/sgc_if.h"
 #include "cfg/option.h"
 #include <zlib.h>
@@ -31,15 +32,19 @@ const char* maple_densha_controller_name    = "TAITO 001 Controller";
 const char* maple_sega_brand = "Produced By or Under License From SEGA ENTERPRISES,LTD.";
 
 //fill in the info
-void maple_device::Setup(u32 port, int playerNum)
+void maple_device::Setup(u32 bus, u32 port, int playerNum)
 {
-	maple_port = port;
-	bus_port = maple_GetPort(port);
-	bus_id = maple_GetBusId(port);
+	maple_port = (bus << 6) | (1 << port);
+	bus_port = port;
+	bus_id = bus;
 	logical_port[0] = 'A' + bus_id;
 	logical_port[1] = bus_port == 5 ? 'x' : '1' + bus_port;
 	logical_port[2] = 0;
 	player_num = playerNum == -1 ? bus_id : playerNum;
+
+	config = new MapleConfigMap(this);
+	OnSetup();
+	MapleDevices[bus][port] = this;
 }
 maple_device::~maple_device()
 {
@@ -331,10 +336,11 @@ u8 vmu_default[] = {
 
 struct maple_sega_vmu: maple_base
 {
-	FILE* file;
+	FILE *file = nullptr;
 	u8 flash_data[128_KB];
 	u8 lcd_data[192];
 	u8 lcd_data_decoded[48*32];
+	bool fullSaveNeeded = false;
 
 	MapleDeviceType get_device_type() override
 	{
@@ -360,11 +366,28 @@ struct maple_sega_vmu: maple_base
 				config->SetImage(lcd_data_decoded);
 				break;
 			}
+		fullSaveNeeded = true;
+	}
+	
+	bool fullSave()
+	{
+		if (file == nullptr)
+			return false;
+		if (std::fseek(file, 0, SEEK_SET) != 0) {
+			ERROR_LOG(MAPLE, "VMU %s: I/O error", logical_port);
+			return false;
+		}
+		if (std::fwrite(flash_data, sizeof(flash_data), 1, file) != 1) {
+			ERROR_LOG(MAPLE, "Failed to write the VMU %s to disk", logical_port);
+			return false;
+		}
+		fullSaveNeeded = false;
+		return true;
 	}
 
 	void initializeVmu()
 	{
-		INFO_LOG(MAPLE, "Initialising empty VMU...");
+		INFO_LOG(MAPLE, "Initialising empty VMU %s...", logical_port);
 
 		uLongf dec_sz = sizeof(flash_data);
 		int rv = uncompress(flash_data, &dec_sz, vmu_default, sizeof(vmu_default));
@@ -372,34 +395,44 @@ struct maple_sega_vmu: maple_base
 		verify(rv == Z_OK);
 		verify(dec_sz == sizeof(flash_data));
 
-		if (file != nullptr)
-		{
-			if (std::fwrite(flash_data, sizeof(flash_data), 1, file) != 1)
-				WARN_LOG(MAPLE, "Failed to write the VMU to disk");
-			if (std::fseek(file, 0, SEEK_SET) != 0)
-				WARN_LOG(MAPLE, "VMU: I/O error");
-		}
+		fullSave();
 	}
 
 	void OnSetup() override
 	{
 		memset(flash_data, 0, sizeof(flash_data));
 		memset(lcd_data, 0, sizeof(lcd_data));
-		std::string apath = hostfs::getVmuPath(logical_port);
-
-		file = nowide::fopen(apath.c_str(), "rb+");
-		if (file == nullptr)
-		{
-			INFO_LOG(MAPLE, "Unable to open VMU save file \"%s\", creating new file", apath.c_str());
-			file = nowide::fopen(apath.c_str(), "wb+");
-			if (file == nullptr)
-				ERROR_LOG(MAPLE, "Failed to create VMU save file \"%s\"", apath.c_str());
-			initializeVmu();
-		}
-
-		if (file != nullptr)
-			if (std::fread(flash_data, sizeof(flash_data), 1, file) != 1)
-				WARN_LOG(MAPLE, "Failed to read the VMU from disk");
+		
+        // Load existing vmu file if found
+        std::string rpath = hostfs::getVmuPath(logical_port, false);
+		// this might be a storage url
+		FILE *rfile = hostfs::storage().openFile(rpath, "rb");
+        if (rfile == nullptr) {
+            INFO_LOG(MAPLE, "Unable to open VMU file \"%s\", creating new file", rpath.c_str());
+        }
+        else
+        {
+            if (std::fread(flash_data, sizeof(flash_data), 1, rfile) != 1)
+                WARN_LOG(MAPLE, "Failed to read the VMU file \"%s\" from disk", rpath.c_str());
+            std::fclose(rfile);
+        }
+        // Open or create the vmu file to save to
+        std::string wpath = hostfs::getVmuPath(logical_port, true);
+        file = nowide::fopen(wpath.c_str(), "rb+");
+        if (file == nullptr)
+        {
+            file = nowide::fopen(wpath.c_str(), "wb+");
+			if (file == nullptr) {
+                ERROR_LOG(MAPLE, "Failed to create VMU save file \"%s\"", wpath.c_str());
+			}
+			else if (rfile != nullptr)
+			{
+				// VMU file is being renamed so save it fully now
+				// and delete the old file
+				if (fullSave())
+					nowide::remove(rpath.c_str());
+			}
+        }
 
 		u8 sum = 0;
 		for (u32 i = 0; i < sizeof(flash_data); i++)
@@ -408,6 +441,7 @@ struct maple_sega_vmu: maple_base
 		if (sum == 0)
 			// This means the existing VMU file is completely empty and needs to be recreated
 			initializeVmu();
+		fullSaveNeeded = false;
 	}
 
 	~maple_sega_vmu() override
@@ -633,17 +667,19 @@ struct maple_sega_vmu: maple_base
 
 						if (file != nullptr)
 						{
-							if (std::fseek(file, write_adr, SEEK_SET) != 0
+							if (fullSaveNeeded) {
+								if (!fullSave())
+									return MDRE_FileError;
+							}
+							else if (std::fseek(file, write_adr, SEEK_SET) != 0
 									|| std::fwrite(&flash_data[write_adr], write_len, 1, file) != 1)
 							{
-								WARN_LOG(MAPLE, "Failed to save VMU %s: I/O error", logical_port);
+								ERROR_LOG(MAPLE, "Failed to save VMU %s: I/O error", logical_port);
 								return MDRE_FileError; // I/O error
 							}
-							std::fflush(file);
 						}
-						else
-						{
-							INFO_LOG(MAPLE, "Failed to save VMU %s data", logical_port);
+						else {
+							WARN_LOG(MAPLE, "Failed to save VMU %s data", logical_port);
 						}
 						return MDRS_DeviceReply;
 					}
@@ -651,7 +687,7 @@ struct maple_sega_vmu: maple_base
 					case MFID_2_LCD:
 					{
 						DEBUG_LOG(MAPLE, "VMU %s LCD write", logical_port);
-						r32();
+						r32();	// PT, phase, block#
 						rptr(lcd_data,192);
 
 						u8 white=0xff,black=0x00;
@@ -978,7 +1014,15 @@ struct maple_sega_purupuru : maple_base
 			//2
 			w16(0x0640);	// 160 mA
 
-			return cmd == MDC_DeviceRequest ? MDRS_DeviceStatus : MDRS_DeviceStatusAll;
+			if (cmd == MDC_AllStatusReq)
+			{
+				const char *extra = "Version 1.000,1998/11/10,315-6211-AH   ,Vibration Motor:1,Fm:4 - 30Hz,Pow:7     ";
+				wptr(extra, strlen(extra));
+				return MDRS_DeviceStatusAll;
+			}
+			else {
+				return MDRS_DeviceStatus;
+			}
 
 			//get last vibration
 		case MDCF_GetCondition:
@@ -1598,6 +1642,51 @@ struct maple_densha_controller: maple_sega_controller
 	}
 };
 
+struct FullController : maple_sega_controller
+{
+	u32 get_capabilities() override
+	{
+		// byte 0: 0  0  0  0  0  0  0  0
+		// byte 1: 0  0  a5 a4 a3 a2 a1 a0
+		// byte 2: R2 L2 D2 U2 D  X  Y  Z
+		// byte 3: R  L  D  U  St A  B  C
+		return 0xffff3f00;	// 6 axes, all buttons
+	}
+
+	u16 getButtonState(const PlainJoystickState &pjs) override
+	{
+		u32 kcode = pjs.kcode;
+		mutualExclusion(kcode, DC_DPAD_UP | DC_DPAD_DOWN);
+		mutualExclusion(kcode, DC_DPAD_LEFT | DC_DPAD_RIGHT);
+		mutualExclusion(kcode, DC_DPAD2_UP | DC_DPAD2_DOWN);
+		mutualExclusion(kcode, DC_DPAD2_LEFT | DC_DPAD2_RIGHT);
+		return kcode;
+	}
+
+	u32 getAnalogAxis(int index, const PlainJoystickState &pjs) override
+	{
+		if (index == 4 || index == 5)
+		{
+			// Limit the magnitude of the analog axes to 128
+			s8 xaxis = pjs.joy[PJAI_X2] - 128;
+			s8 yaxis = pjs.joy[PJAI_Y2] - 128;
+			limit_joystick_magnitude<128>(xaxis, yaxis);
+			if (index == 4)
+				return xaxis + 128;
+			else
+				return yaxis + 128;
+		}
+		return maple_sega_controller::getAnalogAxis(index, pjs);
+	}
+
+	const char *get_device_name() override {
+		return "Dreamcast Controller XL";
+	}
+
+	MapleDeviceType get_device_type() override {
+		return MDT_SegaControllerXL;
+	}
+};
 
 // Emulates a 838-14245-92 maple to RS232 converter
 // wired to a 838-14243 RFID reader/writer (apparently Saxa HW210)
@@ -1634,7 +1723,7 @@ struct RFIDReaderWriter : maple_base
 		u32 resp = Dma(command, &buffer_in[1], buffer_in_len - 4, &buffer_out[1], outlen);
 
 		if (reci & 0x20)
-			reci |= maple_GetAttachedDevices(maple_GetBusId(reci));
+			reci |= maple_GetAttachedDevices(bus_id);
 
 		verify(u8(outlen / 4) * 4 == outlen);
 		buffer_out[0] = (resp << 0 ) | (reci << 8) | (send << 16) | ((outlen / 4) << 24);
@@ -1981,84 +2070,134 @@ const u8 *getRfidCardData(int playerNum)
 
 maple_device* maple_Create(MapleDeviceType type)
 {
-	maple_device* rv=0;
 	switch(type)
 	{
 	case MDT_SegaController:
 		if (!settings.platform.isAtomiswave())
-			rv = new maple_sega_controller();
+			return new maple_sega_controller();
 		else
-			rv = new maple_atomiswave_controller();
-		break;
-
-	case MDT_Microphone:
-		rv=new maple_microphone();
-		break;
-
-	case MDT_SegaVMU:
-		rv = new maple_sega_vmu();
-		break;
-
-	case MDT_PurupuruPack:
-		rv = new maple_sega_purupuru();
-		break;
-
-	case MDT_Keyboard:
-		rv = new maple_keyboard();
-		break;
-
-	case MDT_Mouse:
-		rv = new maple_mouse();
-		break;
-
+			return new maple_atomiswave_controller();
+	case MDT_Microphone:		return new maple_microphone();
+	case MDT_SegaVMU:			return new maple_sega_vmu();
+	case MDT_PurupuruPack:		return new maple_sega_purupuru();
+	case MDT_Keyboard:			return new maple_keyboard();
+	case MDT_Mouse:				return new maple_mouse();
 	case MDT_LightGun:
 		if (!settings.platform.isAtomiswave())
-			rv = new maple_lightgun();
+			return new maple_lightgun();
 		else
-			rv = new atomiswave_lightgun();
-		break;
-
-	case MDT_NaomiJamma:
-		rv = new maple_naomi_jamma();
-		break;
-
-	case MDT_TwinStick:
-		rv = new maple_sega_twinstick();
-		break;
-
-	case MDT_AsciiStick:
-		rv = new maple_ascii_stick();
-		break;
-
-	case MDT_MaracasController:
-		rv = new maple_maracas_controller();
-		break;
-
-	case MDT_FishingController:
-		rv = new maple_fishing_controller();
-		break;
-
-	case MDT_PopnMusicController:
-		rv = new maple_popnmusic_controller();
-		break;
-
-	case MDT_RacingController:
-		rv = new maple_racing_controller();
-		break;
-
-	case MDT_DenshaDeGoController:
-		rv = new maple_densha_controller();
-		break;
-
-	case MDT_RFIDReaderWriter:
-		rv = new RFIDReaderWriter();
-		break;
+			return new atomiswave_lightgun();
+	case MDT_NaomiJamma:		return new maple_naomi_jamma();
+	case MDT_TwinStick:			return new maple_sega_twinstick();
+	case MDT_AsciiStick:		return new maple_ascii_stick();
+	case MDT_MaracasController:	return new maple_maracas_controller();
+	case MDT_FishingController:	return new maple_fishing_controller();
+	case MDT_PopnMusicController:	return new maple_popnmusic_controller();
+	case MDT_RacingController:	return new maple_racing_controller();
+	case MDT_DenshaDeGoController:	return new maple_densha_controller();
+	case MDT_SegaControllerXL:	return new FullController();
+	case MDT_RFIDReaderWriter:	return new RFIDReaderWriter();
 
 	default:
 		ERROR_LOG(MAPLE, "Invalid device type %d", type);
 		die("Invalid maple device type");
 		break;
 	}
-
-	return rv;
+	return nullptr;
 }
+
+#if defined(_WIN32) && !defined(TARGET_UWP) && defined(USE_SDL) && !defined(LIBRETRO)
+#include "sdl/dreamconn.h"
+
+struct DreamConnVmu : public maple_sega_vmu
+{
+	std::shared_ptr<DreamConn> dreamconn;
+
+	DreamConnVmu(std::shared_ptr<DreamConn> dreamconn) : dreamconn(dreamconn) {
+	}
+
+	u32 dma(u32 cmd) override
+	{
+		if (dma_count_in >= 4)
+		{
+			const u32 functionId = *(u32 *)dma_buffer_in;
+			if ((cmd == MDCF_BlockWrite && functionId == MFID_2_LCD)				// LCD screen
+					|| (cmd == MDCF_SetCondition && functionId == MFID_3_Clock))	// Buzzer
+			{
+				const MapleMsg *msg = reinterpret_cast<const MapleMsg*>(dma_buffer_in - 4);
+				dreamconn->send(*msg);
+			}
+		}
+		return maple_sega_vmu::dma(cmd);
+	}
+
+	void copy(maple_sega_vmu *other)
+	{
+		memcpy(flash_data, other->flash_data, sizeof(flash_data));
+		memcpy(lcd_data, other->lcd_data, sizeof(lcd_data));
+		memcpy(lcd_data_decoded, other->lcd_data_decoded, sizeof(lcd_data_decoded));
+		fullSaveNeeded = other->fullSaveNeeded;
+	}
+
+	void updateScreen()
+	{
+		MapleMsg msg;
+		msg.command = MDCF_BlockWrite;
+		msg.destAP = maple_port;
+		msg.originAP = bus_id << 6;
+		msg.size = 2 + sizeof(lcd_data) / 4;
+		*(u32 *)&msg.data[0] = MFID_2_LCD;
+		*(u32 *)&msg.data[4] = 0;	// PT, phase, block#
+		memcpy(&msg.data[8], lcd_data, sizeof(lcd_data));
+		dreamconn->send(msg);
+	}
+};
+
+struct DreamConnPurupuru : public maple_sega_purupuru
+{
+	std::shared_ptr<DreamConn> dreamconn;
+
+	DreamConnPurupuru(std::shared_ptr<DreamConn> dreamconn) : dreamconn(dreamconn) {
+	}
+
+	u32 dma(u32 cmd) override
+	{
+		if (cmd == MDCF_BlockWrite || cmd == MDCF_SetCondition) {
+			const MapleMsg *msg = reinterpret_cast<const MapleMsg*>(dma_buffer_in - 4);
+			dreamconn->send(*msg);
+		}
+		return maple_sega_purupuru::dma(cmd);
+	}
+};
+
+void createDreamConnDevices(std::shared_ptr<DreamConn> dreamconn, bool gameStart)
+{
+	const int bus = dreamconn->getBus();
+	if (dreamconn->hasVmu())
+	{
+		maple_device *dev = MapleDevices[bus][0];
+		if (gameStart || (dev != nullptr && dev->get_device_type() == MDT_SegaVMU))
+		{
+			DreamConnVmu *vmu = new DreamConnVmu(dreamconn);
+			vmu->Setup(bus, 0);
+			if (!gameStart) {
+				// if loading a state, copy data from the regular vmu and send a screen update
+				vmu->copy(static_cast<maple_sega_vmu*>(dev));
+				vmu->updateScreen();
+			}
+			delete dev;
+		}
+	}
+	if (dreamconn->hasRumble())
+	{
+		maple_device *dev = MapleDevices[bus][1];
+		if (gameStart || (dev != nullptr && dev->get_device_type() == MDT_PurupuruPack))
+		{
+			delete dev;
+			DreamConnPurupuru *rumble = new DreamConnPurupuru(dreamconn);
+			rumble->Setup(bus, 1);
+		}
+	}
+}
+
+#endif

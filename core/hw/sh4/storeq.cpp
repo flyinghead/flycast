@@ -22,14 +22,13 @@
 static u32 CCN_QACR_TR[2];
 
 template<bool mmu_on>
-void DYNACALL do_sqw(u32 Dest, const SQBuffer *sqb)
+static void DYNACALL sqWrite(u32 dest, Sh4Context *ctx)
 {
-	u32 Address;
-
+	u32 address;
 	//Translate the SQ addresses as needed
 	if (mmu_on)
 	{
-		mmu_TranslateSQW(Dest, &Address);
+		mmu_TranslateSQW(dest, &address);
 	}
 	else
 	{
@@ -38,52 +37,46 @@ void DYNACALL do_sqw(u32 Dest, const SQBuffer *sqb)
 
 		u32 QACR = CCN_QACR_TR[0];
 		//QACR has already 0xE000_0000
-		Address = QACR + (Dest & ~0x1f);
+		address = QACR + (dest & ~0x1f);
 	}
 
-	if (((Address >> 26) & 7) != 4)//Area 4
+	if (((address >> 26) & 7) != 4)//Area 4
 	{
-		const SQBuffer *sq = &sqb[(Dest >> 5) & 1];
-		WriteMemBlock_nommu_sq(Address, sq);
+		const SQBuffer *sq = &ctx->sq_buffer[(dest >> 5) & 1];
+		WriteMemBlock_nommu_sq(address, sq);
 	}
 	else
 	{
-		TAWriteSQ(Address, sqb);
+		TAWriteSQ(address, ctx->sq_buffer);	// TODO pass the correct SQBuffer instead of letting TAWriteSQ deal with it
 	}
 }
 
-void DYNACALL do_sqw_mmu(u32 dst) {
-	do_sqw<true>(dst, sq_both);
-}
-
-static void DYNACALL do_sqw_simplemmu(u32 dst, const SQBuffer *sqb) {
-	do_sqw<true>(dst, sqb);
-}
-
 //yes, this micro optimization makes a difference
-static void DYNACALL do_sqw_nommu_area_3(u32 dst, const SQBuffer *sqb)
+static void DYNACALL sqWrite_nommu_area_3(u32 dest, Sh4Context *ctx)
 {
-	SQBuffer *pmem = (SQBuffer *)((u8 *)sqb + sizeof(Sh4RCB::sq_buffer) + sizeof(Sh4RCB::cntx) + 0x0C000000);
-	pmem += (dst & (RAM_SIZE_MAX - 1)) >> 5;
-	*pmem = sqb[(dst >> 5) & 1];
+	SQBuffer *pmem = (SQBuffer *)((u8 *)ctx + sizeof(Sh4Context) + 0x0C000000);
+	pmem += (dest & (RAM_SIZE_MAX - 1)) >> 5;
+	*pmem = ctx->sq_buffer[(dest >> 5) & 1];
 }
 
-static void DYNACALL do_sqw_nommu_area_3_nonvmem(u32 dst, const SQBuffer *sqb)
+static void DYNACALL sqWrite_nommu_area_3_nonvmem(u32 dest, Sh4Context *ctx)
 {
 	u8* pmem = &mem_b[0];
 
-	memcpy((SQBuffer *)&pmem[dst & (RAM_MASK - 0x1F)], &sqb[(dst >> 5) & 1], sizeof(SQBuffer));
+	memcpy((SQBuffer *)&pmem[dest & (RAM_MASK - 0x1F)], &ctx->sq_buffer[(dest >> 5) & 1], sizeof(SQBuffer));
 }
 
-static void DYNACALL do_sqw_nommu_full(u32 dst, const SQBuffer *sqb) {
-	do_sqw<false>(dst, sqb);
+static void DYNACALL sqWriteTA(u32 dest, Sh4Context *ctx)
+{
+	TAWriteSQ(dest, ctx->sq_buffer);
 }
 
 void setSqwHandler()
 {
+	Sh4Context& ctx = p_sh4rcb->cntx;
 	if (CCN_MMUCR.AT == 1)
 	{
-		do_sqw_nommu = &do_sqw_simplemmu;
+		ctx.doSqWrite = &sqWrite<true>;
 	}
 	else
 	{
@@ -95,17 +88,17 @@ void setSqwHandler()
 		{
 		case 3:
 			if (addrspace::virtmemEnabled())
-				do_sqw_nommu = &do_sqw_nommu_area_3;
+				ctx.doSqWrite = &sqWrite_nommu_area_3;
 			else
-				do_sqw_nommu = &do_sqw_nommu_area_3_nonvmem;
+				ctx.doSqWrite = &sqWrite_nommu_area_3_nonvmem;
 			break;
 
 		case 4:
-			do_sqw_nommu = &TAWriteSQ;
+			ctx.doSqWrite = &sqWriteTA;
 			break;
 
 		default:
-			do_sqw_nommu = &do_sqw_nommu_full;
+			ctx.doSqWrite = &sqWrite<false>;
 			break;
 		}
 	}

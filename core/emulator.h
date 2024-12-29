@@ -33,12 +33,10 @@ void loadGameSpecificSettings();
 void SaveSettings();
 
 int flycast_init(int argc, char* argv[]);
-void dc_reset(bool hard); // for tests only
 void flycast_term();
 void dc_exit();
 void dc_savestate(int index = 0, const u8 *pngData = nullptr, u32 pngSize = 0);
 void dc_loadstate(int index = 0);
-void dc_loadstate(Deserializer& deser);
 time_t dc_getStateCreationDate(int index);
 void dc_getStateScreenshot(int index, std::vector<u8>& pngData);
 
@@ -97,6 +95,8 @@ struct LoadProgress
 	std::atomic<const char *> label;
 	std::atomic<float> progress;
 };
+
+class Sh4Executor;
 
 class Emulator
 {
@@ -170,10 +170,27 @@ public:
 	 * Returns true if the cpu was started
 	 */
 	bool restartCpu();
+	/*
+	 * Load the machine state from the passed deserializer
+	 */
+	void loadstate(Deserializer& deser);
+	/**
+	 * Insert a new media in the GD-ROM drive.
+	 */
+	void insertGdrom(const std::string& path);
+	/**
+	 * Open the GD-ROM drive lid.
+	 */
+	void openGdrom();
+
+	Sh4Executor *getSh4Executor();
+
+	void dc_reset(bool hard); // for tests only
 
 private:
 	bool checkStatus(bool wait = false);
 	void runInternal();
+	void diskChange();
 
 	enum State {
 		Uninitialized = 0,
@@ -193,6 +210,8 @@ private:
 	u32 stepRangeTo = 0;
 	bool stopRequested = false;
 	std::mutex mutex;
+	Sh4Executor *interpreter = nullptr;
+	Sh4Executor *recompiler = nullptr;
 };
 extern Emulator emu;
 

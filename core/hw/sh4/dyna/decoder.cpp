@@ -95,9 +95,6 @@ static void dec_End(u32 dst, BlockEndType flags, bool delaySlot)
 		verify(state.JumpAddr != NullAddress);
 }
 
-#define SR_STATUS_MASK STATUS_MASK
-#define SR_T_MASK 1
-
 static u32 dec_jump_simm8(u32 op)
 {
 	return state.cpu.rpc + GetSImm8(op)*2 + 4;
@@ -114,8 +111,8 @@ static u32 dec_set_pr()
 }
 static void dec_write_sr(shil_param src)
 {
-	Emit(shop_and,mk_reg(reg_sr_status),src,mk_imm(SR_STATUS_MASK));
-	Emit(shop_and,mk_reg(reg_sr_T),src,mk_imm(SR_T_MASK));
+	Emit(shop_and, mk_reg(reg_sr_status), src, mk_imm(sr_t::MASK));
+	Emit(shop_and, mk_reg(reg_sr_T), src, mk_imm(1));
 }
 //bf <bdisp8>
 sh4dec(i1000_1011_iiii_iiii)
@@ -987,11 +984,11 @@ bool dec_DecodeBlock(RuntimeBlockInfo* rbi,u32 max_cycles)
 
 					if (!blk->has_fpu_op && OpDesc[op]->IsFloatingPoint())
 					{
-						if (sr.FD == 1)
+						if (Sh4cntx.sr.FD == 1)
 						{
 							// We need to know FPSCR to compile the block, so let the exception handler run first
 							// as it may change the fp registers
-							Do_Exception(next_pc, Sh4Ex_FpuDisabled);
+							Do_Exception(Sh4cntx.pc, Sh4Ex_FpuDisabled);
 							return false;
 						}
 						blk->has_fpu_op = true;

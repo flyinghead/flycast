@@ -14,40 +14,34 @@
 #include "debug/gdb_server.h"
 #include "../sh4_cycles.h"
 
-// SH4 underclock factor when using the interpreter so that it's somewhat usable
-#ifdef STRICT_MODE
-constexpr int CPU_RATIO = 1;
-#else
-constexpr int CPU_RATIO = 8;
-#endif
-
 Sh4ICache icache;
 Sh4OCache ocache;
-Sh4Cycles sh4cycles(CPU_RATIO);
+Sh4Interpreter *Sh4Interpreter::Instance;
 
-static void ExecuteOpcode(u16 op)
+void Sh4Interpreter::ExecuteOpcode(u16 op)
 {
-	if (sr.FD == 1 && OpDesc[op]->IsFloatingPoint())
-		RaiseFPUDisableException();
-	OpPtr[op](op);
+	if (ctx->sr.FD == 1 && OpDesc[op]->IsFloatingPoint())
+		throw SH4ThrownException(ctx->pc - 2, Sh4Ex_FpuDisabled);
+	OpPtr[op](ctx, op);
 	sh4cycles.executeCycles(op);
 }
 
-static u16 ReadNexOp()
+u16 Sh4Interpreter::ReadNexOp()
 {
-	if (!mmu_enabled() && (next_pc & 1))
+	u32 addr = ctx->pc;
+	if (!mmu_enabled() && (addr & 1))
 		// address error
-		throw SH4ThrownException(next_pc, Sh4Ex_AddressErrorRead);
+		throw SH4ThrownException(addr, Sh4Ex_AddressErrorRead);
 
-	u32 addr = next_pc;
-	next_pc += 2;
+	ctx->pc = addr + 2;
 
 	return IReadMem16(addr);
 }
 
-static void Sh4_int_Run()
+void Sh4Interpreter::Run()
 {
-	RestoreHostRoundingMode();
+	Instance = this;
+	ctx->restoreHostRoundingMode();
 
 	try {
 		do
@@ -58,36 +52,38 @@ static void Sh4_int_Run()
 					u32 op = ReadNexOp();
 
 					ExecuteOpcode(op);
-				} while (p_sh4rcb->cntx.cycle_counter > 0);
-				p_sh4rcb->cntx.cycle_counter += SH4_TIMESLICE;
+				} while (ctx->cycle_counter > 0);
+				ctx->cycle_counter += SH4_TIMESLICE;
 				UpdateSystem_INTC();
 			} catch (const SH4ThrownException& ex) {
 				Do_Exception(ex.epc, ex.expEvn);
 				// an exception requires the instruction pipeline to drain, so approx 5 cycles
 				sh4cycles.addCycles(5 * CPU_RATIO);
 			}
-		} while (sh4_int_bCpuRun);
+		} while (ctx->CpuRunning);
 	} catch (const debugger::Stop&) {
 	}
 
-	sh4_int_bCpuRun = false;
+	ctx->CpuRunning = false;
+	Instance = nullptr;
 }
 
-static void Sh4_int_Start()
+void Sh4Interpreter::Start()
 {
-	sh4_int_bCpuRun = true;
+	ctx->CpuRunning = true;
 }
 
-static void Sh4_int_Stop()
+void Sh4Interpreter::Stop()
 {
-	sh4_int_bCpuRun = false;
+	ctx->CpuRunning = false;
 }
 
-static void Sh4_int_Step()
+void Sh4Interpreter::Step()
 {
-	verify(!sh4_int_bCpuRun);
+	verify(!ctx->CpuRunning);
+	Instance = this;
 
-	RestoreHostRoundingMode();
+	ctx->restoreHostRoundingMode();
 	try {
 		u32 op = ReadNexOp();
 		ExecuteOpcode(op);
@@ -97,48 +93,49 @@ static void Sh4_int_Step()
 		sh4cycles.addCycles(5 * CPU_RATIO);
 	} catch (const debugger::Stop&) {
 	}
+	Instance = nullptr;
 }
 
-static void Sh4_int_Reset(bool hard)
+void Sh4Interpreter::Reset(bool hard)
 {
-	verify(!sh4_int_bCpuRun);
+	verify(!ctx->CpuRunning);
 
 	if (hard)
 	{
-		int schedNext = p_sh4rcb->cntx.sh4_sched_next;
-		memset(&p_sh4rcb->cntx, 0, sizeof(p_sh4rcb->cntx));
-		p_sh4rcb->cntx.sh4_sched_next = schedNext;
+		int schedNext = ctx->sh4_sched_next;
+		memset(ctx, 0, sizeof(*ctx));
+		ctx->sh4_sched_next = schedNext;
 	}
-	next_pc = 0xA0000000;
+	ctx->pc = 0xA0000000;
 
-	memset(r,0,sizeof(r));
-	memset(r_bank,0,sizeof(r_bank));
+	memset(ctx->r, 0, sizeof(ctx->r));
+	memset(ctx->r_bank, 0, sizeof(ctx->r_bank));
 
-	gbr=ssr=spc=sgr=dbr=vbr=0;
-	mac.full=pr=fpul=0;
+	ctx->gbr = ctx->ssr = ctx->spc = ctx->sgr = ctx->dbr = ctx->vbr = 0;
+	ctx->mac.full = ctx->pr = ctx->fpul = 0;
 
-	sh4_sr_SetFull(0x700000F0);
-	old_sr.status=sr.status;
+	ctx->sr.setFull(0x700000F0);
+	ctx->old_sr.status = ctx->sr.status;
 	UpdateSR();
 
-	fpscr.full = 0x00040001;
-	old_fpscr = fpscr;
+	ctx->fpscr.full = 0x00040001;
+	ctx->old_fpscr = ctx->fpscr;
 
 	icache.Reset(hard);
 	ocache.Reset(hard);
 	sh4cycles.reset();
-	p_sh4rcb->cntx.cycle_counter = SH4_TIMESLICE;
+	ctx->cycle_counter = SH4_TIMESLICE;
 
 	INFO_LOG(INTERPRETER, "Sh4 Reset");
 }
 
-static bool Sh4_int_IsCpuRunning()
+bool Sh4Interpreter::IsCpuRunning()
 {
-	return sh4_int_bCpuRun;
+	return ctx->CpuRunning;
 }
 
 //TODO : Check for valid delayslot instruction
-void ExecuteDelayslot()
+void Sh4Interpreter::ExecuteDelayslot()
 {
 	try {
 		u32 op = ReadNexOp();
@@ -148,12 +145,12 @@ void ExecuteDelayslot()
 		AdjustDelaySlotException(ex);
 		throw ex;
 	} catch (const debugger::Stop& e) {
-		next_pc -= 2;	// break on previous instruction
+		ctx->pc -= 2;	// break on previous instruction
 		throw e;
 	}
 }
 
-void ExecuteDelayslot_RTE()
+void Sh4Interpreter::ExecuteDelayslot_RTE()
 {
 	try {
 		// In an RTE delay slot, status register (SR) bits are referenced as follows.
@@ -163,61 +160,45 @@ void ExecuteDelayslot_RTE()
 		// instruction execution. The STC and STC.L SR instructions access all SR bits after modification.
 		u32 op = ReadNexOp();
 		// Now restore all SR bits
-		sh4_sr_SetFull(ssr);
+		ctx->sr.setFull(ctx->ssr);
 		// And execute
 		ExecuteOpcode(op);
 	} catch (const SH4ThrownException&) {
 		throw FlycastException("Fatal: SH4 exception in RTE delay slot");
 	} catch (const debugger::Stop& e) {
-		next_pc -= 2;	// break on previous instruction
+		ctx->pc -= 2;	// break on previous instruction
 		throw e;
 	}
 }
 
 // every SH4_TIMESLICE cycles
-int UpdateSystem()
+int UpdateSystem_INTC()
 {
 	Sh4cntx.sh4_sched_next -= SH4_TIMESLICE;
 	if (Sh4cntx.sh4_sched_next < 0)
 		sh4_sched_tick(SH4_TIMESLICE);
-
-	return Sh4cntx.interrupt_pend;
-}
-
-int UpdateSystem_INTC()
-{
-	if (UpdateSystem())
+	if (Sh4cntx.interrupt_pend)
 		return UpdateINTC();
 	else
 		return 0;
 }
 
-static void sh4_int_resetcache() {
+void Sh4Interpreter::Init()
+{
+	ctx = &p_sh4rcb->cntx;
+	memset(ctx, 0, sizeof(*ctx));
+	sh4cycles.init(ctx);
+	icache.init(ctx);
+	ocache.init(ctx);
 }
 
-static void Sh4_int_Init()
+void Sh4Interpreter::Term()
 {
-	static_assert(sizeof(Sh4cntx) == 448, "Invalid Sh4Cntx size");
-
-	memset(&p_sh4rcb->cntx, 0, sizeof(p_sh4rcb->cntx));
-}
-
-static void Sh4_int_Term()
-{
-	Sh4_int_Stop();
+	Stop();
 	INFO_LOG(INTERPRETER, "Sh4 Term");
 }
 
-void Get_Sh4Interpreter(sh4_if* cpu)
+Sh4Executor *Get_Sh4Interpreter()
 {
-	cpu->Start = Sh4_int_Start;
-	cpu->Run = Sh4_int_Run;
-	cpu->Stop = Sh4_int_Stop;
-	cpu->Step = Sh4_int_Step;
-	cpu->Reset = Sh4_int_Reset;
-	cpu->Init = Sh4_int_Init;
-	cpu->Term = Sh4_int_Term;
-	cpu->IsCpuRunning = Sh4_int_IsCpuRunning;
-
-	cpu->ResetCache = sh4_int_resetcache;
+	return new Sh4Interpreter();
 }

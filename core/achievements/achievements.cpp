@@ -779,8 +779,7 @@ std::string Achievements::getGameHash()
 {
 	if (settings.platform.isConsole())
 	{
-		const u32 diskType = libGDR_GetDiscType();
-		if (diskType == NoDisk || diskType == Open)
+		if (!gdr::isLoaded())
 			return {};
 		// Reopen the disk locally to avoid threading issues (CHD)
 		try {
@@ -964,7 +963,8 @@ void Achievements::unloadGame()
 
 void Achievements::diskChange()
 {
-	if (!active)
+	if (!active || settings.content.path.empty())
+		// Don't unload the game when the lid is open while swapping disks
 		return;
 	std::string hash = getGameHash();
 	if (hash == "") {

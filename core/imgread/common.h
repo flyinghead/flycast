@@ -60,10 +60,16 @@ enum DiskArea
 	DoubleDensity
 };
 
-bool InitDrive(const std::string& path);
-void TermDrive();
-bool DiscSwap(const std::string& path);
-void DiscOpenLid();
+namespace gdr {
+
+bool initDrive(const std::string& path);
+void termDrive();
+void insertDisk(const std::string& path);
+void openLid();
+bool isOpen();
+bool isLoaded();
+
+}
 
 struct Session
 {
@@ -112,7 +118,7 @@ struct Disc
 	DiscType type;
 	std::string catalog;
 
-	void ReadSectors(u32 FAD, u32 count, u8 *dst, u32 fmt, LoadProgress *progress = nullptr);
+	u32 ReadSectors(u32 FAD, u32 count, u8 *dst, u32 fmt, bool stopOnMiss = false, LoadProgress *progress = nullptr);
 
 	virtual ~Disc() 
 	{
@@ -255,7 +261,7 @@ struct RawTrackFile : TrackFile
 DiscType GuessDiscType(bool m1, bool m2, bool da);
 
 //IO
-void libGDR_ReadSector(u8 * buff,u32 StartSector,u32 SectorCount,u32 secsz);
+u32 libGDR_ReadSector(u8 * buff, u32 StartSector, u32 SectorCount, u32 secsz, bool stopOnMiss = false);
 void libGDR_ReadSubChannel(u8 * buff, u32 len);
 void libGDR_GetToc(u32 *toc, DiskArea area);
 u32 libGDR_GetDiscType();

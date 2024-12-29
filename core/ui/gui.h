@@ -74,7 +74,7 @@ void gui_setState(GuiState newState);
 
 static inline bool gui_is_open()
 {
-	return gui_state != GuiState::Closed && gui_state != GuiState::VJoyEdit;
+	return gui_state != GuiState::Closed;
 }
 static inline bool gui_is_content_browser()
 {

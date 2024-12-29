@@ -3,13 +3,15 @@
 #include "types.h"
 #include "hw/flashrom/flashrom.h"
 
-bool reios_init();
+void reios_init();
 void reios_set_flash(MemChip* flash);
 void reios_reset(u8* rom);
-
+void reios_serialize(Serializer& ser);
+void reios_deserialize(Deserializer& deser);
 void reios_term();
 
-void DYNACALL reios_trap(u32 op);
+struct Sh4Context;
+void DYNACALL reios_trap(Sh4Context *ctx, u32 op);
 
 void reios_disk_id();
 

@@ -28,8 +28,9 @@ template<typename T, bool ArchX64>
 class BaseXbyakRec : public Xbyak::CodeGenerator
 {
 protected:
-	BaseXbyakRec(Sh4CodeBuffer& codeBuffer) : BaseXbyakRec(codeBuffer, (u8 *)codeBuffer.get()) { }
-	BaseXbyakRec(Sh4CodeBuffer& codeBuffer, u8 *code_ptr) : Xbyak::CodeGenerator(codeBuffer.getFreeSpace(), code_ptr), codeBuffer(codeBuffer) { }
+	BaseXbyakRec(Sh4Context& sh4ctx, Sh4CodeBuffer& codeBuffer) : BaseXbyakRec(sh4ctx, codeBuffer, (u8 *)codeBuffer.get()) { }
+	BaseXbyakRec(Sh4Context& sh4ctx, Sh4CodeBuffer& codeBuffer, u8 *code_ptr)
+	: Xbyak::CodeGenerator(codeBuffer.getFreeSpace(), code_ptr), sh4ctx(sh4ctx), codeBuffer(codeBuffer) { }
 
 	using BinaryOp = void (BaseXbyakRec::*)(const Xbyak::Operand&, const Xbyak::Operand&);
 	using BinaryFOp = void (BaseXbyakRec::*)(const Xbyak::Xmm&, const Xbyak::Operand&);
@@ -582,7 +583,7 @@ protected:
 				mov(rcx, (uintptr_t)&sin_table);
 				mov(rcx, qword[rcx + rax * 8]);
 #if ALLOC_F64 == false
-				mov(rdx, (uintptr_t)op.rd.reg_ptr());
+				mov(rdx, (uintptr_t)op.rd.reg_ptr(sh4ctx));
 				mov(qword[rdx], rcx);
 #else
 				movd(mapXRegister(op.rd, 0), ecx);
@@ -600,8 +601,8 @@ protected:
 				verify(!isAllocAny(op.rd));
 				mov(ecx, dword[(size_t)&sin_table + eax * 8]);
 				mov(edx, dword[(size_t)&sin_table[0].u[1] + eax * 8]);
-				mov(dword[op.rd.reg_ptr()], ecx);
-				mov(dword[op.rd.reg_ptr() + 1], edx);
+				mov(dword[op.rd.reg_ptr(sh4ctx)], ecx);
+				mov(dword[op.rd.reg_ptr(sh4ctx) + 1], edx);
 #endif
 			}
 			break;
@@ -679,13 +680,13 @@ protected:
 					if (ArchX64)
 					{
 #ifndef XBYAK32
-						mov(rax, (size_t)param.reg_ptr());
+						mov(rax, (size_t)param.reg_ptr(sh4ctx));
 						mov(reg.cvt32(), dword[rax]);
 #endif
 					}
 					else
 					{
-						mov(reg.cvt32(), dword[param.reg_ptr()]);
+						mov(reg.cvt32(), dword[param.reg_ptr(sh4ctx)]);
 					}
 				}
 			}
@@ -702,7 +703,7 @@ protected:
 				if (ArchX64)
 				{
 #ifndef XBYAK32
-					mov(rax, (size_t)param.reg_ptr());
+					mov(rax, (size_t)param.reg_ptr(sh4ctx));
 					if (!reg.isXMM())
 						mov(reg.cvt32(), dword[rax]);
 					else
@@ -712,9 +713,9 @@ protected:
 				else
 				{
 					if (!reg.isXMM())
-						mov(reg.cvt32(), dword[param.reg_ptr()]);
+						mov(reg.cvt32(), dword[param.reg_ptr(sh4ctx)]);
 					else
-						movss((const Xbyak::Xmm &)reg, dword[param.reg_ptr()]);
+						movss((const Xbyak::Xmm &)reg, dword[param.reg_ptr(sh4ctx)]);
 				}
 			}
 		}
@@ -756,7 +757,7 @@ protected:
 			if (ArchX64)
 			{
 #ifndef XBYAK32
-				mov(rax, (size_t)param.reg_ptr());
+				mov(rax, (size_t)param.reg_ptr(sh4ctx));
 				if (!reg.isXMM())
 					mov(dword[rax], reg.cvt32());
 				else
@@ -766,13 +767,14 @@ protected:
 			else
 			{
 				if (!reg.isXMM())
-					mov(dword[param.reg_ptr()], reg.cvt32());
+					mov(dword[param.reg_ptr(sh4ctx)], reg.cvt32());
 				else
-					movss(dword[param.reg_ptr()], (const Xbyak::Xmm &)reg);
+					movss(dword[param.reg_ptr(sh4ctx)], (const Xbyak::Xmm &)reg);
 			}
 		}
 	}
 
+	Sh4Context& sh4ctx;
 	Sh4CodeBuffer& codeBuffer;
 
 private:
