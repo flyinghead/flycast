@@ -1478,7 +1478,9 @@ if(APPLE AND USE_METAL)
 			core/rend/metal/metal_shaders.h
 			core/rend/metal/metal_shaders.cpp
 			core/rend/metal/metal_texture.h
-			core/rend/metal/metal_texture.cpp)
+			core/rend/metal/metal_texture.cpp
+			core/deps/imgui/backends/imgui_impl_metal.h
+			core/deps/imgui/backends/imgui_impl_metal.mm)
 endif()
 
 if(WIN32 AND USE_DX9 AND NOT LIBRETRO AND NOT WINDOWS_STORE AND ("x86" IN_LIST ARCHITECTURE OR "x86_64" IN_LIST ARCHITECTURE))

@@ -17,3 +17,43 @@ Copyright 2024 flyinghead
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #pragma once
+#include <Metal/Metal.hpp>
+#include <QuartzCore/QuartzCore.hpp>
+
+#include "wsi/context.h"
+
+class MetalContext : public GraphicsContext
+{
+public:
+    MetalContext();
+    ~MetalContext() override;
+
+    bool init();
+    void term() override;
+
+    MTL::Device* GetDevice() const { return device; }
+
+    void resize() override;
+
+    std::string getDriverName() override {
+        return device->name()->utf8String();
+    }
+
+    std::string getDriverVersion() override {
+        return "";
+    }
+
+    bool isAMD() override {
+        return false;
+    }
+
+    bool hasPerPixel() override {
+        return true;
+    }
+
+    static MetalContext* Instance() { return contextInstance; }
+private:
+    MTL::Device* device = MTL::CreateSystemDefaultDevice();
+    CA::MetalLayer* layer;
+    static MetalContext* contextInstance;
+};

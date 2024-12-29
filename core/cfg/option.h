@@ -415,6 +415,8 @@ public:
 			RenderType::DirectX11
 #elif defined(USE_DX9)
 			RenderType::DirectX9
+#elif defined(USE_METAL)
+			RenderType::Metal
 #elif !defined(USE_OPENGL)
 			RenderType::Vulkan
 #else

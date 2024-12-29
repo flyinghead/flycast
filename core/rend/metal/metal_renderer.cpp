@@ -30,10 +30,18 @@
 bool MetalRenderer::Init()
 {
     NOTICE_LOG(RENDERER, "Metal renderer initializing");
+
+    shaders = MetalShaders();
+    samplers = MetalSamplers();
+
+    frameRendered = false;
+
+    return true;
 }
 
 void MetalRenderer::Term() {
-
+    shaders.term();
+    samplers.term();
 }
 
 void MetalRenderer::Process(TA_context *ctx) {
@@ -41,9 +49,14 @@ void MetalRenderer::Process(TA_context *ctx) {
 }
 
 bool MetalRenderer::Render() {
-
+    return true;
 }
 
 void MetalRenderer::RenderFramebuffer(const FramebufferInfo &info) {
 
+}
+
+Renderer* rend_Metal()
+{
+    return new MetalRenderer();
 }

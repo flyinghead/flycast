@@ -19,6 +19,8 @@ Copyright 2024 flyinghead
 
 #include "metal_shaders.h"
 
+#include "metal_context.h"
+
 static const char VertexShaderSource[] = R"(
 #include <metal_stdlib>
 #include <simd/simd.h>
@@ -337,8 +339,8 @@ fragment FragmentOut fs_main(VertexOut in [[stage_in]], constant FragmentShaderU
 // TODO: Handle gouraud interpolation
 // TODO: N2 Shaders
 
-MetalShaders::MetalShaders(MTL::Device *device) {
-    this->device = device;
+MetalShaders::MetalShaders() {
+    auto device = MetalContext::Instance()->GetDevice();
 
     NS::Error *error = nullptr;
     fragmentShaderLibrary = device->newLibrary(NS::String::string(FragmentShaderSource, NS::UTF8StringEncoding), nullptr, &error);

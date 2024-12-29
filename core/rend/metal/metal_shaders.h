@@ -63,7 +63,7 @@ struct FragmentShaderParams
 class MetalShaders
 {
 public:
-    MetalShaders(MTL::Device *device);
+    MetalShaders();
 
     MTL::Function *GetVertexShader(const VertexShaderParams& params) { return getShader(vertexShaders, params); }
 
@@ -89,7 +89,6 @@ public:
     }
 
 private:
-    MTL::Device *device;
     MTL::Library *vertexShaderLibrary;
     MTL::Library *fragmentShaderLibrary;
     MTL::FunctionConstantValues *vertexShaderConstants;
