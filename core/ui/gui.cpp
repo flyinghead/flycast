@@ -106,18 +106,18 @@ ImFont *largeFont;
 static Toast toast;
 static ThreadRunner uiThreadRunner;
 
-static void emuEventCallback(Event event, void *)
+static void emuEventCallback(EmuEvent event, void *)
 {
 	switch (event)
 	{
-	case Event::Resume:
+	case EmuEvent::Resume:
 		game_started = true;
 		vgamepad::startGame();
 		break;
-	case Event::Start:
+	case EmuEvent::Start:
 		GamepadDevice::load_system_mappings();
 		break;
-	case Event::Terminate:
+	case EmuEvent::Terminate:
 		GamepadDevice::load_system_mappings();
 		game_started = false;
 		break;
@@ -145,9 +145,9 @@ void gui_init()
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;  // Enable Keyboard Controls
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;   // Enable Gamepad Controls
 
-    EventManager::listen(Event::Resume, emuEventCallback);
-    EventManager::listen(Event::Start, emuEventCallback);
-	EventManager::listen(Event::Terminate, emuEventCallback);
+    EventManager::listen(EmuEvent::Resume, emuEventCallback);
+    EventManager::listen(EmuEvent::Start, emuEventCallback);
+	EventManager::listen(EmuEvent::Terminate, emuEventCallback);
     ggpo::receiveChatMessages([](int playerNum, const std::string& msg) { chat.receive(playerNum, msg); });
 }
 
@@ -3784,9 +3784,9 @@ void gui_term()
 		inited = false;
 		scanner.stop();
 		ImGui::DestroyContext();
-	    EventManager::unlisten(Event::Resume, emuEventCallback);
-	    EventManager::unlisten(Event::Start, emuEventCallback);
-	    EventManager::unlisten(Event::Terminate, emuEventCallback);
+	    EventManager::unlisten(EmuEvent::Resume, emuEventCallback);
+	    EventManager::unlisten(EmuEvent::Start, emuEventCallback);
+	    EventManager::unlisten(EmuEvent::Terminate, emuEventCallback);
 	    boxart.term();
 	}
 }

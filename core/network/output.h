@@ -59,13 +59,13 @@ class NetworkOutput
 			return;
 		}
 		set_non_blocking(server);
-		EventManager::listen(Event::VBlank, vblankCallback, this);
+		EventManager::listen(EmuEvent::VBlank, vblankCallback, this);
 	}
 
 public:
 	void term()
 	{
-		EventManager::unlisten(Event::VBlank, vblankCallback, this);
+		EventManager::unlisten(EmuEvent::VBlank, vblankCallback, this);
 		for (sock_t sock : clients)
 			closesocket(sock);
 		clients.clear();
@@ -96,7 +96,7 @@ public:
 	}
 
 private:
-	static void vblankCallback(Event event, void *param) {
+	static void vblankCallback(EmuEvent event, void *param) {
 		((NetworkOutput *)param)->acceptConnections();
 	}
 

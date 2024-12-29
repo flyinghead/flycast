@@ -360,7 +360,7 @@ const WidescreenCheat CheatManager::naomi_widescreen_cheats[] =
 };
 CheatManager cheatManager;
 
-static void vblankCallback(Event event, void *param)
+static void vblankCallback(EmuEvent event, void *param)
 {
 	((CheatManager *)param)->apply();
 }
@@ -369,9 +369,9 @@ void CheatManager::setActive(bool active)
 {
 	this->active = active;
 	if (active || widescreen_cheat != nullptr)
-		EventManager::listen(Event::VBlank, vblankCallback, this);
+		EventManager::listen(EmuEvent::VBlank, vblankCallback, this);
 	else
-		EventManager::unlisten(Event::VBlank, vblankCallback, this);
+		EventManager::unlisten(EmuEvent::VBlank, vblankCallback, this);
 }
 
 void CheatManager::loadCheatFile(const std::string& filename)
