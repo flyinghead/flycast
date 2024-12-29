@@ -40,7 +40,7 @@ void dc_loadstate(int index = 0);
 time_t dc_getStateCreationDate(int index);
 void dc_getStateScreenshot(int index, std::vector<u8>& pngData);
 
-enum class Event {
+enum class EmuEvent {
 	Start,
 	Pause,
 	Resume,
@@ -55,17 +55,17 @@ enum class Event {
 class EventManager
 {
 public:
-	using Callback = void (*)(Event, void *);
+	using Callback = void (*)(EmuEvent, void *);
 
-	static void listen(Event event, Callback callback, void *param = nullptr) {
+	static void listen(EmuEvent event, Callback callback, void *param = nullptr) {
 		instance().registerEvent(event, callback, param);
 	}
 
-	static void unlisten(Event event, Callback callback, void *param = nullptr) {
+	static void unlisten(EmuEvent event, Callback callback, void *param = nullptr) {
 		instance().unregisterEvent(event, callback, param);
 	}
 
-	static void event(Event event) {
+	static void event(EmuEvent event) {
 		instance().broadcastEvent(event);
 	}
 
@@ -76,11 +76,11 @@ private:
 		return _instance;
 	}
 
-	void registerEvent(Event event, Callback callback, void *param);
-	void unregisterEvent(Event event, Callback callback, void *param);
-	void broadcastEvent(Event event);
+	void registerEvent(EmuEvent event, Callback callback, void *param);
+	void unregisterEvent(EmuEvent event, Callback callback, void *param);
+	void broadcastEvent(EmuEvent event);
 
-	std::array<std::vector<std::pair<Callback, void *>>, static_cast<size_t>(Event::max) + 1> callbacks;
+	std::array<std::vector<std::pair<Callback, void *>>, static_cast<size_t>(EmuEvent::max) + 1> callbacks;
 };
 
 struct LoadProgress
