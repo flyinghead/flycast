@@ -18,3 +18,58 @@ Copyright 2024 flyinghead
 */
 
 #include "metal_context.h"
+#include "metal_driver.h"
+#include "sdl/sdl.h"
+#include "ui/imgui_driver.h"
+
+MetalContext *MetalContext::contextInstance;
+
+bool MetalContext::init() {
+    GraphicsContext::instance = this;
+
+#if defined(USE_SDL)
+    if (!sdl_recreate_window(SDL_WINDOW_METAL))
+        return false;
+
+    auto view = SDL_Metal_CreateView((SDL_Window *)window);
+
+    if (view == nullptr) {
+        term();
+        ERROR_LOG(RENDERER, "Failed to create SDL Metal View");
+        return false;
+    }
+
+    layer = static_cast<CA::MetalLayer *>(SDL_Metal_GetLayer(view));
+#endif
+
+    if (!device) {
+        term();
+        NOTICE_LOG(RENDERER, "Metal Device is null.");
+        return false;
+    }
+
+    NOTICE_LOG(RENDERER, "Created Metal view.");
+
+    imguiDriver = std::unique_ptr<ImGuiDriver>(new MetalDriver());
+    return true;
+}
+
+void MetalContext::resize() {
+
+}
+
+void MetalContext::term() {
+    GraphicsContext::instance = nullptr;
+    imguiDriver.reset();
+}
+
+MetalContext::MetalContext() {
+    verify(contextInstance == nullptr);
+    contextInstance = this;
+}
+
+MetalContext::~MetalContext() {
+    verify(contextInstance == this);
+    contextInstance = nullptr;
+}
+

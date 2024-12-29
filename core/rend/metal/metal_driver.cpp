@@ -16,22 +16,4 @@
     You should have received a copy of the GNU General Public License
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
-#pragma once
-#include "metal_shaders.h"
-#include "metal_texture.h"
-#include "hw/pvr/Renderer_if.h"
-
-class MetalRenderer final : public Renderer
-{
-public:
-    bool Init() override;
-    void Term() override;
-    void Process(TA_context* ctx) override;
-    bool Render() override;
-    void RenderFramebuffer(const FramebufferInfo& info) override;
-
-protected:
-    MetalShaders shaders;
-    MetalSamplers samplers;
-    bool frameRendered = false;
-};
+#include "metal_driver.h"
