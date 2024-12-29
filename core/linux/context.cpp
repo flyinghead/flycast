@@ -125,10 +125,6 @@ static void context_segfault(host_context_t* hostctx, void* segfault_ctx)
     #else
         #error "Unsupported OS"
 	#endif
-#elif HOST_CPU == CPU_MIPS
-	bicopy<ToSegfault>(hostctx->pc, MCTX(.pc));
-#elif HOST_CPU == CPU_GENERIC
-    //nothing!
 #else
 	#error Unsupported HOST_CPU
 #endif

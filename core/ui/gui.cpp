@@ -2899,12 +2899,8 @@ static void gui_settings_about()
 			"x86"
 #elif HOST_CPU == CPU_ARM
 			"ARM"
-#elif HOST_CPU == CPU_MIPS
-			"MIPS"
 #elif HOST_CPU == CPU_X64
 			"x86/64"
-#elif HOST_CPU == CPU_GENERIC
-			"Generic"
 #elif HOST_CPU == CPU_ARM64
 			"ARM64"
 #else
