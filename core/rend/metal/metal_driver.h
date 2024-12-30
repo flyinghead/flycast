@@ -35,11 +35,14 @@ public:
     }
 
     void renderDrawData(ImDrawData *drawData, bool gui_open) override {
-
+        if (gui_open)
+            frameRendered = true;
     }
 
     void present() override {
-
+        if (frameRendered)
+            //MetalContext::Instance()->GetDevice().pre
+        frameRendered = false;
     }
 
     ImTextureID getTexture(const std::string &name) override {

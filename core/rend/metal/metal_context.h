@@ -32,8 +32,8 @@ public:
     void term() override;
 
     MTL::Device* GetDevice() const { return device; }
-
     void resize() override;
+    void Present();
 
     std::string getDriverName() override {
         return device->name()->utf8String();

@@ -58,6 +58,10 @@ void MetalContext::resize() {
 
 }
 
+void MetalContext::Present() {
+
+}
+
 void MetalContext::term() {
     GraphicsContext::instance = nullptr;
     imguiDriver.reset();
