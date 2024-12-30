@@ -57,11 +57,11 @@ protected:
         }
     }
 
-    MTL::ScissorRect baseScissor;
-    MTL::ScissorRect currentScissor;
+    MTL::ScissorRect baseScissor {};
+    MTL::ScissorRect currentScissor {};
     TransformMatrix<COORD_DIRECTX> matrices;
 
-    PipelineManager pipelineManager;
+    MetalPipelineManager pipelineManager = MetalPipelineManager(this);
     MetalShaders shaders;
     MetalSamplers samplers;
     bool frameRendered = false;

@@ -20,8 +20,14 @@
 
 #include "metal_context.h"
 #include "metal_shaders.h"
+#include "metal_renderer.h"
 
-void PipelineManager::CreateDepthPassPipeline(int cullMode, bool naomi2)
+MetalPipelineManager::MetalPipelineManager(MetalRenderer *renderer) {
+    this->renderer = renderer;
+}
+
+
+void MetalPipelineManager::CreateDepthPassPipeline(int cullMode, bool naomi2)
 {
     MTL::RenderPipelineDescriptor *descriptor = MTL::RenderPipelineDescriptor::alloc()->init();
     descriptor->setLabel(NS::String::string("Depth Pass", NS::UTF8StringEncoding));
@@ -48,7 +54,7 @@ void PipelineManager::CreateDepthPassPipeline(int cullMode, bool naomi2)
     depthPassPipelines[hash(cullMode, naomi2)] = state;
 }
 
-void PipelineManager::CreatePipeline(u32 listType, bool sortTriangles, const PolyParam &pp, int gpuPalette, bool dithering) {
+void MetalPipelineManager::CreatePipeline(u32 listType, bool sortTriangles, const PolyParam &pp, int gpuPalette, bool dithering) {
     MTL::RenderPipelineDescriptor *descriptor = MTL::RenderPipelineDescriptor::alloc()->init();
     descriptor->setLabel(NS::String::string("Main Draw", NS::UTF8StringEncoding));
     descriptor->setVertexDescriptor(GetMainVertexInputDescriptor(true, pp.isNaomi2()));

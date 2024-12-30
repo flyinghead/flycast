@@ -21,14 +21,16 @@
 #include <Metal/Metal.hpp>
 #include <map>
 
-#include "metal_renderer.h"
 #include "cfg/option.h"
 #include "hw/pvr/ta_ctx.h"
 
-class PipelineManager
+class MetalRenderer;
+
+class MetalPipelineManager
 {
 public:
-    virtual ~PipelineManager() = default;
+    explicit MetalPipelineManager(MetalRenderer *renderer);
+    virtual ~MetalPipelineManager() = default;
 
     void term()
     {
