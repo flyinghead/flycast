@@ -32,7 +32,7 @@ bool MetalRenderer::Init()
 {
     NOTICE_LOG(RENDERER, "Metal renderer initializing");
 
-    pipelineManager = PipelineManager();
+    pipelineManager = MetalPipelineManager(this);
     shaders = MetalShaders();
     samplers = MetalSamplers();
 
@@ -180,7 +180,8 @@ void MetalRenderer::DrawPoly(MTL::RenderCommandEncoder *encoder, u32 listType, b
         // TODO: Bind Texture & Naomi2 Lights Buffers
     }
 
-    encoder->drawIndexedPrimitives(MTL::PrimitiveTypeTriangle, count, MTL::IndexTypeUInt16, , 0, 1);
+    // TODO: Bind Index Buffer
+    // encoder->drawIndexedPrimitives(MTL::PrimitiveTypeTriangle, count, MTL::IndexTypeUInt16, , 0, 1);
     encoder->popDebugGroup();
 }
 
@@ -205,7 +206,8 @@ void MetalRenderer::DrawSorted(MTL::RenderCommandEncoder *encoder, const std::ve
             encoder->setRenderPipelineState(pipelineManager.GetDepthPassPipeline(polyParam.isp.CullMode, polyParam.isNaomi2()));
             MTL::ScissorRect scissorRect {};
             SetTileClip(encoder, polyParam.tileclip, scissorRect);
-            encoder->drawIndexedPrimitives(MTL::PrimitiveTypeTriangle, param.count, MTL::IndexTypeUInt16, , pvrrc.idx.size() + param.first, 1);
+            // TODO: Bind Index Buffer
+            // encoder->drawIndexedPrimitives(MTL::PrimitiveTypeTriangle, param.count, MTL::IndexTypeUInt16, , pvrrc.idx.size() + param.first, 1);
         }
     }
 
