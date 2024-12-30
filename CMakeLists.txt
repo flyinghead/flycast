@@ -1506,6 +1506,8 @@ if(APPLE AND USE_METAL)
 			core/rend/metal/metal_texture.cpp
 			core/rend/metal/metal_pipeline.h
 			core/rend/metal/metal_pipeline.cpp
+			core/rend/metal/metal_buffer.h
+			core/rend/metal/metal_buffer.cpp
 			core/rend/metal/metal_driver.h
 			core/deps/imgui/backends/imgui_impl_metal.h
 			core/deps/imgui/backends/imgui_impl_metal.mm)

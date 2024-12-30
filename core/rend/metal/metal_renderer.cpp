@@ -36,6 +36,9 @@ bool MetalRenderer::Init()
     shaders = MetalShaders();
     samplers = MetalSamplers();
 
+    queue = MetalContext::Instance()->GetDevice()->newCommandQueue();
+    commandBuffer = queue->commandBuffer();
+
     frameRendered = false;
 
     return true;
@@ -45,18 +48,71 @@ void MetalRenderer::Term() {
     pipelineManager.term();
     shaders.term();
     samplers.term();
+    fogTexture = nullptr;
+    paletteTexture = nullptr;
 }
 
 void MetalRenderer::Process(TA_context *ctx) {
+    if (!ctx->rend.isRTT) {
+        frameRendered = false;
+        if (!config::EmulateFramebuffer)
+            clearLastFrame = false;
+    }
 
+    ta_parse(ctx, true);
+
+    // TODO can't update fog or palette twice in multi render
+    CheckFogTexture();
+    CheckPaletteTexture();
 }
 
 bool MetalRenderer::Render() {
-    return true;
+    if (pvrrc.isRTT) {
+
+    }
+    else {
+
+    }
+
+    Draw(fogTexture.get(), paletteTexture.get());
+    if (config::EmulateFramebuffer || pvrrc.isRTT)
+        // delay ending the render pass in case of multi render
+        EndRenderPass();
+
+    return !pvrrc.isRTT;
 }
 
 void MetalRenderer::RenderFramebuffer(const FramebufferInfo &info) {
 
+}
+
+void MetalRenderer::CheckFogTexture() {
+    if (!fogTexture)
+    {
+        fogTexture = std::make_unique<MetalTexture>();
+        fogTexture->tex_type = TextureType::_8;
+        updateFogTable = true;
+    }
+    if (!updateFogTable || !config::Fog)
+        return;
+    updateFogTable = false;
+    u8 texData[256];
+    MakeFogTexture(texData);
+
+    fogTexture->UploadToGPU(128, 2, texData, false);
+}
+
+void MetalRenderer::CheckPaletteTexture() {
+    if (!paletteTexture)
+    {
+        paletteTexture = std::make_unique<MetalTexture>();
+        paletteTexture->tex_type = TextureType::_8;
+    }
+    else if (!updatePalette)
+        return;
+    updatePalette = false;
+
+    paletteTexture->UploadToGPU(1024, 1, (u8 *)palette32_ram, false);
 }
 
 TileClipping MetalRenderer::SetTileClip(MTL::RenderCommandEncoder *encoder, u32 val, MTL::ScissorRect& clipRect) {
@@ -180,8 +236,7 @@ void MetalRenderer::DrawPoly(MTL::RenderCommandEncoder *encoder, u32 listType, b
         // TODO: Bind Texture & Naomi2 Lights Buffers
     }
 
-    // TODO: Bind Index Buffer
-    // encoder->drawIndexedPrimitives(MTL::PrimitiveTypeTriangle, count, MTL::IndexTypeUInt16, , 0, 1);
+    encoder->drawIndexedPrimitives(MTL::PrimitiveTypeTriangle, count, MTL::IndexTypeUInt32, curMainBuffer, offsets.indexOffset, 1);
     encoder->popDebugGroup();
 }
 
@@ -206,8 +261,8 @@ void MetalRenderer::DrawSorted(MTL::RenderCommandEncoder *encoder, const std::ve
             encoder->setRenderPipelineState(pipelineManager.GetDepthPassPipeline(polyParam.isp.CullMode, polyParam.isNaomi2()));
             MTL::ScissorRect scissorRect {};
             SetTileClip(encoder, polyParam.tileclip, scissorRect);
-            // TODO: Bind Index Buffer
-            // encoder->drawIndexedPrimitives(MTL::PrimitiveTypeTriangle, param.count, MTL::IndexTypeUInt16, , pvrrc.idx.size() + param.first, 1);
+            // TODO: Check index offset here
+            encoder->drawIndexedPrimitives(MTL::PrimitiveTypeTriangle, param.count, MTL::IndexTypeUInt32, curMainBuffer, pvrrc.idx.size() + param.first, 1);
         }
     }
 
@@ -227,6 +282,110 @@ void MetalRenderer::DrawList(MTL::RenderCommandEncoder *encoder, u32 listType, b
             DrawPoly(encoder, listType, sortTriangles, *pp, pp->first, pp->count);
 
     encoder->popDebugGroup();
+}
+
+void MetalRenderer::DrawModVols(MTL::RenderCommandEncoder *encoder, int first, int count)
+{
+    if (count == 0 || pvrrc.modtrig.empty() || !config::ModifierVolumes)
+        return;
+
+    encoder->pushDebugGroup(NS::String::string("DrawModVols", NS::UTF8StringEncoding));
+
+    ModifierVolumeParam* params = &pvrrc.global_param_mvo[first];
+
+    int mod_base = -1;
+
+    encoder->popDebugGroup();
+}
+
+void MetalRenderer::UploadMainBuffer(const VertexShaderUniforms &vertexUniforms, const FragmentShaderUniforms &fragmentUniforms) {
+    BufferPacker packer;
+
+    // Vertex
+    packer.add(pvrrc.verts.data(), pvrrc.verts.size() * sizeof(decltype(*pvrrc.verts.data())));
+    // Modifier Volumes
+    offsets.modVolOffset = packer.add(pvrrc.modtrig.data(), pvrrc.modtrig.size() * sizeof(decltype(*pvrrc.modtrig.data())));
+    // Index
+    offsets.indexOffset = packer.add(pvrrc.idx.data(), pvrrc.idx.size() * sizeof(decltype(*pvrrc.idx.data())));
+    // Uniform buffers
+    offsets.vertexUniformOffset = packer.addUniform(&vertexUniforms, sizeof(vertexUniforms));
+    offsets.fragmentUniformOffset = packer.addUniform(&fragmentUniforms, sizeof(fragmentUniforms));
+
+    std::vector<u8> n2uniforms;
+    if (settings.platform.isNaomi2())
+    {
+        // packNaomi2Uniforms(packer, offsets, n2uniforms, false);
+        // offsets.lightsOffset = packNaomi2Lights(packer);
+    }
+
+    MetalBufferData *buffer = GetMainBuffer(packer.size());
+    packer.upload(*buffer);
+    curMainBuffer = buffer->buffer;
+}
+
+bool MetalRenderer::Draw(const MetalTexture *fogTexture, const MetalTexture *paletteTexture) {
+    FragmentShaderUniforms fragUniforms = MakeFragmentUniforms<FragmentShaderUniforms>();
+    dithering = config::EmulateFramebuffer && pvrrc.fb_W_CTRL.fb_dither && pvrrc.fb_W_CTRL.fb_packmode <= 3;
+    if (dithering) {
+        switch (pvrrc.fb_W_CTRL.fb_packmode)
+        {
+            case 0: // 0555 KRGB 16 bit
+            case 3: // 1555 ARGB 16 bit
+                fragUniforms.ditherColorMax[0] = fragUniforms.ditherColorMax[1] = fragUniforms.ditherColorMax[2] = 31.f;
+            fragUniforms.ditherColorMax[3] = 255.f;
+            break;
+            case 1: // 565 RGB 16 bit
+                fragUniforms.ditherColorMax[0] = fragUniforms.ditherColorMax[2] = 31.f;
+            fragUniforms.ditherColorMax[1] = 63.f;
+            fragUniforms.ditherColorMax[3] = 255.f;
+            break;
+            case 2: // 4444 ARGB 16 bit
+                fragUniforms.ditherColorMax[0] = fragUniforms.ditherColorMax[1]
+                    = fragUniforms.ditherColorMax[2] = fragUniforms.ditherColorMax[3] = 15.f;
+            break;
+            default:
+                break;
+        }
+    }
+
+    currentScissor = MTL::ScissorRect {};
+
+    MTL::RenderPassDescriptor *descriptor = MTL::RenderPassDescriptor::alloc()->init();
+    MTL::RenderCommandEncoder *encoder = commandBuffer->renderCommandEncoder(descriptor);
+
+    // Upload vertex and index buffers
+    VertexShaderUniforms vtxUniforms;
+    vtxUniforms.ndcMat = matrices.GetNormalMatrix();
+
+    UploadMainBuffer(vtxUniforms, fragUniforms);
+
+    encoder->setVertexBuffer(curMainBuffer, offsets.vertexUniformOffset, 0);
+    encoder->setFragmentBuffer(curMainBuffer, offsets.fragmentUniformOffset, 0);
+
+    encoder->setFragmentTexture(fogTexture->texture, 2);
+    encoder->setFragmentTexture(paletteTexture->texture, 3);
+
+    RenderPass previous_pass {};
+    for (int render_pass = 0; render_pass < (int)pvrrc.render_passes.size(); render_pass++) {
+        const RenderPass& current_pass = pvrrc.render_passes[render_pass];
+
+        DEBUG_LOG(RENDERER, "Render pass %d OP %d PT %d TR %d MV %d autosort %d", render_pass + 1,
+                current_pass.op_count - previous_pass.op_count,
+                current_pass.pt_count - previous_pass.pt_count,
+                current_pass.tr_count - previous_pass.tr_count,
+                current_pass.mvo_count - previous_pass.mvo_count, current_pass.autosort);
+        DrawList(encoder, ListType_Opaque, false, pvrrc.global_param_op, previous_pass.op_count, current_pass.op_count);
+        DrawList(encoder, ListType_Punch_Through, false, pvrrc.global_param_pt, previous_pass.pt_count, current_pass.pt_count);
+        DrawModVols(encoder, previous_pass.mvo_count, current_pass.mvo_count - previous_pass.mvo_count);
+        if (current_pass.autosort) {
+            if (!config::PerStripSorting)
+                DrawSorted(encoder, pvrrc.sortedTriangles, previous_pass.sorted_tr_count, current_pass.sorted_tr_count, render_pass + 1 < (int)pvrrc.render_passes.size());
+        } else {
+            DrawList(encoder, ListType_Translucent, false, pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count);
+        }
+    }
+
+    return !pvrrc.isRTT;
 }
 
 Renderer* rend_Metal()

@@ -20,6 +20,7 @@ Copyright 2024 flyinghead
 #include <Metal/Metal.hpp>
 
 #include "types.h"
+#include <glm/glm.hpp>
 #include <map>
 
 
@@ -58,6 +59,24 @@ struct FragmentShaderParams
             | ((u32)bumpmap << 11) | ((u32)clamping << 12) | ((u32)trilinear << 13)
             | ((u32)palette << 14) | ((u32)divPosZ << 16) | ((u32)dithering << 17);
     }
+};
+
+// std140 alignment required
+struct VertexShaderUniforms
+{
+    glm::mat4 ndcMat;
+};
+
+// std140 alignment required
+struct FragmentShaderUniforms
+{
+    float colorClampMin[4];
+    float colorClampMax[4];
+    float sp_FOG_COL_RAM[4];	// Only using 3 elements but easier for std140
+    float sp_FOG_COL_VERT[4];	// same comment
+    float ditherColorMax[4];
+    float cp_AlphaTestValue;
+    float sp_FOG_DENSITY;
 };
 
 class MetalShaders
