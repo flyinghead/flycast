@@ -161,7 +161,7 @@ struct Disc
 
 			for (u32 j=tracks[i].StartFAD;j<=tracks[i].EndFAD;j++)
 			{
-				u8 temp[2352];
+				u8 temp[2448];
 				ReadSectors(j,1,temp,fmt);
 				std::fwrite(temp, fmt, 1, fo);
 			}

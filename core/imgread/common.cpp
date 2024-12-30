@@ -282,7 +282,7 @@ bool Disc::readSector(u32 FAD, u8 *dst, SectorFormat *sector_type, u8 *subcode, 
 
 u32 Disc::ReadSectors(u32 FAD, u32 count, u8* dst, u32 fmt, bool stopOnMiss, LoadProgress *progress)
 {
-	u8 temp[2352];
+	u8 temp[2448];
 	SectorFormat secfmt;
 	SubcodeFormat subfmt;
 
