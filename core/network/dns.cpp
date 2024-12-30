@@ -29,6 +29,9 @@ extern "C" {
 #include <pico_stack.h>
 #include <pico_ipv4.h>
 #include <pico_dns_common.h>
+#ifdef _MSC_VER
+#pragma pack(pop)
+#endif
 }
 
 void get_host_by_name(const char *name, struct pico_ip4 dnsaddr);

@@ -39,6 +39,9 @@ extern "C" {
 #include <pico_ipv4.h>
 #include <pico_tcp.h>
 #include <pico_dhcp_server.h>
+#ifdef _MSC_VER
+#pragma pack(pop)
+#endif
 }
 
 #include "net_platform.h"
