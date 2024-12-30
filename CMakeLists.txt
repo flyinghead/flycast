@@ -76,7 +76,7 @@ option(USE_ALSA "Build with ALSA support" ON)
 option(USE_LIBAO "Build with AO support" ON)
 option(USE_OSS "Build with OSS support" OFF)
 option(USE_PULSEAUDIO "Build with PulseAudio support" ON)
-option(USE_BREAKPAD "Build and link with breakpad library" ON)
+option(USE_BREAKPAD "Build and link with breakpad library" OFF)
 option(USE_LUA "Build with Lua support" ON)
 option(ENABLE_GDB_SERVER "Build with GDB debugging support" OFF)
 option(ENABLE_DC_PROFILER "Build with support for target machine (SH4) profiler" OFF)
@@ -1504,6 +1504,9 @@ if(APPLE AND USE_METAL)
 			core/rend/metal/metal_shaders.cpp
 			core/rend/metal/metal_texture.h
 			core/rend/metal/metal_texture.cpp
+			core/rend/metal/metal_pipeline.h
+			core/rend/metal/metal_pipeline.cpp
+			core/rend/metal/metal_driver.h
 			core/deps/imgui/backends/imgui_impl_metal.h
 			core/deps/imgui/backends/imgui_impl_metal.mm)
 endif()

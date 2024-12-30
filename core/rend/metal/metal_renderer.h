@@ -17,9 +17,13 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #pragma once
+#include "metal_pipeline.h"
 #include "metal_shaders.h"
 #include "metal_texture.h"
 #include "hw/pvr/Renderer_if.h"
+
+#include "rend/tileclip.h"
+#include "rend/transform_matrix.h"
 
 class MetalRenderer final : public Renderer
 {
@@ -29,9 +33,37 @@ public:
     void Process(TA_context* ctx) override;
     bool Render() override;
     void RenderFramebuffer(const FramebufferInfo& info) override;
+    MetalShaders* GetShaders() { return &shaders; }
+
+private:
+    void DrawPoly(MTL::RenderCommandEncoder *encoder, u32 listType, bool sortTriangles, const PolyParam& poly, u32 first, u32 count);
+    void DrawSorted(MTL::RenderCommandEncoder *encoder, const std::vector<SortedTriangle>& polys, u32 first, u32 last, bool multipass);
+    void DrawList(MTL::RenderCommandEncoder *encoder, u32 listType, bool sortTriangles, const std::vector<PolyParam>& polys, u32 first, u32 last);
+    void DrawModVols(MTL::RenderCommandEncoder *encoder, int first, int count);
 
 protected:
+    TileClipping SetTileClip(MTL::RenderCommandEncoder *encoder, u32 val, MTL::ScissorRect& clipRect);
+    void SetBaseScissor(MTL::Viewport viewport);
+
+    void SetScissor(MTL::RenderCommandEncoder *encoder, const MTL::ScissorRect& scissor)
+    {
+        if (scissor.x != currentScissor.x ||
+            scissor.y != currentScissor.y ||
+            scissor.width != currentScissor.width ||
+            scissor.height != currentScissor.height)
+        {
+            encoder->setScissorRect(scissor);
+            currentScissor = scissor;
+        }
+    }
+
+    MTL::ScissorRect baseScissor;
+    MTL::ScissorRect currentScissor;
+    TransformMatrix<COORD_DIRECTX> matrices;
+
+    PipelineManager pipelineManager;
     MetalShaders shaders;
     MetalSamplers samplers;
     bool frameRendered = false;
+    bool dithering = false;
 };

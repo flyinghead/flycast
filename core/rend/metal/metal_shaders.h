@@ -66,6 +66,7 @@ public:
     MetalShaders();
 
     MTL::Function *GetVertexShader(const VertexShaderParams& params) { return getShader(vertexShaders, params); }
+    MTL::Function *GetFragmentShader(const FragmentShaderParams& params) { return getShader(fragmentShaders, params); }
 
     void term()
     {
