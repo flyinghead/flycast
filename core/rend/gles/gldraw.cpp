@@ -570,6 +570,7 @@ void DrawModVols(int first, int count)
 	SetCull(0);
 	//enable color writes
 	glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
+	SetBaseClipping();
 
 	//black out any stencil with '1'
 	glcache.Enable(GL_BLEND);

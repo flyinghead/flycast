@@ -886,6 +886,7 @@ void DX11Renderer::drawModVols(int first, int count)
 	setCullMode(0);
 	//enable color writes
 	deviceContext->OMSetBlendState(blendStates.getState(true, 4, 5), nullptr, 0xffffffff);
+	deviceContext->RSSetScissorRects(1, &scissorRect);
 
 	//black out any stencil with '1'
 	//only pixels that are Modvol enabled, and in area 1

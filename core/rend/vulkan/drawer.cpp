@@ -297,6 +297,7 @@ void Drawer::DrawModVols(const vk::CommandBuffer& cmdBuffer, int first, int coun
 
 	int mod_base = -1;
 	vk::Pipeline pipeline;
+	vk::Rect2D scissorRect;
 
 	for (int cmv = 0; cmv < count; cmv++)
 	{
@@ -317,7 +318,6 @@ void Drawer::DrawModVols(const vk::CommandBuffer& cmdBuffer, int first, int coun
 
 		cmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
 		descriptorSets.bindPerPolyDescriptorSets(cmdBuffer, param, first + cmv, curMainBuffer, offsets.naomi2ModVolOffset);
-		vk::Rect2D scissorRect;
 		SetTileClip(cmdBuffer, param.tileclip, scissorRect);
 		// TODO inside clipping
 
@@ -333,6 +333,7 @@ void Drawer::DrawModVols(const vk::CommandBuffer& cmdBuffer, int first, int coun
 		}
 	}
 	cmdBuffer.bindVertexBuffers(0, curMainBuffer, {0});
+	SetTileClip(cmdBuffer, 0, scissorRect);
 
 	const std::array<float, 6> pushConstants = { 1 - FPU_SHAD_SCALE.scale_factor / 256.f, 0, 0, 0, 0, 0 };
 	cmdBuffer.pushConstants<float>(pipelineManager->GetPipelineLayout(), vk::ShaderStageFlagBits::eFragment, 0, pushConstants);
