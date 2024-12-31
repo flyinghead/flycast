@@ -55,16 +55,16 @@ extern jmethodID showScreenKeyboardMid;
 static jmethodID onGameStateChangeMid;
 extern jmethodID setVGamepadEditModeMid;
 
-static void emuEventCallback(Event event, void *)
+static void emuEventCallback(EmuEvent event, void *)
 {
 	switch (event)
 	{
-	case Event::Pause:
+	case EmuEvent::Pause:
 		game_started = false;
 		if (g_activity != nullptr)
 			jni::env()->CallVoidMethod(g_activity, onGameStateChangeMid, false);
 		break;
-	case Event::Resume:
+	case EmuEvent::Resume:
 		game_started = true;
 		if (g_activity != nullptr)
 			jni::env()->CallVoidMethod(g_activity, onGameStateChangeMid, true);
