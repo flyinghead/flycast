@@ -697,6 +697,7 @@ void D3DRenderer::drawModVols(int first, int count)
 	devCache.SetRenderState(D3DRS_COLORWRITEENABLE, 0);
 
 	int mod_base = -1;
+	int clip_rect[4] = {};
 
 	for (int cmv = 0; cmv < count; cmv++)
 	{
@@ -715,7 +716,6 @@ void D3DRenderer::drawModVols(int first, int count)
 		else
 			setMVS_Mode(Xor, param.isp);	// XOR'ing (closed volume)
 
-		int clip_rect[4] = {};
 		setTileClip(param.tileclip, clip_rect);
 		//TODO inside clipping
 
@@ -733,6 +733,7 @@ void D3DRenderer::drawModVols(int first, int count)
 	devCache.SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE);
 	//enable color writes
 	devCache.SetRenderState(D3DRS_COLORWRITEENABLE, D3DCOLORWRITEENABLE_ALPHA | D3DCOLORWRITEENABLE_RED | D3DCOLORWRITEENABLE_GREEN | D3DCOLORWRITEENABLE_BLUE);
+	setTileClip(0, clip_rect);
 
 	//black out any stencil with '1'
 	devCache.SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
