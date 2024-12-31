@@ -49,6 +49,11 @@ void MetalPipelineManager::CreateDepthPassPipeline(int cullMode, bool naomi2)
 
     NS::Error *error = nullptr;
     auto state = MetalContext::Instance()->GetDevice()->newRenderPipelineState(descriptor, &error);
+
+    if (state == nullptr) {
+        ERROR_LOG(RENDERER, "Failed to create Depth Render Pipeline State: %s", error->localizedDescription()->utf8String());
+    }
+
     descriptor->release();
 
     depthPassPipelines[hash(cullMode, naomi2)] = state;
@@ -71,6 +76,10 @@ void MetalPipelineManager::CreatePipeline(u32 listType, bool sortTriangles, cons
     attachment->setDestinationAlphaBlendFactor(GetBlendFactor(dst, false));
     attachment->setAlphaBlendOperation(MTL::BlendOperationAdd);
     attachment->setWriteMask(MTL::ColorWriteMaskAll);
+    attachment->setPixelFormat(MTL::PixelFormatBGRA8Unorm);
+
+    descriptor->setDepthAttachmentPixelFormat(MTL::PixelFormatDepth32Float_Stencil8);
+    descriptor->setStencilAttachmentPixelFormat(MTL::PixelFormatDepth32Float_Stencil8);
 
     bool divPosZ = !settings.platform.isNaomi2() && config::NativeDepthInterpolation;
 
@@ -101,6 +110,11 @@ void MetalPipelineManager::CreatePipeline(u32 listType, bool sortTriangles, cons
 
     NS::Error *error = nullptr;
     auto state = MetalContext::Instance()->GetDevice()->newRenderPipelineState(descriptor, &error);
+
+    if (state == nullptr) {
+        ERROR_LOG(RENDERER, "Failed to create Render Pipeline State: %s", error->localizedDescription()->utf8String());
+    }
+
     descriptor->release();
 
     pipelines[hash(listType, sortTriangles, &pp, gpuPalette, dithering)] = state;

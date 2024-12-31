@@ -95,11 +95,17 @@ public:
 
             desc->release();
 
-            return samplers.emplace(hash, sampler).first->second;
+            samplers.emplace(hash, sampler).first->second;
         }
+
         return sampler;
     }
 
 private:
     std::unordered_map<u32, MTL::SamplerState*> samplers;
+};
+
+class MetalTextureCache final : public BaseTextureCache<MetalTexture>
+{
+
 };

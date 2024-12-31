@@ -62,7 +62,7 @@ public:
     {
         u64 pipehash = hash(listType, sortTriangles, &pp, gpuPalette, dithering);
         const auto &pipeline = pipelines.find(pipehash);
-        if (pipeline != pipelines.end())
+        if (pipeline != pipelines.end() && pipeline->second != nullptr)
             return pipeline->second;
         CreatePipeline(listType, sortTriangles, pp, gpuPalette, dithering);
 
