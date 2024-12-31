@@ -36,9 +36,6 @@ bool MetalRenderer::Init()
     shaders = MetalShaders();
     samplers = MetalSamplers();
 
-    queue = MetalContext::Instance()->GetDevice()->newCommandQueue();
-    commandBuffer = queue->commandBuffer();
-
     frameRendered = false;
 
     return true;
@@ -75,11 +72,18 @@ bool MetalRenderer::Render() {
     }
 
     Draw(fogTexture.get(), paletteTexture.get());
-    if (config::EmulateFramebuffer || pvrrc.isRTT)
-        // delay ending the render pass in case of multi render
-        EndRenderPass();
+    // if (config::EmulateFramebuffer || pvrrc.isRTT)
+    //     // delay ending the render pass in case of multi render
+    //     EndRenderPass();
 
-    return !pvrrc.isRTT;
+    return true;
+}
+
+void MetalRenderer::EndRenderPass() {
+    if (!renderPassStarted)
+        return;
+
+    frameRendered = true;
 }
 
 void MetalRenderer::RenderFramebuffer(const FramebufferInfo &info) {
@@ -350,8 +354,9 @@ bool MetalRenderer::Draw(const MetalTexture *fogTexture, const MetalTexture *pal
 
     currentScissor = MTL::ScissorRect {};
 
+    MTL::CommandBuffer *buffer = MetalContext::Instance()->commandBuffer;
     MTL::RenderPassDescriptor *descriptor = MTL::RenderPassDescriptor::alloc()->init();
-    MTL::RenderCommandEncoder *encoder = commandBuffer->renderCommandEncoder(descriptor);
+    MTL::RenderCommandEncoder *encoder = buffer->renderCommandEncoder(descriptor);
 
     // Upload vertex and index buffers
     VertexShaderUniforms vtxUniforms;
@@ -385,6 +390,16 @@ bool MetalRenderer::Draw(const MetalTexture *fogTexture, const MetalTexture *pal
         }
     }
 
+    encoder->endEncoding();
+    buffer->presentDrawable(MetalContext::Instance()->GetLayer()->nextDrawable());
+    buffer->commit();
+
+    buffer->release();
+    encoder->release();
+
+    DEBUG_LOG(RENDERER, "Render command buffer released");
+
+    MetalContext::Instance()->commandBuffer = MetalContext::Instance()->GetQueue()->commandBuffer();
     return !pvrrc.isRTT;
 }
 

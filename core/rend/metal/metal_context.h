@@ -32,6 +32,9 @@ public:
     void term() override;
 
     MTL::Device* GetDevice() const { return device; }
+    CA::MetalLayer* GetLayer() const { return layer; }
+    MTL::CommandQueue* GetQueue() const { return queue; }
+    MTL::CommandBuffer *commandBuffer = nullptr;
     void resize() override;
     void Present();
 
@@ -54,6 +57,7 @@ public:
     static MetalContext* Instance() { return contextInstance; }
 private:
     MTL::Device* device = MTL::CreateSystemDefaultDevice();
+    MTL::CommandQueue *queue = nullptr;
     CA::MetalLayer* layer;
     static MetalContext* contextInstance;
 };

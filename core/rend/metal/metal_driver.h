@@ -22,8 +22,14 @@
 #include "metal_context.h"
 #include <unordered_map>
 
+#include "metal_texture.h"
+
 class MetalDriver final : public ImGuiDriver {
 public:
+    MetalDriver() {
+        ImGui_ImplMetal_Init(MetalContext::Instance()->GetDevice());
+    }
+
     void reset() override
     {
         ImGuiDriver::reset();
@@ -31,10 +37,42 @@ public:
     }
 
     void newFrame() override {
+        MetalContext *context = MetalContext::Instance();
+        drawable = context->GetLayer()->nextDrawable();
 
+        MTL::RenderPassDescriptor *descriptor = MTL::RenderPassDescriptor::alloc()->init();
+
+        descriptor->setDefaultRasterSampleCount(1);
+
+        auto color = descriptor->colorAttachments()->object(0);
+        color->setClearColor(MTL::ClearColor(0.f, 0.f, 0.f, 1.f));
+        color->setTexture(drawable->texture());
+        color->setLoadAction(MTL::LoadActionClear);
+        color->setStoreAction(MTL::StoreActionStore);
+
+        commandEncoder = context->commandBuffer->renderCommandEncoder(descriptor);
+
+        ImGui_ImplMetal_NewFrame(descriptor);
+
+        // descriptor->release();
     }
 
     void renderDrawData(ImDrawData *drawData, bool gui_open) override {
+        MetalContext *context = MetalContext::Instance();
+        MTL::CommandBuffer *buffer = context->commandBuffer;
+
+        ImGui_ImplMetal_RenderDrawData(drawData, buffer, commandEncoder);
+
+        commandEncoder->endEncoding();
+        buffer->presentDrawable(drawable);
+        buffer->commit();
+
+        buffer->release();
+        commandEncoder->release();
+        commandEncoder = nullptr;
+
+        context->commandBuffer = context->GetQueue()->commandBuffer();
+
         if (gui_open)
             frameRendered = true;
     }
@@ -49,36 +87,38 @@ public:
         auto it = textures.find(name);
         if (it != textures.end())
             return &it->second.texture;
-        else
-            return ImTextureID{};
+
+        return ImTextureID{};
     }
 
     ImTextureID updateTexture(const std::string &name, const u8 *data, int width, int height, bool nearestSampling) override {
-        Texture& texture = textures[name];
-        texture.texture->setPurgeableState(MTL::PurgeableStateEmpty);
+        Texture texture(std::make_unique<MetalTexture>());
+        texture.texture->tex_type = TextureType::_8888;
+        texture.texture->UploadToGPU(width, height, data, false);
 
-        MTL::TextureDescriptor *desc = MTL::TextureDescriptor::alloc()->init();
-        desc->setWidth(width);
-        desc->setHeight(height);
+        ImTextureID textureID = texture.texture->texture;
 
-        MTL::Region region = MTL::Region { 0, 0, static_cast<NS::UInteger>(width), static_cast<NS::UInteger>(height) };
-        texture.texture = MetalContext::Instance()->GetDevice()->newTexture(desc);
-        texture.texture->replaceRegion(region, 0, data, width * 4);
+        textures[name] = std::move(texture);
 
-        return texture.texture;
+        return textureID;
     }
 
     void deleteTexture(const std::string &name) override {
         auto it = textures.find(name);
-        it->second.texture->setPurgeableState(MTL::PurgeableStateEmpty);
+        it->second.texture->texture->setPurgeableState(MTL::PurgeableStateEmpty);
         textures.erase(name);
     }
 
 private:
     struct Texture {
-        MTL::Texture *texture;
+        Texture() = default;
+        Texture(std::unique_ptr<MetalTexture>&& texture) : texture(std::move(texture)) {}
+
+        std::unique_ptr<MetalTexture> texture;
     };
 
     bool frameRendered = false;
+    MTL::RenderCommandEncoder *commandEncoder;
+    CA::MetalDrawable *drawable;
     std::unordered_map<std::string, Texture> textures;
 };
