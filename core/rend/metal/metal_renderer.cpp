@@ -90,6 +90,21 @@ void MetalRenderer::RenderFramebuffer(const FramebufferInfo &info) {
 
 }
 
+BaseTextureCacheData *MetalRenderer::GetTexture(TSP tsp, TCW tcw) {
+    MetalTexture* tf = textureCache.getTextureCacheData(tsp, tcw);
+
+    if (tf->NeedsUpdate()) {
+        if (!tf->Update()) {
+            tf= nullptr;
+        }
+    }
+    else if (tf->IsCustomTextureAvailable()) {
+        // TODO
+    }
+
+    return tf;
+}
+
 void MetalRenderer::CheckFogTexture() {
     if (!fogTexture)
     {
@@ -225,10 +240,34 @@ void MetalRenderer::DrawPoly(MTL::RenderCommandEncoder *encoder, u32 listType, b
             palette_index
         };
 
+
         // TODO: Set & Bind Push Constants
     }
 
     encoder->setRenderPipelineState(pipelineManager.GetPipeline(listType, sortTriangles, poly, gpuPalette, dithering));
+
+    if (poly.texture != nullptr) {
+        auto texture = ((MetalTexture *)poly.texture)->texture;
+        encoder->setFragmentTexture(texture, 0);
+
+        // Texture sampler
+        encoder->setFragmentSamplerState(samplers.GetSampler(poly, listType == ListType_Punch_Through), 0);
+    }
+
+    // Fog sampler
+    TSP fogTsp = {};
+    fogTsp.FilterMode = 1;
+    fogTsp.ClampU = 1;
+    fogTsp.ClampV = 1;
+    encoder->setFragmentSamplerState(samplers.GetSampler(fogTsp), 2);
+
+    // Palette sampler
+    TSP palTsp = {};
+    palTsp.FilterMode = 0;
+    palTsp.ClampU = 1;
+    palTsp.ClampV = 1;
+    encoder->setFragmentSamplerState(samplers.GetSampler(palTsp), 3);
+
     if (poly.pcw.Texture || poly.isNaomi2())
     {
         u32 index = 0;
@@ -354,9 +393,91 @@ bool MetalRenderer::Draw(const MetalTexture *fogTexture, const MetalTexture *pal
 
     currentScissor = MTL::ScissorRect {};
 
+    if (frameBuffer != nullptr) {
+        frameBuffer->setPurgeableState(MTL::PurgeableStateEmpty);
+        frameBuffer->release();
+        frameBuffer = nullptr;
+    }
+
+    if (depthBuffer != nullptr) {
+        depthBuffer->setPurgeableState(MTL::PurgeableStateEmpty);
+        depthBuffer->release();
+        depthBuffer = nullptr;
+    }
+
+    MTL::TextureDescriptor *desc = MTL::TextureDescriptor::alloc()->init();
+    desc->setPixelFormat(MTL::PixelFormatBGRA8Unorm);
+    desc->setWidth(pvrrc.framebufferWidth);
+    desc->setHeight(pvrrc.framebufferHeight);
+    desc->setUsage(MTL::TextureUsagePixelFormatView | MTL::TextureUsageShaderRead | MTL::TextureUsageShaderWrite | MTL::TextureUsageRenderTarget);
+
+    frameBuffer = MetalContext::Instance()->GetDevice()->newTexture(desc);
+    desc->release();
+
+    MTL::TextureDescriptor *depthDesc = MTL::TextureDescriptor::alloc()->init();
+    depthDesc->setPixelFormat(MTL::PixelFormatDepth32Float_Stencil8);
+    depthDesc->setWidth(pvrrc.framebufferWidth);
+    depthDesc->setHeight(pvrrc.framebufferHeight);
+    depthDesc->setUsage(MTL::TextureUsagePixelFormatView | MTL::TextureUsageShaderRead | MTL::TextureUsageShaderWrite | MTL::TextureUsageRenderTarget);
+
+    depthBuffer = MetalContext::Instance()->GetDevice()->newTexture(depthDesc);
+    depthDesc->release();
+
+    auto drawable = MetalContext::Instance()->GetLayer()->nextDrawable();
+
     MTL::CommandBuffer *buffer = MetalContext::Instance()->commandBuffer;
     MTL::RenderPassDescriptor *descriptor = MTL::RenderPassDescriptor::alloc()->init();
+    auto color = descriptor->colorAttachments()->object(0);
+    color->setTexture(frameBuffer);
+    color->setLoadAction(MTL::LoadActionClear);
+    color->setStoreAction(MTL::StoreActionStore);
+
+    MTL::RenderPassDepthAttachmentDescriptor *depthAttachmentDescriptor = MTL::RenderPassDepthAttachmentDescriptor::alloc()->init();
+    depthAttachmentDescriptor->setTexture(depthBuffer);
+    depthAttachmentDescriptor->setLoadAction(MTL::LoadActionClear);
+    depthAttachmentDescriptor->setStoreAction(MTL::StoreActionStore);
+
+    MTL::RenderPassStencilAttachmentDescriptor *stencilAttachmentDescriptor = MTL::RenderPassStencilAttachmentDescriptor::alloc()->init();
+    stencilAttachmentDescriptor->setTexture(depthBuffer);
+    stencilAttachmentDescriptor->setLoadAction(MTL::LoadActionClear);
+    stencilAttachmentDescriptor->setStoreAction(MTL::StoreActionStore);
+
+    descriptor->setDepthAttachment(depthAttachmentDescriptor);
+    descriptor->setStencilAttachment(stencilAttachmentDescriptor);
+
+    depthAttachmentDescriptor->release();
+    stencilAttachmentDescriptor->release();
+
     MTL::RenderCommandEncoder *encoder = buffer->renderCommandEncoder(descriptor);
+
+    descriptor->release();
+
+    if (fogTexture == nullptr) {
+        encoder->setFragmentTexture(fogTexture->texture, 2);
+    }
+
+    if (paletteTexture == nullptr) {
+        encoder->setFragmentTexture(paletteTexture->texture, 3);
+    }
+
+    MTL::CaptureManager *captureManager;
+
+    // if (pvrrc.render_passes.size() > 0 && frameIndex >= 0) {
+    //     MTL::CaptureDescriptor *capture = MTL::CaptureDescriptor::alloc()->init();
+    //     capture->setCaptureObject(MetalContext::Instance()->GetDevice());
+    //     capture->setDestination(MTL::CaptureDestinationGPUTraceDocument);
+    //     std::string filePath = "/Users/isaacmarovitz/Documents/TRACES/flycast-" + std::to_string(frameIndex) + ".gputrace";
+    //     capture->setOutputURL(NS::URL::fileURLWithPath(NS::String::string(filePath.c_str(), NS::UTF8StringEncoding)));
+    //
+    //     captureManager = MTL::CaptureManager::sharedCaptureManager();
+    //
+    //     NS::Error *error = nullptr;
+    //     if (!captureManager->startCapture(capture, &error)) {
+    //         ERROR_LOG(RENDERER, "Failed to start capture, %s", error->localizedDescription()->utf8String());
+    //     }
+    // }
+    //
+    // frameIndex++;
 
     // Upload vertex and index buffers
     VertexShaderUniforms vtxUniforms;
@@ -366,9 +487,6 @@ bool MetalRenderer::Draw(const MetalTexture *fogTexture, const MetalTexture *pal
 
     encoder->setVertexBuffer(curMainBuffer, offsets.vertexUniformOffset, 0);
     encoder->setFragmentBuffer(curMainBuffer, offsets.fragmentUniformOffset, 0);
-
-    encoder->setFragmentTexture(fogTexture->texture, 2);
-    encoder->setFragmentTexture(paletteTexture->texture, 3);
 
     RenderPass previous_pass {};
     for (int render_pass = 0; render_pass < (int)pvrrc.render_passes.size(); render_pass++) {
@@ -391,8 +509,13 @@ bool MetalRenderer::Draw(const MetalTexture *fogTexture, const MetalTexture *pal
     }
 
     encoder->endEncoding();
-    buffer->presentDrawable(MetalContext::Instance()->GetLayer()->nextDrawable());
+    buffer->presentDrawable(drawable);
     buffer->commit();
+
+    //
+    // if (pvrrc.render_passes.size() > 0) {
+    //     captureManager->stopCapture();
+    // }
 
     buffer->release();
     encoder->release();

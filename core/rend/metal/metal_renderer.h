@@ -35,6 +35,7 @@ public:
     bool Render() override;
     void RenderFramebuffer(const FramebufferInfo& info) override;
     MetalShaders* GetShaders() { return &shaders; }
+    BaseTextureCacheData *GetTexture(TSP tsp, TCW tcw) override;;
 
 private:
     bool Draw(const MetalTexture *fogTexture, const MetalTexture *paletteTexture);
@@ -124,13 +125,18 @@ protected:
     MTL::ScissorRect currentScissor {};
     TransformMatrix<COORD_DIRECTX> matrices;
 
+    MTL::Texture* frameBuffer = nullptr;
+    MTL::Texture* depthBuffer = nullptr;
+
     MTL::Buffer *curMainBuffer = nullptr;
     std::vector<std::unique_ptr<MetalBufferData>> mainBuffers;
     MetalPipelineManager pipelineManager = MetalPipelineManager(this);
     MetalShaders shaders;
+    MetalTextureCache textureCache;
     std::unique_ptr<MetalTexture> fogTexture;
     std::unique_ptr<MetalTexture> paletteTexture;
     MetalSamplers samplers;
     bool frameRendered = false;
     bool dithering = false;
+    s64 frameIndex = -350;
 };

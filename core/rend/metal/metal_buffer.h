@@ -69,11 +69,11 @@ public:
     BufferPacker();
 
     u64 addUniform(const void *p, size_t size) {
-        return add(p, size, uniformAlignment);
+        return add(p, size, 16);
     }
 
     u64 addStorage(const void *p, size_t size) {
-        return add(p, size, storageAlignment);
+        return add(p, size, 16);
     }
 
     u64 add(const void *p, size_t size, u32 alignment = 4)
@@ -107,8 +107,6 @@ private:
     std::vector<const void *> chunks;
     std::vector<u32> chunkSizes;
     u64 offset = 0;
-    u64 uniformAlignment;
-    u64 storageAlignment;
 
     static inline u32 align(u64 offset, u32 alignment)
     {
