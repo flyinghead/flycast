@@ -1,5 +1,5 @@
 /*
-Copyright 2024 flyinghead
+    Copyright 2024 flyinghead
 
     This file is part of Flycast.
 
@@ -63,6 +63,8 @@ void MetalTexture::UploadToGPU(int width, int height, const u8 *temp_tex_buffer,
     desc->setHeight(height);
     desc->setPixelFormat(format);
     desc->setMipmapLevelCount(mipmapLevels);
+    desc->setStorageMode(MTL::StorageModeShared);
+    desc->setUsage(MTL::TextureUsageUnknown);
 
     auto device = MetalContext::Instance()->GetDevice();
 
@@ -77,6 +79,7 @@ bool MetalTexture::Delete()
 {
     texture->setPurgeableState(MTL::PurgeableStateEmpty);
     texture->release();
+    texture = nullptr;
 
     return true;
 }

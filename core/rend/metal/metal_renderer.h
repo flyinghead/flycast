@@ -43,10 +43,7 @@ private:
     void DrawList(MTL::RenderCommandEncoder *encoder, u32 listType, bool sortTriangles, const std::vector<PolyParam>& polys, u32 first, u32 last);
     void DrawModVols(MTL::RenderCommandEncoder *encoder, int first, int count);
     void UploadMainBuffer(const VertexShaderUniforms& vertexUniforms, const FragmentShaderUniforms& fragmentUniforms);
-
-    virtual void EndRenderPass() {
-        renderPassStarted = false;
-    }
+    void EndRenderPass();
 
 protected:
     TileClipping SetTileClip(MTL::RenderCommandEncoder *encoder, u32 val, MTL::ScissorRect& clipRect);
@@ -121,8 +118,6 @@ protected:
         u64 lightsOffset = 0;
     } offsets;
 
-    MTL::CommandQueue *queue = nullptr;
-    MTL::CommandBuffer *commandBuffer = nullptr;
     bool renderPassStarted = false;
 
     MTL::ScissorRect baseScissor {};

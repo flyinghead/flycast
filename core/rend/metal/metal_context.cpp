@@ -48,6 +48,10 @@ bool MetalContext::init() {
         return false;
     }
 
+    layer->setDevice(device);
+    queue = device->newCommandQueue();
+    commandBuffer = queue->commandBuffer();
+
     NOTICE_LOG(RENDERER, "Created Metal view.");
 
     imguiDriver = std::unique_ptr<ImGuiDriver>(new MetalDriver());

@@ -1,5 +1,5 @@
 /*
-Copyright 2024 flyinghead
+    Copyright 2024 flyinghead
 
     This file is part of Flycast.
 
