@@ -215,8 +215,8 @@ float4 palette_pixel_bilinear(texture2d<float> texture, sampler texture_sampler,
     return mix(temp0, temp1, weight.y);
 }
 
-fragment FragmentOut fs_main(VertexOut in [[stage_in]], constant FragmentShaderUniforms& uniforms,
-                             constant PushBlock& push_constants,
+fragment FragmentOut fs_main(VertexOut in [[stage_in]], constant FragmentShaderUniforms& uniforms [[buffer(0)]],
+                             constant PushBlock& push_constants [[buffer(1)]],
                              texture2d<float> tex [[texture(0), function_constant(pp_texture)]], sampler tex_sampler [[sampler(0), function_constant(pp_texture)]],
                              texture2d<float> fog_table [[texture(2), function_constant(has_fog_table)]], sampler fog_table_sampler [[sampler(2), function_constant(has_fog_table)]],
                              texture2d<float> palette [[texture(3), function_constant(has_palette)]], sampler palette_sampler [[sampler(3), function_constant(has_palette)]])
