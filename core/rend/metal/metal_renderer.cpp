@@ -240,7 +240,7 @@ void MetalRenderer::DrawPoly(MTL::RenderCommandEncoder *encoder, u32 listType, b
             palette_index
         };
 
-        // TODO: Set & Bind Push Constants
+        encoder->setFragmentBytes(pushConstants.data(), sizeof(pushConstants), 1);
     }
 
     encoder->setRenderPipelineState(pipelineManager.GetPipeline(listType, sortTriangles, poly, gpuPalette, dithering));
