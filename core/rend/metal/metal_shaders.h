@@ -84,6 +84,9 @@ class MetalShaders
 public:
     MetalShaders();
 
+    MTL::Function *GetBlitVertexShader() { return blitVertexShader; }
+    MTL::Function *GetBlitFragmentShader() { return blitFragmentShader; }
+
     MTL::Function *GetVertexShader(const VertexShaderParams& params) { return getShader(vertexShaders, params); }
     MTL::Function *GetFragmentShader(const FragmentShaderParams& params) { return getShader(fragmentShaders, params); }
 
@@ -97,6 +100,7 @@ public:
     }
 
 private:
+    MTL::Library *blitShaderLibrary;
     MTL::Library *vertexShaderLibrary;
     MTL::Library *fragmentShaderLibrary;
     MTL::FunctionConstantValues *vertexShaderConstants;
@@ -114,6 +118,9 @@ private:
     }
     MTL::Function *compileShader(const VertexShaderParams& params);
     MTL::Function *compileShader(const FragmentShaderParams& params);
+
+    MTL::Function* blitVertexShader;
+    MTL::Function* blitFragmentShader;
 
     std::map<u32, MTL::Function*> vertexShaders;
     std::map<u32, MTL::Function*> fragmentShaders;

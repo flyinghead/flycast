@@ -336,6 +336,44 @@ fragment FragmentOut fs_main(VertexOut in [[stage_in]], constant FragmentShaderU
 }
 )";
 
+static const char BlitShader[] = R"(
+#include <metal_stdlib>
+using namespace metal;
+
+struct VertexOut {
+    float4 position [[position]];
+    float2 texCoord;
+};
+
+vertex VertexOut vs_main(uint vertexID [[vertex_id]]) {
+    // Predefined positions and texture coordinates for a full-screen quad
+    float4 positions[4] = {
+        float4(-1.0, -1.0, 0.0, 1.0), // Bottom-left
+        float4( 1.0, -1.0, 0.0, 1.0), // Bottom-right
+        float4(-1.0,  1.0, 0.0, 1.0), // Top-left
+        float4( 1.0,  1.0, 0.0, 1.0)  // Top-right
+    };
+
+    float2 texCoords[4] = {
+        float2(0.0, 1.0), // Bottom-left
+        float2(1.0, 1.0), // Bottom-right
+        float2(0.0, 0.0), // Top-left
+        float2(1.0, 0.0)  // Top-right
+    };
+
+    VertexOut out;
+    out.position = positions[vertexID];
+    out.texCoord = texCoords[vertexID];
+    return out;
+}
+
+fragment float4 fs_main(VertexOut in [[stage_in]],
+                              texture2d<float> sourceTexture [[texture(0)]]) {
+    constexpr sampler textureSampler(mag_filter::linear, min_filter::linear);
+    return sourceTexture.sample(textureSampler, in.texCoord);
+}
+)";
+
 // TODO: Handle gouraud interpolation
 // TODO: N2 Shaders
 
@@ -355,6 +393,27 @@ MetalShaders::MetalShaders() {
     vertexShaderConstants = MTL::FunctionConstantValues::alloc()->init();
 
     if (!vertexShaderLibrary) {
+        ERROR_LOG(RENDERER, "%s", error->localizedDescription()->utf8String());
+        assert(false);
+    }
+
+    blitShaderLibrary = device->newLibrary(NS::String::string(BlitShader, NS::UTF8StringEncoding), nullptr, &error);
+
+    if (!blitShaderLibrary) {
+        ERROR_LOG(RENDERER, "%s", error->localizedDescription()->utf8String());
+        assert(false);
+    }
+
+    blitVertexShader = blitShaderLibrary->newFunction(NS::String::string("vs_main", NS::UTF8StringEncoding), nullptr, &error);
+
+    if (!blitVertexShader) {
+        ERROR_LOG(RENDERER, "%s", error->localizedDescription()->utf8String());
+        assert(false);
+    }
+
+    blitFragmentShader = blitShaderLibrary->newFunction(NS::String::string("fs_main", NS::UTF8StringEncoding), nullptr, &error);
+
+    if (!blitFragmentShader) {
         ERROR_LOG(RENDERER, "%s", error->localizedDescription()->utf8String());
         assert(false);
     }
