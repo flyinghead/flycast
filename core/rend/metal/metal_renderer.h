@@ -64,23 +64,26 @@ protected:
 
     MetalBufferData* GetMainBuffer(u32 size)
     {
-        MetalBufferData* buffer = nullptr;
-
-        if (!mainBuffers.empty())
+        if (mainBuffer != nullptr)
         {
-            buffer = mainBuffers.back().release();
-            mainBuffers.pop_back();
-            if (buffer->bufferSize < size)
-                {
+            if (mainBuffer->bufferSize < size) {
+                u32 newSize = (u32)mainBuffer->bufferSize;
+                while (newSize < size)
+                    newSize *= 2;
 
+                INFO_LOG(RENDERER, "Increasing main buffer size %zd -> %d", mainBuffer->bufferSize, newSize);
+                mainBuffer->buffer->setPurgeableState(MTL::PurgeableStateEmpty);
+                mainBuffer->buffer->release();
+
+                mainBuffer = new MetalBufferData(newSize);
             }
         }
         else
         {
-            buffer = new MetalBufferData(std::max(512 * 1024u, size));
+            mainBuffer = new MetalBufferData(std::max(512 * 1024u, size));
         }
 
-        return buffer;
+        return mainBuffer;
     }
 
     template<typename T>
@@ -129,7 +132,7 @@ protected:
     MTL::Texture* depthBuffer = nullptr;
 
     MTL::Buffer *curMainBuffer = nullptr;
-    std::vector<std::unique_ptr<MetalBufferData>> mainBuffers;
+    MetalBufferData* mainBuffer;
     MetalPipelineManager pipelineManager = MetalPipelineManager(this);
     MetalShaders shaders;
     MetalTextureCache textureCache;
