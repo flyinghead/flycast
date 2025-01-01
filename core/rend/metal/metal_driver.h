@@ -54,7 +54,7 @@ public:
 
         ImGui_ImplMetal_NewFrame(descriptor);
 
-        // descriptor->release();
+        descriptor->release();
     }
 
     void renderDrawData(ImDrawData *drawData, bool gui_open) override {
@@ -67,8 +67,6 @@ public:
         buffer->presentDrawable(drawable);
         buffer->commit();
 
-        buffer->release();
-        commandEncoder->release();
         commandEncoder = nullptr;
 
         context->commandBuffer = context->GetQueue()->commandBuffer();

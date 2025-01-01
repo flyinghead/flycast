@@ -34,28 +34,9 @@ public:
 
     void term()
     {
-        for (auto [i, pipeline] : pipelines) {
-            pipeline->release();
-        }
-
         pipelines.clear();
-
-        for (auto [i, pipeline] : depthPassPipelines) {
-            pipeline->release();
-        }
-
         depthPassPipelines.clear();
-
-        for (auto [i, state] : depthStencilStates) {
-            state->release();
-        }
-
         depthStencilStates.clear();
-
-        for (auto [i, state] : depthPassDepthStencilStates) {
-            state->release();
-        }
-
         depthPassDepthStencilStates.clear();
     }
 
