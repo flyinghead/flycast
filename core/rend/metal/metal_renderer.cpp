@@ -290,7 +290,7 @@ void MetalRenderer::DrawPoly(MTL::RenderCommandEncoder *encoder, u32 listType, b
 
     MTL::PrimitiveType primitive = sortTriangles && !config::PerStripSorting ? MTL::PrimitiveTypeTriangle : MTL::PrimitiveTypeTriangleStrip;
 
-    encoder->drawIndexedPrimitives(primitive, count, MTL::IndexTypeUInt32, curMainBuffer, offsets.indexOffset, 1);
+    encoder->drawIndexedPrimitives(primitive, count, MTL::IndexTypeUInt32, curMainBuffer, offsets.indexOffset + first * sizeof(u32), 1);
     encoder->popDebugGroup();
 }
 
