@@ -45,13 +45,25 @@ public:
         }
 
         depthPassPipelines.clear();
+
+        for (auto [i, state] : depthStencilStates) {
+            state->release();
+        }
+
+        depthStencilStates.clear();
+
+        for (auto [i, state] : depthPassDepthStencilStates) {
+            state->release();
+        }
+
+        depthPassDepthStencilStates.clear();
     }
 
     MTL::RenderPipelineState* GetDepthPassPipeline(int cullMode, bool naomi2)
     {
         u32 pipehash = hash(cullMode, naomi2);
         const auto &pipeline = depthPassPipelines.find(pipehash);
-        if (pipeline != depthPassPipelines.end())
+        if (pipeline != depthPassPipelines.end() && pipeline->second != nullptr)
             return pipeline->second;
         CreateDepthPassPipeline(cullMode, naomi2);
 
@@ -69,9 +81,34 @@ public:
         return pipelines[pipehash];
     }
 
+    MTL::DepthStencilState* GetDepthPassDepthStencilStates(int cullMode, bool naomi2)
+    {
+        u32 pipehash = hash(cullMode, naomi2);
+        const auto &state = depthPassDepthStencilStates.find(pipehash);
+        if (state != depthPassDepthStencilStates.end() && state->second != nullptr)
+            return state->second;
+        CreateDepthPassDepthStencilState(cullMode, naomi2);
+
+        return depthPassDepthStencilStates[pipehash];
+    }
+
+    MTL::DepthStencilState* GetDepthStencilStates(u32 listType, bool sortTriangles, const PolyParam& pp, int gpuPalette, bool dithering)
+    {
+        u64 pipehash = hash(listType, sortTriangles, &pp, gpuPalette, dithering);
+        const auto &state = depthStencilStates.find(pipehash);
+        if (state != depthStencilStates.end() && state->second != nullptr)
+            return state->second;
+        CreateDepthStencilState(listType, sortTriangles, pp, gpuPalette, dithering);
+
+        return depthStencilStates[pipehash];
+    }
+
 private:
     void CreateDepthPassPipeline(int cullMode, bool naomi2);
     void CreatePipeline(u32 listType, bool sortTriangles, const PolyParam& pp, int gpuPalette, bool dithering);
+
+    void CreateDepthPassDepthStencilState(int cullMode, bool naomi2);
+    void CreateDepthStencilState(u32 listType, bool sortTriangles, const PolyParam& pp, int gpuPalette, bool dithering);
 
     u64 hash(u32 listType, bool sortTriangles, const PolyParam *pp, int gpuPalette, bool dithering) const
     {
@@ -158,4 +195,19 @@ private:
     MetalRenderer *renderer;
     std::map<u64, MTL::RenderPipelineState*> pipelines;
     std::map<u32, MTL::RenderPipelineState*> depthPassPipelines;
+
+    std::map<u64, MTL::DepthStencilState*> depthStencilStates;
+    std::map<u32, MTL::DepthStencilState*> depthPassDepthStencilStates;
+};
+
+static const MTL::CompareFunction depthOps[] =
+{
+    MTL::CompareFunctionNever,        // 0 Never
+    MTL::CompareFunctionLess,         // 1 Less
+    MTL::CompareFunctionEqual,        // 2 Equal
+    MTL::CompareFunctionLessEqual,    // 3 Less Or Equal
+    MTL::CompareFunctionGreater,      // 4 Greater
+    MTL::CompareFunctionNotEqual,     // 5 Not Equal
+    MTL::CompareFunctionGreaterEqual, // 6 Greater Or Equal
+    MTL::CompareFunctionAlways,       // 7 Always
 };
