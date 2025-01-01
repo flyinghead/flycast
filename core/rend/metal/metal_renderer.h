@@ -138,5 +138,4 @@ protected:
     MetalSamplers samplers;
     bool frameRendered = false;
     bool dithering = false;
-    s64 frameIndex = -350;
 };

@@ -378,6 +378,8 @@ void MetalRenderer::UploadMainBuffer(const VertexShaderUniforms &vertexUniforms,
 }
 
 bool MetalRenderer::Draw(const MetalTexture *fogTexture, const MetalTexture *paletteTexture) {
+    NS::AutoreleasePool *pool = NS::AutoreleasePool::alloc()->init();
+
     FragmentShaderUniforms fragUniforms = MakeFragmentUniforms<FragmentShaderUniforms>();
     dithering = config::EmulateFramebuffer && pvrrc.fb_W_CTRL.fb_dither && pvrrc.fb_W_CTRL.fb_packmode <= 3;
     if (dithering) {
@@ -471,25 +473,6 @@ bool MetalRenderer::Draw(const MetalTexture *fogTexture, const MetalTexture *pal
         encoder->setFragmentTexture(paletteTexture->texture, 3);
     }
 
-    MTL::CaptureManager *captureManager;
-
-    // if (pvrrc.render_passes.size() > 0 && frameIndex >= 0) {
-    //     MTL::CaptureDescriptor *capture = MTL::CaptureDescriptor::alloc()->init();
-    //     capture->setCaptureObject(MetalContext::Instance()->GetDevice());
-    //     capture->setDestination(MTL::CaptureDestinationGPUTraceDocument);
-    //     std::string filePath = "/Users/isaacmarovitz/Documents/TRACES/flycast-" + std::to_string(frameIndex) + ".gputrace";
-    //     capture->setOutputURL(NS::URL::fileURLWithPath(NS::String::string(filePath.c_str(), NS::UTF8StringEncoding)));
-    //
-    //     captureManager = MTL::CaptureManager::sharedCaptureManager();
-    //
-    //     NS::Error *error = nullptr;
-    //     if (!captureManager->startCapture(capture, &error)) {
-    //         ERROR_LOG(RENDERER, "Failed to start capture, %s", error->localizedDescription()->utf8String());
-    //     }
-    // }
-    //
-    // frameIndex++;
-
     // Upload vertex and index buffers
     VertexShaderUniforms vtxUniforms;
     vtxUniforms.ndcMat = matrices.GetNormalMatrix();
@@ -522,14 +505,7 @@ bool MetalRenderer::Draw(const MetalTexture *fogTexture, const MetalTexture *pal
     encoder->endEncoding();
     buffer->presentDrawable(drawable);
     buffer->commit();
-
-    //
-    // if (pvrrc.render_passes.size() > 0) {
-    //     captureManager->stopCapture();
-    // }
-
-    buffer->release();
-    encoder->release();
+    pool->release();
 
     DEBUG_LOG(RENDERER, "Render command buffer released");
 

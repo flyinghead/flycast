@@ -25,7 +25,9 @@ struct MetalBufferData
     MetalBufferData(u64 size);
     ~MetalBufferData()
     {
+        buffer->setPurgeableState(MTL::PurgeableStateEmpty);
         buffer->release();
+        buffer = nullptr;
     }
 
     void upload(u32 size, const void *data, u32 bufOffset = 0) const

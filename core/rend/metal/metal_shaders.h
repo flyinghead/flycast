@@ -89,20 +89,8 @@ public:
 
     void term()
     {
-        for (auto &[u, func] : vertexShaders) {
-            func->release();
-        }
-
         vertexShaders.clear();
-
-        for (auto &[u, func] : fragmentShaders) {
-            func->release();
-        }
-
         fragmentShaders.clear();
-
-        vertexShaderLibrary->release();
-        fragmentShaderLibrary->release();
 
         vertexShaderConstants->release();
         fragmentShaderConstants->release();

@@ -56,6 +56,7 @@ public:
 
     static MetalContext* Instance() { return contextInstance; }
 private:
+    NS::AutoreleasePool *pool;
     MTL::Device* device = MTL::CreateSystemDefaultDevice();
     MTL::CommandQueue *queue = nullptr;
     CA::MetalLayer* layer;
