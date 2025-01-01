@@ -863,12 +863,12 @@ private:
 		agentInterrupt();
 	}
 
-	static void emuEventCallback(Event event, void *arg)
+	static void emuEventCallback(EmuEvent event, void *arg)
 	{
 		GdbServer *gdbServer = static_cast<GdbServer*>(arg);
 		switch (event)
 		{
-		case Event::Resume:
+		case EmuEvent::Resume:
 			try {
 				if (!gdbServer->isRunning())
 					gdbServer->run();
@@ -876,7 +876,7 @@ private:
 				ERROR_LOG(COMMON, "%s", e.what());
 			}
 			break;
-		case Event::Terminate:
+		case EmuEvent::Terminate:
 			gdbServer->stop();
 			break;
 		default:

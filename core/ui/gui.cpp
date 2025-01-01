@@ -105,18 +105,18 @@ ImFont *largeFont;
 static Toast toast;
 static ThreadRunner uiThreadRunner;
 
-static void emuEventCallback(Event event, void *)
+static void emuEventCallback(EmuEvent event, void *)
 {
 	switch (event)
 	{
-	case Event::Resume:
+	case EmuEvent::Resume:
 		game_started = true;
 		vgamepad::startGame();
 		break;
-	case Event::Start:
+	case EmuEvent::Start:
 		GamepadDevice::load_system_mappings();
 		break;
-	case Event::Terminate:
+	case EmuEvent::Terminate:
 		GamepadDevice::load_system_mappings();
 		game_started = false;
 		break;
@@ -144,9 +144,9 @@ void gui_init()
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;  // Enable Keyboard Controls
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;   // Enable Gamepad Controls
 
-    EventManager::listen(Event::Resume, emuEventCallback);
-    EventManager::listen(Event::Start, emuEventCallback);
-	EventManager::listen(Event::Terminate, emuEventCallback);
+    EventManager::listen(EmuEvent::Resume, emuEventCallback);
+    EventManager::listen(EmuEvent::Start, emuEventCallback);
+	EventManager::listen(EmuEvent::Terminate, emuEventCallback);
     ggpo::receiveChatMessages([](int playerNum, const std::string& msg) { chat.receive(playerNum, msg); });
 }
 
@@ -2181,6 +2181,9 @@ static void gui_settings_video()
 		renderApi = 3;
 		perPixel = true;
 		break;
+	case RenderType::Metal:
+		renderApi = 4;
+		perPixel = true;
 	}
 
 	constexpr int apiCount = 0
@@ -2194,6 +2197,9 @@ static void gui_settings_video()
 			+ 1
 		#endif
 		#ifdef USE_DX11
+			+ 1
+		#endif
+		#ifdef USE_METAL
 			+ 1
 		#endif
 			;
@@ -2210,13 +2216,19 @@ static void gui_settings_video()
 #endif
 #ifdef USE_VULKAN
 #ifdef __APPLE__
-			ImGui::RadioButton("Vulkan (Metal)", &renderApi, 1);
+			ImGui::RadioButton("Vulkan (MoltenVK)", &renderApi, 1);
 			ImGui::SameLine(0, innerSpacing);
 			ShowHelpMarker("MoltenVK: An implementation of Vulkan that runs on Apple's Metal graphics framework");
 #else
 			ImGui::RadioButton("Vulkan", &renderApi, 1);
 #endif // __APPLE__
 			ImGui::NextColumn();
+#endif
+#ifdef USE_METAL
+#ifdef __APPLE__
+			ImGui::RadioButton("Metal", &renderApi, 4);
+			ImGui::NextColumn();
+#endif
 #endif
 #ifdef USE_DX9
 			{
@@ -2548,6 +2560,8 @@ static void gui_settings_video()
     case 3:
     	config::RendererType = perPixel ? RenderType::DirectX11_OIT : RenderType::DirectX11;
     	break;
+    	case 4:
+		config::RendererType = RenderType::Metal;
     }
 }
 
@@ -3765,9 +3779,9 @@ void gui_term()
 		inited = false;
 		scanner.stop();
 		ImGui::DestroyContext();
-	    EventManager::unlisten(Event::Resume, emuEventCallback);
-	    EventManager::unlisten(Event::Start, emuEventCallback);
-	    EventManager::unlisten(Event::Terminate, emuEventCallback);
+	    EventManager::unlisten(EmuEvent::Resume, emuEventCallback);
+	    EventManager::unlisten(EmuEvent::Start, emuEventCallback);
+	    EventManager::unlisten(EmuEvent::Terminate, emuEventCallback);
 	    boxart.term();
 	}
 }

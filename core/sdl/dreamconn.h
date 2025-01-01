@@ -91,7 +91,7 @@ public:
 	static bool isDreamConn(int deviceIndex);
 
 private:
-	static void handleEvent(Event event, void *arg);
+	static void handleEvent(EmuEvent event, void *arg);
 	void checkKeyCombo();
 
 	std::shared_ptr<DreamConn> dreamconn;

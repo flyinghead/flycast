@@ -150,11 +150,11 @@ static void registerForEvents()
 		return;
 	done = true;
 	// Empty the audio buffer when loading a state or terminating the game
-	const auto& callback = [](Event, void *) {
+	const auto& callback = [](EmuEvent, void *) {
 		writePtr = 0;
 	};
-	EventManager::listen(Event::Terminate, callback);
-	EventManager::listen(Event::LoadState, callback);
+	EventManager::listen(EmuEvent::Terminate, callback);
+	EventManager::listen(EmuEvent::LoadState, callback);
 }
 
 

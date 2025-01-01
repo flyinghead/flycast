@@ -42,7 +42,7 @@ using namespace luabridge;
 static std::recursive_mutex mutex;
 using lock_guard = std::lock_guard<std::recursive_mutex>;
 
-static void emuEventCallback(Event event, void *)
+static void emuEventCallback(EmuEvent event, void *)
 {
 	if (L == nullptr || settings.raHardcoreMode)
 		return;
@@ -54,28 +54,28 @@ static void emuEventCallback(Event event, void *)
 		const char *key = nullptr;
 		switch (event)
 		{
-		case Event::Start:
+		case EmuEvent::Start:
 			key = "start";
 			break;
-		case Event::Resume:
+		case EmuEvent::Resume:
 			key = "resume";
 			break;
-		case Event::Pause:
+		case EmuEvent::Pause:
 			key = "pause";
 			break;
-		case Event::Terminate:
+		case EmuEvent::Terminate:
 			key = "terminate";
 			break;
-		case Event::LoadState:
+		case EmuEvent::LoadState:
 			key = "loadState";
 			break;
-		case Event::VBlank:
+		case EmuEvent::VBlank:
 			key = "vblank";
 			break;
-		case Event::Network:
+		case EmuEvent::Network:
 			key = "network";
 			break;
-		case Event::DiskChange:
+		case EmuEvent::DiskChange:
 			key = "diskChange";
 			break;
 		}
@@ -626,13 +626,13 @@ void init()
 	L = luaL_newstate();
 	luaL_openlibs(L);
 	luaRegister(L);
-    EventManager::listen(Event::Start, emuEventCallback);
-    EventManager::listen(Event::Resume, emuEventCallback);
-    EventManager::listen(Event::Pause, emuEventCallback);
-    EventManager::listen(Event::Terminate, emuEventCallback);
-    EventManager::listen(Event::LoadState, emuEventCallback);
-    EventManager::listen(Event::VBlank, emuEventCallback);
-    EventManager::listen(Event::Network, emuEventCallback);
+    EventManager::listen(EmuEvent::Start, emuEventCallback);
+    EventManager::listen(EmuEvent::Resume, emuEventCallback);
+    EventManager::listen(EmuEvent::Pause, emuEventCallback);
+    EventManager::listen(EmuEvent::Terminate, emuEventCallback);
+    EventManager::listen(EmuEvent::LoadState, emuEventCallback);
+    EventManager::listen(EmuEvent::VBlank, emuEventCallback);
+    EventManager::listen(EmuEvent::Network, emuEventCallback);
 
 	doExec(initFile);
 }
@@ -641,13 +641,13 @@ void term()
 {
 	if (L == nullptr)
 		return;
-    EventManager::unlisten(Event::Start, emuEventCallback);
-    EventManager::unlisten(Event::Resume, emuEventCallback);
-    EventManager::unlisten(Event::Pause, emuEventCallback);
-    EventManager::unlisten(Event::Terminate, emuEventCallback);
-    EventManager::unlisten(Event::LoadState, emuEventCallback);
-    EventManager::unlisten(Event::VBlank, emuEventCallback);
-    EventManager::unlisten(Event::Network, emuEventCallback);
+    EventManager::unlisten(EmuEvent::Start, emuEventCallback);
+    EventManager::unlisten(EmuEvent::Resume, emuEventCallback);
+    EventManager::unlisten(EmuEvent::Pause, emuEventCallback);
+    EventManager::unlisten(EmuEvent::Terminate, emuEventCallback);
+    EventManager::unlisten(EmuEvent::LoadState, emuEventCallback);
+    EventManager::unlisten(EmuEvent::VBlank, emuEventCallback);
+    EventManager::unlisten(EmuEvent::Network, emuEventCallback);
 	lua_close(L);
 	L = nullptr;
 }
