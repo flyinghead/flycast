@@ -40,6 +40,15 @@ public:
         depthPassDepthStencilStates.clear();
     }
 
+    MTL::RenderPipelineState* GetBlitPassPipeline() {
+        if (blitPassPipeline != nullptr)
+            return blitPassPipeline;
+
+        CreateBlitPassPipeline();
+
+        return blitPassPipeline;
+    }
+
     MTL::RenderPipelineState* GetDepthPassPipeline(int cullMode, bool naomi2)
     {
         u32 pipehash = hash(cullMode, naomi2);
@@ -85,6 +94,7 @@ public:
     }
 
 private:
+    void CreateBlitPassPipeline();
     void CreateDepthPassPipeline(int cullMode, bool naomi2);
     void CreatePipeline(u32 listType, bool sortTriangles, const PolyParam& pp, int gpuPalette, bool dithering);
 
@@ -174,6 +184,7 @@ private:
     }
 
     MetalRenderer *renderer;
+    MTL::RenderPipelineState* blitPassPipeline = nullptr;
     std::map<u64, MTL::RenderPipelineState*> pipelines;
     std::map<u32, MTL::RenderPipelineState*> depthPassPipelines;
 

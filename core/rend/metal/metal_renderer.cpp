@@ -461,16 +461,16 @@ bool MetalRenderer::Draw(const MetalTexture *fogTexture, const MetalTexture *pal
     depthAttachmentDescriptor->release();
     stencilAttachmentDescriptor->release();
 
-    MTL::RenderCommandEncoder *encoder = buffer->renderCommandEncoder(descriptor);
+    MTL::RenderCommandEncoder *renderEncoder = buffer->renderCommandEncoder(descriptor);
 
     descriptor->release();
 
     if (fogTexture == nullptr) {
-        encoder->setFragmentTexture(fogTexture->texture, 2);
+        renderEncoder->setFragmentTexture(fogTexture->texture, 2);
     }
 
     if (paletteTexture == nullptr) {
-        encoder->setFragmentTexture(paletteTexture->texture, 3);
+        renderEncoder->setFragmentTexture(paletteTexture->texture, 3);
     }
 
     // Upload vertex and index buffers
@@ -479,8 +479,8 @@ bool MetalRenderer::Draw(const MetalTexture *fogTexture, const MetalTexture *pal
 
     UploadMainBuffer(vtxUniforms, fragUniforms);
 
-    encoder->setVertexBuffer(curMainBuffer, offsets.vertexUniformOffset, 0);
-    encoder->setFragmentBuffer(curMainBuffer, offsets.fragmentUniformOffset, 0);
+    renderEncoder->setVertexBuffer(curMainBuffer, offsets.vertexUniformOffset, 0);
+    renderEncoder->setFragmentBuffer(curMainBuffer, offsets.fragmentUniformOffset, 0);
 
     RenderPass previous_pass {};
     for (int render_pass = 0; render_pass < (int)pvrrc.render_passes.size(); render_pass++) {
@@ -491,18 +491,35 @@ bool MetalRenderer::Draw(const MetalTexture *fogTexture, const MetalTexture *pal
                 current_pass.pt_count - previous_pass.pt_count,
                 current_pass.tr_count - previous_pass.tr_count,
                 current_pass.mvo_count - previous_pass.mvo_count, current_pass.autosort);
-        DrawList(encoder, ListType_Opaque, false, pvrrc.global_param_op, previous_pass.op_count, current_pass.op_count);
-        DrawList(encoder, ListType_Punch_Through, false, pvrrc.global_param_pt, previous_pass.pt_count, current_pass.pt_count);
-        DrawModVols(encoder, previous_pass.mvo_count, current_pass.mvo_count - previous_pass.mvo_count);
+        DrawList(renderEncoder, ListType_Opaque, false, pvrrc.global_param_op, previous_pass.op_count, current_pass.op_count);
+        DrawList(renderEncoder, ListType_Punch_Through, false, pvrrc.global_param_pt, previous_pass.pt_count, current_pass.pt_count);
+        DrawModVols(renderEncoder, previous_pass.mvo_count, current_pass.mvo_count - previous_pass.mvo_count);
         if (current_pass.autosort) {
             if (!config::PerStripSorting)
-                DrawSorted(encoder, pvrrc.sortedTriangles, previous_pass.sorted_tr_count, current_pass.sorted_tr_count, render_pass + 1 < (int)pvrrc.render_passes.size());
+                DrawSorted(renderEncoder, pvrrc.sortedTriangles, previous_pass.sorted_tr_count, current_pass.sorted_tr_count, render_pass + 1 < (int)pvrrc.render_passes.size());
         } else {
-            DrawList(encoder, ListType_Translucent, false, pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count);
+            DrawList(renderEncoder, ListType_Translucent, false, pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count);
         }
     }
 
-    encoder->endEncoding();
+    renderEncoder->endEncoding();
+
+    // Blit to framebuffer
+    descriptor = MTL::RenderPassDescriptor::alloc()->init();
+    color = descriptor->colorAttachments()->object(0);
+    color->setTexture(drawable->texture());
+    color->setLoadAction(MTL::LoadActionClear);
+    color->setStoreAction(MTL::StoreActionStore);
+
+    renderEncoder = buffer->renderCommandEncoder(descriptor);
+
+    descriptor->release();
+
+    renderEncoder->setRenderPipelineState(pipelineManager.GetBlitPassPipeline());
+    renderEncoder->setFragmentTexture(frameBuffer, 0);
+    renderEncoder->drawPrimitives(MTL::PrimitiveTypeTriangleStrip, static_cast<NS::UInteger>(0), 4);
+    renderEncoder->endEncoding();
+
     buffer->presentDrawable(drawable);
     buffer->commit();
     pool->release();

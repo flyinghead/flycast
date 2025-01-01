@@ -26,6 +26,28 @@ MetalPipelineManager::MetalPipelineManager(MetalRenderer *renderer) {
     this->renderer = renderer;
 }
 
+void MetalPipelineManager::CreateBlitPassPipeline() {
+    MTL::RenderPipelineDescriptor *descriptor = MTL::RenderPipelineDescriptor::alloc()->init();
+    descriptor->setLabel(NS::String::string("Blit Pass", NS::UTF8StringEncoding));
+
+    auto attachment = descriptor->colorAttachments()->object(0);
+    attachment->setPixelFormat(MTL::PixelFormatBGRA8Unorm);
+
+    descriptor->setVertexFunction(renderer->GetShaders()->GetBlitVertexShader());
+    descriptor->setFragmentFunction(renderer->GetShaders()->GetBlitFragmentShader());
+
+    NS::Error *error = nullptr;
+    auto state = MetalContext::Instance()->GetDevice()->newRenderPipelineState(descriptor, &error);
+
+    if (state == nullptr) {
+        ERROR_LOG(RENDERER, "Failed to create Blit Pipeline State: %s", error->localizedDescription()->utf8String());
+    }
+
+    descriptor->release();
+
+    blitPassPipeline = state;
+}
+
 
 void MetalPipelineManager::CreateDepthPassPipeline(int cullMode, bool naomi2)
 {
