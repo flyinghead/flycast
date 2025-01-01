@@ -240,11 +240,20 @@ void MetalRenderer::DrawPoly(MTL::RenderCommandEncoder *encoder, u32 listType, b
             palette_index
         };
 
-
         // TODO: Set & Bind Push Constants
     }
 
     encoder->setRenderPipelineState(pipelineManager.GetPipeline(listType, sortTriangles, poly, gpuPalette, dithering));
+    encoder->setDepthStencilState(pipelineManager.GetDepthStencilStates(listType, sortTriangles, poly, gpuPalette, dithering));
+
+    bool shadowed = listType == ListType_Opaque || listType == ListType_Punch_Through;
+    if (shadowed) {
+        if (poly.pcw.Shadow != 0) {
+            encoder->setStencilReferenceValue(0x80);
+        } else {
+            encoder->setStencilReferenceValue(0);
+        }
+    }
 
     if (poly.texture != nullptr) {
         auto texture = ((MetalTexture *)poly.texture)->texture;
@@ -279,7 +288,9 @@ void MetalRenderer::DrawPoly(MTL::RenderCommandEncoder *encoder, u32 listType, b
         // TODO: Bind Texture & Naomi2 Lights Buffers
     }
 
-    encoder->drawIndexedPrimitives(MTL::PrimitiveTypeTriangle, count, MTL::IndexTypeUInt32, curMainBuffer, offsets.indexOffset, 1);
+    MTL::PrimitiveType primitive = sortTriangles && !config::PerStripSorting ? MTL::PrimitiveTypeTriangle : MTL::PrimitiveTypeTriangleStrip;
+
+    encoder->drawIndexedPrimitives(primitive, count, MTL::IndexTypeUInt32, curMainBuffer, offsets.indexOffset, 1);
     encoder->popDebugGroup();
 }
 
@@ -302,10 +313,10 @@ void MetalRenderer::DrawSorted(MTL::RenderCommandEncoder *encoder, const std::ve
             if (polyParam.isp.ZWriteDis)
                 continue;
             encoder->setRenderPipelineState(pipelineManager.GetDepthPassPipeline(polyParam.isp.CullMode, polyParam.isNaomi2()));
+            encoder->setDepthStencilState(pipelineManager.GetDepthPassDepthStencilStates(polyParam.isp.CullMode, polyParam.isNaomi2()));
             MTL::ScissorRect scissorRect {};
             SetTileClip(encoder, polyParam.tileclip, scissorRect);
-            // TODO: Check index offset here
-            encoder->drawIndexedPrimitives(MTL::PrimitiveTypeTriangle, param.count, MTL::IndexTypeUInt32, curMainBuffer, pvrrc.idx.size() + param.first, 1);
+            encoder->drawIndexedPrimitives(MTL::PrimitiveTypeTriangle, param.count, MTL::IndexTypeUInt32, curMainBuffer, offsets.indexOffset + pvrrc.idx.size() + param.first, 1);
         }
     }
 

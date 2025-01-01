@@ -119,3 +119,65 @@ void MetalPipelineManager::CreatePipeline(u32 listType, bool sortTriangles, cons
 
     pipelines[hash(listType, sortTriangles, &pp, gpuPalette, dithering)] = state;
 }
+
+void MetalPipelineManager::CreateDepthPassDepthStencilState(int cullMode, bool naomi2) {
+    MTL::DepthStencilDescriptor *descriptor = MTL::DepthStencilDescriptor::alloc()->init();
+    descriptor->setLabel(NS::String::string("Depth Pass", NS::UTF8StringEncoding));
+    descriptor->setDepthWriteEnabled(true);
+    descriptor->setDepthCompareFunction(MTL::CompareFunctionGreaterEqual);
+
+    auto state = MetalContext::Instance()->GetDevice()->newDepthStencilState(descriptor);
+
+    descriptor->release();
+
+    depthPassDepthStencilStates[hash(cullMode, naomi2)] = state;
+}
+
+void MetalPipelineManager::CreateDepthStencilState(u32 listType, bool sortTriangles, const PolyParam &pp, int gpuPalette, bool dithering) {
+    MTL::DepthStencilDescriptor *descriptor = MTL::DepthStencilDescriptor::alloc()->init();
+    descriptor->setLabel(NS::String::string("Depth Pass", NS::UTF8StringEncoding));
+
+    MTL::CompareFunction compareFunction;
+    if (listType == ListType_Punch_Through || sortTriangles) {
+        compareFunction = MTL::CompareFunctionGreaterEqual;
+    } else {
+        compareFunction = depthOps[pp.isp.DepthMode];
+    }
+
+    bool depthWriteEnabled;
+    // Z Write Disable seems to be ignored for punch-through.
+    // Fixes Worms World Party, Bust-a-Move 4 and Re-Volt
+    if (listType == ListType_Punch_Through) {
+        depthWriteEnabled = true;
+    } else {
+        depthWriteEnabled = !pp.isp.ZWriteDis;
+    }
+
+    bool shadowed = listType == ListType_Opaque || listType == ListType_Punch_Through;
+    MTL::StencilDescriptor *stencilDescriptor = MTL::StencilDescriptor::alloc()->init();
+    if (shadowed) {
+        stencilDescriptor->setStencilFailureOperation(MTL::StencilOperationKeep);
+        stencilDescriptor->setDepthFailureOperation(MTL::StencilOperationKeep);
+        stencilDescriptor->setDepthStencilPassOperation(MTL::StencilOperationReplace);
+        stencilDescriptor->setStencilCompareFunction(MTL::CompareFunctionAlways);
+        stencilDescriptor->setReadMask(0);
+        stencilDescriptor->setWriteMask(0x80);
+    } else {
+        stencilDescriptor->setStencilFailureOperation(MTL::StencilOperationKeep);
+        stencilDescriptor->setDepthFailureOperation(MTL::StencilOperationKeep);
+        stencilDescriptor->setDepthStencilPassOperation(MTL::StencilOperationKeep);
+        stencilDescriptor->setStencilCompareFunction(MTL::CompareFunctionNever);
+    }
+
+    descriptor->setDepthCompareFunction(compareFunction);
+    descriptor->setDepthWriteEnabled(depthWriteEnabled);
+    descriptor->setBackFaceStencil(stencilDescriptor);
+    descriptor->setFrontFaceStencil(stencilDescriptor);
+
+    auto state = MetalContext::Instance()->GetDevice()->newDepthStencilState(descriptor);
+
+    descriptor->release();
+    stencilDescriptor->release();
+
+    depthStencilStates[hash(listType, sortTriangles, &pp, gpuPalette, dithering)] = state;
+}
