@@ -24,7 +24,14 @@
 
 static PVOID vectoredHandler;
 static LONG (WINAPI *prevExceptionHandler)(EXCEPTION_POINTERS *ep);
+#ifndef LIBRETRO
 const char *getThreadName();
+#else
+// TODO
+static const char *getThreadName() {
+	return "";
+}
+#endif
 
 static void readContext(const EXCEPTION_POINTERS *ep, host_context_t &context)
 {

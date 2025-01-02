@@ -851,6 +851,9 @@ if(LIBRETRO)
 	if(APPLE)
 		target_sources(${PROJECT_NAME} PRIVATE shell/libretro/oslib_apple.mm)
 	endif()
+	if(WIN32)
+		target_link_libraries(${PROJECT_NAME} PRIVATE mswsock)
+	endif()
 endif()
 
 target_sources(${PROJECT_NAME} PRIVATE
