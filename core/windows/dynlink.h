@@ -21,44 +21,44 @@
 
 namespace detail
 {
-    template <typename Ret, typename... Args>
-    struct ProxyTraits {
-        using funcType = Ret (*)(Args...);
-    };
+	template <typename Ret, typename... Args>
+	struct ProxyTraits {
+		using funcType = Ret (WINAPI *)(Args...);
+	};
 }
 
 class WinLibLoader
 {
 public:
-    WinLibLoader(const char* name = nullptr) : name(name) {
-    }
-    ~WinLibLoader() {
-        if (hinst != NULL)
-            FreeLibrary(hinst);
-    }
+	WinLibLoader(const char* name = nullptr) : name(name) {
+	}
+	~WinLibLoader() {
+		if (hinst != NULL)
+			FreeLibrary(hinst);
+	}
 
-    template <typename Ret, typename... Args>
-    auto getFunc(const char* functionName, Ret(* const funcPtr)(Args...))
-    {
-        using funcType = typename detail::ProxyTraits<Ret, Args...>::funcType;
-        if (!loaded()) {
-            if (!load(name))
-                return static_cast<funcType>(nullptr);
-        }
-        return reinterpret_cast<funcType>(GetProcAddress(hinst, functionName));
-    }
+	template <typename Ret, typename... Args>
+	auto getFunc(const char* functionName, Ret(WINAPI * const funcPtr)(Args...))
+	{
+		using funcType = typename detail::ProxyTraits<Ret, Args...>::funcType;
+		if (!loaded()) {
+			if (!load(name))
+				return static_cast<funcType>(nullptr);
+		}
+		return reinterpret_cast<funcType>(GetProcAddress(hinst, functionName));
+	}
 
-    bool load(const char* name)
-    {
-        if (hinst != NULL)
-            FreeLibrary(hinst);
-        hinst = LoadLibraryA(name);
-        return hinst != NULL;
-    }
+	bool load(const char* name)
+	{
+		if (hinst != NULL)
+			FreeLibrary(hinst);
+		hinst = LoadLibraryA(name);
+		return hinst != NULL;
+	}
 
-    bool loaded() const { return hinst != NULL; }
+	bool loaded() const { return hinst != NULL; }
 
 private:
-    const char* name;
-    HINSTANCE hinst = NULL;
+	const char* name;
+	HINSTANCE hinst = NULL;
 };

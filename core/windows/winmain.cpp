@@ -440,7 +440,7 @@ void os_SetThreadName(const char *name)
 	nowide::wstackstring wname;
 	if (wname.convert(name))
 	{
-		static HRESULT (*SetThreadDescription)(HANDLE, PCWSTR) = kernelBaseLib.getFunc("SetThreadDescription", SetThreadDescription);
+		static HRESULT (WINAPI *SetThreadDescription)(HANDLE, PCWSTR) = kernelBaseLib.getFunc("SetThreadDescription", SetThreadDescription);
 		if (SetThreadDescription != nullptr)
 			SetThreadDescription(GetCurrentThread(), wname.get());
 	}
@@ -448,7 +448,7 @@ void os_SetThreadName(const char *name)
 
 const char *getThreadName()
 {
-	static HRESULT (*GetThreadDescription)(HANDLE, PWSTR *) = kernelBaseLib.getFunc("GetThreadDescription", GetThreadDescription);
+	static HRESULT (WINAPI *GetThreadDescription)(HANDLE, PWSTR *) = kernelBaseLib.getFunc("GetThreadDescription", GetThreadDescription);
 	if (GetThreadDescription == nullptr)
 		return "?";
 	PWSTR wname = nullptr;
