@@ -495,6 +495,7 @@ extern Option<bool, false> DiscordPresence;
 #if defined(__ANDROID__) && !defined(LIBRETRO)
 extern Option<bool, false> UseSafFilePicker;
 #endif
+extern OptionString LogServer;
 
 // Profiling
 extern Option<bool> ProfilerEnabled;

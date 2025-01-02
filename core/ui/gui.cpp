@@ -1609,6 +1609,8 @@ static void contentpath_warning_popup()
     }
 }
 
+#if !defined(NDEBUG) || defined(DEBUGFAST) || FC_PROFILER
+
 static void gui_debug_tab()
 {
 	header("Logging");
@@ -1640,6 +1642,9 @@ static void gui_debug_tab()
 			}
 			ImGui::EndCombo();
 		}
+		ImGui::InputText("Log Server", &config::LogServer.get(), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
+        ImGui::SameLine();
+        ShowHelpMarker("Log to this hostname[:port] with UDP. Default port is 31667.");
 	}
 #if FC_PROFILER
 	ImGui::Spacing();
@@ -1663,6 +1668,7 @@ static void gui_debug_tab()
 	}
 #endif
 }
+#endif
 
 static void addContentPathCallback(const std::string& path)
 {
@@ -2839,14 +2845,8 @@ static void gui_settings_advanced()
         		"Dump all textures into data/texdump/<game id>");
 
         bool logToFile = cfgLoadBool("log", "LogToFile", false);
-        bool newLogToFile = logToFile;
-		ImGui::Checkbox("Log to File", &newLogToFile);
-		if (logToFile != newLogToFile)
-		{
-			cfgSaveBool("log", "LogToFile", newLogToFile);
-			LogManager::Shutdown();
-			LogManager::Init();
-		}
+		if (ImGui::Checkbox("Log to File", &logToFile))
+			cfgSaveBool("log", "LogToFile", logToFile);
         ImGui::SameLine();
         ShowHelpMarker("Log debug information to flycast.log");
 #ifdef SENTRY_UPLOAD

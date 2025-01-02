@@ -135,6 +135,7 @@ Option<bool, false> DiscordPresence("DiscordPresence", true);
 #if defined(__ANDROID__) && !defined(LIBRETRO)
 Option<bool, false> UseSafFilePicker("UseSafFilePicker", true);
 #endif
+OptionString LogServer("LogServer", "", "log");
 
 // Profiler
 Option<bool> ProfilerEnabled("Profiler.Enabled");

@@ -146,6 +146,13 @@ if(NINTENDO_SWITCH)
 	if(USE_GLES)
 		target_compile_definitions(${PROJECT_NAME} PRIVATE GLES)
 	endif()
+	# asio
+	target_compile_definitions(${PROJECT_NAME} PRIVATE
+		ASIO_DISABLE_LOCAL_SOCKETS
+		ASIO_DISABLE_SERIAL_PORT
+		ESHUTDOWN=110
+		SA_RESTART=0
+		SA_NOCLDWAIT=0)
 
 elseif(LIBRETRO)
 	add_library(${PROJECT_NAME} SHARED core/emulator.cpp)

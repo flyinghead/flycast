@@ -6,6 +6,7 @@
 
 #include <array>
 #include <cstdarg>
+#include <memory>
 
 #include "BitSet.h"
 #include "Log.h"
@@ -23,6 +24,7 @@ public:
     CONSOLE_LISTENER,
     LOG_WINDOW_LISTENER,
 	IN_MEMORY_LISTENER,
+	NETWORK_LISTENER,
 
     NUMBER_OF_LISTENERS  // Must be last
   };
@@ -52,6 +54,7 @@ public:
   void RegisterListener(LogListener::LISTENER id, LogListener* listener);
   void EnableListener(LogListener::LISTENER id, bool enable);
   bool IsListenerEnabled(LogListener::LISTENER id) const;
+  void UpdateConfig();
 
 private:
   struct LogContainer
@@ -66,7 +69,6 @@ private:
   };
 
   LogManager();
-  ~LogManager();
 
   LogManager(const LogManager&) = delete;
   LogManager& operator=(const LogManager&) = delete;
@@ -75,7 +77,8 @@ private:
 
   LogTypes::LOG_LEVELS m_level;
   std::array<LogContainer, LogTypes::NUMBER_OF_LOGS> m_log{};
-  std::array<LogListener*, LogListener::NUMBER_OF_LISTENERS> m_listeners{};
+  std::array<std::unique_ptr<LogListener>, LogListener::NUMBER_OF_LISTENERS> m_listeners{};
   BitSet32 m_listener_ids;
   size_t m_path_cutoff_point = 0;
+  std::string logServer;
 };
