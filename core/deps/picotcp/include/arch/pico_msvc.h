@@ -7,6 +7,8 @@
 #include <windows.h>
 #pragma pack(pop)
 
+#define PICO_SUPPORT_THREADING
+
 #if defined(_MSC_VER) || defined(_MSC_EXTENSIONS)
   #define DELTA_EPOCH_IN_MICROSECS  11644473600000000Ui64
 #else
@@ -53,6 +55,15 @@ static inline void PICO_IDLE(void)
 }
 
 #define alloca _alloca
+
+#ifdef PICO_SUPPORT_THREADING
+#define PICO_SUPPORT_MUTEX
+/* mutex implementations */
+extern void* pico_mutex_init(void);
+extern void pico_mutex_lock(void* mux);
+extern void pico_mutex_unlock(void* mux);
+extern void pico_mutex_deinit(void* mux);
+#endif
 
 #endif  /* PICO_SUPPORT_MSVC */
 
