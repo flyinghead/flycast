@@ -1,29 +1,27 @@
 /*
-	Created on: Sep 15, 2018
+	Copyright 2024 flyinghead
 
-	Copyright 2018 flyinghead
+	This file is part of Flycast.
 
-	This file is part of reicast.
-
-    reicast is free software: you can redistribute it and/or modify
+    Flycast is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    reicast is distributed in the hope that it will be useful,
+    Flycast is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with reicast.  If not, see <https://www.gnu.org/licenses/>.
+    along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
  */
 
 #ifdef _WIN32
 #include <ws2tcpip.h>
 #endif
 
-#include "stdclass.h"
+#include "types.h"
 
 //#define BBA_PCAPNG_DUMP
 
@@ -39,139 +37,47 @@ extern "C" {
 #include <pico_ipv4.h>
 #include <pico_tcp.h>
 #include <pico_dhcp_server.h>
+#ifdef _MSC_VER
+#pragma pack(pop)
+#endif
 }
+#include <asio.hpp>
 
 #include "net_platform.h"
-
-#include "types.h"
 #include "picoppp.h"
 #include "miniupnp.h"
 #include "cfg/option.h"
 #include "emulator.h"
 #include "oslib/oslib.h"
+#include "util/tsqueue.h"
+#include "util/shared_this.h"
 
-#include <map>
+#include <unordered_map>
 #include <mutex>
-#include <queue>
 #include <future>
 
 #define RESOLVER1_OPENDNS_COM "208.67.222.222"
 #define AFO_ORIG_IP 0x83f2fb3f		// 63.251.242.131 in network order
 #define IGP_ORIG_IP 0xef2bd2cc		// 204.210.43.239 in network order
 
+constexpr int PICO_TICK_MS = 5;
 static pico_device *pico_dev;
 
-static std::queue<u8> in_buffer;
-static std::queue<u8> out_buffer;
-
-static std::mutex in_buffer_lock;
-static std::mutex out_buffer_lock;
+static TsQueue<u8> in_buffer;
+static TsQueue<u8> out_buffer;
 
 static pico_ip4 dcaddr;
 static pico_ip4 dnsaddr;
-static pico_socket *pico_tcp_socket, *pico_udp_socket;
 
 struct pico_ip4 public_ip;
 static pico_ip4 afo_ip;
-
-struct socket_pair
-{
-	socket_pair() : pico_sock(nullptr), native_sock(INVALID_SOCKET) {}
-	socket_pair(pico_socket *pico_sock, sock_t native_sock) : pico_sock(pico_sock), native_sock(native_sock) {}
-	~socket_pair() {
-		if (pico_sock != nullptr)
-			pico_socket_close(pico_sock);
-		if (native_sock != INVALID_SOCKET)
-			closesocket(native_sock);
-	}
-	socket_pair(socket_pair &&) = default;
-	socket_pair(const socket_pair&) = delete;
-	socket_pair& operator=(const socket_pair&) = delete;
-
-	pico_socket *pico_sock;
-	sock_t native_sock;
-	std::vector<char> in_buffer;
-	bool shutdown = false;
-
-	void receive_native()
-	{
-		size_t len;
-		const char *data;
-		char buf[536];
-
-		if (!in_buffer.empty())
-		{
-			len = in_buffer.size();
-			data = &in_buffer[0];
-		}
-		else
-		{
-			if (native_sock == INVALID_SOCKET)
-			{
-				if (!shutdown && pico_sock->q_out.size == 0)
-				{
-					pico_socket_shutdown(pico_sock, PICO_SHUT_RDWR);
-					shutdown = true;
-				}
-				return;
-			}
-			int r = (int)recv(native_sock, buf, sizeof(buf), 0);
-			if (r == 0)
-			{
-				INFO_LOG(MODEM, "Socket[%d] recv(%zd) returned 0 -> EOF", short_be(pico_sock->remote_port), sizeof(buf));
-				closesocket(native_sock);
-				native_sock = INVALID_SOCKET;
-				return;
-			}
-			if (r < 0)
-			{
-				if (get_last_error() != L_EAGAIN && get_last_error() != L_EWOULDBLOCK)
-				{
-					perror("recv tcp socket");
-					closesocket(native_sock);
-					native_sock = INVALID_SOCKET;
-				}
-				return;
-			}
-			len = r;
-			data = buf;
-		}
-		if (pico_sock->remote_port == short_be(5011) && len >= 5 && data[0] == 1)
-			// Visual Concepts sport games
-			memcpy((void *)&data[1], &pico_sock->local_addr.ip4.addr, 4);
-
-		int r2 = pico_socket_send(pico_sock, data, (int)len);
-		if (r2 < 0)
-			INFO_LOG(MODEM, "error TCP sending: %s", strerror(pico_err));
-		else if (r2 < (int)len)
-		{
-			if (r2 > 0 || in_buffer.empty())
-			{
-				len -= r2;
-				std::vector<char> remain(len);
-				memcpy(&remain[0], &data[r2], len);
-				std::swap(in_buffer, remain);
-			}
-		}
-		else
-		{
-			in_buffer.clear();
-		}
-	}
-};
-
-// tcp sockets
-static std::map<pico_socket *, socket_pair> tcp_sockets;
-static std::map<pico_socket *, sock_t> tcp_connecting_sockets;
-// udp sockets: src port -> socket fd
-static std::map<uint16_t, sock_t> udp_sockets;
 
 struct GamePortList {
 	const char *gameId[10];
 	uint16_t udpPorts[10];
 	uint16_t tcpPorts[10];
 };
-static GamePortList GamesPorts[] = {
+static const GamePortList GamesPorts[] = {
 	{ // Alien Front Online
 		{ "MK-51171" },
 		{ 7980 },
@@ -182,8 +88,13 @@ static GamePortList GamesPorts[] = {
 		{ 9789 },
 		{ },
 	},
-	{ // Daytona USA
-		{ "MK-51037", "HDR-0106" },
+	{
+		{
+			"MK-51037", "HDR-0106"	// Daytona USA
+			"HDR-0073"				// Sega Tetris
+			"GENERIC", "T44501M"	// Golf Shiyouyo 2
+									// (the dreamcastlive patched versions are id'ed as GENERIC)
+		},
 		{ 12079, 20675 },
 	},
 	{ // Dee Dee Planet
@@ -225,26 +136,18 @@ static GamePortList GamesPorts[] = {
 	},
 	{ // PBA Tour Bowling 2001
 		{ "T26702N" },
-		{ 2300, 6500, 47624, 13139 }, // FIXME 2300-2400 ?
-		{ 2300, 47624 },			  // FIXME 2300-2400 ?
+		{ 6500, 47624, 13139 }, // +dynamic DirectPlay port 2300-2400
+		{ 47624 },				// +dynamic DirectPlay port 2300-2400
 	},
 	{ // Planet Ring
 		{ "MK-5114864", "MK-5112550" },
 		{ 7648, 1285, 1028 },
 		{ },
 	},
-	{
-		{
-			"HDR-0073"				// Sega Tetris
-			"GENERIC", "T44501M"	// Golf Shiyouyo 2
-									// (the dreamcastlive patched versions are id'ed as GENERIC)
-		},
-		{ 20675, 12079 },
-	},
 	{ // StarLancer
 		{ "T40209N", "T17723D 05" },
-		{ 2300, 6500, 47624 }, // FIXME 2300-2400 ?
-		{ 2300, 47624 },	   // FIXME 2300-2400 ?
+		{ 6500, 47624 },	// +dynamic DirectPlay port 2300-2400
+		{ 47624 },			// +dynamic DirectPlay port 2300-2400
 	},
 	{ // World Series Baseball 2K2
 		{ "MK-51152", "HDR-0198" },
@@ -264,29 +167,18 @@ static GamePortList GamesPorts[] = {
 	},
 };
 
-// listening port -> socket fd
-static std::map<uint16_t, sock_t> tcp_listening_sockets;
-
 static bool pico_thread_running = false;
 extern "C" int dont_reject_opt_vj_hack;
 
-static void read_native_sockets();
-void get_host_by_name(const char *name, pico_ip4 dnsaddr);
-int get_dns_answer(pico_ip4 *address, pico_ip4 dnsaddr);
+u32 makeDnsQueryPacket(void *buf, const char *host);
+pico_ip4 parseDnsResponsePacket(const void *buf, size_t len);
 
 static int modem_read(pico_device *dev, void *data, int len)
 {
 	u8 *p = (u8 *)data;
-
 	int count = 0;
-	out_buffer_lock.lock();
-	while (!out_buffer.empty() && count < len)
-	{
-		*p++ = out_buffer.front();
-		out_buffer.pop();
-		count++;
-	}
-	out_buffer_lock.unlock();
+	for (; !out_buffer.empty() && count < len; count++)
+		*p++ = out_buffer.pop();
 
     return count;
 }
@@ -295,268 +187,679 @@ static int modem_write(pico_device *dev, const void *data, int len)
 {
 	u8 *p = (u8 *)data;
 
-	in_buffer_lock.lock();
 	for (int i = 0; i < len; i++)
 	{
 		while (in_buffer.size() > 1024)
 		{
-			in_buffer_lock.unlock();
 			if (!pico_thread_running)
 				return 0;
 			PICO_IDLE();
-			in_buffer_lock.lock();
 		}
 		in_buffer.push(*p++);
 	}
-	in_buffer_lock.unlock();
 
     return len;
 }
 
-void write_pico(u8 b)
-{
-	out_buffer_lock.lock();
+void write_pico(u8 b) {
 	out_buffer.push(b);
-	out_buffer_lock.unlock();
 }
 
 int read_pico()
 {
-	in_buffer_lock.lock();
 	if (in_buffer.empty())
-	{
-		in_buffer_lock.unlock();
 		return -1;
-	}
 	else
-	{
-		u32 b = in_buffer.front();
-		in_buffer.pop();
-		in_buffer_lock.unlock();
-		return b;
-	}
+		return in_buffer.pop();
 }
 
-int pico_available()
-{
-	in_buffer_lock.lock();
-	int len = in_buffer.size();
-	in_buffer_lock.unlock();
-
-	return len;
+int pico_available() {
+	return in_buffer.size();
 }
 
-static void read_from_dc_socket(pico_socket *pico_sock, sock_t nat_sock)
+class DirectPlay
 {
-	char buf[1510];
+public:
+	virtual ~DirectPlay() = default;
+	virtual void processOutPacket(const u8 *data, int len) = 0;
+};
 
-	int r = pico_socket_read(pico_sock, buf, sizeof(buf));
-	if (r > 0)
+class TcpSocket : public SharedThis<TcpSocket>
+{
+public:
+	void connect(pico_socket *pico_sock)
 	{
-		if (pico_sock->local_port == short_be(5011) && r >= 5 && buf[0] == 1)
-			// Visual Concepts sport games
-			memcpy(&buf[1], &public_ip.addr, 4);
-		if (send(nat_sock, buf, r, 0) < r)
+		this->pico_sock = pico_sock;
+		attachPicoSocket();
+		u32 remoteIp = pico_sock->local_addr.ip4.addr;
+        if (remoteIp == AFO_ORIG_IP			// Alien Front Online
+			|| remoteIp == IGP_ORIG_IP)		// Internet Game Pack
 		{
-			perror("tcp_callback send");
-			tcp_sockets.erase(pico_sock);
+        	remoteIp = afo_ip.addr;		// same ip for both for now
 		}
+		pico.state = Established;
+        asio::ip::address_v4 addrv4(*(std::array<u8, 4> *)&remoteIp);
+		asio::ip::tcp::endpoint endpoint(addrv4, htons(pico_sock->local_port));
+		setName(endpoint);
+		socket.async_connect(endpoint,
+				std::bind(&TcpSocket::onConnect, shared_from_this(), asio::placeholders::error));
 	}
-}
 
-static void tcp_callback(uint16_t ev, pico_socket *s)
-{
-	if (ev & PICO_SOCK_EV_RD)
+	void start()
 	{
-		auto it = tcp_sockets.find(s);
-		if (it == tcp_sockets.end())
-		{
-			if (tcp_connecting_sockets.find(s) == tcp_connecting_sockets.end())
-				INFO_LOG(MODEM, "Unknown socket: remote port %d", short_be(s->remote_port));
+		pico_sock = pico_socket_open(PICO_PROTO_IPV4, PICO_PROTO_TCP, nullptr);
+		if (pico_sock == nullptr) {
+			INFO_LOG(NETWORK, "pico_socket_open failed: error %d", pico_err);
+			return;
 		}
+		attachPicoSocket();
+		const auto& endpoint = socket.remote_endpoint();
+		setName(endpoint);
+		memcpy(&pico_sock->local_addr.ip4.addr, endpoint.address().to_v4().to_bytes().data(), 4);
+		pico_sock->local_port = htons(endpoint.port());
+		if (pico_socket_connect(pico_sock, &dcaddr.addr, htons(socket.local_endpoint().port())) != 0)
+		{
+			INFO_LOG(NETWORK, "pico_socket_connect failed: error %d", pico_err);
+			pico_socket_close(pico_sock);
+			return;
+		}
+		asio.state = Established;
+		socket.set_option(asio::ip::tcp::no_delay(true));
+	}
+
+	asio::ip::tcp::socket& getSocket() {
+		return socket;
+	}
+
+private:
+	TcpSocket(asio::io_context& io_context, std::shared_ptr<DirectPlay> directPlay)
+		: io_context(io_context), socket(io_context), directPlay(directPlay) {
+	}
+
+	void setName(const asio::ip::tcp::endpoint& endpoint)
+	{
+		// for logging
+		if (socket.is_open())
+			name = std::to_string(socket.local_endpoint().port())
+					+ " -> " + endpoint.address().to_string() + ":" + std::to_string(endpoint.port());
 		else
-		{
-			read_from_dc_socket(it->first, it->second.native_sock);
-		}
+			name = "? -> " + endpoint.address().to_string() + ":" + std::to_string(endpoint.port());
 	}
 
-	if (ev & PICO_SOCK_EV_CONN)
+	void attachPicoSocket()
 	{
-		pico_ip4 orig;
-		uint16_t port;
-		char peer[30];
-		int yes = 1;
-
-		pico_socket *sock_a = pico_socket_accept(s, &orig, &port);
-		if (sock_a == NULL)
-		{
-			// Also called for child sockets
-			if (tcp_sockets.find(s) == tcp_sockets.end())
-				INFO_LOG(MODEM, "pico_socket_accept: %s\n", strerror(pico_err));
-		}
-		else
-		{
-			pico_ipv4_to_string(peer, sock_a->local_addr.ip4.addr);
-			//printf("Connection established from port %d to %s:%d\n", short_be(port), peer, short_be(sock_a->local_port));
-			pico_socket_setoption(sock_a, PICO_TCP_NODELAY, &yes);
-			pico_tcp_set_linger(sock_a, 10000);
-			/* Set keepalive options */
-	//		uint32_t ka_val = 5;
-	//		pico_socket_setoption(sock_a, PICO_SOCKET_OPT_KEEPCNT, &ka_val);
-	//		ka_val = 30000;
-	//		pico_socket_setoption(sock_a, PICO_SOCKET_OPT_KEEPIDLE, &ka_val);
-	//		ka_val = 5000;
-	//		pico_socket_setoption(sock_a, PICO_SOCKET_OPT_KEEPINTVL, &ka_val);
-
-			sock_t sockfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-			if (!VALID(sockfd))
+		pico_sock->wakeup = [](uint16_t ev, pico_socket *picoSock)
 			{
-				perror("socket");
+				if (picoSock == nullptr || picoSock->priv == nullptr)
+					ERROR_LOG(NETWORK, "Pico callback with null tcp socket");
+				else
+					static_cast<Ptr *>(picoSock->priv)->get()->picoCallback(ev);
+			};
+		pico_sock->priv = new Ptr(shared_from_this());
+	}
+
+	void detachPicoSocket()
+	{
+		pico.state = Closed;
+		if (pico_sock != nullptr)
+		{
+			pico_sock->wakeup = nullptr;
+			void *priv = pico_sock->priv;
+			pico_sock = nullptr;
+			delete static_cast<Ptr *>(priv);
+			// Note: 'this' might have been deleted at this point
+		}
+	}
+
+	void closeAll()
+	{
+		asio.state = Closed;
+		asio::error_code ec;
+		socket.close(ec);
+		pico.state = Closed;
+		if (pico_sock != nullptr)
+			pico_socket_close(pico_sock);
+	}
+
+	void onConnect(const std::error_code& ec)
+	{
+		if (ec) {
+			INFO_LOG(NETWORK, "TcpSocket[%s] outbound_connect failed: %s", name.c_str(), ec.message().c_str());
+			closeAll();
+		}
+		else
+		{
+			asio.state = Established;
+			socket.set_option(asio::ip::tcp::no_delay(true));
+			setName(socket.remote_endpoint());
+			DEBUG_LOG(NETWORK, "TcpSocket[%s] outbound connected", name.c_str());
+			readAsync();
+			picoCallback(0);
+		}
+	}
+
+	void readAsync()
+	{
+		if (asio.readInProgress || asio.state != Established)
+			return;
+		verify(pico.pendingWrite == 0);
+		asio.readInProgress = true;
+		socket.async_read_some(asio::buffer(in_buffer),
+				std::bind(&TcpSocket::onRead, shared_from_this(),
+						asio::placeholders::error,
+						asio::placeholders::bytes_transferred));
+	}
+
+	void onRead(const std::error_code& ec, size_t len)
+	{
+		asio.readInProgress = false;
+		if (ec || len == 0)
+		{
+			if (ec && ec != asio::error::eof && ec != asio::error::operation_aborted)
+				INFO_LOG(NETWORK, "TcpSocket[%s] read error %s", name.c_str(),
+						ec.message().c_str());
+			else
+				DEBUG_LOG(NETWORK, "TcpSocket[%s] asio EOF", name.c_str());
+			if (pico_sock != nullptr)
+			{
+				if (pico.state == Established)
+					pico_socket_shutdown(pico_sock, PICO_SHUT_WR);
+				else if (pico.state == Closed)
+					pico_socket_close(pico_sock);
+			}
+			asio.state = Closed;
+			return;
+		}
+		if (pico_sock == nullptr)
+			return;
+		DEBUG_LOG(NETWORK, "TcpSocket[%s] inbound %d bytes", name.c_str(), (int)len);
+		if (pico_sock->remote_port == short_be(5011) && len >= 5 && in_buffer[0] == 1)
+			// Visual Concepts sport games
+			memcpy((void *)&in_buffer[1], &pico_sock->local_addr.ip4.addr, 4);
+		pico.pendingWrite = len;
+		picoCallback(PICO_SOCK_EV_WR);
+	}
+
+	void onWritten(const std::error_code& ec, size_t len)
+	{
+		asio.writeInProgress = false;
+		if (ec) {
+			INFO_LOG(NETWORK, "TcpSocket[%s] write error: %s", name.c_str(), ec.message().c_str());
+			closeAll();
+		}
+		else {
+			DEBUG_LOG(NETWORK, "TcpSocket[%s] outbound %d bytes", name.c_str(), (int)len);
+			picoCallback(0);
+		}
+	}
+
+	void picoCallback(u16 ev)
+	{
+		ev |= pico.pendingEvent;
+		pico.pendingEvent = 0;
+		if (!socket.is_open())
+		{
+			if (ev & PICO_SOCK_EV_DEL) {
+				detachPicoSocket();
+			}
+			else {
+				if (ev != PICO_SOCK_EV_FIN)
+					INFO_LOG(NETWORK, "TcpSocket[%s] asio socket is closed (ev %x, pendingW %d)", name.c_str(), ev, pico.pendingWrite);
+				pico_socket_close(pico_sock);
+			}
+			return;
+		}
+		if (ev & PICO_SOCK_EV_RD)
+		{
+			verify(pico.state != Closed);
+			if (asio.state == Connecting || asio.writeInProgress) {
+				pico.pendingEvent |= PICO_SOCK_EV_RD;
 			}
 			else
 			{
-				sockaddr_in serveraddr;
-				memset(&serveraddr, 0, sizeof(serveraddr));
-				serveraddr.sin_family = AF_INET;
-				serveraddr.sin_addr.s_addr = sock_a->local_addr.ip4.addr;
-		        if (serveraddr.sin_addr.s_addr == AFO_ORIG_IP			// Alien Front Online
-					|| serveraddr.sin_addr.s_addr == IGP_ORIG_IP)		// Internet Game Pack
+				// This callback might be called recursively if FIN is received
+				pico.readInProgress = true;
+				int r = pico_socket_read(pico_sock, sendbuf, sizeof(sendbuf));
+				pico.readInProgress = false;
+				DEBUG_LOG(NETWORK, "TcpSocket[%s] read event: pico.state %d, %d bytes", name.c_str(), pico.state, r);
+				if (r > 0)
 				{
-		        	serveraddr.sin_addr.s_addr = afo_ip.addr;		// same ip for both for now
-				}
-
-				serveraddr.sin_port = sock_a->local_port;
-				set_non_blocking(sockfd);
-				if (connect(sockfd, (sockaddr *)&serveraddr, sizeof(serveraddr)) < 0)
-				{
-					if (get_last_error() != EINPROGRESS && get_last_error() != L_EWOULDBLOCK)
-					{
-						pico_ipv4_to_string(peer, sock_a->local_addr.ip4.addr);
-						INFO_LOG(MODEM, "TCP connection to %s:%d failed: %s", peer, short_be(sock_a->local_port), strerror(get_last_error()));
-						closesocket(sockfd);
-					}
+					if (pico_sock->local_port == short_be(5011) && r >= 5 && sendbuf[0] == 1)
+						// Visual Concepts sport games
+						memcpy(&sendbuf[1], &public_ip.addr, 4);
 					else
-						tcp_connecting_sockets[sock_a] = sockfd;
+						directPlay->processOutPacket((const u8 *)&sendbuf[0], r);
+					asio::async_write(socket, asio::buffer(sendbuf, r),
+							std::bind(&TcpSocket::onWritten, shared_from_this(),
+											asio::placeholders::error,
+											asio::placeholders::bytes_transferred));
+					asio.writeInProgress = true;
+				}
+				else if (r < 0)
+				{
+					INFO_LOG(NETWORK, "TcpSocket[%s] pico read error: %s", name.c_str(), strerror(pico_err));
+					if (socket.is_open())
+					{
+						if (asio.state == Closed)
+							socket.close();
+						else
+							socket.shutdown(asio::socket_base::shutdown_send);
+					}
+					pico_socket_close(pico_sock);
+					pico.state = Closed;
+				}
+			}
+		}
+
+		if (ev & PICO_SOCK_EV_WR)
+		{
+			if (pico.pendingWrite > 0)
+			{
+				DEBUG_LOG(NETWORK, "TcpSocket[%s] write event: pico.state %d, %d bytes", name.c_str(), pico.state, pico.pendingWrite);
+				if (pico.state == Connecting) {
+					pico.pendingEvent |= PICO_SOCK_EV_WR;
 				}
 				else
 				{
-					set_tcp_nodelay(sockfd);
-
-					tcp_sockets.try_emplace(sock_a, sock_a, sockfd);
+					int sent = pico_socket_write(pico_sock, &in_buffer[0], (int)pico.pendingWrite);
+					if (sent < 0)
+					{
+						INFO_LOG(NETWORK, "TcpSocket[%s] pico send error: %s", name.c_str(), strerror(pico_err));
+						pico.pendingWrite = 0;
+						closeAll();
+					}
+					else if (sent < (int)pico.pendingWrite)
+					{
+						if (sent > 0)
+						{
+							// FIXME how to handle partial pico writes if any? PICO_SOCK_EV_WR?
+							WARN_LOG(NETWORK, "TcpSocket[%s] Partial pico send: %d -> %d", name.c_str(), (int)pico.pendingWrite, sent);
+							asio.state = Closed;
+						}
+					}
+					else {
+						pico.pendingWrite = 0;
+						readAsync();
+					}
 				}
 			}
+			else {
+				readAsync();
+			}
 		}
+
+		if (ev & PICO_SOCK_EV_CONN)
+		{
+			DEBUG_LOG(NETWORK, "TcpSocket[%s] connect event", name.c_str());
+			verify(pico.state == Connecting);
+			pico.state = Established;
+			readAsync();
+		}
+
+		if (ev & PICO_SOCK_EV_CLOSE)	// FIN received
+		{
+			DEBUG_LOG(NETWORK, "TcpSocket[%s] close event (pending ev %x, pico.reading %d, asio.writing %d)", name.c_str(),
+					pico.pendingEvent, pico.readInProgress, asio.writeInProgress);
+			if (pico.pendingEvent == 0 && !pico.readInProgress && !asio.writeInProgress)
+			{
+				pico.state = Closed;
+				if (socket.is_open()) {
+					pico_socket_shutdown(pico_sock, PICO_SHUT_RD);
+					socket.shutdown(asio::socket_base::shutdown_send);
+				}
+				else {
+					pico_socket_close(pico_sock);
+				}
+			}
+			else {
+				pico.pendingEvent |= PICO_SOCK_EV_CLOSE;
+			}
+		}
+
+		if (ev & PICO_SOCK_EV_FIN)		// Socket is in the closed state
+		{
+			DEBUG_LOG(NETWORK, "TcpSocket[%s] FIN event (pending ev %x, asio.writing %d, pico.reading %d)", name.c_str(),
+					pico.pendingEvent, asio.writeInProgress, pico.readInProgress);
+			if (pico.pendingEvent == 0 && !asio.writeInProgress && !pico.readInProgress)
+				closeAll();
+			else
+				pico.pendingEvent |= PICO_SOCK_EV_FIN;
+		}
+
+		if (ev & PICO_SOCK_EV_ERR) {
+			INFO_LOG(MODEM, "TcpSocket[%s] Pico socket error received: %s", name.c_str(), strerror(pico_err));
+			closeAll();
+		}
+
+		if (ev & PICO_SOCK_EV_DEL)
+			detachPicoSocket();
 	}
 
-	if (ev & PICO_SOCK_EV_FIN) {
-		auto it = tcp_sockets.find(s);
-		if (it != tcp_sockets.end())
-		{
-			tcp_sockets.erase(it);
+	asio::io_context& io_context;
+	asio::ip::tcp::socket socket;
+	std::shared_ptr<DirectPlay> directPlay;
+	pico_socket *pico_sock = nullptr;
+	std::array<char, 536> in_buffer;
+	char sendbuf[1510];
+	enum State { Connecting, Established, Closed };
+	struct {
+		State state = Connecting;
+		bool readInProgress = false;
+		bool writeInProgress = false;
+	} asio;
+	struct {
+		State state = Connecting;
+		u16 pendingEvent = 0;
+		u32 pendingWrite = 0;
+		bool readInProgress = false;
+	} pico;
+	std::string name;
+	friend super;
+};
+
+// Handles inbound tcp connections
+class TcpAcceptor : public SharedThis<TcpAcceptor>
+{
+public:
+	void start()
+	{
+		TcpSocket::Ptr newSock = TcpSocket::create(io_context, directPlay);
+
+		acceptor.async_accept(newSock->getSocket(),
+				std::bind(&TcpAcceptor::onAccept, shared_from_this(), newSock, asio::placeholders::error));
+	}
+
+	void stop() {
+		acceptor.close();
+	}
+
+private:
+	TcpAcceptor(asio::io_context& io_context, u16 port, std::shared_ptr<DirectPlay> directPlay)
+		: io_context(io_context),
+		  acceptor(asio::ip::tcp::acceptor(io_context,
+				asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port))),
+		  directPlay(directPlay)
+	{
+	}
+
+	void onAccept(TcpSocket::Ptr newSock, const std::error_code& ec)
+	{
+		if (ec) {
+			if (ec != asio::error::operation_aborted)
+				INFO_LOG(NETWORK, "accept failed: %s", ec.message().c_str());
 		}
 		else
 		{
-			auto it2 = tcp_connecting_sockets.find(s);
-			if (it2 != tcp_connecting_sockets.end())
-			{
-				closesocket(it2->second);
-				tcp_connecting_sockets.erase(it2);
+			DEBUG_LOG(NETWORK, "Inbound TCP connection to port %d  from %s:%d", acceptor.local_endpoint().port(),
+					newSock->getSocket().remote_endpoint().address().to_string().c_str(), newSock->getSocket().remote_endpoint().port());
+			newSock->start();
+			start();
+		}
+	}
+
+	asio::io_context& io_context;
+	asio::ip::tcp::acceptor acceptor;
+	std::shared_ptr<DirectPlay> directPlay;
+	friend super;
+};
+
+// Handles outbound dc tcp sockets
+class TcpSink
+{
+public:
+	TcpSink(asio::io_context& io_context, std::shared_ptr<DirectPlay> directPlay)
+		: io_context(io_context), directPlay(directPlay)
+	{
+		pico_sock = pico_socket_open(PICO_PROTO_IPV4, PICO_PROTO_TCP, [](uint16_t ev, pico_socket *picoSock) {
+			if (picoSock == nullptr || picoSock->priv == nullptr)
+				WARN_LOG(NETWORK, "Pico callback with null tcp socket");
+			else
+				static_cast<TcpSink *>(picoSock->priv)->picoCallback(ev);
+		});
+		if (pico_sock == nullptr)
+			ERROR_LOG(MODEM, "error opening TCP socket: %s", strerror(pico_err));
+		pico_sock->priv = this;
+		int yes = 1;
+		pico_socket_setoption(pico_sock, PICO_TCP_NODELAY, &yes);
+		pico_ip4 inaddr_any = {};
+		uint16_t listen_port = 0;
+		int ret = pico_socket_bind(pico_sock, &inaddr_any, &listen_port);
+		if (ret < 0)
+			ERROR_LOG(MODEM, "error binding TCP socket to port %u: %s", short_be(listen_port), strerror(pico_err));
+		else if (pico_socket_listen(pico_sock, 10) != 0)
+			ERROR_LOG(MODEM, "error listening on port %u", short_be(listen_port));
+	}
+
+	~TcpSink() {
+		if (pico_sock != nullptr)
+			pico_sock->wakeup = nullptr;
+	}
+
+	void stop()
+	{
+		if (pico_sock != nullptr)
+			pico_socket_close(pico_sock);
+		directPlay.reset();
+	}
+
+private:
+	void picoCallback(uint16_t ev)
+	{
+		if (ev & PICO_SOCK_EV_CONN)
+		{
+			pico_ip4 orig;
+			uint16_t port;
+
+			pico_socket *sock_a = pico_socket_accept(pico_sock, &orig, &port);
+			if (sock_a == nullptr) {
+				// Also called for child sockets
+				INFO_LOG(NETWORK, "pico_socket_accept error: %s", strerror(pico_err));
 			}
 			else
-				INFO_LOG(MODEM, "PICO_SOCK_EV_FIN: Unknown socket: remote port %d", short_be(s->remote_port));
-		}
-	}
-
-	if (ev & PICO_SOCK_EV_ERR) {
-		INFO_LOG(MODEM, "Socket error received: %s", strerror(pico_err));
-		auto it = tcp_sockets.find(s);
-		if (it == tcp_sockets.end())
-			INFO_LOG(MODEM, "PICO_SOCK_EV_ERR: Unknown socket: remote port %d", short_be(s->remote_port));
-		else
-			tcp_sockets.erase(it);
-	}
-
-	if (ev & PICO_SOCK_EV_CLOSE)
-	{
-		auto it = tcp_sockets.find(s);
-		if (it == tcp_sockets.end())
-		{
-			INFO_LOG(MODEM, "PICO_SOCK_EV_CLOSE: Unknown socket: remote port %d", short_be(s->remote_port));
-		}
-		else
-		{
-			if (it->second.native_sock != INVALID_SOCKET)
-				shutdown(it->second.native_sock, SHUT_WR);
-			pico_socket_shutdown(s, PICO_SHUT_RD);
-		}
-	}
-
-//	if (ev & PICO_SOCK_EV_WR)
-//	{
-//	}
-}
-
-static sock_t find_udp_socket(uint16_t src_port)
-{
-	auto it = udp_sockets.find(src_port);
-	if (it != udp_sockets.end())
-		return it->second;
-
-	sock_t sockfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-	if (!VALID(sockfd))
-	{
-		perror("socket");
-		return -1;
-	}
-#ifndef _WIN32
-	fcntl(sockfd, F_SETFL, O_NONBLOCK);
-#else
-	u_long optl = 1;
-	ioctlsocket(sockfd, FIONBIO, &optl);
-#endif
-	int broadcastEnable = 1;
-	setsockopt(sockfd, SOL_SOCKET, SO_BROADCAST, (const char *)&broadcastEnable, sizeof(broadcastEnable));
-
-	// bind to same port if possible (Toy Racer)
-	sockaddr_in saddr;
-	socklen_t saddr_len = sizeof(saddr);
-	memset(&saddr, 0, sizeof(saddr));
-	saddr.sin_family = AF_INET;
-	saddr.sin_addr.s_addr = INADDR_ANY;
-	saddr.sin_port = src_port;
-	if (::bind(sockfd, (sockaddr *)&saddr, saddr_len) < 0)
-		perror("bind");
-
-	// FIXME Need to clean up at some point?
-	udp_sockets[src_port] = sockfd;
-
-	return sockfd;
-}
-
-static void udp_callback(uint16_t ev, pico_socket *s)
-{
-	if (ev & PICO_SOCK_EV_RD)
-	{
-		char buf[1510];
-		pico_ip4 src_addr;
-		uint16_t src_port;
-		pico_msginfo msginfo;
-		int r = 0;
-		while (true)
-		{
-			r = pico_socket_recvfrom_extended(s, buf, sizeof(buf), &src_addr.addr, &src_port, &msginfo);
-
-			if (r <= 0)
 			{
-				if (r < 0)
-					INFO_LOG(MODEM, "error UDP recv: %s", strerror(pico_err));
-				break;
+				char peer[30];
+				int yes = 1;
+				pico_ipv4_to_string(peer, sock_a->local_addr.ip4.addr);
+				DEBUG_LOG(NETWORK, "TcpSink: Outbound from port %d to %s:%d", short_be(port), peer, short_be(sock_a->local_port));
+				pico_socket_setoption(sock_a, PICO_TCP_NODELAY, &yes);
+				pico_tcp_set_linger(sock_a, 10000);
+
+				TcpSocket::Ptr psock = TcpSocket::create(io_context, directPlay);
+				psock->connect(sock_a);
 			}
-			sock_t sockfd = find_udp_socket(src_port);
-			if (VALID(sockfd))
+		}
+
+		if (ev & PICO_SOCK_EV_ERR) {
+			INFO_LOG(NETWORK, "TcpSink error: %s", strerror(pico_err));
+			pico_socket_close(pico_sock);
+		}
+
+		if (ev & PICO_SOCK_EV_FIN)
+			pico_socket_close(pico_sock);
+
+		if (ev & (PICO_SOCK_EV_RD | PICO_SOCK_EV_WR))
+			WARN_LOG(NETWORK, "TcpSink: R/W event %x", ev);
+
+		if (ev & PICO_SOCK_EV_DEL) {
+			pico_sock->priv = nullptr;
+			pico_sock = nullptr;
+		}
+	}
+
+	asio::io_context& io_context;
+	std::shared_ptr<DirectPlay> directPlay;
+	pico_socket *pico_sock;
+};
+
+// Handles inbound datagram to a given port
+class UdpSocket : public SharedThis<UdpSocket>
+{
+public:
+	void start() {
+		readAsync();
+	}
+
+	void sendto(const char *buf, size_t len, u32 addr, u16 port)
+	{
+		this->sendbuf.resize(len);
+		memcpy(this->sendbuf.data(), buf, len);
+		asio::ip::udp::endpoint destination(asio::ip::address_v4(addr), port);
+		DEBUG_LOG(NETWORK, "UdpSocket: outbound %d bytes from %d to %s:%d", (int)len, socket.local_endpoint().port(),
+				destination.address().to_string().c_str(), destination.port());
+		socket.async_send_to(asio::buffer(this->sendbuf), destination,
+				std::bind(&UdpSocket::onSent, this, asio::placeholders::error, asio::placeholders::bytes_transferred));
+	}
+
+	void close() {
+		asio::error_code ec;
+		socket.close(ec);
+	}
+
+private:
+	UdpSocket(asio::io_context& io_context, u16 port, pico_socket *pico_sock)
+		: io_context(io_context),
+		  socket(io_context, asio::ip::udp::endpoint(asio::ip::udp::v4(), port)),
+		  pico_sock(pico_sock)
+	{
+		asio::socket_base::broadcast option(true);
+		socket.set_option(option);
+	}
+
+	void readAsync() {
+		socket.async_receive_from(asio::buffer(this->recvbuf), source,
+			std::bind(&UdpSocket::onReceived, this, asio::placeholders::error, asio::placeholders::bytes_transferred));
+	}
+
+	void onSent(const std::error_code& ec, size_t len) {
+		if (ec)
+			INFO_LOG(NETWORK, "UDP sendto failed: %s", ec.message().c_str());
+	}
+
+	void onReceived(const std::error_code& ec, size_t len)
+	{
+		if (ec) {
+			INFO_LOG(NETWORK, "UDP recv_from failed: %s", ec.message().c_str());
+			return;
+		}
+		DEBUG_LOG(NETWORK, "UdpSocket: received %d bytes to port %d from %s:%d", (int)len,
+				socket.local_endpoint().port(), source.address().to_string().c_str(), source.port());
+		if (len == 0)
+			WARN_LOG(NETWORK, "Received empty datagram");
+
+		// filter out messages coming from ourselves (happens for broadcasts)
+		u32 srcAddr = htonl(source.address().to_v4().to_uint());
+		if (socket.local_endpoint().port() != source.port() || !is_local_address(srcAddr))
+		{
+			pico_msginfo msginfo;
+			msginfo.dev = pico_dev;
+			msginfo.tos = 0;
+			msginfo.ttl = 0;
+			msginfo.local_addr.ip4.addr = srcAddr;
+			msginfo.local_port = htons(source.port());
+
+			int r = pico_socket_sendto_extended(pico_sock, &recvbuf[0], len, &dcaddr, htons(socket.local_endpoint().port()), &msginfo);
+			if (r < (int)len)
+				INFO_LOG(MODEM, "error UDP sending to port %d: %s", socket.local_endpoint().port(), strerror(pico_err));
+		}
+		readAsync();
+	}
+
+	asio::io_context& io_context;
+	asio::ip::udp::socket socket;
+	pico_socket *pico_sock;
+	std::vector<char> sendbuf;
+	std::array<u8, 1510> recvbuf;
+	asio::ip::udp::endpoint source;	// source endpoint when receiving packets
+	friend super;
+};
+
+// Handles all outbound datagrams
+class UdpSink
+{
+public:
+	UdpSink(asio::io_context& io_context)
+		: io_context(io_context)
+	{
+		pico_sock = pico_socket_open(PICO_PROTO_IPV4, PICO_PROTO_UDP, [](u16 ev, pico_socket *picoSock) {
+			if (picoSock == nullptr || picoSock->priv == nullptr)
+				ERROR_LOG(NETWORK, "Pico callback with null udp sink");
+			else
+				static_cast<UdpSink *>(picoSock->priv)->picoCallback(ev);
+		});
+	    if (pico_sock == nullptr) {
+	    	ERROR_LOG(NETWORK, "error opening UDP socket: %s", strerror(pico_err));
+	    	return;
+	    }
+	    pico_sock->priv = this;
+	    pico_ip4 inaddr_any = {0};
+	    uint16_t listen_port = 0;
+	    int ret = pico_socket_bind(pico_sock, &inaddr_any, &listen_port);
+	    if (ret < 0)
+	    	ERROR_LOG(NETWORK, "error binding UDP socket to port %u: %s", short_be(listen_port), strerror(pico_err));
+	}
+
+	~UdpSink() {
+		if (pico_sock != nullptr)
+			pico_sock->wakeup = nullptr;
+	}
+
+	void setDirectPlay(std::shared_ptr<DirectPlay> directPlay) {
+		this->directPlay = directPlay;
+	}
+
+	UdpSocket::Ptr findSocket(u16 port)
+	{
+		auto it = sockets.find(port);
+		if (it != sockets.end())
+			return it->second;
+		try {
+			UdpSocket::Ptr sock = UdpSocket::create(io_context, port, pico_sock);
+			sock->start();
+			sockets[port] = sock;
+			return sock;
+		} catch (const std::system_error& e) {
+			WARN_LOG(NETWORK, "Server UDP socket on port %d: %s", port, e.what());
+			return nullptr;
+		}
+	}
+
+	void stop()
+	{
+		for (auto& [port,sock] : sockets)
+			sock->close();
+		sockets.clear();
+		if (pico_sock != nullptr)
+			pico_socket_close(pico_sock);
+		directPlay.reset();
+	}
+
+private:
+	void picoCallback(u16 ev)
+	{
+		if (ev & PICO_SOCK_EV_RD)
+		{
+			char buf[1510];
+			pico_ip4 src_addr;
+			uint16_t src_port;
+			pico_msginfo msginfo;
+			int r = 0;
+			while (true)
 			{
+				src_port = 0;
+				src_addr = {};
+				r = pico_socket_recvfrom_extended(pico_sock, buf, sizeof(buf), &src_addr.addr, &src_port, &msginfo);
+
+				if (r < 0) {
+					INFO_LOG(NETWORK, "error UDP recv: %s", strerror(pico_err));
+					break;
+				}
+				if (r == 0 && src_port == 0 && src_addr.addr == 0)
+					// No more packets
+					break;
+				if (r == 0)
+					WARN_LOG(NETWORK, "Sending empty datagram");
 				// Daytona USA
-				if (msginfo.local_port == 0x2F2F && buf[0] == 0x20 && buf[2] == 0x42)
+				if (msginfo.local_port == 0x2F2F && r >= 3 && buf[0] == 0x20 && buf[2] == 0x42)
 				{
 					if (buf[1] == 0x2b && r >= 37 + (int)sizeof(public_ip.addr))
 					{
@@ -575,275 +878,184 @@ static void udp_callback(uint16_t ev, pico_socket *s)
 							memcpy(p, &public_ip.addr, sizeof(public_ip.addr));
 					}
 				}
-				sockaddr_in dst_addr;
-				socklen_t addr_len = sizeof(dst_addr);
-				memset(&dst_addr, 0, sizeof(dst_addr));
-				dst_addr.sin_family = AF_INET;
-				dst_addr.sin_addr.s_addr = msginfo.local_addr.ip4.addr;
-				dst_addr.sin_port = msginfo.local_port;
-				if (sendto(sockfd, buf, r, 0, (const sockaddr *)&dst_addr, addr_len) < 0)
-					perror("sendto udp socket");
+				else if (msginfo.local_port == htons(47624))
+					directPlay->processOutPacket((const u8 *)buf, r);
+				UdpSocket::Ptr sock = findSocket(htons(src_port));
+				if (sock)
+					sock->sendto(buf, r, htonl(msginfo.local_addr.ip4.addr), htons(msginfo.local_port));
 			}
 		}
-	}
-
-	if (ev & PICO_SOCK_EV_ERR) {
-		INFO_LOG(MODEM, "UDP Callback error received");
-	}
-}
-
-static void read_native_sockets()
-{
-	int r;
-	sockaddr_in src_addr;
-	socklen_t addr_len;
-
-	// Accept incoming TCP connections
-	for (auto it = tcp_listening_sockets.begin(); it != tcp_listening_sockets.end(); it++)
-	{
-		addr_len = sizeof(src_addr);
-		memset(&src_addr, 0, addr_len);
-		sock_t sockfd = accept(it->second, (sockaddr *)&src_addr, &addr_len);
-		if (!VALID(sockfd))
-		{
-			if (get_last_error() != L_EAGAIN && get_last_error() != L_EWOULDBLOCK)
-				perror("accept");
-			continue;
+		if (ev & PICO_SOCK_EV_DEL) {
+			pico_sock->wakeup = nullptr;
+			pico_sock = nullptr;
 		}
-    	//printf("Incoming TCP connection from %08x to port %d\n", src_addr.sin_addr.s_addr, short_be(it->first));
-    	pico_socket *ps = pico_socket_open(PICO_PROTO_IPV4, PICO_PROTO_TCP, &tcp_callback);
-    	if (ps == NULL)
-    	{
-    		INFO_LOG(MODEM, "pico_socket_open failed: error %d", pico_err);
-    		closesocket(sockfd);
-    		continue;
-    	}
-    	ps->local_addr.ip4.addr = src_addr.sin_addr.s_addr;
-    	ps->local_port = src_addr.sin_port;
-    	if (pico_socket_connect(ps, &dcaddr.addr, it->first) != 0)
-    	{
-    		INFO_LOG(MODEM, "pico_socket_connect failed: error %d", pico_err);
-    		closesocket(sockfd);
-    		pico_socket_close(ps);
-    		continue;
-    	}
-    	set_non_blocking(sockfd);
-    	set_tcp_nodelay(sockfd);
-
-		tcp_sockets.try_emplace(ps, ps, sockfd);
 	}
 
-	// Check connecting outbound TCP sockets
-	fd_set write_fds{};
-	fd_set error_fds{};
-	FD_ZERO(&write_fds);
-	FD_ZERO(&error_fds);
-	int max_fd = -1;
-	for (auto it = tcp_connecting_sockets.begin(); it != tcp_connecting_sockets.end(); it++)
+	asio::io_context& io_context;
+	pico_socket *pico_sock = nullptr;
+	std::unordered_map<u16, UdpSocket::Ptr> sockets;
+	std::shared_ptr<DirectPlay> directPlay;
+};
+
+class DirectPlayImpl : public DirectPlay, public SharedThis<DirectPlayImpl>
+{
+public:
+	void processOutPacket(const u8 *data, int len) override
 	{
-		FD_SET(it->second, &write_fds);
-		FD_SET(it->second, &error_fds);
-		max_fd = std::max(max_fd, (int)it->second);
-	}
-	if (max_fd > -1)
-	{
-		timeval tv{};
-		int rc = select(max_fd + 1, nullptr, &write_fds, &error_fds, &tv);
-		if (rc == -1)
-			perror("select");
-		else if (rc > 0)
+		if (!isDirectPlay(data, len))
+			return;
+
+		u16 port = htons(*(u16 *)&data[6]);
+		if (port >= 2300 && port <= 2400 && port != this->port)
 		{
-			for (auto it = tcp_connecting_sockets.begin(); it != tcp_connecting_sockets.end(); )
+			NOTICE_LOG(NETWORK, "DirectPlay4 local port is %d", port);
+			if (acceptor) {
+				acceptor->stop();
+				acceptor.reset();
+			}
+			forwardPorts(port, false);
+			this->port = port;
+			udpSink.findSocket(port);
+			try {
+				acceptor = TcpAcceptor::create(io_context, port, shared_from_this());
+				acceptor->start();
+			} catch (const std::system_error& e) {
+				WARN_LOG(NETWORK, "DirectPlay TCP socket on port %d: %s", port, e.what());
+			}
+		}
+		if (*(u16 *)&data[24] == 0x13)	// Add Forward Request
+		{
+			// This one is the guest game port, only UDP is used
+			u16 port = htons(*(u16 *)&data[0x72]);
+			if (port >= 2300 && port <= 2400 && port != this->gamePort)
 			{
-				if (!FD_ISSET(it->second, &write_fds) && !FD_ISSET(it->second, &error_fds))
-				{
-					it++;
-					continue;
-				}
-				int error;
-#ifdef _WIN32
-				char *value = (char *)&error;
-#else
-				int *value = &error;
-#endif
-				socklen_t l = sizeof(int);
-				if (getsockopt(it->second, SOL_SOCKET, SO_ERROR, value, &l) < 0 || error != 0)
-				{
-					char peer[30];
-					pico_ipv4_to_string(peer, it->first->local_addr.ip4.addr);
-					INFO_LOG(MODEM, "TCP connection to %s:%d failed: %s", peer, short_be(it->first->local_port), strerror(get_last_error()));
-					pico_socket_close(it->first);
-					closesocket(it->second);
-				}
-				else
-				{
-					set_tcp_nodelay(it->second);
-
-					tcp_sockets.try_emplace(it->first, it->first, it->second);
-
-					read_from_dc_socket(it->first, it->second);
-				}
-				it = tcp_connecting_sockets.erase(it);
+				if (*(u16 *)&data[0x62] == this->port)
+					WARN_LOG(NETWORK, "DirectPlay4 AddForwardRequest expected port %d got %d", this->port, *(u16 *)&data[0x62]);
+				NOTICE_LOG(NETWORK, "DirectPlay4 game port is %d", port);
+				forwardPorts(port, true);
+				this->gamePort = port;
+				udpSink.findSocket(port);
 			}
 		}
 	}
 
-	static char buf[1500];
-	pico_msginfo msginfo;
-
-	// Read UDP sockets
-	for (auto it = udp_sockets.begin(); it != udp_sockets.end(); it++)
+	~DirectPlayImpl()
 	{
-		if (!VALID(it->second))
-			continue;
+		if (upnpCmd.valid())
+			upnpCmd.get();
+		if (acceptor)
+			acceptor->stop();
+	}
 
-		addr_len = sizeof(src_addr);
-		memset(&src_addr, 0, addr_len);
-		r = (int)recvfrom(it->second, buf, sizeof(buf), 0, (sockaddr *)&src_addr, &addr_len);
-		// filter out messages coming from ourselves (happens for broadcasts)
-		if (r > 0 && (it->first != src_addr.sin_port || !is_local_address(src_addr.sin_addr.s_addr)))
+private:
+	DirectPlayImpl(asio::io_context& io_context, UdpSink& udpSink, std::shared_ptr<MiniUPnP> upnp)
+		: io_context(io_context), udpSink(udpSink), upnp(upnp) {
+	}
+
+	bool isDirectPlay(const u8 *data, int len)
+	{
+		return len >= 24 && (data[2] & 0xf0) == 0xb0 && data[3] == 0xfa
+				// DirectPlay4 signature
+				&& !memcmp(&data[20], "play", 4);
+	}
+
+	void forwardPorts(u16 port, bool udpOnly)
+	{
+		if (upnp && upnp->isInitialized())
 		{
-			msginfo.dev = pico_dev;
-			msginfo.tos = 0;
-			msginfo.ttl = 0;
-			msginfo.local_addr.ip4.addr = src_addr.sin_addr.s_addr;
-			msginfo.local_port = src_addr.sin_port;
-
-			int r2 = pico_socket_sendto_extended(pico_udp_socket, buf, r, &dcaddr, it->first, &msginfo);
-			if (r2 < r)
-				INFO_LOG(MODEM, "error UDP sending to %d: %s", short_be(it->first), strerror(pico_err));
+			if (upnpCmd.valid())
+				upnpCmd.get();
+			upnpCmd = std::async(std::launch::async, [this, port, udpOnly]()
+			{
+				if (!upnp->AddPortMapping(port, false))
+					WARN_LOG(MODEM, "UPNP AddPortMapping UDP %d failed", port);
+				if (!udpOnly && !upnp->AddPortMapping(port, true))
+					WARN_LOG(MODEM, "UPNP AddPortMapping TCP %d failed", port);
+			});
 		}
-		else if (r < 0 && get_last_error() != L_EAGAIN && get_last_error() != L_EWOULDBLOCK)
+	}
+
+	u16 port = 0;
+	u16 gamePort = 0;
+	TcpAcceptor::Ptr acceptor;
+	asio::io_context& io_context;
+	UdpSink& udpSink;
+	std::shared_ptr<MiniUPnP> upnp;
+	std::future<void> upnpCmd;
+	friend super;
+};
+
+class DnsResolver : public SharedThis<DnsResolver>
+{
+public:
+	void resolve(const char *host, pico_ip4 *result)
+	{
+		// need to introduce a dns query object if concurrency is needed
+		verify(!busy);
+		busy = true;
+		u32 len = makeDnsQueryPacket(buf, host);
+		socket.async_send_to(asio::buffer(buf, len), nsEndpoint,
+				std::bind(&DnsResolver::querySent, shared_from_this(),
+						result,
+						asio::placeholders::error,
+						asio::placeholders::bytes_transferred));
+	}
+
+private:
+	DnsResolver(asio::io_context& io_context, const char *nameServer)
+		: io_context(io_context), socket(io_context)
+	{
+		using namespace asio::ip;
+		udp::resolver resolver(io_context);
+		nsEndpoint = *resolver.resolve(udp::v4(), nameServer, "53").begin();
+		socket.open(udp::v4());
+	}
+
+	void querySent(pico_ip4 *result, const std::error_code& ec, size_t len)
+	{
+		if (!ec)
 		{
-			perror("recvfrom udp socket");
-			continue;
+			socket.async_receive_from(asio::mutable_buffer(buf, sizeof(buf)), nsEndpoint,
+					std::bind(&DnsResolver::responseReceived, shared_from_this(),
+						result,
+						asio::placeholders::error,
+						asio::placeholders::bytes_transferred));
+		}
+		else {
+			busy = false;
 		}
 	}
 
-	// Read TCP sockets
-	for (auto it = tcp_sockets.begin(); it != tcp_sockets.end(); )
+	void responseReceived(pico_ip4 *result, const std::error_code& ec, size_t len)
 	{
-		it->second.receive_native();
-		if (it->second.pico_sock == nullptr)
-			it = tcp_sockets.erase(it);
-		else
-			it++;
+		if (!ec)
+		{
+			*result = parseDnsResponsePacket(buf, len);
+			DEBUG_LOG(NETWORK, "dns resolved: %s (using %s)",
+					asio::ip::address_v4(*(std::array<u8, 4> *)result).to_string().c_str(),
+					nsEndpoint.address().to_string().c_str());
+		}
+		busy = false;
 	}
-}
 
-static void close_native_sockets()
+	asio::io_context& io_context;
+	asio::ip::udp::endpoint nsEndpoint;
+	asio::ip::udp::socket socket;
+	char buf[1024];
+	bool busy = false;
+	friend super;
+};
+
+static void resolveDns(asio::io_context& io_context)
 {
-	for (const auto& pair : udp_sockets)
-		closesocket(pair.second);
-	udp_sockets.clear();
-	for (auto& pair : tcp_sockets)
-	{
-		pico_socket_del_imm(pair.second.pico_sock);
-		pair.second.pico_sock = nullptr;
-		closesocket(pair.second.native_sock);
-		pair.second.native_sock = INVALID_SOCKET;
-	}
-	tcp_sockets.clear();
-	for (const auto& pair : tcp_connecting_sockets)
-	{
-		pico_socket_del_imm(pair.first);
-		closesocket(pair.second);
-	}
-	tcp_connecting_sockets.clear();
-	for (const auto& pair : tcp_listening_sockets)
-		closesocket(pair.second);
-	tcp_listening_sockets.clear();
-}
-
-static int modem_set_speed(pico_device *dev, uint32_t speed)
-{
-    return 0;
-}
-
-static uint32_t dns_query_start;
-static uint32_t dns_query_attempts;
-
-static void reset_dns_entries()
-{
-	dns_query_attempts = 0;
-	dns_query_start = 0;
 	public_ip.addr = 0;
 	afo_ip.addr = 0;
-}
-
-static void check_dns_entries()
-{
-	if (public_ip.addr == 0)
-	{
-		u32 ip;
-		pico_string_to_ipv4(RESOLVER1_OPENDNS_COM, &ip);
-		pico_ip4 tmpdns { ip };
-		if (dns_query_start == 0)
-		{
-			dns_query_start = PICO_TIME_MS();
-			get_host_by_name("myip.opendns.com", tmpdns);
-		}
-		else if (get_dns_answer(&public_ip, tmpdns) == 0)
-		{
-			dns_query_attempts = 0;
-			dns_query_start = 0;
-			char myip[16];
-			pico_ipv4_to_string(myip, public_ip.addr);
-			INFO_LOG(MODEM, "My IP is %s", myip);
-		}
-		else
-		{
-			if (PICO_TIME_MS() - dns_query_start > 1000)
-			{
-				if (++dns_query_attempts >= 5)
-				{
-					public_ip.addr = 0xffffffff;	// Bogus but not null
-					dns_query_attempts = 0;
-					dns_query_start = 0;
-					WARN_LOG(MODEM, "Can't resolve my IP");
-				}
-				else
-					// Retry
-					dns_query_start = 0;
-			}
-		}
-	}
-	else if (afo_ip.addr == 0)
-	{
-		if (dns_query_start == 0)
-		{
-			dns_query_start = PICO_TIME_MS();
-			get_host_by_name("auriga.segasoft.com", dnsaddr);	// Alien Front Online server
-		}
-		else
-		{
-			if (get_dns_answer(&afo_ip, dnsaddr) == 0)
-			{
-				dns_query_attempts = 0;
-				dns_query_start = 0;
-				char afoip[16];
-				pico_ipv4_to_string(afoip, afo_ip.addr);
-				INFO_LOG(MODEM, "AFO server IP is %s", afoip);
-			}
-			else
-			{
-				if (PICO_TIME_MS() - dns_query_start > 1000)
-				{
-					if (++dns_query_attempts >= 5)
-					{
-						u32 addr;
-						pico_string_to_ipv4("146.185.135.179", &addr);	// Default address
-						memcpy(&afo_ip.addr, &addr, sizeof(addr));
-						dns_query_attempts = 0;
-						WARN_LOG(MODEM, "Can't resolve auriga.segasoft.com. Using default 146.185.135.179");
-					}
-					else
-						// Retry
-						dns_query_start = 0;
-				}
-			}
-		}
-	}
+	DnsResolver::Ptr resolver = DnsResolver::create(io_context, RESOLVER1_OPENDNS_COM);
+	resolver->resolve("myip.opendns.com", &public_ip);
+	char str[16];
+	pico_ipv4_to_string(str, dnsaddr.addr);
+	resolver = DnsResolver::create(io_context, str);
+	resolver->resolve("auriga.segasoft.com", &afo_ip);
 }
 
 static pico_device *pico_eth_create()
@@ -921,8 +1133,7 @@ static void dumpFrame(const u8 *frame, u32 size)
 }
 static void closeDumpFile()
 {
-	if (pcapngDump != nullptr)
-	{
+	if (pcapngDump != nullptr) {
 		fclose(pcapngDump);
 		pcapngDump = nullptr;
 	}
@@ -934,28 +1145,56 @@ void pico_receive_eth_frame(const u8 *frame, u32 size)
 		pico_stack_recv(pico_dev, (u8 *)frame, size);
 }
 
-static int send_eth_frame(pico_device *dev, void *data, int len)
-{
+static int send_eth_frame(pico_device *dev, void *data, int len) {
 	dumpFrame((const u8 *)data, len);
 	return pico_send_eth_frame((const u8 *)data, len);
 }
 
-static void *pico_thread_func(void *)
+static void picoTick(const std::error_code& ec, asio::steady_timer *timer)
 {
-	pico_stack_init();
-#ifdef _WIN32
-	{
-		static WSADATA wsaData;
-		if (wsaData.wVersion == 0)
-		{
-			if (WSAStartup(MAKEWORD(2, 0), &wsaData) != 0)
-				WARN_LOG(MODEM, "WSAStartup failed");
-		}
-    }
-#endif
+	if (ec) {
+		ERROR_LOG(NETWORK, "picoTick timer error: %s", ec.message().c_str());
+		return;
+	}
+	pico_stack_tick();
+	timer->expires_at(timer->expiry() + asio::chrono::milliseconds(PICO_TICK_MS));
+	timer->async_wait(std::bind(picoTick, asio::placeholders::error, timer));
+}
 
-	// Find the network ports for the current game
+class PicoThread
+{
+public:
+	void start()
+	{
+		verify(!thread.joinable());
+		io_context = std::make_unique<asio::io_context>();
+		thread = std::thread(&PicoThread::run, this);
+	}
+
+	void stop()
+	{
+		if (!thread.joinable())
+			return;
+		io_context->stop();
+		thread.join();
+		io_context.reset();
+	}
+
+private:
+	void run();
+
 	const GamePortList *ports = nullptr;
+	std::shared_ptr<MiniUPnP> upnp;
+	bool usingPPP = false;
+	std::thread thread;
+	std::unique_ptr<asio::io_context> io_context;
+};
+
+void PicoThread::run()
+{
+	ThreadName _("PicoTCP");
+	// Find the network ports for the current game
+	ports = nullptr;
 	for (u32 i = 0; i < std::size(GamesPorts) && ports == nullptr; i++)
 	{
 		const auto& game = GamesPorts[i];
@@ -975,40 +1214,32 @@ static void *pico_thread_func(void *)
 	dont_reject_opt_vj_hack = settings.content.gameId == "6107117"
 			|| settings.content.gameId == "610-7390" || settings.content.gameId == "610-7391" ? 1 : 0;
 
-	std::future<MiniUPnP> upnp =
-		std::async(std::launch::async, [ports]() {
-			// Initialize miniupnpc and map network ports
-			ThreadName _("UPNP-init");
-			MiniUPnP upnp;
-			if (ports != nullptr && config::EnableUPnP)
+	std::future<void> pnpFuture;
+	if (ports != nullptr && config::EnableUPnP)
+	{
+		upnp = std::make_shared<MiniUPnP>();
+		pnpFuture = std::move(
+			std::async(std::launch::async, [this]()
 			{
-				if (!upnp.Init())
+				// Initialize miniupnpc and map network ports
+				ThreadName _("UPNP-init");
+				if (!upnp->Init())
 					WARN_LOG(MODEM, "UPNP Init failed");
 				else
 				{
 					for (u32 i = 0; i < std::size(ports->udpPorts) && ports->udpPorts[i] != 0; i++)
-						if (!upnp.AddPortMapping(ports->udpPorts[i], false))
+						if (!upnp->AddPortMapping(ports->udpPorts[i], false))
 							WARN_LOG(MODEM, "UPNP AddPortMapping UDP %d failed", ports->udpPorts[i]);
 					for (u32 i = 0; i < std::size(ports->tcpPorts) && ports->tcpPorts[i] != 0; i++)
-						if (!upnp.AddPortMapping(ports->tcpPorts[i], true))
+						if (!upnp->AddPortMapping(ports->tcpPorts[i], true))
 							WARN_LOG(MODEM, "UPNP AddPortMapping TCP %d failed", ports->tcpPorts[i]);
 				}
-			}
-			return upnp;
-		});
+			}));
+	}
 
 	// Empty queues
-    {
-		std::queue<u8> empty;
-		in_buffer_lock.lock();
-		std::swap(in_buffer, empty);
-		in_buffer_lock.unlock();
-
-		std::queue<u8> empty2;
-		out_buffer_lock.lock();
-		std::swap(out_buffer, empty2);
-		out_buffer_lock.unlock();
-    }
+	in_buffer.clear();
+	out_buffer.clear();
 
     // Find DNS ip address
 	{
@@ -1016,10 +1247,13 @@ static void *pico_thread_func(void *)
 		if (dnsName == "46.101.91.123")
 			// override legacy default with current one
 			dnsName = "dns.flyca.st";
-		hostent *hp = gethostbyname(dnsName.c_str());
-		if (hp != nullptr && hp->h_length > 0)
+		asio::ip::udp::resolver resolver(*io_context);
+		auto it = resolver.resolve(asio::ip::udp::v4(), dnsName, "53");
+		if (!it.empty())
 		{
-			memcpy(&dnsaddr.addr, hp->h_addr_list[0], sizeof(dnsaddr.addr));
+			asio::ip::udp::endpoint endpoint = *it.begin();
+
+			memcpy(&dnsaddr.addr, &endpoint.address().to_v4().to_bytes()[0], sizeof(dnsaddr.addr));
 			char s[17];
 			pico_ipv4_to_string(s, dnsaddr.addr);
 			NOTICE_LOG(MODEM, "%s IP is %s", dnsName.c_str(), s);
@@ -1032,17 +1266,19 @@ static void *pico_thread_func(void *)
 			WARN_LOG(MODEM, "Can't resolve dns.flyca.st. Using default 46.101.91.123");
 		}
 	}
-	reset_dns_entries();
+	resolveDns(*io_context);
+
+	pico_stack_init();
 
 	// Create ppp/eth device
-	const bool usingPPP = !config::EmulateBBA;
+	usingPPP = !config::EmulateBBA;
 	u32 addr;
 	if (usingPPP)
 	{
 		// PPP
 		pico_dev = pico_ppp_create();
 		if (!pico_dev)
-			return NULL;
+			throw FlycastException("PicoTCP ppp creation failed");
 		pico_string_to_ipv4("192.168.167.2", &addr);
 		memcpy(&dcaddr.addr, &addr, sizeof(addr));
 		pico_ppp_set_peer_ip(pico_dev, dcaddr);
@@ -1054,7 +1290,7 @@ static void *pico_thread_func(void *)
 
 		pico_ppp_set_serial_read(pico_dev, modem_read);
 		pico_ppp_set_serial_write(pico_dev, modem_write);
-		pico_ppp_set_serial_set_speed(pico_dev, modem_set_speed);
+		pico_ppp_set_serial_set_speed(pico_dev, [](pico_device *dev, uint32_t speed) { return 0; });
 		pico_dev->proxied = 1;
 
 		pico_ppp_connect(pico_dev);
@@ -1064,7 +1300,7 @@ static void *pico_thread_func(void *)
 		// Ethernet
 		pico_dev = pico_eth_create();
 		if (pico_dev == nullptr)
-			return nullptr;
+			throw FlycastException("PicoTCP eth creation failed");
 		pico_dev->send = &send_eth_frame;
 		pico_dev->proxied = 1;
 		pico_queue_protect(pico_dev->q_in);
@@ -1079,7 +1315,7 @@ static void *pico_thread_func(void *)
 		// dreamcast IP
 		pico_string_to_ipv4("192.168.169.2", &addr);
 		memcpy(&dcaddr.addr, &addr, sizeof(addr));
-		
+
 		pico_dhcp_server_setting dhcpSettings{ 0 };
 		dhcpSettings.dev = pico_dev;
 		dhcpSettings.server_ip = ipaddr;
@@ -1093,89 +1329,49 @@ static void *pico_thread_func(void *)
 			WARN_LOG(MODEM, "DHCP server init failed");
 	}
 
-    pico_udp_socket = pico_socket_open(PICO_PROTO_IPV4, PICO_PROTO_UDP, &udp_callback);
-    if (pico_udp_socket == NULL) {
-    	INFO_LOG(MODEM, "error opening UDP socket: %s", strerror(pico_err));
-		return nullptr;
-    }
-    int yes = 1;
-    pico_ip4 inaddr_any = {0};
-    uint16_t listen_port = 0;
-    int ret = pico_socket_bind(pico_udp_socket, &inaddr_any, &listen_port);
-    if (ret < 0)
-    	INFO_LOG(MODEM, "error binding UDP socket to port %u: %s", short_be(listen_port), strerror(pico_err));
-
-    pico_tcp_socket = pico_socket_open(PICO_PROTO_IPV4, PICO_PROTO_TCP, &tcp_callback);
-    if (pico_tcp_socket == NULL) {
-    	INFO_LOG(MODEM, "error opening TCP socket: %s", strerror(pico_err));
-    }
-    pico_socket_setoption(pico_tcp_socket, PICO_TCP_NODELAY, &yes);
-    ret = pico_socket_bind(pico_tcp_socket, &inaddr_any, &listen_port);
-    if (ret < 0) {
-    	INFO_LOG(MODEM, "error binding TCP socket to port %u: %s", short_be(listen_port), strerror(pico_err));
-    }
-    else
-    {
-        if (pico_socket_listen(pico_tcp_socket, 10) != 0)
-        	INFO_LOG(MODEM, "error listening on port %u", short_be(listen_port));
-    }
+	// Create sinks
+	UdpSink udpSink(*io_context);
+	DirectPlayImpl::Ptr directPlay = DirectPlayImpl::create(*io_context, udpSink, upnp);
+	udpSink.setDirectPlay(directPlay);
+	TcpSink tcpSink(*io_context, directPlay);
 
 	// Open listening sockets
-	sockaddr_in saddr;
-	socklen_t saddr_len = sizeof(saddr);
-	memset(&saddr, 0, sizeof(saddr));
-	saddr.sin_family = AF_INET;
-	saddr.sin_addr.s_addr = INADDR_ANY;
+	std::vector<TcpAcceptor::Ptr> acceptors;
 	if (ports != nullptr)
 	{
 		for (u32 i = 0; i < std::size(ports->udpPorts) && ports->udpPorts[i] != 0; i++)
-		{
-			uint16_t port = short_be(ports->udpPorts[i]);
-			find_udp_socket(port);
-			// bind is done in find_udp_socket
-		}
+			udpSink.findSocket(ports->udpPorts[i]);
 
 		for (u32 i = 0; i < std::size(ports->tcpPorts) && ports->tcpPorts[i] != 0; i++)
-		{
-			uint16_t port = short_be(ports->tcpPorts[i]);
-			saddr.sin_port = port;
-			sock_t sockfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-			if (::bind(sockfd, (sockaddr *)&saddr, saddr_len) < 0)
-			{
-				perror("bind");
-				closesocket(sockfd);
-				continue;
+			try {
+				auto acceptor = TcpAcceptor::create(*io_context, ports->tcpPorts[i], directPlay);
+				acceptor->start();
+				acceptors.push_back(std::move(acceptor));
+			} catch (const std::system_error& e) {
+				WARN_LOG(NETWORK, "Server TCP socket on port %d: %s", ports->tcpPorts[i], e.what());
 			}
-			if (listen(sockfd, 5) < 0)
-			{
-				perror("listen");
-				closesocket(sockfd);
-				continue;
-			}
-			set_non_blocking(sockfd);
-			tcp_listening_sockets[port] = sockfd;
-		}
 	}
 
-	while (pico_thread_running)
-    {
-    	read_native_sockets();
-    	pico_stack_tick();
-    	check_dns_entries();
-		PICO_IDLE();
-    }
+	// pico stack timer
+	asio::steady_timer timer(*io_context);
+	picoTick({}, &timer);
 
-	close_native_sockets();
-	pico_socket_del_imm(pico_tcp_socket);
-	pico_socket_del_imm(pico_udp_socket);
+	// main loop
+	io_context->run();
+
+	for (auto& acceptor : acceptors)
+		acceptor->stop();
+	acceptors.clear();
+	tcpSink.stop();
+	udpSink.stop();
+
 	pico_stack_tick();
 	pico_stack_tick();
 	pico_stack_tick();
 
 	if (pico_dev)
 	{
-		if (usingPPP)
-		{
+		if (usingPPP) {
 			pico_ppp_destroy(pico_dev);
 		}
 		else
@@ -1187,14 +1383,13 @@ static void *pico_thread_func(void *)
 		pico_dev = nullptr;
 	}
 	pico_stack_deinit();
-
-	if (ports != nullptr)
-		upnp.get().Term();
-
-	return NULL;
+	if (upnp) {
+		upnp->Term();
+		upnp.reset();
+	}
 }
 
-static cThread pico_thread(pico_thread_func, nullptr, "PicoTCP");
+static PicoThread pico_thread;
 
 bool start_pico()
 {
@@ -1202,7 +1397,7 @@ bool start_pico()
 	if (pico_thread_running)
 		return false;
 	pico_thread_running = true;
-	pico_thread.Start();
+	pico_thread.start();
 
     return true;
 }
@@ -1211,7 +1406,7 @@ void stop_pico()
 {
 	emu.setNetworkState(false);
 	pico_thread_running = false;
-	pico_thread.WaitToEnd();
+	pico_thread.stop();
 }
 
 // picotcp mutex implementation
