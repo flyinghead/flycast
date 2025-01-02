@@ -37,8 +37,9 @@
 #include <atomic>
 #include <utility>
 #include <xxhash.h>
-#include <thread>
 #include <functional>
+#include "util/worker_thread.h"
+#include "util/periodic_thread.h"
 
 namespace achievements
 {
@@ -74,10 +75,8 @@ private:
 	std::string getOrDownloadImage(const char *url);
 	std::pair<std::string, bool> getCachedImage(const char *url);
 	void diskChange();
-	void asyncTask(std::function<void()> f);
-	void startThread();
-	void stopThread();
-	void backgroundThread();
+	void asyncTask(std::function<void()>&& f);
+	void stopThreads();
 
 	static void clientLoginWithTokenCallback(int result, const char *error_message, rc_client_t *client, void *userdata);
 	static void clientLoginWithPasswordCallback(int result, const char *error_message, rc_client_t *client, void *userdata);
@@ -112,11 +111,12 @@ private:
 	std::string cachePath;
 	std::unordered_map<u64, std::string> cacheMap;
 	std::mutex cacheMutex;
-	std::vector<std::function<void()>> tasks;
-	std::mutex taskMutex;
-	std::thread taskThread;
-	cResetEvent resetEvent;
-	bool threadRunning = false;
+	WorkerThread taskThread {"RA-background"};
+
+	PeriodicThread idleThread { "RA-idle", [this]() {
+		if (active)
+			rc_client_idle(rc_client);
+	}};
 };
 
 bool init() {
@@ -176,6 +176,7 @@ Achievements::Achievements()
 	EventManager::listen(Event::Pause, emuEventCallback, this);
 	EventManager::listen(Event::Resume, emuEventCallback, this);
 	EventManager::listen(Event::DiskChange, emuEventCallback, this);
+	idleThread.setPeriod(1000);
 }
 
 Achievements::~Achievements()
@@ -188,44 +189,13 @@ Achievements::~Achievements()
 	term();
 }
 
-void Achievements::asyncTask(std::function<void()> f)
-{
-	{
-		std::lock_guard<std::mutex> _(taskMutex);
-		tasks.emplace_back(f);
-	}
-	resetEvent.Set();
+void Achievements::asyncTask(std::function<void()>&& f) {
+	taskThread.run(std::move(f));
 }
 
-void Achievements::startThread()
-{
-	threadRunning = true;
-	taskThread = std::thread(&Achievements::backgroundThread, this);
-}
-
-void Achievements::stopThread()
-{
-	threadRunning = false;
-	resetEvent.Set();
-	if (taskThread.joinable())
-		taskThread.join();
-}
-
-void Achievements::backgroundThread()
-{
-	ThreadName _("RA-background");
-	while (threadRunning)
-	{
-		if (!resetEvent.Wait(1000) && active && paused)
-			rc_client_idle(rc_client);
-		std::vector<std::function<void()>> localTasks;
-		{
-			std::lock_guard<std::mutex> _(taskMutex);
-			std::swap(tasks, localTasks);
-		}
-		for (auto& f : localTasks)
-			f();
-	}
+void Achievements::stopThreads() {
+	taskThread.stop();
+	idleThread.stop();
 }
 
 bool Achievements::init()
@@ -243,7 +213,6 @@ bool Achievements::init()
 	//rc_client_set_unofficial_enabled(rc_client, 0);
 	//rc_client_set_spectator_mode_enabled(rc_client, 0);
 	loadCache();
-	startThread();
 
 	if (!config::AchievementsUserName.get().empty() && !config::AchievementsToken.get().empty())
 	{
@@ -357,7 +326,7 @@ void Achievements::term()
 	if (rc_client == nullptr)
 		return;
 	unloadGame();
-	stopThread();
+	stopThreads();
 	rc_client_destroy(rc_client);
 	rc_client = nullptr;
 }
@@ -813,8 +782,11 @@ std::string Achievements::getGameHash()
 	return hash;
 }
 
-void Achievements::pauseGame() {
+void Achievements::pauseGame()
+{
 	paused = true;
+	if (active)
+		idleThread.start();
 }
 
 void Achievements::resumeGame()
@@ -822,6 +794,7 @@ void Achievements::resumeGame()
 	paused = false;
 	if (config::EnableAchievements && !settings.naomi.slave)
 	{
+		idleThread.stop();
 		loadGame();
 		if (settings.raHardcoreMode && !config::AchievementsHardcoreMode)
 		{
@@ -955,8 +928,7 @@ void Achievements::unloadGame()
 	paused = false;
 	EventManager::unlisten(Event::VBlank, emuEventCallback, this);
 	// wait for all async tasks before unloading the game
-	stopThread();
-	startThread();
+	stopThreads();
 	rc_client_unload_game(rc_client);
 	settings.raHardcoreMode = false;
 }

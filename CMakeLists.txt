@@ -1909,7 +1909,10 @@ if(BUILD_TESTING)
 			tests/src/serialize_test.cpp
 			tests/src/AicaArmTest.cpp
 			tests/src/Sh4InterpreterTest.cpp
-			tests/src/MmuTest.cpp)
+			tests/src/MmuTest.cpp
+			tests/src/util/PeriodicThreadTest.cpp
+			tests/src/util/TsQueueTest.cpp
+			tests/src/util/WorkerThreadTest.cpp)
 endif()
 
 if(NINTENDO_SWITCH)
