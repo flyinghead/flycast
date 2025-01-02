@@ -24,6 +24,7 @@
 
 static PVOID vectoredHandler;
 static LONG (WINAPI *prevExceptionHandler)(EXCEPTION_POINTERS *ep);
+const char *getThreadName();
 
 static void readContext(const EXCEPTION_POINTERS *ep, host_context_t &context)
 {
@@ -145,7 +146,7 @@ static LONG WINAPI exceptionHandler(EXCEPTION_POINTERS *ep)
 	}
 #endif
 
-	ERROR_LOG(COMMON, "[GPF] PC %p unhandled access to %p", (void *)context.pc, address);
+	ERROR_LOG(COMMON, "[GPF] Thread:%s PC %p unhandled access to %p", getThreadName(), (void *)context.pc, address);
 	if (prevExceptionHandler != nullptr)
 		prevExceptionHandler(ep);
 
