@@ -474,12 +474,13 @@ bool MetalRenderer::Draw(const MetalTexture *fogTexture, const MetalTexture *pal
     }
 
     // Upload vertex and index buffers
-    VertexShaderUniforms vtxUniforms;
+    VertexShaderUniforms vtxUniforms {};
     vtxUniforms.ndcMat = matrices.GetNormalMatrix();
 
     UploadMainBuffer(vtxUniforms, fragUniforms);
 
     renderEncoder->setVertexBuffer(curMainBuffer, offsets.vertexUniformOffset, 0);
+    renderEncoder->setVertexBuffer(curMainBuffer, 0, 30);
     renderEncoder->setFragmentBuffer(curMainBuffer, offsets.fragmentUniformOffset, 0);
 
     RenderPass previous_pass {};

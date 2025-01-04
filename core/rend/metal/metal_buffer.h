@@ -71,16 +71,16 @@ public:
     BufferPacker();
 
     u64 addUniform(const void *p, size_t size) {
-        return add(p, size, 16);
+        return add(p, size);
     }
 
     u64 addStorage(const void *p, size_t size) {
-        return add(p, size, 16);
+        return add(p, size);
     }
 
-    u64 add(const void *p, size_t size, u32 alignment = 4)
+    u64 add(const void *p, size_t size)
     {
-        u32 padding = align(offset, std::max(4u, alignment));
+        u32 padding = align(offset, 16);
         if (padding != 0)
         {
             chunks.push_back(nullptr);
