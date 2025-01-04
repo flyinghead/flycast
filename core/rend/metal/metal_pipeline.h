@@ -130,28 +130,48 @@ private:
         auto pos = vertexDesc->attributes()->object(0); // pos
         pos->setFormat(MTL::VertexFormatFloat3);
         pos->setOffset(offsetof(Vertex, x));
+        pos->setBufferIndex(30);
 
         if (full) {
             auto col = vertexDesc->attributes()->object(1); // base color
             col->setFormat(MTL::VertexFormatUChar4Normalized);
             col->setOffset(offsetof(Vertex, col));
+            col->setBufferIndex(30);
 
             auto spc = vertexDesc->attributes()->object(2); // offset color
             spc->setFormat(MTL::VertexFormatUChar4Normalized);
             spc->setOffset(offsetof(Vertex, spc));
+            spc->setBufferIndex(30);
 
             auto u = vertexDesc->attributes()->object(3); // tex coord
             u->setFormat(MTL::VertexFormatFloat2);
             u->setOffset(offsetof(Vertex, u));
+            u->setBufferIndex(30);
+
+            auto col1 = vertexDesc->attributes()->object(4);
+            col1->setFormat(MTL::VertexFormatUChar4Normalized);
+            col1->setOffset(offsetof(Vertex, col1));
+            col1->setBufferIndex(30);
+
+            auto spc1 = vertexDesc->attributes()->object(4);
+            spc1->setFormat(MTL::VertexFormatUChar4Normalized);
+            spc1->setOffset(offsetof(Vertex, spc1));
+            spc1->setBufferIndex(30);
+
+            auto u1 = vertexDesc->attributes()->object(3); // tex coord
+            u1->setFormat(MTL::VertexFormatFloat2);
+            u1->setOffset(offsetof(Vertex, u1));
+            u1->setBufferIndex(30);
 
             if (naomi2) {
                 auto nx = vertexDesc->attributes()->object(4); // naomi2 normal
                 nx->setFormat(MTL::VertexFormatFloat3);
                 nx->setOffset(offsetof(Vertex, nx));
+                nx->setBufferIndex(30);
             }
         }
 
-        auto layout = vertexDesc->layouts()->object(0);
+        auto layout = vertexDesc->layouts()->object(30);
         layout->setStride(sizeof(Vertex));
         layout->setStepRate(1);
         layout->setStepFunction(MTL::VertexStepFunctionPerVertex);
