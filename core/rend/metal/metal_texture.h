@@ -85,9 +85,12 @@ public:
                 desc->setMipFilter(MTL::SamplerMipFilterNearest);
             }
 
-            desc->setRAddressMode(tsp.ClampU ? MTL::SamplerAddressModeClampToEdge : tsp.FlipU ? MTL::SamplerAddressModeMirrorRepeat : MTL::SamplerAddressModeRepeat);
-            desc->setSAddressMode(tsp.ClampV ? MTL::SamplerAddressModeClampToEdge : tsp.FlipV ? MTL::SamplerAddressModeMirrorRepeat : MTL::SamplerAddressModeRepeat);
-            desc->setTAddressMode(MTL::SamplerAddressModeRepeat);
+            auto sRepeat = tsp.ClampU ? MTL::SamplerAddressModeClampToEdge : tsp.FlipU ? MTL::SamplerAddressModeMirrorRepeat : MTL::SamplerAddressModeRepeat;
+            auto tRepeat = tsp.ClampV ? MTL::SamplerAddressModeClampToEdge : tsp.FlipV ? MTL::SamplerAddressModeMirrorRepeat : MTL::SamplerAddressModeRepeat;
+
+            desc->setSAddressMode(sRepeat);
+            desc->setTAddressMode(tRepeat);
+            desc->setRAddressMode(tRepeat);
             desc->setCompareFunction(MTL::CompareFunctionNever);
             desc->setMaxAnisotropy(config::AnisotropicFiltering);
 
