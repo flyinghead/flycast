@@ -129,13 +129,13 @@ DreamConnGamepad::DreamConnGamepad(int maple_port, int joystick_idx, SDL_Joystic
 	: SDLGamepad(maple_port, joystick_idx, sdl_joystick)
 {
 	_name = "DreamConn+ Controller";
-	EventManager::listen(Event::Start, handleEvent, this);
-	EventManager::listen(Event::LoadState, handleEvent, this);
+	EventManager::listen(EmuEvent::Start, handleEvent, this);
+	EventManager::listen(EmuEvent::LoadState, handleEvent, this);
 }
 
 DreamConnGamepad::~DreamConnGamepad() {
-	EventManager::unlisten(Event::Start, handleEvent, this);
-	EventManager::unlisten(Event::LoadState, handleEvent, this);
+	EventManager::unlisten(EmuEvent::Start, handleEvent, this);
+	EventManager::unlisten(EmuEvent::LoadState, handleEvent, this);
 }
 
 void DreamConnGamepad::set_maple_port(int port)
@@ -150,11 +150,11 @@ void DreamConnGamepad::set_maple_port(int port)
 	SDLGamepad::set_maple_port(port);
 }
 
-void DreamConnGamepad::handleEvent(Event event, void *arg)
+void DreamConnGamepad::handleEvent(EmuEvent event, void *arg)
 {
 	DreamConnGamepad *gamepad = static_cast<DreamConnGamepad*>(arg);
 	if (gamepad->dreamconn != nullptr)
-		createDreamConnDevices(gamepad->dreamconn, event == Event::Start);
+		createDreamConnDevices(gamepad->dreamconn, event == EmuEvent::Start);
 }
 
 bool DreamConnGamepad::gamepad_btn_input(u32 code, bool pressed)
