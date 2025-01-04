@@ -71,6 +71,8 @@ bool MetalRenderer::Render() {
 
     }
 
+    // TODO: Don't hardcode these values
+    matrices.CalcMatrices(&pvrrc, 1920, 1080);
     Draw(fogTexture.get(), paletteTexture.get());
     // if (config::EmulateFramebuffer || pvrrc.isRTT)
     //     // delay ending the render pass in case of multi render
@@ -201,8 +203,6 @@ void MetalRenderer::SetBaseScissor(MTL::Viewport viewport) {
 
 void MetalRenderer::DrawPoly(MTL::RenderCommandEncoder *encoder, u32 listType, bool sortTriangles, const PolyParam &poly, u32 first, u32 count)
 {
-    encoder->pushDebugGroup(NS::String::string("DrawPoly", NS::UTF8StringEncoding));
-
     MTL::ScissorRect scissorRect {};
     TileClipping tileClip = SetTileClip(encoder, poly.tileclip, scissorRect);
 
@@ -291,7 +291,6 @@ void MetalRenderer::DrawPoly(MTL::RenderCommandEncoder *encoder, u32 listType, b
     MTL::PrimitiveType primitive = sortTriangles && !config::PerStripSorting ? MTL::PrimitiveTypeTriangle : MTL::PrimitiveTypeTriangleStrip;
 
     encoder->drawIndexedPrimitives(primitive, count, MTL::IndexTypeUInt32, curMainBuffer, offsets.indexOffset + first * sizeof(u32), 1);
-    encoder->popDebugGroup();
 }
 
 void MetalRenderer::DrawSorted(MTL::RenderCommandEncoder *encoder, const std::vector<SortedTriangle> &polys, u32 first, u32 last, bool multipass)
