@@ -10,7 +10,6 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <vector>
-#include <chrono>
 
 #ifdef _WIN32
 	#include <algorithm>

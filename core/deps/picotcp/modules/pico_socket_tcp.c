@@ -190,7 +190,6 @@ static int socket_tcp_do_deliver(struct pico_socket *s, struct pico_frame *f)
         return 0;
     }
 
-    dbg("TCP SOCKET> Not s.\n");
     return -1;
 }
 

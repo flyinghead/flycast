@@ -40,17 +40,10 @@ bool DXContext::init(bool keepCurrentWindow)
 	}
 #endif
 
-	d3d9Library = LoadLibraryA("D3D9.DLL");
-	if (d3d9Library == NULL)
-	{
-		ERROR_LOG(RENDERER, "Cannot load D3D9.DLL");
-		term();
-		return false;
-	}
-	decltype(Direct3DCreate9) *pDirect3DCreate9 = (decltype(Direct3DCreate9) *)GetProcAddress(d3d9Library, "Direct3DCreate9");
+	decltype(Direct3DCreate9) *pDirect3DCreate9 = d3d9Library.getFunc("Direct3DCreate9", pDirect3DCreate9);
 	if (pDirect3DCreate9 == nullptr)
 	{
-		ERROR_LOG(RENDERER, "Cannot find entry point Direct3DCreate9");
+		ERROR_LOG(RENDERER, "Cannot load D3D9.DLL");
 		term();
 		return false;
 	}
@@ -123,9 +116,6 @@ void DXContext::term()
 	imguiDriver.reset();
 	pDevice.reset();
 	pD3D.reset();
-	if (d3d9Library != NULL)
-		FreeLibrary(d3d9Library);
-	d3d9Library = NULL;
 	deviceReady = false;
 }
 

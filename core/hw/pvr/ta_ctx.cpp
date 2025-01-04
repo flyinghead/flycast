@@ -101,6 +101,7 @@ void FinishRender(TA_context* ctx)
 }
 
 static std::mutex mtx_pool;
+using Lock = std::lock_guard<std::mutex>;
 
 static std::vector<TA_context*> ctx_pool;
 static std::vector<TA_context*> ctx_list;
@@ -108,17 +109,15 @@ static std::vector<TA_context*> ctx_list;
 TA_context *tactx_Alloc()
 {
 	TA_context *ctx = nullptr;
-
-	mtx_pool.lock();
-	if (!ctx_pool.empty())
 	{
-		ctx = ctx_pool.back();
-		ctx_pool.pop_back();
+		Lock _(mtx_pool);
+		if (!ctx_pool.empty()) {
+			ctx = ctx_pool.back();
+			ctx_pool.pop_back();
+		}
 	}
-	mtx_pool.unlock();
 
-	if (ctx == nullptr)
-	{
+	if (ctx == nullptr) {
 		ctx = new TA_context();
 		ctx->Alloc();
 	}
@@ -129,17 +128,14 @@ static void tactx_Recycle(TA_context* ctx)
 {
 	if (ctx->nextContext != nullptr)
 		tactx_Recycle(ctx->nextContext);
-	mtx_pool.lock();
-	if (ctx_pool.size() > 3)
-	{
+	Lock _(mtx_pool);
+	if (ctx_pool.size() > 3) {
 		delete ctx;
 	}
-	else
-	{
+	else {
 		ctx->Reset();
 		ctx_pool.push_back(ctx);
 	}
-	mtx_pool.unlock();
 }
 
 static TA_context *tactx_Find(u32 addr, bool allocnew)
@@ -147,8 +143,7 @@ static TA_context *tactx_Find(u32 addr, bool allocnew)
 	TA_context *oldCtx = nullptr;
 	for (TA_context *ctx : ctx_list)
 	{
-		if (ctx->Address == addr)
-		{
+		if (ctx->Address == addr) {
 			ctx->lastFrameUsed = FrameCount;
 			return ctx;
 		}
@@ -205,11 +200,10 @@ void tactx_Term()
 		delete ctx;
 	ctx_list.clear();
 
-	mtx_pool.lock();
+	Lock _(mtx_pool);
 	for (TA_context *ctx : ctx_pool)
 		delete ctx;
 	ctx_pool.clear();
-	mtx_pool.unlock();
 }
 
 const u32 NULL_CONTEXT = ~0u;

@@ -23,6 +23,7 @@
 #include <windows.h>
 #include <d3d9.h>
 #include "windows/comptr.h"
+#include "windows/dynlink.h"
 #include "d3d_overlay.h"
 #include "wsi/context.h"
 
@@ -63,7 +64,7 @@ public:
 private:
 	void resetDevice();
 
-	HMODULE d3d9Library = NULL;
+	WinLibLoader d3d9Library{ "D3D9.DLL" };
 	ComPtr<IDirect3D9> pD3D;
 	ComPtr<IDirect3DDevice9> pDevice;
 	D3DPRESENT_PARAMETERS d3dpp{};

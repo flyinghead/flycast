@@ -151,6 +151,13 @@ if(NINTENDO_SWITCH)
 	if(USE_GLES)
 		target_compile_definitions(${PROJECT_NAME} PRIVATE GLES)
 	endif()
+	# asio
+	target_compile_definitions(${PROJECT_NAME} PRIVATE
+		ASIO_DISABLE_LOCAL_SOCKETS
+		ASIO_DISABLE_SERIAL_PORT
+		ESHUTDOWN=110
+		SA_RESTART=0
+		SA_NOCLDWAIT=0)
 
 elseif(LIBRETRO)
 	add_library(${PROJECT_NAME} SHARED core/emulator.cpp)
@@ -848,6 +855,9 @@ if(LIBRETRO)
 		shell/libretro/vmu_xhair.cpp)
 	if(APPLE)
 		target_sources(${PROJECT_NAME} PRIVATE shell/libretro/oslib_apple.mm)
+	endif()
+	if(WIN32)
+		target_link_libraries(${PROJECT_NAME} PRIVATE mswsock)
 	endif()
 endif()
 
@@ -1930,7 +1940,10 @@ if(BUILD_TESTING)
 			tests/src/serialize_test.cpp
 			tests/src/AicaArmTest.cpp
 			tests/src/Sh4InterpreterTest.cpp
-			tests/src/MmuTest.cpp)
+			tests/src/MmuTest.cpp
+			tests/src/util/PeriodicThreadTest.cpp
+			tests/src/util/TsQueueTest.cpp
+			tests/src/util/WorkerThreadTest.cpp)
 endif()
 
 if(NINTENDO_SWITCH)

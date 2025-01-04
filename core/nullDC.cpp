@@ -110,6 +110,7 @@ void SaveSettings()
 	void SaveAndroidSettings();
 	SaveAndroidSettings();
 #endif
+	LogManager::GetInstance()->UpdateConfig();
 }
 
 void flycast_term()

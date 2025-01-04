@@ -22,6 +22,8 @@
 #include "oslib/storage.h"
 #include "cfg/option.h"
 #include "oslib/oslib.h"
+#include "stdclass.h"
+#include "util/worker_thread.h"
 
 #include <sstream>
 #define STB_IMAGE_IMPLEMENTATION
@@ -32,58 +34,34 @@
 #include <stb_image_write.h>
 
 CustomTexture custom_texture;
+static WorkerThread loader_thread {"CustomTexLoader"};
 
-void CustomTexture::LoaderThread()
+void CustomTexture::loadTexture(BaseTextureCacheData *texture)
 {
-	LoadMap();
-	while (initialized)
-	{
-		BaseTextureCacheData *texture;
-		
-		do {
-			texture = nullptr;
-			{
-				std::unique_lock<std::mutex> lock(work_queue_mutex);
-				if (!work_queue.empty())
-				{
-					texture = work_queue.back();
-					work_queue.pop_back();
-				}
-			}
-			
-			if (texture != nullptr)
-			{
-				texture->ComputeHash();
-				if (texture->custom_image_data != nullptr)
-				{
-					free(texture->custom_image_data);
-					texture->custom_image_data = nullptr;
-				}
-				if (!texture->dirty)
-				{
-					int width, height;
-					u8 *image_data = LoadCustomTexture(texture->texture_hash, width, height);
-					if (image_data == nullptr && texture->old_vqtexture_hash != 0)
-						image_data = LoadCustomTexture(texture->old_vqtexture_hash, width, height);
-					if (image_data == nullptr)
-						image_data = LoadCustomTexture(texture->old_texture_hash, width, height);
-					if (image_data != nullptr)
-					{
-						texture->custom_width = width;
-						texture->custom_height = height;
-						texture->custom_image_data = image_data;
-					}
-				}
-				texture->custom_load_in_progress--;
-			}
-
-		} while (texture != nullptr);
-		
-		wakeup_thread.Wait();
+	texture->ComputeHash();
+	if (texture->custom_image_data != nullptr) {
+		free(texture->custom_image_data);
+		texture->custom_image_data = nullptr;
 	}
+	if (!texture->dirty)
+	{
+		int width, height;
+		u8 *image_data = loadTexture(texture->texture_hash, width, height);
+		if (image_data == nullptr && texture->old_vqtexture_hash != 0)
+			image_data = loadTexture(texture->old_vqtexture_hash, width, height);
+		if (image_data == nullptr)
+			image_data = loadTexture(texture->old_texture_hash, width, height);
+		if (image_data != nullptr)
+		{
+			texture->custom_width = width;
+			texture->custom_height = height;
+			texture->custom_image_data = image_data;
+		}
+	}
+	texture->custom_load_in_progress--;
 }
 
-std::string CustomTexture::GetGameId()
+std::string CustomTexture::getGameId()
 {
    std::string game_id(settings.content.gameId);
    const size_t str_end = game_id.find_last_not_of(' ');
@@ -95,12 +73,12 @@ std::string CustomTexture::GetGameId()
    return game_id;
 }
 
-bool CustomTexture::Init()
+bool CustomTexture::init()
 {
 	if (!initialized)
 	{
 		initialized = true;
-		std::string game_id = GetGameId();
+		std::string game_id = getGameId();
 		if (game_id.length() > 0)
 		{
 			textures_path = hostfs::getTextureLoadPath(game_id);
@@ -113,7 +91,9 @@ bool CustomTexture::Init()
 					{
 						NOTICE_LOG(RENDERER, "Found custom textures directory: %s", textures_path.c_str());
 						custom_textures_available = true;
-						loader_thread.Start();
+						loader_thread.run([this]() {
+							loadMap();
+						});
 					}
 				} catch (const FlycastException& e) {
 				}
@@ -125,20 +105,12 @@ bool CustomTexture::Init()
 
 void CustomTexture::Terminate()
 {
-	if (initialized)
-	{
-		initialized = false;
-		{
-			std::unique_lock<std::mutex> lock(work_queue_mutex);
-			work_queue.clear();
-		}
-		wakeup_thread.Set();
-		loader_thread.WaitToEnd();
-		texture_map.clear();
-	}
+	loader_thread.stop();
+	texture_map.clear();
+	initialized = false;
 }
 
-u8* CustomTexture::LoadCustomTexture(u32 hash, int& width, int& height)
+u8* CustomTexture::loadTexture(u32 hash, int& width, int& height)
 {
 	auto it = texture_map.find(hash);
 	if (it == texture_map.end())
@@ -156,15 +128,13 @@ u8* CustomTexture::LoadCustomTexture(u32 hash, int& width, int& height)
 
 void CustomTexture::LoadCustomTextureAsync(BaseTextureCacheData *texture_data)
 {
-	if (!Init())
+	if (!init())
 		return;
 
 	texture_data->custom_load_in_progress++;
-	{
-		std::unique_lock<std::mutex> lock(work_queue_mutex);
-		work_queue.insert(work_queue.begin(), texture_data);
-	}
-	wakeup_thread.Set();
+	loader_thread.run([this, texture_data]() {
+		loadTexture(texture_data);
+	});
 }
 
 void CustomTexture::DumpTexture(u32 hash, int w, int h, TextureType textype, void *src_buffer)
@@ -172,7 +142,7 @@ void CustomTexture::DumpTexture(u32 hash, int w, int h, TextureType textype, voi
 	std::string base_dump_dir = hostfs::getTextureDumpPath();
 	if (!file_exists(base_dump_dir))
 		make_directory(base_dump_dir);
-	std::string game_id = GetGameId();
+	std::string game_id = getGameId();
 	if (game_id.length() == 0)
 	   return;
 
@@ -299,7 +269,7 @@ void CustomTexture::DumpTexture(u32 hash, int w, int h, TextureType textype, voi
 	free(dst_buffer);
 }
 
-void CustomTexture::LoadMap()
+void CustomTexture::loadMap()
 {
 	texture_map.clear();
 	hostfs::DirectoryTree tree(textures_path);

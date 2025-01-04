@@ -3,6 +3,7 @@
 #include "oslib/virtmem.h"
 
 #include <windows.h>
+#include "dynlink.h"
 
 namespace virtmem
 {
@@ -54,12 +55,22 @@ static std::vector<void *> mapped_regions;
 
 // Implement vmem initialization for RAM, ARAM, VRAM and SH4 context, fpcb etc.
 
+#ifdef TARGET_UWP
+static WinLibLoader kernel32("Kernel32.dll");
+static LPVOID(*MapViewOfFileEx)(HANDLE, DWORD, DWORD, DWORD, SIZE_T, LPVOID);
+#endif
+
 // Please read the POSIX implementation for more information. On Windows this is
 // rather straightforward.
 bool init(void **vmem_base_addr, void **sh4rcb_addr, size_t ramSize)
 {
 #ifdef TARGET_UWP
-	return false;
+	if (MapViewOfFileEx == nullptr)
+	{
+		MapViewOfFileEx = kernel32.getFunc("MapViewOfFileEx", MapViewOfFileEx);
+		if (MapViewOfFileEx == nullptr)
+			return false;
+	}
 #endif
 	unmapped_regions.reserve(32);
 	mapped_regions.reserve(32);
@@ -112,7 +123,6 @@ void ondemand_page(void *address, unsigned size_bytes) {
 void create_mappings(const Mapping *vmem_maps, unsigned nummaps) {
 	// Since this is tricky to get right in Windows (in posix one can just unmap sections and remap later)
 	// we unmap the whole thing only to remap it later.
-#ifndef TARGET_UWP
 	// Unmap the whole section
 	for (void *p : mapped_regions)
 		UnmapViewOfFile(p);
@@ -148,7 +158,6 @@ void create_mappings(const Mapping *vmem_maps, unsigned nummaps) {
 			}
 		}
 	}
-#endif
 }
 
 template<typename Mapper>

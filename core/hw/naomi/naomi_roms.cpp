@@ -586,7 +586,6 @@ const Game Games[] =
             { "opr-23968.ic20",  0x2000002, 0x800000,  0x0000000, InterleavedWord },
             { "opr-23969.ic21s", 0x3000000, 0x800000,  0x0000000, InterleavedWord },
             { "opr-23970.ic22",  0x3000002, 0x800000,  0x0000000, InterleavedWord },
-            { NULL, 0, 0 },
         }
     },
 	// Soreike! Anpanman Popcorn Koujou 2 (Rev C)

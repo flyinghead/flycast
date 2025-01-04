@@ -15,6 +15,7 @@
 
 #include "ConsoleListener.h"
 #include "InMemoryListener.h"
+#include "NetworkListener.h"
 #include "Log.h"
 #include "StringUtil.h"
 #include "cfg/cfg.h"
@@ -118,8 +119,6 @@ LogManager::LogManager()
 	m_log[LogTypes::SAVESTATE] = {"SAVESTATE", "Save States"};
 	m_log[LogTypes::SH4] = {"SH4", "SH4 Modules"};
 
-	RegisterListener(LogListener::CONSOLE_LISTENER, new ConsoleListener());
-
 	// Set up log listeners
 	int verbosity = cfgLoadInt("log", "Verbosity", LogTypes::LDEBUG);
 
@@ -128,47 +127,56 @@ LogManager::LogManager()
 		verbosity = 1;
 	if (verbosity > MAX_LOGLEVEL)
 		verbosity = MAX_LOGLEVEL;
-
 	SetLogLevel(static_cast<LogTypes::LOG_LEVELS>(verbosity));
-	if (cfgLoadBool("log", "LogToFile", false))
-	{
-#if defined(__ANDROID__) || defined(__APPLE__) || defined(TARGET_UWP)
-		std::string logPath = get_writable_data_path("flycast.log");
-#else
-		std::string logPath = "flycast.log";
-#endif
-		FileLogListener *listener = new FileLogListener(logPath);
-		if (!listener->IsValid())
-		{
-			const char *home = nowide::getenv("HOME");
-			if (home != nullptr)
-			{
-				delete listener;
-				listener = new FileLogListener(home + ("/" + logPath));
-			}
-		}
-		RegisterListener(LogListener::FILE_LISTENER, listener);
-		EnableListener(LogListener::FILE_LISTENER, true);
-	}
+
+	RegisterListener(LogListener::CONSOLE_LISTENER, new ConsoleListener());
 	EnableListener(LogListener::CONSOLE_LISTENER, cfgLoadBool("log", "LogToConsole", true));
-	//  EnableListener(LogListener::LOG_WINDOW_LISTENER, Config::Get(LOGGER_WRITE_TO_WINDOW));
 	RegisterListener(LogListener::IN_MEMORY_LISTENER, new InMemoryListener());
 	EnableListener(LogListener::IN_MEMORY_LISTENER, true);
 
 	for (LogContainer& container : m_log)
-	{
 		container.m_enable = cfgLoadBool("log", container.m_short_name, true);
-	}
 
 	m_path_cutoff_point = DeterminePathCutOffPoint();
+
+	UpdateConfig();
 }
 
-LogManager::~LogManager()
+void LogManager::UpdateConfig()
 {
-	// The log window listener pointer is owned by the GUI code.
-	delete m_listeners[LogListener::CONSOLE_LISTENER];
-	delete m_listeners[LogListener::FILE_LISTENER];
-	delete m_listeners[LogListener::IN_MEMORY_LISTENER];
+	bool logToFile = cfgLoadBool("log", "LogToFile", false);
+	if (logToFile != IsListenerEnabled(LogListener::FILE_LISTENER))
+	{
+		if (!logToFile) {
+			m_listeners[LogListener::FILE_LISTENER].reset();
+		}
+		else {
+#if defined(__ANDROID__) || defined(__APPLE__) || defined(TARGET_UWP)
+			std::string logPath = get_writable_data_path("flycast.log");
+#else
+			std::string logPath = "flycast.log";
+#endif
+			FileLogListener *listener = new FileLogListener(logPath);
+			if (!listener->IsValid())
+			{
+				const char *home = nowide::getenv("HOME");
+				if (home != nullptr)
+				{
+					delete listener;
+					listener = new FileLogListener(home + ("/" + logPath));
+				}
+			}
+			RegisterListener(LogListener::FILE_LISTENER, listener);
+		}
+		EnableListener(LogListener::FILE_LISTENER, logToFile);
+	}
+	std::string newLogServer = cfgLoadStr("log", "LogServer", "");
+	if (logServer != newLogServer)
+	{
+		logServer = newLogServer;
+		RegisterListener(LogListener::NETWORK_LISTENER, new NetworkListener(logServer));
+		EnableListener(LogListener::NETWORK_LISTENER, !logServer.empty());
+	}
 }
 
 // Return the current time formatted as Minutes:Seconds:Milliseconds
@@ -241,7 +249,7 @@ const char* LogManager::GetFullName(LogTypes::LOG_TYPE type) const
 
 void LogManager::RegisterListener(LogListener::LISTENER id, LogListener* listener)
 {
-	m_listeners[id] = listener;
+	m_listeners[id] = std::unique_ptr<LogListener>(listener);
 }
 
 void LogManager::EnableListener(LogListener::LISTENER id, bool enable)
