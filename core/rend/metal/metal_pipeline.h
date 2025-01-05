@@ -153,18 +153,18 @@ private:
             col1->setOffset(offsetof(Vertex, col1));
             col1->setBufferIndex(30);
 
-            auto spc1 = vertexDesc->attributes()->object(4);
+            auto spc1 = vertexDesc->attributes()->object(5);
             spc1->setFormat(MTL::VertexFormatUChar4Normalized);
             spc1->setOffset(offsetof(Vertex, spc1));
             spc1->setBufferIndex(30);
 
-            auto u1 = vertexDesc->attributes()->object(3); // tex coord
+            auto u1 = vertexDesc->attributes()->object(6); // tex coord
             u1->setFormat(MTL::VertexFormatFloat2);
             u1->setOffset(offsetof(Vertex, u1));
             u1->setBufferIndex(30);
 
             if (naomi2) {
-                auto nx = vertexDesc->attributes()->object(4); // naomi2 normal
+                auto nx = vertexDesc->attributes()->object(7); // naomi2 normal
                 nx->setFormat(MTL::VertexFormatFloat3);
                 nx->setOffset(offsetof(Vertex, nx));
                 nx->setBufferIndex(30);
