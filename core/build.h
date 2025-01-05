@@ -38,7 +38,7 @@
 
 #if defined(__APPLE__)
 #include "TargetConditionals.h"
-#if defined(TARGET_OS_SIMULATOR)
+#if TARGET_OS_SIMULATOR
 // iOS simulator
 #define TARGET_NO_REC
 #endif

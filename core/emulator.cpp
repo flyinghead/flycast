@@ -148,6 +148,8 @@ static void loadSpecialSettings()
 				|| prod_id == "T9507N"
 				// Silent Scope (EU)
 				|| prod_id == "T9505D"
+				// Silent Scope (JP)
+				|| prod_id == "T9513M"
 				// Pro Pinball - Trilogy (EU)
 				|| prod_id == "T30701D 50")
 		{
