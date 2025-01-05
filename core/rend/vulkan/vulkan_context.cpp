@@ -471,23 +471,6 @@ bool VulkanContext::InitDevice()
 		}
 		
 		// Get device features
-		const auto addPointerToChain = [](void* head, const void* ptr) -> void
-		{
-			vk::BaseInStructure* prevInStructure = static_cast<vk::BaseInStructure*>(head);
-			while (prevInStructure->pNext)
-			{
-				// Structure already in chain
-				if (prevInStructure->pNext == ptr)
-				{
-					return;
-				}
-				prevInStructure = const_cast<vk::BaseInStructure*>(prevInStructure->pNext);
-			}
-
-			// Add structure to end
-			prevInStructure->pNext = static_cast<const vk::BaseInStructure*>(ptr);
-		};
-
 		vk::PhysicalDeviceFeatures2 featuresChain{};
 		vk::PhysicalDeviceFeatures& features = featuresChain.features;
 
