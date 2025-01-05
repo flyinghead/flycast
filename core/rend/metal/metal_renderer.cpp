@@ -464,13 +464,8 @@ bool MetalRenderer::Draw(const MetalTexture *fogTexture, const MetalTexture *pal
 
     descriptor->release();
 
-    if (fogTexture == nullptr) {
-        renderEncoder->setFragmentTexture(fogTexture->texture, 2);
-    }
-
-    if (paletteTexture == nullptr) {
-        renderEncoder->setFragmentTexture(paletteTexture->texture, 3);
-    }
+    renderEncoder->setFragmentTexture(fogTexture->texture, 2);
+    renderEncoder->setFragmentTexture(paletteTexture->texture, 3);
 
     // Upload vertex and index buffers
     VertexShaderUniforms vtxUniforms {};
