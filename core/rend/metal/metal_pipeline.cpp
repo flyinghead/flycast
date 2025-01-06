@@ -80,6 +80,10 @@ void MetalPipelineManager::CreateModVolPipeline(ModVolMode mode, int cullMode, b
     attachment->setDestinationAlphaBlendFactor(MTL::BlendFactorOneMinusSourceAlpha);
     attachment->setAlphaBlendOperation(MTL::BlendOperationAdd);
     attachment->setWriteMask(mode != ModVolMode::Final ? MTL::ColorWriteMaskNone : MTL::ColorWriteMaskAll);
+    attachment->setPixelFormat(MTL::PixelFormatBGRA8Unorm);
+
+    descriptor->setDepthAttachmentPixelFormat(MTL::PixelFormatDepth32Float_Stencil8);
+    descriptor->setStencilAttachmentPixelFormat(MTL::PixelFormatDepth32Float_Stencil8);
 
     ModVolShaderParams shaderParams { naomi2, !settings.platform.isNaomi2() && config::NativeDepthInterpolation };
     descriptor->setVertexFunction(renderer->GetShaders()->GetModVolVertexShader(shaderParams));
