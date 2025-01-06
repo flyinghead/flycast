@@ -1340,9 +1340,22 @@ bool VulkanContext::GetLastFrame(std::vector<u8>& data, int& width, int& height)
 		else
 			width = w;
 	}
+
+	vk::Format imageFormat = vk::Format::eR8G8B8A8Unorm;
+	const vk::ImageUsageFlags imageUsage = vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eTransferSrc;
+
+	// Test if RGB8 is natively supported to avoid having to do a format conversion
+	bool nativeRgb8 = false;
+	vk::ImageFormatProperties rgb8Properties{};
+	if (physicalDevice.getImageFormatProperties(vk::Format::eR8G8B8Unorm, vk::ImageType::e2D, vk::ImageTiling::eOptimal, imageUsage, {}, &rgb8Properties) == vk::Result::eSuccess)
+	{
+		nativeRgb8 = true;
+		imageFormat = vk::Format::eR8G8B8Unorm;
+	}
+
 	// color attachment
 	FramebufferAttachment attachment(physicalDevice, *device);
-	attachment.Init(width, height, vk::Format::eR8G8B8A8Unorm, vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eTransferSrc, "screenshot");
+	attachment.Init(width, height, imageFormat, imageUsage, "screenshot");
 	// command buffer
 	vk::UniqueCommandBuffer commandBuffer = std::move(device->allocateCommandBuffersUnique(
 			vk::CommandBufferAllocateInfo(*commandPools.back(), vk::CommandBufferLevel::ePrimary, 1)).front());
@@ -1352,7 +1365,7 @@ bool VulkanContext::GetLastFrame(std::vector<u8>& data, int& width, int& height)
 	CommandBufferDebugScope _(commandBuffer.get(), "GetLastFrame", scopeColor);
 
 	// render pass
-	vk::AttachmentDescription attachmentDescription = vk::AttachmentDescription(vk::AttachmentDescriptionFlags(), vk::Format::eR8G8B8A8Unorm, vk::SampleCountFlagBits::e1,
+	vk::AttachmentDescription attachmentDescription = vk::AttachmentDescription(vk::AttachmentDescriptionFlags(), imageFormat, vk::SampleCountFlagBits::e1,
 			vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eStore, vk::AttachmentLoadOp::eDontCare, vk::AttachmentStoreOp::eDontCare,
 			vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferSrcOptimal);
 	vk::AttachmentReference colorReference(0, vk::ImageLayout::eColorAttachmentOptimal);
@@ -1417,15 +1430,25 @@ bool VulkanContext::GetLastFrame(std::vector<u8>& data, int& width, int& height)
 
 	const u8 *img = (const u8 *)attachment.GetBufferData()->MapMemory();
 	data.clear();
-	data.reserve(width * height * 3);
-	for (int y = 0; y < height; y++)
+	if (nativeRgb8)
 	{
-		for (int x = 0; x < width; x++)
+		// Format is already RGB, can be directly copied
+		data.resize(width * height * 3);
+		std::memcpy(data.data(), img, width* height * 3);
+	}
+	else
+	{
+		data.reserve(width * height * 3);
+		// RGBA -> RGB
+		for (int y = 0; y < height; y++)
 		{
-			data.push_back(*img++);
-			data.push_back(*img++);
-			data.push_back(*img++);
-			img++;
+			for (int x = 0; x < width; x++)
+			{
+				data.push_back(*img++);
+				data.push_back(*img++);
+				data.push_back(*img++);
+				img++;
+			}
 		}
 	}
 	attachment.GetBufferData()->UnmapMemory();
