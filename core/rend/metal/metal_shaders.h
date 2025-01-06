@@ -61,6 +61,14 @@ struct FragmentShaderParams
     }
 };
 
+struct ModVolShaderParams
+{
+    bool naomi2;
+    bool divPosZ;
+
+    u32 hash() { return (u32)naomi2 | ((u32)divPosZ << 1); }
+};
+
 // std140 alignment required
 struct VertexShaderUniforms
 {
@@ -87,6 +95,16 @@ public:
     MTL::Function *GetBlitVertexShader() { return blitVertexShader; }
     MTL::Function *GetBlitFragmentShader() { return blitFragmentShader; }
 
+    MTL::Function *GetModVolVertexShader(const ModVolShaderParams& params) { return getShader(modVolVertexShaders, params); }
+    MTL::Function *GetModVolFragmentShader(bool divPosZ) {
+        auto modVolFragmentShader = modVolFragmentShaders.find(divPosZ);
+        if (modVolFragmentShader != modVolFragmentShaders.end())
+            return modVolFragmentShader->second;
+
+        modVolFragmentShaders[divPosZ] = compileShader(divPosZ);
+        return modVolFragmentShaders[divPosZ];
+    }
+
     MTL::Function *GetVertexShader(const VertexShaderParams& params) { return getShader(vertexShaders, params); }
     MTL::Function *GetFragmentShader(const FragmentShaderParams& params) { return getShader(fragmentShaders, params); }
 
@@ -97,14 +115,17 @@ public:
 
         vertexShaderConstants->release();
         fragmentShaderConstants->release();
+        modVolShaderConstants->release();
     }
 
 private:
     MTL::Library *blitShaderLibrary;
+    MTL::Library *modVolShaderLibrary;
     MTL::Library *vertexShaderLibrary;
     MTL::Library *fragmentShaderLibrary;
     MTL::FunctionConstantValues *vertexShaderConstants;
     MTL::FunctionConstantValues *fragmentShaderConstants;
+    MTL::FunctionConstantValues *modVolShaderConstants;
 
     template<typename T>
     MTL::Function *getShader(std::map<u32, MTL::Function*> &map, T params)
@@ -118,9 +139,14 @@ private:
     }
     MTL::Function *compileShader(const VertexShaderParams& params);
     MTL::Function *compileShader(const FragmentShaderParams& params);
+    MTL::Function *compileShader(const ModVolShaderParams& params);
+    MTL::Function *compileShader(bool divPosZ);
 
     MTL::Function* blitVertexShader;
     MTL::Function* blitFragmentShader;
+
+    std::map<u32, MTL::Function*> modVolVertexShaders;
+    std::map<bool, MTL::Function*> modVolFragmentShaders;
 
     std::map<u32, MTL::Function*> vertexShaders;
     std::map<u32, MTL::Function*> fragmentShaders;

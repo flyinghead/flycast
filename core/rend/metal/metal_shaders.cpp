@@ -374,6 +374,78 @@ fragment float4 fs_main(VertexOut in [[stage_in]],
 }
 )";
 
+static const char ModVolShaderSource[] = R"(
+#include <metal_stdlib>
+#include <simd/simd.h>
+
+using namespace metal;
+
+constant bool div_pos_z [[function_constant(1)]];
+
+struct VertexShaderUniforms
+{
+    float4x4 ndc_mat;
+};
+
+struct VertexIn
+{
+    float4 in_pos [[attribute(0)]];
+};
+
+struct VertexOut
+{
+    float depth;
+    float4 position [[position]];
+};
+
+struct FragmentOut
+{
+    float4 color [[color(0)]];
+    float depth [[depth(any)]];
+};
+
+struct PushBlock
+{
+    float sp_shader_color;
+};
+
+vertex VertexOut vs_main(VertexIn in [[stage_in]], constant VertexShaderUniforms& uniforms [[buffer(0)]]) {
+    float4 vpos = uniforms.ndc_mat * in.in_pos;
+
+    VertexOut out = {};
+
+    if (div_pos_z) {
+        vpos /= vpos.z;
+        vpos.z = vpos.w;
+        out.depth = vpos.w;
+    } else {
+        out.depth = vpos.z;
+        vpos.w = 1.0;
+        vpos.z = 0.0;
+    }
+
+    out.position = vpos;
+    return out;
+}
+
+fragment FragmentOut fs_main(VertexOut in [[stage_in]],
+                             constant PushBlock& push_constants [[buffer(1)]]) {
+    FragmentOut out = {};
+
+    float w;
+
+    if (div_pos_z) {
+        w = 100000.0 / in.depth;
+    } else {
+        w = 100000.0 * in.depth;
+    }
+
+    out.depth = log2(1.0 + max(w, -0.999999)) / 34.0;
+    out.color = float4(0.0, 0.0, 0.0, push_constants.sp_shader_color);
+    return out;
+}
+)";
+
 // TODO: Handle gouraud interpolation
 // TODO: N2 Shaders
 
@@ -417,6 +489,9 @@ MetalShaders::MetalShaders() {
         ERROR_LOG(RENDERER, "%s", error->localizedDescription()->utf8String());
         assert(false);
     }
+
+    modVolShaderLibrary = device->newLibrary(NS::String::string(ModVolShaderSource, NS::UTF8StringEncoding), nullptr, &error);
+    modVolShaderConstants = MTL::FunctionConstantValues::alloc()->init();
 }
 
 MTL::Function *MetalShaders::compileShader(const VertexShaderParams &params) {
@@ -463,3 +538,35 @@ MTL::Function *MetalShaders::compileShader(const FragmentShaderParams &params) {
 
     return function;
 }
+
+MTL::Function *MetalShaders::compileShader(const ModVolShaderParams &params) {
+    modVolShaderConstants->setConstantValue(&params.divPosZ, MTL::DataTypeBool, static_cast<NS::UInteger>(0));
+
+    NS::Error *error = nullptr;
+
+    // TODO: Naomi2 ModVol Frag Shader
+    MTL::Function *function = modVolShaderLibrary->newFunction(NS::String::string("vs_main", NS::UTF8StringEncoding), modVolShaderConstants, &error);
+
+    if (!function) {
+        ERROR_LOG(RENDERER, "%s", error->localizedDescription()->utf8String());
+        assert(false);
+    }
+
+    return function;
+}
+
+MTL::Function *MetalShaders::compileShader(bool divPosZ) {
+    modVolShaderConstants->setConstantValue(&divPosZ, MTL::DataTypeBool, static_cast<NS::UInteger>(0));
+
+    NS::Error *error = nullptr;
+
+    MTL::Function *function = modVolShaderLibrary->newFunction(NS::String::string("fs_main", NS::UTF8StringEncoding), modVolShaderConstants, &error);
+
+    if (!function) {
+        ERROR_LOG(RENDERER, "%s", error->localizedDescription()->utf8String());
+        assert(false);
+    }
+
+    return function;
+}
+

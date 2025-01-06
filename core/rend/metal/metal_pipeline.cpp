@@ -48,6 +48,57 @@ void MetalPipelineManager::CreateBlitPassPipeline() {
     blitPassPipeline = state;
 }
 
+void MetalPipelineManager::CreateModVolPipeline(ModVolMode mode, int cullMode, bool naomi2) {
+    MTL::VertexDescriptor *vertexDesc = nullptr;
+    MTL::RenderPipelineDescriptor *descriptor = MTL::RenderPipelineDescriptor::alloc()->init();
+
+    descriptor->setLabel(NS::String::string("Mod Vol Pass", NS::UTF8StringEncoding));
+
+    if (mode == ModVolMode::Final) {
+        descriptor->setVertexDescriptor(GetMainVertexInputDescriptor(false, naomi2));
+    }
+    else {
+        vertexDesc = MTL::VertexDescriptor::alloc()->init();
+
+        auto layout = vertexDesc->layouts()->object(0);
+        layout->setStride(sizeof(float) * 3);
+
+        auto attribute = vertexDesc->attributes()->object(0);
+        attribute->setOffset(0);
+        attribute->setBufferIndex(0);
+        attribute->setFormat(MTL::VertexFormatFloat3);
+
+        descriptor->setVertexDescriptor(vertexDesc);
+    }
+
+    auto attachment = descriptor->colorAttachments()->object(0);
+    attachment->setBlendingEnabled(mode == ModVolMode::Final);
+    attachment->setSourceRGBBlendFactor(MTL::BlendFactorSourceAlpha);
+    attachment->setDestinationRGBBlendFactor(MTL::BlendFactorOneMinusSourceAlpha);
+    attachment->setRgbBlendOperation(MTL::BlendOperationAdd);
+    attachment->setSourceAlphaBlendFactor(MTL::BlendFactorSourceAlpha);
+    attachment->setDestinationAlphaBlendFactor(MTL::BlendFactorOneMinusSourceAlpha);
+    attachment->setAlphaBlendOperation(MTL::BlendOperationAdd);
+    attachment->setWriteMask(mode != ModVolMode::Final ? MTL::ColorWriteMaskNone : MTL::ColorWriteMaskAll);
+
+    ModVolShaderParams shaderParams { naomi2, !settings.platform.isNaomi2() && config::NativeDepthInterpolation };
+    descriptor->setVertexFunction(renderer->GetShaders()->GetModVolVertexShader(shaderParams));
+    descriptor->setFragmentFunction(renderer->GetShaders()->GetModVolFragmentShader(!settings.platform.isNaomi2() && config::NativeDepthInterpolation));
+
+    NS::Error *error = nullptr;
+    auto state = MetalContext::Instance()->GetDevice()->newRenderPipelineState(descriptor, &error);
+
+    if (state == nullptr) {
+        ERROR_LOG(RENDERER, "Failed to create Depth Render Pipeline State: %s", error->localizedDescription()->utf8String());
+    }
+
+    descriptor->release();
+    if (vertexDesc) {
+        vertexDesc->release();
+    }
+
+    modVolPipelines[hash(mode, cullMode, naomi2)] = state;
+}
 
 void MetalPipelineManager::CreateDepthPassPipeline(int cullMode, bool naomi2)
 {
@@ -142,9 +193,69 @@ void MetalPipelineManager::CreatePipeline(u32 listType, bool sortTriangles, cons
     pipelines[hash(listType, sortTriangles, &pp, gpuPalette, dithering)] = state;
 }
 
+void MetalPipelineManager::CreateModVolDepthStencilState(ModVolMode mode, int cullMode, bool naomi2) {
+    MTL::DepthStencilDescriptor *descriptor = MTL::DepthStencilDescriptor::alloc()->init();
+    descriptor->setDepthWriteEnabled(false);
+    descriptor->setDepthCompareFunction(mode == ModVolMode::Xor || mode == ModVolMode::Or ? MTL::CompareFunctionGreater : MTL::CompareFunctionAlways);
+
+    MTL::StencilDescriptor *stencilDescriptor = MTL::StencilDescriptor::alloc()->init();
+    switch (mode)
+    {
+    case ModVolMode::Xor:
+        stencilDescriptor->setStencilFailureOperation(MTL::StencilOperationKeep);
+        stencilDescriptor->setDepthStencilPassOperation(MTL::StencilOperationInvert);
+        stencilDescriptor->setDepthFailureOperation(MTL::StencilOperationKeep);
+        stencilDescriptor->setStencilCompareFunction(MTL::CompareFunctionAlways);
+        stencilDescriptor->setReadMask(0);
+        stencilDescriptor->setWriteMask(2);
+        break;
+    case ModVolMode::Or:
+        stencilDescriptor->setStencilFailureOperation(MTL::StencilOperationKeep);
+        stencilDescriptor->setDepthStencilPassOperation(MTL::StencilOperationReplace);
+        stencilDescriptor->setDepthFailureOperation(MTL::StencilOperationKeep);
+        stencilDescriptor->setStencilCompareFunction(MTL::CompareFunctionAlways);
+        stencilDescriptor->setReadMask(2);
+        stencilDescriptor->setWriteMask(2);
+        break;
+    case ModVolMode::Inclusion:
+        stencilDescriptor->setStencilFailureOperation(MTL::StencilOperationZero);
+        stencilDescriptor->setDepthStencilPassOperation(MTL::StencilOperationReplace);
+        stencilDescriptor->setDepthFailureOperation(MTL::StencilOperationZero);
+        stencilDescriptor->setStencilCompareFunction(MTL::CompareFunctionLessEqual);
+        stencilDescriptor->setReadMask(3);
+        stencilDescriptor->setWriteMask(3);
+        break;
+    case ModVolMode::Exclusion:
+        stencilDescriptor->setStencilFailureOperation(MTL::StencilOperationZero);
+        stencilDescriptor->setDepthStencilPassOperation(MTL::StencilOperationKeep);
+        stencilDescriptor->setDepthFailureOperation(MTL::StencilOperationZero);
+        stencilDescriptor->setStencilCompareFunction(MTL::CompareFunctionEqual);
+        stencilDescriptor->setReadMask(3);
+        stencilDescriptor->setWriteMask(3);
+        break;
+    case ModVolMode::Final:
+        stencilDescriptor->setStencilFailureOperation(MTL::StencilOperationZero);
+        stencilDescriptor->setDepthStencilPassOperation(MTL::StencilOperationZero);
+        stencilDescriptor->setDepthFailureOperation(MTL::StencilOperationZero);
+        stencilDescriptor->setStencilCompareFunction(MTL::CompareFunctionEqual);
+        stencilDescriptor->setReadMask(0x81);
+        stencilDescriptor->setWriteMask(3);
+        break;
+    }
+
+    descriptor->setFrontFaceStencil(stencilDescriptor);
+    descriptor->setBackFaceStencil(stencilDescriptor);
+
+    auto state = MetalContext::Instance()->GetDevice()->newDepthStencilState(descriptor);
+
+    descriptor->release();
+
+    modVolStencilStates[hash(mode, cullMode, naomi2)] = state;
+}
+
 void MetalPipelineManager::CreateDepthPassDepthStencilState(int cullMode, bool naomi2) {
     MTL::DepthStencilDescriptor *descriptor = MTL::DepthStencilDescriptor::alloc()->init();
-    descriptor->setLabel(NS::String::string("Depth Pass", NS::UTF8StringEncoding));
+    descriptor->setLabel(NS::String::string("Sorted Depth Pass", NS::UTF8StringEncoding));
     descriptor->setDepthWriteEnabled(true);
     descriptor->setDepthCompareFunction(MTL::CompareFunctionGreaterEqual);
 
@@ -157,7 +268,7 @@ void MetalPipelineManager::CreateDepthPassDepthStencilState(int cullMode, bool n
 
 void MetalPipelineManager::CreateDepthStencilState(u32 listType, bool sortTriangles, const PolyParam &pp, int gpuPalette, bool dithering) {
     MTL::DepthStencilDescriptor *descriptor = MTL::DepthStencilDescriptor::alloc()->init();
-    descriptor->setLabel(NS::String::string("Depth Pass", NS::UTF8StringEncoding));
+    descriptor->setLabel(NS::String::string("Main Depth Pass", NS::UTF8StringEncoding));
 
     MTL::CompareFunction compareFunction;
     if (listType == ListType_Punch_Through || sortTriangles) {

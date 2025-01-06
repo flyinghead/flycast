@@ -25,6 +25,7 @@
 #include <QuartzCore/QuartzCore.hpp>
 
 #include "metal_renderer.h"
+#include "hw/aica/dsp.h"
 #include "hw/pvr/ta.h"
 #include "hw/pvr/pvr_mem.h"
 
@@ -263,20 +264,6 @@ void MetalRenderer::DrawPoly(MTL::RenderCommandEncoder *encoder, u32 listType, b
         encoder->setFragmentSamplerState(samplers.GetSampler(poly, listType == ListType_Punch_Through), 0);
     }
 
-    // Fog sampler
-    TSP fogTsp = {};
-    fogTsp.FilterMode = 1;
-    fogTsp.ClampU = 1;
-    fogTsp.ClampV = 1;
-    encoder->setFragmentSamplerState(samplers.GetSampler(fogTsp), 2);
-
-    // Palette sampler
-    TSP palTsp = {};
-    palTsp.FilterMode = 0;
-    palTsp.ClampU = 1;
-    palTsp.ClampV = 1;
-    encoder->setFragmentSamplerState(samplers.GetSampler(palTsp), 3);
-
     if (poly.pcw.Texture || poly.isNaomi2())
     {
         u32 index = 0;
@@ -343,10 +330,65 @@ void MetalRenderer::DrawModVols(MTL::RenderCommandEncoder *encoder, int first, i
         return;
 
     encoder->pushDebugGroup(NS::String::string("DrawModVols", NS::UTF8StringEncoding));
+    encoder->setVertexBuffer(curMainBuffer, offsets.modVolOffset, 0);
 
     ModifierVolumeParam* params = &pvrrc.global_param_mvo[first];
 
     int mod_base = -1;
+    MTL::RenderPipelineState *state;
+    MTL::DepthStencilState *depth_state;
+
+    for (int cmv = 0; cmv < count; cmv++) {
+        ModifierVolumeParam& param = params[cmv];
+        MTL::CullMode cull_mode = param.isp.CullMode == 3 ? MTL::CullModeBack : param.isp.CullMode == 2 ? MTL::CullModeFront : MTL::CullModeNone;
+        encoder->setCullMode(cull_mode);
+        encoder->setFrontFacingWinding(MTL::WindingCounterClockwise);
+
+        if (param.count == 0)
+            continue;
+
+        u32 mv_mode = param.isp.DepthMode;
+
+        if (mod_base == -1)
+            mod_base = param.first;
+
+        if (!param.isp.VolumeLast && mv_mode > 0) {
+            state = pipelineManager.GetModifierVolumePipeline(ModVolMode::Or, param.isp.CullMode, param.isNaomi2());  // OR'ing (open volume or quad)
+            depth_state = pipelineManager.GetModVolDepthStencilStates(ModVolMode::Or, param.isp.CullMode, param.isNaomi2());
+        } else {
+            state = pipelineManager.GetModifierVolumePipeline(ModVolMode::Xor, param.isp.CullMode, param.isNaomi2()); // XOR'ing (closed volume)
+            depth_state = pipelineManager.GetModVolDepthStencilStates(ModVolMode::Xor, param.isp.CullMode, param.isNaomi2());
+        }
+
+        encoder->setRenderPipelineState(state);
+        encoder->setDepthStencilState(depth_state);
+        MTL::ScissorRect scissorRect {};
+        SetTileClip(encoder, param.tileclip, scissorRect);
+        // TODO inside clipping
+
+        encoder->drawPrimitives(MTL::PrimitiveTypeTriangle, param.first * 3, param.count * 3, 1);
+
+        if (mv_mode == 1 || mv_mode == 2)
+        {
+            // Sum the area
+            state = pipelineManager.GetModifierVolumePipeline(mv_mode == 1 ? ModVolMode::Inclusion : ModVolMode::Exclusion, param.isp.CullMode, param.isNaomi2());
+            depth_state = pipelineManager.GetModVolDepthStencilStates(mv_mode == 1 ? ModVolMode::Inclusion : ModVolMode::Exclusion, param.isp.CullMode, param.isNaomi2());
+            encoder->setRenderPipelineState(state);
+            encoder->setDepthStencilState(depth_state);
+            encoder->drawPrimitives(MTL::PrimitiveTypeTriangle, mod_base * 3, (param.first + param.count - mod_base) * 3, 1);
+            mod_base = -1;
+        }
+    }
+    encoder->setVertexBuffer(curMainBuffer, 0, 0);
+
+    const std::array<float, 6> pushConstants = { 1 - FPU_SHAD_SCALE.scale_factor / 256.f, 0, 0, 0, 0, 0 };
+    encoder->setFragmentBytes(pushConstants.data(), sizeof(pushConstants), 1);
+
+    state = pipelineManager.GetModifierVolumePipeline(ModVolMode::Final, 0, false);
+    depth_state = pipelineManager.GetModVolDepthStencilStates(ModVolMode::Final, 0, false);
+    encoder->setRenderPipelineState(state);
+    encoder->setDepthStencilState(depth_state);
+    encoder->drawIndexedPrimitives(MTL::PrimitiveTypeTriangleStrip, 4, MTL::IndexTypeUInt32, curMainBuffer, offsets.indexOffset, 1);
 
     encoder->popDebugGroup();
 }
@@ -421,7 +463,7 @@ bool MetalRenderer::Draw(const MetalTexture *fogTexture, const MetalTexture *pal
     desc->setPixelFormat(MTL::PixelFormatBGRA8Unorm);
     desc->setWidth(pvrrc.framebufferWidth);
     desc->setHeight(pvrrc.framebufferHeight);
-    desc->setUsage(MTL::TextureUsagePixelFormatView | MTL::TextureUsageShaderRead | MTL::TextureUsageShaderWrite | MTL::TextureUsageRenderTarget);
+    desc->setUsage(MTL::TextureUsageShaderRead | MTL::TextureUsageRenderTarget);
 
     frameBuffer = MetalContext::Instance()->GetDevice()->newTexture(desc);
     desc->release();
@@ -430,7 +472,7 @@ bool MetalRenderer::Draw(const MetalTexture *fogTexture, const MetalTexture *pal
     depthDesc->setPixelFormat(MTL::PixelFormatDepth32Float_Stencil8);
     depthDesc->setWidth(pvrrc.framebufferWidth);
     depthDesc->setHeight(pvrrc.framebufferHeight);
-    depthDesc->setUsage(MTL::TextureUsagePixelFormatView | MTL::TextureUsageShaderRead | MTL::TextureUsageShaderWrite | MTL::TextureUsageRenderTarget);
+    depthDesc->setUsage(MTL::TextureUsageShaderRead | MTL::TextureUsageRenderTarget);
 
     depthBuffer = MetalContext::Instance()->GetDevice()->newTexture(depthDesc);
     depthDesc->release();
@@ -447,12 +489,12 @@ bool MetalRenderer::Draw(const MetalTexture *fogTexture, const MetalTexture *pal
     MTL::RenderPassDepthAttachmentDescriptor *depthAttachmentDescriptor = MTL::RenderPassDepthAttachmentDescriptor::alloc()->init();
     depthAttachmentDescriptor->setTexture(depthBuffer);
     depthAttachmentDescriptor->setLoadAction(MTL::LoadActionClear);
-    depthAttachmentDescriptor->setStoreAction(MTL::StoreActionStore);
+    depthAttachmentDescriptor->setStoreAction(MTL::StoreActionDontCare);
 
     MTL::RenderPassStencilAttachmentDescriptor *stencilAttachmentDescriptor = MTL::RenderPassStencilAttachmentDescriptor::alloc()->init();
     stencilAttachmentDescriptor->setTexture(depthBuffer);
     stencilAttachmentDescriptor->setLoadAction(MTL::LoadActionClear);
-    stencilAttachmentDescriptor->setStoreAction(MTL::StoreActionStore);
+    stencilAttachmentDescriptor->setStoreAction(MTL::StoreActionDontCare);
 
     descriptor->setDepthAttachment(depthAttachmentDescriptor);
     descriptor->setStencilAttachment(stencilAttachmentDescriptor);
@@ -466,6 +508,20 @@ bool MetalRenderer::Draw(const MetalTexture *fogTexture, const MetalTexture *pal
 
     renderEncoder->setFragmentTexture(fogTexture->texture, 2);
     renderEncoder->setFragmentTexture(paletteTexture->texture, 3);
+
+    // Fog sampler
+    TSP fogTsp = {};
+    fogTsp.FilterMode = 1;
+    fogTsp.ClampU = 1;
+    fogTsp.ClampV = 1;
+    renderEncoder->setFragmentSamplerState(samplers.GetSampler(fogTsp), 2);
+
+    // Palette sampler
+    TSP palTsp = {};
+    palTsp.FilterMode = 0;
+    palTsp.ClampU = 1;
+    palTsp.ClampV = 1;
+    renderEncoder->setFragmentSamplerState(samplers.GetSampler(palTsp), 3);
 
     // Upload vertex and index buffers
     VertexShaderUniforms vtxUniforms {};
