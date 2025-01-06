@@ -26,6 +26,8 @@
 
 class MetalRenderer;
 
+enum class ModVolMode { Xor, Or, Inclusion, Exclusion, Final };
+
 class MetalPipelineManager
 {
 public:
@@ -60,6 +62,17 @@ public:
         return depthPassPipelines[pipehash];
     }
 
+    MTL::RenderPipelineState* GetModifierVolumePipeline(ModVolMode mode, int cullMode, bool naomi2)
+    {
+        u32 pipehash = hash(mode, cullMode, naomi2);
+        const auto &pipeline = modVolPipelines.find(pipehash);
+        if (pipeline != modVolPipelines.end() && pipeline->second != nullptr)
+            return pipeline->second;
+        CreateModVolPipeline(mode, cullMode, naomi2);
+
+        return modVolPipelines[pipehash];
+    }
+
     MTL::RenderPipelineState* GetPipeline(u32 listType, bool sortTriangles, const PolyParam& pp, int gpuPalette, bool dithering)
     {
         u64 pipehash = hash(listType, sortTriangles, &pp, gpuPalette, dithering);
@@ -69,6 +82,17 @@ public:
         CreatePipeline(listType, sortTriangles, pp, gpuPalette, dithering);
 
         return pipelines[pipehash];
+    }
+
+    MTL::DepthStencilState* GetModVolDepthStencilStates(ModVolMode mode, int cullMode, bool naomi2)
+    {
+        u32 pipehash = hash(mode, cullMode, naomi2);
+        const auto &state = modVolStencilStates.find(pipehash);
+        if (state != modVolStencilStates.end() && state->second != nullptr)
+            return state->second;
+        CreateModVolDepthStencilState(mode, cullMode, naomi2);
+
+        return modVolStencilStates[pipehash];
     }
 
     MTL::DepthStencilState* GetDepthPassDepthStencilStates(int cullMode, bool naomi2)
@@ -95,9 +119,11 @@ public:
 
 private:
     void CreateBlitPassPipeline();
+    void CreateModVolPipeline(ModVolMode mode, int cullMode, bool naomi2);
     void CreateDepthPassPipeline(int cullMode, bool naomi2);
     void CreatePipeline(u32 listType, bool sortTriangles, const PolyParam& pp, int gpuPalette, bool dithering);
 
+    void CreateModVolDepthStencilState(ModVolMode mode, int cullMode, bool naomi2);
     void CreateDepthPassDepthStencilState(int cullMode, bool naomi2);
     void CreateDepthStencilState(u32 listType, bool sortTriangles, const PolyParam& pp, int gpuPalette, bool dithering);
 
@@ -117,6 +143,10 @@ private:
         hash |= (u64)dithering << 32;
 
         return hash;
+    }
+    u32 hash(ModVolMode mode, int cullMode, bool naomi2) const
+    {
+        return ((int)mode << 2) | cullMode | ((int)naomi2 << 5) | ((int)(!settings.platform.isNaomi2() && config::NativeDepthInterpolation) << 6);
     }
     u32 hash(int cullMode, bool naomi2) const
     {
@@ -206,8 +236,10 @@ private:
     MetalRenderer *renderer;
     MTL::RenderPipelineState* blitPassPipeline = nullptr;
     std::map<u64, MTL::RenderPipelineState*> pipelines;
+    std::map<u32, MTL::RenderPipelineState*> modVolPipelines;
     std::map<u32, MTL::RenderPipelineState*> depthPassPipelines;
 
+    std::map<u32, MTL::DepthStencilState*> modVolStencilStates;
     std::map<u64, MTL::DepthStencilState*> depthStencilStates;
     std::map<u32, MTL::DepthStencilState*> depthPassDepthStencilStates;
 };
