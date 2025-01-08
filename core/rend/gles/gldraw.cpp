@@ -644,9 +644,9 @@ void DrawStrips()
 
 void OpenGLRenderer::RenderFramebuffer(const FramebufferInfo& info)
 {
-	initVideoRoutingFrameBuffer();
 	glReadFramebuffer(info);
 	saveCurrentFramebuffer();
+	initVideoRoutingFrameBuffer();
 	getVideoShift(gl.ofbo.shiftX, gl.ofbo.shiftY);
 #ifdef LIBRETRO
 	glBindFramebuffer(GL_FRAMEBUFFER, postProcessor.getFramebuffer(gl.dcfb.width, gl.dcfb.height));
