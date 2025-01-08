@@ -161,8 +161,8 @@ extern "C" JNIEXPORT jstring JNICALL Java_com_flycast_emulator_emu_JNIdc_initEnv
     if (first_init)
     {
         // Do one-time initialization
-    	EventManager::listen(Event::Pause, emuEventCallback);
-    	EventManager::listen(Event::Resume, emuEventCallback);
+    	EventManager::listen(EmuEvent::Pause, emuEventCallback);
+    	EventManager::listen(EmuEvent::Resume, emuEventCallback);
         jstring msg = NULL;
         int rc = flycast_init(0, NULL);
         if (rc == -1)

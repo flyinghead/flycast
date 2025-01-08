@@ -166,14 +166,14 @@ public:
 	void init(int port)
 	{
 		this->port = port;
-		EventManager::listen(Event::Resume, emuEventCallback, this);
-		EventManager::listen(Event::Terminate, emuEventCallback, this);
+		EventManager::listen(EmuEvent::Resume, emuEventCallback, this);
+		EventManager::listen(EmuEvent::Terminate, emuEventCallback, this);
 	}
 
 	void term()
 	{
-		EventManager::unlisten(Event::Resume, emuEventCallback, this);
-		EventManager::unlisten(Event::Terminate, emuEventCallback, this);
+		EventManager::unlisten(EmuEvent::Resume, emuEventCallback, this);
+		EventManager::unlisten(EmuEvent::Terminate, emuEventCallback, this);
 		stop();
 	}
 
