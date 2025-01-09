@@ -301,20 +301,20 @@ void MetalPipelineManager::CreateDepthStencilState(u32 listType, bool sortTriang
     stencilDescriptor->setStencilFailureOperation(MTL::StencilOperationKeep);
     stencilDescriptor->setDepthFailureOperation(MTL::StencilOperationKeep);
 
+    if (shadowed) {
+        stencilDescriptor->setDepthStencilPassOperation(MTL::StencilOperationReplace);
         stencilDescriptor->setStencilCompareFunction(MTL::CompareFunctionAlways);
         stencilDescriptor->setReadMask(0);
         stencilDescriptor->setWriteMask(0x80);
-    } else {
-        stencilDescriptor->setStencilFailureOperation(MTL::StencilOperationKeep);
-        stencilDescriptor->setDepthFailureOperation(MTL::StencilOperationKeep);
-        stencilDescriptor->setDepthStencilPassOperation(MTL::StencilOperationKeep);
-        stencilDescriptor->setStencilCompareFunction(MTL::CompareFunctionNever);
     }
 
     descriptor->setDepthCompareFunction(compareFunction);
     descriptor->setDepthWriteEnabled(depthWriteEnabled);
-    descriptor->setBackFaceStencil(stencilDescriptor);
-    descriptor->setFrontFaceStencil(stencilDescriptor);
+
+    if (shadowed) {
+        descriptor->setBackFaceStencil(stencilDescriptor);
+        descriptor->setFrontFaceStencil(stencilDescriptor);
+    }
 
     auto state = MetalContext::Instance()->GetDevice()->newDepthStencilState(descriptor);
 

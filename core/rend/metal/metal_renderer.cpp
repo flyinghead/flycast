@@ -204,6 +204,8 @@ void MetalRenderer::SetBaseScissor(MTL::Viewport viewport) {
 
 void MetalRenderer::DrawPoly(MTL::RenderCommandEncoder *encoder, u32 listType, bool sortTriangles, const PolyParam &poly, u32 first, u32 count)
 {
+    encoder->setVertexBuffer(curMainBuffer, offsets.vertexUniformOffset, 0);
+
     MTL::ScissorRect scissorRect {};
     TileClipping tileClip = SetTileClip(encoder, poly.tileclip, scissorRect);
 
@@ -533,7 +535,6 @@ bool MetalRenderer::Draw(const MetalTexture *fogTexture, const MetalTexture *pal
 
     UploadMainBuffer(vtxUniforms, fragUniforms);
 
-    renderEncoder->setVertexBuffer(curMainBuffer, offsets.vertexUniformOffset, 0);
     renderEncoder->setVertexBuffer(curMainBuffer, 0, 30);
     renderEncoder->setFragmentBuffer(curMainBuffer, offsets.fragmentUniformOffset, 0);
 
