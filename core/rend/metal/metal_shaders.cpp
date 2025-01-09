@@ -236,7 +236,7 @@ fragment FragmentOut fs_main(VertexOut in [[stage_in]], constant FragmentShaderU
         offset /= in.vtx_uv.z;
     }
 
-    if (pp_use_alpha) {
+    if (!pp_use_alpha) {
         color.a = 1.0;
     }
 
