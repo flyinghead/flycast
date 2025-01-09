@@ -19,13 +19,20 @@
     along with reicast.  If not, see <https://www.gnu.org/licenses/>.
  */
 #pragma once
+#include "netservice.h"
 
-bool start_pico();
-void stop_pico();
-void write_pico(u8 b);
-int read_pico();
-int pico_available();
+namespace net::modbba
+{
 
-void pico_receive_eth_frame(const u8 *frame, u32 size);
-// implemented in bba
-int pico_send_eth_frame(const u8 *data, u32 len);
+class PicoTcpService : public Service
+{
+public:
+	bool start() override;
+	void stop() override;
+	void writeModem(u8 b) override;
+	int readModem() override;
+	int modemAvailable() override;
+	void receiveEthFrame(const u8 *frame, u32 size) override;
+};
+
+}

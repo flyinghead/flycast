@@ -1194,7 +1194,11 @@ target_sources(${PROJECT_NAME} PRIVATE
 		core/network/output.cpp
 		core/network/output.h
 		core/network/picoppp.cpp
-		core/network/picoppp.h)
+		core/network/picoppp.h
+		core/network/netservice.cpp
+		core/network/netservice.h
+		core/network/dcnet.cpp
+		core/network/dcnet.h)
 
 if(ANDROID)
 	target_sources(${PROJECT_NAME} PRIVATE

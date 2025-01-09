@@ -1,5 +1,5 @@
 /*
-	Copyright 2021 flyinghead
+	Copyright 2025 flyinghead
 
 	This file is part of Flycast.
 
@@ -15,15 +15,24 @@
 
     You should have received a copy of the GNU General Public License
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
-*/
+ */
 #pragma once
-#include "types.h"
+#include "netservice.h"
 
-void bba_Init();
-void bba_Term();
-void bba_Reset(bool hard);
-u32 bba_ReadMem(u32 addr, u32 sz);
-void bba_WriteMem(u32 addr, u32 data, u32 sz);
-void bba_Serialize(Serializer& ser);
-void bba_Deserialize(Deserializer& deser);
-int bba_recv_frame(const u8 *data, u32 len);
+namespace net::modbba
+{
+
+class DCNetService : public Service
+{
+public:
+	bool start() override;
+	void stop() override;
+
+	void writeModem(u8 b) override;
+	int readModem() override;
+	int modemAvailable() override;
+
+	void receiveEthFrame(const u8 *frame, u32 size) override;
+};
+
+}

@@ -25,7 +25,7 @@
 #include "modem_regs.h"
 #include "hw/holly/holly_intc.h"
 #include "hw/sh4/sh4_sched.h"
-#include "network/picoppp.h"
+#include "network/netservice.h"
 #include "serialize.h"
 #include "cfg/option.h"
 #include "stdclass.h"
@@ -263,7 +263,7 @@ static int modem_sched_func(int tag, int cycles, int jitter, void *arg)
 			dspram[0x208] = 0xff;	// 2.4 - 19.2 kpbs supported
 			dspram[0x209] = 0xbf;	// 21.6 - 33.6 kpbs supported, asymmetric supported
 
-			start_pico();
+			net::modbba::start();
 			connect_state = CONNECTED;
 			callback_cycles = SH4_MAIN_CLOCK / 1000000 * 238;	// 238 us
 			data_sent = false;
@@ -291,7 +291,7 @@ static int modem_sched_func(int tag, int cycles, int jitter, void *arg)
 			// Let WinCE send data first to avoid choking it
 			if (!modem_regs.reg1e.RDBF && data_sent)
 			{
-				int c = read_pico();
+				int c = net::modbba::readModem();
 				if (c >= 0)
 				{
 					//LOG("pppd received %02x", c);
@@ -328,7 +328,7 @@ void ModemInit()
 
 void ModemReset()
 {
-	stop_pico();
+	net::modbba::stop();
 }
 
 void ModemTerm()
@@ -441,7 +441,7 @@ static void modem_reset(u32 v)
 	{
 		if (state == MS_RESET)
 		{
-			stop_pico();
+			net::modbba::stop();;
 			memset(&modem_regs, 0, sizeof(modem_regs));
 			state = MS_RESETING;
 			ControllerTestStart();
@@ -528,7 +528,7 @@ static void ModemNormalWrite(u32 reg, u32 data)
 			if (sent_fp)
 				fputc(data, sent_fp);
 #endif
-			write_pico(data);
+			net::modbba::writeModem(data);
 			modem_regs.reg1e.TDBE = 0;
 		}
 		break;

@@ -522,6 +522,7 @@ extern Option<int> GGPOChatTimeout;
 extern Option<bool> NetworkOutput;
 extern Option<int> MultiboardSlaves;
 extern Option<bool> BattleCableEnable;
+extern Option<bool> UseDCNet;
 
 #ifdef USE_OMX
 extern Option<int> OmxAudioLatency;

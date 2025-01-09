@@ -2795,6 +2795,7 @@ static void gui_settings_network()
 			OptionCheckbox("Broadband Adapter Emulation", config::EmulateBBA,
 					"Emulate the Ethernet Broadband Adapter (BBA) instead of the Modem");
 		}
+		OptionCheckbox("Use DCNet (Experimental)", config::UseDCNet, "Connect to the experimental DCNet cloud service.");
 	}
 #ifdef NAOMI_MULTIBOARD
 	ImGui::Spacing();

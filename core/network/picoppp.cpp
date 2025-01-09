@@ -51,6 +51,7 @@ extern "C" {
 #include "oslib/oslib.h"
 #include "util/tsqueue.h"
 #include "util/shared_this.h"
+#include "hw/bba/bba.h"
 
 #include <unordered_map>
 #include <mutex>
@@ -201,11 +202,11 @@ static int modem_write(pico_device *dev, const void *data, int len)
     return len;
 }
 
-void write_pico(u8 b) {
+static void write_pico(u8 b) {
 	out_buffer.push(b);
 }
 
-int read_pico()
+static int read_pico()
 {
 	if (in_buffer.empty())
 		return -1;
@@ -213,7 +214,7 @@ int read_pico()
 		return in_buffer.pop();
 }
 
-int pico_available() {
+static int pico_available() {
 	return in_buffer.size();
 }
 
@@ -1138,7 +1139,7 @@ static void closeDumpFile()
 		pcapngDump = nullptr;
 	}
 }
-void pico_receive_eth_frame(const u8 *frame, u32 size)
+static void pico_receive_eth_frame(const u8 *frame, u32 size)
 {
 	dumpFrame(frame, size);
 	if (pico_dev != nullptr)
@@ -1147,7 +1148,7 @@ void pico_receive_eth_frame(const u8 *frame, u32 size)
 
 static int send_eth_frame(pico_device *dev, void *data, int len) {
 	dumpFrame((const u8 *)data, len);
-	return pico_send_eth_frame((const u8 *)data, len);
+	return bba_recv_frame((const u8 *)data, len);
 }
 
 static void picoTick(const std::error_code& ec, asio::steady_timer *timer)
@@ -1391,7 +1392,7 @@ void PicoThread::run()
 
 static PicoThread pico_thread;
 
-bool start_pico()
+static bool start_pico()
 {
 	emu.setNetworkState(true);
 	if (pico_thread_running)
@@ -1402,7 +1403,7 @@ bool start_pico()
     return true;
 }
 
-void stop_pico()
+static void stop_pico()
 {
 	emu.setNetworkState(false);
 	pico_thread_running = false;
@@ -1429,3 +1430,30 @@ void pico_mutex_deinit(void *mux) {
 }
 
 }
+
+namespace net::modbba
+{
+
+bool PicoTcpService::start() {
+	return start_pico();
+}
+void PicoTcpService::stop() {
+	stop_pico();
+}
+
+void PicoTcpService::writeModem(u8 b) {
+	write_pico(b);
+}
+int PicoTcpService::readModem() {
+	return read_pico();
+}
+int PicoTcpService::modemAvailable() {
+	return pico_available();
+}
+
+void PicoTcpService::receiveEthFrame(const u8 *frame, u32 size) {
+	pico_receive_eth_frame(frame, size);
+}
+
+}
+

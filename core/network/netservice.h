@@ -1,5 +1,5 @@
 /*
-	Copyright 2021 flyinghead
+	Copyright 2025 flyinghead
 
 	This file is part of Flycast.
 
@@ -15,15 +15,34 @@
 
     You should have received a copy of the GNU General Public License
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
-*/
+ */
 #pragma once
 #include "types.h"
 
-void bba_Init();
-void bba_Term();
-void bba_Reset(bool hard);
-u32 bba_ReadMem(u32 addr, u32 sz);
-void bba_WriteMem(u32 addr, u32 data, u32 sz);
-void bba_Serialize(Serializer& ser);
-void bba_Deserialize(Deserializer& deser);
-int bba_recv_frame(const u8 *data, u32 len);
+namespace net::modbba
+{
+
+bool start();
+void stop();
+
+void writeModem(u8 b);
+int readModem();
+int modemAvailable();
+
+void receiveEthFrame(const u8 *frame, u32 size);
+
+class Service
+{
+public:
+	virtual ~Service() = default;
+	virtual bool start() = 0;
+	virtual void stop() = 0;
+
+	virtual void writeModem(u8 b) = 0;
+	virtual int readModem() = 0;
+	virtual int modemAvailable() = 0;
+
+	virtual void receiveEthFrame(const u8 *frame, u32 size) = 0;
+};
+
+}
