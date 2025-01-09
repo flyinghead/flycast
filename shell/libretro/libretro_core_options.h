@@ -245,6 +245,20 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       },
       "enabled",
    },
+   {
+      CORE_OPTION_NAME "_dcnet",
+      "Use DCNet (Experimental)",
+      NULL,
+      "Connect to the experimental DCNet cloud service.",
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
 
    {
       CORE_OPTION_NAME "_internal_resolution",
