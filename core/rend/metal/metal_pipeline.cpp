@@ -60,12 +60,12 @@ void MetalPipelineManager::CreateModVolPipeline(ModVolMode mode, int cullMode, b
     else {
         vertexDesc = MTL::VertexDescriptor::alloc()->init();
 
-        auto layout = vertexDesc->layouts()->object(0);
+        auto layout = vertexDesc->layouts()->object(30);
         layout->setStride(sizeof(float) * 3);
 
         auto attribute = vertexDesc->attributes()->object(0);
         attribute->setOffset(0);
-        attribute->setBufferIndex(0);
+        attribute->setBufferIndex(30);
         attribute->setFormat(MTL::VertexFormatFloat3);
 
         descriptor->setVertexDescriptor(vertexDesc);
