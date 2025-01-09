@@ -106,13 +106,14 @@ public:
         return depthPassDepthStencilStates[pipehash];
     }
 
-    MTL::DepthStencilState* GetDepthStencilStates(u32 listType, bool sortTriangles, const PolyParam& pp, int gpuPalette, bool dithering)
+    MTL::DepthStencilState* GetDepthStencilStates(u32 listType, bool sortTriangles, bool shadowed, const PolyParam& pp)
     {
-        u64 pipehash = hash(listType, sortTriangles, &pp, gpuPalette, dithering);
+        u64 pipehash = hash(listType, sortTriangles, shadowed, &pp);
+
         const auto &state = depthStencilStates.find(pipehash);
         if (state != depthStencilStates.end() && state->second != nullptr)
             return state->second;
-        CreateDepthStencilState(listType, sortTriangles, pp, gpuPalette, dithering);
+        CreateDepthStencilState(listType, sortTriangles, shadowed, pp);
 
         return depthStencilStates[pipehash];
     }
@@ -125,7 +126,7 @@ private:
 
     void CreateModVolDepthStencilState(ModVolMode mode, int cullMode, bool naomi2);
     void CreateDepthPassDepthStencilState(int cullMode, bool naomi2);
-    void CreateDepthStencilState(u32 listType, bool sortTriangles, const PolyParam& pp, int gpuPalette, bool dithering);
+    void CreateDepthStencilState(u32 listType, bool sortTriangles, bool shadowed, const PolyParam& pp);
 
     u64 hash(u32 listType, bool sortTriangles, const PolyParam *pp, int gpuPalette, bool dithering) const
     {
@@ -141,6 +142,22 @@ private:
         hash |= (u64)(!settings.platform.isNaomi2() && config::NativeDepthInterpolation) << 30;
         hash |= (u64)(pp->tcw.PixelFmt == PixelBumpMap) << 31;
         hash |= (u64)dithering << 32;
+
+        return hash;
+    }
+    u64 hash(u32 listType, bool sortTriangles, bool shadowed, const PolyParam *pp) const
+    {
+        u64 hash = pp->pcw.Gouraud | (pp->pcw.Offset << 1) | (pp->pcw.Texture << 2) | (pp->pcw.Shadow << 3)
+            | (((pp->tileclip >> 28) == 3) << 4);
+        hash |= ((listType >> 1) << 5);
+        bool ignoreTexAlpha = pp->tsp.IgnoreTexA || pp->tcw.PixelFmt == Pixel565;
+        hash |= (pp->tsp.ShadInstr << 7) | (ignoreTexAlpha << 9) | (pp->tsp.UseAlpha << 10)
+            | (pp->tsp.ColorClamp << 11) | ((config::Fog ? pp->tsp.FogCtrl : 2) << 12) | (pp->tsp.SrcInstr << 14)
+            | (pp->tsp.DstInstr << 17);
+        hash |= (pp->isp.ZWriteDis << 20) | (pp->isp.CullMode << 21) | (pp->isp.DepthMode << 23);
+        hash |= ((u64)sortTriangles << 26) | ((u64)pp->isNaomi2() << 29);
+        hash |= (u64)(!settings.platform.isNaomi2() && config::NativeDepthInterpolation) << 30;
+        hash |= (u64)(pp->tcw.PixelFmt == PixelBumpMap) << 31;
 
         return hash;
     }

@@ -244,10 +244,11 @@ void MetalRenderer::DrawPoly(MTL::RenderCommandEncoder *encoder, u32 listType, b
         encoder->setFragmentBytes(pushConstants.data(), sizeof(pushConstants), 1);
     }
 
-    encoder->setRenderPipelineState(pipelineManager.GetPipeline(listType, sortTriangles, poly, gpuPalette, dithering));
-    encoder->setDepthStencilState(pipelineManager.GetDepthStencilStates(listType, sortTriangles, poly, gpuPalette, dithering));
-
     bool shadowed = listType == ListType_Opaque || listType == ListType_Punch_Through;
+
+    encoder->setRenderPipelineState(pipelineManager.GetPipeline(listType, sortTriangles, poly, gpuPalette, dithering));
+    encoder->setDepthStencilState(pipelineManager.GetDepthStencilStates(listType, sortTriangles, shadowed, poly));
+
     if (shadowed) {
         if (poly.pcw.Shadow != 0) {
             encoder->setStencilReferenceValue(0x80);
@@ -330,13 +331,16 @@ void MetalRenderer::DrawModVols(MTL::RenderCommandEncoder *encoder, int first, i
         return;
 
     encoder->pushDebugGroup(NS::String::string("DrawModVols", NS::UTF8StringEncoding));
-    encoder->setVertexBuffer(curMainBuffer, offsets.modVolOffset, 0);
+    encoder->setVertexBufferOffset(offsets.modVolOffset, 0);
 
     ModifierVolumeParam* params = &pvrrc.global_param_mvo[first];
 
     int mod_base = -1;
     MTL::RenderPipelineState *state;
     MTL::DepthStencilState *depth_state;
+
+    const std::array<float, 1> pushConstants = { 1 - FPU_SHAD_SCALE.scale_factor / 256.f };
+    encoder->setFragmentBytes(pushConstants.data(), sizeof(pushConstants), 1);
 
     for (int cmv = 0; cmv < count; cmv++) {
         ModifierVolumeParam& param = params[cmv];
@@ -362,6 +366,7 @@ void MetalRenderer::DrawModVols(MTL::RenderCommandEncoder *encoder, int first, i
 
         encoder->setRenderPipelineState(state);
         encoder->setDepthStencilState(depth_state);
+        encoder->setStencilReferenceValue(2);
         MTL::ScissorRect scissorRect {};
         SetTileClip(encoder, param.tileclip, scissorRect);
         // TODO inside clipping
@@ -375,19 +380,18 @@ void MetalRenderer::DrawModVols(MTL::RenderCommandEncoder *encoder, int first, i
             depth_state = pipelineManager.GetModVolDepthStencilStates(mv_mode == 1 ? ModVolMode::Inclusion : ModVolMode::Exclusion, param.isp.CullMode, param.isNaomi2());
             encoder->setRenderPipelineState(state);
             encoder->setDepthStencilState(depth_state);
+            encoder->setStencilReferenceValue(1);
             encoder->drawPrimitives(MTL::PrimitiveTypeTriangle, mod_base * 3, (param.first + param.count - mod_base) * 3, 1);
             mod_base = -1;
         }
     }
-    encoder->setVertexBuffer(curMainBuffer, 0, 0);
-
-    const std::array<float, 6> pushConstants = { 1 - FPU_SHAD_SCALE.scale_factor / 256.f, 0, 0, 0, 0, 0 };
-    encoder->setFragmentBytes(pushConstants.data(), sizeof(pushConstants), 1);
+    encoder->setVertexBufferOffset(0, 0);
 
     state = pipelineManager.GetModifierVolumePipeline(ModVolMode::Final, 0, false);
     depth_state = pipelineManager.GetModVolDepthStencilStates(ModVolMode::Final, 0, false);
     encoder->setRenderPipelineState(state);
     encoder->setDepthStencilState(depth_state);
+    encoder->setStencilReferenceValue(0x81);
     encoder->drawIndexedPrimitives(MTL::PrimitiveTypeTriangleStrip, 4, MTL::IndexTypeUInt32, curMainBuffer, offsets.indexOffset, 1);
 
     encoder->popDebugGroup();
@@ -548,9 +552,13 @@ bool MetalRenderer::Draw(const MetalTexture *fogTexture, const MetalTexture *pal
         if (current_pass.autosort) {
             if (!config::PerStripSorting)
                 DrawSorted(renderEncoder, pvrrc.sortedTriangles, previous_pass.sorted_tr_count, current_pass.sorted_tr_count, render_pass + 1 < (int)pvrrc.render_passes.size());
+            else
+                DrawList(renderEncoder, ListType_Translucent, true, pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count);
         } else {
-            DrawList(renderEncoder, ListType_Translucent, false, pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count);
+            // TODO: This breaking?
+            // DrawList(renderEncoder, ListType_Translucent, false, pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count);
         }
+        previous_pass = current_pass;
     }
 
     renderEncoder->endEncoding();

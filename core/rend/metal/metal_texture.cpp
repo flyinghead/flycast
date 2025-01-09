@@ -64,7 +64,7 @@ void MetalTexture::UploadToGPU(int width, int height, const u8 *temp_tex_buffer,
     desc->setPixelFormat(format);
     desc->setMipmapLevelCount(mipmapLevels);
     desc->setStorageMode(MTL::StorageModeShared);
-    desc->setUsage(MTL::TextureUsageUnknown);
+    desc->setUsage(MTL::TextureUsageShaderRead);
 
     auto device = MetalContext::Instance()->GetDevice();
 
