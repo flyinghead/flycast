@@ -204,8 +204,6 @@ void MetalRenderer::SetBaseScissor(MTL::Viewport viewport) {
 
 void MetalRenderer::DrawPoly(MTL::RenderCommandEncoder *encoder, u32 listType, bool sortTriangles, const PolyParam &poly, u32 first, u32 count)
 {
-    encoder->setVertexBuffer(curMainBuffer, offsets.vertexUniformOffset, 0);
-
     MTL::ScissorRect scissorRect {};
     TileClipping tileClip = SetTileClip(encoder, poly.tileclip, scissorRect);
 
@@ -333,7 +331,7 @@ void MetalRenderer::DrawModVols(MTL::RenderCommandEncoder *encoder, int first, i
         return;
 
     encoder->pushDebugGroup(NS::String::string("DrawModVols", NS::UTF8StringEncoding));
-    encoder->setVertexBufferOffset(offsets.modVolOffset, 0);
+    encoder->setVertexBufferOffset(offsets.modVolOffset, 30);
 
     ModifierVolumeParam* params = &pvrrc.global_param_mvo[first];
 
@@ -387,7 +385,7 @@ void MetalRenderer::DrawModVols(MTL::RenderCommandEncoder *encoder, int first, i
             mod_base = -1;
         }
     }
-    encoder->setVertexBufferOffset(0, 0);
+    encoder->setVertexBufferOffset(0, 30);
 
     state = pipelineManager.GetModifierVolumePipeline(ModVolMode::Final, 0, false);
     depth_state = pipelineManager.GetModVolDepthStencilStates(ModVolMode::Final, 0, false);
@@ -536,6 +534,7 @@ bool MetalRenderer::Draw(const MetalTexture *fogTexture, const MetalTexture *pal
     UploadMainBuffer(vtxUniforms, fragUniforms);
 
     renderEncoder->setVertexBuffer(curMainBuffer, 0, 30);
+    renderEncoder->setVertexBuffer(curMainBuffer, offsets.vertexUniformOffset, 0);
     renderEncoder->setFragmentBuffer(curMainBuffer, offsets.fragmentUniformOffset, 0);
 
     RenderPass previous_pass {};
