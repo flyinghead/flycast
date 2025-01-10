@@ -70555,8 +70555,8 @@ struct retro_core_options_v2 options_sr = {
 #define CORE_OPTION_NAME_UPNP_INFO_0_SV "Använd UPnP för att automatiskt konfigurera din internetrouter för onlinespel."
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_SV "Intern upplösning"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_SV "Ändra renderingsupplösning."
-#define OPTION_VAL_320X240_SV NULL
-#define OPTION_VAL_640X480_SV NULL
+#define OPTION_VAL_320X240_SV "320x240 (Halv)"
+#define OPTION_VAL_640X480_SV "640x480 (Inbyggd)"
 #define OPTION_VAL_800X600_SV NULL
 #define OPTION_VAL_960X720_SV NULL
 #define OPTION_VAL_1024X768_SV NULL
