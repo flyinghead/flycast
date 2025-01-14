@@ -22,6 +22,7 @@
 #include "vulkan_renderer.h"
 #include "imgui.h"
 #include "imgui_impl_vulkan.h"
+#include "stdclass.h"
 #include "ui/gui.h"
 #ifdef USE_SDL
 #include <sdl/sdl.h>
