@@ -83,7 +83,7 @@ static void sdl_open_joystick(int index)
 		std::shared_ptr<SDLGamepad> gamepad = std::make_shared<SwitchGamepad>(index < MAPLE_PORTS ? index : -1, index, pJoystick);
 #else
 		std::shared_ptr<SDLGamepad> gamepad;
-		if (DreamConnGamepad::isDreamConn(index))
+		if (DreamConnGamepad::isDreamcastController(index))
 			gamepad = std::make_shared<DreamConnGamepad>(index < MAPLE_PORTS ? index : -1, index, pJoystick);
 		else
 			gamepad = std::make_shared<SDLGamepad>(index < MAPLE_PORTS ? index : -1, index, pJoystick);

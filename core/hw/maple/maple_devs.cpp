@@ -2106,7 +2106,7 @@ maple_device* maple_Create(MapleDeviceType type)
 	return nullptr;
 }
 
-#if defined(_WIN32) && !defined(TARGET_UWP) && defined(USE_SDL) && !defined(LIBRETRO)
+#if (defined(_WIN32) || defined(__linux__) || (defined(__APPLE__) && defined(TARGET_OS_MAC))) && !defined(TARGET_UWP) && defined(USE_SDL) && !defined(LIBRETRO)
 #include "sdl/dreamconn.h"
 
 struct DreamConnVmu : public maple_sega_vmu
