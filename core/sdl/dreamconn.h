@@ -20,8 +20,10 @@
 #include "types.h"
 #include "emulator.h"
 #include "sdl_gamepad.h"
-#if defined(_WIN32) && !defined(TARGET_UWP)
-#define USE_DREAMCONN 1
+#if (defined(_WIN32) || defined(__linux__) || (defined(__APPLE__) && defined(TARGET_OS_MAC))) && !defined(TARGET_UWP)
+#define USE_DREAMCASTCONTROLLER 1
+#define TYPE_DREAMCONN 1
+#define TYPE_DREAMCASTCONTROLLERUSB 2
 #include <asio.hpp>
 #endif
 
@@ -48,14 +50,17 @@ static_assert(sizeof(MapleMsg) == 1028);
 class DreamConn
 {
 	const int bus;
-#ifdef USE_DREAMCONN
+	const int dreamcastControllerType;
 	asio::ip::tcp::iostream iostream;
-#endif
+	asio::io_context io_context;
+	asio::io_service io_service;
+	asio::serial_port serial_handler{io_context};
+	bool maple_io_connected;
 	u8 expansionDevs = 0;
 	static constexpr u16 BASE_PORT = 37393;
 
 public:
-	DreamConn(int bus) : bus(bus) {
+	DreamConn(int bus, int dreamcastControllerType) : bus(bus), dreamcastControllerType(dreamcastControllerType) {
 		connect();
 	}
 	~DreamConn() {
@@ -66,6 +71,9 @@ public:
 
 	int getBus() const {
 		return bus;
+	}
+	int getDreamcastControllerType() const {
+		return dreamcastControllerType;
 	}
 	bool hasVmu() {
 		return expansionDevs & 1;
@@ -88,7 +96,7 @@ public:
 	void set_maple_port(int port) override;
 	bool gamepad_btn_input(u32 code, bool pressed) override;
 	bool gamepad_axis_input(u32 code, int value) override;
-	static bool isDreamConn(int deviceIndex);
+	static bool isDreamcastController(int deviceIndex);
 
 private:
 	static void handleEvent(Event event, void *arg);
@@ -98,4 +106,5 @@ private:
 	bool ltrigPressed = false;
 	bool rtrigPressed = false;
 	bool startPressed = false;
+	int dreamcastControllerType;
 };

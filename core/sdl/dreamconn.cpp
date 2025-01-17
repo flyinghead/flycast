@@ -18,7 +18,7 @@
  */
 #include "dreamconn.h"
 
-#ifdef USE_DREAMCONN
+#ifdef USE_DREAMCASTCONTROLLER
 #include "hw/maple/maple_devs.h"
 #include "ui/gui.h"
 #include <cfg/option.h>
@@ -27,9 +27,17 @@
 #include <iomanip>
 #include <sstream>
 
+#if defined(__linux__) || (defined(__APPLE__) && defined(TARGET_OS_MAC))
+#include <dirent.h>
+#endif
+
+#if defined(_WIN32)
+#include<Windows.h>
+#endif
+
 void createDreamConnDevices(std::shared_ptr<DreamConn> dreamconn, bool gameStart);
 
-static bool sendMsg(const MapleMsg& msg, asio::ip::tcp::iostream& stream)
+static asio::error_code sendMsg(const MapleMsg& msg, asio::ip::tcp::iostream& stream, asio::serial_port& serial_handler, int dreamcastControllerType)
 {
 	std::ostringstream s;
 	s.fill('0');
@@ -42,93 +50,280 @@ static bool sendMsg(const MapleMsg& msg, asio::ip::tcp::iostream& stream)
 	for (u32 i = 0; i < sz; i++)
 		s << " " << std::setw(2) << (u32)msg.data[i];
 	s << "\r\n";
-
-	asio::ip::tcp::socket& sock = static_cast<asio::ip::tcp::socket&>(stream.socket());
+	
 	asio::error_code ec;
-	asio::write(sock, asio::buffer(s.str()), ec);
-	return !ec;
+	
+	if (dreamcastControllerType == TYPE_DREAMCONN)
+	{
+		if (!stream)
+			return asio::error::not_connected;
+		asio::ip::tcp::socket& sock = static_cast<asio::ip::tcp::socket&>(stream.socket());
+		asio::write(sock, asio::buffer(s.str()), ec);
+	}
+	else if (dreamcastControllerType == TYPE_DREAMCASTCONTROLLERUSB)
+	{
+		if (!serial_handler.is_open())
+			return asio::error::not_connected;
+		asio::async_write(serial_handler, asio::buffer(s.str()), asio::transfer_exactly(s.str().size()), [ &serial_handler](const asio::error_code& error, size_t bytes_transferred)
+		{
+			if (error) {
+				serial_handler.cancel();
+			}
+		});
+	}
+	
+	return ec;
 }
 
-static bool receiveMsg(MapleMsg& msg, std::istream& stream)
+static bool receiveMsg(MapleMsg& msg, std::istream& stream, asio::serial_port& serial_handler, int dreamcastControllerType)
 {
 	std::string response;
-	if (!std::getline(stream, response))
-		return false;
-	sscanf(response.c_str(), "%hhx %hhx %hhx %hhx", &msg.command, &msg.destAP, &msg.originAP, &msg.size);
-	if ((msg.getDataSize() - 1) * 3 + 13 >= response.length())
-		return false;
-	for (unsigned i = 0; i < msg.getDataSize(); i++)
-		sscanf(&response[i * 3 + 12], "%hhx", &msg.data[i]);
-	return !stream.fail();
+	
+	if (dreamcastControllerType == TYPE_DREAMCONN)
+	{
+		if (!std::getline(stream, response))
+			return false;
+		sscanf(response.c_str(), "%hhx %hhx %hhx %hhx", &msg.command, &msg.destAP, &msg.originAP, &msg.size);
+		if ((msg.getDataSize() - 1) * 3 + 13 >= response.length())
+			return false;
+		for (unsigned i = 0; i < msg.getDataSize(); i++)
+			sscanf(&response[i * 3 + 12], "%hhx", &msg.data[i]);
+		return !stream.fail();
+	}
+	else if (dreamcastControllerType == TYPE_DREAMCASTCONTROLLERUSB)
+	{
+		asio::error_code ec;
+		
+		char c;
+		for (int i = 0; i < 2; ++i)
+		{
+			// discard the first message as we are interested in the second only which returns the controller configuration
+			response = "";
+			while (serial_handler.read_some(asio::buffer(&c, 1), ec) > 0)
+			{
+				if (!serial_handler.is_open())
+					return false;
+				if (c == '\n')
+					break;
+				response += c;
+			}
+			response.pop_back();
+		}
+		
+		sscanf(response.c_str(), "%hhx %hhx %hhx %hhx", &msg.command, &msg.destAP, &msg.originAP, &msg.size);
+		
+		if (!ec && serial_handler.is_open())
+			return true;
+		else
+			return false;
+	}
+}
+
+static std::string getFirstSerialDevice() {
+	std::string device_prefix = "";
+
+#if defined(_WIN32)
+	device_prefix = "\\\\.\\COM";
+	for (int i = 1; i <= 256; ++i) {
+		std::string comPort = device_prefix + std::to_string(i);
+		HANDLE hCom = CreateFile(comPort.c_str(), GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
+		if (hCom != INVALID_HANDLE_VALUE) {
+			CloseHandle(hCom);
+			return "COM" + std::to_string(i);
+		}
+	}
+	return "";
+#endif
+
+#if defined(__linux__) || (defined(__APPLE__) && defined(TARGET_OS_MAC))
+	
+#if defined(__linux__)
+	device_prefix = "ttyACM";
+#elif (defined(__APPLE__) && defined(TARGET_OS_MAC))
+	device_prefix = "tty.usbmodem";
+#endif
+	std::string path = "/dev/";
+	DIR *dir;
+	struct dirent *ent;
+	if ((dir = opendir(path.c_str())) != NULL) {
+		while ((ent = readdir(dir)) != NULL) {
+			std::string device = ent->d_name;
+			if (device.find(device_prefix) != std::string::npos) {
+				closedir(dir);
+				return path + device;
+			}
+		}
+		closedir(dir);
+	}
+	return "";
+#endif
 }
 
 void DreamConn::connect()
 {
-	iostream = asio::ip::tcp::iostream("localhost", std::to_string(BASE_PORT + bus));
-	if (!iostream) {
-		WARN_LOG(INPUT, "DreamConn[%d] connection failed: %s", bus, iostream.error().message().c_str());
-		disconnect();
-		return;
+	maple_io_connected = false;
+	
+	asio::error_code ec;
+	
+	switch (dreamcastControllerType) {
+		case TYPE_DREAMCONN:
+		{
+#if !defined(_WIN32)
+			WARN_LOG(INPUT, "DreamcastController[%d] connection failed: DreamConn+ Controller supported on Windows only", bus);
+			return;
+#endif
+			iostream = asio::ip::tcp::iostream("localhost", std::to_string(BASE_PORT + bus));
+			if (!iostream) {
+				WARN_LOG(INPUT, "DreamcastController[%d] connection failed: %s", bus, iostream.error().message().c_str());
+				disconnect();
+				return;
+			}
+			iostream.expires_from_now(std::chrono::seconds(1));
+			break;
+		}
+		case TYPE_DREAMCASTCONTROLLERUSB:
+		{
+			// the serial port isn't ready at this point, so we need to sleep briefly
+			// we probably should have a better way to handle this
+#if defined(_WIN32)
+			Sleep(500);
+#elif defined(__linux__) || (defined(__APPLE__) && defined(TARGET_OS_MAC))
+			usleep(500000);
+#endif
+
+			serial_handler = asio::serial_port(io_service);
+			
+			// select first available serial device
+			std::string serial_device = getFirstSerialDevice();
+
+			serial_handler.open(serial_device, ec);
+			
+			if (ec || !serial_handler.is_open()) {
+				WARN_LOG(INPUT, "DreamcastController[%d] connection failed: %s", bus, ec.message().c_str());
+				disconnect();
+				return;
+			}
+			break;
+		}
+		default:
+		{
+			return;
+		}
 	}
-	iostream.expires_from_now(std::chrono::seconds(1));
+	
 	// Now get the controller configuration
 	MapleMsg msg;
 	msg.command = MDCF_GetCondition;
 	msg.destAP = (bus << 6) | 0x20;
 	msg.originAP = bus << 6;
 	msg.setData(MFID_0_Input);
-	if (!sendMsg(msg, iostream))
+	
+	ec = sendMsg(msg, iostream, serial_handler, dreamcastControllerType);
+	if (ec)
 	{
-		WARN_LOG(INPUT, "DreamConn[%d] communication failed", bus);
+		WARN_LOG(INPUT, "DreamcastController[%d] connection failed: %s", bus, ec.message().c_str());
 		disconnect();
 		return;
 	}
-	if (!receiveMsg(msg, iostream)) {
-		WARN_LOG(INPUT, "DreamConn[%d] read timeout", bus);
+	if (!receiveMsg(msg, iostream, serial_handler, dreamcastControllerType)) {
+		WARN_LOG(INPUT, "DreamcastController[%d] read timeout", bus);
 		disconnect();
 		return;
 	}
-	iostream.expires_from_now(std::chrono::duration<u32>::max());	// don't use a 64-bit based duration to avoid overflow
+	if (dreamcastControllerType == TYPE_DREAMCONN)
+		iostream.expires_from_now(std::chrono::duration<u32>::max());	// don't use a 64-bit based duration to avoid overflow
+
 	expansionDevs = msg.originAP & 0x1f;
-	NOTICE_LOG(INPUT, "Connected to DreamConn[%d]: VMU:%d, Rumble Pack:%d", bus, hasVmu(), hasRumble());
+	
 	config::MapleExpansionDevices[bus][0] = hasVmu() ? MDT_SegaVMU : MDT_None;
 	config::MapleExpansionDevices[bus][1] = hasRumble() ? MDT_PurupuruPack : MDT_None;
+	
+	if (hasVmu() || hasRumble())
+	{
+		NOTICE_LOG(INPUT, "Connected to DreamcastController[%d]: Type:%s, VMU:%d, Rumble Pack:%d", bus, dreamcastControllerType == 1 ? "DreamConn+ Controller" : "Dreamcast Controller USB", hasVmu(), hasRumble());
+		maple_io_connected = true;
+	}
+	else
+	{
+		WARN_LOG(INPUT, "DreamcastController[%d] connection: no VMU or Rumble Pack connected", bus);
+		disconnect();
+		return;
+	}
 }
 
 void DreamConn::disconnect()
 {
-	if (iostream) {
-		iostream.close();
-		NOTICE_LOG(INPUT, "Disconnected from DreamConn[%d]", bus);
+	if (dreamcastControllerType == TYPE_DREAMCONN)
+	{
+		if (iostream)
+			iostream.close();
 	}
+	else if (dreamcastControllerType == TYPE_DREAMCASTCONTROLLERUSB)
+	{
+		if (serial_handler.is_open())
+			serial_handler.cancel();
+		serial_handler.close();
+	}
+	
+	maple_io_connected = false;
+	
+	NOTICE_LOG(INPUT, "Disconnected from DreamcastController[%d]", bus);
 }
 
 bool DreamConn::send(const MapleMsg& msg)
 {
-	if (!iostream)
+	asio::error_code ec;
+
+	if (maple_io_connected)
+		ec = sendMsg(msg, iostream, serial_handler, dreamcastControllerType);
+	else
 		return false;
-	if (!sendMsg(msg, iostream)) {
-		WARN_LOG(INPUT, "DreamConn[%d] send failed: %s", bus, iostream.error().message().c_str());
+	if (ec) {
+		maple_io_connected = false;
+		WARN_LOG(INPUT, "DreamcastController[%d] send failed: %s", bus, ec.message().c_str());
+		disconnect();
 		return false;
 	}
 	return true;
 }
 
-bool DreamConnGamepad::isDreamConn(int deviceIndex)
+bool DreamConnGamepad::isDreamcastController(int deviceIndex)
 {
 	char guid_str[33] {};
 	SDL_JoystickGetGUIDString(SDL_JoystickGetDeviceGUID(deviceIndex), guid_str, sizeof(guid_str));
 	INFO_LOG(INPUT, "GUID: %s VID:%c%c%c%c PID:%c%c%c%c", guid_str,
 			guid_str[10], guid_str[11], guid_str[8], guid_str[9],
 			guid_str[18], guid_str[19], guid_str[16], guid_str[17]);
+	
 	// DreamConn VID:4457 PID:4443
-	return memcmp("5744000043440000", guid_str + 8, 16) == 0;
+	// Dreamcast Controller USB VID:1209 PID:2f07
+	if (memcmp("5744000043440000", guid_str + 8, 16) == 0 || memcmp("09120000072f0000", guid_str + 8, 16) == 0)
+	{
+		return true;
+	}
+	return false;
 }
 
 DreamConnGamepad::DreamConnGamepad(int maple_port, int joystick_idx, SDL_Joystick* sdl_joystick)
 	: SDLGamepad(maple_port, joystick_idx, sdl_joystick)
 {
-	_name = "DreamConn+ Controller";
+	char guid_str[33] {};
+	
+	SDL_JoystickGetGUIDString(SDL_JoystickGetDeviceGUID(joystick_idx), guid_str, sizeof(guid_str));
+	
+	// DreamConn VID:4457 PID:4443
+	// Dreamcast Controller USB VID:1209 PID:2f07
+	if (memcmp("5744000043440000", guid_str + 8, 16) == 0)
+	{
+		dreamcastControllerType = TYPE_DREAMCONN;
+		_name = "DreamConn+ Controller";
+	}
+	else if (memcmp("09120000072f0000", guid_str + 8, 16) == 0)
+	{
+		dreamcastControllerType = TYPE_DREAMCASTCONTROLLERUSB;
+		_name = "Dreamcast Controller USB";
+	}
+	
 	EventManager::listen(Event::Start, handleEvent, this);
 	EventManager::listen(Event::LoadState, handleEvent, this);
 }
@@ -145,7 +340,7 @@ void DreamConnGamepad::set_maple_port(int port)
 	}
 	else if (dreamconn == nullptr || dreamconn->getBus() != port) {
 		dreamconn.reset();
-		dreamconn = std::make_shared<DreamConn>(port);
+		dreamconn = std::make_shared<DreamConn>(port, dreamcastControllerType);
 	}
 	SDLGamepad::set_maple_port(port);
 }
@@ -205,7 +400,7 @@ void DreamConn::connect() {
 void DreamConn::disconnect() {
 }
 
-bool DreamConnGamepad::isDreamConn(int deviceIndex) {
+bool DreamConnGamepad::isDreamcastController(int deviceIndex) {
 	return false;
 }
 DreamConnGamepad::DreamConnGamepad(int maple_port, int joystick_idx, SDL_Joystick* sdl_joystick)
