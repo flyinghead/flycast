@@ -41,7 +41,7 @@ public:
 	{
 		schedId = sh4_sched_register(0, schedCallback, this);
 		sh4_sched_request(schedId, SCHED_CYCLES);
-		EventManager::listen(Event::Pause, handleEvent, this);
+		EventManager::listen(EmuEvent::Pause, handleEvent, this);
 
 		std::string path = getConfigFileName();
 		FILE *f = fopen(path.c_str(), "rb");
@@ -66,7 +66,7 @@ public:
 	}
 
 	virtual ~BaseHopper() {
-		EventManager::unlisten(Event::Pause, handleEvent, this);
+		EventManager::unlisten(EmuEvent::Pause, handleEvent, this);
 		sh4_sched_unregister(schedId);
 	}
 
@@ -266,7 +266,7 @@ private:
 		return SCHED_CYCLES;
 	}
 
-	static void handleEvent(Event event, void *p) {
+	static void handleEvent(EmuEvent event, void *p) {
 		((BaseHopper *)p)->saveConfig();
 	}
 

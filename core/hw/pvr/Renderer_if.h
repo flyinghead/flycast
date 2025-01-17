@@ -58,12 +58,12 @@ struct FramebufferInfo
 struct Renderer
 {
 	Renderer() {
-		EventManager::listen(Event::Terminate, onEvent, this);
-		EventManager::listen(Event::LoadState, onEvent, this);
+		EventManager::listen(EmuEvent::Terminate, onEvent, this);
+		EventManager::listen(EmuEvent::LoadState, onEvent, this);
 	}
 	virtual ~Renderer() {
-		EventManager::unlisten(Event::Terminate, onEvent, this);
-		EventManager::unlisten(Event::LoadState, onEvent, this);
+		EventManager::unlisten(EmuEvent::Terminate, onEvent, this);
+		EventManager::unlisten(EmuEvent::LoadState, onEvent, this);
 	}
 
 	virtual bool Init() = 0;
@@ -90,13 +90,13 @@ protected:
 	bool updateFogTable = true;
 
 private:
-	static void onEvent(Event event, void *arg)
+	static void onEvent(EmuEvent event, void *arg)
 	{
 		Renderer *renderer = static_cast<Renderer*>(arg);
 		renderer->resetTextureCache = true;
 		renderer->updatePalette = true;
 		renderer->updateFogTable = true;
-		if (event == Event::Terminate)
+		if (event == EmuEvent::Terminate)
 			renderer->clearLastFrame = true;
 	}
 	friend void rend_updatePalette();

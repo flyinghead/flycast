@@ -31,19 +31,19 @@ class DiscordPresence
 public:
 	DiscordPresence()
 	{
-		EventManager::listen(Event::Start, handleEmuEvent, this);
-		EventManager::listen(Event::Terminate, handleEmuEvent, this);
-		EventManager::listen(Event::Resume, handleEmuEvent, this);
-		EventManager::listen(Event::Network, handleEmuEvent, this);
+		EventManager::listen(EmuEvent::Start, handleEmuEvent, this);
+		EventManager::listen(EmuEvent::Terminate, handleEmuEvent, this);
+		EventManager::listen(EmuEvent::Resume, handleEmuEvent, this);
+		EventManager::listen(EmuEvent::Network, handleEmuEvent, this);
 	}
 
 	~DiscordPresence()
 	{
 		shutdown();
-		EventManager::unlisten(Event::Start, handleEmuEvent, this);
-		EventManager::unlisten(Event::Terminate, handleEmuEvent, this);
-		EventManager::unlisten(Event::Resume, handleEmuEvent, this);
-		EventManager::unlisten(Event::Network, handleEmuEvent, this);
+		EventManager::unlisten(EmuEvent::Start, handleEmuEvent, this);
+		EventManager::unlisten(EmuEvent::Terminate, handleEmuEvent, this);
+		EventManager::unlisten(EmuEvent::Resume, handleEmuEvent, this);
+		EventManager::unlisten(EmuEvent::Network, handleEmuEvent, this);
 	}
 
 private:
@@ -85,21 +85,21 @@ private:
         Discord_UpdatePresence(&discordPresence);
 	}
 
-	static void handleEmuEvent(Event event, void *p)
+	static void handleEmuEvent(EmuEvent event, void *p)
 	{
 		if (settings.naomi.slave || settings.naomi.drivingSimSlave != 0)
 			return;
 		DiscordPresence *inst = (DiscordPresence *)p;
 		switch (event)
 		{
-		case Event::Start:
+		case EmuEvent::Start:
 			inst->startTimestamp = time(nullptr);
 			[[fallthrough]];
-		case Event::Network:
+		case EmuEvent::Network:
 			if (config::DiscordPresence)
 				inst->sendPresence();
 			break;
-		case Event::Resume:
+		case EmuEvent::Resume:
 			if (config::DiscordPresence && !inst->initialized)
 				// Discord presence enabled
 				inst->sendPresence();
@@ -110,7 +110,7 @@ private:
 				inst->shutdown();
 			}
 			break;
-		case Event::Terminate:
+		case EmuEvent::Terminate:
 			if (inst->initialized)
 				Discord_ClearPresence();
 			inst->startTimestamp = 0;

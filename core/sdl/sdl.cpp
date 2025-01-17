@@ -136,15 +136,15 @@ static void captureMouse(bool capture)
 	}
 }
 
-static void emuEventCallback(Event event, void *)
+static void emuEventCallback(EmuEvent event, void *)
 {
 	switch (event)
 	{
-	case Event::Terminate:
+	case EmuEvent::Terminate:
 		SDL_SetWindowTitle(window, "Flycast");
 		sdl_stopHaptic(0);
 		break;
-	case Event::Pause:
+	case EmuEvent::Pause:
 		gameRunning = false;
 		if (!config::UseRawInput)
 			SDL_SetRelativeMouseMode(SDL_FALSE);
@@ -152,7 +152,7 @@ static void emuEventCallback(Event event, void *)
 		setWindowTitleGame();
 		pauseHaptic();
 		break;
-	case Event::Resume:
+	case EmuEvent::Resume:
 		gameRunning = true;
 		captureMouse(mouseCaptured);
 		if (window_fullscreen && !mouseCaptured)
@@ -234,9 +234,9 @@ void input_sdl_init()
 
 	// Event::Start is called on a background thread, so we can't use it to change the window title (macOS)
 	// However it's followed by Event::Resume which is fine.
-	EventManager::listen(Event::Terminate, emuEventCallback);
-	EventManager::listen(Event::Pause, emuEventCallback);
-	EventManager::listen(Event::Resume, emuEventCallback);
+	EventManager::listen(EmuEvent::Terminate, emuEventCallback);
+	EventManager::listen(EmuEvent::Pause, emuEventCallback);
+	EventManager::listen(EmuEvent::Resume, emuEventCallback);
 
 	checkRawInput();
 
@@ -270,9 +270,9 @@ void input_sdl_init()
 
 void input_sdl_quit()
 {
-	EventManager::unlisten(Event::Terminate, emuEventCallback);
-	EventManager::unlisten(Event::Pause, emuEventCallback);
-	EventManager::unlisten(Event::Resume, emuEventCallback);
+	EventManager::unlisten(EmuEvent::Terminate, emuEventCallback);
+	EventManager::unlisten(EmuEvent::Pause, emuEventCallback);
+	EventManager::unlisten(EmuEvent::Resume, emuEventCallback);
 	SDLGamepad::closeAllGamepads();
 	SDL_QuitSubSystem(SDL_INIT_JOYSTICK | SDL_INIT_HAPTIC);
 }

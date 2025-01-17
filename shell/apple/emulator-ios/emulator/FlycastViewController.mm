@@ -55,17 +55,17 @@ std::map<GCKeyboard *, std::shared_ptr<IOSKeyboard>> IOSKeyboard::keyboards;
 std::map<GCMouse *, std::shared_ptr<IOSMouse>> IOSMouse::mice;
 
 static bool lockedPointer;
-static void updatePointerLock(Event event, void *)
+static void updatePointerLock(EmuEvent event, void *)
 {
     if (@available(iOS 14.0, *)) {
         bool hasChanged = NO;
         switch (event) {
-            case Event::Resume:
+            case EmuEvent::Resume:
                 lockedPointer = YES;
                 hasChanged = YES;
                 break;
-            case Event::Pause:
-            case Event::Terminate:
+            case EmuEvent::Pause:
+            case EmuEvent::Terminate:
                 lockedPointer = NO;
                 hasChanged = YES;
                 break;
@@ -80,9 +80,9 @@ static void updatePointerLock(Event event, void *)
 }
 
 static bool recordingAVSession;
-static void updateAudioSession(Event event, void *)
+static void updateAudioSession(EmuEvent event, void *)
 {
-	if (event == Event::Resume)
+	if (event == EmuEvent::Resume)
 	{
 		AVAudioSession *session = [AVAudioSession sharedInstance];
 		NSError *error = nil;
@@ -266,9 +266,9 @@ static void updateAudioSession(Event event, void *)
             IOSMouse::removeMouse(mouse);
         }];
 
-        EventManager::listen(Event::Resume, updatePointerLock);
-        EventManager::listen(Event::Pause, updatePointerLock);
-        EventManager::listen(Event::Terminate, updatePointerLock);
+        EventManager::listen(EmuEvent::Resume, updatePointerLock);
+        EventManager::listen(EmuEvent::Pause, updatePointerLock);
+        EventManager::listen(EmuEvent::Terminate, updatePointerLock);
     }
 
     self.gamePadConnectObserver = [[NSNotificationCenter defaultCenter] addObserverForName:GCControllerDidConnectNotification object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification *note) {
@@ -311,7 +311,7 @@ static void updateAudioSession(Event event, void *)
     self.iCadeReader.delegate = self;
     self.iCadeReader.active = YES;
 	// TODO iCade handlers
-	EventManager::listen(Event::Resume, updateAudioSession);
+	EventManager::listen(EmuEvent::Resume, updateAudioSession);
 
 	settings.display.width = roundf([[UIScreen mainScreen] nativeBounds].size.width);
     settings.display.height = roundf([[UIScreen mainScreen] nativeBounds].size.height);
@@ -364,10 +364,10 @@ static void updateAudioSession(Event event, void *)
 - (void)dealloc
 {
 	[self deinitKeyboard];
-	EventManager::unlisten(Event::Resume, updatePointerLock);
-	EventManager::unlisten(Event::Pause, updatePointerLock);
-	EventManager::unlisten(Event::Terminate, updatePointerLock);
-	EventManager::unlisten(Event::Resume, updateAudioSession);
+	EventManager::unlisten(EmuEvent::Resume, updatePointerLock);
+	EventManager::unlisten(EmuEvent::Pause, updatePointerLock);
+	EventManager::unlisten(EmuEvent::Terminate, updatePointerLock);
+	EventManager::unlisten(EmuEvent::Resume, updateAudioSession);
     if ([EAGLContext currentContext] == self.context) {
         [EAGLContext setCurrentContext:nil];
     }
