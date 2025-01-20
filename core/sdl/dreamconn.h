@@ -72,9 +72,6 @@ public:
 	int getBus() const {
 		return bus;
 	}
-	int getDreamcastControllerType() const {
-		return dreamcastControllerType;
-	}
 	bool hasVmu() {
 		return expansionDevs & 1;
 	}
