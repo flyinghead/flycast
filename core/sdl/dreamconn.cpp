@@ -169,7 +169,7 @@ void DreamConn::connect()
 		case TYPE_DREAMCONN:
 		{
 #if !defined(_WIN32)
-			WARN_LOG(INPUT, "DreamcastController[%d] connection failed: DreamConn+ Controller supported on Windows only", bus);
+			WARN_LOG(INPUT, "DreamcastController[%d] connection failed: DreamConn+ / DreamConn S Controller supported on Windows only", bus);
 			return;
 #endif
 			iostream = asio::ip::tcp::iostream("localhost", std::to_string(BASE_PORT + bus));
@@ -240,7 +240,7 @@ void DreamConn::connect()
 	
 	if (hasVmu() || hasRumble())
 	{
-		NOTICE_LOG(INPUT, "Connected to DreamcastController[%d]: Type:%s, VMU:%d, Rumble Pack:%d", bus, dreamcastControllerType == 1 ? "DreamConn+ Controller" : "Dreamcast Controller USB", hasVmu(), hasRumble());
+		NOTICE_LOG(INPUT, "Connected to DreamcastController[%d]: Type:%s, VMU:%d, Rumble Pack:%d", bus, dreamcastControllerType == 1 ? "DreamConn+ / DreamcConn S Controller" : "Dreamcast Controller USB", hasVmu(), hasRumble());
 		maple_io_connected = true;
 	}
 	else
@@ -316,7 +316,7 @@ DreamConnGamepad::DreamConnGamepad(int maple_port, int joystick_idx, SDL_Joystic
 	if (memcmp("5744000043440000", guid_str + 8, 16) == 0)
 	{
 		dreamcastControllerType = TYPE_DREAMCONN;
-		_name = "DreamConn+ Controller";
+		_name = "DreamConn+ / DreamConn S Controller";
 	}
 	else if (memcmp("09120000072f0000", guid_str + 8, 16) == 0)
 	{
@@ -372,14 +372,27 @@ bool DreamConnGamepad::gamepad_axis_input(u32 code, int value)
 {
 	if (!is_detecting_input())
 	{
+	// For DreamcastControllerUsb, we need to diff between Linux which exposes the UDB HID event codes as expected, and MacOS/Windows which require a dedicated mapping
+	// Change is temporary for testing - will be superseded by an extension of SDL providing default mappings for DreamcastControllerUsb
+#if defined(_WIN32) || (defined(__APPLE__) && defined(TARGET_OS_MAC))
+		if ((code == leftTrigger && dreamcastControllerType == TYPE_DREAMCONN) || (code == 2 && dreamcastControllerType == TYPE_DREAMCASTCONTROLLERUSB)) {
+			ltrigPressed = value > 0;
+			checkKeyCombo();
+		}
+		if ((code == rightTrigger && dreamcastControllerType == TYPE_DREAMCONN) || (code == 5 && dreamcastControllerType == TYPE_DREAMCASTCONTROLLERUSB)) {
+			rtrigPressed = value > 0;
+			checkKeyCombo();
+		}
+#elif defined(__linux__)
 		if (code == leftTrigger) {
 			ltrigPressed = value > 0;
 			checkKeyCombo();
 		}
-		else if (code == rightTrigger) {
+		if (code == rightTrigger) {
 			rtrigPressed = value > 0;
 			checkKeyCombo();
 		}
+#endif
 	}
 	else {
 		ltrigPressed = false;
