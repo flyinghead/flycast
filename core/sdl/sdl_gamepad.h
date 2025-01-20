@@ -4,28 +4,73 @@
 #include "stdclass.h"
 #include "sdl.h"
 
-template<bool Arcade = false, bool Gamepad = false>
+template<bool Arcade = false, bool Gamepad = false, bool DreamcastControllerUsb = false>
 class DefaultInputMapping : public InputMapping
 {
 public:
 	DefaultInputMapping()
 	{
-		name = "Default";
-		set_button(DC_BTN_Y, 0);
-		set_button(DC_BTN_B, 1);
-		set_button(DC_BTN_A, 2);
-		set_button(DC_BTN_X, 3);
-		set_button(DC_BTN_START, 9);
+		if (!DreamcastControllerUsb)
+		{
+			name = "Default";
+			set_button(DC_BTN_Y, 0);
+			set_button(DC_BTN_B, 1);
+			set_button(DC_BTN_A, 2);
+			set_button(DC_BTN_X, 3);
+			set_button(DC_BTN_START, 9);
 
-		set_axis(0, DC_AXIS_LEFT, 0, false);
-		set_axis(0, DC_AXIS_RIGHT, 0, true);
-		set_axis(0, DC_AXIS_UP, 1, false);
-		set_axis(0, DC_AXIS_DOWN, 1, true);
-		set_axis(0, DC_AXIS2_LEFT, 2, false);
-		set_axis(0, DC_AXIS2_RIGHT, 2, true);
-		set_axis(0, DC_AXIS2_UP, 3, false);
-		set_axis(0, DC_AXIS2_DOWN, 3, true);
-		dirty = false;
+			set_axis(0, DC_AXIS_LEFT, 0, false);
+			set_axis(0, DC_AXIS_RIGHT, 0, true);
+			set_axis(0, DC_AXIS_UP, 1, false);
+			set_axis(0, DC_AXIS_DOWN, 1, true);
+			set_axis(0, DC_AXIS2_LEFT, 2, false);
+			set_axis(0, DC_AXIS2_RIGHT, 2, true);
+			set_axis(0, DC_AXIS2_UP, 3, false);
+			set_axis(0, DC_AXIS2_DOWN, 3, true);
+			dirty = false;
+		}
+		else
+		{
+			// For DreamcastControllerUsb, we need to diff between Linux which exposes the UDB HID event codes as expected, and MacOS/Windows which require a dedicated mapping
+			// Change is temporary for testing - will be superseded by an extension of SDL providing default mappings for DreamcastControllerUsb
+			name = "Dreamcast Controller USB";
+#if defined(__linux__)
+			set_button(DC_BTN_Y, 0);
+			set_button(DC_BTN_B, 1);
+			set_button(DC_BTN_A, 2);
+			set_button(DC_BTN_X, 3);
+			set_button(DC_BTN_START, 9);
+
+			set_axis(0, DC_AXIS_LEFT, 0, false);
+			set_axis(0, DC_AXIS_RIGHT, 0, true);
+			set_axis(0, DC_AXIS_UP, 1, false);
+			set_axis(0, DC_AXIS_DOWN, 1, true);
+			set_axis(0, DC_AXIS2_LEFT, 2, false);
+			set_axis(0, DC_AXIS2_RIGHT, 2, true);
+			set_axis(0, DC_AXIS2_UP, 3, false);
+			set_axis(0, DC_AXIS2_DOWN, 3, true);
+			dirty = false;
+#elif defined(_WIN32) || (defined(__APPLE__) && defined(TARGET_OS_MAC))
+			set_button(DC_DPAD_UP, 256);
+			set_button(DC_DPAD_DOWN, 257);
+			set_button(DC_DPAD_LEFT, 258);
+			set_button(DC_DPAD_RIGHT, 259);
+			
+			set_button(DC_BTN_Y, 4);
+			set_button(DC_BTN_B, 1);
+			set_button(DC_BTN_A, 0);
+			set_button(DC_BTN_X, 3);
+			set_button(DC_BTN_START, 11);
+
+			set_axis(0, DC_AXIS_LEFT, 0, false);
+			set_axis(0, DC_AXIS_RIGHT, 0, true);
+			set_axis(0, DC_AXIS_UP, 1, false);
+			set_axis(0, DC_AXIS_DOWN, 1, true);
+			set_axis(0, DC_AXIS_LT, 2, true);
+			set_axis(0, DC_AXIS_RT, 5, true);
+			dirty = false;
+#endif
+		}
 	}
 
 	DefaultInputMapping(SDL_GameController *sdlController) : DefaultInputMapping()
@@ -157,7 +202,10 @@ public:
 			dirty = false;
 		}
 		else
-			INFO_LOG(INPUT, "using default mapping");
+			if (DreamcastControllerUsb)
+				INFO_LOG(INPUT, "using default mapping for Dreamcast Controller USB");
+			else
+				INFO_LOG(INPUT, "using default mapping");
 	}
 };
 
@@ -197,7 +245,18 @@ public:
 		}
 
 		if (!find_mapping())
-			input_mapper = std::make_shared<DefaultInputMapping<>>(sdl_controller);
+		{
+			// We explicitely check for Dreamcast Controller USB with VID:1209 PID:2f07 to override the default button mapping
+			// Change is temporary for testing - will be superseded by an extension of SDL providing default mappings for DreamcastControllerUsb
+			char guid_str[33] {};
+			SDL_JoystickGetGUIDString(SDL_JoystickGetDeviceGUID(joystick_idx), guid_str, sizeof(guid_str));
+			if (memcmp("09120000072f0000", guid_str + 8, 16) == 0)
+			{
+				input_mapper = std::make_shared<DefaultInputMapping<false, true, true>>(sdl_controller);
+			}
+			else
+				input_mapper = std::make_shared<DefaultInputMapping<>>(sdl_controller);
+		}
 		else
 			INFO_LOG(INPUT, "using custom mapping '%s'", input_mapper->name.c_str());
 
@@ -607,16 +666,28 @@ public:
 
 	void resetMappingToDefault(bool arcade, bool gamepad) override
 	{
-		NOTICE_LOG(INPUT, "Resetting SDL gamepad to default: %d %d", arcade, gamepad);
-		if (arcade)
+		// We explicitely check for Dreamcast Controller USB with VID:1209 PID:2f07 to override the default button mapping
+		// Change is temporary for testing - will be superseded by an extension of SDL providing default mappings for DreamcastControllerUsb
+		char guid_str[33] {};
+		SDL_JoystickGetGUIDString(SDL_JoystickGetGUID(this->sdl_joystick), guid_str, sizeof(guid_str));
+		if (memcmp("09120000072f0000", guid_str + 8, 16) == 0)
 		{
-			if (gamepad)
-				input_mapper = std::make_shared<DefaultInputMapping<true, true>>(sdl_controller);
-			else
-				input_mapper = std::make_shared<DefaultInputMapping<true, false>>(sdl_controller);
+			NOTICE_LOG(INPUT, "Resetting SDL gamepad to default for Dreamcast Controller USB");
+			input_mapper = std::make_shared<DefaultInputMapping<false, true, true>>(sdl_controller);
 		}
 		else
-			input_mapper = std::make_shared<DefaultInputMapping<false, false>>(sdl_controller);
+		{
+			NOTICE_LOG(INPUT, "Resetting SDL gamepad to default: %d %d", arcade, gamepad);
+			if (arcade)
+			{
+				if (gamepad)
+					input_mapper = std::make_shared<DefaultInputMapping<true, true, false>>(sdl_controller);
+				else
+					input_mapper = std::make_shared<DefaultInputMapping<true, false, false>>(sdl_controller);
+			}
+			else
+				input_mapper = std::make_shared<DefaultInputMapping<false, false, false>>(sdl_controller);
+		}
 	}
 
 
