@@ -322,6 +322,8 @@ DreamConnGamepad::DreamConnGamepad(int maple_port, int joystick_idx, SDL_Joystic
 	{
 		dreamcastControllerType = TYPE_DREAMCASTCONTROLLERUSB;
 		_name = "Dreamcast Controller USB";
+		leftTrigger = 2;
+		rightTrigger = 5;
 	}
 	
 	EventManager::listen(Event::Start, handleEvent, this);
@@ -372,27 +374,14 @@ bool DreamConnGamepad::gamepad_axis_input(u32 code, int value)
 {
 	if (!is_detecting_input())
 	{
-	// For DreamcastControllerUsb, we need to diff between Linux which exposes the UDB HID event codes as expected, and MacOS/Windows which require a dedicated mapping
-	// Change is temporary for testing - will be superseded by an extension of SDL providing default mappings for DreamcastControllerUsb
-#if defined(_WIN32) || (defined(__APPLE__) && defined(TARGET_OS_MAC))
-		if ((code == leftTrigger && dreamcastControllerType == TYPE_DREAMCONN) || (code == 2 && dreamcastControllerType == TYPE_DREAMCASTCONTROLLERUSB)) {
-			ltrigPressed = value > 0;
-			checkKeyCombo();
-		}
-		if ((code == rightTrigger && dreamcastControllerType == TYPE_DREAMCONN) || (code == 5 && dreamcastControllerType == TYPE_DREAMCASTCONTROLLERUSB)) {
-			rtrigPressed = value > 0;
-			checkKeyCombo();
-		}
-#elif defined(__linux__)
 		if (code == leftTrigger) {
 			ltrigPressed = value > 0;
 			checkKeyCombo();
 		}
-		if (code == rightTrigger) {
+		else if (code == rightTrigger) {
 			rtrigPressed = value > 0;
 			checkKeyCombo();
 		}
-#endif
 	}
 	else {
 		ltrigPressed = false;
