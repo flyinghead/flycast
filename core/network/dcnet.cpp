@@ -20,6 +20,7 @@
 #include "netservice.h"
 #include "util/tsqueue.h"
 #include "oslib/oslib.h"
+#include "emulator.h"
 #include <asio.hpp>
 #include <thread>
 #include <memory>
@@ -207,13 +208,16 @@ private:
 };
 static DCNetThread thread;
 
-bool DCNetService::start() {
+bool DCNetService::start()
+{
+	emu.setNetworkState(true);
 	thread.start();
 	return true;
 }
 
 void DCNetService::stop() {
 	thread.stop();
+	emu.setNetworkState(false);
 }
 
 void DCNetService::writeModem(u8 b) {
