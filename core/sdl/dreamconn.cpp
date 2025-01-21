@@ -32,7 +32,8 @@
 #endif
 
 #if defined(_WIN32)
-#include<Windows.h>
+#include <windows.h>
+#include <setupapi.h>
 #endif
 
 void createDreamConnDevices(std::shared_ptr<DreamConn> dreamconn, bool gameStart);
@@ -123,24 +124,53 @@ static bool receiveMsg(MapleMsg& msg, std::istream& stream, asio::serial_port& s
 		else
 			return false;
 	}
+	
+	return false;
 }
 
 static std::string getFirstSerialDevice() {
-	std::string device_prefix = "";
-
+	
+	// On Windows, we get the first serial device matching our VID/PID
 #if defined(_WIN32)
-	device_prefix = "\\\\.\\COM";
-	for (int i = 1; i <= 256; ++i) {
-		std::string comPort = device_prefix + std::to_string(i);
-		HANDLE hCom = CreateFile(comPort.c_str(), GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
-		if (hCom != INVALID_HANDLE_VALUE) {
-			CloseHandle(hCom);
-			return "COM" + std::to_string(i);
+	HDEVINFO deviceInfoSet = SetupDiGetClassDevs(NULL, "USB", NULL, DIGCF_PRESENT | DIGCF_ALLCLASSES);
+	if (deviceInfoSet == INVALID_HANDLE_VALUE) {
+		return "";
+	}
+
+	SP_DEVINFO_DATA deviceInfoData;
+	deviceInfoData.cbSize = sizeof(SP_DEVINFO_DATA);
+
+	for (DWORD i = 0; SetupDiEnumDeviceInfo(deviceInfoSet, i, &deviceInfoData); ++i) {
+		DWORD dataType, bufferSize = 0;
+		SetupDiGetDeviceRegistryProperty(deviceInfoSet, &deviceInfoData, SPDRP_HARDWAREID, &dataType, NULL, 0, &bufferSize);
+
+		if (bufferSize > 0) {
+			std::vector<char> buffer(bufferSize);
+			if (SetupDiGetDeviceRegistryProperty(deviceInfoSet, &deviceInfoData, SPDRP_HARDWAREID, &dataType, (PBYTE)buffer.data(), bufferSize, NULL)) {
+				std::string hardwareId(buffer.begin(), buffer.end());
+				if (hardwareId.find("VID_1209") != std::string::npos && hardwareId.find("PID_2F07") != std::string::npos) {
+					HKEY deviceKey = SetupDiOpenDevRegKey(deviceInfoSet, &deviceInfoData, DICS_FLAG_GLOBAL, 0, DIREG_DEV, KEY_READ);
+					if (deviceKey != INVALID_HANDLE_VALUE) {
+						char portName[256];
+						DWORD portNameSize = sizeof(portName);
+						if (RegQueryValueEx(deviceKey, "PortName", NULL, NULL, (LPBYTE)portName, &portNameSize) == ERROR_SUCCESS) {
+							RegCloseKey(deviceKey);
+							SetupDiDestroyDeviceInfoList(deviceInfoSet);
+							return std::string(portName);
+						}
+						RegCloseKey(deviceKey);
+					}
+				}
+			}
 		}
 	}
+	
+	SetupDiDestroyDeviceInfoList(deviceInfoSet);
 	return "";
 #endif
-
+	
+	// On MacOS/Linux, we get the first serial device matching the device prefix
+	std::string device_prefix = "";
 #if defined(__linux__) || (defined(__APPLE__) && defined(TARGET_OS_MAC))
 	
 #if defined(__linux__)
@@ -148,6 +178,7 @@ static std::string getFirstSerialDevice() {
 #elif (defined(__APPLE__) && defined(TARGET_OS_MAC))
 	device_prefix = "tty.usbmodem";
 #endif
+	
 	std::string path = "/dev/";
 	DIR *dir;
 	struct dirent *ent;
