@@ -202,10 +202,12 @@ lowp vec4 getPaletteEntry(highp float colorIndex)
 
 lowp vec4 palettePixel(highp vec3 coords)
 {
-#if TARGET_GL != GLES2 && TARGET_GL != GL2 && DIV_POS_Z != 1
-	coords.xy /= coords.z;
-#endif
+#if TARGET_GL == GLES2 || TARGET_GL == GL2 || DIV_POS_Z == 1
 	return getPaletteEntry(texture(tex, coords.xy).FOG_CHANNEL);
+#else
+	return getPaletteEntry(textureProj(tex, coords).FOG_CHANNEL);
+#endif
+
 }
 
 #elif pp_Palette == 2		// Bi-linear filtering
