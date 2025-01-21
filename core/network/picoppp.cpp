@@ -1384,8 +1384,12 @@ void PicoThread::run()
 		pico_dev = nullptr;
 	}
 	pico_stack_deinit();
-	if (upnp) {
-		upnp->Term();
+	if (upnp)
+	{
+		std::thread pnpTerm([upnp = this->upnp]() {
+			upnp->Term();
+		});
+		pnpTerm.detach();
 		upnp.reset();
 	}
 }
