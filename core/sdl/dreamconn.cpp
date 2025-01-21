@@ -41,6 +41,12 @@ static asio::error_code sendMsg(const MapleMsg& msg, asio::ip::tcp::iostream& st
 {
 	std::ostringstream s;
 	s.fill('0');
+	if (dreamcastControllerType == TYPE_DREAMCASTCONTROLLERUSB)
+	{
+		// Messages to Dreamcast Controller USB need to be prefixed to trigger the correct parser
+		s << "X ";
+	}
+		
 	s << std::hex << std::uppercase
 		<< std::setw(2) << (u32)msg.command << " "
 		<< std::setw(2) << (u32)msg.destAP << " "
