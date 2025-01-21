@@ -496,7 +496,18 @@ bool BaseTextureCacheData::Update()
 		}
 	}
 	if (config::CustomTextures)
+	{
+		u32 oldHash = texture_hash;
+		ComputeHash();
+		if (Updates > 1 && oldHash == texture_hash)
+		{
+			// Texture hasn't changed so skip the update.
+			protectVRam();
+			size = originalSize;
+			return true;
+		}
 		custom_texture.LoadCustomTextureAsync(this);
+	}
 
 	void *temp_tex_buffer = NULL;
 	u32 upscaled_w = width;

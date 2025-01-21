@@ -38,7 +38,6 @@ static WorkerThread loader_thread {"CustomTexLoader"};
 
 void CustomTexture::loadTexture(BaseTextureCacheData *texture)
 {
-	texture->ComputeHash();
 	if (texture->custom_image_data != nullptr) {
 		free(texture->custom_image_data);
 		texture->custom_image_data = nullptr;
