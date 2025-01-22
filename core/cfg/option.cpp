@@ -105,7 +105,11 @@ Option<int> TextureFiltering("rend.TextureFiltering", 0); // Default
 Option<bool> ThreadedRendering("rend.ThreadedRendering", true);
 Option<bool> DupeFrames("rend.DupeFrames", false);
 Option<int> PerPixelLayers("rend.PerPixelLayers", 32);
+#ifdef TARGET_UWP
+Option<bool> NativeDepthInterpolation("rend.NativeDepthInterpolation", true);
+#else
 Option<bool> NativeDepthInterpolation("rend.NativeDepthInterpolation", false);
+#endif
 Option<bool> EmulateFramebuffer("rend.EmulateFramebuffer", false);
 Option<bool> FixUpscaleBleedingEdge("rend.FixUpscaleBleedingEdge", true);
 Option<bool> CustomGpuDriver("rend.CustomGpuDriver", false);
