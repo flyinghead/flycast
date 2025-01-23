@@ -627,6 +627,7 @@ protected:
 		in = (in & 0xAA) >> 1 | (in & 0x55) << 1;
 
 		out = process(in);
+		jvs_837_13844::write_digital_out(1, data);	// The first byte is for lamps
 	}
 
 	virtual u8 process(u8 in) = 0;
