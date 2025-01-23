@@ -16,8 +16,8 @@
     You should have received a copy of the GNU General Public License
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
  */
-#include <asio.hpp>
 #include "types.h"
+#include <asio.hpp>
 #include "netservice.h"
 #include "util/tsqueue.h"
 #include "oslib/oslib.h"
