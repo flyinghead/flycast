@@ -51,10 +51,12 @@ class DreamConn
 {
 	const int bus;
 	const int dreamcastControllerType;
+#ifdef USE_DREAMCASTCONTROLLER
 	asio::ip::tcp::iostream iostream;
 	asio::io_context io_context;
 	asio::io_service io_service;
 	asio::serial_port serial_handler{io_context};
+#endif
 	bool maple_io_connected;
 	u8 expansionDevs = 0;
 	static constexpr u16 BASE_PORT = 37393;
