@@ -661,7 +661,7 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 				dc_loadstate(config::SavestateSlot);
 #endif
 		}
-		EventManager::event(Event::Start);
+		EventManager::event(EmuEvent::Start);
 
 		if (progress)
 		{
@@ -739,7 +739,7 @@ void Emulator::unloadGame()
 		settings.content.title.clear();
 		settings.platform.system = DC_PLATFORM_DREAMCAST;
 		state = Init;
-		EventManager::event(Event::Terminate);
+		EventManager::event(EmuEvent::Terminate);
 	}
 }
 
@@ -796,7 +796,7 @@ void Emulator::stop()
 			throw e;
 		}
 		nvmem::saveFiles();
-		EventManager::event(Event::Pause);
+		EventManager::event(EmuEvent::Pause);
 	}
 	else
 	{
@@ -807,7 +807,7 @@ void Emulator::stop()
 #else
 		TermAudio();
 		nvmem::saveFiles();
-		EventManager::event(Event::Pause);
+		EventManager::event(EmuEvent::Pause);
 #endif
 	}
 }
@@ -882,7 +882,7 @@ void Emulator::loadstate(Deserializer& deser)
 
 	mmu_set_state();
 	getSh4Executor()->ResetCache();
-	EventManager::event(Event::LoadState);
+	EventManager::event(EmuEvent::LoadState);
 }
 
 void Emulator::setNetworkState(bool online)
@@ -897,19 +897,19 @@ void Emulator::setNetworkState(bool online)
 			config::Sh4Clock.override(200);
 			getSh4Executor()->ResetCache();
 		}
-		EventManager::event(Event::Network);
+		EventManager::event(EmuEvent::Network);
 	}
 	settings.input.fastForwardMode &= !online;
 }
 
-void EventManager::registerEvent(Event event, Callback callback, void *param)
+void EventManager::registerEvent(EmuEvent event, Callback callback, void *param)
 {
 	unregisterEvent(event, callback, param);
 	auto& vector = callbacks[static_cast<size_t>(event)];
 	vector.push_back(std::make_pair(callback, param));
 }
 
-void EventManager::unregisterEvent(Event event, Callback callback, void *param)
+void EventManager::unregisterEvent(EmuEvent event, Callback callback, void *param)
 {
 	auto& vector = callbacks[static_cast<size_t>(event)];
 	auto it = std::find(vector.begin(), vector.end(), std::make_pair(callback, param));
@@ -917,7 +917,7 @@ void EventManager::unregisterEvent(Event event, Callback callback, void *param)
 		vector.erase(it);
 }
 
-void EventManager::broadcastEvent(Event event)
+void EventManager::broadcastEvent(EmuEvent event)
 {
 	auto& vector = callbacks[static_cast<size_t>(event)];
 	for (auto& pair : vector)
@@ -939,7 +939,7 @@ void Emulator::run()
 		setNetworkState(false);
 		state = Error;
 		getSh4Executor()->Stop();
-		EventManager::event(Event::Pause);
+		EventManager::event(EmuEvent::Pause);
 		throw;
 	}
 }
@@ -990,7 +990,7 @@ void Emulator::start()
 		InitAudio();
 	}
 
-	EventManager::event(Event::Resume);
+	EventManager::event(EmuEvent::Resume);
 }
 
 bool Emulator::checkStatus(bool wait)
@@ -1013,7 +1013,7 @@ bool Emulator::checkStatus(bool wait)
 		}
 		return false;
 	} catch (...) {
-		EventManager::event(Event::Pause);
+		EventManager::event(EmuEvent::Pause);
 		state = Error;
 		throw;
 	}
@@ -1030,7 +1030,7 @@ bool Emulator::render()
 			stopRequested = false;
 			TermAudio();
 			nvmem::saveFiles();
-			EventManager::event(Event::Pause);
+			EventManager::event(EmuEvent::Pause);
 			return false;
 		}
 		if (state != Running)
@@ -1048,7 +1048,7 @@ bool Emulator::render()
 
 void Emulator::vblank()
 {
-	EventManager::event(Event::VBlank);
+	EventManager::event(EmuEvent::VBlank);
 	// Time out if a frame hasn't been rendered for 50 ms
 	if (sh4_sched_now64() - startTime <= 10000000)
 		return;
@@ -1104,7 +1104,7 @@ void Emulator::diskChange()
 	if (cheatManager.isWidescreen())
 		config::ScreenStretching.override(134);	// 4:3 -> 16:9
 	custom_texture.Terminate();
-	EventManager::event(Event::DiskChange);
+	EventManager::event(EmuEvent::DiskChange);
 }
 
 Emulator emu;

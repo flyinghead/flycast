@@ -166,14 +166,14 @@ public:
 	void init(int port)
 	{
 		this->port = port;
-		EventManager::listen(Event::Resume, emuEventCallback, this);
-		EventManager::listen(Event::Terminate, emuEventCallback, this);
+		EventManager::listen(EmuEvent::Resume, emuEventCallback, this);
+		EventManager::listen(EmuEvent::Terminate, emuEventCallback, this);
 	}
 
 	void term()
 	{
-		EventManager::unlisten(Event::Resume, emuEventCallback, this);
-		EventManager::unlisten(Event::Terminate, emuEventCallback, this);
+		EventManager::unlisten(EmuEvent::Resume, emuEventCallback, this);
+		EventManager::unlisten(EmuEvent::Terminate, emuEventCallback, this);
 		stop();
 	}
 
@@ -863,12 +863,12 @@ private:
 		agentInterrupt();
 	}
 
-	static void emuEventCallback(Event event, void *arg)
+	static void emuEventCallback(EmuEvent event, void *arg)
 	{
 		GdbServer *gdbServer = static_cast<GdbServer*>(arg);
 		switch (event)
 		{
-		case Event::Resume:
+		case EmuEvent::Resume:
 			try {
 				if (!gdbServer->isRunning())
 					gdbServer->run();
@@ -876,7 +876,7 @@ private:
 				ERROR_LOG(COMMON, "%s", e.what());
 			}
 			break;
-		case Event::Terminate:
+		case EmuEvent::Terminate:
 			gdbServer->stop();
 			break;
 		default:
