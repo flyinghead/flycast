@@ -38,7 +38,7 @@
 
 void createDreamConnDevices(std::shared_ptr<DreamConn> dreamconn, bool gameStart);
 
-static asio::error_code sendMsg(const MapleMsg& msg, asio::ip::tcp::iostream& stream, asio::serial_port& serial_handler, int dreamcastControllerType)
+static asio::error_code sendMsg(const MapleMsg& msg, asio::ip::tcp::iostream& stream, asio::io_context& io_context, asio::serial_port& serial_handler, int dreamcastControllerType)
 {
 	std::ostringstream s;
 	s.fill('0');
@@ -69,6 +69,9 @@ static asio::error_code sendMsg(const MapleMsg& msg, asio::ip::tcp::iostream& st
 	}
 	else if (dreamcastControllerType == TYPE_DREAMCASTCONTROLLERUSB)
 	{
+		io_context.run();
+		io_context.reset();
+		
 		if (!serial_handler.is_open())
 			return asio::error::not_connected;
 		asio::async_write(serial_handler, asio::buffer(s.str()), asio::transfer_exactly(s.str().size()), [ &serial_handler](const asio::error_code& error, size_t bytes_transferred)
@@ -228,7 +231,7 @@ void DreamConn::connect()
 			usleep(500000);
 #endif
 
-			serial_handler = asio::serial_port(io_service);
+			serial_handler = asio::serial_port(io_context);
 			
 			// select first available serial device
 			std::string serial_device = getFirstSerialDevice();
@@ -255,7 +258,7 @@ void DreamConn::connect()
 	msg.originAP = bus << 6;
 	msg.setData(MFID_0_Input);
 	
-	ec = sendMsg(msg, iostream, serial_handler, dreamcastControllerType);
+	ec = sendMsg(msg, iostream, io_context, serial_handler, dreamcastControllerType);
 	if (ec)
 	{
 		WARN_LOG(INPUT, "DreamcastController[%d] connection failed: %s", bus, ec.message().c_str());
@@ -300,6 +303,7 @@ void DreamConn::disconnect()
 		if (serial_handler.is_open())
 			serial_handler.cancel();
 		serial_handler.close();
+		io_context.stop();
 	}
 	
 	maple_io_connected = false;
@@ -312,7 +316,7 @@ bool DreamConn::send(const MapleMsg& msg)
 	asio::error_code ec;
 
 	if (maple_io_connected)
-		ec = sendMsg(msg, iostream, serial_handler, dreamcastControllerType);
+		ec = sendMsg(msg, iostream, io_context, serial_handler, dreamcastControllerType);
 	else
 		return false;
 	if (ec) {

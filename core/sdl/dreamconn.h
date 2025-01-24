@@ -54,7 +54,6 @@ class DreamConn
 #ifdef USE_DREAMCASTCONTROLLER
 	asio::ip::tcp::iostream iostream;
 	asio::io_context io_context;
-	asio::io_service io_service;
 	asio::serial_port serial_handler{io_context};
 #endif
 	bool maple_io_connected;
