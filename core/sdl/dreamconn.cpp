@@ -359,8 +359,6 @@ DreamConnGamepad::DreamConnGamepad(int maple_port, int joystick_idx, SDL_Joystic
 	{
 		dreamcastControllerType = TYPE_DREAMCASTCONTROLLERUSB;
 		_name = "Dreamcast Controller USB";
-		leftTrigger = 2;
-		rightTrigger = 5;
 	}
 	
 	EventManager::listen(Event::Start, handleEvent, this);
