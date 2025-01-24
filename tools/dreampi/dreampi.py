@@ -620,7 +620,7 @@ class Modem(object):
         logger.info("Call answered!")
         #logger.info(subprocess.check_output(["pon", "dreamcast"]).decode())
         self.disconnect()
-        subprocess.check_call(["/home/pi/dcnet"])
+        subprocess.check_call(["/home/pi/dreampi/dcnet.rpi"])
         logger.info("Connection terminated")
         self.connect()
 

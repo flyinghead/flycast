@@ -14,4 +14,5 @@ clean:
 	rm -f dcnet.o dcnet
 
 install: dcnet
-	cp dcnet /home/pi/
+	cp dcnet /home/pi/dreampi/dcnet.rpi
+
