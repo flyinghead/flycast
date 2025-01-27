@@ -1901,7 +1901,6 @@ void Arm32Assembler::compileOp(RuntimeBlockInfo* block, shil_opcode* op, bool op
 			unaryFpOp(op, &MacroAssembler::Vsqrt);
 			break;
 
-		
 		case shop_fmac:
 			{
 				SRegister rd = reg.mapFReg(op->rd);
@@ -1945,7 +1944,7 @@ void Arm32Assembler::compileOp(RuntimeBlockInfo* block, shil_opcode* op, bool op
 				}
 				if (!rd.Is(rs1))
 					Vmov(rd, rs1);
-				Vmla(rd, rs2, rs3);
+				Vfma(rd, rs2, rs3);
 			}
 			break;
 
@@ -2001,7 +2000,7 @@ void Arm32Assembler::compileOp(RuntimeBlockInfo* block, shil_opcode* op, bool op
 				Vstr(d0, MemOperand(r8, op->rd.reg_nofs()));
 			}
 			break;
-
+		/* fall back to the canonical implementations for better precision
 		case shop_fipr:
 			{
 				QRegister _r1 = q0;
@@ -2098,7 +2097,7 @@ void Arm32Assembler::compileOp(RuntimeBlockInfo* block, shil_opcode* op, bool op
 #endif
 			}
 			break;
-
+			*/
 		case shop_frswap:
 			Sub(r0, r8, -op->rs1.reg_nofs());
 			Sub(r1, r8, -op->rd.reg_nofs());
@@ -2111,8 +2110,19 @@ void Arm32Assembler::compileOp(RuntimeBlockInfo* block, shil_opcode* op, bool op
 			break;
 
 		case shop_cvt_f2i_t:
-			Vcvt(S32, F32, s0, reg.mapFReg(op->rs1));
-			Vmov(reg.mapReg(op->rd), s0);
+			{
+				SRegister from = reg.mapFReg(op->rs1);
+				Register to = reg.mapReg(op->rd);
+				Vcvt(S32, F32, s0, from);
+				Vmov(to, s0);
+				Mvn(r0, 127);
+				Sub(r0, r0, 0x80000000);
+				Cmp(to, r0);
+				Mvn(gt, to, 0xf8000000);
+				Vcmp(from, from);
+				Vmrs(RegisterOrAPSR_nzcv(APSR_nzcv), FPSCR);
+				Mov(ne, to, 0x80000000);
+			}
 			break;
 
 		case shop_cvt_i2f_n:	// may be some difference should be made ?
