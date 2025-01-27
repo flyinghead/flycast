@@ -715,6 +715,7 @@ shil_opc_end()
 //shop_cvt_f2i_t	//float to integer : truncate
 shil_opc(cvt_f2i_t)
 
+#if HOST_CPU == CPU_X86 || HOST_CPU == CPU_X64
 shil_canonical
 (
 u32,f1,(f32 f1),
@@ -724,18 +725,29 @@ u32,f1,(f32 f1),
 	}
 	else {
 		res = (s32)f1;
-#if HOST_CPU == CPU_X86 || HOST_CPU == CPU_X64
 		// Fix result sign for Intel CPUs
 		if ((u32)res == 0x80000000 && f1 > 0)
 			res = 0x7fffffff;
-#elif HOST_CPU == CPU_ARM || HOST_CPU == CPU_ARM64
-		// conversion of NaN returns 0 on ARM
-		if (std::isnan(f1))
-			res = 0x80000000;
-#endif
 	}
 	return res;
 )
+#elif HOST_CPU == CPU_ARM || HOST_CPU == CPU_ARM64
+shil_canonical
+(
+u32,f1,(f32 f1),
+	s32 res;
+	if (f1 > 2147483520.0f) { // IEEE 754: 0x4effffff
+		res = 0x7fffffff;
+	}
+	else {
+		res = (s32)f1;
+		// conversion of NaN returns 0 on ARM
+		if (std::isnan(f1))
+			res = 0x80000000;
+	}
+	return res;
+)
+#endif
 
 shil_compile
 (
