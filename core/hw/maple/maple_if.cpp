@@ -163,7 +163,8 @@ static void maple_DoDma()
 	}
 
 	const bool swap_msb = (SB_MMSEL == 0);
-	u32 xfer_count = 0;
+	u32 xferOut = 0;
+	u32 xferIn = 0;
 	bool last = false;
 	while (!last)
 	{
@@ -226,7 +227,8 @@ static void maple_DoDma()
 				inlen = (inlen + 1) * 4;
 				u32 outbuf[1024 / 4];
 				u32 outlen = MapleDevices[bus][port]->RawDma(&p_data[0], inlen, outbuf);
-				xfer_count += inlen + 3 + outlen + 3; // start, parity and stop bytes
+				xferIn += inlen + 3; // start, parity and stop bytes
+				xferOut += outlen + 3;
 #ifdef STRICT_MODE
 				if (!check_mdapro(header_2 + outlen - 1))
 				{
@@ -258,7 +260,7 @@ static void maple_DoDma()
 			u32 bus = (header_1 >> 16) & 3;
 			if (MapleDevices[bus][5]) {
 				SDCKBOccupied = SDCKBOccupied || MapleDevices[bus][5]->get_lightgun_pos();
-				xfer_count++;
+				xferIn++;
 			}
 			addr += 1 * 4;
 		}
@@ -271,7 +273,7 @@ static void maple_DoDma()
 
 		case MP_Reset:
 			addr += 1 * 4;
-			xfer_count++;
+			xferIn++;
 			break;
 
 		case MP_NOP:
@@ -285,9 +287,17 @@ static void maple_DoDma()
 	}
 
 	// Maple bus max speed: 2 Mb/s, actual speed: 1 Mb/s
-	//printf("Maple XFER size %d bytes - %.2f ms\n", xfer_count, xfer_count * 1000.0f / (128 * 1024));
+	// actual measured speed with protocol analyzer for devices (vmu?) is 724-738Kb/s
+	// See https://github.com/OrangeFox86/DreamcastControllerUsbPico/blob/main/measurements/Dreamcast-Power-Up-Digital-and-Analog-Player1-Controller-VMU-JumpPack.sal
 	if (!SDCKBOccupied)
-		sh4_sched_request(maple_schid, std::min((u64)xfer_count * (SH4_MAIN_CLOCK / (256 * 1024)), (u64)SH4_MAIN_CLOCK));
+	{
+		// 2 Mb/s from console
+		u32 cycles = sh4CyclesForXfer(xferIn, 2'000'000 / 8);
+		// 740 Kb/s from devices
+		cycles += sh4CyclesForXfer(xferOut, 740'000 / 8);
+		cycles = std::min<u32>(cycles, SH4_MAIN_CLOCK);
+		sh4_sched_request(maple_schid, cycles);
+	}
 }
 
 static int maple_schd(int tag, int cycles, int jitter, void *arg)

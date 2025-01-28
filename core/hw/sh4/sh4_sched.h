@@ -53,3 +53,7 @@ void sh4_sched_serialize(Serializer& ser);
 void sh4_sched_deserialize(Deserializer& deser);
 void sh4_sched_serialize(Serializer& ser, int id);
 void sh4_sched_deserialize(Deserializer& deser, int id);
+
+constexpr u32 sh4CyclesForXfer(u32 sizeUnit, u32 unitPerSecond) {
+	return (u64)SH4_MAIN_CLOCK * sizeUnit / unitPerSecond;
+}
