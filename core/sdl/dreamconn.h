@@ -26,6 +26,7 @@
 #define TYPE_DREAMCASTCONTROLLERUSB 2
 #include <asio.hpp>
 #endif
+#include <memory>
 
 struct MapleMsg
 {
@@ -52,21 +53,15 @@ class DreamConn
 	const int bus;
 	const int dreamcastControllerType;
 #ifdef USE_DREAMCASTCONTROLLER
-	asio::ip::tcp::iostream iostream;
-	asio::io_context io_context;
-	asio::serial_port serial_handler{io_context};
+	std::unique_ptr<class DreamcastControllerConnection> dcConnection;
 #endif
 	bool maple_io_connected;
 	u8 expansionDevs = 0;
-	static constexpr u16 BASE_PORT = 37393;
 
 public:
-	DreamConn(int bus, int dreamcastControllerType) : bus(bus), dreamcastControllerType(dreamcastControllerType) {
-		connect();
-	}
-	~DreamConn() {
-		disconnect();
-	}
+	DreamConn(int bus, int dreamcastControllerType);
+
+	~DreamConn();
 
 	bool send(const MapleMsg& msg);
 
