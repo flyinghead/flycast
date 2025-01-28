@@ -29,6 +29,8 @@
 #include <optional>
 #include <thread>
 #include <list>
+#include <mutex>
+#include <condition_variable>
 
 #if defined(__linux__) || (defined(__APPLE__) && defined(TARGET_OS_MAC))
 #include <dirent.h>
