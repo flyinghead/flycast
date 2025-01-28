@@ -952,8 +952,20 @@ public:
 				break;
 
 			case shop_cvt_f2i_t:
-				Fcvtzs(regalloc.MapRegister(op.rd), regalloc.MapVRegister(op.rs1));
+				{
+					const VRegister& from = regalloc.MapVRegister(op.rs1);
+					const Register& to = regalloc.MapRegister(op.rd);
+					Fcvtzs(to, from);
+					Mov(w0, 0x7FFFFF80);
+					Cmp(to, w0);
+					Mov(w0, 0x7FFFFFF);
+					Csel(to, w0, to, gt);
+					Fcmp(from, from);
+					Mov(w0, 0x80000000);
+					Csel(to, to, w0, vc);
+				}
 				break;
+
 			case shop_cvt_i2f_n:
 			case shop_cvt_i2f_z:
 				Scvtf(regalloc.MapVRegister(op.rd), regalloc.MapRegister(op.rs1));

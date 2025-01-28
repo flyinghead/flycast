@@ -519,28 +519,35 @@ sh4op(i1111_nnnn_0011_1101)
 	if (ctx->fpscr.PR == 0)
 	{
 		u32 n = GetN(op);
-		ctx->fpul = (u32)(s32)ctx->fr[n];
-
-		if ((s32)ctx->fpul > 0x7fffff80)
-			ctx->fpul = 0x7fffffff;
-		// Intel CPUs convert out of range float numbers to 0x80000000. Manually set the correct sign
-		else if (ctx->fpul == 0x80000000 && ctx->fr[n] == ctx->fr[n])
+		if (std::isnan(ctx->fr[n])) {
+			ctx->fpul = 0x80000000;
+		}
+		else
 		{
-			if (*(int *)&ctx->fr[n] > 0) // Using integer math to avoid issues with Inf and NaN
+			ctx->fpul = (u32)(s32)ctx->fr[n];
+			if ((s32)ctx->fpul > 0x7fffff80)
+				ctx->fpul = 0x7fffffff;
+#if HOST_CPU == CPU_X86 || HOST_CPU == CPU_X64
+			// Intel CPUs convert out of range float numbers to 0x80000000. Manually set the correct sign
+			else if (ctx->fpul == 0x80000000 && ctx->fr[n] > 0)
 				ctx->fpul--;
+#endif
 		}
 	}
 	else
 	{
 		f64 f = getDRn(ctx, op);
-		ctx->fpul = (u32)(s32)f;
-
-		// TODO saturate
-		// Intel CPUs convert out of range float numbers to 0x80000000. Manually set the correct sign
-		if (ctx->fpul == 0x80000000 && f == f)
+		if (std::isnan(f)) {
+			ctx->fpul = 0x80000000;
+		}
+		else
 		{
-			if (*(s64 *)&f > 0)     // Using integer math to avoid issues with Inf and NaN
+			ctx->fpul = (u32)(s32)f;
+#if HOST_CPU == CPU_X86 || HOST_CPU == CPU_X64
+			// Intel CPUs convert out of range float numbers to 0x80000000. Manually set the correct sign
+			if (ctx->fpul == 0x80000000 && f > 0)
 				ctx->fpul--;
+#endif
 		}
 	}
 }

@@ -141,19 +141,11 @@ shil_compile( \
 template<int Stride = 1>
 static inline float innerProduct(const float *f1, const float *f2)
 {
-#if HOST_CPU == CPU_X86 || HOST_CPU == CPU_X64 || HOST_CPU == CPU_ARM64
 	const double f = (double)f1[0] * f2[Stride * 0]
 				   + (double)f1[1] * f2[Stride * 1]
 				   + (double)f1[2] * f2[Stride * 2]
 				   + (double)f1[3] * f2[Stride * 3];
 	return fixNaN((float)f);
-#else
-	const float f = f1[0] * f2[Stride * 0]
-				  + f1[1] * f2[Stride * 1]
-				  + f1[2] * f2[Stride * 2]
-				  + f1[3] * f2[Stride * 3];
-	return fixNaN(f);
-#endif
 }
 
 #endif
@@ -727,27 +719,33 @@ shil_opc(cvt_f2i_t)
 shil_canonical
 (
 u32,f1,(f32 f1),
-	if (f1 > 2147483520.0f) // IEEE 754: 0x4effffff
-		return 0x7fffffff;
-	else
-	{
-		s32 res = (s32)f1;
-
-		// Fix result sign for Intel CPUs
-		if ((u32)res == 0x80000000 && f1 == f1 && *(s32 *)&f1 > 0)
-			res = 0x7fffffff;
-
-		return res;
+	s32 res;
+	if (f1 > 2147483520.0f) { // IEEE 754: 0x4effffff
+		res = 0x7fffffff;
 	}
+	else {
+		res = (s32)f1;
+		// Fix result sign for Intel CPUs
+		if ((u32)res == 0x80000000 && f1 > 0)
+			res = 0x7fffffff;
+	}
+	return res;
 )
-#else
+#elif HOST_CPU == CPU_ARM || HOST_CPU == CPU_ARM64
 shil_canonical
 (
 u32,f1,(f32 f1),
-	if (f1 > 2147483520.0f) // IEEE 754: 0x4effffff
-		return 0x7fffffff;
-	else
-		return (s32)f1;
+	s32 res;
+	if (f1 > 2147483520.0f) { // IEEE 754: 0x4effffff
+		res = 0x7fffffff;
+	}
+	else {
+		res = (s32)f1;
+		// conversion of NaN returns 0 on ARM
+		if (std::isnan(f1))
+			res = 0x80000000;
+	}
+	return res;
 )
 #endif
 
