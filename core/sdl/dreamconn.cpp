@@ -380,7 +380,8 @@ public:
 		}
 
 		// discard the first message as we are interested in the second only which returns the controller configuration
-		response = read_queue.back();
+		response = std::move(read_queue.back());
+		read_queue.clear();
 
 		sscanf(response.c_str(), "%hhx %hhx %hhx %hhx", &msg.command, &msg.destAP, &msg.originAP, &msg.size);
 
