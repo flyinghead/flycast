@@ -83,7 +83,7 @@ const WidescreenCheat CheatManager::widescreen_cheats[] =
 		{ "T30006M",    nullptr,    { 0x4CF42C, 0x4CF45C, 0x3E1A36, 0x3E1A34, 0x3E1A3C, 0x3E1A54, 0x3E1A5C },
 				{ 0x43F00000, 0x3F400000, 0x08010000, 0, 0, 0, 0 } },
 		{ "MK-5103750", nullptr,    { 0x1FE270 }, { 0x43700000 } },		// Daytona USA (PAL)
-		{ "MK-51037",   nullptr,    { 0x1FC6D0 }, { 0x43700000 } },		// Daytona USA (USA)
+		// breaks online connection { "MK-51037",   nullptr,    { 0x1FC6D0 }, { 0x43700000 } },		// Daytona USA (USA)
 		{ "T9501N-50",  nullptr,    { 0x9821D4 }, { 0x3F400000 } },		// Deadly Skies (PAL)
 		{ "T8116D  50", nullptr,    { 0x2E5530 }, { 0x43700000 } },		// Dead or Alive 2 (PAL)
 		{ "T3601N",     nullptr,    { 0x2F0670 }, { 0x43700000 } },		// Dead or Alive 2 (USA)
