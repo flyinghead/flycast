@@ -8110,15 +8110,15 @@ struct retro_core_options_v2 options_bg = {
 /* RETRO_LANGUAGE_CA */
 
 #define CATEGORY_SYSTEM_LABEL_CA "Sistema"
-#define CATEGORY_SYSTEM_INFO_0_CA NULL
+#define CATEGORY_SYSTEM_INFO_0_CA "Canvia la configuració de regió, idioma, BIOS i del maquinari base."
 #define CATEGORY_VIDEO_LABEL_CA "Vídeo"
 #define CATEGORY_VIDEO_INFO_0_CA NULL
 #define CATEGORY_PERFORMANCE_LABEL_CA "Rendiment"
-#define CATEGORY_PERFORMANCE_INFO_0_CA NULL
+#define CATEGORY_PERFORMANCE_INFO_0_CA "Configura el renderitzat multifil i l'omissió de fotogrames."
 #define CATEGORY_HACKS_LABEL_CA "Correccions de l'emulació"
 #define CATEGORY_HACKS_INFO_0_CA NULL
 #define CATEGORY_INPUT_LABEL_CA "Entrada"
-#define CATEGORY_INPUT_INFO_0_CA NULL
+#define CATEGORY_INPUT_INFO_0_CA "Canvia la configuració dels controladors i les pistoles de llum."
 #define CATEGORY_EXPANSIONS_LABEL_CA "Ports d'expansió dels controladors"
 #define CATEGORY_EXPANSIONS_INFO_0_CA NULL
 #define CATEGORY_VMU_LABEL_CA "Unitat de la memòria visual"
@@ -8137,19 +8137,19 @@ struct retro_core_options_v2 options_bg = {
 #define OPTION_VAL_SPANISH_CA "Español"
 #define OPTION_VAL_ITALIAN_CA "Italià"
 #define CORE_OPTION_NAME_HLE_BIOS_LABEL_CA "HLE BIOS (Es requereix reinici)"
-#define CORE_OPTION_NAME_HLE_BIOS_INFO_0_CA NULL
+#define CORE_OPTION_NAME_HLE_BIOS_INFO_0_CA "Obliga l'ús d'una BIOS amb emulació d'alt nivell."
 #define CORE_OPTION_NAME_BOOT_TO_BIOS_LABEL_CA "Reinicia a la BIOS (Es requereix reinici)"
-#define CORE_OPTION_NAME_BOOT_TO_BIOS_INFO_0_CA NULL
+#define CORE_OPTION_NAME_BOOT_TO_BIOS_INFO_0_CA "Inicia directament el menú de la BIOS de Dreamcast."
 #define CORE_OPTION_NAME_ENABLE_DSP_LABEL_CA "Habilitar DSP"
 #define CORE_OPTION_NAME_ENABLE_DSP_INFO_0_CA NULL
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_CA "Permet els botons de servei d'arcade"
-#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_CA NULL
+#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_CA "Habilita el botó SERVICE per jocs arcade, per accedir a la configuració de la màquina."
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_CA "Estableix els jocs de NAOMI com a gratuïts"
-#define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_CA NULL
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_CA "Modifica la configuració de monedes del joc a partides gratuïtes."
 #define CORE_OPTION_NAME_EMULATE_BBA_LABEL_CA "Emulació de l'adaptador Broadband"
 #define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_CA NULL
 #define CORE_OPTION_NAME_UPNP_LABEL_CA "Habilitat UPnP"
-#define CORE_OPTION_NAME_UPNP_INFO_0_CA NULL
+#define CORE_OPTION_NAME_UPNP_INFO_0_CA "Fes servir UPnP per configurar automàticament el router per jocs en línia."
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_CA "Resolució Interna"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_CA "Modifica la resolució interna."
 #define OPTION_VAL_320X240_CA "320 × 240 (50 %)"
@@ -8180,7 +8180,7 @@ struct retro_core_options_v2 options_bg = {
 #define OPTION_VAL_12160X9120_CA NULL
 #define OPTION_VAL_12800X9600_CA NULL
 #define CORE_OPTION_NAME_CABLE_TYPE_LABEL_CA "Tipus de cable"
-#define CORE_OPTION_NAME_CABLE_TYPE_INFO_0_CA NULL
+#define CORE_OPTION_NAME_CABLE_TYPE_INFO_0_CA "Tipus del senyal de sortida. 'TV (Composició)' és el tipus de senyal més suportat."
 #define OPTION_VAL_VGA_CA NULL
 #define OPTION_VAL_TV_RGB_CA NULL
 #define OPTION_VAL_TV_COMPOSITE_CA "TV (Composició)"
@@ -8193,21 +8193,21 @@ struct retro_core_options_v2 options_bg = {
 #define OPTION_VAL_HORIZONTAL_CA "Horitzontal"
 #define OPTION_VAL_VERTICAL_CA NULL
 #define CORE_OPTION_NAME_ALPHA_SORTING_LABEL_CA "Ordenar per transparències"
-#define CORE_OPTION_NAME_ALPHA_SORTING_INFO_0_CA NULL
+#define CORE_OPTION_NAME_ALPHA_SORTING_INFO_0_CA "Selecciona l'ordre de dibuix dels polígons transparents."
 #define OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_CA "Per bandes (ràpid però menys acurat)"
 #define OPTION_VAL_PER_TRIANGLE_NORMAL_CA NULL
 #define OPTION_VAL_PER_PIXEL_ACCURATE_CA "Per píxel (acurat però lent)"
 #define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_CA "Mida de la memòria intermèdia dels píxels d'acumulació"
-#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_INFO_0_CA NULL
+#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_INFO_0_CA "És possible que sigui necessari un valor alt perquè la imatge es mostri correctament amb resolucions superiors a la nativa."
 #define OPTION_VAL_512MB_CA "512 MB"
 #define OPTION_VAL_1GB_CA "1 GB"
 #define OPTION_VAL_2GB_CA "2 GB"
 #define OPTION_VAL_4GB_CA "4 GB"
 #define CORE_OPTION_NAME_OIT_LAYERS_LABEL_CA "Nombre màxim de capes transparents"
-#define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_CA NULL
+#define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_CA "Les escenes més complexes poden necessitar un valor més alt."
 #define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_CA "Emulació completa de la memòria intermèdia"
 #define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_CA NULL
-#define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_CA NULL
+#define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_CA "Habilita la memòria intermèdia RTT (Renderitzat a textures)"
 #define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_CA NULL
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_CA NULL
 #define CORE_OPTION_NAME_MIPMAPPING_INFO_0_CA NULL
@@ -8231,28 +8231,28 @@ struct retro_core_options_v2 options_bg = {
 #define OPTION_VAL_2_O26_CA NULL
 #define OPTION_VAL_4_CA NULL
 #define OPTION_VAL_6_CA NULL
-#define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_CA NULL
+#define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_CA "Mida màxima de l'escalat de textures"
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_INFO_0_CA NULL
 #define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_CA "Interpolació nativa de profunditat"
 #define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_CA NULL
 #define CORE_OPTION_NAME_FIX_UPSCALE_BLEEDING_EDGE_LABEL_CA "Corregeix els defectes de les vores en escalar"
 #define CORE_OPTION_NAME_FIX_UPSCALE_BLEEDING_EDGE_INFO_0_CA NULL
 #define CORE_OPTION_NAME_THREADED_RENDERING_LABEL_CA "Renderitzat multifil"
-#define CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_CA NULL
+#define CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_CA "Executa la GPU i la CPU en diferents fils. Molt recomanat."
 #define CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_CA "Omissió automàtica de fotogrames"
 #define CORE_OPTION_NAME_AUTO_SKIP_FRAME_INFO_0_CA NULL
 #define OPTION_VAL_SOME_CA NULL
 #define OPTION_VAL_MORE_CA "Màxim"
 #define CORE_OPTION_NAME_FRAME_SKIPPING_LABEL_CA "Omissió de fotogrames"
-#define CORE_OPTION_NAME_FRAME_SKIPPING_INFO_0_CA NULL
-#define CORE_OPTION_NAME_WIDESCREEN_CHEATS_LABEL_CA NULL
-#define CORE_OPTION_NAME_WIDESCREEN_CHEATS_INFO_0_CA NULL
+#define CORE_OPTION_NAME_FRAME_SKIPPING_INFO_0_CA "Selecciona el nombre de fotogrames a ometre per cada fotograma en pantalla que es mostra."
+#define CORE_OPTION_NAME_WIDESCREEN_CHEATS_LABEL_CA "Correccions per pantalles panoràmiques (Es requereix reinici)"
+#define CORE_OPTION_NAME_WIDESCREEN_CHEATS_INFO_0_CA "Activa els trucs que permet a certs jocs mostrar-se correctament en pantalles panoràmiques."
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_LABEL_CA "Correcció de pantalles panoràmiques"
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_CA NULL
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_CA "Lectura ràpida de GD-ROM (poc acurat)"
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_CA "Augmenta la velocitat de càrrega de GD-ROM."
 #define CORE_OPTION_NAME_DC_32MB_MOD_LABEL_CA NULL
-#define CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_CA NULL
+#define CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_CA "Activa la modificació de 32 MB de RAM per Dreamcast. Pot afectar la compatibilitat"
 #define CORE_OPTION_NAME_SH4CLOCK_LABEL_CA NULL
 #define CORE_OPTION_NAME_SH4CLOCK_INFO_0_CA NULL
 #define OPTION_VAL_100_CA NULL
@@ -8353,33 +8353,33 @@ struct retro_core_options_v2 options_bg = {
 #define CORE_OPTION_NAME_LIGHTGUN3_CROSSHAIR_LABEL_CA "Mostra el punt de mira de la pistola 3"
 #define CORE_OPTION_NAME_LIGHTGUN4_CROSSHAIR_LABEL_CA "Mostra el punt de mira de la pistola 4"
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_LABEL_CA "Dispositu en el port d'expansió A1"
-#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_INFO_0_CA NULL
+#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_INFO_0_CA "Selecciona el dispositiu connectat a la ranura d'expansió A1 (port A ranura 1)."
 #define OPTION_VAL_VMU_CA NULL
 #define OPTION_VAL_PURUPURU_CA "Pack de vibració"
 #define OPTION_VAL_NONE_CA "Cap"
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_LABEL_CA "Dispositiu en el port d'expansió A2"
-#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_INFO_0_CA NULL
+#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_INFO_0_CA "Selecciona el dispositiu connectat a la ranura d'expansió A2 (port A ranura 2)."
 #define CORE_OPTION_NAME_DEVICE_PORT2_SLOT1_LABEL_CA "Dispositiu en el port d'expansió B1"
-#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT1_INFO_0_CA NULL
+#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT1_INFO_0_CA "Selecciona el dispositiu connectat a la ranura d'expansió B1 (port B ranura 1)."
 #define CORE_OPTION_NAME_DEVICE_PORT2_SLOT2_LABEL_CA "Dispostiu en el port d'expanció B2"
-#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT2_INFO_0_CA NULL
+#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT2_INFO_0_CA "Selecciona el dispositiu connectat a la ranura d'expansió B2 (port B ranura 2)."
 #define CORE_OPTION_NAME_DEVICE_PORT3_SLOT1_LABEL_CA "Dispositiu en el port d'expansió C1"
-#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT1_INFO_0_CA NULL
+#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT1_INFO_0_CA "Selecciona el dispositiu connectat a la ranura d'expansió C1 (port C ranura 1)."
 #define CORE_OPTION_NAME_DEVICE_PORT3_SLOT2_LABEL_CA "Dispositiu en el port d'expansió C2"
-#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT2_INFO_0_CA NULL
+#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT2_INFO_0_CA "Selecciona el dispositiu connectat a la ranura d'expansió C2 (port C ranura 2)."
 #define CORE_OPTION_NAME_DEVICE_PORT4_SLOT1_LABEL_CA "Dispositiu en el port d'expansió D1"
-#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT1_INFO_0_CA NULL
+#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT1_INFO_0_CA "Selecciona el dispositiu connectat a la ranura d'expansió D1 (port D ranura 1)."
 #define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_LABEL_CA "Dispositiu en el port d'expanció D2"
-#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_INFO_0_CA NULL
-#define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CA NULL
+#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_INFO_0_CA "Selecciona el dispositiu connectat a la ranura d'expansió D2 (port D ranura 2)."
+#define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CA "Separar Visual Memory (VMU) per cada joc"
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CAT_CA "VMUs individuals per cada joc"
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_CA NULL
 #define OPTION_VAL_VMU_A1_CA NULL
 #define OPTION_VAL_ALL_VMUS_CA "Totes les VMUs"
-#define CORE_OPTION_NAME_VMU_SOUND_LABEL_CA NULL
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_CA "Sons de les Visual Memory (VMU)"
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_CA "Sons VMU"
 #define CORE_OPTION_NAME_VMU_SOUND_INFO_0_CA "Quan està actiu, es reprodueixen els sons de la VMU."
-#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CA NULL
+#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CA "Mostra la configuració de visualització de les Visual Memory (VMU)"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_CA "Mostra la configuració de pantalla de VMU"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_CA NULL
 #define CORE_OPTION_NAME_VMU1_SCREEN_DISPLAY_LABEL_CA "Pantalla de la VMU 1"
