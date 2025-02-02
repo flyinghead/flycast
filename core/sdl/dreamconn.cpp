@@ -800,6 +800,8 @@ DreamConnGamepad::~DreamConnGamepad() {
 void DreamConnGamepad::set_maple_port(int port) {
 	SDLGamepad::set_maple_port(port);
 }
+void DreamConnGamepad::registered() {
+}
 bool DreamConnGamepad::gamepad_btn_input(u32 code, bool pressed) {
 	return SDLGamepad::gamepad_btn_input(code, pressed);
 }
