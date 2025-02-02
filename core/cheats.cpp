@@ -489,6 +489,10 @@ void CheatManager::reset(const std::string& gameId)
 			// force logging on to use more cycles
 			cheats.emplace_back(Cheat::Type::setValue, "enable logging", true, 32, 0x00314228, 1, true);
 		}
+		else if (gameId == "T6807M") {		// Aero Dancing i
+			cheats.emplace_back(Cheat::Type::setValue, "bypass dricas auth", true, 16, 0x0004b7a0, 0x000b, true);	// rts
+			cheats.emplace_back(Cheat::Type::setValue, "bypass dricas auth", true, 16, 0x0004b7a2, 0xe000, true);	// mov #0, r0
+		}
 
 		if (cheats.size() > cheatCount)
 			setActive(true);
