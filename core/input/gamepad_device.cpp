@@ -329,7 +329,7 @@ bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 			int threshold = 16384;
 			if (code == leftTrigger || code == rightTrigger )
 				threshold = 100;
-
+				
 			if (std::abs(v) < threshold)
 				kcode[port] |=  key; // button released
 			else
@@ -540,9 +540,9 @@ static FILE *get_record_input(bool write)
 void GamepadDevice::Register(const std::shared_ptr<GamepadDevice>& gamepad)
 {
 	int maple_port = cfgLoadInt("input",
-			MAPLE_PORT_CFG_PREFIX + gamepad->unique_id(), gamepad->maple_port());
-	// set_maple_port will perform connection to real maple bus here
-	gamepad->set_maple_port(maple_port);
+			MAPLE_PORT_CFG_PREFIX + gamepad->unique_id(), 12345);
+	if (maple_port != 12345)
+		gamepad->set_maple_port(maple_port);
 #ifdef TEST_AUTOMATION
 	if (record_input == NULL)
 	{
