@@ -555,7 +555,10 @@ bool BaseTextureCacheData::Update()
 					{
 						PixelBuffer<u32> pb0;
 						pb0.init(2, 2 ,false);
-						texconv32(&pb0, (u8*)&vram[vram_addr], 2, 2);
+						if (tcw.PixelFmt == PixelYUV)
+							// Use higher LoD mipmap
+							vram_addr = startAddress + VQMipPoint[1];
+						texconv32(&pb0, &vram[vram_addr], 2, 2);
 						*pb32.data() = *pb0.data(1, 1);
 						continue;
 					}
