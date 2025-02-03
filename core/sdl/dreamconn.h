@@ -50,16 +50,17 @@ static_assert(sizeof(MapleMsg) == 1028);
 
 class DreamConn
 {
-	const int bus;
+	int bus = -1;
 	const int dreamcastControllerType;
+	const std::string name;
 #ifdef USE_DREAMCASTCONTROLLER
 	std::unique_ptr<class DreamcastControllerConnection> dcConnection;
 #endif
-	bool maple_io_connected;
+	bool maple_io_connected = false;
 	u8 expansionDevs = 0;
 
 public:
-	DreamConn(int bus, int dreamcastControllerType);
+	DreamConn(int bus, int dreamcastControllerType, const std::string& name);
 
 	~DreamConn();
 
@@ -75,7 +76,8 @@ public:
 		return expansionDevs & 2;
 	}
 
-private:
+	void change_bus(int bus);
+
 	void connect();
 	void disconnect();
 };
@@ -87,6 +89,7 @@ public:
 	~DreamConnGamepad();
 
 	void set_maple_port(int port) override;
+	void registered() override;
 	bool gamepad_btn_input(u32 code, bool pressed) override;
 	bool gamepad_axis_input(u32 code, int value) override;
 	static bool isDreamcastController(int deviceIndex);
@@ -99,5 +102,4 @@ private:
 	bool ltrigPressed = false;
 	bool rtrigPressed = false;
 	bool startPressed = false;
-	int dreamcastControllerType;
 };

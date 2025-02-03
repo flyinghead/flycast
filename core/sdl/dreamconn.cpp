@@ -566,7 +566,19 @@ private:
 	}
 };
 
-DreamConn::DreamConn(int bus, int dreamcastControllerType) : bus(bus), dreamcastControllerType(dreamcastControllerType) {
+DreamConn::DreamConn(int bus, int dreamcastControllerType, const std::string& name) :
+	bus(bus), dreamcastControllerType(dreamcastControllerType), name(name)
+{
+	change_bus(bus);
+}
+
+DreamConn::~DreamConn() {
+	disconnect();
+}
+
+void DreamConn::change_bus(int bus) {
+	disconnect();
+	dcConnection.reset();
 	switch (dreamcastControllerType)
 	{
 		case TYPE_DREAMCONN:
@@ -577,16 +589,14 @@ DreamConn::DreamConn(int bus, int dreamcastControllerType) : bus(bus), dreamcast
 			dcConnection = std::make_unique<DreamcastControllerUsbPicoConnection>(bus);
 			break;
 	}
-
-	connect();
-}
-
-DreamConn::~DreamConn() {
-	disconnect();
 }
 
 void DreamConn::connect()
 {
+	if (maple_io_connected) {
+		disconnect();
+	}
+
 	maple_io_connected = false;
 	expansionDevs = 0;
 
@@ -607,7 +617,7 @@ void DreamConn::connect()
 
 	if (hasVmu() || hasRumble())
 	{
-		NOTICE_LOG(INPUT, "Connected to DreamcastController[%d]: Type:%s, VMU:%d, Rumble Pack:%d", bus, dreamcastControllerType == 1 ? "DreamConn+ / DreamcConn S Controller" : "Dreamcast Controller USB", hasVmu(), hasRumble());
+		NOTICE_LOG(INPUT, "Connected to DreamcastController[%d]: Type:%s, VMU:%d, Rumble Pack:%d", bus, name.c_str(), hasVmu(), hasRumble());
 		maple_io_connected = true;
 	}
 	else
@@ -682,13 +692,13 @@ DreamConnGamepad::DreamConnGamepad(int maple_port, int joystick_idx, SDL_Joystic
 	// Dreamcast Controller USB VID:1209 PID:2f07
 	if (memcmp(DreamConnConnection::VID_PID_GUID, guid_str + 8, 16) == 0)
 	{
-		dreamcastControllerType = TYPE_DREAMCONN;
 		_name = "DreamConn+ / DreamConn S Controller";
+		dreamconn = std::make_shared<DreamConn>(maple_port, TYPE_DREAMCONN, _name);
 	}
 	else if (memcmp(DreamcastControllerUsbPicoConnection::VID_PID_GUID, guid_str + 8, 16) == 0)
 	{
-		dreamcastControllerType = TYPE_DREAMCASTCONTROLLERUSB;
 		_name = "Dreamcast Controller USB";
+		dreamconn = std::make_shared<DreamConn>(maple_port, TYPE_DREAMCASTCONTROLLERUSB, _name);
 	}
 
 	EventManager::listen(Event::Start, handleEvent, this);
@@ -702,14 +712,26 @@ DreamConnGamepad::~DreamConnGamepad() {
 
 void DreamConnGamepad::set_maple_port(int port)
 {
-	if (port < 0 || port >= 4) {
-		dreamconn.reset();
-	}
-	else if (dreamconn == nullptr || dreamconn->getBus() != port) {
-		dreamconn.reset();
-		dreamconn = std::make_shared<DreamConn>(port, dreamcastControllerType);
+	if (dreamconn) {
+		if (port < 0 || port >= 4) {
+			dreamconn->disconnect();
+		}
+		else if (dreamconn->getBus() != port) {
+			dreamconn->change_bus(port);
+			if (is_registered()) {
+				dreamconn->connect();
+			}
+		}
 	}
 	SDLGamepad::set_maple_port(port);
+}
+
+void DreamConnGamepad::registered()
+{
+	if (dreamconn)
+	{
+		dreamconn->connect();
+	}
 }
 
 void DreamConnGamepad::handleEvent(Event event, void *arg)
@@ -777,6 +799,8 @@ DreamConnGamepad::~DreamConnGamepad() {
 }
 void DreamConnGamepad::set_maple_port(int port) {
 	SDLGamepad::set_maple_port(port);
+}
+void DreamConnGamepad::registered() {
 }
 bool DreamConnGamepad::gamepad_btn_input(u32 code, bool pressed) {
 	return SDLGamepad::gamepad_btn_input(code, pressed);
