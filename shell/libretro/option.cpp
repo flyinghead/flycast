@@ -123,6 +123,7 @@ Option<bool> NetworkOutput(CORE_OPTION_NAME "_network_output", false);
 Option<int> MultiboardSlaves("", 0);
 Option<bool> BattleCableEnable("", false);
 Option<bool> UseDCNet(CORE_OPTION_NAME "_dcnet", false);
+OptionString ISPUsername("", "flycast1");
 
 // Maple
 

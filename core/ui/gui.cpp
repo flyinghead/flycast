@@ -2796,6 +2796,10 @@ static void gui_settings_network()
 					"Emulate the Ethernet Broadband Adapter (BBA) instead of the Modem");
 		}
 		OptionCheckbox("Use DCNet (Experimental)", config::UseDCNet, "Connect to the experimental DCNet cloud service.");
+		ImGui::InputText("ISP User Name", &config::ISPUsername.get(), ImGuiInputTextFlags_CharsNoBlank | ImGuiInputTextFlags_CallbackCharFilter,
+				[](ImGuiInputTextCallbackData *data) { return static_cast<int>(data->EventChar <= ' ' || data->EventChar > '~'); }, nullptr);
+		ImGui::SameLine();
+		ShowHelpMarker("The ISP user name stored in the console Flash RAM. Used by some online games as the player name. Leave blank to keep the current Flash RAM value.");
 	}
 #ifdef NAOMI_MULTIBOARD
 	ImGui::Spacing();

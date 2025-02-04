@@ -167,6 +167,7 @@ Option<bool> NetworkOutput("NetworkOutput", false, "network");
 Option<int> MultiboardSlaves("MultiboardSlaves", 1, "network");
 Option<bool> BattleCableEnable("BattleCable", false, "network");
 Option<bool> UseDCNet("DCNet", false, "network");
+OptionString ISPUsername("ISPUsername", "flycast1", "network");
 
 #ifdef USE_OMX
 Option<int> OmxAudioLatency("audio_latency", 100, "omx");
