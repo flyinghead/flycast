@@ -491,18 +491,23 @@ void CheatManager::reset(const std::string& gameId)
 		}
 		// Dricas auth bypass
 		else if (gameId == "T6807M") {		// Aero Dancing i
+			cheats.emplace_back(Cheat::Type::runNextIfEq, "bypass auth ifeq", true, 32, 0x0004b7a0, 0x2fd62fe6, true);
 			cheats.emplace_back(Cheat::Type::setValue, "bypass dricas auth", true, 32, 0x0004b7a0, 0xe000000b, true);	// rts, _mov #0, r0
 		}
 		else if (gameId == "HDR-0106") {	// Daytona USA (JP)
+			cheats.emplace_back(Cheat::Type::runNextIfEq, "bypass auth ifeq", true, 32, 0x0003ad30, 0x2fd62fe6, true);
 			cheats.emplace_back(Cheat::Type::setValue, "bypass dricas auth", true, 32, 0x0003ad30, 0xe000000b, true);	// rts, _mov #0, r0
 		}
 		else if (gameId == "HDR-0073") {	// Sega Tetris
+			cheats.emplace_back(Cheat::Type::runNextIfEq, "bypass auth ifeq", true, 32, 0x000a56f8, 0x2fd62fe6, true);
 			cheats.emplace_back(Cheat::Type::setValue, "bypass dricas auth", true, 32, 0x000a56f8, 0xe000000b, true);	// rts, _mov #0, r0
 		}
 		else if (gameId == "T44501M") {		// Golf Shiyou Yo 2
+			cheats.emplace_back(Cheat::Type::runNextIfEq, "bypass auth ifeq", true, 32, 0x0013f150, 0x2fd62fe6, true);
 			cheats.emplace_back(Cheat::Type::setValue, "bypass dricas auth", true, 32, 0x0013f150, 0xe000000b, true);	// rts, _mov #0, r0
 		}
 		else if (gameId == "HDR-0124") {		// Hundred Swords
+			cheats.emplace_back(Cheat::Type::runNextIfEq, "bypass auth ifeq", true, 32, 0x006558ac, 0x1f414f22, true);
 			cheats.emplace_back(Cheat::Type::setValue, "bypass dricas auth", true, 32, 0x006558ac, 0xe000000b, true);	// rts, _mov #0, r0
 		}
 
