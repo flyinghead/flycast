@@ -140,6 +140,10 @@ void DmaBuffer::deserialize(Deserializer& deser)
 	{
 		deser >> index;
 		deser >> size;
+		if (index >= sizeof(cache))
+			clear();
+		else
+			size = std::min<u32>(size, sizeof(cache) - index);
 		deser >> cache;
 		deser.skip(2352 * 16);
 	}
