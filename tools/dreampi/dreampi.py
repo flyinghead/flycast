@@ -79,7 +79,7 @@ DNS_FILE = "https://dreamcast.online/dreampi/dreampi_dns.conf"
 
 
 logger = logging.getLogger("dreampi")
-
+first_run = 1
 
 def check_internet_connection():
     """ Returns True if there's a connection """
@@ -578,9 +578,15 @@ class Modem(object):
     def start_dial_tone(self):
         if not self._dial_tone_wav:
             return
+        global first_run
         i = 0
         while i < 3:
             try:
+                if first_run:
+                    first_run = 0
+                    subprocess.Popen("/home/pi/dreampi/dcnet.rpi")
+                    time.sleep(2)
+                    subprocess.call("sudo killall dcnet.rpi".split())
                 self.reset()
                 self.send_command(b"AT+FCLASS=8")  # Enter voice mode
                 self.send_command(b"AT+VLS=1")  # Go off-hook
