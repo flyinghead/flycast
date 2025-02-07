@@ -8112,24 +8112,24 @@ struct retro_core_options_v2 options_bg = {
 #define CATEGORY_SYSTEM_LABEL_CA "Sistema"
 #define CATEGORY_SYSTEM_INFO_0_CA "Canvia la configuració de regió, idioma, BIOS i del maquinari base."
 #define CATEGORY_VIDEO_LABEL_CA "Vídeo"
-#define CATEGORY_VIDEO_INFO_0_CA NULL
+#define CATEGORY_VIDEO_INFO_0_CA "Configura resolució, les transparències independents de l'ordre i els efectes visuals."
 #define CATEGORY_PERFORMANCE_LABEL_CA "Rendiment"
 #define CATEGORY_PERFORMANCE_INFO_0_CA "Configura el renderitzat multifil i l'omissió de fotogrames."
 #define CATEGORY_HACKS_LABEL_CA "Correccions de l'emulació"
-#define CATEGORY_HACKS_INFO_0_CA NULL
+#define CATEGORY_HACKS_INFO_0_CA "Canvia la configuració de les correccions de pantalla panoràmica, la velocitat de càrrega de GD-ROM i la substitució de textures."
 #define CATEGORY_INPUT_LABEL_CA "Entrada"
 #define CATEGORY_INPUT_INFO_0_CA "Canvia la configuració dels controladors i les pistoles de llum."
 #define CATEGORY_EXPANSIONS_LABEL_CA "Ports d'expansió dels controladors"
-#define CATEGORY_EXPANSIONS_INFO_0_CA NULL
+#define CATEGORY_EXPANSIONS_INFO_0_CA "Selecciona el dispositiu (VMU, dispositiu vibració) connectat a cada port d'expansió."
 #define CATEGORY_VMU_LABEL_CA "Unitat de la memòria visual"
-#define CATEGORY_VMU_INFO_0_CA NULL
+#define CATEGORY_VMU_INFO_0_CA "Configura fitxers per desar partides diferents per cada joc i la visibilitat en pantalla per cada joc."
 #define CORE_OPTION_NAME_REGION_LABEL_CA "Regió"
 #define OPTION_VAL_JAPAN_CA "Japó"
 #define OPTION_VAL_USA_CA NULL
 #define OPTION_VAL_EUROPE_CA "Europa"
 #define OPTION_VAL_DEFAULT_CA "Per defecte"
 #define CORE_OPTION_NAME_LANGUAGE_LABEL_CA "Llengua"
-#define CORE_OPTION_NAME_LANGUAGE_INFO_0_CA NULL
+#define CORE_OPTION_NAME_LANGUAGE_INFO_0_CA "Canvia la llengua que farà servir la BIOS i els jocs que contenen diferents idiomes."
 #define OPTION_VAL_JAPANESE_CA "Japonès"
 #define OPTION_VAL_ENGLISH_CA "Anglès"
 #define OPTION_VAL_GERMAN_CA "Alemany"
@@ -8147,7 +8147,7 @@ struct retro_core_options_v2 options_bg = {
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_CA "Estableix els jocs de NAOMI com a gratuïts"
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_CA "Modifica la configuració de monedes del joc a partides gratuïtes."
 #define CORE_OPTION_NAME_EMULATE_BBA_LABEL_CA "Emulació de l'adaptador Broadband"
-#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_CA NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_CA "Emula l'adaptador de banda ampla per cable Ethernet en compte del mòdem (Es requereix reinici)."
 #define CORE_OPTION_NAME_UPNP_LABEL_CA "Habilitat UPnP"
 #define CORE_OPTION_NAME_UPNP_INFO_0_CA "Fes servir UPnP per configurar automàticament el router per jocs en línia."
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_CA "Resolució Interna"
@@ -8221,26 +8221,26 @@ struct retro_core_options_v2 options_bg = {
 #define OPTION_VAL_1_CA "Força píxel més proper"
 #define OPTION_VAL_2_CA "Forçar lineal"
 #define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_CA "Retardar el canvi de fotogrames"
-#define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_CA NULL
+#define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_CA "Útil per evitar parpelleig constant errors gràfics en els vídeos. No es recomana activar-ho en plataformes amb pocs recursos."
 #define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_CA "Detecta els canvis en la taxa de fotogrames"
 #define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_CA NULL
 #define CORE_OPTION_NAME_PVR2_FILTERING_LABEL_CA "Filtre de postprocessat PowerVR2"
-#define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_CA NULL
+#define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_CA "Postprocessa la imatge renderitzada per emular els efectes dedicats de la GPU PowerVR2 i els senyals de vídeo analògic."
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_CA "Augment de mida de les textures (xBRZ)"
-#define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_CA NULL
+#define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_CA "Millora els gràfics de tipus píxel art dibuixats a mà. Activa-ho només per jocs 2D pixelats."
 #define OPTION_VAL_2_O26_CA NULL
 #define OPTION_VAL_4_CA NULL
 #define OPTION_VAL_6_CA NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_CA "Mida màxima de l'escalat de textures"
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_INFO_0_CA NULL
 #define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_CA "Interpolació nativa de profunditat"
-#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_CA NULL
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_CA "Esmorteeix la corrupció de textures i els problemes gràfics de profunditat en fer servir una GPU de AMB. En alguns casos també pot ajudar en una GPU de Intel."
 #define CORE_OPTION_NAME_FIX_UPSCALE_BLEEDING_EDGE_LABEL_CA "Corregeix els defectes de les vores en escalar"
 #define CORE_OPTION_NAME_FIX_UPSCALE_BLEEDING_EDGE_INFO_0_CA NULL
 #define CORE_OPTION_NAME_THREADED_RENDERING_LABEL_CA "Renderitzat multifil"
 #define CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_CA "Executa la GPU i la CPU en diferents fils. Molt recomanat."
 #define CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_CA "Omissió automàtica de fotogrames"
-#define CORE_OPTION_NAME_AUTO_SKIP_FRAME_INFO_0_CA NULL
+#define CORE_OPTION_NAME_AUTO_SKIP_FRAME_INFO_0_CA "Omet fotogrames automàticament si l'emulador funciona amb lentitud. Nota: Aquesta opció només funciona si l'opció 'Renderitzat multifil' està activada."
 #define OPTION_VAL_SOME_CA NULL
 #define OPTION_VAL_MORE_CA "Màxim"
 #define CORE_OPTION_NAME_FRAME_SKIPPING_LABEL_CA "Omissió de fotogrames"
@@ -8248,7 +8248,7 @@ struct retro_core_options_v2 options_bg = {
 #define CORE_OPTION_NAME_WIDESCREEN_CHEATS_LABEL_CA "Correccions per pantalles panoràmiques (Es requereix reinici)"
 #define CORE_OPTION_NAME_WIDESCREEN_CHEATS_INFO_0_CA "Activa els trucs que permet a certs jocs mostrar-se correctament en pantalles panoràmiques."
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_LABEL_CA "Correcció de pantalles panoràmiques"
-#define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_CA NULL
+#define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_CA "Dibuixa geometries més enllà de la relació d'aspecte 4:3. Pot produir errors gràfics en les zones visibles."
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_CA "Lectura ràpida de GD-ROM (poc acurat)"
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_CA "Augmenta la velocitat de càrrega de GD-ROM."
 #define CORE_OPTION_NAME_DC_32MB_MOD_LABEL_CA NULL
@@ -8297,11 +8297,11 @@ struct retro_core_options_v2 options_bg = {
 #define OPTION_VAL_490_CA NULL
 #define OPTION_VAL_500_CA NULL
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_CA "Carregar textures personalitzades"
-#define CORE_OPTION_NAME_CUSTOM_TEXTURES_INFO_0_CA NULL
+#define CORE_OPTION_NAME_CUSTOM_TEXTURES_INFO_0_CA "Carrega textures personalitzades que es trobin a la carpeta 'system/dc/textures/<game-id>/'."
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_CA "Abocar textures"
-#define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_CA NULL
+#define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_CA "Cada vegada que un joc faci servir una nova textura, aquesta es desarà en un fitxer .png a la carpeta 'system/dc/texdump/<game-id>/'."
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_CA "Zona morta palanca analògica"
-#define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_INFO_0_CA NULL
+#define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_INFO_0_CA "Selecciona la distància a la qual es reconeix la pulsació del gatell."
 #define OPTION_VAL_0_CA NULL
 #define OPTION_VAL_5_CA NULL
 #define OPTION_VAL_10_CA NULL
@@ -8310,13 +8310,13 @@ struct retro_core_options_v2 options_bg = {
 #define OPTION_VAL_25_CA NULL
 #define OPTION_VAL_30_CA NULL
 #define CORE_OPTION_NAME_TRIGGER_DEADZONE_LABEL_CA "Zona morta dels gatells"
-#define CORE_OPTION_NAME_TRIGGER_DEADZONE_INFO_0_CA NULL
+#define CORE_OPTION_NAME_TRIGGER_DEADZONE_INFO_0_CA "Selecciona la distància a la qual es reconeix la pulsació del gatell."
 #define CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_CA "Gatells digitals"
 #define CORE_OPTION_NAME_DIGITAL_TRIGGERS_INFO_0_CA NULL
 #define CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_CA "Transmet les sortides digitals"
-#define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_CA NULL
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_CA "Transmet els senyals digitals i l'estat de vibració del port TCP 8000. És compatible amb l'opció de MAME '-output network'."
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_CA "Mostra la configuració de la pistola de llum"
-#define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_CA NULL
+#define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_CA "Permet configurar les diferents mires de les pistoles de llum. NOTA: És imprescindible sortir i tornar a entrar al menú ràpid perquè el canvi funcioni."
 #define CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_CA "Escala del punt de mira de la pistola"
 #define OPTION_VAL_50_CA NULL
 #define OPTION_VAL_60_CA NULL
