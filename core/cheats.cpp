@@ -490,29 +490,49 @@ void CheatManager::reset(const std::string& gameId)
 			cheats.emplace_back(Cheat::Type::setValue, "enable logging", true, 32, 0x00314228, 1, true);
 		}
 		// Dricas auth bypass
-		else if (gameId == "T6807M") {		// Aero Dancing i
+		else if (gameId == "T6807M")		// Aero Dancing i
+		{
+			// modem
 			cheats.emplace_back(Cheat::Type::runNextIfEq, "bypass auth ifeq", true, 32, 0x0004b7a0, 0x2fd62fe6, true);
-			cheats.emplace_back(Cheat::Type::setValue, "bypass dricas auth", true, 32, 0x0004b7a0, 0xe000000b, true);	// rts, _mov #0, r0
+			cheats.emplace_back(Cheat::Type::setValue, "bypass dricas auth", true, 32, 0x0004b7a0, 0xe000000b, true);		// rts, _mov #0, r0
+			// BBA
+			cheats.emplace_back(Cheat::Type::runNextIfEq, "bba bypass auth ifeq", true, 32, 0x0004af5c, 0x2fd62fe6, true);
+			cheats.emplace_back(Cheat::Type::setValue, "bba bypass dricas auth", true, 32, 0x0004af5c, 0xe000000b, true);
+			// IP check
+			cheats.emplace_back(Cheat::Type::runNextIfEq, "ip check ifeq", true, 32, 0x00020860, 0x4f222fe6, true);
+			cheats.emplace_back(Cheat::Type::setValue, "ip check ok", true, 32, 0x00020860, 0xe000000b, true);
 		}
-		else if (gameId == "T6809M") {		// Aero Dancing i - Jikai Saku Made Matemasen
+		else if (gameId == "T6809M")		// Aero Dancing i - Jikai Saku Made Matemasen
+		{
+			// modem
 			cheats.emplace_back(Cheat::Type::runNextIfEq, "bypass auth ifeq", true, 32, 0x0004b940, 0x2fd62fe6, true);
-			cheats.emplace_back(Cheat::Type::setValue, "bypass dricas auth", true, 32, 0x0004b940, 0xe000000b, true);	// rts, _mov #0, r0
+			cheats.emplace_back(Cheat::Type::setValue, "bypass dricas auth", true, 32, 0x0004b940, 0xe000000b, true);
+			// BBA
+			cheats.emplace_back(Cheat::Type::runNextIfEq, "bba bypass auth ifeq", true, 32, 0x0004f848, 0x2fd62fe6, true);
+			cheats.emplace_back(Cheat::Type::setValue, "bba bypass dricas auth", true, 32, 0x0004f848, 0xe000000b, true);
+			// IP check
+			cheats.emplace_back(Cheat::Type::runNextIfEq, "ip check ifeq", true, 32, 0x00020980, 0x4f222fe6, true);
+			cheats.emplace_back(Cheat::Type::setValue, "ip check ok", true, 32, 0x00020980, 0xe000000b, true);
 		}
 		else if (gameId == "HDR-0106") {	// Daytona USA (JP)
 			cheats.emplace_back(Cheat::Type::runNextIfEq, "bypass auth ifeq", true, 32, 0x0003ad30, 0x2fd62fe6, true);
-			cheats.emplace_back(Cheat::Type::setValue, "bypass dricas auth", true, 32, 0x0003ad30, 0xe000000b, true);	// rts, _mov #0, r0
+			cheats.emplace_back(Cheat::Type::setValue, "bypass dricas auth", true, 32, 0x0003ad30, 0xe000000b, true);
 		}
 		else if (gameId == "HDR-0073") {	// Sega Tetris
 			cheats.emplace_back(Cheat::Type::runNextIfEq, "bypass auth ifeq", true, 32, 0x000a56f8, 0x2fd62fe6, true);
-			cheats.emplace_back(Cheat::Type::setValue, "bypass dricas auth", true, 32, 0x000a56f8, 0xe000000b, true);	// rts, _mov #0, r0
+			cheats.emplace_back(Cheat::Type::setValue, "bypass dricas auth", true, 32, 0x000a56f8, 0xe000000b, true);
 		}
 		else if (gameId == "T44501M") {		// Golf Shiyou Yo 2
 			cheats.emplace_back(Cheat::Type::runNextIfEq, "bypass auth ifeq", true, 32, 0x0013f150, 0x2fd62fe6, true);
-			cheats.emplace_back(Cheat::Type::setValue, "bypass dricas auth", true, 32, 0x0013f150, 0xe000000b, true);	// rts, _mov #0, r0
+			cheats.emplace_back(Cheat::Type::setValue, "bypass dricas auth", true, 32, 0x0013f150, 0xe000000b, true);
 		}
-		else if (gameId == "HDR-0124") {		// Hundred Swords
+		else if (gameId == "HDR-0124") {	// Hundred Swords
 			cheats.emplace_back(Cheat::Type::runNextIfEq, "bypass auth ifeq", true, 32, 0x006558ac, 0x1f414f22, true);
-			cheats.emplace_back(Cheat::Type::setValue, "bypass dricas auth", true, 32, 0x006558ac, 0xe000000b, true);	// rts, _mov #0, r0
+			cheats.emplace_back(Cheat::Type::setValue, "bypass dricas auth", true, 32, 0x006558ac, 0xe000000b, true);
+		}
+		else if (gameId == "T43903M") {		// Culdcept II
+			cheats.emplace_back(Cheat::Type::runNextIfEq, "bypass auth ifeq", true, 32, 0x00800524, 0x2fd62fe6, true);
+			cheats.emplace_back(Cheat::Type::setValue, "bypass dricas auth", true, 32, 0x00800524, 0xe000000b, true);
 		}
 
 		if (cheats.size() > cheatCount)
