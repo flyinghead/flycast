@@ -587,6 +587,7 @@ class Modem(object):
                     subprocess.Popen("/home/pi/dreampi/dcnet.rpi")
                     time.sleep(2)
                     subprocess.call("sudo killall dcnet.rpi".split())
+                    self.shake_it_off()
                 self.reset()
                 self.send_command(b"AT+FCLASS=8")  # Enter voice mode
                 self.send_command(b"AT+VLS=1")  # Go off-hook
