@@ -368,7 +368,7 @@ struct maple_sega_vmu: maple_base
 			}
 		fullSaveNeeded = true;
 	}
-	
+
 	bool fullSave()
 	{
 		if (file == nullptr)
@@ -402,7 +402,7 @@ struct maple_sega_vmu: maple_base
 	{
 		memset(flash_data, 0, sizeof(flash_data));
 		memset(lcd_data, 0, sizeof(lcd_data));
-		
+
         // Load existing vmu file if found
         std::string rpath = hostfs::getVmuPath(logical_port, false);
 		// this might be a storage url
@@ -2108,6 +2108,8 @@ maple_device* maple_Create(MapleDeviceType type)
 
 #if (defined(_WIN32) || defined(__linux__) || (defined(__APPLE__) && defined(TARGET_OS_MAC))) && !defined(TARGET_UWP) && defined(USE_SDL) && !defined(LIBRETRO)
 #include "sdl/dreamconn.h"
+#include <list>
+#include <memory>
 
 struct DreamConnVmu : public maple_sega_vmu
 {
@@ -2131,12 +2133,20 @@ struct DreamConnVmu : public maple_sega_vmu
 		return maple_sega_vmu::dma(cmd);
 	}
 
-	void copy(maple_sega_vmu *other)
+	void copyIn(maple_sega_vmu *other)
 	{
 		memcpy(flash_data, other->flash_data, sizeof(flash_data));
 		memcpy(lcd_data, other->lcd_data, sizeof(lcd_data));
 		memcpy(lcd_data_decoded, other->lcd_data_decoded, sizeof(lcd_data_decoded));
 		fullSaveNeeded = other->fullSaveNeeded;
+	}
+
+	void copyOut(maple_sega_vmu *other)
+	{
+		memcpy(other->flash_data, flash_data, sizeof(other->flash_data));
+		memcpy(other->lcd_data, lcd_data, sizeof(other->lcd_data));
+		memcpy(other->lcd_data_decoded, lcd_data_decoded, sizeof(other->lcd_data_decoded));
+		other->fullSaveNeeded = fullSaveNeeded;
 	}
 
 	void updateScreen()
@@ -2170,32 +2180,99 @@ struct DreamConnPurupuru : public maple_sega_purupuru
 	}
 };
 
+static std::list<DreamConnVmu*> vmus;
+static std::list<DreamConnPurupuru*> purupurus;
+
 void createDreamConnDevices(std::shared_ptr<DreamConn> dreamconn, bool gameStart)
 {
 	const int bus = dreamconn->getBus();
 	if (dreamconn->hasVmu())
 	{
-		maple_device *dev = MapleDevices[bus][0];
-		if (gameStart || (dev != nullptr && dev->get_device_type() == MDT_SegaVMU))
+		bool found = false;
+		for (const DreamConnVmu* vmu : vmus)
 		{
-			DreamConnVmu *vmu = new DreamConnVmu(dreamconn);
-			vmu->Setup(bus, 0);
-			if (!gameStart) {
-				// if loading a state, copy data from the regular vmu and send a screen update
-				vmu->copy(static_cast<maple_sega_vmu*>(dev));
-				vmu->updateScreen();
+			if (vmu->dreamconn.get() == dreamconn.get())
+			{
+				found = true;
+				break;
 			}
-			delete dev;
+		}
+
+		if (!found)
+		{
+			maple_device *dev = MapleDevices[bus][0];
+			if (gameStart || (dev != nullptr && dev->get_device_type() == MDT_SegaVMU))
+			{
+				DreamConnVmu* vmu = new DreamConnVmu(dreamconn);
+				vmu->Setup(bus, 0);
+				if (!gameStart) {
+					// if loading a state, copy data from the regular vmu and send a screen update
+					vmu->copyIn(static_cast<maple_sega_vmu*>(dev));
+					vmu->updateScreen();
+				}
+				delete dev;
+				vmus.push_back(vmu);
+			}
 		}
 	}
 	if (dreamconn->hasRumble())
 	{
-		maple_device *dev = MapleDevices[bus][1];
-		if (gameStart || (dev != nullptr && dev->get_device_type() == MDT_PurupuruPack))
+		bool found = false;
+		for (const DreamConnPurupuru* purupuru : purupurus)
 		{
-			delete dev;
-			DreamConnPurupuru *rumble = new DreamConnPurupuru(dreamconn);
-			rumble->Setup(bus, 1);
+			if (purupuru->dreamconn.get() == dreamconn.get())
+			{
+				found = true;
+				break;
+			}
+		}
+
+		if (!found)
+		{
+			maple_device *dev = MapleDevices[bus][1];
+			if (gameStart || (dev != nullptr && dev->get_device_type() == MDT_PurupuruPack))
+			{
+				delete dev;
+				DreamConnPurupuru* rumble = new DreamConnPurupuru(dreamconn);
+				rumble->Setup(bus, 1);
+				purupurus.push_back(rumble);
+			}
+		}
+	}
+}
+
+void tearDownDreamConnDevices(std::shared_ptr<DreamConn> dreamconn)
+{
+	const int bus = dreamconn->getBus();
+	for (std::list<DreamConnVmu*>::const_iterator iter = vmus.begin(); iter != vmus.end();)
+	{
+		if ((*iter)->dreamconn.get() == dreamconn.get())
+		{
+			maple_sega_vmu *dev = new maple_sega_vmu();
+			dev->Setup(bus, 0);
+			DreamConnVmu* vmu = *iter;
+			vmu->copyOut(dev);
+			iter = vmus.erase(iter);
+			delete vmu;
+		}
+		else
+		{
+			++iter;
+		}
+	}
+	for (std::list<DreamConnPurupuru*>::const_iterator iter = purupurus.begin(); iter != purupurus.end();)
+	{
+		if ((*iter)->dreamconn.get() == dreamconn.get())
+		{
+			maple_sega_purupuru *dev = new maple_sega_purupuru();
+			dev->Setup(bus, 1);
+			DreamConnPurupuru* purupuru = *iter;
+			iter = purupurus.erase(iter);
+			delete purupuru;
+		}
+		else
+		{
+			++iter;
 		}
 	}
 }

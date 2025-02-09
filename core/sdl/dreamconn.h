@@ -60,7 +60,7 @@ class DreamConn
 	u8 expansionDevs = 0;
 
 public:
-	DreamConn(int bus, int dreamcastControllerType, const std::string& name);
+	DreamConn(int bus, int dreamcastControllerType, SDL_Joystick* sdl_joystick);
 
 	~DreamConn();
 
@@ -76,7 +76,9 @@ public:
 		return expansionDevs & 2;
 	}
 
-	void change_bus(int bus);
+	void changeBus(int newBus);
+
+	std::string getName();
 
 	void connect();
 	void disconnect();
