@@ -52,7 +52,6 @@ class DreamConn
 {
 	int bus = -1;
 	const int dreamcastControllerType;
-	const std::string name;
 #ifdef USE_DREAMCASTCONTROLLER
 	std::unique_ptr<class DreamcastControllerConnection> dcConnection;
 #endif

@@ -140,7 +140,7 @@ public:
 	EstablishConnectionResult establishConnection(int bus) override {
 #if !defined(_WIN32)
 		WARN_LOG(INPUT, "DreamcastController[%d] connection failed: DreamConn+ / DreamConn S Controller supported on Windows only", bus);
-		return false;
+		return EstablishConnectionResult::ConnectionFailed;
 #else
 		iostream = asio::ip::tcp::iostream("localhost", std::to_string(BASE_PORT + bus));
 		if (!iostream) {
@@ -774,7 +774,7 @@ public:
 			return serial->receiveMsg(msg, timeout_ms);
 		}
 
-		return asio::error::not_connected;
+		return false;
 	}
 
 	std::string getName() override {
@@ -792,7 +792,7 @@ std::unique_ptr<DreamPortSerialHandler> DreamPortConnection::serial;
 std::atomic<std::uint32_t> DreamPortConnection::connected_dev_count = 0;
 
 DreamConn::DreamConn(int bus, int dreamcastControllerType, SDL_Joystick* sdl_joystick) :
-	bus(bus), dreamcastControllerType(dreamcastControllerType), name(name)
+	bus(bus), dreamcastControllerType(dreamcastControllerType)
 {
 	switch (dreamcastControllerType)
 	{
@@ -850,7 +850,7 @@ void DreamConn::connect()
 
 	if (hasVmu() || hasRumble())
 	{
-		NOTICE_LOG(INPUT, "Connected to DreamcastController[%d]: Type:%s, VMU:%d, Rumble Pack:%d", bus, name.c_str(), hasVmu(), hasRumble());
+		NOTICE_LOG(INPUT, "Connected to DreamcastController[%d]: Type:%s, VMU:%d, Rumble Pack:%d", bus, getName().c_str(), hasVmu(), hasRumble());
 		maple_io_connected = true;
 	}
 	else
