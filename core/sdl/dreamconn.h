@@ -75,6 +75,8 @@ public:
 		return expansionDevs & 2;
 	}
 
+	int getDefaultBus();
+
 	void changeBus(int newBus);
 
 	std::string getName();

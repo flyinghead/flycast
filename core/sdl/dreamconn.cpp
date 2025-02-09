@@ -111,6 +111,10 @@ public:
 	virtual asio::error_code sendMsg(const MapleMsg& msg) = 0;
 	virtual bool receiveMsg(MapleMsg& msg) = 0;
 	virtual std::string getName() = 0;
+	virtual int getDefaultBus() {
+		// Value of -1 means to use enumeration order
+		return -1;
+	}
 
 protected:
 	virtual EstablishConnectionResult establishConnection(int bus) = 0;
@@ -711,6 +715,10 @@ public:
 		return is_hardware_bus_implied;
 	}
 
+	bool isSingleDevice() const {
+		return is_single_device;
+	}
+
 	EstablishConnectionResult establishConnection(int bus) override {
 		// Timeout is 1 second while establishing connection
 		timeout_ms = std::chrono::seconds(1);
@@ -785,6 +793,15 @@ public:
 		}
 		return name;
 	}
+
+	virtual int getDefaultBus() {
+		if (!is_hardware_bus_implied && !is_single_device) {
+			return hardware_bus;
+		} else {
+			// Value of -1 means to use enumeration order
+			return -1;
+		}
+	}
 };
 
 // Define the static instances here
@@ -810,11 +827,15 @@ DreamConn::~DreamConn() {
 	disconnect();
 }
 
+int DreamConn::getDefaultBus() {
+	if (dcConnection) {
+		return dcConnection->getDefaultBus();
+	}
+	return -1;
+}
+
 void DreamConn::changeBus(int newBus) {
 	bus = newBus;
-	if (dcConnection) {
-		dcConnection->connect(bus);
-	}
 }
 
 std::string DreamConn::getName() {
@@ -934,6 +955,10 @@ DreamConnGamepad::DreamConnGamepad(int maple_port, int joystick_idx, SDL_Joystic
 
 	if (dreamconn) {
 		_name = dreamconn->getName();
+		int defaultBus = dreamconn->getDefaultBus();
+		if (defaultBus >= 0 && defaultBus < 4) {
+			set_maple_port(defaultBus);
+		}
 	}
 
 	EventManager::listen(Event::Start, handleEvent, this);
