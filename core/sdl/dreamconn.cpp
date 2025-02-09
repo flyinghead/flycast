@@ -309,18 +309,18 @@ public:
 			u8 hwOriginAP = (hardware_bus << 6) | (msg.originAP & 0x3F);
 
 			std::ostringstream s;
-			s << "X "; // 'X' prefix triggers flycast command parser
+			s << "X"; // 'X' prefix triggers flycast command parser
 			s.fill('0');
 			s << std::hex << std::uppercase
-				<< std::setw(2) << (u32)msg.command << " "
-				<< std::setw(2) << (u32)hwDestAP << " " // override dest
-				<< std::setw(2) << (u32)hwOriginAP << " " // override origin
+				<< std::setw(2) << (u32)msg.command
+				<< std::setw(2) << (u32)hwDestAP // override dest
+				<< std::setw(2) << (u32)hwOriginAP // override origin
 				<< std::setw(2) << (u32)msg.size;
 			const u32 sz = msg.getDataSize();
 			for (u32 i = 0; i < sz; i++) {
-				s << " " << std::setw(2) << (u32)msg.data[i];
+				s << std::setw(2) << (u32)msg.data[i];
 			}
-			s << "\r\n";
+			s << "\n";
 
 			serial_out_data = std::move(s.str());
 		}
