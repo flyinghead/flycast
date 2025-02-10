@@ -129,7 +129,9 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: flycast-${{ matrix.config.name }}
-          path: artifact/bin
+          path: |
+            artifact/bin
+            artifact/lib/libretro
 
       - name: Package app (macos)
         run: |
