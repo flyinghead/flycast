@@ -59,7 +59,7 @@ class DreamConn
 	u8 expansionDevs = 0;
 
 public:
-	DreamConn(int bus, int dreamcastControllerType, SDL_Joystick* sdl_joystick);
+	DreamConn(int bus, int dreamcastControllerType, int joystick_idx, SDL_Joystick* sdl_joystick);
 
 	~DreamConn();
 

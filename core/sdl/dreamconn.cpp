@@ -620,9 +620,12 @@ public:
 	DreamPortConnection(const DreamPortConnection&) = delete;
 	DreamPortConnection() = delete;
 
-	DreamPortConnection(SDL_Joystick* sdl_joystick) :
+	DreamPortConnection(int joystick_idx, SDL_Joystick* sdl_joystick) :
 		DreamcastControllerConnection()
 	{
+		// Getting the instance ID FIRST fixes some sort of L/R trigger bug in dinput
+		int instance_id = SDL_JoystickGetDeviceInstanceID(joystick_idx);
+
 		const char* joystick_name = SDL_JoystickName(sdl_joystick);
 		const char* joystick_path = SDL_JoystickPath(sdl_joystick);
 
@@ -666,7 +669,7 @@ public:
 					} else {
 						is_single_device = false;
 						// Interfaces go in decending order
-						hardware_bus = (count - (my_dev->interface_number % 4) - 1);
+						hardware_bus = (count - (instance_id % 4) - 1);
 						is_hardware_bus_implied = false;
 					}
 				}
@@ -809,7 +812,7 @@ public:
 std::unique_ptr<DreamPortSerialHandler> DreamPortConnection::serial;
 std::atomic<std::uint32_t> DreamPortConnection::connected_dev_count = 0;
 
-DreamConn::DreamConn(int bus, int dreamcastControllerType, SDL_Joystick* sdl_joystick) :
+DreamConn::DreamConn(int bus, int dreamcastControllerType, int joystick_idx, SDL_Joystick* sdl_joystick) :
 	bus(bus), dreamcastControllerType(dreamcastControllerType)
 {
 	switch (dreamcastControllerType)
@@ -819,7 +822,7 @@ DreamConn::DreamConn(int bus, int dreamcastControllerType, SDL_Joystick* sdl_joy
 			break;
 
 		case TYPE_DREAMCASTCONTROLLERUSB:
-			dcConnection = std::make_unique<DreamPortConnection>(sdl_joystick);
+			dcConnection = std::make_unique<DreamPortConnection>(joystick_idx, sdl_joystick);
 			break;
 	}
 }
@@ -947,11 +950,11 @@ DreamConnGamepad::DreamConnGamepad(int maple_port, int joystick_idx, SDL_Joystic
 	// Dreamcast Controller USB VID:1209 PID:2f07
 	if (memcmp(DreamConnConnection::VID_PID_GUID, guid_str + 8, 16) == 0)
 	{
-		dreamconn = std::make_shared<DreamConn>(maple_port, TYPE_DREAMCONN, sdl_joystick);
+		dreamconn = std::make_shared<DreamConn>(maple_port, TYPE_DREAMCONN, joystick_idx, sdl_joystick);
 	}
 	else if (memcmp(DreamPortConnection::VID_PID_GUID, guid_str + 8, 16) == 0)
 	{
-		dreamconn = std::make_shared<DreamConn>(maple_port, TYPE_DREAMCASTCONTROLLERUSB, sdl_joystick);
+		dreamconn = std::make_shared<DreamConn>(maple_port, TYPE_DREAMCASTCONTROLLERUSB, joystick_idx, sdl_joystick);
 	}
 
 	if (dreamconn) {
