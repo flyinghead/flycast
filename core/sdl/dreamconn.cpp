@@ -665,7 +665,8 @@ public:
 						is_hardware_bus_implied = false;
 					} else {
 						is_single_device = false;
-						hardware_bus = my_dev->interface_number;
+						// Interfaces go in decending order
+						hardware_bus = (count - my_dev->interface_number - 1);
 						is_hardware_bus_implied = false;
 					}
 				}
