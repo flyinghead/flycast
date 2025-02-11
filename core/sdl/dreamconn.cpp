@@ -668,30 +668,24 @@ public:
 							}
 							it = it->next;
 						}
-					}
-					if (count <= 0) {
-						WARN_LOG(INPUT, "DreamPort connection: device has no serial; assuming HW ID of 0");
-						is_single_device = true;
-						hardware_bus = 0;
-						is_hardware_bus_implied = true;
-					} else if (count == 1) {
-						// Single device of this serial found
-						is_single_device = true;
-						hardware_bus = 0;
-						is_hardware_bus_implied = false;
-					} else {
-						is_single_device = false;
-						if (my_dev->release_number < 0x0102)
-						{
-							// Interfaces go in decending order
-							hardware_bus = (count - (my_dev->interface_number % 4) - 1);
+
+						if (count == 1) {
+							// Single device of this serial found
+							is_single_device = true;
+							hardware_bus = 0;
 							is_hardware_bus_implied = false;
-						}
-						else
-						{
-							// Version 1.02 of interface will make interfaces in ascending order
-							hardware_bus = (my_dev->interface_number % 4);
-							is_hardware_bus_implied = false;
+						} else {
+							is_single_device = false;
+							if (my_dev->release_number < 0x0102)
+							{
+								// Interfaces go in decending order
+								hardware_bus = (count - (my_dev->interface_number % 4) - 1);
+								is_hardware_bus_implied = false;
+							} else {
+								// Version 1.02 of interface will make interfaces in ascending order
+								hardware_bus = (my_dev->interface_number % 4);
+								is_hardware_bus_implied = false;
+							}
 						}
 					}
 				}
