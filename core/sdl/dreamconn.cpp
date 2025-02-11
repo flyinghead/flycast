@@ -648,7 +648,7 @@ public:
 					while (it)
 					{
 						// Note: hex characters will be differing case, so case-insensitive cmp is needed
-						if (0 == SDL_strcasecmp(it->path, joystick_path)) {
+						if (it->path && 0 == SDL_strcasecmp(it->path, joystick_path)) {
 							my_dev = it;
 							break;
 						}
@@ -660,10 +660,19 @@ public:
 					it = devs;
 					int count = 0;
 					while (it) {
-						if (0 == wcscmp(it->serial_number, my_dev->serial_number)) {
+						if (it->serial_number &&
+							my_dev->serial_number &&
+							0 == wcscmp(it->serial_number, my_dev->serial_number))
+						{
 							++count;
 						}
 						it = it->next;
+					}
+					if (count <= 0) {
+						// Device had no serial
+						is_single_device = true;
+						hardware_bus = 0;
+						is_hardware_bus_implied = true;
 					}
 					if (count == 1) {
 						// Single device of this serial found

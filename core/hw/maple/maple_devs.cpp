@@ -2133,7 +2133,7 @@ struct DreamConnVmu : public maple_sega_vmu
 		return maple_sega_vmu::dma(cmd);
 	}
 
-	void copyIn(std::shared_ptr<maple_sega_vmu>& other)
+	void copyIn(std::shared_ptr<maple_sega_vmu> other)
 	{
 		memcpy(flash_data, other->flash_data, sizeof(flash_data));
 		memcpy(lcd_data, other->lcd_data, sizeof(lcd_data));
@@ -2141,7 +2141,7 @@ struct DreamConnVmu : public maple_sega_vmu
 		fullSaveNeeded = other->fullSaveNeeded;
 	}
 
-	void copyOut(std::shared_ptr<maple_sega_vmu>& other)
+	void copyOut(std::shared_ptr<maple_sega_vmu> other)
 	{
 		memcpy(other->flash_data, flash_data, sizeof(other->flash_data));
 		memcpy(other->lcd_data, lcd_data, sizeof(other->lcd_data));
