@@ -659,22 +659,22 @@ public:
 				if (my_dev) {
 					it = devs;
 					int count = 0;
-					while (it) {
-						if (it->serial_number &&
-							my_dev->serial_number &&
-							0 == wcscmp(it->serial_number, my_dev->serial_number))
-						{
-							++count;
+					if (my_dev->serial_number) {
+						while (it) {
+							if (it->serial_number &&
+								0 == wcscmp(it->serial_number, my_dev->serial_number))
+							{
+								++count;
+							}
+							it = it->next;
 						}
-						it = it->next;
 					}
 					if (count <= 0) {
-						// Device had no serial
+						WARN_LOG(INPUT, "DreamPort connection: device has no serial; assuming HW ID of 0");
 						is_single_device = true;
 						hardware_bus = 0;
 						is_hardware_bus_implied = true;
-					}
-					if (count == 1) {
+					} else if (count == 1) {
 						// Single device of this serial found
 						is_single_device = true;
 						hardware_bus = 0;
@@ -705,6 +705,7 @@ public:
 						is_single_device = true;
 #else
 						if (!joystick_name) {
+							WARN_LOG(INPUT, "DreamPort connection: failed to locate enumerated device; assuming HW ID of 0");
 							hardware_bus = 0;
 							is_hardware_bus_implied = true;
 							is_single_device = true;
