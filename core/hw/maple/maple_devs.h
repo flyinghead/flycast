@@ -121,7 +121,7 @@ enum AWAVE_KEYS
 	AWAVE_TRIGGER_KEY = 1 << 17,
 };
 
-struct maple_device
+struct maple_device : public std::enable_shared_from_this<maple_device>
 {
 	u8 maple_port;          //raw maple port
 	u8 bus_port;            //0 .. 5
@@ -150,7 +150,7 @@ struct maple_device
 	virtual const void *getData(size_t& size) const { size = 0; return nullptr; }
 };
 
-maple_device* maple_Create(MapleDeviceType type);
+std::shared_ptr<maple_device> maple_Create(MapleDeviceType type);
 
 #define MAPLE_PORTS 4
 

@@ -44,7 +44,7 @@ void maple_device::Setup(u32 bus, u32 port, int playerNum)
 
 	config = new MapleConfigMap(this);
 	OnSetup();
-	MapleDevices[bus][port] = this;
+	MapleDevices[bus][port] = shared_from_this();
 }
 maple_device::~maple_device()
 {
@@ -2047,56 +2047,56 @@ struct RFIDReaderWriter : maple_base
 
 void insertRfidCard(int playerNum)
 {
-	maple_device *mapleDev = MapleDevices[1 + playerNum][5];
+	std::shared_ptr<maple_device> mapleDev = MapleDevices[1 + playerNum][5];
 	if (mapleDev != nullptr && mapleDev->get_device_type() == MDT_RFIDReaderWriter)
-		((RFIDReaderWriter *)mapleDev)->insertCard();
+		std::static_pointer_cast<RFIDReaderWriter>(mapleDev)->insertCard();
 }
 
 void setRfidCardData(int playerNum, u8 *data)
 {
-	maple_device *mapleDev = MapleDevices[1 + playerNum][5];
+	std::shared_ptr<maple_device> mapleDev = MapleDevices[1 + playerNum][5];
 	if (mapleDev != nullptr && mapleDev->get_device_type() == MDT_RFIDReaderWriter)
-		((RFIDReaderWriter *)mapleDev)->setCardData(data);
+		std::static_pointer_cast<RFIDReaderWriter>(mapleDev)->setCardData(data);
 }
 
 const u8 *getRfidCardData(int playerNum)
 {
-	maple_device *mapleDev = MapleDevices[1 + playerNum][5];
+	std::shared_ptr<maple_device> mapleDev = MapleDevices[1 + playerNum][5];
 	if (mapleDev != nullptr && mapleDev->get_device_type() == MDT_RFIDReaderWriter)
-		return ((RFIDReaderWriter *)mapleDev)->getCardData();
+		return std::static_pointer_cast<RFIDReaderWriter>(mapleDev)->getCardData();
 	else
 		return nullptr;
 }
 
-maple_device* maple_Create(MapleDeviceType type)
+std::shared_ptr<maple_device> maple_Create(MapleDeviceType type)
 {
 	switch(type)
 	{
 	case MDT_SegaController:
 		if (!settings.platform.isAtomiswave())
-			return new maple_sega_controller();
+			return std::make_shared<maple_sega_controller>();
 		else
-			return new maple_atomiswave_controller();
-	case MDT_Microphone:		return new maple_microphone();
-	case MDT_SegaVMU:			return new maple_sega_vmu();
-	case MDT_PurupuruPack:		return new maple_sega_purupuru();
-	case MDT_Keyboard:			return new maple_keyboard();
-	case MDT_Mouse:				return new maple_mouse();
+			return std::make_shared<maple_atomiswave_controller>();
+	case MDT_Microphone:		return std::make_shared<maple_microphone>();
+	case MDT_SegaVMU:			return std::make_shared<maple_sega_vmu>();
+	case MDT_PurupuruPack:		return std::make_shared<maple_sega_purupuru>();
+	case MDT_Keyboard:			return std::make_shared<maple_keyboard>();
+	case MDT_Mouse:				return std::make_shared<maple_mouse>();
 	case MDT_LightGun:
 		if (!settings.platform.isAtomiswave())
-			return new maple_lightgun();
+			return std::make_shared<maple_lightgun>();
 		else
-			return new atomiswave_lightgun();
-	case MDT_NaomiJamma:		return new maple_naomi_jamma();
-	case MDT_TwinStick:			return new maple_sega_twinstick();
-	case MDT_AsciiStick:		return new maple_ascii_stick();
-	case MDT_MaracasController:	return new maple_maracas_controller();
-	case MDT_FishingController:	return new maple_fishing_controller();
-	case MDT_PopnMusicController:	return new maple_popnmusic_controller();
-	case MDT_RacingController:	return new maple_racing_controller();
-	case MDT_DenshaDeGoController:	return new maple_densha_controller();
-	case MDT_SegaControllerXL:	return new FullController();
-	case MDT_RFIDReaderWriter:	return new RFIDReaderWriter();
+			return std::make_shared<atomiswave_lightgun>();
+	case MDT_NaomiJamma:		return std::make_shared<maple_naomi_jamma>();
+	case MDT_TwinStick:			return std::make_shared<maple_sega_twinstick>();
+	case MDT_AsciiStick:		return std::make_shared<maple_ascii_stick>();
+	case MDT_MaracasController:	return std::make_shared<maple_maracas_controller>();
+	case MDT_FishingController:	return std::make_shared<maple_fishing_controller>();
+	case MDT_PopnMusicController:	return std::make_shared<maple_popnmusic_controller>();
+	case MDT_RacingController:	return std::make_shared<maple_racing_controller>();
+	case MDT_DenshaDeGoController:	return std::make_shared<maple_densha_controller>();
+	case MDT_SegaControllerXL:	return std::make_shared<FullController>();
+	case MDT_RFIDReaderWriter:	return std::make_shared<RFIDReaderWriter>();
 
 	default:
 		ERROR_LOG(MAPLE, "Invalid device type %d", type);
@@ -2133,7 +2133,7 @@ struct DreamConnVmu : public maple_sega_vmu
 		return maple_sega_vmu::dma(cmd);
 	}
 
-	void copyIn(maple_sega_vmu *other)
+	void copyIn(std::shared_ptr<maple_sega_vmu>& other)
 	{
 		memcpy(flash_data, other->flash_data, sizeof(flash_data));
 		memcpy(lcd_data, other->lcd_data, sizeof(lcd_data));
@@ -2141,7 +2141,7 @@ struct DreamConnVmu : public maple_sega_vmu
 		fullSaveNeeded = other->fullSaveNeeded;
 	}
 
-	void copyOut(maple_sega_vmu *other)
+	void copyOut(std::shared_ptr<maple_sega_vmu>& other)
 	{
 		memcpy(other->flash_data, flash_data, sizeof(other->flash_data));
 		memcpy(other->lcd_data, lcd_data, sizeof(other->lcd_data));
@@ -2180,8 +2180,8 @@ struct DreamConnPurupuru : public maple_sega_purupuru
 	}
 };
 
-static std::list<DreamConnVmu*> vmus;
-static std::list<DreamConnPurupuru*> purupurus;
+static std::list<std::shared_ptr<DreamConnVmu>> dreamConnVmus;
+static std::list<std::shared_ptr<DreamConnPurupuru>> dreamConnPurupurus;
 
 void createDreamConnDevices(std::shared_ptr<DreamConn> dreamconn, bool gameStart)
 {
@@ -2189,7 +2189,7 @@ void createDreamConnDevices(std::shared_ptr<DreamConn> dreamconn, bool gameStart
 	if (dreamconn->hasVmu())
 	{
 		bool found = false;
-		for (const DreamConnVmu* vmu : vmus)
+		for (const std::shared_ptr<const DreamConnVmu>& vmu : dreamConnVmus)
 		{
 			if (vmu->dreamconn.get() == dreamconn.get())
 			{
@@ -2200,25 +2200,24 @@ void createDreamConnDevices(std::shared_ptr<DreamConn> dreamconn, bool gameStart
 
 		if (!found)
 		{
-			maple_device *dev = MapleDevices[bus][0];
+			std::shared_ptr<maple_device> dev = MapleDevices[bus][0];
 			if (gameStart || (dev != nullptr && dev->get_device_type() == MDT_SegaVMU))
 			{
-				DreamConnVmu* vmu = new DreamConnVmu(dreamconn);
+				std::shared_ptr<DreamConnVmu> vmu = std::make_shared<DreamConnVmu>(dreamconn);
 				vmu->Setup(bus, 0);
 				if (!gameStart) {
 					// if loading a state, copy data from the regular vmu and send a screen update
-					vmu->copyIn(static_cast<maple_sega_vmu*>(dev));
+					vmu->copyIn(std::static_pointer_cast<maple_sega_vmu>(dev));
 					vmu->updateScreen();
 				}
-				delete dev;
-				vmus.push_back(vmu);
+				dreamConnVmus.push_back(vmu);
 			}
 		}
 	}
 	if (dreamconn->hasRumble())
 	{
 		bool found = false;
-		for (const DreamConnPurupuru* purupuru : purupurus)
+		for (const std::shared_ptr<const DreamConnPurupuru>& purupuru : dreamConnPurupurus)
 		{
 			if (purupuru->dreamconn.get() == dreamconn.get())
 			{
@@ -2229,13 +2228,12 @@ void createDreamConnDevices(std::shared_ptr<DreamConn> dreamconn, bool gameStart
 
 		if (!found)
 		{
-			maple_device *dev = MapleDevices[bus][1];
+			std::shared_ptr<maple_device> dev = MapleDevices[bus][1];
 			if (gameStart || (dev != nullptr && dev->get_device_type() == MDT_PurupuruPack))
 			{
-				delete dev;
-				DreamConnPurupuru* rumble = new DreamConnPurupuru(dreamconn);
+				std::shared_ptr<DreamConnPurupuru> rumble = std::make_shared<DreamConnPurupuru>(dreamconn);
 				rumble->Setup(bus, 1);
-				purupurus.push_back(rumble);
+				dreamConnPurupurus.push_back(rumble);
 			}
 		}
 	}
@@ -2244,31 +2242,31 @@ void createDreamConnDevices(std::shared_ptr<DreamConn> dreamconn, bool gameStart
 void tearDownDreamConnDevices(std::shared_ptr<DreamConn> dreamconn)
 {
 	const int bus = dreamconn->getBus();
-	for (std::list<DreamConnVmu*>::const_iterator iter = vmus.begin(); iter != vmus.end();)
+	for (std::list<std::shared_ptr<DreamConnVmu>>::const_iterator iter = dreamConnVmus.begin();
+		iter != dreamConnVmus.end();)
 	{
 		if ((*iter)->dreamconn.get() == dreamconn.get())
 		{
-			maple_sega_vmu *dev = new maple_sega_vmu();
+			std::shared_ptr<maple_device> dev = maple_Create(MDT_SegaVMU);
 			dev->Setup(bus, 0);
-			DreamConnVmu* vmu = *iter;
-			vmu->copyOut(dev);
-			iter = vmus.erase(iter);
-			delete vmu;
+			(*iter)->copyOut(std::static_pointer_cast<maple_sega_vmu>(dev));
+			iter = dreamConnVmus.erase(iter);
+			break;
 		}
 		else
 		{
 			++iter;
 		}
 	}
-	for (std::list<DreamConnPurupuru*>::const_iterator iter = purupurus.begin(); iter != purupurus.end();)
+	for (std::list<std::shared_ptr<DreamConnPurupuru>>::const_iterator iter = dreamConnPurupurus.begin();
+		iter != dreamConnPurupurus.end();)
 	{
 		if ((*iter)->dreamconn.get() == dreamconn.get())
 		{
-			maple_sega_purupuru *dev = new maple_sega_purupuru();
+			std::shared_ptr<maple_device> dev = maple_Create(MDT_PurupuruPack);
 			dev->Setup(bus, 1);
-			DreamConnPurupuru* purupuru = *iter;
-			iter = purupurus.erase(iter);
-			delete purupuru;
+			iter = dreamConnPurupurus.erase(iter);
+			break;
 		}
 		else
 		{
