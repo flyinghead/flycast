@@ -630,6 +630,7 @@ public:
 		const char* joystick_path = SDL_JoystickPath(sdl_joystick);
 
 		// Set hardware_bus
+		// The firmware comes in 2 flavors: host-1p (1 gamepad) and host-4p (4 gamepads)
 		struct SDL_hid_device_info* devs = SDL_hid_enumerate(VID, PID);
 		if (devs) {
 			hardware_bus = -1;
@@ -642,14 +643,17 @@ public:
 				struct SDL_hid_device_info* it = devs;
 				struct SDL_hid_device_info* my_dev = nullptr;
 
-				while (it)
+				if (joystick_path)
 				{
-					// Note: hex characters will be differing case, so case-insensitive cmp is needed
-					if (0 == SDL_strcasecmp(it->path, joystick_path)) {
-						my_dev = it;
-						break;
+					while (it)
+					{
+						// Note: hex characters will be differing case, so case-insensitive cmp is needed
+						if (0 == SDL_strcasecmp(it->path, joystick_path)) {
+							my_dev = it;
+							break;
+						}
+						it = it->next;
 					}
-					it = it->next;
 				}
 
 				if (my_dev) {
@@ -668,9 +672,18 @@ public:
 						is_hardware_bus_implied = false;
 					} else {
 						is_single_device = false;
-						// Interfaces go in decending order
-						hardware_bus = (count - (instance_id % 4) - 1);
-						is_hardware_bus_implied = false;
+						if (my_dev->release_number < 0x0102)
+						{
+							// Interfaces go in decending order
+							hardware_bus = (count - (my_dev->interface_number % 4) - 1);
+							is_hardware_bus_implied = false;
+						}
+						else
+						{
+							// Version 1.02 of interface will make interfaces in ascending order
+							hardware_bus = (my_dev->interface_number % 4);
+							is_hardware_bus_implied = false;
+						}
 					}
 				}
 
@@ -682,18 +695,30 @@ public:
 						is_hardware_bus_implied = true;
 						is_single_device = true;
 #else
-						if (0 == strcmp("P4", joystick_name)) {
-							hardware_bus = 3;
-							is_hardware_bus_implied = false;
-						} else if (0 == strcmp("P3", joystick_name)) {
-							hardware_bus = 2;
-							is_hardware_bus_implied = false;
-						} else if (0 == strcmp("P2", joystick_name)) {
-							hardware_bus = 1;
-							is_hardware_bus_implied = false;
-						} else {
+						if (!joystick_name) {
 							hardware_bus = 0;
-							is_hardware_bus_implied = false;
+							is_hardware_bus_implied = true;
+							is_single_device = true;
+						else {
+							std::size_t name_len = strlen(joystick_name);
+							char lastChar = '\0';
+							if (name_len > 0) {
+								lastChar = joystick_name[name_len - 1];
+							}
+							if (lastChar == '4' || lastChar == 'D') {
+								hardware_bus = 3;
+								is_hardware_bus_implied = false;
+							} else if (lastChar == '3' || lastChar == 'C') {
+								hardware_bus = 2;
+								is_hardware_bus_implied = false;
+							} else if (lastChar == '2' || lastChar == 'B') {
+								hardware_bus = 1;
+								is_hardware_bus_implied = false;
+							} else {
+								hardware_bus = 0;
+								is_hardware_bus_implied = (lastChar == '\0');
+								is_single_device = (lastChar != '1' && lastChar != 'A');
+							}
 						}
 #endif
 				}
@@ -704,6 +729,7 @@ public:
 			WARN_LOG(INPUT, "DreamPort connection: failed to enumerate devices; assuming HW ID of 0");
 			hardware_bus = 0;
 			is_hardware_bus_implied = true;
+			is_single_device = true;
 		}
 	}
 
@@ -821,7 +847,7 @@ DreamConn::DreamConn(int bus, int dreamcastControllerType, int joystick_idx, SDL
 			dcConnection = std::make_unique<DreamConnConnection>();
 			break;
 
-		case TYPE_DREAMCASTCONTROLLERUSB:
+		case TYPE_DREAMPORT:
 			dcConnection = std::make_unique<DreamPortConnection>(joystick_idx, sdl_joystick);
 			break;
 	}
@@ -954,7 +980,7 @@ DreamConnGamepad::DreamConnGamepad(int maple_port, int joystick_idx, SDL_Joystic
 	}
 	else if (memcmp(DreamPortConnection::VID_PID_GUID, guid_str + 8, 16) == 0)
 	{
-		dreamconn = std::make_shared<DreamConn>(maple_port, TYPE_DREAMCASTCONTROLLERUSB, joystick_idx, sdl_joystick);
+		dreamconn = std::make_shared<DreamConn>(maple_port, TYPE_DREAMPORT, joystick_idx, sdl_joystick);
 	}
 
 	if (dreamconn) {

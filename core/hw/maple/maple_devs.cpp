@@ -2188,53 +2188,60 @@ void createDreamConnDevices(std::shared_ptr<DreamConn> dreamconn, bool gameStart
 	const int bus = dreamconn->getBus();
 	if (dreamconn->hasVmu())
 	{
-		bool found = false;
-		for (const std::shared_ptr<const DreamConnVmu>& vmu : dreamConnVmus)
+		std::shared_ptr<DreamConnVmu> vmu;
+		for (const std::shared_ptr<DreamConnVmu>& vmuIter : dreamConnVmus)
 		{
-			if (vmu->dreamconn.get() == dreamconn.get())
+			if (vmuIter->dreamconn.get() == dreamconn.get())
 			{
-				found = true;
+				vmu = vmuIter;
 				break;
 			}
 		}
 
-		if (!found)
+		std::shared_ptr<maple_device> dev = MapleDevices[bus][0];
+		if (gameStart || (dev != nullptr && dev->get_device_type() == MDT_SegaVMU))
 		{
-			std::shared_ptr<maple_device> dev = MapleDevices[bus][0];
-			if (gameStart || (dev != nullptr && dev->get_device_type() == MDT_SegaVMU))
+			bool vmuCreated = false;
+			if (!vmu)
 			{
-				std::shared_ptr<DreamConnVmu> vmu = std::make_shared<DreamConnVmu>(dreamconn);
-				vmu->Setup(bus, 0);
-				if (!gameStart) {
-					// if loading a state, copy data from the regular vmu and send a screen update
-					vmu->copyIn(std::static_pointer_cast<maple_sega_vmu>(dev));
-					vmu->updateScreen();
-				}
-				dreamConnVmus.push_back(vmu);
+				vmu = std::make_shared<DreamConnVmu>(dreamconn);
+				vmuCreated = true;
 			}
+
+			vmu->Setup(bus, 0);
+
+			if (!gameStart || !vmuCreated) {
+				// if loading a state or DreamConnVmu existed, copy data from the regular vmu and send a screen update
+				if (dev) {
+					vmu->copyIn(std::static_pointer_cast<maple_sega_vmu>(dev));
+				}
+				vmu->updateScreen();
+			}
+
+			dreamConnVmus.push_back(vmu);
 		}
 	}
 	if (dreamconn->hasRumble())
 	{
-		bool found = false;
-		for (const std::shared_ptr<const DreamConnPurupuru>& purupuru : dreamConnPurupurus)
+		std::shared_ptr<DreamConnPurupuru> rumble;
+		for (const std::shared_ptr<DreamConnPurupuru>& purupuru : dreamConnPurupurus)
 		{
 			if (purupuru->dreamconn.get() == dreamconn.get())
 			{
-				found = true;
+				rumble = purupuru;
 				break;
 			}
 		}
 
-		if (!found)
+		std::shared_ptr<maple_device> dev = MapleDevices[bus][1];
+		if (gameStart || (dev != nullptr && dev->get_device_type() == MDT_PurupuruPack))
 		{
-			std::shared_ptr<maple_device> dev = MapleDevices[bus][1];
-			if (gameStart || (dev != nullptr && dev->get_device_type() == MDT_PurupuruPack))
+			if (!rumble)
 			{
-				std::shared_ptr<DreamConnPurupuru> rumble = std::make_shared<DreamConnPurupuru>(dreamconn);
-				rumble->Setup(bus, 1);
-				dreamConnPurupurus.push_back(rumble);
+				rumble = std::make_shared<DreamConnPurupuru>(dreamconn);
 			}
+			rumble->Setup(bus, 1);
+			dreamConnPurupurus.push_back(rumble);
 		}
 	}
 }

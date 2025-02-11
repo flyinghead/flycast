@@ -23,7 +23,7 @@
 #if (defined(_WIN32) || defined(__linux__) || (defined(__APPLE__) && defined(TARGET_OS_MAC))) && !defined(TARGET_UWP)
 #define USE_DREAMCASTCONTROLLER 1
 #define TYPE_DREAMCONN 1
-#define TYPE_DREAMCASTCONTROLLERUSB 2
+#define TYPE_DREAMPORT 2
 #include <asio.hpp>
 #endif
 #include <memory>
