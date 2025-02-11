@@ -699,7 +699,7 @@ public:
 							hardware_bus = 0;
 							is_hardware_bus_implied = true;
 							is_single_device = true;
-						else {
+						} else {
 							std::size_t name_len = strlen(joystick_name);
 							char lastChar = '\0';
 							if (name_len > 0) {
