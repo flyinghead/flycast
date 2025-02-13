@@ -594,6 +594,8 @@ class DreamPortConnection : public DreamcastControllerConnection
 	static std::atomic<std::uint32_t> connected_dev_count;
 	//! Current timeout in milliseconds
 	std::chrono::milliseconds timeout_ms;
+	//! The bus ID dictated by flycast
+	int software_bus = -1;
 	//! The bus index of the hardware connection which will differ from the software bus
 	int hardware_bus = -1;
 	//! true iff only a single devices was found when enumerating devices
@@ -642,6 +644,8 @@ public:
 	bool establishConnection(int bus) override {
 		// Timeout is 1 second while establishing connection
 		timeout_ms = std::chrono::seconds(1);
+
+		software_bus = bus;
 
 		if (connection_established && serial) {
 			if (serial->is_open()) {
@@ -730,11 +734,8 @@ public:
 	}
 
 	void gameTermination() override {
-		// This will update the displayed port letter on the screen
-		std::ostringstream s;
-		s << "X-"; // X- is flycast "reset"
-		s << hardware_bus << "\n";
-		serial->sendCmd(s.str());
+		// Reset screen to selected port
+		sendPort(software_bus);
 	}
 
 private:
