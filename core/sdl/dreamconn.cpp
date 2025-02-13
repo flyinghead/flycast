@@ -50,17 +50,6 @@ class DreamcastControllerConnection
 private:
 	MapleMsg connection_msg;
 
-protected:
-	enum class EstablishConnectionResult
-	{
-		//! Connection establishment has failed
-		ConnectionFailed,
-		//! A new connection was established
-		NewConnectionEstablished,
-		//! The current connection is still valid
-		ConnectionPersists
-	};
-
 public:
 	DreamcastControllerConnection(const DreamcastControllerConnection&) = delete;
 
@@ -68,43 +57,34 @@ public:
 	~DreamcastControllerConnection() = default;
 
 	std::optional<MapleMsg> connect(int bus){
-		EstablishConnectionResult result = establishConnection(bus);
+		bool result = establishConnection(bus);
 
-		switch (result)
-		{
-			default:
-			case EstablishConnectionResult::ConnectionFailed:
-				return std::nullopt;
-
-			case EstablishConnectionResult::ConnectionPersists:
-				return connection_msg;
-
-			case EstablishConnectionResult::NewConnectionEstablished:
-			{
-				// Now get the controller configuration
-				connection_msg.command = MDCF_GetCondition;
-				connection_msg.destAP = (bus << 6) | 0x20;
-				connection_msg.originAP = bus << 6;
-				connection_msg.setData(MFID_0_Input);
-
-				asio::error_code ec = sendMsg(connection_msg);
-				if (ec)
-				{
-					WARN_LOG(INPUT, "DreamcastController[%d] connection failed: %s", bus, ec.message().c_str());
-					disconnect();
-					return std::nullopt;
-				}
-				if (!receiveMsg(connection_msg)) {
-					WARN_LOG(INPUT, "DreamcastController[%d] read timeout", bus);
-					disconnect();
-					return std::nullopt;
-				}
-
-				onConnectComplete();
-
-				return connection_msg;
-			}
+		if (!result) {
+			return std::nullopt;
 		}
+
+		// Now get the controller configuration
+		connection_msg.command = MDCF_GetCondition;
+		connection_msg.destAP = (bus << 6) | 0x20;
+		connection_msg.originAP = bus << 6;
+		connection_msg.setData(MFID_0_Input);
+
+		asio::error_code ec = sendMsg(connection_msg);
+		if (ec)
+		{
+			WARN_LOG(INPUT, "DreamcastController[%d] connection failed: %s", bus, ec.message().c_str());
+			disconnect();
+			return std::nullopt;
+		}
+		if (!receiveMsg(connection_msg)) {
+			WARN_LOG(INPUT, "DreamcastController[%d] read timeout", bus);
+			disconnect();
+			return std::nullopt;
+		}
+
+		onConnectComplete();
+
+		return connection_msg;
 	}
 
 	virtual void disconnect() = 0;
@@ -117,7 +97,7 @@ public:
 	}
 
 protected:
-	virtual EstablishConnectionResult establishConnection(int bus) = 0;
+	virtual bool establishConnection(int bus) = 0;
 	virtual void onConnectComplete() = 0;
 };
 
@@ -141,19 +121,19 @@ public:
 		disconnect();
 	}
 
-	EstablishConnectionResult establishConnection(int bus) override {
+	bool establishConnection(int bus) override {
 #if !defined(_WIN32)
 		WARN_LOG(INPUT, "DreamcastController[%d] connection failed: DreamConn+ / DreamConn S Controller supported on Windows only", bus);
-		return EstablishConnectionResult::ConnectionFailed;
+		return false;
 #else
 		iostream = asio::ip::tcp::iostream("localhost", std::to_string(BASE_PORT + bus));
 		if (!iostream) {
 			WARN_LOG(INPUT, "DreamcastController[%d] connection failed: %s", bus, iostream.error().message().c_str());
 			disconnect();
-			return EstablishConnectionResult::ConnectionFailed;
+			return false;
 		}
 		iostream.expires_from_now(std::chrono::seconds(1));
-		return EstablishConnectionResult::NewConnectionEstablished;
+		return true;
 #endif
 	}
 
@@ -285,49 +265,10 @@ public:
 		return serial_handler.is_open();
 	}
 
-	asio::error_code sendMsg(const MapleMsg& msg, int hardware_bus, std::chrono::milliseconds timeout_ms)
-	{
+	asio::error_code sendCmd(std::string& cmd) {
 		asio::error_code ec;
 
-		if (!serial_handler.is_open()) {
-			return asio::error::not_connected;
-		}
-
-		// Wait for last write to complete
-		std::unique_lock<std::mutex> lock(write_cv_mutex);
-		const std::chrono::steady_clock::time_point expiration = std::chrono::steady_clock::now() + timeout_ms;
-		if (!write_cv.wait_until(lock, expiration, [this](){return (!serial_write_in_progress || !serial_handler.is_open());}))
-		{
-			return asio::error::timed_out;
-		}
-
-		// Check again before continuing
-		if (!serial_handler.is_open()) {
-			return asio::error::not_connected;
-		}
-
-		// Build serial_out_data string
-		{
-			// Need to message the hardware bus instead of the software bus
-			u8 hwDestAP = (hardware_bus << 6) | (msg.destAP & 0x3F);
-			u8 hwOriginAP = (hardware_bus << 6) | (msg.originAP & 0x3F);
-
-			std::ostringstream s;
-			s << "X"; // 'X' prefix triggers flycast command parser
-			s.fill('0');
-			s << std::hex << std::uppercase
-				<< std::setw(2) << (u32)msg.command
-				<< std::setw(2) << (u32)hwDestAP // override dest
-				<< std::setw(2) << (u32)hwOriginAP // override origin
-				<< std::setw(2) << (u32)msg.size;
-			const u32 sz = msg.getDataSize();
-			for (u32 i = 0; i < sz; i++) {
-				s << std::setw(2) << (u32)msg.data[i];
-			}
-			s << "\n";
-
-			serial_out_data = std::move(s.str());
-		}
+		serial_out_data = cmd;
 
 		// Clear out the read buffer before writing next command
 		read_queue.clear();
@@ -357,10 +298,50 @@ public:
 		return ec;
 	}
 
-	bool receiveMsg(MapleMsg& msg, std::chrono::milliseconds timeout_ms)
-	{
-		std::string response;
+	asio::error_code sendMsg(const MapleMsg& msg, int hardware_bus, std::chrono::milliseconds timeout_ms) {
+		asio::error_code ec;
 
+		if (!serial_handler.is_open()) {
+			return asio::error::not_connected;
+		}
+
+		// Wait for last write to complete
+		std::unique_lock<std::mutex> lock(write_cv_mutex);
+		const std::chrono::steady_clock::time_point expiration = std::chrono::steady_clock::now() + timeout_ms;
+		if (!write_cv.wait_until(lock, expiration, [this](){return (!serial_write_in_progress || !serial_handler.is_open());}))
+		{
+			return asio::error::timed_out;
+		}
+
+		// Check again before continuing
+		if (!serial_handler.is_open()) {
+			return asio::error::not_connected;
+		}
+
+		// Build serial_out_data string
+		// Need to message the hardware bus instead of the software bus
+		u8 hwDestAP = (hardware_bus << 6) | (msg.destAP & 0x3F);
+		u8 hwOriginAP = (hardware_bus << 6) | (msg.originAP & 0x3F);
+
+		std::ostringstream s;
+		s << "X "; // 'X' prefix triggers flycast command parser
+		s.fill('0');
+		s << std::hex << std::uppercase
+			<< std::setw(2) << (u32)msg.command
+			<< std::setw(2) << (u32)hwDestAP // override dest
+			<< std::setw(2) << (u32)hwOriginAP // override origin
+			<< std::setw(2) << (u32)msg.size;
+		const u32 sz = msg.getDataSize();
+		for (u32 i = 0; i < sz; i++) {
+			s << std::setw(2) << (u32)msg.data[i];
+		}
+		s << "\n";
+
+		return sendCmd(s.str());
+	}
+
+	bool receiveCmd(std::string& cmd, std::chrono::milliseconds timeout_ms)
+	{
 		// Wait for at least 2 lines to be received (first line is echo back)
 		std::unique_lock<std::mutex> lock(read_cv_mutex);
 		const std::chrono::steady_clock::time_point expiration = std::chrono::steady_clock::now() + timeout_ms;
@@ -376,8 +357,17 @@ public:
 		}
 
 		// discard the first message as we are interested in the second only which returns the controller configuration
-		response = std::move(read_queue.back());
+		cmd = std::move(read_queue.back());
 		read_queue.clear();
+		return true;
+	}
+
+	bool receiveMsg(MapleMsg& msg, std::chrono::milliseconds timeout_ms)
+	{
+		std::string response;
+		if (!receiveCmd(response, timeout_ms)) {
+			return false;
+		}
 
 		sscanf(response.c_str(), "%hhx %hhx %hhx %hhx", &msg.command, &msg.destAP, &msg.originAP, &msg.size);
 
@@ -602,7 +592,7 @@ class DreamPortConnection : public DreamcastControllerConnection
 	//! Current timeout in milliseconds
 	std::chrono::milliseconds timeout_ms;
 	//! The bus index of the hardware connection which will differ from the software bus
-	int hardware_bus = 0;
+	int hardware_bus = -1;
 	//! true iff only a single devices was found when enumerating devices
 	bool is_single_device = true;
 	//! True when initial enumeration failed
@@ -623,118 +613,11 @@ public:
 	DreamPortConnection(int joystick_idx, SDL_Joystick* sdl_joystick) :
 		DreamcastControllerConnection()
 	{
-		// Getting the instance ID FIRST fixes some sort of L/R trigger bug in dinput
-		int instance_id = SDL_JoystickGetDeviceInstanceID(joystick_idx);
-
-		const char* joystick_name = SDL_JoystickName(sdl_joystick);
-		const char* joystick_path = SDL_JoystickPath(sdl_joystick);
-
-		// Set hardware_bus
-		// The firmware comes in 2 flavors: host-1p (1 gamepad) and host-4p (4 gamepads)
-		struct SDL_hid_device_info* devs = SDL_hid_enumerate(VID, PID);
-		if (devs) {
-			hardware_bus = -1;
-			if (!devs->next) {
-				// Only single device found, so this is simple (host-1p firmware used)
-				hardware_bus = 0;
-				is_hardware_bus_implied = false;
-				is_single_device = true;
-			} else {
-				struct SDL_hid_device_info* it = devs;
-				struct SDL_hid_device_info* my_dev = nullptr;
-
-				if (joystick_path)
-				{
-					while (it)
-					{
-						// Note: hex characters will be differing case, so case-insensitive cmp is needed
-						if (it->path && 0 == SDL_strcasecmp(it->path, joystick_path)) {
-							my_dev = it;
-							break;
-						}
-						it = it->next;
-					}
-				}
-
-				if (my_dev) {
-					it = devs;
-					int count = 0;
-					if (my_dev->serial_number) {
-						while (it) {
-							if (it->serial_number &&
-								0 == wcscmp(it->serial_number, my_dev->serial_number))
-							{
-								++count;
-							}
-							it = it->next;
-						}
-
-						if (count == 1) {
-							// Single device of this serial found
-							is_single_device = true;
-							hardware_bus = 0;
-							is_hardware_bus_implied = false;
-						} else {
-							is_single_device = false;
-							if (my_dev->release_number < 0x0102)
-							{
-								// Interfaces go in decending order
-								hardware_bus = (count - (my_dev->interface_number % 4) - 1);
-								is_hardware_bus_implied = false;
-							} else {
-								// Version 1.02 of interface will make interfaces in ascending order
-								hardware_bus = (my_dev->interface_number % 4);
-								is_hardware_bus_implied = false;
-							}
-						}
-					}
-				}
-
-				if (hardware_bus < 0) {
 #if defined(_WIN32)
-						// Windows doesn't set joystick name properly, so there is nothing else that can be done
-						WARN_LOG(INPUT, "DreamPort connection: failed to locate enumerated device; assuming HW ID of 0");
-						hardware_bus = 0;
-						is_hardware_bus_implied = true;
-						is_single_device = true;
-#else
-						if (!joystick_name) {
-							WARN_LOG(INPUT, "DreamPort connection: failed to locate enumerated device; assuming HW ID of 0");
-							hardware_bus = 0;
-							is_hardware_bus_implied = true;
-							is_single_device = true;
-						} else {
-							std::size_t name_len = strlen(joystick_name);
-							char lastChar = '\0';
-							if (name_len > 0) {
-								lastChar = joystick_name[name_len - 1];
-							}
-							if (lastChar == '4' || lastChar == 'D') {
-								hardware_bus = 3;
-								is_hardware_bus_implied = false;
-							} else if (lastChar == '3' || lastChar == 'C') {
-								hardware_bus = 2;
-								is_hardware_bus_implied = false;
-							} else if (lastChar == '2' || lastChar == 'B') {
-								hardware_bus = 1;
-								is_hardware_bus_implied = false;
-							} else {
-								hardware_bus = 0;
-								is_hardware_bus_implied = (lastChar == '\0');
-								is_single_device = (lastChar != '1' && lastChar != 'A');
-							}
-						}
+		// Workaround: Getting the instance ID here fixes some sort of L/R trigger bug in Windows dinput for some reason
+		(void)SDL_JoystickGetDeviceInstanceID(joystick_idx);
 #endif
-				}
-			}
-
-			SDL_hid_free_enumeration(devs);
-		} else {
-			WARN_LOG(INPUT, "DreamPort connection: failed to enumerate devices; assuming HW ID of 0");
-			hardware_bus = 0;
-			is_hardware_bus_implied = true;
-			is_single_device = true;
-		}
+		determineHardwareBus(joystick_idx, sdl_joystick);
 	}
 
 	~DreamPortConnection(){
@@ -753,39 +636,45 @@ public:
 		return is_single_device;
 	}
 
-	EstablishConnectionResult establishConnection(int bus) override {
+	bool establishConnection(int bus) override {
 		// Timeout is 1 second while establishing connection
 		timeout_ms = std::chrono::seconds(1);
 
 		if (connection_established && serial) {
-			if (serial->is_open())
-			{
+			if (serial->is_open()) {
 				// This equipment is fixed to the hardware bus - the software bus isn't relevant
-				return EstablishConnectionResult::ConnectionPersists;
-			}
-			else
-			{
+				sendPort(bus);
+				return true;
+			} else {
 				disconnect();
-				return EstablishConnectionResult::ConnectionFailed;
+				return false;
 			}
 		}
 
 		++connected_dev_count;
 		connection_established = true;
-		if (!serial)
-		{
+		if (!serial) {
 			serial = std::make_unique<DreamPortSerialHandler>();
 		}
 
-		if (serial && serial->is_open())
-		{
-			return EstablishConnectionResult::NewConnectionEstablished;
-		}
-		else
-		{
+		if (serial && serial->is_open()) {
+			sendPort(bus);
+			return true;
+		} else {
 			disconnect();
-			return EstablishConnectionResult::ConnectionFailed;
+			return false;
 		}
+	}
+
+	void sendPort(int bus) {
+		// This will update the displayed port letter on the screen
+		std::ostringstream s;
+		s << "XP "; // XP is flycast "set port" command
+		s << hardware_bus << " " << bus << "\n";
+		serial->sendCmd(s.str());
+		// Don't really care about the response, just want to ensure it gets fully processed before continuing
+		std::string buffer;
+		serial->receiveCmd(buffer, timeout_ms);
 	}
 
 	void onConnectComplete() override {
@@ -834,6 +723,93 @@ public:
 		} else {
 			// Value of -1 means to use enumeration order
 			return -1;
+		}
+	}
+
+private:
+	void determineHardwareBus(int joystick_idx, SDL_Joystick* sdl_joystick) {
+		// This function determines what bus index to use when communicating with the hardware.
+#if defined(_WIN32)
+		// This only works in Windows because the joystick_path is not given in other OSes
+		const char* joystick_name = SDL_JoystickName(sdl_joystick);
+		const char* joystick_path = SDL_JoystickPath(sdl_joystick);
+
+		struct SDL_hid_device_info* devs = SDL_hid_enumerate(VID, PID);
+		if (devs) {
+			if (!devs->next) {
+				// Only single device found, so this is simple (host-1p firmware used)
+				hardware_bus = 0;
+				is_hardware_bus_implied = false;
+				is_single_device = true;
+			} else {
+				struct SDL_hid_device_info* it = devs;
+				struct SDL_hid_device_info* my_dev = nullptr;
+
+				if (joystick_path)
+				{
+					while (it)
+					{
+						// Note: hex characters will be differing case, so case-insensitive cmp is needed
+						if (it->path && 0 == SDL_strcasecmp(it->path, joystick_path)) {
+							my_dev = it;
+							break;
+						}
+						it = it->next;
+					}
+				}
+
+				if (my_dev) {
+					it = devs;
+					int count = 0;
+					if (my_dev->serial_number) {
+						while (it) {
+							if (it->serial_number &&
+								0 == wcscmp(it->serial_number, my_dev->serial_number))
+							{
+								++count;
+							}
+							it = it->next;
+						}
+
+						if (count == 1) {
+							// Single device of this serial found
+							is_single_device = true;
+							hardware_bus = 0;
+							is_hardware_bus_implied = false;
+						} else {
+							is_single_device = false;
+							if (my_dev->release_number < 0x0102) {
+								// Interfaces go in decending order
+								hardware_bus = (count - (my_dev->interface_number % 4) - 1);
+								is_hardware_bus_implied = false;
+							} else {
+								// Version 1.02 of interface will make interfaces in ascending order
+								hardware_bus = (my_dev->interface_number % 4);
+								is_hardware_bus_implied = false;
+							}
+						}
+					}
+				}
+			}
+			SDL_hid_free_enumeration(devs);
+		}
+#endif
+
+		if (hardware_bus < 0) {
+			// The number of buttons gives a clue as to what index the controller is
+			int nbuttons = SDL_JoystickNumButtons(sdl_joystick);
+
+			if (nbuttons >= 32 || nbuttons <= 27) {
+				// Older version of firmware or single player
+				hardware_bus = 0;
+				is_hardware_bus_implied = true;
+				is_single_device = true;
+			}
+			else {
+				hardware_bus = 31 - nbuttons;
+				is_hardware_bus_implied = false;
+				is_single_device = false;
+			}
 		}
 	}
 };
