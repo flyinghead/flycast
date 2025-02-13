@@ -95,6 +95,9 @@ public:
 		// Value of -1 means to use enumeration order
 		return -1;
 	}
+	virtual void gameTermination() {
+		// Do nothing by default
+	}
 
 protected:
 	virtual bool establishConnection(int bus) = 0;
@@ -717,13 +720,21 @@ public:
 		return name;
 	}
 
-	virtual int getDefaultBus() {
+	int getDefaultBus() override {
 		if (!is_hardware_bus_implied && !is_single_device) {
 			return hardware_bus;
 		} else {
 			// Value of -1 means to use enumeration order
 			return -1;
 		}
+	}
+
+	void gameTermination() override {
+		// This will update the displayed port letter on the screen
+		std::ostringstream s;
+		s << "X-"; // X- is flycast "reset"
+		s << hardware_bus << "\n";
+		serial->sendCmd(s.str());
 	}
 
 private:
@@ -926,6 +937,13 @@ bool DreamConn::send(const MapleMsg& msg)
 	return true;
 }
 
+void DreamConn::gameTermination()
+{
+	if (dcConnection) {
+		dcConnection->gameTermination();
+	}
+}
+
 bool DreamConnGamepad::isDreamcastController(int deviceIndex)
 {
 	char guid_str[33] {};
@@ -1015,11 +1033,10 @@ void DreamConnGamepad::handleEvent(Event event, void *arg)
 	DreamConnGamepad *gamepad = static_cast<DreamConnGamepad*>(arg);
 	if (gamepad->dreamconn != nullptr)
 		createDreamConnDevices(gamepad->dreamconn, event == Event::Start);
- 
+
     if (gamepad->dreamconn != nullptr && event == Event::Terminate)
     {
-        DreamPortConnection *dreamPortConnection = static_cast<DreamPortConnection*>(gamepad->dreamconn->getDcConnection());
-        dreamPortConnection->sendPort(gamepad->dreamconn->getBus());
+		gamepad->dreamconn->gameTermination();
     }
 }
 
@@ -1069,6 +1086,8 @@ void DreamConnGamepad::checkKeyCombo() {
 void DreamConn::connect() {
 }
 void DreamConn::disconnect() {
+}
+void DreamConn::gameTermination() {
 }
 
 bool DreamConnGamepad::isDreamcastController(int deviceIndex) {

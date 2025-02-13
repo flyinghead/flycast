@@ -64,10 +64,9 @@ public:
 	~DreamConn();
 
 	bool send(const MapleMsg& msg);
-    
-    DreamcastControllerConnection* getDcConnection() {
-        return dcConnection.get();
-    }
+
+	// When called, do teardown stuff like reset screen
+	void gameTermination();
 
 	int getBus() const {
 		return bus;
