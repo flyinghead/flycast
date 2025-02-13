@@ -2213,7 +2213,9 @@ void createDreamConnDevices(std::shared_ptr<DreamConn> dreamconn, bool gameStart
 			if ((!gameStart || !vmuCreated) && dev) {
 				// if loading a state or DreamConnVmu existed, copy data from the regular vmu and send a screen update
 				vmu->copyIn(std::static_pointer_cast<maple_sega_vmu>(dev));
-				vmu->updateScreen();
+				if (!gameStart) {
+					vmu->updateScreen();
+				}
 			}
 
 			dreamConnVmus.push_back(vmu);
