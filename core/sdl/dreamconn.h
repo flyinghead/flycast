@@ -64,6 +64,10 @@ public:
 	~DreamConn();
 
 	bool send(const MapleMsg& msg);
+    
+    DreamcastControllerConnection* getDcConnection() {
+        return dcConnection.get();
+    }
 
 	int getBus() const {
 		return bus;

@@ -973,11 +973,13 @@ DreamConnGamepad::DreamConnGamepad(int maple_port, int joystick_idx, SDL_Joystic
 
 	EventManager::listen(Event::Start, handleEvent, this);
 	EventManager::listen(Event::LoadState, handleEvent, this);
+    EventManager::listen(Event::Terminate, handleEvent, this);
 }
 
 DreamConnGamepad::~DreamConnGamepad() {
 	EventManager::unlisten(Event::Start, handleEvent, this);
 	EventManager::unlisten(Event::LoadState, handleEvent, this);
+    EventManager::unlisten(Event::Terminate, handleEvent, this);
 	if (dreamconn) {
 		tearDownDreamConnDevices(dreamconn);
 		dreamconn.reset();
@@ -1013,6 +1015,12 @@ void DreamConnGamepad::handleEvent(Event event, void *arg)
 	DreamConnGamepad *gamepad = static_cast<DreamConnGamepad*>(arg);
 	if (gamepad->dreamconn != nullptr)
 		createDreamConnDevices(gamepad->dreamconn, event == Event::Start);
+ 
+    if (gamepad->dreamconn != nullptr && event == Event::Terminate)
+    {
+        DreamPortConnection *dreamPortConnection = static_cast<DreamPortConnection*>(gamepad->dreamconn->getDcConnection());
+        dreamPortConnection->sendPort(gamepad->dreamconn->getBus());
+    }
 }
 
 bool DreamConnGamepad::gamepad_btn_input(u32 code, bool pressed)
