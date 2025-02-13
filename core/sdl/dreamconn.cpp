@@ -265,7 +265,7 @@ public:
 		return serial_handler.is_open();
 	}
 
-	asio::error_code sendCmd(std::string& cmd) {
+	asio::error_code sendCmd(const std::string& cmd) {
 		asio::error_code ec;
 
 		serial_out_data = cmd;
