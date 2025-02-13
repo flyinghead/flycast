@@ -650,7 +650,7 @@ public:
 		if (connection_established && serial) {
 			if (serial->is_open()) {
 				// This equipment is fixed to the hardware bus - the software bus isn't relevant
-				sendPort(bus);
+				sendPort();
 				return true;
 			} else {
 				disconnect();
@@ -665,7 +665,7 @@ public:
 		}
 
 		if (serial && serial->is_open()) {
-			sendPort(bus);
+			sendPort();
 			return true;
 		} else {
 			disconnect();
@@ -673,15 +673,17 @@ public:
 		}
 	}
 
-	void sendPort(int bus) {
-		// This will update the displayed port letter on the screen
-		std::ostringstream s;
-		s << "XP "; // XP is flycast "set port" command
-		s << hardware_bus << " " << bus << "\n";
-		serial->sendCmd(s.str());
-		// Don't really care about the response, just want to ensure it gets fully processed before continuing
-		std::string buffer;
-		serial->receiveCmd(buffer, timeout_ms);
+	void sendPort() {
+		if (connection_established && software_bus >= 0 && software_bus <= 3 && hardware_bus >=0 && hardware_bus <= 3) {
+			// This will update the displayed port letter on the screen
+			std::ostringstream s;
+			s << "XP "; // XP is flycast "set port" command
+			s << hardware_bus << " " << software_bus << "\n";
+			serial->sendCmd(s.str());
+			// Don't really care about the response, just want to ensure it gets fully processed before continuing
+			std::string buffer;
+			serial->receiveCmd(buffer, timeout_ms);
+		}
 	}
 
 	void onConnectComplete() override {
@@ -735,7 +737,7 @@ public:
 
 	void gameTermination() override {
 		// Reset screen to selected port
-		sendPort(software_bus);
+		sendPort();
 	}
 
 private:
