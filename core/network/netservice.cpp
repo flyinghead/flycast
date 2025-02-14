@@ -61,7 +61,7 @@ int modemAvailable() {
 }
 
 void receiveEthFrame(const u8 *frame, u32 size) {
-	verify(service != nullptr);
+	start();
 	service->receiveEthFrame(frame, size);
 }
 

@@ -1728,8 +1728,7 @@ static void rtl8139_io_writeb(void *opaque, uint8_t addr, uint32_t val)
             break;
 
         default:
-            INFO_LOG(NETWORK, "not implemented write(b) addr=0x%x val=0x%02x", addr,
-                val);
+            DEBUG_LOG(NETWORK, "not implemented write(b) addr=0x%x val=0x%02x", addr, val);
             break;
     }
 }

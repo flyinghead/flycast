@@ -171,6 +171,7 @@ static const GamePortList GamesPorts[] = {
 static bool pico_thread_running = false;
 extern "C" int dont_reject_opt_vj_hack;
 
+static bool start_pico();
 u32 makeDnsQueryPacket(void *buf, const char *host);
 pico_ip4 parseDnsResponsePacket(const void *buf, size_t len);
 
@@ -270,6 +271,11 @@ public:
 
 	asio::ip::tcp::socket& getSocket() {
 		return socket;
+	}
+
+	void close() {
+		closeAll();
+		directPlay.reset();
 	}
 
 private:
@@ -565,6 +571,7 @@ public:
 	void start()
 	{
 		TcpSocket::Ptr newSock = TcpSocket::create(io_context, directPlay);
+		sockets.push_back(newSock);
 
 		acceptor.async_accept(newSock->getSocket(),
 				std::bind(&TcpAcceptor::onAccept, shared_from_this(), newSock, asio::placeholders::error));
@@ -572,6 +579,10 @@ public:
 
 	void stop() {
 		acceptor.close();
+		for (auto& socket : sockets)
+			socket->close();
+		sockets.clear();
+		directPlay.reset();
 	}
 
 private:
@@ -601,6 +612,7 @@ private:
 	asio::io_context& io_context;
 	asio::ip::tcp::acceptor acceptor;
 	std::shared_ptr<DirectPlay> directPlay;
+	std::vector<TcpSocket::Ptr> sockets;
 	friend super;
 };
 
@@ -641,6 +653,9 @@ public:
 		if (pico_sock != nullptr)
 			pico_socket_close(pico_sock);
 		directPlay.reset();
+		for (auto& socket : sockets)
+			socket->close();
+		sockets.clear();
 	}
 
 private:
@@ -667,6 +682,7 @@ private:
 
 				TcpSocket::Ptr psock = TcpSocket::create(io_context, directPlay);
 				psock->connect(sock_a);
+				sockets.push_back(psock);
 			}
 		}
 
@@ -690,6 +706,7 @@ private:
 	asio::io_context& io_context;
 	std::shared_ptr<DirectPlay> directPlay;
 	pico_socket *pico_sock;
+	std::vector<TcpSocket::Ptr> sockets;
 };
 
 // Handles inbound datagram to a given port
@@ -942,10 +959,15 @@ public:
 
 	~DirectPlayImpl()
 	{
+		stop();
 		if (upnpCmd.valid())
 			upnpCmd.get();
+	}
+
+	void stop() {
 		if (acceptor)
 			acceptor->stop();
+		acceptor.reset();
 	}
 
 private:
@@ -1141,9 +1163,13 @@ static void closeDumpFile()
 }
 static void pico_receive_eth_frame(const u8 *frame, u32 size)
 {
-	dumpFrame(frame, size);
-	if (pico_dev != nullptr)
+	if (pico_dev == nullptr) {
+		start_pico();
+	}
+	else {
+		dumpFrame(frame, size);
 		pico_stack_recv(pico_dev, (u8 *)frame, size);
+	}
 }
 
 static int send_eth_frame(pico_device *dev, void *data, int len) {
@@ -1365,6 +1391,8 @@ void PicoThread::run()
 	acceptors.clear();
 	tcpSink.stop();
 	udpSink.stop();
+	directPlay->stop();
+	directPlay.reset();
 
 	pico_stack_tick();
 	pico_stack_tick();

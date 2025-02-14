@@ -179,9 +179,9 @@ void bba_WriteMem(u32 addr, u32 data, u32 sz)
 		case GAPS_RESET:
 			if (data & 1)
 			{
-				DEBUG_LOG(NETWORK, "GAPS reset");
+				INFO_LOG(NETWORK, "BBA: GAPS reset");
 				rtl8139_reset(rtl8139device);
-				net::modbba::start();
+				net::modbba::stop();
 			}
 			break;
 
