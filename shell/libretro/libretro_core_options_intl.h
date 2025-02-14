@@ -4121,7 +4121,7 @@ struct retro_core_options_v2 options_ast = {
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_BE "Рэжым Free Play для гульняў NAOMI"
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_BE "Змяняць наладкі манетызацыі для ўключэння бясплатнай гульні."
 #define CORE_OPTION_NAME_EMULATE_BBA_LABEL_BE "Эмуляцыя Broadband Adapter"
-#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_BE "Эмуляваць замест мадэма шырокапалосны Ethernet-адаптар (патрабуецца перазапуск)"
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_BE "Эмуляваць замест мадэма шырокапалосны Ethernet-адаптар. (Патрабуецца перазапуск)"
 #define CORE_OPTION_NAME_UPNP_LABEL_BE "Уключыць UPnP"
 #define CORE_OPTION_NAME_UPNP_INFO_0_BE "Выкарыстоўваць UPnP для аўтаматычнай наладкі вашага Інтэрнэт-роўтара для анлайн-гульняў."
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_BE "Унутраная раздзяляльнасць"
@@ -8141,7 +8141,7 @@ struct retro_core_options_v2 options_bg = {
 #define CORE_OPTION_NAME_BOOT_TO_BIOS_LABEL_CA "Reinicia a la BIOS (Es requereix reinici)"
 #define CORE_OPTION_NAME_BOOT_TO_BIOS_INFO_0_CA "Inicia directament el menú de la BIOS de Dreamcast."
 #define CORE_OPTION_NAME_ENABLE_DSP_LABEL_CA "Habilitar DSP"
-#define CORE_OPTION_NAME_ENABLE_DSP_INFO_0_CA NULL
+#define CORE_OPTION_NAME_ENABLE_DSP_INFO_0_CA "Habilita l'emulació del processador d'àudio DSP de Dreamcast. Millora la precisió del so generat, però augmenta els requisits de maquinari."
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_CA "Permet els botons de servei d'arcade"
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_CA "Habilita el botó SERVICE per jocs arcade, per accedir a la configuració de la màquina."
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_CA "Estableix els jocs de NAOMI com a gratuïts"
@@ -8210,7 +8210,7 @@ struct retro_core_options_v2 options_bg = {
 #define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_CA "Habilita la memòria intermèdia RTT (Renderitzat a textures)"
 #define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_CA NULL
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_CA NULL
-#define CORE_OPTION_NAME_MIPMAPPING_INFO_0_CA NULL
+#define CORE_OPTION_NAME_MIPMAPPING_INFO_0_CA "En activar aquesta opció, les textures mostraran una versió més reduïda de mida si es troben més allunyades de la pantalla. Pot millorar el rendiment i reduir els efectes de distorsió."
 #define CORE_OPTION_NAME_FOG_LABEL_CA "Efectes de boira"
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_CA "Modificador de volum"
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_CA NULL
@@ -8232,11 +8232,11 @@ struct retro_core_options_v2 options_bg = {
 #define OPTION_VAL_4_CA NULL
 #define OPTION_VAL_6_CA NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_CA "Mida màxima de l'escalat de textures"
-#define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_INFO_0_CA NULL
+#define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_INFO_0_CA "Selecciona un valor màxim per a l'escalat de textures. Si la mida de la textura és superior al valor seleccionat, no s'escalarà."
 #define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_CA "Interpolació nativa de profunditat"
 #define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_CA "Esmorteeix la corrupció de textures i els problemes gràfics de profunditat en fer servir una GPU de AMB. En alguns casos també pot ajudar en una GPU de Intel."
 #define CORE_OPTION_NAME_FIX_UPSCALE_BLEEDING_EDGE_LABEL_CA "Corregeix els defectes de les vores en escalar"
-#define CORE_OPTION_NAME_FIX_UPSCALE_BLEEDING_EDGE_INFO_0_CA NULL
+#define CORE_OPTION_NAME_FIX_UPSCALE_BLEEDING_EDGE_INFO_0_CA "Dona suport si les textures mostren vores sagnants en escalar-les. Desactivar aquesta opció pot ser útil si hi ha distorsió de píxels en escalar jocs 2D (MVC2, CVS, KOF, etç...)"
 #define CORE_OPTION_NAME_THREADED_RENDERING_LABEL_CA "Renderitzat multifil"
 #define CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_CA "Executa la GPU i la CPU en diferents fils. Molt recomanat."
 #define CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_CA "Omissió automàtica de fotogrames"
@@ -8312,7 +8312,7 @@ struct retro_core_options_v2 options_bg = {
 #define CORE_OPTION_NAME_TRIGGER_DEADZONE_LABEL_CA "Zona morta dels gatells"
 #define CORE_OPTION_NAME_TRIGGER_DEADZONE_INFO_0_CA "Selecciona la distància a la qual es reconeix la pulsació del gatell."
 #define CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_CA "Gatells digitals"
-#define CORE_OPTION_NAME_DIGITAL_TRIGGERS_INFO_0_CA NULL
+#define CORE_OPTION_NAME_DIGITAL_TRIGGERS_INFO_0_CA "En activar aquesta opció, els gatells funcionaran com botons normals, el que significa que el senyal serà polsat o no polsat, sense valor intermedi."
 #define CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_CA "Transmet les sortides digitals"
 #define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_CA "Transmet els senyals digitals i l'estat de vibració del port TCP 8000. És compatible amb l'opció de MAME '-output network'."
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_CA "Mostra la configuració de la pistola de llum"
