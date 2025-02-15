@@ -268,8 +268,25 @@ public:
 		return serial_handler.is_open();
 	}
 
-	asio::error_code sendCmd(const std::string& cmd) {
+	asio::error_code sendCmd(const std::string& cmd, std::chrono::milliseconds timeout_ms) {
 		asio::error_code ec;
+
+		if (!serial_handler.is_open()) {
+			return asio::error::not_connected;
+		}
+
+		// Wait for last write to complete
+		std::unique_lock<std::mutex> lock(write_cv_mutex);
+		const std::chrono::steady_clock::time_point expiration = std::chrono::steady_clock::now() + timeout_ms;
+		if (!write_cv.wait_until(lock, expiration, [this](){return (!serial_write_in_progress || !serial_handler.is_open());}))
+		{
+			return asio::error::timed_out;
+		}
+
+		// Check again before continuing
+		if (!serial_handler.is_open()) {
+			return asio::error::not_connected;
+		}
 
 		serial_out_data = cmd;
 
@@ -302,25 +319,6 @@ public:
 	}
 
 	asio::error_code sendMsg(const MapleMsg& msg, int hardware_bus, std::chrono::milliseconds timeout_ms) {
-		asio::error_code ec;
-
-		if (!serial_handler.is_open()) {
-			return asio::error::not_connected;
-		}
-
-		// Wait for last write to complete
-		std::unique_lock<std::mutex> lock(write_cv_mutex);
-		const std::chrono::steady_clock::time_point expiration = std::chrono::steady_clock::now() + timeout_ms;
-		if (!write_cv.wait_until(lock, expiration, [this](){return (!serial_write_in_progress || !serial_handler.is_open());}))
-		{
-			return asio::error::timed_out;
-		}
-
-		// Check again before continuing
-		if (!serial_handler.is_open()) {
-			return asio::error::not_connected;
-		}
-
 		// Build serial_out_data string
 		// Need to message the hardware bus instead of the software bus
 		u8 hwDestAP = (hardware_bus << 6) | (msg.destAP & 0x3F);
@@ -340,7 +338,7 @@ public:
 		}
 		s << "\n";
 
-		return sendCmd(s.str());
+		return sendCmd(s.str(), timeout_ms);
 	}
 
 	bool receiveCmd(std::string& cmd, std::chrono::milliseconds timeout_ms)
@@ -679,7 +677,7 @@ public:
 			std::ostringstream s;
 			s << "XP "; // XP is flycast "set port" command
 			s << hardware_bus << " " << software_bus << "\n";
-			serial->sendCmd(s.str());
+			serial->sendCmd(s.str(), timeout_ms);
 			// Don't really care about the response, just want to ensure it gets fully processed before continuing
 			std::string buffer;
 			serial->receiveCmd(buffer, timeout_ms);
