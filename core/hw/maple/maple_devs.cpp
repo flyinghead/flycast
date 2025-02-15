@@ -2120,19 +2120,51 @@ struct DreamLinkVmu : public maple_sega_vmu
 	DreamLinkVmu(std::shared_ptr<DreamLink> dreamlink) : dreamlink(dreamlink) {
 	}
 
-	// bool fullSave() override
-	// {
-	// 	if (useRealVmu)
-	// 	{
-	// 		// do nothing
-	// 		DEBUG_LOG("Not saving because this is a real vmu");
-	// 		return true;
-	// 	}
-	// 	else
-	// 	{
-	// 		return maple_sega_vmu::fullSave();
-	// 	}
-	// }
+	void OnSetup() override
+	{
+		maple_sega_vmu::OnSetup();
+
+		for (u32 block = 0; block < 256; ++block) {
+			// Try up to 4 times to read
+			for (u32 i = 0; i < 4; ++i) {
+				MapleMsg msg;
+				msg.command = 0x0B;
+				msg.destAP = 1; // TODO: fix for port number
+				msg.originAP = 0; // TODO: fix for DreamConn (not needed for DreamPort)
+				msg.size = 2;
+				msg.data[0] = 0;
+				msg.data[1] = 0;
+				msg.data[2] = 0;
+				msg.data[3] = 0x02;
+				msg.data[4] = 0;
+				msg.data[5] = 0;
+				msg.data[6] = 0;
+				msg.data[7] = block;
+
+				dreamlink->send(msg);
+
+				if (dreamlink->receive(msg) && msg.size == 130) {
+					// Something read!
+					memcpy(&flash_data[block * 512], &msg.data[8], 4 * 128);
+					break;
+				}
+			}
+		}
+	}
+
+	bool fullSave() override
+	{
+		if (useRealVmu)
+		{
+			// do nothing
+			DEBUG_LOG(MAPLE, "Not saving because this is a real vmu");
+			return true;
+		}
+		else
+		{
+			return maple_sega_vmu::fullSave();
+		}
+	}
 
 	u32 dma(u32 cmd) override
 	{
@@ -2178,9 +2210,11 @@ struct DreamLinkVmu : public maple_sega_vmu
 				}
 
 				// case MDCF_BlockRead:
-				// {
-
-				// }
+				{
+					DEBUG_LOG(MAPLE, "VMU Storage cmd %02x", cmd);
+					dreamlink->send(*msg);
+					break;
+				}
 
 				case MDC_DeviceRequest:
 					DEBUG_LOG(MAPLE, "VMU Device request");
