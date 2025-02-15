@@ -2186,6 +2186,10 @@ static std::list<std::shared_ptr<DreamConnPurupuru>> dreamConnPurupurus;
 void createDreamConnDevices(std::shared_ptr<DreamConn> dreamconn, bool gameStart)
 {
 	const int bus = dreamconn->getBus();
+    
+    bool vmuFound = false;
+    bool rumbleFound = false;
+    
 	if (dreamconn->hasVmu())
 	{
 		std::shared_ptr<DreamConnVmu> vmu;
@@ -2193,6 +2197,7 @@ void createDreamConnDevices(std::shared_ptr<DreamConn> dreamconn, bool gameStart
 		{
 			if (vmuIter->dreamconn.get() == dreamconn.get())
 			{
+                vmuFound = true;
 				vmu = vmuIter;
 				break;
 			}
@@ -2218,7 +2223,7 @@ void createDreamConnDevices(std::shared_ptr<DreamConn> dreamconn, bool gameStart
 				}
 			}
 
-			dreamConnVmus.push_back(vmu);
+			if (!vmuFound) dreamConnVmus.push_back(vmu);
 		}
 	}
 	if (dreamconn->hasRumble())
@@ -2228,6 +2233,7 @@ void createDreamConnDevices(std::shared_ptr<DreamConn> dreamconn, bool gameStart
 		{
 			if (purupuru->dreamconn.get() == dreamconn.get())
 			{
+                rumbleFound = true;
 				rumble = purupuru;
 				break;
 			}
@@ -2241,7 +2247,8 @@ void createDreamConnDevices(std::shared_ptr<DreamConn> dreamconn, bool gameStart
 				rumble = std::make_shared<DreamConnPurupuru>(dreamconn);
 			}
 			rumble->Setup(bus, 1);
-			dreamConnPurupurus.push_back(rumble);
+            
+			if (!rumbleFound) dreamConnPurupurus.push_back(rumble);
 		}
 	}
 }
