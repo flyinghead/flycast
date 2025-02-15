@@ -11,6 +11,7 @@
 #include <zlib.h>
 #include <cerrno>
 #include <ctime>
+#include <thread>
 
 const char* maple_sega_controller_name = "Dreamcast Controller";
 const char* maple_sega_vmu_name        = "Visual Memory";
@@ -369,7 +370,7 @@ struct maple_sega_vmu: maple_base
 		fullSaveNeeded = true;
 	}
 
-	bool fullSave()
+	virtual bool fullSave()
 	{
 		if (file == nullptr)
 			return false;
@@ -2114,22 +2115,94 @@ std::shared_ptr<maple_device> maple_Create(MapleDeviceType type)
 struct DreamLinkVmu : public maple_sega_vmu
 {
 	std::shared_ptr<DreamLink> dreamlink;
+	bool useRealVmu = false;
 
 	DreamLinkVmu(std::shared_ptr<DreamLink> dreamlink) : dreamlink(dreamlink) {
 	}
+
+	// bool fullSave() override
+	// {
+	// 	if (useRealVmu)
+	// 	{
+	// 		// do nothing
+	// 		DEBUG_LOG("Not saving because this is a real vmu");
+	// 		return true;
+	// 	}
+	// 	else
+	// 	{
+	// 		return maple_sega_vmu::fullSave();
+	// 	}
+	// }
 
 	u32 dma(u32 cmd) override
 	{
 		if (dma_count_in >= 4)
 		{
-			const u32 functionId = *(u32 *)dma_buffer_in;
-			if ((cmd == MDCF_BlockWrite && functionId == MFID_2_LCD)				// LCD screen
-					|| (cmd == MDCF_SetCondition && functionId == MFID_3_Clock))	// Buzzer
+			const u32 functionId = *(u32*)dma_buffer_in;
+			const MapleMsg* msg = reinterpret_cast<const MapleMsg*>(dma_buffer_in - 4);
+
+			if (functionId == MFID_1_Storage)
 			{
-				const MapleMsg *msg = reinterpret_cast<const MapleMsg*>(dma_buffer_in - 4);
+				switch (cmd)
+				{
+				case MDCF_GetMediaInfo:
+					DEBUG_LOG(MAPLE, "VMU GetMediaInfo request");
+					dreamlink->send(*msg);
+					break;
+
+				case MDCF_GetLastError:
+					NOTICE_LOG(MAPLE, "VMU GetLastError request");
+					dreamlink->send(*msg);
+					// Need to slow down writes so that flash has a chance to write
+					std::this_thread::sleep_for(std::chrono::milliseconds(500));
+					break;
+
+				case MDCF_BlockWrite:
+				{
+					u32 bph = *(u32*)(dma_buffer_in + 4);
+					u32 Block = (SWAP32(bph)) & 0xffff;
+					u32 Phase = ((SWAP32(bph)) >> 16) & 0xff;
+					u32 write_adr = Block * 512 + Phase * (512 / 4);
+					u32 write_len = r_count();
+
+					NOTICE_LOG(MAPLE, "VMU mirroring write - Block:%d Phase:%d Addr:%x Len:%d",
+						Block, Phase, write_adr, write_len);
+
+					// Send exact same DreamConnVmu::DreamConnVmudata to physical VMU
+					dreamlink->send(*msg);
+
+					// Need to slow down writes so that flash has a chance to write
+					std::this_thread::sleep_for(std::chrono::milliseconds(500));
+
+					break;
+				}
+
+				// case MDCF_BlockRead:
+				// {
+
+				// }
+
+				case MDC_DeviceRequest:
+					DEBUG_LOG(MAPLE, "VMU Device request");
+					dreamlink->send(*msg);
+					break;
+
+				default:
+					DEBUG_LOG(MAPLE, "VMU Storage cmd %02x", cmd);
+					dreamlink->send(*msg);
+					break;
+				}
+			}
+			else if (cmd == MDCF_BlockWrite && functionId == MFID_2_LCD)
+			{
+				dreamlink->send(*msg);
+			}
+			else if (cmd == MDCF_SetCondition && functionId == MFID_3_Clock)
+			{
 				dreamlink->send(*msg);
 			}
 		}
+
 		return maple_sega_vmu::dma(cmd);
 	}
 
