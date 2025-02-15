@@ -2116,39 +2116,48 @@ struct DreamLinkVmu : public maple_sega_vmu
 {
 	std::shared_ptr<DreamLink> dreamlink;
 	bool useRealVmu = false;
+	bool readIn = true;
 
 	DreamLinkVmu(std::shared_ptr<DreamLink> dreamlink) : dreamlink(dreamlink) {
 	}
 
 	void OnSetup() override
 	{
-		maple_sega_vmu::OnSetup();
+		if (readIn)
+		{
+			maple_sega_vmu::OnSetup();
 
-		for (u32 block = 0; block < 256; ++block) {
-			// Try up to 4 times to read
-			for (u32 i = 0; i < 4; ++i) {
-				MapleMsg msg;
-				msg.command = 0x0B;
-				msg.destAP = 1; // TODO: fix for port number
-				msg.originAP = 0; // TODO: fix for DreamConn (not needed for DreamPort)
-				msg.size = 2;
-				msg.data[0] = 0;
-				msg.data[1] = 0;
-				msg.data[2] = 0;
-				msg.data[3] = 0x02;
-				msg.data[4] = 0;
-				msg.data[5] = 0;
-				msg.data[6] = 0;
-				msg.data[7] = block;
+			readIn = false;
+			for (u32 block = 0; block < 256; ++block) {
+				// Try up to 4 times to read
+				for (u32 i = 0; i < 4; ++i) {
+					MapleMsg msg;
+					msg.command = 0x0B;
+					msg.destAP = 1; // TODO: fix for port number
+					msg.originAP = 0; // TODO: fix for DreamConn (not needed for DreamPort)
+					msg.size = 2;
+					msg.data[0] = 0;
+					msg.data[1] = 0;
+					msg.data[2] = 0;
+					msg.data[3] = 0x02;
+					msg.data[4] = 0;
+					msg.data[5] = 0;
+					msg.data[6] = 0;
+					msg.data[7] = block;
 
-				dreamlink->send(msg);
+					dreamlink->send(msg);
 
-				if (dreamlink->receive(msg) && msg.size == 130) {
-					// Something read!
-					memcpy(&flash_data[block * 512], &msg.data[8], 4 * 128);
-					break;
+					if (dreamlink->receive(msg) && msg.size == 130) {
+						// Something read!
+						memcpy(&flash_data[block * 512], &msg.data[8], 4 * 128);
+						break;
+					}
 				}
 			}
+		}
+		else
+		{
+			memset(lcd_data, 0, sizeof(lcd_data));
 		}
 	}
 
