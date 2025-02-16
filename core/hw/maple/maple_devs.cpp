@@ -2115,7 +2115,7 @@ std::shared_ptr<maple_device> maple_Create(MapleDeviceType type)
 struct DreamLinkVmu : public maple_sega_vmu
 {
 	std::shared_ptr<DreamConn> dreamlink;
-	bool useRealVmu = true;  // Set this to true to use physical VMU, false for virtual
+	bool useRealVmu = true;  // Set this to true to use physical VMU, false for virtual *THIS IS BEING MADE TO CONNECT TO A PHYSICAL UI BUTTON, true=Physical VMU false=Virtual VMU
 	bool readIn = true;
 
 	DreamLinkVmu(std::shared_ptr<DreamLink> dreamlink) : dreamlink(dreamlink) {
@@ -2129,7 +2129,7 @@ struct DreamLinkVmu : public maple_sega_vmu
 
 			readIn = false;
 			for (u32 block = 0; block < 256; ++block) {
-				// Try up to 4 times to read
+				// Try up to 2 times to read (was 4, trying to keep speed up, if it wont write in the first 2 attempts, i doubt the next 2 will write, allow the user to manually retry)
 				for (u32 i = 0; i < 2; ++i) {
 					MapleMsg msg;
 					msg.command = 0x0B;
@@ -2197,7 +2197,7 @@ struct DreamLinkVmu : public maple_sega_vmu
 					case MDCF_GetLastError:
 						//NOTICE_LOG(MAPLE, "VMU GetLastError request");
 						dreamlink->send(*msg);
-						// Need to slow down writes so that flash has a chance to write
+						// Need to slow down writes so that flash has a chance to write (50MS is the lowest I can get with never failing -so far-)
 						std::this_thread::sleep_for(std::chrono::milliseconds(50));
 						break;
 
