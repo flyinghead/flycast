@@ -37,7 +37,6 @@ namespace net::modbba
 {
 
 static TsQueue<u8> toModem;
-static TsQueue<u8> fromModem;
 
 class DCNetService : public Service
 {
@@ -57,12 +56,14 @@ class PPPSocket
 {
 public:
 	PPPSocket(asio::io_context& io_context, const typename SocketT::endpoint_type& endpoint)
-		: socket(io_context), timer(io_context)
+		: socket(io_context)
 	{
-		socket.connect(endpoint);
+		asio::error_code ec;
+		socket.connect(endpoint, ec);
+		if (ec)
+			throw FlycastException(ec.message().c_str());
 		os_notify("Connected to DCNet with modem", 5000);
 		receive();
-		sendIfAny({});
 	}
 
 	~PPPSocket() {
@@ -70,61 +71,67 @@ public:
 			fclose(dumpfp);
 	}
 
+	void send(u8 b)
+	{
+		if (sendBufSize == sendBuffer.size()) {
+			WARN_LOG(NETWORK, "PPP output buffer overflow");
+			return;
+		}
+		sendBuffer[sendBufSize++] = b;
+		doSend();
+	}
+
 private:
-	void receive() {
+	void receive()
+	{
 		socket.async_read_some(asio::buffer(recvBuffer),
-				std::bind(&PPPSocket::onRecv, this, asio::placeholders::error, asio::placeholders::bytes_transferred));
-	}
-	void onRecv(asio::error_code ec, size_t len)
-	{
-		if (ec) {
-			ERROR_LOG(NETWORK, "onRecv error: %s", ec.message().c_str());
-			return;
-		}
-		pppdump(recvBuffer.data(), len, false);
-		for (size_t i = 0; i < len; i++)
-			toModem.push(recvBuffer[i]);
-		receive();
-	}
-
-	void sendIfAny(const std::error_code& ec)
-	{
-		if (ec) {
-			ERROR_LOG(NETWORK, "sendIfAny timer error: %s", ec.message().c_str());
-			return;
-		}
-		if (!sending)
-		{
-			for (; !fromModem.empty() && sendBufSize < sendBuffer.size(); sendBufSize++)
+			[this](const std::error_code& ec, size_t len)
 			{
-				sendBuffer[sendBufSize] = fromModem.pop();
-				if (sendBufSize != 0 && sendBuffer[sendBufSize] == 0x7e) {
-					sendBufSize++;
-					break;
+				if (ec || len == 0)
+				{
+					if (ec)
+						ERROR_LOG(NETWORK, "Receive error: %s", ec.message().c_str());
+					close();
+					return;
 				}
-			}
-			if ((sendBufSize > 1 && sendBuffer[sendBufSize - 1] == 0x7e)
-					|| sendBufSize == sendBuffer.size())
-			{
-				pppdump(sendBuffer.data(), sendBufSize, true);
-				asio::async_write(socket, asio::buffer(sendBuffer, sendBufSize),
-						std::bind(&PPPSocket::onSent, this, asio::placeholders::error, asio::placeholders::bytes_transferred));
-				sending = true;
-			}
-		}
-
-		timer.expires_at(timer.expiry() + asio::chrono::milliseconds(5));
-		timer.async_wait(std::bind(&PPPSocket::sendIfAny, this, asio::placeholders::error));
+				pppdump(recvBuffer.data(), len, false);
+				for (size_t i = 0; i < len; i++)
+					toModem.push(recvBuffer[i]);
+				receive();
+			});
 	}
 
-	void onSent(asio::error_code ec, size_t len)
+	void doSend()
 	{
-		sending = false;
-		sendBufSize = 0;
-		if (ec) {
-			ERROR_LOG(NETWORK, "onRecv error: %s", ec.message().c_str());
+		if (sending)
 			return;
+		if ((sendBufSize > 1 && sendBuffer[sendBufSize - 1] == 0x7e)
+				|| sendBufSize == sendBuffer.size())
+		{
+			pppdump(sendBuffer.data(), sendBufSize, true);
+			sending = true;
+			asio::async_write(socket, asio::buffer(sendBuffer, sendBufSize),
+				[this](const std::error_code& ec, size_t len)
+				{
+					if (ec)
+					{
+						ERROR_LOG(NETWORK, "Send error: %s", ec.message().c_str());
+						close();
+						return;
+					}
+					sending = false;
+					sendBufSize -= len;
+					if (sendBufSize > 0) {
+						memmove(&sendBuffer[0], &sendBuffer[len], sendBufSize);
+						doSend();
+					}
+				});
 		}
+	}
+
+	void close() {
+		std::error_code ignored;
+		socket.close(ignored);
 	}
 
 	void pppdump(uint8_t *buf, int len, bool egress)
@@ -157,18 +164,14 @@ private:
 			fwrite(&delta, sizeof(delta), 1, dumpfp);
 		}
 		dump_last_time_ms = getTimeMs();
-
 		fputc(egress ? 1 : 2, dumpfp);			// Sent/received data
-
 		uint16_t slen = htons(len);
 		fwrite(&slen, 2, 1, dumpfp);
-
 		fwrite(buf, 1, len, dumpfp);
 #endif
 	}
 
 	SocketT socket;
-	asio::steady_timer timer;
 	std::array<u8, 1542> recvBuffer;
 	std::array<u8, 1542> sendBuffer;
 	u32 sendBufSize = 0;
@@ -178,24 +181,27 @@ private:
 	u64 dump_last_time_ms;
 };
 
+using PPPTcpSocket = PPPSocket<asio::ip::tcp::socket>;
+
 class EthSocket
 {
 public:
 	EthSocket(asio::io_context& io_context, const asio::ip::tcp::endpoint& endpoint)
 		: socket(io_context)
 	{
-		socket.connect(endpoint);
-		os_notify("Connected to DCNet with ethernet", 5000);
+		asio::error_code ec;
+		socket.connect(endpoint, ec);
+		if (ec)
+			throw FlycastException(ec.message().c_str());
+		os_notify("Connected to DCNet with Ethernet", 5000);
 		receive();
 		u8 prolog[] = { 'D', 'C', 'N', 'E', 'T', 1 };
 		send(prolog, sizeof(prolog));
-		Instance = this;
 	}
 
 	~EthSocket() {
 		if (dumpfp != nullptr)
 			fclose(dumpfp);
-		Instance = nullptr;
 	}
 
 	void send(const u8 *frame, u32 size)
@@ -204,7 +210,7 @@ public:
 			WARN_LOG(NETWORK, "Dropped out frame (buffer:%d + %d bytes). Increase send buffer size\n", sendBufferIdx, size);
 			return;
 		}
-		if (Instance != nullptr)
+		if (size >= 32) // skip prolog
 			ethdump(frame, size);
 		*(u16 *)&sendBuffer[sendBufferIdx] = size;
 		sendBufferIdx += 2;
@@ -230,34 +236,35 @@ private:
 		return std::make_pair(begin + len, true);
 	}
 
-	void receive() {
-		asio::async_read_until(socket, asio::dynamic_vector_buffer(recvBuffer), packetMatcher,
-				std::bind(&EthSocket::onRecv, this, asio::placeholders::error, asio::placeholders::bytes_transferred));
-	}
-	void onRecv(asio::error_code ec, size_t len)
+	void receive()
 	{
-		if (ec || len == 0)
-		{
-			if (ec)
-				ERROR_LOG(NETWORK, "onRecv error: %s", ec.message().c_str());
-			socket.close(ec);
-			return;
-		}
-		/*
-		verify(len - 2 == *(u16 *)&recvBuffer[0]);
-		printf("In frame: dest %02x:%02x:%02x:%02x:%02x:%02x "
-			   "src %02x:%02x:%02x:%02x:%02x:%02x, ethertype %04x, size %d bytes\n",
-			   recvBuffer[2], recvBuffer[3], recvBuffer[4], recvBuffer[5], recvBuffer[6], recvBuffer[7],
-			   recvBuffer[8], recvBuffer[9], recvBuffer[10], recvBuffer[11], recvBuffer[12], recvBuffer[13],
-			*(u16 *)&recvBuffer[14], (int)len - 2);
-		*/
-		ethdump(&recvBuffer[2], len - 2);
-		bba_recv_frame(&recvBuffer[2], len - 2);
-		if (len < recvBuffer.size())
-			recvBuffer.erase(recvBuffer.begin(), recvBuffer.begin() + len);
-		else
-			recvBuffer.clear();
-		receive();
+		asio::async_read_until(socket, asio::dynamic_vector_buffer(recvBuffer), packetMatcher,
+			[this](const std::error_code& ec, size_t len)
+			{
+				if (ec || len == 0)
+				{
+					if (ec)
+						ERROR_LOG(NETWORK, "Receive error: %s", ec.message().c_str());
+					std::error_code ignored;
+					socket.close(ignored);
+					return;
+				}
+				/*
+				verify(len - 2 == *(u16 *)&recvBuffer[0]);
+				printf("In frame: dest %02x:%02x:%02x:%02x:%02x:%02x "
+					   "src %02x:%02x:%02x:%02x:%02x:%02x, ethertype %04x, size %d bytes\n",
+					   recvBuffer[2], recvBuffer[3], recvBuffer[4], recvBuffer[5], recvBuffer[6], recvBuffer[7],
+					   recvBuffer[8], recvBuffer[9], recvBuffer[10], recvBuffer[11], recvBuffer[12], recvBuffer[13],
+					*(u16 *)&recvBuffer[14], (int)len - 2);
+				*/
+				ethdump(&recvBuffer[2], len - 2);
+				bba_recv_frame(&recvBuffer[2], len - 2);
+				if (len < recvBuffer.size())
+					recvBuffer.erase(recvBuffer.begin(), recvBuffer.begin() + len);
+				else
+					recvBuffer.clear();
+				receive();
+			});
 	}
 
 	void doSend()
@@ -266,22 +273,22 @@ private:
 			return;
 		sending = true;
 		asio::async_write(socket, asio::buffer(sendBuffer, sendBufferIdx),
-				std::bind(&EthSocket::onSent, this, asio::placeholders::error, asio::placeholders::bytes_transferred));
-	}
-
-	void onSent(asio::error_code ec, size_t len)
-	{
-		sending = false;
-		if (ec) {
-			ERROR_LOG(NETWORK, "onRecv error: %s", ec.message().c_str());
-			socket.close(ec);
-			return;
-		}
-		sendBufferIdx -= len;
-		if (sendBufferIdx != 0) {
-			memmove(sendBuffer.data(), sendBuffer.data() + len, sendBufferIdx);
-			doSend();
-		}
+			[this](const std::error_code& ec, size_t len)
+			{
+				sending = false;
+				if (ec)
+				{
+					ERROR_LOG(NETWORK, "Send error: %s", ec.message().c_str());
+					std::error_code ignored;
+					socket.close(ignored);
+					return;
+				}
+				sendBufferIdx -= len;
+				if (sendBufferIdx != 0) {
+					memmove(sendBuffer.data(), sendBuffer.data() + len, sendBufferIdx);
+					doSend();
+				}
+			});
 	}
 
 	void ethdump(const uint8_t *frame, int size)
@@ -348,11 +355,7 @@ private:
 	bool sending = false;
 
 	FILE *dumpfp = nullptr;
-
-public:
-	static EthSocket *Instance;
 };
-EthSocket *EthSocket::Instance;
 
 class DCNetThread
 {
@@ -371,8 +374,33 @@ public:
 			return;
 		io_context->stop();
 		thread.join();
+		pppSocket.reset();
+		ethSocket.reset();
 		io_context.reset();
 		os_notify("DCNet disconnected", 3000);
+	}
+
+	void sendModem(u8 v)
+	{
+		if (io_context == nullptr || pppSocket == nullptr)
+			return;
+		io_context->post([this, v]() {
+			pppSocket->send(v);
+		});
+	}
+	void sendEthFrame(const u8 *frame, u32 len)
+	{
+		if (io_context != nullptr && ethSocket != nullptr)
+		{
+			std::vector<u8> vbuf(frame, frame + len);
+			io_context->post([this, vbuf]() {
+				ethSocket->send(vbuf.data(), vbuf.size());
+			});
+		}
+		else {
+			// restart the thread if previously stopped
+			start();
+		}
 	}
 
 private:
@@ -380,6 +408,8 @@ private:
 
 	std::thread thread;
 	std::unique_ptr<asio::io_context> io_context;
+	std::unique_ptr<PPPTcpSocket> pppSocket;
+	std::unique_ptr<EthSocket> ethSocket;
 	friend DCNetService;
 };
 static DCNetThread thread;
@@ -397,7 +427,7 @@ void DCNetService::stop() {
 }
 
 void DCNetService::writeModem(u8 b) {
-	fromModem.push(b);
+	thread.sendModem(b);
 }
 
 int DCNetService::readModem()
@@ -429,7 +459,8 @@ void DCNetService::receiveEthFrame(u8 const *frame, unsigned int len)
 			&& ntohs(*(u16 *)&frame[0x24]) == 67)	// dest port: dhcps
 	{
 		const u8 *options = &frame[0x11a];
-		while (options - frame < len && *options != 0xff) {
+		while (options - frame < len && *options != 0xff)
+		{
 			if (*options == 53		// message type
 				&& options[2] == 7)	// release
 			{
@@ -439,17 +470,7 @@ void DCNetService::receiveEthFrame(u8 const *frame, unsigned int len)
 			options += options[1] + 2;
 		}
 	}
-    if (EthSocket::Instance != nullptr)
-    {
-    	std::vector<u8> vbuf(frame, frame + len);
-    	thread.io_context->post([vbuf]() {
-    		EthSocket::Instance->send(vbuf.data(), vbuf.size());
-    	});
-    }
-    else {
-    	// restart the thread if previously stopped
-    	start();
-    }
+	thread.sendEthFrame(frame, len);
 }
 
 void DCNetThread::run()
@@ -461,19 +482,20 @@ void DCNetThread::run()
 		else
 			port = "7654";
 		asio::ip::tcp::resolver resolver(*io_context);
-		auto it = resolver.resolve("dcnet.flyca.st", port);
-		if (it.empty())
-			throw std::runtime_error("Can't find dcnet host");
+		asio::error_code ec;
+		auto it = resolver.resolve("dcnet.flyca.st", port, ec);
+		if (ec)
+			throw FlycastException(ec.message());
 		asio::ip::tcp::endpoint endpoint = *it.begin();
 
-		if (config::EmulateBBA) {
-			EthSocket socket(*io_context, endpoint);
-			io_context->run();
-		}
-		else {
-			PPPSocket<asio::ip::tcp::socket> socket(*io_context, endpoint);
-			io_context->run();
-		}
+		if (config::EmulateBBA)
+			ethSocket = std::make_unique<EthSocket>(*io_context, endpoint);
+		else
+			pppSocket = std::make_unique<PPPTcpSocket>(*io_context, endpoint);
+		io_context->run();
+	} catch (const FlycastException& e) {
+		ERROR_LOG(NETWORK, "DCNet connection error: %s", e.what());
+		os_notify("Can't connect to DCNet", 8000, e.what());
 	} catch (const std::runtime_error& e) {
 		ERROR_LOG(NETWORK, "DCNetThread::run error: %s", e.what());
 	}
