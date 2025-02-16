@@ -271,9 +271,9 @@ void input_sdl_init()
 	// Linux mappings are OK by default
 	// Can be removed once mapping is merged into SDL, see https://github.com/libsdl-org/SDL/pull/12039
 #if (defined(__APPLE__) && defined(TARGET_OS_MAC))
-	SDL_GameControllerAddMapping("0300000009120000072f000000010000,OrangeFox86 Dreamcast Controller USB,a:b0,b:b1,x:b3,y:b4,dpleft:h0.8,dpright:h0.2,dpup:h0.1,dpdown:h0.4,leftx:a0,lefty:a1,lefttrigger:a2,righttrigger:a5,start:b11");
+	SDL_GameControllerAddMapping("0300000009120000072f000000010000,OrangeFox86 DreamPort,a:b0,b:b1,x:b3,y:b4,dpleft:h0.8,dpright:h0.2,dpup:h0.1,dpdown:h0.4,leftx:a0,lefty:a1,lefttrigger:a2,righttrigger:a5,start:b11");
 #elif defined(_WIN32)
-	SDL_GameControllerAddMapping("0300000009120000072f000000000000,OrangeFox86 Dreamcast Controller USB,a:b0,b:b1,x:b3,y:b4,dpleft:h0.8,dpright:h0.2,dpup:h0.1,dpdown:h0.4,leftx:a0,lefty:a1,lefttrigger:-a2,righttrigger:-a5,start:b11");
+	SDL_GameControllerAddMapping("0300000009120000072f000000000000,OrangeFox86 DreamPort,a:b0,b:b1,x:b3,y:b4,dpleft:h0.8,dpright:h0.2,dpup:h0.1,dpdown:h0.4,leftx:a0,lefty:a1,lefttrigger:-a2,righttrigger:-a5,start:b11");
 #endif
 }
 

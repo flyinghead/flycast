@@ -8,6 +8,8 @@
 #include "network/ggpo.h"
 #include "hw/naomi/card_reader.h"
 
+#include <memory>
+
 enum MaplePattern
 {
 	MP_Start,
@@ -17,7 +19,7 @@ enum MaplePattern
 	MP_NOP = 7
 };
 
-maple_device* MapleDevices[MAPLE_PORTS][6];
+std::shared_ptr<maple_device> MapleDevices[MAPLE_PORTS][6];
 
 int maple_schid;
 
@@ -202,13 +204,13 @@ static void maple_DoDma()
 			}
 			const u32 frame_header = swap_msb ? SWAP32(p_data[0]) : p_data[0];
 
-			//Command code 
+			//Command code
 			u32 command = frame_header & 0xFF;
-			//Recipient address 
+			//Recipient address
 			u32 reci = (frame_header >> 8) & 0xFF;//0-5;
-			//Sender address 
+			//Sender address
 			//u32 send = (frame_header >> 16) & 0xFF;
-			//Number of additional words in frame 
+			//Number of additional words in frame
 			u32 inlen = (frame_header >> 24) & 0xFF;
 
 			u32 port = getPort(reci);

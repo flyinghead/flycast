@@ -23,7 +23,7 @@
 #if (defined(_WIN32) || defined(__linux__) || (defined(__APPLE__) && defined(TARGET_OS_MAC))) && !defined(TARGET_UWP)
 #define USE_DREAMCASTCONTROLLER 1
 #define TYPE_DREAMCONN 1
-#define TYPE_DREAMCASTCONTROLLERUSB 2
+#define TYPE_DREAMPORT 2
 #include <asio.hpp>
 #endif
 #include <memory>
@@ -52,7 +52,6 @@ class DreamConn
 {
 	int bus = -1;
 	const int dreamcastControllerType;
-	const std::string name;
 #ifdef USE_DREAMCASTCONTROLLER
 	std::unique_ptr<class DreamcastControllerConnection> dcConnection;
 #endif
@@ -60,11 +59,14 @@ class DreamConn
 	u8 expansionDevs = 0;
 
 public:
-	DreamConn(int bus, int dreamcastControllerType, const std::string& name);
+	DreamConn(int bus, int dreamcastControllerType, int joystick_idx, SDL_Joystick* sdl_joystick);
 
 	~DreamConn();
 
 	bool send(const MapleMsg& msg);
+
+	// When called, do teardown stuff like reset screen
+	void gameTermination();
 
 	int getBus() const {
 		return bus;
@@ -76,7 +78,11 @@ public:
 		return expansionDevs & 2;
 	}
 
-	void change_bus(int bus);
+	int getDefaultBus();
+
+	void changeBus(int newBus);
+
+	std::string getName();
 
 	void connect();
 	void disconnect();
