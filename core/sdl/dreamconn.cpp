@@ -228,18 +228,6 @@ public:
 
 		// use user-configured serial device if available, fallback to first available
 		serial_device = cfgLoadStr("input", "DreamPicoPortSerialDevice", "");
-		if (serial_device.empty()) {
-            serial_device = cfgLoadStr("input", "DreamPortSerialDevice", "");
-            if (!serial_device.empty()) {
-                WARN_LOG(INPUT, "DreamPortSerialDevice config is deprecated; use DreamPicoPortSerialDevice instead");
-            } else {
-                serial_device = cfgLoadStr("input", "DreamcastControllerUsbSerialDevice", "");
-                if (!serial_device.empty()) {
-                    WARN_LOG(INPUT, "DreamcastControllerUsbSerialDevice config is deprecated; use DreamPicoPortSerialDevice instead");
-                }
-            }
-		}
-
 		if (!serial_device.empty())
 		{
 			NOTICE_LOG(INPUT, "DreamPicoPort connecting to user-configured serial device: %s", serial_device.c_str());
