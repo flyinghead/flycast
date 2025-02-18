@@ -189,13 +189,13 @@ public:
 	}
 };
 
-class DreamPortSerialHandler
+class DreamPicoPortSerialHandler
 {
 	//! Asynchronous context for serial_handler
 	asio::io_context io_context;
 	//! Output buffer data for serial_handler
 	std::string serial_out_data;
-	//! Handles communication to DreamPort
+	//! Handles communication to DreamPicoPort
 	asio::serial_port serial_handler{io_context};
 	//! Set to true while an async write is in progress with serial_handler
 	bool serial_write_in_progress = false;
@@ -215,7 +215,7 @@ class DreamPortSerialHandler
 	std::mutex read_cv_mutex;
 
 public:
-	DreamPortSerialHandler() {
+	DreamPicoPortSerialHandler() {
 
 		// the serial port isn't ready at this point, so we need to sleep briefly
 		// we probably should have a better way to handle this
@@ -227,30 +227,35 @@ public:
 		std::string serial_device = "";
 
 		// use user-configured serial device if available, fallback to first available
-		serial_device = cfgLoadStr("input", "DreamPortSerialDevice", "");
+		serial_device = cfgLoadStr("input", "DreamPicoPortSerialDevice", "");
 		if (serial_device.empty()) {
-			serial_device = cfgLoadStr("input", "DreamcastControllerUsbSerialDevice", "");
-			if (!serial_device.empty()) {
-				WARN_LOG(INPUT, "DreamcastControllerUsbSerialDevice config is deprecated; use DreamPortSerialDevice instead");
-			}
+            serial_device = cfgLoadStr("input", "DreamPortSerialDevice", "");
+            if (!serial_device.empty()) {
+                WARN_LOG(INPUT, "DreamPortSerialDevice config is deprecated; use DreamPicoPortSerialDevice instead");
+            } else {
+                serial_device = cfgLoadStr("input", "DreamcastControllerUsbSerialDevice", "");
+                if (!serial_device.empty()) {
+                    WARN_LOG(INPUT, "DreamcastControllerUsbSerialDevice config is deprecated; use DreamPicoPortSerialDevice instead");
+                }
+            }
 		}
 
 		if (!serial_device.empty())
 		{
-			NOTICE_LOG(INPUT, "DreamPort connecting to user-configured serial device: %s", serial_device.c_str());
+			NOTICE_LOG(INPUT, "DreamPicoPort connecting to user-configured serial device: %s", serial_device.c_str());
 		} else {
 			serial_device = getFirstSerialDevice();
-			NOTICE_LOG(INPUT, "DreamPort connecting to autoselected serial device: %s", serial_device.c_str());
+			NOTICE_LOG(INPUT, "DreamPicoPort connecting to autoselected serial device: %s", serial_device.c_str());
 		}
 
 		asio::error_code ec;
 		serial_handler.open(serial_device, ec);
 
 		if (ec || !serial_handler.is_open()) {
-			WARN_LOG(INPUT, "DreamPort serial connection failed: %s", ec.message().c_str());
+			WARN_LOG(INPUT, "DreamPicoPort serial connection failed: %s", ec.message().c_str());
 			disconnect();
 		} else {
-			NOTICE_LOG(INPUT, "DreamPort serial connection successful!");
+			NOTICE_LOG(INPUT, "DreamPicoPort serial connection successful!");
 		}
 
 		// This must be done before the io_context is run because it will keep io_context from returning immediately
@@ -259,7 +264,7 @@ public:
 		io_context_thread = std::make_unique<std::thread>([this](){contextThreadEnty();});
 	}
 
-	~DreamPortSerialHandler() {
+	~DreamPicoPortSerialHandler() {
 		disconnect();
 		io_context_thread->join();
 	}
@@ -583,11 +588,11 @@ private:
 	}
 };
 
-//! See: https://github.com/OrangeFox86/DreamPort
-class DreamPortConnection : public DreamcastControllerConnection
+//! See: https://github.com/OrangeFox86/DreamPicoPort
+class DreamPicoPortConnection : public DreamcastControllerConnection
 {
 	//! The one and only serial port
-	static std::unique_ptr<DreamPortSerialHandler> serial;
+	static std::unique_ptr<DreamPicoPortSerialHandler> serial;
 	//! Number of devices using the above serial
 	static std::atomic<std::uint32_t> connected_dev_count;
 	//! Current timeout in milliseconds
@@ -610,10 +615,10 @@ public:
 	static constexpr const char* VID_PID_GUID = "09120000072f0000";
 
 public:
-	DreamPortConnection(const DreamPortConnection&) = delete;
-	DreamPortConnection() = delete;
+	DreamPicoPortConnection(const DreamPicoPortConnection&) = delete;
+	DreamPicoPortConnection() = delete;
 
-	DreamPortConnection(int joystick_idx, SDL_Joystick* sdl_joystick) :
+	DreamPicoPortConnection(int joystick_idx, SDL_Joystick* sdl_joystick) :
 		DreamcastControllerConnection()
 	{
 #if defined(_WIN32)
@@ -623,7 +628,7 @@ public:
 		determineHardwareBus(joystick_idx, sdl_joystick);
 	}
 
-	~DreamPortConnection(){
+	~DreamPicoPortConnection(){
 		disconnect();
 	}
 
@@ -659,7 +664,7 @@ public:
 		++connected_dev_count;
 		connection_established = true;
 		if (!serial) {
-			serial = std::make_unique<DreamPortSerialHandler>();
+			serial = std::make_unique<DreamPicoPortSerialHandler>();
 		}
 
 		if (serial && serial->is_open()) {
@@ -716,7 +721,7 @@ public:
 	}
 
 	std::string getName() override {
-		std::string name = "DreamPort";
+		std::string name = "DreamPicoPort";
 		if (!is_hardware_bus_implied && !is_single_device) {
 			const char portChar = ('A' + hardware_bus);
 			name += " " + std::string(1, portChar);
@@ -827,8 +832,8 @@ private:
 };
 
 // Define the static instances here
-std::unique_ptr<DreamPortSerialHandler> DreamPortConnection::serial;
-std::atomic<std::uint32_t> DreamPortConnection::connected_dev_count = 0;
+std::unique_ptr<DreamPicoPortSerialHandler> DreamPicoPortConnection::serial;
+std::atomic<std::uint32_t> DreamPicoPortConnection::connected_dev_count = 0;
 
 DreamConn::DreamConn(int bus, int dreamcastControllerType, int joystick_idx, SDL_Joystick* sdl_joystick) :
 	bus(bus), dreamcastControllerType(dreamcastControllerType)
@@ -839,8 +844,8 @@ DreamConn::DreamConn(int bus, int dreamcastControllerType, int joystick_idx, SDL
 			dcConnection = std::make_unique<DreamConnConnection>();
 			break;
 
-		case TYPE_DREAMPORT:
-			dcConnection = std::make_unique<DreamPortConnection>(joystick_idx, sdl_joystick);
+		case TYPE_DREAMPICOPORT:
+			dcConnection = std::make_unique<DreamPicoPortConnection>(joystick_idx, sdl_joystick);
 			break;
 	}
 }
@@ -956,7 +961,7 @@ bool DreamConnGamepad::isDreamcastController(int deviceIndex)
 	// DreamConn VID:4457 PID:4443
 	// Dreamcast Controller USB VID:1209 PID:2f07
 	if (memcmp(DreamConnConnection::VID_PID_GUID, guid_str + 8, 16) == 0 ||
-		memcmp(DreamPortConnection::VID_PID_GUID, guid_str + 8, 16) == 0)
+		memcmp(DreamPicoPortConnection::VID_PID_GUID, guid_str + 8, 16) == 0)
 	{
 		NOTICE_LOG(INPUT, "Dreamcast controller found!");
 		return true;
@@ -977,9 +982,9 @@ DreamConnGamepad::DreamConnGamepad(int maple_port, int joystick_idx, SDL_Joystic
 	{
 		dreamconn = std::make_shared<DreamConn>(maple_port, TYPE_DREAMCONN, joystick_idx, sdl_joystick);
 	}
-	else if (memcmp(DreamPortConnection::VID_PID_GUID, guid_str + 8, 16) == 0)
+	else if (memcmp(DreamPicoPortConnection::VID_PID_GUID, guid_str + 8, 16) == 0)
 	{
-		dreamconn = std::make_shared<DreamConn>(maple_port, TYPE_DREAMPORT, joystick_idx, sdl_joystick);
+		dreamconn = std::make_shared<DreamConn>(maple_port, TYPE_DREAMPICOPORT, joystick_idx, sdl_joystick);
 	}
 
 	if (dreamconn) {
