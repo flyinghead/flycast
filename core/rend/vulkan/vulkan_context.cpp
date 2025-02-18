@@ -42,6 +42,7 @@ VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 #endif
 
 #include <memory>
+#include <vulkan/vulkan_format_traits.hpp>
 
 void ReInitOSD();
 
@@ -632,23 +633,28 @@ void VulkanContext::CreateSwapChain()
 		for (auto& img : imageViews)
 			img.reset();
 
-		// get the supported VkFormats
-		std::vector<vk::SurfaceFormatKHR> formats = physicalDevice.getSurfaceFormatsKHR(GetSurface());
-		assert(!formats.empty());
-		for (const auto& f : formats)
-		{
-			DEBUG_LOG(RENDERER, "Supported surface format: %s", vk::to_string(f.format).c_str());
-			// Try to find an non-sRGB color format
-			if (f.format == vk::Format::eB8G8R8A8Unorm || f.format == vk::Format::eR8G8B8A8Unorm)
+		// Determine surface format and color-space
+		std::vector<vk::SurfaceFormatKHR> surfaceFormats = physicalDevice.getSurfaceFormatsKHR(GetSurface());
+
+		// Prefer a non-sRGB image format
+		std::stable_partition(surfaceFormats.begin(), surfaceFormats.end(),
+			[](const vk::SurfaceFormatKHR& surfaceFormat) -> bool
 			{
-				colorFormat = f.format;
-				break;
+				return std::string_view("SRGB").compare(vk::componentNumericFormat(surfaceFormat.format, 0)) != 0;
 			}
-		}
-		if (colorFormat == vk::Format::eUndefined)
-		{
-			colorFormat = (formats[0].format == vk::Format::eUndefined) ? vk::Format::eB8G8R8A8Unorm : formats[0].format;
-		}
+		);
+
+		// Prefer an sRGB presentation color-space
+		std::stable_partition(surfaceFormats.begin(), surfaceFormats.end(),
+			[](const vk::SurfaceFormatKHR& surfaceFormat) -> bool
+			{
+				return surfaceFormat.colorSpace == vk::ColorSpaceKHR::eSrgbNonlinear;
+			}
+		);
+
+		// Top of the list is the best candidate surface format/color-space
+		const vk::SurfaceFormatKHR& targetSurfaceFormat = surfaceFormats[0];
+		presentFormat = targetSurfaceFormat.format;
 
 		int tries = 0;
 		do {
@@ -708,7 +714,7 @@ void VulkanContext::CreateSwapChain()
 			// for final screenshot or Syphon
 			usage |= vk::ImageUsageFlagBits::eTransferSrc;
 #endif
-			vk::SwapchainCreateInfoKHR swapChainCreateInfo(vk::SwapchainCreateFlagsKHR(), GetSurface(), imageCount, colorFormat, vk::ColorSpaceKHR::eSrgbNonlinear,
+			vk::SwapchainCreateInfoKHR swapChainCreateInfo(vk::SwapchainCreateFlagsKHR(), GetSurface(), imageCount, targetSurfaceFormat.format, targetSurfaceFormat.colorSpace,
 					swapchainExtent, 1, usage, vk::SharingMode::eExclusive, 0, nullptr, preTransform, vk::CompositeAlphaFlagBitsKHR::eOpaque, swapchainPresentMode, true, nullptr);
 
 			u32 queueFamilyIndices[2] = { graphicsQueueIndex, presentQueueIndex };
@@ -744,7 +750,7 @@ void VulkanContext::CreateSwapChain()
 		u32 imageIdx = 0;
 		for (auto image : swapChainImages)
 		{
-			vk::ImageViewCreateInfo imageViewCreateInfo(vk::ImageViewCreateFlags(), image, vk::ImageViewType::e2D, colorFormat, componentMapping, subResourceRange);
+			vk::ImageViewCreateInfo imageViewCreateInfo(vk::ImageViewCreateFlags(), image, vk::ImageViewType::e2D, presentFormat, componentMapping, subResourceRange);
 			imageViews[imageIdx++] = device->createImageViewUnique(imageViewCreateInfo);
 
 			// create a UniqueCommandPool to allocate a CommandBuffer from
@@ -757,7 +763,7 @@ void VulkanContext::CreateSwapChain()
 	    depthFormat = findDepthFormat(physicalDevice);
 
 	    // Render pass
-	    vk::AttachmentDescription attachmentDescription = vk::AttachmentDescription(vk::AttachmentDescriptionFlags(), colorFormat, vk::SampleCountFlagBits::e1,
+	    vk::AttachmentDescription attachmentDescription = vk::AttachmentDescription(vk::AttachmentDescriptionFlags(), presentFormat, vk::SampleCountFlagBits::e1,
 	    		vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eStore, vk::AttachmentLoadOp::eDontCare, vk::AttachmentStoreOp::eDontCare,
 				vk::ImageLayout::eUndefined, vk::ImageLayout::ePresentSrcKHR);
 
@@ -1340,9 +1346,22 @@ bool VulkanContext::GetLastFrame(std::vector<u8>& data, int& width, int& height)
 		else
 			width = w;
 	}
+
+	vk::Format imageFormat = vk::Format::eR8G8B8A8Unorm;
+	const vk::ImageUsageFlags imageUsage = vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eTransferSrc;
+
+	// Test if RGB8 is natively supported to avoid having to do a format conversion
+	bool nativeRgb8 = false;
+	vk::ImageFormatProperties rgb8Properties{};
+	if (physicalDevice.getImageFormatProperties(vk::Format::eR8G8B8Unorm, vk::ImageType::e2D, vk::ImageTiling::eOptimal, imageUsage, {}, &rgb8Properties) == vk::Result::eSuccess)
+	{
+		nativeRgb8 = true;
+		imageFormat = vk::Format::eR8G8B8Unorm;
+	}
+
 	// color attachment
 	FramebufferAttachment attachment(physicalDevice, *device);
-	attachment.Init(width, height, vk::Format::eR8G8B8A8Unorm, vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eTransferSrc, "screenshot");
+	attachment.Init(width, height, imageFormat, imageUsage, "screenshot");
 	// command buffer
 	vk::UniqueCommandBuffer commandBuffer = std::move(device->allocateCommandBuffersUnique(
 			vk::CommandBufferAllocateInfo(*commandPools.back(), vk::CommandBufferLevel::ePrimary, 1)).front());
@@ -1352,7 +1371,7 @@ bool VulkanContext::GetLastFrame(std::vector<u8>& data, int& width, int& height)
 	CommandBufferDebugScope _(commandBuffer.get(), "GetLastFrame", scopeColor);
 
 	// render pass
-	vk::AttachmentDescription attachmentDescription = vk::AttachmentDescription(vk::AttachmentDescriptionFlags(), vk::Format::eR8G8B8A8Unorm, vk::SampleCountFlagBits::e1,
+	vk::AttachmentDescription attachmentDescription = vk::AttachmentDescription(vk::AttachmentDescriptionFlags(), imageFormat, vk::SampleCountFlagBits::e1,
 			vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eStore, vk::AttachmentLoadOp::eDontCare, vk::AttachmentStoreOp::eDontCare,
 			vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferSrcOptimal);
 	vk::AttachmentReference colorReference(0, vk::ImageLayout::eColorAttachmentOptimal);
@@ -1417,15 +1436,25 @@ bool VulkanContext::GetLastFrame(std::vector<u8>& data, int& width, int& height)
 
 	const u8 *img = (const u8 *)attachment.GetBufferData()->MapMemory();
 	data.clear();
-	data.reserve(width * height * 3);
-	for (int y = 0; y < height; y++)
+	if (nativeRgb8)
 	{
-		for (int x = 0; x < width; x++)
+		// Format is already RGB, can be directly copied
+		data.resize(width * height * 3);
+		std::memcpy(data.data(), img, width* height * 3);
+	}
+	else
+	{
+		data.reserve(width * height * 3);
+		// RGBA -> RGB
+		for (int y = 0; y < height; y++)
 		{
-			data.push_back(*img++);
-			data.push_back(*img++);
-			data.push_back(*img++);
-			img++;
+			for (int x = 0; x < width; x++)
+			{
+				data.push_back(*img++);
+				data.push_back(*img++);
+				data.push_back(*img++);
+				img++;
+			}
 		}
 	}
 	attachment.GetBufferData()->UnmapMemory();

@@ -1371,11 +1371,11 @@ public:
 		if (codeBuffer == nullptr)
 			// init() not called yet
 			return false;
-		void* protStart = codeBuffer->get();
-		size_t protSize = codeBuffer->getFreeSpace();
-		virtmem::jit_set_exec(protStart, protSize, false);
+		u8 *retAddr = *(u8**)context.rsp - 5;
+		if (retAddr < (u8*)codeBuffer->getBase() || retAddr >= (u8*)codeBuffer->getBase() + codeBuffer->getSize())
+			return false;
+		virtmem::jit_set_exec(retAddr, 16, false);
 
-		u8 *retAddr = *(u8 **)context.rsp - 5;
 		BlockCompiler compiler(*sh4ctx, *codeBuffer, retAddr);
 		bool rc = false;
 		try {
@@ -1383,7 +1383,7 @@ public:
 		} catch (const Xbyak::Error& e) {
 			ERROR_LOG(DYNAREC, "Fatal xbyak error: %s", e.what());
 		}
-		virtmem::jit_set_exec(protStart, protSize, true);
+		virtmem::jit_set_exec(retAddr, 16, true);
 		return rc;
 	}
 

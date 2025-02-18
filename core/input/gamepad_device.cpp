@@ -329,7 +329,7 @@ bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 			int threshold = 16384;
 			if (code == leftTrigger || code == rightTrigger )
 				threshold = 100;
-				
+
 			if (std::abs(v) < threshold)
 				kcode[port] |=  key; // button released
 			else
@@ -554,6 +554,9 @@ void GamepadDevice::Register(const std::shared_ptr<GamepadDevice>& gamepad)
 	Lock _(_gamepads_mutex);
 	_gamepads.push_back(gamepad);
 	MapleConfigMap::UpdateVibration = updateVibration;
+
+	gamepad->_is_registered = true;
+	gamepad->registered();
 }
 
 void GamepadDevice::Unregister(const std::shared_ptr<GamepadDevice>& gamepad)

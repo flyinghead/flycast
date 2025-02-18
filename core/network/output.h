@@ -27,10 +27,14 @@
 
 class NetworkOutput
 {
-public:
 	void init()
 	{
-		if (!config::NetworkOutput || settings.naomi.slave || settings.naomi.drivingSimSlave == 1)
+		if (!config::NetworkOutput || settings.naomi.slave || settings.naomi.drivingSimSlave == 1) {
+			term();
+			return;
+		}
+		if (server != INVALID_SOCKET)
+			// already done
 			return;
 		server = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
@@ -44,13 +48,13 @@ public:
 		saddr.sin_port = htons(8000 + settings.naomi.drivingSimSlave);
 		if (::bind(server, (sockaddr *)&saddr, saddr_len) < 0)
 		{
-			perror("bind");
+			perror("Network output: bind failed");
 			term();
 			return;
 		}
 		if (listen(server, 5) < 0)
 		{
-			perror("listen");
+			perror("Network output: listen failed");
 			term();
 			return;
 		}
@@ -58,27 +62,27 @@ public:
 		EventManager::listen(Event::VBlank, vblankCallback, this);
 	}
 
+public:
 	void term()
 	{
 		EventManager::unlisten(Event::VBlank, vblankCallback, this);
 		for (sock_t sock : clients)
 			closesocket(sock);
 		clients.clear();
-		if (server != INVALID_SOCKET)
-		{
+		if (server != INVALID_SOCKET) {
 			closesocket(server);
 			server = INVALID_SOCKET;
 		}
 	}
 
-	void reset()
-	{
+	void reset() {
+		init();
 		gameNameSent = false;
 	}
 
 	void output(const char *name, u32 value)
 	{
-		if (!config::NetworkOutput || clients.empty())
+		if (clients.empty())
 			return;
 		if (!gameNameSent)
 		{
@@ -104,6 +108,18 @@ private:
 		if (sockfd != INVALID_SOCKET)
 		{
 			set_non_blocking(sockfd);
+			if (gameNameSent)
+			{
+				std::string msg = "game = " + settings.content.gameId + "\n";
+				if (::send(sockfd, msg.c_str(), msg.length(), 0) < 0)
+				{
+					int error = get_last_error();
+					if (error != L_EWOULDBLOCK && error != L_EAGAIN) {
+						closesocket(sockfd);
+						return;
+					}
+				}
+			}
 			clients.push_back(sockfd);
 		}
 	}

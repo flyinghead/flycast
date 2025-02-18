@@ -12,6 +12,11 @@
 #else
 	#define DYNACALL
 #endif
+#ifdef _MSC_VER
+// conversion from 't1' to 't2', possible loss of data
+#pragma warning(disable: 4267)
+#pragma warning(disable: 4244)
+#endif
 
 #include <cstdint>
 #include <cstddef>

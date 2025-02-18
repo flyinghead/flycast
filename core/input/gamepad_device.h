@@ -40,7 +40,7 @@ public:
 	virtual bool gamepad_btn_input(u32 code, bool pressed);
 	virtual bool gamepad_axis_input(u32 code, int value);
 	virtual ~GamepadDevice() = default;
-	
+
 	void detect_btn_input(input_detected_cb button_pressed);
 	void detect_axis_input(input_detected_cb axis_moved);
 	void detectButtonOrAxisInput(input_detected_cb input_changed);
@@ -91,6 +91,7 @@ public:
 			save_mapping();
 		}
 	}
+	bool is_registered() const { return _is_registered; }
 
 	static void Register(const std::shared_ptr<GamepadDevice>& gamepad);
 	static void Unregister(const std::shared_ptr<GamepadDevice>& gamepad);
@@ -145,6 +146,7 @@ protected:
 	u32 rightTrigger = ~0;
 
 private:
+	virtual void registered() {}
 	bool handleButtonInput(int port, DreamcastKey key, bool pressed);
 	std::string make_mapping_filename(bool instance, int system, bool perGame = false);
 
@@ -189,6 +191,7 @@ private:
 	u64 _detection_start_time = 0;
 	input_detected_cb _input_detected;
 	bool _remappable;
+	bool _is_registered = false;
 	u32 digitalToAnalogState[4];
 	std::map<DreamcastKey, int> lastAxisValue[4];
 	bool perGameMapping = false;

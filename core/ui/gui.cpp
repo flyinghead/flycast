@@ -1609,6 +1609,8 @@ static void contentpath_warning_popup()
     }
 }
 
+#if !defined(NDEBUG) || defined(DEBUGFAST) || FC_PROFILER
+
 static void gui_debug_tab()
 {
 	header("Logging");
@@ -1640,6 +1642,9 @@ static void gui_debug_tab()
 			}
 			ImGui::EndCombo();
 		}
+		ImGui::InputText("Log Server", &config::LogServer.get(), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
+        ImGui::SameLine();
+        ShowHelpMarker("Log to this hostname[:port] with UDP. Default port is 31667.");
 	}
 #if FC_PROFILER
 	ImGui::Spacing();
@@ -1663,6 +1668,7 @@ static void gui_debug_tab()
 	}
 #endif
 }
+#endif
 
 static void addContentPathCallback(const std::string& path)
 {
@@ -2789,6 +2795,11 @@ static void gui_settings_network()
 			OptionCheckbox("Broadband Adapter Emulation", config::EmulateBBA,
 					"Emulate the Ethernet Broadband Adapter (BBA) instead of the Modem");
 		}
+		OptionCheckbox("Use DCNet (Experimental)", config::UseDCNet, "Connect to the experimental DCNet cloud service.");
+		ImGui::InputText("ISP User Name", &config::ISPUsername.get(), ImGuiInputTextFlags_CharsNoBlank | ImGuiInputTextFlags_CallbackCharFilter,
+				[](ImGuiInputTextCallbackData *data) { return static_cast<int>(data->EventChar <= ' ' || data->EventChar > '~'); }, nullptr);
+		ImGui::SameLine();
+		ShowHelpMarker("The ISP user name stored in the console Flash RAM. Used by some online games as the player name. Leave blank to keep the current Flash RAM value.");
 	}
 #ifdef NAOMI_MULTIBOARD
 	ImGui::Spacing();
@@ -2839,14 +2850,8 @@ static void gui_settings_advanced()
         		"Dump all textures into data/texdump/<game id>");
 
         bool logToFile = cfgLoadBool("log", "LogToFile", false);
-        bool newLogToFile = logToFile;
-		ImGui::Checkbox("Log to File", &newLogToFile);
-		if (logToFile != newLogToFile)
-		{
-			cfgSaveBool("log", "LogToFile", newLogToFile);
-			LogManager::Shutdown();
-			LogManager::Init();
-		}
+		if (ImGui::Checkbox("Log to File", &logToFile))
+			cfgSaveBool("log", "LogToFile", logToFile);
         ImGui::SameLine();
         ShowHelpMarker("Log debug information to flycast.log");
 #ifdef SENTRY_UPLOAD

@@ -19,7 +19,7 @@
 #include "alienfnt_modem.h"
 #include "hw/sh4/sh4_sched.h"
 #include "hw/sh4/modules/modules.h"
-#include "picoppp.h"
+#include "netservice.h"
 
 #include <vector>
 #include <deque>
@@ -34,7 +34,7 @@ struct ModemEmu : public SerialPort::Pipe
 
 	~ModemEmu() override {
 		sh4_sched_unregister(schedId);
-		stop_pico();
+		net::modbba::stop();
 		SCIFSerialPort::Instance().setPipe(nullptr);
 	}
 
@@ -47,7 +47,7 @@ struct ModemEmu : public SerialPort::Pipe
 			return c;
 		}
 		else if (dataMode)
-			return read_pico();
+			return net::modbba::readModem();
 		else
 			return 0;
 	}
@@ -57,7 +57,7 @@ struct ModemEmu : public SerialPort::Pipe
 		if (!toSend.empty())
 			return toSend.size();
 		else if (dataMode)
-			return pico_available();
+			return net::modbba::modemAvailable();
 		else
 			return 0;
 	}
@@ -76,10 +76,10 @@ struct ModemEmu : public SerialPort::Pipe
 				}
 				else
 				{
-					write_pico('+');
-					write_pico('+');
-					write_pico('+');
-					write_pico(data);
+					net::modbba::writeModem('+');
+					net::modbba::writeModem('+');
+					net::modbba::writeModem('+');
+					net::modbba::writeModem(data);
 				}
 				pluses = 0;
 				plusTime = 0;
@@ -92,10 +92,10 @@ struct ModemEmu : public SerialPort::Pipe
 			else
 			{
 				while (pluses > 0) {
-					write_pico('+');
+					net::modbba::writeModem('+');
 					pluses--;
 				}
-				write_pico(data);
+				net::modbba::writeModem(data);
 			}
 		}
 		else if (data == '\r' || data == '\n')
@@ -113,13 +113,13 @@ private:
 		recvBuf.clear();
 		if (line.substr(0, 4) == "ATDT") {
 			send("CONNECT 14400");
-			start_pico();
+			net::modbba::start();
 			dataMode = true;
 			sh4_sched_request(schedId, SH4_MAIN_CLOCK / 60);
 		}
 		if (line.substr(0, 3) == "ATH")
 		{
-			stop_pico();
+			net::modbba::stop();
 			send("OK");
 		}
 		else if (line.substr(0, 2) == "AT")

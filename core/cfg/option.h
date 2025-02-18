@@ -495,6 +495,7 @@ extern Option<bool, false> DiscordPresence;
 #if defined(__ANDROID__) && !defined(LIBRETRO)
 extern Option<bool, false> UseSafFilePicker;
 #endif
+extern OptionString LogServer;
 
 // Profiling
 extern Option<bool> ProfilerEnabled;
@@ -521,6 +522,8 @@ extern Option<int> GGPOChatTimeout;
 extern Option<bool> NetworkOutput;
 extern Option<int> MultiboardSlaves;
 extern Option<bool> BattleCableEnable;
+extern Option<bool> UseDCNet;
+extern OptionString ISPUsername;
 
 #ifdef USE_OMX
 extern Option<int> OmxAudioLatency;

@@ -1,7 +1,8 @@
 #pragma once
 #include "maple_devs.h"
+#include <memory>
 
-extern maple_device* MapleDevices[MAPLE_PORTS][6];
+extern std::shared_ptr<maple_device> MapleDevices[MAPLE_PORTS][6];
 
 void maple_Init();
 void maple_Reset(bool Manual);

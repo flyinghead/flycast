@@ -83,7 +83,7 @@ static void sdl_open_joystick(int index)
 		std::shared_ptr<SDLGamepad> gamepad = std::make_shared<SwitchGamepad>(index < MAPLE_PORTS ? index : -1, index, pJoystick);
 #else
 		std::shared_ptr<SDLGamepad> gamepad;
-		if (DreamConnGamepad::isDreamConn(index))
+		if (DreamConnGamepad::isDreamcastController(index))
 			gamepad = std::make_shared<DreamConnGamepad>(index < MAPLE_PORTS ? index : -1, index, pJoystick);
 		else
 			gamepad = std::make_shared<SDLGamepad>(index < MAPLE_PORTS ? index : -1, index, pJoystick);
@@ -266,6 +266,15 @@ void input_sdl_init()
 	if (settings.input.keyboardLangId == KeyboardLayout::US)
 		settings.input.keyboardLangId = detectKeyboardLayout();
 	barcode.clear();
+
+	// Add MacOS and Windows mappings for Dreamcast Controller USB
+	// Linux mappings are OK by default
+	// Can be removed once mapping is merged into SDL, see https://github.com/libsdl-org/SDL/pull/12039
+#if (defined(__APPLE__) && defined(TARGET_OS_MAC))
+	SDL_GameControllerAddMapping("0300000009120000072f000000010000,OrangeFox86 DreamPort,a:b0,b:b1,x:b3,y:b4,dpleft:h0.8,dpright:h0.2,dpup:h0.1,dpdown:h0.4,leftx:a0,lefty:a1,lefttrigger:a2,righttrigger:a5,start:b11");
+#elif defined(_WIN32)
+	SDL_GameControllerAddMapping("0300000009120000072f000000000000,OrangeFox86 DreamPort,a:b0,b:b1,x:b3,y:b4,dpleft:h0.8,dpright:h0.2,dpup:h0.1,dpdown:h0.4,leftx:a0,lefty:a1,lefttrigger:-a2,righttrigger:-a5,start:b11");
+#endif
 }
 
 void input_sdl_quit()
@@ -538,7 +547,7 @@ void input_sdl_handle()
 			case SDL_JOYDEVICEREMOVED:
 				sdl_close_joystick((SDL_JoystickID)event.jdevice.which);
 				break;
-				
+
 			case SDL_DROPFILE:
 				gui_start_game(event.drop.file);
 				break;
@@ -593,7 +602,7 @@ static inline void get_window_state()
         windowPos.h /= hdpiScaling;
         SDL_GetWindowPosition(window, &windowPos.x, &windowPos.y);
     }
-		
+
 }
 
 #if defined(_WIN32) && !defined(TARGET_UWP)
@@ -620,14 +629,14 @@ bool sdl_recreate_window(u32 flags)
         PROCESS_SYSTEM_DPI_AWARE = 1,
         PROCESS_PER_MONITOR_DPI_AWARE = 2
     } PROCESS_DPI_AWARENESS;
-    
+
     HRESULT(WINAPI *SetProcessDpiAwareness)(PROCESS_DPI_AWARENESS dpiAwareness); // Windows 8.1 and later
     void* shcoreDLL = SDL_LoadObject("SHCORE.DLL");
     if (shcoreDLL) {
         SetProcessDpiAwareness = (HRESULT(WINAPI *)(PROCESS_DPI_AWARENESS)) SDL_LoadFunction(shcoreDLL, "SetProcessDpiAwareness");
         if (SetProcessDpiAwareness) {
             SetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE);
-            
+
             if (SDL_GetDisplayDPI(0, &settings.display.dpi, NULL, NULL) != -1){ //SDL_WINDOWPOS_UNDEFINED is Display 0
                 //When using HiDPI mode, set correct DPI scaling
             	hdpiScaling = settings.display.dpi / 96.f;
@@ -636,7 +645,7 @@ bool sdl_recreate_window(u32 flags)
         SDL_UnloadObject(shcoreDLL);
     }
 #endif
-    
+
 #ifdef __SWITCH__
 	AppletOperationMode om = appletGetOperationMode();
 	if (om == AppletOperationMode_Handheld)

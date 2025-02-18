@@ -25,7 +25,7 @@
 #include "modem_regs.h"
 #include "hw/holly/holly_intc.h"
 #include "hw/sh4/sh4_sched.h"
-#include "network/picoppp.h"
+#include "network/netservice.h"
 #include "serialize.h"
 #include "cfg/option.h"
 #include "stdclass.h"
@@ -127,8 +127,6 @@ static bool data_sent;
 static u64 last_comm_stats;
 static int sent_bytes;
 static int recvd_bytes;
-static FILE *recv_fp;
-static FILE *sent_fp;
 #endif
 
 static int modem_sched_func(int tag, int cycles, int jitter, void *arg)
@@ -263,7 +261,7 @@ static int modem_sched_func(int tag, int cycles, int jitter, void *arg)
 			dspram[0x208] = 0xff;	// 2.4 - 19.2 kpbs supported
 			dspram[0x209] = 0xbf;	// 21.6 - 33.6 kpbs supported, asymmetric supported
 
-			start_pico();
+			net::modbba::start();
 			connect_state = CONNECTED;
 			callback_cycles = SH4_MAIN_CLOCK / 1000000 * 238;	// 238 us
 			data_sent = false;
@@ -291,7 +289,7 @@ static int modem_sched_func(int tag, int cycles, int jitter, void *arg)
 			// Let WinCE send data first to avoid choking it
 			if (!modem_regs.reg1e.RDBF && data_sent)
 			{
-				int c = read_pico();
+				int c = net::modbba::readModem();
 				if (c >= 0)
 				{
 					//LOG("pppd received %02x", c);
@@ -328,7 +326,7 @@ void ModemInit()
 
 void ModemReset()
 {
-	stop_pico();
+	net::modbba::stop();
 }
 
 void ModemTerm()
@@ -436,12 +434,12 @@ static void modem_reset(u32 v)
 		memset(&modem_regs, 0, sizeof(modem_regs));
 		state = MS_RESET;
 		LOG("Modem reset start ...");
+		net::modbba::stop();
 	}
 	else
 	{
 		if (state == MS_RESET)
 		{
-			stop_pico();
 			memset(&modem_regs, 0, sizeof(modem_regs));
 			state = MS_RESETING;
 			ControllerTestStart();
@@ -470,13 +468,6 @@ static u8 download_crc;
 
 static void ModemNormalWrite(u32 reg, u32 data)
 {
-#ifndef NDEBUG
-	if (recv_fp == NULL)
-	{
-		recv_fp = fopen("ppp_recv.dump", "w");
-		sent_fp = fopen("ppp_sent.dump", "w");
-	}
-#endif
 	//if (!module_download && reg != 0x10)
 	//	LOG("ModemNormalWrite : %03X=%X", reg,data);
 	u32 old = modem_regs.ptr[reg];
@@ -525,10 +516,8 @@ static void ModemNormalWrite(u32 reg, u32 data)
 			data_sent = true;
 #ifndef NDEBUG
 			sent_bytes++;
-			if (sent_fp)
-				fputc(data, sent_fp);
 #endif
-			write_pico(data);
+			net::modbba::writeModem(data);
 			modem_regs.reg1e.TDBE = 0;
 		}
 		break;
@@ -686,10 +675,6 @@ u32 ModemReadMem_A0_006(u32 addr, u32 size)
 					modem_regs.reg1e.RDBF = 0;
 					SET_STATUS_BIT(0x0c, modem_regs.reg0c.RXFNE, 0);
 					SET_STATUS_BIT(0x01, modem_regs.reg01.RXHF, 0);
-#ifndef NDEBUG
-					if (connect_state == CONNECTED && recv_fp)
-						fputc(data, recv_fp);
-#endif
 					update_interrupt();
 				}
 				else if (reg == 0x16 || reg == 0x17)

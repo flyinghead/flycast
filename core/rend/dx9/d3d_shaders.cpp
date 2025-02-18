@@ -457,19 +457,18 @@ void D3DShaders::init(const ComPtr<IDirect3DDevice9>& device)
 	for (int ver = 43; ver >= 24; ver--)
 	{
 		std::string dllname = "d3dx9_" + std::to_string(ver) + ".dll";
-		d3dx9Library = LoadLibraryA(dllname.c_str());
-		if (d3dx9Library != NULL) {
+		if (d3dx9Library.load(dllname.c_str())) {
 			DEBUG_LOG(RENDERER, "Loaded %s", dllname.c_str());
 			break;
 		}
 	}
-	if (d3dx9Library == NULL) {
+	if (!d3dx9Library.loaded()) {
 		ERROR_LOG(RENDERER, "Cannot load d3dx9_??.dll");
 		throw FlycastException("Cannot load d3dx9_??.dll");
 	}
-	pD3DXCompileShader = (decltype(D3DXCompileShader) *)GetProcAddress(d3dx9Library, "D3DXCompileShader");
-	pD3DXGetVertexShaderProfile = (decltype(D3DXGetVertexShaderProfile) *)GetProcAddress(d3dx9Library, "D3DXGetVertexShaderProfile");
-	pD3DXGetPixelShaderProfile = (decltype(D3DXGetPixelShaderProfile) *)GetProcAddress(d3dx9Library, "D3DXGetPixelShaderProfile");
+	pD3DXCompileShader = d3dx9Library.getFunc("D3DXCompileShader", pD3DXCompileShader);
+	pD3DXGetVertexShaderProfile = d3dx9Library.getFunc("D3DXGetVertexShaderProfile", pD3DXGetVertexShaderProfile);
+	pD3DXGetPixelShaderProfile = d3dx9Library.getFunc("D3DXGetPixelShaderProfile", pD3DXGetPixelShaderProfile);
 	if (pD3DXCompileShader == nullptr || pD3DXGetVertexShaderProfile == nullptr || pD3DXGetPixelShaderProfile == nullptr) {
 		ERROR_LOG(RENDERER, "Cannot find entry point in d3dx9_??.dll");
 		throw FlycastException("Cannot load d3dx9_??.dll");
@@ -484,7 +483,4 @@ void D3DShaders::term()
 	for (auto& shader : modVolShaders)
 		shader.reset();
 	device.reset();
-	if (d3dx9Library != NULL)
-		FreeLibrary(d3dx9Library);
-	d3dx9Library = NULL;
 }

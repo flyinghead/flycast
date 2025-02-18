@@ -87,6 +87,9 @@ void os_InstallFaultHandler()
 #ifndef __SWITCH__
 	struct sigaction act;
 	memset(&act, 0, sizeof(act));
+	act.sa_handler = SIG_IGN;
+	sigaction(SIGPIPE, &act, nullptr);
+
 	act.sa_sigaction = fault_handler;
 	sigemptyset(&act.sa_mask);
 	act.sa_flags = SA_SIGINFO;

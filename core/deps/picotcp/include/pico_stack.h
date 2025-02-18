@@ -9,7 +9,7 @@
 #include "pico_frame.h"
 #include "pico_constants.h"
 
-#define PICO_MAX_TIMERS 20
+#define PICO_MAX_TIMERS 50
 
 #define PICO_ETH_MRU (1514u)
 #define PICO_IP_MRU (1500u)

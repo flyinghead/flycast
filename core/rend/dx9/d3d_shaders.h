@@ -19,6 +19,7 @@
 #pragma once
 #include <unordered_map>
 #include "dxcontext.h"
+#include "windows/dynlink.h"
 #include <d3dx9shader.h>
 
 class D3DShaders
@@ -41,7 +42,7 @@ private:
 	std::unordered_map<u32, ComPtr<IDirect3DPixelShader9>> shaders;
 	ComPtr<IDirect3DVertexShader9> vertexShaders[4];
 	ComPtr<IDirect3DPixelShader9> modVolShaders[2];
-	HMODULE d3dx9Library = NULL;
+	WinLibLoader d3dx9Library;
 	decltype(D3DXCompileShader) *pD3DXCompileShader = nullptr;
 	decltype(D3DXGetVertexShaderProfile) *pD3DXGetVertexShaderProfile = nullptr;
 	decltype(D3DXGetPixelShaderProfile) *pD3DXGetPixelShaderProfile = nullptr;

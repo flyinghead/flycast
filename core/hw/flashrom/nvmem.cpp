@@ -49,7 +49,7 @@ static std::string getRomPrefix()
 	}
 }
 
-static void add_isp_to_nvmem(DCFlashChip *flash)
+static void add_isp_to_nvmem(DCFlashChip *flash, const char *username)
 {
 	u8 block[64];
 	if (!flash->ReadBlock(FLASH_PT_USER, FLASH_USER_INET, block))
@@ -79,11 +79,14 @@ static void add_isp_to_nvmem(DCFlashChip *flash)
 		flash_isp1_block isp1{};
 		isp1._unknown[3] = 1;
 		memcpy(isp1.sega, "SEGA", 4);
-		strcpy(isp1.username, "flycast1");
+		if (username == nullptr || username[0] == '\0')
+			strcpy(isp1.username, "flycast1");
+		else
+			strncpy(isp1.username, username, sizeof(isp1.username) - 1);
 		strcpy(isp1.password, "password");
 		strcpy(isp1.phone, "1234567");
 		if (flash->WriteBlock(FLASH_PT_USER, FLASH_USER_ISP1, &isp1) != 1)
-			WARN_LOG(FLASHROM, "Failed to save ISP information to flash RAM");
+			WARN_LOG(FLASHROM, "Failed to save ISP1 information to flash RAM");
 
 		memset(block, 0, sizeof(block));
 		flash->WriteBlock(FLASH_PT_USER, FLASH_USER_ISP1 + 1, block);
@@ -97,11 +100,14 @@ static void add_isp_to_nvmem(DCFlashChip *flash)
 
 		flash_isp2_block isp2{};
 		memcpy(isp2.sega, "SEGA", 4);
-		strcpy(isp2.username, "flycast2");
+		if (username == nullptr || username[0] == '\0')
+			strcpy(isp2.username, "flycast2");
+		else
+			strncpy(isp2.username, username, sizeof(isp2.username) - 1);
 		strcpy(isp2.password, "password");
 		strcpy(isp2.phone, "1234567");
 		if (flash->WriteBlock(FLASH_PT_USER, FLASH_USER_ISP2, &isp2) != 1)
-			WARN_LOG(FLASHROM, "Failed to save ISP information to flash RAM");
+			WARN_LOG(FLASHROM, "Failed to save ISP2 information to flash RAM");
 		u8 block[64];
 		memset(block, 0, sizeof(block));
 		for (u32 i = FLASH_USER_ISP2 + 1; i <= 0xEA; i++)
@@ -112,6 +118,22 @@ static void add_isp_to_nvmem(DCFlashChip *flash)
 				block[56] = 0;
 			flash->WriteBlock(FLASH_PT_USER, i, block);
 		}
+	}
+	else if (username != nullptr && username[0] != '\0')
+	{
+		flash_isp1_block isp1{};
+		flash->ReadBlock(FLASH_PT_USER, FLASH_USER_ISP1, &isp1);
+		memset(isp1.username, 0, sizeof(isp1.username));
+		strncpy(isp1.username, username, sizeof(isp1.username) - 1);
+		if (flash->WriteBlock(FLASH_PT_USER, FLASH_USER_ISP1, &isp1) != 1)
+			WARN_LOG(FLASHROM, "Failed to save ISP1 information to flash RAM");
+
+		flash_isp2_block isp2{};
+		flash->ReadBlock(FLASH_PT_USER, FLASH_USER_ISP2, &isp2);
+		memset(isp2.username, 0, sizeof(isp2.username));
+		strncpy(isp2.username, username, sizeof(isp2.username) - 1);
+		if (flash->WriteBlock(FLASH_PT_USER, FLASH_USER_ISP2, &isp2) != 1)
+			WARN_LOG(FLASHROM, "Failed to save ISP2 information to flash RAM");
 	}
 }
 
@@ -162,7 +184,7 @@ static void fixUpDCFlash()
 		if (static_cast<DCFlashChip*>(sys_nvmem)->WriteBlock(FLASH_PT_USER, FLASH_USER_SYSCFG, &syscfg) != 1)
 			WARN_LOG(FLASHROM, "Failed to save time and language to flash RAM");
 
-		add_isp_to_nvmem(static_cast<DCFlashChip*>(sys_nvmem));
+		add_isp_to_nvmem(static_cast<DCFlashChip*>(sys_nvmem), config::ISPUsername.get().c_str());
 
      	// Check the console ID used by some network games (chuchu rocket)
      	u8 *console_id = &sys_nvmem->data[0x1A058];

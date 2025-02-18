@@ -24,29 +24,28 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <mutex>
 
 class MiniUPnP
 {
 public:
 	MiniUPnP() {
 		lanAddress[0] = 0;
-		wanAddress[0] = 0;
 		memset(&urls, 0, sizeof(urls));
 		memset(&data, 0, sizeof(data));
 	}
 	bool Init();
 	void Term();
 	bool AddPortMapping(int port, bool tcp);
-	const char *localAddress() const { return lanAddress; }
-	const char *externalAddress() const { return wanAddress; }
+	bool isInitialized() const { return initialized; }
 
 private:
 	UPNPUrls urls;
 	IGDdatas data;
 	char lanAddress[32];
-	char wanAddress[32];
 	std::vector<std::pair<std::string, bool>> mappedPorts;
 	bool initialized = false;
+	std::mutex mutex;
 };
 
 #else
@@ -57,8 +56,7 @@ public:
 	bool Init() { return true; }
 	void Term() {}
 	bool AddPortMapping(int port, bool tcp) { return true; }
-	const char *localAddress() const { return ""; }
-	const char *externalAddress() const { return ""; }
+	bool isInitialized() const { return false; }
 };
 
 #endif

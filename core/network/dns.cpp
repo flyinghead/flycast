@@ -34,10 +34,8 @@ extern "C" {
 #endif
 }
 
-void get_host_by_name(const char *name, struct pico_ip4 dnsaddr);
-int get_dns_answer(struct pico_ip4 *address, struct pico_ip4 dnsaddr);
-char *read_name(char *reader, char *buffer, int *count);
-void set_non_blocking(sock_t fd);
+u32 makeDnsQueryPacket(void *buf, const char *host);
+pico_ip4 parseDnsResponsePacket(const void *buf, size_t len);
 
 static sock_t sock_fd = INVALID_SOCKET;
 static unsigned short qid = PICO_TIME_MS();
@@ -59,7 +57,15 @@ void get_host_by_name(const char *host, struct pico_ip4 dnsaddr)
 
     // DNS Packet header
 	char buf[1024];
-    pico_dns_packet *dns = (pico_dns_packet *)&buf;
+	u32 len = makeDnsQueryPacket(buf, host);
+
+    if (sendto(sock_fd, buf, len, 0, (struct sockaddr *)&dest, sizeof(dest)) < 0)
+    	perror("DNS sendto failed");
+}
+
+u32 makeDnsQueryPacket(void *buf, const char *host)
+{
+    pico_dns_packet *dns = (pico_dns_packet *)buf;
 
     dns->id = qid++;
     dns->qr = PICO_DNS_QR_QUERY;
@@ -75,18 +81,25 @@ void get_host_by_name(const char *host, struct pico_ip4 dnsaddr)
     dns->nscount = 0;
     dns->arcount = 0;
 
-    char *qname = &buf[sizeof(pico_dns_packet)];
+    char *qname = (char *)buf + sizeof(pico_dns_packet);
 
     strcpy(qname + 1, host);
     pico_dns_name_to_dns_notation(qname, 128);
 	qname_len = strlen(qname) + 1;
 
-	struct pico_dns_question_suffix *qinfo = (struct pico_dns_question_suffix *) &buf[sizeof(pico_dns_packet) + qname_len]; //fill it
+	pico_dns_question_suffix *qinfo = (pico_dns_question_suffix *)(qname + qname_len); //fill it
     qinfo->qtype = htons(PICO_DNS_TYPE_A);		// Address record
     qinfo->qclass = htons(PICO_DNS_CLASS_IN);
 
-    if (sendto(sock_fd, buf, sizeof(pico_dns_packet) + qname_len + sizeof(struct pico_dns_question_suffix), 0, (struct sockaddr *)&dest, sizeof(dest)) < 0)
-    	perror("DNS sendto failed");
+    return sizeof(pico_dns_packet) + qname_len + sizeof(pico_dns_question_suffix);
+}
+
+static int dnsNameLen(const char *s)
+{
+	if ((uint8_t)s[0] & 0xC0)
+		return 2;
+	else
+		return strlen(s) + 1;
 }
 
 int get_dns_answer(struct pico_ip4 *address, struct pico_ip4 dnsaddr)
@@ -105,50 +118,39 @@ int get_dns_answer(struct pico_ip4 *address, struct pico_ip4 dnsaddr)
     if (peer.sin_addr.s_addr != dnsaddr.addr)
     	return -1;
 
-    pico_dns_packet *dns = (pico_dns_packet*) buf;
+    pico_ip4 addr = parseDnsResponsePacket(buf, r);
+    if (addr.addr == ~0u)
+    	return -1;
+    address->addr = addr.addr;
+
+    return 0;
+}
+
+pico_ip4 parseDnsResponsePacket(const void *buf, size_t len)
+{
+	const pico_dns_packet *dns = (const pico_dns_packet *)buf;
 
     // move to the first answer
-    char *reader = &buf[sizeof(pico_dns_packet) + qname_len + sizeof(struct pico_dns_question_suffix)];
-
-    int stop = 0;
+	const char *reader = (const char *)buf + sizeof(pico_dns_packet);
+    reader += strlen(reader) + 1 + sizeof(pico_dns_question_suffix);
 
     for (int i = 0; i < ntohs(dns->ancount); i++)
     {
-    	// FIXME Check name?
-        free(read_name(reader, buf, &stop));
-        reader = reader + stop;
-
-        struct pico_dns_record_suffix *record = (struct pico_dns_record_suffix *)reader;
-        reader = reader + sizeof(struct pico_dns_record_suffix);
+    	// TODO Check name?
+        reader += dnsNameLen(reader);
+        const pico_dns_record_suffix *record = (const pico_dns_record_suffix *)reader;
+        reader += sizeof(pico_dns_record_suffix);
 
         if (ntohs(record->rtype) == PICO_DNS_TYPE_A) // Address record
         {
-            memcpy(&address->addr, reader, 4);
+        	pico_ip4 address;
+            memcpy(&address.addr, reader, 4);
 
-            return 0;
+            return address;
         }
         reader = reader + ntohs(record->rdlength);
     }
-    return -1;
-}
-
-char *read_name(char *reader, char *buffer, int *count)
-{
-	char *name = (char *)malloc(128);
-	if ((uint8_t)reader[0] & 0xC0)
-	{
-		int offset = (((uint8_t)reader[0] & ~0xC0) << 8) + (uint8_t)reader[1];
-		reader = &buffer[offset];
-		*count = 2;
-	}
-	else
-	{
-		*count = strlen(reader) + 1;
-	}
-	pico_dns_notation_to_name(reader, 128);
-	strcpy(name, reader + 1);
-
-	return name;
+    return { ~0u };
 }
 
 #if !defined(_WIN32) && !defined(__SWITCH__)

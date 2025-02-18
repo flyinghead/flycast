@@ -26,3 +26,4 @@ u32 bba_ReadMem(u32 addr, u32 sz);
 void bba_WriteMem(u32 addr, u32 data, u32 sz);
 void bba_Serialize(Serializer& ser);
 void bba_Deserialize(Deserializer& deser);
+int bba_recv_frame(const u8 *data, u32 len);

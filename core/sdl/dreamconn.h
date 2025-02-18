@@ -20,10 +20,13 @@
 #include "types.h"
 #include "emulator.h"
 #include "sdl_gamepad.h"
-#if defined(_WIN32) && !defined(TARGET_UWP)
-#define USE_DREAMCONN 1
+#if (defined(_WIN32) || defined(__linux__) || (defined(__APPLE__) && defined(TARGET_OS_MAC))) && !defined(TARGET_UWP)
+#define USE_DREAMCASTCONTROLLER 1
+#define TYPE_DREAMCONN 1
+#define TYPE_DREAMPORT 2
 #include <asio.hpp>
 #endif
+#include <memory>
 
 struct MapleMsg
 {
@@ -47,22 +50,23 @@ static_assert(sizeof(MapleMsg) == 1028);
 
 class DreamConn
 {
-	const int bus;
-#ifdef USE_DREAMCONN
-	asio::ip::tcp::iostream iostream;
+	int bus = -1;
+	const int dreamcastControllerType;
+#ifdef USE_DREAMCASTCONTROLLER
+	std::unique_ptr<class DreamcastControllerConnection> dcConnection;
 #endif
+	bool maple_io_connected = false;
 	u8 expansionDevs = 0;
-	static constexpr u16 BASE_PORT = 37393;
 
 public:
-	DreamConn(int bus) : bus(bus) {
-		connect();
-	}
-	~DreamConn() {
-		disconnect();
-	}
+	DreamConn(int bus, int dreamcastControllerType, int joystick_idx, SDL_Joystick* sdl_joystick);
+
+	~DreamConn();
 
 	bool send(const MapleMsg& msg);
+
+	// When called, do teardown stuff like reset screen
+	void gameTermination();
 
 	int getBus() const {
 		return bus;
@@ -74,7 +78,12 @@ public:
 		return expansionDevs & 2;
 	}
 
-private:
+	int getDefaultBus();
+
+	void changeBus(int newBus);
+
+	std::string getName();
+
 	void connect();
 	void disconnect();
 };
@@ -86,9 +95,10 @@ public:
 	~DreamConnGamepad();
 
 	void set_maple_port(int port) override;
+	void registered() override;
 	bool gamepad_btn_input(u32 code, bool pressed) override;
 	bool gamepad_axis_input(u32 code, int value) override;
-	static bool isDreamConn(int deviceIndex);
+	static bool isDreamcastController(int deviceIndex);
 
 private:
 	static void handleEvent(Event event, void *arg);

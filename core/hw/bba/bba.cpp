@@ -19,7 +19,7 @@
 #include "bba.h"
 #include "rtl8139c.h"
 #include "hw/holly/holly_intc.h"
-#include "network/picoppp.h"
+#include "network/netservice.h"
 #include "serialize.h"
 
 static RTL8139State *rtl8139device;
@@ -79,7 +79,7 @@ void bba_Term()
 {
 	if (rtl8139device != nullptr)
 	{
-		stop_pico();
+		net::modbba::stop();
 		rtl8139_destroy(rtl8139device);
 		rtl8139device = nullptr;
 	}
@@ -179,9 +179,9 @@ void bba_WriteMem(u32 addr, u32 data, u32 sz)
 		case GAPS_RESET:
 			if (data & 1)
 			{
-				DEBUG_LOG(NETWORK, "GAPS reset");
+				INFO_LOG(NETWORK, "BBA: GAPS reset");
 				rtl8139_reset(rtl8139device);
-				start_pico();
+				net::modbba::stop();
 			}
 			break;
 
@@ -208,12 +208,12 @@ void bba_WriteMem(u32 addr, u32 data, u32 sz)
 
 ssize_t qemu_send_packet(RTL8139State *s, const uint8_t *buf, int size)
 {
-	pico_receive_eth_frame(buf, size);
+	net::modbba::receiveEthFrame(buf, size);
 
 	return size;
 }
 
-int pico_send_eth_frame(const u8 *data, u32 len)
+int bba_recv_frame(const u8 *data, u32 len)
 {
 	if (!rtl8139_can_receive(rtl8139device))
 		return 0;
@@ -249,7 +249,7 @@ void bba_Deserialize(Deserializer& deser)
 	deser >> interruptPending;
     // returns true if the receiver is enabled and the network stack must be started
     if (rtl8139_deserialize(rtl8139device, deser))
-        start_pico();
+        net::modbba::start();
 }
 
 #define POLYNOMIAL_BE 0x04c11db6

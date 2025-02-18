@@ -147,6 +147,13 @@ if(NINTENDO_SWITCH)
 	if(USE_GLES)
 		target_compile_definitions(${PROJECT_NAME} PRIVATE GLES)
 	endif()
+	# asio
+	target_compile_definitions(${PROJECT_NAME} PRIVATE
+		ASIO_DISABLE_LOCAL_SOCKETS
+		ASIO_DISABLE_SERIAL_PORT
+		ESHUTDOWN=110
+		SA_RESTART=0
+		SA_NOCLDWAIT=0)
 
 elseif(LIBRETRO)
 	add_library(${PROJECT_NAME} SHARED core/emulator.cpp)
@@ -220,6 +227,10 @@ else()
 	add_executable(${PROJECT_NAME} core/emulator.cpp)
 endif()
 
+set_target_properties(${PROJECT_NAME} PROPERTIES 
+		CMAKE_CXX_STANDARD 20
+		CMAKE_CXX_STANDARD_REQUIRED ON)
+
 if(WINDOWS_STORE)
 	set(USE_OPENGL OFF)
 	set(USE_VULKAN OFF)
@@ -255,6 +266,7 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
 		$<$<BOOL:${MSVC}>:NOMINMAX>
 		$<$<BOOL:${TEST_AUTOMATION}>:TEST_AUTOMATION>
 		$<$<BOOL:${WINDOWS_STORE}>:NOCRYPT>
+		$<$<BOOL:${WINDOWS_STORE}>:_WIN32_WINNT=0x0A00>
 		$<$<OR:$<BOOL:${MINGW}>,$<BOOL:${MSVC}>>:_USE_MATH_DEFINES>)
 
 if(UNIX AND NOT ANDROID AND NOT APPLE)
@@ -846,6 +858,9 @@ if(LIBRETRO)
 	if(APPLE)
 		target_sources(${PROJECT_NAME} PRIVATE shell/libretro/oslib_apple.mm)
 	endif()
+	if(WIN32)
+		target_link_libraries(${PROJECT_NAME} PRIVATE mswsock)
+	endif()
 endif()
 
 target_sources(${PROJECT_NAME} PRIVATE
@@ -1181,7 +1196,11 @@ target_sources(${PROJECT_NAME} PRIVATE
 		core/network/output.cpp
 		core/network/output.h
 		core/network/picoppp.cpp
-		core/network/picoppp.h)
+		core/network/picoppp.h
+		core/network/netservice.cpp
+		core/network/netservice.h
+		core/network/dcnet.cpp
+		core/network/dcnet.h)
 
 if(ANDROID)
 	target_sources(${PROJECT_NAME} PRIVATE
@@ -1904,7 +1923,10 @@ if(BUILD_TESTING)
 			tests/src/serialize_test.cpp
 			tests/src/AicaArmTest.cpp
 			tests/src/Sh4InterpreterTest.cpp
-			tests/src/MmuTest.cpp)
+			tests/src/MmuTest.cpp
+			tests/src/util/PeriodicThreadTest.cpp
+			tests/src/util/TsQueueTest.cpp
+			tests/src/util/WorkerThreadTest.cpp)
 endif()
 
 if(NINTENDO_SWITCH)
