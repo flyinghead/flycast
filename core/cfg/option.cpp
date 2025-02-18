@@ -129,6 +129,7 @@ Option<bool> GDBWaitForConnection("Debug.GDBWaitForConnection");
 Option<bool> UseReios("UseReios");
 Option<bool> FastGDRomLoad("FastGDRomLoad", false);
 Option<bool> RamMod32MB("Dreamcast.RamMod32MB", false);
+Option<bool> UsePhysicalVmuOnly("Dreamcast.UsePhysicalVmuOnly", false);
 
 Option<bool> OpenGlChecks("OpenGlChecks", false, "validate");
 

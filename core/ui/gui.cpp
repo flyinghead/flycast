@@ -2816,8 +2816,8 @@ static void gui_settings_network()
 static void gui_settings_advanced()
 {
 #if FEAT_SHREC != DYNAREC_NONE
-    header("CPU Mode");
-    {
+	header("CPU Mode");
+	{
 		ImGui::Columns(2, "cpu_modes", false);
 		OptionRadioButton("Dynarec", config::DynarecEnabled, true,
 			"Use the dynamic recompiler. Recommended in most cases");
@@ -2825,40 +2825,40 @@ static void gui_settings_advanced()
 		OptionRadioButton("Interpreter", config::DynarecEnabled, false,
 			"Use the interpreter. Very slow but may help in case of a dynarec problem");
 		ImGui::Columns(1, NULL, false);
-
 		OptionSlider("SH4 Clock", config::Sh4Clock, 100, 300,
-				"Over/Underclock the main SH4 CPU. Default is 200 MHz. Other values may crash, freeze or trigger unexpected nuclear reactions.",
-				"%d MHz");
-    }
+			"Over/Underclock the main SH4 CPU. Default is 200 MHz. Other values may crash, freeze or trigger unexpected nuclear reactions.",
+			"%d MHz");
+	}
 	ImGui::Spacing();
 #endif
-    header("Other");
-    {
-    	OptionCheckbox("HLE BIOS", config::UseReios, "Force high-level BIOS emulation");
-        OptionCheckbox("Multi-threaded emulation", config::ThreadedRendering,
-        		"Run the emulated CPU and GPU on different threads");
+	header("Other");
+	{
+		OptionCheckbox("HLE BIOS", config::UseReios, "Force high-level BIOS emulation");
+		OptionCheckbox("Multi-threaded emulation", config::ThreadedRendering,
+			"Run the emulated CPU and GPU on different threads");
 #ifndef __ANDROID
-        OptionCheckbox("Serial Console", config::SerialConsole,
-        		"Dump the Dreamcast serial console to stdout");
+		OptionCheckbox("Serial Console", config::SerialConsole,
+			"Dump the Dreamcast serial console to stdout");
 #endif
 		{
 			DisabledScope scope(game_started);
 			OptionCheckbox("Dreamcast 32MB RAM Mod", config::RamMod32MB,
 				"Enables 32MB RAM Mod for Dreamcast. May affect compatibility");
 		}
-        OptionCheckbox("Dump Textures", config::DumpTextures,
-        		"Dump all textures into data/texdump/<game id>");
-
-        bool logToFile = cfgLoadBool("log", "LogToFile", false);
+		OptionCheckbox("Use Physical VMU Only, because FUCK mackdiddy", config::UsePhysicalVmuOnly,
+			"Restrict VMU usage to physical devices only when using a physical Vmu with DreamPicoPort/Dreamconn");
+		OptionCheckbox("Dump Textures", config::DumpTextures,
+			"Dump all textures into data/texdump/<game id>");
+		bool logToFile = cfgLoadBool("log", "LogToFile", false);
 		if (ImGui::Checkbox("Log to File", &logToFile))
 			cfgSaveBool("log", "LogToFile", logToFile);
-        ImGui::SameLine();
-        ShowHelpMarker("Log debug information to flycast.log");
+		ImGui::SameLine();
+		ShowHelpMarker("Log debug information to flycast.log");
 #ifdef SENTRY_UPLOAD
-        OptionCheckbox("Automatically Report Crashes", config::UploadCrashLogs,
-        		"Automatically upload crash reports to sentry.io to help in troubleshooting. No personal information is included.");
+		OptionCheckbox("Automatically Report Crashes", config::UploadCrashLogs,
+			"Automatically upload crash reports to sentry.io to help in troubleshooting. No personal information is included.");
 #endif
-    }
+	}
 
 #ifdef USE_LUA
 	header("Lua Scripting");
