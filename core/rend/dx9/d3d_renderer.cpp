@@ -21,6 +21,7 @@
 #include "hw/pvr/pvr_mem.h"
 #include "ui/gui.h"
 #include "rend/sorter.h"
+#include "cfg/option.h"  
 
 const u32 DstBlendGL[]
 {

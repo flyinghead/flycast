@@ -79,6 +79,9 @@ Option<bool> DumpTextures("rend.DumpTextures");
 Option<int> ScreenStretching("rend.ScreenStretching", 100);
 Option<bool> Fog("rend.Fog", true);
 Option<bool> FloatVMUs("rend.FloatVMUs");
+Option<float> VmuScreenSize("rend.VmuScreenSize", 1.0f);          // Default 1x size
+Option<float> VmuTransparency("rend.VmuTransparency", 0.75f);     // Default 75% opacity
+Option<bool> OnlyShowVMUA1("rend.OnlyShowVMUA1", false);
 Option<bool> Rotate90("rend.Rotate90");
 Option<bool> PerStripSorting("rend.PerStripSorting");
 #ifdef __APPLE__

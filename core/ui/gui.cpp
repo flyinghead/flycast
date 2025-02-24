@@ -22,6 +22,7 @@
 #include "hw/maple/maple_if.h"
 #include "hw/maple/maple_devs.h"
 #include "imgui.h"
+#include "cfg/option.h"
 #include "imgui_stdlib.h"
 #include "network/net_handshake.h"
 #include "network/ggpo.h"
@@ -434,7 +435,7 @@ static void gui_newFrame()
 	io.AddKeyEvent(ImGuiKey_GamepadDpadRight, ((kcode[0] & DC_DPAD_RIGHT) == 0));
 	io.AddKeyEvent(ImGuiKey_GamepadDpadUp, ((kcode[0] & DC_DPAD_UP) == 0));
 	io.AddKeyEvent(ImGuiKey_GamepadDpadDown, ((kcode[0] & DC_DPAD_DOWN) == 0));
-	
+
 	float analog;
 	analog = joyx[0] < 0 ? -(float)joyx[0] / 32768.f : 0.f;
 	io.AddKeyAnalogEvent(ImGuiKey_GamepadLStickLeft, analog > 0.1f, analog);
@@ -820,8 +821,8 @@ const char *maple_device_types[] =
 //	"Dreameye",
 };
 
-const char *maple_expansion_device_types[] = 
-{ 
+const char *maple_expansion_device_types[] =
+{
 	"None",
 	"Sega VMU",
 	"Vibration Pack",
@@ -2148,8 +2149,16 @@ static void gui_settings_controls(bool& maple_devices_changed)
 			DisabledScope scope(!is_there_any_xhair);
 			OptionSlider("Crosshair Size", config::CrosshairSize, 10, 100);
 		}
+
+		ImGui::Spacing();
+		header("VMU Display");
+		{
+			ImGui::SliderFloat("VMU Size", &config::VmuScreenSize.get(), 0.25f, 10.0f, "%.2fx");
+			ImGui::SliderFloat("VMU Opacity", &config::VmuTransparency.get(), 0.0f, 1.0f, "%.2f");
+		}
+		ImGui::Spacing();
 		OptionCheckbox("Per Game VMU A1", config::PerGameVmu, "When enabled, each game has its own VMU on port 1 of controller A.");
-    }
+	}
 }
 
 static void gui_settings_video()
@@ -2294,78 +2303,113 @@ static void gui_settings_video()
         	resLabels[i] += " (" + scalingsText[i] + ")";
         }
 
-        ImGui::PushItemWidth(ImGui::CalcItemWidth() - innerSpacing * 2.0f - ImGui::GetFrameHeight() * 2.0f);
-        if (ImGui::BeginCombo("##Resolution", resLabels[selected].c_str(), ImGuiComboFlags_NoArrowButton))
-        {
-        	for (u32 i = 0; i < scalings.size(); i++)
-            {
-                bool is_selected = vres[i] == config::RenderResolution;
-                if (ImGui::Selectable(resLabels[i].c_str(), is_selected))
-                	config::RenderResolution = vres[i];
-                if (is_selected)
-                    ImGui::SetItemDefaultFocus();
-            }
-            ImGui::EndCombo();
-        }
-        ImGui::PopItemWidth();
-        ImGui::SameLine(0, innerSpacing);
+		ImGui::PushItemWidth(ImGui::CalcItemWidth() - innerSpacing * 2.0f - ImGui::GetFrameHeight() * 2.0f);
+		if (ImGui::BeginCombo("##Resolution", resLabels[selected].c_str(), ImGuiComboFlags_NoArrowButton))
+		{
+			for (u32 i = 0; i < scalings.size(); i++)
+			{
+				bool is_selected = vres[i] == config::RenderResolution;
+				if (ImGui::Selectable(resLabels[i].c_str(), is_selected))
+					config::RenderResolution = vres[i];
+				if (is_selected)
+					ImGui::SetItemDefaultFocus();
+			}
+			ImGui::EndCombo();
+		}
+		ImGui::PopItemWidth();
+		ImGui::SameLine(0, innerSpacing);
 
-        if (ImGui::ArrowButton("##Decrease Res", ImGuiDir_Left))
-        {
-            if (selected > 0)
-            	config::RenderResolution = vres[selected - 1];
-        }
-        ImGui::SameLine(0, innerSpacing);
-        if (ImGui::ArrowButton("##Increase Res", ImGuiDir_Right))
-        {
-            if (selected < vres.size() - 1)
-            	config::RenderResolution = vres[selected + 1];
-        }
-        ImGui::SameLine(0, innerSpacing);
+		if (ImGui::ArrowButton("##Decrease Res", ImGuiDir_Left))
+		{
+			if (selected > 0)
+				config::RenderResolution = vres[selected - 1];
+		}
+		ImGui::SameLine(0, innerSpacing);
+		if (ImGui::ArrowButton("##Increase Res", ImGuiDir_Right))
+		{
+			if (selected < vres.size() - 1)
+				config::RenderResolution = vres[selected + 1];
+		}
+		ImGui::SameLine(0, innerSpacing);
 
-        ImGui::Text("Internal Resolution");
-        ImGui::SameLine();
-        ShowHelpMarker("Internal render resolution. Higher is better, but more demanding on the GPU. Values higher than your display resolution (but no more than double your display resolution) can be used for supersampling, which provides high-quality antialiasing without reducing sharpness.");
+		ImGui::Text("Internal Resolution");
+		ImGui::SameLine();
+		ShowHelpMarker("Internal render resolution. Higher is better, but more demanding on the GPU. Values higher than your display resolution (but no more than double your display resolution) can be used for supersampling, which provides high-quality antialiasing without reducing sharpness.");
 
 #ifndef TARGET_IPHONE
-    	OptionCheckbox("VSync", config::VSync, "Synchronizes the frame rate with the screen refresh rate. Recommended");
-    	if (isVulkan(config::RendererType))
-    	{
-	    	ImGui::Indent();
+		OptionCheckbox("VSync", config::VSync, "Synchronizes the frame rate with the screen refresh rate. Recommended");
+		if (isVulkan(config::RendererType))
+		{
+			ImGui::Indent();
 			{
 				DisabledScope scope(!config::VSync);
 
 				OptionCheckbox("Duplicate frames", config::DupeFrames, "Duplicate frames on high refresh rate monitors (120 Hz and higher)");
-	    	}
-	    	ImGui::Unindent();
-    	}
+			}
+			ImGui::Unindent();
+		}
 #endif
-    	OptionCheckbox("Show VMU In-game", config::FloatVMUs, "Show the VMU LCD screens while in-game");
-    	OptionCheckbox("Full Framebuffer Emulation", config::EmulateFramebuffer,
-    			"Fully accurate VRAM framebuffer emulation. Helps games that directly access the framebuffer for special effects. "
-    			"Very slow and incompatible with upscaling and wide screen.");
-    	OptionCheckbox("Load Custom Textures", config::CustomTextures,
-    			"Load custom/high-res textures from data/textures/<game id>");
-    }
+		OptionCheckbox("Show VMU In-game", config::FloatVMUs, "Show the VMU LCD screens while in-game");
+		OptionCheckbox("Only Show VMU A1", config::OnlyShowVMUA1, "Allows only 1st VMU screen to show when multiple VMUs used");
+		OptionCheckbox("Full Framebuffer Emulation", config::EmulateFramebuffer,
+			"Fully accurate VRAM framebuffer emulation. Helps games that directly access the framebuffer for special effects. "
+			"Very slow and incompatible with upscaling and wide screen.");
+		OptionCheckbox("Load Custom Textures", config::CustomTextures,
+			"Load custom/high-res textures from data/textures/<game id>");
+	}
 	ImGui::Spacing();
-    header("Aspect Ratio");
-    {
-    	OptionCheckbox("Widescreen", config::Widescreen,
-    			"Draw geometry outside of the normal 4:3 aspect ratio. May produce graphical glitches in the revealed areas.\nAspect Fit and shows the full 16:9 content.");
+	header("Aspect Ratio");
+	{
+		OptionCheckbox("Widescreen", config::Widescreen,
+			"Draw geometry outside of the normal 4:3 aspect ratio. May produce graphical glitches in the revealed areas.\nAspect Fit and shows the full 16:9 content.");
 		{
 			DisabledScope scope(!config::Widescreen);
 
 			ImGui::Indent();
 			OptionCheckbox("Super Widescreen", config::SuperWidescreen,
-					"Use the full width of the screen or window when its aspect ratio is greater than 16:9.\nAspect Fill and remove black bars.");
+				"Use the full width of the screen or window when its aspect ratio is greater than 16:9.\nAspect Fill and remove black bars.");
 			ImGui::Unindent();
-    	}
-    	OptionCheckbox("Widescreen Game Cheats", config::WidescreenGameHacks,
-    			"Modify the game so that it displays in 16:9 anamorphic format and use horizontal screen stretching. Only some games are supported.");
-    	OptionSlider("Horizontal Stretching", config::ScreenStretching, 100, 250,
-    			"Stretch the screen horizontally", "%d%%");
-    	OptionCheckbox("Rotate Screen 90°", config::Rotate90, "Rotate the screen 90° counterclockwise");
+		}
+		OptionCheckbox("Widescreen Game Cheats", config::WidescreenGameHacks,
+			"Modify the game so that it displays in 16:9 anamorphic format and use horizontal screen stretching. Only some games are supported.");
+		OptionSlider("Horizontal Stretching", config::ScreenStretching, 100, 250,
+			"Stretch the screen horizontally, 133% is 16:9", "%d%%");
+		OptionCheckbox("Rotate Screen 90°", config::Rotate90, "Rotate the screen 90° counterclockwise for verticle games");
+	}
+	if (perPixel)
+	{
+		ImGui::Spacing();
+		header("Per Pixel Settings");
+
+		const std::array<int64_t, 4> bufSizes{ 512_MB, 1_GB, 2_GB, 4_GB };
+		const std::array<std::string, 4> bufSizesText{ "512 MB", "1 GB", "2 GB", "4 GB" };
+		ImGui::PushItemWidth(ImGui::CalcItemWidth() - innerSpacing * 2.0f - ImGui::GetFrameHeight() * 2.0f);
+		u32 selected = 0;
+		for (; selected < bufSizes.size(); selected++)
+			if (bufSizes[selected] == config::PixelBufferSize)
+				break;
+		if (selected == bufSizes.size())
+			selected = 0;
+		if (ImGui::BeginCombo("##PixelBuffer", bufSizesText[selected].c_str(), ImGuiComboFlags_NoArrowButton))
+		{
+			for (u32 i = 0; i < bufSizes.size(); i++)
+			{
+				bool is_selected = i == selected;
+				if (ImGui::Selectable(bufSizesText[i].c_str(), is_selected))
+					config::PixelBufferSize = bufSizes[i];
+				if (is_selected) {
+					ImGui::SetItemDefaultFocus();
+					selected = i;
+				}
+			}
+			ImGui::EndCombo();
+		}
+		ImGui::PopItemWidth();
+		ImGui::SameLine(0, innerSpacing);
+
     }
+	ImGui::Spacing();
+
 	if (perPixel)
 	{
 		ImGui::Spacing();
@@ -2846,10 +2890,10 @@ static void gui_settings_advanced()
 			OptionCheckbox("Dreamcast 32MB RAM Mod", config::RamMod32MB,
 				"Enables 32MB RAM Mod for Dreamcast. May affect compatibility");
 		}
-        OptionCheckbox("Dump Textures", config::DumpTextures,
-        		"Dump all textures into data/texdump/<game id>");
 
-        bool logToFile = cfgLoadBool("log", "LogToFile", false);
+		OptionCheckbox("Dump Textures", config::DumpTextures,
+			"Dump all textures into data/texdump/<game id>");
+		bool logToFile = cfgLoadBool("log", "LogToFile", false);
 		if (ImGui::Checkbox("Log to File", &logToFile))
 			cfgSaveBool("log", "LogToFile", logToFile);
         ImGui::SameLine();
@@ -3268,7 +3312,7 @@ static void gui_display_content()
 		const int itemsPerLine = std::max<int>(totalWidth / (uiScaled(150) + ImGui::GetStyle().ItemSpacing.x), 1);
 		const float responsiveBoxSize = totalWidth / itemsPerLine - ImGui::GetStyle().FramePadding.x * 2;
 		const ImVec2 responsiveBoxVec2 = ImVec2(responsiveBoxSize, responsiveBoxSize);
-		
+
 		if (config::BoxartDisplayMode)
 			ImGui::PushStyleVar(ImGuiStyleVar_SelectableTextAlign, ImVec2(0.5f, 0.5f));
 		else
@@ -3737,7 +3781,7 @@ void gui_display_profiler()
 			ImGui::Unindent();
 		}
 	}
-	
+
 	for (const fc_profiler::ProfileThread* profileThread : fc_profiler::ProfileThread::s_allThreads)
 	{
 		fc_profiler::drawGraph(*profileThread);

@@ -61,9 +61,14 @@ private:
 	ComPtr<ID3D11ShaderResourceView> xhairTextureView;
 	std::array<ComPtr<ID3D11Texture2D>, 8> vmuTextures;
 	std::array<ComPtr<ID3D11ShaderResourceView>, 8> vmuTextureViews;
-	std::array<u64, 8> vmuLastChanged {};
+	std::array<u64, 8> vmuLastChanged{};
 	Quad quad;
-	Samplers *samplers;
+	Samplers* samplers;
 	BlendStates blendStates;
 	DepthStencilStates depthStencilStates;
+	bool isDragging = false;
+	int draggedVMU = -1;
+	float dragOffsetX[8] = { 0 };
+	float dragOffsetY[8] = { 0 };
+	POINT lastMousePos = { 0, 0 };
 };
