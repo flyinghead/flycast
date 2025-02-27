@@ -235,7 +235,9 @@ static void loadSpecialSettings()
 		}
 		else
 			WARN_LOG(BOOT, "No region specified in IP.BIN");
-		if (config::Cable <= 1 && !ip_meta.supportsVGA())
+		if (config::Cable <= 1 && (!ip_meta.supportsVGA()
+				|| prod_id == "T-12504N"	// Caesar's Palace (NTSC)
+				|| prod_id == "12502D-50"))	// Caesar's Palace (PAL)
 		{
 			NOTICE_LOG(BOOT, "Game doesn't support VGA. Using TV Composite instead");
 			config::Cable.override(3);
@@ -291,7 +293,8 @@ static void loadSpecialSettings()
 			|| prod_id == "T-8112D-50"		// South Park Rally (EU)
 			|| prod_id == "T7014D  50"		// Super Runabout (EU)
 			|| prod_id == "T10001D 50"		// MTV Sport - Skateboarding (PAL)
-			|| prod_id == "MK-5101050")		// Snow Surfers
+			|| prod_id == "MK-5101050"		// Snow Surfers
+			|| prod_id == "12502D-50")		// Caesar's Palace (PAL)
 		{
 			NOTICE_LOG(BOOT, "Forcing PAL broadcasting");
 			config::Broadcast.override(1);
