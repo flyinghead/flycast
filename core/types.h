@@ -162,7 +162,6 @@ struct settings_t
 		float refreshRate = 0;
 		float dpi = 96.f;
 		float uiScale = 1.f;
-
 	} display;
 
 	struct
