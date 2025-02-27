@@ -34,7 +34,6 @@
 #include <stb_image_write.h>
 
 CustomTexture custom_texture;
-static WorkerThread loader_thread {"CustomTexLoader"};
 
 void CustomTexture::loadTexture(BaseTextureCacheData *texture)
 {
@@ -90,7 +89,8 @@ bool CustomTexture::init()
 					{
 						NOTICE_LOG(RENDERER, "Found custom textures directory: %s", textures_path.c_str());
 						custom_textures_available = true;
-						loader_thread.run([this]() {
+						loaderThread = std::make_unique<WorkerThread>("CustomTexLoader");
+						loaderThread->run([this]() {
 							loadMap();
 						});
 					}
@@ -102,9 +102,15 @@ bool CustomTexture::init()
 	return custom_textures_available;
 }
 
+CustomTexture::~CustomTexture() {
+	Terminate();
+}
+
 void CustomTexture::Terminate()
 {
-	loader_thread.stop();
+	if (loaderThread)
+		loaderThread->stop();
+	loaderThread.reset();
 	texture_map.clear();
 	initialized = false;
 }
@@ -131,7 +137,7 @@ void CustomTexture::LoadCustomTextureAsync(BaseTextureCacheData *texture_data)
 		return;
 
 	texture_data->custom_load_in_progress++;
-	loader_thread.run([this, texture_data]() {
+	loaderThread->run([this, texture_data]() {
 		loadTexture(texture_data);
 	});
 }

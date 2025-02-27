@@ -20,13 +20,15 @@
 #include "texconv.h"
 #include <string>
 #include <map>
+#include <memory>
 
 class BaseTextureCacheData;
+class WorkerThread;
 
 class CustomTexture
 {
 public:
-	~CustomTexture() { Terminate(); }
+	~CustomTexture();
 	void LoadCustomTextureAsync(BaseTextureCacheData *texture_data);
 	void DumpTexture(u32 hash, int w, int h, TextureType textype, void *src_buffer);
 	void Terminate();
@@ -42,6 +44,7 @@ private:
 	bool custom_textures_available = false;
 	std::string textures_path;
 	std::map<u32, std::string> texture_map;
+	std::unique_ptr<WorkerThread> loaderThread;
 };
 
 extern CustomTexture custom_texture;
