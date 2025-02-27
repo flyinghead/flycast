@@ -23,11 +23,14 @@
 namespace http {
 
     static jobject HttpClient;
+    static jmethodID initMid;
     static jmethodID openUrlMid;
     static jmethodID postMid;
     static jmethodID postRawMid;
 
     void init() {
+    	jni::String juserAgent(getUserAgent());
+    	jni::env()->CallVoidMethod(HttpClient, initMid, static_cast<jstring>(juserAgent));
     }
 
     int get(const std::string &url, std::vector<u8> &content, std::string &contentType)
@@ -95,6 +98,7 @@ namespace http {
 extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_emu_HttpClient_nativeInit(JNIEnv *env, jobject obj)
 {
     http::HttpClient = env->NewGlobalRef(obj);
+    http::initMid = env->GetMethodID(env->GetObjectClass(obj), "init", "(Ljava/lang/String;)V");
     http::openUrlMid = env->GetMethodID(env->GetObjectClass(obj), "openUrl", "(Ljava/lang/String;[[B[Ljava/lang/String;)I");
     http::postMid = env->GetMethodID(env->GetObjectClass(obj), "post", "(Ljava/lang/String;[Ljava/lang/String;[Ljava/lang/String;[Ljava/lang/String;)I");
     http::postRawMid = env->GetMethodID(env->GetObjectClass(obj), "post", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;[[B)I");

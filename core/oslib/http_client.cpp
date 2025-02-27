@@ -33,7 +33,7 @@ static HINTERNET hInet;
 void init()
 {
 	if (hInet == NULL)
-		hInet = InternetOpen("Flycast/1.0", INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, 0);
+		hInet = InternetOpen(getUserAgent().c_str(), INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, 0);
 }
 
 int get(const std::string& url, std::vector<u8>& content, std::string& contentType)
@@ -238,7 +238,7 @@ static size_t receiveData(void *buffer, size_t size, size_t nmemb, std::vector<u
 static CURL *makeCurlEasy(const std::string& url)
 {
 	CURL *curl = curl_easy_init();
-	curl_easy_setopt(curl, CURLOPT_USERAGENT, "Flycast/1.0");
+	curl_easy_setopt(curl, CURLOPT_USERAGENT, getUserAgent().c_str());
 	curl_easy_setopt(curl, CURLOPT_AUTOREFERER, 1);
 	curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1);
 

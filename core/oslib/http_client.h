@@ -23,6 +23,7 @@
 #include <iomanip>
 #include <sstream>
 #include "types.h"
+#include "version.h"
 
 namespace http {
 
@@ -79,6 +80,11 @@ static inline std::string urlEncode(const std::string& value)
 	}
 
 	return escaped.str();
+}
+
+static inline std::string getUserAgent() {
+	std::string uaVersion(GIT_VERSION);
+	return "Flycast/" + uaVersion.substr(1); // skip 'v'
 }
 
 }

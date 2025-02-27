@@ -40,15 +40,21 @@ import java.nio.charset.Charset;
 
 public class HttpClient {
     private CloseableHttpClient httpClient;
+    private String userAgent = "Flycast/1.0";
 
     static { System.loadLibrary("flycast"); }
 
     // Called from native code
+    public void init(String userAgent) {
+        this.userAgent = userAgent;
+    }
+
     public int openUrl(String url_string, byte[][] content, String[] contentType)
     {
         try {
             URL url = new URL(url_string);
             HttpURLConnection conn = (HttpURLConnection)url.openConnection();
+            conn.setRequestProperty("User-Agent", userAgent);
             conn.connect();
             if (conn.getResponseCode() >= 200 && conn.getResponseCode() < 300) {
                 InputStream is = conn.getInputStream();
@@ -86,6 +92,7 @@ public class HttpClient {
                 httpClient = HttpClients.createDefault();
             HttpPost httpPost = new HttpPost(urlString);
             httpPost.setEntity(new StringEntity(payload, contentType != null ? ContentType.create(contentType) : ContentType.APPLICATION_FORM_URLENCODED));
+            httpPost.setHeader("User-Agent", userAgent);
             CloseableHttpResponse response = httpClient.execute(httpPost);
             InputStream is = response.getEntity().getContent();
 
@@ -131,6 +138,7 @@ public class HttpClient {
             }
             HttpEntity multipart = builder.build();
             httpPost.setEntity(multipart);
+            httpPost.setHeader("User-Agent", userAgent);
             CloseableHttpResponse response = httpClient.execute(httpPost);
 
             return response.getCode();

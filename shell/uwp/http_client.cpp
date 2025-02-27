@@ -30,9 +30,13 @@ using namespace Windows::Web::Http::Headers;
 
 static HttpClient^ httpClient;
 
-void init() {
+void init()
+{
+	nowide::wstackstring wagent;
+	wagent.convert(getUserAgent().c_str());
+
 	httpClient = ref new HttpClient();
-	httpClient->DefaultRequestHeaders->UserAgent->ParseAdd(L"Flycast/1.0");
+	httpClient->DefaultRequestHeaders->UserAgent->ParseAdd(ref new String(wagent.get()));
 }
 
 void term() {
