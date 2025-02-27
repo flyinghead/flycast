@@ -244,8 +244,7 @@ void VulkanOverlay::Draw(vk::CommandBuffer commandBuffer, vk::Extent2D viewport,
 			};
 			xhairDrawer->Draw(commandBuffer, !imageViewBound ? xhairTexture->GetImageView() : vk::ImageView(), vtx, true, xhairColor);
 			imageViewBound = true;
-			if (config::OnlyShowVMUA1)
-				break;
+			
 		}
 	}
 }
