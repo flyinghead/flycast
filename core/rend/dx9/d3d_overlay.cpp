@@ -123,8 +123,7 @@ void D3DOverlay::draw(u32 width, u32 height, bool vmu, bool crosshair)
 				| ((config::CrosshairColor[i] >> 16) & 0xFF)
 				| ((config::CrosshairColor[i] & 0xFF) << 16);
 			drawQuad(rect, color);
-			if (config::OnlyShowVMUA1)
-				break;
+			
 		}
 	}
 }
