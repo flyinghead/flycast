@@ -8289,7 +8289,7 @@ struct retro_core_options_v2 options_bg = {
 #define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_CA "Retardar el canvi de fotogrames"
 #define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_CA "Útil per evitar parpelleig constant errors gràfics en els vídeos. No es recomana activar-ho en plataformes amb pocs recursos."
 #define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_CA "Detecta els canvis en la taxa de fotogrames"
-#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_CA NULL
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_CA "Informa al front-end si canvia la freqüència d'actualització interna. Millora la cadència de fotogrames en aquells jocs que s'executin a 30 o 20 fotogrames per segon fixes, però aquesta opció cal desactivar-se en aquells jocs que tinguin freqüències de fotogrames desbloquejades. NOTA: Aquesta opció no està disponible si s'activa Omissió automàtica de fotogrames."
 #define CORE_OPTION_NAME_PVR2_FILTERING_LABEL_CA "Filtre de postprocessat PowerVR2"
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_CA "Postprocessa la imatge renderitzada per emular els efectes dedicats de la GPU PowerVR2 i els senyals de vídeo analògic."
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_CA "Augment de mida de les textures (xBRZ)"
@@ -8439,7 +8439,7 @@ struct retro_core_options_v2 options_bg = {
 #define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_INFO_0_CA "Selecciona el dispositiu connectat a la ranura d'expansió D2 (port D ranura 2)."
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CA "Separar Visual Memory (VMU) per cada joc"
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CAT_CA "VMUs individuals per cada joc"
-#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_CA NULL
+#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_CA "En desactivar aquesta opció, tots els jocs compartiran els 8 fitxers de desats de VMU (A1/A2/B1/B2/C1/C2/D1/D2) que es troben a la carpeta del sistema de RetroArch. L'opció \"VMU A1\" crearà un únic fitxer de la VMU A1 a la carpeta de desats de RetroArch per cada joc que s'executi. L'opció \"Totes les VMU\" crearà 8 fitxers VMU únics per cada joc que s'executi."
 #define OPTION_VAL_VMU_A1_CA NULL
 #define OPTION_VAL_ALL_VMUS_CA "Totes les VMUs"
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_CA "Sons de les Visual Memory (VMU)"
@@ -42707,8 +42707,8 @@ struct retro_core_options_v2 options_hr = {
 #define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_HU "Modem helyett a szélessávú Ethernet adapter emulálása. (Újraindítás szükséges.)"
 #define CORE_OPTION_NAME_UPNP_LABEL_HU "UPnP engedélyezése"
 #define CORE_OPTION_NAME_UPNP_INFO_0_HU "Az internetre csatlakozó router automatikus konfigurálása az online játékokhoz UPnP-n keresztül."
-#define CORE_OPTION_NAME_DCNET_LABEL_HU NULL
-#define CORE_OPTION_NAME_DCNET_INFO_0_HU NULL
+#define CORE_OPTION_NAME_DCNET_LABEL_HU "DCNet használata (Kísérleti)"
+#define CORE_OPTION_NAME_DCNET_INFO_0_HU "Csatlakozás a kísérleti DCNet felhőszolgáltatáshoz."
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_HU "Belső felbontás"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_HU "A képelőállítás felbontása."
 #define OPTION_VAL_320X240_HU "320x240 (Felezett)"
@@ -71338,7 +71338,7 @@ struct retro_core_options_v2 options_sr = {
 #define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_INFO_0_SV NULL
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_SV "Per-spel visningsminnesenheter/systemer (VMU)"
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CAT_SV "Per-spel VMU:er"
-#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_SV NULL
+#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_SV "När den är inaktiverad delar alla spel upp till 8 VMU-sparfiler (A1/A2/B1/B2/C1/C2/D1/D2) som finns i RetroArchs systemmapp.\nInställningen ”VMU A1” skapar en unik VMU-fil ”A1” i RetroArchs sparmapp för varje spel som startas.\nInställningen ”Alla VMU: er” skapar upp till 8 unika VMU-filer (A1/A2/B1/B2/C1/C2/D1/D2) för varje spel som startas."
 #define OPTION_VAL_VMU_A1_SV NULL
 #define OPTION_VAL_ALL_VMUS_SV "Alla VMU:er"
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_SV "Ljud för visuella minnesenheter/System (VMU)"
