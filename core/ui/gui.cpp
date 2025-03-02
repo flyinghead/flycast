@@ -571,7 +571,7 @@ void gui_stop_game(const std::string& message)
 	const LockGuard lock(guiMutex);
 	if (!commandLineStart)
 	{
-		// Exit to main menu
+	        // Exit to main menu
 		emu.unloadGame();
 		gui_setState(GuiState::Main);
 		reset_vmus();
@@ -2301,61 +2301,67 @@ static void gui_settings_video()
         	else
         		resLabels[i] = std::to_string((int)(scalings[i] * 480 * 16 / 9)) + "x" + std::to_string((int)(scalings[i] * 480));
         	resLabels[i] += " (" + scalingsText[i] + ")";
+    }
+
+	ImGui::PushItemWidth(ImGui::CalcItemWidth() - innerSpacing * 2.0f - ImGui::GetFrameHeight() * 2.0f);
+	if (ImGui::BeginCombo("##Resolution", resLabels[selected].c_str(), ImGuiComboFlags_NoArrowButton))
+        {
+        	for (u32 i = 0; i < scalings.size(); i++)
+            {
+                bool is_selected = vres[i] == config::RenderResolution;
+                if (ImGui::Selectable(resLabels[i].c_str(), is_selected))
+                	config::RenderResolution = vres[i];
+                if (is_selected)
+                    ImGui::SetItemDefaultFocus();
+            }
+            ImGui::EndCombo();
         }
+        ImGui::PopItemWidth();
+        ImGui::SameLine(0, innerSpacing);
 
-		ImGui::PushItemWidth(ImGui::CalcItemWidth() - innerSpacing * 2.0f - ImGui::GetFrameHeight() * 2.0f);
-		if (ImGui::BeginCombo("##Resolution", resLabels[selected].c_str(), ImGuiComboFlags_NoArrowButton))
-		{
-			for (u32 i = 0; i < scalings.size(); i++)
-			{
-				bool is_selected = vres[i] == config::RenderResolution;
-				if (ImGui::Selectable(resLabels[i].c_str(), is_selected))
-					config::RenderResolution = vres[i];
-				if (is_selected)
-					ImGui::SetItemDefaultFocus();
-			}
-			ImGui::EndCombo();
-		}
-		ImGui::PopItemWidth();
-		ImGui::SameLine(0, innerSpacing);
+        if (ImGui::ArrowButton("##Decrease Res", ImGuiDir_Left))
+        {
+            if (selected > 0)
+            	config::RenderResolution = vres[selected - 1];
+        }
+        ImGui::SameLine(0, innerSpacing);
+        if (ImGui::ArrowButton("##Increase Res", ImGuiDir_Right))
+        {
+            if (selected < vres.size() - 1)
+            	config::RenderResolution = vres[selected + 1];
+        }
+        ImGui::SameLine(0, innerSpacing);
 
-		if (ImGui::ArrowButton("##Decrease Res", ImGuiDir_Left))
-		{
-			if (selected > 0)
-				config::RenderResolution = vres[selected - 1];
-		}
-		ImGui::SameLine(0, innerSpacing);
-		if (ImGui::ArrowButton("##Increase Res", ImGuiDir_Right))
-		{
-			if (selected < vres.size() - 1)
-				config::RenderResolution = vres[selected + 1];
-		}
-		ImGui::SameLine(0, innerSpacing);
-
-		ImGui::Text("Internal Resolution");
-		ImGui::SameLine();
-		ShowHelpMarker("Internal render resolution. Higher is better, but more demanding on the GPU. Values higher than your display resolution (but no more than double your display resolution) can be used for supersampling, which provides high-quality antialiasing without reducing sharpness.");
+        ImGui::Text("Internal Resolution");
+        ImGui::SameLine();
+        ShowHelpMarker("Internal render resolution. Higher is better, but more demanding on the GPU. Values higher than your display resolution (but no more than double your display resolution) can be used for supersampling, which provides high-quality antialiasing without reducing sharpness.");
 
 #ifndef TARGET_IPHONE
-		OptionCheckbox("VSync", config::VSync, "Synchronizes the frame rate with the screen refresh rate. Recommended");
-		if (isVulkan(config::RendererType))
-		{
-			ImGui::Indent();
+    	OptionCheckbox("VSync", config::VSync, "Synchronizes the frame rate with the screen refresh rate. Recommended");
+    	if (isVulkan(config::RendererType))
+    	{
+	    	ImGui::Indent();
 			{
 				DisabledScope scope(!config::VSync);
 
 				OptionCheckbox("Duplicate frames", config::DupeFrames, "Duplicate frames on high refresh rate monitors (120 Hz and higher)");
-			}
-			ImGui::Unindent();
-		}
+	    	}
+	    	ImGui::Unindent();
+    	}
 #endif
-		OptionCheckbox("Show VMU In-game", config::FloatVMUs, "Show the VMU LCD screens while in-game");
-		OptionCheckbox("Only Show VMU A1", config::OnlyShowVMUA1, "Allows only 1st VMU screen to show when multiple VMUs used");
-		OptionCheckbox("Full Framebuffer Emulation", config::EmulateFramebuffer,
-			"Fully accurate VRAM framebuffer emulation. Helps games that directly access the framebuffer for special effects. "
-			"Very slow and incompatible with upscaling and wide screen.");
-		OptionCheckbox("Load Custom Textures", config::CustomTextures,
-			"Load custom/high-res textures from data/textures/<game id>");
+    	OptionCheckbox("Show VMU In-game", config::FloatVMUs, "Show the VMU LCD screens while in-game");
+    	OptionCheckbox("Only Show VMU A1", config::OnlyShowVMUA1, "Allows only 1st VMU screen to show when multiple VMUs used");
+    	OptionCheckbox("Full Framebuffer Emulation", config::EmulateFramebuffer,
+    			"Fully accurate VRAM framebuffer emulation. Helps games that directly access the framebuffer for special effects. "
+    			"Very slow and incompatible with upscaling and wide screen.");
+    	OptionCheckbox("Load Custom Textures", config::CustomTextures,
+    			"Load custom/high-res textures from data/textures/<game id>");
+    }
+	ImGui::Spacing();
+    header("Aspect Ratio");
+    {
+    	OptionCheckbox("Widescreen", config::Widescreen,
+    			"Draw geometry outside of the normal 4:3 aspect ratio. May produce graphical glitches in the revealed areas.\nAspect Fit and shows the full 16:9 content.");
 	}
 	ImGui::Spacing();
 	header("Aspect Ratio");
