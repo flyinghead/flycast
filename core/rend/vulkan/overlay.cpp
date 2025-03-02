@@ -129,7 +129,7 @@ void VulkanOverlay::Draw(vk::CommandBuffer commandBuffer, vk::Extent2D viewport,
 	{
 #ifndef LIBRETRO
 		f32 vmu_padding = 8.f * scaling;
-		f32 vmu_height = 70.f * scaling * config::VmuScreenSize;
+		f32 vmu_height = 32.f * scaling * config::VmuScreenSize;
 		f32 vmu_width = 48.f / 32.f * vmu_height;
 #else
 		f32 vmu_padding_x = 8.f * viewport.width / 640.f;
