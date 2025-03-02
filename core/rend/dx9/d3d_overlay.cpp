@@ -14,7 +14,7 @@
 	GNU General Public License for more details.
 
 	You should have received a copy of the GNU General Public License
-	along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
+    along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #include "d3d_overlay.h"
 #include "rend/osd.h"
@@ -25,11 +25,11 @@
 void D3DOverlay::drawQuad(const RECT& rect, D3DCOLOR color)
 {
 	device->SetTextureStageState(0, D3DTSS_CONSTANT, color);
-	Vertex quad[]{
-		{ {(float)(rect.left),  (float)(rect.top),    0.5f}, {0.f, 0.f} },
-		{ {(float)(rect.left),  (float)(rect.bottom), 0.5f}, {0.f, 1.f} },
-		{ {(float)(rect.right), (float)(rect.top),    0.5f}, {1.f, 0.f} },
-		{ {(float)(rect.right), (float)(rect.bottom), 0.5f}, {1.f, 1.f} }
+	Vertex quad[] {
+			{ (float)(rect.left),  (float)(rect.top),    0.5f}, {0.f, 0.f} },
+			{ (float)(rect.left),  (float)(rect.bottom), 0.5f}, {0.f, 1.f} },
+			{ (float)(rect.right), (float)(rect.top),    0.5f}, {1.f, 0.f} },
+			{ (float)(rect.right), (float)(rect.bottom), 0.5f}, {1.f, 1.f} }
 	};
 	device->DrawPrimitiveUP(D3DPT_TRIANGLESTRIP, 2, quad, sizeof(Vertex));
 }
@@ -58,7 +58,7 @@ void D3DOverlay::draw(u32 width, u32 height, bool vmu, bool crosshair)
 				D3DLOCKED_RECT rect;
 				if (SUCCEEDED(texture->LockRect(0, &rect, nullptr, 0)))
 				{
-					u8* dst = (u8*)rect.pBits;
+					u8 *dst = (u8*) rect.pBits;
 					for (int y = 0; y < 32; y++)
 						memcpy(dst + y * rect.Pitch, vmu_lcd_data[i] + (31 - y) * 48, 48 * 4);
 					texture->UnlockRect(0);
@@ -108,7 +108,7 @@ void D3DOverlay::draw(u32 width, u32 height, bool vmu, bool crosshair)
 						memcpy(rect.pBits, texData, 16 * 16 * sizeof(u32));
 					else
 					{
-						u8* dst = (u8*)rect.pBits;
+						u8 *dst = (u8 *) rect.pBits;
 						for (int y = 0; y < 16; y++)
 							memcpy(dst + y * rect.Pitch, texData + y * 16, 16 * sizeof(u32));
 					}
@@ -118,10 +118,10 @@ void D3DOverlay::draw(u32 width, u32 height, bool vmu, bool crosshair)
 			device->SetTexture(0, xhairTexture);
 			auto [x, y] = getCrosshairPosition(i);
 			float halfWidth = config::CrosshairSize * settings.display.uiScale / 2.f;
-			RECT rect{ (long)(x - halfWidth), (long)(y - halfWidth), (long)(x + halfWidth), (long)(y + halfWidth) };
+			RECT rect { (long) (x - halfWidth), (long) (y - halfWidth), (long) (x + halfWidth), (long) (y + halfWidth) };
 			D3DCOLOR color = (config::CrosshairColor[i] & 0xFF00FF00)
-				| ((config::CrosshairColor[i] >> 16) & 0xFF)
-				| ((config::CrosshairColor[i] & 0xFF) << 16);
+							| ((config::CrosshairColor[i] >> 16) & 0xFF)
+							| ((config::CrosshairColor[i] & 0xFF) << 16);
 			drawQuad(rect, color);
 			
 		}
@@ -155,9 +155,9 @@ void D3DOverlay::setupRenderState(u32 displayWidth, u32 displayHeight)
 	glm::mat4 projection = glm::translate(glm::vec3(-1.f - 1.f / displayWidth, 1.f + 1.f / displayHeight, 0))
 		* glm::scale(glm::vec3(2.f / displayWidth, -2.f / displayHeight, 1.f));
 
-	device->SetTransform(D3DTS_WORLD, (const D3DMATRIX*)&identity[0][0]);
-	device->SetTransform(D3DTS_VIEW, (const D3DMATRIX*)&identity[0][0]);
-	device->SetTransform(D3DTS_PROJECTION, (const D3DMATRIX*)&projection[0][0]);
+	device->SetTransform(D3DTS_WORLD, (const D3DMATRIX *)&identity[0][0]);
+	device->SetTransform(D3DTS_VIEW, (const D3DMATRIX *)&identity[0][0]);
+	device->SetTransform(D3DTS_PROJECTION, (const D3DMATRIX *)&projection[0][0]);
 
 	device->SetFVF(D3DFVF_XYZ | D3DFVF_TEX1);
 }
