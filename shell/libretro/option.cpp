@@ -68,7 +68,7 @@ Option<bool> DumpTextures(CORE_OPTION_NAME "_dump_textures");
 Option<int> ScreenStretching("", 100);
 Option<bool> Fog(CORE_OPTION_NAME "_fog", true);
 Option<bool> FloatVMUs("");
-Option<bool> OnlyShowVMUA1(CORE_OPTION_NAME "_only_show_vmu_a1", false);
+Option<bool> OnlyShowVMUA1("");
 Option<bool> Rotate90("");
 Option<bool> PerStripSorting("");
 Option<bool> DelayFrameSwapping(CORE_OPTION_NAME "_delay_frame_swapping");
