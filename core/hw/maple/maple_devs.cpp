@@ -2107,15 +2107,15 @@ std::shared_ptr<maple_device> maple_Create(MapleDeviceType type)
 }
 
 #if (defined(_WIN32) || defined(__linux__) || (defined(__APPLE__) && defined(TARGET_OS_MAC))) && !defined(TARGET_UWP) && defined(USE_SDL) && !defined(LIBRETRO)
-#include "sdl/dreamconn.h"
+#include "sdl/dreamlink.h"
 #include <list>
 #include <memory>
 
-struct DreamConnVmu : public maple_sega_vmu
+struct DreamLinkVmu : public maple_sega_vmu
 {
-	std::shared_ptr<DreamConn> dreamconn;
+	std::shared_ptr<DreamLink> dreamlink;
 
-	DreamConnVmu(std::shared_ptr<DreamConn> dreamconn) : dreamconn(dreamconn) {
+	DreamLinkVmu(std::shared_ptr<DreamLink> dreamlink) : dreamlink(dreamlink) {
 	}
 
 	u32 dma(u32 cmd) override
@@ -2127,7 +2127,7 @@ struct DreamConnVmu : public maple_sega_vmu
 					|| (cmd == MDCF_SetCondition && functionId == MFID_3_Clock))	// Buzzer
 			{
 				const MapleMsg *msg = reinterpret_cast<const MapleMsg*>(dma_buffer_in - 4);
-				dreamconn->send(*msg);
+				dreamlink->send(*msg);
 			}
 		}
 		return maple_sega_vmu::dma(cmd);
@@ -2159,43 +2159,43 @@ struct DreamConnVmu : public maple_sega_vmu
 		*(u32 *)&msg.data[0] = MFID_2_LCD;
 		*(u32 *)&msg.data[4] = 0;	// PT, phase, block#
 		memcpy(&msg.data[8], lcd_data, sizeof(lcd_data));
-		dreamconn->send(msg);
+		dreamlink->send(msg);
 	}
 };
 
-struct DreamConnPurupuru : public maple_sega_purupuru
+struct DreamLinkPurupuru : public maple_sega_purupuru
 {
-	std::shared_ptr<DreamConn> dreamconn;
+	std::shared_ptr<DreamLink> dreamlink;
 
-	DreamConnPurupuru(std::shared_ptr<DreamConn> dreamconn) : dreamconn(dreamconn) {
+	DreamLinkPurupuru(std::shared_ptr<DreamLink> dreamlink) : dreamlink(dreamlink) {
 	}
 
 	u32 dma(u32 cmd) override
 	{
 		if (cmd == MDCF_BlockWrite || cmd == MDCF_SetCondition) {
 			const MapleMsg *msg = reinterpret_cast<const MapleMsg*>(dma_buffer_in - 4);
-			dreamconn->send(*msg);
+			dreamlink->send(*msg);
 		}
 		return maple_sega_purupuru::dma(cmd);
 	}
 };
 
-static std::list<std::shared_ptr<DreamConnVmu>> dreamConnVmus;
-static std::list<std::shared_ptr<DreamConnPurupuru>> dreamConnPurupurus;
+static std::list<std::shared_ptr<DreamLinkVmu>> dreamConnVmus;
+static std::list<std::shared_ptr<DreamLinkPurupuru>> dreamConnPurupurus;
 
-void createDreamConnDevices(std::shared_ptr<DreamConn> dreamconn, bool gameStart)
+void createDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink, bool gameStart)
 {
-	const int bus = dreamconn->getBus();
-    
+	const int bus = dreamlink->getBus();
+
     bool vmuFound = false;
     bool rumbleFound = false;
-    
-	if (dreamconn->hasVmu())
+
+	if (dreamlink->hasVmu())
 	{
-		std::shared_ptr<DreamConnVmu> vmu;
-		for (const std::shared_ptr<DreamConnVmu>& vmuIter : dreamConnVmus)
+		std::shared_ptr<DreamLinkVmu> vmu;
+		for (const std::shared_ptr<DreamLinkVmu>& vmuIter : dreamConnVmus)
 		{
-			if (vmuIter->dreamconn.get() == dreamconn.get())
+			if (vmuIter->dreamlink.get() == dreamlink.get())
 			{
                 vmuFound = true;
 				vmu = vmuIter;
@@ -2209,14 +2209,14 @@ void createDreamConnDevices(std::shared_ptr<DreamConn> dreamconn, bool gameStart
 			bool vmuCreated = false;
 			if (!vmu)
 			{
-				vmu = std::make_shared<DreamConnVmu>(dreamconn);
+				vmu = std::make_shared<DreamLinkVmu>(dreamlink);
 				vmuCreated = true;
 			}
 
 			vmu->Setup(bus, 0);
 
 			if ((!gameStart || !vmuCreated) && dev) {
-				// if loading a state or DreamConnVmu existed, copy data from the regular vmu and send a screen update
+				// if loading a state or DreamLinkVmu existed, copy data from the regular vmu and send a screen update
 				vmu->copyIn(std::static_pointer_cast<maple_sega_vmu>(dev));
 				if (!gameStart) {
 					vmu->updateScreen();
@@ -2226,12 +2226,12 @@ void createDreamConnDevices(std::shared_ptr<DreamConn> dreamconn, bool gameStart
 			if (!vmuFound) dreamConnVmus.push_back(vmu);
 		}
 	}
-	if (dreamconn->hasRumble())
+	if (dreamlink->hasRumble())
 	{
-		std::shared_ptr<DreamConnPurupuru> rumble;
-		for (const std::shared_ptr<DreamConnPurupuru>& purupuru : dreamConnPurupurus)
+		std::shared_ptr<DreamLinkPurupuru> rumble;
+		for (const std::shared_ptr<DreamLinkPurupuru>& purupuru : dreamConnPurupurus)
 		{
-			if (purupuru->dreamconn.get() == dreamconn.get())
+			if (purupuru->dreamlink.get() == dreamlink.get())
 			{
                 rumbleFound = true;
 				rumble = purupuru;
@@ -2244,22 +2244,22 @@ void createDreamConnDevices(std::shared_ptr<DreamConn> dreamconn, bool gameStart
 		{
 			if (!rumble)
 			{
-				rumble = std::make_shared<DreamConnPurupuru>(dreamconn);
+				rumble = std::make_shared<DreamLinkPurupuru>(dreamlink);
 			}
 			rumble->Setup(bus, 1);
-            
+
 			if (!rumbleFound) dreamConnPurupurus.push_back(rumble);
 		}
 	}
 }
 
-void tearDownDreamConnDevices(std::shared_ptr<DreamConn> dreamconn)
+void tearDownDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink)
 {
-	const int bus = dreamconn->getBus();
-	for (std::list<std::shared_ptr<DreamConnVmu>>::const_iterator iter = dreamConnVmus.begin();
+	const int bus = dreamlink->getBus();
+	for (std::list<std::shared_ptr<DreamLinkVmu>>::const_iterator iter = dreamConnVmus.begin();
 		iter != dreamConnVmus.end();)
 	{
-		if ((*iter)->dreamconn.get() == dreamconn.get())
+		if ((*iter)->dreamlink.get() == dreamlink.get())
 		{
 			std::shared_ptr<maple_device> dev = maple_Create(MDT_SegaVMU);
 			dev->Setup(bus, 0);
@@ -2272,10 +2272,10 @@ void tearDownDreamConnDevices(std::shared_ptr<DreamConn> dreamconn)
 			++iter;
 		}
 	}
-	for (std::list<std::shared_ptr<DreamConnPurupuru>>::const_iterator iter = dreamConnPurupurus.begin();
+	for (std::list<std::shared_ptr<DreamLinkPurupuru>>::const_iterator iter = dreamConnPurupurus.begin();
 		iter != dreamConnPurupurus.end();)
 	{
-		if ((*iter)->dreamconn.get() == dreamconn.get())
+		if ((*iter)->dreamlink.get() == dreamlink.get())
 		{
 			std::shared_ptr<maple_device> dev = maple_Create(MDT_PurupuruPack);
 			dev->Setup(bus, 1);

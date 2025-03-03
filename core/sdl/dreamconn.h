@@ -17,95 +17,56 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
  */
 #pragma once
-#include "types.h"
-#include "emulator.h"
-#include "sdl_gamepad.h"
-#if (defined(_WIN32) || defined(__linux__) || (defined(__APPLE__) && defined(TARGET_OS_MAC))) && !defined(TARGET_UWP)
-#define USE_DREAMCASTCONTROLLER 1
-#define TYPE_DREAMCONN 1
-#define TYPE_DREAMPICOPORT 2
-#include <asio.hpp>
-#endif
-#include <memory>
+#include "dreamlink.h"
 
-struct MapleMsg
-{
-	u8 command;
-	u8 destAP;
-	u8 originAP;
-	u8 size;
-	u8 data[1024];
-
-	u32 getDataSize() const {
-		return size * 4;
-	}
-
-	template<typename T>
-	void setData(const T& p) {
-		memcpy(data, &p, sizeof(T));
-		this->size = (sizeof(T) + 3) / 4;
-	}
-};
-static_assert(sizeof(MapleMsg) == 1028);
-
-class DreamConn
-{
-	int bus = -1;
-	const int dreamcastControllerType;
 #ifdef USE_DREAMCASTCONTROLLER
-	std::unique_ptr<class DreamcastControllerConnection> dcConnection;
-#endif
+
+#include <asio.hpp>
+
+class DreamConn : public DreamLink
+{
+	//! Base port of communication to DreamConn
+	static constexpr u16 BASE_PORT = 37393;
+
+	int bus = -1;
 	bool maple_io_connected = false;
 	u8 expansionDevs = 0;
+	asio::ip::tcp::iostream iostream;
 
 public:
-	DreamConn(int bus, int dreamcastControllerType, int joystick_idx, SDL_Joystick* sdl_joystick);
+	//! DreamConn VID:4457 PID:4443
+	static constexpr const char* VID_PID_GUID = "5744000043440000";
+
+public:
+	DreamConn(int bus);
 
 	~DreamConn();
 
-	bool send(const MapleMsg& msg);
+	bool send(const MapleMsg& msg) override;
 
-	// When called, do teardown stuff like reset screen
-	void gameTermination();
+    bool receive(MapleMsg& msg) override;
 
-	int getBus() const {
+	int getBus() const override {
 		return bus;
 	}
-	bool hasVmu() {
+
+	bool hasVmu() const override {
 		return expansionDevs & 1;
 	}
-	bool hasRumble() {
+
+	bool hasRumble() const override {
 		return expansionDevs & 2;
 	}
 
-	int getDefaultBus();
+	void changeBus(int newBus) override;
 
-	void changeBus(int newBus);
+	std::string getName() const override {
+		return "DreamConn+ / DreamConn S Controller";
+	}
 
-	std::string getName();
+	void connect() override;
 
-	void connect();
-	void disconnect();
+	void disconnect() override;
 };
 
-class DreamConnGamepad : public SDLGamepad
-{
-public:
-	DreamConnGamepad(int maple_port, int joystick_idx, SDL_Joystick* sdl_joystick);
-	~DreamConnGamepad();
-
-	void set_maple_port(int port) override;
-	void registered() override;
-	bool gamepad_btn_input(u32 code, bool pressed) override;
-	bool gamepad_axis_input(u32 code, int value) override;
-	static bool isDreamcastController(int deviceIndex);
-
-private:
-	static void handleEvent(Event event, void *arg);
-	void checkKeyCombo();
-
-	std::shared_ptr<DreamConn> dreamconn;
-	bool ltrigPressed = false;
-	bool rtrigPressed = false;
-	bool startPressed = false;
-};
+#endif // USE_DREAMCASTCONTROLLER
