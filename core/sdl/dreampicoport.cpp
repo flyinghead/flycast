@@ -58,7 +58,9 @@ class DreamPicoPortSerialHandler
 	//! Mutex for write_cv and serializes access to serial_write_in_progress
 	std::mutex write_cv_mutex;
 	//! Input stream buffer from serial_handler
-	asio::streambuf serial_read_buffer;
+	char serial_read_buffer[1024];
+    //! Holds on to partially parsed line
+	std::string read_line_buffer;
 	//! Thread which runs the io_context
 	std::unique_ptr<std::thread> io_context_thread;
 	//! Contains queue of incoming lines from serial
@@ -67,6 +69,10 @@ class DreamPicoPortSerialHandler
 	std::condition_variable read_cv;
 	//! Mutex for read_cv and serializes access to read_queue
 	std::mutex read_cv_mutex;
+
+    int32_t num_binary_parsed = -1;
+    uint16_t stored_binary_size = 0;
+    uint16_t num_binary_left = 0;
 
 public:
 	DreamPicoPortSerialHandler() {
@@ -331,103 +337,109 @@ private:
 
 	void startSerialRead()
 	{
-		serialReadHandler(asio::error_code(), 0);
+		serialReadHandler();
 		// Just to make sure initial data is cleared off of incoming buffer
 		io_context.poll_one();
 		read_queue.clear();
 	}
 
-	void serialReadHandler(const asio::error_code& error, std::size_t size)
+	void serialReadHandler()
 	{
-		if (error) {
-			std::lock_guard<std::mutex> lock(read_cv_mutex);
-			try
-			{
-				serial_handler.cancel();
-			}
-			catch(const asio::system_error&)
-			{
-				// Ignore cancel errors
-			}
-			read_cv.notify_all();
-		}
-		else {
-			// Rearm the read
-			asio::async_read_until(
-				serial_handler,
-				serial_read_buffer,
-				'\n',
-				[this](const asio::error_code& error, std::size_t size) -> void {
-					if (size > 0)
+		// Arm or rearm the read
+		serial_handler.async_read_some(
+			asio::buffer(serial_read_buffer, sizeof(serial_read_buffer)),
+			[this](const asio::error_code& error, std::size_t size) -> void {
+				std::lock_guard<std::mutex> lock(read_cv_mutex);
+				if (error) {
+					try
 					{
-						// Lock access to read_queue
-						std::lock_guard<std::mutex> lock(read_cv_mutex);
+						serial_handler.cancel();
+					}
+					catch(const asio::system_error&)
+					{
+						// Ignore cancel errors
+					}
+					read_cv.notify_all();
+				} else {
+					if (size > 0) {
 						// Consume the received data
-						if (consumeReadBuffer() > 0)
+						if (consumeReadBuffer(size) > 0)
 						{
 							// New lines available
 							read_cv.notify_all();
 						}
 					}
 					// Auto reload read - io_context will always have work to do
-					serialReadHandler(error, size);
+					serialReadHandler();
 				}
-			);
-		}
+			}
+		);
 	}
 
-	int consumeReadBuffer() {
-		if (serial_read_buffer.size() <= 0) {
+	int consumeReadBuffer(std::size_t size) {
+		if (size <= 0) {
 			return 0;
 		}
 
 		int numberOfLines = 0;
-		while (true)
+		const char* iter = serial_read_buffer;
+		while (size-- > 0)
 		{
-			char c = '\0';
-			std::string line;
+			char c = *iter++;
 
-			// Consume characters until buffers are empty or \n found
-			asio::const_buffers_1 data = serial_read_buffer.data();
-			std::size_t consumed = 0;
-			for (const asio::const_buffer& buff : data)
+			if (num_binary_parsed >= 0)
 			{
-				const char* buffDat = static_cast<const char*>(buff.data());
-				for (std::size_t i = 0; i < buff.size(); ++i)
+				++num_binary_parsed;
+				--num_binary_left;
+
+				if (num_binary_parsed == 1)
 				{
-					c = *buffDat++;
-					++consumed;
-
-					if (c == '\n') {
-						// Stop reading now
-						break;
-					}
-
-					line += c;
+					stored_binary_size = (c << 8);
+				}
+				else if (num_binary_parsed == 2)
+				{
+					stored_binary_size |= c;
+					num_binary_left = stored_binary_size;
+				}
+				else
+				{
+					std::stringstream ss;
+					const u8* pu8 = reinterpret_cast<const u8*>(&c);
+					ss << std::hex << std::setfill('0') << std::setw(2) << ((int)*pu8) << " ";
+					read_line_buffer += ss.str();
 				}
 
-				if (c == '\n') {
-					// Stop reading now
-					break;
+				if (num_binary_left == 0)
+				{
+					num_binary_parsed = -1;
 				}
+
+				c = 0; // make sure we don't break out yet
 			}
-
-			if (c == '\n') {
-				serial_read_buffer.consume(consumed);
-
+			else if (c == '\5') // binary start character
+			{
+				num_binary_parsed = 0;
+				stored_binary_size = 0;
+				num_binary_left = 2; // Parse size
+			}
+			else if (c == '\n')
+			{
 				// Remove carriage return if found and add this line to queue
-				if (line.size() > 0 && line[line.size() - 1] == '\r') {
-					line.pop_back();
+				if (read_line_buffer.size() > 0 && read_line_buffer[read_line_buffer.size() - 1] == '\r') {
+					read_line_buffer.pop_back();
 				}
-				read_queue.push_back(std::move(line));
+				read_queue.push_back(read_line_buffer);
+				read_line_buffer.clear();
 
 				++numberOfLines;
 			}
-			else {
-				// Ran out of data to consume
-				return numberOfLines;
+			else
+			{
+				read_line_buffer += c;
 			}
 		}
+
+		return numberOfLines;
 	}
 };
 
