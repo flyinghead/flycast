@@ -480,6 +480,8 @@ bool DreamPicoPort::receive(MapleMsg& msg) {
 }
 
 inline void DreamPicoPort::gameTermination() {
+    // Need a short delay to wait for last screen draw to complete
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
     // Reset screen to selected port
     sendPort();
 }
