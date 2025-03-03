@@ -3,32 +3,33 @@
 
 	This file is part of Flycast.
 
-    Flycast is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 2 of the License, or
-    (at your option) any later version.
+	Flycast is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 2 of the License, or
+	(at your option) any later version.
 
-    Flycast is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+	Flycast is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
+	You should have received a copy of the GNU General Public License
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #include "d3d_overlay.h"
 #include "rend/osd.h"
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
+#include "cfg/option.h"
 
 void D3DOverlay::drawQuad(const RECT& rect, D3DCOLOR color)
 {
 	device->SetTextureStageState(0, D3DTSS_CONSTANT, color);
 	Vertex quad[] {
-		{ (float)(rect.left),  (float)(rect.top),    0.5f, 0.f, 0.f },
-		{ (float)(rect.left),  (float)(rect.bottom), 0.5f, 0.f, 1.f },
-		{ (float)(rect.right), (float)(rect.top),    0.5f, 1.f, 0.f },
-		{ (float)(rect.right), (float)(rect.bottom), 0.5f, 1.f, 1.f }
+			{ (float)(rect.left),  (float)(rect.top),    0.5f}, {0.f, 0.f} },
+			{ (float)(rect.left),  (float)(rect.bottom), 0.5f}, {0.f, 1.f} },
+			{ (float)(rect.right), (float)(rect.top),    0.5f}, {1.f, 0.f} },
+			{ (float)(rect.right), (float)(rect.bottom), 0.5f}, {1.f, 1.f} }
 	};
 	device->DrawPrimitiveUP(D3DPT_TRIANGLESTRIP, 2, quad, sizeof(Vertex));
 }
@@ -39,7 +40,7 @@ void D3DOverlay::draw(u32 width, u32 height, bool vmu, bool crosshair)
 	if (vmu)
 	{
 		float vmu_padding = 8.f * settings.display.uiScale;
-		float vmu_height = 70.f * settings.display.uiScale;
+		float vmu_height = 70.f * settings.display.uiScale * config::VmuScreenSize;
 		float vmu_width = 48.f / 32.f * vmu_height;
 
 		for (size_t i = 0; i < vmuTextures.size(); i++)
@@ -57,7 +58,7 @@ void D3DOverlay::draw(u32 width, u32 height, bool vmu, bool crosshair)
 				D3DLOCKED_RECT rect;
 				if (SUCCEEDED(texture->LockRect(0, &rect, nullptr, 0)))
 				{
-					u8 *dst = (u8 *) rect.pBits;
+					u8 *dst = (u8*) rect.pBits;
 					for (int y = 0; y < 32; y++)
 						memcpy(dst + y * rect.Pitch, vmu_lcd_data[i] + (31 - y) * 48, 48 * 4);
 					texture->UnlockRect(0);
@@ -83,8 +84,10 @@ void D3DOverlay::draw(u32 width, u32 height, bool vmu, bool crosshair)
 					y += vmu_padding + vmu_height;
 			}
 			device->SetTexture(0, texture);
-			RECT rect { (long)x, (long)y, (long)(x + vmu_width), (long)(y + vmu_height) };
-			drawQuad(rect, D3DCOLOR_ARGB(192, 255, 255, 255));
+			RECT rect{ (long)x, (long)y, (long)(x + vmu_width), (long)(y + vmu_height) };
+			drawQuad(rect, D3DCOLOR_ARGB((int)(config::VmuTransparency * 255), 255, 255, 255));
+			if (config::OnlyShowVMUA1)
+				break;
 		}
 	}
 	if (crosshair)
@@ -117,9 +120,10 @@ void D3DOverlay::draw(u32 width, u32 height, bool vmu, bool crosshair)
 			float halfWidth = config::CrosshairSize * settings.display.uiScale / 2.f;
 			RECT rect { (long) (x - halfWidth), (long) (y - halfWidth), (long) (x + halfWidth), (long) (y + halfWidth) };
 			D3DCOLOR color = (config::CrosshairColor[i] & 0xFF00FF00)
-					| ((config::CrosshairColor[i] >> 16) & 0xFF)
-					| ((config::CrosshairColor[i] & 0xFF) << 16);
+							| ((config::CrosshairColor[i] >> 16) & 0xFF)
+							| ((config::CrosshairColor[i] & 0xFF) << 16);
 			drawQuad(rect, color);
+			
 		}
 	}
 }
