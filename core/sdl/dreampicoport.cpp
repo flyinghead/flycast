@@ -222,12 +222,103 @@ public:
 	{
         asio::error_code ec;
 		std::string response;
+
         ec = receiveCmd(response, timeout_ms);
 		if (ec) {
 			return ec;
 		}
 
-		sscanf(response.c_str(), "%hhx %hhx %hhx %hhx", &msg.command, &msg.destAP, &msg.originAP, &msg.size);
+		std::vector<uint32_t> words;
+		bool valid = false;
+		const char* iter = response.c_str();
+		const char* eol = iter + response.size();
+
+		if (*iter == '\5') // binary parsing
+		{
+			// binary
+			++iter;
+			while (iter < eol)
+			{
+				uint32_t word = 0;
+				uint32_t i = 0;
+				while (i < 4 && iter < eol)
+				{
+					const u8* pu8 = reinterpret_cast<const u8*>(iter++);
+					// Apply value into current word
+					word |= (*pu8 << ((4 - i) * 8 - 8));
+					++i;
+				}
+
+				// Invalid if a partial word was given
+				valid = ((i == 4) || (i == 0));
+
+				if (i == 4)
+				{
+					words.push_back(word);
+				}
+			}
+		}
+		else
+		{
+			while (iter < eol)
+			{
+				uint32_t word = 0;
+				uint32_t i = 0;
+				while (i < 8 && iter < eol)
+				{
+					char v = *iter++;
+					uint_fast8_t value = 0;
+
+					if (v >= '0' && v <= '9')
+					{
+						value = v - '0';
+					}
+					else if (v >= 'a' && v <= 'f')
+					{
+						value = v - 'a' + 0xa;
+					}
+					else if (v >= 'A' && v <= 'F')
+					{
+						value = v - 'A' + 0xA;
+					}
+					else
+					{
+						// Ignore this character
+						continue;
+					}
+
+					// Apply value into current word
+					word |= (value << ((8 - i) * 4 - 4));
+					++i;
+				}
+
+				// Invalid if a partial word was given
+				valid = ((i == 8) || (i == 0));
+
+				if (i == 8)
+				{
+					words.push_back(word);
+				}
+			}
+		}
+
+		if (words.size() > 0)
+		{
+			msg.command = (words[0] >> 24) & 0xFF;
+			msg.destAP = (words[0] >> 16) & 0xFF;
+			msg.originAP = (words[0] >> 8) & 0xFF;
+			msg.size = words[0] & 0xFF;
+
+			for (uint32_t i = 1; i < words.size(); ++i)
+			{
+				uint32_t dat = ntohl(words[i]);
+				memcpy(&msg.data[(i-1)*4], &dat, sizeof(dat));
+			}
+		}
+		else
+		{
+			return asio::error::message_size;
+		}
 
 		if (!serial_handler.is_open()) {
 			return asio::error::not_connected;
