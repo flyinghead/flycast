@@ -8,9 +8,6 @@
 #ifdef LIBRETRO
 #include "postprocess.h"
 #include "vmu_xhair.h"
-// Add these global variables for the libretro build
-int vmu_screen_size = 100;
-float vmu_screen_opacity = 0.7f;
 #endif
 
 #include <memory>
@@ -963,6 +960,9 @@ static void drawVmuTexture(u8 vmuIndex, int width, int height)
 	color = blend_factor;
 #else
 	// LIBRETRO implementation - define x, y, w, h
+	constexpr int vmu_screen_size = 100;
+	constexpr float vmu_screen_opacity = 0.7f;
+	
 	w = 48.f * vmu_screen_size / 100.f;
 	h = 32.f * vmu_screen_size / 100.f;
 
