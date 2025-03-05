@@ -2224,6 +2224,9 @@ struct DreamLinkVmu : public maple_sega_vmu
 						break;
 					}
 
+					case MDCF_BlockRead:
+						break; // do nothing
+
 					default:
 						//DEBUG_LOG(MAPLE, "VMU Storage cmd %02x", cmd);
 						dreamlink->send(*msg);
