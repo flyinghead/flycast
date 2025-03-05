@@ -2130,7 +2130,8 @@ struct DreamLinkVmu : public maple_sega_vmu
 
 		if (readIn)
 		{
-			maple_sega_vmu::OnSetup();
+			memset(flash_data, 0, sizeof(flash_data));
+			memset(lcd_data, 0, sizeof(lcd_data));
 
 			readIn = false;
 			for (u32 block = 0; block < 256; ++block) {
