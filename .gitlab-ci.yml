@@ -120,6 +120,8 @@ libretro-build-osx-x64:
   extends:
     - .libretro-osx-cmake-x86
     - .core-defs-osx-x64
+  tags:
+    - mac-apple-silicon
 
 # MacOS arm 64-bit
 libretro-build-osx-arm64:
