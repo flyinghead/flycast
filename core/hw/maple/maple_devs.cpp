@@ -2183,15 +2183,15 @@ struct DreamLinkVmu : public maple_sega_vmu
 
 	u32 dma(u32 cmd) override
 	{
-		if (useRealVmu)
+		// Physical VMU logic
+		if (dma_count_in >= 4)
 		{
-			// Physical VMU logic
-			if (dma_count_in >= 4)
-			{
-				const u32 functionId = *(u32*)dma_buffer_in;
-				const MapleMsg* msg = reinterpret_cast<const MapleMsg*>(dma_buffer_in - 4);
+			const u32 functionId = *(u32*)dma_buffer_in;
+			const MapleMsg* msg = reinterpret_cast<const MapleMsg*>(dma_buffer_in - 4);
 
-				if (functionId == MFID_1_Storage)
+			if (functionId == MFID_1_Storage)
+			{
+				if (useRealVmu)
 				{
 					switch (cmd)
 					{
@@ -2225,11 +2225,17 @@ struct DreamLinkVmu : public maple_sega_vmu
 						break;
 					}
 				}
-				else if (cmd == MDCF_BlockWrite && functionId == MFID_2_LCD)
+			}
+			else if (functionId == MFID_2_LCD)
+			{
+				if (cmd == MDCF_BlockWrite)
 				{
 					dreamlink->send(*msg);
 				}
-				else if (cmd == MDCF_SetCondition && functionId == MFID_3_Clock)
+			}
+			else if (functionId == MFID_3_Clock)
+			{
+				if (cmd == MDCF_SetCondition)
 				{
 					dreamlink->send(*msg);
 				}
