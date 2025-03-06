@@ -2195,11 +2195,6 @@ struct DreamLinkVmu : public maple_sega_vmu
 				{
 					switch (cmd)
 					{
-					case MDCF_GetMediaInfo:
-						//DEBUG_LOG(MAPLE, "VMU GetMediaInfo request");
-						dreamlink->send(*msg);
-						break;
-
 					case MDCF_GetLastError:
 						//NOTICE_LOG(MAPLE, "VMU GetLastError request");
 						dreamlink->send(*msg);
@@ -2225,11 +2220,8 @@ struct DreamLinkVmu : public maple_sega_vmu
 					}
 
 					case MDCF_BlockRead:
-						break; // do nothing
-
 					default:
-						//DEBUG_LOG(MAPLE, "VMU Storage cmd %02x", cmd);
-						dreamlink->send(*msg);
+						// do nothing
 						break;
 					}
 				}

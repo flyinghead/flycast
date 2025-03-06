@@ -491,24 +491,21 @@ private:
 				{
 					stored_binary_size |= c;
 					num_binary_left = stored_binary_size;
+					read_line_buffer.reserve(1 + stored_binary_size);
 				}
 				else
 				{
-					std::stringstream ss;
-					const u8* pu8 = reinterpret_cast<const u8*>(&c);
-					ss << std::hex << std::setfill('0') << std::setw(2) << ((int)*pu8) << " ";
-					read_line_buffer += ss.str();
+					read_line_buffer += c;
 				}
 
 				if (num_binary_left == 0)
 				{
 					num_binary_parsed = -1;
 				}
-
-				c = 0; // make sure we don't break out yet
 			}
 			else if (c == '\5') // binary start character
 			{
+				read_line_buffer += c;
 				num_binary_parsed = 0;
 				stored_binary_size = 0;
 				num_binary_left = 2; // Parse size
