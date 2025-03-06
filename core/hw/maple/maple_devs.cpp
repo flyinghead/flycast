@@ -12,6 +12,7 @@
 #include <cerrno>
 #include <ctime>
 #include <thread>
+#include <chrono>
 
 const char* maple_sega_controller_name = "Dreamcast Controller";
 const char* maple_sega_vmu_name        = "Visual Memory";
@@ -2178,7 +2179,7 @@ struct DreamLinkVmu : public maple_sega_vmu
 			// Skip virtual save when using physical VMU
 			//DEBUG_LOG(MAPLE, "Not saving because this is a real vmu");
 			NOTICE_LOG(MAPLE, "Saving to physical VMU");
-			os_notify("ATTENTION: You are saving to a physical VMU, Do not unplug the VMU while saving or close the game", 6000);
+			os_notify("ATTENTION: You are saving to a physical VMU", 6000, "Do not unplug the VMU while saving or close the game");
 			return true;
 		}
 		else
@@ -2199,13 +2200,38 @@ struct DreamLinkVmu : public maple_sega_vmu
 			{
 				if (useRealVmu)
 				{
+					static u64 lastNotifyTime = 0;
+					u64 currentTime = std::chrono::duration_cast<std::chrono::milliseconds>(
+						std::chrono::steady_clock::now().time_since_epoch()).count();
+					
+					// Only show notification once every 6 seconds to avoid spam
+					if (currentTime - lastNotifyTime > 4000)
+					{
+						switch (cmd)
+						{
+						case MDCF_BlockWrite:
+							// This is a write operation (saving)
+							os_notify("ATTENTION: You are saving to a physical VMU", 6000, 
+									"Do not disconnect the VMU or close the game");
+							lastNotifyTime = currentTime;
+							break;
+							
+						case MDCF_BlockRead:
+							// This is a read operation (loading)
+							os_notify("ATTENTION: Loading from a physical VMU", 6000, 
+									"Game data is being loaded from your physical VMU");
+							lastNotifyTime = currentTime;
+							break;
+						}
+					}
+					
 					switch (cmd)
 					{
 					case MDCF_GetLastError:
 						//NOTICE_LOG(MAPLE, "VMU GetLastError request");
 						dreamlink->send(*msg);
 						// Need to slow down writes so that flash has a chance to write (50MS is the lowest I can get with never failing -so far-)
-						std::this_thread::sleep_for(std::chrono::milliseconds(50));
+						std::this_thread::sleep_for(std::chrono::milliseconds(30));
 						break;
 
 					case MDCF_BlockWrite:
@@ -2220,9 +2246,7 @@ struct DreamLinkVmu : public maple_sega_vmu
 							//Block, Phase, write_adr, write_len);
 
 						dreamlink->send(*msg);
-						os_notify("ATTENTION: You are saving to a physical VMU, Do not unplug the VMU while saving or close the game", 6000);
-
-						std::this_thread::sleep_for(std::chrono::milliseconds(40));
+						std::this_thread::sleep_for(std::chrono::milliseconds(30));
 						break;
 					}
 
