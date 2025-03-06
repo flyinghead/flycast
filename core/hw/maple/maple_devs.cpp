@@ -2128,35 +2128,38 @@ struct DreamLinkVmu : public maple_sega_vmu
 		// Update useRealVmu in case config changed
 		useRealVmu = config::UsePhysicalVmuOnly;
 
-		if (useRealVmu && !isRead)
+		if (useRealVmu)
 		{
-			memset(flash_data, 0, sizeof(flash_data));
-			memset(lcd_data, 0, sizeof(lcd_data));
+			if (!isRead)
+			{
+				memset(flash_data, 0, sizeof(flash_data));
+				memset(lcd_data, 0, sizeof(lcd_data));
 
-			isRead = true;
-			for (u32 block = 0; block < 256; ++block) {
-				// Try up to 2 times to read
-				for (u32 i = 0; i < 2; ++i) {
-					MapleMsg msg;
-					msg.command = 0x0B;
-					msg.destAP = 1; // TODO: fix for port number
-					msg.originAP = 0; // TODO: fix for DreamLink (not needed for DreamPort)
-					msg.size = 2;
-					msg.data[0] = 0;
-					msg.data[1] = 0;
-					msg.data[2] = 0;
-					msg.data[3] = 0x02;
-					msg.data[4] = 0;
-					msg.data[5] = 0;
-					msg.data[6] = 0;
-					msg.data[7] = block;
+				isRead = true;
+				for (u32 block = 0; block < 256; ++block) {
+					// Try up to 2 times to read
+					for (u32 i = 0; i < 2; ++i) {
+						MapleMsg msg;
+						msg.command = 0x0B;
+						msg.destAP = 1; // TODO: fix for port number
+						msg.originAP = 0; // TODO: fix for DreamLink (not needed for DreamPort)
+						msg.size = 2;
+						msg.data[0] = 0;
+						msg.data[1] = 0;
+						msg.data[2] = 0;
+						msg.data[3] = 0x02;
+						msg.data[4] = 0;
+						msg.data[5] = 0;
+						msg.data[6] = 0;
+						msg.data[7] = block;
 
-					dreamlink->send(msg);
+						dreamlink->send(msg);
 
-					if (dreamlink->receive(msg) && msg.size == 130) {
-						// Something read!
-						memcpy(&flash_data[block * 512], &msg.data[8], 4 * 128);
-						break;
+						if (dreamlink->receive(msg) && msg.size == 130) {
+							// Something read!
+							memcpy(&flash_data[block * 512], &msg.data[8], 4 * 128);
+							break;
+						}
 					}
 				}
 			}
@@ -2164,6 +2167,7 @@ struct DreamLinkVmu : public maple_sega_vmu
 		else
 		{
 			maple_sega_vmu::OnSetup();
+			isRead = false;
 		}
 	}
 
