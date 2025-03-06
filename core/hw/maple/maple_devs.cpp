@@ -2116,7 +2116,7 @@ struct DreamLinkVmu : public maple_sega_vmu
 {
 	std::shared_ptr<DreamLink> dreamlink;
 	bool useRealVmu;  // Set this to true to use physical VMU, false for virtual
-	bool readIn = true;
+	bool isRead = false;
 
 	DreamLinkVmu(std::shared_ptr<DreamLink> dreamlink) : dreamlink(dreamlink) {
 		// Initialize useRealVmu with our config setting
@@ -2128,12 +2128,12 @@ struct DreamLinkVmu : public maple_sega_vmu
 		// Update useRealVmu in case config changed
 		useRealVmu = config::UsePhysicalVmuOnly;
 
-		if (readIn)
+		if (useRealVmu && !isRead)
 		{
 			memset(flash_data, 0, sizeof(flash_data));
 			memset(lcd_data, 0, sizeof(lcd_data));
 
-			readIn = false;
+			isRead = true;
 			for (u32 block = 0; block < 256; ++block) {
 				// Try up to 2 times to read
 				for (u32 i = 0; i < 2; ++i) {
@@ -2163,7 +2163,7 @@ struct DreamLinkVmu : public maple_sega_vmu
 		}
 		else
 		{
-			memset(lcd_data, 0, sizeof(lcd_data));
+			maple_sega_vmu::OnSetup();
 		}
 	}
 
