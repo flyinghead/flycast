@@ -2131,6 +2131,9 @@ struct DreamLinkVmu : public maple_sega_vmu
 
 		if (useRealVmu)
 		{
+			// Always reset the state when physical VMU is enabled
+			isRead = false;
+			
 			if (!isRead)
 			{
 				memset(flash_data, 0, sizeof(flash_data));
@@ -2179,7 +2182,7 @@ struct DreamLinkVmu : public maple_sega_vmu
 			// Skip virtual save when using physical VMU
 			//DEBUG_LOG(MAPLE, "Not saving because this is a real vmu");
 			NOTICE_LOG(MAPLE, "Saving to physical VMU");
-			os_notify("ATTENTION: You are saving to a physical VMU", 6000, "Do not unplug the VMU while saving or close the game");
+			
 			return true;
 		}
 		else
@@ -2287,7 +2290,8 @@ struct DreamLinkVmu : public maple_sega_vmu
 
 	void copyOut(std::shared_ptr<maple_sega_vmu> other)
 	{
-		if (!useRealVmu)  // Only copy data if we're not using physical VMU
+		// Never copy data to virtual VMU if physical VMU is enabled
+		if (!config::UsePhysicalVmuOnly && !useRealVmu)
 		{
 			memcpy(other->flash_data, flash_data, sizeof(other->flash_data));
 			memcpy(other->lcd_data, lcd_data, sizeof(other->lcd_data));
@@ -2351,7 +2355,9 @@ void createDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink, bool gameStart
 		}
 
 		std::shared_ptr<maple_device> dev = MapleDevices[bus][0];
-		if (gameStart || (dev != nullptr && dev->get_device_type() == MDT_SegaVMU))
+		
+		// Always create/setup the physical VMU if Use Physical VMU Only is enabled
+		if (config::UsePhysicalVmuOnly || gameStart || (dev != nullptr && dev->get_device_type() == MDT_SegaVMU))
 		{
 			bool vmuCreated = false;
 			if (!vmu)
@@ -2361,9 +2367,16 @@ void createDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink, bool gameStart
 			}
 
 			vmu->Setup(bus, 0);
+			
+			// Force re-initialization when switching games
+			if (!gameStart && !vmuCreated)
+			{
+				vmu->isRead = false;
+				vmu->OnSetup();
+			}
 
-			if ((!gameStart || !vmuCreated) && dev) {
-				// if loading a state or DreamLinkVmu existed, copy data from the regular vmu and send a screen update
+			if ((!gameStart || !vmuCreated) && dev && !config::UsePhysicalVmuOnly) {
+				// Only copy data from virtual VMU if Physical VMU Only is disabled
 				vmu->copyIn(std::static_pointer_cast<maple_sega_vmu>(dev));
 				if (!gameStart) {
 					vmu->updateScreen();
