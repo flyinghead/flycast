@@ -145,6 +145,9 @@ void VulkanOverlay::Draw(vk::CommandBuffer commandBuffer, vk::Extent2D viewport,
 		pipeline->BindPipeline(commandBuffer);
 		const float* color = nullptr;
 #ifndef LIBRETRO
+		vmu_height *= 2.f;
+
+		vmu_width *= 2.f;
 		float blendConstants[4] = { config::VmuTransparency, config::VmuTransparency, config::VmuTransparency, config::VmuTransparency };
 		color = blendConstants;
 #else
