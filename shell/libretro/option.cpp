@@ -73,7 +73,7 @@ Option<bool> Rotate90("");
 Option<bool> PerStripSorting("");
 Option<bool> DelayFrameSwapping(CORE_OPTION_NAME "_delay_frame_swapping");
 Option<bool> WidescreenGameHacks(CORE_OPTION_NAME "_widescreen_cheats");
-std::array<Option<int>, 4> CrosshairColor{
+std::array<Option<int>, 4> CrosshairColor {
 	Option<int>(""),
 	Option<int>(""),
 	Option<int>(""),
@@ -137,7 +137,7 @@ std::array<Option<MapleDeviceType>, 4> MapleMainDevices {
 	Option<MapleDeviceType>("", MDT_None),
 	Option<MapleDeviceType>("", MDT_None),
 };
-std::array<std::array<Option<MapleDeviceType>, 2>, 4> MapleExpansionDevices{
+std::array<std::array<Option<MapleDeviceType>, 2>, 4> MapleExpansionDevices {
 	Option<MapleDeviceType>("", MDT_None),
 	Option<MapleDeviceType>("", MDT_None),
 
