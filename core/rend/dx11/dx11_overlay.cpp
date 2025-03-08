@@ -17,6 +17,7 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #include "dx11_overlay.h"
+#include "cfg/option.h"
 #include "rend/osd.h"
 #ifdef LIBRETRO
 #include "vmu_xhair.h"
@@ -24,17 +25,17 @@
 
 void DX11Overlay::draw(u32 width, u32 height, bool vmu, bool crosshair)
 {
-	RECT rect { 0, 0, (LONG)width, (LONG)height };
+	RECT rect{ 0, 0, (LONG)width, (LONG)height };
 	deviceContext->RSSetScissorRects(1, &rect);
 	if (vmu)
 	{
 #ifndef LIBRETRO
 		float vmu_padding = 8.f * settings.display.uiScale;
-		float vmu_height = 70.f * settings.display.uiScale;
+		float vmu_height = 70.f * settings.display.uiScale * config::VmuScreenSize;
 		float vmu_width = 48.f / 32.f * vmu_height;
-
-		const float blend_factor[4] = { 0.75f, 0.75f, 0.75f, 0.75f };
+		const float blend_factor[4] = { config::VmuTransparency, config::VmuTransparency, config::VmuTransparency, config::VmuTransparency };
 		deviceContext->OMSetBlendState(blendStates.getState(true, 8, 8), blend_factor, 0xffffffff);
+
 #else
 		float vmu_padding_x = 8.f * width / 640.f;
 		float vmu_padding_y = 8.f * height / 480.f;
@@ -140,65 +141,71 @@ void DX11Overlay::draw(u32 width, u32 height, bool vmu, bool crosshair)
 			vp.MaxDepth = 1.f;
 			deviceContext->RSSetViewports(1, &vp);
 			quad.draw(vmuTextureViews[i], samplers->getSampler(false));
+			if (config::OnlyShowVMUA1)  // Only break if single VMU mode is enabled
+				break;
 		}
 	}
 	if (crosshair)
 	{
 		for (u32 i = 0; i < config::CrosshairColor.size(); i++)
 		{
-			if (!crosshairNeeded(i))
-				continue;
-			if (!xhairTexture)
+			if (!vmu_lcd_status[i])
 			{
-				const u32* texData = getCrosshairTextureData();
-				D3D11_TEXTURE2D_DESC desc{};
-				desc.Width = 16;
-				desc.Height = 16;
-				desc.ArraySize = 1;
-				desc.SampleDesc.Count = 1;
-				desc.Usage = D3D11_USAGE_DEFAULT;
-				desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
-				desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-				desc.MipLevels = 1;
-
-				if (SUCCEEDED(device->CreateTexture2D(&desc, nullptr, &xhairTexture.get())))
+				if (!crosshairNeeded(i))
+					continue;
+				if (!xhairTexture)
 				{
-					D3D11_SHADER_RESOURCE_VIEW_DESC viewDesc{};
-					viewDesc.Format = desc.Format;
-					viewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-					viewDesc.Texture2D.MipLevels = desc.MipLevels;
-					device->CreateShaderResourceView(xhairTexture, &viewDesc, &xhairTextureView.get());
+					const u32* texData = getCrosshairTextureData();
+					D3D11_TEXTURE2D_DESC desc{};
+					desc.Width = 16;
+					desc.Height = 16;
+					desc.ArraySize = 1;
+					desc.SampleDesc.Count = 1;
+					desc.Usage = D3D11_USAGE_DEFAULT;
+					desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+					desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+					desc.MipLevels = 1;
 
-					deviceContext->UpdateSubresource(xhairTexture, 0, nullptr, texData, 16 * 4, 16 * 4 * 16);
+					if (SUCCEEDED(device->CreateTexture2D(&desc, nullptr, &xhairTexture.get())))
+					{
+						D3D11_SHADER_RESOURCE_VIEW_DESC viewDesc{};
+						viewDesc.Format = desc.Format;
+						viewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+						viewDesc.Texture2D.MipLevels = desc.MipLevels;
+						device->CreateShaderResourceView(xhairTexture, &viewDesc, &xhairTextureView.get());
+
+						deviceContext->UpdateSubresource(xhairTexture, 0, nullptr, texData, 16 * 4, 16 * 4 * 16);
+					}
 				}
-			}
 
-			auto [x, y] = getCrosshairPosition(i);
+				auto [x, y] = getCrosshairPosition(i);
 #ifdef LIBRETRO
-			float halfWidth = lightgun_crosshair_size / 2.f / config::ScreenStretching * 100.f * config::RenderResolution / 480.f;
-			float halfHeight = lightgun_crosshair_size / 2.f * config::RenderResolution / 480.f;
-			x /= config::ScreenStretching / 100.f;
+				float halfWidth = lightgun_crosshair_size / 2.f / config::ScreenStretching * 100.f * config::RenderResolution / 480.f;
+				float halfHeight = lightgun_crosshair_size / 2.f * config::RenderResolution / 480.f;
+				x /= config::ScreenStretching / 100.f;
 #else
-			float halfWidth = config::CrosshairSize * settings.display.uiScale / 2.f;
-			float halfHeight = halfWidth;
+				float halfWidth = config::CrosshairSize * settings.display.uiScale / 2.f;
+				float halfHeight = halfWidth;
 #endif
-			D3D11_VIEWPORT vp{};
-			vp.TopLeftX = x - halfWidth;
-			vp.TopLeftY = y - halfHeight;
-			vp.Width = halfWidth * 2;
-			vp.Height = halfHeight * 2;
-			vp.MinDepth = 0.f;
-			vp.MaxDepth = 1.f;
-			deviceContext->RSSetViewports(1, &vp);
-
-			const float colors[4] = {
-					(config::CrosshairColor[i] & 0xff) / 255.f,
-					((config::CrosshairColor[i] >> 8) & 0xff) / 255.f,
-					((config::CrosshairColor[i] >> 16) & 0xff) / 255.f,
-					((config::CrosshairColor[i] >> 24) & 0xff) / 255.f
-			};
-			deviceContext->OMSetBlendState(blendStates.getState(true, 4, 5), nullptr, 0xffffffff);
-			quad.draw(xhairTextureView, samplers->getSampler(false), colors);
+				D3D11_VIEWPORT vp{};
+				vp.TopLeftX = x - halfWidth;
+				vp.TopLeftY = y - halfHeight;
+				vp.Width = halfWidth * 2;
+				vp.Height = halfHeight * 2;
+				vp.MinDepth = 0.f;
+				vp.MaxDepth = 1.f;
+				deviceContext->RSSetViewports(1, &vp);
+				const float colors[4] = {
+						(config::CrosshairColor[i] & 0xff) / 255.f,
+						((config::CrosshairColor[i] >> 8) & 0xff) / 255.f,
+						((config::CrosshairColor[i] >> 16) & 0xff) / 255.f,
+						((config::CrosshairColor[i] >> 24) & 0xff) / 255.f
+				};
+				deviceContext->OMSetBlendState(blendStates.getState(true, 4, 5), nullptr, 0xffffffff);
+				quad.draw(xhairTextureView, samplers->getSampler(false), colors);
+			}
+			if (config::OnlyShowVMUA1)
+				break;
 		}
 	}
 }

@@ -165,7 +165,7 @@ void SetGPState(const PolyParam* gp,u32 cflip=0)
 								  gpuPalette,
 								  gp->isNaomi2(),
 								  ShaderUniforms.dithering);
-	
+
 	glcache.UseProgram(CurrentShader->program);
 	if (CurrentShader->trilinear_alpha != -1)
 		glUniform1f(CurrentShader->trilinear_alpha, trilinear_alpha);
@@ -633,7 +633,7 @@ void DrawStrips()
 				if (!config::PerStripSorting)
 					drawSorted(previous_pass.sorted_tr_count, current_pass.sorted_tr_count - previous_pass.sorted_tr_count, render_pass < (int)pvrrc.render_passes.size() - 1);
 				else
-					DrawList<ListType_Translucent,true>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
+					DrawList<ListType_Translucent, true>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
             }
 			else
 				DrawList<ListType_Translucent,false>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
@@ -925,13 +925,14 @@ static void updateVmuTexture(int vmuIndex)
 static void drawVmuTexture(u8 vmuIndex, int width, int height)
 {
 	const float *color = nullptr;
+	float x, y, w, h;  // Define these variables outside of the ifndef block
 #ifndef LIBRETRO
 	const float vmu_padding = 8.f * settings.display.uiScale;
-	const float w = 96.f * settings.display.uiScale;
-	const float h = 64.f * settings.display.uiScale;
+	const float vmu_height = 70.f * settings.display.uiScale * config::VmuScreenSize;
+	const float vmu_width = 48.f / 32.f * vmu_height;
+	w = vmu_width;
+	h = vmu_height;
 
-	float x;
-	float y;
 	if (vmuIndex & 2)
 		x = width - vmu_padding - w;
 	else
@@ -948,41 +949,43 @@ static void drawVmuTexture(u8 vmuIndex, int width, int height)
 		if (vmuIndex & 1)
 			y += vmu_padding + h;
 	}
-	const float blend_factor[4] = { 0.75f, 0.75f, 0.75f, 0.75f };
+	// Apply transparency setting
+	const float blend_factor[4] = {
+		config::VmuTransparency,
+		config::VmuTransparency,
+		config::VmuTransparency,
+		config::VmuTransparency
+	};
 	color = blend_factor;
 #else
-	if (vmuIndex & 1)
-		return;
-	const float vmu_padding_x = 8.f * width / 640.f * 4.f / 3.f / gl.ofbo.aspectRatio;
-	const float vmu_padding_y = 8.f * height / 480.f;
-	const float w = (float)VMU_SCREEN_WIDTH * width / 640.f * 4.f / 3.f / gl.ofbo.aspectRatio
-			* vmu_screen_params[vmuIndex / 2].vmu_screen_size_mult;
-	const float h = (float)VMU_SCREEN_HEIGHT * height / 480.f
-			* vmu_screen_params[vmuIndex / 2].vmu_screen_size_mult;
+	// LIBRETRO implementation - define x, y, w, h
+	constexpr int vmu_screen_size = 100;
+	constexpr float vmu_screen_opacity = 0.7f;
 
-	float x;
-	float y;
+	w = 48.f * vmu_screen_size / 100.f;
+	h = 32.f * vmu_screen_size / 100.f;
 
-	switch (vmu_screen_params[vmuIndex / 2].vmu_screen_position)
+	// Position calculation for LIBRETRO
+	if (vmuIndex & 2)
+		x = width - 8.f - w;
+	else
+		x = 8.f;
+	if (vmuIndex & 4)
 	{
-	case UPPER_LEFT:
-	default:
-		x = vmu_padding_x;
-		y = vmu_padding_y;
-		break;
-	case UPPER_RIGHT:
-		x = width - vmu_padding_x - w;
-		y = vmu_padding_y;
-		break;
-	case LOWER_LEFT:
-		x = vmu_padding_x;
-		y = height - vmu_padding_y - h;
-		break;
-	case LOWER_RIGHT:
-		x = width - vmu_padding_x - w;
-		y = height - vmu_padding_y - h;
-		break;
+		y = height - 8.f - h;
+		if (vmuIndex & 1)
+			y -= 8.f + h;
 	}
+	else
+	{
+		y = 8.f;
+		if (vmuIndex & 1)
+			y += 8.f + h;
+	}
+
+	// Use vmu_screen_opacity for transparency in LIBRETRO
+	static float libretro_blend[4] = { 1.f, 1.f, 1.f, vmu_screen_opacity };
+	color = libretro_blend;
 #endif
 
 	if (vmuLastChanged[vmuIndex] != vmuLastUpdated[vmuIndex]  || vmuTextureId[vmuIndex] == 0)
@@ -1061,12 +1064,17 @@ void drawVmusAndCrosshairs(int width, int height)
 #else
 	const bool showVmus = true;
 #endif
-
 	if (settings.platform.isConsole() && showVmus)
 	{
 		for (int i = 0; i < 8 ; i++)
+		{
 			if (vmu_lcd_status[i])
+			{
 				drawVmuTexture(i, width, height);
+				if (config::OnlyShowVMUA1)
+					break;
+			}
+		}
 	}
 
 	for (int i = 0 ; i < 4 ; i++)
