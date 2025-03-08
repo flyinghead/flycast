@@ -578,6 +578,16 @@ int DreamPicoPort::getBus() const {
     return software_bus;
 }
 
+u32 DreamPicoPort::getFunctionCode(int forPort) const {
+	if (forPort == 1 && hasVmu()) {
+		return 0x0E000000;
+	}
+	else if (forPort == 2 && hasRumble()) {
+		return 0x00010000;
+	}
+	return 0;
+}
+
 bool DreamPicoPort::hasVmu() const {
     return expansionDevs & 1;
 }
@@ -795,6 +805,10 @@ void DreamPicoPort::determineHardwareBus(int joystick_idx, SDL_Joystick* sdl_joy
             is_single_device = false;
         }
     }
+}
+
+void DreamPicoPort::queryPeripherals() {
+    // TODO
 }
 
 #endif // USE_DREAMCASTCONTROLLER

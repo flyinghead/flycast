@@ -67,6 +67,10 @@ public:
 
 	virtual int getBus() const = 0;
 
+    //! @param[in] forPort The port number to get the function code of (1 or 2)
+    //! @return the device type for the given port
+    virtual u32 getFunctionCode(int forPort) const = 0;
+
 	virtual bool hasVmu() const = 0;
 
 	virtual bool hasRumble() const = 0;

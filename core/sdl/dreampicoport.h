@@ -51,6 +51,8 @@ class DreamPicoPort : public DreamLink
 	bool is_hardware_bus_implied = true;
 	//! True once connection is established
 	bool connection_established = false;
+    //! The queried interface version
+    double interface_version = 0.0;
 
 public:
     //! Dreamcast Controller USB VID:1209 PID:2f07
@@ -70,6 +72,8 @@ public:
 	virtual inline void gameTermination() override;
 
 	virtual int getBus() const override;
+
+    virtual u32 getFunctionCode(int forPort) const override;
 
 	virtual bool hasVmu() const override;
 
@@ -99,6 +103,7 @@ private:
     asio::error_code receiveCmd(std::string& cmd);
     asio::error_code receiveMsg(MapleMsg& msg);
 	void determineHardwareBus(int joystick_idx, SDL_Joystick* sdl_joystick);
+    void queryPeripherals();
 };
 
 #endif // USE_DREAMCASTCONTROLLER

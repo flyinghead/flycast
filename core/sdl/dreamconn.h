@@ -50,6 +50,16 @@ public:
 		return bus;
 	}
 
+    u32 getFunctionCode(int forPort) const override {
+		if (forPort == 1 && hasVmu()) {
+			return 0x0E000000;
+		}
+		else if (forPort == 2 && hasRumble()) {
+			return 0x00010000;
+		}
+		return 0;
+	}
+
 	bool hasVmu() const override {
 		return expansionDevs & 1;
 	}
