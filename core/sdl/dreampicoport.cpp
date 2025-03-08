@@ -671,11 +671,11 @@ void DreamPicoPort::connect() {
 	}
 
 	u32 portTwoFn = getFunctionCode(2);
-	if (portTwoFn & MFID_1_Storage) {
-		config::MapleExpansionDevices[software_bus][1] = MDT_SegaVMU;
-	}
-	else if (portTwoFn & MFID_8_Vibration) {
+	if (portTwoFn & MFID_8_Vibration) {
 		config::MapleExpansionDevices[software_bus][1] = MDT_PurupuruPack;
+	}
+	else if (portTwoFn & MFID_1_Storage) {
+		config::MapleExpansionDevices[software_bus][1] = MDT_SegaVMU;
 	}
 	else {
 		config::MapleExpansionDevices[software_bus][1] = MDT_None;
