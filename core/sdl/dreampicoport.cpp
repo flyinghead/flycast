@@ -3,18 +3,18 @@
 
 	This file is part of Flycast.
 
-    Flycast is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 2 of the License, or
-    (at your option) any later version.
+	Flycast is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 2 of the License, or
+	(at your option) any later version.
 
-    Flycast is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+	Flycast is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
+	You should have received a copy of the GNU General Public License
+	along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
  */
 
 #include "dreampicoport.h"
@@ -61,7 +61,7 @@ class DreamPicoPortSerialHandler
 	std::mutex write_cv_mutex;
 	//! Input stream buffer from serial_handler
 	char serial_read_buffer[1024];
-    //! Holds on to partially parsed line
+	//! Holds on to partially parsed line
 	std::string read_line_buffer;
 	//! Thread which runs the io_context
 	std::unique_ptr<std::thread> io_context_thread;
@@ -72,9 +72,9 @@ class DreamPicoPortSerialHandler
 	//! Mutex for read_cv and serializes access to read_queue
 	std::mutex read_cv_mutex;
 
-    int32_t num_binary_parsed = -1;
-    uint16_t stored_binary_size = 0;
-    uint16_t num_binary_left = 0;
+	int32_t num_binary_parsed = -1;
+	uint16_t stored_binary_size = 0;
+	uint16_t num_binary_left = 0;
 
 public:
 	DreamPicoPortSerialHandler() {
@@ -198,7 +198,7 @@ public:
 
 	asio::error_code receiveCmd(std::string& cmd, std::chrono::milliseconds timeout_ms)
 	{
-        asio::error_code ec;
+		asio::error_code ec;
 
 		// Wait for at least 2 lines to be received (first line is echo back)
 		std::unique_lock<std::mutex> lock(read_cv_mutex);
@@ -222,10 +222,10 @@ public:
 
 	asio::error_code receiveMsg(MapleMsg& msg, std::chrono::milliseconds timeout_ms)
 	{
-        asio::error_code ec;
+		asio::error_code ec;
 		std::string response;
 
-        ec = receiveCmd(response, timeout_ms);
+		ec = receiveCmd(response, timeout_ms);
 		if (ec) {
 			return ec;
 		}
@@ -538,46 +538,46 @@ std::unique_ptr<DreamPicoPortSerialHandler> DreamPicoPort::serial;
 std::atomic<std::uint32_t> DreamPicoPort::connected_dev_count = 0;
 
 DreamPicoPort::DreamPicoPort(int bus, int joystick_idx, SDL_Joystick* sdl_joystick) :
-    software_bus(bus)
+	software_bus(bus)
 {
 #if defined(_WIN32)
-    // Workaround: Getting the instance ID here fixes some sort of L/R trigger bug in Windows dinput for some reason
-    (void)SDL_JoystickGetDeviceInstanceID(joystick_idx);
+	// Workaround: Getting the instance ID here fixes some sort of L/R trigger bug in Windows dinput for some reason
+	(void)SDL_JoystickGetDeviceInstanceID(joystick_idx);
 #endif
-    determineHardwareBus(joystick_idx, sdl_joystick);
+	determineHardwareBus(joystick_idx, sdl_joystick);
 }
 
 DreamPicoPort::~DreamPicoPort() {
-    disconnect();
+	disconnect();
 }
 
 bool DreamPicoPort::send(const MapleMsg& msg) {
-    if (serial) {
-        asio::error_code ec = serial->sendMsg(msg, hardware_bus, timeout_ms);
-        return !ec;
-    }
+	if (serial) {
+		asio::error_code ec = serial->sendMsg(msg, hardware_bus, timeout_ms);
+		return !ec;
+	}
 
-    return false;
+	return false;
 }
 
 bool DreamPicoPort::receive(MapleMsg& msg) {
-    if (serial) {
-        asio::error_code ec = serial->receiveMsg(msg, timeout_ms);
-        return !ec;
-    }
+	if (serial) {
+		asio::error_code ec = serial->receiveMsg(msg, timeout_ms);
+		return !ec;
+	}
 
-    return false;
+	return false;
 }
 
 inline void DreamPicoPort::gameTermination() {
-    // Need a short delay to wait for last screen draw to complete
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    // Reset screen to selected port
-    sendPort();
+	// Need a short delay to wait for last screen draw to complete
+	std::this_thread::sleep_for(std::chrono::milliseconds(10));
+	// Reset screen to selected port
+	sendPort();
 }
 
 int DreamPicoPort::getBus() const {
-    return software_bus;
+	return software_bus;
 }
 
 u32 DreamPicoPort::getFunctionCode(int forPort) const {
@@ -593,21 +593,21 @@ u32 DreamPicoPort::getFunctionCode(int forPort) const {
 
 bool DreamPicoPort::hasVmu() const {
 	// TODO: this is left for backward compatibility
-    return expansionDevs & 1;
+	return expansionDevs & 1;
 }
 
 bool DreamPicoPort::hasRumble() const {
 	// TODO: this is left for backward compatibility
-    return expansionDevs & 2;
+	return expansionDevs & 2;
 }
 
 int DreamPicoPort::getDefaultBus() const {
-    if (!is_hardware_bus_implied && !is_single_device) {
-        return hardware_bus;
-    } else {
-        // Value of -1 means to use enumeration order
-        return -1;
-    }
+	if (!is_hardware_bus_implied && !is_single_device) {
+		return hardware_bus;
+	} else {
+		// Value of -1 means to use enumeration order
+		return -1;
+	}
 }
 
 void DreamPicoPort::changeBus(int newBus) {
@@ -615,39 +615,39 @@ void DreamPicoPort::changeBus(int newBus) {
 }
 
 std::string DreamPicoPort::getName() const {
-    std::string name = "DreamPicoPort";
-    if (!is_hardware_bus_implied && !is_single_device) {
-        const char portChar = ('A' + hardware_bus);
-        name += " " + std::string(1, portChar);
-    }
-    return name;
+	std::string name = "DreamPicoPort";
+	if (!is_hardware_bus_implied && !is_single_device) {
+		const char portChar = ('A' + hardware_bus);
+		name += " " + std::string(1, portChar);
+	}
+	return name;
 }
 
 void DreamPicoPort::connect() {
-    // Timeout is 1 second while establishing connection
-    timeout_ms = std::chrono::seconds(1);
+	// Timeout is 1 second while establishing connection
+	timeout_ms = std::chrono::seconds(1);
 
-    if (connection_established && serial) {
-        if (serial->is_open()) {
-            sendPort();
-        } else {
-            disconnect();
-            return;
-        }
-    }
+	if (connection_established && serial) {
+		if (serial->is_open()) {
+			sendPort();
+		} else {
+			disconnect();
+			return;
+		}
+	}
 
-    ++connected_dev_count;
-    connection_established = true;
-    if (!serial) {
-        serial = std::make_unique<DreamPicoPortSerialHandler>();
-    }
+	++connected_dev_count;
+	connection_established = true;
+	if (!serial) {
+		serial = std::make_unique<DreamPicoPortSerialHandler>();
+	}
 
-    if (serial && serial->is_open()) {
-        sendPort();
-    } else {
-        disconnect();
-        return;
-    }
+	if (serial && serial->is_open()) {
+		sendPort();
+	} else {
+		disconnect();
+		return;
+	}
 
 	if (!queryInterfaceVersion()) {
 		disconnect();
@@ -659,8 +659,8 @@ void DreamPicoPort::connect() {
 		return;
 	}
 
-    // Timeout is extended to 5 seconds for all other communication after connection
-    timeout_ms = std::chrono::seconds(5);
+	// Timeout is extended to 5 seconds for all other communication after connection
+	timeout_ms = std::chrono::seconds(5);
 
 	u32 portOneFn = getFunctionCode(1);
 	if (portOneFn & MFID_1_Storage) {
@@ -692,124 +692,124 @@ void DreamPicoPort::connect() {
 }
 
 void DreamPicoPort::disconnect() {
-    if (connection_established) {
-        connection_established = false;
-        if (--connected_dev_count == 0) {
-            // serial is no longer needed
-            serial.reset();
-        }
-    }
+	if (connection_established) {
+		connection_established = false;
+		if (--connected_dev_count == 0) {
+			// serial is no longer needed
+			serial.reset();
+		}
+	}
 }
 
 void DreamPicoPort::sendPort() {
-    if (connection_established && serial && software_bus >= 0 && software_bus <= 3 && hardware_bus >=0 && hardware_bus <= 3) {
-        // This will update the displayed port letter on the screen
-        std::ostringstream s;
-        s << "XP "; // XP is flycast "set port" command
-        s << hardware_bus << " " << software_bus << "\n";
-        serial->sendCmd(s.str(), timeout_ms);
-        // Don't really care about the response, just want to ensure it gets fully processed before continuing
-        std::string buffer;
-        serial->receiveCmd(buffer, timeout_ms);
-    }
+	if (connection_established && serial && software_bus >= 0 && software_bus <= 3 && hardware_bus >=0 && hardware_bus <= 3) {
+		// This will update the displayed port letter on the screen
+		std::ostringstream s;
+		s << "XP "; // XP is flycast "set port" command
+		s << hardware_bus << " " << software_bus << "\n";
+		serial->sendCmd(s.str(), timeout_ms);
+		// Don't really care about the response, just want to ensure it gets fully processed before continuing
+		std::string buffer;
+		serial->receiveCmd(buffer, timeout_ms);
+	}
 }
 
 int DreamPicoPort::hardwareBus() const {
-    return hardware_bus;
+	return hardware_bus;
 }
 
 bool DreamPicoPort::isHardwareBusImplied() const {
-    return is_hardware_bus_implied;
+	return is_hardware_bus_implied;
 }
 
 bool DreamPicoPort::isSingleDevice() const {
-    return is_single_device;
+	return is_single_device;
 }
 
 void DreamPicoPort::determineHardwareBus(int joystick_idx, SDL_Joystick* sdl_joystick) {
-    // This function determines what bus index to use when communicating with the hardware.
+	// This function determines what bus index to use when communicating with the hardware.
 #if defined(_WIN32)
-    // This only works in Windows because the joystick_path is not given in other OSes
-    const char* joystick_name = SDL_JoystickName(sdl_joystick);
-    const char* joystick_path = SDL_JoystickPath(sdl_joystick);
+	// This only works in Windows because the joystick_path is not given in other OSes
+	const char* joystick_name = SDL_JoystickName(sdl_joystick);
+	const char* joystick_path = SDL_JoystickPath(sdl_joystick);
 
-    struct SDL_hid_device_info* devs = SDL_hid_enumerate(VID, PID);
-    if (devs) {
-        if (!devs->next) {
-            // Only single device found, so this is simple (host-1p firmware used)
-            hardware_bus = 0;
-            is_hardware_bus_implied = false;
-            is_single_device = true;
-        } else {
-            struct SDL_hid_device_info* it = devs;
-            struct SDL_hid_device_info* my_dev = nullptr;
+	struct SDL_hid_device_info* devs = SDL_hid_enumerate(VID, PID);
+	if (devs) {
+		if (!devs->next) {
+			// Only single device found, so this is simple (host-1p firmware used)
+			hardware_bus = 0;
+			is_hardware_bus_implied = false;
+			is_single_device = true;
+		} else {
+			struct SDL_hid_device_info* it = devs;
+			struct SDL_hid_device_info* my_dev = nullptr;
 
-            if (joystick_path)
-            {
-                while (it)
-                {
-                    // Note: hex characters will be differing case, so case-insensitive cmp is needed
-                    if (it->path && 0 == SDL_strcasecmp(it->path, joystick_path)) {
-                        my_dev = it;
-                        break;
-                    }
-                    it = it->next;
-                }
-            }
+			if (joystick_path)
+			{
+				while (it)
+				{
+					// Note: hex characters will be differing case, so case-insensitive cmp is needed
+					if (it->path && 0 == SDL_strcasecmp(it->path, joystick_path)) {
+						my_dev = it;
+						break;
+					}
+					it = it->next;
+				}
+			}
 
-            if (my_dev) {
-                it = devs;
-                int count = 0;
-                if (my_dev->serial_number) {
-                    while (it) {
-                        if (it->serial_number &&
-                            0 == wcscmp(it->serial_number, my_dev->serial_number))
-                        {
-                            ++count;
-                        }
-                        it = it->next;
-                    }
+			if (my_dev) {
+				it = devs;
+				int count = 0;
+				if (my_dev->serial_number) {
+					while (it) {
+						if (it->serial_number &&
+							0 == wcscmp(it->serial_number, my_dev->serial_number))
+						{
+							++count;
+						}
+						it = it->next;
+					}
 
-                    if (count == 1) {
-                        // Single device of this serial found
-                        is_single_device = true;
-                        hardware_bus = 0;
-                        is_hardware_bus_implied = false;
-                    } else {
-                        is_single_device = false;
-                        if (my_dev->release_number < 0x0102) {
-                            // Interfaces go in decending order
-                            hardware_bus = (count - (my_dev->interface_number % 4) - 1);
-                            is_hardware_bus_implied = false;
-                        } else {
-                            // Version 1.02 of interface will make interfaces in ascending order
-                            hardware_bus = (my_dev->interface_number % 4);
-                            is_hardware_bus_implied = false;
-                        }
-                    }
-                }
-            }
-        }
-        SDL_hid_free_enumeration(devs);
-    }
+					if (count == 1) {
+						// Single device of this serial found
+						is_single_device = true;
+						hardware_bus = 0;
+						is_hardware_bus_implied = false;
+					} else {
+						is_single_device = false;
+						if (my_dev->release_number < 0x0102) {
+							// Interfaces go in decending order
+							hardware_bus = (count - (my_dev->interface_number % 4) - 1);
+							is_hardware_bus_implied = false;
+						} else {
+							// Version 1.02 of interface will make interfaces in ascending order
+							hardware_bus = (my_dev->interface_number % 4);
+							is_hardware_bus_implied = false;
+						}
+					}
+				}
+			}
+		}
+		SDL_hid_free_enumeration(devs);
+	}
 #endif
 
-    if (hardware_bus < 0) {
-        // The number of buttons gives a clue as to what index the controller is
-        int nbuttons = SDL_JoystickNumButtons(sdl_joystick);
+	if (hardware_bus < 0) {
+		// The number of buttons gives a clue as to what index the controller is
+		int nbuttons = SDL_JoystickNumButtons(sdl_joystick);
 
-        if (nbuttons >= 32 || nbuttons <= 27) {
-            // Older version of firmware or single player
-            hardware_bus = 0;
-            is_hardware_bus_implied = true;
-            is_single_device = true;
-        }
-        else {
-            hardware_bus = 31 - nbuttons;
-            is_hardware_bus_implied = false;
-            is_single_device = false;
-        }
-    }
+		if (nbuttons >= 32 || nbuttons <= 27) {
+			// Older version of firmware or single player
+			hardware_bus = 0;
+			is_hardware_bus_implied = true;
+			is_single_device = true;
+		}
+		else {
+			hardware_bus = 31 - nbuttons;
+			is_hardware_bus_implied = false;
+			is_single_device = false;
+		}
+	}
 }
 
 bool DreamPicoPort::queryInterfaceVersion() {
@@ -834,24 +834,24 @@ bool DreamPicoPort::queryInterfaceVersion() {
 }
 
 bool DreamPicoPort::queryPeripherals() {
-    MapleMsg msg;
-    msg.command = MDCF_GetCondition;
-    msg.destAP = (hardware_bus << 6) | 0x20;
-    msg.originAP = hardware_bus << 6;
-    msg.setData(MFID_0_Input);
+	MapleMsg msg;
+	msg.command = MDCF_GetCondition;
+	msg.destAP = (hardware_bus << 6) | 0x20;
+	msg.originAP = hardware_bus << 6;
+	msg.setData(MFID_0_Input);
 
-    asio::error_code ec = serial->sendMsg(msg, hardware_bus, timeout_ms);
-    if (ec)
-    {
-        WARN_LOG(INPUT, "DreamPicoPort[%d] connection failed: %s", software_bus, ec.message().c_str());
-        return false;
-    }
+	asio::error_code ec = serial->sendMsg(msg, hardware_bus, timeout_ms);
+	if (ec)
+	{
+		WARN_LOG(INPUT, "DreamPicoPort[%d] connection failed: %s", software_bus, ec.message().c_str());
+		return false;
+	}
 
-    ec = serial->receiveMsg(msg, timeout_ms);
-    if (ec) {
-        WARN_LOG(INPUT, "DreamPicoPort[%d] read failed: %s", software_bus, ec.message().c_str());
-        return false;
-    }
+	ec = serial->receiveMsg(msg, timeout_ms);
+	if (ec) {
+		WARN_LOG(INPUT, "DreamPicoPort[%d] read failed: %s", software_bus, ec.message().c_str());
+		return false;
+	}
 
 	expansionDevs = msg.originAP & 0x1f;
 	peripherals.clear();
