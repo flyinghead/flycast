@@ -571,7 +571,7 @@ void gui_stop_game(const std::string& message)
 	const LockGuard lock(guiMutex);
 	if (!commandLineStart)
 	{
-	    // Exit to main menu
+		// Exit to main menu
 		emu.unloadGame();
 		gui_setState(GuiState::Main);
 		reset_vmus();
