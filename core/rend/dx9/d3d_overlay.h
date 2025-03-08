@@ -55,4 +55,3 @@ private:
 	std::array<ComPtr<IDirect3DTexture9>, 8> vmuTextures;
 	std::array<u64, 8> vmuLastChanged {};
 };
- 

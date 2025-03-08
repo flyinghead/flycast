@@ -14,14 +14,14 @@
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with Flycast. If not, see <https://www.gnu.org/licenses/>.
+    along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #include "cfg/option.h"
 #include "libretro_core_option_defines.h"
 
 namespace config {
 
-	// Dynarec
+// Dynarec
 
 Option<bool> DynarecEnabled("", true);
 IntOption Sh4Clock(CORE_OPTION_NAME "_sh4clock", 200);
@@ -74,10 +74,10 @@ Option<bool> PerStripSorting("");
 Option<bool> DelayFrameSwapping(CORE_OPTION_NAME "_delay_frame_swapping");
 Option<bool> WidescreenGameHacks(CORE_OPTION_NAME "_widescreen_cheats");
 std::array<Option<int>, 4> CrosshairColor{
-    Option<int>(""),
-    Option<int>(""),
-    Option<int>(""),
-    Option<int>(""),
+	Option<int>(""),
+	Option<int>(""),
+	Option<int>(""),
+	Option<int>(""),
 };
 Option<int> SkipFrame(CORE_OPTION_NAME "_frame_skipping");
 Option<int> MaxThreads("", 3);
@@ -131,24 +131,24 @@ OptionString ISPUsername("", "flycast1");
 Option<int> MouseSensitivity("", 100);
 Option<int> VirtualGamepadVibration("", 20);
 
-std::array<Option<MapleDeviceType>, 4> MapleMainDevices{
-    Option<MapleDeviceType>("", MDT_None),
-    Option<MapleDeviceType>("", MDT_None),
-    Option<MapleDeviceType>("", MDT_None),
-    Option<MapleDeviceType>("", MDT_None),
+std::array<Option<MapleDeviceType>, 4> MapleMainDevices {
+	Option<MapleDeviceType>("", MDT_None),
+	Option<MapleDeviceType>("", MDT_None),
+	Option<MapleDeviceType>("", MDT_None),
+	Option<MapleDeviceType>("", MDT_None),
 };
 std::array<std::array<Option<MapleDeviceType>, 2>, 4> MapleExpansionDevices{
-    Option<MapleDeviceType>("", MDT_None),
-    Option<MapleDeviceType>("", MDT_None),
+	Option<MapleDeviceType>("", MDT_None),
+	Option<MapleDeviceType>("", MDT_None),
 
-    Option<MapleDeviceType>("", MDT_None),
-    Option<MapleDeviceType>("", MDT_None),
+	Option<MapleDeviceType>("", MDT_None),
+	Option<MapleDeviceType>("", MDT_None),
 
-    Option<MapleDeviceType>("", MDT_None),
-    Option<MapleDeviceType>("", MDT_None),
+	Option<MapleDeviceType>("", MDT_None),
+	Option<MapleDeviceType>("", MDT_None),
 
-    Option<MapleDeviceType>("", MDT_None),
-    Option<MapleDeviceType>("", MDT_None),
+	Option<MapleDeviceType>("", MDT_None),
+	Option<MapleDeviceType>("", MDT_None),
 };
 
 } // namespace config

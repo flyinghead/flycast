@@ -571,7 +571,7 @@ void gui_stop_game(const std::string& message)
 	const LockGuard lock(guiMutex);
 	if (!commandLineStart)
 	{
-	        // Exit to main menu
+	    // Exit to main menu
 		emu.unloadGame();
 		gui_setState(GuiState::Main);
 		reset_vmus();
@@ -2158,7 +2158,7 @@ static void gui_settings_controls(bool& maple_devices_changed)
 		}
 		ImGui::Spacing();
 		OptionCheckbox("Per Game VMU A1", config::PerGameVmu, "When enabled, each game has its own VMU on port 1 of controller A.");
-	}
+    }
 }
 
 static void gui_settings_video()
@@ -2301,10 +2301,10 @@ static void gui_settings_video()
         	else
         		resLabels[i] = std::to_string((int)(scalings[i] * 480 * 16 / 9)) + "x" + std::to_string((int)(scalings[i] * 480));
         	resLabels[i] += " (" + scalingsText[i] + ")";
-    }
+        }
 
-	ImGui::PushItemWidth(ImGui::CalcItemWidth() - innerSpacing * 2.0f - ImGui::GetFrameHeight() * 2.0f);
-	if (ImGui::BeginCombo("##Resolution", resLabels[selected].c_str(), ImGuiComboFlags_NoArrowButton))
+        ImGui::PushItemWidth(ImGui::CalcItemWidth() - innerSpacing * 2.0f - ImGui::GetFrameHeight() * 2.0f);
+        if (ImGui::BeginCombo("##Resolution", resLabels[selected].c_str(), ImGuiComboFlags_NoArrowButton))
         {
         	for (u32 i = 0; i < scalings.size(); i++)
             {
@@ -2373,15 +2373,15 @@ static void gui_settings_video()
 
 			ImGui::Indent();
 			OptionCheckbox("Super Widescreen", config::SuperWidescreen,
-				"Use the full width of the screen or window when its aspect ratio is greater than 16:9.\nAspect Fill and remove black bars.");
+					"Use the full width of the screen or window when its aspect ratio is greater than 16:9.\nAspect Fill and remove black bars.");
 			ImGui::Unindent();
-		}
-		OptionCheckbox("Widescreen Game Cheats", config::WidescreenGameHacks,
-			"Modify the game so that it displays in 16:9 anamorphic format and use horizontal screen stretching. Only some games are supported.");
-		OptionSlider("Horizontal Stretching", config::ScreenStretching, 100, 250,
-			"Stretch the screen horizontally, 133% is 16:9", "%d%%");
-		OptionCheckbox("Rotate Screen 90°", config::Rotate90, "Rotate the screen 90° counterclockwise for verticle games");
-	}
+    	}
+    	OptionCheckbox("Widescreen Game Cheats", config::WidescreenGameHacks,
+    			"Modify the game so that it displays in 16:9 anamorphic format and use horizontal screen stretching. Only some games are supported.");
+    	OptionSlider("Horizontal Stretching", config::ScreenStretching, 100, 250,
+    			"Stretch the screen horizontally", "%d%%");
+    	OptionCheckbox("Rotate Screen 90°", config::Rotate90, "Rotate the screen 90° counterclockwise");
+    }
 	if (perPixel)
 	{
 		ImGui::Spacing();
@@ -2897,9 +2897,10 @@ static void gui_settings_advanced()
 				"Enables 32MB RAM Mod for Dreamcast. May affect compatibility");
 		}
 
-		OptionCheckbox("Dump Textures", config::DumpTextures,
-			"Dump all textures into data/texdump/<game id>");
-		bool logToFile = cfgLoadBool("log", "LogToFile", false);
+        OptionCheckbox("Dump Textures", config::DumpTextures,
+        		"Dump all textures into data/texdump/<game id>");
+
+        bool logToFile = cfgLoadBool("log", "LogToFile", false);
 		if (ImGui::Checkbox("Log to File", &logToFile))
 			cfgSaveBool("log", "LogToFile", logToFile);
         ImGui::SameLine();

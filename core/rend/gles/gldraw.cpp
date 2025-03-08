@@ -121,7 +121,7 @@ static TileClipping setTileClip(u32 tileclip, int clip_rect[4])
 }
 
 template <u32 Type, bool SortingEnabled>
-void SetGPState(const PolyParam* gp, u32 cflip = 0)
+void SetGPState(const PolyParam* gp,u32 cflip=0)
 {
 	float trilinear_alpha;
 	if (gp->pcw.Texture && gp->tsp.FilterMode > 1 && Type != ListType_Punch_Through && gp->tcw.MipMapped == 1)
@@ -139,9 +139,9 @@ void SetGPState(const PolyParam* gp, u32 cflip = 0)
 
 	int clip_rect[4] = {};
 	TileClipping clipmode = setTileClip(gp->tileclip, clip_rect);
-	TextureCacheData* texture = (TextureCacheData*)gp->texture;
+	TextureCacheData *texture = (TextureCacheData *)gp->texture;
 	int gpuPalette = texture == nullptr || !texture->gpuPalette ? 0
-		: gp->tsp.FilterMode + 1;
+			: gp->tsp.FilterMode + 1;
 	if (gpuPalette != 0)
 	{
 		if (config::TextureFiltering == 1)
@@ -151,20 +151,20 @@ void SetGPState(const PolyParam* gp, u32 cflip = 0)
 	}
 
 	CurrentShader = GetProgram(Type == ListType_Punch_Through ? true : false,
-								clipmode == TileClipping::Inside,
-								gp->pcw.Texture,
-								gp->tsp.UseAlpha,
-								gp->tsp.IgnoreTexA,
-								gp->tsp.ShadInstr,
-								gp->pcw.Offset,
-								fog_ctrl,
-								gp->pcw.Gouraud,
-								gp->tcw.PixelFmt == PixelBumpMap,
-								color_clamp,
-								trilinear_alpha != 1.f,
-								gpuPalette,
-								gp->isNaomi2(),
-								ShaderUniforms.dithering);
+								  clipmode == TileClipping::Inside,
+								  gp->pcw.Texture,
+								  gp->tsp.UseAlpha,
+								  gp->tsp.IgnoreTexA,
+								  gp->tsp.ShadInstr,
+								  gp->pcw.Offset,
+								  fog_ctrl,
+								  gp->pcw.Gouraud,
+								  gp->tcw.PixelFmt == PixelBumpMap,
+								  color_clamp,
+								  trilinear_alpha != 1.f,
+								  gpuPalette,
+								  gp->isNaomi2(),
+								  ShaderUniforms.dithering);
 
 	glcache.UseProgram(CurrentShader->program);
 	if (CurrentShader->trilinear_alpha != -1)
@@ -226,7 +226,7 @@ void SetGPState(const PolyParam* gp, u32 cflip = 0)
 		{
 			//bilinear filtering
 			//PowerVR supports also trilinear via two passes, but we ignore that for now
-			glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, mipmapped && Type != ListType_Punch_Through ? GL_LINEAR_MIPMAP_NEAREST : GL_LINEAR);
+			glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, mipmapped  && Type != ListType_Punch_Through ? GL_LINEAR_MIPMAP_NEAREST : GL_LINEAR);
 			glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		}
 
@@ -253,7 +253,7 @@ void SetGPState(const PolyParam* gp, u32 cflip = 0)
 	// Apparently punch-through polys support blending, or at least some combinations
 	// Opaque polygons support blending in list continuations (wild guess)
 	glcache.Enable(GL_BLEND);
-	glcache.BlendFunc(SrcBlendGL[gp->tsp.SrcInstr], DstBlendGL[gp->tsp.DstInstr]);
+	glcache.BlendFunc(SrcBlendGL[gp->tsp.SrcInstr],DstBlendGL[gp->tsp.DstInstr]);
 
 	//set cull mode !
 	//cflip is required when exploding triangles for triangle sorting
@@ -292,8 +292,8 @@ void DrawList(const std::vector<PolyParam>& gply, int first, int count)
 	const PolyParam* params = &gply[first];
 
 	glcache.Enable(GL_STENCIL_TEST);
-	glcache.StencilFunc(GL_ALWAYS, 0,0);
-	glcache.StencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+	glcache.StencilFunc(GL_ALWAYS,0,0);
+	glcache.StencilOp(GL_KEEP,GL_KEEP,GL_REPLACE);
 
 	for (; count > 0; count--, params++)
 	{
@@ -303,9 +303,9 @@ void DrawList(const std::vector<PolyParam>& gply, int first, int count)
 				&& params->isp.DepthMode == 0)
 			// depthFunc = never
 			continue;
-		SetGPState<Type, SortingEnabled>(params);
+		SetGPState<Type,SortingEnabled>(params);
 		glDrawElements(GL_TRIANGLE_STRIP, params->count, gl.index_type,
-			(GLvoid*)(gl.get_index_size() * params->first)); glCheck();
+				(GLvoid*)(gl.get_index_size() * params->first)); glCheck();
 	}
 }
 
@@ -314,14 +314,14 @@ static void drawSorted(int first, int count, bool multipass)
 	if (count == 0)
 		return;
 	glcache.Enable(GL_STENCIL_TEST);
-	glcache.StencilFunc(GL_ALWAYS, 0, 0);
-	glcache.StencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+	glcache.StencilFunc(GL_ALWAYS,0,0);
+	glcache.StencilOp(GL_KEEP,GL_KEEP,GL_REPLACE);
 
 	int end = first + count;
 	for (int p = first; p < end; p++)
 	{
 		const PolyParam* params = &pvrrc.global_param_tr[pvrrc.sortedTriangles[p].polyIndex];
-		SetGPState<ListType_Translucent, true>(params);
+		SetGPState<ListType_Translucent,true>(params);
 		glDrawElements(GL_TRIANGLES, pvrrc.sortedTriangles[p].count, gl.index_type,
 				(GLvoid*)(gl.get_index_size() * pvrrc.sortedTriangles[p].first));
 	}
@@ -432,7 +432,7 @@ void SetMVS_Mode(ModifierVolumeMode mv_mode, ISP_Modvol ispc)
 			//1   : 1      : 01
 
 			// if (1<=st) st=1; else st=0;
-			glcache.StencilFunc(GL_LEQUAL, 1,3);
+			glcache.StencilFunc(GL_LEQUAL,1,3);
 			glcache.StencilOp(GL_ZERO, GL_ZERO, GL_REPLACE);
 		}
 		else
@@ -460,16 +460,16 @@ void MainVertexArray::defineVtxAttribs()
 {
 	//setup vertex buffers attrib pointers
 	glEnableVertexAttribArray(VERTEX_POS_ARRAY);
-	glVertexAttribPointer(VERTEX_POS_ARRAY, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, x));
+	glVertexAttribPointer(VERTEX_POS_ARRAY, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex,x));
 
 	glEnableVertexAttribArray(VERTEX_COL_BASE_ARRAY);
-	glVertexAttribPointer(VERTEX_COL_BASE_ARRAY, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex), (void*)offsetof(Vertex, col));
+	glVertexAttribPointer(VERTEX_COL_BASE_ARRAY, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex), (void*)offsetof(Vertex,col));
 
 	glEnableVertexAttribArray(VERTEX_COL_OFFS_ARRAY);
-	glVertexAttribPointer(VERTEX_COL_OFFS_ARRAY, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex), (void*)offsetof(Vertex, spc));
+	glVertexAttribPointer(VERTEX_COL_OFFS_ARRAY, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex), (void*)offsetof(Vertex,spc));
 
 	glEnableVertexAttribArray(VERTEX_UV_ARRAY);
-	glVertexAttribPointer(VERTEX_UV_ARRAY, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, u));
+	glVertexAttribPointer(VERTEX_UV_ARRAY, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex,u));
 
 	glEnableVertexAttribArray(VERTEX_NORM_ARRAY);
 	glVertexAttribPointer(VERTEX_NORM_ARRAY, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, nx));
@@ -484,7 +484,7 @@ void SetupMainVBO()
 void ModvolVertexArray::defineVtxAttribs()
 {
 	glEnableVertexAttribArray(VERTEX_POS_ARRAY);
-	glVertexAttribPointer(VERTEX_POS_ARRAY, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, (void*)0);
+	glVertexAttribPointer(VERTEX_POS_ARRAY, 3, GL_FLOAT, GL_FALSE, sizeof(float)*3, (void*)0);
 
 	glDisableVertexAttribArray(VERTEX_UV_ARRAY);
 	glDisableVertexAttribArray(VERTEX_COL_OFFS_ARRAY);
@@ -569,25 +569,25 @@ void DrawModVols(int first, int count)
 	//disable culling
 	SetCull(0);
 	//enable color writes
-	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+	glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
 	SetBaseClipping();
 
 	//black out any stencil with '1'
 	glcache.Enable(GL_BLEND);
-	glcache.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glcache.BlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
 
 	glcache.Enable(GL_STENCIL_TEST);
-	glcache.StencilFunc(GL_EQUAL, 0x81, 0x81); //only pixels that are Modvol enabled, and in area 1
+	glcache.StencilFunc(GL_EQUAL,0x81,0x81); //only pixels that are Modvol enabled, and in area 1
 
 	//clear the stencil result bit
 	glcache.StencilMask(0x3);    //write to lsb
-	glcache.StencilOp(GL_ZERO, GL_ZERO, GL_ZERO);
+	glcache.StencilOp(GL_ZERO,GL_ZERO,GL_ZERO);
 
 	//don't do depth testing
 	glcache.Disable(GL_DEPTH_TEST);
 
 	SetupMainVBO();
-	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+	glDrawArrays(GL_TRIANGLE_STRIP,0,4);
 
 	//restore states
 	glcache.Enable(GL_DEPTH_TEST);
@@ -602,12 +602,12 @@ void DrawStrips()
 	glActiveTexture(GL_TEXTURE0);
 
 	RenderPass previous_pass = {};
-for (int render_pass = 0; render_pass < (int)pvrrc.render_passes.size(); render_pass++)
-{
-    const RenderPass& current_pass = pvrrc.render_passes[render_pass];
+    for (int render_pass = 0; render_pass < (int)pvrrc.render_passes.size(); render_pass++)
+    {
+        const RenderPass& current_pass = pvrrc.render_passes[render_pass];
 
-    DEBUG_LOG(RENDERER, "Render pass %d OP %d PT %d TR %d MV %d", render_pass + 1,
-			current_pass.op_count - previous_pass.op_count,
+        DEBUG_LOG(RENDERER, "Render pass %d OP %d PT %d TR %d MV %d", render_pass + 1,
+        		current_pass.op_count - previous_pass.op_count,
 				current_pass.pt_count - previous_pass.pt_count,
 				current_pass.tr_count - previous_pass.tr_count,
 				current_pass.mvo_count - previous_pass.mvo_count);
@@ -617,10 +617,10 @@ for (int render_pass = 0; render_pass < (int)pvrrc.render_passes.size(); render_
 		glcache.DepthMask(GL_TRUE);
 
 		//Opaque
-		DrawList<ListType_Opaque, false>(pvrrc.global_param_op, previous_pass.op_count, current_pass.op_count - previous_pass.op_count);
+		DrawList<ListType_Opaque,false>(pvrrc.global_param_op, previous_pass.op_count, current_pass.op_count - previous_pass.op_count);
 
 		//Alpha tested
-		DrawList<ListType_Punch_Through, false>(pvrrc.global_param_pt, previous_pass.pt_count, current_pass.pt_count - previous_pass.pt_count);
+		DrawList<ListType_Punch_Through,false>(pvrrc.global_param_pt, previous_pass.pt_count, current_pass.pt_count - previous_pass.pt_count);
 
 		// Modifier volumes
 		if (config::ModifierVolumes)
@@ -629,14 +629,14 @@ for (int render_pass = 0; render_pass < (int)pvrrc.render_passes.size(); render_
 		//Alpha blended
 		{
 			if (current_pass.autosort)
-	    {
+            {
 				if (!config::PerStripSorting)
 					drawSorted(previous_pass.sorted_tr_count, current_pass.sorted_tr_count - previous_pass.sorted_tr_count, render_pass < (int)pvrrc.render_passes.size() - 1);
 				else
 					DrawList<ListType_Translucent, true>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
-			}
+            }
 			else
-				DrawList<ListType_Translucent, false>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
+				DrawList<ListType_Translucent,false>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
 		}
 		previous_pass = current_pass;
 	}
@@ -825,7 +825,7 @@ bool OpenGLRenderer::renderLastFrame()
 		glBlitFramebuffer(-gl.ofbo.shiftX, -gl.ofbo.shiftY, framebuffer->getWidth() - gl.ofbo.shiftX, framebuffer->getHeight() - gl.ofbo.shiftY,
 				dx, settings.display.height - dy, settings.display.width - dx, dy,
 				GL_COLOR_BUFFER_BIT, config::TextureFiltering == 1 ? GL_NEAREST : GL_LINEAR);
-	glBindFramebuffer(GL_FRAMEBUFFER, gl.ofbo.origFbo);
+    	glBindFramebuffer(GL_FRAMEBUFFER, gl.ofbo.origFbo);
 #endif
 	}
 	return true;
@@ -924,9 +924,8 @@ static void updateVmuTexture(int vmuIndex)
 
 static void drawVmuTexture(u8 vmuIndex, int width, int height)
 {
-	const float* color = nullptr;
+	const float *color = nullptr;
 	float x, y, w, h;  // Define these variables outside of the ifndef block
-
 #ifndef LIBRETRO
 	const float vmu_padding = 8.f * settings.display.uiScale;
 	const float vmu_height = 70.f * settings.display.uiScale * config::VmuScreenSize;
@@ -962,7 +961,7 @@ static void drawVmuTexture(u8 vmuIndex, int width, int height)
 	// LIBRETRO implementation - define x, y, w, h
 	constexpr int vmu_screen_size = 100;
 	constexpr float vmu_screen_opacity = 0.7f;
-	
+
 	w = 48.f * vmu_screen_size / 100.f;
 	h = 32.f * vmu_screen_size / 100.f;
 
@@ -1067,7 +1066,7 @@ void drawVmusAndCrosshairs(int width, int height)
 #endif
 	if (settings.platform.isConsole() && showVmus)
 	{
-		for (int i = 0; i < 8; i++)
+		for (int i = 0; i < 8 ; i++)
 		{
 			if (vmu_lcd_status[i])
 			{
@@ -1078,14 +1077,9 @@ void drawVmusAndCrosshairs(int width, int height)
 		}
 	}
 
-	for (int i = 0; i < 4; i++)
-	{
+	for (int i = 0 ; i < 4 ; i++)
 		if (crosshairNeeded(i))
-		{
 			drawGunCrosshair(i, width, height);
-
-		}
-	}
 	glCheck();
 }
 
