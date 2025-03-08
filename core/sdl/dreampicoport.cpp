@@ -30,6 +30,8 @@
 #include <optional>
 #include <thread>
 #include <list>
+#include <vector>
+#include <array>
 #include <mutex>
 #include <condition_variable>
 #include <atomic>
@@ -579,20 +581,23 @@ int DreamPicoPort::getBus() const {
 }
 
 u32 DreamPicoPort::getFunctionCode(int forPort) const {
-	if (forPort == 1 && hasVmu()) {
-		return 0x0E000000;
+	u32 mask = 0;
+	if (peripherals.size() > forPort) {
+		for (const auto& peripheral : peripherals[forPort]) {
+			mask |= peripheral[0];
+		}
 	}
-	else if (forPort == 2 && hasRumble()) {
-		return 0x00010000;
-	}
-	return 0;
+	// swap bytes to get the correct function code
+	return ((mask & 0xFF000000) >> 24) | ((mask & 0x00FF0000) >> 8) | ((mask & 0x0000FF00) << 8) | ((mask & 0x000000FF) << 24);
 }
 
 bool DreamPicoPort::hasVmu() const {
+	// TODO: this is left for backward compatibility
     return expansionDevs & 1;
 }
 
 bool DreamPicoPort::hasRumble() const {
+	// TODO: this is left for backward compatibility
     return expansionDevs & 2;
 }
 
@@ -644,42 +649,42 @@ void DreamPicoPort::connect() {
         return;
     }
 
-    // Now get the controller configuration
-    MapleMsg msg;
-    msg.command = MDCF_GetCondition;
-    msg.destAP = (hardware_bus << 6) | 0x20;
-    msg.originAP = hardware_bus << 6;
-    msg.setData(MFID_0_Input);
+	if (!queryInterfaceVersion()) {
+		disconnect();
+		return;
+	}
 
-    asio::error_code ec = serial->sendMsg(msg, hardware_bus, timeout_ms);
-    if (ec)
-    {
-        WARN_LOG(INPUT, "DreamPicoPort[%d] connection failed: %s", software_bus, ec.message().c_str());
-        disconnect();
-        return;
-    }
-
-    ec = serial->receiveMsg(msg, timeout_ms);
-    if (ec) {
-        WARN_LOG(INPUT, "DreamPicoPort[%d] read failed: %s", software_bus, ec.message().c_str());
-        disconnect();
-        return;
-    }
+	if (!queryPeripherals()) {
+		disconnect();
+		return;
+	}
 
     // Timeout is extended to 5 seconds for all other communication after connection
     timeout_ms = std::chrono::seconds(5);
 
-	expansionDevs = msg.originAP & 0x1f;
+	u32 portOneFn = getFunctionCode(1);
+	if (portOneFn & MFID_1_Storage) {
+		config::MapleExpansionDevices[software_bus][0] = MDT_SegaVMU;
+	}
+	else {
+		config::MapleExpansionDevices[software_bus][0] = MDT_None;
+	}
 
-	config::MapleExpansionDevices[software_bus][0] = hasVmu() ? MDT_SegaVMU : MDT_None;
-	config::MapleExpansionDevices[software_bus][1] = hasRumble() ? MDT_PurupuruPack : MDT_None;
+	u32 portTwoFn = getFunctionCode(2);
+	if (portTwoFn & MFID_1_Storage) {
+		config::MapleExpansionDevices[software_bus][1] = MDT_SegaVMU;
+	}
+	else if (portTwoFn & MFID_8_Vibration) {
+		config::MapleExpansionDevices[software_bus][1] = MDT_PurupuruPack;
+	}
+	else {
+		config::MapleExpansionDevices[software_bus][1] = MDT_None;
+	}
 
-	if (hasVmu() || hasRumble())
-	{
+	if (hasVmu() || hasRumble()) {
 		NOTICE_LOG(INPUT, "Connected to DreamcastController[%d]: Type:%s, VMU:%d, Rumble Pack:%d", software_bus, getName().c_str(), hasVmu(), hasRumble());
 	}
-	else
-	{
+	else {
 		WARN_LOG(INPUT, "DreamcastController[%d] connection: no VMU or Rumble Pack connected", software_bus);
 		disconnect();
 		return;
@@ -807,8 +812,140 @@ void DreamPicoPort::determineHardwareBus(int joystick_idx, SDL_Joystick* sdl_joy
     }
 }
 
-void DreamPicoPort::queryPeripherals() {
-    // TODO
+bool DreamPicoPort::queryInterfaceVersion() {
+	if (serial->sendCmd("XV\n", timeout_ms)) {
+		return false;
+	}
+
+	std::string buffer;
+	if (serial->receiveCmd(buffer, timeout_ms)) {
+		return false;
+	}
+
+	try {
+		interface_version = std::stod(buffer);
+	}
+	catch(const std::exception&) {
+		// Using a version of firmware before "XV" was available
+		interface_version = 0.0;
+	}
+
+	return true;
+}
+
+bool DreamPicoPort::queryPeripherals() {
+    MapleMsg msg;
+    msg.command = MDCF_GetCondition;
+    msg.destAP = (hardware_bus << 6) | 0x20;
+    msg.originAP = hardware_bus << 6;
+    msg.setData(MFID_0_Input);
+
+    asio::error_code ec = serial->sendMsg(msg, hardware_bus, timeout_ms);
+    if (ec)
+    {
+        WARN_LOG(INPUT, "DreamPicoPort[%d] connection failed: %s", software_bus, ec.message().c_str());
+        return false;
+    }
+
+    ec = serial->receiveMsg(msg, timeout_ms);
+    if (ec) {
+        WARN_LOG(INPUT, "DreamPicoPort[%d] read failed: %s", software_bus, ec.message().c_str());
+        return false;
+    }
+
+	expansionDevs = msg.originAP & 0x1f;
+	peripherals.clear();
+
+	if (interface_version >= 1.0) {
+		// Can just use X?
+		if (serial->sendCmd("X?" + std::to_string(hardware_bus) + "\n", timeout_ms)) {
+			return false;
+		}
+
+		std::string buffer;
+		if (serial->receiveCmd(buffer, timeout_ms)) {
+			return false;
+		}
+
+		{
+			std::istringstream stream(buffer);
+			std::string outerGroup;
+			while (std::getline(stream, outerGroup, ';')) {
+				if (outerGroup.empty() || outerGroup == ",") continue;
+				std::vector<std::array<uint32_t, 2>> outerList;
+				std::istringstream outerStream(outerGroup.substr(1)); // Skip the leading '{'
+				std::string innerGroup;
+
+				while (std::getline(outerStream, innerGroup, '}')) {
+					if (innerGroup.empty() || innerGroup == ",") continue;
+					std::array<uint32_t, 2> innerList = {{0, 0}};
+					std::istringstream innerStream(innerGroup.substr(1)); // Skip the leading '{'
+					std::string number;
+					std::size_t idx = 0;
+
+					while (std::getline(innerStream, number, ',')) {
+						if (!number.empty() && number[0] == '{') {
+							number = number.substr(1);
+						}
+						uint32_t value;
+						std::stringstream ss;
+						ss << std::hex << number;
+						ss >> value;
+						if (idx < 2) {
+							innerList[idx] = value;
+						}
+						++idx;
+					}
+
+					outerList.push_back(innerList);
+				}
+
+				peripherals.push_back(outerList);
+			}
+		}
+	}
+	else {
+		// TODO: probably should just pop up a toast asking user to update firmware
+		// Manually query each sub-peripheral
+		peripherals.push_back({}); // skip controller since it's not used
+		for (u32 i = 0; i < 2; ++i) {
+			std::vector<std::array<uint32_t, 2>> portPeripherals;
+			u8 port = (1 << i);
+			if (expansionDevs & port) {
+				msg.command = MDC_DeviceRequest;
+				msg.destAP = (hardware_bus << 6) | port;
+				msg.originAP = hardware_bus << 6;
+				msg.size = 0;
+
+				ec = serial->sendMsg(msg, hardware_bus, timeout_ms);
+				if (ec) {
+					return false;
+				}
+
+				ec = serial->receiveMsg(msg, timeout_ms);
+				if (ec || msg.size < 4) {
+					return false;
+				}
+
+				const u32 fnCode = (msg.data[0] << 24) | (msg.data[1] << 16) | (msg.data[2] << 8) | msg.data[3];
+				u8 fnIdx = 1;
+				u32 mask = 0x80000000;
+				while (mask > 0) {
+					if (fnCode & mask) {
+						u32 i = fnIdx++ * 4;
+						u32 code = (msg.data[i] << 24) | (msg.data[i+1] << 16) | (msg.data[i+2] << 8) | msg.data[i+3];
+						std::array<uint32_t, 2> peripheral = {{mask, code}};
+						portPeripherals.push_back(std::move(peripheral));
+					}
+					mask >>= 1;
+				}
+
+			}
+			peripherals.push_back(portPeripherals);
+		}
+	}
+
+	return true;
 }
 
 #endif // USE_DREAMCASTCONTROLLER

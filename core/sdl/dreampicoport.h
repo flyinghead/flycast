@@ -26,6 +26,8 @@
 
 #include <atomic>
 #include <chrono>
+#include <vector>
+#include <array>
 
 // Forward declaration of underlying serial connection
 class DreamPicoPortSerialHandler;
@@ -53,6 +55,8 @@ class DreamPicoPort : public DreamLink
 	bool connection_established = false;
     //! The queried interface version
     double interface_version = 0.0;
+    //! The queried peripherals; for each function, index 0 is function code and index 1 is the function definition
+    std::vector<std::vector<std::array<uint32_t, 2>>> peripherals;
 
 public:
     //! Dreamcast Controller USB VID:1209 PID:2f07
@@ -103,7 +107,8 @@ private:
     asio::error_code receiveCmd(std::string& cmd);
     asio::error_code receiveMsg(MapleMsg& msg);
 	void determineHardwareBus(int joystick_idx, SDL_Joystick* sdl_joystick);
-    void queryPeripherals();
+    bool queryInterfaceVersion();
+    bool queryPeripherals();
 };
 
 #endif // USE_DREAMCASTCONTROLLER
