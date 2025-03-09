@@ -434,7 +434,7 @@ static void gui_newFrame()
 	io.AddKeyEvent(ImGuiKey_GamepadDpadRight, ((kcode[0] & DC_DPAD_RIGHT) == 0));
 	io.AddKeyEvent(ImGuiKey_GamepadDpadUp, ((kcode[0] & DC_DPAD_UP) == 0));
 	io.AddKeyEvent(ImGuiKey_GamepadDpadDown, ((kcode[0] & DC_DPAD_DOWN) == 0));
-	
+
 	float analog;
 	analog = joyx[0] < 0 ? -(float)joyx[0] / 32768.f : 0.f;
 	io.AddKeyAnalogEvent(ImGuiKey_GamepadLStickLeft, analog > 0.1f, analog);
@@ -820,8 +820,8 @@ const char *maple_device_types[] =
 //	"Dreameye",
 };
 
-const char *maple_expansion_device_types[] = 
-{ 
+const char *maple_expansion_device_types[] =
+{
 	"None",
 	"Sega VMU",
 	"Vibration Pack",
@@ -2816,8 +2816,8 @@ static void gui_settings_network()
 static void gui_settings_advanced()
 {
 #if FEAT_SHREC != DYNAREC_NONE
-	header("CPU Mode");
-	{
+    header("CPU Mode");
+    {
 		ImGui::Columns(2, "cpu_modes", false);
 		OptionRadioButton("Dynarec", config::DynarecEnabled, true,
 			"Use the dynamic recompiler. Recommended in most cases");
@@ -2825,40 +2825,41 @@ static void gui_settings_advanced()
 		OptionRadioButton("Interpreter", config::DynarecEnabled, false,
 			"Use the interpreter. Very slow but may help in case of a dynarec problem");
 		ImGui::Columns(1, NULL, false);
+
 		OptionSlider("SH4 Clock", config::Sh4Clock, 100, 300,
-			"Over/Underclock the main SH4 CPU. Default is 200 MHz. Other values may crash, freeze or trigger unexpected nuclear reactions.",
-			"%d MHz");
-	}
+				"Over/Underclock the main SH4 CPU. Default is 200 MHz. Other values may crash, freeze or trigger unexpected nuclear reactions.",
+				"%d MHz");
+    }
 	ImGui::Spacing();
 #endif
-	header("Other");
-	{
-		OptionCheckbox("HLE BIOS", config::UseReios, "Force high-level BIOS emulation");
-		OptionCheckbox("Multi-threaded emulation", config::ThreadedRendering,
-			"Run the emulated CPU and GPU on different threads");
+    header("Other");
+    {
+        OptionCheckbox("HLE BIOS", config::UseReios, "Force high-level BIOS emulation");
+        OptionCheckbox("Multi-threaded emulation", config::ThreadedRendering,
+    		"Run the emulated CPU and GPU on different threads");
 #ifndef __ANDROID
-		OptionCheckbox("Serial Console", config::SerialConsole,
-			"Dump the Dreamcast serial console to stdout");
+        OptionCheckbox("Serial Console", config::SerialConsole,
+        		"Dump the Dreamcast serial console to stdout");
 #endif
 		{
 			DisabledScope scope(game_started);
 			OptionCheckbox("Dreamcast 32MB RAM Mod", config::RamMod32MB,
 				"Enables 32MB RAM Mod for Dreamcast. May affect compatibility");
 		}
-		OptionCheckbox("Use Physical VMU Only, because FUCK mackdiddy", config::UsePhysicalVmuOnly,
+        OptionCheckbox("Use Physical VMU Only, because FUCK mackdiddy", config::UsePhysicalVmuOnly,
 			"Restrict VMU usage to physical devices only when using a physical Vmu with DreamPicoPort/Dreamconn");
 		OptionCheckbox("Dump Textures", config::DumpTextures,
-			"Dump all textures into data/texdump/<game id>");
-		bool logToFile = cfgLoadBool("log", "LogToFile", false);
+        		"Dump all textures into data/texdump/<game id>");
+        bool logToFile = cfgLoadBool("log", "LogToFile", false);
 		if (ImGui::Checkbox("Log to File", &logToFile))
 			cfgSaveBool("log", "LogToFile", logToFile);
-		ImGui::SameLine();
-		ShowHelpMarker("Log debug information to flycast.log");
+        ImGui::SameLine();
+        ShowHelpMarker("Log debug information to flycast.log");
 #ifdef SENTRY_UPLOAD
-		OptionCheckbox("Automatically Report Crashes", config::UploadCrashLogs,
-			"Automatically upload crash reports to sentry.io to help in troubleshooting. No personal information is included.");
+        OptionCheckbox("Automatically Report Crashes", config::UploadCrashLogs,
+        	"Automatically upload crash reports to sentry.io to help in troubleshooting. No personal information is included.");
 #endif
-	}
+    }
 
 #ifdef USE_LUA
 	header("Lua Scripting");
@@ -3268,7 +3269,7 @@ static void gui_display_content()
 		const int itemsPerLine = std::max<int>(totalWidth / (uiScaled(150) + ImGui::GetStyle().ItemSpacing.x), 1);
 		const float responsiveBoxSize = totalWidth / itemsPerLine - ImGui::GetStyle().FramePadding.x * 2;
 		const ImVec2 responsiveBoxVec2 = ImVec2(responsiveBoxSize, responsiveBoxSize);
-		
+
 		if (config::BoxartDisplayMode)
 			ImGui::PushStyleVar(ImGuiStyleVar_SelectableTextAlign, ImVec2(0.5f, 0.5f));
 		else
@@ -3737,7 +3738,7 @@ void gui_display_profiler()
 			ImGui::Unindent();
 		}
 	}
-	
+
 	for (const fc_profiler::ProfileThread* profileThread : fc_profiler::ProfileThread::s_allThreads)
 	{
 		fc_profiler::drawGraph(*profileThread);
