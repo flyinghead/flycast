@@ -55,6 +55,8 @@ class DreamPicoPortSerialHandler
 	asio::serial_port serial_handler{io_context};
 	//! Set to true while an async write is in progress with serial_handler
 	bool serial_write_in_progress = false;
+	//! Set to true while an async read is in progress with serial_handler
+	std::atomic<bool> serial_read_in_progress = false;
 	//! Signaled when serial_write_in_progress transitions to false
 	std::condition_variable write_cv;
 	//! Mutex for write_cv and serializes access to serial_write_in_progress
@@ -130,6 +132,13 @@ public:
 			return asio::error::not_connected;
 		}
 
+		if (serial_read_in_progress) {
+			// Wait up to 30 ms for read to complete before writing to help ensure expected command order.
+			// Continue regardless of result.
+			std::string cmd;
+			(void)receiveCmd(cmd, std::chrono::milliseconds(30));
+		}
+
 		// Wait for last write to complete
 		std::unique_lock<std::mutex> lock(write_cv_mutex);
 		const std::chrono::steady_clock::time_point expiration = std::chrono::steady_clock::now() + timeout_ms;
@@ -148,6 +157,7 @@ public:
 		// Clear out the read buffer before writing next command
 		read_queue.clear();
 		serial_write_in_progress = true;
+		serial_read_in_progress = true;
 		asio::async_write(
 			serial_handler,
 			asio::buffer(serial_out_data),
@@ -217,6 +227,7 @@ public:
 		// discard the first message as we are interested in the second only which returns the controller configuration
 		cmd = std::move(read_queue.back());
 		read_queue.clear();
+		serial_read_in_progress = false;
 		return ec;
 	}
 
