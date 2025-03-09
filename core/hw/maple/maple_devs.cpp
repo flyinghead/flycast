@@ -2117,7 +2117,6 @@ struct DreamLinkVmu : public maple_sega_vmu
 {
 	std::shared_ptr<DreamLink> dreamlink;
 	bool useRealVmu;  // Set this to true to use physical VMU, false for virtual
-	bool isRead = false;
 	std::chrono::time_point<std::chrono::system_clock> lastWriteTime;
 	s32 lastWriteBlock = -1;
 
@@ -2140,37 +2139,12 @@ struct DreamLinkVmu : public maple_sega_vmu
 				file = nullptr;
 			}
 
-			if (!isRead)
-			{
-				memset(flash_data, 0, sizeof(flash_data));
-				memset(lcd_data, 0, sizeof(lcd_data));
-
-				isRead = true;
-				for (u32 block = 0; block < 256; ++block) {
-					// Try up to 2 times to read
-					for (u32 i = 0; i < 2; ++i) {
-						MapleMsg msg;
-						msg.command = MDCF_BlockRead;
-						msg.destAP = (bus_id << 6) | (1 << bus_port);
-						msg.originAP = (bus_id << 6);
-						const u32 data[2] = {MFID_1_Storage, (block << 24)};
-						msg.setData(data);
-
-						dreamlink->send(msg);
-
-						if (dreamlink->receive(msg) && msg.size == 130) {
-							// Something read!
-							memcpy(&flash_data[block * 512], &msg.data[8], 4 * 128);
-							break;
-						}
-					}
-				}
-			}
+			memset(flash_data, 0, sizeof(flash_data));
+			memset(lcd_data, 0, sizeof(lcd_data));
 		}
 		else
 		{
 			maple_sega_vmu::OnSetup();
-			isRead = false;
 		}
 	}
 
@@ -2272,6 +2246,26 @@ struct DreamLinkVmu : public maple_sega_vmu
 					}
 
 					case MDCF_BlockRead:
+					{
+						// Try up to 4 times to read
+						for (u32 i = 0; i < 4; ++i) {
+							if (i > 0) {
+								std::this_thread::sleep_for(std::chrono::milliseconds(30));
+							}
+
+							dreamlink->send(*msg);
+
+							MapleMsg rcvMsg;
+							if (dreamlink->receive(rcvMsg) && rcvMsg.size == 130) {
+								// Something read!
+								u32 block = rcvMsg.data[7];
+								memcpy(&flash_data[block * 4 * 128], &rcvMsg.data[8], 4 * 128);
+								break;
+							}
+						}
+						break;
+					}
+
 					default:
 						// do nothing
 						break;
@@ -2382,12 +2376,6 @@ void createDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink, bool gameStart
 			{
 				vmu = std::make_shared<DreamLinkVmu>(dreamlink);
 				vmuCreated = true;
-			}
-
-			// Force re-initialization when switching games
-			if (gameStart)
-			{
-				vmu->isRead = false;
 			}
 
 			vmu->Setup(bus, 0);
