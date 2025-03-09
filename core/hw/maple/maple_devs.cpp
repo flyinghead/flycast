@@ -2133,6 +2133,13 @@ struct DreamLinkVmu : public maple_sega_vmu
 
 		if (useRealVmu)
 		{
+			// Ensure file is not being used
+			if (file != nullptr)
+			{
+				std::fclose(file);
+				file = nullptr;
+			}
+
 			if (!isRead)
 			{
 				memset(flash_data, 0, sizeof(flash_data));
