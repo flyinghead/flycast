@@ -2150,18 +2150,11 @@ struct DreamLinkVmu : public maple_sega_vmu
 					// Try up to 2 times to read
 					for (u32 i = 0; i < 2; ++i) {
 						MapleMsg msg;
-						msg.command = 0x0B;
+						msg.command = MDCF_BlockRead;
 						msg.destAP = (bus_id << 6) | (1 << bus_port);
 						msg.originAP = (bus_id << 6);
-						msg.size = 2;
-						msg.data[0] = 0;
-						msg.data[1] = 0;
-						msg.data[2] = 0;
-						msg.data[3] = 0x02;
-						msg.data[4] = 0;
-						msg.data[5] = 0;
-						msg.data[6] = 0;
-						msg.data[7] = block;
+						const u32 data[2] = {MFID_1_Storage, (block << 24)};
+						msg.setData(data);
 
 						dreamlink->send(msg);
 
