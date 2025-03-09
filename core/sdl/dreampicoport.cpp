@@ -588,7 +588,7 @@ u32 DreamPicoPort::getFunctionCode(int forPort) const {
 		}
 	}
 	// swap bytes to get the correct function code
-	return ((mask & 0xFF000000) >> 24) | ((mask & 0x00FF0000) >> 8) | ((mask & 0x0000FF00) << 8) | ((mask & 0x000000FF) << 24);
+	return SWAP32(mask);
 }
 
 bool DreamPicoPort::hasVmu() const {
@@ -813,12 +813,16 @@ void DreamPicoPort::determineHardwareBus(int joystick_idx, SDL_Joystick* sdl_joy
 }
 
 bool DreamPicoPort::queryInterfaceVersion() {
-	if (serial->sendCmd("XV\n", timeout_ms)) {
+	asio::error_code error = serial->sendCmd("XV\n", timeout_ms);
+	if (error) {
+		WARN_LOG(INPUT, "DreamPicoPort[%d] send failed: %s", software_bus, error.message().c_str());
 		return false;
 	}
 
 	std::string buffer;
-	if (serial->receiveCmd(buffer, timeout_ms)) {
+	error = serial->receiveCmd(buffer, timeout_ms);
+	if (error) {
+		WARN_LOG(INPUT, "DreamPicoPort[%d] receive failed: %s", software_bus, error.message().c_str());
 		return false;
 	}
 
@@ -840,16 +844,16 @@ bool DreamPicoPort::queryPeripherals() {
 	msg.originAP = hardware_bus << 6;
 	msg.setData(MFID_0_Input);
 
-	asio::error_code ec = serial->sendMsg(msg, hardware_bus, timeout_ms);
-	if (ec)
+	asio::error_code error = serial->sendMsg(msg, hardware_bus, timeout_ms);
+	if (error)
 	{
-		WARN_LOG(INPUT, "DreamPicoPort[%d] connection failed: %s", software_bus, ec.message().c_str());
+		WARN_LOG(INPUT, "DreamPicoPort[%d] connection failed: %s", software_bus, error.message().c_str());
 		return false;
 	}
 
-	ec = serial->receiveMsg(msg, timeout_ms);
-	if (ec) {
-		WARN_LOG(INPUT, "DreamPicoPort[%d] read failed: %s", software_bus, ec.message().c_str());
+	error = serial->receiveMsg(msg, timeout_ms);
+	if (error) {
+		WARN_LOG(INPUT, "DreamPicoPort[%d] read failed: %s", software_bus, error.message().c_str());
 		return false;
 	}
 
@@ -858,12 +862,16 @@ bool DreamPicoPort::queryPeripherals() {
 
 	if (interface_version >= 1.0) {
 		// Can just use X?
-		if (serial->sendCmd("X?" + std::to_string(hardware_bus) + "\n", timeout_ms)) {
+		error = serial->sendCmd("X?" + std::to_string(hardware_bus) + "\n", timeout_ms);
+		if (error) {
+			WARN_LOG(INPUT, "DreamPicoPort[%d] send failed: %s", software_bus, error.message().c_str());
 			return false;
 		}
 
 		std::string buffer;
-		if (serial->receiveCmd(buffer, timeout_ms)) {
+		error = serial->receiveCmd(buffer, timeout_ms);
+		if (error) {
+			WARN_LOG(INPUT, "DreamPicoPort[%d] receive failed: %s", software_bus, error.message().c_str());
 			return false;
 		}
 
@@ -917,13 +925,19 @@ bool DreamPicoPort::queryPeripherals() {
 				msg.originAP = hardware_bus << 6;
 				msg.size = 0;
 
-				ec = serial->sendMsg(msg, hardware_bus, timeout_ms);
-				if (ec) {
+				error = serial->sendMsg(msg, hardware_bus, timeout_ms);
+				if (error) {
+					WARN_LOG(INPUT, "DreamPicoPort[%d] send failed: %s", software_bus, error.message().c_str());
 					return false;
 				}
 
-				ec = serial->receiveMsg(msg, timeout_ms);
-				if (ec || msg.size < 4) {
+				error = serial->receiveMsg(msg, timeout_ms);
+				if (error) {
+					WARN_LOG(INPUT, "DreamPicoPort[%d] read failed: %s", software_bus, error.message().c_str());
+					return false;
+				}
+				else if (msg.size < 4) {
+					WARN_LOG(INPUT, "DreamPicoPort[%d] read failed: invalid size %d", software_bus, msg.size);
 					return false;
 				}
 
