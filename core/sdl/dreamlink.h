@@ -60,7 +60,7 @@ public:
 
 	virtual bool send(const MapleMsg& msg) = 0;
 
-    virtual bool receive(MapleMsg& msg) = 0;
+    virtual bool send(const MapleMsg& txMsg, MapleMsg& rxMsg) = 0;
 
 	// When called, do teardown stuff like reset screen
 	virtual inline void gameTermination() {}

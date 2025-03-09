@@ -71,7 +71,7 @@ public:
 
 	bool send(const MapleMsg& msg) override;
 
-    virtual bool receive(MapleMsg& msg) override;
+    virtual bool send(const MapleMsg& txMsg, MapleMsg& rxMsg) override;
 
 	virtual inline void gameTermination() override;
 

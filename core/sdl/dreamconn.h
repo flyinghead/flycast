@@ -44,7 +44,7 @@ public:
 
 	bool send(const MapleMsg& msg) override;
 
-    bool receive(MapleMsg& msg) override;
+    bool send(const MapleMsg& txMsg, MapleMsg& rxMsg) override;
 
 	int getBus() const override {
 		return bus;

@@ -2253,10 +2253,8 @@ struct DreamLinkVmu : public maple_sega_vmu
 								std::this_thread::sleep_for(std::chrono::milliseconds(30));
 							}
 
-							dreamlink->send(*msg);
-
 							MapleMsg rcvMsg;
-							if (dreamlink->receive(rcvMsg) && rcvMsg.size == 130) {
+							if (dreamlink->send(*msg, rcvMsg) && rcvMsg.size == 130) {
 								// Something read!
 								u32 block = rcvMsg.data[7];
 								memcpy(&flash_data[block * 4 * 128], &rcvMsg.data[8], 4 * 128);

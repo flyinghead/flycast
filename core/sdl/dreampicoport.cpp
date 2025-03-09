@@ -125,14 +125,14 @@ public:
 		return serial_handler.is_open();
 	}
 
-	asio::error_code sendCmd(const std::string& cmd, std::chrono::milliseconds timeout_ms) {
+	asio::error_code sendCmd(const std::string& cmd, std::chrono::milliseconds timeout_ms, bool receive_expected=false) {
 		asio::error_code ec;
 
 		if (!serial_handler.is_open()) {
 			return asio::error::not_connected;
 		}
 
-		if (serial_read_in_progress) {
+		if (receive_expected && serial_read_in_progress) {
 			// Wait up to 30 ms for read to complete before writing to help ensure expected command order.
 			// Continue regardless of result.
 			std::string cmd;
@@ -183,7 +183,12 @@ public:
 		return ec;
 	}
 
-	asio::error_code sendMsg(const MapleMsg& msg, int hardware_bus, std::chrono::milliseconds timeout_ms) {
+	asio::error_code sendMsg(
+		const MapleMsg& msg,
+		int hardware_bus,
+		std::chrono::milliseconds timeout_ms,
+		bool receive_expected=false)
+	{
 		// Build serial_out_data string
 		// Need to message the hardware bus instead of the software bus
 		u8 hwDestAP = (hardware_bus << 6) | (msg.destAP & 0x3F);
@@ -571,9 +576,12 @@ bool DreamPicoPort::send(const MapleMsg& msg) {
 	return false;
 }
 
-bool DreamPicoPort::receive(MapleMsg& msg) {
+bool DreamPicoPort::send(const MapleMsg& txMsg, MapleMsg& rxMsg) {
 	if (serial) {
-		asio::error_code ec = serial->receiveMsg(msg, timeout_ms);
+		asio::error_code ec = serial->sendMsg(txMsg, hardware_bus, timeout_ms, true);
+		if (!ec) {
+			ec = serial->receiveMsg(rxMsg, timeout_ms);
+		}
 		return !ec;
 	}
 
