@@ -2834,9 +2834,9 @@ static void gui_settings_advanced()
 #endif
     header("Other");
     {
-        OptionCheckbox("HLE BIOS", config::UseReios, "Force high-level BIOS emulation");
+    	OptionCheckbox("HLE BIOS", config::UseReios, "Force high-level BIOS emulation");
         OptionCheckbox("Multi-threaded emulation", config::ThreadedRendering,
-    		"Run the emulated CPU and GPU on different threads");
+        	"Run the emulated CPU and GPU on different threads");
 #ifndef __ANDROID
         OptionCheckbox("Serial Console", config::SerialConsole,
         		"Dump the Dreamcast serial console to stdout");
@@ -2848,7 +2848,7 @@ static void gui_settings_advanced()
 		}
         OptionCheckbox("Use Physical VMU Only, because FUCK mackdiddy", config::UsePhysicalVmuOnly,
 			"Restrict VMU usage to physical devices only when using a physical Vmu with DreamPicoPort/Dreamconn");
-		OptionCheckbox("Dump Textures", config::DumpTextures,
+        OptionCheckbox("Dump Textures", config::DumpTextures,
         		"Dump all textures into data/texdump/<game id>");
         bool logToFile = cfgLoadBool("log", "LogToFile", false);
 		if (ImGui::Checkbox("Log to File", &logToFile))
@@ -2857,7 +2857,7 @@ static void gui_settings_advanced()
         ShowHelpMarker("Log debug information to flycast.log");
 #ifdef SENTRY_UPLOAD
         OptionCheckbox("Automatically Report Crashes", config::UploadCrashLogs,
-        	"Automatically upload crash reports to sentry.io to help in troubleshooting. No personal information is included.");
+    		"Automatically upload crash reports to sentry.io to help in troubleshooting. No personal information is included.");
 #endif
     }
 
