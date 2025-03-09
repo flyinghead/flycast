@@ -2151,8 +2151,8 @@ struct DreamLinkVmu : public maple_sega_vmu
 					for (u32 i = 0; i < 2; ++i) {
 						MapleMsg msg;
 						msg.command = 0x0B;
-						msg.destAP = 1; // TODO: fix for port number
-						msg.originAP = 0; // TODO: fix for DreamLink (not needed for DreamPort)
+						msg.destAP = (bus_id << 6) | (1 << bus_port);
+						msg.originAP = (bus_id << 6);
 						msg.size = 2;
 						msg.data[0] = 0;
 						msg.data[1] = 0;
