@@ -2117,7 +2117,7 @@ struct DreamLinkVmu : public maple_sega_vmu
 {
 	std::shared_ptr<DreamLink> dreamlink;
 	bool useRealVmu;  // Set this to true to use physical VMU, false for virtual
-	s32 lastWriteBlock = -1;
+	std::chrono::time_point<std::chrono::system_clock> lastWriteTime;
 
 	DreamLinkVmu(std::shared_ptr<DreamLink> dreamlink) : dreamlink(dreamlink) {
 		// Initialize useRealVmu with our config setting
@@ -2202,73 +2202,6 @@ struct DreamLinkVmu : public maple_sega_vmu
 
 					switch (cmd)
 					{
-					case MDCF_GetLastError:
-					{
-						// A GetLastError command is sent after 4 writes to commit the data
-
-						bool writeSuccess = true;
-						if (lastWriteBlock >= 0) {
-							const u8* blockData = &flash_data[lastWriteBlock * 4 * 128];
-							std::chrono::milliseconds delay(3);
-							const std::chrono::milliseconds delayInc(8);
-							// Try up to 4 times to write
-							for (u32 i = 0; i < 4; ++i) {
-								if (i > 0) {
-									// Slow down writes to avoid overloading the VMU
-									delay += delayInc;
-								}
-
-								writeSuccess = true;
-
-								// 4 write phases per block
-								for (u32 phase = 0; phase < 4; ++phase) {
-									MapleMsg writeMsg;
-									writeMsg.command = MDCF_BlockWrite;
-									writeMsg.destAP = msg->destAP;
-									writeMsg.originAP = msg->originAP;
-									writeMsg.size = 34;
-									writeMsg.setWord(MFID_1_Storage, 0);
-									u32 locationWord = (lastWriteBlock << 24) | (phase << 8);
-									writeMsg.setWord(locationWord, 1);
-									memcpy(&writeMsg.data[8], &blockData[phase * 128], 128);
-
-									// Delay before writing
-									std::this_thread::sleep_for(delay);
-
-									MapleMsg rcvMsg;
-									if (!dreamlink->send(writeMsg, rcvMsg) || rcvMsg.command != MDRS_DeviceReply) {
-										// Not acknowledged
-										writeSuccess = false;
-										break;
-									}
-								}
-
-								if (writeSuccess) {
-									// Delay before committing
-									std::this_thread::sleep_for(delay);
-
-									// Send the GetLastError command to commit the data
-									MapleMsg rcvMsg;
-									if (dreamlink->send(*msg, rcvMsg) && rcvMsg.command == MDRS_DeviceReply) {
-										// Acknowledged
-										break;
-									}
-								}
-								// else: continue to retry
-
-								NOTICE_LOG(MAPLE, "Failed to write VMU %s - retrying", logical_port);
-							}
-
-							if (!writeSuccess) {
-								ERROR_LOG(MAPLE, "Failed to save VMU %s: I/O error", logical_port);
-								return MDRE_FileError; // I/O error
-							}
-						}
-
-						lastWriteBlock = -1;
-						break;
-					}
-
 					case MDCF_BlockWrite:
 					{
 						// Throw away function
@@ -2288,11 +2221,29 @@ struct DreamLinkVmu : public maple_sega_vmu
 							return MDRE_FileError; //invalid params
 						}
 						rptr(&flash_data[write_adr],write_len);
+					}
+					// Fall through
+					case MDCF_GetLastError:
+					{
+						// Minimum of 15 ms per write operation to allow VMU to catch up
+						std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now();
+						std::chrono::milliseconds elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastWriteTime);
+						if (elapsed.count() < 15)
+						{
+							// Need to slow down writes so that flash has a chance to write
+							std::this_thread::sleep_for(std::chrono::milliseconds(15) - elapsed);
+						}
 
-						// Write should be called 4 consecutive times per block - save what block to write
-						lastWriteBlock = Block;
-
-						// Don't do base's DMA operation to avoid printing an error
+						MapleMsg rcvMsg;
+						bool sent = dreamlink->send(*msg, rcvMsg);
+						if (!sent || rcvMsg.command != MDRS_DeviceReply) {
+							// Not acknowledged
+							ERROR_LOG(MAPLE, "Failed to save VMU %s: I/O error", logical_port);
+							if (sent) {
+								return rcvMsg.command;
+							}
+							return MDRE_FileError; // I/O error
+						}
 						return MDRS_DeviceReply;
 					}
 
