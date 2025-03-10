@@ -2209,8 +2209,8 @@ struct DreamLinkVmu : public maple_sega_vmu
 						bool writeSuccess = true;
 						if (lastWriteBlock >= 0) {
 							const u8* blockData = &flash_data[lastWriteBlock * 4 * 128];
-							std::chrono::milliseconds delay(10);
-							const std::chrono::milliseconds delayInc(5);
+							std::chrono::milliseconds delay(3);
+							const std::chrono::milliseconds delayInc(8);
 							// Try up to 4 times to write
 							for (u32 i = 0; i < 4; ++i) {
 								if (i > 0) {
@@ -2255,10 +2255,13 @@ struct DreamLinkVmu : public maple_sega_vmu
 									}
 								}
 								// else: continue to retry
+
+								NOTICE_LOG(MAPLE, "Failed to write VMU %s - retrying", logical_port);
 							}
 
 							if (!writeSuccess) {
 								ERROR_LOG(MAPLE, "Failed to save VMU %s: I/O error", logical_port);
+								return MDRE_FileError; // I/O error
 							}
 						}
 
@@ -2296,6 +2299,7 @@ struct DreamLinkVmu : public maple_sega_vmu
 					case MDCF_BlockRead:
 					{
 						// Try up to 4 times to read
+						bool readSuccess = false;
 						for (u32 i = 0; i < 4; ++i) {
 							if (i > 0) {
 								std::this_thread::sleep_for(std::chrono::milliseconds(30));
@@ -2306,10 +2310,16 @@ struct DreamLinkVmu : public maple_sega_vmu
 								// Something read!
 								u32 block = rcvMsg.data[7];
 								memcpy(&flash_data[block * 4 * 128], &rcvMsg.data[8], 4 * 128);
+								readSuccess = true;
 								break;
 							}
 						}
-						// TODO: handle failed read
+
+						if (!readSuccess) {
+							ERROR_LOG(MAPLE, "Failed to read VMU %s: I/O error", logical_port);
+							return MDRE_FileError; // I/O error
+						}
+
 						break;
 					}
 
