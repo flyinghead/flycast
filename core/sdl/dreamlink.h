@@ -32,10 +32,10 @@
 
 struct MapleMsg
 {
-	u8 command;
-	u8 destAP;
-	u8 originAP;
-	u8 size;
+	u8 command = 0;
+	u8 destAP = 0;
+	u8 originAP = 0;
+	u8 size = 0;
 	u8 data[1024];
 
 	u32 getDataSize() const {
@@ -46,6 +46,16 @@ struct MapleMsg
 	void setData(const T& p) {
 		memcpy(data, &p, sizeof(T));
 		this->size = (sizeof(T) + 3) / 4;
+	}
+
+	void setWord(const u32& p, int index) {
+		if (index < 0 || index >= 256) {
+			return;
+		}
+		memcpy(&data[index * 4], &p, sizeof(u32));
+		if (this->size <= index) {
+			this->size = index + 1;
+		}
 	}
 };
 static_assert(sizeof(MapleMsg) == 1028);
