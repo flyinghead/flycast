@@ -2244,6 +2244,8 @@ struct DreamLinkVmu : public maple_sega_vmu
 							}
 							return MDRE_FileError; // I/O error
 						}
+
+						lastWriteTime = std::chrono::system_clock::now();
 						return MDRS_DeviceReply;
 					}
 
