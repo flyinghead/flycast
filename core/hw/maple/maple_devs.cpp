@@ -2296,7 +2296,7 @@ struct DreamLinkVmu : public maple_sega_vmu
 			}
 		}
 
-		// Always call base virtual VMU implementation
+		// If made it here, call base's dma to handle return value
 		return maple_sega_vmu::dma(cmd);
 	}
 
