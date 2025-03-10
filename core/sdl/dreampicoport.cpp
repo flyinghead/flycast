@@ -251,7 +251,12 @@ public:
 		const char* iter = response.c_str();
 		const char* eol = iter + response.size();
 
-		if (*iter == '\5') // binary parsing
+		if (*iter == '*')
+		{
+			// Asterisk indicates the write or read operation failed
+			return asio::error::no_data;
+		}
+		else if (*iter == '\5') // binary parsing
 		{
 			// binary
 			++iter;
