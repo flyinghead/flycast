@@ -36620,8 +36620,8 @@ struct retro_core_options_v2 options_fr = {
 #define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_GL "Emule o adaptador de banda ancha ethernet en lugar do módem. (Reiniciar obrigatorio)"
 #define CORE_OPTION_NAME_UPNP_LABEL_GL "Activar UPnP"
 #define CORE_OPTION_NAME_UPNP_INFO_0_GL "Use UPnP para configurar automaticamente o seu enrutador de Internet para xogos en liña."
-#define CORE_OPTION_NAME_DCNET_LABEL_GL NULL
-#define CORE_OPTION_NAME_DCNET_INFO_0_GL NULL
+#define CORE_OPTION_NAME_DCNET_LABEL_GL "Empregar DCNet (Experimental)"
+#define CORE_OPTION_NAME_DCNET_INFO_0_GL "Conectar ao servizo en nube experimental DCNet."
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_GL "Resolución interna"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_GL "Modificar a resolución do renderizado."
 #define OPTION_VAL_320X240_GL "320 x 240 (a metade)"
