@@ -103,6 +103,11 @@ bool DreamConn::send(const MapleMsg& txMsg, MapleMsg& rxMsg) {
 	return receiveMsg(rxMsg, iostream);
 }
 
+bool DreamConn::send(const MapleMsg& txMsg, const std::function<void(std::shared_ptr<const MapleMsg>)>& callback) {
+	// TODO: implement
+	return false;
+}
+
 void DreamConn::changeBus(int newBus) {
 	bus = newBus;
 }

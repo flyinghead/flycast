@@ -24,6 +24,9 @@
 #include "emulator.h"
 #include "sdl_gamepad.h"
 
+#include <functional>
+#include <memory>
+
 #if (defined(_WIN32) || defined(__linux__) || (defined(__APPLE__) && defined(TARGET_OS_MAC))) && !defined(TARGET_UWP)
 #define USE_DREAMCASTCONTROLLER 1
 #endif
@@ -68,34 +71,49 @@ public:
 
 	virtual ~DreamLink() = default;
 
+	//! Sends a message to the controller, ignoring the response
+	//! @note The implementation shall be thread safe
 	virtual bool send(const MapleMsg& msg) = 0;
 
+	//! Sends a message to the controller and waits for a response
+	//! @note The implementation shall be thread safe
     virtual bool send(const MapleMsg& txMsg, MapleMsg& rxMsg) = 0;
 
-	// When called, do teardown stuff like reset screen
-	virtual inline void gameTermination() {}
+	//! Sends a message to the controller and calls the callback once a response is received (non-blocking)
+	//! @note The implementation shall be thread safe
+	virtual bool send(const MapleMsg& txMsg, const std::function<void(std::shared_ptr<const MapleMsg>)>& callback) = 0;
 
-	virtual int getBus() const = 0;
+	//! When called, do teardown stuff like reset screen
+	virtual inline void gameTermination() {}
 
     //! @param[in] forPort The port number to get the function code of (1 or 2)
     //! @return the device type for the given port
     virtual u32 getFunctionCode(int forPort) const = 0;
 
+	//! @return true iff the controller has a VMU
 	virtual bool hasVmu() const = 0;
 
+	//! @return true iff the controller has a rumble pack
 	virtual bool hasRumble() const = 0;
 
+	//! @return the default bus number to select for this controller or -1 to not select a default
 	virtual int getDefaultBus() const {
-		// No default bus by default
 		return -1;
 	}
 
+	//! @return the selected bus number of the controller
+	virtual int getBus() const = 0;
+
+	//! Changes the selected maple port is changed by the user
 	virtual void changeBus(int newBus) = 0;
 
+	//! @return the display name of the controller
 	virtual std::string getName() const = 0;
 
+	//! Attempt connection to the hardware controller
 	virtual void connect() = 0;
 
+	//! Disconnect from the hardware controller
 	virtual void disconnect() = 0;
 };
 

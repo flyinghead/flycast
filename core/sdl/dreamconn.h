@@ -46,6 +46,8 @@ public:
 
     bool send(const MapleMsg& txMsg, MapleMsg& rxMsg) override;
 
+	bool send(const MapleMsg& txMsg, const std::function<void(std::shared_ptr<const MapleMsg>)>& callback) override;
+
 	int getBus() const override {
 		return bus;
 	}
