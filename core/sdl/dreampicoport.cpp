@@ -74,9 +74,16 @@ class DreamPicoPortSerialHandler
 	//! Mutex for read_cv and serializes access to read_queue
 	std::mutex read_cv_mutex;
 
+	//! When >= 0, parsing binary input and signifies total number parsed in this set
+	//! When < 0, not parsing binary input
 	int32_t num_binary_parsed = -1;
+	//! Number of binary bytes left to parse
 	uint16_t stored_binary_size = 0;
+	//! Number of binary bytes left to parse in current set
 	uint16_t num_binary_left = 0;
+
+	//! Serializes send calls, making them thread-safe
+	std::mutex send_mutex;
 
 public:
 	DreamPicoPortSerialHandler() {
@@ -125,7 +132,173 @@ public:
 		return serial_handler.is_open();
 	}
 
-	asio::error_code sendCmd(const std::string& cmd, std::chrono::milliseconds timeout_ms, bool receive_expected=false) {
+	asio::error_code sendCmd(
+		const std::string& cmd,
+		std::string& response,
+		std::chrono::milliseconds timeout_ms
+	) {
+		const std::chrono::steady_clock::time_point expiration = std::chrono::steady_clock::now() + timeout_ms;
+
+		std::lock_guard<std::mutex> lock(send_mutex); // Ensure thread safety for send operations
+
+		asio::error_code ec = transmit(cmd, true, expiration);
+
+		if (!ec) {
+			ec = receive(response, expiration);
+		}
+
+		return ec;
+	}
+
+	asio::error_code sendCmd(
+		const std::string& cmd,
+		std::chrono::milliseconds timeout_ms
+	) {
+		const std::chrono::steady_clock::time_point expiration = std::chrono::steady_clock::now() + timeout_ms;
+
+		std::lock_guard<std::mutex> lock(send_mutex); // Ensure thread safety for send operations
+
+		return transmit(cmd, false, expiration);
+	}
+
+	asio::error_code sendMsg(
+		const MapleMsg& msg,
+		int hardware_bus,
+		MapleMsg& response,
+		std::chrono::milliseconds timeout_ms)
+	{
+		const std::chrono::steady_clock::time_point expiration = std::chrono::steady_clock::now() + timeout_ms;
+
+		std::lock_guard<std::mutex> lock(send_mutex); // Ensure thread safety for send operations
+
+		std::string cmd = msgToStr(msg, hardware_bus);
+		asio::error_code ec = transmit(cmd, true, expiration);
+
+		if (!ec) {
+			ec = receive(response, expiration);
+		}
+
+		return ec;
+	}
+
+	asio::error_code sendMsg(
+		const MapleMsg& msg,
+		int hardware_bus,
+		std::chrono::milliseconds timeout_ms)
+	{
+		const std::chrono::steady_clock::time_point expiration = std::chrono::steady_clock::now() + timeout_ms;
+
+		std::lock_guard<std::mutex> lock(send_mutex); // Ensure thread safety for send operations
+
+		std::string cmd = msgToStr(msg, hardware_bus);
+		return transmit(cmd, false, expiration);
+	}
+
+private:
+	void disconnect()
+	{
+		io_context.stop();
+
+		if (serial_handler.is_open()) {
+			try
+			{
+				serial_handler.cancel();
+			}
+			catch(const asio::system_error&)
+			{
+				// Ignore cancel errors
+			}
+		}
+
+		try
+		{
+			serial_handler.close();
+		}
+		catch(const asio::system_error&)
+		{
+			// Ignore closing errors
+		}
+	}
+
+	void contextThreadEnty()
+	{
+		// This context should never exit until disconnect due to read handler automatically rearming
+		io_context.run();
+	}
+
+	static std::string getFirstSerialDevice() {
+
+		// On Windows, we get the first serial device matching our VID/PID
+#if defined(_WIN32)
+		HDEVINFO deviceInfoSet = SetupDiGetClassDevs(NULL, "USB", NULL, DIGCF_PRESENT | DIGCF_ALLCLASSES);
+		if (deviceInfoSet == INVALID_HANDLE_VALUE) {
+			return "";
+		}
+
+		SP_DEVINFO_DATA deviceInfoData;
+		deviceInfoData.cbSize = sizeof(SP_DEVINFO_DATA);
+
+		for (DWORD i = 0; SetupDiEnumDeviceInfo(deviceInfoSet, i, &deviceInfoData); ++i) {
+			DWORD dataType, bufferSize = 0;
+			SetupDiGetDeviceRegistryProperty(deviceInfoSet, &deviceInfoData, SPDRP_HARDWAREID, &dataType, NULL, 0, &bufferSize);
+
+			if (bufferSize > 0) {
+				std::vector<char> buffer(bufferSize);
+				if (SetupDiGetDeviceRegistryProperty(deviceInfoSet, &deviceInfoData, SPDRP_HARDWAREID, &dataType, (PBYTE)buffer.data(), bufferSize, NULL)) {
+					std::string hardwareId(buffer.begin(), buffer.end());
+					if (hardwareId.find("VID_1209") != std::string::npos && hardwareId.find("PID_2F07") != std::string::npos) {
+						HKEY deviceKey = SetupDiOpenDevRegKey(deviceInfoSet, &deviceInfoData, DICS_FLAG_GLOBAL, 0, DIREG_DEV, KEY_READ);
+						if (deviceKey != INVALID_HANDLE_VALUE) {
+							char portName[256];
+							DWORD portNameSize = sizeof(portName);
+							if (RegQueryValueEx(deviceKey, "PortName", NULL, NULL, (LPBYTE)portName, &portNameSize) == ERROR_SUCCESS) {
+								RegCloseKey(deviceKey);
+								SetupDiDestroyDeviceInfoList(deviceInfoSet);
+								return std::string(portName);
+							}
+							RegCloseKey(deviceKey);
+						}
+					}
+				}
+			}
+		}
+
+		SetupDiDestroyDeviceInfoList(deviceInfoSet);
+		return "";
+#endif
+
+#if defined(__linux__) || (defined(__APPLE__) && defined(TARGET_OS_MAC))
+	// On MacOS/Linux, we get the first serial device matching the device prefix
+	std::string device_prefix = "";
+
+#if defined(__linux__)
+		device_prefix = "ttyACM";
+#elif (defined(__APPLE__) && defined(TARGET_OS_MAC))
+		device_prefix = "tty.usbmodem";
+#endif
+
+		std::string path = "/dev/";
+		DIR *dir;
+		struct dirent *ent;
+		if ((dir = opendir(path.c_str())) != NULL) {
+			while ((ent = readdir(dir)) != NULL) {
+				std::string device = ent->d_name;
+				if (device.find(device_prefix) != std::string::npos) {
+					closedir(dir);
+					return path + device;
+				}
+			}
+			closedir(dir);
+		}
+		return "";
+#endif
+	}
+
+	asio::error_code transmit(
+		const std::string& cmd,
+		bool receive_expected,
+		const std::chrono::steady_clock::time_point& expiration
+	) {
 		asio::error_code ec;
 
 		if (!serial_handler.is_open()) {
@@ -135,13 +308,20 @@ public:
 		if (receive_expected && serial_read_in_progress) {
 			// Wait up to 30 ms for read to complete before writing to help ensure expected command order.
 			// Continue regardless of result.
-			std::string cmd;
-			(void)receiveCmd(cmd, std::chrono::milliseconds(30));
+			std::string rx;
+
+			std::chrono::steady_clock::time_point rxExpiration =
+				std::chrono::steady_clock::now() + std::chrono::milliseconds(30);
+
+			if (rxExpiration > expiration) {
+				rxExpiration = expiration;
+			}
+
+			(void)receive(rx, rxExpiration);
 		}
 
 		// Wait for last write to complete
 		std::unique_lock<std::mutex> lock(write_cv_mutex);
-		const std::chrono::steady_clock::time_point expiration = std::chrono::steady_clock::now() + timeout_ms;
 		if (!write_cv.wait_until(lock, expiration, [this](){return (!serial_write_in_progress || !serial_handler.is_open());}))
 		{
 			return asio::error::timed_out;
@@ -183,41 +363,12 @@ public:
 		return ec;
 	}
 
-	asio::error_code sendMsg(
-		const MapleMsg& msg,
-		int hardware_bus,
-		std::chrono::milliseconds timeout_ms,
-		bool receive_expected=false)
-	{
-		// Build serial_out_data string
-		// Need to message the hardware bus instead of the software bus
-		u8 hwDestAP = (hardware_bus << 6) | (msg.destAP & 0x3F);
-		u8 hwOriginAP = (hardware_bus << 6) | (msg.originAP & 0x3F);
-
-		std::ostringstream s;
-		s << "X "; // 'X' prefix triggers flycast command parser
-		s.fill('0');
-		s << std::hex << std::uppercase
-			<< std::setw(2) << (u32)msg.command
-			<< std::setw(2) << (u32)hwDestAP // override dest
-			<< std::setw(2) << (u32)hwOriginAP // override origin
-			<< std::setw(2) << (u32)msg.size;
-		const u32 sz = msg.getDataSize();
-		for (u32 i = 0; i < sz; i++) {
-			s << std::setw(2) << (u32)msg.data[i];
-		}
-		s << "\n";
-
-		return sendCmd(s.str(), timeout_ms);
-	}
-
-	asio::error_code receiveCmd(std::string& cmd, std::chrono::milliseconds timeout_ms)
+	asio::error_code receive(std::string& cmd, const std::chrono::steady_clock::time_point& expiration)
 	{
 		asio::error_code ec;
 
 		// Wait for at least 2 lines to be received (first line is echo back)
 		std::unique_lock<std::mutex> lock(read_cv_mutex);
-		const std::chrono::steady_clock::time_point expiration = std::chrono::steady_clock::now() + timeout_ms;
 		if (!read_cv.wait_until(lock, expiration, [this](){return ((read_queue.size() >= 2) || !serial_handler.is_open());}))
 		{
 			// Timeout
@@ -236,12 +387,12 @@ public:
 		return ec;
 	}
 
-	asio::error_code receiveMsg(MapleMsg& msg, std::chrono::milliseconds timeout_ms)
+	asio::error_code receive(MapleMsg& msg, const std::chrono::steady_clock::time_point& expiration)
 	{
 		asio::error_code ec;
 		std::string response;
 
-		ec = receiveCmd(response, timeout_ms);
+		ec = receive(response, expiration);
 		if (ec) {
 			return ec;
 		}
@@ -350,103 +501,27 @@ public:
 		return ec;
 	}
 
-private:
-	void disconnect()
-	{
-		io_context.stop();
+	std::string msgToStr(const MapleMsg& msg, int hardware_bus) {
+		// Build serial_out_data string
+		// Need to message the hardware bus instead of the software bus
+		u8 hwDestAP = (hardware_bus << 6) | (msg.destAP & 0x3F);
+		u8 hwOriginAP = (hardware_bus << 6) | (msg.originAP & 0x3F);
 
-		if (serial_handler.is_open()) {
-			try
-			{
-				serial_handler.cancel();
-			}
-			catch(const asio::system_error&)
-			{
-				// Ignore cancel errors
-			}
+		std::ostringstream s;
+		s << "X "; // 'X' prefix triggers flycast command parser
+		s.fill('0');
+		s << std::hex << std::uppercase
+			<< std::setw(2) << (u32)msg.command
+			<< std::setw(2) << (u32)hwDestAP // override dest
+			<< std::setw(2) << (u32)hwOriginAP // override origin
+			<< std::setw(2) << (u32)msg.size;
+		const u32 sz = msg.getDataSize();
+		for (u32 i = 0; i < sz; i++) {
+			s << std::setw(2) << (u32)msg.data[i];
 		}
+		s << "\n";
 
-		try
-		{
-			serial_handler.close();
-		}
-		catch(const asio::system_error&)
-		{
-			// Ignore closing errors
-		}
-	}
-
-	void contextThreadEnty()
-	{
-		// This context should never exit until disconnect due to read handler automatically rearming
-		io_context.run();
-	}
-	static std::string getFirstSerialDevice() {
-
-		// On Windows, we get the first serial device matching our VID/PID
-#if defined(_WIN32)
-		HDEVINFO deviceInfoSet = SetupDiGetClassDevs(NULL, "USB", NULL, DIGCF_PRESENT | DIGCF_ALLCLASSES);
-		if (deviceInfoSet == INVALID_HANDLE_VALUE) {
-			return "";
-		}
-
-		SP_DEVINFO_DATA deviceInfoData;
-		deviceInfoData.cbSize = sizeof(SP_DEVINFO_DATA);
-
-		for (DWORD i = 0; SetupDiEnumDeviceInfo(deviceInfoSet, i, &deviceInfoData); ++i) {
-			DWORD dataType, bufferSize = 0;
-			SetupDiGetDeviceRegistryProperty(deviceInfoSet, &deviceInfoData, SPDRP_HARDWAREID, &dataType, NULL, 0, &bufferSize);
-
-			if (bufferSize > 0) {
-				std::vector<char> buffer(bufferSize);
-				if (SetupDiGetDeviceRegistryProperty(deviceInfoSet, &deviceInfoData, SPDRP_HARDWAREID, &dataType, (PBYTE)buffer.data(), bufferSize, NULL)) {
-					std::string hardwareId(buffer.begin(), buffer.end());
-					if (hardwareId.find("VID_1209") != std::string::npos && hardwareId.find("PID_2F07") != std::string::npos) {
-						HKEY deviceKey = SetupDiOpenDevRegKey(deviceInfoSet, &deviceInfoData, DICS_FLAG_GLOBAL, 0, DIREG_DEV, KEY_READ);
-						if (deviceKey != INVALID_HANDLE_VALUE) {
-							char portName[256];
-							DWORD portNameSize = sizeof(portName);
-							if (RegQueryValueEx(deviceKey, "PortName", NULL, NULL, (LPBYTE)portName, &portNameSize) == ERROR_SUCCESS) {
-								RegCloseKey(deviceKey);
-								SetupDiDestroyDeviceInfoList(deviceInfoSet);
-								return std::string(portName);
-							}
-							RegCloseKey(deviceKey);
-						}
-					}
-				}
-			}
-		}
-
-		SetupDiDestroyDeviceInfoList(deviceInfoSet);
-		return "";
-#endif
-
-#if defined(__linux__) || (defined(__APPLE__) && defined(TARGET_OS_MAC))
-	// On MacOS/Linux, we get the first serial device matching the device prefix
-	std::string device_prefix = "";
-
-#if defined(__linux__)
-		device_prefix = "ttyACM";
-#elif (defined(__APPLE__) && defined(TARGET_OS_MAC))
-		device_prefix = "tty.usbmodem";
-#endif
-
-		std::string path = "/dev/";
-		DIR *dir;
-		struct dirent *ent;
-		if ((dir = opendir(path.c_str())) != NULL) {
-			while ((ent = readdir(dir)) != NULL) {
-				std::string device = ent->d_name;
-				if (device.find(device_prefix) != std::string::npos) {
-					closedir(dir);
-					return path + device;
-				}
-			}
-			closedir(dir);
-		}
-		return "";
-#endif
+		return s.str();
 	}
 
 	void startSerialRead()
@@ -583,10 +658,7 @@ bool DreamPicoPort::send(const MapleMsg& msg) {
 
 bool DreamPicoPort::send(const MapleMsg& txMsg, MapleMsg& rxMsg) {
 	if (serial) {
-		asio::error_code ec = serial->sendMsg(txMsg, hardware_bus, timeout_ms, true);
-		if (!ec) {
-			ec = serial->receiveMsg(rxMsg, timeout_ms);
-		}
+		asio::error_code ec = serial->sendMsg(txMsg, hardware_bus, rxMsg, timeout_ms);
 		return !ec;
 	}
 
@@ -732,9 +804,6 @@ void DreamPicoPort::sendPort() {
 		s << "XP "; // XP is flycast "set port" command
 		s << hardware_bus << " " << software_bus << "\n";
 		serial->sendCmd(s.str(), timeout_ms);
-		// Don't really care about the response, just want to ensure it gets fully processed before continuing
-		std::string buffer;
-		serial->receiveCmd(buffer, timeout_ms);
 	}
 }
 
@@ -837,16 +906,10 @@ void DreamPicoPort::determineHardwareBus(int joystick_idx, SDL_Joystick* sdl_joy
 }
 
 bool DreamPicoPort::queryInterfaceVersion() {
-	asio::error_code error = serial->sendCmd("XV\n", timeout_ms);
+	std::string buffer;
+	asio::error_code error = serial->sendCmd("XV\n", buffer, timeout_ms);
 	if (error) {
 		WARN_LOG(INPUT, "DreamPicoPort[%d] send failed: %s", software_bus, error.message().c_str());
-		return false;
-	}
-
-	std::string buffer;
-	error = serial->receiveCmd(buffer, timeout_ms);
-	if (error) {
-		WARN_LOG(INPUT, "DreamPicoPort[%d] receive failed: %s", software_bus, error.message().c_str());
 		return false;
 	}
 
@@ -868,16 +931,10 @@ bool DreamPicoPort::queryPeripherals() {
 	msg.originAP = hardware_bus << 6;
 	msg.setData(MFID_0_Input);
 
-	asio::error_code error = serial->sendMsg(msg, hardware_bus, timeout_ms);
+	asio::error_code error = serial->sendMsg(msg, hardware_bus, msg, timeout_ms);
 	if (error)
 	{
 		WARN_LOG(INPUT, "DreamPicoPort[%d] connection failed: %s", software_bus, error.message().c_str());
-		return false;
-	}
-
-	error = serial->receiveMsg(msg, timeout_ms);
-	if (error) {
-		WARN_LOG(INPUT, "DreamPicoPort[%d] read failed: %s", software_bus, error.message().c_str());
 		return false;
 	}
 
@@ -886,16 +943,10 @@ bool DreamPicoPort::queryPeripherals() {
 
 	if (interface_version >= 1.0) {
 		// Can just use X?
-		error = serial->sendCmd("X?" + std::to_string(hardware_bus) + "\n", timeout_ms);
+		std::string buffer;
+		error = serial->sendCmd("X?" + std::to_string(hardware_bus) + "\n", buffer, timeout_ms);
 		if (error) {
 			WARN_LOG(INPUT, "DreamPicoPort[%d] send failed: %s", software_bus, error.message().c_str());
-			return false;
-		}
-
-		std::string buffer;
-		error = serial->receiveCmd(buffer, timeout_ms);
-		if (error) {
-			WARN_LOG(INPUT, "DreamPicoPort[%d] receive failed: %s", software_bus, error.message().c_str());
 			return false;
 		}
 
@@ -949,18 +1000,13 @@ bool DreamPicoPort::queryPeripherals() {
 				msg.originAP = hardware_bus << 6;
 				msg.size = 0;
 
-				error = serial->sendMsg(msg, hardware_bus, timeout_ms);
+				error = serial->sendMsg(msg, hardware_bus, msg, timeout_ms);
 				if (error) {
 					WARN_LOG(INPUT, "DreamPicoPort[%d] send failed: %s", software_bus, error.message().c_str());
 					return false;
 				}
 
-				error = serial->receiveMsg(msg, timeout_ms);
-				if (error) {
-					WARN_LOG(INPUT, "DreamPicoPort[%d] read failed: %s", software_bus, error.message().c_str());
-					return false;
-				}
-				else if (msg.size < 4) {
+				if (msg.size < 4) {
 					WARN_LOG(INPUT, "DreamPicoPort[%d] read failed: invalid size %d", software_bus, msg.size);
 					return false;
 				}

@@ -22,6 +22,7 @@
 #ifdef USE_DREAMCASTCONTROLLER
 
 #include <asio.hpp>
+#include <mutex>
 
 class DreamConn : public DreamLink
 {
@@ -32,6 +33,7 @@ class DreamConn : public DreamLink
 	bool maple_io_connected = false;
 	u8 expansionDevs = 0;
 	asio::ip::tcp::iostream iostream;
+	std::mutex send_mutex;
 
 public:
 	//! DreamConn VID:4457 PID:4443
