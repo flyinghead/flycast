@@ -62,11 +62,11 @@ public:
 		return 0;
 	}
 
-	bool hasVmu() const override {
+	bool hasVmu() const {
 		return expansionDevs & 1;
 	}
 
-	bool hasRumble() const override {
+	bool hasRumble() const {
 		return expansionDevs & 2;
 	}
 
