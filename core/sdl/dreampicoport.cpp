@@ -35,7 +35,6 @@
 #include <mutex>
 #include <condition_variable>
 #include <atomic>
-#include <functional>
 
 #if defined(__linux__) || (defined(__APPLE__) && defined(TARGET_OS_MAC))
 #include <dirent.h>
@@ -56,6 +55,8 @@ class DreamPicoPortSerialHandler
 	asio::serial_port serial_handler{io_context};
 	//! Set to true while an async write is in progress with serial_handler
 	bool serial_write_in_progress = false;
+	//! Set to true while an async read is in progress with serial_handler
+	std::atomic<bool> serial_read_in_progress = false;
 	//! Signaled when serial_write_in_progress transitions to false
 	std::condition_variable write_cv;
 	//! Mutex for write_cv and serializes access to serial_write_in_progress
@@ -66,29 +67,16 @@ class DreamPicoPortSerialHandler
 	std::string read_line_buffer;
 	//! Thread which runs the io_context
 	std::unique_ptr<std::thread> io_context_thread;
-
-	//! When >= 0, parsing binary input and signifies total number parsed in this set
-	//! When < 0, not parsing binary input
-	int32_t num_binary_parsed = -1;
-	//! Number of binary bytes left to parse
-	uint16_t stored_binary_size = 0;
-	//! Number of binary bytes left to parse in current set
-	uint16_t num_binary_left = 0;
-
-	//! Callback set when the response is expected to be a string command response
-	std::function<void(const std::string&)> cmd_callback = nullptr;
+	//! Contains queue of incoming lines from serial
+	std::list<std::string> read_queue;
 	//! Signaled when data is in read_queue
 	std::condition_variable read_cv;
-	//! Mutex serializing the above cmd_callback and read_cv
-	std::mutex callback_mutex;
+	//! Mutex for read_cv and serializes access to read_queue
+	std::mutex read_cv_mutex;
 
-	asio::steady_timer read_timer{io_context};
-
-	std::mutex blocking_read_mutex;
-	std::string blocking_read_string;
-	bool blocking_read_response_received = false;
-	std::condition_variable blocking_read_cv;
-	std::mutex blocking_read_cv_mutex;
+	int32_t num_binary_parsed = -1;
+	uint16_t stored_binary_size = 0;
+	uint16_t num_binary_left = 0;
 
 public:
 	DreamPicoPortSerialHandler() {
@@ -137,41 +125,26 @@ public:
 		return serial_handler.is_open();
 	}
 
-	asio::error_code sendCmd(
-		const std::string& cmd,
-		std::chrono::milliseconds timeout_ms,
-		std::function<void(const std::string&)> callback=nullptr
-	) {
+	asio::error_code sendCmd(const std::string& cmd, std::chrono::milliseconds timeout_ms, bool receive_expected=false) {
 		asio::error_code ec;
 
 		if (!serial_handler.is_open()) {
 			return asio::error::not_connected;
 		}
 
-		const std::chrono::steady_clock::time_point expiration = std::chrono::steady_clock::now() + timeout_ms;
+		if (receive_expected && serial_read_in_progress) {
+			// Wait up to 30 ms for read to complete before writing to help ensure expected command order.
+			// Continue regardless of result.
+			std::string cmd;
+			(void)receiveCmd(cmd, std::chrono::milliseconds(30));
+		}
 
 		// Wait for last write to complete
 		std::unique_lock<std::mutex> lock(write_cv_mutex);
+		const std::chrono::steady_clock::time_point expiration = std::chrono::steady_clock::now() + timeout_ms;
 		if (!write_cv.wait_until(lock, expiration, [this](){return (!serial_write_in_progress || !serial_handler.is_open());}))
 		{
 			return asio::error::timed_out;
-		}
-
-		if (callback) {
-			// WARNING: avoid deadlock - must never lock callback_mutex before locking write_cv_mutex
-			std::unique_lock<std::mutex> lock(callback_mutex);
-			if (callback) {
-				// Wait for cmd_callback to be reset
-				if (!write_cv.wait_until(lock, expiration, [this]() -> bool {return !cmd_callback;})) {
-					// Timeout
-					return asio::error::timed_out;
-				}
-				cmd_callback = callback;
-			}
-
-			// Set the read timeout at a static 500 ms
-			read_timer.expires_after(std::chrono::milliseconds(500));
-			read_timer.async_wait([this](const asio::error_code& error){readTimeoutHandler(error);});
 		}
 
 		// Check again before continuing
@@ -182,7 +155,9 @@ public:
 		serial_out_data = cmd;
 
 		// Clear out the read buffer before writing next command
+		read_queue.clear();
 		serial_write_in_progress = true;
+		serial_read_in_progress = true;
 		asio::async_write(
 			serial_handler,
 			asio::buffer(serial_out_data),
@@ -208,177 +183,69 @@ public:
 		return ec;
 	}
 
-	asio::error_code sendCmd(
-		const std::string& cmd,
-		std::string& rx,
-		std::chrono::milliseconds timeout_ms
-	) {
-		const std::chrono::steady_clock::time_point expiration = std::chrono::steady_clock::now() + timeout_ms;
-
-		std::lock_guard<std::mutex> lock(blocking_read_mutex);
-
-		blocking_read_response_received = false;
-
-		asio::error_code error = sendCmd(
-			cmd,
-			timeout_ms,
-			[this](const std::string& response){ blockingReadHandler(response); }
-		);
-
-		if (!error) {
-			std::unique_lock<std::mutex> lock(blocking_read_cv_mutex);
-			if (!blocking_read_cv.wait_until(
-				lock,
-				expiration,
-				[this]() -> bool {return (blocking_read_response_received);})
-			) {
-				// Timeout
-				return asio::error::timed_out;
-			}
-
-			rx = blocking_read_string;
-		}
-
-		return error;
-	}
-
 	asio::error_code sendMsg(
 		const MapleMsg& msg,
 		int hardware_bus,
 		std::chrono::milliseconds timeout_ms,
-		std::function<void(std::shared_ptr<const MapleMsg>)> callback=nullptr
-	) {
-		if (callback) {
-			// TODO: it should be reasonable to just always call the following even when !callback, but that causes lag (timeouts)
-			return sendCmd(
-				msgToCmd(msg, hardware_bus),
-				timeout_ms,
-				[this, callback](const std::string& response){responseToMsgHandler(callback, response);});
-		} else {
-			return sendCmd(msgToCmd(msg, hardware_bus), timeout_ms);
-		}
-	}
-
-	asio::error_code sendMsg(
-		const MapleMsg& msg,
-		int hardware_bus,
-		MapleMsg& rx,
-		std::chrono::milliseconds timeout_ms
-	) {
-		std::string strRx;
-		asio::error_code error = sendCmd(msgToCmd(msg, hardware_bus), strRx, timeout_ms);
-		if (!error) {
-			std::shared_ptr<MapleMsg> msg = responseToMsg(strRx);
-			if (msg) {
-				rx = *msg;
-			} else {
-				error = asio::error::no_data;
-			}
-		}
-		return error;
-	}
-
-private:
-	void disconnect()
+		bool receive_expected=false)
 	{
-		io_context.stop();
+		// Build serial_out_data string
+		// Need to message the hardware bus instead of the software bus
+		u8 hwDestAP = (hardware_bus << 6) | (msg.destAP & 0x3F);
+		u8 hwOriginAP = (hardware_bus << 6) | (msg.originAP & 0x3F);
 
-		if (serial_handler.is_open()) {
-			try
-			{
-				serial_handler.cancel();
-			}
-			catch(const asio::system_error&)
-			{
-				// Ignore cancel errors
-			}
+		std::ostringstream s;
+		s << "X "; // 'X' prefix triggers flycast command parser
+		s.fill('0');
+		s << std::hex << std::uppercase
+			<< std::setw(2) << (u32)msg.command
+			<< std::setw(2) << (u32)hwDestAP // override dest
+			<< std::setw(2) << (u32)hwOriginAP // override origin
+			<< std::setw(2) << (u32)msg.size;
+		const u32 sz = msg.getDataSize();
+		for (u32 i = 0; i < sz; i++) {
+			s << std::setw(2) << (u32)msg.data[i];
 		}
+		s << "\n";
 
-		try
-		{
-			serial_handler.close();
-		}
-		catch(const asio::system_error&)
-		{
-			// Ignore closing errors
-		}
+		return sendCmd(s.str(), timeout_ms);
 	}
 
-	void contextThreadEnty()
+	asio::error_code receiveCmd(std::string& cmd, std::chrono::milliseconds timeout_ms)
 	{
-		// This context should never exit until disconnect due to read handler automatically rearming
-		io_context.run();
+		asio::error_code ec;
+
+		// Wait for at least 2 lines to be received (first line is echo back)
+		std::unique_lock<std::mutex> lock(read_cv_mutex);
+		const std::chrono::steady_clock::time_point expiration = std::chrono::steady_clock::now() + timeout_ms;
+		if (!read_cv.wait_until(lock, expiration, [this](){return ((read_queue.size() >= 2) || !serial_handler.is_open());}))
+		{
+			// Timeout
+			return asio::error::timed_out;
+		}
+
+		if (read_queue.size() < 2) {
+			// Connection was closed before data could be received
+			return asio::error::connection_aborted;
+		}
+
+		// discard the first message as we are interested in the second only which returns the controller configuration
+		cmd = std::move(read_queue.back());
+		read_queue.clear();
+		serial_read_in_progress = false;
+		return ec;
 	}
 
-	static std::string getFirstSerialDevice() {
+	asio::error_code receiveMsg(MapleMsg& msg, std::chrono::milliseconds timeout_ms)
+	{
+		asio::error_code ec;
+		std::string response;
 
-		// On Windows, we get the first serial device matching our VID/PID
-#if defined(_WIN32)
-		HDEVINFO deviceInfoSet = SetupDiGetClassDevs(NULL, "USB", NULL, DIGCF_PRESENT | DIGCF_ALLCLASSES);
-		if (deviceInfoSet == INVALID_HANDLE_VALUE) {
-			return "";
+		ec = receiveCmd(response, timeout_ms);
+		if (ec) {
+			return ec;
 		}
 
-		SP_DEVINFO_DATA deviceInfoData;
-		deviceInfoData.cbSize = sizeof(SP_DEVINFO_DATA);
-
-		for (DWORD i = 0; SetupDiEnumDeviceInfo(deviceInfoSet, i, &deviceInfoData); ++i) {
-			DWORD dataType, bufferSize = 0;
-			SetupDiGetDeviceRegistryProperty(deviceInfoSet, &deviceInfoData, SPDRP_HARDWAREID, &dataType, NULL, 0, &bufferSize);
-
-			if (bufferSize > 0) {
-				std::vector<char> buffer(bufferSize);
-				if (SetupDiGetDeviceRegistryProperty(deviceInfoSet, &deviceInfoData, SPDRP_HARDWAREID, &dataType, (PBYTE)buffer.data(), bufferSize, NULL)) {
-					std::string hardwareId(buffer.begin(), buffer.end());
-					if (hardwareId.find("VID_1209") != std::string::npos && hardwareId.find("PID_2F07") != std::string::npos) {
-						HKEY deviceKey = SetupDiOpenDevRegKey(deviceInfoSet, &deviceInfoData, DICS_FLAG_GLOBAL, 0, DIREG_DEV, KEY_READ);
-						if (deviceKey != INVALID_HANDLE_VALUE) {
-							char portName[256];
-							DWORD portNameSize = sizeof(portName);
-							if (RegQueryValueEx(deviceKey, "PortName", NULL, NULL, (LPBYTE)portName, &portNameSize) == ERROR_SUCCESS) {
-								RegCloseKey(deviceKey);
-								SetupDiDestroyDeviceInfoList(deviceInfoSet);
-								return std::string(portName);
-							}
-							RegCloseKey(deviceKey);
-						}
-					}
-				}
-			}
-		}
-
-		SetupDiDestroyDeviceInfoList(deviceInfoSet);
-		return "";
-#endif
-
-#if defined(__linux__) || (defined(__APPLE__) && defined(TARGET_OS_MAC))
-	// On MacOS/Linux, we get the first serial device matching the device prefix
-	std::string device_prefix = "";
-
-#if defined(__linux__)
-		device_prefix = "ttyACM";
-#elif (defined(__APPLE__) && defined(TARGET_OS_MAC))
-		device_prefix = "tty.usbmodem";
-#endif
-
-		std::string path = "/dev/";
-		DIR *dir;
-		struct dirent *ent;
-		if ((dir = opendir(path.c_str())) != NULL) {
-			while ((ent = readdir(dir)) != NULL) {
-				std::string device = ent->d_name;
-				if (device.find(device_prefix) != std::string::npos) {
-					closedir(dir);
-					return path + device;
-				}
-			}
-			closedir(dir);
-		}
-		return "";
-#endif
-	}
-
-	std::shared_ptr<MapleMsg> responseToMsg(const std::string& response) {
 		std::vector<uint32_t> words;
 		bool valid = false;
 		const char* iter = response.c_str();
@@ -387,7 +254,7 @@ private:
 		if (*iter == '*')
 		{
 			// Asterisk indicates the write or read operation failed
-			return nullptr;
+			return asio::error::no_data;
 		}
 		else if (*iter == '\5') // binary parsing
 		{
@@ -460,79 +327,126 @@ private:
 
 		if (words.size() > 0)
 		{
-			std::shared_ptr<MapleMsg> msg = std::make_shared<MapleMsg>();
-
-			msg->command = (words[0] >> 24) & 0xFF;
-			msg->destAP = (words[0] >> 16) & 0xFF;
-			msg->originAP = (words[0] >> 8) & 0xFF;
-			msg->size = words[0] & 0xFF;
+			msg.command = (words[0] >> 24) & 0xFF;
+			msg.destAP = (words[0] >> 16) & 0xFF;
+			msg.originAP = (words[0] >> 8) & 0xFF;
+			msg.size = words[0] & 0xFF;
 
 			for (uint32_t i = 1; i < words.size(); ++i)
 			{
 				uint32_t dat = ntohl(words[i]);
-				memcpy(&msg->data[(i-1)*4], &dat, sizeof(dat));
+				memcpy(&msg.data[(i-1)*4], &dat, sizeof(dat));
 			}
-
-			return msg;
 		}
 		else
 		{
-			return nullptr;
+			return asio::error::message_size;
 		}
+
+		if (!serial_handler.is_open()) {
+			return asio::error::not_connected;
+		}
+
+		return ec;
 	}
 
-	void responseToMsgHandler(std::function<void(std::shared_ptr<const MapleMsg>)> callback, const std::string& response) {
-		if (callback) {
-			std::shared_ptr<MapleMsg> msg = responseToMsg(response);
-			callback(msg);
-		}
-	}
+private:
+	void disconnect()
+	{
+		io_context.stop();
 
-	std::string msgToCmd(const MapleMsg& msg, int hardware_bus) {
-		// Build serial_out_data string
-		// Need to message the hardware bus instead of the software bus
-		u8 hwDestAP = (hardware_bus << 6) | (msg.destAP & 0x3F);
-		u8 hwOriginAP = (hardware_bus << 6) | (msg.originAP & 0x3F);
-
-		std::ostringstream s;
-		s << "X "; // 'X' prefix triggers flycast command parser
-		s.fill('0');
-		s << std::hex << std::uppercase
-			<< std::setw(2) << (u32)msg.command
-			<< std::setw(2) << (u32)hwDestAP // override dest
-			<< std::setw(2) << (u32)hwOriginAP // override origin
-			<< std::setw(2) << (u32)msg.size;
-		const u32 sz = msg.getDataSize();
-		for (u32 i = 0; i < sz; i++) {
-			s << std::setw(2) << (u32)msg.data[i];
-		}
-		s << "\n";
-
-		return s.str();
-	}
-
-	void readTimeoutHandler(const asio::error_code& error) {
-		if (!error) { // Timer expired
-			std::function<void(const std::string&)> callback;
-
-			// callback_mutex context
+		if (serial_handler.is_open()) {
+			try
 			{
-				std::lock_guard<std::mutex> lock(callback_mutex);
-				cmd_callback.swap(callback);
-				read_cv.notify_one();
+				serial_handler.cancel();
 			}
+			catch(const asio::system_error&)
+			{
+				// Ignore cancel errors
+			}
+		}
 
-			if (callback) {
-				callback(nullptr);
-			}
+		try
+		{
+			serial_handler.close();
+		}
+		catch(const asio::system_error&)
+		{
+			// Ignore closing errors
 		}
 	}
 
-	void blockingReadHandler(const std::string& response) {
-		std::unique_lock<std::mutex> lock(blocking_read_cv_mutex);
-		blocking_read_string = response;
-		blocking_read_response_received = true;
-		blocking_read_cv.notify_all();
+	void contextThreadEnty()
+	{
+		// This context should never exit until disconnect due to read handler automatically rearming
+		io_context.run();
+	}
+	static std::string getFirstSerialDevice() {
+
+		// On Windows, we get the first serial device matching our VID/PID
+#if defined(_WIN32)
+		HDEVINFO deviceInfoSet = SetupDiGetClassDevs(NULL, "USB", NULL, DIGCF_PRESENT | DIGCF_ALLCLASSES);
+		if (deviceInfoSet == INVALID_HANDLE_VALUE) {
+			return "";
+		}
+
+		SP_DEVINFO_DATA deviceInfoData;
+		deviceInfoData.cbSize = sizeof(SP_DEVINFO_DATA);
+
+		for (DWORD i = 0; SetupDiEnumDeviceInfo(deviceInfoSet, i, &deviceInfoData); ++i) {
+			DWORD dataType, bufferSize = 0;
+			SetupDiGetDeviceRegistryProperty(deviceInfoSet, &deviceInfoData, SPDRP_HARDWAREID, &dataType, NULL, 0, &bufferSize);
+
+			if (bufferSize > 0) {
+				std::vector<char> buffer(bufferSize);
+				if (SetupDiGetDeviceRegistryProperty(deviceInfoSet, &deviceInfoData, SPDRP_HARDWAREID, &dataType, (PBYTE)buffer.data(), bufferSize, NULL)) {
+					std::string hardwareId(buffer.begin(), buffer.end());
+					if (hardwareId.find("VID_1209") != std::string::npos && hardwareId.find("PID_2F07") != std::string::npos) {
+						HKEY deviceKey = SetupDiOpenDevRegKey(deviceInfoSet, &deviceInfoData, DICS_FLAG_GLOBAL, 0, DIREG_DEV, KEY_READ);
+						if (deviceKey != INVALID_HANDLE_VALUE) {
+							char portName[256];
+							DWORD portNameSize = sizeof(portName);
+							if (RegQueryValueEx(deviceKey, "PortName", NULL, NULL, (LPBYTE)portName, &portNameSize) == ERROR_SUCCESS) {
+								RegCloseKey(deviceKey);
+								SetupDiDestroyDeviceInfoList(deviceInfoSet);
+								return std::string(portName);
+							}
+							RegCloseKey(deviceKey);
+						}
+					}
+				}
+			}
+		}
+
+		SetupDiDestroyDeviceInfoList(deviceInfoSet);
+		return "";
+#endif
+
+#if defined(__linux__) || (defined(__APPLE__) && defined(TARGET_OS_MAC))
+	// On MacOS/Linux, we get the first serial device matching the device prefix
+	std::string device_prefix = "";
+
+#if defined(__linux__)
+		device_prefix = "ttyACM";
+#elif (defined(__APPLE__) && defined(TARGET_OS_MAC))
+		device_prefix = "tty.usbmodem";
+#endif
+
+		std::string path = "/dev/";
+		DIR *dir;
+		struct dirent *ent;
+		if ((dir = opendir(path.c_str())) != NULL) {
+			while ((ent = readdir(dir)) != NULL) {
+				std::string device = ent->d_name;
+				if (device.find(device_prefix) != std::string::npos) {
+					closedir(dir);
+					return path + device;
+				}
+			}
+			closedir(dir);
+		}
+		return "";
+#endif
 	}
 
 	void startSerialRead()
@@ -540,6 +454,7 @@ private:
 		serialReadHandler();
 		// Just to make sure initial data is cleared off of incoming buffer
 		io_context.poll_one();
+		read_queue.clear();
 	}
 
 	void serialReadHandler()
@@ -548,6 +463,7 @@ private:
 		serial_handler.async_read_some(
 			asio::buffer(serial_read_buffer, sizeof(serial_read_buffer)),
 			[this](const asio::error_code& error, std::size_t size) -> void {
+				std::lock_guard<std::mutex> lock(read_cv_mutex);
 				if (error) {
 					try
 					{
@@ -557,10 +473,15 @@ private:
 					{
 						// Ignore cancel errors
 					}
+					read_cv.notify_all();
 				} else {
 					if (size > 0) {
 						// Consume the received data
-						consumeReadBuffer(size);
+						if (consumeReadBuffer(size) > 0)
+						{
+							// New lines available
+							read_cv.notify_all();
+						}
 					}
 					// Auto reload read - io_context will always have work to do
 					serialReadHandler();
@@ -618,24 +539,7 @@ private:
 				if (read_line_buffer.size() > 0 && read_line_buffer[read_line_buffer.size() - 1] == '\r') {
 					read_line_buffer.pop_back();
 				}
-
-				// No response will begin with 'X', so 'X' is just the echo of a command
-				if (read_line_buffer[0] != 'X' && !read_line_buffer.empty()) {
-					std::function<void(const std::string&)> callback;
-
-					// callback_mutex context
-					{
-						std::lock_guard<std::mutex> lock(callback_mutex);
-						cmd_callback.swap(callback);
-						read_cv.notify_one();
-					}
-
-					if (callback) {
-						callback(read_line_buffer);
-					}
-					read_timer.cancel();
-				}
-
+				read_queue.push_back(read_line_buffer);
 				read_line_buffer.clear();
 
 				++numberOfLines;
@@ -679,16 +583,10 @@ bool DreamPicoPort::send(const MapleMsg& msg) {
 
 bool DreamPicoPort::send(const MapleMsg& txMsg, MapleMsg& rxMsg) {
 	if (serial) {
-		asio::error_code ec = serial->sendMsg(txMsg, hardware_bus, rxMsg, timeout_ms);
-		return !ec;
-	}
-
-	return false;
-}
-
-bool DreamPicoPort::send(const MapleMsg& txMsg, const std::function<void(std::shared_ptr<const MapleMsg>)>& callback) {
-	if (serial) {
-		asio::error_code ec = serial->sendMsg(txMsg, hardware_bus, timeout_ms, callback);
+		asio::error_code ec = serial->sendMsg(txMsg, hardware_bus, timeout_ms, true);
+		if (!ec) {
+			ec = serial->receiveMsg(rxMsg, timeout_ms);
+		}
 		return !ec;
 	}
 
@@ -834,6 +732,9 @@ void DreamPicoPort::sendPort() {
 		s << "XP "; // XP is flycast "set port" command
 		s << hardware_bus << " " << software_bus << "\n";
 		serial->sendCmd(s.str(), timeout_ms);
+		// Don't really care about the response, just want to ensure it gets fully processed before continuing
+		std::string buffer;
+		serial->receiveCmd(buffer, timeout_ms);
 	}
 }
 
@@ -936,10 +837,16 @@ void DreamPicoPort::determineHardwareBus(int joystick_idx, SDL_Joystick* sdl_joy
 }
 
 bool DreamPicoPort::queryInterfaceVersion() {
-	std::string buffer;
-	asio::error_code error = serial->sendCmd("XV\n", buffer, timeout_ms);
+	asio::error_code error = serial->sendCmd("XV\n", timeout_ms);
 	if (error) {
 		WARN_LOG(INPUT, "DreamPicoPort[%d] send failed: %s", software_bus, error.message().c_str());
+		return false;
+	}
+
+	std::string buffer;
+	error = serial->receiveCmd(buffer, timeout_ms);
+	if (error) {
+		WARN_LOG(INPUT, "DreamPicoPort[%d] receive failed: %s", software_bus, error.message().c_str());
 		return false;
 	}
 
@@ -961,10 +868,16 @@ bool DreamPicoPort::queryPeripherals() {
 	msg.originAP = hardware_bus << 6;
 	msg.setData(MFID_0_Input);
 
-	asio::error_code error = serial->sendMsg(msg, hardware_bus, msg, timeout_ms);
+	asio::error_code error = serial->sendMsg(msg, hardware_bus, timeout_ms);
 	if (error)
 	{
-		WARN_LOG(INPUT, "DreamPicoPort[%d] send failed: %s", software_bus, error.message().c_str());
+		WARN_LOG(INPUT, "DreamPicoPort[%d] connection failed: %s", software_bus, error.message().c_str());
+		return false;
+	}
+
+	error = serial->receiveMsg(msg, timeout_ms);
+	if (error) {
+		WARN_LOG(INPUT, "DreamPicoPort[%d] read failed: %s", software_bus, error.message().c_str());
 		return false;
 	}
 
@@ -972,11 +885,17 @@ bool DreamPicoPort::queryPeripherals() {
 	peripherals.clear();
 
 	if (interface_version >= 1.0) {
-		// Can just use "X?"
-		std::string buffer;
-		error = serial->sendCmd("X?" + std::to_string(hardware_bus) + "\n", buffer, timeout_ms);
+		// Can just use X?
+		error = serial->sendCmd("X?" + std::to_string(hardware_bus) + "\n", timeout_ms);
 		if (error) {
 			WARN_LOG(INPUT, "DreamPicoPort[%d] send failed: %s", software_bus, error.message().c_str());
+			return false;
+		}
+
+		std::string buffer;
+		error = serial->receiveCmd(buffer, timeout_ms);
+		if (error) {
+			WARN_LOG(INPUT, "DreamPicoPort[%d] receive failed: %s", software_bus, error.message().c_str());
 			return false;
 		}
 
@@ -1030,13 +949,18 @@ bool DreamPicoPort::queryPeripherals() {
 				msg.originAP = hardware_bus << 6;
 				msg.size = 0;
 
-				error = serial->sendMsg(msg, hardware_bus, msg, timeout_ms);
+				error = serial->sendMsg(msg, hardware_bus, timeout_ms);
 				if (error) {
 					WARN_LOG(INPUT, "DreamPicoPort[%d] send failed: %s", software_bus, error.message().c_str());
 					return false;
 				}
 
-				if (msg.size < 4) {
+				error = serial->receiveMsg(msg, timeout_ms);
+				if (error) {
+					WARN_LOG(INPUT, "DreamPicoPort[%d] read failed: %s", software_bus, error.message().c_str());
+					return false;
+				}
+				else if (msg.size < 4) {
 					WARN_LOG(INPUT, "DreamPicoPort[%d] read failed: invalid size %d", software_bus, msg.size);
 					return false;
 				}

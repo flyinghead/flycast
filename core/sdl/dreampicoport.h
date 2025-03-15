@@ -71,29 +71,27 @@ public:
 
 	bool send(const MapleMsg& msg) override;
 
-    bool send(const MapleMsg& txMsg, MapleMsg& rxMsg) override;
+    virtual bool send(const MapleMsg& txMsg, MapleMsg& rxMsg) override;
 
-	bool send(const MapleMsg& txMsg, const std::function<void(std::shared_ptr<const MapleMsg>)>& callback) override;
+	virtual inline void gameTermination() override;
 
-	void gameTermination() override;
+	virtual int getBus() const override;
 
-	int getBus() const override;
+    virtual u32 getFunctionCode(int forPort) const override;
 
-    u32 getFunctionCode(int forPort) const override;
+	virtual bool hasVmu() const override;
 
-	bool hasVmu() const override;
+	virtual bool hasRumble() const override;
 
-	bool hasRumble() const override;
+	virtual int getDefaultBus() const override;
 
-	int getDefaultBus() const override;
+	virtual void changeBus(int newBus);
 
-	void changeBus(int newBus);
+	virtual std::string getName() const override;
 
-	std::string getName() const override;
+	virtual void connect() override;
 
-	void connect() override;
-
-	void disconnect() override;
+	virtual void disconnect() override;
 
     void sendPort();
 
