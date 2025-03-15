@@ -687,6 +687,16 @@ u32 DreamPicoPort::getFunctionCode(int forPort) const {
 	return SWAP32(mask);
 }
 
+bool DreamPicoPort::hasVmu() const {
+	// TODO: this is left for backward compatibility
+	return expansionDevs & 1;
+}
+
+bool DreamPicoPort::hasRumble() const {
+	// TODO: this is left for backward compatibility
+	return expansionDevs & 2;
+}
+
 int DreamPicoPort::getDefaultBus() const {
 	if (!is_hardware_bus_implied && !is_single_device) {
 		return hardware_bus;
@@ -748,13 +758,9 @@ void DreamPicoPort::connect() {
 	// Timeout is extended to 5 seconds for all other communication after connection
 	timeout_ms = std::chrono::seconds(5);
 
-	int numVmus = 0;
-	int numVibration = 0;
-
 	u32 portOneFn = getFunctionCode(1);
 	if (portOneFn & MFID_1_Storage) {
 		config::MapleExpansionDevices[software_bus][0] = MDT_SegaVMU;
-		++numVmus;
 	}
 	else {
 		config::MapleExpansionDevices[software_bus][0] = MDT_None;
@@ -763,17 +769,22 @@ void DreamPicoPort::connect() {
 	u32 portTwoFn = getFunctionCode(2);
 	if (portTwoFn & MFID_8_Vibration) {
 		config::MapleExpansionDevices[software_bus][1] = MDT_PurupuruPack;
-		++numVibration;
 	}
 	else if (portTwoFn & MFID_1_Storage) {
 		config::MapleExpansionDevices[software_bus][1] = MDT_SegaVMU;
-		++numVmus;
 	}
 	else {
 		config::MapleExpansionDevices[software_bus][1] = MDT_None;
 	}
 
-	NOTICE_LOG(INPUT, "Connected to DreamcastController[%d]: Type:%s, VMU:%d, Rumble Pack:%d", software_bus, getName().c_str(), numVmus, numVibration);
+	if (hasVmu() || hasRumble()) {
+		NOTICE_LOG(INPUT, "Connected to DreamcastController[%d]: Type:%s, VMU:%d, Rumble Pack:%d", software_bus, getName().c_str(), hasVmu(), hasRumble());
+	}
+	else {
+		WARN_LOG(INPUT, "DreamcastController[%d] connection: no VMU or Rumble Pack connected", software_bus);
+		disconnect();
+		return;
+	}
 }
 
 void DreamPicoPort::disconnect() {

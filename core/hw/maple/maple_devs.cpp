@@ -2118,12 +2118,11 @@ struct DreamLinkVmu : public maple_sega_vmu
 	std::shared_ptr<DreamLink> dreamlink;
 	bool useRealVmu;  // Set this to true to use physical VMU, false for virtual
 	std::chrono::time_point<std::chrono::system_clock> lastWriteTime;
-	//! Saves the previous maple device type that was replaced
-	MapleDeviceType prevType;
 
-	DreamLinkVmu(std::shared_ptr<DreamLink> dreamlink, MapleDeviceType prevType) :
-		dreamlink(dreamlink), useRealVmu(config::UsePhysicalVmuOnly), prevType(prevType)
-	{}
+	DreamLinkVmu(std::shared_ptr<DreamLink> dreamlink) : dreamlink(dreamlink) {
+		// Initialize useRealVmu with our config setting
+		useRealVmu = config::UsePhysicalVmuOnly;
+	}
 
 	void OnSetup() override
 	{
@@ -2340,12 +2339,9 @@ struct DreamLinkVmu : public maple_sega_vmu
 struct DreamLinkPurupuru : public maple_sega_purupuru
 {
 	std::shared_ptr<DreamLink> dreamlink;
-	//! Saves the previous maple device type that was replaced
-	MapleDeviceType prevType;
 
-	DreamLinkPurupuru(std::shared_ptr<DreamLink> dreamlink, MapleDeviceType prevType) :
-		dreamlink(dreamlink), prevType(prevType)
-	{}
+	DreamLinkPurupuru(std::shared_ptr<DreamLink> dreamlink) : dreamlink(dreamlink) {
+	}
 
 	u32 dma(u32 cmd) override
 	{
@@ -2357,7 +2353,7 @@ struct DreamLinkPurupuru : public maple_sega_purupuru
 	}
 };
 
-static std::list<std::shared_ptr<DreamLinkVmu>> dreamLinkVmus[2];
+static std::list<std::shared_ptr<DreamLinkVmu>> dreamLinkVmus;
 static std::list<std::shared_ptr<DreamLinkPurupuru>> dreamLinkPurupurus;
 
 void createDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink, bool gameStart)
@@ -2367,77 +2363,67 @@ void createDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink, bool gameStart
     bool vmuFound = false;
     bool rumbleFound = false;
 
-	for (int ctrlrPort = 1; ctrlrPort < 3; ++ctrlrPort)
+	if (dreamlink->hasVmu())
 	{
-		std::shared_ptr<maple_device> dev = MapleDevices[bus][ctrlrPort - 1];
-		MapleDeviceType devType = MDT_None;
-		if (dev)
+		std::shared_ptr<DreamLinkVmu> vmu;
+		for (const std::shared_ptr<DreamLinkVmu>& vmuIter : dreamLinkVmus)
 		{
-			devType = dev->get_device_type();
+			if (vmuIter->dreamlink.get() == dreamlink.get())
+			{
+                vmuFound = true;
+				vmu = vmuIter;
+				break;
+			}
 		}
 
-		// Create the devices if not found
-		u32 fnCode = dreamlink->getFunctionCode(ctrlrPort);
-		if ((fnCode & MFID_1_Storage) || devType == MDT_SegaVMU)
+		std::shared_ptr<maple_device> dev = MapleDevices[bus][0];
+
+		// Always create/setup the physical VMU if Use Physical VMU Only is enabled
+		if (config::UsePhysicalVmuOnly || gameStart || (dev != nullptr && dev->get_device_type() == MDT_SegaVMU))
 		{
-			std::shared_ptr<DreamLinkVmu> vmu;
-			for (const std::shared_ptr<DreamLinkVmu>& vmuIter : dreamLinkVmus[ctrlrPort - 1])
+			bool vmuCreated = false;
+			if (!vmu)
 			{
-				if (vmuIter->dreamlink.get() == dreamlink.get())
-				{
-					vmuFound = true;
-					vmu = vmuIter;
-					break;
+				vmu = std::make_shared<DreamLinkVmu>(dreamlink);
+				vmuCreated = true;
+			}
+
+			vmu->Setup(bus, 0);
+
+			if ((!gameStart || !vmuCreated) && dev && !config::UsePhysicalVmuOnly) {
+				// Only copy data from virtual VMU if Physical VMU Only is disabled
+				vmu->copyIn(std::static_pointer_cast<maple_sega_vmu>(dev));
+				if (!gameStart) {
+					vmu->updateScreen();
 				}
 			}
 
-			// Always create/setup the physical VMU if Use Physical VMU Only is enabled
-			if (gameStart || !vmuFound)
+			if (!vmuFound) dreamLinkVmus.push_back(vmu);
+		}
+	}
+	if (dreamlink->hasRumble())
+	{
+		std::shared_ptr<DreamLinkPurupuru> rumble;
+		for (const std::shared_ptr<DreamLinkPurupuru>& purupuru : dreamLinkPurupurus)
+		{
+			if (purupuru->dreamlink.get() == dreamlink.get())
 			{
-				bool vmuCreated = false;
-				if (!vmu)
-				{
-					vmu = std::make_shared<DreamLinkVmu>(dreamlink, devType);
-					vmuCreated = true;
-				}
-
-				vmu->Setup(bus, 0);
-
-				if ((gameStart || vmuCreated) && devType == MDT_SegaVMU && !config::UsePhysicalVmuOnly) {
-					// Only copy data from virtual VMU if Physical VMU Only is disabled
-					vmu->copyIn(std::static_pointer_cast<maple_sega_vmu>(dev));
-					if (!gameStart) {
-						vmu->updateScreen();
-					}
-				}
-
-				if (!vmuFound) dreamLinkVmus[ctrlrPort - 1].push_back(vmu);
+                rumbleFound = true;
+				rumble = purupuru;
+				break;
 			}
 		}
-		else if ((fnCode & MFID_8_Vibration) || devType == MDT_PurupuruPack)
+
+		std::shared_ptr<maple_device> dev = MapleDevices[bus][1];
+		if (gameStart || (dev != nullptr && dev->get_device_type() == MDT_PurupuruPack))
 		{
-			std::shared_ptr<DreamLinkPurupuru> rumble;
-			for (const std::shared_ptr<DreamLinkPurupuru>& purupuru : dreamLinkPurupurus)
+			if (!rumble)
 			{
-				if (purupuru->dreamlink.get() == dreamlink.get())
-				{
-					rumbleFound = true;
-					rumble = purupuru;
-					break;
-				}
+				rumble = std::make_shared<DreamLinkPurupuru>(dreamlink);
 			}
+			rumble->Setup(bus, 1);
 
-			std::shared_ptr<maple_device> dev = MapleDevices[bus][1];
-			if (gameStart || !rumbleFound)
-			{
-				if (!rumble)
-				{
-					rumble = std::make_shared<DreamLinkPurupuru>(dreamlink, dev->get_device_type());
-				}
-				rumble->Setup(bus, 1);
-
-				if (!rumbleFound) dreamLinkPurupurus.push_back(rumble);
-			}
+			if (!rumbleFound) dreamLinkPurupurus.push_back(rumble);
 		}
 	}
 }
@@ -2445,32 +2431,27 @@ void createDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink, bool gameStart
 void tearDownDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink)
 {
 	const int bus = dreamlink->getBus();
-
-	for (int ctrlrPort = 1; ctrlrPort < 3; ++ctrlrPort)
+	for (std::list<std::shared_ptr<DreamLinkVmu>>::const_iterator iter = dreamLinkVmus.begin();
+		iter != dreamLinkVmus.end();)
 	{
-		for (std::list<std::shared_ptr<DreamLinkVmu>>::const_iterator iter = dreamLinkVmus[ctrlrPort - 1].begin();
-			iter != dreamLinkVmus[ctrlrPort - 1].end();)
+		if ((*iter)->dreamlink.get() == dreamlink.get())
 		{
-			if ((*iter)->dreamlink.get() == dreamlink.get())
+			DEBUG_LOG(MAPLE, "VMU teardown - Physical VMU: %s", (*iter)->useRealVmu ? "true" : "false");
+			std::shared_ptr<maple_device> dev = maple_Create(MDT_SegaVMU);
+			dev->Setup(bus, 0);
+			if (!(*iter)->useRealVmu)
 			{
-				DEBUG_LOG(MAPLE, "VMU teardown - Physical VMU: %s", (*iter)->useRealVmu ? "true" : "false");
-				std::shared_ptr<maple_device> dev = maple_Create(MDT_SegaVMU);
-				dev->Setup(bus, 0);
-				if (!(*iter)->useRealVmu)
-				{
-					(*iter)->copyOut(std::static_pointer_cast<maple_sega_vmu>(dev));
-				}
-				DEBUG_LOG(MAPLE, "VMU teardown - Copy completed");
-				iter = dreamLinkVmus[ctrlrPort - 1].erase(iter);
-				break;
+				(*iter)->copyOut(std::static_pointer_cast<maple_sega_vmu>(dev));
 			}
-			else
-			{
-				++iter;
-			}
+			DEBUG_LOG(MAPLE, "VMU teardown - Copy completed");
+			iter = dreamLinkVmus.erase(iter);
+			break;
+		}
+		else
+		{
+			++iter;
 		}
 	}
-
 	for (std::list<std::shared_ptr<DreamLinkPurupuru>>::const_iterator iter = dreamLinkPurupurus.begin();
 		iter != dreamLinkPurupurus.end();)
 	{
