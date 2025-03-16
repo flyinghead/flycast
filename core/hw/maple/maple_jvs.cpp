@@ -1838,7 +1838,7 @@ u32 maple_naomi_jamma::RawDma(u32* buffer_in, u32 buffer_in_len, u32* buffer_out
 
 			if (dma_buffer_in[1] == 0xff)
 			{
-				u32 hash = XXH32(ram, 0x10000, 0);
+				u32 hash = XXH3_64bits(ram, 0x10000);
 				LOGJVS("JVS Firmware hash %08x\n", hash);
 				hotd2p = hash == 0xa6784e26;
 				if (hash == 0xa7c50459	// CT

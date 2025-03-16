@@ -395,20 +395,20 @@ void BaseTextureCacheData::ComputeHash()
 		// We use the old size to compute the hash for backward-compatibility
 		// with existing custom texture packs.
 		int oldSize = width * height / 8;
-		old_vqtexture_hash = XXH32(&vram[mmStartAddress - VQ_CODEBOOK_SIZE], oldSize, 7);
+		old_vqtexture_hash = XXH3_64bits(&vram[mmStartAddress - VQ_CODEBOOK_SIZE], oldSize);
 		if (IsPaletted())
 			old_vqtexture_hash ^= palette_hash;
 		old_texture_hash = old_vqtexture_hash;
 		old_vqtexture_hash ^= tcw.full & tcwMask;
 		// New hash
-	    XXH32_state_t *state = XXH32_createState();
-	    XXH32_reset(state, 7);
+	    XXH3_state_t *state = XXH3_createState();
+	    XXH3_64bits_reset(state);
 	    // hash vq codebook
-	    XXH32_update(state, &vram[startAddress], VQ_CODEBOOK_SIZE);
+	    XXH3_64bits_update(state, &vram[startAddress], VQ_CODEBOOK_SIZE);
 	    // hash texture
-	    XXH32_update(state, &vram[mmStartAddress], size);
-	    texture_hash = XXH32_digest(state);
-	    XXH32_freeState(state);
+	    XXH3_64bits_update(state, &vram[mmStartAddress], size);
+	    texture_hash = XXH3_64bits_digest(state);
+	    XXH3_freeState(state);
 		if (IsPaletted())
 			texture_hash ^= palette_hash;
 		texture_hash ^= tcw.full & tcwMask;
@@ -416,7 +416,7 @@ void BaseTextureCacheData::ComputeHash()
 	else
 	{
 		old_vqtexture_hash = 0;
-		texture_hash = XXH32(&vram[mmStartAddress], size, 7);
+		texture_hash = XXH3_64bits(&vram[mmStartAddress], size);
 		if (IsPaletted())
 			texture_hash ^= palette_hash;
 		old_texture_hash = texture_hash;
