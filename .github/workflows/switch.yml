@@ -52,11 +52,11 @@ jobs:
         id: aws-credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: AKIAJOZQS4H2PHQWYFCA
-          aws-secret-access-key: ${{ secrets.S3_SECRET_KEY }}
-          aws-region: us-east-2
+          aws-access-key-id: 9d1dcc5e9a6445c9a7380c7d3e98ffb7
+          aws-secret-access-key: ${{ secrets.OVH_SECRET_KEY }}
+          aws-region: gra
         if: github.repository == 'flyinghead/flycast' && github.event_name == 'push' && matrix.config.destDir != ''
 
       - name: Upload to S3
-        run: aws s3 sync artifact/bin s3://flycast-builds/${{ matrix.config.destDir }}/${GITHUB_REF#refs/}-$GITHUB_SHA --acl public-read --follow-symlinks
+        run: aws s3 --endpoint https://s3.gra.io.cloud.ovh.net/ sync artifact/bin s3://flycast-builds/${{ matrix.config.destDir }}/${GITHUB_REF#refs/}-$GITHUB_SHA --acl public-read --follow-symlinks
         if: ${{ steps.aws-credentials.outputs.aws-account-id != '' }}
