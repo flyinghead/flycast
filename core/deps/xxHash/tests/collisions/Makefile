@@ -1,6 +1,6 @@
 #  Brute force collision tester for 64-bit hashes
 #  Part of xxHash project
-#  Copyright (C) 2012-present, Yann Collet
+#  Copyright (C) 2019-2021 Yann Collet
 #
 # GPL v2 License
 #
@@ -18,21 +18,20 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
-#  You can contact the author at :
+#  You can contact the author at:
 #  - xxHash homepage: https://www.xxhash.com
-#  - xxHash source repository : https://github.com/Cyan4973/xxHash
+#  - xxHash source repository: https://github.com/Cyan4973/xxHash
 #
 
 SRC_DIRS = ./ ../../ allcodecs/
 VPATH = $(SRC_DIRS)
 CPPFLAGS += $(addprefix -I ,$(SRC_DIRS))
-CFLAGS   ?= -std=c99 \
-            -Wall -Wextra -Wconversion
-CFLAGS   += -maes -mavx2
-CXXFLAGS ?= -Wall -Wextra -Wconversion --std=c++11
+CFLAGS   += -Wall -Wextra -Wconversion \
+            -std=c11
+CXXFLAGS += -Wall -Wextra -Wconversion \
+            -std=c++11
 LDFLAGS  += -pthread
-LDFLAGS  += -maes -mavx2
-TESTHASHES = 110000000
+TESTHASHES = 3200000
 
 HASH_SRC := $(sort $(wildcard allcodecs/*.c allcodecs/*.cc))
 HASH_OBJ := $(patsubst %.c,%.o,$(HASH_SRC))
@@ -47,7 +46,7 @@ all: release
 collisionsTest: main.o pool.o threading.o sort.o $(HASH_OBJ)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $^ $(LDFLAGS) -o $@
 
-main.o: hashes.h xxh3.h xxhash.h
+main.o: hashes.h xxhash.h
 
 release: CXXFLAGS += -O3
 release: CFLAGS += -O3
@@ -63,11 +62,14 @@ check: test
 .PHONY: test
 test: debug
 	@echo ""
-	@echo "## $(TESTHASHES) hashes with original and 0 threads"
+	@echo "## $(TESTHASHES) hashes"
 	@time ./collisionsTest --nbh=$(TESTHASHES)
 	@echo ""
-	@echo "## $(TESTHASHES) hashes with original and 4 threads"
-	@time ./collisionsTest --nbh=$(TESTHASHES) --threadlog=2
+	@echo "## $(TESTHASHES) hashes with filter"
+	@time ./collisionsTest --nbh=$(TESTHASHES) --filter
+	@echo ""
+	@echo "## $(TESTHASHES) hashes with 2 threads"
+	@time ./collisionsTest --nbh=$(TESTHASHES) --threadlog=1
 	@echo ""
 
 .PHONY: clean
