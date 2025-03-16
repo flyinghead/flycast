@@ -75,7 +75,7 @@ jobs:
           aws configure set aws_access_key_id 9d1dcc5e9a6445c9a7380c7d3e98ffb7
           aws configure set aws_secret_access_key ${{ secrets.OVH_SECRET_KEY }}
           cp shell/android-studio/flycast/build/outputs/bundle/release/*.aab shell/android-studio/flycast/build/outputs/apk/release/
-          aws s3 --endpoint https://s3.gra.io.cloud.ovh.net/ sync shell/android-studio/flycast/build/outputs/apk/release s3://flycast-builds/android/${GITHUB_REF#refs/}-$GITHUB_SHA --acl public-read --exclude='*.json' --follow-symlinks
+          aws s3 --endpoint https://s3.gra.io.cloud.ovh.net/ cp shell/android-studio/flycast/build/outputs/apk/release s3://flycast-builds/android/${GITHUB_REF#refs/}-$GITHUB_SHA --acl public-read --exclude='*.json' --follow-symlinks --recursive
         if: github.repository == 'flyinghead/flycast' && github.event_name == 'push'
 
       - name: Setup Sentry CLI
