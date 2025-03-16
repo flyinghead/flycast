@@ -311,6 +311,9 @@ static void retro_keyboard_event(bool down, unsigned keycode, uint32_t character
 // Now comes the interesting stuff
 void retro_init()
 {
+	first_run = true;
+	memset(device_type, -1, sizeof(device_type));
+	
 	static bool emuInited;
 
 	// Logging
@@ -371,6 +374,7 @@ void retro_deinit()
 {
 	INFO_LOG(COMMON, "retro_deinit");
 	first_run = true;
+	memset(device_type, -1, sizeof(device_type));
 
 	//When auto-save states are enabled this is needed to prevent the core from shutting down before
 	//any save state actions are still running - which results in partial saves
