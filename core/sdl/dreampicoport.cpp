@@ -318,6 +318,10 @@ private:
 			}
 
 			(void)receive(rx, rxExpiration);
+		} else {
+			// Just clear out the read queue before continuing
+			std::unique_lock<std::mutex> lock(read_cv_mutex);
+			read_queue.clear();
 		}
 
 		// Wait for last write to complete
@@ -335,7 +339,6 @@ private:
 		serial_out_data = cmd;
 
 		// Clear out the read buffer before writing next command
-		read_queue.clear();
 		serial_write_in_progress = true;
 		serial_read_in_progress = true;
 		asio::async_write(
