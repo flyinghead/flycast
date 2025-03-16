@@ -1,7 +1,7 @@
 /*
  * Main program to benchmark hash functions
  * Part of the xxHash project
- * Copyright (C) 2019-present, Yann Collet
+ * Copyright (C) 2019-2021 Yann Collet
  * GPL v2 License
  *
  * This program is free software; you can redistribute it and/or modify
@@ -74,7 +74,7 @@ static int readIntFromChar(const char** stringPtr)
 
 
 /**
- * longCommand():
+ * isCommand():
  * Checks if string is the same as longCommand.
  * If yes, @return 1, otherwise @return 0
  */
@@ -169,7 +169,7 @@ static int badusage(const char* exename)
     return 1;
 }
 
-int main(int argc, const char** argv)
+int main(int argc, const char* argv[])
 {
     const char* const exename = argv[0];
     int hashNb = 0;
