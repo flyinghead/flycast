@@ -93,6 +93,9 @@ DreamLinkGamepad::DreamLinkGamepad(int maple_port, int joystick_idx, SDL_Joystic
 		if (defaultBus >= 0 && defaultBus < 4) {
 			set_maple_port(defaultBus);
 		}
+
+		// Create DreamLink Maple Devices here just in case game is already running
+		createDreamLinkDevices(dreamlink, false);
 	}
 
 	EventManager::listen(Event::Start, handleEvent, this);
@@ -137,8 +140,9 @@ void DreamLinkGamepad::registered()
 void DreamLinkGamepad::handleEvent(Event event, void *arg)
 {
 	DreamLinkGamepad *gamepad = static_cast<DreamLinkGamepad*>(arg);
-	if (gamepad->dreamlink != nullptr)
+	if (gamepad->dreamlink != nullptr && event != Event::Terminate) {
 		createDreamLinkDevices(gamepad->dreamlink, event == Event::Start);
+	}
 
     if (gamepad->dreamlink != nullptr && event == Event::Terminate)
     {

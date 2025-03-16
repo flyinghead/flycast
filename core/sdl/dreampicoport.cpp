@@ -758,9 +758,13 @@ void DreamPicoPort::connect() {
 	// Timeout is extended to 5 seconds for all other communication after connection
 	timeout_ms = std::chrono::seconds(5);
 
+	int vmuCount = 0;
+	int vibrationCount = 0;
+
 	u32 portOneFn = getFunctionCode(1);
 	if (portOneFn & MFID_1_Storage) {
 		config::MapleExpansionDevices[software_bus][0] = MDT_SegaVMU;
+		++vmuCount;
 	}
 	else {
 		config::MapleExpansionDevices[software_bus][0] = MDT_None;
@@ -769,22 +773,17 @@ void DreamPicoPort::connect() {
 	u32 portTwoFn = getFunctionCode(2);
 	if (portTwoFn & MFID_8_Vibration) {
 		config::MapleExpansionDevices[software_bus][1] = MDT_PurupuruPack;
+		++vibrationCount;
 	}
 	else if (portTwoFn & MFID_1_Storage) {
 		config::MapleExpansionDevices[software_bus][1] = MDT_SegaVMU;
+		++vmuCount;
 	}
 	else {
 		config::MapleExpansionDevices[software_bus][1] = MDT_None;
 	}
 
-	if (hasVmu() || hasRumble()) {
-		NOTICE_LOG(INPUT, "Connected to DreamcastController[%d]: Type:%s, VMU:%d, Rumble Pack:%d", software_bus, getName().c_str(), hasVmu(), hasRumble());
-	}
-	else {
-		WARN_LOG(INPUT, "DreamcastController[%d] connection: no VMU or Rumble Pack connected", software_bus);
-		disconnect();
-		return;
-	}
+	NOTICE_LOG(INPUT, "Connected to DreamcastController[%d]: Type:%s, VMU:%d, Rumble Pack:%d", software_bus, getName().c_str(), vmuCount, vibrationCount);
 }
 
 void DreamPicoPort::disconnect() {
@@ -909,7 +908,7 @@ bool DreamPicoPort::queryInterfaceVersion() {
 	std::string buffer;
 	asio::error_code error = serial->sendCmd("XV\n", buffer, timeout_ms);
 	if (error) {
-		WARN_LOG(INPUT, "DreamPicoPort[%d] send failed: %s", software_bus, error.message().c_str());
+		WARN_LOG(INPUT, "DreamPicoPort[%d] send(XV) failed: %s", software_bus, error.message().c_str());
 		return false;
 	}
 
@@ -925,6 +924,9 @@ bool DreamPicoPort::queryInterfaceVersion() {
 }
 
 bool DreamPicoPort::queryPeripherals() {
+	peripherals.clear();
+	expansionDevs = 0;
+
 	MapleMsg msg;
 	msg.command = MDCF_GetCondition;
 	msg.destAP = (hardware_bus << 6) | 0x20;
@@ -934,19 +936,18 @@ bool DreamPicoPort::queryPeripherals() {
 	asio::error_code error = serial->sendMsg(msg, hardware_bus, msg, timeout_ms);
 	if (error)
 	{
-		WARN_LOG(INPUT, "DreamPicoPort[%d] connection failed: %s", software_bus, error.message().c_str());
-		return false;
+		WARN_LOG(INPUT, "DreamPicoPort[%d] send(condition) failed: %s", software_bus, error.message().c_str());
+		return true; // assume simply controller not connected yet
 	}
 
 	expansionDevs = msg.originAP & 0x1f;
-	peripherals.clear();
 
 	if (interface_version >= 1.0) {
 		// Can just use X?
 		std::string buffer;
 		error = serial->sendCmd("X?" + std::to_string(hardware_bus) + "\n", buffer, timeout_ms);
 		if (error) {
-			WARN_LOG(INPUT, "DreamPicoPort[%d] send failed: %s", software_bus, error.message().c_str());
+			WARN_LOG(INPUT, "DreamPicoPort[%d] send(X?) failed: %s", software_bus, error.message().c_str());
 			return false;
 		}
 
@@ -1002,12 +1003,12 @@ bool DreamPicoPort::queryPeripherals() {
 
 				error = serial->sendMsg(msg, hardware_bus, msg, timeout_ms);
 				if (error) {
-					WARN_LOG(INPUT, "DreamPicoPort[%d] send failed: %s", software_bus, error.message().c_str());
+					WARN_LOG(INPUT, "DreamPicoPort[%d] send(query) failed: %s", software_bus, error.message().c_str());
 					return false;
 				}
 
 				if (msg.size < 4) {
-					WARN_LOG(INPUT, "DreamPicoPort[%d] read failed: invalid size %d", software_bus, msg.size);
+					WARN_LOG(INPUT, "DreamPicoPort[%d] read(query) failed: invalid size %d", software_bus, msg.size);
 					return false;
 				}
 
