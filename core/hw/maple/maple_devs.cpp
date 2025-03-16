@@ -2115,19 +2115,49 @@ std::shared_ptr<maple_device> maple_Create(MapleDeviceType type)
 
 struct DreamLinkVmu : public maple_sega_vmu
 {
-	std::shared_ptr<DreamLink> dreamlink;
-	bool useRealVmuMemory;  // Set this to true to use physical VMU memory, false for virtual memory
-	std::chrono::time_point<std::chrono::system_clock> lastWriteTime;
+	bool running = true;
 
-	DreamLinkVmu(std::shared_ptr<DreamLink> dreamlink) : dreamlink(dreamlink) {
+	std::shared_ptr<DreamLink> dreamlink;
+	bool useRealVmuMemory;  //!< Set this to true to use physical VMU memory, false for virtual memory
+	std::chrono::time_point<std::chrono::system_clock> lastWriteTime;
+	bool mirroredBlocks[256]; //!< Set to true for block that has been loaded/written
+	s16 lastWriteBlock = -1;
+
+	std::list<u8> blocksToWrite;
+	std::mutex writeMutex;
+	std::condition_variable writeCv;
+	std::thread writeThread;
+
+	static u64 lastNotifyTime;
+	static u64 lastErrorNotifyTime;
+
+	DreamLinkVmu(std::shared_ptr<DreamLink> dreamlink) :
+		dreamlink(dreamlink),
+		writeThread([this](){writeEntrypoint();})
+	{
 		// Initialize useRealVmuMemory with our config setting
 		useRealVmuMemory = config::UsePhysicalVmuOnly;
+	}
+
+	virtual ~DreamLinkVmu() {
+		running = false;
+
+		// Entering lock context
+		{
+			std::unique_lock<std::mutex> lock(writeMutex);
+			writeCv.notify_all();
+		}
+
+		writeThread.join();
 	}
 
 	void OnSetup() override
 	{
 		// Update useRealVmuMemory in case config changed
 		useRealVmuMemory = config::UsePhysicalVmuOnly;
+
+		// All data must be re-read
+		memset(mirroredBlocks, 0, sizeof(mirroredBlocks));
 
 		if (useRealVmuMemory)
 		{
@@ -2140,6 +2170,7 @@ struct DreamLinkVmu : public maple_sega_vmu
 
 			memset(flash_data, 0, sizeof(flash_data));
 			memset(lcd_data, 0, sizeof(lcd_data));
+
 		}
 		else
 		{
@@ -2175,29 +2206,18 @@ struct DreamLinkVmu : public maple_sega_vmu
 			{
 				if (useRealVmuMemory)
 				{
-					static u64 lastNotifyTime = 0;
-					u64 currentTime = std::chrono::duration_cast<std::chrono::milliseconds>(
+					const u64 currentTime = std::chrono::duration_cast<std::chrono::milliseconds>(
 						std::chrono::steady_clock::now().time_since_epoch()).count();
 
 					// Only show notification once every 6 seconds to avoid spam
-					if (currentTime - lastNotifyTime > 4000)
+					if (cmd == MDCF_BlockRead &&
+						(currentTime - lastNotifyTime) > 4000 &&
+						(currentTime - lastErrorNotifyTime) > 4000)
 					{
-						switch (cmd)
-						{
-						case MDCF_BlockWrite:
-							// This is a write operation (saving)
-							os_notify("ATTENTION: You are saving to a physical VMU", 6000,
-									"Do not disconnect the VMU or close the game");
-							lastNotifyTime = currentTime;
-							break;
-
-						case MDCF_BlockRead:
-							// This is a read operation (loading)
-							os_notify("ATTENTION: Loading from a physical VMU", 6000,
-									"Game data is being loaded from your physical VMU");
-							lastNotifyTime = currentTime;
-							break;
-						}
+						// This is a read operation (loading)
+						os_notify("ATTENTION: Loading from a physical VMU", 6000,
+								"Game data is being loaded from your physical VMU");
+						lastNotifyTime = currentTime;
 					}
 
 					switch (cmd)
@@ -2209,7 +2229,7 @@ struct DreamLinkVmu : public maple_sega_vmu
 
 						// Save the write to RAM
 						u32 bph=r32();
-						u32 Block = (SWAP32(bph))&0xffff;
+						u32 Block = lastWriteBlock = (SWAP32(bph))&0xffff;
 						u32 Phase = ((SWAP32(bph))>>16)&0xff;
 						u32 write_adr=Block*512+Phase*(512/4);
 						u32 write_len=r_count();
@@ -2221,28 +2241,23 @@ struct DreamLinkVmu : public maple_sega_vmu
 							return MDRE_FileError; //invalid params
 						}
 						rptr(&flash_data[write_adr],write_len);
+
+						// All done - wait until GetLastError to queue the write
+						return MDRS_DeviceReply;
 					}
-					// Fall through
+
 					case MDCF_GetLastError:
 					{
-						// Minimum of 15 ms per write operation to allow VMU to catch up
-						std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now();
-						std::chrono::milliseconds elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastWriteTime);
-						if (elapsed.count() < 15)
-						{
-							// Need to slow down writes so that flash has a chance to write
-							std::this_thread::sleep_for(std::chrono::milliseconds(15) - elapsed);
-						}
+						mirroredBlocks[lastWriteBlock] = true;
 
-						MapleMsg rcvMsg;
-						bool sent = dreamlink->send(*msg, rcvMsg);
-						if (!sent || rcvMsg.command != MDRS_DeviceReply) {
-							// Not acknowledged
-							ERROR_LOG(MAPLE, "Failed to save VMU %s: I/O error", logical_port);
-							if (sent) {
-								return rcvMsg.command;
+						// Entering lock context
+						{
+							std::unique_lock<std::mutex> lock(writeMutex);
+							if (std::find(blocksToWrite.begin(), blocksToWrite.end(), lastWriteBlock) == blocksToWrite.end())
+							{
+								blocksToWrite.push_back(lastWriteBlock);
+								writeCv.notify_all();
 							}
-							return MDRE_FileError; // I/O error
 						}
 
 						lastWriteTime = std::chrono::system_clock::now();
@@ -2251,26 +2266,30 @@ struct DreamLinkVmu : public maple_sega_vmu
 
 					case MDCF_BlockRead:
 					{
-						// Try up to 4 times to read
-						bool readSuccess = false;
-						for (u32 i = 0; i < 4; ++i) {
-							if (i > 0) {
-								std::this_thread::sleep_for(std::chrono::milliseconds(30));
+						u8 requestBlock = msg->data[7];
+						if (!mirroredBlocks[requestBlock]) {
+							// Try up to 4 times to read
+							bool readSuccess = false;
+							for (u32 i = 0; i < 4; ++i) {
+								if (i > 0) {
+									std::this_thread::sleep_for(std::chrono::milliseconds(30));
+								}
+
+								MapleMsg rcvMsg;
+								if (dreamlink->send(*msg, rcvMsg) && rcvMsg.size == 130) {
+									// Something read!
+									u8 block = rcvMsg.data[7];
+									memcpy(&flash_data[block * 4 * 128], &rcvMsg.data[8], 4 * 128);
+									mirroredBlocks[block] = true;
+									readSuccess = true;
+									break;
+								}
 							}
 
-							MapleMsg rcvMsg;
-							if (dreamlink->send(*msg, rcvMsg) && rcvMsg.size == 130) {
-								// Something read!
-								u32 block = rcvMsg.data[7];
-								memcpy(&flash_data[block * 4 * 128], &rcvMsg.data[8], 4 * 128);
-								readSuccess = true;
-								break;
+							if (!readSuccess) {
+								ERROR_LOG(MAPLE, "Failed to read VMU %s: I/O error", logical_port);
+								return MDRE_FileError; // I/O error
 							}
-						}
-
-						if (!readSuccess) {
-							ERROR_LOG(MAPLE, "Failed to read VMU %s: I/O error", logical_port);
-							return MDRE_FileError; // I/O error
 						}
 
 						break;
@@ -2334,7 +2353,118 @@ struct DreamLinkVmu : public maple_sega_vmu
 		memcpy(&msg.data[8], lcd_data, sizeof(lcd_data));
 		dreamlink->send(msg);
 	}
+
+private:
+	//! Thread entrypoint for write operations
+	void writeEntrypoint()
+	{
+		while (true)
+		{
+			u8 block = 0;
+
+			// Entering lock context
+			{
+				std::unique_lock<std::mutex> lock(writeMutex);
+				writeCv.wait(lock, [this](){ return (!running || !blocksToWrite.empty()); });
+
+				if (!running)
+				{
+					break;
+				}
+
+				block = blocksToWrite.front();
+				blocksToWrite.pop_front();
+			}
+
+			const u64 currentTime = std::chrono::duration_cast<std::chrono::milliseconds>(
+				std::chrono::steady_clock::now().time_since_epoch()).count();
+
+			// Only show notification once every 6 seconds to avoid spam
+			if ((currentTime - lastNotifyTime) > 4000 && (currentTime - lastErrorNotifyTime) > 4000)
+			{
+				// This is a write operation (saving)
+				os_notify("ATTENTION: You are saving to a physical VMU", 6000,
+						"Do not disconnect the VMU or close the game");
+				lastNotifyTime = currentTime;
+			}
+
+			bool writeSuccess = true;
+			const u8* blockData = &flash_data[block * 4 * 128];
+			std::chrono::milliseconds delay(10);
+			const std::chrono::milliseconds delayInc(5);
+			// Try up to 4 times to write
+			for (u32 i = 0; i < 4; ++i) {
+				if (i > 0) {
+					// Slow down writes to avoid overloading the VMU
+					delay += delayInc;
+				}
+
+				writeSuccess = true;
+
+				// 4 write phases per block
+				for (u32 phase = 0; phase < 4; ++phase) {
+					MapleMsg writeMsg;
+					writeMsg.command = MDCF_BlockWrite;
+					writeMsg.destAP = (bus_id << 6) | (1 << bus_port);;
+					writeMsg.originAP = (bus_id << 6);
+					writeMsg.size = 34;
+					writeMsg.setWord(MFID_1_Storage, 0);
+					const u32 locationWord = (block << 24) | (phase << 8);
+					writeMsg.setWord(locationWord, 1);
+					memcpy(&writeMsg.data[8], &blockData[phase * 128], 128);
+
+					// Delay before writing
+					std::this_thread::sleep_for(delay);
+
+					MapleMsg rcvMsg;
+					if (!dreamlink->send(writeMsg, rcvMsg) || rcvMsg.command != MDRS_DeviceReply) {
+						// Not acknowledged
+						writeSuccess = false;
+						break;
+					}
+				}
+
+				if (writeSuccess) {
+					// Delay before committing
+					std::this_thread::sleep_for(delay);
+
+					// Send the GetLastError command to commit the data
+					MapleMsg writeMsg;
+					writeMsg.command = MDCF_GetLastError;
+					writeMsg.destAP = (bus_id << 6) | (1 << bus_port);;
+					writeMsg.originAP = (bus_id << 6);
+					writeMsg.size = 2;
+					writeMsg.setWord(MFID_1_Storage, 0);
+					const u32 phase = 4;
+					const u32 locationWord = (block << 24) | (phase << 8);
+					writeMsg.setWord(locationWord, 1);
+					MapleMsg rcvMsg;
+					if (dreamlink->send(writeMsg, rcvMsg) && rcvMsg.command == MDRS_DeviceReply) {
+						// Acknowledged
+						break;
+					}
+				}
+				// else: continue to retry
+			}
+
+			if (!writeSuccess) {
+				ERROR_LOG(MAPLE, "Failed to save VMU %s: I/O error", logical_port);
+
+				const u64 currentTime = std::chrono::duration_cast<std::chrono::milliseconds>(
+					std::chrono::steady_clock::now().time_since_epoch()).count();
+
+				if ((currentTime - lastErrorNotifyTime) > 4000)
+				{
+					os_notify("ATTENTION: Write to VMU failed", 6000);
+					lastErrorNotifyTime = currentTime;
+				}
+			}
+		}
+	}
 };
+
+u64 DreamLinkVmu::lastNotifyTime = 0;
+u64 DreamLinkVmu::lastErrorNotifyTime = 0;
 
 struct DreamLinkPurupuru : public maple_sega_purupuru
 {
