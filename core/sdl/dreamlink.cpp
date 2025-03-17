@@ -108,6 +108,11 @@ DreamLinkGamepad::~DreamLinkGamepad() {
 	if (dreamlink) {
 		tearDownDreamLinkDevices(dreamlink);
 		dreamlink.reset();
+
+		// Make sure settings are open in case disconnection happened mid-game
+		if (!gui_is_open()) {
+			gui_open_settings();
+		}
 	}
 }
 
