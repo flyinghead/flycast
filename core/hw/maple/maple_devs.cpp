@@ -2136,7 +2136,7 @@ struct DreamLinkVmu : public maple_sega_vmu
 		writeThread([this](){writeEntrypoint();})
 	{
 		// Initialize useRealVmuMemory with our config setting
-		useRealVmuMemory = config::UsePhysicalVmuOnly;
+		useRealVmuMemory = config::UsePhysicalVmuMemory;
 	}
 
 	virtual ~DreamLinkVmu() {
@@ -2154,7 +2154,7 @@ struct DreamLinkVmu : public maple_sega_vmu
 	void OnSetup() override
 	{
 		// Update useRealVmuMemory in case config changed
-		useRealVmuMemory = config::UsePhysicalVmuOnly;
+		useRealVmuMemory = config::UsePhysicalVmuMemory;
 
 		// All data must be re-read
 		memset(mirroredBlocks, 0, sizeof(mirroredBlocks));
@@ -2332,7 +2332,7 @@ struct DreamLinkVmu : public maple_sega_vmu
 	void copyOut(std::shared_ptr<maple_sega_vmu> other)
 	{
 		// Never copy data to virtual VMU if physical VMU is enabled
-		if (!config::UsePhysicalVmuOnly && !useRealVmuMemory)
+		if (!config::UsePhysicalVmuMemory && !useRealVmuMemory)
 		{
 			memcpy(other->flash_data, flash_data, sizeof(other->flash_data));
 			memcpy(other->lcd_data, lcd_data, sizeof(other->lcd_data));

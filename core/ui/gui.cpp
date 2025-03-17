@@ -54,6 +54,7 @@
 #include "hw/pvr/Renderer_if.h"
 #if defined(USE_SDL)
 #include "sdl/sdl.h"
+#include "sdl/dreamlink.h"
 #endif
 
 #include "vgamepad.h"
@@ -2032,6 +2033,10 @@ static void gui_settings_controls(bool& maple_devices_changed)
 #if defined(_WIN32) && !defined(TARGET_UWP)
 	OptionCheckbox("Use Raw Input", config::UseRawInput, "Supports multiple pointing devices (mice, light guns) and keyboards");
 #endif
+#ifdef USE_DREAMCASTCONTROLLER
+	OptionCheckbox("Use Physical VMU Memory", config::UsePhysicalVmuMemory,
+		"Enables direct read/write access to physical VMU memory via DreamPicoPort/Dreamconn.");
+#endif
 
 	ImGui::Spacing();
 	header("Dreamcast Devices");
@@ -2846,8 +2851,6 @@ static void gui_settings_advanced()
 			OptionCheckbox("Dreamcast 32MB RAM Mod", config::RamMod32MB,
 				"Enables 32MB RAM Mod for Dreamcast. May affect compatibility");
 		}
-        OptionCheckbox("Use Physical VMU Only, because FUCK mackdiddy", config::UsePhysicalVmuOnly,
-			"Restrict VMU usage to physical devices only when using a physical Vmu with DreamPicoPort/Dreamconn");
         OptionCheckbox("Dump Textures", config::DumpTextures,
         		"Dump all textures into data/texdump/<game id>");
         bool logToFile = cfgLoadBool("log", "LogToFile", false);
