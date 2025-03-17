@@ -18,7 +18,7 @@ jobs:
       - name: Set up build environment
         run: |
           sudo apt-get update
-          sudo apt-get -y install gitsome ccache
+          sudo apt-get -y install ccache
 
       - uses: actions/checkout@v4
         with:
@@ -52,6 +52,7 @@ jobs:
         uses: AnimMouse/setup-rclone@v1
         with:
           rclone_config: ${{ secrets.RCLONE_CONFIG }}
+          version: v1.69.1
 
       - name: Upload to S3
         run: rclone copy artifact/bin scaleway:flycast-builds/${{ matrix.config.destDir }}/${GITHUB_REF#refs/}-$GITHUB_SHA
