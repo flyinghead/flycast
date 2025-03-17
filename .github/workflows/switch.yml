@@ -18,7 +18,7 @@ jobs:
       - name: Set up build environment
         run: |
           sudo apt-get update
-          sudo apt-get -y install awscli ccache
+          sudo apt-get -y install gitsome ccache
 
       - uses: actions/checkout@v4
         with:
