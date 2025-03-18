@@ -38,6 +38,7 @@
 #include "hw/mem/mem_watch.h"
 #include "network/net_handshake.h"
 #include "network/naomi_network.h"
+#include "input/mapping.h"
 #include "serialize.h"
 #include "hw/pvr/pvr.h"
 #include "profiler/fc_profiler.h"
@@ -839,6 +840,9 @@ void loadGameSpecificSettings()
 
 	// Reload per-game settings
 	config::Settings::instance().load(true);
+
+	// Apply any hardcoded game-specific control mappings
+	ApplyGameSpecificMapping();
 
 	if (config::GGPOEnable || settings.raHardcoreMode)
 		config::Sh4Clock.override(200);

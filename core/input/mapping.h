@@ -131,3 +131,6 @@ public:
 		set_axis(0, DC_AXIS3_DOWN, DC_AXIS3_DOWN, true);
 	}
 };
+
+// Function to apply predefined custom mappings for specific games
+void ApplyGameSpecificMapping();

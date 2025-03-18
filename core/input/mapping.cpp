@@ -18,6 +18,7 @@
  */
 #include <cmath>
 #include "mapping.h"
+#include "gamepad_device.h"
 #include "cfg/ini.h"
 #include "stdclass.h"
 
@@ -492,4 +493,211 @@ void InputMapping::DeleteMapping(const std::string& name)
 {
 	loaded_mappings.erase(name);
 	std::remove(get_writable_config_path(std::string("mappings/") + name).c_str());
+}
+
+// Applies a predefined set of game-specific button mappings
+// Called when a game is loaded to apply hardcoded custom mappings for specific games
+void ApplyGameSpecificMapping()
+{
+	// Only proceed if we have a valid game ID
+	if (settings.content.gameId.empty())
+		return;
+
+	// Check for the specific game ID that needs custom mappings
+	if (settings.content.gameId == "VIRTUA FIGHTER 4 JAPAN")
+	{
+		DEBUG_LOG(INPUT, "Applying predefined control mapping for game %s", settings.content.gameId.c_str());
+		
+		// For each gamepad
+		for (int i = 0; i < GamepadDevice::GetGamepadCount(); i++)
+		{
+			std::shared_ptr<GamepadDevice> gamepad = GamepadDevice::GetGamepad(i);
+			if (gamepad == nullptr || !gamepad->remappable())
+				continue;
+				
+			std::shared_ptr<InputMapping> mapping = gamepad->get_input_mapping();
+			if (mapping == nullptr)
+				continue;
+			
+			// Skip if this gamepad already has a per-game mapping for this game
+			// This prevents overriding user's custom per-game settings
+			if (gamepad->isPerGameMapping())
+			{
+				DEBUG_LOG(INPUT, "Gamepad %d already has a per-game mapping, skipping", i);
+				continue;
+			}
+				
+			// Example custom mapping for Virtua Fighter 4
+			// This will map DC_BTN_Y to DC_BTN_A and DC_BTN_B to DC_BTN_X
+			// Clear existing mappings first
+			u32 y_btn_code = mapping->get_button_code(0, DC_BTN_Y);
+			u32 b_btn_code = mapping->get_button_code(0, DC_BTN_B);
+			
+			if (y_btn_code != 0)
+			{
+				mapping->clear_button(0, DC_BTN_Y);
+				mapping->set_button(0, DC_BTN_A, y_btn_code);
+			}
+			
+			if (b_btn_code != 0)
+			{
+				mapping->clear_button(0, DC_BTN_B);
+				mapping->set_button(0, DC_BTN_X, b_btn_code);
+			}
+			
+			// Apply other custom mappings as needed
+			
+			// Save the mapping with game-specific flag
+			gamepad->setPerGameMapping(true);
+			gamepad->save_mapping();
+		}
+		
+		INFO_LOG(INPUT, "Applied custom control mapping for Virtua Fighter 4");
+	}
+	// You can add more game IDs with their specific mappings here
+	else if (settings.content.gameId == "VF4 EVOLUTION JAPAN") 
+	{
+		// Similar mapping for VF4 Evolution
+		DEBUG_LOG(INPUT, "Applying predefined control mapping for game %s", settings.content.gameId.c_str());
+		
+		// Apply the same mapping as VF4
+		for (int i = 0; i < GamepadDevice::GetGamepadCount(); i++)
+		{
+			std::shared_ptr<GamepadDevice> gamepad = GamepadDevice::GetGamepad(i);
+			if (gamepad == nullptr || !gamepad->remappable())
+				continue;
+				
+			std::shared_ptr<InputMapping> mapping = gamepad->get_input_mapping();
+			if (mapping == nullptr)
+				continue;
+			
+			// Skip if this gamepad already has a per-game mapping for this game
+			if (gamepad->isPerGameMapping())
+			{
+				DEBUG_LOG(INPUT, "Gamepad %d already has a per-game mapping, skipping", i);
+				continue;
+			}
+				
+			u32 y_btn_code = mapping->get_button_code(0, DC_BTN_Y);
+			u32 b_btn_code = mapping->get_button_code(0, DC_BTN_B);
+			
+			if (y_btn_code != 0)
+			{
+				mapping->clear_button(0, DC_BTN_Y);
+				mapping->set_button(0, DC_BTN_A, y_btn_code);
+			}
+			
+			if (b_btn_code != 0)
+			{
+				mapping->clear_button(0, DC_BTN_B);
+				mapping->set_button(0, DC_BTN_X, b_btn_code);
+			}
+			
+			gamepad->setPerGameMapping(true);
+			gamepad->save_mapping();
+		}
+		
+		INFO_LOG(INPUT, "Applied custom control mapping for VF4 Evolution");
+	}
+	// Custom mapping for T13003N Toystory 2- Swapping D-pad and analog stick
+	else if (settings.content.gameId == "T13003N") 
+	{
+		DEBUG_LOG(INPUT, "Applying predefined control mapping for game %s", settings.content.gameId.c_str());
+		
+		for (int i = 0; i < GamepadDevice::GetGamepadCount(); i++)
+		{
+			std::shared_ptr<GamepadDevice> gamepad = GamepadDevice::GetGamepad(i);
+			if (gamepad == nullptr || !gamepad->remappable())
+				continue;
+				
+			std::shared_ptr<InputMapping> mapping = gamepad->get_input_mapping();
+			if (mapping == nullptr)
+				continue;
+			
+			// Skip if this gamepad already has a per-game mapping for this game
+			if (gamepad->isPerGameMapping())
+			{
+				DEBUG_LOG(INPUT, "Gamepad %d already has a per-game mapping, skipping", i);
+				continue;
+			}
+			
+			// Swap D-pad and Analog stick
+			// First get all the current mappings
+			std::pair<u32, bool> dpad_up = mapping->get_axis_code(0, DC_DPAD_UP);
+			std::pair<u32, bool> dpad_down = mapping->get_axis_code(0, DC_DPAD_DOWN);
+			std::pair<u32, bool> dpad_left = mapping->get_axis_code(0, DC_DPAD_LEFT);
+			std::pair<u32, bool> dpad_right = mapping->get_axis_code(0, DC_DPAD_RIGHT);
+			
+			std::pair<u32, bool> analog_up = mapping->get_axis_code(0, DC_AXIS_UP);
+			std::pair<u32, bool> analog_down = mapping->get_axis_code(0, DC_AXIS_DOWN);
+			std::pair<u32, bool> analog_left = mapping->get_axis_code(0, DC_AXIS_LEFT);
+			std::pair<u32, bool> analog_right = mapping->get_axis_code(0, DC_AXIS_RIGHT);
+			
+			// Also handle the button versions of the D-pad controls
+			u32 dpad_up_btn = mapping->get_button_code(0, DC_DPAD_UP);
+			u32 dpad_down_btn = mapping->get_button_code(0, DC_DPAD_DOWN);
+			u32 dpad_left_btn = mapping->get_button_code(0, DC_DPAD_LEFT);
+			u32 dpad_right_btn = mapping->get_button_code(0, DC_DPAD_RIGHT);
+			
+			// Clear all existing mappings for these controls
+			mapping->clear_axis(0, DC_DPAD_UP);
+			mapping->clear_axis(0, DC_DPAD_DOWN);
+			mapping->clear_axis(0, DC_DPAD_LEFT);
+			mapping->clear_axis(0, DC_DPAD_RIGHT);
+			
+			mapping->clear_axis(0, DC_AXIS_UP);
+			mapping->clear_axis(0, DC_AXIS_DOWN);
+			mapping->clear_axis(0, DC_AXIS_LEFT);
+			mapping->clear_axis(0, DC_AXIS_RIGHT);
+			
+			mapping->clear_button(0, DC_DPAD_UP);
+			mapping->clear_button(0, DC_DPAD_DOWN);
+			mapping->clear_button(0, DC_DPAD_LEFT);
+			mapping->clear_button(0, DC_DPAD_RIGHT);
+			
+			// Swap the axis controls
+			if (analog_up.first != (u32)-1)
+				mapping->set_axis(0, DC_DPAD_UP, analog_up.first, analog_up.second);
+			
+			if (analog_down.first != (u32)-1)
+				mapping->set_axis(0, DC_DPAD_DOWN, analog_down.first, analog_down.second);
+			
+			if (analog_left.first != (u32)-1)
+				mapping->set_axis(0, DC_DPAD_LEFT, analog_left.first, analog_left.second);
+			
+			if (analog_right.first != (u32)-1)
+				mapping->set_axis(0, DC_DPAD_RIGHT, analog_right.first, analog_right.second);
+			
+			if (dpad_up.first != (u32)-1)
+				mapping->set_axis(0, DC_AXIS_UP, dpad_up.first, dpad_up.second);
+			
+			if (dpad_down.first != (u32)-1)
+				mapping->set_axis(0, DC_AXIS_DOWN, dpad_down.first, dpad_down.second);
+			
+			if (dpad_left.first != (u32)-1)
+				mapping->set_axis(0, DC_AXIS_LEFT, dpad_left.first, dpad_left.second);
+			
+			if (dpad_right.first != (u32)-1)
+				mapping->set_axis(0, DC_AXIS_RIGHT, dpad_right.first, dpad_right.second);
+			
+			// Map button versions of D-pad to analog stick
+			if (dpad_up_btn != (u32)-1)
+				mapping->set_button(0, DC_AXIS_UP, dpad_up_btn);
+			
+			if (dpad_down_btn != (u32)-1)
+				mapping->set_button(0, DC_AXIS_DOWN, dpad_down_btn);
+			
+			if (dpad_left_btn != (u32)-1)
+				mapping->set_button(0, DC_AXIS_LEFT, dpad_left_btn);
+			
+			if (dpad_right_btn != (u32)-1)
+				mapping->set_button(0, DC_AXIS_RIGHT, dpad_right_btn);
+			
+			// Save the mapping with game-specific flag
+			gamepad->setPerGameMapping(true);
+			gamepad->save_mapping();
+		}
+		
+		INFO_LOG(INPUT, "Applied custom D-pad/analog stick swap for game with ID: T13003N");
+	}
 }
