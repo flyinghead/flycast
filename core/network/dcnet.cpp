@@ -25,6 +25,9 @@
 #include "hw/bba/bba.h"
 #include "cfg/option.h"
 #include "stdclass.h"
+#ifndef LIBRETRO
+#include "cfg/cfg.h"
+#endif
 
 #include <thread>
 #include <memory>
@@ -481,17 +484,24 @@ void DCNetThread::run()
 			port = "7655";
 		else
 			port = "7654";
+		std::string hostname = "dcnet.flyca.st";
+#ifndef LIBRETRO
+		hostname = cfgLoadStr("network", "DCNetServer", hostname);
+#endif
 		asio::ip::tcp::resolver resolver(*io_context);
 		asio::error_code ec;
-		auto it = resolver.resolve("dcnet.flyca.st", port, ec);
+		auto it = resolver.resolve(hostname, port, ec);
 		if (ec)
 			throw FlycastException(ec.message());
 		asio::ip::tcp::endpoint endpoint = *it.begin();
 
-		if (config::EmulateBBA)
+		if (config::EmulateBBA) {
 			ethSocket = std::make_unique<EthSocket>(*io_context, endpoint);
-		else
+		}
+		else {
+			toModem.clear();
 			pppSocket = std::make_unique<PPPTcpSocket>(*io_context, endpoint);
+		}
 		io_context->run();
 	} catch (const FlycastException& e) {
 		ERROR_LOG(NETWORK, "DCNet connection error: %s", e.what());
