@@ -2470,6 +2470,9 @@ struct DreamLinkPurupuru : public maple_sega_purupuru
 {
 	std::shared_ptr<DreamLink> dreamlink;
 
+	//! Number of consecutive stop conditions sent
+	u32 stopSendCount = 0;
+
 	DreamLinkPurupuru(std::shared_ptr<DreamLink> dreamlink) : dreamlink(dreamlink) {
 	}
 
@@ -2477,7 +2480,18 @@ struct DreamLinkPurupuru : public maple_sega_purupuru
 	{
 		if (cmd == MDCF_BlockWrite || cmd == MDCF_SetCondition) {
 			const MapleMsg *msg = reinterpret_cast<const MapleMsg*>(dma_buffer_in - 4);
-			dreamlink->send(*msg);
+			const u32 functionId = *(u32*)dma_buffer_in;
+			const u32 condition = *(u32*)(dma_buffer_in + 4);
+			if (functionId == MFID_8_Vibration && condition == 0x00000010) {
+				++stopSendCount;
+			} else {
+				stopSendCount = 0;
+			}
+
+			// Only send 2 consecutive stop commands; ignore the rest to avoid unnecessary communications
+			if (stopSendCount <= 2) {
+				dreamlink->send(*msg);
+			}
 		}
 		return maple_sega_purupuru::dma(cmd);
 	}

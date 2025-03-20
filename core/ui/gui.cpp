@@ -2035,7 +2035,7 @@ static void gui_settings_controls(bool& maple_devices_changed)
 #endif
 #ifdef USE_DREAMCASTCONTROLLER
 	OptionCheckbox("Use Physical VMU Memory", config::UsePhysicalVmuMemory,
-		"Enables direct read/write access to physical VMU memory via DreamPicoPort/Dreamconn.");
+		"Enables direct read/write access to physical VMU memory via DreamPicoPort/DreamConn.");
 #endif
 
 	ImGui::Spacing();

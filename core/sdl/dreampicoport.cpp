@@ -915,12 +915,18 @@ bool DreamPicoPort::queryInterfaceVersion() {
 		return false;
 	}
 
-	try {
-		interface_version = std::stod(buffer);
-	}
-	catch(const std::exception&) {
+	if (strncmp("*failed", buffer.c_str(), 7)) {
 		// Using a version of firmware before "XV" was available
 		interface_version = 0.0;
+	}
+	else {
+		try {
+			interface_version = std::stod(buffer);
+		}
+		catch(const std::exception&) {
+			WARN_LOG(INPUT, "DreamPicoPort[%d] command XV received invalid response: %s", software_bus, buffer.c_str());
+			return false;
+		}
 	}
 
 	return true;
