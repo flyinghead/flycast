@@ -905,7 +905,7 @@ bool DreamPicoPort::queryInterfaceVersion() {
 		return false;
 	}
 
-	if (strncmp("*failed", buffer.c_str(), 7)) {
+	if (0 == strncmp("*failed", buffer.c_str(), 7) || 0 == strncmp("0: failed", buffer.c_str(), 9)) {
 		// Using a version of firmware before "XV" was available
 		interface_version = 0.0;
 	}
