@@ -79,10 +79,6 @@ public:
 
     u32 getFunctionCode(int forPort) const override;
 
-	bool hasVmu() const override;
-
-	bool hasRumble() const override;
-
 	int getDefaultBus() const override;
 
 	void changeBus(int newBus);

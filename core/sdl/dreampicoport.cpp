@@ -690,16 +690,6 @@ u32 DreamPicoPort::getFunctionCode(int forPort) const {
 	return SWAP32(mask);
 }
 
-bool DreamPicoPort::hasVmu() const {
-	// TODO: this is left for backward compatibility
-	return expansionDevs & 1;
-}
-
-bool DreamPicoPort::hasRumble() const {
-	// TODO: this is left for backward compatibility
-	return expansionDevs & 2;
-}
-
 int DreamPicoPort::getDefaultBus() const {
 	if (!is_hardware_bus_implied && !is_single_device) {
 		return hardware_bus;

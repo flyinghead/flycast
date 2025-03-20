@@ -86,12 +86,6 @@ public:
     //! @return the device type for the given port
     virtual u32 getFunctionCode(int forPort) const = 0;
 
-	//! @return true iff the controller has a VMU
-	virtual bool hasVmu() const = 0;
-
-	//! @return true iff the controller has a rumble pack
-	virtual bool hasRumble() const = 0;
-
 	//! @return the default bus number to select for this controller or -1 to not select a default
 	virtual int getDefaultBus() const {
 		return -1;
