@@ -46,7 +46,7 @@
 #include <setupapi.h>
 #endif
 
-void createDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink, bool gameStart);
+void createDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink, bool gameStart, bool gameEnd);
 void tearDownDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink);
 
 bool DreamLinkGamepad::isDreamcastController(int deviceIndex)
@@ -139,7 +139,7 @@ void DreamLinkGamepad::registered()
 		dreamlink->connect();
 
 		// Create DreamLink Maple Devices here just in case game is already running
-		createDreamLinkDevices(dreamlink, false);
+		createDreamLinkDevices(dreamlink, false, false);
 	}
 }
 
@@ -147,7 +147,7 @@ void DreamLinkGamepad::handleEvent(Event event, void *arg)
 {
 	DreamLinkGamepad *gamepad = static_cast<DreamLinkGamepad*>(arg);
 	if (gamepad->dreamlink != nullptr && event != Event::Terminate) {
-		createDreamLinkDevices(gamepad->dreamlink, event == Event::Start);
+		createDreamLinkDevices(gamepad->dreamlink, event == Event::Start, event == Event::Terminate);
 	}
 
     if (gamepad->dreamlink != nullptr && event == Event::Terminate)

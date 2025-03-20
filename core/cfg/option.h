@@ -485,7 +485,6 @@ extern Option<bool> GDBWaitForConnection;
 extern Option<bool> UseReios;
 extern Option<bool> FastGDRomLoad;
 extern Option<bool> RamMod32MB;
-extern Option<bool> UsePhysicalVmuMemory;
 
 extern Option<bool> OpenGlChecks;
 
@@ -544,6 +543,7 @@ extern Option<bool, false> UseRawInput;
 #else
 constexpr bool UseRawInput = false;
 #endif
+extern Option<bool> UsePhysicalVmuMemory;
 
 #ifdef USE_LUA
 extern Option<std::string, false> LuaFileName;

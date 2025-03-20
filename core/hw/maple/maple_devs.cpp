@@ -2500,7 +2500,21 @@ struct DreamLinkPurupuru : public maple_sega_purupuru
 static std::list<std::shared_ptr<DreamLinkVmu>> dreamLinkVmus[2];
 static std::list<std::shared_ptr<DreamLinkPurupuru>> dreamLinkPurupurus;
 
-void createDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink, bool gameStart)
+static void disablePhysicalVmuMemoryOption()
+{
+	// Make setting read only
+	config::UsePhysicalVmuMemory.override(config::UsePhysicalVmuMemory);
+}
+
+static void enablePhysicalVmuMemoryOption()
+{
+	// Remove read-only setting and preserve current value
+	bool val = config::UsePhysicalVmuMemory;
+	config::UsePhysicalVmuMemory.reset();
+	config::UsePhysicalVmuMemory.set(val);
+}
+
+void createDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink, bool gameStart, bool gameEnd)
 {
 	const int bus = dreamlink->getBus();
 
@@ -2542,6 +2556,15 @@ void createDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink, bool gameStart
 				if (!vmuFound) {
 					dreamLinkVmus[i].push_back(vmu);
 				}
+			}
+
+			if (gameStart)
+			{
+				disablePhysicalVmuMemoryOption();
+			}
+			else if (gameEnd)
+			{
+				enablePhysicalVmuMemoryOption();
 			}
 		}
 		else if (i == 1 && ((dreamlink->getFunctionCode(i + 1) & MFID_8_Vibration) || (dev != nullptr && dev->get_device_type() == MDT_PurupuruPack)))
@@ -2599,6 +2622,17 @@ void tearDownDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink)
 				++iter;
 			}
 		}
+	}
+
+	std::size_t dreamLinkVmuCount = 0;
+	for (int i = 0; i < 2; ++i)
+	{
+		dreamLinkVmuCount += dreamLinkVmus[i].size();
+	}
+
+	if (dreamLinkVmuCount == 0)
+	{
+		enablePhysicalVmuMemoryOption();
 	}
 
 	for (std::list<std::shared_ptr<DreamLinkPurupuru>>::const_iterator iter = dreamLinkPurupurus.begin();

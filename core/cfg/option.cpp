@@ -129,7 +129,6 @@ Option<bool> GDBWaitForConnection("Debug.GDBWaitForConnection");
 Option<bool> UseReios("UseReios");
 Option<bool> FastGDRomLoad("FastGDRomLoad", false);
 Option<bool> RamMod32MB("Dreamcast.RamMod32MB", false);
-Option<bool> UsePhysicalVmuMemory("Dreamcast.UsePhysicalVmuMemory", false);
 
 Option<bool> OpenGlChecks("OpenGlChecks", false, "validate");
 
@@ -204,6 +203,7 @@ Option<bool> PerGameVmu("PerGameVmu", false, "config");
 #ifdef _WIN32
 Option<bool, false> UseRawInput("RawInput", false, "input");
 #endif
+Option<bool> UsePhysicalVmuMemory("UsePhysicalVmuMemory", false);
 
 #ifdef USE_LUA
 Option<std::string, false> LuaFileName("LuaFileName", "flycast.lua");
