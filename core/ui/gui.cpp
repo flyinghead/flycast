@@ -2841,7 +2841,7 @@ static void gui_settings_advanced()
     {
     	OptionCheckbox("HLE BIOS", config::UseReios, "Force high-level BIOS emulation");
         OptionCheckbox("Multi-threaded emulation", config::ThreadedRendering,
-        	"Run the emulated CPU and GPU on different threads");
+        		"Run the emulated CPU and GPU on different threads");
 #ifndef __ANDROID
         OptionCheckbox("Serial Console", config::SerialConsole,
         		"Dump the Dreamcast serial console to stdout");
@@ -2860,7 +2860,7 @@ static void gui_settings_advanced()
         ShowHelpMarker("Log debug information to flycast.log");
 #ifdef SENTRY_UPLOAD
         OptionCheckbox("Automatically Report Crashes", config::UploadCrashLogs,
-    		"Automatically upload crash reports to sentry.io to help in troubleshooting. No personal information is included.");
+        		"Automatically upload crash reports to sentry.io to help in troubleshooting. No personal information is included.");
 #endif
     }
 
