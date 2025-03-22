@@ -108,28 +108,24 @@ private:
 	{
 		if (sending)
 			return;
-		if ((sendBufSize > 1 && sendBuffer[sendBufSize - 1] == 0x7e)
-				|| sendBufSize == sendBuffer.size())
-		{
-			pppdump(sendBuffer.data(), sendBufSize, true);
-			sending = true;
-			asio::async_write(socket, asio::buffer(sendBuffer, sendBufSize),
-				[this](const std::error_code& ec, size_t len)
+		pppdump(sendBuffer.data(), sendBufSize, true);
+		sending = true;
+		asio::async_write(socket, asio::buffer(sendBuffer, sendBufSize),
+			[this](const std::error_code& ec, size_t len)
+			{
+				if (ec)
 				{
-					if (ec)
-					{
-						ERROR_LOG(NETWORK, "Send error: %s", ec.message().c_str());
-						close();
-						return;
-					}
-					sending = false;
-					sendBufSize -= len;
-					if (sendBufSize > 0) {
-						memmove(&sendBuffer[0], &sendBuffer[len], sendBufSize);
-						doSend();
-					}
-				});
-		}
+					ERROR_LOG(NETWORK, "Send error: %s", ec.message().c_str());
+					close();
+					return;
+				}
+				sending = false;
+				sendBufSize -= len;
+				if (sendBufSize > 0) {
+					memmove(&sendBuffer[0], &sendBuffer[len], sendBufSize);
+					doSend();
+				}
+			});
 	}
 
 	void close() {
