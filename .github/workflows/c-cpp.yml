@@ -145,19 +145,15 @@ jobs:
           rm artifact/bin/flycast.exe
         if: matrix.config.name == 'x86_64-w64-mingw32'
 
-      - name: Configure AWS Credentials
-        id: aws-credentials
-        uses: aws-actions/configure-aws-credentials@v4
+      - name: Setup Rclone
+        uses: AnimMouse/setup-rclone@v1
         with:
-          aws-access-key-id: AKIAJOZQS4H2PHQWYFCA
-          aws-secret-access-key: ${{ secrets.S3_SECRET_KEY }}
-          aws-region: us-east-2
-        if: github.repository == 'flyinghead/flycast' && github.event_name == 'push' && matrix.config.destDir != ''
+          rclone_config: ${{ secrets.RCLONE_CONFIG }}
 
       - name: Upload to S3
-        run: aws s3 sync artifact/bin s3://flycast-builds/${{ matrix.config.destDir }}/${GITHUB_REF#refs/}-$GITHUB_SHA --acl public-read --follow-symlinks
+        run: rclone copy artifact/bin scaleway:flycast-builds/${{ matrix.config.destDir }}/${GITHUB_REF#refs/}-$GITHUB_SHA
         shell: bash
-        if: ${{ steps.aws-credentials.outputs.aws-account-id != '' }}
+        if: github.repository == 'flyinghead/flycast' && github.event_name == 'push' && matrix.config.destDir != ''
 
       - name: Setup Sentry CLI
         uses: mathieu-bour/setup-sentry-cli@v2

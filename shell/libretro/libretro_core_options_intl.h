@@ -4156,8 +4156,8 @@ struct retro_core_options_v2 options_ast = {
 #define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_BE "Эмуляваць замест мадэма шырокапалосны Ethernet-адаптар. (Патрабуецца перазапуск)"
 #define CORE_OPTION_NAME_UPNP_LABEL_BE "Уключыць UPnP"
 #define CORE_OPTION_NAME_UPNP_INFO_0_BE "Выкарыстоўваць UPnP для аўтаматычнай наладкі вашага Інтэрнэт-роўтара для анлайн-гульняў."
-#define CORE_OPTION_NAME_DCNET_LABEL_BE NULL
-#define CORE_OPTION_NAME_DCNET_INFO_0_BE NULL
+#define CORE_OPTION_NAME_DCNET_LABEL_BE "Выкарыстоўваць DCNet (эксперыментальна)"
+#define CORE_OPTION_NAME_DCNET_INFO_0_BE "Злучыцца з эксперыментальным воблачным сэрвісам DCNet."
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_BE "Унутраная раздзяляльнасць"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_BE "Змяніць раздзяляльнасць рэндэрынгу."
 #define OPTION_VAL_320X240_BE "320x240 (напалову)"
@@ -14266,12 +14266,12 @@ struct retro_core_options_v2 options_cht = {
 #define CATEGORY_VIDEO_INFO_0_CS "Konfigurace rozlišení, nastavení průhlednosti a vizuálních efektů nezávislých na pořadí."
 #define CATEGORY_PERFORMANCE_LABEL_CS "Výkon"
 #define CATEGORY_PERFORMANCE_INFO_0_CS "Konfigurace nastavení vykreslování ve vláknech a přeskakování snímků."
-#define CATEGORY_HACKS_LABEL_CS NULL
+#define CATEGORY_HACKS_LABEL_CS "Emulace hacků"
 #define CATEGORY_HACKS_INFO_0_CS "Konfigurace přepisu širokoúhlého zobrazení, rychlosti načítání GD-ROM a nastavení výměny textur."
 #define CATEGORY_INPUT_LABEL_CS "Vstup"
 #define CATEGORY_INPUT_INFO_0_CS "Konfigurace nastavení gamepadu a světelné pistole."
-#define CATEGORY_EXPANSIONS_LABEL_CS NULL
-#define CATEGORY_EXPANSIONS_INFO_0_CS NULL
+#define CATEGORY_EXPANSIONS_LABEL_CS "Rozšiřující sloty ovladače"
+#define CATEGORY_EXPANSIONS_INFO_0_CS "Vyberte zařízení (VMU, rumble device) zapojené do každého rozšiřujícího slotu ovladače."
 #define CATEGORY_VMU_LABEL_CS "Jednotka Vizuální Paměti"
 #define CATEGORY_VMU_INFO_0_CS "Konfigurace ukládacích souborů VMU pro jednotlivé hry a nastavení viditelnosti VMU na obrazovce."
 #define CORE_OPTION_NAME_REGION_LABEL_CS NULL
@@ -14293,28 +14293,28 @@ struct retro_core_options_v2 options_cht = {
 #define CORE_OPTION_NAME_BOOT_TO_BIOS_INFO_0_CS "Spustit přímo do menu Dreamcast BIOS."
 #define CORE_OPTION_NAME_ENABLE_DSP_LABEL_CS "Povolit DSP"
 #define CORE_OPTION_NAME_ENABLE_DSP_INFO_0_CS "Umožňuje emulaci zvukového DSP (digitálního signálového procesoru) konzole Dreamcast. Zlepšuje přesnost generovaného zvuku, ale zvyšuje nároky na výkon."
-#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_CS NULL
-#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_CS NULL
+#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_CS "Povolení tlačítek služby Arcade"
+#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_CS "Povoluje tlačítko SERVICE pro arkádové hry, které slouží k zadání nastavení kabinetu."
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_CS "Nastavení her NAOMI na volné hraní"
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_CS "Upravte nastavení mincí ve hře na volnou hru."
 #define CORE_OPTION_NAME_EMULATE_BBA_LABEL_CS "Emulace širokopásmového adaptéru"
 #define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_CS "Místo modemu emulujte širokopásmový adaptér ethernetu. (nutný restart)"
 #define CORE_OPTION_NAME_UPNP_LABEL_CS "Povolit UPnP"
 #define CORE_OPTION_NAME_UPNP_INFO_0_CS "Pomocí UPnP můžete automaticky nakonfigurovat svůj internetový směrovač pro online hry."
-#define CORE_OPTION_NAME_DCNET_LABEL_CS NULL
-#define CORE_OPTION_NAME_DCNET_INFO_0_CS NULL
+#define CORE_OPTION_NAME_DCNET_LABEL_CS "Použití sítě DCNet (experimentální)"
+#define CORE_OPTION_NAME_DCNET_INFO_0_CS "Připojení k experimentální cloudové službě DCNet."
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_CS "Vnitřní rozlišení"
-#define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_CS "Úprava Rozlišení Vykreslování."
+#define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_CS "Úprava rozlišení vykreslování."
 #define OPTION_VAL_320X240_CS "320x240 (Poloviční)"
-#define OPTION_VAL_640X480_CS NULL
+#define OPTION_VAL_640X480_CS "640x480 (nativní)"
 #define OPTION_VAL_800X600_CS NULL
-#define OPTION_VAL_960X720_CS NULL
+#define OPTION_VAL_960X720_CS "960 x 720 (x1.5)"
 #define OPTION_VAL_1024X768_CS NULL
 #define OPTION_VAL_1280X960_CS NULL
-#define OPTION_VAL_1440X1080_CS NULL
+#define OPTION_VAL_1440X1080_CS "1440 x 1080 (x2.25)"
 #define OPTION_VAL_1600X1200_CS NULL
 #define OPTION_VAL_1920X1440_CS NULL
-#define OPTION_VAL_2560X1920_CS NULL
+#define OPTION_VAL_2560X1920_CS "2560 x 1920 (x4)"
 #define OPTION_VAL_2880X2160_CS NULL
 #define OPTION_VAL_3200X2400_CS NULL
 #define OPTION_VAL_3840X2880_CS NULL
@@ -14332,7 +14332,7 @@ struct retro_core_options_v2 options_cht = {
 #define OPTION_VAL_11520X8640_CS NULL
 #define OPTION_VAL_12160X9120_CS NULL
 #define OPTION_VAL_12800X9600_CS NULL
-#define CORE_OPTION_NAME_CABLE_TYPE_LABEL_CS "Typ Kabelu"
+#define CORE_OPTION_NAME_CABLE_TYPE_LABEL_CS "Typ kabelu"
 #define CORE_OPTION_NAME_CABLE_TYPE_INFO_0_CS "Typ výstupního signálu. Nejvíce podporovaný je 'TV (Kompozitní)'."
 #define OPTION_VAL_VGA_CS NULL
 #define OPTION_VAL_TV_RGB_CS NULL
@@ -14346,7 +14346,7 @@ struct retro_core_options_v2 options_cht = {
 #define OPTION_VAL_HORIZONTAL_CS "Horizontální"
 #define OPTION_VAL_VERTICAL_CS "Vertikální"
 #define CORE_OPTION_NAME_ALPHA_SORTING_LABEL_CS "Třídění Alpha"
-#define CORE_OPTION_NAME_ALPHA_SORTING_INFO_0_CS NULL
+#define CORE_OPTION_NAME_ALPHA_SORTING_INFO_0_CS "Vyberte způsob řazení průhledných polygonů."
 #define OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_CS "Per-Strip (rychlé, nejméně přesné)"
 #define OPTION_VAL_PER_TRIANGLE_NORMAL_CS "Per-Triangle (normální)"
 #define OPTION_VAL_PER_PIXEL_ACCURATE_CS "Per-Pixel (přesné, ale nejpomalejší)"
@@ -14363,7 +14363,7 @@ struct retro_core_options_v2 options_cht = {
 #define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_CS "Povolení Vyrovnávací Paměti RTT (Render To Texture)"
 #define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_CS "Kopírování vykreslených textur z GPU zpět do VRAM. Tato možnost je obvykle povolena u her, které ji vyžadují. Pokud je povolena, je vypnuto zvyšování rozlišení vykreslovaných textur a může dojít ke snížení výkonu."
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_CS "Mipmapování"
-#define CORE_OPTION_NAME_MIPMAPPING_INFO_0_CS NULL
+#define CORE_OPTION_NAME_MIPMAPPING_INFO_0_CS "Pokud je tato funkce povolena, textury použijí menší verzi sebe sama, když se objeví ve větší vzdálenosti, což může zvýšit výkon a snížit třpyt."
 #define CORE_OPTION_NAME_FOG_LABEL_CS "Efekty Mlhy"
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_CS "Modifikátor Hlasitosti"
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_CS "Funkce grafického procesoru Dreamcast, která se obvykle používá ve hrách ke kreslení stínů objektů. Tato funkce by měla být normálně povolena - dopad na výkon je obvykle minimální až zanedbatelný."
@@ -14385,11 +14385,11 @@ struct retro_core_options_v2 options_cht = {
 #define OPTION_VAL_4_CS NULL
 #define OPTION_VAL_6_CS NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_CS "Zvýšení Rozlišení Textur Max. Filtrovaná Velikost"
-#define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_INFO_0_CS NULL
+#define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_INFO_0_CS "Vyberte maximální hodnotu velikosti textury, která má být zvětšena, pokud je velikost textury větší než vybraná hodnota, nebude zvětšena."
 #define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_CS "Nativní interpolace hloubky"
 #define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_CS "Pomáhá řešit problémy s poškozením textur a hloubkou na grafických procesorech AMD. V některých případech může pomoci i GPU Intel."
-#define CORE_OPTION_NAME_FIX_UPSCALE_BLEEDING_EDGE_LABEL_CS NULL
-#define CORE_OPTION_NAME_FIX_UPSCALE_BLEEDING_EDGE_INFO_0_CS NULL
+#define CORE_OPTION_NAME_FIX_UPSCALE_BLEEDING_EDGE_LABEL_CS "Fix Upscalingu krvacející okraj"
+#define CORE_OPTION_NAME_FIX_UPSCALE_BLEEDING_EDGE_INFO_0_CS "Pomáhá v případě krvácení textur při upscalingu. Jeho vypnutí může pomoci, pokud se pixely při upscalingu ve 2D hrách (MVC2, CVS, KOF atd.) deformují."
 #define CORE_OPTION_NAME_THREADED_RENDERING_LABEL_CS "Vykreslování Vláken"
 #define CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_CS "Spouští GPU a CPU v různých vláknech. Důrazně doporučujeme."
 #define CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_CS "Automatické Přeskočení Snímků"
@@ -14450,11 +14450,11 @@ struct retro_core_options_v2 options_cht = {
 #define OPTION_VAL_490_CS NULL
 #define OPTION_VAL_500_CS NULL
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_CS "Načíst Vlastní Textury"
-#define CORE_OPTION_NAME_CUSTOM_TEXTURES_INFO_0_CS NULL
+#define CORE_OPTION_NAME_CUSTOM_TEXTURES_INFO_0_CS "Načtení vlastních textur umístěných ve složce 'system/dc/textures/<game-id>/'."
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_CS "Skladiště Textur"
-#define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_CS NULL
+#define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_CS "Pokaždé, když hra použije novou texturu, uloží ji jako soubor .png do složky 'system/dc/texdump/<game-id>/'."
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_CS "Analogova Páčka Mrtvé Zóny"
-#define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_INFO_0_CS NULL
+#define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_INFO_0_CS "Zvolte, jak daleko musíte zatlačit na analogovou páčku, než se začne zpracovávat."
 #define OPTION_VAL_0_CS NULL
 #define OPTION_VAL_5_CS NULL
 #define OPTION_VAL_10_CS NULL
@@ -14463,9 +14463,9 @@ struct retro_core_options_v2 options_cht = {
 #define OPTION_VAL_25_CS NULL
 #define OPTION_VAL_30_CS NULL
 #define CORE_OPTION_NAME_TRIGGER_DEADZONE_LABEL_CS "Spouštěč Mrtvé Zóny"
-#define CORE_OPTION_NAME_TRIGGER_DEADZONE_INFO_0_CS NULL
+#define CORE_OPTION_NAME_TRIGGER_DEADZONE_INFO_0_CS "Zvolte, jak dlouho musíte stisknout spoušť, než se začne zpracovávat."
 #define CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_CS "Digitální Spouštěče"
-#define CORE_OPTION_NAME_DIGITAL_TRIGGERS_INFO_0_CS NULL
+#define CORE_OPTION_NAME_DIGITAL_TRIGGERS_INFO_0_CS "Pokud je tato funkce povolena, budou se spouštěče chovat jako běžná tlačítka, což znamená, že budou zpracovávány buď jako plně stisknuté, nebo jako nestisknuté, bez mezistupně."
 #define CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_CS "Digitální výstupy pro vysílání"
 #define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_CS "Vysílání digitálních výstupů a stavu vynucene zpětné vazby na portu TCP 8000. Kompatibilní s volbou MAME \"-výstupní síť\"."
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_CS "Zobrazit Nastavení Světelné Pistole"
@@ -14505,28 +14505,28 @@ struct retro_core_options_v2 options_cht = {
 #define CORE_OPTION_NAME_LIGHTGUN2_CROSSHAIR_LABEL_CS "Zobrazení Kříže Zbraně 2"
 #define CORE_OPTION_NAME_LIGHTGUN3_CROSSHAIR_LABEL_CS "Zobrazení Kříže Zbraně 3"
 #define CORE_OPTION_NAME_LIGHTGUN4_CROSSHAIR_LABEL_CS "Zobrazení Kříže Zbraně 4"
-#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_LABEL_CS NULL
-#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_INFO_0_CS NULL
+#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_LABEL_CS "Zařízení v rozšiřujícím slotu A1"
+#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_INFO_0_CS "Vyberte zařízení zapojené do rozšiřujícího slotu A1 (port A slot 1)."
 #define OPTION_VAL_VMU_CS NULL
-#define OPTION_VAL_PURUPURU_CS NULL
+#define OPTION_VAL_PURUPURU_CS "Balíček vibrací"
 #define OPTION_VAL_NONE_CS "Žádné"
-#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_LABEL_CS NULL
-#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_INFO_0_CS NULL
-#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT1_LABEL_CS NULL
-#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT1_INFO_0_CS NULL
-#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT2_LABEL_CS NULL
-#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT2_INFO_0_CS NULL
-#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT1_LABEL_CS NULL
-#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT1_INFO_0_CS NULL
-#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT2_LABEL_CS NULL
-#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT2_INFO_0_CS NULL
-#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT1_LABEL_CS NULL
-#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT1_INFO_0_CS NULL
-#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_LABEL_CS NULL
-#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_INFO_0_CS NULL
+#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_LABEL_CS "Zařízení v rozšiřujícím slotu A2"
+#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_INFO_0_CS "Vyberte zařízení zapojené do rozšiřujícího slotu A2 (port A slot 2)."
+#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT1_LABEL_CS "Zařízení v rozšiřujícím slotu B1"
+#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT1_INFO_0_CS "Vyberte zařízení zapojené do rozšiřujícího slotu B1 (port B slot 1)."
+#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT2_LABEL_CS "Zařízení v rozšiřujícím slotu B2"
+#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT2_INFO_0_CS "Vyberte zařízení zapojené do rozšiřujícího slotu B2 (port B slot 2)."
+#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT1_LABEL_CS "Zařízení v rozšiřujícím slotu C1"
+#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT1_INFO_0_CS "Vyberte zařízení zapojené do rozšiřujícího slotu C1 (port C slot 1)."
+#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT2_LABEL_CS "Zařízení v rozšiřujícím slotu C2"
+#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT2_INFO_0_CS "Vyberte zařízení zapojené do rozšiřujícího slotu C2 (port C slot 2)."
+#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT1_LABEL_CS "Zařízení v rozšiřujícím slotu D1"
+#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT1_INFO_0_CS "Vyberte zařízení zapojené do rozšiřujícího slotu D1 (port D slot 1)."
+#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_LABEL_CS "Zařízení v rozšiřujícím slotu D2"
+#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_INFO_0_CS "Vyberte zařízení zapojené do rozšiřujícího slotu D2 (port D slot 2)."
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CS "Vizuální Paměťové Jednotky/Systémy pro Jednotlivé Hry (VMU)"
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CAT_CS "VMUs Na-Hru"
-#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_CS NULL
+#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_CS "Pokud je vypnuto, všechny hry sdílejí až 8 souborů VMU (A1/A2/B1/B2/C1/C2/D1/D2) umístěných v systémové složce aplikace RetroArch.\nNastavení „VMU A1“ vytvoří pro každou spuštěnou hru jedinečný soubor VMU „A1“ ve složce uložení aplikace RetroArch.\nNastavení „Všechny VMU“ vytvoří pro každou spuštěnou hru až 8 jedinečných souborů VMU (A1/A2/B1/B2/C1/C2/D1/D2)."
 #define OPTION_VAL_VMU_A1_CS NULL
 #define OPTION_VAL_ALL_VMUS_CS NULL
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_CS "Vizuální paměťové jednotky/systémy (VMU) Zvuky"
@@ -36620,8 +36620,8 @@ struct retro_core_options_v2 options_fr = {
 #define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_GL "Emule o adaptador de banda ancha ethernet en lugar do módem. (Reiniciar obrigatorio)"
 #define CORE_OPTION_NAME_UPNP_LABEL_GL "Activar UPnP"
 #define CORE_OPTION_NAME_UPNP_INFO_0_GL "Use UPnP para configurar automaticamente o seu enrutador de Internet para xogos en liña."
-#define CORE_OPTION_NAME_DCNET_LABEL_GL NULL
-#define CORE_OPTION_NAME_DCNET_INFO_0_GL NULL
+#define CORE_OPTION_NAME_DCNET_LABEL_GL "Empregar DCNet (Experimental)"
+#define CORE_OPTION_NAME_DCNET_INFO_0_GL "Conectar ao servizo en nube experimental DCNet."
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_GL "Resolución interna"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_GL "Modificar a resolución do renderizado."
 #define OPTION_VAL_320X240_GL "320 x 240 (a metade)"

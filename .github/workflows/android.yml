@@ -70,20 +70,16 @@ jobs:
             mv libflycast.so.sym symbols/libflycast.so/$BUILD_ID
           done
 
-      - name: Configure AWS Credentials
-        id: aws-credentials
-        uses: aws-actions/configure-aws-credentials@v4
+      - name: Setup Rclone
+        uses: AnimMouse/setup-rclone@v1
         with:
-          aws-access-key-id: AKIAJOZQS4H2PHQWYFCA
-          aws-secret-access-key: ${{ secrets.S3_SECRET_KEY }}
-          aws-region: us-east-2
-        if: github.repository == 'flyinghead/flycast' && github.event_name == 'push'
+          rclone_config: ${{ secrets.RCLONE_CONFIG }}
 
       - name: Upload to S3
         run: |
           cp shell/android-studio/flycast/build/outputs/bundle/release/*.aab shell/android-studio/flycast/build/outputs/apk/release/
-          aws s3 sync shell/android-studio/flycast/build/outputs/apk/release s3://flycast-builds/android/${GITHUB_REF#refs/}-$GITHUB_SHA --acl public-read --exclude='*.json' --follow-symlinks
-        if: ${{ steps.aws-credentials.outputs.aws-account-id != '' }}
+          rclone copy shell/android-studio/flycast/build/outputs/apk/release scaleway:flycast-builds/android/${GITHUB_REF#refs/}-$GITHUB_SHA --exclude '*.json'
+        if: github.repository == 'flyinghead/flycast' && github.event_name == 'push'
 
       - name: Setup Sentry CLI
         uses: mathieu-bour/setup-sentry-cli@v2
