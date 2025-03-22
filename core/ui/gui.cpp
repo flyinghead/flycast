@@ -54,6 +54,7 @@
 #include "hw/pvr/Renderer_if.h"
 #if defined(USE_SDL)
 #include "sdl/sdl.h"
+#include "sdl/dreamlink.h"
 #endif
 
 #include "vgamepad.h"
@@ -434,7 +435,7 @@ static void gui_newFrame()
 	io.AddKeyEvent(ImGuiKey_GamepadDpadRight, ((kcode[0] & DC_DPAD_RIGHT) == 0));
 	io.AddKeyEvent(ImGuiKey_GamepadDpadUp, ((kcode[0] & DC_DPAD_UP) == 0));
 	io.AddKeyEvent(ImGuiKey_GamepadDpadDown, ((kcode[0] & DC_DPAD_DOWN) == 0));
-	
+
 	float analog;
 	analog = joyx[0] < 0 ? -(float)joyx[0] / 32768.f : 0.f;
 	io.AddKeyAnalogEvent(ImGuiKey_GamepadLStickLeft, analog > 0.1f, analog);
@@ -820,8 +821,8 @@ const char *maple_device_types[] =
 //	"Dreameye",
 };
 
-const char *maple_expansion_device_types[] = 
-{ 
+const char *maple_expansion_device_types[] =
+{
 	"None",
 	"Sega VMU",
 	"Vibration Pack",
@@ -2032,6 +2033,10 @@ static void gui_settings_controls(bool& maple_devices_changed)
 #if defined(_WIN32) && !defined(TARGET_UWP)
 	OptionCheckbox("Use Raw Input", config::UseRawInput, "Supports multiple pointing devices (mice, light guns) and keyboards");
 #endif
+#ifdef USE_DREAMCASTCONTROLLER
+	OptionCheckbox("Use Physical VMU Memory", config::UsePhysicalVmuMemory,
+		"Enables direct read/write access to physical VMU memory via DreamPicoPort/DreamConn.");
+#endif
 
 	ImGui::Spacing();
 	header("Dreamcast Devices");
@@ -2848,7 +2853,6 @@ static void gui_settings_advanced()
 		}
         OptionCheckbox("Dump Textures", config::DumpTextures,
         		"Dump all textures into data/texdump/<game id>");
-
         bool logToFile = cfgLoadBool("log", "LogToFile", false);
 		if (ImGui::Checkbox("Log to File", &logToFile))
 			cfgSaveBool("log", "LogToFile", logToFile);
@@ -3268,7 +3272,7 @@ static void gui_display_content()
 		const int itemsPerLine = std::max<int>(totalWidth / (uiScaled(150) + ImGui::GetStyle().ItemSpacing.x), 1);
 		const float responsiveBoxSize = totalWidth / itemsPerLine - ImGui::GetStyle().FramePadding.x * 2;
 		const ImVec2 responsiveBoxVec2 = ImVec2(responsiveBoxSize, responsiveBoxSize);
-		
+
 		if (config::BoxartDisplayMode)
 			ImGui::PushStyleVar(ImGuiStyleVar_SelectableTextAlign, ImVec2(0.5f, 0.5f));
 		else
@@ -3737,7 +3741,7 @@ void gui_display_profiler()
 			ImGui::Unindent();
 		}
 	}
-	
+
 	for (const fc_profiler::ProfileThread* profileThread : fc_profiler::ProfileThread::s_allThreads)
 	{
 		fc_profiler::drawGraph(*profileThread);

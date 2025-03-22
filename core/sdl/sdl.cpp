@@ -30,7 +30,7 @@
 #include "nswitch.h"
 #include "switch_gamepad.h"
 #endif
-#include "dreamconn.h"
+#include "dreamlink.h"
 #include <unordered_map>
 
 static SDL_Window* window = NULL;
@@ -83,8 +83,8 @@ static void sdl_open_joystick(int index)
 		std::shared_ptr<SDLGamepad> gamepad = std::make_shared<SwitchGamepad>(index < MAPLE_PORTS ? index : -1, index, pJoystick);
 #else
 		std::shared_ptr<SDLGamepad> gamepad;
-		if (DreamConnGamepad::isDreamcastController(index))
-			gamepad = std::make_shared<DreamConnGamepad>(index < MAPLE_PORTS ? index : -1, index, pJoystick);
+		if (DreamLinkGamepad::isDreamcastController(index))
+			gamepad = std::make_shared<DreamLinkGamepad>(index < MAPLE_PORTS ? index : -1, index, pJoystick);
 		else
 			gamepad = std::make_shared<SDLGamepad>(index < MAPLE_PORTS ? index : -1, index, pJoystick);
 #endif

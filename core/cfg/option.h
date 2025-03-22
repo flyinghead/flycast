@@ -543,6 +543,7 @@ extern Option<bool, false> UseRawInput;
 #else
 constexpr bool UseRawInput = false;
 #endif
+extern Option<bool> UsePhysicalVmuMemory;
 
 #ifdef USE_LUA
 extern Option<std::string, false> LuaFileName;
