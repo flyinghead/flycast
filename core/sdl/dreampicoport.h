@@ -79,6 +79,8 @@ public:
 
     u32 getFunctionCode(int forPort) const override;
 
+	std::array<u32, 3> getFunctionDefinitions(int forPort) const override;
+
 	int getDefaultBus() const override;
 
 	void changeBus(int newBus);

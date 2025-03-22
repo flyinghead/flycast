@@ -26,6 +26,7 @@
 
 #include <functional>
 #include <memory>
+#include <array>
 
 #if (defined(_WIN32) || defined(__linux__) || (defined(__APPLE__) && defined(TARGET_OS_MAC))) && !defined(TARGET_UWP)
 #define USE_DREAMCASTCONTROLLER 1
@@ -85,6 +86,10 @@ public:
     //! @param[in] forPort The port number to get the function code of (1 or 2)
     //! @return the device type for the given port
     virtual u32 getFunctionCode(int forPort) const = 0;
+
+    //! @param[in] forPort The port number to get the function definitions of (1 or 2)
+	//! @return the 3 function definitions for the supported function codes
+    virtual std::array<u32, 3> getFunctionDefinitions(int forPort) const = 0;
 
 	//! @return the default bus number to select for this controller or -1 to not select a default
 	virtual int getDefaultBus() const {

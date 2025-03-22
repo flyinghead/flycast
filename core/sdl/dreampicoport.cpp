@@ -690,6 +690,18 @@ u32 DreamPicoPort::getFunctionCode(int forPort) const {
 	return SWAP32(mask);
 }
 
+std::array<u32, 3> DreamPicoPort::getFunctionDefinitions(int forPort) const {
+	std::array<u32, 3> arr{0, 0, 0};
+	if (peripherals.size() > forPort) {
+		std::size_t idx = 0;
+		for (const auto& peripheral : peripherals[forPort]) {
+			arr[idx++] = SWAP32(peripheral[1]);
+			if (idx >= 3) break;
+		}
+	}
+	return arr;
+}
+
 int DreamPicoPort::getDefaultBus() const {
 	if (!is_hardware_bus_implied && !is_single_device) {
 		return hardware_bus;
