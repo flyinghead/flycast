@@ -726,6 +726,42 @@ static std::vector<u32> parseCodes(const std::string& s)
 	return codes;
 }
 
+// Decrypt (some) Action Replay/Gameshark/Codebreaker/Xploder encrypted codes
+// Master codes change the encryption method and thus are not supported (07xxxxxx)
+// Taken from DCcrypt
+constexpr u32 Seeds[16] = {
+	0xA53A8888,
+	0xA1427921, 0xAC9528B1, 0xC5892354, 0x49671B12,
+	0xACC56121, 0xACB5381E, 0x765436E1, 0x9F2C3E54,
+	0x1133E312, 0xAC5E7894, 0xE9F208B1, 0x4E87DCFE,
+	0x43174312, 0x1D7A6C99, 0x874224A2
+};
+
+static u32 decryptCode(u32 v)
+{
+	constexpr u32 something = 6;
+
+	if ((v & 0xf0000000) == 0)
+		return v;
+	u32 seed = Seeds[v >> 28];
+	if (something & 4)
+		v = (((v << 1) & 0x0FFFFFFE) | ((v >> 27) & 1));
+	if (something & 2) {
+		v = (((v << 1) & 0x0FFFFFFE) | ((v >> 27) & 1));
+		v = (((v << 8) & 0x0FFFFF00) | ((v >> 20) & 0xFF));
+	}
+	if (something & 1)
+		seed >>= 4;
+	u32 ret = (seed & 0x0FFFFFFF) ^ v;
+	//if ((ret & 0x0FF00000) != 0x07100000)
+	//	something = (ret & 0x0f) + 6;
+	return ret;
+}
+
+static u32 decryptArg(u32 v) {
+	return (((v + 0x543700D0) >> 29) | ((v + 0x543700D0) * 8)) ^ Seeds[0];
+}
+
 void CheatManager::addGameSharkCheat(const std::string& name, const std::string& s)
 {
 	std::vector<u32> codes = parseCodes(s);
@@ -741,6 +777,22 @@ void CheatManager::addGameSharkCheat(const std::string& name, const std::string&
 			Cheat cheat{};
 			cheat.description = name;
 			u32 code = (codes[i] & 0xff000000) >> 24;
+			if (code & 0xf0)
+			{
+				// encrypted code
+				codes[i] = decryptCode(codes[i]);
+				code = (codes[i] & 0xff000000) >> 24;
+				if (code == 4 && i + 2 < codes.size()) {
+					// following args are also encrypted
+					codes[i + 1] = decryptArg(codes[i + 1]);
+					codes[i + 2] = decryptArg(codes[i + 2]);
+				}
+				else if (code == 0xd && i + 2 < codes.size()) {
+					// following arg is also encrypted
+					codes[i + 1] = decryptArg(codes[i + 1]);
+				}
+				// TODO Which ops have encrypted args (3, 5, E, F)? Couldn't find any
+			}
 			switch (code)
 			{
 			case 0:
@@ -854,9 +906,17 @@ void CheatManager::addGameSharkCheat(const std::string& name, const std::string&
 					cheats.push_back(cheat);
 				}
 				break;
-			// TODO 7 change decryption type
-			// TODO 0xb delay applying codes
-			// TODO 0xc global enable test
+
+			case 7:
+				// change decryption type: 071000XX (example: 07100005)
+				throw FlycastException("Master codes aren't supported");
+
+			// TODO 0xb delay applying codes: 0b0xxxxx
+			//     Delay putting on codes for xxxxx cycles. Default 1000 (0x3e7)
+			// TODO 0xc global enable test: 0cxxxxxx vvvvvvvv
+			//     If the value at address 8Cxxxxxx is equal to vvvvvvvv, execute ALL codes;
+			//     otherwise no codes are executed. Useful for waiting until game has loaded.
+
 			case 0xd:
 				{
 					// enable next code if eq/neq/lt/gt
@@ -914,6 +974,10 @@ void CheatManager::addGameSharkCheat(const std::string& name, const std::string&
 					conditionCheat = cheat;
 				}
 				break;
+
+			// TODO 0xF: 0F-XXXXXX 0000YYYY
+			//    16-Bit Write Once Immediately. (Activator code)
+
 			default:
 				throw FlycastException("Unsupported cheat type");
 			}
