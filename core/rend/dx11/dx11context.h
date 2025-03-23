@@ -23,8 +23,8 @@
 #elif defined(_WIN32)
 #include "types.h"
 #include <windows.h>
-#include <d3d11.h>
-#include <dxgi1_2.h>
+#include <d3d11_4.h>
+#include <dxgi1_6.h>
 #include "windows/comptr.h"
 #include "windows/dynlink.h"
 #include "dx11_overlay.h"
