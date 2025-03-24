@@ -143,14 +143,14 @@ void DreamLinkGamepad::registered()
 	}
 }
 
-void DreamLinkGamepad::handleEvent(Event event, void *arg)
+void DreamLinkGamepad::handleEvent(EmuEvent event, void *arg)
 {
 	DreamLinkGamepad *gamepad = static_cast<DreamLinkGamepad*>(arg);
-	if (gamepad->dreamlink != nullptr && event != Event::Terminate) {
-		createDreamLinkDevices(gamepad->dreamlink, event == Event::Start, event == Event::Terminate);
+	if (gamepad->dreamlink != nullptr && event != EmuEvent::Terminate) {
+		createDreamLinkDevices(gamepad->dreamlink, event == EmuEvent::Start, event == EmuEvent::Terminate);
 	}
 
-    if (gamepad->dreamlink != nullptr && event == Event::Terminate)
+    if (gamepad->dreamlink != nullptr && event == EmuEvent::Terminate)
     {
 		gamepad->dreamlink->gameTermination();
     }
