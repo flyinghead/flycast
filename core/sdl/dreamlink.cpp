@@ -96,15 +96,15 @@ DreamLinkGamepad::DreamLinkGamepad(int maple_port, int joystick_idx, SDL_Joystic
 
 	}
 
-	EventManager::listen(Event::Start, handleEvent, this);
-	EventManager::listen(Event::LoadState, handleEvent, this);
-    EventManager::listen(Event::Terminate, handleEvent, this);
+	EventManager::listen(EmuEvent::Start, handleEvent, this);
+	EventManager::listen(EmuEvent::LoadState, handleEvent, this);
+    EventManager::listen(EmuEvent::Terminate, handleEvent, this);
 }
 
 DreamLinkGamepad::~DreamLinkGamepad() {
-	EventManager::unlisten(Event::Start, handleEvent, this);
-	EventManager::unlisten(Event::LoadState, handleEvent, this);
-    EventManager::unlisten(Event::Terminate, handleEvent, this);
+	EventManager::unlisten(EmuEvent::Start, handleEvent, this);
+	EventManager::unlisten(EmuEvent::LoadState, handleEvent, this);
+    EventManager::unlisten(EmuEvent::Terminate, handleEvent, this);
 	if (dreamlink) {
 		tearDownDreamLinkDevices(dreamlink);
 		dreamlink.reset();
