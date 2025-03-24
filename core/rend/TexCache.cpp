@@ -213,9 +213,9 @@ void BaseTextureCacheData::PrintTextureName()
 		strcat(str, " Bilinear");
 
 	size_t len = strlen(str);
-
 	snprintf(str + len, sizeof(str) - len, " %dx%d @ 0x%X", 8 << tsp.TexU, 8 << tsp.TexV, tcw.TexAddr << 3);
 	std::string id = GetId();
+	len = strlen(str);
 	snprintf(str + len, sizeof(str) - len, " id=%s", id.c_str());
 	DEBUG_LOG(RENDERER, "%s", str);
 #endif
