@@ -1852,7 +1852,7 @@ u32 maple_naomi_jamma::RawDma(u32* buffer_in, u32 buffer_in_len, u32* buffer_out
 				char filename[128];
 				for (int i = 0; ; i++)
 				{
-					sprintf(filename, "z80_fw_%d.bin", i);
+					snprintf(filename, sizeof(filename), "z80_fw_%d.bin", i);
 					fw_dump = fopen(filename, "r");
 					if (fw_dump == NULL)
 					{

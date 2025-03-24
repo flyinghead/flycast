@@ -1351,7 +1351,7 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 				ImGui::SetColumnWidth(1, col_width);
 				continue;
 			}
-			sprintf(key_id, "key_id%d", systemMapping->key);
+			snprintf(key_id, sizeof(key_id), "key_id%d", systemMapping->key);
 			ImguiID _(key_id);
 
 			const char *game_btn_name = nullptr;
@@ -1836,7 +1836,7 @@ static void gui_settings_general()
         if (ImGui::Button("Reveal in Finder"))
         {
             char temp[512];
-            sprintf(temp, "open \"%s\"", get_writable_config_path("").c_str());
+            snprintf(temp, sizeof(temp), "open \"%s\"", get_writable_config_path("").c_str());
             system(temp);
         }
 #endif
@@ -1978,7 +1978,7 @@ static void gui_settings_controls(bool& maple_devices_changed)
 
 				ImGui::TableSetColumnIndex(2);
 				char port_name[32];
-				sprintf(port_name, "##mapleport%d", i);
+				snprintf(port_name, sizeof(port_name), "##mapleport%d", i);
 				ImguiID _(port_name);
 				ImGui::SetNextItemWidth(portComboWidth);
 				if (ImGui::BeginCombo(port_name, maple_ports[gamepad->maple_port() + 1]))
@@ -2056,7 +2056,7 @@ static void gui_settings_controls(bool& maple_devices_changed)
 
 				ImGui::TableSetColumnIndex(1);
 				char device_name[32];
-				sprintf(device_name, "##device%d", bus);
+				snprintf(device_name, sizeof(device_name), "##device%d", bus);
 				float w = ImGui::CalcItemWidth() / 3;
 				ImGui::PushItemWidth(w);
 				ImGui::SetNextItemWidth(mainComboWidth);
@@ -2092,7 +2092,7 @@ static void gui_settings_controls(bool& maple_devices_changed)
 				for (int port = 0; port < port_count; port++)
 				{
 					ImGui::TableSetColumnIndex(2 + port);
-					sprintf(device_name, "##device%d.%d", bus, port + 1);
+					snprintf(device_name, sizeof(device_name), "##device%d.%d", bus, port + 1);
 					ImguiID _(device_name);
 					ImGui::SetNextItemWidth(expComboWidth);
 					if (ImGui::BeginCombo(device_name, maple_expansion_device_name(config::MapleExpansionDevices[bus][port]), ImGuiComboFlags_None))
@@ -2114,7 +2114,7 @@ static void gui_settings_controls(bool& maple_devices_changed)
 				if (config::MapleMainDevices[bus] == MDT_LightGun)
 				{
 					ImGui::TableSetColumnIndex(3);
-					sprintf(device_name, "##device%d.xhair", bus);
+					snprintf(device_name, sizeof(device_name), "##device%d.xhair", bus);
 					ImguiID _(device_name);
 					u32 color = config::CrosshairColor[bus];
 					float xhairColor[4] {
@@ -2748,7 +2748,7 @@ static void gui_settings_network()
 				if (config::GGPOChatTimeoutToggle)
 				{
 					char chatTimeout[256];
-					sprintf(chatTimeout, "%d", (int)config::GGPOChatTimeout);
+					snprintf(chatTimeout, sizeof(chatTimeout), "%d", (int)config::GGPOChatTimeout);
 					ImGui::InputText("Chat Window Timeout (seconds)", chatTimeout, sizeof(chatTimeout), ImGuiInputTextFlags_CharsDecimal, nullptr, nullptr);
 					ImGui::SameLine();
 					ShowHelpMarker("Sets duration that chat window stays open after new message is received.");
@@ -2769,7 +2769,7 @@ static void gui_settings_network()
 				ShowHelpMarker("The server to connect to. Leave blank to find a server automatically on the default port");
 			}
 			char localPort[256];
-			sprintf(localPort, "%d", (int)config::LocalPort);
+			snprintf(localPort, sizeof(localPort), "%d", (int)config::LocalPort);
 			ImGui::InputText("Local Port", localPort, sizeof(localPort), ImGuiInputTextFlags_CharsDecimal, nullptr, nullptr);
 			ImGui::SameLine();
 			ShowHelpMarker("The local UDP port to use");
@@ -2781,7 +2781,7 @@ static void gui_settings_network()
 			ImGui::SameLine();
 			ShowHelpMarker("The peer to connect to. Leave blank to find a player automatically on the default port");
 			char localPort[256];
-			sprintf(localPort, "%d", (int)config::LocalPort);
+			snprintf(localPort, sizeof(localPort), "%d", (int)config::LocalPort);
 			ImGui::InputText("Local Port", localPort, sizeof(localPort), ImGuiInputTextFlags_CharsDecimal, nullptr, nullptr);
 			ImGui::SameLine();
 			ShowHelpMarker("The local UDP port to use");

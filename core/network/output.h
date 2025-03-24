@@ -90,7 +90,7 @@ public:
 			gameNameSent = true;
 		}
 		char s[9];
-		sprintf(s, "%x", value);
+		snprintf(s, sizeof(s), "%x", value);
 		std::string msg = std::string(name) + " = " + std::string(s) + "\n";	// mame uses \r
 		send(msg);
 	}
