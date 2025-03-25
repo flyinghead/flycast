@@ -294,7 +294,7 @@ static bool print_wince_syscall(u32 address)
 			api = wince_apis[api_id];
 		else
 		{
-			sprintf(api_buf, "[%d]", api_id);
+			snprintf(api_buf, sizeof(api_buf), "[%d]", api_id);
 			api = api_buf;
 		}
 
@@ -310,7 +310,7 @@ static bool print_wince_syscall(u32 address)
 			method = wince_methods[api_id][meth_id];
 		if (method == NULL)
 		{
-			sprintf(method_buf, "[%d]", meth_id);
+			snprintf(method_buf, sizeof(method_buf), "[%d]", meth_id);
 			method = method_buf;
 		}
 		printf("WinCE %08x %04x.%04x %s: %s", address, getCurrentProcessId() & 0xffff, getCurrentThreadId() & 0xffff, api, method);

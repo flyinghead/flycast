@@ -57,7 +57,7 @@ public:
 
 	void UploadToGPU(int width, int height, const u8 *data, bool mipmapped, bool mipmapsIncluded = false) override;
 	u64 GetIntId() { return (u64)reinterpret_cast<uintptr_t>(this); }
-	std::string GetId() override { char s[20]; sprintf(s, "%p", this); return s; }
+	std::string GetId() override { char s[20]; snprintf(s, sizeof(s), "%p", this); return s; }
 	vk::ImageView GetImageView() const { return *imageView; }
 	vk::Image GetImage() const { return *image; }
 	vk::ImageView GetReadOnlyImageView() const { return readOnlyImageView ? readOnlyImageView : *imageView; }

@@ -92,13 +92,13 @@ static const char *regName(u32 paddr)
 	if (it == pvr_reg_names.end())
 	{
 		if (addr >= FOG_TABLE_START_addr && addr <= FOG_TABLE_END_addr)
-			sprintf(regName, "FOG_TABLE[%x]", addr - FOG_TABLE_START_addr);
+			snprintf(regName, sizeof(regName), "FOG_TABLE[%x]", addr - FOG_TABLE_START_addr);
 		else if (addr >= TA_OL_POINTERS_START_addr && addr <= TA_OL_POINTERS_END_addr)
-			sprintf(regName, "TA_OL_POINTERS[%x]", addr - TA_OL_POINTERS_START_addr);
+			snprintf(regName, sizeof(regName), "TA_OL_POINTERS[%x]", addr - TA_OL_POINTERS_START_addr);
 		else if (addr >= PALETTE_RAM_START_addr && addr <= PALETTE_RAM_END_addr)
-			sprintf(regName, "PALETTE[%x]", addr - PALETTE_RAM_START_addr);
+			snprintf(regName, sizeof(regName), "PALETTE[%x]", addr - PALETTE_RAM_START_addr);
 		else
-			sprintf(regName, "?%08x", paddr);
+			snprintf(regName, sizeof(regName), "?%08x", paddr);
 		return regName;
 	}
 	else

@@ -117,7 +117,7 @@ static void dump_table()
 {
 	static int iter = 1;
 	char filename[128];
-	sprintf(filename, "mmutable%03d", iter++);
+	snprintf(filename, sizeof(filename), "mmutable%03d", iter++);
 	FILE *f = fopen(filename, "wb");
 	if (f == NULL)
 		return;
