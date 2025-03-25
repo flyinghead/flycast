@@ -60,13 +60,13 @@ static inline u16 swap16(u16 w)
 }
 #endif
 
-static void vblankCallback(Event event, void *param) {
+static void vblankCallback(EmuEvent event, void *param) {
 	((NaomiM3Comm *)param)->vblank();
 }
 
 void NaomiM3Comm::closeNetwork()
 {
-	EventManager::unlisten(Event::VBlank, vblankCallback, this);
+	EventManager::unlisten(EmuEvent::VBlank, vblankCallback, this);
 	naomiNetwork.shutdown();
 }
 
@@ -79,7 +79,7 @@ void NaomiM3Comm::connectNetwork()
 	if (slot_count >= 2)
 	{
 		connectedState();
-		EventManager::listen(Event::VBlank, vblankCallback, this);
+		EventManager::listen(EmuEvent::VBlank, vblankCallback, this);
 	}
 }
 

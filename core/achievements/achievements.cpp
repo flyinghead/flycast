@@ -100,7 +100,7 @@ private:
 	void handleShowLeaderboardTracker(const rc_client_event_t *event);
 	void handleHideLeaderboardTracker(const rc_client_event_t *event);
 	void handleUpdateLeaderboardTracker(const rc_client_event_t *event);
-	static void emuEventCallback(Event event, void *arg);
+	static void emuEventCallback(EmuEvent event, void *arg);
 
 	rc_client_t *rc_client = nullptr;
 	bool loggedOn = false;
@@ -171,21 +171,21 @@ OnLoad _([]() { Achievements::Instance(); });
 
 Achievements::Achievements()
 {
-	EventManager::listen(Event::Start, emuEventCallback, this);
-	EventManager::listen(Event::Terminate, emuEventCallback, this);
-	EventManager::listen(Event::Pause, emuEventCallback, this);
-	EventManager::listen(Event::Resume, emuEventCallback, this);
-	EventManager::listen(Event::DiskChange, emuEventCallback, this);
+	EventManager::listen(EmuEvent::Start, emuEventCallback, this);
+	EventManager::listen(EmuEvent::Terminate, emuEventCallback, this);
+	EventManager::listen(EmuEvent::Pause, emuEventCallback, this);
+	EventManager::listen(EmuEvent::Resume, emuEventCallback, this);
+	EventManager::listen(EmuEvent::DiskChange, emuEventCallback, this);
 	idleThread.setPeriod(1000);
 }
 
 Achievements::~Achievements()
 {
-	EventManager::unlisten(Event::Start, emuEventCallback, this);
-	EventManager::unlisten(Event::Terminate, emuEventCallback, this);
-	EventManager::unlisten(Event::Pause, emuEventCallback, this);
-	EventManager::unlisten(Event::Resume, emuEventCallback, this);
-	EventManager::unlisten(Event::DiskChange, emuEventCallback, this);
+	EventManager::unlisten(EmuEvent::Start, emuEventCallback, this);
+	EventManager::unlisten(EmuEvent::Terminate, emuEventCallback, this);
+	EventManager::unlisten(EmuEvent::Pause, emuEventCallback, this);
+	EventManager::unlisten(EmuEvent::Resume, emuEventCallback, this);
+	EventManager::unlisten(EmuEvent::DiskChange, emuEventCallback, this);
 	term();
 }
 
@@ -806,25 +806,25 @@ void Achievements::resumeGame()
 		term();
 }
 
-void Achievements::emuEventCallback(Event event, void *arg)
+void Achievements::emuEventCallback(EmuEvent event, void *arg)
 {
 	Achievements *instance = ((Achievements *)arg);
 	switch (event)
 	{
-	case Event::Start:
-	case Event::Resume:
+	case EmuEvent::Start:
+	case EmuEvent::Resume:
 		instance->resumeGame();
 		break;
-	case Event::Terminate:
+	case EmuEvent::Terminate:
 		instance->unloadGame();
 		break;
-	case Event::VBlank:
+	case EmuEvent::VBlank:
 		rc_client_do_frame(instance->rc_client);
 		break;
-	case Event::Pause:
+	case EmuEvent::Pause:
 		instance->pauseGame();
 		break;
-	case Event::DiskChange:
+	case EmuEvent::DiskChange:
 		instance->diskChange();
 		break;
 	default:
@@ -892,7 +892,7 @@ void Achievements::gameLoaded(int result, const char *errorMessage)
 	}
 	active = true;
 	loadingGame = false;
-	EventManager::listen(Event::VBlank, emuEventCallback, this);
+	EventManager::listen(EmuEvent::VBlank, emuEventCallback, this);
 	NOTICE_LOG(COMMON, "RA: game %d loaded: %s, achievements %d leaderboards %d rich presence %d", info->id, info->title,
 			rc_client_has_achievements(rc_client), rc_client_has_leaderboards(rc_client), rc_client_has_rich_presence(rc_client));
 	if (!rc_client_is_processing_required(rc_client))
@@ -926,7 +926,7 @@ void Achievements::unloadGame()
 		return;
 	active = false;
 	paused = false;
-	EventManager::unlisten(Event::VBlank, emuEventCallback, this);
+	EventManager::unlisten(EmuEvent::VBlank, emuEventCallback, this);
 	// wait for all async tasks before unloading the game
 	stopThreads();
 	rc_client_unload_game(rc_client);
