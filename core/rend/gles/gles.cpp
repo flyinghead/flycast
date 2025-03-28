@@ -1002,14 +1002,20 @@ static void updateFogTexture(u8 *fog_table, GLenum texture_slot, GLint fog_image
 		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	}
-	else
+	else {
 		glcache.BindTexture(GL_TEXTURE_2D, fogTextureId);
+	}
 
 	u8 temp_tex_buffer[256];
 	MakeFogTexture(temp_tex_buffer);
 
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-	glTexImage2D(GL_TEXTURE_2D, 0, fog_image_format, 128, 2, 0, fog_image_format, GL_UNSIGNED_BYTE, temp_tex_buffer);
+    GLint internalformat;
+    if (gl.is_gles && fog_image_format == GL_RED)
+    	internalformat = GL_R8;
+    else
+    	internalformat = fog_image_format;
+	glTexImage2D(GL_TEXTURE_2D, 0, internalformat, 128, 2, 0, fog_image_format, GL_UNSIGNED_BYTE, temp_tex_buffer);
 	glCheck();
 
 	glActiveTexture(GL_TEXTURE0);
@@ -1027,8 +1033,9 @@ static void updatePaletteTexture(GLenum texture_slot)
 		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	}
-	else
+	else {
 		glcache.BindTexture(GL_TEXTURE_2D, paletteTextureId);
+	}
 
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 32, 32, 0, GL_RGBA, GL_UNSIGNED_BYTE, palette32_ram);
