@@ -174,10 +174,11 @@ static void reserveBottomMemory()
     // Print diagnostics showing how many allocations we had to make in
     // order to reserve all of low memory, typically less than 200.
     char buffer[1000];
-    sprintf_s(buffer, "Reserved %1.3f MB (%d vallocs,"
-                      "%d heap allocs) of low-memory.\n",
-            totalReservation / (1024 * 1024.0),
-            (int)numVAllocs, (int)numHeapAllocs);
+    snprintf(buffer, sizeof(buffer),
+             "Reserved %1.3f MB (%d vallocs,"
+             "%d heap allocs) of low-memory.\n",
+             totalReservation / (1024 * 1024.0),
+             (int)numVAllocs, (int)numHeapAllocs);
     OutputDebugStringA(buffer);
 #endif
 }

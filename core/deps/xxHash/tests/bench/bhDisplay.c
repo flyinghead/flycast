@@ -1,7 +1,7 @@
 /*
 *  CSV Display module for the hash benchmark program
 *  Part of the xxHash project
-*  Copyright (C) 2019-present, Yann Collet
+*  Copyright (C) 2019-2021 Yann Collet
 *
 *  GPL v2 License
 *
@@ -48,7 +48,7 @@ static void bench_oneHash_largeInput(Bench_Entry hashDesc, int minlog, int maxlo
         double const nbhps = bench_hash(hashDesc.hash, BMK_throughput,
                                         inputSize, BMK_fixedSize,
                                         BENCH_LARGE_TOTAL_MS, BENCH_LARGE_ITER_MS);
-        printf(",%9.1f", nbhps * inputSize / MB_UNIT); fflush(NULL);
+        printf(",%6.0f", nbhps * inputSize / MB_UNIT); fflush(NULL);
     }
     printf("\n");
 }
@@ -77,14 +77,15 @@ static void bench_throughput_oneHash_smallInputs(Bench_Entry hashDesc, size_t si
         double const nbhps = bench_hash(hashDesc.hash, BMK_throughput,
                                         s, BMK_fixedSize,
                                         BENCH_SMALL_TOTAL_MS, BENCH_SMALL_ITER_MS);
-        printf(",%11.1f", nbhps); fflush(NULL);
+        printf(",%10.0f", nbhps); fflush(NULL);
     }
     printf("\n");
 }
 
 void bench_throughput_smallInputs(Bench_Entry const* hashDescTable, int nbHashes, size_t sizeMin, size_t sizeMax)
 {
-    printf("Throughput small inputs of fixed size : \n");
+    printf("Throughput small inputs of fixed size (from %zu to %zu bytes): \n",
+            sizeMin, sizeMax);
     for (int i=0; i<nbHashes; i++)
         bench_throughput_oneHash_smallInputs(hashDescTable[i], sizeMin, sizeMax);
 }
@@ -100,7 +101,7 @@ static void bench_latency_oneHash_smallInputs(Bench_Entry hashDesc, size_t size_
         double const nbhps = bench_hash(hashDesc.hash, BMK_latency,
                                         s, BMK_fixedSize,
                                         BENCH_SMALL_TOTAL_MS, BENCH_SMALL_ITER_MS);
-        printf(",%11.1f", nbhps); fflush(NULL);
+        printf(",%10.0f", nbhps); fflush(NULL);
     }
     printf("\n");
 }
@@ -123,7 +124,7 @@ static void bench_randomInputLength_withOneHash(Bench_Entry hashDesc, size_t siz
         double const nbhps = bench_hash(hashDesc.hash, BMK_throughput,
                                         s, BMK_randomSize,
                                         BENCH_SMALL_TOTAL_MS, BENCH_SMALL_ITER_MS);
-        printf(",%11.1f", nbhps); fflush(NULL);
+        printf(",%10.0f", nbhps); fflush(NULL);
     }
     printf("\n");
 }
@@ -146,7 +147,7 @@ static void bench_latency_oneHash_randomInputLength(Bench_Entry hashDesc, size_t
         double const nbhps = bench_hash(hashDesc.hash, BMK_latency,
                                         s, BMK_randomSize,
                                         BENCH_SMALL_TOTAL_MS, BENCH_SMALL_ITER_MS);
-        printf(",%11.1f", nbhps); fflush(NULL);
+        printf(",%10.0f", nbhps); fflush(NULL);
     }
     printf("\n");
 }

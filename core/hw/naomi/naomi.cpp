@@ -704,7 +704,7 @@ struct DriveSimPipe : public SerialPort::Pipe
 				if (!config::NetworkOutput)
 				{
 					char message[16];
-					sprintf(message, "Speed: %3d", speed);
+					snprintf(message, sizeof(message), "Speed: %3d", speed);
 					os_notify(message, 1000);
 				}
 			}

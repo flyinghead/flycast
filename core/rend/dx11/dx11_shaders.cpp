@@ -818,20 +818,20 @@ u64 CachedDX11Shaders::hashShader(const char* source, const char* function, cons
 	if (!enabled)
 		return 0;
 
-	XXH64_state_t *xxh = XXH64_createState();
-	XXH64_reset(xxh, 777);
-	XXH64_update(xxh, source, strlen(source));
-	XXH64_update(xxh, function, strlen(function));
+	XXH3_state_t *xxh = XXH3_createState();
+	XXH3_64bits_reset(xxh);
+	XXH3_64bits_update(xxh, source, strlen(source));
+	XXH3_64bits_update(xxh, function, strlen(function));
 	if (pDefines != nullptr)
 		for (const D3D_SHADER_MACRO *pDef = pDefines; pDef->Name != nullptr; pDef++)
 		{
-			XXH64_update(xxh, pDef->Name, strlen(pDef->Name));
-			XXH64_update(xxh, pDef->Definition, strlen(pDef->Definition));
+			XXH3_64bits_update(xxh, pDef->Name, strlen(pDef->Name));
+			XXH3_64bits_update(xxh, pDef->Definition, strlen(pDef->Definition));
 		}
 	if (includeFile != nullptr)
-		XXH64_update(xxh, includeFile, strlen(includeFile));
-	u64 hash = XXH64_digest(xxh);
-	XXH64_freeState(xxh);
+		XXH3_64bits_update(xxh, includeFile, strlen(includeFile));
+	u64 hash = XXH3_64bits_digest(xxh);
+	XXH3_freeState(xxh);
 
 	return hash;
 }

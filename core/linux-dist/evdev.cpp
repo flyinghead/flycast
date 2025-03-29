@@ -189,7 +189,7 @@ void input_evdev_init()
 	char buf[32];
 	for (int port = 0; port < 100; port++)
 	{
-		sprintf(buf, EVDEV_DEVICE_STRING, port);
+		snprintf(buf, sizeof(buf), EVDEV_DEVICE_STRING, port);
 		input_evdev_add_device(buf);
 	}
 #endif

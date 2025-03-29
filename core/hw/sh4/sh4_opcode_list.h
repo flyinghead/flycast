@@ -71,7 +71,7 @@ struct sh4_opcodelistentry
 		if (!strcmp(disOp, "missing"))
 		{
 			static char tmp[6];
-			sprintf(tmp, "?%04X", op);
+			snprintf(tmp, sizeof(tmp), "?%04X", op);
 			disOp = tmp;
 		}
 
