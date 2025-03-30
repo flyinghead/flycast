@@ -96,15 +96,15 @@ DreamLinkGamepad::DreamLinkGamepad(int maple_port, int joystick_idx, SDL_Joystic
 
 	}
 
-	EventManager::listen(Event::Start, handleEvent, this);
-	EventManager::listen(Event::LoadState, handleEvent, this);
-    EventManager::listen(Event::Terminate, handleEvent, this);
+	EventManager::listen(EmuEvent::Start, handleEvent, this);
+	EventManager::listen(EmuEvent::LoadState, handleEvent, this);
+    EventManager::listen(EmuEvent::Terminate, handleEvent, this);
 }
 
 DreamLinkGamepad::~DreamLinkGamepad() {
-	EventManager::unlisten(Event::Start, handleEvent, this);
-	EventManager::unlisten(Event::LoadState, handleEvent, this);
-    EventManager::unlisten(Event::Terminate, handleEvent, this);
+	EventManager::unlisten(EmuEvent::Start, handleEvent, this);
+	EventManager::unlisten(EmuEvent::LoadState, handleEvent, this);
+    EventManager::unlisten(EmuEvent::Terminate, handleEvent, this);
 	if (dreamlink) {
 		tearDownDreamLinkDevices(dreamlink);
 		dreamlink.reset();
@@ -143,14 +143,14 @@ void DreamLinkGamepad::registered()
 	}
 }
 
-void DreamLinkGamepad::handleEvent(Event event, void *arg)
+void DreamLinkGamepad::handleEvent(EmuEvent event, void *arg)
 {
 	DreamLinkGamepad *gamepad = static_cast<DreamLinkGamepad*>(arg);
-	if (gamepad->dreamlink != nullptr && event != Event::Terminate) {
-		createDreamLinkDevices(gamepad->dreamlink, event == Event::Start, event == Event::Terminate);
+	if (gamepad->dreamlink != nullptr && event != EmuEvent::Terminate) {
+		createDreamLinkDevices(gamepad->dreamlink, event == EmuEvent::Start, event == EmuEvent::Terminate);
 	}
 
-    if (gamepad->dreamlink != nullptr && event == Event::Terminate)
+    if (gamepad->dreamlink != nullptr && event == EmuEvent::Terminate)
     {
 		gamepad->dreamlink->gameTermination();
     }

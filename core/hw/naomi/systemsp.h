@@ -192,7 +192,7 @@ private:
 	void saveFiles();
 	std::string getEepromPath() const;
 
-	static void handleEvent(Event event, void *p) {
+	static void handleEvent(EmuEvent event, void *p) {
 		((SystemSpCart *)p)->saveFiles();
 	}
 

@@ -1862,7 +1862,7 @@ SystemSpCart::SystemSpCart(u32 size) : M4Cartridge(size), uart1(this, 1), uart2(
 
 SystemSpCart::~SystemSpCart()
 {
-	EventManager::unlisten(Event::Pause, handleEvent, this);
+	EventManager::unlisten(EmuEvent::Pause, handleEvent, this);
 	if (chd != nullptr)
 		chd_close(chd);
 	if (chdFile != nullptr)
@@ -2200,7 +2200,7 @@ void SystemSpCart::Init(LoadProgress *progress, std::vector<u8> *digest)
 	if (!ioPortManager)
 		ioPortManager = std::make_unique<DefaultIOManager>();
 
-	EventManager::listen(Event::Pause, handleEvent, this);
+	EventManager::listen(EmuEvent::Pause, handleEvent, this);
 }
 
 u32 SystemSpCart::ReadMem(u32 address, u32 size)
