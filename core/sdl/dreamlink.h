@@ -123,6 +123,8 @@ public:
 	bool gamepad_btn_input(u32 code, bool pressed) override;
 	bool gamepad_axis_input(u32 code, int value) override;
 	static bool isDreamcastController(int deviceIndex);
+	bool find_mapping(int system = settings.platform.system) override;
+	void resetMappingToDefault(bool arcade, bool gamepad) override;
 
 private:
 	static void handleEvent(Event event, void *arg);
@@ -132,4 +134,5 @@ private:
 	bool ltrigPressed = false;
 	bool rtrigPressed = false;
 	bool startPressed = false;
+	std::string device_guid;
 };
