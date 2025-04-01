@@ -719,13 +719,13 @@ public:
 
 	void sendto(const char *buf, size_t len, u32 addr, u16 port)
 	{
-		this->sendbuf.resize(len);
-		memcpy(this->sendbuf.data(), buf, len);
 		asio::ip::udp::endpoint destination(asio::ip::address_v4(addr), port);
 		DEBUG_LOG(NETWORK, "UdpSocket: outbound %d bytes from %d to %s:%d", (int)len, socket.local_endpoint().port(),
 				destination.address().to_string().c_str(), destination.port());
-		socket.async_send_to(asio::buffer(this->sendbuf), destination,
-				std::bind(&UdpSocket::onSent, this, asio::placeholders::error, asio::placeholders::bytes_transferred));
+		std::error_code ec;
+		socket.send_to(asio::buffer(buf, len), destination, 0, ec);
+		if (ec && ec != asio::error::would_block)
+			INFO_LOG(NETWORK, "UDP sendto failed: %s", ec.message().c_str());
 	}
 
 	void close() {
@@ -741,51 +741,45 @@ private:
 	{
 		asio::socket_base::broadcast option(true);
 		socket.set_option(option);
+		socket.non_blocking(true);
 	}
 
-	void readAsync() {
-		socket.async_receive_from(asio::buffer(this->recvbuf), source,
-			std::bind(&UdpSocket::onReceived, this, asio::placeholders::error, asio::placeholders::bytes_transferred));
-	}
-
-	void onSent(const std::error_code& ec, size_t len) {
-		if (ec)
-			INFO_LOG(NETWORK, "UDP sendto failed: %s", ec.message().c_str());
-	}
-
-	void onReceived(const std::error_code& ec, size_t len)
+	void readAsync()
 	{
-		if (ec) {
-			INFO_LOG(NETWORK, "UDP recv_from failed: %s", ec.message().c_str());
-			return;
-		}
-		DEBUG_LOG(NETWORK, "UdpSocket: received %d bytes to port %d from %s:%d", (int)len,
-				socket.local_endpoint().port(), source.address().to_string().c_str(), source.port());
-		if (len == 0)
-			WARN_LOG(NETWORK, "Received empty datagram");
+		socket.async_receive_from(asio::buffer(recvbuf), source,
+			[this](const std::error_code& ec, size_t len)
+			{
+				if (ec) {
+					INFO_LOG(NETWORK, "UDP recv_from failed: %s", ec.message().c_str());
+					return;
+				}
+				DEBUG_LOG(NETWORK, "UdpSocket: received %d bytes to port %d from %s:%d", (int)len,
+						socket.local_endpoint().port(), source.address().to_string().c_str(), source.port());
+				if (len == 0)
+					WARN_LOG(NETWORK, "Received empty datagram");
 
-		// filter out messages coming from ourselves (happens for broadcasts)
-		u32 srcAddr = htonl(source.address().to_v4().to_uint());
-		if (socket.local_endpoint().port() != source.port() || !is_local_address(srcAddr))
-		{
-			pico_msginfo msginfo;
-			msginfo.dev = pico_dev;
-			msginfo.tos = 0;
-			msginfo.ttl = 0;
-			msginfo.local_addr.ip4.addr = srcAddr;
-			msginfo.local_port = htons(source.port());
+				// filter out messages coming from ourselves (happens for broadcasts)
+				u32 srcAddr = htonl(source.address().to_v4().to_uint());
+				if (socket.local_endpoint().port() != source.port() || !is_local_address(srcAddr))
+				{
+					pico_msginfo msginfo;
+					msginfo.dev = pico_dev;
+					msginfo.tos = 0;
+					msginfo.ttl = 0;
+					msginfo.local_addr.ip4.addr = srcAddr;
+					msginfo.local_port = htons(source.port());
 
-			int r = pico_socket_sendto_extended(pico_sock, &recvbuf[0], len, &dcaddr, htons(socket.local_endpoint().port()), &msginfo);
-			if (r < (int)len)
-				INFO_LOG(MODEM, "error UDP sending to port %d: %s", socket.local_endpoint().port(), strerror(pico_err));
-		}
-		readAsync();
+					int r = pico_socket_sendto_extended(pico_sock, &recvbuf[0], len, &dcaddr, htons(socket.local_endpoint().port()), &msginfo);
+					if (r < (int)len)
+						INFO_LOG(MODEM, "error UDP sending to port %d: %s", socket.local_endpoint().port(), strerror(pico_err));
+				}
+				readAsync();
+			});
 	}
 
 	asio::io_context& io_context;
 	asio::ip::udp::socket socket;
 	pico_socket *pico_sock;
-	std::vector<char> sendbuf;
 	std::array<u8, 1510> recvbuf;
 	asio::ip::udp::endpoint source;	// source endpoint when receiving packets
 	friend super;
@@ -1275,8 +1269,11 @@ void PicoThread::run()
 			// override legacy default with current one
 			dnsName = "dns.flyca.st";
 		asio::ip::udp::resolver resolver(*io_context);
-		auto it = resolver.resolve(asio::ip::udp::v4(), dnsName, "53");
-		if (!it.empty())
+		std::error_code ec;
+		auto it = resolver.resolve(asio::ip::udp::v4(), dnsName, "53", ec);
+		if (ec)
+			WARN_LOG(NETWORK, "%s: %s", dnsName.c_str(), ec.message().c_str());
+		if (!ec && !it.empty())
 		{
 			asio::ip::udp::endpoint endpoint = *it.begin();
 
