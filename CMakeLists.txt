@@ -512,25 +512,31 @@ if(NOT LIBRETRO)
 endif()
 
 find_package(PkgConfig)
+
+if(NOT WITH_SYSTEM_ZLIB)
+    option(ZLIB_BUILD_EXAMPLES "Enable Zlib Examples" OFF)
+    add_subdirectory("core/deps/libchdr/deps/zlib-1.3.1" EXCLUDE_FROM_ALL)
+	set_target_properties(zlibstatic PROPERTIES POSITION_INDEPENDENT_CODE ON)
+	target_link_libraries(${PROJECT_NAME} PRIVATE zlibstatic)
+	# help libzip find the package
+	set(ZLIB_RELATIVE_PATH "core/deps/libchdr/deps/zlib-1.3.1")
+	set(ZLIB_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/${ZLIB_RELATIVE_PATH}" "${CMAKE_CURRENT_BINARY_DIR}/${ZLIB_RELATIVE_PATH}")
+endif()
+
 if(PKG_CONFIG_FOUND AND USE_HOST_LIBCHDR)
 	pkg_check_modules(LIBCHDR IMPORTED_TARGET libchdr)
 	target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::LIBCHDR)
 else()
+	option(ZSTD_BUILD_SHARED "BUILD SHARED LIBRARIES" OFF)
+	option(ZSTD_BUILD_PROGRAMS "BUILD PROGRAMS" OFF)
+	option(ZSTD_LEGACY_SUPPORT "LEGACY SUPPORT" OFF)
+	add_subdirectory(core/deps/libchdr/deps/zstd-1.5.6/build/cmake EXCLUDE_FROM_ALL)
+	target_link_libraries(${PROJECT_NAME} PRIVATE libzstd_static)
+
+	option(WITH_SYSTEM_ZSTD "Use system provided zstd library" ON)
 	add_subdirectory(core/deps/libchdr EXCLUDE_FROM_ALL)
 	target_link_libraries(${PROJECT_NAME} PRIVATE chdr-static)
 	target_include_directories(${PROJECT_NAME} PRIVATE core/deps/libchdr/include)
-endif()
-
-if(NOT WITH_SYSTEM_ZLIB)
-	set(ZLIB_RELATIVE_PATH "core/deps/libchdr/deps/zlib-1.3.1")
-	target_include_directories(${PROJECT_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/${ZLIB_RELATIVE_PATH}" "${CMAKE_CURRENT_BINARY_DIR}/${ZLIB_RELATIVE_PATH}")
-	# help libzip find the package
-	set(ZLIB_FOUND TRUE)
-	set(ZLIB_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/${ZLIB_RELATIVE_PATH}" "${CMAKE_CURRENT_BINARY_DIR}/${ZLIB_RELATIVE_PATH}")
-
-	cmake_policy(SET CMP0026 OLD)
-	get_target_property(ZLIB_LIBRARY_RELEASE zlibstatic LOCATION)
-	get_target_property(ZLIB_LIBRARY_DEBUG zlibstatic LOCATION_Debug)
 endif()
 
 if(PKG_CONFIG_FOUND AND NOT ANDROID AND NOT APPLE AND NOT LIBRETRO)
@@ -676,10 +682,6 @@ if(NOT MINIUPNP_FOUND)
 endif()
 
 if(NOT LIBZIP_FOUND OR NINTENDO_SWITCH)
-	cmake_policy(SET CMP0026 OLD)
-	set(zstd_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/core/deps/libchdr/deps/zstd-1.5.6/lib")
-	get_target_property(zstd_STATIC_LIBRARY libzstd_static LOCATION)
-
 	option(ENABLE_COMMONCRYPTO "Enable use of CommonCrypto" OFF)
 	option(ENABLE_GNUTLS "Enable use of GnuTLS" OFF)
 	option(ENABLE_MBEDTLS "Enable use of mbed TLS" OFF)

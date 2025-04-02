@@ -425,7 +425,7 @@ private:
 					return;
 				}
 				const uint8_t *p = &recvbuf[5];
-				while (p - &recvbuf[0] < (ssize_t)len)
+				while (p - &recvbuf[0] < (int)len)
 				{
 					accessPoints.emplace_back();
 					uint32_t addr;
