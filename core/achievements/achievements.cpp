@@ -270,7 +270,7 @@ void Achievements::loadCache()
 }
 
 static u64 hashUrl(const char *url) {
-	return XXH64(url, strlen(url), 13);
+	return XXH3_64bits(url, strlen(url));
 }
 
 std::pair<std::string, bool> Achievements::getCachedImage(const char *url)

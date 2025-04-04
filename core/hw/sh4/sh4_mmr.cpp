@@ -168,7 +168,7 @@ static const char *regName(u32 paddr)
 	static char regName[32];
 	auto it = sh4_reg_names.find(addr);
 	if (it == sh4_reg_names.end()) {
-		sprintf(regName, "?%08x", paddr);
+		snprintf(regName, sizeof(regName), "?%08x", paddr);
 		return regName;
 	}
 	else

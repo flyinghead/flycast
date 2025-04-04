@@ -449,131 +449,131 @@ std::string disassemble_op(const char* tx1, u32 pc, u16 opcode)
 			tx1++;
 			if (strcmp2(tx1,"REG_N>"))
 			{
-				sprintf(buf,"R%d=%x ", GetN(opcode), p_sh4rcb->cntx.r[GetN(opcode)]);
+				snprintf(buf, sizeof(buf), "R%d=%x ", GetN(opcode), p_sh4rcb->cntx.r[GetN(opcode)]);
 				regs += buf;
-				sprintf(buf,"R%d",GetN(opcode));
+				snprintf(buf, sizeof(buf), "R%d",GetN(opcode));
 			}
 			else if (strcmp2(tx1,"REG_M>") )
 			{
-				sprintf(buf,"R%d=%x ", GetM(opcode), p_sh4rcb->cntx.r[GetM(opcode)]);
+				snprintf(buf, sizeof(buf), "R%d=%x ", GetM(opcode), p_sh4rcb->cntx.r[GetM(opcode)]);
 				regs += buf;
-				sprintf(buf,"R%d",GetM(opcode));
+				snprintf(buf, sizeof(buf), "R%d",GetM(opcode));
 			}
 			else if (strcmp2(tx1,"FREG_N>"))
 			{
-				sprintf(buf,"FR%d=%f ", GetN(opcode), p_sh4rcb->cntx.fr[GetN(opcode)]);
+				snprintf(buf, sizeof(buf), "FR%d=%f ", GetN(opcode), p_sh4rcb->cntx.fr[GetN(opcode)]);
 				regs += buf;
-				sprintf(buf,"FR%d",GetN(opcode));
+				snprintf(buf, sizeof(buf), "FR%d",GetN(opcode));
 			}
 			else if (strcmp2(tx1,"FREG_M>"))
 			{
-				sprintf(buf,"FR%d=%f ", GetM(opcode), p_sh4rcb->cntx.fr[GetM(opcode)]);
+				snprintf(buf, sizeof(buf), "FR%d=%f ", GetM(opcode), p_sh4rcb->cntx.fr[GetM(opcode)]);
 				regs += buf;
-				sprintf(buf,"FR%d",GetM(opcode));
+				snprintf(buf, sizeof(buf), "FR%d",GetM(opcode));
 			}
 			else if (strcmp2(tx1, "FREG_M_SD_F>"))
 			{
-				sprintf(buf,"FR%d=%f ", GetM(opcode), p_sh4rcb->cntx.fr[GetM(opcode)]);
+				snprintf(buf, sizeof(buf), "FR%d=%f ", GetM(opcode), p_sh4rcb->cntx.fr[GetM(opcode)]);
 				regs += buf;
-				sprintf(buf,"FR%d", GetM(opcode));
+				snprintf(buf, sizeof(buf), "FR%d", GetM(opcode));
 			}
 			else if (strcmp2(tx1,"FREG_0>"))
 			{
-				sprintf(buf,"FR0=%f ", p_sh4rcb->cntx.fr[0]);
+				snprintf(buf, sizeof(buf), "FR0=%f ", p_sh4rcb->cntx.fr[0]);
 				regs += buf;
-				sprintf(buf,"FR0");
+				snprintf(buf, sizeof(buf), "FR0");
 			}
 			else if (strcmp2(tx1,"RM_BANK>"))
 			{
-				sprintf(buf,"R%d_BANK",GetM(opcode)&0x7);
+				snprintf(buf, sizeof(buf), "R%d_BANK",GetM(opcode)&0x7);
 			}
 			else if (strcmp2(tx1,"DFREG_N>"))
 			{
-				sprintf(buf,"DR%d",GetN(opcode)>>1);
+				snprintf(buf, sizeof(buf), "DR%d",GetN(opcode)>>1);
 			}
 			else if (strcmp2(tx1,"DFREG_M>"))
 			{
-				sprintf(buf,"DR%d",GetM(opcode)>>1);
+				snprintf(buf, sizeof(buf), "DR%d",GetM(opcode)>>1);
 			}
 			else if (strcmp2(tx1,"XDFREG_N>"))
 			{
 				u32 t=GetN(opcode);
 				if (t & 0x1)
-					sprintf(buf,"XD%d",t>>1);
+					snprintf(buf, sizeof(buf), "XD%d",t>>1);
 				else
-					sprintf(buf,"DR%d",t>>1);
+					snprintf(buf, sizeof(buf), "DR%d",t>>1);
 			}
 			else if (strcmp2(tx1,"XDFREG_M>"))
 			{
 				u32 t=GetM(opcode);
 				if (t & 0x1)
-					sprintf(buf,"XD%d",t>>1);
+					snprintf(buf, sizeof(buf), "XD%d",t>>1);
 				else
-					sprintf(buf,"DR%d",t>>1);
+					snprintf(buf, sizeof(buf), "DR%d",t>>1);
 			}
 			else if (strcmp2(tx1,"disp4b>"))
 			{
-				sprintf(buf,"0x%X",GetImm4(opcode)*1);
+				snprintf(buf, sizeof(buf), "0x%X",GetImm4(opcode)*1);
 			}
 			else if (strcmp2(tx1,"disp4w>"))
 			{
-				sprintf(buf,"0x%X",GetImm4(opcode)*2);
+				snprintf(buf, sizeof(buf), "0x%X",GetImm4(opcode)*2);
 			}
 			else if (strcmp2(tx1,"disp4dw>"))
 			{
-				sprintf(buf,"0x%X",GetImm4(opcode)*4);
+				snprintf(buf, sizeof(buf), "0x%X",GetImm4(opcode)*4);
 			}
 			else if (strcmp2(tx1,"PCdisp8w>"))
 			{
-				sprintf(buf,"0x%X[PC]",(pc)+4+(GetImm8(opcode)<<1));
+				snprintf(buf, sizeof(buf), "0x%X[PC]",(pc)+4+(GetImm8(opcode)<<1));
 			}
 			else if (strcmp2(tx1,"PCdisp8d>"))
 			{
-				sprintf(buf,"0x%X[PC]",(pc&0xFFFFFFFC)+4+(GetImm8(opcode)<<2));
+				snprintf(buf, sizeof(buf), "0x%X[PC]",(pc&0xFFFFFFFC)+4+(GetImm8(opcode)<<2));
 			}
 			else if (strcmp2(tx1,"disp8b>"))
 			{
-				sprintf(buf,"0x%X",GetImm8(opcode)*1);
+				snprintf(buf, sizeof(buf), "0x%X",GetImm8(opcode)*1);
 			}
 			else if (strcmp2(tx1,"disp8w>"))
 			{
-				sprintf(buf,"0x%X",GetImm8(opcode)*2);
+				snprintf(buf, sizeof(buf), "0x%X",GetImm8(opcode)*2);
 			}
 			else if (strcmp2(tx1,"disp8dw>"))
 			{
-				sprintf(buf,"0x%X",GetImm8(opcode)*4);
+				snprintf(buf, sizeof(buf), "0x%X",GetImm8(opcode)*4);
 			}
 			else if (strcmp2(tx1,"GBRdisp8b>"))
 			{
-				sprintf(buf,"0x%X",GetImm8(opcode)*1 + p_sh4rcb->cntx.gbr);
+				snprintf(buf, sizeof(buf), "0x%X",GetImm8(opcode)*1 + p_sh4rcb->cntx.gbr);
 			}
 			else if (strcmp2(tx1,"GBRdisp8w>"))
 			{
-				sprintf(buf,"0x%X",GetImm8(opcode)*2 + p_sh4rcb->cntx.gbr);
+				snprintf(buf, sizeof(buf), "0x%X",GetImm8(opcode)*2 + p_sh4rcb->cntx.gbr);
 			}
 			else if (strcmp2(tx1,"GBRdisp8dw>"))
 			{
-				sprintf(buf,"0x%X",GetImm8(opcode)*4 + p_sh4rcb->cntx.gbr);
+				snprintf(buf, sizeof(buf), "0x%X",GetImm8(opcode)*4 + p_sh4rcb->cntx.gbr);
 			}
 			else if (strcmp2(tx1,"bdisp8>"))
 			{
-				sprintf(buf,"0x%X",((GetSImm8(opcode))*2 + 4 + pc));
+				snprintf(buf, sizeof(buf), "0x%X",((GetSImm8(opcode))*2 + 4 + pc));
 			}
 			else if (strcmp2(tx1,"bdisp12>"))
 			{
-				sprintf(buf,"0x%X",((  ((s16)((GetImm12(opcode))<<4)) >>3)  + pc + 4));
+				snprintf(buf, sizeof(buf), "0x%X",((  ((s16)((GetImm12(opcode))<<4)) >>3)  + pc + 4));
 			}
 			else if (strcmp2(tx1,"imm8>"))
 			{
-				sprintf(buf,"0x%X",GetImm8(opcode));
+				snprintf(buf, sizeof(buf), "0x%X",GetImm8(opcode));
 			}
 			else if (strcmp2(tx1,"simm8>"))
 			{
-				sprintf(buf,"%d",GetSImm8(opcode));
+				snprintf(buf, sizeof(buf), "%d",GetSImm8(opcode));
 			}
 			else if (strcmp2(tx1,"simm8hex>"))
 			{
-				sprintf(buf,"0x%X",GetSImm8(opcode));
+				snprintf(buf, sizeof(buf), "0x%X",GetSImm8(opcode));
 			}
 			else
 			{

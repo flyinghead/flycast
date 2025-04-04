@@ -168,7 +168,7 @@ static const char *regName(u32 addr)
 	auto it = sb_reg_names.find(addr & 0x7fffff); // (addr - 0x5f6800) & 0x1fff);
 	if (it == sb_reg_names.end())
 	{
-		sprintf(regName, "?%06x", addr& 0x7fffff);
+		snprintf(regName, sizeof(regName), "?%06x", addr& 0x7fffff);
 		return regName;
 	}
 	else

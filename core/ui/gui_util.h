@@ -280,7 +280,7 @@ static inline bool iconButton(const char *icon, const std::string& label, const 
 {
 	ImguiStyleVar _{ImGuiStyleVar_ButtonTextAlign, ImVec2(0.f, 0.5f)};	// left aligned
 	std::string s(5 + label.size(), '\0');
-	s.resize(sprintf(s.data(), "%s  %s", icon, label.c_str()));
+	s.resize(snprintf(s.data(), s.size() + 1, "%s  %s", icon, label.c_str()));
 	return ImGui::Button(s.c_str(), size);
 }
 
@@ -288,7 +288,7 @@ static inline float iconButtonWidth(const char *icon, const std::string& label)
 {
 	// TODO avoid doing stuff twice
 	std::string s(5 + label.size(), '\0');
-	s.resize(sprintf(s.data(), "%s  %s", icon, label.c_str()));
+	s.resize(snprintf(s.data(), s.size() + 1, "%s  %s", icon, label.c_str()));
 	return ImGui::CalcTextSize(s.c_str()).x + ImGui::GetStyle().FramePadding.x * 2;
 }
 

@@ -183,7 +183,7 @@ void bm_AddBlock(RuntimeBlockInfo* blk)
 	{
 		char fname[512];
 
-		sprintf(fname,"sh4:%08X,c:%d,s:%d,h:%d", block->addr, block->guest_cycles, block->guest_opcodes, block->host_opcodes);
+		snprintf(fname, sizeof(fname), "sh4:%08X,c:%d,s:%d,h:%d", block->addr, block->guest_cycles, block->guest_opcodes, block->host_opcodes);
 
 		if (op_write_native_code(oprofHandle, fname, (uint64_t)block->code, (void*)block->code, block->host_code_size) != 0)
 		{

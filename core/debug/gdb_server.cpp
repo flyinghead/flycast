@@ -381,7 +381,7 @@ private:
 				}
 				data.push_back('#');
 				char s[9];
-				sprintf(s, "%02x", checksum);
+				snprintf(s, sizeof(s), "%02x", checksum);
 				data += s;
 			}
 			DEBUG_LOG(NETWORK, "gdb: sent %s", data.c_str());
@@ -397,7 +397,7 @@ private:
 	std::string reportException()
 	{
 		char s[4];
-		sprintf(s, "S%02X", agent.currentException());
+		snprintf(s, sizeof(s), "S%02X", agent.currentException());
 		return s;
 	}
 
@@ -457,7 +457,7 @@ private:
 		for (u32 i = 0; i < len; i++)
 		{
 			char s[3];
-			sprintf(s,"%02x", mem[i]);
+			snprintf(s, sizeof(s), "%02x", mem[i]);
 			outpkt += s;
 		}
 		return outpkt;
@@ -586,7 +586,7 @@ private:
 				for (u32 i = 0; i < len; i++)
 				{
 					char n[10];
-					sprintf(n, "%08x ", *data++);
+					snprintf(n, sizeof(n), "%08x ", *data++);
 					for (char *p = n; *p != 0; p++)
 					{
 						*r++ = packnb((*p >> 4) & 0xf);
@@ -614,7 +614,7 @@ private:
 		{
 			// Obtain from the target OS a printable string description of thread attributes
 			char s[19];
-			sprintf(s, "%02x%02x%02x%02x%02x%02x%02x%02x%02x", 'R', 'u', 'n', 'n', 'a', 'b', 'l', 'e', 0);
+			snprintf(s, sizeof(s), "%02x%02x%02x%02x%02x%02x%02x%02x%02x", 'R', 'u', 'n', 'n', 'a', 'b', 'l', 'e', 0);
 			return { std::string(s, 18) };
 		}
 		else if (pkt.rfind("qXfer:", 0) == 0)
@@ -825,7 +825,7 @@ private:
 	{
 		u32 signal = agentInterrupt();
 		char s[10];
-		sprintf(s, "S%02x", signal);
+		snprintf(s, sizeof(s), "S%02x", signal);
 		return s;
 	}
 
