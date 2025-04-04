@@ -205,17 +205,12 @@ void DreamLinkGamepad::checkKeyCombo() {
 		gui_open_settings();
 }
 
-bool DreamLinkGamepad::find_mapping(int system)
-{
-	return SDLGamepad::find_mapping(system);
-}
-
 void DreamLinkGamepad::resetMappingToDefault(bool arcade, bool gamepad)
 {
 	SDLGamepad::resetMappingToDefault(arcade, gamepad);
-	
+
 	// Set DreamPort device's deadzone to 0.0 for reset-to-default case
-	if (input_mapper != nullptr && dreamlink && 
+	if (input_mapper != nullptr && dreamlink &&
 		device_guid.length() >= 24 && memcmp(DreamPicoPort::VID_PID_GUID, device_guid.c_str() + 8, 16) == 0) {
 		input_mapper->dead_zone = 0.0f;
 		input_mapper->set_dirty();
