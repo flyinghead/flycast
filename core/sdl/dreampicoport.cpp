@@ -649,7 +649,7 @@ DreamPicoPort::DreamPicoPort(int bus, int joystick_idx, SDL_Joystick* sdl_joysti
 
 	unique_id.clear();
 	if (!is_hardware_bus_implied && !serial_number.empty()) {
-		// Locking to name which includes A-D plus serial number will ensure correct enumeration every time
+		// Locking to name, which includes A-D, plus serial number will ensure correct enumeration every time
 		unique_id = std::string("sdl_") + getName("") + std::string("_") + serial_number;
 	}
 }
@@ -722,6 +722,10 @@ int DreamPicoPort::getDefaultBus() const {
 void DreamPicoPort::setDefaultMapping(const std::shared_ptr<InputMapping>& mapping) const {
 	// Since this is a real DC controller, no deadzone adjustment is needed
 	mapping->dead_zone = 0.0f;
+	// Map the things not set by SDL
+	mapping->set_button(DC_BTN_C, 2);
+	mapping->set_button(DC_BTN_Z, 5);
+	mapping->set_button(DC_BTN_D, 10);
 }
 
 std::string DreamPicoPort::getUniqueId() const {
