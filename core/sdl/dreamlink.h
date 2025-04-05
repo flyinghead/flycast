@@ -96,6 +96,10 @@ public:
 		return -1;
 	}
 
+	//! Allows a DreamLink device to dictate the default mapping
+	virtual void setDefaultMapping(const std::shared_ptr<InputMapping>& mapping) const {
+	}
+
 	//! @return the selected bus number of the controller
 	virtual int getBus() const = 0;
 
@@ -123,11 +127,11 @@ public:
 	bool gamepad_btn_input(u32 code, bool pressed) override;
 	bool gamepad_axis_input(u32 code, int value) override;
 	static bool isDreamcastController(int deviceIndex);
-	void resetMappingToDefault(bool arcade, bool gamepad) override;
 
 private:
 	static void handleEvent(Event event, void *arg);
 	void checkKeyCombo();
+	std::shared_ptr<InputMapping> getDefaultMapping() override;
 
 	std::shared_ptr<DreamLink> dreamlink;
 	bool ltrigPressed = false;

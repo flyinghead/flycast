@@ -83,6 +83,8 @@ public:
 
 	int getDefaultBus() const override;
 
+	void setDefaultMapping(const std::shared_ptr<InputMapping>& mapping) const override;
+
 	void changeBus(int newBus);
 
 	std::string getName() const override;

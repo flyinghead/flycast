@@ -711,6 +711,11 @@ int DreamPicoPort::getDefaultBus() const {
 	}
 }
 
+void DreamPicoPort::setDefaultMapping(const std::shared_ptr<InputMapping>& mapping) const {
+	// Since this is a real DC controller, no deadzone adjustment is needed
+	mapping->dead_zone = 0.0f;
+}
+
 void DreamPicoPort::changeBus(int newBus) {
 	software_bus = newBus;
 }

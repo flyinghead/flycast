@@ -86,13 +86,6 @@ DreamLinkGamepad::DreamLinkGamepad(int maple_port, int joystick_idx, SDL_Joystic
 	else if (memcmp(DreamPicoPort::VID_PID_GUID, guid_str + 8, 16) == 0)
 	{
 		dreamlink = std::make_shared<DreamPicoPort>(maple_port, joystick_idx, sdl_joystick);
-		// Set DreamPort device's default deadzone to 0.0 for new mappings only
-		if (input_mapper != nullptr && !find_mapping())
-		{
-			input_mapper->dead_zone = 0.0f;
-			input_mapper->set_dirty();
-			save_mapping();
-		}
 	}
 
 	if (dreamlink) {
@@ -107,6 +100,8 @@ DreamLinkGamepad::DreamLinkGamepad(int maple_port, int joystick_idx, SDL_Joystic
 	EventManager::listen(Event::Start, handleEvent, this);
 	EventManager::listen(Event::LoadState, handleEvent, this);
     EventManager::listen(Event::Terminate, handleEvent, this);
+
+	loadMapping();
 }
 
 DreamLinkGamepad::~DreamLinkGamepad() {
@@ -205,16 +200,12 @@ void DreamLinkGamepad::checkKeyCombo() {
 		gui_open_settings();
 }
 
-void DreamLinkGamepad::resetMappingToDefault(bool arcade, bool gamepad)
-{
-	SDLGamepad::resetMappingToDefault(arcade, gamepad);
-
-	// Set DreamPort device's deadzone to 0.0 for reset-to-default case
-	if (input_mapper != nullptr && dreamlink &&
-		device_guid.length() >= 24 && memcmp(DreamPicoPort::VID_PID_GUID, device_guid.c_str() + 8, 16) == 0) {
-		input_mapper->dead_zone = 0.0f;
-		input_mapper->set_dirty();
+std::shared_ptr<InputMapping> DreamLinkGamepad::getDefaultMapping() {
+	std::shared_ptr<InputMapping> mapping = SDLGamepad::getDefaultMapping();
+	if (mapping && dreamlink) {
+		dreamlink->setDefaultMapping(mapping);
 	}
+	return mapping;
 }
 
 #else // USE_DREAMCASTCONTROLLER
@@ -238,11 +229,8 @@ bool DreamLinkGamepad::gamepad_btn_input(u32 code, bool pressed) {
 bool DreamLinkGamepad::gamepad_axis_input(u32 code, int value) {
 	return SDLGamepad::gamepad_axis_input(code, value);
 }
-bool DreamLinkGamepad::find_mapping(int system) {
-	return SDLGamepad::find_mapping(system);
-}
-void DreamLinkGamepad::resetMappingToDefault(bool arcade, bool gamepad) {
-	SDLGamepad::resetMappingToDefault(arcade, gamepad);
+std::shared_ptr<InputMapping> DreamLinkGamepad::getDefaultMapping() {
+	return SDLGamepad::getDefaultMapping();
 }
 
 #endif
