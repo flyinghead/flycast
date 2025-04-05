@@ -198,7 +198,7 @@ void BaseTextureCacheData::PrintTextureName()
 {
 #if !defined(NDEBUG) || defined(DEBUGFAST)
 	char str[512];
-	sprintf(str, "Texture: %s", GetPixelFormatName());
+	snprintf(str, sizeof(str), "Texture: %s", GetPixelFormatName());
 
 	if (tcw.VQ_Comp)
 		strcat(str, " VQ");
@@ -212,9 +212,11 @@ void BaseTextureCacheData::PrintTextureName()
 	if (tsp.FilterMode != 0)
 		strcat(str, " Bilinear");
 
-	sprintf(str + strlen(str), " %dx%d @ 0x%X", 8 << tsp.TexU, 8 << tsp.TexV, tcw.TexAddr << 3);
+	size_t len = strlen(str);
+	snprintf(str + len, sizeof(str) - len, " %dx%d @ 0x%X", 8 << tsp.TexU, 8 << tsp.TexV, tcw.TexAddr << 3);
 	std::string id = GetId();
-	sprintf(str + strlen(str), " id=%s", id.c_str());
+	len = strlen(str);
+	snprintf(str + len, sizeof(str) - len, " id=%s", id.c_str());
 	DEBUG_LOG(RENDERER, "%s", str);
 #endif
 }

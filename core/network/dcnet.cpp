@@ -32,6 +32,7 @@
 #include <thread>
 #include <memory>
 #include <array>
+#include <chrono>
 #ifndef __ANDROID__
 //#define WIRESHARK_DUMP 1
 #endif
@@ -58,14 +59,15 @@ template<typename SocketT>
 class PPPSocket
 {
 public:
-	PPPSocket(asio::io_context& io_context, const typename SocketT::endpoint_type& endpoint)
+	PPPSocket(asio::io_context& io_context, const typename SocketT::endpoint_type& endpoint,
+			const std::string& endpointName = "")
 		: socket(io_context)
 	{
 		asio::error_code ec;
 		socket.connect(endpoint, ec);
 		if (ec)
 			throw FlycastException(ec.message().c_str());
-		os_notify("Connected to DCNet with modem", 5000);
+		os_notify("Connected to DCNet with modem", 5000, endpointName.c_str());
 		receive();
 	}
 
@@ -185,14 +187,15 @@ using PPPTcpSocket = PPPSocket<asio::ip::tcp::socket>;
 class EthSocket
 {
 public:
-	EthSocket(asio::io_context& io_context, const asio::ip::tcp::endpoint& endpoint)
+	EthSocket(asio::io_context& io_context, const asio::ip::tcp::endpoint& endpoint,
+			const std::string& endpointName = "")
 		: socket(io_context)
 	{
 		asio::error_code ec;
 		socket.connect(endpoint, ec);
 		if (ec)
 			throw FlycastException(ec.message().c_str());
-		os_notify("Connected to DCNet with Ethernet", 5000);
+		os_notify("Connected to DCNet with Ethernet", 5000, endpointName.c_str());
 		receive();
 		u8 prolog[] = { 'D', 'C', 'N', 'E', 'T', 1 };
 		send(prolog, sizeof(prolog));
@@ -356,6 +359,204 @@ private:
 	FILE *dumpfp = nullptr;
 };
 
+class AccessPointFinder
+{
+public:
+	AccessPointFinder(asio::io_context& io_context)
+		: io_context(io_context), socket(io_context, asio::ip::udp::endpoint()),
+		  timer(io_context)
+	{
+	}
+
+	template<typename Handler>
+	void find(const Handler& handler)
+	{
+		this->handler = std::function<void(const std::error_code&, const asio::ip::address&, const std::string&)>(handler);
+		try {
+			asio::ip::udp::resolver resolver(io_context);
+			auto it = resolver.resolve("dcnet.flyca.st", std::to_string(PORT));
+			if (it.empty()) {
+				finish();
+				return;
+			}
+			mainEndpoint = *it.begin();
+
+			std::array<uint8_t, 5> buf;
+			memcpy(&buf[0], &MAGIC, sizeof(MAGIC));
+			buf[4] = DISCOVER;	// discover access points
+			socket.send_to(asio::buffer(buf), mainEndpoint);
+
+			timer.expires_after(asio::chrono::milliseconds(500));
+			timer.async_wait([this](const std::error_code& ec)
+			{
+				if (ec)
+					return;
+				// Re-ping access points that didn't answer after 500 ms
+				for (const auto& ap : accessPoints) {
+					if (ap.count == 0)
+						sendPing(ap.endpoint);
+				}
+				timer.expires_after(asio::chrono::milliseconds(500));
+				timer.async_wait([this](const std::error_code& ec)
+				{
+					// 1 sec final timeout
+					if (ec)
+						return;
+					std::error_code err;
+					socket.close(err);
+					finish();
+				});
+			});
+			receiveAccessPoints();
+		} catch (const std::system_error& e) {
+			finish(e.code());
+		}
+	}
+
+private:
+	void receiveAccessPoints()
+	{
+		socket.async_receive_from(asio::buffer(recvbuf), recvEndpoint, [this](const std::error_code& ec, size_t len)
+			{
+				if (recvEndpoint != mainEndpoint || len < 5
+						|| memcmp(&recvbuf[0], &MAGIC, sizeof(MAGIC)) || recvbuf[4] != DISCOVER) {
+					// Unexpected or invalid packet
+					receiveAccessPoints();
+					return;
+				}
+				const uint8_t *p = &recvbuf[5];
+				while (p - &recvbuf[0] < (int)len)
+				{
+					accessPoints.emplace_back();
+					uint32_t addr;
+					memcpy(&addr, p, sizeof(uint32_t));
+					accessPoints.back().endpoint = asio::ip::udp::endpoint(asio::ip::address_v4(htonl(addr)), PORT);
+					p += 4;
+					size_t l = *p++;
+					accessPoints.back().name = std::string((const char *)p, (const char *)(p + l));
+					p += l;
+				}
+				if (accessPoints.size() > 1)
+				{
+					// Need to ping
+					for (const auto& ap : accessPoints)
+						sendPing(ap.endpoint);
+				}
+				else {
+					finish();
+				}
+			});
+	}
+
+	void sendPing(const asio::ip::udp::endpoint& endpoint)
+	{
+		std::array<uint8_t, 13> buf;
+		memcpy(&buf[0], &MAGIC, sizeof(MAGIC));
+		buf[4] = PING;
+		u64 now = (u64)getTimeMs();
+		memcpy(&buf[5], &now, sizeof(u64));
+		socket.send_to(asio::buffer(buf), endpoint);
+		receivePing();
+	}
+
+	void receivePing()
+	{
+		if (receiving)
+			return;
+		receiving = true;
+		socket.async_receive_from(asio::buffer(recvbuf), recvEndpoint, [this](const std::error_code& ec, size_t len)
+			{
+				receiving = false;
+				if (ec)
+				{
+					if (ec != asio::error::operation_aborted && ec != asio::error::bad_descriptor)
+						INFO_LOG(NETWORK, "receivePing error: %s", ec.message().c_str());
+					return;
+				}
+				if (len != 13 || recvbuf[4] != PONG) {
+					receivePing();
+					return;
+				}
+				u64 ts;
+				memcpy(&ts, &recvbuf[5], sizeof(ts));
+				int ping = getTimeMs() - (time_t)ts;
+				for (auto& ap : accessPoints)
+				{
+					if (ap.endpoint == recvEndpoint)
+					{
+						ap.ping += ping;
+						ap.count++;
+						if (ap.count < 3)
+							sendPing(ap.endpoint);
+						else
+							// we have 3 answers from one AP so let's stop here
+							finish();
+						return;
+					}
+				}
+				receivePing();
+			});
+	}
+
+	void finish(const std::error_code& ec = {})
+	{
+		std::error_code e;
+		socket.close(e);
+		timer.cancel(e);
+		if (ec) {
+			handler(ec, {}, {});
+		}
+		else if (accessPoints.empty()) {
+			handler({}, mainEndpoint.address(), {});
+		}
+		else
+		{
+			int bestPing = 1000000;
+			const AccessPoint *bestAP = nullptr;
+			for (const AccessPoint& ap : accessPoints)
+			{
+				if (ap.count == 0) {
+					INFO_LOG(NETWORK, "AP %s (%s): no answer", ap.name.c_str(), ap.endpoint.address().to_string().c_str());
+					continue;
+				}
+				const int ping = ap.ping / ap.count;
+				INFO_LOG(NETWORK, "AP %s (%s): ping %d ms", ap.name.c_str(), ap.endpoint.address().to_string().c_str(), ping);
+				if (ping < bestPing) {
+					bestPing = ping;
+					bestAP = &ap;
+				}
+			}
+			if (bestAP == nullptr)
+				bestAP = &accessPoints[0];
+			handler({}, bestAP->endpoint.address(), bestAP->name);
+		}
+	}
+
+	struct AccessPoint
+	{
+		asio::ip::udp::endpoint endpoint;
+		std::string name;
+		int ping = 0;
+		int count = 0;
+	};
+
+	asio::io_context& io_context;
+	asio::ip::udp::socket socket;
+	std::array<uint8_t, 512> recvbuf;
+	asio::ip::udp::endpoint recvEndpoint;
+	asio::ip::udp::endpoint mainEndpoint;
+	std::vector<AccessPoint> accessPoints;
+	bool receiving = false;
+	asio::steady_timer timer;
+	std::function<void(const std::error_code&, const asio::ip::address&, const std::string&)> handler;
+
+	static constexpr uint16_t PORT = 7655;
+	static constexpr uint32_t MAGIC = 0xDC15C001;
+	static constexpr uint8_t PING = 1;
+	static constexpr uint8_t PONG = 2;
+	static constexpr uint8_t DISCOVER = 3;
+};
+
 class DCNetThread
 {
 public:
@@ -404,11 +605,15 @@ public:
 
 private:
 	void run();
+	void connect(const asio::ip::address& address = {}, const std::string& apname = {});
 
 	std::thread thread;
 	std::unique_ptr<asio::io_context> io_context;
 	std::unique_ptr<PPPTcpSocket> pppSocket;
 	std::unique_ptr<EthSocket> ethSocket;
+
+	static constexpr uint16_t PPP_PORT = 7654;
+	static constexpr uint16_t TAP_PORT = 7655;
 	friend DCNetService;
 };
 static DCNetThread thread;
@@ -472,32 +677,59 @@ void DCNetService::receiveEthFrame(u8 const *frame, unsigned int len)
 	thread.sendEthFrame(frame, len);
 }
 
-void DCNetThread::run()
+void DCNetThread::connect(const asio::ip::address& address, const std::string& apname)
 {
-	try {
-		std::string port;
-		if (config::EmulateBBA)
-			port = "7655";
-		else
-			port = "7654";
+	asio::ip::tcp::endpoint endpoint;
+	if (address.is_unspecified())
+	{
 		std::string hostname = "dcnet.flyca.st";
 #ifndef LIBRETRO
 		hostname = cfgLoadStr("network", "DCNetServer", hostname);
 #endif
+		std::string port;
+		if (config::EmulateBBA)
+			port = std::to_string(TAP_PORT);
+		else
+			port = std::to_string(PPP_PORT);
 		asio::ip::tcp::resolver resolver(*io_context);
 		asio::error_code ec;
 		auto it = resolver.resolve(hostname, port, ec);
 		if (ec)
 			throw FlycastException(ec.message());
-		asio::ip::tcp::endpoint endpoint = *it.begin();
+		if (it.empty())
+			throw FlycastException("Host not found");
+		endpoint = *it.begin();
+	}
+	else {
+		endpoint.address(address);
+		endpoint.port(config::EmulateBBA ? TAP_PORT : PPP_PORT);
+	}
+	if (config::EmulateBBA)
+		ethSocket = std::make_unique<EthSocket>(*io_context, endpoint, apname);
+	else
+		pppSocket = std::make_unique<PPPTcpSocket>(*io_context, endpoint, apname);
+}
 
-		if (config::EmulateBBA) {
-			ethSocket = std::make_unique<EthSocket>(*io_context, endpoint);
-		}
-		else {
-			toModem.clear();
-			pppSocket = std::make_unique<PPPTcpSocket>(*io_context, endpoint);
-		}
+void DCNetThread::run()
+{
+	toModem.clear();
+	try {
+		std::string hostname;
+#ifndef LIBRETRO
+		hostname = cfgLoadStr("network", "DCNetServer", "");
+		if (!hostname.empty())
+			connect();
+#endif
+		AccessPointFinder finder(*io_context);
+		if (hostname.empty())
+			finder.find([this](const std::error_code& ec,
+					const asio::ip::address& address, const std::string& apname)
+				{
+					if (ec)
+						WARN_LOG(NETWORK, "AP discovery failed: %s", ec.message().c_str());
+					this->connect(address, apname);
+				});
+
 		io_context->run();
 	} catch (const FlycastException& e) {
 		ERROR_LOG(NETWORK, "DCNet connection error: %s", e.what());

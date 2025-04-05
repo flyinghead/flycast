@@ -253,7 +253,7 @@ void Texture::CreateImage(vk::ImageTiling tiling, vk::ImageUsageFlags usage, vk:
 	imageView = device.createImageViewUnique(imageViewCreateInfo);
 #ifdef VK_DEBUG
 	char name[128];
-	sprintf(name, "texture @ %x", startAddress);
+	snprintf(name, sizeof(name), "texture @ %x", startAddress);
 	VulkanContext::Instance()->setObjectName(image.get(), name);
 	VulkanContext::Instance()->setObjectName(imageView.get(), name);
 #endif

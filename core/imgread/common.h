@@ -155,7 +155,7 @@ struct Disc
 		{
 			u32 fmt = tracks[i].isDataTrack() ? 2048 : 2352;
 			char fsto[1024];
-			sprintf(fsto,"%s%s%d.img",path.c_str(),".track",i);
+			snprintf(fsto, sizeof(fsto), "%s%s%d.img", path.c_str(),".track", i);
 			
 			FILE *fo = nowide::fopen(fsto, "wb");
 

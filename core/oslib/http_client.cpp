@@ -142,7 +142,7 @@ int post(const std::string& url, const char *payload, const char *contentType, s
 {
 	char buf[512];
 	if (contentType != nullptr) {
-		sprintf(buf, "Content-Type: %s", contentType);
+		snprintf(buf, sizeof(buf), "Content-Type: %s", contentType);
 		contentType = buf;
 	}
 	return post(url, contentType, (const u8 *)payload, strlen(payload), reply);

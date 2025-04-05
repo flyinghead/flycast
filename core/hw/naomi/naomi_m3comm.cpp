@@ -250,7 +250,8 @@ bool NaomiM3Comm::DmaStart(u32 addr, u32 data)
 			for (u32 i = 0; i < SB_GDLEN; i++)
 			{
 				u8 value = comm_ram[comm_offset + i];
-				sprintf(buf + strlen(buf), "%02x ", value);
+				size_t len = strlen(buf);
+				snprintf(buf + len, sizeof(buf) - len, "%02x ", value);
 			}
 			DEBUG_LOG(NAOMI, "Comm RAM read @%x: %s", comm_offset, buf);
 		}

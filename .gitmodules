@@ -3,7 +3,7 @@
 	url = https://github.com/libsdl-org/SDL.git
 [submodule "core/deps/libchdr"]
 	path = core/deps/libchdr
-	url = https://github.com/rtissera/libchdr.git
+	url = https://github.com/flyinghead/libchdr.git
 	ignore = dirty
 [submodule "core/deps/luabridge"]
 	path = core/deps/luabridge
