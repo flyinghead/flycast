@@ -35,6 +35,8 @@
 #include <mutex>
 #include <condition_variable>
 #include <atomic>
+#include <locale>
+#include <codecvt>
 
 #if defined(__linux__) || (defined(__APPLE__) && defined(TARGET_OS_MAC))
 #include <dirent.h>
@@ -644,6 +646,12 @@ DreamPicoPort::DreamPicoPort(int bus, int joystick_idx, SDL_Joystick* sdl_joysti
 	(void)SDL_JoystickGetDeviceInstanceID(joystick_idx);
 #endif
 	determineHardwareBus(joystick_idx, sdl_joystick);
+
+	unique_id.clear();
+	if (!is_hardware_bus_implied && !serial_number.empty()) {
+		// Locking to name which includes A-D plus serial number will ensure correct enumeration every time
+		unique_id = std::string("sdl_") + getName("") + std::string("_") + serial_number;
+	}
 }
 
 DreamPicoPort::~DreamPicoPort() {
@@ -716,15 +724,23 @@ void DreamPicoPort::setDefaultMapping(const std::shared_ptr<InputMapping>& mappi
 	mapping->dead_zone = 0.0f;
 }
 
+std::string DreamPicoPort::getUniqueId() const {
+	return unique_id;
+}
+
 void DreamPicoPort::changeBus(int newBus) {
 	software_bus = newBus;
 }
 
 std::string DreamPicoPort::getName() const {
+	return getName(" ");
+}
+
+std::string DreamPicoPort::getName(std::string separator) const {
 	std::string name = "DreamPicoPort";
 	if (!is_hardware_bus_implied && !is_single_device) {
 		const char portChar = ('A' + hardware_bus);
-		name += " " + std::string(1, portChar);
+		name += separator + std::string(1, portChar);
 	}
 	return name;
 }
@@ -830,6 +846,13 @@ bool DreamPicoPort::isSingleDevice() const {
 
 void DreamPicoPort::determineHardwareBus(int joystick_idx, SDL_Joystick* sdl_joystick) {
 	// This function determines what bus index to use when communicating with the hardware.
+
+	// Set the serial number if found by SDL Joystick
+	const char* joystick_serial = SDL_JoystickGetSerial(sdl_joystick);
+	if (joystick_serial) {
+		serial_number = joystick_serial;
+	}
+
 #if defined(_WIN32)
 	// This only works in Windows because the joystick_path is not given in other OSes
 	const char* joystick_name = SDL_JoystickName(sdl_joystick);
@@ -837,14 +860,16 @@ void DreamPicoPort::determineHardwareBus(int joystick_idx, SDL_Joystick* sdl_joy
 
 	struct SDL_hid_device_info* devs = SDL_hid_enumerate(VID, PID);
 	if (devs) {
+		struct SDL_hid_device_info* my_dev = nullptr;
+
 		if (!devs->next) {
 			// Only single device found, so this is simple (host-1p firmware used)
 			hardware_bus = 0;
 			is_hardware_bus_implied = false;
 			is_single_device = true;
+			my_dev = devs;
 		} else {
 			struct SDL_hid_device_info* it = devs;
-			struct SDL_hid_device_info* my_dev = nullptr;
 
 			if (joystick_path)
 			{
@@ -892,8 +917,18 @@ void DreamPicoPort::determineHardwareBus(int joystick_idx, SDL_Joystick* sdl_joy
 				}
 			}
 		}
+
+		// Set serial number if found in SDL_hid
+		if (my_dev) {
+			if (serial_number.empty() && my_dev->serial_number) {
+				std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
+				serial_number = converter.to_bytes(my_dev->serial_number);
+			}
+		}
+
 		SDL_hid_free_enumeration(devs);
 	}
+
 #endif
 
 	if (hardware_bus < 0) {

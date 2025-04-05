@@ -100,6 +100,11 @@ public:
 	virtual void setDefaultMapping(const std::shared_ptr<InputMapping>& mapping) const {
 	}
 
+	//! @return a unique ID for this DreamLink device or empty string to use default
+	virtual std::string getUniqueId() const {
+		return std::string();
+	}
+
 	//! @return the selected bus number of the controller
 	virtual int getBus() const = 0;
 

@@ -95,6 +95,10 @@ DreamLinkGamepad::DreamLinkGamepad(int maple_port, int joystick_idx, SDL_Joystic
 			set_maple_port(defaultBus);
 		}
 
+		std::string uniqueId = dreamlink->getUniqueId();
+		if (!uniqueId.empty()) {
+			this->_unique_id = uniqueId;
+		}
 	}
 
 	EventManager::listen(Event::Start, handleEvent, this);
