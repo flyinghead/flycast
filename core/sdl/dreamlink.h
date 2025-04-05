@@ -128,10 +128,12 @@ public:
 	bool gamepad_axis_input(u32 code, int value) override;
 	static bool isDreamcastController(int deviceIndex);
 
+protected:
+	std::shared_ptr<InputMapping> getDefaultMapping() override;
+
 private:
 	static void handleEvent(Event event, void *arg);
 	void checkKeyCombo();
-	std::shared_ptr<InputMapping> getDefaultMapping() override;
 
 	std::shared_ptr<DreamLink> dreamlink;
 	bool ltrigPressed = false;

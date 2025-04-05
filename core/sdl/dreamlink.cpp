@@ -46,7 +46,7 @@
 #include <setupapi.h>
 #endif
 
-void createDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink, bool gameStart, bool gameEnd);
+void createDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink, bool gameStart);
 void tearDownDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink);
 
 bool DreamLinkGamepad::isDreamcastController(int deviceIndex)
@@ -142,7 +142,7 @@ void DreamLinkGamepad::registered()
 		dreamlink->connect();
 
 		// Create DreamLink Maple Devices here just in case game is already running
-		createDreamLinkDevices(dreamlink, false, false);
+		createDreamLinkDevices(dreamlink, false);
 	}
 }
 
@@ -150,7 +150,7 @@ void DreamLinkGamepad::handleEvent(Event event, void *arg)
 {
 	DreamLinkGamepad *gamepad = static_cast<DreamLinkGamepad*>(arg);
 	if (gamepad->dreamlink != nullptr && event != Event::Terminate) {
-		createDreamLinkDevices(gamepad->dreamlink, event == Event::Start, event == Event::Terminate);
+		createDreamLinkDevices(gamepad->dreamlink, event == Event::Start);
 	}
 
     if (gamepad->dreamlink != nullptr && event == Event::Terminate)
@@ -195,17 +195,17 @@ bool DreamLinkGamepad::gamepad_axis_input(u32 code, int value)
 	return SDLGamepad::gamepad_axis_input(code, value);
 }
 
-void DreamLinkGamepad::checkKeyCombo() {
-	if (ltrigPressed && rtrigPressed && startPressed)
-		gui_open_settings();
-}
-
 std::shared_ptr<InputMapping> DreamLinkGamepad::getDefaultMapping() {
 	std::shared_ptr<InputMapping> mapping = SDLGamepad::getDefaultMapping();
 	if (mapping && dreamlink) {
 		dreamlink->setDefaultMapping(mapping);
 	}
 	return mapping;
+}
+
+void DreamLinkGamepad::checkKeyCombo() {
+	if (ltrigPressed && rtrigPressed && startPressed)
+		gui_open_settings();
 }
 
 #else // USE_DREAMCASTCONTROLLER

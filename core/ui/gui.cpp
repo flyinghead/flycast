@@ -2034,8 +2034,11 @@ static void gui_settings_controls(bool& maple_devices_changed)
 	OptionCheckbox("Use Raw Input", config::UseRawInput, "Supports multiple pointing devices (mice, light guns) and keyboards");
 #endif
 #ifdef USE_DREAMCASTCONTROLLER
-	OptionCheckbox("Use Physical VMU Memory", config::UsePhysicalVmuMemory,
-		"Enables direct read/write access to physical VMU memory via DreamPicoPort/DreamConn.");
+	{
+		DisabledScope scope(game_started);
+		OptionCheckbox("Use Physical VMU Memory", config::UsePhysicalVmuMemory,
+			"Enables direct read/write access to physical VMU memory via DreamPicoPort/DreamConn.");
+	}
 #endif
 
 	ImGui::Spacing();
