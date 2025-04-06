@@ -201,7 +201,9 @@ bool DreamLinkGamepad::gamepad_axis_input(u32 code, int value)
 
 void DreamLinkGamepad::resetMappingToDefault(bool arcade, bool gamepad) {
 	SDLGamepad::resetMappingToDefault(arcade, gamepad);
-	dreamlink->setDefaultMapping(input_mapper);
+	if (input_mapper && dreamlink) {
+		dreamlink->setDefaultMapping(input_mapper);
+	}
 }
 
 std::shared_ptr<InputMapping> DreamLinkGamepad::getDefaultMapping() {
