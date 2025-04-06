@@ -210,7 +210,8 @@ void gui_initFonts()
     // Setup Dear ImGui style
 	ImGui::GetStyle() = ImGuiStyle{};
     ImGui::StyleColorsDark();
-    ImGui::GetStyle().TabRounding = 0;
+    ImGui::GetStyle().TabRounding = 5.0f;
+    ImGui::GetStyle().FrameRounding = 3.0f;
     ImGui::GetStyle().ItemSpacing = ImVec2(8, 8);		// from 8,4
     ImGui::GetStyle().ItemInnerSpacing = ImVec2(4, 6);	// from 4,4
 #if defined(__ANDROID__) || defined(TARGET_IPHONE) || defined(__SWITCH__)
