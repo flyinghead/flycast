@@ -155,8 +155,8 @@ bool GamepadDevice::handleButtonInput(int port, DreamcastKey key, bool pressed)
 
 bool GamepadDevice::gamepad_btn_input(u32 code, bool pressed)
 {
-	if (_input_detected != nullptr && _detecting_button
-			&& getTimeMs() >= _detection_start_time && pressed)
+	if (_input_detected != NULL && _detecting_button
+			&& getTimeMs() >= _detection_start_time)
 	{
 		_input_detected(code, false, false);
 		_input_detected = nullptr;
@@ -166,16 +166,150 @@ bool GamepadDevice::gamepad_btn_input(u32 code, bool pressed)
 		return false;
 
 	bool rc = false;
+	
+	// Mark button as pressed or released for combination detection
+	if (pressed)
+		pressed_buttons.insert(code);
+	else
+		pressed_buttons.erase(code);
+	
+	// Check for button combinations
 	if (_maple_port == 4)
 	{
 		for (int port = 0; port < 4; port++)
 		{
+			// Try all possible combinations of currently pressed buttons
+			std::vector<u32> current_buttons(pressed_buttons.begin(), pressed_buttons.end());
+			
+			for (size_t len = current_buttons.size(); len > 0; len--)
+			{
+				// Check all combinations of length 'len'
+				std::vector<u32> combo(len);
+				std::vector<bool> selected(current_buttons.size(), false);
+				
+				// Initialize with the first 'len' elements selected
+				for (size_t i = 0; i < len; i++)
+					selected[i] = true;
+					
+				do {
+					// Create the current combination
+					size_t combo_idx = 0;
+					for (size_t i = 0; i < current_buttons.size(); i++)
+					{
+						if (selected[i])
+							combo[combo_idx++] = current_buttons[i];
+					}
+					
+					// Check if this combination is mapped
+					DreamcastKey key = input_mapper->get_button_combination_id(port, combo);
+					if (key != EMU_BTN_NONE)
+					{
+						rc = handleButtonInput(port, key, true) || rc;
+						
+						// Store the combination as active
+						active_combinations[port].insert(key);
+					}
+					
+				} while (std::prev_permutation(selected.begin(), selected.end()));
+			}
+			
+			// Check if any previously active combinations are no longer active
+			std::set<DreamcastKey> inactive_combinations;
+			for (DreamcastKey key : active_combinations[port])
+			{
+				std::vector<u32> mapped_buttons = input_mapper->get_button_combination_codes(port, key);
+				bool all_pressed = true;
+				
+				for (u32 btn : mapped_buttons)
+				{
+					if (pressed_buttons.find(btn) == pressed_buttons.end())
+					{
+						all_pressed = false;
+						break;
+					}
+				}
+				
+				if (!all_pressed)
+				{
+					rc = handleButtonInput(port, key, false) || rc;
+					inactive_combinations.insert(key);
+				}
+			}
+			
+			// Remove inactive combinations
+			for (DreamcastKey key : inactive_combinations)
+				active_combinations[port].erase(key);
+			
+			// Normal single button handling
 			DreamcastKey key = input_mapper->get_button_id(port, code);
 			rc = handleButtonInput(port, key, pressed) || rc;
 		}
 	}
 	else
 	{
+		// Try all possible combinations of currently pressed buttons for a single port
+		std::vector<u32> current_buttons(pressed_buttons.begin(), pressed_buttons.end());
+		
+		for (size_t len = current_buttons.size(); len > 0; len--)
+		{
+			// Check all combinations of length 'len'
+			std::vector<u32> combo(len);
+			std::vector<bool> selected(current_buttons.size(), false);
+			
+			// Initialize with the first 'len' elements selected
+			for (size_t i = 0; i < len; i++)
+				selected[i] = true;
+				
+			do {
+				// Create the current combination
+				size_t combo_idx = 0;
+				for (size_t i = 0; i < current_buttons.size(); i++)
+				{
+					if (selected[i])
+						combo[combo_idx++] = current_buttons[i];
+				}
+				
+				// Check if this combination is mapped
+				DreamcastKey key = input_mapper->get_button_combination_id(0, combo);
+				if (key != EMU_BTN_NONE)
+				{
+					rc = handleButtonInput(_maple_port, key, true) || rc;
+					
+					// Store the combination as active
+					active_combinations[_maple_port].insert(key);
+				}
+				
+			} while (std::prev_permutation(selected.begin(), selected.end()));
+		}
+		
+		// Check if any previously active combinations are no longer active
+		std::set<DreamcastKey> inactive_combinations;
+		for (DreamcastKey key : active_combinations[_maple_port])
+		{
+			std::vector<u32> mapped_buttons = input_mapper->get_button_combination_codes(0, key);
+			bool all_pressed = true;
+			
+			for (u32 btn : mapped_buttons)
+			{
+				if (pressed_buttons.find(btn) == pressed_buttons.end())
+				{
+					all_pressed = false;
+					break;
+				}
+			}
+			
+			if (!all_pressed)
+			{
+				rc = handleButtonInput(_maple_port, key, false) || rc;
+				inactive_combinations.insert(key);
+			}
+		}
+		
+		// Remove inactive combinations
+		for (DreamcastKey key : inactive_combinations)
+			active_combinations[_maple_port].erase(key);
+		
+		// Normal single button handling
 		DreamcastKey key = input_mapper->get_button_id(0, code);
 		rc = handleButtonInput(_maple_port, key, pressed);
 	}

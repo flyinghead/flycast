@@ -1114,6 +1114,18 @@ static DreamcastKey getOppositeDirectionKey(DreamcastKey key)
 		return EMU_BTN_NONE;
 	}
 }
+
+static bool is_analog_trigger(DreamcastKey key)
+{
+	return key == DC_AXIS_LT || key == DC_AXIS_RT || key == DC_AXIS_LT2 || key == DC_AXIS_RT2;
+}
+
+template<typename T>
+static bool contains(const std::vector<T>& vec, const T& item)
+{
+	return std::find(vec.begin(), vec.end(), item) != vec.end();
+}
+
 static void detect_input_popup(const Mapping *mapping)
 {
 	ImVec2 padding = ScaledVec2(20, 20);
@@ -1121,39 +1133,127 @@ static void detect_input_popup(const Mapping *mapping)
 	ImguiStyleVar _1(ImGuiStyleVar_ItemSpacing, padding);
 	if (ImGui::BeginPopupModal("Map Control", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
 	{
+		static std::vector<u32> mapped_codes;
+		static bool first_button_pressed = false;
+		static u64 first_button_time = 0;
+		static bool button_released = false;
+		
+		if (mapped_codes.empty() && mapped_code != (u32)-1)
+		{
+			// First button was just pressed
+			mapped_codes.push_back(mapped_code);
+			first_button_pressed = true;
+			first_button_time = getTimeMs();
+			mapped_code = (u32)-1;
+		}
+		
 		ImGui::Text("Waiting for control '%s'...", mapping->name);
 		u64 now = getTimeMs();
-		ImGui::Text("Time out in %d s", (int)(5 - (now - map_start_time) / 1000));
-		if (mapped_code != (u32)-1)
+		int timeout_sec = 5 - (int)((now - map_start_time) / 1000);
+		ImGui::Text("Time out in %d s", timeout_sec);
+		
+		if (first_button_pressed)
 		{
-			std::shared_ptr<InputMapping> input_mapping = mapped_device->get_input_mapping();
-			if (input_mapping != NULL)
+			if (!mapped_codes.empty())
 			{
-				unmapControl(input_mapping, gamepad_port, mapping->key);
-				if (analogAxis)
+				std::string button_str;
+				for (size_t i = 0; i < mapped_codes.size(); i++)
 				{
-					input_mapping->set_axis(gamepad_port, mapping->key, mapped_code, positiveDirection);
-					DreamcastKey opposite = getOppositeDirectionKey(mapping->key);
-					// Map the axis opposite direction to the corresponding opposite dc button or axis,
-					// but only if the opposite direction axis isn't used and the dc button or axis isn't mapped.
-					if (opposite != EMU_BTN_NONE
-							&& input_mapping->get_axis_id(gamepad_port, mapped_code, !positiveDirection) == EMU_BTN_NONE
-							&& input_mapping->get_axis_code(gamepad_port, opposite).first == (u32)-1
-							&& input_mapping->get_button_code(gamepad_port, opposite) == (u32)-1)
-						input_mapping->set_axis(gamepad_port, opposite, mapped_code, !positiveDirection);
+					if (i > 0)
+						button_str += " + ";
+					button_str += mapped_device->get_button_name(mapped_codes[i]) ? mapped_device->get_button_name(mapped_codes[i]) : std::to_string(mapped_codes[i]);
 				}
-				else
-					input_mapping->set_button(gamepad_port, mapping->key, mapped_code);
+				ImGui::Text("Current: %s", button_str.c_str());
+				
+				if (mapped_code != (u32)-1 && !contains(mapped_codes, mapped_code))
+				{
+					// Another button was pressed while holding previous button(s)
+					mapped_codes.push_back(mapped_code);
+					mapped_code = (u32)-1;
+				}
+				
+				if (button_released)
+				{
+					// We've detected button release or timeout after first button press
+					std::shared_ptr<InputMapping> input_mapping = mapped_device->get_input_mapping();
+					if (input_mapping != nullptr)
+					{
+						if (mapped_codes.size() == 1)
+						{
+							// Single button mapping
+							unmapControl(input_mapping, gamepad_port, mapping->key);
+							if (analogAxis)
+							{
+								input_mapping->set_axis(gamepad_port, mapping->key, mapped_codes[0], positiveDirection);
+								DreamcastKey opposite = getOppositeDirectionKey(mapping->key);
+								// Map the axis opposite direction to the corresponding opposite dc button or axis,
+								// but only if the opposite direction axis isn't used and the dc button or axis isn't mapped.
+								if (opposite != EMU_BTN_NONE
+										&& input_mapping->get_axis_id(gamepad_port, mapped_codes[0], !positiveDirection) == EMU_BTN_NONE
+										&& input_mapping->get_axis_code(gamepad_port, opposite).first == (u32)-1
+										&& input_mapping->get_button_code(gamepad_port, opposite) == (u32)-1)
+									input_mapping->set_axis(gamepad_port, opposite, mapped_codes[0], !positiveDirection);
+							}
+							else
+								input_mapping->set_button(gamepad_port, mapping->key, mapped_codes[0]);
+						}
+						else
+						{
+							// Multi-button mapping
+							unmapControl(input_mapping, gamepad_port, mapping->key);
+							input_mapping->set_button_combination(gamepad_port, mapping->key, mapped_codes);
+						}
+					}
+					mapped_device = nullptr;
+					mapped_codes.clear();
+					first_button_pressed = false;
+					button_released = false;
+					ImGui::CloseCurrentPopup();
+				}
 			}
-			mapped_device = NULL;
-			ImGui::CloseCurrentPopup();
 		}
 		else if (now - map_start_time >= 5000)
 		{
-			mapped_device = NULL;
+			// Regular timeout with no button press
+			mapped_device = nullptr;
+			mapped_codes.clear();
+			first_button_pressed = false;
+			button_released = false;
 			ImGui::CloseCurrentPopup();
 		}
+		
+		// Check if all buttons were released
+		if (first_button_pressed && !button_released)
+		{
+			bool all_released = true;
+			
+			for (const auto& code : mapped_codes)
+			{
+				if (mapped_device->is_button_pressed(code))
+				{
+					all_released = false;
+					break;
+				}
+			}
+			
+			if (all_released)
+			{
+				button_released = true;
+			}
+			
+			// Or if we've hit the overall timeout
+			if (now - map_start_time >= 5000)
+			{
+				button_released = true;
+			}
+		}
+		
 		ImGui::EndPopup();
+	}
+	else
+	{
+		// If popup was closed without completing mapping
+		mapped_device = nullptr;
 	}
 }
 
@@ -1168,12 +1268,31 @@ static void displayLabelOrCode(const char *label, u32 code, const char *suffix =
 static void displayMappedControl(const std::shared_ptr<GamepadDevice>& gamepad, DreamcastKey key)
 {
 	std::shared_ptr<InputMapping> input_mapping = gamepad->get_input_mapping();
+	
+	// First check for button combinations
+	std::vector<u32> combo_codes = input_mapping->get_button_combination_codes(gamepad_port, key);
+	if (!combo_codes.empty())
+	{
+		std::string combo_text;
+		for (size_t i = 0; i < combo_codes.size(); i++)
+		{
+			if (i > 0)
+				combo_text += " + ";
+			combo_text += gamepad->get_button_name(combo_codes[i]) ? gamepad->get_button_name(combo_codes[i]) : std::to_string(combo_codes[i]);
+		}
+		ImGui::Text("%s", combo_text.c_str());
+		return;
+	}
+	
+	// Check for single button mapping
 	u32 code = input_mapping->get_button_code(gamepad_port, key);
 	if (code != (u32)-1)
 	{
 		displayLabelOrCode(gamepad->get_button_name(code), code);
 		return;
 	}
+	
+	// Check for axis mapping
 	std::pair<u32, bool> pair = input_mapping->get_axis_code(gamepad_port, key);
 	code = pair.first;
 	if (code != (u32)-1)

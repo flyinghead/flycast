@@ -619,6 +619,55 @@ public:
 			input_mapper = std::make_shared<DefaultInputMapping<false, false>>(sdl_controller);
 	}
 
+	bool is_button_pressed(u32 code) override
+	{
+		if (sdl_controller != nullptr)
+		{
+			// Check if this is a button
+			if (code < 32)  // Regular buttons
+			{
+				// SDL buttons are 0-based
+				return SDL_GameControllerGetButton(sdl_controller, (SDL_GameControllerButton)code) != 0;
+			}
+			else if ((code >> 8) != 0)  // Hat
+			{
+				int hat = (code >> 8) - 1;
+				int dir = code & 0xFF;
+				
+				Uint8 hatState = SDL_JoystickGetHat(sdl_joystick, hat);
+				
+				switch (dir)
+				{
+				case 0: // Up
+					return (hatState & SDL_HAT_UP) != 0;
+				case 1: // Down
+					return (hatState & SDL_HAT_DOWN) != 0;
+				case 2: // Left
+					return (hatState & SDL_HAT_LEFT) != 0;
+				case 3: // Right
+					return (hatState & SDL_HAT_RIGHT) != 0;
+				default:
+					return false;
+				}
+			}
+			else if (code < 128)  // Axis button
+			{
+				// Check if axis value is beyond threshold
+				Sint16 value = SDL_GameControllerGetAxis(sdl_controller, (SDL_GameControllerAxis)(code - 32));
+				return std::abs(value) > 16384;
+			}
+		}
+		else if (sdl_joystick != nullptr)
+		{
+			// Simpler path for non-controller joysticks
+			if (code < SDL_JoystickNumButtons(sdl_joystick))
+			{
+				return SDL_JoystickGetButton(sdl_joystick, code) != 0;
+			}
+		}
+		
+		return false;
+	}
 
 	static void AddSDLGamepad(std::shared_ptr<SDLGamepad> gamepad)
 	{

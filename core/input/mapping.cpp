@@ -265,6 +265,59 @@ void InputMapping::load(FILE* fp)
 		DreamcastKey id = getKeyId(key);
 		set_axis(port, id, code, positive);
 	}
+	
+	// Load button combinations
+	bindIndex = 0;
+	while (true)
+	{
+		std::string s = mf.get("combinations", "bind" + std::to_string(bindIndex++), "");
+		if (s.empty())
+			break;
+			
+		size_t colon = s.find(':');
+		if (colon == std::string::npos || colon == 0)
+		{
+			WARN_LOG(INPUT, "Invalid combination bind entry: %s", s.c_str());
+			break;
+		}
+		
+		std::string codes_str = s.substr(0, colon);
+		std::string key = s.substr(colon + 1);
+		
+		if (key.empty() || codes_str.empty())
+		{
+			WARN_LOG(INPUT, "Invalid combination bind entry: %s", s.c_str());
+			break;
+		}
+		
+		int port = 0;
+		if (key[key.size() - 1] >= '1' && key[key.size() - 1] <= '3')
+		{
+			port = key[key.size() - 1] - '0';
+			key = key.substr(0, key.size() - 1);
+		}
+		
+		DreamcastKey id = getKeyId(key);
+		
+		// Parse the button codes list
+		std::vector<u32> codes;
+		size_t start = 0;
+		size_t end = 0;
+		while ((end = codes_str.find(',', start)) != std::string::npos) {
+			if (end > start) {
+				codes.push_back(atoi(codes_str.substr(start, end - start).c_str()));
+			}
+			start = end + 1;
+		}
+		if (start < codes_str.size()) {
+			codes.push_back(atoi(codes_str.substr(start).c_str()));
+		}
+		
+		if (!codes.empty()) {
+			set_button_combination(port, id, codes);
+		}
+	}
+	
 	dirty = false;
 }
 
@@ -340,11 +393,10 @@ u32 InputMapping::get_button_code(u32 port, DreamcastKey key)
 
 std::pair<u32, bool> InputMapping::get_axis_code(u32 port, DreamcastKey key)
 {
-	for (auto& it : axes[port])
-	{
-		if (it.second == key)
-			return it.first;
-	}
+	for (const auto& kvp : axes[port])
+		if (kvp.second == key)
+			return kvp.first;
+
 	return std::make_pair((u32)-1, false);
 }
 
@@ -475,6 +527,39 @@ bool InputMapping::save(const std::string& name)
 			bindIndex++;
 		}
 	}
+	
+	// Save button combinations
+	bindIndex = 0;
+	for (int port = 0; port < 4; port++)
+	{
+		for (const auto& pair : buttonCombinations[port])
+		{
+			if (pair.second == EMU_BTN_NONE)
+				continue;
+			const char *keyName = getKeyName(pair.second);
+			if (keyName == nullptr)
+				continue;
+			
+			std::string option;
+			if (port == 0)
+				option = keyName;
+			else
+				option = keyName + std::to_string(port);
+			
+			// Create a comma-separated list of button codes
+			std::string codes_str;
+			for (size_t i = 0; i < pair.first.codes.size(); i++)
+			{
+				if (i > 0)
+					codes_str += ",";
+				codes_str += std::to_string(pair.first.codes[i]);
+			}
+			
+			mf.set("combinations", "bind" + std::to_string(bindIndex), codes_str + ":" + option);
+			bindIndex++;
+		}
+	}
+	
 	mf.save(fp);
 	dirty = false;
 	std::fclose(fp);
@@ -492,4 +577,57 @@ void InputMapping::DeleteMapping(const std::string& name)
 {
 	loaded_mappings.erase(name);
 	std::remove(get_writable_config_path(std::string("mappings/") + name).c_str());
+}
+
+DreamcastKey InputMapping::get_button_combination_id(u32 port, const std::vector<u32>& codes)
+{
+	if (codes.empty())
+		return EMU_BTN_NONE;
+		
+	ButtonCombination combo;
+	combo.codes = codes;
+	
+	auto it = buttonCombinations[port].find(combo);
+	if (it != buttonCombinations[port].end())
+		return it->second;
+	else
+		return EMU_BTN_NONE;
+}
+
+void InputMapping::clear_button_combination(u32 port, DreamcastKey id)
+{
+	if (id != EMU_BTN_NONE)
+	{
+		std::vector<ButtonCombination> toRemove;
+		for (const auto& kvp : buttonCombinations[port])
+			if (kvp.second == id)
+				toRemove.push_back(kvp.first);
+				
+		for (const auto& combo : toRemove)
+		{
+			buttonCombinations[port].erase(combo);
+			dirty = true;
+		}
+	}
+}
+
+void InputMapping::set_button_combination(u32 port, DreamcastKey id, const std::vector<u32>& codes)
+{
+	if (id != EMU_BTN_NONE && !codes.empty())
+	{
+		clear_button_combination(port, id);
+		ButtonCombination combo;
+		combo.codes = codes;
+		buttonCombinations[port][combo] = id;
+		dirty = true;
+	}
+}
+
+std::vector<u32> InputMapping::get_button_combination_codes(u32 port, DreamcastKey key)
+{
+	for (const auto& kvp : buttonCombinations[port])
+		if (kvp.second == key)
+			return kvp.first.codes;
+
+	return std::vector<u32>();
 }

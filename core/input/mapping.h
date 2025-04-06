@@ -23,6 +23,7 @@
 
 #include <map>
 #include <memory>
+#include <vector>
 
 namespace emucfg {
 struct ConfigFile;
@@ -41,8 +42,24 @@ public:
 		{
 			buttons[port] = other.buttons[port];
 			axes[port] = other.axes[port];
+			buttonCombinations[port] = other.buttonCombinations[port];
 		}
 	}
+
+	struct ButtonCombination {
+		std::vector<u32> codes;
+		
+		bool operator<(const ButtonCombination& other) const {
+			if (codes.size() != other.codes.size())
+				return codes.size() < other.codes.size();
+			
+			for (size_t i = 0; i < codes.size(); i++) {
+				if (codes[i] != other.codes[i])
+					return codes[i] < other.codes[i];
+			}
+			return false;
+		}
+	};
 
 	std::string name;
 	float dead_zone = 0.1f;
@@ -62,6 +79,13 @@ public:
 	void set_button(u32 port, DreamcastKey id, u32 code);
 	void set_button(DreamcastKey id, u32 code) { set_button(0, id, code); }
 	u32 get_button_code(u32 port, DreamcastKey key);
+
+	// Multi-button combination methods
+	DreamcastKey get_button_combination_id(u32 port, const std::vector<u32>& codes);
+	void clear_button_combination(u32 port, DreamcastKey id);
+	void set_button_combination(u32 port, DreamcastKey id, const std::vector<u32>& codes);
+	void set_button_combination(DreamcastKey id, const std::vector<u32>& codes) { set_button_combination(0, id, codes); }
+	std::vector<u32> get_button_combination_codes(u32 port, DreamcastKey key);
 
 	DreamcastKey get_axis_id(u32 port, u32 code, bool pos)
 	{
@@ -97,6 +121,7 @@ private:
 
 	std::map<u32, DreamcastKey> buttons[4];
 	std::map<std::pair<u32, bool>, DreamcastKey> axes[4];
+	std::map<ButtonCombination, DreamcastKey> buttonCombinations[4];
 
 	static std::map<std::string, std::shared_ptr<InputMapping>> loaded_mappings;
 };

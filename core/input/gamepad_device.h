@@ -26,6 +26,7 @@
 #include <memory>
 #include <mutex>
 #include <vector>
+#include <set>
 
 class GamepadDevice
 {
@@ -54,6 +55,8 @@ public:
 	virtual const char *get_axis_name(u32 code) { return nullptr; }
 	bool remappable() { return _remappable && input_mapper; }
 	virtual bool is_virtual_gamepad() { return false; }
+
+	virtual bool is_button_pressed(u32 code) { return false; }
 
 	virtual void rumble(float power, float inclination, u32 duration_ms) {}
 	virtual void update_rumble() {}
@@ -145,6 +148,15 @@ protected:
 	u32 leftTrigger = ~0;
 	u32 rightTrigger = ~0;
 
+	u32 digitalToAnalogState[4];
+	std::map<DreamcastKey, int> lastAxisValue[4];
+	bool perGameMapping = false;
+	bool instanceMapping = false;
+	std::set<u32> pressed_buttons;
+	std::set<DreamcastKey> active_combinations[4];
+
+	u64 lastAnalogUpdate = 0;
+
 private:
 	virtual void registered() {}
 	bool handleButtonInput(int port, DreamcastKey key, bool pressed);
@@ -192,12 +204,6 @@ private:
 	input_detected_cb _input_detected;
 	bool _remappable;
 	bool _is_registered = false;
-	u32 digitalToAnalogState[4];
-	std::map<DreamcastKey, int> lastAxisValue[4];
-	bool perGameMapping = false;
-	bool instanceMapping = false;
-
-	u64 lastAnalogUpdate = 0;
 	u32 rampAnalogState[4] {};
 	static constexpr float AnalogRamp = 32767.f / 100.f;		// 100 ms ramp time
 	std::mutex rampMutex;
