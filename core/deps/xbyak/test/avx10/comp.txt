@@ -1,0 +1,17 @@
+vcomxsd(xm1, xm2|T_sae);
+vcomxsd(xm1, ptr[rax+128]);
+
+vcomxsh(xm1, xm2|T_sae);
+vcomxsh(xm1, ptr[rax+128]);
+
+vcomxss(xm1, xm2|T_sae);
+vcomxss(xm1, ptr[rax+128]);
+
+vucomxsd(xm1, xm2|T_sae);
+vucomxsd(xm1, ptr[rax+128]);
+
+vucomxsh(xm1, xm2|T_sae);
+vucomxsh(xm1, ptr[rax+128]);
+
+vucomxss(xm1, xm2|T_sae);
+vucomxss(xm1, ptr[rax+128]);

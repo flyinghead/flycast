@@ -42,7 +42,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#define XBYAK_NO_OP_NAMES
 #include "xbyak/xbyak.h"
 #ifdef _MSC_VER
 	#pragma warning(disable : 4996) // scanf
@@ -199,7 +198,7 @@ int main(int argc, char *argv[])
 		quantize2(dest2, src, qTbl);
 		for (int i = 0; i < N; i++) {
 			if (dest[i] != dest2[i]) {
-				printf("err[%d] %d %d\n", i, dest[i], dest2[i]);
+				printf("err[%d] %u %u\n", i, dest[i], dest2[i]);
 			}
 		}
 

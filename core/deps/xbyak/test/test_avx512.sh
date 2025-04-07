@@ -1,6 +1,9 @@
 #!/bin/sh
 
+set -e
+
 FILTER="grep -v warning"
+CXX=${CXX:=g++}
 
 case $1 in
 64)
@@ -18,9 +21,9 @@ case $1 in
 	;;
 esac
 
-CFLAGS="-Wall -fno-operator-names -I../ $OPT2 -DUSE_AVX512"
+CFLAGS="-Wall -I../ $OPT2 -DUSE_AVX512"
 echo "compile make_512.cpp"
-g++ $CFLAGS make_512.cpp -o make_512
+$CXX $CFLAGS make_512.cpp -o make_512
 
 ./make_512 > a.asm
 echo "asm"
@@ -30,6 +33,6 @@ awk '{printf "%s", sub(/-$/, "", $3) ? $3 : $3 ORS}' a.lst | $FILTER > ok.lst
 echo "xbyak"
 ./make_512 jit > nm.cpp
 echo "compile nm_frame.cpp"
-g++ $CFLAGS -DXBYAK_TEST nm_frame.cpp -o nm_frame -DXBYAK_AVX512
+$CXX $CFLAGS -DXBYAK_TEST nm_frame.cpp -o nm_frame -DXBYAK_AVX512
 ./nm_frame | $FILTER > x.lst
-diff -B ok.lst x.lst && echo "ok"
+diff -bB ok.lst x.lst && echo "ok"

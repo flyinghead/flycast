@@ -8,14 +8,25 @@
 
 typedef unsigned char uint8_t;
 
-std::string normalize(const std::string& line)
+std::string normalize(std::string line)
 {
+	size_t pos = line.find('(');
+	/* nasm generates byte codes containing () for xbegin, so remove it. */
+	if (pos != std::string::npos) {
+		line.erase(pos, 1);
+		pos = line.find(')');
+		if (pos == std::string::npos) {
+			fprintf(stderr, "line error {%s}\n", line.c_str());
+			return "";
+		}
+		line.erase(pos, 1);
+	}
 	static const char tbl[][3] = { "66", "67", "F2", "F3" };
 	size_t tblNum = sizeof(tbl) / sizeof(tbl[0]);
 	typedef std::set<std::string> StringSet;
 	StringSet suf;
 
-	size_t pos = 0;
+	pos = 0;
 	for (; pos < line.size(); pos += 2) {
 		bool found = false;
 		for (size_t i = 0; i < tblNum; i++) {

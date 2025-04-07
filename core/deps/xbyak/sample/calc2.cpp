@@ -22,7 +22,6 @@
 #include <assert.h>
 #include <string>
 #include <vector>
-#define XBYAK_NO_OP_NAMES
 #include "xbyak/xbyak.h"
 
 enum Operand {

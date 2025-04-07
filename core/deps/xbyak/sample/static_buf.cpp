@@ -2,7 +2,6 @@
 	sample to use static memory
 */
 #include <stdio.h>
-#define XBYAK_NO_OP_NAMES
 #include "xbyak/xbyak.h"
 
 MIE_ALIGN(4096) char buf[4096];

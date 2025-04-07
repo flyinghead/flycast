@@ -1,0 +1,2 @@
+vendor intel
+ mmx mmx2 cmov sse sse2 sse3 ssse3 sse41 sse42 popcnt aesni rdtscp xsave(xgetvb) osxsave pclmulqdq avx enh_rep rdrand f16c

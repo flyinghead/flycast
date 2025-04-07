@@ -1,11 +1,32 @@
 name: test
-on: [push]
+on:
+  push:
+    branches:
+      - '*'
+
+defaults:
+  run:
+    shell: sh
+
+permissions:
+  contents: read
 
 jobs:
-  build:
-    name: test
+  test:
     runs-on: ubuntu-latest
+    container:
+      image: debian:testing
     steps:
-    - uses: actions/checkout@v2
-    - run: sudo apt install nasm yasm g++-multilib tcsh
+    - uses: actions/checkout@v4
+    - run: apt -y update
+    - run: apt -y install g++-multilib libboost-dev make nasm yasm wget python3 #xz-utils
     - run: make test
+    - run: make -C sample CXXFLAGS="-DXBYAK_NO_EXCEPTION"
+    - run: |
+        cd test
+        #wget https://downloadmirror.intel.com/831748/sde-external-9.44.0-2024-08-22-lin.tar.xz
+        #tar xvf sde-external-9.44.0-2024-08-22-lin.tar.xz
+        wget https://github.com/herumi/xed-bin/raw/refs/heads/main/xed.tgz
+        tar xvf xed.tgz
+        ./xed -version
+        env XED=./xed make xed_test

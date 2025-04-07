@@ -7,7 +7,6 @@
 #endif
 #include <stdio.h>
 #include <stdlib.h>
-#define XBYAK_NO_OP_NAMES
 #include "xbyak/xbyak.h"
 
 class Sample : public Xbyak::CodeGenerator {

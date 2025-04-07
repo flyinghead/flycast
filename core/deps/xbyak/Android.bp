@@ -1,0 +1,8 @@
+//#################################################
+cc_library_headers {
+    name: "xbyak_headers",
+    vendor: true,
+    export_include_dirs: [
+        "xbyak"
+    ],
+}

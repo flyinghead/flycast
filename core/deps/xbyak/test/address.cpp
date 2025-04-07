@@ -31,7 +31,7 @@ void genVsib(bool isJIT)
 		"xmm3 * 8 + edi + 123",
 		"xmm2 * 2 + 5",
 		"eax + xmm0",
-		"esp + xmm4",
+		"esp + xmm2",
 	};
 	const char *vm32yTbl[] = {
 		"ymm0",
@@ -42,7 +42,7 @@ void genVsib(bool isJIT)
 		"ymm3 * 8 + edi + 123",
 		"ymm2 * 2 + 5",
 		"eax + ymm0",
-		"esp + ymm4",
+		"esp + ymm2",
 	};
 	genVsibSub(isJIT, "vgatherdpd", vm32xTbl, NUM_OF_ARRAY(vm32xTbl));
 	genVsibSub(isJIT, "vgatherqpd", vm32yTbl, NUM_OF_ARRAY(vm32yTbl));
@@ -93,7 +93,7 @@ void genAddress(bool isJIT, const char regTbl[][5], size_t regTblNum)
 					}
 					if (isFirst) {
 						if (isJIT) printf("(void*)");
-						printf("0x%08X", disp);
+						printf("%d", disp);
 					} else {
 						if (disp >= 0) {
 							putchar('+');

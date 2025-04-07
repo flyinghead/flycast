@@ -1,0 +1,2 @@
+vendor intel
+ mmx mmx2 cmov sse sse2 sse3 ssse3 sse41 sse42 popcnt aesni rdtscp xsave(xgetvb) osxsave pclmulqdq avx fma avx2 bmi1 bmi2 lzcnt prefetchw enh_rep rdrand adx rdseed smap sha f16c movbe avx512f avx512dq avx512_ifma avx512cd avx512bw avx512vl avx512_vbmi avx512_vbmi2 gfni vaes vpclmulqdq avx512_vnni avx512_bitalg avx512_vpopcntdq avx512_bf16 amx(tile) amx(int8) amx(bf16) avx_vnni avx512_fp16 waitpkg clflushopt cldemote clwb movdiri movdir64b uintr serialize

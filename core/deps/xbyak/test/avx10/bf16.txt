@@ -1,0 +1,210 @@
+vaddnepbf16(xm1, xm2, xm3);
+vaddnepbf16(ym1|k1, ym2, ptr[rax+128]);
+vaddnepbf16(ym1|k1, ym2, ptr_b[rax+128]);
+vaddnepbf16(zm1|k2|T_z, zm2, ptr_b[rax+128]);
+
+vdivnepbf16(xm1, xm2, xm3);
+vdivnepbf16(ym1|k1, ym2, ptr[rax+128]);
+vdivnepbf16(ym1|k1, ym2, ptr_b[rax+128]);
+vdivnepbf16(zm1|k2|T_z, zm2, ptr_b[rax+128]);
+
+vmaxpbf16(xm1, xm2, xm3);
+vmaxpbf16(ym1|k1, ym2, ptr[rax+128]);
+vmaxpbf16(ym1|k1, ym2, ptr_b[rax+128]);
+vmaxpbf16(zm1|k2|T_z, zm2, ptr_b[rax+128]);
+
+vminpbf16(xm1, xm2, xm3);
+vminpbf16(ym1|k1, ym2, ptr[rax+128]);
+vminpbf16(ym1|k1, ym2, ptr_b[rax+128]);
+vminpbf16(zm1|k2|T_z, zm2, ptr_b[rax+128]);
+
+vmulnepbf16(xm1, xm2, xm3);
+vmulnepbf16(ym1|k1, ym2, ptr[rax+128]);
+vmulnepbf16(ym1|k1, ym2, ptr_b[rax+128]);
+vmulnepbf16(zm1|k2|T_z, zm2, ptr_b[rax+128]);
+
+vscalefpbf16(xm1, xm2, xm3);
+vscalefpbf16(ym1|k1, ym2, ptr[rax+128]);
+vscalefpbf16(ym1|k1, ym2, ptr_b[rax+128]);
+vscalefpbf16(zm1|k2|T_z, zm2, ptr_b[rax+128]);
+
+vsubnepbf16(xm1, xm2, xm3);
+vsubnepbf16(ym1|k1, ym2, ptr[rax+128]);
+vsubnepbf16(ym1|k1, ym2, ptr_b[rax+128]);
+vsubnepbf16(zm1|k2|T_z, zm2, ptr_b[rax+128]);
+// madd
+vfmadd132nepbf16(xm1, xm2, xm3);
+vfmadd132nepbf16(ym1|k1, ym2, ptr[rax+128]);
+vfmadd132nepbf16(ym1|k1, ym2, ptr_b[rax+128]);
+vfmadd132nepbf16(zm1|k2|T_z, zm2, ptr_b[rax+128]);
+
+vfmadd213nepbf16(xm1, xm2, xm3);
+vfmadd213nepbf16(ym1|k1, ym2, ptr[rax+128]);
+vfmadd213nepbf16(ym1|k1, ym2, ptr_b[rax+128]);
+vfmadd213nepbf16(zm1|k2|T_z, zm2, ptr_b[rax+128]);
+
+vfmadd231nepbf16(xm1, xm2, xm3);
+vfmadd231nepbf16(ym1|k1, ym2, ptr[rax+128]);
+vfmadd231nepbf16(ym1|k1, ym2, ptr_b[rax+128]);
+vfmadd231nepbf16(zm1|k2|T_z, zm2, ptr_b[rax+128]);
+// nmadd
+vfnmadd132nepbf16(xm1, xm2, xm3);
+vfnmadd132nepbf16(ym1|k1, ym2, ptr[rax+128]);
+vfnmadd132nepbf16(ym1|k1, ym2, ptr_b[rax+128]);
+vfnmadd132nepbf16(zm1|k2|T_z, zm2, ptr_b[rax+128]);
+
+vfnmadd213nepbf16(xm1, xm2, xm3);
+vfnmadd213nepbf16(ym1|k1, ym2, ptr[rax+128]);
+vfnmadd213nepbf16(ym1|k1, ym2, ptr_b[rax+128]);
+vfnmadd213nepbf16(zm1|k2|T_z, zm2, ptr_b[rax+128]);
+
+vfnmadd231nepbf16(xm1, xm2, xm3);
+vfnmadd231nepbf16(ym1|k1, ym2, ptr[rax+128]);
+vfnmadd231nepbf16(ym1|k1, ym2, ptr_b[rax+128]);
+vfnmadd231nepbf16(zm1|k2|T_z, zm2, ptr_b[rax+128]);
+// msub
+vfmsub132nepbf16(xm1, xm2, xm3);
+vfmsub132nepbf16(ym1|k1, ym2, ptr[rax+128]);
+vfmsub132nepbf16(ym1|k1, ym2, ptr_b[rax+128]);
+vfmsub132nepbf16(zm1|k2|T_z, zm2, ptr_b[rax+128]);
+
+vfmsub213nepbf16(xm1, xm2, xm3);
+vfmsub213nepbf16(ym1|k1, ym2, ptr[rax+128]);
+vfmsub213nepbf16(ym1|k1, ym2, ptr_b[rax+128]);
+vfmsub213nepbf16(zm1|k2|T_z, zm2, ptr_b[rax+128]);
+
+vfmsub231nepbf16(xm1, xm2, xm3);
+vfmsub231nepbf16(ym1|k1, ym2, ptr[rax+128]);
+vfmsub231nepbf16(ym1|k1, ym2, ptr_b[rax+128]);
+vfmsub231nepbf16(zm1|k2|T_z, zm2, ptr_b[rax+128]);
+// nmsub
+vfnmsub132nepbf16(xm1, xm2, xm3);
+vfnmsub132nepbf16(ym1|k1, ym2, ptr[rax+128]);
+vfnmsub132nepbf16(ym1|k1, ym2, ptr_b[rax+128]);
+vfnmsub132nepbf16(zm1|k2|T_z, zm2, ptr_b[rax+128]);
+
+vfnmsub213nepbf16(xm1, xm2, xm3);
+vfnmsub213nepbf16(ym1|k1, ym2, ptr[rax+128]);
+vfnmsub213nepbf16(ym1|k1, ym2, ptr_b[rax+128]);
+vfnmsub213nepbf16(zm1|k2|T_z, zm2, ptr_b[rax+128]);
+
+vfnmsub231nepbf16(xm1, xm2, xm3);
+vfnmsub231nepbf16(ym1|k1, ym2, ptr[rax+128]);
+vfnmsub231nepbf16(ym1|k1, ym2, ptr_b[rax+128]);
+vfnmsub231nepbf16(zm1|k2|T_z, zm2, ptr_b[rax+128]);
+
+vcmppbf16(k1, xm5, xm4, 5);
+vcmppbf16(k2, ym5, ym4, 6);
+vcmppbf16(k3, ym15, ptr_b[rax+128], 7);
+vcmppbf16(k4, zm30, zm20, 8);
+vcmppbf16(k5, zm1, ptr[rax+128], 9);
+vcmppbf16(k6, zm10, ptr_b[rax+128], 10);
+
+vfpclasspbf16(k1, xm4, 5);
+vfpclasspbf16(k2|k5, ym4, 6);
+vfpclasspbf16(k3|k5, zm20, 7);
+vfpclasspbf16(k3|k5, xword[rax+128], 8);
+vfpclasspbf16(k3, xword_b[rax+128], 9);
+vfpclasspbf16(k5|k5, yword[rax+128], 10);
+vfpclasspbf16(k6|k5, yword_b[rax+128], 11);
+vfpclasspbf16(k7|k5, zword[rax+128], 12);
+vfpclasspbf16(k7|k5, zword_b[rax+128], 13);
+
+vcomsbf16(xm2, xm3);
+vcomsbf16(xm2, ptr[rax+128]);
+
+vgetexppbf16(xm1|k3, xmm2);
+vgetexppbf16(xm1|k3, ptr[rax+128]);
+vgetexppbf16(xm1|k3, ptr_b[rax+128]);
+
+vgetexppbf16(ym1|k3, ymm2);
+vgetexppbf16(ym1|k3, ptr[rax+128]);
+vgetexppbf16(ym1|k3, ptr_b[rax+128]);
+
+vgetexppbf16(zm1|k3, zmm2);
+vgetexppbf16(zm1|k3, ptr[rax+128]);
+vgetexppbf16(zm1|k3, ptr_b[rax+128]);
+
+vgetmantpbf16(xm1|k3, xmm2, 3);
+vgetmantpbf16(xm1|k3, ptr[rax+128], 5);
+vgetmantpbf16(xm1|k3, ptr_b[rax+128], 9);
+
+vgetmantpbf16(ym1|k3, ymm2, 3);
+vgetmantpbf16(ym1|k3, ptr[rax+128], 5);
+vgetmantpbf16(ym1|k3, ptr_b[rax+128], 9);
+
+vgetmantpbf16(zm1|k3, zmm2, 3);
+vgetmantpbf16(zm1|k3, ptr[rax+128], 5);
+vgetmantpbf16(zm1|k3, ptr_b[rax+128], 9);
+
+vrcppbf16(xm1|k5, xm2);
+vrcppbf16(xm1|k5, ptr[rcx+128]);
+vrcppbf16(xm1|k5, ptr_b[rcx+128]);
+
+vrcppbf16(ym1|k5, ym2);
+vrcppbf16(ym1|k5, ptr[rcx+128]);
+vrcppbf16(ym1|k5, ptr_b[rcx+128]);
+
+vrcppbf16(zm1|k5, zm2);
+vrcppbf16(zm1|k5, ptr[rcx+128]);
+vrcppbf16(zm1|k5, ptr_b[rcx+128]);
+
+vreducenepbf16(xm1|k4, xm2, 1);
+vreducenepbf16(xm1|k4, ptr[rax+128], 1);
+vreducenepbf16(xm1|k4, ptr_b[rax+128], 1);
+
+vreducenepbf16(ym1|k4, ym2, 1);
+vreducenepbf16(ym1|k4, ptr[rax+128], 1);
+vreducenepbf16(ym1|k4, ptr_b[rax+128], 1);
+
+vreducenepbf16(zm1|k4, zm2, 1);
+vreducenepbf16(zm1|k4, ptr[rax+128], 1);
+vreducenepbf16(zm1|k4, ptr_b[rax+128], 1);
+
+vrndscalenepbf16(xm1|k4, xm2, 1);
+vrndscalenepbf16(xm1|k4, ptr[rax+128], 1);
+vrndscalenepbf16(xm1|k4, ptr_b[rax+128], 1);
+
+vrndscalenepbf16(ym1|k4, ym2, 1);
+vrndscalenepbf16(ym1|k4, ptr[rax+128], 1);
+vrndscalenepbf16(ym1|k4, ptr_b[rax+128], 1);
+
+vrndscalenepbf16(zm1|k4, zm2, 1);
+vrndscalenepbf16(zm1|k4, ptr[rax+128], 1);
+vrndscalenepbf16(zm1|k4, ptr_b[rax+128], 1);
+
+vrsqrtpbf16(xm1|k5, xm2);
+vrsqrtpbf16(xm1|k5, ptr[rcx+128]);
+vrsqrtpbf16(xm1|k5, ptr_b[rcx+128]);
+
+vrsqrtpbf16(ym1|k5, ym2);
+vrsqrtpbf16(ym1|k5, ptr[rcx+128]);
+vrsqrtpbf16(ym1|k5, ptr_b[rcx+128]);
+
+vrsqrtpbf16(zm1|k5, zm2);
+vrsqrtpbf16(zm1|k5, ptr[rcx+128]);
+vrsqrtpbf16(zm1|k5, ptr_b[rcx+128]);
+
+vscalefpbf16(xm1|k5, xm5, xm2);
+vscalefpbf16(xm1|k5, xm5, ptr[rcx+128]);
+vscalefpbf16(xm1|k5, xm5, ptr_b[rcx+128]);
+
+vscalefpbf16(ym1|k5, ym9, ym2);
+vscalefpbf16(ym1|k5, ym9, ptr[rcx+128]);
+vscalefpbf16(ym1|k5, ym9, ptr_b[rcx+128]);
+
+vscalefpbf16(zm1|k5, zm30, zm2);
+vscalefpbf16(zm1|k5, zm30, ptr[rcx+128]);
+vscalefpbf16(zm1|k5, zm30, ptr_b[rcx+128]);
+
+vsqrtnepbf16(xm5|k3, xmm4);
+vsqrtnepbf16(xm5|k3, ptr[rax+128]);
+vsqrtnepbf16(xm5|k3, ptr_b[rax+128]);
+
+vsqrtnepbf16(ym5|k3, ymm4);
+vsqrtnepbf16(ym5|k3, ptr[rax+128]);
+vsqrtnepbf16(ym5|k3, ptr_b[rax+128]);
+
+vsqrtnepbf16(zm5|k3, zmm4);
+vsqrtnepbf16(zm5|k3, ptr[rax+128]);
+vsqrtnepbf16(zm5|k3, ptr_b[rax+128]);

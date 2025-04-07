@@ -2,7 +2,6 @@
 	sample of move(reg, LABEL);, L(LABEL), putL(LABEL);
 */
 #include <stdio.h>
-#define XBYAK_NO_OP_NAMES
 #include <xbyak/xbyak.h>
 
 const int expectTbl[] = {

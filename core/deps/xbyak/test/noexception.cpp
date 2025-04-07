@@ -56,7 +56,7 @@ void test2()
 void test3()
 {
 	static struct EmptyAllocator : Xbyak::Allocator {
-		uint8_t *alloc() { return 0; }
+		uint8_t *alloc(size_t) { return 0; }
 	} emptyAllocator;
 	struct Code : CodeGenerator {
 		Code() : CodeGenerator(8, 0, &emptyAllocator)

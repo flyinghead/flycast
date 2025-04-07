@@ -1,6 +1,9 @@
 #!/bin/sh
 
+set -e
+
 FILTER=cat
+CXX=${CXX:=g++}
 
 case $1 in
 Y)
@@ -44,9 +47,9 @@ noexcept)
 	;;
 esac
 
-CFLAGS="-Wall -fno-operator-names -I../ $OPT2"
+CFLAGS="-Wall -g -I../ $OPT2"
 echo "compile make_nm.cpp with $CFLAGS"
-g++ $CFLAGS make_nm.cpp -o make_nm
+$CXX $CFLAGS make_nm.cpp -o make_nm
 
 ./make_nm > a.asm
 echo "asm"
@@ -56,6 +59,6 @@ awk '$3 != "1+1" {printf "%s", sub(/-$/, "", $3) ? $3 : $3 ORS}' a.lst | $FILTER
 echo "xbyak"
 ./make_nm jit > nm.cpp
 echo "compile nm_frame.cpp"
-g++ $CFLAGS -DXBYAK_TEST nm_frame.cpp -o nm_frame
+$CXX $CFLAGS -DXBYAK_TEST nm_frame.cpp -o nm_frame
 ./nm_frame | $FILTER > x.lst
-diff -B ok.lst x.lst && echo "ok"
+diff -bB ok.lst x.lst && echo "ok"

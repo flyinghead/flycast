@@ -1,5 +1,5 @@
-#define XBYAK_NO_OP_NAMES
 #include <xbyak/xbyak_util.h>
+#include <cybozu/test.hpp>
 
 #ifdef XBYAK32
 	#error "this sample is for only 64-bit mode"
@@ -209,32 +209,23 @@ struct Code2 : Xbyak::CodeGenerator {
 };
 
 
-static int errNum = 0;
-void check(int x, int y)
-{
-	if (x != y) {
-		printf("err x=%d, y=%d\n", x, y);
-		errNum++;
-	}
-}
-
-void verify(const Xbyak::uint8_t *f, int pNum)
+void verify(const uint8_t *f, int pNum)
 {
 	switch (pNum) {
 	case 0:
-		check(1, reinterpret_cast<int (*)()>(f)());
+		CYBOZU_TEST_EQUAL(1, reinterpret_cast<int (*)()>(f)());
 		return;
 	case 1:
-		check(11, reinterpret_cast<int (*)(int)>(f)(10));
+		CYBOZU_TEST_EQUAL(11, reinterpret_cast<int (*)(int)>(f)(10));
 		return;
 	case 2:
-		check(111, reinterpret_cast<int (*)(int, int)>(f)(10, 100));
+		CYBOZU_TEST_EQUAL(111, reinterpret_cast<int (*)(int, int)>(f)(10, 100));
 		return;
 	case 3:
-		check(1111, reinterpret_cast<int (*)(int, int, int)>(f)(10, 100, 1000));
+		CYBOZU_TEST_EQUAL(1111, reinterpret_cast<int (*)(int, int, int)>(f)(10, 100, 1000));
 		return;
 	case 4:
-		check(11111, reinterpret_cast<int (*)(int, int, int, int)>(f)(10, 100, 1000, 10000));
+		CYBOZU_TEST_EQUAL(11111, reinterpret_cast<int (*)(int, int, int, int)>(f)(10, 100, 1000, 10000));
 		return;
 	default:
 		printf("ERR pNum=%d\n", pNum);
@@ -242,7 +233,7 @@ void verify(const Xbyak::uint8_t *f, int pNum)
 	}
 }
 
-void testAll()
+CYBOZU_TEST_AUTO(param)
 {
 	Code2 code;
 	for (int stackSize = 0; stackSize < 32; stackSize += 7) {
@@ -264,7 +255,7 @@ void testAll()
 				}
 				for (int tNum = 0; tNum < maxNum; tNum++) {
 //					printf("pNum=%d, tNum=%d, stackSize=%d\n", pNum, tNum | opt, stackSize);
-					const Xbyak::uint8_t *f = code.getCurr();
+					const uint8_t *f = code.getCurr();
 					code.gen(pNum, tNum | opt, stackSize);
 					verify(f, pNum);
 					/*
@@ -274,7 +265,7 @@ void testAll()
 						Code2 c2;
 						c2.gen2(pNum, tNum | opt, stackSize);
 						uint64_t addr = c2.getCode<uint64_t (*)()>()();
-						check(addr % 16, 0);
+						CYBOZU_TEST_EQUAL(addr % 16, 0);
 					}
 				}
 			}
@@ -282,70 +273,70 @@ void testAll()
 	}
 }
 
-void testPartial()
+CYBOZU_TEST_AUTO(args)
 {
 	Code code;
 	int (*f1)(int) = code.getCurr<int (*)(int)>();
 	code.gen1();
-	check(5, f1(5));
+	CYBOZU_TEST_EQUAL(5, f1(5));
 
 	int (*f2)(int, int) = code.getCurr<int (*)(int, int)>();
 	code.gen2();
-	check(9, f2(3, 6));
+	CYBOZU_TEST_EQUAL(9, f2(3, 6));
 
 	int (*f3)(int, int, int) = code.getCurr<int (*)(int, int, int)>();
 	code.gen3();
-	check(14, f3(1, 4, 9));
+	CYBOZU_TEST_EQUAL(14, f3(1, 4, 9));
 
 	int (*f4)(int, int, int, int) = code.getCurr<int (*)(int, int, int, int)>();
 	code.gen4();
-	check(30, f4(1, 4, 9, 16));
+	CYBOZU_TEST_EQUAL(30, f4(1, 4, 9, 16));
 
 	int (*f5)(int, int, int, int) = code.getCurr<int (*)(int, int, int, int)>();
 	code.gen5();
-	check(23, f5(2, 5, 7, 9));
+	CYBOZU_TEST_EQUAL(23, f5(2, 5, 7, 9));
 
 	int (*f6)(int, int, int, int) = code.getCurr<int (*)(int, int, int, int)>();
 	code.gen6();
-	check(18, f6(3, 4, 5, 6));
+	CYBOZU_TEST_EQUAL(18, f6(3, 4, 5, 6));
 
 	int (*f7)(int, int, int) = code.getCurr<int (*)(int, int, int)>();
 	code.gen7();
-	check(12, f7(3, 4, 5));
+	CYBOZU_TEST_EQUAL(12, f7(3, 4, 5));
 
 	int (*f8)(int, int, int) = code.getCurr<int (*)(int, int, int)>();
 	code.gen8();
-	check(23, f8(5, 8, 10));
+	CYBOZU_TEST_EQUAL(23, f8(5, 8, 10));
 
 	int (*f9)(int, int, int) = code.getCurr<int (*)(int, int, int)>();
 	code.gen9();
-	check(60, f9(10, 20, 30));
+	CYBOZU_TEST_EQUAL(60, f9(10, 20, 30));
 
 	int (*f10)(int, int, int, int) = code.getCurr<int (*)(int, int, int, int)>();
 	code.gen10();
-	check(100, f10(10, 20, 30, 40));
+	CYBOZU_TEST_EQUAL(100, f10(10, 20, 30, 40));
 
 	int (*f11)() = code.getCurr<int (*)()>();
 	code.gen11();
-	check(3, f11());
+	CYBOZU_TEST_EQUAL(3, f11());
 
 	int (*f12)(int, int, int, int) = code.getCurr<int (*)(int, int, int, int)>();
 	code.gen12();
-	check(24, f12(3, 5, 7, 9));
+	CYBOZU_TEST_EQUAL(24, f12(3, 5, 7, 9));
 
 	{
 		int64_t tbl[] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13 };
 		int64_t (*f13)(const int64_t*) = code.getCurr<int64_t (*)(const int64_t*)>();
 		code.gen13();
-		check(91, f13(tbl));
+		CYBOZU_TEST_EQUAL(91, f13(tbl));
 
 		int64_t (*f14)(const int64_t*) = code.getCurr<int64_t (*)(const int64_t*)>();
 		code.gen14();
-		check(91, f14(tbl));
+		CYBOZU_TEST_EQUAL(91, f14(tbl));
 	}
 	int (*f15)() = code.getCurr<int (*)()>();
 	code.gen15();
-	check((1 << 15) - 1, f15());
+	CYBOZU_TEST_EQUAL((1 << 15) - 1, f15());
 }
 
 void put(const Xbyak::util::Pack& p)
@@ -359,11 +350,11 @@ void put(const Xbyak::util::Pack& p)
 void verifyPack(const Xbyak::util::Pack& p, const int *tbl, size_t tblNum)
 {
 	for (size_t i = 0; i < tblNum; i++) {
-		check(p[i].getIdx(), tbl[i]);
+		CYBOZU_TEST_EQUAL(p[i].getIdx(), tbl[i]);
 	}
 }
 
-void testPack()
+CYBOZU_TEST_AUTO(pack)
 {
 	const int N = 10;
 	Xbyak::Reg64 regTbl[N];
@@ -398,19 +389,46 @@ void testPack()
 	}
 }
 
-int main()
-	try
+struct CloseCode : Xbyak::CodeGenerator {
+	CloseCode(size_t mode)
+	{
+		switch (mode) {
+		case 0:
+			{
+				StackFrame sf(this, 0);
+				// close() is automatically called.
+			}
+			break;
+
+		case 1:
+			{
+				StackFrame sf(this, 0, 0, 0, false);
+				sf.close(); // Explicitly call close().
+				setProtectModeRE(); // Ensure that no writes occur in destructor by setting read-exec
+			}
+			break;
+
+		case 2:
+			{
+				StackFrame sf(this, 0, 0, 0, false);
+				sf.close(); // Explicitly call close().
+				sf.close(); // Explicitly call close().
+				setProtectModeRE(); // Ensure that no writes occur in destructor by setting read-exec
+			}
+			break;
+		default:
+			CYBOZU_TEST_ASSERT(false);
+		}
+	}
+};
+
+CYBOZU_TEST_AUTO(close)
 {
-	testAll();
-
-	testPartial();
-	testPack();
-	printf("errNum=%d\n", errNum);
-} catch (std::exception& e) {
-	printf("err %s\n", e.what());
-	return 1;
-} catch (...) {
-	puts("ERR");
-	return 1;
+	const size_t expectedTbl[] = {
+		1, 1, 2,
+	};
+	for (size_t i = 0; i < sizeof(expectedTbl)/sizeof(expectedTbl[0]); i++) {
+		CloseCode c(i);
+		CYBOZU_TEST_EQUAL(c.getSize(), expectedTbl[i]);
+	}
 }
-

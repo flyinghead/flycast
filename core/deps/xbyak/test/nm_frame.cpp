@@ -32,6 +32,7 @@ public:
 };
 
 int main()
+	try
 {
 	// the size of Operand exceeds 32 bit.
 	CYBOZU_TEST_EQUAL(sizeof(Xbyak::Operand), 8u);
@@ -39,4 +40,7 @@ int main()
 	s.gen();
 	ErrorSample es;
 	es.gen();
+} catch (std::exception& e) {
+	fprintf(stderr, "ERR=%s\n", e.what());
+	return 1;
 }
