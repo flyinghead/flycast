@@ -46,7 +46,7 @@
 #include <setupapi.h>
 #endif
 
-void createDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink, bool gameStart, bool gameEnd);
+void createDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink, bool gameStart);
 void tearDownDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink);
 
 bool DreamLinkGamepad::isDreamcastController(int deviceIndex)
@@ -75,6 +75,7 @@ DreamLinkGamepad::DreamLinkGamepad(int maple_port, int joystick_idx, SDL_Joystic
 	char guid_str[33] {};
 
 	SDL_JoystickGetGUIDString(SDL_JoystickGetDeviceGUID(joystick_idx), guid_str, sizeof(guid_str));
+	device_guid = guid_str;
 
 	// DreamConn VID:4457 PID:4443
 	// Dreamcast Controller USB VID:1209 PID:2f07
@@ -94,11 +95,17 @@ DreamLinkGamepad::DreamLinkGamepad(int maple_port, int joystick_idx, SDL_Joystic
 			set_maple_port(defaultBus);
 		}
 
+		std::string uniqueId = dreamlink->getUniqueId();
+		if (!uniqueId.empty()) {
+			this->_unique_id = uniqueId;
+		}
 	}
 
 	EventManager::listen(Event::Start, handleEvent, this);
 	EventManager::listen(Event::LoadState, handleEvent, this);
     EventManager::listen(Event::Terminate, handleEvent, this);
+
+	loadMapping();
 }
 
 DreamLinkGamepad::~DreamLinkGamepad() {
@@ -139,7 +146,7 @@ void DreamLinkGamepad::registered()
 		dreamlink->connect();
 
 		// Create DreamLink Maple Devices here just in case game is already running
-		createDreamLinkDevices(dreamlink, false, false);
+		createDreamLinkDevices(dreamlink, false);
 	}
 }
 
@@ -147,7 +154,7 @@ void DreamLinkGamepad::handleEvent(Event event, void *arg)
 {
 	DreamLinkGamepad *gamepad = static_cast<DreamLinkGamepad*>(arg);
 	if (gamepad->dreamlink != nullptr && event != Event::Terminate) {
-		createDreamLinkDevices(gamepad->dreamlink, event == Event::Start, event == Event::Terminate);
+		createDreamLinkDevices(gamepad->dreamlink, event == Event::Start);
 	}
 
     if (gamepad->dreamlink != nullptr && event == Event::Terminate)
@@ -192,6 +199,21 @@ bool DreamLinkGamepad::gamepad_axis_input(u32 code, int value)
 	return SDLGamepad::gamepad_axis_input(code, value);
 }
 
+void DreamLinkGamepad::resetMappingToDefault(bool arcade, bool gamepad) {
+	SDLGamepad::resetMappingToDefault(arcade, gamepad);
+	if (input_mapper && dreamlink) {
+		dreamlink->setDefaultMapping(input_mapper);
+	}
+}
+
+std::shared_ptr<InputMapping> DreamLinkGamepad::getDefaultMapping() {
+	std::shared_ptr<InputMapping> mapping = SDLGamepad::getDefaultMapping();
+	if (mapping && dreamlink) {
+		dreamlink->setDefaultMapping(mapping);
+	}
+	return mapping;
+}
+
 void DreamLinkGamepad::checkKeyCombo() {
 	if (ltrigPressed && rtrigPressed && startPressed)
 		gui_open_settings();
@@ -217,6 +239,12 @@ bool DreamLinkGamepad::gamepad_btn_input(u32 code, bool pressed) {
 }
 bool DreamLinkGamepad::gamepad_axis_input(u32 code, int value) {
 	return SDLGamepad::gamepad_axis_input(code, value);
+}
+void DreamLinkGamepad::resetMappingToDefault(bool arcade, bool gamepad) {
+	SDLGamepad::resetMappingToDefault(arcade, gamepad);
+}
+std::shared_ptr<InputMapping> DreamLinkGamepad::getDefaultMapping() {
+	return SDLGamepad::getDefaultMapping();
 }
 
 #endif

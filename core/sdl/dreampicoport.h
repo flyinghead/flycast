@@ -57,6 +57,10 @@ class DreamPicoPort : public DreamLink
     double interface_version = 0.0;
     //! The queried peripherals; for each function, index 0 is function code and index 1 is the function definition
     std::vector<std::vector<std::array<uint32_t, 2>>> peripherals;
+	//! The located serial number of this device or empty string if could not be found
+	std::string serial_number;
+	//! If set, the determined unique ID of this device. If not set, the serial could not be parsed.
+	std::string unique_id;
 
 public:
     //! Dreamcast Controller USB VID:1209 PID:2f07
@@ -79,7 +83,13 @@ public:
 
     u32 getFunctionCode(int forPort) const override;
 
+	std::array<u32, 3> getFunctionDefinitions(int forPort) const override;
+
 	int getDefaultBus() const override;
+
+	void setDefaultMapping(const std::shared_ptr<InputMapping>& mapping) const override;
+
+	std::string getUniqueId() const override;
 
 	void changeBus(int newBus);
 
@@ -96,6 +106,9 @@ public:
 	bool isHardwareBusImplied() const;
 
 	bool isSingleDevice() const;
+
+private:
+	std::string getName(std::string separator) const;
 
 private:
     asio::error_code sendCmd(const std::string& cmd);

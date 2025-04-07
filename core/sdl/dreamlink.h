@@ -26,6 +26,7 @@
 
 #include <functional>
 #include <memory>
+#include <array>
 
 #if (defined(_WIN32) || defined(__linux__) || (defined(__APPLE__) && defined(TARGET_OS_MAC))) && !defined(TARGET_UWP)
 #define USE_DREAMCASTCONTROLLER 1
@@ -86,9 +87,22 @@ public:
     //! @return the device type for the given port
     virtual u32 getFunctionCode(int forPort) const = 0;
 
+    //! @param[in] forPort The port number to get the function definitions of (1 or 2)
+	//! @return the 3 function definitions for the supported function codes
+    virtual std::array<u32, 3> getFunctionDefinitions(int forPort) const = 0;
+
 	//! @return the default bus number to select for this controller or -1 to not select a default
 	virtual int getDefaultBus() const {
 		return -1;
+	}
+
+	//! Allows a DreamLink device to dictate the default mapping
+	virtual void setDefaultMapping(const std::shared_ptr<InputMapping>& mapping) const {
+	}
+
+	//! @return a unique ID for this DreamLink device or empty string to use default
+	virtual std::string getUniqueId() const {
+		return std::string();
 	}
 
 	//! @return the selected bus number of the controller
@@ -118,6 +132,10 @@ public:
 	bool gamepad_btn_input(u32 code, bool pressed) override;
 	bool gamepad_axis_input(u32 code, int value) override;
 	static bool isDreamcastController(int deviceIndex);
+	void resetMappingToDefault(bool arcade, bool gamepad) override;
+
+protected:
+	std::shared_ptr<InputMapping> getDefaultMapping() override;
 
 private:
 	static void handleEvent(Event event, void *arg);
@@ -127,4 +145,5 @@ private:
 	bool ltrigPressed = false;
 	bool rtrigPressed = false;
 	bool startPressed = false;
+	std::string device_guid;
 };
