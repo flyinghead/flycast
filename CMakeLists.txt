@@ -726,6 +726,32 @@ if(WIN32)
 	target_include_directories(${PROJECT_NAME} PRIVATE core/deps/dirent)
 endif()
 
+if(NOT LIBRETRO AND NOT NINTENDO_SWITCH)
+	target_compile_definitions(${PROJECT_NAME} PRIVATE USE_ICE)
+	# libjuice
+	option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
+	option(NO_SERVER "Disable server support" ON)
+	option(NO_TESTS "Disable tests build" ON)
+	add_subdirectory(core/deps/libjuice EXCLUDE_FROM_ALL)
+	target_link_libraries(${PROJECT_NAME} PRIVATE LibJuice::LibJuiceStatic)
+
+	# websocket++
+	target_include_directories(${PROJECT_NAME} PRIVATE core/deps/websocketpp)
+	target_compile_definitions(${PROJECT_NAME} PRIVATE ASIO_STANDALONE)
+	if (MSVC)
+		target_compile_definitions(${PROJECT_NAME} PRIVATE 
+			_WEBSOCKETPP_CPP11_FUNCTIONAL_
+			_WEBSOCKETPP_CPP11_SYSTEM_ERROR_
+			_WEBSOCKETPP_CPP11_RANDOM_DEVICE_
+			_WEBSOCKETPP_CPP11_MEMORY_
+			_WEBSOCKETPP_CPP11_TYPE_TRAITS_)
+	elseif(MINGW)
+		target_compile_definitions(${PROJECT_NAME} PRIVATE _WEBSOCKETPP_CPP11_THREAD_)
+	else()
+		target_compile_definitions(${PROJECT_NAME} PRIVATE _WEBSOCKETPP_CPP11_STL_)
+	endif()
+endif()
+
 target_include_directories(${PROJECT_NAME} PRIVATE core/deps/picotcp/include core/deps/picotcp/modules)
 target_sources(${PROJECT_NAME} PRIVATE
 		core/deps/picotcp/include/arch/pico_arm9.h
@@ -1206,12 +1232,10 @@ target_sources(${PROJECT_NAME} PRIVATE
 		core/network/netservice.cpp
 		core/network/netservice.h
 		core/network/dcnet.cpp
-		core/network/dcnet.h)
-
-if(ANDROID)
-	target_sources(${PROJECT_NAME} PRIVATE
-			core/network/ifaddrs.c)
-endif()
+		core/network/dcnet.h
+		core/network/ice.cpp
+		core/network/ice.h
+		core/network/ifaddrs.c)
 
 if(NOT LIBRETRO)
 	target_sources(${PROJECT_NAME} PRIVATE

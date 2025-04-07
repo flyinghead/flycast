@@ -66,20 +66,21 @@ void NetworkHandshake::init()
 	if (settings.platform.isArcade())
 		SetNaomiNetworkConfig(-1);
 
-	if (config::GGPOEnable)
+	if (config::GGPOEnable) {
 		instance = new GGPONetworkHandshake();
-	else if (NaomiNetworkSupported())
+	}
+	else if (NaomiNetworkSupported()) {
 		instance = new NaomiNetworkHandshake();
-	else if (config::NetworkEnable && settings.content.gameId == "MAXIMUM SPEED")
-//		instance = new MaxSpeedHandshake();
-	{
-		configure_maxspeed_flash(true, config::ActAsServer);
-		instance = new BattleCableHandshake();
 	}
 	else if (config::BattleCableEnable && !settings.platform.isNaomi())
+	{
+		if (settings.content.gameId == "MAXIMUM SPEED")
+			configure_maxspeed_flash(true, config::ActAsServer);
 		instance = new BattleCableHandshake();
-	else
+	}
+	else {
 		instance = nullptr;
+	}
 }
 
 void NetworkHandshake::term()

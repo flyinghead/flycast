@@ -25,6 +25,7 @@
 #include "imgui_stdlib.h"
 #include "network/net_handshake.h"
 #include "network/ggpo.h"
+#include "network/ice.h"
 #include "wsi/context.h"
 #include "input/gamepad_device.h"
 #include "gui_util.h"
@@ -2777,15 +2778,68 @@ static void gui_settings_network()
 		}
 		else if (config::BattleCableEnable)
 		{
-			ImGui::InputText("Peer", &config::NetworkServer.get(), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
-			ImGui::SameLine();
-			ShowHelpMarker("The peer to connect to. Leave blank to find a player automatically on the default port");
-			char localPort[256];
-			snprintf(localPort, sizeof(localPort), "%d", (int)config::LocalPort);
-			ImGui::InputText("Local Port", localPort, sizeof(localPort), ImGuiInputTextFlags_CharsDecimal, nullptr, nullptr);
-			ImGui::SameLine();
-			ShowHelpMarker("The local UDP port to use");
-			config::LocalPort.set(atoi(localPort));
+#ifdef USE_ICE
+		    if (ImGui::BeginTabBar("battleMode", ImGuiTabBarFlags_NoTooltip))
+		    {
+				if (ImGui::BeginTabItem("Match Code"))
+				{
+					ice::State state = ice::getState();
+					ImGuiInputTextFlags textFlags = state == ice::Offline ? ImGuiInputTextFlags_CharsNoBlank : ImGuiInputTextFlags_ReadOnly;
+					static std::string matchCode;
+					ImGui::InputText("Code", &matchCode, textFlags);
+					ImGui::SameLine();
+					ShowHelpMarker("Choose a unique word or number and share it with your opponent.");
+					if (state == ice::Offline) {
+						if (ImGui::Button("Connect") && !matchCode.empty())
+							ice::init(matchCode, true);
+					}
+					else {
+						if (ImGui::Button("Disconnect"))
+							try { ice::term(); } catch (...) {}
+					}
+					std::string status;
+					switch (state)
+					{
+					case ice::Offline:
+						status = ice::getStatusText();
+						break;
+					case ice::Online:
+						status = "Waiting at meeting point...";
+						break;
+					case ice::ChalAccepted:
+						status = "Preparing game...";
+						break;
+					case ice::Playing:
+						status = "Playing " + matchCode + " (" + ice::getStatusText() + ")";
+						break;
+					default:
+						break;
+					}
+					ImGui::TextDisabled("%s", status.c_str());
+					OptionCheckbox("Network Statistics", config::NetworkStats,
+							"Display network statistics on screen");
+					ImGui::EndTabItem();
+				}
+				if (ImGui::BeginTabItem("Manual"))
+				{
+#endif
+					ImGui::InputText("Peer", &config::NetworkServer.get(), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
+					ImGui::SameLine();
+					ShowHelpMarker("The peer to connect to. Leave blank to find a player automatically on the default port");
+					char localPort[256];
+					snprintf(localPort, sizeof(localPort), "%d", (int)config::LocalPort);
+					ImGui::InputText("Local Port", localPort, sizeof(localPort), ImGuiInputTextFlags_CharsDecimal, nullptr, nullptr);
+					ImGui::SameLine();
+					ShowHelpMarker("The local UDP port to use");
+					config::LocalPort.set(atoi(localPort));
+#ifdef USE_ICE
+					ImGui::EndTabItem();
+				}
+				ImGui::EndTabBar();
+		    }
+#endif
+			OptionCheckbox("Act as Master", config::ActAsServer,
+					"Only used for Maximum Speed. One of the peer must be master.");
 		}
 	}
 	ImGui::Spacing();
@@ -2800,7 +2854,7 @@ static void gui_settings_network()
 			OptionCheckbox("Broadband Adapter Emulation", config::EmulateBBA,
 					"Emulate the Ethernet Broadband Adapter (BBA) instead of the Modem");
 		}
-		OptionCheckbox("Use DCNet (Experimental)", config::UseDCNet, "Connect to the experimental DCNet cloud service.");
+		OptionCheckbox("Use DCNet", config::UseDCNet, "Use the DCNet cloud service for Dreamcast Internet access.");
 		ImGui::InputText("ISP User Name", &config::ISPUsername.get(), ImGuiInputTextFlags_CharsNoBlank | ImGuiInputTextFlags_CallbackCharFilter,
 				[](ImGuiInputTextCallbackData *data) { return static_cast<int>(data->EventChar <= ' ' || data->EventChar > '~'); }, nullptr);
 		ImGui::SameLine();
@@ -3703,6 +3757,9 @@ void gui_draw_osd()
 		if (config::NetworkStats)
 			ggpo::displayStats();
 		chat.display();
+	}
+	else if (config::NetworkStats) {
+		ice::displayStats();
 	}
 	if (!settings.raHardcoreMode)
 		lua::overlay();
