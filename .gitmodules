@@ -44,3 +44,6 @@
 [submodule "core/deps/asio"]
 	path = core/deps/asio
 	url = https://github.com/flyinghead/asio.git
+[submodule "core/deps/xbyak"]
+	path = core/deps/xbyak
+	url = https://github.com/herumi/xbyak.git
