@@ -16,7 +16,7 @@
     You should have received a copy of the GNU General Public License
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
  */
-#if 1 //def USE_ICE
+#ifdef USE_ICE
 #include "ice.h"
 #include "types.h"
 #include "hw/sh4/modules/modules.h"
