@@ -1108,7 +1108,206 @@ static DreamcastKey getOppositeDirectionKey(DreamcastKey key)
 	case DC_AXIS3_DOWN:
 		return DC_AXIS3_UP;
 	case DC_AXIS3_LEFT:
+		return DC_AXIS3_RIGHT;
+	case DC_AXIS3_RIGHT:
+		return DC_AXIS3_LEFT;
+	default:
+		return EMU_BTN_NONE;
+	}
+}
+static void detect_input_popup(const Mapping *mapping)
+{
+	ImVec2 padding = ScaledVec2(20, 20);
+	ImguiStyleVar _(ImGuiStyleVar_WindowPadding, padding);
+	ImguiStyleVar _1(ImGuiStyleVar_ItemSpacing, padding);
+	if (ImGui::BeginPopupModal("Map Control", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
+	{
+		ImGui::Text("Waiting for control '%s'...", mapping->name);
+		u64 now = getTimeMs();
+		
+		// Check if we're still in the initial delay period
+		if (now < map_start_time)
+		{
+			ImGui::Text("Starting detection in %d ms...", (int)(map_start_time - now));
+		}
+		else
+		{
+			int remaining = (int)(5 - (now - map_start_time) / 1000);
+			ImGui::Text("Time out in %d s", remaining);
+			
+			// Display currently detected buttons during the countdown
+			if (!mapped_codes.empty())
+			{
+				ImGui::Text("Current inputs: ");
+				ImGui::SameLine();
+				bool first = true;
+				for (u32 code : mapped_codes)
+				{
+					if (!first)
+					{
+						ImGui::SameLine();
+						ImGui::Text("+");
+						ImGui::SameLine();
+					}
+					
+					const char* name = mapped_device->get_button_name(code);
+					if (name != nullptr)
+						ImGui::Text("%s", name);
+					else
+						ImGui::Text("[%d]", code);
+					
+					first = false;
+				}
+				
+				// Allow early completion with Confirm button if at least one button is detected
+				if (ImGui::Button("Confirm"))
+				{
+					remaining = 0;
+				}
+			}
+			
+			// Wait for the countdown to complete before mapping
+			if (remaining <= 0)
+			{
+				std::shared_ptr<InputMapping> input_mapping = mapped_device->get_input_mapping();
+				if (input_mapping != NULL && !mapped_codes.empty())
+				{
+					unmapControl(input_mapping, gamepad_port, mapping->key);
+					if (analogAxis)
+					{
+						input_mapping->set_axis(gamepad_port, mapping->key, mapped_codes[0], positiveDirection);
+						DreamcastKey opposite = getOppositeDirectionKey(mapping->key);
+						// Map the axis opposite direction to the corresponding opposite dc button or axis,
+						// but only if the opposite direction axis isn't used and the dc button or axis isn't mapped.
+						if (opposite != EMU_BTN_NONE
+								&& input_mapping->get_axis_id(gamepad_port, mapped_codes[0], !positiveDirection) == EMU_BTN_NONE
+								&& input_mapping->get_axis_code(gamepad_port, opposite).first == (u32)-1
+								&& input_mapping->get_button_code(gamepad_port, opposite) == (u32)-1)
+							input_mapping->set_axis(gamepad_port, opposite, mapped_codes[0], !positiveDirection);
+					}
+					else
+					{
+						// Create a button combination with all the collected buttons
+						InputMapping::ButtonCombination combo(mapped_codes);
+						input_mapping->set_button_combination(gamepad_port, mapping->key, combo);
+					}
+				}
+				
+				// Make sure to cancel input detection to prevent collecting more inputs
+				if (mapped_device)
+					mapped_device->cancel_detect_input();
+				
+				mapped_device = NULL;
+				mapped_codes.clear();
+				ImGui::CloseCurrentPopup();
+			}
+		}
+		ImGui::EndPopup();
+	}
+}
 
+static void displayLabelOrCode(const char *label, u32 code, const char *suffix = "")
+{
+	if (label != nullptr)
+		ImGui::Text("%s%s", label, suffix);
+	else
+		ImGui::Text("[%d]%s", code, suffix);
+}
+
+static void displayMappedControl(const std::shared_ptr<GamepadDevice>& gamepad, DreamcastKey key)
+{
+	std::shared_ptr<InputMapping> input_mapping = gamepad->get_input_mapping();
+	auto combo = input_mapping->get_button_combination(gamepad_port, key);
+	
+	if (!combo.buttons.empty())
+	{
+		// Display button combination in "Button1 + Button2 + ..." format
+		bool first = true;
+		for (u32 code : combo.buttons)
+		{
+			if (!first)
+				ImGui::SameLine(0, 0);
+			
+			const char* name = gamepad->get_button_name(code);
+			if (!first)
+				ImGui::Text(" + ");
+			displayLabelOrCode(name, code);
+			first = false;
+		}
+		return;
+	}
+	
+	std::pair<u32, bool> pair = input_mapping->get_axis_code(gamepad_port, key);
+	u32 code = pair.first;
+	if (code != (u32)-1)
+	{
+		displayLabelOrCode(gamepad->get_axis_name(code), code, pair.second ? "+" : "-");
+		return;
+	}
+}
+
+static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamepad)
+{
+	fullScreenWindow(true);
+	ImguiStyleVar _(ImGuiStyleVar_WindowRounding, 0);
+	if (ImGui::BeginPopupModal("Controller Mapping", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove))
+	{
+		const ImGuiStyle& style = ImGui::GetStyle();
+		const float winWidth = ImGui::GetIO().DisplaySize.x - insetLeft - insetRight - (style.WindowBorderSize + style.WindowPadding.x) * 2;
+		const float col_width = (winWidth - style.GrabMinSize - style.ItemSpacing.x
+				- (ImGui::CalcTextSize("Map").x + style.FramePadding.x * 2.0f + style.ItemSpacing.x)
+				- (ImGui::CalcTextSize("Unmap").x + style.FramePadding.x * 2.0f + style.ItemSpacing.x)) / 2;
+
+		static int map_system;
+		static int item_current_map_idx = 0;
+		static int last_item_current_map_idx = 2;
+
+		std::shared_ptr<InputMapping> input_mapping = gamepad->get_input_mapping();
+		if (input_mapping == NULL || ImGui::Button("Done", ScaledVec2(100, 30)))
+		{
+			ImGui::CloseCurrentPopup();
+			gamepad->save_mapping(map_system);
+			last_item_current_map_idx = 2;
+			ImGui::EndPopup();
+			return;
+		}
+		ImGui::SetItemDefaultFocus();
+
+		float portWidth = 0;
+		if (gamepad->maple_port() == MAPLE_PORTS)
+		{
+			ImGui::SameLine();
+			ImguiStyleVar _(ImGuiStyleVar_FramePadding, ImVec2(ImGui::GetStyle().FramePadding.x, (uiScaled(30) - ImGui::GetFontSize()) / 2));
+			portWidth = ImGui::CalcTextSize("AA").x + ImGui::GetStyle().ItemSpacing.x * 2.0f + ImGui::GetFontSize();
+			ImGui::SetNextItemWidth(portWidth);
+			if (ImGui::BeginCombo("Port", maple_ports[gamepad_port + 1]))
+			{
+				for (u32 j = 0; j < MAPLE_PORTS; j++)
+				{
+					bool is_selected = gamepad_port == j;
+					if (ImGui::Selectable(maple_ports[j + 1], &is_selected))
+						gamepad_port = j;
+					if (is_selected)
+						ImGui::SetItemDefaultFocus();
+				}
+				ImGui::EndCombo();
+			}
+			portWidth += ImGui::CalcTextSize("Port").x + ImGui::GetStyle().ItemSpacing.x + ImGui::GetStyle().FramePadding.x;
+		}
+		float comboWidth = ImGui::CalcTextSize("Dreamcast Controls").x + ImGui::GetStyle().ItemSpacing.x + ImGui::GetFontSize() + ImGui::GetStyle().FramePadding.x * 4;
+		float gameConfigWidth = 0;
+		if (!settings.content.gameId.empty())
+			gameConfigWidth = ImGui::CalcTextSize(gamepad->isPerGameMapping() ? "Delete Game Config" : "Make Game Config").x + ImGui::GetStyle().ItemSpacing.x + ImGui::GetStyle().FramePadding.x * 2;
+		ImGui::SameLine(0, ImGui::GetContentRegionAvail().x - comboWidth - gameConfigWidth - ImGui::GetStyle().ItemSpacing.x - uiScaled(100) * 2 - portWidth);
+
+		ImGui::AlignTextToFramePadding();
+
+		if (!settings.content.gameId.empty())
+		{
+			if (gamepad->isPerGameMapping())
+			{
+				if (ImGui::Button("Delete Game Config", ScaledVec2(0, 30)))
+				{
 					gamepad->setPerGameMapping(false);
 					if (!gamepad->find_mapping(map_system))
 						gamepad->resetMappingToDefault(arcade_button_mode, true);

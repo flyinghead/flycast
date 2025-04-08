@@ -207,6 +207,23 @@ bool GamepadDevice::gamepad_btn_input(u32 code, bool pressed)
 		}
 	}
 	
+	// Special handling for trigger buttons in SDL-based controllers
+	// Map common triggers to standard codes for combo detection
+	u32 normalizedCode = code;
+	// For common SDL trigger button codes (varies by controller)
+	if (code == 2 || code == 5 || code == 4 || code == 6 || code == 7)
+	{
+		// Check if this is mapped to a trigger
+		DreamcastKey triggerKey = input_mapper->get_button_id(targetPort, code);
+		if (triggerKey == DC_AXIS_LT || triggerKey == DC_AXIS_RT ||
+		    triggerKey == DC_AXIS_LT2 || triggerKey == DC_AXIS_RT2)
+		{
+			// This is a trigger - use the DreamcastKey value as the normalized code
+			// This makes it consistent across different controllers
+			normalizedCode = triggerKey;
+		}
+	}
+	
 	// Then process button combinations
 	// We do this separately to ensure both individual buttons AND combinations work
 	for (const auto& pair : input_mapper->get_all_button_combinations(targetPort))
@@ -216,7 +233,15 @@ bool GamepadDevice::gamepad_btn_input(u32 code, bool pressed)
 			continue;
 			
 		// Check if this button is part of this combination
-		if (std::find(pair.second.buttons.begin(), pair.second.buttons.end(), code) == pair.second.buttons.end())
+		// Use either the original code or normalized code for triggers
+		bool isInCombo = false;
+		for (u32 comboCode : pair.second.buttons) {
+			if (comboCode == code || comboCode == normalizedCode) {
+				isInCombo = true;
+				break;
+			}
+		}
+		if (!isInCombo)
 			continue;
 			
 		// Check if the combination state changed because of this button press/release
@@ -772,8 +797,31 @@ bool GamepadDevice::isButtonCombinationPressed(int port, const InputMapping::But
 	// For combinations, all buttons must be pressed
 	for (u32 code : combo.buttons)
 	{
-		if (pressedButtons[port].find(code) == pressedButtons[port].end())
-			return false; // At least one button in the combination is not pressed
+		// First check with the actual code
+		if (pressedButtons[port].find(code) != pressedButtons[port].end())
+			continue;
+			
+		// If this is a trigger button, check with the normalized DreamcastKey value
+		if ((code == DC_AXIS_LT || code == DC_AXIS_RT || code == DC_AXIS_LT2 || code == DC_AXIS_RT2))
+		{
+			// Look for possible SDL trigger button codes for this trigger
+			bool found = false;
+			for (u32 possibleCode : {2, 5, 4, 6, 7})
+			{
+				// Check if this button is mapped to our trigger
+				DreamcastKey triggerKey = input_mapper->get_button_id(port, possibleCode);
+				if (triggerKey == code && pressedButtons[port].find(possibleCode) != pressedButtons[port].end())
+				{
+					found = true;
+					break;
+				}
+			}
+			if (found)
+				continue;
+		}
+		
+		// Button not pressed in any form
+		return false;
 	}
 	
 	return true; // All buttons in the combination are pressed
