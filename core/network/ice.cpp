@@ -83,6 +83,7 @@ public:
 	{
 		EventManager::unlisten(Event::Start, onEmuEvent, this);
 		EventManager::unlisten(Event::Terminate, onEmuEvent, this);
+		EventManager::unlisten(Event::LoadState, onEmuEvent, this);
 		destroyJuiceAgent();
 		destroyWebSocket();
 		SCIFSerialPort::Instance().setPipe(nullptr);
@@ -120,6 +121,7 @@ public:
 		}
 		EventManager::listen(Event::Start, onEmuEvent, this);
 		EventManager::listen(Event::Terminate, onEmuEvent, this);
+		EventManager::listen(Event::LoadState, onEmuEvent, this);
 		createWebSocket(room);
 	}
 
@@ -188,8 +190,8 @@ public:
 
 	struct Stats
 	{
-		u32 txQueueSize;
-		u32 rxQueueSize;
+		float txQueueSize;
+		float rxQueueSize;
 		float rxSpeed;
 		float txSpeed;
 	};
@@ -197,10 +199,20 @@ public:
 	Stats getStats()
 	{
 		u64 now = getTimeMs();
-		Stats s = { txBufferSize, (u32)recvQueue.size() };
-		if (stat.timestamp != 0) {
-			s.rxSpeed = (float)stat.rxBytes.exchange(0) * 1000 / (now - stat.timestamp);
-			s.txSpeed = (float)stat.txBytes.exchange(0) * 1000 / (now - stat.timestamp);
+		Stats s {};
+		if (stat.timestamp != 0)
+		{
+			if (stat.timestamp == now) {
+				s = stat.last;
+				return s;
+			}
+			float cur = (float)stat.rxBytes.exchange(0) * 1000 / (now - stat.timestamp);
+			s.rxSpeed = stat.last.rxSpeed * .3f + cur * .7f;
+			cur = (float)stat.txBytes.exchange(0) * 1000 / (now - stat.timestamp);
+			s.txSpeed = stat.last.txSpeed * .3f + cur * .7f;
+			s.rxQueueSize = (float)recvQueue.size() * .7f + stat.last.rxQueueSize * .3f;
+			s.txQueueSize = (float)txBufferSize * .7f + stat.last.txQueueSize * .3f;
+			stat.last = s;
 		}
 		stat.timestamp = now;
 		return s;
@@ -531,10 +543,21 @@ private:
 	static void onEmuEvent(Event event, void *arg)
 	{
 		IceSession *ice = (IceSession *)arg;
-		if (event == Event::Start)
+		switch (event)
+		{
+		case Event::Start:
 			ice->emuStartGame();
-		else if (event == Event::Terminate)
+			break;
+		case Event::Terminate:
 			ice->emuTerminateGame();
+			break;
+		case Event::LoadState:
+			ice->recvQueue.clear();
+			ice->txBufferSize = 0;
+			break;
+		default:
+			break;
+		}
 	}
 
 	// Serial port
@@ -543,7 +566,6 @@ private:
 	void sendBreak() override {
 		if (state == Playing)
 			WARN_LOG(NETWORK, "ice: Ignoring sent break");
-			//juice_send(agent, "B", 1);
 	}
 	int available() override {
 		return recvQueue.size();
@@ -584,6 +606,7 @@ private:
 		u64 timestamp = 0;
 		std::atomic_int rxBytes = 0;
 		std::atomic_int txBytes = 0;
+		Stats last {};
 	} stat;
 	std::unique_ptr<Writer> writer;
 	FILE *dump = nullptr;
@@ -641,16 +664,59 @@ public:
 
 	void write() override
 	{
+		curSize++;
 		// Parse F355 packets
 		// 2 types:
-		// 'L' 'X' followed by 32 bytes
+		// 'L' 'Q' followed by 32 bytes
 		// 'X' 'X' followed by 156 bytes (only in race)
-		if ((ice.txBufferSize == 34 && ice.txBuffer[0] == 'L' && ice.txBuffer[1] == 'Q')
-				|| (ice.txBufferSize == 158 && ice.txBuffer[0] == 'X' && ice.txBuffer[1] == 'X'))
+		switch (curSize)
 		{
+		case 1:
+			switch (ice.txBuffer[0])
+			{
+			case 'L':
+				LQ = true;
+				break;
+			case 'X':
+				LQ = false;
+				break;
+			default:
+				// resynchronize
+				INFO_LOG(NETWORK, "Resync: size %d\n", curSize);
+				ice.flushTxBuffer();
+				curSize = 0;
+				break;
+			}
+			break;
+		case 2:
+			if ((ice.txBuffer[0] == 'L' && ice.txBuffer[1] != 'Q')
+					|| (ice.txBuffer[0] == 'X' && ice.txBuffer[1] != 'X')) {
+				// resynchronize
+				INFO_LOG(NETWORK, "Resync: size %d\n", curSize);
+				ice.flushTxBuffer();
+				curSize = 0;
+			}
+			break;
+		case 34:
 			ice.flushTxBuffer();
+			if (LQ)
+				curSize = 0;
+			break;
+		case 158:
+			ice.flushTxBuffer();
+			curSize = 0;
+			break;
+		default:
+			// flush every 34 bytes
+			if (ice.txBufferSize == 34)
+				ice.flushTxBuffer();
+			break;
 		}
 	}
+
+private:
+	u32 curSize = 0;
+	bool LQ = false;
 };
 
 class MaxSpeedWriter : public Writer
@@ -816,14 +882,14 @@ void displayStats()
 
 		// TX/RX Queues
 		ImGui::Text("Send Q");
-		ImGui::ProgressBar(s.txQueueSize / 200.f, ImVec2(-1, uiScaled(10.f)), "");
+		ImGui::ProgressBar(s.txQueueSize / 100.f, ImVec2(-1, uiScaled(10.f)), "");
 		ImGui::Text("Tx Speed");
-		ImGui::ProgressBar(s.txSpeed / 20000, ImVec2(-1, uiScaled(10.f)), "");
+		ImGui::ProgressBar(s.txSpeed / 20000.f, ImVec2(-1, uiScaled(10.f)), "");
 
 		ImGui::Text("Recv Q");
 		ImGui::ProgressBar(s.rxQueueSize / 100.f, ImVec2(-1, uiScaled(10.f)), "");
 		ImGui::Text("Rx Speed");
-		ImGui::ProgressBar(s.rxSpeed / 20000, ImVec2(-1, uiScaled(10.f)), "");
+		ImGui::ProgressBar(s.rxSpeed / 20000.f, ImVec2(-1, uiScaled(10.f)), "");
 
 		ImGui::TextWrapped("%s", session->getStatusText().c_str());
 	}
