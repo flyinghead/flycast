@@ -50,6 +50,7 @@ public:
 		_detecting_button = false;
 		_detecting_axis = false;
 		_detecting_combo = false;
+		detectionButtons.clear();
 	}
 	std::shared_ptr<InputMapping> get_input_mapping() { return input_mapper; }
 	void save_mapping(int system = settings.platform.system);
@@ -161,6 +162,8 @@ private:
 
 	// Track which buttons are currently pressed (for button combos)
 	std::set<u32> pressedButtons[4];
+	// Track buttons pressed during the current mapping session
+	std::set<u32> detectionButtons;
 	bool isButtonCombinationPressed(int port, const InputMapping::ButtonCombination& combo);
 
 	enum DigAnalog {
