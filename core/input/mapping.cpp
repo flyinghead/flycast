@@ -126,12 +126,18 @@ void InputMapping::clear_button(u32 port, DreamcastKey id)
 {
 	if (id != EMU_BTN_NONE)
 	{
-		while (true)
+		auto it = buttonCombinations[port].find(id);
+		if (it != buttonCombinations[port].end())
 		{
-			u32 code = get_button_code(port, id);
-			if (code == (u32)-1)
-				break;
-			buttons[port][code] = EMU_BTN_NONE;
+			// Remove button mappings from the reverse map ONLY if they map to this id
+			for (u32 code : it->second.buttons) {
+				auto revIt = reverseButtonMap[port].find(code);
+				if (revIt != reverseButtonMap[port].end() && revIt->second == id)
+					reverseButtonMap[port].erase(code);
+			}
+			
+			// Remove the combination itself
+			buttonCombinations[port].erase(it);
 			dirty = true;
 		}
 	}
@@ -141,10 +147,61 @@ void InputMapping::set_button(u32 port, DreamcastKey id, u32 code)
 {
 	if (id != EMU_BTN_NONE)
 	{
-		clear_button(port, id);
-		buttons[port][code] = id;
+		// Create a single-button combination
+		ButtonCombination combo(code);
+		set_button_combination(port, id, combo);
+	}
+}
+
+void InputMapping::set_button_combination(u32 port, DreamcastKey id, const ButtonCombination& combo)
+{
+	if (id != EMU_BTN_NONE && !combo.buttons.empty())
+	{
+		// Only clear this specific mapping, not all mappings for these buttons
+		auto it = buttonCombinations[port].find(id);
+		if (it != buttonCombinations[port].end())
+		{
+			// Remove old combination's buttons from the reverse map ONLY if they map to this id
+			for (u32 code : it->second.buttons) {
+				auto revIt = reverseButtonMap[port].find(code);
+				if (revIt != reverseButtonMap[port].end() && revIt->second == id)
+					reverseButtonMap[port].erase(code);
+			}
+			buttonCombinations[port].erase(it);
+		}
+		
+		// Add the combination
+		buttonCombinations[port][id] = combo;
+		
+		// Add individual buttons to the reverse map for quick lookup
+		// ONLY if they're not already mapped to something else!
+		for (u32 code : combo.buttons) {
+			// Only add to reverse map if not already mapped to something else
+			// or if this is a one-button combo (to preserve single-button mappings)
+			if (combo.buttons.size() == 1 || reverseButtonMap[port].find(code) == reverseButtonMap[port].end())
+				reverseButtonMap[port][code] = id;
+		}
+		
 		dirty = true;
 	}
+}
+
+u32 InputMapping::get_button_code(u32 port, DreamcastKey key)
+{
+	auto combo = get_button_combination(port, key);
+	if (!combo.buttons.empty())
+		return combo.buttons[0];
+	else
+		return (u32)-1;
+}
+
+InputMapping::ButtonCombination InputMapping::get_button_combination(u32 port, DreamcastKey key)
+{
+	auto it = buttonCombinations[port].find(key);
+	if (it != buttonCombinations[port].end())
+		return it->second;
+	else
+		return ButtonCombination();
 }
 
 void InputMapping::clear_axis(u32 port, DreamcastKey id)
@@ -208,6 +265,7 @@ void InputMapping::load(FILE* fp)
 		loadv1(mf);
 		return;
 	}
+	
 	int bindIndex = 0;
 	while (true)
 	{
@@ -220,22 +278,58 @@ void InputMapping::load(FILE* fp)
 			WARN_LOG(INPUT, "Invalid bind entry: %s", s.c_str());
 			break;
 		}
-		u32 code = atoi(s.substr(0, colon).c_str());
+		
+		std::string codeStr = s.substr(0, colon);
 		std::string key = s.substr(colon + 1);
 		if (key.empty())
 		{
 			WARN_LOG(INPUT, "Invalid bind entry: %s", s.c_str());
 			break;
 		}
+		
 		int port = 0;
 		if (key[key.size() - 1] >= '1' && key[key.size() - 1] <= '3')
 		{
 			port = key[key.size() - 1] - '0';
 			key = key.substr(0, key.size() - 1);
 		}
+		
 		DreamcastKey id = getKeyId(key);
-		set_button(port, id, code);
+		
+		if (version >= 4)
+		{
+			// Parse comma-separated list of button codes for button combinations
+			std::vector<u32> buttonCodes;
+			size_t start = 0;
+			size_t comma = codeStr.find(',');
+			
+			while (start < codeStr.length())
+			{
+				if (comma == std::string::npos)
+				{
+					buttonCodes.push_back(atoi(codeStr.substr(start).c_str()));
+					break;
+				}
+				
+				buttonCodes.push_back(atoi(codeStr.substr(start, comma - start).c_str()));
+				start = comma + 1;
+				comma = codeStr.find(',', start);
+			}
+			
+			if (!buttonCodes.empty())
+			{
+				ButtonCombination combo(buttonCodes);
+				set_button_combination(port, id, combo);
+			}
+		}
+		else
+		{
+			// Legacy format - single button
+			u32 code = atoi(codeStr.c_str());
+			set_button(port, id, code);
+		}
 	}
+	
 	bindIndex = 0;
 	while (true)
 	{
@@ -326,16 +420,6 @@ void InputMapping::loadv1(ConfigFile& mf)
 		}
 	}
 	dirty = true;
-}
-
-u32 InputMapping::get_button_code(u32 port, DreamcastKey key)
-{
-	for (auto& it : buttons[port])
-	{
-		if (it.second == key)
-			return it.first;
-	}
-	return -1;
 }
 
 std::pair<u32, bool> InputMapping::get_axis_code(u32 port, DreamcastKey key)
@@ -434,24 +518,36 @@ bool InputMapping::save(const std::string& name)
 	mf.set_int("emulator", "dead_zone", (int)std::round(this->dead_zone * 100.f));
 	mf.set_int("emulator", "saturation", (int)std::round(this->saturation * 100.f));
 	mf.set_int("emulator", "rumble_power", this->rumblePower);
-	mf.set_int("emulator", "version", 3);
+	mf.set_int("emulator", "version", 4);  // Update version to support button combos
 
 	int bindIndex = 0;
 	for (int port = 0; port < 4; port++)
 	{
-		for (const auto& pair : buttons[port])
+		// Save button combinations
+		for (const auto& pair : buttonCombinations[port])
 		{
-			if (pair.second == EMU_BTN_NONE)
+			if (pair.first == EMU_BTN_NONE || pair.second.buttons.empty())
 				continue;
-			const char *keyName = getKeyName(pair.second);
+			
+			const char *keyName = getKeyName(pair.first);
 			if (keyName == nullptr)
 				continue;
+			
 			std::string option;
 			if (port == 0)
 				option = keyName;
 			else
 				option = keyName + std::to_string(port);
-			mf.set("digital", "bind" + std::to_string(bindIndex), std::to_string(pair.first) + ":" + option);
+			
+			// Build a comma-separated list of button codes
+			std::string buttonList;
+			for (size_t i = 0; i < pair.second.buttons.size(); i++) {
+				if (i > 0)
+					buttonList += ",";
+				buttonList += std::to_string(pair.second.buttons[i]);
+			}
+			
+			mf.set("digital", "bind" + std::to_string(bindIndex), buttonList + ":" + option);
 			bindIndex++;
 		}
 	}

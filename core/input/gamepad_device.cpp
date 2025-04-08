@@ -56,6 +56,16 @@ std::mutex GamepadDevice::_gamepads_mutex;
 static FILE *record_input;
 #endif
 
+// Constructor is now defined only in the header file
+// GamepadDevice::GamepadDevice(int maple_port, const char *api_name, bool remappable)
+//  : _api_name(api_name), _maple_port(maple_port), _input_detected(nullptr), _remappable(remappable),
+//    digitalToAnalogState{}
+// {
+//  // Initialize our pressedButtons sets
+//  for (int i = 0; i < 4; i++)
+//      pressedButtons[i].clear();
+// }
+
 bool GamepadDevice::handleButtonInput(int port, DreamcastKey key, bool pressed)
 {
 	if (key == EMU_BTN_NONE)
@@ -155,29 +165,73 @@ bool GamepadDevice::handleButtonInput(int port, DreamcastKey key, bool pressed)
 
 bool GamepadDevice::gamepad_btn_input(u32 code, bool pressed)
 {
-	if (_input_detected != nullptr && _detecting_button
+	// When detecting input for button mapping
+	if (_input_detected != nullptr && _detecting_button 
 			&& getTimeMs() >= _detection_start_time && pressed)
 	{
+		// Always call the callback with the detected button
 		_input_detected(code, false, false);
-		_input_detected = nullptr;
+		
+		// If we're not in combo detection mode, stop detecting after first button
+		if (!_detecting_combo) {
+			_input_detected = nullptr;
+		}
+		
 		return true;
 	}
+	
 	if (!input_mapper || _maple_port > (int)std::size(kcode))
 		return false;
 
 	bool rc = false;
-	if (_maple_port == 4)
+
+	// Update button press tracking
+	int targetPort = (_maple_port == 4) ? 0 : _maple_port; // Use port 0 for all-ports mode as a base
+	if (pressed)
+		pressedButtons[targetPort].insert(code);
+	else
+		pressedButtons[targetPort].erase(code);
+		
+	// First handle individual button mapping (standard behavior)
+	DreamcastKey key = input_mapper->get_button_id(targetPort, code);
+	if (key != EMU_BTN_NONE)
 	{
-		for (int port = 0; port < 4; port++)
+		if (_maple_port == 4)
 		{
-			DreamcastKey key = input_mapper->get_button_id(port, code);
-			rc = handleButtonInput(port, key, pressed) || rc;
+			for (int port = 0; port < 4; port++)
+				rc = handleButtonInput(port, key, pressed) || rc;
+		}
+		else
+		{
+			rc = handleButtonInput(_maple_port, key, pressed);
 		}
 	}
-	else
+	
+	// Then process button combinations
+	// We do this separately to ensure both individual buttons AND combinations work
+	for (const auto& pair : input_mapper->get_all_button_combinations(targetPort))
 	{
-		DreamcastKey key = input_mapper->get_button_id(0, code);
-		rc = handleButtonInput(_maple_port, key, pressed);
+		// We only care about combinations with more than one button
+		if (pair.second.buttons.size() <= 1)
+			continue;
+			
+		// Check if this button is part of this combination
+		if (std::find(pair.second.buttons.begin(), pair.second.buttons.end(), code) == pair.second.buttons.end())
+			continue;
+			
+		// Check if the combination state changed because of this button press/release
+		bool comboPressed = isButtonCombinationPressed(targetPort, pair.second);
+		
+		// Handle the combination state
+		if (_maple_port == 4)
+		{
+			for (int port = 0; port < 4; port++)
+				rc = handleButtonInput(port, pair.first, comboPressed) || rc;
+		}
+		else
+		{
+			rc = handleButtonInput(_maple_port, pair.first, comboPressed) || rc;
+		}
 	}
 
 	return rc;
@@ -520,6 +574,7 @@ void GamepadDevice::detectButtonOrAxisInput(input_detected_cb input_changed)
 	_detecting_button = true;
 	_detecting_axis = true;
 	_detection_start_time = getTimeMs() + 200;
+	_detecting_combo = true;
 }
 
 #ifdef TEST_AUTOMATION
@@ -704,3 +759,22 @@ void replay_input()
 	}
 }
 #endif
+
+bool GamepadDevice::isButtonCombinationPressed(int port, const InputMapping::ButtonCombination& combo)
+{
+	if (combo.buttons.empty())
+		return false;
+		
+	// For a single button, just check if it's pressed
+	if (combo.buttons.size() == 1)
+		return pressedButtons[port].find(combo.buttons[0]) != pressedButtons[port].end();
+		
+	// For combinations, all buttons must be pressed
+	for (u32 code : combo.buttons)
+	{
+		if (pressedButtons[port].find(code) == pressedButtons[port].end())
+			return false; // At least one button in the combination is not pressed
+	}
+	
+	return true; // All buttons in the combination are pressed
+}
