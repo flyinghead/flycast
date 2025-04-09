@@ -2888,7 +2888,7 @@ static void gui_settings_advanced()
 			"Use the interpreter. Very slow but may help in case of a dynarec problem");
 		ImGui::Columns(1, NULL, false);
 
-		OptionSlider("SH4 Clock", config::Sh4Clock, 100, 300,
+		OptionSlider("SH4 Clock", config::Sh4Clock, 100, 500,
 				"Over/Underclock the main SH4 CPU. Default is 200 MHz. Other values may crash, freeze or trigger unexpected nuclear reactions.",
 				"%d MHz");
     }
