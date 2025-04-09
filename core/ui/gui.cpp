@@ -1132,8 +1132,14 @@ static void detect_input_popup(const Mapping *mapping)
 		}
 		else
 		{
-			int remaining = (int)(5 - (now - map_start_time) / 1000);
-			ImGui::Text("Time out in %d s", remaining);
+			// Check if device is still detecting input (might have been cancelled by button release)
+			bool still_detecting = mapped_device && mapped_device->is_input_detecting();
+			
+			// If detection was cancelled by button release, close popup immediately
+			int remaining = still_detecting ? (int)(5 - (now - map_start_time) / 1000) : 0;
+			
+			if (still_detecting)
+				ImGui::Text("Time out in %d s", remaining);
 			
 			// Display currently detected buttons during the countdown
 			if (!mapped_codes.empty())

@@ -52,6 +52,9 @@ public:
 		_detecting_combo = false;
 		detectionButtons.clear();
 	}
+	bool is_input_detecting() const {
+		return _input_detected != nullptr;
+	}
 	std::shared_ptr<InputMapping> get_input_mapping() { return input_mapper; }
 	void save_mapping(int system = settings.platform.system);
 
