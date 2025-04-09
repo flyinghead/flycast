@@ -18,7 +18,7 @@
 */
 #ifdef LIBRETRO
 #include "dx11context_lr.h"
-#include <dxgi1_2.h>
+#include <dxgi1_6.h>
 #include "rend/osd.h"
 #include "rend/transform_matrix.h"
 
