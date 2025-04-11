@@ -129,6 +129,8 @@ protected:
 	void loadMapping() {
 		if (!find_mapping())
 			input_mapper = getDefaultMapping();
+		else
+			INFO_LOG(INPUT, "using custom mapping '%s'", input_mapper->name.c_str());
 	}
 	virtual std::shared_ptr<InputMapping> getDefaultMapping() {
 		return std::make_shared<IdentityInputMapping>();
