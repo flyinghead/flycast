@@ -196,10 +196,7 @@ public:
 			}
 		}
 
-		if (!find_mapping())
-			input_mapper = std::make_shared<DefaultInputMapping<>>(sdl_controller);
-		else
-			INFO_LOG(INPUT, "using custom mapping '%s'", input_mapper->name.c_str());
+		loadMapping();
 
 		hasAnalogStick = SDL_JoystickNumAxes(sdl_joystick) > 0;
 		set_maple_port(maple_port);
@@ -605,6 +602,11 @@ public:
 		return nullptr;
 	}
 
+	std::shared_ptr<InputMapping> getDefaultMapping() override
+	{
+		return std::make_shared<DefaultInputMapping<>>(sdl_controller);
+	}
+
 	void resetMappingToDefault(bool arcade, bool gamepad) override
 	{
 		NOTICE_LOG(INPUT, "Resetting SDL gamepad to default: %d %d", arcade, gamepad);
@@ -699,4 +701,3 @@ public:
 
 	void setAbsPos(int x, int y);
 };
-
