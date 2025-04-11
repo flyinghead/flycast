@@ -10243,8 +10243,8 @@ struct retro_core_options_v2 options_ca = {
 #define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_CHS "模拟以太网宽带适配器而不是调制解调器. (需要重启)"
 #define CORE_OPTION_NAME_UPNP_LABEL_CHS "启用 UPnP"
 #define CORE_OPTION_NAME_UPNP_INFO_0_CHS "使用 UPnP 自动配置您的网络路由器进行在线游戏."
-#define CORE_OPTION_NAME_DCNET_LABEL_CHS NULL
-#define CORE_OPTION_NAME_DCNET_INFO_0_CHS NULL
+#define CORE_OPTION_NAME_DCNET_LABEL_CHS "使用 DCNet (实验性)"
+#define CORE_OPTION_NAME_DCNET_INFO_0_CHS "连接到实验性的 DCNet 云服务."
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_CHS "内部分辨率"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_CHS "修改渲染分辨率."
 #define OPTION_VAL_320X240_CHS "320x240 (1/2)"
@@ -71262,9 +71262,9 @@ struct retro_core_options_v2 options_sr = {
 #define OPTION_VAL_490_SV NULL
 #define OPTION_VAL_500_SV NULL
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_SV "Ladda in anpassade texturer"
-#define CORE_OPTION_NAME_CUSTOM_TEXTURES_INFO_0_SV NULL
+#define CORE_OPTION_NAME_CUSTOM_TEXTURES_INFO_0_SV "Läs in anpassade texturer som finns i mappen 'system/dc/textures/<game-id>/'."
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_SV "Dumpa texturer"
-#define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_SV NULL
+#define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_SV "Varje gång en ny textur används av spelet sparas den som en .png-fil i mappen 'system/dc/texdump/<game-id>/'."
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_SV "Analoga spakens dödzon"
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_INFO_0_SV "Välj hur långt du måste flytta på den analoga spaken innan den börjar bearbetas."
 #define OPTION_VAL_0_SV NULL
