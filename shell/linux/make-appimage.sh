@@ -7,13 +7,14 @@ fi
 
 SHLIBS=(
 	libcurl.so.4
+	libcurl-gnutls.so.4
 	libz.so.1
 	liblua5.3.so.0
 	libminiupnpc.so.17
 	libgomp.so.1
 	libao.so.4
 	libpulse.so.0
-	libzip.so.5
+	libzip.so.4
 	libnghttp2.so.14
 	libidn2.so.0
 	librtmp.so.1
@@ -22,16 +23,18 @@ SHLIBS=(
 	libssl.so.1.1
 	libcrypto.so.1.1
 	libgssapi_krb5.so.2
-	libldap_r-2.4.so.2
-	liblber-2.4.so.2
+	libldap-2.5.so.0
+	liblber-2.5.so.0
+	libzstd.so.1
 	libbrotlidec.so.1
-	pulseaudio/libpulsecommon-13.99.so
+	pulseaudio/libpulsecommon-15.99.so
 	libdbus-1.so.3
 	libbz2.so.1.0
+	libcrypto.so.3
 	libunistring.so.2
 	libgnutls.so.30
-	libhogweed.so.5
-	libnettle.so.7
+	libhogweed.so.6
+	libnettle.so.8
 	libgmp.so.10
 	libkrb5.so.3
 	libk5crypto.so.3
@@ -39,7 +42,7 @@ SHLIBS=(
 	libkrb5support.so.0
 	libresolv.so.2
 	libsasl2.so.2
-	libgssapi.so.3
+	libgssapi_krb5.so.2
 	libbrotlicommon.so.1
 	libxcb.so.1
 	libsystemd.so.0
@@ -50,29 +53,25 @@ SHLIBS=(
 	libp11-kit.so.0
 	libtasn1.so.6
 	libkeyutils.so.1
-	libheimntlm.so.0
-	libkrb5.so.26
-	libasn1.so.8
-	libhcrypto.so.4
-	libroken.so.18
+	libkrb5.so.3
 	libXau.so.6
 	libXdmcp.so.6
 	liblzma.so.5
 	liblz4.so.1
+	libcap.so.2
 	libgcrypt.so.20
 	libnsl.so.1
 	libFLAC.so.8
 	libogg.so.0
 	libvorbis.so.0
 	libvorbisenc.so.2
-	libffi.so.7
-	libwind.so.0
-	libheimbase.so.1
-	libhx509.so.5
+	libffi.so.8
+	libopus.so.0
 	libsqlite3.so.0
 	libcrypt.so.1
 	libbsd.so.0
-	libcdio.so.18
+	libcdio.so.19.0.0
+	libmd.so.0
 )
 
 if [ ! -f appimagetool-x86_64.AppImage ]; then
