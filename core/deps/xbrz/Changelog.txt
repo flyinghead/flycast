@@ -1,6 +1,21 @@
-===========
-|Changelog|
-===========
+xBRZ 1.8 [2019-11-28]
+---------------------
+Consider ARGB outside area as transparent
+Fixed ARGB scaling issue on image borders
+
+
+xBRZ 1.7 [2019-07-04]
+---------------------
+Fixed asymmetric color distance
+New parameter: "Center direction bias"
+
+
+xBRZ 1.6 [2018-02-27]
+---------------------
+Added bilinear scaling
+Option to skip color buffer creation
+Updated license info
+
 
 xBRZ 1.5 [2017-08-07]
 ---------------------
