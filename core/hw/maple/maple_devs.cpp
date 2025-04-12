@@ -2405,7 +2405,7 @@ private:
 				for (u32 phase = 0; phase < 4; ++phase) {
 					MapleMsg writeMsg;
 					writeMsg.command = MDCF_BlockWrite;
-					writeMsg.destAP = (bus_id << 6) | (1 << bus_port);;
+					writeMsg.destAP = (bus_id << 6) | (1 << bus_port);
 					writeMsg.originAP = (bus_id << 6);
 					writeMsg.size = 34;
 					writeMsg.setWord(MFID_1_Storage, 0);
@@ -2431,7 +2431,7 @@ private:
 					// Send the GetLastError command to commit the data
 					MapleMsg writeMsg;
 					writeMsg.command = MDCF_GetLastError;
-					writeMsg.destAP = (bus_id << 6) | (1 << bus_port);;
+					writeMsg.destAP = (bus_id << 6) | (1 << bus_port);
 					writeMsg.originAP = (bus_id << 6);
 					writeMsg.size = 2;
 					writeMsg.setWord(MFID_1_Storage, 0);

@@ -958,7 +958,7 @@ bool active() {
 }
 
 std::future<bool> startNetwork() {
-	return std::async(std::launch::deferred, []{ return false; });;
+	return std::async(std::launch::deferred, []{ return false; });
 }
 
 void displayStats() {
