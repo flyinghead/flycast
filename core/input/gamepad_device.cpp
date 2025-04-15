@@ -308,9 +308,29 @@ bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 			&& getTimeMs() >= _detection_start_time && std::abs(value) >= 16384)
 	{
 		_input_detected(code, true, positive);
+		
+		// If we're in combo detection mode, add this axis to tracking but don't end detection
+		if (_detecting_combo && _detecting_button) {
+			// Track this axis as a "button" for combo detection
+			detectionButtons.insert(code);
+			return true;
+		}
+		
 		_input_detected = nullptr;
 		return true;
 	}
+	// When in combo detection, track button releases for axes too
+	else if (_input_detected != NULL && _detecting_combo && _detecting_axis && _detecting_button 
+			&& getTimeMs() >= _detection_start_time && std::abs(value) < 8192)
+	{
+		// If this is an axis we previously detected as pressed, end detection
+		if (detectionButtons.find(code) != detectionButtons.end()) {
+			_input_detected = nullptr;
+			detectionButtons.clear();
+			DEBUG_LOG(INPUT, "Ending combo detection on axis release: %d", code);
+		}
+	}
+	
 	if (!input_mapper || _maple_port < 0 || _maple_port > 4)
 		return false;
 
@@ -461,6 +481,15 @@ bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 		handle_axis(_maple_port, key, 0);
 		key = input_mapper->get_axis_id(0, code, positive);
 		rc = handle_axis(_maple_port, key, value);
+	}
+
+	// Update axis press tracking for button combinations
+	// We consider an axis "pressed" if its value exceeds a threshold
+	int targetPort = (_maple_port == 4) ? 0 : _maple_port; // Use port 0 for all-ports mode as a base
+	if (std::abs(value) >= 16384) { // Use 50% deflection as "pressed" threshold
+		pressedButtons[targetPort].insert(code);
+	} else if (std::abs(value) < 8192) { // Use 25% deflection as "released" threshold
+		pressedButtons[targetPort].erase(code);
 	}
 
 	return rc;
@@ -834,6 +863,18 @@ bool GamepadDevice::isButtonCombinationPressed(int port, const InputMapping::But
 					break;
 				}
 			}
+			
+			// Also check for SDL axes 3 and 5 (common triggers)
+			if (!found) {
+				for (u32 axisCode : {3, 5}) {
+					// If we have an axis mapping for this trigger, check if the axis is "pressed"
+					if (pressedButtons[port].find(axisCode) != pressedButtons[port].end()) {
+						found = true;
+						break;
+					}
+				}
+			}
+			
 			if (found)
 				continue;
 		}

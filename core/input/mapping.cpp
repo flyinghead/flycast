@@ -518,7 +518,7 @@ bool InputMapping::save(const std::string& name)
 	mf.set_int("emulator", "dead_zone", (int)std::round(this->dead_zone * 100.f));
 	mf.set_int("emulator", "saturation", (int)std::round(this->saturation * 100.f));
 	mf.set_int("emulator", "rumble_power", this->rumblePower);
-	mf.set_int("emulator", "version", 4);  // Update version to support button combos
+	mf.set_int("emulator", "version", 4);  // Updated version to support button combos
 
 	int bindIndex = 0;
 	for (int port = 0; port < 4; port++)

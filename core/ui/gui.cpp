@@ -1054,7 +1054,7 @@ static MapleDeviceType maple_expansion_device_type_from_index(int idx)
 }
 
 static std::shared_ptr<GamepadDevice> mapped_device;
-static std::vector<u32> mapped_codes;  // Now a vector to store multiple buttons
+static std::vector<u32> mapped_codes;  // Now is a vector to store multiple buttons rather then single button inputs.
 static bool analogAxis;
 static bool positiveDirection;
 static u64 map_start_time;
@@ -1160,7 +1160,14 @@ static void detect_input_popup(const Mapping *mapping)
 					if (name != nullptr)
 						ImGui::Text("%s", name);
 					else
-						ImGui::Text("[%d]", code);
+					{
+						// Check if this might be an axis
+						const char* axisName = mapped_device->get_axis_name(code);
+						if (axisName != nullptr)
+							ImGui::Text("%s", axisName);
+						else
+							ImGui::Text("[%d]", code);
+					}
 					
 					first = false;
 				}
@@ -1234,7 +1241,12 @@ static void displayMappedControl(const std::shared_ptr<GamepadDevice>& gamepad, 
 			if (!first)
 				ImGui::SameLine(0, 0);
 			
+			// First try to get button name
 			const char* name = gamepad->get_button_name(code);
+			if (name == nullptr)
+				// If no button name, try to get axis name
+				name = gamepad->get_axis_name(code);
+				
 			if (!first)
 				ImGui::Text(" + ");
 			displayLabelOrCode(name, code);
@@ -1468,7 +1480,7 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 						if (std::find(mapped_codes.begin(), mapped_codes.end(), code) == mapped_codes.end())
 						{
 							// Limit to a reasonable number of buttons in a combo
-							if (mapped_codes.size() < 2)
+							if (mapped_codes.size() < 8)
 							{
 								mapped_codes.push_back(code);
 								analogAxis = false;
