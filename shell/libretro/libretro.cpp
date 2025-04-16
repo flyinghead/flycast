@@ -118,6 +118,7 @@ static int trigger_deadzone = 0;
 static bool digital_triggers = false;
 static bool allow_service_buttons = false;
 static bool haveCardReader;
+static bool native_240p = false;
 
 static bool libretro_supports_bitmasks = false;
 
@@ -675,6 +676,18 @@ static bool set_variable_visibility(void)
 
 static void setGameGeometry(retro_game_geometry& geometry)
 {
+	if (native_240p)
+	{
+		geometry.base_width = 640;
+		geometry.base_height = 240;
+		geometry.max_width = 640;
+		geometry.max_height = 240;
+		geometry.aspect_ratio = 4.0f / 3.0f;
+		if (rotate_screen)
+			geometry.aspect_ratio = 3.0f / 4.0f;
+		return;
+	}
+
 	geometry.aspect_ratio = framebufferAspectRatio;
 	if (rotate_screen)
 		geometry.aspect_ratio = 1 / geometry.aspect_ratio;
@@ -684,6 +697,7 @@ static void setGameGeometry(retro_game_geometry& geometry)
 	geometry.base_width = 640;
 	geometry.base_height = 480;
 }
+
 
 void setAVInfo(retro_system_av_info& avinfo)
 {
@@ -779,15 +793,24 @@ static void update_variables(bool first_startup)
 	var.key = CORE_OPTION_NAME "_internal_resolution";
 	if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
 	{
-		char str[100];
-		snprintf(str, sizeof(str), "%s", var.value);
+		if (!strcmp(var.value, "640x240"))
+		{
+			config::RenderResolution = 480;
+			native_240p = true;
+		}
+		else
+		{
+			native_240p = false;
+			char str[100];
+			snprintf(str, sizeof(str), "%s", var.value);
 
-		char *pch = strtok(str, "x");
-		pch = strtok(NULL, "x");
-		if (pch != nullptr)
-			config::RenderResolution = strtoul(pch, NULL, 0);
-
-		DEBUG_LOG(COMMON, "Got height: %u", (int)config::RenderResolution);
+			char *pch = strtok(str, "x");
+			pch = strtok(NULL, "x");
+			if (pch != nullptr)
+				config::RenderResolution = strtoul(pch, NULL, 0);
+			
+			DEBUG_LOG(COMMON, "Got height: %u", (int)config::RenderResolution);
+		}
 	}
 
 	var.key = CORE_OPTION_NAME "_boot_to_bios";
@@ -1176,8 +1199,9 @@ void retro_run()
 		glsm_ctl(GLSM_CTL_STATE_BIND, nullptr);
 #endif
 
-	// On the first call, we start the emulator
-	if (first_run)
+	if (!emu.running())
+		// It could be the first time retro_run() is called,
+		// or it was paused in retro_serialize_size() and retro_serialize() was never called
 		emu.start();
 
 	poll_cb();
@@ -2318,17 +2342,16 @@ size_t retro_serialize_size()
 	DEBUG_LOG(SAVESTATE, "retro_serialize_size");
 	std::lock_guard<std::mutex> lock(mtx_serialization);
 
-	if (!first_run)
-		try {
-			emu.stop();
-		} catch (const FlycastException& e) {
-			ERROR_LOG(COMMON, "%s", e.what());
-			return 0;
-		}
+	try {
+		emu.stop();
+	} catch (const FlycastException& e) {
+		ERROR_LOG(COMMON, "%s", e.what());
+		return 0;
+	}
 
 	Serializer ser;
 	dc_serialize(ser);
-	if (!first_run)
+	if (!first_run && ser.size() == 0)
 		emu.start();
 
 	return ser.size();
@@ -2339,13 +2362,12 @@ bool retro_serialize(void *data, size_t size)
 	DEBUG_LOG(SAVESTATE, "retro_serialize %d bytes", (int)size);
 	std::lock_guard<std::mutex> lock(mtx_serialization);
 
-	if (!first_run)
-		try {
-			emu.stop();
-		} catch (const FlycastException& e) {
-			ERROR_LOG(COMMON, "%s", e.what());
-			return false;
-		}
+	try {
+		emu.stop();
+	} catch (const FlycastException& e) {
+		ERROR_LOG(COMMON, "%s", e.what());
+		return false;
+	}
 
 	Serializer ser(data, size);
 	dc_serialize(ser);

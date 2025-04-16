@@ -185,7 +185,10 @@ void QuadDrawer::Init(QuadPipeline *pipeline)
 void QuadDrawer::Draw(vk::CommandBuffer commandBuffer, vk::ImageView imageView, QuadVertex vertices[4], bool nearestFilter, const float *color)
 {
 	VulkanContext *context = GetContext();
-	auto &descSet = descriptorSets[context->GetCurrentImageIndex()];
+	const unsigned imageIndex = context->GetCurrentImageIndex();
+	if (imageIndex >= descriptorSets.size())
+		descriptorSets.resize(imageIndex + 1);
+	auto &descSet = descriptorSets[imageIndex];
 	if (!descSet)
 	{
 		vk::DescriptorSetLayout layout = pipeline->GetDescSetLayout();

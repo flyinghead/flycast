@@ -263,7 +263,7 @@ private:
 				break;
 			case 'A':	// Initialized argv[] array passed into program. not supported
 				replies.push_back("E01");
-				break;;
+				break;
 			case 'b':	// Change the serial line speed to baud. deprecated
 				break;
 			case 'B':	// Set or clear a breakpoint at addr. deprecated
@@ -282,7 +282,7 @@ private:
 				agent.detach();
 				break;
 			case 'F':	// File-I/O protocol extension not currently supported
-				break;;
+				break;
 			case 'g':	// Read general registers
 				replies.push_back(readAllRegs());
 				break;
@@ -361,7 +361,7 @@ private:
 			default:
 				// Unknown commands are ignored
 				WARN_LOG(COMMON, "Unknown gdb command: %s", packet.c_str());
-				break;;
+				break;
 			}
 			std::string data;
 			for (const std::string& pkt : replies)
