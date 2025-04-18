@@ -50823,8 +50823,8 @@ struct retro_core_options_v2 options_ja = {
 #define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_KO "모뎀 대신 이더넷 브로드밴드 어댑터를 에뮬레이트합니다. (재시작 필요)"
 #define CORE_OPTION_NAME_UPNP_LABEL_KO "UPnP 활성화"
 #define CORE_OPTION_NAME_UPNP_INFO_0_KO "온라인 게임에서 UPnP를 사용해 자동으로 인터넷 라우터를 설정합니다."
-#define CORE_OPTION_NAME_DCNET_LABEL_KO NULL
-#define CORE_OPTION_NAME_DCNET_INFO_0_KO NULL
+#define CORE_OPTION_NAME_DCNET_LABEL_KO "DCNet사용 (실험적)"
+#define CORE_OPTION_NAME_DCNET_INFO_0_KO "실험적인 DCNet 클라우드 서비스에 연결합니다."
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_KO "내부 해상도"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_KO "렌더링 해상도를 변경합니다."
 #define OPTION_VAL_320X240_KO "320x240 (절반)"
@@ -71261,7 +71261,7 @@ struct retro_core_options_v2 options_sr = {
 #define OPTION_VAL_480_SV NULL
 #define OPTION_VAL_490_SV NULL
 #define OPTION_VAL_500_SV NULL
-#define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_SV "Ladda in anpassade texturer"
+#define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_SV "Läs in anpassade texturer"
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_INFO_0_SV "Läs in anpassade texturer som finns i mappen 'system/dc/textures/<game-id>/'."
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_SV "Dumpa texturer"
 #define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_SV "Varje gång en ny textur används av spelet sparas den som en .png-fil i mappen 'system/dc/texdump/<game-id>/'."
@@ -71309,14 +71309,14 @@ struct retro_core_options_v2 options_sr = {
 #define OPTION_VAL_280_O46_SV NULL
 #define OPTION_VAL_290_O46_SV NULL
 #define OPTION_VAL_300_O46_SV NULL
-#define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_SV "Visa pistol hårkorset 1"
+#define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_SV "Visa hårkors för pistol 1"
 #define OPTION_VAL_WHITE_SV "Vit"
 #define OPTION_VAL_RED_SV "Röd"
 #define OPTION_VAL_GREEN_SV "Grön"
 #define OPTION_VAL_BLUE_SV "Blå"
-#define CORE_OPTION_NAME_LIGHTGUN2_CROSSHAIR_LABEL_SV "Visa pistol hårkorset 2"
-#define CORE_OPTION_NAME_LIGHTGUN3_CROSSHAIR_LABEL_SV "Visa pistol hårkorset 3"
-#define CORE_OPTION_NAME_LIGHTGUN4_CROSSHAIR_LABEL_SV "Visa pistol hårkorset 4"
+#define CORE_OPTION_NAME_LIGHTGUN2_CROSSHAIR_LABEL_SV "Visa hårkors för pistol 2"
+#define CORE_OPTION_NAME_LIGHTGUN3_CROSSHAIR_LABEL_SV "Visa hårkors för pistol 3"
+#define CORE_OPTION_NAME_LIGHTGUN4_CROSSHAIR_LABEL_SV "Visa hårkors för pistol 4"
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_LABEL_SV "Enhet i expansionsfack A1"
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_INFO_0_SV "Välj den enhet som är ansluten till expansionsfack A1 (port A plats 1)."
 #define OPTION_VAL_VMU_SV NULL
@@ -71347,13 +71347,13 @@ struct retro_core_options_v2 options_sr = {
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_SV "Visa inställningar för Visual Memory Unit/System (VMU)-skärmen"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_SV "Visa VMU-skärminställningar"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_SV "Möjliggör konfiguration av emulerad VMU LCD-skärmens synlighet, storlek, position och färg. OBS!: Snabbmenyn kan behöva aktiveras/dras fram för att den här inställningen ska träda i kraft."
-#define CORE_OPTION_NAME_VMU1_SCREEN_DISPLAY_LABEL_SV "Visa VMU skärm 1"
+#define CORE_OPTION_NAME_VMU1_SCREEN_DISPLAY_LABEL_SV "Visa VMU-skärm 1"
 #define CORE_OPTION_NAME_VMU1_SCREEN_POSITION_LABEL_SV "Position för VMU-skärm 1"
 #define OPTION_VAL_UPPER_LEFT_SV "Övre vänstra"
 #define OPTION_VAL_UPPER_RIGHT_SV "Övre högra"
 #define OPTION_VAL_LOWER_LEFT_SV "Nedre vänstra"
 #define OPTION_VAL_LOWER_RIGHT_SV "Nedre högra"
-#define CORE_OPTION_NAME_VMU1_SCREEN_SIZE_MULT_LABEL_SV "VMU skärm 1 Storlek"
+#define CORE_OPTION_NAME_VMU1_SCREEN_SIZE_MULT_LABEL_SV "Storlek för VMU-skärm 1"
 #define OPTION_VAL_1X_SV NULL
 #define OPTION_VAL_3X_SV NULL
 #define OPTION_VAL_5X_SV NULL
