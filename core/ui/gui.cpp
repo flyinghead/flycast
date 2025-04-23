@@ -52,6 +52,7 @@
 #include "oslib/storage.h"
 #include <stb_image_write.h>
 #include "hw/pvr/Renderer_if.h"
+#include "hw/mem/addrspace.h"
 #if defined(USE_SDL)
 #include "sdl/sdl.h"
 #include "sdl/dreamlink.h"
@@ -2836,6 +2837,49 @@ static void gui_settings_advanced()
 				"Over/Underclock the main SH4 CPU. Default is 200 MHz. Other values may crash, freeze or trigger unexpected nuclear reactions.",
 				"%d MHz");
     }
+#ifdef GDB_SERVER
+	ImGui::Spacing();
+	header("Virtual memory addresses");
+	{
+		void *ram_base, *ram, *vram, *aram;
+		addrspace::getAddress(&ram_base, &ram, &vram, &aram);
+
+		ImGui::Text("Base Address: %p", ram_base);
+
+		if (ram == nullptr) {
+			const ImVec4 gray(0.75f, 0.75f, 0.75f, 1.f);
+			ImGui::TextColored(gray, "RAM adresses are not available until the emulation is started");
+		} else {
+			ImGui::Columns(3, "virtualMemoryAddress", false);
+			ImGui::Text("RAM: %p", ram);
+			ImGui::NextColumn();
+			ImGui::Text("VRAM64: %p", vram);
+			ImGui::NextColumn();
+			ImGui::Text("ARAM: %p", aram);
+			ImGui::Columns(1, nullptr, false);
+		}
+
+	}
+	ImGui::Spacing();
+	header("Debugging");
+	{
+		OptionCheckbox("Enable GDB", config::GDB, "GDB debugging support, disables Dynarec and dramatically reduces performance when a debugger is connected.");
+		OptionCheckbox("Wait for connection", config::GDBWaitForConnection, "Start emulation once the debugger is connected.");
+#ifndef __ANDROID
+		OptionCheckbox("Serial Console", config::SerialConsole, "Dump the Dreamcast serial console to stdout");
+		OptionCheckbox("Serial PTY", config::SerialPTY, "Requires the option \"Serial Console\" to work");
+#endif
+
+		static int gdbport = config::GDBPort;
+		if (ImGui::InputInt("GDB port", &gdbport))
+		{
+			config::GDBPort = gdbport;
+		}
+		const ImGuiStyle& style = ImGui::GetStyle();
+		ImGui::SameLine(0, style.ItemInnerSpacing.x);
+		ShowHelpMarker("Default port is 3263");
+	}
+#endif
 	ImGui::Spacing();
 #endif
     header("Other");
@@ -2843,7 +2887,7 @@ static void gui_settings_advanced()
     	OptionCheckbox("HLE BIOS", config::UseReios, "Force high-level BIOS emulation");
         OptionCheckbox("Multi-threaded emulation", config::ThreadedRendering,
         		"Run the emulated CPU and GPU on different threads");
-#ifndef __ANDROID
+#if !defined(__ANDROID) && !defined(GDB_SERVER)
         OptionCheckbox("Serial Console", config::SerialConsole,
         		"Dump the Dreamcast serial console to stdout");
 #endif
