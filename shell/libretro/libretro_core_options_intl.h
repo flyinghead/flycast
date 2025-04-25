@@ -71175,7 +71175,7 @@ struct retro_core_options_v2 options_sr = {
 #define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_SV "Aktivera RTT (Render To Texture) buffert"
 #define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_SV "Kopiera renderade texturer tillbaka från GPU till VRAM. Denna inställning är normalt aktiverad för spel som kräver det. När den är aktiverad avaktiveras uppskalning av texturrendering och prestandan kan påverkas."
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_SV "Mipmappning"
-#define CORE_OPTION_NAME_MIPMAPPING_INFO_0_SV NULL
+#define CORE_OPTION_NAME_MIPMAPPING_INFO_0_SV "När aktiverade texturer använder mindre versioner av sig själva när de visas längre bort kan det öka prestandan och minska skimret."
 #define CORE_OPTION_NAME_FOG_LABEL_SV "Dimeffekter"
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_SV "Volymjusterare"
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_SV "En Dreamcast GPU-funktion som vanligtvis används av spel för att rita objektsskuggor. Detta bör normalt vara aktiverat - prestandapåverkan är vanligtvis minimal till försumbar."
