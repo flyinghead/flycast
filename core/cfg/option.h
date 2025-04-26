@@ -367,6 +367,7 @@ extern Option<bool> ForceFreePlay;
 extern Option<bool, false> FetchBoxart;
 extern Option<bool, false> BoxartDisplayMode;
 extern Option<int, false> UIScaling;
+extern Option<int, false> UITheme;          // 0 -> Dark, 1 -> Light
 
 // Sound
 

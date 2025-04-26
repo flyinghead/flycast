@@ -50,7 +50,8 @@ template<bool PerGameOption>
 bool OptionSlider(const char *name, config::Option<int, PerGameOption>& option, int min, int max, const char *help = nullptr, const char *format = nullptr);
 template<typename T>
 bool OptionRadioButton(const char *name, config::Option<T>& option, T value, const char *help = nullptr);
-void OptionComboBox(const char *name, config::Option<int>& option, const char *values[], int count,
+template<bool PerGameOption>
+void OptionComboBox(const char *name, config::Option<int, PerGameOption>& option, const char *values[], int count,
 			const char *help = nullptr);
 bool OptionArrowButtons(const char *name, config::Option<int>& option, int min, int max, const char *help = nullptr, const char *format = "%d");
 
