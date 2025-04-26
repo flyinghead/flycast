@@ -23,6 +23,7 @@
 #include <functional>
 
 void gui_init();
+void resetThemeHighContrastSettings();
 void applyDarkTheme();
 void applyLightTheme();
 void applyDreamcastTheme();
