@@ -207,6 +207,9 @@ void applyDarkTheme()
 	style.Colors[ImGuiCol_Button] = ImVec4(0.35f, 0.40f, 0.61f, 0.62f);
 	style.Colors[ImGuiCol_ButtonHovered] = ImVec4(0.40f, 0.48f, 0.71f, 0.79f);
 	style.Colors[ImGuiCol_ButtonActive] = ImVec4(0.46f, 0.54f, 0.80f, 1.00f);
+
+	style.TabBorderSize = 0.0f;        // Revert to default
+	style.FrameBorderSize = 0.0f;      // Revert to default
 }
 
 void applyLightTheme()
@@ -262,6 +265,9 @@ void applyLightTheme()
 	style.Colors[ImGuiCol_TabUnfocusedActive] = ImVec4(0.65f, 0.65f, 0.80f, 0.65f); // Medium when unfocused but active
 
 	style.Colors[ImGuiCol_TextSelectedBg] = ImVec4(0.45f, 0.45f, 0.85f, 0.35f); // Visible selection background
+
+	style.TabBorderSize = 0.0f;        // Revert to default
+	style.FrameBorderSize = 0.0f;      // Revert to default
 }
 
 void applyDreamcastTheme()
@@ -324,6 +330,9 @@ void applyDreamcastTheme()
     style.Colors[ImGuiCol_TableBorderLight] = ImVec4(0.00f, 0.43f, 0.73f, 0.70f);  // Lighter borders
     style.Colors[ImGuiCol_TableRowBg] = ImVec4(0.10f, 0.12f, 0.15f, 1.00f);     // Same as window bg
     style.Colors[ImGuiCol_TableRowBgAlt] = ImVec4(0.15f, 0.17f, 0.20f, 1.00f);  // Slightly lighter for alt rows
+
+	style.TabBorderSize = 0.0f;        // Revert to default
+	style.FrameBorderSize = 0.0f;      // Revert to default
 }
 
 void applyHighContrastTheme()
