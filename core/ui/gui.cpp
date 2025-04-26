@@ -272,64 +272,64 @@ void applyLightTheme()
 
 void applyDreamcastTheme()
 {
-    ImGui::StyleColorsDark();
-    ImGuiStyle& style = ImGui::GetStyle();
-    
-    // Dreamcast-inspired theme
-    // Pure white text - maximum brightness
-    style.Colors[ImGuiCol_Text] = ImVec4(1.00f, 1.00f, 1.00f, 1.00f);           // Pure white text
-    style.Colors[ImGuiCol_TextDisabled] = ImVec4(0.70f, 0.70f, 0.70f, 0.50f);   // More transparent for disabled text
-    
-    // Darker background - 100% opaque
-    style.Colors[ImGuiCol_WindowBg] = ImVec4(0.10f, 0.12f, 0.15f, 1.00f);      // Darker DC Menu Background
-    style.Colors[ImGuiCol_ChildBg] = ImVec4(0.10f, 0.12f, 0.15f, 1.00f);       // Match window background
-    style.Colors[ImGuiCol_TitleBg] = ImVec4(0.13f, 0.16f, 0.40f, 0.80f);      // DC Logo Blue (fully opaque)
-    style.Colors[ImGuiCol_TitleBgActive] = ImVec4(0.13f, 0.16f, 0.40f, 0.80f);  // DC Highlight Blue
-    style.Colors[ImGuiCol_TitleBgCollapsed] = ImVec4(0.00f, 0.43f, 0.73f, 0.70f); // More opaque
-    style.Colors[ImGuiCol_MenuBarBg] = ImVec4(0.15f, 0.17f, 0.20f, 1.00f);     // 100% opaque, slightly darker
-    style.Colors[ImGuiCol_ScrollbarBg] = ImVec4(0.10f, 0.12f, 0.15f, 0.85f);   // Darker, same as window background
-    style.Colors[ImGuiCol_ScrollbarGrab] = ImVec4(0.95f, 0.95f, 0.95f, 0.60f); // DC Shell White
-    style.Colors[ImGuiCol_ScrollbarGrabHovered] = ImVec4(0.95f, 0.95f, 0.95f, 0.75f);
-    style.Colors[ImGuiCol_ScrollbarGrabActive] = ImVec4(0.95f, 0.95f, 0.95f, 0.90f);
-    
-    // Controller button colors
-    style.Colors[ImGuiCol_Button] = ImVec4(0.85f, 0.45f, 0.08f, 1.00f);        // 
-    style.Colors[ImGuiCol_ButtonHovered] = ImVec4(0.98f, 0.69f, 0.41f, 1.00f); // 
-    style.Colors[ImGuiCol_ButtonActive] = ImVec4(0.91f, 0.42f, 0.00f, 1.00f);  //  
-    
-    style.Colors[ImGuiCol_PopupBg] = ImVec4(0.10f, 0.12f, 0.15f, 1.00f);       // Darker DC Menu Background (100% opaque)
-    style.Colors[ImGuiCol_FrameBg] = ImVec4(0.15f, 0.17f, 0.22f, 0.80f);       // Darker DC Menu
-    style.Colors[ImGuiCol_FrameBgHovered] = ImVec4(0.08f, 0.65f, 0.44f, 1.00f); // Y Button (Green)
-    style.Colors[ImGuiCol_FrameBgActive] = ImVec4(0.06f, 0.54f, 0.35f, 0.90f);  // Y Button (Green)
-    
-    style.Colors[ImGuiCol_Header] = ImVec4(0.13f, 0.16f, 0.40f, 0.75f);        // B Button (Blue)
-    style.Colors[ImGuiCol_HeaderHovered] = ImVec4(0.13f, 0.16f, 0.40f, 0.90f); // B Button (Blue)
-    style.Colors[ImGuiCol_HeaderActive] = ImVec4(0.10f, 0.13f, 0.33f, 1.00f);  // B Button darker
-    
-    // A Button Red
-    style.Colors[ImGuiCol_CheckMark] = ImVec4(0.95f, 0.27f, 0.27f, 1.00f);     // A Button (Red) - fully opaque
-    style.Colors[ImGuiCol_SliderGrab] = ImVec4(0.95f, 0.27f, 0.27f, 0.90f);    // A Button (Red)
-    style.Colors[ImGuiCol_SliderGrabActive] = ImVec4(0.85f, 0.17f, 0.17f, 1.00f); // A Button darker
-    
-    // Tabs - using X Button Blue 
-    style.Colors[ImGuiCol_Tab] = ImVec4(0.13f, 0.16f, 0.40f, 1.00f);           // X Button Blue
-    style.Colors[ImGuiCol_TabHovered] = ImVec4(0.18f, 0.21f, 0.45f, 0.90f);    // Slightly brighter when hovered
-    style.Colors[ImGuiCol_TabActive] = ImVec4(0.30f, 0.35f, 0.65f, 1.00f);     // Much brighter & whiter when active
-    style.Colors[ImGuiCol_TabUnfocused] = ImVec4(0.13f, 0.16f, 0.40f, 0.70f);  // Same blue but more transparent
-    style.Colors[ImGuiCol_TabUnfocusedActive] = ImVec4(0.20f, 0.25f, 0.50f, 0.85f); // In-between brightness for unfocused active
-    
-    // Other elements
-    style.Colors[ImGuiCol_Border] = ImVec4(0.98f, 0.83f, 0.21f, .70f);         // DC "X" yellow borders
+	ImGui::StyleColorsDark();
+	ImGuiStyle& style = ImGui::GetStyle();
+
+	// Dreamcast-inspired theme
+	// Pure white text - maximum brightness
+	style.Colors[ImGuiCol_Text] = ImVec4(1.00f, 1.00f, 1.00f, 1.00f);           // Pure white text
+	style.Colors[ImGuiCol_TextDisabled] = ImVec4(0.70f, 0.70f, 0.70f, 0.50f);   // More transparent for disabled text
+
+	// Darker background - 100% opaque
+	style.Colors[ImGuiCol_WindowBg] = ImVec4(0.10f, 0.12f, 0.15f, 1.00f);      // Darker DC Menu Background
+	style.Colors[ImGuiCol_ChildBg] = ImVec4(0.10f, 0.12f, 0.15f, 1.00f);       // Match window background
+	style.Colors[ImGuiCol_TitleBg] = ImVec4(0.13f, 0.16f, 0.40f, 0.80f);      // DC Logo Blue (fully opaque)
+	style.Colors[ImGuiCol_TitleBgActive] = ImVec4(0.13f, 0.16f, 0.40f, 0.80f);  // DC Highlight Blue
+	style.Colors[ImGuiCol_TitleBgCollapsed] = ImVec4(0.00f, 0.43f, 0.73f, 0.70f); // More opaque
+	style.Colors[ImGuiCol_MenuBarBg] = ImVec4(0.15f, 0.17f, 0.20f, 1.00f);     // 100% opaque, slightly darker
+	style.Colors[ImGuiCol_ScrollbarBg] = ImVec4(0.10f, 0.12f, 0.15f, 0.85f);   // Darker, same as window background
+	style.Colors[ImGuiCol_ScrollbarGrab] = ImVec4(0.95f, 0.95f, 0.95f, 0.60f); // DC Shell White
+	style.Colors[ImGuiCol_ScrollbarGrabHovered] = ImVec4(0.95f, 0.95f, 0.95f, 0.75f);
+	style.Colors[ImGuiCol_ScrollbarGrabActive] = ImVec4(0.95f, 0.95f, 0.95f, 0.90f);
+
+	// Controller button colors
+	style.Colors[ImGuiCol_Button] = ImVec4(0.85f, 0.45f, 0.08f, 1.00f);        // 
+	style.Colors[ImGuiCol_ButtonHovered] = ImVec4(0.98f, 0.69f, 0.41f, 1.00f); // 
+	style.Colors[ImGuiCol_ButtonActive] = ImVec4(0.91f, 0.42f, 0.00f, 1.00f);  //  
+
+	style.Colors[ImGuiCol_PopupBg] = ImVec4(0.10f, 0.12f, 0.15f, 1.00f);       // Darker DC Menu Background (100% opaque)
+	style.Colors[ImGuiCol_FrameBg] = ImVec4(0.15f, 0.17f, 0.22f, 0.80f);       // Darker DC Menu
+	style.Colors[ImGuiCol_FrameBgHovered] = ImVec4(0.08f, 0.65f, 0.44f, 1.00f); // Y Button (Green)
+	style.Colors[ImGuiCol_FrameBgActive] = ImVec4(0.06f, 0.54f, 0.35f, 0.90f);  // Y Button (Green)
+
+	style.Colors[ImGuiCol_Header] = ImVec4(0.13f, 0.16f, 0.40f, 0.75f);        // B Button (Blue)
+	style.Colors[ImGuiCol_HeaderHovered] = ImVec4(0.13f, 0.16f, 0.40f, 0.90f); // B Button (Blue)
+	style.Colors[ImGuiCol_HeaderActive] = ImVec4(0.10f, 0.13f, 0.33f, 1.00f);  // B Button darker
+
+	// A Button Red
+	style.Colors[ImGuiCol_CheckMark] = ImVec4(0.95f, 0.27f, 0.27f, 1.00f);     // A Button (Red) - fully opaque
+	style.Colors[ImGuiCol_SliderGrab] = ImVec4(0.95f, 0.27f, 0.27f, 0.90f);    // A Button (Red)
+	style.Colors[ImGuiCol_SliderGrabActive] = ImVec4(0.85f, 0.17f, 0.17f, 1.00f); // A Button darker
+
+	// Tabs - using X Button Blue 
+	style.Colors[ImGuiCol_Tab] = ImVec4(0.13f, 0.16f, 0.40f, 1.00f);           // X Button Blue
+	style.Colors[ImGuiCol_TabHovered] = ImVec4(0.18f, 0.21f, 0.45f, 0.90f);    // Slightly brighter when hovered
+	style.Colors[ImGuiCol_TabActive] = ImVec4(0.30f, 0.35f, 0.65f, 1.00f);     // Much brighter & whiter when active
+	style.Colors[ImGuiCol_TabUnfocused] = ImVec4(0.13f, 0.16f, 0.40f, 0.70f);  // Same blue but more transparent
+	style.Colors[ImGuiCol_TabUnfocusedActive] = ImVec4(0.20f, 0.25f, 0.50f, 0.85f); // In-between brightness for unfocused active
+
+	// Other elements
+	style.Colors[ImGuiCol_Border] = ImVec4(0.98f, 0.83f, 0.21f, .70f);         // DC "X" yellow borders
 	style.Colors[ImGuiCol_BorderShadow] = ImVec4(1.00f, 0.00f, 0.00f, 1.00f);   // No border shadows
-    style.Colors[ImGuiCol_Separator] = ImVec4(0.00f, 0.43f, 0.73f, 0.75f);      // DC Logo Blue separators
-    style.Colors[ImGuiCol_TextSelectedBg] = ImVec4(1.00f, 0.50f, 0.00f, 1.00f); // DC Swirl Orange selection
-    
-    // Table colors
-    style.Colors[ImGuiCol_TableHeaderBg] = ImVec4(0.13f, 0.16f, 0.40f, 0.80f);  // X Button Blue for headers
-    style.Colors[ImGuiCol_TableBorderStrong] = ImVec4(0.00f, 0.43f, 0.73f, 1.00f); // DC Logo Blue borders
-    style.Colors[ImGuiCol_TableBorderLight] = ImVec4(0.00f, 0.43f, 0.73f, 0.70f);  // Lighter borders
-    style.Colors[ImGuiCol_TableRowBg] = ImVec4(0.10f, 0.12f, 0.15f, 1.00f);     // Same as window bg
-    style.Colors[ImGuiCol_TableRowBgAlt] = ImVec4(0.15f, 0.17f, 0.20f, 1.00f);  // Slightly lighter for alt rows
+	style.Colors[ImGuiCol_Separator] = ImVec4(0.00f, 0.43f, 0.73f, 0.75f);      // DC Logo Blue separators
+	style.Colors[ImGuiCol_TextSelectedBg] = ImVec4(1.00f, 0.50f, 0.00f, 1.00f); // DC Swirl Orange selection
+
+	// Table colors
+	style.Colors[ImGuiCol_TableHeaderBg] = ImVec4(0.13f, 0.16f, 0.40f, 0.80f);  // X Button Blue for headers
+	style.Colors[ImGuiCol_TableBorderStrong] = ImVec4(0.00f, 0.43f, 0.73f, 1.00f); // DC Logo Blue borders
+	style.Colors[ImGuiCol_TableBorderLight] = ImVec4(0.00f, 0.43f, 0.73f, 0.70f);  // Lighter borders
+	style.Colors[ImGuiCol_TableRowBg] = ImVec4(0.10f, 0.12f, 0.15f, 1.00f);     // Same as window bg
+	style.Colors[ImGuiCol_TableRowBgAlt] = ImVec4(0.15f, 0.17f, 0.20f, 1.00f);  // Slightly lighter for alt rows
 
 	style.TabBorderSize = 0.0f;        // Revert to default
 	style.FrameBorderSize = 0.0f;      // Revert to default
@@ -337,77 +337,77 @@ void applyDreamcastTheme()
 
 void applyHighContrastTheme()
 {
-    ImGui::StyleColorsDark();
-    ImGuiStyle& style = ImGui::GetStyle();
-    
-    // High contrast theme with Dreamcast color accents
-    // Base colors - extreme contrast
-    style.Colors[ImGuiCol_Text] = ImVec4(1.00f, 1.00f, 1.00f, 1.00f);           // Pure white text
-    style.Colors[ImGuiCol_TextDisabled] = ImVec4(0.75f, 0.75f, 0.75f, 1.00f);   // Light gray for disabled text
-    
-    style.Colors[ImGuiCol_WindowBg] = ImVec4(0.00f, 0.00f, 0.00f, 1.00f);       // Pure black background
-    style.Colors[ImGuiCol_ChildBg] = ImVec4(0.05f, 0.05f, 0.05f, 1.00f);        // Very dark gray child windows
-    style.Colors[ImGuiCol_PopupBg] = ImVec4(0.07f, 0.07f, 0.09f, 1.00f);        // Very dark for popups
-    
-    style.Colors[ImGuiCol_Border] = ImVec4(0.00f, 0.43f, 0.73f, 0.50f);         // DC Logo Blue borders
-    style.Colors[ImGuiCol_BorderShadow] = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);   // No shadows
-    
-    // Frame elements (checkboxes, input fields)
-    style.Colors[ImGuiCol_FrameBg] = ImVec4(0.20f, 0.20f, 0.20f, 1.00f);        // Dark gray frame backgrounds
-    style.Colors[ImGuiCol_FrameBgHovered] = ImVec4(0.30f, 0.30f, 0.30f, 1.00f); // Medium gray when hovered
-    style.Colors[ImGuiCol_FrameBgActive] = ImVec4(0.15f, 0.15f, 0.15f, 1.00f);  // Darker gray when active
-    
-    // Title bars
-    style.Colors[ImGuiCol_TitleBg] = ImVec4(0.10f, 0.10f, 0.10f, 1.00f);        // Dark gray title bar
-    style.Colors[ImGuiCol_TitleBgActive] = ImVec4(0.00f, 0.43f, 0.73f, 1.00f);  // DC Logo Blue active title
-    style.Colors[ImGuiCol_TitleBgCollapsed] = ImVec4(0.00f, 0.43f, 0.73f, 0.50f); // Semi-transparent when collapsed
-    
-    style.Colors[ImGuiCol_MenuBarBg] = ImVec4(0.10f, 0.10f, 0.10f, 1.00f);      // Dark gray menu bar
-    
-    // Scrollbars
-    style.Colors[ImGuiCol_ScrollbarBg] = ImVec4(0.10f, 0.10f, 0.10f, 1.00f);    // Dark scrollbar background
-    style.Colors[ImGuiCol_ScrollbarGrab] = ImVec4(0.40f, 0.40f, 0.40f, 1.00f);  // Medium gray scrollbar
-    style.Colors[ImGuiCol_ScrollbarGrabHovered] = ImVec4(0.56f, 0.56f, 0.56f, 1.00f); // Lighter when hovered
-    style.Colors[ImGuiCol_ScrollbarGrabActive] = ImVec4(0.00f, 0.65f, 0.90f, 1.00f);  // DC Highlight Blue when active
-    
-    // Interactive elements
-    style.Colors[ImGuiCol_CheckMark] = ImVec4(1.00f, 0.50f, 0.00f, 1.00f);      // DC Swirl Orange for checkmarks
-    
-    style.Colors[ImGuiCol_SliderGrab] = ImVec4(0.00f, 0.65f, 0.90f, 1.00f);     // DC Highlight Blue for sliders
-    style.Colors[ImGuiCol_SliderGrabActive] = ImVec4(1.00f, 0.50f, 0.00f, 1.00f); // DC Swirl Orange when active
-    
-    // Buttons
-    style.Colors[ImGuiCol_Button] = ImVec4(0.00f, 0.43f, 0.73f, 1.00f);         // DC Logo Blue buttons
-    style.Colors[ImGuiCol_ButtonHovered] = ImVec4(0.00f, 0.65f, 0.90f, 1.00f);  // DC Highlight Blue when hovered
-    style.Colors[ImGuiCol_ButtonActive] = ImVec4(0.00f, 0.33f, 0.60f, 1.00f);   // Darker blue when active
-    
-    // Headers (collapsing headers, tree nodes)
-    style.Colors[ImGuiCol_Header] = ImVec4(0.00f, 0.43f, 0.73f, 0.45f);         // Semi-transparent DC Logo Blue
-    style.Colors[ImGuiCol_HeaderHovered] = ImVec4(0.00f, 0.65f, 0.90f, 0.80f);  // Semi-transparent DC Highlight Blue
-    style.Colors[ImGuiCol_HeaderActive] = ImVec4(0.00f, 0.43f, 0.73f, 1.00f);   // Solid DC Logo Blue when active
-    
-    // Tables
-    style.Colors[ImGuiCol_TableHeaderBg] = ImVec4(0.15f, 0.15f, 0.15f, 1.00f);  // Dark gray table headers
-    style.Colors[ImGuiCol_TableBorderStrong] = ImVec4(0.00f, 0.43f, 0.73f, 1.00f); // DC Logo Blue table borders
-    style.Colors[ImGuiCol_TableBorderLight] = ImVec4(0.00f, 0.43f, 0.73f, 0.50f);  // Lighter DC Logo Blue inner borders
-    
-    // Tabs
-    style.Colors[ImGuiCol_Tab] = ImVec4(0.15f, 0.15f, 0.15f, 1.00f);            // Dark gray tabs
-    style.Colors[ImGuiCol_TabHovered] = ImVec4(0.00f, 0.65f, 0.90f, 1.00f);     // DC Highlight Blue when hovered
-    style.Colors[ImGuiCol_TabActive] = ImVec4(0.00f, 0.43f, 0.73f, 1.00f);      // DC Logo Blue when active
-    style.Colors[ImGuiCol_TabUnfocused] = ImVec4(0.15f, 0.15f, 0.15f, 1.00f);   // Dark gray when unfocused
-    style.Colors[ImGuiCol_TabUnfocusedActive] = ImVec4(0.00f, 0.43f, 0.73f, 0.70f); // Semi-transparent when unfocused but active
-    
-    // Other UI elements
-    style.Colors[ImGuiCol_Separator] = ImVec4(1.00f, 1.00f, 1.00f, 0.40f);      // Semi-transparent white separators
-    style.Colors[ImGuiCol_TextSelectedBg] = ImVec4(1.00f, 0.50f, 0.00f, 0.35f); // Semi-transparent DC Swirl Orange selection
-    
-    // Increase contrast even more
-    style.Alpha = 1.0f;                // No transparency
-    style.FrameBorderSize = 1.0f;      // Add borders to frames
-    style.WindowBorderSize = 1.0f;     // Add borders to windows
-    style.PopupBorderSize = 1.0f;      // Add borders to popups
-    style.TabBorderSize = 1.0f;        // Add borders to tabs
+	ImGui::StyleColorsDark();
+	ImGuiStyle& style = ImGui::GetStyle();
+
+	// High contrast theme with Dreamcast color accents
+	// Base colors - extreme contrast
+	style.Colors[ImGuiCol_Text] = ImVec4(1.00f, 1.00f, 1.00f, 1.00f);           // Pure white text
+	style.Colors[ImGuiCol_TextDisabled] = ImVec4(0.75f, 0.75f, 0.75f, 1.00f);   // Light gray for disabled text
+
+	style.Colors[ImGuiCol_WindowBg] = ImVec4(0.00f, 0.00f, 0.00f, 1.00f);       // Pure black background
+	style.Colors[ImGuiCol_ChildBg] = ImVec4(0.05f, 0.05f, 0.05f, 1.00f);        // Very dark gray child windows
+	style.Colors[ImGuiCol_PopupBg] = ImVec4(0.07f, 0.07f, 0.09f, 1.00f);        // Very dark for popups
+
+	style.Colors[ImGuiCol_Border] = ImVec4(0.00f, 0.43f, 0.73f, 0.50f);         // DC Logo Blue borders
+	style.Colors[ImGuiCol_BorderShadow] = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);   // No shadows
+
+	// Frame elements (checkboxes, input fields)
+	style.Colors[ImGuiCol_FrameBg] = ImVec4(0.20f, 0.20f, 0.20f, 1.00f);        // Dark gray frame backgrounds
+	style.Colors[ImGuiCol_FrameBgHovered] = ImVec4(0.30f, 0.30f, 0.30f, 1.00f); // Medium gray when hovered
+	style.Colors[ImGuiCol_FrameBgActive] = ImVec4(0.15f, 0.15f, 0.15f, 1.00f);  // Darker gray when active
+
+	// Title bars
+	style.Colors[ImGuiCol_TitleBg] = ImVec4(0.10f, 0.10f, 0.10f, 1.00f);        // Dark gray title bar
+	style.Colors[ImGuiCol_TitleBgActive] = ImVec4(0.00f, 0.43f, 0.73f, 1.00f);  // DC Logo Blue active title
+	style.Colors[ImGuiCol_TitleBgCollapsed] = ImVec4(0.00f, 0.43f, 0.73f, 0.50f); // Semi-transparent when collapsed
+
+	style.Colors[ImGuiCol_MenuBarBg] = ImVec4(0.10f, 0.10f, 0.10f, 1.00f);      // Dark gray menu bar
+
+	// Scrollbars
+	style.Colors[ImGuiCol_ScrollbarBg] = ImVec4(0.10f, 0.10f, 0.10f, 1.00f);    // Dark scrollbar background
+	style.Colors[ImGuiCol_ScrollbarGrab] = ImVec4(0.40f, 0.40f, 0.40f, 1.00f);  // Medium gray scrollbar
+	style.Colors[ImGuiCol_ScrollbarGrabHovered] = ImVec4(0.56f, 0.56f, 0.56f, 1.00f); // Lighter when hovered
+	style.Colors[ImGuiCol_ScrollbarGrabActive] = ImVec4(0.00f, 0.65f, 0.90f, 1.00f);  // DC Highlight Blue when active
+
+	// Interactive elements
+	style.Colors[ImGuiCol_CheckMark] = ImVec4(1.00f, 0.50f, 0.00f, 1.00f);      // DC Swirl Orange for checkmarks
+
+	style.Colors[ImGuiCol_SliderGrab] = ImVec4(0.00f, 0.65f, 0.90f, 1.00f);     // DC Highlight Blue for sliders
+	style.Colors[ImGuiCol_SliderGrabActive] = ImVec4(1.00f, 0.50f, 0.00f, 1.00f); // DC Swirl Orange when active
+
+	// Buttons
+	style.Colors[ImGuiCol_Button] = ImVec4(0.00f, 0.43f, 0.73f, 1.00f);         // DC Logo Blue buttons
+	style.Colors[ImGuiCol_ButtonHovered] = ImVec4(0.00f, 0.65f, 0.90f, 1.00f);  // DC Highlight Blue when hovered
+	style.Colors[ImGuiCol_ButtonActive] = ImVec4(0.00f, 0.33f, 0.60f, 1.00f);   // Darker blue when active
+
+	// Headers (collapsing headers, tree nodes)
+	style.Colors[ImGuiCol_Header] = ImVec4(0.00f, 0.43f, 0.73f, 0.45f);         // Semi-transparent DC Logo Blue
+	style.Colors[ImGuiCol_HeaderHovered] = ImVec4(0.00f, 0.65f, 0.90f, 0.80f);  // Semi-transparent DC Highlight Blue
+	style.Colors[ImGuiCol_HeaderActive] = ImVec4(0.00f, 0.43f, 0.73f, 1.00f);   // Solid DC Logo Blue when active
+
+	// Tables
+	style.Colors[ImGuiCol_TableHeaderBg] = ImVec4(0.15f, 0.15f, 0.15f, 1.00f);  // Dark gray table headers
+	style.Colors[ImGuiCol_TableBorderStrong] = ImVec4(0.00f, 0.43f, 0.73f, 1.00f); // DC Logo Blue table borders
+	style.Colors[ImGuiCol_TableBorderLight] = ImVec4(0.00f, 0.43f, 0.73f, 0.50f);  // Lighter DC Logo Blue inner borders
+
+	// Tabs
+	style.Colors[ImGuiCol_Tab] = ImVec4(0.15f, 0.15f, 0.15f, 1.00f);            // Dark gray tabs
+	style.Colors[ImGuiCol_TabHovered] = ImVec4(0.00f, 0.65f, 0.90f, 1.00f);     // DC Highlight Blue when hovered
+	style.Colors[ImGuiCol_TabActive] = ImVec4(0.00f, 0.43f, 0.73f, 1.00f);      // DC Logo Blue when active
+	style.Colors[ImGuiCol_TabUnfocused] = ImVec4(0.15f, 0.15f, 0.15f, 1.00f);   // Dark gray when unfocused
+	style.Colors[ImGuiCol_TabUnfocusedActive] = ImVec4(0.00f, 0.43f, 0.73f, 0.70f); // Semi-transparent when unfocused but active
+
+	// Other UI elements
+	style.Colors[ImGuiCol_Separator] = ImVec4(1.00f, 1.00f, 1.00f, 0.40f);      // Semi-transparent white separators
+	style.Colors[ImGuiCol_TextSelectedBg] = ImVec4(1.00f, 0.50f, 0.00f, 0.35f); // Semi-transparent DC Swirl Orange selection
+
+	// Increase contrast even more
+	style.Alpha = 1.0f;                // No transparency
+	style.FrameBorderSize = 1.0f;      // Add borders to frames
+	style.WindowBorderSize = 1.0f;     // Add borders to windows
+	style.PopupBorderSize = 1.0f;      // Add borders to popups
+	style.TabBorderSize = 1.0f;        // Add borders to tabs
 }
 
 void gui_initFonts()
