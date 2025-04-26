@@ -410,6 +410,162 @@ void applyHighContrastTheme()
 	style.TabBorderSize = 1.0f;        // Add borders to tabs
 }
 
+void applyNintendoTheme()
+{
+    ImGui::StyleColorsDark();
+    ImGuiStyle& style = ImGui::GetStyle();
+    
+    // Nintendo color palette
+    ImVec4 nintendoRed = ImVec4(0.90f, 0.10f, 0.10f, 1.00f);            // Nintendo logo/Switch red
+    ImVec4 nintendoRedLight = ImVec4(1.00f, 0.30f, 0.30f, 1.00f);       // Lighter red
+    ImVec4 nintendoRedDark = ImVec4(0.65f, 0.05f, 0.05f, 1.00f);        // Darker red
+    
+    ImVec4 luigiGreen = ImVec4(0.00f, 0.65f, 0.00f, 1.00f);             // Luigi green
+    ImVec4 luigiGreenLight = ImVec4(0.30f, 0.85f, 0.30f, 1.00f);        // Lighter green
+    ImVec4 luigiGreenDark = ImVec4(0.00f, 0.45f, 0.00f, 1.00f);         // Darker green
+    
+    ImVec4 gameboy = ImVec4(0.70f, 0.80f, 0.15f, 1.00f);                // GameBoy screen color
+    ImVec4 gamecubePurple = ImVec4(0.35f, 0.20f, 0.65f, 1.00f);         // GameCube purple
+    
+    // Text colors
+    style.Colors[ImGuiCol_Text] = ImVec4(1.00f, 1.00f, 1.00f, 1.00f);           // Pure white text
+    style.Colors[ImGuiCol_TextDisabled] = ImVec4(0.70f, 0.70f, 0.70f, 0.65f);   // Light gray for disabled
+    
+    // Window background and elements - darker blue-black like classic consoles
+    style.Colors[ImGuiCol_WindowBg] = ImVec4(0.03f, 0.03f, 0.10f, 0.97f);       // Dark blue-black background
+    style.Colors[ImGuiCol_ChildBg] = ImVec4(0.03f, 0.03f, 0.10f, 0.97f);        // Match window background
+    style.Colors[ImGuiCol_PopupBg] = ImVec4(0.02f, 0.02f, 0.08f, 0.98f);        // Slightly darker for popup
+    
+    // Frame elements - using GameCube purple for frames
+    style.Colors[ImGuiCol_FrameBg] = ImVec4(0.12f, 0.08f, 0.20f, 0.85f);        // Dark purple-ish background
+    style.Colors[ImGuiCol_FrameBgHovered] = ImVec4(0.20f, 0.14f, 0.35f, 0.95f); // Lighter purple when hovered
+    style.Colors[ImGuiCol_FrameBgActive] = gamecubePurple;                      // GameCube purple when active
+    
+    // Title elements - using Nintendo red
+    style.Colors[ImGuiCol_TitleBg] = ImVec4(0.05f, 0.05f, 0.12f, 1.00f);        // Dark blue background
+    style.Colors[ImGuiCol_TitleBgActive] = nintendoRed;                         // Nintendo red for active title
+    style.Colors[ImGuiCol_TitleBgCollapsed] = ImVec4(0.05f, 0.05f, 0.12f, 0.75f); // Semi-transparent when collapsed
+    style.Colors[ImGuiCol_MenuBarBg] = ImVec4(0.08f, 0.08f, 0.15f, 1.00f);      // Dark menu bar
+    
+    // Scrollbars - GameBoy inspired
+    style.Colors[ImGuiCol_ScrollbarBg] = ImVec4(0.04f, 0.04f, 0.10f, 0.85f);    // Dark scrollbar background
+    style.Colors[ImGuiCol_ScrollbarGrab] = ImVec4(0.30f, 0.40f, 0.10f, 0.90f);  // GameBoy green-yellow
+    style.Colors[ImGuiCol_ScrollbarGrabHovered] = ImVec4(0.50f, 0.60f, 0.15f, 0.90f); // Brighter GameBoy color
+    style.Colors[ImGuiCol_ScrollbarGrabActive] = gameboy;                       // Full GameBoy color when active
+    
+    // Button elements - Nintendo red
+    style.Colors[ImGuiCol_Button] = nintendoRed;                                // Nintendo red button
+    style.Colors[ImGuiCol_ButtonHovered] = nintendoRedLight;                    // Lighter red when hovered
+    style.Colors[ImGuiCol_ButtonActive] = nintendoRedDark;                      // Darker red when active
+    
+    // Interactive elements - Luigi green for checkmarks and sliders
+    style.Colors[ImGuiCol_CheckMark] = luigiGreenLight;                         // Bright Luigi green for checkmarks
+    style.Colors[ImGuiCol_SliderGrab] = luigiGreen;                             // Luigi green for sliders
+    style.Colors[ImGuiCol_SliderGrabActive] = luigiGreenLight;                  // Lighter when active
+    
+    // Headers (collapsing headers, tree nodes) - GameCube purple
+    style.Colors[ImGuiCol_Header] = ImVec4(0.20f, 0.12f, 0.35f, 0.80f);         // Semi-transparent GameCube purple
+    style.Colors[ImGuiCol_HeaderHovered] = gamecubePurple;                      // Full purple when hovered
+    style.Colors[ImGuiCol_HeaderActive] = ImVec4(0.45f, 0.25f, 0.75f, 1.00f);   // Brighter purple when active
+    
+    // Tab elements - Red/green for Mario/Luigi contrast
+    style.Colors[ImGuiCol_Tab] = ImVec4(0.15f, 0.10f, 0.30f, 0.90f);            // Dark purple tabs
+    style.Colors[ImGuiCol_TabHovered] = luigiGreenLight;                        // Luigi green when hovered
+    style.Colors[ImGuiCol_TabActive] = nintendoRed;                             // Mario red when active
+    style.Colors[ImGuiCol_TabUnfocused] = ImVec4(0.10f, 0.08f, 0.20f, 0.90f);   // Darker when unfocused
+    style.Colors[ImGuiCol_TabUnfocusedActive] = ImVec4(0.40f, 0.10f, 0.10f, 0.90f); // Darker red when unfocused but active
+    
+    // Border and separator
+    style.Colors[ImGuiCol_Border] = ImVec4(0.40f, 0.40f, 0.50f, 0.50f);         // Subtle borders
+    style.Colors[ImGuiCol_BorderShadow] = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);   // No shadows
+    style.Colors[ImGuiCol_Separator] = nintendoRed;                             // Nintendo red separators
+    
+    // Table elements
+    style.Colors[ImGuiCol_TableHeaderBg] = ImVec4(0.15f, 0.10f, 0.25f, 1.00f);      // Dark purple headers
+    style.Colors[ImGuiCol_TableBorderStrong] = nintendoRed;                         // Nintendo red strong borders
+    style.Colors[ImGuiCol_TableBorderLight] = ImVec4(0.40f, 0.10f, 0.10f, 0.70f);   // Lighter red inner borders
+    style.Colors[ImGuiCol_TableRowBg] = ImVec4(0.03f, 0.03f, 0.10f, 0.97f);         // Match window background
+    style.Colors[ImGuiCol_TableRowBgAlt] = ImVec4(0.06f, 0.06f, 0.14f, 0.97f);      // Slightly lighter for alt rows
+    
+    // Selected text
+    style.Colors[ImGuiCol_TextSelectedBg] = ImVec4(luigiGreen.x, luigiGreen.y, luigiGreen.z, 0.35f); // Semi-transparent Luigi green
+    
+    
+    // Reset to defaults for these
+    style.TabBorderSize = 0.0f;
+    style.FrameBorderSize = 0.0f;
+}
+
+void applySoftTheme()
+{
+    ImGui::StyleColorsDark();
+    ImGuiStyle& style = ImGui::GetStyle();
+    
+    // Soft, blue/turquoise theme that's easy on the eyes
+    // Soft text colors
+    style.Colors[ImGuiCol_Text] = ImVec4(0.85f, 0.90f, 0.92f, 1.00f);           // Soft blue-white text
+    style.Colors[ImGuiCol_TextDisabled] = ImVec4(0.55f, 0.60f, 0.65f, 1.00f);   // Muted blue-gray for disabled text
+    
+    // Soft dark backgrounds with turquoise tint
+    style.Colors[ImGuiCol_WindowBg] = ImVec4(0.15f, 0.18f, 0.20f, 1.00f);      // Soft dark background with blue tint
+    style.Colors[ImGuiCol_ChildBg] = ImVec4(0.15f, 0.18f, 0.20f, 1.00f);       // Match window background
+    style.Colors[ImGuiCol_TitleBg] = ImVec4(0.10f, 0.25f, 0.30f, 1.00f);       // Deep turquoise title bar
+    style.Colors[ImGuiCol_TitleBgActive] = ImVec4(0.15f, 0.35f, 0.45f, 1.00f); // Brighter turquoise when active
+    style.Colors[ImGuiCol_TitleBgCollapsed] = ImVec4(0.10f, 0.25f, 0.30f, 0.75f); // Semi-transparent when collapsed
+    style.Colors[ImGuiCol_MenuBarBg] = ImVec4(0.17f, 0.21f, 0.24f, 1.00f);     // Slightly lighter than background
+    
+    // Soft scrollbars
+    style.Colors[ImGuiCol_ScrollbarBg] = ImVec4(0.15f, 0.18f, 0.20f, 1.00f);   // Match window background
+    style.Colors[ImGuiCol_ScrollbarGrab] = ImVec4(0.25f, 0.45f, 0.50f, 0.50f); // Soft turquoise
+    style.Colors[ImGuiCol_ScrollbarGrabHovered] = ImVec4(0.30f, 0.55f, 0.60f, 0.60f); // Brighter when hovered
+    style.Colors[ImGuiCol_ScrollbarGrabActive] = ImVec4(0.35f, 0.65f, 0.70f, 0.70f);  // Even brighter when active
+    
+    // Soft, muted button colors
+    style.Colors[ImGuiCol_Button] = ImVec4(0.20f, 0.40f, 0.45f, 0.50f);        // Muted turquoise
+    style.Colors[ImGuiCol_ButtonHovered] = ImVec4(0.25f, 0.50f, 0.55f, 0.60f); // Slightly brighter when hovered
+    style.Colors[ImGuiCol_ButtonActive] = ImVec4(0.30f, 0.60f, 0.65f, 0.70f);  // Even brighter when active
+    
+    style.Colors[ImGuiCol_PopupBg] = ImVec4(0.15f, 0.18f, 0.20f, 0.95f);       // Match window background
+    
+    // Frames (checkboxes, input fields)
+    style.Colors[ImGuiCol_FrameBg] = ImVec4(0.20f, 0.28f, 0.33f, 0.60f);       // Soft blue-gray frames
+    style.Colors[ImGuiCol_FrameBgHovered] = ImVec4(0.25f, 0.35f, 0.40f, 0.70f); // Slightly brighter when hovered
+    style.Colors[ImGuiCol_FrameBgActive] = ImVec4(0.30f, 0.45f, 0.50f, 0.80f);  // Even brighter when active
+    
+    // Headers (collapsing headers, tree nodes)
+    style.Colors[ImGuiCol_Header] = ImVec4(0.20f, 0.35f, 0.45f, 0.45f);        // Soft blue headers
+    style.Colors[ImGuiCol_HeaderHovered] = ImVec4(0.25f, 0.40f, 0.50f, 0.60f); // Slightly brighter when hovered
+    style.Colors[ImGuiCol_HeaderActive] = ImVec4(0.30f, 0.50f, 0.60f, 0.70f);  // Even brighter when active
+    
+    // Accent colors - light turquoise
+    style.Colors[ImGuiCol_CheckMark] = ImVec4(0.40f, 0.80f, 0.90f, 0.80f);     // Light turquoise checkmarks
+    style.Colors[ImGuiCol_SliderGrab] = ImVec4(0.35f, 0.65f, 0.75f, 0.60f);    // Turquoise sliders
+    style.Colors[ImGuiCol_SliderGrabActive] = ImVec4(0.45f, 0.75f, 0.85f, 0.70f); // Brighter when active
+    
+    // Tabs - soft blue palette
+    style.Colors[ImGuiCol_Tab] = ImVec4(0.15f, 0.30f, 0.40f, 0.80f);           // Soft blue tabs
+    style.Colors[ImGuiCol_TabHovered] = ImVec4(0.25f, 0.40f, 0.50f, 0.80f);    // Slightly brighter when hovered
+    style.Colors[ImGuiCol_TabActive] = ImVec4(0.30f, 0.50f, 0.60f, 1.00f);     // Turquoise blue when active
+    style.Colors[ImGuiCol_TabUnfocused] = ImVec4(0.10f, 0.25f, 0.35f, 0.70f);  // More muted when unfocused
+    style.Colors[ImGuiCol_TabUnfocusedActive] = ImVec4(0.20f, 0.35f, 0.45f, 0.85f); // In-between for unfocused active
+    
+    // Other elements
+    style.Colors[ImGuiCol_Border] = ImVec4(0.20f, 0.35f, 0.45f, 0.50f);         // Soft blue borders
+    style.Colors[ImGuiCol_Separator] = ImVec4(0.20f, 0.35f, 0.45f, 0.50f);      // Soft blue separators
+    style.Colors[ImGuiCol_TextSelectedBg] = ImVec4(0.30f, 0.50f, 0.60f, 0.35f); // Soft blue selection
+    
+    // Table colors
+    style.Colors[ImGuiCol_TableHeaderBg] = ImVec4(0.15f, 0.30f, 0.40f, 0.80f);  // Soft blue headers
+    style.Colors[ImGuiCol_TableBorderStrong] = ImVec4(0.20f, 0.35f, 0.45f, 0.70f); // Soft blue borders
+    style.Colors[ImGuiCol_TableBorderLight] = ImVec4(0.20f, 0.35f, 0.45f, 0.50f);  // Lighter borders
+    style.Colors[ImGuiCol_TableRowBg] = ImVec4(0.15f, 0.18f, 0.20f, 1.00f);     // Match window bg
+    style.Colors[ImGuiCol_TableRowBgAlt] = ImVec4(0.17f, 0.21f, 0.24f, 1.00f);  // Slightly lighter for alt rows
+    
+  	// Reset to defaults for these
+	style.TabBorderSize = 0.0f;
+	style.FrameBorderSize = 0.0f;
+}
+
 void gui_initFonts()
 {
 	static float uiScale;
@@ -436,8 +592,14 @@ void gui_initFonts()
 		applyLightTheme();
 	else if (config::UITheme == 2)
 		applyDreamcastTheme();
+	else if (config::UITheme == 3)
+		applyHighContrastTheme();  // Fixed ordering - was Nintendo
+	else if (config::UITheme == 4)
+		applyNintendoTheme();      // Fixed ordering - was High Contrast
+	else if (config::UITheme == 5)
+		applySoftTheme();          // New "Easy on the Eyes" theme
 	else
-		applyHighContrastTheme();
+		applyDarkTheme(); // Default fallback
     ImGui::GetStyle().TabRounding = 5.0f;
     ImGui::GetStyle().FrameRounding = 3.0f;
     ImGui::GetStyle().ItemSpacing = ImVec2(8, 8);		// from 8,4
@@ -2097,7 +2259,7 @@ static void gui_settings_general()
 		}
 	}
 
-	const char *themes[] = { "Dark", "Light", "Dreamcast", "High Contrast" };
+	const char *themes[] = { "Dark", "Light", "Dreamcast", "High Contrast", "Nintendo", "Easy on the Eyes" };
 	OptionComboBox("UI Theme", config::UITheme, themes, std::size(themes),
 			"Select the UI color theme.");
 	ImGui::SameLine();
@@ -2108,8 +2270,14 @@ static void gui_settings_general()
 			applyLightTheme();
 		else if (config::UITheme == 2)
 			applyDreamcastTheme();
-		else
+		else if (config::UITheme == 3)
 			applyHighContrastTheme();
+		else if (config::UITheme == 4)
+			applyNintendoTheme();
+		else if (config::UITheme == 5)
+			applySoftTheme();
+		else
+			applyDarkTheme(); // Default fallback
 	}
 
 	if (OptionCheckbox("Hide Legacy Naomi Roms", config::HideLegacyNaomiRoms,
