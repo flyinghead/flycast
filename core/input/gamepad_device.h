@@ -133,8 +133,7 @@ protected:
 		  digitalToAnalogState{}
 	{
 		// Initialize pressedButtons sets
-		for (int i = 0; i < 4; i++)
-			currentInputs[i].clear();
+		currentInputs.clear();
 	}
 
 	void loadMapping() {
@@ -164,7 +163,7 @@ private:
 	std::string make_mapping_filename(bool instance, int system, bool perGame = false);
 
 	// Track which inputs are currently activated (for button combos)
-	InputMapping::InputSet currentInputs[4];
+	InputMapping::InputSet currentInputs;
 	// Track inputs during the current mapping session
 	InputMapping::InputSet detectionInputs;
 

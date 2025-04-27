@@ -1065,6 +1065,7 @@ static void unmapControl(const std::shared_ptr<InputMapping>& mapping, u32 gamep
 {
 	mapping->clear_button(gamepad_port, key);
 	mapping->clear_axis(gamepad_port, key);
+	mapping->clear_combo(gamepad_port, key);
 }
 
 static DreamcastKey getOppositeDirectionKey(DreamcastKey key)
@@ -1115,6 +1116,15 @@ static DreamcastKey getOppositeDirectionKey(DreamcastKey key)
 		return EMU_BTN_NONE;
 	}
 }
+
+static void displayLabelOrCode(const char *label, u32 code, const char *suffix = "")
+{
+	if (label != nullptr)
+		ImGui::Text("%s%s", label, suffix);
+	else
+		ImGui::Text("[%d]%s", code, suffix);
+}
+
 static void detect_input_popup(const Mapping *mapping)
 {
 	ImVec2 padding = ScaledVec2(20, 20);
@@ -1169,14 +1179,7 @@ static void detect_input_popup(const Mapping *mapping)
 						name = mapped_device->get_axis_name(inputDef.code);
 					}
 
-					if (name != nullptr)
-					{
-						ImGui::Text("%s", name);
-					}
-					else
-					{
-						ImGui::Text("[%d]", inputDef.code);
-					}
+					displayLabelOrCode(name, inputDef.code);
 
 					first = false;
 				}
@@ -1211,14 +1214,6 @@ static void detect_input_popup(const Mapping *mapping)
 	}
 }
 
-static void displayLabelOrCode(const char *label, u32 code, const char *suffix = "")
-{
-	if (label != nullptr)
-		ImGui::Text("%s%s", label, suffix);
-	else
-		ImGui::Text("[%d]%s", code, suffix);
-}
-
 static void displayMappedControl(const std::shared_ptr<GamepadDevice>& gamepad, DreamcastKey key)
 {
 	std::shared_ptr<InputMapping> input_mapping = gamepad->get_input_mapping();
@@ -1240,7 +1235,10 @@ static void displayMappedControl(const std::shared_ptr<GamepadDevice>& gamepad, 
 				name = gamepad->get_axis_name(inputDef.code);
 
 			if (!first)
+			{
 				ImGui::Text(" + ");
+				ImGui::SameLine(0, 0);
+			}
 			displayLabelOrCode(name, inputDef.code);
 			first = false;
 		}

@@ -196,9 +196,9 @@ bool GamepadDevice::gamepad_btn_input(u32 code, bool pressed)
 	if (pressed)
 	{
 		// Add to triggered inputs
-		currentInputs[targetPort].insert_back(inputDef);
+		currentInputs.insert_back(inputDef);
 		// Handle keys activated by this new input
-		std::list<DreamcastKey> keys = input_mapper->get_combo_ids(targetPort, currentInputs[targetPort]);
+		std::list<DreamcastKey> keys = input_mapper->get_combo_ids(targetPort, currentInputs);
 		for (const DreamcastKey& key : keys)
 		{
 			if (_maple_port == 4)
@@ -215,7 +215,7 @@ bool GamepadDevice::gamepad_btn_input(u32 code, bool pressed)
 	else
 	{
 		// Remove from triggered inputs
-		currentInputs[targetPort].remove(inputDef);
+		currentInputs.remove(inputDef);
 		DreamcastKey key = input_mapper->get_button_id(targetPort, code);
 		if (_maple_port == 4)
 		{
@@ -303,11 +303,11 @@ bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 	// We consider an axis "pressed" if its value exceeds a threshold
 	if (std::abs(value) >= 16384) // Use 50% deflection as "pressed" threshold
 	{
-		pressed = currentInputs[targetPort].insert_back(inputDef);
+		pressed = currentInputs.insert_back(inputDef);
 	}
 	else if (std::abs(value) < 8192) // Use 25% deflection as "released" threshold
 	{
-		currentInputs[targetPort].remove(inputDef);
+		currentInputs.remove(inputDef);
 	}
 
 	auto handle_axis = [&](u32 port, DreamcastKey key, int v)
@@ -452,7 +452,7 @@ bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 
 			if (pressed)
 			{
-				std::list<DreamcastKey> keys = input_mapper->get_combo_ids(port, currentInputs[targetPort]);
+				std::list<DreamcastKey> keys = input_mapper->get_combo_ids(port, currentInputs);
 				for (const DreamcastKey& otherKey : keys)
 				{
 					if (otherKey != key)
@@ -471,7 +471,7 @@ bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 
 		if (pressed)
 		{
-			std::list<DreamcastKey> keys = input_mapper->get_combo_ids(0, currentInputs[targetPort]);
+			std::list<DreamcastKey> keys = input_mapper->get_combo_ids(0, currentInputs);
 			for (const DreamcastKey& otherKey : keys)
 			{
 				if (otherKey != key)
