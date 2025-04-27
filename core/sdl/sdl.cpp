@@ -669,7 +669,7 @@ bool sdl_recreate_window(u32 flags)
 	if (window != nullptr)
 		get_window_state();
 	
-	// Check if the saved window position is on a valid display
+	// Check if the saved window position is on a valid display, preventing Flycast from opening on a screen no longer pluged in
 	bool validPosition = false;
 	int numDisplays = SDL_GetNumVideoDisplays();
 	if (numDisplays > 0) {
@@ -685,7 +685,7 @@ bool sdl_recreate_window(u32 flags)
 			}
 		}
 		
-		// If position is invalid, reset to primary display
+		// If position is invalid, reset to primary display, avoiding Flycast from opening in a missing window and not being seen when windowed
 		if (!validPosition) {
 			NOTICE_LOG(COMMON, "Saved window position is not on any connected display, resetting to primary display");
 			windowPos.x = SDL_WINDOWPOS_UNDEFINED;
