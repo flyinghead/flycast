@@ -50,7 +50,7 @@ public:
 		_detecting_button = false;
 		_detecting_axis = false;
 		_detecting_combo = false;
-		detectionButtons.clear();
+		detectionInputs.clear();
 	}
 	bool is_input_detecting() const {
 		return _input_detected != nullptr;
@@ -134,7 +134,7 @@ protected:
 	{
 		// Initialize pressedButtons sets
 		for (int i = 0; i < 4; i++)
-			pressedButtons[i].clear();
+			currentInputs[i].clear();
 	}
 
 	void loadMapping() {
@@ -163,11 +163,10 @@ private:
 	bool handleButtonInput(int port, DreamcastKey key, bool pressed);
 	std::string make_mapping_filename(bool instance, int system, bool perGame = false);
 
-	// Track which buttons are currently pressed (for button combos)
-	std::set<u32> pressedButtons[4];
-	// Track buttons pressed during the current mapping session
-	std::set<u32> detectionButtons;
-	bool isButtonCombinationPressed(int port, const InputMapping::ButtonCombination& combo);
+	// Track which inputs are currently activated (for button combos)
+	InputMapping::InputSet currentInputs[4];
+	// Track inputs during the current mapping session
+	InputMapping::InputSet detectionInputs;
 
 	enum DigAnalog {
 		DIGANA_LEFT   = 1 << 0,

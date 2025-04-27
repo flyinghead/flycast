@@ -1054,7 +1054,7 @@ static MapleDeviceType maple_expansion_device_type_from_index(int idx)
 }
 
 static std::shared_ptr<GamepadDevice> mapped_device;
-static std::vector<u32> mapped_codes;  // Now is a vector to store multiple buttons rather then single button inputs.
+static InputMapping::InputSet mapped_codes;  // Stores multiple buttons in the order they were entered
 static bool analogAxis;
 static bool positiveDirection;
 static u64 map_start_time;
@@ -1124,7 +1124,7 @@ static void detect_input_popup(const Mapping *mapping)
 	{
 		ImGui::Text("Waiting for control '%s'...", mapping->name);
 		u64 now = getTimeMs();
-		
+
 		// Check if we're still in the initial delay period
 		if (now < map_start_time)
 		{
@@ -1134,20 +1134,23 @@ static void detect_input_popup(const Mapping *mapping)
 		{
 			// Check if device is still detecting input (might have been cancelled by button release)
 			bool still_detecting = mapped_device && mapped_device->is_input_detecting();
-			
+
 			// If detection was cancelled by button release, close popup immediately
 			int remaining = still_detecting ? (int)(5 - (now - map_start_time) / 1000) : 0;
-			
+
+			if (remaining < 0)
+				remaining = 5;
+
 			if (still_detecting)
 				ImGui::Text("Time out in %d s", remaining);
-			
+
 			// Display currently detected buttons during the countdown
 			if (!mapped_codes.empty())
 			{
 				ImGui::Text("Current inputs: ");
 				ImGui::SameLine();
 				bool first = true;
-				for (u32 code : mapped_codes)
+				for (const InputMapping::InputDef& inputDef : mapped_codes)
 				{
 					if (!first)
 					{
@@ -1155,30 +1158,36 @@ static void detect_input_popup(const Mapping *mapping)
 						ImGui::Text("+");
 						ImGui::SameLine();
 					}
-					
-					const char* name = mapped_device->get_button_name(code);
-					if (name != nullptr)
-						ImGui::Text("%s", name);
+
+					const char* name = nullptr;
+					if (inputDef.is_button())
+					{
+						name = mapped_device->get_button_name(inputDef.code);
+					}
 					else
 					{
-						// Check if this might be an axis
-						const char* axisName = mapped_device->get_axis_name(code);
-						if (axisName != nullptr)
-							ImGui::Text("%s", axisName);
-						else
-							ImGui::Text("[%d]", code);
+						name = mapped_device->get_axis_name(inputDef.code);
 					}
-					
+
+					if (name != nullptr)
+					{
+						ImGui::Text("%s", name);
+					}
+					else
+					{
+						ImGui::Text("[%d]", inputDef.code);
+					}
+
 					first = false;
 				}
-				
+
 				// Allow early completion with Confirm button if at least one button is detected
 				if (ImGui::Button("Confirm"))
 				{
 					remaining = 0;
 				}
 			}
-			
+
 			// Wait for the countdown to complete before mapping
 			if (remaining <= 0)
 			{
@@ -1186,30 +1195,13 @@ static void detect_input_popup(const Mapping *mapping)
 				if (input_mapping != NULL && !mapped_codes.empty())
 				{
 					unmapControl(input_mapping, gamepad_port, mapping->key);
-					if (analogAxis)
-					{
-						input_mapping->set_axis(gamepad_port, mapping->key, mapped_codes[0], positiveDirection);
-						DreamcastKey opposite = getOppositeDirectionKey(mapping->key);
-						// Map the axis opposite direction to the corresponding opposite dc button or axis,
-						// but only if the opposite direction axis isn't used and the dc button or axis isn't mapped.
-						if (opposite != EMU_BTN_NONE
-								&& input_mapping->get_axis_id(gamepad_port, mapped_codes[0], !positiveDirection) == EMU_BTN_NONE
-								&& input_mapping->get_axis_code(gamepad_port, opposite).first == (u32)-1
-								&& input_mapping->get_button_code(gamepad_port, opposite) == (u32)-1)
-							input_mapping->set_axis(gamepad_port, opposite, mapped_codes[0], !positiveDirection);
-					}
-					else
-					{
-						// Create a button combination with all the collected buttons
-						InputMapping::ButtonCombination combo(mapped_codes);
-						input_mapping->set_button_combination(gamepad_port, mapping->key, combo);
-					}
+					input_mapping->set_combo(gamepad_port, mapping->key, mapped_codes);
 				}
-				
+
 				// Make sure to cancel input detection to prevent collecting more inputs
 				if (mapped_device)
 					mapped_device->cancel_detect_input();
-				
+
 				mapped_device = NULL;
 				mapped_codes.clear();
 				ImGui::CloseCurrentPopup();
@@ -1230,31 +1222,31 @@ static void displayLabelOrCode(const char *label, u32 code, const char *suffix =
 static void displayMappedControl(const std::shared_ptr<GamepadDevice>& gamepad, DreamcastKey key)
 {
 	std::shared_ptr<InputMapping> input_mapping = gamepad->get_input_mapping();
-	auto combo = input_mapping->get_button_combination(gamepad_port, key);
-	
-	if (!combo.buttons.empty())
+	InputMapping::InputSet combo = input_mapping->get_combo_codes(gamepad_port, key);
+
+	if (!combo.empty())
 	{
 		// Display button combination in "Button1 + Button2 + ..." format
 		bool first = true;
-		for (u32 code : combo.buttons)
+		for (const InputMapping::InputDef& inputDef : combo)
 		{
 			if (!first)
 				ImGui::SameLine(0, 0);
-			
-			// First try to get button name
-			const char* name = gamepad->get_button_name(code);
-			if (name == nullptr)
-				// If no button name, try to get axis name
-				name = gamepad->get_axis_name(code);
-				
+
+			const char* name = nullptr;
+			if (inputDef.is_button())
+				name = gamepad->get_button_name(inputDef.code);
+			else if (inputDef.is_axis())
+				name = gamepad->get_axis_name(inputDef.code);
+
 			if (!first)
 				ImGui::Text(" + ");
-			displayLabelOrCode(name, code);
+			displayLabelOrCode(name, inputDef.code);
 			first = false;
 		}
 		return;
 	}
-	
+
 	std::pair<u32, bool> pair = input_mapping->get_axis_code(gamepad_port, key);
 	u32 code = pair.first;
 	if (code != (u32)-1)
@@ -1458,34 +1450,25 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 				ImGui::OpenPopup("Map Control");
 				mapped_device = gamepad;
 				mapped_codes.clear();  // Clear previous button codes
-				
+
 				// Set up a callback to collect button presses during the 5-second window
 				gamepad->detectButtonOrAxisInput([](u32 code, bool analog, bool positive)
 				{
 					if (analog)
 					{
 						// For analog inputs - only store a single axis
-						if (std::abs(positive) >= 0.5f)  // Only accept inputs with significant deflection
-						{
-							mapped_codes.clear();  // Analog inputs replace any existing mappings
-							mapped_codes.push_back(code);
-							analogAxis = true;
-							positiveDirection = positive;
-						}
+						mapped_codes.insert_back(InputMapping::InputDef{
+							code,
+							positive ? InputMapping::InputDef::InputType::AXIS_POS : InputMapping::InputDef::InputType::AXIS_NEG
+						});
+						analogAxis = true;
+						positiveDirection = positive;
 					}
 					else
 					{
 						// For buttons - build a combination
-						// Only add the button if it's not already in the list
-						if (std::find(mapped_codes.begin(), mapped_codes.end(), code) == mapped_codes.end())
-						{
-							// Limit to a reasonable number of buttons in a combo
-							if (mapped_codes.size() < 8)
-							{
-								mapped_codes.push_back(code);
-								analogAxis = false;
-							}
-						}
+						mapped_codes.insert_back(InputMapping::InputDef{code, InputMapping::InputDef::InputType::BUTTON});
+						analogAxis = false;
 					}
 				});
 			}
