@@ -511,18 +511,18 @@ void applySoftTheme()
     style.Colors[ImGuiCol_ChildBg] = ImVec4(0.15f, 0.18f, 0.20f, 1.00f);       // Match window background
     style.Colors[ImGuiCol_TitleBg] = ImVec4(0.10f, 0.25f, 0.30f, 1.00f);       // Deep turquoise title bar
     style.Colors[ImGuiCol_TitleBgActive] = ImVec4(0.15f, 0.35f, 0.45f, 1.00f); // Brighter turquoise when active
-    style.Colors[ImGuiCol_TitleBgCollapsed] = ImVec4(0.10f, 0.25f, 0.30f, 0.75f); // Semi-transparent when collapsed
+    style.Colors[ImGuiCol_TitleBgCollapsed] = ImVec4(0.10f, 0.25f, 0.30f, 1.00f); // Semi-transparent when collapsed
     style.Colors[ImGuiCol_MenuBarBg] = ImVec4(0.17f, 0.21f, 0.24f, 1.00f);     // Slightly lighter than background
     
     // Soft scrollbars
     style.Colors[ImGuiCol_ScrollbarBg] = ImVec4(0.15f, 0.18f, 0.20f, 1.00f);   // Match window background
-    style.Colors[ImGuiCol_ScrollbarGrab] = ImVec4(0.25f, 0.45f, 0.50f, 0.50f); // Soft turquoise
-    style.Colors[ImGuiCol_ScrollbarGrabHovered] = ImVec4(0.30f, 0.55f, 0.60f, 0.60f); // Brighter when hovered
-    style.Colors[ImGuiCol_ScrollbarGrabActive] = ImVec4(0.35f, 0.65f, 0.70f, 0.70f);  // Even brighter when active
+    style.Colors[ImGuiCol_ScrollbarGrab] = ImVec4(0.25f, 0.45f, 0.50f, 1.00f); // Soft turquoise
+    style.Colors[ImGuiCol_ScrollbarGrabHovered] = ImVec4(0.30f, 0.55f, 1.00f, 0.60f); // Brighter when hovered
+    style.Colors[ImGuiCol_ScrollbarGrabActive] = ImVec4(0.35f, 0.65f, 1.00f, 0.70f);  // Even brighter when active
     
     // Soft, muted button colors
-    style.Colors[ImGuiCol_Button] = ImVec4(0.20f, 0.40f, 0.45f, 0.50f);        // Muted turquoise
-    style.Colors[ImGuiCol_ButtonHovered] = ImVec4(0.25f, 0.50f, 0.55f, 0.60f); // Slightly brighter when hovered
+    style.Colors[ImGuiCol_Button] = ImVec4(0.20f, 0.40f, 0.45f, 1.00f);        // Muted turquoise
+    style.Colors[ImGuiCol_ButtonHovered] = ImVec4(0.25f, 0.50f, 0.55f, 1.00f); // Slightly brighter when hovered
     style.Colors[ImGuiCol_ButtonActive] = ImVec4(0.30f, 0.60f, 0.65f, 0.70f);  // Even brighter when active
     
     style.Colors[ImGuiCol_PopupBg] = ImVec4(0.15f, 0.18f, 0.20f, 0.95f);       // Match window background
@@ -533,13 +533,13 @@ void applySoftTheme()
     style.Colors[ImGuiCol_FrameBgActive] = ImVec4(0.30f, 0.45f, 0.50f, 0.80f);  // Even brighter when active
     
     // Headers (collapsing headers, tree nodes)
-    style.Colors[ImGuiCol_Header] = ImVec4(0.20f, 0.35f, 0.45f, 0.45f);        // Soft blue headers
-    style.Colors[ImGuiCol_HeaderHovered] = ImVec4(0.25f, 0.40f, 0.50f, 0.60f); // Slightly brighter when hovered
+    style.Colors[ImGuiCol_Header] = ImVec4(0.20f, 0.35f, 0.45f, 1.00f);        // Soft blue headers
+    style.Colors[ImGuiCol_HeaderHovered] = ImVec4(0.25f, 0.40f, 0.50f, 1.00f); // Slightly brighter when hovered
     style.Colors[ImGuiCol_HeaderActive] = ImVec4(0.30f, 0.50f, 0.60f, 0.70f);  // Even brighter when active
     
     // Accent colors - light turquoise
     style.Colors[ImGuiCol_CheckMark] = ImVec4(0.40f, 0.80f, 0.90f, 0.80f);     // Light turquoise checkmarks
-    style.Colors[ImGuiCol_SliderGrab] = ImVec4(0.35f, 0.65f, 0.75f, 0.60f);    // Turquoise sliders
+    style.Colors[ImGuiCol_SliderGrab] = ImVec4(0.35f, 0.65f, 0.75f, 1.00f);    // Turquoise sliders
     style.Colors[ImGuiCol_SliderGrabActive] = ImVec4(0.45f, 0.75f, 0.85f, 0.70f); // Brighter when active
     
     // Tabs - soft blue palette
@@ -550,14 +550,14 @@ void applySoftTheme()
     style.Colors[ImGuiCol_TabUnfocusedActive] = ImVec4(0.20f, 0.35f, 0.45f, 0.85f); // In-between for unfocused active
     
     // Other elements
-    style.Colors[ImGuiCol_Border] = ImVec4(0.20f, 0.35f, 0.45f, 0.50f);         // Soft blue borders
-    style.Colors[ImGuiCol_Separator] = ImVec4(0.20f, 0.35f, 0.45f, 0.50f);      // Soft blue separators
-    style.Colors[ImGuiCol_TextSelectedBg] = ImVec4(0.30f, 0.50f, 0.60f, 0.35f); // Soft blue selection
+    style.Colors[ImGuiCol_Border] = ImVec4(0.20f, 0.35f, 0.45f, 1.00f);         // Soft blue borders
+    style.Colors[ImGuiCol_Separator] = ImVec4(0.20f, 0.35f, 0.45f, 1.00f);      // Soft blue separators
+    style.Colors[ImGuiCol_TextSelectedBg] = ImVec4(0.30f, 0.50f, 0.60f, 1.00f); // Soft blue selection
     
     // Table colors
     style.Colors[ImGuiCol_TableHeaderBg] = ImVec4(0.15f, 0.30f, 0.40f, 0.80f);  // Soft blue headers
     style.Colors[ImGuiCol_TableBorderStrong] = ImVec4(0.20f, 0.35f, 0.45f, 0.70f); // Soft blue borders
-    style.Colors[ImGuiCol_TableBorderLight] = ImVec4(0.20f, 0.35f, 0.45f, 0.50f);  // Lighter borders
+    style.Colors[ImGuiCol_TableBorderLight] = ImVec4(0.20f, 0.35f, 0.45f, 1.00f);  // Lighter borders
     style.Colors[ImGuiCol_TableRowBg] = ImVec4(0.15f, 0.18f, 0.20f, 1.00f);     // Match window bg
     style.Colors[ImGuiCol_TableRowBgAlt] = ImVec4(0.17f, 0.21f, 0.24f, 1.00f);  // Slightly lighter for alt rows
     
