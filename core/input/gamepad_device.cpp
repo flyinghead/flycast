@@ -267,16 +267,19 @@ bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 	{
 		if (_detecting_axis && std::abs(value) >= 16384)
 		{
-			_input_detected(code, true, positive);
-
 			// If we're in combo detection mode, add this axis to tracking but don't end detection
 			if (_detecting_combo)
 			{
 				// Track this axis as a "button" for combo detection
-				detectionInputs.insert_back(inputDef);
+				if (detectionInputs.insert_back(inputDef))
+				{
+					_input_detected(code, true, positive);
+				}
+
 				return true;
 			}
 
+			_input_detected(code, true, positive);
 			_input_detected = nullptr;
 			return true;
 		}

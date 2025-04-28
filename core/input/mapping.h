@@ -164,7 +164,7 @@ public:
 
 		//! Insert new element to the back, ensuring uniqueness
 		//! @param[in] val The value to insert at the back
-		//! @return true iff new item in
+		//! @return true iff new item inserted
 		inline bool insert_back(const InputMapping::InputDef& val)
 		{
 			remove_inverse_axis(val);
