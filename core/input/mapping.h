@@ -101,19 +101,26 @@ public:
 			return (code == rhs.code && is_axis() && rhs.is_axis());
 		}
 
-		//! @return the string equivalent to this InputDef
-		inline std::string to_str() const
+		//! @return the suffix for this InputDef which signifies the type
+		inline const char* get_suffix() const
 		{
-			std::string result = std::to_string(code);
 			if (type == InputType::AXIS_POS)
 			{
-				result += "+";
+				return "+";
 			}
 			else if (type == InputType::AXIS_NEG)
 			{
-				result += "-";
+				return "-";
 			}
-			return result;
+
+			// Assume button otherwise
+			return "";
+		}
+
+		//! @return the string equivalent to this InputDef
+		inline std::string to_str() const
+		{
+			return std::to_string(code) + std::string(get_suffix());
 		}
 
 		//! Converts a string to an InputDef
@@ -156,11 +163,16 @@ public:
 	class InputSet : public std::list<InputDef>
 	{
 	public:
-		InputSet() : std::list<InputDef>() {}
+		inline InputSet() : std::list<InputDef>() {}
 
-		explicit InputSet(const allocator_type& a) : std::list<InputDef>(a) {}
-
-		explicit InputSet(std::initializer_list<value_type> l) : std::list<InputDef>(l) {}
+		explicit inline InputSet(std::initializer_list<value_type> l) : std::list<InputDef>()
+		{
+			// Do insert_back of each to ensure uniqueness
+			for (const auto& x : l)
+			{
+				insert_back(x);
+			}
+		}
 
 		//! Insert new element to the back, ensuring uniqueness
 		//! @param[in] val The value to insert at the back
@@ -200,22 +212,41 @@ public:
 		}
 
 		//! @return true if this InputSet ends with the given rhs
-		inline bool ends_with(const InputSet& rhs) const
+		inline bool ends_with(const InputSet& rhs, bool sequential) const
 		{
 			InputSet::const_reverse_iterator iter = crbegin();
-			InputSet::const_reverse_iterator riter = rhs.crbegin();
 
-			while (iter != crend() && riter != rhs.crend())
+			if (sequential)
 			{
-				if (*iter != *riter)
-				{
-					break;
-				}
-				++iter;
-				++riter;
-			}
+				InputSet::const_reverse_iterator riter = rhs.crbegin();
 
-			return (riter == rhs.crend());
+				for (; iter != crend() && riter != rhs.crend(); ++iter, ++riter)
+				{
+					if (*iter != *riter)
+					{
+						break;
+					}
+				}
+
+				return (riter == rhs.crend());
+			}
+			else
+			{
+				std::size_t foundCount = 0;
+				for (; iter != crend(); ++iter)
+				{
+					if (std::find(rhs.begin(), rhs.end(), *iter) != rhs.end())
+					{
+						++foundCount;
+					}
+					else
+					{
+						break;
+					}
+				}
+
+				return (foundCount == rhs.size());
+			}
 		}
 
 	private:
@@ -235,6 +266,12 @@ public:
 				remove(InputMapping::InputDef{val.code, inversetype});
 			}
 		}
+	};
+
+	struct ButtonCombo
+	{
+		InputSet inputs;
+		bool sequential = true;
 	};
 
 	InputMapping() = default;
@@ -301,13 +338,19 @@ public:
 	//! @param[in] id The key to map
 	//! @param[in] combo Combination of inputs that should activate the key
 	//! @return true iff the combo has been set
-	bool set_combo(u32 port, DreamcastKey id, const InputSet& combo);
-	inline bool set_combo(DreamcastKey id, const InputSet& combo) { return set_combo(0, id, combo); }
+	bool set_combo(u32 port, DreamcastKey id, const ButtonCombo& combo);
+	inline bool set_combo(DreamcastKey id, const ButtonCombo& combo) { return set_combo(0, id, combo); }
 
 	//! @param[in] port The port [0,NUM_PORTS)
 	//! @param[in] key The key
-	//! @return the InputSet associated with the given key at the given port
-	InputSet get_combo_codes(u32 port, DreamcastKey key);
+	//! @return the ButtonCombo associated with the given key at the given port
+	ButtonCombo get_combo(u32 port, DreamcastKey key) const;
+
+	//! @param[in] port The port [0,NUM_PORTS)
+	//! @param[in] key The key
+	//! @return pointer to the ButtonCombo associated with the given key at the given port if found
+	//! @return nullptr otherwise
+	ButtonCombo* get_combo_ptr(u32 port, DreamcastKey key);
 
 	void clear_axis(u32 port, DreamcastKey id);
 	void set_axis(u32 port, DreamcastKey id, u32 code, bool positive);
@@ -332,7 +375,7 @@ private:
 	void loadv1(emucfg::ConfigFile& mf);
 
 	//! Maps an DreamcastKey to one or more inputs that need to be activated
-	std::map<DreamcastKey, InputSet> multiEmuButtonMap[NUM_PORTS];
+	std::map<DreamcastKey, ButtonCombo> multiEmuButtonMap[NUM_PORTS];
 	//! Maps an input to one or more DreamcastKeys which that input is tied to
 	std::multimap<InputDef, DreamcastKey> reverseMultiEmuButtonMap[NUM_PORTS];
 

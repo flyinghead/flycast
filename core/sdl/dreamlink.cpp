@@ -163,60 +163,40 @@ void DreamLinkGamepad::handleEvent(Event event, void *arg)
     }
 }
 
-bool DreamLinkGamepad::gamepad_btn_input(u32 code, bool pressed)
-{
-	if (!is_detecting_input() && input_mapper)
-	{
-		DreamcastKey key = input_mapper->get_button_id(0, code);
-		if (key == DC_BTN_START) {
-			startPressed = pressed;
-			checkKeyCombo();
-		}
-	}
-	else {
-		startPressed = false;
-	}
-	return SDLGamepad::gamepad_btn_input(code, pressed);
-}
-
-bool DreamLinkGamepad::gamepad_axis_input(u32 code, int value)
-{
-	if (!is_detecting_input())
-	{
-		if (code == leftTrigger) {
-			ltrigPressed = value > 0;
-			checkKeyCombo();
-		}
-		else if (code == rightTrigger) {
-			rtrigPressed = value > 0;
-			checkKeyCombo();
-		}
-	}
-	else {
-		ltrigPressed = false;
-		rtrigPressed = false;
-	}
-	return SDLGamepad::gamepad_axis_input(code, value);
-}
-
 void DreamLinkGamepad::resetMappingToDefault(bool arcade, bool gamepad) {
 	SDLGamepad::resetMappingToDefault(arcade, gamepad);
-	if (input_mapper && dreamlink) {
-		dreamlink->setDefaultMapping(input_mapper);
+	if (input_mapper) {
+		setBaseDefaultMapping(input_mapper);
+		if (dreamlink) {
+			dreamlink->setDefaultMapping(input_mapper);
+		}
 	}
 }
 
 std::shared_ptr<InputMapping> DreamLinkGamepad::getDefaultMapping() {
 	std::shared_ptr<InputMapping> mapping = SDLGamepad::getDefaultMapping();
-	if (mapping && dreamlink) {
-		dreamlink->setDefaultMapping(mapping);
+	if (mapping) {
+		setBaseDefaultMapping(mapping);
+		if (dreamlink) {
+			dreamlink->setDefaultMapping(mapping);
+		}
 	}
 	return mapping;
 }
 
-void DreamLinkGamepad::checkKeyCombo() {
-	if (ltrigPressed && rtrigPressed && startPressed)
-		gui_open_settings();
+void DreamLinkGamepad::setBaseDefaultMapping(const std::shared_ptr<InputMapping>& mapping) const {
+	u32 startCode = mapping->get_button_code(0, DreamcastKey::DC_BTN_START);
+	if (startCode != InputMapping::InputDef::INVALID_CODE)
+	{
+		mapping->set_combo(DreamcastKey::EMU_BTN_MENU, InputMapping::ButtonCombo{
+			InputMapping::InputSet{
+				InputMapping::InputDef{leftTrigger, InputMapping::InputDef::InputType::AXIS_POS},
+				InputMapping::InputDef{rightTrigger, InputMapping::InputDef::InputType::AXIS_POS},
+				InputMapping::InputDef{startCode, InputMapping::InputDef::InputType::BUTTON}
+			},
+			false
+		});
+	}
 }
 
 #else // USE_DREAMCASTCONTROLLER
@@ -234,17 +214,13 @@ void DreamLinkGamepad::set_maple_port(int port) {
 }
 void DreamLinkGamepad::registered() {
 }
-bool DreamLinkGamepad::gamepad_btn_input(u32 code, bool pressed) {
-	return SDLGamepad::gamepad_btn_input(code, pressed);
-}
-bool DreamLinkGamepad::gamepad_axis_input(u32 code, int value) {
-	return SDLGamepad::gamepad_axis_input(code, value);
-}
 void DreamLinkGamepad::resetMappingToDefault(bool arcade, bool gamepad) {
 	SDLGamepad::resetMappingToDefault(arcade, gamepad);
 }
 std::shared_ptr<InputMapping> DreamLinkGamepad::getDefaultMapping() {
 	return SDLGamepad::getDefaultMapping();
+}
+void DreamLinkGamepad::setBaseDefaultMapping(const std::shared_ptr<InputMapping>& mapping) const {
 }
 
 #endif

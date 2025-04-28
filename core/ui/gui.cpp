@@ -1194,7 +1194,7 @@ static void detect_input_popup(const Mapping *mapping)
 				if (input_mapping != NULL && !mapped_codes.empty())
 				{
 					unmapControl(input_mapping, gamepad_port, mapping->key);
-					input_mapping->set_combo(gamepad_port, mapping->key, mapped_codes);
+					input_mapping->set_combo(gamepad_port, mapping->key, InputMapping::ButtonCombo{mapped_codes, true});
 				}
 
 				// Make sure to cancel input detection to prevent collecting more inputs
@@ -1213,13 +1213,19 @@ static void detect_input_popup(const Mapping *mapping)
 static void displayMappedControl(const std::shared_ptr<GamepadDevice>& gamepad, DreamcastKey key)
 {
 	std::shared_ptr<InputMapping> input_mapping = gamepad->get_input_mapping();
-	InputMapping::InputSet combo = input_mapping->get_combo_codes(gamepad_port, key);
+	InputMapping::ButtonCombo* combo = input_mapping->get_combo_ptr(gamepad_port, key);
 
-	if (!combo.empty())
+	if (!combo)
+	{
+		// Not found
+		return;
+	}
+
+	if (!combo->inputs.empty())
 	{
 		// Display button combination in "Button1 & Button2 & ..." format
 		bool first = true;
-		for (const InputMapping::InputDef& inputDef : combo)
+		for (const InputMapping::InputDef& inputDef : combo->inputs)
 		{
 			if (!first)
 			{
@@ -1228,24 +1234,28 @@ static void displayMappedControl(const std::shared_ptr<GamepadDevice>& gamepad, 
 				ImGui::SameLine();
 			}
 
+			const char* name = nullptr;
 			if (inputDef.is_button())
 			{
-				displayLabelOrCode(gamepad->get_button_name(inputDef.code), inputDef.code);
+				name = gamepad->get_button_name(inputDef.code);
 			}
 			else if (inputDef.is_axis())
 			{
-				displayLabelOrCode(
-					gamepad->get_axis_name(inputDef.code),
-					inputDef.code,
-					(inputDef.type == InputMapping::InputDef::InputType::AXIS_POS ? "+" : "-"));
-			}
-			else
-			{
-				displayLabelOrCode(nullptr, inputDef.code);
+				name = gamepad->get_axis_name(inputDef.code);
 			}
 
+			displayLabelOrCode(name, inputDef.code, inputDef.get_suffix());
 			first = false;
 		}
+	}
+
+	if (combo->inputs.size() > 1)
+	{
+		ImGui::Checkbox("Sequential", &(combo->sequential));
+		ImGui::SameLine();
+		ShowHelpMarker(
+			"When checked, this combo will only activate when all keys are pressed in the given sequence.\n"
+			"When not checked, the combo will activate when all keys are pressed in any order.");
 	}
 }
 
