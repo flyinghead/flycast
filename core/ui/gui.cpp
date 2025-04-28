@@ -1136,11 +1136,7 @@ static void detect_input_popup(const Mapping *mapping)
 		u64 now = getTimeMs();
 
 		// Check if we're still in the initial delay period
-		if (now < map_start_time)
-		{
-			ImGui::Text("Starting detection in %d ms...", (int)(map_start_time - now));
-		}
-		else
+		if (now >= map_start_time)
 		{
 			// Check if device is still detecting input (might have been cancelled by button release)
 			bool still_detecting = mapped_device && mapped_device->is_input_detecting();
@@ -1165,7 +1161,7 @@ static void detect_input_popup(const Mapping *mapping)
 					if (!first)
 					{
 						ImGui::SameLine();
-						ImGui::Text("+");
+						ImGui::Text("&");
 						ImGui::SameLine();
 					}
 
@@ -1221,36 +1217,35 @@ static void displayMappedControl(const std::shared_ptr<GamepadDevice>& gamepad, 
 
 	if (!combo.empty())
 	{
-		// Display button combination in "Button1 + Button2 + ..." format
+		// Display button combination in "Button1 & Button2 & ..." format
 		bool first = true;
 		for (const InputMapping::InputDef& inputDef : combo)
 		{
 			if (!first)
-				ImGui::SameLine(0, 0);
-
-			const char* name = nullptr;
-			if (inputDef.is_button())
-				name = gamepad->get_button_name(inputDef.code);
-			else if (inputDef.is_axis())
-				name = gamepad->get_axis_name(inputDef.code);
-
-			if (!first)
 			{
-				ImGui::Text(" + ");
-				ImGui::SameLine(0, 0);
+				ImGui::SameLine();
+				ImGui::Text("&");
+				ImGui::SameLine();
 			}
-			displayLabelOrCode(name, inputDef.code);
+
+			if (inputDef.is_button())
+			{
+				displayLabelOrCode(gamepad->get_button_name(inputDef.code), inputDef.code);
+			}
+			else if (inputDef.is_axis())
+			{
+				displayLabelOrCode(
+					gamepad->get_axis_name(inputDef.code),
+					inputDef.code,
+					(inputDef.type == InputMapping::InputDef::InputType::AXIS_POS ? "+" : "-"));
+			}
+			else
+			{
+				displayLabelOrCode(nullptr, inputDef.code);
+			}
+
 			first = false;
 		}
-		return;
-	}
-
-	std::pair<u32, bool> pair = input_mapping->get_axis_code(gamepad_port, key);
-	u32 code = pair.first;
-	if (code != (u32)-1)
-	{
-		displayLabelOrCode(gamepad->get_axis_name(code), code, pair.second ? "+" : "-");
-		return;
 	}
 }
 
