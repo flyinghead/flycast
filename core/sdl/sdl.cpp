@@ -1,4 +1,3 @@
-
 #if defined(USE_SDL)
 #include "types.h"
 #include "cfg/cfg.h"
@@ -669,6 +668,30 @@ bool sdl_recreate_window(u32 flags)
 	window_maximized = cfgLoadBool("window", "maximized", window_maximized);
 	if (window != nullptr)
 		get_window_state();
+	
+	// Check if the saved window position is on a valid display, preventing Flycast from opening on a screen no longer pluged in
+	bool validPosition = false;
+	int numDisplays = SDL_GetNumVideoDisplays();
+	if (numDisplays > 0) {
+		for (int i = 0; i < numDisplays; i++) {
+			SDL_Rect bounds;
+			if (SDL_GetDisplayBounds(i, &bounds) == 0) {
+				// Check if the window position is inside this display
+				if (windowPos.x >= bounds.x && windowPos.x < bounds.x + bounds.w &&
+					windowPos.y >= bounds.y && windowPos.y < bounds.y + bounds.h) {
+					validPosition = true;
+					break;
+				}
+			}
+		}
+		
+		// If position is invalid, reset to primary display, avoiding Flycast from opening in a missing window and not being seen when windowed
+		if (!validPosition) {
+			NOTICE_LOG(COMMON, "Saved window position is not on any connected display, resetting to primary display");
+			windowPos.x = SDL_WINDOWPOS_UNDEFINED;
+			windowPos.y = SDL_WINDOWPOS_UNDEFINED;
+		}
+	}
 #endif
 	if (window != nullptr)
 	{
