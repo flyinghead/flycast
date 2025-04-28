@@ -514,6 +514,10 @@ void CheatManager::reset(const std::string& gameId)
 			cheats.emplace_back(Cheat::Type::runNextIfEq, "ip check ifeq", true, 32, 0x00020980, 0x4f222fe6, true);
 			cheats.emplace_back(Cheat::Type::setValue, "ip check ok", true, 32, 0x00020980, 0xe000000b, true);
 		}
+		else if (gameId == "T6805M") {		// Aero Dancing F - Todoroki Tsubasa no Hatsu Hikou
+			cheats.emplace_back(Cheat::Type::runNextIfEq, "bypass auth ifeq", true, 32, 0x0003ed10, 0x2fd62fe6, true);
+			cheats.emplace_back(Cheat::Type::setValue, "bypass dricas auth", true, 32, 0x0003ed10, 0xe000000b, true);
+		}
 		else if (gameId == "HDR-0106") {	// Daytona USA (JP)
 			cheats.emplace_back(Cheat::Type::runNextIfEq, "bypass auth ifeq", true, 32, 0x0003ad30, 0x2fd62fe6, true);
 			cheats.emplace_back(Cheat::Type::setValue, "bypass dricas auth", true, 32, 0x0003ad30, 0xe000000b, true);
