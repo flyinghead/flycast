@@ -187,7 +187,7 @@ static void DYNACALL write_elanreg(u32 paddr, u32 data)
 			break;
 		case 0x10: // sh4 if control?
 			reg10 = data;
-			break;;
+			break;
 		case 0x14: // SDRAM refresh
 			// x2029
 			break;
@@ -207,7 +207,7 @@ static void DYNACALL write_elanreg(u32 paddr, u32 data)
 		// 88 = 0
 		case 0xd0: // _kmtlifSetCullingRegister
 			// 6
-			break;;
+			break;
 		default:
 			break;
 		}

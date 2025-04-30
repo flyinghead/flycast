@@ -10243,8 +10243,8 @@ struct retro_core_options_v2 options_ca = {
 #define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_CHS "模拟以太网宽带适配器而不是调制解调器. (需要重启)"
 #define CORE_OPTION_NAME_UPNP_LABEL_CHS "启用 UPnP"
 #define CORE_OPTION_NAME_UPNP_INFO_0_CHS "使用 UPnP 自动配置您的网络路由器进行在线游戏."
-#define CORE_OPTION_NAME_DCNET_LABEL_CHS NULL
-#define CORE_OPTION_NAME_DCNET_INFO_0_CHS NULL
+#define CORE_OPTION_NAME_DCNET_LABEL_CHS "使用 DCNet (实验性)"
+#define CORE_OPTION_NAME_DCNET_INFO_0_CHS "连接到实验性的 DCNet 云服务."
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_CHS "内部分辨率"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_CHS "修改渲染分辨率."
 #define OPTION_VAL_320X240_CHS "320x240 (1/2)"
@@ -50823,8 +50823,8 @@ struct retro_core_options_v2 options_ja = {
 #define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_KO "모뎀 대신 이더넷 브로드밴드 어댑터를 에뮬레이트합니다. (재시작 필요)"
 #define CORE_OPTION_NAME_UPNP_LABEL_KO "UPnP 활성화"
 #define CORE_OPTION_NAME_UPNP_INFO_0_KO "온라인 게임에서 UPnP를 사용해 자동으로 인터넷 라우터를 설정합니다."
-#define CORE_OPTION_NAME_DCNET_LABEL_KO NULL
-#define CORE_OPTION_NAME_DCNET_INFO_0_KO NULL
+#define CORE_OPTION_NAME_DCNET_LABEL_KO "DCNet사용 (실험적)"
+#define CORE_OPTION_NAME_DCNET_INFO_0_KO "실험적인 DCNet 클라우드 서비스에 연결합니다."
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_KO "내부 해상도"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_KO "렌더링 해상도를 변경합니다."
 #define OPTION_VAL_320X240_KO "320x240 (절반)"
@@ -71113,8 +71113,8 @@ struct retro_core_options_v2 options_sr = {
 #define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_SV "Emulera bredbandsadaptern istället för modemet. (omstart krävs)"
 #define CORE_OPTION_NAME_UPNP_LABEL_SV "Aktivera UPnP"
 #define CORE_OPTION_NAME_UPNP_INFO_0_SV "Använd UPnP för att automatiskt konfigurera din internetrouter för onlinespel."
-#define CORE_OPTION_NAME_DCNET_LABEL_SV NULL
-#define CORE_OPTION_NAME_DCNET_INFO_0_SV NULL
+#define CORE_OPTION_NAME_DCNET_LABEL_SV "Använd DCNet (experimentell)"
+#define CORE_OPTION_NAME_DCNET_INFO_0_SV "Anslut till den experimentella DCNet-molntjänsten."
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_SV "Intern upplösning"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_SV "Ändra renderingsupplösning."
 #define OPTION_VAL_320X240_SV "320x240 (Halv)"
@@ -71175,7 +71175,7 @@ struct retro_core_options_v2 options_sr = {
 #define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_SV "Aktivera RTT (Render To Texture) buffert"
 #define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_SV "Kopiera renderade texturer tillbaka från GPU till VRAM. Denna inställning är normalt aktiverad för spel som kräver det. När den är aktiverad avaktiveras uppskalning av texturrendering och prestandan kan påverkas."
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_SV "Mipmappning"
-#define CORE_OPTION_NAME_MIPMAPPING_INFO_0_SV NULL
+#define CORE_OPTION_NAME_MIPMAPPING_INFO_0_SV "När aktiverade texturer använder mindre versioner av sig själva när de visas längre bort kan det öka prestandan och minska skimret."
 #define CORE_OPTION_NAME_FOG_LABEL_SV "Dimeffekter"
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_SV "Volymjusterare"
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_SV "En Dreamcast GPU-funktion som vanligtvis används av spel för att rita objektsskuggor. Detta bör normalt vara aktiverat - prestandapåverkan är vanligtvis minimal till försumbar."
@@ -71197,11 +71197,11 @@ struct retro_core_options_v2 options_sr = {
 #define OPTION_VAL_4_SV NULL
 #define OPTION_VAL_6_SV NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_SV "Maximalt filtrerad storlek för texturuppskalning"
-#define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_INFO_0_SV NULL
+#define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_INFO_0_SV "Välj ett maximalt storleksvärde för en textur som ska skalas upp, om texturstorleken är högre än det valda värdet kommer den inte att skalas upp."
 #define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_SV "Ursprunglig djupinterpolation"
 #define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_SV "Hjälper till med texturkorruption och djupproblem på AMD-GPU:n. Kan även hjälpa Intel-GPU:n i vissa fall."
 #define CORE_OPTION_NAME_FIX_UPSCALE_BLEEDING_EDGE_LABEL_SV NULL
-#define CORE_OPTION_NAME_FIX_UPSCALE_BLEEDING_EDGE_INFO_0_SV NULL
+#define CORE_OPTION_NAME_FIX_UPSCALE_BLEEDING_EDGE_INFO_0_SV "Hjälper till med texturblödning vid uppskalning. Om du inaktiverar det kan det hjälpa om bildpunkter förvrängs vid uppskalning i 2D-spel (MVC2, CVS, KOF, etc.)"
 #define CORE_OPTION_NAME_THREADED_RENDERING_LABEL_SV "Trådad rendering"
 #define CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_SV "Kör GPU och CPU på olika trådar. Starkt rekommenderat."
 #define CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_SV "Hoppa över bildrutor automatiskt"
@@ -71261,12 +71261,12 @@ struct retro_core_options_v2 options_sr = {
 #define OPTION_VAL_480_SV NULL
 #define OPTION_VAL_490_SV NULL
 #define OPTION_VAL_500_SV NULL
-#define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_SV "Ladda in anpassade texturer"
-#define CORE_OPTION_NAME_CUSTOM_TEXTURES_INFO_0_SV NULL
+#define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_SV "Läs in anpassade texturer"
+#define CORE_OPTION_NAME_CUSTOM_TEXTURES_INFO_0_SV "Läs in anpassade texturer som finns i mappen 'system/dc/textures/<game-id>/'."
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_SV "Dumpa texturer"
-#define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_SV NULL
+#define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_SV "Varje gång en ny textur används av spelet sparas den som en .png-fil i mappen 'system/dc/texdump/<game-id>/'."
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_SV "Analoga spakens dödzon"
-#define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_INFO_0_SV NULL
+#define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_INFO_0_SV "Välj hur långt du måste flytta på den analoga spaken innan den börjar bearbetas."
 #define OPTION_VAL_0_SV NULL
 #define OPTION_VAL_5_SV NULL
 #define OPTION_VAL_10_SV NULL
@@ -71275,9 +71275,9 @@ struct retro_core_options_v2 options_sr = {
 #define OPTION_VAL_25_SV NULL
 #define OPTION_VAL_30_SV NULL
 #define CORE_OPTION_NAME_TRIGGER_DEADZONE_LABEL_SV "Dödläge för avtryckare"
-#define CORE_OPTION_NAME_TRIGGER_DEADZONE_INFO_0_SV NULL
+#define CORE_OPTION_NAME_TRIGGER_DEADZONE_INFO_0_SV "Välj hur mycket du måste trycka på avtryckaren innan den börjar bearbetas."
 #define CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_SV "Digitala avtryckare"
-#define CORE_OPTION_NAME_DIGITAL_TRIGGERS_INFO_0_SV NULL
+#define CORE_OPTION_NAME_DIGITAL_TRIGGERS_INFO_0_SV "När avtryckare är aktiverade fungerar de som vanliga knappar, vilket innebär att de behandlas som antingen helt intryckta eller inte intryckta alls, utan något mellanting."
 #define CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_SV "Sänd ut digitala utgångar"
 #define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_SV "Sänd digitala utgångar och force-feedbackstatus på TCP-port 8000. Kompatibelt med MAME-alternativet \"-output network\"."
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_SV "Visa ljuspistolinställningar"
@@ -71309,33 +71309,33 @@ struct retro_core_options_v2 options_sr = {
 #define OPTION_VAL_280_O46_SV NULL
 #define OPTION_VAL_290_O46_SV NULL
 #define OPTION_VAL_300_O46_SV NULL
-#define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_SV "Visa pistol hårkorset 1"
+#define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_SV "Visa hårkors för pistol 1"
 #define OPTION_VAL_WHITE_SV "Vit"
 #define OPTION_VAL_RED_SV "Röd"
 #define OPTION_VAL_GREEN_SV "Grön"
 #define OPTION_VAL_BLUE_SV "Blå"
-#define CORE_OPTION_NAME_LIGHTGUN2_CROSSHAIR_LABEL_SV "Visa pistol hårkorset 2"
-#define CORE_OPTION_NAME_LIGHTGUN3_CROSSHAIR_LABEL_SV "Visa pistol hårkorset 3"
-#define CORE_OPTION_NAME_LIGHTGUN4_CROSSHAIR_LABEL_SV "Visa pistol hårkorset 4"
-#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_LABEL_SV NULL
-#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_INFO_0_SV NULL
+#define CORE_OPTION_NAME_LIGHTGUN2_CROSSHAIR_LABEL_SV "Visa hårkors för pistol 2"
+#define CORE_OPTION_NAME_LIGHTGUN3_CROSSHAIR_LABEL_SV "Visa hårkors för pistol 3"
+#define CORE_OPTION_NAME_LIGHTGUN4_CROSSHAIR_LABEL_SV "Visa hårkors för pistol 4"
+#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_LABEL_SV "Enhet i expansionsfack A1"
+#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_INFO_0_SV "Välj den enhet som är ansluten till expansionsfack A1 (port A plats 1)."
 #define OPTION_VAL_VMU_SV NULL
-#define OPTION_VAL_PURUPURU_SV NULL
+#define OPTION_VAL_PURUPURU_SV "Vibrationspaket"
 #define OPTION_VAL_NONE_SV "Ingen"
-#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_LABEL_SV NULL
-#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_INFO_0_SV NULL
-#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT1_LABEL_SV NULL
-#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT1_INFO_0_SV NULL
-#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT2_LABEL_SV NULL
-#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT2_INFO_0_SV NULL
-#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT1_LABEL_SV NULL
-#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT1_INFO_0_SV NULL
-#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT2_LABEL_SV NULL
-#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT2_INFO_0_SV NULL
-#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT1_LABEL_SV NULL
-#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT1_INFO_0_SV NULL
-#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_LABEL_SV NULL
-#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_INFO_0_SV NULL
+#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_LABEL_SV "Enhet i expansionsfack A2"
+#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_INFO_0_SV "Välj den enhet som är ansluten till expansionsfack A2 (port A plats 2)."
+#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT1_LABEL_SV "Enhet i expansionsfack B1"
+#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT1_INFO_0_SV "Välj den enhet som är ansluten till expansionsfack B1 (port B plats 1)."
+#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT2_LABEL_SV "Enhet i expansionsfack B2"
+#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT2_INFO_0_SV "Välj den enhet som är ansluten till expansionsfack B2 (port B plats 2)."
+#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT1_LABEL_SV "Enhet i expansionsfack C1"
+#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT1_INFO_0_SV "Välj den enhet som är ansluten till expansionsfack C1 (port C plats 1)."
+#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT2_LABEL_SV "Enhet i expansionsfack C2"
+#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT2_INFO_0_SV "Välj den enhet som är ansluten till expansionsfack C2 (port C plats 2)."
+#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT1_LABEL_SV "Enhet i expansionsfack D1"
+#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT1_INFO_0_SV "Välj den enhet som är ansluten till expansionsfack D1 (port D plats 1)."
+#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_LABEL_SV "Enhet i expansionsfack D2"
+#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_INFO_0_SV "Välj den enhet som är ansluten till expansionsfack D2 (port D plats 2)."
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_SV "Per-spel visningsminnesenheter/systemer (VMU)"
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CAT_SV "Per-spel VMU:er"
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_SV "När den är inaktiverad delar alla spel upp till 8 VMU-sparfiler (A1/A2/B1/B2/C1/C2/D1/D2) som finns i RetroArchs systemmapp.\nInställningen ”VMU A1” skapar en unik VMU-fil ”A1” i RetroArchs sparmapp för varje spel som startas.\nInställningen ”Alla VMU: er” skapar upp till 8 unika VMU-filer (A1/A2/B1/B2/C1/C2/D1/D2) för varje spel som startas."
@@ -71347,13 +71347,13 @@ struct retro_core_options_v2 options_sr = {
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_SV "Visa inställningar för Visual Memory Unit/System (VMU)-skärmen"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_SV "Visa VMU-skärminställningar"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_SV "Möjliggör konfiguration av emulerad VMU LCD-skärmens synlighet, storlek, position och färg. OBS!: Snabbmenyn kan behöva aktiveras/dras fram för att den här inställningen ska träda i kraft."
-#define CORE_OPTION_NAME_VMU1_SCREEN_DISPLAY_LABEL_SV "Visa VMU skärm 1"
+#define CORE_OPTION_NAME_VMU1_SCREEN_DISPLAY_LABEL_SV "Visa VMU-skärm 1"
 #define CORE_OPTION_NAME_VMU1_SCREEN_POSITION_LABEL_SV "Position för VMU-skärm 1"
 #define OPTION_VAL_UPPER_LEFT_SV "Övre vänstra"
 #define OPTION_VAL_UPPER_RIGHT_SV "Övre högra"
 #define OPTION_VAL_LOWER_LEFT_SV "Nedre vänstra"
 #define OPTION_VAL_LOWER_RIGHT_SV "Nedre högra"
-#define CORE_OPTION_NAME_VMU1_SCREEN_SIZE_MULT_LABEL_SV "VMU skärm 1 Storlek"
+#define CORE_OPTION_NAME_VMU1_SCREEN_SIZE_MULT_LABEL_SV "Storlek för VMU-skärm 1"
 #define OPTION_VAL_1X_SV NULL
 #define OPTION_VAL_3X_SV NULL
 #define OPTION_VAL_5X_SV NULL
