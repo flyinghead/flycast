@@ -129,7 +129,7 @@ vec4 resolveAlphaBlend(ivec2 coords) {
 				srcCoef = vec4(1.0);
 				break;
 			case OTHER_COLOR:
-				srcCoef = finalColor;
+				srcCoef = dstColor;
 				break;
 			case INVERSE_OTHER_COLOR:
 				srcCoef = vec4(1.0) - dstColor;
