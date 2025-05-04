@@ -127,6 +127,11 @@ public:
 	void setPerGameMapping(bool enabled);
 	bool isPerGameMapping() const { return perGameMapping; }
 
+	//! The axis value which causes a button activation (for axis to button mapping) (inclusive)
+	static const int AXIS_ACTIVATION_VALUE = 16384;  // Use 50% deflection as "pressed" threshold
+	//! The axis value which causes a button deactivation (for axis to button mapping) (exclusive)
+	static const int AXIS_DEACTIVATION_VALUE = 8192; // 25% deflection as "released" threshold
+
 protected:
 	GamepadDevice(int maple_port, const char *api_name, bool remappable = true)
 		: _api_name(api_name), _maple_port(maple_port), _input_detected(nullptr), _remappable(remappable),
@@ -160,12 +165,15 @@ protected:
 private:
 	virtual void registered() {}
 	bool handleButtonInput(int port, DreamcastKey key, bool pressed);
+	bool handleButtonInputDef(const InputMapping::InputDef& inputDef, bool pressed);
 	std::string make_mapping_filename(bool instance, int system, bool perGame = false);
 
 	// Track which inputs are currently activated (for button combos)
 	InputMapping::InputSet currentInputs;
 	// Track inputs during the current mapping session
 	InputMapping::InputSet detectionInputs;
+	// Track which keys are currently pressed
+	std::list<DreamcastKey> currentKeys;
 
 	enum DigAnalog {
 		DIGANA_LEFT   = 1 << 0,

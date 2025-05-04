@@ -188,7 +188,7 @@ void DreamLinkGamepad::setBaseDefaultMapping(const std::shared_ptr<InputMapping>
 	u32 startCode = mapping->get_button_code(0, DreamcastKey::DC_BTN_START);
 	if (startCode != InputMapping::InputDef::INVALID_CODE)
 	{
-		mapping->set_combo(DreamcastKey::EMU_BTN_MENU, InputMapping::ButtonCombo{
+		mapping->set_button(DreamcastKey::EMU_BTN_MENU, InputMapping::ButtonCombo{
 			InputMapping::InputSet{
 				InputMapping::InputDef{leftTrigger, InputMapping::InputDef::InputType::AXIS_POS},
 				InputMapping::InputDef{rightTrigger, InputMapping::InputDef::InputType::AXIS_POS},

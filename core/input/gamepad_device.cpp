@@ -153,6 +153,59 @@ bool GamepadDevice::handleButtonInput(int port, DreamcastKey key, bool pressed)
 	return true;
 }
 
+bool GamepadDevice::handleButtonInputDef(const InputMapping::InputDef& inputDef, bool pressed)
+{
+	if (!input_mapper || _maple_port > (int)std::size(kcode))
+		return false;
+
+	bool rc = false;
+
+	// Update button press tracking
+	int targetPort = (_maple_port == 4) ? 0 : _maple_port; // Use port 0 for all-ports mode as a base
+
+	std::list<DreamcastKey> mappedKeys;
+
+	if (pressed)
+	{
+		// Add to triggered inputs
+		currentInputs.insert_back(inputDef);
+
+		// Handle keys activated by this new input
+		mappedKeys = input_mapper->get_button_ids(targetPort, currentInputs);
+		for (const DreamcastKey& key : mappedKeys)
+		{
+			currentKeys.push_back(key);
+		}
+	}
+	else
+	{
+		// Remove from triggered inputs
+		currentInputs.remove(inputDef);
+
+		// Handle keys deactivated by this new input
+		mappedKeys = input_mapper->get_button_released_ids(targetPort, currentKeys, inputDef);
+		for (const DreamcastKey& key : mappedKeys)
+		{
+			currentKeys.remove(key);
+		}
+	}
+
+	for (const DreamcastKey& key : mappedKeys)
+	{
+		if (_maple_port == 4)
+		{
+			for (int port = 0; port < 4; port++)
+				rc = handleButtonInput(port, key, pressed) || rc;
+		}
+		else
+		{
+			rc = handleButtonInput(_maple_port, key, pressed);
+		}
+	}
+
+	return rc;
+}
+
 bool GamepadDevice::gamepad_btn_input(u32 code, bool pressed)
 {
 	InputMapping::InputDef inputDef{code, InputMapping::InputDef::InputType::BUTTON};
@@ -185,50 +238,7 @@ bool GamepadDevice::gamepad_btn_input(u32 code, bool pressed)
 		return true;
 	}
 
-	if (!input_mapper || _maple_port > (int)std::size(kcode))
-		return false;
-
-	bool rc = false;
-
-	// Update button press tracking
-	int targetPort = (_maple_port == 4) ? 0 : _maple_port; // Use port 0 for all-ports mode as a base
-
-	if (pressed)
-	{
-		// Add to triggered inputs
-		currentInputs.insert_back(inputDef);
-		// Handle keys activated by this new input
-		std::list<DreamcastKey> keys = input_mapper->get_combo_ids(targetPort, currentInputs);
-		for (const DreamcastKey& key : keys)
-		{
-			if (_maple_port == 4)
-			{
-				for (int port = 0; port < 4; port++)
-					rc = handleButtonInput(port, key, pressed) || rc;
-			}
-			else
-			{
-				rc = handleButtonInput(_maple_port, key, pressed);
-			}
-		}
-	}
-	else
-	{
-		// Remove from triggered inputs
-		currentInputs.remove(inputDef);
-		DreamcastKey key = input_mapper->get_button_id(targetPort, code);
-		if (_maple_port == 4)
-		{
-			for (int port = 0; port < 4; port++)
-				rc = handleButtonInput(port, key, pressed) || rc;
-		}
-		else
-		{
-			rc = handleButtonInput(_maple_port, key, pressed);
-		}
-	}
-
-	return rc;
+	return handleButtonInputDef(inputDef, pressed);
 }
 
 static DreamcastKey getOppositeAxis(DreamcastKey key)
@@ -265,7 +275,7 @@ bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 
 	if (_input_detected != NULL & getTimeMs() >= _detection_start_time)
 	{
-		if (_detecting_axis && std::abs(value) >= 16384)
+		if (_detecting_axis && std::abs(value) >= AXIS_ACTIVATION_VALUE)
 		{
 			// If we're in combo detection mode, add this axis to tracking but don't end detection
 			if (_detecting_combo)
@@ -284,7 +294,7 @@ bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 			return true;
 		}
 		// When in combo detection, track button releases for axes too
-		else if (_detecting_combo && std::abs(value) < 8192)
+		else if (_detecting_combo && std::abs(value) < AXIS_DEACTIVATION_VALUE)
 		{
 			// If this is an axis we previously detected as pressed, end detection
 			if (detectionInputs.contains(inputDef))
@@ -298,20 +308,6 @@ bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 
 	if (!input_mapper || _maple_port < 0 || _maple_port > 4)
 		return false;
-
-	bool pressed = false;
-	int targetPort = (_maple_port == 4) ? 0 : _maple_port; // Use port 0 for all-ports mode as a base
-
-	// Update axis press tracking for button combinations
-	// We consider an axis "pressed" if its value exceeds a threshold
-	if (std::abs(value) >= 16384) // Use 50% deflection as "pressed" threshold
-	{
-		pressed = currentInputs.insert_back(inputDef);
-	}
-	else if (std::abs(value) < 8192) // Use 25% deflection as "released" threshold
-	{
-		currentInputs.remove(inputDef);
-	}
 
 	auto handle_axis = [&](u32 port, DreamcastKey key, int v)
 	{
@@ -419,7 +415,7 @@ bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 		{
 			//printf("B-AXIS %d Mapped to %d -> %d\n", key, value, v);
 			// TODO hysteresis?
-			int threshold = 16384;
+			int threshold = AXIS_ACTIVATION_VALUE;
 			if (code == leftTrigger || code == rightTrigger )
 				threshold = 100;
 
@@ -432,8 +428,8 @@ bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 		{
 			int lastValue = lastAxisValue[port][key];
 			int newValue = std::abs(v);
-			if ((lastValue < 16384 && newValue >= 16384) || (lastValue >= 16384 && newValue < 16384))
-				handleButtonInput(port, key, newValue >= 16384);
+			if ((lastValue < AXIS_ACTIVATION_VALUE && newValue >= AXIS_ACTIVATION_VALUE) || (lastValue >= AXIS_ACTIVATION_VALUE && newValue < AXIS_ACTIVATION_VALUE))
+				handleButtonInput(port, key, newValue >= AXIS_ACTIVATION_VALUE);
 			lastAxisValue[port][key] = newValue;
 		}
 		else
@@ -452,16 +448,6 @@ bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 			handle_axis(port, key, 0);
 			key = input_mapper->get_axis_id(port, code, positive);
 			rc = handle_axis(port, key, value) || rc;
-
-			if (pressed)
-			{
-				std::list<DreamcastKey> keys = input_mapper->get_combo_ids(port, currentInputs);
-				for (const DreamcastKey& otherKey : keys)
-				{
-					if (otherKey != key)
-						rc = handle_axis(port, otherKey, value) || rc;
-				}
-			}
 		}
 	}
 	else
@@ -471,16 +457,13 @@ bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 		handle_axis(_maple_port, key, 0);
 		key = input_mapper->get_axis_id(0, code, positive);
 		rc = handle_axis(_maple_port, key, value) || rc;
+	}
 
-		if (pressed)
-		{
-			std::list<DreamcastKey> keys = input_mapper->get_combo_ids(0, currentInputs);
-			for (const DreamcastKey& otherKey : keys)
-			{
-				if (otherKey != key)
-					rc = handle_axis(_maple_port, otherKey, value) || rc;
-			}
-		}
+	// Update axis press tracking for button combinations
+	const int absValue = std::abs(value);
+	if (absValue < AXIS_DEACTIVATION_VALUE || absValue >= AXIS_ACTIVATION_VALUE)
+	{
+		rc = handleButtonInputDef(inputDef, (absValue >= AXIS_ACTIVATION_VALUE)) || rc;
 	}
 
 	return rc;

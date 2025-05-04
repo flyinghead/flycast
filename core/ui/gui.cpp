@@ -1065,7 +1065,6 @@ static void unmapControl(const std::shared_ptr<InputMapping>& mapping, u32 gamep
 {
 	mapping->clear_button(gamepad_port, key);
 	mapping->clear_axis(gamepad_port, key);
-	mapping->clear_combo(gamepad_port, key);
 }
 
 static DreamcastKey getOppositeDirectionKey(DreamcastKey key)
@@ -1194,7 +1193,7 @@ static void detect_input_popup(const Mapping *mapping)
 				if (input_mapping != NULL && !mapped_codes.empty())
 				{
 					unmapControl(input_mapping, gamepad_port, mapping->key);
-					input_mapping->set_combo(gamepad_port, mapping->key, InputMapping::ButtonCombo{mapped_codes, true});
+					input_mapping->set_button(gamepad_port, mapping->key, InputMapping::ButtonCombo{mapped_codes, true});
 				}
 
 				// Make sure to cancel input detection to prevent collecting more inputs
@@ -1213,7 +1212,7 @@ static void detect_input_popup(const Mapping *mapping)
 static void displayMappedControl(const std::shared_ptr<GamepadDevice>& gamepad, DreamcastKey key)
 {
 	std::shared_ptr<InputMapping> input_mapping = gamepad->get_input_mapping();
-	InputMapping::ButtonCombo* combo = input_mapping->get_combo_ptr(gamepad_port, key);
+	InputMapping::ButtonCombo* combo = input_mapping->get_button_ptr(gamepad_port, key);
 
 	if (!combo)
 	{

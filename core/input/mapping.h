@@ -182,12 +182,12 @@ public:
 			remove_inverse_axis(val);
 			const_iterator iter = std::find(cbegin(), cend(), val);
 			bool removed = (iter != cend());
-            if (removed)
-            {
-                erase(iter);
-            }
+			if (removed)
+			{
+				erase(iter);
+			}
 			push_back(val);
-            return !removed;
+			return !removed;
 		}
 
 		//! Insert new element to the back, ensuring uniqueness
@@ -197,12 +197,12 @@ public:
 			remove_inverse_axis(val);
 			const_iterator iter = std::find(cbegin(), cend(), val);
 			bool removed = (iter != cend());
-            if (removed)
-            {
-                erase(iter);
-            }
+			if (removed)
+			{
+				erase(iter);
+			}
 			push_back(std::move(val));
-            return !removed;
+			return !removed;
 		}
 
 		//! @return true iff this set contains the given val
@@ -290,7 +290,7 @@ public:
 	//! Number of controller ports there are
 	static constexpr const u32 NUM_PORTS = 4;
 	//! Version 4 adds button combos
-    static constexpr const int CURRENT_FILE_VERSION = 4;
+	static constexpr const int CURRENT_FILE_VERSION = 4;
 
 	std::string name;
 	float dead_zone = 0.1f;
@@ -298,59 +298,67 @@ public:
 	int rumblePower = 100;
 	int version = CURRENT_FILE_VERSION;
 
-	DreamcastKey get_button_id(u32 port, u32 code)
-	{
-		std::list<DreamcastKey> ids = get_combo_ids(port, InputSet{InputDef{code, InputDef::InputType::BUTTON}});
-		if (!ids.empty())
-			return *(ids.begin());
-		else
-			return EMU_BTN_NONE;
-	}
-	void clear_button(u32 port, DreamcastKey id);
-	void set_button(u32 port, DreamcastKey id, u32 code);
-	void set_button(DreamcastKey id, u32 code) { set_button(0, id, code); }
-	u32 get_button_code(u32 port, DreamcastKey key);
-
-	DreamcastKey get_axis_id(u32 port, u32 code, bool pos)
-	{
-		InputDef::InputType type = (pos ? InputDef::InputType::AXIS_POS : InputDef::InputType::AXIS_NEG);
-		std::list<DreamcastKey> ids = get_combo_ids(port, InputSet{InputDef{code, type}});
-		if (!ids.empty())
-			return *(ids.begin());
-		else
-			return EMU_BTN_NONE;
-	}
-	std::pair<u32, bool> get_axis_code(u32 port, DreamcastKey key);
-
-	//! Resolves existing inputs plus a new input into a key from multi-input lookup
+	//! Resolves an ordered set of inputs into keys from multi-input lookup
 	//! @param[in] port The port that the given inputs belong to [0,NUM_PORTS)
 	//! @param[in] inputSet The input set to look for
-	//! @return all keys that should be activated due to the new input (all combos this set ends with)
-	std::list<DreamcastKey> get_combo_ids(u32 port, const InputSet& inputSet) const;
+	//! @return all keys that should be activated due to the given input set (all combos inputSet ends with)
+	std::list<DreamcastKey> get_button_ids(u32 port, const InputSet& inputSet) const;
+
+	//! Resolves currently active keys with a released input into keys that should be released
+	//! @param[in] port The port that the given inputs belong to [0,NUM_PORTS)
+	//! @param[in] activeKeys A list of active keys compiled from get_button_ids()
+	//! @param[in] releasedInput The released input to check for
+	//! @return all keys that should be released due to the released input
+	std::list<DreamcastKey> get_button_released_ids(
+		u32 port,
+		const std::list<DreamcastKey>& activeKeys,
+		const InputDef& releasedInput) const;
 
 	//! Clears combo setting for a given key
 	//! @param[in] port The port [0,NUM_PORTS)
 	//! @param[in] id The key
-	void clear_combo(u32 port, DreamcastKey id);
+	void clear_button(u32 port, DreamcastKey id);
 
 	//! Sets DreamcastKey to a set of inputs
 	//! @param[in] port The port that the id should be mapped [0,NUM_PORTS)
 	//! @param[in] id The key to map
 	//! @param[in] combo Combination of inputs that should activate the key
 	//! @return true iff the combo has been set
-	bool set_combo(u32 port, DreamcastKey id, const ButtonCombo& combo);
-	inline bool set_combo(DreamcastKey id, const ButtonCombo& combo) { return set_combo(0, id, combo); }
+	bool set_button(u32 port, DreamcastKey id, const ButtonCombo& combo);
+	inline bool set_button(DreamcastKey id, const ButtonCombo& combo) { return set_button(0, id, combo); }
+	inline bool set_button(u32 port, DreamcastKey id, u32 buttonCode)
+	{
+		return set_button(0, id, ButtonCombo{InputSet{InputDef{buttonCode, InputDef::InputType::BUTTON}}, false});
+	}
+	inline bool set_button(DreamcastKey id, u32 buttonCode) { return set_button(0, id, buttonCode); }
 
 	//! @param[in] port The port [0,NUM_PORTS)
 	//! @param[in] key The key
 	//! @return the ButtonCombo associated with the given key at the given port
-	ButtonCombo get_combo(u32 port, DreamcastKey key) const;
+	ButtonCombo get_button_combo(u32 port, DreamcastKey key) const;
+
+	//! Get the button code if and only if the given key is mapped to a single code
+	//! @param[in] port The port [0,NUM_PORTS)
+	//! @param[in] key The key
+	//! @return the button code for the given key if found
+	//! @return InputDef::INVALID_CODE if multiple inputs are mapped to this key or none are mapped
+	u32 get_button_code(u32 port, DreamcastKey key) const;
 
 	//! @param[in] port The port [0,NUM_PORTS)
 	//! @param[in] key The key
 	//! @return pointer to the ButtonCombo associated with the given key at the given port if found
 	//! @return nullptr otherwise
-	ButtonCombo* get_combo_ptr(u32 port, DreamcastKey key);
+	ButtonCombo* get_button_ptr(u32 port, DreamcastKey key);
+
+	DreamcastKey get_axis_id(u32 port, u32 code, bool pos)
+	{
+		auto it = axes[port].find(std::make_pair(code, pos));
+		if (it != axes[port].end())
+			return it->second;
+		else
+			return EMU_AXIS_NONE;
+	}
+	std::pair<u32, bool> get_axis_code(u32 port, DreamcastKey key);
 
 	void clear_axis(u32 port, DreamcastKey id);
 	void set_axis(u32 port, DreamcastKey id, u32 code, bool positive);
@@ -373,6 +381,8 @@ protected:
 
 private:
 	void loadv1(emucfg::ConfigFile& mf);
+
+	std::map<std::pair<u32, bool>, DreamcastKey> axes[NUM_PORTS];
 
 	//! Maps an DreamcastKey to one or more inputs that need to be activated
 	std::map<DreamcastKey, ButtonCombo> multiEmuButtonMap[NUM_PORTS];
