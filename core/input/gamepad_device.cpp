@@ -168,25 +168,27 @@ bool GamepadDevice::handleButtonInputDef(const InputMapping::InputDef& inputDef,
 	if (pressed)
 	{
 		// Add to triggered inputs
-		currentInputs.insert_back(inputDef);
-
-		// Handle keys activated by this new input
-		mappedKeys = input_mapper->get_button_ids(targetPort, currentInputs);
-		for (const DreamcastKey& key : mappedKeys)
+		if (currentInputs.insert_back(inputDef))
 		{
-			currentKeys.push_back(key);
+			// Handle keys activated by this new input
+			mappedKeys = input_mapper->get_button_ids(targetPort, currentInputs);
+			for (const DreamcastKey& key : mappedKeys)
+			{
+				currentKeys.push_back(key);
+			}
 		}
 	}
 	else
 	{
 		// Remove from triggered inputs
-		currentInputs.remove(inputDef);
-
-		// Handle keys deactivated by this new input
-		mappedKeys = input_mapper->get_button_released_ids(targetPort, currentKeys, inputDef);
-		for (const DreamcastKey& key : mappedKeys)
+		if (currentInputs.remove(inputDef) > 0)
 		{
-			currentKeys.remove(key);
+			// Handle keys deactivated by this new input
+			mappedKeys = input_mapper->get_button_released_ids(targetPort, currentKeys, inputDef);
+			for (const DreamcastKey& key : mappedKeys)
+			{
+				currentKeys.remove(key);
+			}
 		}
 	}
 
@@ -456,7 +458,7 @@ bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 		// Reset opposite axis to 0
 		handle_axis(_maple_port, key, 0);
 		key = input_mapper->get_axis_id(0, code, positive);
-		rc = handle_axis(_maple_port, key, value) || rc;
+		rc = handle_axis(_maple_port, key, value);
 	}
 
 	// Update axis press tracking for button combinations

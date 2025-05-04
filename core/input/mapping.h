@@ -174,20 +174,19 @@ public:
 			}
 		}
 
-		//! Insert new element to the back, ensuring uniqueness
+		//! Insert new element to the back only if it doesn't already exist in the set
 		//! @param[in] val The value to insert at the back
 		//! @return true iff new item inserted
 		inline bool insert_back(const InputMapping::InputDef& val)
 		{
 			remove_inverse_axis(val);
 			const_iterator iter = std::find(cbegin(), cend(), val);
-			bool removed = (iter != cend());
-			if (removed)
+			if (iter == cend())
 			{
-				erase(iter);
+				push_back(val);
+				return true;
 			}
-			push_back(val);
-			return !removed;
+			return false;
 		}
 
 		//! Insert new element to the back, ensuring uniqueness
@@ -196,13 +195,27 @@ public:
 		{
 			remove_inverse_axis(val);
 			const_iterator iter = std::find(cbegin(), cend(), val);
-			bool removed = (iter != cend());
-			if (removed)
+			if (iter == cend())
+			{
+				push_back(std::move(val));
+				return true;
+			}
+			return false;
+		}
+
+		//! Removes all elements that match val
+		//! @param[in] val The value to remove
+		//! @return number of elements removed (normally 0 or 1)
+		inline std::size_t remove(const InputMapping::InputDef& val)
+		{
+			std::size_t removedCount = 0;
+			const_iterator iter;
+			while ((iter = std::find(cbegin(), cend(), val)) != cend())
 			{
 				erase(iter);
+				++removedCount;
 			}
-			push_back(std::move(val));
-			return !removed;
+			return removedCount;
 		}
 
 		//! @return true iff this set contains the given val
