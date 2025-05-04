@@ -876,7 +876,7 @@ bool InputMapping::save(const std::string& name)
 	{
 		for (const auto& pair : multiEmuButtonMap[port])
 		{
-			if (pair.second.inputs.size() != 1 || !pair.second.inputs.begin()->is_button())
+			if (pair.second.inputs.size() != 1)
 				continue;
 			if (pair.first == EMU_BTN_NONE)
 				continue;
@@ -918,7 +918,7 @@ bool InputMapping::save(const std::string& name)
 		for (const auto& pair : multiEmuButtonMap[port])
 		{
 			if (pair.second.inputs.size() == 1)
-				continue; // Already covered above
+				continue; // Already covered by digital bind
 			if (pair.first == EMU_BTN_NONE)
 				continue;
 			const char *keyName = getKeyName(pair.first);
