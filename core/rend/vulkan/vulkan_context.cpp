@@ -42,6 +42,7 @@ VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 #endif
 
 #include <memory>
+#include <set>
 #include <vulkan/vulkan_format_traits.hpp>
 
 void ReInitOSD();
