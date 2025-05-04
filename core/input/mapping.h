@@ -189,7 +189,7 @@ public:
 			return false;
 		}
 
-		//! Insert new element to the back, ensuring uniqueness
+		//! Insert new element to the back only if it doesn't already exist in the set
 		//! @param[in,out] val The value to insert at the back (move operation)
 		inline bool insert_back(InputMapping::InputDef&& val)
 		{
