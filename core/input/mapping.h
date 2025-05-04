@@ -208,12 +208,6 @@ public:
 	//! @return InputDef::INVALID_CODE if multiple inputs are mapped to this key or none are mapped
 	u32 get_button_code(u32 port, DreamcastKey key) const;
 
-	//! @param[in] port The port [0,NUM_PORTS)
-	//! @param[in] key The key
-	//! @return pointer to the ButtonCombo associated with the given key at the given port if found
-	//! @return nullptr otherwise
-	ButtonCombo* get_button_ptr(u32 port, DreamcastKey key);
-
 	inline DreamcastKey get_axis_id(u32 port, u32 code, bool pos)
 	{
 		auto it = axes[port].find(std::make_pair(code, pos));

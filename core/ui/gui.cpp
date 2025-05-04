@@ -1212,9 +1212,9 @@ static void detect_input_popup(const Mapping *mapping)
 static void displayMappedControl(const std::shared_ptr<GamepadDevice>& gamepad, DreamcastKey key)
 {
 	std::shared_ptr<InputMapping> input_mapping = gamepad->get_input_mapping();
-	InputMapping::ButtonCombo* combo = input_mapping->get_button_ptr(gamepad_port, key);
+	InputMapping::ButtonCombo combo = input_mapping->get_button_combo(gamepad_port, key);
 
-	if (!combo || combo->inputs.empty())
+	if (combo.inputs.empty())
 	{
 		// Try axis
 		std::pair<u32, bool> pair = input_mapping->get_axis_code(gamepad_port, key);
@@ -1228,7 +1228,7 @@ static void displayMappedControl(const std::shared_ptr<GamepadDevice>& gamepad, 
 	{
 		// Display button combination in "Button1 & Button2 & ..." format
 		bool first = true;
-		for (const InputMapping::InputDef& inputDef : combo->inputs)
+		for (const InputMapping::InputDef& inputDef : combo.inputs)
 		{
 			if (!first)
 			{
@@ -1251,9 +1251,15 @@ static void displayMappedControl(const std::shared_ptr<GamepadDevice>& gamepad, 
 			first = false;
 		}
 
-		if (combo->inputs.size() > 1)
+		if (combo.inputs.size() > 1)
 		{
-			ImGui::Checkbox("Sequential", &(combo->sequential));
+			const bool oldSequential = combo.sequential;
+			ImGui::Checkbox("Sequential", &(combo.sequential));
+			if (oldSequential != combo.sequential)
+			{
+				// Update mapping with updated combo settings
+				input_mapping->set_button(gamepad_port, key, combo);
+			}
 			ImGui::SameLine();
 			ShowHelpMarker(
 				"When checked, this combo will only activate when all keys are pressed in the given sequence.\n"

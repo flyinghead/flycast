@@ -763,26 +763,6 @@ u32 InputMapping::get_button_code(u32 port, DreamcastKey key) const
 	return InputDef::INVALID_CODE;
 }
 
-InputMapping::ButtonCombo* InputMapping::get_button_ptr(u32 port, DreamcastKey key)
-{
-	if (port >= NUM_PORTS)
-	{
-		// Invalid port
-		return nullptr;
-	}
-
-	std::map<DreamcastKey, ButtonCombo>& inputMap = multiEmuButtonMap[port];
-	std::map<DreamcastKey, ButtonCombo>::iterator iter = inputMap.find(key);
-
-	if (iter != inputMap.end())
-	{
-		return &(iter->second);
-	}
-
-	// Not found
-	return nullptr;
-}
-
 void InputMapping::ClearMappings()
 {
 	loaded_mappings.clear();
