@@ -1214,38 +1214,41 @@ static void displayMappedControl(const std::shared_ptr<GamepadDevice>& gamepad, 
 	std::shared_ptr<InputMapping> input_mapping = gamepad->get_input_mapping();
 	InputMapping::ButtonCombo* combo = input_mapping->get_button_ptr(gamepad_port, key);
 
-	if (!combo)
+	if (!combo || combo->inputs.empty())
 	{
-		// Not found
+		// Try axis
+		std::pair<u32, bool> pair = input_mapping->get_axis_code(gamepad_port, key);
+		u32 code = pair.first;
+		if (code != InputMapping::InputDef::INVALID_CODE)
+		{
+			displayLabelOrCode(gamepad->get_axis_name(code), code, pair.second ? "+" : "-");
+		}
 		return;
 	}
 
-	if (!combo->inputs.empty())
+	// Display button combination in "Button1 & Button2 & ..." format
+	bool first = true;
+	for (const InputMapping::InputDef& inputDef : combo->inputs)
 	{
-		// Display button combination in "Button1 & Button2 & ..." format
-		bool first = true;
-		for (const InputMapping::InputDef& inputDef : combo->inputs)
+		if (!first)
 		{
-			if (!first)
-			{
-				ImGui::SameLine();
-				ImGui::Text("&");
-				ImGui::SameLine();
-			}
-
-			const char* name = nullptr;
-			if (inputDef.is_button())
-			{
-				name = gamepad->get_button_name(inputDef.code);
-			}
-			else if (inputDef.is_axis())
-			{
-				name = gamepad->get_axis_name(inputDef.code);
-			}
-
-			displayLabelOrCode(name, inputDef.code, inputDef.get_suffix());
-			first = false;
+			ImGui::SameLine();
+			ImGui::Text("&");
+			ImGui::SameLine();
 		}
+
+		const char* name = nullptr;
+		if (inputDef.is_button())
+		{
+			name = gamepad->get_button_name(inputDef.code);
+		}
+		else if (inputDef.is_axis())
+		{
+			name = gamepad->get_axis_name(inputDef.code);
+		}
+
+		displayLabelOrCode(name, inputDef.code, inputDef.get_suffix());
+		first = false;
 	}
 
 	if (combo->inputs.size() > 1)
