@@ -538,6 +538,10 @@ void CheatManager::reset(const std::string& gameId)
 			cheats.emplace_back(Cheat::Type::runNextIfEq, "bypass auth ifeq", true, 32, 0x00800524, 0x2fd62fe6, true);
 			cheats.emplace_back(Cheat::Type::setValue, "bypass dricas auth", true, 32, 0x00800524, 0xe000000b, true);
 		}
+		else if (gameId == "T40214N") {		// The Next Tetris (US)
+			cheats.emplace_back(Cheat::Type::runNextIfEq, "bypass speed ifeq", true, 32, 0x0016d5d4, 0x2f862fe6, true);
+			cheats.emplace_back(Cheat::Type::setValue, "bypass speed check", true, 32, 0x0016d5d4, 0xe001000b, true);
+		}
 
 		if (cheats.size() > cheatCount)
 			setActive(true);
