@@ -120,6 +120,217 @@ axis_list[] =
 
 };
 
+//
+// InputDef
+//
+
+u64 InputMapping::InputDef::get_hash() const
+{
+	return (static_cast<u64>(type) << 32) | code;
+}
+
+bool InputMapping::InputDef::operator<(const InputDef& rhs) const
+{
+	return (get_hash() < rhs.get_hash());
+}
+
+bool InputMapping::InputDef::operator==(const InputDef& rhs) const
+{
+	return (get_hash() == rhs.get_hash());
+}
+
+bool InputMapping::InputDef::operator!=(const InputDef& rhs) const
+{
+	return (get_hash() != rhs.get_hash());
+}
+
+bool InputMapping::InputDef::is_button() const
+{
+	return (type == InputType::BUTTON);
+}
+
+bool InputMapping::InputDef::is_axis() const
+{
+	return (type == InputType::AXIS_POS || type == InputType::AXIS_NEG);
+}
+
+bool InputMapping::InputDef::is_valid() const
+{
+	return (code != INVALID_CODE && (is_button() || is_axis()));
+}
+
+const char* InputMapping::InputDef::get_suffix() const
+{
+	if (type == InputType::AXIS_POS)
+	{
+		return "+";
+	}
+	else if (type == InputType::AXIS_NEG)
+	{
+		return "-";
+	}
+
+	// Assume button otherwise
+	return "";
+}
+
+std::string InputMapping::InputDef::to_str() const
+{
+	return std::to_string(code) + std::string(get_suffix());
+}
+
+InputMapping::InputDef InputMapping::InputDef::from_str(const std::string& str)
+{
+	InputDef inputDef;
+	if (!str.empty())
+	{
+		std::string tmp = str;
+		if (tmp.back() == '+')
+		{
+			inputDef.type = InputType::AXIS_POS;
+			tmp.erase(tmp.size() - 1);
+		}
+		else if (tmp.back() == '-')
+		{
+			inputDef.type = InputType::AXIS_NEG;
+			tmp.erase(tmp.size() - 1);
+		}
+		else
+		{
+			inputDef.type = InputType::BUTTON;
+		}
+
+		try
+		{
+			inputDef.code = std::stoul(tmp);
+		}
+		catch (const std::exception&)
+		{
+			inputDef.code = INVALID_CODE;
+		}
+	}
+	return inputDef;
+}
+
+InputMapping::InputDef InputMapping::InputDef::from_button(u32 code)
+{
+	return InputDef{code, InputType::BUTTON};
+}
+
+InputMapping::InputDef InputMapping::InputDef::from_axis(u32 code, bool positive)
+{
+	return InputDef{code, positive ? InputType::AXIS_POS : InputType::AXIS_NEG};
+}
+
+//
+// InputSet
+//
+
+InputMapping::InputSet::InputSet() : std::list<InputDef>() {}
+
+InputMapping::InputSet::InputSet(std::initializer_list<value_type> l) : std::list<InputDef>()
+{
+	// Do insert_back of each to ensure uniqueness
+	for (const auto& x : l)
+	{
+		insert_back(x);
+	}
+}
+
+bool InputMapping::InputSet::insert_back(const InputMapping::InputDef& val)
+{
+	remove_inverse_axis(val);
+	const_iterator iter = std::find(cbegin(), cend(), val);
+	if (iter == cend())
+	{
+		push_back(val);
+		return true;
+	}
+	return false;
+}
+
+bool InputMapping::InputSet::insert_back(InputMapping::InputDef&& val)
+{
+	remove_inverse_axis(val);
+	const_iterator iter = std::find(cbegin(), cend(), val);
+	if (iter == cend())
+	{
+		push_back(std::move(val));
+		return true;
+	}
+	return false;
+}
+
+std::size_t InputMapping::InputSet::remove(const InputMapping::InputDef& val)
+{
+	std::size_t removedCount = 0;
+	const_iterator iter;
+	while ((iter = std::find(cbegin(), cend(), val)) != cend())
+	{
+		erase(iter);
+		++removedCount;
+	}
+	return removedCount;
+}
+
+bool InputMapping::InputSet::contains(const InputMapping::InputDef& val) const
+{
+	return (std::find(cbegin(), cend(), val) != cend());
+}
+
+bool InputMapping::InputSet::ends_with(const InputSet& rhs, bool sequential) const
+{
+	InputSet::const_reverse_iterator iter = crbegin();
+
+	if (sequential)
+	{
+		InputSet::const_reverse_iterator riter = rhs.crbegin();
+
+		for (; iter != crend() && riter != rhs.crend(); ++iter, ++riter)
+		{
+			if (*iter != *riter)
+			{
+				break;
+			}
+		}
+
+		return (riter == rhs.crend());
+	}
+	else
+	{
+		std::size_t foundCount = 0;
+		for (; iter != crend(); ++iter)
+		{
+			if (std::find(rhs.begin(), rhs.end(), *iter) != rhs.end())
+			{
+				++foundCount;
+			}
+			else
+			{
+				break;
+			}
+		}
+
+		return (foundCount == rhs.size());
+	}
+}
+
+void InputMapping::InputSet::remove_inverse_axis(const InputMapping::InputDef& val)
+{
+	if (val.is_axis())
+	{
+		InputMapping::InputDef::InputType inversetype(
+			val.type == InputMapping::InputDef::InputType::AXIS_POS
+			? InputMapping::InputDef::InputType::AXIS_NEG
+			: InputMapping::InputDef::InputType::AXIS_POS);
+		remove(InputMapping::InputDef{val.code, inversetype});
+	}
+}
+
+//
+// InputMapping
+//
+
 std::map<std::string, std::shared_ptr<InputMapping>> InputMapping::loaded_mappings;
 
 void InputMapping::clear_axis(u32 port, DreamcastKey id)

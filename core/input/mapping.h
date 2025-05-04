@@ -54,108 +54,40 @@ public:
 		InputType type = InputType::BUTTON;
 
 		//! Creates a 1:1 hash which uniquely identifies this input
-		inline u64 get_hash() const
-		{
-			return (static_cast<u64>(type) << 32) | code;
-		}
+		u64 get_hash() const;
 
 		//! @return true iff this InputType is less than rhs
-		inline bool operator<(const InputDef& rhs) const
-		{
-			return (get_hash() < rhs.get_hash());
-		}
+		bool operator<(const InputDef& rhs) const;
 
 		//! @return true iff this InputType is equivalent to rhs
-		inline bool operator==(const InputDef& rhs) const
-		{
-			return (get_hash() == rhs.get_hash());
-		}
+		bool operator==(const InputDef& rhs) const;
 
 		//! @return true iff this InputType is not equivalent to rhs
-		inline bool operator!=(const InputDef& rhs) const
-		{
-			return (get_hash() != rhs.get_hash());
-		}
+		bool operator!=(const InputDef& rhs) const;
 
 		//! @return true iff this InputType is a button
-		inline bool is_button() const
-		{
-			return (type == InputType::BUTTON);
-		}
+		bool is_button() const;
 
 		//! @return true iff this InputType is an axis
-		inline bool is_axis() const
-		{
-			return (type == InputType::AXIS_POS || type == InputType::AXIS_NEG);
-		}
+		bool is_axis() const;
 
 		//! @return true iff this input definition is valid
-		inline bool is_valid() const
-		{
-			return (code != INVALID_CODE && (is_button() || is_axis()));
-		}
-
-		//! @return true iff this InputType is an axis, rhs is an axis, and axis codes are equivalent
-		inline bool axis_equivalent(const InputDef& rhs)
-		{
-			return (code == rhs.code && is_axis() && rhs.is_axis());
-		}
+		bool is_valid() const;
 
 		//! @return the suffix for this InputDef which signifies the type
-		inline const char* get_suffix() const
-		{
-			if (type == InputType::AXIS_POS)
-			{
-				return "+";
-			}
-			else if (type == InputType::AXIS_NEG)
-			{
-				return "-";
-			}
-
-			// Assume button otherwise
-			return "";
-		}
+		const char* get_suffix() const;
 
 		//! @return the string equivalent to this InputDef
-		inline std::string to_str() const
-		{
-			return std::to_string(code) + std::string(get_suffix());
-		}
+		std::string to_str() const;
 
 		//! Converts a string to an InputDef
-		static inline InputDef from_str(const std::string& str)
-		{
-			InputDef inputDef;
-			if (!str.empty())
-			{
-				std::string tmp = str;
-				if (tmp.back() == '+')
-				{
-					inputDef.type = InputType::AXIS_POS;
-					tmp.erase(tmp.size() - 1);
-				}
-				else if (tmp.back() == '-')
-				{
-					inputDef.type = InputType::AXIS_NEG;
-					tmp.erase(tmp.size() - 1);
-				}
-				else
-				{
-					inputDef.type = InputType::BUTTON;
-				}
+		static InputDef from_str(const std::string& str);
 
-				try
-				{
-					inputDef.code = std::stoul(tmp);
-				}
-				catch (const std::exception&)
-				{
-					inputDef.code = INVALID_CODE;
-				}
-			}
-			return inputDef;
-		}
+		//! Converts a button code to an InputDef
+		static InputDef from_button(u32 code);
+
+		//! Converts an axis code plus direction to an InputDef
+		static InputDef from_axis(u32 code, bool positive);
 	};
 
 	//! A group of inputs used to link to multiple keys to a function.
@@ -163,104 +95,29 @@ public:
 	class InputSet : public std::list<InputDef>
 	{
 	public:
-		inline InputSet() : std::list<InputDef>() {}
+		InputSet();
 
-		explicit inline InputSet(std::initializer_list<value_type> l) : std::list<InputDef>()
-		{
-			// Do insert_back of each to ensure uniqueness
-			for (const auto& x : l)
-			{
-				insert_back(x);
-			}
-		}
+		explicit InputSet(std::initializer_list<value_type> l);
 
 		//! Insert new element to the back only if it doesn't already exist in the set
 		//! @param[in] val The value to insert at the back
 		//! @return true iff new item inserted
-		inline bool insert_back(const InputMapping::InputDef& val)
-		{
-			remove_inverse_axis(val);
-			const_iterator iter = std::find(cbegin(), cend(), val);
-			if (iter == cend())
-			{
-				push_back(val);
-				return true;
-			}
-			return false;
-		}
+		bool insert_back(const InputMapping::InputDef& val);
 
 		//! Insert new element to the back only if it doesn't already exist in the set
 		//! @param[in,out] val The value to insert at the back (move operation)
-		inline bool insert_back(InputMapping::InputDef&& val)
-		{
-			remove_inverse_axis(val);
-			const_iterator iter = std::find(cbegin(), cend(), val);
-			if (iter == cend())
-			{
-				push_back(std::move(val));
-				return true;
-			}
-			return false;
-		}
+		bool insert_back(InputMapping::InputDef&& val);
 
 		//! Removes all elements that match val
 		//! @param[in] val The value to remove
 		//! @return number of elements removed (normally 0 or 1)
-		inline std::size_t remove(const InputMapping::InputDef& val)
-		{
-			std::size_t removedCount = 0;
-			const_iterator iter;
-			while ((iter = std::find(cbegin(), cend(), val)) != cend())
-			{
-				erase(iter);
-				++removedCount;
-			}
-			return removedCount;
-		}
+		std::size_t remove(const InputMapping::InputDef& val);
 
 		//! @return true iff this set contains the given val
-		inline bool contains(const InputMapping::InputDef& val) const
-		{
-			return (std::find(cbegin(), cend(), val) != cend());
-		}
+		bool contains(const InputMapping::InputDef& val) const;
 
 		//! @return true if this InputSet ends with the given rhs
-		inline bool ends_with(const InputSet& rhs, bool sequential) const
-		{
-			InputSet::const_reverse_iterator iter = crbegin();
-
-			if (sequential)
-			{
-				InputSet::const_reverse_iterator riter = rhs.crbegin();
-
-				for (; iter != crend() && riter != rhs.crend(); ++iter, ++riter)
-				{
-					if (*iter != *riter)
-					{
-						break;
-					}
-				}
-
-				return (riter == rhs.crend());
-			}
-			else
-			{
-				std::size_t foundCount = 0;
-				for (; iter != crend(); ++iter)
-				{
-					if (std::find(rhs.begin(), rhs.end(), *iter) != rhs.end())
-					{
-						++foundCount;
-					}
-					else
-					{
-						break;
-					}
-				}
-
-				return (foundCount == rhs.size());
-			}
-		}
+		bool ends_with(const InputSet& rhs, bool sequential) const;
 
 	private:
 		// Make push functionality private
@@ -268,27 +125,21 @@ public:
 		using std::list<InputDef>::push_front;
 
 		//! Removes inverse axis value if val is an axis
-		void remove_inverse_axis(const InputMapping::InputDef& val)
-		{
-			if (val.is_axis())
-			{
-				InputMapping::InputDef::InputType inversetype(
-					val.type == InputMapping::InputDef::InputType::AXIS_POS
-					? InputMapping::InputDef::InputType::AXIS_NEG
-					: InputMapping::InputDef::InputType::AXIS_POS);
-				remove(InputMapping::InputDef{val.code, inversetype});
-			}
-		}
+		void remove_inverse_axis(const InputMapping::InputDef& val);
 	};
 
+	//! Contains all settings for a button combination
 	struct ButtonCombo
 	{
+		//! The set of inputs that make up a button combination
 		InputSet inputs;
+		//! Set to true if the above input set must be pressed in the given sequence to activate the combo.
+		//! Set to false if all of the buttons may be pressed in any sequence to activate the combo.
 		bool sequential = true;
 	};
 
 	InputMapping() = default;
-	InputMapping(const InputMapping& other) {
+	inline InputMapping(const InputMapping& other) {
 		name = other.name;
 		dead_zone = other.dead_zone;
 		saturation = other.saturation;
@@ -363,7 +214,7 @@ public:
 	//! @return nullptr otherwise
 	ButtonCombo* get_button_ptr(u32 port, DreamcastKey key);
 
-	DreamcastKey get_axis_id(u32 port, u32 code, bool pos)
+	inline DreamcastKey get_axis_id(u32 port, u32 code, bool pos)
 	{
 		auto it = axes[port].find(std::make_pair(code, pos));
 		if (it != axes[port].end())

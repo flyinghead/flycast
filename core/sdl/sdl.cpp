@@ -324,8 +324,7 @@ void input_sdl_handle()
 				if (event.key.repeat == 0)
 				{
 					auto is_key_mapped = [](u32 code) -> bool {
-						const InputMapping::InputDef inputDef{code, InputMapping::InputDef::InputType::BUTTON};
-						const InputMapping::InputSet inputSet{inputDef};
+						const InputMapping::InputSet inputSet{InputMapping::InputDef::from_button(code)};
 #if defined(_WIN32) && !defined(TARGET_UWP)
 						if (config::UseRawInput)
 						{

@@ -210,7 +210,7 @@ bool GamepadDevice::handleButtonInputDef(const InputMapping::InputDef& inputDef,
 
 bool GamepadDevice::gamepad_btn_input(u32 code, bool pressed)
 {
-	InputMapping::InputDef inputDef{code, InputMapping::InputDef::InputType::BUTTON};
+	const InputMapping::InputDef inputDef = InputMapping::InputDef::from_button(code);
 
 	// When detecting input for button mapping
 	if (_input_detected != nullptr && _detecting_button
@@ -269,11 +269,9 @@ static DreamcastKey getOppositeAxis(DreamcastKey key)
 //
 bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 {
-	bool positive = value >= 0;
-	InputMapping::InputDef inputDef{
-		code,
-		(positive ? InputMapping::InputDef::InputType::AXIS_POS : InputMapping::InputDef::InputType::AXIS_NEG)
-	};
+	const bool positive = value >= 0;
+	const InputMapping::InputDef inputDef = InputMapping::InputDef::from_axis(code, positive);
+	const InputMapping::InputDef inverseInputDef = InputMapping::InputDef::from_axis(code, !positive);
 
 	if (_input_detected != NULL & getTimeMs() >= _detection_start_time)
 	{
@@ -465,6 +463,8 @@ bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 	const int absValue = std::abs(value);
 	if (absValue < AXIS_DEACTIVATION_VALUE || absValue >= AXIS_ACTIVATION_VALUE)
 	{
+		// Reset opposite axis to 0
+		rc = handleButtonInputDef(inverseInputDef, false) || rc;
 		rc = handleButtonInputDef(inputDef, (absValue >= AXIS_ACTIVATION_VALUE)) || rc;
 	}
 
