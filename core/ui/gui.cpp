@@ -1193,7 +1193,17 @@ static void detect_input_popup(const Mapping *mapping)
 				if (input_mapping != NULL && !mapped_codes.empty())
 				{
 					unmapControl(input_mapping, gamepad_port, mapping->key);
-					input_mapping->set_button(gamepad_port, mapping->key, InputMapping::ButtonCombo{mapped_codes, true});
+					if ((mapping->key & (DC_AXIS_TRIGGERS | DC_AXIS_STICKS)) != 0)
+					{
+						// Single axis to single input mapping
+						const InputMapping::InputDef& axisInputDef = mapped_codes.front();
+						const bool positive = (axisInputDef.type == InputMapping::InputDef::InputType::AXIS_POS);
+						input_mapping->set_axis(gamepad_port, mapping->key, axisInputDef.code, positive);
+					}
+					else
+					{
+						input_mapping->set_button(gamepad_port, mapping->key, InputMapping::ButtonCombo{mapped_codes, true});
+					}
 				}
 
 				// Make sure to cancel input detection to prevent collecting more inputs
@@ -1463,8 +1473,11 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 				mapped_device = gamepad;
 				mapped_codes.clear();  // Clear previous button codes
 
-				// Set up a callback to collect button presses during the 5-second window
-				gamepad->detectButtonOrAxisInput([](u32 code, bool analog, bool positive)
+				// Don't detect combos for axes
+				const bool detectCombo = ((systemMapping->key & (DC_AXIS_TRIGGERS | DC_AXIS_STICKS)) == 0);
+
+				// Setup a callback to collect button/axes presses
+				gamepad->detectInput(true, true, detectCombo, [](u32 code, bool analog, bool positive)
 				{
 					if (analog)
 					{

@@ -45,6 +45,7 @@ public:
 	void detect_btn_input(input_detected_cb button_pressed);
 	void detect_axis_input(input_detected_cb axis_moved);
 	void detectButtonOrAxisInput(input_detected_cb input_changed);
+	void detectInput(bool button, bool axis, bool combo, input_detected_cb input_changed);
 	void cancel_detect_input() {
 		_input_detected = nullptr;
 		_detecting_button = false;

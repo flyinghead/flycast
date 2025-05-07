@@ -599,30 +599,30 @@ static void updateVibration(u32 port, float power, float inclination, u32 durati
 
 void GamepadDevice::detect_btn_input(input_detected_cb button_pressed)
 {
-	_input_detected = button_pressed;
-	_detecting_button = true;
-	_detecting_axis = false;
-	_detection_start_time = getTimeMs() + 200;
-	detectionInputs.clear();
+	detectInput(true, false, false, button_pressed);
 }
 
 void GamepadDevice::detect_axis_input(input_detected_cb axis_moved)
 {
-	_input_detected = axis_moved;
-	_detecting_button = false;
-	_detecting_axis = true;
-	_detection_start_time = getTimeMs() + 200;
-	detectionInputs.clear();
+	detectInput(false, true, false, axis_moved);
 }
 
 void GamepadDevice::detectButtonOrAxisInput(input_detected_cb input_changed)
 {
-	_input_detected = input_changed;
-	_detecting_button = true;
-	_detecting_axis = true;
-	_detection_start_time = getTimeMs() + 200;
-	_detecting_combo = true;
-	detectionInputs.clear();
+	detectInput(true, true, true, input_changed);
+}
+
+void GamepadDevice::detectInput(bool button, bool axis, bool combo, input_detected_cb input_changed)
+{
+	if (button || axis || combo)
+	{
+		_input_detected = input_changed;
+		_detecting_button = button;
+		_detecting_axis = axis;
+		_detecting_combo = combo;
+		_detection_start_time = getTimeMs() + 200;
+		detectionInputs.clear();
+	}
 }
 
 #ifdef TEST_AUTOMATION
