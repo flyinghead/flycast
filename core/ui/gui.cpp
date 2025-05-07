@@ -330,8 +330,6 @@ void applyDreamcastTheme()
 	style.Colors[ImGuiCol_TableBorderLight] = ImVec4(0.00f, 0.50f, 0.80f, 0.70f);  // Brighter borders (some transparency ok)
 	style.Colors[ImGuiCol_TableRowBg] = ImVec4(0.05f, 0.07f, 0.10f, 1.00f);     // Same as window bg
 	style.Colors[ImGuiCol_TableRowBgAlt] = ImVec4(0.10f, 0.12f, 0.15f, 1.00f);  // Slightly lighter for alt rows
-
-
 }
 
 void applyHighContrastTheme()
@@ -564,6 +562,25 @@ void applySoftTheme()
 	style.FrameBorderSize = 0.0f;
 }
 
+// Add the common function before gui_initFonts
+void applyCurrentTheme()
+{
+	if (config::UITheme == 0)
+		applyDarkTheme();
+	else if (config::UITheme == 1)
+		applyLightTheme();
+	else if (config::UITheme == 2)
+		applyDreamcastTheme();
+	else if (config::UITheme == 3)
+		applyHighContrastTheme();
+	else if (config::UITheme == 4)
+		applyNintendoTheme();      // Fixed ordering - was High Contrast
+	else if (config::UITheme == 5)
+		applySoftTheme();          // New "Aqua Chill" theme
+	else
+		applyDarkTheme();
+}
+
 void gui_initFonts()
 {
 	static float uiScale;
@@ -574,7 +591,7 @@ void gui_initFonts()
 #if !defined(TARGET_UWP) && !defined(__SWITCH__)
 	settings.display.uiScale = std::max(1.f, settings.display.dpi / 100.f * 0.75f);
    	// Limit scaling on small low-res screens
-    if (settings.display.width <= 640 || settings.display.height <= 480)
+	if (settings.display.width <= 640 || settings.display.height <= 480)
     	settings.display.uiScale = std::min(1.2f, settings.display.uiScale);
 #endif
     settings.display.uiScale *= config::UIScaling / 100.f;
@@ -584,20 +601,10 @@ void gui_initFonts()
 
     // Setup Dear ImGui style
 	ImGui::GetStyle() = ImGuiStyle{};
-    if (config::UITheme == 0)
-		applyDarkTheme();
-	else if (config::UITheme == 1)
-		applyLightTheme();
-	else if (config::UITheme == 2)
-		applyDreamcastTheme();
-	else if (config::UITheme == 3)
-		applyHighContrastTheme();  // Fixed ordering - was Nintendo
-	else if (config::UITheme == 4)
-		applyNintendoTheme();      // Fixed ordering - was High Contrast
-	else if (config::UITheme == 5)
-		applySoftTheme();          // New "Aqua Chill" theme
-	else
-		applyDarkTheme(); // Default fallback
+    
+    // Apply the current theme
+    applyCurrentTheme();
+    
     ImGui::GetStyle().TabRounding = 5.0f;
     ImGui::GetStyle().FrameRounding = 3.0f;
     ImGui::GetStyle().ItemSpacing = ImVec2(8, 8);		// from 8,4
@@ -718,7 +725,7 @@ void gui_initFonts()
 	const float largeFontSize = uiScaled(21.f);
 	largeFont = io.Fonts->AddFontFromMemoryTTF(data.release(), dataSize, largeFontSize, nullptr, ranges);
 
-    NOTICE_LOG(RENDERER, "Screen DPI is %.0f, size %d x %d. Scaling by %.2f", settings.display.dpi, settings.display.width, settings.display.height, settings.display.uiScale);
+	NOTICE_LOG(RENDERER, "Screen DPI is %.0f, size %d x %d. Scaling by %.2f", settings.display.dpi, settings.display.width, settings.display.height, settings.display.uiScale);
 	vgamepad::applyUiScale();
 }
 
@@ -2263,25 +2270,12 @@ static void gui_settings_general()
 			"Select the UI color theme.");
 	// Auto-apply theme when selection changes
 	if (previousUITheme != config::UITheme) {
-		if (config::UITheme == 0)
-			applyDarkTheme();
-		else if (config::UITheme == 1)
-			applyLightTheme();
-		else if (config::UITheme == 2)
-			applyDreamcastTheme();
-		else if (config::UITheme == 3)
-			applyHighContrastTheme();
-		else if (config::UITheme == 4)
-			applyNintendoTheme();
-		else if (config::UITheme == 5)
-			applySoftTheme();
-		else
-			applyDarkTheme(); // Default fallback
+		applyCurrentTheme();
 	}
 
 	if (OptionCheckbox("Hide Legacy Naomi Roms", config::HideLegacyNaomiRoms,
 			"Hide .bin, .dat and .lst files from the content browser"))
-			scanner.refresh();
+		scanner.refresh();
 #ifdef __ANDROID__
 	OptionCheckbox("Use SAF File Picker", config::UseSafFilePicker,
 			"Use Android Storage Access Framework file picker to select folders and files. Ignored on Android 10 and later.");
