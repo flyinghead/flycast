@@ -25,6 +25,7 @@
 #include <set>
 #include <memory>
 #include <list>
+#include <vector>
 #include <limits>
 
 namespace emucfg {
@@ -239,6 +240,7 @@ protected:
 
 private:
 	void loadv1(emucfg::ConfigFile& mf);
+	static std::vector<std::string> strSplit(const std::string str, char c, size_t maxsplit = 0);
 
 	std::map<std::pair<u32, bool>, DreamcastKey> axes[NUM_PORTS];
 

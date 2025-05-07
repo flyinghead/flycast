@@ -460,50 +460,37 @@ void InputMapping::load(FILE* fp)
 		while (true)
 		{
 			std::string s = mf.get("combo", "bind" + std::to_string(bindIndex++), "");
-			size_t colon = s.find(':');
-			if (colon == std::string::npos || colon < 2)
+			if (s.empty())
+				break;
+			std::vector<std::string> parts = strSplit(s, ':', 3);
+			if (parts.size() < 2)
 			{
 				WARN_LOG(INPUT, "Invalid bind entry: %s", s.c_str());
 				break;
 			}
-			size_t secondColon = s.find(':', colon + 1);
-			if (secondColon == std::string::npos)
-			{
-				secondColon = s.size();
-			}
-			std::string codeStr = s.substr(0, colon);
+			const std::string& codeStr = parts[0];
 			InputSet inputs;
-			size_t start = 0, end = 0;
-			while ((end = codeStr.find(',', start)) != std::string::npos)
-			{
-				inputs.insert_back(InputDef::from_str(codeStr.substr(start, end - start)));
-				start = end + 1;
-			}
-			inputs.insert_back(InputDef::from_str(codeStr.substr(start)));
 			bool allValid = true;
-			for (const InputDef& inputDef : inputs)
+			for (const std::string& inputStr : strSplit(codeStr, ','))
 			{
+				InputDef inputDef = InputDef::from_str(inputStr);
 				if (!inputDef.is_valid())
 				{
 					allValid = false;
 					break;
 				}
+				inputs.insert_back(inputDef);
 			}
-			if (inputs.empty() || !allValid)
-			{
-				WARN_LOG(INPUT, "Invalid bind entry: %s", s.c_str());
-				break;
-			}
-			std::string key = s.substr(colon + 1, secondColon - colon - 1);
-			if (key.empty())
+			std::string key = parts[1];
+			if (inputs.empty() || !allValid || key.empty())
 			{
 				WARN_LOG(INPUT, "Invalid bind entry: %s", s.c_str());
 				break;
 			}
 			bool sequential = true;
-			if (secondColon != s.size())
+			if (parts.size() > 2)
 			{
-				std::string seqStr = s.substr(secondColon + 1);
+				const std::string& seqStr = parts[2];
 				try
 				{
 					sequential = (std::stoul(seqStr) != 0);
@@ -942,4 +929,33 @@ void InputMapping::DeleteMapping(const std::string& name)
 {
 	loaded_mappings.erase(name);
 	std::remove(get_writable_config_path(std::string("mappings/") + name).c_str());
+}
+
+std::vector<std::string> InputMapping::strSplit(const std::string str, char c, size_t maxsplit)
+{
+	std::vector<std::string> out;
+	if (maxsplit > 0)
+	{
+		out.reserve(maxsplit + 1);
+	}
+
+	size_t pos = 0;
+	size_t count = 0;
+	while (maxsplit == 0 || count < maxsplit)
+	{
+		size_t nextPos = str.find(c, pos);
+		if (nextPos == std::string::npos)
+		{
+			out.push_back(str.substr(pos));
+			return out;
+		}
+
+		out.push_back(str.substr(pos, nextPos - pos));
+		pos = nextPos + 1;
+		++count;
+	}
+
+	out.push_back(str.substr(pos));
+
+	return out;
 }
