@@ -1479,12 +1479,10 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 				{
 					if (analog)
 					{
-						// For analog inputs - only store a single axis
 						mapped_codes.insert_back(InputMapping::InputDef::from_axis(code, positive));
 					}
 					else
 					{
-						// For buttons - build a combination
 						mapped_codes.insert_back(InputMapping::InputDef::from_button(code));
 					}
 				});

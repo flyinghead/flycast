@@ -487,6 +487,13 @@ void InputMapping::load(FILE* fp)
 				WARN_LOG(INPUT, "Invalid bind entry: %s", s.c_str());
 				break;
 			}
+			int port = 0;
+			if (key[key.size() - 1] >= '1' && key[key.size() - 1] <= '3')
+			{
+				port = key[key.size() - 1] - '0';
+				key = key.substr(0, key.size() - 1);
+			}
+			DreamcastKey id = getKeyId(key);
 			bool sequential = true;
 			if (parts.size() > 2)
 			{
@@ -500,13 +507,6 @@ void InputMapping::load(FILE* fp)
 					sequential = true;
 				}
 			}
-			int port = 0;
-			if (key[key.size() - 1] >= '1' && key[key.size() - 1] <= '3')
-			{
-				port = key[key.size() - 1] - '0';
-				key = key.substr(0, key.size() - 1);
-			}
-			DreamcastKey id = getKeyId(key);
 			set_button(port, id, ButtonCombo{inputs, sequential});
 		}
 	}
