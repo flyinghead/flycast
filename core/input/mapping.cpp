@@ -462,6 +462,8 @@ void InputMapping::load(FILE* fp)
 			std::string s = mf.get("combo", "bind" + std::to_string(bindIndex++), "");
 			if (s.empty())
 				break;
+			// Parse for 1 more colon than what is needed for forward compatibility
+			// (third colon and everything after it is ignored)
 			std::vector<std::string> parts = strSplit(s, ':', 3);
 			if (parts.size() < 2)
 			{
