@@ -1055,8 +1055,6 @@ static MapleDeviceType maple_expansion_device_type_from_index(int idx)
 
 static std::shared_ptr<GamepadDevice> mapped_device;
 static InputMapping::InputSet mapped_codes;  // Stores multiple buttons in the order they were entered
-static bool analogAxis;
-static bool positiveDirection;
 static u64 map_start_time;
 static bool arcade_button_mode;
 static u32 gamepad_port;
@@ -1193,9 +1191,9 @@ static void detect_input_popup(const Mapping *mapping)
 				if (input_mapping != NULL && !mapped_codes.empty())
 				{
 					unmapControl(input_mapping, gamepad_port, mapping->key);
-					if ((mapping->key & (DC_AXIS_TRIGGERS | DC_AXIS_STICKS)) != 0)
+					if (mapped_codes.size() == 1 && mapped_codes.front().is_axis())
 					{
-						// Single axis to single input mapping
+						// Single axis mapping
 						const InputMapping::InputDef& axisInputDef = mapped_codes.front();
 						const bool positive = (axisInputDef.type == InputMapping::InputDef::InputType::AXIS_POS);
 						input_mapping->set_axis(gamepad_port, mapping->key, axisInputDef.code, positive);
@@ -1483,14 +1481,11 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 					{
 						// For analog inputs - only store a single axis
 						mapped_codes.insert_back(InputMapping::InputDef::from_axis(code, positive));
-						analogAxis = true;
-						positiveDirection = positive;
 					}
 					else
 					{
 						// For buttons - build a combination
 						mapped_codes.insert_back(InputMapping::InputDef::from_button(code));
-						analogAxis = false;
 					}
 				});
 			}
