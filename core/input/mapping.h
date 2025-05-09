@@ -137,6 +137,12 @@ public:
 		//! Set to true if the above input set must be pressed in the given sequence to activate the combo.
 		//! Set to false if all of the buttons may be pressed in any sequence to activate the combo.
 		bool sequential = true;
+
+		//! @return true iff this ButtonCombo is less than rhs
+		bool operator<(const ButtonCombo& rhs) const;
+
+		//! @return true iff this ButtonCombo is equal to or has an intersection with rhs
+		bool intersects(const ButtonCombo& rhs) const;
 	};
 
 	InputMapping() = default;
@@ -147,8 +153,9 @@ public:
 		rumblePower = other.rumblePower;
 		for (int port = 0; port < 4; port++)
 		{
-			multiEmuButtonMap[port] = other.multiEmuButtonMap[port];
-			reverseMultiEmuButtonMap[port] = other.reverseMultiEmuButtonMap[port];
+			axes[port] = other.axes[port];
+			buttonMap[port] = other.buttonMap[port];
+			reverseButtonMap[port] = other.reverseButtonMap[port];
 		}
 	}
 
@@ -167,14 +174,14 @@ public:
 	//! @param[in] port The port that the given inputs belong to [0,NUM_PORTS)
 	//! @param[in] inputSet The input set to look for
 	//! @return all keys that should be activated due to the given input set (all combos inputSet ends with)
-	std::list<DreamcastKey> get_button_ids(u32 port, const InputSet& inputSet) const;
+	DreamcastKey get_button_id(u32 port, const InputSet& inputSet) const;
 
 	//! Resolves currently active keys with a released input into keys that should be released
 	//! @param[in] port The port that the given inputs belong to [0,NUM_PORTS)
-	//! @param[in] activeKeys A list of active keys compiled from get_button_ids()
+	//! @param[in] activeKeys A list of active keys compiled from get_button_id()
 	//! @param[in] releasedInput The released input to check for
 	//! @return all keys that should be released due to the released input
-	std::list<DreamcastKey> get_button_released_ids(
+	DreamcastKey get_button_released_id(
 		u32 port,
 		const std::list<DreamcastKey>& activeKeys,
 		const InputDef& releasedInput) const;
@@ -244,10 +251,10 @@ private:
 
 	std::map<std::pair<u32, bool>, DreamcastKey> axes[NUM_PORTS];
 
-	//! Maps an DreamcastKey to one or more inputs that need to be activated
-	std::map<DreamcastKey, ButtonCombo> multiEmuButtonMap[NUM_PORTS];
-	//! Maps an input to one or more DreamcastKeys which that input is tied to
-	std::multimap<InputDef, DreamcastKey> reverseMultiEmuButtonMap[NUM_PORTS];
+	//! ButtonCombo -> DreamcastKey
+	std::map<ButtonCombo, DreamcastKey> buttonMap[NUM_PORTS];
+	//! DreamcastKey -> ButtonCombo
+	std::map<DreamcastKey, ButtonCombo> reverseButtonMap[NUM_PORTS];
 
 	static std::map<std::string, std::shared_ptr<InputMapping>> loaded_mappings;
 };

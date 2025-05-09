@@ -333,7 +333,7 @@ void input_sdl_handle()
 								auto gamepad = GamepadDevice::GetGamepad(i);
 								if (dynamic_cast<rawinput::RawKeyboard*>(gamepad.get()) != nullptr)
 								{
-									bool mapped = !(gamepad->get_input_mapping()->get_button_ids(0, inputSet).empty());
+									bool mapped = (gamepad->get_input_mapping()->get_button_id(0, inputSet) != EMU_BTN_NONE);
 									if (mapped) return true;
 								}
 							}
@@ -342,7 +342,7 @@ void input_sdl_handle()
 						else
 #endif
 						{
-							return !(sdl_keyboard->get_input_mapping()->get_button_ids(0, inputSet).empty());
+							return (sdl_keyboard->get_input_mapping()->get_button_id(0, inputSet) != EMU_BTN_NONE);
 						}
 					};
 					if (event.type == SDL_KEYDOWN)

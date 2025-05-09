@@ -1261,7 +1261,7 @@ static void displayMappedControl(const std::shared_ptr<GamepadDevice>& gamepad, 
 
 		if (combo.inputs.size() > 1)
 		{
-			if (ImGui::Checkbox("Sequential", &(combo.sequential)));
+			if (ImGui::Checkbox("Sequential", &(combo.sequential)))
 			{
 				// Update mapping with updated combo settings
 				input_mapping->set_button(gamepad_port, key, combo);
