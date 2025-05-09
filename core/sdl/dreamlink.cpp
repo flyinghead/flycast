@@ -166,27 +166,29 @@ void DreamLinkGamepad::handleEvent(Event event, void *arg)
 void DreamLinkGamepad::resetMappingToDefault(bool arcade, bool gamepad) {
 	SDLGamepad::resetMappingToDefault(arcade, gamepad);
 	if (input_mapper) {
-		setBaseDefaultMapping(input_mapper);
 		if (dreamlink) {
 			dreamlink->setDefaultMapping(input_mapper);
 		}
+		setBaseDefaultMapping(input_mapper);
 	}
 }
 
 std::shared_ptr<InputMapping> DreamLinkGamepad::getDefaultMapping() {
 	std::shared_ptr<InputMapping> mapping = SDLGamepad::getDefaultMapping();
 	if (mapping) {
-		setBaseDefaultMapping(mapping);
 		if (dreamlink) {
 			dreamlink->setDefaultMapping(mapping);
 		}
+		setBaseDefaultMapping(mapping);
 	}
 	return mapping;
 }
 
 void DreamLinkGamepad::setBaseDefaultMapping(const std::shared_ptr<InputMapping>& mapping) const {
-	u32 startCode = mapping->get_button_code(0, DreamcastKey::DC_BTN_START);
-	if (startCode != InputMapping::InputDef::INVALID_CODE)
+	u32 startCode = mapping->get_button_code(maple_port(), DreamcastKey::DC_BTN_START);
+	if (leftTrigger != InputMapping::InputDef::INVALID_CODE &&
+		rightTrigger != InputMapping::InputDef::INVALID_CODE &&
+		startCode != InputMapping::InputDef::INVALID_CODE)
 	{
 		mapping->set_button(DreamcastKey::EMU_BTN_MENU, InputMapping::ButtonCombo{
 			InputMapping::InputSet{
