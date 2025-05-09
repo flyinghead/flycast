@@ -141,6 +141,12 @@ public:
 		//! @return true iff this ButtonCombo is less than rhs
 		bool operator<(const ButtonCombo& rhs) const;
 
+		//! @return true iff this ButtonCombo is equivalent to rhs
+		bool operator==(const ButtonCombo& rhs) const;
+
+		//! @return true iff this ButtonCombo is not equivalent to rhs
+		bool operator!=(const ButtonCombo& rhs) const;
+
 		//! @return true iff this ButtonCombo is equal to or has an intersection with rhs
 		bool intersects(const ButtonCombo& rhs) const;
 	};

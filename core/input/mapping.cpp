@@ -141,7 +141,7 @@ bool InputMapping::InputDef::operator==(const InputDef& rhs) const
 
 bool InputMapping::InputDef::operator!=(const InputDef& rhs) const
 {
-	return (get_hash() != rhs.get_hash());
+	return !(*this == rhs);
 }
 
 bool InputMapping::InputDef::is_button() const
@@ -337,16 +337,28 @@ bool InputMapping::ButtonCombo::operator<(const ButtonCombo& rhs) const
 	return inputs < rhs.inputs;
 }
 
+bool InputMapping::ButtonCombo::operator==(const ButtonCombo& rhs) const
+{
+	return (inputs == rhs.inputs && sequential == rhs.sequential);
+}
+
+bool InputMapping::ButtonCombo::operator!=(const ButtonCombo& rhs) const
+{
+	return !(*this == rhs);
+}
+
 bool InputMapping::ButtonCombo::intersects(const ButtonCombo& rhs) const
 {
 	if (!sequential || !rhs.sequential)
 	{
-		if (inputs.ends_with(rhs.inputs, false) && rhs.inputs.ends_with(inputs, false))
-		{
-			return true;
-		}
+		// Return true iff both sets contain the same elements
+		return (inputs.size() == rhs.inputs.size() && inputs.ends_with(rhs.inputs, false));
 	}
-	return false;
+	else
+	{
+		// Return true iff exactly matching
+		return *this == rhs;
+	}
 }
 
 //
