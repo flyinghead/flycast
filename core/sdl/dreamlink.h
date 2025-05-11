@@ -129,17 +129,15 @@ public:
 
 	void set_maple_port(int port) override;
 	void registered() override;
-	bool gamepad_btn_input(u32 code, bool pressed) override;
-	bool gamepad_axis_input(u32 code, int value) override;
 	static bool isDreamcastController(int deviceIndex);
 	void resetMappingToDefault(bool arcade, bool gamepad) override;
 
 protected:
 	std::shared_ptr<InputMapping> getDefaultMapping() override;
+	void setBaseDefaultMapping(const std::shared_ptr<InputMapping>& mapping) const;
 
 private:
 	static void handleEvent(Event event, void *arg);
-	void checkKeyCombo();
 
 	std::shared_ptr<DreamLink> dreamlink;
 	bool ltrigPressed = false;
