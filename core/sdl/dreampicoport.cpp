@@ -726,6 +726,10 @@ void DreamPicoPort::setDefaultMapping(const std::shared_ptr<InputMapping>& mappi
 	mapping->set_button(DC_BTN_C, 2);
 	mapping->set_button(DC_BTN_Z, 5);
 	mapping->set_button(DC_BTN_D, 10);
+	mapping->set_button(DC_DPAD2_UP, 9);
+	mapping->set_button(DC_DPAD2_DOWN, 8);
+	mapping->set_button(DC_DPAD2_LEFT, 7);
+	mapping->set_button(DC_DPAD2_RIGHT, 6);
 }
 
 std::string DreamPicoPort::getUniqueId() const {
