@@ -726,6 +726,33 @@ void DreamPicoPort::setDefaultMapping(const std::shared_ptr<InputMapping>& mappi
 	mapping->set_button(DC_BTN_C, 2);
 	mapping->set_button(DC_BTN_Z, 5);
 	mapping->set_button(DC_BTN_D, 10);
+	mapping->set_button(DC_DPAD2_UP, 9);
+	mapping->set_button(DC_DPAD2_DOWN, 8);
+	mapping->set_button(DC_DPAD2_LEFT, 7);
+	mapping->set_button(DC_DPAD2_RIGHT, 6);
+}
+
+const char *DreamPicoPort::getButtonName(u32 code) const {
+	switch (code) {
+		// Coincides with buttons setup in setDefaultMapping
+		case 2: return "C";
+		case 5: return "Z";
+		case 10: return "D";
+		case 9: return "DPad2 Up";
+		case 8: return "DPad2 Down";
+		case 7: return "DPad2 Left";
+		case 6: return "DPad2 Right";
+
+		// These buttons are normally not physically accessible, but are mapped on DreamPicoPort
+		case 12: return "VMU1 A";
+		case 15: return "VMU1 B";
+		case 16: return "VMU1 Up";
+		case 17: return "VMU1 Down";
+		case 18: return "VMU1 Left";
+		case 19: return "VMU1 Right";
+
+		default: return nullptr; // no override
+	}
 }
 
 std::string DreamPicoPort::getUniqueId() const {

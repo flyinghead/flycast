@@ -89,6 +89,8 @@ public:
 
 	void setDefaultMapping(const std::shared_ptr<InputMapping>& mapping) const override;
 
+	const char *getButtonName(u32 code) const override;
+
 	std::string getUniqueId() const override;
 
 	void changeBus(int newBus);
