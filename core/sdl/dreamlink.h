@@ -100,6 +100,22 @@ public:
 	virtual void setDefaultMapping(const std::shared_ptr<InputMapping>& mapping) const {
 	}
 
+	//! Allows button names to be defined by a DreamLink device
+	//! @param[in] code The button code to retrieve name of
+	//! @return the button name for the given code to override what is defined by the gamepad
+	//! @return nullptr to fall back to gamepad definitions
+	virtual const char *getButtonName(u32 code) const {
+		return nullptr;
+	}
+
+	//! Allows axis names to be defined by a DreamLink device
+	//! @param[in] code The axis code to retrieve name of
+	//! @return the axis name for the given code to override what is defined by the gamepad
+	//! @return nullptr to fall back to gamepad definitions
+	virtual const char *getAxisName(u32 code) const {
+		return nullptr;
+	}
+
 	//! @return a unique ID for this DreamLink device or empty string to use default
 	virtual std::string getUniqueId() const {
 		return std::string();
@@ -133,6 +149,8 @@ public:
 	bool gamepad_axis_input(u32 code, int value) override;
 	static bool isDreamcastController(int deviceIndex);
 	void resetMappingToDefault(bool arcade, bool gamepad) override;
+	const char *get_button_name(u32 code) override;
+	const char *get_axis_name(u32 code) override;
 
 protected:
 	std::shared_ptr<InputMapping> getDefaultMapping() override;

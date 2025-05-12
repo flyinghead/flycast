@@ -205,6 +205,25 @@ void DreamLinkGamepad::resetMappingToDefault(bool arcade, bool gamepad) {
 		dreamlink->setDefaultMapping(input_mapper);
 	}
 }
+const char *DreamLinkGamepad::get_button_name(u32 code) {
+	if (dreamlink) {
+		const char* name = dreamlink->getButtonName(code);
+		if (name) {
+			return name;
+		}
+	}
+	return SDLGamepad::get_button_name(code);
+}
+
+const char *DreamLinkGamepad::get_axis_name(u32 code) {
+	if (dreamlink) {
+		const char* name = dreamlink->getAxisName(code);
+		if (name) {
+			return name;
+		}
+	}
+	return SDLGamepad::get_axis_name(code);
+}
 
 std::shared_ptr<InputMapping> DreamLinkGamepad::getDefaultMapping() {
 	std::shared_ptr<InputMapping> mapping = SDLGamepad::getDefaultMapping();
@@ -242,6 +261,12 @@ bool DreamLinkGamepad::gamepad_axis_input(u32 code, int value) {
 }
 void DreamLinkGamepad::resetMappingToDefault(bool arcade, bool gamepad) {
 	SDLGamepad::resetMappingToDefault(arcade, gamepad);
+}
+const char *DreamLinkGamepad::get_button_name(u32 code) {
+	return SDLGamepad::get_button_name(code);
+}
+const char *DreamLinkGamepad::get_axis_name(u32 code) {
+	return SDLGamepad::get_axis_name(code);
 }
 std::shared_ptr<InputMapping> DreamLinkGamepad::getDefaultMapping() {
 	return SDLGamepad::getDefaultMapping();
