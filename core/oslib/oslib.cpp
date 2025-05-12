@@ -194,6 +194,25 @@ std::string getTextureLoadPath(const std::string& gameId)
 		return "";
 }
 
+std::string getCustomBoxartPath()
+{
+#ifdef __ANDROID__
+	extern std::string getAndroidContentDirectory();
+	std::string androidPath = getAndroidContentDirectory();
+	if (!androidPath.empty())
+	{
+		std::string contentPath = androidPath + "/custom-boxart/";
+		if (!file_exists(contentPath))
+			make_directory(contentPath);
+		return contentPath;
+	}
+#endif
+	std::string path = get_writable_data_path("custom-boxart/");
+	if (!file_exists(path))
+		make_directory(path);
+	return path;
+}
+
 std::string getTextureDumpPath()
 {
 	return get_writable_data_path("texdump/");

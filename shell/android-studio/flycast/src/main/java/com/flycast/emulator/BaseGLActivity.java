@@ -188,8 +188,11 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
         pathList.addAll(FileBrowser.getExternalMounts());
         pathList.add(getApplicationContext().getFilesDir().getAbsolutePath());
         File dir= getApplicationContext().getExternalFilesDir(null);
-        if (dir != null)
+        if (dir != null) {
             pathList.add(dir.getAbsolutePath());
+            // Set content directory for custom boxart
+            storage.setContentDirectory(dir.getAbsolutePath());
+        }
         Log.i("flycast", "Storage dirs: " + pathList);
         if (storage != null)
             storage.setStorageDirectories(pathList);
@@ -450,6 +453,13 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
                 break;
             case AndroidStorage.IMPORT_HOME_ACTIVITY_REQUEST:
                 storage.onImportHomeResult(data);
+                // After importing, reload the boxart database to recognize custom boxart
+                if (resultCode == RESULT_OK) {
+                    // Delay slightly to ensure file operations complete
+                    new android.os.Handler().postDelayed(() -> {
+                        storage.reloadBoxartDatabase();
+                    }, 1000);
+                }
                 break;
             case AndroidStorage.EXPORT_HOME_ACTIVITY_REQUEST:
                 storage.onExportHomeResult(data);

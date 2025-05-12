@@ -287,3 +287,13 @@ extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_AndroidStorage_reloa
 		config::RendererType = render;
 	}
 }
+
+extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_AndroidStorage_reloadBoxartDatabase(JNIEnv *env)
+{
+	// Force reload of boxart database to pick up custom boxart 
+	// that may have been imported
+	extern class Boxart boxart;
+	// Clear the loaded flag to force reloading the database
+	boxart = Boxart();
+	INFO_LOG(COMMON, "Boxart database reloaded");
+}

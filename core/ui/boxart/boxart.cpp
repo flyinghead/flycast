@@ -23,8 +23,53 @@
 #include "cfg/option.h"
 #include <chrono>
 
+GameBoxart Boxart::checkCustomBoxart(const GameMedia& media)
+{
+	GameBoxart boxart;
+	std::string gameName = media.fileName;
+	
+	// Remove file extension if present
+	size_t lastdot = gameName.find_last_of('.');
+	if (lastdot != std::string::npos)
+		gameName = gameName.substr(0, lastdot);
+
+	std::string customBoxartPath = getCustomBoxartDirectory() + gameName + ".png";
+	if (file_exists(customBoxartPath))
+	{
+		boxart.fileName = media.fileName;
+		boxart.gamePath = media.path;
+		boxart.name = media.name;
+		boxart.searchName = media.gameName;
+		boxart.boxartPath = customBoxartPath;
+		boxart.scraped = true;
+		return boxart;
+	}
+
+	// Also check for other common image formats
+	customBoxartPath = getCustomBoxartDirectory() + gameName + ".jpg";
+	if (file_exists(customBoxartPath))
+	{
+		boxart.fileName = media.fileName;
+		boxart.gamePath = media.path;
+		boxart.name = media.name;
+		boxart.searchName = media.gameName;
+		boxart.boxartPath = customBoxartPath;
+		boxart.scraped = true;
+		return boxart;
+	}
+
+	// If we made it here, no custom boxart was found
+	return boxart;
+}
+
 GameBoxart Boxart::getBoxart(const GameMedia& media)
 {
+	// First check for custom boxart
+	GameBoxart customBoxart = checkCustomBoxart(media);
+	if (!customBoxart.boxartPath.empty())
+		return customBoxart;
+
+	// Fall back to database boxart
 	loadDatabase();
 	GameBoxart boxart;
 	{
@@ -38,6 +83,11 @@ GameBoxart Boxart::getBoxart(const GameMedia& media)
 
 GameBoxart Boxart::getBoxartAndLoad(const GameMedia& media)
 {
+	// First check for custom boxart
+	GameBoxart customBoxart = checkCustomBoxart(media);
+	if (!customBoxart.boxartPath.empty())
+		return customBoxart;
+
 	loadDatabase();
 	GameBoxart boxart;
 	{

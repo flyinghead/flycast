@@ -501,11 +501,35 @@ std::string getFilesPath()
 
 void dc_exit()
 {
-	settings.content.path.clear();
-	if (g_activity != nullptr)
-	{
-		JNIEnv *env = jni::env();
-		jmethodID finishAffinity = env->GetMethodID(env->GetObjectClass(g_activity), "finishAffinity", "()V");
-		jni::env()->CallVoidMethod(g_activity, finishAffinity);
-	}
+    //Kill maple
+    //Sockets
+    //Threads
+
+    flycast_term();
+
+    if (g_jvm)
+    {
+        jni::JVMAttacher attacher;
+        if (g_activity != nullptr)
+        {
+            jni::env()->CallVoidMethod(g_activity, onGameStateChangeMid, false);
+            jni::env()->DeleteGlobalRef(g_activity);
+            g_activity = nullptr;
+        }
+    }
+    game_started = false;
+}
+
+// Content directory for custom boxart on Android
+static std::string android_content_directory;
+
+extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_AndroidStorage_setContentDirectory(JNIEnv *env, jobject obj, jstring path)
+{
+    android_content_directory = jni::String(path, false).to_string();
+    INFO_LOG(COMMON, "Setting Android content directory: %s", android_content_directory.c_str());
+}
+
+std::string getAndroidContentDirectory()
+{
+    return android_content_directory;
 }

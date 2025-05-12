@@ -58,6 +58,7 @@ namespace hostfs
 	std::string getSavestatePath(int index, bool writable);
 
 	std::string getTextureLoadPath(const std::string& gameId);
+	std::string getCustomBoxartPath();
 	std::string getTextureDumpPath();
 
 	std::string getShaderCachePath(const std::string& filename);

@@ -176,17 +176,36 @@ public class HomeMover {
                     if (!wrapper.exists(to))
                         to = wrapper.mkdir(toParent, name);
 
+                    // Add special handling for custom_boxart directory
+                    boolean isCustomBoxart = name.equals("custom_boxart");
+                    if (isCustomBoxart) {
+                        Log.d("flycast", "Copying custom_boxart folder from: " + from + " to: " + to);
+                    }
+
                     FileInfo[] files = wrapper.listContent(from);
                     incrementMaxProgress(files.length);
                     for (FileInfo file : files)
                     {
                         if (migrationThreadCancelled)
                             break;
-                        if (!file.isDirectory())
+                        if (!file.isDirectory()) {
+                            if (isCustomBoxart) {
+                                Log.d("flycast", "Copying custom boxart file: " + file.name + " from: " + file.path + " to: " + to);
+                            }
                             copyFile(file.path, file.name, to);
+                        }
                         else
                             copyDir(file.path, to, file.getName());
                         incrementProgress(1);
+                    }
+                    
+                    // Verify custom_boxart files were copied successfully
+                    if (isCustomBoxart) {
+                        Log.d("flycast", "Verifying custom boxart files in: " + to);
+                        FileInfo[] boxartFiles = wrapper.listContent(to);
+                        for (FileInfo file : boxartFiles) {
+                            Log.d("flycast", "Custom boxart file exists: " + file.name + " at " + file.path);
+                        }
                     }
                 } catch (Exception e) {
                     Log.e("flycast", "Error copying folder " + from, e);

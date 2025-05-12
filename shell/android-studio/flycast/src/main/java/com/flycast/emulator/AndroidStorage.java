@@ -631,10 +631,16 @@ public class AndroidStorage {
         HomeMover mover = new HomeMover(activity, this);
         mover.setReloadConfigOnCompletion(true);
         mover.copyHome(uri.toString(), activity.getExternalFilesDir(null).toURI().toString(), "Importing home folder");
+        
+        // Log that we need to manually trigger boxart reloading through JNI
+        Log.d("flycast", "Home directory imported, will reload boxart database");
     }
 
+    public native void reloadBoxartDatabase();
+
     public boolean requiresSafFilePicker() {
-        // Android 10+ requires ASS
-        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q;
+        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT && !Environment.isExternalStorageEmulated() && !Environment.isExternalStorageRemovable();
     }
+
+    public native void setContentDirectory(String path);
 }
