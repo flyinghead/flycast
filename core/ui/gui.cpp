@@ -2802,7 +2802,7 @@ static void gui_settings_network()
 			OptionCheckbox("Broadband Adapter Emulation", config::EmulateBBA,
 					"Emulate the Ethernet Broadband Adapter (BBA) instead of the Modem");
 		}
-		OptionCheckbox("Use DCNet (Experimental)", config::UseDCNet, "Connect to the experimental DCNet cloud service.");
+		OptionCheckbox("Use DCNet", config::UseDCNet, "Use the DCNet cloud service for Dreamcast Internet access.");
 		ImGui::InputText("ISP User Name", &config::ISPUsername.get(), ImGuiInputTextFlags_CharsNoBlank | ImGuiInputTextFlags_CallbackCharFilter,
 				[](ImGuiInputTextCallbackData *data) { return static_cast<int>(data->EventChar <= ' ' || data->EventChar > '~'); }, nullptr);
 		ImGui::SameLine();

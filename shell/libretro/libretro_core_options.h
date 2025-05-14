@@ -221,7 +221,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       CORE_OPTION_NAME "_emulate_bba",
       "Broadband Adapter Emulation",
       NULL,
-      "Emulate the ethernet broadband adapter instead of the modem. (Restart Required)",
+      "Emulate the Ethernet broadband adapter instead of the modem. (Restart Required)",
       NULL,
       "system",
       {
@@ -247,9 +247,9 @@ struct retro_core_option_v2_definition option_defs_us[] = {
    },
    {
       CORE_OPTION_NAME "_dcnet",
-      "Use DCNet (Experimental)",
+      "Use DCNet",
       NULL,
-      "Connect to the experimental DCNet cloud service.",
+      "Use the DCNet cloud service for Dreamcast Internet access.",
       NULL,
       "system",
       {
