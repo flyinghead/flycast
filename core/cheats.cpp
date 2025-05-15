@@ -542,6 +542,18 @@ void CheatManager::reset(const std::string& gameId)
 			cheats.emplace_back(Cheat::Type::runNextIfEq, "bypass speed ifeq", true, 32, 0x0016d5d4, 0x2f862fe6, true);
 			cheats.emplace_back(Cheat::Type::setValue, "bypass speed check", true, 32, 0x0016d5d4, 0xe001000b, true);
 		}
+		else if (gameId == "MK-51065") {	// Bomberman Online
+			cheats.emplace_back(Cheat::Type::runNextIfEq, "modem automode ifeq", true, 32, 0x00196da8, 0x2c302c30, true);	// 0,0,
+			cheats.emplace_back(Cheat::Type::setValue, "modem automode set", true, 32, 0x00196da8, 0x2c302c31, true);		// 1,0,
+		}
+		else if (gameId == "MK-51102") {	// Outtrigger (US)
+			cheats.emplace_back(Cheat::Type::runNextIfEq, "modem automode ifeq", true, 32, 0x001bdb48, 0x2c302c30, true);	// 0,0,
+			cheats.emplace_back(Cheat::Type::setValue, "modem automode set", true, 32, 0x001bdb48, 0x2c302c31, true);		// 1,0,
+		}
+		else if (gameId == "HDR-0118") {	// Outtrigger (JP)
+			cheats.emplace_back(Cheat::Type::runNextIfEq, "bypass auth ifeq", true, 32, 0x00139f54, 0x2fd62fe6, true);
+			cheats.emplace_back(Cheat::Type::setValue, "bypass dricas auth", true, 32, 0x00139f54, 0xe000000b, true);
+		}
 
 		if (cheats.size() > cheatCount)
 			setActive(true);
