@@ -2127,7 +2127,7 @@ struct retro_core_options_v2 options_ar = {
 #define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_AST NULL
 #define CORE_OPTION_NAME_UPNP_LABEL_AST NULL
 #define CORE_OPTION_NAME_UPNP_INFO_0_AST NULL
-#define CORE_OPTION_NAME_DCNET_LABEL_AST "Usar DCNet (opción esperimental)"
+#define CORE_OPTION_NAME_DCNET_LABEL_AST NULL
 #define CORE_OPTION_NAME_DCNET_INFO_0_AST NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_AST "Resolución interna"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_AST "Modifica la resolución de la renderización."
@@ -4153,11 +4153,11 @@ struct retro_core_options_v2 options_ast = {
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_BE "Рэжым Free Play для гульняў NAOMI"
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_BE "Змяняць наладкі манетызацыі для ўключэння бясплатнай гульні."
 #define CORE_OPTION_NAME_EMULATE_BBA_LABEL_BE "Эмуляцыя Broadband Adapter"
-#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_BE "Эмуляваць замест мадэма шырокапалосны Ethernet-адаптар. (Патрабуецца перазапуск)"
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_BE NULL
 #define CORE_OPTION_NAME_UPNP_LABEL_BE "Уключыць UPnP"
 #define CORE_OPTION_NAME_UPNP_INFO_0_BE "Выкарыстоўваць UPnP для аўтаматычнай наладкі вашага Інтэрнэт-роўтара для анлайн-гульняў."
-#define CORE_OPTION_NAME_DCNET_LABEL_BE "Выкарыстоўваць DCNet (эксперыментальна)"
-#define CORE_OPTION_NAME_DCNET_INFO_0_BE "Злучыцца з эксперыментальным воблачным сэрвісам DCNet."
+#define CORE_OPTION_NAME_DCNET_LABEL_BE NULL
+#define CORE_OPTION_NAME_DCNET_INFO_0_BE NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_BE "Унутраная раздзяляльнасць"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_BE "Змяніць раздзяляльнасць рэндэрынгу."
 #define OPTION_VAL_320X240_BE "320x240 (напалову)"
@@ -8211,11 +8211,11 @@ struct retro_core_options_v2 options_bg = {
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_CA "Estableix els jocs de NAOMI com a gratuïts"
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_CA "Modifica la configuració de monedes del joc a partides gratuïtes."
 #define CORE_OPTION_NAME_EMULATE_BBA_LABEL_CA "Emulació de l'adaptador Broadband"
-#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_CA "Emula l'adaptador de banda ampla per cable Ethernet en compte del mòdem (Es requereix reinici)."
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_CA "Emula l'adaptador de banda ampla per cable Ethernet en compte del mòdem (Es requereix reinici)"
 #define CORE_OPTION_NAME_UPNP_LABEL_CA "Habilitat UPnP"
 #define CORE_OPTION_NAME_UPNP_INFO_0_CA "Fes servir UPnP per configurar automàticament el router per jocs en línia."
-#define CORE_OPTION_NAME_DCNET_LABEL_CA "Utilitzar DCNet (Experimental)"
-#define CORE_OPTION_NAME_DCNET_INFO_0_CA "Connectar al servei al núvol experimental DCNet."
+#define CORE_OPTION_NAME_DCNET_LABEL_CA "Fes servir DCNet"
+#define CORE_OPTION_NAME_DCNET_INFO_0_CA "Fes servir el servei en el núvol de DCNet per l'accés a internet de la Dreamcast."
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_CA "Resolució Interna"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_CA "Modifica la resolució interna."
 #define OPTION_VAL_320X240_CA "320 × 240 (50 %)"
@@ -10240,11 +10240,11 @@ struct retro_core_options_v2 options_ca = {
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_CHS "NAOMI 游戏设置为免费游戏"
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_CHS "修改游戏的硬币设置为免费游戏."
 #define CORE_OPTION_NAME_EMULATE_BBA_LABEL_CHS "模拟宽带适配器"
-#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_CHS "模拟以太网宽带适配器而不是调制解调器. (需要重启)"
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_CHS NULL
 #define CORE_OPTION_NAME_UPNP_LABEL_CHS "启用 UPnP"
 #define CORE_OPTION_NAME_UPNP_INFO_0_CHS "使用 UPnP 自动配置您的网络路由器进行在线游戏."
-#define CORE_OPTION_NAME_DCNET_LABEL_CHS "使用 DCNet (实验性)"
-#define CORE_OPTION_NAME_DCNET_INFO_0_CHS "连接到实验性的 DCNet 云服务."
+#define CORE_OPTION_NAME_DCNET_LABEL_CHS NULL
+#define CORE_OPTION_NAME_DCNET_INFO_0_CHS NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_CHS "内部分辨率"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_CHS "修改渲染分辨率."
 #define OPTION_VAL_320X240_CHS "320x240 (1/2)"
@@ -14298,11 +14298,11 @@ struct retro_core_options_v2 options_cht = {
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_CS "Nastavení her NAOMI na volné hraní"
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_CS "Upravte nastavení mincí ve hře na volnou hru."
 #define CORE_OPTION_NAME_EMULATE_BBA_LABEL_CS "Emulace širokopásmového adaptéru"
-#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_CS "Místo modemu emulujte širokopásmový adaptér ethernetu. (nutný restart)"
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_CS NULL
 #define CORE_OPTION_NAME_UPNP_LABEL_CS "Povolit UPnP"
 #define CORE_OPTION_NAME_UPNP_INFO_0_CS "Pomocí UPnP můžete automaticky nakonfigurovat svůj internetový směrovač pro online hry."
-#define CORE_OPTION_NAME_DCNET_LABEL_CS "Použití sítě DCNet (experimentální)"
-#define CORE_OPTION_NAME_DCNET_INFO_0_CS "Připojení k experimentální cloudové službě DCNet."
+#define CORE_OPTION_NAME_DCNET_LABEL_CS NULL
+#define CORE_OPTION_NAME_DCNET_INFO_0_CS NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_CS "Vnitřní rozlišení"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_CS "Úprava rozlišení vykreslování."
 #define OPTION_VAL_320X240_CS "320x240 (Poloviční)"
@@ -20388,8 +20388,8 @@ struct retro_core_options_v2 options_da = {
 #define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_DE "Den Ethernet-Breitbandadapter anstelle des Modems emulieren. (Neustart erforderlich)"
 #define CORE_OPTION_NAME_UPNP_LABEL_DE "UPnP aktivieren"
 #define CORE_OPTION_NAME_UPNP_INFO_0_DE "Verwendet UPnP, um den Internetrouter automatisch für Onlinespiele zu konfigurieren."
-#define CORE_OPTION_NAME_DCNET_LABEL_DE "DCNet verwenden (Experimentell)"
-#define CORE_OPTION_NAME_DCNET_INFO_0_DE "Mit dem experimentellen Cloud-Dienst DCNet verbinden."
+#define CORE_OPTION_NAME_DCNET_LABEL_DE "DCNet verwenden"
+#define CORE_OPTION_NAME_DCNET_INFO_0_DE "Den DCNet-Cloud-Service für den Dreamcast-Internetzugang nutzen."
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_DE "Interne Auflösung"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_DE "Rendering-Auflösung ändern."
 #define OPTION_VAL_320X240_DE "320×240 (Halb)"
@@ -24443,7 +24443,7 @@ struct retro_core_options_v2 options_el = {
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_EN NULL
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_EN NULL
 #define CORE_OPTION_NAME_EMULATE_BBA_LABEL_EN NULL
-#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_EN "Emulate the Ethernet broadband adapter instead of the modem. (Restart Required)"
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_EN NULL
 #define CORE_OPTION_NAME_UPNP_LABEL_EN NULL
 #define CORE_OPTION_NAME_UPNP_INFO_0_EN NULL
 #define CORE_OPTION_NAME_DCNET_LABEL_EN NULL
@@ -28504,8 +28504,8 @@ struct retro_core_options_v2 options_eo = {
 #define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_ES "Emula el adaptador de banda ancha por Ethernet en lugar del módem (es necesario reiniciar)."
 #define CORE_OPTION_NAME_UPNP_LABEL_ES "Activar UPnP"
 #define CORE_OPTION_NAME_UPNP_INFO_0_ES "Utiliza UPnP para configurar automáticamente tu router/enrutador de Internet para poder conectarte a juegos online."
-#define CORE_OPTION_NAME_DCNET_LABEL_ES "Utilizar DCNet (experimental)"
-#define CORE_OPTION_NAME_DCNET_INFO_0_ES "Conectarse al servicio experimental de la nube de DCNet."
+#define CORE_OPTION_NAME_DCNET_LABEL_ES "Utilizar DCNet"
+#define CORE_OPTION_NAME_DCNET_INFO_0_ES "Utiliza el servicio en la nube DCNet para conectar la Dreamcast a Internet."
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_ES "Resolución interna"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_ES "Modifica la resolución de renderizado."
 #define OPTION_VAL_320X240_ES "320 × 240 (50 %)"
@@ -32562,8 +32562,8 @@ struct retro_core_options_v2 options_fa = {
 #define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_FI NULL
 #define CORE_OPTION_NAME_UPNP_LABEL_FI "Käytä UPnP:tä"
 #define CORE_OPTION_NAME_UPNP_INFO_0_FI "Käytä UPnP:tä Internet-reitittimen määrittämiseksi verkkopelejä varten."
-#define CORE_OPTION_NAME_DCNET_LABEL_FI "Käytä DCNetiä (kokeellinen)"
-#define CORE_OPTION_NAME_DCNET_INFO_0_FI "Yhdistä kokeelliseen DCNet-pilvipalveluun."
+#define CORE_OPTION_NAME_DCNET_LABEL_FI "Käytä DCNetiä"
+#define CORE_OPTION_NAME_DCNET_INFO_0_FI "Käytä DCNet-pilvipalvelua Dreamcastin Internet-käyttöön."
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_FI "Sisäinen resoluutio"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_FI "Muokkaa renderöintitarkkuutta."
 #define OPTION_VAL_320X240_FI "320x240 (Puolikas)"
@@ -34591,8 +34591,8 @@ struct retro_core_options_v2 options_fi = {
 #define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_FR "Émuler l'adaptateur haut débit Ethernet au lieu du modem. (Redémarrage requis)"
 #define CORE_OPTION_NAME_UPNP_LABEL_FR "Activer l'UPnP"
 #define CORE_OPTION_NAME_UPNP_INFO_0_FR "Utilisez l'UPnP pour configurer automatiquement votre routeur Internet pour les jeux en ligne."
-#define CORE_OPTION_NAME_DCNET_LABEL_FR "Utiliser DCNet (expérimental)"
-#define CORE_OPTION_NAME_DCNET_INFO_0_FR "Se connecter au service expérimental du cloud DCNet."
+#define CORE_OPTION_NAME_DCNET_LABEL_FR "Utiliser DCNet"
+#define CORE_OPTION_NAME_DCNET_INFO_0_FR "Utilisez le service cloud DCNet pour l'accès à internet de la Dreamcast."
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_FR "Résolution interne"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_FR "Modifier la résolution de rendu."
 #define OPTION_VAL_320X240_FR "320x240 (Moitié)"
@@ -36617,11 +36617,11 @@ struct retro_core_options_v2 options_fr = {
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_GL "Configura NAOMI Games Para Xogar de Balde"
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_GL "Modifica a configuración de moedas do xogo para xogar libremente."
 #define CORE_OPTION_NAME_EMULATE_BBA_LABEL_GL "Emulación de adaptador de banda ancha"
-#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_GL "Emule o adaptador de banda ancha ethernet en lugar do módem. (Reiniciar obrigatorio)"
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_GL NULL
 #define CORE_OPTION_NAME_UPNP_LABEL_GL "Activar UPnP"
 #define CORE_OPTION_NAME_UPNP_INFO_0_GL "Use UPnP para configurar automaticamente o seu enrutador de Internet para xogos en liña."
-#define CORE_OPTION_NAME_DCNET_LABEL_GL "Empregar DCNet (Experimental)"
-#define CORE_OPTION_NAME_DCNET_INFO_0_GL "Conectar ao servizo en nube experimental DCNet."
+#define CORE_OPTION_NAME_DCNET_LABEL_GL NULL
+#define CORE_OPTION_NAME_DCNET_INFO_0_GL NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_GL "Resolución interna"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_GL "Modificar a resolución do renderizado."
 #define OPTION_VAL_320X240_GL "320 x 240 (a metade)"
@@ -42704,11 +42704,11 @@ struct retro_core_options_v2 options_hr = {
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_HU "Ingyen játék a NAOMI játékokhoz"
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_HU "Az érmebeállítások ingyen játékra állítása."
 #define CORE_OPTION_NAME_EMULATE_BBA_LABEL_HU "Szélessávú adapter emulálása"
-#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_HU "Modem helyett a szélessávú Ethernet adapter emulálása. (Újraindítás szükséges.)"
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_HU NULL
 #define CORE_OPTION_NAME_UPNP_LABEL_HU "UPnP engedélyezése"
 #define CORE_OPTION_NAME_UPNP_INFO_0_HU "Az internetre csatlakozó router automatikus konfigurálása az online játékokhoz UPnP-n keresztül."
-#define CORE_OPTION_NAME_DCNET_LABEL_HU "DCNet használata (Kísérleti)"
-#define CORE_OPTION_NAME_DCNET_INFO_0_HU "Csatlakozás a kísérleti DCNet felhőszolgáltatáshoz."
+#define CORE_OPTION_NAME_DCNET_LABEL_HU NULL
+#define CORE_OPTION_NAME_DCNET_INFO_0_HU NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_HU "Belső felbontás"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_HU "A képelőállítás felbontása."
 #define OPTION_VAL_320X240_HU "320x240 (Felezett)"
@@ -44733,7 +44733,7 @@ struct retro_core_options_v2 options_hu = {
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_ID NULL
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_ID NULL
 #define CORE_OPTION_NAME_EMULATE_BBA_LABEL_ID NULL
-#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_ID "Mengemulasi adapter pita lebar eternet dan bukan modem. (Perlu Mulai Ulang)"
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_ID NULL
 #define CORE_OPTION_NAME_UPNP_LABEL_ID NULL
 #define CORE_OPTION_NAME_UPNP_INFO_0_ID NULL
 #define CORE_OPTION_NAME_DCNET_LABEL_ID NULL
@@ -46762,11 +46762,11 @@ struct retro_core_options_v2 options_id = {
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_IT "Imposta giochi NAOMI a Free Play"
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_IT "Modificare le impostazioni del gioco per free play."
 #define CORE_OPTION_NAME_EMULATE_BBA_LABEL_IT "Emulazione Adattatore A banda larga"
-#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_IT "Emulare l'adattatore a banda larga ethernet invece del modem. (Riavvio richiesto)"
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_IT NULL
 #define CORE_OPTION_NAME_UPNP_LABEL_IT "Abilita UPnP"
 #define CORE_OPTION_NAME_UPNP_INFO_0_IT "Usa UPnP per configurare automaticamente il router Internet per i giochi online."
-#define CORE_OPTION_NAME_DCNET_LABEL_IT "Usa DCNet (Sperimentale)"
-#define CORE_OPTION_NAME_DCNET_INFO_0_IT "Connettiti al servizio cloud sperimentale DCNet."
+#define CORE_OPTION_NAME_DCNET_LABEL_IT NULL
+#define CORE_OPTION_NAME_DCNET_INFO_0_IT NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_IT "Risoluzione Interna"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_IT "Modificare la risoluzione di rendering."
 #define OPTION_VAL_320X240_IT "320x240 (Metà)"
@@ -48791,7 +48791,7 @@ struct retro_core_options_v2 options_it = {
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_JA "NAOMI ゲームを無料プレイにする"
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_JA "無料プレイを行うためにゲームのコイン設定を変更します。"
 #define CORE_OPTION_NAME_EMULATE_BBA_LABEL_JA "ブロードバンドアダプタエミュレーション"
-#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_JA "モデムの代わりにイーサネットブロードバンドアダプタをエミュレートします (再起動が必要)。"
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_JA NULL
 #define CORE_OPTION_NAME_UPNP_LABEL_JA "UPnP を有効にする"
 #define CORE_OPTION_NAME_UPNP_INFO_0_JA "オンラインゲーム用にルーターの UPnP を自動的に設定し使用します。"
 #define CORE_OPTION_NAME_DCNET_LABEL_JA NULL
@@ -50823,8 +50823,8 @@ struct retro_core_options_v2 options_ja = {
 #define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_KO "모뎀 대신 이더넷 브로드밴드 어댑터를 에뮬레이트합니다. (재시작 필요)"
 #define CORE_OPTION_NAME_UPNP_LABEL_KO "UPnP 활성화"
 #define CORE_OPTION_NAME_UPNP_INFO_0_KO "온라인 게임에서 UPnP를 사용해 자동으로 인터넷 라우터를 설정합니다."
-#define CORE_OPTION_NAME_DCNET_LABEL_KO "DCNet사용 (실험적)"
-#define CORE_OPTION_NAME_DCNET_INFO_0_KO "실험적인 DCNet 클라우드 서비스에 연결합니다."
+#define CORE_OPTION_NAME_DCNET_LABEL_KO "DCNet 사용"
+#define CORE_OPTION_NAME_DCNET_INFO_0_KO "DCNet 클라우드 서비스를 통해 Dreamcast를 인터넷에 연결합니다."
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_KO "내부 해상도"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_KO "렌더링 해상도를 변경합니다."
 #define OPTION_VAL_320X240_KO "320x240 (절반)"
@@ -60965,11 +60965,11 @@ struct retro_core_options_v2 options_pl = {
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_PT_BR "Definir jogos NAOMI como gratuitos"
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_PT_BR "Define as configurações de moeda do jogo como gratuitas."
 #define CORE_OPTION_NAME_EMULATE_BBA_LABEL_PT_BR "Emulação do Broadband Adapter"
-#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_PT_BR "Emula o Broadband Adapter por Ethernet, em vez do Modem.\nOBSERVAÇÃO: requer reinício."
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_PT_BR "Emular o adaptador de banda larga Ethernet em vez do modem. (Reinício Necessário)"
 #define CORE_OPTION_NAME_UPNP_LABEL_PT_BR "Ativar UPnP"
 #define CORE_OPTION_NAME_UPNP_INFO_0_PT_BR "Usa o UPnP para configurar automaticamente seu roteador de Internet para jogos on-line."
-#define CORE_OPTION_NAME_DCNET_LABEL_PT_BR NULL
-#define CORE_OPTION_NAME_DCNET_INFO_0_PT_BR NULL
+#define CORE_OPTION_NAME_DCNET_LABEL_PT_BR "Usar DCNet"
+#define CORE_OPTION_NAME_DCNET_INFO_0_PT_BR "Usar o serviço em nuvem DCNet para acesso à Internet no Dreamcast."
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_PT_BR "Resolução interna"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_PT_BR "Define a resolução de renderização."
 #define OPTION_VAL_320X240_PT_BR "320x240 (50%)"
@@ -65023,11 +65023,11 @@ struct retro_core_options_v2 options_pt_pt = {
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_RU "Режим Free Play для игр NAOMI"
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_RU "Изменять настройки монетизации для включения бесплатной игры."
 #define CORE_OPTION_NAME_EMULATE_BBA_LABEL_RU "Эмуляция Broadband Adapter"
-#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_RU "Эмулировать вместо модема широкополосный Ethernet-адаптер (требуется перезапуск)."
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_RU NULL
 #define CORE_OPTION_NAME_UPNP_LABEL_RU "Включить UPnP"
 #define CORE_OPTION_NAME_UPNP_INFO_0_RU "Использовать UPnP для автоматической настройки вашего Интернет-роутера для онлайн-игр."
-#define CORE_OPTION_NAME_DCNET_LABEL_RU "Использовать DCNet (экспериментально)"
-#define CORE_OPTION_NAME_DCNET_INFO_0_RU "Подключаться к экспериментальному облачному сервису DCNet."
+#define CORE_OPTION_NAME_DCNET_LABEL_RU NULL
+#define CORE_OPTION_NAME_DCNET_INFO_0_RU NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_RU "Внутреннее разрешение"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_RU "Настройка разрешения рендеринга."
 #define OPTION_VAL_320X240_RU "320x240 (половина)"
@@ -71110,11 +71110,11 @@ struct retro_core_options_v2 options_sr = {
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_SV "Ställ in NAOMI-spel till Free Play"
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_SV "Ändra spelets myntinställningar till free play."
 #define CORE_OPTION_NAME_EMULATE_BBA_LABEL_SV "Emulering av bredbandsadapter"
-#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_SV "Emulera bredbandsadaptern istället för modemet. (omstart krävs)"
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_SV NULL
 #define CORE_OPTION_NAME_UPNP_LABEL_SV "Aktivera UPnP"
 #define CORE_OPTION_NAME_UPNP_INFO_0_SV "Använd UPnP för att automatiskt konfigurera din internetrouter för onlinespel."
-#define CORE_OPTION_NAME_DCNET_LABEL_SV "Använd DCNet (experimentell)"
-#define CORE_OPTION_NAME_DCNET_INFO_0_SV "Anslut till den experimentella DCNet-molntjänsten."
+#define CORE_OPTION_NAME_DCNET_LABEL_SV NULL
+#define CORE_OPTION_NAME_DCNET_INFO_0_SV NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_SV "Intern upplösning"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_SV "Ändra renderingsupplösning."
 #define OPTION_VAL_320X240_SV "320x240 (Halv)"
@@ -73139,11 +73139,11 @@ struct retro_core_options_v2 options_sv = {
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_TR "NAOMI Oyunlarını Serbest Oynamaya Ayarlayın"
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_TR "Serbest oynamak için oyunun jeton ayarlarını değiştirin."
 #define CORE_OPTION_NAME_EMULATE_BBA_LABEL_TR "Geniş Bant Adaptör Taklidi"
-#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_TR "Modem yerine ethernet geniş bant adaptörünü taklit edin. (Yeniden Başlatılmalı)"
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_TR "Modem yerine Ethernet geniş bant adaptörünü taklit edin. (Yeniden Başlatılmalı)"
 #define CORE_OPTION_NAME_UPNP_LABEL_TR "UPnP Etkinleştir"
 #define CORE_OPTION_NAME_UPNP_INFO_0_TR "İnternet yönlendiricinizi çevrimiçi oyunlar için otomatik olarak yapılandırmak üzere UPnP kullanın."
-#define CORE_OPTION_NAME_DCNET_LABEL_TR "DCNet kullan (Deneysel)"
-#define CORE_OPTION_NAME_DCNET_INFO_0_TR "Deneysel DCNet bulut servisine bağlanın."
+#define CORE_OPTION_NAME_DCNET_LABEL_TR "DCNet Kullan"
+#define CORE_OPTION_NAME_DCNET_INFO_0_TR "Dreamcast İnternet erişimi için DCNet bulut hizmetini kullanın."
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_TR "Dahili Çözünürlük"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_TR "İşleme çözünürlüğünü değiştirin."
 #define OPTION_VAL_320X240_TR "320x240 (Yarım)"
@@ -77197,11 +77197,11 @@ struct retro_core_options_v2 options_tt = {
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_UK "Встановити NAOMI ігри для безкоштовної гри"
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_UK "Змінювати параметри гри за допомогою монет \"Вільна гра\"."
 #define CORE_OPTION_NAME_EMULATE_BBA_LABEL_UK "Широкосмугова емуляція адаптера"
-#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_UK "Емуляція ethernet широкосмугового адаптера замість модема. (Перезавантажити необхідно)"
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_UK NULL
 #define CORE_OPTION_NAME_UPNP_LABEL_UK "Активувати UPnP"
 #define CORE_OPTION_NAME_UPNP_INFO_0_UK "Використовуйте UPnP для автоматичного налаштування інтернет-маршрутизатора для онлайн-ігор."
-#define CORE_OPTION_NAME_DCNET_LABEL_UK "Використовувати DCNet (експериментально)"
-#define CORE_OPTION_NAME_DCNET_INFO_0_UK "Підключіться до експериментального хмарного сервісу DCNet."
+#define CORE_OPTION_NAME_DCNET_LABEL_UK NULL
+#define CORE_OPTION_NAME_DCNET_INFO_0_UK NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_UK "Роздільна здатність"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_UK "Змінити роздільну здатність візуалізації."
 #define OPTION_VAL_320X240_UK "320х240 (Half)"
