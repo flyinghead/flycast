@@ -706,6 +706,25 @@ const Game Games[] =
 		nullptr,
 		&mushik_inputs,
     },
+	// Mushiking The King Of Beetle (2K3 2ND, Japan)
+    {
+        "mushi2k3",
+        nullptr,
+        "Mushiking The King Of Beetle (2K3 2ND, Japan)",
+		0x5800000,
+        0,
+        "naomi",
+        M2,
+        ROT0,
+        {
+        	{ "epr-24135.ic22", 0x00000000, 0x00400000, 0x4e5d7b69 },
+			{ "mpr-24136.ic1",  0x00800000, 0x01000000, 0x4b020825 },
+			{ "mpr-24137.ic2",  0x01800000, 0x01000000, 0x0f6e79de },
+			{ "mpr-24138.ic3",  0x02800000, 0x01000000, 0x45379a9f },
+        },
+		nullptr,
+		&mushik_inputs,
+    },
 	// Mushiking The King Of Beetles - Mushiking II / III / III+ (Ver. 1.000-) (Korea)
 	// require rev.H Korea BIOS, not dumped
     {
@@ -2384,11 +2403,11 @@ const Game Games[] =
         NULL,
         &jambo_inputs
     },
-    // Mars TV (JPN)
+    // Kasei Channel Mars TV (JPN)
     {
         "marstv",
 		nullptr,
-        "Mars TV",
+        "Kasei Channel Mars TV",
         0x08000000,
         0x280b8ef5,
 		"naomi-jp-d",
