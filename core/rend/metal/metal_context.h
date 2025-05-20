@@ -17,8 +17,11 @@ Copyright 2024 flyinghead
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #pragma once
+
+#ifdef __OBJC__
 #include <Metal/Metal.h>
 #include <QuartzCore/QuartzCore.h>
+#endif
 
 #include "wsi/context.h"
 
@@ -31,16 +34,16 @@ public:
     bool init();
     void term() override;
 
+#ifdef __OBJC__
     id<MTLDevice> GetDevice() const { return device; }
     CAMetalLayer* GetLayer() const { return layer; }
     id<MTLCommandQueue> GetQueue() const { return queue; }
     id<MTLCommandBuffer> commandBuffer = nil;
+#endif
     void resize() override;
     void Present();
 
-    std::string getDriverName() override {
-        return [[device name] UTF8String];
-    }
+    std::string getDriverName() override;
 
     std::string getDriverVersion() override {
         return "";
@@ -56,9 +59,11 @@ public:
 
     static MetalContext* Instance() { return contextInstance; }
 private:
+#ifdef __OBJC__
     NSAutoreleasePool *pool;
     id<MTLDevice> device = MTLCreateSystemDefaultDevice();
     id<MTLCommandQueue> queue = nil;
     CAMetalLayer* layer;
+#endif
     static MetalContext* contextInstance;
 };
