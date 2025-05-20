@@ -63,6 +63,10 @@ void MetalContext::resize() {
 
 }
 
+std::string MetalContext::getDriverName() {
+    return [[device name] UTF8String];
+}
+
 void MetalContext::Present() {
 
 }
