@@ -55,7 +55,7 @@ inline static void getPvrFramebufferSize(const rend_context& rendCtx, int& width
 // +Y is up in clip, NDC and framebuffer coordinates
 // Vulkan:
 // +Y is down in clip, NDC and framebuffer coordinates
-// DirectX9:
+// DirectX9 & Metal:
 // +Y is up in clip and NDC coordinates, but down in framebuffer coordinates
 // Y must also be flipped for render-to-texture so that the top of the texture comes first
 enum CoordSystem { COORD_OPENGL, COORD_VULKAN, COORD_DIRECTX };

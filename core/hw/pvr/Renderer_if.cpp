@@ -268,6 +268,7 @@ Renderer* rend_norend();
 Renderer* rend_Vulkan();
 Renderer* rend_OITVulkan();
 Renderer* rend_DirectX9();
+Renderer* rend_Metal();
 Renderer* rend_DirectX11();
 Renderer* rend_OITDirectX11();
 
@@ -300,6 +301,11 @@ static void rend_create_renderer()
 #ifdef USE_DX9
 	case RenderType::DirectX9:
 		renderer = rend_DirectX9();
+		break;
+#endif
+#ifdef USE_METAL
+	case RenderType::Metal:
+		renderer = rend_Metal();
 		break;
 #endif
 #ifdef USE_DX11
