@@ -73,7 +73,6 @@ protected:
 
                 INFO_LOG(RENDERER, "Increasing main buffer size %zd -> %d", mainBuffer->bufferSize, newSize);
                 [mainBuffer->buffer setPurgeableState: MTLPurgeableStateEmpty];
-                [mainBuffer->buffer release];
 
                 mainBuffer = new MetalBufferData(newSize);
             }

@@ -112,10 +112,6 @@ public:
     {
         vertexShaders.clear();
         fragmentShaders.clear();
-
-        [vertexShaderConstants release];
-        [fragmentShaderConstants release];
-        [modVolShaderConstants release];
     }
 
 private:

@@ -69,7 +69,6 @@ void MetalTexture::UploadToGPU(int width, int height, const u8 *temp_tex_buffer,
     auto device = MetalContext::Instance()->GetDevice();
 
     texture = [device newTextureWithDescriptor:desc];
-    [desc release];
 
     MTLRegion region = { 0, 0, static_cast<NSUInteger>(width), static_cast<NSUInteger>(height) };
     [texture replaceRegion:region mipmapLevel:0 withBytes:temp_tex_buffer bytesPerRow:bpp * width];
@@ -78,7 +77,6 @@ void MetalTexture::UploadToGPU(int width, int height, const u8 *temp_tex_buffer,
 bool MetalTexture::Delete()
 {
     [texture setPurgeableState:MTLPurgeableStateEmpty];
-    [texture release];
     texture = nil;
 
     return true;

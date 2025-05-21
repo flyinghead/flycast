@@ -60,7 +60,6 @@ public:
     static MetalContext* Instance() { return contextInstance; }
 private:
 #ifdef __OBJC__
-    NSAutoreleasePool *pool;
     id<MTLDevice> device = MTLCreateSystemDefaultDevice();
     id<MTLCommandQueue> queue = nil;
     CAMetalLayer* layer;

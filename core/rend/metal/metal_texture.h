@@ -43,10 +43,6 @@ public:
     static const u32 TSP_Mask = 0x7ef00;
 
     void term() {
-        for (auto &[u, samp] : samplers) {
-            [samp release];
-        }
-
         samplers.clear();
     }
 
@@ -95,8 +91,6 @@ public:
             [desc setMaxAnisotropy:config::AnisotropicFiltering];
 
             sampler = [MetalContext::Instance()->GetDevice() newSamplerStateWithDescriptor:desc];
-
-            [desc release];
 
             samplers.emplace(hash, sampler).first->second;
         }
