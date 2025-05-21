@@ -77,7 +77,6 @@ void initRenderApi(void *window, void *display)
 	if (isMetal(config::RendererType))
 	{
 		theMetalContext.setWindow(window, display);
-
 		if (theMetalContext.init())
 			return;
 		// Fall back to OpenGL
