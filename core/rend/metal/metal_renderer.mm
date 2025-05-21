@@ -439,8 +439,6 @@ void MetalRenderer::UploadMainBuffer(const VertexShaderUniforms &vertexUniforms,
 }
 
 bool MetalRenderer::Draw(const MetalTexture *fogTexture, const MetalTexture *paletteTexture) {
-    NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-
     FragmentShaderUniforms fragUniforms = MakeFragmentUniforms<FragmentShaderUniforms>();
     dithering = config::EmulateFramebuffer && pvrrc.fb_W_CTRL.fb_dither && pvrrc.fb_W_CTRL.fb_packmode <= 3;
     if (dithering) {
@@ -469,13 +467,11 @@ bool MetalRenderer::Draw(const MetalTexture *fogTexture, const MetalTexture *pal
 
     if (frameBuffer != nil) {
         [frameBuffer setPurgeableState:MTLPurgeableStateEmpty];
-        [frameBuffer release];
         frameBuffer = nil;
     }
 
     if (depthBuffer != nil) {
         [depthBuffer setPurgeableState:MTLPurgeableStateEmpty];
-        [depthBuffer release];
         depthBuffer = nil;
     }
 
@@ -486,7 +482,6 @@ bool MetalRenderer::Draw(const MetalTexture *fogTexture, const MetalTexture *pal
     [desc setUsage:MTLTextureUsageShaderRead | MTLTextureUsageRenderTarget];
 
     frameBuffer = [MetalContext::Instance()->GetDevice() newTextureWithDescriptor:desc];
-    [desc release];
 
     MTLTextureDescriptor *depthDesc = [[MTLTextureDescriptor alloc] init];
     [depthDesc setPixelFormat:MTLPixelFormatDepth32Float_Stencil8];
@@ -495,7 +490,6 @@ bool MetalRenderer::Draw(const MetalTexture *fogTexture, const MetalTexture *pal
     [depthDesc setUsage:MTLTextureUsageShaderRead | MTLTextureUsageRenderTarget];
 
     depthBuffer = [MetalContext::Instance()->GetDevice() newTextureWithDescriptor:depthDesc];
-    [depthDesc release];
 
     auto drawable = [MetalContext::Instance()->GetLayer() nextDrawable];
 
@@ -519,12 +513,7 @@ bool MetalRenderer::Draw(const MetalTexture *fogTexture, const MetalTexture *pal
     [descriptor setDepthAttachment:depthAttachmentDescriptor];
     [descriptor setStencilAttachment:stencilAttachmentDescriptor];
 
-    [depthAttachmentDescriptor release];
-    [stencilAttachmentDescriptor release];
-
     id<MTLRenderCommandEncoder> renderEncoder = [buffer renderCommandEncoderWithDescriptor:descriptor];
-
-    [descriptor release];
 
     [renderEncoder setFragmentTexture:fogTexture->texture atIndex:2];
     [renderEncoder setFragmentTexture:paletteTexture->texture atIndex:3];
@@ -588,8 +577,6 @@ bool MetalRenderer::Draw(const MetalTexture *fogTexture, const MetalTexture *pal
 
     renderEncoder = [buffer renderCommandEncoderWithDescriptor:descriptor];
 
-    [descriptor release];
-
     [renderEncoder setRenderPipelineState:pipelineManager.GetBlitPassPipeline()];
     [renderEncoder setFragmentTexture:frameBuffer atIndex:0];
     [renderEncoder drawPrimitives: MTLPrimitiveTypeTriangleStrip vertexStart:0 vertexCount:4];
@@ -597,7 +584,6 @@ bool MetalRenderer::Draw(const MetalTexture *fogTexture, const MetalTexture *pal
 
     [buffer presentDrawable:drawable];
     [buffer commit];
-    [pool release];
 
     DEBUG_LOG(RENDERER, "Render command buffer released");
 

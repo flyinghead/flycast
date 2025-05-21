@@ -26,7 +26,6 @@ struct MetalBufferData
     ~MetalBufferData()
     {
         [buffer setPurgeableState:MTLPurgeableStateEmpty];
-        [buffer release];
         buffer = nil;
     }
 

@@ -43,8 +43,6 @@ void MetalPipelineManager::CreateBlitPassPipeline() {
         ERROR_LOG(RENDERER, "Failed to create Blit Pipeline State: %s", [error localizedDescription]);;
     }
 
-    [descriptor release];
-
     blitPassPipeline = state;
 }
 
@@ -96,11 +94,6 @@ void MetalPipelineManager::CreateModVolPipeline(ModVolMode mode, int cullMode, b
         ERROR_LOG(RENDERER, "Failed to create Depth Render Pipeline State: %s", [[error localizedDescription] UTF8String]);
     }
 
-    [descriptor release];
-    if (vertexDesc) {
-        [vertexDesc release];
-    }
-
     modVolPipelines[hash(mode, cullMode, naomi2)] = state;
 }
 
@@ -130,8 +123,6 @@ void MetalPipelineManager::CreateDepthPassPipeline(int cullMode, bool naomi2)
     if (state == nil) {
         ERROR_LOG(RENDERER, "Failed to create Depth Render Pipeline State: %s", [[error localizedDescription] UTF8String]);
     }
-
-    [descriptor release];
 
     depthPassPipelines[hash(cullMode, naomi2)] = state;
 }
@@ -192,8 +183,6 @@ void MetalPipelineManager::CreatePipeline(u32 listType, bool sortTriangles, cons
         ERROR_LOG(RENDERER, "Failed to create Render Pipeline State: %s", [[error localizedDescription] UTF8String]);
     }
 
-    [descriptor release];
-
     pipelines[hash(listType, sortTriangles, &pp, gpuPalette, dithering)] = state;
 }
 
@@ -252,8 +241,6 @@ void MetalPipelineManager::CreateModVolDepthStencilState(ModVolMode mode, int cu
 
     auto state = [MetalContext::Instance()->GetDevice() newDepthStencilStateWithDescriptor:descriptor];
 
-    [descriptor release];
-
     modVolStencilStates[hash(mode, cullMode, naomi2)] = state;
 }
 
@@ -264,8 +251,6 @@ void MetalPipelineManager::CreateDepthPassDepthStencilState(int cullMode, bool n
     [descriptor setDepthCompareFunction:MTLCompareFunctionGreaterEqual];
 
     auto state = [MetalContext::Instance()->GetDevice() newDepthStencilStateWithDescriptor:descriptor];
-
-    [descriptor release];
 
     depthPassDepthStencilStates[hash(cullMode, naomi2)] = state;
 }
@@ -317,9 +302,6 @@ void MetalPipelineManager::CreateDepthStencilState(u32 listType, bool sortTriang
     }
 
     auto state = [MetalContext::Instance()->GetDevice() newDepthStencilStateWithDescriptor:descriptor];
-
-    [descriptor release];
-    [stencilDescriptor release];
 
     depthStencilStates[hash(listType, sortTriangles, shadowed, &pp)] = state;
 }

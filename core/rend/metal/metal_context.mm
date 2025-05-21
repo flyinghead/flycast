@@ -25,7 +25,6 @@ Copyright 2024 flyinghead
 MetalContext *MetalContext::contextInstance;
 
 bool MetalContext::init() {
-    pool = [[NSAutoreleasePool alloc] init];
     GraphicsContext::instance = this;
 
 #if defined(USE_SDL)
@@ -74,7 +73,6 @@ void MetalContext::Present() {
 void MetalContext::term() {
     GraphicsContext::instance = nullptr;
     imguiDriver.reset();
-    [pool release];
 }
 
 MetalContext::MetalContext() {

@@ -53,8 +53,6 @@ public:
         commandEncoder = [context->commandBuffer renderCommandEncoderWithDescriptor:descriptor];
 
         ImGui_ImplMetal_NewFrame(descriptor);
-
-        [descriptor release];
     }
 
     void renderDrawData(ImDrawData *drawData, bool gui_open) override {
