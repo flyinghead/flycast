@@ -40,7 +40,7 @@ void MetalPipelineManager::CreateBlitPassPipeline() {
     auto state = [MetalContext::Instance()->GetDevice() newRenderPipelineStateWithDescriptor:descriptor error:&error];
 
     if (state == nil) {
-        ERROR_LOG(RENDERER, "Failed to create Blit Pipeline State: %s", [error localizedDescription]);;
+        ERROR_LOG(RENDERER, "Failed to create Blit Pipeline State: %s", [[error localizedDescription] UTF8String]);;
     }
 
     blitPassPipeline = state;
