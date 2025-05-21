@@ -39,6 +39,12 @@ public:
     CAMetalLayer* GetLayer() const { return layer; }
     id<MTLCommandQueue> GetQueue() const { return queue; }
     id<MTLCommandBuffer> commandBuffer = nil;
+// Hack to make sure everything lines up when in pure C++
+#else
+    void* GetDevice() const { return device; }
+    void* GetLayer() const { return layer; }
+    void* GetQueue() const { return queue; }
+    void* commandBuffer = nullptr;
 #endif
     void resize() override;
     void Present();
@@ -63,6 +69,10 @@ private:
     id<MTLDevice> device = nil;
     id<MTLCommandQueue> queue = nil;
     CAMetalLayer* layer;
+#else
+    void* device = nullptr;
+    void* queue = nullptr;
+    void* layer = nullptr;
 #endif
     static MetalContext* contextInstance;
 };
