@@ -531,7 +531,7 @@ void ImGui_ImplMetal_DestroyDeviceObjects()
                              "\n"
                              "fragment half4 fragment_main(VertexOut in [[stage_in]],\n"
                              "                             texture2d<half, access::sample> texture [[texture(0)]]) {\n"
-                             "    constexpr sampler linearSampler(coord::normalized, min_filter::linear, mag_filter::linear, mip_filter::linear);\n"
+                             "    constexpr sampler linearSampler(coord::normalized, address::clamp_to_border, min_filter::linear, mag_filter::linear, mip_filter::linear);\n"
                              "    half4 texColor = texture.sample(linearSampler, in.texCoords);\n"
                              "    return half4(in.color) * texColor;\n"
                              "}\n";
