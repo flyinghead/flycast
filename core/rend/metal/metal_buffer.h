@@ -19,6 +19,7 @@
 #pragma once
 #include "types.h"
 #include <Metal/Metal.h>
+#include <vector>
 
 struct MetalBufferData
 {
