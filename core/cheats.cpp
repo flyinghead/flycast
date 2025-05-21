@@ -554,6 +554,13 @@ void CheatManager::reset(const std::string& gameId)
 			cheats.emplace_back(Cheat::Type::runNextIfEq, "bypass auth ifeq", true, 32, 0x00139f54, 0x2fd62fe6, true);
 			cheats.emplace_back(Cheat::Type::setValue, "bypass dricas auth", true, 32, 0x00139f54, 0xe000000b, true);
 		}
+		else if (gameId == "T13306M")		// Mobile Suit Gundam: Federation vs. Zeon
+		{
+			cheats.emplace_back(Cheat::Type::runNextIfEq, "modem rxspeed ifeq", true, 32, 0x0016e710, 0x3434312c, true);	// ",144"
+			cheats.emplace_back(Cheat::Type::setValue, "modem rxspeed set", true, 32, 0x0016e710, 0x2020202c, true);		// ",   "
+			cheats.emplace_back(Cheat::Type::runNextIfEq, "modem txspeed ifeq", true, 32, 0x0016e71c, 0x3434312c, true);	// ",144"
+			cheats.emplace_back(Cheat::Type::setValue, "modem txspeed set", true, 32, 0x0016e71c, 0x2020202c, true);		// ",   "
+		}
 
 		if (cheats.size() > cheatCount)
 			setActive(true);
