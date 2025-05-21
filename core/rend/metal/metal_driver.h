@@ -39,8 +39,7 @@ public:
     void newFrame() override {
         MetalContext *context = MetalContext::Instance();
         drawable = [context->GetLayer() nextDrawable];
-
-        MTLRenderPassDescriptor *descriptor = [[MTLRenderPassDescriptor alloc] init];
+        descriptor = [[MTLRenderPassDescriptor alloc] init];
 
         [descriptor setDefaultRasterSampleCount:1];
 
@@ -50,24 +49,20 @@ public:
         [color setLoadAction:MTLLoadActionClear];
         [color setStoreAction:MTLStoreActionStore];
 
-        commandEncoder = [context->commandBuffer renderCommandEncoderWithDescriptor:descriptor];
-
         ImGui_ImplMetal_NewFrame(descriptor);
     }
 
     void renderDrawData(ImDrawData *drawData, bool gui_open) override {
         MetalContext *context = MetalContext::Instance();
-        id<MTLCommandBuffer> buffer = context->commandBuffer;
+        id<MTLCommandBuffer> buffer = [context->GetQueue() commandBuffer];
+        id<MTLRenderCommandEncoder> commandEncoder = [buffer renderCommandEncoderWithDescriptor:descriptor];
 
         ImGui_ImplMetal_RenderDrawData(drawData, buffer, commandEncoder);
 
         [commandEncoder endEncoding];
+        commandEncoder = nil;
         [buffer presentDrawable:drawable];
         [buffer commit];
-
-        commandEncoder = nil;
-
-        context->commandBuffer = [context->GetQueue() commandBuffer];
 
         if (gui_open)
             frameRendered = true;
@@ -114,7 +109,7 @@ private:
     };
 
     bool frameRendered = false;
-    id<MTLRenderCommandEncoder> commandEncoder;
+    MTLRenderPassDescriptor* descriptor;
     id<CAMetalDrawable> drawable;
     std::unordered_map<std::string, Texture> textures;
 };

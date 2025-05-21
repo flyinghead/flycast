@@ -38,13 +38,11 @@ public:
     id<MTLDevice> GetDevice() const { return device; }
     CAMetalLayer* GetLayer() const { return layer; }
     id<MTLCommandQueue> GetQueue() const { return queue; }
-    id<MTLCommandBuffer> commandBuffer = nil;
 // Hack to make sure everything lines up when in pure C++
 #else
     void* GetDevice() const { return device; }
     void* GetLayer() const { return layer; }
     void* GetQueue() const { return queue; }
-    void* commandBuffer = nullptr;
 #endif
     void resize() override;
     void Present();
