@@ -860,9 +860,6 @@ static inline void tcp_parse_option_mss(struct pico_socket_tcp *t, uint8_t len, 
     if (tcpopt_len_check(idx, len, PICO_TCPOPTLEN_MSS) < 0)
         return;
 
-    if ((*idx + PICO_TCPOPTLEN_MSS) > len)
-        return;
-
     t->mss_ok = 1;
     mss = short_from(opt + *idx);
     *idx += (uint32_t)sizeof(uint16_t);
@@ -891,10 +888,6 @@ static int tcp_parse_options(struct pico_frame *f)
     uint8_t *opt = f->transport_hdr + PICO_SIZE_TCPHDR;
     uint32_t i = 0;
     f->timestamp = 0;
-
-    if (f->buffer + f->buffer_len > f->transport_hdr + f->transport_len)
-        return -1;
-
     while (i < (f->transport_len - PICO_SIZE_TCPHDR)) {
         uint8_t type =  opt[i++];
         uint8_t len;

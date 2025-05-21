@@ -403,11 +403,6 @@ static int pico_ipv4_process_in(struct pico_protocol *self, struct pico_frame *f
     f->transport_hdr = ((uint8_t *)f->net_hdr) + PICO_SIZE_IP4HDR + option_len;
     f->transport_len = (uint16_t)(short_be(hdr->len) - PICO_SIZE_IP4HDR - option_len);
     f->net_len = (uint16_t)(PICO_SIZE_IP4HDR + option_len);
-
-    if ((f->net_hdr + f->net_len) > (f->buffer + f->buffer_len)) {
-        pico_frame_discard(f);
-        return 0;
-    }
 #if defined(PICO_SUPPORT_IPV4FRAG) || defined(PICO_SUPPORT_IPV6FRAG)
     f->frag = short_be(hdr->frag);
 #endif
