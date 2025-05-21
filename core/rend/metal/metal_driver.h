@@ -82,7 +82,7 @@ public:
     ImTextureID getTexture(const std::string &name) override {
         auto it = textures.find(name);
         if (it != textures.end())
-            return &it->second.texture;
+            return it->second.texture->texture;
 
         return ImTextureID{};
     }

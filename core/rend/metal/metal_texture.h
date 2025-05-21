@@ -28,7 +28,6 @@ public:
     MetalTexture(TSP tsp = {}, TCW tcw = {}) : BaseTextureCacheData(tsp, tcw) {}
     id<MTLTexture> texture;
 
-
     std::string GetId() override { return std::to_string([texture gpuResourceID]._impl); }
     void UploadToGPU(int width, int height, const u8 *temp_tex_buffer, bool mipmapped, bool mipmapsIncluded = false) override;
     bool Delete() override;

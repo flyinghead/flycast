@@ -70,8 +70,7 @@ void MetalTexture::UploadToGPU(int width, int height, const u8 *temp_tex_buffer,
 
     texture = [device newTextureWithDescriptor:desc];
 
-    MTLRegion region = { 0, 0, static_cast<NSUInteger>(width), static_cast<NSUInteger>(height) };
-    [texture replaceRegion:region mipmapLevel:0 withBytes:temp_tex_buffer bytesPerRow:bpp * width];
+    [texture replaceRegion:MTLRegionMake2D(0, 0, width, height) mipmapLevel:0 withBytes:temp_tex_buffer bytesPerRow:bpp * width];
 }
 
 bool MetalTexture::Delete()

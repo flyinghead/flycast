@@ -18,7 +18,6 @@
 */
 
 #include "metal_buffer.h"
-
 #include "metal_context.h"
 
 MetalBufferData::MetalBufferData(u64 size) : bufferSize(size) {

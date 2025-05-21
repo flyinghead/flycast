@@ -42,6 +42,8 @@ bool MetalContext::init() {
     layer = static_cast<CAMetalLayer*>(SDL_Metal_GetLayer(view));
 #endif
 
+    device = MTLCreateSystemDefaultDevice();
+
     if (!device) {
         term();
         NOTICE_LOG(RENDERER, "Metal Device is null.");
