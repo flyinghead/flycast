@@ -60,7 +60,7 @@ public:
     static MetalContext* Instance() { return contextInstance; }
 private:
 #ifdef __OBJC__
-    id<MTLDevice> device = MTLCreateSystemDefaultDevice();
+    id<MTLDevice> device = nil;
     id<MTLCommandQueue> queue = nil;
     CAMetalLayer* layer;
 #endif

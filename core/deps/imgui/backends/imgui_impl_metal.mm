@@ -15,6 +15,8 @@
 
 // CHANGELOG
 // (minor and older changes stripped away, please see git history for details)
+//  2025-02-03: Metal: Crash fix. (#8367)
+//  2024-01-08: Metal: Fixed memory leaks when using metal-cpp (#8276, #8166) or when using multiple contexts (#7419).
 //  2022-08-23: Metal: Update deprecated property 'sampleCount'->'rasterSampleCount'.
 //  2022-07-05: Metal: Add dispatch synchronization.
 //  2022-06-30: Metal: Use __bridge for ARC based systems.
@@ -142,6 +144,7 @@ bool ImGui_ImplMetal_Init(id<MTLDevice> device)
 void ImGui_ImplMetal_Shutdown()
 {
     ImGui_ImplMetal_Data* bd = ImGui_ImplMetal_GetBackendData();
+    IM_UNUSED(bd);
     IM_ASSERT(bd != nullptr && "No renderer backend to shutdown, or already shutdown?");
     ImGui_ImplMetal_DestroyDeviceObjects();
     ImGui_ImplMetal_DestroyBackendData();
@@ -156,15 +159,18 @@ void ImGui_ImplMetal_NewFrame(MTLRenderPassDescriptor* renderPassDescriptor)
 {
     ImGui_ImplMetal_Data* bd = ImGui_ImplMetal_GetBackendData();
     IM_ASSERT(bd != nil && "Context or backend not initialized! Did you call ImGui_ImplMetal_Init()?");
+#ifdef IMGUI_IMPL_METAL_CPP
+    bd->SharedMetalContext.framebufferDescriptor = [[[FramebufferDescriptor alloc] initWithRenderPassDescriptor:renderPassDescriptor]autorelease];
+#else
     bd->SharedMetalContext.framebufferDescriptor = [[FramebufferDescriptor alloc] initWithRenderPassDescriptor:renderPassDescriptor];
-
+#endif
     if (bd->SharedMetalContext.depthStencilState == nil)
         ImGui_ImplMetal_CreateDeviceObjects(bd->SharedMetalContext.device);
 }
 
 static void ImGui_ImplMetal_SetupRenderState(ImDrawData* drawData, id<MTLCommandBuffer> commandBuffer,
-    id<MTLRenderCommandEncoder> commandEncoder, id<MTLRenderPipelineState> renderPipelineState,
-    MetalBuffer* vertexBuffer, size_t vertexBufferOffset)
+                                             id<MTLRenderCommandEncoder> commandEncoder, id<MTLRenderPipelineState> renderPipelineState,
+                                             MetalBuffer* vertexBuffer, size_t vertexBufferOffset)
 {
     IM_UNUSED(commandBuffer);
     ImGui_ImplMetal_Data* bd = ImGui_ImplMetal_GetBackendData();
@@ -175,14 +181,14 @@ static void ImGui_ImplMetal_SetupRenderState(ImDrawData* drawData, id<MTLCommand
     // Our visible imgui space lies from draw_data->DisplayPos (top left) to
     // draw_data->DisplayPos+data_data->DisplaySize (bottom right). DisplayMin is typically (0,0) for single viewport apps.
     MTLViewport viewport =
-    {
-        .originX = 0.0,
-        .originY = 0.0,
-        .width = (double)(drawData->DisplaySize.x * drawData->FramebufferScale.x),
-        .height = (double)(drawData->DisplaySize.y * drawData->FramebufferScale.y),
-        .znear = 0.0,
-        .zfar = 1.0
-    };
+            {
+                    .originX = 0.0,
+                    .originY = 0.0,
+                    .width = (double)(drawData->DisplaySize.x * drawData->FramebufferScale.x),
+                    .height = (double)(drawData->DisplaySize.y * drawData->FramebufferScale.y),
+                    .znear = 0.0,
+                    .zfar = 1.0
+            };
     [commandEncoder setViewport:viewport];
 
     float L = drawData->DisplayPos.x;
@@ -192,12 +198,12 @@ static void ImGui_ImplMetal_SetupRenderState(ImDrawData* drawData, id<MTLCommand
     float N = (float)viewport.znear;
     float F = (float)viewport.zfar;
     const float ortho_projection[4][4] =
-    {
-        { 2.0f/(R-L),   0.0f,           0.0f,   0.0f },
-        { 0.0f,         2.0f/(T-B),     0.0f,   0.0f },
-        { 0.0f,         0.0f,        1/(F-N),   0.0f },
-        { (R+L)/(L-R),  (T+B)/(B-T), N/(F-N),   1.0f },
-    };
+            {
+                    { 2.0f/(R-L),   0.0f,           0.0f,   0.0f },
+                    { 0.0f,         2.0f/(T-B),     0.0f,   0.0f },
+                    { 0.0f,         0.0f,        1/(F-N),   0.0f },
+                    { (R+L)/(L-R),  (T+B)/(B-T), N/(F-N),   1.0f },
+            };
     [commandEncoder setVertexBytes:&ortho_projection length:sizeof(ortho_projection) atIndex:1];
 
     [commandEncoder setRenderPipelineState:renderPipelineState];
@@ -281,12 +287,12 @@ void ImGui_ImplMetal_RenderDrawData(ImDrawData* drawData, id<MTLCommandBuffer> c
 
                 // Apply scissor/clipping rectangle
                 MTLScissorRect scissorRect =
-                {
-                    .x = NSUInteger(clip_min.x),
-                    .y = NSUInteger(clip_min.y),
-                    .width = NSUInteger(clip_max.x - clip_min.x),
-                    .height = NSUInteger(clip_max.y - clip_min.y)
-                };
+                        {
+                                .x = NSUInteger(clip_min.x),
+                                .y = NSUInteger(clip_min.y),
+                                .width = NSUInteger(clip_max.x - clip_min.x),
+                                .height = NSUInteger(clip_max.y - clip_min.y)
+                        };
                 [commandEncoder setScissorRect:scissorRect];
 
                 // Bind texture, Draw
@@ -306,25 +312,21 @@ void ImGui_ImplMetal_RenderDrawData(ImDrawData* drawData, id<MTLCommandBuffer> c
         indexBufferOffset += (size_t)draw_list->IdxBuffer.Size * sizeof(ImDrawIdx);
     }
 
+    MetalContext* sharedMetalContext = bd->SharedMetalContext;
     [commandBuffer addCompletedHandler:^(id<MTLCommandBuffer>)
     {
         dispatch_async(dispatch_get_main_queue(), ^{
-            ImGui_ImplMetal_Data* bd = ImGui_ImplMetal_GetBackendData();
-            if (bd != nullptr)
+            @synchronized(sharedMetalContext.bufferCache)
             {
-                @synchronized(bd->SharedMetalContext.bufferCache)
-                {
-                    [bd->SharedMetalContext.bufferCache addObject:vertexBuffer];
-                    [bd->SharedMetalContext.bufferCache addObject:indexBuffer];
-                }
+                [sharedMetalContext.bufferCache addObject:vertexBuffer];
+                [sharedMetalContext.bufferCache addObject:indexBuffer];
             }
         });
     }];
 }
 
 bool ImGui_ImplMetal_CreateFontsTexture(id<MTLDevice> device)
-{
-    ImGui_ImplMetal_Data* bd = ImGui_ImplMetal_GetBackendData();
+{    ImGui_ImplMetal_Data* bd = ImGui_ImplMetal_GetBackendData();
     ImGuiIO& io = ImGui::GetIO();
 
     // We are retrieving and uploading the font atlas as a 4-channels RGBA texture here.
@@ -367,8 +369,10 @@ bool ImGui_ImplMetal_CreateDeviceObjects(id<MTLDevice> device)
     depthStencilDescriptor.depthWriteEnabled = NO;
     depthStencilDescriptor.depthCompareFunction = MTLCompareFunctionAlways;
     bd->SharedMetalContext.depthStencilState = [device newDepthStencilStateWithDescriptor:depthStencilDescriptor];
+#ifdef IMGUI_IMPL_METAL_CPP
+    [depthStencilDescriptor release];
+#endif
     ImGui_ImplMetal_CreateFontsTexture(device);
-
     return true;
 }
 
@@ -434,9 +438,9 @@ void ImGui_ImplMetal_DestroyDeviceObjects()
     if (![other isKindOfClass:[FramebufferDescriptor class]])
         return NO;
     return other.sampleCount == self.sampleCount      &&
-    other.colorPixelFormat   == self.colorPixelFormat &&
-    other.depthPixelFormat   == self.depthPixelFormat &&
-    other.stencilPixelFormat == self.stencilPixelFormat;
+           other.colorPixelFormat   == self.colorPixelFormat &&
+           other.depthPixelFormat   == self.depthPixelFormat &&
+           other.stencilPixelFormat == self.stencilPixelFormat;
 }
 
 @end
@@ -497,40 +501,40 @@ void ImGui_ImplMetal_DestroyDeviceObjects()
     NSError* error = nil;
 
     NSString* shaderSource = @""
-    "#include <metal_stdlib>\n"
-    "using namespace metal;\n"
-    "\n"
-    "struct Uniforms {\n"
-    "    float4x4 projectionMatrix;\n"
-    "};\n"
-    "\n"
-    "struct VertexIn {\n"
-    "    float2 position  [[attribute(0)]];\n"
-    "    float2 texCoords [[attribute(1)]];\n"
-    "    uchar4 color     [[attribute(2)]];\n"
-    "};\n"
-    "\n"
-    "struct VertexOut {\n"
-    "    float4 position [[position]];\n"
-    "    float2 texCoords;\n"
-    "    float4 color;\n"
-    "};\n"
-    "\n"
-    "vertex VertexOut vertex_main(VertexIn in                 [[stage_in]],\n"
-    "                             constant Uniforms &uniforms [[buffer(1)]]) {\n"
-    "    VertexOut out;\n"
-    "    out.position = uniforms.projectionMatrix * float4(in.position, 0, 1);\n"
-    "    out.texCoords = in.texCoords;\n"
-    "    out.color = float4(in.color) / float4(255.0);\n"
-    "    return out;\n"
-    "}\n"
-    "\n"
-    "fragment half4 fragment_main(VertexOut in [[stage_in]],\n"
-    "                             texture2d<half, access::sample> texture [[texture(0)]]) {\n"
-    "    constexpr sampler linearSampler(coord::normalized, min_filter::linear, mag_filter::linear, mip_filter::linear);\n"
-    "    half4 texColor = texture.sample(linearSampler, in.texCoords);\n"
-    "    return half4(in.color) * texColor;\n"
-    "}\n";
+                             "#include <metal_stdlib>\n"
+                             "using namespace metal;\n"
+                             "\n"
+                             "struct Uniforms {\n"
+                             "    float4x4 projectionMatrix;\n"
+                             "};\n"
+                             "\n"
+                             "struct VertexIn {\n"
+                             "    float2 position  [[attribute(0)]];\n"
+                             "    float2 texCoords [[attribute(1)]];\n"
+                             "    uchar4 color     [[attribute(2)]];\n"
+                             "};\n"
+                             "\n"
+                             "struct VertexOut {\n"
+                             "    float4 position [[position]];\n"
+                             "    float2 texCoords;\n"
+                             "    float4 color;\n"
+                             "};\n"
+                             "\n"
+                             "vertex VertexOut vertex_main(VertexIn in                 [[stage_in]],\n"
+                             "                             constant Uniforms &uniforms [[buffer(1)]]) {\n"
+                             "    VertexOut out;\n"
+                             "    out.position = uniforms.projectionMatrix * float4(in.position, 0, 1);\n"
+                             "    out.texCoords = in.texCoords;\n"
+                             "    out.color = float4(in.color) / float4(255.0);\n"
+                             "    return out;\n"
+                             "}\n"
+                             "\n"
+                             "fragment half4 fragment_main(VertexOut in [[stage_in]],\n"
+                             "                             texture2d<half, access::sample> texture [[texture(0)]]) {\n"
+                             "    constexpr sampler linearSampler(coord::normalized, min_filter::linear, mag_filter::linear, mip_filter::linear);\n"
+                             "    half4 texColor = texture.sample(linearSampler, in.texCoords);\n"
+                             "    return half4(in.color) * texColor;\n"
+                             "}\n";
 
     id<MTLLibrary> library = [device newLibraryWithSource:shaderSource options:nil error:&error];
     if (library == nil)
