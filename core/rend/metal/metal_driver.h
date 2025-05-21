@@ -115,6 +115,6 @@ private:
 
     bool frameRendered = false;
     id<MTLRenderCommandEncoder> commandEncoder;
-    CAMetalDrawable *drawable;
+    id<CAMetalDrawable> drawable;
     std::unordered_map<std::string, Texture> textures;
 };

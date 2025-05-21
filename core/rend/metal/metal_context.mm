@@ -39,7 +39,7 @@ bool MetalContext::init() {
         return false;
     }
 
-    layer = static_cast<id<CAMetalLayer>>(SDL_Metal_GetLayer(view));
+    layer = static_cast<CAMetalLayer*>(SDL_Metal_GetLayer(view));
 #endif
 
     if (!device) {
