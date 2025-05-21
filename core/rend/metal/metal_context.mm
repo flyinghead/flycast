@@ -19,7 +19,9 @@ Copyright 2024 flyinghead
 
 #include "metal_context.h"
 #include "metal_driver.h"
+#ifdef USE_SDL
 #include "sdl/sdl.h"
+#endif
 #include "ui/imgui_driver.h"
 
 MetalContext *MetalContext::contextInstance;
@@ -27,7 +29,7 @@ MetalContext *MetalContext::contextInstance;
 bool MetalContext::init() {
     GraphicsContext::instance = this;
 
-#if defined(USE_SDL)
+#ifdef USE_SDL
     if (!sdl_recreate_window(SDL_WINDOW_METAL))
         return false;
 
