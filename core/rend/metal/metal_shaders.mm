@@ -30,6 +30,9 @@ using namespace metal;
 constant bool pp_gouraud [[function_constant(0)]];
 constant bool div_pos_z [[function_constant(1)]];
 
+constant bool is_flat = pp_gouraud == 0;
+constant bool is_not_flag = !is_flat;
+
 struct VertexShaderUniforms
 {
     float4x4 ndc_mat;
@@ -45,9 +48,10 @@ struct VertexIn
 
 struct VertexOut
 {
-    // TODO: Interpolation mode
-    float4 vtx_base;
-    float4 vtx_offs;
+    float4 flat_vtx_base [[flat, function_constant(is_flat)]];
+    float4 flat_vtx_offs [[flat, function_constant(is_flat)]];
+    float4 vtx_base [[function_constant(is_not_flag)]];
+    float4 vtx_offs [[function_constant(is_not_flag)]];
     float3 vtx_uv;
     float4 position [[position]];
 };
@@ -62,13 +66,23 @@ vertex VertexOut vs_main(VertexIn in [[stage_in]], constant VertexShaderUniforms
     }
 
     VertexOut out = {};
-    out.vtx_base = in.in_base;
-    out.vtx_offs = in.in_offs;
+    if (is_flat) {
+        out.flat_vtx_base = in.in_base;
+        out.flat_vtx_offs = in.in_offs;
+    } else {
+        out.vtx_base = in.in_base;
+        out.vtx_offs = in.in_offs;
+    }
     out.vtx_uv = float3(in.in_uv, vpos.z);
 
     if (pp_gouraud && !div_pos_z) {
-        out.vtx_base *= vpos.z;
-        out.vtx_offs *= vpos.z;
+        if (is_flat) {
+            out.flat_vtx_base *= vpos.z;
+            out.flat_vtx_offs *= vpos.z;
+        } else {
+            out.vtx_base *= vpos.z;
+            out.vtx_offs *= vpos.z;
+        }
     }
 
     if (!div_pos_z) {
@@ -107,6 +121,8 @@ constant bool dithering [[function_constant(14)]];
 
 constant bool has_fog_table = pp_fog_ctrl != 2;
 constant bool has_palette = pp_palette != 0;
+constant bool is_flat = pp_gouraud == 0;
+constant bool is_not_flag = !is_flat;
 
 struct FragmentShaderUniforms
 {
@@ -128,9 +144,10 @@ struct PushBlock
 
 struct VertexOut
 {
-    // TODO: Interpolation mode
-    float4 vtx_base;
-    float4 vtx_offs;
+    float4 flat_vtx_base [[flat, function_constant(is_flat)]];
+    float4 flat_vtx_offs [[flat, function_constant(is_flat)]];
+    float4 vtx_base [[function_constant(is_not_flag)]];
+    float4 vtx_offs [[function_constant(is_not_flag)]];
     float3 vtx_uv;
     float4 position [[position]];
 };
@@ -228,8 +245,16 @@ fragment FragmentOut fs_main(VertexOut in [[stage_in]], constant FragmentShaderU
             discard_fragment();
     }
 
-    float4 color = in.vtx_base;
-    float4 offset = in.vtx_offs;
+    float4 color;
+    float4 offset;
+
+    if (is_flat) {
+        color = in.flat_vtx_base;
+        float4 offset = in.flat_vtx_offs;
+    } else {
+        color = in.vtx_base;
+        float4 offset = in.vtx_offs;
+    }
 
     if (pp_gouraud && !div_pos_z) {
         color /= in.vtx_uv.z;
@@ -446,7 +471,6 @@ fragment FragmentOut fs_main(VertexOut in [[stage_in]],
 }
 )";
 
-// TODO: Handle gouraud interpolation
 // TODO: N2 Shaders
 
 MetalShaders::MetalShaders() {
