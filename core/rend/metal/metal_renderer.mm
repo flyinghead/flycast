@@ -258,7 +258,7 @@ void MetalRenderer::DrawPoly(id<MTLRenderCommandEncoder> encoder, u32 listType, 
         [encoder setFragmentTexture:texture atIndex:0];
 
         // Texture sampler
-        [encoder setFragmentSamplerState:samplers.GetSampler(poly, listType == ListType_Punch_Through), 0];
+        [encoder setFragmentSamplerState:samplers.GetSampler(poly, listType == ListType_Punch_Through) atIndex:0];
     }
 
     if (poly.pcw.Texture || poly.isNaomi2())
