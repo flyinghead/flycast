@@ -54,7 +54,6 @@ bool MetalContext::init() {
 
     [layer setDevice:device];
     queue = [device newCommandQueue];
-    commandBuffer = [queue commandBuffer];
 
     NOTICE_LOG(RENDERER, "Created Metal view.");
 

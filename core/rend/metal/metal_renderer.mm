@@ -493,7 +493,7 @@ bool MetalRenderer::Draw(const MetalTexture *fogTexture, const MetalTexture *pal
 
     auto drawable = [MetalContext::Instance()->GetLayer() nextDrawable];
 
-    id<MTLCommandBuffer> buffer = MetalContext::Instance()->commandBuffer;
+    id<MTLCommandBuffer> buffer = [MetalContext::Instance()->GetQueue() commandBuffer];
     MTLRenderPassDescriptor *descriptor = [[MTLRenderPassDescriptor alloc] init];
     auto color = [descriptor colorAttachments][0];
     [color setTexture:frameBuffer];
@@ -513,60 +513,62 @@ bool MetalRenderer::Draw(const MetalTexture *fogTexture, const MetalTexture *pal
     [descriptor setDepthAttachment:depthAttachmentDescriptor];
     [descriptor setStencilAttachment:stencilAttachmentDescriptor];
 
-    id<MTLRenderCommandEncoder> renderEncoder = [buffer renderCommandEncoderWithDescriptor:descriptor];
+    @autoreleasepool {
+        id<MTLRenderCommandEncoder> renderEncoder = [buffer renderCommandEncoderWithDescriptor:descriptor];
 
-    [renderEncoder setFragmentTexture:fogTexture->texture atIndex:2];
-    [renderEncoder setFragmentTexture:paletteTexture->texture atIndex:3];
+        [renderEncoder setFragmentTexture:fogTexture->texture atIndex:2];
+        [renderEncoder setFragmentTexture:paletteTexture->texture atIndex:3];
 
-    // Fog sampler
-    TSP fogTsp = {};
-    fogTsp.FilterMode = 1;
-    fogTsp.ClampU = 1;
-    fogTsp.ClampV = 1;
-    [renderEncoder setFragmentSamplerState:samplers.GetSampler(fogTsp) atIndex:2];
+        // Fog sampler
+        TSP fogTsp = {};
+        fogTsp.FilterMode = 1;
+        fogTsp.ClampU = 1;
+        fogTsp.ClampV = 1;
+        [renderEncoder setFragmentSamplerState:samplers.GetSampler(fogTsp) atIndex:2];
 
-    // Palette sampler
-    TSP palTsp = {};
-    palTsp.FilterMode = 0;
-    palTsp.ClampU = 1;
-    palTsp.ClampV = 1;
-    [renderEncoder setFragmentSamplerState:samplers.GetSampler(palTsp) atIndex:3];
+        // Palette sampler
+        TSP palTsp = {};
+        palTsp.FilterMode = 0;
+        palTsp.ClampU = 1;
+        palTsp.ClampV = 1;
+        [renderEncoder setFragmentSamplerState:samplers.GetSampler(palTsp) atIndex:3];
 
-    // Upload vertex and index buffers
-    VertexShaderUniforms vtxUniforms {};
-    vtxUniforms.ndcMat = matrices.GetNormalMatrix();
+        // Upload vertex and index buffers
+        VertexShaderUniforms vtxUniforms {};
+        vtxUniforms.ndcMat = matrices.GetNormalMatrix();
 
-    UploadMainBuffer(vtxUniforms, fragUniforms);
+        UploadMainBuffer(vtxUniforms, fragUniforms);
 
-    [renderEncoder setVertexBuffer:curMainBuffer offset:0 atIndex:30];
-    [renderEncoder setVertexBuffer:curMainBuffer offset:offsets.vertexUniformOffset atIndex:0];
-    [renderEncoder setFragmentBuffer:curMainBuffer offset:offsets.fragmentUniformOffset atIndex:0];
+        [renderEncoder setVertexBuffer:curMainBuffer offset:0 atIndex:30];
+        [renderEncoder setVertexBuffer:curMainBuffer offset:offsets.vertexUniformOffset atIndex:0];
+        [renderEncoder setFragmentBuffer:curMainBuffer offset:offsets.fragmentUniformOffset atIndex:0];
 
-    RenderPass previous_pass {};
-    for (int render_pass = 0; render_pass < (int)pvrrc.render_passes.size(); render_pass++) {
-        const RenderPass& current_pass = pvrrc.render_passes[render_pass];
+        RenderPass previous_pass {};
+        for (int render_pass = 0; render_pass < (int)pvrrc.render_passes.size(); render_pass++) {
+            const RenderPass& current_pass = pvrrc.render_passes[render_pass];
 
-        DEBUG_LOG(RENDERER, "Render pass %d OP %d PT %d TR %d MV %d autosort %d", render_pass + 1,
-                current_pass.op_count - previous_pass.op_count,
-                current_pass.pt_count - previous_pass.pt_count,
-                current_pass.tr_count - previous_pass.tr_count,
-                current_pass.mvo_count - previous_pass.mvo_count, current_pass.autosort);
-        DrawList(renderEncoder, ListType_Opaque, false, pvrrc.global_param_op, previous_pass.op_count, current_pass.op_count);
-        DrawList(renderEncoder, ListType_Punch_Through, false, pvrrc.global_param_pt, previous_pass.pt_count, current_pass.pt_count);
-        DrawModVols(renderEncoder, previous_pass.mvo_count, current_pass.mvo_count - previous_pass.mvo_count);
-        if (current_pass.autosort) {
-            if (!config::PerStripSorting)
-                DrawSorted(renderEncoder, pvrrc.sortedTriangles, previous_pass.sorted_tr_count, current_pass.sorted_tr_count, render_pass + 1 < (int)pvrrc.render_passes.size());
-            else
-                DrawList(renderEncoder, ListType_Translucent, true, pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count);
-        } else {
-            // TODO: This breaking?
-            // DrawList(renderEncoder, ListType_Translucent, false, pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count);
+            DEBUG_LOG(RENDERER, "Render pass %d OP %d PT %d TR %d MV %d autosort %d", render_pass + 1,
+                      current_pass.op_count - previous_pass.op_count,
+                      current_pass.pt_count - previous_pass.pt_count,
+                      current_pass.tr_count - previous_pass.tr_count,
+                      current_pass.mvo_count - previous_pass.mvo_count, current_pass.autosort);
+            DrawList(renderEncoder, ListType_Opaque, false, pvrrc.global_param_op, previous_pass.op_count, current_pass.op_count);
+            DrawList(renderEncoder, ListType_Punch_Through, false, pvrrc.global_param_pt, previous_pass.pt_count, current_pass.pt_count);
+            DrawModVols(renderEncoder, previous_pass.mvo_count, current_pass.mvo_count - previous_pass.mvo_count);
+            if (current_pass.autosort) {
+                if (!config::PerStripSorting)
+                    DrawSorted(renderEncoder, pvrrc.sortedTriangles, previous_pass.sorted_tr_count, current_pass.sorted_tr_count, render_pass + 1 < (int)pvrrc.render_passes.size());
+                else
+                    DrawList(renderEncoder, ListType_Translucent, true, pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count);
+            } else {
+                // TODO: This breaking?
+                // DrawList(renderEncoder, ListType_Translucent, false, pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count);
+            }
+            previous_pass = current_pass;
         }
-        previous_pass = current_pass;
-    }
 
-    [renderEncoder endEncoding];
+        [renderEncoder endEncoding];
+    }
 
     // Blit to framebuffer
     descriptor = [[MTLRenderPassDescriptor alloc] init];
@@ -575,19 +577,19 @@ bool MetalRenderer::Draw(const MetalTexture *fogTexture, const MetalTexture *pal
     [color setLoadAction:MTLLoadActionClear];
     [color setStoreAction:MTLStoreActionStore];
 
-    renderEncoder = [buffer renderCommandEncoderWithDescriptor:descriptor];
+    @autoreleasepool {
+        id<MTLRenderCommandEncoder> renderEncoder = [buffer renderCommandEncoderWithDescriptor:descriptor];
 
-    [renderEncoder setRenderPipelineState:pipelineManager.GetBlitPassPipeline()];
-    [renderEncoder setFragmentTexture:frameBuffer atIndex:0];
-    [renderEncoder drawPrimitives: MTLPrimitiveTypeTriangleStrip vertexStart:0 vertexCount:4];
-    [renderEncoder endEncoding];
+        [renderEncoder setRenderPipelineState:pipelineManager.GetBlitPassPipeline()];
+        [renderEncoder setFragmentTexture:frameBuffer atIndex:0];
+        [renderEncoder drawPrimitives: MTLPrimitiveTypeTriangleStrip vertexStart:0 vertexCount:4];
+        [renderEncoder endEncoding];
+    }
 
     [buffer presentDrawable:drawable];
     [buffer commit];
 
     DEBUG_LOG(RENDERER, "Render command buffer released");
-
-    MetalContext::Instance()->commandBuffer = [MetalContext::Instance()->GetQueue() commandBuffer];
     return !pvrrc.isRTT;
 }
 
