@@ -92,7 +92,7 @@ public:
         texture.texture->tex_type = TextureType::_8888;
         texture.texture->UploadToGPU(width, height, data, false);
 
-        ImTextureID textureID = texture.texture->texture;
+        auto textureID = (ImTextureID)(intptr_t)(__bridge void*)texture.texture->texture;
 
         textures[name] = std::move(texture);
 
