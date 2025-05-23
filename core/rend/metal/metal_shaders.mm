@@ -250,10 +250,10 @@ fragment FragmentOut fs_main(VertexOut in [[stage_in]], constant FragmentShaderU
 
     if (is_flat) {
         color = in.flat_vtx_base;
-        float4 offset = in.flat_vtx_offs;
+        offset = in.flat_vtx_offs;
     } else {
         color = in.vtx_base;
-        float4 offset = in.vtx_offs;
+        offset = in.vtx_offs;
     }
 
     if (pp_gouraud && !div_pos_z) {
