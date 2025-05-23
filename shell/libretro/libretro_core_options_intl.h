@@ -46762,11 +46762,11 @@ struct retro_core_options_v2 options_id = {
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_IT "Imposta giochi NAOMI a Free Play"
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_IT "Modificare le impostazioni del gioco per free play."
 #define CORE_OPTION_NAME_EMULATE_BBA_LABEL_IT "Emulazione Adattatore A banda larga"
-#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_IT NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_IT "Emulare l'adattatore a banda larga Ethernet invece del modem. (Riavvio Richiesto)"
 #define CORE_OPTION_NAME_UPNP_LABEL_IT "Abilita UPnP"
 #define CORE_OPTION_NAME_UPNP_INFO_0_IT "Usa UPnP per configurare automaticamente il router Internet per i giochi online."
-#define CORE_OPTION_NAME_DCNET_LABEL_IT NULL
-#define CORE_OPTION_NAME_DCNET_INFO_0_IT NULL
+#define CORE_OPTION_NAME_DCNET_LABEL_IT "Usa DCNet"
+#define CORE_OPTION_NAME_DCNET_INFO_0_IT "Utilizzare il servizio cloud DCNet per l'accesso a Internet Dreamcast."
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_IT "Risoluzione Interna"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_IT "Modificare la risoluzione di rendering."
 #define OPTION_VAL_320X240_IT "320x240 (Metà)"
@@ -77197,11 +77197,11 @@ struct retro_core_options_v2 options_tt = {
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_UK "Встановити NAOMI ігри для безкоштовної гри"
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_UK "Змінювати параметри гри за допомогою монет \"Вільна гра\"."
 #define CORE_OPTION_NAME_EMULATE_BBA_LABEL_UK "Широкосмугова емуляція адаптера"
-#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_UK NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_UK "Емуляція Ethernet широкосмугового адаптера замість модема. (Перезавантажити необхідно)"
 #define CORE_OPTION_NAME_UPNP_LABEL_UK "Активувати UPnP"
 #define CORE_OPTION_NAME_UPNP_INFO_0_UK "Використовуйте UPnP для автоматичного налаштування інтернет-маршрутизатора для онлайн-ігор."
-#define CORE_OPTION_NAME_DCNET_LABEL_UK NULL
-#define CORE_OPTION_NAME_DCNET_INFO_0_UK NULL
+#define CORE_OPTION_NAME_DCNET_LABEL_UK "Використовувати DCNet"
+#define CORE_OPTION_NAME_DCNET_INFO_0_UK "Використовувати сервіс у хмарі DCNet для доступу в Інтернет Dreamcast."
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_UK "Роздільна здатність"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_UK "Змінити роздільну здатність візуалізації."
 #define OPTION_VAL_320X240_UK "320х240 (Half)"
