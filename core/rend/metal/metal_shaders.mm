@@ -405,7 +405,7 @@ static const char ModVolShaderSource[] = R"(
 
 using namespace metal;
 
-constant bool div_pos_z [[function_constant(1)]];
+constant bool div_pos_z [[function_constant(0)]];
 
 struct VertexShaderUniforms
 {
