@@ -400,6 +400,11 @@ void input_sdl_handle()
 						SDL_GL_GetDrawableSize(window, &settings.display.width, &settings.display.height);
 					else
 #endif
+#ifdef USE_METAL
+                    if (windowFlags & SDL_WINDOW_METAL)
+                        SDL_Metal_GetDrawableSize(window, &settings.display.width, &settings.display.height);
+                    else
+#endif
 						SDL_GetWindowSize(window, &settings.display.width, &settings.display.height);
 					GraphicsContext::Instance()->resize();
 				}
