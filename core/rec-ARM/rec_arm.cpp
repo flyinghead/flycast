@@ -1436,7 +1436,7 @@ void Arm32Assembler::compileOp(RuntimeBlockInfo* block, shil_opcode* op, bool op
 						//1-1=0 !
 						//should be slightly faster ...
 						//we could get rid of the imm mov, if not for infs & co ..
-						Vmov(reg.mapFReg(op->rd), 1.f);;
+						Vmov(reg.mapFReg(op->rd), 1.f);
 						Vsub(reg.mapFReg(op->rd), reg.mapFReg(op->rd), reg.mapFReg(op->rd));
 #endif
 					}

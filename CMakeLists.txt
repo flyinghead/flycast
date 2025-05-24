@@ -248,7 +248,7 @@ else()
 		$<$<COMPILE_LANGUAGE:CXX>:-Wall>)
 endif()
 
-if(${CMAKE_OSX_SYSROOT} MATCHES "\/MacOSX.platform\/Developer\/SDKs")
+if(APPLE AND NOT IOS)
 	set(TARGET_MAC ON)
 endif()
 

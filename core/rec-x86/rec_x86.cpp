@@ -489,7 +489,7 @@ void X86Compiler::genMainloop()
 	Xbyak::Label do_iter;
 	L(do_iter);
 	add(esp, 4);	// pop intc_sched() return address
-	mov(ecx, dword[sh4ctx.pc]);
+	mov(ecx, dword[&sh4ctx.pc]);
 	jmp(no_updateLabel);
 
 //ngen_LinkBlock_Shared_stub:

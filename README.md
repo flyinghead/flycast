@@ -6,7 +6,7 @@
 [![Windows UWP CI](https://github.com/flyinghead/flycast/actions/workflows/uwp.yml/badge.svg)](https://github.com/flyinghead/flycast/actions/workflows/uwp.yml)
 [![BSD CI](https://github.com/flyinghead/flycast/actions/workflows/bsd.yml/badge.svg)](https://github.com/flyinghead/flycast/actions/workflows/bsd.yml)
 
-![flycast logo](https://github.com/flyinghead/flycast/raw/master/shell/linux/flycast.png)
+<img src="shell/linux/flycast.png" alt="flycast logo" width="150"/>
 
 **Flycast** is a multi-platform Sega Dreamcast, Naomi, Naomi 2, and Atomiswave emulator derived from [**reicast**](https://github.com/skmp/reicast-emulator).
 

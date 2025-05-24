@@ -14,13 +14,13 @@ jobs:
         include:
           - operating_system: freebsd
             version: '14.2'
-            pkginstall: sudo pkg install -y alsa-lib ccache cmake evdev-proto git libao libevdev libudev-devd libzip lua54 miniupnpc ninja pkgconf pulseaudio sdl2 libcdio
+            pkginstall: sudo pkg update && sudo pkg install -y alsa-lib ccache cmake evdev-proto git libao libevdev libudev-devd libzip lua54 miniupnpc ninja pkgconf pulseaudio sdl2 libcdio
           - operating_system: netbsd
             version: '10.1'
-            pkginstall: sudo pkgin update && sudo pkgin -y install alsa-lib ccache cmake gcc12 git libao libzip lua54 miniupnpc ninja-build pkgconf pulseaudio SDL2 libcdio && export PATH=/usr/pkg/gcc12/bin:$PATH
+            pkginstall: sudo pkgin update && sudo pkgin -y install alsa-lib ccache clang cmake git libao libzip lua54 miniupnpc ninja-build pkgconf pulseaudio SDL2 libcdio
           - operating_system: openbsd
-            version: '7.6'
-            pkginstall: sudo pkg_add ccache cmake git libao libzip miniupnpc ninja pkgconf pulseaudio sdl2 libcdio
+            version: '7.7'
+            pkginstall: sudo pkg_add -u && sudo pkg_add ccache cmake git libao libzip miniupnpc ninja pkgconf pulseaudio sdl2 libcdio
         exclude:
           - architecture: arm64
 
@@ -36,7 +36,7 @@ jobs:
           key: ccache-${{ matrix.operating_system }}-${{ matrix.architecture }}-${{ github.sha }}
           restore-keys: ccache-${{ matrix.operating_system }}-${{ matrix.architecture }}-
 
-      - uses: cross-platform-actions/action@v0.27.0
+      - uses: cross-platform-actions/action@v0.28.0
         with:
           operating_system: ${{ matrix.operating_system }}
           architecture: ${{ matrix.architecture }}

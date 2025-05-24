@@ -8,7 +8,7 @@
 CFLAGS=-O3 -Wall -Wconversion
 
 dcnet: dcnet.c
-	$(CC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) -o $@ $<
 
 clean:
 	rm -f dcnet.o dcnet

@@ -161,6 +161,7 @@ struct SRamChip : WritableChip
 #define FLASH_USER_INET 0x80
 #define FLASH_USER_ISP1 0xC0
 #define FLASH_USER_ISP2 0xC6
+#define FLASH_USER_BBA 0xE0
 
 struct flash_syscfg_block {
   u16 block_id;
@@ -175,6 +176,7 @@ struct flash_syscfg_block {
   u8 unknown2[4];
   u8 reserved[50];
 };
+static_assert(sizeof(flash_syscfg_block) == 64);
 
 struct flash_isp1_block {
 	u16 block_id;
@@ -185,6 +187,7 @@ struct flash_isp1_block {
 	char phone[8];
 	u16 crc;
 };
+static_assert(sizeof(flash_isp1_block) == 64);
 
 struct flash_isp2_block {
 	u16 block_id;
@@ -194,6 +197,24 @@ struct flash_isp2_block {
 	char phone[12];
 	u16 crc;
 };
+static_assert(sizeof(flash_isp2_block) == 64);
+
+#pragma pack(push,1)
+struct flash_bba_block {
+	u16 block_id;
+	char sega[4];
+	u32 unk1;
+	u32 ipAddress;
+	u32 netmask;
+	u32 broadcast;
+	u32 dns1;
+	u32 dns2;
+	u32 gateway;
+	char unk2[28];
+	u16 crc;
+};
+#pragma pack(pop)
+static_assert(sizeof(flash_bba_block) == 64);
 
 // header block in block-allocated partition
 struct flash_header_block {
@@ -202,6 +223,7 @@ struct flash_header_block {
   u8 version;
   u8 reserved[46];
 };
+static_assert(sizeof(flash_header_block) == 64);
 
 // user block in block-allocated partition
 struct flash_user_block {
@@ -209,6 +231,7 @@ struct flash_user_block {
   u8 data[60];
   u16 crc;
 };
+static_assert(sizeof(flash_user_block) == 64);
 
 // Macronix 29LV160TMC
 // AtomisWave uses a custom 29L001mc model

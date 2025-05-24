@@ -543,4 +543,18 @@ u32 getVramOffset(void *addr)
 	}
 }
 
+void getAddress(void** out_ram_base, void** out_ram, void** out_vram, void** out_aica) {
+    if (ram_base != nullptr) {
+        *out_ram_base =	ram_base;
+        *out_ram = &mem_b[0];
+        *out_vram = &vram[0];
+        *out_aica = &aica::aica_ram[0];
+    } else {
+        *out_ram_base =	nullptr;
+        *out_ram = nullptr;
+        *out_vram = nullptr;
+        *out_aica = nullptr;
+    }
+}
+
 } // namespace addrspace

@@ -886,7 +886,7 @@ static void update_variables(bool first_startup)
 	{
 		if (config::ThreadedRendering)
 		{
-			bool save_state_in_background = true ;
+			bool save_state_in_background = false;
 			unsigned poll_type_early      = 1; /* POLL_TYPE_EARLY */
 			environ_cb(RETRO_ENVIRONMENT_SET_SAVE_STATE_IN_BACKGROUND, &save_state_in_background);
 			environ_cb(RETRO_ENVIRONMENT_POLL_TYPE_OVERRIDE, &poll_type_early);
