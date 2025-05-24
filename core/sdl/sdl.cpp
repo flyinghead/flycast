@@ -323,6 +323,7 @@ void input_sdl_handle()
 				if (event.key.repeat == 0)
 				{
 					auto is_key_mapped = [](u32 code) -> bool {
+						const InputMapping::InputSet inputSet{InputMapping::InputDef::from_button(code)};
 #if defined(_WIN32) && !defined(TARGET_UWP)
 						if (config::UseRawInput)
 						{
@@ -331,7 +332,7 @@ void input_sdl_handle()
 								auto gamepad = GamepadDevice::GetGamepad(i);
 								if (dynamic_cast<rawinput::RawKeyboard*>(gamepad.get()) != nullptr)
 								{
-									bool mapped = (gamepad->get_input_mapping()->get_button_id(0, code) != EMU_BTN_NONE);
+									bool mapped = (gamepad->get_input_mapping()->get_button_id(0, inputSet) != EMU_BTN_NONE);
 									if (mapped) return true;
 								}
 							}
@@ -340,7 +341,7 @@ void input_sdl_handle()
 						else
 #endif
 						{
-							return (sdl_keyboard->get_input_mapping()->get_button_id(0, code) != EMU_BTN_NONE);
+							return (sdl_keyboard->get_input_mapping()->get_button_id(0, inputSet) != EMU_BTN_NONE);
 						}
 					};
 					if (event.type == SDL_KEYDOWN)
