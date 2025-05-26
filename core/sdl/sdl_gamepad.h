@@ -4,6 +4,8 @@
 #include "stdclass.h"
 #include "sdl.h"
 
+#include <cmath>
+
 template<bool Arcade = false, bool Gamepad = false>
 class DefaultInputMapping : public InputMapping
 {

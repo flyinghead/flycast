@@ -64,7 +64,7 @@ public:
 			vertices = defaultVtx;
 		};
 
-		const size_t quadVerticesHash = hashQuadVertexData(vertices);;
+		const size_t quadVerticesHash = hashQuadVertexData(vertices);
 		if (quadVerticesHash == lastUploadHash)
 		{
 			// data already uploaded

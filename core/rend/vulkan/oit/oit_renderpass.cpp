@@ -97,6 +97,13 @@ vk::UniqueRenderPass RenderPasses::MakeRenderPass(bool initial, bool last, bool 
     		vk::AccessFlagBits::eShaderRead | vk::AccessFlagBits::eShaderWrite,
 			vk::AccessFlagBits::eShaderRead | vk::AccessFlagBits::eShaderWrite,
 			vk::DependencyFlagBits::eByRegion);
+	if (GetContext()->GetVendorID() == VulkanContext::VENDOR_ARM) {
+		// Avoid glitches in upper left corner with Mali GPUs.
+		// Using eTopOfPipe as destination since eFragmentShader/eInputAttachmentRead|eShaderRead fails to fix the problem, which is odd.
+		// Also, vulkan defines an implicit dependency from 2 to VK_SUBPASS_EXTERNAL, so this one shouldn't be needed.
+		dependencies.emplace_back(2, VK_SUBPASS_EXTERNAL, vk::PipelineStageFlagBits::eColorAttachmentOutput, vk::PipelineStageFlagBits::eTopOfPipe,
+				vk::AccessFlagBits::eColorAttachmentWrite, vk::AccessFlagBits::eNone);
+	}
 
     return GetContext()->GetDevice().createRenderPassUnique(vk::RenderPassCreateInfo(vk::RenderPassCreateFlags(),
     		attachmentDescriptions,

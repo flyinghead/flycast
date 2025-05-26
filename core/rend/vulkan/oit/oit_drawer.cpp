@@ -314,21 +314,19 @@ bool OITDrawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 		{
 		case 0: // 0555 KRGB 16 bit
 		case 3: // 1555 ARGB 16 bit
-			fragUniforms.ditherColorMax[0] = fragUniforms.ditherColorMax[1] = fragUniforms.ditherColorMax[2] = 31.f;
-			fragUniforms.ditherColorMax[3] = 255.f;
+			fragUniforms.ditherDivisor[0] = fragUniforms.ditherDivisor[1] = fragUniforms.ditherDivisor[2] = 2.f;
 			break;
 		case 1: // 565 RGB 16 bit
-			fragUniforms.ditherColorMax[0] = fragUniforms.ditherColorMax[2] = 31.f;
-			fragUniforms.ditherColorMax[1] = 63.f;
-			fragUniforms.ditherColorMax[3] = 255.f;
+			fragUniforms.ditherDivisor[0] = fragUniforms.ditherDivisor[2] = 2.f;
+			fragUniforms.ditherDivisor[1] = 4.f;
 			break;
 		case 2: // 4444 ARGB 16 bit
-			fragUniforms.ditherColorMax[0] = fragUniforms.ditherColorMax[1]
-				= fragUniforms.ditherColorMax[2] = fragUniforms.ditherColorMax[3] = 15.f;
+			fragUniforms.ditherDivisor[0] = fragUniforms.ditherDivisor[1] = fragUniforms.ditherDivisor[2] = 1.f;
 			break;
 		default:
 			break;
 		}
+		fragUniforms.ditherDivisor[3] = 1.f;
 	}
 
 	currentScissor = vk::Rect2D();

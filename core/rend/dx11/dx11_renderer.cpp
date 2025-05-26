@@ -445,21 +445,19 @@ void DX11Renderer::setupPixelShaderConstants()
 		{
 		case 0: // 0555 KRGB 16 bit
 		case 3: // 1555 ARGB 16 bit
-			pixelConstants.ditherColorMax[0] = pixelConstants.ditherColorMax[1] = pixelConstants.ditherColorMax[2] = 31.f;
-			pixelConstants.ditherColorMax[3] = 255.f;
-			break;
+			pixelConstants.ditherDivisor[0] = pixelConstants.ditherDivisor[1] = pixelConstants.ditherDivisor[2] = 2.f;
+		break;
 		case 1: // 565 RGB 16 bit
-			pixelConstants.ditherColorMax[0] = pixelConstants.ditherColorMax[2] = 31.f;
-			pixelConstants.ditherColorMax[1] = 63.f;
-			pixelConstants.ditherColorMax[3] = 255.f;
+			pixelConstants.ditherDivisor[0] = pixelConstants.ditherDivisor[2] = 2.f;
+			pixelConstants.ditherDivisor[1] = 4.f;
 			break;
 		case 2: // 4444 ARGB 16 bit
-			pixelConstants.ditherColorMax[0] = pixelConstants.ditherColorMax[1]
-				= pixelConstants.ditherColorMax[2] = pixelConstants.ditherColorMax[3] = 15.f;
+			pixelConstants.ditherDivisor[0] = pixelConstants.ditherDivisor[1] = pixelConstants.ditherDivisor[2] = 1.f;
 			break;
 		default:
 			break;
 		}
+		pixelConstants.ditherDivisor[3] = 1.f;
 	}
 
 	D3D11_MAPPED_SUBRESOURCE mappedSubres;

@@ -91,7 +91,7 @@ layout (std140, set = 0, binding = 1) uniform FragmentShaderUniforms
 	vec4 colorClampMax;
 	vec4 sp_FOG_COL_RAM;
 	vec4 sp_FOG_COL_VERT;
-	vec4 ditherColorMax;
+	vec4 ditherDivisor;
 	float cp_AlphaTestValue;
 	float sp_FOG_DENSITY;
 	float shade_scale_factor;
@@ -473,7 +473,7 @@ vec4 resolveAlphaBlend(ivec2 coords) {
 				srcCoef = vec4(1.0);
 				break;
 			case OTHER_COLOR:
-				srcCoef = finalColor;
+				srcCoef = dstColor;
 				break;
 			case INVERSE_OTHER_COLOR:
 				srcCoef = vec4(1.0) - dstColor;
@@ -528,16 +528,14 @@ vec4 resolveAlphaBlend(ivec2 coords) {
 
 #if DITHERING == 1
 	float ditherTable[16] = float[](
-		 0.9375,  0.1875,  0.75,  0.,   
-		 0.4375,  0.6875,  0.25,  0.5,
-		 0.8125,  0.0625,  0.875, 0.125,
-		 0.3125,  0.5625,  0.375, 0.625	
+		5., 13.,  7., 15.,
+		9.,  1., 11.,  3.,
+		6., 14.,  4., 12.,
+		10., 2.,  8.,  0.
 	);
 	float r = ditherTable[int(mod(gl_FragCoord.y, 4.)) * 4 + int(mod(gl_FragCoord.x, 4.))];
-	// 31 for 5-bit color, 63 for 6 bits, 15 for 4 bits
-	finalColor += r / uniformBuffer.ditherColorMax;
-	// avoid rounding
-	finalColor = floor(finalColor * 255.) / 255.;
+	vec4 dv = vec4(r, r, r, 1.) / uniformBuffer.ditherDivisor;
+	finalColor = clamp(floor(finalColor * 255. + dv) / 255., 0., 1.);
 #endif
 	return finalColor;
 	

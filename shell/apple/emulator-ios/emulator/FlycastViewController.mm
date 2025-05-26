@@ -323,7 +323,7 @@ static void updateAudioSession(Event event, void *)
 	}
 	settings.display.dpi = 160.f * scale;
 	initRenderApi();
-#if defined(TARGET_OS_SIMULATOR) && HOST_CPU == CPU_ARM64
+#if TARGET_OS_SIMULATOR == 1 && HOST_CPU == CPU_ARM64
 	if (config::RendererType.get() == RenderType::OpenGL)
 	{
 		NSLog(@"🚨🚨🚨 OpenGL renderer is not supported in Apple Silicon Mac 🚨🚨🚨\n");

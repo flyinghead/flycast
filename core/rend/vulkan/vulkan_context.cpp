@@ -42,6 +42,7 @@ VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 #endif
 
 #include <memory>
+#include <set>
 #include <vulkan/vulkan_format_traits.hpp>
 
 void ReInitOSD();
@@ -1408,6 +1409,16 @@ bool VulkanContext::GetLastFrame(std::vector<u8>& data, int& width, int& height)
 	drawer.Draw(*commandBuffer, lastFrameView, vtx, false);
 	commandBuffer->endRenderPass();
 
+	if (vendorID == VENDOR_ARM)
+	{
+		// Mali GPUs need an extra mem barrier here for some reason
+		vk::MemoryBarrier memoryBarrier(
+				vk::AccessFlagBits::eColorAttachmentWrite,
+				vk::AccessFlagBits::eTransferRead);
+		commandBuffer->pipelineBarrier(vk::PipelineStageFlagBits::eColorAttachmentOutput,
+						vk::PipelineStageFlagBits::eTransfer, {}, memoryBarrier, nullptr, nullptr);
+	}
+
 	// Copy back
 	vk::BufferImageCopy copyRegion(0, width, height, vk::ImageSubresourceLayers(vk::ImageAspectFlagBits::eColor, 0, 0, 1), vk::Offset3D(0, 0, 0),
 			vk::Extent3D(width, height, 1));
@@ -1440,7 +1451,7 @@ bool VulkanContext::GetLastFrame(std::vector<u8>& data, int& width, int& height)
 	{
 		// Format is already RGB, can be directly copied
 		data.resize(width * height * 3);
-		std::memcpy(data.data(), img, width* height * 3);
+		std::memcpy(data.data(), img, width * height * 3);
 	}
 	else
 	{

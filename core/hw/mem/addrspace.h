@@ -80,5 +80,6 @@ bool bm_lockedWrite(u8* address); // FIXME rename?
 void protectVram(u32 addr, u32 size);
 void unprotectVram(u32 addr, u32 size);
 u32 getVramOffset(void *addr);
+void getAddress(void** out_ram_base, void** out_ram, void** out_vram, void** out_aica);
 
 } // namespace addrspace
