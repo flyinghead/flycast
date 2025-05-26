@@ -73,7 +73,7 @@ protected:
 		float colorClampMax[4];
 		float fog_col_vert[4];
 		float fog_col_ram[4];
-		float ditherColorMax[4];
+		float ditherDivisor[4];
 		float fogDensity;
 		float shadowScale;
 		float alphaTestValue;

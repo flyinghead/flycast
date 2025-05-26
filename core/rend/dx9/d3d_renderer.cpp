@@ -1116,27 +1116,24 @@ bool D3DRenderer::Render()
 	dithering = config::EmulateFramebuffer && pvrrc.fb_W_CTRL.fb_dither && pvrrc.fb_W_CTRL.fb_packmode <= 3;
 	if (dithering)
 	{
-		float ditherColorMax[4];
+		float ditherDivisor[4] { 0.f, 0.f, 0.f, 1.f };
 		switch (pvrrc.fb_W_CTRL.fb_packmode)
 		{
 		case 0: // 0555 KRGB 16 bit
 		case 3: // 1555 ARGB 16 bit
-			ditherColorMax[0] = ditherColorMax[1] = ditherColorMax[2] = 31.f;
-			ditherColorMax[3] = 255.f;
+			ditherDivisor[0] = ditherDivisor[1] = ditherDivisor[2] = 2.f;
 			break;
 		case 1: // 565 RGB 16 bit
-			ditherColorMax[0] = ditherColorMax[2] = 31.f;
-			ditherColorMax[1] = 63.f;
-			ditherColorMax[3] = 255.f;
+			ditherDivisor[0] = ditherDivisor[2] = 2.f;
+			ditherDivisor[1] = 4.f;
 			break;
 		case 2: // 4444 ARGB 16 bit
-			ditherColorMax[0] = ditherColorMax[1]
-				= ditherColorMax[2] = ditherColorMax[3] = 15.f;
+			ditherDivisor[0] = ditherDivisor[1] = ditherDivisor[2] = 1.f;
 			break;
 		default:
 			break;
 		}
-		device->SetPixelShaderConstantF(8, ditherColorMax, 1);
+		device->SetPixelShaderConstantF(8, ditherDivisor, 1);
 	}
 
 	devCache.SetRenderState(D3DRS_ZENABLE, D3DZB_TRUE);
