@@ -286,6 +286,10 @@ if(NINTENDO_SWITCH)
 	target_include_directories(${PROJECT_NAME} PRIVATE shell/switch)
 endif()
 
+if(CMAKE_SYSTEM_NAME STREQUAL "OpenBSD")
+	target_link_options(${PROJECT_NAME} PRIVATE "-Wl,--no-execute-only")
+endif()
+
 if(USE_BREAKPAD AND NOT LIBRETRO)
 	find_program(SH_EXECUTABLE sh)
 	if((ANDROID AND NOT CMAKE_HOST_SYSTEM_NAME STREQUAL "Windows") OR (MINGW AND SH_EXECUTABLE) OR (CMAKE_SYSTEM_NAME STREQUAL "Linux"))
