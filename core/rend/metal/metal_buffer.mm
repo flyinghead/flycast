@@ -25,3 +25,5 @@ MetalBufferData::MetalBufferData(u64 size) : bufferSize(size) {
 
     buffer = [device newBufferWithLength:size options:MTLResourceStorageModeShared];
 }
+
+BufferPacker::BufferPacker() {}
