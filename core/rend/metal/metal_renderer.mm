@@ -274,12 +274,11 @@ void MetalRenderer::DrawPoly(id<MTLRenderCommandEncoder> encoder, u32 listType, 
 
     MTLPrimitiveType primitive = sortTriangles && !config::PerStripSorting ? MTLPrimitiveTypeTriangle : MTLPrimitiveTypeTriangleStrip;
 
-    [encoder drawIndexedPrimitives: primitive
-                        indexCount: count
-                         indexType: MTLIndexTypeUInt32
-                       indexBuffer: curMainBuffer
-                 indexBufferOffset: offsets.indexOffset + first * sizeof(u32)
-                     instanceCount: 1];
+    [encoder drawIndexedPrimitives:primitive
+                        indexCount:count
+                         indexType:MTLIndexTypeUInt32
+                       indexBuffer:curMainBuffer
+                 indexBufferOffset:offsets.indexOffset + first * sizeof(u32)];
 }
 
 void MetalRenderer::DrawSorted(id<MTLRenderCommandEncoder> encoder, const std::vector<SortedTriangle> &polys, u32 first, u32 last, bool multipass)
@@ -306,9 +305,9 @@ void MetalRenderer::DrawSorted(id<MTLRenderCommandEncoder> encoder, const std::v
             SetTileClip(encoder, polyParam.tileclip, scissorRect);
             [encoder drawIndexedPrimitives:MTLPrimitiveTypeTriangle
                                 indexCount:param.count
-                                 indexType:MTLIndexTypeUInt32 indexBuffer:curMainBuffer
-                         indexBufferOffset:offsets.indexOffset + param.first * sizeof(u32)
-                             instanceCount:1];
+                                 indexType:MTLIndexTypeUInt32
+                               indexBuffer:curMainBuffer
+                         indexBufferOffset:offsets.indexOffset + param.first * sizeof(u32)];
         }
     }
 
@@ -378,8 +377,7 @@ void MetalRenderer::DrawModVols(id<MTLRenderCommandEncoder> encoder, int first, 
 
         [encoder drawPrimitives:MTLPrimitiveTypeTriangle
                     vertexStart:param.first * 3
-                    vertexCount:param.count * 3
-                  instanceCount:1];
+                    vertexCount:param.count * 3];
 
         if (mv_mode == 1 || mv_mode == 2)
         {
@@ -391,8 +389,7 @@ void MetalRenderer::DrawModVols(id<MTLRenderCommandEncoder> encoder, int first, 
             [encoder setStencilReferenceValue:1];
             [encoder drawPrimitives:MTLPrimitiveTypeTriangle
                         vertexStart: mod_base * 3
-                        vertexCount: (param.first + param.count - mod_base) * 3
-                      instanceCount: 1];
+                        vertexCount: (param.first + param.count - mod_base) * 3];
             mod_base = -1;
         }
     }
@@ -403,12 +400,11 @@ void MetalRenderer::DrawModVols(id<MTLRenderCommandEncoder> encoder, int first, 
     [encoder setRenderPipelineState:state];
     [encoder setDepthStencilState:depth_state];
     [encoder setStencilReferenceValue:0x81];
-    [encoder drawIndexedPrimitives: MTLPrimitiveTypeTriangleStrip
-                        indexCount: 4
-                         indexType: MTLIndexTypeUInt32
-                       indexBuffer: curMainBuffer
-                 indexBufferOffset: offsets.indexOffset
-                     instanceCount: 1];
+    [encoder drawIndexedPrimitives:MTLPrimitiveTypeTriangleStrip
+                        indexCount:4
+                         indexType:MTLIndexTypeUInt32
+                       indexBuffer:curMainBuffer
+                 indexBufferOffset:offsets.indexOffset];
 
     [encoder popDebugGroup];
 }
@@ -447,17 +443,17 @@ bool MetalRenderer::Draw(const MetalTexture *fogTexture, const MetalTexture *pal
             case 0: // 0555 KRGB 16 bit
             case 3: // 1555 ARGB 16 bit
                 fragUniforms.ditherColorMax[0] = fragUniforms.ditherColorMax[1] = fragUniforms.ditherColorMax[2] = 31.f;
-            fragUniforms.ditherColorMax[3] = 255.f;
-            break;
+                fragUniforms.ditherColorMax[3] = 255.f;
+                break;
             case 1: // 565 RGB 16 bit
                 fragUniforms.ditherColorMax[0] = fragUniforms.ditherColorMax[2] = 31.f;
-            fragUniforms.ditherColorMax[1] = 63.f;
-            fragUniforms.ditherColorMax[3] = 255.f;
-            break;
+                fragUniforms.ditherColorMax[1] = 63.f;
+                fragUniforms.ditherColorMax[3] = 255.f;
+                break;
             case 2: // 4444 ARGB 16 bit
                 fragUniforms.ditherColorMax[0] = fragUniforms.ditherColorMax[1]
                     = fragUniforms.ditherColorMax[2] = fragUniforms.ditherColorMax[3] = 15.f;
-            break;
+                break;
             default:
                 break;
         }
@@ -588,6 +584,8 @@ bool MetalRenderer::Draw(const MetalTexture *fogTexture, const MetalTexture *pal
 
     [buffer presentDrawable:drawable];
     [buffer commit];
+    // TODO: Properly handle wait/vsync/buffering!
+    [buffer waitUntilCompleted];
 
     DEBUG_LOG(RENDERER, "Render command buffer released");
     return !pvrrc.isRTT;
