@@ -105,14 +105,14 @@ public:
         return offset;
     }
 
-private:
-    std::vector<const void *> chunks;
-    std::vector<u32> chunkSizes;
-    u64 offset = 0;
-
     static inline u32 align(u64 offset, u32 alignment)
     {
         u32 pad = (u32)(offset & (alignment - 1));
         return pad == 0 ? 0 : alignment - pad;
     }
+
+private:
+    std::vector<const void *> chunks;
+    std::vector<u32> chunkSizes;
+    u64 offset = 0;
 };

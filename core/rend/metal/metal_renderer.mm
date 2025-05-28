@@ -237,7 +237,7 @@ void MetalRenderer::DrawPoly(id<MTLRenderCommandEncoder> encoder, u32 listType, 
             palette_index
         };
 
-        [encoder setFragmentBytes:pushConstants.data() length:sizeof(pushConstants) atIndex:1];
+        [encoder setFragmentBytes:pushConstants.data() length:sizeof(pushConstants) + MetalBufferPacker::align(sizeof(pushConstants), 16) atIndex:1];
     }
 
     bool shadowed = listType == ListType_Opaque || listType == ListType_Punch_Through;
@@ -345,7 +345,7 @@ void MetalRenderer::DrawModVols(id<MTLRenderCommandEncoder> encoder, int first, 
     id<MTLDepthStencilState> depth_state;
 
     const std::array<float, 1> pushConstants = { 1 - FPU_SHAD_SCALE.scale_factor / 256.f };
-    [encoder setFragmentBytes:pushConstants.data() length:sizeof(pushConstants) atIndex:1];
+    [encoder setFragmentBytes:pushConstants.data() length:sizeof(pushConstants) + MetalBufferPacker::align(sizeof(pushConstants), 16) atIndex:1];
 
     for (int cmv = 0; cmv < count; cmv++) {
         ModifierVolumeParam& param = params[cmv];
