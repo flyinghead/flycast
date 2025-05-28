@@ -414,7 +414,7 @@ void MetalRenderer::DrawModVols(id<MTLRenderCommandEncoder> encoder, int first, 
 }
 
 void MetalRenderer::UploadMainBuffer(const VertexShaderUniforms &vertexUniforms, const FragmentShaderUniforms &fragmentUniforms) {
-    BufferPacker packer;
+    MetalBufferPacker packer;
 
     // Vertex
     packer.add(pvrrc.verts.data(), pvrrc.verts.size() * sizeof(decltype(*pvrrc.verts.data())));

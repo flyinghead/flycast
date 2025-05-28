@@ -65,10 +65,10 @@ struct MetalBufferData
     u64 bufferSize;
 };
 
-class BufferPacker
+class MetalBufferPacker
 {
 public:
-    BufferPacker();
+    MetalBufferPacker();
 
     u64 addUniform(const void *p, size_t size) {
         return add(p, size);
