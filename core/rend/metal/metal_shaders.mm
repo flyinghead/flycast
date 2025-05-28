@@ -208,7 +208,7 @@ float4 palette_pixel_bilinear(texture2d<float> texture, sampler texture_sampler,
                               texture2d<float> palette, sampler palette_sampler,
                               float3 coords, constant PushBlock& push_constants)
 {
-    if (div_pos_z) {
+    if (!div_pos_z) {
         coords.xy /= coords.z;
     }
 
