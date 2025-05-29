@@ -1,5 +1,5 @@
 /*
-    Copyright 2024 flyinghead
+    Copyright 2025 flyinghead
 
     This file is part of Flycast.
 
@@ -16,6 +16,7 @@
     You should have received a copy of the GNU General Public License
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
+
 #include "metal_pipeline.h"
 
 #include "metal_context.h"
