@@ -18,10 +18,8 @@ Copyright 2024 flyinghead
 */
 #pragma once
 
-#ifdef __OBJC__
 #include <Metal/Metal.h>
 #include <QuartzCore/QuartzCore.h>
-#endif
 
 #include "wsi/context.h"
 
@@ -33,19 +31,12 @@ public:
 
     bool init();
     void term() override;
+    void resize() override;
+    void Present();
 
-#ifdef __OBJC__
     id<MTLDevice> GetDevice() const { return device; }
     CAMetalLayer* GetLayer() const { return layer; }
     id<MTLCommandQueue> GetQueue() const { return queue; }
-// Hack to make sure everything lines up when in pure C++
-#else
-    void* GetDevice() const { return device; }
-    void* GetLayer() const { return layer; }
-    void* GetQueue() const { return queue; }
-#endif
-    void resize() override;
-    void Present();
 
     std::string getDriverName() override;
 
@@ -63,14 +54,9 @@ public:
 
     static MetalContext* Instance() { return contextInstance; }
 private:
-#ifdef __OBJC__
     id<MTLDevice> device = nil;
     id<MTLCommandQueue> queue = nil;
     CAMetalLayer* layer;
-#else
-    void* device = nullptr;
-    void* queue = nullptr;
-    void* layer = nullptr;
-#endif
+
     static MetalContext* contextInstance;
 };

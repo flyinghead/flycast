@@ -1342,8 +1342,15 @@ endif()
 target_sources(${PROJECT_NAME} PRIVATE
 		core/wsi/context.h
 		core/wsi/libretro.cpp
-		core/wsi/libretro.h
+		core/wsi/libretro.h)
+
+if(USE_METAL)
+	target_sources(${PROJECT_NAME} PRIVATE
+		core/wsi/switcher.mm)
+else()
+	target_sources(${PROJECT_NAME} PRIVATE
 		core/wsi/switcher.cpp)
+endif()
 
 if(USE_OPENGL)
 	target_compile_definitions(${PROJECT_NAME} PRIVATE USE_OPENGL)
