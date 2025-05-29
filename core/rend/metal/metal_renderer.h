@@ -133,6 +133,7 @@ protected:
 
     id<MTLBuffer> curMainBuffer = nil;
     id<MTLCommandBuffer> commandBuffer = nil;
+    id<MTLCommandBuffer> texCommandBuffer = nil;
     MetalBufferData* mainBuffer;
     MetalPipelineManager pipelineManager = MetalPipelineManager(this);
     MetalShaders shaders;

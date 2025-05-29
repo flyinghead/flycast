@@ -54,12 +54,20 @@ void MetalRenderer::Process(TA_context *ctx) {
         if (!config::EmulateFramebuffer)
             clearLastFrame = false;
     }
+    if (resetTextureCache) {
+        textureCache.Clear();
+        resetTextureCache = false;
+    }
+
+    texCommandBuffer = [MetalContext::Instance()->GetQueue() commandBuffer];
 
     ta_parse(ctx, true);
 
     // TODO can't update fog or palette twice in multi render
     CheckFogTexture();
     CheckPaletteTexture();
+    [texCommandBuffer commit];
+    texCommandBuffer = nil;
 }
 
 bool MetalRenderer::Render() {
@@ -95,13 +103,18 @@ BaseTextureCacheData *MetalRenderer::GetTexture(TSP tsp, TCW tcw) {
     MetalTexture* tf = textureCache.getTextureCacheData(tsp, tcw);
 
     if (tf->NeedsUpdate()) {
+        tf->SetCommandBuffer(texCommandBuffer);
+
         if (!tf->Update()) {
-            tf= nullptr;
+            tf = nullptr;
+            return nullptr;
         }
     }
     else if (tf->IsCustomTextureAvailable()) {
         // TODO
+        tf->SetCommandBuffer(texCommandBuffer);
     }
+    tf->SetCommandBuffer(nil);
 
     return tf;
 }
@@ -119,7 +132,9 @@ void MetalRenderer::CheckFogTexture() {
     u8 texData[256];
     MakeFogTexture(texData);
 
+    fogTexture->SetCommandBuffer(texCommandBuffer);
     fogTexture->UploadToGPU(128, 2, texData, false);
+    fogTexture->SetCommandBuffer(nil);
 }
 
 void MetalRenderer::CheckPaletteTexture() {
@@ -132,7 +147,9 @@ void MetalRenderer::CheckPaletteTexture() {
         return;
     updatePalette = false;
 
+    paletteTexture->SetCommandBuffer(texCommandBuffer);
     paletteTexture->UploadToGPU(1024, 1, (u8 *)palette32_ram, false);
+    paletteTexture->SetCommandBuffer(nil);
 }
 
 void MetalRenderer::WaitIdle() {
@@ -233,9 +250,11 @@ void MetalRenderer::DrawPoly(id<MTLRenderCommandEncoder> encoder, u32 listType, 
             palette_index = float(poly.tcw.PalSelect >> 4 << 8) / 1023.0f;
     }
 
+    std::array<float, 6> pushConstants;
+
     if (tileClip == TileClipping::Inside || trilinearAlpha != 1.0f || gpuPalette != 0)
     {
-        const std::array<float, 6> pushConstants = {
+        pushConstants = {
             (float)scissorRect.x,
             (float)scissorRect.y,
             (float)scissorRect.x + (float)scissorRect.width,
@@ -243,9 +262,11 @@ void MetalRenderer::DrawPoly(id<MTLRenderCommandEncoder> encoder, u32 listType, 
             trilinearAlpha,
             palette_index
         };
-
-        [encoder setFragmentBytes:pushConstants.data() length:sizeof(pushConstants) + MetalBufferPacker::align(sizeof(pushConstants), 16) atIndex:1];
+    } else {
+        pushConstants = { 0, 0, 0, 0, 0, 0 };
     }
+
+    [encoder setFragmentBytes:pushConstants.data() length:sizeof(pushConstants) + MetalBufferPacker::align(sizeof(pushConstants), 16) atIndex:1];
 
     bool shadowed = listType == ListType_Opaque || listType == ListType_Punch_Through;
 
@@ -261,7 +282,7 @@ void MetalRenderer::DrawPoly(id<MTLRenderCommandEncoder> encoder, u32 listType, 
     }
 
     if (poly.texture != nullptr) {
-        auto texture = ((MetalTexture *)poly.texture)->texture;
+        auto texture = ((MetalTexture *)poly.texture)->GetTexture();
         [encoder setFragmentTexture:texture atIndex:0];
 
         // Texture sampler
@@ -532,8 +553,8 @@ bool MetalRenderer::Draw(const MetalTexture *fogTexture, const MetalTexture *pal
     @autoreleasepool {
         id<MTLRenderCommandEncoder> renderEncoder = [commandBuffer renderCommandEncoderWithDescriptor:descriptor];
 
-        [renderEncoder setFragmentTexture:fogTexture->texture atIndex:2];
-        [renderEncoder setFragmentTexture:paletteTexture->texture atIndex:3];
+        [renderEncoder setFragmentTexture:fogTexture->GetTexture() atIndex:2];
+        [renderEncoder setFragmentTexture:paletteTexture->GetTexture() atIndex:3];
 
         // Fog sampler
         TSP fogTsp = {};

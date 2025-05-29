@@ -77,7 +77,7 @@ public:
     ImTextureID getTexture(const std::string &name) override {
         auto it = textures.find(name);
         if (it != textures.end())
-            return (ImTextureID)(intptr_t)(__bridge void*)it->second.texture->texture;
+            return (ImTextureID)(intptr_t)(__bridge void*)it->second.texture->GetTexture();
 
         return ImTextureID{};
     }
@@ -87,7 +87,7 @@ public:
         texture.texture->tex_type = TextureType::_8888;
         texture.texture->UploadToGPU(width, height, data, false);
 
-        auto textureID = (ImTextureID)(intptr_t)(__bridge void*)texture.texture->texture;
+        auto textureID = (ImTextureID)(intptr_t)(__bridge void*)texture.texture->GetTexture();
 
         textures[name] = std::move(texture);
 
@@ -96,7 +96,7 @@ public:
 
     void deleteTexture(const std::string &name) override {
         auto it = textures.find(name);
-        [it->second.texture->texture setPurgeableState:MTLPurgeableStateEmpty];
+        [it->second.texture->GetTexture() setPurgeableState:MTLPurgeableStateEmpty];
         textures.erase(name);
     }
 

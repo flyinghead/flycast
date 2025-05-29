@@ -26,11 +26,24 @@ class MetalTexture final : public BaseTextureCacheData
 {
 public:
     MetalTexture(TSP tsp = {}, TCW tcw = {}) : BaseTextureCacheData(tsp, tcw) {}
-    id<MTLTexture> texture;
 
     std::string GetId() override { return std::to_string([texture gpuResourceID]._impl); }
-    void UploadToGPU(int width, int height, const u8 *temp_tex_buffer, bool mipmapped, bool mipmapsIncluded = false) override;
+    id<MTLTexture> GetTexture() const { return texture; }
+    void UploadToGPU(int width, int height, const u8 *data, bool mipmapped, bool mipmapsIncluded = false) override;
+    void SetCommandBuffer(id<MTLCommandBuffer> commandBuffer) { this->commandBuffer = commandBuffer; }
     bool Delete() override;
+
+private:
+    void Init(u32 width, u32 height, MTLPixelFormat format, u32 dataSize, bool mipmapped, bool mipmapsIncluded);
+    void SetImage(u32 srcSize, const void *srcData, bool genMipmaps);
+    void GenerateMipmaps();
+
+    MTLPixelFormat format = MTLPixelFormatInvalid;
+    u32 width = 0;
+    u32 height = 0;
+    u32 mipmapLevels = 1;
+    id<MTLCommandBuffer> commandBuffer;
+    id<MTLTexture> texture;
 };
 
 class MetalSamplers
