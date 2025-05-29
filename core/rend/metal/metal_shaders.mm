@@ -130,7 +130,7 @@ struct FragmentShaderUniforms
     float4 color_clamp_max;
     float4 sp_fog_col_ram;
     float4 sp_fog_col_vert;
-    float4 dither_color_max;
+    float4 dither_divisor;
     float cp_alpha_test_value;
     float sp_fog_density;
 };
@@ -344,17 +344,15 @@ fragment FragmentOut fs_main(VertexOut in [[stage_in]], constant FragmentShaderU
 
     if (dithering) {
         constexpr float dither_table[16] = {
-		    0.9375,  0.1875,  0.75,  0.0,
-		    0.4375,  0.6875,  0.25,  0.5,
-		    0.8125,  0.0625,  0.875, 0.125,
-		    0.3125,  0.5625,  0.375, 0.625
+		    5, 13,  7, 15,
+		    9,  1, 11,  3,
+		    6, 14,  4, 12,
+		    10, 2,  8,  0
         };
 
         float r = dither_table[int(fmod(in.position.y, 4.0)) * 4 + int(fmod(in.position.x, 4.0))];
-        // 31 for 5-bit color, 63 for 6-bits, 15 for 4 bits
-        color += r / uniforms.dither_color_max;
-        // Avoid rounding
-        color = floor(color * 255.0) / 255.0;
+        float4 dv = float4(r, r, r, 1.0) / uniforms.dither_divisor;
+        color = clamp(floor(color * 255 + dv) / 255, 0, 1);
     }
 
     return FragmentOut { color, depth };
