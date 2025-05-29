@@ -39,6 +39,7 @@ bool MetalRenderer::Init()
 }
 
 void MetalRenderer::Term() {
+    WaitIdle();
     pipelineManager.term();
     shaders.term();
     samplers.term();
@@ -131,6 +132,11 @@ void MetalRenderer::CheckPaletteTexture() {
     updatePalette = false;
 
     paletteTexture->UploadToGPU(1024, 1, (u8 *)palette32_ram, false);
+}
+
+void MetalRenderer::WaitIdle() {
+    [commandBuffer waitUntilCompleted];
+    commandBuffer = nil;
 }
 
 TileClipping MetalRenderer::SetTileClip(id<MTLRenderCommandEncoder> encoder, u32 val, MTLScissorRect& clipRect) {
@@ -435,6 +441,15 @@ void MetalRenderer::UploadMainBuffer(const VertexShaderUniforms &vertexUniforms,
 }
 
 bool MetalRenderer::Draw(const MetalTexture *fogTexture, const MetalTexture *paletteTexture) {
+    matrices.CalcMatrices(&pvrrc);
+    u32 origWidth = pvrrc.getFramebufferWidth();
+    u32 origHeight = pvrrc.getFramebufferHeight();
+    u32 upscaledWidth = origWidth;
+    u32 upscaledHeight = origHeight;
+    u32 widthPow2;
+    u32 heightPow2;
+    getRenderToTextureDimensions(upscaledWidth, upscaledHeight, widthPow2, heightPow2);
+
     FragmentShaderUniforms fragUniforms = MakeFragmentUniforms<FragmentShaderUniforms>();
     dithering = config::EmulateFramebuffer && pvrrc.fb_W_CTRL.fb_dither && pvrrc.fb_W_CTRL.fb_packmode <= 3;
     if (dithering) {
@@ -461,35 +476,41 @@ bool MetalRenderer::Draw(const MetalTexture *fogTexture, const MetalTexture *pal
 
     currentScissor = MTLScissorRect {};
 
-    if (frameBuffer != nil) {
-        [frameBuffer setPurgeableState:MTLPurgeableStateEmpty];
-        frameBuffer = nil;
+    if (!frameBuffer || widthPow2 > frameBuffer.width || heightPow2 > frameBuffer.height) {
+        if (frameBuffer) {
+            WaitIdle();
+            [frameBuffer setPurgeableState:MTLPurgeableStateEmpty];
+            frameBuffer = nil;
+        }
+
+        MTLTextureDescriptor *desc = [[MTLTextureDescriptor alloc] init];
+        [desc setPixelFormat:MTLPixelFormatBGRA8Unorm];
+        [desc setWidth:widthPow2];
+        [desc setHeight:heightPow2];
+        [desc setUsage:MTLTextureUsageShaderRead | MTLTextureUsageRenderTarget];
+
+        frameBuffer = [MetalContext::Instance()->GetDevice() newTextureWithDescriptor:desc];
     }
 
-    if (depthBuffer != nil) {
-        [depthBuffer setPurgeableState:MTLPurgeableStateEmpty];
-        depthBuffer = nil;
+    if (!depthBuffer || widthPow2 > depthBuffer.width || heightPow2 > depthBuffer.height) {
+        if (depthBuffer) {
+            WaitIdle();
+            [depthBuffer setPurgeableState:MTLPurgeableStateEmpty];
+            depthBuffer = nil;
+        }
+
+        MTLTextureDescriptor *depthDesc = [[MTLTextureDescriptor alloc] init];
+        [depthDesc setPixelFormat:MTLPixelFormatDepth32Float_Stencil8];
+        [depthDesc setWidth:widthPow2];
+        [depthDesc setHeight:heightPow2];
+        [depthDesc setUsage:MTLTextureUsageShaderRead | MTLTextureUsageRenderTarget];
+
+        depthBuffer = [MetalContext::Instance()->GetDevice() newTextureWithDescriptor:depthDesc];
     }
-
-    MTLTextureDescriptor *desc = [[MTLTextureDescriptor alloc] init];
-    [desc setPixelFormat:MTLPixelFormatBGRA8Unorm];
-    [desc setWidth:pvrrc.framebufferWidth];
-    [desc setHeight:pvrrc.framebufferHeight];
-    [desc setUsage:MTLTextureUsageShaderRead | MTLTextureUsageRenderTarget];
-
-    frameBuffer = [MetalContext::Instance()->GetDevice() newTextureWithDescriptor:desc];
-
-    MTLTextureDescriptor *depthDesc = [[MTLTextureDescriptor alloc] init];
-    [depthDesc setPixelFormat:MTLPixelFormatDepth32Float_Stencil8];
-    [depthDesc setWidth:pvrrc.framebufferWidth];
-    [depthDesc setHeight:pvrrc.framebufferHeight];
-    [depthDesc setUsage:MTLTextureUsageShaderRead | MTLTextureUsageRenderTarget];
-
-    depthBuffer = [MetalContext::Instance()->GetDevice() newTextureWithDescriptor:depthDesc];
 
     auto drawable = [MetalContext::Instance()->GetLayer() nextDrawable];
 
-    id<MTLCommandBuffer> buffer = [MetalContext::Instance()->GetQueue() commandBuffer];
+    commandBuffer = [MetalContext::Instance()->GetQueue() commandBuffer];
     MTLRenderPassDescriptor *descriptor = [[MTLRenderPassDescriptor alloc] init];
     auto color = [descriptor colorAttachments][0];
     [color setTexture:frameBuffer];
@@ -510,7 +531,7 @@ bool MetalRenderer::Draw(const MetalTexture *fogTexture, const MetalTexture *pal
     [descriptor setStencilAttachment:stencilAttachmentDescriptor];
 
     @autoreleasepool {
-        id<MTLRenderCommandEncoder> renderEncoder = [buffer renderCommandEncoderWithDescriptor:descriptor];
+        id<MTLRenderCommandEncoder> renderEncoder = [commandBuffer renderCommandEncoderWithDescriptor:descriptor];
 
         [renderEncoder setFragmentTexture:fogTexture->texture atIndex:2];
         [renderEncoder setFragmentTexture:paletteTexture->texture atIndex:3];
@@ -574,7 +595,7 @@ bool MetalRenderer::Draw(const MetalTexture *fogTexture, const MetalTexture *pal
     [color setStoreAction:MTLStoreActionStore];
 
     @autoreleasepool {
-        id<MTLRenderCommandEncoder> renderEncoder = [buffer renderCommandEncoderWithDescriptor:descriptor];
+        id<MTLRenderCommandEncoder> renderEncoder = [commandBuffer renderCommandEncoderWithDescriptor:descriptor];
 
         [renderEncoder setRenderPipelineState:pipelineManager.GetBlitPassPipeline()];
         [renderEncoder setFragmentTexture:frameBuffer atIndex:0];
@@ -582,10 +603,10 @@ bool MetalRenderer::Draw(const MetalTexture *fogTexture, const MetalTexture *pal
         [renderEncoder endEncoding];
     }
 
-    [buffer presentDrawable:drawable];
-    [buffer commit];
+    [commandBuffer presentDrawable:drawable];
+    [commandBuffer commit];
     // TODO: Properly handle wait/vsync/buffering!
-    [buffer waitUntilCompleted];
+    WaitIdle();
 
     DEBUG_LOG(RENDERER, "Render command buffer released");
     return !pvrrc.isRTT;

@@ -107,6 +107,7 @@ protected:
 
     void CheckFogTexture();
     void CheckPaletteTexture();
+    void WaitIdle();
 
     struct {
         u64 indexOffset = 0;
@@ -131,6 +132,7 @@ protected:
     id<MTLTexture> depthBuffer = nil;
 
     id<MTLBuffer> curMainBuffer = nil;
+    id<MTLCommandBuffer> commandBuffer = nil;
     MetalBufferData* mainBuffer;
     MetalPipelineManager pipelineManager = MetalPipelineManager(this);
     MetalShaders shaders;
