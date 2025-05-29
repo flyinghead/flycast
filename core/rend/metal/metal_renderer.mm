@@ -126,7 +126,7 @@ void MetalRenderer::CheckPaletteTexture() {
     if (!paletteTexture)
     {
         paletteTexture = std::make_unique<MetalTexture>();
-        paletteTexture->tex_type = TextureType::_8;
+        paletteTexture->tex_type = TextureType::_8888;
     }
     else if (!updatePalette)
         return;
