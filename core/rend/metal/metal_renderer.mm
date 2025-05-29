@@ -24,6 +24,7 @@
 #include "hw/aica/dsp.h"
 #include "hw/pvr/ta.h"
 #include "hw/pvr/pvr_mem.h"
+#include "rend/sorter.h"
 
 bool MetalRenderer::Init()
 {
@@ -549,6 +550,8 @@ bool MetalRenderer::Draw(const MetalTexture *fogTexture, const MetalTexture *pal
         palTsp.ClampU = 1;
         palTsp.ClampV = 1;
         [renderEncoder setFragmentSamplerState:samplers.GetSampler(palTsp) atIndex:3];
+
+        setFirstProvokingVertex(pvrrc);
 
         // Upload vertex and index buffers
         VertexShaderUniforms vtxUniforms {};
