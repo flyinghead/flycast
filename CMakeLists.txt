@@ -88,6 +88,10 @@ if(IOS AND NOT LIBRETRO)
 	set(USE_VULKAN OFF CACHE BOOL "Force vulkan off" FORCE)
 endif()
 
+if(NOT APPLE)
+	set(USE_METAL OFF CACHE BOOL "Force metal off" FORCE)
+endif()
+
 include(GNUInstallDirs)
 include(CMakeRC)
 
