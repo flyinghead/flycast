@@ -8211,7 +8211,7 @@ struct retro_core_options_v2 options_bg = {
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_CA "Estableix els jocs de NAOMI com a gratuïts"
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_CA "Modifica la configuració de monedes del joc a partides gratuïtes."
 #define CORE_OPTION_NAME_EMULATE_BBA_LABEL_CA "Emulació de l'adaptador Broadband"
-#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_CA "Emula l'adaptador de banda ampla per cable Ethernet en compte del mòdem (Es requereix reinici)"
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_CA "Emula l'adaptador de banda ampla per cable Ethernet en compte del mòdem (es requereix reinici)"
 #define CORE_OPTION_NAME_UPNP_LABEL_CA "Habilitat UPnP"
 #define CORE_OPTION_NAME_UPNP_INFO_0_CA "Fes servir UPnP per configurar automàticament el router per jocs en línia."
 #define CORE_OPTION_NAME_DCNET_LABEL_CA "Fes servir DCNet"
@@ -71083,7 +71083,7 @@ struct retro_core_options_v2 options_sr = {
 #define CATEGORY_INPUT_LABEL_SV "Inmatning"
 #define CATEGORY_INPUT_INFO_0_SV "Konfigurera inställningar för spelkontrollern och ljuspistolen."
 #define CATEGORY_EXPANSIONS_LABEL_SV NULL
-#define CATEGORY_EXPANSIONS_INFO_0_SV NULL
+#define CATEGORY_EXPANSIONS_INFO_0_SV "Välj enheten (VMU, rumble-enhet) ansluten i varje kontrollers expansionsplats."
 #define CATEGORY_VMU_LABEL_SV "Visuell minnesenhet"
 #define CATEGORY_VMU_INFO_0_SV "Konfigurera per-spel VMU-sparfiler och inställningar för synlighet av VMU på skärmen."
 #define CORE_OPTION_NAME_REGION_LABEL_SV NULL
@@ -71110,11 +71110,11 @@ struct retro_core_options_v2 options_sr = {
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_SV "Ställ in NAOMI-spel till Free Play"
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_SV "Ändra spelets myntinställningar till free play."
 #define CORE_OPTION_NAME_EMULATE_BBA_LABEL_SV "Emulering av bredbandsadapter"
-#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_SV NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_SV "Emulera Ethernet-bredbandsadaptern istället för modemet. (Omstart krävs)"
 #define CORE_OPTION_NAME_UPNP_LABEL_SV "Aktivera UPnP"
 #define CORE_OPTION_NAME_UPNP_INFO_0_SV "Använd UPnP för att automatiskt konfigurera din internetrouter för onlinespel."
-#define CORE_OPTION_NAME_DCNET_LABEL_SV NULL
-#define CORE_OPTION_NAME_DCNET_INFO_0_SV NULL
+#define CORE_OPTION_NAME_DCNET_LABEL_SV "Använd DCNet"
+#define CORE_OPTION_NAME_DCNET_INFO_0_SV "Använd DCNet-molntjänsten för Dreamcasts internetåtkomst."
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_SV "Intern upplösning"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_SV "Ändra renderingsupplösning."
 #define OPTION_VAL_320X240_SV "320x240 (Halv)"
