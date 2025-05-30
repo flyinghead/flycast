@@ -674,7 +674,7 @@ DreamcastKey InputMapping::get_button_released_id(
 	const std::multimap<DreamcastKey, ButtonCombo>& inputMap = reverseButtonMap[port];
 	for (const DreamcastKey& key : activeKeys)
 	{
-		auto& range = inputMap.equal_range(key);
+		const auto& range = inputMap.equal_range(key);
 		for(auto iter = range.first; iter != range.second; ++iter)
 		{
 			if (iter->second.inputs.contains(releasedInput))
@@ -699,7 +699,7 @@ void InputMapping::clear_button(u32 port, DreamcastKey id)
 	std::multimap<DreamcastKey, ButtonCombo>& revInputMap = reverseButtonMap[port];
 
 	// Remove the existing
-	auto& range = revInputMap.equal_range(id);
+	const auto& range = revInputMap.equal_range(id);
 	for(auto existing = range.first; existing != range.second;)
 	{
 		inputMap.erase(existing->second);
@@ -772,7 +772,7 @@ u32 InputMapping::get_button_code(u32 port, DreamcastKey key) const
 	}
 
 	const std::multimap<DreamcastKey, ButtonCombo>& inputMap = reverseButtonMap[port];
-	auto& range = inputMap.equal_range(key);
+	const auto& range = inputMap.equal_range(key);
 	for(auto iter = range.first; iter != range.second; ++iter)
 	{
 		if (iter->second.inputs.size() == 1 && iter->second.inputs.begin()->is_button())
