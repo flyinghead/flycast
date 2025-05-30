@@ -1032,7 +1032,7 @@ bool D3DRenderer::Render()
 	matrices.CalcMatrices(&pvrrc, width, height);
 	// infamous DX9 half-pixel viewport shift
 	// https://docs.microsoft.com/en-us/windows/win32/direct3d9/directly-mapping-texels-to-pixels
-	glm::mat4 normalMat = glm::translate(glm::vec3(1.f / vpWidth, 1.f / vpHeight, 0)) * matrices.GetNormalMatrix();
+	glm::mat4 normalMat = glm::translate(glm::vec3(-1.f / vpWidth, 1.f / vpHeight, 0)) * matrices.GetNormalMatrix();
 	rc = SUCCEEDED(device->SetVertexShaderConstantF(0, &normalMat[0][0], 4));
 	verify(rc);
 
