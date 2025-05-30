@@ -260,7 +260,7 @@ private:
 	//! ButtonCombo -> DreamcastKey
 	std::map<ButtonCombo, DreamcastKey> buttonMap[NUM_PORTS];
 	//! DreamcastKey -> ButtonCombo
-	std::map<DreamcastKey, ButtonCombo> reverseButtonMap[NUM_PORTS];
+	std::multimap<DreamcastKey, ButtonCombo> reverseButtonMap[NUM_PORTS];
 
 	static std::map<std::string, std::shared_ptr<InputMapping>> loaded_mappings;
 };
