@@ -1544,6 +1544,10 @@ if(APPLE AND USE_METAL)
 			core/rend/metal/metal_pipeline.mm
 			core/rend/metal/metal_buffer.h
 			core/rend/metal/metal_buffer.mm
+			core/rend/metal/metal_drawer.h
+			core/rend/metal/metal_drawer.mm
+			core/rend/metal/metal_quad.h
+			core/rend/metal/metal_quad.mm
 			core/rend/metal/metal_driver.h
 			core/deps/imgui/backends/imgui_impl_metal.h
 			core/deps/imgui/backends/imgui_impl_metal.mm)

@@ -18,14 +18,14 @@
 */
 
 #pragma once
+
 #include <Metal/Metal.h>
 
 #include "types.h"
 #include <glm/glm.hpp>
 #include <map>
 
-
-struct VertexShaderParams
+struct MetalVertexShaderParams
 {
     bool gouraud;
     bool naomi2;
@@ -34,7 +34,7 @@ struct VertexShaderParams
     u32 hash() { return (u32)gouraud | ((u32)naomi2 << 1) | ((u32)divPosZ << 2); }
 };
 
-struct FragmentShaderParams
+struct MetalFragmentShaderParams
 {
     bool alphaTest;
     bool insideClipTest;
@@ -62,7 +62,7 @@ struct FragmentShaderParams
     }
 };
 
-struct ModVolShaderParams
+struct MetalModVolShaderParams
 {
     bool naomi2;
     bool divPosZ;
@@ -71,13 +71,13 @@ struct ModVolShaderParams
 };
 
 // std140 alignment required
-struct VertexShaderUniforms
+struct MetalVertexShaderUniforms
 {
     glm::mat4 ndcMat;
 };
 
 // std140 alignment required
-struct FragmentShaderUniforms
+struct MetalFragmentShaderUniforms
 {
     float colorClampMin[4];
     float colorClampMax[4];
@@ -96,7 +96,7 @@ public:
     id<MTLFunction> GetBlitVertexShader() { return blitVertexShader; }
     id<MTLFunction> GetBlitFragmentShader() { return blitFragmentShader; }
 
-    id<MTLFunction> GetModVolVertexShader(const ModVolShaderParams& params) { return getShader(modVolVertexShaders, params); }
+    id<MTLFunction> GetModVolVertexShader(const MetalModVolShaderParams& params) { return getShader(modVolVertexShaders, params); }
     id<MTLFunction> GetModVolFragmentShader(bool divPosZ) {
         auto modVolFragmentShader = modVolFragmentShaders.find(divPosZ);
         if (modVolFragmentShader != modVolFragmentShaders.end())
@@ -106,8 +106,38 @@ public:
         return modVolFragmentShaders[divPosZ];
     }
 
-    id<MTLFunction> GetVertexShader(const VertexShaderParams& params) { return getShader(vertexShaders, params); }
-    id<MTLFunction> GetFragmentShader(const FragmentShaderParams& params) { return getShader(fragmentShaders, params); }
+    id<MTLFunction> GetQuadVertexShader(bool rotate) {
+        if (rotate)
+        {
+            if (quadRotateVertexShader == nil)
+                quadRotateVertexShader = compileQuadVertexShader(true);
+            return quadRotateVertexShader;
+        }
+        else
+        {
+            if (quadVertexShader == nil)
+                quadVertexShader = compileQuadVertexShader(false);
+            return quadVertexShader;
+        }
+    }
+
+    id<MTLFunction> GetQuadFragmentShader(bool ignoreTexAlpha) {
+        if (ignoreTexAlpha)
+        {
+            if (quadNoAlphaFragmentShader == nil)
+                quadNoAlphaFragmentShader = compileQuadFragmentShader(true);
+            return quadNoAlphaFragmentShader;
+        }
+        else
+        {
+            if (quadFragmentShader == nil)
+                quadFragmentShader = compileQuadFragmentShader(false);
+            return quadFragmentShader;
+        }
+    }
+
+    id<MTLFunction> GetVertexShader(const MetalVertexShaderParams& params) { return getShader(vertexShaders, params); }
+    id<MTLFunction> GetFragmentShader(const MetalFragmentShaderParams& params) { return getShader(fragmentShaders, params); }
 
     void term()
     {
@@ -120,9 +150,11 @@ private:
     id<MTLLibrary> modVolShaderLibrary;
     id<MTLLibrary> vertexShaderLibrary;
     id<MTLLibrary> fragmentShaderLibrary;
+    id<MTLLibrary> quadShaderLibrary;
     MTLFunctionConstantValues* vertexShaderConstants;
     MTLFunctionConstantValues* fragmentShaderConstants;
     MTLFunctionConstantValues* modVolShaderConstants;
+    MTLFunctionConstantValues* quadShaderConstants;
 
     template<typename T>
     id<MTLFunction> getShader(std::map<u32, id<MTLFunction>> &map, T params)
@@ -134,10 +166,12 @@ private:
         map[h] = compileShader(params);
         return map[h];
     }
-    id<MTLFunction> compileShader(const VertexShaderParams& params);
-    id<MTLFunction> compileShader(const FragmentShaderParams& params);
-    id<MTLFunction> compileShader(const ModVolShaderParams& params);
+    id<MTLFunction> compileShader(const MetalVertexShaderParams& params);
+    id<MTLFunction> compileShader(const MetalFragmentShaderParams& params);
+    id<MTLFunction> compileShader(const MetalModVolShaderParams& params);
     id<MTLFunction> compileShader(bool divPosZ);
+    id<MTLFunction> compileQuadVertexShader(bool rotate);
+    id<MTLFunction> compileQuadFragmentShader(bool ignoreTexAlpha);
 
     id<MTLFunction> blitVertexShader;
     id<MTLFunction> blitFragmentShader;
@@ -147,4 +181,9 @@ private:
 
     std::map<u32, id<MTLFunction>> vertexShaders;
     std::map<u32, id<MTLFunction>> fragmentShaders;
+
+    id<MTLFunction> quadVertexShader;
+    id<MTLFunction> quadRotateVertexShader;
+    id<MTLFunction> quadFragmentShader;
+    id<MTLFunction> quadNoAlphaFragmentShader;
 };

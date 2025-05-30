@@ -24,6 +24,7 @@
 
 #include "cfg/option.h"
 #include "hw/pvr/ta_ctx.h"
+#include "metal_shaders.h"
 
 class MetalRenderer;
 
@@ -32,7 +33,7 @@ enum class ModVolMode { Xor, Or, Inclusion, Exclusion, Final };
 class MetalPipelineManager
 {
 public:
-    explicit MetalPipelineManager(MetalRenderer *renderer);
+    explicit MetalPipelineManager(MetalShaders *shaderManager);
     virtual ~MetalPipelineManager() = default;
 
     void term()
@@ -251,7 +252,6 @@ private:
 		}
     }
 
-    MetalRenderer *renderer;
     id<MTLRenderPipelineState> blitPassPipeline = nil;
     std::map<u64, id<MTLRenderPipelineState>> pipelines;
     std::map<u32, id<MTLRenderPipelineState>> modVolPipelines;
@@ -260,6 +260,9 @@ private:
     std::map<u32, id<MTLDepthStencilState>> modVolStencilStates;
     std::map<u64, id<MTLDepthStencilState>> depthStencilStates;
     std::map<u32, id<MTLDepthStencilState>> depthPassDepthStencilStates;
+
+protected:
+    MetalShaders *shaderManager;
 };
 
 static const MTLCompareFunction depthOps[] =

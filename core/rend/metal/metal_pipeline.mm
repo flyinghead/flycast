@@ -20,11 +20,10 @@
 #include "metal_pipeline.h"
 
 #include "metal_context.h"
-#include "metal_shaders.h"
 #include "metal_renderer.h"
 
-MetalPipelineManager::MetalPipelineManager(MetalRenderer *renderer) {
-    this->renderer = renderer;
+MetalPipelineManager::MetalPipelineManager(MetalShaders *shaderManager) {
+    this->shaderManager = shaderManager;
 }
 
 void MetalPipelineManager::CreateBlitPassPipeline() {
@@ -32,10 +31,10 @@ void MetalPipelineManager::CreateBlitPassPipeline() {
     [descriptor setLabel:@"Blit Pass"];
 
     auto attachment = [descriptor colorAttachments][0];
-    [attachment setPixelFormat:MTLPixelFormatBGRA8Unorm];
+    [attachment setPixelFormat:MTLPixelFormatRGBA8Unorm];
 
-    [descriptor setVertexFunction:renderer->GetShaders()->GetBlitVertexShader()];
-    [descriptor setFragmentFunction:renderer->GetShaders()->GetBlitFragmentShader()];
+    [descriptor setVertexFunction:shaderManager->GetBlitVertexShader()];
+    [descriptor setFragmentFunction:shaderManager->GetBlitFragmentShader()];
 
     NSError *error = nil;
     auto state = [MetalContext::Instance()->GetDevice() newRenderPipelineStateWithDescriptor:descriptor error:&error];
@@ -79,14 +78,14 @@ void MetalPipelineManager::CreateModVolPipeline(ModVolMode mode, int cullMode, b
     [attachment setDestinationAlphaBlendFactor:MTLBlendFactorOneMinusSourceAlpha];
     [attachment setAlphaBlendOperation:MTLBlendOperationAdd];
     [attachment setWriteMask:mode != ModVolMode::Final ? MTLColorWriteMaskNone : MTLColorWriteMaskAll];
-    [attachment setPixelFormat:MTLPixelFormatBGRA8Unorm];
+    [attachment setPixelFormat:MTLPixelFormatRGBA8Unorm];
 
     [descriptor setDepthAttachmentPixelFormat:MTLPixelFormatDepth32Float_Stencil8];
     [descriptor setStencilAttachmentPixelFormat:MTLPixelFormatDepth32Float_Stencil8];
 
-    ModVolShaderParams shaderParams { naomi2, !settings.platform.isNaomi2() && config::NativeDepthInterpolation };
-    [descriptor setVertexFunction:renderer->GetShaders()->GetModVolVertexShader(shaderParams)];
-    [descriptor setFragmentFunction:renderer->GetShaders()->GetModVolFragmentShader(!settings.platform.isNaomi2() && config::NativeDepthInterpolation)];
+    MetalModVolShaderParams shaderParams { naomi2, !settings.platform.isNaomi2() && config::NativeDepthInterpolation };
+    [descriptor setVertexFunction:shaderManager->GetModVolVertexShader(shaderParams)];
+    [descriptor setFragmentFunction:shaderManager->GetModVolFragmentShader(!settings.platform.isNaomi2() && config::NativeDepthInterpolation)];
 
     NSError *error = nil;
     auto state = [MetalContext::Instance()->GetDevice() newRenderPipelineStateWithDescriptor:descriptor error:&error];
@@ -145,19 +144,19 @@ void MetalPipelineManager::CreatePipeline(u32 listType, bool sortTriangles, cons
     [attachment setDestinationAlphaBlendFactor:GetBlendFactor(dst, false)];
     [attachment setAlphaBlendOperation:MTLBlendOperationAdd];
     [attachment setWriteMask:MTLColorWriteMaskAll];
-    [attachment setPixelFormat:MTLPixelFormatBGRA8Unorm];
+    [attachment setPixelFormat:MTLPixelFormatRGBA8Unorm];
 
     [descriptor setDepthAttachmentPixelFormat:MTLPixelFormatDepth32Float_Stencil8];
     [descriptor setStencilAttachmentPixelFormat:MTLPixelFormatDepth32Float_Stencil8];
 
     bool divPosZ = !settings.platform.isNaomi2() && config::NativeDepthInterpolation;
 
-    VertexShaderParams vertParams = {};
+    MetalVertexShaderParams vertParams = {};
     vertParams.gouraud = pp.pcw.Gouraud == 1;
     vertParams.naomi2 = pp.isNaomi2();
     vertParams.divPosZ = divPosZ;
 
-    FragmentShaderParams fragParams = {};
+    MetalFragmentShaderParams fragParams = {};
     fragParams.alphaTest = listType == ListType_Punch_Through;
     fragParams.bumpmap = pp.tcw.PixelFmt == PixelBumpMap;
     fragParams.clamping = pp.tsp.ColorClamp;
@@ -174,8 +173,8 @@ void MetalPipelineManager::CreatePipeline(u32 listType, bool sortTriangles, cons
     fragParams.divPosZ = divPosZ;
     fragParams.dithering = dithering;
 
-    [descriptor setVertexFunction:renderer->GetShaders()->GetVertexShader(vertParams)];
-    [descriptor setFragmentFunction:renderer->GetShaders()->GetFragmentShader(fragParams)];
+    [descriptor setVertexFunction:shaderManager->GetVertexShader(vertParams)];
+    [descriptor setFragmentFunction:shaderManager->GetFragmentShader(fragParams)];
 
     NSError *error = nil;
     auto state = [MetalContext::Instance()->GetDevice() newRenderPipelineStateWithDescriptor:descriptor error:&error];

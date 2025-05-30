@@ -705,7 +705,7 @@ bool sdl_recreate_window(u32 flags)
 	}
 
 #if !defined(GLES)
-	flags |= SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI;
+	flags |= SDL_WINDOW_RESIZABLE;
 	if (window_fullscreen)
 		flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
 	else if (window_maximized)

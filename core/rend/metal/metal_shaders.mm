@@ -399,7 +399,6 @@ fragment float4 fs_main(VertexOut in [[stage_in]],
 
 static const char ModVolShaderSource[] = R"(
 #include <metal_stdlib>
-#include <simd/simd.h>
 
 using namespace metal;
 
@@ -469,6 +468,61 @@ fragment FragmentOut fs_main(VertexOut in [[stage_in]],
 }
 )";
 
+static const char QuadVertexShaderSource[] = R"(
+#include <metal_stdlib>
+
+using namespace metal;
+
+constant bool rotate_quad [[function_constant(0)]];
+constant bool ignore_tex_alpha [[function_constant(1)]];
+
+struct VertexIn
+{
+    float3 pos [[attribute(0)]];
+    float2 uv [[attribute(1)]];
+};
+
+struct VertexOut
+{
+    float4 position [[position]];
+    float2 uv;
+};
+
+struct PushBlock
+{
+    float4 color;
+};
+
+vertex VertexOut vs_main(VertexIn in [[stage_in]]) {
+    VertexOut out = {};
+
+    if (!rotate_quad) {
+        out.position = float4(in.pos, 1.0);
+    } else {
+        out.position = float4(-in.pos.y, in.pos.x, in.pos.z, 1.0);
+    }
+
+    out.uv = in.uv;
+    return out;
+}
+
+fragment float4 fs_main(VertexOut in [[stage_in]],
+                        constant PushBlock& push_constants [[buffer(0)]],
+                        texture2d<float> tex [[texture(0)]],
+                        sampler samp [[sampler(0)]]) {
+    float4 color;
+
+    if (ignore_tex_alpha) {
+        color.rgb = push_constants.color.rgb * tex.sample(samp, in.uv).rgb;
+        color.a = push_constants.color.a;
+    } else {
+        color = push_constants.color * tex.sample(samp, in.uv);
+    }
+
+    return color;
+}
+)";
+
 // TODO: N2 Shaders
 
 MetalShaders::MetalShaders() {
@@ -514,9 +568,23 @@ MetalShaders::MetalShaders() {
 
     modVolShaderLibrary = [device newLibraryWithSource:[NSString stringWithUTF8String:ModVolShaderSource] options:nil error:&error];
     modVolShaderConstants = [[MTLFunctionConstantValues alloc] init];
+
+    if (!modVolShaderLibrary) {
+        ERROR_LOG(RENDERER, "%s", [[error localizedDescription] UTF8String]);
+        assert(false);
+    }
+
+    quadShaderLibrary = [device newLibraryWithSource:[NSString stringWithUTF8String:QuadVertexShaderSource] options:nil error:&error];
+    quadShaderConstants = [[MTLFunctionConstantValues alloc] init];
+
+    if (!quadShaderLibrary) {
+        ERROR_LOG(RENDERER, "%s", [[error localizedDescription] UTF8String]);
+        assert(false);
+    }
+
 }
 
-id<MTLFunction> MetalShaders::compileShader(const VertexShaderParams &params) {
+id<MTLFunction> MetalShaders::compileShader(const MetalVertexShaderParams &params) {
     [vertexShaderConstants setConstantValue:&params.gouraud type:MTLDataTypeBool atIndex:0];
     [vertexShaderConstants setConstantValue:&params.divPosZ type:MTLDataTypeBool atIndex:1];
 
@@ -532,7 +600,7 @@ id<MTLFunction> MetalShaders::compileShader(const VertexShaderParams &params) {
     return function;
 }
 
-id<MTLFunction> MetalShaders::compileShader(const FragmentShaderParams &params) {
+id<MTLFunction> MetalShaders::compileShader(const MetalFragmentShaderParams &params) {
     [fragmentShaderConstants setConstantValue:&params.alphaTest type:MTLDataTypeBool atIndex:0];
     [fragmentShaderConstants setConstantValue:&params.insideClipTest type:MTLDataTypeBool atIndex:1];
     [fragmentShaderConstants setConstantValue:&params.useAlpha type:MTLDataTypeBool atIndex:2];
@@ -561,7 +629,7 @@ id<MTLFunction> MetalShaders::compileShader(const FragmentShaderParams &params) 
     return function;
 }
 
-id<MTLFunction> MetalShaders::compileShader(const ModVolShaderParams &params) {
+id<MTLFunction> MetalShaders::compileShader(const MetalModVolShaderParams &params) {
     [modVolShaderConstants setConstantValue:&params.divPosZ type:MTLDataTypeBool atIndex:0];
 
     NSError* error = nil;
@@ -591,4 +659,35 @@ id<MTLFunction> MetalShaders::compileShader(bool divPosZ) {
 
     return function;
 }
+
+id<MTLFunction> MetalShaders::compileQuadVertexShader(bool rotate)
+{
+    [quadShaderConstants setConstantValue:&rotate type:MTLDataTypeBool atIndex:0];
+
+    NSError* error = nil;
+
+    id<MTLFunction> function = [quadShaderLibrary newFunctionWithName:@"vs_main" constantValues:quadShaderConstants error:&error];
+    if (!function) {
+        ERROR_LOG(RENDERER, "%s", [[error localizedDescription] UTF8String]);
+        assert(false);
+    }
+
+    return function;
+}
+
+id<MTLFunction> MetalShaders::compileQuadFragmentShader(bool ignoreTexAlpha)
+{
+    [quadShaderConstants setConstantValue:&ignoreTexAlpha type:MTLDataTypeBool atIndex:1];
+
+    NSError* error = nil;
+
+    id<MTLFunction> function = [quadShaderLibrary newFunctionWithName:@"fs_main" constantValues:quadShaderConstants error:&error];
+    if (!function) {
+        ERROR_LOG(RENDERER, "%s", [[error localizedDescription] UTF8String]);
+        assert(false);
+    }
+
+    return function;
+}
+
 

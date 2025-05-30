@@ -39,31 +39,40 @@ public:
 
     void newFrame() override {
         MetalContext *context = MetalContext::Instance();
-        drawable = [context->GetLayer() nextDrawable];
-        descriptor = [[MTLRenderPassDescriptor alloc] init];
 
-        [descriptor setDefaultRasterSampleCount:1];
+        // Use existing descriptor and encoder when available
+        if (context->GetDescriptor() != nullptr) {
+            ImGui_ImplMetal_NewFrame(MetalContext::Instance()->GetDescriptor());
+        } else {
+            drawable = [context->GetLayer() nextDrawable];
+            descriptor = [[MTLRenderPassDescriptor alloc] init];
 
-        auto color = [descriptor colorAttachments][0];
-        [color setClearColor:MTLClearColorMake(0.f, 0.f, 0.f, 1.f)];
-        [color setTexture:[drawable texture]];
-        [color setLoadAction:MTLLoadActionClear];
-        [color setStoreAction:MTLStoreActionStore];
+            [descriptor setDefaultRasterSampleCount:1];
 
-        ImGui_ImplMetal_NewFrame(descriptor);
+            auto color = [descriptor colorAttachments][0];
+            [color setClearColor:MTLClearColorMake(0.f, 0.f, 0.f, 1.f)];
+            [color setTexture:[drawable texture]];
+            [color setLoadAction:MTLLoadActionClear];
+            [color setStoreAction:MTLStoreActionStore];
+
+            ImGui_ImplMetal_NewFrame(descriptor);
+        }
     }
 
     void renderDrawData(ImDrawData *drawData, bool gui_open) override {
         MetalContext *context = MetalContext::Instance();
-        id<MTLCommandBuffer> buffer = [context->GetQueue() commandBuffer];
-        id<MTLRenderCommandEncoder> commandEncoder = [buffer renderCommandEncoderWithDescriptor:descriptor];
 
-        ImGui_ImplMetal_RenderDrawData(drawData, buffer, commandEncoder);
+        if (context->GetCommandBuffer() != nil && context->GetCommandBuffer() != nil) {
+            ImGui_ImplMetal_RenderDrawData(drawData, context->GetCommandBuffer(), context->GetEncoder());
+        } else {
+            id<MTLCommandBuffer> buffer = [context->GetQueue() commandBuffer];
+            id<MTLRenderCommandEncoder> commandEncoder = [buffer renderCommandEncoderWithDescriptor:descriptor];
+            ImGui_ImplMetal_RenderDrawData(drawData, buffer, commandEncoder);
 
-        [commandEncoder endEncoding];
-        commandEncoder = nil;
-        [buffer presentDrawable:drawable];
-        [buffer commit];
+            [commandEncoder endEncoding];
+            [buffer presentDrawable:drawable];
+            [buffer commit];
+        }
 
         if (gui_open)
             frameRendered = true;
