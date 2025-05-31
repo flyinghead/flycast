@@ -34,7 +34,8 @@ TEST_F(MultiBindMappingTest, get_button_code__not_found)
     const u32 retrievedCode = inputMapping.get_button_code(0, DreamcastKey::DC_BTN_B);
 
     // Assert
-    ASSERT_EQ(retrievedCode, InputMapping::INVALID_CODE);
+    const u32 expected = InputMapping::InputDef::INVALID_CODE;
+    ASSERT_EQ(retrievedCode, expected);
 }
 
 TEST_F(MultiBindMappingTest, get_button_combo__found)
