@@ -169,6 +169,8 @@ public:
 	static constexpr const u32 NUM_PORTS = 4;
 	//! Version 4 adds button combos
 	static constexpr const int CURRENT_FILE_VERSION = 4;
+	//! Initialized and invalid value for code
+	static const u32 INVALID_CODE = InputDef::INVALID_CODE;
 
 	std::string name;
 	float dead_zone = 0.1f;

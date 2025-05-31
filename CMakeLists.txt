@@ -739,7 +739,7 @@ if(NOT LIBRETRO AND NOT NINTENDO_SWITCH)
 	target_include_directories(${PROJECT_NAME} PRIVATE core/deps/websocketpp)
 	target_compile_definitions(${PROJECT_NAME} PRIVATE ASIO_STANDALONE)
 	if (MSVC)
-		target_compile_definitions(${PROJECT_NAME} PRIVATE 
+		target_compile_definitions(${PROJECT_NAME} PRIVATE
 			_WEBSOCKETPP_CPP11_FUNCTIONAL_
 			_WEBSOCKETPP_CPP11_SYSTEM_ERROR_
 			_WEBSOCKETPP_CPP11_RANDOM_DEVICE_
@@ -1945,6 +1945,7 @@ if(BUILD_TESTING)
 	add_subdirectory(core/deps/googletest EXCLUDE_FROM_ALL)
 	target_link_libraries(${PROJECT_NAME} PRIVATE GTest::gtest_main)
 
+	target_include_directories(${PROJECT_NAME} PUBLIC tests/inc)
 	target_sources(${PROJECT_NAME} PRIVATE
 			tests/src/CheatManagerTest.cpp
 			tests/src/ConfigFileTest.cpp
@@ -1954,6 +1955,12 @@ if(BUILD_TESTING)
 			tests/src/AicaArmTest.cpp
 			tests/src/Sh4InterpreterTest.cpp
 			tests/src/MmuTest.cpp
+			tests/src/input/ButtonComboTest.cpp
+			tests/src/input/GamepadInputHandlingTest.cpp
+			tests/src/input/MultiBindMappingTest.cpp
+			tests/src/input/InputDefTest.cpp
+			tests/src/input/InputMappingConfigFileTest.cpp
+			tests/src/input/InputSetTest.cpp
 			tests/src/util/PeriodicThreadTest.cpp
 			tests/src/util/TsQueueTest.cpp
 			tests/src/util/WorkerThreadTest.cpp)

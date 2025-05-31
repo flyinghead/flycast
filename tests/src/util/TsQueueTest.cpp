@@ -3,6 +3,8 @@
 #include <atomic>
 #include <future>
 
+#include "test_utils.h"
+
 class TsQueueTest : public ::testing::Test
 {
 };
