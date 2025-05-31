@@ -101,4 +101,7 @@ TEST_F(GamepadeInputHandlingTest, combo_test)
     gamepadDevice.gamepad_axis_input(789, 0);
     currentCode |= static_cast<u32>(DreamcastKey::DC_BTN_D);
     ASSERT_TRUE(kcode[0], currentCode);
+    gamepadDevice.gamepad_btn_input(100, true); // This activates B now
+    currentCode &= ~static_cast<u32>(DreamcastKey::DC_BTN_B);
+    ASSERT_TRUE(kcode[0], currentCode);
 }
