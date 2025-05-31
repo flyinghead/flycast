@@ -163,7 +163,7 @@ bool GamepadDevice::handleButtonInputDef(const InputMapping::InputDef& inputDef,
 	// Update button press tracking
 	int targetPort = (_maple_port == 4) ? 0 : _maple_port; // Use port 0 for all-ports mode as a base
 
-	DreamcastKey mappedKey = EMU_BTN_NONE;
+	std::list<DreamcastKey> mappedKeys;
 
 	if (pressed)
 	{
@@ -171,9 +171,10 @@ bool GamepadDevice::handleButtonInputDef(const InputMapping::InputDef& inputDef,
 		if (currentInputs.insert_back(inputDef))
 		{
 			// Handle keys activated by this new input
-			mappedKey = input_mapper->get_button_id(targetPort, currentInputs);
+			DreamcastKey mappedKey = input_mapper->get_button_id(targetPort, currentInputs);
 			if (mappedKey != EMU_BTN_NONE)
 			{
+				mappedKeys.push_back(mappedKey);
 				currentKeys.push_back(mappedKey);
 			}
 		}
@@ -184,12 +185,15 @@ bool GamepadDevice::handleButtonInputDef(const InputMapping::InputDef& inputDef,
 		if (currentInputs.remove(inputDef) > 0)
 		{
 			// Handle keys deactivated by this new input
-			mappedKey = input_mapper->get_button_released_id(targetPort, currentKeys, inputDef);
-			currentKeys.remove(mappedKey);
+			mappedKeys = input_mapper->get_button_released_ids(targetPort, currentKeys, inputDef);
+			for (const DreamcastKey& mappedKey : mappedKeys)
+			{
+				currentKeys.remove(mappedKey);
+			}
 		}
 	}
 
-	if (mappedKey != EMU_BTN_NONE)
+	for (const DreamcastKey& mappedKey : mappedKeys)
 	{
 		if (_maple_port == 4)
 		{

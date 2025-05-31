@@ -70,6 +70,16 @@ class GamepadeInputHandlingTest : public ::testing::Test
 {
 protected:
     TestGamepadDeviceStub gamepadDevice;
+
+    void SetUp() override
+    {
+        kcode[0] = ~0;
+    }
+
+    void TearDown() override
+    {
+        kcode[0] = ~0;
+    }
 };
 
 TEST_F(GamepadeInputHandlingTest, combo_test)
@@ -77,31 +87,56 @@ TEST_F(GamepadeInputHandlingTest, combo_test)
     gamepadDevice.gamepad_btn_input(100, true);
     u32 currentCode = ~0;
     currentCode &= ~static_cast<u32>(DreamcastKey::DC_BTN_A);
-    ASSERT_TRUE(kcode[0], currentCode);
+    ASSERT_EQ(kcode[0], currentCode);
     gamepadDevice.gamepad_axis_input(3, 30000);
-    ASSERT_TRUE(kcode[0], currentCode);
+    ASSERT_EQ(kcode[0], currentCode);
     gamepadDevice.gamepad_axis_input(191, -30000);
-    ASSERT_TRUE(kcode[0], currentCode); // combo 1 and 3 should not be active - wrong order
+    ASSERT_EQ(kcode[0], currentCode); // combo 1 and 3 should not be active - wrong order
     gamepadDevice.gamepad_axis_input(191, 0);
-    ASSERT_TRUE(kcode[0], currentCode);
+    ASSERT_EQ(kcode[0], currentCode);
     gamepadDevice.gamepad_btn_input(100, false);
     currentCode |= static_cast<u32>(DreamcastKey::DC_BTN_A);
-    ASSERT_TRUE(kcode[0], currentCode);
+    ASSERT_EQ(kcode[0], currentCode);
     gamepadDevice.gamepad_btn_input(100, true);
     currentCode &= ~static_cast<u32>(DreamcastKey::DC_BTN_A);
-    ASSERT_TRUE(kcode[0], currentCode);
+    ASSERT_EQ(kcode[0], currentCode);
     gamepadDevice.gamepad_axis_input(191, -30000); // combo 3 should now be active
     currentCode &= ~static_cast<u32>(DreamcastKey::DC_BTN_Z);
-    ASSERT_TRUE(kcode[0], currentCode);
+    ASSERT_EQ(kcode[0], currentCode);
     gamepadDevice.gamepad_axis_input(789, 30000);
-    ASSERT_TRUE(kcode[0], currentCode);
-    gamepadDevice.gamepad_btn_input(100, true); // combo 2 will take precedence over B
+    ASSERT_EQ(kcode[0], currentCode);
+    gamepadDevice.gamepad_axis_input(191, 0);
+    currentCode |= static_cast<u32>(DreamcastKey::DC_BTN_Z);
+    ASSERT_EQ(kcode[0], currentCode);
+    gamepadDevice.gamepad_btn_input(100, false);
+    currentCode |= static_cast<u32>(DreamcastKey::DC_BTN_A);
+    ASSERT_EQ(kcode[0], currentCode);
+    gamepadDevice.gamepad_btn_input(200, true); // combo 2 will take precedence over B
     currentCode &= ~static_cast<u32>(DreamcastKey::DC_BTN_D);
-    ASSERT_TRUE(kcode[0], currentCode);
+    ASSERT_EQ(kcode[0], currentCode);
     gamepadDevice.gamepad_axis_input(789, 0);
     currentCode |= static_cast<u32>(DreamcastKey::DC_BTN_D);
-    ASSERT_TRUE(kcode[0], currentCode);
-    gamepadDevice.gamepad_btn_input(100, true); // This activates B now
+    ASSERT_EQ(kcode[0], currentCode);
+    gamepadDevice.gamepad_btn_input(200, false);
+    gamepadDevice.gamepad_btn_input(200, true); // This activates B now
     currentCode &= ~static_cast<u32>(DreamcastKey::DC_BTN_B);
-    ASSERT_TRUE(kcode[0], currentCode);
+    ASSERT_EQ(kcode[0], currentCode);
+}
+
+TEST_F(GamepadeInputHandlingTest, combo_multi_release)
+{
+    u32 currentCode = ~0;
+    gamepadDevice.gamepad_axis_input(191, -30000);
+    gamepadDevice.gamepad_btn_input(100, true); // Activates A
+    gamepadDevice.gamepad_axis_input(3, 30000); // Activates C (combo of above 3)
+
+    currentCode &= ~static_cast<u32>(DreamcastKey::DC_BTN_A);
+    currentCode &= ~static_cast<u32>(DreamcastKey::DC_BTN_C);
+    ASSERT_EQ(kcode[0], currentCode);
+
+    gamepadDevice.gamepad_btn_input(100, false); // Should deactivate both A and C
+
+    currentCode |= static_cast<u32>(DreamcastKey::DC_BTN_A);
+    currentCode |= static_cast<u32>(DreamcastKey::DC_BTN_C);
+    ASSERT_EQ(kcode[0], currentCode);
 }

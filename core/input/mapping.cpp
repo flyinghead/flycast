@@ -660,7 +660,7 @@ DreamcastKey InputMapping::get_button_id(
 	return matchedKey;
 }
 
-DreamcastKey InputMapping::get_button_released_id(
+std::list<DreamcastKey> InputMapping::get_button_released_ids(
 	u32 port,
 	const std::list<DreamcastKey>& activeKeys,
 	const InputDef& releasedInput) const
@@ -668,9 +668,10 @@ DreamcastKey InputMapping::get_button_released_id(
 	if (port >= NUM_PORTS || activeKeys.empty())
 	{
 		// Invalid port or nothing active
-		return EMU_BTN_NONE;
+		return std::list<DreamcastKey>();
 	}
 
+	std::list<DreamcastKey> releasedKeys;
 	const std::multimap<DreamcastKey, ButtonCombo>& inputMap = reverseButtonMap[port];
 	for (const DreamcastKey& key : activeKeys)
 	{
@@ -679,12 +680,12 @@ DreamcastKey InputMapping::get_button_released_id(
 		{
 			if (iter->second.inputs.contains(releasedInput))
 			{
-				return key;
+				releasedKeys.push_back(key);
 			}
 		}
 	}
 
-	return EMU_BTN_NONE;
+	return releasedKeys;
 }
 
 void InputMapping::clear_button(u32 port, DreamcastKey id)

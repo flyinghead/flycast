@@ -178,10 +178,11 @@ public:
 	int rumblePower = 100;
 	int version = CURRENT_FILE_VERSION;
 
-	//! Resolves an ordered set of inputs into keys from multi-input lookup
+	//! Resolves an ordered set of inputs into a key from a multi-input lookup
 	//! @param[in] port The port that the given inputs belong to [0,NUM_PORTS)
 	//! @param[in] inputSet The input set to look for
-	//! @return all keys that should be activated due to the given input set (all combos inputSet ends with)
+	//! @return EMU_BTN_NONE if no key should be activated
+	//! @return the key that should be activated due to the given input set otherwise
 	DreamcastKey get_button_id(u32 port, const InputSet& inputSet) const;
 
 	//! Resolves currently active keys with a released input into keys that should be released
@@ -189,7 +190,7 @@ public:
 	//! @param[in] activeKeys A list of active keys compiled from get_button_id()
 	//! @param[in] releasedInput The released input to check for
 	//! @return all keys that should be released due to the released input
-	DreamcastKey get_button_released_id(
+	std::list<DreamcastKey> get_button_released_ids(
 		u32 port,
 		const std::list<DreamcastKey>& activeKeys,
 		const InputDef& releasedInput) const;
