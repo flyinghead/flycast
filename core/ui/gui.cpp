@@ -193,7 +193,7 @@ static ImGuiKey keycodeToImGuiKey(u8 keycode)
 	}
 }
 
-void applyDarkTheme()
+static void applyDarkTheme()
 {
 	// Reset style first, then apply dark colors - exactly like original Flycast
 	ImGui::GetStyle() = ImGuiStyle{};
@@ -211,7 +211,7 @@ void applyDarkTheme()
 	style.FrameBorderSize = 0.0f;      // Revert to default
 }
 
-void applyLightTheme()
+static void applyLightTheme()
 {
 	ImGui::StyleColorsLight();
 	ImGuiStyle& style = ImGui::GetStyle();
@@ -269,7 +269,7 @@ void applyLightTheme()
 	style.FrameBorderSize = 0.0f;      // Revert to default
 }
 
-void applyDreamcastTheme()
+static void applyDreamcastTheme()
 {
 	ImGui::StyleColorsDark();
 	ImGuiStyle& style = ImGui::GetStyle();
@@ -331,7 +331,7 @@ void applyDreamcastTheme()
 	style.Colors[ImGuiCol_TableRowBgAlt] = ImVec4(0.10f, 0.12f, 0.15f, 1.00f);  // Slightly lighter for alt rows
 }
 
-void applyHighContrastTheme()
+static void applyHighContrastTheme()
 {
 	ImGui::StyleColorsDark();
 	ImGuiStyle& style = ImGui::GetStyle();
@@ -406,7 +406,7 @@ void applyHighContrastTheme()
 	style.TabBorderSize = 1.0f;        // Add borders to tabs
 }
 
-void applyNintendoTheme()
+static void applyNintendoTheme()
 {
 	ImGui::StyleColorsDark();
 	ImGuiStyle& style = ImGui::GetStyle();
@@ -491,7 +491,7 @@ void applyNintendoTheme()
 	style.FrameBorderSize = 0.0f;
 }
 
-void applySoftTheme()
+static void applySoftTheme()
 {
 	ImGui::StyleColorsDark();
 	ImGuiStyle& style = ImGui::GetStyle();
@@ -562,7 +562,7 @@ void applySoftTheme()
 }
 
 // Add the common function before gui_initFonts
-void applyCurrentTheme()
+static void applyCurrentTheme()
 {
 	if (config::UITheme == 0)
 		applyDarkTheme();

@@ -23,12 +23,6 @@
 #include <functional>
 
 void gui_init();
-void applyDarkTheme();
-void applyLightTheme();
-void applyDreamcastTheme();
-void applyHighContrastTheme();
-void applyNintendoTheme();
-void applySoftTheme();
 void gui_initFonts();
 void gui_open_settings();
 void gui_display_ui();
