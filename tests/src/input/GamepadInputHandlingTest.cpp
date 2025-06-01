@@ -12,12 +12,12 @@ public:
         loadMapping();
     }
 
-	void resetMappingToDefault(bool arcade, bool gamepad) override
+    void resetMappingToDefault(bool arcade, bool gamepad) override
     {
         input_mapper = getDefaultMapping();
     }
 
-	std::shared_ptr<InputMapping> getDefaultMapping() override
+    std::shared_ptr<InputMapping> getDefaultMapping() override
     {
         std::shared_ptr<InputMapping> inputMapping = std::make_shared<InputMapping>();
 

@@ -85,7 +85,7 @@ TEST_F(TsQueueTest, Class)
 	TsQueue<T3> q3;
 	q3.push(T3("pi"));
 	T3 r3 = q3.pop();
-	ASSERT_EQ("pi", r3.s);
+	ASSERT_EQ(std::string("pi"), r3.s);
 }
 
 TEST_F(TsQueueTest, Clear)
