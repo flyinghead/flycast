@@ -195,20 +195,18 @@ static ImGuiKey keycodeToImGuiKey(u8 keycode)
 
 void applyDarkTheme()
 {
+	// Reset style first, then apply dark colors - exactly like original Flycast
+	ImGui::GetStyle() = ImGuiStyle{};
 	ImGui::StyleColorsDark();
+	
+	// Apply original Flycast styling to match exactly how it was
 	ImGuiStyle& style = ImGui::GetStyle();
-	style.Colors[ImGuiCol_TitleBg] = ImVec4(0.27f, 0.27f, 0.54f, 0.83f);
-	style.Colors[ImGuiCol_TitleBgActive] = ImVec4(0.32f, 0.32f, 0.63f, 0.87f);
-	style.Colors[ImGuiCol_TitleBgCollapsed] = ImVec4(0.40f, 0.40f, 0.80f, 0.20f);
-	style.Colors[ImGuiCol_MenuBarBg] = ImVec4(0.40f, 0.40f, 0.55f, 0.80f);
-	style.Colors[ImGuiCol_ScrollbarBg] = ImVec4(0.20f, 0.25f, 0.30f, 0.60f);
-	style.Colors[ImGuiCol_ScrollbarGrab] = ImVec4(0.40f, 0.40f, 0.80f, 0.30f);
-	style.Colors[ImGuiCol_ScrollbarGrabHovered] = ImVec4(0.40f, 0.40f, 0.80f, 0.40f);
-	style.Colors[ImGuiCol_ScrollbarGrabActive] = ImVec4(0.41f, 0.39f, 0.80f, 0.60f);
-	style.Colors[ImGuiCol_Button] = ImVec4(0.35f, 0.40f, 0.61f, 0.62f);
-	style.Colors[ImGuiCol_ButtonHovered] = ImVec4(0.40f, 0.48f, 0.71f, 0.79f);
-	style.Colors[ImGuiCol_ButtonActive] = ImVec4(0.46f, 0.54f, 0.80f, 1.00f);
-
+	style.TabRounding = 5.0f;
+	style.FrameRounding = 3.0f;
+	style.ItemSpacing = ImVec2(8, 8);		// from 8,4
+	style.ItemInnerSpacing = ImVec2(4, 6);	// from 4,4
+	
+	// Reset style properties to defaults to ensure clean theme switching
 	style.TabBorderSize = 0.0f;        // Revert to default
 	style.FrameBorderSize = 0.0f;      // Revert to default
 }
