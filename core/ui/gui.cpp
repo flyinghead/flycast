@@ -152,7 +152,6 @@ void gui_init()
 	EventManager::listen(Event::Terminate, emuEventCallback);
     ggpo::receiveChatMessages([](int playerNum, const std::string& msg) { chat.receive(playerNum, msg); });
 
-    gui_initFonts();
 }
 
 static ImGuiKey keycodeToImGuiKey(u8 keycode)
