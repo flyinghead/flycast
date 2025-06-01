@@ -896,6 +896,7 @@ static InputDescriptors dinok_inputs = {
 		{ DC_BTN_A, "ROCK" },
 		{ DC_BTN_B, "SCISSORS" },
 		{ DC_BTN_C, "PAPER" },
+		{ DC_BTN_X, "ROCK P2", 0, DC_BTN_A },
 		NAO_BASE_BTN_DESC
 	},
 };
