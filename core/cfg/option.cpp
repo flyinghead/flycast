@@ -40,6 +40,7 @@ Option<bool> ForceFreePlay("ForceFreePlay", true);
 Option<bool, false> FetchBoxart("FetchBoxart", true);
 Option<bool, false> BoxartDisplayMode("BoxartDisplayMode", true);
 Option<int, false> UIScaling("UIScaling", 100);
+Option<int, false> UITheme("UITheme", 0);
 
 // Sound
 
