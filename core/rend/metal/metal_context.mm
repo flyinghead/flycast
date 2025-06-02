@@ -195,9 +195,10 @@ void MetalContext::Present()
         swapOnVSync = (!settings.input.fastForwardMode && config::VSync);
         resized = true;
     }
-    if (resized)
+    if (resized) {
         CreateSwapChain();
         lastFrameTexture = nil;
+    }
 }
 
 void MetalContext::DrawFrame(id<MTLTexture> texture, MTLViewport viewport, float aspectRatio) {
@@ -276,7 +277,15 @@ void MetalContext::PresentLastFrame()
 
 void MetalContext::term() {
     GraphicsContext::instance = nullptr;
+    lastFrameTexture = nil;
     imguiDriver.reset();
+    quadDrawer.reset();
+    quadPipeline.reset();
+    quadPipelineWithAlpha.reset();
+    quadRotateDrawer.reset();
+    quadRotatePipeline.reset();
+    shaderManager.reset();
+    commandBuffers.clear();
 }
 
 bool MetalContext::HasSurfaceDimensionChanged() const

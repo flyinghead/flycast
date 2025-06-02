@@ -34,6 +34,7 @@ public:
     void reset() override
     {
         ImGuiDriver::reset();
+        textures.clear();
         ImGui_ImplMetal_Shutdown();
     }
 
@@ -62,26 +63,28 @@ public:
     void renderDrawData(ImDrawData *drawData, bool gui_open) override {
         MetalContext *context = MetalContext::Instance();
 
-        if (context->GetCommandBuffer() != nil && context->GetCommandBuffer() != nil) {
-            ImGui_ImplMetal_RenderDrawData(drawData, context->GetCommandBuffer(), context->GetEncoder());
-        } else {
-            id<MTLCommandBuffer> buffer = [context->GetQueue() commandBuffer];
-            id<MTLRenderCommandEncoder> commandEncoder = [buffer renderCommandEncoderWithDescriptor:descriptor];
-            ImGui_ImplMetal_RenderDrawData(drawData, buffer, commandEncoder);
+        if (!context->IsValid())
+            return;
 
-            [commandEncoder endEncoding];
-            [buffer presentDrawable:drawable];
-            [buffer commit];
+        bool rendering = context->IsRendering();
+        if (!rendering)
+            context->NewFrame();
+        if (!rendering || newFrameStarted)
+        {
+            context->BeginRenderPass();
+            if (renderer->RenderLastFrame())
+                context->PresentLastFrame();
         }
 
-        if (gui_open)
-            frameRendered = true;
+        ImGui_ImplMetal_RenderDrawData(drawData, context->GetCommandBuffer(), context->GetEncoder());
+
+        if (!rendering || newFrameStarted)
+            context->EndFrame();
+        newFrameStarted = false;
     }
 
     void present() override {
-        if (frameRendered)
-            //MetalContext::Instance()->GetDevice().pre
-        frameRendered = false;
+        MetalContext::Instance()->Present();
     }
 
     ImTextureID getTexture(const std::string &name) override {
@@ -118,8 +121,8 @@ private:
         std::unique_ptr<MetalTexture> texture;
     };
 
-    bool frameRendered = false;
     MTLRenderPassDescriptor* descriptor;
     id<CAMetalDrawable> drawable;
     std::unordered_map<std::string, Texture> textures;
+    bool newFrameStarted = false;
 };

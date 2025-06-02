@@ -48,16 +48,10 @@ public:
     id<MTLDevice> GetDevice() const { return device; }
     CAMetalLayer* GetLayer() const { return layer; }
     id<MTLCommandQueue> GetQueue() const { return queue; }
-    MTLRenderPassDescriptor* GetDescriptor() const {
-        if (rendering) {
-            return renderPassDescriptor;
-        }
-
-        // Hack to make sure imgui takes control of presenting pause menu
-        return nullptr;
-    }
+    MTLRenderPassDescriptor* GetDescriptor() const { return renderPassDescriptor; }
     id<MTLRenderCommandEncoder> GetEncoder() const { return commandEncoder; }
     id<MTLCommandBuffer> GetCommandBuffer() const { return commandBuffers[currentImage]; }
+    bool IsRendering() const { return rendering; }
 
     std::string getDriverName() override;
 
