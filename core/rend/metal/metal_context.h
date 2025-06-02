@@ -70,7 +70,7 @@ public:
     }
 
     bool hasPerPixel() override {
-        return true;
+        return false;
     }
     bool recreateSwapChainIfNeeded();
 

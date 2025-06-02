@@ -2200,7 +2200,7 @@ static void gui_settings_video()
 		break;
 	case RenderType::Metal:
 		renderApi = 4;
-		perPixel = true;
+		perPixel = false;
 	}
 
 	constexpr int apiCount = 0
