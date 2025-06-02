@@ -35,9 +35,11 @@ void MetalContext::CreateSwapChain()
 
     [layer setPixelFormat:MTLPixelFormatBGRA8Unorm];
     [layer setFramebufferOnly:TRUE];
-    [layer setDisplaySyncEnabled:TRUE];
     [layer setColorspace:CGColorSpaceCreateWithName(kCGColorSpaceSRGB)];
     [layer setMaximumDrawableCount:3];
+#if TARGET_OS_MAC || TARGET_OS_MACCATALYST
+    [layer setDisplaySyncEnabled:TRUE];
+#endif
 
     auto size = [layer drawableSize];
     width = size.width;
