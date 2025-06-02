@@ -46,8 +46,7 @@ public:
     }
 
     bool GetLastFrame(std::vector<u8>& data, int& width, int& height) override {
-        // return MetalContext::Instance()->GetLastFrame(data, width, height);
-        return false;
+        return MetalContext::Instance()->GetLastFrame(data, width, height);
     }
 
 protected:
