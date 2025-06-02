@@ -399,8 +399,7 @@ bool MetalDrawer::Draw(const MetalTexture *fogTexture, const MetalTexture *palet
                 else
                     DrawList(renderEncoder, ListType_Translucent, true, pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count);
             } else {
-                // TODO: This breaking?
-                // DrawList(renderEncoder, ListType_Translucent, false, pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count);
+                DrawList(renderEncoder, ListType_Translucent, false, pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count);
             }
             previous_pass = current_pass;
         }
