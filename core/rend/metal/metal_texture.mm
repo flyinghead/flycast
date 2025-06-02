@@ -105,7 +105,7 @@ void MetalTexture::SetImage(u32 srcSize, const void *srcData, bool genMipmaps) {
         u32 dataOffset = 0;
 
         for (u32 i = 0; i < mipmapLevels; i++) {
-            const u32 size = (1 << (2 * i)) * bpp;
+            const u32 size = (1 << (2 * i)) * 2;
 
             u32 mipLevel = mipmapLevels - i - 1;
             u32 mipWidth = std::max(texture.width >> mipLevel, 1ul);
@@ -114,10 +114,11 @@ void MetalTexture::SetImage(u32 srcSize, const void *srcData, bool genMipmaps) {
             MTLRegion region = MTLRegionMake2D(0, 0, mipWidth, mipHeight);
             [texture replaceRegion:region
                        mipmapLevel:mipLevel
-                         withBytes:src + dataOffset
+                         withBytes:src
                        bytesPerRow:mipWidth * bpp];
 
             dataOffset += ((size + 3) >> 2) << 2;
+            src += size;
         }
     }
     else
