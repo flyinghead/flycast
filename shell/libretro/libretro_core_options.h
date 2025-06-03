@@ -269,6 +269,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "video",
       {
          { "320x240",    "320x240 (Half)" },
+	 { "640x240",    "640x240 (Native 240p)" },
          { "640x480",    "640x480 (Native)" },
          { "800x600",    "800x600 (x1.25)" },
          { "960x720",    "960x720 (x1.5)" },
