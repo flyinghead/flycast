@@ -36617,11 +36617,11 @@ struct retro_core_options_v2 options_fr = {
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_GL "Configura NAOMI Games Para Xogar de Balde"
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_GL "Modifica a configuración de moedas do xogo para xogar libremente."
 #define CORE_OPTION_NAME_EMULATE_BBA_LABEL_GL "Emulación de adaptador de banda ancha"
-#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_GL NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_GL "Emular o adaptador Ethernet de banda ancha en lugar do módem. (Requírese reinicio)"
 #define CORE_OPTION_NAME_UPNP_LABEL_GL "Activar UPnP"
 #define CORE_OPTION_NAME_UPNP_INFO_0_GL "Use UPnP para configurar automaticamente o seu enrutador de Internet para xogos en liña."
-#define CORE_OPTION_NAME_DCNET_LABEL_GL NULL
-#define CORE_OPTION_NAME_DCNET_INFO_0_GL NULL
+#define CORE_OPTION_NAME_DCNET_LABEL_GL "Usar DCNet"
+#define CORE_OPTION_NAME_DCNET_INFO_0_GL "Usar o servizo na nube DCNet para acceso a Internet de Dreamcast."
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_GL "Resolución interna"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_GL "Modificar a resolución do renderizado."
 #define OPTION_VAL_320X240_GL "320 x 240 (a metade)"
