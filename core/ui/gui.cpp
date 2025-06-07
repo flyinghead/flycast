@@ -417,7 +417,6 @@ static void applyNintendoTheme()
 
 	ImVec4 luigiGreen = ImVec4(0.00f, 0.65f, 0.00f, 1.00f);             // Luigi green
 	ImVec4 luigiGreenLight = ImVec4(0.30f, 0.85f, 0.30f, 1.00f);        // Lighter green
-	ImVec4 luigiGreenDark = ImVec4(0.00f, 0.45f, 0.00f, 1.00f);         // Darker green
 
 	ImVec4 gameboy = ImVec4(0.70f, 0.80f, 0.15f, 1.00f);                // GameBoy screen color
 	ImVec4 gamecubePurple = ImVec4(0.35f, 0.20f, 0.65f, 1.00f);         // GameCube purple
@@ -1557,13 +1556,9 @@ static void detect_input_popup(const Mapping *mapping)
 
 					const char* name = nullptr;
 					if (inputDef.is_button())
-					{
 						name = mapped_device->get_button_name(inputDef.code);
-					}
 					else
-					{
 						name = mapped_device->get_axis_name(inputDef.code);
-					}
 
 					displayLabelOrCode(name, inputDef.code);
 
@@ -1572,9 +1567,7 @@ static void detect_input_popup(const Mapping *mapping)
 
 				// Allow early completion with Confirm button if at least one button is detected
 				if (ImGui::Button("Confirm"))
-				{
 					remaining = 0;
-				}
 			}
 
 			// Wait for the countdown to complete before mapping
@@ -1590,6 +1583,14 @@ static void detect_input_popup(const Mapping *mapping)
 						const InputMapping::InputDef& axisInputDef = mapped_codes.front();
 						const bool positive = (axisInputDef.type == InputMapping::InputDef::InputType::AXIS_POS);
 						input_mapping->set_axis(gamepad_port, mapping->key, axisInputDef.code, positive);
+						DreamcastKey opposite = getOppositeDirectionKey(mapping->key);
+						// Map the axis opposite direction to the corresponding opposite dc button or axis,
+						// but only if the opposite direction axis isn't used and the dc button or axis isn't mapped.
+						if (opposite != EMU_BTN_NONE
+								&& input_mapping->get_axis_id(gamepad_port, axisInputDef.code, !positive) == EMU_BTN_NONE
+								&& input_mapping->get_axis_code(gamepad_port, opposite).first == (u32)-1
+								&& input_mapping->get_button_code(gamepad_port, opposite) == (u32)-1)
+							input_mapping->set_axis(gamepad_port, opposite, axisInputDef.code, !positive);
 					}
 					else
 					{
@@ -1621,9 +1622,7 @@ static void displayMappedControl(const std::shared_ptr<GamepadDevice>& gamepad, 
 		std::pair<u32, bool> pair = input_mapping->get_axis_code(gamepad_port, key);
 		const InputMapping::InputDef inputDef = InputMapping::InputDef::from_axis(pair.first, pair.second);
 		if (inputDef.is_valid())
-		{
 			displayLabelOrCode(gamepad->get_axis_name(inputDef.code), inputDef.code, inputDef.get_suffix());
-		}
 	}
 	else
 	{
@@ -1640,13 +1639,9 @@ static void displayMappedControl(const std::shared_ptr<GamepadDevice>& gamepad, 
 
 			const char* name = nullptr;
 			if (inputDef.is_button())
-			{
 				name = gamepad->get_button_name(inputDef.code);
-			}
 			else if (inputDef.is_axis())
-			{
 				name = gamepad->get_axis_name(inputDef.code);
-			}
 
 			displayLabelOrCode(name, inputDef.code, inputDef.get_suffix());
 			first = false;
@@ -1655,10 +1650,8 @@ static void displayMappedControl(const std::shared_ptr<GamepadDevice>& gamepad, 
 		if (combo.inputs.size() > 1)
 		{
 			if (ImGui::Checkbox("Sequential", &(combo.sequential)))
-			{
 				// Update mapping with updated combo settings
 				input_mapping->set_button(gamepad_port, key, combo);
-			}
 			ImGui::SameLine();
 			ShowHelpMarker(
 				"When checked, this combo will only activate when all keys are pressed in the given sequence.\n"
@@ -1793,9 +1786,8 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 		ImGui::Combo("##arcadeMode", &item_current_map_idx, items, IM_ARRAYSIZE(items));
 		ImGui::PopStyleVar();
 		if (last_item_current_map_idx != 2 && item_current_map_idx != last_item_current_map_idx)
-		{
 			gamepad->save_mapping(map_system);
-		}
+
 		const Mapping *systemMapping = dcButtons;
 		if (item_current_map_idx == 0)
 		{
@@ -1870,13 +1862,9 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 				gamepad->detectInput(true, true, detectCombo, [](u32 code, bool analog, bool positive)
 				{
 					if (analog)
-					{
 						mapped_codes.insert_back(InputMapping::InputDef::from_axis(code, positive));
-					}
 					else
-					{
 						mapped_codes.insert_back(InputMapping::InputDef::from_button(code));
-					}
 				});
 			}
 			detect_input_popup(systemMapping);
@@ -3366,6 +3354,14 @@ static void gui_settings_network()
 				[](ImGuiInputTextCallbackData *data) { return static_cast<int>(data->EventChar <= ' ' || data->EventChar > '~'); }, nullptr);
 		ImGui::SameLine();
 		ShowHelpMarker("The ISP user name stored in the console Flash RAM. Used by some online games as the player name. Leave blank to keep the current Flash RAM value.");
+#if !defined(NDEBUG) || defined(DEBUGFAST)
+		{
+			DisabledScope scope(config::UseDCNet);
+			ImGui::InputText("DNS", &config::DNS.get(), ImGuiInputTextFlags_CharsNoBlank);
+			ImGui::SameLine();
+			ShowHelpMarker("DNS server name or IP address");
+		}
+#endif
 	}
 #ifdef NAOMI_MULTIBOARD
 	ImGui::Spacing();

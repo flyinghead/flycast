@@ -158,11 +158,7 @@ bool GamepadDevice::handleButtonInputDef(const InputMapping::InputDef& inputDef,
 	if (!input_mapper || _maple_port > (int)std::size(kcode))
 		return false;
 
-	bool rc = false;
-
 	// Update button press tracking
-	int targetPort = (_maple_port == 4) ? 0 : _maple_port; // Use port 0 for all-ports mode as a base
-
 	std::list<DreamcastKey> mappedKeys;
 
 	if (pressed)
@@ -171,9 +167,8 @@ bool GamepadDevice::handleButtonInputDef(const InputMapping::InputDef& inputDef,
 		if (currentInputs.insert_back(inputDef))
 		{
 			// Handle keys activated by this new input
-			DreamcastKey mappedKey = input_mapper->get_button_id(targetPort, currentInputs);
-			if (mappedKey != EMU_BTN_NONE)
-			{
+			DreamcastKey mappedKey = input_mapper->get_button_id(0, currentInputs);
+			if (mappedKey != EMU_BTN_NONE) {
 				mappedKeys.push_back(mappedKey);
 				currentKeys.push_back(mappedKey);
 			}
@@ -185,24 +180,24 @@ bool GamepadDevice::handleButtonInputDef(const InputMapping::InputDef& inputDef,
 		if (currentInputs.remove(inputDef) > 0)
 		{
 			// Handle keys deactivated by this new input
-			mappedKeys = input_mapper->get_button_released_ids(targetPort, currentKeys, inputDef);
+			mappedKeys = input_mapper->get_button_released_ids(0, currentKeys, inputDef);
 			for (const DreamcastKey& mappedKey : mappedKeys)
-			{
 				currentKeys.remove(mappedKey);
-			}
 		}
 	}
 
+	bool rc = false;
 	for (const DreamcastKey& mappedKey : mappedKeys)
+		rc = handleButtonInput(_maple_port == 4 ? 0 : _maple_port, mappedKey, pressed) || rc;
+
+	// Handle inputs for ports 1 to 3 in all-ports mode
+	// Combos are only detected on port 0 in this mode
+	if (_maple_port == 4)
 	{
-		if (_maple_port == 4)
-		{
-			for (int port = 0; port < 4; port++)
-				rc = handleButtonInput(port, mappedKey, pressed) || rc;
-		}
-		else
-		{
-			rc = handleButtonInput(_maple_port, mappedKey, pressed);
+		const InputMapping::InputSet simpleInput{inputDef};
+		for (int port = 1; port < 4; port++) {
+			DreamcastKey mappedKey = input_mapper->get_button_id(port, simpleInput);
+			rc = handleButtonInput(port, mappedKey, pressed) || rc;
 		}
 	}
 
@@ -274,7 +269,7 @@ bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 	const InputMapping::InputDef inputDef = InputMapping::InputDef::from_axis(code, positive);
 	const InputMapping::InputDef inverseInputDef = InputMapping::InputDef::from_axis(code, !positive);
 
-	if (_input_detected != NULL & getTimeMs() >= _detection_start_time)
+	if (_input_detected != nullptr && getTimeMs() >= _detection_start_time)
 	{
 		if (_detecting_axis && std::abs(value) >= AXIS_ACTIVATION_VALUE)
 		{
@@ -283,9 +278,7 @@ bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 			{
 				// Track this axis as a "button" for combo detection
 				if (detectionInputs.insert_back(inputDef))
-				{
 					_input_detected(code, true, positive);
-				}
 
 				return true;
 			}

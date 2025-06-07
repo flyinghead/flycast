@@ -206,12 +206,15 @@ public:
 	//! @param[in] combo Combination of inputs that should activate the key
 	//! @return true iff the combo has been set
 	bool set_button(u32 port, DreamcastKey id, const ButtonCombo& combo);
-	inline bool set_button(DreamcastKey id, const ButtonCombo& combo) { return set_button(0, id, combo); }
-	inline bool set_button(u32 port, DreamcastKey id, u32 buttonCode)
-	{
-		return set_button(0, id, ButtonCombo{InputSet{InputDef{buttonCode, InputDef::InputType::BUTTON}}, false});
+	inline bool set_button(DreamcastKey id, const ButtonCombo& combo) {
+		return set_button(0, id, combo);
 	}
-	inline bool set_button(DreamcastKey id, u32 buttonCode) { return set_button(0, id, buttonCode); }
+	inline bool set_button(u32 port, DreamcastKey id, u32 buttonCode) {
+		return set_button(port, id, ButtonCombo{InputSet{InputDef{buttonCode, InputDef::InputType::BUTTON}}, false});
+	}
+	inline bool set_button(DreamcastKey id, u32 buttonCode) {
+		return set_button(0, id, buttonCode);
+	}
 
 	//! @param[in] port The port [0,NUM_PORTS)
 	//! @param[in] key The key
