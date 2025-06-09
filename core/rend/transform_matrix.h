@@ -284,6 +284,30 @@ inline static float getDCFramebufferAspectRatio()
 	return aspectRatio * config::ScreenStretching / 100.f;
 }
 
+inline static void getSidebarDimensions(int fbwidth, int fbheight, int outwidth, int outheight, float renderAR, int& dx, int& dy) {
+	fbwidth *= config::ScreenStretching / 100.f;
+
+	if (config::IntegerScale && (fbwidth & fbheight) != 0) {
+		int scale = std::min(outwidth / fbwidth, outheight / fbheight);
+		if (scale == 0) {
+			scale = std::min(outwidth / fbwidth, outheight / fbheight);
+			dx = (outwidth - fbwidth / scale) / 2;
+			dy = (outheight - fbheight / scale) / 2;
+		}
+		else {
+			dx = (outwidth - fbwidth * scale) / 2;
+			dy = (outheight - fbheight * scale) / 2;
+		}
+	}
+	else {
+		float screenAR = (float)outwidth / outheight;
+		if (renderAR > screenAR)
+			dy = (int)roundf(outheight * (1 - screenAR / renderAR) / 2.f);
+		else
+			dx = (int)roundf(outwidth * (1 - renderAR / screenAR) / 2.f);
+	}
+}
+
 inline static void getVideoShift(float& x, float& y)
 {
 	const bool vga = FB_R_CTRL.vclk_div == 1;
