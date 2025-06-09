@@ -290,7 +290,7 @@ inline static void getSidebarDimensions(int fbwidth, int fbheight, int outwidth,
 	if (config::IntegerScale && (fbwidth & fbheight) != 0) {
 		int scale = std::min(outwidth / fbwidth, outheight / fbheight);
 		if (scale == 0) {
-			scale = std::min(outwidth / fbwidth, outheight / fbheight);
+			scale = std::max(fbwidth / outwidth, fbheight / outheight) + 1;
 			dx = (outwidth - fbwidth / scale) / 2;
 			dy = (outheight - fbheight / scale) / 2;
 		}
