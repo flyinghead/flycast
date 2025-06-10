@@ -2855,11 +2855,11 @@ static void gui_settings_video()
     	OptionCheckbox("Widescreen", config::Widescreen,
     			"Draw geometry outside of the normal 4:3 aspect ratio. May produce graphical glitches in the revealed areas.\nAspect Fit and shows the full 16:9 content.");
 		{
-			DisabledScope scope(!config::Widescreen);
+			DisabledScope scope(!config::Widescreen || config::IntegerScale);
 
 			ImGui::Indent();
 			OptionCheckbox("Super Widescreen", config::SuperWidescreen,
-					"Use the full width of the screen or window when its aspect ratio is greater than 16:9.\nAspect Fill and remove black bars.");
+					"Use the full width of the screen or window when its aspect ratio is greater than 16:9.\nAspect Fill and remove black bars. Not compatible with integer scaling.");
 			ImGui::Unindent();
     	}
     	OptionCheckbox("Widescreen Game Cheats", config::WidescreenGameHacks,

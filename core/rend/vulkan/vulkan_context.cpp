@@ -1007,21 +1007,20 @@ void VulkanContext::DrawFrame(vk::ImageView imageView, const vk::Extent2D& exten
 	else
 		quadPipeline->BindPipeline(commandBuffer);
 
-	float screenAR = (float)width / height;
-	float dx = 0;
-	float dy = 0;
-	if (aspectRatio > screenAR)
-		dy = height * (1 - screenAR / aspectRatio) / 2;
-	else
-		dx = width * (1 - aspectRatio / screenAR) / 2;
+	int dx = 0;
+	int dy = 0;
+	fbheight = config::RenderResolution;
+	fbwidth = (int)(fbheight * (config::Widescreen ? 16.f / 9.f : 4.f / 3.f));
 
+	getSidebarDimensions(fbwidth, fbheight, width, height, aspectRatio, dx, dy, config::Rotate90);
+	
 	vk::Viewport viewport(dx, dy, width - dx * 2, height - dy * 2);
 	commandBuffer.setViewport(0, viewport);
 	commandBuffer.setScissor(0, vk::Rect2D(vk::Offset2D(dx, dy), vk::Extent2D(width - dx * 2, height - dy * 2)));
 	if (config::Rotate90)
-		quadRotateDrawer->Draw(commandBuffer, imageView, vtx, config::TextureFiltering == 1);
+		quadRotateDrawer->Draw(commandBuffer, imageView, vtx, !config::LinearInterpolation);
 	else
-		quadDrawer->Draw(commandBuffer, imageView, vtx, config::TextureFiltering == 1);
+		quadDrawer->Draw(commandBuffer, imageView, vtx, !config::LinearInterpolation);
 }
 
 void VulkanContext::WaitIdle() const

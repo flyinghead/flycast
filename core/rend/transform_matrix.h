@@ -284,19 +284,26 @@ inline static float getDCFramebufferAspectRatio()
 	return aspectRatio * config::ScreenStretching / 100.f;
 }
 
-inline static void getSidebarDimensions(int fbwidth, int fbheight, int outwidth, int outheight, float renderAR, int& dx, int& dy) {
+inline static void getSidebarDimensions(u32& fbwidth, u32& fbheight, int outwidth, int outheight, float renderAR, int& dx, int& dy, bool rotate) {
+	if (_pvrrc != nullptr) {
+		fbwidth = pvrrc.framebufferWidth;
+		fbheight = pvrrc.framebufferHeight;
+	}
 	fbwidth *= config::ScreenStretching / 100.f;
 
 	if (config::IntegerScale && (fbwidth & fbheight) != 0) {
-		int scale = std::min(outwidth / fbwidth, outheight / fbheight);
+		int fbw = rotate ? fbheight : fbwidth;
+		int fbh = rotate ? fbwidth : fbheight;
+
+		int scale = std::min(outwidth / fbw, outheight / fbh);
 		if (scale == 0) {
-			scale = std::max(fbwidth / outwidth, fbheight / outheight) + 1;
-			dx = (outwidth - fbwidth / scale) / 2;
-			dy = (outheight - fbheight / scale) / 2;
+			scale = std::max(fbw / outwidth, fbh / outheight) + 1;
+			dx = (outwidth - fbw / scale) / 2;
+			dy = (outheight - fbh / scale) / 2;
 		}
 		else {
-			dx = (outwidth - fbwidth * scale) / 2;
-			dy = (outheight - fbheight * scale) / 2;
+			dx = (outwidth - fbw * scale) / 2;
+			dy = (outheight - fbh * scale) / 2;
 		}
 	}
 	else {

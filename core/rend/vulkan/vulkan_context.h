@@ -231,6 +231,8 @@ private:
 	float maxSamplerAnisotropy = 0.f;
 	bool dedicatedAllocationSupported = false;
 	bool provokingVertexSupported = false;
+	u32 fbwidth = 0;
+	u32 fbheight = 0;
 	u32 vendorID = 0;
 	int swapInterval = 1;
 	vk::UniqueDevice device;

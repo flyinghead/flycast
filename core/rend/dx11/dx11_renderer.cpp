@@ -23,7 +23,6 @@
 #include "ui/gui.h"
 #include "rend/sorter.h"
 
-#include <algorithm>
 #include <memory>
 
 void os_VideoRoutingTermDX();
@@ -560,13 +559,11 @@ void DX11Renderer::displayFramebuffer()
 		std::swap(shiftX, shiftY);
 		renderAR = 1 / renderAR;
 	}
+	
 	int dy = 0;
 	int dx = 0;
-	if (_pvrrc != nullptr) {
-		fbwidth = pvrrc.framebufferWidth;
-		fbheight = pvrrc.framebufferHeight;
-	}
-	getSidebarDimensions(fbwidth, fbheight, outwidth, outheight, renderAR, dx, dy);
+	// handles the rotation on its own, so never pass config::Rotate90
+	getSidebarDimensions(fbwidth, fbheight, outwidth, outheight, renderAR, dx, dy, false);
 	
 	float x = (float)dx;
 	float y = (float)dy;
