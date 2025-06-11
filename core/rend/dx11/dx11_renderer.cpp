@@ -563,7 +563,7 @@ void DX11Renderer::displayFramebuffer()
 	int dy = 0;
 	int dx = 0;
 	// handles the rotation on its own, so never pass config::Rotate90
-	getWindowboxDimensions(fbwidth, fbheight, outwidth, outheight, renderAR, dx, dy, false);
+	getWindowboxDimensions(outwidth, outheight, renderAR, dx, dy, false);
 	
 	float x = (float)dx;
 	float y = (float)dy;

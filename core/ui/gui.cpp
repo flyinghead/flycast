@@ -2827,6 +2827,7 @@ static void gui_settings_video()
         ImGui::Text("Internal Resolution");
         ImGui::SameLine();
         ShowHelpMarker("Internal render resolution. Higher is better, but more demanding on the GPU. Values higher than your display resolution (but no more than double your display resolution) can be used for supersampling, which provides high-quality antialiasing without reducing sharpness.");
+		OptionCheckbox("Anamorphic Widescreen", config::AnamorphicWidescreen, "Outputs in a 16:9 aspect ratio with a 4:3 frame buffer. Use when game has internal anamorphic widescreen toggle.");
 		OptionCheckbox("Integer Scaling", config::IntegerScale, "Scales the output by the maximum integer multiple allowed by the display resolution.");
 		OptionCheckbox("Linear Interpolation", config::LinearInterpolation, "Scales the output with linear interpolation. Will use nearest neighbor interpolation otherwise. Disable with integer scaling.");
 #ifndef TARGET_IPHONE

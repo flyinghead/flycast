@@ -1216,9 +1216,15 @@ void D3DRenderer::displayFramebuffer()
 {
 	devCache.SetRenderState(D3DRS_SCISSORTESTENABLE, FALSE);
 	device->ColorFill(backbuffer, 0, D3DCOLOR_ARGB(255, VO_BORDER_COL._red, VO_BORDER_COL._green, VO_BORDER_COL._blue));
+	
 	int dx = 0;
 	int dy = 0;
-	getWindowboxDimensions(fbwidth, fbheight, settings.display.width, settings.display.height, aspectRatio, dx, dy, config::Rotate90);
+	// D3DSURFACE_DESC *desc;
+	// if (framebufferSurface->GetDesc(desc) == D3D_OK) {
+	// 	fbwidth = desc->Width;
+	// 	fbheight = desc->Height;
+	// }
+	getWindowboxDimensions(settings.display.width, settings.display.height, aspectRatio, dx, dy, config::Rotate90);
 
 	float shiftX, shiftY;
 	getVideoShift(shiftX, shiftY);

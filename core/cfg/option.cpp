@@ -99,6 +99,7 @@ Option<int> SkipFrame("ta.skip");
 Option<int> MaxThreads("pvr.MaxThreads", 3);
 Option<int> AutoSkipFrame("pvr.AutoSkipFrame", 0);
 Option<int> RenderResolution("rend.Resolution", 480);
+Option<bool> AnamorphicWidescreen("rend.AnamorphicWidescreen", false);
 Option<bool> IntegerScale("rend.IntegerScale", false);
 Option<bool> LinearInterpolation("rend.LinearInterpolation", true);
 Option<bool> VSync("rend.vsync", true);

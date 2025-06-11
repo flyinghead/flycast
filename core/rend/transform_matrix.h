@@ -284,17 +284,17 @@ inline static float getDCFramebufferAspectRatio()
 	return aspectRatio * config::ScreenStretching / 100.f;
 }
 
-inline static void getWindowboxDimensions(u32& fbwidth, u32& fbheight, int outwidth, int outheight, float renderAR, int& dx, int& dy, bool rotate) {
-	if (_pvrrc != nullptr) {
-		// On boot, occasional frames where the render context is dead (always occurs on Vulkan)
-		fbwidth = pvrrc.framebufferWidth;
-		fbheight = pvrrc.framebufferHeight;
-	}
-	fbwidth *= config::ScreenStretching / 100.f;
+#include <stdio.h>
 
-	if (config::IntegerScale && (fbwidth & fbheight) != 0) {
-		int fbw = rotate ? fbheight : fbwidth;
-		int fbh = rotate ? fbwidth : fbheight;
+inline static void getWindowboxDimensions(int outwidth, int outheight, float renderAR, int& dx, int& dy, bool rotate) {
+	if (config::AnamorphicWidescreen)
+		renderAR = 16.f / 9.f * config::ScreenStretching / 100.f;
+
+	if (config::IntegerScale && config::RenderResolution) {
+		int fbh = config::RenderResolution;
+		int fbw = (int)((rotate ? 1 / renderAR : renderAR) * fbh);
+		if (rotate)
+			std::swap(fbw, fbh);
 
 		int scale = std::min(outwidth / fbw, outheight / fbh);
 		if (scale == 0) {
@@ -306,6 +306,7 @@ inline static void getWindowboxDimensions(u32& fbwidth, u32& fbheight, int outwi
 			dx = (outwidth - fbw * scale) / 2;
 			dy = (outheight - fbh * scale) / 2;
 		}
+		printf("fbw=%d fbh=%d renderAR=%f dx=%d dy=%d scale=%d\n", fbw, fbh, renderAR, dx, dy, scale);
 	}
 	else {
 		float screenAR = (float)outwidth / outheight;
