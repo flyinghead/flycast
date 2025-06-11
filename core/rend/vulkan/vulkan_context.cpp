@@ -1011,8 +1011,7 @@ void VulkanContext::DrawFrame(vk::ImageView imageView, const vk::Extent2D& exten
 	int dy = 0;
 	fbheight = config::RenderResolution;
 	fbwidth = (int)(fbheight * (config::Widescreen ? 16.f / 9.f : 4.f / 3.f));
-
-	getSidebarDimensions(fbwidth, fbheight, width, height, aspectRatio, dx, dy, config::Rotate90);
+	getWindowboxDimensions(fbwidth, fbheight, width, height, aspectRatio, dx, dy, config::Rotate90);
 	
 	vk::Viewport viewport(dx, dy, width - dx * 2, height - dy * 2);
 	commandBuffer.setViewport(0, viewport);

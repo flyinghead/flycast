@@ -781,7 +781,7 @@ bool OpenGLRenderer::renderLastFrame()
 	int dx = 0;
 	int dy = 0;
 	glcache.Disable(GL_SCISSOR_TEST);
-	getSidebarDimensions(fbwidth, fbheight, settings.display.width, settings.display.height, gl.ofbo.aspectRatio, dx, dy, config::Rotate90);
+	getWindowboxDimensions(fbwidth, fbheight, settings.display.width, settings.display.height, gl.ofbo.aspectRatio, dx, dy, config::Rotate90);
 
 	if (gl.bogusBlitFramebuffer || config::Rotate90)
 	{

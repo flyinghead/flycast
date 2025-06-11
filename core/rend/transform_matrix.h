@@ -284,8 +284,9 @@ inline static float getDCFramebufferAspectRatio()
 	return aspectRatio * config::ScreenStretching / 100.f;
 }
 
-inline static void getSidebarDimensions(u32& fbwidth, u32& fbheight, int outwidth, int outheight, float renderAR, int& dx, int& dy, bool rotate) {
+inline static void getWindowboxDimensions(u32& fbwidth, u32& fbheight, int outwidth, int outheight, float renderAR, int& dx, int& dy, bool rotate) {
 	if (_pvrrc != nullptr) {
+		// On boot, occasional frames where the render context is dead (always occurs on Vulkan)
 		fbwidth = pvrrc.framebufferWidth;
 		fbheight = pvrrc.framebufferHeight;
 	}
