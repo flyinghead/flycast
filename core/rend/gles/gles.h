@@ -556,8 +556,6 @@ protected:
 	bool frameRendered = false;
 	int width = 640;
 	int height = 480;
-	u32 fbwidth = 0;
-	u32 fbheight = 0;
 	void initVideoRoutingFrameBuffer();
 };
 

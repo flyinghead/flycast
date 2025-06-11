@@ -169,8 +169,6 @@ private:
 
 	u32 width = 0;
 	u32 height = 0;
-	u32 fbwidth = 0;
-	u32 fbheight = 0;
 	TransformMatrix<COORD_DIRECTX> matrices;
 	D3DTextureCache texCache;
 	D3DShaders shaders;

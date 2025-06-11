@@ -1009,8 +1009,6 @@ void VulkanContext::DrawFrame(vk::ImageView imageView, const vk::Extent2D& exten
 
 	int dx = 0;
 	int dy = 0;
-	// fbheight = config::RenderResolution;
-	// fbwidth = (int)(fbheight * (config::Widescreen ? 16.f / 9.f : 4.f / 3.f));
 	getWindowboxDimensions(width, height, aspectRatio, dx, dy, config::Rotate90);
 	
 	vk::Viewport viewport(dx, dy, width - dx * 2, height - dy * 2);

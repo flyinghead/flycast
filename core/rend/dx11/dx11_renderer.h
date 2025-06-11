@@ -126,8 +126,6 @@ protected:
 	D3D11_RECT scissorRect{};
 	u32 width = 0;
 	u32 height = 0;
-	u32 fbwidth = 0;
-	u32 fbheight = 0;
 	bool frameRendered = false;
 	bool frameRenderedOnce = false;
 	Naomi2Helper n2Helper;

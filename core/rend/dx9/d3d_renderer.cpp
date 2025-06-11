@@ -1219,11 +1219,6 @@ void D3DRenderer::displayFramebuffer()
 	
 	int dx = 0;
 	int dy = 0;
-	// D3DSURFACE_DESC *desc;
-	// if (framebufferSurface->GetDesc(desc) == D3D_OK) {
-	// 	fbwidth = desc->Width;
-	// 	fbheight = desc->Height;
-	// }
 	getWindowboxDimensions(settings.display.width, settings.display.height, aspectRatio, dx, dy, config::Rotate90);
 
 	float shiftX, shiftY;
