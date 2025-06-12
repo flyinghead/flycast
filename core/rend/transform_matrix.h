@@ -285,7 +285,7 @@ inline static float getDCFramebufferAspectRatio()
 }
 
 inline static void getWindowboxDimensions(int outwidth, int outheight, float renderAR, int& dx, int& dy, bool rotate) {
-	if (config::IntegerScale && config::RenderResolution) {
+	if (config::IntegerScale) {
 		int fbh = config::RenderResolution;
 		int fbw = (int)((rotate ? 1 / renderAR : renderAR) * fbh);
 		if (rotate)
