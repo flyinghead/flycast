@@ -284,12 +284,7 @@ inline static float getDCFramebufferAspectRatio()
 	return aspectRatio * config::ScreenStretching / 100.f;
 }
 
-#include <stdio.h>
-
 inline static void getWindowboxDimensions(int outwidth, int outheight, float renderAR, int& dx, int& dy, bool rotate) {
-	if (config::AnamorphicWidescreen)
-		renderAR = 16.f / 9.f * config::ScreenStretching / 100.f;
-
 	if (config::IntegerScale && config::RenderResolution) {
 		int fbh = config::RenderResolution;
 		int fbw = (int)((rotate ? 1 / renderAR : renderAR) * fbh);
