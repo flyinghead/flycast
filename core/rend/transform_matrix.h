@@ -301,7 +301,6 @@ inline static void getWindowboxDimensions(int outwidth, int outheight, float ren
 			dx = (outwidth - fbw * scale) / 2;
 			dy = (outheight - fbh * scale) / 2;
 		}
-		printf("fbw=%d fbh=%d renderAR=%f dx=%d dy=%d scale=%d\n", fbw, fbh, renderAR, dx, dy, scale);
 	}
 	else {
 		float screenAR = (float)outwidth / outheight;
