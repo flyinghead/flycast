@@ -216,11 +216,12 @@ public:
 			// Query supported haptic effects for force-feedback
 			u32 hapq = SDL_HapticQuery(haptic);
 			INFO_LOG(INPUT, "SDL_HapticQuery: supported: %x", hapq);
-			if ((hapq & SDL_HAPTIC_SINE) != 0 && SDL_JoystickGetType(sdl_joystick) == SDL_JOYSTICK_TYPE_WHEEL)
+			isWheel = SDL_JoystickGetType(sdl_joystick) == SDL_JOYSTICK_TYPE_WHEEL;
+			if ((hapq & SDL_HAPTIC_SINE) != 0 && isWheel)
 			{
 				SDL_HapticEffect effect{};
 				effect.type = SDL_HAPTIC_SINE;
-				effect.periodic.direction.type = SDL_HAPTIC_CARTESIAN;
+				effect.periodic.direction.type = SDL_HAPTIC_STEERING_AXIS;
 				effect.periodic.direction.dir[0] = -1;	// west
 				effect.periodic.period = 40; 			// 25 Hz
 				effect.periodic.magnitude = 0x7fff;
@@ -245,7 +246,7 @@ public:
 			{
 				SDL_HapticEffect effect{};
 				effect.type = SDL_HAPTIC_CONSTANT;
-				effect.constant.direction.type = SDL_HAPTIC_CARTESIAN;
+				effect.constant.direction.type = isWheel ? SDL_HAPTIC_STEERING_AXIS : SDL_HAPTIC_CARTESIAN;
 				effect.constant.direction.dir[0] = -1;	// west, updated when used
 				effect.constant.length = SDL_HAPTIC_INFINITY;
 				effect.constant.delay = 0;
@@ -259,7 +260,7 @@ public:
 				SDL_HapticEffect effect{};
 				effect.type = SDL_HAPTIC_SPRING;
 				effect.condition.length = SDL_HAPTIC_INFINITY;
-				effect.condition.direction.type = SDL_HAPTIC_CARTESIAN;	// not used but required!
+				effect.condition.direction.type = isWheel ? SDL_HAPTIC_STEERING_AXIS : SDL_HAPTIC_CARTESIAN;	// not used but required!
 				// effect level at full deflection
 				effect.condition.left_sat[0] = effect.condition.right_sat[0] = 0xffff;
 				// how fast to increase the force
@@ -273,7 +274,7 @@ public:
 				SDL_HapticEffect effect{};
 				effect.type = SDL_HAPTIC_DAMPER;
 				effect.condition.length = SDL_HAPTIC_INFINITY;
-				effect.condition.direction.type = SDL_HAPTIC_CARTESIAN;	// not used but required!
+				effect.condition.direction.type = isWheel ? SDL_HAPTIC_STEERING_AXIS : SDL_HAPTIC_CARTESIAN;	// not used but required!
 				// max effect level
 				effect.condition.left_sat[0] = effect.condition.right_sat[0] = 0xffff;
 				// how fast to increase the force
@@ -318,10 +319,11 @@ public:
 			{
 				SDL_HapticEffect effect{};
 				effect.type = SDL_HAPTIC_SINE;
-				effect.periodic.direction.type = SDL_HAPTIC_CARTESIAN;
-				effect.periodic.direction.dir[0] = (vib_stop_time & 1) ? -1 : 1;	// west or east randomly
+				effect.periodic.direction.type = SDL_HAPTIC_STEERING_AXIS;
+				effect.periodic.direction.dir[0] = 1;
 				effect.periodic.period = 40; 				// 25 Hz
-				effect.periodic.magnitude = intensity / 4;	// scale by an additional 0.5 to soften it
+				// scale by an additional 0.5 to soften it and pick random direction
+				effect.periodic.magnitude = intensity / 4 * ((rand() & 1) * 2 - 1);
 				effect.periodic.length = duration_ms;
 				SDL_HapticUpdateEffect(haptic, sineEffectId, &effect);
 				SDL_HapticRunEffect(haptic, sineEffectId, 1);
@@ -373,10 +375,19 @@ public:
 		{
 			SDL_HapticEffect effect{};
 			effect.type = SDL_HAPTIC_CONSTANT;
-			effect.constant.direction.type = SDL_HAPTIC_CARTESIAN;
-			effect.constant.direction.dir[0] = torque < 0 ? -1 : 1;	// west/cw if torque < 0
 			effect.constant.length = SDL_HAPTIC_INFINITY;
-			effect.constant.level = std::abs(torque) * 32767.f * rumblePower / 100.f;
+			if (isWheel)
+			{
+				effect.constant.direction.type = SDL_HAPTIC_STEERING_AXIS;
+				effect.constant.direction.dir[0] = 1;
+				effect.constant.level = torque * 32767.f * rumblePower / 100.f;
+			}
+			else
+			{
+				effect.constant.direction.type = SDL_HAPTIC_CARTESIAN;
+				effect.constant.direction.dir[0] = torque < 0 ? -1 : 1;	// west/cw if torque < 0
+				effect.constant.level = std::abs(torque) * 32767.f * rumblePower / 100.f;
+			}
 			SDL_HapticUpdateEffect(haptic, constEffectId, &effect);
 			SDL_HapticRunEffect(haptic, constEffectId, 1);
 		}
@@ -420,7 +431,7 @@ public:
 				SDL_HapticEffect effect{};
 				effect.type = SDL_HAPTIC_SPRING;
 				effect.condition.length = SDL_HAPTIC_INFINITY;
-				effect.condition.direction.type = SDL_HAPTIC_CARTESIAN;
+				effect.condition.direction.type = isWheel ? SDL_HAPTIC_STEERING_AXIS : SDL_HAPTIC_CARTESIAN;
 				// effect level at full deflection
 				effect.condition.left_sat[0] = effect.condition.right_sat[0] = (saturation * rumblePower / 100.f) * 0xffff;
 				// how fast to increase the force
@@ -443,7 +454,7 @@ public:
 			SDL_HapticEffect effect{};
 			effect.type = SDL_HAPTIC_DAMPER;
 			effect.condition.length = SDL_HAPTIC_INFINITY;
-			effect.condition.direction.type = SDL_HAPTIC_CARTESIAN;
+			effect.condition.direction.type = isWheel ? SDL_HAPTIC_STEERING_AXIS : SDL_HAPTIC_CARTESIAN;
 			// max effect level
 			effect.condition.left_sat[0] = effect.condition.right_sat[0] = (param * rumblePower / 100.f) * 0xffff;
 			// how fast to increase the force
@@ -678,6 +689,7 @@ private:
 	SDL_Haptic *haptic = nullptr;
 	bool hapticRumble = false;
 	bool hasAutocenter = false;
+	bool isWheel = false;
 	int sineEffectId = -1;
 	int constEffectId = -1;
 	int springEffectId = -1;

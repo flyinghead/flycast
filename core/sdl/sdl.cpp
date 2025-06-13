@@ -1263,7 +1263,7 @@ static float damperSpeed;
 void sdl_setTorque(int port, float torque)
 {
 	::torque = torque;
-	if (gameRunning)
+	if (gameRunning || torque == 0.f)
 		SDLGamepad::SetTorque(port, torque);
 }
 
