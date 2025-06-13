@@ -2166,7 +2166,7 @@ struct retro_core_options_v2 options_ar = {
 #define CORE_OPTION_NAME_BROADCAST_LABEL_AST NULL
 #define OPTION_VAL_NTSC_AST NULL
 #define OPTION_VAL_PAL_AST NULL
-#define OPTION_VAL_PAL_N_AST "PAL-N (Arxentina, Paraguái y Uruguái)"
+#define OPTION_VAL_PAL_N_AST "PAL-N (Arxentina, Paraguái ya Uruguái)"
 #define OPTION_VAL_PAL_M_AST "PAL-M (Brasil)"
 #define CORE_OPTION_NAME_SCREEN_ROTATION_LABEL_AST "Orientación de la pantalla"
 #define OPTION_VAL_HORIZONTAL_AST NULL
