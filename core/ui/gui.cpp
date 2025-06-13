@@ -2827,7 +2827,8 @@ static void gui_settings_video()
         ImGui::Text("Internal Resolution");
         ImGui::SameLine();
         ShowHelpMarker("Internal render resolution. Higher is better, but more demanding on the GPU. Values higher than your display resolution (but no more than double your display resolution) can be used for supersampling, which provides high-quality antialiasing without reducing sharpness.");
-
+		OptionCheckbox("Integer Scaling", config::IntegerScale, "Scales the output by the maximum integer multiple allowed by the display resolution.");
+		OptionCheckbox("Linear Interpolation", config::LinearInterpolation, "Scales the output with linear interpolation. Will use nearest neighbor interpolation otherwise. Disable with integer scaling.");
 #ifndef TARGET_IPHONE
     	OptionCheckbox("VSync", config::VSync, "Synchronizes the frame rate with the screen refresh rate. Recommended");
     	if (isVulkan(config::RendererType))
@@ -2854,11 +2855,11 @@ static void gui_settings_video()
     	OptionCheckbox("Widescreen", config::Widescreen,
     			"Draw geometry outside of the normal 4:3 aspect ratio. May produce graphical glitches in the revealed areas.\nAspect Fit and shows the full 16:9 content.");
 		{
-			DisabledScope scope(!config::Widescreen);
+			DisabledScope scope(!config::Widescreen || config::IntegerScale);
 
 			ImGui::Indent();
 			OptionCheckbox("Super Widescreen", config::SuperWidescreen,
-					"Use the full width of the screen or window when its aspect ratio is greater than 16:9.\nAspect Fill and remove black bars.");
+					"Use the full width of the screen or window when its aspect ratio is greater than 16:9.\nAspect Fill and remove black bars. Not compatible with integer scaling.");
 			ImGui::Unindent();
     	}
     	OptionCheckbox("Widescreen Game Cheats", config::WidescreenGameHacks,

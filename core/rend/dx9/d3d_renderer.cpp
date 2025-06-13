@@ -1216,13 +1216,10 @@ void D3DRenderer::displayFramebuffer()
 {
 	devCache.SetRenderState(D3DRS_SCISSORTESTENABLE, FALSE);
 	device->ColorFill(backbuffer, 0, D3DCOLOR_ARGB(255, VO_BORDER_COL._red, VO_BORDER_COL._green, VO_BORDER_COL._blue));
-	float screenAR = (float)settings.display.width / settings.display.height;
+	
 	int dx = 0;
 	int dy = 0;
-	if (aspectRatio > screenAR)
-		dy = (int)roundf(settings.display.height * (1 - screenAR / aspectRatio) / 2.f);
-	else
-		dx = (int)roundf(settings.display.width * (1 - aspectRatio / screenAR) / 2.f);
+	getWindowboxDimensions(settings.display.width, settings.display.height, aspectRatio, dx, dy, config::Rotate90);
 
 	float shiftX, shiftY;
 	getVideoShift(shiftX, shiftY);
@@ -1231,7 +1228,7 @@ void D3DRenderer::displayFramebuffer()
 		RECT rs { 0, 0, (long)width, (long)height };
 		RECT rd { dx, dy, settings.display.width - dx, settings.display.height - dy };
 		device->StretchRect(framebufferSurface, &rs, backbuffer, &rd,
-				config::TextureFiltering == 1 ? D3DTEXF_POINT : D3DTEXF_LINEAR);	// This can fail if window is minimized
+				config::LinearInterpolation ? D3DTEXF_LINEAR : D3DTEXF_POINT);	// This can fail if window is minimized
 	}
 	else
 	{
@@ -1241,8 +1238,8 @@ void D3DRenderer::displayFramebuffer()
 		device->SetRenderState(D3DRS_ZENABLE, FALSE);
 		device->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
 		device->SetRenderState(D3DRS_ALPHATESTENABLE, FALSE);
-		device->SetSamplerState(0, D3DSAMP_MINFILTER, config::TextureFiltering == 1 ? D3DTEXF_POINT : D3DTEXF_LINEAR);
-		device->SetSamplerState(0, D3DSAMP_MAGFILTER, config::TextureFiltering == 1 ? D3DTEXF_POINT : D3DTEXF_LINEAR);
+		device->SetSamplerState(0, D3DSAMP_MINFILTER, config::LinearInterpolation ? D3DTEXF_LINEAR : D3DTEXF_POINT);
+		device->SetSamplerState(0, D3DSAMP_MAGFILTER, config::LinearInterpolation ? D3DTEXF_LINEAR : D3DTEXF_POINT);
 
 		glm::mat4 identity = glm::identity<glm::mat4>();
 		glm::mat4 projection = glm::translate(glm::vec3(-1.f / settings.display.width, 1.f / settings.display.height, 0));
