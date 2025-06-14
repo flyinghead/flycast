@@ -702,16 +702,16 @@ void computeColors(constant N2VertexShaderUniforms& n2_uniforms, constant N2Ligh
         if (n2_lights.lights[i].specular[vol_idx] == 1)
         {
             float factor = (n2_lights.lights[i].routing & ROUTING_SUB) != 0 ? -BASE_FACTOR : BASE_FACTOR;
-            if (n2_lights.lights[i].dmode == LMODE_SINGLE_SIDED)
+            if (n2_lights.lights[i].smode == LMODE_SINGLE_SIDED)
                 factor *= clamp(pow(max(dot(light_dir, reflect_dir), 0.0), n2_uniforms.gloss_coef[vol_idx]), 0.0, 1.0);
-            else if (n2_lights.lights[i].dmode == LMODE_DOUBLE_SIDED)
+            else if (n2_lights.lights[i].smode == LMODE_DOUBLE_SIDED)
                 factor *= clamp(pow(abs(dot(light_dir, reflect_dir)), n2_uniforms.gloss_coef[vol_idx]), 0.0, 1.0);
 
             if ((n2_lights.lights[i].routing & ROUTING_ALPHA) != 0)
                 specular_alpha += light_color.r * factor;
             else
             {
-                if ((n2_lights.lights[i].routing & ROUTING_DIFF_TO_OFFSET) == 0)
+                if ((n2_lights.lights[i].routing & ROUTING_SPEC_TO_OFFSET) == 0)
                     diffuse += light_color * factor * offset_col->rgb;
                 else
                     specular += light_color * factor * offset_col->rgb;
@@ -724,9 +724,9 @@ void computeColors(constant N2VertexShaderUniforms& n2_uniforms, constant N2Ligh
     else
         diffuse += n2_lights.ambient_base[vol_idx].rgb;
     if (n2_lights.ambient_material_offset[vol_idx] == 1)
-        diffuse += n2_lights.ambient_offset[vol_idx].rgb * offset_col->rgb;
+        specular += n2_lights.ambient_offset[vol_idx].rgb * offset_col->rgb;
     else
-        diffuse += n2_lights.ambient_offset[vol_idx].rgb;
+        specular += n2_lights.ambient_offset[vol_idx].rgb;
     base_col->rgb = diffuse;
     offset_col->rgb = specular;
 
