@@ -244,8 +244,8 @@ struct rend_context
 	u32 framebufferWidth;
 	u32 framebufferHeight;
 	
-	RGBAColor fog_clamp_min;
-	RGBAColor fog_clamp_max;
+	RGBA_Color fog_clamp_min;
+	RGBA_Color fog_clamp_max;
 
 	std::vector<Vertex> verts;
 	std::vector<u32> idx;

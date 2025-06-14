@@ -316,6 +316,7 @@ public:
 protected:
 	void resize(int w, int h) override
 	{
+        ERROR_LOG(RENDERER, "VulkanRenderer::resize %d %d", w, h);
 		if ((u32)w == viewport.width && (u32)h == viewport.height)
 			return;
 		BaseVulkanRenderer::resize(w, h);
