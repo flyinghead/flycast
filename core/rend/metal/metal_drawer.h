@@ -27,6 +27,7 @@
 #include "rend/transform_matrix.h"
 #include "rend/sorter.h"
 #include "hw/pvr/pvr_mem.h"
+#include <glm/gtc/type_ptr.hpp>
 
 class MetalBaseDrawer
 {
@@ -90,6 +91,97 @@ protected:
         fragUniforms.cp_AlphaTestValue = (PT_ALPHA_REF & 0xFF) / 255.0f;
 
         return fragUniforms;
+    }
+
+    template<typename Offsets>
+    void packNaomi2Uniforms(MetalBufferPacker& packer, Offsets& offsets, std::vector<u8>& n2uniforms, bool trModVolIncluded)
+    {
+        size_t n2UniformSize = sizeof(MetalN2VertexShaderUniforms) + MetalBufferPacker::align(sizeof(MetalN2VertexShaderUniforms), 16);
+        int items = pvrrc.global_param_op.size() + pvrrc.global_param_pt.size() + pvrrc.global_param_tr.size() + pvrrc.global_param_mvo.size();
+        if (trModVolIncluded)
+            items += pvrrc.global_param_mvo_tr.size();
+        n2uniforms.resize(items * n2UniformSize);
+        size_t bufIdx = 0;
+        auto addUniform = [&](const PolyParam& pp, int polyNumber) {
+            if (pp.isNaomi2())
+            {
+                MetalN2VertexShaderUniforms& uni = *(MetalN2VertexShaderUniforms *)&n2uniforms[bufIdx];
+                memcpy(glm::value_ptr(uni.mvMat), pvrrc.matrices[pp.mvMatrix].mat, sizeof(uni.mvMat));
+                memcpy(glm::value_ptr(uni.normalMat), pvrrc.matrices[pp.normalMatrix].mat, sizeof(uni.normalMat));
+                memcpy(glm::value_ptr(uni.projMat), pvrrc.matrices[pp.projMatrix].mat, sizeof(uni.projMat));
+                uni.bumpMapping = pp.pcw.Texture == 1 && pp.tcw.PixelFmt == PixelBumpMap;
+                uni.polyNumber = polyNumber;
+                for (size_t i = 0; i < 2; i++)
+                {
+                    uni.envMapping[i] = pp.envMapping[i];
+                    uni.glossCoef[i] = pp.glossCoef[i];
+                    uni.constantColor[i] = pp.constantColor[i];
+                }
+            }
+            bufIdx += n2UniformSize;
+        };
+        for (const PolyParam& pp : pvrrc.global_param_op)
+            addUniform(pp, 0);
+        size_t ptOffset = bufIdx;
+        for (const PolyParam& pp : pvrrc.global_param_pt)
+            addUniform(pp, 0);
+        size_t trOffset = bufIdx;
+        if (!pvrrc.global_param_tr.empty())
+        {
+            u32 firstVertexIdx = pvrrc.idx[pvrrc.global_param_tr[0].first];
+            for (const PolyParam& pp : pvrrc.global_param_tr)
+                addUniform(pp, ((&pp - &pvrrc.global_param_tr[0]) << 17) - firstVertexIdx);
+        }
+        size_t mvOffset = bufIdx;
+        for (const ModifierVolumeParam& mvp : pvrrc.global_param_mvo)
+        {
+            if (mvp.isNaomi2())
+            {
+                MetalN2VertexShaderUniforms& uni = *(MetalN2VertexShaderUniforms *)&n2uniforms[bufIdx];
+                memcpy(glm::value_ptr(uni.mvMat), pvrrc.matrices[mvp.mvMatrix].mat, sizeof(uni.mvMat));
+                memcpy(glm::value_ptr(uni.projMat), pvrrc.matrices[mvp.projMatrix].mat, sizeof(uni.projMat));
+            }
+            bufIdx += n2UniformSize;
+        }
+        size_t trMvOffset = bufIdx;
+        if (trModVolIncluded)
+            for (const ModifierVolumeParam& mvp : pvrrc.global_param_mvo_tr)
+            {
+                if (mvp.isNaomi2())
+                {
+                    MetalN2VertexShaderUniforms& uni = *(MetalN2VertexShaderUniforms *)&n2uniforms[bufIdx];
+                    memcpy(glm::value_ptr(uni.mvMat), pvrrc.matrices[mvp.mvMatrix].mat, sizeof(uni.mvMat));
+                    memcpy(glm::value_ptr(uni.projMat), pvrrc.matrices[mvp.projMatrix].mat, sizeof(uni.projMat));
+                }
+                bufIdx += n2UniformSize;
+            }
+        offsets.naomi2OpaqueOffset = packer.addUniform(n2uniforms.data(), bufIdx);
+        offsets.naomi2PunchThroughOffset = offsets.naomi2OpaqueOffset + ptOffset;
+        offsets.naomi2TranslucentOffset = offsets.naomi2OpaqueOffset + trOffset;
+        offsets.naomi2ModVolOffset = offsets.naomi2OpaqueOffset + mvOffset;
+        offsets.naomi2TrModVolOffset = offsets.naomi2OpaqueOffset + trMvOffset;
+    }
+
+    u64 packNaomi2Lights(MetalBufferPacker& packer)
+    {
+        u64 offset = -1;
+
+        size_t n2LightSize = sizeof(N2LightModel) + MetalBufferPacker::align(sizeof(N2LightModel), 16);
+        if (n2LightSize == sizeof(N2LightModel) && !pvrrc.lightModels.empty())
+        {
+            offset = packer.addUniform(&pvrrc.lightModels[0], pvrrc.lightModels.size() * sizeof(decltype(pvrrc.lightModels[0])));
+        }
+        else
+        {
+            for (const N2LightModel& model : pvrrc.lightModels)
+            {
+                u64 ioffset = packer.addUniform(&model, sizeof(N2LightModel));
+                if (offset == (u64)-1)
+                    offset = ioffset;
+            }
+        }
+
+        return offset;
     }
 
     MTLScissorRect baseScissor {};

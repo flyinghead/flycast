@@ -468,7 +468,7 @@ fragment FragmentOut fs_main(VertexOut in [[stage_in]],
 }
 )";
 
-static const char QuadVertexShaderSource[] = R"(
+static const char QuadShaderSource[] = R"(
 #include <metal_stdlib>
 
 using namespace metal;
@@ -523,7 +523,342 @@ fragment float4 fs_main(VertexOut in [[stage_in]],
 }
 )";
 
-// TODO: N2 Shaders
+static const char N2VertexShaderSource[] = R"(
+#include <metal_stdlib>
+
+using namespace metal;
+
+constant bool pp_gouraud [[function_constant(0)]];
+
+constant bool is_flat = pp_gouraud == 0;
+constant bool is_not_flag = !is_flat;
+
+struct VertexShaderUniforms
+{
+    float4x4 ndc_mat;
+};
+
+struct N2VertexShaderUniforms
+{
+    float4x4 mv_mat;
+    float4x4 normal_mat;
+    float4x4 proj_mat;
+    int2 env_mapping;
+    int bump_mapping;
+    int poly_number;
+
+    float2 gloss_coef;
+    int2 constant_color;
+};
+
+struct N2VertexIn
+{
+    float4 in_pos [[attribute(0)]];
+    float4 in_base [[attribute(1)]];
+    float4 in_offs [[attribute(2)]];
+    float2 in_uv [[attribute(3)]];
+    float3 in_normal [[attribute(4)]];
+};
+
+struct VertexOut
+{
+    float4 flat_vtx_base [[flat, function_constant(is_flat)]];
+    float4 flat_vtx_offs [[flat, function_constant(is_flat)]];
+    float4 vtx_base [[function_constant(is_not_flag)]];
+    float4 vtx_offs [[function_constant(is_not_flag)]];
+    float3 vtx_uv;
+    float4 position [[position]];
+};
+
+#define PI 3.1415926
+
+#define LMODE_SINGLE_SIDED 0
+#define LMODE_DOUBLE_SIDED 1
+#define LMODE_DOUBLE_SIDED_WITH_TOLERANCE 2
+#define LMODE_SPECIAL_EFFECT 3
+#define LMODE_THIN_SURFACE 4
+#define LMODE_BUMP_MAP 5
+
+#define ROUTING_SPEC_TO_OFFSET 1
+#define ROUTING_DIFF_TO_OFFSET 2
+#define ROUTING_ATTENUATION 1	// not handled
+#define ROUTING_FOG 2			// not handled
+#define ROUTING_ALPHA 4
+#define ROUTING_SUB 8
+
+struct N2Light
+{
+    float4 color;
+    float4 direction; // For parallel/spot
+    float4 position; // For spot/point
+
+    int parallel;
+    int routing;
+    int dmode;
+    int smode;
+
+    int2 diffuse;
+    int2 specular;
+
+    float attn_dist_a;
+    float attn_dist_b;
+    float attn_angle_a; // For spot
+    float attn_angle_b;
+
+    int dist_attn_mode; // For spot/point
+    int _pad1;
+    int _pad2;
+    int _pad3;
+};
+
+struct N2Lights
+{
+    N2Light lights[16];
+    float4 ambient_base[2];
+    float4 ambient_offset[2];
+    int2 ambient_material_base;
+    int2 ambient_material_offset;
+    int light_count;
+    int use_base_over;
+    int bump_id0;
+    int bump_id1;
+};
+
+float4 w_divide(float4 in_vpos, float4x4 ndc_mat, thread VertexOut& out)
+{
+    float4 vpos = float4(in_vpos.xy / in_vpos.w, 1.0 / in_vpos.w, 1.0);
+    vpos = ndc_mat * vpos;
+    if (pp_gouraud == 1) {
+        if (is_flat) {
+            out.flat_vtx_base *= vpos.z;
+            out.flat_vtx_offs *= vpos.z;
+        } else {
+            out.vtx_base *= vpos.z;
+            out.vtx_offs *= vpos.z;
+        }
+    }
+    out.vtx_uv = float3(out.vtx_uv.xy * vpos.z, vpos.z);
+    vpos.w = 1.0;
+    vpos.z = 0.0;
+    return vpos;
+}
+
+void computeColors(constant N2VertexShaderUniforms& n2_uniforms, constant N2Lights& n2_lights,
+                   thread float4 *base_col, thread float4 *offset_col, int vol_idx, float3 position, float3 normal)
+{
+    if (n2_uniforms.constant_color[vol_idx] == 1)
+        return;
+
+    float3 diffuse = float3(0.0);
+    float3 specular = float3(0.0);
+    float diffuse_alpha = 0.0;
+    float specular_alpha = 0.0;
+    float3 reflect_dir = reflect(normalize(position), normal);
+    const float BASE_FACTOR = 2.0;
+
+    for (int i = 0; i < n2_lights.light_count; i++)
+    {
+        float3 light_dir; // direction to the light
+        float3 light_color = n2_lights.lights[i].color.rgb;
+        if (n2_lights.lights[i].parallel == 1)
+        {
+            light_dir = normalize(n2_lights.lights[i].direction.xyz);
+        }
+        else
+        {
+            light_dir = normalize(n2_lights.lights[i].position.xyz - position);
+            if (n2_lights.lights[i].attn_dist_a != 1.0 || n2_lights.lights[i].attn_dist_b != 0.0)
+            {
+                float distance = length(n2_lights.lights[i].position.xyz - position);
+                if (n2_lights.lights[i].dist_attn_mode == 0)
+                    distance = 1.0 / distance;
+                light_color *= clamp(n2_lights.lights[i].attn_dist_b * distance + n2_lights.lights[i].attn_dist_a, 0.0, 1.0);
+            }
+            if (n2_lights.lights[i].attn_angle_a != 1.0 || n2_lights.lights[i].attn_angle_b != 0.0)
+            {
+                float3 spot_dir = n2_lights.lights[i].direction.xyz;
+                float cos_angle = 1.0 - max(0.0, dot(light_dir, spot_dir));
+                light_color *= clamp(cos_angle * n2_lights.lights[i].attn_angle_b + n2_lights.lights[i].attn_angle_a, 0.0, 1.0);
+            }
+        }
+        if (n2_lights.lights[i].diffuse[vol_idx] == 1)
+        {
+            float factor = (n2_lights.lights[i].routing & ROUTING_SUB) != 0 ? -BASE_FACTOR : BASE_FACTOR;
+            if (n2_lights.lights[i].dmode == LMODE_SINGLE_SIDED)
+                factor *= max(dot(normal, light_dir), 0.0);
+            else if (n2_lights.lights[i].dmode == LMODE_DOUBLE_SIDED)
+                factor *= abs(dot(normal, light_dir));
+
+            if ((n2_lights.lights[i].routing & ROUTING_ALPHA) != 0)
+                diffuse_alpha += light_color.r * factor;
+            else
+            {
+                if ((n2_lights.lights[i].routing & ROUTING_DIFF_TO_OFFSET) == 0)
+                    diffuse += light_color * factor * base_col->rgb;
+                else
+                    specular += light_color * factor * base_col->rgb;
+            }
+        }
+        if (n2_lights.lights[i].specular[vol_idx] == 1)
+        {
+            float factor = (n2_lights.lights[i].routing & ROUTING_SUB) != 0 ? -BASE_FACTOR : BASE_FACTOR;
+            if (n2_lights.lights[i].dmode == LMODE_SINGLE_SIDED)
+                factor *= clamp(pow(max(dot(light_dir, reflect_dir), 0.0), n2_uniforms.gloss_coef[vol_idx]), 0.0, 1.0);
+            else if (n2_lights.lights[i].dmode == LMODE_DOUBLE_SIDED)
+                factor *= clamp(pow(abs(dot(light_dir, reflect_dir)), n2_uniforms.gloss_coef[vol_idx]), 0.0, 1.0);
+
+            if ((n2_lights.lights[i].routing & ROUTING_ALPHA) != 0)
+                specular_alpha += light_color.r * factor;
+            else
+            {
+                if ((n2_lights.lights[i].routing & ROUTING_DIFF_TO_OFFSET) == 0)
+                    diffuse += light_color * factor * offset_col->rgb;
+                else
+                    specular += light_color * factor * offset_col->rgb;
+            }
+        }
+    }
+    // ambient light
+    if (n2_lights.ambient_material_base[vol_idx] == 1)
+        diffuse += n2_lights.ambient_base[vol_idx].rgb * base_col->rgb;
+    else
+        diffuse += n2_lights.ambient_base[vol_idx].rgb;
+    if (n2_lights.ambient_material_offset[vol_idx] == 1)
+        diffuse += n2_lights.ambient_offset[vol_idx].rgb * offset_col->rgb;
+    else
+        diffuse += n2_lights.ambient_offset[vol_idx].rgb;
+    base_col->rgb = diffuse;
+    offset_col->rgb = specular;
+
+    base_col->a += diffuse_alpha;
+    offset_col->a += specular_alpha;
+    if (n2_lights.use_base_over == 1)
+    {
+        float4 overflow = max(base_col->rgba - float4(1.0), 0.0);
+        offset_col->rgba += overflow;
+    }
+    base_col->rgba = clamp(base_col->rgba, 0.0, 1.0);
+    offset_col->rgba = clamp(offset_col->rgba, 0.0, 1.0);
+}
+
+float2 computeEnvMap(float2 uv, float3 position, float3 normal)
+{
+    // Spherical mapping
+    // float3 r = reflect(normalize(position), normal);
+    // float m = 2.0 * sqrt(r.x * r.x + r.y * r.y + (r.z + 1.0) * (r.z + 1.0));
+    // uv += r.xy / m + 0.5;
+
+    // Cheap env mapping
+    uv += normal.xy / 2.0 + 0.5;
+    uv = clamp(uv, 0.0, 1.0);
+
+    return uv;
+}
+
+void computeBumpMap(constant N2Lights& n2_lights)
+{
+    // TODO
+    // if (n2_lights.bump_id0 == -1)
+        return;
+}
+
+vertex VertexOut vs_main(N2VertexIn in [[stage_in]],
+                         constant VertexShaderUniforms& uniforms [[buffer(0)]],
+                         constant N2VertexShaderUniforms& n2_uniforms [[buffer(1)]],
+                         constant N2Lights& n2_lights [[buffer(2)]])
+{
+    float4 vpos = n2_uniforms.mv_mat * in.in_pos;
+
+    VertexOut out = {};
+    if (is_flat) {
+        out.flat_vtx_base = in.in_base;
+        out.flat_vtx_offs = in.in_offs;
+    } else {
+        out.vtx_base = in.in_base;
+        out.vtx_offs = in.in_offs;
+    }
+
+    float3 vnorm = normalize(float3x3(n2_uniforms.normal_mat[0].xyz,
+                                      n2_uniforms.normal_mat[1].xyz,
+                                      n2_uniforms.normal_mat[2].xyz) *  in.in_normal);
+
+    // TODO bump mapping
+    if (n2_uniforms.bump_mapping == 0) {
+        computeColors(n2_uniforms, n2_lights,
+                      &out.vtx_base, &out.vtx_offs, 0, vpos.xyz, vnorm);
+    }
+
+    out.vtx_uv.xy = in.in_uv;
+    if (n2_uniforms.env_mapping[0] == 1)
+        out.vtx_uv.xy = computeEnvMap(out.vtx_uv.xy, vpos.xyz, vnorm);
+
+    vpos = n2_uniforms.proj_mat * vpos;
+    vpos = w_divide(vpos, uniforms.ndc_mat, out);
+
+    out.position = vpos;
+    return out;
+}
+)";
+
+extern const char MTLN2ModVolVertexShaderSource[] = R"(
+#include <metal_stdlib>
+
+using namespace metal;
+
+struct VertexShaderUniforms
+{
+    float4x4 ndc_mat;
+};
+
+struct N2VertexShaderUniforms
+{
+    float4x4 mv_mat;
+    float4x4 normal_mat;
+    float4x4 proj_mat;
+    int2 env_mapping;
+    int bump_mapping;
+    int poly_number;
+
+    float2 gloss_coef;
+    int2 constant_color;
+};
+
+struct VertexIn
+{
+    float4 in_pos [[attribute(0)]];
+};
+
+struct VertexOut
+{
+    float depth;
+    float4 position [[position]];
+};
+
+float4 w_divide(float4 in_vpos, float4x4 ndc_mat, thread VertexOut& out)
+{
+    float4 vpos = float4(in_vpos.xy / in_vpos.w, 1.0 / in_vpos.w, 1.0);
+    vpos = ndc_mat * vpos;
+    out.depth = vpos.z;
+    vpos.w = 1.0;
+    vpos.z = 0.0;
+    return vpos;
+}
+
+vertex VertexOut vs_main(VertexIn in [[stage_in]],
+                         constant VertexShaderUniforms& uniforms [[buffer(0)]],
+                         constant N2VertexShaderUniforms& n2_uniforms [[buffer(1)]])
+{
+    VertexOut out = {};
+
+    float4 vpos = n2_uniforms.mv_mat * in.in_pos;
+    vpos.z = min(vpos.z, -0.01);
+    vpos = n2_uniforms.proj_mat * vpos;
+    vpos = w_divide(vpos, uniforms.ndc_mat, out);
+    out.position = vpos;
+
+    return out;
+}
+)";
 
 MetalShaders::MetalShaders() {
     auto device = MetalContext::Instance()->GetDevice();
@@ -541,6 +876,13 @@ MetalShaders::MetalShaders() {
     vertexShaderConstants = [[MTLFunctionConstantValues alloc] init];
 
     if (!vertexShaderLibrary) {
+        ERROR_LOG(RENDERER, "%s", [[error localizedDescription] UTF8String]);
+        assert(false);
+    }
+
+    n2VertexShaderLibrary = [device newLibraryWithSource:[NSString stringWithUTF8String:N2VertexShaderSource] options:nil error:&error];
+
+    if (!n2VertexShaderLibrary) {
         ERROR_LOG(RENDERER, "%s", [[error localizedDescription] UTF8String]);
         assert(false);
     }
@@ -574,7 +916,14 @@ MetalShaders::MetalShaders() {
         assert(false);
     }
 
-    quadShaderLibrary = [device newLibraryWithSource:[NSString stringWithUTF8String:QuadVertexShaderSource] options:nil error:&error];
+    n2ModVolVertexShaderLibrary = [device newLibraryWithSource:[NSString stringWithUTF8String:MTLN2ModVolVertexShaderSource] options:nil error:&error];
+
+    if (!n2ModVolVertexShaderLibrary) {
+        ERROR_LOG(RENDERER, "%s", [[error localizedDescription] UTF8String]);
+        assert(false);
+    }
+
+    quadShaderLibrary = [device newLibraryWithSource:[NSString stringWithUTF8String:QuadShaderSource] options:nil error:&error];
     quadShaderConstants = [[MTLFunctionConstantValues alloc] init];
 
     if (!quadShaderLibrary) {
@@ -586,11 +935,18 @@ MetalShaders::MetalShaders() {
 
 id<MTLFunction> MetalShaders::compileShader(const MetalVertexShaderParams &params) {
     [vertexShaderConstants setConstantValue:&params.gouraud type:MTLDataTypeBool atIndex:0];
-    [vertexShaderConstants setConstantValue:&params.divPosZ type:MTLDataTypeBool atIndex:1];
 
     NSError* error = nil;
 
-    id<MTLFunction> function = [vertexShaderLibrary newFunctionWithName:@"vs_main" constantValues:vertexShaderConstants error:&error];
+    id<MTLFunction> function;
+
+    if (params.naomi2) {
+        function = [n2VertexShaderLibrary newFunctionWithName:@"vs_main" constantValues:vertexShaderConstants error:&error];
+    } else {
+        [vertexShaderConstants setConstantValue:&params.divPosZ type:MTLDataTypeBool atIndex:1];
+
+        function = [vertexShaderLibrary newFunctionWithName:@"vs_main" constantValues:vertexShaderConstants error:&error];
+    }
 
     if (!function) {
         ERROR_LOG(RENDERER, "%s", [[error localizedDescription] UTF8String]);
@@ -634,8 +990,13 @@ id<MTLFunction> MetalShaders::compileShader(const MetalModVolShaderParams &param
 
     NSError* error = nil;
 
-    // TODO: Naomi2 ModVol Frag Shader
-    id<MTLFunction> function = [modVolShaderLibrary newFunctionWithName:@"vs_main" constantValues:modVolShaderConstants error:&error];
+    id<MTLFunction> function;
+
+    if (params.naomi2) {
+        function = [n2ModVolVertexShaderLibrary newFunctionWithName:@"vs_main" constantValues:[[MTLFunctionConstantValues alloc] init] error:&error];
+    } else {
+        function = [modVolShaderLibrary newFunctionWithName:@"vs_main" constantValues:modVolShaderConstants error:&error];
+    }
 
     if (!function) {
         ERROR_LOG(RENDERER, "%s", [[error localizedDescription] UTF8String]);

@@ -113,9 +113,9 @@ void MetalPipelineManager::CreateDepthPassPipeline(int cullMode, bool naomi2)
     [attachment setAlphaBlendOperation:MTLBlendOperationAdd];
     [attachment setWriteMask:MTLColorWriteMaskNone];
 
-    // TODO: Need functions here
-    // descriptor->setVertexFunction();
-    // descriptor->setFragmentFunction();
+    MetalModVolShaderParams shaderParams { naomi2, !settings.platform.isNaomi2() && config::NativeDepthInterpolation };
+    [descriptor setVertexFunction:shaderManager->GetModVolVertexShader(shaderParams)];
+    [descriptor setFragmentFunction:shaderManager->GetModVolFragmentShader(!settings.platform.isNaomi2() && config::NativeDepthInterpolation)];;
 
     NSError *error = nil;
     auto state = [MetalContext::Instance()->GetDevice() newRenderPipelineStateWithDescriptor:descriptor error:&error];

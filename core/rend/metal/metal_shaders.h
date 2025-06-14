@@ -88,6 +88,20 @@ struct MetalFragmentShaderUniforms
     float sp_FOG_DENSITY;
 };
 
+// std140 alignment required
+struct MetalN2VertexShaderUniforms
+{
+    glm::mat4 mvMat;
+    glm::mat4 normalMat;
+    glm::mat4 projMat;
+    int envMapping[2];
+    int bumpMapping;
+    int polyNumber;
+
+    float glossCoef[2];
+    int constantColor[2];
+};
+
 class MetalShaders
 {
 public:
@@ -148,7 +162,9 @@ public:
 private:
     id<MTLLibrary> blitShaderLibrary;
     id<MTLLibrary> modVolShaderLibrary;
+    id<MTLLibrary> n2ModVolVertexShaderLibrary;
     id<MTLLibrary> vertexShaderLibrary;
+    id<MTLLibrary> n2VertexShaderLibrary;
     id<MTLLibrary> fragmentShaderLibrary;
     id<MTLLibrary> quadShaderLibrary;
     MTLFunctionConstantValues* vertexShaderConstants;

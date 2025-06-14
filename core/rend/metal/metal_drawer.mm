@@ -152,13 +152,32 @@ void MetalDrawer::DrawPoly(id<MTLRenderCommandEncoder> encoder, u32 listType, bo
 
     if (poly.pcw.Texture || poly.isNaomi2())
     {
+        u64 offset = 0;
         u32 index = 0;
         if (poly.isNaomi2())
         {
-
+            switch (listType)
+            {
+                case ListType_Opaque:
+                    offset = offsets.naomi2OpaqueOffset;
+                    index = &poly - &pvrrc.global_param_op[0];
+                    break;
+                case ListType_Punch_Through:
+                    offset = offsets.naomi2PunchThroughOffset;
+                    index = &poly - &pvrrc.global_param_pt[0];
+                    break;
+                case ListType_Translucent:
+                    offset = offsets.naomi2TranslucentOffset;
+                    index = &poly - &pvrrc.global_param_tr[0];
+                    break;
+            }
         }
 
-        // TODO: Bind Texture & Naomi2 Lights Buffers
+        size_t size = sizeof(MetalN2VertexShaderUniforms) + MetalBufferPacker::align(sizeof(MetalN2VertexShaderUniforms), 16);
+        [encoder setVertexBuffer:curMainBuffer offset:offset + index * size atIndex:1];
+
+        size = sizeof(N2LightModel) + MetalBufferPacker::align(sizeof(N2LightModel), 16);
+        [encoder setVertexBuffer:curMainBuffer offset:offsets.lightsOffset + poly.lightModel * size atIndex:2];
     }
 
     MTLPrimitiveType primitive = sortTriangles && !config::PerStripSorting ? MTLPrimitiveTypeTriangle : MTLPrimitiveTypeTriangleStrip;
@@ -314,8 +333,8 @@ void MetalDrawer::UploadMainBuffer(const MetalVertexShaderUniforms &vertexUnifor
     std::vector<u8> n2uniforms;
     if (settings.platform.isNaomi2())
     {
-        // packNaomi2Uniforms(packer, offsets, n2uniforms, false);
-        // offsets.lightsOffset = packNaomi2Lights(packer);
+         packNaomi2Uniforms(packer, offsets, n2uniforms, false);
+         offsets.lightsOffset = packNaomi2Lights(packer);
     }
 
     MetalBufferData *buffer = GetMainBuffer(packer.size());
