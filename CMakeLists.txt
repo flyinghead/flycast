@@ -986,6 +986,8 @@ target_sources(${PROJECT_NAME} PRIVATE
 		core/hw/modem/modem.cpp
 		core/hw/modem/modem.h
 		core/hw/modem/modem_regs.h
+		core/hw/naomi/atomiswave.cpp
+		core/hw/naomi/atomiswave.h
 		core/hw/naomi/awave_regs.h
 		core/hw/naomi/awcartridge.cpp
 		core/hw/naomi/awcartridge.h
