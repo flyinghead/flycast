@@ -31,7 +31,7 @@ constant bool pp_gouraud [[function_constant(0)]];
 constant bool div_pos_z [[function_constant(1)]];
 
 constant bool is_flat = pp_gouraud == 0;
-constant bool is_not_flag = !is_flat;
+constant bool is_not_flat = !is_flat;
 
 struct VertexShaderUniforms
 {
@@ -50,8 +50,8 @@ struct VertexOut
 {
     float4 flat_vtx_base [[flat, function_constant(is_flat)]];
     float4 flat_vtx_offs [[flat, function_constant(is_flat)]];
-    float4 vtx_base [[function_constant(is_not_flag)]];
-    float4 vtx_offs [[function_constant(is_not_flag)]];
+    float4 vtx_base [[function_constant(is_not_flat)]];
+    float4 vtx_offs [[function_constant(is_not_flat)]];
     float3 vtx_uv;
     float4 position [[position]];
 };
@@ -122,7 +122,7 @@ constant bool dithering [[function_constant(14)]];
 constant bool has_fog_table = pp_fog_ctrl != 2;
 constant bool has_palette = pp_palette != 0;
 constant bool is_flat = pp_gouraud == 0;
-constant bool is_not_flag = !is_flat;
+constant bool is_not_flat = !is_flat;
 
 struct FragmentShaderUniforms
 {
@@ -146,8 +146,8 @@ struct VertexOut
 {
     float4 flat_vtx_base [[flat, function_constant(is_flat)]];
     float4 flat_vtx_offs [[flat, function_constant(is_flat)]];
-    float4 vtx_base [[function_constant(is_not_flag)]];
-    float4 vtx_offs [[function_constant(is_not_flag)]];
+    float4 vtx_base [[function_constant(is_not_flat)]];
+    float4 vtx_offs [[function_constant(is_not_flat)]];
     float3 vtx_uv;
     float4 position [[position]];
 };
@@ -531,7 +531,7 @@ using namespace metal;
 constant bool pp_gouraud [[function_constant(0)]];
 
 constant bool is_flat = pp_gouraud == 0;
-constant bool is_not_flag = !is_flat;
+constant bool is_not_flat = !is_flat;
 
 struct VertexShaderUniforms
 {
@@ -564,8 +564,8 @@ struct VertexOut
 {
     float4 flat_vtx_base [[flat, function_constant(is_flat)]];
     float4 flat_vtx_offs [[flat, function_constant(is_flat)]];
-    float4 vtx_base [[function_constant(is_not_flag)]];
-    float4 vtx_offs [[function_constant(is_not_flag)]];
+    float4 vtx_base [[function_constant(is_not_flat)]];
+    float4 vtx_offs [[function_constant(is_not_flat)]];
     float3 vtx_uv;
     float4 position [[position]];
 };
@@ -784,8 +784,13 @@ vertex VertexOut vs_main(N2VertexIn in [[stage_in]],
 
     // TODO bump mapping
     if (n2_uniforms.bump_mapping == 0) {
-        computeColors(n2_uniforms, n2_lights,
-                      &out.vtx_base, &out.vtx_offs, 0, vpos.xyz, vnorm);
+        if (is_flat) {
+            computeColors(n2_uniforms, n2_lights,
+                          &out.flat_vtx_base, &out.flat_vtx_offs, 0, vpos.xyz, vnorm);
+        } else {
+            computeColors(n2_uniforms, n2_lights,
+                          &out.vtx_base, &out.vtx_offs, 0, vpos.xyz, vnorm);
+        }
     }
 
     out.vtx_uv.xy = in.in_uv;
@@ -851,7 +856,7 @@ vertex VertexOut vs_main(VertexIn in [[stage_in]],
     VertexOut out = {};
 
     float4 vpos = n2_uniforms.mv_mat * in.in_pos;
-    vpos.z = min(vpos.z, -0.01);
+    vpos.z = min(vpos.z, -0.001);
     vpos = n2_uniforms.proj_mat * vpos;
     vpos = w_divide(vpos, uniforms.ndc_mat, out);
     out.position = vpos;
