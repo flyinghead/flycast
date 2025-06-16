@@ -482,6 +482,7 @@ if(NOT LIBRETRO)
 		target_sources(${PROJECT_NAME} PRIVATE
 			core/sdl/sdl.cpp
 			core/sdl/sdl.h
+			core/sdl/sdl_gamepad.cpp
 			core/sdl/sdl_gamepad.h
 			core/sdl/sdl_keyboard.h
 			core/sdl/sdl_keyboard_mac.h

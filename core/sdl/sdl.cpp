@@ -38,7 +38,6 @@ static u32 windowFlags;
 #define WINDOW_WIDTH  640
 #define WINDOW_HEIGHT  480
 
-std::map<SDL_JoystickID, std::shared_ptr<SDLGamepad>> SDLGamepad::sdl_gamepads;
 static std::unordered_map<u64, std::shared_ptr<SDLMouse>> sdl_mice;
 static std::shared_ptr<SDLKeyboardDevice> sdl_keyboard;
 static bool window_fullscreen;
