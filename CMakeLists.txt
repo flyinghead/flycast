@@ -996,6 +996,8 @@ target_sources(${PROJECT_NAME} PRIVATE
 		core/hw/naomi/m1cartridge.h
 		core/hw/naomi/m4cartridge.cpp
 		core/hw/naomi/m4cartridge.h
+		core/hw/naomi/midiffb.h
+		core/hw/naomi/midiffb.cpp
 		core/hw/naomi/multiboard.h
 		core/hw/naomi/multiboard.cpp
 		core/hw/naomi/naomi_cart.cpp
