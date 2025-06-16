@@ -18,7 +18,6 @@
 #include "hw/holly/sb.h"
 #include "hw/sh4/sh4_mem.h"
 #include "hw/holly/holly_intc.h"
-#include "hw/maple/maple_cfg.h"
 #include "hw/sh4/sh4_sched.h"
 #include "hw/aica/aica_if.h"
 #include "hw/hwreg.h"
@@ -454,6 +453,8 @@ static float power = 0.8f;
 static bool active;
 static float position = 8192.f;
 static float torque;
+static float springForce;
+static u8 maxSpring = 0x7f;
 
 static void midiSend(u8 b1, u8 b2, u8 b3)
 {
@@ -463,6 +464,7 @@ static void midiSend(u8 b1, u8 b2, u8 b3)
 	aica::midiSend((b1 ^ b2 ^ b3) & 0x7f);
 }
 
+// Thanks to njz3 and boomslangnz for their help
 // https://www.arcade-projects.com/threads/force-feedback-translator-sega-midi-sega-rs422-and-namco-rs232.924/
 static void midiReceiver(u8 data)
 {
@@ -478,6 +480,8 @@ static void midiReceiver(u8 data)
 		{
 		case 0:
 			// FFB on/off
+			// b1 & 1 => Temporary (a few 10th of a second) else permanently
+			// b2 & 1 => FFB enabled
 			if (midiTxBuf[2] == 0)
 			{
 				active = false;
@@ -487,43 +491,75 @@ static void midiReceiver(u8 data)
 					os_notify("Calibration done", 2000);
 				}
 			}
-			else if (midiTxBuf[2] == 1) {
+			else if (midiTxBuf[2] == 1)
+			{
 				active = true;
-				haptic::setDamper(0, damperParam * power, damperSpeed);
+				haptic::setDamper(0, damperSpeed * power, damperParam);
+				haptic::setSpring(0, springForce * power, 1.f);
 			}
 			break;
 
-		// 01: 30 40 then 7f 40 (sgdrvsim search base pos)
-		//     30 40 (*2 initdv3e init, clubk after init)
-		//     7f 7f (kingrt init)
-		//     1f 1f kingrt test menu
-		// 02: 00 54 (sgdrvsim search base pos, kingrt)
-		//     7f 54 (*2 initdv3e init)
-		//     04 54 (clubk after init)
+		case 1:
+			// Set force
+			// b1: max torque forward (centering force)
+			// b2: max torque backward (anti-centering force or friction)
+			// Ex: 30 40 then 7f 40 (sgdrvsim search base pos)
+			//     30 40 (*2 initdv3e init, clubk after init)
+			//     7f 7f (kingrt init)
+			//     1f 1f kingrt test menu
+			maxSpring = midiTxBuf[1];
+			break;
+
+		case 2:
+			// Unknown, seems to be used to enable something, usually follows 1 or 6
+			// b1: 00 or 04 or 1F or 7F
+			// b2: 54
+			// Ex: 00 54 (sgdrvsim search base pos, kingrt)
+			//     7f 54 (*2 initdv3e init)
+			//     04 54 (clubk after init)
+			break;
 
 		case 3:
 			// Drive power
-			// buf[2]? initdv3, clubk2k3: 4, kingrt: 0, sgdrvsim: 28
+			// b1: power level [0-7f]
+			// b2: ? initdv3, clubk2k3: 4, kingrt: 0, sgdrvsim: 28
 			power = (midiTxBuf[1] >> 3) / 15.f;
 			break;
+
 		case 4:
 			// Torque
+			// from 0 (max torque to the right) to 17f (max torque to the left)
 			torque = ((midiTxBuf[1] << 7) | midiTxBuf[2]) - 0x80;
 			if (active && !calibrating)
 				haptic::setTorque(0, torque / 128.f * power);
 			break;
+
 		case 5:
 			// Rumble
+			// b1: frequency in half Hz
+			// b2: amplitude
+			// Examples:
+			// * 02 40: large sine of 1Hz
+			// * 0A 20: smaller sine of 5 Hz
 			// decoding from FFB Arcade Plugin (by Boomslangnz)
 			// https://github.com/Boomslangnz/FFBArcadePlugin/blob/master/Game%20Files/Demul.cpp
-			// buf[1]?
 			if (active)
-				MapleConfigMap::UpdateVibration(0, std::max(0.f, (float)(midiTxBuf[2] - 1) / 24.f * power), 0.f, 17);
+			{
+				const float intensity = std::clamp((float)(midiTxBuf[2] - 1) / 80.f * power, 0.f, 1.f);
+				const float freq = midiTxBuf[1] / 2.f;
+				haptic::setSine(0, intensity, freq, 1000);
+			}
 			break;
+
 		case 6:
-			// Damper
-			damperParam = midiTxBuf[1] / 127.f;
-			damperSpeed = midiTxBuf[2] / 127.f;
+			// Damper effect expressed as a ratio param1/param2, or a pole of
+            // a transfer function.
+			// Examples:
+			// * 10 7F: strong damper
+			// * 40 40: light damper
+			// * XX 00: disabled
+			damperSpeed = midiTxBuf[1] / 127.f;
+			damperParam = midiTxBuf[2] / 127.f;
 			// clubkart sets it to 28 40 in menus, and 04 12 when in game (not changing in between)
 			// initdv3 starts with 02 2c		// FIXME no effect with sat=2
 			//	changes it in-game: 02 11-2c
@@ -535,26 +571,47 @@ static void midiReceiver(u8 data)
 			//           28 nn in menus (nn is viscoSpeed<<6 >>8 from table: 20,28,30,38,...,98)
 			//           1e+n 0+m in game (n and m are set in test menu, default 1e, 0))
 			//           also: 8+n 0a+m and 0+n 3c+m
-			// byte1 is effect force? byte2 speed of effect?
 			if (active && !calibrating)
-				haptic::setDamper(0, damperParam * power, damperSpeed);
+				haptic::setDamper(0, damperSpeed * power, damperParam);
 			break;
 
-		// 07 nn nn: set wheel center. n=004d 90° right, 0100 center, 011a ? left
+		// 07 nn nn: Spring angle offset from center.
+		// b1: 00 right, 01 left
+		// b2: offset [0-7f] max 90 deg
+
+		// 08: Spring effect inverted gain or limit?
 		// 09 00 00: kingrt init
 		//    03 40: end init
 		// 0A 10 58: kingrt end init
-		// 0B nn mm: auto center? deflection range?
-		//	sgdrvsim: 20 10 in menus, else 00 00. Also nn 7f (nn computed)
-		//    kingrt: 1b 00 end init
-		// 70 00 00: kingrt init (before 7f & 7a), kingrt test menu (after 7f)
-		// 7A 00 10,14: clubk,initv3e,kingrt init/tets menu
-		// 7C 00 3f: initdv3e init
+
+		case 0xB:
+			// Spring force
+			// b1: force
+			// b2: 00
+			//  sgdrvsim: 20 10 in menus, else 00 00. Also [0-7f] 7f
+			//  kingrt: 1b 00 (boot)
+			//  clubk2k: 00 00 (boot) 20 10 (menus) 00 00 (drive)
+			springForce = std::min(midiTxBuf[1], maxSpring) / 127.f;
+			if (active && !calibrating)
+				haptic::setSpring(0, springForce * power, 1.f);
+			break;
+
+		// 70 00 00: Set wheel center
+		//    kingrt init (before 7f & 7a), kingrt test menu (after 7f)
+		// 7A 00 nn: Set reply mode
+		//       10: long status
+		//       14: long status + encoder feedback (club2k, drvsimm)
+		//       1f: short status
+		// 00 10,14: clubk,initv3e,kingrt init/test menu
+
+		// 7C 00 nn Start phase alignment. From 0 (disabled) to 7f (very strong)
+		//    00 3f: initdv3e init
 		//       20: clubk init
 		//       30: kingrt init
-		// 7D 00 00: nop, poll
+		// 7D 00 00: Query status
 
 		case 0x7f:
+			// Reset board
 			// FIXME also set when entering the service menu (kingrt66)
 			os_notify("Calibrating the wheel. Keep it centered.", 10000);
 			calibrating = true;
@@ -620,6 +677,8 @@ void serialize(Serializer& ser)
 		ser << damperSpeed;
 		ser << position;
 		ser << torque;
+		ser << maxSpring;
+		ser << springForce;
 	}
 }
 
@@ -651,6 +710,8 @@ void deserialize(Deserializer& deser)
 	}
 	if (initialized)
 	{
+		maxSpring = 0x7f;
+		springForce = 0;
 		if (deser.version() >= Deserializer::V51)
 		{
 			deser >> active;
@@ -659,8 +720,14 @@ void deserialize(Deserializer& deser)
 			deser >> damperSpeed;
 			deser >> position;
 			deser >> torque;
-			if (active && !calibrating)
-				haptic::setDamper(0, damperParam * power, damperSpeed);
+			if (deser.version() >= Deserializer::V55) {
+				deser >> maxSpring;
+				deser >> springForce;
+			}
+			if (active && !calibrating) {
+				haptic::setDamper(0, damperSpeed * power, damperParam);
+				haptic::setSpring(0, springForce * power, 1.f);
+			}
 		}
 		else
 		{

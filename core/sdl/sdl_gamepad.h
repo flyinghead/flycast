@@ -310,20 +310,25 @@ public:
 		else
 			return (u16)std::min(power * 65535.f / std::pow(1.06f, 100.f - rumblePower), 65535.f);
 	}
-	void doRumble(float power, u32 duration_ms)
+	void doRumble(float power, u32 duration_ms) {
+		setSine(power, 25.f, duration_ms);
+	}
+
+	void setSine(float power, float freq, u32 duration_ms)
 	{
-		const u16 intensity = getRumbleIntensity(power);
+		if (!rumbleEnabled)
+			return;
 		if (hapticRumble)
 		{
-			if (intensity != 0 && duration_ms != 0)
+			if (power != 0.f && freq != 0.f && duration_ms != 0)
 			{
 				SDL_HapticEffect effect{};
 				effect.type = SDL_HAPTIC_SINE;
 				effect.periodic.direction.type = SDL_HAPTIC_STEERING_AXIS;
 				effect.periodic.direction.dir[0] = 1;
-				effect.periodic.period = 40; 				// 25 Hz
-				// scale by an additional 0.5 to soften it and pick random direction
-				effect.periodic.magnitude = intensity / 4 * ((rand() & 1) * 2 - 1);
+				effect.periodic.period = 1000 / std::min(freq, 100.f); // period in ms
+				// pick random direction
+				effect.periodic.magnitude = power * rumblePower / 100.f * 32767.f * ((rand() & 1) * 2 - 1);
 				effect.periodic.length = duration_ms;
 				SDL_HapticUpdateEffect(haptic, sineEffectId, &effect);
 				SDL_HapticRunEffect(haptic, sineEffectId, 1);
@@ -333,6 +338,7 @@ public:
 			}
 		}
 		else {
+			const u16 intensity = getRumbleIntensity(power);
 			SDL_JoystickRumble(sdl_joystick, intensity, intensity, duration_ms);
 		}
 	}
@@ -672,6 +678,9 @@ public:
 	}
 	static void SetDamper(int port, float param, float speed) {
 		applyToPort(port, &SDLGamepad::setDamper, param, speed);
+	}
+	static void SetSine(int port, float power, float freq, u32 duration_ms) {
+		applyToPort(port, &SDLGamepad::setSine, power, freq, duration_ms);
 	}
 	static void StopHaptic(int port) {
 		applyToPort(port, &SDLGamepad::stopHaptic);

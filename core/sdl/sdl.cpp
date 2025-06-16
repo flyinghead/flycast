@@ -1259,6 +1259,8 @@ static float springSat;
 static float springSpeed;
 static float damperParam;
 static float damperSpeed;
+static float rumblePower;
+static float rumbleFreq;
 
 void sdl_setTorque(int port, float torque)
 {
@@ -1279,6 +1281,13 @@ void sdl_setDamper(int port, float param, float speed)
 	damperParam = param;
 	damperSpeed = speed;
 	SDLGamepad::SetDamper(port, param, speed);
+}
+
+void sdl_setSine(int port, float power, float freq, u32 duration_ms)
+{
+	rumblePower = power;
+	rumbleFreq = freq;
+	SDLGamepad::SetSine(port, power, freq, duration_ms);
 }
 
 void sdl_stopHaptic(int port)
@@ -1315,7 +1324,7 @@ void sdl_displayHapticStats()
 	ImGui::Text("Torque");
 	char s[32];
 	snprintf(s, sizeof(s), "%.1f", torque);
-	ImGui::ProgressBar(0.5f + torque / 2.f, ImVec2(-1, 0), s);
+	ImGui::ProgressBar(0.5f - torque / 2.f, ImVec2(-1, 0), s);
 
 	ImGui::Text("Spring Sat");
 	snprintf(s, sizeof(s), "%.1f", springSat);
@@ -1332,6 +1341,12 @@ void sdl_displayHapticStats()
 	ImGui::Text("Damper Speed");
 	snprintf(s, sizeof(s), "%.1f", damperSpeed);
 	ImGui::ProgressBar(damperSpeed, ImVec2(-1, 0), s);
+
+	ImGui::Text("Rumble");
+	snprintf(s, sizeof(s), "%.1f", rumblePower);
+	ImGui::ProgressBar(rumblePower, ImVec2(-1, 0), s);
+	snprintf(s, sizeof(s), "%.0f Hz", rumbleFreq);
+	ImGui::ProgressBar(rumbleFreq / 200.f, ImVec2(-1, 0), s);
 
 	ImGui::End();
 }
