@@ -18,7 +18,7 @@
 
 #include <cstring>
 
-// Vulkan and DirectX use the color values of the first vertex for flat shaded triangle strips.
+// Vulkan, DirectX, and Metal use the color values of the first vertex for flat shaded triangle strips.
 // On Dreamcast the last vertex is the provoking one so we must copy it onto the first.
 void setFirstProvokingVertex(rend_context& rendContext)
 {
