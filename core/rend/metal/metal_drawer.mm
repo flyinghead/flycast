@@ -176,8 +176,10 @@ void MetalDrawer::DrawPoly(id<MTLRenderCommandEncoder> encoder, u32 listType, bo
         size_t size = sizeof(MetalN2VertexShaderUniforms) + MetalBufferPacker::align(sizeof(MetalN2VertexShaderUniforms), 16);
         [encoder setVertexBuffer:curMainBuffer offset:offset + index * size atIndex:1];
 
-        size = sizeof(N2LightModel) + MetalBufferPacker::align(sizeof(N2LightModel), 16);
-        [encoder setVertexBuffer:curMainBuffer offset:offsets.lightsOffset + poly.lightModel * size atIndex:2];
+        if (offsets.lightsOffset != -1) {
+            size = sizeof(N2LightModel) + MetalBufferPacker::align(sizeof(N2LightModel), 16);
+            [encoder setVertexBuffer:curMainBuffer offset:offsets.lightsOffset + poly.lightModel * size atIndex:2];
+        }
     }
 
     MTLPrimitiveType primitive = sortTriangles && !config::PerStripSorting ? MTLPrimitiveTypeTriangle : MTLPrimitiveTypeTriangleStrip;

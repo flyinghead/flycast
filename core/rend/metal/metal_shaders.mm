@@ -170,7 +170,7 @@ float fog_mode2(float w, constant FragmentShaderUniforms& uniforms,
     }
 
     float exp = floor(log2(z));
-    float m = z * 16.0 / pow(2.0, exp) - 16.0;
+    float m = z * 16.0 / powr(2.0, exp) - 16.0;
     float idx = floor(m) + exp * 16.0 + 0.5;
     float4 fog_coef = fog_table.sample(fog_table_sampler, float2(idx / 128.0, 0.75 - (m - floor(m)) / 2.0));
     return fog_coef.r;
@@ -644,7 +644,7 @@ float4 w_divide(float4 in_vpos, float4x4 ndc_mat, thread VertexOut& out)
 }
 
 void computeColors(constant N2VertexShaderUniforms& n2_uniforms, constant N2Lights& n2_lights,
-                   thread float4 *base_col, thread float4 *offset_col, int vol_idx, float3 position, float3 normal)
+                   thread float4& base_col, thread float4& offset_col, int vol_idx, float3 position, float3 normal)
 {
     if (n2_uniforms.constant_color[vol_idx] == 1)
         return;
@@ -694,51 +694,51 @@ void computeColors(constant N2VertexShaderUniforms& n2_uniforms, constant N2Ligh
             else
             {
                 if ((n2_lights.lights[i].routing & ROUTING_DIFF_TO_OFFSET) == 0)
-                    diffuse += light_color * factor * base_col->rgb;
+                    diffuse += light_color * factor * base_col.rgb;
                 else
-                    specular += light_color * factor * base_col->rgb;
+                    specular += light_color * factor * base_col.rgb;
             }
         }
         if (n2_lights.lights[i].specular[vol_idx] == 1)
         {
             float factor = (n2_lights.lights[i].routing & ROUTING_SUB) != 0 ? -BASE_FACTOR : BASE_FACTOR;
             if (n2_lights.lights[i].smode == LMODE_SINGLE_SIDED)
-                factor *= clamp(pow(max(dot(light_dir, reflect_dir), 0.0), n2_uniforms.gloss_coef[vol_idx]), 0.0, 1.0);
+                factor *= clamp(powr(max(dot(light_dir, reflect_dir), 0.0), n2_uniforms.gloss_coef[vol_idx]), 0.0, 1.0);
             else if (n2_lights.lights[i].smode == LMODE_DOUBLE_SIDED)
-                factor *= clamp(pow(abs(dot(light_dir, reflect_dir)), n2_uniforms.gloss_coef[vol_idx]), 0.0, 1.0);
+                factor *= clamp(powr(abs(dot(light_dir, reflect_dir)), n2_uniforms.gloss_coef[vol_idx]), 0.0, 1.0);
 
             if ((n2_lights.lights[i].routing & ROUTING_ALPHA) != 0)
                 specular_alpha += light_color.r * factor;
             else
             {
                 if ((n2_lights.lights[i].routing & ROUTING_SPEC_TO_OFFSET) == 0)
-                    diffuse += light_color * factor * offset_col->rgb;
+                    diffuse += light_color * factor * offset_col.rgb;
                 else
-                    specular += light_color * factor * offset_col->rgb;
+                    specular += light_color * factor * offset_col.rgb;
             }
         }
     }
     // ambient light
     if (n2_lights.ambient_material_base[vol_idx] == 1)
-        diffuse += n2_lights.ambient_base[vol_idx].rgb * base_col->rgb;
+        diffuse += n2_lights.ambient_base[vol_idx].rgb * base_col.rgb;
     else
         diffuse += n2_lights.ambient_base[vol_idx].rgb;
     if (n2_lights.ambient_material_offset[vol_idx] == 1)
-        specular += n2_lights.ambient_offset[vol_idx].rgb * offset_col->rgb;
+        specular += n2_lights.ambient_offset[vol_idx].rgb * offset_col.rgb;
     else
         specular += n2_lights.ambient_offset[vol_idx].rgb;
-    base_col->rgb = diffuse;
-    offset_col->rgb = specular;
+    base_col.rgb = diffuse;
+    offset_col.rgb = specular;
 
-    base_col->a += diffuse_alpha;
-    offset_col->a += specular_alpha;
+    base_col.a += diffuse_alpha;
+    offset_col.a += specular_alpha;
     if (n2_lights.use_base_over == 1)
     {
-        float4 overflow = max(base_col->rgba - float4(1.0), 0.0);
-        offset_col->rgba += overflow;
+        float4 overflow = max(base_col - float4(1.0), 0.0);
+        offset_col += overflow;
     }
-    base_col->rgba = clamp(base_col->rgba, 0.0, 1.0);
-    offset_col->rgba = clamp(offset_col->rgba, 0.0, 1.0);
+    base_col = clamp(base_col, 0.0, 1.0);
+    offset_col = clamp(offset_col, 0.0, 1.0);
 }
 
 float2 computeEnvMap(float2 uv, float3 position, float3 normal)
@@ -749,7 +749,7 @@ float2 computeEnvMap(float2 uv, float3 position, float3 normal)
     // uv += r.xy / m + 0.5;
 
     // Cheap env mapping
-    uv += normal.xy / 2.0 + 0.5;
+    uv += (normal.xy / 2.0) + 0.5;
     uv = clamp(uv, 0.0, 1.0);
 
     return uv;
@@ -769,31 +769,32 @@ vertex VertexOut vs_main(N2VertexIn in [[stage_in]],
 {
     float4 vpos = n2_uniforms.mv_mat * in.in_pos;
 
-    VertexOut out = {};
-    if (is_flat) {
-        out.flat_vtx_base = in.in_base;
-        out.flat_vtx_offs = in.in_offs;
-    } else {
-        out.vtx_base = in.in_base;
-        out.vtx_offs = in.in_offs;
-    }
-
     float3 vnorm = normalize(float3x3(n2_uniforms.normal_mat[0].xyz,
                                       n2_uniforms.normal_mat[1].xyz,
                                       n2_uniforms.normal_mat[2].xyz) *  in.in_normal);
 
+    float4 base = in.in_base;
+    float4 offset = in.in_offs;
+
     // TODO bump mapping
     if (n2_uniforms.bump_mapping == 0) {
-        if (is_flat) {
-            computeColors(n2_uniforms, n2_lights,
-                          &out.flat_vtx_base, &out.flat_vtx_offs, 0, vpos.xyz, vnorm);
-        } else {
-            computeColors(n2_uniforms, n2_lights,
-                          &out.vtx_base, &out.vtx_offs, 0, vpos.xyz, vnorm);
-        }
+        computeColors(n2_uniforms, n2_lights,
+                      base, offset, 0, vpos.xyz, vnorm);
+        base += offset;
+    }
+
+    VertexOut out = {};
+
+    if (is_flat) {
+        out.flat_vtx_base = base;
+        out.flat_vtx_offs = offset;
+    } else {
+        out.vtx_base = base;
+        out.vtx_offs = offset;
     }
 
     out.vtx_uv.xy = in.in_uv;
+
     if (n2_uniforms.env_mapping[0] == 1)
         out.vtx_uv.xy = computeEnvMap(out.vtx_uv.xy, vpos.xyz, vnorm);
 

@@ -166,19 +166,9 @@ protected:
     {
         u64 offset = -1;
 
-        size_t n2LightSize = sizeof(N2LightModel) + MetalBufferPacker::align(sizeof(N2LightModel), 16);
-        if (n2LightSize == sizeof(N2LightModel) && !pvrrc.lightModels.empty())
+        if (!pvrrc.lightModels.empty())
         {
             offset = packer.addUniform(&pvrrc.lightModels[0], pvrrc.lightModels.size() * sizeof(decltype(pvrrc.lightModels[0])));
-        }
-        else
-        {
-            for (const N2LightModel& model : pvrrc.lightModels)
-            {
-                u64 ioffset = packer.addUniform(&model, sizeof(N2LightModel));
-                if (offset == (u64)-1)
-                    offset = ioffset;
-            }
         }
 
         return offset;
