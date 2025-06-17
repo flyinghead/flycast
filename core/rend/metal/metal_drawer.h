@@ -174,6 +174,12 @@ protected:
         return offset;
     }
 
+    MTLCullMode toMetalCullMode(int cullMode) {
+        return cullMode == 3 ? MTLCullModeBack
+               : cullMode == 2 ? MTLCullModeFront
+               : MTLCullModeNone;
+    }
+
     MTLScissorRect baseScissor {};
     MTLScissorRect currentScissor {};
     TransformMatrix<COORD_DIRECTX> matrices;

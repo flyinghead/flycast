@@ -133,6 +133,7 @@ void MetalDrawer::DrawPoly(id<MTLRenderCommandEncoder> encoder, u32 listType, bo
 
     [encoder setRenderPipelineState:pipelineManager->GetPipeline(listType, sortTriangles, poly, gpuPalette, dithering)];
     [encoder setDepthStencilState:pipelineManager->GetDepthStencilStates(listType, sortTriangles, shadowed, poly)];
+    [encoder setCullMode:toMetalCullMode(poly.isp.CullMode)];
 
     if (shadowed) {
         if (poly.pcw.Shadow != 0) {
@@ -209,10 +210,14 @@ void MetalDrawer::DrawSorted(id<MTLRenderCommandEncoder> encoder, const std::vec
             const PolyParam& polyParam = pvrrc.global_param_tr[param.polyIndex];
             if (polyParam.isp.ZWriteDis)
                 continue;
-            [encoder setRenderPipelineState:pipelineManager->GetDepthPassPipeline(polyParam.isp.CullMode, polyParam.isNaomi2())];
-            [encoder setDepthStencilState:pipelineManager->GetDepthPassDepthStencilStates(polyParam.isp.CullMode, polyParam.isNaomi2())];
+            [encoder setRenderPipelineState:pipelineManager->GetDepthPassPipeline(polyParam.isNaomi2())];
+            [encoder setDepthStencilState:pipelineManager->GetDepthPassDepthStencilStates(polyParam.isNaomi2())];
+
             MTLScissorRect scissorRect {};
             SetTileClip(encoder, polyParam.tileclip, scissorRect);
+
+            [encoder setCullMode:toMetalCullMode(polyParam.isp.CullMode)];
+
             [encoder drawIndexedPrimitives:MTLPrimitiveTypeTriangle
                                 indexCount:param.count
                                  indexType:MTLIndexTypeUInt32
@@ -258,9 +263,6 @@ void MetalDrawer::DrawModVols(id<MTLRenderCommandEncoder> encoder, int first, in
 
     for (int cmv = 0; cmv < count; cmv++) {
         ModifierVolumeParam& param = params[cmv];
-        MTLCullMode cull_mode = param.isp.CullMode == 3 ? MTLCullModeBack : param.isp.CullMode == 2 ? MTLCullModeFront : MTLCullModeNone;
-        [encoder setCullMode:cull_mode];
-        [encoder setFrontFacingWinding:MTLWindingCounterClockwise];
 
         if (param.count == 0)
             continue;
@@ -271,15 +273,16 @@ void MetalDrawer::DrawModVols(id<MTLRenderCommandEncoder> encoder, int first, in
             mod_base = param.first;
 
         if (!param.isp.VolumeLast && mv_mode > 0) {
-            state = pipelineManager->GetModifierVolumePipeline(ModVolMode::Or, param.isp.CullMode, param.isNaomi2());  // OR'ing (open volume or quad)
-            depth_state = pipelineManager->GetModVolDepthStencilStates(ModVolMode::Or, param.isp.CullMode, param.isNaomi2());
+            state = pipelineManager->GetModifierVolumePipeline(ModVolMode::Or, param.isNaomi2());  // OR'ing (open volume or quad)
+            depth_state = pipelineManager->GetModVolDepthStencilStates(ModVolMode::Or, param.isNaomi2());
         } else {
-            state = pipelineManager->GetModifierVolumePipeline(ModVolMode::Xor, param.isp.CullMode, param.isNaomi2()); // XOR'ing (closed volume)
-            depth_state = pipelineManager->GetModVolDepthStencilStates(ModVolMode::Xor, param.isp.CullMode, param.isNaomi2());
+            state = pipelineManager->GetModifierVolumePipeline(ModVolMode::Xor, param.isNaomi2()); // XOR'ing (closed volume)
+            depth_state = pipelineManager->GetModVolDepthStencilStates(ModVolMode::Xor, param.isNaomi2());
         }
 
         [encoder setRenderPipelineState:state];
         [encoder setDepthStencilState:depth_state];
+        [encoder setCullMode:toMetalCullMode(param.isp.CullMode)];
         [encoder setStencilReferenceValue:2];
         MTLScissorRect scissorRect {};
         SetTileClip(encoder, param.tileclip, scissorRect);
@@ -292,10 +295,11 @@ void MetalDrawer::DrawModVols(id<MTLRenderCommandEncoder> encoder, int first, in
         if (mv_mode == 1 || mv_mode == 2)
         {
             // Sum the area
-            state = pipelineManager->GetModifierVolumePipeline(mv_mode == 1 ? ModVolMode::Inclusion : ModVolMode::Exclusion, param.isp.CullMode, param.isNaomi2());
-            depth_state = pipelineManager->GetModVolDepthStencilStates(mv_mode == 1 ? ModVolMode::Inclusion : ModVolMode::Exclusion, param.isp.CullMode, param.isNaomi2());
+            state = pipelineManager->GetModifierVolumePipeline(mv_mode == 1 ? ModVolMode::Inclusion : ModVolMode::Exclusion, param.isNaomi2());
+            depth_state = pipelineManager->GetModVolDepthStencilStates(mv_mode == 1 ? ModVolMode::Inclusion : ModVolMode::Exclusion, param.isNaomi2());
             [encoder setRenderPipelineState:state];
             [encoder setDepthStencilState:depth_state];
+            [encoder setCullMode:toMetalCullMode(param.isp.CullMode)];
             [encoder setStencilReferenceValue:1];
             [encoder drawPrimitives:MTLPrimitiveTypeTriangle
                         vertexStart: mod_base * 3
@@ -305,10 +309,11 @@ void MetalDrawer::DrawModVols(id<MTLRenderCommandEncoder> encoder, int first, in
     }
     [encoder setVertexBufferOffset:0 atIndex:30];
 
-    state = pipelineManager->GetModifierVolumePipeline(ModVolMode::Final, 0, false);
-    depth_state = pipelineManager->GetModVolDepthStencilStates(ModVolMode::Final, 0, false);
+    state = pipelineManager->GetModifierVolumePipeline(ModVolMode::Final, false);
+    depth_state = pipelineManager->GetModVolDepthStencilStates(ModVolMode::Final, false);
     [encoder setRenderPipelineState:state];
     [encoder setDepthStencilState:depth_state];
+    [encoder setCullMode:toMetalCullMode(0)];
     [encoder setStencilReferenceValue:0x81];
     [encoder drawIndexedPrimitives:MTLPrimitiveTypeTriangleStrip
                         indexCount:4
@@ -395,6 +400,8 @@ bool MetalDrawer::Draw(const MetalTexture *fogTexture, const MetalTexture *palet
         // Upload vertex and index buffers
         MetalVertexShaderUniforms vtxUniforms {};
         vtxUniforms.ndcMat = matrices.GetNormalMatrix();
+
+        [renderEncoder setFrontFacingWinding:MTLWindingCounterClockwise];
 
         UploadMainBuffer(vtxUniforms, fragUniforms);
 

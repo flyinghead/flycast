@@ -53,24 +53,24 @@ public:
         return blitPassPipeline;
     }
 
-    id<MTLRenderPipelineState> GetDepthPassPipeline(int cullMode, bool naomi2)
+    id<MTLRenderPipelineState> GetDepthPassPipeline(bool naomi2)
     {
-        u32 pipehash = hash(cullMode, naomi2);
+        u32 pipehash = hash(naomi2);
         const auto &pipeline = depthPassPipelines.find(pipehash);
         if (pipeline != depthPassPipelines.end() && pipeline->second != nullptr)
             return pipeline->second;
-        CreateDepthPassPipeline(cullMode, naomi2);
+        CreateDepthPassPipeline(naomi2);
 
         return depthPassPipelines[pipehash];
     }
 
-    id<MTLRenderPipelineState> GetModifierVolumePipeline(ModVolMode mode, int cullMode, bool naomi2)
+    id<MTLRenderPipelineState> GetModifierVolumePipeline(ModVolMode mode, bool naomi2)
     {
-        u32 pipehash = hash(mode, cullMode, naomi2);
+        u32 pipehash = hash(mode, naomi2);
         const auto &pipeline = modVolPipelines.find(pipehash);
         if (pipeline != modVolPipelines.end() && pipeline->second != nullptr)
             return pipeline->second;
-        CreateModVolPipeline(mode, cullMode, naomi2);
+        CreateModVolPipeline(mode, naomi2);
 
         return modVolPipelines[pipehash];
     }
@@ -86,24 +86,24 @@ public:
         return pipelines[pipehash];
     }
 
-    id<MTLDepthStencilState> GetModVolDepthStencilStates(ModVolMode mode, int cullMode, bool naomi2)
+    id<MTLDepthStencilState> GetModVolDepthStencilStates(ModVolMode mode, bool naomi2)
     {
-        u32 pipehash = hash(mode, cullMode, naomi2);
+        u32 pipehash = hash(mode, naomi2);
         const auto &state = modVolStencilStates.find(pipehash);
         if (state != modVolStencilStates.end() && state->second != nullptr)
             return state->second;
-        CreateModVolDepthStencilState(mode, cullMode, naomi2);
+        CreateModVolDepthStencilState(mode, naomi2);
 
         return modVolStencilStates[pipehash];
     }
 
-    id<MTLDepthStencilState> GetDepthPassDepthStencilStates(int cullMode, bool naomi2)
+    id<MTLDepthStencilState> GetDepthPassDepthStencilStates(bool naomi2)
     {
-        u32 pipehash = hash(cullMode, naomi2);
+        u32 pipehash = hash(naomi2);
         const auto &state = depthPassDepthStencilStates.find(pipehash);
         if (state != depthPassDepthStencilStates.end() && state->second != nullptr)
             return state->second;
-        CreateDepthPassDepthStencilState(cullMode, naomi2);
+        CreateDepthPassDepthStencilState(naomi2);
 
         return depthPassDepthStencilStates[pipehash];
     }
@@ -122,12 +122,12 @@ public:
 
 private:
     void CreateBlitPassPipeline();
-    void CreateModVolPipeline(ModVolMode mode, int cullMode, bool naomi2);
-    void CreateDepthPassPipeline(int cullMode, bool naomi2);
+    void CreateModVolPipeline(ModVolMode mode, bool naomi2);
+    void CreateDepthPassPipeline(bool naomi2);
     void CreatePipeline(u32 listType, bool sortTriangles, const PolyParam& pp, int gpuPalette, bool dithering);
 
-    void CreateModVolDepthStencilState(ModVolMode mode, int cullMode, bool naomi2);
-    void CreateDepthPassDepthStencilState(int cullMode, bool naomi2);
+    void CreateModVolDepthStencilState(ModVolMode mode, bool naomi2);
+    void CreateDepthPassDepthStencilState(bool naomi2);
     void CreateDepthStencilState(u32 listType, bool sortTriangles, bool shadowed, const PolyParam& pp);
 
     u64 hash(u32 listType, bool sortTriangles, const PolyParam *pp, int gpuPalette, bool dithering) const
@@ -163,13 +163,13 @@ private:
 
         return hash;
     }
-    u32 hash(ModVolMode mode, int cullMode, bool naomi2) const
+    u32 hash(ModVolMode mode, bool naomi2) const
     {
-        return ((int)mode << 2) | cullMode | ((int)naomi2 << 5) | ((int)(!settings.platform.isNaomi2() && config::NativeDepthInterpolation) << 6);
+        return ((int)mode << 2) | ((int)naomi2 << 5) | ((int)(!settings.platform.isNaomi2() && config::NativeDepthInterpolation) << 6);
     }
-    u32 hash(int cullMode, bool naomi2) const
+    u32 hash(bool naomi2) const
     {
-        return cullMode | ((int)naomi2 << 2) | ((int)(!settings.platform.isNaomi2() && config::NativeDepthInterpolation) << 3);
+        return ((int)naomi2 << 2) | ((int)(!settings.platform.isNaomi2() && config::NativeDepthInterpolation) << 3);
     }
 
     MTLVertexDescriptor* GetMainVertexInputDescriptor(bool full = true, bool naomi2 = false) const

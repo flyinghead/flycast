@@ -46,7 +46,7 @@ void MetalPipelineManager::CreateBlitPassPipeline() {
     blitPassPipeline = state;
 }
 
-void MetalPipelineManager::CreateModVolPipeline(ModVolMode mode, int cullMode, bool naomi2) {
+void MetalPipelineManager::CreateModVolPipeline(ModVolMode mode, bool naomi2) {
     MTLVertexDescriptor *vertexDesc = nil;
     MTLRenderPipelineDescriptor *descriptor = [[MTLRenderPipelineDescriptor alloc] init];
 
@@ -94,10 +94,10 @@ void MetalPipelineManager::CreateModVolPipeline(ModVolMode mode, int cullMode, b
         ERROR_LOG(RENDERER, "Failed to create Depth Render Pipeline State: %s", [[error localizedDescription] UTF8String]);
     }
 
-    modVolPipelines[hash(mode, cullMode, naomi2)] = state;
+    modVolPipelines[hash(mode, naomi2)] = state;
 }
 
-void MetalPipelineManager::CreateDepthPassPipeline(int cullMode, bool naomi2)
+void MetalPipelineManager::CreateDepthPassPipeline(bool naomi2)
 {
     MTLRenderPipelineDescriptor *descriptor = [[MTLRenderPipelineDescriptor alloc] init];
     [descriptor setLabel:@"Depth Pass"];
@@ -124,7 +124,7 @@ void MetalPipelineManager::CreateDepthPassPipeline(int cullMode, bool naomi2)
         ERROR_LOG(RENDERER, "Failed to create Depth Render Pipeline State: %s", [[error localizedDescription] UTF8String]);
     }
 
-    depthPassPipelines[hash(cullMode, naomi2)] = state;
+    depthPassPipelines[hash(naomi2)] = state;
 }
 
 void MetalPipelineManager::CreatePipeline(u32 listType, bool sortTriangles, const PolyParam &pp, int gpuPalette, bool dithering) {
@@ -186,7 +186,7 @@ void MetalPipelineManager::CreatePipeline(u32 listType, bool sortTriangles, cons
     pipelines[hash(listType, sortTriangles, &pp, gpuPalette, dithering)] = state;
 }
 
-void MetalPipelineManager::CreateModVolDepthStencilState(ModVolMode mode, int cullMode, bool naomi2) {
+void MetalPipelineManager::CreateModVolDepthStencilState(ModVolMode mode, bool naomi2) {
     MTLDepthStencilDescriptor *descriptor = [[MTLDepthStencilDescriptor alloc] init];
     [descriptor setDepthWriteEnabled:false];
     [descriptor setDepthCompareFunction:mode == ModVolMode::Xor || mode == ModVolMode::Or ? MTLCompareFunctionGreater : MTLCompareFunctionAlways];
@@ -241,10 +241,10 @@ void MetalPipelineManager::CreateModVolDepthStencilState(ModVolMode mode, int cu
 
     auto state = [MetalContext::Instance()->GetDevice() newDepthStencilStateWithDescriptor:descriptor];
 
-    modVolStencilStates[hash(mode, cullMode, naomi2)] = state;
+    modVolStencilStates[hash(mode, naomi2)] = state;
 }
 
-void MetalPipelineManager::CreateDepthPassDepthStencilState(int cullMode, bool naomi2) {
+void MetalPipelineManager::CreateDepthPassDepthStencilState(bool naomi2) {
     MTLDepthStencilDescriptor *descriptor = [[MTLDepthStencilDescriptor alloc] init];
     [descriptor setLabel:@"Sorted Depth Pass"];
     [descriptor setDepthWriteEnabled:true];
@@ -252,7 +252,7 @@ void MetalPipelineManager::CreateDepthPassDepthStencilState(int cullMode, bool n
 
     auto state = [MetalContext::Instance()->GetDevice() newDepthStencilStateWithDescriptor:descriptor];
 
-    depthPassDepthStencilStates[hash(cullMode, naomi2)] = state;
+    depthPassDepthStencilStates[hash(naomi2)] = state;
 }
 
 void MetalPipelineManager::CreateDepthStencilState(u32 listType, bool sortTriangles, bool shadowed, const PolyParam &pp) {
