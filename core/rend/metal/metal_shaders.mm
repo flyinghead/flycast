@@ -557,7 +557,7 @@ struct N2VertexIn
     float4 in_base [[attribute(1)]];
     float4 in_offs [[attribute(2)]];
     float2 in_uv [[attribute(3)]];
-    float3 in_normal [[attribute(4)]];
+    float3 in_normal [[attribute(7)]];
 };
 
 struct VertexOut
