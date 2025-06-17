@@ -624,9 +624,9 @@ struct N2Lights
     int bump_id1;
 };
 
-float4 w_divide(float4 in_vpos, float4x4 ndc_mat, thread VertexOut& out)
+void w_divide(thread float4& vpos, float4x4 ndc_mat, thread VertexOut& out)
 {
-    float4 vpos = float4(in_vpos.xy / in_vpos.w, 1.0 / in_vpos.w, 1.0);
+    vpos = float4(vpos.xy / vpos.w, 1.0 / vpos.w, 1.0);
     vpos = ndc_mat * vpos;
     if (pp_gouraud == 1) {
         if (is_flat) {
@@ -640,10 +640,9 @@ float4 w_divide(float4 in_vpos, float4x4 ndc_mat, thread VertexOut& out)
     out.vtx_uv = float3(out.vtx_uv.xy * vpos.z, vpos.z);
     vpos.w = 1.0;
     vpos.z = 0.0;
-    return vpos;
 }
 
-void computeColors(constant N2VertexShaderUniforms& n2_uniforms, constant N2Lights& n2_lights,
+void compute_colors(constant N2VertexShaderUniforms& n2_uniforms, constant N2Lights& n2_lights,
                    thread float4& base_col, thread float4& offset_col, int vol_idx, float3 position, float3 normal)
 {
     if (n2_uniforms.constant_color[vol_idx] == 1)
@@ -741,25 +740,16 @@ void computeColors(constant N2VertexShaderUniforms& n2_uniforms, constant N2Ligh
     offset_col = clamp(offset_col, 0.0, 1.0);
 }
 
-float2 computeEnvMap(float2 uv, float3 position, float3 normal)
+void compute_env_map(thread float3& uv, float3 position, float3 normal)
 {
     // Spherical mapping
     // float3 r = reflect(normalize(position), normal);
     // float m = 2.0 * sqrt(r.x * r.x + r.y * r.y + (r.z + 1.0) * (r.z + 1.0));
-    // uv += r.xy / m + 0.5;
+    // uv.xy += r.xy / m + 0.5;
 
     // Cheap env mapping
-    uv += (normal.xy / 2.0) + 0.5;
-    uv = clamp(uv, 0.0, 1.0);
-
-    return uv;
-}
-
-void computeBumpMap(constant N2Lights& n2_lights)
-{
-    // TODO
-    // if (n2_lights.bump_id0 == -1)
-        return;
+    uv.xy += (normal.xy / 2.0) + 0.5;
+    uv.xy = clamp(uv.xy, 0.0, 1.0);
 }
 
 vertex VertexOut vs_main(N2VertexIn in [[stage_in]],
@@ -778,7 +768,7 @@ vertex VertexOut vs_main(N2VertexIn in [[stage_in]],
 
     // TODO bump mapping
     if (n2_uniforms.bump_mapping == 0) {
-        computeColors(n2_uniforms, n2_lights,
+        compute_colors(n2_uniforms, n2_lights,
                       base, offset, 0, vpos.xyz, vnorm);
         base += offset;
     }
@@ -796,10 +786,10 @@ vertex VertexOut vs_main(N2VertexIn in [[stage_in]],
     out.vtx_uv.xy = in.in_uv;
 
     if (n2_uniforms.env_mapping[0] == 1)
-        out.vtx_uv.xy = computeEnvMap(out.vtx_uv.xy, vpos.xyz, vnorm);
+        compute_env_map(out.vtx_uv, vpos.xyz, vnorm);
 
     vpos = n2_uniforms.proj_mat * vpos;
-    vpos = w_divide(vpos, uniforms.ndc_mat, out);
+    w_divide(vpos, uniforms.ndc_mat, out);
 
     out.position = vpos;
     return out;
@@ -840,14 +830,13 @@ struct VertexOut
     float4 position [[position]];
 };
 
-float4 w_divide(float4 in_vpos, float4x4 ndc_mat, thread VertexOut& out)
+void w_divide(thread float4& vpos, float4x4 ndc_mat, thread VertexOut& out)
 {
-    float4 vpos = float4(in_vpos.xy / in_vpos.w, 1.0 / in_vpos.w, 1.0);
+    vpos = float4(vpos.xy / vpos.w, 1.0 / vpos.w, 1.0);
     vpos = ndc_mat * vpos;
     out.depth = vpos.z;
     vpos.w = 1.0;
     vpos.z = 0.0;
-    return vpos;
 }
 
 vertex VertexOut vs_main(VertexIn in [[stage_in]],
@@ -859,7 +848,8 @@ vertex VertexOut vs_main(VertexIn in [[stage_in]],
     float4 vpos = n2_uniforms.mv_mat * in.in_pos;
     vpos.z = min(vpos.z, -0.001);
     vpos = n2_uniforms.proj_mat * vpos;
-    vpos = w_divide(vpos, uniforms.ndc_mat, out);
+    w_divide(vpos, uniforms.ndc_mat, out);
+
     out.position = vpos;
 
     return out;
@@ -869,8 +859,11 @@ vertex VertexOut vs_main(VertexIn in [[stage_in]],
 MetalShaders::MetalShaders() {
     auto device = MetalContext::Instance()->GetDevice();
 
+    MTLCompileOptions* compileOptions = [[MTLCompileOptions alloc] init];
+    [compileOptions setFastMathEnabled:YES];
+
     NSError* error = nil;
-    fragmentShaderLibrary = [device newLibraryWithSource:[NSString stringWithUTF8String:FragmentShaderSource] options:nil error:&error];
+    fragmentShaderLibrary = [device newLibraryWithSource:[NSString stringWithUTF8String:FragmentShaderSource] options:compileOptions error:&error];
     fragmentShaderConstants = [[MTLFunctionConstantValues alloc] init];
 
     if (!fragmentShaderLibrary) {
@@ -878,7 +871,7 @@ MetalShaders::MetalShaders() {
         assert(false);
     }
 
-    vertexShaderLibrary = [device newLibraryWithSource:[NSString stringWithUTF8String:VertexShaderSource] options:nil error:&error];
+    vertexShaderLibrary = [device newLibraryWithSource:[NSString stringWithUTF8String:VertexShaderSource] options:compileOptions error:&error];
     vertexShaderConstants = [[MTLFunctionConstantValues alloc] init];
 
     if (!vertexShaderLibrary) {
@@ -886,14 +879,14 @@ MetalShaders::MetalShaders() {
         assert(false);
     }
 
-    n2VertexShaderLibrary = [device newLibraryWithSource:[NSString stringWithUTF8String:N2VertexShaderSource] options:nil error:&error];
+    n2VertexShaderLibrary = [device newLibraryWithSource:[NSString stringWithUTF8String:N2VertexShaderSource] options:compileOptions error:&error];
 
     if (!n2VertexShaderLibrary) {
         ERROR_LOG(RENDERER, "%s", [[error localizedDescription] UTF8String]);
         assert(false);
     }
 
-    blitShaderLibrary = [device newLibraryWithSource:[NSString stringWithUTF8String:BlitShader] options:nil error:&error];
+    blitShaderLibrary = [device newLibraryWithSource:[NSString stringWithUTF8String:BlitShader] options:compileOptions error:&error];
 
     if (!blitShaderLibrary) {
         ERROR_LOG(RENDERER, "%s", [[error localizedDescription] UTF8String]);
@@ -914,7 +907,7 @@ MetalShaders::MetalShaders() {
         assert(false);
     }
 
-    modVolShaderLibrary = [device newLibraryWithSource:[NSString stringWithUTF8String:ModVolShaderSource] options:nil error:&error];
+    modVolShaderLibrary = [device newLibraryWithSource:[NSString stringWithUTF8String:ModVolShaderSource] options:compileOptions error:&error];
     modVolShaderConstants = [[MTLFunctionConstantValues alloc] init];
 
     if (!modVolShaderLibrary) {
@@ -922,14 +915,14 @@ MetalShaders::MetalShaders() {
         assert(false);
     }
 
-    n2ModVolVertexShaderLibrary = [device newLibraryWithSource:[NSString stringWithUTF8String:MTLN2ModVolVertexShaderSource] options:nil error:&error];
+    n2ModVolVertexShaderLibrary = [device newLibraryWithSource:[NSString stringWithUTF8String:MTLN2ModVolVertexShaderSource] options:compileOptions error:&error];
 
     if (!n2ModVolVertexShaderLibrary) {
         ERROR_LOG(RENDERER, "%s", [[error localizedDescription] UTF8String]);
         assert(false);
     }
 
-    quadShaderLibrary = [device newLibraryWithSource:[NSString stringWithUTF8String:QuadShaderSource] options:nil error:&error];
+    quadShaderLibrary = [device newLibraryWithSource:[NSString stringWithUTF8String:QuadShaderSource] options:compileOptions error:&error];
     quadShaderConstants = [[MTLFunctionConstantValues alloc] init];
 
     if (!quadShaderLibrary) {
