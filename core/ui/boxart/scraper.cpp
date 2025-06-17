@@ -27,6 +27,47 @@
 #include <stb_image_write.h>
 #include <random>
 
+json GameBoxart::to_json(const std::string& baseArtPath) const
+{
+	// Convert absolute path to base path-relative ones
+	std::string artPath;
+	if (!boxartPath.empty() && boxartPath.substr(0, baseArtPath.length()) == baseArtPath)
+		artPath = boxartPath.substr(baseArtPath.length());
+	else
+		artPath = boxartPath;
+	json j = {
+		{ "file_name", fileName },
+		{ "name", name },
+		{ "unique_id", uniqueId },
+		{ "search_name", searchName },
+		{ "region", region },
+		{ "release_date", releaseDate },
+		{ "overview", overview },
+		{ "boxart_path", artPath },
+		{ "boxart_url", boxartUrl },
+		{ "parsed", parsed },
+		{ "scraped", scraped },
+	};
+	return j;
+}
+
+GameBoxart::GameBoxart(const json& j, const std::string& baseArtPath)
+{
+	loadProperty(fileName, j, "file_name");
+	loadProperty(name, j, "name");
+	loadProperty(uniqueId, j, "unique_id");
+	loadProperty(searchName, j, "search_name");
+	loadProperty(region, j, "region");
+	loadProperty(releaseDate, j, "release_date");
+	loadProperty(overview, j, "overview");
+	loadProperty(boxartPath, j, "boxart_path");
+	loadProperty(boxartUrl, j, "boxart_url");
+	loadProperty(parsed, j, "parsed");
+	loadProperty(scraped, j, "scraped");
+	if (!boxartPath.empty() && !isAbsolutePath(boxartPath))
+		boxartPath = baseArtPath + boxartPath;
+}
+
 bool Scraper::downloadImage(const std::string& url, const std::string& localName)
 {
 	DEBUG_LOG(COMMON, "downloading %s", url.c_str());

@@ -46,23 +46,7 @@ struct GameBoxart
 
 	enum Region { JAPAN = 1, USA = 2, EUROPE = 4 };
 
-	json to_json() const
-	{
-		json j = {
-			{ "file_name", fileName },
-			{ "name", name },
-			{ "unique_id", uniqueId },
-			{ "search_name", searchName },
-			{ "region", region },
-			{ "release_date", releaseDate },
-			{ "overview", overview },
-			{ "boxart_path", boxartPath },
-			{ "boxart_url", boxartUrl },
-			{ "parsed", parsed },
-			{ "scraped", scraped },
-		};
-		return j;
-	}
+	json to_json(const std::string& baseArtPath) const;
 
 	template<typename T>
 	static void loadProperty(T& i, const json& j, const std::string& propName)
@@ -76,20 +60,7 @@ struct GameBoxart
 
 	GameBoxart() = default;
 
-	GameBoxart(const json& j)
-	{
-		loadProperty(fileName, j, "file_name");
-		loadProperty(name, j, "name");
-		loadProperty(uniqueId, j, "unique_id");
-		loadProperty(searchName, j, "search_name");
-		loadProperty(region, j, "region");
-		loadProperty(releaseDate, j, "release_date");
-		loadProperty(overview, j, "overview");
-		loadProperty(boxartPath, j, "boxart_path");
-		loadProperty(boxartUrl, j, "boxart_url");
-		loadProperty(parsed, j, "parsed");
-		loadProperty(scraped, j, "scraped");
-	}
+	GameBoxart(const json& j, const std::string& baseArtPath);
 
 	void setBoxartPath(const std::string& path) {
 		if (!boxartPath.empty())

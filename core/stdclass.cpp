@@ -27,24 +27,41 @@ bool file_exists(const std::string& filename)
 	return (flycast::access(filename.c_str(), R_OK) == 0);
 }
 
+static void appendPathSep(std::string& str)
+{
+#ifdef _WIN32
+	if (str.empty() || (str.back() != '/' && str.back() != '\\'))
+		str += '\\';
+#else
+	if (str.empty() || str.back() != '/')
+		str += '/';
+#endif
+}
+
 void set_user_config_dir(const std::string& dir)
 {
 	user_config_dir = dir;
+	appendPathSep(user_config_dir);
 }
 
 void set_user_data_dir(const std::string& dir)
 {
 	user_data_dir = dir;
+	appendPathSep(user_data_dir);
 }
 
 void add_system_config_dir(const std::string& dir)
 {
-	system_config_dirs.push_back(dir);
+	std::string s(dir);
+	appendPathSep(s);
+	system_config_dirs.push_back(s);
 }
 
 void add_system_data_dir(const std::string& dir)
 {
-	system_data_dirs.push_back(dir);
+	std::string s(dir);
+	appendPathSep(s);
+	system_data_dirs.push_back(s);
 }
 
 std::string get_writable_config_path(const std::string& filename)

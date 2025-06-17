@@ -155,6 +155,20 @@ static inline std::string trim_ws(const std::string& str,
     return str.substr(strStart, str.find_last_not_of(whitespace) + 1 - strStart);
 }
 
+static inline bool isAbsolutePath(const std::string& path)
+{
+#ifdef _WIN32
+	if (path.length() >= 3 && std::isalpha(static_cast<u8>(path[0]))
+			&& path[1] == ':' && (path[2] == '/' || path[2] == '\\'))
+		return true;
+	if (!path.empty() && (path[0] == '/' || path[0] == '\\'))
+		return true;
+	return false;
+#else
+	return !path.empty() && path[0] == '/';
+#endif
+}
+
 class MD5Sum
 {
 	MD5_CTX ctx;

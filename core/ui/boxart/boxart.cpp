@@ -154,7 +154,8 @@ void Boxart::saveDatabase()
 {
 	if (!databaseDirty)
 		return;
-	std::string db_name = getSaveDirectory() + DB_NAME;
+	std::string basePath = getSaveDirectory();
+	std::string db_name = basePath + DB_NAME;
 	FILE *file = nowide::fopen(db_name.c_str(), "wt");
 	if (file == nullptr)
 	{
@@ -168,7 +169,7 @@ void Boxart::saveDatabase()
 		std::lock_guard<std::mutex> guard(mutex);
 		for (const auto& game : games)
 			if (game.second.scraped || game.second.parsed)
-				array.push_back(game.second.to_json());
+				array.push_back(game.second.to_json(basePath));
 	}
 	std::string serialized = array.dump(4);
 	fwrite(serialized.c_str(), 1, serialized.size(), file);
@@ -207,7 +208,7 @@ void Boxart::loadDatabase()
 		json v = json::parse(all_data);
 		for (const auto& o : v)
 		{
-			GameBoxart game(o);
+			GameBoxart game(o, save_dir);
 			games[game.fileName] = game;
 		}
 	} catch (const json::exception& e) {
