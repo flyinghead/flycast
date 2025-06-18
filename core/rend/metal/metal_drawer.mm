@@ -576,11 +576,8 @@ void MetalTextureDrawer::EndRenderPass()
 
     if (config::RenderToTextureBuffer)
     {
+        commandPool->EndFrameAndWait();
 
-    }
-
-    if (config::RenderToTextureBuffer)
-    {
         u16 *dst = (u16 *)&vram[textureAddr];
 
         PixelBuffer<u32> tmpBuf;
@@ -590,7 +587,9 @@ void MetalTextureDrawer::EndRenderPass()
     }
     else
     {
-
+        commandPool->EndFrame();
+        texture->dirty = 0;
+        texture->unprotectVRam();
     }
 
     MetalDrawer::EndRenderPass();
