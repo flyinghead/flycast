@@ -400,6 +400,11 @@ void input_sdl_handle()
 						SDL_GL_GetDrawableSize(window, &settings.display.width, &settings.display.height);
 					else
 #endif
+#ifdef USE_METAL
+                    if (windowFlags & SDL_WINDOW_METAL)
+                        SDL_Metal_GetDrawableSize(window, &settings.display.width, &settings.display.height);
+                    else
+#endif
 						SDL_GetWindowSize(window, &settings.display.width, &settings.display.height);
 					GraphicsContext::Instance()->resize();
 				}
@@ -700,7 +705,7 @@ bool sdl_recreate_window(u32 flags)
 	}
 
 #if !defined(GLES)
-	flags |= SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI;
+	flags |= SDL_WINDOW_RESIZABLE;
 	if (window_fullscreen)
 		flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
 	else if (window_maximized)

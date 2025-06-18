@@ -1162,7 +1162,7 @@ static void sendLights()
 		return;
 
 	state.lightModelUpdated = false;
-	N2LightModel model;
+	N2LightModel model {};
 	model.lightCount = 0;
 	if (curLightModel == nullptr)
 	{

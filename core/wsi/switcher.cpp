@@ -30,7 +30,11 @@
 
 VulkanContext theVulkanContext;
 #endif
+#ifdef USE_METAL
+#include "rend/metal/metal_context.h"
 
+MetalContext theMetalContext;
+#endif
 GraphicsContext *GraphicsContext::instance;
 
 void initRenderApi(void *window, void *display)
@@ -66,6 +70,17 @@ void initRenderApi(void *window, void *display)
 			return;
 		// Fall back to OpenGL
 		WARN_LOG(RENDERER, "DirectX 9 init failed. Falling back to OpenGL.");
+		config::RendererType = RenderType::OpenGL;
+	}
+#endif
+#ifdef USE_METAL
+	if (isMetal(config::RendererType))
+	{
+		theMetalContext.setWindow(window, display);
+		if (theMetalContext.init())
+			return;
+		// Fall back to OpenGL
+		WARN_LOG(RENDERER, "Metal init failed. Falling back to OpenGL.");
 		config::RendererType = RenderType::OpenGL;
 	}
 #endif

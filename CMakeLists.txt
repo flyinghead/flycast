@@ -30,6 +30,10 @@ else()
 	project(flycast)
 endif()
 
+if(APPLE)
+	enable_language(OBJC OBJCXX)
+endif()
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 if(CMAKE_SYSTEM_NAME STREQUAL "NetBSD" OR NINTENDO_SWITCH)
@@ -62,6 +66,7 @@ option(USE_HOST_SDL "Use host SDL library" ${USE_HOST_SDL_DEFAULT})
 option(USE_HOST_LIBCHDR "Use host libchdr" OFF)
 option(USE_OPENMP "Use OpenMP if available" ON)
 option(USE_VULKAN "Build with Vulkan support" ON)
+option(USE_METAL "Build with Metal support" ON)
 option(USE_DX9 "Build with Direct3D 9 support" ON)
 option(USE_DX11 "Build with Direct3D 11 support" ON)
 option(LIBRETRO "Build libretro core" OFF)
@@ -71,7 +76,7 @@ option(USE_ALSA "Build with ALSA support" ON)
 option(USE_LIBAO "Build with AO support" ON)
 option(USE_OSS "Build with OSS support" OFF)
 option(USE_PULSEAUDIO "Build with PulseAudio support" ON)
-option(USE_BREAKPAD "Build and link with breakpad library" ON)
+option(USE_BREAKPAD "Build and link with breakpad library" OFF)
 option(USE_LUA "Build with Lua support" ON)
 option(ENABLE_GDB_SERVER "Build with GDB debugging support" OFF)
 option(ENABLE_DC_PROFILER "Build with support for target machine (SH4) profiler" OFF)
@@ -81,6 +86,10 @@ option(USE_LIBCDIO "Use libcdio for CDROM access" OFF)
 
 if(IOS AND NOT LIBRETRO)
 	set(USE_VULKAN OFF CACHE BOOL "Force vulkan off" FORCE)
+endif()
+
+if(NOT APPLE)
+	set(USE_METAL OFF CACHE BOOL "Force metal off" FORCE)
 endif()
 
 include(GNUInstallDirs)
@@ -1346,8 +1355,15 @@ endif()
 target_sources(${PROJECT_NAME} PRIVATE
 		core/wsi/context.h
 		core/wsi/libretro.cpp
-		core/wsi/libretro.h
+		core/wsi/libretro.h)
+
+if(USE_METAL)
+	target_sources(${PROJECT_NAME} PRIVATE
+		core/wsi/switcher.mm)
+else()
+	target_sources(${PROJECT_NAME} PRIVATE
 		core/wsi/switcher.cpp)
+endif()
 
 if(USE_OPENGL)
 	target_compile_definitions(${PROJECT_NAME} PRIVATE USE_OPENGL)
@@ -1518,6 +1534,35 @@ if(USE_VULKAN)
 			target_compile_definitions(${PROJECT_NAME} PRIVATE ImTextureID=ImU64)
 		endif()
 	endif()
+endif()
+
+if(APPLE AND USE_METAL)
+	target_link_libraries(${PROJECT_NAME} PRIVATE "-framework Metal -framework QuartzCore -framework CoreGraphics")
+
+	target_compile_definitions(${PROJECT_NAME} PRIVATE USE_METAL HAVE_METAL)
+	target_sources(${PROJECT_NAME} PRIVATE
+			core/rend/metal/metal_renderer.h
+			core/rend/metal/metal_renderer.mm
+			core/rend/metal/metal_context.h
+			core/rend/metal/metal_context.mm
+			core/rend/metal/metal_shaders.h
+			core/rend/metal/metal_shaders.mm
+			core/rend/metal/metal_texture.h
+			core/rend/metal/metal_texture.mm
+			core/rend/metal/metal_pipeline.h
+			core/rend/metal/metal_pipeline.mm
+			core/rend/metal/metal_buffer.h
+			core/rend/metal/metal_buffer.mm
+			core/rend/metal/metal_drawer.h
+			core/rend/metal/metal_drawer.mm
+			core/rend/metal/metal_quad.h
+			core/rend/metal/metal_quad.mm
+			core/rend/metal/metal_commandpool.h
+			core/rend/metal/metal_commandpool.mm
+			core/rend/metal/metal.h
+			core/rend/metal/metal_driver.h
+			core/deps/imgui/backends/imgui_impl_metal.h
+			core/deps/imgui/backends/imgui_impl_metal.mm)
 endif()
 
 if(WIN32 AND USE_DX9 AND NOT LIBRETRO AND NOT WINDOWS_STORE AND ("x86" IN_LIST ARCHITECTURE OR "x86_64" IN_LIST ARCHITECTURE))

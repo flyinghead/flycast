@@ -151,7 +151,7 @@ struct VO_BORDER_COL_type : RGBAColorTemplate<VO_BORDER_COL_type>
 	};
 };
 
-struct RGBColor : RGBAColorTemplate<RGBColor>
+struct RGB_Color : RGBAColorTemplate<RGB_Color>
 {
 	union {
 		struct
@@ -165,7 +165,7 @@ struct RGBColor : RGBAColorTemplate<RGBColor>
 	};
 };
 
-struct RGBAColor : RGBAColorTemplate<RGBAColor>
+struct RGBA_Color : RGBAColorTemplate<RGBA_Color>
 {
 	union {
 		struct
@@ -531,11 +531,11 @@ union FOG_DENSITY_type
 #define SDRAM_ARB_CFG     PvrReg(SDRAM_ARB_CFG_addr,u32)                  // RW  Texture memory arbiter control
 #define SDRAM_CFG         PvrReg(SDRAM_CFG_addr,u32)                      // RW  Texture memory control
 
-#define FOG_COL_RAM       PvrReg(FOG_COL_RAM_addr, RGBColor)              // RW  Color for Look Up table Fog
-#define FOG_COL_VERT      PvrReg(FOG_COL_VERT_addr, RGBColor)             // RW  Color for vertex Fog
+#define FOG_COL_RAM       PvrReg(FOG_COL_RAM_addr, RGB_Color)              // RW  Color for Look Up table Fog
+#define FOG_COL_VERT      PvrReg(FOG_COL_VERT_addr, RGB_Color)             // RW  Color for vertex Fog
 #define FOG_DENSITY       PvrReg(FOG_DENSITY_addr, FOG_DENSITY_type)      // RW  Fog scale value
-#define FOG_CLAMP_MAX     PvrReg(FOG_CLAMP_MAX_addr, RGBAColor)           // RW  Color clamping maximum value
-#define FOG_CLAMP_MIN     PvrReg(FOG_CLAMP_MIN_addr, RGBAColor)           // RW  Color clamping minimum value
+#define FOG_CLAMP_MAX     PvrReg(FOG_CLAMP_MAX_addr, RGBA_Color)           // RW  Color clamping maximum value
+#define FOG_CLAMP_MIN     PvrReg(FOG_CLAMP_MIN_addr, RGBA_Color)           // RW  Color clamping minimum value
 #define SPG_TRIGGER_POS   PvrReg(SPG_TRIGGER_POS_addr,u32)                // RW  External trigger signal HV counter value
 #define SPG_HBLANK_INT    PvrReg(SPG_HBLANK_INT_addr,SPG_HBLANK_INT_type) // RW  H-blank interrupt control
 #define SPG_VBLANK_INT    PvrReg(SPG_VBLANK_INT_addr,SPG_VBLANK_INT_type) // RW  V-blank interrupt control
