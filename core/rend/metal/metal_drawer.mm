@@ -144,7 +144,7 @@ void MetalDrawer::DrawPoly(id<MTLRenderCommandEncoder> encoder, u32 listType, bo
     }
 
     if (poly.texture != nullptr) {
-        auto texture = ((MetalTexture *)poly.texture)->GetTexture();
+        auto texture = ((MetalTexture *)poly.texture)->GetReadOnlyTexture();
         [encoder setFragmentTexture:texture atIndex:0];
 
         // Texture sampler
@@ -344,12 +344,12 @@ void MetalDrawer::UploadMainBuffer(const MetalVertexShaderUniforms &vertexUnifor
          offsets.lightsOffset = packNaomi2Lights(packer);
     }
 
-    MetalBufferData *buffer = GetMainBuffer(packer.size());
+    MetalBufferData *buffer = new MetalBufferData(packer.size());
     packer.upload(*buffer);
     curMainBuffer = buffer->buffer;
 }
 
-bool MetalDrawer::Draw(const MetalTexture *fogTexture, const MetalTexture *paletteTexture, id<MTLCommandBuffer> commandBuffer) {
+bool MetalDrawer::Draw(const MetalTexture *fogTexture, const MetalTexture *paletteTexture) {
     MetalFragmentShaderUniforms fragUniforms = MakeFragmentUniforms<MetalFragmentShaderUniforms>();
     dithering = config::EmulateFramebuffer && pvrrc.fb_W_CTRL.fb_dither && pvrrc.fb_W_CTRL.fb_packmode <= 3;
     if (dithering) {
@@ -375,7 +375,7 @@ bool MetalDrawer::Draw(const MetalTexture *fogTexture, const MetalTexture *palet
     currentScissor = MTLScissorRect {};
 
     @autoreleasepool {
-        id<MTLRenderCommandEncoder> renderEncoder = BeginRenderPass(commandBuffer);
+        id<MTLRenderCommandEncoder> renderEncoder = BeginRenderPass();
         [renderEncoder retain];
 
         [renderEncoder setFragmentTexture:fogTexture->GetTexture() atIndex:2];
@@ -447,7 +447,7 @@ void MetalTextureDrawer::Init(MetalSamplers *samplers, MetalShaders *shaders, Me
     rttPassDescriptor = [[MTLRenderPassDescriptor alloc] init];
 }
 
-id<MTLRenderCommandEncoder> MetalTextureDrawer::BeginRenderPass(id<MTLCommandBuffer> commandBuffer) {
+id<MTLRenderCommandEncoder> MetalTextureDrawer::BeginRenderPass() {
     DEBUG_LOG(RENDERER, "RenderToTexture packmode=%d stride=%d - %d x %d @ %06x", pvrrc.fb_W_CTRL.fb_packmode, pvrrc.fb_W_LINESTRIDE * 8,
               pvrrc.fb_X_CLIP.max + 1, pvrrc.fb_Y_CLIP.max + 1, pvrrc.fb_W_SOF1 & VRAM_MASK);
     matrices.CalcMatrices(&pvrrc);
@@ -460,6 +460,8 @@ id<MTLRenderCommandEncoder> MetalTextureDrawer::BeginRenderPass(id<MTLCommandBuf
     u32 widthPow2;
     u32 heightPow2;
     getRenderToTextureDimensions(upscaledWidth, upscaledHeight, widthPow2, heightPow2);
+
+    id<MTLCommandBuffer> commandBuffer = commandPool->Allocate();
 
     if (!depthAttachment || widthPow2 > depthAttachment.width || heightPow2 > depthAttachment.height)
     {
@@ -479,6 +481,12 @@ id<MTLRenderCommandEncoder> MetalTextureDrawer::BeginRenderPass(id<MTLCommandBuf
     if (!config::RenderToTextureBuffer)
     {
         texture = textureCache->getRTTexture(textureAddr, pvrrc.fb_W_CTRL.fb_packmode, origWidth, origHeight);
+        if (textureCache->IsInFlight(texture, false))
+        {
+            texture->CreateReadOnlyCopy(commandBuffer);
+            texture->deferDeleteResource(commandPool);
+        }
+        textureCache->SetInFlight(texture);
 
         // Check if we need to recreate the texture
         bool needsRecreation = !texture->GetTexture() ||
@@ -598,8 +606,32 @@ void MetalScreenDrawer::Init(MetalSamplers *samplers, MetalShaders *shaders, con
             this->viewport.originY != viewport.originY ||
             this->viewport.zfar != viewport.zfar ||
             this->viewport.znear != viewport.znear) {
+        if (!framebuffers.empty()) {
+            verify(commandPool != nullptr);
+            commandPool->addToFlight(new MetalDeleter(std::move(framebuffers)));
+        }
+        if (depthAttachment) {
+            class ResourceDeleter : public MetalDeletable
+            {
+            public:
+                ResourceDeleter(id<MTLTexture> texture)
+                {
+                    std::swap(this->texture, texture);
+                }
+
+                ~ResourceDeleter() override {
+                    [texture setPurgeableState:MTLPurgeableStateEmpty];
+                    texture = nil;
+                }
+
+            private:
+                id<MTLTexture> texture = nil;
+            };
+
+            commandPool->addToFlight(new ResourceDeleter(depthAttachment));
+        }
+
         depthAttachment = nil;
-        framebuffers.clear();
         clearPassDescriptors.clear();
         loadPassDescriptors.clear();
         clearNeeded.clear();
@@ -667,11 +699,11 @@ void MetalScreenDrawer::Init(MetalSamplers *samplers, MetalShaders *shaders, con
     MetalDrawer::Init(samplers, MetalPipelineManager(shaderManager));
 }
 
-id<MTLRenderCommandEncoder> MetalScreenDrawer::BeginRenderPass(id<MTLCommandBuffer> commandBuffer) {
+id<MTLRenderCommandEncoder> MetalScreenDrawer::BeginRenderPass() {
     if (!renderPassStarted)
     {
         frameRendered = false;
-
+        id<MTLCommandBuffer> commandBuffer = commandPool->Allocate();
         MTLRenderPassDescriptor* passDescriptor = clearNeeded[GetCurrentImage()] || pvrrc.clearFramebuffer ? clearPassDescriptors[GetCurrentImage()] : loadPassDescriptors[GetCurrentImage()];
         clearNeeded[GetCurrentImage()] = false;
         currentEncoder = [commandBuffer renderCommandEncoderWithDescriptor:passDescriptor];
@@ -697,13 +729,14 @@ void MetalScreenDrawer::EndRenderPass() {
 
     if (emulateFramebuffer)
     {
-
+        // TODO: scaleAndWriteFramebuffer
     }
     else
     {
+
         aspectRatio = getOutputFramebufferAspectRatio();
     }
+    commandPool->EndFrame();
     MetalDrawer::EndRenderPass();
-
     frameRendered = true;
 }

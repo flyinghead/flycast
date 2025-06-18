@@ -23,6 +23,7 @@
 #include "metal_texture.h"
 #include "metal_buffer.h"
 #include "metal_drawer.h"
+#include "metal_commandpool.h"
 
 #include "hw/pvr/Renderer_if.h"
 #include "rend/tileclip.h"
@@ -31,7 +32,7 @@
 class BaseMetalRenderer : public Renderer
 {
 protected:
-    bool BaseInit(id<MTLRenderCommandEncoder> commandEncoder);
+    bool BaseInit();
 
 public:
     void Term() override;
@@ -63,7 +64,8 @@ protected:
     MetalShaders shaderManager;
     std::unique_ptr<MetalTexture> fogTexture;
     std::unique_ptr<MetalTexture> paletteTexture;
-    id<MTLCommandBuffer> commandBuffer = nil;
+    MetalCommandPool texCommandPool;
+    MetalCommandPool fbCommandPool;
     id<MTLCommandBuffer> texCommandBuffer = nil;
     std::vector<std::unique_ptr<MetalTexture>> framebufferTextures;
     int framebufferTexIndex = 0;

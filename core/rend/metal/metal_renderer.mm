@@ -24,8 +24,11 @@
 #include "hw/aica/dsp.h"
 #include "hw/pvr/ta.h"
 
-bool BaseMetalRenderer::BaseInit(id<MTLRenderCommandEncoder> commandEncoder)
+bool BaseMetalRenderer::BaseInit()
 {
+    texCommandPool.Init();
+    fbCommandPool.Init();
+
     return true;
 }
 
@@ -33,6 +36,8 @@ void BaseMetalRenderer::Term()
 {
     WaitIdle();
     MetalContext::Instance()->PresentFrame(nil, MTLViewport {}, 0);
+    texCommandPool.Term();
+    fbCommandPool.Term();
     textureCache.Clear();
     fogTexture = nil;
     paletteTexture = nil;
@@ -48,8 +53,9 @@ BaseTextureCacheData *BaseMetalRenderer::GetTexture(TSP tsp, TCW tcw)
     if (tf->NeedsUpdate()) {
         tf->SetCommandBuffer(texCommandBuffer);
 
-        if (!tf->Update()) {
-            tf = nullptr;
+        if (!tf->Update())
+        {
+            tf->SetCommandBuffer(nil);
             return nullptr;
         }
     }
@@ -58,6 +64,7 @@ BaseTextureCacheData *BaseMetalRenderer::GetTexture(TSP tsp, TCW tcw)
         tf->SetCommandBuffer(texCommandBuffer);
     }
     tf->SetCommandBuffer(nil);
+    textureCache.SetInFlight(tf);
 
     return tf;
 }
@@ -74,20 +81,24 @@ void BaseMetalRenderer::Process(TA_context *ctx)
         resetTextureCache = false;
     }
 
-    texCommandBuffer = [MetalContext::Instance()->GetQueue() commandBuffer];
+    texCommandPool.BeginFrame();
+    textureCache.SetCurrentIndex(texCommandPool.GetIndex());
+    textureCache.Cleanup();
+
+    texCommandBuffer = texCommandPool.Allocate();
 
     ta_parse(ctx, true);
 
     // TODO can't update fog or palette twice in multi render
     CheckFogTexture();
     CheckPaletteTexture();
-    [texCommandBuffer commit];
     texCommandBuffer = nil;
 }
 
 void BaseMetalRenderer::ReInitOSD()
 {
-
+    texCommandPool.Init();
+    fbCommandPool.Init();
 }
 
 void BaseMetalRenderer::RenderFramebuffer(const FramebufferInfo &info)
@@ -103,6 +114,11 @@ void BaseMetalRenderer::RenderFramebuffer(const FramebufferInfo &info)
         curTexture = std::make_unique<MetalTexture>();
         curTexture->tex_type = TextureType::_8888;
     }
+
+    fbCommandPool.BeginFrame();
+    id<MTLCommandBuffer> fbCommandBuffer = fbCommandPool.Allocate();
+
+    curTexture->SetCommandBuffer(fbCommandBuffer);
     if (info.fb_r_ctrl.fb_enable == 0 || info.vo_control.blank_video == 1)
     {
         // Video output disabled
@@ -118,15 +134,17 @@ void BaseMetalRenderer::RenderFramebuffer(const FramebufferInfo &info)
 
         curTexture->UploadToGPU(width, height, (u8*)pb.data(), false);
     }
-
+    curTexture->SetCommandBuffer(nil);
+    fbCommandBuffer = nil;
+    fbCommandPool.EndFrame();
     framebufferRendered = true;
     clearLastFrame = false;
 }
 
 void BaseMetalRenderer::WaitIdle()
 {
-    [commandBuffer waitUntilCompleted];
-    commandBuffer = nil;
+//    [commandBuffer waitUntilCompleted];
+//    commandBuffer = nil;
 }
 
 void BaseMetalRenderer::CheckFogTexture() {
@@ -180,13 +198,16 @@ bool BaseMetalRenderer::presentFramebuffer()
 class MetalRenderer final : public BaseMetalRenderer
 {
 public:
-    bool Init()
+    bool Init() override
     {
         NOTICE_LOG(RENDERER, "MetalRenderer::Init");
 
         textureDrawer.Init(&samplerManager, &shaderManager, &textureCache);
+        textureDrawer.SetCommandPool(&texCommandPool);
+
         screenDrawer.Init(&samplerManager, &shaderManager, viewport);
-        // BaseInit(screenDrawer.GetRenderPass());
+        screenDrawer.SetCommandPool(&texCommandPool);
+        BaseInit();
         emulateFramebuffer = config::EmulateFramebuffer;
 
         return true;
@@ -196,6 +217,7 @@ public:
     {
         NOTICE_LOG(RENDERER, "MetalRenderer::Term");
         WaitIdle();
+        texCommandPool.Term();
         screenDrawer.Term();
         textureDrawer.Term();
         samplerManager.term();
@@ -221,8 +243,6 @@ public:
 
     bool Render() override
     {
-        id<MTLCommandBuffer> commandBuffer = [MetalContext::Instance()->GetQueue() commandBuffer];
-
         MetalDrawer *drawer;
         if (pvrrc.isRTT)
             drawer = &textureDrawer;
@@ -231,13 +251,10 @@ public:
             drawer = &screenDrawer;
         }
 
-        drawer->Draw(fogTexture.get(), paletteTexture.get(), commandBuffer);
-        // TODO: ENABLE LATER WHEN WE CAN
-        //if (config::EmulateFramebuffer || pvrrc.isRTT)
+        drawer->Draw(fogTexture.get(), paletteTexture.get());
+        if (config::EmulateFramebuffer || pvrrc.isRTT)
             // delay ending the render pass in case of multi render
-        drawer->EndRenderPass();
-
-        [commandBuffer commit];
+            drawer->EndRenderPass();
 
         return !pvrrc.isRTT;
     }
@@ -258,7 +275,7 @@ protected:
         if ((u32)w == viewport.width && (u32)h == viewport.height)
             return;
         BaseMetalRenderer::resize(w, h);
-        WaitIdle();
+        // WaitIdle();
         screenDrawer.Init(&samplerManager, &shaderManager, viewport);
     }
 

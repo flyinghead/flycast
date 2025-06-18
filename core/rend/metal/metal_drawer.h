@@ -23,6 +23,7 @@
 #include "metal_shaders.h"
 #include "metal_pipeline.h"
 #include "metal_buffer.h"
+#include "metal_commandpool.h"
 #include "rend/tileclip.h"
 #include "rend/transform_matrix.h"
 #include "rend/sorter.h"
@@ -31,6 +32,9 @@
 
 class MetalBaseDrawer
 {
+public:
+    void SetCommandPool(MetalCommandPool *commandPool) { this->commandPool = commandPool; }
+
 protected:
     TileClipping SetTileClip(id<MTLRenderCommandEncoder> encoder, u32 val, MTLScissorRect& clipRect);
     void SetBaseScissor(MTLViewport viewport);
@@ -55,12 +59,12 @@ protected:
             buffer = mainBuffers.back().release();
             mainBuffers.pop_back();
             if (buffer->bufferSize < size) {
+                commandPool->addToFlight(new MetalDeleter(buffer));
                 u32 newSize = (u32)buffer->bufferSize;
                 while (newSize < size)
                     newSize *= 2;
-
                 INFO_LOG(RENDERER, "Increasing main buffer size %zd -> %d", buffer->bufferSize, newSize);
-                [buffer->buffer setPurgeableState: MTLPurgeableStateEmpty];
+                delete buffer;
 
                 buffer = new MetalBufferData(newSize);
             }
@@ -69,6 +73,21 @@ protected:
         {
             buffer = new MetalBufferData(std::max(512 * 1024u, size));
         }
+
+        class BufferHolder : public MetalDeletable
+        {
+        public:
+            BufferHolder(MetalBufferData *buffer, MetalBaseDrawer *drawer) : buffer(buffer), drawer(drawer) {}
+
+            ~BufferHolder() override {
+                drawer->mainBuffers.emplace_back(buffer);
+            }
+
+        private:
+            MetalBufferData *buffer;
+            MetalBaseDrawer *drawer;
+        };
+        commandPool->addToFlight(new BufferHolder(buffer, this));
 
         return buffer;
     }
@@ -183,6 +202,7 @@ protected:
     MTLScissorRect baseScissor {};
     MTLScissorRect currentScissor {};
     TransformMatrix<COORD_DIRECTX> matrices;
+    MetalCommandPool *commandPool = nullptr;
     std::vector<std::unique_ptr<MetalBufferData>> mainBuffers;
 };
 
@@ -191,7 +211,7 @@ class MetalDrawer : public MetalBaseDrawer
 public:
     virtual ~MetalDrawer() = default;
 
-    bool Draw(const MetalTexture *fogTexture, const MetalTexture *paletteTexture, id<MTLCommandBuffer> commandBuffer);
+    bool Draw(const MetalTexture *fogTexture, const MetalTexture *paletteTexture);
     virtual void EndRenderPass() {
         renderPassStarted = false;
     }
@@ -201,7 +221,7 @@ public:
     }
 
 protected:
-    virtual id<MTLRenderCommandEncoder> BeginRenderPass(id<MTLCommandBuffer> commandBuffer) = 0;
+    virtual id<MTLRenderCommandEncoder> BeginRenderPass() = 0;
     void Init(MetalSamplers *samplers, MetalPipelineManager pipelineManager) {
         this->samplers = samplers;
         this->pipelineManager = std::make_unique<MetalPipelineManager>(pipelineManager);
@@ -256,7 +276,7 @@ public:
     }
 
 protected:
-    id<MTLRenderCommandEncoder> BeginRenderPass(id<MTLCommandBuffer> commandBuffer) override;
+    id<MTLRenderCommandEncoder> BeginRenderPass() override;
 
 private:
     std::vector<id<MTLTexture>> framebuffers;
@@ -279,7 +299,7 @@ public:
     void EndRenderPass() override;
 
 protected:
-    id<MTLRenderCommandEncoder> BeginRenderPass(id<MTLCommandBuffer> commandBuffer) override;
+    id<MTLRenderCommandEncoder> BeginRenderPass() override;
 
 private:
     u32 width = 0;

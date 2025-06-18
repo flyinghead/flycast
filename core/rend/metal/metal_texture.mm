@@ -174,15 +174,99 @@ void MetalTexture::GenerateMipmaps()
     [blitEncoder endEncoding];
 }
 
-bool MetalTexture::Delete()
+void MetalTexture::deferDeleteResource(MetalFlightManager *manager)
 {
-    [texture setPurgeableState:MTLPurgeableStateEmpty];
-    texture = nil;
+    class ResourceDeleter : public MetalDeletable
+    {
+    public:
+        ResourceDeleter(MetalTexture *texture)
+        {
+            std::swap(this->texture, texture->texture);
+            std::swap(this->readOnlyTexture, texture->readOnlyTexture);
+        }
 
-    return true;
+        ~ResourceDeleter() override {
+            [texture setPurgeableState:MTLPurgeableStateEmpty];
+            texture = nil;
+            [readOnlyTexture setPurgeableState:MTLPurgeableStateEmpty];
+            readOnlyTexture = nil;
+        }
+
+    private:
+        id<MTLTexture> texture = nil;
+        id<MTLTexture> readOnlyTexture;
+    };
+    manager->addToFlight(new ResourceDeleter(this));
+}
+
+void MetalTexture::CreateReadOnlyCopy(id<MTLCommandBuffer> commandBuffer)
+{
+    if (!texture || readOnlyTexture)
+        return;
+
+    MTLTextureDescriptor *desc = [[MTLTextureDescriptor alloc] init];
+    [desc setWidth:texture.width];
+    [desc setHeight:texture.height];
+    [desc setPixelFormat:texture.pixelFormat];
+    [desc setMipmapLevelCount:texture.mipmapLevelCount];
+    [desc setStorageMode:MTLStorageModePrivate];
+    [desc setUsage:MTLTextureUsageShaderRead];
+
+    readOnlyTexture = [texture.device newTextureWithDescriptor:desc];
+    [readOnlyTexture setLabel:@"RTT Read-Only Copy"];
+
+    id<MTLBlitCommandEncoder> blitEncoder = [commandBuffer blitCommandEncoder];
+    [blitEncoder copyFromTexture:texture
+                     sourceSlice:0
+                     sourceLevel:0
+                    sourceOrigin:MTLOriginMake(0, 0, 0)
+                      sourceSize:MTLSizeMake(texture.width, texture.height, 1)
+                       toTexture:readOnlyTexture
+                destinationSlice:0
+                destinationLevel:0
+               destinationOrigin:MTLOriginMake(0, 0, 0)];
+
+    for (NSUInteger level = 1; level < texture.mipmapLevelCount; level++) {
+        NSUInteger mipWidth = MAX(texture.width >> level, 1);
+        NSUInteger mipHeight = MAX(texture.height >> level, 1);
+
+        [blitEncoder copyFromTexture:texture
+                         sourceSlice:0
+                         sourceLevel:level
+                        sourceOrigin:MTLOriginMake(0, 0, 0)
+                          sourceSize:MTLSizeMake(mipWidth, mipHeight, 1)
+                           toTexture:readOnlyTexture
+                    destinationSlice:0
+                    destinationLevel:level
+                   destinationOrigin:MTLOriginMake(0, 0, 0)];
+    }
+
+    [blitEncoder endEncoding];
 }
 
 MetalSamplers::MetalSamplers() = default;
 MetalSamplers::~MetalSamplers() {
     term();
+}
+
+void MetalTextureCache::Cleanup()
+{
+    std::vector<u64> list;
+
+    u32 TargetFrame = std::max((u32)120, FrameCount) - 120;
+
+    for (const auto& [id, texture] : cache)
+    {
+        if (texture.dirty && texture.dirty < TargetFrame)
+            list.push_back(id);
+
+        if (list.size() > 5)
+            break;
+    }
+
+    for (u64 id : list)
+    {
+        if (clearTexture(&cache[id]))
+            cache.erase(id);
+    }
 }

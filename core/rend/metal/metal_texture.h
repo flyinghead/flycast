@@ -20,7 +20,9 @@
 #pragma once
 #include "rend/TexCache.h"
 #include "metal_context.h"
-#include <unordered_map>
+#include "metal.h"
+
+#include <unordered_set>
 #include <Metal/Metal.h>
 
 class MetalTexture final : public BaseTextureCacheData
@@ -37,7 +39,12 @@ public:
         this->width = width;
         this->height = height;
     }
-    bool Delete() override;
+    void SetInFlight(bool inFlight) {
+        this->isInFlight = inFlight;
+    }
+    void deferDeleteResource(MetalFlightManager *manager);
+    id<MTLTexture> GetReadOnlyTexture() const { return readOnlyTexture ? readOnlyTexture : texture; }
+    void CreateReadOnlyCopy(id<MTLCommandBuffer> commandBuffer);
 
 private:
     void Init(u32 width, u32 height, MTLPixelFormat format, u32 dataSize, bool mipmapped, bool mipmapsIncluded);
@@ -50,6 +57,10 @@ private:
     u32 mipmapLevels = 1;
     id<MTLCommandBuffer> commandBuffer = nil;
     id<MTLTexture> texture = nil;
+    id<MTLTexture> readOnlyTexture = nil;
+    bool isInFlight = false;
+
+    friend class MetalTextureCache;
 };
 
 class MetalSamplers
@@ -122,5 +133,69 @@ private:
 
 class MetalTextureCache final : public BaseTextureCache<MetalTexture>
 {
+public:
+    MetalTextureCache() {}
 
+    void SetCurrentIndex(int index)
+    {
+        if (index == (int)currentIndex)
+            return;
+        if (currentIndex < inFlightTextures.size())
+            std::for_each(inFlightTextures[currentIndex].begin(), inFlightTextures[currentIndex].end(),
+                          [](MetalTexture *texture) {
+                texture->SetInFlight(false);
+                texture->readOnlyTexture = nil;
+            });
+        currentIndex = index;
+        EmptyTrash(inFlightTextures);
+    }
+
+    bool IsInFlight(MetalTexture *texture, bool previous)
+    {
+        for (u32 i = 0; i < inFlightTextures.size(); i++)
+            if ((!previous || i != currentIndex)
+                && inFlightTextures[i].find(texture) != inFlightTextures[i].end())
+                return true;
+        return false;
+    }
+
+    void SetInFlight(MetalTexture *texture)
+    {
+        texture->SetInFlight(true);
+        inFlightTextures[currentIndex].insert(texture);
+    }
+
+    void Cleanup();
+
+    void Clear()
+    {
+        for (auto& set : inFlightTextures)
+        {
+            for (MetalTexture *tex : set)
+                tex->SetInFlight(false);
+            set.clear();
+        }
+        BaseTextureCache::Clear();
+    }
+
+private:
+    bool clearTexture(MetalTexture *tex)
+    {
+        for (auto& set : inFlightTextures)
+            set.erase(tex);
+
+        return tex->Delete();
+    }
+
+    template<typename T>
+    void EmptyTrash(T& v)
+    {
+        if (v.size() < currentIndex + 1)
+            v.resize(currentIndex + 1);
+        else
+            v[currentIndex].clear();
+    }
+
+    std::vector<std::unordered_set<MetalTexture *>> inFlightTextures;
+    u32 currentIndex = ~0;
 };
