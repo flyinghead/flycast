@@ -1,5 +1,5 @@
 target_sources(${PROJECT_NAME} PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/hwreg.h)
+        hwreg.h)
 
 add_subdirectory(aica)
 add_subdirectory(arm7)

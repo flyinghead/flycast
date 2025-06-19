@@ -1,27 +1,27 @@
 if(NOT LIBRETRO)
     target_sources(${PROJECT_NAME} PRIVATE
-            ${CMAKE_CURRENT_SOURCE_DIR}/game_scanner.cpp
-            ${CMAKE_CURRENT_SOURCE_DIR}/game_scanner.h
-            ${CMAKE_CURRENT_SOURCE_DIR}/imgui_driver.h
-            ${CMAKE_CURRENT_SOURCE_DIR}/gui.cpp
-            ${CMAKE_CURRENT_SOURCE_DIR}/gui.h
-            ${CMAKE_CURRENT_SOURCE_DIR}/gui_achievements.cpp
-            ${CMAKE_CURRENT_SOURCE_DIR}/vgamepad.cpp
-            ${CMAKE_CURRENT_SOURCE_DIR}/vgamepad.h
-            ${CMAKE_CURRENT_SOURCE_DIR}/gui_chat.h
-            ${CMAKE_CURRENT_SOURCE_DIR}/gui_cheats.cpp
-            ${CMAKE_CURRENT_SOURCE_DIR}/gui_util.cpp
-            ${CMAKE_CURRENT_SOURCE_DIR}/gui_util.h
-            ${CMAKE_CURRENT_SOURCE_DIR}/mainui.cpp
-            ${CMAKE_CURRENT_SOURCE_DIR}/mainui.h
-            ${CMAKE_CURRENT_SOURCE_DIR}/boxart/boxart.cpp
-            ${CMAKE_CURRENT_SOURCE_DIR}/boxart/boxart.h
-            ${CMAKE_CURRENT_SOURCE_DIR}/boxart/gamesdb.cpp
-            ${CMAKE_CURRENT_SOURCE_DIR}/boxart/gamesdb.h
-            ${CMAKE_CURRENT_SOURCE_DIR}/boxart/scraper.cpp
-            ${CMAKE_CURRENT_SOURCE_DIR}/boxart/scraper.h)
+            game_scanner.cpp
+            game_scanner.h
+            imgui_driver.h
+            gui.cpp
+            gui.h
+            gui_achievements.cpp
+            vgamepad.cpp
+            vgamepad.h
+            gui_chat.h
+            gui_cheats.cpp
+            gui_util.cpp
+            gui_util.h
+            mainui.cpp
+            mainui.h
+            boxart/boxart.cpp
+            boxart/boxart.h
+            boxart/gamesdb.cpp
+            boxart/gamesdb.h
+            boxart/scraper.cpp
+            boxart/scraper.h)
 
     if(USE_DISCORD)
-        target_sources(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/discord.cpp)
+        target_sources(${PROJECT_NAME} PRIVATE discord.cpp)
     endif()
 endif()
