@@ -890,6 +890,16 @@ endif()
 add_subdirectory(core/archive)
 add_subdirectory(core/cfg)
 add_subdirectory(core/hw)
+add_subdirectory(core/imgread)
+add_subdirectory(core/input)
+add_subdirectory(core/log)
+add_subdirectory(core/network)
+add_subdirectory(core/oslib)
+add_subdirectory(core/audio)
+add_subdirectory(core/reios)
+add_subdirectory(core/achievements)
+add_subdirectory(core/ui)
+add_subdirectory(core/lua)
 
 cmrc_add_resources(flycast-resources
 		WHENCE resources
@@ -934,31 +944,6 @@ if(NOT LIBRETRO)
 	endif()
 endif()
 
-target_sources(${PROJECT_NAME} PRIVATE
-		core/imgread/cdi.cpp
-		core/imgread/cdio.cpp
-		core/imgread/chd.cpp
-		core/imgread/common.cpp
-		core/imgread/common.h
-		core/imgread/cue.cpp
-		core/imgread/gdi.cpp
-		core/imgread/ImgReader.cpp
-		core/imgread/iso9660.h
-		core/imgread/isofs.cpp
-		core/imgread/isofs.h)
-
-if(NOT LIBRETRO)
-	target_sources(${PROJECT_NAME} PRIVATE
-			core/input/gamepad.h
-			core/input/gamepad_device.cpp
-			core/input/gamepad_device.h
-			core/input/keyboard_device.h
-			core/input/mapping.cpp
-			core/input/mapping.h
-			core/input/mouse.cpp
-			core/input/mouse.h)
-endif()
-
 if(WIN32)
 	target_sources(${PROJECT_NAME} PRIVATE
 			core/windows/comptr.h
@@ -993,28 +978,6 @@ if(NOT LIBRETRO)
 			core/linux-dist/x11_keyboard.h)
 endif()
 
-target_sources(${PROJECT_NAME} PRIVATE
-		core/log/BitSet.h
-		core/log/Log.h
-		core/log/StringUtil.h)
-if(NOT LIBRETRO)
-	target_sources(${PROJECT_NAME} PRIVATE
-			core/log/ConsoleListener.h
-			core/log/ConsoleListenerDroid.cpp
-			core/log/ConsoleListenerNix.cpp
-			core/log/ConsoleListenerWin.cpp
-			core/log/LogManager.cpp
-			core/log/LogManager.h)
-endif()
-
-add_subdirectory(core/network)
-add_subdirectory(core/oslib)
-add_subdirectory(core/audio)
-
-target_sources(${PROJECT_NAME} PRIVATE
-		core/lua/lua.cpp
-		core/lua/lua.h)
-
 if (ENABLE_DC_PROFILER)
 	target_sources(${PROJECT_NAME} PRIVATE
 		core/profiler/dc_profiler.cpp
@@ -1031,10 +994,8 @@ if (ENABLE_FC_PROFILER)
 		target_compile_definitions(${PROJECT_NAME} PRIVATE FC_PROFILER)
 endif()
 
-add_subdirectory(core/reios)
 cmrc_add_resources(flycast-resources fonts/biosfont.bin.zip)
 
-add_subdirectory(core/achievements)
 if(NOT LIBRETRO)
 	target_sources(${PROJECT_NAME} PRIVATE
 			core/deps/rcheevos/src/rc_client_raintegration.c
@@ -1070,23 +1031,10 @@ if(NOT LIBRETRO)
 	target_compile_definitions(${PROJECT_NAME} PRIVATE USE_RACHIEVEMENTS RC_DISABLE_LUA)
 endif()
 
-target_sources(${PROJECT_NAME} PRIVATE
-		core/wsi/context.h
-		core/wsi/libretro.cpp
-		core/wsi/libretro.h
-		core/wsi/switcher.cpp)
+add_subdirectory(core/wsi)
 
 if(USE_OPENGL)
 	target_compile_definitions(${PROJECT_NAME} PRIVATE USE_OPENGL)
-	target_sources(${PROJECT_NAME} PRIVATE
-			core/wsi/egl.cpp
-			core/wsi/egl.h
-			core/wsi/gl_context.cpp
-			core/wsi/gl_context.h
-			core/wsi/osx.cpp
-			core/wsi/osx.h
-			core/wsi/sdl.cpp
-			core/wsi/sdl.h)
 
 	target_sources(${PROJECT_NAME} PRIVATE
 			core/rend/gles/glcache.h
@@ -1145,8 +1093,6 @@ target_sources(${PROJECT_NAME} PRIVATE
 		core/rend/texconv.cpp
 		core/rend/texconv.h
 		core/rend/norend/norend.cpp)
-
-add_subdirectory(core/ui)
 
 if(USE_VULKAN)
 	target_compile_definitions(${PROJECT_NAME} PUBLIC VK_ENABLE_BETA_EXTENSIONS VK_NO_PROTOTYPES)
