@@ -1538,33 +1538,7 @@ if(NOT LIBRETRO)
 endif()
 
 if(BUILD_TESTING)
-	option(BUILD_GMOCK "Builds the googlemock subproject" OFF)
-	option(INSTALL_GTEST "Enable installation of googletest. (Projects embedding googletest may want to turn this OFF.)" OFF)
-	if(WIN32)
-		set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-	endif()
-	add_subdirectory(core/deps/googletest EXCLUDE_FROM_ALL)
-	target_link_libraries(${PROJECT_NAME} PRIVATE GTest::gtest_main)
-
-	target_include_directories(${PROJECT_NAME} PUBLIC tests/inc)
-	target_sources(${PROJECT_NAME} PRIVATE
-			tests/src/CheatManagerTest.cpp
-			tests/src/ConfigFileTest.cpp
-			tests/src/div32_test.cpp
-			tests/src/test_stubs.cpp
-			tests/src/serialize_test.cpp
-			tests/src/AicaArmTest.cpp
-			tests/src/Sh4InterpreterTest.cpp
-			tests/src/MmuTest.cpp
-			tests/src/input/ButtonComboTest.cpp
-			tests/src/input/GamepadInputHandlingTest.cpp
-			tests/src/input/MultiBindMappingTest.cpp
-			tests/src/input/InputDefTest.cpp
-			tests/src/input/InputMappingConfigFileTest.cpp
-			tests/src/input/InputSetTest.cpp
-			tests/src/util/PeriodicThreadTest.cpp
-			tests/src/util/TsQueueTest.cpp
-			tests/src/util/WorkerThreadTest.cpp)
+	add_subdirectory(tests)
 endif()
 
 if(NINTENDO_SWITCH)
