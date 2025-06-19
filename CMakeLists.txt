@@ -479,19 +479,7 @@ if(NOT LIBRETRO)
 		endif()
 
 		target_compile_definitions(${PROJECT_NAME} PRIVATE USE_SDL USE_SDL_AUDIO)
-		target_sources(${PROJECT_NAME} PRIVATE
-			core/sdl/sdl.cpp
-			core/sdl/sdl.h
-			core/sdl/sdl_gamepad.cpp
-			core/sdl/sdl_gamepad.h
-			core/sdl/sdl_keyboard.h
-			core/sdl/sdl_keyboard_mac.h
-			core/sdl/dreamlink.cpp
-			core/sdl/dreamlink.h
-			core/sdl/dreampicoport.cpp
-			core/sdl/dreampicoport.h
-			core/sdl/dreamconn.cpp
-			core/sdl/dreamconn.h)
+		add_subdirectory(core/sdl)
 
 		if((UNIX AND NOT APPLE) OR NINTENDO_SWITCH)
 			find_package(CURL REQUIRED)
@@ -850,7 +838,6 @@ if(USE_DISCORD AND NOT LIBRETRO)
 	target_include_directories(${PROJECT_NAME} PRIVATE core/deps/discord-rpc/include)
 	target_link_libraries(${PROJECT_NAME} PRIVATE discord-rpc)
 	target_compile_definitions(${PROJECT_NAME} PRIVATE USE_DISCORD)
-	target_sources(${PROJECT_NAME} PRIVATE core/ui/discord.cpp)
 endif()
 
 cmrc_add_resource_library(flycast-resources ALIAS flycast::res NAMESPACE flycast)
@@ -900,27 +887,8 @@ if(LIBRETRO)
 	endif()
 endif()
 
-target_sources(${PROJECT_NAME} PRIVATE
-		core/archive/7zArchive.cpp
-		core/archive/7zArchive.h
-		core/archive/archive.cpp
-		core/archive/archive.h
-		core/archive/rzip.cpp
-		core/archive/rzip.h
-		core/archive/ZipArchive.cpp
-		core/archive/ZipArchive.h
-		core/cfg/option.h)
-
-if(NOT LIBRETRO)
-	target_sources(${PROJECT_NAME} PRIVATE
-			core/cfg/cfg.cpp
-			core/cfg/cfg.h
-			core/cfg/cl.cpp
-			core/cfg/ini.cpp
-			core/cfg/ini.h
-			core/cfg/option.cpp)
-endif()
-
+add_subdirectory(core/archive)
+add_subdirectory(core/cfg)
 add_subdirectory(core/hw)
 
 cmrc_add_resources(flycast-resources
@@ -1039,60 +1007,11 @@ if(NOT LIBRETRO)
 			core/log/LogManager.h)
 endif()
 
-target_sources(${PROJECT_NAME} PRIVATE
-		core/network/alienfnt_modem.cpp
-		core/network/alienfnt_modem.h
-		core/network/dns.cpp
-		core/network/ggpo.cpp
-		core/network/ggpo.h
-		core/network/miniupnp.cpp
-		core/network/miniupnp.h
-		core/network/naomi_network.cpp
-		core/network/naomi_network.h
-		core/network/net_handshake.cpp
-		core/network/net_handshake.h
-		core/network/net_platform.h
-		core/network/output.cpp
-		core/network/output.h
-		core/network/picoppp.cpp
-		core/network/picoppp.h
-		core/network/netservice.cpp
-		core/network/netservice.h
-		core/network/dcnet.cpp
-		core/network/dcnet.h
-		core/network/ice.cpp
-		core/network/ice.h
-		core/network/ifaddrs.c)
-
-if(NOT LIBRETRO)
-	target_sources(${PROJECT_NAME} PRIVATE
-			core/audio/audiobackend_alsa.cpp
-			core/audio/audiobackend_coreaudio.cpp
-			core/audio/audiobackend_directsound.cpp
-			core/audio/audiobackend_libao.cpp
-			core/audio/audiobackend_null.cpp
-			core/audio/audiobackend_oboe.cpp
-			core/audio/audiobackend_omx.cpp
-			core/audio/audiobackend_oss.cpp
-			core/audio/audiobackend_pulseaudio.cpp
-			core/audio/audiobackend_sdl2.cpp
-			core/audio/audiostream.cpp
-			core/oslib/http_client.cpp
-			core/oslib/http_client.h
-			core/oslib/oslib.cpp)
-endif()
+add_subdirectory(core/network)
+add_subdirectory(core/oslib)
+add_subdirectory(core/audio)
 
 target_sources(${PROJECT_NAME} PRIVATE
-		core/audio/audiostream.h
-		core/oslib/directory.h
-		core/oslib/host_context.h
-		core/oslib/oslib.h
-		core/oslib/resources.cpp
-		core/oslib/resources.h
-		core/oslib/storage.cpp
-		core/oslib/storage.h
-		core/oslib/unwind_info.h
-		core/oslib/virtmem.h
 		core/lua/lua.cpp
 		core/lua/lua.h)
 
@@ -1112,20 +1031,10 @@ if (ENABLE_FC_PROFILER)
 		target_compile_definitions(${PROJECT_NAME} PRIVATE FC_PROFILER)
 endif()
 
-target_sources(${PROJECT_NAME} PRIVATE
-		core/reios/descrambl.cpp
-		core/reios/descrambl.h
-		core/reios/gdrom_hle.cpp
-		core/reios/gdrom_hle.h
-		core/reios/reios.cpp
-		core/reios/reios.h
-		core/reios/reios_elf.cpp
-		core/reios/reios_elf.h)
+add_subdirectory(core/reios)
 cmrc_add_resources(flycast-resources fonts/biosfont.bin.zip)
 
-target_sources(${PROJECT_NAME} PRIVATE
-			core/achievements/achievements.cpp
-			core/achievements/achievements.h)
+add_subdirectory(core/achievements)
 if(NOT LIBRETRO)
 	target_sources(${PROJECT_NAME} PRIVATE
 			core/deps/rcheevos/src/rc_client_raintegration.c
@@ -1236,37 +1145,8 @@ target_sources(${PROJECT_NAME} PRIVATE
 		core/rend/texconv.cpp
 		core/rend/texconv.h
 		core/rend/norend/norend.cpp)
-if(NOT LIBRETRO)
-	target_sources(${PROJECT_NAME} PRIVATE
-			core/ui/game_scanner.cpp
-			core/ui/game_scanner.h
-			core/ui/imgui_driver.h
-			core/ui/gui.cpp
-			core/ui/gui.h
-			core/ui/gui_achievements.cpp
-			core/ui/vgamepad.cpp
-			core/ui/vgamepad.h
-			core/ui/gui_chat.h
-			core/ui/gui_cheats.cpp
-			core/ui/gui_util.cpp
-			core/ui/gui_util.h
-			core/ui/mainui.cpp
-			core/ui/mainui.h
-			core/ui/settings.cpp
-			core/ui/settings.h
-			core/ui/settings_about.cpp
-			core/ui/settings_audio.cpp
-			core/ui/settings_controls.cpp
-			core/ui/settings_general.cpp
-			core/ui/settings_network.cpp
-			core/ui/settings_video.cpp
-			core/ui/boxart/boxart.cpp
-			core/ui/boxart/boxart.h
-			core/ui/boxart/gamesdb.cpp
-			core/ui/boxart/gamesdb.h
-			core/ui/boxart/scraper.cpp
-			core/ui/boxart/scraper.h)
-endif()
+
+add_subdirectory(core/ui)
 
 if(USE_VULKAN)
 	target_compile_definitions(${PROJECT_NAME} PUBLIC VK_ENABLE_BETA_EXTENSIONS VK_NO_PROTOTYPES)
