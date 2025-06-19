@@ -840,7 +840,6 @@ if(USE_DISCORD AND NOT LIBRETRO)
 	target_compile_definitions(${PROJECT_NAME} PRIVATE USE_DISCORD)
 endif()
 
-cmrc_add_resource_library(flycast-resources ALIAS flycast::res NAMESPACE flycast)
 target_link_libraries(${PROJECT_NAME} PRIVATE flycast::res)
 
 if(LIBRETRO)
@@ -900,49 +899,10 @@ add_subdirectory(core/reios)
 add_subdirectory(core/achievements)
 add_subdirectory(core/ui)
 add_subdirectory(core/lua)
+add_subdirectory(core/profiler)
+add_subdirectory(core/wsi)
 
-cmrc_add_resources(flycast-resources
-		WHENCE resources
-		resources/flash/alienfnt.nvmem.zip	# network settings
-		resources/flash/gunsur2.nvmem.zip
-		resources/flash/mazan.nvmem.zip		# free play, calibrated
-		resources/flash/otrigger.nvmem.zip
-		resources/flash/wldkicks.nvmem.zip	# free play
-		resources/flash/wldkicksj.nvmem.zip	# free play
-		resources/flash/wldkicksu.nvmem.zip	# free play
-		resources/flash/f355.nvmem.zip		# printer on
-		resources/flash/f355twin.nvmem.zip	# printer on
-		resources/flash/f355twn2.nvmem.zip	# printer on
-		resources/flash/dirtypig.nvmem.zip	# 4 players
-		resources/flash/dirtypig.nvmem2.zip
-		resources/flash/vf4.nvmem.zip		# card all day, stage select
-		resources/flash/vf4evob.nvmem.zip	# card all day, stage select
-		resources/flash/vf4tuned.nvmem.zip  # card all day, stage select, 45 sec time limit, 3 match
-		resources/flash/magicpop.nvmem.zip	# debug: comm and all errors disabled
-		resources/flash/ochaken.nvmem.zip	# debug: comm and all errors disabled
-		resources/flash/puyomedal.nvmem.zip	# debug: comm and all errors disabled
-		resources/flash/unomedal.nvmem.zip	# debug: comm and all errors disabled
-		resources/flash/westdrmg.nvmem.zip	# debug: comm and all errors disabled
-		resources/picture/f355_print_template.png)
-
-cmrc_add_resources(flycast-resources
-		fonts/printer_ascii8x16.bin.zip
-		fonts/printer_ascii12x24.bin.zip
-		fonts/printer_kanji16x16.bin.zip
-		fonts/printer_kanji24x24.bin.zip)
-
-if(NOT LIBRETRO)
-	cmrc_add_resources(flycast-resources
-		fonts/Roboto-Medium.ttf.zip
-		fonts/Roboto-Regular.ttf.zip
-		fonts/fa-solid-900.ttf.zip)
-	if(ANDROID OR IOS)
-		cmrc_add_resources(flycast-resources
-			WHENCE resources
-			resources/picture/buttons.png
-			resources/picture/buttons-arcade.png)
-	endif()
-endif()
+include(cmake/resources.cmake)
 
 if(WIN32)
 	target_sources(${PROJECT_NAME} PRIVATE
@@ -978,24 +938,6 @@ if(NOT LIBRETRO)
 			core/linux-dist/x11_keyboard.h)
 endif()
 
-if (ENABLE_DC_PROFILER)
-	target_sources(${PROJECT_NAME} PRIVATE
-		core/profiler/dc_profiler.cpp
-		core/profiler/dc_profiler.h)
-
-		target_compile_definitions(${PROJECT_NAME} PRIVATE DC_PROFILER)
-endif()
-
-if (ENABLE_FC_PROFILER)
-	target_sources(${PROJECT_NAME} PRIVATE
-		core/profiler/fc_profiler.cpp
-		core/profiler/fc_profiler.h)
-
-		target_compile_definitions(${PROJECT_NAME} PRIVATE FC_PROFILER)
-endif()
-
-cmrc_add_resources(flycast-resources fonts/biosfont.bin.zip)
-
 if(NOT LIBRETRO)
 	target_sources(${PROJECT_NAME} PRIVATE
 			core/deps/rcheevos/src/rc_client_raintegration.c
@@ -1030,8 +972,6 @@ if(NOT LIBRETRO)
 	target_include_directories(${PROJECT_NAME} PRIVATE core/deps/rcheevos/include)
 	target_compile_definitions(${PROJECT_NAME} PRIVATE USE_RACHIEVEMENTS RC_DISABLE_LUA)
 endif()
-
-add_subdirectory(core/wsi)
 
 if(USE_OPENGL)
 	target_compile_definitions(${PROJECT_NAME} PRIVATE USE_OPENGL)
