@@ -22,6 +22,6 @@ if(NOT LIBRETRO)
             ${CMAKE_CURRENT_SOURCE_DIR}/boxart/scraper.h)
 
     if(USE_DISCORD)
-        target_sources(${PROJECT_NAME} PRIVATE core/ui/discord.cpp)
+        target_sources(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/discord.cpp)
     endif()
 endif()
