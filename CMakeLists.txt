@@ -1434,6 +1434,14 @@ if(NOT LIBRETRO)
 			core/ui/gui_util.h
 			core/ui/mainui.cpp
 			core/ui/mainui.h
+			core/ui/settings.cpp
+			core/ui/settings.h
+			core/ui/settings_about.cpp
+			core/ui/settings_audio.cpp
+			core/ui/settings_controls.cpp
+			core/ui/settings_general.cpp
+			core/ui/settings_network.cpp
+			core/ui/settings_video.cpp
 			core/ui/boxart/boxart.cpp
 			core/ui/boxart/boxart.h
 			core/ui/boxart/gamesdb.cpp
