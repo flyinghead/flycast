@@ -413,6 +413,8 @@ static InputDescriptors zombie_inputs = {
 	  {
 			{ "UP - DOWN", Full, 1, true },
 			{ "LEFT - RIGHT", Full, 0, true },
+			{ "", Half, 4 },	// unused but P2 starts at axis 4
+			{ "", Half, 5 },	// unused but P2 starts at axis 4
 	  },
 };
 
