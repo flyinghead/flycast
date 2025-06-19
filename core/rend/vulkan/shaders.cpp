@@ -735,6 +735,7 @@ vk::UniqueShaderModule ShaderManager::compileShader(const VertexShaderParams& pa
 	else
 	{
 		src.addConstant("pp_Gouraud", (int)params.gouraud)
+				.addConstant("pp_Texture", (int)params.texture)
 				.addSource(GouraudSource)
 				.addSource(N2LightShaderSource)
 				.addSource(N2VertexShaderSource);
