@@ -1538,6 +1538,7 @@ if(NOT LIBRETRO)
 endif()
 
 if(BUILD_TESTING)
+	add_subdirectory(core/deps/googletest EXCLUDE_FROM_ALL)
 	add_subdirectory(tests)
 endif()
 
