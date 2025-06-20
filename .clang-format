@@ -9,6 +9,7 @@ DerivePointerAlignment: false
 PointerAlignment: Left
 ReferenceAlignment: Left
 BreakBeforeBinaryOperators: NonAssignment
+BreakTemplateDeclarations: No
 AlignOperands: Align
 AlignConsecutiveMacros: Consecutive
 AlignArrayOfStructures: Right
