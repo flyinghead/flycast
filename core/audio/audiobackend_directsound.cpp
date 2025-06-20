@@ -4,11 +4,11 @@
 #include "cfg/option.h"
 #include "oslib/oslib.h"
 #include "stdclass.h"
+#include <dsound.h>
 #include <initguid.h>
 
 #include "windows/comptr.h"
 #include <atomic>
-#include <dsound.h>
 #include <thread>
 #include <vector>
 
