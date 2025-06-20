@@ -1,0 +1,44 @@
+BasedOnStyle: LLVM
+UseTab: Always
+IndentWidth: 4
+TabWidth: 4
+BreakBeforeBraces: Allman
+ColumnLimit: 0
+
+DerivePointerAlignment: false
+PointerAlignment: Left
+ReferenceAlignment: Left
+BreakBeforeBinaryOperators: NonAssignment
+AlignOperands: Align
+AlignConsecutiveMacros: Consecutive
+AlignArrayOfStructures: Right
+AlignAfterOpenBracket: DontAlign
+
+AlignTrailingComments:
+  Kind: Always
+  OverEmptyLines: 2
+
+IndentCaseLabels: false
+IndentCaseBlocks: false
+AccessModifierOffset: -4
+IndentAccessModifiers: false
+EmptyLineBeforeAccessModifier: Always
+NamespaceIndentation: None
+Standard: c++17
+SpaceBeforeParens: ControlStatements
+SpaceAfterCStyleCast: false
+SpaceBeforeAssignmentOperators: true
+SpaceInEmptyParentheses: false
+SpacesInSquareBrackets: false
+SpaceBeforeCpp11BracedList: true
+SpaceAfterTemplateKeyword: false
+Cpp11BracedListStyle: false
+FixNamespaceComments: false
+
+KeepEmptyLines:
+  AtEndOfFile: true
+  AtStartOfBlock: false
+  AtStartOfFile: false
+
+InsertNewlineAtEOF: true
+AllowShortEnumsOnASingleLine: true
