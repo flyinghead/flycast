@@ -938,7 +938,8 @@ void Emulator::run()
 		runInternal();
 		if (ggpo::active())
 			ggpo::nextFrame();
-	} catch (...) {
+	} catch (const std::exception& e) {
+		printf("Exception: %s\n", e.what());
 		setNetworkState(false);
 		state = Error;
 		getSh4Executor()->Stop();

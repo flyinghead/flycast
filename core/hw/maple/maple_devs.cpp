@@ -2276,7 +2276,8 @@ struct DreamLinkVmu : public maple_sega_vmu
 								}
 
 								MapleMsg rcvMsg;
-								if (dreamlink->send(*msg, rcvMsg) && rcvMsg.size == 130) {
+								bool response = dreamlink->send(*msg, rcvMsg);
+								if (response && rcvMsg.size == 130) {
 									// Something read!
 									u8 block = rcvMsg.data[7];
 									memcpy(&flash_data[block * 4 * 128], &rcvMsg.data[8], 4 * 128);

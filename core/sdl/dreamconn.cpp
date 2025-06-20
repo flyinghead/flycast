@@ -35,6 +35,10 @@
 #include <windows.h>
 #include <setupapi.h>
 #endif
+#include <hw\maple\maple_if.h>
+
+// TODO: it doesn't seem sound to assume that only one dreamlink will need reconnecting at a time.
+std::shared_ptr<DreamLink> dreamlink_needs_reconnect = nullptr;
 
 static asio::error_code sendMsg(const MapleMsg& msg, asio::ip::tcp::iostream& stream)
 {
@@ -82,7 +86,10 @@ DreamConn::~DreamConn() {
 
 bool DreamConn::send(const MapleMsg& msg) {
 	std::lock_guard<std::mutex> lock(send_mutex); // Ensure thread safety for send operations
+	return send_no_lock(msg);
+}
 
+bool DreamConn::send_no_lock(const MapleMsg& msg) {
 	asio::error_code ec;
 
 	if (maple_io_connected)
@@ -101,7 +108,7 @@ bool DreamConn::send(const MapleMsg& msg) {
 bool DreamConn::send(const MapleMsg& txMsg, MapleMsg& rxMsg) {
 	std::lock_guard<std::mutex> lock(send_mutex); // Ensure thread safety for send operations
 
-	if (!send(txMsg)) {
+	if (!send_no_lock(txMsg)) {
 		return false;
 	}
 	return receiveMsg(rxMsg, iostream);
@@ -109,6 +116,59 @@ bool DreamConn::send(const MapleMsg& txMsg, MapleMsg& rxMsg) {
 
 void DreamConn::changeBus(int newBus) {
 	bus = newBus;
+}
+
+void DreamConn::reloadConfigurationIfNeeded() {
+	if (!maple_io_connected) {
+		return;
+	}
+
+	std::lock_guard<std::mutex> lock(send_mutex);
+
+	asio::ip::tcp::socket& sock = static_cast<asio::ip::tcp::socket&>(iostream.socket());
+	// TODO: it's dubious just to assume that it's a reset message if it starts with 'F' and is long enough.
+	// Ideally we could notice if any message we read was a reset message and react accordingly
+	if (sock.available() >= 13 && iostream.peek() == (int)'F') {
+		MapleMsg message;
+		receiveMsg(message, iostream);
+
+		if (message.command == 0xff && message.destAP == 0xff && message.originAP == 0xff && message.size == 0xff) {
+			if (!updateExpansionDevs()) {
+				return;
+			}
+			NOTICE_LOG(INPUT, "Reloading DreamcastController devices bus[%d]: Type:%s, VMU:%d, Rumble Pack:%d", bus, getName().c_str(), hasVmu(), hasRumble());
+			dreamlink_needs_reconnect = shared_from_this();
+			maple_ReconnectDevices();
+		}
+	}
+}
+
+bool DreamConn::updateExpansionDevs() {
+
+	// Now get the controller configuration
+	MapleMsg msg;
+	msg.command = MDCF_GetCondition;
+	msg.destAP = (bus << 6) | 0x20;
+	msg.originAP = bus << 6;
+	msg.setData(MFID_0_Input);
+
+	auto ec = sendMsg(msg, iostream);
+	if (ec)
+	{
+		WARN_LOG(INPUT, "DreamcastController[%d] connection failed: %s", bus, ec.message().c_str());
+		disconnect();
+		return false;
+	}
+	if (!receiveMsg(msg, iostream)) {
+		WARN_LOG(INPUT, "DreamcastController[%d] read timeout", bus);
+		disconnect();
+		return false;
+	}
+
+	expansionDevs = msg.originAP & 0x1f;
+	config::MapleExpansionDevices[bus][0] = hasVmu() ? MDT_SegaVMU : MDT_None;
+	config::MapleExpansionDevices[bus][1] = hasRumble() ? MDT_PurupuruPack : MDT_None;
+	return true;
 }
 
 void DreamConn::connect() {
@@ -127,9 +187,9 @@ void DreamConn::connect() {
 		disconnect();
 		return;
 	}
-	iostream.expires_from_now(std::chrono::seconds(1));
+	iostream.expires_from_now(std::chrono::seconds(10)); // TODO revert
 
-
+	// TODO: reuse helper 'reloadConfigurationIfNeeded()'
 	// Now get the controller configuration
 	MapleMsg msg;
 	msg.command = MDCF_GetCondition;
@@ -150,14 +210,15 @@ void DreamConn::connect() {
 		return;
 	}
 
-	iostream.expires_from_now(std::chrono::duration<u32>::max());	// don't use a 64-bit based duration to avoid overflow
-
 	expansionDevs = msg.originAP & 0x1f;
 
 	config::MapleExpansionDevices[bus][0] = hasVmu() ? MDT_SegaVMU : MDT_None;
 	config::MapleExpansionDevices[bus][1] = hasRumble() ? MDT_PurupuruPack : MDT_None;
 
-	if (hasVmu() || hasRumble())
+	iostream.expires_from_now(std::chrono::duration<u32>::max());	// don't use a 64-bit based duration to avoid overflow
+
+	// TODO: unsure whether to adjust or to delete this condition. We need to stay connected to be notified if a peripheral gets plugged back in later on
+	if (true || (hasVmu() || hasRumble()))
 	{
 		NOTICE_LOG(INPUT, "Connected to DreamcastController[%d]: Type:%s, VMU:%d, Rumble Pack:%d", bus, getName().c_str(), hasVmu(), hasRumble());
 		maple_io_connected = true;

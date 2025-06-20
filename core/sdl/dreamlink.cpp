@@ -46,8 +46,7 @@
 #include <setupapi.h>
 #endif
 
-void createDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink, bool gameStart);
-void tearDownDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink);
+std::vector<std::shared_ptr<DreamLink>> allDreamLinks = {};
 
 bool DreamLinkGamepad::isDreamcastController(int deviceIndex)
 {
@@ -60,7 +59,9 @@ bool DreamLinkGamepad::isDreamcastController(int deviceIndex)
 	// DreamConn VID:4457 PID:4443
 	// Dreamcast Controller USB VID:1209 PID:2f07
     const char* pid_vid_guid_str = guid_str + 8;
-	if (memcmp(DreamConn::VID_PID_GUID, pid_vid_guid_str, 16) == 0 ||
+	// TODO hack: just assume every controller is a DreamLinkGamepad
+	if (true ||
+		memcmp(DreamConn::VID_PID_GUID, pid_vid_guid_str, 16) == 0 ||
 		memcmp(DreamPicoPort::VID_PID_GUID, pid_vid_guid_str, 16) == 0)
 	{
 		NOTICE_LOG(INPUT, "Dreamcast controller found!");
@@ -79,8 +80,11 @@ DreamLinkGamepad::DreamLinkGamepad(int maple_port, int joystick_idx, SDL_Joystic
 
 	// DreamConn VID:4457 PID:4443
 	// Dreamcast Controller USB VID:1209 PID:2f07
-	if (memcmp(DreamConn::VID_PID_GUID, guid_str + 8, 16) == 0)
+	// TODO hack: assume the connected gamepad is a DreamConn.
+	if (true ||
+		memcmp(DreamConn::VID_PID_GUID, guid_str + 8, 16) == 0)
 	{
+		// TODO: can't we just attempt to make a DreamConn elsewhere, in order to decouple the concept from gamepad
 		dreamlink = std::make_shared<DreamConn>(maple_port);
 	}
 	else if (memcmp(DreamPicoPort::VID_PID_GUID, guid_str + 8, 16) == 0)
@@ -89,6 +93,7 @@ DreamLinkGamepad::DreamLinkGamepad(int maple_port, int joystick_idx, SDL_Joystic
 	}
 
 	if (dreamlink) {
+		allDreamLinks.push_back(dreamlink);
 		_name = dreamlink->getName();
 		int defaultBus = dreamlink->getDefaultBus();
 		if (defaultBus >= 0 && defaultBus < 4) {

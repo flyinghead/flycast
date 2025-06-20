@@ -65,10 +65,10 @@ struct MapleMsg
 static_assert(sizeof(MapleMsg) == 1028);
 
 // Abstract base class for physical controller implementations
-class DreamLink
+class DreamLink : public std::enable_shared_from_this<DreamLink>
 {
 public:
-    DreamLink() = default;
+	DreamLink() = default;
 
 	virtual ~DreamLink() = default;
 
@@ -130,6 +130,9 @@ public:
 	//! @return the display name of the controller
 	virtual std::string getName() const = 0;
 
+	//! Check if the remote device configuration has changed and update if necessary
+	virtual void reloadConfigurationIfNeeded() = 0;
+
 	//! Attempt connection to the hardware controller
 	virtual void connect() = 0;
 
@@ -165,3 +168,7 @@ private:
 	bool startPressed = false;
 	std::string device_guid;
 };
+
+extern std::vector<std::shared_ptr<DreamLink>> allDreamLinks;
+void createDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink, bool gameStart);
+void tearDownDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink);

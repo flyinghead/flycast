@@ -61,6 +61,7 @@ __attribute__((format(printf, 5, 6)))
 #else
 #ifndef MAX_LOGLEVEL
 #define MAX_LOGLEVEL LogTypes::LOG_LEVELS::LWARNING
+//#define MAX_LOGLEVEL LogTypes::LOG_LEVELS::LINFO
 #endif  // loglevel
 #endif  // logging
 

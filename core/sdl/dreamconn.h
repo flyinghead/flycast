@@ -24,18 +24,23 @@
 #include <asio.hpp>
 #include <mutex>
 
+extern std::shared_ptr<DreamLink> dreamlink_needs_reconnect;
+
 class DreamConn : public DreamLink
 {
 	//! Base port of communication to DreamConn
 	static constexpr u16 BASE_PORT = 37393;
 
 	int bus = -1;
-	bool maple_io_connected = false;
 	u8 expansionDevs = 0;
 	asio::ip::tcp::iostream iostream;
 	std::mutex send_mutex;
 
+private:
+	bool send_no_lock(const MapleMsg& msg);
+
 public:
+	bool maple_io_connected = false;
 	//! DreamConn VID:4457 PID:4443
 	static constexpr const char* VID_PID_GUID = "5744000043440000";
 
@@ -87,6 +92,10 @@ public:
 	std::string getName() const override {
 		return "DreamConn+ / DreamConn S Controller";
 	}
+
+	void reloadConfigurationIfNeeded() override;
+
+	bool updateExpansionDevs();
 
 	void connect() override;
 
