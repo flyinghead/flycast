@@ -2,22 +2,22 @@
 #if defined(_WIN32) && !defined(TARGET_UWP)
 #include "audiostream.h"
 #include "cfg/option.h"
-#include <initguid.h>
-#include <dsound.h>
-#include <vector>
-#include <atomic>
-#include <thread>
+#include "oslib/oslib.h"
 #include "stdclass.h"
 #include "windows/comptr.h"
-#include "oslib/oslib.h"
+#include <atomic>
+#include <dsound.h>
+#include <initguid.h>
+#include <thread>
+#include <vector>
 
 HWND getNativeHwnd();
 #define verifyc(x) verify(!FAILED(x))
 
 #ifdef __CRT_UUID_DECL
-__CRT_UUID_DECL(IDirectSoundBuffer8, 0x6825A449,0x7524,0x4D82,0x92,0x0F,0x50,0xE3,0x6A,0xB3,0xAB,0x1E);
-__CRT_UUID_DECL(IDirectSoundNotify,	0xB0210783,0x89cd,0x11d0,0xAF,0x08,0x00,0xA0,0xC9,0x25,0xCD,0x16);
-__CRT_UUID_DECL(IDirectSoundCaptureBuffer8, 0x00990DF4,0x0DBB,0x4872,0x83,0x3E,0x6D,0x30,0x3E,0x80,0xAE,0xB6);
+__CRT_UUID_DECL(IDirectSoundBuffer8, 0x6825A449, 0x7524, 0x4D82, 0x92, 0x0F, 0x50, 0xE3, 0x6A, 0xB3, 0xAB, 0x1E);
+__CRT_UUID_DECL(IDirectSoundNotify, 0xB0210783, 0x89cd, 0x11d0, 0xAF, 0x08, 0x00, 0xA0, 0xC9, 0x25, 0xCD, 0x16);
+__CRT_UUID_DECL(IDirectSoundCaptureBuffer8, 0x00990DF4, 0x0DBB, 0x4872, 0x83, 0x3E, 0x6D, 0x30, 0x3E, 0x80, 0xAE, 0xB6);
 #else
 struct __declspec(uuid("{6825A449-7524-4D82-920F-50E36AB3AB1E}")) IDirectSoundBuffer8;
 struct __declspec(uuid("{B0210783-89cd-11d0-AF08-00A0C925CD16}")) IDirectSoundNotify;
@@ -41,7 +41,8 @@ class DirectSoundBackend : public AudioBackend
 
 	RingBuffer ringBuffer;
 
-	u32 notificationOffset(int index) {
+	u32 notificationOffset(int index)
+	{
 		return index * SAMPLE_BYTES;
 	}
 
@@ -83,11 +84,13 @@ public:
 
 	bool init() override
 	{
-		if (FAILED(DirectSoundCreate8(NULL, &dsound.get(), NULL))) {
+		if (FAILED(DirectSoundCreate8(NULL, &dsound.get(), NULL)))
+		{
 			ERROR_LOG(AUDIO, "DirectSound8 initialization failed");
 			return false;
 		}
-		if (FAILED(dsound->SetCooperativeLevel(getNativeHwnd(), DSSCL_PRIORITY))) {
+		if (FAILED(dsound->SetCooperativeLevel(getNativeHwnd(), DSSCL_PRIORITY)))
+		{
 			ERROR_LOG(AUDIO, "DirectSound8 SetCooperativeLevel failed");
 			dsound.reset();
 			return false;
@@ -114,7 +117,7 @@ public:
 		// Create the buffer
 		ComPtr<IDirectSoundBuffer> buffer_;
 		if (FAILED(dsound->CreateSoundBuffer(&desc, &buffer_.get(), 0))
-				|| FAILED(buffer_.as(buffer)))
+			|| FAILED(buffer_.as(buffer)))
 		{
 			ERROR_LOG(AUDIO, "DirectSound8 CreateSoundBuffer failed");
 			dsound.reset();
@@ -159,7 +162,7 @@ public:
 
 	u32 push(const void* frame, u32 samples, bool wait) override
 	{
-		while (!ringBuffer.write((const u8 *)frame, samples * 4) && wait)
+		while (!ringBuffer.write((const u8*)frame, samples * 4) && wait)
 			pushWait.Wait();
 
 		return 1;
@@ -186,8 +189,7 @@ public:
 			return false;
 		}
 		HRESULT hr;
-		WAVEFORMATEX wfx =
-		{ WAVE_FORMAT_PCM, 1, sampling_freq, sampling_freq * 2, 2, 16, 0 };
+		WAVEFORMATEX wfx = { WAVE_FORMAT_PCM, 1, sampling_freq, sampling_freq * 2, 2, 16, 0 };
 		// wFormatTag, nChannels, nSamplesPerSec, nAvgBytesPerSec,
 		// nBlockAlign, wBitsPerSample, cbSize
 
@@ -214,7 +216,7 @@ public:
 		return true;
 	}
 
-	u32 record(void *buffer, u32 samples) override
+	u32 record(void* buffer, u32 samples) override
 	{
 		DWORD readPos;
 		capture_buffer->GetCurrentPosition(NULL, &readPos);
@@ -223,7 +225,7 @@ public:
 		capture_buffer->Lock(readPos, samples * 2, &p1, &p1bytes, &p2, &p2bytes, 0);
 		memcpy(buffer, p1, p1bytes);
 		if (p2bytes > 0)
-			memcpy((u8 *)buffer + p1bytes, p2, p2bytes);
+			memcpy((u8*)buffer + p1bytes, p2, p2bytes);
 		capture_buffer->Unlock(p1, p1bytes, p2, p2bytes);
 		return (p1bytes + p2bytes) / 2;
 	}

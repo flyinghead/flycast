@@ -1,9 +1,9 @@
 #if defined(USE_SDL_AUDIO)
 
-#include <SDL.h>
 #include "audiostream.h"
 #include "cfg/option.h"
 #include "stdclass.h"
+#include <SDL.h>
 
 #include <algorithm>
 #include <atomic>
@@ -15,7 +15,7 @@ class SDLAudioBackend : AudioBackend
 	bool needs_resampling = false;
 	cResetEvent read_wait;
 	std::mutex stream_mutex;
-	uint32_t *sample_buffer;
+	uint32_t* sample_buffer;
 	unsigned sample_buffer_size = 0;
 	unsigned sample_count = 0;
 	SDL_AudioCVT audioCvt;
@@ -27,7 +27,7 @@ class SDLAudioBackend : AudioBackend
 
 	static void audioCallback(void* userdata, Uint8* stream, int len)
 	{
-		SDLAudioBackend *backend = (SDLAudioBackend *)userdata;
+		SDLAudioBackend* backend = (SDLAudioBackend*)userdata;
 
 		backend->stream_mutex.lock();
 		// Wait until there's enough samples to feed the kraken
@@ -43,7 +43,8 @@ class SDLAudioBackend : AudioBackend
 			return;
 		}
 
-		if (!backend->needs_resampling) {
+		if (!backend->needs_resampling)
+		{
 			// Just copy bytes for this case.
 			memcpy(stream, &backend->sample_buffer[0], len);
 		}
@@ -72,12 +73,13 @@ public:
 	{
 		if (!SDL_WasInit(SDL_INIT_AUDIO))
 		{
-			if (SDL_InitSubSystem(SDL_INIT_AUDIO)) {
+			if (SDL_InitSubSystem(SDL_INIT_AUDIO))
+			{
 				ERROR_LOG(AUDIO, "SDL2 error initializing audio subsystem: %s", SDL_GetError());
 				return false;
 			}
 		}
-	
+
 		sample_buffer_size = std::max<u32>(SAMPLE_COUNT * 2, config::AudioBufferSize);
 		sample_buffer = new uint32_t[sample_buffer_size]();
 		sample_count = 0;
@@ -88,7 +90,7 @@ public:
 		wav_spec.freq = 44100;
 		wav_spec.format = AUDIO_S16;
 		wav_spec.channels = 2;
-		wav_spec.samples = SAMPLE_COUNT * 2;  // Must be power of two
+		wav_spec.samples = SAMPLE_COUNT * 2; // Must be power of two
 		wav_spec.callback = audioCallback;
 		wav_spec.userdata = this;
 		needs_resampling = false;
@@ -131,8 +133,10 @@ public:
 
 		// If wait, then wait for the buffer to be smaller than a certain size.
 		stream_mutex.lock();
-		if (wait) {
-			while (sample_count + samples > sample_buffer_size) {
+		if (wait)
+		{
+			while (sample_count + samples > sample_buffer_size)
+			{
 				stream_mutex.unlock();
 				read_wait.Wait();
 				stream_mutex.lock();
@@ -159,18 +163,18 @@ public:
 			SDL_CloseAudioDevice(audiodev);
 			audiodev = SDL_AudioDeviceID();
 		}
-		delete [] sample_buffer;
+		delete[] sample_buffer;
 		sample_buffer = nullptr;
 		if (needs_resampling)
 		{
-			delete [] audioCvt.buf;
+			delete[] audioCvt.buf;
 			audioCvt.buf = nullptr;
 		}
 	}
 
-	static void recordCallback(void *userdata, u8 *stream, int len)
+	static void recordCallback(void* userdata, u8* stream, int len)
 	{
-		SDLAudioBackend *backend = (SDLAudioBackend *)userdata;
+		SDLAudioBackend* backend = (SDLAudioBackend*)userdata;
 		DEBUG_LOG(AUDIO, "SDL2: sdl2_record_cb len %d write %zd read %zd", len, (size_t)backend->rec_write, (size_t)backend->rec_read);
 		while (len > 0)
 		{
@@ -192,7 +196,7 @@ public:
 		wav_spec.freq = sampling_freq;
 		wav_spec.format = AUDIO_S16;
 		wav_spec.channels = 1;
-		wav_spec.samples = 256;  // Must be power of two
+		wav_spec.samples = 256; // Must be power of two
 		wav_spec.callback = recordCallback;
 		wav_spec.userdata = this;
 		recorddev = SDL_OpenAudioDevice(NULL, 1, &wav_spec, &out_spec, 0);
@@ -227,7 +231,7 @@ public:
 			if (avail == 0)
 				break;
 			avail = std::min(avail, samples);
-			memcpy((u8 *)frame + count, &recordbuf[rec_read], avail);
+			memcpy((u8*)frame + count, &recordbuf[rec_read], avail);
 			rec_read = (rec_read + avail) % sizeof(recordbuf);
 			samples -= avail;
 			count += avail;

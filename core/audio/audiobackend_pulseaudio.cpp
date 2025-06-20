@@ -5,14 +5,14 @@
 
 class PulseAudioBackend : public AudioBackend
 {
-	pa_threaded_mainloop *mainloop = nullptr;
-	pa_context *context = nullptr;
-	pa_stream *stream = nullptr;
-	pa_stream *record_stream = nullptr;
+	pa_threaded_mainloop* mainloop = nullptr;
+	pa_context* context = nullptr;
+	pa_stream* stream = nullptr;
+	pa_stream* record_stream = nullptr;
 
-	static void context_state_cb(pa_context *c, void *userdata)
+	static void context_state_cb(pa_context* c, void* userdata)
 	{
-		PulseAudioBackend *backend = (PulseAudioBackend *)userdata;
+		PulseAudioBackend* backend = (PulseAudioBackend*)userdata;
 		switch (pa_context_get_state(c))
 		{
 		case PA_CONTEXT_READY:
@@ -25,9 +25,9 @@ class PulseAudioBackend : public AudioBackend
 		}
 	}
 
-	static void stream_request_cb(pa_stream *s, size_t length, void *userdata)
+	static void stream_request_cb(pa_stream* s, size_t length, void* userdata)
 	{
-		PulseAudioBackend *backend = (PulseAudioBackend *)userdata;
+		PulseAudioBackend* backend = (PulseAudioBackend*)userdata;
 		pa_threaded_mainloop_signal(backend->mainloop, 0);
 	}
 
@@ -76,7 +76,7 @@ public:
 			term();
 			return false;
 		}
-		pa_sample_spec spec{ PA_SAMPLE_S16LE, 44100, 2 };
+		pa_sample_spec spec { PA_SAMPLE_S16LE, 44100, 2 };
 
 		stream = pa_stream_new(context, "audio", &spec, NULL);
 		if (!stream)
@@ -87,11 +87,11 @@ public:
 			return false;
 		}
 
-		//pa_stream_set_state_callback(stream, stream_state_cb, this);
+		// pa_stream_set_state_callback(stream, stream_state_cb, this);
 		pa_stream_set_write_callback(stream, stream_request_cb, this);
-		//pa_stream_set_latency_update_callback(stream, stream_latency_update_cb, this);
-		//pa_stream_set_underflow_callback(stream, underrun_update_cb, this);
-		//pa_stream_set_buffer_attr_callback(stream, buffer_attr_cb, this);
+		// pa_stream_set_latency_update_callback(stream, stream_latency_update_cb, this);
+		// pa_stream_set_underflow_callback(stream, underrun_update_cb, this);
+		// pa_stream_set_buffer_attr_callback(stream, buffer_attr_cb, this);
 
 		pa_buffer_attr buffer_attr;
 		buffer_attr.maxlength = -1;
@@ -118,7 +118,7 @@ public:
 			return false;
 		}
 
-		const pa_buffer_attr *server_attr = pa_stream_get_buffer_attr(stream);
+		const pa_buffer_attr* server_attr = pa_stream_get_buffer_attr(stream);
 		if (server_attr)
 			DEBUG_LOG(AUDIO, "PulseAudio: requested %d samples buffer, got %d", buffer_attr.tlength / 4, server_attr->tlength / 4);
 
@@ -129,7 +129,7 @@ public:
 
 	u32 push(const void* frame, u32 samples, bool wait) override
 	{
-		const u8 *buf = (const u8 *)frame;
+		const u8* buf = (const u8*)frame;
 		size_t size = samples * 4;
 
 		pa_threaded_mainloop_lock(mainloop);
@@ -178,7 +178,7 @@ public:
 
 	bool initRecord(u32 sampling_freq) override
 	{
-		pa_sample_spec spec{ PA_SAMPLE_S16LE, sampling_freq, 1 };
+		pa_sample_spec spec { PA_SAMPLE_S16LE, sampling_freq, 1 };
 
 		record_stream = pa_stream_new(context, "record", &spec, NULL);
 		if (!record_stream)
@@ -218,12 +218,12 @@ public:
 		}
 	}
 
-	u32 record(void *buffer, u32 samples) override
+	u32 record(void* buffer, u32 samples) override
 	{
 		if (record_stream == nullptr)
 			return 0;
 		pa_threaded_mainloop_lock(mainloop);
-		const void *data;
+		const void* data;
 		size_t size;
 		if (pa_stream_peek(record_stream, &data, &size) < 0)
 		{

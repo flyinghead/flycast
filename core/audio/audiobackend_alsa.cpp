@@ -1,16 +1,16 @@
 #if USE_ALSA
 #include "audiostream.h"
-#include <alsa/asoundlib.h>
 #include "cfg/cfg.h"
 #include "cfg/option.h"
+#include <alsa/asoundlib.h>
 
 class AlsaAudioBackend : public AudioBackend
 {
-	snd_pcm_t *handle = nullptr;
+	snd_pcm_t* handle = nullptr;
 	bool pcm_blocking = true;
 	snd_pcm_uframes_t buffer_size = 0;
 	snd_pcm_uframes_t period_size = 0;
-	snd_pcm_t *handle_record = nullptr;
+	snd_pcm_t* handle_record = nullptr;
 
 public:
 	AlsaAudioBackend()
@@ -18,12 +18,13 @@ public:
 
 	bool init() override
 	{
-		snd_pcm_hw_params_t *params;
+		snd_pcm_hw_params_t* params;
 
 		std::string device = cfgLoadStr("alsa", "device", "");
 
 		int rc = -1;
-		if (!device.empty() && device != "auto") {
+		if (!device.empty() && device != "auto")
+		{
 			rc = snd_pcm_open(&handle, device.c_str(), SND_PCM_STREAM_PLAYBACK, 0);
 			if (rc < 0)
 				WARN_LOG(AUDIO, "ALSA: Cannot open device %s. Trying auto", device.c_str());
@@ -79,7 +80,7 @@ public:
 		snd_pcm_hw_params_alloca(&params);
 
 		/* Fill it in with default values. */
-		rc=snd_pcm_hw_params_any(handle, params);
+		rc = snd_pcm_hw_params_any(handle, params);
 		if (rc < 0)
 		{
 			ERROR_LOG(AUDIO, "ALSA: Error:snd_pcm_hw_params_any %s", snd_strerror(rc));
@@ -90,7 +91,7 @@ public:
 		/* Set the desired hardware parameters. */
 
 		/* Interleaved mode */
-		rc=snd_pcm_hw_params_set_access(handle, params, SND_PCM_ACCESS_RW_INTERLEAVED);
+		rc = snd_pcm_hw_params_set_access(handle, params, SND_PCM_ACCESS_RW_INTERLEAVED);
 		if (rc < 0)
 		{
 			ERROR_LOG(AUDIO, "ALSA: Error:snd_pcm_hw_params_set_access %s", snd_strerror(rc));
@@ -99,7 +100,7 @@ public:
 		}
 
 		/* Signed 16-bit little-endian format */
-		rc=snd_pcm_hw_params_set_format(handle, params, SND_PCM_FORMAT_S16_LE);
+		rc = snd_pcm_hw_params_set_format(handle, params, SND_PCM_FORMAT_S16_LE);
 		if (rc < 0)
 		{
 			ERROR_LOG(AUDIO, "ALSA: Error:snd_pcm_hw_params_set_format %s", snd_strerror(rc));
@@ -108,7 +109,7 @@ public:
 		}
 
 		/* Two channels (stereo) */
-		rc=snd_pcm_hw_params_set_channels(handle, params, 2);
+		rc = snd_pcm_hw_params_set_channels(handle, params, 2);
 		if (rc < 0)
 		{
 			ERROR_LOG(AUDIO, "ALSA: Error:snd_pcm_hw_params_set_channels %s", snd_strerror(rc));
@@ -167,7 +168,7 @@ public:
 			ERROR_LOG(AUDIO, "ALSA: Cannot open default audio capture device: %s", snd_strerror(err));
 			return false;
 		}
-		snd_pcm_hw_params_t *hw_params;
+		snd_pcm_hw_params_t* hw_params;
 		if ((err = snd_pcm_hw_params_malloc(&hw_params)) < 0)
 		{
 			ERROR_LOG(AUDIO, "ALSA: Cannot allocate hardware parameter structure: %s", snd_strerror(err));
@@ -245,7 +246,7 @@ public:
 				err = 0;
 				err = snd_pcm_prepare(handle_record);
 			}
-			u8 *buffer = (u8 *)frame + err;
+			u8* buffer = (u8*)frame + err;
 			memset(buffer, 0, (samples - err) * 2);
 		}
 
@@ -254,7 +255,8 @@ public:
 
 	u32 push(const void* frame, u32 samples, bool wait) override
 	{
-		if (wait != pcm_blocking) {
+		if (wait != pcm_blocking)
+		{
 			snd_pcm_nonblock(handle, wait ? 0 : 1);
 			pcm_blocking = wait;
 		}
@@ -268,7 +270,7 @@ public:
 				// EPIPE means underrun
 				// Write some silence then our samples
 				const size_t silence_size = buffer_size - samples;
-				void *silence = alloca(silence_size * 4);
+				void* silence = alloca(silence_size * 4);
 				memset(silence, 0, silence_size * 4);
 				snd_pcm_writei(handle, silence, silence_size);
 				snd_pcm_writei(handle, frame, samples);
@@ -287,7 +289,7 @@ public:
 	{
 		std::vector<std::string> result;
 
-		char **hints;
+		char** hints;
 		int err = snd_device_name_hint(-1, "pcm", (void***)&hints);
 
 		// Error initializing ALSA
@@ -301,8 +303,8 @@ public:
 		while (*n != NULL)
 		{
 			// Get the type (NULL/Input/Output)
-			char *type = snd_device_name_get_hint(*n, "IOID");
-			char *name = snd_device_name_get_hint(*n, "NAME");
+			char* type = snd_device_name_get_hint(*n, "IOID");
+			char* name = snd_device_name_get_hint(*n, "NAME");
 
 			if (name != NULL)
 			{
@@ -323,7 +325,6 @@ public:
 
 					result.emplace_back(name);
 				}
-
 			}
 
 			if (type != NULL)
@@ -340,7 +341,7 @@ public:
 		return result;
 	}
 
-	Option* getOptions(int *count) override
+	Option* getOptions(int* count) override
 	{
 		*count = 1;
 		static Option result;
