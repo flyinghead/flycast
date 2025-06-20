@@ -5,6 +5,7 @@ TabWidth: 4
 BreakBeforeBraces: Allman
 ColumnLimit: 0
 
+IncludeBlocks: Preserve
 DerivePointerAlignment: false
 PointerAlignment: Left
 ReferenceAlignment: Left
