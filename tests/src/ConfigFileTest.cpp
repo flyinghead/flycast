@@ -1,8 +1,9 @@
-#include "gtest/gtest.h"
-#include "types.h"
 #include "cfg/ini.h"
+#include "types.h"
+#include "gtest/gtest.h"
 
-class ConfigFileTest : public ::testing::Test {
+class ConfigFileTest : public ::testing::Test
+{
 };
 
 TEST_F(ConfigFileTest, TestLoadSave)
@@ -16,7 +17,7 @@ TEST_F(ConfigFileTest, TestLoadSave)
 	ASSERT_EQ(2, file.get_int("", "prop2", 0));
 	ASSERT_TRUE(file.get_bool("", "prop3", false));
 
-	FILE *fp = fopen("test.cfg", "w");
+	FILE* fp = fopen("test.cfg", "w");
 	file.save(fp);
 	fclose(fp);
 	fp = fopen("test.cfg", "r");
@@ -38,7 +39,7 @@ TEST_F(ConfigFileTest, TestLoadSave)
 TEST_F(ConfigFileTest, TestQuotes)
 {
 	using namespace emucfg;
-	FILE *fp = fopen("test.cfg", "w");
+	FILE* fp = fopen("test.cfg", "w");
 	fprintf(fp, "propWithQuotes=\"value with quotes\"\n");
 	fprintf(fp, "propWithQuotes2=\"42\"\n");
 	fprintf(fp, "propWithQuotes3=\"true\"\n");
@@ -55,7 +56,7 @@ TEST_F(ConfigFileTest, TestQuotes)
 TEST_F(ConfigFileTest, TestTrim)
 {
 	using namespace emucfg;
-	FILE *fp = fopen("test.cfg", "w");
+	FILE* fp = fopen("test.cfg", "w");
 	fprintf(fp, "   prop   =    \"value 1 \"     \n\n\n");
 	fprintf(fp, " prop2 = 42     \n");
 	fprintf(fp, " prop3 = yes   \r\n\n");
@@ -80,7 +81,7 @@ TEST_F(ConfigFileTest, TestLoadSaveSection)
 	ASSERT_EQ(2, file.get_int("sect2", "prop2", 0));
 	ASSERT_TRUE(file.get_bool("sect2", "prop3", false));
 
-	FILE *fp = fopen("test.cfg", "w");
+	FILE* fp = fopen("test.cfg", "w");
 	file.save(fp);
 	fclose(fp);
 	fp = fopen("test.cfg", "r");

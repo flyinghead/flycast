@@ -1,12 +1,13 @@
-#include "gtest/gtest.h"
-#include "types.h"
-#include "cfg/ini.h"
 #include "cfg/cfg.h"
+#include "cfg/ini.h"
 #include "cheats.h"
 #include "emulator.h"
 #include "hw/sh4/sh4_mem.h"
+#include "types.h"
+#include "gtest/gtest.h"
 
-class CheatManagerTest : public ::testing::Test {
+class CheatManagerTest : public ::testing::Test
+{
 protected:
 	void SetUp() override
 	{
@@ -18,8 +19,8 @@ protected:
 
 TEST_F(CheatManagerTest, TestLoad)
 {
-	FILE *fp = fopen("test.cht", "w");
-	const char *s = R"(
+	FILE* fp = fopen("test.cht", "w");
+	const char* s = R"(
 cheat0_address = "1234"
 cheat0_address_bit_position = "0"
 cheat0_big_endian = "false"
@@ -150,7 +151,8 @@ TEST_F(CheatManagerTest, TestGameShark)
 	ASSERT_EQ(1u, mgr.cheats[0].repeatCount);
 
 	mgr.reset("TESTGS10");
-	mgr.addGameSharkCheat("cheat10", "0d654321" "00031984");
+	mgr.addGameSharkCheat("cheat10", "0d654321"
+									 "00031984");
 	ASSERT_EQ(Cheat::Type::runNextIfGt, mgr.cheats[0].type);
 	ASSERT_EQ(0x654321u, mgr.cheats[0].address);
 	ASSERT_EQ(0x1984u, mgr.cheats[0].value);
@@ -175,7 +177,6 @@ TEST_F(CheatManagerTest, TestGameShark)
 	ASSERT_EQ(16u, mgr.cheats[2].size);
 	ASSERT_EQ(1u, mgr.cheats[2].repeatCount);
 }
-
 
 TEST_F(CheatManagerTest, TestGameSharkError)
 {
@@ -258,8 +259,8 @@ TEST_F(CheatManagerTest, TestSave)
 
 TEST_F(CheatManagerTest, TestSubBytePatch)
 {
-	FILE *fp = fopen("test.cht", "w");
-	const char *s = R"(
+	FILE* fp = fopen("test.cht", "w");
+	const char* s = R"(
 cheat0_address = "0x10000"
 cheat0_address_bit_position = "0xF0"
 cheat0_big_endian = "false"
@@ -304,5 +305,4 @@ cheats = "2"
 	WriteMem8_nommu(0x8c010001, 0);
 	mgr.apply();
 	ASSERT_EQ(2, ReadMem8_nommu(0x8c010001));
-
 }
