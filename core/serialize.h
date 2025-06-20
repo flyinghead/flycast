@@ -3,18 +3,18 @@
 
 	This file is part of Flycast.
 
-    Flycast is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 2 of the License, or
-    (at your option) any later version.
+	Flycast is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 2 of the License, or
+	(at your option) any later version.
 
-    Flycast is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+	Flycast is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
+	You should have received a copy of the GNU General Public License
+	along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #pragma once
 #include "types.h"
@@ -25,7 +25,8 @@
 class SerializeBase
 {
 public:
-	enum Version : int32_t {
+	enum Version : int32_t
+	{
 		V16 = 811,
 		V17,
 		V18,
@@ -88,10 +89,10 @@ public:
 	class Exception : public std::runtime_error
 	{
 	public:
-		Exception(const char *msg) : std::runtime_error(msg) {}
+		Exception(const char* msg) : std::runtime_error(msg) {}
 	};
 
-	Deserializer(const void *data, size_t limit, bool rollback = false);
+	Deserializer(const void* data, size_t limit, bool rollback = false);
 
 	template<typename T>
 	void deserialize(T& obj)
@@ -99,7 +100,7 @@ public:
 		doDeserialize(&obj, sizeof(T));
 	}
 	template<typename T>
-	void deserialize(T *obj, size_t count)
+	void deserialize(T* obj, size_t count)
 	{
 		doDeserialize(obj, sizeof(T) * count);
 	}
@@ -125,9 +126,9 @@ public:
 	Version version() const { return _version; }
 
 private:
-	void doDeserialize(void *dest, size_t size)
+	void doDeserialize(void* dest, size_t size)
 	{
-		if (this->_size + size > limit)	// FIXME one more test vs. current
+		if (this->_size + size > limit) // FIXME one more test vs. current
 		{
 			WARN_LOG(SAVESTATE, "Savestate overflow: current %d limit %d sz %d", (int)this->_size, (int)limit, (int)size);
 			throw Exception("Invalid savestate");
@@ -138,7 +139,7 @@ private:
 	}
 
 	Version _version;
-	const u8 *data;
+	const u8* data;
 };
 
 class Serializer : public SerializeBase
@@ -147,7 +148,7 @@ public:
 	Serializer()
 		: Serializer(nullptr, std::numeric_limits<size_t>::max(), false) {}
 
-	Serializer(void *data, size_t limit, bool rollback = false);
+	Serializer(void* data, size_t limit, bool rollback = false);
 
 	template<typename T>
 	void serialize(const T& obj)
@@ -155,7 +156,7 @@ public:
 		doSerialize(&obj, sizeof(T));
 	}
 	template<typename T>
-	void serialize(const T *obj, size_t count)
+	void serialize(const T* obj, size_t count)
 	{
 		doSerialize(obj, sizeof(T) * count);
 	}
@@ -174,7 +175,7 @@ public:
 	bool dryrun() const { return data == nullptr; }
 
 private:
-	void doSerialize(const void *src, size_t size)
+	void doSerialize(const void* src, size_t size)
 	{
 		if (data != nullptr)
 		{
@@ -184,17 +185,19 @@ private:
 		this->_size += size;
 	}
 
-	u8 *data;
+	u8* data;
 };
 
 template<typename T>
-Serializer& operator<<(Serializer& ctx, const T& obj) {
+Serializer& operator<<(Serializer& ctx, const T& obj)
+{
 	ctx.serialize(obj);
 	return ctx;
 }
 
 template<typename T>
-Deserializer& operator>>(Deserializer& ctx, T& obj) {
+Deserializer& operator>>(Deserializer& ctx, T& obj)
+{
 	ctx.deserialize(obj);
 	return ctx;
 }

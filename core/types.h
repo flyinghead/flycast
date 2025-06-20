@@ -2,32 +2,32 @@
 #include "build.h"
 
 #if HOST_CPU == CPU_X86
-	#ifdef _MSC_VER
-	#define DYNACALL  __fastcall
-	#else
-	//android defines fastcall as regparm(3), it doesn't work for us
-	#undef fastcall
-	#define DYNACALL __attribute__((fastcall))
-	#endif
+#ifdef _MSC_VER
+#define DYNACALL __fastcall
 #else
-	#define DYNACALL
+// android defines fastcall as regparm(3), it doesn't work for us
+#undef fastcall
+#define DYNACALL __attribute__((fastcall))
+#endif
+#else
+#define DYNACALL
 #endif
 #ifdef _MSC_VER
 // conversion from 't1' to 't2', possible loss of data
-#pragma warning(disable: 4267)
-#pragma warning(disable: 4244)
+#pragma warning(disable : 4267)
+#pragma warning(disable : 4244)
 #endif
 
-#include <cstdint>
 #include <cstddef>
+#include <cstdint>
 
-//basic types
-typedef int8_t  s8;
+// basic types
+typedef int8_t s8;
 typedef int16_t s16;
 typedef int32_t s32;
 typedef int64_t s64;
 
-typedef uint8_t  u8;
+typedef uint8_t u8;
 typedef uint16_t u16;
 typedef uint32_t u32;
 typedef uint64_t u64;
@@ -36,8 +36,8 @@ typedef float f32;
 typedef double f64;
 
 #ifndef TARGET_UWP
-#include "nowide/cstdlib.hpp"
 #include "nowide/cstdio.hpp"
+#include "nowide/cstdlib.hpp"
 #else
 #include "nowide/config.hpp"
 #include "nowide/convert.hpp"
@@ -45,40 +45,43 @@ typedef double f64;
 #include "nowide/stackstring.hpp"
 
 #include <cstdio>
-namespace nowide {
-FILE *fopen(char const *file_name, char const *mode);
-int remove(const char *pathname);
+namespace nowide
+{
+FILE* fopen(char const* file_name, char const* mode);
+int remove(const char* pathname);
 }
 #endif
 
 #if defined(__APPLE__)
-int darw_printf(const char* Text,...);
+int darw_printf(const char* Text, ...);
 #endif
 
 #ifndef TARGET_IPHONE
 #if defined(TARGET_ARM_MAC)
 #include <pthread.h>
-inline static void JITWriteProtect(bool enabled) {
+inline static void JITWriteProtect(bool enabled)
+{
 	if (__builtin_available(macOS 11.0, *))
 		pthread_jit_write_protect_np(enabled);
 }
 #else
-inline static void JITWriteProtect(bool enabled) {
+inline static void JITWriteProtect(bool enabled)
+{
 }
 #endif
 #endif
 
-//includes from c++rt
-#include <string>
+// includes from c++rt
 #include <stdexcept>
+#include <string>
 
 #ifdef _MSC_VER
-#define likely(x) x
-#define unlikely(x) x
+#define likely(x)	   x
+#define unlikely(x)	   x
 #define expected(x, y) x
 #else
-#define likely(x)      __builtin_expect(!!(x), 1)
-#define unlikely(x)    __builtin_expect(!!(x), 0)
+#define likely(x)	   __builtin_expect(!!(x), 1)
+#define unlikely(x)	   __builtin_expect(!!(x), 0)
 #define expected(x, y) __builtin_expect((x), (y))
 #endif
 
@@ -91,10 +94,24 @@ inline static void JITWriteProtect(bool enabled) {
 [[noreturn]] void os_DebugBreak();
 void fatal_error(const char* text, ...);
 
-#define verify(x) do { if ((x) == false){ fatal_error("Verify Failed  : " #x "\n in %s -> %s : %d", (__FUNCTION__), (__FILE__), __LINE__); os_DebugBreak();}} while (false)
-#define die(reason) do { fatal_error("Fatal error : %s\n in %s -> %s : %d", (reason), (__FUNCTION__), (__FILE__), __LINE__); os_DebugBreak();} while (false)
+#define verify(x)                                                                                            \
+	do                                                                                                       \
+	{                                                                                                        \
+		if ((x) == false)                                                                                    \
+		{                                                                                                    \
+			fatal_error("Verify Failed  : " #x "\n in %s -> %s : %d", (__FUNCTION__), (__FILE__), __LINE__); \
+			os_DebugBreak();                                                                                 \
+		}                                                                                                    \
+	} while (false)
+#define die(reason)                                                                                         \
+	do                                                                                                      \
+	{                                                                                                       \
+		fatal_error("Fatal error : %s\n in %s -> %s : %d", (reason), (__FUNCTION__), (__FILE__), __LINE__); \
+		os_DebugBreak();                                                                                    \
+	} while (false)
 
-enum class RenderType {
+enum class RenderType
+{
 	OpenGL = 0,
 	OpenGL_OIT = 3,
 	Vulkan = 4,
@@ -104,17 +121,21 @@ enum class RenderType {
 	DirectX11_OIT = 6,
 };
 
-static inline bool isOpenGL(RenderType renderType)  {
+static inline bool isOpenGL(RenderType renderType)
+{
 	return renderType == RenderType::OpenGL || renderType == RenderType::OpenGL_OIT;
 }
-static inline bool isVulkan(RenderType renderType) {
+static inline bool isVulkan(RenderType renderType)
+{
 	return renderType == RenderType::Vulkan || renderType == RenderType::Vulkan_OIT;
 }
-static inline bool isDirectX(RenderType renderType) {
+static inline bool isDirectX(RenderType renderType)
+{
 	return renderType == RenderType::DirectX9 || renderType == RenderType::DirectX11 || renderType == RenderType::DirectX11_OIT;
 }
 
-enum class KeyboardLayout {
+enum class KeyboardLayout
+{
 	JP = 1,
 	US,
 	UK,
@@ -135,7 +156,8 @@ enum class KeyboardLayout {
 
 struct settings_t
 {
-	struct {
+	struct
+	{
 		int system;
 		u32 ram_size;
 		u32 ram_mask;
@@ -155,7 +177,8 @@ struct settings_t
 		bool isSystemSP() const { return system == DC_PLATFORM_SYSTEMSP; }
 	} platform;
 
-	struct {
+	struct
+	{
 		int width = 640;
 		int height = 480;
 		float pointScale = 1.f;
@@ -177,13 +200,14 @@ struct settings_t
 		std::string title;
 	} content;
 
-	struct {
+	struct
+	{
 		KeyboardLayout keyboardLangId = KeyboardLayout::US;
 		bool fastForwardMode;
 		// The following flags are only set for arcade games
 		bool lightgunGame; // or touchscreen
 		bool keyboardGame;
-		bool mouseGame; // or rotary encoders
+		bool mouseGame;	   // or rotary encoders
 		bool fourPlayerGames;
 	} input;
 
@@ -214,8 +238,8 @@ struct settings_t
 
 extern settings_t settings;
 
-#define RAM_SIZE settings.platform.ram_size
-#define RAM_MASK settings.platform.ram_mask
+#define RAM_SIZE  settings.platform.ram_size
+#define RAM_MASK  settings.platform.ram_mask
 #define ARAM_SIZE settings.platform.aram_size
 #define ARAM_MASK settings.platform.aram_mask
 #define VRAM_SIZE settings.platform.vram_size
@@ -243,17 +267,17 @@ public:
 class Serializer;
 class Deserializer;
 
-constexpr size_t operator""_KB(unsigned long long  x)
+constexpr size_t operator""_KB(unsigned long long x)
 {
 	return 1024 * x;
 }
 
-constexpr size_t operator""_MB(unsigned long long  x)
+constexpr size_t operator""_MB(unsigned long long x)
 {
 	return 1024 * 1024 * x;
 }
 
-constexpr size_t operator""_GB(unsigned long long  x)
+constexpr size_t operator""_GB(unsigned long long x)
 {
 	return 1024 * 1024 * 1024 * x;
 }
