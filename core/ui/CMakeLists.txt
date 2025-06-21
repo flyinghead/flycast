@@ -14,6 +14,14 @@ if(NOT LIBRETRO)
             gui_util.h
             mainui.cpp
             mainui.h
+            settings.cpp
+            settings.h
+            settings_about.cpp
+            settings_audio.cpp
+            settings_controls.cpp
+            settings_general.cpp
+            settings_network.cpp
+            settings_video.cpp
             boxart/boxart.cpp
             boxart/boxart.h
             boxart/gamesdb.cpp
