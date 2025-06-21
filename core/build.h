@@ -42,7 +42,7 @@
 	#define HOST_CPU CPU_GENERIC
 #endif
 
-#if defined(TARGET_NO_REC)
+#if defined(TARGET_NO_REC) || defined(NO_JIT)
 #define FEAT_SHREC DYNAREC_NONE
 #define FEAT_AREC DYNAREC_NONE
 #define FEAT_DSPREC DYNAREC_NONE
