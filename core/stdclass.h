@@ -1,17 +1,17 @@
 #pragma once
-#include "types.h"
 #include "md5/md5.h"
+#include "types.h"
 
 #include <algorithm>
+#include <cassert>
 #include <cctype>
 #include <condition_variable>
 #include <cstring>
+#include <functional>
 #include <mutex>
 #include <thread>
-#include <vector>
-#include <functional>
-#include <cassert>
 #include <time.h>
+#include <vector>
 
 #ifdef __ANDROID__
 #include <sys/mman.h>
@@ -22,7 +22,7 @@
 #define PAGE_SIZE 4096
 #endif
 #ifndef PAGE_MASK
-#define PAGE_MASK (PAGE_SIZE-1)
+#define PAGE_MASK (PAGE_SIZE - 1)
 #endif
 
 class cThread
@@ -31,13 +31,13 @@ private:
 	typedef void* ThreadEntryFP(void* param);
 	ThreadEntryFP* entry;
 	void* param;
-	const char *name;
+	const char* name;
 
 public:
 	std::thread thread;
 
-	cThread(ThreadEntryFP* function, void* param, const char *name)
-		:entry(function), param(param), name(name) {}
+	cThread(ThreadEntryFP* function, void* param, const char* name)
+		: entry(function), param(param), name(name) {}
 	~cThread() { WaitToEnd(); }
 	void Start();
 	void WaitToEnd();
@@ -50,13 +50,13 @@ private:
 	std::condition_variable cond;
 	bool state;
 
-public :
+public:
 	cResetEvent();
 	~cResetEvent();
-	void Set();		//Set state to signaled
-	void Reset();	//Set state to non signaled
-	bool Wait(u32 msec);//Wait for signal , then reset[if auto]. Returns false if timed out
-	void Wait();	//Wait for signal , then reset[if auto]
+	void Set();			 // Set state to signaled
+	void Reset();		 // Set state to non signaled
+	bool Wait(u32 msec); // Wait for signal , then reset[if auto]. Returns false if timed out
+	void Wait();		 // Wait for signal , then reset[if auto]
 };
 
 void set_user_config_dir(const std::string& dir);
@@ -78,7 +78,7 @@ size_t get_last_slash_pos(const std::string& path);
 
 class RamRegion
 {
-	u8 *data;
+	u8* data;
 	size_t size;
 	bool ownsMemory = false;
 
@@ -86,33 +86,37 @@ public:
 	void alloc(size_t size);
 	void free();
 
-	void setRegion(u8 *data, size_t size)
+	void setRegion(u8* data, size_t size)
 	{
 		this->data = data;
 		this->size = size;
 		ownsMemory = false;
 	}
 
-	void zero() {
+	void zero()
+	{
 		std::memset(data, 0, size);
 	}
 
-	u8& operator [](size_t i) {
+	u8& operator[](size_t i)
+	{
 		return data[i];
-    }
+	}
 
-	void serialize(Serializer &ser) const;
-	void deserialize(Deserializer &deser);
+	void serialize(Serializer& ser) const;
+	void deserialize(Deserializer& deser);
 };
 
 static inline void string_tolower(std::string& s)
 {
-	std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c){ return std::tolower(c); });
+	std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c)
+		{ return std::tolower(c); });
 }
 
 static inline void string_toupper(std::string& s)
 {
-	std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c){ return std::toupper(c); });
+	std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c)
+		{ return std::toupper(c); });
 }
 
 static inline std::string get_file_extension(const std::string& s)
@@ -136,23 +140,23 @@ static inline std::string get_file_basename(const std::string& s)
 extern const std::string defaultWs;
 
 static inline std::string trim_trailing_ws(const std::string& str,
-                 const std::string& whitespace = defaultWs)
+	const std::string& whitespace = defaultWs)
 {
-    const auto strEnd = str.find_last_not_of(whitespace);
+	const auto strEnd = str.find_last_not_of(whitespace);
 	if (strEnd == std::string::npos)
 		return "";
 
-    return str.substr(0, strEnd + 1);
+	return str.substr(0, strEnd + 1);
 }
 
 static inline std::string trim_ws(const std::string& str,
-                 const std::string& whitespace = defaultWs)
+	const std::string& whitespace = defaultWs)
 {
-    const auto strStart = str.find_first_not_of(whitespace);
+	const auto strStart = str.find_first_not_of(whitespace);
 	if (strStart == std::string::npos)
 		return "";
 
-    return str.substr(strStart, str.find_last_not_of(whitespace) + 1 - strStart);
+	return str.substr(strStart, str.find_last_not_of(whitespace) + 1 - strStart);
 }
 
 class MD5Sum
@@ -160,16 +164,19 @@ class MD5Sum
 	MD5_CTX ctx;
 
 public:
-	MD5Sum() {
+	MD5Sum()
+	{
 		MD5_Init(&ctx);
 	}
 
-	MD5Sum& add(const void *data, unsigned long len) {
+	MD5Sum& add(const void* data, unsigned long len)
+	{
 		MD5_Update(&ctx, data, len);
 		return *this;
 	}
 
-	MD5Sum& add(std::FILE *file) {
+	MD5Sum& add(std::FILE* file)
+	{
 		std::fseek(file, 0, SEEK_SET);
 		char buf[4096];
 		unsigned long len = 0;
@@ -179,22 +186,26 @@ public:
 	}
 
 	template<typename T>
-	MD5Sum& add(const T& v) {
+	MD5Sum& add(const T& v)
+	{
 		MD5_Update(&ctx, &v, (unsigned long)sizeof(T));
 		return *this;
 	}
 
 	template<typename T>
-	MD5Sum& add(const std::vector<T>& v) {
+	MD5Sum& add(const std::vector<T>& v)
+	{
 		MD5_Update(&ctx, v.data(), (unsigned long)(v.size() * sizeof(T)));
 		return *this;
 	}
 
-	void getDigest(u8 digest[16]) {
+	void getDigest(u8 digest[16])
+	{
 		MD5_Final(digest, &ctx);
 	}
 
-	std::vector<u8> getDigest() {
+	std::vector<u8> getDigest()
+	{
 		std::vector<u8> v(16);
 		MD5_Final(v.data(), &ctx);
 		return v;
@@ -207,15 +218,18 @@ std::string timeToISO8601(time_t time);
 class ThreadRunner
 {
 public:
-	void init() {
+	void init()
+	{
 		threadId = std::this_thread::get_id();
 	}
 	void runOnThread(std::function<void()> func)
 	{
-		if (threadId == std::this_thread::get_id()) {
+		if (threadId == std::this_thread::get_id())
+		{
 			func();
 		}
-		else {
+		else
+		{
 			LockGuard _(mutex);
 			tasks.push_back(func);
 		}

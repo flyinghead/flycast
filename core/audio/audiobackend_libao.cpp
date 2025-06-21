@@ -4,7 +4,7 @@
 
 class LibAOBackend : public AudioBackend
 {
-	ao_device *aodevice = nullptr;
+	ao_device* aodevice = nullptr;
 
 public:
 	LibAOBackend()
@@ -23,7 +23,8 @@ public:
 		aodevice = ao_open_live(ao_default_driver_id(), &aoformat, NULL); // Live output
 		if (aodevice == nullptr)
 			aodevice = ao_open_live(ao_driver_id("null"), &aoformat, NULL);
-		if (aodevice == nullptr) {
+		if (aodevice == nullptr)
+		{
 			ERROR_LOG(AUDIO, "Cannot open libao driver");
 			ao_shutdown();
 		}
