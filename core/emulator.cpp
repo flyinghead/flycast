@@ -47,6 +47,9 @@
 #ifndef LIBRETRO
 #include "ui/gui.h"
 #endif
+#if defined(ENABLE_SH4_IR)
+#include "hw/sh4/ir/sh4_ir_interpreter.h"
+#endif
 
 settings_t settings;
 
@@ -488,7 +491,7 @@ void Emulator::init()
 	// the recompiler may start generating code at this point and needs a fully configured machine
 #if defined(ENABLE_SH4_IR)
 	// Use the IR interpreter when ENABLE_SH4_IR is defined
-	Get_Sh4Interpreter(&sh4_cpu);
+	sh4::ir::Get_Sh4Interpreter(&sh4_cpu);
 	sh4_cpu.Init();
 #elif FEAT_SHREC != DYNAREC_NONE
 	Get_Sh4Recompiler(&sh4_cpu);

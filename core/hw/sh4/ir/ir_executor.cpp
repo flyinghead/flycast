@@ -8,8 +8,8 @@
 
 // Helper functions for sr_t
 static inline u32 sr_getFull(const sr_t& sr) {
-    return (sr.MD << 30) | (sr.RB << 29) | (sr.BL << 28) | 
-           (sr.FD << 15) | (sr.M << 9) | (sr.Q << 8) | 
+    return (sr.MD << 30) | (sr.RB << 29) | (sr.BL << 28) |
+           (sr.FD << 15) | (sr.M << 9) | (sr.Q << 8) |
            (sr.IMASK << 4) | (sr.S << 1) | sr.T;
 }
 
@@ -25,14 +25,28 @@ static inline void sr_setFull(sr_t& sr, u32 value) {
     sr.MD = (value >> 30) & 1;
 }
 
-// External declarations
-extern bool g_exception_was_raised;
+// -----------------------------------------------------------------------------
+// Fallback stubs for classic interpreter integration
+// -----------------------------------------------------------------------------
+// The IR executor still calls into the legacy interpreter for a handful of
+// not-yet-implemented opcodes (e.g., certain coprocessor or debug paths).
+// When the legacy interpreter compilation unit is not linked (as is the case
+// for the libretro iOS target), we provide minimal stubs so the linker is
+// satisfied. The stubs simply flag an exception so the caller immediately
+// unwinds to the SH4 core which will raise an illegal instruction trap.
+//
+// NOTE: Once full opcode coverage is achieved inside IR, these fallbacks can
+// be removed and the calls eliminated.
 
-// Forward declarations
-// Forward declarations
-extern "C" {
-    void ExecuteOpcode(u16 op);
+bool g_exception_was_raised = false;
+
+extern "C" void ExecuteOpcode(u16 op)
+{
+    ERROR_LOG(SH4, "ExecuteOpcode fallback called for opcode 0x%04X – marking exception", op);
+    g_exception_was_raised = true;
 }
+
+// -----------------------------------------------------------------------------
 
 // Utility to safely reinterpret u32 bits as float without UB
 static inline float BitsToFloat(u32 bits)

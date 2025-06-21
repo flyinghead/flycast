@@ -316,6 +316,10 @@ static inline void sh4_sr_SetFull(u32 value)
 #define sh4rcb (*p_sh4rcb)
 #define Sh4cntx (sh4rcb.cntx)
 
+#ifdef ENABLE_SH4_IR
+namespace sh4 { namespace ir { void Get_Sh4Interpreter(sh4_if* cpu); } }
+#endif
+
 //Get an interface to sh4 interpreter
 void Get_Sh4Interpreter(sh4_if* cpu);
 void Get_Sh4Recompiler(sh4_if* cpu);

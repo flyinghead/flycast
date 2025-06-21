@@ -7,6 +7,11 @@
 namespace sh4 {
 namespace ir {
 
+// Obtain sh4_if interface wrappers that drive the IR interpreter.
+// This mirrors the legacy Get_Sh4Interpreter function used by the core,
+// but routes all calls to an internal Sh4IrInterpreter instance.
+void Get_Sh4Interpreter(sh4_if* cpu);
+
 class Sh4IrInterpreter : public Executor {
 public:
     Sh4IrInterpreter();

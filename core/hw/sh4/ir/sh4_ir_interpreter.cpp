@@ -1,5 +1,6 @@
 #include "sh4_ir_interpreter.h"
 #include "hw/sh4/sh4_if.h"
+#include "hw/sh4/sh4_if.h"
 #include "hw/sh4/sh4_interrupts.h"
 #include "hw/sh4/sh4_core.h" // for SH4ThrownException
 #include "log/Log.h"
@@ -211,14 +212,48 @@ void Sh4IrInterpreter::Step()
 } // namespace sh4
 
 #ifdef ENABLE_SH4_IR
-Executor* Get_Sh4Interpreter()
-{
-    fprintf(stderr, "[DEBUG_PRINTF] IR Get_Sh4Interpreter() called THE NEW ONE\n");
-    printf("[DEBUG_PRINTF] IR Get_Sh4Interpreter() called. THE NEW ONE\n");
-    fflush(stderr);
-    return new sh4::ir::Sh4IrInterpreter();
+
+// -----------------------------------------------------------------------------
+// Legacy sh4_if wrappers for the new IR-based interpreter
+// -----------------------------------------------------------------------------
+
+namespace {
+    // Single global instance used by the C-style callback wrappers below.
+    sh4::ir::Sh4IrInterpreter g_ir;
+
+    void IR_Start()                { g_ir.Start(); }
+    void IR_Run()                  { g_ir.Run(); }
+    void IR_Stop()                 { g_ir.Stop(); }
+    void IR_Step()                 { g_ir.Step(); }
+    void IR_Reset(bool hard)       { g_ir.Reset(hard); }
+    void IR_Init()                 { g_ir.Init(); }
+    void IR_Term()                 { g_ir.Term(); }
+    void IR_ResetCache()           { g_ir.ResetCache(); }
+    bool IR_IsCpuRunning()         { return g_ir.IsCpuRunning(); }
 }
 
+// Expose a function with the same signature the core expects, but inside the
+// sh4::ir namespace. This populates the provided `sh4_if` structure with
+// pointers to the wrapper functions above, effectively plumbing the modern IR
+// interpreter into the legacy C callback interface.
+void sh4::ir::Get_Sh4Interpreter(sh4_if* cpu)
+{
+    cpu->Start         = IR_Start;
+    cpu->Run           = IR_Run;
+    cpu->Stop          = IR_Stop;
+    cpu->Step          = IR_Step;
+    cpu->Reset         = IR_Reset;
+    cpu->Init          = IR_Init;
+    cpu->Term          = IR_Term;
+    cpu->ResetCache    = IR_ResetCache;
+    cpu->IsCpuRunning  = IR_IsCpuRunning;
+}
+
+// Global (non-namespaced) wrapper to satisfy legacy calls like Get_Sh4Interpreter(&sh4_cpu).
+void Get_Sh4Interpreter(sh4_if* cpu)
+{
+    sh4::ir::Get_Sh4Interpreter(cpu);
+}
 void sh4::ir::Sh4IrInterpreter::InvalidateBlock(u32 addr)
 {
     // Simple implementation: reset both emitter and executor caches for any write to code memory
@@ -232,4 +267,4 @@ void sh4::ir::Sh4IrInterpreter::InvalidateBlock(u32 addr)
     // This ensures any stale block pointers are discarded
     executor_.ResetCachedBlocks();
 }
-#endif // SH4_IR_ENABLED
+#endif // ENABLE_SH4_IR
