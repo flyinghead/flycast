@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10.2)
+cmake_minimum_required(VERSION 3.25...4.0)
 
 find_program(CCACHE_PROGRAM ccache)
 if(CCACHE_PROGRAM)
@@ -479,19 +479,7 @@ if(NOT LIBRETRO)
 		endif()
 
 		target_compile_definitions(${PROJECT_NAME} PRIVATE USE_SDL USE_SDL_AUDIO)
-		target_sources(${PROJECT_NAME} PRIVATE
-			core/sdl/sdl.cpp
-			core/sdl/sdl.h
-			core/sdl/sdl_gamepad.cpp
-			core/sdl/sdl_gamepad.h
-			core/sdl/sdl_keyboard.h
-			core/sdl/sdl_keyboard_mac.h
-			core/sdl/dreamlink.cpp
-			core/sdl/dreamlink.h
-			core/sdl/dreampicoport.cpp
-			core/sdl/dreampicoport.h
-			core/sdl/dreamconn.cpp
-			core/sdl/dreamconn.h)
+		add_subdirectory(core/sdl)
 
 		if((UNIX AND NOT APPLE) OR NINTENDO_SWITCH)
 			find_package(CURL REQUIRED)
@@ -850,10 +838,8 @@ if(USE_DISCORD AND NOT LIBRETRO)
 	target_include_directories(${PROJECT_NAME} PRIVATE core/deps/discord-rpc/include)
 	target_link_libraries(${PROJECT_NAME} PRIVATE discord-rpc)
 	target_compile_definitions(${PROJECT_NAME} PRIVATE USE_DISCORD)
-	target_sources(${PROJECT_NAME} PRIVATE core/ui/discord.cpp)
 endif()
 
-cmrc_add_resource_library(flycast-resources ALIAS flycast::res NAMESPACE flycast)
 target_link_libraries(${PROJECT_NAME} PRIVATE flycast::res)
 
 if(LIBRETRO)
@@ -900,278 +886,23 @@ if(LIBRETRO)
 	endif()
 endif()
 
-target_sources(${PROJECT_NAME} PRIVATE
-		core/archive/7zArchive.cpp
-		core/archive/7zArchive.h
-		core/archive/archive.cpp
-		core/archive/archive.h
-		core/archive/rzip.cpp
-		core/archive/rzip.h
-		core/archive/ZipArchive.cpp
-		core/archive/ZipArchive.h
-		core/cfg/option.h)
+add_subdirectory(core/archive)
+add_subdirectory(core/cfg)
+add_subdirectory(core/hw)
+add_subdirectory(core/imgread)
+add_subdirectory(core/input)
+add_subdirectory(core/log)
+add_subdirectory(core/network)
+add_subdirectory(core/oslib)
+add_subdirectory(core/audio)
+add_subdirectory(core/reios)
+add_subdirectory(core/achievements)
+add_subdirectory(core/ui)
+add_subdirectory(core/lua)
+add_subdirectory(core/profiler)
+add_subdirectory(core/wsi)
 
-if(NOT LIBRETRO)
-	target_sources(${PROJECT_NAME} PRIVATE
-			core/cfg/cfg.cpp
-			core/cfg/cfg.h
-			core/cfg/cl.cpp
-			core/cfg/ini.cpp
-			core/cfg/ini.h
-			core/cfg/option.cpp)
-endif()
-
-target_sources(${PROJECT_NAME} PRIVATE
-		core/hw/hwreg.h
-		core/hw/aica/aica.cpp
-		core/hw/aica/aica.h
-		core/hw/aica/aica_if.cpp
-		core/hw/aica/aica_if.h
-		core/hw/aica/aica_mem.cpp
-		core/hw/aica/aica_mem.h
-		core/hw/aica/dsp.cpp
-		core/hw/aica/dsp.h
-		core/hw/aica/dsp_arm32.cpp
-		core/hw/aica/dsp_arm64.cpp
-		core/hw/aica/dsp_interp.cpp
-		core/hw/aica/dsp_x64.cpp
-		core/hw/aica/dsp_x86.cpp
-		core/hw/aica/sgc_if.cpp
-		core/hw/aica/sgc_if.h
-		core/hw/arm7/arm7.cpp
-		core/hw/arm7/arm7.h
-		core/hw/arm7/arm_mem.cpp
-		core/hw/arm7/arm_mem.h
-		core/hw/arm7/arm7_rec_arm32.cpp
-		core/hw/arm7/arm7_rec_arm64.cpp
-		core/hw/arm7/arm7_rec_x64.cpp
-		core/hw/arm7/arm7_rec.cpp
-		core/hw/arm7/arm7_rec.h
-		core/hw/arm7/arm-new.h
-		core/hw/bba/bba.h
-		core/hw/bba/bba.cpp
-		core/hw/bba/rtl8139c.h
-		core/hw/bba/rtl8139c.cpp
-		core/hw/flashrom/at93cxx.cpp
-		core/hw/flashrom/at93cxx.h
-		core/hw/flashrom/flashrom.cpp
-		core/hw/flashrom/flashrom.h
-		core/hw/flashrom/nvmem.cpp
-		core/hw/flashrom/nvmem.h
-		core/hw/flashrom/x76f100.cpp
-		core/hw/flashrom/x76f100.h
-		core/hw/gdrom/gdrom_if.h
-		core/hw/gdrom/gdrom_response.cpp
-		core/hw/gdrom/gdromv3.cpp
-		core/hw/gdrom/gdromv3.h
-		core/hw/holly/holly_intc.cpp
-		core/hw/holly/holly_intc.h
-		core/hw/holly/sb.cpp
-		core/hw/holly/sb.h
-		core/hw/holly/sb_mem.cpp
-		core/hw/holly/sb_mem.h
-		core/hw/maple/maple_cfg.cpp
-		core/hw/maple/maple_cfg.h
-		core/hw/maple/maple_devs.cpp
-		core/hw/maple/maple_devs.h
-		core/hw/maple/maple_helper.cpp
-		core/hw/maple/maple_helper.h
-		core/hw/maple/maple_if.cpp
-		core/hw/maple/maple_if.h
-		core/hw/maple/maple_jvs.cpp
-		core/hw/mem/addrspace.cpp
-		core/hw/mem/addrspace.h
-		core/hw/mem/mem_watch.cpp
-		core/hw/mem/mem_watch.h
-		core/hw/modem/modem.cpp
-		core/hw/modem/modem.h
-		core/hw/modem/modem_regs.h
-		core/hw/naomi/atomiswave.cpp
-		core/hw/naomi/atomiswave.h
-		core/hw/naomi/awave_regs.h
-		core/hw/naomi/awcartridge.cpp
-		core/hw/naomi/awcartridge.h
-		core/hw/naomi/decrypt.cpp
-		core/hw/naomi/decrypt.h
-		core/hw/naomi/gdcartridge.cpp
-		core/hw/naomi/gdcartridge.h
-		core/hw/naomi/m1cartridge.cpp
-		core/hw/naomi/m1cartridge.h
-		core/hw/naomi/m4cartridge.cpp
-		core/hw/naomi/m4cartridge.h
-		core/hw/naomi/midiffb.h
-		core/hw/naomi/midiffb.cpp
-		core/hw/naomi/multiboard.h
-		core/hw/naomi/multiboard.cpp
-		core/hw/naomi/naomi_cart.cpp
-		core/hw/naomi/naomi_cart.h
-		core/hw/naomi/naomi_flashrom.cpp
-		core/hw/naomi/naomi_flashrom.h
-		core/hw/naomi/naomi_m3comm.cpp
-		core/hw/naomi/naomi_m3comm.h
-		core/hw/naomi/naomi.cpp
-		core/hw/naomi/naomi.h
-		core/hw/naomi/naomi_regs.h
-		core/hw/naomi/naomi_roms.cpp
-		core/hw/naomi/naomi_roms.h
-		core/hw/naomi/naomi_roms_input.h
-		core/hw/naomi/netdimm.cpp
-		core/hw/naomi/netdimm.h
-		core/hw/naomi/card_reader.h
-		core/hw/naomi/card_reader.cpp
-		core/hw/naomi/touchscreen.h
-		core/hw/naomi/touchscreen.cpp
-		core/hw/naomi/printer.h
-		core/hw/naomi/printer.cpp
-		core/hw/naomi/systemsp.h
-		core/hw/naomi/systemsp.cpp
-		core/hw/naomi/hopper.h
-		core/hw/naomi/hopper.cpp
-		core/hw/pvr/elan.cpp
-		core/hw/pvr/elan.h
-		core/hw/pvr/elan_struct.h
-		core/hw/pvr/pvr.cpp
-		core/hw/pvr/pvr.h
-		core/hw/pvr/pvr_mem.cpp
-		core/hw/pvr/pvr_mem.h
-		core/hw/pvr/pvr_regs.cpp
-		core/hw/pvr/pvr_regs.h
-		core/hw/pvr/pvr_sb_regs.cpp
-		core/hw/pvr/pvr_sb_regs.h
-		core/hw/pvr/Renderer_if.cpp
-		core/hw/pvr/Renderer_if.h
-		core/hw/pvr/spg.cpp
-		core/hw/pvr/spg.h
-		core/hw/pvr/ta_const_df.h
-		core/hw/pvr/ta.cpp
-		core/hw/pvr/ta_ctx.cpp
-		core/hw/pvr/ta_ctx.h
-		core/hw/pvr/ta.h
-		core/hw/pvr/ta_structs.h
-		core/hw/pvr/ta_util.cpp
-		core/hw/pvr/ta_vtx.cpp
-		core/hw/sh4/dyna/blockmanager.cpp
-		core/hw/sh4/dyna/blockmanager.h
-		core/hw/sh4/dyna/decoder.cpp
-		core/hw/sh4/dyna/decoder.h
-		core/hw/sh4/dyna/decoder_opcodes.h
-		core/hw/sh4/dyna/driver.cpp
-		core/hw/sh4/dyna/ngen.h
-		core/hw/sh4/dyna/shil_canonical.h
-		core/hw/sh4/dyna/shil.cpp
-		core/hw/sh4/dyna/shil.h
-		core/hw/sh4/dyna/ssa.cpp
-		core/hw/sh4/dyna/ssa.h
-		core/hw/sh4/dyna/ssa_regalloc.h
-		core/hw/sh4/fsca-table.h
-		core/hw/sh4/interpr/sh4_fpu.cpp
-		core/hw/sh4/interpr/sh4_interpreter.cpp
-		core/hw/sh4/interpr/sh4_opcodes.cpp
-		core/hw/sh4/interpr/sh4_opcodes.h
-		core/hw/sh4/modules/bsc.cpp
-		core/hw/sh4/modules/ccn.cpp
-		core/hw/sh4/modules/ccn.h
-		core/hw/sh4/modules/cpg.cpp
-		core/hw/sh4/modules/dmac.cpp
-		core/hw/sh4/modules/dmac.h
-		core/hw/sh4/modules/fastmmu.cpp
-		core/hw/sh4/modules/intc.cpp
-		core/hw/sh4/modules/mmu.cpp
-		core/hw/sh4/modules/mmu.h
-		core/hw/sh4/modules/modules.h
-		core/hw/sh4/modules/rtc.cpp
-		core/hw/sh4/modules/serial.cpp
-		core/hw/sh4/modules/tmu.cpp
-		core/hw/sh4/modules/ubc.cpp
-		core/hw/sh4/modules/wince.h
-		core/hw/sh4/sh4_cache.h
-		core/hw/sh4/sh4_cycles.cpp
-		core/hw/sh4/sh4_cycles.h
-		core/hw/sh4/sh4_core.h
-		core/hw/sh4/sh4_core_regs.cpp
-		core/hw/sh4/sh4_if.h
-		core/hw/sh4/sh4_interpreter.h
-		core/hw/sh4/sh4_interrupts.cpp
-		core/hw/sh4/sh4_interrupts.h
-		core/hw/sh4/sh4_mem.cpp
-		core/hw/sh4/sh4_mem.h
-		core/hw/sh4/sh4_mmr.cpp
-		core/hw/sh4/sh4_mmr.h
-		core/hw/sh4/sh4_opcode_list.cpp
-		core/hw/sh4/sh4_opcode_list.h
-		core/hw/sh4/sh4_rom.cpp
-		core/hw/sh4/sh4_rom.h
-		core/hw/sh4/sh4_sched.cpp
-		core/hw/sh4/sh4_sched.h
-		core/hw/sh4/storeq.cpp)
-
-cmrc_add_resources(flycast-resources
-		WHENCE resources
-		resources/flash/alienfnt.nvmem.zip	# network settings
-		resources/flash/gunsur2.nvmem.zip
-		resources/flash/mazan.nvmem.zip		# free play, calibrated
-		resources/flash/otrigger.nvmem.zip
-		resources/flash/wldkicks.nvmem.zip	# free play
-		resources/flash/wldkicksj.nvmem.zip	# free play
-		resources/flash/wldkicksu.nvmem.zip	# free play
-		resources/flash/f355.nvmem.zip		# printer on
-		resources/flash/f355twin.nvmem.zip	# printer on
-		resources/flash/f355twn2.nvmem.zip	# printer on
-		resources/flash/dirtypig.nvmem.zip	# 4 players
-		resources/flash/dirtypig.nvmem2.zip
-		resources/flash/vf4.nvmem.zip		# card all day, stage select
-		resources/flash/vf4evob.nvmem.zip	# card all day, stage select
-		resources/flash/vf4tuned.nvmem.zip  # card all day, stage select, 45 sec time limit, 3 match
-		resources/flash/magicpop.nvmem.zip	# debug: comm and all errors disabled
-		resources/flash/ochaken.nvmem.zip	# debug: comm and all errors disabled
-		resources/flash/puyomedal.nvmem.zip	# debug: comm and all errors disabled
-		resources/flash/unomedal.nvmem.zip	# debug: comm and all errors disabled
-		resources/flash/westdrmg.nvmem.zip	# debug: comm and all errors disabled
-		resources/picture/f355_print_template.png)
-
-cmrc_add_resources(flycast-resources
-		fonts/printer_ascii8x16.bin.zip
-		fonts/printer_ascii12x24.bin.zip
-		fonts/printer_kanji16x16.bin.zip
-		fonts/printer_kanji24x24.bin.zip)
-
-if(NOT LIBRETRO)
-	cmrc_add_resources(flycast-resources
-		fonts/Roboto-Medium.ttf.zip
-		fonts/Roboto-Regular.ttf.zip
-		fonts/fa-solid-900.ttf.zip)
-	if(ANDROID OR IOS)
-		cmrc_add_resources(flycast-resources
-			WHENCE resources
-			resources/picture/buttons.png
-			resources/picture/buttons-arcade.png)
-	endif()
-endif()
-
-target_sources(${PROJECT_NAME} PRIVATE
-		core/imgread/cdi.cpp
-		core/imgread/cdio.cpp
-		core/imgread/chd.cpp
-		core/imgread/common.cpp
-		core/imgread/common.h
-		core/imgread/cue.cpp
-		core/imgread/gdi.cpp
-		core/imgread/ImgReader.cpp
-		core/imgread/iso9660.h
-		core/imgread/isofs.cpp
-		core/imgread/isofs.h)
-
-if(NOT LIBRETRO)
-	target_sources(${PROJECT_NAME} PRIVATE
-			core/input/gamepad.h
-			core/input/gamepad_device.cpp
-			core/input/gamepad_device.h
-			core/input/keyboard_device.h
-			core/input/mapping.cpp
-			core/input/mapping.h
-			core/input/mouse.cpp
-			core/input/mouse.h)
-endif()
+include(cmake/resources.cmake)
 
 if(WIN32)
 	target_sources(${PROJECT_NAME} PRIVATE
@@ -1207,107 +938,6 @@ if(NOT LIBRETRO)
 			core/linux-dist/x11_keyboard.h)
 endif()
 
-target_sources(${PROJECT_NAME} PRIVATE
-		core/log/BitSet.h
-		core/log/Log.h
-		core/log/StringUtil.h)
-if(NOT LIBRETRO)
-	target_sources(${PROJECT_NAME} PRIVATE
-			core/log/ConsoleListener.h
-			core/log/ConsoleListenerDroid.cpp
-			core/log/ConsoleListenerNix.cpp
-			core/log/ConsoleListenerWin.cpp
-			core/log/LogManager.cpp
-			core/log/LogManager.h)
-endif()
-
-target_sources(${PROJECT_NAME} PRIVATE
-		core/network/alienfnt_modem.cpp
-		core/network/alienfnt_modem.h
-		core/network/dns.cpp
-		core/network/ggpo.cpp
-		core/network/ggpo.h
-		core/network/miniupnp.cpp
-		core/network/miniupnp.h
-		core/network/naomi_network.cpp
-		core/network/naomi_network.h
-		core/network/net_handshake.cpp
-		core/network/net_handshake.h
-		core/network/net_platform.h
-		core/network/output.cpp
-		core/network/output.h
-		core/network/picoppp.cpp
-		core/network/picoppp.h
-		core/network/netservice.cpp
-		core/network/netservice.h
-		core/network/dcnet.cpp
-		core/network/dcnet.h
-		core/network/ice.cpp
-		core/network/ice.h
-		core/network/ifaddrs.c)
-
-if(NOT LIBRETRO)
-	target_sources(${PROJECT_NAME} PRIVATE
-			core/audio/audiobackend_alsa.cpp
-			core/audio/audiobackend_coreaudio.cpp
-			core/audio/audiobackend_directsound.cpp
-			core/audio/audiobackend_libao.cpp
-			core/audio/audiobackend_null.cpp
-			core/audio/audiobackend_oboe.cpp
-			core/audio/audiobackend_omx.cpp
-			core/audio/audiobackend_oss.cpp
-			core/audio/audiobackend_pulseaudio.cpp
-			core/audio/audiobackend_sdl2.cpp
-			core/audio/audiostream.cpp
-			core/oslib/http_client.cpp
-			core/oslib/http_client.h
-			core/oslib/oslib.cpp)
-endif()
-
-target_sources(${PROJECT_NAME} PRIVATE
-		core/audio/audiostream.h
-		core/oslib/directory.h
-		core/oslib/host_context.h
-		core/oslib/oslib.h
-		core/oslib/resources.cpp
-		core/oslib/resources.h
-		core/oslib/storage.cpp
-		core/oslib/storage.h
-		core/oslib/unwind_info.h
-		core/oslib/virtmem.h
-		core/lua/lua.cpp
-		core/lua/lua.h)
-
-if (ENABLE_DC_PROFILER)
-	target_sources(${PROJECT_NAME} PRIVATE
-		core/profiler/dc_profiler.cpp
-		core/profiler/dc_profiler.h)
-
-		target_compile_definitions(${PROJECT_NAME} PRIVATE DC_PROFILER)
-endif()
-
-if (ENABLE_FC_PROFILER)
-	target_sources(${PROJECT_NAME} PRIVATE
-		core/profiler/fc_profiler.cpp
-		core/profiler/fc_profiler.h)
-
-		target_compile_definitions(${PROJECT_NAME} PRIVATE FC_PROFILER)
-endif()
-
-target_sources(${PROJECT_NAME} PRIVATE
-		core/reios/descrambl.cpp
-		core/reios/descrambl.h
-		core/reios/gdrom_hle.cpp
-		core/reios/gdrom_hle.h
-		core/reios/reios.cpp
-		core/reios/reios.h
-		core/reios/reios_elf.cpp
-		core/reios/reios_elf.h)
-cmrc_add_resources(flycast-resources fonts/biosfont.bin.zip)
-
-target_sources(${PROJECT_NAME} PRIVATE
-			core/achievements/achievements.cpp
-			core/achievements/achievements.h)
 if(NOT LIBRETRO)
 	target_sources(${PROJECT_NAME} PRIVATE
 			core/deps/rcheevos/src/rc_client_raintegration.c
@@ -1343,23 +973,8 @@ if(NOT LIBRETRO)
 	target_compile_definitions(${PROJECT_NAME} PRIVATE USE_RACHIEVEMENTS RC_DISABLE_LUA)
 endif()
 
-target_sources(${PROJECT_NAME} PRIVATE
-		core/wsi/context.h
-		core/wsi/libretro.cpp
-		core/wsi/libretro.h
-		core/wsi/switcher.cpp)
-
 if(USE_OPENGL)
 	target_compile_definitions(${PROJECT_NAME} PRIVATE USE_OPENGL)
-	target_sources(${PROJECT_NAME} PRIVATE
-			core/wsi/egl.cpp
-			core/wsi/egl.h
-			core/wsi/gl_context.cpp
-			core/wsi/gl_context.h
-			core/wsi/osx.cpp
-			core/wsi/osx.h
-			core/wsi/sdl.cpp
-			core/wsi/sdl.h)
 
 	target_sources(${PROJECT_NAME} PRIVATE
 			core/rend/gles/glcache.h
@@ -1418,37 +1033,6 @@ target_sources(${PROJECT_NAME} PRIVATE
 		core/rend/texconv.cpp
 		core/rend/texconv.h
 		core/rend/norend/norend.cpp)
-if(NOT LIBRETRO)
-	target_sources(${PROJECT_NAME} PRIVATE
-			core/ui/game_scanner.cpp
-			core/ui/game_scanner.h
-			core/ui/imgui_driver.h
-			core/ui/gui.cpp
-			core/ui/gui.h
-			core/ui/gui_achievements.cpp
-			core/ui/vgamepad.cpp
-			core/ui/vgamepad.h
-			core/ui/gui_chat.h
-			core/ui/gui_cheats.cpp
-			core/ui/gui_util.cpp
-			core/ui/gui_util.h
-			core/ui/mainui.cpp
-			core/ui/mainui.h
-			core/ui/settings.cpp
-			core/ui/settings.h
-			core/ui/settings_about.cpp
-			core/ui/settings_audio.cpp
-			core/ui/settings_controls.cpp
-			core/ui/settings_general.cpp
-			core/ui/settings_network.cpp
-			core/ui/settings_video.cpp
-			core/ui/boxart/boxart.cpp
-			core/ui/boxart/boxart.h
-			core/ui/boxart/gamesdb.cpp
-			core/ui/boxart/gamesdb.h
-			core/ui/boxart/scraper.cpp
-			core/ui/boxart/scraper.h)
-endif()
 
 if(USE_VULKAN)
 	target_compile_definitions(${PROJECT_NAME} PUBLIC VK_ENABLE_BETA_EXTENSIONS VK_NO_PROTOTYPES)
@@ -1954,33 +1538,8 @@ if(NOT LIBRETRO)
 endif()
 
 if(BUILD_TESTING)
-	option(BUILD_GMOCK "Builds the googlemock subproject" OFF)
-	option(INSTALL_GTEST "Enable installation of googletest. (Projects embedding googletest may want to turn this OFF.)" OFF)
-	if(WIN32)
-		set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-	endif()
 	add_subdirectory(core/deps/googletest EXCLUDE_FROM_ALL)
-	target_link_libraries(${PROJECT_NAME} PRIVATE GTest::gtest_main)
-
-	target_include_directories(${PROJECT_NAME} PUBLIC tests/inc)
-	target_sources(${PROJECT_NAME} PRIVATE
-			tests/src/CheatManagerTest.cpp
-			tests/src/ConfigFileTest.cpp
-			tests/src/div32_test.cpp
-			tests/src/test_stubs.cpp
-			tests/src/serialize_test.cpp
-			tests/src/AicaArmTest.cpp
-			tests/src/Sh4InterpreterTest.cpp
-			tests/src/MmuTest.cpp
-			tests/src/input/ButtonComboTest.cpp
-			tests/src/input/GamepadInputHandlingTest.cpp
-			tests/src/input/MultiBindMappingTest.cpp
-			tests/src/input/InputDefTest.cpp
-			tests/src/input/InputMappingConfigFileTest.cpp
-			tests/src/input/InputSetTest.cpp
-			tests/src/util/PeriodicThreadTest.cpp
-			tests/src/util/TsQueueTest.cpp
-			tests/src/util/WorkerThreadTest.cpp)
+	add_subdirectory(tests)
 endif()
 
 if(NINTENDO_SWITCH)

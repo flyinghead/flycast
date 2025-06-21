@@ -1,0 +1,15 @@
+target_sources(${PROJECT_NAME} PRIVATE
+        hwreg.h)
+
+add_subdirectory(aica)
+add_subdirectory(arm7)
+add_subdirectory(bba)
+add_subdirectory(flashrom)
+add_subdirectory(gdrom)
+add_subdirectory(holly)
+add_subdirectory(maple)
+add_subdirectory(mem)
+add_subdirectory(modem)
+add_subdirectory(naomi)
+add_subdirectory(pvr)
+add_subdirectory(sh4)
