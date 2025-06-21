@@ -117,7 +117,11 @@ public:
             [desc setTAddressMode:tRepeat];
             [desc setRAddressMode:tRepeat];
             [desc setCompareFunction:MTLCompareFunctionNever];
-            [desc setMaxAnisotropy:config::AnisotropicFiltering];
+            if (tsp.FilterMode == 1 && !punchThrough) {
+                [desc setMaxAnisotropy:config::AnisotropicFiltering];
+            } else {
+                [desc setMaxAnisotropy:1];
+            }
 
             sampler = [MetalContext::Instance()->GetDevice() newSamplerStateWithDescriptor:desc];
 
