@@ -486,7 +486,11 @@ void Emulator::init()
 	reios_init();
 
 	// the recompiler may start generating code at this point and needs a fully configured machine
-#if FEAT_SHREC != DYNAREC_NONE
+#if defined(ENABLE_SH4_IR)
+	// Use the IR interpreter when ENABLE_SH4_IR is defined
+	Get_Sh4Interpreter(&sh4_cpu);
+	sh4_cpu.Init();
+#elif FEAT_SHREC != DYNAREC_NONE
 	Get_Sh4Recompiler(&sh4_cpu);
 	sh4_cpu.Init();		// Also initialize the interpreter
 	if(config::DynarecEnabled)

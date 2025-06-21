@@ -21,7 +21,7 @@ void Sh4IrInterpreter::Init()
     emitter_.ClearCaches();
     // Zero context similar to legacy init
     memset(ctx_, 0, sizeof(*ctx_));
-    
+
     // Temporarily undefine macros
 #undef vbr
 #undef pc
@@ -51,7 +51,7 @@ void Sh4IrInterpreter::Reset(bool /*hard*/)
 #define vbr Sh4cntx.vbr
 #define sr Sh4cntx.sr
 #define pc next_pc
-    
+
     ResetCache();
 }
 
@@ -87,12 +87,12 @@ void Sh4IrInterpreter::Run()
         uint32_t pc_val = ctx_->pc;
         uint32_t old_pc = pc_val;
         // No need to restore pc macro here
-        
+
         static uint64_t step_counter = 0;
         try {
             const Block* blk = emitter_.BuildBlock(pc_val);
             executor_.ExecuteBlock(blk, ctx_);
-            
+
             // Access ctx_->pc directly without macro interference
 #undef pc
             if (ctx_->pc == old_pc)
@@ -153,22 +153,22 @@ void Sh4IrInterpreter::Step()
 {
     printf("[PRINTF_DEBUG_IR_STEP_ENTRY] Sh4IrInterpreter::Step() entered.\n");
     //fflush(stdout); // Temporarily removed for testing crash output behavior
-    
+
     // Access ctx_->pc directly without macro interference
 #undef pc
     uint32_t pc_val = ctx_->pc;
     uint32_t old_pc = pc_val;
-    
+
     try {
         const Block* blk = emitter_.BuildBlock(pc_val);
         executor_.ExecuteBlock(blk, ctx_);
-        
+
         if (ctx_->pc == old_pc)
             ctx_->pc = blk->pcNext;
         if (blk->code.size() == 2 && blk->code[0].op == ir::Op::NOP)
         {
             u32 pc_scan = ctx_->pc;
-            
+
             if (u8* base = FastPtr(pc_scan))
             {
                 const u16* w = reinterpret_cast<const u16*>(base);
@@ -210,7 +210,7 @@ void Sh4IrInterpreter::Step()
 } // namespace ir
 } // namespace sh4
 
-#ifdef SH4_IR_ENABLED
+#ifdef ENABLE_SH4_IR
 Executor* Get_Sh4Interpreter()
 {
     fprintf(stderr, "[DEBUG_PRINTF] IR Get_Sh4Interpreter() called THE NEW ONE\n");
@@ -224,10 +224,10 @@ void sh4::ir::Sh4IrInterpreter::InvalidateBlock(u32 addr)
     // Simple implementation: reset both emitter and executor caches for any write to code memory
     // This is inefficient but guarantees correctness for self-modifying code
     INFO_LOG(SH4, "Invalidating block at address 0x%08X", addr);
-    
+
     // Clear emitter caches
     emitter_.ClearCaches();
-    
+
     // Reset executor state to force re-fetching blocks
     // This ensures any stale block pointers are discarded
     executor_.ResetCachedBlocks();

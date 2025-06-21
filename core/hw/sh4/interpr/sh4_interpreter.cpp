@@ -208,6 +208,7 @@ static void Sh4_int_Term()
 	INFO_LOG(INTERPRETER, "Sh4 Term");
 }
 
+#ifndef ENABLE_SH4_IR
 void Get_Sh4Interpreter(sh4_if* cpu)
 {
 	cpu->Start = Sh4_int_Start;
@@ -221,3 +222,4 @@ void Get_Sh4Interpreter(sh4_if* cpu)
 
 	cpu->ResetCache = sh4_int_resetcache;
 }
+#endif // ENABLE_SH4_IR
