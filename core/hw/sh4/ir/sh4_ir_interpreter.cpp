@@ -13,12 +13,25 @@ namespace sh4 {
 namespace ir {
 
 Sh4IrInterpreter::Sh4IrInterpreter()
+    : ctx_(nullptr)
 {
-    ctx_ = &p_sh4rcb->cntx; // assume global struct exists as in legacy interpreter
+    // ctx_ will be bound during Init() once p_sh4rcb has been created by the core.
 }
 
 void Sh4IrInterpreter::Init()
 {
+    // Bind context lazily the first time Init() is called – at this point the
+    // global p_sh4rcb should have been allocated by Emulator::init().
+    if (!ctx_)
+    {
+        if (!p_sh4rcb)
+        {
+            ERROR_LOG(SH4, "p_sh4rcb is null during IR_Init – sh4 core not initialised yet");
+            return;
+        }
+        ctx_ = &p_sh4rcb->cntx;
+    }
+
     emitter_.ClearCaches();
     // Zero context similar to legacy init
     memset(ctx_, 0, sizeof(*ctx_));
