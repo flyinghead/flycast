@@ -501,10 +501,11 @@ if(NOT WITH_SYSTEM_ZLIB)
 	# help libzip find the package
 	set(ZLIB_FOUND TRUE)
 	set(ZLIB_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/${ZLIB_RELATIVE_PATH}" "${CMAKE_CURRENT_BINARY_DIR}/${ZLIB_RELATIVE_PATH}")
-	
-	cmake_policy(SET CMP0026 OLD)
-	get_target_property(ZLIB_LIBRARY_RELEASE zlibstatic LOCATION)
-	get_target_property(ZLIB_LIBRARY_DEBUG zlibstatic LOCATION_Debug)
+
+	# Get the actual library file path instead of using target name
+	set(ZLIB_FOUND TRUE)
+	# Link the target directly to the project
+	target_link_libraries(${PROJECT_NAME} PRIVATE zlibstatic)
 endif()
 
 if(PKG_CONFIG_FOUND AND NOT ANDROID AND NOT APPLE AND NOT LIBRETRO)
@@ -650,9 +651,11 @@ if(NOT MINIUPNP_FOUND)
 endif()
 
 if(NOT LIBZIP_FOUND OR NINTENDO_SWITCH)
-	cmake_policy(SET CMP0026 OLD)
 	set(zstd_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/core/deps/libchdr/deps/zstd-1.5.6/lib")
-	get_target_property(zstd_STATIC_LIBRARY libzstd_static LOCATION)
+	# Use target directly in target_link_libraries later
+	set(HAVE_ZSTD TRUE)
+	# Add explicit target_link_libraries for libzstd_static
+	target_link_libraries(${PROJECT_NAME} PRIVATE libzstd_static)
 
 	option(ENABLE_COMMONCRYPTO "Enable use of CommonCrypto" OFF)
 	option(ENABLE_GNUTLS "Enable use of GnuTLS" OFF)
@@ -1917,4 +1920,20 @@ endif()
 if(${CMAKE_GENERATOR} MATCHES "^Xcode.*|^Visual Studio.*")
 	file(GLOB_RECURSE SRC_FILES *.h *.cpp *.c *.cc *.mm)
 	source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SRC_FILES})
+endif()
+
+option(ENABLE_SH4_IR "Enable cached IR SH4 interpreter (no JIT)" OFF)
+
+if(ENABLE_SH4_IR)
+    target_sources(${PROJECT_NAME} PRIVATE
+        core/hw/sh4/ir/ir_defs.h
+        core/hw/sh4/ir/ir_emitter.h
+        core/hw/sh4/ir/ir_emitter.cpp
+        core/hw/sh4/ir/ir_executor.h
+        core/hw/sh4/ir/ir_executor.cpp
+        core/hw/sh4/ir/sh4_ir_interpreter.h
+        core/hw/sh4/ir/sh4_ir_interpreter.cpp
+        core/hw/sh4/ir/ir_tables.h
+        core/hw/sh4/ir/ir_tables.cpp)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE ENABLE_SH4_IR)
 endif()

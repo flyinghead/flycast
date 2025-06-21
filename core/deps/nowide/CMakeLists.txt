@@ -13,7 +13,7 @@
 #
 # When not using CMake to link against the shared library on windows define -DNOWIDE_DYN_LINK
 
-cmake_minimum_required(VERSION 3.9)
+cmake_minimum_required(VERSION 3.16)
 # Version number starts at 10 to avoid conflicts with Nowide version
 set(_version 11.3.0)
 project(nowide VERSION ${_version} LANGUAGES CXX)
