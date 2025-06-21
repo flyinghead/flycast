@@ -1934,6 +1934,7 @@ if(ENABLE_SH4_IR)
         core/hw/sh4/ir/sh4_ir_interpreter.h
         core/hw/sh4/ir/sh4_ir_interpreter.cpp
         core/hw/sh4/ir/ir_tables.h
-        core/hw/sh4/ir/ir_tables.cpp)
+        core/hw/sh4/ir/ir_tables.cpp
+        core/hw/sh4/ir/ir_blockmanager_stubs.cpp)
     target_compile_definitions(${PROJECT_NAME} PRIVATE ENABLE_SH4_IR)
 endif()
