@@ -64,6 +64,20 @@ static bool FastDecode(uint16_t raw, uint32_t pc, Instr &ins, Block &blk)
         return true;
     }
 
+    // FNEG FPUL (0xF04D)
+    if (raw == 0xF04D) {
+        ins.op = Op::FNEG_FPUL;
+        blk.pcNext = pc + 2;
+        DEBUG_LOG(SH4, "FastDecode: FNEG FPUL (0xF04D)");
+        return true;
+    }
+    // FABS FPUL (0xF05D)
+    if (raw == 0xF05D) {
+        ins.op = Op::FABS_FPUL;
+        blk.pcNext = pc + 2;
+        DEBUG_LOG(SH4, "FastDecode: FABS FPUL (0xF05D)");
+        return true;
+    }
     // FSRRA FRn (0xFn7D)
     if ((raw & 0xF0FF) == 0xF07D) {
         ins.op = Op::FSRRA;
@@ -724,8 +738,8 @@ static bool FastDecode(uint16_t raw, uint32_t pc, Instr &ins, Block &blk)
         blk.pcNext = pc + 2;
         return true;
     }
-    // FTRC FRm,FPUL (0xF3nD with n != 9) - Float to integer conversion
-    else if ((raw & 0xFF0F) == 0xF30D && ((raw >> 8) & 0xF) != 9)
+    // FTRC FRm,FPUL (0xFm3D) - Float to integer conversion
+    else if ((raw & 0xF0FF) == 0xF03D)
     {
         uint8_t m = (raw >> 8) & 0xF;
         ins.op = Op::FTRC;
@@ -1397,10 +1411,12 @@ Block& Emitter::CreateNew(uint32_t pc) {
                      m, n, raw, pc);
         }
         // MOV.L Rm, @(disp, Rn) or MOV.L Rm, @Rn
-        else if ((raw & 0xF000) == 0x2000)
+        // Generic MOV.<size> Rm,@Rn and variants for type nibbles 0x0–0x6.
+        // Do NOT catch 0x8–0xF, as those encode logical ops (TST/XOR/AND/OR, etc.).
+        else if ((raw & 0xF000) == 0x2000 && (raw & 0x000F) <= 0x6)
         {
             INFO_LOG(SH4, "Emitter: Manual STORE32 path entered for raw=0x%04X, pc=0x%08X. m=R%d, n=R%d", raw, pc, m, n);
-            uint8_t type_nibble = raw & 0xF;
+            uint8_t type_nibble = static_cast<uint8_t>(raw & 0xF);
 
             ins.src1.isImm = false;
             ins.src1.reg = (raw >> 4) & 0xF; // Rm (third nibble)

@@ -126,6 +126,8 @@ enum class Op : uint8_t {
   FSUB,
   FTRC,
   FTRV,
+  FNEG_FPUL,
+  FABS_FPUL,
   JMP,
   LDC,
   LDC_L,

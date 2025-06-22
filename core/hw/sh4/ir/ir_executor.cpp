@@ -2,6 +2,21 @@
 #include <cstring> // for memcpy
 #include "../sh4_interpreter.h" // for interpreter functions
 
+#ifdef fpul
+#undef fpul
+#endif
+
+// Helper that writes to FPUL now that the conflicting macro is undefined.
+static inline void UpdateContextFPUL(Sh4Context* ctx, u32 value)
+{
+    if (ctx) {
+        ctx->fpul = value;
+        WARN_LOG(SH4, "UpdateContextFPUL: ctx=%p, value=0x%08X", ctx, value);
+    } else {
+        ERROR_LOG(SH4, "UpdateContextFPUL: ctx is NULL!");
+    }
+}
+
 // Helper macros for register access
 #define GET_REG(ctx, idx) r[idx]
 #define SET_REG(ctx, idx, val) r[idx] = (val)
@@ -58,7 +73,8 @@ static inline float BitsToFloat(u32 bits)
 
 #include "hw/sh4/modules/mmu.h"
 #include "hw/sh4/sh4_core.h" // for SH4ThrownException
-#include <cmath> // for fabsf, fabs
+#include <cmath>
+#include <cstring> // for fabsf, fabs
 #include <cassert>
 #include "log/Log.h"
 #include <array>
@@ -1887,14 +1903,20 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                     u32 srcReg = ins.src1.reg; // FR index encoded, so DR index = srcReg >> 1
                     double dval = GetDR(srcReg >> 1);
                     float fval = static_cast<float>(dval);
-                    fpul = *reinterpret_cast<u32*>(&fval);
-                    INFO_LOG(SH4, "FCNVDS DR%u (%.6f) -> FPUL (0x%08X)", srcReg >> 1, dval, fpul);
+                    {
+                        u32 bits; std::memcpy(&bits, &fval, sizeof(bits));
+                        UpdateContextFPUL(ctx, bits);
+                        fpul = bits;
+                    }
+                    { u32 fpul_val = *reinterpret_cast<u32*>(&fval); INFO_LOG(SH4, "FCNVDS DR%u (%.6f) -> FPUL (0x%08X)", srcReg >> 1, dval, fpul_val); }
                     break;
                 }
 
                 case Op::FTRC:
+                    fprintf(stderr, "[DEBUG] Entered FTRC handler at PC=0x%08X\n", ctx->pc);
                 {
-                    bool pr_val = fpscr.PR != 0;
+                    // FTRC: decide single vs double based solely on opcode variant; PR does not matter
+                    
                     u32 srcReg = ins.src1.reg; // for FTRC, source is in src1
                     int32_t int_val;
                     // According to SH4 manual, the DR variant of FTRC (opcode 0xF?3D) always
@@ -1902,25 +1924,48 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                     // The encoding places an *even* FR register number in m; that pair forms DRm/2.
                     bool treat_as_double = (srcReg % 2 == 0); // even index implies DR source variant
 
-                    if (!treat_as_double && pr == 0) {
+                    if (!treat_as_double) {
                         // Single-precision variant.
                         float fval = fr[srcReg];
 
                         // Handle special cases according to SH4 spec and test expectations
-                        if (std::isnan(fval)) {
-                            // NaN -> 0x80000000
-                            int_val = static_cast<int32_t>(0x80000000);
-                            INFO_LOG(SH4, "FTRC FR%d (NaN) -> FPUL (0x80000000)", srcReg);
-                        } else if (fval >= 2147483648.0f) {
-                            // Values >= 2^31 -> 0x7FFFFFFF (INT_MAX)
-                            int_val = 0x7FFFFFFF;
+                        // Get raw bit pattern to detect NaN/Inf regardless of platform float behavior
+                        u32 bits; std::memcpy(&bits, &fr[srcReg], sizeof(bits));
+                        WARN_LOG(SH4, "FTRC FR%d: raw=0x%08X, float=%f, isnan=%d, exponent check=%d", 
+                               srcReg, bits, fval, std::isnan(fval), (bits & 0x7F800000) == 0x7F800000);
+                        // Detect NaN / ±Inf via raw bits to avoid platform casting quirks.
+                        const bool is_nan   = ((bits & 0x7F800000u) == 0x7F800000u) && (bits & 0x007FFFFFu);
+                        const bool is_inf   = ((bits & 0x7F800000u) == 0x7F800000u) && !(bits & 0x007FFFFFu);
+                        const bool sign_neg = (bits & 0x80000000u);
+
+                        if (is_nan) {
+                            // NaN  -> INT32_MIN (0x80000000)
+                            int_val = INT32_MIN;
+                            WARN_LOG(SH4, "FTRC FR%d (NaN) -> FPUL (0x80000000)", srcReg);
+                        } else if (is_inf) {
+                            // +Inf -> INT32_MAX , -Inf -> INT32_MIN
+                            int_val = sign_neg ? INT32_MIN : INT32_MAX;
+                            WARN_LOG(SH4, "FTRC FR%d (%sInf) -> FPUL (0x%08X)", srcReg, sign_neg ? "-" : "+", (u32)int_val);
+                        } else if (fval >= static_cast<float>(INT32_MAX)) {
+                            // Overflow: clamp to INT_MAX
+                            int_val = INT32_MAX;
                             INFO_LOG(SH4, "FTRC FR%d (%.1f, overflow) -> FPUL (0x7FFFFFFF)", srcReg, fval);
-                        } else if (fval <= -2147483649.0f) {
-                            // Values <= -2^31-1 -> 0x80000000 (INT_MIN)
-                            int_val = static_cast<int32_t>(0x80000000);
+                        } else if (fval <= static_cast<float>(INT32_MIN)) {
+                            // Underflow: clamp to INT_MIN
+                            int_val = INT32_MIN;
                             INFO_LOG(SH4, "FTRC FR%d (%.1f, underflow) -> FPUL (0x80000000)", srcReg, fval);
+                            fprintf(stderr, "[DEBUG] FTRC underflow branch: fval=%f -> INT32_MIN\n", fval);
+                        } else if (fval >= static_cast<float>(INT32_MAX)) {
+                            // Overflow: clamp to INT_MAX
+                            int_val = INT32_MAX;
+                            INFO_LOG(SH4, "FTRC FR%d (%.1f, overflow) -> FPUL (0x7FFFFFFF)", srcReg, fval);
+                        } else if (fval <= static_cast<float>(INT32_MIN)) {
+                            // Underflow: clamp to INT_MIN
+                            int_val = INT32_MIN;
+                            INFO_LOG(SH4, "FTRC FR%d (%.1f, underflow) -> FPUL (0x80000000)", srcReg, fval);
+                            fprintf(stderr, "[DEBUG] FTRC underflow branch: fval=%f -> INT32_MIN\n", fval);
                         } else {
-                            // Normal case
+                            // Within range – round toward zero as per SH4 spec
                             int_val = static_cast<int32_t>(fval);
                             INFO_LOG(SH4, "FTRC FR%d (%.1f) -> FPUL (%d)", srcReg, fval, int_val);
                         }
@@ -1929,26 +1974,33 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                         double dval = GetDR(srcReg >> 1);
 
                         // Handle special cases for double precision too
-                        if (std::isnan(dval)) {
-                            // NaN -> 0x80000000
-                            int_val = static_cast<int32_t>(0x80000000);
-                            INFO_LOG(SH4, "FTRC DR%d (NaN) -> FPUL (0x80000000)", srcReg >> 1);
-                        } else if (dval >= 2147483648.0) {
-                            // Values >= 2^31 -> 0x7FFFFFFF (INT_MAX)
-                            int_val = 0x7FFFFFFF;
+                        // Get raw bit pattern to detect NaN/Inf regardless of platform float behavior
+                        u64 dbits; std::memcpy(&dbits, &dval, sizeof(dbits));
+                        if (std::isnan(dval) || std::isinf(dval) || (dbits & 0x7FF0000000000000ULL) == 0x7FF0000000000000ULL) {
+                            // NaN or Infinity -> 0x80000000 (INT32_MIN)
+                            int_val = INT32_MIN; // 0x80000000
+                            INFO_LOG(SH4, "FTRC DR%d (NaN/Inf) -> FPUL (0x80000000)", srcReg >> 1);
+                        } else if (dval > static_cast<double>(INT32_MAX)) {
+                            int_val = INT32_MAX;
                             INFO_LOG(SH4, "FTRC DR%d (%.1f, overflow) -> FPUL (0x7FFFFFFF)", srcReg >> 1, dval);
-                        } else if (dval <= -2147483649.0) {
-                            // Values <= -2^31-1 -> 0x80000000 (INT_MIN)
-                            int_val = static_cast<int32_t>(0x80000000);
+                        } else if (dval < static_cast<double>(INT32_MIN)) {
+                            int_val = INT32_MIN;
                             INFO_LOG(SH4, "FTRC DR%d (%.1f, underflow) -> FPUL (0x80000000)", srcReg >> 1, dval);
                         } else {
-                            // Normal case
                             int_val = static_cast<int32_t>(dval);
                             INFO_LOG(SH4, "FTRC DR%d (%.1f) -> FPUL (%d)", srcReg >> 1, dval, int_val);
                         }
                     }
 
-                    fpul = static_cast<u32>(int_val);
+                    // Write result directly into the current context's FPUL register
+                    u32 fpul_val = static_cast<u32>(int_val);
+                    UpdateContextFPUL(ctx, fpul_val);
+                    fpul = fpul_val;
+                    WARN_LOG(SH4, "FTRC: fpul set to 0x%08X, ctx=%p", fpul_val, ctx);
+                    
+                    // Ensure the value is written directly to global context as well
+                    // This is a safeguard against macro expansion issues
+                    // No additional global context update needed; ctx already points to shared context
                     break;
                 }
 
@@ -2232,7 +2284,12 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                     break;
                 }
                 case Op::FLDS: // Move FRm -> FPUL (store as int bits)
-                    fpul = *reinterpret_cast<uint32_t*>(&fr[ins.src1.reg]);
+                    {
+                        static_assert(sizeof(uint32_t) == sizeof(float), "size mismatch");
+                        uint32_t bits;
+                        std::memcpy(&bits, &fr[ins.src1.reg], sizeof(bits));
+                        fpul = bits;
+                    }
                     break;
                 case Op::FLDI0:
                     if ((ins.dst.reg & 1) == 0) {
@@ -2287,6 +2344,23 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                         fr[ins.dst.reg] = -fr[ins.dst.reg];
                         DEBUG_LOG(SH4, "FNEG: FR%u = %f", ins.dst.reg, fr[ins.dst.reg]);
                     }
+                    break;
+                }
+                case Op::FNEG_FPUL:
+                {
+                    float val = *reinterpret_cast<float*>(&fpul);
+                    val = -val;
+                    fpul = *reinterpret_cast<u32*>(&val);
+                    DEBUG_LOG(SH4, "FNEG FPUL -> 0x%08X", fpul);
+                    break;
+                }
+
+                case Op::FABS_FPUL:
+                {
+                    float val = *reinterpret_cast<float*>(&fpul);
+                    val = std::fabs(val);
+                    fpul = *reinterpret_cast<u32*>(&val);
+                    DEBUG_LOG(SH4, "FABS FPUL -> 0x%08X", fpul);
                     break;
                 }
                 case Op::FRCHG:

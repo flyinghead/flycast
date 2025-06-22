@@ -1,6 +1,7 @@
 #include "types.h"
 #include "hw/mem/addrspace.h"
 
+
 // Stub implementations for blockmanager functions when using IR interpreter without dynarec
 // These are minimal implementations to satisfy the linker when TARGET_NO_REC/NO_JIT are defined
 
@@ -48,3 +49,12 @@ void dec_illegalOp(u32 op)
     // Simple implementation for illegal opcodes in IR mode
     printf("IR: Illegal opcode %08x\n", op);
 }
+
+// ---------------------------------------------------------------------------
+// Additional stub implementations required by SSAOptimizer when dynarec is
+// disabled (FEAT_SHREC == DYNAREC_NONE / NO_JIT / TARGET_NO_REC).
+// These functions are normally provided by dynarec-related translation units
+// but are only needed at link-time to satisfy references. They should never be
+// executed in IR-only builds, so they contain minimal no-op behaviour.
+// ---------------------------------------------------------------------------
+

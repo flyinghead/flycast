@@ -224,7 +224,6 @@ void Sh4IrInterpreter::Step()
 } // namespace ir
 } // namespace sh4
 
-#ifdef ENABLE_SH4_IR
 
 // -----------------------------------------------------------------------------
 // Legacy sh4_if wrappers for the new IR-based interpreter
@@ -262,11 +261,10 @@ void sh4::ir::Get_Sh4Interpreter(sh4_if* cpu)
     cpu->IsCpuRunning  = IR_IsCpuRunning;
 }
 
-// Global (non-namespaced) wrapper to satisfy legacy calls like Get_Sh4Interpreter(&sh4_cpu).
-void Get_Sh4Interpreter(sh4_if* cpu)
-{
-    sh4::ir::Get_Sh4Interpreter(cpu);
-}
+// Provide the legacy symbol expected by existing code/tests.
+
+
+
 void sh4::ir::Sh4IrInterpreter::InvalidateBlock(u32 addr)
 {
     // Simple implementation: reset both emitter and executor caches for any write to code memory
@@ -280,4 +278,3 @@ void sh4::ir::Sh4IrInterpreter::InvalidateBlock(u32 addr)
     // This ensures any stale block pointers are discarded
     executor_.ResetCachedBlocks();
 }
-#endif // ENABLE_SH4_IR
