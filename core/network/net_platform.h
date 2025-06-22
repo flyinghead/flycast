@@ -53,7 +53,7 @@ typedef int sock_t;
 #define L_EWOULDBLOCK EWOULDBLOCK
 #define L_EAGAIN EAGAIN
 #define L_EINPROGRESS EINPROGRESS
-#define get_last_error() (errno)
+static inline int get_last_error() { return errno; }
 #define INVALID_SOCKET (-1)
 #define perror(s) do { ERROR_LOG(NETWORK, "%s: %s", (s) != NULL ? (s) : "", strerror(get_last_error())); } while (false)
 #else
@@ -62,7 +62,7 @@ typedef SOCKET sock_t;
 #define L_EWOULDBLOCK WSAEWOULDBLOCK
 #define L_EAGAIN WSAEWOULDBLOCK
 #define L_EINPROGRESS WSAEINPROGRESS
-#define get_last_error() (WSAGetLastError())
+static inline int get_last_error() { return WSAGetLastError(); }
 #define perror(s) do { ERROR_LOG(NETWORK, "%s: Winsock error: %d", (s) != NULL ? (s) : "", WSAGetLastError()); } while (false)
 #ifndef SHUT_WR
 #define SHUT_WR SD_SEND

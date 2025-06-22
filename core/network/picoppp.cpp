@@ -534,7 +534,7 @@ private:
 		}
 
 		if (ev & PICO_SOCK_EV_ERR) {
-			INFO_LOG(MODEM, "TcpSocket[%s] Pico socket error received: %s", name.c_str(), strerror(pico_err));
+			INFO_LOG(NETWORK, "TcpSocket[%s] Pico socket error received: %s", name.c_str(), strerror(pico_err));
 			closeAll();
 		}
 
@@ -630,7 +630,7 @@ public:
 				static_cast<TcpSink *>(picoSock->priv)->picoCallback(ev);
 		});
 		if (pico_sock == nullptr)
-			ERROR_LOG(MODEM, "error opening TCP socket: %s", strerror(pico_err));
+			ERROR_LOG(NETWORK, "error opening TCP socket: %s", strerror(pico_err));
 		pico_sock->priv = this;
 		int yes = 1;
 		pico_socket_setoption(pico_sock, PICO_TCP_NODELAY, &yes);
@@ -638,9 +638,9 @@ public:
 		uint16_t listen_port = 0;
 		int ret = pico_socket_bind(pico_sock, &inaddr_any, &listen_port);
 		if (ret < 0)
-			ERROR_LOG(MODEM, "error binding TCP socket to port %u: %s", short_be(listen_port), strerror(pico_err));
+			ERROR_LOG(NETWORK, "error binding TCP socket to port %u: %s", short_be(listen_port), strerror(pico_err));
 		else if (pico_socket_listen(pico_sock, 10) != 0)
-			ERROR_LOG(MODEM, "error listening on port %u", short_be(listen_port));
+			ERROR_LOG(NETWORK, "error listening on port %u", short_be(listen_port));
 	}
 
 	~TcpSink() {
@@ -734,10 +734,11 @@ public:
 	}
 
 private:
-	UdpSocket(asio::io_context& io_context, u16 port, pico_socket *pico_sock)
+	UdpSocket(asio::io_context& io_context, u16 port, pico_socket *pico_sock, u16 dcport)
 		: io_context(io_context),
 		  socket(io_context, asio::ip::udp::endpoint(asio::ip::udp::v4(), port)),
-		  pico_sock(pico_sock)
+		  pico_sock(pico_sock),
+		  dcport(dcport)
 	{
 		asio::socket_base::broadcast option(true);
 		socket.set_option(option);
@@ -754,7 +755,7 @@ private:
 					return;
 				}
 				DEBUG_LOG(NETWORK, "UdpSocket: received %d bytes to port %d from %s:%d", (int)len,
-						socket.local_endpoint().port(), source.address().to_string().c_str(), source.port());
+						dcport, source.address().to_string().c_str(), source.port());
 				if (len == 0)
 					WARN_LOG(NETWORK, "Received empty datagram");
 
@@ -769,9 +770,9 @@ private:
 					msginfo.local_addr.ip4.addr = srcAddr;
 					msginfo.local_port = htons(source.port());
 
-					int r = pico_socket_sendto_extended(pico_sock, &recvbuf[0], len, &dcaddr, htons(socket.local_endpoint().port()), &msginfo);
+					int r = pico_socket_sendto_extended(pico_sock, &recvbuf[0], len, &dcaddr, htons(dcport), &msginfo);
 					if (r < (int)len)
-						INFO_LOG(MODEM, "error UDP sending to port %d: %s", socket.local_endpoint().port(), strerror(pico_err));
+						INFO_LOG(NETWORK, "error UDP sending to port %d: %s", dcport, strerror(pico_err));
 				}
 				readAsync();
 			});
@@ -782,6 +783,7 @@ private:
 	pico_socket *pico_sock;
 	std::array<u8, 1510> recvbuf;
 	asio::ip::udp::endpoint source;	// source endpoint when receiving packets
+	u16 dcport;
 	friend super;
 };
 
@@ -825,7 +827,16 @@ public:
 		if (it != sockets.end())
 			return it->second;
 		try {
-			UdpSocket::Ptr sock = UdpSocket::create(io_context, port, pico_sock);
+			UdpSocket::Ptr sock;
+			try {
+				sock = UdpSocket::create(io_context, port, pico_sock, port);
+			} catch (const std::system_error& e) {
+				if (e.code() != asio::error::address_in_use)
+					throw;
+				// Use a random local port
+				WARN_LOG(NETWORK, "Server UDP socket on port %d: address in use, using random port instead", port);
+				sock = UdpSocket::create(io_context, 0, pico_sock, port);
+			}
 			sock->start();
 			sockets[port] = sock;
 			return sock;
@@ -985,9 +996,9 @@ private:
 			upnpCmd = std::async(std::launch::async, [this, port, udpOnly]()
 			{
 				if (!upnp->AddPortMapping(port, false))
-					WARN_LOG(MODEM, "UPNP AddPortMapping UDP %d failed", port);
+					WARN_LOG(NETWORK, "UPNP AddPortMapping UDP %d failed", port);
 				if (!udpOnly && !upnp->AddPortMapping(port, true))
-					WARN_LOG(MODEM, "UPNP AddPortMapping TCP %d failed", port);
+					WARN_LOG(NETWORK, "UPNP AddPortMapping TCP %d failed", port);
 			});
 		}
 	}
@@ -1223,7 +1234,7 @@ void PicoThread::run()
 		{
 			if (settings.content.gameId == game.gameId[j])
 			{
-				NOTICE_LOG(MODEM, "Found network ports for game %s", settings.content.gameId.c_str());
+				NOTICE_LOG(NETWORK, "Found network ports for game %s", settings.content.gameId.c_str());
 				ports = &game;
 				break;
 			}
@@ -1245,15 +1256,15 @@ void PicoThread::run()
 				// Initialize miniupnpc and map network ports
 				ThreadName _("UPNP-init");
 				if (!upnp->Init())
-					WARN_LOG(MODEM, "UPNP Init failed");
+					WARN_LOG(NETWORK, "UPNP Init failed");
 				else
 				{
 					for (u32 i = 0; i < std::size(ports->udpPorts) && ports->udpPorts[i] != 0; i++)
 						if (!upnp->AddPortMapping(ports->udpPorts[i], false))
-							WARN_LOG(MODEM, "UPNP AddPortMapping UDP %d failed", ports->udpPorts[i]);
+							WARN_LOG(NETWORK, "UPNP AddPortMapping UDP %d failed", ports->udpPorts[i]);
 					for (u32 i = 0; i < std::size(ports->tcpPorts) && ports->tcpPorts[i] != 0; i++)
 						if (!upnp->AddPortMapping(ports->tcpPorts[i], true))
-							WARN_LOG(MODEM, "UPNP AddPortMapping TCP %d failed", ports->tcpPorts[i]);
+							WARN_LOG(NETWORK, "UPNP AddPortMapping TCP %d failed", ports->tcpPorts[i]);
 				}
 			}));
 	}
@@ -1280,14 +1291,14 @@ void PicoThread::run()
 			memcpy(&dnsaddr.addr, &endpoint.address().to_v4().to_bytes()[0], sizeof(dnsaddr.addr));
 			char s[17];
 			pico_ipv4_to_string(s, dnsaddr.addr);
-			NOTICE_LOG(MODEM, "%s IP is %s", dnsName.c_str(), s);
+			NOTICE_LOG(NETWORK, "%s IP is %s", dnsName.c_str(), s);
 		}
 		else
 		{
 			u32 addr;
 			pico_string_to_ipv4("46.101.91.123", &addr);
 			dnsaddr.addr = addr;
-			WARN_LOG(MODEM, "Can't resolve dns.flyca.st. Using default 46.101.91.123");
+			WARN_LOG(NETWORK, "Can't resolve dns.flyca.st. Using default 46.101.91.123");
 		}
 	}
 	resolveDns(*io_context);
@@ -1350,7 +1361,7 @@ void PicoThread::run()
 		dhcpSettings.pool_next = addr;
 		dhcpSettings.dns_server.addr = dnsaddr.addr;
 		if (pico_dhcp_server_initiate(&dhcpSettings) != 0)
-			WARN_LOG(MODEM, "DHCP server init failed");
+			WARN_LOG(NETWORK, "DHCP server init failed");
 	}
 
 	// Create sinks
