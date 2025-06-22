@@ -19,6 +19,7 @@
 #include "sh4_ops.h"
 #include "emulator.h"
 #include "hw/sh4/sh4_mem.h"
+#include "hw/sh4/ir/sh4_ir_interpreter.h"
 
 class Sh4InterpreterTest : public Sh4OpTest {
 protected:
@@ -30,7 +31,7 @@ protected:
 		mem_map_default();
 		dc_reset(true);
 		ctx = &p_sh4rcb->cntx;
-		Get_Sh4Interpreter(&sh4);
+		::sh4::ir::Get_Sh4Interpreter(&this->sh4);
 	}
 	void PrepareOp(u16 op, u16 op2 = 0, u16 op3 = 0) override
 	{
