@@ -1549,15 +1549,16 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                     SET_REG(ctx, ins.dst.reg, sr.T);
                     break;
                 case Op::CMP_EQ:
-                    SET_REG(ctx, ins.dst.reg, GET_REG(ctx, ins.src1.reg));
-                    sr.T = 0; // MOV doesn't affect T
+                    sr.T = (GET_REG(ctx, ins.dst.reg) == GET_REG(ctx, ins.src1.reg));
                     break;
                 case Op::CMP_EQ_IMM:
-                    // Compare R0 with immediate value (sign-extended)
-                    SET_REG(ctx, 0, (int8_t)ins.extra);
-                    sr.T = 0; // MOVI doesn't affect T
-                    INFO_LOG(SH4, "CMP_EQ_IMM: R0(0x%08X) == #%d -> T=%d",
-                            GET_REG(ctx, 0), (int8_t)ins.extra, sr.T);
+                    {
+                        // Compare R0 with sign-extended 8-bit immediate and set T accordingly.
+                        int32_t imm = static_cast<int8_t>(ins.extra);
+                        sr.T = (static_cast<int32_t>(GET_REG(ctx, 0)) == imm);
+                        INFO_LOG(SH4, "CMP_EQ_IMM: R0(0x%08X) == #%d -> T=%d",
+                                 GET_REG(ctx, 0), imm, sr.T);
+                    }
                     break;
                 case Op::CMP_HI:
                     sr.T = (GET_REG(ctx, ins.dst.reg) > GET_REG(ctx, ins.src1.reg));
