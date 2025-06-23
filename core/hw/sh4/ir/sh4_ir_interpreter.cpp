@@ -111,6 +111,7 @@ void Sh4IrInterpreter::Run()
 #undef pc
             if (ctx_->pc == old_pc)
                 ctx_->pc = blk->pcNext;
+#ifdef SH4_FAST_SKIP
             if (blk->code.size() == 2 && blk->code[0].op == ir::Op::NOP)
             {
                 // Fast-skip over large stretches of 0x0000 instructions that
@@ -144,12 +145,13 @@ void Sh4IrInterpreter::Run()
                     }
                     ctx_->pc = pc_scan;
                 }
-            }
-            ++step_counter;
-            if ((step_counter & 0x1FFFF) == 0) // every 131072 blocks
-            {
-                INFO_LOG(SH4, "PC=%08X", ctx_->pc);
-            }
+
+                ++step_counter;
+                if ((step_counter & 0x1FFFF) == 0) // every 131072 blocks
+                {
+                    INFO_LOG(SH4, "PC=%08X", ctx_->pc);
+                }
+#endif // SH4_FAST_SKIP
 #define pc next_pc
         } catch (const SH4ThrownException& ex) {
             // Access ctx fields directly without macro interference
@@ -178,7 +180,8 @@ void Sh4IrInterpreter::Step()
         executor_.ExecuteBlock(blk, ctx_);
 
         if (ctx_->pc == old_pc)
-            ctx_->pc = blk->pcNext;
+             ctx_->pc = blk->pcNext;
+#ifdef SH4_FAST_SKIP
         if (blk->code.size() == 2 && blk->code[0].op == ir::Op::NOP)
         {
             u32 pc_scan = ctx_->pc;
@@ -208,6 +211,7 @@ void Sh4IrInterpreter::Step()
                 ctx_->pc = pc_scan;
             }
         }
+#endif // SH4_FAST_SKIP
         // Restore pc macro for rest of code
 #define pc next_pc
     } catch (const SH4ThrownException& ex) {
