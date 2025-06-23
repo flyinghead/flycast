@@ -16,10 +16,9 @@
 //#define SHIL_MODE 2
 //#include "shil_canonical.h"
 
-#if FEAT_SHREC != DYNAREC_NONE
+// Always generate SHIL opcode class implementations; needed by SSA constant folding even in IR-only builds
 #define SHIL_MODE 3
 #include "shil_canonical.h"
-#endif
 
 #include "ssa.h"
 

@@ -24,6 +24,8 @@
 #include "ui/mainui.h"
 #include <future>
 
+#include <gtest/gtest.h>
+
 int darw_printf(const char* text, ...)
 {
     va_list args;
@@ -64,8 +66,15 @@ static void emu_flycast_term()
 	LogManager::Shutdown();
 }
 
-extern "C" int SDL_main(int argc, char *argv[])
+extern "C" int FlycastSDLMain(int argc, char *argv[])
 {
+    bool run_tests = false;
+    for (int i = 1; i < argc; ++i)
+        if (strncmp(argv[i], "--gtest", 7) == 0)
+            run_tests = true;
+    ::testing::InitGoogleTest(&argc, argv);
+    if (run_tests || ::testing::GTEST_FLAG(list_tests))
+        return RUN_ALL_TESTS();
     char *home = getenv("HOME");
     if (home != NULL)
     {

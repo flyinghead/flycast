@@ -5,6 +5,8 @@
 #define USE_WINCE_HACK
 #endif
 
+#define ENABLE_SH4_IR 1
+
 #define DC_PLATFORM_DREAMCAST   0
 #define DC_PLATFORM_DEV_UNIT    1
 #define DC_PLATFORM_NAOMI       2

@@ -24,6 +24,8 @@ op_agent_t          oprofHandle;
 
 #if FEAT_SHREC != DYNAREC_NONE
 
+#error "We shouldn't be here"
+
 
 typedef std::vector<RuntimeBlockInfoPtr> bm_List;
 typedef std::set<RuntimeBlockInfoPtr> bm_Set;
@@ -350,7 +352,7 @@ void bm_Term()
 {
 #ifdef DYNA_OPROF
 	if (oprofHandle) op_close_agent(oprofHandle);
-	
+
 	oprofHandle=0;
 #endif
 	bm_Reset();
@@ -393,8 +395,8 @@ RuntimeBlockInfo::~RuntimeBlockInfo()
 }
 
 void RuntimeBlockInfo::AddRef(const RuntimeBlockInfoPtr& other)
-{ 
-	pre_refs.push_back(other); 
+{
+	pre_refs.push_back(other);
 }
 
 void RuntimeBlockInfo::RemRef(const RuntimeBlockInfoPtr& other)
@@ -571,7 +573,7 @@ void print_blocks()
 			s32 gcode=-1;
 
 			size_t j=0;
-			
+
 			fprintf(f,"{\n");
 			for (;j<blk->oplist.size();j++)
 			{
@@ -597,7 +599,7 @@ void print_blocks()
 				std::string s = op->dissasm();
 				fprintf(f,"//il:%d:%d: %s\n",op->guest_offs,op->host_offs,s.c_str());
 			}
-			
+
 			//fprint_hex(f,"//h:",pucode,hcode,blk->host_code_size);
 
 			fprintf(f,"}\n");
@@ -607,4 +609,3 @@ void print_blocks()
 	if (f) fclose(f);
 }
 #endif
-

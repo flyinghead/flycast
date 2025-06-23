@@ -47,9 +47,7 @@
 #ifndef LIBRETRO
 #include "ui/gui.h"
 #endif
-#if defined(ENABLE_SH4_IR)
 #include "hw/sh4/ir/sh4_ir_interpreter.h"
-#endif
 
 settings_t settings;
 
@@ -489,24 +487,10 @@ void Emulator::init()
 	reios_init();
 
 	// the recompiler may start generating code at this point and needs a fully configured machine
-#if defined(ENABLE_SH4_IR)
-	// Use the IR interpreter when ENABLE_SH4_IR is defined
+// Always use the new IR interpreter regardless of build flags.
 	sh4::ir::Get_Sh4Interpreter(&sh4_cpu);
 	sh4_cpu.Init();
-#elif FEAT_SHREC != DYNAREC_NONE
-	Get_Sh4Recompiler(&sh4_cpu);
-	sh4_cpu.Init();		// Also initialize the interpreter
-	if(config::DynarecEnabled)
-	{
-		INFO_LOG(DYNAREC, "Using Recompiler");
-	}
-	else
-#endif
-	{
-		Get_Sh4Interpreter(&sh4_cpu);
-		sh4_cpu.Init();
-		INFO_LOG(INTERPRETER, "Using Interpreter");
-	}
+	INFO_LOG(INTERPRETER, "Using IR Interpreter (forced)");
 	state = Init;
 }
 
@@ -937,18 +921,8 @@ void Emulator::start()
 	if (config::GGPOEnable && config::ThreadedRendering)
 		// Not supported with GGPO
 		config::EmulateFramebuffer.override(false);
-#if FEAT_SHREC != DYNAREC_NONE
-	if (config::DynarecEnabled)
-	{
-		Get_Sh4Recompiler(&sh4_cpu);
-		INFO_LOG(DYNAREC, "Using Recompiler");
-	}
-	else
-#endif
-	{
-		Get_Sh4Interpreter(&sh4_cpu);
-		INFO_LOG(DYNAREC, "Using Interpreter");
-	}
+		sh4::ir::Get_Sh4Interpreter(&sh4_cpu);
+		INFO_LOG(DYNAREC, "Using NEW Interpreter");
 	setupPtyPipe();
 
 	memwatch::protect();

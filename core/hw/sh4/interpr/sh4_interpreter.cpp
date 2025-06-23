@@ -211,6 +211,7 @@ static void Sh4_int_Term()
 #ifndef ENABLE_SH4_IR
 void Get_Sh4Interpreter(sh4_if* cpu)
 {
+    fprintf(stderr, "[LEGACY-INT] Get_Sh4Interpreter called — linking legacy interpreter!\n");
 	cpu->Start = Sh4_int_Start;
 	cpu->Run = Sh4_int_Run;
 	cpu->Stop = Sh4_int_Stop;

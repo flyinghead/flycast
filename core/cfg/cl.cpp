@@ -112,6 +112,12 @@ void ParseCommandLine(int argc,char* argv[])
 #endif
 		else if ((*arg)[0] == '-')
 		{
+			// Allow GoogleTest flags to pass through without warning so the main executable can run tests
+			if (strncmp(*arg, "--gtest", 7) == 0) {
+				arg++;
+				cl--;
+				continue; // skip Flycast option handling
+			}
 			WARN_LOG(COMMON, "Ignoring unknown command line option '%s'", *arg);
 		}
 		else

@@ -88,9 +88,16 @@ if(ENABLE_CTEST)
 	include(CTest)
 endif()
 
+# Enable Swift for iOS builds and Objective-C for all Apple platforms so
+# CMake generates the necessary OBJC compile rules (avoids CMAKE_OBJC_COMPILE_OBJECT errors).
 if(IOS AND NOT LIBRETRO)
 	set(CMAKE_Swift_LANGUAGE_VERSION 5.0)
 	enable_language(Swift)
+endif()
+
+if(APPLE)
+	enable_language(OBJC)
+	enable_language(OBJCXX)
 endif()
 
 find_package(Git)
@@ -445,9 +452,12 @@ if(NOT LIBRETRO)
 		endif()
 
 		# SDL2::SDL2main may or may not be available. It is e.g. required by Windows GUI applications
-		if(TARGET SDL2::SDL2main AND NOT BUILD_TESTING)
+		if(TARGET SDL2::SDL2main)
 			# It has an implicit dependency on SDL2 functions, so it MUST be added before SDL2::SDL2 (or SDL2::SDL2-static)
 			target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2main)
+			if(TEST_AUTOMATION)
+				target_link_libraries(${PROJECT_NAME} PRIVATE gtest)
+			endif()
 		endif()
 
 		if((APPLE OR WIN32) AND TARGET SDL2::SDL2-static)
@@ -1569,7 +1579,9 @@ if("arm64" IN_LIST ARCHITECTURE)
 		core/deps/vixl/pool-manager-impl.h
 		core/deps/vixl/utils-vixl.cc
 		core/deps/vixl/utils-vixl.h)
-	target_sources(${PROJECT_NAME} PRIVATE core/rec-ARM64/rec_arm64.cpp core/rec-ARM64/arm64_regalloc.h)
+	target_sources(${PROJECT_NAME} PRIVATE
+		$<$<BOOL:ENABLE_DYNAREC>:core/rec-ARM64/rec_arm64.cpp>
+		$<$<BOOL:ENABLE_DYNAREC>:core/rec-ARM64/arm64_regalloc.h>)
 endif()
 if("x86" IN_LIST ARCHITECTURE OR "x86_64" IN_LIST ARCHITECTURE)
 	add_subdirectory(core/deps/xbyak EXCLUDE_FROM_ALL)
@@ -1749,7 +1761,8 @@ if(NOT LIBRETRO)
 					shell/apple/common/util.mm
 					shell/apple/emulator-osx/emulator-osx/SDLApplicationDelegate.h
 					shell/apple/emulator-osx/emulator-osx/SDLApplicationDelegate.mm
-					shell/apple/emulator-osx/emulator-osx/osx-main.mm)
+					shell/apple/emulator-osx/emulator-osx/osx-main.mm
+                    shell/apple/emulator-osx/emulator-osx/sdl_entry.mm)
 			set(ASSETS shell/apple/emulator-osx/emulator-osx/Images.xcassets)
 			target_sources(${PROJECT_NAME} PRIVATE ${ASSETS})
 			source_group("Resources" FILES ${ASSETS})
@@ -1849,24 +1862,115 @@ if(NOT LIBRETRO)
 endif()
 
 if(BUILD_TESTING)
-	option(BUILD_GMOCK "Builds the googlemock subproject" OFF)
-	option(INSTALL_GTEST "Enable installation of googletest. (Projects embedding googletest may want to turn this OFF.)" OFF)
-	if(WIN32)
-		set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-	endif()
-	add_subdirectory(core/deps/googletest EXCLUDE_FROM_ALL)
-	target_link_libraries(${PROJECT_NAME} PRIVATE GTest::gtest_main)
+    enable_testing()
+    option(BUILD_GMOCK "Builds the googlemock subproject" OFF)
+    option(INSTALL_GTEST "Enable installation of googletest" OFF)
+    if(WIN32)
+        set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+    endif()
+    if(NOT TARGET GTest::gtest)
+        add_subdirectory(core/deps/googletest EXCLUDE_FROM_ALL)
+    endif()
 
-	target_sources(${PROJECT_NAME} PRIVATE
-			tests/src/CheatManagerTest.cpp
-			tests/src/ConfigFileTest.cpp
-			tests/src/div32_test.cpp
-			tests/src/test_stubs.cpp
-			tests/src/serialize_test.cpp
-			tests/src/AicaArmTest.cpp
-			tests/src/Sh4InterpreterTest.cpp
-			tests/src/MmuTest.cpp)
+    set(FLYCAST_TEST_SOURCES
+        tests/src/CheatManagerTest.cpp
+        tests/src/ConfigFileTest.cpp
+        tests/src/div32_test.cpp
+        tests/src/test_stubs.cpp
+        tests/src/serialize_test.cpp
+        tests/src/AicaArmTest.cpp
+        tests/src/Sh4InterpreterTest.cpp
+        tests/src/gtest_main_entry.cpp
+        tests/src/MmuTest.cpp
+    )
+
+    # Configure GoogleTest integration
+    set_target_properties(${PROJECT_NAME} PROPERTIES ENABLE_EXPORTS ON)
+    # allow SDL app to compile gtest include in osx-main.mm
+    target_include_directories(${PROJECT_NAME} PRIVATE
+        tests/include
+        ${CMAKE_SOURCE_DIR}/core/deps/googletest/googletest/include)
+
+    # Universal console test runner
+    add_executable(flycast_tests
+        tests/src/gtest_bootstrap.cpp
+        ${FLYCAST_TEST_SOURCES})
+
+    # Enable verbose logging (INFO/DEBUG) in unit tests
+    target_compile_definitions(flycast_tests PRIVATE LOGGING)
+
+
+    # Always build the SH4 IR interpreter into the test binary so symbols like
+    # sh4::ir::Get_Sh4Interpreter are available at link time.
+    target_sources(flycast_tests PRIVATE
+        core/hw/sh4/ir/ir_emitter.cpp
+        core/hw/sh4/ir/ir_executor.cpp
+        core/hw/sh4/ir/sh4_ir_interpreter.cpp
+        core/hw/sh4/ir/ir_tables.cpp)
+
+    # -----------------------------------------------------------
+    # Dynarec stubs — compile only when dynarec is disabled
+    # -----------------------------------------------------------
+    if(NOT ENABLE_DYNAREC OR FEAT_SHREC STREQUAL "DYNAREC_NONE")
+        target_sources(${PROJECT_NAME} PRIVATE
+            core/hw/sh4/ir/dynarec_stubs.cpp
+            core/hw/sh4/ir/ir_blockmanager_stubs.cpp)
+        
+    endif()
+
+    target_include_directories(flycast_tests PRIVATE
+        tests/include
+        ${CMAKE_SOURCE_DIR}
+        ${CMAKE_SOURCE_DIR}/core
+        ${CMAKE_SOURCE_DIR}/core/deps/nowide/include
+        ${CMAKE_SOURCE_DIR}/core/deps)
+    if (APPLE)
+        # Link core objects + gtest; strip out any accidental gtest_main
+        target_link_libraries(flycast_tests PRIVATE
+             $<TARGET_OBJECTS:flycast_core>
+             GTest::gtest)
+        # Manually append remaining libraries from main target except gtest_main
+        get_target_property(_extra_libs ${PROJECT_NAME} LINK_LIBRARIES)
+        if(_extra_libs)
+            list(REMOVE_ITEM _extra_libs GTest::gtest_main)
+            target_link_libraries(flycast_tests PRIVATE ${_extra_libs})
+        endif()
+
+    else()
+        target_link_libraries(flycast_tests PRIVATE ${PROJECT_NAME} GTest::gtest
+            $<TARGET_PROPERTY:${PROJECT_NAME},LINK_LIBRARIES>
+            $<TARGET_PROPERTY:${PROJECT_NAME},INTERFACE_LINK_LIBRARIES>)
+    endif()
+    # propagate link options too
+    target_link_options(flycast_tests PRIVATE
+        $<TARGET_PROPERTY:${PROJECT_NAME},LINK_OPTIONS>)
+    include(GoogleTest)
+		target_compile_definitions(flycast_tests PRIVATE
+    FLYCAST_TEST_BUILD
+    DEBUGFAST # Ensure MAX_LOGLEVEL is LDEBUG for tests
+    FEAT_NO_NETWORKING
+    FEAT_NO_GGPO
+    FEAT_NO_MINIUPNPC
+    FEAT_NO_RCHEEVOS
+    VIDEO_ROUTING
+)
+if(BUILD_TESTING)
+    target_link_libraries(${PROJECT_NAME} PRIVATE GTest::gtest)
 endif()
+
+    if (APPLE)
+        target_sources(flycast_tests PRIVATE
+            tests/src/osx_shims.mm
+            shell/apple/common/util.mm
+            tests/src/http_stubs.cpp)
+        target_link_libraries(flycast_tests PRIVATE iconv)
+    endif()
+
+    gtest_discover_tests(flycast_tests
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+        DISCOVERY_TIMEOUT 120)
+
+    endif()
 
 if(NINTENDO_SWITCH)
 	if(LIBRETRO)
@@ -1891,6 +1995,61 @@ if(IOS)
 elseif(NINTENDO_SWITCH AND NOT LIBRETRO)
 	install(FILES ${CMAKE_BINARY_DIR}/flycast.nro DESTINATION "${CMAKE_INSTALL_BINDIR}")
 else()
+	# --- Flycast core object library for unit tests (macOS static linking) ---
+# Only create when building tests to avoid impacting other front-ends
+if(BUILD_TESTING AND APPLE)
+	# Collect the full source list from the main target and build it again as an OBJECT library.
+	# This lets other consumers (unit tests) link against the core without relying on the MH_EXECUTE binary.
+	get_target_property(FLYCAST_SOURCES ${PROJECT_NAME} SOURCES)
+# Exclude application entry points and front-end files not needed for core logic
+set(_exclude_globs "shell/*/*/main*.cpp" "shell/*/*/main*.mm" "shell/*/*/osx-main.mm" "shell/apple/*" "shell/qt/*" "shell/linux/*" "shell/win32/*")
+foreach(_pat IN LISTS _exclude_globs)
+  foreach(_src IN LISTS FLYCAST_SOURCES)
+    if(_src MATCHES "${_pat}")
+      list(REMOVE_ITEM FLYCAST_SOURCES ${_src})
+    endif()
+  endforeach()
+endforeach()
+	add_library(flycast_core OBJECT ${FLYCAST_SOURCES})
+	# Propagate include paths / compile definitions / options so the object build matches the executable.
+	get_target_property(FLYCAST_INCLUDES ${PROJECT_NAME} INCLUDE_DIRECTORIES)
+	if(FLYCAST_INCLUDES)
+	    target_include_directories(flycast_core PRIVATE ${FLYCAST_INCLUDES})
+	endif()
+	get_target_property(FLYCAST_DEFINES ${PROJECT_NAME} COMPILE_DEFINITIONS)
+	if(FLYCAST_DEFINES)
+	    target_compile_definitions(flycast_core PRIVATE ${FLYCAST_DEFINES})
+	endif()
+	# Inherit include directories and compile definitions from main target
+# INTERFACE_INCLUDE_DIRECTORIES covers modern usage; INCLUDE_DIRECTORIES legacy
+get_target_property(_iface_includes ${PROJECT_NAME} INTERFACE_INCLUDE_DIRECTORIES)
+if(_iface_includes)
+  target_include_directories(flycast_core PRIVATE ${_iface_includes})
+endif()
+# The executable may also have PRIVATE include dirs attached via INCLUDE_DIRECTORIES property
+get_target_property(_priv_includes ${PROJECT_NAME} INCLUDE_DIRECTORIES)
+if(_priv_includes)
+  target_include_directories(flycast_core PRIVATE ${_priv_includes})
+endif()
+# Inherit compile options & definitions
+get_target_property(_compile_opts ${PROJECT_NAME} COMPILE_OPTIONS)
+if(_compile_opts)
+  target_compile_options(flycast_core PRIVATE ${_compile_opts})
+endif()
+get_target_property(_compile_defs ${PROJECT_NAME} COMPILE_DEFINITIONS)
+if(_compile_defs)
+  target_compile_definitions(flycast_core PRIVATE ${_compile_defs})
+endif()
+# Link same libraries (for header-only include satisfaction & symbol resolution when consumed as OBJECTS)
+get_target_property(_link_libs ${PROJECT_NAME} LINK_LIBRARIES)
+if(_link_libs)
+  target_link_libraries(flycast_core PRIVATE ${_link_libs})
+endif()
+set_target_properties(flycast_core PROPERTIES POSITION_INDEPENDENT_CODE ON)
+endif()
+
+
+
 	install(TARGETS ${PROJECT_NAME} DESTINATION "${CMAKE_INSTALL_BINDIR}")
 endif()
 
@@ -1922,7 +2081,7 @@ if(${CMAKE_GENERATOR} MATCHES "^Xcode.*|^Visual Studio.*")
 	source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SRC_FILES})
 endif()
 
-option(ENABLE_SH4_IR "Enable cached IR SH4 interpreter (no JIT)" OFF)
+option(ENABLE_SH4_IR "Enable cached IR SH4 interpreter (no JIT)" ON)
 
 if(ENABLE_SH4_IR)
     target_sources(${PROJECT_NAME} PRIVATE
@@ -1936,5 +2095,7 @@ if(ENABLE_SH4_IR)
         core/hw/sh4/ir/ir_tables.h
         core/hw/sh4/ir/ir_tables.cpp
         core/hw/sh4/ir/ir_blockmanager_stubs.cpp)
-    target_compile_definitions(${PROJECT_NAME} PRIVATE ENABLE_SH4_IR)
+    # Ensure dynamic recompiler code paths are fully disabled when using the IR interpreter
+    # These macros are checked in core/build.h to set FEAT_SHREC/FEAT_AREC/DSP rec to DYNAREC_NONE
+    target_compile_definitions(${PROJECT_NAME} PRIVATE ENABLE_SH4_IR TARGET_NO_REC NO_JIT)
 endif()
