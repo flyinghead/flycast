@@ -2575,15 +2575,6 @@ Block& Emitter::CreateNew(uint32_t pc) {
             ins.src2.reg = n;
             decoded = true; blk.pcNext = pc + 2;
         }
-        else if ((raw & 0xF00F) == 0x000E)
-        {
-            ins.op = Op::LOAD32_R0;
-            ins.dst.isImm = false; ins.dst.reg = n;
-            ins.src1.isImm = false; ins.src1.reg = m;
-            ins.src2.isImm = false;
-            ins.src2.reg = n;
-            decoded = true; blk.pcNext = pc + 2;
-        }
         // LDC.L @Rm+,SR  (0x4m3E)
         else if ((raw & 0xF0FF) == 0x403E)
         {
