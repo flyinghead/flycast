@@ -44,6 +44,7 @@ protected:
 	virtual void RunOp(int numOp = 1) = 0;
 
 	void ClearRegs() {
+		sh4.ResetCache();          // discard all compiled IR blocks
 		for (int i = 0; i < 16; i++)
 			r(i) = REG_MAGIC;
 		for (int i = 0; i < 32; i++)
