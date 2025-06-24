@@ -58,7 +58,13 @@ void Sh4IrInterpreter::Init()
 #undef pc
     // SH-4 reset state (matches legacy interpreter):
     ctx_->vbr = 0x00000000;          // Vector Base = 0
-    ctx_->pc  = 0xA0000000;          // BIOS entry point (P2 area)
+    ctx_->pc = 0xA0000000;           // BIOS entry point (P2 area)
+
+    // Disable MMU translation (power-on default)
+    CCN_MMUCR.reg_data = 0;
+    // // Flush software TLB arrays
+    // memset(UTLB, 0, sizeof(UTLB));
+    // memset(ITLB, 0, sizeof(ITLB));
 
     // Initialise SR to MD=1, BL=0, RB=0, IMASK=0xF (0x700000F0)
     sh4_sr_SetFull(0x700000F0);
@@ -83,28 +89,65 @@ void Sh4IrInterpreter::Reset(bool hard)
 #undef vbr
 #undef sr
 #undef pc
-    // If hard reset requested, clear most of the context like the legacy interpreter.
+#undef gbr
+#undef ssr
+#undef spc
+#undef sgr
+#undef dbr
+#undef mac
+#undef pr
+#undef fpul
+#undef fpscr
+    // If hard reset requested, fully clear the context like the legacy interpreter.
     if (hard)
     {
         int schedNext = ctx_->sh4_sched_next;
         memset(ctx_, 0, sizeof(*ctx_));
         ctx_->sh4_sched_next = schedNext;
-
-        // Re-establish architectural reset values
-        ctx_->vbr = 0x00000000;
-        ctx_->pc  = 0xA0000000;
-        sh4_sr_SetFull(0x700000F0);
-
-        // Disable MMU translation (power-on default)
-        CCN_MMUCR.reg_data = 0;
-        // Flush software TLB arrays
-        memset(UTLB, 0, sizeof(UTLB));
-        memset(ITLB, 0, sizeof(ITLB));
     }
 
+    /*
+     * The Dreamcast BIOS performs multiple *software* resets during the
+     * power-on self-test.  The legacy "sh4_interpreter" re-initialises a
+     * considerable amount of state even when the reset isn’t "hard".
+     * Replicate that behaviour here so the IR interpreter matches the
+     * expectations of the boot ROM.
+     */
+
+    // Architectural reset values (always applied)
+    ctx_->pc  = 0xA0000000;           // Reset vector (P2 area)
+    ctx_->vbr = 0x00000000;
+
+    // Clear general registers and banked registers
+    memset(ctx_->r,       0, sizeof(ctx_->r));
+#ifdef R_BANK
+    memset(ctx_->r_bank,  0, sizeof(ctx_->r_bank));
+#endif
+
+    // Clear assorted CPU state registers
+    ctx_->gbr = 0;
+    ctx_->ssr = 0;
+    ctx_->spc = 0;
+    ctx_->sgr = 0;
+    ctx_->dbr = 0;
+    ctx_->mac.full = 0;
+    ctx_->pr  = 0;
+    ctx_->fpul = 0;
+
+    // Status register (MD=1, RB=0, BL=0, IMASK=0xF)
+    sh4_sr_SetFull(0x700000F0);
+
+    // FP status register
+    ctx_->fpscr.full = 0x00040001;
+
+    // Disable MMU translation (power-on default) and flush software TLBs
+    CCN_MMUCR.reg_data = 0;
+    memset(UTLB, 0, sizeof(UTLB));
+    memset(ITLB, 0, sizeof(ITLB));
+
     ctx_->sh4_sched_next = 0; // Reset scheduler/cycle count for IR
-    printf("[IR][Reset][EXIT] ctx_=%p r[0]=%08X r[1]=%08X r[2]=%08X r[3]=%08X sr.T=%u\n",
-        (void*)ctx_, ctx_ ? ctx_->r[0] : 0, ctx_ ? ctx_->r[1] : 0, ctx_ ? ctx_->r[2] : 0, ctx_ ? ctx_->r[3] : 0, ctx_ ? ctx_->sr.T : 0);
+    printf("[IR][Reset][EXIT]  ctx_=%p r[0]=%08X r[1]=%08X r[2]=%08X r[3]=%08X sr.T=%u\n",
+        (void*)ctx_, ctx_->r[0], ctx_->r[1], ctx_->r[2], ctx_->r[3], ctx_->sr.T);
 
     // Restore macros
 #define r Sh4cntx.r
