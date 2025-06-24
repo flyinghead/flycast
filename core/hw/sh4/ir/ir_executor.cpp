@@ -689,8 +689,59 @@ static void Exec_JMP(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
 {
     uint32_t target = GET_REG(ctx, ins.src1.reg) & ~1u; // even addr
     SetPC(ctx, target, "JMP");
-    // Return immediately so sequential increment code is skipped
     return;
+}
+
+// Generic 32-bit load: MOV.L @(disp,Rm),Rn (or similar)
+static void Exec_LOAD32(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
+{
+    uint32_t base = GET_REG(ctx, ins.src1.reg);
+    uint32_t addr = base + ins.extra;
+    uint32_t val  = RawRead32(addr);
+    SET_REG(ctx, ins.dst.reg, val);
+}
+
+// Generic 32-bit store: MOV.L Rn,@(disp,Rm)
+static void Exec_STORE32(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
+{
+    uint32_t base = GET_REG(ctx, ins.src2.reg); // Rm is src2
+    uint32_t addr = base + ins.extra;
+    uint32_t val  = GET_REG(ctx, ins.src1.reg); // Rn is src1
+    RawWrite32(addr, val);
+}
+
+// Generic 16-bit load: MOV.W @(disp,Rm),Rn
+static void Exec_LOAD16(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
+{
+    uint32_t addr = GET_REG(ctx, ins.src1.reg) + ins.extra;
+    uint16_t raw  = RawRead16(addr);
+    int32_t val   = static_cast<int32_t>(static_cast<int16_t>(raw));
+    SET_REG(ctx, ins.dst.reg, static_cast<uint32_t>(val));
+}
+
+// Generic 8-bit load: MOV.B @(disp,Rm),Rn (Rn often R0)
+static void Exec_LOAD8(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
+{
+    uint32_t addr = GET_REG(ctx, ins.src1.reg) + ins.extra;
+    uint8_t raw   = RawRead8(addr);
+    int32_t val   = static_cast<int32_t>(static_cast<int8_t>(raw));
+    SET_REG(ctx, ins.dst.reg, static_cast<uint32_t>(val));
+}
+
+// Generic 16-bit store: MOV.W Rn,@(disp,Rm)
+static void Exec_STORE16(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
+{
+    uint32_t addr = GET_REG(ctx, ins.src2.reg) + ins.extra;
+    uint16_t val  = static_cast<uint16_t>(GET_REG(ctx, ins.src1.reg));
+    RawWrite16(addr, val);
+}
+
+// Generic 8-bit store: MOV.B Rn,@(disp,Rm)
+static void Exec_STORE8(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
+{
+    uint32_t addr = GET_REG(ctx, ins.src2.reg) + ins.extra;
+    uint8_t val   = static_cast<uint8_t>(GET_REG(ctx, ins.src1.reg));
+    RawWrite8(addr, val);
 }
 
 // MOV.B Rm,@-Rn (pre-decrement store byte)
@@ -1242,6 +1293,12 @@ static void InitExecTable()
     g_exec_table[static_cast<int>(sh4::ir::Op::MOV_B_REG_PREDEC)] = &Exec_MOV_B_REG_PREDEC;
     // Literal load
     g_exec_table[static_cast<int>(sh4::ir::Op::LOAD32_PC)] = &Exec_LOAD32_PC;
+    g_exec_table[static_cast<int>(sh4::ir::Op::LOAD32)]     = &Exec_LOAD32;
+    g_exec_table[static_cast<int>(sh4::ir::Op::STORE32)]    = &Exec_STORE32;
+    g_exec_table[static_cast<int>(sh4::ir::Op::LOAD16)]     = &Exec_LOAD16;
+    g_exec_table[static_cast<int>(sh4::ir::Op::LOAD8)]      = &Exec_LOAD8;
+    g_exec_table[static_cast<int>(sh4::ir::Op::STORE16)]    = &Exec_STORE16;
+    g_exec_table[static_cast<int>(sh4::ir::Op::STORE8)]     = &Exec_STORE8;
     g_exec_table[static_cast<int>(sh4::ir::Op::ADDC)]       = &Exec_ADDC;
     g_exec_table[static_cast<int>(sh4::ir::Op::ADDV)]       = &Exec_ADDV;
     g_exec_table[static_cast<int>(sh4::ir::Op::SUB)]        = &Exec_SUB;
