@@ -1447,6 +1447,10 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                     // Block finished, jump to the next one.
                     INFO_LOG(SH4, "BLOCK_END: AtPC:%08X (Op:END) PR:%08X SR.T:%d -> TargetNextPC:%08X", next_pc, pr, GET_SR_T(ctx), blk->pcNext);
                     SetPC(ctx, blk->pcNext, "block_end");
+                    if (unlikely(g_exception_was_raised)) {
+                        SyncCtxFromGlobals(ctx);
+                        return;
+                    }
                     return;
                 case Op::NOP:
                     break;
@@ -3072,6 +3076,10 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
         {
             INFO_LOG(SH4, "BLOCK_END: AtPC:%08X (Op:END) PR:%08X SR.T:%d -> TargetNextPC:%08X", ctx->pc, pr, GET_SR_T(ctx), blk->pcNext);
             SetPC(ctx, blk->pcNext, "block_end");
+            if (unlikely(g_exception_was_raised)) {
+                SyncCtxFromGlobals(ctx);
+                return;
+            }
             return; // leave ExecuteBlock; caller will schedule next block
         }
 
@@ -3147,6 +3155,10 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                 // Jump to the branch target and finish executing this block so
                 // the dispatcher can start a new one from the destination.
                 SetPC(ctx, branch_target, "branch_commit");
+                if (unlikely(g_exception_was_raised)) {
+                    SyncCtxFromGlobals(ctx);
+                    return;
+                }
                 return;
             }
             else
