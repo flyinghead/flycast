@@ -1391,7 +1391,7 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
         {
             g_exception_was_raised = false;
             // Exception handler in higher layer will look at legacy globals, so keep them in-sync
-            SyncGlobalsFromCtx(ctx);
+            SyncCtxFromGlobals(ctx);
             return;
         }
         // Current PC before executing this instruction
@@ -1420,13 +1420,13 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                      ins.pc, ins.raw, GetOpName(static_cast<size_t>(ins.op)));
             ++boot_trace_lines;
         }
-#endif
         // ---- statistics & trace ----
         LogHighR0(ctx, curr_pc, ins.op);
         g_opExecCounts[static_cast<size_t>(ins.op)]++;
         g_totalExecCount++;
 
         MaybeDumpStats();
+#endif
 
         // Try fast table dispatch first
         {
@@ -1447,10 +1447,7 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                     // Block finished, jump to the next one.
                     INFO_LOG(SH4, "BLOCK_END: AtPC:%08X (Op:END) PR:%08X SR.T:%d -> TargetNextPC:%08X", next_pc, pr, GET_SR_T(ctx), blk->pcNext);
                     SetPC(ctx, blk->pcNext, "block_end");
-                    if (unlikely(g_exception_was_raised)) {
-                        SyncCtxFromGlobals(ctx);
-                        return;
-                    }
+                    SyncCtxFromGlobals(ctx);
                     return;
                 case Op::NOP:
                     break;
@@ -2296,14 +2293,14 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                             dbr = val_to_load;
                             break;
                         // R0_BANK to R7_BANK
-                        case 8: r_bank[0] = val_to_load; break;
-                        case 9: r_bank[1] = val_to_load; break;
-                        case 10: r_bank[2] = val_to_load; break;
-                        case 11: r_bank[3] = val_to_load; break;
-                        case 12: r_bank[4] = val_to_load; break;
-                        case 13: r_bank[5] = val_to_load; break;
-                        case 14: r_bank[6] = val_to_load; break;
-                        case 15: r_bank[7] = val_to_load; break;
+                        case 8: r_bank[0] = val_to_load; break; // R0_BANK
+                        case 9: r_bank[1] = val_to_load; break; // R1_BANK
+                        case 10: r_bank[2] = val_to_load; break; // R2_BANK
+                        case 11: r_bank[3] = val_to_load; break; // R3_BANK
+                        case 12: r_bank[4] = val_to_load; break; // R4_BANK
+                        case 13: r_bank[5] = val_to_load; break; // R5_BANK
+                        case 14: r_bank[6] = val_to_load; break; // R6_BANK
+                        case 15: r_bank[7] = val_to_load; break; // R7_BANK
                         default:
                             ERROR_LOG(SH4, "LDC: Unhandled ins.extra=0x%X for Rm=R%d at PC=0x%08X", ins.extra, ins.src1.reg, curr_pc);
                             // Consider throwing an exception for truly unhandled CRs if strictness is desired.
@@ -2556,7 +2553,7 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                     // FSQRT FRn - Calculate square root
                     // FRn = sqrt(FRn) or DRn = sqrt(DRn) depending on PR bit
 
-                    // Check if PR bit is set (double precision) and register is even
+                    // Check if PR bit is set (double precision) AND both registers are even
                     if (fpscr.PR == 1 && (ins.dst.reg & 1) == 0) {
                         // Double precision mode
                         uint32_t dr_idx = ins.dst.reg >> 1;
@@ -3056,6 +3053,7 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                           {
                               DEBUG_LOG(SH4, "IR fallback to interpreter FPU for raw=%04X at PC=%08X", raw16, current_pc_addr);
                               ExecuteOpcode(raw16); // advances PC internally
+                              SyncCtxFromGlobals(ctx);
                               return; // leave block; new block will be fetched next tick
                           }
                           ERROR_LOG(SH4, "IR executor fell through: raw=%04X pc=%08X", raw16, current_pc_addr);
@@ -3076,10 +3074,7 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
         {
             INFO_LOG(SH4, "BLOCK_END: AtPC:%08X (Op:END) PR:%08X SR.T:%d -> TargetNextPC:%08X", ctx->pc, pr, GET_SR_T(ctx), blk->pcNext);
             SetPC(ctx, blk->pcNext, "block_end");
-            if (unlikely(g_exception_was_raised)) {
-                SyncCtxFromGlobals(ctx);
-                return;
-            }
+            SyncCtxFromGlobals(ctx);
             return; // leave ExecuteBlock; caller will schedule next block
         }
 

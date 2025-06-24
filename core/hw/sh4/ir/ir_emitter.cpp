@@ -1350,7 +1350,6 @@ Block& Emitter::CreateNew(uint32_t pc) {
             ins.extra = 0;      // 0 for SR
             decoded = true;
             blk.pcNext = pc + 2;
-
         }
         // STC GBR, Rn (0000 nnnn 0001 0010 -> 0x0n12)
         else if ((raw & 0xF0FF) == 0x0012)
@@ -1690,8 +1689,6 @@ Block& Emitter::CreateNew(uint32_t pc) {
             decoded = true;
             INFO_LOG(SH4, "Emitter::CreateNew: Manually decoded DT R%d (0x%04X) at PC=0x%08X", n, raw, pc);
         }
-        // MOV.L @(disp,Rm),Rn (0x5nm2) - REMOVED - now handled by the 0x5000 pattern below
-        // This was causing conflicts with the more general 0x5000 pattern
         // NEG Rm -> Rn  (0x6nmB)
         else if ((raw & 0xF00F) == 0x600B)
         {
@@ -2785,7 +2782,8 @@ Block& Emitter::CreateNew(uint32_t pc) {
                         ins.op = Op::FADD;
                         ins.dst.isImm = false; ins.dst.reg = n; ins.dst.type = RegType::FGR;
                         ins.src1.isImm = false; ins.src1.reg = m; ins.src1.type = RegType::FGR;
-                        ins.src2.isImm = false; ins.src2.reg = n;
+                        ins.src2.isImm = false;
+                        ins.src2.reg = n;
                         break; // FADD FRm,FRn
                     case 0x1:
                         // For double precision, the instruction format is FSUB DRm,DRn
@@ -2794,7 +2792,8 @@ Block& Emitter::CreateNew(uint32_t pc) {
                         ins.op = Op::FSUB;
                         ins.dst.isImm = false; ins.dst.reg = n; ins.dst.type = RegType::FGR;
                         ins.src1.isImm = false; ins.src1.reg = m; ins.src1.type = RegType::FGR;
-                        ins.src2.isImm = false; ins.src2.reg = n;
+                        ins.src2.isImm = false;
+                        ins.src2.reg = n;
                         break; // FSUB FRm,FRn
                     case 0x2:
                         // For double precision, the instruction format is FMUL DRm,DRn
@@ -2803,7 +2802,8 @@ Block& Emitter::CreateNew(uint32_t pc) {
                         ins.op = Op::FMUL;
                         ins.dst.isImm = false; ins.dst.reg = n; ins.dst.type = RegType::FGR;
                         ins.src1.isImm = false; ins.src1.reg = m; ins.src1.type = RegType::FGR;
-                        ins.src2.isImm = false; ins.src2.reg = n;
+                        ins.src2.isImm = false;
+                        ins.src2.reg = n;
                         break; // FMUL FRm,FRn
                     case 0x3:
                         // For double precision, the instruction format is FDIV DRm,DRn
@@ -2812,7 +2812,8 @@ Block& Emitter::CreateNew(uint32_t pc) {
                         ins.op = Op::FDIV;
                         ins.dst.isImm = false; ins.dst.reg = n; ins.dst.type = RegType::FGR;
                         ins.src1.isImm = false; ins.src1.reg = m; ins.src1.type = RegType::FGR;
-                        ins.src2.isImm = false; ins.src2.reg = n;
+                        ins.src2.isImm = false;
+                        ins.src2.reg = n;
                         break; // FDIV FRm,FRn
                     case 0x4:
                         ins.op = Op::FCMP_EQ;
@@ -3077,7 +3078,6 @@ Block& Emitter::CreateNew(uint32_t pc) {
                 Block dummy_slot_blk_for_decode{};
                 bool slot_decoded_fast = FastDecode(slot_raw, slot_pc, slot, dummy_slot_blk_for_decode);
                 INFO_LOG(SH4, "Emitter::DelaySlot: FastDecode returned %d, slot.op=%d (expected MOV_REG=%d), blk.pcNext=0x%08X", slot_decoded_fast, static_cast<int>(slot.op), static_cast<int>(Op::MOV_REG), blk.pcNext);
-
                 if (!slot_decoded_fast)
                 {
                     // Attempt manual decode for the slot if FastDecode failed
