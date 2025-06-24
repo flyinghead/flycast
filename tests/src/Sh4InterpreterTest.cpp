@@ -36,11 +36,11 @@ protected:
 	void PrepareOp(u16 op, u16 op2 = 0, u16 op3 = 0) override
 	{
 		ctx->pc = START_PC;
+
+		// Always populate three 16-bit words so the interpreter has deterministic padding.
 		addrspace::write16(ctx->pc, op);
-		if (op2 != 0)
-			addrspace::write16(ctx->pc + 2, op2);
-		if (op3 != 0)
-			addrspace::write16(ctx->pc + 4, op3);
+		addrspace::write16(ctx->pc + 2, op2 != 0 ? op2 : 0x0009); // NOP if unused
+		addrspace::write16(ctx->pc + 4, op3 != 0 ? op3 : 0x0009); // NOP if unused
 	}
 	void RunOp(int numOp = 1) override
 	{

@@ -93,6 +93,7 @@ void Sh4IrInterpreter::Reset(bool /*hard*/)
     ResetCache();
 }
 
+#ifdef SH4_FAST_SKIP
 // Helper similar to Executor::FastRamPtr (local copy for interpreter)
 static inline u8* FastPtr(uint32_t addr)
 {
@@ -114,6 +115,7 @@ static inline u8* FastPtr(uint32_t addr)
 
     return nullptr;
 }
+#endif // SH4_FAST_SKIP
 
 void Sh4IrInterpreter::Run()
 {
@@ -217,28 +219,28 @@ void Sh4IrInterpreter::Step()
         // Add debug logging to track opcode execution
         u16 opcode = mmu_IReadMem16(pc_val);
         printf("[IR][Step] Reading opcode at PC=%08X: %04X\n", pc_val, opcode);
-        
+
         // Temporarily undefine macros to avoid conflicts
         #undef r
         #undef sr
-        
+
         // Special handling for ADDC test case with r[2]=0xFFFFFFFF and r[3]=1
         if (opcode == 0x323E && ctx_->r[2] == 0xFFFFFFFF && ctx_->r[3] == 1) {
             printf("[IR][Step] Detected critical ADDC test case with r[2]=0xFFFFFFFF and r[3]=1\n");
         }
-        
+
         const Block* blk = emitter_.BuildBlock(pc_val);
         printf("[IR][Step] Block built, executing with %zu instructions\n", blk->code.size());
-        
+
         // Debug: Print the first instruction in the block
         if (blk->code.size() > 0) {
             printf("[IR][Step] First instruction: op=%d\n", static_cast<int>(blk->code[0].op));
         }
-        
+
         // Restore macros
         #define r Sh4cntx.r
         #define sr Sh4cntx.sr
-        
+
         executor_.ExecuteBlock(blk, ctx_);
 
         if (ctx_->pc == old_pc)
@@ -356,5 +358,7 @@ void sh4::ir::Sh4IrInterpreter::InvalidateBlock(u32 addr)
 
     // Reset executor state to force re-fetching blocks
     // This ensures any stale block pointers are discarded
+
+    // TODO: Is this needed?
     executor_.ResetCachedBlocks();
 }
