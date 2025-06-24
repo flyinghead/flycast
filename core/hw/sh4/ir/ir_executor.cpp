@@ -302,7 +302,8 @@ static void DumpTrace() {
         size_t idx = (g_tracePos + i) % kTraceLen;
         const auto& e = g_traceBuf[idx];
         if (e.op == Op::NOP && e.pc == 0) continue; // empty slot
-        INFO_LOG(SH4, "  %08X : %s", e.pc, GetOpName(static_cast<size_t>(e.op)));
+        // Log the instruction, with the pc and the op name and op code in hex
+        INFO_LOG(SH4, "  %08X : %s 0x%02X", e.pc, GetOpName(static_cast<size_t>(e.op)), e.op);
     }
 }
 
