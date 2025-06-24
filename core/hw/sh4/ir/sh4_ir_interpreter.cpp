@@ -9,6 +9,8 @@
 #include "hw/mem/addrspace.h" // for ram_base fast access
 #include "hw/flashrom/nvmem.h" // for BIOS pointer
 
+// #define SH4_FAST_SKIP 1
+
 namespace sh4 {
 namespace ir {
 
@@ -92,6 +94,12 @@ void Sh4IrInterpreter::Reset(bool hard)
         ctx_->vbr = 0x00000000;
         ctx_->pc  = 0xA0000000;
         sh4_sr_SetFull(0x700000F0);
+
+        // Disable MMU translation (power-on default)
+        CCN_MMUCR.reg_data = 0;
+        // Flush software TLB arrays
+        memset(UTLB, 0, sizeof(UTLB));
+        memset(ITLB, 0, sizeof(ITLB));
     }
 
     ctx_->sh4_sched_next = 0; // Reset scheduler/cycle count for IR
@@ -142,7 +150,10 @@ void Sh4IrInterpreter::Run()
         uint32_t old_pc = pc_val;
         // No need to restore pc macro here
 
+        // static counter kept for occasional PC log; disable in release builds
+#ifndef NDEBUG
         static uint64_t step_counter = 0;
+#endif
         try {
             const Block* blk = emitter_.BuildBlock(pc_val);
             executor_.ExecuteBlock(blk, ctx_);
@@ -186,11 +197,13 @@ void Sh4IrInterpreter::Run()
                     ctx_->pc = pc_scan;
                 }
 
+#ifndef NDEBUG
                 ++step_counter;
                 if ((step_counter & 0x1FFFF) == 0) // every 131072 blocks
                 {
                     INFO_LOG(SH4, "PC=%08X", ctx_->pc);
                 }
+#endif // NDEBUG
 #endif // SH4_FAST_SKIP
 #define pc next_pc
         } catch (const SH4ThrownException& ex) {
