@@ -1,4 +1,8 @@
 #include "ir_executor.h"
+
+#ifndef UNLIKELY
+#define UNLIKELY(x) __builtin_expect(!!(x), 0)
+#endif
 #include <cstring> // for memcpy
 #include "../sh4_interpreter.h" // for interpreter functions
 #include "hw/sh4/modules/mmu.h"
@@ -11,6 +15,7 @@
 #include <atomic>
 #include <cstdint>
 #include <cstdio>
+#include "hw/sh4/sh4_interrupts.h"
 
 // Undefine global macros from sh4_core.h to prevent conflicts
 #ifdef r
@@ -129,7 +134,6 @@ static inline void sr_setFull(Sh4Context* ctx, u32 value) {
 // NOTE: Once full opcode coverage is achieved inside IR, these fallbacks can
 // be removed and the calls eliminated.
 
-bool g_exception_was_raised = false;
 
 extern "C" void ExecuteOpcode(u16 op)
 {
@@ -443,15 +447,77 @@ static inline u8* FastRamPtrWrite(uint32_t addr)
 // overhead inside tight IR loops.
 static inline bool is_mmu_on() { return mmu_enabled(); }
 
-static inline u8  RawRead8(uint32_t a)  { return is_mmu_on() ? mmu_ReadMem<u8>(a)  : addrspace::read8(a);  }
-static inline u16 RawRead16(uint32_t a) { return is_mmu_on() ? mmu_ReadMem<u16>(a) : addrspace::read16(a); }
-static inline u32 RawRead32(uint32_t a) { return is_mmu_on() ? mmu_ReadMem<u32>(a) : addrspace::read32(a); }
-static inline u64 RawRead64(uint32_t a) { return is_mmu_on() ? mmu_ReadMem<u64>(a) : addrspace::read64(a); }
+// Centralised helpers that also cooperate with the IR exception-flag model.
+// After every MMU access we check the global flag and early-return/skip further
+// execution inside the current IR block so that control unwinds back to the
+// main Run() loop at the exception vector.
+// KISS: we simply return 0 on reads when an exception was just raised; the
+// value is irrelevant because the instruction raising the exception won’t be
+// architecturally committed.
 
-static inline void RawWrite8 (uint32_t a, u8  d) { if (is_mmu_on()) mmu_WriteMem(a, d); else addrspace::write8 (a, d); }
-static inline void RawWrite16(uint32_t a, u16 d) { if (is_mmu_on()) mmu_WriteMem(a, d); else addrspace::write16(a, d); }
-static inline void RawWrite32(uint32_t a, u32 d) { if (is_mmu_on()) mmu_WriteMem(a, d); else addrspace::write32(a, d); }
-static inline void RawWrite64(uint32_t a, u64 d) { if (is_mmu_on()) mmu_WriteMem(a, d); else addrspace::write64(a, d); }
+static inline u8  RawRead8(uint32_t a)
+{
+    u8 v = is_mmu_on() ? mmu_ReadMem<u8>(a) : addrspace::read8(a);
+    if (UNLIKELY(g_exception_was_raised))
+        return 0;
+    return v;
+}
+
+static inline u16 RawRead16(uint32_t a)
+{
+    u16 v = is_mmu_on() ? mmu_ReadMem<u16>(a) : addrspace::read16(a);
+    if (UNLIKELY(g_exception_was_raised))
+        return 0;
+    return v;
+}
+
+static inline u32 RawRead32(uint32_t a)
+{
+    u32 v = is_mmu_on() ? mmu_ReadMem<u32>(a) : addrspace::read32(a);
+    if (UNLIKELY(g_exception_was_raised))
+        return 0;
+    return v;
+}
+
+static inline u64 RawRead64(uint32_t a)
+{
+    u64 v = is_mmu_on() ? mmu_ReadMem<u64>(a) : addrspace::read64(a);
+    if (UNLIKELY(g_exception_was_raised))
+        return 0;
+    return v;
+}
+
+static inline void RawWrite8(uint32_t a, u8 d)
+{
+    if (!g_exception_was_raised)
+    {
+        if (is_mmu_on()) mmu_WriteMem(a, d); else addrspace::write8(a, d);
+    }
+}
+
+static inline void RawWrite16(uint32_t a, u16 d)
+{
+    if (!g_exception_was_raised)
+    {
+        if (is_mmu_on()) mmu_WriteMem(a, d); else addrspace::write16(a, d);
+    }
+}
+
+static inline void RawWrite32(uint32_t a, u32 d)
+{
+    if (!g_exception_was_raised)
+    {
+        if (is_mmu_on()) mmu_WriteMem(a, d); else addrspace::write32(a, d);
+    }
+}
+
+static inline void RawWrite64(uint32_t a, u64 d)
+{
+    if (!g_exception_was_raised)
+    {
+        if (is_mmu_on()) mmu_WriteMem(a, d); else addrspace::write64(a, d);
+    }
+}
 
 // -----------------------------------------------------------------------------
 //  Aligned fast-path helpers (avoid SIGBUS on unaligned host accesses)
@@ -1615,7 +1681,7 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                     if (IsTopRegion(GET_REG(ctx, ins.src1.reg)))
                         ERROR_LOG(SH4, "*** HIGH-FF JSR target at %08X : R%u=%08X", curr_pc, ins.src1.reg, GET_REG(ctx, ins.src1.reg));
                     pr = curr_pc + 4; // address after delay slot
-                    branch_target = GET_REG(ctx, ins.src1.reg);
+                    branch_target = GET_REG(ctx, ins.src1.reg) & ~1u; // mask LSB to ensure even address
                     if (IsTopRegion(branch_target))
                         ERROR_LOG(SH4, "*** HIGH-FF branch target set by JMP at %08X -> %08X (r%u)", curr_pc, branch_target, ins.src1.reg);
                     branch_pending = true;
@@ -1633,7 +1699,7 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                     INFO_LOG(SH4, "BR JMP from %08X -> %08X (r%u)", curr_pc, GET_REG(ctx, ins.src1.reg), ins.src1.reg);
                     if (IsTopRegion(GET_REG(ctx, ins.src1.reg)))
                         ERROR_LOG(SH4, "*** HIGH-FF JMP target at %08X : R%u=%08X", curr_pc, ins.src1.reg, GET_REG(ctx, ins.src1.reg));
-                    branch_target = GET_REG(ctx, ins.src1.reg);
+                    branch_target = GET_REG(ctx, ins.src1.reg) & ~1u; // mask LSB to ensure even address
                     branch_pending = true;
                     executed_delay = false;
                     break;

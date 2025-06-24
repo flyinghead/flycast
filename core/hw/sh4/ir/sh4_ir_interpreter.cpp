@@ -1,10 +1,10 @@
 #include "sh4_ir_interpreter.h"
 #include "hw/sh4/sh4_if.h"
-#include "hw/sh4/sh4_if.h"
 #include "hw/sh4/sh4_interrupts.h"
 #include "hw/sh4/sh4_core.h" // for SH4ThrownException
 #include "log/Log.h"
 #include "hw/sh4/sh4_interpreter.h"
+#include "hw/sh4/sh4_interrupts.h"
 #include "hw/sh4/modules/mmu.h"
 #include "hw/mem/addrspace.h" // for ram_base fast access
 #include "hw/flashrom/nvmem.h" // for BIOS pointer
@@ -184,85 +184,36 @@ static inline u8* FastPtr(uint32_t addr)
 
 void Sh4IrInterpreter::Run()
 {
+    // Temporarily undefine macro that collides with member name
+#ifdef pc
+#undef pc
+#endif
     running_ = true;
     while (running_)
     {
-        // Access ctx_->pc directly without macro interference
-#undef pc
         uint32_t pc_val = ctx_->pc;
-        uint32_t old_pc = pc_val;
-        // No need to restore pc macro here
+        g_exception_was_raised = false;
 
-        // static counter kept for occasional PC log; disable in release builds
-#ifndef NDEBUG
-        static uint64_t step_counter = 0;
-#endif
-        try {
+        try
+        {
             const Block* blk = emitter_.BuildBlock(pc_val);
             executor_.ExecuteBlock(blk, ctx_);
 
-            // Access ctx_->pc directly without macro interference
-#undef pc
-            if (ctx_->pc == old_pc)
-                ctx_->pc = blk->pcNext;
-#ifdef SH4_FAST_SKIP
-            if (blk->code.size() == 2 && blk->code[0].op == ir::Op::NOP)
-            {
-                // Fast-skip over large stretches of 0x0000 instructions that
-                // the BIOS uses for memory clear stubs. We only do this when
-                // we have a direct pointer into either RAM or the BIOS ROM –
-                // this guarantees the memory is valid and avoids hiding real
-                // mapping bugs.
-                u32 pc_scan = ctx_->pc;
-                // No need to restore pc macro here
-                if (u8* base = FastPtr(pc_scan))
-                {
-                    const u16* w = reinterpret_cast<const u16*>(base);
-                    while (*w == 0 || *w == 0x0009)
-                    {
-                        ++w;
-                        pc_scan += 2;
-                        if ((pc_scan - ctx_->pc) >= 0x100000)
-                            break;
-                    }
-                    ctx_->pc = pc_scan;
-                }
-                else
-                {
-                    // No direct pointer; fall back to reading via MMU
-                    const uint32_t limit = pc_scan + 0x100000; // 1 MiB max
-                    while (pc_scan < limit)
-                    {
-                        u16 iw = mmu_IReadMem16(pc_scan);
-                        if (iw != 0x0000 && iw != 0x0009) break;
-                        pc_scan += 2;
-                    }
-                    ctx_->pc = pc_scan;
-                }
+            if (g_exception_was_raised)      // exception flag set by helpers
+                continue;                    // PC already updated by Do_Exception
 
-#ifndef NDEBUG
-                ++step_counter;
-                if ((step_counter & 0x1FFFF) == 0) // every 131072 blocks
-                {
-                    INFO_LOG(SH4, "PC=%08X", ctx_->pc);
-                }
-#endif // NDEBUG
-#endif // SH4_FAST_SKIP
-#define pc next_pc
-        } catch (const SH4ThrownException& ex) {
-            // Access ctx fields directly without macro interference
-#undef pc
-#undef sr
-            Do_Exception(ex.epc, ex.expEvn);
-    // After taking an exception the global core has set `next_pc` to the
-    // exception vector. Propagate that into the local context so that the IR
-    // interpreter begins execution from the correct address on the next Step.
-    ctx_->pc = next_pc;
-            // Restore macros for rest of code
-#define pc next_pc
-#define sr Sh4cntx.sr
+            if (ctx_->pc == pc_val)          // sequential advance when block ended
+                ctx_->pc = blk->pcNext;
+        }
+        catch (const SH4ThrownException&)    // any legacy throw -> flag already set
+        {
+            continue;
         }
     }
+#ifdef pc
+#else
+#define pc next_pc
+#endif
 }
 
 void Sh4IrInterpreter::Step()

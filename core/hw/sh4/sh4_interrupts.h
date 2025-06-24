@@ -1,5 +1,14 @@
 #pragma once
+
 #include "sh4_if.h"
+
+// Global flag set when any SH4 exception is taken (used by IR executor to abort current block)
+extern bool g_exception_was_raised;
+
+// Helper that mirrors Do_Exception but also sets g_exception_was_raised and
+// returns true so callers can use it in early-return expressions. Defined in
+// sh4_interrupts.cpp.
+bool Sh4TakeException(u32 epc, Sh4ExceptionCode expEvn);
 
 enum InterruptID
 {

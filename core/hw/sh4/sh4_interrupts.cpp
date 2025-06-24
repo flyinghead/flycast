@@ -16,6 +16,13 @@
 #include "oslib/oslib.h"
 #include "debug/gdb_server.h"
 #include "serialize.h"
+
+// Global flag to indicate an exception occurred during the most recent step
+bool g_exception_was_raised = false;
+
+// Forward declaration – provided further below in this file
+bool Sh4TakeException(u32 epc, Sh4ExceptionCode expEvn);
+
 #include <cassert>
 
 //these are fixed
@@ -198,6 +205,10 @@ static void Do_Interrupt(Sh4ExceptionCode intEvn)
 
 void Do_Exception(u32 epc, Sh4ExceptionCode expEvn)
 {
+    // Mark that an exception has been taken so other cores (e.g., IR) can abort
+    g_exception_was_raised = true;
+
+
 	assert((expEvn >= Sh4Ex_TlbMissRead && expEvn <= Sh4Ex_SlotIllegalInstr)
 			|| expEvn == Sh4Ex_FpuDisabled || expEvn == Sh4Ex_SlotFpuDisabled || expEvn == Sh4Ex_UserBreak);
 	if (sr.BL != 0)
@@ -216,6 +227,15 @@ void Do_Exception(u32 epc, Sh4ExceptionCode expEvn)
 	debugger::subroutineCall();
 
 	//printf("RaiseException: from pc %08x to %08x, event %x\n", epc, next_pc, expEvn);
+}
+
+// -----------------------------------------------------------------------------
+// Wrapper for IR executor – sets flag and forwards to Do_Exception
+// -----------------------------------------------------------------------------
+bool Sh4TakeException(u32 epc, Sh4ExceptionCode expEvn)
+{
+    Do_Exception(epc, expEvn);
+    return true; // always taken
 }
 
 
