@@ -4,7 +4,7 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 PROJECT_ROOT_DIR="${SCRIPT_DIR}/.."
 
 LIBRETRO="OFF"
-BUILD_TYPE="Release"
+BUILD_TYPE="Debug"
 PIC="ON"
 ARCH="arm64"
 SYSTEM_NAME="macOS"
