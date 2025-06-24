@@ -684,6 +684,15 @@ static void Exec_STC(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t) {
     SET_REG(ctx, ins.dst.reg, val);
 }
 
+// JMP @Rm – unconditional jump via register (no delay-slot handling here)
+static void Exec_JMP(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
+{
+    uint32_t target = GET_REG(ctx, ins.src1.reg) & ~1u; // even addr
+    SetPC(ctx, target, "JMP");
+    // Return immediately so sequential increment code is skipped
+    return;
+}
+
 // MOV.B Rm,@-Rn (pre-decrement store byte)
 static void Exec_MOV_B_REG_PREDEC(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t) {
     uint32_t& rn = GET_REG(ctx, ins.dst.reg);
@@ -1227,6 +1236,7 @@ static void InitExecTable()
     g_exec_table[static_cast<int>(sh4::ir::Op::BT)]       = &Exec_BT;
     // Variable shift
     g_exec_table[static_cast<int>(sh4::ir::Op::SHR_OP)]   = &Exec_SHR_OP;
+    g_exec_table[static_cast<int>(sh4::ir::Op::JMP)]       = &Exec_JMP;
     // STC and MOV.B @-Rn
     g_exec_table[static_cast<int>(sh4::ir::Op::STC)]      = &Exec_STC;
     g_exec_table[static_cast<int>(sh4::ir::Op::MOV_B_REG_PREDEC)] = &Exec_MOV_B_REG_PREDEC;
