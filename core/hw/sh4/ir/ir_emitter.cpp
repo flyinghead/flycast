@@ -567,16 +567,19 @@ static bool FastDecode(uint16_t raw, uint32_t pc, Instr &ins, Block &blk)
     {
         uint8_t n = (raw >> 8) & 0xF;
         uint8_t m = (raw >> 4) & 0xF;
+        DEBUG_LOG(SH4, "[IR_EMITTER][ADDC] FastDecode: raw=0x%04X pc=0x%08X n=%u m=%u", raw, pc, n, m);
         ins.op = Op::ADDC;
         ins.dst.isImm = false; ins.dst.reg = n;
         ins.src1.isImm = false; ins.src1.reg = m;
+        DEBUG_LOG(SH4, "[IR_EMITTER][ADDC] ins.dst: isImm=%d reg=%u, ins.src1: isImm=%d reg=%u", ins.dst.isImm, ins.dst.reg, ins.src1.isImm, ins.src1.reg);
         blk.pcNext = pc + 2;
+        DEBUG_LOG(SH4, "[IR_EMITTER][ADDC] blk.pcNext=0x%08X", blk.pcNext);
         return true;
     }
 
     // ADDV Rm, Rn (0x3nmF)
-    else if ((raw & 0xF00F) == 0x300F)
-    {
+    else if ((raw & 0xF00F) == 0x300F) {
+        DEBUG_LOG(SH4, "In ADDV fast decode.");
         uint8_t n = (raw >> 8) & 0xF;
         uint8_t m = (raw >> 4) & 0xF;
         ins.op = Op::ADDV;

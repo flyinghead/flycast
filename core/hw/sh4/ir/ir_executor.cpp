@@ -521,13 +521,17 @@ static void Exec_ADDC(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
     uint32_t rm = GET_REG(ctx, ins.src1.reg);
     uint32_t rn = GET_REG(ctx, ins.dst.reg);
     uint32_t t = GET_SR_T(ctx);
-
-    // Calculate result
+    printf("[IR_EXECUTOR][ADDC] Entered: Rn (r[%u])=0x%08X, Rm (r[%u])=0x%08X, T=%u\n", ins.dst.reg, rn, ins.src1.reg, rm, t);
+    // Calculate result using 64-bit to catch carry
     uint64_t sum = static_cast<uint64_t>(rn) + rm + t;
+    printf("[IR_EXECUTOR][ADDC] Computed sum: 0x%016llX\n", (unsigned long long)sum);
+    // Store the 32-bit result
     SET_REG(ctx, ins.dst.reg, static_cast<uint32_t>(sum));
-
-    // Set T=1 if carry occurred
-    SET_SR_T(ctx, (sum >> 32) & 1);
+    printf("[IR_EXECUTOR][ADDC] Result written to r[%u]: 0x%08X\n", ins.dst.reg, (uint32_t)sum);
+    // Set T=1 if carry occurred (sum > 0xFFFFFFFF)
+    uint32_t newT = (sum >> 32) & 1;
+    SET_SR_T(ctx, newT);
+    printf("[IR_EXECUTOR][ADDC] New T flag: %u\n", newT);
 }
 
 static void Exec_CLRT(const sh4::ir::Instr& /*ins*/, Sh4Context* ctx, uint32_t /*pc*/) {

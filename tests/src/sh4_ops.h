@@ -91,7 +91,7 @@ protected:
 		SetDR(regNum, d);
 	}
 
-	Sh4Context *ctx;
+	Sh4Context* ctx; // Pointer, always assigned to p_sh4rcb->cntx in SetUp()
 	sh4_if sh4;
 	std::set<u32 *> checkedRegs;
 	static constexpr u32 START_PC = 0xAC000000;
@@ -533,6 +533,7 @@ protected:
 		sr().T = 1;
 		r(2) = 0;
 		r(3) = 0;
+		printf("[DEBUG][TEST] ctx=%p sr.T=%u\n", (void*)ctx, sr().T);
 		RunOp();
 		ASSERT_EQ(r(2), 1u);
 		ASSERT_EQ(sr().T, 0u);
