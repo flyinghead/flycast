@@ -4,7 +4,7 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 PROJECT_ROOT_DIR="${SCRIPT_DIR}/.."
 
 LIBRETRO="OFF"
-BUILD_TYPE="Debug"
+BUILD_TYPE="Release"
 PIC="ON"
 ARCH="arm64"
 SYSTEM_NAME="macOS"
@@ -18,6 +18,7 @@ fi
 # PASS CLEAN=TRUE to force cleaning
 CLEAN=${CLEAN:-"FALSE"}
 
+# export PATH="/opt/homebrew/bin:$PATH"
 
 # Initialize flags
 C_FLAGS="-arch ${ARCH} \
@@ -69,7 +70,7 @@ fi
       -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
       -DCMAKE_POSITION_INDEPENDENT_CODE=${PIC} \
       -DCMAKE_SYSTEM_NAME=${SYSTEM_NAME} \
-      -DCMAKE_BUILD_TYPE=Debug \
+      -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
       -DCMAKE_POLICY_DEFAULT_CMP0091=NEW \
       -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
       -DENABLE_SH4_IR=ON \
@@ -90,7 +91,7 @@ fi
 
 # Build project (will also build flycast_tests if the target exists)
 echo "Build log in ${BUILD_DIR}/build.log"
-cmake --build "${BUILD_DIR}" --config Debug -j$(sysctl -n hw.ncpu) > "${BUILD_DIR}/build.log" 2>&1 || {
+cmake --build "${BUILD_DIR}" --config ${BUILD_TYPE} -j$(sysctl -n hw.ncpu) > "${BUILD_DIR}/build.log" 2>&1 || {
     tail -n100 "${BUILD_DIR}/build.log"
     echo "Build failed. See ${BUILD_DIR}/build.log"
     exit 1
