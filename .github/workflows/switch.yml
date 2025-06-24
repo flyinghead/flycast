@@ -42,7 +42,9 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: flycast-switch-${{ matrix.config.name }}
-          path: artifact/bin
+          path: |
+            artifact/bin
+            artifact/lib/libretro
 
       - name: Package app
         run: zip -m artifact/bin/flycast.nro.zip artifact/bin/flycast.nro
