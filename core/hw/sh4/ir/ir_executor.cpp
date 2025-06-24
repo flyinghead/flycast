@@ -30,6 +30,14 @@
 #undef pc
 #endif
 
+#ifdef gbr
+#undef gbr
+#endif
+
+#ifdef vbr
+#undef vbr
+#endif
+
 #ifdef fpul
 #undef fpul
 #endif
@@ -596,10 +604,102 @@ static void ExecStub(const sh4::ir::Instr& ins, Sh4Context*, uint32_t pc)
     throw SH4ThrownException(pc, Sh4Ex_IllegalInstr);
 }
 
-// Forward helpers for some hot operations already implemented in switch – duplicate minimal logic
+// ----------------------------------------------------------------------------
+// Forward helpers for some hot operations already implemented earlier but now
+// promoted to dedicated Exec_* functions so they can be dispatched through the
+// fast lookup table. Keeping them tiny and header-independent avoids compiler
+// churn while giving us a single execution path (eliminates the big switch
+// fallback for these common ops).
+// ----------------------------------------------------------------------------
 static void Exec_NOP(const sh4::ir::Instr&, Sh4Context*, uint32_t) { /* nothing */ }
 static void Exec_ADD_REG(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t) { GET_REG(ctx, ins.dst.reg) += GET_REG(ctx, ins.src1.reg); }
 static void Exec_ADD_IMM(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t) { GET_REG(ctx, ins.dst.reg) += static_cast<uint32_t>(ins.src1.imm); }
+
+// Simple ALU / logical ops ----------------------------------------------------
+static void Exec_XOR_REG(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t) { GET_REG(ctx, ins.dst.reg) ^= GET_REG(ctx, ins.src1.reg); }
+static void Exec_AND_IMM(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t) { GET_REG(ctx, ins.dst.reg) &= static_cast<uint32_t>(ins.src1.imm); }
+static void Exec_OR_IMM (const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t) { GET_REG(ctx, ins.dst.reg) |= static_cast<uint32_t>(ins.src1.imm); }
+static void Exec_XOR_IMM(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t) { GET_REG(ctx, ins.dst.reg) ^= static_cast<uint32_t>(ins.src1.imm); }
+
+// MOV Rm -> Rn (register-to-register)
+static void Exec_MOV_REG(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t) {
+    SET_REG(ctx, ins.dst.reg, GET_REG(ctx, ins.src1.reg));
+}
+
+// MOV #imm -> Rn (sign-extended immediate)
+static void Exec_MOV_IMM(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t) {
+    SET_REG(ctx, ins.dst.reg, static_cast<uint32_t>(static_cast<int32_t>(ins.src1.imm)));
+}
+
+// Branch helpers -------------------------------------------------------------
+// BF: branch if SR.T == 0 (false)
+static void Exec_BF(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t pc) {
+    if (!GET_SR_T(ctx)) {
+        SetPC(ctx, pc + 2 + static_cast<int32_t>(ins.extra), "BF");
+    }
+}
+// BT: branch if SR.T == 1 (true)
+static void Exec_BT(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t pc) {
+    if (GET_SR_T(ctx)) {
+        SetPC(ctx, pc + 2 + static_cast<int32_t>(ins.extra), "BT");
+    }
+}
+
+// Variable logical right shift (SHR Rn,Rn)
+static void Exec_SHR_OP(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t) {
+    uint32_t count = GET_REG(ctx, ins.src1.reg) & 0x1F;
+    GET_REG(ctx, ins.dst.reg) >>= count;
+}
+
+// STC – store system register to general register (only GBR & VBR needed for BIOS)
+static void Exec_STC(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t) {
+    switch (ins.extra) {
+    case 1: // GBR
+        SET_REG(ctx, ins.dst.reg, ctx->gbr);
+        break;
+    case 2: // VBR
+        SET_REG(ctx, ins.dst.reg, ctx->vbr);
+        break;
+    default:
+        // Unhandled system reg – fall back to legacy path for now.
+        throw SH4ThrownException(0, Sh4Ex_IllegalInstr);
+    }
+}
+
+// MOV.B Rm,@-Rn (pre-decrement store byte)
+static void Exec_MOV_B_REG_PREDEC(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t) {
+    uint32_t& rn = GET_REG(ctx, ins.dst.reg);
+    rn -= 1;
+    RawWrite8(rn, static_cast<u8>(GET_REG(ctx, ins.src1.reg)));
+}
+
+// PC-relative literal load (already present in big switch but add fast path)
+static void Exec_LOAD32_PC(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t pc) {
+    uint32_t base = (pc & ~3u) + 4u;
+    uint32_t addr = base + (static_cast<uint32_t>(ins.extra) << 2);
+    SET_REG(ctx, ins.dst.reg, ReadAligned32(addr));
+}
+
+// SHL logical left shift by immediate amount in ins.extra (0-31)
+static void Exec_SHL(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t) {
+    uint32_t amount = ins.extra & 31u;
+    SET_REG(ctx, ins.dst.reg, GET_REG(ctx, ins.dst.reg) << amount);
+}
+
+// SHR1 logical right shift by 1
+static void Exec_SHR1(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t) {
+    (void)ins; // src/dst are same register (dst holds Rn)
+    uint32_t val = GET_REG(ctx, ins.dst.reg);
+    SET_SR_T(ctx, val & 1);           // per SH-4 spec, T receives LSB prior to shift
+    SET_REG(ctx, ins.dst.reg, val >> 1);
+}
+
+// SAR1 arithmetic right shift by 1 (sign-extended)
+static void Exec_SAR1(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t) {
+    int32_t val = static_cast<int32_t>(GET_REG(ctx, ins.dst.reg));
+    SET_SR_T(ctx, val & 1);           // T = LSB prior to shift
+    SET_REG(ctx, ins.dst.reg, static_cast<uint32_t>(val >> 1));
+}
 static void Exec_ADDC(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t pc)
 {
     // ADDC: Rn = Rn + Rm + T
@@ -1094,6 +1194,26 @@ static void InitExecTable()
     g_exec_table[static_cast<int>(sh4::ir::Op::ADD)]       = &Exec_ADD;
     g_exec_table[static_cast<int>(sh4::ir::Op::ADD_REG)]  = &Exec_ADD_REG;
     g_exec_table[static_cast<int>(sh4::ir::Op::ADD_IMM)]  = &Exec_ADD_IMM;
+    g_exec_table[static_cast<int>(sh4::ir::Op::MOV_REG)]  = &Exec_MOV_REG;
+    g_exec_table[static_cast<int>(sh4::ir::Op::MOV_IMM)]  = &Exec_MOV_IMM;
+    g_exec_table[static_cast<int>(sh4::ir::Op::SHL)]      = &Exec_SHL;
+    g_exec_table[static_cast<int>(sh4::ir::Op::SHR1)]     = &Exec_SHR1;
+    g_exec_table[static_cast<int>(sh4::ir::Op::SAR1)]     = &Exec_SAR1;
+    // Logic ops
+    g_exec_table[static_cast<int>(sh4::ir::Op::XOR_REG)]  = &Exec_XOR_REG;
+    g_exec_table[static_cast<int>(sh4::ir::Op::AND_IMM)]  = &Exec_AND_IMM;
+    g_exec_table[static_cast<int>(sh4::ir::Op::OR_IMM)]   = &Exec_OR_IMM;
+    g_exec_table[static_cast<int>(sh4::ir::Op::XOR_IMM)]  = &Exec_XOR_IMM;
+    // Branches
+    g_exec_table[static_cast<int>(sh4::ir::Op::BF)]       = &Exec_BF;
+    g_exec_table[static_cast<int>(sh4::ir::Op::BT)]       = &Exec_BT;
+    // Variable shift
+    g_exec_table[static_cast<int>(sh4::ir::Op::SHR_OP)]   = &Exec_SHR_OP;
+    // STC and MOV.B @-Rn
+    g_exec_table[static_cast<int>(sh4::ir::Op::STC)]      = &Exec_STC;
+    g_exec_table[static_cast<int>(sh4::ir::Op::MOV_B_REG_PREDEC)] = &Exec_MOV_B_REG_PREDEC;
+    // Literal load
+    g_exec_table[static_cast<int>(sh4::ir::Op::LOAD32_PC)] = &Exec_LOAD32_PC;
     g_exec_table[static_cast<int>(sh4::ir::Op::ADDC)]       = &Exec_ADDC;
     g_exec_table[static_cast<int>(sh4::ir::Op::ADDV)]       = &Exec_ADDV;
     g_exec_table[static_cast<int>(sh4::ir::Op::SUB)]        = &Exec_SUB;
@@ -1162,7 +1282,9 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
         // delay-slot instruction has executed (see logic at bottom of loop).
 
         const Instr& ins = blk->code[ip++];
-        // --- early-boot tracing ------------------------------------------------
+        // --- early-boot tracing
+        // ------------------------------------------------
+#if 0
         static int boot_trace_lines = 0;
         if (boot_trace_lines < 256 &&                         // just limit spam
             ((curr_pc & 0xF0000000u) == 0xA0000000u ||        // P2 BIOS
@@ -1172,6 +1294,7 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                      ins.pc, ins.raw, GetOpName(static_cast<size_t>(ins.op)));
             ++boot_trace_lines;
         }
+#endif
         // ---- statistics & trace ----
         LogHighR0(ctx, curr_pc, ins.op);
         g_opExecCounts[static_cast<size_t>(ins.op)]++;
@@ -1533,18 +1656,18 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                 }
                 case Op::LOAD8_GBR:
                 {
-                    u8 val = RawRead8(gbr + static_cast<uint32_t>(ins.extra));
+                    u8 val = RawRead8(ctx->gbr + static_cast<uint32_t>(ins.extra));
                     SET_REG(ctx, ins.dst.reg, static_cast<uint32_t>(static_cast<int8_t>(val)));
                     break;
                 }
                 case Op::LOAD16_GBR:
                 {
-                    u16 val = RawRead16(gbr + static_cast<uint32_t>(ins.extra));
+                    u16 val = RawRead16(ctx->gbr + static_cast<uint32_t>(ins.extra));
                     SET_REG(ctx, ins.dst.reg, static_cast<uint32_t>(static_cast<int16_t>(val)));
                     break;
                 }
                 case Op::LOAD32_GBR:
-                    SET_REG(ctx, ins.dst.reg, RawRead32(gbr + static_cast<uint32_t>(ins.extra)));
+                    SET_REG(ctx, ins.dst.reg, RawRead32(ctx->gbr + static_cast<uint32_t>(ins.extra)));
                     break;
                 case Op::LOAD8_POST:
                 {
@@ -1612,16 +1735,16 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                     break;
                 }
                 case Op::STORE8_GBR:
-                    if (!IsBiosAddr(gbr + static_cast<uint32_t>(ins.extra)))
-                        RawWrite8(gbr + static_cast<uint32_t>(ins.extra), GET_REG(ctx, ins.src1.reg));
+                    if (!IsBiosAddr(ctx->gbr + static_cast<uint32_t>(ins.extra)))
+                        RawWrite8(ctx->gbr + static_cast<uint32_t>(ins.extra), GET_REG(ctx, ins.src1.reg));
                     break;
                 case Op::STORE16_GBR:
-                    if (!IsBiosAddr(gbr + static_cast<uint32_t>(ins.extra)))
-                        WriteAligned16(gbr + static_cast<uint32_t>(ins.extra), static_cast<u16>(GET_REG(ctx, ins.src1.reg)));
+                    if (!IsBiosAddr(ctx->gbr + static_cast<uint32_t>(ins.extra)))
+                        WriteAligned16(ctx->gbr + static_cast<uint32_t>(ins.extra), static_cast<u16>(GET_REG(ctx, ins.src1.reg)));
                     break;
                 case Op::STORE32_GBR:
-                    if (!IsBiosAddr(gbr + static_cast<uint32_t>(ins.extra)))
-                        WriteAligned32(gbr + static_cast<uint32_t>(ins.extra), GET_REG(ctx, ins.src1.reg));
+                    if (!IsBiosAddr(ctx->gbr + static_cast<uint32_t>(ins.extra)))
+                        WriteAligned32(ctx->gbr + static_cast<uint32_t>(ins.extra), GET_REG(ctx, ins.src1.reg));
                     break;
 
                 case Op::LOAD8_R0:
@@ -1983,8 +2106,8 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                     // 15: R7_BANK (extra = 8 + 7, distinct from DBR's 0xF due to emitter order)
                     switch (ins.extra) {
                         case 0:  val_to_store = sr_getFull(ctx); break; // Use sr_getFull
-                        case 1:  val_to_store = gbr; break;
-                        case 2:  val_to_store = vbr; break;
+                        case 1:  val_to_store = ctx->gbr; break;
+                        case 2:  val_to_store = ctx->vbr; break;
                         case 3:  val_to_store = ssr; break;
                         case 4:  val_to_store = spc; break;
                         case 7:  val_to_store = dbr; break; // DBR (emitter now uses 7)
@@ -2018,10 +2141,10 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                             UpdateSR();
                             break;
                         case 1: // GBR
-                            gbr = val_to_load;
+                            ctx->gbr = val_to_load;
                             break;
                         case 2: // VBR
-                            vbr = val_to_load;
+                            ctx->vbr = val_to_load;
                             break;
                         case 3: // SSR
                             ssr = val_to_load;
@@ -2064,10 +2187,12 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                     break;
                 }
                 case Op::DT: // DT Rn (R[n]--; T = (R[n]==0))
-                    GET_REG(ctx, ins.dst.reg)--;
-                    SET_REG(ctx, ins.dst.reg, 0);
-                    SET_SR_T(ctx, 0); // CLR doesn't affect T
+                {
+                    uint32_t val = GET_REG(ctx, ins.dst.reg) - 1;
+                    SET_REG(ctx, ins.dst.reg, val);
+                    SET_SR_T(ctx, val == 0);
                     break;
+                }
                 case Op::FADD:
                 {
                     // Check if PR bit is set (double precision) AND both registers are even
@@ -2718,11 +2843,11 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                             break;
                         case 1: // GBR
                             INFO_LOG(SH4, "LDC.L GBR <- %08X from @%08X (R%u) at PC=%08X", val, addr, ins.src1.reg, curr_pc);
-                            gbr = val;
+                            ctx->gbr = val;
                             break;
                         case 2: // VBR
                             INFO_LOG(SH4, "LDC.L VBR <- %08X from @%08X (R%u) at PC=%08X", val, addr, ins.src1.reg, curr_pc);
-                            vbr = val;
+                            ctx->vbr = val;
                             break;
                         case 3: // SSR
                             INFO_LOG(SH4, "LDC.L SSR <- %08X from @%08X (R%u) at PC=%08X", val, addr, ins.src1.reg, curr_pc);
