@@ -33,12 +33,13 @@ void Sh4IrInterpreter::Init()
     }
 
     emitter_.ClearCaches();
-    // Zero context similar to legacy init
-    memset(ctx_, 0, sizeof(*ctx_));
+    // Do NOT zero the context here, as it may contain values set by tests
+    // The test framework will clear registers as needed with ClearRegs()
 
     // Temporarily undefine macros
 #undef vbr
 #undef pc
+    // TODO: Review if we want / need this
     ctx_->vbr = 0x8C000000; // exception vectors
     ctx_->pc  = 0xA0000000; // BIOS entry point in P2
     // Restore macros
