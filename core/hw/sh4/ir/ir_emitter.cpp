@@ -25,7 +25,7 @@ static std::unordered_map<uint64_t, const sh4::ir::Block*> g_block_sig_cache;
 static uint64_t CalcBlockSig(uint32_t pc)
 {
     // Hash first 64 bytes (32 instructions) of code at pc, plus SR.T
-    uint8_t buf[65];
+    uint8_t buf[64];
     for (int i = 0; i < 32; ++i)
     {
         uint16_t op = mmu_IReadMem16(pc + i * 2);
@@ -33,7 +33,7 @@ static uint64_t CalcBlockSig(uint32_t pc)
         buf[i * 2 + 1] = static_cast<uint8_t>(op >> 8);
     }
     // Include SR.T in the hash to force new blocks when T changes
-    buf[64] = (uint8_t)(p_sh4rcb ? p_sh4rcb->cntx.sr.T : 0);
+    // buf[64] = (uint8_t)(p_sh4rcb ? p_sh4rcb->cntx.sr.T : 0);
     return XXH3_64bits(buf, sizeof(buf));
 }
 #ifdef SH4_RESTORE_SR_MACRO
