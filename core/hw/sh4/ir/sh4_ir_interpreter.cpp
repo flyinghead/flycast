@@ -54,15 +54,18 @@ void Sh4IrInterpreter::Init()
     // Temporarily undefine macros
 #undef vbr
 #undef pc
-    // TODO: Review if we want / need this
-    ctx_->vbr = 0x8C000000; // exception vectors
-    ctx_->pc  = 0xA0000000; // BIOS entry point in P2
+    // SH-4 reset state (matches legacy interpreter):
+    ctx_->vbr = 0x00000000;          // Vector Base = 0
+    ctx_->pc  = 0xA0000000;          // BIOS entry point (P2 area)
+
+    // Initialise SR to MD=1, BL=0, RB=0, IMASK=0xF (0x700000F0)
+    sh4_sr_SetFull(0x700000F0);
     // Restore macros
 #define vbr Sh4cntx.vbr
 #define pc next_pc
 }
 
-void Sh4IrInterpreter::Reset(bool /*hard*/)
+void Sh4IrInterpreter::Reset(bool hard)
 {
     // Temporarily undefine macros for logging
 #undef r
@@ -78,8 +81,19 @@ void Sh4IrInterpreter::Reset(bool /*hard*/)
 #undef vbr
 #undef sr
 #undef pc
-    // DO NOT zero registers or PC here; tests expect register state to persist across Reset.
-    // Only reset scheduler/cycle count and IR cache. See ArithmeticTest and similar.
+    // If hard reset requested, clear most of the context like the legacy interpreter.
+    if (hard)
+    {
+        int schedNext = ctx_->sh4_sched_next;
+        memset(ctx_, 0, sizeof(*ctx_));
+        ctx_->sh4_sched_next = schedNext;
+
+        // Re-establish architectural reset values
+        ctx_->vbr = 0x00000000;
+        ctx_->pc  = 0xA0000000;
+        sh4_sr_SetFull(0x700000F0);
+    }
+
     ctx_->sh4_sched_next = 0; // Reset scheduler/cycle count for IR
     printf("[IR][Reset][EXIT] ctx_=%p r[0]=%08X r[1]=%08X r[2]=%08X r[3]=%08X sr.T=%u\n",
         (void*)ctx_, ctx_ ? ctx_->r[0] : 0, ctx_ ? ctx_->r[1] : 0, ctx_ ? ctx_->r[2] : 0, ctx_ ? ctx_->r[3] : 0, ctx_ ? ctx_->sr.T : 0);
