@@ -437,6 +437,25 @@ static inline u8* FastRamPtrWrite(uint32_t addr)
 // -----------------------------------------------------------------------------
 //  Aligned fast-path helpers (avoid SIGBUS on unaligned host accesses)
 // -----------------------------------------------------------------------------
+// Generic helpers that automatically choose the correct backend depending
+// on whether the MMU is active (MMUCR.AT bit) or not.  This mirrors the logic
+// in sh4_mem.cpp::SetMemoryHandlers() but avoids the indirect function call
+// overhead inside tight IR loops.
+static inline bool is_mmu_on() { return mmu_enabled(); }
+
+static inline u8  RawRead8(uint32_t a)  { return is_mmu_on() ? mmu_ReadMem<u8>(a)  : addrspace::read8(a);  }
+static inline u16 RawRead16(uint32_t a) { return is_mmu_on() ? mmu_ReadMem<u16>(a) : addrspace::read16(a); }
+static inline u32 RawRead32(uint32_t a) { return is_mmu_on() ? mmu_ReadMem<u32>(a) : addrspace::read32(a); }
+static inline u64 RawRead64(uint32_t a) { return is_mmu_on() ? mmu_ReadMem<u64>(a) : addrspace::read64(a); }
+
+static inline void RawWrite8 (uint32_t a, u8  d) { if (is_mmu_on()) mmu_WriteMem(a, d); else addrspace::write8 (a, d); }
+static inline void RawWrite16(uint32_t a, u16 d) { if (is_mmu_on()) mmu_WriteMem(a, d); else addrspace::write16(a, d); }
+static inline void RawWrite32(uint32_t a, u32 d) { if (is_mmu_on()) mmu_WriteMem(a, d); else addrspace::write32(a, d); }
+static inline void RawWrite64(uint32_t a, u64 d) { if (is_mmu_on()) mmu_WriteMem(a, d); else addrspace::write64(a, d); }
+
+// -----------------------------------------------------------------------------
+//  Aligned fast-path helpers (avoid SIGBUS on unaligned host accesses)
+// -----------------------------------------------------------------------------
 static inline u16 ReadAligned16(uint32_t addr)
 {
     if ((addr & 1u) == 0)
@@ -444,7 +463,7 @@ static inline u16 ReadAligned16(uint32_t addr)
         if (u8* p = FastRamPtr(addr))
             return *reinterpret_cast<u16*>(p);
     }
-    return mmu_ReadMem<u16>(addr);
+    return RawRead16(addr);
 }
 
 static inline u32 ReadAligned32(uint32_t addr)
@@ -454,33 +473,25 @@ static inline u32 ReadAligned32(uint32_t addr)
         if (u8* p = FastRamPtr(addr))
             return *reinterpret_cast<u32*>(p);
     }
-    return mmu_ReadMem<u32>(addr);
+    return RawRead32(addr);
 }
 
 static inline void WriteAligned16(uint32_t addr, u16 data)
 {
-    // if ((addr & 1u) == 0)
-    // {
-    //     if (u8* p = FastRamPtr(addr))
-    //     {
-    //         *reinterpret_cast<u16*>(p) = data;
-    //         return;
-    //     }
-    // }
-    mmu_WriteMem(addr, data);
+    if ((addr & 1u) == 0)
+    {
+        if (u8* p = FastRamPtr(addr)) { *reinterpret_cast<u16*>(p) = data; return; }
+    }
+    RawWrite16(addr, data);
 }
 
 static inline void WriteAligned32(uint32_t addr, u32 data)
 {
-    // if ((addr & 3u) == 0)
-    // {
-    //     if (u8* p = FastRamPtr(addr))
-    //     {
-    //         *reinterpret_cast<u32*>(p) = data;
-    //         return;
-    //     }
-    // }
-    mmu_WriteMem(addr, data);
+    if ((addr & 3u) == 0)
+    {
+        if (u8* p = FastRamPtr(addr)) { *reinterpret_cast<u32*>(p) = data; return; }
+    }
+    RawWrite32(addr, data);
 }
 
 
@@ -521,25 +532,25 @@ static void Exec_ADDC(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t pc)
     uint32_t rm = GET_REG(ctx, ins.src1.reg);
     uint32_t rn = GET_REG(ctx, ins.dst.reg);
     uint32_t t = GET_SR_T(ctx);
-    
-    printf("[Exec_ADDC][PRE] ctx=%p pc=%08X dst.reg=%d src1.reg=%d Rn(%d)=%08X Rm(%d)=%08X T=%u\n", 
+
+    printf("[Exec_ADDC][PRE] ctx=%p pc=%08X dst.reg=%d src1.reg=%d Rn(%d)=%08X Rm(%d)=%08X T=%u\n",
            (void*)ctx, pc, ins.dst.reg, ins.src1.reg, ins.dst.reg, rn, ins.src1.reg, rm, t);
-    
+
     // Calculate result using 64-bit to catch carry
     uint64_t sum = static_cast<uint64_t>(rn) + rm + t;
-    
+
     // Store the 32-bit result
     SET_REG(ctx, ins.dst.reg, static_cast<uint32_t>(sum));
-    
+
     // Set T=1 if carry occurred (sum > 0xFFFFFFFF)
     uint32_t t_result = (sum >> 32) & 1;
     SET_SR_T(ctx, t_result);
-    
+
     // Verify the register values after setting
     uint32_t rn_after = GET_REG(ctx, ins.dst.reg);
     uint32_t t_after = GET_SR_T(ctx);
-    
-    printf("[Exec_ADDC][POST] ctx=%p pc=%08X dst.reg=%d Rn(%d)=%08X T=%u sum=0x%llX expected_t=%u\n", 
+
+    printf("[Exec_ADDC][POST] ctx=%p pc=%08X dst.reg=%d Rn(%d)=%08X T=%u sum=0x%llX expected_t=%u\n",
            (void*)ctx, pc, ins.dst.reg, ins.dst.reg, rn_after, t_after, sum, t_result);
 }
 
@@ -595,26 +606,26 @@ static void Exec_SUBC(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t pc)
     uint32_t rm = GET_REG(ctx, ins.src1.reg);
     uint32_t rn = GET_REG(ctx, ins.dst.reg);
     uint32_t t = GET_SR_T(ctx);
-    
-    printf("[Exec_SUBC][PRE] ctx=%p pc=%08X Rn(%d)=%08X Rm(%d)=%08X T=%u\n", 
+
+    printf("[Exec_SUBC][PRE] ctx=%p pc=%08X Rn(%d)=%08X Rm(%d)=%08X T=%u\n",
            (void*)ctx, pc, ins.dst.reg, rn, ins.src1.reg, rm, t);
-    
+
     // For SUBC, we need to properly detect borrow in a two-step subtraction
     // First check if rn < rm (first borrow)
     bool borrow1 = (rn < rm);
-    
+
     // Then check if the result of (rn-rm) < t (second borrow)
     uint32_t temp = rn - rm;
     bool borrow2 = (temp < t);
-    
+
     // Calculate final result
     uint32_t res = temp - t;
     SET_REG(ctx, ins.dst.reg, res);
-    
+
     // Set T=1 if either subtraction produced a borrow
     SET_SR_T(ctx, (borrow1 || borrow2) ? 1 : 0);
-    
-    printf("[Exec_SUBC][POST] ctx=%p pc=%08X Rn(%d)=%08X T=%u\n", 
+
+    printf("[Exec_SUBC][POST] ctx=%p pc=%08X Rn(%d)=%08X T=%u\n",
            (void*)ctx, pc, ins.dst.reg, GET_REG(ctx, ins.dst.reg), GET_SR_T(ctx));
 }
 
@@ -799,8 +810,8 @@ static void Exec_MAC_L(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t pc) 
     uint32_t addr_n = GET_REG(ctx, n);
 
     // Read 32-bit values from memory
-    int32_t val_m = (int32_t)mmu_ReadMem<u32>(addr_m);
-    int32_t val_n = (int32_t)mmu_ReadMem<u32>(addr_n);
+    int32_t val_m = (int32_t)RawRead32(addr_m);
+    int32_t val_n = (int32_t)RawRead32(addr_n);
 
     // Post-increment registers by 4
     GET_REG(ctx, m) += 4;
@@ -835,8 +846,8 @@ static void Exec_MAC_W(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t pc) 
     uint32_t addr_n = GET_REG(ctx, n);
 
     // Read 16-bit values from memory and sign-extend to 32-bit
-    int16_t val_m_16 = (int16_t)mmu_ReadMem<u16>(addr_m);
-    int16_t val_n_16 = (int16_t)mmu_ReadMem<u16>(addr_n);
+    int16_t val_m_16 = (int16_t)RawRead16(addr_m);
+    int16_t val_n_16 = (int16_t)RawRead16(addr_n);
     int32_t val_m = (int32_t)val_m_16;
     int32_t val_n = (int32_t)val_n_16;
 
@@ -1097,7 +1108,7 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
         // Try fast table dispatch first
         {
             ExecFn fn = GetExecFn(ins.op);
-            printf("[ExecuteBlock] Executing instruction at PC=%08X, op=%d (%s), fn=%p, ExecStub=%p\n", 
+            printf("[ExecuteBlock] Executing instruction at PC=%08X, op=%d (%s), fn=%p, ExecStub=%p\n",
                    curr_pc, static_cast<int>(ins.op), GetOpName(static_cast<size_t>(ins.op)), (void*)fn, (void*)&ExecStub);
             if (fn != &ExecStub)
             {
@@ -1162,17 +1173,31 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
 
                 case Op::STORE8:
                 {
-                    uint32_t addr = GET_REG(ctx, ins.src2.reg) + ins.extra;
-                    uint8_t val_to_store = static_cast<uint8_t>(GET_REG(ctx, ins.src1.reg));
-                    // Initial log for context
+                    uint32_t base = GET_REG(ctx, ins.src2.reg);
+                    int32_t  disp = ins.extra; // already sign/zero-extended by emitter where appropriate
+                    uint32_t addr = base + static_cast<uint32_t>(disp);
+                    uint8_t  val_to_store = static_cast<uint8_t>(GET_REG(ctx, ins.src1.reg));
+
+                    // Extra diagnostics to catch bogus addresses early in boot
+                    if ((addr & 0xFF000000u) == 0x61000000u) {
+                        ERROR_LOG(SH4, "[BAD-ADDR] STORE8  PC=%08X  Rn=R%u=%08X  disp=%d (0x%X)  result=%08X  val=%02X",
+                                  curr_pc, ins.src2.reg, base, disp, disp & 0xFF, addr, val_to_store);
+                        // Print a short look-back in the current block to identify the writer of Rn
+                        size_t dbg_ip = ip > 3 ? ip - 3 : 0;
+                        for (size_t j = dbg_ip; j <= ip && j < blk->code.size(); ++j) {
+                            INFO_LOG(SH4, "    blk[%zu]: %s", j, GetOpName(static_cast<size_t>(blk->code[j].op)));
+                        }
+                    }
+
+                    // Original logging
                     INFO_LOG(SH4, "STORE8 PRE-WRITE: R%u(0x%02X) intended for addr 0x%08X. (Rn=R%u@0x%08X, disp=%d)",
                              ins.src1.reg, val_to_store, addr,
-                             ins.src2.reg, GET_REG(ctx, ins.src2.reg), ins.extra);
+                             ins.src2.reg, base, disp);
                     if (unlikely(IsBiosAddr(addr))) {
                         LogIllegalBiosWrite(ins, addr, curr_pc);
                     } else {
                         INFO_LOG(SH4, "STORE8 ACTUAL WRITE: Writing 0x%02X to 0x%08X", val_to_store, addr);
-                        mmu_WriteMem<uint8_t>(addr, val_to_store);
+                        RawWrite8(addr, val_to_store);
                     }
                     break;
                 }
@@ -1188,7 +1213,7 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                         LogIllegalBiosWrite(ins, addr, curr_pc);
                     } else {
                         INFO_LOG(SH4, "STORE16 ACTUAL WRITE: Writing 0x%04X to 0x%08X", val_to_store, addr);
-                        mmu_WriteMem<uint16_t>(addr, val_to_store);
+                        RawWrite16(addr, val_to_store);
                     }
                     break;
                 }
@@ -1212,7 +1237,7 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                         LogIllegalBiosWrite(ins, addr, curr_pc);
                     } else {
                         INFO_LOG(SH4, "STORE32 ACTUAL WRITE: Writing 0x%08X to 0x%08X", val_to_store, addr);
-                        mmu_WriteMem<uint32_t>(addr, val_to_store);
+                        RawWrite32(addr, val_to_store);
                     }
                     break;
                 }
@@ -1229,7 +1254,7 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                     if (unlikely(IsBiosAddr(addr))) {
                         LogIllegalBiosWrite(ins, addr, curr_pc);
                     } else {
-                        mmu_WriteMem<uint8_t>(addr, val_to_store);
+                        RawWrite8(addr, val_to_store);
                     }
                     break;
                 }
@@ -1280,7 +1305,7 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                          addr = GET_REG(ctx, ins.src2.reg) + GET_REG(ctx, 0);
                          value = static_cast<uint8_t>(GET_REG(ctx, ins.src1.reg) & 0xFF);
                      }
-                     mmu_WriteMem<u8>(addr, value);
+                     RawWrite8(addr, value);
                      break;
                  }
                 case Op::STORE16_R0:
@@ -1296,7 +1321,7 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                          addr = GET_REG(ctx, ins.src2.reg) + GET_REG(ctx, 0);
                          value = static_cast<uint16_t>(GET_REG(ctx, ins.src1.reg) & 0xFFFF);
                      }
-                     mmu_WriteMem<u16>(addr, value);
+                     RawWrite16(addr, value);
                      break;
                  }
                 case Op::STORE32_R0:
@@ -1310,7 +1335,7 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                          addr = GET_REG(ctx, ins.src2.reg) + GET_REG(ctx, 0);
                          value = GET_REG(ctx, ins.src1.reg);
                      }
-                     mmu_WriteMem<u32>(addr, value);
+                     RawWrite32(addr, value);
                      break;
                  }
                 case Op::OR_REG:
@@ -1401,7 +1426,7 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                     if (u8* p = FastRamPtr(addr))
                         val = *p;
                     else
-                        val = mmu_ReadMem<u8>(addr);
+                        val = RawRead8(addr);
                     SET_REG(ctx, ins.dst.reg, static_cast<uint32_t>(static_cast<int8_t>(val))); // Sign-extend byte
 
                     // DEBUG WATCH: if R0 acquires a near-0x0FFFFFFx value, log once to locate its origin
@@ -1429,23 +1454,23 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                     uint32_t& rn = GET_REG(ctx, ins.dst.reg);
                     rn -= 1;
                     // Use standard MMU write to respect protection and avoid invalid host pointers.
-                    mmu_WriteMem<u8>(rn, static_cast<u8>(GET_REG(ctx, ins.src1.reg)));
+                    RawWrite8(rn, static_cast<u8>(GET_REG(ctx, ins.src1.reg)));
                     break;
                 }
                 case Op::LOAD8_GBR:
                 {
-                    u8 val = mmu_ReadMem<u8>(gbr + static_cast<uint32_t>(ins.extra));
+                    u8 val = RawRead8(gbr + static_cast<uint32_t>(ins.extra));
                     SET_REG(ctx, ins.dst.reg, static_cast<uint32_t>(static_cast<int8_t>(val)));
                     break;
                 }
                 case Op::LOAD16_GBR:
                 {
-                    u16 val = mmu_ReadMem<u16>(gbr + static_cast<uint32_t>(ins.extra));
+                    u16 val = RawRead16(gbr + static_cast<uint32_t>(ins.extra));
                     SET_REG(ctx, ins.dst.reg, static_cast<uint32_t>(static_cast<int16_t>(val)));
                     break;
                 }
                 case Op::LOAD32_GBR:
-                    SET_REG(ctx, ins.dst.reg, mmu_ReadMem<u32>(gbr + static_cast<uint32_t>(ins.extra)));
+                    SET_REG(ctx, ins.dst.reg, RawRead32(gbr + static_cast<uint32_t>(ins.extra)));
                     break;
                 case Op::LOAD8_POST:
                 {
@@ -1454,7 +1479,7 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                     if (u8* p = FastRamPtr(addr))
                         val = *p;
                     else
-                        val = mmu_ReadMem<u8>(addr);
+                        val = RawRead8(addr);
                     SET_REG(ctx, ins.dst.reg, static_cast<uint32_t>(static_cast<int8_t>(val)));
                     if (ins.src1.reg != ins.dst.reg)
                         GET_REG(ctx, ins.src1.reg) += 1;
@@ -1485,7 +1510,7 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                     else if (IsBiosAddr(addr)) {
                          LogIllegalBiosWrite(ins, addr, curr_pc);
                      } else
-                         mmu_WriteMem<u8>(addr, GET_REG(ctx, ins.src1.reg));
+                         RawWrite8(addr, GET_REG(ctx, ins.src1.reg));
                     if (ins.dst.reg != ins.src1.reg)
                         GET_REG(ctx, ins.dst.reg) += 1;
                     break;
@@ -1514,7 +1539,7 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                 }
                 case Op::STORE8_GBR:
                     if (!IsBiosAddr(gbr + static_cast<uint32_t>(ins.extra)))
-                        mmu_WriteMem<u8>(gbr + static_cast<uint32_t>(ins.extra), GET_REG(ctx, ins.src1.reg));
+                        RawWrite8(gbr + static_cast<uint32_t>(ins.extra), GET_REG(ctx, ins.src1.reg));
                     break;
                 case Op::STORE16_GBR:
                     if (!IsBiosAddr(gbr + static_cast<uint32_t>(ins.extra)))
@@ -1532,7 +1557,7 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                     if (u8* p = FastRamPtr(addr))
                         val = *p;
                     else
-                        val = mmu_ReadMem<u8>(addr);
+                        val = RawRead8(addr);
                     SET_REG(ctx, ins.dst.reg, static_cast<uint32_t>(static_cast<int8_t>(val)));
                     break;
                 }
@@ -2605,7 +2630,7 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                 case Op::LDC_L: // LDC.L @Rm+, <CR>
                 {
                     uint32_t addr = GET_REG(ctx, ins.src1.reg);
-                    uint32_t val = mmu_ReadMem<u32>(addr);
+                    uint32_t val = RawRead32(addr);
                     GET_REG(ctx, ins.src1.reg) += 4;
 
                     // ins.extra contains the control register ID
@@ -2663,14 +2688,14 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                         uint32_t addr = GET_REG(ctx, ins.src1.reg);
                         if (fpscr.PR) {
                             // Load 64-bit and advance Rm by 8
-                            uint64_t val64 = mmu_ReadMem<u64>(addr);
+                            uint64_t val64 = RawRead64(addr);
                             double* d_fr = reinterpret_cast<double*>(&ctx->xffr[16]);
                             int dr_dst_idx = ins.dst.reg ;
                             d_fr[dr_dst_idx] = *reinterpret_cast<double*>(&val64);
                             GET_REG(ctx, ins.src1.reg) += 8;
                         } else {
                             // Load 32-bit and advance Rm by 4
-                            uint32_t val32 = mmu_ReadMem<u32>(addr);
+                            uint32_t val32 = RawRead32(addr);
                             SET_FR(ctx, ins.dst.reg, *reinterpret_cast<float*>(&val32));
                             GET_REG(ctx, ins.src1.reg) += 4;
                         }
@@ -2679,7 +2704,7 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                 }
                 case Op::ILLEGAL:
                       {
-                          uint16_t raw16 = mmu_ReadMem<u16>(current_pc_addr);
+                          uint16_t raw16 = RawRead16(current_pc_addr);
                           {
                               INFO_LOG(SH4, "IR executor delegating ILLEGAL raw=%04X at PC=%08X to interpreter", raw16, current_pc_addr);
                               ExecuteOpcode(raw16);
@@ -2691,7 +2716,7 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                       }
                 default:
                       {
-                          uint16_t raw16 = mmu_ReadMem<u16>(current_pc_addr);
+                          uint16_t raw16 = RawRead16(current_pc_addr);
                           // If this is an FPU group opcode (0xFxxx) and interpreter is available
                           if ((raw16 & 0xF000) == 0xF000)
                           {
@@ -2779,7 +2804,7 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
             {
                 // Delay slot just executed – about to commit the branch.
                 INFO_LOG(SH4, "BR COMMIT %08X", branch_target);
-                uint16_t raw16_prev = mmu_ReadMem<u16>(curr_pc - 2);
+                uint16_t raw16_prev = RawRead16(curr_pc - 2);
                 if (branch_target == 0)
                 {
                     ERROR_LOG(SH4, "*** ZERO-TARGET commit! branch raw=%04X src_pc=%08X", raw16_prev, curr_pc - 2);
