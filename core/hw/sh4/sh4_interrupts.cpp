@@ -194,6 +194,7 @@ static void Do_Interrupt(Sh4ExceptionCode intEvn)
 
 	ssr = sh4_sr_GetFull();
 	spc = next_pc;
+    DEBUG_LOG(SH4, "Do_Interrupt: save SPC=%08X SSR=%08X (event=%d)", spc, ssr, intEvn);
 	sgr = r[15];
 	sr.BL = 1;
 	sr.MD = 1;
@@ -217,6 +218,7 @@ void Do_Exception(u32 epc, Sh4ExceptionCode expEvn)
 
 	ssr = sh4_sr_GetFull();
 	spc = epc;
+    DEBUG_LOG(SH4, "Do_Exception: save SPC=%08X SSR=%08X (event=%d)", spc, ssr, expEvn);
 	sgr = r[15];
 	sr.BL = 1;
 	sr.MD = 1;
