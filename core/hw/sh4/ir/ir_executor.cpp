@@ -458,39 +458,47 @@ static inline void RawWrite64(uint32_t a, u64 d) { if (is_mmu_on()) mmu_WriteMem
 // -----------------------------------------------------------------------------
 static inline u16 ReadAligned16(uint32_t addr)
 {
+#if defined(USE_FAST_PTR)
     if ((addr & 1u) == 0)
     {
         if (u8* p = FastRamPtr(addr))
             return *reinterpret_cast<u16*>(p);
     }
+#endif
     return RawRead16(addr);
 }
 
 static inline u32 ReadAligned32(uint32_t addr)
 {
+#if defined(USE_FAST_PTR)
     if ((addr & 3u) == 0)
     {
         if (u8* p = FastRamPtr(addr))
             return *reinterpret_cast<u32*>(p);
     }
+#endif
     return RawRead32(addr);
 }
 
 static inline void WriteAligned16(uint32_t addr, u16 data)
 {
+#if defined(USE_FAST_PTR)
     if ((addr & 1u) == 0)
     {
         if (u8* p = FastRamPtr(addr)) { *reinterpret_cast<u16*>(p) = data; return; }
     }
+#endif
     RawWrite16(addr, data);
 }
 
 static inline void WriteAligned32(uint32_t addr, u32 data)
 {
+#if defined(USE_FAST_PTR)
     if ((addr & 3u) == 0)
     {
         if (u8* p = FastRamPtr(addr)) { *reinterpret_cast<u32*>(p) = data; return; }
     }
+#endif
     RawWrite32(addr, data);
 }
 
