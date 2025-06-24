@@ -561,17 +561,18 @@ static void Exec_ADD(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
 // Rn = Rn + Rm, SR.T = 1 if signed overflow
 static void Exec_ADDV(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
 {
-    // Get register values
+    // Get operands as 32-bit signed integers
     int32_t rm = static_cast<int32_t>(GET_REG(ctx, ins.src1.reg));
     int32_t rn = static_cast<int32_t>(GET_REG(ctx, ins.dst.reg));
 
-    // Calculate result
+    // Perform addition
     int32_t res = rn + rm;
     SET_REG(ctx, ins.dst.reg, static_cast<uint32_t>(res));
 
-    // Set SR.T if signed overflow occurred
-    // Overflow happens when adding two positives gives negative or two negatives gives positive
-    SET_SR_T(ctx, ((rm > 0 && rn > 0 && res < 0) || (rm < 0 && rn < 0 && res > 0)) ? 1 : 0);
+    // Overflow detection (SH-4 manual)
+    // Overflow occurs when operands share the same sign bit but the result sign differs.
+    bool overflow = (((rn ^ rm) & 0x80000000) == 0) && (((rn ^ res) & 0x80000000) != 0);
+    SET_SR_T(ctx, overflow ? 1 : 0);
 }
 
 // SUB Rm,Rn - Subtract
