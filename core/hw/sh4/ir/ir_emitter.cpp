@@ -341,6 +341,24 @@ static bool FastDecode(uint16_t raw, uint32_t pc, Instr &ins, Block &blk)
         blk.pcNext = pc + 2;
         return true;
     }
+    // MOV.W @(disp,Rm),R0 0x5xxx pattern (destination fixed R0, word displacement*2)
+    // Must appear before other 0x5000 handlers to avoid conflicts
+    else if ((raw & 0xF000) == 0x5000 && ((raw & 0x0F00) == 0x0000) && ((raw & 0xF) != 0x2) && ((raw & 0xF) != 0x1)) {
+        uint8_t rm = (raw >> 4) & 0xF;     // Rm in bits 7-4
+        uint8_t disp4 = raw & 0xF;         // disp low nibble
+        uint8_t disp_high = (raw >> 8) & 0xF; // bits 11-8 are zero (dest), reuse as high nibble of disp if needed
+        uint8_t disp8 = static_cast<uint8_t>((disp_high << 4) | disp4);
+
+        ins.op = Op::LOAD16;               // 16-bit load (sign-extended)
+        ins.dst = {false, 0};              // destination is R0
+        ins.src1 = {false, rm};            // base register Rm
+        ins.extra = static_cast<uint32_t>(disp8) * 2; // displacement in bytes
+
+        INFO_LOG(SH4, "FastDecode: MOV.W @(%u,R%u),R0 (0x%04X) at PC=%08X", ins.extra, rm, raw, pc);
+        blk.pcNext = pc + 2;
+        return true;
+    }
+
     // 0x5000 patterns can be either:  
     // 1. MOV.L @(disp,Rm),Rn (0x5nm2) - LOAD operation
     // 2. MOV.L Rm,@(disp,Rn) (0x5nm1) - STORE operation
