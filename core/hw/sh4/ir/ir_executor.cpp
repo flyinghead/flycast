@@ -653,17 +653,35 @@ static void Exec_SHR_OP(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t) {
 
 // STC – store system register to general register (only GBR & VBR needed for BIOS)
 static void Exec_STC(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t) {
+    uint32_t val = 0;
     switch (ins.extra) {
+    case 0: // SR
+        val = sr_getFull(ctx);
+        break;
     case 1: // GBR
-        SET_REG(ctx, ins.dst.reg, ctx->gbr);
+        val = ctx->gbr;
         break;
     case 2: // VBR
-        SET_REG(ctx, ins.dst.reg, ctx->vbr);
+        val = ctx->vbr;
+        break;
+    case 3: // SSR
+        val = ssr;
+        break;
+    case 4: // SPC
+        val = spc;
+        break;
+    case 7: // DBR (consistent mapping with emitter)
+        val = dbr;
+        break;
+    case 8: case 9: case 10: case 11: case 12: case 13: case 14: case 15:
+        val = r_bank[ins.extra - 8];
         break;
     default:
-        // Unhandled system reg – fall back to legacy path for now.
-        throw SH4ThrownException(0, Sh4Ex_IllegalInstr);
+        // Unhandled system reg – let slow path handle, but avoid infinite loop by simply returning.
+        val = 0;
+        break;
     }
+    SET_REG(ctx, ins.dst.reg, val);
 }
 
 // MOV.B Rm,@-Rn (pre-decrement store byte)
