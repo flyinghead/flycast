@@ -44,9 +44,11 @@ static uint64_t CalcBlockSig(uint32_t pc)
 namespace sh4 {
 namespace ir {
 
+extern std::atomic_bool g_ir_cache_invalidated;
 void Emitter::ClearCaches() {
     cache_.clear();
     g_block_sig_cache.clear();
+    g_ir_cache_invalidated.store(true, std::memory_order_release);
     INFO_LOG(SH4, "Emitter caches cleared.");
 }
 
@@ -71,6 +73,22 @@ static bool FastDecode(uint16_t raw, uint32_t pc, Instr &ins, Block &blk)
         ins.dst.type = RegType::FGR;
         blk.pcNext = pc + 2;
         DEBUG_LOG(SH4, "FastDecode: FLOAT FPUL,FR%u (0x%04X)", ins.dst.reg, raw);
+        return true;
+    }
+
+    // ----------------------------------------------------------------
+    //  BRA disp12   1010nnnnnnnnnnnn (A***). Delay-slot ⇒ blk.pcNext = pc+4
+    // ----------------------------------------------------------------
+    if ((raw & 0xF000) == 0xA000) {
+        uint32_t imm12 = raw & 0x0FFF;
+        int32_t  disp   = static_cast<int32_t>(imm12 << 1);  // byte displacement
+        // Sign-extend 13-bit (bit 12 after shift is sign)
+        if (disp & 0x1000)
+            disp |= ~0x1FFF;
+        ins.op     = Op::BRA;
+        ins.extra  = disp;
+        blk.pcNext = pc + 4;   // execute delay slot, then branch
+        DEBUG_LOG(SH4, "FastDecode: BRA raw=0x%04X pc=0x%08X disp=%d (0x%X) target=0x%08X", raw, pc, disp, disp, pc + 4 + disp);
         return true;
     }
 
@@ -359,7 +377,7 @@ static bool FastDecode(uint16_t raw, uint32_t pc, Instr &ins, Block &blk)
         return true;
     }
 
-    // 0x5000 patterns can be either:  
+    // 0x5000 patterns can be either:
     // 1. MOV.L @(disp,Rm),Rn (0x5nm2) - LOAD operation
     // 2. MOV.L Rm,@(disp,Rn) (0x5nm1) - STORE operation
     else if ((raw & 0xF000) == 0x5000) {
@@ -367,7 +385,7 @@ static bool FastDecode(uint16_t raw, uint32_t pc, Instr &ins, Block &blk)
         uint8_t rn = (raw >> 8) & 0xF;     // Rn in bits 8-11
         uint8_t rm = (raw >> 4) & 0xF;    // Rm in bits 4-7
         uint8_t disp = raw & 0xF;
-        
+
         // Check the lowest bit to distinguish between LOAD (2) and STORE (1)
         if ((raw & 0xF) == 0x2) {
             // MOV.L @(disp,Rm),Rn (0x5nm2) - LOAD operation
@@ -375,7 +393,7 @@ static bool FastDecode(uint16_t raw, uint32_t pc, Instr &ins, Block &blk)
             ins.dst = {false, rn};            // Destination is Rn
             ins.src1 = {false, rm};          // Base address from Rm
             ins.extra = disp * 4;            // Displacement in ins.extra (disp * 4 bytes)
-            
+
             INFO_LOG(SH4, "FastDecode: Decoded MOV.L @(%u,R%u),R%u (LOAD) (0x%04X) at PC=%08X",
                     disp * 4, rm, rn, raw, pc);
         } else if ((raw & 0xF) == 0x1) {
@@ -384,7 +402,7 @@ static bool FastDecode(uint16_t raw, uint32_t pc, Instr &ins, Block &blk)
             ins.dst = {false, rn};            // Base address register is Rn
             ins.src1 = {false, rm};          // Source data from Rm
             ins.extra = disp * 4;            // Displacement in ins.extra (disp * 4 bytes)
-            
+
             INFO_LOG(SH4, "FastDecode: Decoded MOV.L R%u,@(%u,R%u) (STORE) (0x%04X) at PC=%08X",
                     rm, disp * 4, rn, raw, pc);
         } else {

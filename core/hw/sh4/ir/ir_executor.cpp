@@ -16,6 +16,7 @@
 #include <atomic>
 #include <cstdint>
 #include <cstdio>
+#include <csignal>
 #include "hw/sh4/sh4_interrupts.h"
 
 // Undefine global macros from sh4_core.h to prevent conflicts
@@ -1363,12 +1364,28 @@ static void InitExecTable()
     init = true;
 }
 
-// Static constructor to initialize table before main
-struct ExecTableInit { ExecTableInit(){ InitExecTable(); } } g_exec_table_init;
+// Lazy one-time initialization using call_once to avoid static-init order issues
+#include <mutex>
+#include <atomic>
+// Global flag set by emitter when its caches are cleared while a block is executing
+std::atomic_bool g_ir_cache_invalidated{false};
+static std::once_flag g_exec_table_once;
 
 static inline ExecFn GetExecFn(sh4::ir::Op op)
 {
-    return g_exec_table[static_cast<int>(op)];
+    // Ensure the table is initialized exactly once, even in multithreaded use
+    std::call_once(g_exec_table_once, InitExecTable);
+
+    int idx = static_cast<int>(op);
+    if (unlikely(idx < 0 || idx >= static_cast<int>(sh4::ir::Op::NUM_OPS)))
+    {
+      ERROR_LOG(SH4,
+                "GetExecFn: invalid op index %d (expected < %d). Falling back "
+                "to ExecStub",
+                idx, static_cast<int>(sh4::ir::Op::NUM_OPS));
+      return &ExecStub;
+    }
+    return g_exec_table[idx];
 }
 
 // ----------------------------------------------------------------------------
@@ -1385,8 +1402,14 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
     bool branch_pending = false;       // we have seen a branch, delay slot ahead
     bool executed_delay = false;       // delay slot has just been executed
     uint32_t branch_target = 0;
+    bool first_instruction_executed = false;
     while (ip < blk->code.size())
     {
+        // Abort current block if emitter flushed caches (block memory may be freed)
+        if (first_instruction_executed && g_ir_cache_invalidated.exchange(false, std::memory_order_acq_rel)) {
+            SyncCtxFromGlobals(ctx);
+            return; // re-dispatch with fresh block fetch
+        }
         if (unlikely(g_exception_was_raised))
         {
             g_exception_was_raised = false;
@@ -1408,6 +1431,8 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
         // delay-slot instruction has executed (see logic at bottom of loop).
 
         const Instr& ins = blk->code[ip++];
+        // Record in circular trace buffer for post-mortem dumps
+        TraceLog(current_pc_addr, ins.op);
         // --- early-boot tracing
         // ------------------------------------------------
 #if 0
@@ -1430,6 +1455,8 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
 
         // Try fast table dispatch first
         {
+          DEBUG_LOG(SH4, "Executing instruction at PC=%08X, op=%d hex=%04X (%s)",
+                   current_pc_addr, static_cast<int>(ins.op), ins.raw, GetOpName(static_cast<size_t>(ins.op)));
             ExecFn fn = GetExecFn(ins.op);
 // #ifdef IR_TRACE_EXEC
             DEBUG_LOG(SH4, "Executing instruction at PC=%08X, op=%d hex=%04X (%s), fn=%p, ExecStub=%p",
@@ -3040,8 +3067,8 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                            // Dump once per unique illegal opcode
                            static std::unordered_set<uint32_t> illegal_seen;
                            uint32_t key = (raw16 << 16) | (current_pc_addr & 0xFFFF);
-                           if (illegal_seen.insert(key).second)
-                               sh4::ir::DumpTrace();
+                           sh4::ir::DumpTrace();
+                           raise(SIGTRAP);
                            // Abort execution so caller (emulator/tests) can catch and investigate
                            throw SH4ThrownException(current_pc_addr, Sh4Ex_IllegalInstr);
                        }
@@ -3059,12 +3086,12 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                           ERROR_LOG(SH4, "IR executor fell through: raw=%04X pc=%08X", raw16, current_pc_addr);
                           ERROR_LOG(SH4, "IR executor unimplemented opcode %s (%zu) at %08X", GetOpName(static_cast<size_t>(ins.op)), static_cast<size_t>(ins.op), current_pc_addr);
                           sh4::ir::DumpTrace();
+                          raise(SIGTRAP);
                           throw SH4ThrownException(current_pc_addr, Sh4Ex_IllegalInstr);
                       }
                 } // end switch (ins.op)
             } // end else dispatch
         } // end else dispatch
-
         // Early exit if END instruction was executed via an ExecFn handler that
         // returned normally (i.e., it was not caught by the earlier switch-case
         // fallback).  Replicate the same logic used in the switch at the top of
