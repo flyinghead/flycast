@@ -1390,8 +1390,8 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
         // Try fast table dispatch first
         {
             ExecFn fn = GetExecFn(ins.op);
-            printf("[ExecuteBlock] Executing instruction at PC=%08X, op=%d (%s), fn=%p, ExecStub=%p\n",
-                   curr_pc, static_cast<int>(ins.op), GetOpName(static_cast<size_t>(ins.op)), (void*)fn, (void*)&ExecStub);
+            printf("[ExecuteBlock] Executing instruction at PC=%08X, op=%d hex=%04X (%s), fn=%p, ExecStub=%p\n",
+                   curr_pc, static_cast<int>(ins.op), ins.raw, GetOpName(static_cast<size_t>(ins.op)), (void*)fn, (void*)&ExecStub);
             if (fn != &ExecStub)
             {
                 fn(ins, ctx, curr_pc);
