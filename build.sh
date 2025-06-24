@@ -193,7 +193,7 @@ if [ $? -eq 0 ]; then
   # Run make if requested
   if [ "${RUN_BUILD}" = "ON" ]; then
     echo "Running make in ${BUILD_DIR}..."
-    cmake --build ${BUILD_DIR} -- -j12
+    cmake --build ${BUILD_DIR} -- -j$(sysctl -n hw.ncpu)
 
     if [ $? -eq 0 ]; then
       echo "Build successful!"
