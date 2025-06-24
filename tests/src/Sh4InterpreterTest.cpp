@@ -44,12 +44,9 @@ protected:
 	}
 	void RunOp(int numOp = 1) override
 	{
-		printf("[DEBUG] Before RunOp: T flag = %u\n", ctx->sr.T);
-		printf("[DEBUG] Before RunOp: ctx=%p, p_sh4rcb->cntx=%p\n", ctx, &p_sh4rcb->cntx);
 		ctx->pc = START_PC;
 		for (int i = 0; i < numOp; i++)
 			sh4.Step();
-		printf("[DEBUG] After RunOp: T flag = %u\n", ctx->sr.T);
 	}
 };
 
@@ -84,6 +81,8 @@ TEST_F(Sh4InterpreterTest, StoreTest2)
 TEST_F(Sh4InterpreterTest, ArithmeticTest)
 {
 	Sh4OpTest::ArithmeticTest();
+	// Add debug output after ArithmeticTest to check register and context
+
 }
 TEST_F(Sh4InterpreterTest, MulDivTest)
 {

@@ -67,7 +67,7 @@ static inline const float* GET_XF(Sh4Context* ctx)
 
 // Helper macros for register access - explicit context pointer
 #define GET_REG(ctx, idx) ((ctx)->r[(idx)])
-#define SET_REG(ctx, idx, val) ((ctx)->r[(idx)] = (val))
+#define SET_REG(ctx, idx, val) do { (ctx)->r[(idx)] = (val); } while(0)
 
 // Helper macros for status register access
 #define GET_SR_T(ctx) ((ctx)->sr.T)
@@ -515,27 +515,46 @@ static void ExecStub(const sh4::ir::Instr& ins, Sh4Context*, uint32_t pc)
 static void Exec_NOP(const sh4::ir::Instr&, Sh4Context*, uint32_t) { /* nothing */ }
 static void Exec_ADD_REG(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t) { GET_REG(ctx, ins.dst.reg) += GET_REG(ctx, ins.src1.reg); }
 static void Exec_ADD_IMM(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t) { GET_REG(ctx, ins.dst.reg) += static_cast<uint32_t>(ins.src1.imm); }
-static void Exec_ADDC(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
+static void Exec_ADDC(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t pc)
 {
     // ADDC: Rn = Rn + Rm + T
     uint32_t rm = GET_REG(ctx, ins.src1.reg);
     uint32_t rn = GET_REG(ctx, ins.dst.reg);
     uint32_t t = GET_SR_T(ctx);
-    printf("[IR_EXECUTOR][ADDC] Entered: Rn (r[%u])=0x%08X, Rm (r[%u])=0x%08X, T=%u\n", ins.dst.reg, rn, ins.src1.reg, rm, t);
+    
+    printf("[Exec_ADDC][PRE] ctx=%p pc=%08X dst.reg=%d src1.reg=%d Rn(%d)=%08X Rm(%d)=%08X T=%u\n", 
+           (void*)ctx, pc, ins.dst.reg, ins.src1.reg, ins.dst.reg, rn, ins.src1.reg, rm, t);
+    
     // Calculate result using 64-bit to catch carry
     uint64_t sum = static_cast<uint64_t>(rn) + rm + t;
-    printf("[IR_EXECUTOR][ADDC] Computed sum: 0x%016llX\n", (unsigned long long)sum);
+    
     // Store the 32-bit result
     SET_REG(ctx, ins.dst.reg, static_cast<uint32_t>(sum));
-    printf("[IR_EXECUTOR][ADDC] Result written to r[%u]: 0x%08X\n", ins.dst.reg, (uint32_t)sum);
+    
     // Set T=1 if carry occurred (sum > 0xFFFFFFFF)
-    uint32_t newT = (sum >> 32) & 1;
-    SET_SR_T(ctx, newT);
-    printf("[IR_EXECUTOR][ADDC] New T flag: %u\n", newT);
+    uint32_t t_result = (sum >> 32) & 1;
+    SET_SR_T(ctx, t_result);
+    
+    // Verify the register values after setting
+    uint32_t rn_after = GET_REG(ctx, ins.dst.reg);
+    uint32_t t_after = GET_SR_T(ctx);
+    
+    printf("[Exec_ADDC][POST] ctx=%p pc=%08X dst.reg=%d Rn(%d)=%08X T=%u sum=0x%llX expected_t=%u\n", 
+           (void*)ctx, pc, ins.dst.reg, ins.dst.reg, rn_after, t_after, sum, t_result);
 }
+
 
 static void Exec_CLRT(const sh4::ir::Instr& /*ins*/, Sh4Context* ctx, uint32_t /*pc*/) {
     SET_SR_T(ctx, 0);
+}
+
+// ADD Rm,Rn - Integer addition
+// Rn = Rn + Rm
+static void Exec_ADD(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
+{
+    uint32_t rm = GET_REG(ctx, ins.src1.reg);
+    uint32_t rn = GET_REG(ctx, ins.dst.reg);
+    SET_REG(ctx, ins.dst.reg, rn + rm);
 }
 
 // ADDV Rm,Rn - Add with overflow detection
@@ -570,19 +589,32 @@ static void Exec_SUB(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
 // SUBC Rm,Rn - Subtract with Carry
 // Rn = Rn - Rm - T
 // SR.T = borrow
-static void Exec_SUBC(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
+static void Exec_SUBC(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t pc)
 {
     uint32_t rm = GET_REG(ctx, ins.src1.reg);
     uint32_t rn = GET_REG(ctx, ins.dst.reg);
     uint32_t t = GET_SR_T(ctx);
-
-    // Calculate result: Rn - Rm - T
-    uint32_t res = rn - rm - t;
+    
+    printf("[Exec_SUBC][PRE] ctx=%p pc=%08X Rn(%d)=%08X Rm(%d)=%08X T=%u\n", 
+           (void*)ctx, pc, ins.dst.reg, rn, ins.src1.reg, rm, t);
+    
+    // For SUBC, we need to properly detect borrow in a two-step subtraction
+    // First check if rn < rm (first borrow)
+    bool borrow1 = (rn < rm);
+    
+    // Then check if the result of (rn-rm) < t (second borrow)
+    uint32_t temp = rn - rm;
+    bool borrow2 = (temp < t);
+    
+    // Calculate final result
+    uint32_t res = temp - t;
     SET_REG(ctx, ins.dst.reg, res);
-
-    // Set T=1 if borrow occurred
-    // Borrow occurs when: (rn < rm) OR (rn == rm AND t == 1)
-    SET_SR_T(ctx, (rn < rm || (rn == rm && t == 1)) ? 1 : 0);
+    
+    // Set T=1 if either subtraction produced a borrow
+    SET_SR_T(ctx, (borrow1 || borrow2) ? 1 : 0);
+    
+    printf("[Exec_SUBC][POST] ctx=%p pc=%08X Rn(%d)=%08X T=%u\n", 
+           (void*)ctx, pc, ins.dst.reg, GET_REG(ctx, ins.dst.reg), GET_SR_T(ctx));
 }
 
 // SUBX Rm,Rn - Subtract with borrow
@@ -973,6 +1005,7 @@ static void InitExecTable()
     if (init) return;
     for (auto& fn : g_exec_table) fn = &ExecStub;
     g_exec_table[static_cast<int>(sh4::ir::Op::NOP)]      = &Exec_NOP;
+    g_exec_table[static_cast<int>(sh4::ir::Op::ADD)]       = &Exec_ADD;
     g_exec_table[static_cast<int>(sh4::ir::Op::ADD_REG)]  = &Exec_ADD_REG;
     g_exec_table[static_cast<int>(sh4::ir::Op::ADD_IMM)]  = &Exec_ADD_IMM;
     g_exec_table[static_cast<int>(sh4::ir::Op::ADDC)]       = &Exec_ADDC;
@@ -1063,6 +1096,8 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
         // Try fast table dispatch first
         {
             ExecFn fn = GetExecFn(ins.op);
+            printf("[ExecuteBlock] Executing instruction at PC=%08X, op=%d (%s), fn=%p, ExecStub=%p\n", 
+                   curr_pc, static_cast<int>(ins.op), GetOpName(static_cast<size_t>(ins.op)), (void*)fn, (void*)&ExecStub);
             if (fn != &ExecStub)
             {
                 fn(ins, ctx, curr_pc);

@@ -43,7 +43,8 @@ protected:
 	virtual void PrepareOp(u16 op, u16 op2 = 0, u16 op3 = 0) = 0;
 	virtual void RunOp(int numOp = 1) = 0;
 
-	void ClearRegs() {
+	void ClearRegs()
+	{
 		sh4.ResetCache();          // discard all compiled IR blocks
 		for (int i = 0; i < 16; i++)
 			r(i) = REG_MAGIC;
@@ -53,6 +54,8 @@ protected:
 		mac() = 0;
 		gbr() = REG_MAGIC;
 		checkedRegs.clear();
+		uint32_t* regs = ctx->r;
+		printf("[TEST][ClearRegs] ctx=%p r[0]=%08X r[1]=%08X r[2]=%08X r[3]=%08X sr.T=%u\n", (void*)ctx, regs[0], regs[1], regs[2], regs[3], ctx->sr.T);
 	}
 	void AssertState() {
 		for (int i = 0; i < 16; i++)
@@ -543,6 +546,7 @@ protected:
 		sr().T = 0;
 		r(2) = 0xffffffff;
 		r(3) = 1;
+		printf("[TEST][PRE-RunOp] ctx=%p r[2]=%08X r[3]=%08X sr.T=%u\n", (void*)ctx, r(2), r(3), sr().T);
 		RunOp();
 		ASSERT_EQ(r(2), 0u);
 		ASSERT_EQ(sr().T, 1u);

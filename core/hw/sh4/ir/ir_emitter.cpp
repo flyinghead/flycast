@@ -18,18 +18,28 @@
 // Reuse identical blocks (e.g. BIOS memset stub copied across SDRAM pages)
 static std::unordered_map<uint64_t, const sh4::ir::Block*> g_block_sig_cache;
 
+// Work around macro collision: sr is defined as Sh4cntx.sr, so we must undef it
+#ifdef sr
+#undef sr
+#endif
 static uint64_t CalcBlockSig(uint32_t pc)
 {
-    // Hash first 64 bytes (32 instructions) of code at pc.
-    uint8_t buf[64];
+    // Hash first 64 bytes (32 instructions) of code at pc, plus SR.T
+    uint8_t buf[65];
     for (int i = 0; i < 32; ++i)
     {
         uint16_t op = mmu_IReadMem16(pc + i * 2);
         buf[i * 2]     = static_cast<uint8_t>(op & 0xFF);
         buf[i * 2 + 1] = static_cast<uint8_t>(op >> 8);
     }
+    // Include SR.T in the hash to force new blocks when T changes
+    buf[64] = (uint8_t)(p_sh4rcb ? p_sh4rcb->cntx.sr.T : 0);
     return XXH3_64bits(buf, sizeof(buf));
 }
+#ifdef SH4_RESTORE_SR_MACRO
+#define sr Sh4cntx.sr
+#endif
+
 
 namespace sh4 {
 namespace ir {
@@ -567,11 +577,11 @@ static bool FastDecode(uint16_t raw, uint32_t pc, Instr &ins, Block &blk)
     {
         uint8_t n = (raw >> 8) & 0xF;
         uint8_t m = (raw >> 4) & 0xF;
-        DEBUG_LOG(SH4, "[IR_EMITTER][ADDC] FastDecode: raw=0x%04X pc=0x%08X n=%u m=%u", raw, pc, n, m);
+        printf("[IR_EMITTER][ADDC] FastDecode: raw=0x%04X pc=0x%08X n=%u m=%u\n", raw, pc, n, m);
         ins.op = Op::ADDC;
         ins.dst.isImm = false; ins.dst.reg = n;
         ins.src1.isImm = false; ins.src1.reg = m;
-        DEBUG_LOG(SH4, "[IR_EMITTER][ADDC] ins.dst: isImm=%d reg=%u, ins.src1: isImm=%d reg=%u", ins.dst.isImm, ins.dst.reg, ins.src1.isImm, ins.src1.reg);
+        printf("[IR_EMITTER][ADDC] ins.dst: isImm=%d reg=%u, ins.src1: isImm=%d reg=%u\n", ins.dst.isImm, ins.dst.reg, ins.src1.isImm, ins.src1.reg);
         blk.pcNext = pc + 2;
         DEBUG_LOG(SH4, "[IR_EMITTER][ADDC] blk.pcNext=0x%08X", blk.pcNext);
         return true;
@@ -1895,14 +1905,13 @@ Block& Emitter::CreateNew(uint32_t pc) {
                      ins.src1.reg, ins.dst.reg, raw, pc);
             decoded = true; blk.pcNext = pc + 2;
         }
-        // ADDC Rm,Rn (0x3nmC) Add with carry
+
+        // ADD Rm, Rn (0x3nmC) - Integer addition
         else if ((raw & 0xF00F) == 0x300C)
         {
-            ins.op = Op::ADDC;
+            ins.op = Op::ADD;
             ins.dst.isImm = false; ins.dst.reg = n;
             ins.src1.isImm = false; ins.src1.reg = m;
-            ins.src2.isImm = false;
-            ins.src2.reg = n;
             decoded = true; blk.pcNext = pc + 2;
         }
         // CMP/PL Rn (0x4n05)

@@ -24,7 +24,10 @@ public:
     void Reset(bool hard);
     void Init();
     void Term() {}
-    void ResetCache() { emitter_ = Emitter{}; }
+    // Completely clear IR emitter caches, including global dedup map, to avoid
+    // dangling Block pointers after the interpreter resets between unit-test
+    // sub-cases.
+    void ResetCache() { emitter_.ClearCaches(); }
     bool IsCpuRunning() { return running_; }
     Sh4Context* GetContext() { return ctx_; }
 
