@@ -211,6 +211,10 @@ void Sh4IrInterpreter::Run()
 #undef pc
 #undef sr
             Do_Exception(ex.epc, ex.expEvn);
+    // After taking an exception the global core has set `next_pc` to the
+    // exception vector. Propagate that into the local context so that the IR
+    // interpreter begins execution from the correct address on the next Step.
+    ctx_->pc = next_pc;
             // Restore macros for rest of code
 #define pc next_pc
 #define sr Sh4cntx.sr
@@ -309,6 +313,10 @@ void Sh4IrInterpreter::Step()
 #undef pc
 #undef sr
         Do_Exception(ex.epc, ex.expEvn);
+    // After taking an exception the global core has set `next_pc` to the
+    // exception vector. Propagate that into the local context so that the IR
+    // interpreter begins execution from the correct address on the next Step.
+    ctx_->pc = next_pc;
 #define pc next_pc
 #define sr Sh4cntx.sr
     }
