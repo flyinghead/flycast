@@ -1,4 +1,5 @@
 #include "ir_executor.h"
+#include "hw/sh4/sh4_if.h"  // for Sh4cntx macro
 
 #ifndef UNLIKELY
 #define UNLIKELY(x) __builtin_expect(!!(x), 0)
@@ -318,6 +319,38 @@ static inline bool IsTopRegion(uint32_t addr)
 // -----------------------------------------------------------------------------
 //  PC write helper to trap problematic jumps or boundary crossings
 // -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+//  Context <-> legacy-global register synchronisation helpers
+// -----------------------------------------------------------------------------
+static inline void SyncGlobalsFromCtx(const Sh4Context* ctx)
+{
+    // Keep only the few globals still referenced by legacy code/macros.
+    next_pc = ctx->pc;
+        /* Temporarily undef 'pr' macro to use the real struct member */
+#ifdef pr
+#undef pr
+        sh4rcb.cntx.pr = ctx->pr;
+#define pr Sh4cntx.pr
+#else
+        sh4rcb.cntx.pr = ctx->pr;
+#endif
+}
+
+static inline void SyncCtxFromGlobals(Sh4Context* ctx)
+{
+    ctx->pc = next_pc;
+#ifdef pr
+#undef pr
+        ctx->pr = sh4rcb.cntx.pr;
+#define pr Sh4cntx.pr
+#else
+        ctx->pr = sh4rcb.cntx.pr;
+#endif
+}
+
+// -----------------------------------------------------------------------------
+//  PC write helper to trap problematic jumps or boundary crossings
+// -----------------------------------------------------------------------------
 static inline void SetPC(Sh4Context* ctx, uint32_t new_pc, const char* why)
 {
     uint32_t old_pc = next_pc;
@@ -340,6 +373,8 @@ static inline void SetPC(Sh4Context* ctx, uint32_t new_pc, const char* why)
         ERROR_LOG(SH4, "*** PC crossed into top region: %08X -> %08X via %s", old_pc, new_pc, why);
     }
 
+    // Update both the per-thread context and the legacy globals so all code paths agree.
+    ctx->pc = new_pc;
     next_pc = new_pc;
 }
 
@@ -1342,6 +1377,10 @@ static inline ExecFn GetExecFn(sh4::ir::Op op)
 void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
 {
     assert(blk);
+
+    // Make sure legacy globals (next_pc, pr, etc.) reflect the incoming context so
+    // helper macros used by older code remain coherent within this block.
+    SyncGlobalsFromCtx(ctx);
     size_t ip = 0;
     bool branch_pending = false;       // we have seen a branch, delay slot ahead
     bool executed_delay = false;       // delay slot has just been executed
@@ -1351,6 +1390,8 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
         if (unlikely(g_exception_was_raised))
         {
             g_exception_was_raised = false;
+            // Exception handler in higher layer will look at legacy globals, so keep them in-sync
+            SyncGlobalsFromCtx(ctx);
             return;
         }
         // Current PC before executing this instruction
@@ -1390,8 +1431,10 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
         // Try fast table dispatch first
         {
             ExecFn fn = GetExecFn(ins.op);
-            printf("[ExecuteBlock] Executing instruction at PC=%08X, op=%d hex=%04X (%s), fn=%p, ExecStub=%p\n",
-                   curr_pc, static_cast<int>(ins.op), ins.raw, GetOpName(static_cast<size_t>(ins.op)), (void*)fn, (void*)&ExecStub);
+// #ifdef IR_TRACE_EXEC
+            DEBUG_LOG(SH4, "Executing instruction at PC=%08X, op=%d hex=%04X (%s), fn=%p, ExecStub=%p",
+                   current_pc_addr, static_cast<int>(ins.op), ins.raw, GetOpName(static_cast<size_t>(ins.op)), fn, ExecStub);
+// #endif
             if (fn != &ExecStub)
             {
                 fn(ins, ctx, curr_pc);
@@ -1794,7 +1837,7 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                      } else
                          RawWrite8(addr, GET_REG(ctx, ins.src1.reg));
                     if (ins.dst.reg != ins.src1.reg)
-                        GET_REG(ctx, ins.dst.reg) += 1;
+                         GET_REG(ctx, ins.dst.reg) += 1;
                     break;
                 }
                 case Op::STORE16_POST:
@@ -1805,7 +1848,8 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                     } else {
                         WriteAligned16(addr, static_cast<u16>(GET_REG(ctx, ins.src1.reg)));
                     }
-                    GET_REG(ctx, ins.dst.reg) += 2;
+                    if (ins.dst.reg != ins.src1.reg)
+                         GET_REG(ctx, ins.dst.reg) += 2;
                     break;
                 }
                 case Op::STORE32_POST:
@@ -1816,7 +1860,8 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                     } else {
                         WriteAligned32(addr, GET_REG(ctx, ins.src1.reg));
                     }
-                    GET_REG(ctx, ins.dst.reg) += 4;
+                    if (ins.dst.reg != ins.src1.reg)
+                         GET_REG(ctx, ins.dst.reg) += 4;
                     break;
                 }
                 case Op::STORE8_GBR:
@@ -2138,7 +2183,8 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                         ERROR_LOG(SH4, "*** HIGH-FF PR value loaded %08X via LDS.L at PC=%08X", pr, curr_pc);
                     GET_REG(ctx, ins.src1.reg) += 4;
                     break;
-                case Op::STS_PR_L:
+                case Op::STS:   // Treat as STS_PR_L (store PR to @-Rn)
+                case Op::STS_PR_L:   // emitter’s explicit variant
                 {
                     uint32_t new_addr = GET_REG(ctx, ins.dst.reg) - 4;
                     SET_REG(ctx, ins.dst.reg, new_addr);
@@ -2987,17 +3033,17 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                     break;
                 }
                 case Op::ILLEGAL:
-                      {
-                          uint16_t raw16 = RawRead16(current_pc_addr);
-                          {
-                              INFO_LOG(SH4, "IR executor delegating ILLEGAL raw=%04X at PC=%08X to interpreter", raw16, current_pc_addr);
-                              ExecuteOpcode(raw16);
-                              return;
-                          }
-                          ERROR_LOG(SH4, "ILLEGAL opcode raw=%04X at PC=%08X with no interpreter fallback", raw16, current_pc_addr);
-                          sh4::ir::DumpTrace();
-                          throw SH4ThrownException(current_pc_addr, Sh4Ex_IllegalInstr);
-                      }
+                       {
+                           uint16_t raw16 = RawRead16(current_pc_addr);
+                           ERROR_LOG(SH4, "IR executor trapped ILLEGAL opcode raw=%04X at PC=%08X", raw16, current_pc_addr);
+                           // Dump once per unique illegal opcode
+                           static std::unordered_set<uint32_t> illegal_seen;
+                           uint32_t key = (raw16 << 16) | (current_pc_addr & 0xFFFF);
+                           if (illegal_seen.insert(key).second)
+                               sh4::ir::DumpTrace();
+                           // Abort execution so caller (emulator/tests) can catch and investigate
+                           throw SH4ThrownException(current_pc_addr, Sh4Ex_IllegalInstr);
+                       }
                 default:
                       {
                           uint16_t raw16 = RawRead16(current_pc_addr);
@@ -3111,6 +3157,9 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
             }
         }
     } // end for (const auto& ins : blk->code)
+
+    // Normal fall-through: sync back any PC/PR mutations performed through legacy macros
+    SyncCtxFromGlobals(ctx);
 } // end Executor::ExecuteBlock
 
 void Executor::ResetCachedBlocks()

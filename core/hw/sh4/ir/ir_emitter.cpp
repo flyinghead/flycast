@@ -326,24 +326,54 @@ static bool FastDecode(uint16_t raw, uint32_t pc, Instr &ins, Block &blk)
         blk.pcNext = pc + 2;
         return true;
     }
+    // MOV.W @(disp,Rm),R0   Encoding 1000 0101 mmmm dddd (opcode 0x85md)
+    // Loads a 16-bit word from @(disp*2,Rm) into R0.
+    else if ((raw & 0xFF00) == 0x8500) {
+        uint8_t rm_base_reg = (raw >> 4) & 0xF;   // bits 7-4 = Rm
+        uint8_t disp4       = raw & 0xF;          // bits 3-0 = disp4
 
-
-    // MOV.L Rm,@(disp,Rn) 0x5(Rm)(Rn)disp -- This is a STORE: Store Rm to @(disp,Rn)
+        ins.op   = Op::LOAD16;                    // 16-bit load
+        ins.dst  = {false, 0};                    // destination is R0
+        ins.src1 = {false, rm_base_reg};          // base register Rm
+        ins.extra = static_cast<uint32_t>(disp4) * 2; // displacement bytes (×2)
+        printf("[IR_EMITTER_DEBUG] Decoded MOV.W @(disp=%u,R%d),R0  raw=0x%04X pc=0x%08X\n", disp4, rm_base_reg, raw, pc);
+// #endif
+        blk.pcNext = pc + 2;
+        return true;
+    }
+    // 0x5000 patterns can be either:  
+    // 1. MOV.L @(disp,Rm),Rn (0x5nm2) - LOAD operation
+    // 2. MOV.L Rm,@(disp,Rn) (0x5nm1) - STORE operation
     else if ((raw & 0xF000) == 0x5000) {
         printf("[IR_EMITTER_DEBUG] FastDecode: Entered 0x5000 block for raw=0x%04X, pc=0x%08X\n", raw, pc); fflush(stdout);
-        // CORRECTED: SH4 spec puts Rn in bits 8-11 and Rm in bits 4-7
-        uint8_t rn_dst_reg = (raw >> 8) & 0xF;     // Rn (destination register)
-        uint8_t rm_base_reg = (raw >> 4) & 0xF;    // Rm (base address register)
-        uint8_t disp_val = raw & 0xF;
+        uint8_t rn = (raw >> 8) & 0xF;     // Rn in bits 8-11
+        uint8_t rm = (raw >> 4) & 0xF;    // Rm in bits 4-7
+        uint8_t disp = raw & 0xF;
+        
+        // Check the lowest bit to distinguish between LOAD (2) and STORE (1)
+        if ((raw & 0xF) == 0x2) {
+            // MOV.L @(disp,Rm),Rn (0x5nm2) - LOAD operation
+            ins.op = Op::LOAD32;
+            ins.dst = {false, rn};            // Destination is Rn
+            ins.src1 = {false, rm};          // Base address from Rm
+            ins.extra = disp * 4;            // Displacement in ins.extra (disp * 4 bytes)
+            
+            INFO_LOG(SH4, "FastDecode: Decoded MOV.L @(%u,R%u),R%u (LOAD) (0x%04X) at PC=%08X",
+                    disp * 4, rm, rn, raw, pc);
+        } else if ((raw & 0xF) == 0x1) {
+            // MOV.L Rm,@(disp,Rn) (0x5nm1) - STORE operation
+            ins.op = Op::STORE32;
+            ins.dst = {false, rn};            // Base address register is Rn
+            ins.src1 = {false, rm};          // Source data from Rm
+            ins.extra = disp * 4;            // Displacement in ins.extra (disp * 4 bytes)
+            
+            INFO_LOG(SH4, "FastDecode: Decoded MOV.L R%u,@(%u,R%u) (STORE) (0x%04X) at PC=%08X",
+                    rm, disp * 4, rn, raw, pc);
+        } else {
+            // Not a recognized 0x5000 pattern in FastDecode
+            return false;
+        }
 
-        // FIXED: This is MOV.L @(disp,Rm),Rn - a LOAD operation, not STORE
-        ins.op = Op::LOAD32;                      // Use generic LOAD32
-        ins.dst = {false, rn_dst_reg};            // Destination is Rn
-        ins.src1 = {false, rm_base_reg};          // Base address from Rm
-        ins.extra = disp_val * 4;                 // Displacement in ins.extra (disp * 4 bytes)
-
-        INFO_LOG(SH4, "FastDecode: Decoded LOAD32 @(%u,R%u),R%u (0x%04X) at PC=%08X",
-                disp_val * 4, rm_base_reg, rn_dst_reg, raw, pc);
         blk.pcNext = pc + 2;
         return true;
     }
@@ -1642,20 +1672,8 @@ Block& Emitter::CreateNew(uint32_t pc) {
             decoded = true;
             INFO_LOG(SH4, "Emitter::CreateNew: Manually decoded DT R%d (0x%04X) at PC=0x%08X", n, raw, pc);
         }
-        // MOV.L @(disp,Rm),Rn (0x5nm2)
-        else if ((raw & 0xF00F) == 0x5002)
-        {
-            ins.op = Op::LOAD32; // Generic load, displacement in ins.extra
-            ins.dst.isImm = false; ins.dst.reg = n;
-            ins.src1.isImm = false; ins.src1.reg = m;
-            ins.src2.isImm = false;
-            ins.src2.reg = n;
-            ins.pc = pc;
-            ins.raw = raw;
-            ins.extra = (raw & 0xF) * 4; // disp is lower 4 bits, scaled by 4
-            decoded = true; blk.pcNext = pc + 2;
-            INFO_LOG(SH4, "Emitter::CreateNew: Manually decoded MOV.L @(0x%X,R%d),R%d (0x%04X) at PC=0x%08X", ins.extra, m, n, raw, pc);
-        }
+        // MOV.L @(disp,Rm),Rn (0x5nm2) - REMOVED - now handled by the 0x5000 pattern below
+        // This was causing conflicts with the more general 0x5000 pattern
         // NEG Rm -> Rn  (0x6nmB)
         else if ((raw & 0xF00F) == 0x600B)
         {
@@ -2286,7 +2304,22 @@ Block& Emitter::CreateNew(uint32_t pc) {
         // MOV.L @(disp,Rm),Rn / @(disp,PC),Rn -- 0x5nmd
         else if ((raw & 0xF000) == 0x5000)
         {
-            if (((raw >> 4) & 0xF) == 0) // m == 0, treat as PC-relative based on user feedback
+            // Check if this is specifically MOV.L @(disp,Rm),Rn (0x5nm2)
+            // The pattern is 0x5nm2 where n=register number, m=register number, 2=fixed
+            if ((raw & 0xF) == 0x2)
+            {
+                // This is the specific MOV.L @(disp,Rm),Rn form
+                uint8_t disp4 = (raw >> 0) & 0xF;
+                ins.op = Op::LOAD32;
+                ins.dst.isImm = false; ins.dst.reg = n;
+                ins.src1.isImm = false; ins.src1.reg = m;
+                ins.src2.isImm = false; ins.src2.reg = n;
+                ins.pc = pc;
+                ins.raw = raw;
+                ins.extra = disp4 * 4; // disp is lower 4 bits, scaled by 4
+                INFO_LOG(SH4, "Emitter: Decoded MOV.L @(0x%X,R%d),R%d (0x%04X) at PC=0x%08X", ins.extra, m, n, raw, pc);
+            }
+            else if (((raw >> 4) & 0xF) == 0) // m == 0, treat as PC-relative based on user feedback
             {
                 // Per user instruction, use special displacement for this case.
                 uint32_t disp = (raw & 0x0FFF) >> 2;
@@ -2298,6 +2331,7 @@ Block& Emitter::CreateNew(uint32_t pc) {
             }
             else
             {
+                // Handle other 0x5000 patterns (if any)
                 uint8_t disp4 = raw & 0xF;
                 ins.op = Op::LOAD32;
                 ins.dst.isImm = false;
@@ -2307,6 +2341,7 @@ Block& Emitter::CreateNew(uint32_t pc) {
                 ins.src2.isImm = false;
                 ins.src2.reg = n;
                 ins.extra = disp4 * 4;
+                INFO_LOG(SH4, "Emitter: Decoded generic LOAD32 @(0x%X,R%d),R%d (0x%04X) at PC=0x%08X", ins.extra, m, n, raw, pc);
             }
             decoded = true;
             blk.pcNext = pc + 2;
