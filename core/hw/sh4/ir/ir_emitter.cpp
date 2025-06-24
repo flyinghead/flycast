@@ -1583,14 +1583,13 @@ Block& Emitter::CreateNew(uint32_t pc) {
         else if ((raw & 0xF00F) == 0x000A) // Matches 0x0njA pattern
         {
             uint8_t j_bank_field = (raw >> 4) & 0xF;
-            // This handles R0_BANK (j=0) through R7_BANK (j=7).
-            // ins.extra will be 8 (for R0_BANK) through 15 (for R7_BANK).
-            // This is now distinct from DBR's 0xF if DBR rule is checked first.
-            if (j_bank_field <= 0x7) {
+            // Banked registers are encoded with j=0x8..0xF (R0_BANK..R7_BANK)
+            if (j_bank_field >= 0x8 && j_bank_field <= 0xF) {
+                uint8_t bank_index = j_bank_field - 0x8; // 0..7
                 ins.op = Op::STC;
                 ins.dst.isImm = false;
                 ins.dst.reg = n; // Rn
-                ins.extra = 8 + j_bank_field;
+                ins.extra = 8 + bank_index; // 8..15 maps to R0_BANK..R7_BANK
                 decoded = true;
                 blk.pcNext = pc + 2;
                 INFO_LOG(SH4, "Emitter: Decoded STC R%d_BANK, R%d (0x%04X) at PC=0x%08X", j_bank_field, n, raw, pc);
