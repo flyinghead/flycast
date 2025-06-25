@@ -383,7 +383,19 @@ static bool FastDecode(uint16_t raw, uint32_t pc, Instr &ins, Block &blk)
         uint8_t imm = raw & 0xFF;
         ins.op = Op::TST_IMM;
         ins.src1.isImm = true;  ins.src1.imm = imm;
+        ins.extra = imm;
         blk.pcNext = pc + 2;
+        return true;
+    }
+    // TST.B #imm8,@(R0,GBR)  (0xCCii)
+    else if ((raw & 0xFF00) == 0xCC00)
+    {
+        uint8_t imm = raw & 0xFF;
+        ins.op = Op::TST_B;
+        ins.src1.isImm = true; ins.src1.imm = imm; // immediate value
+        ins.extra = imm;
+        blk.pcNext = pc + 2;
+        DEBUG_LOG(SH4, "FastDecode: TST.B #0x%02X,@(R0,GBR) (0x%04X)", imm, raw);
         return true;
     }
     // MOV.W @(disp,Rm),R0   Encoding 1000 0101 mmmm dddd (opcode 0x85md)
@@ -1161,6 +1173,17 @@ static bool FastDecode(uint16_t raw, uint32_t pc, Instr &ins, Block &blk)
         ins.src2.isImm = false; ins.src2.reg = n;
         ins.extra = disp * 4;
         blk.pcNext = pc + 2;
+        return true;
+    }
+    // FIPR FRm,FRn  (0xFnmF)
+    else if ((raw & 0xF00F) == 0xF00F) {
+        uint8_t n = (raw >> 8) & 0xF;
+        uint8_t m = (raw >> 4) & 0xF;
+        ins.op = Op::FIPR;
+        ins.dst = {false, n};
+        ins.src1 = {false, m};
+        blk.pcNext = pc + 2;
+        DEBUG_LOG(SH4, "FastDecode: FIPR FR%u,FR%u (0x%04X)", m, n, raw);
         return true;
     }
     // FMOV.S @Rm+, FRn (0xFnm9)

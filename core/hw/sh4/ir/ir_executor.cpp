@@ -1285,6 +1285,37 @@ static void Exec_TST_IMM(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
     SET_SR_T(ctx, ((r0 & imm) == 0) ? 1 : 0);
 }
 
+// TST.B #imm,@(R0,GBR) (0xCCii) – byte test in memory
+static void Exec_TST_B(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
+{
+    uint32_t imm = static_cast<uint32_t>(ins.extra) & 0xFF;
+    uint32_t addr = ctx->gbr + GET_REG(ctx, 0);
+    uint8_t  val  = RawRead8(addr);
+    uint8_t  res  = val & static_cast<uint8_t>(imm);
+    SET_SR_T(ctx, (res == 0) ? 1 : 0);
+    INFO_LOG(SH4, "Exec_TST_B: [GBR+R0]=0x%02X & imm=0x%02X -> %s (T=%d) at PC=0x%08X", val, imm, res==0?"zero":"non-zero", GET_SR_T(ctx), next_pc);
+}
+
+// FIPR FRm,FRn : 4-element inner product (single-precision)
+static void Exec_FIPR(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
+{
+    // FIPR only defined for single-precision operation
+    if (fpscr.PR) {
+        ERROR_LOG(SH4, "Exec_FIPR called with PR=1 (double precision) – treating as NOP");
+        return;
+    }
+    const u8 m = ins.src1.reg;
+    const u8 n = ins.dst.reg;
+
+    float sum = 0.0f;
+    for (int i = 0; i < 4; ++i) {
+        sum += GET_FR(ctx, m + i) * GET_FR(ctx, n + i);
+    }
+    SET_FR(ctx, n, sum);
+
+    INFO_LOG(SH4, "Exec_FIPR: dst FR%u <- dot(FR%u..FR%u, FR%u..FR%u) = %.6f", n, m, m+3, n, n+3, sum);
+}
+
 // SUB Rm,Rn - Subtract
 // Rn = Rn - Rm
 static void Exec_SUB(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
@@ -1744,7 +1775,9 @@ static void InitExecTable()
     g_exec_table[static_cast<int>(sh4::ir::Op::CMP_GE)]      = &Exec_CMP_GE;
     g_exec_table[static_cast<int>(sh4::ir::Op::CMP_GT)]      = &Exec_CMP_GT;
     g_exec_table[static_cast<int>(sh4::ir::Op::TST_IMM)]     = &Exec_TST_IMM;
+    g_exec_table[static_cast<int>(sh4::ir::Op::TST_B)]       = &Exec_TST_B;
     g_exec_table[static_cast<int>(sh4::ir::Op::XOR_IMM)]  = &Exec_XOR_IMM;
+    g_exec_table[static_cast<int>(sh4::ir::Op::FIPR)]      = &Exec_FIPR;
     g_exec_table[static_cast<int>(sh4::ir::Op::XOR_REG)]  = &Exec_XOR_REG;
     g_exec_table[static_cast<int>(sh4::ir::Op::DT)]       = &Exec_DT;
     g_exec_table[static_cast<int>(sh4::ir::Op::STORE32_PREDEC)] = &Exec_STORE32_PREDEC;
