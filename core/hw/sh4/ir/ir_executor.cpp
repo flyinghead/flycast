@@ -966,11 +966,27 @@ static void Exec_SHL(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t) {
 
 // SHR1 logical right shift by 1
 static void Exec_SHR1(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t) {
-    (void)ins; // src/dst are same register (dst holds Rn)
+    (void)ins;
     uint32_t val = GET_REG(ctx, ins.dst.reg);
-    SET_SR_T(ctx, val & 1);           // per SH-4 spec, T receives LSB prior to shift
+    SET_SR_T(ctx, val & 1); // T flag receives LSB prior to shift
     SET_REG(ctx, ins.dst.reg, val >> 1);
 }
+
+// Variable shift right arithmetic: Rn >>= (Rm & 31)
+static void Exec_SAR_OP(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t) {
+    uint32_t count = GET_REG(ctx, ins.src1.reg) & 31u; // src1 holds Rm
+    if (count == 0) return;
+    int32_t val = static_cast<int32_t>(GET_REG(ctx, ins.dst.reg));
+    SET_REG(ctx, ins.dst.reg, static_cast<uint32_t>(val >> count));
+}
+
+// SWAP.W Rm,Rn – swap high/low 16-bit words in a 32-bit register
+static void Exec_SWAP_W(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t) {
+    uint32_t val = GET_REG(ctx, ins.src1.reg); // Rm
+    uint32_t swapped = (val << 16) | (val >> 16);
+    SET_REG(ctx, ins.dst.reg, swapped);
+}
+
 
 // SAR1 arithmetic right shift by 1 (sign-extended)
 static void Exec_SAR1(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t) {
@@ -1542,6 +1558,8 @@ static void InitExecTable()
     g_exec_table[static_cast<int>(sh4::ir::Op::SHL)]      = &Exec_SHL;
     g_exec_table[static_cast<int>(sh4::ir::Op::SHR1)]     = &Exec_SHR1;
     g_exec_table[static_cast<int>(sh4::ir::Op::SAR1)]     = &Exec_SAR1;
+    g_exec_table[static_cast<int>(sh4::ir::Op::SAR_OP)]   = &Exec_SAR_OP;
+    g_exec_table[static_cast<int>(sh4::ir::Op::SWAP_W)]   = &Exec_SWAP_W;
     // Logic ops
     g_exec_table[static_cast<int>(sh4::ir::Op::XOR_REG)]  = &Exec_XOR_REG;
     g_exec_table[static_cast<int>(sh4::ir::Op::AND_IMM)]  = &Exec_AND_IMM;
