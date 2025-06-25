@@ -364,6 +364,13 @@ static inline void SetPC(Sh4Context* ctx, uint32_t new_pc, const char* why)
     // Added PR and SR.T to existing SetPC logging
     INFO_LOG(SH4, "SetPC: %08X -> %08X (PR:%08X SR.T:%d) via %s", old_pc, new_pc, pr, GET_SR_T(ctx), why);
 
+    // Reject addresses in invalid high region (0x10000000–0x1FFFFFFF)
+    if (new_pc >= 0x10000000 && new_pc < 0x20000000) {
+        ERROR_LOG(SH4, "*** INVALID PC RANGE: %08X from %s – ignoring write", new_pc, why);
+        DumpTrace();
+        return; // keep executing at current PC so slow path / exception can handle
+    }
+
     if (new_pc == 0)
     {
         ERROR_LOG(SH4, "*** SetPC to ZERO from %s", why);
