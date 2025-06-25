@@ -674,6 +674,26 @@ static void Exec_ADD_IMM(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t) {
 static void Exec_XOR_REG(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t) { GET_REG(ctx, ins.dst.reg) ^= GET_REG(ctx, ins.src1.reg); }
 static void Exec_AND_IMM(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t) { GET_REG(ctx, ins.dst.reg) &= static_cast<uint32_t>(ins.src1.imm); }
 static void Exec_OR_IMM (const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t) { GET_REG(ctx, ins.dst.reg) |= static_cast<uint32_t>(ins.src1.imm); }
+
+// DT Rn : Rn-- ; SR.T = 1 if result == 0 else 0
+static void Exec_DT(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
+{
+    uint8_t n = ins.dst.reg;
+    uint32_t before = GET_REG(ctx, n);
+    uint32_t after  = before - 1;
+    SET_REG(ctx, n, after);
+    SET_SR_T(ctx, (after == 0));
+}
+
+// STORE32_PREDEC : @-Rn = Rm ; Rn -= 4 (pre-decrement)
+static void Exec_STORE32_PREDEC(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
+{
+    uint8_t n = ins.dst.reg;   // address register (Rn)
+    uint8_t m = ins.src1.reg;  // value register (Rm)
+    uint32_t new_addr = GET_REG(ctx, n) - 4;
+    SET_REG(ctx, n, new_addr);
+    WriteAligned32(new_addr, GET_REG(ctx, m));
+}
 static void Exec_XOR_IMM(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t) { GET_REG(ctx, ins.dst.reg) ^= static_cast<uint32_t>(ins.src1.imm); }
 
 // MOV Rm -> Rn (register-to-register)
@@ -1453,6 +1473,9 @@ static void InitExecTable()
     g_exec_table[static_cast<int>(sh4::ir::Op::CMP_GT)]      = &Exec_CMP_GT;
     g_exec_table[static_cast<int>(sh4::ir::Op::TST_IMM)]     = &Exec_TST_IMM;
     g_exec_table[static_cast<int>(sh4::ir::Op::XOR_IMM)]  = &Exec_XOR_IMM;
+    g_exec_table[static_cast<int>(sh4::ir::Op::XOR_REG)]  = &Exec_XOR_REG;
+    g_exec_table[static_cast<int>(sh4::ir::Op::DT)]       = &Exec_DT;
+    g_exec_table[static_cast<int>(sh4::ir::Op::STORE32_PREDEC)] = &Exec_STORE32_PREDEC;
     // Branches
     g_exec_table[static_cast<int>(sh4::ir::Op::BF)]       = &Exec_BF;
     g_exec_table[static_cast<int>(sh4::ir::Op::BT)]       = &Exec_BT;
