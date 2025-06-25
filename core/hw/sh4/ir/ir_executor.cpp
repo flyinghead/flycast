@@ -686,10 +686,12 @@ static void Exec_OR_IMM (const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t) {
 static void Exec_DT(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
 {
     uint8_t n = ins.dst.reg;
-    uint32_t before = GET_REG(ctx, n);
-    uint32_t after  = before - 1;
+    uint32_t after = GET_REG(ctx, n) - 1;
     SET_REG(ctx, n, after);
-    // SH-4 spec: T flag is set when the decremented result is zero
+
+    const bool t_flag = (before != 0 && after == 0);
+
+    // SH-4 spec: T flag is set when the decremented result becomes 0 after the decrement
     SET_SR_T(ctx, (after == 0));
 }
 
