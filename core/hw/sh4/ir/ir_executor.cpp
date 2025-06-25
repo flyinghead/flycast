@@ -2359,13 +2359,18 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                     UTLB_Sync(CCN_MMUCR.URC);
                     break;
                 }
-                case Op::DT: // DT Rn (R[n]--; T = (R[n]==0))
+                case Op::DT: // DT Rn (R[n]--; if result == -1 then T=1 else T=0)
                 {
-                    uint32_t val = GET_REG(ctx, ins.dst.reg) - 1;
-                    SET_REG(ctx, ins.dst.reg, val);
-                    // According to SH-4 programming manual: DT sets T = 1 when the
-                    // decremented value becomes -1 (0xFFFFFFFF); otherwise T = 0.
-                    SET_SR_T(ctx, val == 0xFFFFFFFF);
+                    const uint8_t n = ins.dst.reg;
+                    const uint32_t before = GET_REG(ctx, n);
+                    const uint32_t after  = before - 1;
+                    SET_REG(ctx, n, after);
+
+                    // SH-4 manual: T flag is set when the result becomes 0
+                    const bool t_flag = (after == 0);
+                    SET_SR_T(ctx, t_flag);
+
+                    DEBUG_LOG(SH4, "DT R%u: %08X -> %08X, T=%d", n, before, after, t_flag ? 1 : 0);
                     break;
                 }
                 case Op::FADD:
