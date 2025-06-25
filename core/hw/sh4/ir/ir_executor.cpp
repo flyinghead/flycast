@@ -852,11 +852,11 @@ static void Exec_STC(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t) {
 }
 
 // JMP @Rm – unconditional jump via register (no delay-slot handling here)
+// Legacy fast JMP handler (unused when exec_table entry is null)
 static void Exec_JMP(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
 {
     uint32_t target = GET_REG(ctx, ins.src1.reg) & ~1u; // even addr
-    SetPC(ctx, target, "JMP");
-    return;
+    SetPC(ctx, target, "JMP_fast");
 }
 
 // Generic 32-bit load: MOV.L @(disp,Rm),Rn (or similar)
@@ -1652,9 +1652,9 @@ static void InitExecTable()
     g_exec_table[static_cast<int>(sh4::ir::Op::BT)]       = &Exec_BT;
     // Variable shift
     g_exec_table[static_cast<int>(sh4::ir::Op::SHR_OP)]   = &Exec_SHR_OP;
-    g_exec_table[static_cast<int>(sh4::ir::Op::JMP)]       = &Exec_JMP;
-    g_exec_table[static_cast<int>(sh4::ir::Op::JSR)]       = &Exec_JSR;
-    g_exec_table[static_cast<int>(sh4::ir::Op::RTS)]       = &Exec_RTS;
+    g_exec_table[static_cast<int>(sh4::ir::Op::JMP)]       = nullptr; // use generic path for correct delay slot
+    g_exec_table[static_cast<int>(sh4::ir::Op::JSR)]       = nullptr;
+    g_exec_table[static_cast<int>(sh4::ir::Op::RTS)]       = nullptr;
     // STC and MOV.B @-Rn
     g_exec_table[static_cast<int>(sh4::ir::Op::STC)]      = &Exec_STC;
     g_exec_table[static_cast<int>(sh4::ir::Op::MOV_B_REG_PREDEC)] = &Exec_MOV_B_REG_PREDEC;
