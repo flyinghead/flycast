@@ -452,8 +452,8 @@ static inline bool IsBiosAddr(uint32_t addr)
 // as no-ops if we don't emulate the SQ yet.
 static inline bool IsStoreQueueAddr(uint32_t addr)
 {
-    // Expand store queue range - SH4 typically has larger SQ regions
-    return ((addr & 0xFFE00000u) == 0xA0000000u) && ((addr & 0x001FFFFF) < 0x1000);
+    // SH4 Store Queue: 0xE000_0000 – 0xE000_003F (64-byte window)
+    return (addr & 0xFFFFFFC0u) == 0xE0000000u;
 }
 
 static void LogIllegalBiosWrite(const Instr& ins, uint32_t addr, uint32_t pc)
