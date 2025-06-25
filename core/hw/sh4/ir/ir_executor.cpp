@@ -673,6 +673,13 @@ static void Exec_ADD_IMM(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t) {
 // Simple ALU / logical ops ----------------------------------------------------
 static void Exec_XOR_REG(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t) { GET_REG(ctx, ins.dst.reg) ^= GET_REG(ctx, ins.src1.reg); }
 static void Exec_AND_IMM(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t) { GET_REG(ctx, ins.dst.reg) &= static_cast<uint32_t>(ins.src1.imm); }
+
+// Rn &= Rm
+static void Exec_AND_REG(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
+{
+    uint32_t val = GET_REG(ctx, ins.dst.reg) & GET_REG(ctx, ins.src1.reg);
+    SET_REG(ctx, ins.dst.reg, val);
+}
 static void Exec_OR_IMM (const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t) { GET_REG(ctx, ins.dst.reg) |= static_cast<uint32_t>(ins.src1.imm); }
 
 // DT Rn : Rn-- ; SR.T = 1 if result == 0 else 0
@@ -1484,6 +1491,7 @@ static void InitExecTable()
     // Logic ops
     g_exec_table[static_cast<int>(sh4::ir::Op::XOR_REG)]  = &Exec_XOR_REG;
     g_exec_table[static_cast<int>(sh4::ir::Op::AND_IMM)]  = &Exec_AND_IMM;
+    g_exec_table[static_cast<int>(sh4::ir::Op::AND_REG)]  = &Exec_AND_REG;
     g_exec_table[static_cast<int>(sh4::ir::Op::OR_IMM)]   = &Exec_OR_IMM;
 
     // Compare ops
