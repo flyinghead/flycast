@@ -690,9 +690,32 @@ static void Exec_STORE32_PREDEC(const sh4::ir::Instr& ins, Sh4Context* ctx, uint
 {
     uint8_t n = ins.dst.reg;   // address register (Rn)
     uint8_t m = ins.src1.reg;  // value register (Rm)
-    uint32_t new_addr = GET_REG(ctx, n) - 4;
+    uint32_t val = GET_REG(ctx, m);          // capture before modifying Rn
+    uint32_t new_addr = GET_REG(ctx, n) - 4; // pre-decrement
     SET_REG(ctx, n, new_addr);
-    WriteAligned32(new_addr, GET_REG(ctx, m));
+    WriteAligned32(new_addr, val);
+}
+
+// STORE16_PREDEC : @-Rn = (low16)Rm ; Rn -= 2
+static void Exec_STORE16_PREDEC(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
+{
+    uint8_t n = ins.dst.reg;
+    uint8_t m = ins.src1.reg;
+    uint16_t val = static_cast<uint16_t>(GET_REG(ctx, m));
+    uint32_t new_addr = GET_REG(ctx, n) - 2;
+    SET_REG(ctx, n, new_addr);
+    WriteAligned16(new_addr, val);
+}
+
+// STORE8_PREDEC : @-Rn = (low8)Rm ; Rn -= 1
+static void Exec_STORE8_PREDEC(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
+{
+    uint8_t n = ins.dst.reg;
+    uint8_t m = ins.src1.reg;
+    uint8_t val = static_cast<uint8_t>(GET_REG(ctx, m));
+    uint32_t new_addr = GET_REG(ctx, n) - 1;
+    SET_REG(ctx, n, new_addr);
+    RawWrite8(new_addr, val);
 }
 static void Exec_XOR_IMM(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t) { GET_REG(ctx, ins.dst.reg) ^= static_cast<uint32_t>(ins.src1.imm); }
 
@@ -1476,6 +1499,8 @@ static void InitExecTable()
     g_exec_table[static_cast<int>(sh4::ir::Op::XOR_REG)]  = &Exec_XOR_REG;
     g_exec_table[static_cast<int>(sh4::ir::Op::DT)]       = &Exec_DT;
     g_exec_table[static_cast<int>(sh4::ir::Op::STORE32_PREDEC)] = &Exec_STORE32_PREDEC;
+    g_exec_table[static_cast<int>(sh4::ir::Op::STORE16_PREDEC)] = &Exec_STORE16_PREDEC;
+    g_exec_table[static_cast<int>(sh4::ir::Op::STORE8_PREDEC)]  = &Exec_STORE8_PREDEC;
     // Branches
     g_exec_table[static_cast<int>(sh4::ir::Op::BF)]       = &Exec_BF;
     g_exec_table[static_cast<int>(sh4::ir::Op::BT)]       = &Exec_BT;
