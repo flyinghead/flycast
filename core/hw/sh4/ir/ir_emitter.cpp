@@ -542,6 +542,55 @@ static bool FastDecode(uint16_t raw, uint32_t pc, Instr &ins, Block &blk)
         blk.pcNext = pc + 2;
         return true;
     }
+    // XOR Rm,Rn (0x2nmA) - for 0x204E (XOR R4,R0)
+    else if ((raw & 0xF00F) == 0x200A)
+    {
+        uint8_t n = (raw >> 8) & 0xF;
+        uint8_t m = (raw >> 4) & 0xF;
+        ins.op = Op::XOR_REG;
+        ins.dst.isImm = false; ins.dst.reg = n;
+        ins.src1.isImm = false; ins.src1.reg = m;
+        ins.src2.isImm = false; ins.src2.reg = n;
+        blk.pcNext = pc + 2;
+        DEBUG_LOG(SH4, "FastDecode: XOR R%u,R%u (0x%04X)", m, n, raw);
+        return true;
+    }
+    // JSR @Rn (0x4n0B) - for 0x410B (JSR @R1)
+    else if ((raw & 0xF0FF) == 0x400B)
+    {
+        uint8_t n = (raw >> 8) & 0xF;
+        ins.op = Op::JSR;
+        ins.src1.isImm = false; ins.src1.reg = n;
+        blk.pcNext = pc + 4; // JSR has delay slot
+        DEBUG_LOG(SH4, "FastDecode: JSR @R%u (0x%04X)", n, raw);
+        return true;
+    }
+    // CMP/STR Rm,Rn (0x2nmC) - String compare
+    else if ((raw & 0xF00F) == 0x200C)
+    {
+        uint8_t n = (raw >> 8) & 0xF;
+        uint8_t m = (raw >> 4) & 0xF;
+        ins.op = Op::CMP_STR;
+        ins.dst.isImm = false; ins.dst.reg = n;
+        ins.src1.isImm = false; ins.src1.reg = m;
+        ins.src2.isImm = false; ins.src2.reg = n;
+        blk.pcNext = pc + 2;
+        DEBUG_LOG(SH4, "FastDecode: CMP/STR R%u,R%u (0x%04X)", m, n, raw);
+        return true;
+    }
+    // CMP/EQ Rm,Rn (0x3nm0) - for 0x3400 (CMP/EQ R0,R4)
+    else if ((raw & 0xF00F) == 0x3000)
+    {
+        uint8_t n = (raw >> 8) & 0xF;
+        uint8_t m = (raw >> 4) & 0xF;
+        ins.op = Op::CMP_EQ;
+        ins.dst.isImm = false; ins.dst.reg = n;
+        ins.src1.isImm = false; ins.src1.reg = m;
+        ins.src2.isImm = false; ins.src2.reg = n;
+        blk.pcNext = pc + 2;
+        DEBUG_LOG(SH4, "FastDecode: CMP/EQ R%u,R%u (0x%04X)", m, n, raw);
+        return true;
+    }
 
 
     // MOV.L @(disp,PC),Rn 0xD000 | Rn<<8 | disp8
