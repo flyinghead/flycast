@@ -2481,8 +2481,7 @@ Block& Emitter::CreateNew(uint32_t pc) {
             ins.op = Op::AND_REG;
             ins.dst.isImm = false; ins.dst.reg = n;
             ins.src1.isImm = false; ins.src1.reg = m;
-            ins.src2.isImm = false;
-            ins.src2.reg = n;
+            ins.src2.isImm = false; ins.src2.reg = n;
             decoded = true;
             blk.pcNext = pc + 2;
         }
@@ -2503,8 +2502,7 @@ Block& Emitter::CreateNew(uint32_t pc) {
             ins.op = Op::XOR_REG;
             ins.dst.isImm = false; ins.dst.reg = n;
             ins.src1.isImm = false; ins.src1.reg = m;
-            ins.src2.isImm = false;
-            ins.src2.reg = n;
+            ins.src2.isImm = false;ins.src2.reg = n;
             decoded = true;
             blk.pcNext = pc + 2;
         }
