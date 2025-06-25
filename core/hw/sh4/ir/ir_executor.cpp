@@ -44,6 +44,11 @@
 #undef fpul
 #endif
 
+
+#ifdef fr
+#undef fr
+#endif
+
 #ifdef fr
 #undef fr
 #endif
@@ -2234,16 +2239,24 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                     UpdateSR(); // Essential after SR change
                     break;
                 }
-                case Op::RTE:
-                    INFO_LOG(SH4, "RTE from %08X -> %08X", curr_pc, spc);
-                    if (IsTopRegion(spc))
-                        ERROR_LOG(SH4, "*** HIGH-FF RTE target at %08X -> %08X", curr_pc, spc);
-                    sr_setFull(ctx, ssr);
+                case Op::RTE: {
+                    /* Fetch latest saved state; exception may have occurred earlier in this block */
+                    #undef ssr
+                    #undef spc
+                    uint32_t new_ssr = ctx->ssr;
+                    uint32_t new_spc = ctx->spc;
+                    #define ssr Sh4cntx.ssr
+                    #define spc Sh4cntx.spc
+                    INFO_LOG(SH4, "RTE from %08X -> %08X", curr_pc, new_spc);
+                    if (IsTopRegion(new_spc))
+                        ERROR_LOG(SH4, "*** HIGH-FF RTE target at %08X -> %08X", curr_pc, new_spc);
+                    sr_setFull(ctx, new_ssr);
                     UpdateSR();
-                    branch_target = spc;
-                    branch_pending = true;
-                    executed_delay = false;
+                    branch_target   = new_spc;
+                    branch_pending  = true;
+                    executed_delay  = false;
                     break;
+                }
                 case Op::LDC_SSR_L:
                     ssr = ReadAligned32(GET_REG(ctx, ins.src1.reg));
                     GET_REG(ctx, ins.src1.reg) += 4;

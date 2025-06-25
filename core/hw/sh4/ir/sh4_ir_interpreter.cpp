@@ -126,8 +126,10 @@ void Sh4IrInterpreter::Reset(bool hard)
 
     // Clear assorted CPU state registers
     ctx_->gbr = 0;
-    ctx_->ssr = 0;
-    ctx_->spc = 0;
+    // Initialise return-from-exception shadow registers so the very first
+    // RTE executed by the reset stub returns to a valid address inside the BIOS.
+    ctx_->ssr = sh4_sr_GetFull();           // snapshot of SR before reset
+    ctx_->spc = ctx_->pc + 4;                   // next sequential instruction
     ctx_->sgr = 0;
     ctx_->dbr = 0;
     ctx_->mac.full = 0;
