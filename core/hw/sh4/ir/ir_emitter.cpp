@@ -276,6 +276,21 @@ static bool FastDecode(uint16_t raw, uint32_t pc, Instr &ins, Block &blk)
         blk.pcNext = pc + 2;
         return true;
     }
+    // MOV.W R0,@(disp,Rn) 0x8n1d
+    else if ((raw & 0xFF00) == 0x8100)
+    {
+        printf("[FastDecode] MATCHED 0x8100 pattern for raw=0x%04X\n", raw);
+        uint8_t disp4 = static_cast<uint8_t>(raw & 0xF);
+        uint8_t n_reg = (raw >> 4) & 0xF;
+        ins.op = Op::STORE16_R0;
+        ins.dst.isImm = false; ins.dst.reg = n_reg;
+        ins.src1.isImm = false; ins.src1.reg = 0;
+        ins.src2.isImm = false; ins.src2.reg = n_reg;
+        ins.extra = disp4 * 2;
+        blk.pcNext = pc + 2;
+        printf("[FastDecode] Decoded MOV.W R0,@(%u,R%u)\n", disp4*2, n_reg);
+        return true;
+    }
     // SHL2/8/16 Rn variants (0x4n08,0x4n18,0x4n28)
     else if ((raw & 0xF00F) == 0x4008)
     {
