@@ -1024,6 +1024,14 @@ static void Exec_LOAD32_PC(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t 
     SET_REG(ctx, ins.dst.reg, ReadAligned32(addr));
 }
 
+// PC-relative 16-bit literal load
+static void Exec_LOAD16_PC(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t pc) {
+    uint32_t base = (pc & ~3u) + 4u;                 // Align then +4 per SH-4 spec
+    uint32_t addr = base + (static_cast<uint32_t>(ins.extra) << 1); // disp * 2
+    u16 val = ReadAligned16(addr);
+    SET_REG(ctx, ins.dst.reg, static_cast<uint32_t>(static_cast<int16_t>(val))); // sign-extend
+}
+
 // SHL logical left shift by immediate amount in ins.extra (0-31)
 static void Exec_SHL(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t) {
     uint32_t amount = ins.extra & 31u;
@@ -1670,6 +1678,7 @@ static void InitExecTable()
     g_exec_table[static_cast<int>(sh4::ir::Op::MOV_B_REG_PREDEC)] = &Exec_MOV_B_REG_PREDEC;
     // Literal load
     g_exec_table[static_cast<int>(sh4::ir::Op::LOAD32_PC)] = &Exec_LOAD32_PC;
+    g_exec_table[static_cast<int>(sh4::ir::Op::LOAD16_PC)] = &Exec_LOAD16_PC;
     g_exec_table[static_cast<int>(sh4::ir::Op::LOAD32)]     = &Exec_LOAD32;
     g_exec_table[static_cast<int>(sh4::ir::Op::STORE32)]    = &Exec_STORE32;
     g_exec_table[static_cast<int>(sh4::ir::Op::LOAD16)]     = &Exec_LOAD16;
