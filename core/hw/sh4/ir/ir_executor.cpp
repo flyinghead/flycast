@@ -2976,7 +2976,7 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                     // Write result directly into the current context's FPUL register
                     u32 fpul_val = static_cast<u32>(int_val);
                     UpdateContextFPUL(ctx, fpul_val);
-                    ctx->fpul = fpul_val;
+                    //ctx->fpul = fpul_val;
                     WARN_LOG(SH4, "FTRC: fpul set to 0x%08X, ctx=%p", fpul_val, ctx);
 
                     // Ensure the value is written directly to global context as well
