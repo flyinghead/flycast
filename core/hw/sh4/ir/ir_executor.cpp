@@ -1493,6 +1493,9 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
         const Instr& ins = blk->code[ip++];
         // Record in circular trace buffer for post-mortem dumps
         TraceLog(pc_snapshot, ins.op);
+
+        // Mark that we've successfully executed at least one instruction in this block
+        first_instruction_executed = true;
         // --- early-boot tracing
         // ------------------------------------------------
 #if 0
@@ -1511,7 +1514,9 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
         g_totalExecCount++;
 
         MaybeDumpStats();
-#endif
+#endif // end boot-trace block
+
+
 
         // Try fast table dispatch first
         {
@@ -1613,6 +1618,13 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                     } else {
                         INFO_LOG(SH4, "STORE8 ACTUAL WRITE: Writing 0x%02X to 0x%08X", val_to_store, addr);
                         RawWrite8(addr, val_to_store);
+
+                        // If the write caused a full MMU flush the emitter cleared its caches.
+                        // Exit the block immediately to avoid using a freed `blk` pointer.
+                        if (unlikely(g_ir_cache_invalidated.exchange(false, std::memory_order_acq_rel))) {
+                            SyncCtxFromGlobals(ctx);
+                            return;
+                        }
                     }
                     break;
                 }
@@ -1634,6 +1646,12 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                             break;
                         }
                         RawWrite16(addr, val_to_store);
+
+                    // Check for cache invalidation triggered by MMUCR or similar writes
+                    if (unlikely(g_ir_cache_invalidated.exchange(false, std::memory_order_acq_rel))) {
+                        SyncCtxFromGlobals(ctx);
+                        return;
+                    }
                     }
                     break;
                 }
@@ -1663,6 +1681,12 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                             break;
                         }
                         RawWrite32(addr, val_to_store);
+
+                // Detect emitter cache flush (e.g., MMUCR write) and abandon current block safely
+                if (unlikely(g_ir_cache_invalidated.exchange(false, std::memory_order_acq_rel))) {
+                    SyncCtxFromGlobals(ctx);
+                    return;
+                }
                     }
                     break;
                 }
@@ -1682,6 +1706,13 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                         LogIllegalBiosWrite(ins, addr, next_pc);
                     } else {
                         RawWrite8(addr, val_to_store);
+
+                        // If the write caused a full MMU flush the emitter cleared its caches.
+                        // Exit the block immediately to avoid using a freed `blk` pointer.
+                        if (unlikely(g_ir_cache_invalidated.exchange(false, std::memory_order_acq_rel))) {
+                            SyncCtxFromGlobals(ctx);
+                            return;
+                        }
                     }
                     break;
                 }
