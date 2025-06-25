@@ -772,6 +772,31 @@ static void Exec_BSR(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t pc) {
     SetPC(ctx, pc + 2 + static_cast<int32_t>(ins.extra), "BSR");
 }
 
+// JSR @Rm – jump sub-routine via register with link in PR
+static void Exec_JSR(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t pc) {
+#ifdef pr
+#undef pr
+    ctx->pr = pc + 4;
+#define pr Sh4cntx.pr
+#else
+    ctx->pr = pc + 4;
+#endif
+    uint32_t target = GET_REG(ctx, ins.src1.reg) & ~1u;
+    SetPC(ctx, target, "JSR");
+}
+
+// RTS – return from sub-routine (jump to PR)
+static void Exec_RTS(const sh4::ir::Instr&, Sh4Context* ctx, uint32_t) {
+#ifdef pr
+#undef pr
+    uint32_t target = ctx->pr & ~1u;
+#define pr Sh4cntx.pr
+#else
+    uint32_t target = ctx->pr & ~1u;
+#endif
+    SetPC(ctx, target, "RTS");
+}
+
 // BF_S / BT_S delay-slot versions (optional; treat same but assume emitter places slot instruction)
 static void Exec_BF_S(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t pc) {
     if (!GET_SR_T(ctx)) {
@@ -1628,6 +1653,8 @@ static void InitExecTable()
     // Variable shift
     g_exec_table[static_cast<int>(sh4::ir::Op::SHR_OP)]   = &Exec_SHR_OP;
     g_exec_table[static_cast<int>(sh4::ir::Op::JMP)]       = &Exec_JMP;
+    g_exec_table[static_cast<int>(sh4::ir::Op::JSR)]       = &Exec_JSR;
+    g_exec_table[static_cast<int>(sh4::ir::Op::RTS)]       = &Exec_RTS;
     // STC and MOV.B @-Rn
     g_exec_table[static_cast<int>(sh4::ir::Op::STC)]      = &Exec_STC;
     g_exec_table[static_cast<int>(sh4::ir::Op::MOV_B_REG_PREDEC)] = &Exec_MOV_B_REG_PREDEC;
