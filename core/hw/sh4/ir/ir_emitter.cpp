@@ -1364,10 +1364,24 @@ Block& Emitter::CreateNew(uint32_t pc) {
             ins.dst.reg = n;
             ins.src1.isImm = false;
             ins.src1.reg = m;
-        ins.src2.isImm = false;
-        ins.src2.reg = n;
+            ins.src2.isImm = false;
+            ins.src2.reg = n;
             decoded = true;
             blk.pcNext = pc + 2;
+        }
+        // MOV.W R0,@(disp,Rn) - specific pattern for 0x812x
+        else if ((raw & 0xFFF0) == 0x8120)
+        {
+            uint8_t rn = 1;  // R1 for 0x812x
+            uint8_t disp4 = raw & 0xF;
+            ins.op = Op::STORE16_R0;
+            ins.dst.isImm = false; ins.dst.reg = rn;
+            ins.src1.isImm = false; ins.src1.reg = 0;
+            ins.src2.isImm = false; ins.src2.reg = rn;
+            ins.extra = disp4 * 2;
+            decoded = true;
+            blk.pcNext = pc + 2;
+            printf("[EMITTER_DEBUG] Decoded MOV.W R0,@(%u,R%u) for raw=0x%04X\n", disp4*2, rn, raw);
         }
         // MOV #imm,Rn  (0xE000 | Rn<<8 | imm8)
         else if ((raw & 0xF000) == 0xE000)
