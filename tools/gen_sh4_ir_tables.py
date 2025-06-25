@@ -103,11 +103,17 @@ def gather_helper_names(manual_names: list, mapping: dict) -> list:
     legacy_names = {v for v in mapping.values() if v not in manual_names}
     # Extra internal IR opcodes not present in the SH4 legacy table
     extra_internal = {
-        'ILLEGAL',
-        'MOV_REG', 'MOV_IMM', 'ADD_REG', 'ADD_IMM',
-        'LOAD16_IMM', 'LOAD32_IMM', 'LOAD32_PC', 'LOAD16_PC',
-        'JSR', 'RTS', 'BRA',
-        'FMOV_LOAD_R0', 'FMOV_STORE_R0',
+    'ILLEGAL',
+    'MOV_REG', 'MOV_IMM', 'ADD_REG', 'ADD_IMM',
+    'LOAD16_IMM', 'LOAD32_IMM', 'LOAD32_PC', 'LOAD16_PC',
+    'JSR', 'RTS', 'BRA',
+    'FMOV_LOAD_R0', 'FMOV_STORE_R0',
+    # helper-only R0 offset variants
+    'LOAD8_R0', 'STORE8_R0', 'STORE16_R0', 'STORE32_R0',
+    'STORE8_R0_REG', 'STORE16_R0_REG', 'STORE32_R0_REG',
+    'STORE8_Rm_R0RN', 'STORE16_Rm_R0RN', 'STORE32_Rm_R0RN',
+    'LOAD16_R0', 'LOAD32_R0',
+    'FMOV_STORE_PREDEC',
     }
     helpers = sorted((legacy_names | extra_internal) - {'NUM_OPS'})
     return helpers

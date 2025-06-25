@@ -195,21 +195,7 @@ enum class Op : uint8_t {
   LDC_SR_L,  // load SR from @Rn+ (post-increment long)
   MOVA_PC,   // MOVA @(disp,PC),R0 - loads effective address into R0
 #include "ir_defs_auto.inc"
-           // --- R0 offset addressing variants ---
-  LOAD8_R0,
-  STORE8_R0,
-  STORE16_R0,
-  STORE32_R0,
-  STORE8_R0_REG,
-  STORE16_R0_REG,
-  STORE32_R0_REG,
-  // R0-indexed variants that store value from Rm (not R0)
-  STORE8_Rm_R0RN,
-  STORE16_Rm_R0RN,
-  STORE32_Rm_R0RN,
-  LOAD16_R0,
-  LOAD32_R0,
-  FMOV_STORE_PREDEC, // FMOV.S FRm,@-Rn
+  // (helper opcodes now auto-generated in ir_defs_auto.inc)
   NUM_OPS
 };
 
