@@ -29,6 +29,9 @@ public:
     // sub-cases.
     void ResetCache() { emitter_.ClearCaches(); }
     bool IsCpuRunning() { return running_; }
+
+// Invalidate any cached block touching `addr` globally (helper for memory writes)
+void GlobalInvalidate(u32 addr);
     Sh4Context* GetContext() { return ctx_; }
 
     // Invalidate a block at the specified address
@@ -40,6 +43,9 @@ private:
     Emitter emitter_;
     Executor executor_;
 };
+
+// Global singleton instance (defined in sh4_ir_interpreter.cpp)
+extern Sh4IrInterpreter g_ir;
 
 } // namespace ir
 } // namespace sh4

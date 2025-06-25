@@ -7,6 +7,7 @@
 #include <cstring> // for memcpy
 #include "../sh4_interpreter.h" // for interpreter functions
 #include "hw/sh4/modules/mmu.h"
+#include "sh4_ir_interpreter.h"
 #include "hw/sh4/sh4_core.h" // for SH4ThrownException
 #include <cmath>
 #include <cstring> // for fabsf, fabs
@@ -20,6 +21,14 @@
 #include "hw/sh4/sh4_interrupts.h"
 
 #define IR_TRACE_EXEC 1
+
+// Forward declaration of the global IR interpreter instance (defined in
+// sh4_ir_interpreter.cpp) so memory write helpers can call InvalidateBlock.
+namespace sh4 { namespace ir {
+class Sh4IrInterpreter;
+extern Sh4IrInterpreter g_ir;
+} }
+using sh4::ir::g_ir;
 
 // Undefine global macros from sh4_core.h to prevent conflicts
 #ifdef r
@@ -568,8 +577,11 @@ static inline u64 RawRead64(uint32_t a)
     return v;
 }
 
+static inline bool IsWorkRam(u32 a) { return (a & 0xFC000000u) == 0x8C000000u || (a & 0xFC000000u) == 0x0C000000u; }
+
 static inline void RawWrite8(uint32_t a, u8 d)
 {
+        if (IsWorkRam(a)) g_ir.InvalidateBlock(a & ~1u);
     if (!g_exception_was_raised)
     {
         if (is_mmu_on()) mmu_WriteMem(a, d); else addrspace::write8(a, d);
@@ -582,6 +594,7 @@ static inline void RawWrite16(uint32_t a, u16 d) {
         // Could return early here to avoid the actual write
         return;
     }
+        if (IsWorkRam(a)) g_ir.InvalidateBlock(a & ~1u);
     if (!g_exception_was_raised)
     {
         if (is_mmu_on()) mmu_WriteMem(a, d); else addrspace::write16(a, d);
@@ -594,6 +607,7 @@ static inline void RawWrite32(uint32_t a, u32 d) {
         // Could return early here to avoid the actual write
         return;
     }
+        if (IsWorkRam(a)) g_ir.InvalidateBlock(a & ~1u);
     if (!g_exception_was_raised)
     {
         if (is_mmu_on()) mmu_WriteMem(a, d); else addrspace::write32(a, d);

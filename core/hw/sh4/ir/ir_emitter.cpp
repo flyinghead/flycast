@@ -1130,7 +1130,7 @@ static bool FastDecode(uint16_t raw, uint32_t pc, Instr &ins, Block &blk)
     Op op = static_cast<Op>(kEmitterTable[raw]);
     if (op == Op::ILLEGAL)
     {
-        WARN_LOG(SH4, "FastDecode: ILLEGAL raw=0x%04X at PC=0x%08X", raw, pc);
+        WARN_LOG(SH4, "FastDecode miss: %04X @%08X", raw, pc);
         return false;
     }
 
@@ -1219,6 +1219,24 @@ static bool FastDecode(uint16_t raw, uint32_t pc, Instr &ins, Block &blk)
 }
 
 Block& Emitter::CreateNew(uint32_t pc) {
+    // Avoid caching blocks from uninitialised work-RAM. The BIOS copies code
+    // here later, so decoding zeros would produce a permanent NOP block.
+    if (((pc & 0xFC000000) == 0x8C000000) || ((pc & 0xFC000000) == 0x0C000000))
+    {
+        u32 firstWord = (static_cast<u32>(mmu_IReadMem16(pc)) << 16) | mmu_IReadMem16(pc + 2);
+        if (firstWord == 0)
+        {
+            static Block temp; // thread-unsafe but fine for single-threaded SH4
+            temp.code.clear();
+            temp.pcStart = pc;
+            temp.pcNext  = pc + 2;
+
+            Instr nop{}; nop.op = Op::NOP; nop.pc = pc; nop.raw = 0;
+            Instr end{}; end.op = Op::END; end.pc = pc; end.raw = 0;
+            temp.code = {nop, end};
+            return temp; // do NOT cache
+        }
+    }
     // Simple global cap on total cached blocks to avoid runaway memory usage.
     static constexpr size_t kMaxBlocks = MAX_BLOCKS;
     if (cache_.size() > kMaxBlocks)
