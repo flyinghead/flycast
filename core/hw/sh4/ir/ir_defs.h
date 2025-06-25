@@ -203,6 +203,10 @@ enum class Op : uint8_t {
   STORE8_R0_REG,
   STORE16_R0_REG,
   STORE32_R0_REG,
+  // R0-indexed variants that store value from Rm (not R0)
+  STORE8_Rm_R0RN,
+  STORE16_Rm_R0RN,
+  STORE32_Rm_R0RN,
   LOAD16_R0,
   LOAD32_R0,
   FMOV_STORE_PREDEC, // FMOV.S FRm,@-Rn

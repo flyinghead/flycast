@@ -1473,9 +1473,9 @@ Block& Emitter::CreateNew(uint32_t pc) {
             ins.src2.isImm = false;  ins.src2.reg = n;  // base
             ins.extra      = 0;                        // R0-indexed (no disp)
 
-            if (type == 0x4)      ins.op = Op::STORE8_R0;
-            else if (type == 0x5) ins.op = Op::STORE16_R0;
-            else                  ins.op = Op::STORE32_R0;
+            if (type == 0x4)      ins.op = Op::STORE8_Rm_R0RN;
+            else if (type == 0x5) ins.op = Op::STORE16_Rm_R0RN;
+            else                  ins.op = Op::STORE32_Rm_R0RN;
 
             INFO_LOG(SH4, "Emitter: Decoded op=%u R%d,@(R0,R%d) (%04X) PC=%08X",
                      static_cast<unsigned>(ins.op), m, n, raw, pc);

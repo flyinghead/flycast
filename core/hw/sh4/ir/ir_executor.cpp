@@ -796,6 +796,28 @@ static void Exec_STORE8(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
     RawWrite8(addr, val);
 }
 
+// Dedicated Rm,@(R0,Rn) store variants (no disp, address = R0 + Rn)
+static void Exec_STORE8_Rm_R0RN(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
+{
+    uint32_t addr = GET_REG(ctx, ins.src2.reg) + GET_REG(ctx, 0); // Rn + R0
+    uint8_t val   = static_cast<uint8_t>(GET_REG(ctx, ins.src1.reg));           // Rm
+    RawWrite8(addr, val);
+}
+
+static void Exec_STORE16_Rm_R0RN(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
+{
+    uint32_t addr = GET_REG(ctx, ins.src2.reg) + GET_REG(ctx, 0);
+    uint16_t val  = static_cast<uint16_t>(GET_REG(ctx, ins.src1.reg));
+    RawWrite16(addr, val);
+}
+
+static void Exec_STORE32_Rm_R0RN(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
+{
+    uint32_t addr = GET_REG(ctx, ins.src2.reg) + GET_REG(ctx, 0);
+    uint32_t val  = GET_REG(ctx, ins.src1.reg);
+    RawWrite32(addr, val);
+}
+
 // MOV.B Rm,@-Rn (pre-decrement store byte)
 static void Exec_MOV_B_REG_PREDEC(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t) {
     uint32_t& rn = GET_REG(ctx, ins.dst.reg);
@@ -1369,6 +1391,9 @@ static void InitExecTable()
     g_exec_table[static_cast<int>(sh4::ir::Op::LOAD8)]      = &Exec_LOAD8;
     g_exec_table[static_cast<int>(sh4::ir::Op::STORE16)]    = &Exec_STORE16;
     g_exec_table[static_cast<int>(sh4::ir::Op::STORE8)]     = &Exec_STORE8;
+    g_exec_table[static_cast<int>(sh4::ir::Op::STORE8_Rm_R0RN)]  = &Exec_STORE8_Rm_R0RN;
+    g_exec_table[static_cast<int>(sh4::ir::Op::STORE16_Rm_R0RN)] = &Exec_STORE16_Rm_R0RN;
+    g_exec_table[static_cast<int>(sh4::ir::Op::STORE32_Rm_R0RN)] = &Exec_STORE32_Rm_R0RN;
     g_exec_table[static_cast<int>(sh4::ir::Op::ADDC)]       = &Exec_ADDC;
     g_exec_table[static_cast<int>(sh4::ir::Op::ADDV)]       = &Exec_ADDV;
     g_exec_table[static_cast<int>(sh4::ir::Op::SUB)]        = &Exec_SUB;
@@ -1738,7 +1763,28 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                          value = GET_REG(ctx, ins.src1.reg);
                      }
                      RawWrite32(addr, value);
-                     break;
+                      break;
+                  }
+                  case Op::STORE8_Rm_R0RN:
+                  {
+                      uint32_t addr = GET_REG(ctx, ins.src2.reg) + GET_REG(ctx, 0); // Rn + R0
+                      uint8_t value = static_cast<uint8_t>(GET_REG(ctx, ins.src1.reg) & 0xFF); // Rm
+                      RawWrite8(addr, value);
+                      break;
+                  }
+                  case Op::STORE16_Rm_R0RN:
+                  {
+                      uint32_t addr = GET_REG(ctx, ins.src2.reg) + GET_REG(ctx, 0);
+                      uint16_t value = static_cast<uint16_t>(GET_REG(ctx, ins.src1.reg) & 0xFFFF);
+                      RawWrite16(addr, value);
+                      break;
+                  }
+                  case Op::STORE32_Rm_R0RN:
+                  {
+                      uint32_t addr = GET_REG(ctx, ins.src2.reg) + GET_REG(ctx, 0);
+                      uint32_t value = GET_REG(ctx, ins.src1.reg);
+                      RawWrite32(addr, value);
+                      break;
                  }
                 case Op::OR_REG:
                     GET_REG(ctx, ins.dst.reg) |= GET_REG(ctx, ins.src1.reg);
