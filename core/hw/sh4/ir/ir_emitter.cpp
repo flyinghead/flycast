@@ -1007,6 +1007,117 @@ static bool FastDecode(uint16_t raw, uint32_t pc, Instr &ins, Block &blk)
         blk.pcNext = pc + 2;
         return true;
     }
+    // BF disp8 (0x8Bdd) - for 0x8B77
+    else if ((raw & 0xFF00) == 0x8B00)
+    {
+        int8_t disp = raw & 0xFF;
+        int32_t d = static_cast<int32_t>(disp) << 1;
+        ins.op = Op::BF;
+        ins.extra = d;
+        blk.pcNext = pc + 2;
+        DEBUG_LOG(SH4, "FastDecode: BF disp=%d (0x%04X)", d, raw);
+        return true;
+    }
+
+    // MOV.L Rm,@(disp,Rn) (0x1nmd) - for 0x1304 and 0x1317
+    else if ((raw & 0xF000) == 0x1000)
+    {
+        uint8_t n = (raw >> 8) & 0xF;
+        uint8_t m = (raw >> 4) & 0xF;
+        uint8_t disp = raw & 0xF;
+        ins.op = Op::STORE32;
+        ins.src1.isImm = false; ins.src1.reg = m; // Value (Rm)
+        ins.src2.isImm = false; ins.src2.reg = n; // Base (Rn)
+        ins.extra = disp * 4; // displacement * 4
+        blk.pcNext = pc + 2;
+        DEBUG_LOG(SH4, "FastDecode: MOV.L R%u,@(%u,R%u) (0x%04X)", m, disp*4, n, raw);
+        return true;
+    }
+
+    // ADD #imm,Rn (0x7nii) - for 0x7129, 0x7560, 0x7620
+    else if ((raw & 0xF000) == 0x7000)
+    {
+        uint8_t n = (raw >> 8) & 0xF;
+        int8_t imm = static_cast<int8_t>(raw & 0xFF);
+        ins.op = Op::ADD_IMM;
+        ins.dst.isImm = false; ins.dst.reg = n;
+        ins.src1.isImm = true; ins.src1.imm = imm;
+        blk.pcNext = pc + 2;
+        DEBUG_LOG(SH4, "FastDecode: ADD #%d,R%u (0x%04X)", imm, n, raw);
+        return true;
+    }
+
+    // OR #imm,R0 (0xCBii) - for 0xCBCD, 0xCBB0
+    else if ((raw & 0xFF00) == 0xCB00)
+    {
+        uint8_t imm = raw & 0xFF;
+        ins.op = Op::OR_IMM;
+        ins.dst.isImm = false; ins.dst.reg = 0;
+        ins.src1.isImm = true; ins.src1.imm = imm;
+        blk.pcNext = pc + 2;
+        DEBUG_LOG(SH4, "FastDecode: OR #0x%02X,R0 (0x%04X)", imm, raw);
+        return true;
+    }
+
+    // MOV.L Rm,@(disp,Rn) alternative pattern (0x13xx) - for 0x1303
+    // This is the same as above but adding explicit check for 0x1303 pattern
+    else if ((raw & 0xFF0F) == 0x1303)
+    {
+        uint8_t disp = (raw >> 4) & 0xF;
+        ins.op = Op::STORE32;
+        ins.src1.isImm = false; ins.src1.reg = 3; // R3
+        ins.src2.isImm = false; ins.src2.reg = 1; // R1 (base)
+        ins.extra = disp * 4;
+        blk.pcNext = pc + 2;
+        DEBUG_LOG(SH4, "FastDecode: MOV.L R3,@(%u,R1) (0x%04X)", disp*4, raw);
+        return true;
+    }
+
+    // BRAF Rn (0x0n23) - for 0x0583 (BRAF R5)
+    else if ((raw & 0xF0FF) == 0x0023)
+    {
+        uint8_t n = (raw >> 8) & 0xF;
+        ins.op = Op::BRAF;
+        ins.src1.isImm = false; ins.src1.reg = n;
+        blk.pcNext = pc + 4; // delay slot
+        DEBUG_LOG(SH4, "FastDecode: BRAF R%u (0x%04X)", n, raw);
+        return true;
+    }
+
+    // JMP @Rn (0x4n2B) - for 0x462B (JMP @R6)
+    else if ((raw & 0xF0FF) == 0x402B)
+    {
+        uint8_t n = (raw >> 8) & 0xF;
+        ins.op = Op::JMP;
+        ins.src1.isImm = false; ins.src1.reg = n;
+        blk.pcNext = pc + 4; // delay slot
+        DEBUG_LOG(SH4, "FastDecode: JMP @R%u (0x%04X)", n, raw);
+        return true;
+    }
+    // SWAP.W Rm,Rn 0x6nm9
+    else if ((raw & 0xF00F) == 0x6009)
+    {
+        uint8_t n = (raw >> 8) & 0xF;
+        uint8_t m = (raw >> 4) & 0xF;
+        ins.op = Op::SWAP_W;
+        ins.dst.isImm = false; ins.dst.reg = n;
+        ins.src1.isImm = false; ins.src1.reg = m;
+        ins.src2.isImm = false; ins.src2.reg = n;
+        blk.pcNext = pc + 2;
+        return true;
+    }
+    // MULU.W Rm,Rn (0x2nmE) - for 0x204E
+    else if ((raw & 0xF00F) == 0x200E)
+    {
+        uint8_t n = (raw >> 8) & 0xF;
+        uint8_t m = (raw >> 4) & 0xF;
+        ins.op = Op::MULU_W;
+        ins.dst.isImm = false; ins.dst.reg = n;
+        ins.src1.isImm = false; ins.src1.reg = m;
+        blk.pcNext = pc + 2;
+        DEBUG_LOG(SH4, "FastDecode: MULU.W R%u,R%u (0x%04X)", m, n, raw);
+        return true;
+    }
 
     // Debug: log key opcodes
     if (raw == 0x6439) INFO_LOG(SH4, "DEBUG: 0x6439 - should match MOV.W @Rm+,Rn pattern");
