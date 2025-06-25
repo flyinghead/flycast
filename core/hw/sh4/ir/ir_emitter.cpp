@@ -2578,20 +2578,6 @@ Block& Emitter::CreateNew(uint32_t pc) {
                 decoded = true; blk.pcNext = pc + 2;
             }
         }
-        // MOV.L Rm,@(disp,Rn) 0x1nmd (disp = low4 * 4)
-         // Handles BIOS pattern like 0x18E0 (MOV.L R8,@(0xE*4,R0))
-         else if ((raw & 0xF000) == 0x1000)
-         {
-             uint8_t disp4 = raw & 0xF;
-             ins.op = Op::STORE32;
-             ins.dst.isImm = false; ins.dst.reg = n;    // base register Rn
-             ins.src1.isImm = false; ins.src1.reg = m;
-            ins.src2.isImm = false;
-            ins.src2.reg = n;  // value register Rm
-             ins.extra = disp4 * 4;                     // long = 4 bytes
-             decoded = true;
-             blk.pcNext = pc + 2;
-         }
         // MOV.L Rm,@(disp,Rn) 0x2nmd (same as 0x1nmd on some opcode maps) retain for compatibility
          else if ((raw & 0xF000) == 0x2000)
          {
