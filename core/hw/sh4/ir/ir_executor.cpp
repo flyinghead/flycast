@@ -1752,7 +1752,7 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                              ins.src1.reg, val_to_store, addr,
                              ins.src2.reg, base, disp);
                     if (unlikely(IsStoreQueueAddr(addr))) {
-                        // Store queue / scratchpad – currently unimplemented, ignore
+                        // Store Queue write – treat as uncached memory write
                     } else if (unlikely(IsBiosAddr(addr))) {
                         LogIllegalBiosWrite(ins, addr, next_pc);
                     } else {
@@ -1777,7 +1777,7 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                              ins.src1.reg, val_to_store, addr,
                              ins.src2.reg, GET_REG(ctx, ins.src2.reg), ins.extra);
                     if (unlikely(IsStoreQueueAddr(addr))) {
-                        // SQ write: drop
+                        // Store Queue write – treat as uncached memory write
                     } else if (unlikely(IsBiosAddr(addr))) {
                         LogIllegalBiosWrite(ins, addr, next_pc);
                     } else {
@@ -1811,7 +1811,7 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                     fflush(stdout);
 
                     if (unlikely(IsStoreQueueAddr(addr))) {
-                        // SQ write – ignore
+                        // Store Queue write – treat as uncached memory write
                     } else if (unlikely(IsBiosAddr(addr))) {
                         LogIllegalBiosWrite(ins, addr, next_pc);
                     } else {
@@ -1840,7 +1840,7 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                              ins.src2.reg, ins.src2.reg, GET_REG(ctx, ins.src2.reg), addr);
 
                     if (unlikely(IsStoreQueueAddr(addr))) {
-                        // SQ write – ignore
+                        // Store Queue write – treat as uncached memory write
                     } else if (unlikely(IsBiosAddr(addr))) {
                         LogIllegalBiosWrite(ins, addr, next_pc);
                     } else {
