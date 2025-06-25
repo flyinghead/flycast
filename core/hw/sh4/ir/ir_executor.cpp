@@ -2456,7 +2456,8 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                     SET_REG(ctx, n, after);
 
                     // SH-4 manual: T flag is set when the result becomes 0
-                    const bool t_flag = (after == 0);
+                    // T flag set when the decrement results in 0 (i.e., value *becomes* 0)
+                    const bool t_flag = (before != 0 && after == 0);
                     SET_SR_T(ctx, t_flag);
 
                     DEBUG_LOG(SH4, "DT R%u: %08X -> %08X, T=%d", n, before, after, t_flag ? 1 : 0);
