@@ -876,6 +876,56 @@ static void Exec_STORE32_Rm_R0RN(const sh4::ir::Instr& ins, Sh4Context* ctx, uin
     RawWrite32(addr, val);
 }
 
+// -----------------------------------------------------------------------------
+// R0-offset store variants
+// -----------------------------------------------------------------------------
+// MOV.B R0,@(disp,Rn)  / MOV.B Rm,@(R0,Rn)
+static void Exec_STORE8_R0(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
+{
+    uint32_t addr;
+    uint8_t  val;
+    if (ins.extra != 0 || ins.src1.reg == 0) {
+        // displacement form – value in R0, address = Rn + disp
+        addr = GET_REG(ctx, ins.src2.reg) + static_cast<uint32_t>(ins.extra);
+        val  = static_cast<uint8_t>(GET_REG(ctx, 0) & 0xFF);
+    } else {
+        // R0-indexed register form – value in Rm, address = Rn + R0
+        addr = GET_REG(ctx, ins.src2.reg) + GET_REG(ctx, 0);
+        val  = static_cast<uint8_t>(GET_REG(ctx, ins.src1.reg) & 0xFF);
+    }
+    RawWrite8(addr, val);
+}
+
+// MOV.W R0,@(disp,Rn) / MOV.W Rm,@(R0,Rn)
+static void Exec_STORE16_R0(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
+{
+    uint32_t addr;
+    uint16_t val;
+    if (ins.extra != 0 || ins.src1.reg == 0) {
+        addr = GET_REG(ctx, ins.src2.reg) + static_cast<uint32_t>(ins.extra);
+        val  = static_cast<uint16_t>(GET_REG(ctx, 0) & 0xFFFF);
+    } else {
+        addr = GET_REG(ctx, ins.src2.reg) + GET_REG(ctx, 0);
+        val  = static_cast<uint16_t>(GET_REG(ctx, ins.src1.reg) & 0xFFFF);
+    }
+    RawWrite16(addr, val);
+}
+
+// MOV.L R0,@(disp,Rn) / MOV.L Rm,@(R0,Rn)
+static void Exec_STORE32_R0(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
+{
+    uint32_t addr;
+    uint32_t val;
+    if (ins.extra != 0 || ins.src1.reg == 0) {
+        addr = GET_REG(ctx, ins.src2.reg) + static_cast<uint32_t>(ins.extra);
+        val  = GET_REG(ctx, 0);
+    } else {
+        addr = GET_REG(ctx, ins.src2.reg) + GET_REG(ctx, 0);
+        val  = GET_REG(ctx, ins.src1.reg);
+    }
+    RawWrite32(addr, val);
+}
+
 // MOV.B Rm,@-Rn (pre-decrement store byte)
 static void Exec_MOV_B_REG_PREDEC(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t) {
     uint32_t& rn = GET_REG(ctx, ins.dst.reg);
@@ -1534,6 +1584,10 @@ static void InitExecTable()
     g_exec_table[static_cast<int>(sh4::ir::Op::STORE8_Rm_R0RN)]  = &Exec_STORE8_Rm_R0RN;
     g_exec_table[static_cast<int>(sh4::ir::Op::STORE16_Rm_R0RN)] = &Exec_STORE16_Rm_R0RN;
     g_exec_table[static_cast<int>(sh4::ir::Op::STORE32_Rm_R0RN)] = &Exec_STORE32_Rm_R0RN;
+    // R0-offset variants
+    g_exec_table[static_cast<int>(sh4::ir::Op::STORE8_R0)]  = &Exec_STORE8_R0;
+    g_exec_table[static_cast<int>(sh4::ir::Op::STORE16_R0)] = &Exec_STORE16_R0;
+    g_exec_table[static_cast<int>(sh4::ir::Op::STORE32_R0)] = &Exec_STORE32_R0;
     g_exec_table[static_cast<int>(sh4::ir::Op::ADDC)]       = &Exec_ADDC;
     g_exec_table[static_cast<int>(sh4::ir::Op::ADDV)]       = &Exec_ADDV;
     g_exec_table[static_cast<int>(sh4::ir::Op::SUB)]        = &Exec_SUB;
