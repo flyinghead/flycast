@@ -920,14 +920,70 @@ static void Exec_ADDV(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
     int32_t rm = static_cast<int32_t>(GET_REG(ctx, ins.src1.reg));
     int32_t rn = static_cast<int32_t>(GET_REG(ctx, ins.dst.reg));
 
-    // Perform addition
     int32_t res = rn + rm;
     SET_REG(ctx, ins.dst.reg, static_cast<uint32_t>(res));
 
-    // Overflow detection (SH-4 manual)
-    // Overflow occurs when operands share the same sign bit but the result sign differs.
+    // Overflow occurs when operands share sign but result differs
     bool overflow = (((rn ^ rm) & 0x80000000) == 0) && (((rn ^ res) & 0x80000000) != 0);
     SET_SR_T(ctx, overflow ? 1 : 0);
+}
+
+// -----------------------------------------------------------------------------
+// Compare instructions (set SR.T)
+// -----------------------------------------------------------------------------
+static void Exec_CMP_EQ(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
+{
+    uint32_t rn = GET_REG(ctx, ins.dst.reg);
+    uint32_t rm = GET_REG(ctx, ins.src1.reg);
+    SET_SR_T(ctx, rn == rm ? 1 : 0);
+}
+
+// Compare R0 with immediate value (8-bit sign-extended)
+static void Exec_CMP_EQ_IMM(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
+{
+    int32_t imm = ins.extra;               // emitter already sign-extended into extra
+    uint32_t r0 = GET_REG(ctx, 0);
+    SET_SR_T(ctx, r0 == static_cast<uint32_t>(imm) ? 1 : 0);
+}
+
+static void Exec_CMP_PL(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
+{
+    int32_t rn = static_cast<int32_t>(GET_REG(ctx, ins.dst.reg));
+    SET_SR_T(ctx, rn > 0 ? 1 : 0);
+}
+
+static void Exec_CMP_PZ(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
+{
+    int32_t rn = static_cast<int32_t>(GET_REG(ctx, ins.dst.reg));
+    SET_SR_T(ctx, rn >= 0 ? 1 : 0);
+}
+
+static void Exec_CMP_HS(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
+{
+    uint32_t rn = GET_REG(ctx, ins.dst.reg);
+    uint32_t rm = GET_REG(ctx, ins.src1.reg);
+    SET_SR_T(ctx, rn >= rm ? 1 : 0);
+}
+
+static void Exec_CMP_HI(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
+{
+    uint32_t rn = GET_REG(ctx, ins.dst.reg);
+    uint32_t rm = GET_REG(ctx, ins.src1.reg);
+    SET_SR_T(ctx, rn > rm ? 1 : 0);
+}
+
+static void Exec_CMP_GE(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
+{
+    int32_t rn = static_cast<int32_t>(GET_REG(ctx, ins.dst.reg));
+    int32_t rm = static_cast<int32_t>(GET_REG(ctx, ins.src1.reg));
+    SET_SR_T(ctx, rn >= rm ? 1 : 0);
+}
+
+static void Exec_CMP_GT(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
+{
+    int32_t rn = static_cast<int32_t>(GET_REG(ctx, ins.dst.reg));
+    int32_t rm = static_cast<int32_t>(GET_REG(ctx, ins.src1.reg));
+    SET_SR_T(ctx, rn > rm ? 1 : 0);
 }
 
 // SUB Rm,Rn - Subtract
@@ -1373,6 +1429,16 @@ static void InitExecTable()
     g_exec_table[static_cast<int>(sh4::ir::Op::XOR_REG)]  = &Exec_XOR_REG;
     g_exec_table[static_cast<int>(sh4::ir::Op::AND_IMM)]  = &Exec_AND_IMM;
     g_exec_table[static_cast<int>(sh4::ir::Op::OR_IMM)]   = &Exec_OR_IMM;
+
+    // Compare ops
+    g_exec_table[static_cast<int>(sh4::ir::Op::CMP_EQ)]      = &Exec_CMP_EQ;
+    g_exec_table[static_cast<int>(sh4::ir::Op::CMP_EQ_IMM)]  = &Exec_CMP_EQ_IMM;
+    g_exec_table[static_cast<int>(sh4::ir::Op::CMP_PL)]      = &Exec_CMP_PL;
+    g_exec_table[static_cast<int>(sh4::ir::Op::CMP_PZ)]      = &Exec_CMP_PZ;
+    g_exec_table[static_cast<int>(sh4::ir::Op::CMP_HS)]      = &Exec_CMP_HS;
+    g_exec_table[static_cast<int>(sh4::ir::Op::CMP_HI)]      = &Exec_CMP_HI;
+    g_exec_table[static_cast<int>(sh4::ir::Op::CMP_GE)]      = &Exec_CMP_GE;
+    g_exec_table[static_cast<int>(sh4::ir::Op::CMP_GT)]      = &Exec_CMP_GT;
     g_exec_table[static_cast<int>(sh4::ir::Op::XOR_IMM)]  = &Exec_XOR_IMM;
     // Branches
     g_exec_table[static_cast<int>(sh4::ir::Op::BF)]       = &Exec_BF;
