@@ -390,9 +390,10 @@ static bool FastDecode(uint16_t raw, uint32_t pc, Instr &ins, Block &blk)
         if ((raw & 0xF) == 0x2) {
             // MOV.L @(disp,Rm),Rn (0x5nm2) - LOAD operation
             ins.op = Op::LOAD32;
-            ins.dst = {false, rn};            // Destination is Rn
-            ins.src1 = {false, rm};          // Base address from Rm
-            ins.extra = disp * 4;            // Displacement in ins.extra (disp * 4 bytes)
+            ins.dst  = {false, rn};           // Destination is Rn
+            ins.src1 = {false, rm};           // Base register (Rm)
+            ins.src2 = {false, rn};           // Keep src2 for consistency (Rn)
+            ins.extra = disp * 4;             // Byte displacement (disp * 4)
 
             INFO_LOG(SH4, "FastDecode: Decoded MOV.L @(%u,R%u),R%u (LOAD) (0x%04X) at PC=%08X",
                     disp * 4, rm, rn, raw, pc);
@@ -1488,13 +1489,9 @@ Block& Emitter::CreateNew(uint32_t pc) {
         else if ((raw & 0xF000) == 0x1000)
         {
             ins.op = Op::STORE32;
-            ins.src1.isImm = false;
-            ins.src1.reg = m;
-        ins.src2.isImm = false;
-        ins.src2.reg = n; // Rm
-            ins.src2.isImm = false;
-            ins.src2.reg = n; // Rn
-            ins.extra = (raw & 0xF) * 4; // displacement, scaled by 4
+            ins.src1.isImm = false;  ins.src1.reg = m; // Value (Rm)
+            ins.src2.isImm = false;  ins.src2.reg = n; // Base (Rn)
+            ins.extra = (raw & 0xF) * 4; // displacement * 4
             INFO_LOG(SH4, "Emitter: Decoded STORE32 R%d, @(%d,R%d) (0x%04X) at PC=0x%08X", m, ins.extra, n, raw, pc);
             decoded = true;
             blk.pcNext = pc + 2;

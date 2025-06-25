@@ -1797,13 +1797,12 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                 }
                 case Op::STORE32:
                 {
-                    // Updated debug log to reflect corrected register mapping
-                    printf("[PRINTF_DEBUG_IR_STORE32_ENTRY] STORE32: ins.src1.reg (Rn_dst)=%u, ins.src2.reg (Rm_base)=%u, ins.extra (disp)=%u\n",
+                    // Debug: src1 = value (Rm), src2 = base (Rn)
+                    printf("[PRINTF_DEBUG_IR_STORE32_ENTRY] STORE32: ins.src1.reg (Rm_value)=%u, ins.src2.reg (Rn_base)=%u, ins.extra (disp)=%u\n",
                            ins.src1.reg, ins.src2.reg, ins.extra);
                     fflush(stdout);
 
-                    // CORRECTED: ins.src1.reg is now Rn (value to store)
-                    // CORRECTED: ins.src2.reg is now Rm (base address)
+                    // Convention: src1 holds value (Rm); src2 holds base address (Rn)
                     uint32_t addr = GET_REG(ctx, ins.src2.reg) + ins.extra;
                     uint32_t val_to_store = GET_REG(ctx, ins.src1.reg);
 
