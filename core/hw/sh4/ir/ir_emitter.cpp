@@ -165,6 +165,33 @@ static bool FastDecode(uint16_t raw, uint32_t pc, Instr &ins, Block &blk)
         blk.pcNext = pc + 2;
         return true;
     }
+    // MOV.W @Rm+,Rn (0x6nm5) - already exists but add debug for 0x6439
+    else if ((raw & 0xF00F) == 0x6005)
+    {
+        uint8_t n = (raw >> 8) & 0xF;
+        uint8_t m = (raw >> 4) & 0xF;
+        ins.op = Op::LOAD16_POST;
+        ins.dst.isImm = false; ins.dst.reg = n;
+        ins.src1.isImm = false; ins.src1.reg = m;
+        ins.src2.isImm = false; ins.src2.reg = n;
+        blk.pcNext = pc + 2;
+        WARN_LOG(SH4, "FastDecode: MOV.W @R%u+,R%u (0x%04X)", m, n, raw);
+        return true;
+    }
+    // MOV.L Rm,@(disp,Rn) (0x1nmd) - for 0x1304 and 0x1317
+    else if ((raw & 0xF000) == 0x1000)
+    {
+        uint8_t n = (raw >> 8) & 0xF;
+        uint8_t m = (raw >> 4) & 0xF;
+        uint8_t disp = raw & 0xF;
+        ins.op = Op::STORE32;
+        ins.src1.isImm = false; ins.src1.reg = m; // Value (Rm)
+        ins.src2.isImm = false; ins.src2.reg = n; // Base (Rn)
+        ins.extra = disp * 4; // displacement * 4
+        blk.pcNext = pc + 2;
+        DEBUG_LOG(SH4, "FastDecode: MOV.L R%u,@(%u,R%u) (0x%04X)", m, disp*4, n, raw);
+        return true;
+    }
     // MOV.B Rm,@Rn (0x2nm0)
     else if ((raw & 0xF00F) == 0x2000)
     {
