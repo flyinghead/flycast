@@ -2271,8 +2271,9 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                         INFO_LOG(SH4, "BR BT  from %08X -> %08X (disp=%d)", curr_pc, target, ins.extra);
                         if (IsTopRegion(target))
                             ERROR_LOG(SH4, "*** HIGH-FF BT target at %08X -> %08X (disp=%d)", curr_pc, target, ins.extra);
-                        // No delay slot: set PC to target immediately (account for +2 at loop bottom)
-                        SetPC(ctx, target - 2, "BT/BF");
+                        // No delay slot: set PC to target and terminate block execution
+                        SetPC(ctx, target, "BT");
+                        return;
                     }
                     break;
                 case Op::BF:
@@ -2282,7 +2283,9 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                         INFO_LOG(SH4, "BR BF  from %08X -> %08X (disp=%d)", curr_pc, target, ins.extra);
                         if (IsTopRegion(target))
                             ERROR_LOG(SH4, "*** HIGH-FF BF target at %08X -> %08X (disp=%d)", curr_pc, target, ins.extra);
-                        SetPC(ctx, target - 2, "BT/BF");
+                        // No delay slot: set PC to target and terminate block execution
+                        SetPC(ctx, target, "BF");
+                        return;
                     }
                     break;
                 case Op::CMP_PL:
