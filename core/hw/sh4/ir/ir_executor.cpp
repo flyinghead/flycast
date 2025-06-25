@@ -3202,8 +3202,8 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                 case Op::LOAD32_PC:
                 {
                     uint32_t disp8 = static_cast<uint32_t>(ins.extra);
-                    uint32_t base_pc = next_pc;        // Use currently executing PC
-                    uint32_t base = (base_pc & ~3u) + 4u;     // Align and add 4 per SH4 spec
+                    uint32_t base_pc = next_pc;        // PC of following instruction (curr_pc+2)
+                    uint32_t base = (base_pc & ~3u) + 4u;     // Align then +4 per SH-4 spec
                     uint32_t mem_addr = base + (disp8 << 2);
                     uint32_t val = ReadAligned32(mem_addr);
                     uint32_t old_reg = GET_REG(ctx, ins.dst.reg);
@@ -3224,8 +3224,8 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                 case Op::LOAD16_PC:
                 {
                     uint32_t disp8 = static_cast<uint32_t>(ins.extra);
-                    uint32_t base_pc = next_pc;        // Use currently executing PC
-                    uint32_t base = (base_pc & ~3u) + 4u;     // Align to 4-byte boundary and add 4 per SH-4 spec
+                    uint32_t base_pc = next_pc;        // PC of following instruction
+                    uint32_t base = (base_pc & ~3u) + 4u;     // Align then +4 per SH-4 spec
                     uint32_t mem_addr = base + (disp8 << 1);  // Scale by 2 for word addressing
                     u16 val = ReadAligned16(mem_addr);
                     uint32_t old_reg = GET_REG(ctx, ins.dst.reg);
