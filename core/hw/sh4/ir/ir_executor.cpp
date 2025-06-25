@@ -809,6 +809,19 @@ static void Exec_BSR(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t pc) {
     SetPC(ctx, pc + 2 + static_cast<int32_t>(ins.extra), "BSR");
 }
 
+// BRAF Rn - Branch Far Relative
+static void Exec_BRAF(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t pc) {
+    uint32_t target = pc + 4 + GET_REG(ctx, ins.src1.reg);
+    INFO_LOG(SH4, "BR BRAF from %08X -> %08X (R%u)", pc, target, ins.src1.reg);
+    SetPC(ctx, target, "BRAF");
+}
+
+// OR_REG Rm,Rn - Bitwise OR register
+static void Exec_OR_REG(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t) {
+    uint32_t val = GET_REG(ctx, ins.dst.reg) | GET_REG(ctx, ins.src1.reg);
+    SET_REG(ctx, ins.dst.reg, val);
+}
+
 // JSR @Rm – jump sub-routine via register with link in PR
 static void Exec_JSR(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t pc) {
 #ifdef pr
@@ -1695,7 +1708,9 @@ static void InitExecTable()
     g_exec_table[static_cast<int>(sh4::ir::Op::BF)]       = &Exec_BF;
     g_exec_table[static_cast<int>(sh4::ir::Op::BT)]       = &Exec_BT;
     g_exec_table[static_cast<int>(sh4::ir::Op::BRA)]      = &Exec_BRA;
-    g_exec_table[static_cast<int>(sh4::ir::Op::BSR)]      = &Exec_BSR;
+    g_exec_table[static_cast<int>(sh4::ir::Op::BSR)] = &Exec_BSR;
+    g_exec_table[static_cast<int>(sh4::ir::Op::BRAF)]      = &Exec_BRAF;
+    g_exec_table[static_cast<int>(sh4::ir::Op::OR_REG)]    = &Exec_OR_REG;
     // Delay-slot conditional branches if present
 #ifdef sh4_ir_Op_BT_S_defined
     g_exec_table[static_cast<int>(sh4::ir::Op::BT_S)]     = &Exec_BT_S;
