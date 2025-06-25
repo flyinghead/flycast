@@ -279,7 +279,7 @@ static bool FastDecode(uint16_t raw, uint32_t pc, Instr &ins, Block &blk)
     // MOV.W R0,@(disp,Rn) 0x8n1d
     else if ((raw & 0xFF00) == 0x8100)
     {
-        printf("[FastDecode] MATCHED 0x8100 pattern for raw=0x%04X\n", raw);
+
         uint8_t disp4 = static_cast<uint8_t>(raw & 0xF);
         uint8_t n_reg = (raw >> 4) & 0xF;
         ins.op = Op::STORE16_R0;
@@ -288,7 +288,7 @@ static bool FastDecode(uint16_t raw, uint32_t pc, Instr &ins, Block &blk)
         ins.src2.isImm = false; ins.src2.reg = n_reg;
         ins.extra = disp4 * 2;
         blk.pcNext = pc + 2;
-        printf("[FastDecode] Decoded MOV.W R0,@(%u,R%u)\n", disp4*2, n_reg);
+
         return true;
     }
     // SHL2/8/16 Rn variants (0x4n08,0x4n18,0x4n28)
@@ -2621,18 +2621,7 @@ Block& Emitter::CreateNew(uint32_t pc) {
              blk.pcNext = pc + 2;
              INFO_LOG(SH4, "Emitter::CreateNew: Decoded STORE32 R%d -> @(0x%X,R%d) (0x%04X) at PC=0x%08X", m, disp4*4, n, raw, pc);
          }
-        // MOV.W Rm,@(disp,Rn) 0x3nm5 (disp = low4 * 2)
-         else if ((raw & 0xF00F) == 0x3005)
-         {
-             uint8_t disp4 = raw & 0xF;
-             ins.op = Op::STORE16;
-             ins.dst.isImm = false; ins.dst.reg = n;
-             ins.src1.isImm = false; ins.src1.reg = m;
-            ins.src2.isImm = false;
-            ins.src2.reg = n;
-             ins.extra = disp4 * 2;
-             decoded = true; blk.pcNext = pc + 2;
-         }
+
          // MOV.L Rm,@(disp,Rn) 0x4nmd (some CPUs) retained below for safety
         // (original code)
         else if ((raw & 0xF000) == 0x4000 && (raw & 0x0F00) != 0x0000) // legacy path, keep for compatibility
