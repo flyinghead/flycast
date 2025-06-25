@@ -663,7 +663,10 @@ static void ExecStub(const sh4::ir::Instr& ins, Sh4Context*, uint32_t pc)
 // churn while giving us a single execution path (eliminates the big switch
 // fallback for these common ops).
 // ----------------------------------------------------------------------------
-static void Exec_NOP(const sh4::ir::Instr&, Sh4Context*, uint32_t) { /* nothing */ }
+static void Exec_NOP(const sh4::ir::Instr& , Sh4Context*, uint32_t) { /* no-op */ }
+
+// END - IR sentinel marking end of block (no operation)
+static void Exec_END(const sh4::ir::Instr&, Sh4Context*, uint32_t) { /* block end handled by executor loop */ }
 static void Exec_ADD_REG(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t) { GET_REG(ctx, ins.dst.reg) += GET_REG(ctx, ins.src1.reg); }
 static void Exec_ADD_IMM(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t) { GET_REG(ctx, ins.dst.reg) += static_cast<uint32_t>(ins.src1.imm); }
 
@@ -984,6 +987,14 @@ static void Exec_CMP_GT(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
     int32_t rn = static_cast<int32_t>(GET_REG(ctx, ins.dst.reg));
     int32_t rm = static_cast<int32_t>(GET_REG(ctx, ins.src1.reg));
     SET_SR_T(ctx, rn > rm ? 1 : 0);
+}
+
+// TST #imm,R0  (0x81ii) – set T = ((R0 & imm) == 0)
+static void Exec_TST_IMM(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
+{
+    uint32_t imm = static_cast<uint32_t>(ins.extra) & 0xFF; // emitter stores imm in extra
+    uint32_t r0  = GET_REG(ctx, 0);
+    SET_SR_T(ctx, ((r0 & imm) == 0) ? 1 : 0);
 }
 
 // SUB Rm,Rn - Subtract
@@ -1417,6 +1428,7 @@ static void InitExecTable()
     if (init) return;
     for (auto& fn : g_exec_table) fn = &ExecStub;
     g_exec_table[static_cast<int>(sh4::ir::Op::NOP)]      = &Exec_NOP;
+    g_exec_table[static_cast<int>(sh4::ir::Op::END)]      = &Exec_END;
     g_exec_table[static_cast<int>(sh4::ir::Op::ADD)]       = &Exec_ADD;
     g_exec_table[static_cast<int>(sh4::ir::Op::ADD_REG)]  = &Exec_ADD_REG;
     g_exec_table[static_cast<int>(sh4::ir::Op::ADD_IMM)]  = &Exec_ADD_IMM;
@@ -1439,6 +1451,7 @@ static void InitExecTable()
     g_exec_table[static_cast<int>(sh4::ir::Op::CMP_HI)]      = &Exec_CMP_HI;
     g_exec_table[static_cast<int>(sh4::ir::Op::CMP_GE)]      = &Exec_CMP_GE;
     g_exec_table[static_cast<int>(sh4::ir::Op::CMP_GT)]      = &Exec_CMP_GT;
+    g_exec_table[static_cast<int>(sh4::ir::Op::TST_IMM)]     = &Exec_TST_IMM;
     g_exec_table[static_cast<int>(sh4::ir::Op::XOR_IMM)]  = &Exec_XOR_IMM;
     // Branches
     g_exec_table[static_cast<int>(sh4::ir::Op::BF)]       = &Exec_BF;
