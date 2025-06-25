@@ -166,7 +166,6 @@ static inline u8* FastPtr(uint32_t addr)
 {
     // BIOS ROM (2 MiB) and mirrors (include P0 0x4000 0000 for ITLB-miss handler)
     if ((addr & 0xFFE00000u) == 0x00000000u ||
-        (addr & 0xFFE00000u) == 0x40000000u ||
         (addr & 0xFFE00000u) == 0x80000000u ||
         (addr & 0xFFE00000u) == 0xA0000000u ||
         (addr & 0xFFE00000u) == 0xC0000000u)

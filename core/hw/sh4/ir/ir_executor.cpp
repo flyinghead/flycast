@@ -444,7 +444,7 @@ static inline bool IsBiosAddr(uint32_t addr)
         return false;
 
     uint32_t off = addr & 0x001FFFFF;
-    return off >= 0x200; // <0x200 is writable on real HW
+    return off < 0x200; // Only first 0x200 bytes (on-chip area) are writable
 }
 
 // Writes to the store-queue (first 0x300 bytes of P2 mirrors) are legal and
