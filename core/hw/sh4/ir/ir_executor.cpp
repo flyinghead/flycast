@@ -2363,7 +2363,9 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                 {
                     uint32_t val = GET_REG(ctx, ins.dst.reg) - 1;
                     SET_REG(ctx, ins.dst.reg, val);
-                    SET_SR_T(ctx, val == 0);
+                    // According to SH-4 programming manual: DT sets T = 1 when the
+                    // decremented value becomes -1 (0xFFFFFFFF); otherwise T = 0.
+                    SET_SR_T(ctx, val == 0xFFFFFFFF);
                     break;
                 }
                 case Op::FADD:
