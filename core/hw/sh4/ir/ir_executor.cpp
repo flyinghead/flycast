@@ -868,13 +868,22 @@ static void Exec_TRAPA(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t pc)
     ctx->sr.RB = 1; // Switch to register bank 1
 
     // Store the trap number in CCN_TRA (hardware register, shifted left by 2)
-    CCN_TRA = (ins.src1.imm & 0xFF) << 2;
+    uint8_t trap_no = static_cast<uint8_t>(ins.src1.imm & 0xFF);
+    CCN_TRA = trap_no << 2;
 
     // Set the exception event code for TRAPA (0x160)
     CCN_EXPEVT = 0x160;
 
-    // Jump to the TRAPA exception handler vector (VBR + 0x100)
-    uint32_t handler_pc = RawRead32(ctx->vbr + 0x100);
+    // Each TRAPA vector is a 32-bit address located at VBR + 0x100 + (n * 4)
+    uint32_t vector_addr = ctx->vbr + 0x100 + (trap_no * 4);
+    uint32_t handler_pc  = RawRead32(vector_addr);
+
+    // If the vector is blank (0x00000000), treat as illegal instruction instead
+    if (handler_pc == 0) {
+        ERROR_LOG(SH4, "TRAPA vector %02X empty (addr=%08X) - treating as illegal", trap_no, vector_addr);
+        return;
+    }
+
     SetPC(ctx, handler_pc, "TRAPA");
 }
 #define ssr Sh4cntx.ssr
