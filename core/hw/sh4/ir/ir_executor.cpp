@@ -1019,14 +1019,16 @@ static inline bool IsValidMemoryAddress(uint32_t addr, const char* op_name, uint
 }
 
 static void Exec_LOAD32_PC(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t pc) {
-    uint32_t base = (pc & ~3u) + 4u;
+    uint32_t base_pc = pc + 2u;                              // PC of following instruction
+    uint32_t base = (base_pc & ~3u) + 4u;                 // Align then +4 per SH-4 spec
     uint32_t addr = base + (static_cast<uint32_t>(ins.extra) << 2);
     SET_REG(ctx, ins.dst.reg, ReadAligned32(addr));
 }
 
 // PC-relative 16-bit literal load
 static void Exec_LOAD16_PC(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t pc) {
-    uint32_t base = (pc & ~3u) + 4u;                 // Align then +4 per SH-4 spec
+    uint32_t base_pc = pc + 2u;                              // PC of following instruction
+    uint32_t base = (base_pc & ~3u) + 4u;                 // Align then +4 per SH-4 spec
     uint32_t addr = base + (static_cast<uint32_t>(ins.extra) << 1); // disp * 2
     u16 val = ReadAligned16(addr);
     SET_REG(ctx, ins.dst.reg, static_cast<uint32_t>(static_cast<int16_t>(val))); // sign-extend

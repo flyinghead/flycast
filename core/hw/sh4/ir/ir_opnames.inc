@@ -11,7 +11,6 @@ static const char* kOpNames[] = {
     "STORE8",
     "STORE16",
     "STORE32",
-    "LOAD16_PC,        // PC-relative 16-bit literal load",
     "LOAD8_POST",
     "LOAD16_POST",
     "LOAD32_POST",
