@@ -682,7 +682,8 @@ static void Exec_DT(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
     uint32_t before = GET_REG(ctx, n);
     uint32_t after  = before - 1;
     SET_REG(ctx, n, after);
-    SET_SR_T(ctx, (after == 0));
+    // SH-4 spec: T is set when result becomes -1 (0xFFFFFFFF)
+    SET_SR_T(ctx, (after == 0xFFFFFFFF));
 }
 
 // STORE32_PREDEC : @-Rn = Rm ; Rn -= 4 (pre-decrement)
