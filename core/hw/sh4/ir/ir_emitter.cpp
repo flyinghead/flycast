@@ -399,9 +399,10 @@ static bool FastDecode(uint16_t raw, uint32_t pc, Instr &ins, Block &blk)
         } else if ((raw & 0xF) == 0x1) {
             // MOV.L Rm,@(disp,Rn) (0x5nm1) - STORE operation
             ins.op = Op::STORE32;
-            ins.dst = {false, rn};            // Base address register is Rn
-            ins.src1 = {false, rm};          // Source data from Rm
-            ins.extra = disp * 4;            // Displacement in ins.extra (disp * 4 bytes)
+            // For STORE32, src1 holds the value (Rm) and src2 is the base address (Rn)
+            ins.src1 = {false, rm};          // Value to store (Rm)
+            ins.src2 = {false, rn};          // Base address register (Rn)
+            ins.extra = disp * 4;            // Byte displacement (disp * 4)
 
             INFO_LOG(SH4, "FastDecode: Decoded MOV.L R%u,@(%u,R%u) (STORE) (0x%04X) at PC=%08X",
                     rm, disp * 4, rn, raw, pc);
