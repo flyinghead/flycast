@@ -389,9 +389,8 @@ static inline void SetPC(Sh4Context* ctx, uint32_t new_pc, const char* why)
 // Fast pointer fetch for read-only accesses (includes BIOS)
 static inline u8 *FastRamPtr(uint32_t addr) {
 #ifdef USE_FAST_PTR
-    // BIOS ROM 0x00000000–0x001FFFFF (2 MiB) and its mirrors in P1/P2/P3 **and P0 0x40000000**
-    if ((addr & 0xFFE00000u) == 0x00000000u || // U0 window
-        (addr & 0xFFE00000u) == 0x40000000u || // P0 mirror used by ITLB handler
+    // BIOS ROM 0x00000000–0x001FFFFF (2 MiB) and its mirrors
+    if ((addr & 0xFFE00000u) == 0x00000000u ||
         (addr & 0xFFE00000u) == 0x80000000u || // P1 mirror
         (addr & 0xFFE00000u) == 0xA0000000u || // P2 mirror
         (addr & 0xFFE00000u) == 0xC0000000u)   // P3 mirror
@@ -399,29 +398,21 @@ static inline u8 *FastRamPtr(uint32_t addr) {
         return nvmem::getBiosData() + (addr & 0x001FFFFF);
     }
 
-    // Main RAM cached area P0: 0x00000000–0x0FFFFFFF (skip first 2 MiB BIOS shadow)
-    if (addr < 0x10000000u && addr >= 0x00200000u)
-    {
-        u32 off = addr & 0x00FFFFFFu; // mask to 16 MiB
-        return addrspace::ram_base + off;
-    }
+    // Remove the problematic P0 0x40000000 mirror - this might be I/O space
 
-    // Uncached mirrors in P1 (0x8C000000–0x8CFFFFFF) and P2 (0xAC000000–0xACFFFFFF)
-    if ((addr & 0xFF000000u) == 0x8C000000u || (addr & 0xFF000000u) == 0xAC000000u)
-    {
-        u32 off = addr & 0x00FFFFFFu;
-        return addrspace::ram_base + off;
-    }
-
-    // Main RAM physical window 0x0C000000–0x0FFFFFFF (26-bit mask)
+    // Main RAM P0: 0x0C000000–0x0FFFFFFF (physical window)
     if ((addr & 0xFC000000u) == 0x0C000000u)
         return addrspace::ram_base + (addr & 0x03FFFFFF);
 
-    // P4 SDRAM mirrors 0xF8xxxxxx–0xFExxxxxx (8 windows of 16 MiB)
-    if (addr >= 0xF8000000u && addr < 0xFF000000u)
-        return addrspace::ram_base + 0x0C000000 + (addr & 0x00FFFFFF);
+    // Cached P0 window: 0x00200000–0x0BFFFFFF (avoid BIOS region)
+    if (addr >= 0x00200000u && addr < 0x0C000000u)
+        return addrspace::ram_base + (addr - 0x00200000u);
 
-    return nullptr; // everything else is treated via MMU
+    // Uncached mirrors in P1/P2
+    if ((addr & 0xFF000000u) == 0x8C000000u || (addr & 0xFF000000u) == 0xAC000000u)
+        return addrspace::ram_base + (addr & 0x00FFFFFF);
+
+    return nullptr;
 #else
     return nullptr;
 #endif
@@ -444,24 +435,35 @@ static inline void LogHighR0(Sh4Context* c, uint32_t pc, Op op)
 
 static inline bool IsBiosAddr(uint32_t addr)
 {
+    // Only check known BIOS mirrors, exclude potentially problematic 0x40000000
     bool in_window = ((addr & 0xFFE00000u) == 0x00000000u ||
-                      (addr & 0xFFE00000u) == 0x40000000u ||
                       (addr & 0xFFE00000u) == 0x80000000u ||
                       (addr & 0xFFE00000u) == 0xA0000000u ||
                       (addr & 0xFFE00000u) == 0xC0000000u);
     if (!in_window)
         return false;
 
-    // Offset within 2 MiB ROM image
     uint32_t off = addr & 0x001FFFFF;
     return off >= 0x200; // <0x200 is writable on real HW
 }
 
+// Writes to the store-queue (first 0x300 bytes of P2 mirrors) are legal and
+// should silently succeed (they act as a write-combining buffer).  Treat them
+// as no-ops if we don't emulate the SQ yet.
+static inline bool IsStoreQueueAddr(uint32_t addr)
+{
+    // Expand store queue range - SH4 typically has larger SQ regions
+    return ((addr & 0xFFE00000u) == 0xA0000000u) && ((addr & 0x001FFFFF) < 0x1000);
+}
+
 static void LogIllegalBiosWrite(const Instr& ins, uint32_t addr, uint32_t pc)
 {
+    if (IsStoreQueueAddr(addr))
+        return; // valid SQ access – ignore
+
     static bool first = true;
     if (!first)
-        return; // log only the first occurrence to avoid flood
+        return; // log only the first true illegal access to avoid spam
     first = false;
     ERROR_LOG(SH4, "ILLEGAL BIOS WRITE attempt: PC=%08X raw=%04X op=%s addr=%08X", pc, ins.raw, GetOpName(static_cast<size_t>(ins.op)), addr);
 }
@@ -545,16 +547,24 @@ static inline void RawWrite8(uint32_t a, u8 d)
     }
 }
 
-static inline void RawWrite16(uint32_t a, u16 d)
-{
+static inline void RawWrite16(uint32_t a, u16 d) {
+    if (a >= 0x1f000000 && a <= 0x1f000018) {
+        ERROR_LOG(SH4, "Invalid P4 write (16-bit) addr=0x%08X, data=0x%08X, pc=0x%08X", a, d, next_pc);
+        // Could return early here to avoid the actual write
+        return;
+    }
     if (!g_exception_was_raised)
     {
         if (is_mmu_on()) mmu_WriteMem(a, d); else addrspace::write16(a, d);
     }
 }
 
-static inline void RawWrite32(uint32_t a, u32 d)
-{
+static inline void RawWrite32(uint32_t a, u32 d) {
+    if (a >= 0x1f000000 && a <= 0x1f000018) {
+        ERROR_LOG(SH4, "Invalid P4 write (16-bit) addr=0x%08X, data=0x%08X, pc=0x%08X", a, d, next_pc);
+        // Could return early here to avoid the actual write
+        return;
+    }
     if (!g_exception_was_raised)
     {
         if (is_mmu_on()) mmu_WriteMem(a, d); else addrspace::write32(a, d);
@@ -794,6 +804,24 @@ static void Exec_MOV_B_REG_PREDEC(const sh4::ir::Instr& ins, Sh4Context* ctx, ui
 }
 
 // PC-relative literal load (already present in big switch but add fast path)
+// -----------------------------------------------------------------------------
+// Helpers / validation
+// -----------------------------------------------------------------------------
+static inline bool IsValidMemoryAddress(uint32_t addr, const char* op_name, uint32_t pc)
+{
+    // Very low addresses (except exactly 0) are suspicious while BIOS boots
+    if (addr < 0x200 && addr != 0) {
+        ERROR_LOG(SH4, "BAD ADDRESS in %s: 0x%08X at PC=0x%08X", op_name, addr, pc);
+        return false;
+    }
+    // Mirror of P4 MMR in P1 – should never be accessed by normal STOREs
+    if (addr >= 0x1F000000 && addr <= 0x1F000018) {
+        ERROR_LOG(SH4, "HW REG ACCESS in %s: 0x%08X at PC=0x%08X", op_name, addr, pc);
+        return false;
+    }
+    return true;
+}
+
 static void Exec_LOAD32_PC(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t pc) {
     uint32_t base = (pc & ~3u) + 4u;
     uint32_t addr = base + (static_cast<uint32_t>(ins.extra) << 2);
@@ -1424,8 +1452,9 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
             return;
         }
         // Current PC before executing this instruction
-        uint32_t current_pc_addr = ctx->pc;
-        if (current_pc_addr == 0)
+        uint32_t pc_snapshot = next_pc; // capture current PC
+
+        if (pc_snapshot == 0)
         {
             ERROR_LOG(SH4, "*** PC reached 0! R0=%08X R1=%08X R2=%08X R3=%08X R4=%08X R5=%08X R6=%08X R7=%08X R8=%08X R9=%08X R10=%08X R11=%08X R12=%08X R13=%08X R14=%08X R15=%08X PR=%08X",
                       GET_REG(ctx, 0), GET_REG(ctx, 1), GET_REG(ctx, 2), GET_REG(ctx, 3), GET_REG(ctx, 4), GET_REG(ctx, 5), GET_REG(ctx, 6), GET_REG(ctx, 7), GET_REG(ctx, 8), GET_REG(ctx, 9), GET_REG(ctx, 10), GET_REG(ctx, 11), GET_REG(ctx, 12), GET_REG(ctx, 13), GET_REG(ctx, 14), GET_REG(ctx, 15), pr);
@@ -1438,7 +1467,7 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
 
         const Instr& ins = blk->code[ip++];
         // Record in circular trace buffer for post-mortem dumps
-        TraceLog(current_pc_addr, ins.op);
+        TraceLog(pc_snapshot, ins.op);
         // --- early-boot tracing
         // ------------------------------------------------
 #if 0
@@ -1462,11 +1491,11 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
         // Try fast table dispatch first
         {
           DEBUG_LOG(SH4, "Executing instruction at PC=%08X, op=%d hex=%04X (%s)",
-                   current_pc_addr, static_cast<int>(ins.op), ins.raw, GetOpName(static_cast<size_t>(ins.op)));
+                   next_pc, static_cast<int>(ins.op), ins.raw, GetOpName(static_cast<size_t>(ins.op)));
             ExecFn fn = GetExecFn(ins.op);
 // #ifdef IR_TRACE_EXEC
             DEBUG_LOG(SH4, "Executing instruction at PC=%08X, op=%d hex=%04X (%s), fn=%p, ExecStub=%p",
-                   current_pc_addr, static_cast<int>(ins.op), ins.raw, GetOpName(static_cast<size_t>(ins.op)), fn, ExecStub);
+                   next_pc, static_cast<int>(ins.op), ins.raw, GetOpName(static_cast<size_t>(ins.op)), fn, ExecStub);
 // #endif
             if (fn != &ExecStub)
             {
@@ -1552,8 +1581,10 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                     INFO_LOG(SH4, "STORE8 PRE-WRITE: R%u(0x%02X) intended for addr 0x%08X. (Rn=R%u@0x%08X, disp=%d)",
                              ins.src1.reg, val_to_store, addr,
                              ins.src2.reg, base, disp);
-                    if (unlikely(IsBiosAddr(addr))) {
-                        LogIllegalBiosWrite(ins, addr, curr_pc);
+                    if (unlikely(IsStoreQueueAddr(addr))) {
+                        // Store queue / scratchpad – currently unimplemented, ignore
+                    } else if (unlikely(IsBiosAddr(addr))) {
+                        LogIllegalBiosWrite(ins, addr, next_pc);
                     } else {
                         INFO_LOG(SH4, "STORE8 ACTUAL WRITE: Writing 0x%02X to 0x%08X", val_to_store, addr);
                         RawWrite8(addr, val_to_store);
@@ -1568,10 +1599,15 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                     INFO_LOG(SH4, "STORE16 PRE-WRITE: R%u(0x%04X) intended for addr 0x%08X. (Rn=R%u@0x%08X, disp=%d)",
                              ins.src1.reg, val_to_store, addr,
                              ins.src2.reg, GET_REG(ctx, ins.src2.reg), ins.extra);
-                    if (unlikely(IsBiosAddr(addr))) {
-                        LogIllegalBiosWrite(ins, addr, curr_pc);
+                    if (unlikely(IsStoreQueueAddr(addr))) {
+                        // SQ write: drop
+                    } else if (unlikely(IsBiosAddr(addr))) {
+                        LogIllegalBiosWrite(ins, addr, next_pc);
                     } else {
                         INFO_LOG(SH4, "STORE16 ACTUAL WRITE: Writing 0x%04X to 0x%08X", val_to_store, addr);
+                        if (!IsValidMemoryAddress(addr, "STORE16", next_pc)) {
+                            break;
+                        }
                         RawWrite16(addr, val_to_store);
                     }
                     break;
@@ -1592,10 +1628,15 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                            ins.src1.reg, val_to_store, ins.src2.reg, GET_REG(ctx, ins.src2.reg), addr);
                     fflush(stdout);
 
-                    if (unlikely(IsBiosAddr(addr))) {
-                        LogIllegalBiosWrite(ins, addr, curr_pc);
+                    if (unlikely(IsStoreQueueAddr(addr))) {
+                        // SQ write – ignore
+                    } else if (unlikely(IsBiosAddr(addr))) {
+                        LogIllegalBiosWrite(ins, addr, next_pc);
                     } else {
-                        INFO_LOG(SH4, "STORE32 ACTUAL WRITE: Writing 0x%08X to 0x%08X", val_to_store, addr);
+                        INFO_LOG(SH4, "STORE32 PRE-WRITE: R%u intended for addr 0x%08X", ins.src1.reg, addr);
+                                    if (!IsValidMemoryAddress(addr, "STORE32", next_pc)) {
+                            break;
+                        }
                         RawWrite32(addr, val_to_store);
                     }
                     break;
@@ -1610,8 +1651,10 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                              ins.src1.reg, val_to_store,
                              ins.src2.reg, ins.src2.reg, GET_REG(ctx, ins.src2.reg), addr);
 
-                    if (unlikely(IsBiosAddr(addr))) {
-                        LogIllegalBiosWrite(ins, addr, curr_pc);
+                    if (unlikely(IsStoreQueueAddr(addr))) {
+                        // SQ write – ignore
+                    } else if (unlikely(IsBiosAddr(addr))) {
+                        LogIllegalBiosWrite(ins, addr, next_pc);
                     } else {
                         RawWrite8(addr, val_to_store);
                     }
@@ -1628,7 +1671,7 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                              ins.src2.reg, ins.src2.reg, GET_REG(ctx, ins.src2.reg), addr);
 
                     if (unlikely(IsBiosAddr(addr))) {
-                        LogIllegalBiosWrite(ins, addr, curr_pc);
+                        LogIllegalBiosWrite(ins, addr, next_pc);
                     } else {
                         WriteAligned16(addr, val_to_store);
                     }
@@ -1645,7 +1688,7 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                              ins.src2.reg, ins.src2.reg, GET_REG(ctx, ins.src2.reg), addr);
 
                     if (unlikely(IsBiosAddr(addr))) {
-                        LogIllegalBiosWrite(ins, addr, curr_pc);
+                        LogIllegalBiosWrite(ins, addr, next_pc);
                     } else {
                         WriteAligned32(addr, val_to_store);
                     }
@@ -1867,7 +1910,7 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                     if (u8* p = FastRamPtr(addr))
                         *p = static_cast<u8>(GET_REG(ctx, ins.src1.reg));
                     else if (IsBiosAddr(addr)) {
-                         LogIllegalBiosWrite(ins, addr, curr_pc);
+                         LogIllegalBiosWrite(ins, addr, next_pc);
                      } else
                          RawWrite8(addr, GET_REG(ctx, ins.src1.reg));
                     if (ins.dst.reg != ins.src1.reg)
@@ -1878,7 +1921,7 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                 {
                     uint32_t addr = GET_REG(ctx, ins.dst.reg);
                     if (unlikely(IsBiosAddr(addr))) {
-                        LogIllegalBiosWrite(ins, addr, curr_pc);
+                        LogIllegalBiosWrite(ins, addr, next_pc);
                     } else {
                         WriteAligned16(addr, static_cast<u16>(GET_REG(ctx, ins.src1.reg)));
                     }
@@ -1890,7 +1933,7 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                 {
                     uint32_t addr = GET_REG(ctx, ins.dst.reg);
                     if (unlikely(IsBiosAddr(addr))) {
-                        LogIllegalBiosWrite(ins, addr, curr_pc);
+                        LogIllegalBiosWrite(ins, addr, next_pc);
                     } else {
                         WriteAligned32(addr, GET_REG(ctx, ins.src1.reg));
                     }
@@ -2293,11 +2336,11 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                         case 14: val_to_store = r_bank[6]; break; // R6_BANK
                         case 15: val_to_store = r_bank[7]; break; // R7_BANK
                         default:
-                            ERROR_LOG(SH4, "STC: Unhandled ins.extra=0x%X for Rn=R%d at PC=0x%08X", ins.extra, ins.dst.reg, current_pc_addr);
-                            throw SH4ThrownException(current_pc_addr, Sh4Ex_IllegalInstr);
+                            ERROR_LOG(SH4, "STC: Unhandled ins.extra=0x%X for Rn=R%d at PC=0x%08X", ins.extra, ins.dst.reg, next_pc);
+                            throw SH4ThrownException(next_pc, Sh4Ex_IllegalInstr);
                     }
                     SET_REG(ctx, ins.dst.reg, val_to_store);
-                    DEBUG_LOG(SH4, "Executor: STC [extra=0x%X] -> R%d (val=0x%08X) at PC=0x%08X", ins.extra, ins.dst.reg, val_to_store, current_pc_addr);
+                    DEBUG_LOG(SH4, "Executor: STC [extra=0x%X] -> R%d (val=0x%08X) at PC=0x%08X", ins.extra, ins.dst.reg, val_to_store, next_pc);
                     break;
                 }
                 case Op::LDC: // LDC Rm, <CR>
@@ -2939,7 +2982,7 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                 case Op::LOAD32_PC:
                 {
                     uint32_t disp8 = static_cast<uint32_t>(ins.extra);
-                    uint32_t base_pc = ins.pc;                // PC of this instruction
+                    uint32_t base_pc = next_pc;        // Use currently executing PC
                     uint32_t base = (base_pc & ~3u) + 4u;     // Align and add 4 per SH4 spec
                     uint32_t mem_addr = base + (disp8 << 2);
                     uint32_t val = ReadAligned32(mem_addr);
@@ -2961,8 +3004,8 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                 case Op::LOAD16_PC:
                 {
                     uint32_t disp8 = static_cast<uint32_t>(ins.extra);
-                    uint32_t base_pc = ins.pc;                // PC of this instruction
-                    uint32_t base = (base_pc & ~1u) + 4u;     // Align and add 4 per SH4 spec
+                    uint32_t base_pc = next_pc;        // Use currently executing PC
+                    uint32_t base = (base_pc & ~3u) + 4u;     // Align to 4-byte boundary and add 4 per SH-4 spec
                     uint32_t mem_addr = base + (disp8 << 1);  // Scale by 2 for word addressing
                     u16 val = ReadAligned16(mem_addr);
                     uint32_t old_reg = GET_REG(ctx, ins.dst.reg);
@@ -2970,13 +3013,14 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
 
                     // Enhanced debug logging
                     printf("[PRINTF_DEBUG_LOAD16_PC] PC=%08X, raw=0x%04X, dst=R%u, base_pc=%08X, aligned_base=%08X, disp=%u, addr=%08X, val=0x%04X, sign_ext=0x%08X, old_reg=0x%08X\n",
-                           curr_pc, ins.raw, ins.dst.reg, base_pc, base, disp8, mem_addr, val, GET_REG(ctx, ins.dst.reg), old_reg);
+                           curr_pc, ins.raw, ins.dst.reg, base_pc, base, disp8, mem_addr, val, static_cast<uint32_t>(static_cast<int16_t>(val)), old_reg);
                     printf("[PRINTF_DEBUG_LOAD16_PC] Register state: R0-R7: %08X %08X %08X %08X %08X %08X %08X %08X\n",
                            GET_REG(ctx, 0), GET_REG(ctx, 1), GET_REG(ctx, 2), GET_REG(ctx, 3), GET_REG(ctx, 4), GET_REG(ctx, 5), GET_REG(ctx, 6), GET_REG(ctx, 7));
                     fflush(stdout);
 
                     INFO_LOG(SH4, "LOAD16_PC: Loaded 0x%04X (sign-ext: 0x%08X) into R%u from addr 0x%08X (PC=%08X, disp=%d)",
-                             val, GET_REG(ctx, ins.dst.reg), ins.dst.reg, mem_addr, curr_pc, disp8);
+                             val, static_cast<uint32_t>(static_cast<int16_t>(val)), ins.dst.reg, mem_addr, curr_pc, disp8);
+                             /* duplicate old log removed */
                     break;
                 }
                 case Op::FMOV_LOAD_R0:
@@ -3083,32 +3127,32 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                 }
                 case Op::ILLEGAL:
                        {
-                           uint16_t raw16 = RawRead16(current_pc_addr);
-                           ERROR_LOG(SH4, "IR executor trapped ILLEGAL opcode raw=%04X at PC=%08X", raw16, current_pc_addr);
+                           uint16_t raw16 = RawRead16(next_pc);
+                           ERROR_LOG(SH4, "IR executor trapped ILLEGAL opcode raw=%04X at PC=%08X", raw16, next_pc);
                            // Dump once per unique illegal opcode
                            static std::unordered_set<uint32_t> illegal_seen;
-                           uint32_t key = (raw16 << 16) | (current_pc_addr & 0xFFFF);
+                           uint32_t key = (raw16 << 16) | (next_pc & 0xFFFF);
                            sh4::ir::DumpTrace();
                            raise(SIGTRAP);
                            // Abort execution so caller (emulator/tests) can catch and investigate
-                           throw SH4ThrownException(current_pc_addr, Sh4Ex_IllegalInstr);
+                           throw SH4ThrownException(next_pc, Sh4Ex_IllegalInstr);
                        }
                 default:
                       {
-                          uint16_t raw16 = RawRead16(current_pc_addr);
+                          uint16_t raw16 = RawRead16(next_pc);
                           // If this is an FPU group opcode (0xFxxx) and interpreter is available
                           if ((raw16 & 0xF000) == 0xF000)
                           {
-                              DEBUG_LOG(SH4, "IR fallback to interpreter FPU for raw=%04X at PC=%08X", raw16, current_pc_addr);
+                              DEBUG_LOG(SH4, "IR fallback to interpreter FPU for raw=%04X at PC=%08X", raw16, next_pc);
                               ExecuteOpcode(raw16); // advances PC internally
                               SyncCtxFromGlobals(ctx);
                               return; // leave block; new block will be fetched next tick
                           }
-                          ERROR_LOG(SH4, "IR executor fell through: raw=%04X pc=%08X", raw16, current_pc_addr);
-                          ERROR_LOG(SH4, "IR executor unimplemented opcode %s (%zu) at %08X", GetOpName(static_cast<size_t>(ins.op)), static_cast<size_t>(ins.op), current_pc_addr);
+                          ERROR_LOG(SH4, "IR executor fell through: raw=%04X pc=%08X", raw16, next_pc);
+                          ERROR_LOG(SH4, "IR executor unimplemented opcode %s (%zu) at %08X", GetOpName(static_cast<size_t>(ins.op)), static_cast<size_t>(ins.op), next_pc);
                           sh4::ir::DumpTrace();
                           raise(SIGTRAP);
-                          throw SH4ThrownException(current_pc_addr, Sh4Ex_IllegalInstr);
+                          throw SH4ThrownException(next_pc, Sh4Ex_IllegalInstr);
                       }
                 } // end switch (ins.op)
             } // end else dispatch
@@ -3150,9 +3194,9 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
             else if (idle_run > 64)
             {
                 // Only throw exception after 64 consecutive NOPs/ENDs
-                ERROR_LOG(SH4, "*** Executed %d consecutive END/NOP from %08X – likely ran off real code", idle_run, current_pc_addr);
+                ERROR_LOG(SH4, "*** Executed %d consecutive END/NOP from %08X – likely ran off real code", idle_run, next_pc);
                 sh4::ir::DumpTrace();
-                throw SH4ThrownException(current_pc_addr, Sh4Ex_IllegalInstr);
+                throw SH4ThrownException(next_pc, Sh4Ex_IllegalInstr);
             }
         }
         else

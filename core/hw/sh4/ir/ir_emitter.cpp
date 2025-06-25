@@ -1436,7 +1436,7 @@ Block& Emitter::CreateNew(uint32_t pc) {
             decoded = true;
             blk.pcNext = pc + 2;
         }
-        // MOV.B/W/L Rm, @(R0, Rn)
+        // MOV.B/W/L Rm, @(R0, Rn)  -- 0x0*** forms (already handled below)
         else if ((raw & 0xF00F) == 0x0004 || (raw & 0xF00F) == 0x0005 || (raw & 0xF00F) == 0x0006)
         {
             uint8_t type = raw & 0xF;
@@ -1458,6 +1458,29 @@ Block& Emitter::CreateNew(uint32_t pc) {
                 INFO_LOG(SH4, "Emitter: Decoded STORE32_R0_REG R%d, @(R0,R%d) (0x%04X) at PC=0x%08X", m, n, raw, pc);
             }
             decoded = true;
+            blk.pcNext = pc + 2;
+        }
+          // MOV.B/W/L Rm,@(R0,Rn)  — register-indexed form with leading ‘8’
+        //  pattern: 1000 nnnn mmmm 0x?6  (type 0x4=byte, 0x5=word, 0x6=long)
+        else if ((raw & 0xF000) == 0x8000 &&
+                 ((raw & 0x000F) == 0x4 || (raw & 0x000F) == 0x5 || (raw & 0x000F) == 0x6))
+        {
+            uint8_t n    = (raw >> 8) & 0xF;   // base register Rn
+            uint8_t m    = (raw >> 4) & 0xF;   // source register Rm
+            uint8_t type =  raw        & 0xF;  // 0x4 / 0x5 / 0x6
+
+            ins.src1.isImm = false;  ins.src1.reg = m;  // value
+            ins.src2.isImm = false;  ins.src2.reg = n;  // base
+            ins.extra      = 0;                        // R0-indexed (no disp)
+
+            if (type == 0x4)      ins.op = Op::STORE8_R0;
+            else if (type == 0x5) ins.op = Op::STORE16_R0;
+            else                  ins.op = Op::STORE32_R0;
+
+            INFO_LOG(SH4, "Emitter: Decoded op=%u R%d,@(R0,R%d) (%04X) PC=%08X",
+                     static_cast<unsigned>(ins.op), m, n, raw, pc);
+
+            decoded   = true;
             blk.pcNext = pc + 2;
         }
         // MOV.L Rm,@(disp,Rn) (0x1nmD)
