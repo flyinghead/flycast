@@ -703,6 +703,75 @@ static bool FastDecode(uint16_t raw, uint32_t pc, Instr &ins, Block &blk)
         blk.pcNext = pc + 2;
         return true;
     }
+    // MOV.W @Rm+,Rn (0x6nm5)
+    else if ((raw & 0xF00F) == 0x6005)
+    {
+        uint8_t n = (raw >> 8) & 0xF;
+        uint8_t m = (raw >> 4) & 0xF;
+        ins.op = Op::LOAD16_POST;
+        ins.dst.isImm = false; ins.dst.reg = n;
+        ins.src1.isImm = false; ins.src1.reg = m;
+        blk.pcNext = pc + 2;
+        return true;
+    }
+    // AND Rm, Rn (0x2nm9)
+    else if ((raw & 0xF00F) == 0x2009)
+    {
+        uint8_t n = (raw >> 8) & 0xF;
+        uint8_t m = (raw >> 4) & 0xF;
+        ins.op = Op::AND_REG;
+        ins.dst.isImm = false; ins.dst.reg = n;
+        ins.src1.isImm = false; ins.src1.reg = m;
+        blk.pcNext = pc + 2;
+        return true;
+    }
+    // MUL.L Rm, Rn (0x2nm7)
+    else if ((raw & 0xF00F) == 0x2007)
+    {
+        uint8_t n = (raw >> 8) & 0xF;
+        uint8_t m = (raw >> 4) & 0xF;
+        ins.op = Op::MUL_L;
+        ins.dst.isImm = false; ins.dst.reg = n;
+        ins.src1.isImm = false; ins.src1.reg = m;
+        blk.pcNext = pc + 2;
+        return true;
+    }
+    // CMP/PL Rn (0x4n05)
+    else if ((raw & 0xF0FF) == 0x4005)
+    {
+        uint8_t n = (raw >> 8) & 0xF;
+        ins.op = Op::CMP_PL;
+        ins.dst.isImm = false; ins.dst.reg = n;
+        blk.pcNext = pc + 2;
+        return true;
+    }
+    // ROTL Rn (0x4n04)
+    else if ((raw & 0xF0FF) == 0x4004)
+    {
+        uint8_t n = (raw >> 8) & 0xF;
+        ins.op = Op::ROTL;
+        ins.dst.isImm = false; ins.dst.reg = n;
+        blk.pcNext = pc + 2;
+        return true;
+    }
+    // ROTR Rn (0x4n06)
+    else if ((raw & 0xF0FF) == 0x4006)
+    {
+        uint8_t n = (raw >> 8) & 0xF;
+        ins.op = Op::ROTR;
+        ins.dst.isImm = false; ins.dst.reg = n;
+        blk.pcNext = pc + 2;
+        return true;
+    }
+    // SHAR Rn (0x4n21)
+    else if ((raw & 0xF0FF) == 0x4021)
+    {
+        uint8_t n = (raw >> 8) & 0xF;
+        ins.op = Op::SAR1;
+        ins.dst.isImm = false; ins.dst.reg = n;
+        blk.pcNext = pc + 2;
+        return true;
+    }
     // NEG Rm, Rn (0x6nmB)
     else if ((raw & 0xF00F) == 0x600B)
     {
@@ -862,6 +931,13 @@ static bool FastDecode(uint16_t raw, uint32_t pc, Instr &ins, Block &blk)
         blk.pcNext = pc + 2;
         return true;
     }
+
+    // Debug: log key opcodes
+    if (raw == 0x6439) INFO_LOG(SH4, "DEBUG: 0x6439 - should match MOV.W @Rm+,Rn pattern");
+    if (raw == 0x240A) INFO_LOG(SH4, "DEBUG: 0x240A - should match AND Rm,Rn pattern");
+    if (raw == 0x8B77) INFO_LOG(SH4, "DEBUG: 0x8B77 - should match BF pattern");
+    if (raw == 0x1304) INFO_LOG(SH4, "DEBUG: 0x1304 - should match MOV.L store pattern");
+    if (raw == 0x7129) INFO_LOG(SH4, "DEBUG: 0x7129 - should match ADD #imm pattern");
 
     Op op = static_cast<Op>(kEmitterTable[raw]);
     if (op == Op::ILLEGAL)
