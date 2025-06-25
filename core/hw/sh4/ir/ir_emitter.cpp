@@ -1047,6 +1047,63 @@ Block& Emitter::CreateNew(uint32_t pc) {
                 blk.pcNext = next_pc_addr; // could not decode
             }
 
+                        // Coalescing loop: keep decoding straight-line instructions
+            uint32_t curr_pc_addr = blk.pcNext == 0 ? (pc + 2) : blk.pcNext;
+            static constexpr size_t kMaxInstrPerBlock = 64;
+            while (blk.code.size() < kMaxInstrPerBlock)
+            {
+                // Stop if previous instruction was a control-flow that already changed pcNext (branch, rts, etc.)
+                if (blk.pcNext != curr_pc_addr)
+                    break; // pcNext already diverged – control-flow boundary reached
+
+                uint16_t next_raw = mmu_IReadMem16(curr_pc_addr);
+                Instr next_ins{}; // clear
+                Block scratch_blk; // temporary for FastDecode (fills blk.pcNext)
+                bool decoded_ok = FastDecode(next_raw, curr_pc_addr, next_ins, scratch_blk);
+
+                if (!decoded_ok || next_ins.op == Op::ILLEGAL)
+                    break; // do not extend past undecoded/illegal instruction (executor will trap if needed)
+
+                // If FastDecode handled, next_ins may lack PC/raw details until we set them.
+                next_ins.pc  = curr_pc_addr;
+                next_ins.raw = next_raw;
+                blk.code.push_back(next_ins);
+
+                // Update blk.pcNext to whatever FastDecode decided – for straight-line it will be curr_pc+2.
+                blk.pcNext = scratch_blk.pcNext ? scratch_blk.pcNext : (curr_pc_addr + 2);
+
+                // Handle delay slot: if instruction has delay slot (pcNext == curr_pc + 4)
+                if (blk.pcNext == curr_pc_addr + 4)
+                {
+                    uint32_t slot_pc  = curr_pc_addr + 2;
+                    uint16_t slot_raw = mmu_IReadMem16(slot_pc);
+                    Instr slot{};
+                    Block dummy_slot_blk;
+                    bool slot_ok = FastDecode(slot_raw, slot_pc, slot, dummy_slot_blk);
+                    if (!slot_ok || slot.op == Op::ILLEGAL)
+                    {
+                        // Try minimal manual decode of MOV_REG delay slot to keep common branches working
+                        if ((slot_raw & 0xF00F) == 0x6003)
+                        {
+                            slot.op = Op::MOV_REG;
+                            slot.dst.isImm = false; slot.dst.reg = (slot_raw >> 8) & 0xF;
+                            slot.src1.isImm = false; slot.src1.reg = (slot_raw >> 4) & 0xF;
+                        }
+                        else
+                        {
+                            break; // cannot decode delay slot – stop block here
+                        }
+                    }
+                    slot.pc  = slot_pc;
+                    slot.raw = slot_raw;
+                    blk.code.push_back(slot);
+                    // blk.pcNext already set by branch (curr_pc +4) or dummy_slot_blk.pcNext as appropriate
+                }
+
+                // Advance curr_pc to blk.pcNext (straight-line case curr_pc+2)
+                curr_pc_addr = blk.pcNext;
+            }
+
             // END sentinel so executor stops at blk.pcNext.
             Instr end{};
             end.op = Op::END;
