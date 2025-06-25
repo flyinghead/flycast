@@ -19,6 +19,8 @@
 #include <csignal>
 #include "hw/sh4/sh4_interrupts.h"
 
+#define IR_TRACE_EXEC 1
+
 // Undefine global macros from sh4_core.h to prevent conflicts
 #ifdef r
 #undef r
@@ -1659,9 +1661,10 @@ static void InitExecTable()
     g_exec_table[static_cast<int>(sh4::ir::Op::BT)]       = &Exec_BT;
     // Variable shift
     g_exec_table[static_cast<int>(sh4::ir::Op::SHR_OP)]   = &Exec_SHR_OP;
-    g_exec_table[static_cast<int>(sh4::ir::Op::JMP)]       = nullptr; // use generic path for correct delay slot
-    g_exec_table[static_cast<int>(sh4::ir::Op::JSR)]       = nullptr;
-    g_exec_table[static_cast<int>(sh4::ir::Op::RTS)]       = nullptr;
+    // Use generic path via ExecStub so switch-case handles delay-slot branches safely
+    g_exec_table[static_cast<int>(sh4::ir::Op::JMP)]       = &ExecStub;
+    g_exec_table[static_cast<int>(sh4::ir::Op::JSR)]       = &ExecStub;
+    g_exec_table[static_cast<int>(sh4::ir::Op::RTS)]       = &ExecStub;
     // STC and MOV.B @-Rn
     g_exec_table[static_cast<int>(sh4::ir::Op::STC)]      = &Exec_STC;
     g_exec_table[static_cast<int>(sh4::ir::Op::MOV_B_REG_PREDEC)] = &Exec_MOV_B_REG_PREDEC;
@@ -1809,10 +1812,10 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
           DEBUG_LOG(SH4, "Executing instruction at PC=%08X, op=%d hex=%04X (%s)",
                    next_pc, static_cast<int>(ins.op), ins.raw, GetOpName(static_cast<size_t>(ins.op)));
             ExecFn fn = GetExecFn(ins.op);
-// #ifdef IR_TRACE_EXEC
+#if IR_TRACE_EXEC
             DEBUG_LOG(SH4, "Executing instruction at PC=%08X, op=%d hex=%04X (%s), fn=%p, ExecStub=%p",
                    next_pc, static_cast<int>(ins.op), ins.raw, GetOpName(static_cast<size_t>(ins.op)), fn, ExecStub);
-// #endif
+#endif
             if (fn != &ExecStub)
             {
                 fn(ins, ctx, curr_pc);
