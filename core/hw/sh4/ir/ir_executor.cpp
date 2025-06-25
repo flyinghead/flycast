@@ -1307,6 +1307,7 @@ static void Exec_FIPR(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
     const u8 m = ins.src1.reg;
     const u8 n = ins.dst.reg;
 
+    // TODO: SIMD this on ARM?
     float sum = 0.0f;
     for (int i = 0; i < 4; ++i) {
         sum += GET_FR(ctx, m + i) * GET_FR(ctx, n + i);
@@ -1314,6 +1315,31 @@ static void Exec_FIPR(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
     SET_FR(ctx, n, sum);
 
     INFO_LOG(SH4, "Exec_FIPR: dst FR%u <- dot(FR%u..FR%u, FR%u..FR%u) = %.6f", n, m, m+3, n, n+3, sum);
+}
+
+// SHAD Rm,Rn - Arithmetic/Logical shift based on sign of Rm
+static void Exec_SHAD(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
+{
+    u32 n = ins.dst.reg;
+    u32 m = ins.src1.reg;
+    u32 shift = GET_REG(ctx, m) & 0x1F;
+    if ((GET_REG(ctx, m) & 0x80000000) == 0)
+    {
+        // Left logical shift
+        SET_REG(ctx, n, GET_REG(ctx, n) << shift);
+    }
+    else
+    {
+        if (shift == 0)
+        {
+            // All bits set to sign bit
+            SET_REG(ctx, n, static_cast<u32>(static_cast<s32>(GET_REG(ctx, n)) >> 31));
+        }
+        else
+        {
+            SET_REG(ctx, n, static_cast<u32>(static_cast<s32>(GET_REG(ctx, n)) >> ((~GET_REG(ctx, m) & 0x1F) + 1)));
+        }
+    }
 }
 
 // SUB Rm,Rn - Subtract
@@ -1764,6 +1790,7 @@ static void InitExecTable()
     g_exec_table[static_cast<int>(sh4::ir::Op::AND_IMM)]  = &Exec_AND_IMM;
     g_exec_table[static_cast<int>(sh4::ir::Op::AND_REG)]  = &Exec_AND_REG;
     g_exec_table[static_cast<int>(sh4::ir::Op::OR_IMM)]   = &Exec_OR_IMM;
+    g_exec_table[static_cast<int>(sh4::ir::Op::SHAD)]     = &Exec_SHAD;
 
     // Compare ops
     g_exec_table[static_cast<int>(sh4::ir::Op::CMP_EQ)]      = &Exec_CMP_EQ;

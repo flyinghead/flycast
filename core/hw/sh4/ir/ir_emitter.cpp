@@ -628,17 +628,30 @@ static bool FastDecode(uint16_t raw, uint32_t pc, Instr &ins, Block &blk)
         DEBUG_LOG(SH4, "FastDecode: CMP/STR R%u,R%u (0x%04X)", m, n, raw);
         return true;
     }
-    // CMP/EQ Rm,Rn (0x3nm0) - for 0x3400 (CMP/EQ R0,R4)
+    // CMP/EQ Rm,Rn (0x3nm0)
     else if ((raw & 0xF00F) == 0x3000)
     {
         uint8_t n = (raw >> 8) & 0xF;
         uint8_t m = (raw >> 4) & 0xF;
         ins.op = Op::CMP_EQ;
-        ins.dst.isImm = false; ins.dst.reg = n;
-        ins.src1.isImm = false; ins.src1.reg = m;
-        ins.src2.isImm = false; ins.src2.reg = n;
+        ins.dst = {false, n};
+        ins.src1 = {false, m};
+        ins.src2 = {false, n};
         blk.pcNext = pc + 2;
         DEBUG_LOG(SH4, "FastDecode: CMP/EQ R%u,R%u (0x%04X)", m, n, raw);
+        return true;
+    }
+    // CMP/HS Rm,Rn (0x3nm1)
+    else if ((raw & 0xF00F) == 0x3001)
+    {
+        uint8_t n = (raw >> 8) & 0xF;
+        uint8_t m = (raw >> 4) & 0xF;
+        ins.op = Op::CMP_HS;
+        ins.dst = {false, n};
+        ins.src1 = {false, m};
+        ins.src2 = {false, n};
+        blk.pcNext = pc + 2;
+        DEBUG_LOG(SH4, "FastDecode: CMP/HS R%u,R%u (0x%04X)", m, n, raw);
         return true;
     }
 
@@ -1173,6 +1186,17 @@ static bool FastDecode(uint16_t raw, uint32_t pc, Instr &ins, Block &blk)
         ins.src2.isImm = false; ins.src2.reg = n;
         ins.extra = disp * 4;
         blk.pcNext = pc + 2;
+        return true;
+    }
+    // SHAD Rm,Rn  (0x4nmC)
+    else if ((raw & 0xF00F) == 0x400C) {
+        uint8_t n = (raw >> 8) & 0xF;
+        uint8_t m = (raw >> 4) & 0xF;
+        ins.op = Op::SHAD;
+        ins.dst = {false, n};
+        ins.src1 = {false, m};
+        blk.pcNext = pc + 2;
+        DEBUG_LOG(SH4, "FastDecode: SHAD R%u,R%u (0x%04X)", m, n, raw);
         return true;
     }
     // FIPR FRm,FRn  (0xFnmF)
