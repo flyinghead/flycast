@@ -850,6 +850,37 @@ static void Exec_JSR(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t pc) {
 }
 
 // RTS – return from sub-routine (jump to PR)
+#ifdef ssr
+#undef ssr
+#endif
+#ifdef spc
+#undef spc
+#endif
+static void Exec_TRAPA(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t pc)
+{
+    // Save context for exception return
+    ctx->ssr = ctx->sr.status;
+    ctx->spc = pc + 2;
+
+    // Set SR to privileged, interrupt-disabled state
+    ctx->sr.MD = 1;
+    ctx->sr.BL = 1;
+    ctx->sr.RB = 1; // Switch to register bank 1
+
+    // Store the trap number in CCN_TRA (hardware register, shifted left by 2)
+    CCN_TRA = (ins.src1.imm & 0xFF) << 2;
+
+    // Set the exception event code for TRAPA (0x160)
+    CCN_EXPEVT = 0x160;
+
+    // Jump to the TRAPA exception handler vector (VBR + 0x100)
+    uint32_t handler_pc = RawRead32(ctx->vbr + 0x100);
+    SetPC(ctx, handler_pc, "TRAPA");
+}
+#define ssr Sh4cntx.ssr
+#define spc Sh4cntx.spc
+
+
 static void Exec_RTS(const sh4::ir::Instr&, Sh4Context* ctx, uint32_t) {
 #ifdef pr
 #undef pr
@@ -1696,6 +1727,7 @@ static void InitExecTable()
     g_exec_table[static_cast<int>(sh4::ir::Op::SAR1)]     = &Exec_SAR1;
     g_exec_table[static_cast<int>(sh4::ir::Op::SAR_OP)]   = &Exec_SAR_OP;
     g_exec_table[static_cast<int>(sh4::ir::Op::SWAP_W)]   = &Exec_SWAP_W;
+    g_exec_table[static_cast<int>(sh4::ir::Op::TRAPA)]    = &Exec_TRAPA;
     // Logic ops
     g_exec_table[static_cast<int>(sh4::ir::Op::XOR_REG)]  = &Exec_XOR_REG;
     g_exec_table[static_cast<int>(sh4::ir::Op::AND_IMM)]  = &Exec_AND_IMM;

@@ -1120,6 +1120,62 @@ static bool FastDecode(uint16_t raw, uint32_t pc, Instr &ins, Block &blk)
         return true;
     }
 
+    // TRAPA #imm8 : 0xC3??
+    else if ((raw & 0xFF00) == 0xC300)
+    {
+        ins.op = Op::TRAPA;
+        ins.src1.isImm = true;
+        ins.src1.imm   = static_cast<int8_t>(raw & 0xFF);
+        ins.raw        = raw;
+        blk.pcNext     = pc + 2; // no delay slot
+        DEBUG_LOG(SH4, "FastDecode: TRAPA #%02X (0x%04X)", ins.src1.imm & 0xFF, raw);
+        return true;
+    }
+    // MOV.L Rm,@(R0,Rn) (0x0nm0)
+    else if ((raw & 0xF00F) == 0x0000) {
+        uint8_t n = (raw >> 8) & 0xF;
+        uint8_t m = (raw >> 4) & 0xF;
+        ins.op = Op::STORE32_Rm_R0RN;
+        ins.src1.isImm = false; ins.src1.reg = m;
+        ins.src2.isImm = false; ins.src2.reg = n;
+        blk.pcNext = pc + 2;
+        return true;
+    }
+    // MOV.W Rm,@(R0,Rn) (0x4nm1) -> Store 16-bit value with R0 offset
+    else if ((raw & 0xF00F) == 0x4001) {
+        uint8_t n = (raw >> 8) & 0xF;
+        uint8_t m = (raw >> 4) & 0xF;
+        ins.op = Op::STORE16_Rm_R0RN;
+        ins.src1.isImm = false; ins.src1.reg = m; // value
+        ins.src2.isImm = false; ins.src2.reg = n; // base
+        blk.pcNext = pc + 2;
+        DEBUG_LOG(SH4, "FastDecode: MOV.W R%u,@(R0,R%u) (0x%04X)", m, n, raw);
+        return true;
+    }
+    // MOV.L R0,@(disp,Rn) (0x0n0d)
+    else if ((raw & 0xF0F0) == 0x0000) {
+        uint8_t n = (raw >> 8) & 0xF;
+        uint8_t disp = (raw >> 4) & 0xF;
+        ins.op = Op::STORE32_R0;
+        ins.src1.isImm = false; ins.src1.reg = 0;
+        ins.src2.isImm = false; ins.src2.reg = n;
+        ins.extra = disp * 4;
+        blk.pcNext = pc + 2;
+        return true;
+    }
+    // FMOV.S @Rm+, FRn (0xFnm9)
+    else if ((raw & 0xF00F) == 0xF009) {
+        uint8_t n = (raw >> 8) & 0xF;
+        uint8_t m = (raw >> 4) & 0xF;
+        ins.op = Op::FMOV; // Use the standard FMOV opcode
+        ins.dst.isImm = false; ins.dst.reg = n; // FRn
+        ins.src1.isImm = false; ins.src1.reg = m; // Rm
+        ins.extra = 4; // Indicate post-increment by 4 bytes
+        blk.pcNext = pc + 2;
+        DEBUG_LOG(SH4, "FastDecode: FMOV.S @R%u+, FR%u (0x%04X)", m, n, raw);
+        return true;
+    }
+
     // Debug: log key opcodes
     if (raw == 0x6439) INFO_LOG(SH4, "DEBUG: 0x6439 - should match MOV.W @Rm+,Rn pattern");
     if (raw == 0x240A) INFO_LOG(SH4, "DEBUG: 0x240A - should match AND Rm,Rn pattern");
