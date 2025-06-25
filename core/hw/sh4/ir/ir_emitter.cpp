@@ -798,6 +798,7 @@ static bool FastDecode(uint16_t raw, uint32_t pc, Instr &ins, Block &blk)
         ins.op = Op::AND_REG;
         ins.dst.isImm = false; ins.dst.reg = n;
         ins.src1.isImm = false; ins.src1.reg = m;
+        ins.src2.isImm = false; ins.src2.reg = n;
         blk.pcNext = pc + 2;
         return true;
     }
