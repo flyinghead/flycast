@@ -525,16 +525,27 @@ static bool FastDecode(uint16_t raw, uint32_t pc, Instr &ins, Block &blk)
         blk.pcNext = pc + 2;
         return true;
     }
-    // MOV.W @Rm+,Rn 0x6nm5
-    else if ((raw & 0xF00F) == 0x6005) {
-        uint8_t n = (raw >> 8) & 0xF;
-        uint8_t m = (raw >> 4) & 0xF;
-        ins.op = Op::LOAD16_POST;
-        ins.dst = {false, n};
-        ins.src1 = {false, m};
-        blk.pcNext = pc + 2;
-        return true;
-    }
+    // // MOV.W @Rm+,Rn 0x6nm5
+    // else if ((raw & 0xF00F) == 0x6005) {
+    //     uint8_t n = (raw >> 8) & 0xF;
+    //     uint8_t m = (raw >> 4) & 0xF;
+    //     ins.op = Op::LOAD16_POST;
+    //     ins.dst = {false, n};
+    //     ins.src1 = {false, m};
+    //     blk.pcNext = pc + 2;
+    //     return true;
+    // }
+    // // MOV.W @Rm+,Rn (0x6nm5)
+    // else if ((raw & 0xF00F) == 0x6005)
+    // {
+    //     uint8_t n = (raw >> 8) & 0xF;
+    //     uint8_t m = (raw >> 4) & 0xF;
+    //     ins.op = Op::LOAD16_POST;
+    //     ins.dst.isImm = false; ins.dst.reg = n;
+    //     ins.src1.isImm = false; ins.src1.reg = m;
+    //     blk.pcNext = pc + 2;
+    //     return true;
+    // }
     // MOV.B @(Rm,Rn),R0  (0x00mn2) -> R0 = mem[Rm+Rn]
     // For 0x0082: Rm=R0 (n=0), Rn=R8 (m=8) -> R0 = mem[R0+R8]
     else if ((raw & 0xFF0F) == 0x0002) // Mask for 0000nnnnmmmm0010
@@ -774,17 +785,6 @@ static bool FastDecode(uint16_t raw, uint32_t pc, Instr &ins, Block &blk)
         uint8_t n = (raw >> 8) & 0xF;
         uint8_t m = (raw >> 4) & 0xF;
         ins.op = Op::SUBV;
-        ins.dst.isImm = false; ins.dst.reg = n;
-        ins.src1.isImm = false; ins.src1.reg = m;
-        blk.pcNext = pc + 2;
-        return true;
-    }
-    // MOV.W @Rm+,Rn (0x6nm5)
-    else if ((raw & 0xF00F) == 0x6005)
-    {
-        uint8_t n = (raw >> 8) & 0xF;
-        uint8_t m = (raw >> 4) & 0xF;
-        ins.op = Op::LOAD16_POST;
         ins.dst.isImm = false; ins.dst.reg = n;
         ins.src1.isImm = false; ins.src1.reg = m;
         blk.pcNext = pc + 2;
