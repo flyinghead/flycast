@@ -865,7 +865,10 @@ static bool FastDecode(uint16_t raw, uint32_t pc, Instr &ins, Block &blk)
 
     Op op = static_cast<Op>(kEmitterTable[raw]);
     if (op == Op::ILLEGAL)
+    {
+        WARN_LOG(SH4, "FastDecode: ILLEGAL raw=0x%04X at PC=0x%08X", raw, pc);
         return false;
+    }
 
     uint8_t n = (raw >> 8) & 0xF;
     uint8_t m = (raw >> 4) & 0xF;
@@ -1631,8 +1634,8 @@ Block& Emitter::CreateNew(uint32_t pc) {
                 ins.op = Op::XTRCT;
                 ins.dst.isImm = false; ins.dst.reg = n;
                 ins.src1.isImm = false; ins.src1.reg = m;
-        ins.src2.isImm = false;
-        ins.src2.reg = n;
+                ins.src2.isImm = false;
+                ins.src2.reg = n;
                 INFO_LOG(SH4, "Emitter: Decoded XTRCT R%d (Rm=%d), R%d (Rn=%d) (0x%04X) at PC=0x%08X", m, m, n, n, raw, pc);
             } else {
                 ins.op = Op::ILLEGAL;

@@ -89,7 +89,27 @@ static inline const float* GET_XF(Sh4Context* ctx)
 
 // Helper macros for register access - explicit context pointer
 #define GET_REG(ctx, idx) ((ctx)->r[(idx)])
-#define SET_REG(ctx, idx, val) do { (ctx)->r[(idx)] = (val); } while(0)
+#define SET_REG(ctx, idx, val) do { \
+        if ((idx) == 6) { LOG_R6_WRITE((val), (ctx)->pc, "GENERIC"); } \
+        else if ((idx) == 5) { LOG_R5_WRITE((val), (ctx)->pc, "GENERIC"); } \
+        (ctx)->r[(idx)] = (val); \
+    } while(0)
+
+// Debug: log writes to R6 to trace corruption of jump register
+#if 1
+#define LOG_R6_WRITE(new_val, pc, op_name) \
+    do { \
+        INFO_LOG(SH4, "R6 WRITE: 0x%08X at PC=0x%08X via %s", \
+                 static_cast<uint32_t>(new_val), static_cast<uint32_t>(pc), op_name); \
+    } while (0)
+#define LOG_R5_WRITE(new_val, pc, op_name) \
+    do { \
+        INFO_LOG(SH4, "R5 WRITE: 0x%08X at PC=0x%08X via %s", \
+                 static_cast<uint32_t>(new_val), static_cast<uint32_t>(pc), op_name); \
+    } while (0)
+#else
+#define LOG_R6_WRITE(new_val, pc, op_name) do {} while (0)
+#endif
 
 // Helper macros for status register access
 #define GET_SR_T(ctx) ((ctx)->sr.T)
@@ -741,13 +761,21 @@ static void Exec_STORE8_PREDEC(const sh4::ir::Instr& ins, Sh4Context* ctx, uint3
 static void Exec_XOR_IMM(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t) { GET_REG(ctx, ins.dst.reg) ^= static_cast<uint32_t>(ins.src1.imm); }
 
 // MOV Rm -> Rn (register-to-register)
-static void Exec_MOV_REG(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t) {
-    SET_REG(ctx, ins.dst.reg, GET_REG(ctx, ins.src1.reg));
+static void Exec_MOV_REG(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t pc) {
+    uint32_t value = GET_REG(ctx, ins.src1.reg);
+    SET_REG(ctx, ins.dst.reg, value);
+    if (ins.dst.reg == 6) {
+        LOG_R6_WRITE(value, pc, "MOV_REG");
+    }
 }
 
 // MOV #imm -> Rn (sign-extended immediate)
-static void Exec_MOV_IMM(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t) {
-    SET_REG(ctx, ins.dst.reg, static_cast<uint32_t>(static_cast<int32_t>(ins.src1.imm)));
+static void Exec_MOV_IMM(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t pc) {
+    uint32_t value = static_cast<uint32_t>(static_cast<int32_t>(ins.src1.imm));
+    SET_REG(ctx, ins.dst.reg, value);
+    if (ins.dst.reg == 6) {
+        LOG_R6_WRITE(value, pc, "MOV_IMM");
+    }
 }
 
 // Branch helpers -------------------------------------------------------------
@@ -862,9 +890,14 @@ static void Exec_STC(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t) {
 
 // JMP @Rm – unconditional jump via register (no delay-slot handling here)
 // Legacy fast JMP handler (unused when exec_table entry is null)
-static void Exec_JMP(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
+static void Exec_JMP(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t pc)
 {
-    uint32_t target = GET_REG(ctx, ins.src1.reg) & ~1u; // even addr
+    uint32_t raw_target = GET_REG(ctx, ins.src1.reg);
+    uint32_t target = raw_target & ~1u; // align to 2 bytes per SH-4 spec
+    // basic sanity: BIOS/ROM executes in 0xA0000000+; log if we jump below 0x1000
+    if (target < 0x1000) {
+        ERROR_LOG(SH4, "JMP to suspicious address 0x%08X (raw 0x%08X) from PC=0x%08X", target, raw_target, pc);
+    }
     SetPC(ctx, target, "JMP_fast");
 }
 

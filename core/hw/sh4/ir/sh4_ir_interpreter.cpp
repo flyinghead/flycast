@@ -115,6 +115,8 @@ void Sh4IrInterpreter::Reset(bool hard)
      */
 
     // Architectural reset values (always applied)
+    // 	next_pc = 0xA0000000;
+
     ctx_->pc  = 0xA0000000;           // Reset vector (P2 area)
     ctx_->vbr = 0x00000000;
 
