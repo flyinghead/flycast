@@ -755,6 +755,38 @@ static void Exec_BT(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t pc) {
     }
 }
 
+// BRA: unconditional branch relative
+static void Exec_BRA(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t pc) {
+    SetPC(ctx, pc + 2 + static_cast<int32_t>(ins.extra), "BRA");
+}
+
+// BSR: branch and link – save return address to PR then branch
+static void Exec_BSR(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t pc) {
+#ifdef pr
+#undef pr
+    ctx->pr = pc + 4; // address after delay slot
+#define pr Sh4cntx.pr
+#else
+    ctx->pr = pc + 4;
+#endif
+    SetPC(ctx, pc + 2 + static_cast<int32_t>(ins.extra), "BSR");
+}
+
+// BF_S / BT_S delay-slot versions (optional; treat same but assume emitter places slot instruction)
+static void Exec_BF_S(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t pc) {
+    if (!GET_SR_T(ctx)) {
+        SetPC(ctx, pc + 4 + static_cast<int32_t>(ins.extra), "BF_S");
+    }
+    else {
+        // fall-through: pc will already be pc+4 after executing slot
+    }
+}
+static void Exec_BT_S(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t pc) {
+    if (GET_SR_T(ctx)) {
+        SetPC(ctx, pc + 4 + static_cast<int32_t>(ins.extra), "BT_S");
+    }
+}
+
 // Variable logical right shift (SHR Rn,Rn)
 static void Exec_SHR_OP(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t) {
     uint32_t count = GET_REG(ctx, ins.src1.reg) & 0x1F;
@@ -1584,6 +1616,14 @@ static void InitExecTable()
     g_exec_table[static_cast<int>(sh4::ir::Op::STORE8_PREDEC)]  = &Exec_STORE8_PREDEC;
     // Branches
     g_exec_table[static_cast<int>(sh4::ir::Op::BF)]       = &Exec_BF;
+    g_exec_table[static_cast<int>(sh4::ir::Op::BT)]       = &Exec_BT;
+    g_exec_table[static_cast<int>(sh4::ir::Op::BRA)]      = &Exec_BRA;
+    g_exec_table[static_cast<int>(sh4::ir::Op::BSR)]      = &Exec_BSR;
+    // Delay-slot conditional branches if present
+#ifdef sh4_ir_Op_BT_S_defined
+    g_exec_table[static_cast<int>(sh4::ir::Op::BT_S)]     = &Exec_BT_S;
+    g_exec_table[static_cast<int>(sh4::ir::Op::BF_S)]     = &Exec_BF_S;
+#endif
     g_exec_table[static_cast<int>(sh4::ir::Op::BT)]       = &Exec_BT;
     // Variable shift
     g_exec_table[static_cast<int>(sh4::ir::Op::SHR_OP)]   = &Exec_SHR_OP;
