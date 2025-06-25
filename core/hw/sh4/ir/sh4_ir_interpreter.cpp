@@ -9,10 +9,21 @@
 #include "hw/mem/addrspace.h" // for ram_base fast access
 #include "hw/flashrom/nvmem.h" // for BIOS pointer
 
+// Undefine macros that collide with struct field names
+#ifdef old_sr
+#undef old_sr
+#endif
+#ifdef old_fpscr
+#undef old_fpscr
+#endif
+
 // #define SH4_FAST_SKIP 1
 
 namespace sh4 {
 namespace ir {
+
+// Global instance referenced by executor for cache invalidation
+Sh4IrInterpreter g_ir;
 
 Sh4IrInterpreter::Sh4IrInterpreter()
     : ctx_(nullptr)
@@ -49,25 +60,13 @@ void Sh4IrInterpreter::Init()
 #define vbr Sh4cntx.vbr
     }
 
-    emitter_.ClearCaches();
-    // Do NOT zero the context here, as it may contain values set by tests
-    // The test framework will clear registers as needed with ClearRegs()
-
     // Temporarily undefine macros
 #undef vbr
 #undef pc
-    // SH-4 reset state (matches legacy interpreter):
-    ctx_->vbr = 0x00000000;          // Vector Base = 0
-    ctx_->pc = 0xA0000000;           // BIOS entry point (P2 area)
+    // Clear the context like the legacy interpreter
+    memset(&p_sh4rcb->cntx, 0, sizeof(p_sh4rcb->cntx));
 
-    // Disable MMU translation (power-on default)
-    CCN_MMUCR.reg_data = 0;
-    // // Flush software TLB arrays
-    // memset(UTLB, 0, sizeof(UTLB));
-    // memset(ITLB, 0, sizeof(ITLB));
-
-    // Initialise SR to MD=1, BL=0, RB=0, IMASK=0xF (0x700000F0)
-    sh4_sr_SetFull(0x700000F0);
+    emitter_.ClearCaches();
     // Restore macros
 #define vbr Sh4cntx.vbr
 #define pc next_pc
@@ -98,68 +97,58 @@ void Sh4IrInterpreter::Reset(bool hard)
 #undef pr
 #undef fpul
 #undef fpscr
-    // If hard reset requested, fully clear the context like the legacy interpreter.
-    if (hard)
-    {
-        int schedNext = ctx_->sh4_sched_next;
-        memset(ctx_, 0, sizeof(*ctx_));
-        ctx_->sh4_sched_next = schedNext;
-    }
+if (hard)
+{
+    int schedNext = ctx_->sh4_sched_next;
+    memset(ctx_, 0, sizeof(*ctx_));
+    ctx_->sh4_sched_next = schedNext;
+}
 
-    /*
-     * The Dreamcast BIOS performs multiple *software* resets during the
-     * power-on self-test.  The legacy "sh4_interpreter" re-initialises a
-     * considerable amount of state even when the reset isn’t "hard".
-     * Replicate that behaviour here so the IR interpreter matches the
-     * expectations of the boot ROM.
-     */
+// Set PC to reset vector
+ctx_->pc = 0xA0000000;
+next_pc = 0xA0000000;  // Keep legacy global in sync
 
-    // Architectural reset values (always applied)
-    // 	next_pc = 0xA0000000;
+// Clear registers
+memset(ctx_->r, 0, sizeof(ctx_->r));
+memset(r_bank, 0, sizeof(r_bank));  // Use global r_bank
 
-    ctx_->pc  = 0xA0000000;           // Reset vector (P2 area)
-    ctx_->vbr = 0x00000000;
+// Clear other registers
+ctx_->gbr = 0;
+ctx_->ssr = 0;
+ctx_->spc = 0;
+ctx_->sgr = 0;
+ctx_->dbr = 0;
+ctx_->mac.full = 0;
+ctx_->pr = 0;
+ctx_->fpul = 0;
+ctx_->vbr = 0;
 
-    // Clear general registers and banked registers
-    memset(ctx_->r,       0, sizeof(ctx_->r));
-#ifdef R_BANK
-    memset(ctx_->r_bank,  0, sizeof(ctx_->r_bank));
-#endif
+// Set SR (MD=1, RB=0, BL=0, IMASK=0xF)
+sh4_sr_SetFull(0x700000F0);
+ctx_->old_sr.status = ctx_->sr.status;
+UpdateSR();                  // Add this!
 
-    // Clear assorted CPU state registers
-    ctx_->gbr = 0;
-    // Initialise return-from-exception shadow registers so the very first
-    // RTE executed by the reset stub returns to a valid address inside the BIOS.
-    ctx_->ssr = sh4_sr_GetFull();           // snapshot of SR before reset
-    ctx_->spc = ctx_->pc + 4;                   // next sequential instruction
-    ctx_->sgr = 0;
-    ctx_->dbr = 0;
-    ctx_->mac.full = 0;
-    ctx_->pr  = 0;
-    ctx_->fpul = 0;
+// FP status register
+ctx_->fpscr.full = 0x00040001;
+ctx_->old_fpscr.full = ctx_->fpscr.full;
 
-    // Status register (MD=1, RB=0, BL=0, IMASK=0xF)
-    sh4_sr_SetFull(0x700000F0);
+// Reset MMU
+CCN_MMUCR.reg_data = 0;
+memset(UTLB, 0, sizeof(UTLB));
+memset(ITLB, 0, sizeof(ITLB));
 
-    // FP status register
-    ctx_->fpscr.full = 0x00040001;
+// Initialize cycle counter
+ctx_->cycle_counter = SH4_TIMESLICE;
 
-    // Disable MMU translation (power-on default) and flush software TLBs
-    CCN_MMUCR.reg_data = 0;
-    memset(UTLB, 0, sizeof(UTLB));
-    memset(ITLB, 0, sizeof(ITLB));
-
-    ctx_->sh4_sched_next = 0; // Reset scheduler/cycle count for IR
-    printf("[IR][Reset][EXIT]  ctx_=%p r[0]=%08X r[1]=%08X r[2]=%08X r[3]=%08X sr.T=%u\n",
-        (void*)ctx_, ctx_->r[0], ctx_->r[1], ctx_->r[2], ctx_->r[3], ctx_->sr.T);
+// Clear caches
+emitter_.ClearCaches();
+executor_.ResetCachedBlocks();
 
     // Restore macros
 #define r Sh4cntx.r
 #define sr Sh4cntx.sr
 #define pc next_pc
 #define vbr Sh4cntx.vbr
-
-    ResetCache();
 }
 
 #ifdef SH4_FAST_SKIP
@@ -345,17 +334,17 @@ void Sh4IrInterpreter::Step()
 
 namespace {
     // Single global instance used by the C-style callback wrappers below.
-    sh4::ir::Sh4IrInterpreter g_ir;
+    // use global g_ir defined above
 
-    void IR_Start()                { g_ir.Start(); }
-    void IR_Run()                  { g_ir.Run(); }
-    void IR_Stop()                 { g_ir.Stop(); }
-    void IR_Step()                 { g_ir.Step(); }
-    void IR_Reset(bool hard)       { g_ir.Reset(hard); }
-    void IR_Init()                 { g_ir.Init(); }
-    void IR_Term()                 { g_ir.Term(); }
-    void IR_ResetCache()           { g_ir.ResetCache(); }
-    bool IR_IsCpuRunning()         { return g_ir.IsCpuRunning(); }
+    void IR_Start()                { sh4::ir::g_ir.Start(); }
+    void IR_Run()                  { sh4::ir::g_ir.Run(); }
+    void IR_Stop()                 { sh4::ir::g_ir.Stop(); }
+    void IR_Step()                 { sh4::ir::g_ir.Step(); }
+    void IR_Reset(bool hard)       { sh4::ir::g_ir.Reset(hard); }
+    void IR_Init()                 { sh4::ir::g_ir.Init(); }
+    void IR_Term()                 { sh4::ir::g_ir.Term(); }
+    void IR_ResetCache()           { sh4::ir::g_ir.ResetCache(); }
+    bool IR_IsCpuRunning()         { return sh4::ir::g_ir.IsCpuRunning(); }
 }
 
 // Expose a function with the same signature the core expects, but inside the
