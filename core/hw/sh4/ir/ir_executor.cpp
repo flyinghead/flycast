@@ -28,7 +28,7 @@
 // writes. We intercept accesses in RawRead/RawWrite helpers via these utils.
 // ---------------------------------------------------------------------------
 namespace {
-    static std::array<u8, 0x8000> g_vector_ram{}; // 32 KiB area-0 on-chip RAM
+    static std::array<u8, 0x10000> g_vector_ram{}; // 64 KiB area-0 on-chip RAM
     // 64-byte Store-Queue backing buffer (phys 0x3000–0x303F)
     static std::array<u8, 0x80> g_sq_buffer{};
 
@@ -51,13 +51,13 @@ namespace {
     static inline bool IsVectorRamAddr(uint32_t vaddr)
     {
         // Accept mirrors in cached area (0xA0000000) and uncached P2 (0x20000000)
-        return (vaddr & 0x0FFFFFFFu) < 0x8000u; // first 32 KiB overlay
+        return (vaddr & 0x0FFFFFFFu) < 0x10000u; // first 64 KiB overlay
     }
 
     template<typename T>
     static inline T ReadVectorRam(uint32_t vaddr)
     {
-        uint32_t off = vaddr & 0x7FFFu;
+        uint32_t off = vaddr & 0xFFFFu;
         if constexpr (sizeof(T) == 1)
             return g_vector_ram[off];
         else if constexpr (sizeof(T) == 2)
@@ -69,7 +69,7 @@ namespace {
     template<typename T>
     static inline void WriteVectorRam(uint32_t vaddr, T data)
     {
-        uint32_t off = vaddr & 0x7FFFu;
+        uint32_t off = vaddr & 0xFFFFu;
         if constexpr (sizeof(T) == 1)
             g_vector_ram[off] = static_cast<u8>(data);
         else if constexpr (sizeof(T) == 2)
