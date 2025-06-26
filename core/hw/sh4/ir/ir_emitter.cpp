@@ -3025,26 +3025,7 @@ Block& Emitter::CreateNew(uint32_t pc) {
             blk.pcNext = pc + 2;
         }
 
-        // MOV.B @(disp,Rm),R0 0x0nmd (disp = low4)  — allow n=0 too (except 0x0000 and 0x0009)
-        else if ((raw & 0xF000) == 0x0000 && (raw & 0x000F) <= 0x0B)
-        {
-            if (raw == 0x0009 || raw == 0x0000)
-            {
-                ins.op = Op::NOP;
-                decoded = true;
-                blk.pcNext = pc + 2;
-            }
-            else
-            {
-                uint8_t disp4 = raw & 0xF;
-                uint8_t m_reg = (raw >> 4) & 0xF; // source base register
-                ins.op = Op::LOAD8; // load byte into R0
-                ins.dst.isImm = false; ins.dst.reg = 0; // R0 destination
-                ins.src1.isImm = false; ins.src1.reg = m_reg; // base register
-                ins.extra = disp4; // byte offset
-                decoded = true; blk.pcNext = pc + 2;
-            }
-        }
+
         // MOV.L Rm,@(disp,Rn) 0x2nmd (same as 0x1nmd on some opcode maps) retain for compatibility
          else if ((raw & 0xF000) == 0x2000)
          {
