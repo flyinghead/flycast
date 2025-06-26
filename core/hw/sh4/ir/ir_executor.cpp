@@ -864,6 +864,20 @@ static void Exec_NOP(const sh4::ir::Instr& , Sh4Context*, uint32_t) { /* no-op *
 
 // END - IR sentinel marking end of block (no operation)
 static void Exec_END(const sh4::ir::Instr&, Sh4Context*, uint32_t) { /* block end handled by executor loop */ }
+
+// STS.L PR,@-Rn
+static void Exec_STSL_PR_PREDEC(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t /*pc*/)
+{
+    uint32_t rn_addr = GET_REG(ctx, ins.dst.reg) - 4;
+    SET_REG(ctx, ins.dst.reg, rn_addr);
+#ifdef pr
+#undef pr
+    WriteAligned32(rn_addr, ctx->pr);
+#define pr Sh4cntx.pr
+#else
+    WriteAligned32(rn_addr, ctx->pr);
+#endif
+}
 static void Exec_ADD_REG(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t) { GET_REG(ctx, ins.dst.reg) += GET_REG(ctx, ins.src1.reg); }
 static void Exec_ADD_IMM(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t) { GET_REG(ctx, ins.dst.reg) += static_cast<uint32_t>(ins.src1.imm); }
 
@@ -1947,6 +1961,7 @@ static void InitExecTable()
     g_exec_table[static_cast<int>(sh4::ir::Op::ADD)]       = &Exec_ADD;
     g_exec_table[static_cast<int>(sh4::ir::Op::ADD_REG)]  = &Exec_ADD_REG;
     g_exec_table[static_cast<int>(sh4::ir::Op::ADD_IMM)]  = &Exec_ADD_IMM;
+    g_exec_table[static_cast<int>(sh4::ir::Op::STSL_PR_PREDEC)] = &Exec_STSL_PR_PREDEC;
     g_exec_table[static_cast<int>(sh4::ir::Op::MOV_REG)]  = &Exec_MOV_REG;
     g_exec_table[static_cast<int>(sh4::ir::Op::MOV_IMM)]  = &Exec_MOV_IMM;
     g_exec_table[static_cast<int>(sh4::ir::Op::SHL)]      = &Exec_SHL;
