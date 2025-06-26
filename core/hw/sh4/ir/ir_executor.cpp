@@ -880,8 +880,15 @@ static void Exec_TRAPA(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t pc)
 
     // If the vector is blank (0x00000000), treat as illegal instruction instead
     if (handler_pc == 0) {
-        ERROR_LOG(SH4, "TRAPA vector %02X empty (addr=%08X) - treating as illegal", trap_no, vector_addr);
-        return;
+      // Vector in on-chip RAM is empty – fall back to BIOS ROM mirror
+      uint32_t rom_addr = 0xA0000000 + 0x100 + (trap_no * 4);
+      handler_pc = RawRead32(rom_addr);
+      if (handler_pc == 0) {
+          ERROR_LOG(SH4, "TRAPA vector %02X empty in RAM and ROM (addr=%08X)", trap_no, vector_addr);
+          return; // give up – will appear as illegal opcode later
+      }
+      INFO_LOG(SH4, "TRAPA vector %02X served from ROM mirror (%08X)", trap_no, rom_addr);
+  
     }
 
     SetPC(ctx, handler_pc, "TRAPA");
