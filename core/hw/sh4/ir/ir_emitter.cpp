@@ -3045,6 +3045,18 @@ Block& Emitter::CreateNew(uint32_t pc) {
                 decoded = true; blk.pcNext = pc + 2;
             }
         }
+        // MOV.W Rm,@Rn (0x6nm2)
+        else if ((raw & 0xF00F) == 0x6002)
+        {
+            uint8_t n_reg = (raw >> 8) & 0xF; // Rn, address
+            uint8_t m_reg = (raw >> 4) & 0xF; // Rm, data
+            ins.op = Op::STORE16;
+            ins.dst.isImm = false; ins.dst.reg = n_reg;
+            ins.src1.isImm = false; ins.src1.reg = m_reg;
+            decoded = true;
+            blk.pcNext = pc + 2;
+        }
+
         // MOV.L Rm,@(disp,Rn) 0x2nmd (same as 0x1nmd on some opcode maps) retain for compatibility
          else if ((raw & 0xF000) == 0x2000)
          {
