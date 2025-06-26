@@ -762,6 +762,16 @@ static bool FastDecode(uint16_t raw, uint32_t pc, Instr &ins, Block &blk)
         blk.pcNext = pc + 2;
         return true;
     }
+    // STS.L PR,@-Rn (0n18)
+    else if ((raw & 0xF0FF) == 0x0018)
+    {
+        ins.op = Op::STSL_PR_PREDEC;
+        ins.dst.isImm = false;
+        ins.dst.reg = (raw >> 8) & 0xF; // Rn
+        blk.pcNext = pc + 2;
+        DEBUG_LOG(SH4, "FastDecode: STS.L PR,@-R%d (0x%04X)", ins.dst.reg, raw);
+        return true;
+    }
     // DIV0U (0x0019)
     else if (raw == 0x0019)
     {
