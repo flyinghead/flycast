@@ -165,6 +165,7 @@ static bool FastDecode(uint16_t raw, uint32_t pc, Instr &ins, Block &blk)
         blk.pcNext = pc + 2;
         return true;
     }
+
     // MOV.W @Rm+,Rn (0x6nm5) - already exists but add debug for 0x6439
     else if ((raw & 0xF00F) == 0x6005)
     {
