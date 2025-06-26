@@ -1056,7 +1056,7 @@ static void Exec_TRAPA(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t pc)
           return; // give up – will appear as illegal opcode later
       }
       INFO_LOG(SH4, "TRAPA vector %02X served from ROM mirror (%08X)", trap_no, rom_addr);
-  
+
     }
 
     SetPC(ctx, handler_pc, "TRAPA");
@@ -1338,12 +1338,13 @@ static void Exec_SWAP_W(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t) {
     SET_REG(ctx, ins.dst.reg, swapped);
 }
 
-// ROTL Rn - Rotate left through carry
+// ROTL Rn - Rotate left by one bit
 static void Exec_ROTL(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t) {
     uint32_t n = ins.dst.reg;
     uint32_t val = GET_REG(ctx, n);
-    SET_SR_T(ctx, (val >> 31) & 1);
-    val = (val << 1) | GET_SR_T(ctx);
+    uint32_t msb = (val >> 31) & 1;  // Save MSB
+    SET_SR_T(ctx, msb);               // MSB goes to T
+    val = (val << 1) | msb;           // Rotate: shift left and put old MSB in LSB
     SET_REG(ctx, n, val);
 }
 
