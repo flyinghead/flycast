@@ -2984,11 +2984,10 @@ Block& Emitter::CreateNew(uint32_t pc) {
             else
             {
                 uint8_t disp4 = raw & 0xF;
-                uint8_t n_reg = (raw >> 8) & 0xF;
-                uint8_t m_reg = (raw >> 4) & 0xF;
-                ins.op = Op::STORE8;
-                ins.dst.isImm = false; ins.dst.reg = n_reg; // base
-                ins.src1.isImm = false; ins.src1.reg = m_reg; // value
+                uint8_t m_reg = (raw >> 4) & 0xF; // source base register
+                ins.op = Op::LOAD8; // load byte into R0
+                ins.dst.isImm = false; ins.dst.reg = 0; // R0 destination
+                ins.src1.isImm = false; ins.src1.reg = m_reg; // base register
                 ins.extra = disp4; // byte offset
                 decoded = true; blk.pcNext = pc + 2;
             }
