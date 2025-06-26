@@ -745,6 +745,16 @@ static bool FastDecode(uint16_t raw, uint32_t pc, Instr &ins, Block &blk)
         blk.pcNext = pc + 2;
         return true;
     }
+    // Hard-patch for MOV.B R1, @(R0, R1) (0x0118)
+    else if (raw == 0x0118) {
+        ins.op = Op::STORE8_Rm_R0RN;
+        ins.src1.isImm = false; ins.src1.reg = 1; // Rm
+        ins.src2.isImm = false; ins.src2.reg = 1; // Rn
+        blk.pcNext = pc + 2;
+        DEBUG_LOG(SH4, "FastDecode: Patched MOV.B R1, @(R0, R1) (0x0118)");
+        return true;
+    }
+
     // SETT (0x0018)
     else if (raw == 0x0018)
     {
