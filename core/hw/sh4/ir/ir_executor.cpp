@@ -1338,6 +1338,24 @@ static void Exec_SWAP_W(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t) {
     SET_REG(ctx, ins.dst.reg, swapped);
 }
 
+// ROTL Rn - Rotate left through carry
+static void Exec_ROTL(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t) {
+    uint32_t n = ins.dst.reg;
+    uint32_t val = GET_REG(ctx, n);
+    SET_SR_T(ctx, (val >> 31) & 1);
+    val = (val << 1) | GET_SR_T(ctx);
+    SET_REG(ctx, n, val);
+}
+
+// ROTR Rn - Rotate right through carry
+static void Exec_ROTR(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t) {
+    uint32_t n = ins.dst.reg;
+    uint32_t val = GET_REG(ctx, n);
+    uint32_t t = GET_SR_T(ctx);
+    SET_SR_T(ctx, val & 1);
+    val = (val >> 1) | (t << 31);
+    SET_REG(ctx, n, val);
+}
 
 // SAR1 arithmetic right shift by 1 (sign-extended)
 static void Exec_SAR1(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t) {
@@ -1956,6 +1974,8 @@ static void InitExecTable()
     static bool init = false;
     if (init) return;
     for (auto& fn : g_exec_table) fn = &ExecStub;
+    g_exec_table[static_cast<int>(sh4::ir::Op::ROTL)]     = &Exec_ROTL;
+    g_exec_table[static_cast<int>(sh4::ir::Op::ROTR)]     = &Exec_ROTR;
     g_exec_table[static_cast<int>(sh4::ir::Op::NOP)]      = &Exec_NOP;
     g_exec_table[static_cast<int>(sh4::ir::Op::END)]      = &Exec_END;
     g_exec_table[static_cast<int>(sh4::ir::Op::ADD)]       = &Exec_ADD;
