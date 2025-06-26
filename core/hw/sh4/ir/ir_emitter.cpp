@@ -804,6 +804,21 @@ static bool FastDecode(uint16_t raw, uint32_t pc, Instr &ins, Block &blk)
         blk.pcNext = pc + 2;
         return true;
     }
+    // MOV.B @(disp,Rm),R0 (0x0m0d, n=0)
+    // Restrict m!=0 to avoid masking system ops (CLRT/SETT/DIV0U/CLRS/SETS)
+    else if ((raw & 0xF000) == 0x0000 && ((raw >> 8) & 0xF) == 0 && ((raw >> 4) & 0xF) != 0 && raw != 0x0058)
+    {
+        uint8_t m = (raw >> 4) & 0xF;
+        uint8_t disp = raw & 0xF;
+        ins.op = Op::LOAD8;
+        ins.dst.isImm = false; ins.dst.reg = 0;   // R0
+        ins.src1.isImm = false; ins.src1.reg = m; // Rm
+        ins.extra = disp;
+        blk.pcNext = pc + 2;
+        DEBUG_LOG(SH4, "FastDecode: MOV.B @(0x%X,R%u),R0 (0x%04X)", disp, m, raw);
+        return true;
+    }
+
 
     // ADDC Rm, Rn (0x3nmE) - Add with carry
     else if ((raw & 0xF00F) == 0x300E)
