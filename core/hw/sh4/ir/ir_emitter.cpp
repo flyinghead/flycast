@@ -797,6 +797,13 @@ static bool FastDecode(uint16_t raw, uint32_t pc, Instr &ins, Block &blk)
         blk.pcNext = pc + 2;
         return true;
     }
+    // SETS (0x0058)
+    else if (raw == 0x0058)
+    {
+        ins.op = Op::SETS;
+        blk.pcNext = pc + 2;
+        return true;
+    }
 
     // ADDC Rm, Rn (0x3nmE) - Add with carry
     else if ((raw & 0xF00F) == 0x300E)
