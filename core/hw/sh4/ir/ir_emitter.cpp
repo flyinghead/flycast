@@ -2278,6 +2278,36 @@ Block& Emitter::CreateNew(uint32_t pc) {
             decoded = true;
             blk.pcNext = pc + 2;
         }
+        // MOV.B @Rm+,Rn  (0x6nm4)  post-increment byte load
+        else if ((raw & 0xF00F) == 0x6004)
+        {
+            ins.op = Op::LOAD8_POST;
+            ins.dst = {false, n};
+            ins.src1 = {false, m}; // base register
+            ins.src2 = {false, m}; // executor needs base for writeback
+            blk.pcNext = pc + 2;
+            decoded = true;
+        }
+        // MOV.W @Rm+,Rn  (0x6nm5)  post-increment word load
+        else if ((raw & 0xF00F) == 0x6005)
+        {
+            ins.op = Op::LOAD16_POST;
+            ins.dst = {false, n};
+            ins.src1 = {false, m};
+            ins.src2 = {false, m};
+            blk.pcNext = pc + 2;
+            decoded = true;
+        }
+        // MOV.L @Rm+,Rn  (0x6nm6)  post-increment long load
+        else if ((raw & 0xF00F) == 0x6006)
+        {
+            ins.op = Op::LOAD32_POST;
+            ins.dst = {false, n};
+            ins.src1 = {false, m};
+            ins.src2 = {false, m};
+            blk.pcNext = pc + 2;
+            decoded = true;
+        }
         // MOV.L @Rm,Rn (0x6nm2)
         else if ((raw & 0xF00F) == 0x6002 && m != 0)
         {
