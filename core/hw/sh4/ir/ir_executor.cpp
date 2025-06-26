@@ -3723,19 +3723,18 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                 case Op::LOAD32_PC:
                 {
                     uint32_t disp8 = static_cast<uint32_t>(ins.extra);
-                    uint32_t base_pc = next_pc;        // PC of following instruction (curr_pc+2)
-                    uint32_t base = (base_pc & ~3u) + 4u;     // Align then +4 per SH-4 spec
+                    uint32_t base_pc = curr_pc;  // FIXED: Use current instruction's PC
+                    uint32_t base = (base_pc & ~3u) + 4u;  // Align to 4-byte boundary and add 4
                     uint32_t mem_addr = base + (disp8 << 2);
                     uint32_t val = ReadAligned32(mem_addr);
-                    uint32_t old_reg = GET_REG(ctx, ins.dst.reg);
                     SET_REG(ctx, ins.dst.reg, val);
 
                     // Enhanced debug logging for all registers, not just R0
-                    printf("[PRINTF_DEBUG_LOAD32_PC] PC=%08X, raw=0x%04X, dst=R%u, base_pc=%08X, aligned_base=%08X, disp=%u, addr=%08X, val=0x%08X, old_reg=0x%08X\n",
-                           curr_pc, ins.raw, ins.dst.reg, base_pc, base, disp8, mem_addr, val, old_reg);
-                    printf("[PRINTF_DEBUG_LOAD32_PC] Register state: R0-R7: %08X %08X %08X %08X %08X %08X %08X %08X\n",
-                           GET_REG(ctx, 0), GET_REG(ctx, 1), GET_REG(ctx, 2), GET_REG(ctx, 3), GET_REG(ctx, 4), GET_REG(ctx, 5), GET_REG(ctx, 6), GET_REG(ctx, 7));
-                    fflush(stdout);
+                    // printf("[PRINTF_DEBUG_LOAD32_PC] PC=%08X, raw=0x%04X, dst=R%u, base_pc=%08X, aligned_base=%08X, disp=%u, addr=%08X, val=0x%08X, old_reg=0x%08X\n",
+                    //        curr_pc, ins.raw, ins.dst.reg, base_pc, base, disp8, mem_addr, val, old_reg);
+                    // printf("[PRINTF_DEBUG_LOAD32_PC] Register state: R0-R7: %08X %08X %08X %08X %08X %08X %08X %08X\n",
+                    //        GET_REG(ctx, 0), GET_REG(ctx, 1), GET_REG(ctx, 2), GET_REG(ctx, 3), GET_REG(ctx, 4), GET_REG(ctx, 5), GET_REG(ctx, 6), GET_REG(ctx, 7));
+                    // fflush(stdout);
 
                     if (ins.dst.reg == 0) {
                         INFO_LOG(SH4, "LOAD32_PC: Loaded 0x%08X into R0 from addr 0x%08X (PC=%08X, disp=%d)", val, mem_addr, curr_pc, disp8);
@@ -3745,9 +3744,9 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                 case Op::LOAD16_PC:
                 {
                     uint32_t disp8 = static_cast<uint32_t>(ins.extra);
-                    uint32_t base_pc = next_pc;        // PC of following instruction
-                    uint32_t base = (base_pc & ~3u) + 4u;     // Align then +4 per SH-4 spec
-                    uint32_t mem_addr = base + (disp8 << 1);  // Scale by 2 for word addressing
+                    uint32_t base_pc = curr_pc;  // FIXED: Use current instruction's PC
+                    uint32_t base = (base_pc & ~3u) + 4u;
+                    uint32_t mem_addr = base + (disp8 << 1);
                     u16 val = ReadAligned16(mem_addr);
                     uint32_t old_reg = GET_REG(ctx, ins.dst.reg);
                     SET_REG(ctx, ins.dst.reg, static_cast<uint32_t>(static_cast<int16_t>(val))); // Sign-extend 16-bit value
