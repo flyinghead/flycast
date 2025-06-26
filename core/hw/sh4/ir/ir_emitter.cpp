@@ -1162,17 +1162,51 @@ static bool FastDecode(uint16_t raw, uint32_t pc, Instr &ins, Block &blk)
         blk.pcNext = pc + 2;
         return true;
     }
-    // BF disp8 (0x8Bdd) - for 0x8B77
+    // BF disp8 (0x8Bdd) – branch if T==0, no delay slot
     else if ((raw & 0xFF00) == 0x8B00)
     {
-        int8_t disp = raw & 0xFF;
-        int32_t d = static_cast<int32_t>(disp) << 1;
-        ins.op = Op::BF;
-        ins.extra = d;
-        blk.pcNext = pc + 2;
-        DEBUG_LOG(SH4, "FastDecode: BF disp=%d (0x%04X)", d, raw);
-        return true;
+    int8_t disp = raw & 0xFF;
+    ins.op = Op::BF;
+    ins.extra = static_cast<int32_t>(disp) << 1;
+    blk.pcNext = pc + 2;
+    return true;
     }
+    // BT disp8 (0x8900-0x89FF) – branch if T==1, no delay slot
+    else if ((raw & 0xFF00) == 0x8900)
+        {
+            int8_t disp = raw & 0xFF;
+            ins.op = Op::BT;
+            ins.extra = static_cast<int32_t>(disp) << 1;
+            blk.pcNext = pc + 2;
+            return true;
+        }
+        // BF.S disp8 (0x8Fdd): delayed-slot version (executes following instr)
+        else if ((raw & 0xFF00) == 0x8F00)
+        {
+            int8_t disp = raw & 0xFF;
+            ins.op = Op::BF_S;
+            ins.extra = static_cast<int32_t>(disp) << 1;
+            blk.pcNext = pc + 4; // emitter will adjust after slot generation
+            return true;
+        }
+        // BT.S disp8 (0x8Ddd): delayed-slot version
+        else if ((raw & 0xFF00) == 0x8D00)
+        {
+            int8_t disp = raw & 0xFF;
+            ins.op = Op::BT_S;
+            ins.extra = static_cast<int32_t>(disp) << 1;
+            blk.pcNext = pc + 4;
+            return true;
+        }
+        // CMP/PZ Rn (0x4n01)
+        else if ((raw & 0xF0FF) == 0x4001)
+        {
+            uint8_t n = (raw >> 8) & 0xF;
+            ins.op = Op::CMP_PZ;
+            ins.dst.isImm = false; ins.dst.reg = n;
+            blk.pcNext = pc + 2;
+            return true;
+        }
 
     // MOV.L Rm,@(disp,Rn) (0x1nmd) - for 0x1304 and 0x1317
     else if ((raw & 0xF000) == 0x1000)
