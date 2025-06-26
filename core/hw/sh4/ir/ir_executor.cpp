@@ -22,6 +22,64 @@
 
 #define IR_TRACE_EXEC 1
 
+// ---------------------------------------------------------------------------
+// IR-local overlay for on-chip vector RAM (0x00000000–0x000003FF).
+// BIOS patches this area very early; when IR runs from reset we must allow
+// writes. We intercept accesses in RawRead/RawWrite helpers via these utils.
+// ---------------------------------------------------------------------------
+namespace {
+    static std::array<u8, 0x400> g_vector_ram{};
+    // 64-byte Store-Queue backing buffer (phys 0x3000–0x303F)
+    static std::array<u8, 0x80> g_sq_buffer{};
+
+    // SH-4 Store-Queue window that aliases area 0 writes (0xE0000000–0xE000003F)
+    static inline bool IsStoreQueueAddr(uint32_t a)
+    {
+        uint32_t masked = a & 0xFFFFFFC0u;
+        return masked == 0xE0000000u || masked == 0xE0000040u ||
+               masked == 0xE0003000u || masked == 0xE0003040u; // SQ0/SQ1 cached&uncached
+    }
+    static inline uint32_t SqOffset(uint32_t a) { return a & 0x7Fu; }
+    static inline bool IsSqPhysAddr(uint32_t a)
+    {
+        uint32_t off = a & 0x01FFFFFFu;
+        return off >= 0x3000u && off < 0x3080u; // 0x3000-0x307F mirror of SQ0/SQ1
+    }
+    static inline uint32_t SqToVectorAddr(uint32_t a) { return a & 0x7Fu; }
+
+    // True for any mirrored address landing in first 1 KiB of area 0.
+    static inline bool IsVectorRamAddr(uint32_t vaddr)
+    {
+        // Accept mirrors in cached area (0xA0000000) and uncached P2 (0x20000000)
+        return (vaddr & 0x0FFFFFFFu) < 0x400u; // first 1 KiB overlay
+    }
+
+    template<typename T>
+    static inline T ReadVectorRam(uint32_t vaddr)
+    {
+        uint32_t off = vaddr & 0x3FFu;
+        if constexpr (sizeof(T) == 1)
+            return g_vector_ram[off];
+        else if constexpr (sizeof(T) == 2)
+            return *reinterpret_cast<const u16*>(&g_vector_ram[off]);
+        else // 4 bytes
+            return *reinterpret_cast<const u32*>(&g_vector_ram[off]);
+    }
+
+    template<typename T>
+    static inline void WriteVectorRam(uint32_t vaddr, T data)
+    {
+        uint32_t off = vaddr & 0x3FFu;
+        if constexpr (sizeof(T) == 1)
+            g_vector_ram[off] = static_cast<u8>(data);
+        else if constexpr (sizeof(T) == 2)
+            *reinterpret_cast<u16*>(&g_vector_ram[off]) = static_cast<u16>(data);
+        else // 4
+            *reinterpret_cast<u32*>(&g_vector_ram[off]) = static_cast<u32>(data);
+    }
+} // anonymous namespace
+
+
 // Forward declaration of the global IR interpreter instance (defined in
 // sh4_ir_interpreter.cpp) so memory write helpers can call InvalidateBlock.
 namespace sh4 { namespace ir {
@@ -547,7 +605,16 @@ static inline bool is_mmu_on() { return mmu_enabled(); }
 
 static inline u8  RawRead8(uint32_t a)
 {
-    u8 v = is_mmu_on() ? mmu_ReadMem<u8>(a) : addrspace::read8(a);
+    u8 v;
+    if (IsSqPhysAddr(a)) {
+        v = g_sq_buffer[SqOffset(a)];
+    } else if (IsVectorRamAddr(a)) {
+        v = ReadVectorRam<u8>(a);
+        // fall-through: if zero, you may still want ROM mirror; but returning
+        // zero is fine because BIOS will have patched actual bytes when needed.
+    } else {
+        v = is_mmu_on() ? mmu_ReadMem<u8>(a) : addrspace::read8(a);
+    }
     if (UNLIKELY(g_exception_was_raised))
         return 0;
     return v;
@@ -555,7 +622,14 @@ static inline u8  RawRead8(uint32_t a)
 
 static inline u16 RawRead16(uint32_t a)
 {
-    u16 v = is_mmu_on() ? mmu_ReadMem<u16>(a) : addrspace::read16(a);
+    u16 v;
+    if (IsSqPhysAddr(a)) {
+        v = *reinterpret_cast<const u16*>(&g_sq_buffer[SqOffset(a)]);
+    } else if (IsVectorRamAddr(a)) {
+        v = ReadVectorRam<u16>(a);
+    } else {
+        v = is_mmu_on() ? mmu_ReadMem<u16>(a) : addrspace::read16(a);
+    }
     if (UNLIKELY(g_exception_was_raised))
         return 0;
     return v;
@@ -563,7 +637,16 @@ static inline u16 RawRead16(uint32_t a)
 
 static inline u32 RawRead32(uint32_t a)
 {
-    u32 v = is_mmu_on() ? mmu_ReadMem<u32>(a) : addrspace::read32(a);
+    u32 v;
+    if (IsSqPhysAddr(a)) {
+        v = *reinterpret_cast<const u32*>(&g_sq_buffer[SqOffset(a)]);
+        ERROR_LOG(SH4, "SQ READ32 addr=0x%08X off=%u val=0x%08X", a, SqOffset(a), v);
+    } else if (IsVectorRamAddr(a)) {
+        v = ReadVectorRam<u32>(a);
+        ERROR_LOG(SH4, "VEC READ32 addr=0x%08X off=%u val=0x%08X", a, a & 0x3FFu, v);
+    } else {
+        v = is_mmu_on() ? mmu_ReadMem<u32>(a) : addrspace::read32(a);
+    }
     if (UNLIKELY(g_exception_was_raised))
         return 0;
     return v;
@@ -571,7 +654,19 @@ static inline u32 RawRead32(uint32_t a)
 
 static inline u64 RawRead64(uint32_t a)
 {
-    u64 v = is_mmu_on() ? mmu_ReadMem<u64>(a) : addrspace::read64(a);
+    u64 v;
+    if (IsSqPhysAddr(a) && SqOffset(a) <= 0x38u) {
+        u32 lo = *reinterpret_cast<const u32*>(&g_sq_buffer[SqOffset(a)]);
+        u32 hi = *reinterpret_cast<const u32*>(&g_sq_buffer[SqOffset(a)+4]);
+        v = (static_cast<u64>(hi) << 32) | lo;
+    } else if (IsVectorRamAddr(a) && ((a & 0x3FFu) <= 0x3F8u)) {
+        // Combine two 32-bit chunks, SH-4 is little-endian
+        u32 lo = ReadVectorRam<u32>(a);
+        u32 hi = ReadVectorRam<u32>(a + 4);
+        v = (static_cast<u64>(hi) << 32) | lo;
+    } else {
+        v = is_mmu_on() ? mmu_ReadMem<u64>(a) : addrspace::read64(a);
+    }
     if (UNLIKELY(g_exception_was_raised))
         return 0;
     return v;
@@ -582,40 +677,99 @@ static inline bool IsWorkRam(u32 a) { return (a & 0xFC000000u) == 0x8C000000u ||
 static inline void RawWrite8(uint32_t a, u8 d)
 {
         if (IsWorkRam(a)) g_ir.InvalidateBlock(a & ~1u);
+    if (IsStoreQueueAddr(a)) {
+        g_sq_buffer[SqOffset(a)] = d;
+        WriteVectorRam(SqToVectorAddr(a), d);
+        return;
+    }
+    if (IsVectorRamAddr(a)) {
+        WriteVectorRam(a, d);
+        return;
+    }
     if (!g_exception_was_raised)
     {
         if (is_mmu_on()) mmu_WriteMem(a, d); else addrspace::write8(a, d);
     }
 }
 
-static inline void RawWrite16(uint32_t a, u16 d) {
-    if (a >= 0x1f000000 && a <= 0x1f000018) {
-        ERROR_LOG(SH4, "Invalid P4 write (16-bit) addr=0x%08X, data=0x%08X, pc=0x%08X", a, d, next_pc);
-        // Could return early here to avoid the actual write
+static inline void RawWrite16(uint32_t a, u16 d)
+{
+    if (a >= 0x1F000000 && a <= 0x1F000018) {
+        ERROR_LOG(SH4, "Invalid P4 write (16-bit) addr=0x%08X, data=0x%04X, pc=0x%08X", a, d, next_pc);
         return;
     }
-        if (IsWorkRam(a)) g_ir.InvalidateBlock(a & ~1u);
-    if (!g_exception_was_raised)
-    {
-        if (is_mmu_on()) mmu_WriteMem(a, d); else addrspace::write16(a, d);
+
+    if (IsWorkRam(a))
+        g_ir.InvalidateBlock(a & ~1u);
+
+    if (IsStoreQueueAddr(a)) {
+        *reinterpret_cast<u16*>(&g_sq_buffer[SqOffset(a)]) = d;
+        WriteVectorRam(SqToVectorAddr(a), d);
+        return;
+    }
+
+    if (IsVectorRamAddr(a)) {
+        WriteVectorRam(a, d);
+        return;
+    }
+
+    if (!g_exception_was_raised) {
+        if (is_mmu_on())
+            mmu_WriteMem(a, d);
+        else
+            addrspace::write16(a, d);
     }
 }
 
-static inline void RawWrite32(uint32_t a, u32 d) {
-    if (a >= 0x1f000000 && a <= 0x1f000018) {
-        ERROR_LOG(SH4, "Invalid P4 write (16-bit) addr=0x%08X, data=0x%08X, pc=0x%08X", a, d, next_pc);
-        // Could return early here to avoid the actual write
+static inline void RawWrite32(uint32_t a, u32 d)
+{
+    if (a >= 0x1F000000 && a <= 0x1F000018) {
+        ERROR_LOG(SH4, "Invalid P4 write (32-bit) addr=0x%08X, data=0x%08X, pc=0x%08X", a, d, next_pc);
         return;
     }
-        if (IsWorkRam(a)) g_ir.InvalidateBlock(a & ~1u);
-    if (!g_exception_was_raised)
-    {
-        if (is_mmu_on()) mmu_WriteMem(a, d); else addrspace::write32(a, d);
+
+    if (IsWorkRam(a))
+        g_ir.InvalidateBlock(a & ~1u);
+
+    if (IsStoreQueueAddr(a)) {
+        *reinterpret_cast<u32*>(&g_sq_buffer[SqOffset(a)]) = d;
+        ERROR_LOG(SH4, "SQ WRITE32 addr=0x%08X off=%u val=0x%08X", a, SqOffset(a), d);
+        WriteVectorRam(SqToVectorAddr(a), d);
+        return;
+    }
+
+    if (IsVectorRamAddr(a)) {
+        WriteVectorRam(a, d);
+        return;
+    }
+
+    if (!g_exception_was_raised) {
+        if (is_mmu_on())
+            mmu_WriteMem(a, d);
+        else
+            addrspace::write32(a, d);
     }
 }
 
 static inline void RawWrite64(uint32_t a, u64 d)
 {
+    if (IsStoreQueueAddr(a) && SqOffset(a) <= 0x78u) {
+        *reinterpret_cast<u32*>(&g_sq_buffer[SqOffset(a)])     = static_cast<u32>(d & 0xFFFFFFFFu);
+        ERROR_LOG(SH4, "SQ WRITE64 low addr=0x%08X off=%u val=0x%08X", a, SqOffset(a), static_cast<u32>(d & 0xFFFFFFFFu));
+        *reinterpret_cast<u32*>(&g_sq_buffer[SqOffset(a) + 4]) = static_cast<u32>(d >> 32);
+        ERROR_LOG(SH4, "SQ WRITE64 high addr=0x%08X off=%u val=0x%08X", a+4, SqOffset(a)+4, static_cast<u32>(d >> 32));
+        // mirror to vector RAM (little-endian order)
+        WriteVectorRam(SqToVectorAddr(a), static_cast<u32>(d & 0xFFFFFFFFu));
+        WriteVectorRam(SqToVectorAddr(a) + 4, static_cast<u32>(d >> 32));
+        return;
+    }
+    if (IsVectorRamAddr(a) && ((a & 0x3FFu) <= 0x3F8u)) {
+        // Little-endian: write lower then upper dword
+        uint32_t base = a;
+        WriteVectorRam(base, static_cast<u32>(d & 0xFFFFFFFFu));
+        WriteVectorRam(base + 4, static_cast<u32>(d >> 32));
+        return;
+    }
     if (!g_exception_was_raised)
     {
         if (is_mmu_on()) mmu_WriteMem(a, d); else addrspace::write64(a, d);
