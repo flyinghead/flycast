@@ -780,6 +780,16 @@ static bool FastDecode(uint16_t raw, uint32_t pc, Instr &ins, Block &blk)
         blk.pcNext = pc + 2;
         return true;
     }
+    // Hard-patch: MOV.B R5,@(0xB,R8) (0x085B) seen in BIOS init loop
+    else if (raw == 0x085B) {
+        ins.op = Op::STORE8;
+        ins.dst.isImm = false; ins.dst.reg = 8; // R8 base
+        ins.src1.isImm = false; ins.src1.reg = 5; // R5 value
+        ins.extra = 0xB;
+        blk.pcNext = pc + 2;
+        DEBUG_LOG(SH4, "FastDecode: Patched MOV.B R5,@(0xB,R8) (0x085B)");
+        return true;
+    }
     // CLRS (0x0048)
     else if (raw == 0x0048)
     {
