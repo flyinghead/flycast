@@ -1207,6 +1207,37 @@ static bool FastDecode(uint16_t raw, uint32_t pc, Instr &ins, Block &blk)
             blk.pcNext = pc + 2;
             return true;
         }
+        // MOV.B R0,@(disp,GBR) (0xC0dd)
+        else if ((raw & 0xFF00) == 0xC000)
+        {
+            uint8_t disp = raw & 0xFF;
+            ins.op = Op::STORE8_GBR;
+            ins.src1.isImm = false; ins.src1.reg = 0; // R0
+            ins.extra = disp;
+            blk.pcNext = pc + 2;
+            return true;
+        }
+        // MOV.B @(disp,GBR),R0 (0x8Cdd)
+        else if ((raw & 0xFF00) == 0x8C00)
+        {
+            uint8_t disp = raw & 0xFF;
+            ins.op = Op::LOAD8_GBR;
+            ins.dst.isImm = false; ins.dst.reg = 0; // R0
+            ins.extra = disp;
+            blk.pcNext = pc + 2;
+            return true;
+        }
+        // MOV.B @Rm,Rn (0x6nm0)
+        else if ((raw & 0xF00F) == 0x6000)
+        {
+            uint8_t n = (raw >> 8) & 0xF;
+            uint8_t m = (raw >> 4) & 0xF;
+            ins.op = Op::LOAD8;
+            ins.dst.isImm = false; ins.dst.reg = n; // Rn
+            ins.src1.isImm = false; ins.src1.reg = m; // Rm
+            blk.pcNext = pc + 2;
+            return true;
+        }
 
     // MOV.L Rm,@(disp,Rn) (0x1nmd) - for 0x1304 and 0x1317
     else if ((raw & 0xF000) == 0x1000)
