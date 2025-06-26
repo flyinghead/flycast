@@ -104,6 +104,7 @@ def gather_helper_names(manual_names: list, mapping: dict) -> list:
     # Extra internal IR opcodes not present in the SH4 legacy table
     extra_internal = {
     'ILLEGAL',
+    'STSL_PR_PREDEC',
     'MOV_REG', 'MOV_IMM', 'ADD_REG', 'ADD_IMM',
     'LOAD16_IMM', 'LOAD32_IMM', 'LOAD32_PC', 'LOAD16_PC',
     'JSR', 'RTS', 'BRA',

@@ -202,6 +202,7 @@ enum class Op : uint8_t {
 enum class RegType : uint8_t {
   NONE,   // Default or not applicable
   GPR,    // General Purpose Register (R0-R15)
+  GPSET_REG,        // REG[extra] = Rs
   FGR,    // Floating Point Register (FR0-FR15, DR0-DR14, XF0-XF14)
   SPR,    // System/Special Purpose Register (SR, GBR, VBR, SSR, SPC, SGR, DBR,
           // MACH, MACL, PR, FPUL, FPSCR)
