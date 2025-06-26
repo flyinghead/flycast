@@ -451,7 +451,7 @@ static inline void SetPC(Sh4Context* ctx, uint32_t new_pc, const char* why)
 {
     uint32_t old_pc = next_pc;
     // Added PR and SR.T to existing SetPC logging
-    INFO_LOG(SH4, "SetPC: %08X -> %08X (PR:%08X SR.T:%d) via %s", old_pc, new_pc, pr, GET_SR_T(ctx), why);
+    DEBUG_LOG(SH4, "SetPC: %08X -> %08X (PR:%08X SR.T:%d) via %s", old_pc, new_pc, pr, GET_SR_T(ctx), why);
 
     // Reject addresses in invalid high region (0x10000000–0x1FFFFFFF)
     if (new_pc >= 0x10000000 && new_pc < 0x20000000) {
@@ -1046,17 +1046,18 @@ static void Exec_TRAPA(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t pc)
     uint32_t vector_addr = ctx->vbr + 0x100 + (trap_no * 4);
     uint32_t handler_pc  = RawRead32(vector_addr);
 
-    // If the vector is blank (0x00000000), treat as illegal instruction instead
+    // If the vector is blank (0x00000000), fall back to BIOS ROM mirror at 0xA000xxxx.
     if (handler_pc == 0) {
-      // Vector in on-chip RAM is empty – fall back to BIOS ROM mirror
-      uint32_t rom_addr = 0xA0000000 + 0x100 + (trap_no * 4);
-      handler_pc = RawRead32(rom_addr);
-      if (handler_pc == 0) {
-          ERROR_LOG(SH4, "TRAPA vector %02X empty in RAM and ROM (addr=%08X)", trap_no, vector_addr);
-          return; // give up – will appear as illegal opcode later
-      }
-      INFO_LOG(SH4, "TRAPA vector %02X served from ROM mirror (%08X)", trap_no, rom_addr);
-
+        uint32_t rom_addr = 0xA0000000 + 0x100 + (trap_no * 4);
+        handler_pc = RawRead32(rom_addr);
+        if (handler_pc == 0) {
+            ERROR_LOG(SH4, "TRAPA vector %02X empty in RAM and ROM (addr=%08X)", trap_no, vector_addr);
+            DumpTrace();
+            // Resume after the TRAPA so we don't jump to PC=0 and crash again
+            SetPC(ctx, pc + 2, "TRAPA empty");
+            return;
+        }
+        INFO_LOG(SH4, "TRAPA vector %02X served from ROM mirror (%08X)", trap_no, rom_addr);
     }
 
     SetPC(ctx, handler_pc, "TRAPA");
@@ -3904,7 +3905,7 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
         // jumps to the next one, regardless of how it was executed.
         if (ins.op == Op::END)
         {
-            INFO_LOG(SH4, "BLOCK_END: AtPC:%08X (Op:END) PR:%08X SR.T:%d -> TargetNextPC:%08X", ctx->pc, pr, GET_SR_T(ctx), blk->pcNext);
+            DEBUG_LOG(SH4, "BLOCK_END: AtPC:%08X (Op:END) PR:%08X SR.T:%d -> TargetNextPC:%08X", ctx->pc, pr, GET_SR_T(ctx), blk->pcNext);
             SetPC(ctx, blk->pcNext, "block_end");
             SyncCtxFromGlobals(ctx);
             return; // leave ExecuteBlock; caller will schedule next block
@@ -3950,7 +3951,7 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
         // commit step at the top of the next iteration will overwrite pc with
         // the branch target after the delay slot has run.
         // pc here is the PC of the instruction just executed.
-        INFO_LOG(SH4, "SEQUENTIAL_ADVANCE: AtPC:%08X PR:%08X SR.T:%d -> TargetNextPC:%08X", ctx->pc, pr, GET_SR_T(ctx), ctx->pc + 2);
+        DEBUG_LOG(SH4, "SEQUENTIAL_ADVANCE: AtPC:%08X PR:%08X SR.T:%d -> TargetNextPC:%08X", ctx->pc, pr, GET_SR_T(ctx), ctx->pc + 2);
         SetPC(ctx, ctx->pc + 2, "seq");
 
         // Branch delay-slot/commit bookkeeping ----------------------------------

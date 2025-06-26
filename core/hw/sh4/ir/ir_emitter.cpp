@@ -229,6 +229,82 @@ static bool FastDecode(uint16_t raw, uint32_t pc, Instr &ins, Block &blk)
         blk.pcNext = pc + 2;
         return true;
     }
+    // -----------------------------
+    // Group 0x4** – register-to-register stores (no R0 index)
+    // MOV.B/W/L Rm,@Rn and pre-decrement variants
+    // -----------------------------
+    // MOV.B Rm,@Rn  (0x4nm0)
+    else if ((raw & 0xF00F) == 0x4000)
+    {
+        uint8_t n = (raw >> 8) & 0xF;
+        uint8_t m = (raw >> 4) & 0xF;
+        ins.op = Op::STORE8;
+        ins.src1 = {false, m};
+        ins.src2 = {false, n};
+        ins.extra = 0;
+        blk.pcNext = pc + 2;
+        return true;
+    }
+    // MOV.W Rm,@Rn  (0x4nm1)
+    else if ((raw & 0xF00F) == 0x4001)
+    {
+        uint8_t n = (raw >> 8) & 0xF;
+        uint8_t m = (raw >> 4) & 0xF;
+        ins.op = Op::STORE16;
+        ins.src1 = {false, m};
+        ins.src2 = {false, n};
+        ins.extra = 0;
+        blk.pcNext = pc + 2;
+        return true;
+    }
+    // MOV.L Rm,@Rn  (0x4nm2)
+    else if ((raw & 0xF00F) == 0x4002)
+    {
+        uint8_t n = (raw >> 8) & 0xF;
+        uint8_t m = (raw >> 4) & 0xF;
+        ins.op = Op::STORE32;
+        ins.src1 = {false, m};
+        ins.src2 = {false, n};
+        ins.extra = 0;
+        blk.pcNext = pc + 2;
+        return true;
+    }
+    // MOV.B Rm,@-Rn (0x4nm4)
+    else if ((raw & 0xF00F) == 0x4004)
+    {
+        uint8_t n = (raw >> 8) & 0xF;
+        uint8_t m = (raw >> 4) & 0xF;
+        ins.op = Op::STORE8_PREDEC;
+        ins.dst  = {false, n}; // destination register (Rn) will be decremented
+        ins.src1 = {false, m}; // value (Rm)
+        ins.src2 = {false, n}; // base register
+        blk.pcNext = pc + 2;
+        return true;
+    }
+    // MOV.W Rm,@-Rn (0x4nm5)
+    else if ((raw & 0xF00F) == 0x4005)
+    {
+        uint8_t n = (raw >> 8) & 0xF;
+        uint8_t m = (raw >> 4) & 0xF;
+        ins.op = Op::STORE16_PREDEC;
+        ins.dst  = {false, n};
+        ins.src1 = {false, m};
+        ins.src2 = {false, n};
+        blk.pcNext = pc + 2;
+        return true;
+    }
+    // MOV.L Rm,@-Rn (0x4nm6)
+    else if ((raw & 0xF00F) == 0x4006)
+    {
+        uint8_t n = (raw >> 8) & 0xF;
+        uint8_t m = (raw >> 4) & 0xF;
+        ins.op = Op::STORE32_PREDEC;
+        ins.dst  = {false, n};
+        ins.src1 = {false, m};
+        ins.src2 = {false, n};
+        blk.pcNext = pc + 2;
+        return true;
+    }
     // MOV.B Rm,@-Rn (0x2nm4)
     else if ((raw & 0xF00F) == 0x2004)
     {
@@ -1414,14 +1490,14 @@ Block& Emitter::CreateNew(uint32_t pc) {
         }
 
         blk.pcStart = pc;
-        INFO_LOG(SH4, "Emitter::CreateNew: Entered for PC=0x%08X", pc);
+        DEBUG_LOG(SH4, "Emitter::CreateNew: Entered for PC=0x%08X", pc);
         fflush(stdout);
         if (pc == 0xAC000000) {
-            INFO_LOG(SH4, "Emitter::CreateNew: Processing target PC=0xAC000000");
+            DEBUG_LOG(SH4, "Emitter::CreateNew: Processing target PC=0xAC000000");
             fflush(stdout);
         }
         uint16_t raw = mmu_IReadMem16(pc);
-        INFO_LOG(SH4, "Emitter::CreateNew: PC=0x%08X, raw_opcode=0x%04X", pc, raw);
+        DEBUG_LOG(SH4, "Emitter::CreateNew: PC=0x%08X, raw_opcode=0x%04X", pc, raw);
         fflush(stdout);
     if (pc == 0x8C00B6B8 || pc == 0x8C00B6BA || pc == 0x8C00B6BC) {
         INFO_LOG(SH4, "Emitter::CreateNew: At critical PC=%08X, raw=0x%04X", pc, raw);
@@ -3664,7 +3740,7 @@ Block& Emitter::CreateNew(uint32_t pc) {
 
             Instr end{}; end.op = Op::END; end.pc = blk.pcNext; end.raw = 0xFFFF;
             blk.code.push_back(end);
-            INFO_LOG(SH4, "Emitter::CreateNew: Finalizing block for PC=0x%08X. Instructions: %zu. pcNext=0x%08X", blk.pcStart, blk.code.size(), blk.pcNext);
+            DEBUG_LOG(SH4, "Emitter::CreateNew: Finalizing block for PC=0x%08X. Instructions: %zu. pcNext=0x%08X", blk.pcStart, blk.code.size(), blk.pcNext);
     fflush(stdout);
     g_block_sig_cache.emplace(sig, &blk);
     return blk;
