@@ -18,6 +18,14 @@
 */
 #include "sh4_cycles.h"
 
+#ifdef STRICT_MODE
+constexpr int CPU_RATIO = 1;
+#else
+constexpr int CPU_RATIO = 8;
+#endif
+
+Sh4Cycles sh4cycles(CPU_RATIO);
+
 // TODO additional wait cycles depending on area?:
 // Area       Wait cycles (not including external wait)
 // 0          3

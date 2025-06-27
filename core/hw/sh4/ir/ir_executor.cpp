@@ -9,6 +9,7 @@
 #include "hw/sh4/modules/mmu.h"
 #include "sh4_ir_interpreter.h"
 #include "hw/sh4/sh4_core.h" // for SH4ThrownException
+#include "hw/sh4/sh4_cycles.h" // for cycle counting
 #include <cmath>
 #include <cstring> // for fabsf, fabs
 #include <cassert>
@@ -603,7 +604,7 @@ static inline bool is_mmu_on() { return mmu_enabled(); }
 // execution inside the current IR block so that control unwinds back to the
 // main Run() loop at the exception vector.
 // KISS: we simply return 0 on reads when an exception was just raised; the
-// value is irrelevant because the instruction raising the exception won’t be
+// value is irrelevant because the instruction raising the exception won't be
 // architecturally committed.
 
 static inline u8  RawRead8(uint32_t a)
@@ -2267,7 +2268,26 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
         MaybeDumpStats();
 #endif // end boot-trace block
 
-
+        // Check for FPU disable before executing floating point instructions
+        if (ctx->sr.FD == 1) {
+            // Check if this is a floating point instruction
+            // This is a simplified check - we need to identify FPU instructions
+            bool is_fpu_instruction = false;
+            switch (ins.op) {
+                case Op::FSTS:
+                case Op::FLDS:
+                case Op::FIPR:
+                // Add other FPU instructions as needed
+                    is_fpu_instruction = true;
+                    break;
+                default:
+                    break;
+            }
+            if (is_fpu_instruction) {
+                RaiseFPUDisableException();
+                continue;
+            }
+        }
 
         // Try fast table dispatch first
         {
@@ -3092,7 +3112,7 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                     GET_REG(ctx, ins.src1.reg) += 4;
                     break;
                 case Op::STS:   // Treat as STS_PR_L (store PR to @-Rn)
-                case Op::STS_PR_L:   // emitter’s explicit variant
+                case Op::STS_PR_L:   // emitter's explicit variant
                 {
                     uint32_t new_addr = GET_REG(ctx, ins.dst.reg) - 4;
                     SET_REG(ctx, ins.dst.reg, new_addr);
@@ -4086,6 +4106,10 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                 executed_delay = true;
             }
         }
+
+        // Add cycle counting after instruction execution
+        // Use the raw opcode from the instruction for cycle counting
+        sh4cycles.executeCycles(ins.raw);
     } // end for (const auto& ins : blk->code)
 
     // Normal fall-through: sync back any PC/PR mutations performed through legacy macros

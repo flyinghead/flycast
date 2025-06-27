@@ -23,14 +23,12 @@ constexpr int CPU_RATIO = 8;
 
 Sh4ICache icache;
 Sh4OCache ocache;
-Sh4Cycles sh4cycles(CPU_RATIO);
 
 static void ExecuteOpcode(u16 op)
 {
 	if (sr.FD == 1 && OpDesc[op]->IsFloatingPoint())
 		RaiseFPUDisableException();
 	OpPtr[op](op);
-	sh4cycles.executeCycles(op);
 }
 
 static u16 ReadNexOp()

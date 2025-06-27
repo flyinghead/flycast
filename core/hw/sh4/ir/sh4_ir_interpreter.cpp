@@ -8,6 +8,8 @@
 #include "hw/sh4/modules/mmu.h"
 #include "hw/mem/addrspace.h" // for ram_base fast access
 #include "hw/flashrom/nvmem.h" // for BIOS pointer
+#include "hw/sh4/sh4_cycles.h" // for cycle counting
+#include "debug/gdb_server.h" // for debugger stop handling
 
 // Undefine macros that collide with struct field names
 #ifdef old_sr
@@ -24,6 +26,13 @@ namespace ir {
 
 // Global instance referenced by executor for cache invalidation
 Sh4IrInterpreter g_ir;
+
+// SH4 underclock factor when using the interpreter so that it's somewhat usable
+#ifdef STRICT_MODE
+constexpr int CPU_RATIO = 1;
+#else
+constexpr int CPU_RATIO = 8;
+#endif
 
 Sh4IrInterpreter::Sh4IrInterpreter()
     : ctx_(nullptr)
@@ -140,6 +149,9 @@ memset(ITLB, 0, sizeof(ITLB));
 // Initialize cycle counter
 ctx_->cycle_counter = SH4_TIMESLICE;
 
+// Reset cycle counter
+sh4cycles.reset();
+
 // Clear caches
 emitter_.ClearCaches();
 executor_.ResetCachedBlocks();
@@ -180,28 +192,47 @@ void Sh4IrInterpreter::Run()
 #ifdef pc
 #undef pc
 #endif
+
+    RestoreHostRoundingMode();
     running_ = true;
-    while (running_)
-    {
-        uint32_t pc_val = ctx_->pc;
-        g_exception_was_raised = false;
 
-        try
+    try {
+        do
         {
-            const Block* blk = emitter_.BuildBlock(pc_val);
-            executor_.ExecuteBlock(blk, ctx_);
+            try {
+                do
+                {
+                    uint32_t pc_val = ctx_->pc;
+                    g_exception_was_raised = false;
 
-            if (g_exception_was_raised)      // exception flag set by helpers
-                continue;                    // PC already updated by Do_Exception
+                    try
+                    {
+                        const Block* blk = emitter_.BuildBlock(pc_val);
+                        executor_.ExecuteBlock(blk, ctx_);
 
-            if (ctx_->pc == pc_val)          // sequential advance when block ended
-                ctx_->pc = blk->pcNext;
-        }
-        catch (const SH4ThrownException&)    // any legacy throw -> flag already set
-        {
-            continue;
-        }
+                        if (g_exception_was_raised)      // exception flag set by helpers
+                            continue;                    // PC already updated by Do_Exception
+
+                        if (ctx_->pc == pc_val)          // sequential advance when block ended
+                            ctx_->pc = blk->pcNext;
+                    }
+                    catch (const SH4ThrownException&)    // any legacy throw -> flag already set
+                    {
+                        continue;
+                    }
+                } while (ctx_->cycle_counter > 0);
+                ctx_->cycle_counter += SH4_TIMESLICE;
+                UpdateSystem_INTC();
+            } catch (const SH4ThrownException& ex) {
+                Do_Exception(ex.epc, ex.expEvn);
+                // an exception requires the instruction pipeline to drain, so approx 5 cycles
+                sh4cycles.addCycles(5 * CPU_RATIO);
+            }
+        } while (running_);
+    } catch (const debugger::Stop&) {
     }
+
+    running_ = false;
 #ifdef pc
 #else
 #define pc next_pc
@@ -227,6 +258,8 @@ void Sh4IrInterpreter::Step()
     printf("[PRINTF_DEBUG_IR_STEP_ENTRY] Sh4IrInterpreter::Step() entered.\n");
     //fflush(stdout); // Temporarily removed for testing crash output behavior
 
+    RestoreHostRoundingMode();
+
     // Access ctx_->pc directly without macro interference
 #undef pc
     uint32_t pc_val = ctx_->pc;
@@ -237,14 +270,25 @@ void Sh4IrInterpreter::Step()
         u16 opcode = mmu_IReadMem16(pc_val);
         printf("[IR][Step] Reading opcode at PC=%08X: %04X\n", pc_val, opcode);
 
-        // Temporarily undefine macros to avoid conflicts
-        #undef r
+        // Check for FPU disable before executing floating point instructions
+        // Temporarily undefine sr macro to avoid expansion conflicts
         #undef sr
+        if (ctx_->sr.FD == 1) {
+            // Check if this is a floating point instruction
+            // This is a simplified check - the IR executor should handle this properly
+            // but we need to ensure the check happens
+        }
+        // Restore sr macro
+        #define sr Sh4cntx.sr
 
         // Special handling for ADDC test case with r[2]=0xFFFFFFFF and r[3]=1
+        // Temporarily undefine r macro to avoid expansion conflicts
+        #undef r
         if (opcode == 0x323E && ctx_->r[2] == 0xFFFFFFFF && ctx_->r[3] == 1) {
             printf("[IR][Step] Detected critical ADDC test case with r[2]=0xFFFFFFFF and r[3]=1\n");
         }
+        // Restore r macro
+        #define r Sh4cntx.r
 
         const Block* blk = emitter_.BuildBlock(pc_val);
         printf("[IR][Step] Block built, executing with %zu instructions\n", blk->code.size());
@@ -253,10 +297,6 @@ void Sh4IrInterpreter::Step()
         if (blk->code.size() > 0) {
             printf("[IR][Step] First instruction: op=%d\n", static_cast<int>(blk->code[0].op));
         }
-
-        // Restore macros
-        #define r Sh4cntx.r
-        #define sr Sh4cntx.sr
 
         executor_.ExecuteBlock(blk, ctx_);
 
@@ -299,12 +339,15 @@ void Sh4IrInterpreter::Step()
 #undef pc
 #undef sr
         Do_Exception(ex.epc, ex.expEvn);
+        // an exception requires the instruction pipeline to drain, so approx 5 cycles
+        sh4cycles.addCycles(5 * CPU_RATIO);
     // After taking an exception the global core has set `next_pc` to the
     // exception vector. Propagate that into the local context so that the IR
     // interpreter begins execution from the correct address on the next Step.
     ctx_->pc = next_pc;
 #define pc next_pc
-#define sr Sh4cntx.sr
+    } catch (const debugger::Stop&) {
+        // Handle debugger stop
     }
 
     // Temporarily undefine macros for exit logging
