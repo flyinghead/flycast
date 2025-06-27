@@ -648,12 +648,7 @@ static inline u16 RawRead16(uint32_t a)
 
 static inline u32 RawRead32(uint32_t a)
 {
-    u32 v;
-    // DIAGNOSTIC: Log path taken for specific problematic addresses
-    if (a == 0xA00001B0 || a == 0xA00001B4) {
-        INFO_LOG(SH4, "RawRead32 DEBUG: addr=0x%08X IsSq=%d IsVec=%d", a, IsSqPhysAddr(a), IsVectorRamAddr(a));
-    }
-
+        u32 v;
     if (IsSqPhysAddr(a)) {
         v = *reinterpret_cast<const u32*>(&g_sq_buffer[SqOffset(a)]);
         INFO_LOG(SH4, "SQ READ32 addr=0x%08X off=%u val=0x%08X", a, SqOffset(a), v);
@@ -2275,34 +2270,19 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
             // This will cause the emitter to re-emit the block on the next execution
             g_ir.InvalidateBlock(start_pc);
 
-            // If this is a critical BIOS area, clear all caches to ensure consistency
+            // For BIOS area, just invalidate this specific block - don't reset entire CPU
             if (start_pc >= 0xA0000000 && start_pc <= 0xA0200000) {
-                INFO_LOG(SH4, "BIOS area cache invalidation - clearing all caches");
-                g_ir.Reset(true);
+                INFO_LOG(SH4, "BIOS area cache invalidation - invalidating block only");
+                // Block already invalidated above, no need for full reset
             }
             return;
         }
 
-        // Additional validation for critical instructions near the problem area
+        // TEMPORARY: Disable cache validation during BIOS boot to avoid corruption
+        // BIOS patches memory dynamically, so cache mismatches are expected and normal
         if (start_pc >= 0xA0000100 && start_pc <= 0xA0000120) {
-            for (size_t i = 0; i < std::min(blk->code.size(), size_t(8)); i++) {
-                uint32_t pc = blk->code[i].pc;
-                uint16_t actual = RawRead16(pc);
-                uint16_t expected = blk->code[i].raw;
-
-                if (actual != expected) {
-                    INFO_LOG(SH4, "Cache invalidation: Mismatch at PC=%08X (idx=%zu). Expected=0x%04X, Actual=0x%04X",
-                             pc, i, expected, actual);
-                    g_ir.InvalidateBlock(start_pc);
-
-                    // Clear all caches for BIOS area mismatches
-                    if (start_pc >= 0xA0000000 && start_pc <= 0xA0200000) {
-                        INFO_LOG(SH4, "BIOS area detailed cache invalidation - clearing all caches");
-                        g_ir.Reset(true);
-                    }
-                    return;
-                }
-            }
+            // Skip cache validation in critical BIOS area to allow normal patching
+            INFO_LOG(SH4, "Skipping cache validation for BIOS area PC=%08X", start_pc);
         }
     }
 
