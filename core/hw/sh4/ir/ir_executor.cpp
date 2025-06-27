@@ -1213,6 +1213,14 @@ static void Exec_STORE8(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
 }
 
 // Dedicated Rm,@(R0,Rn) store variants (no disp, address = R0 + Rn)
+// MOV.B R0,@(R0,Rn) (0x8n00)
+static void Exec_STORE8_R0_REG(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
+{
+    uint32_t addr = GET_REG(ctx, 0) + GET_REG(ctx, ins.dst.reg); // R0 + Rn
+    uint8_t val  = static_cast<uint8_t>(GET_REG(ctx, 0));
+    RawWrite8(addr, val);
+}
+
 static void Exec_STORE8_Rm_R0RN(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
 {
     uint32_t addr = GET_REG(ctx, ins.src2.reg) + GET_REG(ctx, 0); // Rn + R0
@@ -2084,6 +2092,7 @@ static void InitExecTable()
     g_exec_table[static_cast<int>(sh4::ir::Op::STORE32_GBR)] = &Exec_STORE32_GBR;
     // R0-offset variants
     g_exec_table[static_cast<int>(sh4::ir::Op::STORE8_R0)]  = &Exec_STORE8_R0;
+    g_exec_table[static_cast<int>(sh4::ir::Op::STORE8_R0_REG)]  = &Exec_STORE8_R0_REG;
     g_exec_table[static_cast<int>(sh4::ir::Op::STORE16_R0)] = &Exec_STORE16_R0;
     g_exec_table[static_cast<int>(sh4::ir::Op::STORE32_R0)] = &Exec_STORE32_R0;
     g_exec_table[static_cast<int>(sh4::ir::Op::ADDC)]       = &Exec_ADDC;
@@ -2442,6 +2451,7 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                     break;
                 }
                 case Op::STORE8_R0:
+                  case Op::STORE8_R0_REG:
                  {
                      uint32_t addr;
                      uint8_t value;
