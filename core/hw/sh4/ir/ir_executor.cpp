@@ -66,11 +66,13 @@ namespace {
         // Vector RAM overlay should only apply to Work RAM addresses, not BIOS area
         // Check if it's in the Work RAM cached (0x8C000000) or uncached (0x0C000000) regions
         uint32_t base = vaddr & 0xFC000000u;
+        bool result = false;
         if (base == 0x8C000000u || base == 0x0C000000u) {
-            return (vaddr & 0x0FFFFFFFu) < 0x400u; // first 1 KiB overlay in Work RAM
+            result = (vaddr & 0x0FFFFFFFu) < 0x400u; // first 1 KiB overlay in Work RAM
         }
+
         // Do NOT overlay BIOS addresses (0xA0000000 range)
-        return false;
+        return result;
     }
 
     template<typename T>
