@@ -63,8 +63,14 @@ namespace {
     // True for any mirrored address landing in first 1 KiB of area 0.
     static inline bool IsVectorRamAddr(uint32_t vaddr)
     {
-        // Accept mirrors in cached area (0xA0000000) and uncached P2 (0x20000000)
-        return (vaddr & 0x0FFFFFFFu) < 0x400u; // first 1 KiB overlay
+        // Vector RAM overlay should only apply to Work RAM addresses, not BIOS area
+        // Check if it's in the Work RAM cached (0x8C000000) or uncached (0x0C000000) regions
+        uint32_t base = vaddr & 0xFC000000u;
+        if (base == 0x8C000000u || base == 0x0C000000u) {
+            return (vaddr & 0x0FFFFFFFu) < 0x400u; // first 1 KiB overlay in Work RAM
+        }
+        // Do NOT overlay BIOS addresses (0xA0000000 range)
+        return false;
     }
 
     template<typename T>
@@ -643,6 +649,11 @@ static inline u16 RawRead16(uint32_t a)
 static inline u32 RawRead32(uint32_t a)
 {
     u32 v;
+    // DIAGNOSTIC: Log path taken for specific problematic addresses
+    if (a == 0xA00001B0 || a == 0xA00001B4) {
+        INFO_LOG(SH4, "RawRead32 DEBUG: addr=0x%08X IsSq=%d IsVec=%d", a, IsSqPhysAddr(a), IsVectorRamAddr(a));
+    }
+
     if (IsSqPhysAddr(a)) {
         v = *reinterpret_cast<const u32*>(&g_sq_buffer[SqOffset(a)]);
         INFO_LOG(SH4, "SQ READ32 addr=0x%08X off=%u val=0x%08X", a, SqOffset(a), v);
