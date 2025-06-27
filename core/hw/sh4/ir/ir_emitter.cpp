@@ -1121,6 +1121,61 @@ static bool FastDecode(uint16_t raw, uint32_t pc, Instr &ins, Block &blk)
             blk.pcNext = pc + 2;
             return true;
         }
+        // MOV.W R0,@(R0,Rn) (0x8n01)
+        else if ((raw & 0xF00F) == 0x8001)
+        {
+            uint8_t n = (raw >> 8) & 0xF;
+            ins.op = Op::STORE16_R0;
+            ins.src2.isImm = false; ins.src2.reg = n;
+            ins.src1.isImm = false; ins.src1.reg = 0;
+            ins.extra = 0;
+            blk.pcNext = pc + 2;
+            return true;
+        }
+        // MOV.L R0,@(R0,Rn) (0x8n02)
+        else if ((raw & 0xF00F) == 0x8002)
+        {
+            uint8_t n = (raw >> 8) & 0xF;
+            ins.op = Op::STORE32_R0;
+            ins.src2.isImm = false; ins.src2.reg = n;
+            ins.src1.isImm = false; ins.src1.reg = 0;
+            ins.extra = 0;
+            blk.pcNext = pc + 2;
+            return true;
+        }
+        // MOV.B Rm,@(R0,Rn) (0x8n04)
+        else if ((raw & 0xF00F) == 0x8004)
+        {
+            uint8_t n = (raw >> 8) & 0xF;
+            uint8_t m = (raw >> 4) & 0xF;
+            ins.op = Op::STORE8_Rm_R0RN;
+            ins.src1.isImm = false; ins.src1.reg = m;
+            ins.src2.isImm = false; ins.src2.reg = n;
+            blk.pcNext = pc + 2;
+            return true;
+        }
+        // MOV.W Rm,@(R0,Rn) (0x8n05)
+        else if ((raw & 0xF00F) == 0x8005)
+        {
+            uint8_t n = (raw >> 8) & 0xF;
+            uint8_t m = (raw >> 4) & 0xF;
+            ins.op = Op::STORE16_Rm_R0RN;
+            ins.src1.isImm = false; ins.src1.reg = m;
+            ins.src2.isImm = false; ins.src2.reg = n;
+            blk.pcNext = pc + 2;
+            return true;
+        }
+        // MOV.L Rm,@(R0,Rn) (0x8n06)
+        else if ((raw & 0xF00F) == 0x8006)
+        {
+            uint8_t n = (raw >> 8) & 0xF;
+            uint8_t m = (raw >> 4) & 0xF;
+            ins.op = Op::STORE32_Rm_R0RN;
+            ins.src1.isImm = false; ins.src1.reg = m;
+            ins.src2.isImm = false; ins.src2.reg = n;
+            blk.pcNext = pc + 2;
+            return true;
+        }
         else if (((raw & 0xFF0F) == 0xF703)) // FSTS FPUL,FRn (0xF7n3)
         {
             uint8_t n = (raw >> 8) & 0xF;
@@ -1236,6 +1291,16 @@ static bool FastDecode(uint16_t raw, uint32_t pc, Instr &ins, Block &blk)
             blk.pcNext = pc + 2;
             return true;
         }
+        // MOV.L R0,@(disp,GBR) (0xC2dd)
+        else if ((raw & 0xFF00) == 0xC200)
+        {
+            uint8_t disp = raw & 0xFF;
+            ins.op = Op::STORE32_GBR;          // store R0 -> (disp,GBR)
+            ins.src1.isImm = false; ins.src1.reg = 0; // R0 value
+            ins.extra = disp;                  // byte offset units of 4 (handled later)
+            blk.pcNext = pc + 2;
+            return true;
+        }
         // MOV.B @(disp,GBR),R0 (0x8Cdd)
         else if ((raw & 0xFF00) == 0x8C00)
         {
@@ -1267,7 +1332,7 @@ static bool FastDecode(uint16_t raw, uint32_t pc, Instr &ins, Block &blk)
             return true;
         }
         // MOV.B R0,@(R0,Rn) (0x8n00)
-        else if ((raw & 0xF00F) == 0x8000)
+        else if ((raw & 0xF00F) == 0x8000) // MOV.B R0,@(R0,Rn)
         {
             uint8_t n = (raw >> 8) & 0xF;
             ins.op = Op::STORE8_R0_REG;
