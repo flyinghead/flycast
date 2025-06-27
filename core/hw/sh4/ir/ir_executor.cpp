@@ -643,12 +643,13 @@ static inline u32 RawRead32(uint32_t a)
     u32 v;
     if (IsSqPhysAddr(a)) {
         v = *reinterpret_cast<const u32*>(&g_sq_buffer[SqOffset(a)]);
-        ERROR_LOG(SH4, "SQ READ32 addr=0x%08X off=%u val=0x%08X", a, SqOffset(a), v);
+        INFO_LOG(SH4, "SQ READ32 addr=0x%08X off=%u val=0x%08X", a, SqOffset(a), v);
     } else if (IsVectorRamAddr(a)) {
         v = ReadVectorRam<u32>(a);
-        ERROR_LOG(SH4, "VEC READ32 addr=0x%08X off=%u val=0x%08X", a, a & 0x3FFu, v);
+        INFO_LOG(SH4, "VEC READ32 addr=0x%08X off=%u val=0x%08X", a, a & 0x3FFu, v);
     } else {
         v = is_mmu_on() ? mmu_ReadMem<u32>(a) : addrspace::read32(a);
+        INFO_LOG(SH4, "%s READ32 addr=0x%08X val=0x%08X", is_mmu_on() ? "MMU" : "ADD", a, v);
     }
     if (UNLIKELY(g_exception_was_raised))
         return 0;
@@ -662,13 +663,16 @@ static inline u64 RawRead64(uint32_t a)
         u32 lo = *reinterpret_cast<const u32*>(&g_sq_buffer[SqOffset(a)]);
         u32 hi = *reinterpret_cast<const u32*>(&g_sq_buffer[SqOffset(a)+4]);
         v = (static_cast<u64>(hi) << 32) | lo;
+        INFO_LOG(SH4, "SQ READ64 addr=0x%08X off=%u val=0x%08X", a, SqOffset(a), v);
     } else if (IsVectorRamAddr(a) && ((a & 0x3FFu) <= 0x3F8u)) {
         // Combine two 32-bit chunks, SH-4 is little-endian
         u32 lo = ReadVectorRam<u32>(a);
         u32 hi = ReadVectorRam<u32>(a + 4);
         v = (static_cast<u64>(hi) << 32) | lo;
+        INFO_LOG(SH4, "VEC READ64 addr=0x%08X off=%u val=0x%08X", a, a & 0x3FFu, v);
     } else {
-        v = is_mmu_on() ? mmu_ReadMem<u64>(a) : addrspace::read64(a);
+      v = is_mmu_on() ? mmu_ReadMem<u64>(a) : addrspace::read64(a);
+      INFO_LOG(SH4, "%s READ64 addr=0x%08X val=0x%08X", is_mmu_on() ? "MMU" : "ADD", a, v);
     }
     if (UNLIKELY(g_exception_was_raised))
         return 0;
@@ -884,15 +888,34 @@ static void Exec_END(const sh4::ir::Instr&, Sh4Context*, uint32_t) { /* block en
 // STS.L PR,@-Rn
 static void Exec_STSL_PR_PREDEC(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t /*pc*/)
 {
-    uint32_t rn_addr = GET_REG(ctx, ins.dst.reg) - 4;
-    SET_REG(ctx, ins.dst.reg, rn_addr);
+    // Macro `pr` is defined globally (maps to Sh4cntx.pr) and breaks member access like ctx->pr.
+    // Ensure we use the literal struct member.
 #ifdef pr
 #undef pr
-    WriteAligned32(rn_addr, ctx->pr);
+    WriteAligned32(GET_REG(ctx, ins.dst.reg) - 4, ctx->pr);
 #define pr Sh4cntx.pr
 #else
-    WriteAligned32(rn_addr, ctx->pr);
+    WriteAligned32(GET_REG(ctx, ins.dst.reg) - 4, ctx->pr);
 #endif
+    // Pre-decrement Rn after calculating address
+    uint32_t new_rn = GET_REG(ctx, ins.dst.reg) - 4;
+    SET_REG(ctx, ins.dst.reg, new_rn);
+}
+
+// STS.L MACL,@-Rn
+static void Exec_STSL_MACL_PREDEC(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t /*pc*/)
+{
+    // Macro `mac` is defined globally (maps to Sh4cntx.mac) and interferes with ctx->mac.
+#ifdef mac
+#undef mac
+    uint32_t macl_val = ctx->mac.l;
+#define mac Sh4cntx.mac
+#else
+    uint32_t macl_val = ctx->mac.l;
+#endif
+    uint32_t new_rn = GET_REG(ctx, ins.dst.reg) - 4;
+    SET_REG(ctx, ins.dst.reg, new_rn);
+    WriteAligned32(new_rn, macl_val);
 }
 static void Exec_ADD_REG(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t) { GET_REG(ctx, ins.dst.reg) += GET_REG(ctx, ins.src1.reg); }
 static void Exec_ADD_IMM(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t) { GET_REG(ctx, ins.dst.reg) += static_cast<uint32_t>(ins.src1.imm); }
@@ -2040,6 +2063,7 @@ static void InitExecTable()
     g_exec_table[static_cast<int>(sh4::ir::Op::ADD_REG)]  = &Exec_ADD_REG;
     g_exec_table[static_cast<int>(sh4::ir::Op::ADD_IMM)]  = &Exec_ADD_IMM;
     g_exec_table[static_cast<int>(sh4::ir::Op::STSL_PR_PREDEC)] = &Exec_STSL_PR_PREDEC;
+    g_exec_table[static_cast<int>(sh4::ir::Op::STSL_MACL_PREDEC)] = &Exec_STSL_MACL_PREDEC;
     g_exec_table[static_cast<int>(sh4::ir::Op::MOV_REG)]  = &Exec_MOV_REG;
     g_exec_table[static_cast<int>(sh4::ir::Op::MOV_IMM)]  = &Exec_MOV_IMM;
     g_exec_table[static_cast<int>(sh4::ir::Op::SHL)]      = &Exec_SHL;

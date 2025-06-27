@@ -2487,7 +2487,7 @@ Block& Emitter::CreateNew(uint32_t pc) {
             decoded = true;
         }
         // MOV.L @Rm,Rn (0x6nm2)
-        else if ((raw & 0xF00F) == 0x6002 && m != 0)
+        else if ((raw & 0xF00F) == 0x6002)
         {
             ins.op = Op::LOAD32;
             ins.dst.isImm = false; ins.dst.reg = n;
@@ -3525,6 +3525,16 @@ Block& Emitter::CreateNew(uint32_t pc) {
             ins.dst.reg = n;
             decoded = true;
             blk.pcNext = pc + 2;
+        }
+        // STS.L MACL,@-Rn (0x4n03)
+        else if ((raw & 0xF0FF) == 0x4003)
+        {
+            ins.op = Op::STSL_MACL_PREDEC;
+            ins.dst.isImm = false; // Rn contains address
+            ins.dst.reg = n;
+            decoded = true;
+            blk.pcNext = pc + 2;
+            DEBUG_LOG(SH4, "FastDecode: STS.L MACL,@-R%d (0x%04X)", n, raw);
         }
         // LDS.L @Rn+,PR  (0x4n26)
         else if ((raw & 0xF0FF) == 0x4026)

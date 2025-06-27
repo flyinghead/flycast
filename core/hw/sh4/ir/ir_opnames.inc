@@ -211,5 +211,6 @@ static const char* kOpNames[] = {
     "STORE8_R0",
     "STORE8_R0_REG",
     "STORE8_Rm_R0RN",
+    "STSL_MACL_PREDEC",
     "STSL_PR_PREDEC",
 };
