@@ -35,15 +35,26 @@ namespace {
     // SH-4 Store-Queue window that aliases area 0 writes (0xE0000000–0xE000003F)
     static inline bool IsStoreQueueAddr(uint32_t a)
     {
-        uint32_t masked = a & 0xFFFFFFC0u;
-        return masked == 0xE0000000u || masked == 0xE0000040u ||
-               masked == 0xE0003000u || masked == 0xE0003040u; // SQ0/SQ1 cached&uncached
+        // Uncached P2 SQ windows (each 64 bytes)
+        switch (a & 0xFFFFFFC0u)
+        {
+            case 0xE0000000u: // SQ0
+            case 0xE0003000u: // SQ1
+                return true;
+            default:
+                break;
+        }
+        // Cached mirror slices every 0x800 bytes within 0x8C00_0000 – 0x8C00_07FF; each slice exposes the first 0x80 bytes of the SQ
+        // Single cached mirror (64 bytes) in Area-C at 0x8C00_0000–0x8C00_003F only
+        return (a >= 0x8C000000u && a < 0x8C000040u);
     }
     static inline uint32_t SqOffset(uint32_t a) { return a & 0x7Fu; }
     static inline bool IsSqPhysAddr(uint32_t a)
     {
+        if (IsStoreQueueAddr(a))
+            return true;
         uint32_t off = a & 0x01FFFFFFu;
-        return off >= 0x3000u && off < 0x3080u; // 0x3000-0x307F mirror of SQ0/SQ1
+        return off >= 0x3000u && off < 0x3080u; // physical mirrors via P2
     }
     static inline uint32_t SqToVectorAddr(uint32_t a) { return a & 0x7Fu; }
 
@@ -51,7 +62,7 @@ namespace {
     static inline bool IsVectorRamAddr(uint32_t vaddr)
     {
         // Accept mirrors in cached area (0xA0000000) and uncached P2 (0x20000000)
-        return (vaddr & 0x0FFFFFFFu) < 0x200000u; // first 2 MiB overlay
+        return (vaddr & 0x0FFFFFFFu) < 0x400u; // first 1 KiB overlay
     }
 
     template<typename T>
@@ -543,14 +554,6 @@ static inline bool IsBiosAddr(uint32_t addr)
     return off < 0x200; // Only first 0x200 bytes (on-chip area) are writable
 }
 
-// Writes to the store-queue (first 0x300 bytes of P2 mirrors) are legal and
-// should silently succeed (they act as a write-combining buffer).  Treat them
-// as no-ops if we don't emulate the SQ yet.
-static inline bool IsStoreQueueAddr(uint32_t addr)
-{
-    // SH4 Store Queue: 0xE000_0000 – 0xE000_003F (64-byte window)
-    return (addr & 0xFFFFFFC0u) == 0xE0000000u;
-}
 
 static void LogIllegalBiosWrite(const Instr& ins, uint32_t addr, uint32_t pc)
 {
@@ -680,6 +683,8 @@ static inline void RawWrite8(uint32_t a, u8 d)
     if (IsStoreQueueAddr(a)) {
         g_sq_buffer[SqOffset(a)] = d;
         WriteVectorRam(SqToVectorAddr(a), d);
+        // Also commit to backing Work RAM so non-IR paths observe the write
+        addrspace::write8(a, d);
         return;
     }
     if (IsVectorRamAddr(a)) {
@@ -705,6 +710,7 @@ static inline void RawWrite16(uint32_t a, u16 d)
     if (IsStoreQueueAddr(a)) {
         *reinterpret_cast<u16*>(&g_sq_buffer[SqOffset(a)]) = d;
         WriteVectorRam(SqToVectorAddr(a), d);
+        addrspace::write16(a, d);
         return;
     }
 
@@ -735,6 +741,7 @@ static inline void RawWrite32(uint32_t a, u32 d)
         *reinterpret_cast<u32*>(&g_sq_buffer[SqOffset(a)]) = d;
         ERROR_LOG(SH4, "SQ WRITE32 addr=0x%08X off=%u val=0x%08X", a, SqOffset(a), d);
         WriteVectorRam(SqToVectorAddr(a), d);
+        addrspace::write32(a, d);
         return;
     }
 
@@ -754,13 +761,17 @@ static inline void RawWrite32(uint32_t a, u32 d)
 static inline void RawWrite64(uint32_t a, u64 d)
 {
     if (IsStoreQueueAddr(a) && SqOffset(a) <= 0x78u) {
-        *reinterpret_cast<u32*>(&g_sq_buffer[SqOffset(a)])     = static_cast<u32>(d & 0xFFFFFFFFu);
-        ERROR_LOG(SH4, "SQ WRITE64 low addr=0x%08X off=%u val=0x%08X", a, SqOffset(a), static_cast<u32>(d & 0xFFFFFFFFu));
-        *reinterpret_cast<u32*>(&g_sq_buffer[SqOffset(a) + 4]) = static_cast<u32>(d >> 32);
-        ERROR_LOG(SH4, "SQ WRITE64 high addr=0x%08X off=%u val=0x%08X", a+4, SqOffset(a)+4, static_cast<u32>(d >> 32));
+        u32 low = static_cast<u32>(d & 0xFFFFFFFFu);
+        u32 high = static_cast<u32>(d >> 32);
+        *reinterpret_cast<u32*>(&g_sq_buffer[SqOffset(a)])     = low;
+        *reinterpret_cast<u32*>(&g_sq_buffer[SqOffset(a) + 4]) = high;
+        ERROR_LOG(SH4, "SQ WRITE64 low addr=0x%08X off=%u val=0x%08X", a, SqOffset(a), low);
+        ERROR_LOG(SH4, "SQ WRITE64 high addr=0x%08X off=%u val=0x%08X", a+4, SqOffset(a)+4, high);
         // mirror to vector RAM (little-endian order)
-        WriteVectorRam(SqToVectorAddr(a), static_cast<u32>(d & 0xFFFFFFFFu));
-        WriteVectorRam(SqToVectorAddr(a) + 4, static_cast<u32>(d >> 32));
+        WriteVectorRam(SqToVectorAddr(a), low);
+        WriteVectorRam(SqToVectorAddr(a) + 4, high);
+        addrspace::write32(a, low);
+        addrspace::write32(a + 4, high);
         return;
     }
     if (IsVectorRamAddr(a) && ((a & 0x3FFu) <= 0x3F8u)) {
@@ -793,6 +804,9 @@ static inline u16 ReadAligned16(uint32_t addr)
 
 static inline u32 ReadAligned32(uint32_t addr)
 {
+    // Store-Queue reads from uncached window should consult SQ buffer, but cached mirrors read backing RAM
+    if ((addr & 0xFFFFFFC0u) == 0xE0000000u || (addr & 0xFFFFFFC0u) == 0xE0003000u)
+        return RawRead32(addr);
 #if defined(USE_FAST_PTR)
     if ((addr & 3u) == 0)
     {
@@ -805,6 +819,7 @@ static inline u32 ReadAligned32(uint32_t addr)
 
 static inline void WriteAligned16(uint32_t addr, u16 data)
 {
+    if (IsStoreQueueAddr(addr)) { RawWrite16(addr, data); return; }
 #if defined(USE_FAST_PTR)
     if ((addr & 1u) == 0)
     {
@@ -816,6 +831,7 @@ static inline void WriteAligned16(uint32_t addr, u16 data)
 
 static inline void WriteAligned32(uint32_t addr, u32 data)
 {
+    if (IsStoreQueueAddr(addr)) { RawWrite32(addr, data); return; }
 #if defined(USE_FAST_PTR)
     if ((addr & 3u) == 0)
     {
@@ -1969,6 +1985,14 @@ static void Exec_DIV0S(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t pc) 
              GET_SR_Q(ctx), GET_SR_M(ctx), GET_SR_T(ctx), next_pc);
 }
 
+// Forward declarations for GBR-based load/store handlers defined later
+static void Exec_LOAD8_GBR(const sh4::ir::Instr&, Sh4Context*, uint32_t);
+static void Exec_LOAD16_GBR(const sh4::ir::Instr&, Sh4Context*, uint32_t);
+static void Exec_LOAD32_GBR(const sh4::ir::Instr&, Sh4Context*, uint32_t);
+static void Exec_STORE8_GBR(const sh4::ir::Instr&, Sh4Context*, uint32_t);
+static void Exec_STORE16_GBR(const sh4::ir::Instr&, Sh4Context*, uint32_t);
+static void Exec_STORE32_GBR(const sh4::ir::Instr&, Sh4Context*, uint32_t);
+
 static ExecFn g_exec_table[static_cast<int>(sh4::ir::Op::NUM_OPS)]{};
 
 static void InitExecTable()
@@ -2051,6 +2075,13 @@ static void InitExecTable()
     g_exec_table[static_cast<int>(sh4::ir::Op::STORE8_Rm_R0RN)]  = &Exec_STORE8_Rm_R0RN;
     g_exec_table[static_cast<int>(sh4::ir::Op::STORE16_Rm_R0RN)] = &Exec_STORE16_Rm_R0RN;
     g_exec_table[static_cast<int>(sh4::ir::Op::STORE32_Rm_R0RN)] = &Exec_STORE32_Rm_R0RN;
+    // GBR-based accesses
+    g_exec_table[static_cast<int>(sh4::ir::Op::LOAD8_GBR)]   = &Exec_LOAD8_GBR;
+    g_exec_table[static_cast<int>(sh4::ir::Op::LOAD16_GBR)]  = &Exec_LOAD16_GBR;
+    g_exec_table[static_cast<int>(sh4::ir::Op::LOAD32_GBR)]  = &Exec_LOAD32_GBR;
+    g_exec_table[static_cast<int>(sh4::ir::Op::STORE8_GBR)]  = &Exec_STORE8_GBR;
+    g_exec_table[static_cast<int>(sh4::ir::Op::STORE16_GBR)] = &Exec_STORE16_GBR;
+    g_exec_table[static_cast<int>(sh4::ir::Op::STORE32_GBR)] = &Exec_STORE32_GBR;
     // R0-offset variants
     g_exec_table[static_cast<int>(sh4::ir::Op::STORE8_R0)]  = &Exec_STORE8_R0;
     g_exec_table[static_cast<int>(sh4::ir::Op::STORE16_R0)] = &Exec_STORE16_R0;
@@ -2684,11 +2715,11 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                     break;
                 case Op::STORE16_GBR:
                     if (!IsBiosAddr(ctx->gbr + static_cast<uint32_t>(ins.extra)))
-                        WriteAligned16(ctx->gbr + static_cast<uint32_t>(ins.extra), static_cast<u16>(GET_REG(ctx, ins.src1.reg)));
+                        RawWrite16(ctx->gbr + static_cast<uint32_t>(ins.extra), static_cast<u16>(GET_REG(ctx, ins.src1.reg)));
                     break;
                 case Op::STORE32_GBR:
                     if (!IsBiosAddr(ctx->gbr + static_cast<uint32_t>(ins.extra)))
-                        WriteAligned32(ctx->gbr + static_cast<uint32_t>(ins.extra), GET_REG(ctx, ins.src1.reg));
+                        RawWrite32(ctx->gbr + static_cast<uint32_t>(ins.extra), GET_REG(ctx, ins.src1.reg));
                     break;
 
                 case Op::LOAD8_R0:
@@ -4010,6 +4041,54 @@ void Executor::ResetCachedBlocks()
     // Log the cache reset for debugging
     INFO_LOG(SH4, "Executor: Reset cached block pointers");
 }
+
+// -----------------------------------------------------------------------------
+// GBR-based load/store (MOV.B/W/L R0,@(disp,GBR) and variants)
+// -----------------------------------------------------------------------------
+static void Exec_LOAD8_GBR(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
+{
+    uint32_t addr = ctx->gbr + static_cast<uint32_t>(ins.extra);
+    DEBUG_LOG(SH4, "LOAD8_GBR disp=%u addr=%08X", ins.extra, addr);
+    uint8_t val = RawRead8(addr);
+    SET_REG(ctx, ins.dst.reg, static_cast<uint32_t>(static_cast<int8_t>(val)));
+}
+
+static void Exec_LOAD16_GBR(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
+{
+    uint32_t addr = ctx->gbr + (static_cast<uint32_t>(ins.extra) << 1);
+    DEBUG_LOG(SH4, "LOAD16_GBR disp=%u addr=%08X", ins.extra, addr);
+    uint16_t val = RawRead16(addr);
+    SET_REG(ctx, ins.dst.reg, static_cast<uint32_t>(static_cast<int16_t>(val)));
+}
+
+static void Exec_LOAD32_GBR(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
+{
+    uint32_t addr = ctx->gbr + (static_cast<uint32_t>(ins.extra) << 2);
+    uint32_t val = RawRead32(addr);
+    SET_REG(ctx, ins.dst.reg, val);
+}
+
+static void Exec_STORE8_GBR(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
+{
+    uint32_t addr = ctx->gbr + static_cast<uint32_t>(ins.extra);
+    uint8_t val = static_cast<uint8_t>(GET_REG(ctx, ins.src1.reg));
+    RawWrite8(addr, val);
+}
+
+static void Exec_STORE16_GBR(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
+{
+    uint32_t addr = ctx->gbr + (static_cast<uint32_t>(ins.extra) << 1);
+    uint16_t val = static_cast<uint16_t>(GET_REG(ctx, ins.src1.reg));
+    RawWrite16(addr, val);
+}
+
+static void Exec_STORE32_GBR(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
+{
+    uint32_t addr = ctx->gbr + (static_cast<uint32_t>(ins.extra) << 2);
+    uint32_t val = GET_REG(ctx, ins.src1.reg);
+    RawWrite32(addr, val);
+}
+
 
 } // namespace ir
 } // namespace sh4

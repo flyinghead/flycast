@@ -1237,11 +1237,11 @@ static bool FastDecode(uint16_t raw, uint32_t pc, Instr &ins, Block &blk)
             blk.pcNext = pc + 2;
             return true;
         }
-        // MOV.W @(disp,GBR),R0 (0xC6dd)
+        // MOV.L @(disp,GBR),R0 (0xC6dd)
         else if ((raw & 0xFF00) == 0xC600)
         {
             uint8_t disp = raw & 0xFF;
-            ins.op = Op::LOAD16_GBR;
+            ins.op = Op::LOAD32_GBR;
             ins.dst.isImm = false; ins.dst.reg = 0;
             ins.extra = disp;
             blk.pcNext = pc + 2;
@@ -3014,7 +3014,7 @@ Block& Emitter::CreateNew(uint32_t pc) {
             uint8_t disp = raw & 0xFF;
             ins.op = Op::STORE16_GBR;
             ins.src1.isImm = false; ins.src1.reg = 0;
-            ins.extra = disp << 1;
+            ins.extra = disp;
             decoded = true; blk.pcNext = pc + 2;
         }
         // MOV.L R0,@(disp,GBR) 0xC2??
@@ -3023,7 +3023,7 @@ Block& Emitter::CreateNew(uint32_t pc) {
             uint8_t disp = raw & 0xFF;
             ins.op = Op::STORE32_GBR;
             ins.src1.isImm = false; ins.src1.reg = 0;
-            ins.extra = disp << 2;
+            ins.extra = disp;
             decoded = true; blk.pcNext = pc + 2;
         }
         // MOV.B @(disp,GBR),R0 0xC4??
@@ -3041,7 +3041,7 @@ Block& Emitter::CreateNew(uint32_t pc) {
             uint8_t disp = raw & 0xFF;
             ins.op = Op::LOAD16_GBR;
             ins.dst.isImm = false; ins.dst.reg = 0;
-            ins.extra = disp << 1;
+            ins.extra = disp;
             decoded = true; blk.pcNext = pc + 2;
         }
         // MOV.L @(disp,GBR),R0 0xC6??
@@ -3050,7 +3050,7 @@ Block& Emitter::CreateNew(uint32_t pc) {
             uint8_t disp = raw & 0xFF;
             ins.op = Op::LOAD32_GBR;
             ins.dst.isImm = false; ins.dst.reg = 0;
-            ins.extra = disp << 2;
+            ins.extra = disp;
             decoded = true; blk.pcNext = pc + 2;
         }
         // MOVA @(disp,PC),R0 0xC7??
