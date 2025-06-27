@@ -19,6 +19,7 @@
 #include <cstdint>
 #include <cstdio>
 #include <csignal>
+#include <unordered_map>
 #include "hw/sh4/sh4_interrupts.h"
 
 #define IR_TRACE_EXEC 1
@@ -2204,6 +2205,96 @@ static inline ExecFn GetExecFn(sh4::ir::Op op)
 // ----------------------------------------------------------------------------
 void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
 {
+    if (!blk || blk->code.empty()) {
+        ERROR_LOG(SH4, "ExecuteBlock: Invalid block");
+        return;
+    }
+
+    // Validate that the memory content matches what was used during IR emission
+    // This prevents executing stale cached blocks when memory content has changed
+    if (!blk->code.empty()) {
+        uint32_t start_pc = blk->code[0].pc;
+        uint16_t actual_opcode = RawRead16(start_pc);
+        uint16_t expected_opcode = blk->code[0].raw;
+
+        if (actual_opcode != expected_opcode) {
+            // Track invalidation attempts to prevent infinite loops
+            static std::unordered_map<uint32_t, int> invalidation_count;
+            invalidation_count[start_pc]++;
+
+            INFO_LOG(SH4, "Cache invalidation: Memory content mismatch at PC=%08X. Expected=0x%04X, Actual=0x%04X. Block needs re-emission (attempt %d).",
+                     start_pc, expected_opcode, actual_opcode, invalidation_count[start_pc]);
+
+            // If we've invalidated this block too many times, there's a deeper issue
+            if (invalidation_count[start_pc] > 3) {
+                ERROR_LOG(SH4, "Cache invalidation loop detected at PC=%08X. Memory content is consistently invalid. This suggests BIOS/ROM mapping issues.", start_pc);
+
+                // Check if the entire BIOS region is zeroed
+                bool bios_is_zeroed = true;
+                for (uint32_t addr = 0xA0000000; addr < 0xA0000100; addr += 2) {
+                    if (RawRead16(addr) != 0) {
+                        bios_is_zeroed = false;
+                        break;
+                    }
+                }
+
+                if (bios_is_zeroed) {
+                    ERROR_LOG(SH4, "BIOS region appears to be completely zeroed. This is a memory mapping issue, not a cache issue.");
+                    ERROR_LOG(SH4, "Consider checking BIOS loading and memory mapping in addrspace.cpp");
+                }
+
+                // Reset the invalidation count to avoid log spam
+                invalidation_count[start_pc] = 0;
+
+                // Try to continue execution by falling back to interpreter for this instruction
+                // Read the actual raw opcode and execute it directly
+                if (actual_opcode != 0) {
+                    INFO_LOG(SH4, "Attempting fallback execution of raw opcode 0x%04X at PC=%08X", actual_opcode, start_pc);
+                    ExecuteOpcode(actual_opcode);
+                    SyncCtxFromGlobals(ctx);
+                    return;
+                }
+
+                // If even the raw opcode is 0, we have a serious memory mapping issue
+                ERROR_LOG(SH4, "Cannot execute: memory at PC=%08X contains 0. Halting execution.", start_pc);
+                return;
+            }
+
+            // Force block invalidation by clearing cached blocks
+            // This will cause the emitter to re-emit the block on the next execution
+            g_ir.InvalidateBlock(start_pc);
+
+            // If this is a critical BIOS area, clear all caches to ensure consistency
+            if (start_pc >= 0xA0000000 && start_pc <= 0xA0200000) {
+                INFO_LOG(SH4, "BIOS area cache invalidation - clearing all caches");
+                g_ir.Reset(true);
+            }
+            return;
+        }
+
+        // Additional validation for critical instructions near the problem area
+        if (start_pc >= 0xA0000100 && start_pc <= 0xA0000120) {
+            for (size_t i = 0; i < std::min(blk->code.size(), size_t(8)); i++) {
+                uint32_t pc = blk->code[i].pc;
+                uint16_t actual = RawRead16(pc);
+                uint16_t expected = blk->code[i].raw;
+
+                if (actual != expected) {
+                    INFO_LOG(SH4, "Cache invalidation: Mismatch at PC=%08X (idx=%zu). Expected=0x%04X, Actual=0x%04X",
+                             pc, i, expected, actual);
+                    g_ir.InvalidateBlock(start_pc);
+
+                    // Clear all caches for BIOS area mismatches
+                    if (start_pc >= 0xA0000000 && start_pc <= 0xA0200000) {
+                        INFO_LOG(SH4, "BIOS area detailed cache invalidation - clearing all caches");
+                        g_ir.Reset(true);
+                    }
+                    return;
+                }
+            }
+        }
+    }
+
     assert(blk);
 
     // Make sure legacy globals (next_pc, pr, etc.) reflect the incoming context so
@@ -2214,6 +2305,8 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
     bool executed_delay = false;       // delay slot has just been executed
     uint32_t branch_target = 0;
     bool first_instruction_executed = false;
+    uint32_t pending_pr = 0; // Store PR for delayed commit
+    Op pending_op = Op::NOP; // Store the branch instruction type for delayed commit
     while (ip < blk->code.size())
     {
         // Abort current block if emitter flushed caches (block memory may be freed)
@@ -2854,16 +2947,31 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                     SET_REG(ctx, ins.dst.reg, sr_getFull(ctx));
                     // INFO_LOG(SH4, "STC_SR: SR (0x%08X) -> R%d (0x%08X) at PC=%08X", sr.GetFull(), ins.dst.reg, GET_REG(ctx, ins.dst.reg), curr_pc);
                     break;
-                case Op::JSR:
-                    INFO_LOG(SH4, "BR JSR from %08X -> %08X (r%u)", curr_pc, GET_REG(ctx, ins.src1.reg), ins.src1.reg);
-                    if (IsTopRegion(GET_REG(ctx, ins.src1.reg)))
-                        ERROR_LOG(SH4, "*** HIGH-FF JSR target at %08X : R%u=%08X", curr_pc, ins.src1.reg, GET_REG(ctx, ins.src1.reg));
-                    pr = curr_pc + 4; // address after delay slot
-                    branch_target = GET_REG(ctx, ins.src1.reg) & ~1u; // mask LSB to ensure even address
-                    if (IsTopRegion(branch_target))
-                        ERROR_LOG(SH4, "*** HIGH-FF branch target set by JMP at %08X -> %08X (r%u)", curr_pc, branch_target, ins.src1.reg);
-                    branch_pending = true;
-                    executed_delay = false; // ensure delay flag reset
+                                case Op::JSR:
+                    {
+                        uint32_t target_reg_value = GET_REG(ctx, ins.src1.reg);
+                        uint16_t actual_raw = RawRead16(curr_pc);
+                        INFO_LOG(SH4, "BR JSR from %08X -> %08X (r%u) raw=0x%04X actual_raw=0x%04X [R1=%08X R2=%08X R3=%08X]",
+                                curr_pc, target_reg_value, ins.src1.reg, ins.raw, actual_raw,
+                                GET_REG(ctx, 1), GET_REG(ctx, 2), GET_REG(ctx, 3));
+                        if (IsTopRegion(target_reg_value))
+                            ERROR_LOG(SH4, "*** HIGH-FF JSR target at %08X : R%u=%08X", curr_pc, ins.src1.reg, target_reg_value);
+                        pending_pr = curr_pc + 4; // address after delay slot
+                        branch_target = target_reg_value & ~1u; // mask LSB to ensure even address
+                        if (IsTopRegion(branch_target))
+                            ERROR_LOG(SH4, "*** HIGH-FF branch target set by JSR at %08X -> %08X (r%u)", curr_pc, branch_target, ins.src1.reg);
+                        if (target_reg_value == 0) {
+                            ERROR_LOG(SH4, "*** ZERO JSR target! R%u=0 at PC=%08X", ins.src1.reg, curr_pc);
+                            // Show previous instruction that might have set this register
+                            if (ip > 1) {
+                                const Instr& prev_ins = blk->code[ip - 2];
+                                INFO_LOG(SH4, "Previous instruction: %s at PC=%08X", GetOpName(static_cast<size_t>(prev_ins.op)), curr_pc - 2);
+                            }
+                        }
+                        branch_pending = true;
+                        executed_delay = false; // ensure delay flag reset
+                        pending_op = Op::JSR;
+                    }
                     break;
                 case Op::JMP:
                     // Dump full GPR set for debugging the reset jump
@@ -2880,6 +2988,7 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                     branch_target = GET_REG(ctx, ins.src1.reg) & ~1u; // mask LSB to ensure even address
                     branch_pending = true;
                     executed_delay = false;
+                    pending_op = Op::JMP;
                     break;
                 case Op::RTS:
                     INFO_LOG(SH4, "BR RTS from %08X -> %08X", curr_pc, pr);
@@ -2888,6 +2997,7 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                         ERROR_LOG(SH4, "*** HIGH-FF RTS target at %08X -> %08X (PR)", curr_pc, branch_target);
                     branch_pending = true;
                     executed_delay = false;
+                    pending_op = Op::RTS;
                     break;
                 case Op::BRA:
                     INFO_LOG(SH4, "BR BRA from %08X -> %08X (disp=%d)", curr_pc, curr_pc + 4 + ins.extra, ins.extra);
@@ -2896,6 +3006,7 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                         ERROR_LOG(SH4, "*** HIGH-FF BRA target at %08X -> %08X (disp=%d)", curr_pc, branch_target, ins.extra);
                     branch_pending = true;
                     executed_delay = false;
+                    pending_op = Op::BRA;
                     break;
                 case Op::BT:
                     if (GET_SR_T(ctx))
@@ -3063,6 +3174,7 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                     branch_target = curr_pc + 4 + ins.extra;
                     branch_pending = true;
                     executed_delay = false;
+                    pending_op = Op::BSR;
                     break;
                 case Op::BRAF:
                     INFO_LOG(SH4, "BR BRAF from %08X -> %08X (r%u)", curr_pc, curr_pc + 4 + GET_REG(ctx, ins.src1.reg), ins.src1.reg);
@@ -3071,6 +3183,7 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                         ERROR_LOG(SH4, "*** HIGH-FF BRAF target at %08X : target=%08X R%u=%08X", curr_pc, branch_target, ins.src1.reg, GET_REG(ctx, ins.src1.reg));
                     branch_pending = true;
                     executed_delay = false;
+                    pending_op = Op::BRAF;
                     break;
                 case Op::BSRF:
                     INFO_LOG(SH4, "BR BSRF from %08X -> %08X (r%u)", curr_pc, curr_pc + 4 + GET_REG(ctx, ins.src1.reg), ins.src1.reg);
@@ -3080,6 +3193,7 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                         ERROR_LOG(SH4, "*** HIGH-FF BSRF target at %08X : target=%08X R%u=%08X", curr_pc, branch_target, ins.src1.reg, GET_REG(ctx, ins.src1.reg));
                     branch_pending = true;
                     executed_delay = false;
+                    pending_op = Op::BSRF;
                     break;
                 case Op::BT_S:
                     if (GET_SR_T(ctx))
@@ -3837,15 +3951,14 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                     uint32_t base_pc = curr_pc;  // FIXED: Use current instruction's PC
                     uint32_t base = (base_pc & ~3u) + 4u;  // Align to 4-byte boundary and add 4
                     uint32_t mem_addr = base + (disp8 << 2);
+                    uint32_t old_reg = GET_REG(ctx, ins.dst.reg);
                     uint32_t val = ReadAligned32(mem_addr);
                     SET_REG(ctx, ins.dst.reg, val);
 
                     // Enhanced debug logging for all registers, not just R0
-                    // printf("[PRINTF_DEBUG_LOAD32_PC] PC=%08X, raw=0x%04X, dst=R%u, base_pc=%08X, aligned_base=%08X, disp=%u, addr=%08X, val=0x%08X, old_reg=0x%08X\n",
-                    //        curr_pc, ins.raw, ins.dst.reg, base_pc, base, disp8, mem_addr, val, old_reg);
-                    // printf("[PRINTF_DEBUG_LOAD32_PC] Register state: R0-R7: %08X %08X %08X %08X %08X %08X %08X %08X\n",
-                    //        GET_REG(ctx, 0), GET_REG(ctx, 1), GET_REG(ctx, 2), GET_REG(ctx, 3), GET_REG(ctx, 4), GET_REG(ctx, 5), GET_REG(ctx, 6), GET_REG(ctx, 7));
-                    // fflush(stdout);
+                    uint16_t actual_raw = RawRead16(curr_pc);
+                    INFO_LOG(SH4, "LOAD32_PC PC=%08X: raw=0x%04X actual_raw=0x%04X dst=R%u disp=%u addr=%08X val=0x%08X old_reg=0x%08X",
+                             curr_pc, ins.raw, actual_raw, ins.dst.reg, disp8, mem_addr, val, old_reg);
 
                     if (ins.dst.reg == 0) {
                         INFO_LOG(SH4, "LOAD32_PC: Loaded 0x%08X into R0 from addr 0x%08X (PC=%08X, disp=%d)", val, mem_addr, curr_pc, disp8);
@@ -4090,8 +4203,11 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                 {
                     ERROR_LOG(SH4, "*** HIGH-FF branch commit! raw=%04X src_pc=%08X -> %08X", raw16_prev, curr_pc - 2, branch_target);
                 }
-                // Jump to the branch target and finish executing this block so
-                // the dispatcher can start a new one from the destination.
+                // For JSR/BSR, commit PR as well
+                if (pending_op == Op::JSR || pending_op == Op::BSR) {
+                    pr = pending_pr;
+                    INFO_LOG(SH4, "PR commit: %08X from %s", pending_pr, (pending_op == Op::JSR) ? "JSR" : "BSR");
+                }
                 SetPC(ctx, branch_target, "branch_commit");
                 if (unlikely(g_exception_was_raised)) {
                     SyncCtxFromGlobals(ctx);
