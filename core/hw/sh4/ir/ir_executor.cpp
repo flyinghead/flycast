@@ -71,6 +71,8 @@ namespace {
             result = (vaddr & 0x0FFFFFFFu) < 0x400u; // first 1 KiB overlay in Work RAM
         }
 
+
+
         // Do NOT overlay BIOS addresses (0xA0000000 range)
         return result;
     }
@@ -1075,41 +1077,27 @@ static void Exec_JSR(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t pc) {
 #endif
 static void Exec_TRAPA(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t pc)
 {
-    // Save context for exception return
-    ctx->ssr = ctx->sr.status;
-    ctx->spc = pc + 2;
-
-    // Set SR to privileged, interrupt-disabled state
-    ctx->sr.MD = 1;
-    ctx->sr.BL = 1;
-    ctx->sr.RB = 1; // Switch to register bank 1
-
-    // Store the trap number in CCN_TRA (hardware register, shifted left by 2)
     uint8_t trap_no = static_cast<uint8_t>(ins.src1.imm & 0xFF);
     CCN_TRA = trap_no << 2;
 
     // Set the exception event code for TRAPA (0x160)
     CCN_EXPEVT = 0x160;
 
-    // Each TRAPA vector is a 32-bit address located at VBR + 0x100 + (n * 4)
-    uint32_t vector_addr = ctx->vbr + 0x100 + (trap_no * 4);
-    uint32_t handler_pc  = RawRead32(vector_addr);
+    // Use the standard SH4 exception handling mechanism like the legacy interpreter
+    // This will properly save SSR, SPC, set SR.BL/MD/RB, and jump to VBR + 0x100
+    INFO_LOG(SH4, "TRAPA #%02X at PC=%08X, calling Do_Exception", trap_no, pc);
 
-    // If the vector is blank (0x00000000), fall back to BIOS ROM mirror at 0xA000xxxx.
-    if (handler_pc == 0) {
-        uint32_t rom_addr = 0xA0000000 + 0x100 + (trap_no * 4);
-        handler_pc = RawRead32(rom_addr);
-        if (handler_pc == 0) {
-            ERROR_LOG(SH4, "TRAPA vector %02X empty in RAM and ROM (addr=%08X)", trap_no, vector_addr);
-            DumpTrace();
-            // Resume after the TRAPA so we don't jump to PC=0 and crash again
-            SetPC(ctx, pc + 2, "TRAPA empty");
-            return;
-        }
-        INFO_LOG(SH4, "TRAPA vector %02X served from ROM mirror (%08X)", trap_no, rom_addr);
-    }
+    // Sync context to globals before calling Do_Exception
+    SyncCtxFromGlobals(ctx);
 
-    SetPC(ctx, handler_pc, "TRAPA");
+    // Call the standard exception handler
+    Do_Exception(pc, Sh4Ex_Trap);
+
+    // Sync globals back to context after exception handling
+    SyncGlobalsFromCtx(ctx);
+
+    // The exception handler has set next_pc to the exception vector
+    SetPC(ctx, next_pc, "TRAPA exception");
 }
 #define ssr Sh4cntx.ssr
 #define spc Sh4cntx.spc
