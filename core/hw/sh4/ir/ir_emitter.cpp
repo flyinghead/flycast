@@ -1507,6 +1507,27 @@ static bool FastDecode(uint16_t raw, uint32_t pc, Instr &ins, Block &blk)
         return true;
     }
     // FIPR FRm,FRn  (0xFnmF)
+    else if ((raw & 0xF0FF) == 0x00F8) {
+        uint8_t n = (raw >> 8) & 0xF;
+        ins.op = Op::MOV_REG;
+        ins.dst = {false, n};
+        ins.src1 = {false, n};
+        blk.pcNext = pc + 2;
+        DEBUG_LOG(SH4, "FastDecode: PREF @R%u treated as MOV_REG (0x%04X)", n, raw);
+        return true;
+    }
+    // MOV.B Rm,@Rn (0x2nm0)
+    else if ((raw & 0xF00F) == 0x2000 && (raw & 0x000F) == 0x0) {
+        uint8_t n = (raw >> 8) & 0xF;
+        uint8_t m = (raw >> 4) & 0xF;
+        ins.op = Op::STORE8;
+        ins.src1 = {false, m};
+        ins.src2 = {false, n};
+        ins.extra = 0; // no displacement
+        blk.pcNext = pc + 2;
+        DEBUG_LOG(SH4, "FastDecode: MOV.B R%u,@R%u (0x%04X)", m, n, raw);
+        return true;
+    }
     else if ((raw & 0xF00F) == 0xF00F) {
         uint8_t n = (raw >> 8) & 0xF;
         uint8_t m = (raw >> 4) & 0xF;
