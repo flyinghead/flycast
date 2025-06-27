@@ -36579,53 +36579,53 @@ struct retro_core_options_v2 options_fr = {
 
 /* RETRO_LANGUAGE_GA */
 
-#define CATEGORY_SYSTEM_LABEL_GA NULL
-#define CATEGORY_SYSTEM_INFO_0_GA NULL
+#define CATEGORY_SYSTEM_LABEL_GA "Córas"
+#define CATEGORY_SYSTEM_INFO_0_GA "Cumraigh réigiún, teanga, BIOS agus socruithe crua-earraí bunúsacha."
 #define CATEGORY_VIDEO_LABEL_GA "Físeán"
-#define CATEGORY_VIDEO_INFO_0_GA NULL
-#define CATEGORY_PERFORMANCE_LABEL_GA NULL
-#define CATEGORY_PERFORMANCE_INFO_0_GA NULL
-#define CATEGORY_HACKS_LABEL_GA NULL
-#define CATEGORY_HACKS_INFO_0_GA NULL
+#define CATEGORY_VIDEO_INFO_0_GA "Cumraigh socruithe taifeach, trédhearcachta neamhspleách ar ord agus éifeachtaí amhairc."
+#define CATEGORY_PERFORMANCE_LABEL_GA "Feidhmíocht"
+#define CATEGORY_PERFORMANCE_INFO_0_GA "Cumraigh socruithe rindreála snáithithe agus scipeála frámaí."
+#define CATEGORY_HACKS_LABEL_GA "Cleasanna Aithrise"
+#define CATEGORY_HACKS_INFO_0_GA "Cumraigh sáruithe scáileáin leathan, luas lódála GD-ROM agus socruithe athsholáthair uigeachta."
 #define CATEGORY_INPUT_LABEL_GA "Ionchur"
-#define CATEGORY_INPUT_INFO_0_GA NULL
-#define CATEGORY_EXPANSIONS_LABEL_GA NULL
-#define CATEGORY_EXPANSIONS_INFO_0_GA NULL
-#define CATEGORY_VMU_LABEL_GA NULL
-#define CATEGORY_VMU_INFO_0_GA NULL
-#define CORE_OPTION_NAME_REGION_LABEL_GA NULL
-#define OPTION_VAL_JAPAN_GA NULL
-#define OPTION_VAL_USA_GA NULL
-#define OPTION_VAL_EUROPE_GA NULL
-#define OPTION_VAL_DEFAULT_GA NULL
-#define CORE_OPTION_NAME_LANGUAGE_LABEL_GA NULL
-#define CORE_OPTION_NAME_LANGUAGE_INFO_0_GA NULL
-#define OPTION_VAL_JAPANESE_GA NULL
-#define OPTION_VAL_ENGLISH_GA NULL
-#define OPTION_VAL_GERMAN_GA NULL
-#define OPTION_VAL_FRENCH_GA NULL
-#define OPTION_VAL_SPANISH_GA NULL
-#define OPTION_VAL_ITALIAN_GA NULL
-#define CORE_OPTION_NAME_HLE_BIOS_LABEL_GA NULL
-#define CORE_OPTION_NAME_HLE_BIOS_INFO_0_GA NULL
-#define CORE_OPTION_NAME_BOOT_TO_BIOS_LABEL_GA NULL
-#define CORE_OPTION_NAME_BOOT_TO_BIOS_INFO_0_GA NULL
-#define CORE_OPTION_NAME_ENABLE_DSP_LABEL_GA NULL
-#define CORE_OPTION_NAME_ENABLE_DSP_INFO_0_GA NULL
-#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_GA NULL
-#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_GA NULL
-#define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_GA NULL
-#define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_GA NULL
-#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_GA NULL
-#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_GA NULL
-#define CORE_OPTION_NAME_UPNP_LABEL_GA NULL
-#define CORE_OPTION_NAME_UPNP_INFO_0_GA NULL
-#define CORE_OPTION_NAME_DCNET_LABEL_GA NULL
-#define CORE_OPTION_NAME_DCNET_INFO_0_GA NULL
-#define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_GA NULL
-#define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_GA NULL
-#define OPTION_VAL_320X240_GA NULL
-#define OPTION_VAL_640X480_GA NULL
+#define CATEGORY_INPUT_INFO_0_GA "Cumraigh socruithe an gamepad agus an ghunna solais."
+#define CATEGORY_EXPANSIONS_LABEL_GA "Sliotáin Leathnaithe Rialaitheora"
+#define CATEGORY_EXPANSIONS_INFO_0_GA "Roghnaigh an gléas (VMU, gléas creathadh) atá plugáilte isteach i ngach sliotán leathnúcháin rialtóra."
+#define CATEGORY_VMU_LABEL_GA "Aonad Cuimhne Amhairc"
+#define CATEGORY_VMU_INFO_0_GA "Cumraigh comhaid sábhála VMU in aghaidh an chluiche agus socruithe infheictheachta VMU ar an scáileán."
+#define CORE_OPTION_NAME_REGION_LABEL_GA "Réigiún"
+#define OPTION_VAL_JAPAN_GA "An tSeapáin"
+#define OPTION_VAL_USA_GA "Stáit Aontaithe Mheiriceá"
+#define OPTION_VAL_EUROPE_GA "An Eoraip"
+#define OPTION_VAL_DEFAULT_GA "Réamhshocrú"
+#define CORE_OPTION_NAME_LANGUAGE_LABEL_GA "Teanga"
+#define CORE_OPTION_NAME_LANGUAGE_INFO_0_GA "Athraíonn sé an teanga a úsáideann an BIOS agus aon chluiche ina bhfuil ilteangacha."
+#define OPTION_VAL_JAPANESE_GA "Seapáinis"
+#define OPTION_VAL_ENGLISH_GA "Béarla"
+#define OPTION_VAL_GERMAN_GA "Gearmáinis"
+#define OPTION_VAL_FRENCH_GA "Fraincis"
+#define OPTION_VAL_SPANISH_GA "Spáinnis"
+#define OPTION_VAL_ITALIAN_GA "Iodáilis"
+#define CORE_OPTION_NAME_HLE_BIOS_LABEL_GA "BIOS HLE (Atosú Riachtanach)"
+#define CORE_OPTION_NAME_HLE_BIOS_INFO_0_GA "Éigean úsáid BIOS aithrise ardleibhéil."
+#define CORE_OPTION_NAME_BOOT_TO_BIOS_LABEL_GA "Tosaithe chuig BIOS (Atosú Riachtanach)"
+#define CORE_OPTION_NAME_BOOT_TO_BIOS_INFO_0_GA "Tosaithe go díreach isteach i roghchlár BIOS Dreamcast."
+#define CORE_OPTION_NAME_ENABLE_DSP_LABEL_GA "Cumasaigh DSP"
+#define CORE_OPTION_NAME_ENABLE_DSP_INFO_0_GA "Cumasaigh aithris ar DSP fuaime (próiseálaí comhartha digiteach) an Dreamcast. Feabhsaíonn sé cruinneas an fhuaime ghinte, ach méadaíonn sé na ceanglais feidhmíochta."
+#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_GA "Ceadaigh Cnaipí Seirbhíse Arcade"
+#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_GA "Cumasaíonn sé an cnaipe SERVICE le haghaidh cluichí stuara, chun socruithe caibinéid a iontráil."
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_GA "Socraigh Cluichí NAOMI go Súgradh Saor in Aisce"
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_GA "Athraigh socruithe mona an chluiche le haghaidh súgartha saor in aisce."
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_GA "Aithris Oiriúntóra Leathanbhanda"
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_GA "Déan aithris ar an oiriúntóir leathanbhanda Ethernet in ionad an mhóideim. (Atosú Riachtanach)"
+#define CORE_OPTION_NAME_UPNP_LABEL_GA "Cumasaigh UPnP"
+#define CORE_OPTION_NAME_UPNP_INFO_0_GA "Bain úsáid as UPnP chun do ródaire Idirlín a chumrú go huathoibríoch le haghaidh cluichí ar líne."
+#define CORE_OPTION_NAME_DCNET_LABEL_GA "Úsáid DCNet"
+#define CORE_OPTION_NAME_DCNET_INFO_0_GA "Bain úsáid as seirbhís scamall DCNet le haghaidh rochtain Idirlín Dreamcast."
+#define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_GA "Rún Inmheánach"
+#define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_GA "Modhnaigh réiteach rindreála."
+#define OPTION_VAL_320X240_GA "320x240 (Leath)"
+#define OPTION_VAL_640X480_GA "640x480 (Dúchasach)"
 #define OPTION_VAL_800X600_GA NULL
 #define OPTION_VAL_960X720_GA NULL
 #define OPTION_VAL_1024X768_GA NULL
@@ -36651,82 +36651,82 @@ struct retro_core_options_v2 options_fr = {
 #define OPTION_VAL_11520X8640_GA NULL
 #define OPTION_VAL_12160X9120_GA NULL
 #define OPTION_VAL_12800X9600_GA NULL
-#define CORE_OPTION_NAME_CABLE_TYPE_LABEL_GA NULL
-#define CORE_OPTION_NAME_CABLE_TYPE_INFO_0_GA NULL
+#define CORE_OPTION_NAME_CABLE_TYPE_LABEL_GA "Cineál Cábla"
+#define CORE_OPTION_NAME_CABLE_TYPE_INFO_0_GA "An cineál comhartha aschuir. Is é 'Teilifís (Ilchodach)' an ceann is mó a dtacaítear leis."
 #define OPTION_VAL_VGA_GA NULL
 #define OPTION_VAL_TV_RGB_GA NULL
-#define OPTION_VAL_TV_COMPOSITE_GA NULL
-#define CORE_OPTION_NAME_BROADCAST_LABEL_GA NULL
+#define OPTION_VAL_TV_COMPOSITE_GA "Teilifís (Ilchodach)"
+#define CORE_OPTION_NAME_BROADCAST_LABEL_GA "Caighdeán Craolta"
 #define OPTION_VAL_NTSC_GA NULL
-#define OPTION_VAL_PAL_GA NULL
-#define OPTION_VAL_PAL_N_GA NULL
-#define OPTION_VAL_PAL_M_GA NULL
+#define OPTION_VAL_PAL_GA "PAL (Domhanda)"
+#define OPTION_VAL_PAL_N_GA "PAL-N (An Airgintín, Paragua, Uragua)"
+#define OPTION_VAL_PAL_M_GA "PAL-M (An Bhrasaíl)"
 #define CORE_OPTION_NAME_SCREEN_ROTATION_LABEL_GA "Treoshuíomh an Scáileáin"
-#define OPTION_VAL_HORIZONTAL_GA NULL
-#define OPTION_VAL_VERTICAL_GA NULL
-#define CORE_OPTION_NAME_ALPHA_SORTING_LABEL_GA NULL
-#define CORE_OPTION_NAME_ALPHA_SORTING_INFO_0_GA NULL
-#define OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_GA NULL
-#define OPTION_VAL_PER_TRIANGLE_NORMAL_GA NULL
-#define OPTION_VAL_PER_PIXEL_ACCURATE_GA NULL
-#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_GA NULL
-#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_INFO_0_GA NULL
+#define OPTION_VAL_HORIZONTAL_GA "Cothrománach"
+#define OPTION_VAL_VERTICAL_GA "Ingearach"
+#define CORE_OPTION_NAME_ALPHA_SORTING_LABEL_GA "Sórtáil Alfa"
+#define CORE_OPTION_NAME_ALPHA_SORTING_INFO_0_GA "Roghnaigh conas a shórtálfar na polagáin thrédhearcacha."
+#define OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_GA "In aghaidh an Stiall (tapa, is lú cruinn)"
+#define OPTION_VAL_PER_TRIANGLE_NORMAL_GA "In aghaidh an Triantáin (gnáth)"
+#define OPTION_VAL_PER_PIXEL_ACCURATE_GA "In aghaidh an Phicteilín (cruinn, ach is moille)"
+#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_GA "Méid Maoláin Picteil Carntha"
+#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_INFO_0_GA "B’fhéidir go mbeadh luachanna níos airde ag teastáil chun taifeach níos airde a aschur i gceart."
 #define OPTION_VAL_512MB_GA NULL
 #define OPTION_VAL_1GB_GA NULL
 #define OPTION_VAL_2GB_GA NULL
 #define OPTION_VAL_4GB_GA NULL
-#define CORE_OPTION_NAME_OIT_LAYERS_LABEL_GA NULL
-#define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_GA NULL
-#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_GA NULL
-#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_GA NULL
-#define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_GA NULL
-#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_GA NULL
-#define CORE_OPTION_NAME_MIPMAPPING_LABEL_GA NULL
-#define CORE_OPTION_NAME_MIPMAPPING_INFO_0_GA NULL
-#define CORE_OPTION_NAME_FOG_LABEL_GA NULL
-#define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_GA NULL
-#define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_GA NULL
-#define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_LABEL_GA NULL
-#define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_GA NULL
-#define CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_GA NULL
-#define CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_GA NULL
-#define OPTION_VAL_1_GA NULL
-#define OPTION_VAL_2_GA NULL
-#define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_GA NULL
-#define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_GA NULL
-#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_GA NULL
-#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_GA NULL
-#define CORE_OPTION_NAME_PVR2_FILTERING_LABEL_GA NULL
-#define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_GA NULL
-#define CORE_OPTION_NAME_TEXUPSCALE_LABEL_GA NULL
-#define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_GA NULL
+#define CORE_OPTION_NAME_OIT_LAYERS_LABEL_GA "Uasmhéid Sraitheanna Trédhearcacha"
+#define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_GA "D’fhéadfadh luachanna níos airde a bheith ag teastáil le haghaidh radhairc chasta."
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_GA "Aithris iomlán maoláin fráma"
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_GA "Cumasaigh aithris iomlán maolán fráma i VRAM. Tá sé seo úsáideach do chluichí a léann nó a scríobhann an maolán fráma i VRAM go díreach. Nuair a bhíonn sé cumasaithe, cuirtear iallach ar an Taifeach Inmheánach go 640x480 agus d’fhéadfadh tionchar mór a bheith aige ar fheidhmíocht."
+#define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_GA "Cumasaigh Maolán RTT (Rindreáil go hUigeacht)"
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_GA "Cóipeáil uigeachtaí rindreáilte ar ais ón GPU go VRAM. De ghnáth, bíonn an rogha seo cumasaithe le haghaidh cluichí a bhfuil gá leo. Nuair a bhíonn sé cumasaithe, díchumasaítear uas-scálú rindreála uigeachtaí agus d’fhéadfadh tionchar a bheith aige ar fheidhmíocht."
+#define CORE_OPTION_NAME_MIPMAPPING_LABEL_GA "Mipmapáil"
+#define CORE_OPTION_NAME_MIPMAPPING_INFO_0_GA "Nuair a bheidh sé cumasaithe, úsáidfidh uigeachtaí leagan níos lú díobh féin nuair a bheidh siad níos faide ar shiúl, rud a fhéadann feidhmíocht a mhéadú agus lonrú a laghdú."
+#define CORE_OPTION_NAME_FOG_LABEL_GA "Éifeachtaí Ceo"
+#define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_GA "Modhnóir Imleabhair"
+#define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_GA "Gné GPU Dreamcast a úsáideann cluichí de ghnáth chun scáthanna réad a tharraingt. Ba chóir é seo a chumasú de ghnáth - is gnách go mbíonn an tionchar ar fheidhmíocht beag go neamhbhríoch."
+#define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_LABEL_GA "Scagadh Ainiseatrópach"
+#define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_GA "Feabhsaigh cáilíocht na n-uigeachtaí ar dhromchlaí atá ag uillinneacha féachana claonta i gcomparáid leis an gceamara. Bíonn luachanna níos airde níos déine ar an GPU. Ní bheidh feidhm ag athruithe ar an socrú seo ach amháin tar éis atosú."
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_GA "Scagadh Uigeachta"
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_GA "An modh scagtha uigeachta le húsáid. Is féidir é seo a úsáid chun modh scagtha uigeachta áirithe a chur i bhfeidhm ar gach uigeacht chun cuma níos géire (nó níos míne) a fháil ná an Réamhshocrú. D’fhéadfadh luachanna seachas an Réamhshocrú fadhbanna éagsúla rindreála a chruthú. Ní bheidh feidhm ag athruithe ar an socrú seo ach amháin tar éis atosú."
+#define OPTION_VAL_1_GA "Fórsáil an Chomharsa is Gaire"
+#define OPTION_VAL_2_GA "Fórsa Líneach"
+#define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_GA "Moill ar Mhalartú Fráma"
+#define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_GA "Úsáideach chun scáileáin splancacha nó físeáin glitcheacha a sheachaint. Ní mholtar é ar ardáin mhalla."
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_GA "Athruithe ar Ráta Fráma a Bhraith"
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_GA "Cuir an comhéadan ar an eolas nuair a athraíonn an ráta fráma inmheánach (e.g. ó 60 fps go 30 fps). Feabhsaíonn sé luas fráma i gcluichí a ritheann ag 30 fps nó 20 fps faoi ghlas, ach ba chóir é a dhíchumasú i gcluichí le rátaí fráma neamhghlasáilte (éagobhsaí) (e.g. Ecco the Dolphin, Unreal Tournament). Tabhair faoi deara: Níl sé ar fáil nuair a bhíonn 'Auto Skip Frame' cumasaithe."
+#define CORE_OPTION_NAME_PVR2_FILTERING_LABEL_GA "Scagaire Iarphróiseála PowerVR2"
+#define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_GA "Déan an íomhá rindreáilte a iarphróiseáil chun éifeachtaí a insamhladh atá sainiúil don GPU PowerVR2 agus do chomharthaí físe analógacha."
+#define CORE_OPTION_NAME_TEXUPSCALE_LABEL_GA "Uasghrádú Uigeachta (xBRZ)"
+#define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_GA "Feabhsaigh grafaicí ealaíne picteilíní 2T lámhdhéanta. Níor cheart é a úsáid ach le cluichí picteilíní 2T."
 #define OPTION_VAL_2_O27_GA NULL
 #define OPTION_VAL_4_GA NULL
 #define OPTION_VAL_6_GA NULL
-#define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_GA NULL
-#define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_INFO_0_GA NULL
-#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_GA NULL
-#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_GA NULL
-#define CORE_OPTION_NAME_FIX_UPSCALE_BLEEDING_EDGE_LABEL_GA NULL
-#define CORE_OPTION_NAME_FIX_UPSCALE_BLEEDING_EDGE_INFO_0_GA NULL
-#define CORE_OPTION_NAME_THREADED_RENDERING_LABEL_GA NULL
-#define CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_GA NULL
-#define CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_GA NULL
-#define CORE_OPTION_NAME_AUTO_SKIP_FRAME_INFO_0_GA NULL
-#define OPTION_VAL_SOME_GA NULL
-#define OPTION_VAL_MORE_GA NULL
-#define CORE_OPTION_NAME_FRAME_SKIPPING_LABEL_GA NULL
-#define CORE_OPTION_NAME_FRAME_SKIPPING_INFO_0_GA NULL
-#define CORE_OPTION_NAME_WIDESCREEN_CHEATS_LABEL_GA NULL
-#define CORE_OPTION_NAME_WIDESCREEN_CHEATS_INFO_0_GA NULL
-#define CORE_OPTION_NAME_WIDESCREEN_HACK_LABEL_GA NULL
-#define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_GA NULL
-#define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_GA NULL
-#define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_GA NULL
-#define CORE_OPTION_NAME_DC_32MB_MOD_LABEL_GA NULL
-#define CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_GA NULL
-#define CORE_OPTION_NAME_SH4CLOCK_LABEL_GA NULL
-#define CORE_OPTION_NAME_SH4CLOCK_INFO_0_GA NULL
+#define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_GA "Uasmhéid Scagtha Uasmhéid Uigeachta"
+#define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_INFO_0_GA "Roghnaigh uasluach méide le haghaidh uigeachta atá le huaslagadh, mura bhfuil méid na huigeachta níos airde ná an luach roghnaithe ní dhéanfar í a uaslagadh."
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_GA "Idirshuíomh Doimhneachta Dúchasach"
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_GA "Cabhraíonn sé le truailliú uigeachta agus fadhbanna doimhneachta ar GPUanna AMD. Is féidir leis cabhrú le GPUanna Intel i gcásanna áirithe freisin."
+#define CORE_OPTION_NAME_FIX_UPSCALE_BLEEDING_EDGE_LABEL_GA "Deisigh Imeall Fuilteach Uasghrádaithe"
+#define CORE_OPTION_NAME_FIX_UPSCALE_BLEEDING_EDGE_INFO_0_GA "Cuidíonn sé le cás fuilithe uigeachta agus uas-scálú á dhéanamh. Is féidir le díchumasú cabhrú má tá picteilíní ag saobhadh agus uas-scálú á dhéanamh i gcluichí 2T (MVC2, CVS, KOF, srl.)"
+#define CORE_OPTION_NAME_THREADED_RENDERING_LABEL_GA "Rindreáil Snáithithe"
+#define CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_GA "Ritheann sé an GPU agus an LAP ar shnáitheanna difriúla. Moltar go mór."
+#define CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_GA "Fráma Uathoibríoch Léim"
+#define CORE_OPTION_NAME_AUTO_SKIP_FRAME_INFO_0_GA "Léim go huathoibríoch frámaí nuair a bhíonn an t-aithriseoir ag rith go mall. Tabhair faoi deara: Ní bhaineann an socrú seo ach amháin nuair a bhíonn 'Rindreáil Snáithithe' cumasaithe."
+#define OPTION_VAL_SOME_GA "Gnáth"
+#define OPTION_VAL_MORE_GA "Uasmhéid"
+#define CORE_OPTION_NAME_FRAME_SKIPPING_LABEL_GA "Scipeáil Fráma"
+#define CORE_OPTION_NAME_FRAME_SKIPPING_INFO_0_GA "Socraíonn sé líon na bhfrámaí le léim idir gach fráma a thaispeántar."
+#define CORE_OPTION_NAME_WIDESCREEN_CHEATS_LABEL_GA "Cleasanna Leathan-Scáileáin (Atosú Riachtanach)"
+#define CORE_OPTION_NAME_WIDESCREEN_CHEATS_INFO_0_GA "Gníomhaíonn sé cleasanna a ligeann do chluichí áirithe a thaispeáint i bhformáid scáileáin leathan."
+#define CORE_OPTION_NAME_WIDESCREEN_HACK_LABEL_GA "Haic Leathan-Scáileáin"
+#define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_GA "Tarraing geoiméadracht lasmuigh den ghnáthchóimheas gné 4:3. D’fhéadfadh sé go mbeadh fabhtanna grafacha sna ceantair nochta."
+#define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_GA "Luchtú Tapa GD-ROM (míchruinn)"
+#define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_GA "Luasghéadaíonn sé luchtú GD-ROM."
+#define CORE_OPTION_NAME_DC_32MB_MOD_LABEL_GA "Modúl RAM Dreamcast 32MB"
+#define CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_GA "Cumasaíonn sé Mod RAM 32MB do Dreamcast. D’fhéadfadh sé difear a dhéanamh do chomhoiriúnacht"
+#define CORE_OPTION_NAME_SH4CLOCK_LABEL_GA "Róchlogáil/fo-chlogáil LAP SH4"
+#define CORE_OPTION_NAME_SH4CLOCK_INFO_0_GA "Athraigh clog LAP príomhúil SH4 ón 200 MHz réamhshocraithe. D’fhéadfadh tearc-chlogáil cabhrú le hardáin a mhoilliú. D’fhéadfadh ró-chlogáil an ráta fráma a mhéadú do roinnt cluichí. Bain úsáid as go cúramach."
 #define OPTION_VAL_100_GA NULL
 #define OPTION_VAL_110_GA NULL
 #define OPTION_VAL_120_GA NULL
@@ -36768,12 +36768,12 @@ struct retro_core_options_v2 options_fr = {
 #define OPTION_VAL_480_GA NULL
 #define OPTION_VAL_490_GA NULL
 #define OPTION_VAL_500_GA NULL
-#define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_GA NULL
-#define CORE_OPTION_NAME_CUSTOM_TEXTURES_INFO_0_GA NULL
-#define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_GA NULL
-#define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_GA NULL
-#define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_GA NULL
-#define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_INFO_0_GA NULL
+#define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_GA "Luchtaigh Uigeachtaí Saincheaptha"
+#define CORE_OPTION_NAME_CUSTOM_TEXTURES_INFO_0_GA "Luchtaigh uigeachtaí saincheaptha atá suite sa bhfillteán 'system/dc/textures/<game-id>/'."
+#define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_GA "Uigeachtaí Dumpála"
+#define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_GA "Gach uair a úsáideann an cluiche uigeacht nua, sábhálfar í mar chomhad .png sa bhfillteán 'system/dc/texdump/<game-id>/'."
+#define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_GA "Crios Marbh Bata Analógach"
+#define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_INFO_0_GA "Roghnaigh cé chomh fada is gá duit an bata analógach a bhrú sula dtosaíonn sé á phróiseáil."
 #define OPTION_VAL_0_GA NULL
 #define OPTION_VAL_5_GA NULL
 #define OPTION_VAL_10_GA NULL
@@ -36781,15 +36781,15 @@ struct retro_core_options_v2 options_fr = {
 #define OPTION_VAL_20_GA NULL
 #define OPTION_VAL_25_GA NULL
 #define OPTION_VAL_30_GA NULL
-#define CORE_OPTION_NAME_TRIGGER_DEADZONE_LABEL_GA NULL
-#define CORE_OPTION_NAME_TRIGGER_DEADZONE_INFO_0_GA NULL
-#define CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_GA NULL
-#define CORE_OPTION_NAME_DIGITAL_TRIGGERS_INFO_0_GA NULL
-#define CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_GA NULL
-#define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_GA NULL
-#define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_GA NULL
-#define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_GA NULL
-#define CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_GA NULL
+#define CORE_OPTION_NAME_TRIGGER_DEADZONE_LABEL_GA "Spriocdhíon Marbh"
+#define CORE_OPTION_NAME_TRIGGER_DEADZONE_INFO_0_GA "Roghnaigh cé mhéad a chaithfidh tú an truicear a bhrú sula dtosaíonn sé á phróiseáil."
+#define CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_GA "Spreagthóirí Digiteacha"
+#define CORE_OPTION_NAME_DIGITAL_TRIGGERS_INFO_0_GA "Nuair a bheidh siad cumasaithe, feidhmeoidh na spreagthóirí mar chnaipí rialta, rud a chiallaíonn go ndéanfar iad a phróiseáil mar chnaipí brúite go hiomlán nó gan brú ar chor ar bith, gan aon rud eatarthu."
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_GA "Aschuir Dhigiteacha Craolta"
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_GA "Aschuir dhigiteacha craolta agus staid aiseolais fórsa ar phort TCP 8000. Ag luí leis an rogha MAME \"-output network\"."
+#define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_GA "Taispeáin Socruithe Gunna Solais"
+#define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_GA "Cumasaigh cumraíocht roghanna taispeána crosaire gunna solais. TABHAIR FAOI DEARA: B’fhéidir go mbeidh ort an Roghchlár Tapa a athrú chun an socrú seo a chur i bhfeidhm."
+#define CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_GA "Scálú Méid Croslíne Gunna"
 #define OPTION_VAL_50_GA NULL
 #define OPTION_VAL_60_GA NULL
 #define OPTION_VAL_70_GA NULL
@@ -36816,101 +36816,101 @@ struct retro_core_options_v2 options_fr = {
 #define OPTION_VAL_280_O46_GA NULL
 #define OPTION_VAL_290_O46_GA NULL
 #define OPTION_VAL_300_O46_GA NULL
-#define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_GA NULL
-#define OPTION_VAL_WHITE_GA NULL
-#define OPTION_VAL_RED_GA NULL
-#define OPTION_VAL_GREEN_GA NULL
-#define OPTION_VAL_BLUE_GA NULL
-#define CORE_OPTION_NAME_LIGHTGUN2_CROSSHAIR_LABEL_GA NULL
-#define CORE_OPTION_NAME_LIGHTGUN3_CROSSHAIR_LABEL_GA NULL
-#define CORE_OPTION_NAME_LIGHTGUN4_CROSSHAIR_LABEL_GA NULL
-#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_LABEL_GA NULL
-#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_INFO_0_GA NULL
+#define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_GA "Taispeáin Croslíne don Ghunna 1"
+#define OPTION_VAL_WHITE_GA "Bán"
+#define OPTION_VAL_RED_GA "Dearg"
+#define OPTION_VAL_GREEN_GA "Glas"
+#define OPTION_VAL_BLUE_GA "Gorm"
+#define CORE_OPTION_NAME_LIGHTGUN2_CROSSHAIR_LABEL_GA "Taispeáin Croslíne don Ghunna 2"
+#define CORE_OPTION_NAME_LIGHTGUN3_CROSSHAIR_LABEL_GA "Taispeáin Croslíne don Ghunna 3"
+#define CORE_OPTION_NAME_LIGHTGUN4_CROSSHAIR_LABEL_GA "Taispeáin Croslíne don Ghunna 4"
+#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_LABEL_GA "Gléas i Sliotán Leathnaithe A1"
+#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_INFO_0_GA "Roghnaigh an gléas atá plugáilte isteach sa sliotán leathnúcháin A1 (port A sliotán 1)."
 #define OPTION_VAL_VMU_GA NULL
-#define OPTION_VAL_PURUPURU_GA NULL
-#define OPTION_VAL_NONE_GA NULL
-#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_LABEL_GA NULL
-#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_INFO_0_GA NULL
-#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT1_LABEL_GA NULL
-#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT1_INFO_0_GA NULL
-#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT2_LABEL_GA NULL
-#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT2_INFO_0_GA NULL
-#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT1_LABEL_GA NULL
-#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT1_INFO_0_GA NULL
-#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT2_LABEL_GA NULL
-#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT2_INFO_0_GA NULL
-#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT1_LABEL_GA NULL
-#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT1_INFO_0_GA NULL
-#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_LABEL_GA NULL
-#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_INFO_0_GA NULL
-#define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_GA NULL
-#define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CAT_GA NULL
-#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_GA NULL
+#define OPTION_VAL_PURUPURU_GA "Pacáiste Creathadh"
+#define OPTION_VAL_NONE_GA "Dada"
+#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_LABEL_GA "Gléas i Sliotán Leathnaithe A2"
+#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_INFO_0_GA "Roghnaigh an gléas atá plugáilte isteach sa sliotán leathnúcháin A2 (port A sliotán 2)."
+#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT1_LABEL_GA "Gléas i Sliotán Leathnaithe B1"
+#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT1_INFO_0_GA "Roghnaigh an gléas atá plugáilte isteach sa sliotán leathnúcháin B1 (port B sliotán 1)."
+#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT2_LABEL_GA "Gléas i Sliotán Leathnaithe B2"
+#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT2_INFO_0_GA "Roghnaigh an gléas atá plugáilte isteach sa sliotán leathnúcháin B2 (port B sliotán 2)."
+#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT1_LABEL_GA "Gléas i Sliotán Leathnaithe C1"
+#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT1_INFO_0_GA "Roghnaigh an gléas atá plugáilte isteach sa sliotán leathnúcháin C1 (port C sliotán 1)."
+#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT2_LABEL_GA "Gléas i Sliotán Leathnaithe C2"
+#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT2_INFO_0_GA "Roghnaigh an gléas atá plugáilte isteach sa sliotán leathnúcháin C2 (port C sliotán 2)."
+#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT1_LABEL_GA "Gléas i Sliotán Leathnaithe D1"
+#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT1_INFO_0_GA "Roghnaigh an gléas atá plugáilte isteach sa sliotán leathnúcháin D1 (port D sliotán 1)."
+#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_LABEL_GA "Gléas i Sliotán Leathnaithe D2"
+#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_INFO_0_GA "Roghnaigh an gléas atá plugáilte isteach sa sliotán leathnúcháin D2 (port D sliotán 2)."
+#define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_GA "Aonaid/Córais Cuimhne Amhairc In Aghaidh an Chluiche (VMU)"
+#define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CAT_GA "VMUanna In aghaidh an Chluiche"
+#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_GA "Nuair a bhíonn sé díchumasaithe, roinneann gach cluiche suas le 8 gcomhad sábhála VMU (A1/A2/B1/B2/C1/C2/D1/D2) atá suite i bhfillteán córais RetroArch.\nCruthaíonn an socrú 'VMU A1' comhad VMU uathúil 'A1' i bhfillteán sábhála RetroArch do gach cluiche a sheoltar.\nCruthaíonn an socrú 'Gach VMU' suas le 8 gcomhad VMU uathúla (A1/A2/B1/B2/C1/C2/D1/D2) do gach cluiche a sheoltar."
 #define OPTION_VAL_VMU_A1_GA NULL
-#define OPTION_VAL_ALL_VMUS_GA NULL
-#define CORE_OPTION_NAME_VMU_SOUND_LABEL_GA NULL
-#define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_GA NULL
-#define CORE_OPTION_NAME_VMU_SOUND_INFO_0_GA NULL
-#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_GA NULL
-#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_GA NULL
-#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_GA NULL
-#define CORE_OPTION_NAME_VMU1_SCREEN_DISPLAY_LABEL_GA NULL
-#define CORE_OPTION_NAME_VMU1_SCREEN_POSITION_LABEL_GA NULL
-#define OPTION_VAL_UPPER_LEFT_GA NULL
-#define OPTION_VAL_UPPER_RIGHT_GA NULL
-#define OPTION_VAL_LOWER_LEFT_GA NULL
-#define OPTION_VAL_LOWER_RIGHT_GA NULL
-#define CORE_OPTION_NAME_VMU1_SCREEN_SIZE_MULT_LABEL_GA NULL
+#define OPTION_VAL_ALL_VMUS_GA "Gach VMUanna"
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_GA "Fuaimeanna Aonaid/Córais Cuimhne Amhairc (VMU)"
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_GA "Fuaimeanna VMU"
+#define CORE_OPTION_NAME_VMU_SOUND_INFO_0_GA "Nuair a bhíonn sé cumasaithe, seinntear bípeanna VMU."
+#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_GA "Taispeáin Socruithe Taispeána Aonaid/Córais Cuimhne Amhairc (VMU)"
+#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_GA "Taispeáin Socruithe Taispeána VMU"
+#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_GA "Cumasaigh cumraíocht infheictheachta, méide, suíomh agus datha scáileáin LCD VMU aithrisithe. TABHAIR FAOI DEARA: B’fhéidir go mbeidh ort an Roghchlár Tapa a athrú chun an socrú seo a chur i bhfeidhm."
+#define CORE_OPTION_NAME_VMU1_SCREEN_DISPLAY_LABEL_GA "Taispeántas Scáileán 1 VMU"
+#define CORE_OPTION_NAME_VMU1_SCREEN_POSITION_LABEL_GA "Suíomh Scáileáin VMU 1"
+#define OPTION_VAL_UPPER_LEFT_GA "Uachtarach ar Chlé"
+#define OPTION_VAL_UPPER_RIGHT_GA "Uachtarach ar Dheis"
+#define OPTION_VAL_LOWER_LEFT_GA "Íochtarach ar Chlé"
+#define OPTION_VAL_LOWER_RIGHT_GA "Íochtarach ar Dheis"
+#define CORE_OPTION_NAME_VMU1_SCREEN_SIZE_MULT_LABEL_GA "Méid Scáileáin VMU 1"
 #define OPTION_VAL_1X_GA NULL
 #define OPTION_VAL_3X_GA NULL
 #define OPTION_VAL_5X_GA NULL
-#define CORE_OPTION_NAME_VMU1_PIXEL_ON_COLOR_LABEL_GA NULL
-#define OPTION_VAL_DEFAULT_ON_00_GA NULL
-#define OPTION_VAL_DEFAULT_OFF_01_GA NULL
-#define OPTION_VAL_BLACK_02_GA NULL
-#define OPTION_VAL_LIGHT_BLUE_04_GA NULL
-#define OPTION_VAL_CYAN_06_GA NULL
-#define OPTION_VAL_CYAN_BLUE_07_GA NULL
-#define OPTION_VAL_LIGHT_GREEN_08_GA NULL
-#define OPTION_VAL_CYAN_GREEN_09_GA NULL
-#define OPTION_VAL_LIGHT_CYAN_10_GA NULL
-#define OPTION_VAL_PURPLE_12_GA NULL
-#define OPTION_VAL_LIGHT_PURPLE_13_GA NULL
-#define OPTION_VAL_YELLOW_14_GA NULL
-#define OPTION_VAL_GRAY_15_GA NULL
-#define OPTION_VAL_LIGHT_PURPLE_2_16_GA NULL
-#define OPTION_VAL_LIGHT_GREEN_2_17_GA NULL
-#define OPTION_VAL_LIGHT_GREEN_3_18_GA NULL
-#define OPTION_VAL_LIGHT_CYAN_2_19_GA NULL
-#define OPTION_VAL_LIGHT_RED_2_20_GA NULL
-#define OPTION_VAL_MAGENTA_21_GA NULL
-#define OPTION_VAL_LIGHT_PURPLE_3_22_GA NULL
-#define OPTION_VAL_LIGHT_ORANGE_23_GA NULL
-#define OPTION_VAL_ORANGE_24_GA NULL
-#define OPTION_VAL_LIGHT_PURPLE_4_25_GA NULL
-#define OPTION_VAL_LIGHT_YELLOW_26_GA NULL
-#define OPTION_VAL_LIGHT_YELLOW_2_27_GA NULL
-#define CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_GA NULL
-#define CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_GA NULL
+#define CORE_OPTION_NAME_VMU1_PIXEL_ON_COLOR_LABEL_GA "Scáileán VMU 1 Picteilín Ar Dath"
+#define OPTION_VAL_DEFAULT_ON_00_GA "Réamhshocrú AR"
+#define OPTION_VAL_DEFAULT_OFF_01_GA "Réamhshocrú AS"
+#define OPTION_VAL_BLACK_02_GA "Dubh"
+#define OPTION_VAL_LIGHT_BLUE_04_GA "Gorm Éadrom"
+#define OPTION_VAL_CYAN_06_GA "Cian"
+#define OPTION_VAL_CYAN_BLUE_07_GA "Gorm Cian"
+#define OPTION_VAL_LIGHT_GREEN_08_GA "Glas Éadrom"
+#define OPTION_VAL_CYAN_GREEN_09_GA "Glas Cian"
+#define OPTION_VAL_LIGHT_CYAN_10_GA "Cian Éadrom"
+#define OPTION_VAL_PURPLE_12_GA "Corcra"
+#define OPTION_VAL_LIGHT_PURPLE_13_GA "Corcra Éadrom"
+#define OPTION_VAL_YELLOW_14_GA "Buí"
+#define OPTION_VAL_GRAY_15_GA "Liath"
+#define OPTION_VAL_LIGHT_PURPLE_2_16_GA "Corcra Éadrom (2)"
+#define OPTION_VAL_LIGHT_GREEN_2_17_GA "Glas Éadrom (2)"
+#define OPTION_VAL_LIGHT_GREEN_3_18_GA "Glas Éadrom (3)"
+#define OPTION_VAL_LIGHT_CYAN_2_19_GA "Cian Éadrom (2)"
+#define OPTION_VAL_LIGHT_RED_2_20_GA "Dearg Éadrom (2)"
+#define OPTION_VAL_MAGENTA_21_GA "Maigeanta"
+#define OPTION_VAL_LIGHT_PURPLE_3_22_GA "Corcra Éadrom (3)"
+#define OPTION_VAL_LIGHT_ORANGE_23_GA "Oráiste Éadrom"
+#define OPTION_VAL_ORANGE_24_GA "Oráiste"
+#define OPTION_VAL_LIGHT_PURPLE_4_25_GA "Corcra Éadrom (4)"
+#define OPTION_VAL_LIGHT_YELLOW_26_GA "Buí Éadrom"
+#define OPTION_VAL_LIGHT_YELLOW_2_27_GA "Buí Éadrom (2)"
+#define CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_GA "Scáileán VMU 1 Picteilín As Dath"
+#define CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_GA "Teimhneacht Scáileáin 1 VMU"
 #define OPTION_VAL_40_GA NULL
-#define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_GA NULL
-#define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_GA NULL
-#define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_GA NULL
-#define CORE_OPTION_NAME_VMU2_PIXEL_ON_COLOR_LABEL_GA NULL
-#define CORE_OPTION_NAME_VMU2_PIXEL_OFF_COLOR_LABEL_GA NULL
-#define CORE_OPTION_NAME_VMU2_SCREEN_OPACITY_LABEL_GA NULL
-#define CORE_OPTION_NAME_VMU3_SCREEN_DISPLAY_LABEL_GA NULL
-#define CORE_OPTION_NAME_VMU3_SCREEN_POSITION_LABEL_GA NULL
-#define CORE_OPTION_NAME_VMU3_SCREEN_SIZE_MULT_LABEL_GA NULL
-#define CORE_OPTION_NAME_VMU3_PIXEL_ON_COLOR_LABEL_GA NULL
-#define CORE_OPTION_NAME_VMU3_PIXEL_OFF_COLOR_LABEL_GA NULL
-#define CORE_OPTION_NAME_VMU3_SCREEN_OPACITY_LABEL_GA NULL
-#define CORE_OPTION_NAME_VMU4_SCREEN_DISPLAY_LABEL_GA NULL
-#define CORE_OPTION_NAME_VMU4_SCREEN_POSITION_LABEL_GA NULL
-#define CORE_OPTION_NAME_VMU4_SCREEN_SIZE_MULT_LABEL_GA NULL
-#define CORE_OPTION_NAME_VMU4_PIXEL_ON_COLOR_LABEL_GA NULL
-#define CORE_OPTION_NAME_VMU4_PIXEL_OFF_COLOR_LABEL_GA NULL
-#define CORE_OPTION_NAME_VMU4_SCREEN_OPACITY_LABEL_GA NULL
+#define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_GA "Taispeántas Scáileán 2 VMU"
+#define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_GA "Suíomh Scáileáin VMU 2"
+#define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_GA "Méid Scáileáin VMU 2"
+#define CORE_OPTION_NAME_VMU2_PIXEL_ON_COLOR_LABEL_GA "Scáileán VMU 2 Picteilín Ar Dath"
+#define CORE_OPTION_NAME_VMU2_PIXEL_OFF_COLOR_LABEL_GA "Scáileán VMU 2 Picteilín As Dath"
+#define CORE_OPTION_NAME_VMU2_SCREEN_OPACITY_LABEL_GA "Teimhneacht Scáileáin VMU 2"
+#define CORE_OPTION_NAME_VMU3_SCREEN_DISPLAY_LABEL_GA "Taispeántas Scáileán VMU 3"
+#define CORE_OPTION_NAME_VMU3_SCREEN_POSITION_LABEL_GA "Scáileán VMU 3 Seasamh"
+#define CORE_OPTION_NAME_VMU3_SCREEN_SIZE_MULT_LABEL_GA "Méid Scáileáin VMU 3"
+#define CORE_OPTION_NAME_VMU3_PIXEL_ON_COLOR_LABEL_GA "Scáileán VMU 3 Picteilín Ar Dath"
+#define CORE_OPTION_NAME_VMU3_PIXEL_OFF_COLOR_LABEL_GA "Scáileán VMU 3 Picteilín As Dath"
+#define CORE_OPTION_NAME_VMU3_SCREEN_OPACITY_LABEL_GA "Teimhneacht Scáileáin VMU 3"
+#define CORE_OPTION_NAME_VMU4_SCREEN_DISPLAY_LABEL_GA "Taispeántas Scáileán VMU 4"
+#define CORE_OPTION_NAME_VMU4_SCREEN_POSITION_LABEL_GA "Scáileán VMU 4 Seasamh"
+#define CORE_OPTION_NAME_VMU4_SCREEN_SIZE_MULT_LABEL_GA "Méid Scáileáin VMU 4"
+#define CORE_OPTION_NAME_VMU4_PIXEL_ON_COLOR_LABEL_GA "Scáileán VMU 4 Picteilín Ar Dath"
+#define CORE_OPTION_NAME_VMU4_PIXEL_OFF_COLOR_LABEL_GA "Scáileán VMU 4 Picteilín As Dath"
+#define CORE_OPTION_NAME_VMU4_SCREEN_OPACITY_LABEL_GA "Teimhneacht Scáileáin VMU 4"
 
 struct retro_core_option_v2_category option_cats_ga[] = {
    {
@@ -44736,7 +44736,7 @@ struct retro_core_options_v2 options_hr = {
 #define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_HU NULL
 #define CORE_OPTION_NAME_UPNP_LABEL_HU "UPnP engedélyezése"
 #define CORE_OPTION_NAME_UPNP_INFO_0_HU "Az internetre csatlakozó router automatikus konfigurálása az online játékokhoz UPnP-n keresztül."
-#define CORE_OPTION_NAME_DCNET_LABEL_HU NULL
+#define CORE_OPTION_NAME_DCNET_LABEL_HU "DCNet használata"
 #define CORE_OPTION_NAME_DCNET_INFO_0_HU NULL
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_HU "Belső felbontás"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_HU "A képelőállítás felbontása."
