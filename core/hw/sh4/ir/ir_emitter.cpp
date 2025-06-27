@@ -2371,6 +2371,16 @@ Block& Emitter::CreateNew(uint32_t pc) {
         }
         // STC DBR, Rn (0000 nnnn 1111 0010 -> 0x0nF2)
         // This must be before STC Rj_BANK, Rn to correctly identify DBR vs R7_BANK (both can have 0xF in middle nibble)
+        else if ((raw & 0xF0FF) == 0x00F8) // PREF @Rn – treat as NOP (prefetch hint)
+        {
+            ins.op = Op::MOV_REG; // treat as register move Rn -> Rn (no side-effect, non-branch)
+            ins.dst = {false, n};
+            ins.src1 = {false, n};
+            ins.src2 = {false, n};
+            blk.pcNext = pc + 2;
+            decoded = true;
+            INFO_LOG(SH4, "Emitter::CreateNew: Decoded PREF @R%d (0x%04X) at PC=%08X – treated as MOV_REG R%d,R%d", n, raw, pc, n, n);
+        }
         else if ((raw & 0xF0FF) == 0x00F2)
         {
             ins.op = Op::STC;
