@@ -1111,7 +1111,26 @@ static bool FastDecode(uint16_t raw, uint32_t pc, Instr &ins, Block &blk)
         return true;
     }
     // FSTS FPUL,FRn (0xF60D) - Store FPUL into FRn
-    else if (raw == 0xF60D)
+    // Fast group 0xF7n?
+        else if (((raw & 0xFF0F) == 0xF702)) // FLDS FRn,FPUL (0xF7n2)
+        {
+            uint8_t n = (raw >> 8) & 0xF;
+            ins.op = Op::FLDS;
+            ins.src1.isImm = false; ins.src1.reg = n; ins.src1.type = RegType::FGR;
+            DEBUG_LOG(SH4, "FastDecode: FLDS FR%u,FPUL (0x%04X) at PC=0x%08X", n, raw, pc);
+            blk.pcNext = pc + 2;
+            return true;
+        }
+        else if (((raw & 0xFF0F) == 0xF703)) // FSTS FPUL,FRn (0xF7n3)
+        {
+            uint8_t n = (raw >> 8) & 0xF;
+            ins.op = Op::FSTS;
+            ins.dst.isImm = false; ins.dst.reg = n; ins.dst.type = RegType::FGR;
+            DEBUG_LOG(SH4, "FastDecode: FSTS FPUL,FR%u (0x%04X) at PC=0x%08X", n, raw, pc);
+            blk.pcNext = pc + 2;
+            return true;
+        }
+        else if (raw == 0xF60D)
     {
         uint8_t n = (raw >> 8) & 0xF;
         ins.op = Op::FSTS;

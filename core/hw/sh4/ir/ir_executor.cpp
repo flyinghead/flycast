@@ -1214,6 +1214,30 @@ static void Exec_STORE8(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
 
 // Dedicated Rm,@(R0,Rn) store variants (no disp, address = R0 + Rn)
 // MOV.B R0,@(R0,Rn) (0x8n00)
+
+// Utility to convert float to raw 32-bit pattern
+static inline uint32_t FloatToBits(float f)
+{
+    uint32_t bits;
+    std::memcpy(&bits, &f, sizeof(bits));
+    return bits;
+}
+
+// FSTS FPUL -> FRn (single-precision store)
+static void Exec_FSTS(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
+{
+    // Move raw 32-bit pattern from FPUL into destination FRn (no conversion)
+    SET_FR(ctx, ins.dst.reg, BitsToFloat(ctx->fpul));
+}
+
+// FLDS FRm -> FPUL (single-precision load)
+static void Exec_FLDS(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
+{
+    // Copy raw bits of source FRm into FPUL (no conversion)
+    ctx->fpul = FloatToBits(GET_FR(ctx, ins.src1.reg));
+}
+
+
 static void Exec_STORE8_R0_REG(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
 {
     uint32_t addr = GET_REG(ctx, 0) + GET_REG(ctx, ins.dst.reg); // R0 + Rn
@@ -2093,6 +2117,8 @@ static void InitExecTable()
     // R0-offset variants
     g_exec_table[static_cast<int>(sh4::ir::Op::STORE8_R0)]  = &Exec_STORE8_R0;
     g_exec_table[static_cast<int>(sh4::ir::Op::STORE8_R0_REG)]  = &Exec_STORE8_R0_REG;
+    g_exec_table[static_cast<int>(sh4::ir::Op::FSTS)] = &Exec_FSTS;
+    g_exec_table[static_cast<int>(sh4::ir::Op::FLDS)] = &Exec_FLDS;
     g_exec_table[static_cast<int>(sh4::ir::Op::STORE16_R0)] = &Exec_STORE16_R0;
     g_exec_table[static_cast<int>(sh4::ir::Op::STORE32_R0)] = &Exec_STORE32_R0;
     g_exec_table[static_cast<int>(sh4::ir::Op::ADDC)]       = &Exec_ADDC;
