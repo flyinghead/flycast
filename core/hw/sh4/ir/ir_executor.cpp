@@ -457,10 +457,13 @@ static inline void SetPC(Sh4Context* ctx, uint32_t new_pc, const char* why)
     DEBUG_LOG(SH4, "SetPC: %08X -> %08X (PR:%08X SR.T:%d) via %s", old_pc, new_pc, pr, GET_SR_T(ctx), why);
 
     // Check for corruption to the problematic range that causes infinite loops
-    if (new_pc >= 0x1FFD0000 && new_pc <= 0x1FFFFFFF) {
-        ERROR_LOG(SH4, "🚨 PC CORRUPTION: Setting PC to problematic range %08X (was %08X) via %s", new_pc, old_pc, why);
+    // Expanded range to catch ANY corruption pattern in the 1ffc-1fff range
+    if (new_pc >= 0x1FFC0000 && new_pc <= 0x1FFFFFFF) {
+        ERROR_LOG(SH4, "🚨 PC CORRUPTION DETECTED: Setting PC to problematic range %08X (was %08X) via %s", new_pc, old_pc, why);
+        ERROR_LOG(SH4, "🚨 This would cause infinite loop - STOPPING EXECUTION IMMEDIATELY");
         DumpTrace();
-        throw SH4ThrownException(old_pc, Sh4Ex_IllegalInstr);
+        // Force immediate stop to prevent infinite loop
+        abort();
     }
 
     // Reject addresses in invalid high region (0x10000000–0x1FFFFFFF)
@@ -4108,11 +4111,11 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                             break;
                         case 1: // GBR
                             INFO_LOG(SH4, "LDC.L GBR <- %08X from @%08X (R%u) at PC=%08X", val, addr, ins.src1.reg, curr_pc);
-                            ctx->gbr = val;
+                            Sh4cntx.gbr = val;
                             break;
                         case 2: // VBR
                             INFO_LOG(SH4, "LDC.L VBR <- %08X from @%08X (R%u) at PC=%08X", val, addr, ins.src1.reg, curr_pc);
-                            ctx->vbr = val;
+                            Sh4cntx.vbr = val;
                             break;
                         case 3: // SSR
                             INFO_LOG(SH4, "LDC.L SSR <- %08X from @%08X (R%u) at PC=%08X", val, addr, ins.src1.reg, curr_pc);
@@ -4138,7 +4141,7 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                         // Register-to-register move
                         if (fpscr.PR) {
                             // Double-precision : copy 64-bit DRm -> DRn
-                            double* d_fr = reinterpret_cast<double*>(&ctx->xffr[16]);
+                            double* d_fr = reinterpret_cast<double*>(&Sh4cntx.xffr[16]);
                             int dr_dst_idx = ins.dst.reg ;
                             int dr_src_idx = ins.src1.reg ;
                             d_fr[dr_dst_idx] = d_fr[dr_src_idx];
@@ -4154,7 +4157,7 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                         if (fpscr.PR) {
                             // Load 64-bit and advance Rm by 8
                             uint64_t val64 = RawRead64(addr);
-                            double* d_fr = reinterpret_cast<double*>(&ctx->xffr[16]);
+                            double* d_fr = reinterpret_cast<double*>(&Sh4cntx.xffr[16]);
                             int dr_dst_idx = ins.dst.reg ;
                             d_fr[dr_dst_idx] = *reinterpret_cast<double*>(&val64);
                             GET_REG(ctx, ins.src1.reg) += 8;
