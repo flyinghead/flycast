@@ -3496,7 +3496,7 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                 case Op::FCNVSD:
                 {
                     // Convert 32-bit integer in FPUL to double-precision DRn
-                    float single_val = BitsToFloat(ctx->fpul);
+                    float single_val = BitsToFloat(Sh4cntx.fpul);
                     SetDR(ins.dst.reg, static_cast<double>(single_val));
                     INFO_LOG(SH4, "FCNVSD FPUL_SINGLE(%f) -> DR%u (%.6f)", single_val, ins.dst.reg, static_cast<double>(single_val));
                     break;
@@ -3511,7 +3511,7 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                     {
                         u32 bits; std::memcpy(&bits, &fval, sizeof(bits));
                         UpdateContextFPUL(ctx, bits);
-                        ctx->fpul = bits;
+                        Sh4cntx.fpul = bits;
                     }
                     { u32 fpul_val = *reinterpret_cast<u32*>(&fval); INFO_LOG(SH4, "FCNVDS DR%u (%.6f) -> FPUL (0x%08X)", srcReg >> 1, dval, fpul_val); }
                     break;
@@ -3640,7 +3640,7 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                     // Result: sin(angle) -> FRn, cos(angle) -> FR(n+1)
 
                     // In our case, we know n=6 from the emitter (DR3 = FR6:FR7)
-                    uint32_t fpul_value = ctx->fpul;
+                    uint32_t fpul_value = Sh4cntx.fpul;
 
                     // Extract the table index and fractional part for interpolation
                     // We use the high 8 bits as the index into our 256-entry table
@@ -3749,7 +3749,7 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                 {
                     // FLOAT FPUL -> FRn (PR==0) or FLOAT FPUL -> DRn (PR==1)
                     // Convert 32-bit integer in FPUL to floating-point
-                    int32_t int_val = static_cast<int32_t>(ctx->fpul);
+                    int32_t int_val = static_cast<int32_t>(Sh4cntx.fpul);
                     float single = static_cast<float>(int_val);
                     double dbl_val = static_cast<double>(int_val);
 
@@ -3871,8 +3871,8 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                 }
 // FSQRT case was moved and consolidated with the earlier implementation
                 case Op::FSTS: // FSTS FPUL,FRn
-                    SET_FR(ctx, ins.dst.reg, BitsToFloat(ctx->fpul));
-                    DEBUG_LOG(SH4, "FSTS FPUL(0x%08X) -> FR%u (%.6f)", ctx->fpul, ins.dst.reg, BitsToFloat(ctx->fpul));
+                    SET_FR(ctx, ins.dst.reg, BitsToFloat(Sh4cntx.fpul));
+                    DEBUG_LOG(SH4, "FSTS FPUL(0x%08X) -> FR%u (%.6f)", Sh4cntx.fpul, ins.dst.reg, BitsToFloat(Sh4cntx.fpul));
                     break;
                 case Op::FABS:
                 {
@@ -3893,7 +3893,7 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                         static_assert(sizeof(uint32_t) == sizeof(float), "size mismatch");
                         uint32_t bits;
                         std::memcpy(&bits, &GET_FR(ctx, ins.src1.reg), sizeof(bits));
-                        ctx->fpul = bits;
+                        Sh4cntx.fpul = bits;
                     }
                     break;
                 case Op::FLDI0:
@@ -3947,19 +3947,19 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                 }
                 case Op::FNEG_FPUL:
                 {
-                    float val = *reinterpret_cast<float*>(&ctx->fpul);
+                    float val = *reinterpret_cast<float*>(&Sh4cntx.fpul);
                     val = -val;
-                    ctx->fpul = *reinterpret_cast<u32*>(&val);
-                    DEBUG_LOG(SH4, "FNEG FPUL -> 0x%08X", ctx->fpul);
+                    Sh4cntx.fpul = *reinterpret_cast<u32*>(&val);
+                    DEBUG_LOG(SH4, "FNEG FPUL -> 0x%08X", Sh4cntx.fpul);
                     break;
                 }
 
                 case Op::FABS_FPUL:
                 {
-                    float val = *reinterpret_cast<float*>(&ctx->fpul);
+                    float val = *reinterpret_cast<float*>(&Sh4cntx.fpul);
                     val = std::fabs(val);
-                    ctx->fpul = *reinterpret_cast<u32*>(&val);
-                    DEBUG_LOG(SH4, "FABS FPUL -> 0x%08X", ctx->fpul);
+                    Sh4cntx.fpul = *reinterpret_cast<u32*>(&val);
+                    DEBUG_LOG(SH4, "FABS FPUL -> 0x%08X", Sh4cntx.fpul);
                     break;
                 }
                 case Op::FRCHG:
@@ -3980,7 +3980,7 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                             conv.f[0] = bank[dr * 2 + 1];
                             return conv.d;
                         };
-                        const float* bank = use_alt_bank ? GET_XF(ctx) : &ctx->xffr[16];
+                        const float* bank = use_alt_bank ? GET_XF(ctx) : &Sh4cntx.xffr[16];
                         double a = readDR(bank, ins.dst.reg >> 1);
                         double b = readDR(bank, ins.src1.reg >> 1);
                         bool res = (a == b);
@@ -3989,7 +3989,7 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                     }
                     else
                     {
-                        const float* bank = use_alt_bank ? GET_XF(ctx) : &ctx->xffr[16];
+                        const float* bank = use_alt_bank ? GET_XF(ctx) : &Sh4cntx.xffr[16];
                         bool res = (bank[ins.dst.reg] == bank[ins.src1.reg]);
                         INFO_LOG(SH4, "FCMP_EQ FR%u(%.6f) == FR%u(%.6f) -> T=%d", ins.dst.reg, bank[ins.dst.reg], ins.src1.reg, bank[ins.src1.reg], res);
                         SET_SR_T(ctx, res);
@@ -4008,7 +4008,7 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                             conv.f[0] = bank[dr * 2 + 1];
                             return conv.d;
                         };
-                        const float* bank = use_alt_bank ? GET_XF(ctx) : &ctx->xffr[16];
+                        const float* bank = use_alt_bank ? GET_XF(ctx) : &Sh4cntx.xffr[16];
                         double a = readDR(bank, ins.dst.reg >> 1);
                         double b = readDR(bank, ins.src1.reg >> 1);
                         bool res = (a > b);
@@ -4017,7 +4017,7 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                     }
                     else
                     {
-                        const float* bank = use_alt_bank ? GET_XF(ctx) : &ctx->xffr[16];
+                        const float* bank = use_alt_bank ? GET_XF(ctx) : &Sh4cntx.xffr[16];
                         bool res = (bank[ins.dst.reg] > bank[ins.src1.reg]);
                         INFO_LOG(SH4, "FCMP_GT FR%u(%.6f) > FR%u(%.6f) -> T=%d", ins.dst.reg, bank[ins.dst.reg], ins.src1.reg, bank[ins.src1.reg], res);
                         SET_SR_T(ctx, res);
