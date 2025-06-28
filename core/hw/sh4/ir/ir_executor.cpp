@@ -123,9 +123,10 @@ using sh4::ir::g_ir;
 // #undef sr
 // #endif
 
-#ifdef pc
-#undef pc
-#endif
+// Don't undef pc - we need it to resolve to next_pc for global context
+// #ifdef pc
+// #undef pc
+// #endif
 
 #ifdef gbr
 #undef gbr
@@ -1101,9 +1102,6 @@ static void Exec_TRAPA(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t pc)
     INFO_LOG(SH4, "TRAPA #%02X at PC=%08X - treating as NOP", trap_no, pc);
     SetPC(ctx, pc + 2, "TRAPA NOP");
 }
-#define ssr Sh4cntx.ssr
-#define spc Sh4cntx.spc
-
 
 static void Exec_RTS(const sh4::ir::Instr&, Sh4Context* ctx, uint32_t) {
     uint32_t target = pr & ~1u;
@@ -1145,10 +1143,10 @@ static void Exec_STC(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t) {
         val = Sh4cntx.vbr;
         break;
     case 3: // SSR
-        val = ssr;
+        val = Sh4cntx.ssr;
         break;
     case 4: // SPC
-        val = spc;
+        val = Sh4cntx.spc;
         break;
     case 7: // DBR (consistent mapping with emitter)
         val = dbr;
@@ -3335,7 +3333,7 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                 }
                 case Op::RTE: {
                     /* Fetch latest saved state; exception may have occurred earlier in this block */
-                    #undef ssr
+#undef ssr
                     #undef spc
                     uint32_t new_ssr = Sh4cntx.ssr;
                     uint32_t new_spc = Sh4cntx.spc;
@@ -4296,7 +4294,21 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                     pr = pending_pr;
                     INFO_LOG(SH4, "PR commit: %08X from %s", pending_pr, (pending_op == Op::JSR) ? "JSR" : "BSR");
                 }
+                // Enhanced corruption detection for JSR branch commit
+                if (unlikely((branch_target & 0xFFFC0000u) == 0x1FFC0000u)) {
+                    ERROR_LOG(SH4, "🚨 BRANCH TARGET CORRUPTION DETECTED: %08X before SetPC in branch_commit", branch_target);
+                    DumpTrace();
+                    throw SH4ThrownException(curr_pc, Sh4Ex_IllegalInstr);
+                }
                 SetPC(ctx, branch_target, "branch_commit");
+                // CRITICAL DEBUG: Verify next_pc immediately after SetPC call
+                INFO_LOG(SH4, "POST-SETPC DEBUG: next_pc=%08X expected=%08X", next_pc, branch_target);
+                if (unlikely(next_pc != branch_target)) {
+                    ERROR_LOG(SH4, "🚨 PC CORRUPTION DETECTED IMMEDIATELY AFTER SetPC: expected=%08X actual=%08X",
+                             branch_target, next_pc);
+                    DumpTrace();
+                    throw SH4ThrownException(curr_pc, Sh4Ex_IllegalInstr);
+                }
                 if (unlikely(g_exception_was_raised)) {
                     // REMOVED: No longer needed with global context
                     // REMOVED: No longer needed with global context

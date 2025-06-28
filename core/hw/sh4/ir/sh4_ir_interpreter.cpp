@@ -202,6 +202,9 @@ void Sh4IrInterpreter::Run()
             try {
                 do
                 {
+                    // CRITICAL: Sync local context PC with global next_pc before fetching blocks
+                    // This fixes the corruption where JSR updates next_pc but ctx_->pc remains stale
+                    ctx_->pc = next_pc;
                     uint32_t pc_val = ctx_->pc;
                     g_exception_was_raised = false;
 
@@ -260,8 +263,10 @@ void Sh4IrInterpreter::Step()
 
     RestoreHostRoundingMode();
 
-    // Access ctx_->pc directly without macro interference
+    // CRITICAL: Sync local context PC with global next_pc before fetching blocks
+    // This fixes the corruption where JSR updates next_pc but ctx_->pc remains stale
 #undef pc
+    ctx_->pc = next_pc;
     uint32_t pc_val = ctx_->pc;
     uint32_t old_pc = pc_val;
 
