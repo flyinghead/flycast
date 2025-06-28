@@ -147,7 +147,7 @@ using sh4::ir::g_ir;
 static inline void UpdateContextFPUL(Sh4Context* ctx, u32 value)
 {
     if (ctx) {
-        ctx->fpul = value;
+        Sh4cntx.fpul = value;
         WARN_LOG(SH4, "UpdateContextFPUL: ctx=%p, value=0x%08X", ctx, value);
     } else {
         ERROR_LOG(SH4, "UpdateContextFPUL: ctx is NULL!");
@@ -176,9 +176,14 @@ static inline const float* GET_XF(Sh4Context* ctx)
 #define SET_REG(ctx, idx, val) do { \
         if ((idx) == 6) { LOG_R6_WRITE((val), next_pc, "GENERIC"); } \
         else if ((idx) == 5) { LOG_R5_WRITE((val), next_pc, "GENERIC"); } \
-        else if ((idx) == 15 && (val) >= 0x1FFD0000 && (val) <= 0x1FFFFFFF) { \
-            ERROR_LOG(SH4, "🚨 R15 CORRUPTION: Setting R15 to problematic range %08X at PC=%08X", (val), next_pc); \
-            DumpTrace(); \
+        else if ((idx) == 15) { \
+            if ((val) >= 0x1FFD0000 && (val) <= 0x1FFFFFFF) { \
+                ERROR_LOG(SH4, "🚨 R15 CORRUPTION: Setting R15 to problematic range %08X at PC=%08X", (val), next_pc); \
+                DumpTrace(); \
+                throw SH4ThrownException(next_pc, Sh4Ex_IllegalInstr); \
+            } else if ((val) > 0x20000000 && (val) != 0xBAADF00D) { \
+                WARN_LOG(SH4, "⚠️ R15 HIGH: Setting R15 to suspicious value %08X at PC=%08X", (val), next_pc); \
+            } \
         } \
         Sh4cntx.r[(idx)] = (val); \
     } while(0)
@@ -450,6 +455,13 @@ static inline void SetPC(Sh4Context* ctx, uint32_t new_pc, const char* why)
     uint32_t old_pc = next_pc;
     // Added PR and SR.T to existing SetPC logging
     DEBUG_LOG(SH4, "SetPC: %08X -> %08X (PR:%08X SR.T:%d) via %s", old_pc, new_pc, pr, GET_SR_T(ctx), why);
+
+    // Check for corruption to the problematic range that causes infinite loops
+    if (new_pc >= 0x1FFD0000 && new_pc <= 0x1FFFFFFF) {
+        ERROR_LOG(SH4, "🚨 PC CORRUPTION: Setting PC to problematic range %08X (was %08X) via %s", new_pc, old_pc, why);
+        DumpTrace();
+        throw SH4ThrownException(old_pc, Sh4Ex_IllegalInstr);
+    }
 
     // Reject addresses in invalid high region (0x10000000–0x1FFFFFFF)
     if (new_pc >= 0x10000000 && new_pc < 0x20000000) {
@@ -1123,10 +1135,10 @@ static void Exec_STC(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t) {
         val = sr_getFull(ctx);
         break;
     case 1: // GBR
-        val = ctx->gbr;
+        val = Sh4cntx.gbr;
         break;
     case 2: // VBR
-        val = ctx->vbr;
+        val = Sh4cntx.vbr;
         break;
     case 3: // SSR
         val = ssr;
@@ -1255,14 +1267,14 @@ static inline uint32_t FloatToBits(float f)
 static void Exec_FSTS(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
 {
     // Move raw 32-bit pattern from FPUL into destination FRn (no conversion)
-    SET_FR(ctx, ins.dst.reg, BitsToFloat(ctx->fpul));
+    SET_FR(ctx, ins.dst.reg, BitsToFloat(Sh4cntx.fpul));
 }
 
 // FLDS FRm -> FPUL (single-precision load)
 static void Exec_FLDS(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
 {
     // Copy raw bits of source FRm into FPUL (no conversion)
-    ctx->fpul = FloatToBits(GET_FR(ctx, ins.src1.reg));
+    Sh4cntx.fpul = FloatToBits(GET_FR(ctx, ins.src1.reg));
 }
 
 
@@ -2395,7 +2407,7 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
 #endif
 
             // Store pre-execution state for validation
-            uint32_t pre_pc = ctx->pc;
+            uint32_t pre_pc = next_pc;
             uint32_t pre_r0 = GET_REG(ctx, 0);
 
             if (fn != &ExecStub)
