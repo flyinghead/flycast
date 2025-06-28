@@ -1042,8 +1042,9 @@ static void Exec_TRAPA(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t pc)
 
         // CRITICAL: reios_trap() expects next_pc to be at the instruction AFTER the trap
         // It calculates: u32 pc = next_pc - 2; to get back to the trap instruction
-        // So we must set next_pc = pc + 2 BEFORE calling reios_trap()
-        SetPC(ctx, pc + 2, "TRAPA reios");
+        // pc parameter is curr_pc = next_pc - 2, so actual current PC is pc + 2
+        // We need next_pc = (pc + 2) + 2 = pc + 4
+        SetPC(ctx, pc + 4, "TRAPA reios");
 
         // Call reios_trap directly with the full REIOS opcode, just like legacy interpreter
         reios_trap(REIOS_OPCODE);
@@ -2372,7 +2373,7 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
 
             if (fn != &ExecStub)
             {
-                fn(ins, ctx, pc_snapshot);
+                fn(ins, ctx, curr_pc);
 
                                 // Post-execution validation to catch bad opcode implementations
                 if (unlikely(next_pc == 0 && pre_pc != 0)) {
