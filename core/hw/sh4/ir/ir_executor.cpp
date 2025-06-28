@@ -27,12 +27,9 @@
 #define IR_TRACE_EXEC 1
 
 // ---------------------------------------------------------------------------
-// IR-local overlay for on-chip vector RAM (0x00000000–0x000003FF).
-// BIOS patches this area very early; when IR runs from reset we must allow
-// writes. We intercept accesses in RawRead/RawWrite helpers via these utils.
+// Store Queue handling - this is still needed since SQ has special behavior
 // ---------------------------------------------------------------------------
 namespace {
-    static std::array<u8, 0x200000> g_vector_ram{}; // 2 MiB area-0 write-through overlay
     // 64-byte Store-Queue backing buffer (phys 0x3000–0x303F)
     static std::array<u8, 0x80> g_sq_buffer{};
 
@@ -59,48 +56,6 @@ namespace {
             return true;
         uint32_t off = a & 0x01FFFFFFu;
         return off >= 0x3000u && off < 0x3080u; // physical mirrors via P2
-    }
-    static inline uint32_t SqToVectorAddr(uint32_t a) { return a & 0x7Fu; }
-
-    // True for any mirrored address landing in first 1 KiB of area 0.
-    static inline bool IsVectorRamAddr(uint32_t vaddr)
-    {
-        // Vector RAM overlay should only apply to Work RAM addresses, not BIOS area
-        // Check if it's in the Work RAM cached (0x8C000000) or uncached (0x0C000000) regions
-        uint32_t base = vaddr & 0xFC000000u;
-        bool result = false;
-        if (base == 0x8C000000u || base == 0x0C000000u) {
-            result = (vaddr & 0x0FFFFFFFu) < 0x400u; // first 1 KiB overlay in Work RAM
-        }
-
-
-
-        // Do NOT overlay BIOS addresses (0xA0000000 range)
-        return result;
-    }
-
-    template<typename T>
-    static inline T ReadVectorRam(uint32_t vaddr)
-    {
-        uint32_t off = vaddr & 0x1FFFFFu;
-        if constexpr (sizeof(T) == 1)
-            return g_vector_ram[off];
-        else if constexpr (sizeof(T) == 2)
-            return *reinterpret_cast<const u16*>(&g_vector_ram[off]);
-        else // 4 bytes
-            return *reinterpret_cast<const u32*>(&g_vector_ram[off]);
-    }
-
-    template<typename T>
-    static inline void WriteVectorRam(uint32_t vaddr, T data)
-    {
-        uint32_t off = vaddr & 0x1FFFFFu;
-        if constexpr (sizeof(T) == 1)
-            g_vector_ram[off] = static_cast<u8>(data);
-        else if constexpr (sizeof(T) == 2)
-            *reinterpret_cast<u16*>(&g_vector_ram[off]) = static_cast<u16>(data);
-        else // 4
-            *reinterpret_cast<u32*>(&g_vector_ram[off]) = static_cast<u32>(data);
     }
 } // anonymous namespace
 
@@ -585,18 +540,9 @@ static inline u8* FastRamPtrWrite(uint32_t addr)
 
 static inline u8  RawRead8(uint32_t a)
 {
-    // Debug the problematic read from 0x18010750
-    if (a == 0x18010750) {
-        ERROR_LOG(SH4, "🔍 RawRead8 DEBUG: Reading from problematic address 0x%08X", a);
-    }
-
     u8 v;
     if (IsSqPhysAddr(a)) {
         v = g_sq_buffer[SqOffset(a)];
-    } else if (IsVectorRamAddr(a)) {
-        v = ReadVectorRam<u8>(a);
-        // fall-through: if zero, you may still want ROM mirror; but returning
-        // zero is fine because BIOS will have patched actual bytes when needed.
     } else {
         v = ReadMem8(a);
     }
@@ -616,8 +562,7 @@ static inline u16 RawRead16(uint32_t a)
     u16 v;
     if (IsSqPhysAddr(a)) {
         v = *reinterpret_cast<const u16*>(&g_sq_buffer[SqOffset(a)]);
-    } else if (IsVectorRamAddr(a)) {
-        v = ReadVectorRam<u16>(a);
+
     } else {
         v = ReadMem16(a);
     }
@@ -632,9 +577,7 @@ static inline u32 RawRead32(uint32_t a)
     if (IsSqPhysAddr(a)) {
         v = *reinterpret_cast<const u32*>(&g_sq_buffer[SqOffset(a)]);
         INFO_LOG(SH4, "SQ READ32 addr=0x%08X off=%u val=0x%08X", a, SqOffset(a), v);
-    } else if (IsVectorRamAddr(a)) {
-        v = ReadVectorRam<u32>(a);
-        INFO_LOG(SH4, "VEC READ32 addr=0x%08X off=%u val=0x%08X", a, a & 0x3FFu, v);
+
     } else {
         v = ReadMem32(a);
         INFO_LOG(SH4, "%s READ32 addr=0x%08X val=0x%08X", "MEM", a, v);
@@ -652,12 +595,7 @@ static inline u64 RawRead64(uint32_t a)
         u32 hi = *reinterpret_cast<const u32*>(&g_sq_buffer[SqOffset(a)+4]);
         v = (static_cast<u64>(hi) << 32) | lo;
         INFO_LOG(SH4, "SQ READ64 addr=0x%08X off=%u val=0x%08X", a, SqOffset(a), v);
-    } else if (IsVectorRamAddr(a) && ((a & 0x3FFu) <= 0x3F8u)) {
-        // Combine two 32-bit chunks, SH-4 is little-endian
-        u32 lo = ReadVectorRam<u32>(a);
-        u32 hi = ReadVectorRam<u32>(a + 4);
-        v = (static_cast<u64>(hi) << 32) | lo;
-        INFO_LOG(SH4, "VEC READ64 addr=0x%08X off=%u val=0x%08X", a, a & 0x3FFu, v);
+
     } else {
       v = ReadMem64(a);
       INFO_LOG(SH4, "%s READ64 addr=0x%08X val=0x%08X", "MEM", a, v);
@@ -698,13 +636,9 @@ static inline void RawWrite8(uint32_t a, u8 d)
     if (RequiresCacheInvalidation(a)) g_ir.InvalidateBlock(a & ~1u);
     if (IsStoreQueueAddr(a)) {
         g_sq_buffer[SqOffset(a)] = d;
-        WriteVectorRam(SqToVectorAddr(a), d);
+
         // Also commit to backing Work RAM so non-IR paths observe the write
         addrspace::write8(a, d);
-        return;
-    }
-    if (IsVectorRamAddr(a)) {
-        WriteVectorRam(a, d);
         return;
     }
     if (!g_exception_was_raised)
@@ -727,13 +661,8 @@ static inline void RawWrite16(uint32_t a, u16 d)
 
     if (IsStoreQueueAddr(a)) {
         *reinterpret_cast<u16*>(&g_sq_buffer[SqOffset(a)]) = d;
-        WriteVectorRam(SqToVectorAddr(a), d);
-        addrspace::write16(a, d);
-        return;
-    }
 
-    if (IsVectorRamAddr(a)) {
-        WriteVectorRam(a, d);
+        addrspace::write16(a, d);
         return;
     }
 
@@ -757,13 +686,8 @@ static inline void RawWrite32(uint32_t a, u32 d)
     if (IsStoreQueueAddr(a)) {
         *reinterpret_cast<u32*>(&g_sq_buffer[SqOffset(a)]) = d;
         ERROR_LOG(SH4, "SQ WRITE32 addr=0x%08X off=%u val=0x%08X", a, SqOffset(a), d);
-        WriteVectorRam(SqToVectorAddr(a), d);
-        addrspace::write32(a, d);
-        return;
-    }
 
-    if (IsVectorRamAddr(a)) {
-        WriteVectorRam(a, d);
+        addrspace::write32(a, d);
         return;
     }
 
@@ -782,19 +706,13 @@ static inline void RawWrite64(uint32_t a, u64 d)
         ERROR_LOG(SH4, "SQ WRITE64 low addr=0x%08X off=%u val=0x%08X", a, SqOffset(a), low);
         ERROR_LOG(SH4, "SQ WRITE64 high addr=0x%08X off=%u val=0x%08X", a+4, SqOffset(a)+4, high);
         // mirror to vector RAM (little-endian order)
-        WriteVectorRam(SqToVectorAddr(a), low);
-        WriteVectorRam(SqToVectorAddr(a) + 4, high);
+
+
         addrspace::write32(a, low);
         addrspace::write32(a + 4, high);
         return;
     }
-    if (IsVectorRamAddr(a) && ((a & 0x3FFu) <= 0x3F8u)) {
-        // Little-endian: write lower then upper dword
-        uint32_t base = a;
-        WriteVectorRam(base, static_cast<u32>(d & 0xFFFFFFFFu));
-        WriteVectorRam(base + 4, static_cast<u32>(d >> 32));
-        return;
-    }
+
     if (!g_exception_was_raised)
     {
         WriteMem64(a, d);
