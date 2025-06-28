@@ -259,8 +259,8 @@ static bool FastDecode(uint16_t raw, uint32_t pc, Instr &ins, Block &blk)
         DEBUG_LOG(SH4, "FastDecode: FMOV.S FR%u,@R%u (0x%04X)", m, n, raw);
         return true;
     }
-    // FMOV.S @Rm+,FRn (0xFnmD)
-    else if ((raw & 0xF00F) == 0xF00D)
+    // FMOV.S @Rm+,FRn (0xFnmD) - but exclude FLDI0 (0xFn8D), FLDI1 (0xFn9D), FLDS (0xF21D), FSTS (0xF60D), FABS (0xFn5D), FNEG (0xFn4D), FSQRT (0xFn6D), FTRC (0xFn3D), FCNVSD (0xFnAD), and FCNVDS (0xFnBD)
+    else if ((raw & 0xF00F) == 0xF00D && (raw & 0xF0FF) != 0xF08D && (raw & 0xF0FF) != 0xF09D && raw != 0xF21D && raw != 0xF60D && (raw & 0xF0F0) != 0xF050 && (raw & 0xF0F0) != 0xF040 && (raw & 0xF0F0) != 0xF060 && (raw & 0xF0F0) != 0xF030 && (raw & 0xF0F0) != 0xF0A0 && (raw & 0xF0F0) != 0xF0B0)
     {
         uint8_t n = (raw >> 8) & 0xF;
         uint8_t m = (raw >> 4) & 0xF;
@@ -1729,15 +1729,48 @@ static bool FastDecode(uint16_t raw, uint32_t pc, Instr &ins, Block &blk)
         blk.pcNext = pc + 2;
         return true;
     }
-    // FNEG FRn (0xFB4D) - Negate FRn
-    else if (raw == 0xFB4D)
+    // FNEG FRn (0xFn4D) - Negate FRn
+    else if ((raw & 0xF0FF) == 0xF04D)
     {
         uint8_t n = (raw >> 8) & 0xF;
         ins.op = Op::FNEG;
         ins.dst.isImm = false;
         ins.dst.reg = n;
         ins.dst.type = RegType::FGR;
+        ins.src1.isImm = false;
+        ins.src1.reg = n;
+        ins.src1.type = RegType::FGR;
         DEBUG_LOG(SH4, "FastDecode: FNEG FR%u (0x%04X) at PC=0x%08X", n, raw, pc);
+        blk.pcNext = pc + 2;
+        return true;
+    }
+    // FABS FRn (0xFn5D) - Floating point absolute value
+    else if ((raw & 0xF0FF) == 0xF05D)
+    {
+        uint8_t n = (raw >> 8) & 0xF;
+        ins.op = Op::FABS;
+        ins.dst.isImm = false;
+        ins.dst.reg = n;
+        ins.dst.type = RegType::FGR;
+        ins.src1.isImm = false;
+        ins.src1.reg = n;
+        ins.src1.type = RegType::FGR;
+        DEBUG_LOG(SH4, "FastDecode: FABS FR%u (0x%04X) at PC=0x%08X", n, raw, pc);
+        blk.pcNext = pc + 2;
+        return true;
+    }
+    // FSQRT FRn (0xFn6D) - Floating point square root
+    else if ((raw & 0xF0FF) == 0xF06D)
+    {
+        uint8_t n = (raw >> 8) & 0xF;
+        ins.op = Op::FSQRT;
+        ins.dst.isImm = false;
+        ins.dst.reg = n;
+        ins.dst.type = RegType::FGR;
+        ins.src1.isImm = false;
+        ins.src1.reg = n;
+        ins.src1.type = RegType::FGR;
+        DEBUG_LOG(SH4, "FastDecode: FSQRT FR%u (0x%04X) at PC=0x%08X", n, raw, pc);
         blk.pcNext = pc + 2;
         return true;
     }
@@ -2219,8 +2252,8 @@ static bool FastDecode(uint16_t raw, uint32_t pc, Instr &ins, Block &blk)
         DEBUG_LOG(SH4, "FastDecode: MOV.B R%u,@(R0,R%u) (0x%04X)", m, n, raw);
         return true;
     }
-    // MOV.L Rm,@(R0,Rn) (0x0nmC) - Store long with R0 offset
-    else if ((raw & 0xF00F) == 0x000C)
+    // MOV.L Rm,@(R0,Rn) (0x0nm6) - Store long with R0 offset
+    else if ((raw & 0xF00F) == 0x0006)
     {
         uint8_t n = (raw >> 8) & 0xF;
         uint8_t m = (raw >> 4) & 0xF;
