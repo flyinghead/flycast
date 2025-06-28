@@ -1036,23 +1036,24 @@ static void Exec_TRAPA(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t pc)
 {
     uint8_t trap_no = static_cast<uint8_t>(ins.src1.imm & 0xFF);
 
-    // Special case: REIOS trap (0x5B)
+    // Special case: REIOS trap (0x5B) - handle exactly like legacy interpreter
     if (trap_no == 0x5B) {
-        INFO_LOG(SH4, "REIOS TRAP #%02X at PC=%08X - calling reios_trap()", trap_no, pc);
+        INFO_LOG(SH4, "REIOS TRAP #%02X at PC=%08X - calling reios_trap() directly", trap_no, pc);
 
-        // Set the global PC correctly before calling reios_trap
-        // reios_trap calculates pc = next_pc - 2, so we need next_pc = A0000002 to get pc = A0000000
-        // Since pc (curr_pc) = 9FFFFFFE, we need next_pc = A0000000 + 2 = A0000002
-        SetPC(ctx, pc + 4, "TRAPA reios setup");
+        // CRITICAL: reios_trap() expects next_pc to be at the instruction AFTER the trap
+        // It calculates: u32 pc = next_pc - 2; to get back to the trap instruction
+        // So we must set next_pc = pc + 2 BEFORE calling reios_trap()
+        SetPC(ctx, pc + 2, "TRAPA reios");
 
-        // Call the reios trap handler - this will handle BIOS emulation
-        reios_trap(0x085B);  // Pass the full opcode
+        // Call reios_trap directly with the full REIOS opcode, just like legacy interpreter
+        reios_trap(REIOS_OPCODE);
 
-        // PC will be updated by reios_trap() if needed - don't override it
+        // reios_trap() will handle all BIOS initialization and update PC as needed
+        // Don't override PC here - let reios_trap() control execution flow
         return;
     }
 
-    // Regular TRAPA handling
+    // Regular TRAPA handling for other trap numbers
     CCN_TRA = trap_no << 2;
     CCN_EXPEVT = 0x160;
 
@@ -2371,7 +2372,7 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
 
             if (fn != &ExecStub)
             {
-                fn(ins, ctx, curr_pc);
+                fn(ins, ctx, pc_snapshot);
 
                                 // Post-execution validation to catch bad opcode implementations
                 if (unlikely(next_pc == 0 && pre_pc != 0)) {
