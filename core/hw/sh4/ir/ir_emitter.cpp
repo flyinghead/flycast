@@ -259,6 +259,19 @@ static bool FastDecode(uint16_t raw, uint32_t pc, Instr &ins, Block &blk)
         DEBUG_LOG(SH4, "FastDecode: FMOV.S FR%u,@R%u (0x%04X)", m, n, raw);
         return true;
     }
+    // FMOV.S @Rm+,FRn (0xFnmD)
+    else if ((raw & 0xF00F) == 0xF00D)
+    {
+        uint8_t n = (raw >> 8) & 0xF;
+        uint8_t m = (raw >> 4) & 0xF;
+        ins.op = Op::FMOV_S;
+        ins.dst.isImm = false; ins.dst.reg = n; ins.dst.type = RegType::FGR;
+        ins.src1.isImm = false; ins.src1.reg = m; ins.src1.type = RegType::GPR;
+        ins.extra = 1; // Indicate post-increment
+        blk.pcNext = pc + 2;
+        DEBUG_LOG(SH4, "FastDecode: FMOV.S @R%u+,FR%u (0x%04X)", m, n, raw);
+        return true;
+    }
 
     // Specific floating point opcodes that don't follow standard patterns
     // These are exact matches for the missing opcodes
@@ -325,6 +338,18 @@ static bool FastDecode(uint16_t raw, uint32_t pc, Instr &ins, Block &blk)
         ins.src1.isImm = false; ins.src1.reg = m;
         blk.pcNext = pc + 2;
         DEBUG_LOG(SH4, "FastDecode: ADDC R%u,R%u (0x%04X)", m, n, raw);
+        return true;
+    }
+    // MOV.W @(R0, Rm), Rn (0x0nmD) - Load word from R0+Rm into Rn
+    else if ((raw & 0xF00F) == 0x000D)
+    {
+        uint8_t n = (raw >> 8) & 0xF;
+        uint8_t m = (raw >> 4) & 0xF;
+        ins.op = Op::LOAD16_R0;
+        ins.dst.isImm = false; ins.dst.reg = n;
+        ins.src1.isImm = false; ins.src1.reg = m; // Rm (index register)
+        blk.pcNext = pc + 2;
+        DEBUG_LOG(SH4, "FastDecode: MOV.W @(R0,R%u),R%u (0x%04X)", m, n, raw);
         return true;
     }
     // MOV.L @(R0, Rm), Rn (0x0nmE) - Load from R0+Rm into Rn
@@ -501,6 +526,42 @@ static bool FastDecode(uint16_t raw, uint32_t pc, Instr &ins, Block &blk)
         DEBUG_LOG(SH4, "FastDecode: NOT R%u,R%u (0x%04X)", m, n, raw);
         return true;
     }
+    // SWAP.B Rm,Rn (0x6nm8) - Swap bytes in register
+    else if ((raw & 0xF00F) == 0x6008)
+    {
+        uint8_t n = (raw >> 8) & 0xF;
+        uint8_t m = (raw >> 4) & 0xF;
+        ins.op = Op::SWAP_B;
+        ins.dst.isImm = false; ins.dst.reg = n;
+        ins.src1.isImm = false; ins.src1.reg = m;
+        blk.pcNext = pc + 2;
+        DEBUG_LOG(SH4, "FastDecode: SWAP.B R%u,R%u (0x%04X)", m, n, raw);
+        return true;
+    }
+    // MAC.L @Rm+,@Rn+ (0x0nmF)
+    else if ((raw & 0xF00F) == 0x000F)
+    {
+        uint8_t n = (raw >> 8) & 0xF;
+        uint8_t m = (raw >> 4) & 0xF;
+        ins.op = Op::MAC_L;
+        ins.src1.isImm = false; ins.src1.reg = m;
+        ins.src2.isImm = false; ins.src2.reg = n;
+        blk.pcNext = pc + 2;
+        DEBUG_LOG(SH4, "FastDecode: MAC.L @R%u+,@R%u+ (0x%04X)", m, n, raw);
+        return true;
+    }
+    // MAC.W @Rm+,@Rn+ (0x4nmF)
+    else if ((raw & 0xF00F) == 0x400F)
+    {
+        uint8_t n = (raw >> 8) & 0xF;
+        uint8_t m = (raw >> 4) & 0xF;
+        ins.op = Op::MAC_W;
+        ins.src1.isImm = false; ins.src1.reg = m;
+        ins.src2.isImm = false; ins.src2.reg = n;
+        blk.pcNext = pc + 2;
+        DEBUG_LOG(SH4, "FastDecode: MAC.W @R%u+,@R%u+ (0x%04X)", m, n, raw);
+        return true;
+    }
     // MOV.L Rm,@(disp,Rn) (0x1nmd) - for 0x1304 and 0x1317
     else if ((raw & 0xF000) == 0x1000)
     {
@@ -537,6 +598,18 @@ static bool FastDecode(uint16_t raw, uint32_t pc, Instr &ins, Block &blk)
         ins.src1.isImm = false; ins.src1.reg = m;
         blk.pcNext = pc + 2;
         DEBUG_LOG(SH4, "FastDecode: SUB R%u,R%u (0x%04X)", m, n, raw);
+        return true;
+    }
+    // CMP/HS Rm,Rn (0x3nm6)
+    else if ((raw & 0xF00F) == 0x3006)
+    {
+        uint8_t n = (raw >> 8) & 0xF;
+        uint8_t m = (raw >> 4) & 0xF;
+        ins.op = Op::CMP_HS;
+        ins.src1.isImm = false; ins.src1.reg = m;
+        ins.src2.isImm = false; ins.src2.reg = n;
+        blk.pcNext = pc + 2;
+        DEBUG_LOG(SH4, "FastDecode: CMP/HS R%u,R%u (0x%04X)", m, n, raw);
         return true;
     }
     // AND Rm,Rn (0x2nm9)
@@ -2032,6 +2105,42 @@ static bool FastDecode(uint16_t raw, uint32_t pc, Instr &ins, Block &blk)
         DEBUG_LOG(SH4, "FastDecode: MOV.B @(R0,R%u),R%u (0x%04X)", m, n, raw);
         return true;
     }
+    // MOV.L @(R0,Rm),Rn (0x0nmE) - Load long with R0 offset
+    else if ((raw & 0xF00F) == 0x000E)
+    {
+        uint8_t n = (raw >> 8) & 0xF;
+        uint8_t m = (raw >> 4) & 0xF;
+        ins.op = Op::LOAD32_R0;
+        ins.dst.isImm = false; ins.dst.reg = n; // Rn (destination)
+        ins.src1.isImm = false; ins.src1.reg = m; // Rm (index register)
+        blk.pcNext = pc + 2;
+        DEBUG_LOG(SH4, "FastDecode: MOV.L @(R0,R%u),R%u (0x%04X)", m, n, raw);
+        return true;
+    }
+    // MOV.B Rm,@(R0,Rn) (0x0nm8) - Store byte with R0 offset
+    else if ((raw & 0xF00F) == 0x0008)
+    {
+        uint8_t n = (raw >> 8) & 0xF;
+        uint8_t m = (raw >> 4) & 0xF;
+        ins.op = Op::STORE8_Rm_R0RN;
+        ins.src1.isImm = false; ins.src1.reg = m; // Rm (value)
+        ins.src2.isImm = false; ins.src2.reg = n; // Rn (index)
+        blk.pcNext = pc + 2;
+        DEBUG_LOG(SH4, "FastDecode: MOV.B R%u,@(R0,R%u) (0x%04X)", m, n, raw);
+        return true;
+    }
+    // MOV.L Rm,@(R0,Rn) (0x0nmC) - Store long with R0 offset
+    else if ((raw & 0xF00F) == 0x000C)
+    {
+        uint8_t n = (raw >> 8) & 0xF;
+        uint8_t m = (raw >> 4) & 0xF;
+        ins.op = Op::STORE32_Rm_R0RN;
+        ins.src1.isImm = false; ins.src1.reg = m; // Rm (value)
+        ins.src2.isImm = false; ins.src2.reg = n; // Rn (index)
+        blk.pcNext = pc + 2;
+        DEBUG_LOG(SH4, "FastDecode: MOV.L R%u,@(R0,R%u) (0x%04X)", m, n, raw);
+        return true;
+    }
     // MOV.L Rm,@(disp,Rn) (0x1nmd) - Store long with displacement
     else if ((raw & 0xF000) == 0x1000)
     {
@@ -2056,11 +2165,27 @@ static bool FastDecode(uint16_t raw, uint32_t pc, Instr &ins, Block &blk)
     if (raw == 0x7129) INFO_LOG(SH4, "DEBUG: 0x7129 - should match ADD #imm pattern");
 
     Op op = static_cast<Op>(kEmitterTable[raw]);
-    if (op == Op::ILLEGAL)
-    {
-        WARN_LOG(SH4, "FastDecode miss: %04X @%08X", raw, pc);
-        return false;
-    }
+          if (op == Op::ILLEGAL)
+      {
+          // Check if this is a clearly invalid instruction pattern
+          if (raw == 0x0000) {
+              ERROR_LOG(SH4, "FATAL: Attempting to execute NOP/zero instruction at PC=%08X. This suggests memory mapping issues.", pc);
+              return false;
+          }
+
+                    // Check for patterns that are clearly not valid SH4 instructions
+          uint16_t pattern = raw & 0xF00F;
+          if (pattern == 0x0003 || pattern == 0x0007 || pattern == 0x000B) {
+              ERROR_LOG(SH4, "FATAL: Invalid SH4 instruction pattern 0x%04X at PC=%08X. Pattern 0x%04X is not defined in SH4 ISA.",
+                       raw, pc, pattern);
+              ERROR_LOG(SH4, "This suggests execution has gone off-track or memory corruption. Stopping execution.");
+              return false;
+          }
+
+          WARN_LOG(SH4, "FastDecode miss: %04X @%08X (bits: %04b_%04b_%04b_%04b)", raw, pc,
+                   (raw >> 12) & 0xF, (raw >> 8) & 0xF, (raw >> 4) & 0xF, raw & 0xF);
+          return false;
+      }
 
     uint8_t n = (raw >> 8) & 0xF;
     uint8_t m = (raw >> 4) & 0xF;
