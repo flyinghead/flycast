@@ -2487,6 +2487,16 @@ static bool FastDecode(uint16_t raw, uint32_t pc, Instr &ins, Block &blk)
               return true;
           }
 
+          // Special case: REIOS trap opcode 0x085B is valid even though pattern 0x000B is normally invalid
+          if (raw == 0x085B) {
+              INFO_LOG(SH4, "FastDecode: REIOS TRAP 0x085B at PC=0x%08X", pc);
+              ins.op = Op::TRAPA;
+              ins.src1.isImm = true;
+              ins.src1.imm = 0x5B;  // trap number
+              blk.pcNext = pc + 2;
+              return true;
+          }
+
           // Check for patterns that are clearly not valid SH4 instructions
           uint16_t pattern = raw & 0xF00F;
           if (pattern == 0x0007 || pattern == 0x000B) {
@@ -2635,6 +2645,39 @@ Block& Emitter::CreateNew(uint32_t pc) {
         }
         uint16_t raw = mmu_IReadMem16(pc);
         DEBUG_LOG(SH4, "Emitter::CreateNew: PC=0x%08X, raw_opcode=0x%04X", pc, raw);
+
+                        // Special handling for BIOS start address
+        if (pc == 0xA0000000) {
+            DEBUG_LOG(SH4, "🔍 BIOS START: PC=A0000000, raw=0x%04X", raw);
+
+            if (raw == 0x085B) {
+                INFO_LOG(SH4, "✅ REIOS TRAP: Detected reios trap opcode 0x085B at PC=A0000000");
+                // This is the reios trap opcode - handle it directly here since it won't match FastDecode patterns
+                Instr ins{};
+                ins.op = Op::TRAPA;
+                ins.src1.isImm = true;
+                ins.src1.imm = 0x5B;  // trap number
+                ins.pc = pc;
+                ins.raw = raw;
+                blk.pcNext = pc + 2;
+
+                // Add the instruction and end marker
+                blk.code.push_back(ins);
+                Instr end_ins{};
+                end_ins.op = Op::END;
+                end_ins.pc = pc;
+                end_ins.raw = 0;
+                blk.code.push_back(end_ins);
+
+                INFO_LOG(SH4, "✅ REIOS TRAP: Successfully created TRAPA block for 0x085B");
+                return blk;
+            } else if (raw == 0x0000) {
+                ERROR_LOG(SH4, "🚨 UNINITIALIZED BIOS: Raw=0x0000 suggests BIOS not properly initialized");
+                throw std::runtime_error("BIOS memory uninitialized - reios setup failed");
+            } else {
+                INFO_LOG(SH4, "ℹ️ BIOS INSTRUCTION: Valid BIOS instruction 0x%04X at A0000000", raw);
+            }
+        }
         fflush(stdout);
     if (pc == 0x8C00B6B8 || pc == 0x8C00B6BA || pc == 0x8C00B6BC) {
         INFO_LOG(SH4, "Emitter::CreateNew: At critical PC=%08X, raw=0x%04X", pc, raw);
@@ -4850,13 +4893,23 @@ else if ((raw & 0xF000) == 0xF000)
 
 
         // ----------------------------------------------------------------
-        //  Fail-safe: if still not decoded, treat as NOP so execution
-        //  continues instead of throwing an IllegalInstr exception that
-        //  trips the fatal error inside BIOS padding or unknown areas.
+        //  Special case: REIOS trap opcode 0x085B
         // ----------------------------------------------------------------
-        if (!decoded)
+        if (raw == 0x085B)
         {
-            fatal_error("Emitter::CreateNew: ILLEGAL opcode raw=0x%04X at PC=0x%08X", raw, pc);
+            INFO_LOG(SH4, "Emitter::CreateNew: REIOS TRAP opcode 0x085B at PC=0x%08X", pc);
+            ins.op = Op::TRAPA;  // Reuse TRAPA opcode for reios trap
+            ins.src1.isImm = true;
+            ins.src1.imm = 0x5B;  // Store the trap ID
+            decoded = true;
+            blk.pcNext = pc + 2;
+        }
+        // ----------------------------------------------------------------
+        //  Fail-safe: if still not decoded, treat as ILLEGAL
+        // ----------------------------------------------------------------
+        else if (!decoded)
+        {
+            ERROR_LOG(SH4, "Emitter::CreateNew: ILLEGAL opcode raw=0x%04X at PC=0x%08X", raw, pc);
             ins.op = Op::ILLEGAL;
             decoded = true;
             blk.pcNext = pc + 2;
