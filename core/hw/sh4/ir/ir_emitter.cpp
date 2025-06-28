@@ -544,8 +544,8 @@ static bool FastDecode(uint16_t raw, uint32_t pc, Instr &ins, Block &blk)
         uint8_t n = (raw >> 8) & 0xF;
         uint8_t m = (raw >> 4) & 0xF;
         ins.op = Op::MAC_L;
+        ins.dst.isImm = false; ins.dst.reg = n;
         ins.src1.isImm = false; ins.src1.reg = m;
-        ins.src2.isImm = false; ins.src2.reg = n;
         blk.pcNext = pc + 2;
         DEBUG_LOG(SH4, "FastDecode: MAC.L @R%u+,@R%u+ (0x%04X)", m, n, raw);
         return true;
@@ -556,8 +556,8 @@ static bool FastDecode(uint16_t raw, uint32_t pc, Instr &ins, Block &blk)
         uint8_t n = (raw >> 8) & 0xF;
         uint8_t m = (raw >> 4) & 0xF;
         ins.op = Op::MAC_W;
+        ins.dst.isImm = false; ins.dst.reg = n;
         ins.src1.isImm = false; ins.src1.reg = m;
-        ins.src2.isImm = false; ins.src2.reg = n;
         blk.pcNext = pc + 2;
         DEBUG_LOG(SH4, "FastDecode: MAC.W @R%u+,@R%u+ (0x%04X)", m, n, raw);
         return true;
@@ -610,6 +610,89 @@ static bool FastDecode(uint16_t raw, uint32_t pc, Instr &ins, Block &blk)
         ins.src2.isImm = false; ins.src2.reg = n;
         blk.pcNext = pc + 2;
         DEBUG_LOG(SH4, "FastDecode: CMP/HS R%u,R%u (0x%04X)", m, n, raw);
+        return true;
+    }
+    // CMP/HS Rm,Rn (0x3nm2) - Alternative pattern for 3232
+    else if ((raw & 0xF00F) == 0x3002)
+    {
+        uint8_t n = (raw >> 8) & 0xF;
+        uint8_t m = (raw >> 4) & 0xF;
+        ins.op = Op::CMP_HS;
+        ins.src1.isImm = false; ins.src1.reg = m;
+        ins.src2.isImm = false; ins.src2.reg = n;
+        blk.pcNext = pc + 2;
+        DEBUG_LOG(SH4, "FastDecode: CMP/HS R%u,R%u (alt 0x%04X)", m, n, raw);
+        return true;
+    }
+    // MULS.W Rm,Rn (0x2nmF) - 16-bit signed multiply
+    else if ((raw & 0xF00F) == 0x200F)
+    {
+        uint8_t n = (raw >> 8) & 0xF;
+        uint8_t m = (raw >> 4) & 0xF;
+        ins.op = Op::MULS_W;
+        ins.dst.isImm = false; ins.dst.reg = n;
+        ins.src1.isImm = false; ins.src1.reg = m;
+        blk.pcNext = pc + 2;
+        DEBUG_LOG(SH4, "FastDecode: MULS.W R%u,R%u (0x%04X)", m, n, raw);
+        return true;
+    }
+    // DIV1 Rm,Rn (0x3nm4) - Division step
+    else if ((raw & 0xF00F) == 0x3004)
+    {
+        uint8_t n = (raw >> 8) & 0xF;
+        uint8_t m = (raw >> 4) & 0xF;
+        ins.op = Op::DIV1;
+        ins.dst.isImm = false; ins.dst.reg = n;
+        ins.src1.isImm = false; ins.src1.reg = m;
+        blk.pcNext = pc + 2;
+        DEBUG_LOG(SH4, "FastDecode: DIV1 R%u,R%u (0x%04X)", m, n, raw);
+        return true;
+    }
+    // DMULS.L Rm,Rn (0x3nmD) - 32-bit signed multiply
+    else if ((raw & 0xF00F) == 0x300D)
+    {
+        uint8_t n = (raw >> 8) & 0xF;
+        uint8_t m = (raw >> 4) & 0xF;
+        ins.op = Op::DMULS_L;
+        ins.dst.isImm = false; ins.dst.reg = n;
+        ins.src1.isImm = false; ins.src1.reg = m;
+        blk.pcNext = pc + 2;
+        DEBUG_LOG(SH4, "FastDecode: DMULS.L R%u,R%u (0x%04X)", m, n, raw);
+        return true;
+    }
+    // DMULU.L Rm,Rn (0x3nm5) - 32-bit unsigned multiply
+    else if ((raw & 0xF00F) == 0x3005)
+    {
+        uint8_t n = (raw >> 8) & 0xF;
+        uint8_t m = (raw >> 4) & 0xF;
+        ins.op = Op::DMULU_L;
+        ins.dst.isImm = false; ins.dst.reg = n;
+        ins.src1.isImm = false; ins.src1.reg = m;
+        blk.pcNext = pc + 2;
+        DEBUG_LOG(SH4, "FastDecode: DMULU.L R%u,R%u (0x%04X)", m, n, raw);
+        return true;
+    }
+    // MOVT Rn (0x0n29) - Move T bit to register
+    else if ((raw & 0x00FF) == 0x0029)
+    {
+        uint8_t n = (raw >> 8) & 0xF;
+        ins.op = Op::MOVT;
+        ins.dst.isImm = false; ins.dst.reg = n;
+        blk.pcNext = pc + 2;
+        DEBUG_LOG(SH4, "FastDecode: MOVT R%u (0x%04X)", n, raw);
+        return true;
+    }
+    // XTRCT Rm,Rn (0x2nmD) - Extract middle 32 bits
+    else if ((raw & 0xF00F) == 0x200D)
+    {
+        uint8_t n = (raw >> 8) & 0xF;
+        uint8_t m = (raw >> 4) & 0xF;
+        ins.op = Op::XTRCT;
+        ins.dst.isImm = false; ins.dst.reg = n;
+        ins.src1.isImm = false; ins.src1.reg = m;
+        ins.src2.isImm = false; ins.src2.reg = n;
+        blk.pcNext = pc + 2;
+        DEBUG_LOG(SH4, "FastDecode: XTRCT R%u,R%u (0x%04X)", m, n, raw);
         return true;
     }
     // AND Rm,Rn (0x2nm9)
