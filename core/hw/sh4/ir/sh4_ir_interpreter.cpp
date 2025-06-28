@@ -11,14 +11,6 @@
 #include "hw/sh4/sh4_cycles.h" // for cycle counting
 #include "debug/gdb_server.h" // for debugger stop handling
 
-// Undefine macros that collide with struct field names
-#ifdef old_sr
-#undef old_sr
-#endif
-#ifdef old_fpscr
-#undef old_fpscr
-#endif
-
 // #define SH4_FAST_SKIP 1
 
 namespace sh4 {
@@ -42,11 +34,6 @@ Sh4IrInterpreter::Sh4IrInterpreter()
 
 void Sh4IrInterpreter::Init()
 {
-    // Temporarily undefine macros for logging
-#undef r
-#undef sr
-#undef pc
-#undef vbr
     printf("[IR][Init][ENTRY] ctx_=%p\n", (void*)ctx_);
 
     // Bind context lazily the first time Init() is called – at this point the
@@ -60,52 +47,21 @@ void Sh4IrInterpreter::Init()
         }
         ctx_ = &p_sh4rcb->cntx;
         printf("[IR][Init][POST BIND] ctx_=%p r[0]=%08X r[1]=%08X r[2]=%08X r[3]=%08X sr.T=%u\n",
-            (void*)ctx_, ctx_->r[0], ctx_->r[1], ctx_->r[2], ctx_->r[3], ctx_->sr.T);
+            (void*)ctx_, r[0], r[1], r[2], r[3], sr.T);
 
-        // Restore macros
-#define r Sh4cntx.r
-#define sr Sh4cntx.sr
-#define pc next_pc
-#define vbr Sh4cntx.vbr
     }
 
-    // Temporarily undefine macros
-#undef vbr
-#undef pc
     // Clear the context like the legacy interpreter
     memset(&p_sh4rcb->cntx, 0, sizeof(p_sh4rcb->cntx));
 
     emitter_.ClearCaches();
-    // Restore macros
-#define vbr Sh4cntx.vbr
-#define pc next_pc
 }
 
 void Sh4IrInterpreter::Reset(bool hard)
 {
-    // Temporarily undefine macros for logging
-#undef r
-#undef sr
-#undef pc
-#undef vbr
     printf("[IR][Reset][ENTRY] ctx_=%p r[0]=%08X r[1]=%08X r[2]=%08X r[3]=%08X sr.T=%u\n",
-        (void*)ctx_, ctx_ ? ctx_->r[0] : 0, ctx_ ? ctx_->r[1] : 0, ctx_ ? ctx_->r[2] : 0, ctx_ ? ctx_->r[3] : 0, ctx_ ? ctx_->sr.T : 0);
+        (void*)ctx_, ctx_ ? r[0] : 0, ctx_ ? r[1] : 0, ctx_ ? r[2] : 0, ctx_ ? r[3] : 0, ctx_ ? sr.T : 0);
 
-    // Set PC to reset vector; reinitialise general regs and VBR
-    // Temporarily undefine macros
-#undef r
-#undef vbr
-#undef sr
-#undef pc
-#undef gbr
-#undef ssr
-#undef spc
-#undef sgr
-#undef dbr
-#undef mac
-#undef pr
-#undef fpul
-#undef fpscr
 if (hard)
 {
     int schedNext = ctx_->sh4_sched_next;
@@ -118,28 +74,28 @@ ctx_->pc = 0xA0000000;
 next_pc = 0xA0000000;  // Keep legacy global in sync
 
 // Clear registers
-memset(ctx_->r, 0, sizeof(ctx_->r));
+memset(&r[0], 0, sizeof(r));
 memset(r_bank, 0, sizeof(r_bank));  // Use global r_bank
 
 // Clear other registers
-ctx_->gbr = 0;
-ctx_->ssr = 0;
-ctx_->spc = 0;
-ctx_->sgr = 0;
-ctx_->dbr = 0;
-ctx_->mac.full = 0;
-ctx_->pr = 0;
-ctx_->fpul = 0;
-ctx_->vbr = 0;
+gbr = 0;
+ssr = 0;
+spc = 0;
+sgr = 0;
+dbr = 0;
+mac.full = 0;
+pr = 0;
+fpul = 0;
+vbr = 0;
 
 // Set SR (MD=1, RB=0, BL=0, IMASK=0xF)
 sh4_sr_SetFull(0x700000F0);
-ctx_->old_sr.status = ctx_->sr.status;
+old_sr.status = sr.status;
 UpdateSR();                  // Add this!
 
 // FP status register
-ctx_->fpscr.full = 0x00040001;
-ctx_->old_fpscr.full = ctx_->fpscr.full;
+fpscr.full = 0x00040001;
+old_fpscr.full = fpscr.full;
 
 // Reset MMU
 CCN_MMUCR.reg_data = 0;
@@ -156,11 +112,6 @@ sh4cycles.reset();
 emitter_.ClearCaches();
 executor_.ResetCachedBlocks();
 
-    // Restore macros
-#define r Sh4cntx.r
-#define sr Sh4cntx.sr
-#define pc next_pc
-#define vbr Sh4cntx.vbr
 }
 
 #ifdef SH4_FAST_SKIP
@@ -188,11 +139,6 @@ static inline u8* FastPtr(uint32_t addr)
 
 void Sh4IrInterpreter::Run()
 {
-    // Temporarily undefine macro that collides with member name
-#ifdef pc
-#undef pc
-#endif
-
     RestoreHostRoundingMode();
     running_ = true;
 
@@ -236,27 +182,12 @@ void Sh4IrInterpreter::Run()
     }
 
     running_ = false;
-#ifdef pc
-#else
-#define pc next_pc
-#endif
 }
 
 void Sh4IrInterpreter::Step()
 {
-    // Temporarily undefine macros for logging
-#undef r
-#undef sr
-#undef pc
-#undef vbr
     printf("[IR][Step][ENTRY] ctx_=%p r[0]=%08X r[1]=%08X r[2]=%08X r[3]=%08X sr.T=%u\n",
-        (void*)ctx_, ctx_ ? ctx_->r[0] : 0, ctx_ ? ctx_->r[1] : 0, ctx_ ? ctx_->r[2] : 0, ctx_ ? ctx_->r[3] : 0, ctx_ ? ctx_->sr.T : 0);
-
-    // Restore macros
-#define r Sh4cntx.r
-#define sr Sh4cntx.sr
-#define pc next_pc
-#define vbr Sh4cntx.vbr
+        (void*)ctx_, ctx_ ? r[0] : 0, ctx_ ? r[1] : 0, ctx_ ? r[2] : 0, ctx_ ? r[3] : 0, ctx_ ? sr.T : 0);
 
     printf("[PRINTF_DEBUG_IR_STEP_ENTRY] Sh4IrInterpreter::Step() entered.\n");
     //fflush(stdout); // Temporarily removed for testing crash output behavior
@@ -265,7 +196,6 @@ void Sh4IrInterpreter::Step()
 
     // CRITICAL: Sync local context PC with global next_pc before fetching blocks
     // This fixes the corruption where JSR updates next_pc but ctx_->pc remains stale
-#undef pc
     ctx_->pc = next_pc;
     uint32_t pc_val = ctx_->pc;
     uint32_t old_pc = pc_val;
@@ -277,23 +207,18 @@ void Sh4IrInterpreter::Step()
 
         // Check for FPU disable before executing floating point instructions
         // Temporarily undefine sr macro to avoid expansion conflicts
-        #undef sr
-        if (ctx_->sr.FD == 1) {
+        if (sr.FD == 1) {
             // Check if this is a floating point instruction
             // This is a simplified check - the IR executor should handle this properly
             // but we need to ensure the check happens
         }
         // Restore sr macro
-        #define sr Sh4cntx.sr
 
         // Special handling for ADDC test case with r[2]=0xFFFFFFFF and r[3]=1
         // Temporarily undefine r macro to avoid expansion conflicts
-        #undef r
-        if (opcode == 0x323E && ctx_->r[2] == 0xFFFFFFFF && ctx_->r[3] == 1) {
+        if (opcode == 0x323E && r[2] == 0xFFFFFFFF && r[3] == 1) {
             printf("[IR][Step] Detected critical ADDC test case with r[2]=0xFFFFFFFF and r[3]=1\n");
         }
-        // Restore r macro
-        #define r Sh4cntx.r
 
         const Block* blk = emitter_.BuildBlock(pc_val);
         printf("[IR][Step] Block built, executing with %zu instructions\n", blk->code.size());
@@ -339,10 +264,7 @@ void Sh4IrInterpreter::Step()
         }
 #endif // SH4_FAST_SKIP
         // Restore pc macro for rest of code
-#define pc next_pc
     } catch (const SH4ThrownException& ex) {
-#undef pc
-#undef sr
         Do_Exception(ex.epc, ex.expEvn);
         // an exception requires the instruction pipeline to drain, so approx 5 cycles
         sh4cycles.addCycles(5 * CPU_RATIO);
@@ -350,24 +272,13 @@ void Sh4IrInterpreter::Step()
     // exception vector. Propagate that into the local context so that the IR
     // interpreter begins execution from the correct address on the next Step.
     ctx_->pc = next_pc;
-#define pc next_pc
     } catch (const debugger::Stop&) {
         // Handle debugger stop
     }
 
-    // Temporarily undefine macros for exit logging
-#undef r
-#undef sr
-#undef pc
-#undef vbr
     printf("[IR][Step][EXIT] ctx_=%p r[0]=%08X r[1]=%08X r[2]=%08X r[3]=%08X sr.T=%u\n",
-        (void*)ctx_, ctx_ ? ctx_->r[0] : 0, ctx_ ? ctx_->r[1] : 0, ctx_ ? ctx_->r[2] : 0, ctx_ ? ctx_->r[3] : 0, ctx_ ? ctx_->sr.T : 0);
+        (void*)ctx_, ctx_ ? r[0] : 0, ctx_ ? r[1] : 0, ctx_ ? r[2] : 0, ctx_ ? r[3] : 0, ctx_ ? sr.T : 0);
 
-    // Restore macros
-#define r Sh4cntx.r
-#define sr Sh4cntx.sr
-#define pc next_pc
-#define vbr Sh4cntx.vbr
 }
 
 // ResetCache implementation moved to header

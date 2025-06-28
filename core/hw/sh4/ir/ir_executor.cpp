@@ -112,43 +112,12 @@ extern Sh4IrInterpreter g_ir;
 } }
 using sh4::ir::g_ir;
 
-// Undefine only the macros that conflict with our local access patterns
-// Keep the global macros we want to use (sr, pr, etc.)
-#ifdef r
-#undef r
-#endif
-
-// Keep sr, pr, and other global macros defined so we can use them directly
-// #ifdef sr
-// #undef sr
-// #endif
-
-// Don't undef pc - we need it to resolve to next_pc for global context
-// #ifdef pc
-// #undef pc
-// #endif
-
-#ifdef gbr
-#undef gbr
-#endif
-
-#ifdef vbr
-#undef vbr
-#endif
-
-#ifdef fpul
-#undef fpul
-#endif
-
-#ifdef fr
-#undef fr
-#endif
 
 // Helper functions for accessing context registers safely
 static inline void UpdateContextFPUL(Sh4Context* ctx, u32 value)
 {
     if (ctx) {
-        Sh4cntx.fpul = value;
+        fpul = value;
         WARN_LOG(SH4, "UpdateContextFPUL: ctx=%p, value=0x%08X", ctx, value);
     } else {
         ERROR_LOG(SH4, "UpdateContextFPUL: ctx is NULL!");
@@ -173,7 +142,7 @@ static inline const float* GET_XF(Sh4Context* ctx)
 }
 
 // Helper macros for register access - use global context directly
-#define GET_REG(ctx, idx) (Sh4cntx.r[(idx)])
+#define GET_REG(ctx, idx) (r[(idx)])
 #define SET_REG(ctx, idx, val) do { \
         if ((idx) == 6) { LOG_R6_WRITE((val), next_pc, "GENERIC"); } \
         else if ((idx) == 5) { LOG_R5_WRITE((val), next_pc, "GENERIC"); } \
@@ -186,7 +155,7 @@ static inline const float* GET_XF(Sh4Context* ctx)
                 WARN_LOG(SH4, "⚠️ R15 HIGH: Setting R15 to suspicious value %08X at PC=%08X", (val), next_pc); \
             } \
         } \
-        Sh4cntx.r[(idx)] = (val); \
+        r[(idx)] = (val); \
     } while(0)
 
 // Debug: log writes to R6 to trace corruption of jump register
@@ -535,9 +504,9 @@ static inline u8 *FastRamPtr(uint32_t addr) {
 static bool g_logged_high_r0 = false;
 static inline void LogHighR0(Sh4Context* c, uint32_t pc, Op op)
 {
-    if (!g_logged_high_r0 && Sh4cntx.r[0] >= 0x20000000)
+    if (!g_logged_high_r0 && r[0] >= 0x20000000)
     {
-        INFO_LOG(SH4, "R0 HIGH: 0x%08X set at PC=0x%08X by %s", Sh4cntx.r[0], pc, GetOpName(static_cast<size_t>(op)));
+        INFO_LOG(SH4, "R0 HIGH: 0x%08X set at PC=0x%08X by %s", r[0], pc, GetOpName(static_cast<size_t>(op)));
         g_logged_high_r0 = true;
     }
 }
@@ -930,13 +899,7 @@ static void Exec_STSL_MACL_PREDEC(const sh4::ir::Instr& ins, Sh4Context* ctx, ui
 {
     // Use global MAC register instead of local context
     // Temporarily disable mac macro to access MAC register
-#ifdef mac
-#undef mac
-    uint32_t macl_val = Sh4cntx.mac.l;
-#define mac Sh4cntx.mac
-#else
-    uint32_t macl_val = Sh4cntx.mac.l;
-#endif
+    uint32_t macl_val = mac.l;
     uint32_t new_rn = GET_REG(ctx, ins.dst.reg) - 4;
     SET_REG(ctx, ins.dst.reg, new_rn);
     WriteAligned32(new_rn, macl_val);
@@ -1069,12 +1032,6 @@ static void Exec_JSR(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t pc) {
 }
 
 // RTS – return from sub-routine (jump to PR)
-#ifdef ssr
-#undef ssr
-#endif
-#ifdef spc
-#undef spc
-#endif
 static void Exec_TRAPA(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t pc)
 {
     uint8_t trap_no = static_cast<uint8_t>(ins.src1.imm & 0xFF);
@@ -1137,16 +1094,16 @@ static void Exec_STC(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t) {
         val = sr_getFull(ctx);
         break;
     case 1: // GBR
-        val = Sh4cntx.gbr;
+        val = gbr;
         break;
     case 2: // VBR
-        val = Sh4cntx.vbr;
+        val = vbr;
         break;
     case 3: // SSR
-        val = Sh4cntx.ssr;
+        val = ssr;
         break;
     case 4: // SPC
-        val = Sh4cntx.spc;
+        val = spc;
         break;
     case 7: // DBR (consistent mapping with emitter)
         val = dbr;
@@ -1269,14 +1226,14 @@ static inline uint32_t FloatToBits(float f)
 static void Exec_FSTS(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
 {
     // Move raw 32-bit pattern from FPUL into destination FRn (no conversion)
-    SET_FR(ctx, ins.dst.reg, BitsToFloat(Sh4cntx.fpul));
+    SET_FR(ctx, ins.dst.reg, BitsToFloat(fpul));
 }
 
 // FLDS FRm -> FPUL (single-precision load)
 static void Exec_FLDS(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
 {
     // Copy raw bits of source FRm into FPUL (no conversion)
-    Sh4cntx.fpul = FloatToBits(GET_FR(ctx, ins.src1.reg));
+    fpul = FloatToBits(GET_FR(ctx, ins.src1.reg));
 }
 
 
@@ -1583,7 +1540,7 @@ static void Exec_TST_IMM(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
 static void Exec_TST_B(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
 {
     uint32_t imm = static_cast<uint32_t>(ins.extra) & 0xFF;
-    uint32_t addr = Sh4cntx.gbr + GET_REG(ctx, 0);
+    uint32_t addr = gbr + GET_REG(ctx, 0);
     uint8_t  val  = RawRead8(addr);
     uint8_t  res  = val & static_cast<uint8_t>(imm);
     SET_SR_T(ctx, (res == 0) ? 1 : 0);
@@ -2886,18 +2843,18 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                 }
                 case Op::LOAD8_GBR:
                 {
-                    u8 val = RawRead8(Sh4cntx.gbr + static_cast<uint32_t>(ins.extra));
+                    u8 val = RawRead8(gbr + static_cast<uint32_t>(ins.extra));
                     SET_REG(ctx, ins.dst.reg, static_cast<uint32_t>(static_cast<int8_t>(val)));
                     break;
                 }
                 case Op::LOAD16_GBR:
                 {
-                    u16 val = RawRead16(Sh4cntx.gbr + static_cast<uint32_t>(ins.extra));
+                    u16 val = RawRead16(gbr + static_cast<uint32_t>(ins.extra));
                     SET_REG(ctx, ins.dst.reg, static_cast<uint32_t>(static_cast<int16_t>(val)));
                     break;
                 }
                 case Op::LOAD32_GBR:
-                    SET_REG(ctx, ins.dst.reg, RawRead32(Sh4cntx.gbr + static_cast<uint32_t>(ins.extra)));
+                    SET_REG(ctx, ins.dst.reg, RawRead32(gbr + static_cast<uint32_t>(ins.extra)));
                     break;
                 case Op::LOAD8_POST:
                 {
@@ -2967,16 +2924,16 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                     break;
                 }
                 case Op::STORE8_GBR:
-                    if (!IsBiosAddr(Sh4cntx.gbr + static_cast<uint32_t>(ins.extra)))
-                        RawWrite8(Sh4cntx.gbr + static_cast<uint32_t>(ins.extra), GET_REG(ctx, ins.src1.reg));
+                    if (!IsBiosAddr(gbr + static_cast<uint32_t>(ins.extra)))
+                        RawWrite8(gbr + static_cast<uint32_t>(ins.extra), GET_REG(ctx, ins.src1.reg));
                     break;
                 case Op::STORE16_GBR:
-                    if (!IsBiosAddr(Sh4cntx.gbr + static_cast<uint32_t>(ins.extra)))
-                        RawWrite16(Sh4cntx.gbr + static_cast<uint32_t>(ins.extra), static_cast<u16>(GET_REG(ctx, ins.src1.reg)));
+                    if (!IsBiosAddr(gbr + static_cast<uint32_t>(ins.extra)))
+                        RawWrite16(gbr + static_cast<uint32_t>(ins.extra), static_cast<u16>(GET_REG(ctx, ins.src1.reg)));
                     break;
                 case Op::STORE32_GBR:
-                    if (!IsBiosAddr(Sh4cntx.gbr + static_cast<uint32_t>(ins.extra)))
-                        RawWrite32(Sh4cntx.gbr + static_cast<uint32_t>(ins.extra), GET_REG(ctx, ins.src1.reg));
+                    if (!IsBiosAddr(gbr + static_cast<uint32_t>(ins.extra)))
+                        RawWrite32(gbr + static_cast<uint32_t>(ins.extra), GET_REG(ctx, ins.src1.reg));
                     break;
 
                 case Op::LOAD8_R0:
@@ -3333,12 +3290,8 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                 }
                 case Op::RTE: {
                     /* Fetch latest saved state; exception may have occurred earlier in this block */
-#undef ssr
-                    #undef spc
-                    uint32_t new_ssr = Sh4cntx.ssr;
-                    uint32_t new_spc = Sh4cntx.spc;
-                    #define ssr Sh4cntx.ssr
-                    #define spc Sh4cntx.spc
+                    uint32_t new_ssr = ssr;
+                    uint32_t new_spc = spc;
                     INFO_LOG(SH4, "RTE from %08X -> %08X", curr_pc, new_spc);
                     if (IsTopRegion(new_spc))
                         ERROR_LOG(SH4, "*** HIGH-FF RTE target at %08X -> %08X", curr_pc, new_spc);
@@ -3371,8 +3324,8 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                     // 15: R7_BANK (extra = 8 + 7, distinct from DBR's 0xF due to emitter order)
                     switch (ins.extra) {
                         case 0:  val_to_store = sr_getFull(ctx); break; // Use sr_getFull
-                        case 1:  val_to_store = Sh4cntx.gbr; break;
-                        case 2:  val_to_store = Sh4cntx.vbr; break;
+                        case 1:  val_to_store = gbr; break;
+                        case 2:  val_to_store = vbr; break;
                         case 3:  val_to_store = ssr; break;
                         case 4:  val_to_store = spc; break;
                         case 7:  val_to_store = dbr; break; // DBR (emitter now uses 7)
@@ -3406,10 +3359,10 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                             UpdateSR();
                             break;
                         case 1: // GBR
-                            Sh4cntx.gbr = val_to_load;
+                            gbr = val_to_load;
                             break;
                         case 2: // VBR
-                            Sh4cntx.vbr = val_to_load;
+                            vbr = val_to_load;
                             break;
                         case 3: // SSR
                             ssr = val_to_load;
@@ -3494,7 +3447,7 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                 case Op::FCNVSD:
                 {
                     // Convert 32-bit integer in FPUL to double-precision DRn
-                    float single_val = BitsToFloat(Sh4cntx.fpul);
+                    float single_val = BitsToFloat(fpul);
                     SetDR(ins.dst.reg, static_cast<double>(single_val));
                     INFO_LOG(SH4, "FCNVSD FPUL_SINGLE(%f) -> DR%u (%.6f)", single_val, ins.dst.reg, static_cast<double>(single_val));
                     break;
@@ -3509,7 +3462,7 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                     {
                         u32 bits; std::memcpy(&bits, &fval, sizeof(bits));
                         UpdateContextFPUL(ctx, bits);
-                        Sh4cntx.fpul = bits;
+                        fpul = bits;
                     }
                     { u32 fpul_val = *reinterpret_cast<u32*>(&fval); INFO_LOG(SH4, "FCNVDS DR%u (%.6f) -> FPUL (0x%08X)", srcReg >> 1, dval, fpul_val); }
                     break;
@@ -3638,7 +3591,7 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                     // Result: sin(angle) -> FRn, cos(angle) -> FR(n+1)
 
                     // In our case, we know n=6 from the emitter (DR3 = FR6:FR7)
-                    uint32_t fpul_value = Sh4cntx.fpul;
+                    uint32_t fpul_value = fpul;
 
                     // Extract the table index and fractional part for interpolation
                     // We use the high 8 bits as the index into our 256-entry table
@@ -3747,7 +3700,7 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                 {
                     // FLOAT FPUL -> FRn (PR==0) or FLOAT FPUL -> DRn (PR==1)
                     // Convert 32-bit integer in FPUL to floating-point
-                    int32_t int_val = static_cast<int32_t>(Sh4cntx.fpul);
+                    int32_t int_val = static_cast<int32_t>(fpul);
                     float single = static_cast<float>(int_val);
                     double dbl_val = static_cast<double>(int_val);
 
@@ -3869,8 +3822,8 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                 }
 // FSQRT case was moved and consolidated with the earlier implementation
                 case Op::FSTS: // FSTS FPUL,FRn
-                    SET_FR(ctx, ins.dst.reg, BitsToFloat(Sh4cntx.fpul));
-                    DEBUG_LOG(SH4, "FSTS FPUL(0x%08X) -> FR%u (%.6f)", Sh4cntx.fpul, ins.dst.reg, BitsToFloat(Sh4cntx.fpul));
+                    SET_FR(ctx, ins.dst.reg, BitsToFloat(fpul));
+                    DEBUG_LOG(SH4, "FSTS FPUL(0x%08X) -> FR%u (%.6f)", fpul, ins.dst.reg, BitsToFloat(fpul));
                     break;
                 case Op::FABS:
                 {
@@ -3891,7 +3844,7 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                         static_assert(sizeof(uint32_t) == sizeof(float), "size mismatch");
                         uint32_t bits;
                         std::memcpy(&bits, &GET_FR(ctx, ins.src1.reg), sizeof(bits));
-                        Sh4cntx.fpul = bits;
+                        fpul = bits;
                     }
                     break;
                 case Op::FLDI0:
@@ -3945,19 +3898,19 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                 }
                 case Op::FNEG_FPUL:
                 {
-                    float val = *reinterpret_cast<float*>(&Sh4cntx.fpul);
+                    float val = *reinterpret_cast<float*>(&fpul);
                     val = -val;
-                    Sh4cntx.fpul = *reinterpret_cast<u32*>(&val);
-                    DEBUG_LOG(SH4, "FNEG FPUL -> 0x%08X", Sh4cntx.fpul);
+                    fpul = *reinterpret_cast<u32*>(&val);
+                    DEBUG_LOG(SH4, "FNEG FPUL -> 0x%08X", fpul);
                     break;
                 }
 
                 case Op::FABS_FPUL:
                 {
-                    float val = *reinterpret_cast<float*>(&Sh4cntx.fpul);
+                    float val = *reinterpret_cast<float*>(&fpul);
                     val = std::fabs(val);
-                    Sh4cntx.fpul = *reinterpret_cast<u32*>(&val);
-                    DEBUG_LOG(SH4, "FABS FPUL -> 0x%08X", Sh4cntx.fpul);
+                    fpul = *reinterpret_cast<u32*>(&val);
+                    DEBUG_LOG(SH4, "FABS FPUL -> 0x%08X", fpul);
                     break;
                 }
                 case Op::FRCHG:
@@ -4109,11 +4062,11 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                             break;
                         case 1: // GBR
                             INFO_LOG(SH4, "LDC.L GBR <- %08X from @%08X (R%u) at PC=%08X", val, addr, ins.src1.reg, curr_pc);
-                            Sh4cntx.gbr = val;
+                            gbr = val;
                             break;
                         case 2: // VBR
                             INFO_LOG(SH4, "LDC.L VBR <- %08X from @%08X (R%u) at PC=%08X", val, addr, ins.src1.reg, curr_pc);
-                            Sh4cntx.vbr = val;
+                            vbr = val;
                             break;
                         case 3: // SSR
                             INFO_LOG(SH4, "LDC.L SSR <- %08X from @%08X (R%u) at PC=%08X", val, addr, ins.src1.reg, curr_pc);
@@ -4350,7 +4303,7 @@ void Executor::ResetCachedBlocks()
 // -----------------------------------------------------------------------------
 static void Exec_LOAD8_GBR(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
 {
-    uint32_t addr = Sh4cntx.gbr + static_cast<uint32_t>(ins.extra);
+    uint32_t addr = gbr + static_cast<uint32_t>(ins.extra);
     DEBUG_LOG(SH4, "LOAD8_GBR disp=%u addr=%08X", ins.extra, addr);
     uint8_t val = RawRead8(addr);
     SET_REG(ctx, ins.dst.reg, static_cast<uint32_t>(static_cast<int8_t>(val)));
@@ -4358,7 +4311,7 @@ static void Exec_LOAD8_GBR(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
 
 static void Exec_LOAD16_GBR(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
 {
-    uint32_t addr = Sh4cntx.gbr + (static_cast<uint32_t>(ins.extra) << 1);
+    uint32_t addr = gbr + (static_cast<uint32_t>(ins.extra) << 1);
     DEBUG_LOG(SH4, "LOAD16_GBR disp=%u addr=%08X", ins.extra, addr);
     uint16_t val = RawRead16(addr);
     SET_REG(ctx, ins.dst.reg, static_cast<uint32_t>(static_cast<int16_t>(val)));
@@ -4366,28 +4319,28 @@ static void Exec_LOAD16_GBR(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t
 
 static void Exec_LOAD32_GBR(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
 {
-    uint32_t addr = Sh4cntx.gbr + (static_cast<uint32_t>(ins.extra) << 2);
+    uint32_t addr = gbr + (static_cast<uint32_t>(ins.extra) << 2);
     uint32_t val = RawRead32(addr);
     SET_REG(ctx, ins.dst.reg, val);
 }
 
 static void Exec_STORE8_GBR(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
 {
-    uint32_t addr = Sh4cntx.gbr + static_cast<uint32_t>(ins.extra);
+    uint32_t addr = gbr + static_cast<uint32_t>(ins.extra);
     uint8_t val = static_cast<uint8_t>(GET_REG(ctx, ins.src1.reg));
     RawWrite8(addr, val);
 }
 
 static void Exec_STORE16_GBR(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
 {
-    uint32_t addr = Sh4cntx.gbr + (static_cast<uint32_t>(ins.extra) << 1);
+    uint32_t addr = gbr + (static_cast<uint32_t>(ins.extra) << 1);
     uint16_t val = static_cast<uint16_t>(GET_REG(ctx, ins.src1.reg));
     RawWrite16(addr, val);
 }
 
 static void Exec_STORE32_GBR(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
 {
-    uint32_t addr = Sh4cntx.gbr + (static_cast<uint32_t>(ins.extra) << 2);
+    uint32_t addr = gbr + (static_cast<uint32_t>(ins.extra) << 2);
     uint32_t val = GET_REG(ctx, ins.src1.reg);
     RawWrite32(addr, val);
 }

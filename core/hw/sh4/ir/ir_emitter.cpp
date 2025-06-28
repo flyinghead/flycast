@@ -18,10 +18,6 @@
 // Reuse identical blocks (e.g. BIOS memset stub copied across SDRAM pages)
 static std::unordered_map<uint64_t, const sh4::ir::Block*> g_block_sig_cache;
 
-// Don't undef sr - we need it to resolve to Sh4cntx.sr for global context
-// #ifdef sr
-// #undef sr
-// #endif
 static uint64_t CalcBlockSig(uint32_t pc)
 {
     // Hash first 64 bytes (32 instructions) of code at pc, plus SR.T
@@ -36,9 +32,6 @@ static uint64_t CalcBlockSig(uint32_t pc)
     // buf[64] = (uint8_t)(p_sh4rcb ? p_sh4rcb->cntx.sr.T : 0);
     return XXH3_64bits(buf, sizeof(buf));
 }
-// Ensure sr macro is always defined for global context
-#define sr Sh4cntx.sr
-
 
 namespace sh4 {
 namespace ir {
