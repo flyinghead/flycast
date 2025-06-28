@@ -6,6 +6,7 @@
 #include "hw/sh4/sh4_interpreter.h"
 #include "hw/sh4/sh4_interrupts.h"
 #include "hw/sh4/modules/mmu.h"
+#include "hw/sh4/sh4_mem.h" // for memory function pointers
 #include "hw/mem/addrspace.h" // for ram_base fast access
 #include "hw/flashrom/nvmem.h" // for BIOS pointer
 #include "hw/sh4/sh4_cycles.h" // for cycle counting
@@ -202,7 +203,7 @@ void Sh4IrInterpreter::Step()
 
     try {
         // Add debug logging to track opcode execution
-        u16 opcode = mmu_IReadMem16(pc_val);
+        u16 opcode = IReadMem16(pc_val);
         printf("[IR][Step] Reading opcode at PC=%08X: %04X\n", pc_val, opcode);
 
         // Check for FPU disable before executing floating point instructions
@@ -255,7 +256,7 @@ void Sh4IrInterpreter::Step()
                 const uint32_t limit = pc_scan + 0x100000;
                 while (pc_scan < limit)
                 {
-                    u16 iw = mmu_IReadMem16(pc_scan);
+                    u16 iw = IReadMem16(pc_scan);
                     if (iw != 0x0000 && iw != 0x0009) break;
                     pc_scan += 2;
                 }

@@ -8,6 +8,7 @@
 #include <cstring> // for memcpy
 #include "../sh4_interpreter.h" // for interpreter functions
 #include "hw/sh4/modules/mmu.h"
+#include "hw/sh4/sh4_mem.h" // for memory function pointers
 #include "sh4_ir_interpreter.h"
 #include "hw/sh4/sh4_core.h" // for SH4ThrownException
 #include "hw/sh4/sh4_cycles.h" // for cycle counting
@@ -572,7 +573,7 @@ static inline u8* FastRamPtrWrite(uint32_t addr)
 // on whether the MMU is active (MMUCR.AT bit) or not.  This mirrors the logic
 // in sh4_mem.cpp::SetMemoryHandlers() but avoids the indirect function call
 // overhead inside tight IR loops.
-static inline bool is_mmu_on() { return mmu_enabled(); }
+
 
 // Centralised helpers that also cooperate with the IR exception-flag model.
 // After every MMU access we check the global flag and early-return/skip further
@@ -597,7 +598,7 @@ static inline u8  RawRead8(uint32_t a)
         // fall-through: if zero, you may still want ROM mirror; but returning
         // zero is fine because BIOS will have patched actual bytes when needed.
     } else {
-        v = is_mmu_on() ? mmu_ReadMem<u8>(a) : addrspace::read8(a);
+        v = ReadMem8(a);
     }
     if (UNLIKELY(g_exception_was_raised))
         return 0;
@@ -618,7 +619,7 @@ static inline u16 RawRead16(uint32_t a)
     } else if (IsVectorRamAddr(a)) {
         v = ReadVectorRam<u16>(a);
     } else {
-        v = is_mmu_on() ? mmu_ReadMem<u16>(a) : addrspace::read16(a);
+        v = ReadMem16(a);
     }
     if (UNLIKELY(g_exception_was_raised))
         return 0;
@@ -635,8 +636,8 @@ static inline u32 RawRead32(uint32_t a)
         v = ReadVectorRam<u32>(a);
         INFO_LOG(SH4, "VEC READ32 addr=0x%08X off=%u val=0x%08X", a, a & 0x3FFu, v);
     } else {
-        v = is_mmu_on() ? mmu_ReadMem<u32>(a) : addrspace::read32(a);
-        INFO_LOG(SH4, "%s READ32 addr=0x%08X val=0x%08X", is_mmu_on() ? "MMU" : "ADD", a, v);
+        v = ReadMem32(a);
+        INFO_LOG(SH4, "%s READ32 addr=0x%08X val=0x%08X", "MEM", a, v);
     }
     if (UNLIKELY(g_exception_was_raised))
         return 0;
@@ -658,8 +659,8 @@ static inline u64 RawRead64(uint32_t a)
         v = (static_cast<u64>(hi) << 32) | lo;
         INFO_LOG(SH4, "VEC READ64 addr=0x%08X off=%u val=0x%08X", a, a & 0x3FFu, v);
     } else {
-      v = is_mmu_on() ? mmu_ReadMem<u64>(a) : addrspace::read64(a);
-      INFO_LOG(SH4, "%s READ64 addr=0x%08X val=0x%08X", is_mmu_on() ? "MMU" : "ADD", a, v);
+      v = ReadMem64(a);
+      INFO_LOG(SH4, "%s READ64 addr=0x%08X val=0x%08X", "MEM", a, v);
     }
     if (UNLIKELY(g_exception_was_raised))
         return 0;
@@ -708,7 +709,7 @@ static inline void RawWrite8(uint32_t a, u8 d)
     }
     if (!g_exception_was_raised)
     {
-        if (is_mmu_on()) mmu_WriteMem(a, d); else addrspace::write8(a, d);
+        WriteMem8(a, d);
     }
 }
 
@@ -737,10 +738,7 @@ static inline void RawWrite16(uint32_t a, u16 d)
     }
 
     if (!g_exception_was_raised) {
-        if (is_mmu_on())
-            mmu_WriteMem(a, d);
-        else
-            addrspace::write16(a, d);
+        WriteMem16(a, d);
     }
 }
 
@@ -770,10 +768,7 @@ static inline void RawWrite32(uint32_t a, u32 d)
     }
 
     if (!g_exception_was_raised) {
-        if (is_mmu_on())
-            mmu_WriteMem(a, d);
-        else
-            addrspace::write32(a, d);
+        WriteMem32(a, d);
     }
 }
 
@@ -802,7 +797,7 @@ static inline void RawWrite64(uint32_t a, u64 d)
     }
     if (!g_exception_was_raised)
     {
-        if (is_mmu_on()) mmu_WriteMem(a, d); else addrspace::write64(a, d);
+        WriteMem64(a, d);
     }
 }
 
