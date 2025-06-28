@@ -924,13 +924,14 @@ static void Exec_STSL_PR_PREDEC(const sh4::ir::Instr& ins, Sh4Context* ctx, uint
 // STS.L MACL,@-Rn
 static void Exec_STSL_MACL_PREDEC(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t /*pc*/)
 {
-    // Macro `mac` is defined globally (maps to Sh4cntx.mac) and interferes with ctx->mac.
+    // Use global MAC register instead of local context
+    // Temporarily disable mac macro to access MAC register
 #ifdef mac
 #undef mac
-    uint32_t macl_val = ctx->mac.l;
+    uint32_t macl_val = Sh4cntx.mac.l;
 #define mac Sh4cntx.mac
 #else
-    uint32_t macl_val = ctx->mac.l;
+    uint32_t macl_val = Sh4cntx.mac.l;
 #endif
     uint32_t new_rn = GET_REG(ctx, ins.dst.reg) - 4;
     SET_REG(ctx, ins.dst.reg, new_rn);
@@ -3333,8 +3334,8 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                     /* Fetch latest saved state; exception may have occurred earlier in this block */
                     #undef ssr
                     #undef spc
-                    uint32_t new_ssr = ctx->ssr;
-                    uint32_t new_spc = ctx->spc;
+                    uint32_t new_ssr = Sh4cntx.ssr;
+                    uint32_t new_spc = Sh4cntx.spc;
                     #define ssr Sh4cntx.ssr
                     #define spc Sh4cntx.spc
                     INFO_LOG(SH4, "RTE from %08X -> %08X", curr_pc, new_spc);
@@ -3369,8 +3370,8 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                     // 15: R7_BANK (extra = 8 + 7, distinct from DBR's 0xF due to emitter order)
                     switch (ins.extra) {
                         case 0:  val_to_store = sr_getFull(ctx); break; // Use sr_getFull
-                        case 1:  val_to_store = ctx->gbr; break;
-                        case 2:  val_to_store = ctx->vbr; break;
+                        case 1:  val_to_store = Sh4cntx.gbr; break;
+                        case 2:  val_to_store = Sh4cntx.vbr; break;
                         case 3:  val_to_store = ssr; break;
                         case 4:  val_to_store = spc; break;
                         case 7:  val_to_store = dbr; break; // DBR (emitter now uses 7)
@@ -3404,10 +3405,10 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                             UpdateSR();
                             break;
                         case 1: // GBR
-                            ctx->gbr = val_to_load;
+                            Sh4cntx.gbr = val_to_load;
                             break;
                         case 2: // VBR
-                            ctx->vbr = val_to_load;
+                            Sh4cntx.vbr = val_to_load;
                             break;
                         case 3: // SSR
                             ssr = val_to_load;
