@@ -178,11 +178,13 @@ static inline const float* GET_XF(Sh4Context* ctx)
 }
 
 // Helper macros for register access - explicit context pointer
-#define GET_REG(ctx, idx) ((ctx)->r[(idx)])
+// CRITICAL FIX: Use global context directly instead of local context
+// This eliminates all context synchronization issues and makes reios work properly
+#define GET_REG(ctx, idx) (Sh4cntx.r[(idx)])
 #define SET_REG(ctx, idx, val) do { \
         if ((idx) == 6) { LOG_R6_WRITE((val), (ctx)->pc, "GENERIC"); } \
         else if ((idx) == 5) { LOG_R5_WRITE((val), (ctx)->pc, "GENERIC"); } \
-        (ctx)->r[(idx)] = (val); \
+        Sh4cntx.r[(idx)] = (val); \
     } while(0)
 
 // Debug: log writes to R6 to trace corruption of jump register
@@ -453,6 +455,17 @@ static inline void SyncGlobalsFromCtx(const Sh4Context* ctx)
 #else
         sh4rcb.cntx.pr = ctx->pr;
 #endif
+
+    // CRITICAL FIX: Sync all registers, not just PC and PR
+    // This ensures that any legacy code that modifies the global context
+    // will see the current register values from the IR context
+#ifdef r
+#undef r
+    memcpy(sh4rcb.cntx.r, ctx->r, sizeof(ctx->r));
+#define r Sh4cntx.r
+#else
+    memcpy(sh4rcb.cntx.r, ctx->r, sizeof(ctx->r));
+#endif
 }
 
 static inline void SyncCtxFromGlobals(Sh4Context* ctx)
@@ -464,6 +477,17 @@ static inline void SyncCtxFromGlobals(Sh4Context* ctx)
 #define pr Sh4cntx.pr
 #else
         ctx->pr = sh4rcb.cntx.pr;
+#endif
+
+    // CRITICAL FIX: Sync all registers, not just PC and PR
+    // This ensures that any legacy code that modifies the global context
+    // will be reflected in the IR context
+#ifdef r
+#undef r
+    memcpy(ctx->r, sh4rcb.cntx.r, sizeof(ctx->r));
+#define r Sh4cntx.r
+#else
+    memcpy(ctx->r, sh4rcb.cntx.r, sizeof(ctx->r));
 #endif
 }
 
@@ -738,8 +762,10 @@ static inline void RawWrite16(uint32_t a, u16 d)
         return;
     }
 
-    if (RequiresCacheInvalidation(a))
+    if (RequiresCacheInvalidation(a)) {
+        INFO_LOG(SH4, "🔄 Cache invalidation triggered by write16: addr=0x%08X, data=0x%04X", a, d);
         g_ir.InvalidateBlock(a & ~1u);
+    }
 
     if (IsStoreQueueAddr(a)) {
         *reinterpret_cast<u16*>(&g_sq_buffer[SqOffset(a)]) = d;
@@ -768,8 +794,10 @@ static inline void RawWrite32(uint32_t a, u32 d)
         return;
     }
 
-    if (RequiresCacheInvalidation(a))
+    if (RequiresCacheInvalidation(a)) {
+        INFO_LOG(SH4, "🔄 Cache invalidation triggered by write32: addr=0x%08X, data=0x%08X", a, d);
         g_ir.InvalidateBlock(a & ~1u);
+    }
 
     if (IsStoreQueueAddr(a)) {
         *reinterpret_cast<u32*>(&g_sq_buffer[SqOffset(a)]) = d;
@@ -1207,6 +1235,13 @@ static void Exec_STORE32(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
     uint32_t base = GET_REG(ctx, ins.src2.reg); // Rm is src2
     uint32_t addr = base + ins.extra;
     uint32_t val  = GET_REG(ctx, ins.src1.reg); // Rn is src1
+
+    // Debug corrupted addresses that would cause Boot ROM writes
+    if (addr < 0x200) {
+        ERROR_LOG(SH4, "🚨 STORE32 Boot ROM addr=0x%08X: base=R%d(0x%08X) + extra=0x%08X, val=R%d(0x%08X) at PC=0x%08X",
+                  addr, ins.src2.reg, base, ins.extra, ins.src1.reg, val, next_pc);
+    }
+
     RawWrite32(addr, val);
 }
 
@@ -1229,10 +1264,18 @@ static void Exec_LOAD8(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
 }
 
 // Generic 16-bit store: MOV.W Rn,@(disp,Rm)
-static void Exec_STORE16(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
+static void Exec_STORE16(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t pc)
 {
-    uint32_t addr = GET_REG(ctx, ins.src2.reg) + ins.extra;
+    uint32_t base = GET_REG(ctx, ins.src2.reg);
+    uint32_t addr = base + ins.extra;
     uint16_t val  = static_cast<uint16_t>(GET_REG(ctx, ins.src1.reg));
+
+    // Debug corrupted addresses that would cause Boot ROM writes
+    if (addr < 0x200) {
+        ERROR_LOG(SH4, "🚨 STORE16 Boot ROM addr=0x%08X: base=R%d(0x%08X) + extra=0x%08X, val=R%d(0x%04X) at PC=0x%08X",
+                  addr, ins.src2.reg, base, ins.extra, ins.src1.reg, val, pc);
+    }
+
     RawWrite16(addr, val);
 }
 
@@ -2316,6 +2359,7 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
     {
         // Abort current block if emitter flushed caches (block memory may be freed)
         if (first_instruction_executed && g_ir_cache_invalidated.exchange(false, std::memory_order_acq_rel)) {
+            SyncGlobalsFromCtx(ctx);
             SyncCtxFromGlobals(ctx);
             return; // re-dispatch with fresh block fetch
         }
@@ -2323,6 +2367,7 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
         {
             g_exception_was_raised = false;
             // Exception handler in higher layer will look at legacy globals, so keep them in-sync
+            SyncGlobalsFromCtx(ctx);
             SyncCtxFromGlobals(ctx);
             return;
         }
@@ -2408,6 +2453,7 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                     // Block finished, jump to the next one.
                     INFO_LOG(SH4, "BLOCK_END: AtPC:%08X (Op:END) PR:%08X SR.T:%d -> TargetNextPC:%08X", next_pc, pr, GET_SR_T(ctx), blk->pcNext);
                     SetPC(ctx, blk->pcNext, "block_end");
+                    SyncGlobalsFromCtx(ctx);
                     SyncCtxFromGlobals(ctx);
                     return;
                 case Op::NOP:
@@ -2491,6 +2537,7 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                         // If the write caused a full MMU flush the emitter cleared its caches.
                         // Exit the block immediately to avoid using a freed `blk` pointer.
                         if (unlikely(g_ir_cache_invalidated.exchange(false, std::memory_order_acq_rel))) {
+                            SyncGlobalsFromCtx(ctx);
                             SyncCtxFromGlobals(ctx);
                             return;
                         }
@@ -2518,6 +2565,7 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
 
                     // Check for cache invalidation triggered by MMUCR or similar writes
                     if (unlikely(g_ir_cache_invalidated.exchange(false, std::memory_order_acq_rel))) {
+                        SyncGlobalsFromCtx(ctx);
                         SyncCtxFromGlobals(ctx);
                         return;
                     }
@@ -2526,6 +2574,14 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                 }
                 case Op::STORE32:
                 {
+                    // CRITICAL DEBUG: Check for invalid register indices
+                    if (ins.src1.reg >= 16 || ins.src2.reg >= 16) {
+                        printf("🚨 STORE32 INVALID REG: src1.reg=%u src2.reg=%u at PC=%08X\n",
+                               ins.src1.reg, ins.src2.reg, next_pc);
+                        fflush(stdout);
+                        break;
+                    }
+
                     // Debug: src1 = value (Rm), src2 = base (Rn)
                     printf("[PRINTF_DEBUG_IR_STORE32_ENTRY] STORE32: ins.src1.reg (Rm_value)=%u, ins.src2.reg (Rn_base)=%u, ins.extra (disp)=%u\n",
                            ins.src1.reg, ins.src2.reg, ins.extra);
@@ -2552,6 +2608,7 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
 
                 // Detect emitter cache flush (e.g., MMUCR write) and abandon current block safely
                 if (unlikely(g_ir_cache_invalidated.exchange(false, std::memory_order_acq_rel))) {
+                    SyncGlobalsFromCtx(ctx);
                     SyncCtxFromGlobals(ctx);
                     return;
                 }
@@ -2578,6 +2635,7 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                         // If the write caused a full MMU flush the emitter cleared its caches.
                         // Exit the block immediately to avoid using a freed `blk` pointer.
                         if (unlikely(g_ir_cache_invalidated.exchange(false, std::memory_order_acq_rel))) {
+                            SyncGlobalsFromCtx(ctx);
                             SyncCtxFromGlobals(ctx);
                             return;
                         }
@@ -4215,6 +4273,7 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                 }
                 SetPC(ctx, branch_target, "branch_commit");
                 if (unlikely(g_exception_was_raised)) {
+                    SyncGlobalsFromCtx(ctx);
                     SyncCtxFromGlobals(ctx);
                     return;
                 }
@@ -4234,6 +4293,8 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
     } // end for (const auto& ins : blk->code)
 
     // Normal fall-through: sync back any PC/PR mutations performed through legacy macros
+    // CRITICAL FIX: Push IR context changes to global context before syncing back
+    SyncGlobalsFromCtx(ctx);
     SyncCtxFromGlobals(ctx);
 } // end Executor::ExecuteBlock
 

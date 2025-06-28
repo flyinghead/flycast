@@ -1208,8 +1208,8 @@ static bool FastDecode(uint16_t raw, uint32_t pc, Instr &ins, Block &blk)
         DEBUG_LOG(SH4, "FastDecode: XOR R%u,R%u (0x%04X)", m, n, raw);
         return true;
     }
-    // JSR @Rn (0x4n0B) - for 0x410B (JSR @R1)
-    else if ((raw & 0xF0FF) == 0x400B)
+    // JSR @Rn (0x4n0B) - for 0x410B (JSR @R1), 0x408B (JSR @R8), etc.
+    else if ((raw & 0xF00F) == 0x400B)
     {
         uint8_t n = (raw >> 8) & 0xF;
         ins.op = Op::JSR;
@@ -1382,16 +1382,11 @@ static bool FastDecode(uint16_t raw, uint32_t pc, Instr &ins, Block &blk)
         blk.pcNext = pc + 2;
         return true;
     }
-    // Hard-patch: MOV.B R5,@(0xB,R8) (0x085B) seen in BIOS init loop
-    else if (raw == 0x085B) {
-        ins.op = Op::STORE8;
-        ins.dst.isImm = false; ins.dst.reg = 8; // R8 base
-        ins.src1.isImm = false; ins.src1.reg = 5; // R5 value
-        ins.extra = 0xB;
-        blk.pcNext = pc + 2;
-        DEBUG_LOG(SH4, "FastDecode: Patched MOV.B R5,@(0xB,R8) (0x085B)");
-        return true;
-    }
+    // CRITICAL FIX: Do NOT handle 0x085B as MOV.B - it's the REIOS_OPCODE!
+    // The opcode 0x085B is REIOS_OPCODE, not a regular MOV.B instruction.
+    // It must fall through to legacy interpreter to call reios_trap() properly.
+    // Handling it as STORE8 causes Boot ROM writes and prevents BIOS initialization.
+    // else if (raw == 0x085B) { ... } // REMOVED - let it fall through
     // CLRS (0x0048)
     else if (raw == 0x0048)
     {
@@ -1602,8 +1597,20 @@ static bool FastDecode(uint16_t raw, uint32_t pc, Instr &ins, Block &blk)
         blk.pcNext = pc + 2;
         return true;
     }
-    // FSTS FPUL,FRn (0xF08D)
-    else if ((raw & 0xFF0F) == 0xF00D)
+    // FLDI0 FRn (0xFn8D) - Load immediate 0.0 into FRn
+    else if ((raw & 0xF0FF) == 0xF08D)
+    {
+        uint8_t n = (raw >> 8) & 0xF;
+        ins.op = Op::FLDI0;
+        ins.dst.isImm = false;
+        ins.dst.reg = n;
+        ins.dst.type = RegType::FGR;
+        DEBUG_LOG(SH4, "FastDecode: FLDI0 FR%u (0x%04X) at PC=0x%08X", n, raw, pc);
+        blk.pcNext = pc + 2;
+        return true;
+    }
+    // FSTS FPUL,FRn (0xFn0D) - but not 0xFn8D which is FLDI0
+    else if ((raw & 0xFF0F) == 0xF00D && (raw & 0xF0FF) != 0xF08D)
     {
         uint8_t n = (raw >> 8) & 0xF;
         ins.op = Op::FSTS;
@@ -2256,14 +2263,207 @@ static bool FastDecode(uint16_t raw, uint32_t pc, Instr &ins, Block &blk)
               return false;
           }
 
-                    // Check for patterns that are clearly not valid SH4 instructions
+          // Add missing FastDecode patterns before falling back
+
+          // MOV.B Rm,@Rn (0x0nm3) - Store byte to memory (for 0C63)
+          if ((raw & 0xF00F) == 0x0003)
+          {
+              uint8_t n = (raw >> 8) & 0xF;
+              uint8_t m = (raw >> 4) & 0xF;
+              ins.op = Op::STORE8;
+              ins.src1.isImm = false; ins.src1.reg = m; // Value (Rm)
+              ins.src2.isImm = false; ins.src2.reg = n; // Address (Rn)
+              ins.extra = 0; // No displacement
+              blk.pcNext = pc + 2;
+              DEBUG_LOG(SH4, "FastDecode: MOV.B R%u,@R%u (0x%04X)", m, n, raw);
+              return true;
+          }
+
+          // MOV.B @(R0,Rm),Rn (0x0nmc) - Load byte with R0 offset
+          if ((raw & 0xF00F) == 0x000C)
+          {
+              uint8_t n = (raw >> 8) & 0xF;
+              uint8_t m = (raw >> 4) & 0xF;
+              ins.op = Op::LOAD8_R0;
+              ins.dst.isImm = false; ins.dst.reg = n;
+              ins.src1.isImm = false; ins.src1.reg = m; // Base address (Rm)
+              ins.src2.isImm = false; ins.src2.reg = 0; // R0 offset
+              blk.pcNext = pc + 2;
+              DEBUG_LOG(SH4, "FastDecode: MOV.B @(R0,R%u),R%u (0x%04X)", m, n, raw);
+              return true;
+          }
+
+          // MOV.W @(R0,Rm),Rn (0x0nmd) - Load word with R0 offset
+          if ((raw & 0xF00F) == 0x000D)
+          {
+              uint8_t n = (raw >> 8) & 0xF;
+              uint8_t m = (raw >> 4) & 0xF;
+              ins.op = Op::LOAD16_R0;
+              ins.dst.isImm = false; ins.dst.reg = n;
+              ins.src1.isImm = false; ins.src1.reg = m; // Base address (Rm)
+              ins.src2.isImm = false; ins.src2.reg = 0; // R0 offset
+              blk.pcNext = pc + 2;
+              DEBUG_LOG(SH4, "FastDecode: MOV.W @(R0,R%u),R%u (0x%04X)", m, n, raw);
+              return true;
+          }
+
+          // MOV.L @(R0,Rm),Rn (0x0nme) - Load long with R0 offset
+          if ((raw & 0xF00F) == 0x000E)
+          {
+              uint8_t n = (raw >> 8) & 0xF;
+              uint8_t m = (raw >> 4) & 0xF;
+              ins.op = Op::LOAD32_R0;
+              ins.dst.isImm = false; ins.dst.reg = n;
+              ins.src1.isImm = false; ins.src1.reg = m; // Base address (Rm)
+              ins.src2.isImm = false; ins.src2.reg = 0; // R0 offset
+              blk.pcNext = pc + 2;
+              DEBUG_LOG(SH4, "FastDecode: MOV.L @(R0,R%u),R%u (0x%04X)", m, n, raw);
+              return true;
+          }
+
+          // MOV.L @Rm,Rn (0x0nm2) - Load from memory (for 0662)
+          if ((raw & 0xF00F) == 0x0002)
+          {
+              uint8_t n = (raw >> 8) & 0xF;
+              uint8_t m = (raw >> 4) & 0xF;
+              ins.op = Op::LOAD32;
+              ins.dst.isImm = false; ins.dst.reg = n; // Destination (Rn)
+              ins.src1.isImm = false; ins.src1.reg = m; // Address (Rm)
+              blk.pcNext = pc + 2;
+              DEBUG_LOG(SH4, "FastDecode: MOV.L @R%u,R%u (0x%04X)", m, n, raw);
+              return true;
+          }
+
+          // CMP/EQ #imm,R0 (0x88xx) - Compare immediate with R0 (for 0DD8)
+          if ((raw & 0xFF00) == 0x8800)
+          {
+              int8_t imm = static_cast<int8_t>(raw & 0xFF);
+              ins.op = Op::CMP_EQ_IMM;
+              ins.src1.isImm = false; ins.src1.reg = 0; // R0
+              ins.src2.isImm = true; ins.src2.imm = imm;
+              blk.pcNext = pc + 2;
+              DEBUG_LOG(SH4, "FastDecode: CMP/EQ #%d,R0 (0x%04X)", imm, raw);
+              return true;
+          }
+
+          // MOVA @(disp,PC),R0 (0xC7xx) - Move effective address (for C73F)
+          if ((raw & 0xFF00) == 0xC700)
+          {
+              uint8_t disp = raw & 0xFF;
+              ins.op = Op::MOVA;
+              ins.dst.isImm = false; ins.dst.reg = 0; // R0
+              ins.src1.isImm = true; ins.src1.imm = disp * 4; // PC-relative displacement
+              ins.extra = pc; // Store current PC for calculation
+              blk.pcNext = pc + 2;
+              DEBUG_LOG(SH4, "FastDecode: MOVA @(%u,PC),R0 (0x%04X)", disp*4, raw);
+              return true;
+          }
+
+          // FMOV.S @(R0,Rm),FRn (0xFC07) - Floating point load with R0 offset
+          if (raw == 0xFC07)
+          {
+              ins.op = Op::FMOV_LOAD_R0; // Use specific floating point load operation
+              ins.dst.isImm = false; ins.dst.reg = 0; ins.dst.type = RegType::FGR; // FR0
+              ins.src1.isImm = false; ins.src1.reg = 12; ins.src1.type = RegType::GPR; // R12
+              ins.src2.isImm = false; ins.src2.reg = 0; ins.src2.type = RegType::GPR; // R0
+              blk.pcNext = pc + 2;
+              DEBUG_LOG(SH4, "FastDecode: FMOV.S @(R0,R12),FR0 (0x%04X)", raw);
+              return true;
+          }
+
+          // Debug JSR pattern matching
+          if ((raw & 0xF000) == 0x4000) {
+              INFO_LOG(SH4, "🔍 JSR Debug: raw=0x%04X matches 0x4xxx pattern, checking 0x4n0B...", raw);
+          }
+
+          // JSR @Rn (0x4n0B) - Jump to subroutine at address in register (for 408B)
+          if ((raw & 0xF00F) == 0x400B)
+          {
+              uint8_t n = (raw >> 8) & 0xF;
+              ins.op = Op::JSR;
+              ins.src1.isImm = false; ins.src1.reg = n; ins.src1.type = RegType::GPR;
+              blk.pcNext = pc + 4; // JSR has delay slot
+              INFO_LOG(SH4, "🎯 FastDecode: JSR @R%u (0x%04X) at PC=%08X - MATCHED!", n, raw, pc);
+              return true;
+          }
+
+                    // JMP @Rn (0x4n2B) - Jump to address in register
+          if ((raw & 0xF00F) == 0x402B)
+          {
+              uint8_t n = (raw >> 8) & 0xF;
+              ins.op = Op::JMP;
+              ins.src1.isImm = false; ins.src1.reg = n; ins.src1.type = RegType::GPR;
+              blk.pcNext = pc + 2;
+              DEBUG_LOG(SH4, "FastDecode: JMP @R%u (0x%04X)", n, raw);
+              return true;
+          }
+
+          // Additional missing patterns from game execution
+
+          // FMOV.S @(R0,Rm),FRn (0xFC06) - Floating point load with R0 offset (for FC06)
+          if (raw == 0xFC06)
+          {
+              ins.op = Op::FMOV_LOAD_R0; // Use specific floating point load operation
+              ins.dst.isImm = false; ins.dst.reg = 0; ins.dst.type = RegType::FGR; // FR0
+              ins.src1.isImm = false; ins.src1.reg = 12; ins.src1.type = RegType::GPR; // R12
+              ins.src2.isImm = false; ins.src2.reg = 0; ins.src2.type = RegType::GPR; // R0
+              blk.pcNext = pc + 2;
+              DEBUG_LOG(SH4, "FastDecode: FMOV.S @(R0,R12),FR0 (0x%04X)", raw);
+              return true;
+          }
+
+          // MOV.W @(disp,R0),Rn (0xB8xx) - Load 16-bit with R0 displacement (for B8C3)
+          if ((raw & 0xFF00) == 0xB800)
+          {
+              uint8_t n = (raw >> 4) & 0xF;
+              uint8_t disp = raw & 0xFF;
+              ins.op = Op::LOAD16_R0;
+              ins.dst.isImm = false; ins.dst.reg = n;
+              ins.src1.isImm = false; ins.src1.reg = 0; // R0
+              ins.src2.isImm = true; ins.src2.imm = disp * 2; // Word displacement
+              blk.pcNext = pc + 2;
+              DEBUG_LOG(SH4, "FastDecode: MOV.W @(%u,R0),R%u (0x%04X)", disp*2, n, raw);
+              return true;
+          }
+
+          // MOV.W Rm,@(disp,R0) (0xC9xx) - Store 16-bit with R0 displacement (for C901)
+          if ((raw & 0xFF00) == 0xC900)
+          {
+              uint8_t m = (raw >> 4) & 0xF;
+              uint8_t disp = raw & 0xFF;
+              ins.op = Op::STORE16_R0;
+              ins.src1.isImm = false; ins.src1.reg = m; // Source register
+              ins.src2.isImm = false; ins.src2.reg = 0; // R0
+              ins.extra = disp * 2; // Word displacement
+              blk.pcNext = pc + 2;
+              DEBUG_LOG(SH4, "FastDecode: MOV.W R%u,@(%u,R0) (0x%04X)", m, disp*2, raw);
+              return true;
+          }
+
+          // MOV.B @(disp,R0),Rn (0xB0xx) - Load byte with R0 displacement (for B001)
+          if ((raw & 0xFF00) == 0xB000)
+          {
+              uint8_t n = (raw >> 4) & 0xF;
+              uint8_t disp = raw & 0xFF;
+              ins.op = Op::LOAD8_R0;
+              ins.dst.isImm = false; ins.dst.reg = n;
+              ins.src1.isImm = false; ins.src1.reg = 0; // R0
+              ins.src2.isImm = true; ins.src2.imm = disp; // Byte displacement
+              blk.pcNext = pc + 2;
+              DEBUG_LOG(SH4, "FastDecode: MOV.B @(%u,R0),R%u (0x%04X)", disp, n, raw);
+              return true;
+          }
+
+          // Check for patterns that are clearly not valid SH4 instructions
           uint16_t pattern = raw & 0xF00F;
-          if (pattern == 0x0003 || pattern == 0x0007 || pattern == 0x000B) {
+          if (pattern == 0x0007 || pattern == 0x000B) {
               ERROR_LOG(SH4, "FATAL: Invalid SH4 instruction pattern 0x%04X at PC=%08X. Pattern 0x%04X is not defined in SH4 ISA.",
                        raw, pc, pattern);
               ERROR_LOG(SH4, "This suggests execution has gone off-track or memory corruption. Stopping execution.");
               return false;
           }
+
+
 
           WARN_LOG(SH4, "FastDecode miss: %04X @%08X (bits: %04b_%04b_%04b_%04b)", raw, pc,
                    (raw >> 12) & 0xF, (raw >> 8) & 0xF, (raw >> 4) & 0xF, raw & 0xF);
@@ -2324,7 +2524,7 @@ static bool FastDecode(uint16_t raw, uint32_t pc, Instr &ins, Block &blk)
         ins.src1.isImm = false;
         ins.src1.reg = n;
         ins.src1.type = RegType::GPR;
-        blk.pcNext = pc + 2;
+        blk.pcNext = pc + 4; // JSR has delay slot
         return true;
 
     case Op::BRA:
