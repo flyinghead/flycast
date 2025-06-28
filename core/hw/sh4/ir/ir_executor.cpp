@@ -176,6 +176,10 @@ static inline const float* GET_XF(Sh4Context* ctx)
 #define SET_REG(ctx, idx, val) do { \
         if ((idx) == 6) { LOG_R6_WRITE((val), next_pc, "GENERIC"); } \
         else if ((idx) == 5) { LOG_R5_WRITE((val), next_pc, "GENERIC"); } \
+        else if ((idx) == 15 && (val) >= 0x1FFD0000 && (val) <= 0x1FFFFFFF) { \
+            ERROR_LOG(SH4, "🚨 R15 CORRUPTION: Setting R15 to problematic range %08X at PC=%08X", (val), next_pc); \
+            DumpTrace(); \
+        } \
         Sh4cntx.r[(idx)] = (val); \
     } while(0)
 
@@ -515,9 +519,9 @@ static inline u8 *FastRamPtr(uint32_t addr) {
 static bool g_logged_high_r0 = false;
 static inline void LogHighR0(Sh4Context* c, uint32_t pc, Op op)
 {
-    if (!g_logged_high_r0 && GET_REG(c, 0) >= 0x20000000)
+    if (!g_logged_high_r0 && Sh4cntx.r[0] >= 0x20000000)
     {
-        INFO_LOG(SH4, "R0 HIGH: 0x%08X set at PC=0x%08X by %s", GET_REG(c, 0), next_pc, GetOpName(static_cast<size_t>(op)));
+        INFO_LOG(SH4, "R0 HIGH: 0x%08X set at PC=0x%08X by %s", Sh4cntx.r[0], pc, GetOpName(static_cast<size_t>(op)));
         g_logged_high_r0 = true;
     }
 }
@@ -2415,6 +2419,28 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                     ERROR_LOG(SH4, "🚨 EXECUTION INTO BOOT ROM: PC=%08X set by %s (raw=%04X) at PC=%08X",
                              next_pc, GetOpName(static_cast<size_t>(ins.op)), ins.raw, pre_pc);
                     ERROR_LOG(SH4, "🚨 This indicates severe execution corruption - dumping trace");
+                    DumpTrace();
+                    throw SH4ThrownException(pre_pc, Sh4Ex_IllegalInstr);
+                }
+
+                // Check for stack pointer corruption (only check for the specific problematic range)
+                uint32_t sp = GET_REG(ctx, 15);
+                if (unlikely(sp >= 0x1FFD0000 && sp <= 0x1FFFFFFF)) {
+                    ERROR_LOG(SH4, "🚨 STACK POINTER CORRUPTION: R15=%08X set by %s (raw=%04X) at PC=%08X",
+                             sp, GetOpName(static_cast<size_t>(ins.op)), ins.raw, pre_pc);
+                    ERROR_LOG(SH4, "🚨 Stack pointer is in problematic range seen in infinite loop");
+                    DumpTrace();
+                    throw SH4ThrownException(pre_pc, Sh4Ex_IllegalInstr);
+                }
+
+                // Check for PC corruption to the problematic range we've seen
+                if (unlikely(next_pc >= 0x1FFD0000 && next_pc <= 0x1FFFFFFF)) {
+                    ERROR_LOG(SH4, "🚨 PC CORRUPTION DETECTED: PC=%08X set by %s (raw=%04X) at PC=%08X",
+                             next_pc, GetOpName(static_cast<size_t>(ins.op)), ins.raw, pre_pc);
+                    ERROR_LOG(SH4, "🚨 PC is in problematic range seen in infinite loop - dumping state");
+                    ERROR_LOG(SH4, "🚨 Current registers: R0=%08X R15=%08X", GET_REG(ctx, 0), GET_REG(ctx, 15));
+                    ERROR_LOG(SH4, "🚨 Instruction details: dst.reg=%d src1.reg=%d src1.isImm=%d src1.imm=%d extra=%d",
+                             ins.dst.reg, ins.src1.reg, ins.src1.isImm, ins.src1.imm, ins.extra);
                     DumpTrace();
                     throw SH4ThrownException(pre_pc, Sh4Ex_IllegalInstr);
                 }
