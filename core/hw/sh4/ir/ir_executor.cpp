@@ -1,5 +1,6 @@
 #include "ir_executor.h"
 #include "hw/sh4/sh4_if.h"  // for Sh4cntx macro
+#include "reios/reios.h"    // for reios_trap
 
 #ifndef UNLIKELY
 #define UNLIKELY(x) __builtin_expect(!!(x), 0)
@@ -153,33 +154,29 @@ static inline void UpdateContextFPUL(Sh4Context* ctx, u32 value)
     }
 }
 
-// Helper functions for accessing floating point registers
+// Helper functions for accessing floating point registers - use global context
 static inline float& GET_FR(Sh4Context* ctx, int reg)
 {
-    return ctx->xffr[reg + 16]; // fr = &Sh4cntx.xffr[16]
+    return Sh4cntx.xffr[reg + 16]; // fr = &Sh4cntx.xffr[16]
 }
 
 static inline void SET_FR(Sh4Context* ctx, int reg, float value)
 {
-    if(ctx) {
-        ctx->xffr[reg + 16] = value;
-    } else {
-        ERROR_LOG(SH4, "SET_FR: ctx is NULL!");
-    }
+    Sh4cntx.xffr[reg + 16] = value;
 }
 
 // Helper function to get extended floating point registers (xf)
 static inline const float* GET_XF(Sh4Context* ctx)
 {
-    return &ctx->xffr[0]; // xf = &Sh4cntx.xffr[0]
+    return &Sh4cntx.xffr[0]; // xf = &Sh4cntx.xffr[0]
 }
 
-// Helper macros for register access - use local context
-#define GET_REG(ctx, idx) ((ctx)->r[(idx)])
+// Helper macros for register access - use global context directly
+#define GET_REG(ctx, idx) (Sh4cntx.r[(idx)])
 #define SET_REG(ctx, idx, val) do { \
-        if ((idx) == 6) { LOG_R6_WRITE((val), (ctx)->pc, "GENERIC"); } \
-        else if ((idx) == 5) { LOG_R5_WRITE((val), (ctx)->pc, "GENERIC"); } \
-        (ctx)->r[(idx)] = (val); \
+        if ((idx) == 6) { LOG_R6_WRITE((val), next_pc, "GENERIC"); } \
+        else if ((idx) == 5) { LOG_R5_WRITE((val), next_pc, "GENERIC"); } \
+        Sh4cntx.r[(idx)] = (val); \
     } while(0)
 
 // Debug: log writes to R6 to trace corruption of jump register
@@ -473,8 +470,7 @@ static inline void SetPC(Sh4Context* ctx, uint32_t new_pc, const char* why)
         ERROR_LOG(SH4, "*** PC crossed into top region: %08X -> %08X via %s", old_pc, new_pc, why);
     }
 
-    // Update both the per-thread context and the legacy globals so all code paths agree.
-    next_pc = new_pc;
+    // Update the global next_pc (no need for dual context management)
     next_pc = new_pc;
 }
 
@@ -1061,18 +1057,28 @@ static void Exec_JSR(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t pc) {
 static void Exec_TRAPA(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t pc)
 {
     uint8_t trap_no = static_cast<uint8_t>(ins.src1.imm & 0xFF);
-    CCN_TRA = trap_no << 2;
 
-    // Set the exception event code for TRAPA (0x160)
+    // Special case: REIOS trap (0x5B)
+    if (trap_no == 0x5B) {
+        INFO_LOG(SH4, "REIOS TRAP #%02X at PC=%08X - calling reios_trap()", trap_no, pc);
+
+        // Set the global PC correctly before calling reios_trap
+        // reios_trap calculates pc = next_pc - 2, so we need next_pc = A0000002 to get pc = A0000000
+        // Since pc (curr_pc) = 9FFFFFFE, we need next_pc = A0000000 + 2 = A0000002
+        SetPC(ctx, pc + 4, "TRAPA reios setup");
+
+        // Call the reios trap handler - this will handle BIOS emulation
+        reios_trap(0x085B);  // Pass the full opcode
+
+        // PC will be updated by reios_trap() if needed - don't override it
+        return;
+    }
+
+    // Regular TRAPA handling
+    CCN_TRA = trap_no << 2;
     CCN_EXPEVT = 0x160;
 
-    INFO_LOG(SH4, "TRAPA #%02X at PC=%08X - handling as system call", trap_no, pc);
-
-    // For now, treat TRAPA as a NOP and continue execution
-    // This allows the game to continue running while we debug the system call interface
-    INFO_LOG(SH4, "TRAPA #%02X - treating as NOP, continuing execution at PC=%08X", trap_no, pc + 2);
-
-    // Simply advance to the next instruction
+    INFO_LOG(SH4, "TRAPA #%02X at PC=%08X - treating as NOP", trap_no, pc);
     SetPC(ctx, pc + 2, "TRAPA NOP");
 }
 #define ssr Sh4cntx.ssr
@@ -1559,7 +1565,7 @@ static void Exec_TST_IMM(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
 static void Exec_TST_B(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
 {
     uint32_t imm = static_cast<uint32_t>(ins.extra) & 0xFF;
-    uint32_t addr = ctx->gbr + GET_REG(ctx, 0);
+    uint32_t addr = Sh4cntx.gbr + GET_REG(ctx, 0);
     uint8_t  val  = RawRead8(addr);
     uint8_t  res  = val & static_cast<uint8_t>(imm);
     SET_SR_T(ctx, (res == 0) ? 1 : 0);
@@ -2358,6 +2364,17 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
         g_opExecCounts[static_cast<size_t>(ins.op)]++;
         g_totalExecCount++;
 
+        // Add trace logging for every instruction
+        TraceLog(curr_pc, ins.op);
+
+        // Check for the specific invalid pattern we've seen
+        if (unlikely(ins.raw == 0x085B)) {
+            ERROR_LOG(SH4, "🚨 DETECTED INVALID PATTERN 0x085B at PC=%08X - execution corruption detected!", curr_pc);
+            ERROR_LOG(SH4, "🚨 This pattern was seen in Boot ROM write issues - dumping trace");
+            DumpTrace();
+            throw SH4ThrownException(curr_pc, Sh4Ex_IllegalInstr);
+        }
+
         MaybeDumpStats();
 #endif // end boot-trace block
 
@@ -2372,9 +2389,42 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
             DEBUG_LOG(SH4, "Executing instruction at PC=%08X, op=%d hex=%04X (%s), fn=%p, ExecStub=%p",
                    next_pc, static_cast<int>(ins.op), ins.raw, GetOpName(static_cast<size_t>(ins.op)), fn, ExecStub);
 #endif
+
+            // Store pre-execution state for validation
+            uint32_t pre_pc = ctx->pc;
+            uint32_t pre_r0 = GET_REG(ctx, 0);
+
             if (fn != &ExecStub)
             {
                 fn(ins, ctx, curr_pc);
+
+                                // Post-execution validation to catch bad opcode implementations
+                if (unlikely(next_pc == 0 && pre_pc != 0)) {
+                    ERROR_LOG(SH4, "🚨 OPCODE VALIDATION FAILURE: PC set to ZERO by %s (raw=%04X) at PC=%08X",
+                             GetOpName(static_cast<size_t>(ins.op)), ins.raw, pre_pc);
+                    ERROR_LOG(SH4, "🚨 Instruction details: dst.reg=%d src1.reg=%d src1.imm=%d extra=%d",
+                             ins.dst.reg, ins.src1.reg, ins.src1.imm, ins.extra);
+                    ERROR_LOG(SH4, "🚨 Register values: R%d=%08X", ins.src1.reg,
+                             ins.src1.isImm ? ins.src1.imm : GET_REG(ctx, ins.src1.reg));
+                    DumpTrace();
+                    throw SH4ThrownException(pre_pc, Sh4Ex_IllegalInstr);
+                }
+
+                // Check for execution going into Boot ROM area (should never happen)
+                if (unlikely(next_pc < 0x200 && next_pc != 0)) {
+                    ERROR_LOG(SH4, "🚨 EXECUTION INTO BOOT ROM: PC=%08X set by %s (raw=%04X) at PC=%08X",
+                             next_pc, GetOpName(static_cast<size_t>(ins.op)), ins.raw, pre_pc);
+                    ERROR_LOG(SH4, "🚨 This indicates severe execution corruption - dumping trace");
+                    DumpTrace();
+                    throw SH4ThrownException(pre_pc, Sh4Ex_IllegalInstr);
+                }
+
+                                // Check for serious register corruption (less aggressive)
+                if (unlikely(GET_REG(ctx, 0) == 0xDEADBEEF || GET_REG(ctx, 0) == 0xBADDF00D)) {
+                    ERROR_LOG(SH4, "🚨 REGISTER CORRUPTION: R0 set to magic value %08X by %s (raw=%04X) at PC=%08X",
+                             GET_REG(ctx, 0), GetOpName(static_cast<size_t>(ins.op)), ins.raw, pre_pc);
+                    DumpTrace();
+                }
             }
             else
             {
@@ -2796,18 +2846,18 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                 }
                 case Op::LOAD8_GBR:
                 {
-                    u8 val = RawRead8(ctx->gbr + static_cast<uint32_t>(ins.extra));
+                    u8 val = RawRead8(Sh4cntx.gbr + static_cast<uint32_t>(ins.extra));
                     SET_REG(ctx, ins.dst.reg, static_cast<uint32_t>(static_cast<int8_t>(val)));
                     break;
                 }
                 case Op::LOAD16_GBR:
                 {
-                    u16 val = RawRead16(ctx->gbr + static_cast<uint32_t>(ins.extra));
+                    u16 val = RawRead16(Sh4cntx.gbr + static_cast<uint32_t>(ins.extra));
                     SET_REG(ctx, ins.dst.reg, static_cast<uint32_t>(static_cast<int16_t>(val)));
                     break;
                 }
                 case Op::LOAD32_GBR:
-                    SET_REG(ctx, ins.dst.reg, RawRead32(ctx->gbr + static_cast<uint32_t>(ins.extra)));
+                    SET_REG(ctx, ins.dst.reg, RawRead32(Sh4cntx.gbr + static_cast<uint32_t>(ins.extra)));
                     break;
                 case Op::LOAD8_POST:
                 {
@@ -2877,16 +2927,16 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                     break;
                 }
                 case Op::STORE8_GBR:
-                    if (!IsBiosAddr(ctx->gbr + static_cast<uint32_t>(ins.extra)))
-                        RawWrite8(ctx->gbr + static_cast<uint32_t>(ins.extra), GET_REG(ctx, ins.src1.reg));
+                    if (!IsBiosAddr(Sh4cntx.gbr + static_cast<uint32_t>(ins.extra)))
+                        RawWrite8(Sh4cntx.gbr + static_cast<uint32_t>(ins.extra), GET_REG(ctx, ins.src1.reg));
                     break;
                 case Op::STORE16_GBR:
-                    if (!IsBiosAddr(ctx->gbr + static_cast<uint32_t>(ins.extra)))
-                        RawWrite16(ctx->gbr + static_cast<uint32_t>(ins.extra), static_cast<u16>(GET_REG(ctx, ins.src1.reg)));
+                    if (!IsBiosAddr(Sh4cntx.gbr + static_cast<uint32_t>(ins.extra)))
+                        RawWrite16(Sh4cntx.gbr + static_cast<uint32_t>(ins.extra), static_cast<u16>(GET_REG(ctx, ins.src1.reg)));
                     break;
                 case Op::STORE32_GBR:
-                    if (!IsBiosAddr(ctx->gbr + static_cast<uint32_t>(ins.extra)))
-                        RawWrite32(ctx->gbr + static_cast<uint32_t>(ins.extra), GET_REG(ctx, ins.src1.reg));
+                    if (!IsBiosAddr(Sh4cntx.gbr + static_cast<uint32_t>(ins.extra)))
+                        RawWrite32(Sh4cntx.gbr + static_cast<uint32_t>(ins.extra), GET_REG(ctx, ins.src1.reg));
                     break;
 
                 case Op::LOAD8_R0:
@@ -4100,6 +4150,21 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                           throw SH4ThrownException(next_pc, Sh4Ex_IllegalInstr);
                       }
                 } // end switch (ins.op)
+
+                // Post-execution validation for switch statement cases
+                if (unlikely(next_pc == 0 && pre_pc != 0)) {
+                    ERROR_LOG(SH4, "🚨 SWITCH CASE VALIDATION FAILURE: PC set to ZERO by %s (raw=%04X) at PC=%08X",
+                             GetOpName(static_cast<size_t>(ins.op)), ins.raw, pre_pc);
+                    DumpTrace();
+                    throw SH4ThrownException(pre_pc, Sh4Ex_IllegalInstr);
+                }
+
+                                // Check for serious register corruption in switch cases (less aggressive)
+                if (unlikely(GET_REG(ctx, 0) == 0xDEADBEEF || GET_REG(ctx, 0) == 0xBADDF00D)) {
+                    ERROR_LOG(SH4, "🚨 SWITCH CASE REGISTER CORRUPTION: R0 set to magic value %08X by %s (raw=%04X) at PC=%08X",
+                             GET_REG(ctx, 0), GetOpName(static_cast<size_t>(ins.op)), ins.raw, pre_pc);
+                    DumpTrace();
+                }
             } // end else dispatch
         } // end else dispatch
         // Early exit if END instruction was executed via an ExecFn handler that
@@ -4231,7 +4296,7 @@ void Executor::ResetCachedBlocks()
 // -----------------------------------------------------------------------------
 static void Exec_LOAD8_GBR(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
 {
-    uint32_t addr = ctx->gbr + static_cast<uint32_t>(ins.extra);
+    uint32_t addr = Sh4cntx.gbr + static_cast<uint32_t>(ins.extra);
     DEBUG_LOG(SH4, "LOAD8_GBR disp=%u addr=%08X", ins.extra, addr);
     uint8_t val = RawRead8(addr);
     SET_REG(ctx, ins.dst.reg, static_cast<uint32_t>(static_cast<int8_t>(val)));
@@ -4239,7 +4304,7 @@ static void Exec_LOAD8_GBR(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
 
 static void Exec_LOAD16_GBR(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
 {
-    uint32_t addr = ctx->gbr + (static_cast<uint32_t>(ins.extra) << 1);
+    uint32_t addr = Sh4cntx.gbr + (static_cast<uint32_t>(ins.extra) << 1);
     DEBUG_LOG(SH4, "LOAD16_GBR disp=%u addr=%08X", ins.extra, addr);
     uint16_t val = RawRead16(addr);
     SET_REG(ctx, ins.dst.reg, static_cast<uint32_t>(static_cast<int16_t>(val)));
@@ -4247,28 +4312,28 @@ static void Exec_LOAD16_GBR(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t
 
 static void Exec_LOAD32_GBR(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
 {
-    uint32_t addr = ctx->gbr + (static_cast<uint32_t>(ins.extra) << 2);
+    uint32_t addr = Sh4cntx.gbr + (static_cast<uint32_t>(ins.extra) << 2);
     uint32_t val = RawRead32(addr);
     SET_REG(ctx, ins.dst.reg, val);
 }
 
 static void Exec_STORE8_GBR(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
 {
-    uint32_t addr = ctx->gbr + static_cast<uint32_t>(ins.extra);
+    uint32_t addr = Sh4cntx.gbr + static_cast<uint32_t>(ins.extra);
     uint8_t val = static_cast<uint8_t>(GET_REG(ctx, ins.src1.reg));
     RawWrite8(addr, val);
 }
 
 static void Exec_STORE16_GBR(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
 {
-    uint32_t addr = ctx->gbr + (static_cast<uint32_t>(ins.extra) << 1);
+    uint32_t addr = Sh4cntx.gbr + (static_cast<uint32_t>(ins.extra) << 1);
     uint16_t val = static_cast<uint16_t>(GET_REG(ctx, ins.src1.reg));
     RawWrite16(addr, val);
 }
 
 static void Exec_STORE32_GBR(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
 {
-    uint32_t addr = ctx->gbr + (static_cast<uint32_t>(ins.extra) << 2);
+    uint32_t addr = Sh4cntx.gbr + (static_cast<uint32_t>(ins.extra) << 2);
     uint32_t val = GET_REG(ctx, ins.src1.reg);
     RawWrite32(addr, val);
 }
