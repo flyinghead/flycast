@@ -562,7 +562,6 @@ static inline u16 RawRead16(uint32_t a)
     u16 v;
     if (IsSqPhysAddr(a)) {
         v = *reinterpret_cast<const u16*>(&g_sq_buffer[SqOffset(a)]);
-
     } else {
         v = ReadMem16(a);
     }
@@ -577,10 +576,9 @@ static inline u32 RawRead32(uint32_t a)
     if (IsSqPhysAddr(a)) {
         v = *reinterpret_cast<const u32*>(&g_sq_buffer[SqOffset(a)]);
         INFO_LOG(SH4, "SQ READ32 addr=0x%08X off=%u val=0x%08X", a, SqOffset(a), v);
-
     } else {
         v = ReadMem32(a);
-        INFO_LOG(SH4, "%s READ32 addr=0x%08X val=0x%08X", "MEM", a, v);
+        INFO_LOG(SH4, "%s read32 addr=0x%08X val=0x%08X", "MEM", a, v);
     }
     if (UNLIKELY(g_exception_was_raised))
         return 0;
@@ -595,10 +593,9 @@ static inline u64 RawRead64(uint32_t a)
         u32 hi = *reinterpret_cast<const u32*>(&g_sq_buffer[SqOffset(a)+4]);
         v = (static_cast<u64>(hi) << 32) | lo;
         INFO_LOG(SH4, "SQ READ64 addr=0x%08X off=%u val=0x%08X", a, SqOffset(a), v);
-
     } else {
       v = ReadMem64(a);
-      INFO_LOG(SH4, "%s READ64 addr=0x%08X val=0x%08X", "MEM", a, v);
+      INFO_LOG(SH4, "%s read64 addr=0x%08X val=0x%08X", "MEM", a, v);
     }
     if (UNLIKELY(g_exception_was_raised))
         return 0;
@@ -712,7 +709,6 @@ static inline void RawWrite64(uint32_t a, u64 d)
         addrspace::write32(a + 4, high);
         return;
     }
-
     if (!g_exception_was_raised)
     {
         WriteMem64(a, d);
