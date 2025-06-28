@@ -127,18 +127,18 @@ static inline void UpdateContextFPUL(Sh4Context* ctx, u32 value)
 // Helper functions for accessing floating point registers - use global context
 static inline float& GET_FR(Sh4Context* ctx, int reg)
 {
-    return Sh4cntx.xffr[reg + 16]; // fr = &Sh4cntx.xffr[16]
+    return xf[reg + 16]; // fr = &xf[16]
 }
 
 static inline void SET_FR(Sh4Context* ctx, int reg, float value)
 {
-    Sh4cntx.xffr[reg + 16] = value;
+    xf[reg + 16] = value;
 }
 
 // Helper function to get extended floating point registers (xf)
 static inline const float* GET_XF(Sh4Context* ctx)
 {
-    return &Sh4cntx.xffr[0]; // xf = &Sh4cntx.xffr[0]
+    return &xf[0]; // xf = &xf[0]
 }
 
 // Helper macros for register access - use global context directly
@@ -3931,7 +3931,7 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                             conv.f[0] = bank[dr * 2 + 1];
                             return conv.d;
                         };
-                        const float* bank = use_alt_bank ? GET_XF(ctx) : &Sh4cntx.xffr[16];
+                        const float* bank = use_alt_bank ? GET_XF(ctx) : &xf[16];
                         double a = readDR(bank, ins.dst.reg >> 1);
                         double b = readDR(bank, ins.src1.reg >> 1);
                         bool res = (a == b);
@@ -3940,7 +3940,7 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                     }
                     else
                     {
-                        const float* bank = use_alt_bank ? GET_XF(ctx) : &Sh4cntx.xffr[16];
+                        const float* bank = use_alt_bank ? GET_XF(ctx) : &xf[16];
                         bool res = (bank[ins.dst.reg] == bank[ins.src1.reg]);
                         INFO_LOG(SH4, "FCMP_EQ FR%u(%.6f) == FR%u(%.6f) -> T=%d", ins.dst.reg, bank[ins.dst.reg], ins.src1.reg, bank[ins.src1.reg], res);
                         SET_SR_T(ctx, res);
@@ -3959,7 +3959,7 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                             conv.f[0] = bank[dr * 2 + 1];
                             return conv.d;
                         };
-                        const float* bank = use_alt_bank ? GET_XF(ctx) : &Sh4cntx.xffr[16];
+                        const float* bank = use_alt_bank ? GET_XF(ctx) : &xf[16];
                         double a = readDR(bank, ins.dst.reg >> 1);
                         double b = readDR(bank, ins.src1.reg >> 1);
                         bool res = (a > b);
@@ -3968,7 +3968,7 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                     }
                     else
                     {
-                        const float* bank = use_alt_bank ? GET_XF(ctx) : &Sh4cntx.xffr[16];
+                        const float* bank = use_alt_bank ? GET_XF(ctx) : &xf[16];
                         bool res = (bank[ins.dst.reg] > bank[ins.src1.reg]);
                         INFO_LOG(SH4, "FCMP_GT FR%u(%.6f) > FR%u(%.6f) -> T=%d", ins.dst.reg, bank[ins.dst.reg], ins.src1.reg, bank[ins.src1.reg], res);
                         SET_SR_T(ctx, res);
@@ -4092,7 +4092,7 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                         // Register-to-register move
                         if (fpscr.PR) {
                             // Double-precision : copy 64-bit DRm -> DRn
-                            double* d_fr = reinterpret_cast<double*>(&Sh4cntx.xffr[16]);
+                            double* d_fr = reinterpret_cast<double*>(&xf[16]);
                             int dr_dst_idx = ins.dst.reg ;
                             int dr_src_idx = ins.src1.reg ;
                             d_fr[dr_dst_idx] = d_fr[dr_src_idx];
@@ -4108,7 +4108,7 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                         if (fpscr.PR) {
                             // Load 64-bit and advance Rm by 8
                             uint64_t val64 = RawRead64(addr);
-                            double* d_fr = reinterpret_cast<double*>(&Sh4cntx.xffr[16]);
+                            double* d_fr = reinterpret_cast<double*>(&xf[16]);
                             int dr_dst_idx = ins.dst.reg ;
                             d_fr[dr_dst_idx] = *reinterpret_cast<double*>(&val64);
                             GET_REG(ctx, ins.src1.reg) += 8;
