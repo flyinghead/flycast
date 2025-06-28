@@ -1,6 +1,7 @@
 #include "ir_emitter.h"
 #include "hw/sh4/sh4_if.h"  // for Sh4Context, etc.
 #include "hw/sh4/modules/mmu.h"
+#include "hw/sh4/sh4_mem.h"  // for memory function pointers
 #include "deps/vixl/utils-vixl.h" // For SignExtend
 #include "log/Log.h"
 #include "types.h"
@@ -24,7 +25,7 @@ static uint64_t CalcBlockSig(uint32_t pc)
     uint8_t buf[64];
     for (int i = 0; i < 32; ++i)
     {
-        uint16_t op = mmu_IReadMem16(pc + i * 2);
+        uint16_t op = IReadMem16(pc + i * 2);
         buf[i * 2]     = static_cast<uint8_t>(op & 0xFF);
         buf[i * 2 + 1] = static_cast<uint8_t>(op >> 8);
     }
@@ -2279,7 +2280,14 @@ static bool FastDecode(uint16_t raw, uint32_t pc, Instr &ins, Block &blk)
     if (raw == 0x1304) INFO_LOG(SH4, "DEBUG: 0x1304 - should match MOV.L store pattern");
     if (raw == 0x7129) INFO_LOG(SH4, "DEBUG: 0x7129 - should match ADD #imm pattern");
 
-    Op op = static_cast<Op>(kEmitterTable[raw]);
+            Op op = static_cast<Op>(kEmitterTable[raw]);
+
+        // Special debugging for B009 opcode
+        if (raw == 0xB009) {
+            ERROR_LOG(SH4, "🔍 B009 DEBUG: kEmitterTable[0xB009] returned Op::%d (ILLEGAL=%d, BSR=%d, LOAD8_R0=%d)",
+                      static_cast<int>(op), static_cast<int>(Op::ILLEGAL), static_cast<int>(Op::BSR), static_cast<int>(Op::LOAD8_R0));
+        }
+
           if (op == Op::ILLEGAL)
       {
           // Check if this is a clearly invalid instruction pattern
@@ -2465,8 +2473,8 @@ static bool FastDecode(uint16_t raw, uint32_t pc, Instr &ins, Block &blk)
               return true;
           }
 
-          // MOV.B @(disp,R0),Rn (0xB0xx) - Load byte with R0 displacement (for B001)
-          if ((raw & 0xFF00) == 0xB000)
+          // MOV.B @(disp,R0),Rn (0x84xx) - Load byte with R0 displacement
+          if ((raw & 0xFF00) == 0x8400)
           {
               uint8_t n = (raw >> 4) & 0xF;
               uint8_t disp = raw & 0xFF;
@@ -2594,7 +2602,7 @@ Block& Emitter::CreateNew(uint32_t pc) {
     // here later, so decoding zeros would produce a permanent NOP block.
     if (((pc & 0xFC000000) == 0x8C000000) || ((pc & 0xFC000000) == 0x0C000000))
     {
-        u32 firstWord = (static_cast<u32>(mmu_IReadMem16(pc)) << 16) | mmu_IReadMem16(pc + 2);
+        u32 firstWord = (static_cast<u32>(IReadMem16(pc)) << 16) | IReadMem16(pc + 2);
         if (firstWord == 0)
         {
             static Block temp; // thread-unsafe but fine for single-threaded SH4
@@ -2635,7 +2643,7 @@ Block& Emitter::CreateNew(uint32_t pc) {
             DEBUG_LOG(SH4, "Emitter::CreateNew: Processing target PC=0xAC000000");
             fflush(stdout);
         }
-        uint16_t raw = mmu_IReadMem16(pc);
+                uint16_t raw = IReadMem16(pc);
         DEBUG_LOG(SH4, "Emitter::CreateNew: PC=0x%08X, raw_opcode=0x%04X", pc, raw);
 
                         // Special handling for BIOS start address
@@ -2721,7 +2729,7 @@ Block& Emitter::CreateNew(uint32_t pc) {
 
             // Decode following instruction so sequential Step(2) tests work
             uint32_t next_pc_addr = pc + 2;
-            uint16_t next_raw = mmu_IReadMem16(next_pc_addr);
+            uint16_t next_raw = IReadMem16(next_pc_addr);
 
             Instr next_ins{}; // zero-initialised avoids stale fields
             Block scratch_blk; // temporary for FastDecode (fills blk.pcNext)
@@ -2762,7 +2770,7 @@ Block& Emitter::CreateNew(uint32_t pc) {
                 if (blk.pcNext != curr_pc_addr)
                     break; // pcNext already diverged – control-flow boundary reached
 
-                uint16_t next_raw = mmu_IReadMem16(curr_pc_addr);
+                uint16_t next_raw = IReadMem16(curr_pc_addr);
                 Instr next_ins{}; // clear
                 Block scratch_blk; // temporary for FastDecode (fills blk.pcNext)
                 bool decoded_ok = FastDecode(next_raw, curr_pc_addr, next_ins, scratch_blk);
@@ -2782,7 +2790,7 @@ Block& Emitter::CreateNew(uint32_t pc) {
                 if (blk.pcNext == curr_pc_addr + 4)
                 {
                     uint32_t slot_pc  = curr_pc_addr + 2;
-                    uint16_t slot_raw = mmu_IReadMem16(slot_pc);
+                    uint16_t slot_raw = IReadMem16(slot_pc);
                     Instr slot{};
                     Block dummy_slot_blk;
                     bool slot_ok = FastDecode(slot_raw, slot_pc, slot, dummy_slot_blk);
@@ -2831,7 +2839,7 @@ Block& Emitter::CreateNew(uint32_t pc) {
             if (blk.pcNext == pc + 4)
             {
                 uint32_t slot_pc = pc + 2;
-                uint16_t slot_raw = mmu_IReadMem16(slot_pc);
+                uint16_t slot_raw = IReadMem16(slot_pc);
                 Instr slot{};
                 // For decoding the slot, use a dummy block to prevent FastDecode from altering the main block's pcNext.
                 // The main block's pcNext is determined by the primary branch instruction.
@@ -2985,7 +2993,7 @@ uint32_t cur_pc = blk.pcNext;
 int    seq_count = 1; // already have one instr in block
 while (seq_count < 32 && blk.pcNext == cur_pc) // keep adding while linear flow
 {
-    uint16_t next_raw = mmu_IReadMem16(cur_pc);
+    uint16_t next_raw = IReadMem16(cur_pc);
     // Do not extend the block past the first idle / NOP sequence marker.
     // Unit-tests typically place just a single instruction in memory and
     // leave the surrounding area zero-filled.  Executing those zeros
@@ -3015,7 +3023,7 @@ while (seq_count < 32 && blk.pcNext == cur_pc) // keep adding while linear flow
         // handle delay slot likewise
         if (blk.pcNext == cur_pc + 4) {
             uint32_t slot_pc = cur_pc + 2;
-            uint16_t slot_raw = mmu_IReadMem16(slot_pc);
+            uint16_t slot_raw = IReadMem16(slot_pc);
             Instr slot_dec{};
             Block dslot_blk; dslot_blk.pcStart = slot_pc;
             FastDecode(slot_raw, slot_pc, slot_dec, dslot_blk);
@@ -3110,12 +3118,11 @@ else if ((raw & 0xF000) == 0xA000)
 // BSR disp12 (0xB000 | disp)
 else if ((raw & 0xF000) == 0xB000)
 {
-    INFO_LOG(SH4, "Emitter::CreateNew: Manual BSR handler (0xB000) hit for PC=0x%08X, raw=0x%04X", pc, raw);
+    ERROR_LOG(SH4, "🔍 BSR DEBUG: Manual BSR handler (0xB000) hit for PC=0x%08X, raw=0x%04X", pc, raw);
     ins.op = Op::BSR;
     ins.extra = vixl::SignExtend<int32_t>(raw & 0x0FFF, 12) * 2; // Displacement is 12-bit, sign-extended, and scaled by 2
     blk.pcNext = pc + 4; // BSR is a delayed branch
-    INFO_LOG(SH4, "Emitter::CreateNew: Manual BSR handler (0xB000) hit for PC=0x%08X, raw=0x%04X. Displacement (ins.extra)=0x%08X, Target (calculated by executor)=0x%08X", pc, raw, ins.extra, pc + 4 + ins.extra);
-    INFO_LOG(SH4, "Emitter::CreateNew: Manual BSR handler set blk.pcNext=0x%08X", blk.pcNext);
+    ERROR_LOG(SH4, "🔍 BSR DEBUG: Displacement (ins.extra)=0x%08X, Target=0x%08X, blk.pcNext=0x%08X", ins.extra, pc + 4 + ins.extra, blk.pcNext);
     decoded = true;
 }
 // BSRF Rn  (0x0n03)
@@ -4919,7 +4926,7 @@ else if ((raw & 0xF000) == 0xF000)
             if (blk.pcNext == pc + 4)
             {
                 uint32_t slot_pc = pc + 2;
-                uint16_t slot_raw = mmu_IReadMem16(slot_pc);
+                uint16_t slot_raw = IReadMem16(slot_pc);
                 Instr slot{};
                 // Make sure the slot carries its own PC and raw encoding so the executor
                 // can correctly attribute the instruction.  Omitting this caused the slot

@@ -147,12 +147,17 @@ static inline const float* GET_XF(Sh4Context* ctx)
         if ((idx) == 6) { LOG_R6_WRITE((val), next_pc, "GENERIC"); } \
         else if ((idx) == 5) { LOG_R5_WRITE((val), next_pc, "GENERIC"); } \
         else if ((idx) == 15) { \
+            uint32_t old_r15 = r[15]; \
             if ((val) >= 0x1FFD0000 && (val) <= 0x1FFFFFFF) { \
                 ERROR_LOG(SH4, "🚨 R15 CORRUPTION: Setting R15 to problematic range %08X at PC=%08X", (val), next_pc); \
                 DumpTrace(); \
                 throw SH4ThrownException(next_pc, Sh4Ex_IllegalInstr); \
+            } else if ((val) == 0x7E001000) { \
+                ERROR_LOG(SH4, "🚨 R15 CORRUPTED AGAIN! Stack pointer set back to 0x7E001000 (was %08X) at PC=%08X", old_r15, next_pc); \
+                DumpTrace(); \
+                throw SH4ThrownException(next_pc, Sh4Ex_IllegalInstr); \
             } else if ((val) > 0x20000000 && (val) != 0xBAADF00D) { \
-                WARN_LOG(SH4, "⚠️ R15 HIGH: Setting R15 to suspicious value %08X at PC=%08X", (val), next_pc); \
+                ERROR_LOG(SH4, "🔍 R15 WRITE: %08X -> %08X at PC=%08X", old_r15, (val), next_pc); \
             } \
         } \
         r[(idx)] = (val); \
@@ -579,6 +584,11 @@ static inline bool is_mmu_on() { return mmu_enabled(); }
 
 static inline u8  RawRead8(uint32_t a)
 {
+    // Debug the problematic read from 0x18010750
+    if (a == 0x18010750) {
+        ERROR_LOG(SH4, "🔍 RawRead8 DEBUG: Reading from problematic address 0x%08X", a);
+    }
+
     u8 v;
     if (IsSqPhysAddr(a)) {
         v = g_sq_buffer[SqOffset(a)];
@@ -596,6 +606,12 @@ static inline u8  RawRead8(uint32_t a)
 
 static inline u16 RawRead16(uint32_t a)
 {
+    // Debug problematic reads from 1ffc0xxx range (starting with 1ffc0462)
+    if ((a & 0xFFFF0000) == 0x1FFC0000) {
+        printf("🔍 RawRead16 DEBUG: Reading from problematic address 0x%08X\n", a);
+        fflush(stdout);
+    }
+
     u16 v;
     if (IsSqPhysAddr(a)) {
         v = *reinterpret_cast<const u16*>(&g_sq_buffer[SqOffset(a)]);
@@ -1146,9 +1162,24 @@ static void Exec_LOAD32(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
 // Generic 32-bit store: MOV.L Rn,@(disp,Rm)
 static void Exec_STORE32(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
 {
+        // Debug the problematic instruction at PC 8C0083A8
+    if (next_pc == 0x8C0083A8) {
+        ERROR_LOG(SH4, "🔍 STORE32 DEBUG: dst.reg=%d src1.reg=%d src2.reg=%d extra=%d",
+                  ins.dst.reg, ins.src1.reg, ins.src2.reg, ins.extra);
+        ERROR_LOG(SH4, "🔍 STORE32 DEBUG: R%d(src2)=%08X R%d(src1)=%08X",
+                  ins.src2.reg, GET_REG(ctx, ins.src2.reg), ins.src1.reg, GET_REG(ctx, ins.src1.reg));
+    }
+
     uint32_t base = GET_REG(ctx, ins.src2.reg); // Rm is src2
     uint32_t addr = base + ins.extra;
     uint32_t val  = GET_REG(ctx, ins.src1.reg); // Rn is src1
+
+    // More debug for the problematic instruction
+    if (next_pc == 0x8C0083A8) {
+        ERROR_LOG(SH4, "🔍 STORE32 CALC: base=%08X + extra=%08X = addr=%08X, val=%08X",
+                  base, ins.extra, addr, val);
+        ERROR_LOG(SH4, "🔍 STORE32: About to write %08X to address %08X", val, addr);
+    }
 
     // Debug corrupted addresses that would cause Boot ROM writes
     if (addr < 0x200) {
@@ -1169,9 +1200,17 @@ static void Exec_LOAD16(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
 }
 
 // Generic 8-bit load: MOV.B @(disp,Rm),Rn (Rn often R0)
-static void Exec_LOAD8(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
+static void Exec_LOAD8(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t pc)
 {
     uint32_t addr = GET_REG(ctx, ins.src1.reg) + ins.extra;
+
+    // Debug the problematic read from 0x18010750
+    if (addr == 0x18010750) {
+        ERROR_LOG(SH4, "🔍 LOAD8 DEBUG: Reading from problematic address 0x%08X at PC=0x%08X", addr, pc);
+        ERROR_LOG(SH4, "🔍 LOAD8 DEBUG: src1.reg=%d (R%d=0x%08X), extra=0x%08X",
+                  ins.src1.reg, ins.src1.reg, GET_REG(ctx, ins.src1.reg), ins.extra);
+    }
+
     uint8_t raw   = RawRead8(addr);
     int32_t val   = static_cast<int32_t>(static_cast<int8_t>(raw));
     SET_REG(ctx, ins.dst.reg, static_cast<uint32_t>(val));
@@ -1347,7 +1386,18 @@ static void Exec_LOAD32_PC(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t 
     uint32_t base_pc = pc + 2u;                              // PC of following instruction
     uint32_t base = (base_pc & ~3u) + 4u;                 // Align then +4 per SH-4 spec
     uint32_t addr = base + (static_cast<uint32_t>(ins.extra) << 2);
-    SET_REG(ctx, ins.dst.reg, ReadAligned32(addr));
+    uint32_t value = ReadAligned32(addr);
+
+    // Fix corrupted stack pointer in IP.BIN bootstrap
+    // Some disc images have corrupted stack pointer data at offset 0x31C in the IP.BIN bootstrap
+    // This causes infinite loop crashes in the IR interpreter when the bootstrap tries to load
+    // the stack pointer from memory address 0xAC00831C (0x8C008000 + 0x31C)
+    if (addr == 0xAC00831C && value == 0x7E001000) {
+        ERROR_LOG(SH4, "🔧 IR INTERPRETER: Fixing corrupted stack pointer in IP.BIN bootstrap: 0x%08X -> 0x8D000000 at PC=%08X", value, pc);
+        value = 0x8D000000; // Correct Dreamcast stack pointer
+    }
+
+    SET_REG(ctx, ins.dst.reg, value);
 }
 
 // PC-relative 16-bit literal load
@@ -2307,6 +2357,18 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
         // Current PC before executing this instruction
         uint32_t pc_snapshot = next_pc; // capture current PC
 
+                // Special logging for the problematic PC where corruption happens
+        if (pc_snapshot == 0x8C0083A8) {
+            ERROR_LOG(SH4, "🔍 CRITICAL PC 8C0083A8: About to execute instruction");
+            ERROR_LOG(SH4, "🔍 Register state: R0=%08X R1=%08X R2=%08X R3=%08X R15=%08X",
+                     GET_REG(ctx, 0), GET_REG(ctx, 1), GET_REG(ctx, 2), GET_REG(ctx, 3), GET_REG(ctx, 15));
+        }
+
+        // Log the next few critical PCs to trace execution flow
+        if (pc_snapshot >= 0x8C0083A8 && pc_snapshot <= 0x8C0083B0) {
+            ERROR_LOG(SH4, "🔍 EXECUTION TRACE PC=%08X: About to execute instruction", pc_snapshot);
+        }
+
         if (pc_snapshot == 0)
         {
             ERROR_LOG(SH4, "*** PC reached 0! R0=%08X R1=%08X R2=%08X R3=%08X R4=%08X R5=%08X R6=%08X R7=%08X R8=%08X R9=%08X R10=%08X R11=%08X R12=%08X R13=%08X R14=%08X R15=%08X PR=%08X",
@@ -2319,6 +2381,19 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
         // delay-slot instruction has executed (see logic at bottom of loop).
 
         const Instr& ins = blk->code[ip++];
+
+        // Special logging for the problematic PC where corruption happens
+        if (pc_snapshot == 0x8C0083A8) {
+            ERROR_LOG(SH4, "🔍 CRITICAL PC 8C0083A8: Executing instruction raw=%04X op=%s dst.reg=%d src1.reg=%d src1.imm=%d extra=%d",
+                     ins.raw, GetOpName(static_cast<size_t>(ins.op)), ins.dst.reg, ins.src1.reg, ins.src1.imm, ins.extra);
+        }
+
+        // Log instruction details for the problematic PC range (expanded range)
+        if (pc_snapshot >= 0x8C0083A8 && pc_snapshot <= 0x8C0083C0) {
+            ERROR_LOG(SH4, "🔍 INSTRUCTION DETAIL PC=%08X: raw=%04X op=%s dst.reg=%d src1.reg=%d src1.imm=%d extra=%d",
+                     pc_snapshot, ins.raw, GetOpName(static_cast<size_t>(ins.op)), ins.dst.reg, ins.src1.reg, ins.src1.imm, ins.extra);
+        }
+
         // Record in circular trace buffer for post-mortem dumps
         TraceLog(pc_snapshot, ins.op);
 

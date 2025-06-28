@@ -200,7 +200,14 @@ static void Do_Interrupt(Sh4ExceptionCode intEvn)
 	sr.MD = 1;
 	sr.RB = 1;
 	UpdateSR();
-	next_pc = vbr + 0x600;
+	// Add corruption detection for VBR-based interrupt vector
+	u32 interrupt_vector = vbr + 0x600;
+	if (interrupt_vector >= 0x1FFC0000 && interrupt_vector <= 0x1FFFFFFF) {
+		ERROR_LOG(SH4, "🚨 INTERRUPT CORRUPTION: VBR(0x%08X) + 0x600 = 0x%08X is in problematic range!", vbr, interrupt_vector);
+		next_pc = 0xA0000000; // Safe default
+	} else {
+		next_pc = interrupt_vector;
+	}
 	debugger::subroutineCall();
 }
 
@@ -225,7 +232,15 @@ void Do_Exception(u32 epc, Sh4ExceptionCode expEvn)
 	sr.RB = 1;
 	UpdateSR();
 
-	next_pc = vbr + (expEvn == Sh4Ex_TlbMissRead || expEvn == Sh4Ex_TlbMissWrite ? 0x400 : 0x100);
+	// Add corruption detection for VBR-based exception vector
+	u32 exception_offset = (expEvn == Sh4Ex_TlbMissRead || expEvn == Sh4Ex_TlbMissWrite ? 0x400 : 0x100);
+	u32 exception_vector = vbr + exception_offset;
+	if (exception_vector >= 0x1FFC0000 && exception_vector <= 0x1FFFFFFF) {
+		ERROR_LOG(SH4, "🚨 EXCEPTION CORRUPTION: VBR(0x%08X) + 0x%03X = 0x%08X is in problematic range!", vbr, exception_offset, exception_vector);
+		next_pc = 0xA0000000; // Safe default
+	} else {
+		next_pc = exception_vector;
+	}
 	debugger::subroutineCall();
 
 	//printf("RaiseException: from pc %08x to %08x, event %x\n", epc, next_pc, expEvn);
