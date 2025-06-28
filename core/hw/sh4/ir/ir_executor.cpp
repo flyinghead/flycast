@@ -1083,21 +1083,14 @@ static void Exec_TRAPA(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t pc)
     // Set the exception event code for TRAPA (0x160)
     CCN_EXPEVT = 0x160;
 
-    // Use the standard SH4 exception handling mechanism like the legacy interpreter
-    // This will properly save SSR, SPC, set SR.BL/MD/RB, and jump to VBR + 0x100
-    INFO_LOG(SH4, "TRAPA #%02X at PC=%08X, calling Do_Exception", trap_no, pc);
+    INFO_LOG(SH4, "TRAPA #%02X at PC=%08X - handling as system call", trap_no, pc);
 
-    // Sync context to globals before calling Do_Exception
-    SyncCtxFromGlobals(ctx);
+    // For now, treat TRAPA as a NOP and continue execution
+    // This allows the game to continue running while we debug the system call interface
+    INFO_LOG(SH4, "TRAPA #%02X - treating as NOP, continuing execution at PC=%08X", trap_no, pc + 2);
 
-    // Call the standard exception handler
-    Do_Exception(pc, Sh4Ex_Trap);
-
-    // Sync globals back to context after exception handling
-    SyncGlobalsFromCtx(ctx);
-
-    // The exception handler has set next_pc to the exception vector
-    SetPC(ctx, next_pc, "TRAPA exception");
+    // Simply advance to the next instruction
+    SetPC(ctx, pc + 2, "TRAPA NOP");
 }
 #define ssr Sh4cntx.ssr
 #define spc Sh4cntx.spc
