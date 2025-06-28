@@ -776,6 +776,10 @@ std::string DreamPicoPort::getName(std::string separator) const {
 	return name;
 }
 
+void DreamPicoPort::reloadConfigurationIfNeeded() {
+	// TODO: implementing this method may also help to support hot plugging of VMUs/rumble packs here.
+}
+
 void DreamPicoPort::connect() {
 	// Timeout is 1 second while establishing connection
 	timeout_ms = std::chrono::seconds(1);

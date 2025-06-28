@@ -97,6 +97,8 @@ public:
 
 	std::string getName() const override;
 
+	void reloadConfigurationIfNeeded() override;
+
 	void connect() override;
 
 	void disconnect() override;
