@@ -3,18 +3,18 @@
 
 	This file is part of Flycast.
 
-    Flycast is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 2 of the License, or
-    (at your option) any later version.
+	Flycast is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 2 of the License, or
+	(at your option) any later version.
 
-    Flycast is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+	Flycast is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
+	You should have received a copy of the GNU General Public License
+	along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #include "rzip.h"
 #include <zlib.h>
@@ -23,7 +23,7 @@
 
 const u8 RZipHeader[8] = { '#', 'R', 'Z', 'I', 'P', 'v', 1, '#' };
 
-bool RZipFile::Open(FILE *file, bool write)
+bool RZipFile::Open(FILE* file, bool write)
 {
 	verify(this->file == nullptr);
 	verify(file != nullptr);
@@ -67,10 +67,11 @@ bool RZipFile::Open(FILE *file, bool write)
 
 bool RZipFile::Open(const std::string& path, bool write)
 {
-	FILE *f = nowide::fopen(path.c_str(), write ? "wb" : "rb");
+	FILE* f = nowide::fopen(path.c_str(), write ? "wb" : "rb");
 	if (f == nullptr)
 		return false;
-	if (!Open(f, write)) {
+	if (!Open(f, write))
+	{
 		Close();
 		return false;
 	}
@@ -90,18 +91,18 @@ void RZipFile::Close()
 		file = nullptr;
 		if (chunk != nullptr)
 		{
-			delete [] chunk;
+			delete[] chunk;
 			chunk = nullptr;
 		}
 	}
 }
 
-size_t RZipFile::Read(void *data, size_t length)
+size_t RZipFile::Read(void* data, size_t length)
 {
 	verify(file != nullptr);
 	verify(!write);
 
-	u8 *p = (u8 *)data;
+	u8* p = (u8*)data;
 	size_t rv = 0;
 	while (rv < length)
 	{
@@ -114,19 +115,19 @@ size_t RZipFile::Read(void *data, size_t length)
 				break;
 			if (zippedSize == 0)
 				continue;
-			u8 *zipped = new u8[zippedSize];
+			u8* zipped = new u8[zippedSize];
 			if (std::fread(zipped, zippedSize, 1, file) != 1)
 			{
-				delete [] zipped;
+				delete[] zipped;
 				break;
 			}
 			uLongf tl = maxChunkSize;
 			if (uncompress(chunk, &tl, zipped, zippedSize) != Z_OK)
 			{
-				delete [] zipped;
+				delete[] zipped;
 				break;
 			}
-			delete [] zipped;
+			delete[] zipped;
 			chunkSize = (u32)tl;
 		}
 		u32 l = std::min(chunkSize - chunkIndex, (u32)(length - rv));
@@ -139,16 +140,16 @@ size_t RZipFile::Read(void *data, size_t length)
 	return rv;
 }
 
-size_t RZipFile::Write(const void *data, size_t length)
+size_t RZipFile::Write(const void* data, size_t length)
 {
 	verify(file != nullptr);
 	verify(write);
 
 	size += length;
-	const u8 *p = (const u8 *)data;
+	const u8* p = (const u8*)data;
 	// compression output buffer must be 0.1% larger + 12 bytes
 	uLongf maxZippedSize = maxChunkSize + maxChunkSize / 1000 + 12;
-	u8 *zipped = new u8[maxZippedSize];
+	u8* zipped = new u8[maxZippedSize];
 	size_t rv = 0;
 	while (rv < length)
 	{
@@ -170,7 +171,7 @@ size_t RZipFile::Write(const void *data, size_t length)
 		p += uncompressedSize;
 		rv += uncompressedSize;
 	}
-	delete [] zipped;
-	
+	delete[] zipped;
+
 	return rv;
 }
