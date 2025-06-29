@@ -25,13 +25,17 @@ u32 bm_getRamOffset(void *p)
 
 bool bm_RamWriteAccess(void *p)
 {
-    // In IR mode, all RAM writes are allowed
+    // In IR mode, we don't need aggressive cache invalidation
+    // The memory system already handles MMU state changes via function pointers
+    // Just return true to indicate the write is allowed
     return true;
 }
 
 void bm_RamWriteAccess(u32 addr)
 {
-    // No-op in IR-only mode
+    // In IR mode, we don't need aggressive cache invalidation
+    // The memory system already handles MMU state changes via function pointers
+    // The IR system will naturally rebuild blocks when needed
 }
 
 // From addrspace.h/cpp
@@ -57,4 +61,3 @@ void dec_illegalOp(u32 op)
 // but are only needed at link-time to satisfy references. They should never be
 // executed in IR-only builds, so they contain minimal no-op behaviour.
 // ---------------------------------------------------------------------------
-

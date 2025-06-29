@@ -53,7 +53,7 @@ void Sh4IrInterpreter::Init()
     }
 
     // Clear the context like the legacy interpreter
-    memset(&p_sh4rcb->cntx, 0, sizeof(p_sh4rcb->cntx));
+    // memset(&p_sh4rcb->cntx, 0, sizeof(p_sh4rcb->cntx));  // DISABLED: This was zeroing out REIOS memory bank setup
 
     emitter_.ClearCaches();
 }
@@ -66,7 +66,7 @@ void Sh4IrInterpreter::Reset(bool hard)
 if (hard)
 {
     int schedNext = ctx_->sh4_sched_next;
-    memset(ctx_, 0, sizeof(*ctx_));
+    // memset(ctx_, 0, sizeof(*ctx_));  // DISABLED: This was zeroing out REIOS memory bank setup
     ctx_->sh4_sched_next = schedNext;
 }
 
@@ -75,7 +75,8 @@ ctx_->pc = 0xA0000000;
 next_pc = 0xA0000000;  // Keep legacy global in sync
 
 // Clear registers
-memset(&r[0], 0, sizeof(r));
+// memset(&r[0], 0, sizeof(r));  // DISABLED: This was zeroing out REIOS memory bank setup (R9=0x00002000, R15=0x0cc00000)
+printf("[IR][Reset] Preserving REIOS register setup for memory bank initialization\n");
 memset(r_bank, 0, sizeof(r_bank));  // Use global r_bank
 
 // Clear other registers
@@ -140,6 +141,7 @@ static inline u8* FastPtr(uint32_t addr)
 
 void Sh4IrInterpreter::Run()
 {
+    ERROR_LOG(SH4, "🚀 IR INTERPRETER: Starting Run() function");
     RestoreHostRoundingMode();
     running_ = true;
 
@@ -221,15 +223,32 @@ void Sh4IrInterpreter::Step()
             printf("[IR][Step] Detected critical ADDC test case with r[2]=0xFFFFFFFF and r[3]=1\n");
         }
 
-        const Block* blk = emitter_.BuildBlock(pc_val);
-        printf("[IR][Step] Block built, executing with %zu instructions\n", blk->code.size());
+        // Retry loop for cache invalidation scenarios
+        int retry_count = 0;
+        const int max_retries = 2;
+        const Block* blk = nullptr;
 
-        // Debug: Print the first instruction in the block
-        if (blk->code.size() > 0) {
-            printf("[IR][Step] First instruction: op=%d\n", static_cast<int>(blk->code[0].op));
-        }
+        do {
+            blk = emitter_.BuildBlock(pc_val);
+            printf("[IR][Step] Block built, executing with %zu instructions (retry %d)\n", blk->code.size(), retry_count);
 
-        executor_.ExecuteBlock(blk, ctx_);
+            // Debug: Print the first instruction in the block
+            if (blk->code.size() > 0) {
+                printf("[IR][Step] First instruction: op=%d\n", static_cast<int>(blk->code[0].op));
+            }
+
+            uint32_t pc_before_execute = ctx_->pc;
+            executor_.ExecuteBlock(blk, ctx_);
+
+            // If PC didn't advance and we're still at the same location,
+            // it might be due to cache invalidation. Retry.
+            if (ctx_->pc == pc_before_execute && retry_count < max_retries) {
+                printf("[IR][Step] PC didn't advance after ExecuteBlock (PC=%08X), retrying (attempt %d)\n", ctx_->pc, retry_count + 1);
+                retry_count++;
+                continue;
+            }
+            break;
+        } while (retry_count < max_retries);
 
         if (ctx_->pc == old_pc)
              ctx_->pc = blk->pcNext;
@@ -304,7 +323,7 @@ namespace {
     void IR_Init()                 { sh4::ir::g_ir.Init(); }
     void IR_Term()                 { sh4::ir::g_ir.Term(); }
     void IR_ResetCache()           { sh4::ir::g_ir.ResetCache(); }
-    bool IR_IsCpuRunning()         { return sh4::ir::g_ir.IsCpuRunning(); }
+        bool IR_IsCpuRunning()         { return sh4::ir::g_ir.IsCpuRunning(); }
 }
 
 // Expose a function with the same signature the core expects, but inside the

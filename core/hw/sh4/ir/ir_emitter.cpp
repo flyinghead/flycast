@@ -1385,6 +1385,7 @@ static bool FastDecode(uint16_t raw, uint32_t pc, Instr &ins, Block &blk)
     {
         ins.op = Op::CLRS;
         blk.pcNext = pc + 2;
+        INFO_LOG(SH4, "🔍 HARDCODED CLRS: raw=0x0048 -> Op::CLRS (%d)", static_cast<int>(Op::CLRS));
         return true;
     }
     // SETS (0x0058)
@@ -1392,6 +1393,7 @@ static bool FastDecode(uint16_t raw, uint32_t pc, Instr &ins, Block &blk)
     {
         ins.op = Op::SETS;
         blk.pcNext = pc + 2;
+        INFO_LOG(SH4, "🔍 HARDCODED SETS: raw=0x0058 -> Op::SETS (%d)", static_cast<int>(Op::SETS));
         return true;
     }
     // MOV.B @(disp,Rm),R0 (0x0m0d, n=0)
@@ -2282,6 +2284,12 @@ static bool FastDecode(uint16_t raw, uint32_t pc, Instr &ins, Block &blk)
 
             Op op = static_cast<Op>(kEmitterTable[raw]);
 
+        // Special debugging for CLRS/SETS opcodes
+        if (raw == 0x0048 || raw == 0x0058) {
+            INFO_LOG(SH4, "🔍 CLRS/SETS DEBUG: kEmitterTable[0x%04X] returned Op::%d (CLRS=%d, SETS=%d)",
+                      raw, static_cast<int>(op), static_cast<int>(Op::CLRS), static_cast<int>(Op::SETS));
+        }
+
         // Special debugging for B009 opcode
         if (raw == 0xB009) {
             ERROR_LOG(SH4, "🔍 B009 DEBUG: kEmitterTable[0xB009] returned Op::%d (ILLEGAL=%d, BSR=%d, LOAD8_R0=%d)",
@@ -2591,6 +2599,14 @@ static bool FastDecode(uint16_t raw, uint32_t pc, Instr &ins, Block &blk)
         ins.extra = d;
         return true;
     }
+    case Op::CLRS:
+        ins.op = Op::CLRS;
+        blk.pcNext = pc + 2;
+        return true;
+    case Op::SETS:
+        ins.op = Op::SETS;
+        blk.pcNext = pc + 2;
+        return true;
     default:
         INFO_LOG(SH4, "FastDecode: Op %d (from raw 0x%04X at PC=0x%08X) fell into default. Returning false.", static_cast<int>(op), raw, pc);
         return false; // not yet implemented; let manual path try
@@ -4892,9 +4908,29 @@ else if ((raw & 0xF000) == 0xF000)
 
 
         // ----------------------------------------------------------------
+        //  CLRS instruction (0x0048) - Clear S bit in status register
+        // ----------------------------------------------------------------
+        else if (raw == 0x0048)
+        {
+            DEBUG_LOG(SH4, "Emitter::CreateNew: CLRS opcode 0x0048 at PC=0x%08X", pc);
+            ins.op = Op::CLRS;
+            decoded = true;
+            blk.pcNext = pc + 2;
+        }
+        // ----------------------------------------------------------------
+        //  SETS instruction (0x0058) - Set S bit in status register
+        // ----------------------------------------------------------------
+        else if (raw == 0x0058)
+        {
+            DEBUG_LOG(SH4, "Emitter::CreateNew: SETS opcode 0x0058 at PC=0x%08X", pc);
+            ins.op = Op::SETS;
+            decoded = true;
+            blk.pcNext = pc + 2;
+        }
+        // ----------------------------------------------------------------
         //  Special case: REIOS trap opcode 0x085B
         // ----------------------------------------------------------------
-        if (raw == 0x085B)
+        else if (raw == 0x085B)
         {
             INFO_LOG(SH4, "Emitter::CreateNew: REIOS TRAP opcode 0x085B at PC=0x%08X", pc);
             ins.op = Op::TRAPA;  // Reuse TRAPA opcode for reios trap
@@ -4990,32 +5026,12 @@ else if ((raw & 0xF000) == 0xF000)
 
 const Block* Emitter::BuildBlock(uint32_t pc)
 {
-    // Calculate signature of current code at PC
-    uint64_t current_sig = CalcBlockSig(pc);
-
     auto it = cache_.find(pc);
     if (it != cache_.end()) {
-        // Block exists in cache, but check if code has changed
-        uint64_t cached_sig = 0;
-        auto sig_it = g_block_sig_cache.begin();
-        for (; sig_it != g_block_sig_cache.end(); ++sig_it) {
-            if (sig_it->second == &it->second) {
-                cached_sig = sig_it->first;
-                break;
-            }
-        }
-
-        // If signatures match, code hasn't changed, return cached block
-        if (sig_it != g_block_sig_cache.end() && cached_sig == current_sig) {
-            return &it->second;
-        }
-
-        // Code has changed, remove old entry and rebuild
-        if (sig_it != g_block_sig_cache.end()) {
-            g_block_sig_cache.erase(sig_it);
-        }
-        cache_.erase(it);
-        INFO_LOG(SH4, "Emitter detected self-modifying code at PC=0x%08X, rebuilding block", pc);
+        // Block exists in cache - return it directly without signature checking
+        // The memory system will handle cache invalidation through bm_RamWriteAccess
+        // when code is actually modified, just like the dynarec does
+        return &it->second;
     }
 
     return &CreateNew(pc);

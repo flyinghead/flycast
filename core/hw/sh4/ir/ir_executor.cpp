@@ -26,6 +26,101 @@
 
 #define IR_TRACE_EXEC 1
 
+// Loop Detection System for debugging infinite loops during boot
+namespace LoopDetection {
+    struct PCEntry {
+        uint32_t pc;
+        uint32_t count;
+        uint64_t first_seen;
+        uint16_t opcode;
+    };
+
+    static constexpr size_t PC_HISTORY_SIZE = 32;
+    static constexpr uint32_t LOOP_THRESHOLD = 100;
+    static constexpr uint32_t SAME_PC_THRESHOLD = 2;  // Very aggressive loop detection
+
+    static PCEntry pc_history[PC_HISTORY_SIZE];
+    static size_t pc_history_index = 0;
+    static uint64_t instruction_count = 0;
+    static uint32_t last_loop_detection = 0;
+
+    static void RecordPC(uint32_t pc, uint16_t opcode) {
+        instruction_count++;
+
+        // Check if this PC was recently executed
+        for (size_t i = 0; i < PC_HISTORY_SIZE; i++) {
+            if (pc_history[i].pc == pc) {
+                pc_history[i].count++;
+                pc_history[i].opcode = opcode;
+
+                // Detect tight loops (same PC executed many times)
+                if (pc_history[i].count > SAME_PC_THRESHOLD &&
+                    instruction_count - last_loop_detection > 1000) {
+
+                    ERROR_LOG(SH4, "🔄 INFINITE LOOP DETECTED at PC=0x%08X (opcode=0x%04X)", pc, opcode);
+                    ERROR_LOG(SH4, "🔄 This PC has been executed %u times", pc_history[i].count);
+                    ERROR_LOG(SH4, "🔄 Total instructions executed: %llu", instruction_count);
+
+                    // Dump recent execution history
+                    ERROR_LOG(SH4, "🔄 Recent PC execution history:");
+                    for (size_t j = 0; j < PC_HISTORY_SIZE; j++) {
+                        size_t idx = (pc_history_index + j) % PC_HISTORY_SIZE;
+                        if (pc_history[idx].pc != 0) {
+                            ERROR_LOG(SH4, "🔄   PC=0x%08X opcode=0x%04X count=%u",
+                                     pc_history[idx].pc, pc_history[idx].opcode, pc_history[idx].count);
+                        }
+                    }
+
+                    last_loop_detection = instruction_count;
+
+                    // Reset this entry to avoid spam
+                    pc_history[i].count = 0;
+
+                    // CRITICAL: Throw exception to break the infinite loop
+                    ERROR_LOG(SH4, "🚨 BREAKING INFINITE LOOP by throwing exception");
+                    throw SH4ThrownException(pc, Sh4Ex_IllegalInstr);
+                }
+                return;
+            }
+        }
+
+        // Add new PC to history
+        pc_history[pc_history_index].pc = pc;
+        pc_history[pc_history_index].count = 1;
+        pc_history[pc_history_index].first_seen = instruction_count;
+        pc_history[pc_history_index].opcode = opcode;
+        pc_history_index = (pc_history_index + 1) % PC_HISTORY_SIZE;
+    }
+
+    static void DetectSequenceLoop() {
+        // Check for repeating sequences of PCs
+        if (instruction_count % 100 == 0) { // Check every 100 instructions
+            std::unordered_map<uint32_t, uint32_t> pc_counts;
+            for (size_t i = 0; i < PC_HISTORY_SIZE; i++) {
+                if (pc_history[i].pc != 0) {
+                    pc_counts[pc_history[i].pc] += pc_history[i].count;
+                }
+            }
+
+            // If we have very few unique PCs with high counts, we're in a loop
+            if (pc_counts.size() <= 5) {
+                uint32_t total_count = 0;
+                for (const auto& pair : pc_counts) {
+                    total_count += pair.second;
+                }
+
+                if (total_count > LOOP_THRESHOLD && instruction_count - last_loop_detection > 1000) {
+                    ERROR_LOG(SH4, "🔄 SEQUENCE LOOP DETECTED: Only %zu unique PCs in recent history", pc_counts.size());
+                    for (const auto& pair : pc_counts) {
+                        ERROR_LOG(SH4, "🔄   PC=0x%08X executed %u times", pair.first, pair.second);
+                    }
+                    last_loop_detection = instruction_count;
+                }
+            }
+        }
+    }
+}
+
 // ---------------------------------------------------------------------------
 // Store Queue handling - this is still needed since SQ has special behavior
 // ---------------------------------------------------------------------------
@@ -411,7 +506,15 @@ static inline void SetPC(Sh4Context* ctx, uint32_t new_pc, const char* why)
     }
     else if (IsTopRegion(new_pc))
     {
-        ERROR_LOG(SH4, "*** SetPC to near-top %08X from %s", new_pc, why);
+        ERROR_LOG(SH4, "🛑 *** SetPC to near-top %08X from %s", new_pc, why);
+        // Only block truly corrupted ranges, not legitimate I/O areas
+        // 0xFFFF8000+ is legitimate I/O register space
+        if (new_pc >= 0xFFF00000 && new_pc < 0xFFFF8000) {
+            ERROR_LOG(SH4, "🛑 BLOCKING CORRUPTED PC range 0xFFF00000-0xFFFF7FFF - triggering exception");
+            throw SH4ThrownException(next_pc, Sh4Ex_IllegalInstr);
+        } else {
+            ERROR_LOG(SH4, "🛑 WARNING: High PC address but allowing execution to continue");
+        }
     }
 
     // Detect sequential walk crossing into top region (e.g., fall-through past FFFFFFBE)
@@ -951,8 +1054,17 @@ static void Exec_OR_REG(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t) {
 
 // JSR @Rm – jump sub-routine via register with link in PR
 static void Exec_JSR(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t pc) {
-    pr = pc + 4;
     uint32_t target = GET_REG(ctx, ins.src1.reg) & ~1u;
+
+    // CRITICAL: Block corrupted JSR targets that would cause infinite loops
+    if (target >= 0xFE000000) {
+        ERROR_LOG(SH4, "🚨 BLOCKING CORRUPTED JSR: PC=0x%08X attempting JSR to corrupted target 0x%08X", pc, target);
+        ERROR_LOG(SH4, "🚨 Register R%d contains corrupted high address - skipping JSR", ins.src1.reg);
+        // Don't execute the JSR - just continue to next instruction
+        return;
+    }
+
+    pr = pc + 4;
     SetPC(ctx, target, "JSR");
 }
 
@@ -1090,11 +1202,7 @@ static void Exec_STORE32(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
         ERROR_LOG(SH4, "🔍 STORE32: About to write %08X to address %08X", val, addr);
     }
 
-    // Debug corrupted addresses that would cause Boot ROM writes
-    if (addr < 0x200) {
-        ERROR_LOG(SH4, "🚨 STORE32 Boot ROM addr=0x%08X: base=R%d(0x%08X) + extra=0x%08X, val=R%d(0x%08X) at PC=0x%08X",
-                  addr, ins.src2.reg, base, ins.extra, ins.src1.reg, val, next_pc);
-    }
+    // Let hardware handle Boot ROM protection - don't double-block
 
     RawWrite32(addr, val);
 }
@@ -1132,20 +1240,19 @@ static void Exec_STORE16(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t pc
     uint32_t addr = base + ins.extra;
     uint16_t val  = static_cast<uint16_t>(GET_REG(ctx, ins.src1.reg));
 
-    // Debug corrupted addresses that would cause Boot ROM writes
-    if (addr < 0x200) {
-        ERROR_LOG(SH4, "🚨 STORE16 Boot ROM addr=0x%08X: base=R%d(0x%08X) + extra=0x%08X, val=R%d(0x%04X) at PC=0x%08X",
-                  addr, ins.src2.reg, base, ins.extra, ins.src1.reg, val, pc);
-    }
+    // Let hardware handle Boot ROM protection - don't double-block
 
     RawWrite16(addr, val);
 }
 
 // Generic 8-bit store: MOV.B Rn,@(disp,Rm)
-static void Exec_STORE8(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
+static void Exec_STORE8(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t pc)
 {
     uint32_t addr = GET_REG(ctx, ins.src2.reg) + ins.extra;
     uint8_t val   = static_cast<uint8_t>(GET_REG(ctx, ins.src1.reg));
+
+    // Let hardware handle Boot ROM protection - don't double-block
+
     RawWrite8(addr, val);
 }
 
@@ -1219,7 +1326,7 @@ static void Exec_STORE32_Rm_R0RN(const sh4::ir::Instr& ins, Sh4Context* ctx, uin
 // R0-offset store variants
 // -----------------------------------------------------------------------------
 // MOV.B R0,@(disp,Rn)  / MOV.B Rm,@(R0,Rn)
-static void Exec_STORE8_R0(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
+static void Exec_STORE8_R0(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t pc)
 {
     uint32_t addr;
     uint8_t  val;
@@ -1232,11 +1339,14 @@ static void Exec_STORE8_R0(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
         addr = GET_REG(ctx, ins.src2.reg) + GET_REG(ctx, 0);
         val  = static_cast<uint8_t>(GET_REG(ctx, ins.src1.reg) & 0xFF);
     }
+
+    // Let hardware handle Boot ROM protection - don't double-block
+
     RawWrite8(addr, val);
 }
 
 // MOV.W R0,@(disp,Rn) / MOV.W Rm,@(R0,Rn)
-static void Exec_STORE16_R0(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
+static void Exec_STORE16_R0(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t pc)
 {
     uint32_t addr;
     uint16_t val;
@@ -1247,11 +1357,14 @@ static void Exec_STORE16_R0(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t
         addr = GET_REG(ctx, ins.src2.reg) + GET_REG(ctx, 0);
         val  = static_cast<uint16_t>(GET_REG(ctx, ins.src1.reg) & 0xFFFF);
     }
+
+    // Let hardware handle Boot ROM protection - don't double-block
+
     RawWrite16(addr, val);
 }
 
 // MOV.L R0,@(disp,Rn) / MOV.L Rm,@(R0,Rn)
-static void Exec_STORE32_R0(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
+static void Exec_STORE32_R0(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t pc)
 {
     uint32_t addr;
     uint32_t val;
@@ -1262,6 +1375,9 @@ static void Exec_STORE32_R0(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t
         addr = GET_REG(ctx, ins.src2.reg) + GET_REG(ctx, 0);
         val  = GET_REG(ctx, ins.src1.reg);
     }
+
+    // Let hardware handle Boot ROM protection - don't double-block
+
     RawWrite32(addr, val);
 }
 
@@ -2160,6 +2276,12 @@ static inline ExecFn GetExecFn(sh4::ir::Op op)
 // ----------------------------------------------------------------------------
 void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
 {
+    static bool first_call = true;
+    if (first_call) {
+        ERROR_LOG(SH4, "🚀 EXECUTOR: First call to ExecuteBlock with PC=0x%08X", blk ? (blk->code.empty() ? 0 : blk->code[0].pc) : 0);
+        first_call = false;
+    }
+
     if (!blk || blk->code.empty()) {
         ERROR_LOG(SH4, "ExecuteBlock: Invalid block");
         return;
@@ -2224,6 +2346,12 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                 INFO_LOG(SH4, "BIOS area cache invalidation - invalidating block only");
                 // Block already invalidated above, no need for full reset
             }
+
+            // After invalidation, retry execution with the re-emitted block
+            INFO_LOG(SH4, "Cache invalidation complete. Retrying execution with fresh block.");
+            // The block will be re-fetched by the Step function on the next call
+            // We can't directly access the emitter from here, so we need to return
+            // and let the Step function retry
             return;
         }
 
@@ -2306,6 +2434,17 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
         // Record in circular trace buffer for post-mortem dumps
         TraceLog(pc_snapshot, ins.op);
 
+        // Loop detection - record this PC and check for infinite loops
+        LoopDetection::RecordPC(pc_snapshot, ins.raw);
+        LoopDetection::DetectSequenceLoop();
+
+        // Simple execution tracking to debug hangs (disabled - too verbose)
+        // static uint64_t exec_count = 0;
+        // exec_count++;
+        // if (exec_count % 100 == 0) {
+        //     ERROR_LOG(SH4, "🔍 EXECUTION PROGRESS: %llu instructions executed, current PC=0x%08X", exec_count, pc_snapshot);
+        // }
+
         // Mark that we've successfully executed at least one instruction in this block
         first_instruction_executed = true;
         // --- early-boot tracing
@@ -2371,9 +2510,10 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                     throw SH4ThrownException(pre_pc, Sh4Ex_IllegalInstr);
                 }
 
-                // Check for execution going into Boot ROM area (should never happen)
-                if (unlikely(next_pc < 0x200 && next_pc != 0)) {
-                    ERROR_LOG(SH4, "🚨 EXECUTION INTO BOOT ROM: PC=%08X set by %s (raw=%04X) at PC=%08X",
+                // Check for execution going into invalid low memory areas
+                // Note: 0x80-0x200 is valid boot ROM area, only flag truly invalid addresses
+                if (unlikely(next_pc < 0x80 && next_pc != 0)) {
+                    ERROR_LOG(SH4, "🚨 EXECUTION INTO INVALID LOW MEMORY: PC=%08X set by %s (raw=%04X) at PC=%08X",
                              next_pc, GetOpName(static_cast<size_t>(ins.op)), ins.raw, pre_pc);
                     ERROR_LOG(SH4, "🚨 This indicates severe execution corruption - dumping trace");
                     DumpTrace();
@@ -2421,6 +2561,12 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                     // REMOVED: No longer needed with global context
                     return;
                 case Op::NOP:
+                    break;
+                case Op::CLRS:
+                    sr.S = 0;
+                    break;
+                case Op::SETS:
+                    sr.S = 1;
                     break;
                 case Op::MOV_REG:
                     SET_REG(ctx, ins.dst.reg, GET_REG(ctx, ins.src1.reg));
