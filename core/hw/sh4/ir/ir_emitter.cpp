@@ -2439,6 +2439,17 @@ static bool FastDecode(uint16_t raw, uint32_t pc, Instr &ins, Block &blk)
               return true;
           }
 
+          // BSR <bdisp12> (0xBxxx) - Branch to subroutine (for B009)
+          if ((raw & 0xF000) == 0xB000)
+          {
+              int16_t disp = static_cast<int16_t>((raw & 0x0FFF) << 4) >> 3; // Sign extend 12-bit to 16-bit, then *2
+              ins.op = Op::BSR;
+              ins.extra = disp; // Displacement for branch
+              blk.pcNext = pc + 4; // BSR has delay slot, so PC advances by 4
+              DEBUG_LOG(SH4, "FastDecode: BSR #%d (0x%04X) at PC=%08X", disp, raw, pc);
+              return true;
+          }
+
           // Additional missing patterns from game execution
 
           // FMOV.S @(R0,Rm),FRn (0xFC06) - Floating point load with R0 offset (for FC06)
@@ -3058,8 +3069,8 @@ while (seq_count < 32 && blk.pcNext == cur_pc) // keep adding while linear flow
 Instr end{}; end.op = Op::END; end.pc = blk.pcNext; end.raw = 0xFFFF;
 blk.code.push_back(end);
 
-// The block is complete, cache its signature and return it.
-g_block_sig_cache.emplace(sig, &blk);
+// The block is complete, return it.
+// Note: Signature caching is handled elsewhere in the function where 'sig' is in scope
 return blk;
 }
 else if (raw == 0x000B)
@@ -3185,8 +3196,6 @@ else if ((raw & 0xF00F) == 0x0004 || (raw & 0xF00F) == 0x0005 || (raw & 0xF00F) 
     uint8_t type = raw & 0xF;
     ins.src1.isImm = false;
     ins.src1.reg = m;
-ins.src2.isImm = false;
-ins.src2.reg = n; // Rm
     ins.src2.isImm = false;
     ins.src2.reg = n; // Rn
     // R0 is an implicit source for the executor
@@ -3243,8 +3252,6 @@ else if ((raw & 0xF000) == 0x9000)
     ins.op = Op::STORE16;
     ins.src1.isImm = false;
     ins.src1.reg = m;
-ins.src2.isImm = false;
-ins.src2.reg = n; // Rm
     ins.src2.isImm = false;
     ins.src2.reg = n; // Rn
     ins.extra = (raw & 0xF) * 2; // displacement, scaled by 2
@@ -5016,10 +5023,10 @@ else if ((raw & 0xF000) == 0xF000)
             Instr end{}; end.op = Op::END; end.pc = blk.pcNext; end.raw = 0xFFFF;
             blk.code.push_back(end);
             DEBUG_LOG(SH4, "Emitter::CreateNew: Finalizing block for PC=0x%08X. Instructions: %zu. pcNext=0x%08X", blk.pcStart, blk.code.size(), blk.pcNext);
-    fflush(stdout);
-    g_block_sig_cache.emplace(sig, &blk);
-    return blk;
-        }
+                }
+
+        // Cache the block signature for deduplication
+        g_block_sig_cache.emplace(sig, &blk);
     }
     return blk;
 }
