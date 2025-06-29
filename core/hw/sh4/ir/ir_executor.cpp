@@ -738,7 +738,7 @@ static inline void RawWrite8(uint32_t a, u8 d)
         g_sq_buffer[SqOffset(a)] = d;
 
         // Also commit to backing Work RAM so non-IR paths observe the write
-        addrspace::write8(a, d);
+        WriteMem8(a, d);
         return;
     }
     if (!g_exception_was_raised)
@@ -762,7 +762,7 @@ static inline void RawWrite16(uint32_t a, u16 d)
     if (IsStoreQueueAddr(a)) {
         *reinterpret_cast<u16*>(&g_sq_buffer[SqOffset(a)]) = d;
 
-        addrspace::write16(a, d);
+        WriteMem16(a, d);
         return;
     }
 
@@ -787,7 +787,7 @@ static inline void RawWrite32(uint32_t a, u32 d)
         *reinterpret_cast<u32*>(&g_sq_buffer[SqOffset(a)]) = d;
         ERROR_LOG(SH4, "SQ WRITE32 addr=0x%08X off=%u val=0x%08X", a, SqOffset(a), d);
 
-        addrspace::write32(a, d);
+        WriteMem32(a, d);
         return;
     }
 
@@ -808,8 +808,8 @@ static inline void RawWrite64(uint32_t a, u64 d)
         // mirror to vector RAM (little-endian order)
 
 
-        addrspace::write32(a, low);
-        addrspace::write32(a + 4, high);
+        WriteMem32(a, low);
+        WriteMem32(a + 4, high);
         return;
     }
     if (!g_exception_was_raised)
