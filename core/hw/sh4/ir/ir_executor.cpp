@@ -3130,7 +3130,7 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                         if (IsTopRegion(target_reg_value))
                             ERROR_LOG(SH4, "*** HIGH-FF JSR target at %08X : R%u=%08X", curr_pc, ins.src1.reg, target_reg_value);
                         pending_pr = curr_pc + 4; // address after delay slot
-                        branch_target = target_reg_value & ~1u; // mask LSB to ensure even address
+                        branch_target = target;
                         if (IsTopRegion(branch_target))
                             ERROR_LOG(SH4, "*** HIGH-FF branch target set by JSR at %08X -> %08X (r%u)", curr_pc, branch_target, ins.src1.reg);
                         if (target_reg_value == 0) {
