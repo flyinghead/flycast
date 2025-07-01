@@ -24,6 +24,10 @@
 #include "hw/maple/maple_if.h"
 #include "imgui_stdlib.h"
 
+#ifdef GDB_SERVER
+#include "hw/mem/addrspace.h"
+#endif
+
 static void gui_settings_advanced()
 {
 #if FEAT_SHREC != DYNAREC_NONE
