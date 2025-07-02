@@ -9,8 +9,8 @@
 #include "hw/naomi/card_reader.h"
 
 #include <memory>
-#include <sdl\dreamlink.h>
-#include <sdl\dreamconn.h>
+#include <sdl/dreamlink.h>
+#include <sdl/dreamconn.h>
 
 enum MaplePattern
 {

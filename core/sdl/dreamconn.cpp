@@ -35,7 +35,7 @@
 #include <windows.h>
 #include <setupapi.h>
 #endif
-#include <hw\maple\maple_if.h>
+#include <hw/maple/maple_if.h>
 
 // TODO: it doesn't seem sound to assume that only one dreamlink will need reconnecting at a time.
 std::shared_ptr<DreamLink> dreamlink_needs_reconnect = nullptr;
