@@ -12,6 +12,7 @@
 #define XXH_STATIC_LINKING_ONLY
 #include <xxhash.h>
 #include <cstdint>
+#include <chrono>
 
 // ~100k blocks ~= few MB
 #define MAX_BLOCKS 100000
@@ -21,17 +22,40 @@ static std::unordered_map<uint64_t, const sh4::ir::Block*> g_block_sig_cache;
 
 static uint64_t CalcBlockSig(uint32_t pc)
 {
-    // Hash first 64 bytes (32 instructions) of code at pc, plus SR.T
-    uint8_t buf[64];
-    for (int i = 0; i < 32; ++i)
-    {
-        uint16_t op = IReadMem16(pc + i * 2);
-        buf[i * 2]     = static_cast<uint8_t>(op & 0xFF);
-        buf[i * 2 + 1] = static_cast<uint8_t>(op >> 8);
+    // ULTRA CRITICAL: Force debugging output that CANNOT be optimized out
+    volatile uint32_t debug_pc = pc;
+    volatile bool force_check = true;
+
+    // Force stdout writes that can't be optimized
+    if (force_check) {
+        fprintf(stderr, "CalcBlockSig: PC=0x%08X\n", debug_pc);
+        fflush(stderr);
     }
-    // Include SR.T in the hash to force new blocks when T changes
-    // buf[64] = (uint8_t)(p_sh4rcb ? p_sh4rcb->cntx.sr.T : 0);
-    return XXH3_64bits(buf, sizeof(buf));
+
+    if (debug_pc == 0x0) {
+        fprintf(stderr, "🚨🚨🚨 CRITICAL BUG: CalcBlockSig called with PC=0!\n");
+        fprintf(stderr, "🚨🚨🚨 This will cause mirror access and infinite loop!\n");
+        fflush(stderr);
+        ERROR_LOG(SH4, "🚨 CRITICAL BUG: CalcBlockSig() called with PC=0x0!");
+        ERROR_LOG(SH4, "🚨 This will cause mirror access and infinite loop!");
+        abort();
+    }
+    if (debug_pc >= 0x20000000 && debug_pc <= 0x2FFFFFFF) {
+        fprintf(stderr, "🚨🚨🚨 CRITICAL BUG: CalcBlockSig called with corrupted PC=0x%08X!\n", debug_pc);
+        fflush(stderr);
+        ERROR_LOG(SH4, "🚨 CalcBlockSig() called with corrupted PC=0x%08X", pc);
+        abort();
+    }
+
+    // FIXED: Read actual instruction bytes to detect self-modifying code
+    // The old implementation only used PC, which couldn't detect when instruction changed
+    // from 0x8CED to 0x62F6 at the same PC address
+    uint16_t instr = ReadMem16(pc);
+    uint64_t sig = (static_cast<uint64_t>(pc) << 16) | static_cast<uint64_t>(instr);
+
+    ERROR_LOG(SH4, "🔍 CalcBlockSig: PC=0x%08X, instr=0x%04X, sig=0x%016llX", pc, instr, sig);
+
+    return sig;
 }
 
 namespace sh4 {
@@ -806,6 +830,18 @@ static bool FastDecode(uint16_t raw, uint32_t pc, Instr &ins, Block &blk)
         uint8_t n = (raw >> 8) & 0xF;
         uint8_t m = (raw >> 4) & 0xF;
         ins.op = Op::STORE16_PREDEC;
+        ins.dst  = {false, n};
+        ins.src1 = {false, m};
+        ins.src2 = {false, n};
+        blk.pcNext = pc + 2;
+        return true;
+    }
+    // MOV.L Rm,@-Rn (0x4nm2)
+    else if ((raw & 0xF00F) == 0x4002)
+    {
+        uint8_t n = (raw >> 8) & 0xF;
+        uint8_t m = (raw >> 4) & 0xF;
+        ins.op = Op::STORE32_PREDEC;
         ins.dst  = {false, n};
         ins.src1 = {false, m};
         ins.src2 = {false, n};
@@ -2625,10 +2661,22 @@ static bool FastDecode(uint16_t raw, uint32_t pc, Instr &ins, Block &blk)
 }
 
 Block& Emitter::CreateNew(uint32_t pc) {
+    // CRITICAL DEBUG: Check for PC corruption at CreateNew entry
+    if (pc == 0x0) {
+        ERROR_LOG(SH4, "🚨 BUG FOUND: CreateNew() called with PC=0x0!");
+        ERROR_LOG(SH4, "🚨 This will trigger CalcBlockSig(0) and cause mirror access");
+        abort();
+    }
+    if (pc >= 0x20000000 && pc <= 0x2FFFFFFF) {
+        ERROR_LOG(SH4, "🚨 CreateNew() called with corrupted PC=0x%08X", pc);
+        abort();
+    }
+
     // Avoid caching blocks from uninitialised work-RAM. The BIOS copies code
     // here later, so decoding zeros would produce a permanent NOP block.
     if (((pc & 0xFC000000) == 0x8C000000) || ((pc & 0xFC000000) == 0x0C000000))
     {
+        // Use IReadMem16() for instruction reads, like legacy interpreter does
         u32 firstWord = (static_cast<u32>(IReadMem16(pc)) << 16) | IReadMem16(pc + 2);
         if (firstWord == 0)
         {
@@ -2651,26 +2699,58 @@ Block& Emitter::CreateNew(uint32_t pc) {
         ClearCaches();
     }
 
-    auto [it, inserted] = cache_.emplace(pc, Block{});
+        auto [it, inserted] = cache_.emplace(pc, Block{});
     Block& blk = it->second;
     if (inserted)
     {
-        // Deduplicate identical code blocks to avoid runaway allocations.
-        uint64_t sig = CalcBlockSig(pc);
-        if (auto itSig = g_block_sig_cache.find(sig); itSig != g_block_sig_cache.end())
-        {
-            // Point cache entry at existing block and discard placeholder.
-            return const_cast<Block&>(*itSig->second);
-        }
+        // DISABLED: Signature-based caching to fix self-modifying code detection
+        // The old approach only checked the first instruction of a block, missing
+        // self-modifying code changes in the middle of blocks (like 0x8CED -> 0x62F6)
+        // uint64_t sig = CalcBlockSig(pc);
+        // if (auto itSig = g_block_sig_cache.find(sig); itSig != g_block_sig_cache.end())
+        // {
+        //     // Point cache entry at existing block and discard placeholder.
+        //     return const_cast<Block&>(*itSig->second);
+        // }
 
         blk.pcStart = pc;
         DEBUG_LOG(SH4, "Emitter::CreateNew: Entered for PC=0x%08X", pc);
+
+
+        if (pc >= 0x20000000 && pc <= 0x2FFFFFFF) {
+            ERROR_LOG(SH4, "🚨 BUG FIX: PC entered AICA RAM range 0x%08X - this should not happen for instruction fetch", pc);
+            ERROR_LOG(SH4, "🚨 Wrapping PC back to BIOS start to prevent crashes");
+            // Wrap back to beginning of BIOS
+            pc = 0x00000000;
+        }
         fflush(stdout);
         if (pc == 0xAC000000) {
             DEBUG_LOG(SH4, "Emitter::CreateNew: Processing target PC=0xAC000000");
             fflush(stdout);
         }
-                uint16_t raw = IReadMem16(pc);
+
+        // Check for PC corruption - both AICA RAM and NULL addresses
+        if ((pc >= 0x20000000 && pc <= 0x2FFFFFFF) || pc == 0x0) {
+            ERROR_LOG(SH4, "PC CORRUPTION DETECTED: PC=0x%08X", pc);
+            if (pc == 0x0) {
+                ERROR_LOG(SH4, "PC corrupted to NULL - this will cause mirror access and infinite NOP loop");
+            } else {
+                ERROR_LOG(SH4, "PC corrupted to AICA RAM - this will cause infinite NOP loop");
+            }
+            ERROR_LOG(SH4, "This indicates a bug in branch/jump instruction execution");
+            ERROR_LOG(SH4, "CalcBlockSig() will try to read from this corrupted PC address");
+            abort(); // Stop execution to debug
+        }
+
+        // CRITICAL: Check for PC corruption before reading instruction
+        if (pc == 0x0) {
+            ERROR_LOG(SH4, "🚨 CRITICAL: CreateNew() called with PC=0x0!");
+            ERROR_LOG(SH4, "🚨 This will cause mirror access when reading instruction");
+            abort();
+        }
+
+        // Use IReadMem16() for instruction reads, like legacy interpreter does
+        uint16_t raw = IReadMem16(pc);
         DEBUG_LOG(SH4, "Emitter::CreateNew: PC=0x%08X, raw_opcode=0x%04X", pc, raw);
 
                         // Special handling for BIOS start address
@@ -2746,109 +2826,38 @@ Block& Emitter::CreateNew(uint32_t pc) {
             return blk;
         }
 
-        if (raw == 0x0000 || raw == 0x0009)
+        // **CRITICAL FIX**: 0x0000 is NOT NOP in SH4! Only 0x0009 is NOP
+        // 0x0000 is an undefined/illegal instruction that should cause exception
+        if (raw == 0x0000)
         {
-            // Insert NOP first
+            ERROR_LOG(SH4, "🚨 ILLEGAL INSTRUCTION: 0x0000 at PC=0x%08X (NOT NOP!)", pc);
+            ERROR_LOG(SH4, "🚨 0x0000 is undefined in SH4 - only 0x0009 is NOP");
+            ins.op = Op::ILLEGAL;
+            ins.pc = pc;
+            ins.raw = raw;
+            blk.code.push_back(ins);
+            blk.pcNext = pc + 2;
+
+            // END sentinel
+            Instr end{};
+            end.op = Op::END;
+            end.pc = pc + 2;
+            blk.code.push_back(end);
+            return blk;
+        }
+        else if (raw == 0x0009)
+        {
+            // Real NOP instruction (0x0009)
             ins.op = Op::NOP;
             ins.pc = pc;
             ins.raw = raw;
             blk.code.push_back(ins);
+            blk.pcNext = pc + 2;
 
-            // Decode following instruction so sequential Step(2) tests work
-            uint32_t next_pc_addr = pc + 2;
-            uint16_t next_raw = IReadMem16(next_pc_addr);
-
-            Instr next_ins{}; // zero-initialised avoids stale fields
-            Block scratch_blk; // temporary for FastDecode (fills blk.pcNext)
-            bool ok = FastDecode(next_raw, next_pc_addr, next_ins, scratch_blk);
-
-            if (ok && next_ins.op != Op::ILLEGAL)
-            {
-                next_ins.pc  = next_pc_addr;
-                next_ins.raw = next_raw;
-                blk.code.push_back(next_ins);
-                blk.pcNext = scratch_blk.pcNext ? scratch_blk.pcNext : (next_pc_addr + 2);
-            }
-            else if ((next_raw & 0xFF00) == 0xC700) // MOVA @(disp,PC),R0
-            {
-                uint8_t disp = next_raw & 0xFF;
-                uint32_t ea = (next_pc_addr & ~3u) + 4u + (static_cast<uint32_t>(disp) << 2);
-
-                next_ins = Instr{};
-                next_ins.op = Op::MOV_IMM;
-                next_ins.dst.isImm = false; next_ins.dst.reg = 0;
-                next_ins.src1.isImm = true; next_ins.src1.imm = static_cast<int32_t>(ea);
-                next_ins.pc = next_pc_addr;
-                next_ins.raw = next_raw;
-                blk.code.push_back(next_ins);
-                blk.pcNext = next_pc_addr + 2;
-            }
-            else
-            {
-                blk.pcNext = next_pc_addr; // could not decode
-            }
-
-                        // Coalescing loop: keep decoding straight-line instructions
-            uint32_t curr_pc_addr = blk.pcNext == 0 ? (pc + 2) : blk.pcNext;
-            static constexpr size_t kMaxInstrPerBlock = 64;
-            while (blk.code.size() < kMaxInstrPerBlock)
-            {
-                // Stop if previous instruction was a control-flow that already changed pcNext (branch, rts, etc.)
-                if (blk.pcNext != curr_pc_addr)
-                    break; // pcNext already diverged – control-flow boundary reached
-
-                uint16_t next_raw = IReadMem16(curr_pc_addr);
-                Instr next_ins{}; // clear
-                Block scratch_blk; // temporary for FastDecode (fills blk.pcNext)
-                bool decoded_ok = FastDecode(next_raw, curr_pc_addr, next_ins, scratch_blk);
-
-                if (!decoded_ok || next_ins.op == Op::ILLEGAL)
-                    break; // do not extend past undecoded/illegal instruction (executor will trap if needed)
-
-                // If FastDecode handled, next_ins may lack PC/raw details until we set them.
-                next_ins.pc  = curr_pc_addr;
-                next_ins.raw = next_raw;
-                blk.code.push_back(next_ins);
-
-                // Update blk.pcNext to whatever FastDecode decided – for straight-line it will be curr_pc+2.
-                blk.pcNext = scratch_blk.pcNext ? scratch_blk.pcNext : (curr_pc_addr + 2);
-
-                // Handle delay slot: if instruction has delay slot (pcNext == curr_pc + 4)
-                if (blk.pcNext == curr_pc_addr + 4)
-                {
-                    uint32_t slot_pc  = curr_pc_addr + 2;
-                    uint16_t slot_raw = IReadMem16(slot_pc);
-                    Instr slot{};
-                    Block dummy_slot_blk;
-                    bool slot_ok = FastDecode(slot_raw, slot_pc, slot, dummy_slot_blk);
-                    if (!slot_ok || slot.op == Op::ILLEGAL)
-                    {
-                        // Try minimal manual decode of MOV_REG delay slot to keep common branches working
-                        if ((slot_raw & 0xF00F) == 0x6003)
-                        {
-                            slot.op = Op::MOV_REG;
-                            slot.dst.isImm = false; slot.dst.reg = (slot_raw >> 8) & 0xF;
-                            slot.src1.isImm = false; slot.src1.reg = (slot_raw >> 4) & 0xF;
-                        }
-                        else
-                        {
-                            break; // cannot decode delay slot – stop block here
-                        }
-                    }
-                    slot.pc  = slot_pc;
-                    slot.raw = slot_raw;
-                    blk.code.push_back(slot);
-                    // blk.pcNext already set by branch (curr_pc +4) or dummy_slot_blk.pcNext as appropriate
-                }
-
-                // Advance curr_pc to blk.pcNext (straight-line case curr_pc+2)
-                curr_pc_addr = blk.pcNext;
-            }
-
-            // END sentinel so executor stops at blk.pcNext.
+            // END sentinel
             Instr end{};
             end.op = Op::END;
-            end.pc = blk.pcNext;
+            end.pc = pc + 2;
             blk.code.push_back(end);
             return blk;
         }
@@ -3018,7 +3027,9 @@ blk.code.push_back(slot);
 // =============================
 uint32_t cur_pc = blk.pcNext;
 int    seq_count = 1; // already have one instr in block
-while (seq_count < 32 && blk.pcNext == cur_pc) // keep adding while linear flow
+// **CRITICAL FIX**: The condition was wrong! It should check if cur_pc advances normally
+// The old condition "blk.pcNext == cur_pc" would create infinite loop if pcNext was corrupted
+while (seq_count < 32 && cur_pc == pc + (seq_count * 2)) // keep adding while linear flow
 {
     uint16_t next_raw = IReadMem16(cur_pc);
     // Do not extend the block past the first idle / NOP sequence marker.
@@ -5025,14 +5036,22 @@ else if ((raw & 0xF000) == 0xF000)
             DEBUG_LOG(SH4, "Emitter::CreateNew: Finalizing block for PC=0x%08X. Instructions: %zu. pcNext=0x%08X", blk.pcStart, blk.code.size(), blk.pcNext);
                 }
 
-        // Cache the block signature for deduplication
-        g_block_sig_cache.emplace(sig, &blk);
+        // DISABLED: Block signature caching for deduplication
+        // This was causing self-modifying code detection failures
+        // g_block_sig_cache.emplace(sig, &blk);
     }
     return blk;
 }
 
 const Block* Emitter::BuildBlock(uint32_t pc)
 {
+    // Silent corruption check - only log if PC is corrupted
+    if (pc == 0x0 || (pc >= 0x20000000 && pc <= 0x2FFFFFFF)) {
+        ERROR_LOG(SH4, "🚨 BUG FOUND: BuildBlock() called with corrupted PC=0x%08X", pc);
+        ERROR_LOG(SH4, "🚨 This will trigger CalcBlockSig() with corrupted PC and cause mirror access");
+        abort();
+    }
+
     auto it = cache_.find(pc);
     if (it != cache_.end()) {
         // Block exists in cache - return it directly without signature checking

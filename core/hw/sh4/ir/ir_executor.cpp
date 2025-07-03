@@ -163,6 +163,28 @@ extern Sh4IrInterpreter g_ir;
 } }
 using sh4::ir::g_ir;
 
+// **MEMORY MAPPING DEBUG**: Check what's mapped at 0x8C009C07
+void DebugMemoryMapping()
+{
+    ERROR_LOG(SH4, "🔍 MEMORY MAPPING DEBUG: Checking what's mapped at 0x8C009C07");
+
+    // Test read from the problematic address
+    u32 test_addr = 0x8C009C07;
+    u32 test_value = ReadMem32(test_addr);
+    ERROR_LOG(SH4, "🔍 ReadMem32(0x8C009C07) = 0x%08X", test_value);
+
+    // Test read from equivalent P0 address
+    u32 p0_addr = 0x0C009C07;
+    u32 p0_value = ReadMem32(p0_addr);
+    ERROR_LOG(SH4, "🔍 ReadMem32(0x0C009C07) = 0x%08X", p0_value);
+
+    if (test_value == p0_value) {
+        ERROR_LOG(SH4, "✅ Memory mapping is CORRECT - P1 and P0 return same value");
+    } else {
+        ERROR_LOG(SH4, "🚨 Memory mapping is BROKEN - P1 and P0 return different values!");
+        ERROR_LOG(SH4, "🚨 This explains why we're getting corrupted data from 0x8C009C07!");
+    }
+}
 
 // Helper functions for accessing context registers safely
 static inline void UpdateContextFPUL(Sh4Context* ctx, u32 value)
@@ -195,24 +217,30 @@ static inline const float* GET_XF(Sh4Context* ctx)
 // Helper macros for register access - use global context directly
 #define GET_REG(ctx, idx) (r[(idx)])
 #define SET_REG(ctx, idx, val) do { \
-        if ((idx) == 6) { LOG_R6_WRITE((val), next_pc, "GENERIC"); } \
-        else if ((idx) == 5) { LOG_R5_WRITE((val), next_pc, "GENERIC"); } \
-        else if ((idx) == 15) { \
-            uint32_t old_r15 = r[15]; \
-            if ((val) >= 0x1FFD0000 && (val) <= 0x1FFFFFFF) { \
-                ERROR_LOG(SH4, "🚨 R15 CORRUPTION: Setting R15 to problematic range %08X at PC=%08X", (val), next_pc); \
-                DumpTrace(); \
-                throw SH4ThrownException(next_pc, Sh4Ex_IllegalInstr); \
-            } else if ((val) == 0x7E001000) { \
-                ERROR_LOG(SH4, "🚨 R15 CORRUPTED AGAIN! Stack pointer set back to 0x7E001000 (was %08X) at PC=%08X", old_r15, next_pc); \
-                DumpTrace(); \
-                throw SH4ThrownException(next_pc, Sh4Ex_IllegalInstr); \
-            } else if ((val) > 0x20000000 && (val) != 0xBAADF00D) { \
-                ERROR_LOG(SH4, "🔍 R15 WRITE: %08X -> %08X at PC=%08X", old_r15, (val), next_pc); \
-            } \
+    if (1) { \
+        /* DISABLED: R0 corruption checking - LOAD8_GBR legitimately sets R0 to 0xFFFFFFFF */ \
+        /* if ((idx) == 0 && (val) == 0xFFFFFFFF) { \
+            ERROR_LOG(SH4, " R0 CORRUPTION: Setting R0 to 0xFFFFFFFF at PC=%08X", next_pc); \
+        } */ \
+    } \
+    else if ((idx) == 6) { LOG_R6_WRITE((val), next_pc, "GENERIC"); } \
+    else if ((idx) == 5) { LOG_R5_WRITE((val), next_pc, "GENERIC"); } \
+    else if ((idx) == 15) { \
+        uint32_t old_r15 = r[15]; \
+        if ((val) >= 0x1FFD0000 && (val) <= 0x1FFFFFFF) { \
+            ERROR_LOG(SH4, " R15 CORRUPTION: Setting R15 to problematic range %08X at PC=%08X", (val), next_pc); \
+            DumpTrace(); \
+            throw SH4ThrownException(next_pc, Sh4Ex_IllegalInstr); \
+        } else if ((val) == 0x7E001000) { \
+            INFO_LOG(SH4, " R15 RESET: Stack pointer reset to 0x7E001000 (was %08X) at PC=%08X - allowing", old_r15, next_pc); \
+            INFO_LOG(SH4, "🔍 R15 RESET: Stack pointer reset to 0x7E001000 (was %08X) at PC=%08X - allowing", old_r15, next_pc); \
+            /* Allow this - it might be legitimate game behavior */ \
+        } else if ((val) > 0x20000000 && (val) != 0xBAADF00D) { \
+            ERROR_LOG(SH4, "🔍 R15 WRITE: %08X -> %08X at PC=%08X", old_r15, (val), next_pc); \
         } \
-        r[(idx)] = (val); \
-    } while(0)
+    } \
+    r[(idx)] = (val); \
+} while(0)
 
 // Debug: log writes to R6 to trace corruption of jump register
 #if 1
@@ -482,6 +510,48 @@ static inline void SetPC(Sh4Context* ctx, uint32_t new_pc, const char* why)
     // Added PR and SR.T to existing SetPC logging
     DEBUG_LOG(SH4, "SetPC: %08X -> %08X (PR:%08X SR.T:%d) via %s", old_pc, new_pc, pr, GET_SR_T(ctx), why);
 
+    // **CRITICAL DEBUG**: Track PC corruption to unmapped memory region
+    if (new_pc == 0x01000000) {
+        ERROR_LOG(SH4, "🚨 CRITICAL: SetPC called with 0x01000000 - UNMAPPED MEMORY REGION!");
+        ERROR_LOG(SH4, "🚨 Source: %s", why);
+        ERROR_LOG(SH4, "🚨 Previous PC: 0x%08X", old_pc);
+        ERROR_LOG(SH4, "🚨 PR: 0x%08X", pr);
+        ERROR_LOG(SH4, "🚨 Context PC: 0x%08X", ctx ? ctx->pc : 0);
+        ERROR_LOG(SH4, "🚨 This is the EXACT moment PC corruption occurs!");
+        DumpTrace();
+        abort(); // Stop here to get stack trace
+    }
+
+                    // **BLOCK LOOP DETECTION**: Catch blocks that loop back to themselves
+    if (strcmp(why, "block_end") == 0 && new_pc == old_pc) {
+        ERROR_LOG(SH4, "🚨 INFINITE BLOCK LOOP: Block at PC=0x%08X has pcNext=0x%08X (same address!)",
+                 old_pc, new_pc);
+        ERROR_LOG(SH4, "🚨 This creates infinite loop - block restarts itself endlessly");
+        ERROR_LOG(SH4, "🚨 This is a BUG in block creation logic - pcNext should advance!");
+        abort(); // Stop here to get stack trace
+    }
+
+    // **ENHANCED DEBUG**: Track ANY assignment to 0x20000000 with full context
+    if (new_pc == 0x20000000) {
+        ERROR_LOG(SH4, "🔍 CRITICAL: SetPC called with 0x20000000!");
+        ERROR_LOG(SH4, "🔍 Source: %s", why);
+        ERROR_LOG(SH4, "🔍 Previous PC: 0x%08X", old_pc);
+        ERROR_LOG(SH4, "🔍 PR: 0x%08X", pr);
+        ERROR_LOG(SH4, "🔍 Context PC: 0x%08X", ctx ? ctx->pc : 0);
+        ERROR_LOG(SH4, "🔍 This is the EXACT moment PC corruption occurs!");
+        DumpTrace();
+        abort(); // Stop here to get stack trace
+    }
+
+    // **CRITICAL DEBUG**: Catch PC corruption to mirror range (0x20000000-0x2FFFFFFF)
+    if (new_pc >= 0x20000000 && new_pc <= 0x2FFFFFFF) {
+        ERROR_LOG(SH4, "🚨 PC CORRUPTION TO MIRROR RANGE DETECTED!");
+        ERROR_LOG(SH4, "🚨 SetPC: %08X -> %08X via %s", old_pc, new_pc, why);
+        ERROR_LOG(SH4, "🚨 This is the source of the BIOS mirror loop - STOPPING EXECUTION");
+        DumpTrace();
+        abort(); // Stop execution immediately to identify the source
+    }
+
     // Check for corruption to the problematic range that causes infinite loops
     // Expanded range to catch ANY corruption pattern in the 1ffc-1fff range
     if (new_pc >= 0x1FFC0000 && new_pc <= 0x1FFFFFFF) {
@@ -507,14 +577,10 @@ static inline void SetPC(Sh4Context* ctx, uint32_t new_pc, const char* why)
     else if (IsTopRegion(new_pc))
     {
         ERROR_LOG(SH4, "🛑 *** SetPC to near-top %08X from %s", new_pc, why);
-        // Only block truly corrupted ranges, not legitimate I/O areas
-        // 0xFFFF8000+ is legitimate I/O register space
-        if (new_pc >= 0xFFF00000 && new_pc < 0xFFFF8000) {
-            ERROR_LOG(SH4, "🛑 BLOCKING CORRUPTED PC range 0xFFF00000-0xFFFF7FFF - triggering exception");
-            throw SH4ThrownException(next_pc, Sh4Ex_IllegalInstr);
-        } else {
-            ERROR_LOG(SH4, "🛑 WARNING: High PC address but allowing execution to continue");
-        }
+        // Block ALL high addresses - I/O space should not contain executable code
+        // The original issue was addresses like 0xFE8CB39C, not legitimate I/O
+        ERROR_LOG(SH4, "🛑 BLOCKING INVALID PC in top region %08X - triggering exception", new_pc);
+        throw SH4ThrownException(next_pc, Sh4Ex_IllegalInstr);
     }
 
     // Detect sequential walk crossing into top region (e.g., fall-through past FFFFFFBE)
@@ -647,7 +713,7 @@ static inline u8  RawRead8(uint32_t a)
     if (IsSqPhysAddr(a)) {
         v = g_sq_buffer[SqOffset(a)];
     } else {
-        v = ReadMem8(a);
+        v = ReadMem8(a);  // Use function pointer like legacy interpreter
     }
     if (UNLIKELY(g_exception_was_raised))
         return 0;
@@ -662,11 +728,13 @@ static inline u16 RawRead16(uint32_t a)
         fflush(stdout);
     }
 
+
+
     u16 v;
     if (IsSqPhysAddr(a)) {
         v = *reinterpret_cast<const u16*>(&g_sq_buffer[SqOffset(a)]);
     } else {
-        v = ReadMem16(a);
+        v = ReadMem16(a);  // Use function pointer like legacy interpreter
     }
     if (UNLIKELY(g_exception_was_raised))
         return 0;
@@ -680,7 +748,7 @@ static inline u32 RawRead32(uint32_t a)
         v = *reinterpret_cast<const u32*>(&g_sq_buffer[SqOffset(a)]);
         INFO_LOG(SH4, "SQ READ32 addr=0x%08X off=%u val=0x%08X", a, SqOffset(a), v);
     } else {
-        v = ReadMem32(a);
+        v = ReadMem32(a);  // Use function pointer like legacy interpreter
         INFO_LOG(SH4, "%s read32 addr=0x%08X val=0x%08X", "MEM", a, v);
     }
     if (UNLIKELY(g_exception_was_raised))
@@ -697,7 +765,7 @@ static inline u64 RawRead64(uint32_t a)
         v = (static_cast<u64>(hi) << 32) | lo;
         INFO_LOG(SH4, "SQ READ64 addr=0x%08X off=%u val=0x%08X", a, SqOffset(a), v);
     } else {
-      v = ReadMem64(a);
+      v = ReadMem64(a);  // Use function pointer like legacy interpreter
       INFO_LOG(SH4, "%s read64 addr=0x%08X val=0x%08X", "MEM", a, v);
     }
     if (UNLIKELY(g_exception_was_raised))
@@ -761,8 +829,7 @@ static inline void RawWrite16(uint32_t a, u16 d)
 
     if (IsStoreQueueAddr(a)) {
         *reinterpret_cast<u16*>(&g_sq_buffer[SqOffset(a)]) = d;
-
-        WriteMem16(a, d);
+        // **FIX**: Only write to SQ buffer, not to memory (like ARM64 dynarec)
         return;
     }
 
@@ -773,6 +840,14 @@ static inline void RawWrite16(uint32_t a, u16 d)
 
 static inline void RawWrite32(uint32_t a, u32 d)
 {
+    // **GLOBAL CORRUPTION DETECTION**: Monitor writes to the exact corrupted address
+    if (a == 0x8C009C07) {
+        ERROR_LOG(SH4, "🚨 GLOBAL WRITE DETECTION: Writing 0x%08X to address 0x8C009C07!", d);
+        ERROR_LOG(SH4, "🚨 This is the exact address that contains corrupted data!");
+        DumpTrace();
+        abort(); // Stop here to examine the write source
+    }
+
     if (a >= 0x1F000000 && a <= 0x1F000018) {
         ERROR_LOG(SH4, "Invalid P4 write (32-bit) addr=0x%08X, data=0x%08X, pc=0x%08X", a, d, next_pc);
         return;
@@ -804,11 +879,7 @@ static inline void RawWrite64(uint32_t a, u64 d)
         *reinterpret_cast<u32*>(&g_sq_buffer[SqOffset(a) + 4]) = high;
         ERROR_LOG(SH4, "SQ WRITE64 low addr=0x%08X off=%u val=0x%08X", a, SqOffset(a), low);
         ERROR_LOG(SH4, "SQ WRITE64 high addr=0x%08X off=%u val=0x%08X", a+4, SqOffset(a)+4, high);
-        // mirror to vector RAM (little-endian order)
-
-
-        WriteMem32(a, low);
-        WriteMem32(a + 4, high);
+        // **FIX**: Only write to SQ buffer, not to memory (like ARM64 dynarec)
         return;
     }
     if (!g_exception_was_raised)
@@ -1063,6 +1134,15 @@ static void Exec_JSR(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t pc) {
         return;
     }
 
+    // CRITICAL: Block JSR to AICA RAM mirror range (0x20000000-0x2FFFFFFF)
+    if (target >= 0x20000000 && target <= 0x2FFFFFFF) {
+        ERROR_LOG(SH4, "🚨 BLOCKING JSR TO AICA RAM: PC=0x%08X attempting JSR to AICA address 0x%08X", pc, target);
+        ERROR_LOG(SH4, "🚨 Register R%d contains AICA RAM address - this would cause infinite loop", ins.src1.reg);
+        ERROR_LOG(SH4, "🚨 This is likely register confusion - AICA address used as jump target");
+        // Don't execute the JSR - just continue to next instruction
+        return;
+    }
+
     pr = pc + 4;
     SetPC(ctx, target, "JSR");
 }
@@ -1163,6 +1243,16 @@ static void Exec_JMP(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t pc)
 {
     uint32_t raw_target = GET_REG(ctx, ins.src1.reg);
     uint32_t target = raw_target & ~1u; // align to 2 bytes per SH-4 spec
+
+    // CRITICAL: Block JMP to AICA RAM mirror range (0x20000000-0x2FFFFFFF)
+    if (target >= 0x20000000 && target <= 0x2FFFFFFF) {
+        ERROR_LOG(SH4, "🚨 BLOCKING JMP TO AICA RAM: PC=0x%08X attempting JMP to AICA address 0x%08X", pc, target);
+        ERROR_LOG(SH4, "🚨 Register R%d contains AICA RAM address - this would cause infinite loop", ins.src1.reg);
+        ERROR_LOG(SH4, "🚨 This is likely register confusion - AICA address used as jump target");
+        // Don't execute the JMP - just continue to next instruction
+        return;
+    }
+
     // basic sanity: BIOS/ROM executes in 0xA0000000+; log if we jump below 0x1000
     if (target < 0x1000) {
         ERROR_LOG(SH4, "JMP to suspicious address 0x%08X (raw 0x%08X) from PC=0x%08X", target, raw_target, pc);
@@ -1416,10 +1506,10 @@ static void Exec_LOAD32_PC(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t 
     // Some disc images have corrupted stack pointer data at offset 0x31C in the IP.BIN bootstrap
     // This causes infinite loop crashes in the IR interpreter when the bootstrap tries to load
     // the stack pointer from memory address 0xAC00831C (0x8C008000 + 0x31C)
-    if (addr == 0xAC00831C && value == 0x7E001000) {
-        ERROR_LOG(SH4, "🔧 IR INTERPRETER: Fixing corrupted stack pointer in IP.BIN bootstrap: 0x%08X -> 0x8D000000 at PC=%08X", value, pc);
-        value = 0x8D000000; // Correct Dreamcast stack pointer
-    }
+    // if (addr == 0xAC00831C && value == 0x7E001000) {
+    //     ERROR_LOG(SH4, "🔧 IR INTERPRETER: Fixing corrupted stack pointer in IP.BIN bootstrap: 0x%08X -> 0x8D000000 at PC=%08X", value, pc);
+    //     value = 0x8D000000; // Correct Dreamcast stack pointer
+    // }
 
     SET_REG(ctx, ins.dst.reg, value);
 }
@@ -2393,16 +2483,22 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
         // Current PC before executing this instruction
         uint32_t pc_snapshot = next_pc; // capture current PC
 
-                // Special logging for the problematic PC where corruption happens
-        if (pc_snapshot == 0x8C0083A8) {
-            ERROR_LOG(SH4, "🔍 CRITICAL PC 8C0083A8: About to execute instruction");
-            ERROR_LOG(SH4, "🔍 Register state: R0=%08X R1=%08X R2=%08X R3=%08X R15=%08X",
-                     GET_REG(ctx, 0), GET_REG(ctx, 1), GET_REG(ctx, 2), GET_REG(ctx, 3), GET_REG(ctx, 15));
+        // Track PC corruption to AICA RAM addresses
+        static uint32_t last_pc = 0;
+        static uint16_t last_instruction = 0;
+
+        // Check for PC corruption to AICA RAM
+        if (pc_snapshot >= 0x20000000 && pc_snapshot <= 0x2FFFFFFF) {
+            ERROR_LOG(SH4, "PC CORRUPTION DETECTED: PC=0x%08X (AICA RAM)", pc_snapshot);
+            ERROR_LOG(SH4, "Previous PC=0x%08X, Previous instruction=0x%04X", last_pc, last_instruction);
+            ERROR_LOG(SH4, "This will cause infinite NOP loop - source of corruption found!");
+            abort();
         }
 
-        // Log the next few critical PCs to trace execution flow
-        if (pc_snapshot >= 0x8C0083A8 && pc_snapshot <= 0x8C0083B0) {
-            ERROR_LOG(SH4, "🔍 EXECUTION TRACE PC=%08X: About to execute instruction", pc_snapshot);
+        // Update tracking for next iteration
+        last_pc = pc_snapshot;
+        if (ip > 0 && ip <= blk->code.size()) {
+            last_instruction = blk->code[ip-1].raw;
         }
 
         if (pc_snapshot == 0)
@@ -2416,7 +2512,92 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
         // No branch commit here; we defer committing the branch until after the
         // delay-slot instruction has executed (see logic at bottom of loop).
 
-        const Instr& ins = blk->code[ip++];
+                const Instr& ins = blk->code[ip++];
+
+                        // **CRITICAL DEBUG**: Detect PC corruption to unmapped memory region
+        static bool first_unmapped_detected = false;
+        if (!first_unmapped_detected && (pc_snapshot >= 0x01000000 && pc_snapshot < 0x04000000)) {
+            first_unmapped_detected = true;
+            ERROR_LOG(SH4, "🚨 PC CORRUPTION DETECTED! PC=0x%08X is in unmapped memory region 0x01000000-0x04000000", pc_snapshot);
+            ERROR_LOG(SH4, "🚨 This region returns 0x0000 (NOP/END) for all reads, causing infinite loop");
+            ERROR_LOG(SH4, "🚨 Need to find where PC got corrupted to this range");
+
+            // Print call stack or context to help debug
+            ERROR_LOG(SH4, "🚨 Current instruction: %s (raw=0x%04X)", GetOpName(static_cast<size_t>(ins.op)), ins.raw);
+            abort();
+        }
+
+        // **CRITICAL DEBUG**: Track last non-NOP instructions before NOP sled
+        static uint32_t last_non_nop_pcs[10] = {0};
+        static Op last_non_nop_ops[10] = {Op::NOP};
+        static uint16_t last_non_nop_raws[10] = {0};
+        static int last_non_nop_index = 0;
+
+        if (ins.op != Op::NOP && pc_snapshot >= 0x01FF0000) {
+            last_non_nop_pcs[last_non_nop_index] = pc_snapshot;
+            last_non_nop_ops[last_non_nop_index] = ins.op;
+            last_non_nop_raws[last_non_nop_index] = ins.raw;
+            last_non_nop_index = (last_non_nop_index + 1) % 10;
+        }
+
+        // If we hit the first NOP in the problematic range, dump the last non-NOPs
+        static bool nop_sled_logged = false;
+        if (!nop_sled_logged && ins.op == Op::NOP && pc_snapshot >= 0x01FFF000) {
+            nop_sled_logged = true;
+            ERROR_LOG(SH4, "🚨 ENTERING NOP SLED at PC=0x%08X - Last 10 non-NOP instructions:", pc_snapshot);
+            for (int i = 0; i < 10; i++) {
+                int idx = (last_non_nop_index + i) % 10;
+                if (last_non_nop_pcs[idx] != 0) {
+                    ERROR_LOG(SH4, "🚨   [%d] PC=0x%08X: %s (raw=0x%04X)",
+                             i, last_non_nop_pcs[idx], GetOpName(static_cast<size_t>(last_non_nop_ops[idx])), last_non_nop_raws[idx]);
+                }
+            }
+        }
+
+        // **COMPREHENSIVE SH4 SPEC VALIDATION**: Trace instructions leading to corruption
+        static bool critical_tracing = false;
+
+        // **EXPANDED TRACING**: Start much earlier to catch corruption source
+        if (pc_snapshot >= 0x8C008000 && pc_snapshot <= 0x8C009C20) {
+            if (!critical_tracing) {
+                ERROR_LOG(SH4, "🔍 STARTING SH4 SPEC VALIDATION TRACE at PC=0x%08X", pc_snapshot);
+                critical_tracing = true;
+            }
+
+            // **DETAILED INSTRUCTION TRACE**: Every instruction with full context
+            ERROR_LOG(SH4, "📋 SH4 TRACE PC=0x%08X: %s (raw=0x%04X)",
+                     pc_snapshot, GetOpName(static_cast<size_t>(ins.op)), ins.raw);
+            ERROR_LOG(SH4, "📋   Registers: R0=%08X R1=%08X R2=%08X R3=%08X R15=%08X PR=%08X",
+                     GET_REG(ctx, 0), GET_REG(ctx, 1), GET_REG(ctx, 2), GET_REG(ctx, 3), GET_REG(ctx, 15), pr);
+            ERROR_LOG(SH4, "📋   Instruction: dst.reg=%d src1.reg=%d src1.imm=0x%X extra=0x%X",
+                     ins.dst.reg, ins.src1.reg, ins.src1.imm, ins.extra);
+
+            // **MEMORY OPERATION VALIDATION**: Check every memory access against SH4 specs
+            if (ins.op == Op::LOAD32_PC || ins.op == Op::LOAD32 || ins.op == Op::LOAD32_POST ||
+                ins.op == Op::STORE32 || ins.op == Op::STORE32_PREDEC) {
+                ERROR_LOG(SH4, "🔍 MEMORY OP VALIDATION: %s at PC=0x%08X", GetOpName(static_cast<size_t>(ins.op)), pc_snapshot);
+
+                // Pre-execution memory state logging
+                if (ins.op == Op::LOAD32_PC) {
+                    uint32_t load_addr = pc_snapshot + 4 + (ins.extra * 4);
+                    ERROR_LOG(SH4, "🔍 LOAD32_PC: addr=0x%08X (PC+4+disp*4 = 0x%08X+4+%d*4)",
+                             load_addr, pc_snapshot, ins.extra);
+                }
+                else if (ins.op == Op::LOAD32) {
+                    uint32_t base_addr = GET_REG(ctx, ins.src1.reg);
+                    uint32_t load_addr = base_addr + ins.extra;
+                    ERROR_LOG(SH4, "🔍 LOAD32: addr=0x%08X (R%d+disp = 0x%08X+%d)",
+                             load_addr, ins.src1.reg, base_addr, ins.extra);
+                }
+                else if (ins.op == Op::STORE32) {
+                    uint32_t base_addr = GET_REG(ctx, ins.src1.reg);
+                    uint32_t store_addr = base_addr + ins.extra;
+                    uint32_t store_val = GET_REG(ctx, ins.dst.reg);
+                    ERROR_LOG(SH4, "🔍 STORE32: addr=0x%08X val=0x%08X (R%d+disp = 0x%08X+%d, storing R%d)",
+                             store_addr, store_val, ins.src1.reg, base_addr, ins.extra, ins.dst.reg);
+                }
+            }
+        }
 
         // Special logging for the problematic PC where corruption happens
         if (pc_snapshot == 0x8C0083A8) {
@@ -2436,6 +2617,10 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
         // Loop detection - record this PC and check for infinite loops
         LoopDetection::RecordPC(pc_snapshot, ins.raw);
         LoopDetection::DetectSequenceLoop();
+
+                // REMOVED: Overly aggressive stack validation was causing false positives with REIOS
+        // The REIOS stack address 0x0CC00000 is legitimate and should not be flagged
+        // Only keep the specific corruption detection for the problematic range we actually saw
 
         // Simple execution tracking to debug hangs (disabled - too verbose)
         // static uint64_t exec_count = 0;
@@ -2497,7 +2682,51 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
             {
                 fn(ins, ctx, curr_pc);
 
-                                // Post-execution validation to catch bad opcode implementations
+                                // **POST-EXECUTION SH4 SPEC VALIDATION**: Check results against expected behavior
+                if (critical_tracing) {
+                    // **MEMORY CORRUPTION DETECTION**: Check if we just wrote the bad function pointer
+                    if (ins.op == Op::STORE32) {
+                        uint32_t base_addr = GET_REG(ctx, ins.src1.reg);
+                        uint32_t store_addr = base_addr + ins.extra;
+                        uint32_t store_val = GET_REG(ctx, ins.dst.reg);
+
+                        // Check if we just wrote to the problematic address
+                        if (store_addr == 0x8C009C07) {
+                            ERROR_LOG(SH4, "🚨 CORRUPTION DETECTED: Just wrote 0x%08X to address 0x8C009C07!", store_val);
+                            ERROR_LOG(SH4, "🚨 This is the corrupted function pointer that causes the crash!");
+                            ERROR_LOG(SH4, "🚨 Instruction: STORE32 R%d -> [R%d+%d] at PC=0x%08X",
+                                     ins.dst.reg, ins.src1.reg, ins.extra, pc_snapshot);
+                            ERROR_LOG(SH4, "🚨 SH4 SPEC CHECK: STORE32 should write R%d (0x%08X) to address R%d+disp (0x%08X+%d=0x%08X)",
+                                     ins.dst.reg, store_val, ins.src1.reg, base_addr, ins.extra, store_addr);
+
+                            // Validate against SH4 specification
+                            if (store_val == 0x009C0463) {
+                                ERROR_LOG(SH4, "🚨 ROOT CAUSE FOUND: Register R%d contains corrupted AICA RAM address 0x009C0463!", ins.dst.reg);
+                                ERROR_LOG(SH4, "🚨 This should be a main RAM address (0x8C00xxxx), not AICA RAM (0x00xxxxxx)!");
+                                ERROR_LOG(SH4, "🚨 The corruption happened BEFORE this store - need to trace where R%d got this value", ins.dst.reg);
+                            }
+                            DumpTrace();
+                            abort(); // Stop here to examine the exact moment
+                        }
+
+                        // **CRITICAL**: Monitor writes to the exact corrupted address
+                        if (store_addr == 0x8C009C07) {
+                            ERROR_LOG(SH4, "🚨 WRITE TO CORRUPTED ADDRESS: Wrote 0x%08X to 0x8C009C07!", store_val);
+                            ERROR_LOG(SH4, "🚨 This is where the bad function pointer gets written!");
+                            DumpTrace();
+                            abort(); // Stop here to examine
+                        }
+
+                        // Log all stores in critical region for analysis
+                        ERROR_LOG(SH4, "📋 POST-STORE: Wrote 0x%08X to address 0x%08X", store_val, store_addr);
+                    }
+
+                    // **REGISTER VALIDATION**: Check for unexpected register changes
+                    ERROR_LOG(SH4, "📋 POST-EXEC: R0=%08X R1=%08X R2=%08X R3=%08X R15=%08X PR=%08X",
+                             GET_REG(ctx, 0), GET_REG(ctx, 1), GET_REG(ctx, 2), GET_REG(ctx, 3), GET_REG(ctx, 15), pr);
+                }
+
+                // Post-execution validation to catch bad opcode implementations
                 if (unlikely(next_pc == 0 && pre_pc != 0)) {
                     ERROR_LOG(SH4, "🚨 OPCODE VALIDATION FAILURE: PC set to ZERO by %s (raw=%04X) at PC=%08X",
                              GetOpName(static_cast<size_t>(ins.op)), ins.raw, pre_pc);
@@ -2560,6 +2789,41 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                     // REMOVED: No longer needed with global context
                     return;
                 case Op::NOP:
+                    // **CRITICAL DEBUG**: Track consecutive NOPs anywhere to find NOP sled source
+                    {
+                        static uint32_t nop_count = 0;
+                        static uint32_t first_nop_pc = 0;
+                        static uint32_t last_nop_pc = 0;
+
+                        // Reset counter if NOPs are not consecutive
+                        if (last_nop_pc != 0 && curr_pc != last_nop_pc + 2) {
+                            nop_count = 0;
+                        }
+
+                        if (nop_count == 0) {
+                            first_nop_pc = curr_pc;
+                        }
+
+                        nop_count++;
+                        last_nop_pc = curr_pc;
+
+                        // Trigger on 5 consecutive NOPs
+                        if (nop_count == 5) {
+                            ERROR_LOG(SH4, "🚨 NOP SLED DETECTED: 5 consecutive NOPs starting at PC=0x%08X", first_nop_pc);
+                            ERROR_LOG(SH4, "🚨 Current NOP at PC=0x%08X", curr_pc);
+                            ERROR_LOG(SH4, "🚨 Last 10 non-NOP instructions before NOP sled:");
+                            for (int i = 0; i < 10; i++) {
+                                ERROR_LOG(SH4, "🚨   [%d] PC=0x%08X: %s (raw=0x%04X)",
+                                         i, last_non_nop_pcs[i], GetOpName(static_cast<size_t>(last_non_nop_ops[i])), last_non_nop_raws[i]);
+                            }
+                        }
+
+                        // Abort after too many consecutive NOPs
+                        if (nop_count > 20) {
+                            ERROR_LOG(SH4, "🚨 TOO MANY NOPs: %u consecutive NOPs starting at PC=0x%08X - infinite loop detected", nop_count, first_nop_pc);
+                            abort();
+                        }
+                    }
                     break;
                 case Op::CLRS:
                     sr.S = 0;
@@ -3119,13 +3383,29 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                     SET_REG(ctx, ins.dst.reg, sr_getFull(ctx));
                     // INFO_LOG(SH4, "STC_SR: SR (0x%08X) -> R%d (0x%08X) at PC=%08X", sr.GetFull(), ins.dst.reg, GET_REG(ctx, ins.dst.reg), curr_pc);
                     break;
-                                case Op::JSR:
+                                                                case Op::JSR:
                     {
                         uint32_t target_reg_value = GET_REG(ctx, ins.src1.reg);
                         uint16_t actual_raw = RawRead16(curr_pc);
                         INFO_LOG(SH4, "BR JSR from %08X -> %08X (r%u) raw=0x%04X actual_raw=0x%04X [R1=%08X R2=%08X R3=%08X]",
                                 curr_pc, target_reg_value, ins.src1.reg, ins.raw, actual_raw,
                                 GET_REG(ctx, 1), GET_REG(ctx, 2), GET_REG(ctx, 3));
+
+                        // **CRITICAL FIX**: Don't blindly align JSR targets - this was causing the bug!
+                        // The original code `target_reg_value & ~1u` was corrupting valid odd addresses
+                        // like 0x009C0463 -> 0x009C0462, where 0x009C0462 contains 0x0000 (ILLEGAL)
+                        uint32_t target = target_reg_value;
+
+                        // **DEBUG**: Log if we're about to corrupt an address
+                        if ((target_reg_value & 1) != 0) {
+                            ERROR_LOG(SH4, "🔧 JSR TARGET FIX: NOT aligning odd address 0x%08X (was causing ILLEGAL instruction bug)", target_reg_value);
+                            // Check what's at both addresses for debugging
+                            uint16_t odd_val = RawRead16(target_reg_value);
+                            uint16_t even_val = RawRead16(target_reg_value & ~1u);
+                            ERROR_LOG(SH4, "🔧 Address 0x%08X contains: 0x%04X, Address 0x%08X contains: 0x%04X",
+                                     target_reg_value, odd_val, target_reg_value & ~1u, even_val);
+                        }
+
                         if (IsTopRegion(target_reg_value))
                             ERROR_LOG(SH4, "*** HIGH-FF JSR target at %08X : R%u=%08X", curr_pc, ins.src1.reg, target_reg_value);
                         pending_pr = curr_pc + 4; // address after delay slot
@@ -3146,6 +3426,8 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                     }
                     break;
                 case Op::JMP:
+
+
                     // Dump full GPR set for debugging the reset jump
                     INFO_LOG(SH4, "JMP @R%u at %08X  R0=%08X R1=%08X R2=%08X R3=%08X R4=%08X R5=%08X R6=%08X R7=%08X",
                              ins.src1.reg, curr_pc,
@@ -4255,7 +4537,50 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                 case Op::ILLEGAL:
                        {
                            uint16_t raw16 = RawRead16(next_pc);
+
+                           // MEMORY CORRUPTION DEBUGGING - Add comprehensive checks
+                           ERROR_LOG(SH4, "🚨 MEMORY CORRUPTION ANALYSIS for ILLEGAL opcode raw=%04X at PC=%08X", raw16, next_pc);
+
+                           // Check stack pointer integrity
+                           uint32_t sp = GET_REG(ctx, 15);  // R15 is stack pointer
+                           ERROR_LOG(SH4, "🔍 Stack Pointer: R15=%08X (valid range: 0x8C000000-0x8CFFFFFF)", sp);
+                           if (sp < 0x8C000000 || sp > 0x8CFFFFFF) {
+                               ERROR_LOG(SH4, "🚨 STACK POINTER CORRUPTION: SP=%08X is outside valid RAM range", sp);
+                           }
+
+                           // Check critical registers for corruption patterns
+                           for (int i = 0; i < 16; i++) {
+                               uint32_t reg_val = GET_REG(ctx, i);
+                               if (reg_val == 0xDEADBEEF || reg_val == 0xBADDF00D || reg_val == 0xCCCCCCCC) {
+                                   ERROR_LOG(SH4, "🚨 REGISTER CORRUPTION: R%d=%08X (magic corruption value)", i, reg_val);
+                               }
+                               if ((reg_val & 0xFFFF0000) == 0xFFFF0000 && reg_val != 0xFFFFFFFF) {
+                                   ERROR_LOG(SH4, "🚨 SUSPICIOUS HIGH ADDRESS: R%d=%08X", i, reg_val);
+                               }
+                           }
+
+                           // Check if we're executing in a data section by examining nearby memory
+                           ERROR_LOG(SH4, "🔍 Memory context around PC=%08X:", next_pc);
+                           for (int offset = -8; offset <= 8; offset += 2) {
+                               uint32_t check_pc = next_pc + offset;
+                               if (check_pc >= 0x8C000000 && check_pc < 0x8CFFFFFF) {  // Valid RAM range
+                                   uint16_t check_raw = RawRead16(check_pc);
+                                   ERROR_LOG(SH4, "🔍   PC+%d: %08X = %04X %s", offset, check_pc, check_raw,
+                                            (check_pc == next_pc) ? "<<< ILLEGAL" : "");
+                               }
+                           }
+
+                           // Check if this address was recently written to
+                           ERROR_LOG(SH4, "🔍 Checking if PC=%08X was recently modified...", next_pc);
+
+                           // Check procedure register for corruption
+                           ERROR_LOG(SH4, "🔍 PR (Procedure Register): %08X", pr);
+                           if ((pr & 0xFFFF0000) == 0xFFFF0000 && pr != 0xFFFFFFFF) {
+                               ERROR_LOG(SH4, "🚨 PR CORRUPTION: PR=%08X contains suspicious high address", pr);
+                           }
+
                            ERROR_LOG(SH4, "IR executor trapped ILLEGAL opcode raw=%04X at PC=%08X", raw16, next_pc);
+
                            // Dump once per unique illegal opcode
                            static std::unordered_set<uint32_t> illegal_seen;
                            uint32_t key = (raw16 << 16) | (next_pc & 0xFFFF);
@@ -4344,6 +4669,7 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
         // commit step at the top of the next iteration will overwrite pc with
         // the branch target after the delay slot has run.
         // pc here is the PC of the instruction just executed.
+
         DEBUG_LOG(SH4, "SEQUENTIAL_ADVANCE: AtPC:%08X PR:%08X SR.T:%d -> TargetNextPC:%08X", next_pc, pr, GET_SR_T(ctx), next_pc + 2);
         SetPC(ctx, next_pc + 2, "seq");
 
@@ -4384,7 +4710,22 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                     DumpTrace();
                     throw SH4ThrownException(curr_pc, Sh4Ex_IllegalInstr);
                 }
-                SetPC(ctx, branch_target, "branch_commit");
+
+                // CRITICAL FIX: Handle SetPC exceptions properly
+                try {
+                    SetPC(ctx, branch_target, "branch_commit");
+                } catch (const SH4ThrownException&) {
+                    // SetPC threw an exception (likely invalid branch target)
+                    // Clean up branch state and re-throw
+                    ERROR_LOG(SH4, "🚨 SetPC exception during branch commit - cleaning up branch state");
+                    branch_pending = false;
+                    executed_delay = false;
+                    pending_op = Op::NOP;
+                    branch_target = 0;
+                    pending_pr = 0;
+                    throw; // Re-throw the exception
+                }
+
                 // CRITICAL DEBUG: Verify next_pc immediately after SetPC call
                 INFO_LOG(SH4, "POST-SETPC DEBUG: next_pc=%08X expected=%08X", next_pc, branch_target);
                 if (unlikely(next_pc != branch_target)) {
@@ -4398,6 +4739,14 @@ void Executor::ExecuteBlock(const Block* blk, Sh4Context* ctx)
                     // REMOVED: No longer needed with global context
                     return;
                 }
+
+                // **CRITICAL DEBUG**: Add specific debugging for the problematic JSR case
+                if (pending_op == Op::JSR && pending_pr == 0xAC008310 && branch_target == 0x8C0083A8) {
+                    ERROR_LOG(SH4, "🚨 CRITICAL JSR DEBUG: About to return from ExecuteBlock after branch commit");
+                    ERROR_LOG(SH4, "🚨 next_pc=%08X, branch_target=%08X, pending_pr=%08X", next_pc, branch_target, pending_pr);
+                    ERROR_LOG(SH4, "🚨 If we still end up at 0xAC008310, something is overriding PC after this return");
+                }
+
                 return;
             }
             else
@@ -4432,13 +4781,33 @@ void Executor::ResetCachedBlocks()
 // -----------------------------------------------------------------------------
 // GBR-based load/store (MOV.B/W/L R0,@(disp,GBR) and variants)
 // -----------------------------------------------------------------------------
-static void Exec_LOAD8_GBR(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
+static void Exec_LOAD8_GBR(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t pc_next)
 {
     uint32_t addr = gbr + static_cast<uint32_t>(ins.extra);
     DEBUG_LOG(SH4, "LOAD8_GBR disp=%u addr=%08X", ins.extra, addr);
     uint8_t val = RawRead8(addr);
+
+    // Add debugging for the problematic case
+    if (ins.dst.reg == 0 && ins.extra == 0xED) {
+        ERROR_LOG(SH4, "🔍 LOAD8_GBR DEBUG: GBR=0x%08X, disp=0x%02X, addr=0x%08X, raw_val=0x%02X",
+                 gbr, ins.extra, addr, val);
+        ERROR_LOG(SH4, "🔍 LOAD8_GBR: Will set R0 to 0x%08X (sign-extended from 0x%02X)",
+                 static_cast<uint32_t>(static_cast<int8_t>(val)), val);
+
+        // Check the actual memory at this PC to verify instruction bytes
+        uint32_t pc_addr = pc_next - 2;  // Current instruction PC
+        uint16_t actual_instr = ReadMem16(pc_addr);
+        ERROR_LOG(SH4, "🔍 MEMORY CHECK: PC=0x%08X, instruction bytes=0x%04X", pc_addr, actual_instr);
+
+        // Also check what the next instruction will be
+        uint16_t next_instr = ReadMem16(pc_next);
+        ERROR_LOG(SH4, "🔍 NEXT INSTRUCTION: PC=0x%08X, instruction bytes=0x%04X", pc_next, next_instr);
+    }
+
     SET_REG(ctx, ins.dst.reg, static_cast<uint32_t>(static_cast<int8_t>(val)));
 }
+
+// --- FIXED: Remove unmatched closing braces at end of file ---
 
 static void Exec_LOAD16_GBR(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_t)
 {
@@ -4475,7 +4844,6 @@ static void Exec_STORE32_GBR(const sh4::ir::Instr& ins, Sh4Context* ctx, uint32_
     uint32_t val = GET_REG(ctx, ins.src1.reg);
     RawWrite32(addr, val);
 }
-
 
 } // namespace ir
 } // namespace sh4

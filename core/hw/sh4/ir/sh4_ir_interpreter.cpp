@@ -50,7 +50,7 @@ void Sh4IrInterpreter::Init()
         printf("[IR][Init][POST BIND] ctx_=%p r[0]=%08X r[1]=%08X r[2]=%08X r[3]=%08X sr.T=%u\n",
             (void*)ctx_, r[0], r[1], r[2], r[3], sr.T);
 
-    }
+        }
 
     // Clear the context like the legacy interpreter
     // memset(&p_sh4rcb->cntx, 0, sizeof(p_sh4rcb->cntx));  // DISABLED: This was zeroing out REIOS memory bank setup
@@ -159,14 +159,45 @@ void Sh4IrInterpreter::Run()
 
                     try
                     {
+                        // DEBUG: Check for PC corruption before BuildBlock
+                        if (pc_val == 0x0 || (pc_val >= 0x20000000 && pc_val <= 0x2FFFFFFF)) {
+                            ERROR_LOG(SH4, "🚨 PC CORRUPTION in Run(): pc_val=0x%08X", pc_val);
+                            ERROR_LOG(SH4, "🚨 This will be passed to BuildBlock() and cause mirror access");
+                            abort();
+                        }
+
                         const Block* blk = emitter_.BuildBlock(pc_val);
+
+                        // DEBUG: Check if block has corrupted pcNext
+                        if (blk->pcNext == 0x0 || (blk->pcNext >= 0x20000000 && blk->pcNext <= 0x2FFFFFFF)) {
+                            ERROR_LOG(SH4, "🚨 BLOCK CORRUPTION: Block at PC=0x%08X has corrupted pcNext=0x%08X", pc_val, blk->pcNext);
+                            ERROR_LOG(SH4, "🚨 Block instructions:");
+                            for (size_t i = 0; i < blk->code.size(); i++) {
+                                const auto& ins = blk->code[i];
+                                ERROR_LOG(SH4, "🚨   [%zu] op=%d pc=0x%08X raw=0x%04X",
+                                         i, static_cast<int>(ins.op), ins.pc, ins.raw);
+                            }
+                            abort();
+                        }
+
+                        uint32_t pc_before_exec = next_pc;  // Use global next_pc, not ctx_->pc
                         executor_.ExecuteBlock(blk, ctx_);
 
                         if (g_exception_was_raised)      // exception flag set by helpers
                             continue;                    // PC already updated by Do_Exception
 
-                        if (ctx_->pc == pc_val)          // sequential advance when block ended
-                            ctx_->pc = blk->pcNext;
+                        // Sync ctx_->pc with global next_pc after execution
+                        ctx_->pc = next_pc;
+
+                        // If PC wasn't changed by a branch instruction, advance to next block
+                        if (next_pc == pc_before_exec) {
+                            // DEBUG: Final check before setting corrupted PC
+                            if (blk->pcNext == 0x0 || (blk->pcNext >= 0x20000000 && blk->pcNext <= 0x2FFFFFFF)) {
+                                ERROR_LOG(SH4, "🚨 FINAL CHECK: About to set PC to corrupted value 0x%08X", blk->pcNext);
+                                abort();
+                            }
+                            ctx_->pc = next_pc = blk->pcNext;
+                        }
                     }
                     catch (const SH4ThrownException&)    // any legacy throw -> flag already set
                     {
@@ -197,6 +228,14 @@ void Sh4IrInterpreter::Step()
 
     RestoreHostRoundingMode();
 
+    // **CRITICAL DEBUG**: Check for PC corruption at start of Step()
+    if (next_pc >= 0x20000000 && next_pc <= 0x2FFFFFFF) {
+        ERROR_LOG(SH4, "🚨 PC CORRUPTION DETECTED AT STEP START!");
+        ERROR_LOG(SH4, "🚨 next_pc=0x%08X is in mirror range - this will cause infinite loop", next_pc);
+        ERROR_LOG(SH4, "🚨 STOPPING EXECUTION TO PREVENT INFINITE LOOP");
+        abort(); // Stop execution immediately
+    }
+
     // CRITICAL: Sync local context PC with global next_pc before fetching blocks
     // This fixes the corruption where JSR updates next_pc but ctx_->pc remains stale
     ctx_->pc = next_pc;
@@ -204,7 +243,7 @@ void Sh4IrInterpreter::Step()
     uint32_t old_pc = pc_val;
 
     try {
-        // Add debug logging to track opcode execution
+        // Add debug logging to track opcode execution - use direct memory access
         u16 opcode = IReadMem16(pc_val);
         printf("[IR][Step] Reading opcode at PC=%08X: %04X\n", pc_val, opcode);
 
