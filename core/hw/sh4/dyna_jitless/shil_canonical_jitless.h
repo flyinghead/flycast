@@ -84,8 +84,8 @@
 //only in structs we use the code :)
 #include <cmath>
 #include "types.h"
-#include "shil.h"
-#include "decoder.h"
+#include "shil_jitless.h"
+#include "decoder_jitless.h"
 #include "../sh4_rom.h"
 
 #define BIN_OP_I_BASE(code,type,rtype) \

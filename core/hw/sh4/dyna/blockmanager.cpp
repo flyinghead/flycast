@@ -24,8 +24,6 @@ op_agent_t          oprofHandle;
 
 #if FEAT_SHREC != DYNAREC_NONE
 
-#error "We shouldn't be here"
-
 
 typedef std::vector<RuntimeBlockInfoPtr> bm_List;
 typedef std::set<RuntimeBlockInfoPtr> bm_Set;

@@ -2,6 +2,7 @@
 #include <unordered_set>
 
 #include "hw/sh4/sh4_interpreter.h"
+#include "hw/sh4/ir/sh4_ir_interpreter.h"
 #include "hw/sh4/sh4_core.h"
 #include "hw/sh4/sh4_interrupts.h"
 
@@ -366,7 +367,11 @@ static void recSh4_Reset(bool hard)
 static void recSh4_Init()
 {
 	INFO_LOG(DYNAREC, "recSh4 Init");
+#ifdef ENABLE_SH4_CACHED_IR
+	sh4::ir::Get_Sh4Interpreter(&sh4Interp);
+#else
 	Get_Sh4Interpreter(&sh4Interp);
+#endif
 	sh4Interp.Init();
 	bm_Init();
 	

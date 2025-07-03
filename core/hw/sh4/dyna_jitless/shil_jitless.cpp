@@ -20,7 +20,7 @@
 #define SHIL_MODE 3
 #include "shil_canonical_jitless.h"
 
-#include "ssa.h"
+#include "ssa_jitless.h"
 
 void AnalyseBlock(RuntimeBlockInfo* blk)
 {

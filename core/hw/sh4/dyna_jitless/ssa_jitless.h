@@ -24,8 +24,11 @@
 #include <map>
 #include "types.h"
 #include "decoder_jitless.h"
-#include "hw/sh4/modules/mmu.h"
 #include "hw/sh4/sh4_mem.h"
+#include "ngen_jitless.h"
+
+// Forward declaration for missing MMU function
+bool mmu_enabled();
 
 class SSAOptimizer
 {

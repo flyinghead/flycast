@@ -29,7 +29,7 @@ enum shil_param_type
 
 
 #define SHIL_MODE 0
-#include "shil_canonical.h"
+#include "shil_canonical_jitless.h"
 
 struct shil_param
 {
