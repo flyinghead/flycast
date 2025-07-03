@@ -521,28 +521,58 @@ sh4op(i1111_nnnn_0011_1101)
 	if (fpscr.PR == 0)
 	{
 		u32 n = GetN(op);
-		fpul = (u32)(s32)fr[n];
-
-		if ((s32)fpul > 0x7fffff80)
-			fpul = 0x7fffffff;
-		// Intel CPUs convert out of range float numbers to 0x80000000. Manually set the correct sign
-		else if (fpul == 0x80000000 && fr[n] == fr[n])
-		{
-			if (*(int *)&fr[n] > 0) // Using integer math to avoid issues with Inf and NaN
-				fpul--;
+		float fval = fr[n];
+		
+		// Check for NaN and special values using bit manipulation to avoid platform-specific behavior
+		u32 bits = fr_hex[n];
+		bool is_nan = ((bits & 0x7F800000u) == 0x7F800000u) && (bits & 0x007FFFFFu);
+		bool is_inf = ((bits & 0x7F800000u) == 0x7F800000u) && !(bits & 0x007FFFFFu);
+		
+		if (is_nan) {
+			// NaN -> 0x80000000 (INT32_MIN)
+			fpul = 0x80000000u;
+		}
+		else if (is_inf) {
+			// +Inf -> 0x7FFFFFFF, -Inf -> 0x80000000
+			fpul = (bits & 0x80000000u) ? 0x80000000u : 0x7FFFFFFFu;
+		}
+		else if (fval >= 2147483648.0f) {
+			// Overflow -> 0x7FFFFFFF
+			fpul = 0x7FFFFFFFu;
+		}
+		else if (fval <= -2147483649.0f) {
+			// Underflow -> 0x80000000
+			fpul = 0x80000000u;
+		}
+		else {
+			// Normal case - truncate to integer
+			fpul = (u32)(s32)fval;
 		}
 	}
 	else
 	{
 		f64 f = getDRn(op);
-		fpul = (u32)(s32)f;
-
-		// TODO saturate
-		// Intel CPUs convert out of range float numbers to 0x80000000. Manually set the correct sign
-		if (fpul == 0x80000000 && f == f)
-		{
-			if (*(s64 *)&f > 0)     // Using integer math to avoid issues with Inf and NaN
-				fpul--;
+		
+		// Check for NaN and special values for double precision
+		u64 bits = *(u64*)&f;
+		bool is_nan = ((bits & 0x7FF0000000000000ULL) == 0x7FF0000000000000ULL) && (bits & 0x000FFFFFFFFFFFFFULL);
+		bool is_inf = ((bits & 0x7FF0000000000000ULL) == 0x7FF0000000000000ULL) && !(bits & 0x000FFFFFFFFFFFFFULL);
+		
+		if (is_nan || is_inf) {
+			// NaN or Inf -> 0x80000000
+			fpul = 0x80000000u;
+		}
+		else if (f >= 2147483648.0) {
+			// Overflow -> 0x7FFFFFFF
+			fpul = 0x7FFFFFFFu;
+		}
+		else if (f <= -2147483649.0) {
+			// Underflow -> 0x80000000
+			fpul = 0x80000000u;
+		}
+		else {
+			// Normal case - truncate to integer
+			fpul = (u32)(s32)f;
 		}
 	}
 }
