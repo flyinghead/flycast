@@ -42,7 +42,10 @@
 	#define HOST_CPU CPU_GENERIC
 #endif
 
-#if defined(TARGET_NO_REC) || defined(NO_JIT)
+// Dynarec control flags
+// TARGET_NO_REC completely disables all dynarec
+// USE_JITLESS_DYNAREC enables jitless dynarec (when JIT is disabled but dynarec is wanted)
+#if defined(TARGET_NO_REC)
 #define FEAT_SHREC DYNAREC_NONE
 #define FEAT_AREC DYNAREC_NONE
 #define FEAT_DSPREC DYNAREC_NONE
