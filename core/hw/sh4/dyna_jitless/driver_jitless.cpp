@@ -14,7 +14,7 @@
 #include "decoder_jitless.h"
 #include "oslib/virtmem.h"
 
-#if FEAT_SHREC != DYNAREC_NONE
+#if FEAT_SHREC == DYNAREC_JITLESS
 
 constexpr u32 CODE_SIZE = 10_MB;
 constexpr u32 TEMP_CODE_SIZE = 1_MB;
@@ -479,4 +479,4 @@ void rdv_SetFailedToFindBlockHandler(void (*handler)())
 {
 	ngen_FailedToFindBlock = handler;
 }
-#endif  // FEAT_SHREC != DYNAREC_NONE
+#endif  // FEAT_SHREC == DYNAREC_JITLESS

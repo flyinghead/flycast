@@ -20,7 +20,11 @@
 #include "types.h"
 #include "addrspace.h"
 #include "hw/aica/aica_if.h"
+#ifdef ENABLE_SH4_JITLESS
+#include "hw/sh4/dyna_jitless/blockmanager_jitless.h"
+#else
 #include "hw/sh4/dyna/blockmanager.h"
+#endif
 #include "hw/sh4/sh4_mem.h"
 #include "hw/pvr/pvr_mem.h"
 #include "hw/pvr/elan.h"

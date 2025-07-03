@@ -3,6 +3,7 @@
 #include "types.h"
 #include "hw/sh4/sh4_mem.h"
 #include "hw/sh4/sh4_mmr.h"
+#include "hw/sh4/modules/mmu.h"
 
 #include "ngen_jitless.h"
 #include "hw/sh4/sh4_core.h"

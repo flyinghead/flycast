@@ -4,9 +4,15 @@
 #include "emulator.h"
 
 #include "hw/sh4/sh4_core.h"
+#ifdef ENABLE_SH4_JITLESS
+#include "hw/sh4/dyna_jitless/shil_jitless.h"
+#define SHIL_MODE 2
+#include "hw/sh4/dyna_jitless/shil_canonical_jitless.h"
+#else
 #include "hw/sh4/dyna/shil.h"
 #define SHIL_MODE 2
 #include "hw/sh4/dyna/shil_canonical.h"
+#endif
 
 static void div1(u32& r1, u32 r2)
 {

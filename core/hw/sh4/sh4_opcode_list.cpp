@@ -1,9 +1,15 @@
 #include "types.h"
 #include "interpr/sh4_opcodes.h"
 #include "sh4_opcode_list.h"
+#ifdef ENABLE_SH4_JITLESS
+#include "dyna_jitless/decoder_jitless.h"
+#include "dyna_jitless/decoder_opcodes_jitless.h"
+#include "hw/sh4/dyna_jitless/shil_jitless.h"
+#else
 #include "dyna/decoder.h"
 #include "dyna/decoder_opcodes.h"
 #include "hw/sh4/dyna/shil.h"
+#endif
 #include "reios/reios.h"
 
 OpCallFP* OpPtr[0x10000];

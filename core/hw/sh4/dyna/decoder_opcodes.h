@@ -1,5 +1,5 @@
 #pragma once
-#if FEAT_SHREC != DYNAREC_NONE
+#if FEAT_SHREC == DYNAREC_JIT
 #define sh4dec(str) void dec_##str (u32 op)
 #else
 #define sh4dec(str) static void dec_##str (u32 op) { }

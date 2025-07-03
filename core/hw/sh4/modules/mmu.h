@@ -1,7 +1,11 @@
 #pragma once
 #include "types.h"
 #include "hw/sh4/sh4_mmr.h"
+#ifdef ENABLE_SH4_JIT
 #include "hw/sh4/dyna/ngen.h"
+#elif defined(ENABLE_SH4_JITLESS)
+#include "hw/sh4/dyna_jitless/ngen_jitless.h"
+#endif
 
 //Translation Types
 //Opcode read
@@ -132,7 +136,7 @@ static inline void mmuAddressLUTFlush(bool full)
 }
 #endif
 
-#if FEAT_SHREC == DYNAREC_JIT
+#if FEAT_SHREC == DYNAREC_JIT && defined(ENABLE_SH4_JIT)
 static inline u32 DYNACALL mmuDynarecLookup(u32 vaddr, u32 write, u32 pc)
 {
 	u32 paddr;

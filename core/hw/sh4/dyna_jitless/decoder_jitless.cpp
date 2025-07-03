@@ -5,7 +5,7 @@
 
 #include "types.h"
 
-#if FEAT_SHREC != DYNAREC_NONE
+#if FEAT_SHREC == DYNAREC_JITLESS
 
 #include "decoder_jitless.h"
 #include "shil_jitless.h"

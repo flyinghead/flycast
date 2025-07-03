@@ -11,7 +11,11 @@
 #include "hw/sh4/sh4_mem.h"
 #include "hw/sh4/sh4_sched.h"
 #include "profiler/dc_profiler.h"
+#ifdef ENABLE_SH4_JITLESS
+#include "hw/sh4/dyna_jitless/blockmanager_jitless.h"
+#else
 #include "hw/sh4/dyna/blockmanager.h"
+#endif
 #include "hw/arm7/arm7.h"
 #include "cfg/option.h"
 

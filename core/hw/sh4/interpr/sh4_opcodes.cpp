@@ -10,7 +10,11 @@
 #include "hw/sh4/modules/mmu.h"
 #include "hw/sh4/sh4_interrupts.h"
 #include "debug/gdb_server.h"
+#ifdef ENABLE_SH4_JITLESS
+#include "hw/sh4/dyna_jitless/decoder_jitless.h"
+#else
 #include "hw/sh4/dyna/decoder.h"
+#endif
 
 #ifdef STRICT_MODE
 #include "hw/sh4/sh4_cache.h"

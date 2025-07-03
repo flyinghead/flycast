@@ -22,9 +22,9 @@
 op_agent_t          oprofHandle;
 #endif
 
-#if FEAT_SHREC != DYNAREC_NONE
+#if FEAT_SHREC == DYNAREC_JITLESS
 
-#error "We shouldn't be here"
+// Note: This file is used for the jitless dynarec backend
 
 
 typedef std::vector<RuntimeBlockInfoPtr> bm_List;

@@ -975,19 +975,6 @@ target_sources(${PROJECT_NAME} PRIVATE
 		core/hw/pvr/ta_structs.h
 		core/hw/pvr/ta_util.cpp
 		core/hw/pvr/ta_vtx.cpp
-		core/hw/sh4/dyna/blockmanager.cpp
-		core/hw/sh4/dyna/blockmanager.h
-		core/hw/sh4/dyna/decoder.cpp
-		core/hw/sh4/dyna/decoder.h
-		core/hw/sh4/dyna/decoder_opcodes.h
-		core/hw/sh4/dyna/driver.cpp
-		core/hw/sh4/dyna/ngen.h
-		core/hw/sh4/dyna/shil_canonical.h
-		core/hw/sh4/dyna/shil.cpp
-		core/hw/sh4/dyna/shil.h
-		core/hw/sh4/dyna/ssa.cpp
-		core/hw/sh4/dyna/ssa.h
-		core/hw/sh4/dyna/ssa_regalloc.h
 		core/hw/sh4/fsca-table.h
 		core/hw/sh4/interpr/sh4_fpu.cpp
 		core/hw/sh4/interpr/sh4_interpreter.cpp
@@ -1579,9 +1566,7 @@ if("arm64" IN_LIST ARCHITECTURE)
 		core/deps/vixl/pool-manager-impl.h
 		core/deps/vixl/utils-vixl.cc
 		core/deps/vixl/utils-vixl.h)
-	target_sources(${PROJECT_NAME} PRIVATE
-		$<$<BOOL:ENABLE_DYNAREC>:core/rec-ARM64/rec_arm64.cpp>
-		$<$<BOOL:ENABLE_DYNAREC>:core/rec-ARM64/arm64_regalloc.h>)
+	# ARM64 recompiler files are added in the dynarec backend selection section below
 endif()
 if("x86" IN_LIST ARCHITECTURE OR "x86_64" IN_LIST ARCHITECTURE)
 	add_subdirectory(core/deps/xbyak EXCLUDE_FROM_ALL)
@@ -1945,7 +1930,7 @@ if(BUILD_TESTING)
     target_link_options(flycast_tests PRIVATE
         $<TARGET_PROPERTY:${PROJECT_NAME},LINK_OPTIONS>)
     include(GoogleTest)
-		target_compile_definitions(flycast_tests PRIVATE
+		    target_compile_definitions(flycast_tests PRIVATE
     FLYCAST_TEST_BUILD
     DEBUGFAST # Ensure MAX_LOGLEVEL is LDEBUG for tests
     FEAT_NO_NETWORKING
@@ -1954,6 +1939,15 @@ if(BUILD_TESTING)
     FEAT_NO_RCHEEVOS
     VIDEO_ROUTING
 )
+
+# Add jitless dynarec definitions to test target when NO_JIT is enabled
+if(DEFINED NO_JIT)
+    target_compile_definitions(flycast_tests PRIVATE
+        ENABLE_SH4_JITLESS
+        FEAT_SHREC=DYNAREC_JITLESS
+        TARGET_NO_AREC
+    )
+endif()
 if(BUILD_TESTING)
     target_link_libraries(${PROJECT_NAME} PRIVATE GTest::gtest)
 endif()
@@ -2046,6 +2040,54 @@ if(_link_libs)
   target_link_libraries(flycast_core PRIVATE ${_link_libs})
 endif()
 set_target_properties(flycast_core PROPERTIES POSITION_INDEPENDENT_CODE ON)
+
+# Add dynarec files to flycast_core based on NO_JIT flag
+if(NOT DEFINED TARGET_NO_REC)
+    if(DEFINED NO_JIT)
+        target_sources(flycast_core PRIVATE
+            core/hw/sh4/dyna_jitless/blockmanager_jitless.cpp
+            core/hw/sh4/dyna_jitless/blockmanager_jitless.h
+            core/hw/sh4/dyna_jitless/decoder_jitless.cpp
+            core/hw/sh4/dyna_jitless/decoder_jitless.h
+            core/hw/sh4/dyna_jitless/decoder_opcodes_jitless.h
+            core/hw/sh4/dyna_jitless/driver_jitless.cpp
+            core/hw/sh4/dyna_jitless/ngen_jitless.h
+            core/hw/sh4/dyna_jitless/shil_canonical_jitless.h
+            core/hw/sh4/dyna_jitless/shil_jitless.cpp
+            core/hw/sh4/dyna_jitless/shil_jitless.h
+            core/hw/sh4/dyna_jitless/ssa_jitless.cpp
+            core/hw/sh4/dyna_jitless/ssa_jitless.h
+            core/hw/sh4/dyna_jitless/ssa_regalloc_jitless.h
+        )
+
+        # Set compile definitions for jitless dynarec
+        target_compile_definitions(flycast_core PRIVATE ENABLE_SH4_JITLESS)
+        target_compile_definitions(flycast_core PRIVATE FEAT_SHREC=DYNAREC_JITLESS)
+        target_compile_definitions(flycast_core PRIVATE TARGET_NO_AREC)
+    else()
+        target_sources(flycast_core PRIVATE
+            core/hw/sh4/dyna/blockmanager.cpp
+            core/hw/sh4/dyna/blockmanager.h
+            core/hw/sh4/dyna/decoder.cpp
+            core/hw/sh4/dyna/decoder.h
+            core/hw/sh4/dyna/decoder_opcodes.h
+            core/hw/sh4/dyna/driver.cpp
+            core/hw/sh4/dyna/ngen.h
+            core/hw/sh4/dyna/shil_canonical.h
+            core/hw/sh4/dyna/shil.cpp
+            core/hw/sh4/dyna/shil.h
+            core/hw/sh4/dyna/ssa.cpp
+            core/hw/sh4/dyna/ssa.h
+            core/hw/sh4/dyna/ssa_regalloc.h
+        )
+        # Add ARM64 recompiler files for JIT backend
+        if("arm64" IN_LIST ARCHITECTURE)
+            target_sources(flycast_core PRIVATE
+                core/rec-ARM64/rec_arm64.cpp
+                core/rec-ARM64/arm64_regalloc.h)
+        endif()
+    endif()
+endif()
 endif()
 
 
@@ -2099,25 +2141,63 @@ if(ENABLE_SH4_CACHED_IR)
     target_compile_definitions(${PROJECT_NAME} PRIVATE ENABLE_SH4_CACHED_IR)
 endif()
 
-# --- Jitless Dynarec Backend ---
-# Build dyna_jitless backend if NO_JIT or TARGET_NO_REC is set (mirrors IR logic)
-if(DEFINED NO_JIT OR DEFINED TARGET_NO_REC)
-    message(STATUS "Building with JITLESS dynarec backend (dyna_jitless)")
-    target_sources(${PROJECT_NAME} PRIVATE
-        core/hw/sh4/dyna_jitless/blockmanager.cpp
-        core/hw/sh4/dyna_jitless/blockmanager_jitless.cpp
-        core/hw/sh4/dyna_jitless/blockmanager_jitless.h
-        core/hw/sh4/dyna_jitless/decoder_jitless.cpp
-        core/hw/sh4/dyna_jitless/decoder_jitless.h
-        core/hw/sh4/dyna_jitless/decoder_opcodes_jitless.h
-        core/hw/sh4/dyna_jitless/driver_jitless.cpp
-        core/hw/sh4/dyna_jitless/ngen_jitless.h
-        core/hw/sh4/dyna_jitless/shil_canonical_jitless.h
-        core/hw/sh4/dyna_jitless/shil_jitless.cpp
-        core/hw/sh4/dyna_jitless/shil_jitless.h
-        core/hw/sh4/dyna_jitless/ssa_jitless.cpp
-        core/hw/sh4/dyna_jitless/ssa_jitless.h
-        core/hw/sh4/dyna_jitless/ssa_regalloc_jitless.h
-    )
-    target_compile_definitions(${PROJECT_NAME} PRIVATE ENABLE_SH4_JITLESS)
+# --- SH4 Dynarec Backend Selection ---
+# Choose between JIT and jitless dynarec based on NO_JIT flag
+if(NOT DEFINED TARGET_NO_REC)
+    if(DEFINED NO_JIT)
+        message(STATUS "Building with JITLESS dynarec backend (dyna_jitless)")
+        target_sources(${PROJECT_NAME} PRIVATE
+            core/hw/sh4/dyna_jitless/blockmanager_jitless.cpp
+            core/hw/sh4/dyna_jitless/blockmanager_jitless.h
+            core/hw/sh4/dyna_jitless/decoder_jitless.cpp
+            core/hw/sh4/dyna_jitless/decoder_jitless.h
+            core/hw/sh4/dyna_jitless/decoder_opcodes_jitless.h
+            core/hw/sh4/dyna_jitless/driver_jitless.cpp
+            core/hw/sh4/dyna_jitless/ngen_jitless.h
+            core/hw/sh4/dyna_jitless/shil_canonical_jitless.h
+            core/hw/sh4/dyna_jitless/shil_jitless.cpp
+            core/hw/sh4/dyna_jitless/shil_jitless.h
+            core/hw/sh4/dyna_jitless/ssa_jitless.cpp
+            core/hw/sh4/dyna_jitless/ssa_jitless.h
+            core/hw/sh4/dyna_jitless/ssa_regalloc_jitless.h
+        )
+        target_compile_definitions(${PROJECT_NAME} PRIVATE ENABLE_SH4_JITLESS)
+        target_compile_definitions(${PROJECT_NAME} PRIVATE FEAT_SHREC=DYNAREC_JITLESS)
+        # Disable ARM recompiler when using jitless dynarec (no executable pages)
+        target_compile_definitions(${PROJECT_NAME} PRIVATE TARGET_NO_AREC)
+        # Set CMake variables for generator expressions
+        set(ENABLE_SH4_JITLESS ON)
+        set(ENABLE_SH4_JIT OFF)
+    else()
+        message(STATUS "Building with JIT dynarec backend (dyna)")
+        target_sources(${PROJECT_NAME} PRIVATE
+            core/hw/sh4/dyna/blockmanager.cpp
+            core/hw/sh4/dyna/blockmanager.h
+            core/hw/sh4/dyna/decoder.cpp
+            core/hw/sh4/dyna/decoder.h
+            core/hw/sh4/dyna/decoder_opcodes.h
+            core/hw/sh4/dyna/driver.cpp
+            core/hw/sh4/dyna/ngen.h
+            core/hw/sh4/dyna/shil_canonical.h
+            core/hw/sh4/dyna/shil.cpp
+            core/hw/sh4/dyna/shil.h
+            core/hw/sh4/dyna/ssa.cpp
+            core/hw/sh4/dyna/ssa.h
+            core/hw/sh4/dyna/ssa_regalloc.h
+        )
+        target_compile_definitions(${PROJECT_NAME} PRIVATE ENABLE_SH4_JIT)
+        # Set CMake variables for generator expressions
+        set(ENABLE_SH4_JIT ON)
+        set(ENABLE_SH4_JITLESS OFF)
+        # Add ARM64 recompiler files for JIT backend
+        if("arm64" IN_LIST ARCHITECTURE)
+            target_sources(${PROJECT_NAME} PRIVATE
+                core/rec-ARM64/rec_arm64.cpp
+                core/rec-ARM64/arm64_regalloc.h)
+        endif()
+    endif()
+else()
+    message(STATUS "Dynarec disabled (TARGET_NO_REC set)")
 endif()
+
+

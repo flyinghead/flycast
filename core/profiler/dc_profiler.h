@@ -1,6 +1,10 @@
 #pragma once
 #include "types.h"
+#ifdef ENABLE_SH4_JITLESS
+#include "hw/sh4/dyna_jitless/shil_jitless.h"
+#else
 #include "hw/sh4/dyna/shil.h"
+#endif
 
 #if DC_PROFILER
 void dc_prof_init();

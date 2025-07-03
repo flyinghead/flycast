@@ -1,7 +1,7 @@
 #pragma once
 
 #include "types.h"
-#include "decoder.h"
+#include "decoder_jitless.h"
 #include "shil_jitless.h"
 #include "stdclass.h"
 
