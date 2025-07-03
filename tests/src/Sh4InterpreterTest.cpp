@@ -42,11 +42,29 @@ protected:
 		addrspace::write16(ctx->pc + 2, op2 != 0 ? op2 : 0x0009); // NOP if unused
 		addrspace::write16(ctx->pc + 4, op3 != 0 ? op3 : 0x0009); // NOP if unused
 	}
-	void RunOp(int numOp = 1) override
+		void RunOp(int numOp = 1) override
 	{
 		ctx->pc = START_PC;
-		for (int i = 0; i < numOp; i++)
-			sh4.Step();
+		for (int i = 0; i < numOp; i++) {
+			uint32_t initial_pc = ctx->pc;
+
+			// For self-modifying code scenarios, we may need to retry
+			// if cache invalidation occurs
+			int retries = 0;
+			const int max_retries = 2;
+
+			do {
+				sh4.Step();
+				retries++;
+
+				// If we're still at the initial PC after stepping, retry
+				if (ctx->pc == initial_pc && retries < max_retries) {
+					printf("[RunOp] PC didn't advance (PC=%08X), retrying Step() for cache invalidation (attempt %d)\n", ctx->pc, retries);
+					continue;
+				}
+				break;
+			} while (retries < max_retries);
+		}
 	}
 };
 
