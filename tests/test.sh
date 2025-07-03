@@ -18,6 +18,9 @@ fi
 # PASS CLEAN=TRUE to force cleaning
 CLEAN=${CLEAN:-"FALSE"}
 
+# Set VULKAN_SDK environment variable for MoltenVK
+export VULKAN_SDK="${HOME}/VulkanSDK/macOS"
+
 # export PATH="/opt/homebrew/bin:$PATH"
 
 # Initialize flags
