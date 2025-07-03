@@ -786,8 +786,7 @@ static inline void RawWrite32(uint32_t a, u32 d)
     if (IsStoreQueueAddr(a)) {
         *reinterpret_cast<u32*>(&g_sq_buffer[SqOffset(a)]) = d;
         ERROR_LOG(SH4, "SQ WRITE32 addr=0x%08X off=%u val=0x%08X", a, SqOffset(a), d);
-
-        WriteMem32(a, d);
+        // **FIX**: Only write to SQ buffer, not to memory (like ARM64 dynarec)
         return;
     }
 
