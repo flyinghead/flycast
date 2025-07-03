@@ -2081,9 +2081,9 @@ if(${CMAKE_GENERATOR} MATCHES "^Xcode.*|^Visual Studio.*")
 	source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SRC_FILES})
 endif()
 
-option(ENABLE_SH4_IR "Enable cached IR SH4 interpreter (no JIT)" ON)
+option(ENABLE_SH4_CACHED_IR "Enable cached IR SH4 interpreter (no JIT)" ON)
 
-if(ENABLE_SH4_IR)
+if(ENABLE_SH4_CACHED_IR)
     target_sources(${PROJECT_NAME} PRIVATE
         core/hw/sh4/ir/ir_defs.h
         core/hw/sh4/ir/ir_emitter.h
@@ -2097,7 +2097,7 @@ if(ENABLE_SH4_IR)
         core/hw/sh4/ir/ir_blockmanager_stubs.cpp)
     # Ensure dynamic recompiler code paths are fully disabled when using the IR interpreter
     # These macros are checked in core/build.h to set FEAT_SHREC/FEAT_AREC/DSP rec to DYNAREC_NONE
-    target_compile_definitions(${PROJECT_NAME} PRIVATE ENABLE_SH4_IR TARGET_NO_REC NO_JIT)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE ENABLE_SH4_CACHED_IR TARGET_NO_REC NO_JIT)
 endif()
 
 # --- Jitless Dynarec Backend ---

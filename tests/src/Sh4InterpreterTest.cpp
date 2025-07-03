@@ -31,7 +31,11 @@ protected:
 		mem_map_default();
 		dc_reset(true);
 		ctx = &p_sh4rcb->cntx;
-		::sh4::ir::Get_Sh4Interpreter(&this->sh4);
+		#ifdef ENABLE_SH4_CACHED_IR
+			::sh4::ir::Get_Sh4Interpreter(&this->sh4);
+		#else
+			::Get_Sh4Interpreter(&this->sh4);
+		#endif
 	}
 	void PrepareOp(u16 op, u16 op2 = 0, u16 op3 = 0) override
 	{

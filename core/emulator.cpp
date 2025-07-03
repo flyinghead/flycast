@@ -487,10 +487,27 @@ void Emulator::init()
 	reios_init();
 
 	// the recompiler may start generating code at this point and needs a fully configured machine
-// Always use the new IR interpreter regardless of build flags.
-	sh4::ir::Get_Sh4Interpreter(&sh4_cpu);
-	sh4_cpu.Init();
-	INFO_LOG(INTERPRETER, "Using IR Interpreter (forced)");
+	#if FEAT_SHREC != DYNAREC_NONE
+	Get_Sh4Recompiler(&sh4_cpu);
+	sh4_cpu.Init();		// Also initialize the interpreter
+	if(config::DynarecEnabled)
+	{
+		INFO_LOG(DYNAREC, "Using Recompiler");
+	}
+	else
+#endif // FEAT_SHREC != DYNAREC_NONE
+	{
+#ifdef ENABLE_SH4_CACHED_IR
+		INFO_LOG(INTERPRETER, "Using new Cached Interpreter");
+		sh4::ir::Get_Sh4Interpreter(&sh4_cpu);
+		sh4_cpu.Init();
+#else
+		Get_Sh4Interpreter(&sh4_cpu);
+		sh4_cpu.Init();
+		INFO_LOG(INTERPRETER, "Using Interpreter");
+#endif // ENABLE_SH4_CACHED_IR
+	}
+
 	state = Init;
 }
 
@@ -921,16 +938,23 @@ void Emulator::start()
 	if (config::GGPOEnable && config::ThreadedRendering)
 		// Not supported with GGPO
 		config::EmulateFramebuffer.override(false);
-#if defined(ENABLE_SH4_JITLESS)
+#if FEAT_SHREC != DYNAREC_NONE
+	if (config::DynarecEnabled)
+	{
 		Get_Sh4Recompiler(&sh4_cpu);
-		INFO_LOG(DYNAREC, "Using JITLESS Dynarec Backend");
-#elif defined(ENABLE_SH4_IR)
+		INFO_LOG(DYNAREC, "Using Recompiler");
+	}
+	else
+#endif // FEAT_SHREC != DYNAREC_NONE
+	{
+#if defined(ENABLE_SH4_CACHED_IR)
 		sh4::ir::Get_Sh4Interpreter(&sh4_cpu);
-		INFO_LOG(DYNAREC, "Using NEW Interpreter");
+		INFO_LOG(DYNAREC, "Using NEW Cached Interpreter");
 #else
 		Get_Sh4Interpreter(&sh4_cpu);
 		INFO_LOG(DYNAREC, "Using LEGACY Interpreter");
-#endif
+#endif // ENABLE_SH4_CACHED_IR
+	}
 	setupPtyPipe();
 
 	memwatch::protect();

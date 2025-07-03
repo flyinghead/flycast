@@ -206,7 +206,7 @@ static void Sh4_int_Term()
 	INFO_LOG(INTERPRETER, "Sh4 Term");
 }
 
-#ifndef ENABLE_SH4_IR
+#ifndef ENABLE_SH4_CACHED_IR
 void Get_Sh4Interpreter(sh4_if* cpu)
 {
     fprintf(stderr, "[LEGACY-INT] Get_Sh4Interpreter called — linking legacy interpreter!\n");
@@ -221,4 +221,4 @@ void Get_Sh4Interpreter(sh4_if* cpu)
 
 	cpu->ResetCache = sh4_int_resetcache;
 }
-#endif // ENABLE_SH4_IR
+#endif // ENABLE_SH4_CACHED_IR
