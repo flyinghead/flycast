@@ -2099,3 +2099,26 @@ if(ENABLE_SH4_IR)
     # These macros are checked in core/build.h to set FEAT_SHREC/FEAT_AREC/DSP rec to DYNAREC_NONE
     target_compile_definitions(${PROJECT_NAME} PRIVATE ENABLE_SH4_IR TARGET_NO_REC NO_JIT)
 endif()
+
+# --- Jitless Dynarec Backend ---
+# Build dyna_jitless backend if NO_JIT or TARGET_NO_REC is set (mirrors IR logic)
+if(DEFINED NO_JIT OR DEFINED TARGET_NO_REC)
+    message(STATUS "Building with JITLESS dynarec backend (dyna_jitless)")
+    target_sources(${PROJECT_NAME} PRIVATE
+        core/hw/sh4/dyna_jitless/blockmanager.cpp
+        core/hw/sh4/dyna_jitless/blockmanager_jitless.cpp
+        core/hw/sh4/dyna_jitless/blockmanager_jitless.h
+        core/hw/sh4/dyna_jitless/decoder_jitless.cpp
+        core/hw/sh4/dyna_jitless/decoder_jitless.h
+        core/hw/sh4/dyna_jitless/decoder_opcodes_jitless.h
+        core/hw/sh4/dyna_jitless/driver_jitless.cpp
+        core/hw/sh4/dyna_jitless/ngen_jitless.h
+        core/hw/sh4/dyna_jitless/shil_canonical_jitless.h
+        core/hw/sh4/dyna_jitless/shil_jitless.cpp
+        core/hw/sh4/dyna_jitless/shil_jitless.h
+        core/hw/sh4/dyna_jitless/ssa_jitless.cpp
+        core/hw/sh4/dyna_jitless/ssa_jitless.h
+        core/hw/sh4/dyna_jitless/ssa_regalloc_jitless.h
+    )
+    target_compile_definitions(${PROJECT_NAME} PRIVATE ENABLE_SH4_JITLESS)
+endif()

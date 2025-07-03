@@ -921,8 +921,16 @@ void Emulator::start()
 	if (config::GGPOEnable && config::ThreadedRendering)
 		// Not supported with GGPO
 		config::EmulateFramebuffer.override(false);
+#if defined(ENABLE_SH4_JITLESS)
+		Get_Sh4Recompiler(&sh4_cpu);
+		INFO_LOG(DYNAREC, "Using JITLESS Dynarec Backend");
+#elif defined(ENABLE_SH4_IR)
 		sh4::ir::Get_Sh4Interpreter(&sh4_cpu);
 		INFO_LOG(DYNAREC, "Using NEW Interpreter");
+#else
+		Get_Sh4Interpreter(&sh4_cpu);
+		INFO_LOG(DYNAREC, "Using LEGACY Interpreter");
+#endif
 	setupPtyPipe();
 
 	memwatch::protect();
