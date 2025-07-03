@@ -55,7 +55,11 @@ protected:
 			// For self-modifying code scenarios, we may need to retry
 			// if cache invalidation occurs
 			int retries = 0;
+			#ifdef ENABLE_SH4_CACHED_IR
 			const int max_retries = 2;
+			#else
+			const int max_retries = 0;
+			#endif
 
 			do {
 				sh4.Step();
