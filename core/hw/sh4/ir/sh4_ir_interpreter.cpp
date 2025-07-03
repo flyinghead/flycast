@@ -237,21 +237,44 @@ void Sh4IrInterpreter::Step()
                 printf("[IR][Step] First instruction: op=%d\n", static_cast<int>(blk->code[0].op));
             }
 
-            uint32_t pc_before_execute = ctx_->pc;
+            uint32_t pc_before_execute = next_pc;  // Use global next_pc
             executor_.ExecuteBlock(blk, ctx_);
+
+            // Sync ctx_->pc with global next_pc after execution
+            ctx_->pc = next_pc;
 
             // If PC didn't advance and we're still at the same location,
             // it might be due to cache invalidation. Retry.
-            if (ctx_->pc == pc_before_execute && retry_count < max_retries) {
-                printf("[IR][Step] PC didn't advance after ExecuteBlock (PC=%08X), retrying (attempt %d)\n", ctx_->pc, retry_count + 1);
+            if (next_pc == pc_before_execute && retry_count < max_retries) {
+                printf("[IR][Step] PC didn't advance after ExecuteBlock (PC=%08X), retrying (attempt %d)\n", next_pc, retry_count + 1);
                 retry_count++;
                 continue;
             }
             break;
         } while (retry_count < max_retries);
 
-        if (ctx_->pc == old_pc)
-             ctx_->pc = blk->pcNext;
+        // If PC wasn't changed by a branch instruction, advance to next block
+        if (next_pc == old_pc) {
+            // **DEBUG**: Check for corruption before assignment
+            if (blk->pcNext == 0x0 || (blk->pcNext >= 0x20000000 && blk->pcNext <= 0x2FFFFFFF)) {
+                ERROR_LOG(SH4, "🔍 CRITICAL: Block pcNext is corrupted to 0x%08X!", blk->pcNext);
+                ERROR_LOG(SH4, "🔍 Block start PC: 0x%08X", blk->pcStart);
+                ERROR_LOG(SH4, "🔍 Current next_pc: 0x%08X", next_pc);
+                ERROR_LOG(SH4, "🔍 Block has %zu instructions", blk->code.size());
+
+                // Print all instructions in the block to see what caused the corruption
+                ERROR_LOG(SH4, "🔍 Block instructions:");
+                for (size_t i = 0; i < blk->code.size(); i++) {
+                    const auto& ins = blk->code[i];
+                    ERROR_LOG(SH4, "🔍   [%zu] op=%d pc=0x%08X raw=0x%04X",
+                             i, static_cast<int>(ins.op), ins.pc, ins.raw);
+                }
+
+                ERROR_LOG(SH4, "🔍 This is where PC corruption originates - block calculated wrong pcNext!");
+                abort();
+            }
+            ctx_->pc = next_pc = blk->pcNext;
+        }
 #ifdef SH4_FAST_SKIP
         if (blk->code.size() == 2 && blk->code[0].op == ir::Op::NOP)
         {
