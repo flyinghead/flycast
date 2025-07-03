@@ -492,7 +492,13 @@ void Emulator::init()
 	sh4_cpu.Init();		// Also initialize the interpreter
 	if(config::DynarecEnabled)
 	{
+		#if defined(ENABLE_SH4_JIT)
+		INFO_LOG(DYNAREC, "Using JIT Recompiler");
+		#elif defined(ENABLE_SH4_JITLESS)
+		INFO_LOG(DYNAREC, "Using Jitless Recompiler");
+		#else
 		INFO_LOG(DYNAREC, "Using Recompiler");
+		#endif
 	}
 	else
 #endif // FEAT_SHREC != DYNAREC_NONE
@@ -938,11 +944,17 @@ void Emulator::start()
 	if (config::GGPOEnable && config::ThreadedRendering)
 		// Not supported with GGPO
 		config::EmulateFramebuffer.override(false);
-#if FEAT_SHREC != DYNAREC_NONE
+	#if FEAT_SHREC != DYNAREC_NONE
 	if (config::DynarecEnabled)
 	{
 		Get_Sh4Recompiler(&sh4_cpu);
+		#if defined(ENABLE_SH4_JIT)
+		INFO_LOG(DYNAREC, "Using JIT Recompiler");
+		#elif defined(ENABLE_SH4_JITLESS)
+		INFO_LOG(DYNAREC, "Using Jitless Recompiler");
+		#else
 		INFO_LOG(DYNAREC, "Using Recompiler");
+		#endif
 	}
 	else
 #endif // FEAT_SHREC != DYNAREC_NONE
