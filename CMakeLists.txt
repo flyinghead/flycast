@@ -1909,13 +1909,13 @@ if(BUILD_TESTING)
         core/hw/sh4/ir/ir_tables.cpp)
 
     # -----------------------------------------------------------
-    # Dynarec stubs — compile only when dynarec is disabled
+    # Dynarec stubs — compile only when dynarec is completely disabled
     # -----------------------------------------------------------
-    if(NOT ENABLE_DYNAREC OR FEAT_SHREC STREQUAL "DYNAREC_NONE")
+    if(DEFINED TARGET_NO_REC)
+        message(STATUS "Adding dynarec stubs (dynarec completely disabled)")
         target_sources(${PROJECT_NAME} PRIVATE
             core/hw/sh4/ir/dynarec_stubs.cpp
             core/hw/sh4/ir/ir_blockmanager_stubs.cpp)
-        
     endif()
 
     target_include_directories(flycast_tests PRIVATE
@@ -2084,6 +2084,7 @@ endif()
 option(ENABLE_SH4_CACHED_IR "Enable cached IR SH4 interpreter (no JIT)" ON)
 
 if(ENABLE_SH4_CACHED_IR)
+    message(STATUS "Using cached IR interpreter for fallback")
     target_sources(${PROJECT_NAME} PRIVATE
         core/hw/sh4/ir/ir_defs.h
         core/hw/sh4/ir/ir_emitter.h
@@ -2093,11 +2094,9 @@ if(ENABLE_SH4_CACHED_IR)
         core/hw/sh4/ir/sh4_ir_interpreter.h
         core/hw/sh4/ir/sh4_ir_interpreter.cpp
         core/hw/sh4/ir/ir_tables.h
-        core/hw/sh4/ir/ir_tables.cpp
-        core/hw/sh4/ir/ir_blockmanager_stubs.cpp)
-    # Ensure dynamic recompiler code paths are fully disabled when using the IR interpreter
-    # These macros are checked in core/build.h to set FEAT_SHREC/FEAT_AREC/DSP rec to DYNAREC_NONE
-    target_compile_definitions(${PROJECT_NAME} PRIVATE ENABLE_SH4_CACHED_IR TARGET_NO_REC NO_JIT)
+        core/hw/sh4/ir/ir_tables.cpp)
+    # Enable cached IR interpreter as an option
+    target_compile_definitions(${PROJECT_NAME} PRIVATE ENABLE_SH4_CACHED_IR)
 endif()
 
 # --- Jitless Dynarec Backend ---
