@@ -45,6 +45,115 @@ static sh4_if sh4Interp;
 static Sh4CodeBuffer codeBuffer;
 Sh4Dynarec *sh4Dynarec;
 
+// Global pointer to track the current block being executed
+static RuntimeBlockInfo* currentBlock = nullptr;
+
+// Forward declaration for interpreter function
+static void DYNACALL executeShilInterpreter();
+static void executeShilBlock(RuntimeBlockInfo* block);
+
+// Execute a SHIL block using interpretation instead of JIT compilation
+static void executeShilBlock(RuntimeBlockInfo* block) {
+    // For now, use a simple approach - just fall back to the regular SH4 interpreter
+    // This will be replaced with actual SHIL interpretation later
+    
+    // TODO: Implement proper SHIL interpretation
+    // For now, just advance PC to the end of the block
+    next_pc = block->NextBlock;
+    
+    // Advance cycles based on the block's guest cycles
+    sh4rcb.cntx.cycle_counter += block->guest_cycles;
+}
+
+// Placeholder for future memory operation helpers
+
+// Simple jitless dynarec class that initializes the global pointer
+class JitlessDynarec : public Sh4Dynarec {
+public:
+    JitlessDynarec() {
+        sh4Dynarec = this;
+    }
+    
+    void init(Sh4CodeBuffer& codeBuffer) override {
+        // Simple initialization - just keep a reference
+        this->codeBuffer = &codeBuffer;
+    }
+    
+    void compile(RuntimeBlockInfo* block, bool smc_checks, bool optimise) override {
+        // For the jitless dynarec, we don't generate machine code
+        // Instead, we store the SHIL opcodes and execute them via interpreter
+        
+        // We need unique code addresses for the block manager to work correctly
+        u8* code_ptr = (u8*)codeBuffer->get();
+        block->code = (DynarecCodeEntryPtr)code_ptr;  // Each block gets unique address
+        
+        // Store the block pointer at this location so we can retrieve it later
+        *(RuntimeBlockInfo**)code_ptr = block;
+        
+        // Advance the code buffer to ensure next block gets different address
+        codeBuffer->advance(sizeof(RuntimeBlockInfo*));
+        block->host_code_size = sizeof(RuntimeBlockInfo*);
+        
+        // The SHIL opcodes are already stored in block->oplist by the decoder
+        // The interpreter will retrieve the block using bm_GetBlock(code_ptr)
+    }
+    
+    void mainloop(void* cntx) override {
+        // Main loop for jitless dynarec using SHIL interpretation
+        p_sh4rcb = (Sh4RCB*)cntx;
+        
+        do {
+            try {
+                // Find or compile the block for the current PC
+                DynarecCodeEntryPtr code_ptr = bm_GetCodeByVAddr(next_pc);
+                if (unlikely(code_ptr == ngen_FailedToFindBlock)) {
+                    code_ptr = (DynarecCodeEntryPtr)CC_RW2RX(rdv_CompilePC(0));
+                }
+                
+                // Get the block from the code pointer
+                RuntimeBlockInfo* block = *(RuntimeBlockInfo**)code_ptr;
+                
+                // Execute the block using SHIL interpretation
+                executeShilBlock(block);
+                
+            } catch (const SH4ThrownException&) {
+                // Handle SH4 exceptions by breaking out of loop
+                break;
+            }
+        } while (p_sh4rcb->cntx.CpuRunning);
+    }
+    
+    void handleException(host_context_t& context) override {
+        // Simple exception handling - do nothing for now
+    }
+    
+    bool rewrite(host_context_t& context, void *faultAddress) override {
+        // Simple rewrite - always return false (no rewriting)
+        return false;
+    }
+    
+    void canonStart(const shil_opcode *op) override {
+        // Canonical function start - do nothing
+    }
+    
+    void canonParam(const shil_opcode *op, const shil_param *param, CanonicalParamType paramType) override {
+        // Canonical function parameter - do nothing
+    }
+    
+    void canonCall(const shil_opcode *op, void *function) override {
+        // Canonical function call - do nothing
+    }
+    
+    void canonFinish(const shil_opcode *op) override {
+        // Canonical function finish - do nothing
+    }
+    
+private:
+    Sh4CodeBuffer *codeBuffer = nullptr;
+};
+
+static JitlessDynarec instance;
+
 void *Sh4CodeBuffer::get()
 {
 	return tempBuffer ? &TempCodeCache[tempLastAddr] : &CodeCache[lastAddr];
