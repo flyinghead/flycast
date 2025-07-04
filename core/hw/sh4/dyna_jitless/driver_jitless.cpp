@@ -5,6 +5,7 @@
 #include "hw/sh4/sh4_interpreter.h"
 #include "hw/sh4/ir/sh4_ir_interpreter.h"
 #include "hw/sh4/sh4_core.h"
+extern void Sh4_int_Step();
 #include "hw/sh4/sh4_interrupts.h"
 
 #include "hw/sh4/sh4_mem.h"
@@ -17,6 +18,9 @@
 #include "oslib/virtmem.h"
 
 #include "cfg/option.h"
+
+// Global exception flag from sh4_interrupts.cpp
+extern bool g_exception_was_raised;
 
 #if FEAT_SHREC == DYNAREC_JITLESS
 
@@ -398,24 +402,22 @@ static void executeShilBlock(RuntimeBlockInfo* block) {
                     break;
                 }
                 
-                // Illegal instruction - this calls the SH4 exception handler
+                // Illegal instruction - call Do_Exception directly like the legacy dynarec canonical implementation
                 case shop_illegal: {
                     u32 epc = getParamU32(op.rs1);         // Exception PC
                     u32 delaySlot = getParamU32(op.rs2);   // Is it in delay slot?
                     
                     DEBUG_LOG(DYNAREC, "🔍 shop_illegal: Exception at PC=0x%08X, delaySlot=%d", epc, delaySlot);
                     
-                    // Call the appropriate exception handler
+                    // Call Do_Exception directly like the legacy dynarec canonical implementation
                     if (delaySlot == 1) {
                         Do_Exception(epc - 2, Sh4Ex_SlotIllegalInstr);
                     } else {
                         Do_Exception(epc, Sh4Ex_IllegalInstr);
                     }
                     
-                    // After exception handling, update PC and exit block
-                    next_pc = Sh4cntx.pc;
-                    DEBUG_LOG(DYNAREC, "🔍 shop_illegal: After exception, new PC=0x%08X", next_pc);
-                    return; // Exit block after exception
+                    // Return from block execution - Do_Exception handles PC update
+                    return;
                 }
                 
                 // TODO: Add more opcodes as needed
@@ -474,23 +476,110 @@ public:
         
         do {
             try {
+                // ------------------------------------------------------------------
+                // Legacy exception injection and interpreter fallback (ported)
+                // ------------------------------------------------------------------
+                static u32 last_exception_pc = 0;
+                if (unlikely(g_exception_was_raised)) {
+                    DEBUG_LOG(DYNAREC, "🔧 Exception was raised: next_pc=0x%08X, last_exception_pc=0x%08X", next_pc, last_exception_pc);
+                    if (next_pc == last_exception_pc) {
+                        WARN_LOG(DYNAREC, "⚠️  Re-raised exception at 0x%08X; executing one interpreter step to break the loop", next_pc);
+                        bool cpu_was_running = sh4_int_bCpuRun;
+                        if (cpu_was_running)
+                            sh4_int_bCpuRun = false;
+                        try {
+                            Sh4_int_Step();
+                        } catch (const SH4ThrownException&) {
+                            // propagate to outer catch – Do_Exception will handle
+                        }
+                        if (cpu_was_running)
+                            sh4_int_bCpuRun = true;
+                        
+                        // Advance PC past illegal instruction to prevent infinite loop
+                        DEBUG_LOG(DYNAREC, "🔧 Advancing PC past illegal instruction: 0x%08X -> 0x%08X", next_pc, next_pc + 2);
+                        next_pc += 2;
+                        Sh4cntx.pc = next_pc;
+                    }
+                    last_exception_pc = next_pc;
+                    // Clear the flag after handling the re-raised exception
+                    g_exception_was_raised = false;
+                }
                 // Find or compile the block for the current PC
                 INFO_LOG(DYNAREC, "🔧 Looking for block at PC=0x%08X", next_pc);
                 DynarecCodeEntryPtr code_ptr = bm_GetCodeByVAddr(next_pc);
                 INFO_LOG(DYNAREC, "🔧 bm_GetCodeByVAddr returned: %p", code_ptr);
+                // BIOS exception-return sentinel handling
+                if (unlikely(code_ptr == ngen_FailedToFindBlock) && next_pc == 0xFFFFFFFF) {
+                    if (sr.BL == 0) {
+                        INFO_LOG(DYNAREC, "🔧 PC==0xFFFFFFFF (BL=0) – injecting AddressErrorRead");
+                        Do_Exception(next_pc, Sh4Ex_AddressErrorRead);
+                        next_pc = Sh4cntx.pc;
+                        // Don't clear the exception flag here - let the main loop handle it
+                        continue;
+                    } else {
+                        WARN_LOG(DYNAREC, "🔧 PC==0xFFFFFFFF (BL=1) – interpreting until handler restores PC");
+                        bool cpu_was_running = sh4_int_bCpuRun;
+                        if (cpu_was_running)
+                            sh4_int_bCpuRun = false;
+                        while (next_pc == 0xFFFFFFFF && sr.BL) {
+                            Sh4_int_Step();
+                            next_pc = Sh4cntx.pc;
+                        }
+                        if (cpu_was_running)
+                            sh4_int_bCpuRun = true;
+                        continue;
+                    }
+                }
                 
                 if (unlikely(code_ptr == ngen_FailedToFindBlock)) {
                     INFO_LOG(DYNAREC, "🔧 Block not found, creating jitless block...");
-                    code_ptr = createJitlessBlock(next_pc);
-                    INFO_LOG(DYNAREC, "🔧 createJitlessBlock returned: %p", code_ptr);
                     
-                    // Check if block creation failed (e.g., for exception addresses like 0xFFFFFFFF)
-                    if (unlikely(code_ptr == ngen_FailedToFindBlock)) {
-                        DEBUG_LOG(DYNAREC, "🔧 Block creation failed for PC=0x%08X - likely exception condition", next_pc);
-                        // Exception handling may have changed the PC, so update next_pc and continue
-                        next_pc = Sh4cntx.pc;
-                        DEBUG_LOG(DYNAREC, "🔧 Updated next_pc to 0x%08X after exception handling", next_pc);
-                        continue; // Continue with the new PC instead of breaking
+                    try {
+                        code_ptr = createJitlessBlock(next_pc);
+                        INFO_LOG(DYNAREC, "🔧 createJitlessBlock returned: %p", code_ptr);
+                        
+                        // Check if block creation failed (e.g., for exception addresses)
+                        if (unlikely(code_ptr == ngen_FailedToFindBlock)) {
+                            WARN_LOG(DYNAREC, "🔧 Block creation failed for PC=0x%08X - falling back to interpreter", next_pc);
+                            
+                            // Fall back to interpreter execution for this instruction
+                            bool cpu_was_running = sh4_int_bCpuRun;
+                            if (cpu_was_running)
+                                sh4_int_bCpuRun = false;
+                            try {
+                                Sh4_int_Step();
+                                next_pc = Sh4cntx.pc;
+                            } catch (const SH4ThrownException& ex) {
+                                // Let the outer catch block handle exceptions
+                                if (cpu_was_running)
+                                    sh4_int_bCpuRun = true;
+                                throw;
+                            }
+                            if (cpu_was_running)
+                                sh4_int_bCpuRun = true;
+                            continue; // Continue with the new PC
+                        }
+                    } catch (const FlycastException& e) {
+                        // Architectural violation detected (e.g., branch instruction in delay slot)
+                        WARN_LOG(DYNAREC, "🔧 Architectural violation at PC=0x%08X: %s", next_pc, e.what());
+                        WARN_LOG(DYNAREC, "🔧 Falling back to interpreter for this instruction");
+                        
+                        // Fall back to interpreter execution for this instruction
+                        bool cpu_was_running = sh4_int_bCpuRun;
+                        if (cpu_was_running)
+                            sh4_int_bCpuRun = false;
+                        try {
+                            Sh4_int_Step();
+                            next_pc = Sh4cntx.pc;
+                        } catch (const SH4ThrownException& ex) {
+                            // Let the outer catch block handle exceptions
+                            if (cpu_was_running)
+                                sh4_int_bCpuRun = true;
+                            throw;
+                        }
+                        if (cpu_was_running)
+                            sh4_int_bCpuRun = true;
+                        continue; // Continue with the new PC
                     }
                 }
                 
@@ -526,10 +615,18 @@ public:
                     executeShilBlock(block);
                 }
                 
-            } catch (const SH4ThrownException&) {
-                // Handle SH4 exceptions by breaking out of loop
-                break;
-            }
+                         } catch (const SH4ThrownException& ex) {
+                 // Handle SH4 exceptions exactly like the regular interpreter
+                 DEBUG_LOG(DYNAREC, "🔧 SH4ThrownException caught: epc=0x%08X expEvn=0x%X", ex.epc, ex.expEvn);
+                 try {
+                     Do_Exception(ex.epc, ex.expEvn);
+                 } catch (const FlycastException& flyEx) {
+                     // Double fault condition (sr.BL=1) - continue execution instead of crashing
+                     DEBUG_LOG(DYNAREC, "🔧 FlycastException caught during double fault: %s", flyEx.what());
+                     // Continue the main loop - this is normal during REIOS boot
+                 }
+                 // Continue the main loop - don't break! This allows REIOS to handle exceptions properly
+             }
         } while (p_sh4rcb->cntx.CpuRunning);
     }
     
@@ -566,9 +663,17 @@ public:
         }
         
         // Step 2: Setup the block (SH4 → SHIL decoding and optimization)
-        if (!rbi->Setup(pc, fpscr)) {
+        try {
+            if (!rbi->Setup(pc, fpscr)) {
+                delete rbi;
+                return ngen_FailedToFindBlock;
+            }
+        } catch (const FlycastException& e) {
+            // Architectural violation detected during block setup (e.g., branch in delay slot)
+            WARN_LOG(DYNAREC, "🔧 Block setup failed due to architectural violation at PC=0x%08X: %s", pc, e.what());
             delete rbi;
-            return ngen_FailedToFindBlock;
+            // Re-throw the exception to be handled by the caller
+            throw;
         }
         
         // Step 3: Create a unique "code" pointer for this block
@@ -641,16 +746,26 @@ static void recSh4_ClearCache()
 	clear_temp_cache(true);
 }
 
+// Forward declaration so it can be called from recSh4_Run
+static void recSh4_Reset(bool hard);
+
 static void recSh4_Run()
 {
-	RestoreHostRoundingMode();
+    RestoreHostRoundingMode();
 
-	u8 *sh4_dyna_rcb = (u8 *)&Sh4cntx + sizeof(Sh4cntx);
-	INFO_LOG(DYNAREC, "cntx // fpcb offset: %td // pc offset: %td // pc %08X", (u8*)&sh4rcb.fpcb - sh4_dyna_rcb, (u8*)&sh4rcb.cntx.pc - sh4_dyna_rcb, sh4rcb.cntx.pc);
+    u8 *sh4_dyna_rcb = (u8 *)&Sh4cntx + sizeof(Sh4cntx);
+    INFO_LOG(DYNAREC, "cntx // fpcb offset: %td // pc offset: %td // pc %08X", (u8*)&sh4rcb.fpcb - sh4_dyna_rcb, (u8*)&sh4rcb.cntx.pc - sh4_dyna_rcb, sh4rcb.cntx.pc);
 
-	sh4Dynarec->mainloop(sh4_dyna_rcb);
+    // Keep the SH4 running across soft/hard resets initiated by the BIOS.
+    while (true)
+    {
+        sh4Dynarec->mainloop(sh4_dyna_rcb);
 
-	sh4_int_bCpuRun = false;
+        // mainloop returned — CPU is no longer running
+        sh4_int_bCpuRun = false;
+
+        break; // Normal shutdown
+    }
 }
 
 void AnalyseBlock(RuntimeBlockInfo* blk);

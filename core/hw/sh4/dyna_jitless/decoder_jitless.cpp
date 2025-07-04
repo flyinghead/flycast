@@ -997,8 +997,14 @@ bool dec_DecodeBlock(RuntimeBlockInfo* rbi,u32 max_cycles)
 						blk->has_fpu_op = true;
 					}
 
-					if (state.cpu.is_delayslot && OpDesc[op]->SetPC())
-						throw FlycastException("Fatal: SH4 branch instruction in delay slot");
+									if (state.cpu.is_delayslot && OpDesc[op]->SetPC())
+				{
+					WARN_LOG(DYNAREC, "🔧 DELAY SLOT VIOLATION: rpc=0x%08X, op=0x%04X - architectural violation detected", 
+						state.cpu.rpc, op);
+					// This is a legitimate architectural violation that the dynarec cannot handle with static analysis
+					// The IR interpreter can handle this dynamically, so we throw the same exception as the regular dynarec
+					throw FlycastException("Fatal: SH4 branch instruction in delay slot");
+				}
 					if (!OpDesc[op]->rec_oph)
 					{
 						if (!dec_generic(op))
