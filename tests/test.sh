@@ -114,6 +114,8 @@ if [ -n "$FLYCAST_BINARY" ]; then
         echo "Running flycast_tests binary…"
         if ./flycast_tests --gtest_color=yes; then
             echo "✅ Tests passed!"
+
+            "$FLYCAST_BINARY"  /Volumes/Games\ 2TB/ROMs/Dreamcast/Sega\ Dreamcast\ 240pPVR.cdi
         else
             echo "⚠️  Tests failed, but main binary built successfully"
             echo "This is expected with jitless dynarec - test issues can be resolved later"
