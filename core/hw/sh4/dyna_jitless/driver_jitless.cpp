@@ -402,22 +402,19 @@ static void executeShilBlock(RuntimeBlockInfo* block) {
                     break;
                 }
                 
-                // Illegal instruction - call Do_Exception directly like the legacy dynarec canonical implementation
+                // Illegal instruction - throw SH4ThrownException exactly like the IR interpreter does
                 case shop_illegal: {
                     u32 epc = getParamU32(op.rs1);         // Exception PC
                     u32 delaySlot = getParamU32(op.rs2);   // Is it in delay slot?
                     
                     DEBUG_LOG(DYNAREC, "🔍 shop_illegal: Exception at PC=0x%08X, delaySlot=%d", epc, delaySlot);
                     
-                    // Call Do_Exception directly like the legacy dynarec canonical implementation
+                    // Throw SH4ThrownException exactly like the IR interpreter does
                     if (delaySlot == 1) {
-                        Do_Exception(epc - 2, Sh4Ex_SlotIllegalInstr);
+                        throw SH4ThrownException(epc - 2, Sh4Ex_SlotIllegalInstr);
                     } else {
-                        Do_Exception(epc, Sh4Ex_IllegalInstr);
+                        throw SH4ThrownException(epc, Sh4Ex_IllegalInstr);
                     }
-                    
-                    // Return from block execution - Do_Exception handles PC update
-                    return;
                 }
                 
                 // TODO: Add more opcodes as needed
@@ -476,158 +473,72 @@ public:
         
         do {
             try {
-                // ------------------------------------------------------------------
-                // Legacy exception injection and interpreter fallback (ported)
-                // ------------------------------------------------------------------
-                static u32 last_exception_pc = 0;
+                // Exception flag cleared at start of main loop like regular dynarec
                 if (unlikely(g_exception_was_raised)) {
-                    DEBUG_LOG(DYNAREC, "🔧 Exception was raised: next_pc=0x%08X, last_exception_pc=0x%08X", next_pc, last_exception_pc);
-                    if (next_pc == last_exception_pc) {
-                        WARN_LOG(DYNAREC, "⚠️  Re-raised exception at 0x%08X; executing one interpreter step to break the loop", next_pc);
-                        bool cpu_was_running = sh4_int_bCpuRun;
-                        if (cpu_was_running)
-                            sh4_int_bCpuRun = false;
-                        try {
-                            Sh4_int_Step();
-                        } catch (const SH4ThrownException&) {
-                            // propagate to outer catch – Do_Exception will handle
-                        }
-                        if (cpu_was_running)
-                            sh4_int_bCpuRun = true;
-                        
-                        // Advance PC past illegal instruction to prevent infinite loop
-                        DEBUG_LOG(DYNAREC, "🔧 Advancing PC past illegal instruction: 0x%08X -> 0x%08X", next_pc, next_pc + 2);
-                        next_pc += 2;
-                        Sh4cntx.pc = next_pc;
-                    }
-                    last_exception_pc = next_pc;
-                    // Clear the flag after handling the re-raised exception
                     g_exception_was_raised = false;
                 }
-                // Find or compile the block for the current PC
-                INFO_LOG(DYNAREC, "🔧 Looking for block at PC=0x%08X", next_pc);
-                DynarecCodeEntryPtr code_ptr = bm_GetCodeByVAddr(next_pc);
-                INFO_LOG(DYNAREC, "🔧 bm_GetCodeByVAddr returned: %p", code_ptr);
-                // BIOS exception-return sentinel handling
-                if (unlikely(code_ptr == ngen_FailedToFindBlock) && next_pc == 0xFFFFFFFF) {
+                
+                // Find or compile block
+                u32 addr = next_pc;
+                DynarecCodeEntryPtr code_ptr = bm_GetCodeByVAddr(addr);
+                
+                if (addr == 0xFFFFFFFF) {
+                    // BL=0 – inject exception
                     if (sr.BL == 0) {
                         INFO_LOG(DYNAREC, "🔧 PC==0xFFFFFFFF (BL=0) – injecting AddressErrorRead");
-                        Do_Exception(next_pc, Sh4Ex_AddressErrorRead);
-                        next_pc = Sh4cntx.pc;
-                        // Don't clear the exception flag here - let the main loop handle it
+                        Do_Exception(0xFFFFFFFF, Sh4Ex_AddressErrorRead);
                         continue;
                     } else {
-                        WARN_LOG(DYNAREC, "🔧 PC==0xFFFFFFFF (BL=1) – interpreting until handler restores PC");
-                        bool cpu_was_running = sh4_int_bCpuRun;
-                        if (cpu_was_running)
-                            sh4_int_bCpuRun = false;
-                        while (next_pc == 0xFFFFFFFF && sr.BL) {
-                            Sh4_int_Step();
-                            next_pc = Sh4cntx.pc;
-                        }
-                        if (cpu_was_running)
-                            sh4_int_bCpuRun = true;
+                        INFO_LOG(DYNAREC, "🔧 PC==0xFFFFFFFF (BL=1) – double fault condition");
+                        // Double fault - advance PC and continue
+                        next_pc = 0x8C000000;
                         continue;
                     }
                 }
                 
-                if (unlikely(code_ptr == ngen_FailedToFindBlock)) {
-                    INFO_LOG(DYNAREC, "🔧 Block not found, creating jitless block...");
-                    
-                    try {
-                        code_ptr = createJitlessBlock(next_pc);
-                        INFO_LOG(DYNAREC, "🔧 createJitlessBlock returned: %p", code_ptr);
-                        
-                        // Check if block creation failed (e.g., for exception addresses)
-                        if (unlikely(code_ptr == ngen_FailedToFindBlock)) {
-                            WARN_LOG(DYNAREC, "🔧 Block creation failed for PC=0x%08X - falling back to interpreter", next_pc);
-                            
-                            // Fall back to interpreter execution for this instruction
-                            bool cpu_was_running = sh4_int_bCpuRun;
-                            if (cpu_was_running)
-                                sh4_int_bCpuRun = false;
-                            try {
-                                Sh4_int_Step();
-                                next_pc = Sh4cntx.pc;
-                            } catch (const SH4ThrownException& ex) {
-                                // Let the outer catch block handle exceptions
-                                if (cpu_was_running)
-                                    sh4_int_bCpuRun = true;
-                                throw;
-                            }
-                            if (cpu_was_running)
-                                sh4_int_bCpuRun = true;
-                            continue; // Continue with the new PC
-                        }
-                    } catch (const FlycastException& e) {
-                        // Architectural violation detected (e.g., branch instruction in delay slot)
-                        WARN_LOG(DYNAREC, "🔧 Architectural violation at PC=0x%08X: %s", next_pc, e.what());
-                        WARN_LOG(DYNAREC, "🔧 Falling back to interpreter for this instruction");
-                        
-                        // Fall back to interpreter execution for this instruction
-                        bool cpu_was_running = sh4_int_bCpuRun;
-                        if (cpu_was_running)
-                            sh4_int_bCpuRun = false;
-                        try {
-                            Sh4_int_Step();
-                            next_pc = Sh4cntx.pc;
-                        } catch (const SH4ThrownException& ex) {
-                            // Let the outer catch block handle exceptions
-                            if (cpu_was_running)
-                                sh4_int_bCpuRun = true;
-                            throw;
-                        }
-                        if (cpu_was_running)
-                            sh4_int_bCpuRun = true;
-                        continue; // Continue with the new PC
+                if (code_ptr == ngen_FailedToFindBlock) {
+                    // Block not found, create one
+                    DEBUG_LOG(DYNAREC, "🔧 Block not found, creating jitless block...");
+                    code_ptr = createJitlessBlock(addr);
+                    DEBUG_LOG(DYNAREC, "🔧 createJitlessBlock returned: 0x%llX", (unsigned long long)code_ptr);
+                    if (!code_ptr) {
+                        ERROR_LOG(DYNAREC, "🔧 Failed to create jitless block at PC=0x%08X", addr);
+                        continue;
                     }
                 }
                 
-                INFO_LOG(DYNAREC, "🔧 About to execute block: next_pc=0x%08X code_ptr=%p", next_pc, code_ptr);
+                DEBUG_LOG(DYNAREC, "🔧 About to execute block: next_pc=0x%08X code_ptr=0x%llX", next_pc, (unsigned long long)code_ptr);
                 
-                // Check if this is a jitless block (low bit set) or regular JIT block
+                // Check if this is a jitless block (low bit set) or regular block  
                 if (reinterpret_cast<uintptr_t>(code_ptr) & 0x1) {
                     // Jitless block - extract RuntimeBlockInfo and execute via SHIL interpretation
                     RuntimeBlockInfo* block = reinterpret_cast<RuntimeBlockInfo*>(reinterpret_cast<uintptr_t>(code_ptr) & ~0x1);
-                    INFO_LOG(DYNAREC, "🔧 Jitless block detected: block=%p addr=0x%08X oplist.size=%zu", block, block->addr, block->oplist.size());
+                    INFO_LOG(DYNAREC, "🔧 Jitless block detected: block=0x%llX addr=0x%08X oplist.size=%zu", 
+                            (unsigned long long)block, addr, block->oplist.size());
                     
-                    // Log the current state before execution
                     INFO_LOG(DYNAREC, "🔧 PRE-EXECUTE: PC=0x%08X next_pc=0x%08X r[15]=0x%08X", 
-                             Sh4cntx.pc, next_pc, r[15]);
+                            Sh4cntx.pc, next_pc, r[15]);
                     
-                    // Execute the block
                     executeShilBlock(block);
                     
-                    // Log the result after execution
                     INFO_LOG(DYNAREC, "🔧 POST-EXECUTE: PC=0x%08X next_pc=0x%08X r[15]=0x%08X", 
-                             Sh4cntx.pc, next_pc, r[15]);
-                    
+                            Sh4cntx.pc, next_pc, r[15]);
                 } else {
-                    // This should not happen in jitless mode, but handle it gracefully
-                    ERROR_LOG(DYNAREC, "🔧 WARNING: Regular JIT block found in jitless mode: %p", code_ptr);
-                    
-                    // Get the block from the code pointer (regular JIT format)
-                    RuntimeBlockInfo* block = *(RuntimeBlockInfo**)code_ptr;
-                    
-                    INFO_LOG(DYNAREC, "🔧 Fallback block info: block=%p addr=0x%08X oplist.size=%zu", block, block->addr, block->oplist.size());
-                    
-                    // Execute the block using SHIL interpretation
-                    executeShilBlock(block);
+                    // Regular JIT block - shouldn't happen in jitless mode  
+                    ERROR_LOG(DYNAREC, "🔧 Regular JIT block detected in jitless mode: 0x%llX", (unsigned long long)code_ptr);
+                    break;
                 }
                 
-                         } catch (const SH4ThrownException& ex) {
-                 // Handle SH4 exceptions exactly like the regular interpreter
-                 DEBUG_LOG(DYNAREC, "🔧 SH4ThrownException caught: epc=0x%08X expEvn=0x%X", ex.epc, ex.expEvn);
-                 try {
-                     Do_Exception(ex.epc, ex.expEvn);
-                 } catch (const FlycastException& flyEx) {
-                     // Double fault condition (sr.BL=1) - continue execution instead of crashing
-                     DEBUG_LOG(DYNAREC, "🔧 FlycastException caught during double fault: %s", flyEx.what());
-                     // Continue the main loop - this is normal during REIOS boot
-                 }
-                 // Continue the main loop - don't break! This allows REIOS to handle exceptions properly
-             }
+            } catch (const SH4ThrownException& ex) {
+                // Handle SH4 exceptions exactly like the regular interpreter
+                DEBUG_LOG(DYNAREC, "🔧 SH4ThrownException caught: epc=0x%08X expEvn=0x%X", ex.epc, ex.expEvn);
+                
+                // Call Do_Exception like the regular dynarec - let FlycastException propagate and crash
+                Do_Exception(ex.epc, ex.expEvn);
+            }
         } while (p_sh4rcb->cntx.CpuRunning);
+        
+        INFO_LOG(DYNAREC, "🔧 Main loop exited: CpuRunning=%s", p_sh4rcb->cntx.CpuRunning ? "true" : "false");
     }
     
     void handleException(host_context_t& context) override {
