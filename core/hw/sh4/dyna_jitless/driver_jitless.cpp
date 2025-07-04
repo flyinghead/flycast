@@ -16,6 +16,8 @@
 #include "decoder_jitless.h"
 #include "oslib/virtmem.h"
 
+#include "cfg/option.h"
+
 #if FEAT_SHREC == DYNAREC_JITLESS
 
 constexpr u32 CODE_SIZE = 10_MB;
@@ -100,288 +102,329 @@ static void setParamU64(const shil_param& rd1, const shil_param& rd2, u64 value)
 
 // Execute a SHIL block using interpretation
 static void executeShilBlock(RuntimeBlockInfo* block) {
-    ERROR_LOG(DYNAREC, "🔧 executeShilBlock: Starting block addr=0x%08X with %zu opcodes", block->addr, block->oplist.size());
+    currentBlock = block;
     
-    // Execute each SHIL opcode in the block
-    for (size_t i = 0; i < block->oplist.size(); i++) {
-        const shil_opcode& op = block->oplist[i];
-        ERROR_LOG(DYNAREC, "🔧 executeShilBlock: Executing opcode %zu: op=%d", i, (int)op.op);
-        // Simple opcode dispatcher - expand this as needed
-        switch (op.op) {
-            // Memory operations (simplified for now)
-            case shop_mov32:
-                if (!op.rd.is_null() && !op.rs1.is_null()) {
-                    setParamU32(op.rd, getParamU32(op.rs1));
-                }
-                break;
-                
-            case shop_mov64:
-                // 64-bit move - copy two 32-bit values
-                if (!op.rd.is_null() && !op.rd2.is_null() && !op.rs1.is_null() && !op.rs2.is_null()) {
-                    setParamU32(op.rd, getParamU32(op.rs1));   // Low part
-                    setParamU32(op.rd2, getParamU32(op.rs2));  // High part
-                }
-                break;
-                
-            // Arithmetic operations
-            case shop_add: {
-                u32 r1 = getParamU32(op.rs1);
-                u32 r2 = getParamU32(op.rs2);
-                setParamU32(op.rd, r1 + r2);
-                break;
-            }
+    DEBUG_LOG(DYNAREC, "🔍 Executing SHIL block at 0x%08X with %zu ops", block->addr, block->oplist.size());
+    
+         for (size_t i = 0; i < block->oplist.size(); i++) {
+         const shil_opcode& op = block->oplist[i];
+        
+        // Log potentially dangerous operations
+        if (op.op == shop_jdyn || op.op == shop_jcond || op.op == shop_ifb) {
+            DEBUG_LOG(DYNAREC, "🔍 SHIL[%zu]: Executing %s (op=%d)", i, 
+                     (op.op == shop_jdyn) ? "shop_jdyn" : 
+                     (op.op == shop_jcond) ? "shop_jcond" : "shop_ifb", 
+                     op.op);
             
-            case shop_sub: {
-                u32 r1 = getParamU32(op.rs1);
-                u32 r2 = getParamU32(op.rs2);
-                setParamU32(op.rd, r1 - r2);
-                break;
-            }
+            // Log PC state before risky ops
+            u32 pre_next_pc = next_pc;
+            DEBUG_LOG(DYNAREC, "🔍 PRE-OP: next_pc=0x%08X r[15]=0x%08X", next_pc, r[15]);
             
-            case shop_and: {
-                u32 r1 = getParamU32(op.rs1);
-                u32 r2 = getParamU32(op.rs2);
-                setParamU32(op.rd, r1 & r2);
-                break;
-            }
-            
-            case shop_or: {
-                u32 r1 = getParamU32(op.rs1);
-                u32 r2 = getParamU32(op.rs2);
-                setParamU32(op.rd, r1 | r2);
-                break;
-            }
-            
-            case shop_xor: {
-                u32 r1 = getParamU32(op.rs1);
-                u32 r2 = getParamU32(op.rs2);
-                setParamU32(op.rd, r1 ^ r2);
-                break;
-            }
-            
-            case shop_not: {
-                u32 r1 = getParamU32(op.rs1);
-                setParamU32(op.rd, ~r1);
-                break;
-            }
-            
-            case shop_neg: {
-                u32 r1 = getParamU32(op.rs1);
-                setParamU32(op.rd, -(s32)r1);
-                break;
-            }
-            
-            // Shift operations
-            case shop_shl: {
-                u32 r1 = getParamU32(op.rs1);
-                u32 r2 = getParamU32(op.rs2);
-                setParamU32(op.rd, r1 << r2);
-                break;
-            }
-            
-            case shop_shr: {
-                u32 r1 = getParamU32(op.rs1);
-                u32 r2 = getParamU32(op.rs2);
-                setParamU32(op.rd, r1 >> r2);
-                break;
-            }
-            
-            case shop_sar: {
-                s32 r1 = (s32)getParamU32(op.rs1);
-                u32 r2 = getParamU32(op.rs2);
-                setParamU32(op.rd, r1 >> r2);
-                break;
-            }
-            
-            // Compare and test operations
-            case shop_test: {
-                u32 r1 = getParamU32(op.rs1);
-                u32 r2 = getParamU32(op.rs2);
-                setParamU32(op.rd, (r1 & r2) ? 0 : 1); // T flag result
-                break;
-            }
-            
-            case shop_seteq: {
-                u32 r1 = getParamU32(op.rs1);
-                u32 r2 = getParamU32(op.rs2);
-                setParamU32(op.rd, (r1 == r2) ? 1 : 0);
-                break;
-            }
-            
-            case shop_setge: {
-                s32 r1 = (s32)getParamU32(op.rs1);
-                s32 r2 = (s32)getParamU32(op.rs2);
-                setParamU32(op.rd, (r1 >= r2) ? 1 : 0);
-                break;
-            }
-            
-            case shop_setgt: {
-                s32 r1 = (s32)getParamU32(op.rs1);
-                s32 r2 = (s32)getParamU32(op.rs2);
-                setParamU32(op.rd, (r1 > r2) ? 1 : 0);
-                break;
-            }
-            
-            case shop_setae: {
-                u32 r1 = getParamU32(op.rs1);
-                u32 r2 = getParamU32(op.rs2);
-                setParamU32(op.rd, (r1 >= r2) ? 1 : 0);
-                break;
-            }
-            
-            case shop_setab: {
-                u32 r1 = getParamU32(op.rs1);
-                u32 r2 = getParamU32(op.rs2);
-                setParamU32(op.rd, (r1 > r2) ? 1 : 0);
-                break;
-            }
-            
-            // System operations
-            case shop_sync_sr:
-                UpdateSR();
-                break;
-                
-            case shop_sync_fpscr:
-                UpdateFPSCR();
-                break;
-                
-            // Basic floating point operations
-            case shop_fadd: {
-                f32 r1 = getParamF32(op.rs1);
-                f32 r2 = getParamF32(op.rs2);
-                setParamF32(op.rd, r1 + r2);
-                break;
-            }
-            
-            case shop_fsub: {
-                f32 r1 = getParamF32(op.rs1);
-                f32 r2 = getParamF32(op.rs2);
-                setParamF32(op.rd, r1 - r2);
-                break;
-            }
-            
-            case shop_fmul: {
-                f32 r1 = getParamF32(op.rs1);
-                f32 r2 = getParamF32(op.rs2);
-                setParamF32(op.rd, r1 * r2);
-                break;
-            }
-            
-            case shop_fdiv: {
-                f32 r1 = getParamF32(op.rs1);
-                f32 r2 = getParamF32(op.rs2);
-                setParamF32(op.rd, r1 / r2);
-                break;
-            }
-            
-            case shop_fabs: {
-                f32 r1 = getParamF32(op.rs1);
-                setParamF32(op.rd, fabsf(r1));
-                break;
-            }
-            
-            case shop_fneg: {
-                f32 r1 = getParamF32(op.rs1);
-                setParamF32(op.rd, -r1);
-                break;
-            }
-            
-            // Control flow
-            case shop_jdyn:
-                // Dynamic jump - get target from register
-                next_pc = getParamU32(op.rs1);
-                return; // Exit block execution
-                
-            case shop_jcond: {
-                // Conditional jump based on T flag
-                u32 condition = getParamU32(op.rs2);
-                if (condition != 0) {
-                    next_pc = op.rs1.imm_value(); // True branch
-                } else {
-                    next_pc = op.rs3.imm_value(); // False branch  
-                }
-                return; // Exit block execution
-            }
-            
-            case shop_ifb:
-                // Interpreter fallback - call the SH4 instruction handler directly
-                {
-                    ERROR_LOG(DYNAREC, "🔧 executeShilBlock: Executing shop_ifb with rs1=%d rs2=%d rs3=%d", 
-                             op.rs1._imm, op.rs2._imm, op.rs3._imm);
+            // Execute the operation
+            switch (op.op) {
+                case shop_jdyn:
+                    // Dynamic jump
+                    next_pc = getParamU32(op.rs1);
+                    DEBUG_LOG(DYNAREC, "🔍 shop_jdyn: jumping to 0x%08X", next_pc);
+                    return; // Exit block
                     
-                    // Set PC if needed (same logic as ARM64 dynarec)
-                    if (op.rs1._imm) {  // if NeedPC()
-                        next_pc = op.rs2._imm;
-                        ERROR_LOG(DYNAREC, "🔧 executeShilBlock: Setting next_pc = 0x%08X", next_pc);
-                    }
-                    
-                    // Call the SH4 instruction handler directly
-                    u16 opcode = op.rs3._imm;
-                    ERROR_LOG(DYNAREC, "🔧 executeShilBlock: Calling OpDesc[%d]->oph", opcode);
-                    
-                    // Use the interpreter fallback mechanism
-                    extern sh4_opcodelistentry* OpDesc[0x10000];
-                    if (!mmu_enabled()) {
-                        OpDesc[opcode]->oph(opcode);
+                case shop_jcond:
+                    // Conditional jump
+                    if (sr.T == 1) {
+                        next_pc = op.rs1._imm;
+                        DEBUG_LOG(DYNAREC, "🔍 shop_jcond: condition true, jumping to 0x%08X", next_pc);
+                        return; // Exit block
                     } else {
-                        // For MMU case, we need more complex handling
-                        // For now, just call the handler directly
-                        OpDesc[opcode]->oph(opcode);
+                        DEBUG_LOG(DYNAREC, "🔍 shop_jcond: condition false, continuing");
                     }
-                    ERROR_LOG(DYNAREC, "🔧 executeShilBlock: shop_ifb completed");
+                    break;
+                    
+                case shop_ifb:
+                    // Interpreter fallback
+                    {
+                        DEBUG_LOG(DYNAREC, "🔍 shop_ifb: Fallback to interpreter, PC check needed");
+                        if (op.rs1._imm) {
+                            next_pc = op.rs2._imm;
+                            DEBUG_LOG(DYNAREC, "🔍 shop_ifb: Set PC to 0x%08X", next_pc);
+                        }
+                        
+                        u16 opcode = op.rs3._imm;  // Use the already decoded opcode from rs3
+                        DEBUG_LOG(DYNAREC, "🔍 shop_ifb: Executing SH4 opcode 0x%04X at PC=0x%08X", opcode, next_pc);
+                        
+                        u32 pre_pc = next_pc;
+                        OpDesc[opcode]->oph(opcode);
+                        u32 post_pc = next_pc;
+                        
+                        DEBUG_LOG(DYNAREC, "🔍 shop_ifb: PC changed from 0x%08X to 0x%08X", pre_pc, post_pc);
+                        
+                        return; // Exit block after interpreter fallback
+                    }
+                    
+                default:
+                    break;
+            }
+            
+            // Check for corruption after risky ops
+            if (next_pc != pre_next_pc) {
+                DEBUG_LOG(DYNAREC, "🔍 POST-OP: next_pc changed from 0x%08X to 0x%08X", pre_next_pc, next_pc);
+            }
+            
+            if (next_pc >= 0x9F000000 && next_pc <= 0x9FFFFFFF) {
+                ERROR_LOG(DYNAREC, "🚨 PC CORRUPTION in SHIL[%zu]: next_pc=0x%08X after op=%d", i, next_pc, op.op);
+                die("PC corruption detected in SHIL execution");
+            }
+        } else {
+            // Execute normal operations without extensive logging
+            switch (op.op) {
+                // Memory operations (simplified for now)
+                case shop_mov32:
+                    if (!op.rd.is_null() && !op.rs1.is_null()) {
+                        setParamU32(op.rd, getParamU32(op.rs1));
+                    }
+                    break;
+                
+                case shop_mov64:
+                    // 64-bit move - copy two 32-bit values
+                    if (!op.rd.is_null() && !op.rd2.is_null() && !op.rs1.is_null() && !op.rs2.is_null()) {
+                        setParamU32(op.rd, getParamU32(op.rs1));   // Low part
+                        setParamU32(op.rd2, getParamU32(op.rs2));  // High part
+                    }
+                    break;
+                
+                // Arithmetic operations
+                case shop_add: {
+                    u32 r1 = getParamU32(op.rs1);
+                    u32 r2 = getParamU32(op.rs2);
+                    setParamU32(op.rd, r1 + r2);
+                    break;
                 }
-                break;
-            
-            // Memory operations (simplified - real implementation would need proper address translation)
-            case shop_readm: {
-                u32 addr = getParamU32(op.rs1);
-                u32 value;
-                switch (op.size) {
-                    case 1: value = ReadMem8(addr); break;
-                    case 2: value = ReadMem16(addr); break;
-                    case 4: value = ReadMem32(addr); break;
-                    default: 
-                        WARN_LOG(DYNAREC, "Unsupported read size: %d", op.size);
-                        value = 0;
-                        break;
+                
+                case shop_sub: {
+                    u32 r1 = getParamU32(op.rs1);
+                    u32 r2 = getParamU32(op.rs2);
+                    setParamU32(op.rd, r1 - r2);
+                    break;
                 }
-                setParamU32(op.rd, value);
-                break;
-            }
-            
-            case shop_writem: {
-                u32 addr = getParamU32(op.rs1);
-                u32 value = getParamU32(op.rs2);
-                switch (op.size) {
-                    case 1: WriteMem8(addr, value); break;
-                    case 2: WriteMem16(addr, value); break;
-                    case 4: WriteMem32(addr, value); break;
-                    default:
-                        WARN_LOG(DYNAREC, "Unsupported write size: %d", op.size);
-                        break;
+                
+                case shop_and: {
+                    u32 r1 = getParamU32(op.rs1);
+                    u32 r2 = getParamU32(op.rs2);
+                    setParamU32(op.rd, r1 & r2);
+                    break;
                 }
-                break;
+                
+                case shop_or: {
+                    u32 r1 = getParamU32(op.rs1);
+                    u32 r2 = getParamU32(op.rs2);
+                    setParamU32(op.rd, r1 | r2);
+                    break;
+                }
+                
+                case shop_xor: {
+                    u32 r1 = getParamU32(op.rs1);
+                    u32 r2 = getParamU32(op.rs2);
+                    setParamU32(op.rd, r1 ^ r2);
+                    break;
+                }
+                
+                case shop_not: {
+                    u32 r1 = getParamU32(op.rs1);
+                    setParamU32(op.rd, ~r1);
+                    break;
+                }
+                
+                case shop_neg: {
+                    u32 r1 = getParamU32(op.rs1);
+                    setParamU32(op.rd, -(s32)r1);
+                    break;
+                }
+                
+                // Shift operations
+                case shop_shl: {
+                    u32 r1 = getParamU32(op.rs1);
+                    u32 r2 = getParamU32(op.rs2);
+                    setParamU32(op.rd, r1 << r2);
+                    break;
+                }
+                
+                case shop_shr: {
+                    u32 r1 = getParamU32(op.rs1);
+                    u32 r2 = getParamU32(op.rs2);
+                    setParamU32(op.rd, r1 >> r2);
+                    break;
+                }
+                
+                case shop_sar: {
+                    s32 r1 = (s32)getParamU32(op.rs1);
+                    u32 r2 = getParamU32(op.rs2);
+                    setParamU32(op.rd, r1 >> r2);
+                    break;
+                }
+                
+                // Compare and test operations
+                case shop_test: {
+                    u32 r1 = getParamU32(op.rs1);
+                    u32 r2 = getParamU32(op.rs2);
+                    setParamU32(op.rd, (r1 & r2) ? 0 : 1); // T flag result
+                    break;
+                }
+                
+                case shop_seteq: {
+                    u32 r1 = getParamU32(op.rs1);
+                    u32 r2 = getParamU32(op.rs2);
+                    setParamU32(op.rd, (r1 == r2) ? 1 : 0);
+                    break;
+                }
+                
+                case shop_setge: {
+                    s32 r1 = (s32)getParamU32(op.rs1);
+                    s32 r2 = (s32)getParamU32(op.rs2);
+                    setParamU32(op.rd, (r1 >= r2) ? 1 : 0);
+                    break;
+                }
+                
+                case shop_setgt: {
+                    s32 r1 = (s32)getParamU32(op.rs1);
+                    s32 r2 = (s32)getParamU32(op.rs2);
+                    setParamU32(op.rd, (r1 > r2) ? 1 : 0);
+                    break;
+                }
+                
+                case shop_setae: {
+                    u32 r1 = getParamU32(op.rs1);
+                    u32 r2 = getParamU32(op.rs2);
+                    setParamU32(op.rd, (r1 >= r2) ? 1 : 0);
+                    break;
+                }
+                
+                case shop_setab: {
+                    u32 r1 = getParamU32(op.rs1);
+                    u32 r2 = getParamU32(op.rs2);
+                    setParamU32(op.rd, (r1 > r2) ? 1 : 0);
+                    break;
+                }
+                
+                // System operations
+                case shop_sync_sr:
+                    UpdateSR();
+                    break;
+                
+                case shop_sync_fpscr:
+                    UpdateFPSCR();
+                    break;
+                
+                // Basic floating point operations
+                case shop_fadd: {
+                    f32 r1 = getParamF32(op.rs1);
+                    f32 r2 = getParamF32(op.rs2);
+                    setParamF32(op.rd, r1 + r2);
+                    break;
+                }
+                
+                case shop_fsub: {
+                    f32 r1 = getParamF32(op.rs1);
+                    f32 r2 = getParamF32(op.rs2);
+                    setParamF32(op.rd, r1 - r2);
+                    break;
+                }
+                
+                case shop_fmul: {
+                    f32 r1 = getParamF32(op.rs1);
+                    f32 r2 = getParamF32(op.rs2);
+                    setParamF32(op.rd, r1 * r2);
+                    break;
+                }
+                
+                case shop_fdiv: {
+                    f32 r1 = getParamF32(op.rs1);
+                    f32 r2 = getParamF32(op.rs2);
+                    setParamF32(op.rd, r1 / r2);
+                    break;
+                }
+                
+                case shop_fabs: {
+                    f32 r1 = getParamF32(op.rs1);
+                    setParamF32(op.rd, fabsf(r1));
+                    break;
+                }
+                
+                case shop_fneg: {
+                    f32 r1 = getParamF32(op.rs1);
+                    setParamF32(op.rd, -r1);
+                    break;
+                }
+                
+                // Memory operations (simplified - real implementation would need proper address translation)
+                case shop_readm: {
+                    u32 addr = getParamU32(op.rs1);
+                    u32 value;
+                    switch (op.size) {
+                        case 1: value = ReadMem8(addr); break;
+                        case 2: value = ReadMem16(addr); break;
+                        case 4: value = ReadMem32(addr); break;
+                        default: 
+                            WARN_LOG(DYNAREC, "Unsupported read size: %d", op.size);
+                            value = 0;
+                            break;
+                    }
+                    setParamU32(op.rd, value);
+                    break;
+                }
+                
+                case shop_writem: {
+                    u32 addr = getParamU32(op.rs1);
+                    u32 value = getParamU32(op.rs2);
+                    switch (op.size) {
+                        case 1: WriteMem8(addr, value); break;
+                        case 2: WriteMem16(addr, value); break;
+                        case 4: WriteMem32(addr, value); break;
+                        default:
+                            WARN_LOG(DYNAREC, "Unsupported write size: %d", op.size);
+                            break;
+                    }
+                    break;
+                }
+                
+                // Extension operations
+                case shop_ext_s8: {
+                    u32 r1 = getParamU32(op.rs1);
+                    setParamU32(op.rd, (s32)(s8)r1);
+                    break;
+                }
+                
+                case shop_ext_s16: {
+                    u32 r1 = getParamU32(op.rs1);
+                    setParamU32(op.rd, (s32)(s16)r1);
+                    break;
+                }
+                
+                // Illegal instruction - this calls the SH4 exception handler
+                case shop_illegal: {
+                    u32 epc = getParamU32(op.rs1);         // Exception PC
+                    u32 delaySlot = getParamU32(op.rs2);   // Is it in delay slot?
+                    
+                    DEBUG_LOG(DYNAREC, "🔍 shop_illegal: Exception at PC=0x%08X, delaySlot=%d", epc, delaySlot);
+                    
+                    // Call the appropriate exception handler
+                    if (delaySlot == 1) {
+                        Do_Exception(epc - 2, Sh4Ex_SlotIllegalInstr);
+                    } else {
+                        Do_Exception(epc, Sh4Ex_IllegalInstr);
+                    }
+                    
+                    // After exception handling, update PC and exit block
+                    next_pc = Sh4cntx.pc;
+                    DEBUG_LOG(DYNAREC, "🔍 shop_illegal: After exception, new PC=0x%08X", next_pc);
+                    return; // Exit block after exception
+                }
+                
+                // TODO: Add more opcodes as needed
+                default:
+                    // For unhandled opcodes, log a warning but continue
+                    WARN_LOG(DYNAREC, "Unhandled SHIL opcode: %s (%d) at PC %08X", 
+                            shil_opcode_name(op.op), op.op, next_pc);
+                    break;
             }
-            
-            // Extension operations
-            case shop_ext_s8: {
-                u32 r1 = getParamU32(op.rs1);
-                setParamU32(op.rd, (s32)(s8)r1);
-                break;
-            }
-            
-            case shop_ext_s16: {
-                u32 r1 = getParamU32(op.rs1);
-                setParamU32(op.rd, (s32)(s16)r1);
-                break;
-            }
-            
-            // TODO: Add more opcodes as needed
-            default:
-                // For unhandled opcodes, log a warning but continue
-                WARN_LOG(DYNAREC, "Unhandled SHIL opcode: %s (%d) at PC %08X", 
-                        shil_opcode_name(op.op), op.op, next_pc);
-                break;
         }
     }
     
@@ -440,19 +483,36 @@ public:
                     INFO_LOG(DYNAREC, "🔧 Block not found, creating jitless block...");
                     code_ptr = createJitlessBlock(next_pc);
                     INFO_LOG(DYNAREC, "🔧 createJitlessBlock returned: %p", code_ptr);
+                    
+                    // Check if block creation failed (e.g., for exception addresses like 0xFFFFFFFF)
+                    if (unlikely(code_ptr == ngen_FailedToFindBlock)) {
+                        DEBUG_LOG(DYNAREC, "🔧 Block creation failed for PC=0x%08X - likely exception condition", next_pc);
+                        // Exception handling may have changed the PC, so update next_pc and continue
+                        next_pc = Sh4cntx.pc;
+                        DEBUG_LOG(DYNAREC, "🔧 Updated next_pc to 0x%08X after exception handling", next_pc);
+                        continue; // Continue with the new PC instead of breaking
+                    }
                 }
                 
                 INFO_LOG(DYNAREC, "🔧 About to execute block: next_pc=0x%08X code_ptr=%p", next_pc, code_ptr);
                 
                 // Check if this is a jitless block (low bit set) or regular JIT block
                 if (reinterpret_cast<uintptr_t>(code_ptr) & 0x1) {
-                    // This is a jitless block - extract the RuntimeBlockInfo pointer
+                    // Jitless block - extract RuntimeBlockInfo and execute via SHIL interpretation
                     RuntimeBlockInfo* block = reinterpret_cast<RuntimeBlockInfo*>(reinterpret_cast<uintptr_t>(code_ptr) & ~0x1);
-                    
                     INFO_LOG(DYNAREC, "🔧 Jitless block detected: block=%p addr=0x%08X oplist.size=%zu", block, block->addr, block->oplist.size());
                     
-                    // Execute the block using SHIL interpretation
+                    // Log the current state before execution
+                    INFO_LOG(DYNAREC, "🔧 PRE-EXECUTE: PC=0x%08X next_pc=0x%08X r[15]=0x%08X", 
+                             Sh4cntx.pc, next_pc, r[15]);
+                    
+                    // Execute the block
                     executeShilBlock(block);
+                    
+                    // Log the result after execution
+                    INFO_LOG(DYNAREC, "🔧 POST-EXECUTE: PC=0x%08X next_pc=0x%08X r[15]=0x%08X", 
+                             Sh4cntx.pc, next_pc, r[15]);
+                    
                 } else {
                     // This should not happen in jitless mode, but handle it gracefully
                     ERROR_LOG(DYNAREC, "🔧 WARNING: Regular JIT block found in jitless mode: %p", code_ptr);
@@ -499,35 +559,24 @@ public:
     }
     
     DynarecCodeEntryPtr createJitlessBlock(u32 pc) {
-        ERROR_LOG(DYNAREC, "🔧 createJitlessBlock: Creating block for PC=0x%08X", pc);
-        
         // Step 1: Allocate a RuntimeBlockInfo
         RuntimeBlockInfo* rbi = this->allocateBlock();
         if (!rbi) {
-            ERROR_LOG(DYNAREC, "🔧 createJitlessBlock: Failed to allocate block");
             return ngen_FailedToFindBlock;
         }
         
         // Step 2: Setup the block (SH4 → SHIL decoding and optimization)
-        ERROR_LOG(DYNAREC, "🔧 createJitlessBlock: Calling rbi->Setup()");
         if (!rbi->Setup(pc, fpscr)) {
-            ERROR_LOG(DYNAREC, "🔧 createJitlessBlock: rbi->Setup() failed");
             delete rbi;
             return ngen_FailedToFindBlock;
         }
-        
-        ERROR_LOG(DYNAREC, "🔧 createJitlessBlock: Block setup successful, addr=0x%08X oplist.size=%zu", rbi->addr, rbi->oplist.size());
         
         // Step 3: Create a unique "code" pointer for this block
         // We'll use the block's memory address as a unique identifier
         rbi->code = reinterpret_cast<DynarecCodeEntryPtr>(reinterpret_cast<uintptr_t>(rbi) | 0x1);
         
-        ERROR_LOG(DYNAREC, "🔧 createJitlessBlock: Assigned code pointer: %p", rbi->code);
-        
         // Step 4: Add to block manager
         bm_AddBlock(rbi);
-        
-        ERROR_LOG(DYNAREC, "🔧 createJitlessBlock: Block added to manager, returning %p", rbi->code);
         return rbi->code;
     }
 

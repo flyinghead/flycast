@@ -48,11 +48,27 @@ u32 unprotected_blocks;
 // This returns an executable address
 static DynarecCodeEntryPtr DYNACALL bm_GetCode(u32 addr)
 {
-	ERROR_LOG(DYNAREC, "🔧 bm_GetCode: addr=0x%08X", addr);
-	u32 index = (addr >> 1) & FPCB_MASK;
-	ERROR_LOG(DYNAREC, "🔧 bm_GetCode: index=%u, fpcb=%p", index, sh4rcb.fpcb);
+	// Check for exception address - this is NOT corruption, it's legitimate exception handling
+	if (addr == 0xFFFFFFFF) {
+		DEBUG_LOG(DYNAREC, "bm_GetCode: Exception address FFFFFFFF - this is normal exception handling");
+		return ngen_FailedToFindBlock;
+	}
+	
+	// Add logging for suspicious addresses to track corruption
+	if (addr >= 0x9F000000 && addr <= 0x9FFFFFFF) {
+		ERROR_LOG(DYNAREC, "🚨 SUSPICIOUS ADDRESS: bm_GetCode called with addr=0x%08X (high P1)", addr);
+		// Print stack trace or context info here if needed
+	}
+	
+	if (addr > 0xC0000000) {
+		ERROR_LOG(DYNAREC, "🚨 INVALID ADDRESS: bm_GetCode called with addr=0x%08X (beyond SH4 space)", addr);
+	}
+	
+	// Normal FPCA table access
 	DynarecCodeEntryPtr rv = FPCA(addr);
-	ERROR_LOG(DYNAREC, "🔧 bm_GetCode: FPCA access successful, rv=%p", rv);
+	if (rv == 0) {
+		DEBUG_LOG(DYNAREC, "bm_GetCode: No block found for addr=0x%08X", addr);
+	}
 	return rv;
 }
 
@@ -230,12 +246,10 @@ void bm_Periodical_1s()
 
 void bm_vmem_pagefill(void** ptr, u32 size_bytes)
 {
-	INFO_LOG(DYNAREC, "🔧 JITLESS bm_vmem_pagefill called! ptr=%p size=%d entries=%d", ptr, size_bytes, size_bytes / (int)sizeof(ptr[0]));
 	for (size_t i = 0; i < size_bytes / sizeof(ptr[0]); i++)
 	{
 		ptr[i]=(void*)ngen_FailedToFindBlock;
 	}
-	INFO_LOG(DYNAREC, "🔧 JITLESS bm_vmem_pagefill completed successfully");
 }
 
 void bm_Reset()
