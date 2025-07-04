@@ -1865,7 +1865,8 @@ if(BUILD_TESTING)
         tests/src/serialize_test.cpp
         tests/src/AicaArmTest.cpp
         tests/src/Sh4InterpreterTest.cpp
-        tests/src/gtest_main_entry.cpp
+tests/src/JitlessDynarecTest.cpp
+tests/src/gtest_main_entry.cpp
         tests/src/MmuTest.cpp
     )
 
