@@ -48,8 +48,11 @@ u32 unprotected_blocks;
 // This returns an executable address
 static DynarecCodeEntryPtr DYNACALL bm_GetCode(u32 addr)
 {
+	ERROR_LOG(DYNAREC, "🔧 bm_GetCode: addr=0x%08X", addr);
+	u32 index = (addr >> 1) & FPCB_MASK;
+	ERROR_LOG(DYNAREC, "🔧 bm_GetCode: index=%u, fpcb=%p", index, sh4rcb.fpcb);
 	DynarecCodeEntryPtr rv = FPCA(addr);
-
+	ERROR_LOG(DYNAREC, "🔧 bm_GetCode: FPCA access successful, rv=%p", rv);
 	return rv;
 }
 
@@ -227,10 +230,12 @@ void bm_Periodical_1s()
 
 void bm_vmem_pagefill(void** ptr, u32 size_bytes)
 {
+	INFO_LOG(DYNAREC, "🔧 JITLESS bm_vmem_pagefill called! ptr=%p size=%d entries=%d", ptr, size_bytes, size_bytes / (int)sizeof(ptr[0]));
 	for (size_t i = 0; i < size_bytes / sizeof(ptr[0]); i++)
 	{
 		ptr[i]=(void*)ngen_FailedToFindBlock;
 	}
+	INFO_LOG(DYNAREC, "🔧 JITLESS bm_vmem_pagefill completed successfully");
 }
 
 void bm_Reset()

@@ -398,28 +398,44 @@ public:
     
     void mainloop(void* cntx) override {
         // Main loop for jitless dynarec using SHIL interpretation
-        p_sh4rcb = (Sh4RCB*)cntx;
-        
-        // Ensure FPCA table is properly initialized
-        static bool fpca_initialized = false;
-        if (!fpca_initialized) {
-            bm_vmem_pagefill((void**)sh4rcb.fpcb, sizeof(sh4rcb.fpcb));
-            fpca_initialized = true;
-        }
+        // Don't reassign p_sh4rcb - use the existing context to avoid FPCA table mismatch
         
         do {
             try {
                 // Find or compile the block for the current PC
+                INFO_LOG(DYNAREC, "🔧 Looking for block at PC=0x%08X", next_pc);
                 DynarecCodeEntryPtr code_ptr = bm_GetCodeByVAddr(next_pc);
+                INFO_LOG(DYNAREC, "🔧 bm_GetCodeByVAddr returned: %p", code_ptr);
+                
                 if (unlikely(code_ptr == ngen_FailedToFindBlock)) {
-                    code_ptr = (DynarecCodeEntryPtr)CC_RW2RX(rdv_CompilePC(0));
+                    INFO_LOG(DYNAREC, "🔧 Block not found, creating jitless block...");
+                    code_ptr = createJitlessBlock(next_pc);
+                    INFO_LOG(DYNAREC, "🔧 createJitlessBlock returned: %p", code_ptr);
                 }
                 
-                // Get the block from the code pointer
-                RuntimeBlockInfo* block = *(RuntimeBlockInfo**)code_ptr;
+                INFO_LOG(DYNAREC, "🔧 About to execute block: next_pc=0x%08X code_ptr=%p", next_pc, code_ptr);
                 
-                // Execute the block using SHIL interpretation
-                executeShilBlock(block);
+                // Check if this is a jitless block (low bit set) or regular JIT block
+                if (reinterpret_cast<uintptr_t>(code_ptr) & 0x1) {
+                    // This is a jitless block - extract the RuntimeBlockInfo pointer
+                    RuntimeBlockInfo* block = reinterpret_cast<RuntimeBlockInfo*>(reinterpret_cast<uintptr_t>(code_ptr) & ~0x1);
+                    
+                    INFO_LOG(DYNAREC, "🔧 Jitless block detected: block=%p addr=0x%08X oplist.size=%zu", block, block->addr, block->oplist.size());
+                    
+                    // Execute the block using SHIL interpretation
+                    executeShilBlock(block);
+                } else {
+                    // This should not happen in jitless mode, but handle it gracefully
+                    ERROR_LOG(DYNAREC, "🔧 WARNING: Regular JIT block found in jitless mode: %p", code_ptr);
+                    
+                    // Get the block from the code pointer (regular JIT format)
+                    RuntimeBlockInfo* block = *(RuntimeBlockInfo**)code_ptr;
+                    
+                    INFO_LOG(DYNAREC, "🔧 Fallback block info: block=%p addr=0x%08X oplist.size=%zu", block, block->addr, block->oplist.size());
+                    
+                    // Execute the block using SHIL interpretation
+                    executeShilBlock(block);
+                }
                 
             } catch (const SH4ThrownException&) {
                 // Handle SH4 exceptions by breaking out of loop
@@ -453,6 +469,39 @@ public:
         // Canonical function finish - do nothing
     }
     
+    DynarecCodeEntryPtr createJitlessBlock(u32 pc) {
+        ERROR_LOG(DYNAREC, "🔧 createJitlessBlock: Creating block for PC=0x%08X", pc);
+        
+        // Step 1: Allocate a RuntimeBlockInfo
+        RuntimeBlockInfo* rbi = this->allocateBlock();
+        if (!rbi) {
+            ERROR_LOG(DYNAREC, "🔧 createJitlessBlock: Failed to allocate block");
+            return ngen_FailedToFindBlock;
+        }
+        
+        // Step 2: Setup the block (SH4 → SHIL decoding and optimization)
+        ERROR_LOG(DYNAREC, "🔧 createJitlessBlock: Calling rbi->Setup()");
+        if (!rbi->Setup(pc, fpscr)) {
+            ERROR_LOG(DYNAREC, "🔧 createJitlessBlock: rbi->Setup() failed");
+            delete rbi;
+            return ngen_FailedToFindBlock;
+        }
+        
+        ERROR_LOG(DYNAREC, "🔧 createJitlessBlock: Block setup successful, addr=0x%08X oplist.size=%zu", rbi->addr, rbi->oplist.size());
+        
+        // Step 3: Create a unique "code" pointer for this block
+        // We'll use the block's memory address as a unique identifier
+        rbi->code = reinterpret_cast<DynarecCodeEntryPtr>(reinterpret_cast<uintptr_t>(rbi) | 0x1);
+        
+        ERROR_LOG(DYNAREC, "🔧 createJitlessBlock: Assigned code pointer: %p", rbi->code);
+        
+        // Step 4: Add to block manager
+        bm_AddBlock(rbi);
+        
+        ERROR_LOG(DYNAREC, "🔧 createJitlessBlock: Block added to manager, returning %p", rbi->code);
+        return rbi->code;
+    }
+
 private:
     Sh4CodeBuffer *codeBuffer = nullptr;
 };
