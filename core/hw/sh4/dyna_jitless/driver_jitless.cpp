@@ -9,6 +9,7 @@
 
 #include "hw/sh4/sh4_mem.h"
 #include "hw/sh4/modules/mmu.h"
+#include "hw/sh4/sh4_opcode_list.h"
 
 #include "blockmanager_jitless.h"
 #include "ngen_jitless.h"
@@ -99,8 +100,12 @@ static void setParamU64(const shil_param& rd1, const shil_param& rd2, u64 value)
 
 // Execute a SHIL block using interpretation
 static void executeShilBlock(RuntimeBlockInfo* block) {
+    ERROR_LOG(DYNAREC, "🔧 executeShilBlock: Starting block addr=0x%08X with %zu opcodes", block->addr, block->oplist.size());
+    
     // Execute each SHIL opcode in the block
-    for (const shil_opcode& op : block->oplist) {
+    for (size_t i = 0; i < block->oplist.size(); i++) {
+        const shil_opcode& op = block->oplist[i];
+        ERROR_LOG(DYNAREC, "🔧 executeShilBlock: Executing opcode %zu: op=%d", i, (int)op.op);
         // Simple opcode dispatcher - expand this as needed
         switch (op.op) {
             // Memory operations (simplified for now)
@@ -299,9 +304,33 @@ static void executeShilBlock(RuntimeBlockInfo* block) {
             }
             
             case shop_ifb:
-                // Simple block terminator - continue to next block
-                next_pc = op.rs1.imm_value();
-                return; // Exit block execution
+                // Interpreter fallback - call the SH4 instruction handler directly
+                {
+                    ERROR_LOG(DYNAREC, "🔧 executeShilBlock: Executing shop_ifb with rs1=%d rs2=%d rs3=%d", 
+                             op.rs1._imm, op.rs2._imm, op.rs3._imm);
+                    
+                    // Set PC if needed (same logic as ARM64 dynarec)
+                    if (op.rs1._imm) {  // if NeedPC()
+                        next_pc = op.rs2._imm;
+                        ERROR_LOG(DYNAREC, "🔧 executeShilBlock: Setting next_pc = 0x%08X", next_pc);
+                    }
+                    
+                    // Call the SH4 instruction handler directly
+                    u16 opcode = op.rs3._imm;
+                    ERROR_LOG(DYNAREC, "🔧 executeShilBlock: Calling OpDesc[%d]->oph", opcode);
+                    
+                    // Use the interpreter fallback mechanism
+                    extern sh4_opcodelistentry* OpDesc[0x10000];
+                    if (!mmu_enabled()) {
+                        OpDesc[opcode]->oph(opcode);
+                    } else {
+                        // For MMU case, we need more complex handling
+                        // For now, just call the handler directly
+                        OpDesc[opcode]->oph(opcode);
+                    }
+                    ERROR_LOG(DYNAREC, "🔧 executeShilBlock: shop_ifb completed");
+                }
+                break;
             
             // Memory operations (simplified - real implementation would need proper address translation)
             case shop_readm: {
