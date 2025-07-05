@@ -31,8 +31,9 @@ extern bool g_exception_was_raised;
 
 #if FEAT_SHREC == DYNAREC_JITLESS
 
-constexpr u32 CODE_SIZE = 10_MB;
-constexpr u32 TEMP_CODE_SIZE = 1_MB;
+// Enlarged code cache for jitless path to avoid frequent clears
+constexpr u32 CODE_SIZE = 32_MB;
+constexpr u32 TEMP_CODE_SIZE = 2_MB;
 constexpr u32 FULL_SIZE = CODE_SIZE + TEMP_CODE_SIZE;
 
 #if defined(_WIN32) || FEAT_SHREC != DYNAREC_JIT || defined(TARGET_IPHONE) || defined(TARGET_ARM_MAC)

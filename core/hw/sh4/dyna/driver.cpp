@@ -16,8 +16,9 @@
 
 #if FEAT_SHREC != DYNAREC_NONE
 
-constexpr u32 CODE_SIZE = 10_MB;
-constexpr u32 TEMP_CODE_SIZE = 1_MB;
+// Enlarged to reduce cache evictions and block recompilation
+constexpr u32 CODE_SIZE = 128_MB;
+constexpr u32 TEMP_CODE_SIZE = 4_MB;
 constexpr u32 FULL_SIZE = CODE_SIZE + TEMP_CODE_SIZE;
 
 #if defined(_WIN32) || FEAT_SHREC != DYNAREC_JIT || defined(TARGET_IPHONE) || defined(TARGET_ARM_MAC)
