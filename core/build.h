@@ -46,19 +46,19 @@
 // Dynarec control flags
 // TARGET_NO_REC completely disables all dynarec
 // ENABLE_SH4_JITLESS enables jitless dynarec (when JIT is disabled but dynarec is wanted)
-// #if defined(TARGET_NO_REC)
-// #define FEAT_SHREC DYNAREC_NONE
-// #define FEAT_AREC DYNAREC_NONE
-// #define FEAT_DSPREC DYNAREC_NONE
-// #elif defined(ENABLE_SH4_JITLESS)
+#if defined(TARGET_NO_REC)
+#define FEAT_SHREC DYNAREC_NONE
+#define FEAT_AREC DYNAREC_NONE
+#define FEAT_DSPREC DYNAREC_NONE
+#elif defined(ENABLE_SH4_JITLESS)
 #define FEAT_SHREC DYNAREC_JITLESS
 #define FEAT_AREC DYNAREC_NONE
 #define FEAT_DSPREC DYNAREC_NONE
-// #elif defined(TARGET_NO_AREC)
-// #define FEAT_SHREC DYNAREC_JIT
-// #define FEAT_AREC DYNAREC_NONE
-// #define FEAT_DSPREC DYNAREC_NONE
-// #endif
+#elif defined(TARGET_NO_AREC)
+#define FEAT_SHREC DYNAREC_JIT
+#define FEAT_AREC DYNAREC_NONE
+#define FEAT_DSPREC DYNAREC_NONE
+#endif
 
 #ifdef __SWITCH__
 #define FEAT_NO_RWX_PAGES

@@ -3,25 +3,38 @@
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 PROJECT_ROOT_DIR="${SCRIPT_DIR}/.."
 
-LIBRETRO="OFF"
-BUILD_TYPE="Debug"
-PIC="ON"
-ARCH="arm64"
-SYSTEM_NAME="macOS"
-RUN_BUILD="ON"
+LIBRETRO=${LIBRETRO:-"OFF"}
+BUILD_TYPE=${BUILD_TYPE:-"Debug"}
+PIC=${PIC:-"ON"}
+ARCH=${ARCH:-"arm64"}
+SYSTEM_NAME=${SYSTEM_NAME:-"macOS"}
+RUN_BUILD=${RUN_BUILD:-"ON"}
+# Dynarec type: "jitless" (default), "jit", or "none"
+DYNAREC_TYPE=${DYNAREC_TYPE:-"jitless"}
+
+# Set JIT flags based on dynarec type
+if [ "$DYNAREC_TYPE" = "jit" ]; then
+    USE_JIT="ON"
+    NO_JIT="OFF"
+    echo "🔧 Building with JIT dynarec (regular)"
+else
+    USE_JIT="OFF"
+    NO_JIT="ON"
+    echo "🔧 Building with NO dynarec (interpreter only)"
+fi
+ENABLE_SH4_CACHED_IR=${ENABLE_SH4_CACHED_IR:-"OFF"}
+ENABLE_LOG=${ENABLE_LOG:-"ON"}
+# PASS CLEAN=TRUE to force cleaning
+CLEAN=${CLEAN:-"FALSE"}
+# Set VULKAN_SDK environment variable for MoltenVK
+export VULKAN_SDK="${HOME}/VulkanSDK/macOS"
+export PATH="/opt/homebrew/bin:$PATH"
+
 # PASS CLEAN=TRUE to force cleaning (removes previous build)
 if [ "${CLEAN}" = "TRUE" ]; then
   echo "Cleaning previous build directory ${PROJECT_ROOT_DIR}/build_for_tests"
   rm -rf "${PROJECT_ROOT_DIR}/build_for_tests"
 fi
-
-# PASS CLEAN=TRUE to force cleaning
-CLEAN=${CLEAN:-"FALSE"}
-
-# Set VULKAN_SDK environment variable for MoltenVK
-export VULKAN_SDK="${HOME}/VulkanSDK/macOS"
-
-# export PATH="/opt/homebrew/bin:$PATH"
 
 # Initialize flags
 C_FLAGS="-arch ${ARCH} \
@@ -29,7 +42,6 @@ C_FLAGS="-arch ${ARCH} \
 
 CXX_FLAGS="-arch ${ARCH} \
 -DTARGET_NO_NIXPROF"
-
 
 # Simple helper to configure, build and run the C++ unit-tests (GoogleTest)
 # against the SH4 cached-IR executor.
@@ -63,25 +75,25 @@ fi
 
 "$CMAKE_BIN" -S "${PROJECT_ROOT_DIR}" -B "${BUILD_DIR}" \
       -DCMAKE_TOOLCHAIN_FILE="${SCRIPT_DIR}/macos_clang_toolchain.cmake" \
-       -DLIBRETRO=${LIBRETRO} \
+      -DLIBRETRO=${LIBRETRO} \
       -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
       -DCMAKE_POSITION_INDEPENDENT_CODE=${PIC} \
       -DCMAKE_SYSTEM_NAME=${SYSTEM_NAME} \
       -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
       -DCMAKE_POLICY_DEFAULT_CMP0091=NEW \
       -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
-      -DENABLE_SH4_CACHED_IR=OFF \
+      -DENABLE_SH4_CACHED_IR=${ENABLE_SH4_CACHED_IR} \
       -DBUILD_TESTING=ON \
       -DENABLE_OPENMP=OFF \
-      -DUSE_JIT=OFF \
-      -DNO_JIT=ON \
+      -DUSE_JIT=${USE_JIT} \
+      -DNO_JIT=${NO_JIT} \
       -DUSE_BREAKPAD=OFF \
       -DTARGET_NO_NIXPROF=ON \
-      -DENABLE_LOG=ON \
+      -DENABLE_LOG=${ENABLE_LOG} \
       -DCMAKE_C_FLAGS="${C_FLAGS}" \
       -DCMAKE_CXX_FLAGS="${CXX_FLAGS}" \
       -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
-       -DUSE_HOST_SDL=OFF \
+      -DUSE_HOST_SDL=OFF \
       "$@"
 
 # Build project (will also build flycast_tests if the target exists)
@@ -105,7 +117,7 @@ elif [ -f "./flycast" ]; then
 fi
 
 if [ -n "$FLYCAST_BINARY" ]; then
-    echo "✅ SUCCESS: Main Flycast binary built successfully with jitless dynarec!"
+    echo "✅ SUCCESS: Main Flycast binary built successfully with $DYNAREC_TYPE dynarec!"
     echo "Binary location: $FLYCAST_BINARY"
     ls -lh "$FLYCAST_BINARY"
     
@@ -124,7 +136,7 @@ if [ -n "$FLYCAST_BINARY" ]; then
         echo "⚠️  Test binary not built (expected with current jitless dynarec configuration)"
     fi
     
-    echo "🎉 JITLESS DYNAREC BUILD SUCCESSFUL!"
+    echo "🎉 $DYNAREC_TYPE DYNAREC BUILD SUCCESSFUL!"
     exit 0
 else
     echo "❌ FAILED: Main flycast binary not found"

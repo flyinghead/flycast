@@ -1942,7 +1942,7 @@ tests/src/gtest_main_entry.cpp
 )
 
 # Add jitless dynarec definitions to test target when NO_JIT is enabled
-if(DEFINED NO_JIT)
+if(NO_JIT)
     target_compile_definitions(flycast_tests PRIVATE
         ENABLE_SH4_JITLESS
         FEAT_SHREC=DYNAREC_JITLESS
@@ -2044,7 +2044,7 @@ set_target_properties(flycast_core PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 # Add dynarec files to flycast_core based on NO_JIT flag
 if(NOT DEFINED TARGET_NO_REC)
-    if(DEFINED NO_JIT)
+    if(NO_JIT)
         target_sources(flycast_core PRIVATE
             core/hw/sh4/dyna_jitless/blockmanager_jitless.cpp
             core/hw/sh4/dyna_jitless/blockmanager_jitless.h
@@ -2081,6 +2081,9 @@ if(NOT DEFINED TARGET_NO_REC)
             core/hw/sh4/dyna/ssa.h
             core/hw/sh4/dyna/ssa_regalloc.h
         )
+        # Set compile definitions for JIT dynarec
+        target_compile_definitions(flycast_core PRIVATE ENABLE_SH4_JIT)
+        target_compile_definitions(flycast_core PRIVATE FEAT_SHREC=DYNAREC_JIT)
         # Add ARM64 recompiler files for JIT backend
         if("arm64" IN_LIST ARCHITECTURE)
             target_sources(flycast_core PRIVATE
@@ -2090,8 +2093,6 @@ if(NOT DEFINED TARGET_NO_REC)
     endif()
 endif()
 endif()
-
-
 
 	install(TARGETS ${PROJECT_NAME} DESTINATION "${CMAKE_INSTALL_BINDIR}")
 endif()
@@ -2145,7 +2146,7 @@ endif()
 # --- SH4 Dynarec Backend Selection ---
 # Choose between JIT and jitless dynarec based on NO_JIT flag
 if(NOT DEFINED TARGET_NO_REC)
-    if(DEFINED NO_JIT)
+    if(NO_JIT)
         message(STATUS "Building with JITLESS dynarec backend (dyna_jitless)")
         target_sources(${PROJECT_NAME} PRIVATE
             core/hw/sh4/dyna_jitless/blockmanager_jitless.cpp
@@ -2187,6 +2188,7 @@ if(NOT DEFINED TARGET_NO_REC)
             core/hw/sh4/dyna/ssa_regalloc.h
         )
         target_compile_definitions(${PROJECT_NAME} PRIVATE ENABLE_SH4_JIT)
+        target_compile_definitions(${PROJECT_NAME} PRIVATE FEAT_SHREC=DYNAREC_JIT)
         # Set CMake variables for generator expressions
         set(ENABLE_SH4_JIT ON)
         set(ENABLE_SH4_JITLESS OFF)
