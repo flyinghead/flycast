@@ -38,10 +38,16 @@ if [ "${CLEAN}" = "TRUE" ]; then
 fi
 
 # Initialize flags
-C_FLAGS="-arch ${ARCH} \
+# Add micro-arch specific tuning for Apple Silicon
+if [ "${ARCH}" = "arm64" ]; then
+  TUNE_FLAGS="-march=armv8-a+simd+crc"
+else
+  TUNE_FLAGS=""
+fi
+C_FLAGS="-arch ${ARCH} ${TUNE_FLAGS} \
 -DTARGET_NO_NIXPROF"
 
-CXX_FLAGS="-arch ${ARCH} \
+CXX_FLAGS="-arch ${ARCH} ${TUNE_FLAGS} \
 -DTARGET_NO_NIXPROF"
 
 # Simple helper to configure, build and run the C++ unit-tests (GoogleTest)
@@ -90,10 +96,13 @@ fi
       -DNO_JIT=${NO_JIT} \
       -DUSE_BREAKPAD=OFF \
       -DTARGET_NO_NIXPROF=ON \
+      -DNGGEN_ARM64=$( [ "${ARCH}" = "arm64" ] && echo ON || echo OFF ) \
       -DENABLE_LOG=${ENABLE_LOG} \
       -DCMAKE_C_FLAGS="${C_FLAGS}" \
       -DCMAKE_CXX_FLAGS="${CXX_FLAGS}" \
       -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+      -DENABLE_LTO=ON \
+      -DUSE_LINK_TIME_OPTIMIZATION=ON \
       -DUSE_HOST_SDL=OFF \
       "$@"
 

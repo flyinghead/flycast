@@ -76,6 +76,12 @@ option(ENABLE_GDB_SERVER "Build with GDB debugging support" OFF)
 option(ENABLE_DC_PROFILER "Build with support for target machine (SH4) profiler" OFF)
 option(ENABLE_FC_PROFILER "Build with support for host app (Flycast) profiler" OFF)
 option(USE_DISCORD "Use Discord Presence API" OFF)
+# Enable Arm64 dynarec emitter
+if(CMAKE_SYSTEM_PROCESSOR STREQUAL "arm64")
+  option(NGGEN_ARM64 "Enable Arm64 native code generator" ON)
+else()
+  option(NGGEN_ARM64 "Enable Arm64 native code generator" OFF)
+endif()
 
 if(IOS AND NOT LIBRETRO)
 	set(USE_VULKAN OFF CACHE BOOL "Force vulkan off" FORCE)

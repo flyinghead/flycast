@@ -1,6 +1,9 @@
 /*
 	All non fpu opcodes
 */
+#include "sh4_opcodes.h"
+#include "../arm64_simd.h"
+
 #include "types.h"
 
 #include "hw/sh4/sh4_interpreter.h"
@@ -1380,18 +1383,24 @@ sh4op(i0100_nnnn_mmmm_1111)
 	{
 		die("mac.w @<REG_M>+,@<REG_N>+ : S=1");
 	}
+#if defined(__aarch64__)
+	else if (((r[n] | r[m]) & 3) == 0) // both 4-byte aligned → we can load 4 words safely
+	{
+		// Use NEON to accumulate 4 pairs at once
+		int64_t sum = mac_w_4x((const uint16_t*)r[n], (const uint16_t*)r[m]);
+		mac.full += sum;
+		r[n] += 8;
+		r[m] += 8;
+	}
+#endif
 	else
 	{
-		s32 rm,rn;
-
-		rn = (s32)(s16)ReadMem16(r[n]);
-		rm = (s32)(s16)ReadMem16(r[m] + (n == m ? 2 : 0));
-
-		r[n]+=2;
-		r[m]+=2;
-
-		s32 mul=rm * rn;
-		mac.full+=(s64)mul;
+		// scalar fallback
+		s32 rn = (s32)(s16)ReadMem16(r[n]);
+		s32 rm = (s32)(s16)ReadMem16(r[m] + (n == m ? 2 : 0));
+		r[n] += 2;
+		r[m] += 2;
+		mac.full += (s64)(rm * rn);
 	}
 }
 //mac.l @<REG_M>+,@<REG_N>+
