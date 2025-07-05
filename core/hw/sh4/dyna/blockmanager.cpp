@@ -40,15 +40,21 @@ static bm_Map blkmap;
 u32 protected_blocks;
 u32 unprotected_blocks;
 
+// Simple block lookup map for jitless mode (avoids FPCA table)
+static std::map<u32, RuntimeBlockInfoPtr> addr_to_block_map;
+
 #define FPCA(x) ((DynarecCodeEntryPtr&)sh4rcb.fpcb[(x>>1)&FPCB_MASK])
 
 // addr must be a physical address
 // This returns an executable address
 static DynarecCodeEntryPtr DYNACALL bm_GetCode(u32 addr)
 {
-	DynarecCodeEntryPtr rv = FPCA(addr);
-
-	return rv;
+	// JITLESS MODE: Use direct block lookup instead of FPCA table
+	auto it = addr_to_block_map.find(addr);
+	if (it != addr_to_block_map.end()) {
+		return it->second->code;
+	}
+	return ngen_FailedToFindBlock;
 }
 
 // addr must be a virtual address
@@ -175,8 +181,8 @@ void bm_AddBlock(RuntimeBlockInfo* blk)
 	}
 	blkmap[(void*)block->code] = block;
 
-	verify((void*)bm_GetCode(block->addr) == (void*)ngen_FailedToFindBlock);
-	FPCA(block->addr) = (DynarecCodeEntryPtr)CC_RW2RX(block->code);
+	// JITLESS MODE: Use direct block lookup map instead of FPCA table
+	addr_to_block_map[block->addr] = block;
 
 #ifdef DYNA_OPROF
 	if (oprofHandle)
@@ -207,9 +213,8 @@ void bm_DiscardBlock(RuntimeBlockInfo* block)
 	block_ptr->pBranchBlock = NULL;
 	block_ptr->Relink();
 
-	// Remove from jump table
-	verify((void*)bm_GetCode(block_ptr->addr) == CC_RW2RX((void*)block_ptr->code));
-	FPCA(block_ptr->addr) = ngen_FailedToFindBlock;
+	// JITLESS MODE: Remove from direct block lookup map instead of FPCA table
+	addr_to_block_map.erase(block_ptr->addr);
 
 	if (block_ptr->temp_block)
 		all_temp_blocks.erase(block_ptr);
@@ -301,6 +306,9 @@ void bm_ResetCache()
 	blkmap.clear();
 	// blkmap includes temp blocks as well
 	all_temp_blocks.clear();
+	
+	// JITLESS MODE: Clear the direct block lookup map
+	addr_to_block_map.clear();
 
 	for (auto& block_list : blocks_per_page)
 		block_list.clear();

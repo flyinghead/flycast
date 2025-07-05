@@ -13,15 +13,16 @@ RUN_BUILD=${RUN_BUILD:-"ON"}
 DYNAREC_TYPE=${DYNAREC_TYPE:-"jitless"}
 
 # Set JIT flags based on dynarec type
-if [ "$DYNAREC_TYPE" = "jit" ]; then
-    USE_JIT="ON"
-    NO_JIT="OFF"
-    echo "🔧 Building with JIT dynarec (regular)"
-else
+if [ "$DYNAREC_TYPE" = "jitless" ]; then
     USE_JIT="OFF"
     NO_JIT="ON"
+    echo "🔧 Building with JITLESS dynarec"
+else
+    USE_JIT="ON"
+    NO_JIT="OFF"
     echo "🔧 Building with NO dynarec (interpreter only)"
 fi
+
 ENABLE_SH4_CACHED_IR=${ENABLE_SH4_CACHED_IR:-"OFF"}
 ENABLE_LOG=${ENABLE_LOG:-"ON"}
 # PASS CLEAN=TRUE to force cleaning

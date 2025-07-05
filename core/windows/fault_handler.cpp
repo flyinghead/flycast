@@ -15,8 +15,13 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #include "oslib/oslib.h"
+#ifdef ENABLE_SH4_JITLESS
+#include "hw/sh4/dyna_jitless/blockmanager_jitless.h"
+#include "hw/sh4/dyna_jitless/ngen_jitless.h"
+#else
 #include "hw/sh4/dyna/blockmanager.h"
 #include "hw/sh4/dyna/ngen.h"
+#endif
 #include "rend/TexCache.h"
 #include "hw/mem/addrspace.h"
 #include "hw/mem/mem_watch.h"

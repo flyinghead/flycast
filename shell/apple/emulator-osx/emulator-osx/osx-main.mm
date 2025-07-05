@@ -24,7 +24,9 @@
 #include "ui/mainui.h"
 #include <future>
 
+#ifdef FLYCAST_TEST_BUILD
 #include <gtest/gtest.h>
+#endif
 
 int darw_printf(const char* text, ...)
 {
@@ -68,6 +70,7 @@ static void emu_flycast_term()
 
 extern "C" int FlycastSDLMain(int argc, char *argv[])
 {
+#ifdef FLYCAST_TEST_BUILD
     bool run_tests = false;
     for (int i = 1; i < argc; ++i)
         if (strncmp(argv[i], "--gtest", 7) == 0)
@@ -75,6 +78,7 @@ extern "C" int FlycastSDLMain(int argc, char *argv[])
     ::testing::InitGoogleTest(&argc, argv);
     if (run_tests || ::testing::GTEST_FLAG(list_tests))
         return RUN_ALL_TESTS();
+#endif
     char *home = getenv("HOME");
     if (home != NULL)
     {

@@ -2080,6 +2080,8 @@ if(NOT DEFINED TARGET_NO_REC)
             core/hw/sh4/dyna/ssa.cpp
             core/hw/sh4/dyna/ssa.h
             core/hw/sh4/dyna/ssa_regalloc.h
+            core/hw/sh4/dyna/shil_interpreter.cpp
+            core/hw/sh4/dyna/shil_interpreter.h
         )
         # Set compile definitions for JIT dynarec
         target_compile_definitions(flycast_core PRIVATE ENABLE_SH4_JIT)
@@ -2186,6 +2188,8 @@ if(NOT DEFINED TARGET_NO_REC)
             core/hw/sh4/dyna/ssa.cpp
             core/hw/sh4/dyna/ssa.h
             core/hw/sh4/dyna/ssa_regalloc.h
+            core/hw/sh4/dyna/shil_interpreter.cpp
+            core/hw/sh4/dyna/shil_interpreter.h
         )
         target_compile_definitions(${PROJECT_NAME} PRIVATE ENABLE_SH4_JIT)
         target_compile_definitions(${PROJECT_NAME} PRIVATE FEAT_SHREC=DYNAREC_JIT)

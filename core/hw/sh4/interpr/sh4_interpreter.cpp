@@ -82,7 +82,7 @@ static void Sh4_int_Stop()
 	sh4_int_bCpuRun = false;
 }
 
-static void Sh4_int_Step()
+void Sh4_int_Step()
 {
 	verify(!sh4_int_bCpuRun);
 

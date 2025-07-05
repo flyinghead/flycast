@@ -11,6 +11,13 @@ extern void Sh4_int_Step();
 #include "hw/sh4/sh4_mem.h"
 #include "hw/sh4/modules/mmu.h"
 #include "hw/sh4/sh4_opcode_list.h"
+#include "hw/sh4/sh4_cycles.h"
+
+#ifdef STRICT_MODE
+constexpr int CPU_RATIO = 1;
+#else
+constexpr int CPU_RATIO = 8;
+#endif
 
 #include "blockmanager_jitless.h"
 #include "ngen_jitless.h"
@@ -474,7 +481,23 @@ public:
         do {
             try {
                 // Exception flag cleared at start of main loop like regular dynarec
+                static u32 last_exception_pc = 0;
                 if (unlikely(g_exception_was_raised)) {
+                    // If we just raised an exception at the same PC again, step the interpreter once to avoid endless loop
+                    if (next_pc == last_exception_pc) {
+                        WARN_LOG(DYNAREC, "⚠️  Re-raised exception at 0x%08X; executing one interpreter step to advance", next_pc);
+                        bool cpu_was_running = sh4_int_bCpuRun;
+                        if (cpu_was_running)
+                            sh4_int_bCpuRun = false;
+                        try {
+                            Sh4_int_Step();
+                        } catch (const SH4ThrownException&) {
+                            // Let outer handler process nested exception
+                        }
+                        if (cpu_was_running)
+                            sh4_int_bCpuRun = true;
+                    }
+                    last_exception_pc = next_pc;
                     g_exception_was_raised = false;
                 }
                 
@@ -535,6 +558,8 @@ public:
                 
                 // Call Do_Exception like the regular dynarec - let FlycastException propagate and crash
                 Do_Exception(ex.epc, ex.expEvn);
+                // An SH4 exception drains the pipeline (~5 cycles) – match interpreter timing
+                sh4cycles.addCycles(5 * CPU_RATIO);
             }
         } while (p_sh4rcb->cntx.CpuRunning);
         
@@ -674,6 +699,16 @@ static void recSh4_Run()
 
         // mainloop returned — CPU is no longer running
         sh4_int_bCpuRun = false;
+
+        // If PC is at the reset vector, the BIOS just issued an SH4 reset.
+        // Restart the interpreter/dynarec loop instead of shutting down.
+        if (((next_pc & ~1u) == 0xA0000000u) || ((next_pc & ~1u) == 0x00000000u))
+        {
+            INFO_LOG(DYNAREC, "🔄 SH4 reset detected – restarting dynarec mainloop (PC=0x%08X)", next_pc);
+            recSh4_Reset(true);
+            sh4Interp.Start(); // raises CpuRunning again
+            continue; // re-enter mainloop
+        }
 
         break; // Normal shutdown
     }
