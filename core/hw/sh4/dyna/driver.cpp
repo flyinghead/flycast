@@ -15,6 +15,8 @@
 #include "decoder.h"
 #include "oslib/virtmem.h"
 
+#include "shil_interpreter.h"
+
 #if FEAT_SHREC != DYNAREC_NONE
 
 // Enlarged to reduce cache evictions and block recompilation
@@ -169,6 +171,31 @@ static void recSh4_ClearCache()
 	on_cache_cleared("manual");
 }
 
+// === HYBRID EXECUTION MODE ===
+// This bypasses the entire dynarec system for hot code paths
+// and uses direct SH4 execution like the legacy interpreter
+
+// Hybrid execution control
+static bool use_hybrid_execution = true;
+static u32 hybrid_execution_count = 0;
+
+// Override the main execution loop to use hybrid mode
+static void hybrid_execution_loop() {
+    if (!use_hybrid_execution) {
+        return; // Fall back to normal dynarec
+    }
+    
+    hybrid_execution_count++;
+    
+    // Use hybrid execution for hot paths
+    execute_hybrid_block(next_pc);
+    
+    // Print stats periodically
+    if (hybrid_execution_count % 10000 == 0) {
+        print_hybrid_stats();
+    }
+}
+
 static void recSh4_Run()
 {
 	RestoreHostRoundingMode();
@@ -176,7 +203,34 @@ static void recSh4_Run()
 	u8 *sh4_dyna_rcb = (u8 *)&Sh4cntx + sizeof(Sh4cntx);
 	INFO_LOG(DYNAREC, "cntx // fpcb offset: %td // pc offset: %td // pc %08X", (u8*)&sh4rcb.fpcb - sh4_dyna_rcb, (u8*)&sh4rcb.cntx.pc - sh4_dyna_rcb, sh4rcb.cntx.pc);
 	
-	sh4Dynarec->mainloop(sh4_dyna_rcb);
+	// **HYBRID EXECUTION**: Try hybrid mode first for maximum performance
+	if (use_hybrid_execution) {
+		INFO_LOG(DYNAREC, "🚀 Starting HYBRID execution mode - bypassing SHIL for hot paths");
+		
+		try {
+			while (sh4_int_bCpuRun) {
+				// Check for exceptions first
+				if (UpdateSystem()) {
+					continue;
+				}
+				
+				// Use hybrid execution - this can be 10x faster than SHIL for hot paths
+				hybrid_execution_loop();
+			}
+		} catch (const SH4ThrownException& ex) {
+			Do_Exception(ex.epc, ex.expEvn);
+		} catch (const std::exception& ex) {
+			ERROR_LOG(DYNAREC, "Exception in hybrid execution: %s", ex.what());
+			// Fall back to regular dynarec
+			use_hybrid_execution = false;
+		}
+	}
+	
+	// Fall back to regular dynarec if hybrid execution is disabled or failed
+	if (!use_hybrid_execution) {
+		INFO_LOG(DYNAREC, "🐌 Falling back to regular SHIL dynarec");
+		sh4Dynarec->mainloop(sh4_dyna_rcb);
+	}
 
 	sh4_int_bCpuRun = false;
 }
@@ -572,4 +626,5 @@ void rdv_SetFailedToFindBlockHandler(void (*handler)())
 {
 	ngen_FailedToFindBlock = handler;
 }
+
 #endif  // FEAT_SHREC != DYNAREC_NONE

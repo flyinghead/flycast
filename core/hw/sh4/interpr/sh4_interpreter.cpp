@@ -13,6 +13,7 @@
 #include "../sh4_cache.h"
 #include "debug/gdb_server.h"
 #include "../sh4_cycles.h"
+#include "sh4_ultra_interpreter.h"
 
 // SH4 underclock factor when using the interpreter so that it's somewhat usable
 #ifdef STRICT_MODE
@@ -210,16 +211,30 @@ static void Sh4_int_Term()
 #ifndef ENABLE_SH4_CACHED_IR
 void Get_Sh4Interpreter(sh4_if* cpu)
 {
+#ifdef USE_ULTRA_INTERPRETER
+    fprintf(stderr, "🚀 ULTRA-INTERPRETER: Get_Sh4Interpreter called — linking ultra-fast interpreter!\n");
+    
+    // Use the ultra-interpreter instead of legacy
+    cpu->Start = Sh4_int_Start;
+    cpu->Run = (void(*)())Get_UltraInterpreter();  // Use ultra-interpreter run function
+    cpu->Stop = Sh4_int_Stop;
+    cpu->Step = Sh4_int_Step;
+    cpu->Reset = Sh4_int_Reset;
+    cpu->Init = Sh4_int_Init;
+    cpu->Term = Sh4_int_Term;
+    cpu->IsCpuRunning = Sh4_int_IsCpuRunning;
+    cpu->ResetCache = sh4_int_resetcache;
+#else
     fprintf(stderr, "[LEGACY-INT] Get_Sh4Interpreter called — linking legacy interpreter!\n");
-	cpu->Start = Sh4_int_Start;
-	cpu->Run = Sh4_int_Run;
-	cpu->Stop = Sh4_int_Stop;
-	cpu->Step = Sh4_int_Step;
-	cpu->Reset = Sh4_int_Reset;
-	cpu->Init = Sh4_int_Init;
-	cpu->Term = Sh4_int_Term;
-	cpu->IsCpuRunning = Sh4_int_IsCpuRunning;
-
-	cpu->ResetCache = sh4_int_resetcache;
+    cpu->Start = Sh4_int_Start;
+    cpu->Run = Sh4_int_Run;
+    cpu->Stop = Sh4_int_Stop;
+    cpu->Step = Sh4_int_Step;
+    cpu->Reset = Sh4_int_Reset;
+    cpu->Init = Sh4_int_Init;
+    cpu->Term = Sh4_int_Term;
+    cpu->IsCpuRunning = Sh4_int_IsCpuRunning;
+    cpu->ResetCache = sh4_int_resetcache;
+#endif
 }
 #endif // ENABLE_SH4_CACHED_IR
