@@ -67,4 +67,8 @@ extern bool enable_shil_interpreter;
 void init_shil_interpreter_setting();
 
 /// SHIL interpretation mainloop
-void shil_interpreter_mainloop(void* v_cntx); 
+void shil_interpreter_mainloop(void* v_cntx);
+
+/// SHIL cache management functions
+void shil_interpreter_clear_cache();
+void shil_interpreter_print_stats(); 
