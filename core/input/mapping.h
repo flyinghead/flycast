@@ -47,7 +47,7 @@ public:
 		};
 
 		//! Initialized and invalid value for code
-		static const u32 INVALID_CODE = std::numeric_limits<u32>::max();
+		static constexpr u32 INVALID_CODE = std::numeric_limits<u32>::max();
 
 		//! The unique code for the set type
 		u32 code = INVALID_CODE;
