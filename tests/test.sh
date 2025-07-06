@@ -44,10 +44,42 @@ if [ "${ARCH}" = "arm64" ]; then
 else
   TUNE_FLAGS=""
 fi
-C_FLAGS="-arch ${ARCH} ${TUNE_FLAGS} \
+C_FLAGS=" \
+-arch ${ARCH} \
+${TUNE_FLAGS} \
+-fdata-sections \
+-ffast-math \
+-ffunction-sections \
+-finline-functions \
+-flto=thin \
+-fno-strict-aliasing \
+-fomit-frame-pointer \
+-fpermissive \
+-ftree-vectorize \
+-funsafe-math-optimizations \
+-fvectorize \
+-march=armv8-a+simd \
+-mcpu=apple-a10 \
+-O3 \
 -DTARGET_NO_NIXPROF"
 
-CXX_FLAGS="-arch ${ARCH} ${TUNE_FLAGS} \
+CXX_FLAGS=" \
+-arch ${ARCH} \
+${TUNE_FLAGS} \
+-fdata-sections \
+-ffast-math \
+-ffunction-sections \
+-finline-functions \
+-flto=thin \
+-fno-strict-aliasing \
+-fomit-frame-pointer \
+-fpermissive \
+-ftree-vectorize \
+-funsafe-math-optimizations \
+-fvectorize \
+-march=armv8-a+simd \
+-mcpu=apple-a10 \
+-O3 \
 -DTARGET_NO_NIXPROF"
 
 # Simple helper to configure, build and run the C++ unit-tests (GoogleTest)
