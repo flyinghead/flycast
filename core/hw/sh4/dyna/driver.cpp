@@ -514,11 +514,11 @@ static void recSh4_Reset(bool hard)
 static void recSh4_Init()
 {
 	INFO_LOG(DYNAREC, "recSh4 Init");
-#ifdef ENABLE_SH4_CACHED_IR
-	sh4::ir::Get_Sh4Interpreter(&sh4Interp);
-#else
+// #ifdef ENABLE_SH4_CACHED_IR
+	// sh4::ir::Get_Sh4Interpreter(&sh4Interp);
+// #else
 	Get_Sh4Interpreter(&sh4Interp);
-#endif
+// #endif
 	sh4Interp.Init();
 	bm_Init();
 	

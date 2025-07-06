@@ -127,6 +127,7 @@ fi
       -DUSE_JIT=${USE_JIT} \
       -DNO_JIT=${NO_JIT} \
       -DUSE_BREAKPAD=OFF \
+      -DENABLE_SH4_JITLESS=OFF \
       -DTARGET_NO_NIXPROF=ON \
       -DNGGEN_ARM64=$( [ "${ARCH}" = "arm64" ] && echo ON || echo OFF ) \
       -DENABLE_LOG=${ENABLE_LOG} \

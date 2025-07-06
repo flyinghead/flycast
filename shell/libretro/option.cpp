@@ -23,7 +23,7 @@ namespace config {
 
 // Dynarec
 
-Option<bool> DynarecEnabled("", true);
+Option<bool> DynarecEnabled("", false);
 IntOption Sh4Clock(CORE_OPTION_NAME "_sh4clock", 200);
 
 // General

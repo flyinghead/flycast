@@ -10,13 +10,25 @@ IOS_MIN_VERSION="15.0"
 IOS="ON"
 SYSTEM_NAME="iOS"
 RUN_BUILD="ON"
+# Dynarec type: "jitless" (default), "jit", or "none"
+DYNAREC_TYPE=${DYNAREC_TYPE:-"jitless"}
+
+# Set JIT flags based on dynarec type
+if [ "$DYNAREC_TYPE" = "jitless" ]; then
+    USE_JIT="OFF"
+    NO_JIT="ON"
+    echo "🔧 Building with JITLESS dynarec"
+else
+    USE_JIT="ON"
+    NO_JIT="OFF"
+    echo "🔧 Building with NO dynarec (interpreter only)"
+fi
 
 # Initialize flags
 C_FLAGS="-arch ${ARCH} \
 -DIOS \
--DTARGET_NO_REC=ON \
--DNO_JIT=ON \
--DUSE_JIT=OFF \
+-DNO_JIT=${NO_JIT} \
+-DUSE_JIT=${USE_JIT} \
 -DTARGET_NO_NIXPROF \
 -miphoneos-version-min=${IOS_MIN_VERSION} \
 -fdata-sections \
@@ -36,10 +48,9 @@ C_FLAGS="-arch ${ARCH} \
 
 CXX_FLAGS="-arch ${ARCH} \
 -DIOS \
--DTARGET_NO_REC=ON \
--DNO_JIT=ON \
+-DNO_JIT=${NO_JIT} \
+-DUSE_JIT=${USE_JIT} \
 -miphoneos-version-min=${IOS_MIN_VERSION} \
--DUSE_JIT=OFF \
 -DTARGET_NO_NIXPROF \
 -fdata-sections \
 -ffast-math \
@@ -171,8 +182,11 @@ CMAKE_CMD="cmake -B ${BUILD_DIR} \
   -DCMAKE_CXX_FLAGS=\"${CXX_FLAGS}\" \
   -DIOS=${IOS} \
   -DCMAKE_SYSTEM_NAME=${SYSTEM_NAME} \
-  -DENABLE_SH4_CACHED_IR=ON \
-  -DNO_JIT=ON \
+  -DENABLE_SH4_CACHED_IR=OFF \
+  -DNO_JIT=${NO_JIT} \
+  -DUSE_JIT=${USE_JIT} \
+  -DENABLE_LTO=ON \
+  -DUSE_LINK_TIME_OPTIMIZATION=ON \
   -DCMAKE_POLICY_VERSION_MINIMUM=3.5"
 
 # Add linker flags if provided

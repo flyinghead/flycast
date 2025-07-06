@@ -503,15 +503,15 @@ void Emulator::init()
 	else
 #endif // FEAT_SHREC != DYNAREC_NONE
 	{
-#ifdef ENABLE_SH4_CACHED_IR
-		INFO_LOG(INTERPRETER, "Using new Cached Interpreter");
-		sh4::ir::Get_Sh4Interpreter(&sh4_cpu);
-		sh4_cpu.Init();
-#else
+// #ifdef ENABLE_SH4_CACHED_IR
+// 		INFO_LOG(INTERPRETER, "Using new Cached Interpreter");
+// 		sh4::ir::Get_Sh4Interpreter(&sh4_cpu);
+// 		sh4_cpu.Init();
+// #else
 		Get_Sh4Interpreter(&sh4_cpu);
 		sh4_cpu.Init();
 		INFO_LOG(INTERPRETER, "Using Interpreter");
-#endif // ENABLE_SH4_CACHED_IR
+// #endif // ENABLE_SH4_CACHED_IR
 	}
 
 	state = Init;
@@ -959,13 +959,13 @@ void Emulator::start()
 	else
 #endif // FEAT_SHREC != DYNAREC_NONE
 	{
-#if defined(ENABLE_SH4_CACHED_IR)
-		sh4::ir::Get_Sh4Interpreter(&sh4_cpu);
-		INFO_LOG(DYNAREC, "Using NEW Cached Interpreter");
-#else
+// #if defined(ENABLE_SH4_CACHED_IR)
+// 		sh4::ir::Get_Sh4Interpreter(&sh4_cpu);
+// 		INFO_LOG(DYNAREC, "Using NEW Cached Interpreter");
+// #else
 		Get_Sh4Interpreter(&sh4_cpu);
 		INFO_LOG(DYNAREC, "Using LEGACY Interpreter");
-#endif // ENABLE_SH4_CACHED_IR
+// #endif // ENABLE_SH4_CACHED_IR
 	}
 	setupPtyPipe();
 
