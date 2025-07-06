@@ -5,6 +5,7 @@
 #include "hw/sh4/ir/sh4_ir_interpreter.h"
 #include "hw/sh4/sh4_core.h"
 #include "hw/sh4/sh4_interrupts.h"
+#include "hw/sh4/sh4_sched.h"
 
 #include "hw/sh4/sh4_mem.h"
 #include "hw/sh4/modules/mmu.h"
@@ -45,6 +46,70 @@ static std::unordered_set<u32> smc_hotspots;
 static sh4_if sh4Interp;
 static Sh4CodeBuffer codeBuffer;
 Sh4Dynarec *sh4Dynarec;
+
+// === CACHE-FRIENDLY DRIVER IMPROVEMENTS ===
+// Prevent excessive cache clearing that destroys performance
+
+static u32 cache_clear_count = 0;
+static u64 last_clear_time = 0;
+static u32 blocks_compiled_since_clear = 0;
+
+// Cache clear prevention thresholds
+static constexpr u32 MIN_CLEAR_INTERVAL_MS = 3000;  // Don't clear more than once per 3 seconds (reduced)
+static constexpr u32 MIN_BLOCKS_BEFORE_CLEAR = 50;  // Need at least 50 blocks before clearing (reduced)
+static constexpr u32 AGGRESSIVE_CLEAR_THRESHOLD = 8_MB; // Clear when buffer gets low (increased from 16MB)
+
+// Check if we should prevent cache clearing
+static bool should_prevent_cache_clear(u32 pc, const char* reason) {
+    u64 current_time = sh4_sched_now64() / (SH4_MAIN_CLOCK / 1000);  // Convert to milliseconds
+    
+    // Always allow cache clear at startup
+    if (cache_clear_count == 0) {
+        return false;
+    }
+    
+    // CRITICAL: Never prevent cache clear if buffer is critically low (< 1MB)
+    // This prevents crashes when buffer runs out of space
+    if (codeBuffer.getFreeSpace() < 1_MB) {
+        INFO_LOG(DYNAREC, "🚨 CACHE-FRIENDLY: Allowing emergency cache clear (%s) - buffer critically low (%u bytes)", 
+                 reason, codeBuffer.getFreeSpace());
+        return false;
+    }
+    
+    // Check time-based prevention
+    if (current_time - last_clear_time < MIN_CLEAR_INTERVAL_MS) {
+        INFO_LOG(DYNAREC, "🛡️ CACHE-FRIENDLY: Preventing cache clear (%s) - only %llu ms since last clear (need %u ms)", 
+                 reason, current_time - last_clear_time, MIN_CLEAR_INTERVAL_MS);
+        return true;
+    }
+    
+    // Check block-based prevention
+    if (blocks_compiled_since_clear < MIN_BLOCKS_BEFORE_CLEAR) {
+        INFO_LOG(DYNAREC, "🛡️ CACHE-FRIENDLY: Preventing cache clear (%s) - only %u blocks compiled (need %u blocks)", 
+                 reason, blocks_compiled_since_clear, MIN_BLOCKS_BEFORE_CLEAR);
+        return true;
+    }
+    
+    return false;
+}
+
+// Track cache clear events
+static void on_cache_cleared(const char* reason) {
+    u64 current_time = sh4_sched_now64() / (SH4_MAIN_CLOCK / 1000);
+    cache_clear_count++;
+    
+    INFO_LOG(DYNAREC, "🗑️ CACHE-FRIENDLY: Cache cleared (%s) - clear #%u, %u blocks compiled, %llu ms since last clear", 
+             reason, cache_clear_count, blocks_compiled_since_clear, 
+             last_clear_time > 0 ? current_time - last_clear_time : 0);
+    
+    last_clear_time = current_time;
+    blocks_compiled_since_clear = 0;
+}
+
+// Track block compilation
+static void on_block_compiled() {
+    blocks_compiled_since_clear++;
+}
 
 void *Sh4CodeBuffer::get()
 {
@@ -99,6 +164,9 @@ static void recSh4_ClearCache()
 	bm_ResetCache();
 	smc_hotspots.clear();
 	clear_temp_cache(true);
+	
+	// Track cache clear for cache-friendly statistics
+	on_cache_cleared("manual");
 }
 
 static void recSh4_Run()
@@ -172,8 +240,26 @@ DynarecCodeEntryPtr rdv_CompilePC(u32 blockcheck_failures)
 {
 	const u32 pc = next_pc;
 
-	if (codeBuffer.getFreeSpace() < 32_MB || pc == 0x8c0000e0 || pc == 0xac010000 || pc == 0xac008300)
+	// CACHE-FRIENDLY: Use more aggressive threshold and prevent excessive clearing
+	bool need_cache_clear = false;
+	const char* clear_reason = nullptr;
+	u32 free_space = codeBuffer.getFreeSpace();
+	
+	if (free_space < AGGRESSIVE_CLEAR_THRESHOLD) {
+		need_cache_clear = true;
+		clear_reason = "low_space";
+		DEBUG_LOG(DYNAREC, "📊 CACHE-FRIENDLY: Low space detected - %u bytes free (threshold %u)", 
+		          free_space, AGGRESSIVE_CLEAR_THRESHOLD);
+	} else if (pc == 0x8c0000e0 || pc == 0xac010000 || pc == 0xac008300) {
+		need_cache_clear = true;
+		clear_reason = "special_pc";
+	}
+	
+	if (need_cache_clear && !should_prevent_cache_clear(pc, clear_reason)) {
+		INFO_LOG(DYNAREC, "✅ CACHE-FRIENDLY: Allowing cache clear (%s) - %u bytes free", 
+		         clear_reason, free_space);
 		recSh4_ClearCache();
+	}
 
 	RuntimeBlockInfo* rbi = sh4Dynarec->allocateBlock();
 
@@ -198,6 +284,9 @@ DynarecCodeEntryPtr rdv_CompilePC(u32 blockcheck_failures)
 	verify(rbi->code != nullptr);
 
 	bm_AddBlock(rbi);
+	
+	// CACHE-FRIENDLY: Track block compilation
+	on_block_compiled();
 
 	codeBuffer.useTempBuffer(false);
 
@@ -250,7 +339,10 @@ DynarecCodeEntryPtr DYNACALL rdv_BlockCheckFail(u32 addr)
 	else
 	{
 		next_pc = addr;
-		recSh4_ClearCache();
+		// CACHE-FRIENDLY: Prevent excessive clearing on block check failures
+		if (!should_prevent_cache_clear(addr, "block_check_fail")) {
+			recSh4_ClearCache();
+		}
 	}
 	return (DynarecCodeEntryPtr)CC_RW2RX(rdv_CompilePC(blockcheck_failures));
 }
