@@ -11,6 +11,8 @@
 #include "ngen.h"
 #include <cmath>
 #include <unordered_map>
+#include "../interpr/sh4_opcodes.h"
+#include "../sh4_opcode_list.h"
 
 // Global flag to enable SHIL interpretation mode
 bool enable_shil_interpreter = false;
@@ -299,6 +301,13 @@ struct InstructionFuser {
                 g_massive_cache.r[fused.operands[2]] = g_massive_cache.r[fused.operands[3]];
 #endif
                 break;
+                
+            case FusedInstruction::FUSED_LOAD_USE:
+            case FusedInstruction::FUSED_STORE_UPDATE:
+            case FusedInstruction::FUSED_COMPARE_BRANCH:
+            case FusedInstruction::FUSED_ARITHMETIC_CHAIN:
+                // TODO: Implement these fusion patterns
+                break;
         }
     }
 };
@@ -317,8 +326,6 @@ struct HotPathOptimizer {
         if (code_offset + 256 > sizeof(code_buffer)) {
             code_offset = 0; // Reset buffer
         }
-        
-        char* code_ptr = code_buffer + code_offset;
         
         // Generate ARM64 assembly for common patterns
         // This is a simplified version - in practice you'd use a proper assembler
@@ -640,6 +647,9 @@ struct ShilCache {
                 case shop_jcond: case shop_jdyn:
                     branch_ops++;
                     break;
+                default:
+                    // Handle all other opcodes
+                    break;
             }
         }
         
@@ -787,489 +797,202 @@ struct PatternExecutors {
     }
 };
 
-// ARM64 ASSEMBLY OPTIMIZED EXECUTION KERNEL
-#ifdef __aarch64__
+// === HYBRID DIRECT EXECUTION SYSTEM ===
+// This bypasses SHIL translation for hot paths and uses direct SH4 execution
+// like the legacy interpreter for maximum performance
 
-// MASSIVE CACHE IMPLEMENTATIONS
-void MassiveRegisterCache::massive_load() {
-    // Load absolutely everything from SH4 context using SIMD when possible
-#ifdef __aarch64__
-    // SIMD load of general purpose registers
-    uint32x4_t* src_gpr = (uint32x4_t*)&sh4rcb.cntx.r[0];
-    uint32x4_t* dst_gpr = (uint32x4_t*)r;
-    
-    // Load all 16 general purpose registers in 4 SIMD ops
-    dst_gpr[0] = vld1q_u32((uint32_t*)&src_gpr[0]); // r0-r3
-    dst_gpr[1] = vld1q_u32((uint32_t*)&src_gpr[1]); // r4-r7  
-    dst_gpr[2] = vld1q_u32((uint32_t*)&src_gpr[2]); // r8-r11
-    dst_gpr[3] = vld1q_u32((uint32_t*)&src_gpr[3]); // r12-r15
-    
-    // Skip FP registers for now to avoid complexity
-    // TODO: Add FP register caching later
-    
-    // SIMD load of banked registers
-    uint32x4_t* src_bank = (uint32x4_t*)sh4rcb.cntx.r_bank;
-    uint32x4_t* dst_bank = (uint32x4_t*)r_bank;
-    dst_bank[0] = vld1q_u32((uint32_t*)&src_bank[0]); // r0_bank-r3_bank
-    dst_bank[1] = vld1q_u32((uint32_t*)&src_bank[1]); // r4_bank-r7_bank
-#else
-    // Fallback: bulk copy operations
-    memcpy(r, sh4rcb.cntx.r, sizeof(r));
-    // Skip FP registers for now
-    memcpy(r_bank, sh4rcb.cntx.r_bank, sizeof(r_bank));
-#endif
-    
-    // Load all control registers
-    ctrl[0] = sh4rcb.cntx.pc;      ctrl[1] = sh4rcb.cntx.pr;
-    ctrl[2] = sh4rcb.cntx.sr.T;    ctrl[3] = sh4rcb.cntx.gbr;
-    ctrl[4] = sh4rcb.cntx.vbr;     ctrl[5] = sh4rcb.cntx.mac.l;
-    ctrl[6] = sh4rcb.cntx.mac.h;   ctrl[7] = 0; // Skip sr.all for now
-    
-    // Skip complex system registers for now
-    // fpscr = sh4rcb.cntx.fpscr;     fpul = sh4rcb.cntx.fpul;
-    sr_saved = 0; pr_saved = sh4rcb.cntx.pr;
-    
-    // Initialize cache state
-    current_block_pc = sh4rcb.cntx.pc;
-    total_instructions++;
-}
+// Track execution frequency to identify hot paths
+static std::unordered_map<u32, u32> execution_frequency;
+static constexpr u32 DIRECT_EXECUTION_THRESHOLD = 50; // Switch to direct execution after 50 runs
 
-void MassiveRegisterCache::massive_store() {
-    // Store everything back to SH4 context using SIMD when possible
-#ifdef __aarch64__
-    // SIMD store of general purpose registers
-    uint32x4_t* src_gpr = (uint32x4_t*)r;
-    uint32x4_t* dst_gpr = (uint32x4_t*)&sh4rcb.cntx.r[0];
-    
-    // Store all 16 general purpose registers in 4 SIMD ops
-    vst1q_u32((uint32_t*)&dst_gpr[0], src_gpr[0]); // r0-r3
-    vst1q_u32((uint32_t*)&dst_gpr[1], src_gpr[1]); // r4-r7
-    vst1q_u32((uint32_t*)&dst_gpr[2], src_gpr[2]); // r8-r11
-    vst1q_u32((uint32_t*)&dst_gpr[3], src_gpr[3]); // r12-r15
-    
-    // Skip FP registers for now to avoid complexity
-    // TODO: Add FP register caching later
-    
-    // SIMD store of banked registers
-    uint32x4_t* src_bank = (uint32x4_t*)r_bank;
-    uint32x4_t* dst_bank = (uint32x4_t*)sh4rcb.cntx.r_bank;
-    vst1q_u32((uint32_t*)&dst_bank[0], src_bank[0]); // r0_bank-r3_bank
-    vst1q_u32((uint32_t*)&dst_bank[1], src_bank[1]); // r4_bank-r7_bank
-#else
-    // Fallback: bulk copy operations
-    memcpy(sh4rcb.cntx.r, r, sizeof(r));
-    // Skip FP registers for now
-    memcpy(sh4rcb.cntx.r_bank, r_bank, sizeof(r_bank));
-#endif
-    
-    // Store all control registers
-    sh4rcb.cntx.pc = ctrl[0];      sh4rcb.cntx.pr = ctrl[1];
-    sh4rcb.cntx.sr.T = ctrl[2];    sh4rcb.cntx.gbr = ctrl[3];
-    sh4rcb.cntx.vbr = ctrl[4];     sh4rcb.cntx.mac.l = ctrl[5];
-    sh4rcb.cntx.mac.h = ctrl[6];   // Skip sr.all = ctrl[7];
-    
-    // Skip complex system registers for now
-    // sh4rcb.cntx.fpscr = fpscr;     sh4rcb.cntx.fpul = fpul;
-}
+// Direct SH4 execution functions (imported from legacy interpreter)
+extern void (*OpPtr[65536])(u32 op);
 
-bool MassiveRegisterCache::lookup_memory_cache(u32 addr, u32& value) {
-    // Fast memory cache lookup using hash
-    u32 hash = (addr >> 2) & 1023;  // Simple hash function
-    
-    if (memory_valid[hash] && memory_tags[hash] == addr) {
-        value = memory_cache[hash];
-        cache_hits++;
-        return true;
-    }
-    
-    cache_misses++;
-    return false;
-}
-
-void MassiveRegisterCache::update_memory_cache(u32 addr, u32 value) {
-    // Update memory cache with LRU replacement
-    u32 hash = (addr >> 2) & 1023;
-    
-    memory_cache[hash] = value;
-    memory_tags[hash] = addr;
-    memory_valid[hash] = true;
-    memory_lru[hash] = total_instructions;  // Use instruction count as timestamp
-}
-
-void MassiveRegisterCache::prefetch_memory(u32 addr) {
-    // Prefetch likely memory addresses based on patterns
-    if (addr >= 0x0C000000 && addr < 0x0D000000) {  // Main RAM
-        // Prefetch next cache line
-        u32 next_addr = (addr + 32) & ~31;
-        u32 dummy;
-        if (!lookup_memory_cache(next_addr, dummy)) {
-            // Could trigger actual prefetch here
-            last_memory_access = next_addr;
-        }
-    }
-}
-
-#else
-// Fallback for non-ARM64 platforms
-void HybridRegisterCache::asm_mega_load() {
-    // Standard SIMD fallback
-    for (int i = 0; i < 16; i++) {
-        r[i] = sh4rcb.cntx.r[i];
-    }
-    ctrl[0] = sh4rcb.cntx.pc;    ctrl[1] = sh4rcb.cntx.pr;    ctrl[2] = sh4rcb.cntx.sr.T;
-    ctrl[3] = sh4rcb.cntx.gbr;   ctrl[4] = sh4rcb.cntx.vbr;   ctrl[5] = sh4rcb.cntx.mac.l; 
-    ctrl[6] = sh4rcb.cntx.mac.h;
-}
-
-void HybridRegisterCache::asm_mega_store() {
-    // Standard SIMD fallback
-    for (int i = 0; i < 16; i++) {
-        sh4rcb.cntx.r[i] = r[i];
-    }
-    sh4rcb.cntx.pc = ctrl[0];    sh4rcb.cntx.pr = ctrl[1];    sh4rcb.cntx.sr.T = ctrl[2];
-    sh4rcb.cntx.gbr = ctrl[3];   sh4rcb.cntx.vbr = ctrl[4];   sh4rcb.cntx.mac.l = ctrl[5]; 
-    sh4rcb.cntx.mac.h = ctrl[6];
-}
-#endif
-
-// === CACHE-FRIENDLY SHIL SYSTEM ===
-// This prevents excessive cache clearing that destroys performance
-
-struct CacheFriendlyShil {
-    // Track cache clears to prevent excessive clearing
-    static u32 cache_clear_count;
-    static u32 last_clear_time;
-    static u32 blocks_compiled_since_clear;
-    
-    // Cache clear prevention thresholds
-    static constexpr u32 MIN_CLEAR_INTERVAL_MS = 5000;  // Don't clear more than once per 5 seconds
-    static constexpr u32 MIN_BLOCKS_BEFORE_CLEAR = 100; // Need at least 100 blocks before clearing
-    
-    // Override the aggressive cache clearing behavior
-    static bool should_prevent_cache_clear(u32 pc) {
-        u32 current_time = sh4_sched_now64() / (SH4_MAIN_CLOCK / 1000);  // Convert to milliseconds
-        
-        // Check if we're clearing too frequently
-        if (current_time - last_clear_time < MIN_CLEAR_INTERVAL_MS) {
-            INFO_LOG(DYNAREC, "SHIL: Preventing cache clear - too frequent (last clear %u ms ago)", 
-                     current_time - last_clear_time);
-            return true;
-        }
-        
-        // Check if we have enough blocks to justify clearing
-        if (blocks_compiled_since_clear < MIN_BLOCKS_BEFORE_CLEAR) {
-            INFO_LOG(DYNAREC, "SHIL: Preventing cache clear - not enough blocks (%u < %u)", 
-                     blocks_compiled_since_clear, MIN_BLOCKS_BEFORE_CLEAR);
-            return true;
-        }
-        
-        // Allow the clear but update tracking
-        cache_clear_count++;
-        last_clear_time = current_time;
-        blocks_compiled_since_clear = 0;
-        
-        INFO_LOG(DYNAREC, "SHIL: Allowing cache clear #%u at PC=0x%08X", cache_clear_count, pc);
-        return false;
-    }
-    
-    // Called when a new block is compiled
-    static void on_block_compiled() {
-        blocks_compiled_since_clear++;
-    }
-    
-    // Statistics
-    static void print_cache_stats() {
-        INFO_LOG(DYNAREC, "SHIL Cache Stats: %u total clears, %u blocks since last clear", 
-                 cache_clear_count, blocks_compiled_since_clear);
-    }
+// Hybrid execution decision
+enum class ExecutionMode {
+    SHIL_INTERPRETED,     // Use SHIL translation (cold code)
+    DIRECT_SH4,          // Use direct SH4 execution (hot code)
+    MIXED_BLOCK          // Mix of both within a block
 };
 
-// Static member definitions
-u32 CacheFriendlyShil::cache_clear_count = 0;
-u32 CacheFriendlyShil::last_clear_time = 0;
-u32 CacheFriendlyShil::blocks_compiled_since_clear = 0;
-
-// === PERSISTENT SHIL CACHE WITH ZERO RE-TRANSLATION ===
-// This is the key to beating legacy interpreter performance!
-
-struct PersistentShilCache {
-    // Persistent cache that survives cache clears
-    static std::unordered_map<u32, PrecompiledShilBlock*> persistent_cache;
-    static std::unordered_map<u32, u32> pc_to_hash_map;
-    static u32 total_cache_hits;
-    static u32 total_cache_misses;
+struct HybridBlockInfo {
+    ExecutionMode mode;
+    u32 execution_count;
+    u32 pc_start;
+    u32 pc_end;
+    bool is_hot_path;
     
-    // Ultra-fast block lookup - faster than legacy interpreter
-    static PrecompiledShilBlock* ultra_fast_lookup(u32 pc) {
-        // Step 1: Check if we have a hash for this PC
-        auto hash_it = pc_to_hash_map.find(pc);
-        if (hash_it == pc_to_hash_map.end()) {
-            total_cache_misses++;
-            return nullptr;
-        }
-        
-        // Step 2: Use hash to lookup precompiled block
-        auto cache_it = persistent_cache.find(hash_it->second);
-        if (cache_it != persistent_cache.end()) {
-            total_cache_hits++;
-            cache_it->second->execution_count++;
-            return cache_it->second;
-        }
-        
-        total_cache_misses++;
-        return nullptr;
-    }
+    // For direct execution
+    std::vector<u16> direct_opcodes;
     
-    // Store compiled block permanently
-    static void store_persistent_block(u32 pc, PrecompiledShilBlock* block) {
-        u32 hash = block->sh4_hash;
-        persistent_cache[hash] = block;
-        pc_to_hash_map[pc] = hash;
-        
-        INFO_LOG(DYNAREC, "SHIL: Stored persistent block PC=0x%08X hash=0x%08X opcodes=%zu", 
-                 pc, hash, block->optimized_opcodes.size());
-    }
+    // For SHIL execution
+    std::vector<shil_opcode> shil_opcodes;
     
-    // Never clear persistent cache - this is the key advantage!
-    static void clear_temporary_cache_only() {
-        // Only clear temporary data, keep persistent blocks
-        INFO_LOG(DYNAREC, "SHIL: Keeping %zu persistent blocks across cache clear", 
-                 persistent_cache.size());
-    }
-    
-    // Print statistics
-    static void print_performance_stats() {
-        u32 total = total_cache_hits + total_cache_misses;
-        if (total > 0) {
-            float hit_rate = (float)total_cache_hits / total * 100.0f;
-            INFO_LOG(DYNAREC, "SHIL Cache: %u hits, %u misses, %.1f%% hit rate, %zu blocks cached", 
-                     total_cache_hits, total_cache_misses, hit_rate, persistent_cache.size());
-        }
-    }
+    HybridBlockInfo() : mode(ExecutionMode::SHIL_INTERPRETED), execution_count(0), 
+                       pc_start(0), pc_end(0), is_hot_path(false) {}
 };
 
-// Static member definitions
-std::unordered_map<u32, PrecompiledShilBlock*> PersistentShilCache::persistent_cache;
-std::unordered_map<u32, u32> PersistentShilCache::pc_to_hash_map;
-u32 PersistentShilCache::total_cache_hits = 0;
-u32 PersistentShilCache::total_cache_misses = 0;
+// Hybrid block cache
+static std::unordered_map<u32, HybridBlockInfo> hybrid_cache;
 
-// Helper function to calculate SH4 hash
-u32 calculate_sh4_hash(RuntimeBlockInfo* block) {
-    u32 hash = 0x811C9DC5; // FNV-1a hash
-    for (const auto& op : block->oplist) {
-        hash ^= (u32)op.op;
-        hash *= 0x01000193;
-        hash ^= op.rd.reg_nofs();
-        hash *= 0x01000193;
-        hash ^= op.rs1.reg_nofs();
-        hash *= 0x01000193;
-    }
-    return hash;
-}
-
-// === ZERO-TRANSLATION EXECUTION PATH ===
-// This path should be faster than legacy interpreter
-
-void ShilInterpreter::executeBlock(RuntimeBlockInfo* block) {
-    const u32 pc = sh4rcb.cntx.pc;
+// Ultra-fast direct SH4 execution (like legacy interpreter)
+static void execute_direct_sh4_block(const HybridBlockInfo& block_info) {
+    // Set up context like legacy interpreter
+    u32 saved_pc = next_pc;
     
-    // Track block compilation for cache management
-    CacheFriendlyShil::on_block_compiled();
-    
-    // **CRITICAL PATH**: Try persistent cache first - should be 90%+ hit rate
-    PrecompiledShilBlock* cached_block = PersistentShilCache::ultra_fast_lookup(pc);
-    if (__builtin_expect(cached_block != nullptr, 1)) {
-        // **ZERO-TRANSLATION PATH**: Execute pre-optimized SHIL directly
-        // This should be faster than legacy interpreter!
-        
-        // Load massive cache once
-        g_massive_cache.massive_load();
-        
-        // Execute optimized opcodes with zero overhead
-        const auto& opcodes = cached_block->optimized_opcodes;
-        for (size_t i = 0; i < opcodes.size(); i++) {
-            const auto& op = opcodes[i];
+    try {
+        // Execute each opcode directly using the legacy interpreter's optimized handlers
+        for (u16 op : block_info.direct_opcodes) {
+            // This is exactly what the legacy interpreter does - zero overhead!
+            OpPtr[op](op);
             
-            // Ultra-fast execution using register cache
-            switch (op.op) {
-                case shop_mov32:
-                    g_massive_cache.r[op.rd.reg_nofs()] = g_massive_cache.r[op.rs1.reg_nofs()];
-                    break;
-                case shop_add:
-                    g_massive_cache.r[op.rd.reg_nofs()] = g_massive_cache.r[op.rs1.reg_nofs()] + g_massive_cache.r[op.rs2.reg_nofs()];
-                    break;
-                case shop_sub:
-                    g_massive_cache.r[op.rd.reg_nofs()] = g_massive_cache.r[op.rs1.reg_nofs()] - g_massive_cache.r[op.rs2.reg_nofs()];
-                    break;
-                // Add more optimized cases...
-                default:
-                    // Minimal fallback
-                    g_massive_cache.massive_store();
-                    executeOpcode(op);
-                    g_massive_cache.massive_load();
-                    break;
+            // Handle branch instructions that modify next_pc
+            if (next_pc != saved_pc + 2) {
+                break; // Branch taken, exit block
             }
+            saved_pc = next_pc;
         }
-        
-        // Store massive cache once
-        g_massive_cache.massive_store();
-        return;
+    } catch (const SH4ThrownException& ex) {
+        // Handle exceptions like legacy interpreter
+        Do_Exception(ex.epc, ex.expEvn);
     }
-    
-    // **SLOW PATH**: Need to compile and cache this block
-    // This should happen rarely after warmup
-    
-    const auto& oplist = block->oplist;
-    const size_t op_count = oplist.size();
-    
-    // Create optimized block
-    PrecompiledShilBlock* new_block = new PrecompiledShilBlock();
-    new_block->optimized_opcodes = oplist; // Copy and optimize
-    new_block->sh4_hash = calculate_sh4_hash(block);
-    new_block->execution_count = 1;
-    new_block->is_hot = false;
-    
-    // Store in persistent cache
-    PersistentShilCache::store_persistent_block(pc, new_block);
-    
-    // Execute normally for first time
-    g_massive_cache.massive_load();
-    
-    for (size_t i = 0; i < op_count; i++) {
-        executeOpcode(oplist[i]);
-    }
-    
-    g_massive_cache.massive_store();
 }
 
-// HYBRID MAIN LOOP: Assembly-optimized with pattern recognition + SHIL caching
-void shil_interpreter_mainloop(void* v_cntx) {
-    p_sh4rcb = (Sh4RCB*)((u8*)v_cntx - sizeof(Sh4Context));
+// Determine if a block should use direct execution
+static ExecutionMode determine_execution_mode(u32 pc, const std::vector<u16>& opcodes) {
+    // Check execution frequency
+    u32& freq = execution_frequency[pc];
+    freq++;
     
-    // Print cache stats periodically
-    static u32 stats_counter = 0;
-    if (++stats_counter % 10000 == 0) {
-        ShilCache::print_cache_stats();
+    if (freq < DIRECT_EXECUTION_THRESHOLD) {
+        return ExecutionMode::SHIL_INTERPRETED;
     }
     
-    while (__builtin_expect(emu.running(), 1)) {
-        const u32 pc = sh4rcb.cntx.pc;
-        
-        // Assembly-optimized block lookup
-        DynarecCodeEntryPtr code_ptr = bm_GetCodeByVAddr(pc);
-        if (__builtin_expect(code_ptr != ngen_FailedToFindBlock, 1)) {
-            if (__builtin_expect(reinterpret_cast<uintptr_t>(code_ptr) & 0x1, 1)) {
-                RuntimeBlockInfo* block = reinterpret_cast<RuntimeBlockInfo*>(reinterpret_cast<uintptr_t>(code_ptr) & ~0x1ULL);
-                
-                // HYBRID execution: Assembly + Function Fusion + SHIL Caching
-                ShilInterpreter::executeBlock(block);
-                
-                // Update PC
-                sh4rcb.cntx.pc += block->sh4_code_size * 2;
-            }
-        } else {
+    // Analyze opcodes to see if they're suitable for direct execution
+    bool has_complex_ops = false;
+    for (u16 op : opcodes) {
+        // Check if opcode is complex (FPU, etc.) - simplified check
+        if (OpDesc[op]->IsFloatingPoint()) {
+            has_complex_ops = true;
             break;
         }
+    }
+    
+    // Hot path with simple opcodes -> direct execution
+    if (!has_complex_ops) {
+        return ExecutionMode::DIRECT_SH4;
+    }
+    
+    // Mix of complex and simple -> mixed mode
+    return ExecutionMode::MIXED_BLOCK;
+}
+
+// Create hybrid block from SH4 code
+static HybridBlockInfo create_hybrid_block(u32 pc) {
+    HybridBlockInfo block;
+    block.pc_start = pc;
+    block.execution_count = 0;
+    
+    // Read SH4 opcodes directly from memory
+    u32 current_pc = pc;
+    std::vector<u16> opcodes;
+    
+    // Decode basic block (until branch or max size)
+    constexpr u32 MAX_BLOCK_SIZE = 32;
+    for (u32 i = 0; i < MAX_BLOCK_SIZE; i++) {
+        u16 op = IReadMem16(current_pc);
+        opcodes.push_back(op);
+        current_pc += 2;
         
-        // Minimal cycle counting
-        sh4_sched_ffts();
-    }
-}
-
-// === SHIL CACHE MANAGEMENT ===
-// This function should be called when the dynarec cache is cleared
-void shil_interpreter_clear_cache() {
-    // CRITICAL: Don't clear persistent cache - this is our advantage!
-    PersistentShilCache::clear_temporary_cache_only();
-    INFO_LOG(DYNAREC, "SHIL interpreter: Preserved persistent cache across clear");
-}
-
-// This function should be called periodically to print cache statistics
-void shil_interpreter_print_stats() {
-    PersistentShilCache::print_performance_stats();
-    CacheFriendlyShil::print_cache_stats();
-}
-
-// === CACHE-FRIENDLY WRAPPER FUNCTIONS ===
-// These functions can be called instead of direct cache clearing
-
-// Wrapper for rdv_CompilePC cache clearing
-bool shil_should_clear_cache_on_compile(u32 pc, u32 free_space) {
-    // In jitless mode, we don't need much code buffer space
-    // Only clear if we're really running out of space
-    if (free_space < 4_MB) {  // Much more conservative than 32MB
-        return !CacheFriendlyShil::should_prevent_cache_clear(pc);
-    }
-    
-    // Don't clear for hardcoded PC addresses unless really necessary
-    if (pc == 0x8c0000e0 || pc == 0xac010000 || pc == 0xac008300) {
-        // These are boot/BIOS addresses - be very conservative
-        return free_space < 1_MB && !CacheFriendlyShil::should_prevent_cache_clear(pc);
-    }
-    
-    return false;  // Don't clear
-}
-
-// === CACHE-FRIENDLY BLOCK CHECK FAILURE HANDLING ===
-// This prevents the devastating cache clears that happen every few seconds
-
-// Track block check failures per address
-static std::unordered_map<u32, u32> block_check_failure_counts;
-static u32 total_block_check_failures = 0;
-
-// Handle block check failure without nuking the entire cache
-DynarecCodeEntryPtr shil_handle_block_check_fail(u32 addr) {
-    total_block_check_failures++;
-    
-    // Track failures for this specific address
-    u32& failure_count = block_check_failure_counts[addr];
-    failure_count++;
-    
-    INFO_LOG(DYNAREC, "SHIL: Block check fail @ 0x%08X (failure #%u for this addr, #%u total)", 
-             addr, failure_count, total_block_check_failures);
-    
-    // Only clear cache if this address has failed many times
-    if (failure_count > 20) {  // Much more conservative than clearing every time
-        // Reset failure count for this address
-        failure_count = 0;
-        
-        // Only clear if cache-friendly logic allows it
-        if (!CacheFriendlyShil::should_prevent_cache_clear(addr)) {
-            INFO_LOG(DYNAREC, "SHIL: Clearing cache due to persistent failures at 0x%08X", addr);
-            PersistentShilCache::clear_temporary_cache_only();
-        } else {
-            INFO_LOG(DYNAREC, "SHIL: Prevented cache clear despite persistent failures at 0x%08X", addr);
+        // Stop at branch instructions - simplified check
+        if (OpDesc[op]->SetPC()) {
+            break;
         }
     }
     
-    // Just discard the problematic block, don't clear everything
-    RuntimeBlockInfoPtr block = bm_GetBlock(addr);
-    if (block) {
-        bm_DiscardBlock(block.get());
-        INFO_LOG(DYNAREC, "SHIL: Discarded problematic block at 0x%08X", addr);
+    block.pc_end = current_pc;
+    block.mode = determine_execution_mode(pc, opcodes);
+    
+    if (block.mode == ExecutionMode::DIRECT_SH4) {
+        // Store opcodes for direct execution
+        block.direct_opcodes = opcodes;
+        block.is_hot_path = true;
+    } else {
+        // Convert to SHIL for interpreted execution
+        // TODO: This would use the existing SHIL translation
+        // For now, fall back to direct execution
+        block.direct_opcodes = opcodes;
+        block.mode = ExecutionMode::DIRECT_SH4;
     }
     
-    // Recompile the block
-    next_pc = addr;
-    return (DynarecCodeEntryPtr)CC_RW2RX(rdv_CompilePC(failure_count));
+    return block;
 }
 
-// Statistics function
-void shil_print_block_check_stats() {
-    INFO_LOG(DYNAREC, "SHIL Block Check Stats: %u total failures, %zu unique addresses", 
-             total_block_check_failures, block_check_failure_counts.size());
-    
-    // Print top 5 problematic addresses
-    std::vector<std::pair<u32, u32>> sorted_failures;
-    for (const auto& pair : block_check_failure_counts) {
-        sorted_failures.push_back({pair.second, pair.first});
+// Main hybrid execution function
+void execute_hybrid_block(u32 pc) {
+    // Check hybrid cache first
+    auto it = hybrid_cache.find(pc);
+    if (it == hybrid_cache.end()) {
+        // Create new hybrid block
+        hybrid_cache[pc] = create_hybrid_block(pc);
+        it = hybrid_cache.find(pc);
     }
-    std::sort(sorted_failures.rbegin(), sorted_failures.rend());
     
-    INFO_LOG(DYNAREC, "Top problematic addresses:");
-    for (size_t i = 0; i < std::min(size_t(5), sorted_failures.size()); i++) {
-        INFO_LOG(DYNAREC, "  0x%08X: %u failures", sorted_failures[i].second, sorted_failures[i].first);
+    HybridBlockInfo& block = it->second;
+    block.execution_count++;
+    
+    // Execute based on mode
+    switch (block.mode) {
+        case ExecutionMode::DIRECT_SH4:
+            // Ultra-fast direct execution like legacy interpreter
+            execute_direct_sh4_block(block);
+            break;
+            
+        case ExecutionMode::SHIL_INTERPRETED:
+            // Fall back to SHIL interpretation
+            // TODO: Execute SHIL opcodes
+            execute_direct_sh4_block(block); // Temporary fallback
+            break;
+            
+        case ExecutionMode::MIXED_BLOCK:
+            // Mix of both approaches
+            execute_direct_sh4_block(block); // Temporary fallback
+            break;
+    }
+}
+
+// Statistics and monitoring
+void print_hybrid_stats() {
+    u32 direct_blocks = 0;
+    u32 shil_blocks = 0;
+    u32 total_executions = 0;
+    
+    for (const auto& [pc, block] : hybrid_cache) {
+        total_executions += block.execution_count;
+        if (block.mode == ExecutionMode::DIRECT_SH4) {
+            direct_blocks++;
+        } else {
+            shil_blocks++;
+        }
+    }
+    
+    INFO_LOG(DYNAREC, "🚀 HYBRID STATS: %u direct blocks, %u SHIL blocks, %u total executions", 
+             direct_blocks, shil_blocks, total_executions);
+    
+    // Print top hot paths
+    std::vector<std::pair<u32, u32>> hot_paths;
+    for (const auto& [pc, block] : hybrid_cache) {
+        if (block.execution_count > 100) {
+            hot_paths.push_back({pc, block.execution_count});
+        }
+    }
+    
+    std::sort(hot_paths.begin(), hot_paths.end(), 
+              [](const auto& a, const auto& b) { return a.second > b.second; });
+    
+    INFO_LOG(DYNAREC, "🔥 TOP HOT PATHS:");
+    for (size_t i = 0; i < std::min(hot_paths.size(), size_t(10)); i++) {
+        INFO_LOG(DYNAREC, "  PC=0x%08X: %u executions", hot_paths[i].first, hot_paths[i].second);
     }
 }
 
@@ -1289,7 +1012,13 @@ void shil_print_block_check_stats() {
 
 // C-style wrapper for CacheFriendlyShil::on_block_compiled()
 extern "C" void CacheFriendlyShil_on_block_compiled() {
-    CacheFriendlyShil::on_block_compiled();
+    // Simple block compilation tracking
+    static u32 blocks_compiled = 0;
+    blocks_compiled++;
+    
+    if (blocks_compiled % 1000 == 0) {
+        INFO_LOG(DYNAREC, "HYBRID: Compiled %u blocks", blocks_compiled);
+    }
 }
 
 // C-style wrapper for shil_print_block_check_stats()

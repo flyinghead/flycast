@@ -76,4 +76,8 @@ void shil_interpreter_print_stats();
 /// SHIL cache-friendly wrapper functions
 bool shil_should_clear_cache_on_compile(u32 pc, u32 free_space);
 DynarecCodeEntryPtr shil_handle_block_check_fail(u32 addr);
-void shil_print_block_check_stats(); 
+void shil_print_block_check_stats();
+
+/// Hybrid direct execution system
+void execute_hybrid_block(u32 pc);
+void print_hybrid_stats(); 
