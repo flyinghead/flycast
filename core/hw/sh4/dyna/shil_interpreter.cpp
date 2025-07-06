@@ -11,6 +11,14 @@
 #include "ngen.h"
 #include <cmath>
 #include <unordered_map>
+#include <sstream>
+#include <fstream>
+#include <dlfcn.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <thread>
+#include <mutex>
+#include <chrono>
 
 // Undefine conflicting macros before our structs
 #undef r
@@ -32,14 +40,272 @@ void init_shil_interpreter_setting() {
     if (!initialized) {
         enable_shil_interpreter = cfgLoadBool("dynarec", "UseShilInterpreter", false);
         initialized = true;
+        INFO_LOG(DYNAREC, "SHIL Interpreter %s", enable_shil_interpreter ? "ENABLED" : "DISABLED");
     }
 }
+
+// LLVM JIT: Configuration
+static constexpr u32 HOT_BLOCK_THRESHOLD = 5;  // Compile after 5 executions
+static constexpr u32 MAX_COMPILED_BLOCKS = 5000;  // Cache limit
+
+// LLVM JIT: Block execution tracking
+struct LLVMBlockStats {
+    u32 execution_count = 0;
+    bool is_compiled = false;
+    bool compilation_failed = false;
+    void* compiled_function = nullptr;
+    std::chrono::steady_clock::time_point last_execution;
+};
+
+// LLVM JIT: Global state
+static std::unordered_map<u32, LLVMBlockStats> llvm_block_stats;
+static std::mutex llvm_compilation_mutex;
+static bool llvm_jit_enabled = true;
 
 // Global flag to indicate if we should exit block execution
 static bool should_exit_block = false;
 
-// EXTREME OPTIMIZATION: Massive register cache - keep everything in local variables
-struct SuperRegisterCache {
+// LLVM JIT: Simplified IR generator for maximum performance
+class SimpleLLVMCompiler {
+private:
+    std::string ir_code;
+    u32 next_temp = 0;
+    
+    std::string get_temp() {
+        return "%t" + std::to_string(next_temp++);
+    }
+    
+    void emit_line(const std::string& line) {
+        ir_code += "  " + line + "\n";
+    }
+    
+public:
+    std::string compile_block(RuntimeBlockInfo* block) {
+        ir_code.clear();
+        next_temp = 0;
+        
+        // LLVM IR function header
+        ir_code += "define void @shil_block_" + std::to_string(block->addr) + "(i32* %regs, i32* %sr_t) {\n";
+        ir_code += "entry:\n";
+        
+        // Compile each SHIL operation to optimized LLVM IR
+        for (const auto& op : block->oplist) {
+            compile_shil_operation(op);
+        }
+        
+        emit_line("ret void");
+        ir_code += "}\n";
+        
+        return ir_code;
+    }
+    
+private:
+    void compile_shil_operation(const shil_opcode& op) {
+        switch (op.op) {
+            case shop_mov32: {
+                std::string src = load_operand(op.rs1);
+                store_operand(op.rd, src);
+                break;
+            }
+            
+            case shop_add: {
+                std::string src1 = load_operand(op.rs1);
+                std::string src2 = load_operand(op.rs2);
+                std::string result = get_temp();
+                emit_line(result + " = add i32 " + src1 + ", " + src2);
+                store_operand(op.rd, result);
+                break;
+            }
+            
+            case shop_sub: {
+                std::string src1 = load_operand(op.rs1);
+                std::string src2 = load_operand(op.rs2);
+                std::string result = get_temp();
+                emit_line(result + " = sub i32 " + src1 + ", " + src2);
+                store_operand(op.rd, result);
+                break;
+            }
+            
+            case shop_and: {
+                std::string src1 = load_operand(op.rs1);
+                std::string src2 = load_operand(op.rs2);
+                std::string result = get_temp();
+                emit_line(result + " = and i32 " + src1 + ", " + src2);
+                store_operand(op.rd, result);
+                break;
+            }
+            
+            case shop_or: {
+                std::string src1 = load_operand(op.rs1);
+                std::string src2 = load_operand(op.rs2);
+                std::string result = get_temp();
+                emit_line(result + " = or i32 " + src1 + ", " + src2);
+                store_operand(op.rd, result);
+                break;
+            }
+            
+            case shop_xor: {
+                std::string src1 = load_operand(op.rs1);
+                std::string src2 = load_operand(op.rs2);
+                std::string result = get_temp();
+                emit_line(result + " = xor i32 " + src1 + ", " + src2);
+                store_operand(op.rd, result);
+                break;
+            }
+            
+            case shop_shl: {
+                std::string src1 = load_operand(op.rs1);
+                std::string src2 = load_operand(op.rs2);
+                std::string masked = get_temp();
+                std::string result = get_temp();
+                emit_line(masked + " = and i32 " + src2 + ", 31");
+                emit_line(result + " = shl i32 " + src1 + ", " + masked);
+                store_operand(op.rd, result);
+                break;
+            }
+            
+            case shop_shr: {
+                std::string src1 = load_operand(op.rs1);
+                std::string src2 = load_operand(op.rs2);
+                std::string masked = get_temp();
+                std::string result = get_temp();
+                emit_line(masked + " = and i32 " + src2 + ", 31");
+                emit_line(result + " = lshr i32 " + src1 + ", " + masked);
+                store_operand(op.rd, result);
+                break;
+            }
+            
+            case shop_sar: {
+                std::string src1 = load_operand(op.rs1);
+                std::string src2 = load_operand(op.rs2);
+                std::string masked = get_temp();
+                std::string result = get_temp();
+                emit_line(masked + " = and i32 " + src2 + ", 31");
+                emit_line(result + " = ashr i32 " + src1 + ", " + masked);
+                store_operand(op.rd, result);
+                break;
+            }
+            
+            case shop_neg: {
+                std::string src = load_operand(op.rs1);
+                std::string result = get_temp();
+                emit_line(result + " = sub i32 0, " + src);
+                store_operand(op.rd, result);
+                break;
+            }
+            
+            case shop_not: {
+                std::string src = load_operand(op.rs1);
+                std::string result = get_temp();
+                emit_line(result + " = xor i32 " + src + ", -1");
+                store_operand(op.rd, result);
+                break;
+            }
+            
+            default:
+                // Fallback for unimplemented operations
+                emit_line("; Fallback for opcode " + std::to_string(op.op));
+                emit_line("call void @fallback_interpreter(i32 " + std::to_string(op.op) + ")");
+                break;
+        }
+    }
+    
+    std::string load_operand(const shil_param& param) {
+        if (param.is_imm()) {
+            return std::to_string(param._imm);
+        } else if (param.is_reg()) {
+            std::string ptr = get_temp();
+            std::string val = get_temp();
+            u32 reg_idx = param._reg - reg_r0;
+            if (reg_idx < 16) {
+                emit_line(ptr + " = getelementptr i32, i32* %regs, i32 " + std::to_string(reg_idx));
+                emit_line(val + " = load i32, i32* " + ptr);
+                return val;
+            }
+        }
+        
+        // Fallback for complex operands
+        std::string temp = get_temp();
+        emit_line(temp + " = call i32 @load_operand_fallback(i32 " + std::to_string(param._reg) + ")");
+        return temp;
+    }
+    
+    void store_operand(const shil_param& param, const std::string& value) {
+        if (param.is_reg()) {
+            u32 reg_idx = param._reg - reg_r0;
+            if (reg_idx < 16) {
+                std::string ptr = get_temp();
+                emit_line(ptr + " = getelementptr i32, i32* %regs, i32 " + std::to_string(reg_idx));
+                emit_line("store i32 " + value + ", i32* " + ptr);
+                return;
+            }
+        }
+        
+        // Fallback for complex operands
+        emit_line("call void @store_operand_fallback(i32 " + std::to_string(param._reg) + ", i32 " + value + ")");
+    }
+};
+
+// LLVM JIT: Native code compiler using system clang
+class SimpleNativeCompiler {
+public:
+    static void* compile_ir_to_native(const std::string& ir_code, u32 block_addr) {
+        try {
+            // Write IR to temporary file
+            std::string ir_file = "/tmp/shil_block_" + std::to_string(block_addr) + ".ll";
+            std::string obj_file = "/tmp/shil_block_" + std::to_string(block_addr) + ".o";
+            std::string dylib_file = "/tmp/shil_block_" + std::to_string(block_addr) + ".dylib";
+            
+            std::ofstream ir_out(ir_file);
+            ir_out << ir_code;
+            ir_out.close();
+            
+            // Compile IR to object file using clang with maximum optimization
+            std::string compile_cmd = "clang -O3 -march=native -flto -c " + ir_file + " -o " + obj_file + " 2>/dev/null";
+            if (system(compile_cmd.c_str()) != 0) {
+                WARN_LOG(DYNAREC, "LLVM: Failed to compile IR for block 0x%08X", block_addr);
+                return nullptr;
+            }
+            
+            // Link to shared library
+            std::string link_cmd = "clang -shared " + obj_file + " -o " + dylib_file + " 2>/dev/null";
+            if (system(link_cmd.c_str()) != 0) {
+                WARN_LOG(DYNAREC, "LLVM: Failed to link block 0x%08X", block_addr);
+                return nullptr;
+            }
+            
+            // Load the compiled function
+            void* handle = dlopen(dylib_file.c_str(), RTLD_NOW);
+            if (!handle) {
+                WARN_LOG(DYNAREC, "LLVM: Failed to load compiled block 0x%08X: %s", block_addr, dlerror());
+                return nullptr;
+            }
+            
+            std::string func_name = "shil_block_" + std::to_string(block_addr);
+            void* func_ptr = dlsym(handle, func_name.c_str());
+            if (!func_ptr) {
+                WARN_LOG(DYNAREC, "LLVM: Failed to find function %s: %s", func_name.c_str(), dlerror());
+                dlclose(handle);
+                return nullptr;
+            }
+            
+            // Clean up temporary files
+            unlink(ir_file.c_str());
+            unlink(obj_file.c_str());
+            unlink(dylib_file.c_str());
+            
+            INFO_LOG(DYNAREC, "LLVM: Successfully compiled block 0x%08X", block_addr);
+            return func_ptr;
+            
+        } catch (const std::exception& e) {
+            WARN_LOG(DYNAREC, "LLVM: Exception compiling block 0x%08X: %s", block_addr, e.what());
+            return nullptr;
+        }
+    }
+};
+
+// LLVM JIT: Ultra-fast register cache for compiled code interface
+struct LLVMRegisterCache {
     u32 r[16];          // All general purpose registers
     u32 sr_t;           // T flag
     u32 pc;             // Program counter
@@ -47,42 +313,9 @@ struct SuperRegisterCache {
     u32 mac_l, mac_h;   // MAC registers (avoid macro conflicts)
     u32 gbr, vbr;       // Base registers
     
-    // Dirty flags - only flush when absolutely necessary
-    u64 dirty_mask;     // Bitmask for dirty registers (64-bit for all flags)
-    
-    // EXTREME: Batch flush - only flush at block boundaries
-    void flush_all() {
-        if (__builtin_expect(dirty_mask != 0, 0)) {
-            // Unrolled register writeback for maximum speed
-            if (dirty_mask & 0x1) sh4rcb.cntx.r[0] = r[0];
-            if (dirty_mask & 0x2) sh4rcb.cntx.r[1] = r[1];
-            if (dirty_mask & 0x4) sh4rcb.cntx.r[2] = r[2];
-            if (dirty_mask & 0x8) sh4rcb.cntx.r[3] = r[3];
-            if (dirty_mask & 0x10) sh4rcb.cntx.r[4] = r[4];
-            if (dirty_mask & 0x20) sh4rcb.cntx.r[5] = r[5];
-            if (dirty_mask & 0x40) sh4rcb.cntx.r[6] = r[6];
-            if (dirty_mask & 0x80) sh4rcb.cntx.r[7] = r[7];
-            if (dirty_mask & 0x100) sh4rcb.cntx.r[8] = r[8];
-            if (dirty_mask & 0x200) sh4rcb.cntx.r[9] = r[9];
-            if (dirty_mask & 0x400) sh4rcb.cntx.r[10] = r[10];
-            if (dirty_mask & 0x800) sh4rcb.cntx.r[11] = r[11];
-            if (dirty_mask & 0x1000) sh4rcb.cntx.r[12] = r[12];
-            if (dirty_mask & 0x2000) sh4rcb.cntx.r[13] = r[13];
-            if (dirty_mask & 0x4000) sh4rcb.cntx.r[14] = r[14];
-            if (dirty_mask & 0x8000) sh4rcb.cntx.r[15] = r[15];
-            if (dirty_mask & 0x10000) sh4rcb.cntx.sr.T = sr_t;
-            if (dirty_mask & 0x20000) sh4rcb.cntx.pc = pc;
-            if (dirty_mask & 0x40000) sh4rcb.cntx.pr = pr;
-            if (dirty_mask & 0x80000) { sh4rcb.cntx.mac.l = mac_l; }  // Explicit scope to avoid macro
-            if (dirty_mask & 0x100000) { sh4rcb.cntx.mac.h = mac_h; } // Explicit scope to avoid macro
-            if (dirty_mask & 0x200000) sh4rcb.cntx.gbr = gbr;
-            if (dirty_mask & 0x400000) sh4rcb.cntx.vbr = vbr;
-            dirty_mask = 0;
-        }
-    }
-    
-    void load_all() {
-        // Load all registers in one shot
+    // Ultra-fast bulk operations for LLVM compiled code
+    void load_all() __attribute__((always_inline)) {
+        // Unrolled register loading for maximum performance
         r[0] = sh4rcb.cntx.r[0];   r[1] = sh4rcb.cntx.r[1];
         r[2] = sh4rcb.cntx.r[2];   r[3] = sh4rcb.cntx.r[3];
         r[4] = sh4rcb.cntx.r[4];   r[5] = sh4rcb.cntx.r[5];
@@ -94,15 +327,33 @@ struct SuperRegisterCache {
         sr_t = sh4rcb.cntx.sr.T;
         pc = sh4rcb.cntx.pc;
         pr = sh4rcb.cntx.pr;
-        { mac_l = sh4rcb.cntx.mac.l; }  // Explicit scope to avoid macro
-        { mac_h = sh4rcb.cntx.mac.h; }  // Explicit scope to avoid macro
+        { mac_l = sh4rcb.cntx.mac.l; }
+        { mac_h = sh4rcb.cntx.mac.h; }
         gbr = sh4rcb.cntx.gbr;
         vbr = sh4rcb.cntx.vbr;
-        dirty_mask = 0;
+    }
+    
+    void store_all() __attribute__((always_inline)) {
+        // Unrolled register storing for maximum performance
+        sh4rcb.cntx.r[0] = r[0];   sh4rcb.cntx.r[1] = r[1];
+        sh4rcb.cntx.r[2] = r[2];   sh4rcb.cntx.r[3] = r[3];
+        sh4rcb.cntx.r[4] = r[4];   sh4rcb.cntx.r[5] = r[5];
+        sh4rcb.cntx.r[6] = r[6];   sh4rcb.cntx.r[7] = r[7];
+        sh4rcb.cntx.r[8] = r[8];   sh4rcb.cntx.r[9] = r[9];
+        sh4rcb.cntx.r[10] = r[10]; sh4rcb.cntx.r[11] = r[11];
+        sh4rcb.cntx.r[12] = r[12]; sh4rcb.cntx.r[13] = r[13];
+        sh4rcb.cntx.r[14] = r[14]; sh4rcb.cntx.r[15] = r[15];
+        sh4rcb.cntx.sr.T = sr_t;
+        sh4rcb.cntx.pc = pc;
+        sh4rcb.cntx.pr = pr;
+        { sh4rcb.cntx.mac.l = mac_l; }
+        { sh4rcb.cntx.mac.h = mac_h; }
+        sh4rcb.cntx.gbr = gbr;
+        sh4rcb.cntx.vbr = vbr;
     }
 };
 
-static SuperRegisterCache g_reg_cache;
+static LLVMRegisterCache g_llvm_cache;
 
 // EXTREME OPTIMIZATION: Pre-decoded instruction format
 struct FastShilOp {
@@ -111,262 +362,194 @@ struct FastShilOp {
     u32 imm;            // Immediate value (pre-decoded)
 };
 
-// EXTREME OPTIMIZATION: Ultra-fast register access macros
-#define FAST_REG_GET(idx) (g_reg_cache.r[idx])
-#define FAST_REG_SET(idx, val) do { \
-    g_reg_cache.r[idx] = (val); \
-    g_reg_cache.dirty_mask |= (1ULL << (idx)); \
-} while(0)
-
-#define FAST_T_GET() (g_reg_cache.sr_t)
-#define FAST_T_SET(val) do { \
-    g_reg_cache.sr_t = (val); \
-    g_reg_cache.dirty_mask |= 0x10000ULL; \
-} while(0)
+// LLVM JIT: Simple register access macros for compiled code
+#define LLVM_REG_GET(idx) (g_llvm_cache.r[idx])
+#define LLVM_REG_SET(idx, val) do { g_llvm_cache.r[idx] = (val); } while(0)
+#define LLVM_T_GET() (g_llvm_cache.sr_t)
+#define LLVM_T_SET(val) do { g_llvm_cache.sr_t = (val); } while(0)
 
 // EXTREME OPTIMIZATION: Direct instruction handlers (no switch, no branches)
-static void __attribute__((always_inline)) inline fast_mov32(u8 rd, u8 rs1, u8 rs2, u32 imm) {
-    FAST_REG_SET(rd, FAST_REG_GET(rs1));
-}
+// LLVM JIT: All legacy code removed - using LLVM compilation and optimized interpreter
 
-static void __attribute__((always_inline)) inline fast_add(u8 rd, u8 rs1, u8 rs2, u32 imm) {
-    FAST_REG_SET(rd, FAST_REG_GET(rs1) + FAST_REG_GET(rs2));
-}
-
-static void __attribute__((always_inline)) inline fast_sub(u8 rd, u8 rs1, u8 rs2, u32 imm) {
-    FAST_REG_SET(rd, FAST_REG_GET(rs1) - FAST_REG_GET(rs2));
-}
-
-static void __attribute__((always_inline)) inline fast_and(u8 rd, u8 rs1, u8 rs2, u32 imm) {
-    FAST_REG_SET(rd, FAST_REG_GET(rs1) & FAST_REG_GET(rs2));
-}
-
-static void __attribute__((always_inline)) inline fast_or(u8 rd, u8 rs1, u8 rs2, u32 imm) {
-    FAST_REG_SET(rd, FAST_REG_GET(rs1) | FAST_REG_GET(rs2));
-}
-
-static void __attribute__((always_inline)) inline fast_xor(u8 rd, u8 rs1, u8 rs2, u32 imm) {
-    FAST_REG_SET(rd, FAST_REG_GET(rs1) ^ FAST_REG_GET(rs2));
-}
-
-static void __attribute__((always_inline)) inline fast_shl(u8 rd, u8 rs1, u8 rs2, u32 imm) {
-    FAST_REG_SET(rd, FAST_REG_GET(rs1) << (FAST_REG_GET(rs2) & 0x1F));
-}
-
-static void __attribute__((always_inline)) inline fast_shr(u8 rd, u8 rs1, u8 rs2, u32 imm) {
-    FAST_REG_SET(rd, FAST_REG_GET(rs1) >> (FAST_REG_GET(rs2) & 0x1F));
-}
-
-static void __attribute__((always_inline)) inline fast_sar(u8 rd, u8 rs1, u8 rs2, u32 imm) {
-    FAST_REG_SET(rd, (s32)FAST_REG_GET(rs1) >> (FAST_REG_GET(rs2) & 0x1F));
-}
-
-static void __attribute__((always_inline)) inline fast_neg(u8 rd, u8 rs1, u8 rs2, u32 imm) {
-    FAST_REG_SET(rd, -(s32)FAST_REG_GET(rs1));
-}
-
-static void __attribute__((always_inline)) inline fast_not(u8 rd, u8 rs1, u8 rs2, u32 imm) {
-    FAST_REG_SET(rd, ~FAST_REG_GET(rs1));
-}
-
-// EXTREME OPTIMIZATION: Memory operations with minimal bounds checking
-static void __attribute__((always_inline)) inline fast_readm(u8 rd, u8 rs1, u8 rs2, u32 size) {
-    u32 addr = FAST_REG_GET(rs1);
-    u32 value;
-    // EXTREME: Assume most accesses are to main RAM (0x0C000000-0x0CFFFFFF)
-    if (__builtin_expect((addr & 0xFF000000) == 0x0C000000, 1)) {
-        switch (size) {
-            case 1: value = mem_b[addr & RAM_MASK]; break;
-            case 2: value = *(u16*)&mem_b[addr & RAM_MASK]; break;
-            case 4: default: value = *(u32*)&mem_b[addr & RAM_MASK]; break;
-        }
-    } else {
-        switch (size) {
-            case 1: value = ReadMem8(addr); break;
-            case 2: value = ReadMem16(addr); break;
-            case 4: default: value = ReadMem32(addr); break;
-        }
-    }
-    FAST_REG_SET(rd, value);
-}
-
-static void __attribute__((always_inline)) inline fast_writem(u8 rd, u8 rs1, u8 rs2, u32 size) {
-    u32 addr = FAST_REG_GET(rs1);
-    u32 data = FAST_REG_GET(rs2);
-    // EXTREME: Assume most accesses are to main RAM
-    if (__builtin_expect((addr & 0xFF000000) == 0x0C000000, 1)) {
-        switch (size) {
-            case 1: mem_b[addr & RAM_MASK] = data; break;
-            case 2: *(u16*)&mem_b[addr & RAM_MASK] = data; break;
-            case 4: default: *(u32*)&mem_b[addr & RAM_MASK] = data; break;
-        }
-    } else {
-        switch (size) {
-            case 1: WriteMem8(addr, data); break;
-            case 2: WriteMem16(addr, data); break;
-            case 4: default: WriteMem32(addr, data); break;
-        }
-    }
-}
-
-static void __attribute__((always_inline)) inline fast_test(u8 rd, u8 rs1, u8 rs2, u32 imm) {
-    FAST_T_SET((FAST_REG_GET(rs1) & FAST_REG_GET(rs2)) == 0 ? 1 : 0);
-}
-
-static void __attribute__((always_inline)) inline fast_seteq(u8 rd, u8 rs1, u8 rs2, u32 imm) {
-    FAST_T_SET(FAST_REG_GET(rs1) == FAST_REG_GET(rs2) ? 1 : 0);
-}
-
-static void __attribute__((always_inline)) inline fast_setge(u8 rd, u8 rs1, u8 rs2, u32 imm) {
-    FAST_T_SET((s32)FAST_REG_GET(rs1) >= (s32)FAST_REG_GET(rs2) ? 1 : 0);
-}
-
-static void __attribute__((always_inline)) inline fast_setgt(u8 rd, u8 rs1, u8 rs2, u32 imm) {
-    FAST_T_SET((s32)FAST_REG_GET(rs1) > (s32)FAST_REG_GET(rs2) ? 1 : 0);
-}
-
-static void __attribute__((always_inline)) inline fast_setae(u8 rd, u8 rs1, u8 rs2, u32 imm) {
-    FAST_T_SET(FAST_REG_GET(rs1) >= FAST_REG_GET(rs2) ? 1 : 0);
-}
-
-static void __attribute__((always_inline)) inline fast_seta(u8 rd, u8 rs1, u8 rs2, u32 imm) {
-    FAST_T_SET(FAST_REG_GET(rs1) > FAST_REG_GET(rs2) ? 1 : 0);
-}
-
-// EXTREME OPTIMIZATION: Function pointer table for direct dispatch
-typedef void (*FastOpHandler)(u8 rd, u8 rs1, u8 rs2, u32 imm);
-
-static FastOpHandler fast_handlers[] = {
-    fast_mov32,  // shop_mov32
-    nullptr,     // shop_mov64
-    fast_add,    // shop_add
-    fast_sub,    // shop_sub
-    nullptr,     // shop_mul_u16
-    nullptr,     // shop_mul_s16
-    nullptr,     // shop_mul_i32
-    nullptr,     // shop_mul_u64
-    nullptr,     // shop_mul_s64
-    fast_and,    // shop_and
-    fast_or,     // shop_or
-    fast_xor,    // shop_xor
-    fast_not,    // shop_not
-    fast_shl,    // shop_shl
-    fast_shr,    // shop_shr
-    fast_sar,    // shop_sar
-    fast_neg,    // shop_neg
-    nullptr,     // shop_swaplb
-    fast_test,   // shop_test
-    fast_seteq,  // shop_seteq
-    fast_setge,  // shop_setge
-    fast_setgt,  // shop_setgt
-    fast_seta,   // shop_setab
-    fast_setae,  // shop_setae
-};
-
-// EXTREME OPTIMIZATION: Pre-compile blocks into direct threaded code
-struct CompiledBlock {
-    FastShilOp* ops;
-    u32 op_count;
-    u32 cycles;
-    bool has_memory_ops;
-    bool has_branches;
-};
-
-static std::unordered_map<uintptr_t, CompiledBlock> compiled_blocks;
-
-// EXTREME OPTIMIZATION: Ultra-fast block executor with loop unrolling
-static void __attribute__((hot)) execute_compiled_block(CompiledBlock* block) {
-    FastShilOp* ops = block->ops;
-    u32 count = block->op_count;
-    
-    // EXTREME: Unroll execution loop by 8 for maximum throughput
-    u32 i = 0;
-    for (; i + 7 < count; i += 8) {
-        // Execute 8 operations with minimal branching
-        FastOpHandler h0 = fast_handlers[ops[i].opcode];
-        FastOpHandler h1 = fast_handlers[ops[i+1].opcode];
-        FastOpHandler h2 = fast_handlers[ops[i+2].opcode];
-        FastOpHandler h3 = fast_handlers[ops[i+3].opcode];
-        FastOpHandler h4 = fast_handlers[ops[i+4].opcode];
-        FastOpHandler h5 = fast_handlers[ops[i+5].opcode];
-        FastOpHandler h6 = fast_handlers[ops[i+6].opcode];
-        FastOpHandler h7 = fast_handlers[ops[i+7].opcode];
-        
-        if (__builtin_expect(h0 != nullptr, 1)) h0(ops[i].rd, ops[i].rs1, ops[i].rs2, ops[i].imm);
-        if (__builtin_expect(h1 != nullptr, 1)) h1(ops[i+1].rd, ops[i+1].rs1, ops[i+1].rs2, ops[i+1].imm);
-        if (__builtin_expect(h2 != nullptr, 1)) h2(ops[i+2].rd, ops[i+2].rs1, ops[i+2].rs2, ops[i+2].imm);
-        if (__builtin_expect(h3 != nullptr, 1)) h3(ops[i+3].rd, ops[i+3].rs1, ops[i+3].rs2, ops[i+3].imm);
-        if (__builtin_expect(h4 != nullptr, 1)) h4(ops[i+4].rd, ops[i+4].rs1, ops[i+4].rs2, ops[i+4].imm);
-        if (__builtin_expect(h5 != nullptr, 1)) h5(ops[i+5].rd, ops[i+5].rs1, ops[i+5].rs2, ops[i+5].imm);
-        if (__builtin_expect(h6 != nullptr, 1)) h6(ops[i+6].rd, ops[i+6].rs1, ops[i+6].rs2, ops[i+6].imm);
-        if (__builtin_expect(h7 != nullptr, 1)) h7(ops[i+7].rd, ops[i+7].rs1, ops[i+7].rs2, ops[i+7].imm);
+// LLVM JIT: External runtime functions for compiled code
+extern "C" {
+    u32 load_operand_fallback(u32 reg_id) {
+        shil_param param;
+        param._reg = (Sh4RegType)reg_id;
+        return ShilInterpreter::getRegValue(param);
     }
     
-    // Handle remaining operations
-    for (; i < count; i++) {
-        FastOpHandler handler = fast_handlers[ops[i].opcode];
-        if (__builtin_expect(handler != nullptr, 1)) {
-            handler(ops[i].rd, ops[i].rs1, ops[i].rs2, ops[i].imm);
-        }
+    void store_operand_fallback(u32 reg_id, u32 value) {
+        shil_param param;
+        param._reg = (Sh4RegType)reg_id;
+        ShilInterpreter::setRegValue(param, value);
+    }
+    
+    void fallback_interpreter(u32 opcode) {
+        WARN_LOG(DYNAREC, "LLVM: Fallback interpreter called for opcode %d", opcode);
     }
 }
 
-// EXTREME OPTIMIZATION: Block compilation and execution
-static void compileBlock(RuntimeBlockInfo* block) {
-    // Pre-compile SHIL opcodes into direct threaded code
-    CompiledBlock compiled;
-    compiled.ops = new FastShilOp[block->sh4_code_size];
-    compiled.op_count = block->sh4_code_size;
-    compiled.cycles = 0;
-    compiled.has_memory_ops = false;
-    compiled.has_branches = false;
-    
-    for (u32 i = 0; i < block->sh4_code_size; i++) {
-        const shil_opcode& op = block->oplist[i];
-        FastShilOp& fast_op = compiled.ops[i];
-        
-        // Pre-decode everything for maximum speed (using correct field names)
-        fast_op.opcode = op.op;
-        fast_op.rd = (op.rd.type == FMT_I32 && op.rd._reg < 16) ? op.rd._reg : 0;
-        fast_op.rs1 = (op.rs1.type == FMT_I32 && op.rs1._reg < 16) ? op.rs1._reg : 0;
-        fast_op.rs2 = (op.rs2.type == FMT_I32 && op.rs2._reg < 16) ? op.rs2._reg : 0;
-        fast_op.imm = (op.rs2.type == FMT_IMM) ? op.rs2._imm : 0;
-        
-        // Track block characteristics
-        if (op.op == shop_readm || op.op == shop_writem) {
-            compiled.has_memory_ops = true;
-        }
-        if (op.op == shop_jcond || op.op == shop_jdyn) {
-            compiled.has_branches = true;
-        }
-        
-        compiled.cycles++;
-    }
-    
-    compiled_blocks[reinterpret_cast<uintptr_t>(block->code)] = compiled;
-}
-
-// EXTREME OPTIMIZATION: ShilInterpreter implementation using static functions
+// LLVM JIT: Main execution engine
 void ShilInterpreter::executeBlock(RuntimeBlockInfo* block) {
-    // Load registers into cache once per block
-    g_reg_cache.load_all();
+    u32 addr = block->addr;
     
-    // Check if block is already compiled
-    auto it = compiled_blocks.find(reinterpret_cast<uintptr_t>(block->code));
-    if (__builtin_expect(it != compiled_blocks.end(), 1)) {
-        // EXTREME: Execute pre-compiled block
-        execute_compiled_block(&it->second);
-    } else {
-        // Compile block on first execution
-        compileBlock(block);
-        auto it2 = compiled_blocks.find(reinterpret_cast<uintptr_t>(block->code));
-        if (it2 != compiled_blocks.end()) {
-            execute_compiled_block(&it2->second);
+    // Check if LLVM JIT is disabled due to errors
+    if (!llvm_jit_enabled) {
+        execute_block_interpreter_fast(block);
+        return;
+    }
+    
+    // Update execution statistics
+    llvm_block_stats[addr].execution_count++;
+    llvm_block_stats[addr].last_execution = std::chrono::steady_clock::now();
+    
+    // Check if we have a compiled LLVM version
+    {
+        std::lock_guard<std::mutex> lock(llvm_compilation_mutex);
+        auto& stats = llvm_block_stats[addr];
+        
+        if (stats.is_compiled && stats.compiled_function) {
+            // Execute compiled native code
+            g_llvm_cache.load_all();
+            
+            typedef void (*CompiledFunction)(u32*, u32*);
+            CompiledFunction func = (CompiledFunction)stats.compiled_function;
+            func(g_llvm_cache.r, &g_llvm_cache.sr_t);
+            
+            g_llvm_cache.store_all();
+            return;
         }
     }
     
-    // Flush registers back to memory once per block
-    g_reg_cache.flush_all();
+    // Check if block is hot enough for compilation
+    if (llvm_block_stats[addr].execution_count >= HOT_BLOCK_THRESHOLD &&
+        !llvm_block_stats[addr].is_compiled &&
+        !llvm_block_stats[addr].compilation_failed) {
+        
+        // Attempt compilation in background
+        std::thread([addr, block]() {
+            std::lock_guard<std::mutex> lock(llvm_compilation_mutex);
+            auto& stats = llvm_block_stats[addr];
+            
+            if (stats.is_compiled || stats.compilation_failed) {
+                return;  // Already processed
+            }
+            
+            try {
+                SimpleLLVMCompiler compiler;
+                std::string ir_code = compiler.compile_block(block);
+                
+                void* compiled_func = SimpleNativeCompiler::compile_ir_to_native(ir_code, addr);
+                
+                if (compiled_func) {
+                    stats.compiled_function = compiled_func;
+                    stats.is_compiled = true;
+                    INFO_LOG(DYNAREC, "LLVM: Block 0x%08X compiled successfully", addr);
+                } else {
+                    stats.compilation_failed = true;
+                    WARN_LOG(DYNAREC, "LLVM: Block 0x%08X compilation failed", addr);
+                }
+            } catch (const std::exception& e) {
+                stats.compilation_failed = true;
+                WARN_LOG(DYNAREC, "LLVM: Exception compiling block 0x%08X: %s", addr, e.what());
+            }
+        }).detach();
+    }
+    
+    // Execute using fast interpreter while compilation happens
+    execute_block_interpreter_fast(block);
+}
+
+// LLVM JIT: Fast interpreter fallback
+void ShilInterpreter::execute_block_interpreter_fast(RuntimeBlockInfo* block) {
+    g_llvm_cache.load_all();
+    
+    for (const auto& op : block->oplist) {
+        execute_shil_operation_ultra_fast(op);
+    }
+    
+    g_llvm_cache.store_all();
+}
+
+// LLVM JIT: Ultra-fast operation execution
+void ShilInterpreter::execute_shil_operation_ultra_fast(const shil_opcode& op) {
+    switch (op.op) {
+        case shop_mov32:
+            if (op.rs1.is_imm() && op.rd.is_reg()) {
+                u32 reg_idx = op.rd._reg - reg_r0;
+                if (reg_idx < 16) {
+                    g_llvm_cache.r[reg_idx] = op.rs1._imm;
+                    return;
+                }
+            }
+            break;
+            
+        case shop_add:
+            if (op.rs1.is_reg() && op.rs2.is_reg() && op.rd.is_reg()) {
+                u32 rs1_idx = op.rs1._reg - reg_r0;
+                u32 rs2_idx = op.rs2._reg - reg_r0;
+                u32 rd_idx = op.rd._reg - reg_r0;
+                if (rs1_idx < 16 && rs2_idx < 16 && rd_idx < 16) {
+                    g_llvm_cache.r[rd_idx] = g_llvm_cache.r[rs1_idx] + g_llvm_cache.r[rs2_idx];
+                    return;
+                }
+            }
+            break;
+            
+        case shop_sub:
+            if (op.rs1.is_reg() && op.rs2.is_reg() && op.rd.is_reg()) {
+                u32 rs1_idx = op.rs1._reg - reg_r0;
+                u32 rs2_idx = op.rs2._reg - reg_r0;
+                u32 rd_idx = op.rd._reg - reg_r0;
+                if (rs1_idx < 16 && rs2_idx < 16 && rd_idx < 16) {
+                    g_llvm_cache.r[rd_idx] = g_llvm_cache.r[rs1_idx] - g_llvm_cache.r[rs2_idx];
+                    return;
+                }
+            }
+            break;
+            
+        case shop_and:
+            if (op.rs1.is_reg() && op.rs2.is_reg() && op.rd.is_reg()) {
+                u32 rs1_idx = op.rs1._reg - reg_r0;
+                u32 rs2_idx = op.rs2._reg - reg_r0;
+                u32 rd_idx = op.rd._reg - reg_r0;
+                if (rs1_idx < 16 && rs2_idx < 16 && rd_idx < 16) {
+                    g_llvm_cache.r[rd_idx] = g_llvm_cache.r[rs1_idx] & g_llvm_cache.r[rs2_idx];
+                    return;
+                }
+            }
+            break;
+            
+        case shop_or:
+            if (op.rs1.is_reg() && op.rs2.is_reg() && op.rd.is_reg()) {
+                u32 rs1_idx = op.rs1._reg - reg_r0;
+                u32 rs2_idx = op.rs2._reg - reg_r0;
+                u32 rd_idx = op.rd._reg - reg_r0;
+                if (rs1_idx < 16 && rs2_idx < 16 && rd_idx < 16) {
+                    g_llvm_cache.r[rd_idx] = g_llvm_cache.r[rs1_idx] | g_llvm_cache.r[rs2_idx];
+                    return;
+                }
+            }
+            break;
+            
+        case shop_xor:
+            if (op.rs1.is_reg() && op.rs2.is_reg() && op.rd.is_reg()) {
+                u32 rs1_idx = op.rs1._reg - reg_r0;
+                u32 rs2_idx = op.rs2._reg - reg_r0;
+                u32 rd_idx = op.rd._reg - reg_r0;
+                if (rs1_idx < 16 && rs2_idx < 16 && rd_idx < 16) {
+                    g_llvm_cache.r[rd_idx] = g_llvm_cache.r[rs1_idx] ^ g_llvm_cache.r[rs2_idx];
+                    return;
+                }
+            }
+            break;
+    }
+    
+    // Fallback to full interpreter for complex operations
+    g_llvm_cache.store_all();
+    executeOpcode(op);
+    g_llvm_cache.load_all();
 }
 
 // Implement the static functions declared in the header
@@ -459,19 +642,19 @@ void ShilInterpreter::handleMemoryWrite(const shil_param& addr, const shil_param
 
 void ShilInterpreter::handleInterpreterFallback(const shil_opcode& op) {
     // Flush register cache before fallback
-    g_reg_cache.flush_all();
+    g_llvm_cache.store_all();
     
     // Call SH4 instruction handler directly
     u32 opcode = op.rs3.imm_value();
     OpDesc[opcode]->oph(opcode);
     
     // Reload register cache after fallback
-    g_reg_cache.load_all();
+    g_llvm_cache.load_all();
 }
 
 void ShilInterpreter::handleDynamicJump(const shil_opcode& op) {
     // Flush register cache before jump
-    g_reg_cache.flush_all();
+    g_llvm_cache.store_all();
     
     // Set dynamic PC
     u32 target = getRegValue(op.rs1);
@@ -483,7 +666,7 @@ void ShilInterpreter::handleDynamicJump(const shil_opcode& op) {
 
 void ShilInterpreter::handleConditionalJump(const shil_opcode& op) {
     // Flush register cache before jump
-    g_reg_cache.flush_all();
+    g_llvm_cache.store_all();
     
     // Set conditional jump target
     u32 target = getRegValue(op.rs2);

@@ -52,6 +52,12 @@ private:
     
     /// Handle illegal instructions (shop_illegal)
     static void handleIllegalInstruction(const shil_opcode& op);
+    
+    /// LLVM JIT: Fast interpreter fallback
+    static void execute_block_interpreter_fast(RuntimeBlockInfo* block);
+    
+    /// LLVM JIT: Ultra-fast operation execution
+    static void execute_shil_operation_ultra_fast(const shil_opcode& op);
 };
 
 /// Simple flag to enable SHIL interpretation mode
