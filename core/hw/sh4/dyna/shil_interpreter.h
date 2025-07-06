@@ -71,4 +71,9 @@ void shil_interpreter_mainloop(void* v_cntx);
 
 /// SHIL cache management functions
 void shil_interpreter_clear_cache();
-void shil_interpreter_print_stats(); 
+void shil_interpreter_print_stats();
+
+/// SHIL cache-friendly wrapper functions
+bool shil_should_clear_cache_on_compile(u32 pc, u32 free_space);
+DynarecCodeEntryPtr shil_handle_block_check_fail(u32 addr);
+void shil_print_block_check_stats(); 

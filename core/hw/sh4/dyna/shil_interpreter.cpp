@@ -932,6 +932,63 @@ void HybridRegisterCache::asm_mega_store() {
 }
 #endif
 
+// === CACHE-FRIENDLY SHIL SYSTEM ===
+// This prevents excessive cache clearing that destroys performance
+
+struct CacheFriendlyShil {
+    // Track cache clears to prevent excessive clearing
+    static u32 cache_clear_count;
+    static u32 last_clear_time;
+    static u32 blocks_compiled_since_clear;
+    
+    // Cache clear prevention thresholds
+    static constexpr u32 MIN_CLEAR_INTERVAL_MS = 5000;  // Don't clear more than once per 5 seconds
+    static constexpr u32 MIN_BLOCKS_BEFORE_CLEAR = 100; // Need at least 100 blocks before clearing
+    
+    // Override the aggressive cache clearing behavior
+    static bool should_prevent_cache_clear(u32 pc) {
+        u32 current_time = sh4_sched_now64() / (SH4_MAIN_CLOCK / 1000);  // Convert to milliseconds
+        
+        // Check if we're clearing too frequently
+        if (current_time - last_clear_time < MIN_CLEAR_INTERVAL_MS) {
+            INFO_LOG(DYNAREC, "SHIL: Preventing cache clear - too frequent (last clear %u ms ago)", 
+                     current_time - last_clear_time);
+            return true;
+        }
+        
+        // Check if we have enough blocks to justify clearing
+        if (blocks_compiled_since_clear < MIN_BLOCKS_BEFORE_CLEAR) {
+            INFO_LOG(DYNAREC, "SHIL: Preventing cache clear - not enough blocks (%u < %u)", 
+                     blocks_compiled_since_clear, MIN_BLOCKS_BEFORE_CLEAR);
+            return true;
+        }
+        
+        // Allow the clear but update tracking
+        cache_clear_count++;
+        last_clear_time = current_time;
+        blocks_compiled_since_clear = 0;
+        
+        INFO_LOG(DYNAREC, "SHIL: Allowing cache clear #%u at PC=0x%08X", cache_clear_count, pc);
+        return false;
+    }
+    
+    // Called when a new block is compiled
+    static void on_block_compiled() {
+        blocks_compiled_since_clear++;
+    }
+    
+    // Statistics
+    static void print_cache_stats() {
+        INFO_LOG(DYNAREC, "SHIL Cache Stats: %u total clears, %u blocks since last clear", 
+                 cache_clear_count, blocks_compiled_since_clear);
+    }
+};
+
+// Static member definitions
+u32 CacheFriendlyShil::cache_clear_count = 0;
+u32 CacheFriendlyShil::last_clear_time = 0;
+u32 CacheFriendlyShil::blocks_compiled_since_clear = 0;
+
 // === PERSISTENT SHIL CACHE WITH ZERO RE-TRANSLATION ===
 // This is the key to beating legacy interpreter performance!
 
@@ -1016,6 +1073,9 @@ u32 calculate_sh4_hash(RuntimeBlockInfo* block) {
 
 void ShilInterpreter::executeBlock(RuntimeBlockInfo* block) {
     const u32 pc = sh4rcb.cntx.pc;
+    
+    // Track block compilation for cache management
+    CacheFriendlyShil::on_block_compiled();
     
     // **CRITICAL PATH**: Try persistent cache first - should be 90%+ hit rate
     PrecompiledShilBlock* cached_block = PersistentShilCache::ultra_fast_lookup(pc);
@@ -1128,6 +1188,89 @@ void shil_interpreter_clear_cache() {
 // This function should be called periodically to print cache statistics
 void shil_interpreter_print_stats() {
     PersistentShilCache::print_performance_stats();
+    CacheFriendlyShil::print_cache_stats();
+}
+
+// === CACHE-FRIENDLY WRAPPER FUNCTIONS ===
+// These functions can be called instead of direct cache clearing
+
+// Wrapper for rdv_CompilePC cache clearing
+bool shil_should_clear_cache_on_compile(u32 pc, u32 free_space) {
+    // In jitless mode, we don't need much code buffer space
+    // Only clear if we're really running out of space
+    if (free_space < 4_MB) {  // Much more conservative than 32MB
+        return !CacheFriendlyShil::should_prevent_cache_clear(pc);
+    }
+    
+    // Don't clear for hardcoded PC addresses unless really necessary
+    if (pc == 0x8c0000e0 || pc == 0xac010000 || pc == 0xac008300) {
+        // These are boot/BIOS addresses - be very conservative
+        return free_space < 1_MB && !CacheFriendlyShil::should_prevent_cache_clear(pc);
+    }
+    
+    return false;  // Don't clear
+}
+
+// === CACHE-FRIENDLY BLOCK CHECK FAILURE HANDLING ===
+// This prevents the devastating cache clears that happen every few seconds
+
+// Track block check failures per address
+static std::unordered_map<u32, u32> block_check_failure_counts;
+static u32 total_block_check_failures = 0;
+
+// Handle block check failure without nuking the entire cache
+DynarecCodeEntryPtr shil_handle_block_check_fail(u32 addr) {
+    total_block_check_failures++;
+    
+    // Track failures for this specific address
+    u32& failure_count = block_check_failure_counts[addr];
+    failure_count++;
+    
+    INFO_LOG(DYNAREC, "SHIL: Block check fail @ 0x%08X (failure #%u for this addr, #%u total)", 
+             addr, failure_count, total_block_check_failures);
+    
+    // Only clear cache if this address has failed many times
+    if (failure_count > 20) {  // Much more conservative than clearing every time
+        // Reset failure count for this address
+        failure_count = 0;
+        
+        // Only clear if cache-friendly logic allows it
+        if (!CacheFriendlyShil::should_prevent_cache_clear(addr)) {
+            INFO_LOG(DYNAREC, "SHIL: Clearing cache due to persistent failures at 0x%08X", addr);
+            PersistentShilCache::clear_temporary_cache_only();
+        } else {
+            INFO_LOG(DYNAREC, "SHIL: Prevented cache clear despite persistent failures at 0x%08X", addr);
+        }
+    }
+    
+    // Just discard the problematic block, don't clear everything
+    RuntimeBlockInfoPtr block = bm_GetBlock(addr);
+    if (block) {
+        bm_DiscardBlock(block.get());
+        INFO_LOG(DYNAREC, "SHIL: Discarded problematic block at 0x%08X", addr);
+    }
+    
+    // Recompile the block
+    next_pc = addr;
+    return (DynarecCodeEntryPtr)CC_RW2RX(rdv_CompilePC(failure_count));
+}
+
+// Statistics function
+void shil_print_block_check_stats() {
+    INFO_LOG(DYNAREC, "SHIL Block Check Stats: %u total failures, %zu unique addresses", 
+             total_block_check_failures, block_check_failure_counts.size());
+    
+    // Print top 5 problematic addresses
+    std::vector<std::pair<u32, u32>> sorted_failures;
+    for (const auto& pair : block_check_failure_counts) {
+        sorted_failures.push_back({pair.second, pair.first});
+    }
+    std::sort(sorted_failures.rbegin(), sorted_failures.rend());
+    
+    INFO_LOG(DYNAREC, "Top problematic addresses:");
+    for (size_t i = 0; i < std::min(size_t(5), sorted_failures.size()); i++) {
+        INFO_LOG(DYNAREC, "  0x%08X: %u failures", sorted_failures[i].second, sorted_failures[i].first);
+    }
 }
 
 // Redefine macros after our code
@@ -1140,3 +1283,16 @@ void shil_interpreter_print_stats() {
 #define mac Sh4cntx.mac
 #define macl Sh4cntx.macl
 #define mach Sh4cntx.mach 
+
+// === WRAPPER FUNCTIONS FOR EXTERNAL ACCESS ===
+// These allow other modules to access the cache-friendly functionality
+
+// C-style wrapper for CacheFriendlyShil::on_block_compiled()
+extern "C" void CacheFriendlyShil_on_block_compiled() {
+    CacheFriendlyShil::on_block_compiled();
+}
+
+// C-style wrapper for shil_print_block_check_stats()
+extern "C" void shil_print_block_check_stats_wrapper() {
+    shil_print_block_check_stats();
+} 

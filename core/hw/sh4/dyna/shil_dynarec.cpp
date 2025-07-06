@@ -3,6 +3,11 @@
 #include "hw/sh4/sh4_interrupts.h"
 #include "hw/sh4/sh4_mem.h"
 #include "oslib/oslib.h"
+#include "shil_interpreter.h"
+
+// Forward declarations for cache-friendly functions
+extern "C" void CacheFriendlyShil_on_block_compiled();
+extern "C" void shil_print_block_check_stats_wrapper();
 
 // Simple stub function that will be used as the "compiled" code pointer
 static void shil_interpreter_stub() {
@@ -40,59 +45,96 @@ void ShilDynarec::mainloop(void* cntx) {
                 continue;
             }
             
-            // Get the next block to execute
-            DynarecCodeEntryPtr code_ptr = rdv_FindOrCompile();
+            // **CACHE-FRIENDLY BLOCK LOOKUP**: Avoid using rdv_FindOrCompile which can trigger cache clears
+            RuntimeBlockInfoPtr block = bm_GetBlock(next_pc);
             
-            if (code_ptr == ngen_FailedToFindBlock) {
-                code_ptr = rdv_FailedToFindBlock(next_pc);
-            }
-            
-            // Check if this is a SHIL interpreter block
-            if (code_ptr == (DynarecCodeEntryPtr)shil_interpreter_stub) {
-                // This is a SHIL block - execute via interpreter
-                RuntimeBlockInfoPtr block = bm_GetBlock(next_pc);
-                if (block) {
-                    executeShilBlock(block.get());
+            if (block) {
+                // Block exists - execute it via SHIL interpreter
+                executeShilBlock(block.get());
+                
+                // After executing the block, determine next PC based on block type
+                switch (BET_GET_CLS(block->BlockType)) {
+                    case BET_CLS_Static:
+                        if (block->BlockType == BET_StaticIntr) {
+                            next_pc = block->NextBlock;
+                        } else {
+                            next_pc = block->BranchBlock;
+                        }
+                        break;
+                        
+                    case BET_CLS_Dynamic:
+                        // PC should have been set by the block execution
+                        next_pc = Sh4cntx.pc;
+                        break;
+                        
+                    case BET_CLS_COND:
+                        // Conditional branch - check the condition
+                        if (sr.T) {
+                            next_pc = block->BranchBlock;
+                        } else {
+                            next_pc = block->NextBlock;
+                        }
+                        break;
+                }
+            } else {
+                // **CACHE-FRIENDLY BLOCK COMPILATION**: Don't use rdv_FindOrCompile
+                // Compile new block using cache-friendly approach
+                
+                RuntimeBlockInfo* new_block = allocateBlock();
+                if (new_block->Setup(next_pc, fpscr)) {
+                    // Compile the block for SHIL interpretation
+                    compile(new_block, !new_block->read_only, true);
                     
-                    // After executing the block, determine next PC based on block type
-                    switch (BET_GET_CLS(block->BlockType)) {
+                    // Add to block manager
+                    bm_AddBlock(new_block);
+                    
+                    // Track compilation for cache management
+                    CacheFriendlyShil_on_block_compiled();
+                    
+                    // Execute the newly compiled block
+                    executeShilBlock(new_block);
+                    
+                    // Update PC based on block type
+                    switch (BET_GET_CLS(new_block->BlockType)) {
                         case BET_CLS_Static:
-                            if (block->BlockType == BET_StaticIntr) {
-                                next_pc = block->NextBlock;
+                            if (new_block->BlockType == BET_StaticIntr) {
+                                next_pc = new_block->NextBlock;
                             } else {
-                                next_pc = block->BranchBlock;
+                                next_pc = new_block->BranchBlock;
                             }
                             break;
                             
                         case BET_CLS_Dynamic:
-                            // PC should have been set by the block execution
                             next_pc = Sh4cntx.pc;
                             break;
                             
                         case BET_CLS_COND:
-                            // Conditional branch - check the condition
                             if (sr.T) {
-                                next_pc = block->BranchBlock;
+                                next_pc = new_block->BranchBlock;
                             } else {
-                                next_pc = block->NextBlock;
+                                next_pc = new_block->NextBlock;
                             }
                             break;
                     }
                 } else {
-                    // Block not found - this shouldn't happen
-                    ERROR_LOG(DYNAREC, "SHIL block not found for PC %08X", next_pc);
+                    // Block setup failed - this shouldn't happen often
+                    ERROR_LOG(DYNAREC, "SHIL: Block setup failed for PC %08X", next_pc);
+                    delete new_block;
                     break;
                 }
-            } else {
-                // This is a regular JIT block - this shouldn't happen in SHIL mode
-                ERROR_LOG(DYNAREC, "Unexpected JIT block in SHIL mode at PC %08X", next_pc);
-                break;
+            }
+            
+            // Print statistics periodically
+            static u32 stats_counter = 0;
+            if (++stats_counter % 50000 == 0) {
+                shil_interpreter_print_stats();
+                shil_print_block_check_stats_wrapper();
             }
         }
     } catch (const SH4ThrownException& ex) {
         // Handle SH4 exceptions
         Do_Exception(next_pc, ex.expEvn);
-    } catch (const FlycastException& ex) {
+    } catch (const std::exception& ex) {
         // Handle other exceptions
         ERROR_LOG(DYNAREC, "Exception in SHIL mainloop: %s", ex.what());
         sh4_int_bCpuRun = false;
