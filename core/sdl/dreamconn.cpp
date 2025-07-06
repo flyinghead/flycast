@@ -82,7 +82,10 @@ DreamConn::~DreamConn() {
 
 bool DreamConn::send(const MapleMsg& msg) {
 	std::lock_guard<std::mutex> lock(send_mutex); // Ensure thread safety for send operations
+	return send_no_lock(msg);
+}
 
+bool DreamConn::send_no_lock(const MapleMsg& msg) {
 	asio::error_code ec;
 
 	if (maple_io_connected)
@@ -101,7 +104,7 @@ bool DreamConn::send(const MapleMsg& msg) {
 bool DreamConn::send(const MapleMsg& txMsg, MapleMsg& rxMsg) {
 	std::lock_guard<std::mutex> lock(send_mutex); // Ensure thread safety for send operations
 
-	if (!send(txMsg)) {
+	if (!send_no_lock(txMsg)) {
 		return false;
 	}
 	return receiveMsg(rxMsg, iostream);
