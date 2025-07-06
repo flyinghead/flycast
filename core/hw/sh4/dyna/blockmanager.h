@@ -86,7 +86,7 @@ void bm_Term();
 void bm_vmem_pagefill(void** ptr,u32 size_bytes);
 static inline bool bm_IsRamPageProtected(u32 addr)
 {
-	extern bool unprotected_pages[RAM_SIZE_MAX/PAGE_SIZE];
+	extern bool *unprotected_pages;
 	addr &= RAM_MASK;
 	return !unprotected_pages[addr / PAGE_SIZE];
 }

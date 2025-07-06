@@ -12,7 +12,9 @@
 #include <vector>
 
 #ifdef _WIN32
-	#include <algorithm>
+#include <algorithm>
+#elif defined(__ANDROID__)
+#include <unistd.h>
 #endif
 
 static std::string user_config_dir;
@@ -204,6 +206,10 @@ void cResetEvent::Wait()
 
     state = false;
 }
+
+#if defined(__ANDROID__) && (HOST_CPU == CPU_ARM64 || HOST_CPU == CPU_X64)
+const unsigned long PAGE_SIZE = (unsigned long)sysconf(_SC_PAGESIZE);
+#endif
 
 void RamRegion::serialize(Serializer &ser) const {
 	ser.serialize(data, size);
