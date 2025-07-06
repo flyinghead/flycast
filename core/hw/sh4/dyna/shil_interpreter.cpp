@@ -57,7 +57,6 @@ struct WasmBlockStats {
 // WASM JIT: Global state
 static std::unordered_map<u32, WasmBlockStats> wasm_block_stats;
 static std::mutex wasm_compilation_mutex;
-static bool wasm_jit_enabled = true;  // Global flag to disable WASM JIT on failures
 
 // WASM JIT: Ultra-fast register cache
 struct WasmRegisterCache {
@@ -125,109 +124,43 @@ private:
     WasmStack stack;
     
 public:
-    // Complete WASM bytecode opcodes for maximum performance
+    // WASM bytecode opcodes (simplified subset)
     enum WasmOp : u8 {
         // Stack operations
         WASM_I32_CONST = 0x41,
-        WASM_F32_CONST = 0x43,
         WASM_LOCAL_GET = 0x20,
         WASM_LOCAL_SET = 0x21,
         
-        // Integer arithmetic
+        // Arithmetic
         WASM_I32_ADD = 0x6A,
         WASM_I32_SUB = 0x6B,
-        WASM_I32_MUL = 0x6C,
-        WASM_I32_DIV_S = 0x6D,
-        WASM_I32_DIV_U = 0x6E,
-        WASM_I32_REM_S = 0x6F,
-        WASM_I32_REM_U = 0x70,
-        
-        // Integer bitwise
         WASM_I32_AND = 0x71,
         WASM_I32_OR = 0x72,
         WASM_I32_XOR = 0x73,
         WASM_I32_SHL = 0x74,
-        WASM_I32_SHR_S = 0x75,
         WASM_I32_SHR_U = 0x76,
-        WASM_I32_ROTL = 0x77,
-        WASM_I32_ROTR = 0x78,
+        WASM_I32_SHR_S = 0x75,
         
-        // Integer comparison
-        WASM_I32_EQ = 0x46,
-        WASM_I32_NE = 0x47,
-        WASM_I32_LT_S = 0x48,
-        WASM_I32_LT_U = 0x49,
-        WASM_I32_GT_S = 0x4A,
-        WASM_I32_GT_U = 0x4B,
-        WASM_I32_LE_S = 0x4C,
-        WASM_I32_LE_U = 0x4D,
-        WASM_I32_GE_S = 0x4E,
-        WASM_I32_GE_U = 0x4F,
+        // Memory
+        WASM_I32_LOAD = 0x28,
+        WASM_I32_STORE = 0x36,
         
-        // Float arithmetic
-        WASM_F32_ADD = 0x92,
-        WASM_F32_SUB = 0x93,
-        WASM_F32_MUL = 0x94,
-        WASM_F32_DIV = 0x95,
-        WASM_F32_ABS = 0x8B,
-        WASM_F32_NEG = 0x8C,
-        WASM_F32_SQRT = 0x91,
-        
-        // Type conversions
-        WASM_I32_TRUNC_F32_S = 0xA8,
-        WASM_F32_CONVERT_I32_S = 0xB2,
-        
-        // Memory operations
-        WASM_LOAD = 0x28,
-        WASM_STORE = 0x36,
-        
-        // Control flow
-        WASM_BR = 0x0C,
-        WASM_BR_IF = 0x0D,
+        // Control
         WASM_RETURN = 0x0F,
         WASM_END = 0x0B,
         
-        // Custom SH4 operations (high-performance)
+        // Custom: Register access
         WASM_REG_LOAD = 0xF0,
         WASM_REG_STORE = 0xF1,
-        WASM_MEM_FAST = 0xF2,
-        WASM_BYTE_SWAP = 0xF3,
-        WASM_ROTL_CARRY = 0xF4,
-        WASM_ROTR_CARRY = 0xF5,
-        WASM_ADD_CARRY = 0xF6,
-        WASM_SUB_CARRY = 0xF7,
-        WASM_SHIFT_DYNAMIC = 0xF8,
-        WASM_SHIFT_ARITH_DYNAMIC = 0xF9,
-        WASM_CHECK_INT = 0xFA,
-        WASM_SYNC_SR = 0xFB,
-        WASM_SYNC_FPSCR = 0xFC,
-        WASM_FALLBACK = 0xFF
+        WASM_MEM_FAST = 0xF2
     };
     
     // Ultra-fast WASM execution (no validation, maximum speed)
     void execute_wasm_block(const std::vector<u8>& bytecode) __attribute__((hot)) {
-        // Safety checks for WASM execution
-        if (bytecode.empty()) {
-            WARN_LOG(DYNAREC, "WASM: Empty bytecode - fallback to interpreter");
-            return;
-        }
-        
         const u8* pc = bytecode.data();
         const u8* end = pc + bytecode.size();
         
-        // Validate bytecode bounds
-        if (pc >= end) {
-            WARN_LOG(DYNAREC, "WASM: Invalid bytecode bounds - fallback to interpreter");
-            return;
-        }
-        
         while (pc < end) {
-            // Safety check before reading opcode
-            if (pc >= end) {
-                WARN_LOG(DYNAREC, "WASM: PC exceeded bounds during execution");
-                break;
-            }
-            
             u8 opcode = *pc++;
             
             switch (opcode) {
@@ -306,277 +239,6 @@ public:
                     break;
                 }
                 
-                case WASM_I32_MUL: {
-                    u32 b = stack.pop();
-                    u32 a = stack.pop();
-                    stack.push(a * b);
-                    break;
-                }
-                
-                case WASM_I32_DIV_S: {
-                    u32 b = stack.pop();
-                    u32 a = stack.pop();
-                    if (b != 0) stack.push((s32)a / (s32)b);
-                    else stack.push(0);
-                    break;
-                }
-                
-                case WASM_I32_DIV_U: {
-                    u32 b = stack.pop();
-                    u32 a = stack.pop();
-                    if (b != 0) stack.push(a / b);
-                    else stack.push(0);
-                    break;
-                }
-                
-                // ===== COMPARISON OPERATIONS =====
-                case WASM_I32_EQ: {
-                    u32 b = stack.pop();
-                    u32 a = stack.pop();
-                    stack.push(a == b ? 1 : 0);
-                    break;
-                }
-                
-                case WASM_I32_NE: {
-                    u32 b = stack.pop();
-                    u32 a = stack.pop();
-                    stack.push(a != b ? 1 : 0);
-                    break;
-                }
-                
-                case WASM_I32_LT_S: {
-                    u32 b = stack.pop();
-                    u32 a = stack.pop();
-                    stack.push((s32)a < (s32)b ? 1 : 0);
-                    break;
-                }
-                
-                case WASM_I32_LT_U: {
-                    u32 b = stack.pop();
-                    u32 a = stack.pop();
-                    stack.push(a < b ? 1 : 0);
-                    break;
-                }
-                
-                case WASM_I32_GT_S: {
-                    u32 b = stack.pop();
-                    u32 a = stack.pop();
-                    stack.push((s32)a > (s32)b ? 1 : 0);
-                    break;
-                }
-                
-                case WASM_I32_GT_U: {
-                    u32 b = stack.pop();
-                    u32 a = stack.pop();
-                    stack.push(a > b ? 1 : 0);
-                    break;
-                }
-                
-                case WASM_I32_GE_S: {
-                    u32 b = stack.pop();
-                    u32 a = stack.pop();
-                    stack.push((s32)a >= (s32)b ? 1 : 0);
-                    break;
-                }
-                
-                case WASM_I32_GE_U: {
-                    u32 b = stack.pop();
-                    u32 a = stack.pop();
-                    stack.push(a >= b ? 1 : 0);
-                    break;
-                }
-                
-                // ===== FLOATING POINT OPERATIONS =====
-                case WASM_F32_ADD: {
-                    u32 b_bits = stack.pop();
-                    u32 a_bits = stack.pop();
-                    f32 b = *(f32*)&b_bits;
-                    f32 a = *(f32*)&a_bits;
-                    f32 result = a + b;
-                    stack.push(*(u32*)&result);
-                    break;
-                }
-                
-                case WASM_F32_SUB: {
-                    u32 b_bits = stack.pop();
-                    u32 a_bits = stack.pop();
-                    f32 b = *(f32*)&b_bits;
-                    f32 a = *(f32*)&a_bits;
-                    f32 result = a - b;
-                    stack.push(*(u32*)&result);
-                    break;
-                }
-                
-                case WASM_F32_MUL: {
-                    u32 b_bits = stack.pop();
-                    u32 a_bits = stack.pop();
-                    f32 b = *(f32*)&b_bits;
-                    f32 a = *(f32*)&a_bits;
-                    f32 result = a * b;
-                    stack.push(*(u32*)&result);
-                    break;
-                }
-                
-                case WASM_F32_DIV: {
-                    u32 b_bits = stack.pop();
-                    u32 a_bits = stack.pop();
-                    f32 b = *(f32*)&b_bits;
-                    f32 a = *(f32*)&a_bits;
-                    f32 result = a / b;
-                    stack.push(*(u32*)&result);
-                    break;
-                }
-                
-                case WASM_F32_ABS: {
-                    u32 a_bits = stack.pop();
-                    f32 a = *(f32*)&a_bits;
-                    f32 result = fabsf(a);
-                    stack.push(*(u32*)&result);
-                    break;
-                }
-                
-                case WASM_F32_NEG: {
-                    u32 a_bits = stack.pop();
-                    f32 a = *(f32*)&a_bits;
-                    f32 result = -a;
-                    stack.push(*(u32*)&result);
-                    break;
-                }
-                
-                case WASM_F32_SQRT: {
-                    u32 a_bits = stack.pop();
-                    f32 a = *(f32*)&a_bits;
-                    f32 result = sqrtf(a);
-                    stack.push(*(u32*)&result);
-                    break;
-                }
-                
-                // ===== TYPE CONVERSIONS =====
-                case WASM_I32_TRUNC_F32_S: {
-                    u32 a_bits = stack.pop();
-                    f32 a = *(f32*)&a_bits;
-                    s32 result = (s32)a;
-                    stack.push((u32)result);
-                    break;
-                }
-                
-                case WASM_F32_CONVERT_I32_S: {
-                    s32 a = (s32)stack.pop();
-                    f32 result = (f32)a;
-                    stack.push(*(u32*)&result);
-                    break;
-                }
-                
-                // ===== CUSTOM SH4 OPERATIONS =====
-                case WASM_BYTE_SWAP: {
-                    u32 a = stack.pop();
-                    u32 result = ((a & 0xFF) << 8) | ((a >> 8) & 0xFF) | (a & 0xFFFF0000);
-                    stack.push(result);
-                    break;
-                }
-                
-                case WASM_ROTL_CARRY: {
-                    u32 carry = stack.pop();  // T flag
-                    u32 a = stack.pop();
-                    u32 result = (a << 1) | (carry & 1);
-                    u32 new_carry = (a >> 31) & 1;
-                    stack.push(result);
-                    g_wasm_cache.sr_t = new_carry;
-                    break;
-                }
-                
-                case WASM_ROTR_CARRY: {
-                    u32 carry = stack.pop();  // T flag
-                    u32 a = stack.pop();
-                    u32 result = (a >> 1) | ((carry & 1) << 31);
-                    u32 new_carry = a & 1;
-                    stack.push(result);
-                    g_wasm_cache.sr_t = new_carry;
-                    break;
-                }
-                
-                case WASM_ADD_CARRY: {
-                    u32 carry = stack.pop();  // T flag
-                    u32 b = stack.pop();
-                    u32 a = stack.pop();
-                    u64 result64 = (u64)a + (u64)b + (carry & 1);
-                    u32 result = (u32)result64;
-                    u32 new_carry = (result64 >> 32) & 1;
-                    stack.push(result);
-                    g_wasm_cache.sr_t = new_carry;
-                    break;
-                }
-                
-                case WASM_SUB_CARRY: {
-                    u32 carry = stack.pop();  // T flag
-                    u32 b = stack.pop();
-                    u32 a = stack.pop();
-                    u64 result64 = (u64)a - (u64)b - (carry & 1);
-                    u32 result = (u32)result64;
-                    u32 new_carry = (result64 >> 32) & 1;
-                    stack.push(result);
-                    g_wasm_cache.sr_t = new_carry;
-                    break;
-                }
-                
-                case WASM_SHIFT_DYNAMIC: {
-                    u32 shift_amount = stack.pop();
-                    u32 a = stack.pop();
-                    u32 result;
-                    if ((s32)shift_amount >= 0) {
-                        result = a << (shift_amount & 0x1F);
-                    } else {
-                        result = a >> ((-shift_amount) & 0x1F);
-                    }
-                    stack.push(result);
-                    break;
-                }
-                
-                case WASM_SHIFT_ARITH_DYNAMIC: {
-                    u32 shift_amount = stack.pop();
-                    u32 a = stack.pop();
-                    u32 result;
-                    if ((s32)shift_amount >= 0) {
-                        result = a << (shift_amount & 0x1F);
-                    } else {
-                        result = (s32)a >> ((-shift_amount) & 0x1F);
-                    }
-                    stack.push(result);
-                    break;
-                }
-                
-                case WASM_CHECK_INT: {
-                    // Interrupt/exception check - inline fast path
-                    if (__builtin_expect(UpdateSystem_INTC(), 0)) {
-                        // Handle interrupt - this is rare
-                        g_wasm_cache.store_all();
-                        return;
-                    }
-                    break;
-                }
-                
-                case WASM_SYNC_SR: {
-                    // Synchronize status register - mostly no-op in fast path
-                    break;
-                }
-                
-                case WASM_SYNC_FPSCR: {
-                    // Synchronize FPU control register - mostly no-op in fast path
-                    break;
-                }
-                
-                case WASM_FALLBACK: {
-                    u8 shil_op = *pc++;
-                    // This should be very rare now - fallback to legacy interpreter
-                    g_wasm_cache.store_all();
-                    // Create a dummy shil_opcode for fallback (simplified)
-                    shil_opcode dummy_op;
-                    dummy_op.op = (shilop)shil_op;
-                    ShilInterpreter::executeOpcode(dummy_op);
-                    g_wasm_cache.load_all();
-                    break;
-                }
-                
                 case WASM_REG_LOAD: {
                     u8 reg_idx = *pc++;
                     if (reg_idx < 16) {
@@ -599,13 +261,6 @@ public:
                 }
                 
                 case WASM_MEM_FAST: {
-                    // Safety check for parameter bytes
-                    if (pc + 2 > end) {
-                        WARN_LOG(DYNAREC, "WASM: Not enough bytes for MEM_FAST parameters");
-                        g_wasm_cache.store_all();
-                        return;
-                    }
-                    
                     u8 op_type = *pc++;  // 0=read, 1=write
                     u8 size = *pc++;     // 1, 2, 4 bytes
                     
@@ -659,12 +314,8 @@ public:
                     return;
                 
                 default:
-                    // Unknown opcode detected - this indicates corrupted WASM bytecode
-                    WARN_LOG(DYNAREC, "WASM: Unknown opcode 0x%02X at PC offset %zu - disabling WASM JIT", 
-                             opcode, (size_t)(pc - bytecode.data() - 1));
-                    wasm_jit_enabled = false;  // Disable WASM JIT to prevent further crashes
-                    g_wasm_cache.store_all();
-                    return;
+                    // Skip unknown opcodes
+                    break;
             }
         }
     }
@@ -839,12 +490,6 @@ class WasmExecutionEngine {
 public:
     static void execute_block(RuntimeBlockInfo* block) __attribute__((hot)) {
         u32 addr = block->addr;
-        
-        // Check if WASM JIT is disabled due to errors
-        if (!wasm_jit_enabled) {
-            execute_block_interpreter_fast(block);
-            return;
-        }
         
         // Update execution statistics
         wasm_block_stats[addr].execution_count++;
