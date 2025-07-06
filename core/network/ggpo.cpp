@@ -770,7 +770,11 @@ bool nextFrame()
 	if (result != GGPO_OK)
 		WARN_LOG(NETWORK, "ggpo_add_local_input(2) failed %d", result);
 #endif
-	return active();
+	if (active()) {
+		emu.getSh4Executor()->Start();
+		return true;
+	}
+	return false;
 }
 
 bool active()
