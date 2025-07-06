@@ -48,6 +48,10 @@ public:
 
     bool send(const MapleMsg& txMsg, MapleMsg& rxMsg) override;
 
+private:
+	bool send_no_lock(const MapleMsg& msg);
+
+public:
 	int getBus() const override {
 		return bus;
 	}
