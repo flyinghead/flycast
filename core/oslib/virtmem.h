@@ -40,4 +40,9 @@ bool region_lock(void *start, std::size_t len);
 bool region_unlock(void *start, std::size_t len);
 bool region_set_exec(void *start, std::size_t len);
 
+#ifdef TARGET_IPHONE
+// iOS-specific function to force flush pending memory protection operations
+void ios_memory_flush();
+#endif
+
 } // namespace vmem

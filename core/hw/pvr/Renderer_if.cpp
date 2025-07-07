@@ -13,6 +13,136 @@
 #include <mutex>
 #include <deque>
 
+#ifdef TARGET_IPHONE
+#include <TargetConditionals.h>
+#include <chrono>
+#include <atomic>
+
+// === iOS FMV THREADING OPTIMIZATIONS ===
+struct IOSRenderingOptimizer {
+	// FMV mode detection
+	std::atomic<bool> fmv_mode_detected{false};
+	std::atomic<u32> consecutive_render_calls{0};
+	std::chrono::steady_clock::time_point last_render_time;
+	
+	// Performance counters
+	std::atomic<u32> queue_contention_count{0};
+	std::atomic<u32> timeout_count{0};
+	std::chrono::steady_clock::time_point last_optimization_check;
+	
+	// Adaptive timeout values (in milliseconds)
+	std::atomic<int> current_render_timeout{50};  // Start conservative
+	std::atomic<int> current_present_timeout{16}; // 60fps = 16ms
+	
+	// Queue optimization parameters
+	std::atomic<bool> aggressive_queue_mode{false};
+	std::atomic<u32> max_queue_depth{3};  // Adaptive queue depth
+	
+	void init() {
+		fmv_mode_detected = false;
+		consecutive_render_calls = 0;
+		queue_contention_count = 0;
+		timeout_count = 0;
+		current_render_timeout = 50;
+		current_present_timeout = 16;
+		aggressive_queue_mode = false;
+		max_queue_depth = 3;
+		last_render_time = std::chrono::steady_clock::now();
+		last_optimization_check = std::chrono::steady_clock::now();
+		
+		INFO_LOG(RENDERER, "🔥 iOS Rendering Optimizer: Initialized for FMV performance");
+	}
+	
+	bool detect_fmv_mode() {
+		auto now = std::chrono::steady_clock::now();
+		auto time_diff = std::chrono::duration_cast<std::chrono::milliseconds>(now - last_render_time).count();
+		
+		// Rapid render calls indicate FMV activity
+		if (time_diff < 20) {  // Less than 20ms between calls = high frequency
+			consecutive_render_calls++;
+			
+			if (consecutive_render_calls > 30 && !fmv_mode_detected.load()) {
+				fmv_mode_detected = true;
+				aggressive_queue_mode = true;
+				current_render_timeout = 100;   // Longer timeout for FMV
+				current_present_timeout = 25;   // Allow more time for presents
+				max_queue_depth = 5;            // Deeper queue for smoother FMV
+				
+				INFO_LOG(RENDERER, "🚀 iOS Rendering Optimizer: FMV mode detected - enabling aggressive optimization (timeout=%dms, queue_depth=%u)", 
+						 current_render_timeout.load(), max_queue_depth.load());
+			}
+		} else {
+			consecutive_render_calls = 0;
+			
+			// Exit FMV mode after period of calm
+			if (fmv_mode_detected.load() && time_diff > 500) {  // 500ms of calm
+				fmv_mode_detected = false;
+				aggressive_queue_mode = false;
+				current_render_timeout = 50;
+				current_present_timeout = 16;
+				max_queue_depth = 3;
+				
+				INFO_LOG(RENDERER, "📉 iOS Rendering Optimizer: FMV mode disabled - returning to normal operation");
+			}
+		}
+		
+		last_render_time = now;
+		return fmv_mode_detected.load();
+	}
+	
+	void record_queue_contention() {
+		queue_contention_count++;
+		
+		// Adaptive timeout adjustment based on contention
+		auto now = std::chrono::steady_clock::now();
+		auto check_diff = std::chrono::duration_cast<std::chrono::seconds>(now - last_optimization_check).count();
+		
+		if (check_diff >= 2) {  // Check every 2 seconds
+			u32 contention = queue_contention_count.load();
+			if (contention > 20 && current_render_timeout.load() < 200) {
+				// High contention: increase timeout
+				current_render_timeout = std::min(200, current_render_timeout.load() + 10);
+				INFO_LOG(RENDERER, "🔧 iOS Rendering Optimizer: High contention detected, increased timeout to %dms", current_render_timeout.load());
+			} else if (contention < 5 && current_render_timeout.load() > 30) {
+				// Low contention: decrease timeout for responsiveness
+				current_render_timeout = std::max(30, current_render_timeout.load() - 5);
+			}
+			
+			queue_contention_count = 0;
+			last_optimization_check = now;
+		}
+	}
+	
+	void record_timeout() {
+		timeout_count++;
+		// If we're getting frequent timeouts, we might need to be more aggressive
+		if (timeout_count.load() > 10) {
+			current_render_timeout = std::min(300, current_render_timeout.load() + 20);
+			timeout_count = 0;
+			INFO_LOG(RENDERER, "⚠️ iOS Rendering Optimizer: Frequent timeouts, increased to %dms", current_render_timeout.load());
+		}
+	}
+	
+	int get_render_timeout() const {
+		return current_render_timeout.load();
+	}
+	
+	int get_present_timeout() const {
+		return current_present_timeout.load();
+	}
+	
+	bool should_use_aggressive_mode() const {
+		return aggressive_queue_mode.load();
+	}
+	
+	u32 get_max_queue_depth() const {
+		return max_queue_depth.load();
+	}
+};
+
+static IOSRenderingOptimizer g_ios_render_optimizer;
+#endif
+
 #ifdef LIBRETRO
 void retro_rend_present();
 void retro_resize_renderer(int w, int h, float aspectRatio);
@@ -61,6 +191,11 @@ public:
 		Message msg { type, config };
 		if (config::ThreadedRendering)
 		{
+#ifdef TARGET_IPHONE
+			// iOS FMV optimization: detect FMV mode and adjust behavior
+			g_ios_render_optimizer.detect_fmv_mode();
+#endif
+			
 			// FIXME need some synchronization to avoid blinking in densha de go
 			// or use !threaded rendering for emufb?
 			// or read framebuffer vram on emu thread
@@ -69,6 +204,25 @@ public:
 				dupe = false;
 				{
 					const lock_guard lock(mutex);
+					
+#ifdef TARGET_IPHONE
+					// iOS FMV optimization: intelligent queue management
+					if (g_ios_render_optimizer.should_use_aggressive_mode()) {
+						// In FMV mode: allow deeper queue but prioritize newer frames
+						if (queue.size() >= g_ios_render_optimizer.get_max_queue_depth()) {
+							// Remove oldest non-Present messages to make room
+							for (auto it = queue.begin(); it != queue.end(); ) {
+								if (it->type != Present && it->type != Stop) {
+									it = queue.erase(it);
+									break;
+								} else {
+									++it;
+								}
+							}
+						}
+					}
+#endif
+					
 					for (const auto& m : queue)
 						if (m.type == type) {
 							dupe = true;
@@ -83,7 +237,26 @@ public:
 				{
 					if (type == Stop)
 						return;
+						
+#ifdef TARGET_IPHONE
+					// iOS FMV optimization: adaptive timeout
+					g_ios_render_optimizer.record_queue_contention();
+					int timeout = (type == Present) ? 
+						g_ios_render_optimizer.get_present_timeout() : 
+						g_ios_render_optimizer.get_render_timeout();
+					
+					if (!dequeueEvent.Wait(timeout)) {
+						// Timeout occurred
+						g_ios_render_optimizer.record_timeout();
+						if (g_ios_render_optimizer.should_use_aggressive_mode()) {
+							// In FMV mode: don't block, skip this frame
+							dupe = false;
+							WARN_LOG(RENDERER, "iOS FMV Optimizer: Skipping frame due to timeout in FMV mode");
+						}
+					}
+#else
 					dequeueEvent.Wait();
+#endif
 				}
 			} while (dupe);
 			enqueueEvent.Set();
@@ -104,12 +277,22 @@ public:
 
 	bool waitAndExecute(int timeoutMs = -1)
 	{
+#ifdef TARGET_IPHONE
+		// iOS FMV optimization: use adaptive timeout if no specific timeout provided
+		if (timeoutMs == -1) {
+			timeoutMs = g_ios_render_optimizer.get_render_timeout();
+		}
+#endif
 		return execute(dequeue(timeoutMs));
 	}
 
 	void reset() {
 		const lock_guard lock(mutex);
 		queue.clear();
+#ifdef TARGET_IPHONE
+		// Initialize iOS rendering optimizer on reset
+		g_ios_render_optimizer.init();
+#endif
 	}
 
 	void cancelEnqueue()

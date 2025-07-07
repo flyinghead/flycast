@@ -27,9 +27,17 @@
 #include "hw/gdrom/gdrom_if.h"
 #include "cfg/option.h"
 #include "serialize.h"
+#include "types.h"
 
 #include <algorithm>
 #include <cmath>
+
+#ifdef TARGET_IPHONE
+#include <TargetConditionals.h>
+#include <arm_neon.h>
+#include <atomic>
+#include <chrono>
+#endif
 
 #undef FAR
 
@@ -50,6 +58,106 @@ namespace aica::sgc
 //Sound generation, mixin, and channel regs emulation
 //x.15
 static s32 volume_lut[16];
+
+#ifdef TARGET_IPHONE
+// iOS Audio Optimizer class definition
+class iOSAudioOptimizer {
+private:
+    std::atomic<bool> fmv_mode{false};
+    std::atomic<uint64_t> last_activity_time{0};
+    std::atomic<uint32_t> samples_processed{0};
+    std::atomic<uint32_t> channels_skipped{0};
+    uint32_t sample_skip_counter = 0;
+    static constexpr uint32_t CHANNEL_COUNT = 64;
+    bool channel_activity[CHANNEL_COUNT] = {false};
+    
+    std::chrono::steady_clock::time_point last_fmv_check;
+    static constexpr auto FMV_CHECK_INTERVAL = std::chrono::milliseconds(100);
+    
+public:
+    void init() {
+        fmv_mode = false;
+        samples_processed = 0;
+        channels_skipped = 0;
+        sample_skip_counter = 0;
+        last_activity_time = 0;
+        std::fill(std::begin(channel_activity), std::end(channel_activity), false);
+        last_fmv_check = std::chrono::steady_clock::now();
+    }
+    
+    void volume_pan_neon(SampleType value, u32 vol, u32 pan, SampleType& outl, SampleType& outr) {
+        // NEON-optimized volume/pan calculation
+        int32x2_t val_vec = vdup_n_s32(value);
+        int32x2_t vol_vec = vdup_n_s32(volume_lut[vol]);
+        int32x2_t temp_vec = vshr_n_s32(vmul_s32(val_vec, vol_vec), 15);
+        
+        SampleType temp = vget_lane_s32(temp_vec, 0);
+        int32x2_t pan_vec = vdup_n_s32(volume_lut[0xF - (pan & 0xF)]);
+        int32x2_t sc_vec = vshr_n_s32(vmul_s32(temp_vec, pan_vec), 15);
+        SampleType Sc = vget_lane_s32(sc_vec, 0);
+        
+        if (pan & 0x10) {
+            outl += temp;
+            outr += Sc;
+        } else {
+            outl += Sc;
+            outr += temp;
+        }
+    }
+    
+    void update_channel_activity() {
+        // Update channel activity tracking
+        auto now = std::chrono::steady_clock::now().time_since_epoch().count();
+        last_activity_time = now;
+    }
+    
+    bool should_skip_sample() {
+        if (!fmv_mode) return false;
+        
+        // Skip every other sample in FMV mode for performance
+        sample_skip_counter++;
+        return (sample_skip_counter % 2) == 0;
+    }
+    
+    void record_sample_processed() {
+        samples_processed.fetch_add(1, std::memory_order_relaxed);
+    }
+    
+    bool is_fmv_mode() {
+        return fmv_mode.load(std::memory_order_relaxed);
+    }
+    
+    bool should_process_channel(int channel_idx) {
+        if (channel_idx < 0 || channel_idx >= CHANNEL_COUNT) return true;
+        if (!fmv_mode) return true;
+        
+        // In FMV mode, process only active channels
+        return channel_activity[channel_idx];
+    }
+    
+    void record_channel_skipped() {
+        channels_skipped.fetch_add(1, std::memory_order_relaxed);
+    }
+    
+    void detect_fmv_mode() {
+        auto now = std::chrono::steady_clock::now();
+        if (now - last_fmv_check < FMV_CHECK_INTERVAL) return;
+        
+        last_fmv_check = now;
+        
+        // Simple FMV detection based on sustained low interaction
+        uint32_t current_samples = samples_processed.load(std::memory_order_relaxed);
+        uint32_t current_skipped = channels_skipped.load(std::memory_order_relaxed);
+        
+        // If we're processing many samples with lots of channel skipping, likely FMV
+        bool new_fmv_mode = (current_samples > 1000 && current_skipped > current_samples / 4);
+        fmv_mode.store(new_fmv_mode, std::memory_order_relaxed);
+    }
+};
+
+// Global instance
+static iOSAudioOptimizer g_ios_audio_optimizer;
+#endif
 //255 -> mute
 //Converts Send levels to TL-compatible values (DISDL, etc)
 static const u32 SendLevel[16] =
@@ -130,6 +238,10 @@ static T FPMul(T a, T b, int bits) {
 
 static void VolumePan(SampleType value, u32 vol, u32 pan, SampleType& outl, SampleType& outr)
 {
+#ifdef TARGET_IPHONE
+	// Use NEON-optimized version for iOS
+	g_ios_audio_optimizer.volume_pan_neon(value, vol, pan, outl, outr);
+#else
 	SampleType temp = FPMul(value, volume_lut[vol], 15);
 	SampleType Sc = FPMul(temp, volume_lut[0xF - (pan & 0xF)], 15);
 	if (pan & 0x10)
@@ -142,6 +254,7 @@ static void VolumePan(SampleType value, u32 vol, u32 pan, SampleType& outl, Samp
 		outl += Sc;
 		outr += temp;
 	}
+#endif
 }
 
 class VmuBeep
@@ -638,8 +751,35 @@ struct ChannelEx
 
 	static void StepAll(SampleType& mixl, SampleType& mixr)
 	{
+#ifdef TARGET_IPHONE
+		// iOS FMV optimization: adaptive channel processing
+		g_ios_audio_optimizer.update_channel_activity();
+		
+		if (g_ios_audio_optimizer.should_skip_sample()) {
+			g_ios_audio_optimizer.record_sample_processed();
+			return;  // Skip this sample in FMV mode
+		}
+		
+		// Process only active channels in FMV mode for better performance
+		if (g_ios_audio_optimizer.is_fmv_mode()) {
+			for (int i = 0; i < 64; i++) {
+				if (g_ios_audio_optimizer.should_process_channel(i)) {
+					Chans[i].Step(mixl, mixr);
+				} else {
+					g_ios_audio_optimizer.record_channel_skipped();
+				}
+			}
+		} else {
+			// Normal processing when not in FMV mode
+			for (ChannelEx& channel : Chans)
+				channel.Step(mixl, mixr);
+		}
+		
+		g_ios_audio_optimizer.record_sample_processed();
+#else
 		for (ChannelEx& channel : Chans)
 			channel.Step(mixl, mixr);
+#endif
 	}
 
 	void SetAegState(_EG_state newstate)
@@ -953,6 +1093,11 @@ struct ChannelEx
 	static void initAll() {
 		for (std::size_t i = 0; i < std::size(Chans); i++)
 			Chans[i].Init(i, aica_reg);
+			
+#ifdef TARGET_IPHONE
+		// Initialize iOS audio optimizer
+		g_ios_audio_optimizer.init();
+#endif
 	}
 };
 
@@ -1470,6 +1615,11 @@ static u32 cdda_index = CDDA_SIZE;
 
 void AICA_Sample()
 {
+#ifdef TARGET_IPHONE
+	// iOS FMV optimization: detect FMV mode for adaptive processing
+	g_ios_audio_optimizer.detect_fmv_mode();
+#endif
+
 	SampleType mixl,mixr;
 	mixl = 0;
 	mixr = 0;

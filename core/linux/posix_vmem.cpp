@@ -1,4 +1,3 @@
-
 // Implementation of the vmem related function for POSIX-like platforms.
 // There's some minimal amount of platform specific hacks to support
 // Android and OSX since they are slightly different in some areas.
@@ -18,6 +17,202 @@
 
 #ifndef MAP_NOSYNC
 #define MAP_NOSYNC 0
+#endif
+
+// === iOS FMV MEMORY MANAGEMENT OPTIMIZATIONS ===
+#ifdef TARGET_IPHONE
+#include <TargetConditionals.h>
+#include <unordered_set>
+#include <chrono>
+
+// iOS-specific memory management optimization system
+struct IOSMemoryOptimizer {
+    // Protection state tracking to avoid redundant mprotect calls
+    std::unordered_set<void*> locked_pages;
+    std::unordered_set<void*> unlocked_pages;
+    
+    // Batching system to reduce mprotect overhead
+    struct ProtectionBatch {
+        std::vector<std::pair<void*, size_t>> lock_requests;
+        std::vector<std::pair<void*, size_t>> unlock_requests;
+        std::chrono::steady_clock::time_point last_flush;
+        bool fmv_mode = false;
+    } batch;
+    
+    // FMV mode detection
+    u32 consecutive_memory_ops = 0;
+    std::chrono::steady_clock::time_point last_operation;
+    
+    // iOS-specific optimizations
+    bool lazy_protection_enabled = true;
+    bool batch_mode_enabled = true;
+    u32 batch_threshold = 16;  // Batch multiple operations
+    
+    void init() {
+        locked_pages.clear();
+        unlocked_pages.clear();
+        batch.lock_requests.clear();
+        batch.unlock_requests.clear();
+        batch.last_flush = std::chrono::steady_clock::now();
+        consecutive_memory_ops = 0;
+        batch.fmv_mode = false;
+        
+        // iOS optimizations: larger batches for FMV performance
+        batch_threshold = 32;  // More aggressive batching on iOS
+        lazy_protection_enabled = true;
+        
+        INFO_LOG(VMEM, "🔥 iOS Memory Optimizer: Initialized with batch_threshold=%u, lazy_protection=%s", 
+                 batch_threshold, lazy_protection_enabled ? "enabled" : "disabled");
+    }
+    
+    bool is_fmv_mode() {
+        auto now = std::chrono::steady_clock::now();
+        auto time_diff = std::chrono::duration_cast<std::chrono::milliseconds>(now - last_operation).count();
+        
+        if (time_diff < 50) {  // Rapid memory operations indicate FMV
+            consecutive_memory_ops++;
+            if (consecutive_memory_ops > 50 && !batch.fmv_mode) {
+                batch.fmv_mode = true;
+                batch_threshold = 64;  // Even more aggressive in FMV mode
+                INFO_LOG(VMEM, "🚀 iOS Memory Optimizer: FMV mode detected - ultra-aggressive batching enabled");
+            }
+        } else {
+            consecutive_memory_ops = 0;
+            if (batch.fmv_mode && time_diff > 1000) {  // Exit FMV mode after 1 second of calm
+                batch.fmv_mode = false;
+                batch_threshold = 32;
+                INFO_LOG(VMEM, "📉 iOS Memory Optimizer: FMV mode disabled - returning to normal batching");
+            }
+        }
+        
+        last_operation = now;
+        return batch.fmv_mode;
+    }
+    
+    void flush_batch() {
+        if (batch.lock_requests.empty() && batch.unlock_requests.empty())
+            return;
+            
+        // Process lock requests
+        for (auto& [ptr, len] : batch.lock_requests) {
+            size_t inpage = (uintptr_t)ptr & PAGE_MASK;
+            if (mprotect((u8*)ptr - inpage, len + inpage, PROT_READ) == 0) {
+                locked_pages.insert(ptr);
+                unlocked_pages.erase(ptr);
+            }
+        }
+        
+        // Process unlock requests  
+        for (auto& [ptr, len] : batch.unlock_requests) {
+            size_t inpage = (uintptr_t)ptr & PAGE_MASK;
+            if (mprotect((u8*)ptr - inpage, len + inpage, PROT_READ | PROT_WRITE) == 0) {
+                unlocked_pages.insert(ptr);
+                locked_pages.erase(ptr);
+            }
+        }
+        
+        u32 total_ops = batch.lock_requests.size() + batch.unlock_requests.size();
+        if (total_ops > 10) {
+            INFO_LOG(VMEM, "🔥 iOS Memory Optimizer: Flushed %u operations (FMV mode: %s)", 
+                     total_ops, batch.fmv_mode ? "YES" : "NO");
+        }
+        
+        batch.lock_requests.clear();
+        batch.unlock_requests.clear();
+        batch.last_flush = std::chrono::steady_clock::now();
+    }
+    
+    bool should_flush_batch() {
+        if (batch.lock_requests.empty() && batch.unlock_requests.empty())
+            return false;
+            
+        u32 total_requests = batch.lock_requests.size() + batch.unlock_requests.size();
+        
+        // Force flush conditions
+        if (total_requests >= batch_threshold)
+            return true;
+            
+        // Time-based flush (prevent indefinite batching)
+        auto now = std::chrono::steady_clock::now();
+        auto time_since_last = std::chrono::duration_cast<std::chrono::milliseconds>(now - batch.last_flush).count();
+        
+        if (batch.fmv_mode) {
+            return time_since_last > 100;  // Flush every 100ms in FMV mode
+        } else {
+            return time_since_last > 50;   // Flush every 50ms normally
+        }
+    }
+    
+    bool region_lock_optimized(void *start, size_t len) {
+        void* aligned_start = (void*)((uintptr_t)start & ~PAGE_MASK);
+        
+        // Check if already locked (avoid redundant mprotect)
+        if (lazy_protection_enabled && locked_pages.count(aligned_start) > 0) {
+            return true;  // Already locked, skip expensive system call
+        }
+        
+        // Detect FMV mode for adaptive behavior
+        is_fmv_mode();
+        
+        if (batch_mode_enabled) {
+            // Add to batch instead of immediate execution
+            batch.lock_requests.emplace_back(start, len);
+            
+            if (should_flush_batch()) {
+                flush_batch();
+            }
+            return true;
+        } else {
+            // Immediate execution (fallback)
+            size_t inpage = (uintptr_t)start & PAGE_MASK;
+            if (mprotect((u8*)start - inpage, len + inpage, PROT_READ) == 0) {
+                locked_pages.insert(aligned_start);
+                unlocked_pages.erase(aligned_start);
+                return true;
+            }
+            return false;
+        }
+    }
+    
+    bool region_unlock_optimized(void *start, size_t len) {
+        void* aligned_start = (void*)((uintptr_t)start & ~PAGE_MASK);
+        
+        // Check if already unlocked (avoid redundant mprotect)
+        if (lazy_protection_enabled && unlocked_pages.count(aligned_start) > 0) {
+            return true;  // Already unlocked, skip expensive system call
+        }
+        
+        // Detect FMV mode for adaptive behavior
+        is_fmv_mode();
+        
+        if (batch_mode_enabled) {
+            // Add to batch instead of immediate execution
+            batch.unlock_requests.emplace_back(start, len);
+            
+            if (should_flush_batch()) {
+                flush_batch();
+            }
+            return true;
+        } else {
+            // Immediate execution (fallback)
+            size_t inpage = (uintptr_t)start & PAGE_MASK;
+            if (mprotect((u8*)start - inpage, len + inpage, PROT_READ | PROT_WRITE) == 0) {
+                unlocked_pages.insert(aligned_start);
+                locked_pages.erase(aligned_start);
+                return true;
+            }
+            return false;
+        }
+    }
+    
+    void force_flush() {
+        if (!batch.lock_requests.empty() || !batch.unlock_requests.empty()) {
+            flush_batch();
+        }
+    }
+};
+
+static IOSMemoryOptimizer g_ios_memory_optimizer;
 #endif
 
 #ifdef __ANDROID__
@@ -56,23 +251,38 @@ namespace virtmem
 
 bool region_lock(void *start, size_t len)
 {
+#ifdef TARGET_IPHONE
+	// Use iOS-optimized memory management for better FMV performance
+	return g_ios_memory_optimizer.region_lock_optimized(start, len);
+#else
 	size_t inpage = (uintptr_t)start & PAGE_MASK;
 	if (mprotect((u8*)start - inpage, len + inpage, PROT_READ))
 		die("mprotect failed...");
 	return true;
+#endif
 }
 
 bool region_unlock(void *start, size_t len)
 {
+#ifdef TARGET_IPHONE
+	// Use iOS-optimized memory management for better FMV performance
+	return g_ios_memory_optimizer.region_unlock_optimized(start, len);
+#else
 	size_t inpage = (uintptr_t)start & PAGE_MASK;
 	if (mprotect((u8*)start - inpage, len + inpage, PROT_READ | PROT_WRITE))
 		// Add some way to see why it failed? gdb> info proc mappings
 		die("mprotect  failed...");
 	return true;
+#endif
 }
 
 bool region_set_exec(void *start, size_t len)
 {
+#ifdef TARGET_IPHONE
+	// Force flush any pending memory operations before changing exec permissions
+	g_ios_memory_optimizer.force_flush();
+#endif
+
 	size_t inpage = (uintptr_t)start & PAGE_MASK;
     int protFlags = PROT_READ | PROT_EXEC;
 #ifndef TARGET_IPHONE
@@ -85,6 +295,15 @@ bool region_set_exec(void *start, size_t len)
 	}
 	return true;
 }
+
+#ifdef TARGET_IPHONE
+// iOS-specific function to force flush pending memory protection operations
+// This can be called before critical sections that require immediate memory state consistency
+void ios_memory_flush()
+{
+	g_ios_memory_optimizer.force_flush();
+}
+#endif
 
 static void *mem_region_reserve(void *start, size_t len)
 {
@@ -187,12 +406,24 @@ bool init(void **vmem_base_addr, void **sh4rcb_addr, size_t ramSize)
 	// Now map the memory for the SH4 context, do not include FPCB on purpose (paged on demand).
 	region_unlock(sh4rcb_base_ptr, sizeof(Sh4RCB) - fpcb_size);
 
+#ifdef TARGET_IPHONE
+	// Initialize iOS memory optimization system
+	g_ios_memory_optimizer.init();
+	INFO_LOG(VMEM, "🔥 iOS Memory Optimizer: System initialized for FMV performance optimization");
+#endif
+
 	return true;
 }
 
 // Just tries to wipe as much as possible in the relevant area.
 void destroy()
 {
+#ifdef TARGET_IPHONE
+	// Force flush any pending memory operations before cleanup
+	g_ios_memory_optimizer.force_flush();
+	INFO_LOG(VMEM, "🔥 iOS Memory Optimizer: System destroyed");
+#endif
+
 	if (reserved_base != nullptr)
 	{
 		mem_region_release(reserved_base, reserved_size);

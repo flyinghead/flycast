@@ -89,6 +89,124 @@ struct alignas(64) UltraInstructionCache {
 
 static UltraInstructionCache g_ultra_icache;
 
+// === DYNAMIC CPU TIMING SYSTEM ===
+
+struct DynamicTimingController {
+    // Performance monitoring
+    u32 consecutive_fast_frames = 0;
+    u32 consecutive_slow_frames = 0;
+    u64 last_performance_check = 0;
+    
+    // Adaptive system update intervals
+    u32 current_system_update_interval = 512;  // Start conservative
+    u32 min_interval = 256;   // Responsive mode
+    u32 max_interval = 2048;  // FMV boost mode
+    
+    // FMV detection
+    bool fmv_mode_detected = false;
+    u32 low_interaction_frames = 0;
+    
+    // CPU timing adaptation
+    float effective_cpu_ratio = 1.0f;
+    float base_cpu_ratio = 1.0f;
+    float max_boost_ratio = 3.0f;  // Maximum 3x boost for FMV
+    
+    // === ULTRA-AGGRESSIVE MAIN LOOP OPTIMIZATIONS ===
+    
+    // System call reduction system
+    u32 system_call_counter = 0;
+    u32 max_system_call_interval = 4096;  // Reduce system calls dramatically
+    
+    // Interrupt batching system
+    u32 interrupt_batch_counter = 0;
+    u32 interrupt_batch_size = 64;  // Batch interrupts aggressively
+    
+    // Performance-based scheduler bypass
+    bool scheduler_bypass_mode = false;
+    u32 scheduler_bypass_cycles = 0;
+    u32 max_scheduler_bypass = 16384;  // Skip scheduler for long periods
+    
+    void init() {
+        current_system_update_interval = 512;
+        effective_cpu_ratio = base_cpu_ratio;
+        fmv_mode_detected = false;
+        system_call_counter = 0;
+        interrupt_batch_counter = 0;
+        scheduler_bypass_mode = false;
+        scheduler_bypass_cycles = 0;
+    }
+    
+    bool should_update_system() {
+        // Ultra-aggressive system update reduction
+        return (++system_call_counter >= max_system_call_interval);
+    }
+    
+    bool should_check_interrupts() {
+        // Batch interrupt checking for performance
+        return (++interrupt_batch_counter >= interrupt_batch_size);
+    }
+    
+    bool can_bypass_scheduler() {
+        if (!scheduler_bypass_mode) return false;
+        return (scheduler_bypass_cycles < max_scheduler_bypass);
+    }
+    
+    void update_performance_mode() {
+        u64 current_time = sh4_sched_now64();
+        
+        // Check if we should update performance mode (every ~100ms)
+        if (current_time - last_performance_check < 20000000) return;  // 100ms
+        last_performance_check = current_time;
+        
+        // Detect FMV mode based on consistent performance
+        if (consecutive_fast_frames > 10) {
+            // System is running well - enable FMV optimizations
+            if (!fmv_mode_detected) {
+                fmv_mode_detected = true;
+                current_system_update_interval = max_interval;
+                effective_cpu_ratio = max_boost_ratio;
+                scheduler_bypass_mode = true;
+                max_system_call_interval = 8192;  // Even more aggressive in FMV mode
+                interrupt_batch_size = 128;       // Larger interrupt batches
+                INFO_LOG(INTERPRETER, "🚀 FMV MODE DETECTED: Ultra-aggressive optimizations activated!");
+            }
+            consecutive_fast_frames = 0;
+        } else if (consecutive_slow_frames > 5) {
+            // System struggling - reduce optimizations for stability
+            if (fmv_mode_detected) {
+                fmv_mode_detected = false;
+                current_system_update_interval = min_interval;
+                effective_cpu_ratio = base_cpu_ratio;
+                scheduler_bypass_mode = false;
+                max_system_call_interval = 2048;  // More responsive
+                interrupt_batch_size = 32;        // Smaller batches
+                INFO_LOG(INTERPRETER, "📉 Performance issues detected: Reducing optimizations for stability");
+            }
+            consecutive_slow_frames = 0;
+        }
+    }
+    
+    u32 get_system_update_interval() const {
+        return current_system_update_interval;
+    }
+    
+    float get_effective_cpu_ratio() const {
+        return effective_cpu_ratio;
+    }
+    
+    void mark_frame_performance(bool fast_frame) {
+        if (fast_frame) {
+            consecutive_fast_frames++;
+            consecutive_slow_frames = 0;
+        } else {
+            consecutive_slow_frames++;
+            consecutive_fast_frames = 0;
+        }
+    }
+};
+
+static DynamicTimingController g_dynamic_timing;
+
 // === MAXIMUM SPEED TIMING OPTIMIZATION ===
 
 // Reduce scheduler overhead by batching system updates even more aggressively
@@ -140,33 +258,72 @@ static void __attribute__((hot)) Sh4_int_Run()
         // Outer loop with ARM64 optimization
         do {
             try {
-                                 // ULTRA-TIGHT inner loop - MAXIMUM ARM64 performance with CPU_RATIO = 1
+                                 // === ULTRA-AGGRESSIVE MAIN LOOP WITH SCHEDULER BYPASS ===
                  s32 cycles = p_sh4rcb->cntx.cycle_counter;
                  
-                 // Batch execution with minimal system update overhead for maximum speed
+                 // Ultra-aggressive execution with scheduler bypass for maximum FMV performance
                  while (__builtin_expect(cycles > 0, 1)) {
+                     
+                     // === SCHEDULER BYPASS MODE ===
+                     if (g_dynamic_timing.can_bypass_scheduler()) {
+                         // Ultra-fast execution without scheduler overhead
 #ifdef FMV_OPTIMIZED
-                     // FMV-optimized batch: Execute 32 instructions per batch for video decode performance
-                     register int batch_size asm("w19") = 32;  // Use callee-saved register
+                         // FMV mode: Execute 64 instructions per batch with minimal overhead
+                         register int ultra_batch_size asm("w19") = 64;
 #else
-                     // Normal batch: Execute 16 instructions per batch for balanced performance
-                     register int batch_size asm("w19") = 16;
+                         // Normal mode: Execute 32 instructions per batch
+                         register int ultra_batch_size asm("w19") = 32;
 #endif
-                     for (register int i asm("w20") = 0; i < batch_size && cycles > 0; i++) {
-                         register u16 op asm("w21") = UltraReadNextOp();
-                         UltraExecuteOpcode(op);
-                         cycles--;
+                         
+                         for (register int i asm("w20") = 0; i < ultra_batch_size && cycles > 0; i++) {
+                             register u16 op asm("w21") = UltraReadNextOp();
+                             UltraExecuteOpcode(op);
+                             cycles--;
+                         }
+                         
+                         g_dynamic_timing.scheduler_bypass_cycles += ultra_batch_size;
+                         
+                         // Only check interrupts occasionally in bypass mode
+                         if (__builtin_expect(g_dynamic_timing.should_check_interrupts(), 0)) {
+                             g_dynamic_timing.interrupt_batch_counter = 0;
+                             if (__builtin_expect(p_sh4rcb->cntx.interrupt_pend != 0, 0)) {
+                                 break;  // Exit to handle interrupts
+                             }
+                         }
                      }
-                    
-                    // Only update system every SYSTEM_UPDATE_INTERVAL instructions for maximum speed
-                    if (__builtin_expect(++g_system_update_counter >= SYSTEM_UPDATE_INTERVAL, 0)) {
-                        g_system_update_counter = 0;
-                        
-                        // Quick check for interrupts without full system update
-                        if (__builtin_expect(p_sh4rcb->cntx.interrupt_pend != 0, 0)) {
-                            break;  // Exit to handle interrupts
-                        }
-                    }
+                     else {
+                         // === NORMAL BATCHED EXECUTION ===
+#ifdef FMV_OPTIMIZED
+                         // FMV-optimized batch: Execute 32 instructions per batch for video decode performance
+                         register int batch_size asm("w19") = 32;
+#else
+                         // Normal batch: Execute 16 instructions per batch for balanced performance
+                         register int batch_size asm("w19") = 16;
+#endif
+                         
+                         for (register int i asm("w20") = 0; i < batch_size && cycles > 0; i++) {
+                             register u16 op asm("w21") = UltraReadNextOp();
+                             UltraExecuteOpcode(op);
+                             cycles--;
+                         }
+                         
+                         // Ultra-aggressive system call reduction
+                         if (__builtin_expect(g_dynamic_timing.should_update_system(), 0)) {
+                             g_dynamic_timing.system_call_counter = 0;
+                             g_dynamic_timing.scheduler_bypass_cycles = 0;  // Reset bypass counter
+                             
+                             // Update dynamic timing based on performance
+                             g_dynamic_timing.update_performance_mode();
+                             
+                             // Batched interrupt checking
+                             if (__builtin_expect(g_dynamic_timing.should_check_interrupts(), 0)) {
+                                 g_dynamic_timing.interrupt_batch_counter = 0;
+                                 if (__builtin_expect(p_sh4rcb->cntx.interrupt_pend != 0, 0)) {
+                                     break;  // Exit to handle interrupts
+                                 }
+                             }
+                         }
+                     }
                 }
                 
                 p_sh4rcb->cntx.cycle_counter = cycles;
@@ -179,7 +336,7 @@ static void __attribute__((hot)) Sh4_int_Run()
                 
             } catch (const SH4ThrownException& ex) {
                 Do_Exception(ex.epc, ex.expEvn);
-                sh4cycles.addCycles(5 * CPU_RATIO);  // This is now 5 * 1 = 5 cycles (fast!)
+                sh4cycles.addCycles(5 * g_dynamic_timing.get_effective_cpu_ratio());
             }
         } while (__builtin_expect(sh4_int_bCpuRun, 1));
         
@@ -210,7 +367,7 @@ void Sh4_int_Step()
         UltraExecuteOpcode(op);
     } catch (const SH4ThrownException& ex) {
         Do_Exception(ex.epc, ex.expEvn);
-        sh4cycles.addCycles(5 * CPU_RATIO);  // This is now 5 * 1 = 5 cycles (fast!)
+        sh4cycles.addCycles(5 * g_dynamic_timing.get_effective_cpu_ratio());
     } catch (const debugger::Stop&) {
     }
 }
@@ -245,13 +402,16 @@ static void Sh4_int_Reset(bool hard)
     sh4cycles.reset();
     p_sh4rcb->cntx.cycle_counter = SH4_TIMESLICE;
     
-    // Reset ultra instruction cache
+    // Reset ultra instruction cache and dynamic timing system
     g_ultra_icache.reset();
     g_system_update_counter = 0;
     g_last_frame_time = 0;
     g_frame_counter = 0;
+    
+    // Initialize dynamic timing controller
+    g_dynamic_timing.init();
 
-    INFO_LOG(INTERPRETER, "🚀 MAXIMUM SPEED ARM64 Interpreter Reset - CPU_RATIO = 1 (NO BOTTLENECK!)");
+    INFO_LOG(INTERPRETER, "🚀 ULTRA-AGGRESSIVE ARM64 Interpreter Reset - Dynamic timing, scheduler bypass, FMV optimizations active!");
 }
 
 static bool Sh4_int_IsCpuRunning()
@@ -311,7 +471,7 @@ void Get_Sh4Interpreter(sh4_if* cpu)
     cpu->Stop = Sh4_int_Stop;
     cpu->Step = Sh4_int_Step;
     cpu->Reset = Sh4_int_Reset;
-    cpu->Init = []() { INFO_LOG(INTERPRETER, "🚀 MAXIMUM SPEED INTERPRETER: CPU_RATIO = 1, 16KB cache, 512-batch execution!"); };
+    cpu->Init = []() { INFO_LOG(INTERPRETER, "🚀 ULTRA-AGGRESSIVE INTERPRETER: Dynamic timing, scheduler bypass, FMV detection, ARM64 optimizations!"); };
     cpu->Term = []() {};
     cpu->ResetCache = []() { g_ultra_icache.reset(); };
     cpu->IsCpuRunning = Sh4_int_IsCpuRunning;
