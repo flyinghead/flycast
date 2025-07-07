@@ -257,6 +257,7 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
 		$<$<BOOL:${ENABLE_LOG}>:DEBUGFAST>
 		$<$<BOOL:${IOS}>:TARGET_IPHONE>
 		$<$<BOOL:${TARGET_MAC}>:TARGET_MAC>
+		$<$<IN_LIST:arm64,${ARCHITECTURE}>:TARGET_ARM64>
 		$<$<BOOL:${IOS}>:GLES>
 		$<$<BOOL:${IOS}>:GLES3>
 		$<$<BOOL:${IOS}>:GLES_SILENCE_DEPRECATION>
@@ -1572,6 +1573,9 @@ if("arm64" IN_LIST ARCHITECTURE)
 		core/deps/vixl/pool-manager-impl.h
 		core/deps/vixl/utils-vixl.cc
 		core/deps/vixl/utils-vixl.h)
+	
+	# ARM64 FMV optimization files removed - were just stubs
+	
 	# ARM64 recompiler files are added in the dynarec backend selection section below
 endif()
 if("x86" IN_LIST ARCHITECTURE OR "x86_64" IN_LIST ARCHITECTURE)
@@ -2099,6 +2103,8 @@ if(NOT DEFINED TARGET_NO_REC)
                 core/rec-ARM64/arm64_regalloc.h)
         endif()
     endif()
+    
+    # ARM64 FMV optimization files removed - were just stubs
 endif()
 endif()
 
