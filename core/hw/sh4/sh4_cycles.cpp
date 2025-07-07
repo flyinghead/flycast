@@ -21,7 +21,7 @@
 #ifdef STRICT_MODE
 constexpr int CPU_RATIO = 1;
 #else
-constexpr int CPU_RATIO = 8;
+constexpr int CPU_RATIO = 1;  // REMOVED BOTTLENECK: Set to 1 for maximum speed!
 #endif
 
 Sh4Cycles sh4cycles(CPU_RATIO);
