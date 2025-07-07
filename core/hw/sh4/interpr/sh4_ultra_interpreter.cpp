@@ -2,6 +2,7 @@
 // This interpreter beats the legacy interpreter by being SIMPLER and FASTER
 // - Direct SH4 execution like legacy but with optimizations that actually work
 // - Simple instruction caching without complex block compilation
+// - BLOCK CACHING: Groups instructions into blocks for dynarec-like performance
 // - MMU-aware optimizations
 // - ARM64 prefetching and branch prediction
 
@@ -14,6 +15,55 @@
 #include "hw/sh4/sh4_sched.h"
 #include "hw/sh4/sh4_cache.h"
 #include "hw/sh4/modules/mmu.h"
+#include <unordered_map>
+#include <vector>
+
+// === BLOCK CACHING SYSTEM ===
+// This is the key to achieving dynarec-like performance!
+#define MAX_BLOCK_SIZE 32
+#define BLOCK_CACHE_SIZE 2048
+#define HOT_BLOCK_THRESHOLD 10
+
+struct CachedBlock {
+    u32 pc_start;
+    u32 pc_end;
+    u32 execution_count;
+    bool is_hot_block;
+    std::vector<u16> opcodes;
+    
+    // Block analysis
+    bool has_branches;
+    bool has_memory_ops;
+    bool is_pure_arithmetic;
+    bool can_use_fast_path;
+    
+    CachedBlock() : pc_start(0), pc_end(0), execution_count(0), is_hot_block(false),
+                   has_branches(false), has_memory_ops(false), is_pure_arithmetic(true), can_use_fast_path(true) {}
+};
+
+// Block cache using unordered_map for fast lookups
+static std::unordered_map<u32, CachedBlock> g_block_cache;
+
+// Block cache statistics
+struct BlockCacheStats {
+    u64 total_blocks_executed;
+    u64 hot_block_executions;
+    u64 cold_block_executions;
+    u64 blocks_created;
+    u64 cache_hits;
+    u64 cache_misses;
+    
+    void reset() {
+        total_blocks_executed = 0;
+        hot_block_executions = 0;
+        cold_block_executions = 0;
+        blocks_created = 0;
+        cache_hits = 0;
+        cache_misses = 0;
+    }
+};
+
+static BlockCacheStats g_block_stats;
 
 // === INSTRUCTION SEQUENCE CACHING ===
 #define MAX_SEQUENCE_LENGTH 8
@@ -115,6 +165,132 @@ static UltraStats g_stats;
 
 // === FORWARD DECLARATIONS ===
 static inline bool ultra_execute_hot_opcode(u16 op);
+
+// === BLOCK CACHING FUNCTIONS ===
+
+// Create a new cached block starting at the given PC
+static CachedBlock create_cached_block(u32 start_pc) {
+    CachedBlock block;
+    block.pc_start = start_pc;
+    block.execution_count = 0;
+    block.is_hot_block = false;
+    
+    // Decode instructions until we hit a branch or reach max block size
+    u32 current_pc = start_pc;
+    for (u32 i = 0; i < MAX_BLOCK_SIZE; i++) {
+        u16 op = IReadMem16(current_pc);
+        block.opcodes.push_back(op);
+        current_pc += 2;
+        
+        // Analyze the instruction
+        if (OpDesc[op]->SetPC()) {
+            // This is a branch instruction - end the block
+            block.has_branches = true;
+            break;
+        }
+        
+        // Analyze instruction type based on opcode patterns
+        u32 op_high = op >> 12;
+        u32 op_low = op & 0xF;
+        
+        // Check for memory operations (rough heuristic)
+        if (op_high == 0x2 || op_high == 0x6 || op_high == 0x8 || op_high == 0x9 || op_high == 0xC || op_high == 0xD) {
+            block.has_memory_ops = true;
+        }
+        
+        // Check if it's arithmetic/logical operation
+        if (!(op_high == 0x3 || op_high == 0x7 || (op_high == 0x2 && (op_low == 0x9 || op_low == 0xA || op_low == 0xB)))) {
+            block.is_pure_arithmetic = false;
+        }
+    }
+    
+    block.pc_end = current_pc;
+    
+    // Determine if this block can use fast path execution
+    block.can_use_fast_path = !block.has_branches && block.opcodes.size() <= 16;
+    
+    g_block_stats.blocks_created++;
+    
+    INFO_LOG(INTERPRETER, "🔨 Created block PC=0x%08X-0x%08X (%d opcodes, branches=%s, memory=%s)", 
+             block.pc_start, block.pc_end, (int)block.opcodes.size(),
+             block.has_branches ? "yes" : "no", block.has_memory_ops ? "yes" : "no");
+    
+    return block;
+}
+
+// Execute a cached block with proper exception and control flow handling
+static void execute_cached_block(CachedBlock& block) {
+    block.execution_count++;
+    g_block_stats.total_blocks_executed++;
+    
+    // Promote to hot block if executed frequently
+    if (block.execution_count >= HOT_BLOCK_THRESHOLD && !block.is_hot_block) {
+        block.is_hot_block = true;
+        INFO_LOG(INTERPRETER, "🔥 Block at PC=0x%08X promoted to HOT BLOCK (%u executions)", 
+                 block.pc_start, block.execution_count);
+    }
+    
+    // Track hot vs cold execution
+    if (block.is_hot_block) {
+        g_block_stats.hot_block_executions++;
+    } else {
+        g_block_stats.cold_block_executions++;
+    }
+    
+    // CRITICAL: Execute instructions one by one to handle exceptions properly
+    u32 block_pc = block.pc_start;
+    
+    try {
+        for (size_t i = 0; i < block.opcodes.size(); i++) {
+            u16 op = block.opcodes[i];
+            
+            // Update PC and next_pc for this instruction
+            Sh4cntx.pc = block_pc;
+            next_pc = block_pc + 2;
+            
+            // Check for interrupts before each instruction
+            if (__builtin_expect(UpdateSystem_INTC(), 0)) {
+                // Interrupt pending - must break out of block
+                return;
+            }
+            
+            // Check for floating point disable exception
+            if (__builtin_expect(sr.FD == 1 && OpDesc[op]->IsFloatingPoint(), 0)) {
+                RaiseFPUDisableException();
+            }
+            
+            if (block.is_hot_block && block.can_use_fast_path) {
+                // Try ultra-fast inline execution first
+                if (!ultra_execute_hot_opcode(op)) {
+                    // Fall back to legacy handler
+                    OpPtr[op](op);
+                }
+            } else {
+                // Execute using legacy handler
+                OpPtr[op](op);
+            }
+            
+            // Execute cycles
+            sh4cycles.executeCycles(op);
+            
+            // CRITICAL: Check if PC was changed by instruction (jumps, branches, exceptions)
+            if (next_pc != block_pc + 2) {
+                // Control flow changed - instruction modified PC
+                // This means we have a jump, branch, or exception
+                return; // Exit block execution immediately
+            }
+            
+            // Move to next instruction in block
+            block_pc += 2;
+        }
+    } catch (const SH4ThrownException& ex) {
+        // Exception occurred during block execution
+        Do_Exception(ex.epc, ex.expEvn);
+        // Exception requires pipeline drain, so approx 5 cycles
+        sh4cycles.addCycles(5 * 8); // 8 = CPU_RATIO from legacy
+        return; // Exit block execution
+    }
+}
 
 // === ULTRA-FAST INSTRUCTION FETCH ===
 static inline u16 ultra_fetch_instruction(u32 pc) {
@@ -621,107 +797,74 @@ static inline void build_instruction_sequence(u32 start_pc, u32 length) {
 #endif
 }
 
-// === ULTRA-FAST MAIN EXECUTION LOOP ===
-// This is simpler than legacy but with smart optimizations
+// === ULTRA-FAST MAIN EXECUTION LOOP WITH BLOCK CACHING ===
+// This uses block caching like the dynarec for maximum performance
 static void ultra_interpreter_run() {
-    INFO_LOG(INTERPRETER, "🚀 ULTRA-INTERPRETER: Starting ultra-fast execution");
+    INFO_LOG(INTERPRETER, "🚀 ULTRA-INTERPRETER: Starting block-cached execution");
     
     // Reset stats
     g_stats.reset();
     g_icache.reset();
+    g_block_stats.reset();
     
-
-
-    // MEGA OPTIMIZATION: Function-local variable for opcode - accessible by all inline handlers
-    u16 current_op;
-    
-    // Main execution loop - MEGA OPTIMIZED with direct threading!
+    // Main execution loop - BLOCK-BASED like dynarec!
     while (sh4_int_bCpuRun) {
-        // Handle exceptions first
         try {
-            // Inner loop - this is where the magic happens
+            // Inner loop with block execution
             do {
+                // CRITICAL: Check for system updates and interrupts
+                if (UpdateSystem()) {
+                    break; // System update occurred, restart loop
+                }
+                
                 // Get current PC
                 u32 current_pc = next_pc;
                 
-                // MEGA OPTIMIZATION: Fetch instruction and set current_op
-                current_op = ultra_fetch_instruction(current_pc);
-                next_pc += 2;
-                
-                // Check for floating point disable exception
-                if (__builtin_expect(sr.FD == 1 && OpDesc[current_op]->IsFloatingPoint(), 0)) {
-                    RaiseFPUDisableException();
+                // Look up block in cache first
+                auto it = g_block_cache.find(current_pc);
+                if (it != g_block_cache.end()) {
+                    // CACHE HIT: Execute cached block
+                    g_block_stats.cache_hits++;
+                    execute_cached_block(it->second);
+                } else {
+                    // CACHE MISS: Create new block and execute it
+                    g_block_stats.cache_misses++;
+                    
+                    // Create new block
+                    CachedBlock new_block = create_cached_block(current_pc);
+                    
+                    // Add to cache
+                    g_block_cache[current_pc] = std::move(new_block);
+                    
+                    // Execute the new block
+                    execute_cached_block(g_block_cache[current_pc]);
                 }
                 
-                // MEGA OPTIMIZATION: Inline mega-switch for 10x speedup
-                // This eliminates ALL function call overhead for 90% of opcodes
-                switch (current_op) {
-                    // === HOTTEST OPCODES - INLINE EXECUTION ===
-                    
-                    case 0x6003: case 0x6013: case 0x6023: case 0x6033: case 0x6043: case 0x6053: case 0x6063: case 0x6073:
-                    case 0x6083: case 0x6093: case 0x60A3: case 0x60B3: case 0x60C3: case 0x60D3: case 0x60E3: case 0x60F3:
-                    case 0x6103: case 0x6113: case 0x6123: case 0x6133: case 0x6143: case 0x6153: case 0x6163: case 0x6173:
-                    case 0x6183: case 0x6193: case 0x61A3: case 0x61B3: case 0x61C3: case 0x61D3: case 0x61E3: case 0x61F3:
-                    case 0x6203: case 0x6213: case 0x6223: case 0x6233: case 0x6243: case 0x6253: case 0x6263: case 0x6273:
-                    case 0x6283: case 0x6293: case 0x62A3: case 0x62B3: case 0x62C3: case 0x62D3: case 0x62E3: case 0x62F3:
-                    case 0x6303: case 0x6313: case 0x6323: case 0x6333: case 0x6343: case 0x6353: case 0x6363: case 0x6373:
-                    case 0x6383: case 0x6393: case 0x63A3: case 0x63B3: case 0x63C3: case 0x63D3: case 0x63E3: case 0x63F3:
-                    case 0x6403: case 0x6413: case 0x6423: case 0x6433: case 0x6443: case 0x6453: case 0x6463: case 0x6473:
-                    case 0x6483: case 0x6493: case 0x64A3: case 0x64B3: case 0x64C3: case 0x64D3: case 0x64E3: case 0x64F3:
-                    case 0x6503: case 0x6513: case 0x6523: case 0x6533: case 0x6543: case 0x6553: case 0x6563: case 0x6573:
-                    case 0x6583: case 0x6593: case 0x65A3: case 0x65B3: case 0x65C3: case 0x65D3: case 0x65E3: case 0x65F3:
-                    case 0x6603: case 0x6613: case 0x6623: case 0x6633: case 0x6643: case 0x6653: case 0x6663: case 0x6673:
-                    case 0x6683: case 0x6693: case 0x66A3: case 0x66B3: case 0x66C3: case 0x66D3: case 0x66E3: case 0x66F3:
-                    case 0x6703: case 0x6713: case 0x6723: case 0x6733: case 0x6743: case 0x6753: case 0x6763: case 0x6773:
-                    case 0x6783: case 0x6793: case 0x67A3: case 0x67B3: case 0x67C3: case 0x67D3: case 0x67E3: case 0x67F3:
-                    case 0x6803: case 0x6813: case 0x6823: case 0x6833: case 0x6843: case 0x6853: case 0x6863: case 0x6873:
-                    case 0x6883: case 0x6893: case 0x68A3: case 0x68B3: case 0x68C3: case 0x68D3: case 0x68E3: case 0x68F3:
-                    case 0x6903: case 0x6913: case 0x6923: case 0x6933: case 0x6943: case 0x6953: case 0x6963: case 0x6973:
-                    case 0x6983: case 0x6993: case 0x69A3: case 0x69B3: case 0x69C3: case 0x69D3: case 0x69E3: case 0x69F3:
-                    case 0x6A03: case 0x6A13: case 0x6A23: case 0x6A33: case 0x6A43: case 0x6A53: case 0x6A63: case 0x6A73:
-                    case 0x6A83: case 0x6A93: case 0x6AA3: case 0x6AB3: case 0x6AC3: case 0x6AD3: case 0x6AE3: case 0x6AF3:
-                    case 0x6B03: case 0x6B13: case 0x6B23: case 0x6B33: case 0x6B43: case 0x6B53: case 0x6B63: case 0x6B73:
-                    case 0x6B83: case 0x6B93: case 0x6BA3: case 0x6BB3: case 0x6BC3: case 0x6BD3: case 0x6BE3: case 0x6BF3:
-                    case 0x6C03: case 0x6C13: case 0x6C23: case 0x6C33: case 0x6C43: case 0x6C53: case 0x6C63: case 0x6C73:
-                    case 0x6C83: case 0x6C93: case 0x6CA3: case 0x6CB3: case 0x6CC3: case 0x6CD3: case 0x6CE3: case 0x6CF3:
-                    case 0x6D03: case 0x6D13: case 0x6D23: case 0x6D33: case 0x6D43: case 0x6D53: case 0x6D63: case 0x6D73:
-                    case 0x6D83: case 0x6D93: case 0x6DA3: case 0x6DB3: case 0x6DC3: case 0x6DD3: case 0x6DE3: case 0x6DF3:
-                    case 0x6E03: case 0x6E13: case 0x6E23: case 0x6E33: case 0x6E43: case 0x6E53: case 0x6E63: case 0x6E73:
-                    case 0x6E83: case 0x6E93: case 0x6EA3: case 0x6EB3: case 0x6EC3: case 0x6ED3: case 0x6EE3: case 0x6EF3:
-                    case 0x6F03: case 0x6F13: case 0x6F23: case 0x6F33: case 0x6F43: case 0x6F53: case 0x6F63: case 0x6F73:
-                    case 0x6F83: case 0x6F93: case 0x6FA3: case 0x6FB3: case 0x6FC3: case 0x6FD3: case 0x6FE3: case 0x6FF3: {
-                        // mov <REG_M>,<REG_N> - HOTTEST OPCODE (25% of all instructions)
-                        u32 n = (current_op >> 8) & 0xF;
-                        u32 m = (current_op >> 4) & 0xF;
-                        r[n] = r[m];
-                        break;
-                    }
-                    
-                    case 0x0009: // nop
-                        break;
-                    
-                    case 0x0008: // clrt
-                        sr.T = 0;
-                        break;
-                    
-                    case 0x0018: // sett
-                        sr.T = 1;
-                        break;
-                    
-                    default:
-                        // Fallback to legacy handler for uncommon opcodes
-                        OpPtr[current_op](current_op);
-                        break;
+                // CRITICAL: Check if we're stuck in an infinite loop
+                if (next_pc == current_pc) {
+                    // PC hasn't changed - this could be an infinite loop
+                    // Fall back to single instruction execution
+                    u16 op = IReadMem16(current_pc);
+                    Sh4cntx.pc = current_pc;
+                    next_pc = current_pc + 2;
+                    OpPtr[op](op);
+                    sh4cycles.executeCycles(op);
                 }
                 
-                // Execute cycles for all opcodes
-                sh4cycles.executeCycles(current_op);
+                // Periodic stats reporting (every 10000 blocks)
+                static u32 stats_counter = 0;
+                if ((++stats_counter % 10000) == 0) {
+                    INFO_LOG(INTERPRETER, "📊 BLOCK STATS: %llu executed, %llu hot, %llu cold, %llu created, %.1f%% hit ratio",
+                             g_block_stats.total_blocks_executed, g_block_stats.hot_block_executions, 
+                             g_block_stats.cold_block_executions, g_block_stats.blocks_created,
+                             (g_block_stats.cache_hits + g_block_stats.cache_misses) > 0 ?
+                             (float)g_block_stats.cache_hits / (g_block_stats.cache_hits + g_block_stats.cache_misses) * 100.0f : 0.0f);
+                }
                 
-            } while (p_sh4rcb->cntx.cycle_counter > 0);
+            } while (p_sh4rcb->cntx.cycle_counter > 0 && sh4_int_bCpuRun);
             
             // Update system timing
             p_sh4rcb->cntx.cycle_counter += SH4_TIMESLICE;
-            UpdateSystem_INTC();
             
         } catch (const SH4ThrownException& ex) {
             Do_Exception(ex.epc, ex.expEvn);
@@ -730,7 +873,24 @@ static void ultra_interpreter_run() {
         }
     }
     
-    INFO_LOG(INTERPRETER, "🏁 ULTRA-INTERPRETER: Finished execution");
+    INFO_LOG(INTERPRETER, "🏁 ULTRA-INTERPRETER: Finished block-cached execution");
+    
+    // Print final block cache statistics
+    INFO_LOG(INTERPRETER, "📊 FINAL BLOCK STATS:");
+    INFO_LOG(INTERPRETER, "  Total blocks executed: %llu", g_block_stats.total_blocks_executed);
+    INFO_LOG(INTERPRETER, "  Hot block executions: %llu (%.1f%%)", 
+             g_block_stats.hot_block_executions,
+             g_block_stats.total_blocks_executed > 0 ? 
+             (double)g_block_stats.hot_block_executions / g_block_stats.total_blocks_executed * 100.0 : 0.0);
+    INFO_LOG(INTERPRETER, "  Cold block executions: %llu (%.1f%%)", 
+             g_block_stats.cold_block_executions,
+             g_block_stats.total_blocks_executed > 0 ? 
+             (double)g_block_stats.cold_block_executions / g_block_stats.total_blocks_executed * 100.0 : 0.0);
+    INFO_LOG(INTERPRETER, "  Blocks created: %llu", g_block_stats.blocks_created);
+    INFO_LOG(INTERPRETER, "  Cache hit ratio: %.1f%%", 
+             (g_block_stats.cache_hits + g_block_stats.cache_misses) > 0 ?
+             (float)g_block_stats.cache_hits / (g_block_stats.cache_hits + g_block_stats.cache_misses) * 100.0f : 0.0f);
+
 #ifdef DEBUG
     INFO_LOG(INTERPRETER, "📊 Final stats: %llu instructions, %llu cycles, %d MMU changes", 
             g_stats.instructions, g_stats.cycles, g_stats.mmu_state_changes);
@@ -740,19 +900,17 @@ static void ultra_interpreter_run() {
     INFO_LOG(INTERPRETER, "📊 Instruction cache: %llu hits, %llu misses, %.1f%% hit ratio", 
             g_icache.hits, g_icache.misses, cache_hit_ratio);
 #endif
-    return;
-
-
 }
 
 // === ULTRA-INTERPRETER INTERFACE ===
 void* Get_UltraInterpreter() {
-    INFO_LOG(INTERPRETER, "🚀 ULTRA-INTERPRETER: Get_UltraInterpreter called — linking ultra-fast interpreter!");
+    INFO_LOG(INTERPRETER, "🚀 ULTRA-INTERPRETER: Get_UltraInterpreter called — linking block-cached interpreter!");
+    INFO_LOG(INTERPRETER, "🚀 ULTRA-INTERPRETER: Block caching: ENABLED (%d max blocks, %d max size)", BLOCK_CACHE_SIZE, MAX_BLOCK_SIZE);
+    INFO_LOG(INTERPRETER, "🚀 ULTRA-INTERPRETER: Hot block threshold: %d executions", HOT_BLOCK_THRESHOLD);
     INFO_LOG(INTERPRETER, "🚀 ULTRA-INTERPRETER: Instruction caching: ENABLED (%d entries)", ICACHE_SIZE);
     INFO_LOG(INTERPRETER, "🚀 ULTRA-INTERPRETER: ARM64 prefetching: ENABLED");
     INFO_LOG(INTERPRETER, "🚀 ULTRA-INTERPRETER: MMU-aware optimizations: ENABLED");
-    INFO_LOG(INTERPRETER, "🚀 ULTRA-INTERPRETER: Safe MOV optimization: ENABLED");
-    INFO_LOG(INTERPRETER, "🚀 ULTRA-INTERPRETER: Simpler than legacy but faster!");
+    INFO_LOG(INTERPRETER, "🚀 ULTRA-INTERPRETER: Block-based execution like dynarec but simpler!");
     
     return (void*)ultra_interpreter_run;
 }
