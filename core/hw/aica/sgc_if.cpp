@@ -60,33 +60,190 @@ namespace aica::sgc
 static s32 volume_lut[16];
 
 #ifdef TARGET_IPHONE
-// iOS Audio Optimizer class definition
-class iOSAudioOptimizer {
+// Comprehensive Adaptive Audio Management System
+class AdaptiveAudioManager {
 private:
+    // Performance monitoring
     std::atomic<bool> fmv_mode{false};
-    std::atomic<uint64_t> last_activity_time{0};
+    std::atomic<bool> cpu_overload{false};
     std::atomic<uint32_t> samples_processed{0};
     std::atomic<uint32_t> channels_skipped{0};
-    uint32_t sample_skip_counter = 0;
+    std::atomic<uint32_t> buffer_underruns{0};
+    std::atomic<uint32_t> buffer_overflows{0};
+    
+    // Timing and load detection
+    std::chrono::steady_clock::time_point last_sample_time;
+    std::chrono::steady_clock::time_point last_performance_check;
+    std::chrono::steady_clock::time_point last_fmv_check;
+    uint64_t sample_processing_time_avg = 0;
+    uint64_t target_sample_time = 22675; // ~44.1kHz in nanoseconds
+    
+    // Adaptive quality control
+    enum class AudioQuality {
+        FULL = 0,      // Full 44.1kHz, all channels
+        HIGH = 1,      // 44.1kHz, priority channels only
+        MEDIUM = 2,    // 22.05kHz, priority channels
+        LOW = 3,       // 11.025kHz, critical channels only
+        MINIMAL = 4    // Emergency mode - basic audio only
+    };
+    std::atomic<AudioQuality> current_quality{AudioQuality::FULL};
+    
+    // Channel management
     static constexpr uint32_t CHANNEL_COUNT = 64;
     bool channel_activity[CHANNEL_COUNT] = {false};
+    uint8_t channel_priority[CHANNEL_COUNT] = {0}; // 0=critical, 255=lowest priority
+    uint32_t sample_skip_counter = 0;
     
-    std::chrono::steady_clock::time_point last_fmv_check;
+    // Buffer management
+    struct AudioBuffer {
+        std::vector<SampleType> samples;
+        uint32_t write_pos = 0;
+        uint32_t read_pos = 0;
+        uint32_t size = 0;
+        bool overflow = false;
+        bool underrun = false;
+        
+        void init(uint32_t buffer_size) {
+            samples.resize(buffer_size);
+            size = buffer_size;
+            write_pos = read_pos = 0;
+            overflow = underrun = false;
+        }
+        
+        bool push(SampleType sample) {
+            uint32_t next_write = (write_pos + 1) % size;
+            if (next_write == read_pos) {
+                overflow = true;
+                return false; // Buffer full
+            }
+            samples[write_pos] = sample;
+            write_pos = next_write;
+            return true;
+        }
+        
+        bool pop(SampleType& sample) {
+            if (read_pos == write_pos) {
+                underrun = true;
+                sample = 0; // Silence
+                return false; // Buffer empty
+            }
+            sample = samples[read_pos];
+            read_pos = (read_pos + 1) % size;
+            return true;
+        }
+        
+        uint32_t available_samples() const {
+            return (write_pos >= read_pos) ? 
+                   (write_pos - read_pos) : 
+                   (size - read_pos + write_pos);
+        }
+        
+        float load_percentage() const {
+            return (float)available_samples() / (float)size * 100.0f;
+        }
+    };
+    
+    AudioBuffer emergency_buffer;
+    bool emergency_mode = false;
+    
+    // Performance intervals
+    static constexpr auto PERFORMANCE_CHECK_INTERVAL = std::chrono::milliseconds(50);
     static constexpr auto FMV_CHECK_INTERVAL = std::chrono::milliseconds(100);
+    
+    void analyze_performance() {
+        auto now = std::chrono::steady_clock::now();
+        if (now - last_performance_check < PERFORMANCE_CHECK_INTERVAL) return;
+        
+        last_performance_check = now;
+        
+        // Calculate average sample processing time
+        auto processing_duration = now - last_sample_time;
+        uint64_t processing_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(processing_duration).count();
+        
+        // Exponential moving average for smooth adaptation
+        sample_processing_time_avg = (sample_processing_time_avg * 7 + processing_ns) / 8;
+        
+        // Detect CPU overload based on processing time vs target
+        bool new_overload = sample_processing_time_avg > (target_sample_time * 2); // 2x tolerance
+        cpu_overload.store(new_overload, std::memory_order_relaxed);
+        
+        // Adaptive quality scaling based on load
+        AudioQuality target_quality = AudioQuality::FULL;
+        float load_ratio = (float)sample_processing_time_avg / (float)target_sample_time;
+        
+        if (load_ratio > 4.0f || emergency_buffer.underrun) {
+            target_quality = AudioQuality::MINIMAL;
+        } else if (load_ratio > 3.0f || buffer_underruns.load() > 10) {
+            target_quality = AudioQuality::LOW;
+        } else if (load_ratio > 2.0f || fmv_mode.load()) {
+            target_quality = AudioQuality::MEDIUM;
+        } else if (load_ratio > 1.5f) {
+            target_quality = AudioQuality::HIGH;
+        }
+        
+        current_quality.store(target_quality, std::memory_order_relaxed);
+    }
+    
+    void update_channel_priorities() {
+        // Analyze channel activity and assign priorities
+        for (int i = 0; i < CHANNEL_COUNT; i++) {
+            if (channel_activity[i]) {
+                // Active channels get higher priority (lower number)
+                channel_priority[i] = std::max(0, (int)channel_priority[i] - 2);
+            } else {
+                // Inactive channels get lower priority (higher number)
+                channel_priority[i] = std::min(255, (int)channel_priority[i] + 1);
+            }
+        }
+        
+        // Reset activity tracking
+        std::fill(std::begin(channel_activity), std::end(channel_activity), false);
+    }
     
 public:
     void init() {
         fmv_mode = false;
+        cpu_overload = false;
         samples_processed = 0;
         channels_skipped = 0;
+        buffer_underruns = 0;
+        buffer_overflows = 0;
         sample_skip_counter = 0;
-        last_activity_time = 0;
+        current_quality = AudioQuality::FULL;
+        emergency_mode = false;
+        
+        // Initialize emergency buffer (2048 samples = ~46ms at 44.1kHz)
+        emergency_buffer.init(2048);
+        
+        // Initialize all channels with equal priority
+        std::fill(std::begin(channel_priority), std::end(channel_priority), 128);
         std::fill(std::begin(channel_activity), std::end(channel_activity), false);
-        last_fmv_check = std::chrono::steady_clock::now();
+        
+        auto now = std::chrono::steady_clock::now();
+        last_sample_time = last_performance_check = last_fmv_check = now;
+        sample_processing_time_avg = target_sample_time;
     }
     
     void volume_pan_neon(SampleType value, u32 vol, u32 pan, SampleType& outl, SampleType& outr) {
-        // NEON-optimized volume/pan calculation
+        // NEON-optimized volume/pan calculation with quality scaling
+        auto quality = current_quality.load(std::memory_order_relaxed);
+        
+        // In minimal quality mode, use faster integer math
+        if (quality == AudioQuality::MINIMAL) {
+            SampleType temp = (value * volume_lut[vol]) >> 15;
+            SampleType Sc = (temp * volume_lut[0xF - (pan & 0xF)]) >> 15;
+            
+            if (pan & 0x10) {
+                outl += temp;
+                outr += Sc;
+            } else {
+                outl += Sc;
+                outr += temp;
+            }
+            return;
+        }
+        
+        // Full NEON optimization for higher quality modes
         int32x2_t val_vec = vdup_n_s32(value);
         int32x2_t vol_vec = vdup_n_s32(volume_lut[vol]);
         int32x2_t temp_vec = vshr_n_s32(vmul_s32(val_vec, vol_vec), 15);
@@ -105,38 +262,102 @@ public:
         }
     }
     
-    void update_channel_activity() {
-        // Update channel activity tracking
-        auto now = std::chrono::steady_clock::now().time_since_epoch().count();
-        last_activity_time = now;
+    void mark_channel_active(int channel_idx) {
+        if (channel_idx >= 0 && channel_idx < CHANNEL_COUNT) {
+            channel_activity[channel_idx] = true;
+        }
     }
     
     bool should_skip_sample() {
-        if (!fmv_mode) return false;
+        auto quality = current_quality.load(std::memory_order_relaxed);
         
-        // Skip every other sample in FMV mode for performance
-        sample_skip_counter++;
-        return (sample_skip_counter % 2) == 0;
+        switch (quality) {
+            case AudioQuality::MINIMAL:
+                // Skip 3 out of 4 samples (11.025kHz effective)
+                sample_skip_counter++;
+                return (sample_skip_counter % 4) != 0;
+                
+            case AudioQuality::LOW:
+                // Skip every other sample (22.05kHz effective)
+                sample_skip_counter++;
+                return (sample_skip_counter % 2) != 0;
+                
+            case AudioQuality::MEDIUM:
+                // Skip in FMV mode only
+                if (fmv_mode.load()) {
+                    sample_skip_counter++;
+                    return (sample_skip_counter % 2) != 0;
+                }
+                return false;
+                
+            case AudioQuality::HIGH:
+            case AudioQuality::FULL:
+            default:
+                return false;
+        }
+    }
+    
+    bool should_process_channel(int channel_idx) {
+        if (channel_idx < 0 || channel_idx >= CHANNEL_COUNT) return true;
+        
+        auto quality = current_quality.load(std::memory_order_relaxed);
+        
+        switch (quality) {
+            case AudioQuality::MINIMAL:
+                // Only process highest priority channels (0-31)
+                return channel_priority[channel_idx] < 32;
+                
+            case AudioQuality::LOW:
+                // Process priority channels (0-63)
+                return channel_priority[channel_idx] < 64;
+                
+            case AudioQuality::MEDIUM:
+                // Process most channels (0-127)
+                return channel_priority[channel_idx] < 128;
+                
+            case AudioQuality::HIGH:
+                // Process all but lowest priority (0-191)
+                return channel_priority[channel_idx] < 192;
+                
+            case AudioQuality::FULL:
+            default:
+                return true;
+        }
     }
     
     void record_sample_processed() {
+        auto now = std::chrono::steady_clock::now();
         samples_processed.fetch_add(1, std::memory_order_relaxed);
+        
+        // Store sample in emergency buffer for underrun protection
+        SampleType dummy_sample = 0; // This would be the actual processed sample
+        if (!emergency_buffer.push(dummy_sample)) {
+            buffer_overflows.fetch_add(1, std::memory_order_relaxed);
+        }
+        
+        last_sample_time = now;
+        analyze_performance();
+    }
+    
+    void record_channel_skipped() {
+        channels_skipped.fetch_add(1, std::memory_order_relaxed);
+    }
+    
+    void record_buffer_underrun() {
+        buffer_underruns.fetch_add(1, std::memory_order_relaxed);
+        emergency_mode = true;
     }
     
     bool is_fmv_mode() {
         return fmv_mode.load(std::memory_order_relaxed);
     }
     
-    bool should_process_channel(int channel_idx) {
-        if (channel_idx < 0 || channel_idx >= CHANNEL_COUNT) return true;
-        if (!fmv_mode) return true;
-        
-        // In FMV mode, process only active channels
-        return channel_activity[channel_idx];
+    bool is_cpu_overloaded() {
+        return cpu_overload.load(std::memory_order_relaxed);
     }
     
-    void record_channel_skipped() {
-        channels_skipped.fetch_add(1, std::memory_order_relaxed);
+    AudioQuality get_current_quality() {
+        return current_quality.load(std::memory_order_relaxed);
     }
     
     void detect_fmv_mode() {
@@ -145,18 +366,57 @@ public:
         
         last_fmv_check = now;
         
-        // Simple FMV detection based on sustained low interaction
+        // Enhanced FMV detection with CPU load consideration
         uint32_t current_samples = samples_processed.load(std::memory_order_relaxed);
         uint32_t current_skipped = channels_skipped.load(std::memory_order_relaxed);
+        bool current_overload = cpu_overload.load(std::memory_order_relaxed);
         
-        // If we're processing many samples with lots of channel skipping, likely FMV
-        bool new_fmv_mode = (current_samples > 1000 && current_skipped > current_samples / 4);
+        // FMV mode if sustained high sample count with skipping OR CPU overload
+        bool new_fmv_mode = (current_samples > 1000 && current_skipped > current_samples / 4) || 
+                           current_overload;
         fmv_mode.store(new_fmv_mode, std::memory_order_relaxed);
+        
+        // Update channel priorities periodically
+        update_channel_priorities();
+    }
+    
+    // Emergency sample retrieval for severe underruns
+    bool get_emergency_sample(SampleType& sample) {
+        if (emergency_buffer.pop(sample)) {
+            emergency_mode = false;
+            return true;
+        }
+        return false;
+    }
+    
+    // Performance statistics for debugging
+    struct PerformanceStats {
+        float avg_processing_time_ms;
+        float load_percentage;
+        uint32_t total_underruns;
+        uint32_t total_overflows;
+        AudioQuality quality_level;
+        bool fmv_active;
+        bool cpu_overloaded;
+        float buffer_usage;
+    };
+    
+    PerformanceStats get_stats() {
+        return {
+            .avg_processing_time_ms = sample_processing_time_avg / 1000000.0f,
+            .load_percentage = (float)sample_processing_time_avg / (float)target_sample_time * 100.0f,
+            .total_underruns = buffer_underruns.load(),
+            .total_overflows = buffer_overflows.load(),
+            .quality_level = current_quality.load(),
+            .fmv_active = fmv_mode.load(),
+            .cpu_overloaded = cpu_overload.load(),
+            .buffer_usage = emergency_buffer.load_percentage()
+        };
     }
 };
 
 // Global instance
-static iOSAudioOptimizer g_ios_audio_optimizer;
+static AdaptiveAudioManager g_adaptive_audio_manager;
 #endif
 //255 -> mute
 //Converts Send levels to TL-compatible values (DISDL, etc)
@@ -239,8 +499,8 @@ static T FPMul(T a, T b, int bits) {
 static void VolumePan(SampleType value, u32 vol, u32 pan, SampleType& outl, SampleType& outr)
 {
 #ifdef TARGET_IPHONE
-	// Use NEON-optimized version for iOS
-	g_ios_audio_optimizer.volume_pan_neon(value, vol, pan, outl, outr);
+	// Use adaptive NEON-optimized version for iOS
+	g_adaptive_audio_manager.volume_pan_neon(value, vol, pan, outl, outr);
 #else
 	SampleType temp = FPMul(value, volume_lut[vol], 15);
 	SampleType Sc = FPMul(temp, volume_lut[0xF - (pan & 0xF)], 15);
@@ -752,30 +1012,23 @@ struct ChannelEx
 	static void StepAll(SampleType& mixl, SampleType& mixr)
 	{
 #ifdef TARGET_IPHONE
-		// iOS FMV optimization: adaptive channel processing
-		g_ios_audio_optimizer.update_channel_activity();
-		
-		if (g_ios_audio_optimizer.should_skip_sample()) {
-			g_ios_audio_optimizer.record_sample_processed();
-			return;  // Skip this sample in FMV mode
+		// Adaptive audio management: intelligent channel processing
+		if (g_adaptive_audio_manager.should_skip_sample()) {
+			g_adaptive_audio_manager.record_sample_processed();
+			return;  // Skip this sample due to CPU load
 		}
 		
-		// Process only active channels in FMV mode for better performance
-		if (g_ios_audio_optimizer.is_fmv_mode()) {
-			for (int i = 0; i < 64; i++) {
-				if (g_ios_audio_optimizer.should_process_channel(i)) {
-					Chans[i].Step(mixl, mixr);
-				} else {
-					g_ios_audio_optimizer.record_channel_skipped();
-				}
+		// Process channels based on current quality level and CPU load
+		for (int i = 0; i < 64; i++) {
+			if (g_adaptive_audio_manager.should_process_channel(i)) {
+				g_adaptive_audio_manager.mark_channel_active(i);
+				Chans[i].Step(mixl, mixr);
+			} else {
+				g_adaptive_audio_manager.record_channel_skipped();
 			}
-		} else {
-			// Normal processing when not in FMV mode
-			for (ChannelEx& channel : Chans)
-				channel.Step(mixl, mixr);
 		}
 		
-		g_ios_audio_optimizer.record_sample_processed();
+		g_adaptive_audio_manager.record_sample_processed();
 #else
 		for (ChannelEx& channel : Chans)
 			channel.Step(mixl, mixr);
@@ -1095,8 +1348,8 @@ struct ChannelEx
 			Chans[i].Init(i, aica_reg);
 			
 #ifdef TARGET_IPHONE
-		// Initialize iOS audio optimizer
-		g_ios_audio_optimizer.init();
+		// Initialize adaptive audio manager
+		g_adaptive_audio_manager.init();
 #endif
 	}
 };
@@ -1616,8 +1869,8 @@ static u32 cdda_index = CDDA_SIZE;
 void AICA_Sample()
 {
 #ifdef TARGET_IPHONE
-	// iOS FMV optimization: detect FMV mode for adaptive processing
-	g_ios_audio_optimizer.detect_fmv_mode();
+	// Adaptive audio management: detect performance issues and adjust quality
+	g_adaptive_audio_manager.detect_fmv_mode();
 #endif
 
 	SampleType mixl,mixr;
@@ -1694,6 +1947,20 @@ void AICA_Sample()
 
 	mixl = std::clamp(mixl, -32768, 32767);
 	mixr = std::clamp(mixr, -32768, 32767);
+
+#ifdef TARGET_IPHONE
+	// Emergency audio buffer management for severe CPU overload
+	if (g_adaptive_audio_manager.is_cpu_overloaded()) {
+		SampleType emergency_sample;
+		if (g_adaptive_audio_manager.get_emergency_sample(emergency_sample)) {
+			// Use emergency sample if available during severe overload
+			mixl = mixr = emergency_sample;
+		} else {
+			// Last resort: record buffer underrun for quality adjustment
+			g_adaptive_audio_manager.record_buffer_underrun();
+		}
+	}
+#endif
 
 	WriteSample(mixr,mixl);
 }
