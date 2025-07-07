@@ -24,7 +24,9 @@ else
     echo "🔧 Building with NO dynarec (interpreter only)"
 fi
 
-# Initialize flags
+export VULKAN_SDK="${HOME}/VulkanSDK/macOS"
+
+# Initialize FMV-optimized flags (Core Clang optimizations only)
 C_FLAGS="-arch ${ARCH} \
 -DIOS \
 -DNO_JIT=${NO_JIT} \
@@ -42,9 +44,22 @@ C_FLAGS="-arch ${ARCH} \
 -ftree-vectorize \
 -funsafe-math-optimizations \
 -fvectorize \
--march=armv8-a+simd \
--mcpu=apple-a10 \
--O3"
+-march=armv8-a+simd+crc+crypto+dotprod+fp16 \
+-mcpu=apple-a14 \
+-mtune=apple-a14 \
+-O3 \
+-Ofast \
+-fno-math-errno \
+-ffinite-math-only \
+-fno-signed-zeros \
+-fno-trapping-math \
+-freciprocal-math \
+-ffp-contract=fast \
+-funroll-loops \
+-DARM_NEON \
+-DHAVE_NEON \
+-DENABLE_NEON_OPT \
+-DFMV_OPTIMIZED"
 
 CXX_FLAGS="-arch ${ARCH} \
 -DIOS \
@@ -63,9 +78,23 @@ CXX_FLAGS="-arch ${ARCH} \
 -ftree-vectorize \
 -funsafe-math-optimizations \
 -fvectorize \
--march=armv8-a+simd \
--mcpu=apple-a10 \
--O3"
+-march=armv8-a+simd+crc+crypto+dotprod+fp16 \
+-mcpu=apple-a14 \
+-mtune=apple-a14 \
+-O3 \
+-Ofast \
+-fno-math-errno \
+-ffinite-math-only \
+-fno-signed-zeros \
+-fno-trapping-math \
+-freciprocal-math \
+-ffp-contract=fast \
+-funroll-loops \
+-std=c++17 \
+-DARM_NEON \
+-DHAVE_NEON \
+-DENABLE_NEON_OPT \
+-DFMV_OPTIMIZED"
 
 # Add a function to display usage information
 print_usage() {
@@ -173,6 +202,19 @@ if [ $# -eq 0 ]; then
   echo
 fi
 
+# FMV-optimized linker flags for maximum performance (Simple and reliable)
+FMV_LINKER_FLAGS="-Wl,-dead_strip \
+-Wl,-dead_strip_dylibs \
+-Wl,-merge_zero_fill_sections \
+-flto=thin"
+
+# Combine with user linker flags
+if [ -n "$LINKER_FLAGS" ]; then
+  COMBINED_LINKER_FLAGS="$FMV_LINKER_FLAGS $LINKER_FLAGS"
+else
+  COMBINED_LINKER_FLAGS="$FMV_LINKER_FLAGS"
+fi
+
 # Build the cmake command
 CMAKE_CMD="cmake -B ${BUILD_DIR} \
   -DLIBRETRO=${LIBRETRO} \
@@ -180,6 +222,8 @@ CMAKE_CMD="cmake -B ${BUILD_DIR} \
   -DCMAKE_POSITION_INDEPENDENT_CODE=${PIC} \
   -DCMAKE_C_FLAGS=\"${C_FLAGS}\" \
   -DCMAKE_CXX_FLAGS=\"${CXX_FLAGS}\" \
+  -DCMAKE_EXE_LINKER_FLAGS=\"${COMBINED_LINKER_FLAGS}\" \
+  -DCMAKE_SHARED_LINKER_FLAGS=\"${COMBINED_LINKER_FLAGS}\" \
   -DIOS=${IOS} \
   -DCMAKE_SYSTEM_NAME=${SYSTEM_NAME} \
   -DENABLE_SH4_CACHED_IR=OFF \
@@ -187,12 +231,10 @@ CMAKE_CMD="cmake -B ${BUILD_DIR} \
   -DUSE_JIT=${USE_JIT} \
   -DENABLE_LTO=ON \
   -DUSE_LINK_TIME_OPTIMIZATION=ON \
+  -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=ON \
   -DCMAKE_POLICY_VERSION_MINIMUM=3.5"
 
-# Add linker flags if provided
-if [ -n "$LINKER_FLAGS" ]; then
-  CMAKE_CMD="$CMAKE_CMD -DCMAKE_EXE_LINKER_FLAGS=\"${LINKER_FLAGS}\" -DCMAKE_SHARED_LINKER_FLAGS=\"${LINKER_FLAGS}\""
-fi
+# Linker flags are now handled in the FMV optimization block above
 
 # Print the command for verification
 echo "Executing: $CMAKE_CMD"
