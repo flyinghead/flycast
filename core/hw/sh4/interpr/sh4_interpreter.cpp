@@ -16,6 +16,10 @@
 #include "debug/gdb_server.h"
 #include "../sh4_cycles.h"
 
+#ifdef FMV_OPTIMIZED
+#include <arm_neon.h>
+#endif
+
 // SH4 underclock factor when using the interpreter so that it's somewhat usable
 #ifdef STRICT_MODE
 constexpr int CPU_RATIO = 1;
@@ -32,22 +36,42 @@ Sh4OCache ocache;
 #define ULTRA_ICACHE_SIZE 16384  // Increased to 16KB for even better cache hit rate
 #define ULTRA_ICACHE_MASK (ULTRA_ICACHE_SIZE - 1)
 
-// ARM64 NEON-optimized instruction cache
+// ARM64 NEON-optimized instruction cache - FMV Enhanced
 struct alignas(64) UltraInstructionCache {
+#ifdef FMV_OPTIMIZED
+    // Larger cache for FMV sequences - 32KB total
+    static constexpr u32 EXTRA_SIZE = ULTRA_ICACHE_SIZE * 2;
+    u32 pc[EXTRA_SIZE];
+    u16 opcode[EXTRA_SIZE];
+    static constexpr u32 CACHE_MASK = EXTRA_SIZE - 1;
+#else
     u32 pc[ULTRA_ICACHE_SIZE];
     u16 opcode[ULTRA_ICACHE_SIZE];
+    static constexpr u32 CACHE_MASK = ULTRA_ICACHE_MASK;
+#endif
     
     void reset() {
+#ifdef FMV_OPTIMIZED
+        // FMV-optimized: Use ARM64 NEON for ultra-fast cache clear
+        const u32 cache_size = sizeof(pc) / sizeof(u32);
+        uint32x4_t invalid_vec = vdupq_n_u32(0xFFFFFFFF);
+        uint32x4_t* pc_vec = reinterpret_cast<uint32x4_t*>(pc);
+        
+        for (u32 i = 0; i < cache_size / 4; i++) {
+            vst1q_u32(reinterpret_cast<uint32_t*>(&pc_vec[i]), invalid_vec);
+        }
+#else
         // ARM64 NEON optimized memset
         memset(pc, 0xFF, sizeof(pc));
+#endif
     }
     
     __attribute__((always_inline)) inline u16 fetch(u32 addr) {
-        u32 index = (addr >> 1) & ULTRA_ICACHE_MASK;
+        u32 index = (addr >> 1) & CACHE_MASK;
         
         // ARM64 conditional move optimization
         if (__builtin_expect(pc[index] == addr, 1)) {
-            __builtin_prefetch(&pc[(index + 1) & ULTRA_ICACHE_MASK], 0, 3);
+            __builtin_prefetch(&pc[(index + 1) & CACHE_MASK], 0, 3);
             return opcode[index];
         }
         
@@ -57,7 +81,7 @@ struct alignas(64) UltraInstructionCache {
         opcode[index] = op;
         
         // Prefetch next likely instruction
-        __builtin_prefetch(&pc[(index + 1) & ULTRA_ICACHE_MASK], 1, 3);
+        __builtin_prefetch(&pc[(index + 1) & CACHE_MASK], 1, 3);
         
         return op;
     }
@@ -116,17 +140,23 @@ static void __attribute__((hot)) Sh4_int_Run()
         // Outer loop with ARM64 optimization
         do {
             try {
-                // ULTRA-TIGHT inner loop - MAXIMUM ARM64 performance with CPU_RATIO = 1
-                s32 cycles = p_sh4rcb->cntx.cycle_counter;
-                
-                // Batch execution with minimal system update overhead for maximum speed
-                while (__builtin_expect(cycles > 0, 1)) {
-                    // Execute 16 instructions per batch for maximum ARM64 efficiency
-                    for (int i = 0; i < 16 && cycles > 0; i++) {
-                        u16 op = UltraReadNextOp();
-                        UltraExecuteOpcode(op);
-                        cycles--;
-                    }
+                                 // ULTRA-TIGHT inner loop - MAXIMUM ARM64 performance with CPU_RATIO = 1
+                 s32 cycles = p_sh4rcb->cntx.cycle_counter;
+                 
+                 // Batch execution with minimal system update overhead for maximum speed
+                 while (__builtin_expect(cycles > 0, 1)) {
+#ifdef FMV_OPTIMIZED
+                     // FMV-optimized batch: Execute 32 instructions per batch for video decode performance
+                     register int batch_size asm("w19") = 32;  // Use callee-saved register
+#else
+                     // Normal batch: Execute 16 instructions per batch for balanced performance
+                     register int batch_size asm("w19") = 16;
+#endif
+                     for (register int i asm("w20") = 0; i < batch_size && cycles > 0; i++) {
+                         register u16 op asm("w21") = UltraReadNextOp();
+                         UltraExecuteOpcode(op);
+                         cycles--;
+                     }
                     
                     // Only update system every SYSTEM_UPDATE_INTERVAL instructions for maximum speed
                     if (__builtin_expect(++g_system_update_counter >= SYSTEM_UPDATE_INTERVAL, 0)) {
