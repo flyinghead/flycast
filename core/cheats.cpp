@@ -580,12 +580,17 @@ void CheatManager::reset(const std::string& gameId)
 		}
 		else if (gameId == "HDR-0113")	// Power Smash
 		{
-			cheats.emplace_back(Cheat::Type::runNextIfEq,  "no dupe SYN ifeq", true, 16, 0x14d258, 0xbbce, true);	// bsr SendNormalSYN
-			cheats.emplace_back(Cheat::Type::setValue,      "no dupe SYN set", true, 16, 0x14d258, 0x0009, true);	// nop
-			cheats.emplace_back(Cheat::Type::runNextIfEq, "no dupe SYN2 ifeq", true, 16, 0x14d274, 0xbb72, true);	// bsr SendFakeSYN
-			cheats.emplace_back(Cheat::Type::setValue,     "no dupe SYN2 set", true, 16, 0x14d274, 0x0009, true);	// nop
-			cheats.emplace_back(Cheat::Type::runNextIfEq,  "no dupe ACK ifeq", true, 16, 0x14af42, 0x430b, true);	// jsr TCPInternalSendPacket
-			cheats.emplace_back(Cheat::Type::setValue,      "no dupe ACK set", true, 16, 0x14af42, 0x0009, true);	// nop
+			cheats.emplace_back(Cheat::Type::runNextIfEq, "no dupe SYN ifeq", true, 16, 0x14d258, 0xbbce, true);	// bsr SendNormalSYN
+			cheats.emplace_back(Cheat::Type::setValue,     "no dupe SYN set", true, 16, 0x14d258, 0x0009, true);	// nop
+			cheats.emplace_back(Cheat::Type::runNextIfEq, "no dupe ACK ifeq", true, 16, 0x14af42, 0x430b, true);	// jsr TCPInternalSendPacket
+			cheats.emplace_back(Cheat::Type::setValue,     "no dupe ACK set", true, 16, 0x14af42, 0x0009, true);	// nop
+		}
+		else if (gameId == "HDR-0091")	// Pro Yakyuu Team de Asobou Net!
+		{
+			cheats.emplace_back(Cheat::Type::runNextIfEq, "no dupe SYN ifeq", true, 16, 0xe13e0c, 0xbbce, true);	// bsr SendNormalSYN
+			cheats.emplace_back(Cheat::Type::setValue,     "no dupe SYN set", true, 16, 0xe13e0c, 0x0009, true);	// nop
+			cheats.emplace_back(Cheat::Type::runNextIfEq, "no dupe ACK ifeq", true, 16, 0xe11af6, 0x430b, true);	// jsr TCPInternalSendPacket
+			cheats.emplace_back(Cheat::Type::setValue,     "no dupe ACK set", true, 16, 0xe11af6, 0x0009, true);	// nop
 		}
 
 		if (cheats.size() > cheatCount)

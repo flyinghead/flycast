@@ -727,7 +727,8 @@ void DCNetService::receiveEthFrame(u8 const *frame, unsigned int len)
 
 void DCNetThread::connect(const asio::ip::address& address, const std::string& apname)
 {
-	const bool powerSmash = settings.content.gameId == "HDR-0113";
+	const bool powerSmash = settings.content.gameId == "HDR-0113"	// Power Smash
+			|| settings.content.gameId == "HDR-0091";				// Pro Yakyuu Team de Asobou Net!
 	asio::ip::tcp::endpoint endpoint;
 	if (address.is_unspecified())
 	{
