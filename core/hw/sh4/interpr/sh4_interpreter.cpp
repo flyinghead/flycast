@@ -40,6 +40,38 @@ Sh4OCache ocache;
 #define ULTRA_CACHE_ASSOCIATIVITY 4  // 4-way set associative for better conflict resolution
 #define ULTRA_CACHE_LINE_SIZE 64     // Larger cache lines for spatial locality
 
+// === FAST BASIC OPCODE OPTIMIZATION SYSTEM ===
+
+// Fast opcode type classification for optimization
+enum class FastOpcodeType : u8 {
+    COMPLEX = 0,           // Use function call (default)
+    ALU_REG_REG,          // Basic ALU: add, sub, and, xor, or (reg,reg)
+    ALU_IMM_REG,          // Basic ALU: add/and/xor/or with immediate
+    SHIFT_FIXED,          // Fixed shifts: shll2/8/16, shlr2/8/16
+    FLAG_SET,             // Flag operations: sets, clrs, sett, clrt
+    NOP_OP,               // No operation
+    MOV_REG_REG,          // Register to register move
+    MOV_IMM_REG           // Immediate to register move
+};
+
+// Fast lookup table for basic opcode optimization (64KB lookup)
+static FastOpcodeType g_fast_opcode_table[65536];
+static bool g_fast_opcode_initialized = false;
+
+// Performance counters for optimization analysis
+struct FastOpcodeStats {
+    u64 fast_opcodes_executed = 0;
+    u64 complex_opcodes_executed = 0;
+    u64 alu_reg_reg_count = 0;
+    u64 alu_imm_reg_count = 0;
+    u64 shift_fixed_count = 0;
+    u64 flag_set_count = 0;
+    u64 nop_count = 0;
+    u64 mov_count = 0;
+};
+
+static FastOpcodeStats g_fast_stats;
+
 // ARM64 NEON-optimized instruction cache - ULTRA-ENHANCED
 struct alignas(64) UltraInstructionCache {
     // Set-associative cache structure for better conflict resolution
@@ -137,6 +169,21 @@ struct alignas(64) UltraInstructionCache {
 };
 
 static UltraInstructionCache g_ultra_icache;
+
+// Forward declaration for PrintFastOpcodeStats function used in DynamicTimingController
+static void PrintFastOpcodeStats() {
+    u64 total_opcodes = g_fast_stats.fast_opcodes_executed + g_fast_stats.complex_opcodes_executed;
+    if (total_opcodes > 100000) {  // Only print stats after significant execution
+        float fast_percentage = (float)g_fast_stats.fast_opcodes_executed / total_opcodes * 100.0f;
+        
+        INFO_LOG(INTERPRETER, "🚀 Fast Basic Opcode Stats: %.1f%% fast path (%llu fast, %llu complex)", 
+                 fast_percentage, g_fast_stats.fast_opcodes_executed, g_fast_stats.complex_opcodes_executed);
+        INFO_LOG(INTERPRETER, "   - ALU reg-reg: %llu, ALU imm-reg: %llu, Shifts: %llu, Flags: %llu, Moves: %llu, NOPs: %llu",
+                 g_fast_stats.alu_reg_reg_count, g_fast_stats.alu_imm_reg_count, 
+                 g_fast_stats.shift_fixed_count, g_fast_stats.flag_set_count,
+                 g_fast_stats.mov_count, g_fast_stats.nop_count);
+    }
+}
 
 // === DYNAMIC CPU TIMING SYSTEM ===
 
@@ -260,14 +307,17 @@ struct DynamicTimingController {
 				INFO_LOG(INTERPRETER, "⚡ SUSTAINED WORKLOAD DETECTED: ULTRA-BYPASS mode enabled (threshold=%u)", ultra_bypass_threshold);
 			}
 			
-			// Enable ultra syscall reduction for extreme performance
-			if (consecutive_fast_frames > 40 && !ultra_syscall_reduction) {
-				ultra_syscall_reduction = true;
-				max_system_call_interval = ultra_syscall_interval;
-				interrupt_batch_size = ultra_interrupt_batch;
-				INFO_LOG(INTERPRETER, "🚀 EXTREME WORKLOAD DETECTED: ULTRA-SYSCALL REDUCTION enabled (syscall_interval=%u, interrupt_batch=%u)", 
-						 ultra_syscall_interval, ultra_interrupt_batch);
-			}
+			            // Enable ultra syscall reduction for extreme performance
+            if (consecutive_fast_frames > 40 && !ultra_syscall_reduction) {
+                ultra_syscall_reduction = true;
+                max_system_call_interval = ultra_syscall_interval;
+                interrupt_batch_size = ultra_interrupt_batch;
+                INFO_LOG(INTERPRETER, "🚀 EXTREME WORKLOAD DETECTED: ULTRA-SYSCALL REDUCTION enabled (syscall_interval=%u, interrupt_batch=%u)", 
+                         ultra_syscall_interval, ultra_interrupt_batch);
+            }
+            
+            // Fast opcode statistics disabled
+            
             consecutive_fast_frames = 0;
         } else if (consecutive_slow_frames > 5) {
             // System struggling - reduce optimizations for stability
@@ -305,6 +355,91 @@ struct DynamicTimingController {
 
 static DynamicTimingController g_dynamic_timing;
 
+// === FAST BASIC OPCODE IMPLEMENTATION ===
+
+// Initialize the fast opcode lookup table for basic operations
+static void InitFastOpcodeTable() {
+    if (g_fast_opcode_initialized) return;
+    
+    // Initialize all opcodes as COMPLEX (default to function call)
+    for (int i = 0; i < 65536; i++) {
+        g_fast_opcode_table[i] = FastOpcodeType::COMPLEX;
+    }
+    
+    // === ALU_REG_REG: Basic register-to-register ALU operations ===
+    for (int n = 0; n < 16; n++) {
+        for (int m = 0; m < 16; m++) {
+            // add <REG_M>,<REG_N> - 0011_nnnn_mmmm_1100
+            g_fast_opcode_table[0x300C | (n << 8) | (m << 4)] = FastOpcodeType::ALU_REG_REG;
+            // sub <REG_M>,<REG_N> - 0011_nnnn_mmmm_1000  
+            g_fast_opcode_table[0x3008 | (n << 8) | (m << 4)] = FastOpcodeType::ALU_REG_REG;
+            // and <REG_M>,<REG_N> - 0010_nnnn_mmmm_1001
+            g_fast_opcode_table[0x2009 | (n << 8) | (m << 4)] = FastOpcodeType::ALU_REG_REG;
+            // xor <REG_M>,<REG_N> - 0010_nnnn_mmmm_1010
+            g_fast_opcode_table[0x200A | (n << 8) | (m << 4)] = FastOpcodeType::ALU_REG_REG;
+            // or <REG_M>,<REG_N> - 0010_nnnn_mmmm_1011
+            g_fast_opcode_table[0x200B | (n << 8) | (m << 4)] = FastOpcodeType::ALU_REG_REG;
+            // mov <REG_M>,<REG_N> - 0110_nnnn_mmmm_0011
+            g_fast_opcode_table[0x6003 | (n << 8) | (m << 4)] = FastOpcodeType::MOV_REG_REG;
+        }
+    }
+    
+    // === ALU_IMM_REG: Immediate ALU operations ===
+    for (int n = 0; n < 16; n++) {
+        for (int imm = 0; imm < 256; imm++) {
+            // add #<imm>,<REG_N> - 0111_nnnn_iiii_iiii
+            g_fast_opcode_table[0x7000 | (n << 8) | imm] = FastOpcodeType::ALU_IMM_REG;
+            // mov #<imm>,<REG_N> - 1110_nnnn_iiii_iiii
+            g_fast_opcode_table[0xE000 | (n << 8) | imm] = FastOpcodeType::MOV_IMM_REG;
+        }
+    }
+    
+    // === ALU_IMM_REG: R0-specific immediate operations ===
+    for (int imm = 0; imm < 256; imm++) {
+        // and #<imm>,R0 - 1100_1001_iiii_iiii
+        g_fast_opcode_table[0xC900 | imm] = FastOpcodeType::ALU_IMM_REG;
+        // xor #<imm>,R0 - 1100_1010_iiii_iiii
+        g_fast_opcode_table[0xCA00 | imm] = FastOpcodeType::ALU_IMM_REG;
+        // or #<imm>,R0 - 1100_1011_iiii_iiii
+        g_fast_opcode_table[0xCB00 | imm] = FastOpcodeType::ALU_IMM_REG;
+    }
+    
+    // === SHIFT_FIXED: Fixed shift operations ===
+    for (int n = 0; n < 16; n++) {
+        // shll2 <REG_N> - 0100_nnnn_0000_1000
+        g_fast_opcode_table[0x4008 | (n << 8)] = FastOpcodeType::SHIFT_FIXED;
+        // shll8 <REG_N> - 0100_nnnn_0001_1000
+        g_fast_opcode_table[0x4018 | (n << 8)] = FastOpcodeType::SHIFT_FIXED;
+        // shll16 <REG_N> - 0100_nnnn_0010_1000
+        g_fast_opcode_table[0x4028 | (n << 8)] = FastOpcodeType::SHIFT_FIXED;
+        // shlr2 <REG_N> - 0100_nnnn_0000_1001
+        g_fast_opcode_table[0x4009 | (n << 8)] = FastOpcodeType::SHIFT_FIXED;
+        // shlr8 <REG_N> - 0100_nnnn_0001_1001
+        g_fast_opcode_table[0x4019 | (n << 8)] = FastOpcodeType::SHIFT_FIXED;
+        // shlr16 <REG_N> - 0100_nnnn_0010_1001
+        g_fast_opcode_table[0x4029 | (n << 8)] = FastOpcodeType::SHIFT_FIXED;
+    }
+    
+    // === FLAG_SET: Flag manipulation operations ===
+    // sets - 0000_0000_0101_1000
+    g_fast_opcode_table[0x0058] = FastOpcodeType::FLAG_SET;
+    // clrs - 0000_0000_0100_1000
+    g_fast_opcode_table[0x0048] = FastOpcodeType::FLAG_SET;
+    // sett - 0000_0000_0001_1000
+    g_fast_opcode_table[0x0018] = FastOpcodeType::FLAG_SET;
+    // clrt - 0000_0000_0000_1000
+    g_fast_opcode_table[0x0008] = FastOpcodeType::FLAG_SET;
+    
+    // === NOP_OP: No operation ===
+    // nop - 0000_0000_0000_1001
+    g_fast_opcode_table[0x0009] = FastOpcodeType::NOP_OP;
+    
+    g_fast_opcode_initialized = true;
+    INFO_LOG(INTERPRETER, "🔥 Fast Basic Opcode System: Initialized lookup table for maximum performance!");
+}
+
+
+
 // === MAXIMUM SPEED TIMING OPTIMIZATION ===
 
 // Reduce scheduler overhead by batching system updates even more aggressively
@@ -316,10 +451,119 @@ static u64 g_last_frame_time = 0;
 static u32 g_frame_counter = 0;
 
 // Ultra-fast execution with ARM64 optimizations - NO CPU_RATIO penalty
+// Ultra-fast basic opcode execution with inlined implementations
 __attribute__((always_inline, hot)) 
 static inline void UltraExecuteOpcode(u16 op)
 {
-    // ARM64 branch prediction hint
+    // Fast path: Check if this is a basic opcode that can be inlined
+    FastOpcodeType opcode_type = g_fast_opcode_table[op];
+    
+    // TEMPORARILY DISABLED - Debug mode to fix issues
+    if (false && __builtin_expect(opcode_type != FastOpcodeType::COMPLEX, 1)) {
+        // === FAST PATH: Inlined basic opcodes ===
+        g_fast_stats.fast_opcodes_executed++;
+        
+        switch (opcode_type) {
+            case FastOpcodeType::ALU_REG_REG: {
+                // Inline basic ALU register-to-register operations
+                u32 n = (op >> 8) & 0xF;
+                u32 m = (op >> 4) & 0xF;
+                u32 opcode_type = op & 0xF00F;
+                
+                switch (opcode_type) {
+                    case 0x300C: r[n] += r[m]; break;  // add
+                    case 0x3008: r[n] -= r[m]; break;  // sub
+                    case 0x2009: r[n] &= r[m]; break;  // and
+                    case 0x200A: r[n] ^= r[m]; break;  // xor
+                    case 0x200B: r[n] |= r[m]; break;  // or
+                }
+                g_fast_stats.alu_reg_reg_count++;
+                break;
+            }
+            
+            case FastOpcodeType::MOV_REG_REG: {
+                // Inline register-to-register move
+                u32 n = (op >> 8) & 0xF;
+                u32 m = (op >> 4) & 0xF;
+                r[n] = r[m];
+                g_fast_stats.mov_count++;
+                break;
+            }
+            
+            case FastOpcodeType::ALU_IMM_REG: {
+                // Inline immediate ALU operations
+                u32 n = (op >> 8) & 0xF;
+                u32 imm = op & 0xFF;
+                u32 opcode_type = op & 0xFF00;
+                
+                switch (opcode_type) {
+                    case 0x7000: r[n] += (s8)imm; break;     // add #imm,Rn
+                    case 0xC900: r[0] &= imm; break;         // and #imm,R0
+                    case 0xCA00: r[0] ^= imm; break;         // xor #imm,R0  
+                    case 0xCB00: r[0] |= imm; break;         // or #imm,R0
+                }
+                g_fast_stats.alu_imm_reg_count++;
+                break;
+            }
+            
+            case FastOpcodeType::MOV_IMM_REG: {
+                // Inline immediate move
+                u32 n = (op >> 8) & 0xF;
+                s32 imm = (s8)(op & 0xFF);
+                r[n] = imm;
+                g_fast_stats.mov_count++;
+                break;
+            }
+            
+            case FastOpcodeType::SHIFT_FIXED: {
+                // Inline fixed shift operations
+                u32 n = (op >> 8) & 0xF;
+                u32 shift_type = op & 0x00FF;
+                
+                switch (shift_type) {
+                    case 0x08: r[n] <<= 2; break;   // shll2
+                    case 0x18: r[n] <<= 8; break;   // shll8
+                    case 0x28: r[n] <<= 16; break;  // shll16
+                    case 0x09: r[n] >>= 2; break;   // shlr2
+                    case 0x19: r[n] >>= 8; break;   // shlr8
+                    case 0x29: r[n] >>= 16; break;  // shlr16
+                }
+                g_fast_stats.shift_fixed_count++;
+                break;
+            }
+            
+            case FastOpcodeType::FLAG_SET: {
+                // Inline flag operations
+                switch (op) {
+                    case 0x0058: sr.S = 1; break;  // sets
+                    case 0x0048: sr.S = 0; break;  // clrs
+                    case 0x0018: sr.T = 1; break;  // sett
+                    case 0x0008: sr.T = 0; break;  // clrt
+                }
+                g_fast_stats.flag_set_count++;
+                break;
+            }
+            
+            case FastOpcodeType::NOP_OP: {
+                // nop - do nothing
+                g_fast_stats.nop_count++;
+                break;
+            }
+            
+            default:
+                // Should never reach here due to lookup table design
+                break;
+        }
+        
+        // Fast cycle counting (always 1 cycle for basic ops)
+        sh4cycles.addCycles(1);
+        return;
+    }
+    
+    // === SLOW PATH: Complex opcodes use function calls ===
+    g_fast_stats.complex_opcodes_executed++;
+    
+    // ARM64 branch prediction hint for FPU check
     if (__builtin_expect(sr.FD == 1 && OpDesc[op]->IsFloatingPoint(), 0))
         RaiseFPUDisableException();
         
@@ -520,6 +764,8 @@ static void Sh4_int_Reset(bool hard)
     
     // Initialize dynamic timing controller
     g_dynamic_timing.init();
+    
+    // Fast opcodes disabled for compatibility
 
     INFO_LOG(INTERPRETER, "🚀 ULTRA-AGGRESSIVE ARM64 Interpreter Reset - Dynamic timing, scheduler bypass, FMV optimizations active!");
 }
@@ -581,8 +827,12 @@ void Get_Sh4Interpreter(sh4_if* cpu)
     cpu->Stop = Sh4_int_Stop;
     cpu->Step = Sh4_int_Step;
     cpu->Reset = Sh4_int_Reset;
-    cpu->Init = []() { INFO_LOG(INTERPRETER, "🚀 ULTRA-AGGRESSIVE INTERPRETER: Dynamic timing, scheduler bypass, FMV detection, ARM64 optimizations!"); };
-    cpu->Term = []() {};
+    cpu->Init = []() { 
+        INFO_LOG(INTERPRETER, "🚀 ULTRA-AGGRESSIVE INTERPRETER: Dynamic timing, scheduler bypass, FMV detection, ARM64 optimizations!"); 
+    };
+    cpu->Term = []() { 
+        PrintFastOpcodeStats();
+    };
     cpu->ResetCache = []() { g_ultra_icache.reset(); };
     cpu->IsCpuRunning = Sh4_int_IsCpuRunning;
 }
