@@ -21,7 +21,33 @@ namespace aica::dsp
 
 DSPState state;
 
-//float format is ?
+/// ARM64 optimized PACK function for iOS
+#if defined(__aarch64__) && (defined(__APPLE__) || defined(TARGET_IPHONE))
+__attribute__((always_inline))
+u16 DYNACALL PACK(s32 val)
+{
+	/// Use ARM64 hardware bit manipulation for optimal performance
+	int sign = (val >> 23) & 0x1;
+	u32 temp = (val ^ (val << 1)) & 0xFFFFFF;
+	
+	/// ARM64 optimized leading zero count - much faster than loop
+	int exponent = __builtin_clz(temp) - 8; // clz is fast on ARM64
+	if (exponent < 12) {
+		exponent = 12 - exponent;
+		val <<= exponent;
+	} else {
+		val <<= 11;
+		exponent = 0;
+	}
+	
+	val = (val >> 11) & 0x7FF;	// avoid sign extension of mantissa
+	val |= sign << 15;
+	val |= exponent << 11;
+
+	return (u16)val;
+}
+#else
+/// Standard PACK function for other platforms
 u16 DYNACALL PACK(s32 val)
 {
 	int sign = (val >> 23) & 0x1;
@@ -44,7 +70,33 @@ u16 DYNACALL PACK(s32 val)
 
 	return (u16)val;
 }
+#endif
 
+/// ARM64 optimized UNPACK function for iOS
+#if defined(__aarch64__) && (defined(__APPLE__) || defined(TARGET_IPHONE))
+__attribute__((always_inline))
+s32 DYNACALL UNPACK(u16 val)
+{
+	/// ARM64 optimized bit field extraction
+	int sign = (val >> 15) & 0x1;
+	int exponent = (val >> 11) & 0xF;
+	int mantissa = val & 0x7FF;
+	
+	s32 uval = mantissa << 11;
+	uval |= sign << 22;		// take the sign in bit 22
+	if (__builtin_expect(exponent > 11, 0))
+		exponent = 11;		// cap exponent to 11 for denormals
+	else
+		uval ^= 1 << 22;	// reverse bit 22 for normals
+	uval |= sign << 23;		// actual sign bit
+	uval <<= 8;
+	uval >>= 8;
+	uval >>= exponent;
+
+	return uval;
+}
+#else
+/// Standard UNPACK function for other platforms
 s32 DYNACALL UNPACK(u16 val)
 {
 	int sign = (val >> 15) & 0x1;
@@ -63,6 +115,7 @@ s32 DYNACALL UNPACK(u16 val)
 
 	return uval;
 }
+#endif
 
 void DecodeInst(const u32 *IPtr, Instruction *i)
 {
