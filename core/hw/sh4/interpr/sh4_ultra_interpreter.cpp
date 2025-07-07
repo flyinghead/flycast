@@ -15,25 +15,6 @@
 #include "hw/sh4/sh4_cache.h"
 #include "hw/sh4/modules/mmu.h"
 
-// === SHIL-POWERED ULTRA-INTERPRETER ===
-// Leverage the existing optimized SHIL infrastructure for maximum performance!
-#ifdef ENABLE_SH4_JITLESS
-#include "hw/sh4/dyna_jitless/shil_jitless.h"
-#include "hw/sh4/dyna_jitless/decoder_jitless.h"
-#include "hw/sh4/dyna_jitless/blockmanager_jitless.h"
-#else
-#include "hw/sh4/dyna/shil.h"
-#include "hw/sh4/dyna/decoder.h"
-#include "hw/sh4/dyna/blockmanager.h"
-#endif
-
-#include <unordered_map>
-#include <vector>
-
-#ifdef __aarch64__
-#include <arm_neon.h>
-#endif
-
 // === INSTRUCTION SEQUENCE CACHING ===
 #define MAX_SEQUENCE_LENGTH 8
 #define SEQUENCE_CACHE_SIZE 256
@@ -373,10 +354,77 @@ static void ultra_interpreter_run();
 // === ARM64 NEON SIMD OPTIMIZATIONS ===
 // Use ARM64 NEON to process multiple registers simultaneously
 
-// ARM64 NEON optimizations (disabled due to compilation issues)
-// TODO: Re-enable when NEON intrinsics are properly configured
+#ifdef __aarch64__
+#include <arm_neon.h>
 
-// Fallback implementations for all platforms
+// Bulk register clear using NEON (4 registers at once)
+static inline void neon_clear_registers(u32* reg_base, int count) {
+    uint32x4_t zero = vdupq_n_u32(0);
+    for (int i = 0; i < count; i += 4) {
+        vst1q_u32(&reg_base[i], zero);
+    }
+}
+
+// Bulk register copy using NEON (4 registers at once)  
+static inline void neon_copy_registers(u32* dst, const u32* src, int count) {
+    for (int i = 0; i < count; i += 4) {
+        uint32x4_t data = vld1q_u32(&src[i]);
+        vst1q_u32(&dst[i], data);
+    }
+}
+
+// NEON-optimized register bank switching
+static inline void neon_switch_register_bank() {
+    // Save current bank using NEON (only 8 registers in r_bank)
+    uint32x4_t bank0_3 = vld1q_u32(&r[0]);
+    uint32x4_t bank4_7 = vld1q_u32(&r[4]);
+    
+    // Load shadow bank using NEON (only 8 registers)
+    vst1q_u32(&r[0], vld1q_u32(&r_bank[0]));
+    vst1q_u32(&r[4], vld1q_u32(&r_bank[4]));
+    
+    // Store old bank to shadow (only 8 registers)
+    vst1q_u32(&r_bank[0], bank0_3);
+    vst1q_u32(&r_bank[4], bank4_7);
+}
+
+// Detect patterns for NEON optimization
+static inline bool is_bulk_mov_pattern(u16* opcodes, int count) {
+    // Check if we have 4+ consecutive MOV operations
+    int mov_count = 0;
+    for (int i = 0; i < count && i < 8; i++) {
+        if ((opcodes[i] & 0xF00F) == 0x6003) { // mov <REG_M>,<REG_N>
+            mov_count++;
+        } else {
+            break;
+        }
+    }
+    return mov_count >= 4;
+}
+
+// Execute bulk MOV operations with NEON
+static inline int execute_bulk_mov_neon(u16* opcodes, int count) {
+    // Extract source and destination registers
+    u32 src_regs[4], dst_regs[4];
+    for (int i = 0; i < 4; i++) {
+        src_regs[i] = (opcodes[i] >> 4) & 0xF;
+        dst_regs[i] = (opcodes[i] >> 8) & 0xF;
+    }
+    
+    // Load source values using NEON gather (simulated)
+    uint32x4_t values = {r[src_regs[0]], r[src_regs[1]], r[src_regs[2]], r[src_regs[3]]};
+    
+    // Store to destinations
+    r[dst_regs[0]] = vgetq_lane_u32(values, 0);
+    r[dst_regs[1]] = vgetq_lane_u32(values, 1);
+    r[dst_regs[2]] = vgetq_lane_u32(values, 2);
+    r[dst_regs[3]] = vgetq_lane_u32(values, 3);
+    
+    return 4; // Processed 4 instructions
+}
+
+#else
+// Fallback for non-ARM64 platforms
 static inline void neon_clear_registers(u32* reg_base, int count) {
     for (int i = 0; i < count; i++) {
         reg_base[i] = 0;
@@ -400,6 +448,7 @@ static inline void neon_switch_register_bank() {
 
 static inline bool is_bulk_mov_pattern(u16* opcodes, int count) { return false; }
 static inline int execute_bulk_mov_neon(u16* opcodes, int count) { return 0; }
+#endif
 
 // === SEQUENCE CACHING IMPLEMENTATION ===
 
@@ -608,494 +657,36 @@ static inline void build_instruction_sequence(u32 start_pc, u32 length) {
 #endif
 }
 
-// === SHIL BLOCK CACHE ===
-// Cache translated and optimized SHIL blocks for ultra-fast execution
-#define MAX_SHIL_CACHE_SIZE 256  // Bounded cache to prevent memory explosion
-
-struct CachedShilBlock {
-    std::vector<shil_opcode> optimized_opcodes;
-    u32 sh4_hash;
-    u32 execution_count;
-    u64 last_access_time;
-    bool is_hot;
-    
-    // Performance tracking
-    u64 total_cycles;
-    u64 start_time;
-};
-
-static std::unordered_map<u32, CachedShilBlock> g_shil_cache;
-static u64 g_shil_access_counter = 0;
-static u32 g_shil_cache_hits = 0;
-static u32 g_shil_cache_misses = 0;
-
-// === ULTRA-FAST SHIL INTERPRETER ===
-// Execute SHIL opcodes with minimal overhead
-class UltraShilInterpreter {
-public:
-    // Execute a single SHIL opcode with maximum performance
-    static inline void execute_shil_opcode(const shil_opcode& op) {
-        switch (op.op) {
-            case shop_mov32:
-                if (op.rd.is_reg() && op.rs1.is_reg()) {
-                    // Register-to-register move (hottest path)
-                    *op.rd.reg_ptr() = *op.rs1.reg_ptr();
-                } else if (op.rd.is_reg() && op.rs1.is_imm()) {
-                    // Immediate-to-register move
-                    *op.rd.reg_ptr() = op.rs1.imm_value();
-                } else {
-                    // Complex move - use canonical implementation
-                    execute_canonical_shil(op);
-                }
-                break;
-                
-            case shop_add:
-                if (op.rd.is_reg() && op.rs1.is_reg() && op.rs2.is_reg()) {
-                    // Register addition (very hot)
-                    *op.rd.reg_ptr() = *op.rs1.reg_ptr() + *op.rs2.reg_ptr();
-                } else if (op.rd.is_reg() && op.rs1.is_reg() && op.rs2.is_imm()) {
-                    // Add immediate
-                    *op.rd.reg_ptr() = *op.rs1.reg_ptr() + op.rs2.imm_value();
-                } else {
-                    execute_canonical_shil(op);
-                }
-                break;
-                
-            case shop_sub:
-                if (op.rd.is_reg() && op.rs1.is_reg() && op.rs2.is_reg()) {
-                    *op.rd.reg_ptr() = *op.rs1.reg_ptr() - *op.rs2.reg_ptr();
-                } else {
-                    execute_canonical_shil(op);
-                }
-                break;
-                
-            case shop_and:
-                if (op.rd.is_reg() && op.rs1.is_reg() && op.rs2.is_reg()) {
-                    *op.rd.reg_ptr() = *op.rs1.reg_ptr() & *op.rs2.reg_ptr();
-                } else {
-                    execute_canonical_shil(op);
-                }
-                break;
-                
-            case shop_or:
-                if (op.rd.is_reg() && op.rs1.is_reg() && op.rs2.is_reg()) {
-                    *op.rd.reg_ptr() = *op.rs1.reg_ptr() | *op.rs2.reg_ptr();
-                } else {
-                    execute_canonical_shil(op);
-                }
-                break;
-                
-            case shop_xor:
-                if (op.rd.is_reg() && op.rs1.is_reg() && op.rs2.is_reg()) {
-                    *op.rd.reg_ptr() = *op.rs1.reg_ptr() ^ *op.rs2.reg_ptr();
-                } else {
-                    execute_canonical_shil(op);
-                }
-                break;
-                
-            case shop_readm:
-                // Memory read - use existing optimized implementation
-                execute_canonical_shil(op);
-                break;
-                
-            case shop_writem:
-                // Memory write - use existing optimized implementation
-                execute_canonical_shil(op);
-                break;
-                
-            case shop_jcond:
-                // Conditional jump - handle specially
-                handle_conditional_jump(op);
-                break;
-                
-            case shop_jdyn:
-                // Dynamic jump - handle specially
-                handle_dynamic_jump(op);
-                break;
-                
-            case shop_ifb:
-                // Interpreter fallback - call legacy interpreter
-                handle_interpreter_fallback(op);
-                break;
-                
-            default:
-                // Use canonical SHIL implementation for all other opcodes
-                execute_canonical_shil(op);
-                break;
-        }
-    }
-    
-    // Execute an entire SHIL block
-    static void execute_shil_block(const std::vector<shil_opcode>& opcodes) {
-        for (const auto& op : opcodes) {
-            execute_shil_opcode(op);
-        }
-    }
-    
-private:
-    // Execute using canonical SHIL implementation with aggressive safety
-    static void execute_canonical_shil(const shil_opcode& op) {
-        // AGGRESSIVE SAFETY: Never call canonical SHIL for jitless
-        // Always fall back to interpreter to prevent crashes
-        
-        // LOG THE PROBLEMATIC OPCODE FOR DEBUGGING
-        const char* opcode_names[] = {
-            "shop_mov32", "shop_mov64", "shop_jdyn", "shop_jcond", "shop_jmp", 
-            "shop_add", "shop_sub", "shop_mul", "shop_div", "shop_and", 
-            "shop_or", "shop_xor", "shop_not", "shop_shl", "shop_shr", 
-            "shop_sar", "shop_neg", "shop_test", "shop_sext8", "shop_sext16",
-            "shop_readm", "shop_writem", "shop_sync_sr", "shop_sync_fpscr",
-            "shop_swaplb", "shop_neg64", "shop_ext32", "shop_ext64",
-            "shop_ifb", "shop_cvt_f2i_t", "shop_cvt_i2f_n", "shop_cvt_i2f_z",
-            "shop_fadd", "shop_fsub", "shop_fmul", "shop_fdiv", "shop_fabs",
-            "shop_fneg", "shop_fsqrt", "shop_fmac", "shop_float", "shop_ftrc",
-            "shop_fipr", "shop_ftrv", "shop_frswap", "shop_fschg", "shop_fsrra",
-            "shop_fsca", "shop_fld", "shop_fst"
-        };
-        
-        const char* opcode_name = (op.op < sizeof(opcode_names)/sizeof(opcode_names[0])) ? 
-                                 opcode_names[op.op] : "UNKNOWN";
-        
-        if (op.op == shop_ifb && op.rs1.is_imm()) {
-            // This is an interpreter fallback - execute directly
-            u16 sh4_opcode = op.rs1.imm_value();
-            OpPtr[sh4_opcode](sh4_opcode);
-        } else {
-            // For ALL other opcodes, log and skip to prevent crashes
-            WARN_LOG(INTERPRETER, "⚠️ SHIL: Skipping opcode %s (%d) to prevent jitless canonical crash", 
-                    opcode_name, op.op);
-            
-            // Log operand details for debugging
-            if (op.rd.is_reg()) {
-                INFO_LOG(INTERPRETER, "   rd: reg[%d]", op.rd.reg_nofs());
-            }
-            if (op.rs1.is_reg()) {
-                INFO_LOG(INTERPRETER, "   rs1: reg[%d]", op.rs1.reg_nofs());
-            } else if (op.rs1.is_imm()) {
-                INFO_LOG(INTERPRETER, "   rs1: imm(0x%X)", op.rs1.imm_value());
-            }
-            if (op.rs2.is_reg()) {
-                INFO_LOG(INTERPRETER, "   rs2: reg[%d]", op.rs2.reg_nofs());
-            } else if (op.rs2.is_imm()) {
-                INFO_LOG(INTERPRETER, "   rs2: imm(0x%X)", op.rs2.imm_value());
-            }
-            
-            // Don't execute anything - just skip to prevent fatal error
-        }
-    }
-    
-    // Handle conditional jumps
-    static void handle_conditional_jump(const shil_opcode& op) {
-        // TODO: Implement conditional jump handling
-        execute_canonical_shil(op);
-    }
-    
-    // Handle dynamic jumps
-    static void handle_dynamic_jump(const shil_opcode& op) {
-        // TODO: Implement dynamic jump handling
-        execute_canonical_shil(op);
-    }
-    
-    // Handle interpreter fallback
-    static void handle_interpreter_fallback(const shil_opcode& op) {
-        // TODO: Implement interpreter fallback
-        execute_canonical_shil(op);
-    }
-};
-
-// === SHIL BLOCK MANAGEMENT ===
-// Manage cached SHIL blocks with LRU eviction
-class ShilBlockManager {
-public:
-    // Get or create a cached SHIL block
-    static CachedShilBlock* get_or_create_block(u32 pc) {
-        // Check cache first
-        auto it = g_shil_cache.find(pc);
-        if (it != g_shil_cache.end()) {
-            // Cache hit - update access time
-            it->second.last_access_time = ++g_shil_access_counter;
-            it->second.execution_count++;
-            g_shil_cache_hits++;
-            
-            // Promote to hot block if frequently executed
-            if (it->second.execution_count > 10 && !it->second.is_hot) {
-                promote_to_hot_block(&it->second);
-            }
-            
-            return &it->second;
-        }
-        
-        // Cache miss - create new block
-        g_shil_cache_misses++;
-        return create_new_block(pc);
-    }
-    
-    // Clear cache when needed
-    static void clear_cache() {
-        g_shil_cache.clear();
-        g_shil_access_counter = 0;
-        g_shil_cache_hits = 0;
-        g_shil_cache_misses = 0;
-        INFO_LOG(INTERPRETER, "🧹 SHIL cache cleared");
-    }
-    
-    // Get cache statistics
-    static void print_stats() {
-        u32 total = g_shil_cache_hits + g_shil_cache_misses;
-        if (total > 0) {
-            float hit_rate = (float)g_shil_cache_hits / total * 100.0f;
-            INFO_LOG(INTERPRETER, "📊 SHIL Cache: %.1f%% hit rate (%u hits, %u misses, %zu blocks)",
-                     hit_rate, g_shil_cache_hits, g_shil_cache_misses, g_shil_cache.size());
-        }
-    }
-    
-private:
-    // Create a new SHIL block
-    static CachedShilBlock* create_new_block(u32 pc) {
-        // Check if cache is full
-        if (g_shil_cache.size() >= MAX_SHIL_CACHE_SIZE) {
-            evict_oldest_block();
-        }
-        
-        // Create new block
-        CachedShilBlock new_block;
-        new_block.sh4_hash = calculate_sh4_hash(pc);
-        new_block.execution_count = 1;
-        new_block.last_access_time = ++g_shil_access_counter;
-        new_block.is_hot = false;
-        new_block.total_cycles = 0;
-        new_block.start_time = 0;
-        
-        // Translate SH4 to SHIL using existing infrastructure
-        translate_sh4_to_shil(pc, new_block);
-        
-        // Store in cache
-        g_shil_cache[pc] = std::move(new_block);
-        return &g_shil_cache[pc];
-    }
-    
-    // Evict oldest block from cache
-    static void evict_oldest_block() {
-        if (g_shil_cache.empty()) return;
-        
-        // Find oldest block
-        auto oldest = g_shil_cache.begin();
-        for (auto it = g_shil_cache.begin(); it != g_shil_cache.end(); ++it) {
-            if (it->second.last_access_time < oldest->second.last_access_time) {
-                oldest = it;
-            }
-        }
-        
-        // Remove oldest block
-        g_shil_cache.erase(oldest);
-    }
-    
-    // Calculate hash of SH4 code
-    static u32 calculate_sh4_hash(u32 pc) {
-        u32 hash = 0x811c9dc5;  // FNV-1a hash
-        
-        // Hash basic block (simplified)
-        for (u32 i = 0; i < 32; i++) {  // Max 32 instructions
-            u16 opcode = IReadMem16(pc + i * 2);
-            hash ^= opcode;
-            hash *= 0x01000193;
-            
-            // Stop at branch instructions
-            if (OpDesc[opcode]->SetPC()) {
-                break;
-            }
-        }
-        
-        return hash;
-    }
-    
-    // Translate SH4 to SHIL using existing infrastructure
-    static void translate_sh4_to_shil(u32 pc, CachedShilBlock& block) {
-        // Read and decode SH4 instruction
-        u16 sh4_opcode = IReadMem16(pc);
-        
-        // Use existing decoder to get SHIL representation
-        // This leverages all the existing SH4 → SHIL translation logic
-        
-        // Create a basic SHIL block for this instruction
-        shil_opcode shil_op;
-        
-        // Decode common SH4 opcodes to SHIL
-        u32 op_high = (sh4_opcode >> 12) & 0xF;
-        u32 op_low = sh4_opcode & 0xF;
-        u32 n = (sh4_opcode >> 8) & 0xF;
-        u32 m = (sh4_opcode >> 4) & 0xF;
-        
-        switch (op_high) {
-            case 0x6: // MOV family
-                switch (op_low) {
-                    case 0x3: // mov <REG_M>,<REG_N>
-                        // SAFE: shop_mov32 is NOT implemented in jitless, use fallback
-                        shil_op.op = shop_ifb;
-                        shil_op.rs1 = shil_param(sh4_opcode);
-                        block.optimized_opcodes.push_back(shil_op);
-                        break;
-                    case 0x0: // mov.b @<REG_M>,<REG_N>
-                    case 0x1: // mov.w @<REG_M>,<REG_N>
-                    case 0x2: // mov.l @<REG_M>,<REG_N>
-                        // UNSAFE: shop_readm causes fatal crash in jitless - skip SHIL entirely
-                        INFO_LOG(INTERPRETER, "🔄 Skipping SHIL translation for memory read opcode 0x%04X - using safe fallback", sh4_opcode);
-                        return; // Don't add any SHIL opcodes - block will be empty
-                    default:
-                        // Use interpreter fallback for complex moves
-                        shil_op.op = shop_ifb;
-                        shil_op.rs1 = shil_param(sh4_opcode);
-                        block.optimized_opcodes.push_back(shil_op);
-                        break;
-                }
-                break;
-                
-            case 0x3: // ADD family
-                switch (op_low) {
-                    case 0xC: // add <REG_M>,<REG_N>
-                        shil_op.op = shop_add;
-                        shil_op.rd = shil_param((Sh4RegType)(reg_r0 + n));
-                        shil_op.rs1 = shil_param((Sh4RegType)(reg_r0 + n));
-                        shil_op.rs2 = shil_param((Sh4RegType)(reg_r0 + m));
-                        block.optimized_opcodes.push_back(shil_op);
-                        break;
-                    default:
-                        // Fallback
-                        shil_op.op = shop_ifb;
-                        shil_op.rs1 = shil_param(sh4_opcode);
-                        block.optimized_opcodes.push_back(shil_op);
-                        break;
-                }
-                break;
-                
-            case 0x7: // ADD immediate
-                // add #imm,Rn
-                shil_op.op = shop_add;
-                shil_op.rd = shil_param((Sh4RegType)(reg_r0 + n));
-                shil_op.rs1 = shil_param((Sh4RegType)(reg_r0 + n));
-                shil_op.rs2 = shil_param((u32)(s8)(sh4_opcode & 0xFF)); // Sign-extend immediate
-                block.optimized_opcodes.push_back(shil_op);
-                break;
-                
-            case 0x2: // Memory operations
-                switch (op_low) {
-                    case 0x0: // mov.b <REG_M>,@<REG_N>
-                    case 0x1: // mov.w <REG_M>,@<REG_N>
-                    case 0x2: // mov.l <REG_M>,@<REG_N>
-                        // UNSAFE: shop_writem causes fatal crash in jitless - skip SHIL entirely
-                        INFO_LOG(INTERPRETER, "🔄 Skipping SHIL translation for memory write opcode 0x%04X - using safe fallback", sh4_opcode);
-                        return; // Don't add any SHIL opcodes - block will be empty
-                    default:
-                        // Fallback for complex memory ops
-                        shil_op.op = shop_ifb;
-                        shil_op.rs1 = shil_param(sh4_opcode);
-                        block.optimized_opcodes.push_back(shil_op);
-                        break;
-                }
-                break;
-                
-            default:
-                // For all other opcodes, DON'T translate to SHIL
-                // Just leave the block empty so it falls back to safe ultra-interpreter
-                INFO_LOG(INTERPRETER, "🔄 Skipping SHIL translation for opcode 0x%04X - using safe fallback", sh4_opcode);
-                return; // Don't add any SHIL opcodes - block will be empty
-        }
-        
-        INFO_LOG(INTERPRETER, "🔄 Translated SH4 opcode 0x%04X at PC=0x%08X to %zu SHIL opcodes",
-                 sh4_opcode, pc, block.optimized_opcodes.size());
-        
-        // Log every SHIL opcode that gets translated
-        for (const auto& shil_op : block.optimized_opcodes) {
-            const char* opcode_names[] = {
-                "shop_mov32", "shop_mov64", "shop_jdyn", "shop_jcond", "shop_jmp", 
-                "shop_add", "shop_sub", "shop_mul", "shop_div", "shop_and", 
-                "shop_or", "shop_xor", "shop_not", "shop_shl", "shop_shr", 
-                "shop_sar", "shop_neg", "shop_test", "shop_sext8", "shop_sext16",
-                "shop_readm", "shop_writem", "shop_sync_sr", "shop_sync_fpscr",
-                "shop_swaplb", "shop_neg64", "shop_ext32", "shop_ext64",
-                "shop_ifb", "shop_cvt_f2i_t", "shop_cvt_i2f_n", "shop_cvt_i2f_z",
-                "shop_fadd", "shop_fsub", "shop_fmul", "shop_fdiv", "shop_fabs",
-                "shop_fneg", "shop_fsqrt", "shop_fmac", "shop_float", "shop_ftrc",
-                "shop_fipr", "shop_ftrv", "shop_frswap", "shop_fschg", "shop_fsrra",
-                "shop_fsca", "shop_fld", "shop_fst"
-            };
-            
-            const char* opcode_name = (shil_op.op < sizeof(opcode_names)/sizeof(opcode_names[0])) ? 
-                                     opcode_names[shil_op.op] : "UNKNOWN";
-            
-            INFO_LOG(INTERPRETER, "  📝 Generated SHIL: %s (%d)", opcode_name, shil_op.op);
-        }
-    }
-    
-    // Promote block to hot status
-    static void promote_to_hot_block(CachedShilBlock* block) {
-        block->is_hot = true;
-        INFO_LOG(INTERPRETER, "🔥 SHIL block promoted to hot status");
-    }
-};
-
-// Forward declaration
-static void ultra_interpreter_run();
-
 // === ULTRA-FAST MAIN EXECUTION LOOP ===
 // This is simpler than legacy but with smart optimizations
 static void ultra_interpreter_run() {
-    INFO_LOG(INTERPRETER, "🚀 ULTRA-INTERPRETER: Starting SHIL-powered execution");
+    INFO_LOG(INTERPRETER, "🚀 ULTRA-INTERPRETER: Starting ultra-fast execution");
     
     // Reset stats
     g_stats.reset();
     g_icache.reset();
     
-    // Clear SHIL cache on startup
-    ShilBlockManager::clear_cache();
-    
-    // Main execution loop - SHIL-powered for maximum speed!
+    // Main execution loop - simpler than legacy!
     while (sh4_int_bCpuRun) {
         // Handle exceptions first
         try {
-            // Inner loop - this is where the SHIL magic happens
+            // Inner loop - this is where the magic happens
             do {
                 // Get current PC
                 u32 current_pc = next_pc;
                 
-                // === SHIL-POWERED EXECUTION PATH (ENABLED FOR LOGGING) ===
-                // DEBUGGING: Enable SHIL execution to see which opcodes cause crashes
-                // This will help us identify safe vs unsafe opcodes
-                
-                CachedShilBlock* shil_block = ShilBlockManager::get_or_create_block(current_pc);
-                
-                if (shil_block && !shil_block->optimized_opcodes.empty()) {
-                    // Execute optimized SHIL block
-                    UltraShilInterpreter::execute_shil_block(shil_block->optimized_opcodes);
-                    
-                    // Update PC based on block execution
-                    // For now, just advance by 2 (single instruction)
-                    next_pc += 2;
-                    
-                    // Update performance counters
-                    shil_block->total_cycles++;
-                    
-#ifdef DEBUG
-                    g_stats.instructions++;
-                    g_stats.cycles++;
-#endif
-                    
-                    continue; // SHIL execution complete
-                }
-                
-                // === FALLBACK TO SAFE ULTRA-INTERPRETER ===
-                // If SHIL execution fails, fall back to safe optimization
-                
+                // SAFE OPTIMIZATION: Only inline the safest hot opcode
                 // Fetch instruction
                 u16 op = ultra_fetch_instruction(current_pc);
                 next_pc += 2;
                 
-                // ULTRA-FAST PATH: Only inline the safest hot opcode
+                // ULTRA-FAST PATH: Only inline register moves (safest optimization)
                 u32 op_high = (op >> 12) & 0xF;
                 u32 op_low = op & 0xF;
                 
-                // TEMPORARILY DISABLE MOV OPTIMIZATION TO FORCE SHIL PATH
-                if (false && __builtin_expect(op_high == 0x6 && op_low == 0x3, 1)) {
+                // Only inline the safest instruction: mov <REG_M>,<REG_N>
+                // ULTRA-SAFE PATH: Only optimize the safest instruction
+                if (__builtin_expect(op_high == 0x6 && op_low == 0x3, 1)) {
                     // mov <REG_M>,<REG_N> - HOTTEST OPCODE - completely safe to inline
                     u32 n = (op >> 8) & 0xF;
                     u32 m = (op >> 4) & 0xF;
@@ -1113,9 +704,12 @@ static void ultra_interpreter_run() {
                 ultra_execute_hot_opcode_with_mem_opt(op);
                 
                 // ADVANCED TIMING FIX: Proper cycle counting for A/V sync
+                // The ultra-interpreter is more efficient than legacy, so we need to add
+                // proportional timing to match real hardware behavior
                 sh4cycles.executeCycles(op);
                 
                 // ULTRA-PERFORMANCE: Add extra cycles based on instruction complexity
+                // This maintains proper A/V sync while keeping performance gains
                 static u32 timing_counter = 0;
                 static u32 complex_ops = 0;
                 
@@ -1160,16 +754,13 @@ static void ultra_interpreter_run() {
                     g_stats.check_mmu();
                 }
                 
-                // Log performance stats periodically (including SHIL stats)
+                // Log performance stats periodically
                 if (__builtin_expect((g_stats.instructions & 0xFFFF) == 0, 0)) {
                     float cache_hit_ratio = (g_icache.hits + g_icache.misses) > 0 ? 
                         (float)g_icache.hits / (g_icache.hits + g_icache.misses) * 100.0f : 0.0f;
                     
                     INFO_LOG(INTERPRETER, "📊 ULTRA-INTERPRETER: %llu instructions, %.1f%% icache hit ratio, %s MMU", 
                             g_stats.instructions, cache_hit_ratio, g_stats.mmu_enabled ? "POST" : "PRE");
-                    
-                    // Print SHIL cache stats
-                    ShilBlockManager::print_stats();
                 }
 #else
                 // Check MMU state periodically in release builds (without logging)
@@ -1192,11 +783,7 @@ static void ultra_interpreter_run() {
         }
     }
     
-    INFO_LOG(INTERPRETER, "🏁 ULTRA-INTERPRETER: Finished SHIL-powered execution");
-    
-    // Print final SHIL statistics
-    ShilBlockManager::print_stats();
-    
+    INFO_LOG(INTERPRETER, "🏁 ULTRA-INTERPRETER: Finished execution");
 #ifdef DEBUG
     INFO_LOG(INTERPRETER, "📊 Final stats: %llu instructions, %llu cycles, %d MMU changes", 
             g_stats.instructions, g_stats.cycles, g_stats.mmu_state_changes);
@@ -1210,15 +797,12 @@ static void ultra_interpreter_run() {
 
 // === ULTRA-INTERPRETER INTERFACE ===
 void* Get_UltraInterpreter() {
-    INFO_LOG(INTERPRETER, "🚀 ULTRA-INTERPRETER: Get_UltraInterpreter called — linking SHIL-powered interpreter!");
-    INFO_LOG(INTERPRETER, "🚀 ULTRA-INTERPRETER: SHIL caching: ENABLED (%d blocks max)", MAX_SHIL_CACHE_SIZE);
+    INFO_LOG(INTERPRETER, "🚀 ULTRA-INTERPRETER: Get_UltraInterpreter called — linking ultra-fast interpreter!");
     INFO_LOG(INTERPRETER, "🚀 ULTRA-INTERPRETER: Instruction caching: ENABLED (%d entries)", ICACHE_SIZE);
     INFO_LOG(INTERPRETER, "🚀 ULTRA-INTERPRETER: ARM64 prefetching: ENABLED");
     INFO_LOG(INTERPRETER, "🚀 ULTRA-INTERPRETER: MMU-aware optimizations: ENABLED");
     INFO_LOG(INTERPRETER, "🚀 ULTRA-INTERPRETER: Safe MOV optimization: ENABLED");
-    INFO_LOG(INTERPRETER, "🚀 ULTRA-INTERPRETER: SHIL-powered for maximum speed!");
+    INFO_LOG(INTERPRETER, "🚀 ULTRA-INTERPRETER: Simpler than legacy but faster!");
     
     return (void*)ultra_interpreter_run;
 }
-
-
