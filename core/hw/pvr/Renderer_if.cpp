@@ -34,23 +34,35 @@ struct IOSRenderingOptimizer {
 	std::atomic<int> current_render_timeout{50};  // Start conservative
 	std::atomic<int> current_present_timeout{16}; // 60fps = 16ms
 	
-	// Queue optimization parameters
+	// Queue optimization parameters - ULTRA-AGGRESSIVE
 	std::atomic<bool> aggressive_queue_mode{false};
 	std::atomic<u32> max_queue_depth{3};  // Adaptive queue depth
 	
+	// Ultra-aggressive pipeline optimization
+	std::atomic<bool> ultra_pipeline_mode{false};
+	std::atomic<u32> ultra_queue_depth{8};  // Deep queue for sustained rendering
+	std::atomic<u32> frame_skip_threshold{0};  // Adaptive frame skipping
+	std::atomic<u32> total_render_calls{0};
+	std::atomic<u32> successful_renders{0};
+	
 	void init() {
-		fmv_mode_detected = false;
-		consecutive_render_calls = 0;
-		queue_contention_count = 0;
-		timeout_count = 0;
-		current_render_timeout = 50;
-		current_present_timeout = 16;
-		aggressive_queue_mode = false;
-		max_queue_depth = 3;
+		fmv_mode_detected.store(false);
+		consecutive_render_calls.store(0);
+		queue_contention_count.store(0);
+		timeout_count.store(0);
+		current_render_timeout.store(50);
+		current_present_timeout.store(16);
+		aggressive_queue_mode.store(false);
+		max_queue_depth.store(3);
+		ultra_pipeline_mode.store(false);
+		ultra_queue_depth.store(8);
+		frame_skip_threshold.store(0);
+		total_render_calls.store(0);
+		successful_renders.store(0);
 		last_render_time = std::chrono::steady_clock::now();
 		last_optimization_check = std::chrono::steady_clock::now();
 		
-		INFO_LOG(RENDERER, "🔥 iOS Rendering Optimizer: Initialized for FMV performance");
+		INFO_LOG(RENDERER, "🔥 iOS Rendering Optimizer: ULTRA-PIPELINE mode initialized");
 	}
 	
 	bool detect_fmv_mode() {
@@ -62,25 +74,36 @@ struct IOSRenderingOptimizer {
 			consecutive_render_calls++;
 			
 			if (consecutive_render_calls > 30 && !fmv_mode_detected.load()) {
-				fmv_mode_detected = true;
-				aggressive_queue_mode = true;
-				current_render_timeout = 100;   // Longer timeout for FMV
-				current_present_timeout = 25;   // Allow more time for presents
-				max_queue_depth = 5;            // Deeper queue for smoother FMV
+				fmv_mode_detected.store(true);
+				aggressive_queue_mode.store(true);
+				current_render_timeout.store(100);   // Longer timeout for FMV
+				current_present_timeout.store(25);   // Allow more time for presents
+				max_queue_depth.store(5);            // Deeper queue for smoother FMV
 				
 				INFO_LOG(RENDERER, "🚀 iOS Rendering Optimizer: FMV mode detected - enabling aggressive optimization (timeout=%dms, queue_depth=%u)", 
 						 current_render_timeout.load(), max_queue_depth.load());
 			}
+			
+			// Enable ultra pipeline for sustained high-frequency rendering
+			if (consecutive_render_calls > 60 && !ultra_pipeline_mode.load()) {
+				ultra_pipeline_mode.store(true);
+				max_queue_depth.store(ultra_queue_depth.load());
+				current_render_timeout.store(150);   // Even more patient in ultra mode
+				frame_skip_threshold.store(2);       // Allow frame skipping under pressure
+				
+				INFO_LOG(RENDERER, "⚡ iOS Rendering Optimizer: SUSTAINED RENDERING detected - ULTRA-PIPELINE mode enabled (queue_depth=%u)", 
+						 ultra_queue_depth.load());
+			}
 		} else {
-			consecutive_render_calls = 0;
+			consecutive_render_calls.store(0);
 			
 			// Exit FMV mode after period of calm
 			if (fmv_mode_detected.load() && time_diff > 500) {  // 500ms of calm
-				fmv_mode_detected = false;
-				aggressive_queue_mode = false;
-				current_render_timeout = 50;
-				current_present_timeout = 16;
-				max_queue_depth = 3;
+				fmv_mode_detected.store(false);
+				aggressive_queue_mode.store(false);
+				current_render_timeout.store(50);
+				current_present_timeout.store(16);
+				max_queue_depth.store(3);
 				
 				INFO_LOG(RENDERER, "📉 iOS Rendering Optimizer: FMV mode disabled - returning to normal operation");
 			}
@@ -108,7 +131,7 @@ struct IOSRenderingOptimizer {
 				current_render_timeout = std::max(30, current_render_timeout.load() - 5);
 			}
 			
-			queue_contention_count = 0;
+			queue_contention_count.store(0);
 			last_optimization_check = now;
 		}
 	}
@@ -117,8 +140,8 @@ struct IOSRenderingOptimizer {
 		timeout_count++;
 		// If we're getting frequent timeouts, we might need to be more aggressive
 		if (timeout_count.load() > 10) {
-			current_render_timeout = std::min(300, current_render_timeout.load() + 20);
-			timeout_count = 0;
+			current_render_timeout.store(std::min(300, current_render_timeout.load() + 20));
+			timeout_count.store(0);
 			INFO_LOG(RENDERER, "⚠️ iOS Rendering Optimizer: Frequent timeouts, increased to %dms", current_render_timeout.load());
 		}
 	}
@@ -206,17 +229,39 @@ public:
 					const lock_guard lock(mutex);
 					
 #ifdef TARGET_IPHONE
-					// iOS FMV optimization: intelligent queue management
-					if (g_ios_render_optimizer.should_use_aggressive_mode()) {
-						// In FMV mode: allow deeper queue but prioritize newer frames
-						if (queue.size() >= g_ios_render_optimizer.get_max_queue_depth()) {
-							// Remove oldest non-Present messages to make room
-							for (auto it = queue.begin(); it != queue.end(); ) {
-								if (it->type != Present && it->type != Stop) {
-									it = queue.erase(it);
-									break;
-								} else {
-									++it;
+					// iOS optimization: ultra-intelligent queue management
+					u32 current_max_depth = g_ios_render_optimizer.ultra_pipeline_mode.load() ? 
+						g_ios_render_optimizer.ultra_queue_depth.load() : 
+						g_ios_render_optimizer.get_max_queue_depth();
+						
+					if (g_ios_render_optimizer.should_use_aggressive_mode() || g_ios_render_optimizer.ultra_pipeline_mode.load()) {
+						// Ultra-aggressive queue management for sustained workloads
+						if (queue.size() >= current_max_depth) {
+							u32 removed_count = 0;
+							
+							// In ultra mode: more aggressive frame dropping
+							if (g_ios_render_optimizer.ultra_pipeline_mode.load() && type == Render) {
+								// Remove multiple old render calls, keep only most recent ones
+								for (auto it = queue.begin(); it != queue.end() && removed_count < 3; ) {
+									if (it->type == Render) {
+										it = queue.erase(it);
+										removed_count++;
+									} else {
+										++it;
+									}
+								}
+								if (removed_count > 0) {
+									INFO_LOG(RENDERER, "🎯 Ultra Pipeline: Dropped %u old render calls for throughput", removed_count);
+								}
+							} else {
+								// Normal aggressive mode: remove one old non-Present message
+								for (auto it = queue.begin(); it != queue.end(); ) {
+									if (it->type != Present && it->type != Stop) {
+										it = queue.erase(it);
+										break;
+									} else {
+										++it;
+									}
 								}
 							}
 						}

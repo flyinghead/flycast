@@ -24,7 +24,7 @@ Sh4IrInterpreter g_ir;
 #ifdef STRICT_MODE
 constexpr int CPU_RATIO = 1;
 #else
-constexpr int CPU_RATIO = 8;
+constexpr int CPU_RATIO = 1;  // OPTIMIZATION: Remove artificial slowdown for maximum performance
 #endif
 
 Sh4IrInterpreter::Sh4IrInterpreter()

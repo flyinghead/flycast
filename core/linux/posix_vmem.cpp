@@ -43,10 +43,16 @@ struct IOSMemoryOptimizer {
     u32 consecutive_memory_ops = 0;
     std::chrono::steady_clock::time_point last_operation;
     
-    // iOS-specific optimizations
-    bool lazy_protection_enabled = true;
-    bool batch_mode_enabled = true;
-    u32 batch_threshold = 16;  // Batch multiple operations
+    	// iOS-specific optimizations - ULTRA-AGGRESSIVE
+	bool lazy_protection_enabled = true;
+	bool batch_mode_enabled = true;
+	u32 batch_threshold = 64;  // More aggressive batching
+	
+	// Ultra-aggressive optimization parameters
+	bool ultra_batch_mode = false;
+	u32 ultra_batch_threshold = 256;  // Massive batching for sustained workloads
+	u32 page_cache_hits = 0;
+	u32 total_operations = 0;
     
     void init() {
         locked_pages.clear();
@@ -57,12 +63,16 @@ struct IOSMemoryOptimizer {
         consecutive_memory_ops = 0;
         batch.fmv_mode = false;
         
-        // iOS optimizations: larger batches for FMV performance
-        batch_threshold = 32;  // More aggressive batching on iOS
-        lazy_protection_enabled = true;
-        
-        INFO_LOG(VMEM, "🔥 iOS Memory Optimizer: Initialized with batch_threshold=%u, lazy_protection=%s", 
-                 batch_threshold, lazy_protection_enabled ? "enabled" : "disabled");
+        		// iOS optimizations: ultra-aggressive batching for maximum performance
+		batch_threshold = 64;  // Ultra-aggressive baseline batching
+		ultra_batch_threshold = 256;  // Massive batching for sustained workloads
+		lazy_protection_enabled = true;
+		ultra_batch_mode = false;
+		page_cache_hits = 0;
+		total_operations = 0;
+		
+		INFO_LOG(VMEM, "🔥 iOS Memory Optimizer: ULTRA-AGGRESSIVE mode initialized - batch_threshold=%u, ultra_threshold=%u", 
+				 batch_threshold, ultra_batch_threshold);
     }
     
     bool is_fmv_mode() {
@@ -71,11 +81,12 @@ struct IOSMemoryOptimizer {
         
         if (time_diff < 50) {  // Rapid memory operations indicate FMV
             consecutive_memory_ops++;
-            if (consecutive_memory_ops > 50 && !batch.fmv_mode) {
-                batch.fmv_mode = true;
-                batch_threshold = 64;  // Even more aggressive in FMV mode
-                INFO_LOG(VMEM, "🚀 iOS Memory Optimizer: FMV mode detected - ultra-aggressive batching enabled");
-            }
+            			if (consecutive_memory_ops > 50 && !batch.fmv_mode) {
+				batch.fmv_mode = true;
+				ultra_batch_mode = true;
+				batch_threshold = ultra_batch_threshold;  // Massive batching in sustained workload mode
+				INFO_LOG(VMEM, "🚀 iOS Memory Optimizer: SUSTAINED WORKLOAD detected - ULTRA-AGGRESSIVE batching enabled (threshold=%u)", ultra_batch_threshold);
+			}
         } else {
             consecutive_memory_ops = 0;
             if (batch.fmv_mode && time_diff > 1000) {  // Exit FMV mode after 1 second of calm
@@ -111,11 +122,13 @@ struct IOSMemoryOptimizer {
             }
         }
         
-        u32 total_ops = batch.lock_requests.size() + batch.unlock_requests.size();
-        if (total_ops > 10) {
-            INFO_LOG(VMEM, "🔥 iOS Memory Optimizer: Flushed %u operations (FMV mode: %s)", 
-                     total_ops, batch.fmv_mode ? "YES" : "NO");
-        }
+        		u32 total_ops = batch.lock_requests.size() + batch.unlock_requests.size();
+		if (total_ops > 20) {  // Higher threshold for logging in ultra mode
+			INFO_LOG(VMEM, "🔥 iOS Memory Optimizer: Flushed %u operations (Mode: %s, Cache hit rate: %.1f%%)", 
+					 total_ops, 
+					 ultra_batch_mode ? "ULTRA" : (batch.fmv_mode ? "FMV" : "NORMAL"),
+					 total_operations > 0 ? (float)page_cache_hits / total_operations * 100 : 0.0f);
+		}
         
         batch.lock_requests.clear();
         batch.unlock_requests.clear();
@@ -128,28 +141,44 @@ struct IOSMemoryOptimizer {
             
         u32 total_requests = batch.lock_requests.size() + batch.unlock_requests.size();
         
-        // Force flush conditions
-        if (total_requests >= batch_threshold)
-            return true;
-            
-        // Time-based flush (prevent indefinite batching)
-        auto now = std::chrono::steady_clock::now();
-        auto time_since_last = std::chrono::duration_cast<std::chrono::milliseconds>(now - batch.last_flush).count();
-        
-        if (batch.fmv_mode) {
-            return time_since_last > 100;  // Flush every 100ms in FMV mode
-        } else {
-            return time_since_last > 50;   // Flush every 50ms normally
-        }
+        		// Force flush conditions - adaptive based on mode
+		u32 current_threshold = ultra_batch_mode ? ultra_batch_threshold : batch_threshold;
+		if (total_requests >= current_threshold)
+			return true;
+			
+		// Time-based flush (prevent indefinite batching) - more aggressive in ultra mode
+		auto now = std::chrono::steady_clock::now();
+		auto time_since_last = std::chrono::duration_cast<std::chrono::milliseconds>(now - batch.last_flush).count();
+		
+		if (ultra_batch_mode) {
+			return time_since_last > 200;  // Very patient in ultra mode - 200ms
+		} else if (batch.fmv_mode) {
+			return time_since_last > 100;  // Flush every 100ms in FMV mode
+		} else {
+			return time_since_last > 50;   // Flush every 50ms normally
+		}
     }
     
-    bool region_lock_optimized(void *start, size_t len) {
-        void* aligned_start = (void*)((uintptr_t)start & ~PAGE_MASK);
-        
-        // Check if already locked (avoid redundant mprotect)
-        if (lazy_protection_enabled && locked_pages.count(aligned_start) > 0) {
-            return true;  // Already locked, skip expensive system call
-        }
+    	bool region_lock_optimized(void *start, size_t len) {
+		void* aligned_start = (void*)((uintptr_t)start & ~PAGE_MASK);
+		total_operations++;
+		
+		// Check if already locked (avoid redundant mprotect)
+		if (lazy_protection_enabled && locked_pages.count(aligned_start) > 0) {
+			page_cache_hits++;
+			
+			// Adaptive ultra-batching based on cache hit rate
+			if (total_operations > 100) {
+				float hit_rate = (float)page_cache_hits / total_operations;
+				if (hit_rate > 0.7f && !ultra_batch_mode) {
+					ultra_batch_mode = true;
+					batch_threshold = ultra_batch_threshold;
+					INFO_LOG(VMEM, "🎯 iOS Memory Optimizer: High cache hit rate (%.1f%%) - enabling ULTRA-BATCHING", hit_rate * 100);
+				}
+			}
+			
+			return true;  // Already locked, skip expensive system call
+		}
         
         // Detect FMV mode for adaptive behavior
         is_fmv_mode();

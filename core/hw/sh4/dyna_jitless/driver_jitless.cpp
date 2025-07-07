@@ -16,7 +16,7 @@ extern void Sh4_int_Step();
 #ifdef STRICT_MODE
 constexpr int CPU_RATIO = 1;
 #else
-constexpr int CPU_RATIO = 8;
+constexpr int CPU_RATIO = 1;  // OPTIMIZATION: Remove artificial slowdown for maximum performance
 #endif
 
 #include "blockmanager_jitless.h"

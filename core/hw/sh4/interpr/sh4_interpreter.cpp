@@ -32,56 +32,105 @@ Sh4OCache ocache;
 
 // === ULTRA-AGGRESSIVE OPTIMIZATIONS FOR IPHONE ===
 
-// Larger instruction cache for better hit rates on ARM64
-#define ULTRA_ICACHE_SIZE 16384  // Increased to 16KB for even better cache hit rate
+// Ultra-large instruction cache for maximum hit rates on ARM64
+#define ULTRA_ICACHE_SIZE 32768  // Increased to 32KB for maximum cache hit rate  
 #define ULTRA_ICACHE_MASK (ULTRA_ICACHE_SIZE - 1)
 
-// ARM64 NEON-optimized instruction cache - FMV Enhanced
+// Advanced caching parameters
+#define ULTRA_CACHE_ASSOCIATIVITY 4  // 4-way set associative for better conflict resolution
+#define ULTRA_CACHE_LINE_SIZE 64     // Larger cache lines for spatial locality
+
+// ARM64 NEON-optimized instruction cache - ULTRA-ENHANCED
 struct alignas(64) UltraInstructionCache {
+    // Set-associative cache structure for better conflict resolution
+    struct CacheWay {
+        u32 pc;
+        u16 opcode;
+        u32 lru_counter;  // LRU replacement tracking
+    };
+    
 #ifdef FMV_OPTIMIZED
-    // Larger cache for FMV sequences - 32KB total
-    static constexpr u32 EXTRA_SIZE = ULTRA_ICACHE_SIZE * 2;
-    u32 pc[EXTRA_SIZE];
-    u16 opcode[EXTRA_SIZE];
-    static constexpr u32 CACHE_MASK = EXTRA_SIZE - 1;
+    // Larger cache for FMV sequences - 64KB total with 4-way associativity
+    static constexpr u32 CACHE_SETS = (ULTRA_ICACHE_SIZE * 2) / (sizeof(CacheWay) * ULTRA_CACHE_ASSOCIATIVITY);
 #else
-    u32 pc[ULTRA_ICACHE_SIZE];
-    u16 opcode[ULTRA_ICACHE_SIZE];
-    static constexpr u32 CACHE_MASK = ULTRA_ICACHE_MASK;
+    static constexpr u32 CACHE_SETS = ULTRA_ICACHE_SIZE / (sizeof(CacheWay) * ULTRA_CACHE_ASSOCIATIVITY);
 #endif
     
+    CacheWay cache_ways[CACHE_SETS][ULTRA_CACHE_ASSOCIATIVITY];
+    u32 global_lru_counter;
+    
+    // Performance tracking
+    u32 cache_hits;
+    u32 cache_misses;
+    u32 conflict_misses;
+    
     void reset() {
+        // Ultra-fast cache initialization with NEON
 #ifdef FMV_OPTIMIZED
-        // FMV-optimized: Use ARM64 NEON for ultra-fast cache clear
-        const u32 cache_size = sizeof(pc) / sizeof(u32);
-        uint32x4_t invalid_vec = vdupq_n_u32(0xFFFFFFFF);
-        uint32x4_t* pc_vec = reinterpret_cast<uint32x4_t*>(pc);
+        uint32x4_t invalid_pc = vdupq_n_u32(0xFFFFFFFF);
+        uint32x4_t zero_lru = vdupq_n_u32(0);
         
-        for (u32 i = 0; i < cache_size / 4; i++) {
-            vst1q_u32(reinterpret_cast<uint32_t*>(&pc_vec[i]), invalid_vec);
+        for (u32 set = 0; set < CACHE_SETS; set++) {
+            for (u32 way = 0; way < ULTRA_CACHE_ASSOCIATIVITY; way += 4) {
+                // Use NEON to clear 4 ways at once
+                vst1q_u32(&cache_ways[set][way].pc, invalid_pc);
+                vst1q_u32(&cache_ways[set][way].lru_counter, zero_lru);
+            }
         }
 #else
-        // ARM64 NEON optimized memset
-        memset(pc, 0xFF, sizeof(pc));
+        // Standard initialization
+        for (u32 set = 0; set < CACHE_SETS; set++) {
+            for (u32 way = 0; way < ULTRA_CACHE_ASSOCIATIVITY; way++) {
+                cache_ways[set][way].pc = 0xFFFFFFFF;
+                cache_ways[set][way].lru_counter = 0;
+            }
+        }
 #endif
+        global_lru_counter = 1;
+        cache_hits = cache_misses = conflict_misses = 0;
     }
     
     __attribute__((always_inline)) inline u16 fetch(u32 addr) {
-        u32 index = (addr >> 1) & CACHE_MASK;
+        u32 set_index = (addr >> 1) % CACHE_SETS;
+        CacheWay* set = cache_ways[set_index];
         
-        // ARM64 conditional move optimization
-        if (__builtin_expect(pc[index] == addr, 1)) {
-            __builtin_prefetch(&pc[(index + 1) & CACHE_MASK], 0, 3);
-            return opcode[index];
+        // Search all ways in the set for a hit
+        for (u32 way = 0; way < ULTRA_CACHE_ASSOCIATIVITY; way++) {
+            if (__builtin_expect(set[way].pc == addr, 1)) {
+                // Cache hit - update LRU and return
+                set[way].lru_counter = ++global_lru_counter;
+                cache_hits++;
+                
+                // Prefetch next set for spatial locality
+                __builtin_prefetch(&cache_ways[(set_index + 1) % CACHE_SETS], 0, 3);
+                return set[way].opcode;
+            }
         }
         
-        // Cache miss - fetch from memory with prefetch
-        u16 op = IReadMem16(addr);
-        pc[index] = addr;
-        opcode[index] = op;
+        // Cache miss - find LRU way to replace
+        u32 lru_way = 0;
+        u32 min_lru = set[0].lru_counter;
+        for (u32 way = 1; way < ULTRA_CACHE_ASSOCIATIVITY; way++) {
+            if (set[way].lru_counter < min_lru) {
+                min_lru = set[way].lru_counter;
+                lru_way = way;
+            }
+        }
         
-        // Prefetch next likely instruction
-        __builtin_prefetch(&pc[(index + 1) & CACHE_MASK], 1, 3);
+        // Check if this is a conflict miss (all ways occupied)
+        if (set[lru_way].pc != 0xFFFFFFFF) {
+            conflict_misses++;
+        }
+        
+        // Fetch from memory and update cache
+        u16 op = IReadMem16(addr);
+        set[lru_way].pc = addr;
+        set[lru_way].opcode = op;
+        set[lru_way].lru_counter = ++global_lru_counter;
+        cache_misses++;
+        
+        // Prefetch next instruction for spatial locality
+        __builtin_prefetch(&cache_ways[(set_index + 1) % CACHE_SETS], 1, 3);
         
         return op;
     }
@@ -113,43 +162,76 @@ struct DynamicTimingController {
     
     // === ULTRA-AGGRESSIVE MAIN LOOP OPTIMIZATIONS ===
     
-    // System call reduction system
-    u32 system_call_counter = 0;
-    u32 max_system_call_interval = 4096;  // Reduce system calls dramatically
+    	// System call reduction system - ULTRA-AGGRESSIVE
+	u32 system_call_counter = 0;
+	u32 max_system_call_interval = 8192;  // Massive reduction in system calls
+	
+	// Interrupt batching system - ULTRA-AGGRESSIVE
+	u32 interrupt_batch_counter = 0;
+	u32 interrupt_batch_size = 128;  // Massive interrupt batching
+	
+	// Ultra system call reduction for sustained workloads
+	bool ultra_syscall_reduction = false;
+	u32 ultra_syscall_interval = 16384;  // Extreme syscall reduction
+	u32 ultra_interrupt_batch = 256;     // Massive interrupt batching
+	u32 consecutive_syscall_skips = 0;
     
-    // Interrupt batching system
-    u32 interrupt_batch_counter = 0;
-    u32 interrupt_batch_size = 64;  // Batch interrupts aggressively
-    
-    // Performance-based scheduler bypass
-    bool scheduler_bypass_mode = false;
-    u32 scheduler_bypass_cycles = 0;
-    u32 max_scheduler_bypass = 16384;  // Skip scheduler for long periods
+    	// Performance-based scheduler bypass - ULTRA-AGGRESSIVE
+	bool scheduler_bypass_mode = false;
+	u32 scheduler_bypass_cycles = 0;
+	u32 max_scheduler_bypass = 32768;  // Skip scheduler for very long periods
+	
+	// Advanced scheduler bypass control
+	bool ultra_bypass_mode = false;
+	u32 ultra_bypass_threshold = 65536;  // Massive bypass for sustained workloads
+	u32 consecutive_bypass_cycles = 0;
+	u32 total_execution_cycles = 0;
     
     void init() {
         current_system_update_interval = 512;
         effective_cpu_ratio = base_cpu_ratio;
         fmv_mode_detected = false;
-        system_call_counter = 0;
-        interrupt_batch_counter = 0;
-        scheduler_bypass_mode = false;
-        scheduler_bypass_cycles = 0;
+        		system_call_counter = 0;
+		interrupt_batch_counter = 0;
+		ultra_syscall_reduction = false;
+		consecutive_syscall_skips = 0;
+        		scheduler_bypass_mode = false;
+		scheduler_bypass_cycles = 0;
+		ultra_bypass_mode = false;
+		consecutive_bypass_cycles = 0;
+		total_execution_cycles = 0;
     }
     
-    bool should_update_system() {
-        // Ultra-aggressive system update reduction
-        return (++system_call_counter >= max_system_call_interval);
-    }
+    	bool should_update_system() {
+		// Ultra-aggressive system update reduction with adaptive scaling
+		u32 current_interval = ultra_syscall_reduction ? ultra_syscall_interval : max_system_call_interval;
+		
+		if (++system_call_counter >= current_interval) {
+			system_call_counter = 0;
+			return true;
+		}
+		
+		consecutive_syscall_skips++;
+		return false;
+	}
+	
+	bool should_check_interrupts() {
+		// Massive interrupt batching with ultra mode
+		u32 current_batch_size = ultra_syscall_reduction ? ultra_interrupt_batch : interrupt_batch_size;
+		
+		if (++interrupt_batch_counter >= current_batch_size) {
+			interrupt_batch_counter = 0;
+			return true;
+		}
+		return false;
+	}
     
-    bool should_check_interrupts() {
-        // Batch interrupt checking for performance
-        return (++interrupt_batch_counter >= interrupt_batch_size);
-    }
-    
-    bool can_bypass_scheduler() {
-        if (!scheduler_bypass_mode) return false;
-        return (scheduler_bypass_cycles < max_scheduler_bypass);
-    }
+    	bool can_bypass_scheduler() {
+		if (!scheduler_bypass_mode && !ultra_bypass_mode) return false;
+		
+		u32 current_limit = ultra_bypass_mode ? ultra_bypass_threshold : max_scheduler_bypass;
+		return (scheduler_bypass_cycles < current_limit);
+	}
     
     void update_performance_mode() {
         u64 current_time = sh4_sched_now64();
@@ -158,18 +240,34 @@ struct DynamicTimingController {
         if (current_time - last_performance_check < 20000000) return;  // 100ms
         last_performance_check = current_time;
         
-        // Detect FMV mode based on consistent performance
-        if (consecutive_fast_frames > 10) {
-            // System is running well - enable FMV optimizations
-            if (!fmv_mode_detected) {
-                fmv_mode_detected = true;
-                current_system_update_interval = max_interval;
-                effective_cpu_ratio = max_boost_ratio;
-                scheduler_bypass_mode = true;
-                max_system_call_interval = 8192;  // Even more aggressive in FMV mode
-                interrupt_batch_size = 128;       // Larger interrupt batches
-                INFO_LOG(INTERPRETER, "🚀 FMV MODE DETECTED: Ultra-aggressive optimizations activated!");
-            }
+        		// Detect FMV mode based on consistent performance
+		if (consecutive_fast_frames > 10) {
+			// System is running well - enable FMV optimizations
+			if (!fmv_mode_detected) {
+				fmv_mode_detected = true;
+				current_system_update_interval = max_interval;
+				effective_cpu_ratio = max_boost_ratio;
+				scheduler_bypass_mode = true;
+				max_system_call_interval = 8192;  // Even more aggressive in FMV mode
+				interrupt_batch_size = 128;       // Larger interrupt batches
+				INFO_LOG(INTERPRETER, "🚀 FMV MODE DETECTED: Ultra-aggressive optimizations activated!");
+			}
+			
+			// Enable ultra bypass for sustained good performance
+			if (consecutive_fast_frames > 25 && !ultra_bypass_mode) {
+				ultra_bypass_mode = true;
+				max_scheduler_bypass = ultra_bypass_threshold;
+				INFO_LOG(INTERPRETER, "⚡ SUSTAINED WORKLOAD DETECTED: ULTRA-BYPASS mode enabled (threshold=%u)", ultra_bypass_threshold);
+			}
+			
+			// Enable ultra syscall reduction for extreme performance
+			if (consecutive_fast_frames > 40 && !ultra_syscall_reduction) {
+				ultra_syscall_reduction = true;
+				max_system_call_interval = ultra_syscall_interval;
+				interrupt_batch_size = ultra_interrupt_batch;
+				INFO_LOG(INTERPRETER, "🚀 EXTREME WORKLOAD DETECTED: ULTRA-SYSCALL REDUCTION enabled (syscall_interval=%u, interrupt_batch=%u)", 
+						 ultra_syscall_interval, ultra_interrupt_batch);
+			}
             consecutive_fast_frames = 0;
         } else if (consecutive_slow_frames > 5) {
             // System struggling - reduce optimizations for stability
@@ -264,24 +362,36 @@ static void __attribute__((hot)) Sh4_int_Run()
                  // Ultra-aggressive execution with scheduler bypass for maximum FMV performance
                  while (__builtin_expect(cycles > 0, 1)) {
                      
-                     // === SCHEDULER BYPASS MODE ===
-                     if (g_dynamic_timing.can_bypass_scheduler()) {
-                         // Ultra-fast execution without scheduler overhead
+                     					// === SCHEDULER BYPASS MODE ===
+					if (g_dynamic_timing.can_bypass_scheduler()) {
+						// Ultra-fast execution without scheduler overhead
+						register int batch_size asm("w19");
+						
+						if (g_dynamic_timing.ultra_bypass_mode) {
+							// Ultra bypass mode: massive batches for sustained workloads
 #ifdef FMV_OPTIMIZED
-                         // FMV mode: Execute 64 instructions per batch with minimal overhead
-                         register int ultra_batch_size asm("w19") = 64;
+							batch_size = 128;  // Huge batches in FMV + ultra mode
 #else
-                         // Normal mode: Execute 32 instructions per batch
-                         register int ultra_batch_size asm("w19") = 32;
+							batch_size = 96;   // Large batches in ultra mode
 #endif
-                         
-                         for (register int i asm("w20") = 0; i < ultra_batch_size && cycles > 0; i++) {
-                             register u16 op asm("w21") = UltraReadNextOp();
-                             UltraExecuteOpcode(op);
-                             cycles--;
-                         }
-                         
-                         g_dynamic_timing.scheduler_bypass_cycles += ultra_batch_size;
+						} else {
+							// Normal bypass mode
+#ifdef FMV_OPTIMIZED
+							batch_size = 64;   // FMV mode batches
+#else
+							batch_size = 32;   // Normal bypass batches
+#endif
+						}
+						
+						for (register int i asm("w20") = 0; i < batch_size && cycles > 0; i++) {
+							register u16 op asm("w21") = UltraReadNextOp();
+							UltraExecuteOpcode(op);
+							cycles--;
+						}
+						
+						g_dynamic_timing.scheduler_bypass_cycles += batch_size;
+						g_dynamic_timing.consecutive_bypass_cycles += batch_size;
+						g_dynamic_timing.total_execution_cycles += batch_size;
                          
                          // Only check interrupts occasionally in bypass mode
                          if (__builtin_expect(g_dynamic_timing.should_check_interrupts(), 0)) {
