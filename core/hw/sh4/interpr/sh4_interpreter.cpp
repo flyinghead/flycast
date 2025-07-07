@@ -1,5 +1,5 @@
 /*
-	Highly inefficient and boring interpreter. Nothing special here
+	Optimized SH4 interpreter for better performance
 */
 
 #include "types.h"
@@ -13,7 +13,6 @@
 #include "../sh4_cache.h"
 #include "debug/gdb_server.h"
 #include "../sh4_cycles.h"
-#include "sh4_ultra_interpreter.h"
 
 // SH4 underclock factor when using the interpreter so that it's somewhat usable
 #ifdef STRICT_MODE
@@ -25,40 +24,76 @@ constexpr int CPU_RATIO = 8;
 Sh4ICache icache;
 Sh4OCache ocache;
 
-static void ExecuteOpcode(u16 op)
+// === SIMPLE INSTRUCTION CACHE FOR BETTER PERFORMANCE ===
+#define SIMPLE_ICACHE_SIZE 1024
+#define SIMPLE_ICACHE_MASK (SIMPLE_ICACHE_SIZE - 1)
+
+struct SimpleInstructionCache {
+    u32 pc[SIMPLE_ICACHE_SIZE];
+    u16 opcode[SIMPLE_ICACHE_SIZE];
+    
+    void reset() {
+        for (int i = 0; i < SIMPLE_ICACHE_SIZE; i++) {
+            pc[i] = 0xFFFFFFFF;
+        }
+    }
+    
+    u16 fetch(u32 addr) {
+        u32 index = (addr >> 1) & SIMPLE_ICACHE_MASK;
+        
+        if (__builtin_expect(pc[index] == addr, 1)) {
+            return opcode[index];
+        }
+        
+        // Cache miss - fetch from memory
+        u16 op = IReadMem16(addr);
+        pc[index] = addr;
+        opcode[index] = op;
+        return op;
+    }
+};
+
+static SimpleInstructionCache g_simple_icache;
+
+static inline void ExecuteOpcode(u16 op)
 {
-	if (sr.FD == 1 && OpDesc[op]->IsFloatingPoint())
+	if (__builtin_expect(sr.FD == 1 && OpDesc[op]->IsFloatingPoint(), 0))
 		RaiseFPUDisableException();
 	OpPtr[op](op);
 	sh4cycles.executeCycles(op);
 }
 
-static u16 ReadNexOp()
+static inline u16 ReadNexOp()
 {
-	if (!mmu_enabled() && (next_pc & 1))
+	if (__builtin_expect(!mmu_enabled() && (next_pc & 1), 0))
 		// address error
 		throw SH4ThrownException(next_pc, Sh4Ex_AddressErrorRead);
 
 	u32 addr = next_pc;
 	next_pc += 2;
 
-	return IReadMem16(addr);
+	// Use simple instruction cache for better performance
+	return g_simple_icache.fetch(addr);
 }
 
 static void Sh4_int_Run()
 {
 	RestoreHostRoundingMode();
 
+	// Reset instruction cache at start
+	g_simple_icache.reset();
+
 	try {
 		do
 		{
 			try {
+				// Optimized inner loop with minimal overhead
 				do
 				{
 					u32 op = ReadNexOp();
-
 					ExecuteOpcode(op);
-				} while (p_sh4rcb->cntx.cycle_counter > 0);
+				} while (__builtin_expect(p_sh4rcb->cntx.cycle_counter > 0, 1));
+				
 				p_sh4rcb->cntx.cycle_counter += SH4_TIMESLICE;
 				UpdateSystem_INTC();
 			} catch (const SH4ThrownException& ex) {
@@ -66,7 +101,7 @@ static void Sh4_int_Run()
 				// an exception requires the instruction pipeline to drain, so approx 5 cycles
 				sh4cycles.addCycles(5 * CPU_RATIO);
 			}
-		} while (sh4_int_bCpuRun);
+		} while (__builtin_expect(sh4_int_bCpuRun, 1));
 	} catch (const debugger::Stop&) {
 	}
 
@@ -128,6 +163,9 @@ static void Sh4_int_Reset(bool hard)
 	ocache.Reset(hard);
 	sh4cycles.reset();
 	p_sh4rcb->cntx.cycle_counter = SH4_TIMESLICE;
+	
+	// Reset simple instruction cache
+	g_simple_icache.reset();
 
 	INFO_LOG(INTERPRETER, "Sh4 Reset");
 }
@@ -193,6 +231,7 @@ int UpdateSystem_INTC()
 }
 
 static void sh4_int_resetcache() {
+	g_simple_icache.reset();
 }
 
 static void Sh4_int_Init()
@@ -200,6 +239,7 @@ static void Sh4_int_Init()
 	static_assert(sizeof(Sh4cntx) == 448, "Invalid Sh4Cntx size");
 
 	memset(&p_sh4rcb->cntx, 0, sizeof(p_sh4rcb->cntx));
+	g_simple_icache.reset();
 }
 
 static void Sh4_int_Term()
@@ -211,21 +251,7 @@ static void Sh4_int_Term()
 #ifndef ENABLE_SH4_CACHED_IR
 void Get_Sh4Interpreter(sh4_if* cpu)
 {
-#ifdef USE_ULTRA_INTERPRETER
-    fprintf(stderr, "🚀 ULTRA-INTERPRETER: Get_Sh4Interpreter called — linking ultra-fast interpreter!\n");
-    
-    // Use the ultra-interpreter instead of legacy
-    cpu->Start = Sh4_int_Start;
-    cpu->Run = (void(*)())Get_UltraInterpreter();  // Use ultra-interpreter run function
-    cpu->Stop = Sh4_int_Stop;
-    cpu->Step = Sh4_int_Step;
-    cpu->Reset = Sh4_int_Reset;
-    cpu->Init = Sh4_int_Init;
-    cpu->Term = Sh4_int_Term;
-    cpu->IsCpuRunning = Sh4_int_IsCpuRunning;
-    cpu->ResetCache = sh4_int_resetcache;
-#else
-    fprintf(stderr, "[LEGACY-INT] Get_Sh4Interpreter called — linking legacy interpreter!\n");
+    INFO_LOG(INTERPRETER, "🚀 OPTIMIZED-INTERPRETER: Get_Sh4Interpreter called — linking optimized interpreter!");
     cpu->Start = Sh4_int_Start;
     cpu->Run = Sh4_int_Run;
     cpu->Stop = Sh4_int_Stop;
@@ -235,6 +261,5 @@ void Get_Sh4Interpreter(sh4_if* cpu)
     cpu->Term = Sh4_int_Term;
     cpu->IsCpuRunning = Sh4_int_IsCpuRunning;
     cpu->ResetCache = sh4_int_resetcache;
-#endif
 }
 #endif // ENABLE_SH4_CACHED_IR

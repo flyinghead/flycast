@@ -986,8 +986,6 @@ target_sources(${PROJECT_NAME} PRIVATE
 		core/hw/sh4/interpr/sh4_interpreter.cpp
 		core/hw/sh4/interpr/sh4_opcodes.cpp
 		core/hw/sh4/interpr/sh4_opcodes.h
-		core/hw/sh4/interpr/sh4_ultra_interpreter.cpp
-		core/hw/sh4/interpr/sh4_ultra_interpreter.h
 		core/hw/sh4/modules/bsc.cpp
 		core/hw/sh4/modules/ccn.cpp
 		core/hw/sh4/modules/ccn.h
