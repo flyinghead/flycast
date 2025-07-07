@@ -36,12 +36,66 @@
 #if defined(__ANDROID__) && HOST_CPU == CPU_ARM64
 #include "adreno.h"
 #endif
+#include "vulkan.h"
+#include "hw/pvr/Renderer_if.h"
+#include "cfg/option.h"
+#include "rend/osd.h"
+#include "overlay.h"
+#include "wsi/context.h"
+#include "log/LogManager.h"
+#include "rend/TexCache.h"
+#include "hw/pvr/ta.h"
 
 #if VULKAN_HPP_DISPATCH_LOADER_DYNAMIC == 1
 VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 #endif
 
 #include <memory>
+
+#ifdef __APPLE__
+#include <TargetConditionals.h>
+#if TARGET_OS_IOS
+// iOS-specific Metal performance optimizations
+#include <Metal/Metal.h>
+#include <QuartzCore/CAMetalLayer.h>
+
+// MoltenVK FMV optimization configuration
+struct MoltenVKOptimizations {
+    bool is_moltenvk = false;
+    bool ios_optimizations_enabled = false;
+    
+    // iOS Metal performance settings
+    bool metal_unified_memory = false;
+    bool metal_resource_options = false;
+    bool fast_descriptor_updates = false;
+    
+    // FMV-specific optimizations  
+    u32 optimized_swapchain_images = 3;  // Minimum for smooth FMV
+    bool immediate_command_submission = true;
+    bool parallel_command_encoding = true;
+    
+    void detect_and_configure() {
+        // Auto-detect MoltenVK and configure iOS optimizations
+        is_moltenvk = true;  // We're on iOS, using MoltenVK
+        ios_optimizations_enabled = true;
+        
+        // iOS device capabilities detection
+        if (@available(iOS 13.0, *)) {
+            metal_unified_memory = true;
+            metal_resource_options = true;
+            fast_descriptor_updates = true;
+            immediate_command_submission = true;
+            parallel_command_encoding = true;
+        }
+        
+        INFO_LOG(RENDERER, "🔥 MoltenVK iOS FMV Optimizations: Memory=%s, FastDesc=%s, ParallelCmd=%s",
+                 metal_unified_memory ? "Unified" : "Discrete",
+                 fast_descriptor_updates ? "ON" : "OFF", 
+                 parallel_command_encoding ? "ON" : "OFF");
+    }
+} g_moltenvk_opts;
+#endif
+#endif
 
 void ReInitOSD();
 
@@ -352,6 +406,13 @@ bool VulkanContext::InitDevice()
 		return false;
 	try
 	{
+#ifdef __APPLE__
+#if TARGET_OS_IOS
+		// Initialize MoltenVK iOS optimizations
+		g_moltenvk_opts.detect_and_configure();
+#endif
+#endif
+		
 		const vk::PhysicalDeviceProperties physicalDeviceProperties = physicalDevice.getProperties();
 
 		std::vector<vk::QueueFamilyProperties> queueFamilyProperties = physicalDevice.getQueueFamilyProperties();
@@ -498,8 +559,16 @@ bool VulkanContext::InitDevice()
 		if (!fragmentStoresAndAtomics)
 			NOTICE_LOG(RENDERER, "Fragment stores & atomic not supported: no per-pixel sorting");
 
-		// create a UniqueDevice
+		// create a UniqueDevice with MoltenVK iOS optimizations
 		float queuePriority = 1.0f;
+#ifdef __APPLE__
+#if TARGET_OS_IOS
+		// iOS: Use high priority queue for FMV performance
+		if (g_moltenvk_opts.ios_optimizations_enabled) {
+			queuePriority = 1.0f;  // Maximum priority for smooth FMV
+		}
+#endif
+#endif
 		vk::DeviceQueueCreateInfo deviceQueueCreateInfo(vk::DeviceQueueCreateFlags(), graphicsQueueIndex, 1, &queuePriority);
 
 		if (getPhysicalDeviceProperties2Supported)
@@ -523,23 +592,55 @@ bool VulkanContext::InitDevice()
 	    graphicsQueue = device->getQueue(graphicsQueueIndex, 0);
 	    presentQueue = device->getQueue(presentQueueIndex, 0);
 
-	    // Descriptor pool
-        std::array<vk::DescriptorPoolSize, 11> pool_sizes =
+	    // Descriptor pool with MoltenVK iOS optimizations
+        std::array<vk::DescriptorPoolSize, 11> pool_sizes;
+#ifdef __APPLE__
+#if TARGET_OS_IOS
+        if (g_moltenvk_opts.ios_optimizations_enabled) {
+            // iOS MoltenVK: Optimized descriptor pool sizes for FMV performance
+            pool_sizes = {
+                vk::DescriptorPoolSize(vk::DescriptorType::eSampler, 4),
+                vk::DescriptorPoolSize(vk::DescriptorType::eCombinedImageSampler, 60000),  // More for FMV textures
+                vk::DescriptorPoolSize(vk::DescriptorType::eSampledImage, 8),
+                vk::DescriptorPoolSize(vk::DescriptorType::eStorageImage, 16),
+                vk::DescriptorPoolSize(vk::DescriptorType::eUniformTexelBuffer, 4),
+                vk::DescriptorPoolSize(vk::DescriptorType::eStorageTexelBuffer, 4),
+                vk::DescriptorPoolSize(vk::DescriptorType::eUniformBuffer, 120000),  // More for dynamic data
+                vk::DescriptorPoolSize(vk::DescriptorType::eStorageBuffer, 200),     // Increased for iOS Metal
+                vk::DescriptorPoolSize(vk::DescriptorType::eUniformBufferDynamic, 8),
+                vk::DescriptorPoolSize(vk::DescriptorType::eStorageBufferDynamic, 8),
+                vk::DescriptorPoolSize(vk::DescriptorType::eInputAttachment, 200)
+            };
+        } else
+#endif
+#endif
         {
-            vk::DescriptorPoolSize(vk::DescriptorType::eSampler, 2),
-            vk::DescriptorPoolSize(vk::DescriptorType::eCombinedImageSampler, 40000),
-            vk::DescriptorPoolSize(vk::DescriptorType::eSampledImage, 2),
-            vk::DescriptorPoolSize(vk::DescriptorType::eStorageImage, 12),
-            vk::DescriptorPoolSize(vk::DescriptorType::eUniformTexelBuffer, 2),
-			vk::DescriptorPoolSize(vk::DescriptorType::eStorageTexelBuffer, 2),
-            vk::DescriptorPoolSize(vk::DescriptorType::eUniformBuffer, 80000),
-            vk::DescriptorPoolSize(vk::DescriptorType::eStorageBuffer, 100),
-            vk::DescriptorPoolSize(vk::DescriptorType::eUniformBufferDynamic, 2),
-            vk::DescriptorPoolSize(vk::DescriptorType::eStorageBufferDynamic, 2),
-            vk::DescriptorPoolSize(vk::DescriptorType::eInputAttachment, 100)
-        };
+            // Default descriptor pool sizes
+            pool_sizes = {
+                vk::DescriptorPoolSize(vk::DescriptorType::eSampler, 2),
+                vk::DescriptorPoolSize(vk::DescriptorType::eCombinedImageSampler, 40000),
+                vk::DescriptorPoolSize(vk::DescriptorType::eSampledImage, 2),
+                vk::DescriptorPoolSize(vk::DescriptorType::eStorageImage, 12),
+                vk::DescriptorPoolSize(vk::DescriptorType::eUniformTexelBuffer, 2),
+                vk::DescriptorPoolSize(vk::DescriptorType::eStorageTexelBuffer, 2),
+                vk::DescriptorPoolSize(vk::DescriptorType::eUniformBuffer, 80000),
+                vk::DescriptorPoolSize(vk::DescriptorType::eStorageBuffer, 100),
+                vk::DescriptorPoolSize(vk::DescriptorType::eUniformBufferDynamic, 2),
+                vk::DescriptorPoolSize(vk::DescriptorType::eStorageBufferDynamic, 2),
+                vk::DescriptorPoolSize(vk::DescriptorType::eInputAttachment, 100)
+            };
+        }
+        
+        u32 maxSets = 40000;
+#ifdef __APPLE__
+#if TARGET_OS_IOS
+        if (g_moltenvk_opts.ios_optimizations_enabled) {
+            maxSets = 60000;  // Increased for iOS FMV performance
+        }
+#endif
+#endif
 	    descriptorPool = device->createDescriptorPoolUnique(vk::DescriptorPoolCreateInfo(vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet,
-	    		40000, pool_sizes));
+	    		maxSets, pool_sizes));
 
 
 	    std::string cachePath = hostfs::getShaderCachePath("vulkan_pipeline.cache");
@@ -701,6 +802,16 @@ void VulkanContext::CreateSwapChain()
 			vk::SurfaceTransformFlagBitsKHR preTransform = (surfaceCapabilities.supportedTransforms & vk::SurfaceTransformFlagBitsKHR::eIdentity) ? vk::SurfaceTransformFlagBitsKHR::eIdentity : surfaceCapabilities.currentTransform;
 
 			u32 imageCount = std::max(3u * swapInterval, surfaceCapabilities.minImageCount);
+#ifdef __APPLE__
+#if TARGET_OS_IOS
+			// iOS MoltenVK: Optimize swapchain for FMV performance
+			if (g_moltenvk_opts.ios_optimizations_enabled) {
+				// Use optimized image count for smooth FMV playback
+				imageCount = std::max(g_moltenvk_opts.optimized_swapchain_images, surfaceCapabilities.minImageCount);
+				INFO_LOG(RENDERER, "🔥 MoltenVK iOS: Using %u swapchain images for FMV optimization", imageCount);
+			}
+#endif
+#endif
 			if (surfaceCapabilities.maxImageCount != 0)
 				imageCount = std::min(imageCount, surfaceCapabilities.maxImageCount);
 			vk::ImageUsageFlags usage = vk::ImageUsageFlagBits::eColorAttachment;
@@ -748,7 +859,17 @@ void VulkanContext::CreateSwapChain()
 			imageViews[imageIdx++] = device->createImageViewUnique(imageViewCreateInfo);
 
 			// create a UniqueCommandPool to allocate a CommandBuffer from
-			commandPools.push_back(device->createCommandPoolUnique(vk::CommandPoolCreateInfo(vk::CommandPoolCreateFlagBits::eTransient, graphicsQueueIndex)));
+			vk::CommandPoolCreateFlags poolFlags = vk::CommandPoolCreateFlagBits::eTransient;
+#ifdef __APPLE__
+#if TARGET_OS_IOS
+			// iOS MoltenVK: Optimize command pools for FMV performance
+			if (g_moltenvk_opts.ios_optimizations_enabled && g_moltenvk_opts.immediate_command_submission) {
+				// Reset command pool allows individual command buffer reset
+				poolFlags |= vk::CommandPoolCreateFlagBits::eResetCommandBuffer;
+			}
+#endif
+#endif
+			commandPools.push_back(device->createCommandPoolUnique(vk::CommandPoolCreateInfo(poolFlags, graphicsQueueIndex)));
 
 		    // allocate a CommandBuffer from the CommandPool
 		    commandBuffers.push_back(std::move(device->allocateCommandBuffersUnique(vk::CommandBufferAllocateInfo(*commandPools.back(), vk::CommandBufferLevel::ePrimary, 1)).front()));

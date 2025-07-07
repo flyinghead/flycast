@@ -21,6 +21,10 @@
 #include "buffer.h"
 #include "vulkan_context.h"
 
+#ifdef __APPLE__
+#include <TargetConditionals.h>
+#endif
+
 BufferData::BufferData(vk::DeviceSize size, vk::BufferUsageFlags usage, vk::MemoryPropertyFlags propertyFlags)
 	: bufferSize(size), m_usage(usage)
 {
@@ -35,10 +39,24 @@ BufferData::BufferData(vk::DeviceSize size, vk::BufferUsageFlags usage, vk::Memo
 	{
 		// FIXME VMA_ALLOCATION_CREATE_MAPPED_BIT ?
 #ifdef __APPLE__
-		// cpu memory management is fucked up with moltenvk
+#if TARGET_OS_IOS
+		// iOS MoltenVK: Optimized memory allocation for FMV performance
+		if (size > 1024 * 1024) {  // Large allocations (like FMV textures)
+			allocInfo.flags |= VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT;
+			// Use Apple's unified memory architecture efficiently
+			allocInfo.preferredFlags |= VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+		} else {
+			// Small allocations: use shared memory for better performance
+			allocInfo.flags |= VMA_ALLOCATION_CREATE_MAPPED_BIT;
+		}
+		// host coherent memory not supported on apple platforms
+		propertyFlags &= ~vk::MemoryPropertyFlagBits::eHostCoherent;
+#else
+		// macOS: cpu memory management is fucked up with moltenvk
 		allocInfo.flags |= VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT;
 		// host coherent memory not supported on apple platforms
 		propertyFlags &= ~vk::MemoryPropertyFlagBits::eHostCoherent;
+#endif
 #endif
 		if (propertyFlags & vk::MemoryPropertyFlagBits::eHostVisible)
 		{

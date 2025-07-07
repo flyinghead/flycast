@@ -23,6 +23,10 @@
 #include <algorithm>
 #include <memory>
 
+#ifdef __APPLE__
+#include <TargetConditionals.h>
+#endif
+
 void setImageLayout(vk::CommandBuffer const& commandBuffer, vk::Image image, vk::Format format, u32 mipmapLevels, vk::ImageLayout oldImageLayout, vk::ImageLayout newImageLayout)
 {
 	static const float scopeColor[4] = { 0.75f, 0.75f, 0.0f, 1.0f };
@@ -242,7 +246,22 @@ void Texture::CreateImage(vk::ImageTiling tiling, vk::ImageUsageFlags usage, vk:
 	image = device.createImageUnique(imageCreateInfo);
 
 	VmaAllocationCreateInfo allocCreateInfo = { VmaAllocationCreateFlags(), needsStaging ? VmaMemoryUsage::VMA_MEMORY_USAGE_GPU_ONLY : VmaMemoryUsage::VMA_MEMORY_USAGE_CPU_TO_GPU };
-#ifndef __APPLE__
+#ifdef __APPLE__
+#if TARGET_OS_IOS
+	// iOS MoltenVK: Optimized texture allocation for FMV performance
+	if (!needsStaging) {
+		// For iOS unified memory, use mapped memory for better FMV performance
+		if (extent.width * extent.height > 512 * 512) {
+			// Large textures (likely FMV): Use dedicated allocation
+			allocCreateInfo.flags = VmaAllocationCreateFlagBits::VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT;
+			allocCreateInfo.usage = VmaMemoryUsage::VMA_MEMORY_USAGE_GPU_ONLY;
+		} else {
+			// Small textures: Use mapped memory for efficiency
+			allocCreateInfo.flags = VmaAllocationCreateFlagBits::VMA_ALLOCATION_CREATE_MAPPED_BIT;
+		}
+	}
+#endif
+#else
 	if (!needsStaging)
 		allocCreateInfo.flags = VmaAllocationCreateFlagBits::VMA_ALLOCATION_CREATE_MAPPED_BIT;
 #endif
