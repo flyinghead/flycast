@@ -17,11 +17,11 @@
 #undef PAGE_MASK
 #undef PAGE_SIZE
 extern const unsigned long PAGE_SIZE;
-#define MAX_PAGE_SIZE 16384ul
+#define MAX_PAGE_SIZE 16384
 #elif defined(__APPLE__) && defined(__aarch64__)
-#define PAGE_SIZE 16384ul
+#define PAGE_SIZE 16384
 #elif !defined(PAGE_SIZE)
-#define PAGE_SIZE 4096ul
+#define PAGE_SIZE 4096
 #endif
 #ifndef PAGE_MASK
 #define PAGE_MASK (PAGE_SIZE-1)
