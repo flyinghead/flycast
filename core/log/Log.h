@@ -56,13 +56,15 @@ __attribute__((format(printf, 5, 6)))
 #endif
 ;
 
+#ifndef MAX_LOGLEVEL
+
 #if !defined(NDEBUG) || defined(DEBUGFAST)
 #define MAX_LOGLEVEL LogTypes::LOG_LEVELS::LDEBUG
 #else
-#ifndef MAX_LOGLEVEL
 #define MAX_LOGLEVEL LogTypes::LOG_LEVELS::LWARNING
-#endif  // loglevel
-#endif  // logging
+#endif  // #if !defined(NDEBUG) || defined(DEBUGFAST)
+
+#endif  // #ifndef MAX_LOGLEVEL
 
 // Let the compiler optimize this out
 #define GENERIC_LOG(t, v, ...)                                                                     \

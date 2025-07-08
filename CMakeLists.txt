@@ -10,6 +10,11 @@ set(SENTRY_UPLOAD_URL "" CACHE STRING "Sentry upload URL")
 
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/shell/cmake")
 
+# See available log levels under enum LOG_LEVELS in core\log\Log.h
+if(DEFINED MAX_LOGLEVEL)
+	add_compile_definitions("MAX_LOGLEVEL=${MAX_LOGLEVEL}")
+endif()
+
 if(APPLE)
 	if(CMAKE_SYSTEM_NAME STREQUAL iOS)
 		set(CMAKE_OSX_DEPLOYMENT_TARGET "12.0" CACHE STRING "Minimum iOS deployment version")
