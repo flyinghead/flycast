@@ -24,8 +24,6 @@
 #define USE_DREAMCASTCONTROLLER 1
 #endif
 
-#ifdef USE_DREAMCASTCONTROLLER
-
 #include "types.h"
 #include "emulator.h"
 #include "sdl_gamepad.h"
@@ -165,5 +163,3 @@ private:
 	bool startPressed = false;
 	std::string device_guid;
 };
-
-#endif
