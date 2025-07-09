@@ -20,10 +20,6 @@
 
 // This file contains abstraction layer for access to different kinds of physical controllers
 
-#if (defined(_WIN32) || defined(__linux__) || (defined(__APPLE__) && defined(TARGET_OS_MAC))) && !defined(TARGET_UWP)
-#define USE_DREAMCASTCONTROLLER 1
-#endif
-
 #include "types.h"
 #include "emulator.h"
 #include "sdl_gamepad.h"
@@ -31,6 +27,10 @@
 #include <functional>
 #include <memory>
 #include <array>
+
+#if (defined(_WIN32) || defined(__linux__) || (defined(__APPLE__) && defined(TARGET_OS_MAC))) && !defined(TARGET_UWP)
+#define USE_DREAMCASTCONTROLLER 1
+#endif
 
 #include <memory>
 
