@@ -938,7 +938,7 @@ void gui_settings_controls(bool& maple_devices_changed)
 		DisabledScope scope(game_started);
 		OptionCheckbox("Use Physical VMU Memory", config::UsePhysicalVmuMemory,
 			"Enables direct read/write access to physical VMU memory via DreamPicoPort/DreamConn. "
-			"This is not compatible with load state.");
+			"This is not compatible with load state events.");
 	}
 #endif
 
