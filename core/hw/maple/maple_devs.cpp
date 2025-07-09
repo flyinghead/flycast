@@ -2500,7 +2500,7 @@ struct DreamLinkPurupuru : public maple_sega_purupuru
 static std::list<std::shared_ptr<DreamLinkVmu>> dreamLinkVmus[2];
 static std::list<std::shared_ptr<DreamLinkPurupuru>> dreamLinkPurupurus;
 
-void createDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink, bool gameStart)
+void createDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink, bool gameStart, bool stateLoaded)
 {
 	const int bus = dreamlink->getBus();
 
@@ -2522,7 +2522,7 @@ void createDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink, bool gameStart
 				}
 			}
 
-			if (gameStart || !vmuFound)
+			if (gameStart || stateLoaded || !vmuFound)
 			{
 				if (!vmu)
 				{
@@ -2530,6 +2530,13 @@ void createDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink, bool gameStart
 				}
 
 				vmu->Setup(bus, i);
+
+				if (stateLoaded && vmu->useRealVmuMemory)
+				{
+					// Disconnect from real VMU memory when a state is loaded
+					vmu->useRealVmuMemory = false;
+					os_notify("WARNING: Disconnected from physical VMU memory due to load state", 6000);
+				}
 
 				if (!vmuFound && dev && dev->get_device_type() == MDT_SegaVMU && !vmu->useRealVmuMemory) {
 					// Only copy data from virtual VMU if Physical VMU Only is disabled
