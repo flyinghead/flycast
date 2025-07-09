@@ -2153,9 +2153,6 @@ struct DreamLinkVmu : public maple_sega_vmu
 
 	void OnSetup() override
 	{
-		// Update useRealVmuMemory in case config changed
-		useRealVmuMemory = config::UsePhysicalVmuMemory;
-
 		// All data must be re-read
 		memset(mirroredBlocks, 0, sizeof(mirroredBlocks));
 
@@ -2529,14 +2526,22 @@ void createDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink, bool gameStart
 					vmu = std::make_shared<DreamLinkVmu>(dreamlink);
 				}
 
-				vmu->Setup(bus, i);
-
-				if (stateLoaded && vmu->useRealVmuMemory)
+				if (gameStart)
 				{
-					// Disconnect from real VMU memory when a state is loaded
-					vmu->useRealVmuMemory = false;
-					os_notify("WARNING: Disconnected from physical VMU memory due to load state", 6000);
+					// Update useRealVmuMemory in case config changed
+					vmu->useRealVmuMemory = config::UsePhysicalVmuMemory;
 				}
+				else if (stateLoaded)
+				{
+					if (vmu->useRealVmuMemory)
+					{
+						// Disconnect from real VMU memory when a state is loaded
+						vmu->useRealVmuMemory = false;
+						os_notify("WARNING: Disconnected from physical VMU memory due to load state", 6000);
+					}
+				}
+
+				vmu->Setup(bus, i);
 
 				if (!vmuFound && dev && dev->get_device_type() == MDT_SegaVMU && !vmu->useRealVmuMemory) {
 					// Only copy data from virtual VMU if Physical VMU Only is disabled
