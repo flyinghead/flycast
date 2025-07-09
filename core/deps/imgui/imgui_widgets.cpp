@@ -740,7 +740,32 @@ bool ImGui::ButtonBehavior(const ImRect& bb, ImGuiID id, bool* out_hovered, bool
                 ClearActiveID();
             }
             if (!(flags & ImGuiButtonFlags_NoNavFocus) && g.IO.ConfigNavCursorVisibleAuto)
+            {
                 g.NavCursorVisible = false;
+                // Check if dragging (except for scrollbars)
+                if (held && !pressed)
+                {
+                    ImVec2 delta = GetMouseDragDelta(ImGuiMouseButton_Left);
+                    if (ImAbs(delta.x) >= 5.f || ImAbs(delta.y) >= 5.f)
+                    {
+                        ClearActiveID();
+                        // Find an ancestor window that allows drag scrolling.
+                        ImGuiWindow *scrollableWindow = window;
+                        while (scrollableWindow != nullptr
+                               && (scrollableWindow->Flags & ImGuiWindowFlags_ChildWindow)
+                               && !(scrollableWindow->Flags & ImGuiWindowFlags_DragScrolling)
+                               && scrollableWindow->ScrollMax.x == 0.0f
+                               && scrollableWindow->ScrollMax.y == 0.0f)
+                            scrollableWindow = scrollableWindow->ParentWindow;
+                        if (scrollableWindow != nullptr && (scrollableWindow->Flags & ImGuiWindowFlags_DragScrolling))
+                        {
+                            scrollableWindow->DragScrolling = true;
+                            held = false;
+                        }
+                    }
+                }
+            
+            }
         }
         else if (g.ActiveIdSource == ImGuiInputSource_Keyboard || g.ActiveIdSource == ImGuiInputSource_Gamepad)
         {
@@ -7202,6 +7227,12 @@ bool ImGui::Selectable(const char* label, bool selected, ImGuiSelectableFlags fl
     if (flags & ImGuiSelectableFlags_SelectOnRelease)   { button_flags |= ImGuiButtonFlags_PressedOnRelease; }
     if (flags & ImGuiSelectableFlags_AllowDoubleClick)  { button_flags |= ImGuiButtonFlags_PressedOnClickRelease | ImGuiButtonFlags_PressedOnDoubleClick; }
     if ((flags & ImGuiSelectableFlags_AllowOverlap) || (g.LastItemData.ItemFlags & ImGuiItemFlags_AllowOverlap)) { button_flags |= ImGuiButtonFlags_AllowOverlap; }
+
+    if (window->DragScrolling)
+    {
+        selected = false;
+        button_flags |= ImGuiItemFlags_Disabled;
+    }
 
     // Multi-selection support (header)
     const bool was_selected = selected;
