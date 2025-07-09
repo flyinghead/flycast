@@ -22,7 +22,10 @@
 #include "hw/maple/maple_devs.h"
 #include "vgamepad.h"
 #include "oslib/storage.h"
+
+#if defined(USE_SDL)
 #include "sdl/dreamlink.h" // For USE_DREAMCASTCONTROLLER
+#endif
 
 static float calcComboWidth(const char *biggestLabel) {
 	return ImGui::CalcTextSize(biggestLabel).x + ImGui::GetStyle().FramePadding.x * 2.0f + ImGui::GetFrameHeight();
