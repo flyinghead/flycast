@@ -1031,11 +1031,9 @@ std::string middleEllipsis(const std::string& s, float width)
 	float tw = ImGui::CalcTextSize(s.c_str()).x;
 	if (tw <= width)
 		return s;
-	std::string ellipsis;
 	char buf[5];
 	ImTextCharToUtf8(buf, ImGui::GetFont()->EllipsisChar);
-	for (int i = 0; i < ImGui::GetFont()->EllipsisCharCount; i++)
-		ellipsis += buf;
+	std::string ellipsis = buf;
 
 	int l = s.length() / 2;
 	int d = l;
