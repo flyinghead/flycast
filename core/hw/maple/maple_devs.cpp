@@ -2570,12 +2570,13 @@ void createDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink, bool gameStart
 				}
 			}
 
-			if (gameStart || !rumbleFound)
+			if (gameStart || stateLoaded || !rumbleFound)
 			{
 				if (!rumble)
 				{
 					rumble = std::make_shared<DreamLinkPurupuru>(dreamlink);
 				}
+
 				rumble->Setup(bus, i);
 
 				if (!rumbleFound) dreamLinkPurupurus.push_back(rumble);
