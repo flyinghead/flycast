@@ -197,13 +197,13 @@ bool Notification::draw()
 		for (auto it = leaderboards.rbegin(); it != leaderboards.rend(); ++it)
 		{
 			const std::string& text = it->second;
-			ImVec2 size = font->CalcTextSizeA(font->FontSize, FLT_MAX, -1.f, text.c_str());
+			ImVec2 size = font->CalcTextSizeA(font->LegacySize, FLT_MAX, -1.f, text.c_str());
 			ImVec2 psize = size + padding * 2;
 			pos.y -= psize.y;
 			dl->AddRectFilled(pos, pos + psize, bg_col, 0.f);
 			ImVec2 tpos = pos + padding;
 			const ImU32 col = alphaOverride(0xffffff, alpha);
-			dl->AddText(font, font->FontSize, tpos, col, &text.front(), &text.back() + 1, FLT_MAX);
+			dl->AddText(font, font->LegacySize, tpos, col, &text.front(), &text.back() + 1, FLT_MAX);
 			pos.y -= padding.y;
 		}
 	}
@@ -222,8 +222,8 @@ bool Notification::draw()
 		{
 			if (text[i].empty())
 				continue;
-			const ImFont *font = i == 0 ? largeFont : regularFont;
-			textSize[i] = font->CalcTextSizeA(font->FontSize, FLT_MAX, maxW, text[i].c_str());
+			ImFont *font = i == 0 ? largeFont : regularFont;
+			textSize[i] = font->CalcTextSizeA(font->LegacySize, FLT_MAX, maxW, text[i].c_str());
 			totalSize.x = std::max(totalSize.x, textSize[i].x);
 			totalSize.y += textSize[i].y;
 		}
@@ -262,9 +262,9 @@ bool Notification::draw()
 		{
 			if (text[i].empty())
 				continue;
-			const ImFont *font = i == 0 ? largeFont : regularFont;
+			ImFont *font = i == 0 ? largeFont : regularFont;
 			const ImU32 col = alphaOverride(i == 0 ? 0xffffff : 0x00ffff, alpha);
-			dl->AddText(font, font->FontSize, pos, col, &text[i].front(), &text[i].back() + 1, maxW);
+			dl->AddText(font, font->LegacySize, pos, col, &text[i].front(), &text[i].back() + 1, maxW);
 			pos.y += textSize[i].y + vspacing;
 		}
 	}
