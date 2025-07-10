@@ -201,7 +201,7 @@ void scrollWhenDraggingOnVoid(ImGuiMouseButton mouse_button)
     ImGuiButtonFlags button_flags = (mouse_button == ImGuiMouseButton_Left) ? ImGuiButtonFlags_MouseButtonLeft
     		: (mouse_button == ImGuiMouseButton_Right) ? ImGuiButtonFlags_MouseButtonRight : ImGuiButtonFlags_MouseButtonMiddle;
     // If nothing hovered so far in the frame (not same as IsAnyItemHovered()!) or item is disabled
-    if (g.HoveredId == 0 || g.HoveredIdDisabled)
+	if (g.HoveredId == 0 || g.HoveredIdIsDisabled)
     {
     	bool hoveredAllowOverlap = g.HoveredIdAllowOverlap;
     	g.HoveredIdAllowOverlap = true;
