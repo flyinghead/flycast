@@ -23,6 +23,10 @@
 #include "vgamepad.h"
 #include "oslib/storage.h"
 
+#if defined(USE_SDL)
+#include "sdl/dreamlink.h" // For USE_DREAMCASTCONTROLLER
+#endif
+
 static float calcComboWidth(const char *biggestLabel) {
 	return ImGui::CalcTextSize(biggestLabel).x + ImGui::GetStyle().FramePadding.x * 2.0f + ImGui::GetFrameHeight();
 }
@@ -937,7 +941,8 @@ void gui_settings_controls(bool& maple_devices_changed)
 	{
 		DisabledScope scope(game_started);
 		OptionCheckbox("Use Physical VMU Memory", config::UsePhysicalVmuMemory,
-			"Enables direct read/write access to physical VMU memory via DreamPicoPort/DreamConn.");
+			"Enables direct read/write access to physical VMU memory via DreamPicoPort/DreamConn. "
+			"This is not compatible with load state events.");
 	}
 #endif
 

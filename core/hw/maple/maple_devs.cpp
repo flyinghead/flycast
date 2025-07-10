@@ -2153,9 +2153,6 @@ struct DreamLinkVmu : public maple_sega_vmu
 
 	void OnSetup() override
 	{
-		// Update useRealVmuMemory in case config changed
-		useRealVmuMemory = config::UsePhysicalVmuMemory;
-
 		// All data must be re-read
 		memset(mirroredBlocks, 0, sizeof(mirroredBlocks));
 
@@ -2500,7 +2497,7 @@ struct DreamLinkPurupuru : public maple_sega_purupuru
 static std::list<std::shared_ptr<DreamLinkVmu>> dreamLinkVmus[2];
 static std::list<std::shared_ptr<DreamLinkPurupuru>> dreamLinkPurupurus;
 
-void createDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink, bool gameStart)
+void createDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink, bool gameStart, bool stateLoaded)
 {
 	const int bus = dreamlink->getBus();
 
@@ -2522,11 +2519,26 @@ void createDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink, bool gameStart
 				}
 			}
 
-			if (gameStart || !vmuFound)
+			if (gameStart || stateLoaded || !vmuFound)
 			{
 				if (!vmu)
 				{
 					vmu = std::make_shared<DreamLinkVmu>(dreamlink);
+				}
+
+				if (gameStart)
+				{
+					// Update useRealVmuMemory in case config changed
+					vmu->useRealVmuMemory = config::UsePhysicalVmuMemory;
+				}
+				else if (stateLoaded)
+				{
+					if (vmu->useRealVmuMemory)
+					{
+						// Disconnect from real VMU memory when a state is loaded
+						vmu->useRealVmuMemory = false;
+						os_notify("WARNING: Disconnected from physical VMU memory due to load state", 6000);
+					}
 				}
 
 				vmu->Setup(bus, i);
@@ -2558,12 +2570,13 @@ void createDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink, bool gameStart
 				}
 			}
 
-			if (gameStart || !rumbleFound)
+			if (gameStart || stateLoaded || !rumbleFound)
 			{
 				if (!rumble)
 				{
 					rumble = std::make_shared<DreamLinkPurupuru>(dreamlink);
 				}
+
 				rumble->Setup(bus, i);
 
 				if (!rumbleFound) dreamLinkPurupurus.push_back(rumble);
