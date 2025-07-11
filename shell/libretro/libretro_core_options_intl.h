@@ -67052,11 +67052,11 @@ struct retro_core_options_v2 options_pt_pt = {
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_RU "Режим Free Play для игр NAOMI"
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_RU "Изменять настройки монетизации для включения бесплатной игры."
 #define CORE_OPTION_NAME_EMULATE_BBA_LABEL_RU "Эмуляция Broadband Adapter"
-#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_RU NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_RU "Эмулировать вместо модема широкополосный Ethernet-адаптер (требуется перезапуск)"
 #define CORE_OPTION_NAME_UPNP_LABEL_RU "Включить UPnP"
 #define CORE_OPTION_NAME_UPNP_INFO_0_RU "Использовать UPnP для автоматической настройки вашего Интернет-роутера для онлайн-игр."
-#define CORE_OPTION_NAME_DCNET_LABEL_RU NULL
-#define CORE_OPTION_NAME_DCNET_INFO_0_RU NULL
+#define CORE_OPTION_NAME_DCNET_LABEL_RU "Использовать DCNet"
+#define CORE_OPTION_NAME_DCNET_INFO_0_RU "Используйте облачный сервис DCNet для доступа в Интернет Dreamcast."
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_RU "Внутреннее разрешение"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_RU "Настройка разрешения рендеринга."
 #define OPTION_VAL_320X240_RU "320x240 (половина)"
