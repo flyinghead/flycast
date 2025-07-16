@@ -958,7 +958,7 @@ public:
 					Fcvtzs(to, from);
 					Mov(w0, 0x7FFFFF80);
 					Cmp(to, w0);
-					Mov(w0, 0x7FFFFFF);
+					Mov(w0, 0x7FFFFFFF);
 					Csel(to, w0, to, gt);
 					Fcmp(from, from);
 					Mov(w0, 0x80000000);

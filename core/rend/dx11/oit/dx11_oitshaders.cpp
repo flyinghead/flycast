@@ -598,7 +598,7 @@ float4 resolveAlphaBlend(in float2 pos)
 				srcCoef = 1.f;
 				break;
 			case OTHER_COLOR:
-				srcCoef = finalColor;
+				srcCoef = dstColor;
 				break;
 			case INVERSE_OTHER_COLOR:
 				srcCoef = 1.f - dstColor;

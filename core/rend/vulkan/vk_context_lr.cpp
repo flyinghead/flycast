@@ -489,7 +489,6 @@ void VulkanContext::term()
 			}
 		}
 	}
-	overlay->Term();
 	overlay.reset();
 	framebuffers.clear();
 	colorAttachments.clear();
