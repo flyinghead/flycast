@@ -114,7 +114,7 @@ public:
 	{
 		recordFD = openDevice(O_RDONLY);
 
-		if (recordFD < 0 || !setRate(recordFD, sampling_freq) || !setChannels(recordFD, 1) || !setFormat(recordFD, AFMT_S16_NE /* Native 16 bits */ ))
+		if (recordFD < 0 || !setRate(recordFD, sampling_freq) || !setChannels(recordFD, 1) || !setFormat(recordFD, AFMT_S16_NE /* Native 16 bits */))
 		{
 			termRecord();
 			return false;
@@ -130,7 +130,7 @@ public:
 		recordFD = -1;
 	}
 
-	u32 record(void *buffer, u32 samples) override
+	u32 record(void* buffer, u32 samples) override
 	{
 		samples *= 2;
 		int l = read(recordFD, buffer, samples);
@@ -141,7 +141,7 @@ public:
 				INFO_LOG(AUDIO, "OSS: Recording error");
 				l = 0;
 			}
-			memset((u8 *)buffer + l, 0, samples - l);
+			memset((u8*)buffer + l, 0, samples - l);
 		}
 		return l / 2;
 	}

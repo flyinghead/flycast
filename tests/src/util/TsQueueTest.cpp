@@ -1,5 +1,5 @@
-#include "gtest/gtest.h"
 #include "util/tsqueue.h"
+#include "gtest/gtest.h"
 #include <atomic>
 #include <future>
 
@@ -31,11 +31,11 @@ TEST_F(TsQueueTest, MultiThread)
 {
 	TsQueue<bool> queue;
 	std::atomic<bool> gotResult = false;
-	std::future<bool> future = std::async(std::launch::async, [&]() {
+	std::future<bool> future = std::async(std::launch::async, [&]()
+		{
 		bool res = queue.pop();
 		gotResult = true;
-		return res;
-	});
+		return res; });
 	usleep(500'000);
 	ASSERT_FALSE(gotResult);
 	ASSERT_EQ(std::future_status::timeout, future.wait_for(std::chrono::seconds(0)));
@@ -45,7 +45,8 @@ TEST_F(TsQueueTest, MultiThread)
 
 TEST_F(TsQueueTest, Class)
 {
-	struct T1 {
+	struct T1
+	{
 		float f;
 	};
 	TsQueue<T1> q1;
@@ -67,18 +68,20 @@ TEST_F(TsQueueTest, Class)
 	class T3
 	{
 	public:
-		T3(const char *s) : s(s) {}
+		T3(const char* s) : s(s) {}
 		T3(const T3&) = delete;
-		T3(T3&& other) {
+		T3(T3&& other)
+		{
 			std::swap(s, other.s);
 		}
 		T3& operator=(const T3& other) = delete;
-		T3& operator=(T3&& other) {
+		T3& operator=(T3&& other)
+		{
 			std::swap(s, other.s);
 			return *this;
 		}
 
-		const char *s;
+		const char* s;
 	};
 	TsQueue<T3> q3;
 	q3.push(T3("pi"));

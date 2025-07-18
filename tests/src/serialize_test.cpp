@@ -1,12 +1,13 @@
-#include "gtest/gtest.h"
-#include "types.h"
-#include "hw/mem/addrspace.h"
+#include "cfg/option.h"
+#include "emulator.h"
 #include "hw/maple/maple_cfg.h"
 #include "hw/maple/maple_devs.h"
-#include "emulator.h"
-#include "cfg/option.h"
+#include "hw/mem/addrspace.h"
+#include "types.h"
+#include "gtest/gtest.h"
 
-class SerializeTest : public ::testing::Test {
+class SerializeTest : public ::testing::Test
+{
 protected:
 	void SetUp() override
 	{
