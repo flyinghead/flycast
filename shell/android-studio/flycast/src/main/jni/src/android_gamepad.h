@@ -73,7 +73,7 @@ template<bool Arcade = false, bool Gamepad = false>
 class DefaultInputMapping : public InputMapping
 {
 public:
-	DefaultInputMapping(AndroidGamepadDevice& gamepad);
+	DefaultInputMapping(const AndroidGamepadDevice& gamepad);
 };
 
 class ShieldRemoteInputMapping : public InputMapping
@@ -99,7 +99,7 @@ public:
 	AndroidGamepadDevice(int maple_port, int id, const char *name, const char *unique_id,
 			const std::vector<int>& fullAxes, const std::vector<int>& halfAxes)
 		: GamepadDevice(maple_port, "Android"), android_id(id),
-		  fullAxes(fullAxes), halfAxes(halfAxes)
+		  fullAxes(fullAxes)
 	{
 		_name = name;
 		_unique_id = unique_id;
@@ -108,6 +108,7 @@ public:
 		loadMapping();
 		save_mapping();
 		hasAnalogStick = !fullAxes.empty();
+		this->halfAxes.insert(halfAxes.begin(), halfAxes.end());
 	}
 	~AndroidGamepadDevice() override {
 		INFO_LOG(INPUT, "Android: Joystick '%s' on port %d disconnected", _name.c_str(), maple_port());
@@ -210,12 +211,6 @@ public:
 		}
 	}
 
-	void set_trigger_axes(u32 left_axis_code, u32 right_axis_code)
-	{
-		leftTrigger = left_axis_code;
-		rightTrigger = right_axis_code;
-	}
-
 	static std::shared_ptr<AndroidGamepadDevice> GetAndroidGamepad(int id)
 	{
 		auto it = android_gamepads.find(id);
@@ -250,7 +245,7 @@ public:
 		this->rumbleEnabled = rumbleEnabled;
 	}
 
-	bool hasHalfAxis(int axis) const { return std::find(halfAxes.begin(), halfAxes.end(), axis) != halfAxes.end(); }
+	bool hasHalfAxis(int axis) const { return isHalfAxis(axis); }
 	bool hasFullAxis(int axis) const { return std::find(fullAxes.begin(), fullAxes.end(), axis) != fullAxes.end(); }
 
 	void resetMappingToDefault(bool arcade, bool gamepad) override
@@ -271,13 +266,12 @@ private:
 	int android_id;
 	static std::map<int, std::shared_ptr<AndroidGamepadDevice>> android_gamepads;
 	std::vector<int> fullAxes;
-	std::vector<int> halfAxes;
 };
 
 std::map<int, std::shared_ptr<AndroidGamepadDevice>> AndroidGamepadDevice::android_gamepads;
 
 template<bool Arcade, bool Gamepad>
-inline DefaultInputMapping<Arcade, Gamepad>::DefaultInputMapping(AndroidGamepadDevice& gamepad)
+inline DefaultInputMapping<Arcade, Gamepad>::DefaultInputMapping(const AndroidGamepadDevice& gamepad)
 {
 	name = Arcade ? Gamepad ? "Arcade Gamepad" : "Arcade Hitbox" : "Default";
 	int ltAxis = AXIS_LTRIGGER;
@@ -392,8 +386,6 @@ inline DefaultInputMapping<Arcade, Gamepad>::DefaultInputMapping(AndroidGamepadD
 	set_axis(DC_AXIS_RIGHT, AXIS_X, true);
 	set_axis(DC_AXIS_UP, AXIS_Y, false);
 	set_axis(DC_AXIS_DOWN, AXIS_Y, true);
-
-	gamepad.set_trigger_axes(ltAxis, rtAxis);
 
 	dirty = false;
 }

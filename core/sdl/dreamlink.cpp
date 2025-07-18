@@ -204,8 +204,11 @@ std::shared_ptr<InputMapping> DreamLinkGamepad::getDefaultMapping() {
 	return mapping;
 }
 
-void DreamLinkGamepad::setBaseDefaultMapping(const std::shared_ptr<InputMapping>& mapping) const {
-	u32 startCode = mapping->get_button_code(maple_port(), DreamcastKey::DC_BTN_START);
+void DreamLinkGamepad::setBaseDefaultMapping(const std::shared_ptr<InputMapping>& mapping) const
+{
+	const u32 leftTrigger = mapping->get_axis_code(maple_port(), DreamcastKey::DC_AXIS_LT).first;
+	const u32 rightTrigger = mapping->get_axis_code(maple_port(), DreamcastKey::DC_AXIS_RT).first;
+	const u32 startCode = mapping->get_button_code(maple_port(), DreamcastKey::DC_BTN_START);
 	if (leftTrigger != InputMapping::InputDef::INVALID_CODE &&
 		rightTrigger != InputMapping::InputDef::INVALID_CODE &&
 		startCode != InputMapping::InputDef::INVALID_CODE)

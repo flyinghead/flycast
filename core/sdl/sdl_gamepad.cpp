@@ -202,16 +202,31 @@ SDLGamepad::SDLGamepad(int maple_port, int joystick_idx, SDL_Joystick* sdl_joyst
 		{
 			SDL_GameControllerButtonBind bind = SDL_GameControllerGetBindForAxis(sdl_controller, SDL_CONTROLLER_AXIS_TRIGGERLEFT);
 			if (bind.bindType == SDL_CONTROLLER_BINDTYPE_AXIS)
-				leftTrigger = bind.value.axis;
+				halfAxes.insert(bind.value.axis);
 			bind = SDL_GameControllerGetBindForAxis(sdl_controller, SDL_CONTROLLER_AXIS_TRIGGERRIGHT);
 			if (bind.bindType == SDL_CONTROLLER_BINDTYPE_AXIS)
-				rightTrigger = bind.value.axis;
+				halfAxes.insert(bind.value.axis);
+		}
+	}
+
+	// heuristic to detect half axes and their direction
+	const int axes = SDL_JoystickNumAxes(sdl_joystick);
+	// Skip axis 0 since it's extremely unlikely to be a trigger, and a wheel may be fully deflected left or right
+	// and could be confused with one.
+	for (int axis = 1; axis < axes; axis++)
+	{
+		s16 state;
+		if (SDL_JoystickGetAxisInitialState(sdl_joystick, axis, &state)
+				&& std::abs(state) >= AXIS_ACTIVATION_VALUE)
+		{
+			halfAxes.insert(axis);
+			axisDirection[axis] = state >= 0 ? 1 : -1;
 		}
 	}
 
 	loadMapping();
 
-	hasAnalogStick = SDL_JoystickNumAxes(sdl_joystick) > 0;
+	hasAnalogStick = axes > 0;
 	set_maple_port(maple_port);
 
 #if SDL_VERSION_ATLEAST(2, 0, 18)

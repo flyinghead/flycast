@@ -27,8 +27,8 @@ public:
 
 	bool gamepad_axis_input(u32 code, int value) override
 	{
-		if (code == leftTrigger || code == rightTrigger)
-			value = (u16)(value + 32768) / 2;
+		if (isHalfAxis(code))
+			value = std::min((32768 - value * axisDirection[code]) / 2, 32767);
 		return GamepadDevice::gamepad_axis_input(code, value);
 	}
 
@@ -106,6 +106,7 @@ private:
 	SDL_Joystick* sdl_joystick;
 	float vib_inclination = 0;
 	SDL_GameController *sdl_controller = nullptr;
+	std::unordered_map<int, int> axisDirection;
 	static std::map<SDL_JoystickID, std::shared_ptr<SDLGamepad>> sdl_gamepads;
 	SDL_Haptic *haptic = nullptr;
 	bool hapticRumble = false;

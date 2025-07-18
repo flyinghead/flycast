@@ -22,11 +22,11 @@
 #include "mapping.h"
 #include "stdclass.h"
 
-#include <map>
+#include <unordered_map>
 #include <memory>
 #include <mutex>
 #include <vector>
-#include <set>
+#include <unordered_set>
 
 class GamepadDevice
 {
@@ -152,7 +152,12 @@ protected:
 		return std::make_shared<IdentityInputMapping>();
 	}
 
-	bool is_detecting_input() { return _input_detected != nullptr; }
+	bool is_detecting_input() const {
+		return _input_detected != nullptr;
+	}
+	bool isHalfAxis(u32 axis) const {
+		return halfAxes.count(axis) != 0;
+	}
 
 	std::string _name;
 	std::string _unique_id;
@@ -160,8 +165,7 @@ protected:
 	bool rumbleEnabled = false;
 	bool hasAnalogStick = false;
 	int rumblePower = 100;
-	u32 leftTrigger = ~0;
-	u32 rightTrigger = ~0;
+	std::unordered_set<u32> halfAxes;
 
 private:
 	virtual void registered() {}
@@ -220,7 +224,7 @@ private:
 	bool _remappable;
 	bool _is_registered = false;
 	u32 digitalToAnalogState[4];
-	std::map<DreamcastKey, int> lastAxisValue[4];
+	std::unordered_map<DreamcastKey, int> lastAxisValue[4];
 	bool perGameMapping = false;
 	bool instanceMapping = false;
 

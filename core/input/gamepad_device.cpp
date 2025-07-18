@@ -410,7 +410,7 @@ bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 			//printf("B-AXIS %d Mapped to %d -> %d\n", key, value, v);
 			// TODO hysteresis?
 			int threshold = AXIS_ACTIVATION_VALUE;
-			if (code == leftTrigger || code == rightTrigger )
+			if (isHalfAxis(code))
 				threshold = 100;
 
 			if (std::abs(v) < threshold)
