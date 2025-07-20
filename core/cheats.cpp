@@ -169,6 +169,7 @@ const WidescreenCheat CheatManager::widescreen_cheats[] =
 //		{ "T-9502D-50", nullptr,    { 0xBDE9B0, 0xBDE9C4 }, { 0x3F400000, 0x3FA00000 } },	// Nightmare Creatures II (PAL)
 		{ "MK-5110250", nullptr,    { 0x87B5A4 }, { 0x43700000 } },		// Outtrigger (PAL)
 		{ "HDR-0118",   nullptr,    { 0x83E284 }, { 0x43700000 } },		// Outtrigger (JP)
+		{ "MK-51102",   nullptr,    { 0x83E284 }, { 0x43700000 } },     // Outtrigger (US)
 		{ "T15103D 50", nullptr,    { 0x1EEE78 }, { 0x3F400000 } },		// PenPen (PAL)
 		{ "T17001M",    nullptr,    { 0x1C3828 }, { 0x3F400000 } },		// PenPen TriIcelon (JP)
 		{ "MK-5110050", nullptr,    { 0x548E04, 0x0923C0 }, { 0x43E80000, 0x3F966666 } },	// Phantasy Star Online (PAL) TODO
@@ -560,6 +561,36 @@ void CheatManager::reset(const std::string& gameId)
 			cheats.emplace_back(Cheat::Type::setValue, "modem rxspeed set", true, 32, 0x0016e710, 0x2020202c, true);		// ",   "
 			cheats.emplace_back(Cheat::Type::runNextIfEq, "modem txspeed ifeq", true, 32, 0x0016e71c, 0x3434312c, true);	// ",144"
 			cheats.emplace_back(Cheat::Type::setValue, "modem txspeed set", true, 32, 0x0016e71c, 0x2020202c, true);		// ",   "
+		}
+		else if (gameId == "MK-51162")		// Propeller Arena
+		{
+			// 0c1f56f0: ,0,28800,28800,28800,28800\\r"\n
+			// 0c1f5770: ,0,28800,28800,28800,28800\\r"\n
+			for (u32 addr = 0x001f56f0; addr <= 0x001f5770; addr += 0x80)
+			{
+				cheats.emplace_back(Cheat::Type::runNextIfEq, "modem automode1 ifeq", true, 32, addr + 0x00, 0x322c302c, true);	// ",0,2"
+				cheats.emplace_back(Cheat::Type::setValue, "modem automode1 set", true, 32,     addr + 0x00, 0x202c312c, true);	// ",1, "
+				cheats.emplace_back(Cheat::Type::runNextIfEq, "modem automode2 ifeq", true, 32, addr + 0x04, 0x30303838, true);	// "8800"
+				cheats.emplace_back(Cheat::Type::setValue, "modem automode2 set", true, 32,     addr + 0x04, 0x30202020, true);	// "   0"
+				cheats.emplace_back(Cheat::Type::runNextIfEq, "modem automode3 ifeq", true, 32, addr + 0x0c, 0x322c3030, true);	// "00,2"
+				cheats.emplace_back(Cheat::Type::setValue, "modem automode3 set", true, 32,     addr + 0x0c, 0x202c3030, true);	// "00, "
+				cheats.emplace_back(Cheat::Type::runNextIfEq, "modem automode4 ifeq", true, 32, addr + 0x10, 0x30303838, true);	// "8800"
+				cheats.emplace_back(Cheat::Type::setValue, "modem automode4 set", true, 32,     addr + 0x10, 0x30202020, true);	// "   0"
+			}
+		}
+		else if (gameId == "HDR-0113")	// Power Smash
+		{
+			cheats.emplace_back(Cheat::Type::runNextIfEq, "no dupe SYN ifeq", true, 16, 0x14d258, 0xbbce, true);	// bsr SendNormalSYN
+			cheats.emplace_back(Cheat::Type::setValue,     "no dupe SYN set", true, 16, 0x14d258, 0x0009, true);	// nop
+			cheats.emplace_back(Cheat::Type::runNextIfEq, "no dupe ACK ifeq", true, 16, 0x14af42, 0x430b, true);	// jsr TCPInternalSendPacket
+			cheats.emplace_back(Cheat::Type::setValue,     "no dupe ACK set", true, 16, 0x14af42, 0x0009, true);	// nop
+		}
+		else if (gameId == "HDR-0091")	// Pro Yakyuu Team de Asobou Net!
+		{
+			cheats.emplace_back(Cheat::Type::runNextIfEq, "no dupe SYN ifeq", true, 16, 0xe13e0c, 0xbbce, true);	// bsr SendNormalSYN
+			cheats.emplace_back(Cheat::Type::setValue,     "no dupe SYN set", true, 16, 0xe13e0c, 0x0009, true);	// nop
+			cheats.emplace_back(Cheat::Type::runNextIfEq, "no dupe ACK ifeq", true, 16, 0xe11af6, 0x430b, true);	// jsr TCPInternalSendPacket
+			cheats.emplace_back(Cheat::Type::setValue,     "no dupe ACK set", true, 16, 0xe11af6, 0x0009, true);	// nop
 		}
 
 		if (cheats.size() > cheatCount)

@@ -40,6 +40,7 @@ private:
 	void loadDatabase();
 	void saveDatabase();
 	std::string getSaveDirectory() const {
+		// *must* end with a path separator
 		return get_writable_data_path("/boxart/");
 	}
 	void fetchBoxart();

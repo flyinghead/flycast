@@ -38,7 +38,6 @@ static u32 windowFlags;
 #define WINDOW_WIDTH  640
 #define WINDOW_HEIGHT  480
 
-std::map<SDL_JoystickID, std::shared_ptr<SDLGamepad>> SDLGamepad::sdl_gamepads;
 static std::unordered_map<u64, std::shared_ptr<SDLMouse>> sdl_mice;
 static std::shared_ptr<SDLKeyboardDevice> sdl_keyboard;
 static bool window_fullscreen;
@@ -323,6 +322,7 @@ void input_sdl_handle()
 				if (event.key.repeat == 0)
 				{
 					auto is_key_mapped = [](u32 code) -> bool {
+						const InputMapping::InputSet inputSet{InputMapping::InputDef::from_button(code)};
 #if defined(_WIN32) && !defined(TARGET_UWP)
 						if (config::UseRawInput)
 						{
@@ -331,7 +331,7 @@ void input_sdl_handle()
 								auto gamepad = GamepadDevice::GetGamepad(i);
 								if (dynamic_cast<rawinput::RawKeyboard*>(gamepad.get()) != nullptr)
 								{
-									bool mapped = (gamepad->get_input_mapping()->get_button_id(0, code) != EMU_BTN_NONE);
+									bool mapped = (gamepad->get_input_mapping()->get_button_id(0, inputSet) != EMU_BTN_NONE);
 									if (mapped) return true;
 								}
 							}
@@ -340,7 +340,7 @@ void input_sdl_handle()
 						else
 #endif
 						{
-							return (sdl_keyboard->get_input_mapping()->get_button_id(0, code) != EMU_BTN_NONE);
+							return (sdl_keyboard->get_input_mapping()->get_button_id(0, inputSet) != EMU_BTN_NONE);
 						}
 					};
 					if (event.type == SDL_KEYDOWN)
@@ -1258,11 +1258,13 @@ static float springSat;
 static float springSpeed;
 static float damperParam;
 static float damperSpeed;
+static float rumblePower;
+static float rumbleFreq;
 
 void sdl_setTorque(int port, float torque)
 {
 	::torque = torque;
-	if (gameRunning)
+	if (gameRunning || torque == 0.f)
 		SDLGamepad::SetTorque(port, torque);
 }
 
@@ -1278,6 +1280,13 @@ void sdl_setDamper(int port, float param, float speed)
 	damperParam = param;
 	damperSpeed = speed;
 	SDLGamepad::SetDamper(port, param, speed);
+}
+
+void sdl_setSine(int port, float power, float freq, u32 duration_ms)
+{
+	rumblePower = power;
+	rumbleFreq = freq;
+	SDLGamepad::SetSine(port, power, freq, duration_ms);
 }
 
 void sdl_stopHaptic(int port)
@@ -1314,7 +1323,7 @@ void sdl_displayHapticStats()
 	ImGui::Text("Torque");
 	char s[32];
 	snprintf(s, sizeof(s), "%.1f", torque);
-	ImGui::ProgressBar(0.5f + torque / 2.f, ImVec2(-1, 0), s);
+	ImGui::ProgressBar(0.5f - torque / 2.f, ImVec2(-1, 0), s);
 
 	ImGui::Text("Spring Sat");
 	snprintf(s, sizeof(s), "%.1f", springSat);
@@ -1331,6 +1340,12 @@ void sdl_displayHapticStats()
 	ImGui::Text("Damper Speed");
 	snprintf(s, sizeof(s), "%.1f", damperSpeed);
 	ImGui::ProgressBar(damperSpeed, ImVec2(-1, 0), s);
+
+	ImGui::Text("Rumble");
+	snprintf(s, sizeof(s), "%.1f", rumblePower);
+	ImGui::ProgressBar(rumblePower, ImVec2(-1, 0), s);
+	snprintf(s, sizeof(s), "%.0f Hz", rumbleFreq);
+	ImGui::ProgressBar(rumbleFreq / 200.f, ImVec2(-1, 0), s);
 
 	ImGui::End();
 }

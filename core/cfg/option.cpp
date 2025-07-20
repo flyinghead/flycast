@@ -40,6 +40,7 @@ Option<bool> ForceFreePlay("ForceFreePlay", true);
 Option<bool, false> FetchBoxart("FetchBoxart", true);
 Option<bool, false> BoxartDisplayMode("BoxartDisplayMode", true);
 Option<int, false> UIScaling("UIScaling", 100);
+Option<int, false> UITheme("UITheme", 0);
 
 // Sound
 
@@ -98,6 +99,8 @@ Option<int> SkipFrame("ta.skip");
 Option<int> MaxThreads("pvr.MaxThreads", 3);
 Option<int> AutoSkipFrame("pvr.AutoSkipFrame", 0);
 Option<int> RenderResolution("rend.Resolution", 480);
+Option<bool> IntegerScale("rend.IntegerScale", false);
+Option<bool> LinearInterpolation("rend.LinearInterpolation", true);
 Option<bool> VSync("rend.vsync", true);
 Option<int64_t> PixelBufferSize("rend.PixelBufferSize", 512_MB);
 Option<int> AnisotropicFiltering("rend.AnisotropicFiltering", 1);

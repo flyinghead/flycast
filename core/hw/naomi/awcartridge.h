@@ -8,10 +8,7 @@
  *  // copyright-holders:Olivier Galibert,Andreas Naive
  *
  */
-
-#ifndef CORE_HW_NAOMI_AWCARTRIDGE_H_
-#define CORE_HW_NAOMI_AWCARTRIDGE_H_
-
+#pragma once
 #include "naomi_cart.h"
 
 class AWCartridge: public Cartridge
@@ -59,5 +56,3 @@ private:
 
 	void recalc_dma_offset(int mode);
 };
-
-#endif /* CORE_HW_NAOMI_AWCARTRIDGE_H_ */

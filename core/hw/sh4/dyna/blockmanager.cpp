@@ -32,8 +32,9 @@ typedef std::map<void*, RuntimeBlockInfoPtr> bm_Map;
 static bm_Set all_temp_blocks;
 static bm_List del_blocks;
 
-bool unprotected_pages[RAM_SIZE_MAX/PAGE_SIZE];
-static std::set<RuntimeBlockInfo*> blocks_per_page[RAM_SIZE_MAX/PAGE_SIZE];
+static u32 pageCount;
+bool *unprotected_pages;
+static std::set<RuntimeBlockInfo*> *blocks_per_page;
 
 static bm_Map blkmap;
 // Stats
@@ -302,10 +303,10 @@ void bm_ResetCache()
 	// blkmap includes temp blocks as well
 	all_temp_blocks.clear();
 
-	for (auto& block_list : blocks_per_page)
-		block_list.clear();
+	for (size_t i = 0; i < pageCount; i++)
+		blocks_per_page[i].clear();
 
-	memset(unprotected_pages, 0, sizeof(unprotected_pages));
+	memset(unprotected_pages, 0, pageCount);
 
 #ifdef DYNA_OPROF
 	if (oprofHandle)
@@ -337,6 +338,10 @@ void bm_ResetTempCache(bool full)
 
 void bm_Init()
 {
+	pageCount = RAM_SIZE_MAX / PAGE_SIZE;
+	unprotected_pages = new bool[pageCount];
+	blocks_per_page = new std::set<RuntimeBlockInfo*>[pageCount];
+
 #ifdef DYNA_OPROF
 	oprofHandle=op_open_agent();
 	if (oprofHandle==0)
@@ -354,6 +359,8 @@ void bm_Term()
 	oprofHandle=0;
 #endif
 	bm_Reset();
+	delete[] unprotected_pages;
+	delete[] blocks_per_page;
 }
 
 void bm_WriteBlockMap(const std::string& file)

@@ -51,6 +51,10 @@ public:
 
     bool send(const MapleMsg& txMsg, MapleMsg& rxMsg) override;
 
+private:
+	bool send_no_lock(const MapleMsg& msg);
+
+public:
 	int getBus() const override {
 		return bus;
 	}
@@ -65,15 +69,13 @@ public:
 		return 0;
 	}
 
-	std::array<u32, 3> getFunctionDefinitions(int forPort) const override {
-		std::array<u32, 3> arr{0, 0, 0};
-		if (forPort == 1 && hasVmu()) {
+	std::array<u32, 3> getFunctionDefinitions(int forPort) const override
+	{
+		if (forPort == 1 && hasVmu())
 			// For clock, LCD, storage
 			return std::array<u32, 3>{0x403f7e7e, 0x00100500, 0x00410f00};
-		}
-		else if (forPort == 2 && hasRumble()) {
+		else if (forPort == 2 && hasRumble())
 			return std::array<u32, 3>{0x00000101, 0, 0};
-		}
 		return std::array<u32, 3>{0, 0, 0};
 	}
 

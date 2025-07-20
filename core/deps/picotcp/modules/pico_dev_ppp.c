@@ -319,7 +319,7 @@ static void pppdump(uint8_t *buf, int len, int egress)
         last_time_ms = PICO_TIME_MS();
 	}
 
-	uint32_t delta = (PICO_TIME_MS() - last_time_ms) / 100;
+	uint32_t delta = PICO_TIME_MS() / 100 - last_time_ms / 100;
 	if (delta < 256)
 	{
 		fputc(6, dumpfp);					// Time step (short)

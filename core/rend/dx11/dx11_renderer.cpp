@@ -559,14 +559,12 @@ void DX11Renderer::displayFramebuffer()
 		std::swap(shiftX, shiftY);
 		renderAR = 1 / renderAR;
 	}
-	float screenAR = (float)outwidth / outheight;
+	
 	int dy = 0;
 	int dx = 0;
-	if (renderAR > screenAR)
-		dy = (int)roundf(outheight * (1 - screenAR / renderAR) / 2.f);
-	else
-		dx = (int)roundf(outwidth * (1 - renderAR / screenAR) / 2.f);
-
+	// handles the rotation on its own, so never pass config::Rotate90
+	getWindowboxDimensions(outwidth, outheight, renderAR, dx, dy, false);
+	
 	float x = (float)dx;
 	float y = (float)dy;
 	float w = (float)(outwidth - 2 * dx);
@@ -581,7 +579,7 @@ void DX11Renderer::displayFramebuffer()
 	x += shiftX;
 	y += shiftY;
 	deviceContext->OMSetBlendState(blendStates.getState(false), nullptr, 0xffffffff);
-	quad->draw(fbTextureView, samplers->getSampler(config::TextureFiltering != 1), nullptr, x, y, w, h, config::Rotate90);
+	quad->draw(fbTextureView, samplers->getSampler(config::LinearInterpolation), nullptr, x, y, w, h, config::Rotate90);
 #endif
 }
 

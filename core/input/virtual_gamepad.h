@@ -31,8 +31,8 @@ public:
 		input_mapper = std::make_shared<IdentityInputMapping>();
 		// hasAnalogStick = true; // TODO has an analog stick but input mapping isn't persisted
 
-		leftTrigger = DC_AXIS_LT;
-		rightTrigger = DC_AXIS_RT;
+		halfAxes.insert(DC_AXIS_LT);
+		halfAxes.insert(DC_AXIS_RT);
 	}
 
 	bool is_virtual_gamepad() override {

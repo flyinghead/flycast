@@ -18,6 +18,7 @@
 */
 #pragma once
 #ifndef FEAT_NO_MINIUPNPC
+#include <cstddef>
 #include <miniupnpc.h>
 
 #include <cstring>

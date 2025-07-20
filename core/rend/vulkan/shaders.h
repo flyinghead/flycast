@@ -20,7 +20,6 @@
 */
 #pragma once
 #include "vulkan.h"
-#include <glslang/SPIRV/GlslangToSpv.h>
 
 #include <glm/glm.hpp>
 #include <map>
@@ -30,8 +29,9 @@ struct VertexShaderParams
 	bool gouraud;
 	bool naomi2;
 	bool divPosZ;
+	bool texture;
 
-	u32 hash() { return (u32)gouraud | ((u32)naomi2 << 1) | ((u32)divPosZ << 2); }
+	u32 hash() { return (u32)gouraud | ((u32)naomi2 << 1) | ((u32)divPosZ << 2) | ((u32)texture << 3); }
 };
 
 // alpha test, clip test, use alpha, texture, ignore alpha, shader instr, offset, fog, gouraud, bump, clamp, trilinear

@@ -777,17 +777,11 @@ bool OpenGLRenderer::renderLastFrame()
 	GlFramebuffer *framebuffer = gl.ofbo2.ready ? gl.ofbo2.framebuffer.get() : gl.ofbo.framebuffer.get();
 	if (framebuffer == nullptr)
 		return false;
-
-	glcache.Disable(GL_SCISSOR_TEST);
-	float screenAR = (float)settings.display.width / settings.display.height;
-	float renderAR = gl.ofbo.aspectRatio;
-
+	
 	int dx = 0;
 	int dy = 0;
-	if (renderAR > screenAR)
-		dy = (int)roundf(settings.display.height * (1 - screenAR / renderAR) / 2.f);
-	else
-		dx = (int)roundf(settings.display.width * (1 - renderAR / screenAR) / 2.f);
+	glcache.Disable(GL_SCISSOR_TEST);
+	getWindowboxDimensions(settings.display.width, settings.display.height, gl.ofbo.aspectRatio, dx, dy, config::Rotate90);
 
 	if (gl.bogusBlitFramebuffer || config::Rotate90)
 	{
@@ -795,8 +789,8 @@ bool OpenGLRenderer::renderLastFrame()
 		glBindFramebuffer(GL_FRAMEBUFFER, gl.ofbo.origFbo);
 		glcache.ClearColor(VO_BORDER_COL.red(), VO_BORDER_COL.green(), VO_BORDER_COL.blue(), 1.f);
 		glClear(GL_COLOR_BUFFER_BIT);
-		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, config::TextureFiltering == 1 ? GL_NEAREST : GL_LINEAR);
-		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, config::TextureFiltering == 1 ? GL_NEAREST : GL_LINEAR);
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, config::LinearInterpolation ? GL_LINEAR : GL_NEAREST);
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, config::LinearInterpolation ? GL_LINEAR : GL_NEAREST);
 		float *vertices = nullptr;
 		if (gl.ofbo.shiftX != 0 || gl.ofbo.shiftY != 0)
 		{
@@ -824,7 +818,7 @@ bool OpenGLRenderer::renderLastFrame()
 		glClear(GL_COLOR_BUFFER_BIT);
 		glBlitFramebuffer(-gl.ofbo.shiftX, -gl.ofbo.shiftY, framebuffer->getWidth() - gl.ofbo.shiftX, framebuffer->getHeight() - gl.ofbo.shiftY,
 				dx, settings.display.height - dy, settings.display.width - dx, dy,
-				GL_COLOR_BUFFER_BIT, config::TextureFiltering == 1 ? GL_NEAREST : GL_LINEAR);
+				GL_COLOR_BUFFER_BIT, config::LinearInterpolation ? GL_LINEAR : GL_NEAREST);
     	glBindFramebuffer(GL_FRAMEBUFFER, gl.ofbo.origFbo);
 #endif
 	}

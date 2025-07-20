@@ -590,7 +590,8 @@ bool OptionRadioButton(const char *name, config::Option<T>& option, T value, con
 template bool OptionRadioButton<bool>(const char *name, config::Option<bool>& option, bool value, const char *help);
 template bool OptionRadioButton<int>(const char *name, config::Option<int>& option, int value, const char *help);
 
-void OptionComboBox(const char *name, config::Option<int>& option, const char *values[], int count,
+template<bool PerGameOption>
+void OptionComboBox(const char *name, config::Option<int, PerGameOption>& option, const char *values[], int count,
 			const char *help)
 {
 	{
@@ -616,6 +617,10 @@ void OptionComboBox(const char *name, config::Option<int>& option, const char *v
 		ShowHelpMarker(help);
 	}
 }
+
+// Explicit template instantiations
+template void OptionComboBox<true>(const char *name, config::Option<int, true>& option, const char *values[], int count, const char *help);
+template void OptionComboBox<false>(const char *name, config::Option<int, false>& option, const char *values[], int count, const char *help);
 
 void fullScreenWindow(bool modal)
 {

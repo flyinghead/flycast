@@ -385,11 +385,19 @@ public:
 			memset(&lines[0], 0, sizeof(lines));
 	}
 
-	void Serialize(Serializer& ser) {
+	void Serialize(Serializer& ser)
+	{
 		ser << lines;
+		ser << writeBackBufferCycles;
+		ser << writeThroughBufferCycles;
 	}
-	void Deserialize(Deserializer& deser) {
+	void Deserialize(Deserializer& deser)
+	{
 		deser >> lines;
+		if (deser.version() >= Serializer::V55) {
+			deser >> writeBackBufferCycles;
+			deser >> writeThroughBufferCycles;
+		}
 	}
 
 	u32 ReadAddressArray(u32 addr)
@@ -598,7 +606,6 @@ private:
 	}
 
 	std::array<cache_line, 512> lines;
-	// TODO serialize
 	u64 writeBackBufferCycles = 0;
 	u64 writeThroughBufferCycles = 0;
 	Sh4Cycles sh4cycles;

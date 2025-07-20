@@ -367,6 +367,7 @@ extern Option<bool> ForceFreePlay;
 extern Option<bool, false> FetchBoxart;
 extern Option<bool, false> BoxartDisplayMode;
 extern Option<int, false> UIScaling;
+extern Option<int, false> UITheme;          // 0 -> Dark, 1 -> Light, 2 -> Dreamcast, 3 -> High Contrast, 4 -> Nintendo, 5 -> Aqua Chill
 
 // Sound
 
@@ -459,6 +460,8 @@ extern Option<int> SkipFrame;
 extern Option<int> MaxThreads;
 extern Option<int> AutoSkipFrame;		// 0: none, 1: some, 2: more
 extern Option<int> RenderResolution;
+extern Option<bool> IntegerScale;
+extern Option<bool> LinearInterpolation;
 extern Option<bool> VSync;
 extern Option<int64_t> PixelBufferSize;
 extern Option<int> AnisotropicFiltering;

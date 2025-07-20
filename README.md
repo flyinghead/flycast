@@ -38,6 +38,10 @@ Install Flycast from [**Google Play**](https://play.google.com/store/apps/detail
 
 `brew install --cask flycast`
 
+### iOS
+
+Due to persistent harassment from an iOS user, support for this platform has been dropped. 
+
 ### Xbox One/Series ![xbox logo](https://flyinghead.github.io/flycast-builds/xbox.png)
 
 Grab the latest build from [**the builds page**](https://flyinghead.github.io/flycast-builds/), or the [**GitHub Actions**](https://github.com/flyinghead/flycast/actions/workflows/uwp.yml). Then install it using the **Xbox Device Portal**.

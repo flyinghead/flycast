@@ -26,16 +26,14 @@
 #include "hw/pvr/elan.h"
 #include "rend/TexCache.h"
 #include <unordered_map>
+#include <memory>
 
 namespace memwatch
 {
 
 struct Page
 {
-	Page() {
-		// don't initialize data
-	}
-	u8 data[PAGE_SIZE];
+	std::unique_ptr<u8[]> data = std::make_unique<u8[]>(PAGE_SIZE);
 };
 using PageMap = std::unordered_map<u32, Page>;
 
@@ -77,7 +75,7 @@ public:
 		if (offset == (u32)-1)
 			return false;
 		offset &= ~PAGE_MASK;
-	    auto rv = pages.emplace(offset, Page());
+	    auto rv = pages.try_emplace(offset);
 	    if (!rv.second)
 	      // already saved
 	      return true;

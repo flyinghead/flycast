@@ -45,6 +45,7 @@
 #include "netdimm.h"
 #include "systemsp.h"
 #include "hopper.h"
+#include "midiffb.h"
 
 Cartridge *CurrentCartridge;
 bool bios_loaded = false;

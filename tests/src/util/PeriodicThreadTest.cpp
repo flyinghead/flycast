@@ -2,6 +2,8 @@
 #include "util/periodic_thread.h"
 #include <atomic>
 
+#include "test_utils.h"
+
 class PeriodicThreadTest : public ::testing::Test
 {
 };
