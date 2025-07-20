@@ -18,21 +18,20 @@
  */
 #pragma once
 
-// This file contains abstraction layer for access to different kinds of physical controllers
+// This file contains abstraction layer for access to different kinds of remote peripherals.
+// This includes both real Dreamcast controllers, VMUs, rumble packs etc. but also emulated VMUs.
 
 #include "types.h"
 #include "emulator.h"
+
+#if (defined(_WIN32) || defined(__linux__) || (defined(__APPLE__) && defined(TARGET_OS_MAC))) && !defined(TARGET_UWP) && defined(USE_SDL)
+#define USE_DREAMCASTCONTROLLER 1
 #include "sdl_gamepad.h"
+#endif
 
 #include <functional>
 #include <memory>
 #include <array>
-
-#if (defined(_WIN32) || defined(__linux__) || (defined(__APPLE__) && defined(TARGET_OS_MAC))) && !defined(TARGET_UWP)
-#define USE_DREAMCASTCONTROLLER 1
-#endif
-
-#include <memory>
 
 struct MapleMsg
 {
@@ -96,9 +95,11 @@ public:
 		return -1;
 	}
 
+#if defined(USE_DREAMCASTCONTROLLER)
 	//! Allows a DreamLink device to dictate the default mapping
 	virtual void setDefaultMapping(const std::shared_ptr<InputMapping>& mapping) const {
 	}
+#endif
 
 	//! Allows button names to be defined by a DreamLink device
 	//! @param[in] code The button code to retrieve name of
@@ -140,6 +141,7 @@ public:
 	virtual void disconnect() = 0;
 };
 
+#if defined(USE_DREAMCASTCONTROLLER)
 class DreamLinkGamepad : public SDLGamepad
 {
 public:
@@ -168,6 +170,7 @@ private:
 	bool startPressed = false;
 	std::string device_guid;
 };
+#endif
 
 extern std::vector<std::shared_ptr<DreamLink>> allDreamLinks;
 void createDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink, bool gameStart);

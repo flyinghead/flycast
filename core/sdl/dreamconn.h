@@ -19,8 +19,6 @@
 #pragma once
 #include "dreamlink.h"
 
-#ifdef USE_DREAMCASTCONTROLLER
-
 #include <asio.hpp>
 #include <mutex>
 
@@ -101,5 +99,3 @@ public:
 
 	void disconnect() override;
 };
-
-#endif // USE_DREAMCASTCONTROLLER

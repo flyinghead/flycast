@@ -9,6 +9,8 @@
 #include "hw/naomi/card_reader.h"
 
 #include <memory>
+
+// TODO: should we move these to maple folder?
 #include <sdl/dreamlink.h>
 #include <sdl/dreamconn.h>
 
