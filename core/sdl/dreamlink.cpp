@@ -46,6 +46,7 @@
 #include <setupapi.h>
 #endif
 
+std::vector<std::shared_ptr<DreamLink>> allDreamLinks = {};
 void createDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink, bool gameStart, bool stateLoaded);
 void tearDownDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink);
 

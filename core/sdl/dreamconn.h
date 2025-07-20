@@ -34,9 +34,6 @@ class DreamConn : public DreamLink
 	asio::ip::tcp::iostream iostream;
 	std::mutex send_mutex;
 
-private:
-	bool send_no_lock(const MapleMsg& msg);
-
 public:
 	bool maple_io_connected = false;
 	//! DreamConn VID:4457 PID:4443

@@ -95,7 +95,7 @@ public:
 		return -1;
 	}
 
-#if defined(USE_DREAMCASTCONTROLLER)
+#if defined(USE_SDL)
 	//! Allows a DreamLink device to dictate the default mapping
 	virtual void setDefaultMapping(const std::shared_ptr<InputMapping>& mapping) const {
 	}
@@ -141,7 +141,7 @@ public:
 	virtual void disconnect() = 0;
 };
 
-#if defined(USE_DREAMCASTCONTROLLER)
+#if defined(USE_SDL)
 class DreamLinkGamepad : public SDLGamepad
 {
 public:
@@ -171,5 +171,5 @@ private:
 #endif
 
 extern std::vector<std::shared_ptr<DreamLink>> allDreamLinks;
-void createDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink, bool gameStart);
+void createDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink, bool gameStart, bool saveState);
 void tearDownDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink);

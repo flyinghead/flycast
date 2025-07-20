@@ -401,7 +401,7 @@ static void maple_handle_reconnect()
 
 		if (dreamlink_needs_reconnect)
 		{
-			createDreamLinkDevices(dreamlink_needs_reconnect, false);
+			createDreamLinkDevices(dreamlink_needs_reconnect, false, false);
 			dreamlink_needs_reconnect = nullptr;
 		}
 	}
