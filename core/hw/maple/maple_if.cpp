@@ -10,6 +10,10 @@
 
 #include <memory>
 
+// TODO: should we move these to maple folder?
+#include <sdl/dreamlink.h>
+#include <sdl/dreamconn.h>
+
 enum MaplePattern
 {
 	MP_Start,
@@ -47,6 +51,11 @@ bool SDCKBOccupied;
 
 void maple_vblank()
 {
+	for (auto& dreamlink : allDreamLinks)
+	{
+		dreamlink->reloadConfigurationIfNeeded();
+	}
+
 	if (SB_MDEN & 1)
 	{
 		if (SB_MDTSEL == 1)
@@ -73,6 +82,7 @@ void maple_vblank()
 		}
 		SDCKBOccupied = false;
 	}
+
 	if (settings.platform.isConsole())
 		maple_handle_reconnect();
 }
@@ -374,6 +384,10 @@ static u64 reconnect_time;
 
 void maple_ReconnectDevices()
 {
+	if (dreamlink_needs_reconnect)
+	{
+		tearDownDreamLinkDevices(dreamlink_needs_reconnect);
+	}
 	mcfg_DestroyDevices();
 	reconnect_time = sh4_sched_now64() + SH4_MAIN_CLOCK / 10;
 }
@@ -384,5 +398,11 @@ static void maple_handle_reconnect()
 	{
 		reconnect_time = 0;
 		mcfg_CreateDevices();
+
+		if (dreamlink_needs_reconnect)
+		{
+			createDreamLinkDevices(dreamlink_needs_reconnect, false, false);
+			dreamlink_needs_reconnect = nullptr;
+		}
 	}
 }

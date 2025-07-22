@@ -18,8 +18,8 @@
  */
 #include "dreamconn.h"
 
-#ifdef USE_DREAMCASTCONTROLLER
 #include "hw/maple/maple_devs.h"
+#include "hw/maple/maple_if.h"
 #include "ui/gui.h"
 #include <cfg/option.h>
 #include <SDL.h>
@@ -35,6 +35,9 @@
 #include <windows.h>
 #include <setupapi.h>
 #endif
+
+// TODO: it doesn't seem sound to assume that only one dreamlink will need reconnecting at a time.
+std::shared_ptr<DreamLink> dreamlink_needs_reconnect = nullptr;
 
 static asio::error_code sendMsg(const MapleMsg& msg, asio::ip::tcp::iostream& stream)
 {
@@ -114,6 +117,59 @@ void DreamConn::changeBus(int newBus) {
 	bus = newBus;
 }
 
+void DreamConn::reloadConfigurationIfNeeded() {
+	if (!maple_io_connected) {
+		return;
+	}
+
+	std::lock_guard<std::mutex> lock(send_mutex);
+
+	asio::ip::tcp::socket& sock = static_cast<asio::ip::tcp::socket&>(iostream.socket());
+	// TODO: it's dubious just to assume that it's a reset message if it starts with 'F' and is long enough.
+	// Ideally we could notice if any message we read was a reset message and react accordingly
+	if (sock.available() >= 13 && iostream.peek() == (int)'F') {
+		MapleMsg message;
+		receiveMsg(message, iostream);
+
+		if (message.command == 0xff && message.destAP == 0xff && message.originAP == 0xff && message.size == 0xff) {
+			if (!updateExpansionDevs()) {
+				return;
+			}
+			NOTICE_LOG(INPUT, "Reloading DreamcastController devices bus[%d]: Type:%s, VMU:%d, Rumble Pack:%d", bus, getName().c_str(), hasVmu(), hasRumble());
+			dreamlink_needs_reconnect = shared_from_this();
+			maple_ReconnectDevices();
+		}
+	}
+}
+
+bool DreamConn::updateExpansionDevs() {
+
+	// Now get the controller configuration
+	MapleMsg msg;
+	msg.command = MDCF_GetCondition;
+	msg.destAP = (bus << 6) | 0x20;
+	msg.originAP = bus << 6;
+	msg.setData(MFID_0_Input);
+
+	auto ec = sendMsg(msg, iostream);
+	if (ec)
+	{
+		WARN_LOG(INPUT, "DreamcastController[%d] connection failed: %s", bus, ec.message().c_str());
+		disconnect();
+		return false;
+	}
+	if (!receiveMsg(msg, iostream)) {
+		WARN_LOG(INPUT, "DreamcastController[%d] read timeout", bus);
+		disconnect();
+		return false;
+	}
+
+	expansionDevs = msg.originAP & 0x1f;
+	config::MapleExpansionDevices[bus][0] = hasVmu() ? MDT_SegaVMU : MDT_None;
+	config::MapleExpansionDevices[bus][1] = hasRumble() ? MDT_PurupuruPack : MDT_None;
+	return true;
+}
+
 void DreamConn::connect() {
 	maple_io_connected = false;
 
@@ -130,9 +186,9 @@ void DreamConn::connect() {
 		disconnect();
 		return;
 	}
-	iostream.expires_from_now(std::chrono::seconds(1));
+	iostream.expires_from_now(std::chrono::seconds(10)); // TODO revert
 
-
+	// TODO: reuse helper 'reloadConfigurationIfNeeded()'
 	// Now get the controller configuration
 	MapleMsg msg;
 	msg.command = MDCF_GetCondition;
@@ -153,24 +209,16 @@ void DreamConn::connect() {
 		return;
 	}
 
-	iostream.expires_from_now(std::chrono::duration<u32>::max());	// don't use a 64-bit based duration to avoid overflow
-
 	expansionDevs = msg.originAP & 0x1f;
 
 	config::MapleExpansionDevices[bus][0] = hasVmu() ? MDT_SegaVMU : MDT_None;
 	config::MapleExpansionDevices[bus][1] = hasRumble() ? MDT_PurupuruPack : MDT_None;
 
-	if (hasVmu() || hasRumble())
-	{
-		NOTICE_LOG(INPUT, "Connected to DreamcastController[%d]: Type:%s, VMU:%d, Rumble Pack:%d", bus, getName().c_str(), hasVmu(), hasRumble());
-		maple_io_connected = true;
-	}
-	else
-	{
-		WARN_LOG(INPUT, "DreamcastController[%d] connection: no VMU or Rumble Pack connected", bus);
-		disconnect();
-		return;
-	}
+	iostream.expires_from_now(std::chrono::duration<u32>::max());	// don't use a 64-bit based duration to avoid overflow
+
+	// Remain connected even if no devices were found, so that plugging one in later will be detected
+	NOTICE_LOG(INPUT, "Connected to DreamcastController[%d]: Type:%s, VMU:%d, Rumble Pack:%d", bus, getName().c_str(), hasVmu(), hasRumble());
+	maple_io_connected = true;
 }
 
 void DreamConn::disconnect() {
@@ -181,5 +229,3 @@ void DreamConn::disconnect() {
 
 	NOTICE_LOG(INPUT, "Disconnected from DreamcastController[%d]", bus);
 }
-
-#endif
