@@ -191,6 +191,10 @@ SDLGamepad::SDLGamepad(int maple_port, int joystick_idx, SDL_Joystick* sdl_joyst
 	_unique_id = "sdl_joystick_" + std::to_string(sdl_joystick_instance);
 	NOTICE_LOG(INPUT, "SDL: Opened joystick %d on port %d: '%s' unique_id=%s", sdl_joystick_instance, maple_port, _name.c_str(), _unique_id.c_str());
 
+	const int axes = SDL_JoystickNumAxes(sdl_joystick);
+	for (int axis = 0; axis < axes; axis++)
+		axisDirection[axis] = 1;
+
 	if (SDL_IsGameController(joystick_idx))
 	{
 		sdl_controller = SDL_GameControllerOpen(joystick_idx);
@@ -200,6 +204,8 @@ SDLGamepad::SDLGamepad(int maple_port, int joystick_idx, SDL_Joystick* sdl_joyst
 		}
 		else
 		{
+			// TODO the direction of the axis is set in the default mapping.
+			// It would be better to set it here so the control can be remapped correctly
 			SDL_GameControllerButtonBind bind = SDL_GameControllerGetBindForAxis(sdl_controller, SDL_CONTROLLER_AXIS_TRIGGERLEFT);
 			if (bind.bindType == SDL_CONTROLLER_BINDTYPE_AXIS)
 				halfAxes.insert(bind.value.axis);
@@ -208,19 +214,20 @@ SDLGamepad::SDLGamepad(int maple_port, int joystick_idx, SDL_Joystick* sdl_joyst
 				halfAxes.insert(bind.value.axis);
 		}
 	}
-
-	// heuristic to detect half axes and their direction
-	const int axes = SDL_JoystickNumAxes(sdl_joystick);
-	// Skip axis 0 since it's extremely unlikely to be a trigger, and a wheel may be fully deflected left or right
-	// and could be confused with one.
-	for (int axis = 1; axis < axes; axis++)
+	else
 	{
-		s16 state;
-		if (SDL_JoystickGetAxisInitialState(sdl_joystick, axis, &state)
-				&& std::abs(state) >= AXIS_ACTIVATION_VALUE)
+		// heuristic to detect half axes and their direction
+		// Skip axis 0 since it's extremely unlikely to be a trigger, and a wheel may be fully deflected left or right
+		// and could be confused with one.
+		for (int axis = 1; axis < axes; axis++)
 		{
-			halfAxes.insert(axis);
-			axisDirection[axis] = state >= 0 ? 1 : -1;
+			s16 state;
+			if (SDL_JoystickGetAxisInitialState(sdl_joystick, axis, &state)
+					&& std::abs(state) >= AXIS_ACTIVATION_VALUE)
+			{
+				halfAxes.insert(axis);
+				axisDirection[axis] = state >= 0 ? -1 : 1;
+			}
 		}
 	}
 
