@@ -44733,11 +44733,11 @@ struct retro_core_options_v2 options_hr = {
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_HU "Ingyen játék a NAOMI játékokhoz"
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_HU "Az érmebeállítások ingyen játékra állítása."
 #define CORE_OPTION_NAME_EMULATE_BBA_LABEL_HU "Szélessávú adapter emulálása"
-#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_HU NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_HU "Modem helyett a szélessávú Ethernet adapter emulálása. (Újraindítás szükséges.)"
 #define CORE_OPTION_NAME_UPNP_LABEL_HU "UPnP engedélyezése"
 #define CORE_OPTION_NAME_UPNP_INFO_0_HU "Az internetre csatlakozó router automatikus konfigurálása az online játékokhoz UPnP-n keresztül."
 #define CORE_OPTION_NAME_DCNET_LABEL_HU "DCNet használata"
-#define CORE_OPTION_NAME_DCNET_INFO_0_HU NULL
+#define CORE_OPTION_NAME_DCNET_INFO_0_HU "A DCNet felhőszolgáltatás használata a Dreamcast internet hozzáféréséhez."
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_HU "Belső felbontás"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_HU "A képelőállítás felbontása."
 #define OPTION_VAL_320X240_HU "320x240 (Felezett)"
