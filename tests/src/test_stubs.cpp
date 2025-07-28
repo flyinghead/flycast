@@ -10,12 +10,12 @@ void os_DoEvents()
 {
 }
 
-void os_RunInstance(int argc, const char *argv[])
+void os_RunInstance(int argc, const char* argv[])
 {
 }
 
 #ifdef _WIN32
-void os_SetThreadName(const char *name)
+void os_SetThreadName(const char* name)
 {
 }
 #endif
