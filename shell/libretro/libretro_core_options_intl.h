@@ -73107,7 +73107,7 @@ struct retro_core_options_v2 options_sr = {
 #define CATEGORY_VIDEO_INFO_0_SV "Konfigurera upplösning, oberoende transparens i ordning och visuella effektinställningar."
 #define CATEGORY_PERFORMANCE_LABEL_SV "Prestanda"
 #define CATEGORY_PERFORMANCE_INFO_0_SV "Konfigurera inställningar för trådad rendering och bildruteskippning."
-#define CATEGORY_HACKS_LABEL_SV "Emulator Hacks"
+#define CATEGORY_HACKS_LABEL_SV "Emulatorhack"
 #define CATEGORY_HACKS_INFO_0_SV "Konfigurera inställningar för widescreen-överskridanden, GD-ROM-laddningshastighet och texturrelaterade inställningar."
 #define CATEGORY_INPUT_LABEL_SV "Inmatning"
 #define CATEGORY_INPUT_INFO_0_SV "Konfigurera inställningar för spelkontrollern och ljuspistolen."
