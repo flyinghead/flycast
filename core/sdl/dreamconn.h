@@ -19,10 +19,10 @@
 #pragma once
 #include "dreamlink.h"
 
+#ifdef USE_DREAMCASTCONTROLLER
+
 #include <asio.hpp>
 #include <mutex>
-
-extern std::shared_ptr<DreamLink> dreamlink_needs_reconnect;
 
 class DreamConn : public DreamLink
 {
@@ -30,12 +30,12 @@ class DreamConn : public DreamLink
 	static constexpr u16 BASE_PORT = 37393;
 
 	int bus = -1;
+	bool maple_io_connected = false;
 	u8 expansionDevs = 0;
 	asio::ip::tcp::iostream iostream;
 	std::mutex send_mutex;
 
 public:
-	bool maple_io_connected = false;
 	//! DreamConn VID:4457 PID:4443
 	static constexpr const char* VID_PID_GUID = "5744000043440000";
 
@@ -92,9 +92,13 @@ public:
 
 	void reloadConfigurationIfNeeded() override;
 
+private:
 	bool updateExpansionDevs();
 
+public:
 	void connect() override;
 
 	void disconnect() override;
 };
+
+#endif // USE_DREAMCASTCONTROLLER

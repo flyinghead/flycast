@@ -114,6 +114,10 @@
 #define NAOMI_MULTIBOARD
 #endif
 
+#if (defined(_WIN32) || defined(__linux__) || (defined(__APPLE__) && defined(TARGET_OS_MAC))) && !defined(TARGET_UWP)
+#define USE_DREAMCASTCONTROLLER 1
+#endif
+
 // TARGET PLATFORM
 #define GD_CLOCK 33868800						//GDROM XTAL -- 768fs
 #define AICA_CORE_CLOCK (GD_CLOCK * 4 / 3)		//[45158400]  GD->PLL 3:4 -> AICA CORE	 -- 1024fs

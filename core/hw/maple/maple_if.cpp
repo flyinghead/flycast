@@ -8,11 +8,11 @@
 #include "network/ggpo.h"
 #include "hw/naomi/card_reader.h"
 
-#include <memory>
+#ifdef USE_DREAMCASTCONTROLLER
+#include "sdl/dreamlink.h"
+#endif
 
-// TODO: should we move these to maple folder?
-#include <sdl/dreamlink.h>
-#include <sdl/dreamconn.h>
+#include <memory>
 
 enum MaplePattern
 {
@@ -51,10 +51,9 @@ bool SDCKBOccupied;
 
 void maple_vblank()
 {
-	for (auto& dreamlink : allDreamLinks)
-	{
-		dreamlink->reloadConfigurationIfNeeded();
-	}
+#if USE_DREAMCASTCONTROLLER
+	reconnectDreamLinkDevicesIfNeeded();
+#endif
 
 	if (SB_MDEN & 1)
 	{
@@ -384,10 +383,6 @@ static u64 reconnect_time;
 
 void maple_ReconnectDevices()
 {
-	if (dreamlink_needs_reconnect)
-	{
-		tearDownDreamLinkDevices(dreamlink_needs_reconnect);
-	}
 	mcfg_DestroyDevices();
 	reconnect_time = sh4_sched_now64() + SH4_MAIN_CLOCK / 10;
 }
@@ -399,10 +394,8 @@ static void maple_handle_reconnect()
 		reconnect_time = 0;
 		mcfg_CreateDevices();
 
-		if (dreamlink_needs_reconnect)
-		{
-			createDreamLinkDevices(dreamlink_needs_reconnect, false, false);
-			dreamlink_needs_reconnect = nullptr;
-		}
+#if defined(USE_DREAMCASTCONTROLLER)
+		handleReconnectDreamLinkDevices();
+#endif
 	}
 }

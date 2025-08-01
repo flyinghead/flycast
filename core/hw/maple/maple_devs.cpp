@@ -2273,8 +2273,7 @@ struct DreamLinkVmu : public maple_sega_vmu
 								}
 
 								MapleMsg rcvMsg;
-								bool response = dreamlink->send(*msg, rcvMsg);
-								if (response && rcvMsg.size == 130) {
+								if (dreamlink->send(*msg, rcvMsg) && rcvMsg.size == 130) {
 									// Something read!
 									u8 block = rcvMsg.data[7];
 									memcpy(&flash_data[block * 4 * 128], &rcvMsg.data[8], 4 * 128);
@@ -2497,6 +2496,27 @@ struct DreamLinkPurupuru : public maple_sega_purupuru
 
 static std::list<std::shared_ptr<DreamLinkVmu>> dreamLinkVmus[2];
 static std::list<std::shared_ptr<DreamLinkPurupuru>> dreamLinkPurupurus;
+
+std::shared_ptr<DreamLink> dreamlink_needs_reconnect = nullptr;
+std::vector<std::shared_ptr<DreamLink>> allDreamLinks = {};
+
+void reconnectDreamLinkDevicesIfNeeded()
+{
+	for (auto& dreamlink : allDreamLinks)
+	{
+		dreamlink->reloadConfigurationIfNeeded();
+	}
+}
+
+void handleReconnectDreamLinkDevices()
+{
+	if (dreamlink_needs_reconnect)
+	{
+		bool gameStart = false;
+		bool stateLoaded = false;
+		createDreamLinkDevices(dreamlink_needs_reconnect, gameStart, stateLoaded);
+	}
+}
 
 void createDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink, bool gameStart, bool stateLoaded)
 {
