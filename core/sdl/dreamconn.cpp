@@ -20,6 +20,7 @@
 
 #ifdef USE_DREAMCASTCONTROLLER
 #include "hw/maple/maple_devs.h"
+#include "hw/maple/maple_if.h"
 #include "ui/gui.h"
 #include <cfg/option.h>
 #include <SDL.h>
@@ -73,11 +74,15 @@ static bool receiveMsg(MapleMsg& msg, std::istream& stream)
 
 
 
-DreamConn::DreamConn(int bus) : bus(bus) {
+DreamConn::DreamConn(int bus, bool isForPhysicalController) : bus(bus), _isForPhysicalController(isForPhysicalController) {
 }
 
 DreamConn::~DreamConn() {
 	disconnect();
+}
+
+bool DreamConn::isForPhysicalController() {
+	return _isForPhysicalController;
 }
 
 bool DreamConn::send(const MapleMsg& msg) {
@@ -114,10 +119,66 @@ void DreamConn::changeBus(int newBus) {
 	bus = newBus;
 }
 
+void DreamConn::refreshIfNeeded() {
+	if (!maple_io_connected) {
+		return;
+	}
+
+	std::lock_guard<std::mutex> lock(send_mutex);
+
+	asio::ip::tcp::socket& sock = static_cast<asio::ip::tcp::socket&>(iostream.socket());
+	// TODO: it's dubious just to assume that it's a reset message if it starts with 'F' and is long enough.
+	// Ideally we could notice if any message we read was a reset message and react accordingly
+	if (sock.available() >= 13 && iostream.peek() == (int)'F') {
+		MapleMsg message;
+		receiveMsg(message, iostream);
+
+		if (message.command == 0xff && message.destAP == 0xff && message.originAP == 0xff && message.size == 0xff) {
+			if (!updateExpansionDevs()) {
+				return;
+			}
+			// TODO: update log messages to reflect whether physical controller is being used.
+			NOTICE_LOG(INPUT, "Reloading DreamcastController devices bus[%d]: Type:%s, VMU:%d, Rumble Pack:%d", bus, getName().c_str(), hasVmu(), hasRumble());
+			dreamLinkNeedsRefresh[bus] = true;
+			tearDownDreamLinkDevices(shared_from_this());
+			maple_ReconnectDevices();
+		}
+	}
+}
+
+bool DreamConn::updateExpansionDevs() {
+	// Now get the controller configuration
+	MapleMsg msg;
+	msg.command = MDCF_GetCondition;
+	msg.destAP = (bus << 6) | 0x20;
+	msg.originAP = bus << 6;
+	msg.setData(MFID_0_Input);
+
+	auto ec = sendMsg(msg, iostream);
+	if (ec)
+	{
+		WARN_LOG(INPUT, "DreamcastController[%d] connection failed: %s", bus, ec.message().c_str());
+		disconnect();
+		return false;
+	}
+	if (!receiveMsg(msg, iostream)) {
+		WARN_LOG(INPUT, "DreamcastController[%d] read timeout", bus);
+		disconnect();
+		return false;
+	}
+
+	expansionDevs = msg.originAP & 0x1f;
+	config::MapleExpansionDevices[bus][0] = hasVmu() ? MDT_SegaVMU : MDT_None;
+	config::MapleExpansionDevices[bus][1] = hasRumble() ? MDT_PurupuruPack : MDT_None;
+	return true;
+}
+
+bool DreamConn::isConnected() {
+	return maple_io_connected;
+}
+
 void DreamConn::connect() {
 	maple_io_connected = false;
-
-	asio::error_code ec;
 
 #if !defined(_WIN32)
 	WARN_LOG(INPUT, "DreamcastController[%d] connection failed: DreamConn+ / DreamConn S Controller supported on Windows only", bus);
@@ -132,45 +193,14 @@ void DreamConn::connect() {
 	}
 	iostream.expires_from_now(std::chrono::seconds(1));
 
-
-	// Now get the controller configuration
-	MapleMsg msg;
-	msg.command = MDCF_GetCondition;
-	msg.destAP = (bus << 6) | 0x20;
-	msg.originAP = bus << 6;
-	msg.setData(MFID_0_Input);
-
-	ec = sendMsg(msg, iostream);
-	if (ec)
-	{
-		WARN_LOG(INPUT, "DreamcastController[%d] connection failed: %s", bus, ec.message().c_str());
-		disconnect();
+	if (!updateExpansionDevs())
 		return;
-	}
-	if (!receiveMsg(msg, iostream)) {
-		WARN_LOG(INPUT, "DreamcastController[%d] read timeout", bus);
-		disconnect();
-		return;
-	}
 
 	iostream.expires_from_now(std::chrono::duration<u32>::max());	// don't use a 64-bit based duration to avoid overflow
 
-	expansionDevs = msg.originAP & 0x1f;
-
-	config::MapleExpansionDevices[bus][0] = hasVmu() ? MDT_SegaVMU : MDT_None;
-	config::MapleExpansionDevices[bus][1] = hasRumble() ? MDT_PurupuruPack : MDT_None;
-
-	if (hasVmu() || hasRumble())
-	{
-		NOTICE_LOG(INPUT, "Connected to DreamcastController[%d]: Type:%s, VMU:%d, Rumble Pack:%d", bus, getName().c_str(), hasVmu(), hasRumble());
-		maple_io_connected = true;
-	}
-	else
-	{
-		WARN_LOG(INPUT, "DreamcastController[%d] connection: no VMU or Rumble Pack connected", bus);
-		disconnect();
-		return;
-	}
+	// Remain connected even if no devices were found, so that connecting a device later will be detected
+	NOTICE_LOG(INPUT, "Connected to DreamcastController[%d]: Type:%s, VMU:%d, Rumble Pack:%d", bus, getName().c_str(), hasVmu(), hasRumble());
+	maple_io_connected = true;
 }
 
 void DreamConn::disconnect() {

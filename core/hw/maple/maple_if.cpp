@@ -8,6 +8,10 @@
 #include "network/ggpo.h"
 #include "hw/naomi/card_reader.h"
 
+#ifdef USE_DREAMCASTCONTROLLER
+#include "sdl/dreamlink.h"
+#endif
+
 #include <memory>
 
 enum MaplePattern
@@ -47,6 +51,10 @@ bool SDCKBOccupied;
 
 void maple_vblank()
 {
+#if USE_DREAMCASTCONTROLLER
+	refreshDreamLinksIfNeeded();
+#endif
+
 	if (SB_MDEN & 1)
 	{
 		if (SB_MDTSEL == 1)
@@ -73,6 +81,7 @@ void maple_vblank()
 		}
 		SDCKBOccupied = false;
 	}
+
 	if (settings.platform.isConsole())
 		maple_handle_reconnect();
 }
@@ -384,5 +393,9 @@ static void maple_handle_reconnect()
 	{
 		reconnect_time = 0;
 		mcfg_CreateDevices();
+
+#if defined(USE_DREAMCASTCONTROLLER)
+		handleRefreshDreamLinks();
+#endif
 	}
 }
