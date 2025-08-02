@@ -28,7 +28,7 @@ public:
 	bool gamepad_axis_input(u32 code, int value) override
 	{
 		if (isHalfAxis(code))
-			value = std::min((32768 - value * axisDirection[code]) / 2, 32767);
+			value = std::min((32768 + value * axisDirection[code]) / 2, 32767);
 		return GamepadDevice::gamepad_axis_input(code, value);
 	}
 
