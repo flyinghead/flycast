@@ -50,6 +50,10 @@
 #include "hw/sh4/sh4_interpreter.h"
 #include "hw/sh4/dyna/ngen.h"
 
+#if defined(USE_DREAMCASTCONTROLLER)
+#include "sdl/dreamlink.h"
+#endif
+
 settings_t settings;
 constexpr char const *BIOS_TITLE = "Dreamcast BIOS";
 
@@ -631,6 +635,9 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 		}
 		if (!settings.naomi.slave)
 		{
+#if defined(USE_DREAMCASTCONTROLLER)
+			reconnectDreamLinks();
+#endif
 			mcfg_DestroyDevices();
 			mcfg_CreateDevices();
 			if (settings.platform.isNaomi())

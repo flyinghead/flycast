@@ -74,11 +74,15 @@ static bool receiveMsg(MapleMsg& msg, std::istream& stream)
 
 
 
-DreamConn::DreamConn(int bus) : bus(bus) {
+DreamConn::DreamConn(int bus, bool isForPhysicalController) : bus(bus), _isForPhysicalController(isForPhysicalController) {
 }
 
 DreamConn::~DreamConn() {
 	disconnect();
+}
+
+bool DreamConn::isForPhysicalController() {
+	return _isForPhysicalController;
 }
 
 bool DreamConn::send(const MapleMsg& msg) {
@@ -115,7 +119,7 @@ void DreamConn::changeBus(int newBus) {
 	bus = newBus;
 }
 
-void DreamConn::reloadConfigurationIfNeeded() {
+void DreamConn::refreshIfNeeded() {
 	if (!maple_io_connected) {
 		return;
 	}
@@ -133,9 +137,10 @@ void DreamConn::reloadConfigurationIfNeeded() {
 			if (!updateExpansionDevs()) {
 				return;
 			}
+			// TODO: update log messages to reflect whether physical controller is being used.
 			NOTICE_LOG(INPUT, "Reloading DreamcastController devices bus[%d]: Type:%s, VMU:%d, Rumble Pack:%d", bus, getName().c_str(), hasVmu(), hasRumble());
-			dreamlink_needs_reconnect = shared_from_this();
-			tearDownDreamLinkDevices(dreamlink_needs_reconnect);
+			dreamLinkNeedsRefresh[bus] = true;
+			tearDownDreamLinkDevices(shared_from_this());
 			maple_ReconnectDevices();
 		}
 	}
@@ -166,6 +171,10 @@ bool DreamConn::updateExpansionDevs() {
 	config::MapleExpansionDevices[bus][0] = hasVmu() ? MDT_SegaVMU : MDT_None;
 	config::MapleExpansionDevices[bus][1] = hasRumble() ? MDT_PurupuruPack : MDT_None;
 	return true;
+}
+
+bool DreamConn::isConnected() {
+	return maple_io_connected;
 }
 
 void DreamConn::connect() {

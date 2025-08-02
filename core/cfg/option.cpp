@@ -202,6 +202,14 @@ std::array<std::array<Option<MapleDeviceType>, 2>, 4> MapleExpansionDevices {{
 	{{Option<MapleDeviceType>("device4.1", MDT_None, "input"),
 	Option<MapleDeviceType>("device4.2", MDT_None, "input")}},
 }};
+
+std::array<Option<bool>, 4> UseNetworkExpansionDevices{
+	Option<bool>("device1.UseNetworkExpansionDevices", false, "input"),
+	Option<bool>("device2.UseNetworkExpansionDevices", false, "input"),
+	Option<bool>("device3.UseNetworkExpansionDevices", false, "input"),
+	Option<bool>("device4.UseNetworkExpansionDevices", false, "input"),
+};
+
 Option<bool> PerGameVmu("PerGameVmu", false, "config");
 #ifdef _WIN32
 Option<bool, false> UseRawInput("RawInput", false, "input");

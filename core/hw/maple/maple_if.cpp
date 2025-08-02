@@ -52,7 +52,7 @@ bool SDCKBOccupied;
 void maple_vblank()
 {
 #if USE_DREAMCASTCONTROLLER
-	reconnectDreamLinkDevicesIfNeeded();
+	refreshDreamLinksIfNeeded();
 #endif
 
 	if (SB_MDEN & 1)
@@ -395,7 +395,7 @@ static void maple_handle_reconnect()
 		mcfg_CreateDevices();
 
 #if defined(USE_DREAMCASTCONTROLLER)
-		handleReconnectDreamLinkDevices();
+		handleRefreshDreamLinks();
 #endif
 	}
 }

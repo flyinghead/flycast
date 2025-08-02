@@ -59,13 +59,15 @@ struct MapleMsg
 };
 static_assert(sizeof(MapleMsg) == 1028);
 
-// Abstract base class for physical controller implementations
+// Abstract base class for communication with physical controllers and remote expansion devices
 class DreamLink : public std::enable_shared_from_this<DreamLink>
 {
 public:
 	DreamLink() = default;
 
 	virtual ~DreamLink() = default;
+
+	virtual bool isForPhysicalController() = 0;
 
 	//! Sends a message to the controller, ignoring the response
 	//! @note The implementation shall be thread safe
@@ -126,7 +128,10 @@ public:
 	virtual std::string getName() const = 0;
 
 	//! Check if the remote device configuration has changed and update if necessary
-	virtual void reloadConfigurationIfNeeded() = 0;
+	virtual void refreshIfNeeded() = 0;
+
+	//! Returns true if connected to the hardware controller (TODO: "hardware controller or remote device" throughout?)
+	virtual bool isConnected() = 0;
 
 	//! Attempt connection to the hardware controller
 	virtual void connect() = 0;
@@ -162,9 +167,10 @@ private:
 	std::string device_guid;
 };
 
-extern std::shared_ptr<DreamLink> dreamlink_needs_reconnect;
-extern std::vector<std::shared_ptr<DreamLink>> allDreamLinks;
-void reconnectDreamLinkDevicesIfNeeded();
-void handleReconnectDreamLinkDevices();
+extern std::array<bool, 4> dreamLinkNeedsRefresh;
+extern std::array<std::shared_ptr<DreamLink>, 4> allDreamLinks;
+void reconnectDreamLinks();
+void refreshDreamLinksIfNeeded();
+void handleRefreshDreamLinks();
 void createDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink, bool gameStart, bool saveState);
 void tearDownDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink);

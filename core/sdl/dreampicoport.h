@@ -73,6 +73,8 @@ public:
 
 	virtual ~DreamPicoPort();
 
+	bool isForPhysicalController() override;
+
 	bool send(const MapleMsg& msg) override;
 
     bool send(const MapleMsg& txMsg, MapleMsg& rxMsg) override;
@@ -97,7 +99,9 @@ public:
 
 	std::string getName() const override;
 
-	void reloadConfigurationIfNeeded() override;
+	void refreshIfNeeded() override;
+
+	bool isConnected() override;
 
 	void connect() override;
 

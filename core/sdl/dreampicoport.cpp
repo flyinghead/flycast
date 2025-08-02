@@ -658,6 +658,10 @@ DreamPicoPort::~DreamPicoPort() {
 	disconnect();
 }
 
+bool DreamPicoPort::isForPhysicalController() {
+	return true;
+}
+
 bool DreamPicoPort::send(const MapleMsg& msg) {
 	if (serial) {
 		asio::error_code ec = serial->sendMsg(msg, hardware_bus, timeout_ms);
@@ -776,8 +780,12 @@ std::string DreamPicoPort::getName(std::string separator) const {
 	return name;
 }
 
-void DreamPicoPort::reloadConfigurationIfNeeded() {
+void DreamPicoPort::refreshIfNeeded() {
 	// TODO: implementing this method may also help to support hot plugging of VMUs/rumble packs here.
+}
+
+bool DreamPicoPort::isConnected() {
+	return connection_established;
 }
 
 void DreamPicoPort::connect() {

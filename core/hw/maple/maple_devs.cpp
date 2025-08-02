@@ -2108,8 +2108,9 @@ std::shared_ptr<maple_device> maple_Create(MapleDeviceType type)
 	return nullptr;
 }
 
-#if (defined(_WIN32) || defined(__linux__) || (defined(__APPLE__) && defined(TARGET_OS_MAC))) && !defined(TARGET_UWP) && defined(USE_SDL) && !defined(LIBRETRO)
+#if defined(USE_DREAMCASTCONTROLLER)
 #include "sdl/dreamlink.h"
+#include "sdl/dreamconn.h"
 #include <list>
 #include <memory>
 
@@ -2497,27 +2498,63 @@ struct DreamLinkPurupuru : public maple_sega_purupuru
 static std::list<std::shared_ptr<DreamLinkVmu>> dreamLinkVmus[2];
 static std::list<std::shared_ptr<DreamLinkPurupuru>> dreamLinkPurupurus;
 
-std::shared_ptr<DreamLink> dreamlink_needs_reconnect = nullptr;
-std::vector<std::shared_ptr<DreamLink>> allDreamLinks = {};
+// Indicates that the dreamlink in corresponding position of allDreamLinks needs its device configuration refreshed
+std::array<bool, 4> dreamLinkNeedsRefresh;
+std::array<std::shared_ptr<DreamLink>, 4> allDreamLinks;
 
-void reconnectDreamLinkDevicesIfNeeded()
+// Creates and destroys dreamlinks according to config settings,
+// then attempts to connect or reconnect.
+// Not to be confused with "refreshing" dreamlinks.
+void reconnectDreamLinks()
+{
+	auto& useNetworkExpansionDevices = config::UseNetworkExpansionDevices;
+	for (int i = 0; i < 4; i++)
+	{
+		auto dreamlink = allDreamLinks[i];
+
+		if (useNetworkExpansionDevices[i] && !dreamlink)
+		{
+			bool isForPhysicalController = false;
+			allDreamLinks[i] = dreamlink = std::make_shared<DreamConn>(i, isForPhysicalController);
+		}
+		else if (!useNetworkExpansionDevices[i] && dreamlink && !dreamlink->isForPhysicalController())
+		{
+			// This bus is not using network expansion devices.
+			// Dispose of the dreamlink for the bus, unless it is for a physical controller (and therefore not managed by this setting).
+			allDreamLinks[i] = dreamlink = nullptr;
+		}
+
+		if (dreamlink && !dreamlink->isConnected())
+			dreamlink->connect();
+	}
+}
+
+// Checks all connected DreamLinks for whether the remote device configuration has changed,
+// and if so, refreshes the device configuration.
+void refreshDreamLinksIfNeeded()
 {
 	for (auto& dreamlink : allDreamLinks)
 	{
-		dreamlink->reloadConfigurationIfNeeded();
+		if (dreamlink)
+			dreamlink->refreshIfNeeded();
 	}
 }
 
-void handleReconnectDreamLinkDevices()
+void handleRefreshDreamLinks()
 {
-	if (dreamlink_needs_reconnect)
+	for (int i = 0; i < 4; i++)
 	{
-		bool gameStart = false;
-		bool stateLoaded = false;
-		createDreamLinkDevices(dreamlink_needs_reconnect, gameStart, stateLoaded);
+		if (dreamLinkNeedsRefresh[i])
+		{
+			dreamLinkNeedsRefresh[i] = false;
+			bool gameStart = false;
+			bool stateLoaded = false;
+			createDreamLinkDevices(allDreamLinks[i], gameStart, stateLoaded);
+		}
 	}
 }
 
+// Replaces certain ordinary MapleDevices entries with specialized devices that communicate thru a DreamLink.
 void createDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink, bool gameStart, bool stateLoaded)
 {
 	const int bus = dreamlink->getBus();
@@ -2606,6 +2643,7 @@ void createDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink, bool gameStart
 	}
 }
 
+// Replaces DreamLink devices associated with 'dreamlink' with ordinary Maple devices.
 void tearDownDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink)
 {
 	const int bus = dreamlink->getBus();
