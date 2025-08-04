@@ -1,5 +1,5 @@
-#include "gtest/gtest.h"
 #include "util/worker_thread.h"
+#include "gtest/gtest.h"
 #include <atomic>
 #include <future>
 
@@ -9,9 +9,10 @@ class WorkerThreadTest : public ::testing::Test
 
 TEST_F(WorkerThreadTest, Basic)
 {
-	WorkerThread worker{"Test"};
+	WorkerThread worker { "Test" };
 	std::atomic<bool> done = false;
-	const auto& task = [&]() {
+	const auto& task = [&]()
+	{
 		done = true;
 	};
 	worker.run(task);
@@ -28,12 +29,14 @@ TEST_F(WorkerThreadTest, Basic)
 
 TEST_F(WorkerThreadTest, MultiThread)
 {
-	WorkerThread worker{"Test"};
+	WorkerThread worker { "Test" };
 	std::atomic<int> counter = 0;
-	const auto& task = [&]() {
+	const auto& task = [&]()
+	{
 		++counter;
 	};
-	const auto& consumer = [&]() {
+	const auto& consumer = [&]()
+	{
 		for (int i = 0; i < 100; i++)
 			worker.run(task);
 	};
@@ -50,30 +53,33 @@ TEST_F(WorkerThreadTest, MultiThread)
 // be executed. But it shouldn't crash.
 TEST_F(WorkerThreadTest, StartStop)
 {
-	WorkerThread worker{"Test"};
+	WorkerThread worker { "Test" };
 	std::atomic<int> counter = 0;
-	const auto& task = [&]() {
+	const auto& task = [&]()
+	{
 		++counter;
 	};
-	const auto& consumer = [&]() {
+	const auto& consumer = [&]()
+	{
 		for (int i = 0; i < 100; i++)
 			worker.run(task);
 	};
 	std::future<void> future = std::async(std::launch::async, consumer);
-	std::future<void> future2 = std::async(std::launch::async, [&]() {
+	std::future<void> future2 = std::async(std::launch::async, [&]()
+		{
 		for (int i = 0; i < 100; i++)
-			worker.stop();
-	});
+			worker.stop(); });
 	future.get();
 	future2.get();
 	worker.stop();
-	//ASSERT_EQ(100, counter);
+	// ASSERT_EQ(100, counter);
 }
 
 TEST_F(WorkerThreadTest, Future)
 {
-	WorkerThread worker{"Test"};
-	const auto& task = [](u32 v) -> u32 {
+	WorkerThread worker { "Test" };
+	const auto& task = [](u32 v) -> u32
+	{
 		return v;
 	};
 	std::future<u32> f = worker.runFuture(task, 42);
