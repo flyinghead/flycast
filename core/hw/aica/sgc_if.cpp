@@ -1507,7 +1507,11 @@ void AICA_Sample()
 			VolumePan(*(s16*)&DSPData->EFREG[i], dsp_out_vol[i].EFSDL, dsp_out_vol[i].EFPAN, mixl, mixr);
 	}
 
+#ifdef LIBRETRO
+	if (settings.aica.muteAudio)
+#else
 	if (settings.input.fastForwardMode || settings.aica.muteAudio)
+#endif
 		return;
 
 	if (config::VmuSound)

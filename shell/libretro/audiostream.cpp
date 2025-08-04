@@ -38,7 +38,7 @@
  * value */
 #define VSYNC_SWAP_INTERVAL_THRESHOLD 0.05f
 
-extern void setAVInfo(retro_system_av_info& avinfo);
+extern bool setAVInfo(retro_system_av_info& avinfo);
 
 extern retro_environment_t        environ_cb;
 extern retro_audio_sample_batch_t audio_batch_cb;
