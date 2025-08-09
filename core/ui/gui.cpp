@@ -694,6 +694,44 @@ static void gui_display_commands()
 				card_reader::barcodeSetCard(cardBuf);
 		}
 
+#if defined(USE_DREAMCASTCONTROLLER)
+		// DreamLink connection status
+		bool hasAnyDreamLinks = false;
+		bool hasDisconnectedDreamLink = false;
+		for (auto& dreamlink : allDreamLinks)
+		{
+			if (dreamlink)
+			{
+				hasAnyDreamLinks = true;
+				if (!dreamlink->isConnected())
+					hasDisconnectedDreamLink = true;
+			}
+
+			if (hasAnyDreamLinks && hasDisconnectedDreamLink)
+				break;
+		}
+
+		if (hasAnyDreamLinks)
+		{
+			{
+				DisabledScope _{ !hasDisconnectedDreamLink };
+				if (ImGui::Button("Connect DreamLink", ScaledVec2(buttonWidth, 50)))
+				{
+					reconnectDreamLinks();
+				}
+			}
+
+			for (int i = 0; i < 4; i++)
+			{
+				auto dreamlink = allDreamLinks[i];
+				if (dreamlink)
+				{
+					ImGui::Text("Port %c: %s", 'A' + i, dreamlink->isConnected() ? "Connected" : "Disconnected");
+				}
+			}
+		}
+#endif
+
 		ImGui::NextColumn();
 
 		// Insert/Eject Disk

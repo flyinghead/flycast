@@ -36,6 +36,7 @@
 #include <windows.h>
 #include <setupapi.h>
 #endif
+#include <oslib/oslib.h>
 
 static asio::error_code sendMsg(const MapleMsg& msg, asio::ip::tcp::iostream& stream)
 {
@@ -91,14 +92,11 @@ bool DreamConn::send(const MapleMsg& msg) {
 }
 
 bool DreamConn::send_no_lock(const MapleMsg& msg) {
-	asio::error_code ec;
-
-	if (maple_io_connected)
-		ec = sendMsg(msg, iostream);
-	else
+	if (!maple_io_connected)
 		return false;
+
+	auto ec = sendMsg(msg, iostream);
 	if (ec) {
-		maple_io_connected = false;
 		WARN_LOG(INPUT, "DreamcastController[%d] send failed: %s", bus, ec.message().c_str());
 		disconnect();
 		return false;
@@ -120,9 +118,8 @@ void DreamConn::changeBus(int newBus) {
 }
 
 void DreamConn::refreshIfNeeded() {
-	if (!maple_io_connected) {
+	if (!isConnected())
 		return;
-	}
 
 	std::lock_guard<std::mutex> lock(send_mutex);
 
@@ -181,8 +178,36 @@ bool DreamConn::updateExpansionDevs() {
 	return true;
 }
 
+static bool isSocketDisconnected(asio::ip::tcp::socket& sock, int available) {
+	// Socket is disconnected if 0 bytes are available to read and 'select' considers the socket ready to read
+	if (sock.available() != 0)
+		return false;
+
+	auto nativeHandle = sock.native_handle();
+	fd_set readfds;
+	FD_ZERO(&readfds);
+	FD_SET(nativeHandle, &readfds);
+	timeval timeout = { 0, 0 };
+	// nfds should be set to the highest-numbered file descriptor plus 1.
+	// See https://www.man7.org/linux/man-pages/man2/select.2.html
+	int nfds = nativeHandle + 1;
+	int nReady = select(nfds, &readfds, nullptr, nullptr, &timeout);
+	return nReady > 0 && FD_ISSET(nativeHandle, &readfds);
+}
+
 bool DreamConn::isConnected() {
-	return maple_io_connected;
+	if (!maple_io_connected)
+		return false;
+
+	auto& sock = static_cast<asio::ip::tcp::socket&>(iostream.socket());
+	int available = sock.available();
+	if (isSocketDisconnected(sock, available)) {
+		NOTICE_LOG(INPUT, "DreamLink server disconnected bus[%d]", bus);
+		disconnect();
+		return false;
+	}
+
+	return true;
 }
 
 void DreamConn::connect() {
@@ -214,12 +239,22 @@ void DreamConn::connect() {
 }
 
 void DreamConn::disconnect() {
+	// Already disconnected
+	if (!maple_io_connected)
+		return;
+
+	maple_io_connected = false;
 	if (iostream)
 		iostream.close();
 
-	maple_io_connected = false;
-
+	// Notify the user of the disconnect
 	NOTICE_LOG(INPUT, "Disconnected from DreamcastController[%d]", bus);
+	char buf[128];
+	snprintf(buf, sizeof(buf), "WARNING: DreamLink disconnected from port %c", 'A' + bus);
+	os_notify(buf, 6000);
+
+	tearDownDreamLinkDevices(shared_from_this());
+	maple_ReconnectDevices();
 }
 
 #endif
