@@ -126,10 +126,20 @@ DreamLinkGamepad::~DreamLinkGamepad() {
 void DreamLinkGamepad::set_maple_port(int port)
 {
 	if (dreamlink) {
+		int oldBus = dreamlink->getBus();
 		if (port < 0 || port >= 4) {
 			dreamlink->disconnect();
 		}
-		else if (dreamlink->getBus() != port) {
+		else if (oldBus != port) {
+			// Move the dreamlink from the old to new position
+			if (oldBus >= 0 && oldBus < 4) {
+				dreamLinkNeedsRefresh[oldBus] = false;
+				allDreamLinks[oldBus] = nullptr;
+			}
+
+			dreamLinkNeedsRefresh[port] = false;
+			allDreamLinks[port] = dreamlink;
+
 			dreamlink->changeBus(port);
 			if (is_registered()) {
 				dreamlink->connect();

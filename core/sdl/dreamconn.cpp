@@ -126,23 +126,31 @@ void DreamConn::refreshIfNeeded() {
 
 	std::lock_guard<std::mutex> lock(send_mutex);
 
+	// Check if there is a refresh message waiting in the socket buffer.
+	// Avoid reading (consuming) any other kind of message in this context.
+	const int REFRESH_MESSAGE_SIZE = 13;
 	asio::ip::tcp::socket& sock = static_cast<asio::ip::tcp::socket&>(iostream.socket());
-	// TODO: it's dubious just to assume that it's a reset message if it starts with 'F' and is long enough.
-	// Ideally we could notice if any message we read was a reset message and react accordingly
-	if (sock.available() >= 13 && iostream.peek() == (int)'F') {
-		MapleMsg message;
+	if (sock.available() < REFRESH_MESSAGE_SIZE)
+		return;
+
+	char buffer[REFRESH_MESSAGE_SIZE];
+	int bytesPeeked = recv(sock.native_handle(), buffer, REFRESH_MESSAGE_SIZE, MSG_PEEK);
+	if (bytesPeeked != REFRESH_MESSAGE_SIZE)
+		return;
+
+	MapleMsg message;
+	sscanf(buffer, "%hhx %hhx %hhx %hhx", &message.command, &message.destAP, &message.originAP, &message.size);
+	if (message.command == 0xff && message.destAP == 0xff && message.originAP == 0xff && message.size == 0xff) {
+		// It is a refresh message, so consume it.
 		receiveMsg(message, iostream);
 
-		if (message.command == 0xff && message.destAP == 0xff && message.originAP == 0xff && message.size == 0xff) {
-			if (!updateExpansionDevs()) {
-				return;
-			}
-			// TODO: update log messages to reflect whether physical controller is being used.
-			NOTICE_LOG(INPUT, "Reloading DreamcastController devices bus[%d]: Type:%s, VMU:%d, Rumble Pack:%d", bus, getName().c_str(), hasVmu(), hasRumble());
-			dreamLinkNeedsRefresh[bus] = true;
-			tearDownDreamLinkDevices(shared_from_this());
-			maple_ReconnectDevices();
-		}
+		if (!updateExpansionDevs())
+			return;
+
+		NOTICE_LOG(INPUT, "Refreshing DreamLink devices bus[%d]: Type:%s, VMU:%d, Rumble Pack:%d", bus, getName().c_str(), hasVmu(), hasRumble());
+		dreamLinkNeedsRefresh[bus] = true;
+		tearDownDreamLinkDevices(shared_from_this());
+		maple_ReconnectDevices();
 	}
 }
 
@@ -181,8 +189,10 @@ void DreamConn::connect() {
 	maple_io_connected = false;
 
 #if !defined(_WIN32)
-	WARN_LOG(INPUT, "DreamcastController[%d] connection failed: DreamConn+ / DreamConn S Controller supported on Windows only", bus);
-	return;
+	if (isForPhysicalController()) {
+		WARN_LOG(INPUT, "DreamcastController[%d] connection failed: DreamConn+ / DreamConn S Controller supported on Windows only", bus);
+		return;
+	}
 #endif
 
 	iostream = asio::ip::tcp::iostream("localhost", std::to_string(BASE_PORT + bus));
