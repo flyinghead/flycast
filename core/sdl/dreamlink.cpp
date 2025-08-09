@@ -46,9 +46,6 @@
 #include <setupapi.h>
 #endif
 
-void createDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink, bool gameStart, bool stateLoaded);
-void tearDownDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink);
-
 bool DreamLinkGamepad::isDreamcastController(int deviceIndex)
 {
 	char guid_str[33] {};
@@ -81,7 +78,8 @@ DreamLinkGamepad::DreamLinkGamepad(int maple_port, int joystick_idx, SDL_Joystic
 	// Dreamcast Controller USB VID:1209 PID:2f07
 	if (memcmp(DreamConn::VID_PID_GUID, guid_str + 8, 16) == 0)
 	{
-		dreamlink = std::make_shared<DreamConn>(maple_port);
+		bool isForPhysicalController = true;
+		dreamlink = std::make_shared<DreamConn>(maple_port, isForPhysicalController);
 	}
 	else if (memcmp(DreamPicoPort::VID_PID_GUID, guid_str + 8, 16) == 0)
 	{
@@ -89,6 +87,7 @@ DreamLinkGamepad::DreamLinkGamepad(int maple_port, int joystick_idx, SDL_Joystic
 	}
 
 	if (dreamlink) {
+		allDreamLinks[maple_port] = dreamlink;
 		_name = dreamlink->getName();
 		int defaultBus = dreamlink->getDefaultBus();
 		if (defaultBus >= 0 && defaultBus < 4) {
@@ -115,6 +114,7 @@ DreamLinkGamepad::~DreamLinkGamepad() {
 	if (dreamlink) {
 		tearDownDreamLinkDevices(dreamlink);
 		dreamlink.reset();
+		allDreamLinks[maple_port()] = nullptr;
 
 		// Make sure settings are open in case disconnection happened mid-game
 		if (!gui_is_open()) {
@@ -126,10 +126,20 @@ DreamLinkGamepad::~DreamLinkGamepad() {
 void DreamLinkGamepad::set_maple_port(int port)
 {
 	if (dreamlink) {
+		int oldBus = dreamlink->getBus();
 		if (port < 0 || port >= 4) {
 			dreamlink->disconnect();
 		}
-		else if (dreamlink->getBus() != port) {
+		else if (oldBus != port) {
+			// Move the dreamlink from the old to new position
+			if (oldBus >= 0 && oldBus < 4) {
+				dreamLinkNeedsRefresh[oldBus] = false;
+				allDreamLinks[oldBus] = nullptr;
+			}
+
+			dreamLinkNeedsRefresh[port] = false;
+			allDreamLinks[port] = dreamlink;
+
 			dreamlink->changeBus(port);
 			if (is_registered()) {
 				dreamlink->connect();
