@@ -249,8 +249,13 @@ void CHDDisc::tryOpen(const char* file)
 
 Disc* chd_parse(const char* file, std::vector<u8> *digest)
 {
+#ifdef LIBRETRO
+	if (!strstr(&file[strlen(file) - 3], "chd"))
+		return nullptr;
+#else
 	if (get_file_extension(file) != "chd")
 		return nullptr;
+#endif
 
 	CHDDisc* rv = new CHDDisc();
 
