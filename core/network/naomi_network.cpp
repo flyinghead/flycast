@@ -337,7 +337,6 @@ void SetNaomiNetworkConfig(int node)
 	{
 		write_naomi_eeprom(0x45, node == -1 ? 3
 				: node == 0 ? 0 : 1);
-		write_naomi_eeprom(0x47, node == 0 ? 0 : 1);
 	}
 	else if (gameId == "WAVE RUNNER GP")
 	{
