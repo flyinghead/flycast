@@ -18,7 +18,10 @@
  */
 #include "settings.h"
 #include "gui.h"
+#include "IconsFontAwesome6.h"
 #include "input/gamepad_device.h"
+#include "input/keyboard_device.h"
+#include "input/mouse.h"
 #include "hw/maple/maple_devs.h"
 #include "vgamepad.h"
 #include "oslib/storage.h"
@@ -45,7 +48,7 @@ static const char *maple_device_types[] =
 	"Pop'n Music controller",
 	"Racing Controller",
 	"Densha de Go! Controller",
-	"Full Controller",
+	"Panther DC/Full Controller",
 //	"Dreameye",
 };
 
@@ -280,11 +283,12 @@ static MapleDeviceType maple_expansion_device_type_from_index(int idx)
 	}
 }
 
-static std::shared_ptr<GamepadDevice> mapped_device;
+static std::shared_ptr<GamepadDevice> currentGamepad;
 static InputMapping::InputSet mapped_codes;  // Stores multiple buttons in the order they were entered
 static u64 map_start_time;
 static bool arcade_button_mode;
 static u32 gamepad_port;
+static std::unordered_set<DreamcastKey> buttonState;
 
 static void unmapControl(const std::shared_ptr<InputMapping>& mapping, u32 gamepad_port, DreamcastKey key)
 {
@@ -363,7 +367,7 @@ static void detect_input_popup(const Mapping *mapping)
 		if (now >= map_start_time)
 		{
 			// Check if device is still detecting input (might have been cancelled by button release)
-			bool still_detecting = mapped_device && mapped_device->is_input_detecting();
+			bool still_detecting = currentGamepad != nullptr && currentGamepad->is_input_detecting();
 
 			// If detection was cancelled by button release, close popup immediately
 			int remaining = still_detecting ? (int)(5 - (now - map_start_time) / 1000) : 0;
@@ -391,9 +395,9 @@ static void detect_input_popup(const Mapping *mapping)
 
 					const char* name = nullptr;
 					if (inputDef.is_button())
-						name = mapped_device->get_button_name(inputDef.code);
+						name = currentGamepad->get_button_name(inputDef.code);
 					else
-						name = mapped_device->get_axis_name(inputDef.code);
+						name = currentGamepad->get_axis_name(inputDef.code);
 
 					displayLabelOrCode(name, inputDef.code);
 
@@ -408,7 +412,7 @@ static void detect_input_popup(const Mapping *mapping)
 			// Wait for the countdown to complete before mapping
 			if (remaining <= 0)
 			{
-				std::shared_ptr<InputMapping> input_mapping = mapped_device->get_input_mapping();
+				std::shared_ptr<InputMapping> input_mapping = currentGamepad->get_input_mapping();
 				if (input_mapping != NULL && !mapped_codes.empty())
 				{
 					unmapControl(input_mapping, gamepad_port, mapping->key);
@@ -434,10 +438,9 @@ static void detect_input_popup(const Mapping *mapping)
 				}
 
 				// Make sure to cancel input detection to prevent collecting more inputs
-				if (mapped_device)
-					mapped_device->cancel_detect_input();
+				if (currentGamepad)
+					currentGamepad->cancel_detect_input();
 
-				mapped_device = NULL;
 				mapped_codes.clear();
 				ImGui::CloseCurrentPopup();
 			}
@@ -495,6 +498,53 @@ static void displayMappedControl(const std::shared_ptr<GamepadDevice>& gamepad, 
 	}
 }
 
+static float getAxisValue(const std::shared_ptr<GamepadDevice>& gamepad, DreamcastKey axis)
+{
+	int port = gamepad->maple_port();
+	if (port == -1)
+		return 0.f;
+	if (port == 4)
+		port = gamepad_port;
+	float v;
+	switch (axis)
+	{
+	case DC_AXIS_UP: v = -joyy[port] / 32768.f; break;
+	case DC_AXIS_DOWN: v = joyy[port] / 32767.f; break;
+	case DC_AXIS_LEFT: v = -joyx[port] / 32768.f; break;
+	case DC_AXIS_RIGHT: v = joyx[port] / 32767.f; break;
+	case DC_AXIS2_UP: v = -joyry[port] / 32768.f; break;
+	case DC_AXIS2_DOWN: v = joyry[port] / 32767.f; break;
+	case DC_AXIS2_LEFT: v = -joyrx[port] / 32768.f; break;
+	case DC_AXIS2_RIGHT: v = joyrx[port] / 32767.f; break;
+	case DC_AXIS3_UP: v = -joy3y[port] / 32768.f; break;
+	case DC_AXIS3_DOWN: v = joy3y[port] / 32767.f; break;
+	case DC_AXIS3_LEFT: v = -joy3x[port] / 32768.f; break;
+	case DC_AXIS3_RIGHT: v = joy3x[port] / 32767.f; break;
+	case DC_AXIS_LT: v = lt[port] / 65535.f; break;
+	case DC_AXIS_RT: v = rt[port] / 65535.f; break;
+	case DC_AXIS_LT2: v = lt2[port] / 65535.f; break;
+	case DC_AXIS_RT2: v = rt2[port] / 65535.f; break;
+	default: v = 0.f;
+	}
+	return std::clamp(v, 0.f, 1.f);
+}
+
+static void buttonListener(int port, DreamcastKey key, bool pressed)
+{
+	if (currentGamepad == nullptr || port == -1)
+		return;
+	if (currentGamepad->maple_port() == 4 && port != (int)gamepad_port)
+		return;
+	if (pressed)
+		buttonState.insert(key);
+	else
+		buttonState.erase(key);
+}
+
+static bool getButtonState(const std::shared_ptr<GamepadDevice>& gamepad, DreamcastKey btn) {
+	return buttonState.count(btn) != 0;
+}
+
 static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamepad)
 {
 	fullScreenWindow(true);
@@ -505,11 +555,15 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 		const float winWidth = ImGui::GetIO().DisplaySize.x - insetLeft - insetRight - (style.WindowBorderSize + style.WindowPadding.x) * 2;
 		const float col_width = (winWidth - style.GrabMinSize - style.ItemSpacing.x
 				- (ImGui::CalcTextSize("Map").x + style.FramePadding.x * 2.0f + style.ItemSpacing.x)
-				- (ImGui::CalcTextSize("Unmap").x + style.FramePadding.x * 2.0f + style.ItemSpacing.x)) / 2;
+				- (ImGui::CalcTextSize("Unmap").x + style.FramePadding.x * 2.0f + style.ItemSpacing.x)) / 3;
 
 		static int map_system;
 		static int item_current_map_idx = 0;
 		static int last_item_current_map_idx = 2;
+		if (currentGamepad == nullptr) {
+			gamepad->listenButtons(buttonListener);
+			currentGamepad = gamepad;
+		}
 
 		std::shared_ptr<InputMapping> input_mapping = gamepad->get_input_mapping();
 		if (input_mapping == NULL || ImGui::Button("Done", ScaledVec2(100, 30)))
@@ -518,6 +572,8 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 			gamepad->save_mapping(map_system);
 			last_item_current_map_idx = 2;
 			ImGui::EndPopup();
+			gamepad->unlistenButtons(buttonListener);
+			currentGamepad = nullptr;
 			return;
 		}
 		ImGui::SetItemDefaultFocus();
@@ -657,9 +713,10 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 			{
 				ImGui::Columns(1, nullptr, false);
 				header(systemMapping->name);
-				ImGui::Columns(3, "bindings", false);
+				ImGui::Columns(4, "bindings", false);
 				ImGui::SetColumnWidth(0, col_width);
 				ImGui::SetColumnWidth(1, col_width);
+				ImGui::SetColumnWidth(2, col_width);
 				continue;
 			}
 			snprintf(key_id, sizeof(key_id), "key_id%d", systemMapping->key);
@@ -681,12 +738,29 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 			displayMappedControl(gamepad, systemMapping->key);
 
 			ImGui::NextColumn();
+			if (dynamic_cast<KeyboardDevice*>(gamepad.get()) == nullptr
+					&& dynamic_cast<Mouse*>(gamepad.get()) == nullptr)
+			{
+				if ((systemMapping->key & DC_BTN_GROUP_MASK) == DC_AXIS_STICKS
+						|| (systemMapping->key & DC_BTN_GROUP_MASK) == DC_AXIS_TRIGGERS)
+				{
+					ImguiStyleColor _(ImGuiCol_PlotHistogram, ImVec4(0.557f, 0.268f, 0.965f, 1.f));
+					float v = getAxisValue(gamepad, systemMapping->key);
+					char s[32];
+					snprintf(s, sizeof(s), "%.0f%%", v * 100.f);
+					ImGui::ProgressBar(v, ImVec2(-1, 0), s);
+				}
+				else if (getButtonState(gamepad, systemMapping->key)) {
+					ImGui::Text(ICON_FA_CIRCLE_DOT);
+				}
+			}
+
+			ImGui::NextColumn();
 			if (ImGui::Button("Map"))
 			{
 				// Set a small delay to avoid capturing the button press used to click "Map"
 				map_start_time = getTimeMs() + 300; // 300ms delay before starting the countdown
 				ImGui::OpenPopup("Map Control");
-				mapped_device = gamepad;
 				mapped_codes.clear();  // Clear previous button codes
 
 				// Detect combos only for EMU_BUTTONS

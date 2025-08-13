@@ -1682,7 +1682,7 @@ struct FullController : maple_sega_controller
 	}
 
 	const char *get_device_name() override {
-		return "Dreamcast Controller XL";
+		return "Dreamcast PantherDC Controller";
 	}
 
 	MapleDeviceType get_device_type() override {
