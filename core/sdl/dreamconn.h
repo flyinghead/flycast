@@ -30,6 +30,7 @@ class DreamConn : public DreamLink
 	static constexpr u16 BASE_PORT = 37393;
 
 	int bus = -1;
+	bool _isForPhysicalController;
 	bool maple_io_connected = false;
 	u8 expansionDevs = 0;
 	asio::ip::tcp::iostream iostream;
@@ -40,9 +41,11 @@ public:
 	static constexpr const char* VID_PID_GUID = "5744000043440000";
 
 public:
-	DreamConn(int bus);
+	DreamConn(int bus, bool isForPhysicalController);
 
 	~DreamConn();
+
+	bool isForPhysicalController() override;
 
 	bool send(const MapleMsg& msg) override;
 
@@ -89,6 +92,14 @@ public:
 	std::string getName() const override {
 		return "DreamConn+ / DreamConn S Controller";
 	}
+
+	void refreshIfNeeded() override;
+
+private:
+	bool updateExpansionDevs();
+
+public:
+	bool isConnected() override;
 
 	void connect() override;
 
