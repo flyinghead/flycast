@@ -351,7 +351,6 @@ const Game Games[] =
         },
 		nullptr,
         &mvsc2_inputs,
-		mvsc2_eeprom_dump,
     },
     // Mushiking The King Of Beetle (2K3 2ND, World)
     {
@@ -1006,9 +1005,9 @@ const Game Games[] =
             // on-cart X76F100 eeprom contents
 			{ "airlinepdx.sf",  0x000000, 0x000084, 0x404b2add, Eeprom },
         },
-        NULL,
+        nullptr,
         &alpilot_inputs,
-        alpilot_eeprom_dump,
+        nullptr,
 		2,
     },
     // Airline Pilots (Japan, Rev A)
@@ -1035,9 +1034,9 @@ const Game Games[] =
             { "mpr-21737.ic10",  0x5000000, 0x800000 },
             { "mpr-21738.ic11",  0x5800000, 0x800000 },
         },
-        NULL,
+        nullptr,
         &alpilot_inputs,
-        alpilot_eeprom_dump,
+        nullptr,
 		2,
     },
     // Alien Front (Rev T)
@@ -1107,7 +1106,6 @@ const Game Games[] =
         },
         NULL,
         &capcom_4btn_inputs,
-		capsnk_eeprom_dump,
     },
     // Capcom vs. SNK Millennium Fight 2000 (Rev A)
     {
@@ -1132,7 +1130,6 @@ const Game Games[] =
         },
         NULL,
         &capcom_4btn_inputs,
-		capsnk_eeprom_dump,
     },
     // Capcom vs. SNK Millennium Fight 2000
     {
@@ -1157,7 +1154,6 @@ const Game Games[] =
         },
         NULL,
         &capcom_4btn_inputs,
-		capsnk_eeprom_dump,
     },
     // Crackin' DJ
     {
@@ -2082,7 +2078,6 @@ const Game Games[] =
         },
         NULL,
         &shot1234_inputs,
-        gundmct_eeprom_dump
     },
     // Gun Survivor 2 Biohazard Code: Veronica (BHF2 Ver. E)
     {
@@ -2608,7 +2603,6 @@ const Game Games[] =
         },
         NULL,
         &mvsc2_inputs,
-		mvsc2_eeprom_dump,
     },
     // Ninja Assault (NJA3 Ver. A)
     {
@@ -2788,7 +2782,6 @@ const Game Games[] =
         },
 		nullptr,
 		&otrigger_inputs,
-		otrigger_eeprom_dump,
     },
     // Moero! Justice Gakuen (JPN) / Project Justice (USA, EXP, KOR, AUS) (Rev A)
     {
@@ -3536,7 +3529,6 @@ const Game Games[] =
         },
 		NULL,
 		&slashout_inputs,
-		slashout_eeprom_dump
     },
     // Sega Marine Fishing
     {
@@ -3763,11 +3755,11 @@ const Game Games[] =
     // The Typing of the Dead (Rev A)
     {
         "totd",
-        NULL,
+		nullptr,
         "The Typing of the Dead (Rev A)",
         0x0b000000,
         0xffffffff, // not populated
-        NULL,
+		"naomi",
         M2,
         ROT0,
         {
@@ -3797,7 +3789,6 @@ const Game Games[] =
         },
 		nullptr,
 		nullptr,
-		totd_eeprom_dump,
     },
     // The Typing of the Dead
     {
@@ -3806,7 +3797,7 @@ const Game Games[] =
         "The Typing of the Dead",
         0x0b000000,
         0xffffffff, // not populated
-        NULL,
+        "naomi",
         M2,
         ROT0,
         {
@@ -3835,7 +3826,6 @@ const Game Games[] =
         },
 		nullptr,
 		nullptr,
-		totd_eeprom_dump,
     },
     // Shin Nihon Pro Wrestling Toukon Retsuden 4 Arcade Edition (TRF1 Ver. A)
     {
@@ -3894,7 +3884,6 @@ const Game Games[] =
         },
 		nullptr,
 		&toyfight_inputs,
-		toyfight_eeprom_dump,
     },
     // Virtua NBA (USA)
     {
@@ -4072,7 +4061,6 @@ const Game Games[] =
         },
         NULL,
         &vonot_inputs,
-		vonot_eeprom_dump
     },
     // Virtua Striker 2 Ver. 2000 (JPN, USA, EXP, KOR, AUS) (Rev C)
     {
@@ -4162,16 +4150,15 @@ const Game Games[] =
         },
 		nullptr,
         &shot12_inputs,
-		vtennis_eeprom_dump,
     },
     // Wave Runner GP
     {
         "wrungp",
-        NULL,
+		nullptr,
         "Wave Runner GP",
         0x06800000,
         0xffffffff, // not populated
-        NULL,
+		"naomi",
         M2,
         ROT0,
         {
@@ -4183,9 +4170,8 @@ const Game Games[] =
             { "mpr-23723.ic5",  0x4800000, 0x1000000 },
             { "mpr-23724.ic6",  0x5800000, 0x1000000 },
         },
-		NULL,
+		nullptr,
 		&wrungp_inputs,
-		wrungp_eeprom_dump
     },
     // Wave Runner GP (USA, Rev A)
     {
@@ -4194,7 +4180,7 @@ const Game Games[] =
         "Wave Runner GP (USA, Rev A)",
         0x06800000,
 		0x284ae7c3,
-        NULL,
+		"naomi",
         M2,
         ROT0,
         {
@@ -4211,9 +4197,8 @@ const Game Games[] =
             //ROM_REGION( 0x10000, "motorio", ROMREGION_ERASEFF)
             //ROM_LOAD( "epr-19250.ic8", 0x000000, 0x010000, CRC(542d3836) SHA1(128cb0bfaf05791d219437653002f6bb948a4ad5) )
         },
-		NULL,
+		nullptr,
 		&wrungp_inputs,
-		wrungp_eeprom_dump
     },
     // World Kicks (WK2 Ver. A)
     {
@@ -4579,7 +4564,7 @@ const Game Games[] =
     // Akatsuki Blitzkampf Ausf. Achse (Japan)
     {
         "ausfache",
-        NULL,
+		nullptr,
         "Akatsuki Blitzkampf Ausf. Achse",
         0x10000000,
         0x5504,
@@ -4594,7 +4579,6 @@ const Game Games[] =
         },
 		nullptr,
 		&ausfache_inputs,
-		ausfache_eeprom_dump,
     },
     // Asian Dynamite
     {
@@ -4639,7 +4623,7 @@ const Game Games[] =
     // Illvelo (Illmatic Envelope) (Japan)
     {
         "illvelo",
-        NULL,
+		nullptr,
         "Illvelo (Illmatic Envelope)",
         0x10000000,
         0x5504,
@@ -4654,7 +4638,6 @@ const Game Games[] =
         },
 		nullptr,
 		&illvelo_inputs,
-        illvelo_eeprom_dump
     },
     // Manic Panic Ghosts! *** BAD DUMP ***
     {
@@ -4684,7 +4667,7 @@ const Game Games[] =
     // Mamoru-kun wa Norowarete Shimatta! (Japan)
     {
         "mamonoro",
-        NULL,
+		nullptr,
         "Mamoru-kun wa Norowarete Shimatta!",
         0x10000000,
         0x5504,
@@ -4697,14 +4680,13 @@ const Game Games[] =
             { "ic10.bin", 0x8000000, 0x4000000 },
             { "317-5132-jpn.ic3", 0, 0x800,  0x0000000, Key },
         },
-        NULL,
+		nullptr,
         &mamonoro_inputs,
-        mamonoro_eeprom_dump
     },
     // Melty Blood Actress Again Version A (Japan, Rev A)
     {
         "mbaa",
-        NULL,
+		nullptr,
         "Melty Blood Actress Again (Ver. A, Rev A)",
         0x18000000,
         0x5586,
@@ -4723,7 +4705,6 @@ const Game Games[] =
         },
         nullptr,
 		&meltyb_inputs,
-		mbaa_eeprom_dump,
     },
     // Melty Blood Actress Again (Japan) (Clone)
     {
@@ -4746,7 +4727,6 @@ const Game Games[] =
         },
         nullptr,
 		&meltyb_inputs,
-		mbaa_eeprom_dump,
     },
     // Mushiking The King Of Beetles - Mushiking II / III / III+ (Ver. 1.001) (World)
     {
@@ -4934,7 +4914,7 @@ const Game Games[] =
     // Shooting Love 2007 (Japan)
     {
         "sl2007",
-        NULL,
+		nullptr,
         "Shooting Love 2007",
         0x10000000,
         0x5504,
@@ -4950,7 +4930,6 @@ const Game Games[] =
         },
 		nullptr,
 		&sl2007_inputs,
-        sl2007_eeprom_dump
     },
     // Touch De Zunou (Rev A) *** BAD DUMP ***
     {
@@ -5104,7 +5083,6 @@ const Game Games[] =
         },
         "gdl-0004",
 		&capcom_4btn_inputs,
-		cvsgd_eeprom_dump,
     },
     // Capcom vs. SNK 2 Mark Of The Millennium 2001
     // ver 010804
@@ -5123,7 +5101,6 @@ const Game Games[] =
         },
         "gdl-0008",
         &capcom_6btn_inputs,
-		cvs2_eeprom_dump,
     },
     // Capcom vs. SNK 2 Millionaire Fighting 2001 (Rev A)
     // ver 010705
@@ -5141,7 +5118,6 @@ const Game Games[] =
         },
         "gdl-0007a",
         &capcom_6btn_inputs,
-		cvs2_eeprom_dump,
     },
     // Dragon Treasure (Rev B)
     {
@@ -5254,7 +5230,6 @@ const Game Games[] =
         },
         "gdl-0041",
 		&guilty_gear_inputs,
-		ggxxac_eeprom_dump,
     },
     // Guilty Gear XX #Reload (Japan, Rev A)
     {
@@ -5303,7 +5278,6 @@ const Game Games[] =
         },
         "gdl-0033a",
 		&guilty_gear_inputs,
-		ggxxsla_eeprom_dump,
     },
     // Mobile Suit Gundam: Federation vs. Zeon
     {
@@ -5321,7 +5295,6 @@ const Game Games[] =
         },
         "gdl-0001",
 		&shot1234_inputs,
-		gundmct_eeprom_dump
     },
     // Mobile Suit Gundam: Federation vs. Zeon DX (USA, Japan)
     {
@@ -5339,7 +5312,6 @@ const Game Games[] =
         },
         "gdl-0006",
 		&shot1234_inputs,
-		gundmxgd_eeprom_dump
     },
     // Ikaruga
     {
@@ -5373,7 +5345,6 @@ const Game Games[] =
         },
         "gdl-0037",
 		&jingystm_inputs,
-		jingystm_eeprom_dump,
     },
     // Karous (Japan)
     {
@@ -5490,7 +5461,6 @@ const Game Games[] =
         },
         "gdl-0039a",
 		&meltyb_inputs,
-		meltyb_eeprom_dump,
     },
     // Melty Blood Act Cadenza Ver. A (Japan)
     {
@@ -5507,7 +5477,6 @@ const Game Games[] =
         },
         "gdl-0028c",
 		&meltyb_inputs,
-		meltybld_eeprom_dump,
     },
     // Melty Blood Act Cadenza (Japan)
     {
@@ -5524,7 +5493,6 @@ const Game Games[] =
         },
         "gdl-0028",
 		&meltyb_inputs,
-		meltybld_eeprom_dump,
     },
     // Melty Blood Act Cadenza Version B (Japan)
     {
@@ -5541,7 +5509,6 @@ const Game Games[] =
         },
         "gdl-0039",
 		&meltyb_inputs,
-		meltyb_eeprom_dump,
     },
     // Moeru Casinyo (Japan)
     {
@@ -5592,7 +5559,6 @@ const Game Games[] =
         },
         "gds-0008",
         &monkeyba_inputs,
-		monkeyba_eeprom_dump,
     },
     // Psyvariar 2 - The Will To Fabricate (Japan)
     {
@@ -5610,7 +5576,6 @@ const Game Games[] =
         },
         "gdl-0024",
 		&psyvariar_inputs,
-		psyvar2_eeprom_dump,
     },
     // Puyo Pop Fever (World)
     {
@@ -5628,7 +5593,6 @@ const Game Games[] =
         },
         "gds-0034",
 		&puyofev_inputs,
-		puyofev_eeprom_dump,
     },
     // Puyo Puyo Fever (Japan)
     {
@@ -5646,7 +5610,6 @@ const Game Games[] =
         },
         "gds-0031",
 		&puyofev_inputs,
-		puyofev_eeprom_dump,
     },
 	// Puyo Puyo Fever (Prototype)
 	{
@@ -5685,7 +5648,6 @@ const Game Games[] =
 		},
 		nullptr,
 		&puyofev_inputs,
-		puyofev_eeprom_dump,
 	},
     // Quiz Keitai Q mode
     {
@@ -5754,7 +5716,6 @@ const Game Games[] =
         },
         "gdl-0030a",
 		&senko_inputs,
-		senko_eeprom_dump,
     },
     // Senko No Ronde (Japan)
     {
@@ -5772,7 +5733,6 @@ const Game Games[] =
         },
         "gdl-0030",
 		&senko_inputs,
-		senko_eeprom_dump,
     },
     // Senko No Ronde Special (Export, Japan)
     {
@@ -5789,7 +5749,6 @@ const Game Games[] =
         },
         "gdl-0038",
 		&senkosp_inputs,
-		senkosp_eeprom_dump,
     },
     // Street Fighter Zero 3 Upper (Japan)
     {
@@ -5807,7 +5766,6 @@ const Game Games[] =
         },
         "gdl-0002",
         &capcom_6btn_inputs,
-		sfz3ugd_eeprom_dump,
     },
     // Shakatto Tambourine (Rev B)
     {
@@ -5889,7 +5847,6 @@ const Game Games[] =
         },
         "gds-0004",
 		&slashout_inputs,
-		slashout_eeprom_dump
     },
     // Spikers Battle
     {
@@ -5906,7 +5863,6 @@ const Game Games[] =
         },
         "gds-0005",
 		&spkrbtl_inputs,
-		spkrbtl_eeprom_dump
     },
     // Sports Jam
     {
@@ -6018,7 +5974,6 @@ const Game Games[] =
         },
         "gdl-0036a",
 		&trgheart_inputs,
-		trgheart_eeprom_dump,
     },
     // Trigger Heart Exelica (Japan)
     {
@@ -6036,7 +5991,6 @@ const Game Games[] =
         },
         "gdl-0036",
 		&trgheart_inputs,
-		trgheart_eeprom_dump,
     },
     // Trizeal (Japan)
     {
@@ -6054,7 +6008,6 @@ const Game Games[] =
         },
         "gdl-0026",
 		&sl2007_inputs,
-		trizeal_eeprom_dump,
     },
     // Under Defeat (Japan)
     {
@@ -6072,7 +6025,6 @@ const Game Games[] =
         },
         "gdl-0035",
 		&psyvariar_inputs,
-		undefeat_eeprom_dump,
     },
     // Usagi - Yamashiro Mahjong Hen (Japan)
     {
@@ -6121,7 +6073,6 @@ const Game Games[] =
         },
         "gds-0015a",
         &shot12_inputs,
-		vtennis2_eeprom_dump,
     },
     // Virtua Tennis / Power Smash
     {
@@ -6138,7 +6089,6 @@ const Game Games[] =
         },
         "gds-0011",
         &shot12_inputs,
-		vtennisg_eeprom_dump,
     },
     // World Series Baseball / Super Major League
     {

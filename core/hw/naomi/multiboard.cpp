@@ -18,9 +18,9 @@
  */
 #include "multiboard.h"
 
+#ifdef NAOMI_MULTIBOARD
 static Multiboard *multiboard;
 
-#ifdef NAOMI_MULTIBOARD
 #include "cfg/cfg.h"
 #ifndef _WIN32
 #include <fcntl.h>
