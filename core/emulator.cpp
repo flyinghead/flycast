@@ -266,7 +266,8 @@ static void loadSpecialSettings()
 			|| prod_id == "T0019M"		// KenJu Atomiswave DC Conversion
 			|| prod_id == "T0020M"		// Force Five Atomiswave DC Conversion
 			|| prod_id == "HDR-0187"	// Fushigi no Dungeon - Fuurai no Shiren Gaiden - Onna Kenshi Asuka Kenzan!
-			|| prod_id == "T15104D 50") // Slave Zero (PAL)
+			|| prod_id == "T15104D 50"	// Slave Zero (PAL)
+			|| prod_id == "MK-51152")	// World Series Baseball 2K2
 		{
 			NOTICE_LOG(BOOT, "Forcing real BIOS");
 			config::UseReios.override(false);
