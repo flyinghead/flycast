@@ -151,6 +151,8 @@ void DreamConn::refreshIfNeeded() {
 	}
 }
 
+// Sends a message to query for expansion devices.
+// Disconnects upon failure.
 bool DreamConn::updateExpansionDevs() {
 	// Now get the controller configuration
 	MapleMsg msg;
@@ -178,7 +180,7 @@ bool DreamConn::updateExpansionDevs() {
 	return true;
 }
 
-static bool isSocketDisconnected(asio::ip::tcp::socket& sock, int available) {
+static bool isSocketDisconnected(asio::ip::tcp::socket& sock) {
 	// Socket is disconnected if 0 bytes are available to read and 'select' considers the socket ready to read
 	if (sock.available() != 0)
 		return false;
@@ -200,8 +202,7 @@ bool DreamConn::isConnected() {
 		return false;
 
 	auto& sock = static_cast<asio::ip::tcp::socket&>(iostream.socket());
-	int available = sock.available();
-	if (isSocketDisconnected(sock, available)) {
+	if (isSocketDisconnected(sock)) {
 		NOTICE_LOG(INPUT, "DreamLink server disconnected bus[%d]", bus);
 		disconnect();
 		return false;
