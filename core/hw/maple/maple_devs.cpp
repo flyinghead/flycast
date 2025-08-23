@@ -2563,7 +2563,7 @@ void createDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink, bool gameStart
 	{
 		std::shared_ptr<maple_device> dev = MapleDevices[bus][i];
 
-		if ((dreamlink->getFunctionCode(i + 1) & MFID_1_Storage) || (dev != nullptr && dev->get_device_type() == MDT_SegaVMU))
+		if ((dreamlink->getFunctionCode(i + 1) & MFID_1_Storage))
 		{
 			bool vmuFound = false;
 			std::shared_ptr<DreamLinkVmu> vmu;
@@ -2614,7 +2614,7 @@ void createDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink, bool gameStart
 				}
 			}
 		}
-		else if (i == 1 && ((dreamlink->getFunctionCode(i + 1) & MFID_8_Vibration) || (dev != nullptr && dev->get_device_type() == MDT_PurupuruPack)))
+		else if (i == 1 && ((dreamlink->getFunctionCode(i + 1) & MFID_8_Vibration)))
 		{
 			bool rumbleFound = false;
 			std::shared_ptr<DreamLinkPurupuru> rumble;
