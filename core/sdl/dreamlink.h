@@ -157,9 +157,6 @@ protected:
 	std::shared_ptr<InputMapping> getDefaultMapping() override;
 	void setBaseDefaultMapping(const std::shared_ptr<InputMapping>& mapping) const;
 
-private:
-	static void handleEvent(Event event, void *arg);
-
 	std::shared_ptr<DreamLink> dreamlink;
 	bool ltrigPressed = false;
 	bool rtrigPressed = false;
@@ -169,8 +166,18 @@ private:
 
 extern std::array<bool, 4> dreamLinkNeedsRefresh;
 extern std::array<std::shared_ptr<DreamLink>, 4> allDreamLinks;
-void reconnectDreamLinks();
+
+// 1. Creates and destroys dreamlinks according to config settings.
+// 2. Attempts to connect/reconnect dreamlinks which are not yet connected.
+// 3. Marks all newly connected dreamlinks as needing refresh.
+// Returns true if any new connection was established.
+// If returns true, should generally be followed by a call like maple_ReconnectDevices() or refreshDreamLinksIfNeeded().
+bool reconnectDreamLinks();
+
 void refreshDreamLinksIfNeeded();
 void handleRefreshDreamLinks();
-void createDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink, bool gameStart, bool saveState);
+void createDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink, bool gameStart, bool stateLoaded);
 void tearDownDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink);
+
+void registerDreamLinkEvents();
+void unregisterDreamLinkEvents();

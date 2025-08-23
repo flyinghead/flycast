@@ -24,6 +24,7 @@
 #include "dreampicoport.h"
 
 #include "hw/maple/maple_devs.h"
+#include "hw/maple/maple_if.h"
 #include "ui/gui.h"
 #include <cfg/option.h>
 #include <SDL.h>
@@ -45,6 +46,46 @@
 #include <windows.h>
 #include <setupapi.h>
 #endif
+
+void handleEvent(Event event, void* arg)
+{
+	if (event == Event::Start)
+	{
+		if (reconnectDreamLinks())
+			maple_ReconnectDevices();
+
+		return;
+	}
+
+	for (auto& dreamlink : allDreamLinks)
+	{
+		if (dreamlink != nullptr)
+		{
+			if (event != Event::Terminate)
+			{
+				createDreamLinkDevices(dreamlink, event == Event::Start, event == Event::LoadState);
+			}
+			else
+			{
+				dreamlink->gameTermination();
+			}
+		}
+	}
+}
+
+void registerDreamLinkEvents()
+{
+	EventManager::listen(Event::Start, handleEvent, nullptr);
+	EventManager::listen(Event::LoadState, handleEvent, nullptr);
+	EventManager::listen(Event::Terminate, handleEvent, nullptr);
+}
+
+void unregisterDreamLinkEvents()
+{
+	EventManager::unlisten(Event::Start, handleEvent, nullptr);
+	EventManager::unlisten(Event::LoadState, handleEvent, nullptr);
+	EventManager::unlisten(Event::Terminate, handleEvent, nullptr);
+}
 
 bool DreamLinkGamepad::isDreamcastController(int deviceIndex)
 {
@@ -100,17 +141,10 @@ DreamLinkGamepad::DreamLinkGamepad(int maple_port, int joystick_idx, SDL_Joystic
 		}
 	}
 
-	EventManager::listen(Event::Start, handleEvent, this);
-	EventManager::listen(Event::LoadState, handleEvent, this);
-    EventManager::listen(Event::Terminate, handleEvent, this);
-
 	loadMapping();
 }
 
 DreamLinkGamepad::~DreamLinkGamepad() {
-	EventManager::unlisten(Event::Start, handleEvent, this);
-	EventManager::unlisten(Event::LoadState, handleEvent, this);
-    EventManager::unlisten(Event::Terminate, handleEvent, this);
 	if (dreamlink) {
 		tearDownDreamLinkDevices(dreamlink);
 		dreamlink.reset();
@@ -157,20 +191,6 @@ void DreamLinkGamepad::registered()
 
 		// Create DreamLink Maple Devices here just in case game is already running
 		createDreamLinkDevices(dreamlink, false, false);
-	}
-}
-
-void DreamLinkGamepad::handleEvent(Event event, void *arg)
-{
-	DreamLinkGamepad *gamepad = static_cast<DreamLinkGamepad*>(arg);
-	if (gamepad->dreamlink != nullptr)
-	{
-		if (event != Event::Terminate) {
-			createDreamLinkDevices(gamepad->dreamlink, event == Event::Start, event == Event::LoadState);
-		}
-		else {
-			gamepad->dreamlink->gameTermination();
-		}
 	}
 }
 

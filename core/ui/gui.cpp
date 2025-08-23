@@ -44,6 +44,7 @@
 #include <stb_image_write.h>
 #include "hw/pvr/Renderer_if.h"
 #include "hw/mem/addrspace.h"
+#include "hw/maple/maple_if.h"
 #if defined(USE_SDL)
 #include "sdl/sdl.h"
 #include "sdl/dreamlink.h"
@@ -713,11 +714,23 @@ static void gui_display_commands()
 
 		if (hasAnyDreamLinks)
 		{
+			if (hasDisconnectedDreamLink)
 			{
-				DisabledScope _{ !hasDisconnectedDreamLink };
 				if (ImGui::Button("Connect DreamLink", ScaledVec2(buttonWidth, 50)))
 				{
-					reconnectDreamLinks();
+					if (reconnectDreamLinks())
+						maple_ReconnectDevices();
+				}
+			}
+			else
+			{
+				if (ImGui::Button("Disconnect\nDreamLink", ScaledVec2(buttonWidth, 50)))
+				{
+					for (auto& dreamlink : allDreamLinks)
+					{
+						if (dreamlink)
+							dreamlink->disconnect();
+					}
 				}
 			}
 

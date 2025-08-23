@@ -2502,12 +2502,10 @@ static std::list<std::shared_ptr<DreamLinkPurupuru>> dreamLinkPurupurus;
 std::array<bool, 4> dreamLinkNeedsRefresh;
 std::array<std::shared_ptr<DreamLink>, 4> allDreamLinks;
 
-// Creates and destroys dreamlinks according to config settings,
-// then attempts to connect or reconnect.
-// Not to be confused with "refreshing" dreamlinks.
-void reconnectDreamLinks()
+bool reconnectDreamLinks()
 {
 	auto& useNetworkExpansionDevices = config::UseNetworkExpansionDevices;
+	bool anyNewConnection = false;
 	for (int i = 0; i < 4; i++)
 	{
 		auto dreamlink = allDreamLinks[i];
@@ -2521,16 +2519,25 @@ void reconnectDreamLinks()
 		{
 			// This bus is not using network expansion devices.
 			// Dispose of the dreamlink for the bus, unless it is for a physical controller (and therefore not managed by this setting).
+			dreamlink->disconnect();
 			allDreamLinks[i] = dreamlink = nullptr;
 		}
 
 		if (dreamlink && !dreamlink->isConnected())
+		{
 			dreamlink->connect();
+			if (dreamlink->isConnected())
+			{
+				anyNewConnection = true;
+				dreamLinkNeedsRefresh[i] = true;
+			}
+		}
 	}
+
+	return anyNewConnection;
 }
 
-// Checks all connected DreamLinks for whether the remote device configuration has changed,
-// and if so, refreshes the device configuration.
+// Checks for and handles a message from server telling us to refresh the expansion devices.
 void refreshDreamLinksIfNeeded()
 {
 	for (auto& dreamlink : allDreamLinks)
@@ -2540,6 +2547,7 @@ void refreshDreamLinksIfNeeded()
 	}
 }
 
+// Calls createDreamLinkDevices for DreamLinks marked with 'dreamLinkNeedsRefresh'.
 void handleRefreshDreamLinks()
 {
 	for (int i = 0; i < 4; i++)
