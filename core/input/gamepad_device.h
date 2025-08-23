@@ -32,6 +32,7 @@ class GamepadDevice
 {
 public:
 	typedef void (*input_detected_cb)(u32 code, bool analog, bool positive);
+	typedef void (*ButtonListener)(int port, DreamcastKey key, bool pressed);
 
 	const std::string& api_name() { return _api_name; }
 	const std::string& name() { return _name; }
@@ -56,6 +57,14 @@ public:
 	bool is_input_detecting() const {
 		return _input_detected != nullptr;
 	}
+	void listenButtons(ButtonListener listener) {
+		buttonListener = listener;
+	}
+	void unlistenButtons(ButtonListener listener) {
+		if (buttonListener == listener)
+			buttonListener = nullptr;
+	}
+
 	std::shared_ptr<InputMapping> get_input_mapping() { return input_mapper; }
 	void save_mapping(int system = settings.platform.system);
 
@@ -135,7 +144,7 @@ public:
 
 protected:
 	GamepadDevice(int maple_port, const char *api_name, bool remappable = true)
-		: _api_name(api_name), _maple_port(maple_port), _input_detected(nullptr), _remappable(remappable),
+		: _api_name(api_name), _maple_port(maple_port), _remappable(remappable),
 		  digitalToAnalogState{}
 	{
 		// Initialize pressedButtons sets
@@ -220,7 +229,8 @@ private:
 	bool _detecting_axis = false;
 	bool _detecting_combo = false;  // For button combination detection
 	u64 _detection_start_time = 0;
-	input_detected_cb _input_detected;
+	input_detected_cb _input_detected = nullptr;
+	ButtonListener buttonListener = nullptr;
 	bool _remappable;
 	bool _is_registered = false;
 	u32 digitalToAnalogState[4];

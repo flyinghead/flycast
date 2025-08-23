@@ -201,7 +201,7 @@ void scrollWhenDraggingOnVoid(ImGuiMouseButton mouse_button)
     ImGuiButtonFlags button_flags = (mouse_button == ImGuiMouseButton_Left) ? ImGuiButtonFlags_MouseButtonLeft
     		: (mouse_button == ImGuiMouseButton_Right) ? ImGuiButtonFlags_MouseButtonRight : ImGuiButtonFlags_MouseButtonMiddle;
     // If nothing hovered so far in the frame (not same as IsAnyItemHovered()!) or item is disabled
-    if (g.HoveredId == 0 || g.HoveredIdDisabled)
+	if (g.HoveredId == 0 || g.HoveredIdIsDisabled)
     {
     	bool hoveredAllowOverlap = g.HoveredIdAllowOverlap;
     	g.HoveredIdAllowOverlap = true;
@@ -992,9 +992,9 @@ bool Toast::draw()
 	const float maxW = std::min(uiScaled(640.f), displaySize.x);
 	ImFont *regularFont = ImGui::GetFont();
 	const ImVec2 titleSize = title.empty() ? ImVec2()
-			: largeFont->CalcTextSizeA(largeFont->FontSize, FLT_MAX, maxW, &title.front(), &title.back() + 1);
+			: largeFont->CalcTextSizeA(largeFont->LegacySize, FLT_MAX, maxW, &title.front(), &title.back() + 1);
 	const ImVec2 msgSize = message.empty() ? ImVec2()
-			: regularFont->CalcTextSizeA(regularFont->FontSize, FLT_MAX, maxW, &message.front(), &message.back() + 1);
+			: regularFont->CalcTextSizeA(regularFont->LegacySize, FLT_MAX, maxW, &message.front(), &message.back() + 1);
 	const ScaledVec2 padding(5.f, 4.f);
 	const ScaledVec2 spacing(0.f, 2.f);
 	ImVec2 totalSize(std::max(titleSize.x, msgSize.x), titleSize.y + msgSize.y);
@@ -1014,13 +1014,13 @@ bool Toast::draw()
 	if (!title.empty())
 	{
 		const ImU32 col = alphaOverride(ImGui::GetColorU32(ImGuiCol_Text), alpha);
-		dl->AddText(largeFont, largeFont->FontSize, pos, col, &title.front(), &title.back() + 1, maxW);
+		dl->AddText(largeFont, largeFont->LegacySize, pos, col, &title.front(), &title.back() + 1, maxW);
 		pos.y += spacing.y + titleSize.y;
 	}
 	if (!message.empty())
 	{
 		const ImU32 col = alphaOverride(0xFF00FFFF, alpha);	// yellow
-		dl->AddText(regularFont, regularFont->FontSize, pos, col, &message.front(), &message.back() + 1, maxW);
+		dl->AddText(regularFont, regularFont->LegacySize, pos, col, &message.front(), &message.back() + 1, maxW);
 	}
 
 	return true;
@@ -1031,11 +1031,9 @@ std::string middleEllipsis(const std::string& s, float width)
 	float tw = ImGui::CalcTextSize(s.c_str()).x;
 	if (tw <= width)
 		return s;
-	std::string ellipsis;
 	char buf[5];
 	ImTextCharToUtf8(buf, ImGui::GetFont()->EllipsisChar);
-	for (int i = 0; i < ImGui::GetFont()->EllipsisCharCount; i++)
-		ellipsis += buf;
+	std::string ellipsis = buf;
 
 	int l = s.length() / 2;
 	int d = l;
