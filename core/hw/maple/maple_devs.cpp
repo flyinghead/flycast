@@ -2508,7 +2508,7 @@ bool reconnectDreamLinks()
 	bool anyNewConnection = false;
 	for (int i = 0; i < 4; i++)
 	{
-		auto dreamlink = allDreamLinks[i];
+		const auto& dreamlink = allDreamLinks[i];
 
 		if (useNetworkExpansionDevices[i] && !dreamlink)
 		{
