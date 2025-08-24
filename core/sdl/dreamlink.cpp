@@ -18,7 +18,7 @@
  */
 #include "dreamlink.h"
 
-#ifdef USE_DREAMCASTCONTROLLER
+#ifdef USE_DREAMLINK_DEVICES
 
 #include "dreamconn.h"
 #include "dreampicoport.h"

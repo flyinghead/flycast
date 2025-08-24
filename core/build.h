@@ -115,7 +115,7 @@
 #endif
 
 #if (defined(_WIN32) || defined(__linux__) || (defined(__APPLE__) && defined(TARGET_OS_MAC))) && !defined(TARGET_UWP) && defined(USE_SDL) && !defined(LIBRETRO)
-#define USE_DREAMCASTCONTROLLER 1
+#define USE_DREAMLINK_DEVICES 1
 #endif
 
 // TARGET PLATFORM

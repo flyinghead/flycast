@@ -2108,7 +2108,7 @@ std::shared_ptr<maple_device> maple_Create(MapleDeviceType type)
 	return nullptr;
 }
 
-#if defined(USE_DREAMCASTCONTROLLER)
+#if defined(USE_DREAMLINK_DEVICES)
 #include "sdl/dreamlink.h"
 #include "sdl/dreamconn.h"
 #include <list>

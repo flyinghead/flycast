@@ -8,7 +8,7 @@
 #include "network/ggpo.h"
 #include "hw/naomi/card_reader.h"
 
-#ifdef USE_DREAMCASTCONTROLLER
+#ifdef USE_DREAMLINK_DEVICES
 #include "sdl/dreamlink.h"
 #endif
 
@@ -51,7 +51,7 @@ bool SDCKBOccupied;
 
 void maple_vblank()
 {
-#if USE_DREAMCASTCONTROLLER
+#if USE_DREAMLINK_DEVICES
 	refreshDreamLinksIfNeeded();
 #endif
 
@@ -358,7 +358,7 @@ void maple_Init()
 
 	maple_schid = sh4_sched_register(0, maple_schd);
 
-#if defined(USE_DREAMCASTCONTROLLER)
+#if defined(USE_DREAMLINK_DEVICES)
 	registerDreamLinkEvents();
 #endif
 }
@@ -382,7 +382,7 @@ void maple_Term()
 	sh4_sched_unregister(maple_schid);
 	maple_schid = -1;
 
-#if defined(USE_DREAMCASTCONTROLLER)
+#if defined(USE_DREAMLINK_DEVICES)
 	unregisterDreamLinkEvents();
 #endif
 }
@@ -402,7 +402,7 @@ static void maple_handle_reconnect()
 		reconnect_time = 0;
 		mcfg_CreateDevices();
 
-#if defined(USE_DREAMCASTCONTROLLER)
+#if defined(USE_DREAMLINK_DEVICES)
 		handleRefreshDreamLinks();
 #endif
 	}

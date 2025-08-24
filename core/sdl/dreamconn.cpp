@@ -18,7 +18,7 @@
  */
 #include "dreamconn.h"
 
-#ifdef USE_DREAMCASTCONTROLLER
+#ifdef USE_DREAMLINK_DEVICES
 #include "hw/maple/maple_devs.h"
 #include "hw/maple/maple_if.h"
 #include "ui/gui.h"

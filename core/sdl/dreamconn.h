@@ -19,7 +19,7 @@
 #pragma once
 #include "dreamlink.h"
 
-#ifdef USE_DREAMCASTCONTROLLER
+#ifdef USE_DREAMLINK_DEVICES
 
 #include <asio.hpp>
 #include <mutex>

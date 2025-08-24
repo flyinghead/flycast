@@ -28,7 +28,7 @@
 #include "hw/mem/addrspace.h"
 #endif
 
-#if defined(USE_DREAMCASTCONTROLLER)
+#if defined(USE_DREAMLINK_DEVICES)
 #include "sdl/dreamlink.h"
 #endif
 
@@ -219,7 +219,7 @@ void gui_display_settings()
     		maple_devices_changed = false;
     		if (game_started && settings.platform.isConsole())
     		{
-#if defined(USE_DREAMCASTCONTROLLER)
+#if defined(USE_DREAMLINK_DEVICES)
 				reconnectDreamLinks();
 #endif
     			maple_ReconnectDevices();

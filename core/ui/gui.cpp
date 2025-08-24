@@ -695,7 +695,7 @@ static void gui_display_commands()
 				card_reader::barcodeSetCard(cardBuf);
 		}
 
-#if defined(USE_DREAMCASTCONTROLLER)
+#if defined(USE_DREAMLINK_DEVICES)
 		// DreamLink connection status
 		bool hasAnyDreamLinks = false;
 		bool hasDisconnectedDreamLink = false;
