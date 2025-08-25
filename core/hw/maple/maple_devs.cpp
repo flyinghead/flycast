@@ -2513,14 +2513,14 @@ bool reconnectDreamLinks()
 		if (useNetworkExpansionDevices[i] && !dreamlink)
 		{
 			bool isForPhysicalController = false;
-			allDreamLinks[i] = dreamlink = std::make_shared<DreamConn>(i, isForPhysicalController);
+			allDreamLinks[i] = std::make_shared<DreamConn>(i, isForPhysicalController);
 		}
 		else if (!useNetworkExpansionDevices[i] && dreamlink && !dreamlink->isForPhysicalController())
 		{
 			// This bus is not using network expansion devices.
 			// Dispose of the dreamlink for the bus, unless it is for a physical controller (and therefore not managed by this setting).
 			dreamlink->disconnect();
-			allDreamLinks[i] = dreamlink = nullptr;
+			allDreamLinks[i] = nullptr;
 		}
 
 		if (dreamlink && !dreamlink->isConnected())
