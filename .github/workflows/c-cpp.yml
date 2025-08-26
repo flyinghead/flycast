@@ -72,7 +72,7 @@ jobs:
           submodules: recursive
 
       - name: Compile a universal OpenMP (macOS)
-        run: HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=1 brew reinstall --build-from-source --formula ./shell/apple/libomp.rb
+        run: HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=1 HOMEBREW_DEVELOPER=1 brew reinstall --build-from-source --formula ./shell/apple/libomp.rb
         if: matrix.config.name == 'apple-darwin'
 
       - name: Compile OpenMP.xcframework (iOS)

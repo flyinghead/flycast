@@ -28,6 +28,10 @@
 #include "hw/mem/addrspace.h"
 #endif
 
+#if defined(USE_DREAMLINK_DEVICES)
+#include "sdl/dreamlink.h"
+#endif
+
 static void gui_settings_advanced()
 {
 #if FEAT_SHREC != DYNAREC_NONE
@@ -215,6 +219,9 @@ void gui_display_settings()
     		maple_devices_changed = false;
     		if (game_started && settings.platform.isConsole())
     		{
+#if defined(USE_DREAMLINK_DEVICES)
+				reconnectDreamLinks();
+#endif
     			maple_ReconnectDevices();
     			reset_vmus();
     		}
