@@ -38801,7 +38801,7 @@ struct retro_core_options_v2 options_ga = {
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_INFO_0_GL "Carga texturas personalizadas situadas no cartafol \"system/dc/textures/<game-id>/\"."
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_GL "Texturas de volcado"
 #define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_GL "Cada vez que o xogo use unha textura nova, gardarase como ficheiro .png no cartafol 'system/dc/texdump/<game-id>/'."
-#define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_GL "Zona morta stick analóxico"
+#define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_GL "Zona morta panca analóxica"
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_INFO_0_GL "Selecciona ata onde tes que empuxar o stick analóxico antes de que comece a procesarse."
 #define OPTION_VAL_0_GL NULL
 #define OPTION_VAL_5_GL NULL
