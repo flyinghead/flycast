@@ -1,10 +1,10 @@
-#include "gtest/gtest.h"
-#include "types.h"
-#include "hw/mem/addrspace.h"
 #include "emulator.h"
+#include "hw/mem/addrspace.h"
+#include "types.h"
+#include "gtest/gtest.h"
 
-#include "hw/sh4/sh4_core.h"
 #include "hw/sh4/dyna/shil.h"
+#include "hw/sh4/sh4_core.h"
 #define SHIL_MODE 2
 #include "hw/sh4/dyna/shil_canonical.h"
 
@@ -109,7 +109,8 @@ static void div32u_slow(u32& r1, u32 r2, u32& r3)
 	}
 }
 
-class Div32Test : public ::testing::Test {
+class Div32Test : public ::testing::Test
+{
 protected:
 	void SetUp() override
 	{
@@ -122,7 +123,7 @@ protected:
 	void div32s(u32 n1, u32 n2, u32 n3)
 	{
 		const long long int dividend = (long long)n3 << 32 | n1;
-		//printf("%lld / %d = ", dividend, n2);
+		// printf("%lld / %d = ", dividend, n2);
 		int r1s = n1;
 		int r2 = n2;
 		int r3s = n3;
@@ -130,7 +131,7 @@ protected:
 		int r3f = r3s;
 		div32s_slow((u32&)r1s, r2, (u32&)r3s);
 		div32s_fast((u32&)r1f, r2, (u32&)r3f);
-		//printf("%d %% %d\n", (r1s << 1) | sr.T, r3s);
+		// printf("%d %% %d\n", (r1s << 1) | sr.T, r3s);
 		ASSERT_EQ(r1s, r1f);
 		ASSERT_EQ(r3s, r3f);
 	}
@@ -138,7 +139,7 @@ protected:
 	void div32u(u32 n1, u32 n2, u32 n3)
 	{
 		const long long int dividend = (long long)n3 << 32 | n1;
-		//printf("%lld / %d = ", dividend, n2);
+		// printf("%lld / %d = ", dividend, n2);
 		int r1s = n1;
 		int r2 = n2;
 		int r3s = n3;
@@ -146,7 +147,7 @@ protected:
 		int r3f = r3s;
 		div32u_slow((u32&)r1s, r2, (u32&)r3s);
 		div32u_fast((u32&)r1f, r2, (u32&)r3f);
-		//printf("%d %% %d\n", (r1s << 1) | sr.T, r3s);
+		// printf("%d %% %d\n", (r1s << 1) | sr.T, r3s);
 		ASSERT_EQ(r3s, r3f);
 	}
 };
