@@ -100,7 +100,8 @@ static InputDescriptors _18wheelr_inputs = {
 	  {
 			{ NAOMI_BTN0_KEY, "HORN" },
 			{ NAOMI_DOWN_KEY, "VIEW" },
-			{ NAOMI_BTN1_KEY, "SHIFT L/H" },
+			{ NAOMI_BTN1_KEY, "SHIFT L" },
+			{ NAOMI_BTN3_KEY, "SHIFT H" },
 			{ NAOMI_BTN2_KEY, "SHIFT R" },
 			NAO_START_DESC
 			NAO_BASE_BTN_DESC
