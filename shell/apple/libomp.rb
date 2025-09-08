@@ -1,49 +1,70 @@
 class Libomp < Formula
   desc "LLVM's OpenMP runtime library"
   homepage "https://openmp.llvm.org/"
-  url "https://github.com/llvm/llvm-project/releases/download/llvmorg-14.0.6/openmp-14.0.6.src.tar.xz"
-  sha256 "4f731ff202add030d9d68d4c6daabd91d3aeed9812e6a5b4968815cfdff0eb1f"
+  url "https://github.com/llvm/llvm-project/releases/download/llvmorg-21.1.0/openmp-21.1.0.src.tar.xz"
+  sha256 "60d6c4d2019d546aefc029c9b2c4006dc78419dba4cfd0a376ae025be8ff9778"
   license "MIT"
 
   livecheck do
-    url "https://llvm.org/"
-    regex(/LLVM (\d+\.\d+\.\d+)/i)
+    url :stable
+    regex(/^llvmorg[._-]v?(\d+(?:\.\d+)+)$/i)
   end
 
   bottle do
-    sha256 cellar: :any,                 arm64_monterey: "b36b1393289e7d98fc03425b6c23a63c4f5e9290ecf0922d45e6fde2973ba8fb"
-    sha256 cellar: :any,                 arm64_big_sur:  "f00a5f352167b2fd68ad25b1959ef66a346023c6dbeb50892b386381d7ebe183"
-    sha256 cellar: :any,                 monterey:       "a423e0bc90a9d0f0feff08eb197768287ba4722b88d4624c2d8306e443ff6fdb"
-    sha256 cellar: :any,                 big_sur:        "46e5838f0061cfe1901c485987fc5649464cfa3b2150f2ac54dd5e61eb3342a4"
-    sha256 cellar: :any,                 catalina:       "63cdbb3a70c4b85a6a92a55c8ab2384ded244d37568cd769409dee00a14b581d"
-    sha256 cellar: :any_skip_relocation, x86_64_linux:   "470c1338f8c1bc8ef1a41e86bb9beddcff9c353947a2073b2c2b4f584db9bd20"
+    sha256 cellar: :any,                 arm64_sequoia: "0ceba5785dc521e24a27be3a17f82d8712fc0bbf31350b89f20df1cccfc7a37f"
+    sha256 cellar: :any,                 arm64_sonoma:  "efcf5b3a7b8c8e93afc12727321ec4ca1485a516603c4a59abd27131973cbeb5"
+    sha256 cellar: :any,                 arm64_ventura: "898cb346422ccc067020c808b311489470df91b35ff5371948b58e0e51200b53"
+    sha256 cellar: :any,                 sonoma:        "1ac8d9e88130a73308ec32dd6da011fd2433ff031b7a11398293ba36ab6c930d"
+    sha256 cellar: :any,                 ventura:       "f92736c1181011c5a7de2095abffaa56f55e2593349d835d17ee9c9ffe6041d6"
+    sha256 cellar: :any_skip_relocation, arm64_linux:   "8d84032bbe43b9686016039b2ab3e7bb92122c0c2e597c7a97b16c215e752d00"
+    sha256 cellar: :any_skip_relocation, x86_64_linux:  "41f5e91b9b86f0e6ed64596c20a8173aa152c36348f38645b5d9beb51b7a0d4f"
   end
 
-  depends_on "cmake" => :build
-  depends_on :xcode => :build # Sometimes CLT cannot build arm64
+  # Ref: https://github.com/Homebrew/homebrew-core/issues/112107
+  keg_only "it can override GCC headers and result in broken builds"
+
+  # depends_on "cmake" => :build     #Flycast
+  depends_on "lit" => :build
   uses_from_macos "llvm" => :build
 
   on_linux do
-    keg_only "provided by LLVM, which is not keg-only on Linux"
+    depends_on "python@3.13"
+  end
+
+  resource "cmake" do
+    url "https://github.com/llvm/llvm-project/releases/download/llvmorg-21.1.0/cmake-21.1.0.src.tar.xz"
+    sha256 "528347c84c3571d9d387b825ef8b07c7ad93e9437243c32173838439c3b6028f"
+
+    livecheck do
+      formula :parent
+    end
   end
 
   def install
+    # Manually specify the path to the local pinned cmake     #Flycast
+    ENV.prepend_path "PATH", Formula["local/pinned/cmake"].opt_bin
+
+    odie "cmake resource needs to be updated" if version != resource("cmake").version
+
+    (buildpath/"src").install buildpath.children
+    (buildpath/"cmake").install resource("cmake")
+
     # Disable LIBOMP_INSTALL_ALIASES, otherwise the library is installed as
     # libgomp alias which can conflict with GCC's libgomp.
     args = ["-DLIBOMP_INSTALL_ALIASES=OFF"]
     args << "-DOPENMP_ENABLE_LIBOMPTARGET=OFF" if OS.linux?
 
-    # Build universal binary
+    # Build universal binary     #Flycast
     ENV.permit_arch_flags
     ENV.runtime_cpu_detection
     args << "-DCMAKE_OSX_ARCHITECTURES=arm64;x86_64"
-    args << "-DCMAKE_OSX_DEPLOYMENT_TARGET=10.9"
+    args << "-DCMAKE_OSX_DEPLOYMENT_TARGET=10.15"
 
-    # system "cmake", "-S", "openmp-#{version}.src", "-B", "build/shared", *std_cmake_args, *args
+    # system "cmake", "-S", "src", "-B", "build/shared", *std_cmake_args, *args
     # system "cmake", "--build", "build/shared"
     # system "cmake", "--install", "build/shared"
 
-    system "cmake", "-S", "openmp-#{version}.src", "-B", "build/static",
+    system "cmake", "-S", "src", "-B", "build/static",
                     "-DLIBOMP_ENABLE_SHARED=OFF",
                     *std_cmake_args, *args
     system "cmake", "--build", "build/static"
@@ -51,7 +72,7 @@ class Libomp < Formula
   end
 
   test do
-    (testpath/"test.cpp").write <<~EOS
+    (testpath/"test.cpp").write <<~CPP
       #include <omp.h>
       #include <array>
       int main (int argc, char** argv) {
@@ -66,9 +87,9 @@ class Libomp < Formula
         else
             return 1;
       }
-    EOS
+    CPP
     system ENV.cxx, "-Werror", "-Xpreprocessor", "-fopenmp", "test.cpp", "-std=c++11",
-                    "-L#{lib}", "-lomp", "-o", "test"
+                    "-I#{include}", "-L#{lib}", "-lomp", "-o", "test"
     system "./test"
   end
 end
