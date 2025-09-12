@@ -23,7 +23,7 @@ class Libomp < Formula
   # Ref: https://github.com/Homebrew/homebrew-core/issues/112107
   keg_only "it can override GCC headers and result in broken builds"
 
-  # depends_on "cmake" => :build     #Flycast
+  depends_on "cmake" => :build
   depends_on "lit" => :build
   uses_from_macos "llvm" => :build
 
@@ -41,9 +41,6 @@ class Libomp < Formula
   end
 
   def install
-    # Manually specify the path to the local pinned cmake     #Flycast
-    ENV.prepend_path "PATH", Formula["local/pinned/cmake"].opt_bin
-
     odie "cmake resource needs to be updated" if version != resource("cmake").version
 
     (buildpath/"src").install buildpath.children
