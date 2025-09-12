@@ -20352,7 +20352,7 @@ struct retro_core_options_v2 options_da = {
 #define CATEGORY_VIDEO_LABEL_DE NULL
 #define CATEGORY_VIDEO_INFO_0_DE "Einstellungen für Auflösung, reihenfolgeunabhängige Transparenz und visuelle Effekte konfigurieren."
 #define CATEGORY_PERFORMANCE_LABEL_DE "Leistung"
-#define CATEGORY_PERFORMANCE_INFO_0_DE "Einstellungen für Threaded Rendering und Bilder überspringen ändern."
+#define CATEGORY_PERFORMANCE_INFO_0_DE "Einstellungen für mehrgängiges Rendern und Bilder überspringen ändern."
 #define CATEGORY_HACKS_LABEL_DE "Emulations-Hacks"
 #define CATEGORY_HACKS_INFO_0_DE "Breitbildüberschreibungen, GD-ROM-Ladegeschwindigkeit und Texturaustauscheinstellungen konfigurieren."
 #define CATEGORY_INPUT_LABEL_DE "Eingabe"
@@ -20674,7 +20674,7 @@ struct retro_core_options_v2 options_da = {
 #define CORE_OPTION_NAME_VMU3_PIXEL_OFF_COLOR_LABEL_DE "Pixel-aus-Farbe VMU-Bildschirm 3"
 #define CORE_OPTION_NAME_VMU3_SCREEN_OPACITY_LABEL_DE "Deckkraft VMU-Bildschirm 3"
 #define CORE_OPTION_NAME_VMU4_SCREEN_DISPLAY_LABEL_DE "Anzeige VMU-Bildschirm 4"
-#define CORE_OPTION_NAME_VMU4_SCREEN_POSITION_LABEL_DE "Position VMU-Bildschirm 4"
+#define CORE_OPTION_NAME_VMU4_SCREEN_POSITION_LABEL_DE "VMU-Bildschirm-4-Position"
 #define CORE_OPTION_NAME_VMU4_SCREEN_SIZE_MULT_LABEL_DE "Größe VMU-Bildschirm 4"
 #define CORE_OPTION_NAME_VMU4_PIXEL_ON_COLOR_LABEL_DE "Pixel-an-Farbe Bildschirm 4"
 #define CORE_OPTION_NAME_VMU4_PIXEL_OFF_COLOR_LABEL_DE "Pixel-aus-Farbe VMU-Bildschirm 4"
