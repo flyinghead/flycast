@@ -4,7 +4,7 @@
 #include <IL/OMX_Broadcom.h>
 #include <unistd.h>
 
-#define PORT_INDEX 100
+#define PORT_INDEX	100
 #define OUTPUT_FREQ 44100
 
 class OMXAudioBackend : public AudioBackend
@@ -21,16 +21,16 @@ class OMXAudioBackend : public AudioBackend
 	pthread_cond_t omx_state_cond;
 
 	static OMX_ERRORTYPE eventHandler(
-			OMX_IN OMX_HANDLETYPE hComponent,
-			OMX_IN OMX_PTR pAppData,
-			OMX_IN OMX_EVENTTYPE eEvent,
-			OMX_IN OMX_U32 nData1,
-			OMX_IN OMX_U32 nData2,
-			OMX_IN OMX_PTR pEventData)
+		OMX_IN OMX_HANDLETYPE hComponent,
+		OMX_IN OMX_PTR pAppData,
+		OMX_IN OMX_EVENTTYPE eEvent,
+		OMX_IN OMX_U32 nData1,
+		OMX_IN OMX_U32 nData2,
+		OMX_IN OMX_PTR pEventData)
 	{
-		OMXAudioBackend *backend = (OMXAudioBackend *)pAddData;
+		OMXAudioBackend* backend = (OMXAudioBackend*)pAddData;
 		pthread_mutex_lock(&backend->audio_lock);
-		if(eEvent == OMX_EventCmdComplete && nData1 == OMX_CommandStateSet)
+		if (eEvent == OMX_EventCmdComplete && nData1 == OMX_CommandStateSet)
 		{
 			backend->omx_state = (OMX_STATETYPE)nData2;
 			pthread_cond_signal(&backend->omx_state_cond);
@@ -40,17 +40,17 @@ class OMXAudioBackend : public AudioBackend
 	}
 
 	static OMX_ERRORTYPE emptyBufferDone(
-			OMX_IN OMX_HANDLETYPE hComponent,
-			OMX_IN OMX_PTR pAppData,
-			OMX_IN OMX_BUFFERHEADERTYPE* pBuffer)
+		OMX_IN OMX_HANDLETYPE hComponent,
+		OMX_IN OMX_PTR pAppData,
+		OMX_IN OMX_BUFFERHEADERTYPE* pBuffer)
 	{
 		return OMX_ErrorNone;
 	}
 
 	static OMX_ERRORTYPE fillBufferDone(
-			OMX_OUT OMX_HANDLETYPE hComponent,
-			OMX_OUT OMX_PTR pAppData,
-			OMX_OUT OMX_BUFFERHEADERTYPE* pBuffer)
+		OMX_OUT OMX_HANDLETYPE hComponent,
+		OMX_OUT OMX_PTR pAppData,
+		OMX_OUT OMX_BUFFERHEADERTYPE* pBuffer)
 	{
 		return OMX_ErrorNone;
 	}
@@ -58,7 +58,7 @@ class OMXAudioBackend : public AudioBackend
 	void waitForState(OMX_STATETYPE state)
 	{
 		pthread_mutex_lock(&audio_lock);
-		while(omx_state != state)
+		while (omx_state != state)
 			pthread_cond_wait(&omx_state_cond, &audio_lock);
 		pthread_mutex_unlock(&audio_lock);
 	}
@@ -72,7 +72,7 @@ class OMXAudioBackend : public AudioBackend
 		param.nPortIndex = PORT_INDEX;
 
 		OMX_ERRORTYPE error = OMX_GetConfig(omx_handle, OMX_IndexConfigAudioRenderingLatency, &param);
-		if(error != OMX_ErrorNone)
+		if (error != OMX_ErrorNone)
 			WARN_LOG(AUDIO, "OMX: failed to get OMX configuration (OMX_IndexConfigAudioRenderingLatency). Error 0x%X", error);
 
 		return param.nU32 * 1000 / OUTPUT_FREQ;
@@ -103,7 +103,7 @@ public:
 		callbacks.EmptyBufferDone = emptyBufferDone;
 		callbacks.FillBufferDone = fillBufferDone;
 
-		error = OMX_GetHandle(&omx_handle, (OMX_STRING)"OMX.broadcom.audio_render", this, &callbacks);
+		error = OMX_GetHandle(&omx_handle, (OMX_STRING) "OMX.broadcom.audio_render", this, &callbacks);
 		if (error != OMX_ErrorNone)
 		{
 			WARN_LOG(AUDIO, "OMX: OMX_GetHandle() failed. Error 0x%X", error);
@@ -167,11 +167,11 @@ public:
 		}
 		else
 		{
-			for(u32 i = 0; i < param2.nPorts; i++)
+			for (u32 i = 0; i < param2.nPorts; i++)
 			{
 				u32 port = param2.nStartPortNumber + i;
 				error = OMX_SendCommand(omx_handle, OMX_CommandPortDisable, port, NULL);
-				if(error != OMX_ErrorNone)
+				if (error != OMX_ErrorNone)
 					WARN_LOG(AUDIO, "OMX: failed to do OMX_CommandPortDisable on port %u. Error 0x%X", port, error);
 			}
 		}
@@ -239,7 +239,7 @@ public:
 			audio_buffers[i]->nFilledLen = buffer_size;
 
 			error = OMX_EmptyThisBuffer(omx_handle, audio_buffers[i]);
-			if(error != OMX_ErrorNone)
+			if (error != OMX_ErrorNone)
 				WARN_LOG(AUDIO, "OMX: failed to empty buffer[%u]. Error 0x%X", i, error);
 		}
 
@@ -252,7 +252,7 @@ public:
 		memset(&ar_dest, 0, sizeof(ar_dest));
 		ar_dest.nSize = sizeof(OMX_CONFIG_BRCMAUDIODESTINATIONTYPE);
 		ar_dest.nVersion.nVersion = OMX_VERSION;
-		strcpy((char *)ar_dest.sName, output_device);
+		strcpy((char*)ar_dest.sName, output_device);
 		error = OMX_SetConfig(omx_handle, OMX_IndexConfigBrcmAudioDestination, &ar_dest);
 		if (error != OMX_ErrorNone)
 		{
@@ -271,38 +271,38 @@ public:
 
 	u32 push(const void* frame, u32 samples, bool wait) override
 	{
-		if(audio_buffers == NULL)
+		if (audio_buffers == NULL)
 			return 1;
 
 		size_t data_size = samples * 4;
 
-		while(data_size > 0)
+		while (data_size > 0)
 		{
 			size_t copy_size = std::min(buffer_size - buffer_length, data_size);
 
 			// Don't have more than maximum audio latency
 			u32 latency = getLatency();
-			if(latency > latency_max)
+			if (latency > latency_max)
 			{
 				usleep((latency - latency_max) * 1000);
 			}
-			else if(latency == 0)
+			else if (latency == 0)
 			{
 				INFO_LOG(AUDIO, "OMX: underrun occurred");
 			}
 
 			memcpy(audio_buffers[audio_buffer_idx]->pBuffer + buffer_length, frame, copy_size);
 			buffer_length += copy_size;
-			frame = (char *)frame + copy_size;
+			frame = (char*)frame + copy_size;
 
 			// Flush buffer and swap
-			if(buffer_length >= buffer_size)
+			if (buffer_length >= buffer_size)
 			{
 				audio_buffers[audio_buffer_idx]->nOffset = 0;
 				audio_buffers[audio_buffer_idx]->nFilledLen = buffer_size;
 
 				OMX_ERRORTYPE error = OMX_EmptyThisBuffer(omx_handle, audio_buffers[audio_buffer_idx]);
-				if(error != OMX_ErrorNone)
+				if (error != OMX_ErrorNone)
 					INFO_LOG(AUDIO, "OMX: failed to empty buffer[%u]. Error 0x%X", audio_buffer_idx, error);
 
 				audio_buffer_idx = (audio_buffer_idx + 1) % buffer_count;
@@ -322,10 +322,10 @@ public:
 		// Is there anything else that needs to be done for omx?
 
 		error = OMX_Deinit();
-		if(error != OMX_ErrorNone)
+		if (error != OMX_ErrorNone)
 			WARN_LOG(AUDIO, "OMX: OMX_Deinit() failed. Error 0x%X", error);
 
-		if(audio_buffers != NULL)
+		if (audio_buffers != NULL)
 		{
 			delete[] audio_buffers;
 			audio_buffers = NULL;
