@@ -175,6 +175,7 @@ static int framebufferHeight;
 static int maxFramebufferWidth;
 static int maxFramebufferHeight;
 static float framebufferAspectRatio = 4.f / 3.f;
+static double fps_current;
 
 float libretro_expected_audio_samples_per_run;
 unsigned libretro_vsync_swap_interval = 1;
@@ -677,23 +678,53 @@ static void setGameGeometry(retro_game_geometry& geometry)
 	geometry.aspect_ratio = framebufferAspectRatio;
 	if (rotate_screen)
 		geometry.aspect_ratio = 1 / geometry.aspect_ratio;
-	geometry.max_width = std::max(framebufferHeight * 16 / 9, framebufferWidth);
+
+	// Use same height for rotation potential
+	geometry.max_width = std::max(maxFramebufferWidth, framebufferWidth);
 	geometry.max_height = geometry.max_width;
+
 	// Avoid gigantic window size at startup
 	geometry.base_width = 640;
 	geometry.base_height = 480;
 }
 
-void setAVInfo(retro_system_av_info& avinfo)
+bool setAVInfo(retro_system_av_info& avinfo)
 {
 	double sample_rate = 44100.0;
-	double fps = SPG_CONTROL.isNTSC() ? 59.94 : SPG_CONTROL.isPAL() ? 50.0 : 60.0;
+	double fps = SPG_CONTROL.isPAL() ? 50.0 : 59.94;
+
+	// 240p NTSC rate
+	if (framebufferHeight == 240 && !SPG_CONTROL.isNTSC() && !SPG_CONTROL.isPAL())
+		fps = 59.82366;
 
 	setGameGeometry(avinfo.geometry);
 	avinfo.timing.sample_rate = sample_rate;
 	avinfo.timing.fps = fps / (double)libretro_vsync_swap_interval;
 
 	libretro_expected_audio_samples_per_run = sample_rate / fps;
+
+	// Avoid video reinit with same timings
+	if (avinfo.timing.fps == fps_current)
+		return false;
+
+	fps_current = avinfo.timing.fps;
+	return true;
+}
+
+static bool retro_refresh_av_info(void)
+{
+	retro_system_av_info avinfo;
+
+	if (first_run || game_data.empty())
+		return false;
+
+	if (setAVInfo(avinfo))
+	{
+		environ_cb(RETRO_ENVIRONMENT_SET_SYSTEM_AV_INFO, &avinfo);
+		return true;
+	}
+
+	return false;
 }
 
 void retro_resize_renderer(int w, int h, float aspectRatio)
@@ -715,6 +746,10 @@ void retro_resize_renderer(int w, int h, float aspectRatio)
 	}
 	else
 	{
+		// Check if timing change is needed instead
+		if (retro_refresh_av_info())
+			return;
+
 		retro_game_geometry geometry;
 		setGameGeometry(geometry);
 		environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, &geometry);
@@ -2415,11 +2450,12 @@ void retro_get_system_av_info(retro_system_av_info *info)
 		msg.frames = 120;
 		environ_cb(RETRO_ENVIRONMENT_SET_MESSAGE, &msg);
 	}
+
 	framebufferWidth = config::RenderResolution * 16 / 9;
 	framebufferHeight = config::RenderResolution;
+	maxFramebufferWidth = std::max(maxFramebufferWidth, framebufferWidth);
+	maxFramebufferHeight = std::max(maxFramebufferHeight, framebufferHeight);
 	setAVInfo(*info);
-	maxFramebufferWidth = info->geometry.max_width;
-	maxFramebufferHeight = info->geometry.max_height;
 }
 
 unsigned retro_get_region()
