@@ -181,10 +181,7 @@ bool DreamConn::updateExpansionDevs() {
 }
 
 static bool isSocketDisconnected(asio::ip::tcp::socket& sock) {
-	// Socket is disconnected if 0 bytes are available to read and 'select' considers the socket ready to read
-	if (sock.available() != 0)
-		return false;
-
+	// A socket was (gracefully) disconnected if 'select()' says the socket is ready to read, and a subsequent 'recv()' says 0 bytes available to read.
 	auto nativeHandle = sock.native_handle();
 	fd_set readfds;
 	FD_ZERO(&readfds);
@@ -194,7 +191,13 @@ static bool isSocketDisconnected(asio::ip::tcp::socket& sock) {
 	// See https://www.man7.org/linux/man-pages/man2/select.2.html
 	int nfds = nativeHandle + 1;
 	int nReady = select(nfds, &readfds, nullptr, nullptr, &timeout);
-	return nReady > 0 && FD_ISSET(nativeHandle, &readfds);
+	bool socketIsReady = nReady > 0 && FD_ISSET(nativeHandle, &readfds);
+	if (!socketIsReady)
+		return false;
+
+	char dest;
+	int len = recv(nativeHandle, &dest, sizeof(dest), MSG_PEEK);
+	return len == 0;
 }
 
 bool DreamConn::isConnected() {
