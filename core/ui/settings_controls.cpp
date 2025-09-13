@@ -1011,7 +1011,7 @@ void gui_settings_controls(bool& maple_devices_changed)
 #if defined(_WIN32) && !defined(TARGET_UWP)
 	OptionCheckbox("Use Raw Input", config::UseRawInput, "Supports multiple pointing devices (mice, light guns) and keyboards");
 #endif
-#ifdef USE_DREAMCASTCONTROLLER
+#ifdef USE_DREAMLINK_DEVICES
 	{
 		DisabledScope scope(game_started);
 		OptionCheckbox("Use Physical VMU Memory", config::UsePhysicalVmuMemory,
@@ -1127,6 +1127,20 @@ void gui_settings_controls(bool& maple_devices_changed)
 					}
 					is_there_any_xhair |= enabled;
 				}
+
+#ifdef USE_DREAMLINK_DEVICES
+				if (port_count > 0)
+				{
+					ImGui::PushID(bus);
+					bool pressed = OptionCheckbox("Use Network Expansion Devices", config::UseNetworkExpansionDevices[bus],
+						"Connect to expansion devices such as VMUs over local TCP.");
+					ImGui::PopID();
+
+					if (pressed)
+						maple_devices_changed = true;
+				}
+#endif
+
 				ImGui::PopItemWidth();
 			}
 			ImGui::EndTable();
