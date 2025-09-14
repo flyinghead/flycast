@@ -261,4 +261,19 @@ void DreamConn::disconnect() {
 	maple_ReconnectDevices();
 }
 
+void DreamConn::gameTermination() {
+	// Clear the remote VMU screen
+	MapleMsg msg;
+	msg.command = MDCF_BlockWrite;
+	msg.destAP = (bus << 6) | 0x20;
+	msg.originAP = bus << 6;
+
+	u32 localData[0x32];
+	memset(localData, 0, sizeof(localData));
+	localData[0] = MFID_2_LCD;
+	msg.setData(localData);
+
+	send(msg);
+}
+
 #endif

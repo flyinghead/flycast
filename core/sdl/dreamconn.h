@@ -104,6 +104,8 @@ public:
 	void connect() override;
 
 	void disconnect() override;
+
+	void gameTermination() override;
 };
 
 #endif // USE_DREAMCASTCONTROLLER
