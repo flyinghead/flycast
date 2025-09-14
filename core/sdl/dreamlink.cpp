@@ -51,10 +51,7 @@ void handleEvent(Event event, void* arg)
 {
 	if (event == Event::Start)
 	{
-		if (reconnectDreamLinks())
-			maple_ReconnectDevices();
-
-		return;
+		reconnectDreamLinks();
 	}
 
 	for (auto& dreamlink : allDreamLinks)
