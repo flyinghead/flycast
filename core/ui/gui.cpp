@@ -44,6 +44,7 @@
 #include <stb_image_write.h>
 #include "hw/pvr/Renderer_if.h"
 #include "hw/mem/addrspace.h"
+#include "hw/maple/maple_if.h"
 #if defined(USE_SDL)
 #include "sdl/sdl.h"
 #include "sdl/dreamlink.h"
@@ -693,6 +694,56 @@ static void gui_display_commands()
 			if (ImGui::InputText("##barcode", cardBuf, sizeof(cardBuf), ImGuiInputTextFlags_None, nullptr, nullptr))
 				card_reader::barcodeSetCard(cardBuf);
 		}
+
+#if defined(USE_DREAMLINK_DEVICES)
+		// DreamLink connection status
+		bool hasAnyDreamLinks = false;
+		bool hasDisconnectedDreamLink = false;
+		for (auto& dreamlink : allDreamLinks)
+		{
+			if (dreamlink)
+			{
+				hasAnyDreamLinks = true;
+				if (!dreamlink->isConnected())
+					hasDisconnectedDreamLink = true;
+			}
+
+			if (hasAnyDreamLinks && hasDisconnectedDreamLink)
+				break;
+		}
+
+		if (hasAnyDreamLinks)
+		{
+			if (hasDisconnectedDreamLink)
+			{
+				if (ImGui::Button("Connect DreamLink", ScaledVec2(buttonWidth, 50)))
+				{
+					if (reconnectDreamLinks())
+						maple_ReconnectDevices();
+				}
+			}
+			else
+			{
+				if (ImGui::Button("Disconnect\nDreamLink", ScaledVec2(buttonWidth, 50)))
+				{
+					for (auto& dreamlink : allDreamLinks)
+					{
+						if (dreamlink)
+							dreamlink->disconnect();
+					}
+				}
+			}
+
+			for (int i = 0; i < 4; i++)
+			{
+				auto dreamlink = allDreamLinks[i];
+				if (dreamlink)
+				{
+					ImGui::Text("Port %c: %s", 'A' + i, dreamlink->isConnected() ? "Connected" : "Disconnected");
+				}
+			}
+		}
+#endif
 
 		ImGui::NextColumn();
 
