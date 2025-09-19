@@ -2118,7 +2118,7 @@ struct retro_core_options_v2 options_ar = {
 #define CORE_OPTION_NAME_BOOT_TO_BIOS_LABEL_AST NULL
 #define CORE_OPTION_NAME_BOOT_TO_BIOS_INFO_0_AST NULL
 #define CORE_OPTION_NAME_ENABLE_DSP_LABEL_AST "Activar el DSP"
-#define CORE_OPTION_NAME_ENABLE_DSP_INFO_0_AST "Activa la emulación del procesador de señal dixital (DSP) d'audiu de Dreamcast. Ameyora la precisión del soníu xeneráu mas aumenta los requirimientos de rindimientu."
+#define CORE_OPTION_NAME_ENABLE_DSP_INFO_0_AST "Activa la emulación del procesador de señal dixital d'audiu (DSP) de Dreamcast. Ameyora la precisión del soníu xeneráu mas aumenta los requirimientos de rindimientu."
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_AST NULL
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_AST NULL
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_AST NULL
