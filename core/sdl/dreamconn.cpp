@@ -114,7 +114,12 @@ bool DreamConn::send(const MapleMsg& txMsg, MapleMsg& rxMsg) {
 }
 
 void DreamConn::changeBus(int newBus) {
-	bus = newBus;
+	if (newBus != bus) {
+		// A different TCP port is used depending on the bus. We'll need to disconnect from the current port.
+		// The caller will call connect() again if appropriate.
+		disconnect();
+		bus = newBus;
+	}
 }
 
 void DreamConn::refreshIfNeeded() {

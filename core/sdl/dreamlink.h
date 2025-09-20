@@ -146,6 +146,7 @@ public:
     DreamLinkGamepad(int maple_port, int joystick_idx, SDL_Joystick* sdl_joystick);
 	~DreamLinkGamepad();
 
+	const char* dreamLinkStatus();
 	void set_maple_port(int port) override;
 	void registered() override;
 	static bool isDreamcastController(int deviceIndex);

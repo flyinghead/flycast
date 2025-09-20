@@ -154,30 +154,58 @@ DreamLinkGamepad::~DreamLinkGamepad() {
 	}
 }
 
+const char* DreamLinkGamepad::dreamLinkStatus()
+{
+	if (!dreamlink || allDreamLinks[maple_port()] != dreamlink)
+		return "Inactive";
+
+	return dreamlink->isConnected() ? "Connected" : "Disconnected";
+}
+
 void DreamLinkGamepad::set_maple_port(int port)
 {
-	if (dreamlink) {
-		int oldBus = dreamlink->getBus();
-		if (port < 0 || port >= 4) {
-			dreamlink->disconnect();
-		}
-		else if (oldBus != port) {
-			// Move the dreamlink from the old to new position
-			if (oldBus >= 0 && oldBus < 4) {
-				dreamLinkNeedsRefresh[oldBus] = false;
-				allDreamLinks[oldBus] = nullptr;
-			}
+	int oldPort = maple_port();
+	if (oldPort == port)
+		return;
 
-			dreamLinkNeedsRefresh[port] = false;
-			allDreamLinks[port] = dreamlink;
+	SDLGamepad::set_maple_port(port);
+	if (!dreamlink)
+		return;
 
-			dreamlink->changeBus(port);
-			if (is_registered()) {
-				dreamlink->connect();
-			}
+	dreamlink->changeBus(port);
+	if (port < 0 || port >= 4) {
+		// Moving to a port out of range.
+		// This usually means the gamepad is just not being used for any port.
+		// Just disconnect the dreamlink and no further action needed.
+		dreamlink->disconnect();
+		return;
+	}
+
+	if (oldPort >= 0 && oldPort < 4 && allDreamLinks[oldPort] == dreamlink) {
+		// This was previously the active dreamlink for a valid port.
+		// Remove this dreamlink from 'oldPort' and repopulate with the dreamlink for a different gamepad, if any.
+		dreamLinkNeedsRefresh[oldPort] = false;
+		allDreamLinks[oldPort] = nullptr;
+
+		for (int i = 0; i < GamepadDevice::GetGamepadCount(); i++) {
+			DreamLinkGamepad* gamepad = dynamic_cast<DreamLinkGamepad*>(GamepadDevice::GetGamepad(i).get());
+			if (gamepad == nullptr || !gamepad->is_registered() || gamepad->maple_port() != oldPort)
+				continue;
+
+			// Found a DreamLinkGamepad for 'oldPort'
+			assert(gamepad != this);
+			dreamLinkNeedsRefresh[oldPort] = true;
+			allDreamLinks[oldPort] = gamepad->dreamlink;
+			gamepad->dreamlink->connect();
 		}
 	}
-	SDLGamepad::set_maple_port(port);
+
+	dreamLinkNeedsRefresh[port] = true;
+	allDreamLinks[port] = dreamlink;
+
+	if (is_registered()) {
+		dreamlink->connect();
+	}
 }
 
 void DreamLinkGamepad::registered()
@@ -261,6 +289,11 @@ DreamLinkGamepad::DreamLinkGamepad(int maple_port, int joystick_idx, SDL_Joystic
 }
 DreamLinkGamepad::~DreamLinkGamepad() {
 }
+
+const char* DreamLinkGamepad::dreamLinkStatus() {
+	return "";
+}
+
 void DreamLinkGamepad::set_maple_port(int port) {
 	SDLGamepad::set_maple_port(port);
 }
