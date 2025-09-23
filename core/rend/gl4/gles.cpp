@@ -33,7 +33,7 @@
 //Fragment and vertex shaders code
 
 const char* ShaderHeader = R"(
-layout(r32ui, binding = 4) uniform coherent restrict uimage2D abufferPointerImg;
+layout(r32ui, binding = 4) uniform coherent restrict highp uimage2D abufferPointerImg;
 
 layout(binding = 0, offset = 0) uniform atomic_uint buffer_index;
 )"
@@ -42,16 +42,6 @@ R"(
 layout (binding = 0, std430) coherent restrict buffer PixelBuffer {
 	Pixel pixels[];
 };
-
-uint getNextPixelIndex()
-{
-	uint index = atomicCounterIncrement(buffer_index);
-	if (index >= pixels.length())
-		// Buffer overflow
-		discard;
-
-	return index;
-}
 
 layout (binding = 1, std430) readonly buffer TrPolyParamBuffer {
 	PolyParam tr_poly_params[];
@@ -159,7 +149,7 @@ uniform float sp_FOG_DENSITY;
 uniform float shade_scale_factor;
 uniform sampler2D tex0, tex1;
 layout(binding = 5) uniform sampler2D fog_table;
-uniform usampler2D shadow_stencil;
+uniform highp usampler2D shadow_stencil;
 uniform sampler2D DepthTex;
 uniform float trilinear_alpha;
 uniform vec4 fog_clamp_min;
@@ -264,13 +254,27 @@ vec4 palettePixelBilinear(sampler2D tex, vec3 coords)
 
 #endif
 
+#if PASS == PASS_OIT
+
+uint getNextPixelIndex()
+{
+	uint index = atomicCounterIncrement(buffer_index);
+	if (index >= uint(pixels.length()))
+		// Buffer overflow
+		discard;
+
+	return index;
+}
+
+#endif
+
 void main()
 {
 	setFragDepth(vtx_uv.z);
 	
 	#if PASS == PASS_OIT
 		// Manual depth testing
-		float frontDepth = texture(DepthTex, gl_FragCoord.xy / textureSize(DepthTex, 0)).r;
+		float frontDepth = texture(DepthTex, gl_FragCoord.xy / vec2(textureSize(DepthTex, 0))).r;
 		if (gl_FragDepth < frontDepth)
 			discard;
 	#endif
@@ -293,7 +297,7 @@ void main()
 		int cur_shading_instr = shading_instr[0];
 		int cur_fog_control = fog_control[0];
 		#if PASS == PASS_COLOR
-			uvec4 stencil = texture(shadow_stencil, gl_FragCoord.xy / textureSize(shadow_stencil, 0));
+			uvec4 stencil = texture(shadow_stencil, gl_FragCoord.xy / vec2(textureSize(shadow_stencil, 0)));
 			if (stencil.r == 0x81u) {
 				color = vtx_base1;
 				offset = vtx_offs1;
@@ -399,7 +403,7 @@ void main()
 	}
 	#endif
 	#if PASS == PASS_COLOR && pp_TwoVolumes == 0
-		uvec4 stencil = texture(shadow_stencil, gl_FragCoord.xy / textureSize(shadow_stencil, 0));
+		uvec4 stencil = texture(shadow_stencil, gl_FragCoord.xy / vec2(textureSize(shadow_stencil, 0)));
 		if (stencil.r == 0x81u)
 			color.rgb *= shade_scale_factor;
 	#endif
@@ -685,16 +689,12 @@ struct OpenGL4Renderer : OpenGLRenderer
 		stencilTexId = 0;
 		glcache.DeleteTextures(1, &depthTexId);
 		depthTexId = 0;
-		glcache.DeleteTextures(1, &opaqueTexId);
-		opaqueTexId = 0;
-		glcache.DeleteTextures(1, &depthSaveTexId);
-		depthSaveTexId = 0;
-		glDeleteFramebuffers(1, &geom_fbo);
-		geom_fbo = 0;
+		glcache.DeleteTextures(2, opaqueTexId);
+		opaqueTexId[0] = opaqueTexId[1] = 0;
+		glDeleteFramebuffers(2, geom_fbo);
+		geom_fbo[0] = geom_fbo[1] = 0;
 		glDeleteSamplers(2, texSamplers);
 		texSamplers[0] = texSamplers[1] = 0;
-		glDeleteFramebuffers(1, &depth_fbo);
-		depth_fbo = 0;
 
 		TexCache.Clear();
 		termGLCommon();
@@ -739,7 +739,8 @@ void gl_DebugOutput(GLenum source, GLenum type, GLuint id, GLenum severity, GLsi
 bool OpenGL4Renderer::Init()
 {
 	findGLVersion();
-	if (gl.gl_major < 4 || (gl.gl_major == 4 && gl.gl_minor < 3))
+	if ((!gl.is_gles && (gl.gl_major < 4 || (gl.gl_major == 4 && gl.gl_minor < 3)))
+			|| (gl.is_gles && (gl.gl_major < 3 || (gl.gl_major == 3 && gl.gl_minor < 2))))
 	{
 		WARN_LOG(RENDERER, "Warning: OpenGL version doesn't support per-pixel sorting.");
 		return false;
@@ -790,15 +791,10 @@ static void resize(int w, int h)
 			glcache.DeleteTextures(1, &depthTexId);
 			depthTexId = 0;
 		}
-		if (opaqueTexId != 0)
+		if (opaqueTexId[0] != 0)
 		{
-			glcache.DeleteTextures(1, &opaqueTexId);
-			opaqueTexId = 0;
-		}
-		if (depthSaveTexId != 0)
-		{
-			glcache.DeleteTextures(1, &depthSaveTexId);
-			depthSaveTexId = 0;
+			glcache.DeleteTextures(2, opaqueTexId);
+			opaqueTexId[0] = 0;
 		}
 		gl4CreateTextures(max_image_width, max_image_height);
 		reshapeABuffer(max_image_width, max_image_height);
@@ -908,9 +904,14 @@ bool OpenGL4Renderer::renderFrame(int width, int height)
 			trPolyParams[i++] = pp.tsp1.full;
 		}
 		gl4.vbo.getPolyParamBuffer()->update(trPolyParams.data(), trPolyParams.size() * sizeof(u32));
-		// Declare storage
-		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, gl4.vbo.getPolyParamBuffer()->getName());
 	}
+	else {
+		// Fake one if no TR geometry to avoid a crash
+		u32 dummy;
+		gl4.vbo.getPolyParamBuffer()->update(&dummy, sizeof(dummy));
+	}
+	// Declare storage
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, gl4.vbo.getPolyParamBuffer()->getName());
 	glCheck();
 
 	if (is_rtt || !config::Widescreen || matrices.IsClipped() || config::Rotate90 || config::EmulateFramebuffer)

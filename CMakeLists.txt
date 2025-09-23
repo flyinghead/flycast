@@ -179,7 +179,7 @@ elseif(LIBRETRO)
 		target_link_libraries(${PROJECT_NAME} PRIVATE ${FOUNDATION})
 	endif()
 	if(ANDROID OR USE_GLES)
-		target_compile_definitions(${PROJECT_NAME} PRIVATE GLES GLES3 HAVE_OPENGLES HAVE_OPENGLES3)
+		target_compile_definitions(${PROJECT_NAME} PRIVATE GLES GLES3 HAVE_OPENGLES HAVE_OPENGLES3 HAVE_OIT)
     elseif(IOS)
 		target_compile_definitions(${PROJECT_NAME} PRIVATE GLES GLES3 HAVE_OPENGLES HAVE_OPENGLES3)
 		find_library(OPENGLES OpenGLES)
@@ -1000,7 +1000,7 @@ if(USE_OPENGL)
 				core/rend/gles/opengl_driver.h)
 	endif()
 
-	if(NOT (APPLE OR ANDROID OR USE_GLES OR USE_GLES2))
+	if(NOT (APPLE OR USE_GLES2))
 		target_sources(${PROJECT_NAME} PRIVATE
 				core/rend/gl4/abuffer.cpp
 				core/rend/gl4/gl4.h

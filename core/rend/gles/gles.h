@@ -308,6 +308,7 @@ struct gl_ctx
 	bool highp_float_supported;
 	float max_anisotropy;
 	bool mesa_nouveau;
+	bool mali;
 	bool border_clamp_supported;
 	bool prim_restart_supported;
 	bool prim_restart_fixed_supported;

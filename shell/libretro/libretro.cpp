@@ -1981,6 +1981,7 @@ static bool set_opengl_hw_render(u32 preferred)
 	if (config::RendererType == RenderType::OpenGL_OIT || config::RendererType == RenderType::DirectX11_OIT || config::RendererType == RenderType::Vulkan_OIT)
 	{
 		config::RendererType = RenderType::OpenGL_OIT;
+#ifndef HAVE_OPENGLES
 		params.context_type = (retro_hw_context_type)preferred;
 		if (preferred == RETRO_HW_CONTEXT_OPENGL)
 		{
@@ -1997,6 +1998,7 @@ static bool set_opengl_hw_render(u32 preferred)
 			params.major = 4;
 			params.minor = 3;
 		}
+#endif
 	}
 	else
 #endif
