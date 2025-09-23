@@ -219,7 +219,7 @@ void TheGamesDb::parseBoxart(GameBoxart& item, const json& j, int gameId)
 		{
 			// Build the full URL and get from cache or download
 			std::string url = baseUrl + imagePath;
-			std::string filename = makeUniqueFilename("dummy.jpg");	// thegamesdb returns some images as png, but they are really jpeg
+			std::string filename = makeUniqueFilename(imagePath);
 			auto cached = boxartCache.find(url);
 			if (cached != boxartCache.end())
 			{
