@@ -659,7 +659,18 @@ DreamPicoPort::~DreamPicoPort() {
 }
 
 bool DreamPicoPort::send(const MapleMsg& msg) {
-	if (serial) {
+	if (dpp_api_device) {
+		dpp_api::msg::tx::Maple tx;
+		const u32 data_size = msg.getDataSize();
+		tx.packet.reserve(data_size + 4);
+		tx.packet.push_back(msg.command);
+		tx.packet.push_back(msg.destAP);
+		tx.packet.push_back(msg.originAP);
+		tx.packet.push_back(msg.size);
+		tx.packet.insert(tx.packet.end(), msg.data, msg.data + data_size);
+		const uint64_t id = dpp_api_device->send(tx, nullptr, 100);
+		return (id != 0);
+	} else if (serial) {
 		asio::error_code ec = serial->sendMsg(msg, hardware_bus, timeout_ms);
 		return !ec;
 	}
@@ -668,7 +679,26 @@ bool DreamPicoPort::send(const MapleMsg& msg) {
 }
 
 bool DreamPicoPort::send(const MapleMsg& txMsg, MapleMsg& rxMsg) {
-	if (serial) {
+	if (dpp_api_device) {
+		dpp_api::msg::tx::Maple tx;
+		const u32 data_size = txMsg.getDataSize();
+		tx.packet.reserve(data_size + 4);
+		tx.packet.push_back(txMsg.command);
+		tx.packet.push_back(txMsg.destAP);
+		tx.packet.push_back(txMsg.originAP);
+		tx.packet.push_back(txMsg.size);
+		tx.packet.insert(tx.packet.end(), txMsg.data, txMsg.data + data_size);
+		dpp_api::msg::rx::Maple rx = dpp_api_device->sendSync(tx, 100);
+		if (rx.cmd != dpp_api::msg::rx::Msg::kCmdSuccess || rx.packet.size() < 4) {
+			return false;
+		}
+		rxMsg.command = rx.packet[0];
+		rxMsg.destAP = rx.packet[1];
+		rxMsg.originAP = rx.packet[2];
+		rxMsg.size = rx.packet[3];
+		memcpy(rxMsg.data, &rx.packet[4], (std::min)(rx.packet.size(), sizeof(rxMsg.data)));
+		return (rxMsg.getDataSize() <= rx.packet.size());
+	} else if (serial) {
 		asio::error_code ec = serial->sendMsg(txMsg, hardware_bus, rxMsg, timeout_ms);
 		return !ec;
 	}
@@ -743,7 +773,7 @@ const char *DreamPicoPort::getButtonName(u32 code) const {
 		case 7: return "DPad2 Left";
 		case 6: return "DPad2 Right";
 
-		// These buttons are normally not physically accessible, but are mapped on DreamPicoPort
+		// These buttons are normally not physically accessible but are mapped on DreamPicoPort
 		case 12: return "VMU1 A";
 		case 15: return "VMU1 B";
 		case 16: return "VMU1 Up";
@@ -780,8 +810,8 @@ void DreamPicoPort::connect() {
 	// Timeout is 1 second while establishing connection
 	timeout_ms = std::chrono::seconds(1);
 
-	if (connection_established && serial) {
-		if (serial->is_open()) {
+	if (connection_established) {
+		if (isConnected()) {
 			sendPort();
 		} else {
 			disconnect();
@@ -789,13 +819,38 @@ void DreamPicoPort::connect() {
 		}
 	}
 
-	++connected_dev_count;
-	connection_established = true;
-	if (!serial) {
-		serial = std::make_unique<DreamPicoPortSerialHandler>();
+	// Attempt to connect to new API
+	if (!serial_number.empty()) {
+		dpp_api::DppDevice::Filter dppFilter;
+		dppFilter.serial = serial_number;
+		dpp_api_device = dpp_api::DppDevice::find(dppFilter);
+		if (!dpp_api_device->connect()) {
+			WARN_LOG(
+				INPUT,
+				"DreamPicoPort[%d] API connect failed: %s",
+				software_bus,
+				dpp_api_device->getLastErrorStr().c_str()
+			);
+			dpp_api_device.reset();
+		}
+	} else {
+		NOTICE_LOG(INPUT, "Serial number for DreamPicoPort[%d] not found", software_bus);
 	}
 
-	if (serial && serial->is_open()) {
+	if (!dpp_api_device) {
+		NOTICE_LOG(
+			INPUT,
+			"Could not find DppDevice for DreamPicoPort[%d]; falling back to serial interface",
+			software_bus
+		);
+		++connected_dev_count;
+		connection_established = true;
+		if (!serial) {
+			serial = std::make_unique<DreamPicoPortSerialHandler>();
+		}
+	}
+
+	if (isConnected()) {
 		sendPort();
 	} else {
 		disconnect();
@@ -840,26 +895,39 @@ void DreamPicoPort::connect() {
 		config::MapleExpansionDevices[software_bus][1] = MDT_None;
 	}
 
-	NOTICE_LOG(INPUT, "Connected to DreamcastController[%d]: Type:%s, VMU:%d, Rumble Pack:%d", software_bus, getName().c_str(), vmuCount, vibrationCount);
+	NOTICE_LOG(INPUT, "Connected to DreamPicoPort[%d]: Type:%s, VMU:%d, Rumble Pack:%d", software_bus, getName().c_str(), vmuCount, vibrationCount);
+}
+
+bool DreamPicoPort::isConnected() const {
+	return ((serial && serial->is_open()) || (dpp_api_device && dpp_api_device->isConnected()));
 }
 
 void DreamPicoPort::disconnect() {
 	if (connection_established) {
 		connection_established = false;
-		if (--connected_dev_count == 0) {
-			// serial is no longer needed
-			serial.reset();
+		if (!dpp_api_device) {
+			if (--connected_dev_count == 0) {
+				// serial is no longer needed
+				serial.reset();
+			}
 		}
 	}
 }
 
 void DreamPicoPort::sendPort() {
-	if (connection_established && serial && software_bus >= 0 && software_bus <= 3 && hardware_bus >=0 && hardware_bus <= 3) {
-		// This will update the displayed port letter on the screen
-		std::ostringstream s;
-		s << "XP "; // XP is flycast "set port" command
-		s << hardware_bus << " " << software_bus << "\n";
-		serial->sendCmd(s.str(), timeout_ms);
+	if (connection_established && software_bus >= 0 && software_bus <= 3 && hardware_bus >=0 && hardware_bus <= 3) {
+		if (dpp_api_device) {
+			dpp_api::msg::tx::ChangePlayerDisplay changePlayerDisplay;
+			changePlayerDisplay.idx = hardware_bus;
+			changePlayerDisplay.toIdx = software_bus;
+			dpp_api_device->send(changePlayerDisplay, nullptr);
+		} else if (serial) {
+			// This will update the displayed port letter on the screen
+			std::ostringstream s;
+			s << "XP "; // XP is flycast "set port" command
+			s << hardware_bus << " " << software_bus << "\n";
+			serial->sendCmd(s.str(), timeout_ms);
+		}
 	}
 }
 
@@ -882,6 +950,25 @@ void DreamPicoPort::determineHardwareBus(int joystick_idx, SDL_Joystick* sdl_joy
 	const char* joystick_serial = SDL_JoystickGetSerial(sdl_joystick);
 	if (joystick_serial) {
 		serial_number = joystick_serial;
+	} else {
+		// Version 1.2.0 and later embeds serial in name as a workaround for MacOS and Linux
+		// Serial is expected between a dash (-) and space ( ) character or until end of string
+		const char* joystick_name = SDL_JoystickName(sdl_joystick);
+		if (joystick_name) {
+			std::string name_str(joystick_name);
+			size_t dash_pos = name_str.find('-');
+			if (dash_pos != std::string::npos) {
+				size_t start_pos = dash_pos + 1;
+				size_t end_pos = name_str.find(' ', start_pos);
+				if (end_pos == std::string::npos) {
+					end_pos = name_str.length();
+				}
+				// Serials are normally 16 characters, but check for at least 10 to account for any future changes
+				if ((start_pos + 10) <= end_pos) {
+					serial_number = name_str.substr(start_pos, end_pos - start_pos);
+				}
+			}
+		}
 	}
 
 #if defined(_WIN32)
@@ -981,28 +1068,42 @@ void DreamPicoPort::determineHardwareBus(int joystick_idx, SDL_Joystick* sdl_joy
 }
 
 bool DreamPicoPort::queryInterfaceVersion() {
-	std::string buffer;
-	asio::error_code error = serial->sendCmd("XV\n", buffer, timeout_ms);
-	if (error) {
-		WARN_LOG(INPUT, "DreamPicoPort[%d] send(XV) failed: %s", software_bus, error.message().c_str());
-		return false;
-	}
+	if (dpp_api_device) {
+		dpp_api::msg::rx::GetInterfaceVersion rxIfVersion =
+			dpp_api_device->sendSync(dpp_api::msg::tx::GetInterfaceVersion{});
 
-	if (0 == strncmp("*failed", buffer.c_str(), 7) || 0 == strncmp("0: failed", buffer.c_str(), 9)) {
-		// Using a version of firmware before "XV" was available
-		interface_version = 0.0;
-	}
-	else {
-		try {
-			interface_version = std::stod(buffer);
-		}
-		catch(const std::exception&) {
-			WARN_LOG(INPUT, "DreamPicoPort[%d] command XV received invalid response: %s", software_bus, buffer.c_str());
+		if (rxIfVersion.cmd != dpp_api::msg::rx::Msg::kCmdSuccess) {
 			return false;
 		}
-	}
 
-	return true;
+		interface_version = rxIfVersion.verMajor + (rxIfVersion.verMinor / 100.0);
+
+		return true;
+	} else if (serial) {
+		std::string buffer;
+		asio::error_code error = serial->sendCmd("XV\n", buffer, timeout_ms);
+		if (error) {
+			WARN_LOG(INPUT, "DreamPicoPort[%d] send(XV) failed: %s", software_bus, error.message().c_str());
+			return false;
+		}
+
+		if (0 == strncmp("*failed", buffer.c_str(), 7) || 0 == strncmp("0: failed", buffer.c_str(), 9)) {
+			// Using a version of firmware before "XV" was available
+			interface_version = 0.0;
+		} else {
+			try {
+				interface_version = std::stod(buffer);
+			}
+			catch(const std::exception&) {
+				WARN_LOG(INPUT, "DreamPicoPort[%d] command XV received invalid response: %s", software_bus, buffer.c_str());
+				return false;
+			}
+		}
+
+		return true;
+	} else {
+		return false;
+	}
 }
 
 bool DreamPicoPort::queryPeripherals() {
@@ -1015,104 +1116,122 @@ bool DreamPicoPort::queryPeripherals() {
 	msg.originAP = hardware_bus << 6;
 	msg.setData(MFID_0_Input);
 
-	asio::error_code error = serial->sendMsg(msg, hardware_bus, msg, timeout_ms);
-	if (error)
-	{
-		WARN_LOG(INPUT, "DreamPicoPort[%d] send(condition) failed: %s", software_bus, error.message().c_str());
-		return true; // assume simply controller not connected yet
-	}
-
-	expansionDevs = msg.originAP & 0x1f;
-
-	if (interface_version >= 1.0) {
-		// Can just use X?
-		std::string buffer;
-		error = serial->sendCmd("X?" + std::to_string(hardware_bus) + "\n", buffer, timeout_ms);
-		if (error) {
-			WARN_LOG(INPUT, "DreamPicoPort[%d] send(X?) failed: %s", software_bus, error.message().c_str());
-			return false;
+	if (dpp_api_device) {
+		bool success = send(msg, msg);
+		if (!success) {
+			WARN_LOG(INPUT, "DreamPicoPort[%d] send(condition) failed", software_bus);
+			return true; // assume simply controller not connected yet
 		}
 
+		expansionDevs = msg.originAP & 0x1f;
+
+		dpp_api::msg::rx::GetDcSummary summary =
+			dpp_api_device->sendSync(dpp_api::msg::tx::GetDcSummary{static_cast<uint8_t>(hardware_bus)});
+		peripherals = summary.summary;
+
+		return true;
+	} else if (serial) {
+		asio::error_code error = serial->sendMsg(msg, hardware_bus, msg, timeout_ms);
+		if (error)
 		{
-			std::istringstream stream(buffer);
-			std::string outerGroup;
-			while (std::getline(stream, outerGroup, ';')) {
-				if (outerGroup.empty() || outerGroup == ",") continue;
-				std::vector<std::array<uint32_t, 2>> outerList;
-				std::istringstream outerStream(outerGroup.substr(1)); // Skip the leading '{'
-				std::string innerGroup;
+			WARN_LOG(INPUT, "DreamPicoPort[%d] send(condition) failed: %s", software_bus, error.message().c_str());
+			return true; // assume simply controller not connected yet
+		}
 
-				while (std::getline(outerStream, innerGroup, '}')) {
-					if (innerGroup.empty() || innerGroup == ",") continue;
-					std::array<uint32_t, 2> innerList = {{0, 0}};
-					std::istringstream innerStream(innerGroup.substr(1)); // Skip the leading '{'
-					std::string number;
-					std::size_t idx = 0;
+		expansionDevs = msg.originAP & 0x1f;
 
-					while (std::getline(innerStream, number, ',')) {
-						if (!number.empty() && number[0] == '{') {
-							number = number.substr(1);
+		if (interface_version >= 1.0) {
+			// Can just use X?
+			std::string buffer;
+			error = serial->sendCmd("X?" + std::to_string(hardware_bus) + "\n", buffer, timeout_ms);
+			if (error) {
+				WARN_LOG(INPUT, "DreamPicoPort[%d] send(X?) failed: %s", software_bus, error.message().c_str());
+				return false;
+			}
+
+			{
+				std::istringstream stream(buffer);
+				std::string outerGroup;
+				while (std::getline(stream, outerGroup, ';')) {
+					if (outerGroup.empty() || outerGroup == ",") continue;
+					std::vector<std::array<uint32_t, 2>> outerList;
+					std::istringstream outerStream(outerGroup.substr(1)); // Skip the leading '{'
+					std::string innerGroup;
+
+					while (std::getline(outerStream, innerGroup, '}')) {
+						if (innerGroup.empty() || innerGroup == ",") continue;
+						std::array<uint32_t, 2> innerList = {{0, 0}};
+						std::istringstream innerStream(innerGroup.substr(1)); // Skip the leading '{'
+						std::string number;
+						std::size_t idx = 0;
+
+						while (std::getline(innerStream, number, ',')) {
+							if (!number.empty() && number[0] == '{') {
+								number = number.substr(1);
+							}
+							uint32_t value;
+							std::stringstream ss;
+							ss << std::hex << number;
+							ss >> value;
+							if (idx < 2) {
+								innerList[idx] = value;
+							}
+							++idx;
 						}
-						uint32_t value;
-						std::stringstream ss;
-						ss << std::hex << number;
-						ss >> value;
-						if (idx < 2) {
-							innerList[idx] = value;
-						}
-						++idx;
+
+						outerList.push_back(innerList);
 					}
 
-					outerList.push_back(innerList);
+					peripherals.push_back(outerList);
 				}
-
-				peripherals.push_back(outerList);
 			}
 		}
-	}
-	else {
-		// TODO: probably should just pop up a toast asking user to update firmware
-		// Manually query each sub-peripheral
-		peripherals.push_back({}); // skip controller since it's not used
-		for (u32 i = 0; i < 2; ++i) {
-			std::vector<std::array<uint32_t, 2>> portPeripherals;
-			u8 port = (1 << i);
-			if (expansionDevs & port) {
-				msg.command = MDC_DeviceRequest;
-				msg.destAP = (hardware_bus << 6) | port;
-				msg.originAP = hardware_bus << 6;
-				msg.size = 0;
+		else {
+			// TODO: probably should just pop up a toast asking user to update firmware
+			// Manually query each sub-peripheral
+			peripherals.push_back({}); // skip controller since it's not used
+			for (u32 i = 0; i < 2; ++i) {
+				std::vector<std::array<uint32_t, 2>> portPeripherals;
+				u8 port = (1 << i);
+				if (expansionDevs & port) {
+					msg.command = MDC_DeviceRequest;
+					msg.destAP = (hardware_bus << 6) | port;
+					msg.originAP = hardware_bus << 6;
+					msg.size = 0;
 
-				error = serial->sendMsg(msg, hardware_bus, msg, timeout_ms);
-				if (error) {
-					WARN_LOG(INPUT, "DreamPicoPort[%d] send(query) failed: %s", software_bus, error.message().c_str());
-					return false;
-				}
-
-				if (msg.size < 4) {
-					WARN_LOG(INPUT, "DreamPicoPort[%d] read(query) failed: invalid size %d", software_bus, msg.size);
-					return false;
-				}
-
-				const u32 fnCode = (msg.data[0] << 24) | (msg.data[1] << 16) | (msg.data[2] << 8) | msg.data[3];
-				u8 fnIdx = 1;
-				u32 mask = 0x80000000;
-				while (mask > 0) {
-					if (fnCode & mask) {
-						u32 i = fnIdx++ * 4;
-						u32 code = (msg.data[i] << 24) | (msg.data[i+1] << 16) | (msg.data[i+2] << 8) | msg.data[i+3];
-						std::array<uint32_t, 2> peripheral = {{mask, code}};
-						portPeripherals.push_back(std::move(peripheral));
+					error = serial->sendMsg(msg, hardware_bus, msg, timeout_ms);
+					if (error) {
+						WARN_LOG(INPUT, "DreamPicoPort[%d] send(query) failed: %s", software_bus, error.message().c_str());
+						return false;
 					}
-					mask >>= 1;
-				}
 
+					if (msg.size < 4) {
+						WARN_LOG(INPUT, "DreamPicoPort[%d] read(query) failed: invalid size %d", software_bus, msg.size);
+						return false;
+					}
+
+					const u32 fnCode = (msg.data[0] << 24) | (msg.data[1] << 16) | (msg.data[2] << 8) | msg.data[3];
+					u8 fnIdx = 1;
+					u32 mask = 0x80000000;
+					while (mask > 0) {
+						if (fnCode & mask) {
+							u32 i = fnIdx++ * 4;
+							u32 code = (msg.data[i] << 24) | (msg.data[i+1] << 16) | (msg.data[i+2] << 8) | msg.data[i+3];
+							std::array<uint32_t, 2> peripheral = {{mask, code}};
+							portPeripherals.push_back(std::move(peripheral));
+						}
+						mask >>= 1;
+					}
+
+				}
+				peripherals.push_back(portPeripherals);
 			}
-			peripherals.push_back(portPeripherals);
 		}
+
+		return true;
 	}
 
-	return true;
+	return false;
 }
 
 #endif // USE_DREAMCASTCONTROLLER

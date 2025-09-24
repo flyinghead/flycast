@@ -22,6 +22,8 @@
 
 #ifdef USE_DREAMCASTCONTROLLER
 
+#include "DreamPicoPortApi.hpp"
+
 #include <asio.hpp>
 
 #include <atomic>
@@ -41,6 +43,8 @@ class DreamPicoPort : public DreamLink
 	static std::unique_ptr<DreamPicoPortSerialHandler> serial;
 	//! Number of devices using the above serial
 	static std::atomic<std::uint32_t> connected_dev_count;
+	//! This is set when the device supports this new API
+	std::unique_ptr<dpp_api::DppDevice> dpp_api_device;
 	//! Current timeout in milliseconds
 	std::chrono::milliseconds timeout_ms;
 	//! The bus ID dictated by flycast
@@ -98,6 +102,8 @@ public:
 	std::string getName() const override;
 
 	void connect() override;
+
+	bool isConnected() const;
 
 	void disconnect() override;
 
