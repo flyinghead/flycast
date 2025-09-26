@@ -21,6 +21,7 @@
 #include "../game_scanner.h"
 #include "oslib/oslib.h"
 #include "cfg/option.h"
+#include "arcade_scraper.h"
 #include <chrono>
 
 GameBoxart Boxart::getBoxart(const GameMedia& media)
@@ -50,6 +51,7 @@ GameBoxart Boxart::getBoxartAndLoad(const GameMedia& media)
 			{
 				boxart.busy = it->second.busy = true;
 				boxart.gamePath = media.path;
+				boxart.arcade = media.arcade;
 				toFetch.push_back(boxart);
 			}
 		}
@@ -60,6 +62,7 @@ GameBoxart Boxart::getBoxartAndLoad(const GameMedia& media)
 			boxart.name = media.name;
 			boxart.searchName = media.gameName;	// for arcade games
 			boxart.busy = true;
+			boxart.arcade = media.arcade;
 			games[boxart.fileName] = boxart;
 			toFetch.push_back(boxart);
 		}
@@ -83,14 +86,21 @@ void Boxart::fetchBoxart()
 			offlineScraper = std::unique_ptr<Scraper>(new OfflineScraper());
 			offlineScraper->initialize(getSaveDirectory());
 		}
-		if (config::FetchBoxart && scraper == nullptr)
+		if (config::FetchBoxart)
 		{
-			scraper = std::unique_ptr<Scraper>(new TheGamesDb());
-			if (!scraper->initialize(getSaveDirectory()))
+			if (scraper == nullptr)
 			{
-				ERROR_LOG(COMMON, "thegamesdb scraper initialization failed");
-				scraper.reset();
-				return;
+				scraper = std::unique_ptr<Scraper>(new TheGamesDb());
+				if (!scraper->initialize(getSaveDirectory()))
+				{
+					ERROR_LOG(COMMON, "thegamesdb scraper initialization failed");
+					scraper.reset();
+					return;
+				}
+			}
+			if (arcadeScraper == nullptr) {
+				arcadeScraper = std::make_unique<ArcadeScraper>();
+				arcadeScraper->initialize(getSaveDirectory());
 			}
 		}
 		std::vector<GameBoxart> boxart;
@@ -116,6 +126,7 @@ void Boxart::fetchBoxart()
 		if (config::FetchBoxart)
 		{
 			try {
+				arcadeScraper->scrape(boxart);
 				scraper->scrape(boxart);
 				{
 					std::lock_guard<std::mutex> guard(mutex);

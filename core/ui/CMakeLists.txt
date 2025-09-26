@@ -22,10 +22,12 @@ if(NOT LIBRETRO)
             settings_general.cpp
             settings_network.cpp
             settings_video.cpp
+            boxart/arcade_scraper.h
             boxart/boxart.cpp
             boxart/boxart.h
             boxart/gamesdb.cpp
             boxart/gamesdb.h
+            boxart/pvrparser.h
             boxart/scraper.cpp
             boxart/scraper.h)
 
