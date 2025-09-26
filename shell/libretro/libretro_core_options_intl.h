@@ -2094,7 +2094,7 @@ struct retro_core_options_v2 options_ar = {
 #define CATEGORY_PERFORMANCE_INFO_0_AST NULL
 #define CATEGORY_HACKS_LABEL_AST "Hacks de la emulación"
 #define CATEGORY_HACKS_INFO_0_AST NULL
-#define CATEGORY_INPUT_LABEL_AST "Entrada"
+#define CATEGORY_INPUT_LABEL_AST "Controles"
 #define CATEGORY_INPUT_INFO_0_AST NULL
 #define CATEGORY_EXPANSIONS_LABEL_AST NULL
 #define CATEGORY_EXPANSIONS_INFO_0_AST NULL
@@ -62994,11 +62994,11 @@ struct retro_core_options_v2 options_pl = {
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_PT_BR "Definir jogos NAOMI como gratuitos"
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_PT_BR "Define as configurações de moeda do jogo como gratuitas."
 #define CORE_OPTION_NAME_EMULATE_BBA_LABEL_PT_BR "Emulação do Broadband Adapter"
-#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_PT_BR "Emular o adaptador de banda larga Ethernet em vez do modem. (Reinício Necessário)"
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_PT_BR "Emula o adaptador de banda larga por Ethernet em vez do modem. (requer reinício)"
 #define CORE_OPTION_NAME_UPNP_LABEL_PT_BR "Ativar UPnP"
 #define CORE_OPTION_NAME_UPNP_INFO_0_PT_BR "Usa o UPnP para configurar automaticamente seu roteador de Internet para jogos on-line."
-#define CORE_OPTION_NAME_DCNET_LABEL_PT_BR "Usar DCNet"
-#define CORE_OPTION_NAME_DCNET_INFO_0_PT_BR "Usar o serviço em nuvem DCNet para acesso à Internet no Dreamcast."
+#define CORE_OPTION_NAME_DCNET_LABEL_PT_BR "Ativar DCNet"
+#define CORE_OPTION_NAME_DCNET_INFO_0_PT_BR "Usa o serviço de nuvem do DCNet para acessar a Internet do Dreamcast."
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_PT_BR "Resolução interna"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_PT_BR "Define a resolução de renderização."
 #define OPTION_VAL_320X240_PT_BR "320x240 (50%)"
@@ -63077,7 +63077,7 @@ struct retro_core_options_v2 options_pl = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_PT_BR "Processa a imagem renderizada para simular efeitos específicos da GPU PowerVR2 e sinais de vídeo analógicos."
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_PT_BR "Mudar escala de textura (xBRZ)"
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_PT_BR "Realça os gráficos 2D de arte píxel feitos à mão.\nOBSERVAÇÃO: usar apenas em jogos 2D pixelado."
-#define OPTION_VAL_2_O27_PT_BR NULL
+#define OPTION_VAL_2_O27_PT_BR "200%"
 #define OPTION_VAL_4_PT_BR "400%"
 #define OPTION_VAL_6_PT_BR "600%"
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_PT_BR "Tamanho máximo das texturas"
