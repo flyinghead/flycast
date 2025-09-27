@@ -846,10 +846,18 @@ void DreamPicoPort::connect() {
 			dpp_api::DppDevice::Filter dppFilter;
 			dppFilter.serial = serial_number;
 			dpp_api_device = dpp_api::DppDevice::find(dppFilter);
-			if (!dpp_api_device || !dpp_api_device->connect()) {
+			if (!dpp_api_device) {
 				WARN_LOG(
 					INPUT,
-					"DreamPicoPort[%d] API connect failed: %s",
+					"DreamPicoPort[%d] new API connect failed: find failed for serial %s",
+					software_bus,
+					serial_number.c_str()
+				);
+			}
+			else if (!dpp_api_device->connect()) {
+				WARN_LOG(
+					INPUT,
+					"DreamPicoPort[%d] new API connect failed: %s",
 					software_bus,
 					dpp_api_device->getLastErrorStr().c_str()
 				);
