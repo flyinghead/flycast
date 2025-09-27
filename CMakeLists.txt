@@ -486,11 +486,20 @@ if(NOT LIBRETRO)
 		add_subdirectory(core/sdl)
 
 		if (NOT NINTENDO_SWITCH)
-			# libusb
-			add_subdirectory(core/deps/libusb-cmake)
+			if (CMAKE_SYSTEM_NAME STREQUAL "FreeBSD")
+				# A version of libusb is installed in FreeBSD
+				find_package(PkgConfig REQUIRED)
+   	 			pkg_check_modules(LIBUSB REQUIRED libusb-1.0)
+
+				set(DREAMPICOPORT_LIBUSB_LIBRARIES "${LIBUSB_LIBRARIES}" CACHE STRING "Name of the libusb library to link against")
+				set(DREAMPICOPORT_LIBUSB_INCLUDE_DIRS "${LIBUSB_INCLUDE_DIRS}" CACHE STRING "Path to libusb include directory, when applicable")
+			else()
+				# libusb
+				add_subdirectory(core/deps/libusb-cmake)
+				option(DREAMPICOPORT_ADD_LIBUSB "Add internal libusb library" OFF) # Already included above
+			endif()
 
 			# DreamPicoPort-API
-			option(DREAMPICOPORT_ADD_LIBUSB "Add internal libusb library" OFF) # Already included above
 			add_subdirectory(core/deps/DreamPicoPort-API)
 			target_link_libraries(${PROJECT_NAME} PRIVATE dream_pico_port_api)
 		endif()
