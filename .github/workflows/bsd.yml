@@ -14,7 +14,7 @@ jobs:
         include:
           - operating_system: freebsd
             version: '14.2'
-            pkginstall: sudo pkg update && sudo pkg install -y alsa-lib ccache cmake evdev-proto git libao libevdev libudev-devd libzip lua54 miniupnpc ninja pkgconf pulseaudio sdl2 libcdio libusb
+            pkginstall: sudo pkg update && sudo pkg install -y alsa-lib ccache cmake evdev-proto git libao libevdev libudev-devd libzip lua54 miniupnpc ninja pkgconf pulseaudio sdl2 libcdio libusb-1.0
           - operating_system: netbsd
             version: '10.1'
             pkginstall: sudo pkgin update && sudo pkgin -y install alsa-lib ccache clang cmake git libao libzip lua54 miniupnpc ninja-build pkgconf pulseaudio SDL2 libcdio
