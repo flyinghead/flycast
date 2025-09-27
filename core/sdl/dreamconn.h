@@ -98,6 +98,8 @@ public:
 private:
 	bool updateExpansionDevs();
 
+	bool isSocketDisconnected();
+
 public:
 	bool isConnected() override;
 

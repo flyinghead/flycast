@@ -185,8 +185,11 @@ bool DreamConn::updateExpansionDevs() {
 	return true;
 }
 
-static bool isSocketDisconnected(asio::ip::tcp::socket& sock) {
+bool DreamConn::isSocketDisconnected() {
+	std::lock_guard<std::mutex> lock(send_mutex);
+
 	// A socket was (gracefully) disconnected if 'select()' says the socket is ready to read, and a subsequent 'recv()' says 0 bytes available to read.
+	auto& sock = static_cast<asio::ip::tcp::socket&>(iostream.socket());
 	auto nativeHandle = sock.native_handle();
 	fd_set readfds;
 	FD_ZERO(&readfds);
@@ -202,15 +205,14 @@ static bool isSocketDisconnected(asio::ip::tcp::socket& sock) {
 
 	char dest;
 	int len = recv(nativeHandle, &dest, sizeof(dest), MSG_PEEK);
-	return len == 0;
+	return len <= 0;
 }
 
 bool DreamConn::isConnected() {
 	if (!maple_io_connected)
 		return false;
 
-	auto& sock = static_cast<asio::ip::tcp::socket&>(iostream.socket());
-	if (isSocketDisconnected(sock)) {
+	if (isSocketDisconnected()) {
 		NOTICE_LOG(INPUT, "DreamLink server disconnected bus[%d]", bus);
 		disconnect();
 		return false;
