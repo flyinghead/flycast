@@ -424,12 +424,6 @@ option(BUILD_SHARED_LIBS "Build shared library" OFF)
 add_subdirectory(core/deps/glm)
 target_link_libraries(${PROJECT_NAME} PRIVATE glm::glm)
 
-add_subdirectory(core/deps/libusb-cmake)
-
-set(DREAMPICOPORT_LIBUSB_CMAKE_DIRECTORY "") # Already included above
-add_subdirectory(core/deps/DreamPicoPort-API)
-target_link_libraries(${PROJECT_NAME} PRIVATE dream_pico_port_api)
-
 if(USE_VULKAN)
 	if(USE_HOST_GLSLANG)
 		find_package(glslang REQUIRED)
@@ -753,6 +747,14 @@ if(NOT LIBRETRO AND NOT NINTENDO_SWITCH)
 	else()
 		target_compile_definitions(${PROJECT_NAME} PRIVATE _WEBSOCKETPP_CPP11_STL_)
 	endif()
+
+	# libusb
+	add_subdirectory(core/deps/libusb-cmake)
+
+	# DreamPicoPort-API
+	option(DREAMPICOPORT_ADD_LIBUSB "Add internal libusb library" OFF) # Already included above
+	add_subdirectory(core/deps/DreamPicoPort-API)
+	target_link_libraries(${PROJECT_NAME} PRIVATE dream_pico_port_api)
 endif()
 
 target_include_directories(${PROJECT_NAME} PRIVATE core/deps/picotcp/include core/deps/picotcp/modules)

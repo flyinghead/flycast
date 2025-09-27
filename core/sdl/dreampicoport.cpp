@@ -859,8 +859,12 @@ void DreamPicoPort::connect() {
 			} else {
 				// Save this instance to the map
 				all_dpp_api_devices.insert(std::make_pair(serial_number, dpp_api_device));
-				NOTICE_LOG(INPUT, "DreamPicoPort[%d] new API connected", software_bus);
 			}
+		}
+
+		if (dpp_api_device) {
+			NOTICE_LOG(INPUT, "DreamPicoPort[%d] new API connected", software_bus);
+			connection_established = true;
 		}
 	} else {
 		NOTICE_LOG(INPUT, "Serial number for DreamPicoPort[%d] not found", software_bus);
