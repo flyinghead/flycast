@@ -424,6 +424,9 @@ option(BUILD_SHARED_LIBS "Build shared library" OFF)
 add_subdirectory(core/deps/glm)
 target_link_libraries(${PROJECT_NAME} PRIVATE glm::glm)
 
+add_subdirectory(core/deps/libusb-cmake)
+
+set(DREAMPICOPORT_LIBUSB_CMAKE_DIRECTORY "") # Already included above
 add_subdirectory(core/deps/DreamPicoPort-API)
 target_link_libraries(${PROJECT_NAME} PRIVATE dream_pico_port_api)
 

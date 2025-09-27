@@ -30,6 +30,8 @@
 #include <chrono>
 #include <vector>
 #include <array>
+#include <unordered_map>
+#include <mutex>
 
 // Forward declaration of underlying serial connection
 class DreamPicoPortSerialHandler;
@@ -43,8 +45,12 @@ class DreamPicoPort : public DreamLink
 	static std::unique_ptr<DreamPicoPortSerialHandler> serial;
 	//! Number of devices using the above serial
 	static std::atomic<std::uint32_t> connected_dev_count;
+	//! All known dpp_api devices by serial number; already connected if set
+	static std::unordered_map<std::string, std::weak_ptr<dpp_api::DppDevice>> all_dpp_api_devices;
+	//! The mutex serializing access to all_dpp_api_devices
+	static std::mutex all_dpp_api_devices_mutex;
 	//! This is set when the device supports this new API
-	std::unique_ptr<dpp_api::DppDevice> dpp_api_device;
+	std::shared_ptr<dpp_api::DppDevice> dpp_api_device;
 	//! Current timeout in milliseconds
 	std::chrono::milliseconds timeout_ms;
 	//! The bus ID dictated by flycast
