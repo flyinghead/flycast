@@ -49,11 +49,6 @@
 
 void handleEvent(Event event, void* arg)
 {
-	if (event == Event::Start)
-	{
-		reconnectDreamLinks();
-	}
-
 	for (auto& dreamlink : allDreamLinks)
 	{
 		if (dreamlink != nullptr)
