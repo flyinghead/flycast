@@ -168,16 +168,9 @@ void DreamLinkGamepad::set_maple_port(int port)
 		return;
 
 	dreamlink->changeBus(port);
-	if (port < 0 || port >= 4) {
-		// Moving to a port out of range.
-		// This usually means the gamepad is just not being used for any port.
-		// Just disconnect the dreamlink and no further action needed.
-		dreamlink->disconnect();
-		return;
-	}
 
 	if (oldPort >= 0 && oldPort < 4 && allDreamLinks[oldPort] == dreamlink) {
-		// This was previously the active dreamlink for a valid port.
+		// 'dreamlink' is currently active in 'oldPort'.
 		// Remove this dreamlink from 'oldPort' and repopulate with the dreamlink for a different gamepad, if any.
 		dreamLinkNeedsRefresh[oldPort] = false;
 		allDreamLinks[oldPort] = nullptr;
@@ -193,6 +186,21 @@ void DreamLinkGamepad::set_maple_port(int port)
 			allDreamLinks[oldPort] = gamepad->dreamlink;
 			gamepad->dreamlink->connect();
 		}
+	}
+
+	if (port < 0 || port >= 4) {
+		// Moving to a port out of range.
+		// This usually means the gamepad is just not being used for any port.
+		// Just disconnect the dreamlink and no further action needed.
+		dreamlink->disconnect();
+		return;
+	}
+
+	auto& existingDreamLink = allDreamLinks[port];
+	if (existingDreamLink) {
+		// A DreamLink was already active in 'port'. Disconnect it before making it inactive.
+		assert(existingDreamLink != dreamlink);
+		existingDreamLink->disconnect();
 	}
 
 	dreamLinkNeedsRefresh[port] = true;
