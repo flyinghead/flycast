@@ -485,6 +485,16 @@ if(NOT LIBRETRO)
 		target_compile_definitions(${PROJECT_NAME} PRIVATE USE_SDL USE_SDL_AUDIO)
 		add_subdirectory(core/sdl)
 
+		if (not NINTENDO_SWITCH)
+			# libusb
+			add_subdirectory(core/deps/libusb-cmake)
+
+			# DreamPicoPort-API
+			option(DREAMPICOPORT_ADD_LIBUSB "Add internal libusb library" OFF) # Already included above
+			add_subdirectory(core/deps/DreamPicoPort-API)
+			target_link_libraries(${PROJECT_NAME} PRIVATE dream_pico_port_api)
+		endif()
+
 		if((UNIX AND NOT APPLE) OR NINTENDO_SWITCH)
 			find_package(CURL REQUIRED)
 			target_link_libraries(${PROJECT_NAME} PRIVATE CURL::libcurl)
@@ -747,14 +757,6 @@ if(NOT LIBRETRO AND NOT NINTENDO_SWITCH)
 	else()
 		target_compile_definitions(${PROJECT_NAME} PRIVATE _WEBSOCKETPP_CPP11_STL_)
 	endif()
-
-	# libusb
-	add_subdirectory(core/deps/libusb-cmake)
-
-	# DreamPicoPort-API
-	option(DREAMPICOPORT_ADD_LIBUSB "Add internal libusb library" OFF) # Already included above
-	add_subdirectory(core/deps/DreamPicoPort-API)
-	target_link_libraries(${PROJECT_NAME} PRIVATE dream_pico_port_api)
 endif()
 
 target_include_directories(${PROJECT_NAME} PRIVATE core/deps/picotcp/include core/deps/picotcp/modules)
