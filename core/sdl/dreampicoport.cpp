@@ -845,8 +845,6 @@ void DreamPicoPort::connect() {
 		if (!dpp_api_device) {
 			dpp_api::DppDevice::Filter dppFilter;
 			dppFilter.serial = serial_number;
-			// TODO: REMOVE THIS
-			dppFilter.minBcdDevice = 0x0120;
 			dpp_api_device = dpp_api::DppDevice::find(dppFilter);
 			if (!dpp_api_device || !dpp_api_device->connect()) {
 				WARN_LOG(

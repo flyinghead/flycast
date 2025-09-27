@@ -486,7 +486,10 @@ if(NOT LIBRETRO)
 		add_subdirectory(core/sdl)
 
 		if (NOT NINTENDO_SWITCH)
-			if (CMAKE_SYSTEM_NAME STREQUAL "FreeBSD")
+			if (WINDOWS_STORE)
+				# libusb does not compile for UWP - disable it for DreamPicoPort-API
+				option(DREAMPICOPORT_WITH_LIBUSB "Use libusb to access DreamPicoPort-API" OFF)
+			elseif (CMAKE_SYSTEM_NAME STREQUAL "FreeBSD")
 				# A version of libusb is installed in FreeBSD
 				find_package(PkgConfig REQUIRED)
    	 			pkg_check_modules(LIBUSB REQUIRED libusb-1.0)

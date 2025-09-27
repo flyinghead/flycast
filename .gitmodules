@@ -58,4 +58,4 @@
 	url = https://github.com/OrangeFox86/DreamPicoPort-API.git
 [submodule "core/deps/libusb-cmake"]
 	path = core/deps/libusb-cmake
-	url = https://github.com/OrangeFox86/libusb-cmake.git
+	url = https://github.com/libusb/libusb-cmake.git
