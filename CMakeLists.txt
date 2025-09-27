@@ -485,7 +485,7 @@ if(NOT LIBRETRO)
 		target_compile_definitions(${PROJECT_NAME} PRIVATE USE_SDL USE_SDL_AUDIO)
 		add_subdirectory(core/sdl)
 
-		if (not NINTENDO_SWITCH)
+		if (NOT NINTENDO_SWITCH)
 			# libusb
 			add_subdirectory(core/deps/libusb-cmake)
 
