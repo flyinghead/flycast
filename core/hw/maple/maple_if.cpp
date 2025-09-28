@@ -403,7 +403,7 @@ static void maple_handle_reconnect()
 		mcfg_CreateDevices();
 
 #if defined(USE_DREAMLINK_DEVICES)
-		handleRefreshDreamLinks();
+		createAllDreamLinkDevices();
 #endif
 	}
 }

@@ -128,7 +128,7 @@ public:
 	virtual std::string getName() const = 0;
 
 	//! Fetch the latest remote device configuration and return 'true' if it changed.
-	//! If this returns true, it must be followed by a call to 'maple_RefreshDevices'.
+	//! Caller is responsible for recreating the actual devices.
 	virtual bool needsRefresh() = 0;
 
 	//! Returns true if connected to the hardware controller (TODO: "hardware controller or remote device" throughout?)
@@ -178,7 +178,7 @@ extern std::array<std::shared_ptr<DreamLink>, 4> activeDreamLinks;
 bool reconnectDreamLinks();
 
 void refreshDreamLinksIfNeeded();
-void handleRefreshDreamLinks();
+void createAllDreamLinkDevices();
 void createDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink, bool gameStart, bool stateLoaded);
 void tearDownDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink);
 

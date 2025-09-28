@@ -2555,8 +2555,7 @@ void refreshDreamLinksIfNeeded()
 	maple_ReconnectDevices();
 }
 
-// Calls createDreamLinkDevices for all active dreamlinks.
-void handleRefreshDreamLinks()
+void createAllDreamLinkDevices()
 {
 	for (int i = 0; i < 4; i++)
 	{
