@@ -780,8 +780,9 @@ std::string DreamPicoPort::getName(std::string separator) const {
 	return name;
 }
 
-void DreamPicoPort::refreshIfNeeded() {
+bool DreamPicoPort::needsRefresh() {
 	// TODO: implementing this method may also help to support hot plugging of VMUs/rumble packs here.
+	return false;
 }
 
 bool DreamPicoPort::isConnected() {

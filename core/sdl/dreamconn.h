@@ -93,7 +93,7 @@ public:
 		return "DreamConn+ / DreamConn S Controller";
 	}
 
-	void refreshIfNeeded() override;
+	bool needsRefresh() override;
 
 private:
 	bool updateExpansionDevs();

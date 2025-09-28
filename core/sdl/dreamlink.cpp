@@ -49,7 +49,7 @@
 
 void handleEvent(Event event, void* arg)
 {
-	for (auto& dreamlink : allDreamLinks)
+	for (auto& dreamlink : activeDreamLinks)
 	{
 		if (dreamlink != nullptr)
 		{
@@ -120,7 +120,7 @@ DreamLinkGamepad::DreamLinkGamepad(int maple_port, int joystick_idx, SDL_Joystic
 	}
 
 	if (dreamlink) {
-		allDreamLinks[maple_port] = dreamlink;
+		activeDreamLinks[maple_port] = dreamlink;
 		_name = dreamlink->getName();
 		int defaultBus = dreamlink->getDefaultBus();
 		if (defaultBus >= 0 && defaultBus < 4) {
@@ -140,7 +140,7 @@ DreamLinkGamepad::~DreamLinkGamepad() {
 	if (dreamlink) {
 		tearDownDreamLinkDevices(dreamlink);
 		dreamlink.reset();
-		allDreamLinks[maple_port()] = nullptr;
+		activeDreamLinks[maple_port()] = nullptr;
 
 		// Make sure settings are open in case disconnection happened mid-game
 		if (!gui_is_open()) {
@@ -151,7 +151,7 @@ DreamLinkGamepad::~DreamLinkGamepad() {
 
 const char* DreamLinkGamepad::dreamLinkStatus()
 {
-	if (!dreamlink || allDreamLinks[maple_port()] != dreamlink)
+	if (!dreamlink || activeDreamLinks[maple_port()] != dreamlink)
 		return "Inactive";
 
 	return dreamlink->isConnected() ? "Connected" : "Disconnected";
@@ -169,11 +169,10 @@ void DreamLinkGamepad::set_maple_port(int port)
 
 	dreamlink->changeBus(port);
 
-	if (oldPort >= 0 && oldPort < 4 && allDreamLinks[oldPort] == dreamlink) {
+	if (oldPort >= 0 && oldPort < 4 && activeDreamLinks[oldPort] == dreamlink) {
 		// 'dreamlink' is currently active in 'oldPort'.
 		// Remove this dreamlink from 'oldPort' and repopulate with the dreamlink for a different gamepad, if any.
-		dreamLinkNeedsRefresh[oldPort] = false;
-		allDreamLinks[oldPort] = nullptr;
+		activeDreamLinks[oldPort] = nullptr;
 
 		for (int i = 0; i < GamepadDevice::GetGamepadCount(); i++) {
 			DreamLinkGamepad* gamepad = dynamic_cast<DreamLinkGamepad*>(GamepadDevice::GetGamepad(i).get());
@@ -182,8 +181,7 @@ void DreamLinkGamepad::set_maple_port(int port)
 
 			// Found a DreamLinkGamepad for 'oldPort'
 			assert(gamepad != this);
-			dreamLinkNeedsRefresh[oldPort] = true;
-			allDreamLinks[oldPort] = gamepad->dreamlink;
+			activeDreamLinks[oldPort] = gamepad->dreamlink;
 			gamepad->dreamlink->connect();
 		}
 	}
@@ -196,15 +194,14 @@ void DreamLinkGamepad::set_maple_port(int port)
 		return;
 	}
 
-	auto& existingDreamLink = allDreamLinks[port];
+	auto& existingDreamLink = activeDreamLinks[port];
 	if (existingDreamLink) {
 		// A DreamLink was already active in 'port'. Disconnect it before making it inactive.
 		assert(existingDreamLink != dreamlink);
 		existingDreamLink->disconnect();
 	}
 
-	dreamLinkNeedsRefresh[port] = true;
-	allDreamLinks[port] = dreamlink;
+	activeDreamLinks[port] = dreamlink;
 
 	if (is_registered()) {
 		dreamlink->connect();

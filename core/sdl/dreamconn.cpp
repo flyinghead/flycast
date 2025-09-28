@@ -122,9 +122,9 @@ void DreamConn::changeBus(int newBus) {
 	}
 }
 
-void DreamConn::refreshIfNeeded() {
+bool DreamConn::needsRefresh() {
 	if (!isConnected())
-		return;
+		return false;
 
 	std::lock_guard<std::mutex> lock(send_mutex);
 
@@ -133,12 +133,12 @@ void DreamConn::refreshIfNeeded() {
 	const int REFRESH_MESSAGE_SIZE = 13;
 	asio::ip::tcp::socket& sock = static_cast<asio::ip::tcp::socket&>(iostream.socket());
 	if (sock.available() < REFRESH_MESSAGE_SIZE)
-		return;
+		return false;
 
 	char buffer[REFRESH_MESSAGE_SIZE];
 	int bytesPeeked = recv(sock.native_handle(), buffer, REFRESH_MESSAGE_SIZE, MSG_PEEK);
 	if (bytesPeeked != REFRESH_MESSAGE_SIZE)
-		return;
+		return false;
 
 	MapleMsg message;
 	sscanf(buffer, "%hhx %hhx %hhx %hhx", &message.command, &message.destAP, &message.originAP, &message.size);
@@ -147,12 +147,9 @@ void DreamConn::refreshIfNeeded() {
 		receiveMsg(message, iostream);
 
 		if (!updateExpansionDevs())
-			return;
+			return false;
 
-		NOTICE_LOG(INPUT, "Refreshing DreamLink devices bus[%d]: Type:%s, VMU:%d, Rumble Pack:%d", bus, getName().c_str(), hasVmu(), hasRumble());
-		dreamLinkNeedsRefresh[bus] = true;
-		tearDownDreamLinkDevices(shared_from_this());
-		maple_ReconnectDevices();
+		return true;
 	}
 }
 

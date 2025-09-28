@@ -99,7 +99,7 @@ public:
 
 	std::string getName() const override;
 
-	void refreshIfNeeded() override;
+	bool needsRefresh() override;
 
 	bool isConnected() override;
 

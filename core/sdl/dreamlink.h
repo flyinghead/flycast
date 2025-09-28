@@ -127,8 +127,9 @@ public:
 	//! @return the display name of the controller
 	virtual std::string getName() const = 0;
 
-	//! Check if the remote device configuration has changed and update if necessary
-	virtual void refreshIfNeeded() = 0;
+	//! Fetch the latest remote device configuration and return 'true' if it changed.
+	//! If this returns true, it must be followed by a call to 'maple_RefreshDevices'.
+	virtual bool needsRefresh() = 0;
 
 	//! Returns true if connected to the hardware controller (TODO: "hardware controller or remote device" throughout?)
 	virtual bool isConnected() = 0;
@@ -165,8 +166,9 @@ protected:
 	std::string device_guid;
 };
 
-extern std::array<bool, 4> dreamLinkNeedsRefresh;
-extern std::array<std::shared_ptr<DreamLink>, 4> allDreamLinks;
+// The active DreamLink, if any, for each port.
+// Note that multiple gamepad DreamLinks may exist for a given port, in which case only one is active.
+extern std::array<std::shared_ptr<DreamLink>, 4> activeDreamLinks;
 
 // 1. Creates and destroys dreamlinks according to config settings.
 // 2. Attempts to connect/reconnect dreamlinks which are not yet connected.
