@@ -170,11 +170,10 @@ protected:
 // Note that multiple gamepad DreamLinks may exist for a given port, in which case only one is active.
 extern std::array<std::shared_ptr<DreamLink>, 4> activeDreamLinks;
 
-// 1. Creates and destroys dreamlinks according to config settings.
-// 2. Attempts to connect/reconnect dreamlinks which are not yet connected.
-// 3. Marks all newly connected dreamlinks as needing refresh.
+// Creates and destroys DreamLinks according to config settings.
+// Attempts to connect/reconnect DreamLinks which are not connected.
 // Returns true if any new connection was established.
-// If returns true, should generally be followed by a call like maple_ReconnectDevices() or refreshDreamLinksIfNeeded().
+// Note that this doesn't createDreamLinkDevices for DreamLinks created by this function. Caller is responsible for that.
 bool reconnectDreamLinks();
 
 void refreshDreamLinksIfNeeded();

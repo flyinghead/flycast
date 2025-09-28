@@ -21,6 +21,7 @@
 #ifdef USE_DREAMLINK_DEVICES
 #include "hw/maple/maple_devs.h"
 #include "hw/maple/maple_if.h"
+#include "oslib/oslib.h"
 #include "ui/gui.h"
 #include <cfg/option.h>
 #include <SDL.h>
@@ -36,7 +37,6 @@
 #include <windows.h>
 #include <setupapi.h>
 #endif
-#include <oslib/oslib.h>
 
 static asio::error_code sendMsg(const MapleMsg& msg, asio::ip::tcp::iostream& stream)
 {
@@ -185,7 +185,7 @@ bool DreamConn::updateExpansionDevs() {
 bool DreamConn::isSocketDisconnected() {
 	std::lock_guard<std::mutex> lock(send_mutex);
 
-	// A socket was (gracefully) disconnected if 'select()' says the socket is ready to read, and a subsequent 'recv()' says 0 bytes available to read.
+	// A socket was disconnected if 'select()' says the socket is ready to read, and a subsequent 'recv()' fails or says 0 bytes available to read.
 	auto& sock = static_cast<asio::ip::tcp::socket&>(iostream.socket());
 	auto nativeHandle = sock.native_handle();
 	fd_set readfds;

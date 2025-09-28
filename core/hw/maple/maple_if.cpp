@@ -81,7 +81,6 @@ void maple_vblank()
 		}
 		SDCKBOccupied = false;
 	}
-
 	if (settings.platform.isConsole())
 		maple_handle_reconnect();
 }
