@@ -2610,7 +2610,8 @@ void createDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink, bool gameStart
 					{
 						// Disconnect from real VMU memory when a state is loaded
 						vmu->useRealVmuMemory = false;
-						os_notify("WARNING: Disconnected from physical VMU memory due to load state", 6000);
+						os_notify("WARNING: Disconnected from physical VMU memory due to load state", 6000,
+							"Reconnect manually to resume using physical VMU memory");
 					}
 				}
 
