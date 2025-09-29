@@ -1,9 +1,9 @@
-#include "types.h"
 #include "stdclass.h"
 #include "oslib/directory.h"
 #include "oslib/oslib.h"
-#include "serialize.h"
 #include "oslib/storage.h"
+#include "serialize.h"
+#include "types.h"
 
 #include <chrono>
 #include <cstring>
@@ -12,7 +12,7 @@
 #include <vector>
 
 #ifdef _WIN32
-	#include <algorithm>
+#include <algorithm>
 #endif
 
 static std::string user_config_dir;
@@ -93,12 +93,16 @@ std::string get_readonly_data_path(const std::string& filename)
 			return filepath;
 	}
 	// Try the game directory
-	try {
+	try
+	{
 		std::string parent = hostfs::storage().getParentPath(settings.content.path);
 		std::string filepath = hostfs::storage().getSubPath(parent, filename);
 		if (hostfs::storage().exists(filepath))
 			return filepath;
-	} catch (const FlycastException&) { }
+	}
+	catch (const FlycastException&)
+	{
+	}
 
 	// Not found, so we return the user variant
 	return user_filepath;
@@ -130,10 +134,10 @@ bool make_directory(const std::string& path)
 void cThread::Start()
 {
 	verify(!thread.joinable());
-	thread = std::thread([this]() {
+	thread = std::thread([this]()
+		{
 		ThreadName _(name);
-		entry(param);
-	});
+		entry(param); });
 }
 
 void cThread::WaitToEnd()
@@ -144,24 +148,23 @@ void cThread::WaitToEnd()
 
 cResetEvent::cResetEvent() : state(false)
 {
-
 }
 
 cResetEvent::~cResetEvent() = default;
 
-void cResetEvent::Set()//Signal
+void cResetEvent::Set() // Signal
 {
-    std::lock_guard<std::mutex> lock(mutx);
+	std::lock_guard<std::mutex> lock(mutx);
 
-    state = true;
-    cond.notify_one();
+	state = true;
+	cond.notify_one();
 }
 
 void cResetEvent::Reset()
 {
-    std::lock_guard<std::mutex> lock(mutx);
+	std::lock_guard<std::mutex> lock(mutx);
 
-    state = false;
+	state = false;
 }
 
 bool cResetEvent::Wait(u32 msec)
@@ -172,35 +175,37 @@ bool cResetEvent::Wait(u32 msec)
 		cond.wait_for(lock, std::chrono::milliseconds(msec));
 
 	bool rc = state;
-    state = false;
+	state = false;
 
-    return rc;
+	return rc;
 }
 
 void cResetEvent::Wait()
 {
-    std::unique_lock<std::mutex> lock(mutx);
+	std::unique_lock<std::mutex> lock(mutx);
 
-    if (!state) {
-        cond.wait(lock);
-    }
+	if (!state)
+	{
+		cond.wait(lock);
+	}
 
-    state = false;
+	state = false;
 }
 
-void RamRegion::serialize(Serializer &ser) const {
+void RamRegion::serialize(Serializer& ser) const
+{
 	ser.serialize(data, size);
 }
 
-void RamRegion::deserialize(Deserializer &deser) {
+void RamRegion::deserialize(Deserializer& deser)
+{
 	deser.deserialize(data, size);
 }
-
 
 void RamRegion::alloc(size_t size)
 {
 	this->size = size;
-	data = (u8 *)allocAligned(PAGE_SIZE, size);
+	data = (u8*)allocAligned(PAGE_SIZE, size);
 	ownsMemory = true;
 }
 
@@ -222,7 +227,7 @@ u64 getTimeMs()
 }
 
 #ifdef _WIN32
-static struct tm *localtime_r(const time_t *_clock, struct tm *_result)
+static struct tm* localtime_r(const time_t* _clock, struct tm* _result)
 {
 	return localtime_s(_result, _clock) ? nullptr : _result;
 }
