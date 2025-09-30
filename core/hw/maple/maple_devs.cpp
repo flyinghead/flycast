@@ -2497,7 +2497,7 @@ struct DreamLinkPurupuru : public maple_sega_purupuru
 
 static std::list<std::shared_ptr<DreamLinkVmu>> dreamLinkVmus[2];
 static std::list<std::shared_ptr<DreamLinkPurupuru>> dreamLinkPurupurus;
-std::array<std::shared_ptr<DreamLink>, 4> activeDreamLinks;
+std::array<std::shared_ptr<DreamLink>, 4> DreamLink::activeDreamLinks;
 
 bool reconnectDreamLinks()
 {
@@ -2505,19 +2505,19 @@ bool reconnectDreamLinks()
 	bool anyNewConnection = false;
 	for (int i = 0; i < 4; i++)
 	{
-		const auto& dreamlink = activeDreamLinks[i];
+		const auto& dreamlink = DreamLink::activeDreamLinks[i];
 
 		if (useNetworkExpansionDevices[i] && !dreamlink)
 		{
 			bool isForPhysicalController = false;
-			activeDreamLinks[i] = std::make_shared<DreamConn>(i, isForPhysicalController);
+			DreamLink::activeDreamLinks[i] = std::make_shared<DreamConn>(i, isForPhysicalController);
 		}
 		else if (!useNetworkExpansionDevices[i] && dreamlink && !dreamlink->isForPhysicalController())
 		{
 			// This bus is not using network expansion devices.
 			// Dispose of the dreamlink for the bus, unless it is for a physical controller (and therefore not managed by this setting).
 			dreamlink->disconnect();
-			activeDreamLinks[i] = nullptr;
+			DreamLink::activeDreamLinks[i] = nullptr;
 		}
 
 		if (dreamlink && !dreamlink->isConnected())
@@ -2537,7 +2537,7 @@ bool reconnectDreamLinks()
 void refreshDreamLinksIfNeeded()
 {
 	bool anyNeedsRefresh = false;
-	for (auto& dreamlink : activeDreamLinks)
+	for (auto& dreamlink : DreamLink::activeDreamLinks)
 	{
 		if (dreamlink && dreamlink->needsRefresh())
 			anyNeedsRefresh = true;
@@ -2546,7 +2546,7 @@ void refreshDreamLinksIfNeeded()
 	if (!anyNeedsRefresh)
 		return;
 
-	for (auto& dreamlink : activeDreamLinks)
+	for (auto& dreamlink : DreamLink::activeDreamLinks)
 	{
 		if (dreamlink)
 			tearDownDreamLinkDevices(dreamlink);
@@ -2559,7 +2559,7 @@ void createAllDreamLinkDevices()
 {
 	for (int i = 0; i < 4; i++)
 	{
-		const auto& dreamlink = activeDreamLinks[i];
+		const auto& dreamlink = DreamLink::activeDreamLinks[i];
 		if (dreamlink && dreamlink->isConnected())
 		{
 			bool gameStart = false;

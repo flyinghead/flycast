@@ -699,7 +699,7 @@ static void gui_display_commands()
 		// DreamLink connection status
 		bool hasAnyDreamLinks = false;
 		bool hasDisconnectedDreamLink = false;
-		for (auto& dreamlink : activeDreamLinks)
+		for (auto& dreamlink : DreamLink::activeDreamLinks)
 		{
 			if (dreamlink)
 			{
@@ -726,7 +726,7 @@ static void gui_display_commands()
 			{
 				if (ImGui::Button("Disconnect\nDreamLink", ScaledVec2(buttonWidth, 50)))
 				{
-					for (auto& dreamlink : activeDreamLinks)
+					for (auto& dreamlink : DreamLink::activeDreamLinks)
 					{
 						if (dreamlink)
 							dreamlink->disconnect();
@@ -736,7 +736,7 @@ static void gui_display_commands()
 
 			for (int i = 0; i < 4; i++)
 			{
-				auto dreamlink = activeDreamLinks[i];
+				auto dreamlink = DreamLink::activeDreamLinks[i];
 				if (dreamlink)
 				{
 					ImGui::Text("Port %c: %s", 'A' + i, dreamlink->isConnected() ? "Connected" : "Disconnected");

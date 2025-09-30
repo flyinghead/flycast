@@ -63,6 +63,10 @@ static_assert(sizeof(MapleMsg) == 1028);
 class DreamLink : public std::enable_shared_from_this<DreamLink>
 {
 public:
+	// The active DreamLink, if any, for each port.
+	// Note that multiple gamepad DreamLinks may exist for a given port, in which case only one is active.
+	static std::array<std::shared_ptr<DreamLink>, 4> activeDreamLinks;
+
 	DreamLink() = default;
 
 	virtual ~DreamLink() = default;
@@ -165,10 +169,6 @@ protected:
 	bool startPressed = false;
 	std::string device_guid;
 };
-
-// The active DreamLink, if any, for each port.
-// Note that multiple gamepad DreamLinks may exist for a given port, in which case only one is active.
-extern std::array<std::shared_ptr<DreamLink>, 4> activeDreamLinks;
 
 // Creates and destroys DreamLinks according to config settings.
 // Attempts to connect/reconnect DreamLinks which are not connected.
