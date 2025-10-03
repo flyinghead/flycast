@@ -76,6 +76,7 @@ bool CustomTexture::init()
 	if (!initialized)
 	{
 		initialized = true;
+		custom_textures_available = false;
 		std::string game_id = getGameId();
 		if (game_id.length() > 0)
 		{
