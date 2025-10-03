@@ -1146,6 +1146,7 @@ void gui_settings_controls(bool& maple_devices_changed)
 #ifdef USE_DREAMLINK_DEVICES
 				if (port_count > 0)
 				{
+					ImGui::SameLine();
 					ImGui::PushID(bus);
 					bool pressed = OptionCheckbox("Use Network Expansion Devices", config::UseNetworkExpansionDevices[bus],
 						"Connect to expansion devices such as VMUs over local TCP.");
