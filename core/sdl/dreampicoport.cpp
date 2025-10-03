@@ -19,7 +19,7 @@
 
 #include "dreampicoport.h"
 
-#ifdef USE_DREAMCASTCONTROLLER
+#ifdef USE_DREAMLINK_DEVICES
 #include "hw/maple/maple_devs.h"
 #include "ui/gui.h"
 #include <cfg/option.h>
@@ -658,6 +658,10 @@ DreamPicoPort::~DreamPicoPort() {
 	disconnect();
 }
 
+bool DreamPicoPort::isForPhysicalController() {
+	return true;
+}
+
 bool DreamPicoPort::send(const MapleMsg& msg) {
 	if (serial) {
 		asio::error_code ec = serial->sendMsg(msg, hardware_bus, timeout_ms);
@@ -774,6 +778,15 @@ std::string DreamPicoPort::getName(std::string separator) const {
 		name += separator + std::string(1, portChar);
 	}
 	return name;
+}
+
+bool DreamPicoPort::needsRefresh() {
+	// TODO: implementing this method may also help to support hot plugging of VMUs/rumble packs here.
+	return false;
+}
+
+bool DreamPicoPort::isConnected() {
+	return connection_established;
 }
 
 void DreamPicoPort::connect() {

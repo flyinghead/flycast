@@ -2108,8 +2108,9 @@ std::shared_ptr<maple_device> maple_Create(MapleDeviceType type)
 	return nullptr;
 }
 
-#if (defined(_WIN32) || defined(__linux__) || (defined(__APPLE__) && defined(TARGET_OS_MAC))) && !defined(TARGET_UWP) && defined(USE_SDL) && !defined(LIBRETRO)
+#if defined(USE_DREAMLINK_DEVICES)
 #include "sdl/dreamlink.h"
+#include "sdl/dreamconn.h"
 #include <list>
 #include <memory>
 
@@ -2496,7 +2497,79 @@ struct DreamLinkPurupuru : public maple_sega_purupuru
 
 static std::list<std::shared_ptr<DreamLinkVmu>> dreamLinkVmus[2];
 static std::list<std::shared_ptr<DreamLinkPurupuru>> dreamLinkPurupurus;
+std::array<std::shared_ptr<DreamLink>, 4> DreamLink::activeDreamLinks;
 
+bool reconnectDreamLinks()
+{
+	auto& useNetworkExpansionDevices = config::UseNetworkExpansionDevices;
+	bool anyNewConnection = false;
+	for (int i = 0; i < 4; i++)
+	{
+		const auto& dreamlink = DreamLink::activeDreamLinks[i];
+
+		if (useNetworkExpansionDevices[i] && !dreamlink)
+		{
+			bool isForPhysicalController = false;
+			DreamLink::activeDreamLinks[i] = std::make_shared<DreamConn>(i, isForPhysicalController);
+		}
+		else if (!useNetworkExpansionDevices[i] && dreamlink && !dreamlink->isForPhysicalController())
+		{
+			// This bus is not using network expansion devices.
+			// Dispose of the dreamlink for the bus, unless it is for a physical controller (and therefore not managed by this setting).
+			dreamlink->disconnect();
+			DreamLink::activeDreamLinks[i] = nullptr;
+		}
+
+		if (dreamlink && !dreamlink->isConnected())
+		{
+			dreamlink->connect();
+			if (dreamlink->isConnected())
+			{
+				anyNewConnection = true;
+			}
+		}
+	}
+
+	return anyNewConnection;
+}
+
+// Checks for and handles a message from server telling us to refresh the expansion devices.
+void refreshDreamLinksIfNeeded()
+{
+	bool anyNeedsRefresh = false;
+	for (auto& dreamlink : DreamLink::activeDreamLinks)
+	{
+		if (dreamlink && dreamlink->needsRefresh())
+			anyNeedsRefresh = true;
+	}
+
+	if (!anyNeedsRefresh)
+		return;
+
+	for (auto& dreamlink : DreamLink::activeDreamLinks)
+	{
+		if (dreamlink)
+			tearDownDreamLinkDevices(dreamlink);
+	}
+
+	maple_ReconnectDevices();
+}
+
+void createAllDreamLinkDevices()
+{
+	for (int i = 0; i < 4; i++)
+	{
+		const auto& dreamlink = DreamLink::activeDreamLinks[i];
+		if (dreamlink && dreamlink->isConnected())
+		{
+			bool gameStart = false;
+			bool stateLoaded = false;
+			createDreamLinkDevices(dreamlink, gameStart, stateLoaded);
+		}
+	}
+}
+
+// Replaces certain ordinary MapleDevices entries with specialized devices that communicate thru a DreamLink.
 void createDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink, bool gameStart, bool stateLoaded)
 {
 	const int bus = dreamlink->getBus();
@@ -2505,7 +2578,7 @@ void createDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink, bool gameStart
 	{
 		std::shared_ptr<maple_device> dev = MapleDevices[bus][i];
 
-		if ((dreamlink->getFunctionCode(i + 1) & MFID_1_Storage) || (dev != nullptr && dev->get_device_type() == MDT_SegaVMU))
+		if ((dreamlink->getFunctionCode(i + 1) & MFID_1_Storage))
 		{
 			bool vmuFound = false;
 			std::shared_ptr<DreamLinkVmu> vmu;
@@ -2537,7 +2610,8 @@ void createDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink, bool gameStart
 					{
 						// Disconnect from real VMU memory when a state is loaded
 						vmu->useRealVmuMemory = false;
-						os_notify("WARNING: Disconnected from physical VMU memory due to load state", 6000);
+						os_notify("WARNING: Disconnected from physical VMU memory due to load state", 6000,
+							"Reconnect manually to resume using physical VMU memory");
 					}
 				}
 
@@ -2556,7 +2630,7 @@ void createDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink, bool gameStart
 				}
 			}
 		}
-		else if (i == 1 && ((dreamlink->getFunctionCode(i + 1) & MFID_8_Vibration) || (dev != nullptr && dev->get_device_type() == MDT_PurupuruPack)))
+		else if (i == 1 && ((dreamlink->getFunctionCode(i + 1) & MFID_8_Vibration)))
 		{
 			bool rumbleFound = false;
 			std::shared_ptr<DreamLinkPurupuru> rumble;
@@ -2585,6 +2659,7 @@ void createDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink, bool gameStart
 	}
 }
 
+// Replaces DreamLink devices associated with 'dreamlink' with ordinary Maple devices.
 void tearDownDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink)
 {
 	const int bus = dreamlink->getBus();

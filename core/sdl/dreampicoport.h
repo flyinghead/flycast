@@ -20,7 +20,7 @@
 
 #include "dreamlink.h"
 
-#ifdef USE_DREAMCASTCONTROLLER
+#ifdef USE_DREAMLINK_DEVICES
 
 #include <asio.hpp>
 
@@ -73,6 +73,8 @@ public:
 
 	virtual ~DreamPicoPort();
 
+	bool isForPhysicalController() override;
+
 	bool send(const MapleMsg& msg) override;
 
     bool send(const MapleMsg& txMsg, MapleMsg& rxMsg) override;
@@ -96,6 +98,10 @@ public:
 	void changeBus(int newBus);
 
 	std::string getName() const override;
+
+	bool needsRefresh() override;
+
+	bool isConnected() override;
 
 	void connect() override;
 

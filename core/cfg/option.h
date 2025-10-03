@@ -540,6 +540,7 @@ extern Option<int> VirtualGamepadVibration;
 extern Option<int> VirtualGamepadTransparency;
 extern std::array<Option<MapleDeviceType>, 4> MapleMainDevices;
 extern std::array<std::array<Option<MapleDeviceType>, 2>, 4> MapleExpansionDevices;
+extern std::array<Option<bool>, 4> UseNetworkExpansionDevices;
 extern Option<bool> PerGameVmu;
 #ifdef _WIN32
 extern Option<bool, false> UseRawInput;
