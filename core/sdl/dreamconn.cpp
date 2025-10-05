@@ -151,6 +151,7 @@ bool DreamConn::needsRefresh() {
 
 		return true;
 	}
+	return false;
 }
 
 // Sends a message to query for expansion devices.

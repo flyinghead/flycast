@@ -403,7 +403,6 @@ private:
 		}
 
 		std::vector<uint32_t> words;
-		bool valid = false;
 		const char* iter = response.c_str();
 		const char* eol = iter + response.size();
 
@@ -429,12 +428,8 @@ private:
 				}
 
 				// Invalid if a partial word was given
-				valid = ((i == 4) || (i == 0));
-
 				if (i == 4)
-				{
 					words.push_back(word);
-				}
 			}
 		}
 		else
@@ -472,12 +467,8 @@ private:
 				}
 
 				// Invalid if a partial word was given
-				valid = ((i == 8) || (i == 0));
-
 				if (i == 8)
-				{
 					words.push_back(word);
-				}
 			}
 		}
 
@@ -693,7 +684,7 @@ int DreamPicoPort::getBus() const {
 
 u32 DreamPicoPort::getFunctionCode(int forPort) const {
 	u32 mask = 0;
-	if (peripherals.size() > forPort) {
+	if ((int)peripherals.size() > forPort) {
 		for (const auto& peripheral : peripherals[forPort]) {
 			mask |= peripheral[0];
 		}
@@ -704,7 +695,7 @@ u32 DreamPicoPort::getFunctionCode(int forPort) const {
 
 std::array<u32, 3> DreamPicoPort::getFunctionDefinitions(int forPort) const {
 	std::array<u32, 3> arr{0, 0, 0};
-	if (peripherals.size() > forPort) {
+	if ((int)peripherals.size() > forPort) {
 		std::size_t idx = 0;
 		for (const auto& peripheral : peripherals[forPort]) {
 			arr[idx++] = SWAP32(peripheral[1]);
