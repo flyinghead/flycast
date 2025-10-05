@@ -394,7 +394,7 @@ void VulkanContext::PresentFrame(vk::Image image, vk::ImageView imageView, const
 	float shiftX, shiftY;
 	getVideoShift(shiftX, shiftY);
 
-	beginFrame(extent);
+	beginFrame(extent, image);
 	QuadVertex vtx[4] {
 		{ -1, -1, 0, 0, 0 },
 		{  1, -1, 0, 1, 0 },
@@ -420,7 +420,7 @@ void VulkanContext::PresentFrame(vk::Image image, vk::ImageView imageView, const
 	retro_render_if->set_image(retro_render_if->handle, &retro_image, 0, nullptr, VK_QUEUE_FAMILY_IGNORED);
 }
 
-void VulkanContext::beginFrame(vk::Extent2D extent)
+void VulkanContext::beginFrame(vk::Extent2D extent, vk::Image barrierImage)
 {
 	int currentImage = GetCurrentImageIndex();
 	if (currentImage >= (int)framebuffers.size())
@@ -455,6 +455,25 @@ void VulkanContext::beginFrame(vk::Extent2D extent)
 		framebuffers[currentImage] = device.createFramebufferUnique(createInfo);
 		setImageLayout(cmdBuffer, colorAttachments[currentImage]->GetImage(), vk::Format::eR8G8B8A8Unorm,
 				1, vk::ImageLayout::eUndefined, vk::ImageLayout::eShaderReadOnlyOptimal);
+	}
+	if (GetVendorID() == VulkanContext::VENDOR_NVIDIA && barrierImage != nullptr)
+	{
+		vk::ImageMemoryBarrier barrier(
+				vk::AccessFlagBits::eColorAttachmentWrite,
+		        vk::AccessFlagBits::eShaderRead,
+		        vk::ImageLayout::eShaderReadOnlyOptimal,
+		        vk::ImageLayout::eShaderReadOnlyOptimal,
+		        VK_QUEUE_FAMILY_IGNORED,
+		        VK_QUEUE_FAMILY_IGNORED,
+				barrierImage,
+		        vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1));
+		cmdBuffer.pipelineBarrier(
+				vk::PipelineStageFlagBits::eColorAttachmentOutput,
+				vk::PipelineStageFlagBits::eFragmentShader,
+				{},
+				nullptr, nullptr,
+				barrier
+		);
 	}
 	cmdBuffer.beginRenderPass(vk::RenderPassBeginInfo(*renderPass, *framebuffers[currentImage], vk::Rect2D({0, 0}, extent), clear_colors),
 			vk::SubpassContents::eInline);
