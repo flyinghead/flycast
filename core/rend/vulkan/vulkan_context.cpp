@@ -1054,7 +1054,7 @@ void VulkanContext::PresentFrame(vk::Image image, vk::ImageView imageView, const
 			NewFrame();
 			auto overlayCmdBuffer = PrepareOverlay(config::FloatVMUs, true);
 			gui_draw_osd();
-			if (GetVendorID() == VulkanContext::VENDOR_NVIDIA && image != nullptr)
+			if (GetVendorID() == VulkanContext::VENDOR_NVIDIA && image)
 			{
 				vk::ImageMemoryBarrier barrier(
 						vk::AccessFlagBits::eColorAttachmentWrite,

@@ -456,7 +456,7 @@ void VulkanContext::beginFrame(vk::Extent2D extent, vk::Image barrierImage)
 		setImageLayout(cmdBuffer, colorAttachments[currentImage]->GetImage(), vk::Format::eR8G8B8A8Unorm,
 				1, vk::ImageLayout::eUndefined, vk::ImageLayout::eShaderReadOnlyOptimal);
 	}
-	if (GetVendorID() == VulkanContext::VENDOR_NVIDIA && barrierImage != nullptr)
+	if (GetVendorID() == VulkanContext::VENDOR_NVIDIA && barrierImage)
 	{
 		vk::ImageMemoryBarrier barrier(
 				vk::AccessFlagBits::eColorAttachmentWrite,
