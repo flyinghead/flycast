@@ -927,3 +927,13 @@ static InputDescriptors tetgiant_inputs = {
 		NAO_BASE_BTN_DESC
 	},
 };
+
+static InputDescriptors btlracer_inputs = {
+	{
+		{ DC_BTN_A, "BUTTON" },
+		NAO_BASE_BTN_DESC
+	},
+	{
+		{ "WHEEL", Full, 0 },
+	},
+};

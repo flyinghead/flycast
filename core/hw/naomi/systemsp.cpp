@@ -1068,6 +1068,59 @@ public:
 	}
 };
 
+class BattleRacerIOManager : public CardReaderIOManager
+{
+public:
+	u8 getCN9_17_24() override
+	{
+		CardReaderIOManager::getCN9_17_24();
+		u8 v = 0xff;
+		// 0: P1 right
+		// 1: P2 right
+		// 2: P1 right
+		// 3: P2 right
+		// 4: P1 left
+		// 5: P2 left
+		// 6: P1 left
+		// 7: P2 left
+		if (mapleInputState[0].fullAxes[0] <= -16384)
+			v &= ~0x40;
+		if (mapleInputState[0].fullAxes[0] <= -1638)
+			v &= ~0x10;
+		if (mapleInputState[0].fullAxes[0] >= 1638)
+			v &= ~0x04;
+		if (mapleInputState[0].fullAxes[0] >= 16384)
+			v &= ~0x01;
+
+		if (mapleInputState[1].fullAxes[0] <= -16384)
+			v &= ~0x80;
+		if (mapleInputState[1].fullAxes[0] <= -1638)
+			v &= ~0x20;
+		if (mapleInputState[1].fullAxes[0] >= 1638)
+			v &= ~0x08;
+		if (mapleInputState[1].fullAxes[0] >= 16384)
+			v &= ~0x02;
+		return v;
+	}
+
+	u8 getCN9_33_40() override
+	{
+		IO_LOG("systemsp::read IN CN9 33-40");
+		// 0: P1 button
+		// 1: P2 button
+		// 2: CD1 input ok (active low)
+		// those aren't confirmed: assuming the same as dinoking and love & berry
+		// 4: CD1 card jam (active low)
+		// 6: CD1 empty (active low)
+		u8 v = 0xfb;
+		if (!(mapleInputState[0].kcode & DC_BTN_A))
+			v &= ~0x01;
+		if (!(mapleInputState[1].kcode & DC_BTN_A))
+			v &= ~0x02;
+		return v;
+	}
+};
+
 class HopperIOManager : public DefaultIOManager
 {
 	// IN_PORT1
@@ -2194,6 +2247,9 @@ void SystemSpCart::Init(LoadProgress *progress, std::vector<u8> *digest)
 			|| !strcmp(game->name, "unomedal")
 			|| !strcmp(game->name, "westdrmg")) {
 		ioPortManager = std::make_unique<MedalIOManager>();
+	}
+	else if (!strcmp(game->name, "btlracer")) {
+		ioPortManager = std::make_unique<BattleRacerIOManager>();
 	}
 	if (!strncmp(game->name, "dinoki", 6) || !strncmp(game->name, "loveber", 7))
 		ioPortManager = std::make_unique<CardReaderIOManager>();
