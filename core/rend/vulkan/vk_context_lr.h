@@ -118,7 +118,7 @@ public:
 
 private:
 	void beginFrame(vk::Extent2D extent, vk::Image barrierImage);
-	void endFrame();
+	void endFrame(vk::Image barrierImage);
 
 	VMAllocator allocator;
 

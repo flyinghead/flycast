@@ -413,7 +413,7 @@ void VulkanContext::PresentFrame(vk::Image image, vk::ImageView imageView, const
 	quadDrawer->Draw(cmdBuffer, imageView, vtx, false);
 	overlay->Draw(cmdBuffer, extent, config::EmulateFramebuffer ? 1 : (int)config::RenderResolution / 480.f,
 			true, true);
-	endFrame();
+	endFrame(image);
 
 	retro_image.image_view = (VkImageView)colorAttachments[GetCurrentImageIndex()]->GetImageView();
 	retro_image.create_info.image = (VkImage)colorAttachments[GetCurrentImageIndex()]->GetImage();
@@ -479,9 +479,28 @@ void VulkanContext::beginFrame(vk::Extent2D extent, vk::Image barrierImage)
 			vk::SubpassContents::eInline);
 }
 
-void VulkanContext::endFrame()
+void VulkanContext::endFrame(vk::Image barrierImage)
 {
 	cmdBuffer.endRenderPass();
+	if (GetVendorID() == VulkanContext::VENDOR_NVIDIA && barrierImage)
+	{
+		vk::ImageMemoryBarrier barrier(
+				vk::AccessFlagBits::eShaderRead,
+		        vk::AccessFlagBits::eMemoryWrite | vk::AccessFlagBits::eColorAttachmentWrite,
+		        vk::ImageLayout::eShaderReadOnlyOptimal,
+		        vk::ImageLayout::eShaderReadOnlyOptimal,
+		        VK_QUEUE_FAMILY_IGNORED,
+		        VK_QUEUE_FAMILY_IGNORED,
+				barrierImage,
+		        vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1));
+		cmdBuffer.pipelineBarrier(
+				vk::PipelineStageFlagBits::eFragmentShader,
+				vk::PipelineStageFlagBits::eAllCommands,
+				{},
+				nullptr, nullptr,
+				barrier
+		);
+	}
 	cmdBuffer.end();
 	cmdBuffer = nullptr;
 	commandPool.EndFrame();
