@@ -39,10 +39,12 @@ class DreamPicoPort : public DreamLink
 {
 	u8 expansionDevs = 0;
 
+#ifndef TARGET_UWP
 	//! The one and only serial port
 	static std::unique_ptr<DreamPicoPortSerialHandler> serial;
 	//! Number of devices using the above serial
 	static std::atomic<std::uint32_t> connected_dev_count;
+#endif
 	//! All known dpp_api devices by serial number; already connected if set
 	static std::unordered_map<std::string, std::weak_ptr<dpp_api::DppDevice>> all_dpp_api_devices;
 	//! The mutex serializing access to all_dpp_api_devices

@@ -17,10 +17,6 @@
 	along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifdef _WIN32
-#define WIN32_LEAN_AND_MEAN
-#endif
-
 #include "dreampicoport.h"
 
 #ifdef USE_DREAMLINK_DEVICES
@@ -28,8 +24,10 @@
 #include "ui/gui.h"
 #include <cfg/option.h>
 
+#ifndef TARGET_UWP
 // boost
 #include <asio.hpp>
+#endif
 
 // C++ standard library
 #include <iomanip>
@@ -636,8 +634,10 @@ private:
 };
 
 // Define the static instances here
+#ifndef TARGET_UWP
 std::unique_ptr<DreamPicoPortSerialHandler> DreamPicoPort::serial;
 std::atomic<std::uint32_t> DreamPicoPort::connected_dev_count = 0;
+#endif
 std::unordered_map<std::string, std::weak_ptr<dpp_api::DppDevice>> DreamPicoPort::all_dpp_api_devices;
 std::mutex DreamPicoPort::all_dpp_api_devices_mutex;
 
@@ -681,10 +681,13 @@ bool DreamPicoPort::send(const MapleMsg& msg) {
 		tx.packet.insert(tx.packet.end(), msg.data, msg.data + data_size);
 		const uint64_t id = dpp_api_device->send(tx);
 		return (id != 0);
-	} else if (serial) {
+	}
+#ifndef TARGET_UWP
+	else if (serial) {
 		asio::error_code ec = serial->sendMsg(msg, hardware_bus, timeout_ms);
 		return !ec;
 	}
+#endif
 
 	return false;
 }
@@ -715,10 +718,13 @@ bool DreamPicoPort::send(const MapleMsg& txMsg, MapleMsg& rxMsg) {
 			memcpy(rxMsg.data, &rx.packet[4], (std::min)(rx.packet.size() - 4, sizeof(rxMsg.data)));
 		}
 		return (rxMsg.getDataSize() <= (rx.packet.size() - 4));
-	} else if (serial) {
+	}
+#ifndef TARGET_UWP
+	else if (serial) {
 		asio::error_code ec = serial->sendMsg(txMsg, hardware_bus, rxMsg, timeout_ms);
 		return !ec;
 	}
+#endif
 
 	return false;
 }
@@ -893,6 +899,7 @@ void DreamPicoPort::connect() {
 		NOTICE_LOG(INPUT, "Serial number for DreamPicoPort[%d] not found", software_bus);
 	}
 
+#ifndef TARGET_UWP
 	if (!dpp_api_device) {
 		NOTICE_LOG(
 			INPUT,
@@ -905,6 +912,7 @@ void DreamPicoPort::connect() {
 			serial = std::make_unique<DreamPicoPortSerialHandler>();
 		}
 	}
+#endif
 
 	if (isConnected()) {
 		sendPort();
@@ -955,18 +963,25 @@ void DreamPicoPort::connect() {
 }
 
 bool DreamPicoPort::isConnected() const {
-	return ((serial && serial->is_open()) || (dpp_api_device && dpp_api_device->isConnected()));
+	return (
+#ifndef TARGET_UWP
+		(serial && serial->is_open()) ||
+#endif
+		(dpp_api_device && dpp_api_device->isConnected())
+	);
 }
 
 void DreamPicoPort::disconnect() {
 	if (connection_established) {
 		connection_established = false;
+#ifndef TARGET_UWP
 		if (!dpp_api_device) {
 			if (--connected_dev_count == 0) {
 				// serial is no longer needed
 				serial.reset();
 			}
 		}
+#endif
 	}
 }
 
@@ -977,13 +992,16 @@ void DreamPicoPort::sendPort() {
 			changePlayerDisplay.idx = hardware_bus;
 			changePlayerDisplay.toIdx = software_bus;
 			dpp_api_device->send(changePlayerDisplay, nullptr);
-		} else if (serial) {
+		}
+#ifndef TARGET_UWP
+		else if (serial) {
 			// This will update the displayed port letter on the screen
 			std::ostringstream s;
 			s << "XP "; // XP is flycast "set port" command
 			s << hardware_bus << " " << software_bus << "\n";
 			serial->sendCmd(s.str(), timeout_ms);
 		}
+#endif
 	}
 }
 
@@ -1135,7 +1153,9 @@ bool DreamPicoPort::queryInterfaceVersion() {
 		interface_version = rxIfVersion.verMajor + (rxIfVersion.verMinor / 100.0);
 
 		return true;
-	} else if (serial) {
+	}
+#ifndef TARGET_UWP
+	else if (serial) {
 		std::string buffer;
 		asio::error_code error = serial->sendCmd("XV\n", buffer, timeout_ms);
 		if (error) {
@@ -1157,7 +1177,9 @@ bool DreamPicoPort::queryInterfaceVersion() {
 		}
 
 		return true;
-	} else {
+	}
+#endif
+	else {
 		return false;
 	}
 }
@@ -1186,7 +1208,9 @@ bool DreamPicoPort::queryPeripherals() {
 		peripherals = summary.summary;
 
 		return true;
-	} else if (serial) {
+	}
+#ifndef TARGET_UWP
+	else if (serial) {
 		asio::error_code error = serial->sendMsg(msg, hardware_bus, msg, timeout_ms);
 		if (error)
 		{
@@ -1286,6 +1310,7 @@ bool DreamPicoPort::queryPeripherals() {
 
 		return true;
 	}
+#endif
 
 	return false;
 }
