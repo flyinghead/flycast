@@ -24,7 +24,6 @@
 #include "ui/gui.h"
 #include <cfg/option.h>
 #include <SDL.h>
-#include <asio.hpp>
 #include <iomanip>
 #include <sstream>
 #include <optional>
