@@ -485,25 +485,27 @@ if(NOT LIBRETRO)
 		target_compile_definitions(${PROJECT_NAME} PRIVATE USE_SDL USE_SDL_AUDIO)
 		add_subdirectory(core/sdl)
 
-		if ((WIN32 OR WINDOWS_STORE) AND NOT MINGW)
-			# Use winrt implementation of the library
-			option(DREAMPICOPORT_WITH_LIBUSB "Use libusb to access DreamPicoPort-API" OFF)
-		elseif (CMAKE_SYSTEM_NAME STREQUAL "FreeBSD")
-			# A version of libusb is installed in FreeBSD
-			find_package(PkgConfig REQUIRED)
-			pkg_check_modules(LIBUSB REQUIRED libusb-1.0)
+		if (NOT NINTENDO_SWITCH)
+			if ((WIN32 OR WINDOWS_STORE) AND NOT MINGW)
+				# Use winrt implementation of the library
+				option(DREAMPICOPORT_WITH_LIBUSB "Use libusb to access DreamPicoPort-API" OFF)
+			elseif (CMAKE_SYSTEM_NAME STREQUAL "FreeBSD")
+				# A version of libusb is installed in FreeBSD
+				find_package(PkgConfig REQUIRED)
+   	 			pkg_check_modules(LIBUSB REQUIRED libusb-1.0)
 
-			set(DREAMPICOPORT_LIBUSB_LIBRARIES "${LIBUSB_LIBRARIES}" CACHE STRING "Name of the libusb library to link against")
-			set(DREAMPICOPORT_LIBUSB_INCLUDE_DIRS "${LIBUSB_INCLUDE_DIRS}" CACHE STRING "Path to libusb include directory, when applicable")
-		else()
-			# libusb
-			add_subdirectory(core/deps/libusb-cmake)
+				set(DREAMPICOPORT_LIBUSB_LIBRARIES "${LIBUSB_LIBRARIES}" CACHE STRING "Name of the libusb library to link against")
+				set(DREAMPICOPORT_LIBUSB_INCLUDE_DIRS "${LIBUSB_INCLUDE_DIRS}" CACHE STRING "Path to libusb include directory, when applicable")
+			else()
+				# libusb
+				add_subdirectory(core/deps/libusb-cmake)
+			endif()
+
+			# DreamPicoPort-API
+			option(DREAMPICOPORT_ADD_LIBUSB "Add internal libusb library" OFF) # Already included above, when applicable
+			add_subdirectory(core/deps/DreamPicoPort-API)
+			target_link_libraries(${PROJECT_NAME} PRIVATE dream_pico_port_api)
 		endif()
-
-		# DreamPicoPort-API
-		option(DREAMPICOPORT_ADD_LIBUSB "Add internal libusb library" OFF) # Already included above, when applicable
-		add_subdirectory(core/deps/DreamPicoPort-API)
-		target_link_libraries(${PROJECT_NAME} PRIVATE dream_pico_port_api)
 
 		if((UNIX AND NOT APPLE) OR NINTENDO_SWITCH)
 			find_package(CURL REQUIRED)
