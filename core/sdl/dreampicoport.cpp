@@ -851,7 +851,8 @@ void DreamPicoPort::connect() {
 			if (!dpp_api_device) {
 				WARN_LOG(
 					INPUT,
-					"DreamPicoPort[%d] new API connect failed: find failed for serial %s",
+					"DreamPicoPort[%d] new API connect failed: find failed for serial %s\n"
+					"Update DreamPicoPort firmware to version 1.2.1 or later to use new, faster API",
 					software_bus,
 					serial_number.c_str()
 				);
