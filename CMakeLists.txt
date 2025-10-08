@@ -486,7 +486,7 @@ if(NOT LIBRETRO)
 		add_subdirectory(core/sdl)
 
 		if (NOT NINTENDO_SWITCH)
-			if ((WIN32 OR WINDOWS_STORE) AND NOT MINGW)
+			if (WIN32 OR WINDOWS_STORE)
 				# Use winrt implementation of the library
 				option(DREAMPICOPORT_WITH_LIBUSB "Use libusb to access DreamPicoPort-API" OFF)
 			elseif (CMAKE_SYSTEM_NAME STREQUAL "FreeBSD")
