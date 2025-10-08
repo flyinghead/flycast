@@ -663,6 +663,7 @@ DreamPicoPort::~DreamPicoPort() {
 bool DreamPicoPort::send(const MapleMsg& msg) {
 	if (dpp_api_device) {
 		dpp_api::msg::tx::Maple tx;
+		tx.emu = true;
 		const u32 data_size = msg.getDataSize();
 		tx.packet.reserve(data_size + 4);
 		tx.packet.push_back(msg.command);
@@ -686,6 +687,7 @@ bool DreamPicoPort::send(const MapleMsg& msg) {
 bool DreamPicoPort::send(const MapleMsg& txMsg, MapleMsg& rxMsg) {
 	if (dpp_api_device) {
 		dpp_api::msg::tx::Maple tx;
+		tx.emu = true;
 		const u32 data_size = txMsg.getDataSize();
 		tx.packet.reserve(data_size + 4);
 		tx.packet.push_back(txMsg.command);
