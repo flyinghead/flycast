@@ -52,6 +52,7 @@
 #include <setupapi.h>
 #endif
 
+#ifndef TARGET_UWP
 class DreamPicoPortSerialHandler
 {
 	//! Asynchronous context for serial_handler
@@ -632,6 +633,7 @@ private:
 		return numberOfLines;
 	}
 };
+#endif
 
 // Define the static instances here
 #ifndef TARGET_UWP
