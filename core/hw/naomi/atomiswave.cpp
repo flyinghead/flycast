@@ -33,6 +33,7 @@ static u8 awDigitalOuput;
 
 void reset() {
 	aw_ram_test_skipped = false;
+	aw_maple_devs = 0;
 }
 
 u32 readMem_A0_006(u32 addr, u32 size)
