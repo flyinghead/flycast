@@ -1054,7 +1054,25 @@ void VulkanContext::PresentFrame(vk::Image image, vk::ImageView imageView, const
 			NewFrame();
 			auto overlayCmdBuffer = PrepareOverlay(config::FloatVMUs, true);
 			gui_draw_osd();
-
+			if (GetVendorID() == VulkanContext::VENDOR_NVIDIA && image)
+			{
+				vk::ImageMemoryBarrier barrier(
+						vk::AccessFlagBits::eColorAttachmentWrite,
+				        vk::AccessFlagBits::eShaderRead,
+				        vk::ImageLayout::eShaderReadOnlyOptimal,
+				        vk::ImageLayout::eShaderReadOnlyOptimal,
+				        VK_QUEUE_FAMILY_IGNORED,
+				        VK_QUEUE_FAMILY_IGNORED,
+				        image,
+				        vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1));
+				GetCurrentCommandBuffer().pipelineBarrier(
+						vk::PipelineStageFlagBits::eColorAttachmentOutput,
+						vk::PipelineStageFlagBits::eFragmentShader,
+						{},
+						nullptr, nullptr,
+						barrier
+				);
+			}
 			BeginRenderPass();
 
 			if (lastFrameView) // Might have been nullified if swap chain recreated

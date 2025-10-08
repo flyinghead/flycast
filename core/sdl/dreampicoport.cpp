@@ -19,7 +19,7 @@
 
 #include "dreampicoport.h"
 
-#ifdef USE_DREAMCASTCONTROLLER
+#ifdef USE_DREAMLINK_DEVICES
 #include "hw/maple/maple_devs.h"
 #include "ui/gui.h"
 #include <cfg/option.h>
@@ -403,7 +403,6 @@ private:
 		}
 
 		std::vector<uint32_t> words;
-		bool valid = false;
 		const char* iter = response.c_str();
 		const char* eol = iter + response.size();
 
@@ -429,12 +428,8 @@ private:
 				}
 
 				// Invalid if a partial word was given
-				valid = ((i == 4) || (i == 0));
-
 				if (i == 4)
-				{
 					words.push_back(word);
-				}
 			}
 		}
 		else
@@ -472,12 +467,8 @@ private:
 				}
 
 				// Invalid if a partial word was given
-				valid = ((i == 8) || (i == 0));
-
 				if (i == 8)
-				{
 					words.push_back(word);
-				}
 			}
 		}
 
@@ -660,6 +651,10 @@ DreamPicoPort::~DreamPicoPort() {
 	disconnect();
 }
 
+bool DreamPicoPort::isForPhysicalController() {
+	return true;
+}
+
 bool DreamPicoPort::send(const MapleMsg& msg) {
 	if (dpp_api_device) {
 		dpp_api::msg::tx::Maple tx;
@@ -731,7 +726,7 @@ int DreamPicoPort::getBus() const {
 
 u32 DreamPicoPort::getFunctionCode(int forPort) const {
 	u32 mask = 0;
-	if (peripherals.size() > forPort) {
+	if ((int)peripherals.size() > forPort) {
 		for (const auto& peripheral : peripherals[forPort]) {
 			mask |= peripheral[0];
 		}
@@ -742,7 +737,7 @@ u32 DreamPicoPort::getFunctionCode(int forPort) const {
 
 std::array<u32, 3> DreamPicoPort::getFunctionDefinitions(int forPort) const {
 	std::array<u32, 3> arr{0, 0, 0};
-	if (peripherals.size() > forPort) {
+	if ((int)peripherals.size() > forPort) {
 		std::size_t idx = 0;
 		for (const auto& peripheral : peripherals[forPort]) {
 			arr[idx++] = SWAP32(peripheral[1]);
@@ -816,6 +811,15 @@ std::string DreamPicoPort::getName(std::string separator) const {
 		name += separator + std::string(1, portChar);
 	}
 	return name;
+}
+
+bool DreamPicoPort::needsRefresh() {
+	// TODO: implementing this method may also help to support hot plugging of VMUs/rumble packs here.
+	return false;
+}
+
+bool DreamPicoPort::isConnected() {
+	return connection_established;
 }
 
 void DreamPicoPort::connect() {

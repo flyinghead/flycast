@@ -32,7 +32,6 @@ public:
 	bool initialize(const std::string& saveDirectory) override;
 	void scrape(GameBoxart& item) override;
 	void scrape(std::vector<GameBoxart>& items) override;
-	~TheGamesDb() override;
 
 private:
 	void fetchPlatforms();

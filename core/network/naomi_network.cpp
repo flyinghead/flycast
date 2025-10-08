@@ -327,6 +327,8 @@ void SetNaomiNetworkConfig(int node)
 	{
 		write_naomi_eeprom(0x44, node == -1 ? 0
 				: node == 0 ? 1 : 2);
+		// the game wants the region there or it resets the eeprom
+		write_naomi_eeprom(0x30, config::Region);
 	}
 	else if (gameId == "SPIKERS BATTLE JAPAN VERSION")
 	{

@@ -61,15 +61,18 @@ bool GamepadDevice::handleButtonInput(int port, DreamcastKey key, bool pressed)
 	if (key == EMU_BTN_NONE)
 		return false;
 
+	if (buttonListener != nullptr)
+		buttonListener(port, key, pressed);
+	DEBUG_LOG(INPUT, "%d: BUTTON %s %d. kcode=%x", port, pressed ? "down" : "up", key, port >= 0 ? kcode[port] : 0);
+
 	if (key <= DC_BTN_BITMAPPED_LAST)
 	{
-		if (port >= 0)
-		{
-			if (pressed)
-				kcode[port] &= ~key;
-			else
-				kcode[port] |= key;
-		}
+		if (port < 0)
+			return false;
+		if (pressed)
+			kcode[port] &= ~key;
+		else
+			kcode[port] |= key;
 #ifdef TEST_AUTOMATION
 		if (record_input != NULL)
 			fprintf(record_input, "%ld button %x %04x\n", sh4_sched_now64(), port, kcode[port]);
@@ -148,9 +151,6 @@ bool GamepadDevice::handleButtonInput(int port, DreamcastKey key, bool pressed)
 			return false;
 		}
 	}
-	if (buttonListener != nullptr)
-		buttonListener(port, key, pressed);
-	DEBUG_LOG(INPUT, "%d: BUTTON %s %d. kcode=%x", port, pressed ? "down" : "up", key, port >= 0 ? kcode[port] : 0);
 
 	return true;
 }

@@ -24,18 +24,14 @@
 
 static bool operator<(const GameMedia &left, const GameMedia &right)
 {
-	return left.name < right.name;
+	return (int)left.arcade < (int)right.arcade
+			|| (left.arcade == right.arcade && left.name < right.name);
 }
 
 void GameScanner::insert_game(const GameMedia& game)
 {
 	LockGuard _(mutex);
 	game_list.insert(std::upper_bound(game_list.begin(), game_list.end(), game), game);
-}
-
-void GameScanner::insert_arcade_game(const GameMedia& game)
-{
-	arcade_game_list.insert(std::upper_bound(arcade_game_list.begin(), arcade_game_list.end(), game), game);
 }
 
 void GameScanner::add_game_directory(const std::string& path)
@@ -83,13 +79,13 @@ void GameScanner::add_game_directory(const std::string& path)
 				continue;
 			gameName = it->second->description;
 			fileName = fileName + " (" + gameName + ")";
-			insert_arcade_game(GameMedia{ fileName, item.path, item.name, gameName });
+			insert_game(GameMedia{ fileName, item.path, item.name, gameName, true });
 			continue;
 		}
 		else if (extension == "bin" || extension == "lst" || extension == "dat")
 		{
 			if (!config::HideLegacyNaomiRoms)
-				insert_arcade_game(GameMedia{ fileName, item.path, item.name, gameName });
+				insert_game(GameMedia{ fileName, item.path, item.name, gameName, true });
 			continue;
 		}
 		else if (extension == "chd" || extension == "gdi")
@@ -139,7 +135,6 @@ void GameScanner::fetch_game_list()
 				LockGuard _(mutex);
 				game_list.clear();
 			}
-			arcade_game_list.clear();
 			for (const auto& path : config::ContentPath.get())
 			{
 				try {
@@ -162,13 +157,11 @@ void GameScanner::fetch_game_list()
 						name = it->substr(4);
 					else
 						name = *it;
-					game_list.insert(game_list.begin(), { name, *it, name, "", true });
+					game_list.insert(game_list.begin(), { name, *it, name, "", false, true });
 				}
 				// Dreamcast BIOS
 				if (!dcbios.empty())
 					game_list.insert(game_list.begin(), { "Dreamcast BIOS" });
-				// Arcade games
-				game_list.insert(game_list.end(), arcade_game_list.begin(), arcade_game_list.end());
 			}
 			if (running)
 				scan_done = true;

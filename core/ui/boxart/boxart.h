@@ -49,6 +49,7 @@ private:
 	std::mutex mutex;
 	std::unique_ptr<Scraper> scraper;
 	std::unique_ptr<Scraper> offlineScraper;
+	std::unique_ptr<Scraper> arcadeScraper;
 	bool databaseLoaded = false;
 	bool databaseDirty = false;
 

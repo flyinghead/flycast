@@ -922,10 +922,11 @@ void gui_settings_controls(bool& maple_devices_changed)
 {
 	header("Physical Devices");
     {
-		if (ImGui::BeginTable("physicalDevices", 4, ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_NoSavedSettings))
+		if (ImGui::BeginTable("physicalDevices", 5, ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_NoSavedSettings))
 		{
 			ImGui::TableSetupColumn("System", ImGuiTableColumnFlags_WidthFixed);
 			ImGui::TableSetupColumn("Name", ImGuiTableColumnFlags_WidthStretch);
+			ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed);
 			ImGui::TableSetupColumn("Port", ImGuiTableColumnFlags_WidthFixed);
 			ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed);
 
@@ -939,7 +940,7 @@ void gui_settings_controls(bool& maple_devices_changed)
 			ImGui::TableSetColumnIndex(1);
 			ImGui::TextColored(gray, "Name");
 
-			ImGui::TableSetColumnIndex(2);
+			ImGui::TableSetColumnIndex(3);
 			ImGui::TextColored(gray, "Port");
 
 			for (int i = 0; i < GamepadDevice::GetGamepadCount(); i++)
@@ -954,7 +955,15 @@ void gui_settings_controls(bool& maple_devices_changed)
 				ImGui::TableSetColumnIndex(1);
 				ImGui::Text("%s", gamepad->name().c_str());
 
+#if defined(USE_DREAMLINK_DEVICES)
 				ImGui::TableSetColumnIndex(2);
+				DreamLinkGamepad* dreamLinkGamepad = dynamic_cast<DreamLinkGamepad*>(gamepad.get());
+				if (dreamLinkGamepad != nullptr) {
+					ImGui::Text("DreamLink status: %s", dreamLinkGamepad->dreamLinkStatus());
+				}
+#endif
+
+				ImGui::TableSetColumnIndex(3);
 				char port_name[32];
 				snprintf(port_name, sizeof(port_name), "##mapleport%d", i);
 				ImguiID _(port_name);
@@ -964,8 +973,14 @@ void gui_settings_controls(bool& maple_devices_changed)
 					for (int j = -1; j < (int)std::size(maple_ports) - 1; j++)
 					{
 						bool is_selected = gamepad->maple_port() == j;
-						if (ImGui::Selectable(maple_ports[j + 1], &is_selected))
+						if (ImGui::Selectable(maple_ports[j + 1], &is_selected)) {
 							gamepad->set_maple_port(j);
+#if defined(USE_DREAMLINK_DEVICES)
+							if (dreamLinkGamepad != nullptr) {
+								maple_devices_changed = true;
+							}
+#endif
+						}
 						if (is_selected)
 							ImGui::SetItemDefaultFocus();
 					}
@@ -973,7 +988,7 @@ void gui_settings_controls(bool& maple_devices_changed)
 					ImGui::EndCombo();
 				}
 
-				ImGui::TableSetColumnIndex(3);
+				ImGui::TableSetColumnIndex(4);
 				ImGui::SameLine(0, uiScaled(8));
 				if (gamepad->remappable() && ImGui::Button("Map"))
 				{
@@ -1011,7 +1026,7 @@ void gui_settings_controls(bool& maple_devices_changed)
 #if defined(_WIN32) && !defined(TARGET_UWP)
 	OptionCheckbox("Use Raw Input", config::UseRawInput, "Supports multiple pointing devices (mice, light guns) and keyboards");
 #endif
-#ifdef USE_DREAMCASTCONTROLLER
+#ifdef USE_DREAMLINK_DEVICES
 	{
 		DisabledScope scope(game_started);
 		OptionCheckbox("Use Physical VMU Memory", config::UsePhysicalVmuMemory,
@@ -1127,6 +1142,21 @@ void gui_settings_controls(bool& maple_devices_changed)
 					}
 					is_there_any_xhair |= enabled;
 				}
+
+#ifdef USE_DREAMLINK_DEVICES
+				if (port_count > 0)
+				{
+					ImGui::SameLine();
+					ImGui::PushID(bus);
+					bool pressed = OptionCheckbox("Use Network Expansion Devices", config::UseNetworkExpansionDevices[bus],
+						"Connect to expansion devices such as VMUs over local TCP.");
+					ImGui::PopID();
+
+					if (pressed)
+						maple_devices_changed = true;
+				}
+#endif
+
 				ImGui::PopItemWidth();
 			}
 			ImGui::EndTable();

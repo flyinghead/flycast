@@ -18,8 +18,10 @@
  */
 #include "dreamconn.h"
 
-#ifdef USE_DREAMCASTCONTROLLER
+#ifdef USE_DREAMLINK_DEVICES
 #include "hw/maple/maple_devs.h"
+#include "hw/maple/maple_if.h"
+#include "oslib/oslib.h"
 #include "ui/gui.h"
 #include <cfg/option.h>
 #include <SDL.h>
@@ -73,11 +75,15 @@ static bool receiveMsg(MapleMsg& msg, std::istream& stream)
 
 
 
-DreamConn::DreamConn(int bus) : bus(bus) {
+DreamConn::DreamConn(int bus, bool isForPhysicalController) : bus(bus), _isForPhysicalController(isForPhysicalController) {
 }
 
 DreamConn::~DreamConn() {
 	disconnect();
+}
+
+bool DreamConn::isForPhysicalController() {
+	return _isForPhysicalController;
 }
 
 bool DreamConn::send(const MapleMsg& msg) {
@@ -86,14 +92,11 @@ bool DreamConn::send(const MapleMsg& msg) {
 }
 
 bool DreamConn::send_no_lock(const MapleMsg& msg) {
-	asio::error_code ec;
-
-	if (maple_io_connected)
-		ec = sendMsg(msg, iostream);
-	else
+	if (!maple_io_connected)
 		return false;
+
+	auto ec = sendMsg(msg, iostream);
 	if (ec) {
-		maple_io_connected = false;
 		WARN_LOG(INPUT, "DreamcastController[%d] send failed: %s", bus, ec.message().c_str());
 		disconnect();
 		return false;
@@ -111,17 +114,119 @@ bool DreamConn::send(const MapleMsg& txMsg, MapleMsg& rxMsg) {
 }
 
 void DreamConn::changeBus(int newBus) {
-	bus = newBus;
+	if (newBus != bus) {
+		// A different TCP port is used depending on the bus. We'll need to disconnect from the current port.
+		// The caller will call connect() again if appropriate.
+		disconnect();
+		bus = newBus;
+	}
+}
+
+bool DreamConn::needsRefresh() {
+	if (!isConnected())
+		return false;
+
+	std::lock_guard<std::mutex> lock(send_mutex);
+
+	// Check if there is a refresh message waiting in the socket buffer.
+	// Avoid reading (consuming) any other kind of message in this context.
+	const int REFRESH_MESSAGE_SIZE = 13;
+	asio::ip::tcp::socket& sock = static_cast<asio::ip::tcp::socket&>(iostream.socket());
+	if (sock.available() < REFRESH_MESSAGE_SIZE)
+		return false;
+
+	char buffer[REFRESH_MESSAGE_SIZE];
+	int bytesPeeked = recv(sock.native_handle(), buffer, REFRESH_MESSAGE_SIZE, MSG_PEEK);
+	if (bytesPeeked != REFRESH_MESSAGE_SIZE)
+		return false;
+
+	MapleMsg message;
+	sscanf(buffer, "%hhx %hhx %hhx %hhx", &message.command, &message.destAP, &message.originAP, &message.size);
+	if (message.command == 0xff && message.destAP == 0xff && message.originAP == 0xff && message.size == 0xff) {
+		// It is a refresh message, so consume it.
+		receiveMsg(message, iostream);
+
+		if (!updateExpansionDevs())
+			return false;
+
+		return true;
+	}
+	return false;
+}
+
+// Sends a message to query for expansion devices.
+// Disconnects upon failure.
+bool DreamConn::updateExpansionDevs() {
+	// Now get the controller configuration
+	MapleMsg msg;
+	msg.command = MDCF_GetCondition;
+	msg.destAP = (bus << 6) | 0x20;
+	msg.originAP = bus << 6;
+	msg.setData(MFID_0_Input);
+
+	auto ec = sendMsg(msg, iostream);
+	if (ec)
+	{
+		WARN_LOG(INPUT, "DreamcastController[%d] connection failed: %s", bus, ec.message().c_str());
+		disconnect();
+		return false;
+	}
+	if (!receiveMsg(msg, iostream)) {
+		WARN_LOG(INPUT, "DreamcastController[%d] read timeout", bus);
+		disconnect();
+		return false;
+	}
+
+	expansionDevs = msg.originAP & 0x1f;
+	config::MapleExpansionDevices[bus][0] = hasVmu() ? MDT_SegaVMU : MDT_None;
+	config::MapleExpansionDevices[bus][1] = hasRumble() ? MDT_PurupuruPack : MDT_None;
+	return true;
+}
+
+bool DreamConn::isSocketDisconnected() {
+	std::lock_guard<std::mutex> lock(send_mutex);
+
+	// A socket was disconnected if 'select()' says the socket is ready to read, and a subsequent 'recv()' fails or says 0 bytes available to read.
+	auto& sock = static_cast<asio::ip::tcp::socket&>(iostream.socket());
+	auto nativeHandle = sock.native_handle();
+	fd_set readfds;
+	FD_ZERO(&readfds);
+	FD_SET(nativeHandle, &readfds);
+	timeval timeout = { 0, 0 };
+	// nfds should be set to the highest-numbered file descriptor plus 1.
+	// See https://www.man7.org/linux/man-pages/man2/select.2.html
+	int nfds = nativeHandle + 1;
+	int nReady = select(nfds, &readfds, nullptr, nullptr, &timeout);
+	bool socketIsReady = nReady > 0 && FD_ISSET(nativeHandle, &readfds);
+	if (!socketIsReady)
+		return false;
+
+	char dest;
+	int len = recv(nativeHandle, &dest, sizeof(dest), MSG_PEEK);
+	return len <= 0;
+}
+
+bool DreamConn::isConnected() {
+	if (!maple_io_connected)
+		return false;
+
+	if (isSocketDisconnected()) {
+		NOTICE_LOG(INPUT, "DreamLink server disconnected bus[%d]", bus);
+		disconnect();
+		return false;
+	}
+
+	return true;
 }
 
 void DreamConn::connect() {
 	maple_io_connected = false;
 
-	asio::error_code ec;
-
 #if !defined(_WIN32)
-	WARN_LOG(INPUT, "DreamcastController[%d] connection failed: DreamConn+ / DreamConn S Controller supported on Windows only", bus);
-	return;
+	if (isForPhysicalController()) {
+		WARN_LOG(INPUT, "DreamcastController[%d] connection failed: DreamConn+ / DreamConn S Controller supported on Windows only", bus);
+		return;
+	}
 #endif
 
 	iostream = asio::ip::tcp::iostream("localhost", std::to_string(BASE_PORT + bus));
@@ -132,54 +237,48 @@ void DreamConn::connect() {
 	}
 	iostream.expires_from_now(std::chrono::seconds(1));
 
-
-	// Now get the controller configuration
-	MapleMsg msg;
-	msg.command = MDCF_GetCondition;
-	msg.destAP = (bus << 6) | 0x20;
-	msg.originAP = bus << 6;
-	msg.setData(MFID_0_Input);
-
-	ec = sendMsg(msg, iostream);
-	if (ec)
-	{
-		WARN_LOG(INPUT, "DreamcastController[%d] connection failed: %s", bus, ec.message().c_str());
-		disconnect();
+	if (!updateExpansionDevs())
 		return;
-	}
-	if (!receiveMsg(msg, iostream)) {
-		WARN_LOG(INPUT, "DreamcastController[%d] read timeout", bus);
-		disconnect();
-		return;
-	}
 
 	iostream.expires_from_now(std::chrono::duration<u32>::max());	// don't use a 64-bit based duration to avoid overflow
 
-	expansionDevs = msg.originAP & 0x1f;
-
-	config::MapleExpansionDevices[bus][0] = hasVmu() ? MDT_SegaVMU : MDT_None;
-	config::MapleExpansionDevices[bus][1] = hasRumble() ? MDT_PurupuruPack : MDT_None;
-
-	if (hasVmu() || hasRumble())
-	{
-		NOTICE_LOG(INPUT, "Connected to DreamcastController[%d]: Type:%s, VMU:%d, Rumble Pack:%d", bus, getName().c_str(), hasVmu(), hasRumble());
-		maple_io_connected = true;
-	}
-	else
-	{
-		WARN_LOG(INPUT, "DreamcastController[%d] connection: no VMU or Rumble Pack connected", bus);
-		disconnect();
-		return;
-	}
+	// Remain connected even if no devices were found, so that connecting a device later will be detected
+	NOTICE_LOG(INPUT, "Connected to DreamcastController[%d]: Type:%s, VMU:%d, Rumble Pack:%d", bus, getName().c_str(), hasVmu(), hasRumble());
+	maple_io_connected = true;
 }
 
 void DreamConn::disconnect() {
+	// Already disconnected
+	if (!maple_io_connected)
+		return;
+
+	maple_io_connected = false;
 	if (iostream)
 		iostream.close();
 
-	maple_io_connected = false;
-
+	// Notify the user of the disconnect
 	NOTICE_LOG(INPUT, "Disconnected from DreamcastController[%d]", bus);
+	char buf[128];
+	snprintf(buf, sizeof(buf), "WARNING: DreamLink disconnected from port %c", 'A' + bus);
+	os_notify(buf, 6000);
+
+	tearDownDreamLinkDevices(shared_from_this());
+	maple_ReconnectDevices();
+}
+
+void DreamConn::gameTermination() {
+	// Clear the remote VMU screen
+	MapleMsg msg;
+	msg.command = MDCF_BlockWrite;
+	msg.destAP = (bus << 6) | 0x20;
+	msg.originAP = bus << 6;
+
+	u32 localData[0x32];
+	memset(localData, 0, sizeof(localData));
+	localData[0] = MFID_2_LCD;
+	msg.setData(localData);
+
+	send(msg);
 }
 
 #endif

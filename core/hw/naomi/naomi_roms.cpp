@@ -8463,6 +8463,44 @@ const Game Games[] =
 		"mda-c0076",
 		&tetgiant_inputs,
     },
+    {
+    	"btlracer",
+		nullptr,
+		"Saikyou Saisoku Battle Racer",
+		0x08000000,
+		0x5502,
+		"segasp",
+		M4,
+		ROT0,
+        {
+        	{ "ic62",  0x00000000, 0x01000000, 0x86c68cc9 },
+			{ "ic63",  0x01000000, 0x01000000, 0xe1692bce },
+			{ "ic64",  0x02000000, 0x01000000, 0x835c458b },
+			{ "ic65",  0x03000000, 0x01000000, 0x66beafaf },
+			{ "ic66s", 0x04000000, 0x01000000, 0x52d0c1fc },
+			{ "ic67s", 0x05000000, 0x01000000, 0xb8c9c038 },
+			{ "ic68s", 0x06000000, 0x01000000, 0xea7fd93b },
+			{ "ic69s", 0x07000000, 0x01000000, 0x43b2e726 },
+
+			{ "317-0579-com.ic15", 0, 0x800, 0x4951c212, Key },
+        },
+		nullptr,
+		&btlracer_inputs,
+    },
+    {
+    	"monomedal",
+		nullptr,
+		"Monopoly the Medal 2nd Edition",
+		0x08000000,
+		0x5502,
+		"segasp",
+		M4,
+		ROT0,
+        {
+			{ "317-0528-jpn.ic15", 0, 0x800, 0x1af3dac5, Key },
+        },
+		"mda-c0056a",
+    },
 	{
 		nullptr
 	}

@@ -117,8 +117,8 @@ public:
 	constexpr static int VENDOR_MESA = 0x10005;
 
 private:
-	void beginFrame(vk::Extent2D extent);
-	void endFrame();
+	void beginFrame(vk::Extent2D extent, vk::Image barrierImage);
+	void endFrame(vk::Image barrierImage);
 
 	VMAllocator allocator;
 

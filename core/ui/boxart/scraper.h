@@ -40,6 +40,7 @@ struct GameBoxart
 	std::string boxartPath;
 	std::string boxartUrl;
 
+	bool arcade = false;
 	bool parsed = false;
 	bool scraped = false;
 	bool busy = false;
@@ -87,7 +88,7 @@ public:
 	virtual ~Scraper() = default;
 
 protected:
-	bool downloadImage(const std::string& url, const std::string& localName);
+	bool downloadImage(const std::string& url, const std::string& localName, bool mute = false);
 	std::string makeUniqueFilename(const std::string& url);
 
 private:
