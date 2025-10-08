@@ -33,11 +33,6 @@
 #include <dirent.h>
 #endif
 
-#if defined(_WIN32)
-#include <windows.h>
-#include <setupapi.h>
-#endif
-
 static asio::error_code sendMsg(const MapleMsg& msg, asio::ip::tcp::iostream& stream)
 {
 	std::ostringstream s;

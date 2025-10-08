@@ -42,7 +42,7 @@
 #include <dirent.h>
 #endif
 
-#if defined(_WIN32)
+#if defined(_WIN32) && !defined(TARGET_UWP)
 #include <windows.h>
 #include <setupapi.h>
 #endif
@@ -110,11 +110,14 @@ public:
 		}
 
 		asio::error_code ec;
-		serial_handler.open(serial_device, ec);
+		if (!serial_device.empty()) {
+			serial_handler.open(serial_device, ec);
+		}
 
 		if (ec || !serial_handler.is_open()) {
 			WARN_LOG(INPUT, "DreamPicoPort serial connection failed: %s", ec.message().c_str());
 			disconnect();
+			return;
 		} else {
 			NOTICE_LOG(INPUT, "DreamPicoPort serial connection successful!");
 		}
@@ -231,7 +234,8 @@ private:
 	static std::string getFirstSerialDevice() {
 
 		// On Windows, we get the first serial device matching our VID/PID
-#if defined(_WIN32)
+		// (getFirstSerialDevice() not compatible with UWP)
+#if defined(_WIN32) && !defined(TARGET_UWP)
 		HDEVINFO deviceInfoSet = SetupDiGetClassDevs(NULL, "USB", NULL, DIGCF_PRESENT | DIGCF_ALLCLASSES);
 		if (deviceInfoSet == INVALID_HANDLE_VALUE) {
 			return "";
@@ -266,7 +270,6 @@ private:
 		}
 
 		SetupDiDestroyDeviceInfoList(deviceInfoSet);
-		return "";
 #endif
 
 #if defined(__linux__) || (defined(__APPLE__) && defined(TARGET_OS_MAC))
@@ -292,8 +295,8 @@ private:
 			}
 			closedir(dir);
 		}
-		return "";
 #endif
+		return "";
 	}
 
 	asio::error_code transmit(
