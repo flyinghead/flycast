@@ -24,8 +24,6 @@
 
 #include "DreamPicoPortApi.hpp"
 
-#include <asio.hpp>
-
 #include <atomic>
 #include <chrono>
 #include <vector>
@@ -131,10 +129,6 @@ private:
 	std::string getName(std::string separator) const;
 
 private:
-    asio::error_code sendCmd(const std::string& cmd);
-    asio::error_code sendMsg(const MapleMsg& msg);
-    asio::error_code receiveCmd(std::string& cmd);
-    asio::error_code receiveMsg(MapleMsg& msg);
 	void determineHardwareBus(int joystick_idx, SDL_Joystick* sdl_joystick);
     bool queryInterfaceVersion();
     bool queryPeripherals();

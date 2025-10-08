@@ -23,7 +23,11 @@
 #include "hw/maple/maple_devs.h"
 #include "ui/gui.h"
 #include <cfg/option.h>
-#include <SDL.h>
+
+// boost
+#include <asio.hpp>
+
+// C++ standard library
 #include <iomanip>
 #include <sstream>
 #include <optional>
