@@ -30,7 +30,6 @@
 // C++ standard library
 #include <iomanip>
 #include <sstream>
-#include <optional>
 #include <thread>
 #include <list>
 #include <vector>
@@ -38,8 +37,6 @@
 #include <mutex>
 #include <condition_variable>
 #include <atomic>
-#include <locale>
-#include <codecvt>
 
 #if defined(__linux__) || (defined(__APPLE__) && defined(TARGET_OS_MAC))
 #include <dirent.h>
@@ -50,6 +47,7 @@
 #include <setupapi.h>
 #endif
 
+// asio::serial_port is not accessible for UWP. DreamPicoPort-API may be used in UWP.
 #ifndef TARGET_UWP
 class DreamPicoPortSerialHandler
 {
@@ -239,7 +237,7 @@ private:
 
 		// On Windows, we get the first serial device matching our VID/PID
 		// (getFirstSerialDevice() not compatible with UWP)
-#if defined(_WIN32) && !defined(TARGET_UWP)
+#if defined(_WIN32)
 		HDEVINFO deviceInfoSet = SetupDiGetClassDevs(NULL, "USB", NULL, DIGCF_PRESENT | DIGCF_ALLCLASSES);
 		if (deviceInfoSet == INVALID_HANDLE_VALUE) {
 			return "";
@@ -1113,15 +1111,19 @@ void DreamPicoPort::determineHardwareBus(int joystick_idx, SDL_Joystick* sdl_joy
 		// Set serial number if found in SDL_hid
 		if (my_dev) {
 			if (serial_number.empty() && my_dev->serial_number) {
-				std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
-				serial_number = converter.to_bytes(my_dev->serial_number);
+				int len = WideCharToMultiByte(CP_UTF8, 0, my_dev->serial_number, -1, nullptr, 0, nullptr, nullptr);
+				if (len > 0) {
+					std::vector<char> buffer(len);
+					WideCharToMultiByte(CP_UTF8, 0, my_dev->serial_number, -1, buffer.data(), len, nullptr, nullptr);
+					serial_number = std::string(buffer.data());
+				}
 			}
 		}
 
 		SDL_hid_free_enumeration(devs);
 	}
 
-#endif
+#endif // #if defined(_WIN32)
 
 	if (hardware_bus < 0) {
 		// The number of buttons gives a clue as to what index the controller is
