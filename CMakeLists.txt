@@ -486,6 +486,8 @@ if(NOT LIBRETRO)
 		add_subdirectory(core/sdl)
 
 		if (NOT NINTENDO_SWITCH)
+			target_compile_definitions(${PROJECT_NAME} PRIVATE USE_DREAMLINK_DEVICES=1)
+
 			if ((WIN32 OR WINDOWS_STORE) AND NOT MINGW)
 				# Use winrt implementation of the library
 				option(DREAMPICOPORT_WITH_LIBUSB "Use libusb to access DreamPicoPort-API" OFF)
