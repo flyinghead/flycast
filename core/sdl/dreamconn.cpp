@@ -248,7 +248,7 @@ void DreamConn::connect() {
 
 #if !defined(_WIN32)
 	if (isForPhysicalController()) {
-		WARN_LOG(INPUT, "DreamcastController[%d] connection failed: DreamConn+ / DreamConn S Controller supported on Windows only", bus);
+		WARN_LOG(INPUT, "DreamcastController[%d] connection failed: DreamConn+ / DreamConn S Controller supported on Windows only", mImp->bus);
 		return;
 	}
 #endif
