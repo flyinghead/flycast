@@ -25,7 +25,6 @@
 #include <cfg/option.h>
 
 #ifndef TARGET_UWP
-// boost
 #include <asio.hpp>
 #endif
 

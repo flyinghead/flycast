@@ -16,6 +16,8 @@
     You should have received a copy of the GNU General Public License
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
  */
+#include <asio.hpp>
+
 #include "dreamconn.h"
 
 #ifdef USE_DREAMLINK_DEVICES
@@ -25,7 +27,6 @@
 #include "ui/gui.h"
 #include <cfg/option.h>
 #include <SDL.h>
-#include <asio.hpp>
 #include <iomanip>
 #include <sstream>
 
@@ -68,9 +69,15 @@ static bool receiveMsg(MapleMsg& msg, std::istream& stream)
 
 
 
+class DreamConnImp {
+public:
+	asio::ip::tcp::iostream iostream;
+};
 
-
-DreamConn::DreamConn(int bus, bool isForPhysicalController) : bus(bus), _isForPhysicalController(isForPhysicalController) {
+DreamConn::DreamConn(int bus, bool isForPhysicalController) :
+	bus(bus),
+	_isForPhysicalController(isForPhysicalController),
+	mImp(std::make_unique<DreamConnImp>()) {
 }
 
 DreamConn::~DreamConn() {
@@ -90,7 +97,7 @@ bool DreamConn::send_no_lock(const MapleMsg& msg) {
 	if (!maple_io_connected)
 		return false;
 
-	auto ec = sendMsg(msg, iostream);
+	auto ec = sendMsg(msg, mImp->iostream);
 	if (ec) {
 		WARN_LOG(INPUT, "DreamcastController[%d] send failed: %s", bus, ec.message().c_str());
 		disconnect();
@@ -105,7 +112,7 @@ bool DreamConn::send(const MapleMsg& txMsg, MapleMsg& rxMsg) {
 	if (!send_no_lock(txMsg)) {
 		return false;
 	}
-	return receiveMsg(rxMsg, iostream);
+	return receiveMsg(rxMsg, mImp->iostream);
 }
 
 void DreamConn::changeBus(int newBus) {
@@ -126,7 +133,7 @@ bool DreamConn::needsRefresh() {
 	// Check if there is a refresh message waiting in the socket buffer.
 	// Avoid reading (consuming) any other kind of message in this context.
 	const int REFRESH_MESSAGE_SIZE = 13;
-	asio::ip::tcp::socket& sock = static_cast<asio::ip::tcp::socket&>(iostream.socket());
+	asio::ip::tcp::socket& sock = static_cast<asio::ip::tcp::socket&>(mImp->iostream.socket());
 	if (sock.available() < REFRESH_MESSAGE_SIZE)
 		return false;
 
@@ -139,7 +146,7 @@ bool DreamConn::needsRefresh() {
 	sscanf(buffer, "%hhx %hhx %hhx %hhx", &message.command, &message.destAP, &message.originAP, &message.size);
 	if (message.command == 0xff && message.destAP == 0xff && message.originAP == 0xff && message.size == 0xff) {
 		// It is a refresh message, so consume it.
-		receiveMsg(message, iostream);
+		receiveMsg(message, mImp->iostream);
 
 		if (!updateExpansionDevs())
 			return false;
@@ -159,14 +166,14 @@ bool DreamConn::updateExpansionDevs() {
 	msg.originAP = bus << 6;
 	msg.setData(MFID_0_Input);
 
-	auto ec = sendMsg(msg, iostream);
+	auto ec = sendMsg(msg, mImp->iostream);
 	if (ec)
 	{
 		WARN_LOG(INPUT, "DreamcastController[%d] connection failed: %s", bus, ec.message().c_str());
 		disconnect();
 		return false;
 	}
-	if (!receiveMsg(msg, iostream)) {
+	if (!receiveMsg(msg, mImp->iostream)) {
 		WARN_LOG(INPUT, "DreamcastController[%d] read timeout", bus);
 		disconnect();
 		return false;
@@ -182,7 +189,7 @@ bool DreamConn::isSocketDisconnected() {
 	std::lock_guard<std::mutex> lock(send_mutex);
 
 	// A socket was disconnected if 'select()' says the socket is ready to read, and a subsequent 'recv()' fails or says 0 bytes available to read.
-	auto& sock = static_cast<asio::ip::tcp::socket&>(iostream.socket());
+	auto& sock = static_cast<asio::ip::tcp::socket&>(mImp->iostream.socket());
 	auto nativeHandle = sock.native_handle();
 	fd_set readfds;
 	FD_ZERO(&readfds);
@@ -224,18 +231,18 @@ void DreamConn::connect() {
 	}
 #endif
 
-	iostream = asio::ip::tcp::iostream("localhost", std::to_string(BASE_PORT + bus));
-	if (!iostream) {
-		WARN_LOG(INPUT, "DreamcastController[%d] connection failed: %s", bus, iostream.error().message().c_str());
+	mImp->iostream = asio::ip::tcp::iostream("localhost", std::to_string(BASE_PORT + bus));
+	if (!mImp->iostream) {
+		WARN_LOG(INPUT, "DreamcastController[%d] connection failed: %s", bus, mImp->iostream.error().message().c_str());
 		disconnect();
 		return;
 	}
-	iostream.expires_from_now(std::chrono::seconds(1));
+	mImp->iostream.expires_from_now(std::chrono::seconds(1));
 
 	if (!updateExpansionDevs())
 		return;
 
-	iostream.expires_from_now(std::chrono::duration<u32>::max());	// don't use a 64-bit based duration to avoid overflow
+	mImp->iostream.expires_from_now(std::chrono::duration<u32>::max());	// don't use a 64-bit based duration to avoid overflow
 
 	// Remain connected even if no devices were found, so that connecting a device later will be detected
 	NOTICE_LOG(INPUT, "Connected to DreamcastController[%d]: Type:%s, VMU:%d, Rumble Pack:%d", bus, getName().c_str(), hasVmu(), hasRumble());
@@ -248,8 +255,8 @@ void DreamConn::disconnect() {
 		return;
 
 	maple_io_connected = false;
-	if (iostream)
-		iostream.close();
+	if (mImp->iostream)
+		mImp->iostream.close();
 
 	// Notify the user of the disconnect
 	NOTICE_LOG(INPUT, "Disconnected from DreamcastController[%d]", bus);

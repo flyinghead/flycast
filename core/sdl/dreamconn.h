@@ -21,12 +21,8 @@
 
 #ifdef USE_DREAMLINK_DEVICES
 
-#ifdef _WIN32
-#define WIN32_LEAN_AND_MEAN
-#endif
-
-#include <asio.hpp>
 #include <mutex>
+#include <memory>
 
 class DreamConn : public DreamLink
 {
@@ -37,7 +33,8 @@ class DreamConn : public DreamLink
 	bool _isForPhysicalController;
 	bool maple_io_connected = false;
 	u8 expansionDevs = 0;
-	asio::ip::tcp::iostream iostream;
+	// Hides some implementation details
+	std::unique_ptr<class DreamConnImp> mImp;
 	std::mutex send_mutex;
 
 public:
