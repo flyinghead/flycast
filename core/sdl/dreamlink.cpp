@@ -18,8 +18,6 @@
  */
 #include "dreamlink.h"
 
-#ifdef USE_DREAMLINK_DEVICES
-
 #include "dreamconn.h"
 #include "dreampicoport.h"
 
@@ -277,40 +275,3 @@ void DreamLinkGamepad::setBaseDefaultMapping(const std::shared_ptr<InputMapping>
 		});
 	}
 }
-
-#else // USE_DREAMCASTCONTROLLER
-
-bool DreamLinkGamepad::isDreamcastController(int deviceIndex) {
-	return false;
-}
-DreamLinkGamepad::DreamLinkGamepad(int maple_port, int joystick_idx, SDL_Joystick* sdl_joystick)
-	: SDLGamepad(maple_port, joystick_idx, sdl_joystick) {
-}
-DreamLinkGamepad::~DreamLinkGamepad() {
-}
-
-const char* DreamLinkGamepad::dreamLinkStatus() {
-	return "";
-}
-
-void DreamLinkGamepad::set_maple_port(int port) {
-	SDLGamepad::set_maple_port(port);
-}
-void DreamLinkGamepad::registered() {
-}
-void DreamLinkGamepad::resetMappingToDefault(bool arcade, bool gamepad) {
-	SDLGamepad::resetMappingToDefault(arcade, gamepad);
-}
-const char *DreamLinkGamepad::get_button_name(u32 code) {
-	return SDLGamepad::get_button_name(code);
-}
-const char *DreamLinkGamepad::get_axis_name(u32 code) {
-	return SDLGamepad::get_axis_name(code);
-}
-std::shared_ptr<InputMapping> DreamLinkGamepad::getDefaultMapping() {
-	return SDLGamepad::getDefaultMapping();
-}
-void DreamLinkGamepad::setBaseDefaultMapping(const std::shared_ptr<InputMapping>& mapping) const {
-}
-
-#endif

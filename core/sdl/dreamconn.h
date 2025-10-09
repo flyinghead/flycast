@@ -17,9 +17,10 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
  */
 #pragma once
-#include "dreamlink.h"
 
 #ifdef USE_DREAMLINK_DEVICES
+
+#include "dreamlink.h"
 
 #include <mutex>
 #include <memory>
@@ -29,13 +30,8 @@ class DreamConn : public DreamLink
 	//! Base port of communication to DreamConn
 	static constexpr u16 BASE_PORT = 37393;
 
-	int bus = -1;
-	bool _isForPhysicalController;
-	bool maple_io_connected = false;
-	u8 expansionDevs = 0;
-	// Hides some implementation details
+	//! Hides some implementation details, mainly asio
 	std::unique_ptr<class DreamConnImp> mImp;
-	std::mutex send_mutex;
 
 public:
 	//! DreamConn VID:4457 PID:4443
@@ -56,9 +52,7 @@ private:
 	bool send_no_lock(const MapleMsg& msg);
 
 public:
-	int getBus() const override {
-		return bus;
-	}
+	int getBus() const override;
 
     u32 getFunctionCode(int forPort) const override {
 		if (forPort == 1 && hasVmu()) {
@@ -80,13 +74,9 @@ public:
 		return std::array<u32, 3>{0, 0, 0};
 	}
 
-	bool hasVmu() const {
-		return expansionDevs & 1;
-	}
+	bool hasVmu() const;
 
-	bool hasRumble() const {
-		return expansionDevs & 2;
-	}
+	bool hasRumble() const;
 
 	void changeBus(int newBus) override;
 

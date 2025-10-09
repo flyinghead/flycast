@@ -19,7 +19,6 @@
 
 #include "dreampicoport.h"
 
-#ifdef USE_DREAMLINK_DEVICES
 #include "hw/maple/maple_devs.h"
 #include "ui/gui.h"
 #include <cfg/option.h>
@@ -1315,5 +1314,3 @@ bool DreamPicoPort::queryPeripherals() {
 
 	return false;
 }
-
-#endif // USE_DREAMCASTCONTROLLER
