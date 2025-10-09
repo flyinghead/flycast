@@ -21,6 +21,10 @@
 
 #ifdef USE_DREAMLINK_DEVICES
 
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#endif
+
 #include <asio.hpp>
 #include <mutex>
 
