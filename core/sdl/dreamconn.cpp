@@ -16,10 +16,10 @@
     You should have received a copy of the GNU General Public License
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
  */
+#include "dreamconn.h"
 
 #ifdef USE_DREAMLINK_DEVICES
 #include <asio.hpp>
-#include "dreamconn.h"
 #include "hw/maple/maple_devs.h"
 #include "hw/maple/maple_if.h"
 #include "oslib/oslib.h"
