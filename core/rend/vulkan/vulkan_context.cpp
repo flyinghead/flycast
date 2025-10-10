@@ -1172,7 +1172,7 @@ void VulkanContext::DoSwapAutomation()
 	{
 		bool supportsBlit = true;
 		vk::FormatProperties properties;
-		physicalDevice.getFormatProperties(colorFormat, &properties);
+		physicalDevice.getFormatProperties(presentFormat, &properties);
 		if (!(properties.optimalTilingFeatures & vk::FormatFeatureFlagBits::eBlitSrc))
 			supportsBlit = false;
 		physicalDevice.getFormatProperties(vk::Format::eR8G8B8A8Unorm, &properties);
@@ -1257,7 +1257,7 @@ void VulkanContext::DoSwapAutomation()
 			img += subresourceLayout.offset;
 
 			u8 *end = img + settings.display.width * settings.display.height * 4;
-			if (!supportsBlit && colorFormat == vk::Format::eB8G8R8A8Unorm)
+			if (!supportsBlit && presentFormat == vk::Format::eB8G8R8A8Unorm)
 			{
 				for (u8 *p = img; p < end; p += 4)
 				{
