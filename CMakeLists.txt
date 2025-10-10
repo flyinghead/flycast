@@ -1,4 +1,10 @@
-cmake_minimum_required(VERSION 3.25...4.0)
+if(APPLE AND NOT LIBRETRO)
+	# Requirement from SDL
+	# Minimum version for $<LINK_LIBRARY:feature,library-list>
+	cmake_minimum_required(VERSION 3.24)
+else()
+	cmake_minimum_required(VERSION 3.22.1)
+endif()
 
 find_program(CCACHE_PROGRAM ccache)
 if(CCACHE_PROGRAM)
