@@ -73229,7 +73229,7 @@ struct retro_core_options_v2 options_sr = {
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_INFO_0_SV "Välj ett maximalt storleksvärde för en textur som ska skalas upp, om texturstorleken är högre än det valda värdet kommer den inte att skalas upp."
 #define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_SV "Ursprunglig djupinterpolation"
 #define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_SV "Hjälper till med texturkorruption och djupproblem på AMD-GPU:n. Kan även hjälpa Intel-GPU:n i vissa fall."
-#define CORE_OPTION_NAME_FIX_UPSCALE_BLEEDING_EDGE_LABEL_SV NULL
+#define CORE_OPTION_NAME_FIX_UPSCALE_BLEEDING_EDGE_LABEL_SV "Rätta till blödande kanter vid uppskalning"
 #define CORE_OPTION_NAME_FIX_UPSCALE_BLEEDING_EDGE_INFO_0_SV "Hjälper till med texturblödning vid uppskalning. Om du inaktiverar det kan det hjälpa om bildpunkter förvrängs vid uppskalning i 2D-spel (MVC2, CVS, KOF, etc.)"
 #define CORE_OPTION_NAME_THREADED_RENDERING_LABEL_SV "Trådad rendering"
 #define CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_SV "Kör GPU och CPU på olika trådar. Starkt rekommenderat."
@@ -83247,52 +83247,52 @@ struct retro_core_options_v2 options_val = {
 /* RETRO_LANGUAGE_VN */
 
 #define CATEGORY_SYSTEM_LABEL_VN "Hệ thống"
-#define CATEGORY_SYSTEM_INFO_0_VN NULL
-#define CATEGORY_VIDEO_LABEL_VN "Hình ảnh"
-#define CATEGORY_VIDEO_INFO_0_VN NULL
+#define CATEGORY_SYSTEM_INFO_0_VN "Cấu hình vùng, ngôn ngữ, BIOS và phần cứng cơ bản."
+#define CATEGORY_VIDEO_LABEL_VN NULL
+#define CATEGORY_VIDEO_INFO_0_VN "Cấu hình độ phân giải, trong suốt không phụ thuộc thứ tự và hiệu ứng hình ảnh."
 #define CATEGORY_PERFORMANCE_LABEL_VN "Hiệu năng"
-#define CATEGORY_PERFORMANCE_INFO_0_VN NULL
-#define CATEGORY_HACKS_LABEL_VN "Hacks giả lập"
-#define CATEGORY_HACKS_INFO_0_VN NULL
+#define CATEGORY_PERFORMANCE_INFO_0_VN "Cấu hình kết xuất đa luồng và bỏ khung hình."
+#define CATEGORY_HACKS_LABEL_VN "Thủ thuật giả lập"
+#define CATEGORY_HACKS_INFO_0_VN "Cấu hình chế độ màn hình rộng, tốc độ tải GD-ROM và thay thế texture."
 #define CATEGORY_INPUT_LABEL_VN "Đầu vào"
-#define CATEGORY_INPUT_INFO_0_VN NULL
-#define CATEGORY_EXPANSIONS_LABEL_VN NULL
-#define CATEGORY_EXPANSIONS_INFO_0_VN NULL
-#define CATEGORY_VMU_LABEL_VN NULL
-#define CATEGORY_VMU_INFO_0_VN NULL
+#define CATEGORY_INPUT_INFO_0_VN "Cấu hình tay cầm và súng ánh sáng."
+#define CATEGORY_EXPANSIONS_LABEL_VN "Khe mở rộng tay cầm"
+#define CATEGORY_EXPANSIONS_INFO_0_VN "Chọn thiết bị (VMU, thiết bị rung) cắm vào mỗi khe mở rộng tay cầm."
+#define CATEGORY_VMU_LABEL_VN "Bộ nhớ trực quan Vmu"
+#define CATEGORY_VMU_INFO_0_VN "Cấu hình file lưu VMU theo game và hiển thị VMU trên màn hình."
 #define CORE_OPTION_NAME_REGION_LABEL_VN "Khu vực"
-#define OPTION_VAL_JAPAN_VN NULL
-#define OPTION_VAL_USA_VN NULL
-#define OPTION_VAL_EUROPE_VN NULL
-#define OPTION_VAL_DEFAULT_VN NULL
+#define OPTION_VAL_JAPAN_VN "Nhật Bản"
+#define OPTION_VAL_USA_VN "Mỹ"
+#define OPTION_VAL_EUROPE_VN "Châu Âu"
+#define OPTION_VAL_DEFAULT_VN "Mặc định"
 #define CORE_OPTION_NAME_LANGUAGE_LABEL_VN "Ngôn ngữ"
-#define CORE_OPTION_NAME_LANGUAGE_INFO_0_VN NULL
+#define CORE_OPTION_NAME_LANGUAGE_INFO_0_VN "Thay đổi ngôn ngữ được BIOS và các game nhiều ngôn ngữ sử dụng."
 #define OPTION_VAL_JAPANESE_VN "Tiếng Nhật"
 #define OPTION_VAL_ENGLISH_VN "Tiếng Anh"
 #define OPTION_VAL_GERMAN_VN "Tiếng Đức"
 #define OPTION_VAL_FRENCH_VN "Tiếng Pháp"
 #define OPTION_VAL_SPANISH_VN "Tiếng Tây Ban Nha"
 #define OPTION_VAL_ITALIAN_VN "Tiếng Ý"
-#define CORE_OPTION_NAME_HLE_BIOS_LABEL_VN NULL
-#define CORE_OPTION_NAME_HLE_BIOS_INFO_0_VN NULL
+#define CORE_OPTION_NAME_HLE_BIOS_LABEL_VN "HLE BIOS (Cần khởi động lại)"
+#define CORE_OPTION_NAME_HLE_BIOS_INFO_0_VN "Ép sử dụng BIOS giả lập cấp cao."
 #define CORE_OPTION_NAME_BOOT_TO_BIOS_LABEL_VN "Khởi động vào BIOS (Cần khởi động lại)"
 #define CORE_OPTION_NAME_BOOT_TO_BIOS_INFO_0_VN "Khởi động trực tiếp vào menu BIOS của Dreamcast."
 #define CORE_OPTION_NAME_ENABLE_DSP_LABEL_VN "Bật DSP"
 #define CORE_OPTION_NAME_ENABLE_DSP_INFO_0_VN "Bật mô phỏng DSP âm thanh (bộ xử lý tín hiệu số) của Dreamcast. Cải thiện độ chính xác của âm thanh phát ra, nhưng tăng yêu cầu về hiệu năng."
-#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_VN NULL
-#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_VN NULL
-#define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_VN NULL
-#define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_VN NULL
-#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_VN NULL
-#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_VN NULL
-#define CORE_OPTION_NAME_UPNP_LABEL_VN NULL
-#define CORE_OPTION_NAME_UPNP_INFO_0_VN NULL
-#define CORE_OPTION_NAME_DCNET_LABEL_VN NULL
-#define CORE_OPTION_NAME_DCNET_INFO_0_VN NULL
+#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_VN "Cho phép nút Service cho Arcade"
+#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_VN "Bật nút SERVICE để truy cập cài đặt trong máy arcade."
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_VN "Chế độ Free Play cho game NAOMI"
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_VN "Chỉnh cài đặt đồng xu của trò chơi sang chế độ chơi miễn phí."
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_VN "Giả lập Bộ chuyển đổi Băng thông Rộng"
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_VN "Giả lập bộ chuyển đổi Ethernet băng thông rộng thay vì modem. (Cần khởi động lại)"
+#define CORE_OPTION_NAME_UPNP_LABEL_VN "Bật UPnP"
+#define CORE_OPTION_NAME_UPNP_INFO_0_VN "Sử dụng UPnP để tự động cấu hình router Internet cho trò chơi trực tuyến."
+#define CORE_OPTION_NAME_DCNET_LABEL_VN "Sử dụng DCNet"
+#define CORE_OPTION_NAME_DCNET_INFO_0_VN "Sử dụng dịch vụ đám mây DCNet để truy cập Internet trên Dreamcast."
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_VN "Độ phân giải nội bộ"
-#define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_VN NULL
-#define OPTION_VAL_320X240_VN NULL
-#define OPTION_VAL_640X480_VN NULL
+#define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_VN "Thay đổi độ phân giải khi render."
+#define OPTION_VAL_320X240_VN "320x240 (Một nửa)"
+#define OPTION_VAL_640X480_VN "640x480 (Nguyên bản)"
 #define OPTION_VAL_800X600_VN NULL
 #define OPTION_VAL_960X720_VN NULL
 #define OPTION_VAL_1024X768_VN NULL
@@ -83319,50 +83319,50 @@ struct retro_core_options_v2 options_val = {
 #define OPTION_VAL_12160X9120_VN NULL
 #define OPTION_VAL_12800X9600_VN NULL
 #define CORE_OPTION_NAME_CABLE_TYPE_LABEL_VN "Loại cáp"
-#define CORE_OPTION_NAME_CABLE_TYPE_INFO_0_VN NULL
+#define CORE_OPTION_NAME_CABLE_TYPE_INFO_0_VN "Loại tín hiệu xuất. 'TV (Composite)' được hỗ trợ rộng rãi nhất."
 #define OPTION_VAL_VGA_VN NULL
 #define OPTION_VAL_TV_RGB_VN NULL
 #define OPTION_VAL_TV_COMPOSITE_VN NULL
-#define CORE_OPTION_NAME_BROADCAST_LABEL_VN NULL
+#define CORE_OPTION_NAME_BROADCAST_LABEL_VN "Chuẩn Phát sóng"
 #define OPTION_VAL_NTSC_VN NULL
-#define OPTION_VAL_PAL_VN NULL
+#define OPTION_VAL_PAL_VN "PAL (Toàn cầu)"
 #define OPTION_VAL_PAL_N_VN NULL
 #define OPTION_VAL_PAL_M_VN NULL
 #define CORE_OPTION_NAME_SCREEN_ROTATION_LABEL_VN "Hướng màn hình"
-#define OPTION_VAL_HORIZONTAL_VN NULL
-#define OPTION_VAL_VERTICAL_VN NULL
-#define CORE_OPTION_NAME_ALPHA_SORTING_LABEL_VN NULL
-#define CORE_OPTION_NAME_ALPHA_SORTING_INFO_0_VN NULL
-#define OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_VN NULL
-#define OPTION_VAL_PER_TRIANGLE_NORMAL_VN NULL
+#define OPTION_VAL_HORIZONTAL_VN "Ngang"
+#define OPTION_VAL_VERTICAL_VN "Dọc"
+#define CORE_OPTION_NAME_ALPHA_SORTING_LABEL_VN "Sắp xếp Alpha"
+#define CORE_OPTION_NAME_ALPHA_SORTING_INFO_0_VN "Chọn cách sắp xếp các đa giác trong suốt."
+#define OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_VN "Theo Dải (nhanh, chính xác thấp nhất)"
+#define OPTION_VAL_PER_TRIANGLE_NORMAL_VN "Theo Tam giác (bình thường)"
 #define OPTION_VAL_PER_PIXEL_ACCURATE_VN "Theo từng điểm ảnh (chính xác, nhưng chậm nhất)"
-#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_VN NULL
-#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_INFO_0_VN NULL
+#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_VN "Kích thước bộ đệm điểm ảnh tích lũy"
+#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_INFO_0_VN "Các giá trị cao hơn có thể cần thiết để hiển thị đúng ở độ phân giải cao hơn."
 #define OPTION_VAL_512MB_VN NULL
 #define OPTION_VAL_1GB_VN NULL
 #define OPTION_VAL_2GB_VN NULL
 #define OPTION_VAL_4GB_VN NULL
-#define CORE_OPTION_NAME_OIT_LAYERS_LABEL_VN NULL
-#define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_VN NULL
-#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_VN NULL
-#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_VN NULL
+#define CORE_OPTION_NAME_OIT_LAYERS_LABEL_VN "Số lớp trong suốt tối đa"
+#define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_VN "Giá trị cao hơn có thể cần cho các cảnh phức tạp."
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_VN "Mô phỏng toàn bộ framebuffer"
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_VN "Bật mô phỏng toàn bộ framebuffer trong VRAM. Điều này hữu ích cho các trò chơi đọc hoặc ghi trực tiếp framebuffer trong VRAM. Khi bật, độ phân giải nội bộ bị ép ở 640x480 và hiệu năng có thể bị ảnh hưởng nghiêm trọng."
 #define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_VN "Bật bộ đệm RTT (Render To Texture)"
-#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_VN NULL
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_VN "Sao chép các texture đã kết xuất từ GPU trở lại VRAM. Tùy chọn này thường được bật cho các trò chơi yêu cầu. Khi bật, việc tăng cường độ phân giải texture bị vô hiệu và hiệu năng có thể bị ảnh hưởng."
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_VN NULL
-#define CORE_OPTION_NAME_MIPMAPPING_INFO_0_VN NULL
+#define CORE_OPTION_NAME_MIPMAPPING_INFO_0_VN "Khi bật, texture sẽ sử dụng phiên bản nhỏ hơn của chính nó khi xuất hiện ở xa hơn, có thể tăng hiệu năng và giảm hiện tượng nhấp nháy."
 #define CORE_OPTION_NAME_FOG_LABEL_VN "Hiệu ứng sương mù"
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_VN "Điều chỉnh âm lượng"
 #define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_VN "Một tính năng của GPU Dreamcast, thường được các trò chơi sử dụng để vẽ bóng của các đối tượng. Thông thường nên bật tính năng này — ảnh hưởng đến hiệu năng thường rất ít hoặc hầu như không đáng kể."
 #define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_LABEL_VN "Lọc dị hướng"
-#define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_VN NULL
+#define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_VN "Cải thiện chất lượng texture trên các bề mặt ở góc nhìn xiên so với camera. Giá trị cao hơn sẽ đòi hỏi GPU nhiều hơn. Thay đổi thiết lập này chỉ có hiệu lực sau khi khởi động lại."
 #define CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_VN "Lọc kết cấu"
-#define CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_VN NULL
-#define OPTION_VAL_1_VN NULL
-#define OPTION_VAL_2_VN NULL
-#define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_VN NULL
-#define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_VN NULL
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_VN "Chế độ lọc texture cần sử dụng. Có thể ép buộc một chế độ lọc texture nhất định cho tất cả texture để có hình ảnh sắc nét (hoặc mượt mà) hơn so với Mặc định. Các giá trị khác ngoài Mặc định có thể gây ra nhiều vấn đề kết xuất. Thay đổi thiết lập này chỉ có hiệu lực sau khi khởi động lại."
+#define OPTION_VAL_1_VN "Ép dùng Nearest-Neighbor"
+#define OPTION_VAL_2_VN "Ép dùng Linear"
+#define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_VN "Độ trễ đổi khung hình"
+#define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_VN "Hữu ích để tránh màn hình nhấp nháy hoặc video bị giật.Không khuyến nghị trên thiết bị chậm."
 #define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_VN "Phát hiện sự thay đổi tốc độ khung hình"
-#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_VN NULL
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_VN "Thông báo cho giao diện khi tốc độ khung hình thay đổi (ví dụ từ 60 fps xuống 30 fps). Cải thiện nhịp khung hình trong game chạy cố định 30 fps hoặc 20 fps, nhưng nên tắt cho các game có tốc độ khung hình không cố định (ví dụ Ecco the Dolphin, Unreal Tournament). Lưu ý: không khả dụng khi 'Bỏ qua khung hình tự động' bật."
 #define CORE_OPTION_NAME_PVR2_FILTERING_LABEL_VN "Bộ lọc hậu xử lý PowerVR2"
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_VN "Hậu xử lý hình ảnh đã render để mô phỏng các hiệu ứng đặc trưng của GPU PowerVR2 và tín hiệu video analog."
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_VN "Phóng to kết cấu (xBRZ)"
@@ -83371,29 +83371,29 @@ struct retro_core_options_v2 options_val = {
 #define OPTION_VAL_4_VN NULL
 #define OPTION_VAL_6_VN NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_VN "Kích thước tối đa khi phóng to kết cấu đã lọc"
-#define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_INFO_0_VN NULL
-#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_VN NULL
-#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_VN NULL
-#define CORE_OPTION_NAME_FIX_UPSCALE_BLEEDING_EDGE_LABEL_VN NULL
-#define CORE_OPTION_NAME_FIX_UPSCALE_BLEEDING_EDGE_INFO_0_VN NULL
-#define CORE_OPTION_NAME_THREADED_RENDERING_LABEL_VN NULL
-#define CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_VN NULL
-#define CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_VN NULL
-#define CORE_OPTION_NAME_AUTO_SKIP_FRAME_INFO_0_VN NULL
-#define OPTION_VAL_SOME_VN NULL
-#define OPTION_VAL_MORE_VN NULL
-#define CORE_OPTION_NAME_FRAME_SKIPPING_LABEL_VN NULL
-#define CORE_OPTION_NAME_FRAME_SKIPPING_INFO_0_VN NULL
+#define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_INFO_0_VN "Chọn giá trị kích thước tối đa của texture khi tăng độ phân giải.Nếu kích thước texture lớn hơn giá trị chọn, nó sẽ không được tăng."
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_VN "Nội suy độ sâu gốc"
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_VN "Giúp giảm lỗi texture và vấn đề độ sâu trên GPU AMD. Cũng có thể hỗ trợ GPU Intel trong một số trường hợp."
+#define CORE_OPTION_NAME_FIX_UPSCALE_BLEEDING_EDGE_LABEL_VN "Khắc phục tràn màu khi tăng độ phân giải"
+#define CORE_OPTION_NAME_FIX_UPSCALE_BLEEDING_EDGE_INFO_0_VN "Giúp xử lý tình trạng tràn màu khi tăng độ phân giải.Tắt tính năng này có thể giúp nếu pixel bị méo khi tăng độ phân giải trong game 2D (MVC2, CVS, KOF…)"
+#define CORE_OPTION_NAME_THREADED_RENDERING_LABEL_VN "Kết xuất đa luồng"
+#define CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_VN "Chạy GPU và CPU trên các luồng riêng. Rất khuyến nghị."
+#define CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_VN "Bỏ qua khung hình tự động"
+#define CORE_OPTION_NAME_AUTO_SKIP_FRAME_INFO_0_VN "Tự động bỏ qua khung hình khi trình giả lập chạy chậm. Lưu ý: chỉ áp dụng khi 'Kết xuất đa luồng' bật."
+#define OPTION_VAL_SOME_VN "Bình thường"
+#define OPTION_VAL_MORE_VN "Tối đa"
+#define CORE_OPTION_NAME_FRAME_SKIPPING_LABEL_VN "Bỏ qua khung hình"
+#define CORE_OPTION_NAME_FRAME_SKIPPING_INFO_0_VN "Thiết lập số khung hình bỏ qua giữa các khung hình hiển thị."
 #define CORE_OPTION_NAME_WIDESCREEN_CHEATS_LABEL_VN "Mã gian lận màn hình rộng (cần khởi động lại)"
 #define CORE_OPTION_NAME_WIDESCREEN_CHEATS_INFO_0_VN "Kích hoạt các mã gian lận cho phép một số trò chơi hiển thị ở chế độ màn hình rộng."
-#define CORE_OPTION_NAME_WIDESCREEN_HACK_LABEL_VN NULL
-#define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_VN NULL
+#define CORE_OPTION_NAME_WIDESCREEN_HACK_LABEL_VN "Mở rộng màn hình"
+#define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_VN "Vẽ hình học ngoài tỉ lệ khung hình 4:3 chuẩn. Có thể gây lỗi đồ họa ở các vùng hiển thị thêm."
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_VN "Tăng tốc tải GD-ROM (không chính xác)"
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_VN "Tăng tốc quá trình tải GD-ROM."
-#define CORE_OPTION_NAME_DC_32MB_MOD_LABEL_VN NULL
-#define CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_VN NULL
-#define CORE_OPTION_NAME_SH4CLOCK_LABEL_VN NULL
-#define CORE_OPTION_NAME_SH4CLOCK_INFO_0_VN NULL
+#define CORE_OPTION_NAME_DC_32MB_MOD_LABEL_VN "Chế độ RAM 32MB cho Dreamcast"
+#define CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_VN "Bật chế độ RAM 32MB cho Dreamcast. Có thể ảnh hưởng đến khả năng tương thích"
+#define CORE_OPTION_NAME_SH4CLOCK_LABEL_VN "Điều chỉnh xung CPU SH4"
+#define CORE_OPTION_NAME_SH4CLOCK_INFO_0_VN "Thay đổi xung chính của CPU SH4 từ mức mặc định 200 MHz. Giảm xung có thể giúp các nền tảng chậm. Tăng xung có thể tăng tốc khung hình cho một số trò chơi. Sử dụng cẩn thận."
 #define OPTION_VAL_100_VN NULL
 #define OPTION_VAL_110_VN NULL
 #define OPTION_VAL_120_VN NULL
@@ -83436,11 +83436,11 @@ struct retro_core_options_v2 options_val = {
 #define OPTION_VAL_490_VN NULL
 #define OPTION_VAL_500_VN NULL
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_VN "Tải Textures Tùy Chỉnh"
-#define CORE_OPTION_NAME_CUSTOM_TEXTURES_INFO_0_VN NULL
-#define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_VN "Trích xuất kết cấu"
-#define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_VN NULL
+#define CORE_OPTION_NAME_CUSTOM_TEXTURES_INFO_0_VN "Tải các texture tùy chỉnh từ thư mục 'system/dc/textures/<game-id>/'."
+#define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_VN "Xuất kết cấu"
+#define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_VN "Mỗi khi trò chơi sử dụng một kết cấu mới, nó sẽ được lưu dưới dạng tệp .png trong thư mục 'system/dc/texdump/<game-id>/'."
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_VN "Vùng chết của cần analog"
-#define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_INFO_0_VN NULL
+#define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_INFO_0_VN "Chọn mức độ di chuyển cần thiết của cần analog trước khi nó bắt đầu được xử lý."
 #define OPTION_VAL_0_VN NULL
 #define OPTION_VAL_5_VN NULL
 #define OPTION_VAL_10_VN NULL
@@ -83449,14 +83449,14 @@ struct retro_core_options_v2 options_val = {
 #define OPTION_VAL_25_VN NULL
 #define OPTION_VAL_30_VN NULL
 #define CORE_OPTION_NAME_TRIGGER_DEADZONE_LABEL_VN "Vùng chết của nút kích hoạt - trigger"
-#define CORE_OPTION_NAME_TRIGGER_DEADZONE_INFO_0_VN NULL
+#define CORE_OPTION_NAME_TRIGGER_DEADZONE_INFO_0_VN "Chọn lực nhấn cần thiết của nút trigger trước khi nó bắt đầu được xử lý."
 #define CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_VN "Nút kích hoạt kỹ thuật số"
-#define CORE_OPTION_NAME_DIGITAL_TRIGGERS_INFO_0_VN NULL
-#define CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_VN NULL
-#define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_VN NULL
+#define CORE_OPTION_NAME_DIGITAL_TRIGGERS_INFO_0_VN "Khi bật, các trigger sẽ hoạt động như nút thường, nghĩa là chỉ được xử lý ở trạng thái nhấn hoàn toàn hoặc không nhấn, không có mức trung gian."
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_VN "Phát tín hiệu Digital Outputs"
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_VN "Phát tín hiệu digital và trạng thái phản hồi lực qua cổng TCP 8000. Tương thích với tùy chọn \"-output network\" của MAME."
 #define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_VN "Hiển thị Cài đặt Súng Ánh Sáng"
-#define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_VN NULL
-#define CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_VN NULL
+#define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_VN "Bật cấu hình các tùy chọn hiển thị con trỏ súng. Lưu ý: Có thể cần mở Quick Menu để thiết lập này có hiệu lực."
+#define CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_VN "Tỉ lệ kích thước con trỏ súng"
 #define OPTION_VAL_50_VN NULL
 #define OPTION_VAL_60_VN NULL
 #define OPTION_VAL_70_VN NULL
@@ -83485,65 +83485,65 @@ struct retro_core_options_v2 options_val = {
 #define OPTION_VAL_300_O46_VN NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_VN "Hiển thị Tâm ngắm 1"
 #define OPTION_VAL_WHITE_VN "Trắng"
-#define OPTION_VAL_RED_VN NULL
-#define OPTION_VAL_GREEN_VN NULL
-#define OPTION_VAL_BLUE_VN NULL
+#define OPTION_VAL_RED_VN "Đỏ"
+#define OPTION_VAL_GREEN_VN "Xanh lá"
+#define OPTION_VAL_BLUE_VN "Xanh dương"
 #define CORE_OPTION_NAME_LIGHTGUN2_CROSSHAIR_LABEL_VN "Hiển thị Tâm ngắm 2"
 #define CORE_OPTION_NAME_LIGHTGUN3_CROSSHAIR_LABEL_VN "Hiển thị Tâm ngắm 3"
 #define CORE_OPTION_NAME_LIGHTGUN4_CROSSHAIR_LABEL_VN "Hiển thị Tâm ngắm 4"
-#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_LABEL_VN NULL
-#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_INFO_0_VN NULL
+#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_LABEL_VN "Thiết bị ở khe mở rộng A1"
+#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_INFO_0_VN "Chọn thiết bị cắm ở khe mở rộng A1 (cổng A, khe 1)."
 #define OPTION_VAL_VMU_VN NULL
-#define OPTION_VAL_PURUPURU_VN NULL
+#define OPTION_VAL_PURUPURU_VN "Gói rung tay cầm"
 #define OPTION_VAL_NONE_VN "Không"
-#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_LABEL_VN NULL
-#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_INFO_0_VN NULL
-#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT1_LABEL_VN NULL
-#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT1_INFO_0_VN NULL
-#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT2_LABEL_VN NULL
-#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT2_INFO_0_VN NULL
-#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT1_LABEL_VN NULL
-#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT1_INFO_0_VN NULL
-#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT2_LABEL_VN NULL
-#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT2_INFO_0_VN NULL
-#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT1_LABEL_VN NULL
-#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT1_INFO_0_VN NULL
-#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_LABEL_VN NULL
-#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_INFO_0_VN NULL
+#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_LABEL_VN "Thiết bị trong khe mở rộng A2"
+#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_INFO_0_VN "Chọn thiết bị cắm vào khe mở rộng A2 (cổng A khe 2)."
+#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT1_LABEL_VN "Thiết bị trong khe mở rộng B1"
+#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT1_INFO_0_VN "Chọn thiết bị cắm vào khe mở rộng B1 (cổng B khe 1)."
+#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT2_LABEL_VN "Thiết bị trong khe mở rộng B2"
+#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT2_INFO_0_VN "Chọn thiết bị cắm vào khe mở rộng B2 (cổng B khe 2)."
+#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT1_LABEL_VN "Thiết bị trong khe mở rộng C1"
+#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT1_INFO_0_VN "Chọn thiết bị cắm vào khe mở rộng C1 (cổng C khe 1)."
+#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT2_LABEL_VN "Thiết bị trong khe mở rộng C2"
+#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT2_INFO_0_VN "Chọn thiết bị cắm vào khe mở rộng C2 (cổng C khe 2)."
+#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT1_LABEL_VN "Thiết bị trong khe mở rộng D1"
+#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT1_INFO_0_VN "Chọn thiết bị cắm vào khe mở rộng D1 (cổng D khe 1)."
+#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_LABEL_VN "Thiết bị trong khe mở rộng D2"
+#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_INFO_0_VN "Chọn thiết bị cắm vào khe mở rộng D2 (cổng D khe 2)."
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_VN "Đơn vị/ Hệ thống Bộ Nhớ Hình Ảnh theo từng trò chơi (VMU)"
 #define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CAT_VN "VMU theo trò chơi"
-#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_VN NULL
+#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_VN "Khi tắt, tất cả trò chơi chia sẻ tối đa 8 file lưu VMU (A1/A2/B1/B2/C1/C2/D1/D2) nằm trong thư mục hệ thống của RetroArch..\nCài đặt 'VMU A1' tạo một file VMU riêng 'A1' trong thư mục lưu của RetroArch cho mỗi trò chơi được khởi chạy.\nCài đặt 'Tất cả VMU' tạo tối đa 8 file VMU riêng (A1/A2/B1/B2/C1/C2/D1/D2) cho mỗi trò chơi được khởi chạy."
 #define OPTION_VAL_VMU_A1_VN NULL
 #define OPTION_VAL_ALL_VMUS_VN NULL
-#define CORE_OPTION_NAME_VMU_SOUND_LABEL_VN NULL
-#define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_VN NULL
-#define CORE_OPTION_NAME_VMU_SOUND_INFO_0_VN NULL
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_VN "Âm thanh của Bộ nhớ ảo/VMU"
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_VN "Âm thanh VMU"
+#define CORE_OPTION_NAME_VMU_SOUND_INFO_0_VN "Khi bật, VMU sẽ phát tiếng bíp."
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_VN "Hiển thị cài đặt Bộ Nhớ Hình Ảnh/Hệ thống (VMU)"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_VN "Hiển thị Cài đặt VMU"
-#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_VN NULL
+#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_VN "Bật cấu hình hiển thị màn hình LCD VMU giả lập, bao gồm: độ hiển thị, kích thước, vị trí và màu sắc.LƯU Ý: Có thể cần mở lại Menu Nhanh để thiết lập có hiệu lực."
 #define CORE_OPTION_NAME_VMU1_SCREEN_DISPLAY_LABEL_VN "Hiển thị Màn hình VMU 1"
 #define CORE_OPTION_NAME_VMU1_SCREEN_POSITION_LABEL_VN "Vị trí Màn hình VMU 1"
 #define OPTION_VAL_UPPER_LEFT_VN "Trên cùng bên trái"
 #define OPTION_VAL_UPPER_RIGHT_VN "Trên cùng bên phải"
-#define OPTION_VAL_LOWER_LEFT_VN NULL
-#define OPTION_VAL_LOWER_RIGHT_VN NULL
-#define CORE_OPTION_NAME_VMU1_SCREEN_SIZE_MULT_LABEL_VN NULL
+#define OPTION_VAL_LOWER_LEFT_VN "Dưới cùng bên trái"
+#define OPTION_VAL_LOWER_RIGHT_VN "Dưới cùng bên phải"
+#define CORE_OPTION_NAME_VMU1_SCREEN_SIZE_MULT_LABEL_VN "Kích thước Màn hình VMU 1"
 #define OPTION_VAL_1X_VN NULL
 #define OPTION_VAL_3X_VN NULL
 #define OPTION_VAL_5X_VN NULL
-#define CORE_OPTION_NAME_VMU1_PIXEL_ON_COLOR_LABEL_VN NULL
-#define OPTION_VAL_DEFAULT_ON_00_VN NULL
-#define OPTION_VAL_DEFAULT_OFF_01_VN NULL
+#define CORE_OPTION_NAME_VMU1_PIXEL_ON_COLOR_LABEL_VN "Màu pixel BẬT của Màn hình VMU 1"
+#define OPTION_VAL_DEFAULT_ON_00_VN "Bật Mặc định"
+#define OPTION_VAL_DEFAULT_OFF_01_VN "Tắt Mặc định"
 #define OPTION_VAL_BLACK_02_VN "Đen"
-#define OPTION_VAL_LIGHT_BLUE_04_VN NULL
+#define OPTION_VAL_LIGHT_BLUE_04_VN "Xanh dương nhạt"
 #define OPTION_VAL_CYAN_06_VN "Lục lam"
-#define OPTION_VAL_CYAN_BLUE_07_VN NULL
-#define OPTION_VAL_LIGHT_GREEN_08_VN NULL
-#define OPTION_VAL_CYAN_GREEN_09_VN NULL
-#define OPTION_VAL_LIGHT_CYAN_10_VN NULL
+#define OPTION_VAL_CYAN_BLUE_07_VN "Xanh lơ"
+#define OPTION_VAL_LIGHT_GREEN_08_VN "Xanh lá nhạt"
+#define OPTION_VAL_CYAN_GREEN_09_VN "Xanh lơ lá"
+#define OPTION_VAL_LIGHT_CYAN_10_VN "Xanh lơ nhạt"
 #define OPTION_VAL_PURPLE_12_VN "Tím"
 #define OPTION_VAL_LIGHT_PURPLE_13_VN "Tím nhạt"
-#define OPTION_VAL_YELLOW_14_VN NULL
+#define OPTION_VAL_YELLOW_14_VN "Vàng"
 #define OPTION_VAL_GRAY_15_VN "Xám"
 #define OPTION_VAL_LIGHT_PURPLE_2_16_VN "Tím nhạt (2)"
 #define OPTION_VAL_LIGHT_GREEN_2_17_VN "Xanh lá nhạt (2)"
@@ -83554,26 +83554,26 @@ struct retro_core_options_v2 options_val = {
 #define OPTION_VAL_LIGHT_PURPLE_3_22_VN "Tím nhạt (3)"
 #define OPTION_VAL_LIGHT_ORANGE_23_VN "Cam nhạt"
 #define OPTION_VAL_ORANGE_24_VN "Cam"
-#define OPTION_VAL_LIGHT_PURPLE_4_25_VN NULL
+#define OPTION_VAL_LIGHT_PURPLE_4_25_VN "Tím nhạt (4)"
 #define OPTION_VAL_LIGHT_YELLOW_26_VN "Vàng nhạt"
 #define OPTION_VAL_LIGHT_YELLOW_2_27_VN "Vàng nhạt (2)"
 #define CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_VN "Màu Pixel Tắt của Màn hình VMU 1"
 #define CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_VN "Độ Mờ của Màn hình VMU 1"
 #define OPTION_VAL_40_VN NULL
-#define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_VN NULL
-#define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_VN NULL
-#define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_VN NULL
-#define CORE_OPTION_NAME_VMU2_PIXEL_ON_COLOR_LABEL_VN NULL
-#define CORE_OPTION_NAME_VMU2_PIXEL_OFF_COLOR_LABEL_VN NULL
-#define CORE_OPTION_NAME_VMU2_SCREEN_OPACITY_LABEL_VN NULL
-#define CORE_OPTION_NAME_VMU3_SCREEN_DISPLAY_LABEL_VN NULL
-#define CORE_OPTION_NAME_VMU3_SCREEN_POSITION_LABEL_VN NULL
-#define CORE_OPTION_NAME_VMU3_SCREEN_SIZE_MULT_LABEL_VN NULL
-#define CORE_OPTION_NAME_VMU3_PIXEL_ON_COLOR_LABEL_VN NULL
-#define CORE_OPTION_NAME_VMU3_PIXEL_OFF_COLOR_LABEL_VN NULL
-#define CORE_OPTION_NAME_VMU3_SCREEN_OPACITY_LABEL_VN NULL
-#define CORE_OPTION_NAME_VMU4_SCREEN_DISPLAY_LABEL_VN NULL
-#define CORE_OPTION_NAME_VMU4_SCREEN_POSITION_LABEL_VN NULL
+#define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_VN "Hiển thị Màn hình VMU 2"
+#define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_VN "Vị trí Màn hình VMU 2"
+#define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_VN "Kích thước Màn hình VMU 2"
+#define CORE_OPTION_NAME_VMU2_PIXEL_ON_COLOR_LABEL_VN "Màu pixel Bật của Màn hình VMU 2"
+#define CORE_OPTION_NAME_VMU2_PIXEL_OFF_COLOR_LABEL_VN "Màu pixel Tắt của Màn hình VMU 2"
+#define CORE_OPTION_NAME_VMU2_SCREEN_OPACITY_LABEL_VN "Độ mờ của Màn hình VMU 2"
+#define CORE_OPTION_NAME_VMU3_SCREEN_DISPLAY_LABEL_VN "Hiển thị Màn hình VMU 3"
+#define CORE_OPTION_NAME_VMU3_SCREEN_POSITION_LABEL_VN "Vị trí Màn hình VMU 3"
+#define CORE_OPTION_NAME_VMU3_SCREEN_SIZE_MULT_LABEL_VN "Kích thước Màn hình VMU 3"
+#define CORE_OPTION_NAME_VMU3_PIXEL_ON_COLOR_LABEL_VN "Màu pixel Bật của Màn hình VMU 3"
+#define CORE_OPTION_NAME_VMU3_PIXEL_OFF_COLOR_LABEL_VN "Màu pixel Tắt của Màn hình VMU 3"
+#define CORE_OPTION_NAME_VMU3_SCREEN_OPACITY_LABEL_VN "Độ mờ của Màn hình VMU 3"
+#define CORE_OPTION_NAME_VMU4_SCREEN_DISPLAY_LABEL_VN "Hiển thị Màn hình VMU 4"
+#define CORE_OPTION_NAME_VMU4_SCREEN_POSITION_LABEL_VN "Vị trí Màn hình VMU 4"
 #define CORE_OPTION_NAME_VMU4_SCREEN_SIZE_MULT_LABEL_VN "Kích thước Màn hình VMU 4"
 #define CORE_OPTION_NAME_VMU4_PIXEL_ON_COLOR_LABEL_VN "Màu Pixel Bật của Màn hình VMU 4"
 #define CORE_OPTION_NAME_VMU4_PIXEL_OFF_COLOR_LABEL_VN "Màu Pixel Tắt của Màn hình VMU 4"
