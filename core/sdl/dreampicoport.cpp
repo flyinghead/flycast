@@ -1254,26 +1254,28 @@ void DreamPicoPort::connect() {
 	int vmuCount = 0;
 	int vibrationCount = 0;
 
-	u32 portOneFn = getFunctionCode(1);
-	if (portOneFn & MFID_1_Storage) {
-		config::MapleExpansionDevices[software_bus][0] = MDT_SegaVMU;
-		++vmuCount;
-	}
-	else {
-		config::MapleExpansionDevices[software_bus][0] = MDT_None;
-	}
+	if (software_bus >= 0 && static_cast<std::size_t>(software_bus) < config::MapleExpansionDevices.size()) {
+		u32 portOneFn = getFunctionCode(1);
+		if (portOneFn & MFID_1_Storage) {
+			config::MapleExpansionDevices[software_bus][0] = MDT_SegaVMU;
+			++vmuCount;
+		}
+		else {
+			config::MapleExpansionDevices[software_bus][0] = MDT_None;
+		}
 
-	u32 portTwoFn = getFunctionCode(2);
-	if (portTwoFn & MFID_8_Vibration) {
-		config::MapleExpansionDevices[software_bus][1] = MDT_PurupuruPack;
-		++vibrationCount;
-	}
-	else if (portTwoFn & MFID_1_Storage) {
-		config::MapleExpansionDevices[software_bus][1] = MDT_SegaVMU;
-		++vmuCount;
-	}
-	else {
-		config::MapleExpansionDevices[software_bus][1] = MDT_None;
+		u32 portTwoFn = getFunctionCode(2);
+		if (portTwoFn & MFID_8_Vibration) {
+			config::MapleExpansionDevices[software_bus][1] = MDT_PurupuruPack;
+			++vibrationCount;
+		}
+		else if (portTwoFn & MFID_1_Storage) {
+			config::MapleExpansionDevices[software_bus][1] = MDT_SegaVMU;
+			++vmuCount;
+		}
+		else {
+			config::MapleExpansionDevices[software_bus][1] = MDT_None;
+		}
 	}
 
 	NOTICE_LOG(INPUT, "Connected to DreamPicoPort[%d]: Type:%s, VMU:%d, Rumble Pack:%d", software_bus, getName().c_str(), vmuCount, vibrationCount);
