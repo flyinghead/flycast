@@ -88,7 +88,7 @@ public:
 
 	std::string getUniqueId() const override;
 
-	void changeBus(int newBus);
+	void changeBus(int newBus) override;
 
 	std::string getName() const override;
 

@@ -35,12 +35,15 @@
 #include <atomic>
 #include <optional>
 
+#ifndef TARGET_UWP
+#include <asio.hpp>
+#endif
+
 #if defined(__linux__) || (defined(__APPLE__) && defined(TARGET_OS_MAC))
 #include <dirent.h>
 #endif
 
 #if defined(_WIN32) && !defined(TARGET_UWP)
-#include <asio.hpp>
 #include <windows.h>
 #include <setupapi.h>
 #endif
