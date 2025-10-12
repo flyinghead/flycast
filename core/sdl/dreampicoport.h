@@ -18,9 +18,9 @@
  */
 #pragma once
 
-#include "dreamlink.h"
-
 #ifdef USE_DREAMLINK_DEVICES
+
+#include "dreamlink.h"
 
 #include "DreamPicoPortApi.hpp"
 
@@ -31,26 +31,11 @@
 #include <unordered_map>
 #include <mutex>
 
-// Forward declaration of underlying serial connection
-class DreamPicoPortSerialHandler;
-
 //! See: https://github.com/OrangeFox86/DreamPicoPort
 class DreamPicoPort : public DreamLink
 {
-	u8 expansionDevs = 0;
-
-#ifndef TARGET_UWP
-	//! The one and only serial port
-	static std::unique_ptr<DreamPicoPortSerialHandler> serial;
-	//! Number of devices using the above serial
-	static std::atomic<std::uint32_t> connected_dev_count;
-#endif
-	//! All known dpp_api devices by serial number; already connected if set
-	static std::unordered_map<std::string, std::weak_ptr<dpp_api::DppDevice>> all_dpp_api_devices;
-	//! The mutex serializing access to all_dpp_api_devices
-	static std::mutex all_dpp_api_devices_mutex;
-	//! This is set when the device supports this new API
-	std::shared_ptr<dpp_api::DppDevice> dpp_api_device;
+	//! Implements communication interface to DreamPicoPort
+	std::unique_ptr<class DreamPicoPortComms> dpp_comms;
 	//! Current timeout in milliseconds
 	std::chrono::milliseconds timeout_ms;
 	//! The bus ID dictated by flycast
@@ -61,8 +46,6 @@ class DreamPicoPort : public DreamLink
 	bool is_single_device = true;
 	//! True when initial enumeration failed
 	bool is_hardware_bus_implied = true;
-	//! True once connection is established
-	bool connection_established = false;
     //! The queried interface version
     double interface_version = 0.0;
     //! The queried peripherals; for each function, index 0 is function code and index 1 is the function definition
@@ -115,8 +98,6 @@ public:
 
 	void connect() override;
 
-	bool isConnected() const;
-
 	void disconnect() override;
 
     void sendPort();
@@ -129,10 +110,7 @@ public:
 
 private:
 	std::string getName(std::string separator) const;
-
-private:
 	void determineHardwareBus(int joystick_idx, SDL_Joystick* sdl_joystick);
-    bool queryInterfaceVersion();
     bool queryPeripherals();
 };
 
