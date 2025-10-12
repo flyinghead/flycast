@@ -22,7 +22,6 @@
 #include "gamepad.h"
 
 #include <map>
-#include <set>
 #include <memory>
 #include <list>
 #include <vector>
@@ -242,6 +241,14 @@ public:
 	void set_axis(u32 port, DreamcastKey id, u32 code, bool positive);
 	void set_axis(DreamcastKey id, u32 code, bool positive) { set_axis(0, id, code, positive); }
 
+	bool isTrigger(u32 code) const;
+	bool isReverseTrigger(u32 code) const;
+	void addTrigger(u32 code, bool reverse);
+	void deleteTrigger(u32 code);
+	const std::map<u32, bool>& getTriggers() const {
+		return triggers;
+	}
+
 	void load(FILE* fp);
 	bool save(const std::string& name);
 
@@ -262,6 +269,7 @@ private:
 	static std::vector<std::string> strSplit(const std::string str, char c, size_t maxsplit = 0);
 
 	std::map<std::pair<u32, bool>, DreamcastKey> axes[NUM_PORTS];
+	std::map<u32, bool> triggers;
 
 	//! ButtonCombo -> DreamcastKey
 	std::map<ButtonCombo, DreamcastKey> buttonMap[NUM_PORTS];

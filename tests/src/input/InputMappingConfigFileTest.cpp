@@ -112,6 +112,7 @@ dead_zone = 33
 mapping_name = save test case
 rumble_power = 98
 saturation = 50
+triggers = 
 version = 4
 
 )");

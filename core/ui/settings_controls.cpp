@@ -764,11 +764,10 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 				mapped_codes.clear();  // Clear previous button codes
 
 				// Detect combos only for EMU_BUTTONS
-				const auto buttonGroup = (systemMapping->key & DC_BTN_GROUP_MASK);
-				const bool detectCombo = (buttonGroup == EMU_BUTTONS);
+				const bool detectCombo = (systemMapping->key & DC_BTN_GROUP_MASK) == EMU_BUTTONS;
 
 				// Setup a callback to collect button/axes presses
-				gamepad->detectInput(true, true, detectCombo, [](u32 code, bool analog, bool positive)
+				gamepad->detectInput(detectCombo, [](u32 code, bool analog, bool positive)
 				{
 					if (analog)
 						mapped_codes.insert_back(InputMapping::InputDef::from_axis(code, positive));

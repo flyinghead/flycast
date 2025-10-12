@@ -99,16 +99,17 @@ public:
 	AndroidGamepadDevice(int maple_port, int id, const char *name, const char *unique_id,
 			const std::vector<int>& fullAxes, const std::vector<int>& halfAxes)
 		: GamepadDevice(maple_port, "Android"), android_id(id),
-		  fullAxes(fullAxes)
+		  fullAxes(fullAxes), halfAxes(halfAxes)
 	{
 		_name = name;
 		_unique_id = unique_id;
 		INFO_LOG(INPUT, "Android: Opened joystick %d on port %d: '%s' descriptor '%s'", id, maple_port, _name.c_str(), _unique_id.c_str());
 
 		loadMapping();
+		for (int axis : halfAxes)
+			input_mapper->addTrigger(axis, false);
 		save_mapping();
 		hasAnalogStick = !fullAxes.empty();
-		this->halfAxes.insert(halfAxes.begin(), halfAxes.end());
 	}
 	~AndroidGamepadDevice() override {
 		INFO_LOG(INPUT, "Android: Joystick '%s' on port %d disconnected", _name.c_str(), maple_port());
@@ -245,7 +246,7 @@ public:
 		this->rumbleEnabled = rumbleEnabled;
 	}
 
-	bool hasHalfAxis(int axis) const { return isHalfAxis(axis); }
+	bool hasHalfAxis(int axis) const { return std::find(halfAxes.begin(), halfAxes.end(), axis) != halfAxes.end(); }
 	bool hasFullAxis(int axis) const { return std::find(fullAxes.begin(), fullAxes.end(), axis) != fullAxes.end(); }
 
 	void resetMappingToDefault(bool arcade, bool gamepad) override
@@ -266,6 +267,7 @@ private:
 	int android_id;
 	static std::map<int, std::shared_ptr<AndroidGamepadDevice>> android_gamepads;
 	std::vector<int> fullAxes;
+	std::vector<int> halfAxes;
 };
 
 std::map<int, std::shared_ptr<AndroidGamepadDevice>> AndroidGamepadDevice::android_gamepads;

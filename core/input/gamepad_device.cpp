@@ -211,8 +211,7 @@ bool GamepadDevice::gamepad_btn_input(u32 code, bool pressed)
 	const InputMapping::InputDef inputDef = InputMapping::InputDef::from_button(code);
 
 	// When detecting input for button mapping
-	if (_input_detected != nullptr && _detecting_button
-			&& getTimeMs() >= _detection_start_time)
+	if (_input_detected != nullptr && getTimeMs() >= _detection_start_time)
 	{
 		if (pressed)
 		{
@@ -261,63 +260,96 @@ static DreamcastKey getOppositeAxis(DreamcastKey key)
 	}
 }
 
+bool GamepadDevice::detectAxis(u32 code, int value)
+{
+	if (_input_detected == nullptr || getTimeMs() < _detection_start_time)
+		return false;
+
+	const auto& r = detectingAxes.try_emplace(code, value);
+	DetectingAxis& axis = r.first->second;
+	if (!r.second)
+		axis.setValue(value);
+
+	if (!axis.detected)
+		return false;
+
+	const bool isTrigger = axis.start != DetectingAxis::Zero;
+	const bool positive = isTrigger || axis.end == DetectingAxis::Positive;
+	const InputMapping::InputDef inputDef = InputMapping::InputDef::from_axis(code, positive);
+
+	// When in combo detection, track button releases for axes too
+	if (_detecting_combo && axis.released)
+	{
+		// If this is an axis we previously detected as pressed, end detection
+		if (detectionInputs.contains(inputDef))
+		{
+			_input_detected = nullptr;
+			detectionInputs.clear();
+			DEBUG_LOG(INPUT, "Ending combo detection on axis release: %d", code);
+		}
+		return false;
+	}
+
+	if (input_mapper != nullptr)
+	{
+		if (!isTrigger)
+			input_mapper->deleteTrigger(code);
+		else
+			input_mapper->addTrigger(code, axis.start == DetectingAxis::Positive);
+	}
+
+	// If we're in combo detection mode, add this axis to tracking but don't end detection
+	if (_detecting_combo)
+	{
+		// Track this axis as a "button" for combo detection
+		if (detectionInputs.insert_back(inputDef))
+			_input_detected(code, true, positive);
+	}
+	else
+	{
+		_input_detected(code, true, positive);
+		_input_detected = nullptr;
+	}
+	return true;
+}
+
 //
-// value must be >= -32768 and <= 32767 for full axes
-// and 0 to 32767 for half axes/triggers
+// value must be >= -32768 and <= 32767 for all axes
 //
 bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 {
-	const bool positive = value >= 0;
-	const InputMapping::InputDef inputDef = InputMapping::InputDef::from_axis(code, positive);
-	const InputMapping::InputDef inverseInputDef = InputMapping::InputDef::from_axis(code, !positive);
-
-	if (_input_detected != nullptr && getTimeMs() >= _detection_start_time)
-	{
-		if (_detecting_axis && std::abs(value) >= AXIS_ACTIVATION_VALUE)
-		{
-			// If we're in combo detection mode, add this axis to tracking but don't end detection
-			if (_detecting_combo)
-			{
-				// Track this axis as a "button" for combo detection
-				if (detectionInputs.insert_back(inputDef))
-					_input_detected(code, true, positive);
-
-				return true;
-			}
-
-			_input_detected(code, true, positive);
-			_input_detected = nullptr;
-			return true;
-		}
-		// When in combo detection, track button releases for axes too
-		else if (_detecting_combo && std::abs(value) < AXIS_DEACTIVATION_VALUE)
-		{
-			// If this is an axis we previously detected as pressed, end detection
-			if (detectionInputs.contains(inputDef))
-			{
-				_input_detected = nullptr;
-				detectionInputs.clear();
-				DEBUG_LOG(INPUT, "Ending combo detection on axis release: %d", code);
-			}
-		}
-	}
+	if (detectAxis(code, value))
+		return true;
 
 	if (!input_mapper || _maple_port < 0 || _maple_port > 4)
 		return false;
 
-	auto handle_axis = [&](u32 port, DreamcastKey key, int v)
+	const bool positive = input_mapper->isTrigger(code) || value >= 0;
+	const InputMapping::InputDef inputDef = InputMapping::InputDef::from_axis(code, positive);
+
+	auto handle_axis = [&](u32 port, DreamcastKey key, int v, u32 code)
 	{
 		if ((key & DC_BTN_GROUP_MASK) == DC_AXIS_TRIGGERS)	// Triggers
 		{
-			//printf("T-AXIS %d Mapped to %d -> %d\n", key, value, std::min(std::abs(v) >> 7, 255));
+			int mv;
+			if (input_mapper->isTrigger(code))
+			{
+				mv = v + 32768;
+				if (input_mapper->isReverseTrigger(code))
+					mv = 65535 - mv;
+			}
+			else {
+				mv = std::min(std::abs(v) * 2, 0xffff);
+			}
+			//printf("T-AXIS %d Mapped to %d -> %d\n", key, v, mv);
 			if (key == DC_AXIS_LT)
-				lt[port] = std::min(std::abs(v) << 1, 0xffff);
+				lt[port] = mv;
 			else if (key == DC_AXIS_RT)
-				rt[port] = std::min(std::abs(v) << 1, 0xffff);
+				rt[port] = mv;
 			else if (key == DC_AXIS_LT2)
-				lt2[port] = std::min(std::abs(v) << 1, 0xffff);
+				lt2[port] = mv;
 			else if (key == DC_AXIS_RT2)
-				rt2[port] = std::min(std::abs(v) << 1, 0xffff);
+				rt2[port] = mv;
 			else
 				return false;
 		}
@@ -411,22 +443,40 @@ bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 		{
 			//printf("B-AXIS %d Mapped to %d -> %d\n", key, value, v);
 			// TODO hysteresis?
-			int threshold = AXIS_ACTIVATION_VALUE;
-			if (isHalfAxis(code))
-				threshold = 100;
+			bool pressed = false;
+			if (input_mapper->isTrigger(code))
+			{
+				if (!input_mapper->isReverseTrigger(code))
+					pressed = v >= -32768 + 100;	// positive range -32768 -> 32767
+				else
+					pressed = v <= 32767 - 100;		// negative range 32767 -> -32768
+			}
+			else {
+				pressed = std::abs(v) >= AXIS_ACTIVATION_VALUE;
+			}
 
-			if (std::abs(v) < threshold)
-				kcode[port] |=  key; // button released
-			else
+			if (pressed)
 				kcode[port] &= ~key; // button pressed
+			else
+				kcode[port] |=  key; // button released
 		}
 		else if ((key & DC_BTN_GROUP_MASK) == EMU_BUTTONS) // Map triggers to emu buttons
 		{
 			int lastValue = lastAxisValue[port][key];
-			int newValue = std::abs(v);
-			if ((lastValue < AXIS_ACTIVATION_VALUE && newValue >= AXIS_ACTIVATION_VALUE) || (lastValue >= AXIS_ACTIVATION_VALUE && newValue < AXIS_ACTIVATION_VALUE))
-				handleButtonInput(port, key, newValue >= AXIS_ACTIVATION_VALUE);
-			lastAxisValue[port][key] = newValue;
+			if (input_mapper->isTrigger(code))
+			{
+				// 0 is the midpoint for half axes
+				if ((v >= 0) != (lastValue >= 0))
+					handleButtonInput(port, key, input_mapper->isReverseTrigger(code) == (v < 0));
+			}
+			else
+			{
+				lastValue = std::abs(lastValue);
+				int newValue = std::abs(v);
+				if ((lastValue < AXIS_ACTIVATION_VALUE && newValue >= AXIS_ACTIVATION_VALUE) || (lastValue >= AXIS_ACTIVATION_VALUE && newValue < AXIS_ACTIVATION_VALUE))
+					handleButtonInput(port, key, newValue >= AXIS_ACTIVATION_VALUE);
+			}
+			lastAxisValue[port][key] = v;
 		}
 		else
 			return false;
@@ -439,29 +489,49 @@ bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 	{
 		for (u32 port = 0; port < 4; port++)
 		{
-			DreamcastKey key = input_mapper->get_axis_id(port, code, !positive);
-			// Reset opposite axis to 0
-			handle_axis(port, key, 0);
-			key = input_mapper->get_axis_id(port, code, positive);
-			rc = handle_axis(port, key, value) || rc;
+			if (!input_mapper->isTrigger(code)) {
+				DreamcastKey key = input_mapper->get_axis_id(port, code, !positive);
+				// Reset opposite axis to 0
+				handle_axis(port, key, 0, code);
+			}
+			DreamcastKey key = input_mapper->get_axis_id(port, code, positive);
+			rc = handle_axis(port, key, value, code) || rc;
 		}
 	}
 	else
 	{
-		DreamcastKey key = input_mapper->get_axis_id(0, code, !positive);
-		// Reset opposite axis to 0
-		handle_axis(_maple_port, key, 0);
-		key = input_mapper->get_axis_id(0, code, positive);
-		rc = handle_axis(_maple_port, key, value);
+		if (!input_mapper->isTrigger(code)) {
+			DreamcastKey key = input_mapper->get_axis_id(0, code, !positive);
+			// Reset opposite axis to 0
+			handle_axis(_maple_port, key, 0, code);
+		}
+		DreamcastKey key = input_mapper->get_axis_id(0, code, positive);
+		rc = handle_axis(_maple_port, key, value, code);
 	}
 
 	// Update axis press tracking for button combinations
-	const int absValue = std::abs(value);
-	if (absValue < AXIS_DEACTIVATION_VALUE || absValue >= AXIS_ACTIVATION_VALUE)
+	bool pressed = false;
+	bool released = false;
+	if (input_mapper->isTrigger(code))
+	{
+		if (!input_mapper->isReverseTrigger(code))
+			pressed = value >= -32768 + 100;	// normal range -32768 -> 32767
+		else
+			pressed = value <= 32767 - 100;		// reverse range 32767 -> -32768
+		released = !pressed;
+	}
+	else {
+		pressed = std::abs(value) >= AXIS_ACTIVATION_VALUE;
+		released = std::abs(value) < AXIS_ACTIVATION_VALUE;
+	}
+	if (pressed || released)
 	{
 		// Reset opposite axis to 0
-		rc = handleButtonInputDef(inverseInputDef, false) || rc;
-		rc = handleButtonInputDef(inputDef, (absValue >= AXIS_ACTIVATION_VALUE)) || rc;
+		if (!input_mapper->isTrigger(code)) {
+			const InputMapping::InputDef inverseInputDef = InputMapping::InputDef::from_axis(code, !positive);
+			rc = handleButtonInputDef(inverseInputDef, false) || rc;
+		}
+		rc = handleButtonInputDef(inputDef, pressed) || rc;
 	}
 
 	return rc;
@@ -593,32 +663,13 @@ static void updateVibration(u32 port, float power, float inclination, u32 durati
 	}
 }
 
-void GamepadDevice::detect_btn_input(input_detected_cb button_pressed)
+void GamepadDevice::detectInput(bool combo, input_detected_cb input_changed)
 {
-	detectInput(true, false, false, button_pressed);
-}
-
-void GamepadDevice::detect_axis_input(input_detected_cb axis_moved)
-{
-	detectInput(false, true, false, axis_moved);
-}
-
-void GamepadDevice::detectButtonOrAxisInput(input_detected_cb input_changed)
-{
-	detectInput(true, true, true, input_changed);
-}
-
-void GamepadDevice::detectInput(bool button, bool axis, bool combo, input_detected_cb input_changed)
-{
-	if (button || axis || combo)
-	{
-		_input_detected = input_changed;
-		_detecting_button = button;
-		_detecting_axis = axis;
-		_detecting_combo = combo;
-		_detection_start_time = getTimeMs() + 200;
-		detectionInputs.clear();
-	}
+	_input_detected = input_changed;
+	_detecting_combo = combo;
+	_detection_start_time = getTimeMs() + 200;
+	detectionInputs.clear();
+	detectingAxes.clear();
 }
 
 #ifdef TEST_AUTOMATION
