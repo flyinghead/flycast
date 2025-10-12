@@ -4,26 +4,30 @@
 
 static void registerForEvents();
 
-struct SoundFrame { s16 l; s16 r; };
+struct SoundFrame
+{
+	s16 l;
+	s16 r;
+};
 
 static SoundFrame Buffer[SAMPLE_COUNT];
-static u32 writePtr;  // next sample index
+static u32 writePtr; // next sample index
 
-static AudioBackend *currentBackend;
-std::vector<AudioBackend *> *AudioBackend::backends;
+static AudioBackend* currentBackend;
+std::vector<AudioBackend*>* AudioBackend::backends;
 
 static bool audio_recording_started;
 static bool eight_khz;
 
-AudioBackend *AudioBackend::getBackend(const std::string& slug)
+AudioBackend* AudioBackend::getBackend(const std::string& slug)
 {
 	if (backends == nullptr)
 		return nullptr;
 	if (slug == "auto")
 	{
 		// Prefer sdl2 if available and avoid the null driver
-		AudioBackend *sdlBackend = nullptr;
-		AudioBackend *autoBackend = nullptr;
+		AudioBackend* sdlBackend = nullptr;
+		AudioBackend* autoBackend = nullptr;
 		for (auto backend : *backends)
 		{
 			if (backend->slug == "sdl2")
@@ -128,7 +132,7 @@ void StartAudioRecording(bool eight_khz)
 		audio_recording_started = true;
 }
 
-u32 RecordAudio(void *buffer, u32 samples)
+u32 RecordAudio(void* buffer, u32 samples)
 {
 	if (!audio_recording_started || currentBackend == nullptr)
 		return 0;
@@ -150,11 +154,11 @@ static void registerForEvents()
 		return;
 	done = true;
 	// Empty the audio buffer when loading a state or terminating the game
-	const auto& callback = [](Event, void *) {
+	const auto& callback = [](Event, void*)
+	{
 		writePtr = 0;
 	};
 	EventManager::listen(Event::Terminate, callback);
 	EventManager::listen(Event::LoadState, callback);
 }
-
 

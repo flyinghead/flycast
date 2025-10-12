@@ -1,22 +1,22 @@
 // serialize.cpp : save states
 #include "serialize.h"
-#include "types.h"
+#include "achievements/achievements.h"
+#include "cfg/option.h"
 #include "hw/aica/aica_if.h"
-#include "hw/holly/sb.h"
+#include "hw/bba/bba.h"
 #include "hw/flashrom/nvmem.h"
 #include "hw/gdrom/gdrom_if.h"
+#include "hw/holly/sb.h"
 #include "hw/maple/maple_cfg.h"
 #include "hw/modem/modem.h"
-#include "hw/pvr/pvr.h"
-#include "hw/sh4/sh4_sched.h"
-#include "hw/sh4/sh4_mmr.h"
-#include "reios/reios.h"
 #include "hw/naomi/naomi.h"
 #include "hw/naomi/naomi_cart.h"
-#include "hw/bba/bba.h"
-#include "cfg/option.h"
+#include "hw/pvr/pvr.h"
+#include "hw/sh4/sh4_mmr.h"
+#include "hw/sh4/sh4_sched.h"
 #include "imgread/common.h"
-#include "achievements/achievements.h"
+#include "reios/reios.h"
+#include "types.h"
 
 void dc_serialize(Serializer& ser)
 {
@@ -100,18 +100,18 @@ void dc_deserialize(Deserializer& deser)
 	DEBUG_LOG(SAVESTATE, "Loaded %d bytes", (u32)deser.size());
 }
 
-Deserializer::Deserializer(const void *data, size_t limit, bool rollback)
-	: SerializeBase(limit, rollback), data((const u8 *)data)
+Deserializer::Deserializer(const void* data, size_t limit, bool rollback)
+	: SerializeBase(limit, rollback), data((const u8*)data)
 {
 	if (!memcmp(data, "RASTATE\001", 8))
 	{
 		// RetroArch savestates now have several sections: MEM, ACHV, RPLY, etc.
-		const u8 *p = this->data + 8;
+		const u8* p = this->data + 8;
 		limit -= 8;
 		while (limit > 8)
 		{
-			const u8 *section = p;
-			u32 sectionSize = *(const u32 *)&p[4];
+			const u8* section = p;
+			u32 sectionSize = *(const u32*)&p[4];
 			p += 8;
 			limit -= 8;
 			if (!memcmp(section, "MEM ", 4))
@@ -121,8 +121,9 @@ Deserializer::Deserializer(const void *data, size_t limit, bool rollback)
 				this->limit = sectionSize;
 				break;
 			}
-			sectionSize = (sectionSize + 7) & ~7;	// align to 8 bytes
-			if (limit < sectionSize) {
+			sectionSize = (sectionSize + 7) & ~7; // align to 8 bytes
+			if (limit < sectionSize)
+			{
 				limit = 0;
 				break;
 			}
@@ -138,7 +139,7 @@ Deserializer::Deserializer(const void *data, size_t limit, bool rollback)
 	if (_version > Current)
 		throw Exception("Version too recent");
 
-	if(_version >= V42 && settings.platform.isConsole())
+	if (_version >= V42 && settings.platform.isConsole())
 	{
 		u32 ramSize;
 		deserialize(ramSize);
@@ -147,8 +148,8 @@ Deserializer::Deserializer(const void *data, size_t limit, bool rollback)
 	}
 }
 
-Serializer::Serializer(void *data, size_t limit, bool rollback)
-	: SerializeBase(limit, rollback), data((u8 *)data)
+Serializer::Serializer(void* data, size_t limit, bool rollback)
+	: SerializeBase(limit, rollback), data((u8*)data)
 {
 	Version v = Current;
 	serialize(v);

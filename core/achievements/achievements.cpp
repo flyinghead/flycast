@@ -1,18 +1,18 @@
 /*
 	This file is part of Flycast.
 
-    Flycast is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 2 of the License, or
-    (at your option) any later version.
+	Flycast is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 2 of the License, or
+	(at your option) any later version.
 
-    Flycast is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+	Flycast is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
+	You should have received a copy of the GNU General Public License
+	along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 // Derived from duckstation: https://github.com/stenzek/duckstation/blob/master/src/core/achievements.cpp
 // SPDX-FileCopyrightText: 2019-2023 Connor McLaughlin <stenzek@gmail.com>
@@ -20,26 +20,26 @@
 #include "achievements.h"
 #include "serialize.h"
 #ifdef USE_RACHIEVEMENTS
+#include "cfg/option.h"
+#include "emulator.h"
+#include "hw/sh4/sh4_mem.h"
+#include "imgread/common.h"
 #include "oslib/directory.h"
 #include "oslib/http_client.h"
-#include "hw/sh4/sh4_mem.h"
-#include "ui/gui_achievements.h"
-#include "imgread/common.h"
-#include "cfg/option.h"
 #include "oslib/oslib.h"
-#include "emulator.h"
 #include "stdclass.h"
+#include "ui/gui_achievements.h"
+#include "util/periodic_thread.h"
+#include "util/worker_thread.h"
+#include <atomic>
 #include <cassert>
+#include <functional>
 #include <rc_client.h>
 #include <rc_hash.h>
-#include <unordered_map>
 #include <sstream>
-#include <atomic>
+#include <unordered_map>
 #include <utility>
 #include <xxhash.h>
-#include <functional>
-#include "util/worker_thread.h"
-#include "util/periodic_thread.h"
 
 namespace achievements
 {
@@ -51,7 +51,7 @@ public:
 	~Achievements();
 	bool init();
 	void term();
-	std::future<void> login(const char *username, const char *password);
+	std::future<void> login(const char* username, const char* password);
 	void logout();
 	bool isLoggedOn() const { return loggedOn; }
 	bool isActive() const { return active; }
@@ -67,42 +67,42 @@ private:
 	bool createClient();
 	std::string getGameHash();
 	void loadGame();
-	void gameLoaded(int result, const char *errorMessage);
+	void gameLoaded(int result, const char* errorMessage);
 	void unloadGame();
 	void pauseGame();
 	void resumeGame();
 	void loadCache();
-	std::string getOrDownloadImage(const char *url);
-	std::pair<std::string, bool> getCachedImage(const char *url);
+	std::string getOrDownloadImage(const char* url);
+	std::pair<std::string, bool> getCachedImage(const char* url);
 	void diskChange();
 	void asyncTask(std::function<void()>&& f);
 	void stopThreads();
 
-	static void clientLoginWithTokenCallback(int result, const char *error_message, rc_client_t *client, void *userdata);
-	static void clientLoginWithPasswordCallback(int result, const char *error_message, rc_client_t *client, void *userdata);
-	void authenticationSuccess(const rc_client_user_t *user);
-	static void clientMessageCallback(const char *message, const rc_client_t *client);
-	static u32 clientReadMemory(u32 address, u8 *buffer, u32 num_bytes, rc_client_t *client);
-	static void clientServerCall(const rc_api_request_t *request, rc_client_server_callback_t callback,
-			void *callback_data, rc_client_t *client);
-	static void clientEventHandler(const rc_client_event_t *event, rc_client_t *client);
-	void handleResetEvent(const rc_client_event_t *event);
-	void handleUnlockEvent(const rc_client_event_t *event);
-	void handleAchievementChallengeIndicatorShowEvent(const rc_client_event_t *event);
-	void handleAchievementChallengeIndicatorHideEvent(const rc_client_event_t *event);
-	void handleGameCompleted(const rc_client_event_t *event);
-	void handleShowAchievementProgress(const rc_client_event_t *event);
-	void handleHideAchievementProgress(const rc_client_event_t *event);
-	void handleUpdateAchievementProgress(const rc_client_event_t *event);
-	void handleLeaderboardStarted(const rc_client_event_t *event);
-	void handleLeaderboardFailed(const rc_client_event_t *event);
-	void handleLeaderboardSubmitted(const rc_client_event_t *event);
-	void handleShowLeaderboardTracker(const rc_client_event_t *event);
-	void handleHideLeaderboardTracker(const rc_client_event_t *event);
-	void handleUpdateLeaderboardTracker(const rc_client_event_t *event);
-	static void emuEventCallback(Event event, void *arg);
+	static void clientLoginWithTokenCallback(int result, const char* error_message, rc_client_t* client, void* userdata);
+	static void clientLoginWithPasswordCallback(int result, const char* error_message, rc_client_t* client, void* userdata);
+	void authenticationSuccess(const rc_client_user_t* user);
+	static void clientMessageCallback(const char* message, const rc_client_t* client);
+	static u32 clientReadMemory(u32 address, u8* buffer, u32 num_bytes, rc_client_t* client);
+	static void clientServerCall(const rc_api_request_t* request, rc_client_server_callback_t callback,
+		void* callback_data, rc_client_t* client);
+	static void clientEventHandler(const rc_client_event_t* event, rc_client_t* client);
+	void handleResetEvent(const rc_client_event_t* event);
+	void handleUnlockEvent(const rc_client_event_t* event);
+	void handleAchievementChallengeIndicatorShowEvent(const rc_client_event_t* event);
+	void handleAchievementChallengeIndicatorHideEvent(const rc_client_event_t* event);
+	void handleGameCompleted(const rc_client_event_t* event);
+	void handleShowAchievementProgress(const rc_client_event_t* event);
+	void handleHideAchievementProgress(const rc_client_event_t* event);
+	void handleUpdateAchievementProgress(const rc_client_event_t* event);
+	void handleLeaderboardStarted(const rc_client_event_t* event);
+	void handleLeaderboardFailed(const rc_client_event_t* event);
+	void handleLeaderboardSubmitted(const rc_client_event_t* event);
+	void handleShowLeaderboardTracker(const rc_client_event_t* event);
+	void handleHideLeaderboardTracker(const rc_client_event_t* event);
+	void handleUpdateLeaderboardTracker(const rc_client_event_t* event);
+	static void emuEventCallback(Event event, void* arg);
 
-	rc_client_t *rc_client = nullptr;
+	rc_client_t* rc_client = nullptr;
 	bool loggedOn = false;
 	std::atomic_bool loadingGame {};
 	bool active = false;
@@ -111,63 +111,77 @@ private:
 	std::string cachePath;
 	std::unordered_map<u64, std::string> cacheMap;
 	std::mutex cacheMutex;
-	WorkerThread taskThread {"RA-background"};
+	WorkerThread taskThread { "RA-background" };
 
-	PeriodicThread idleThread { "RA-idle", [this]() {
-		if (active)
-			rc_client_idle(rc_client);
-	}};
+	PeriodicThread idleThread { "RA-idle", [this]()
+		{
+			if (active)
+				rc_client_idle(rc_client);
+		} };
 };
 
-bool init() {
+bool init()
+{
 	return Achievements::Instance().init();
 }
 
-void term() {
+void term()
+{
 	Achievements::Instance().term();
 }
 
-std::future<void> login(const char *username, const char *password) {
+std::future<void> login(const char* username, const char* password)
+{
 	return Achievements::Instance().login(username, password);
 }
 
-void logout() {
+void logout()
+{
 	Achievements::Instance().logout();
 }
 
-bool isLoggedOn() {
+bool isLoggedOn()
+{
 	return Achievements::Instance().isLoggedOn();
 }
 
-bool isActive() {
+bool isActive()
+{
 	return Achievements::Instance().isActive();
 }
 
-Game getCurrentGame() {
+Game getCurrentGame()
+{
 	return Achievements::Instance().getCurrentGame();
 }
 
-std::vector<Achievement> getAchievementList() {
+std::vector<Achievement> getAchievementList()
+{
 	return Achievements::Instance().getAchievementList();
 }
 
-bool canPause() {
+bool canPause()
+{
 	return Achievements::Instance().canPause();
 }
 
-void serialize(Serializer& ser) {
+void serialize(Serializer& ser)
+{
 	Achievements::Instance().serialize(ser);
 }
-void deserialize(Deserializer& deser) {
+void deserialize(Deserializer& deser)
+{
 	Achievements::Instance().deserialize(deser);
 }
 
-Achievements& Achievements::Instance() {
+Achievements& Achievements::Instance()
+{
 	static Achievements instance;
 	return instance;
 }
 // create the instance at start up
-OnLoad _([]() { Achievements::Instance(); });
+OnLoad _([]()
+	{ Achievements::Instance(); });
 
 Achievements::Achievements()
 {
@@ -189,11 +203,13 @@ Achievements::~Achievements()
 	term();
 }
 
-void Achievements::asyncTask(std::function<void()>&& f) {
+void Achievements::asyncTask(std::function<void()>&& f)
+{
 	taskThread.run(std::move(f));
 }
 
-void Achievements::stopThreads() {
+void Achievements::stopThreads()
+{
 	taskThread.stop();
 	idleThread.stop();
 }
@@ -209,16 +225,16 @@ bool Achievements::init()
 	rc_client_set_event_handler(rc_client, clientEventHandler);
 	rc_client_set_hardcore_enabled(rc_client, 0);
 	// TODO Expose these settings?
-	//rc_client_set_encore_mode_enabled(rc_client, 0);
-	//rc_client_set_unofficial_enabled(rc_client, 0);
-	//rc_client_set_spectator_mode_enabled(rc_client, 0);
+	// rc_client_set_encore_mode_enabled(rc_client, 0);
+	// rc_client_set_unofficial_enabled(rc_client, 0);
+	// rc_client_set_spectator_mode_enabled(rc_client, 0);
 	loadCache();
 
 	if (!config::AchievementsUserName.get().empty() && !config::AchievementsToken.get().empty())
 	{
 		INFO_LOG(COMMON, "RA: Attempting login with user '%s'...", config::AchievementsUserName.get().c_str());
 		rc_client_begin_login_with_token(rc_client, config::AchievementsUserName.get().c_str(),
-				config::AchievementsToken.get().c_str(), clientLoginWithTokenCallback, nullptr);
+			config::AchievementsToken.get().c_str(), clientLoginWithTokenCallback, nullptr);
 	}
 
 	return true;
@@ -249,12 +265,12 @@ void Achievements::loadCache()
 {
 	cachePath = get_writable_data_path("achievements/");
 	flycast::mkdir(cachePath.c_str(), 0755);
-	DIR *dir = flycast::opendir(cachePath.c_str());
+	DIR* dir = flycast::opendir(cachePath.c_str());
 	if (dir != nullptr)
 	{
 		while (true)
 		{
-			dirent *direntry = flycast::readdir(dir);
+			dirent* direntry = flycast::readdir(dir);
 			if (direntry == nullptr)
 				break;
 			std::string name = direntry->d_name;
@@ -269,16 +285,18 @@ void Achievements::loadCache()
 	}
 }
 
-static u64 hashUrl(const char *url) {
+static u64 hashUrl(const char* url)
+{
 	return XXH3_64bits(url, strlen(url));
 }
 
-std::pair<std::string, bool> Achievements::getCachedImage(const char *url)
+std::pair<std::string, bool> Achievements::getCachedImage(const char* url)
 {
 	u64 hash = hashUrl(url);
 	std::lock_guard<std::mutex> _(cacheMutex);
 	auto it = cacheMap.find(hash);
-	if (it != cacheMap.end()) {
+	if (it != cacheMap.end())
+	{
 		return std::make_pair(cachePath + it->second, true);
 	}
 	else
@@ -289,7 +307,7 @@ std::pair<std::string, bool> Achievements::getCachedImage(const char *url)
 	}
 }
 
-std::string Achievements::getOrDownloadImage(const char *url)
+std::string Achievements::getOrDownloadImage(const char* url)
 {
 	u64 hash = hashUrl(url);
 	{
@@ -306,8 +324,9 @@ std::string Achievements::getOrDownloadImage(const char *url)
 	std::stringstream stream;
 	stream << std::hex << hash << ".png";
 	std::string localPath = cachePath + stream.str();
-	FILE *f = nowide::fopen(localPath.c_str(), "wb");
-	if (f == nullptr) {
+	FILE* f = nowide::fopen(localPath.c_str(), "wb");
+	if (f == nullptr)
+	{
 		WARN_LOG(COMMON, "Can't save image to %s", localPath.c_str());
 		return {};
 	}
@@ -331,28 +350,28 @@ void Achievements::term()
 	rc_client = nullptr;
 }
 
-void Achievements::authenticationSuccess(const rc_client_user_t *user)
+void Achievements::authenticationSuccess(const rc_client_user_t* user)
 {
 	NOTICE_LOG(COMMON, "RA Login successful");
 	std::string url(512, '\0');
 	int rc = rc_client_user_get_image_url(user, url.data(), url.size());
 	if (rc == RC_OK)
 	{
-		asyncTask([this, url]() {
+		asyncTask([this, url]()
+			{
 			std::string image = getOrDownloadImage(url.c_str());
 			std::string text = "User " + config::AchievementsUserName.get() + " authenticated";
-			notifier.notify(Notification::Login, image, text);
-		});
+			notifier.notify(Notification::Login, image, text); });
 	}
 	loggedOn = true;
 	if (!settings.content.fileName.empty()) // TODO better test?
 		loadGame();
 }
 
-void Achievements::clientLoginWithTokenCallback(int result, const char *error_message, rc_client_t *client,
-                                                void *userdata)
+void Achievements::clientLoginWithTokenCallback(int result, const char* error_message, rc_client_t* client,
+	void* userdata)
 {
-	Achievements *achievements = (Achievements *)rc_client_get_userdata(client);
+	Achievements* achievements = (Achievements*)rc_client_get_userdata(client);
 	if (result != RC_OK)
 	{
 		WARN_LOG(COMMON, "RA Login failed: %s", error_message);
@@ -365,17 +384,17 @@ void Achievements::clientLoginWithTokenCallback(int result, const char *error_me
 std::future<void> Achievements::login(const char* username, const char* password)
 {
 	init();
-	std::promise<void> *promise = new std::promise<void>();
+	std::promise<void>* promise = new std::promise<void>();
 	auto future = promise->get_future();
 	rc_client_begin_login_with_password(rc_client, username, password, clientLoginWithPasswordCallback, promise);
 	return future;
 }
 
-void Achievements::clientLoginWithPasswordCallback(int result, const char *error_message, rc_client_t *client,
-                                                   void *userdata)
+void Achievements::clientLoginWithPasswordCallback(int result, const char* error_message, rc_client_t* client,
+	void* userdata)
 {
-	Achievements *achievements = (Achievements *)rc_client_get_userdata(client);
-	std::promise<void> *promise = (std::promise<void> *)userdata;
+	Achievements* achievements = (Achievements*)rc_client_get_userdata(client);
+	std::promise<void>* promise = (std::promise<void>*)userdata;
 	if (result != RC_OK)
 	{
 		std::string errorMsg = rc_error_str(result);
@@ -431,13 +450,13 @@ u32 Achievements::clientReadMemory(u32 address, u8* buffer, u32 num_bytes, rc_cl
 	switch (num_bytes)
 	{
 	case 1:
-    	*buffer = ReadMem8_nommu(address);
-    	break;
+		*buffer = ReadMem8_nommu(address);
+		break;
 	case 2:
-		*(u16 *)buffer = ReadMem16_nommu(address);
+		*(u16*)buffer = ReadMem16_nommu(address);
 		break;
 	case 4:
-		*(u32 *)buffer = ReadMem32_nommu(address);
+		*(u32*)buffer = ReadMem32_nommu(address);
 		break;
 	default:
 		return 0;
@@ -445,18 +464,19 @@ u32 Achievements::clientReadMemory(u32 address, u8* buffer, u32 num_bytes, rc_cl
 	return num_bytes;
 }
 
-void Achievements::clientServerCall(const rc_api_request_t *request, rc_client_server_callback_t callback,
-                                    void *callback_data, rc_client_t *client)
+void Achievements::clientServerCall(const rc_api_request_t* request, rc_client_server_callback_t callback,
+	void* callback_data, rc_client_t* client)
 {
-	Achievements *achievements = (Achievements *)rc_client_get_userdata(client);
-	std::string url {request->url};
+	Achievements* achievements = (Achievements*)rc_client_get_userdata(client);
+	std::string url { request->url };
 	std::string payload;
 	if (request->post_data != nullptr)
 		payload = request->post_data;
 	std::string contentType;
 	if (request->content_type != nullptr)
 		contentType = request->content_type;
-	achievements->asyncTask([url, contentType, payload, callback, callback_data]() {
+	achievements->asyncTask([url, contentType, payload, callback, callback_data]()
+		{
 		int rc;
 		std::vector<u8> reply;
 		if (!payload.empty())
@@ -467,8 +487,7 @@ void Achievements::clientServerCall(const rc_api_request_t *request, rc_client_s
 		rr.http_status_code = rc;	// TODO RC_API_SERVER_RESPONSE_RETRYABLE_CLIENT_ERROR if connection fails?
 		rr.body_length = reply.size();
 		rr.body = (const char *)reply.data();
-		callback(&rr, callback_data);
-	});
+		callback(&rr, callback_data); });
 }
 
 static void handleServerError(const rc_client_server_error_t* error)
@@ -485,7 +504,7 @@ static void notifyError(const std::string& msg)
 
 void Achievements::clientEventHandler(const rc_client_event_t* event, rc_client_t* client)
 {
-	Achievements *achievements = (Achievements *)rc_client_get_userdata(client);
+	Achievements* achievements = (Achievements*)rc_client_get_userdata(client);
 	switch (event->type)
 	{
 	case RC_CLIENT_EVENT_RESET:
@@ -540,7 +559,7 @@ void Achievements::clientEventHandler(const rc_client_event_t* event, rc_client_
 	case RC_CLIENT_EVENT_LEADERBOARD_TRACKER_UPDATE:
 		achievements->handleUpdateLeaderboardTracker(event);
 		break;
-// TODO case RC_CLIENT_EVENT_LEADERBOARD_SCOREBOARD:
+		// TODO case RC_CLIENT_EVENT_LEADERBOARD_SCOREBOARD:
 
 	case RC_CLIENT_EVENT_DISCONNECTED:
 		notifyError("RetroAchievements disconnected");
@@ -556,14 +575,14 @@ void Achievements::clientEventHandler(const rc_client_event_t* event, rc_client_
 	}
 }
 
-void Achievements::handleResetEvent(const rc_client_event_t *event)
+void Achievements::handleResetEvent(const rc_client_event_t* event)
 {
 	// This never seems to be called, probably because hardcore mode is enabled before starting the game.
 	INFO_LOG(COMMON, "RA: Resetting runtime due to reset event");
 	rc_client_reset(rc_client);
 }
 
-void Achievements::handleUnlockEvent(const rc_client_event_t *event)
+void Achievements::handleUnlockEvent(const rc_client_event_t* event)
 {
 	const rc_client_achievement_t* cheevo = event->achievement;
 	assert(cheevo != nullptr);
@@ -575,15 +594,15 @@ void Achievements::handleUnlockEvent(const rc_client_event_t *event)
 	int rc = rc_client_achievement_get_image_url(cheevo, cheevo->state, url.data(), url.size());
 	if (rc == RC_OK)
 	{
-		asyncTask([this, url, title, description]() {
+		asyncTask([this, url, title, description]()
+			{
 			std::string image = getOrDownloadImage(url.c_str());
 			std::string text = "Achievement " + title + " unlocked!";
-			notifier.notify(Notification::Login, image, text, description);
-		});
+			notifier.notify(Notification::Login, image, text, description); });
 	}
 }
 
-void Achievements::handleAchievementChallengeIndicatorShowEvent(const rc_client_event_t *event)
+void Achievements::handleAchievementChallengeIndicatorShowEvent(const rc_client_event_t* event)
 {
 	const rc_client_achievement_t* cheevo = event->achievement;
 	INFO_LOG(COMMON, "RA: Challenge: %s", cheevo->title);
@@ -591,14 +610,14 @@ void Achievements::handleAchievementChallengeIndicatorShowEvent(const rc_client_
 	int rc = rc_client_achievement_get_image_url(cheevo, RC_CLIENT_ACHIEVEMENT_STATE_UNLOCKED, url.data(), url.size());
 	if (rc == RC_OK)
 	{
-		asyncTask([this, url]() {
+		asyncTask([this, url]()
+			{
 			std::string image = getOrDownloadImage(url.c_str());
-			notifier.showChallenge(image);
-		});
+			notifier.showChallenge(image); });
 	}
 }
 
-void Achievements::handleAchievementChallengeIndicatorHideEvent(const rc_client_event_t *event)
+void Achievements::handleAchievementChallengeIndicatorHideEvent(const rc_client_event_t* event)
 {
 	const rc_client_achievement_t* cheevo = event->achievement;
 	INFO_LOG(COMMON, "RA: Challenge hidden: %s", cheevo->title);
@@ -606,54 +625,54 @@ void Achievements::handleAchievementChallengeIndicatorHideEvent(const rc_client_
 	int rc = rc_client_achievement_get_image_url(cheevo, RC_CLIENT_ACHIEVEMENT_STATE_UNLOCKED, url.data(), url.size());
 	if (rc == RC_OK)
 	{
-		asyncTask([this, url]() {
+		asyncTask([this, url]()
+			{
 			std::string image = getOrDownloadImage(url.c_str());
-			notifier.hideChallenge(image);
-		});
+			notifier.hideChallenge(image); });
 	}
 }
 
-void Achievements::handleLeaderboardStarted(const rc_client_event_t *event)
+void Achievements::handleLeaderboardStarted(const rc_client_event_t* event)
 {
-	const rc_client_leaderboard_t *leaderboard = event->leaderboard;
+	const rc_client_leaderboard_t* leaderboard = event->leaderboard;
 	INFO_LOG(COMMON, "RA: Leaderboard started: %s", leaderboard->title);
 	std::string text = "Leaderboard " + std::string(leaderboard->title) + " started";
 	notifier.notify(Notification::Unlocked, "", text, leaderboard->description);
 }
-void Achievements::handleLeaderboardFailed(const rc_client_event_t *event)
+void Achievements::handleLeaderboardFailed(const rc_client_event_t* event)
 {
-	const rc_client_leaderboard_t *leaderboard = event->leaderboard;
+	const rc_client_leaderboard_t* leaderboard = event->leaderboard;
 	INFO_LOG(COMMON, "RA: Leaderboard failed: %s", leaderboard->title);
 	std::string text = "Leaderboard " + std::string(leaderboard->title) + " failed";
 	notifier.notify(Notification::Unlocked, "", text, leaderboard->description);
 }
-void Achievements::handleLeaderboardSubmitted(const rc_client_event_t *event)
+void Achievements::handleLeaderboardSubmitted(const rc_client_event_t* event)
 {
-	const rc_client_leaderboard_t *leaderboard = event->leaderboard;
+	const rc_client_leaderboard_t* leaderboard = event->leaderboard;
 	INFO_LOG(COMMON, "RA: Leaderboard submitted: %s", leaderboard->title);
 	std::string text = "Leaderboard " + std::string(leaderboard->title) + " submitted";
 	notifier.notify(Notification::Unlocked, "", text, leaderboard->description);
 }
-void Achievements::handleShowLeaderboardTracker(const rc_client_event_t *event)
+void Achievements::handleShowLeaderboardTracker(const rc_client_event_t* event)
 {
-	const rc_client_leaderboard_tracker_t *leaderboard = event->leaderboard_tracker;
+	const rc_client_leaderboard_tracker_t* leaderboard = event->leaderboard_tracker;
 	DEBUG_LOG(COMMON, "RA: Show leaderboard[%d]: %s", leaderboard->id, leaderboard->display);
 	notifier.showLeaderboard(leaderboard->id, leaderboard->display);
 }
-void Achievements::handleHideLeaderboardTracker(const rc_client_event_t *event)
+void Achievements::handleHideLeaderboardTracker(const rc_client_event_t* event)
 {
-	const rc_client_leaderboard_tracker_t *leaderboard = event->leaderboard_tracker;
+	const rc_client_leaderboard_tracker_t* leaderboard = event->leaderboard_tracker;
 	DEBUG_LOG(COMMON, "RA: Hide leaderboard[%d]: %s", leaderboard->id, leaderboard->display);
 	notifier.hideLeaderboard(leaderboard->id);
 }
-void Achievements::handleUpdateLeaderboardTracker(const rc_client_event_t *event)
+void Achievements::handleUpdateLeaderboardTracker(const rc_client_event_t* event)
 {
-	const rc_client_leaderboard_tracker_t *leaderboard = event->leaderboard_tracker;
+	const rc_client_leaderboard_tracker_t* leaderboard = event->leaderboard_tracker;
 	DEBUG_LOG(COMMON, "RA: Update leaderboard[%d]: %s", leaderboard->id, leaderboard->display);
 	notifier.showLeaderboard(leaderboard->id, leaderboard->display);
 }
 
-void Achievements::handleGameCompleted(const rc_client_event_t *event)
+void Achievements::handleGameCompleted(const rc_client_event_t* event)
 {
 	const rc_client_game_t* game = rc_client_get_game_info(rc_client);
 	std::string text1 = (rc_client_get_hardcore_enabled(rc_client) ? "Mastered " : "Completed ") + std::string(game->title);
@@ -666,52 +685,52 @@ void Achievements::handleGameCompleted(const rc_client_event_t *event)
 	std::string url(512, '\0');
 	if (rc_client_game_get_image_url(game, url.data(), url.size()) != RC_OK)
 		url.clear();
-	asyncTask([this, url, text1, text2, text3]() {
+	asyncTask([this, url, text1, text2, text3]()
+		{
 		std::string image;
 		if (!url.empty())
 			image = getOrDownloadImage(url.c_str());
-		notifier.notify(Notification::Mastery, image, text1, text2, text3);
-	});
+		notifier.notify(Notification::Mastery, image, text1, text2, text3); });
 }
 
-void Achievements::handleShowAchievementProgress(const rc_client_event_t *event)
+void Achievements::handleShowAchievementProgress(const rc_client_event_t* event)
 {
 	handleUpdateAchievementProgress(event);
 }
-void Achievements::handleHideAchievementProgress(const rc_client_event_t *event)
+void Achievements::handleHideAchievementProgress(const rc_client_event_t* event)
 {
 	notifier.notify(Notification::Progress, "", "");
 }
-void Achievements::handleUpdateAchievementProgress(const rc_client_event_t *event)
+void Achievements::handleUpdateAchievementProgress(const rc_client_event_t* event)
 {
 	const rc_client_achievement_t* cheevo = event->achievement;
 	std::string url(512, '\0');
 	if (rc_client_achievement_get_image_url(cheevo, RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE, url.data(), url.size()) != RC_OK)
 		url.clear();
 	std::string progress(cheevo->measured_progress);
-	asyncTask([this, url, progress]() {
+	asyncTask([this, url, progress]()
+		{
 		std::string image;
 		if (!url.empty())
 			image = getOrDownloadImage(url.c_str());
-		notifier.notify(Notification::Progress, image, progress);
-	});
+		notifier.notify(Notification::Progress, image, progress); });
 }
 
-static Disc *hashDisk;
+static Disc* hashDisk;
 static bool add150;
 
-static void *cdreader_open_track(const char* path, u32 track)
+static void* cdreader_open_track(const char* path, u32 track)
 {
 	DEBUG_LOG(COMMON, "RA: cdreader_open_track %s track %d", path, track);
 	if (track == RC_HASH_CDTRACK_FIRST_DATA)
 	{
 		for (const Track& track : hashDisk->tracks)
 			if (track.isDataTrack())
-				return const_cast<Track *>(&track);
+				return const_cast<Track*>(&track);
 		return nullptr;
 	}
 	if (track <= hashDisk->tracks.size())
-		return const_cast<Track *>(&hashDisk->tracks[track - 1]);
+		return const_cast<Track*>(&hashDisk->tracks[track - 1]);
 	else
 		return nullptr;
 }
@@ -722,7 +741,7 @@ static size_t cdreader_read_sector(void* track_handle, u32 sector, void* buffer,
 		// add 150 sectors to FAD corresponding to files
 		// FIXME get rid of this
 		add150 = true;
-	//DEBUG_LOG(COMMON, "RA: cdreader_read_sector track %p sec %d+%d num %zd", track_handle, sector, add150 ? 150 : 0, requested_bytes);
+	// DEBUG_LOG(COMMON, "RA: cdreader_read_sector track %p sec %d+%d num %zd", track_handle, sector, add150 ? 150 : 0, requested_bytes);
 	if (add150)
 		sector += 150;
 	u8 locbuf[2048];
@@ -739,7 +758,7 @@ static void cdreader_close_track(void* track_handle)
 
 static u32 cdreader_first_track_sector(void* track_handle)
 {
-	Track& track = *static_cast<Track *>(track_handle);
+	Track& track = *static_cast<Track*>(track_handle);
 	DEBUG_LOG(COMMON, "RA: cdreader_first_track_sector track %p -> %d", track_handle, track.StartFAD);
 	return track.StartFAD;
 }
@@ -751,31 +770,32 @@ std::string Achievements::getGameHash()
 		if (!gdr::isLoaded())
 			return {};
 		// Reopen the disk locally to avoid threading issues (CHD)
-		try {
+		try
+		{
 			hashDisk = OpenDisc(settings.content.path);
-		} catch (const FlycastException& e) {
+		}
+		catch (const FlycastException& e)
+		{
 			return {};
 		}
 		add150 = false;
 		rc_hash_cdreader hooks = {
-				cdreader_open_track,
-				cdreader_read_sector,
-				cdreader_close_track,
-				cdreader_first_track_sector
+			cdreader_open_track,
+			cdreader_read_sector,
+			cdreader_close_track,
+			cdreader_first_track_sector
 		};
 		rc_hash_init_custom_cdreader(&hooks);
-		rc_hash_init_error_message_callback([](const char *msg) {
-			WARN_LOG(COMMON, "cdreader: %s", msg);
-		});
+		rc_hash_init_error_message_callback([](const char* msg)
+			{ WARN_LOG(COMMON, "cdreader: %s", msg); });
 #if !defined(NDEBUG) || defined(DEBUGFAST)
-		rc_hash_init_verbose_message_callback([](const char *msg) {
-			DEBUG_LOG(COMMON, "cdreader: %s", msg);
-		});
+		rc_hash_init_verbose_message_callback([](const char* msg)
+			{ DEBUG_LOG(COMMON, "cdreader: %s", msg); });
 #endif
 	}
 	char hash[33] {};
 	rc_hash_generate_from_file(hash, settings.platform.isConsole() ? RC_CONSOLE_DREAMCAST : RC_CONSOLE_ARCADE,
-			settings.content.fileName.c_str());	// fileName is only used for arcade
+		settings.content.fileName.c_str()); // fileName is only used for arcade
 	delete hashDisk;
 	hashDisk = nullptr;
 
@@ -806,9 +826,9 @@ void Achievements::resumeGame()
 		term();
 }
 
-void Achievements::emuEventCallback(Event event, void *arg)
+void Achievements::emuEventCallback(Event event, void* arg)
 {
-	Achievements *instance = ((Achievements *)arg);
+	Achievements* instance = ((Achievements*)arg);
 	switch (event)
 	{
 	case Event::Start:
@@ -843,7 +863,8 @@ void Achievements::loadGame()
 		loadingGame = false;
 		return;
 	}
-	if (!init() || !isLoggedOn()) {
+	if (!init() || !isLoggedOn())
+	{
 		if (!isLoggedOn())
 			INFO_LOG(COMMON, "Not logged on. Not loading game yet");
 		loadingGame = false;
@@ -854,25 +875,26 @@ void Achievements::loadGame()
 	{
 		// settings.raHardcoreMode is set before enabling cheats and loading the initial savestate
 		rc_client_set_hardcore_enabled(rc_client, settings.raHardcoreMode);
-		rc_client_begin_load_game(rc_client, gameHash.c_str(), [](int result, const char *error_message, rc_client_t *client, void *userdata) {
-				((Achievements *)userdata)->gameLoaded(result, error_message);
-			}, this);
+		rc_client_begin_load_game(rc_client, gameHash.c_str(), [](int result, const char* error_message, rc_client_t* client, void* userdata)
+			{ ((Achievements*)userdata)->gameLoaded(result, error_message); }, this);
 	}
-	else {
+	else
+	{
 		INFO_LOG(COMMON, "RA: empty hash. Aborting load");
 		loadingGame = false;
 		settings.raHardcoreMode = false;
 	}
 }
 
-void Achievements::gameLoaded(int result, const char *errorMessage)
+void Achievements::gameLoaded(int result, const char* errorMessage)
 {
 	if (result != RC_OK)
 	{
 		if (result == RC_NO_GAME_LOADED)
 			// Unknown game.
 			INFO_LOG(COMMON, "RA: Unknown game, disabling achievements.");
-		else if (result == RC_LOGIN_REQUIRED) {
+		else if (result == RC_LOGIN_REQUIRED)
+		{
 			// We would've asked to re-authenticate, so leave HC on for now.
 			// Once we've done so, we'll reload the game.
 		}
@@ -894,7 +916,7 @@ void Achievements::gameLoaded(int result, const char *errorMessage)
 	loadingGame = false;
 	EventManager::listen(Event::VBlank, emuEventCallback, this);
 	NOTICE_LOG(COMMON, "RA: game %d loaded: %s, achievements %d leaderboards %d rich presence %d", info->id, info->title,
-			rc_client_has_achievements(rc_client), rc_client_has_leaderboards(rc_client), rc_client_has_rich_presence(rc_client));
+		rc_client_has_achievements(rc_client), rc_client_has_leaderboards(rc_client), rc_client_has_rich_presence(rc_client));
 	if (!rc_client_is_processing_required(rc_client))
 		settings.raHardcoreMode = false;
 	else
@@ -911,13 +933,13 @@ void Achievements::gameLoaded(int result, const char *errorMessage)
 				+ " of " + std::to_string(summary.num_core_achievements) + " achievements unlocked.";
 	else
 		text2 = "This game has no achievements.";
-	asyncTask([this, url, text1, text2]() {
+	asyncTask([this, url, text1, text2]()
+		{
 		std::string image;
 		if (!url.empty())
 			image = getOrDownloadImage(url.c_str());
 		std::string text3 = settings.raHardcoreMode ? "Hardcore Mode" : "";
-		notifier.notify(Notification::Login, image, text1, text2, text3);
-	});
+		notifier.notify(Notification::Login, image, text1, text2, text3); });
 }
 
 void Achievements::unloadGame()
@@ -939,11 +961,13 @@ void Achievements::diskChange()
 		// Don't unload the game when the lid is open while swapping disks
 		return;
 	std::string hash = getGameHash();
-	if (hash == "") {
+	if (hash == "")
+	{
 		unloadGame();
 		return;
 	}
-	rc_client_begin_change_media_from_hash(rc_client, hash.c_str(), [](int result, const char *errorMessage, rc_client_t *client, void *userdata) {
+	rc_client_begin_change_media_from_hash(rc_client, hash.c_str(), [](int result, const char* errorMessage, rc_client_t* client, void* userdata)
+		{
 			if (result == RC_HARDCORE_DISABLED) {
 				settings.raHardcoreMode = false;
 				notifier.notify(Notification::Login, "", "Hardcore mode disabled", "Unrecognized media inserted");
@@ -954,47 +978,48 @@ void Achievements::diskChange()
 				if (errorMessage == nullptr)
 					errorMessage = rc_error_str(result);
 				notifier.notify(Notification::Login, "", "Media change failed", errorMessage);
-			}
-		}, this);
+			} }, this);
 }
 
 Game Achievements::getCurrentGame()
 {
 	if (!active)
-		return Game{};
-	const rc_client_game_t *info = rc_client_get_game_info(rc_client);
+		return Game {};
+	const rc_client_game_t* info = rc_client_get_game_info(rc_client);
 	if (info == nullptr)
-		return Game{};
+		return Game {};
 	char url[128];
 	std::string image;
 	if (rc_client_game_get_image_url(info, url, sizeof(url)) == RC_OK)
 	{
 		bool cached;
 		std::tie(image, cached) = getCachedImage(url);
-		if (!cached) {
+		if (!cached)
+		{
 			std::string surl = url;
-			asyncTask([this, surl]() { getOrDownloadImage(surl.c_str()); });
+			asyncTask([this, surl]()
+				{ getOrDownloadImage(surl.c_str()); });
 		}
 	}
 	rc_client_user_game_summary_t summary;
 	rc_client_get_user_game_summary(rc_client, &summary);
 
-	return Game{ image, info->title, summary.num_unlocked_achievements, summary.num_core_achievements, summary.points_unlocked, summary.points_core };
+	return Game { image, info->title, summary.num_unlocked_achievements, summary.num_core_achievements, summary.points_unlocked, summary.points_core };
 }
 
 std::vector<Achievement> Achievements::getAchievementList()
 {
 	std::vector<Achievement> achievements;
-	rc_client_achievement_list_t *list = rc_client_create_achievement_list(rc_client,
+	rc_client_achievement_list_t* list = rc_client_create_achievement_list(rc_client,
 		RC_CLIENT_ACHIEVEMENT_CATEGORY_CORE_AND_UNOFFICIAL,
 		RC_CLIENT_ACHIEVEMENT_LIST_GROUPING_PROGRESS);
 	std::vector<std::string> uncachedImages;
 	for (u32 i = 0; i < list->num_buckets; i++)
 	{
-		const char *label = list->buckets[i].label;
+		const char* label = list->buckets[i].label;
 		for (u32 j = 0; j < list->buckets[i].num_achievements; j++)
 		{
-			const rc_client_achievement_t *achievement = list->buckets[i].achievements[j];
+			const rc_client_achievement_t* achievement = list->buckets[i].achievements[j];
 			char url[128];
 			std::string image;
 			if (rc_client_achievement_get_image_url(achievement, achievement->state, url, sizeof(url)) == RC_OK)
@@ -1012,10 +1037,10 @@ std::vector<Achievement> Achievements::getAchievementList()
 	}
 	rc_client_destroy_achievement_list(list);
 	if (!uncachedImages.empty())
-		asyncTask([this, uncachedImages]() {
+		asyncTask([this, uncachedImages]()
+			{
 			for (const std::string& url : uncachedImages)
-				getOrDownloadImage(url.c_str());
-		});
+				getOrDownloadImage(url.c_str()); });
 
 	return achievements;
 }
@@ -1036,41 +1061,45 @@ void Achievements::serialize(Serializer& ser)
 	u32 size = (u32)rc_client_progress_size(rc_client);
 	if (size > 0)
 	{
-		u8 *buffer = new u8[size];
+		u8* buffer = new u8[size];
 		if (rc_client_serialize_progress(rc_client, buffer) != RC_OK)
 			size = 0;
 		ser << size;
 		ser.serialize(buffer, size);
 		delete[] buffer;
 	}
-	else {
+	else
+	{
 		ser << size;
 	}
 }
 void Achievements::deserialize(Deserializer& deser)
 {
-	if (deser.version() < Deserializer::V50) {
-		 rc_client_deserialize_progress(rc_client, nullptr);
+	if (deser.version() < Deserializer::V50)
+	{
+		rc_client_deserialize_progress(rc_client, nullptr);
 	}
-	else {
+	else
+	{
 		u32 size;
 		deser >> size;
 		if (size > 0)
 		{
-			u8 *buffer = new u8[size];
+			u8* buffer = new u8[size];
 			deser.deserialize(buffer, size);
 			rc_client_deserialize_progress(rc_client, buffer);
 			delete[] buffer;
 		}
-		else {
+		else
+		{
 			rc_client_deserialize_progress(rc_client, nullptr);
 		}
 	}
 }
 
-}	// namespace achievements
+} // namespace achievements
 
-#else	// !USE_RACHIEVEMENTS
+#else // !USE_RACHIEVEMENTS
 
 namespace achievements
 {

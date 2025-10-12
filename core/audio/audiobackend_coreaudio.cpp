@@ -1,15 +1,15 @@
 /*
-    Simple Core Audio backend for osx (and maybe ios?)
-    Based off various audio core samples and dolphin's code
+	Simple Core Audio backend for osx (and maybe ios?)
+	Based off various audio core samples and dolphin's code
 
-    This is part of the Reicast project, please consult the
-    LICENSE file for licensing & related information
+	This is part of the Reicast project, please consult the
+	LICENSE file for licensing & related information
 
-    This could do with some locking logic to avoid
-    race conditions, and some variable length buffer
-    logic to support chunk sizes other than 512 bytes
+	This could do with some locking logic to avoid
+	race conditions, and some variable length buffer
+	logic to support chunk sizes other than 512 bytes
 
-    It does work on my macmini though
+	It does work on my macmini though
  */
 #if defined(__APPLE__)
 #include "audiostream.h"
@@ -18,15 +18,15 @@
 
 #include <atomic>
 
-#include <AudioUnit/AudioUnit.h>
 #include <AudioToolbox/AudioQueue.h>
+#include <AudioUnit/AudioUnit.h>
 
 class CoreAudioBackend : public AudioBackend
 {
 	AudioUnit audioUnit;
 
 	u32 BUFSIZE = 0;
-	u8 *samples_temp = nullptr;
+	u8* samples_temp = nullptr;
 
 	std::atomic<int> samples_wptr;
 	std::atomic<int> samples_rptr;
@@ -40,19 +40,19 @@ class CoreAudioBackend : public AudioBackend
 	AudioQueueRef recordQueue;
 
 	static OSStatus renderCallback(void* ctx, AudioUnitRenderActionFlags* flags, const AudioTimeStamp* ts,
-								UInt32 bus, UInt32 frames, AudioBufferList* abl)
+		UInt32 bus, UInt32 frames, AudioBufferList* abl)
 	{
-		CoreAudioBackend *backend = (CoreAudioBackend *)ctx;
+		CoreAudioBackend* backend = (CoreAudioBackend*)ctx;
 		for (int i = 0; i < abl->mNumberBuffers; i++)
 		{
 			int size = abl->mBuffers[i].mDataByteSize;
-			u8 *outBuffer = (u8 *)abl->mBuffers[i].mData;
+			u8* outBuffer = (u8*)abl->mBuffers[i].mData;
 			while (size != 0)
 			{
 				int avail = (backend->samples_wptr - backend->samples_rptr + backend->BUFSIZE) % backend->BUFSIZE;
 				if (avail == 0)
 				{
-					//printf("Core Audio: buffer underrun %d bytes (%d)", size, abl->mBuffers[i].mDataByteSize);
+					// printf("Core Audio: buffer underrun %d bytes (%d)", size, abl->mBuffers[i].mDataByteSize);
 					memset(outBuffer, '\0', size);
 					return noErr;
 				}
@@ -93,23 +93,25 @@ public:
 		desc.componentManufacturer = kAudioUnitManufacturer_Apple;
 		component = AudioComponentFindNext(nullptr, &desc);
 
-		if (component == nullptr) {
+		if (component == nullptr)
+		{
 			ERROR_LOG(AUDIO, "coreaudio: AudioComponentFindNext failed");
 			return false;
 		}
 
 		err = AudioComponentInstanceNew(component, &audioUnit);
-		if (err != noErr) {
+		if (err != noErr)
+		{
 			ERROR_LOG(AUDIO, "coreaudio: AudioComponentInstanceNew failed");
 			return false;
 		}
 
 		FillOutASBDForLPCM(format, 44100,
-						   2, 16, 16, false, false, false);
+			2, 16, 16, false, false, false);
 		err = AudioUnitSetProperty(audioUnit,
-								   kAudioUnitProperty_StreamFormat,
-								   kAudioUnitScope_Input, 0, &format,
-								   sizeof(AudioStreamBasicDescription));
+			kAudioUnitProperty_StreamFormat,
+			kAudioUnitScope_Input, 0, &format,
+			sizeof(AudioStreamBasicDescription));
 		if (err != noErr)
 		{
 			ERROR_LOG(AUDIO, "coreaudio: AudioUnitSetProperty(kAudioUnitProperty_StreamFormat) failed");
@@ -120,9 +122,9 @@ public:
 		callback_struct.inputProc = renderCallback;
 		callback_struct.inputProcRefCon = this;
 		err = AudioUnitSetProperty(audioUnit,
-								   kAudioUnitProperty_SetRenderCallback,
-								   kAudioUnitScope_Input, 0, &callback_struct,
-								   sizeof callback_struct);
+			kAudioUnitProperty_SetRenderCallback,
+			kAudioUnitScope_Input, 0, &callback_struct,
+			sizeof callback_struct);
 		if (err != noErr)
 		{
 			ERROR_LOG(AUDIO, "coreaudio: AudioUnitSetProperty(kAudioUnitProperty_SetRenderCallback) failed");
@@ -182,10 +184,10 @@ public:
 			avail = std::min(avail, (int)BUFSIZE - samples_wptr);
 			memcpy(&samples_temp[samples_wptr], frame, avail);
 			samples_wptr = (samples_wptr + avail) % BUFSIZE;
-			frame = (u8 *)frame + avail;
+			frame = (u8*)frame + avail;
 			size -= avail;
 		}
-	
+
 		return 1;
 	}
 
@@ -195,15 +197,15 @@ public:
 		AudioUnitUninitialize(audioUnit);
 		AudioComponentInstanceDispose(audioUnit);
 		bufferEmpty.Set();
-		delete [] samples_temp;
+		delete[] samples_temp;
 		samples_temp = nullptr;
 	}
 
-	static void recordCallback(void *inUserData, AudioQueueRef inAQ, AudioQueueBufferRef inBuffer,
-			const AudioTimeStamp *inStartTime, UInt32 frameSize, const AudioStreamPacketDescription *dataFormat)
+	static void recordCallback(void* inUserData, AudioQueueRef inAQ, AudioQueueBufferRef inBuffer,
+		const AudioTimeStamp* inStartTime, UInt32 frameSize, const AudioStreamPacketDescription* dataFormat)
 	{
-		//DEBUG_LOG(AUDIO, "AudioQueue callback: wptr %d rptr %d bytes %d", (int)input_wptr, (int)input_rptr, inBuffer->mAudioDataByteSize);
-		CoreAudioBackend *backend = (CoreAudioBackend *)inUserData;
+		// DEBUG_LOG(AUDIO, "AudioQueue callback: wptr %d rptr %d bytes %d", (int)input_wptr, (int)input_rptr, inBuffer->mAudioDataByteSize);
+		CoreAudioBackend* backend = (CoreAudioBackend*)inUserData;
 		UInt32 size = inBuffer->mAudioDataByteSize;
 		UInt32 freeSpace = (backend->input_rptr - backend->input_wptr - 2 + InputBufSize) % InputBufSize;
 		if (size > freeSpace)
@@ -233,7 +235,7 @@ public:
 
 	bool initRecord(u32 sampling_freq) override
 	{
-		AudioStreamBasicDescription desc{};
+		AudioStreamBasicDescription desc {};
 		desc.mFormatID = kAudioFormatLinearPCM;
 		desc.mSampleRate = (double)sampling_freq;
 		desc.mChannelsPerFrame = 1;
@@ -242,14 +244,14 @@ public:
 		desc.mFramesPerPacket = 1;
 		desc.mFormatFlags = kLinearPCMFormatFlagIsSignedInteger | kLinearPCMFormatFlagIsPacked;
 		desc.mReserved = 0;
-	
+
 		OSStatus err = AudioQueueNewInput(&desc,
-						   recordCallback,
-						   this,
-						   nullptr,
-						   kCFRunLoopCommonModes,
-						   0,
-						   &recordQueue);
+			recordCallback,
+			this,
+			nullptr,
+			kCFRunLoopCommonModes,
+			0,
+			&recordQueue);
 		if (err != noErr)
 		{
 			ERROR_LOG(AUDIO, "AudioQueueNewInput failed: %d", err);
@@ -280,7 +282,7 @@ public:
 
 	u32 record(void* frame, u32 samples) override
 	{
-	//	DEBUG_LOG(AUDIO, "coreaudio_record: wptr %d rptr %d", (int)input_wptr, (int)input_rptr);
+		//	DEBUG_LOG(AUDIO, "coreaudio_record: wptr %d rptr %d", (int)input_wptr, (int)input_rptr);
 		u32 size = samples * 2;
 		while (size != 0)
 		{
@@ -294,7 +296,7 @@ public:
 			avail = std::min(avail, (u32)(InputBufSize - input_rptr));
 
 			memcpy(frame, &samples_input[input_rptr], avail);
-			frame = (u8 *)frame + avail;
+			frame = (u8*)frame + avail;
 			input_rptr = (input_rptr + avail) % InputBufSize;
 			size -= avail;
 		}
@@ -303,6 +305,5 @@ public:
 	}
 };
 static CoreAudioBackend coreAudioBackend;
-
 
 #endif

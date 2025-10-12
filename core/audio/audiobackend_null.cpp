@@ -31,7 +31,8 @@ public:
 			else
 				last_time += fduration;
 		}
-		else {
+		else
+		{
 			last_time = the_clock::now();
 		}
 		return 1;
@@ -42,7 +43,7 @@ public:
 		return true;
 	}
 
-	u32 record(void *buffer, u32 samples) override
+	u32 record(void* buffer, u32 samples) override
 	{
 		memset(buffer, 0, samples * 2);
 		return samples;

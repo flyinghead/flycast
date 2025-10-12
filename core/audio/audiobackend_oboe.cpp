@@ -3,28 +3,28 @@
 
 	This file is part of Flycast.
 
-    Flycast is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 2 of the License, or
-    (at your option) any later version.
+	Flycast is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 2 of the License, or
+	(at your option) any later version.
 
-    Flycast is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+	Flycast is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
+	You should have received a copy of the GNU General Public License
+	along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #ifdef USE_OBOE
 #include "audiostream.h"
 #include "cfg/option.h"
-#include <oboe/Oboe.h>
-#include <vector>
+#include "stdclass.h"
 #include <algorithm>
 #include <atomic>
 #include <memory>
-#include "stdclass.h"
+#include <oboe/Oboe.h>
+#include <vector>
 
 class OboeBackend : AudioBackend
 {
@@ -37,11 +37,11 @@ class OboeBackend : AudioBackend
 	class AudioCallback : public oboe::AudioStreamDataCallback
 	{
 	public:
-		AudioCallback(OboeBackend *backend) : backend(backend) {}
+		AudioCallback(OboeBackend* backend) : backend(backend) {}
 
-		oboe::DataCallbackResult onAudioReady(oboe::AudioStream *audioStream, void *audioData, int32_t numFrames) override
+		oboe::DataCallbackResult onAudioReady(oboe::AudioStream* audioStream, void* audioData, int32_t numFrames) override
 		{
-			if (!backend->ringBuffer.read((u8 *)audioData, numFrames * 4))
+			if (!backend->ringBuffer.read((u8*)audioData, numFrames * 4))
 				// underrun
 				memset(audioData, 0, numFrames * 4);
 			backend->pushWait.Set();
@@ -49,16 +49,16 @@ class OboeBackend : AudioBackend
 			return oboe::DataCallbackResult::Continue;
 		}
 
-		OboeBackend *backend;
+		OboeBackend* backend;
 	};
 	AudioCallback audioCallback;
 
 	class AudioErrorCallback : public oboe::AudioStreamErrorCallback
 	{
 	public:
-		AudioErrorCallback(OboeBackend *backend) : backend(backend) {}
+		AudioErrorCallback(OboeBackend* backend) : backend(backend) {}
 
-		void onErrorAfterClose(oboe::AudioStream *stream, oboe::Result error) override
+		void onErrorAfterClose(oboe::AudioStream* stream, oboe::Result error) override
 		{
 			// Only attempt to recover if init was successful
 			if (backend->stream != nullptr)
@@ -71,7 +71,7 @@ class OboeBackend : AudioBackend
 			}
 		}
 
-		OboeBackend *backend;
+		OboeBackend* backend;
 	};
 	AudioErrorCallback errorCallback;
 
@@ -86,17 +86,17 @@ public:
 
 		oboe::AudioStreamBuilder builder;
 		oboe::Result result = builder.setDirection(oboe::Direction::Output)
-				->setPerformanceMode(oboe::PerformanceMode::LowLatency)
-				->setSharingMode(oboe::SharingMode::Exclusive)
-				->setFormat(oboe::AudioFormat::I16)
-				->setChannelCount(oboe::ChannelCount::Stereo)
-				->setSampleRate(44100)
-				->setSampleRateConversionQuality(oboe::SampleRateConversionQuality::High)
-				->setFramesPerCallback(SAMPLE_COUNT)
-				->setDataCallback(&audioCallback)
-				->setErrorCallback(&errorCallback)
-				->setUsage(oboe::Usage::Game)
-				->openStream(stream);
+								  ->setPerformanceMode(oboe::PerformanceMode::LowLatency)
+								  ->setSharingMode(oboe::SharingMode::Exclusive)
+								  ->setFormat(oboe::AudioFormat::I16)
+								  ->setChannelCount(oboe::ChannelCount::Stereo)
+								  ->setSampleRate(44100)
+								  ->setSampleRateConversionQuality(oboe::SampleRateConversionQuality::High)
+								  ->setFramesPerCallback(SAMPLE_COUNT)
+								  ->setDataCallback(&audioCallback)
+								  ->setErrorCallback(&errorCallback)
+								  ->setUsage(oboe::Usage::Game)
+								  ->openStream(stream);
 		if (result != oboe::Result::OK)
 		{
 			ERROR_LOG(AUDIO, "Oboe open stream failed: %s", oboe::convertToText(result));
@@ -118,8 +118,8 @@ public:
 
 		stream->requestStart();
 		NOTICE_LOG(AUDIO, "Oboe driver started. stream capacity: %d frames, size: %d frames, frames/callback: %d, frames/burst: %d",
-				stream->getBufferCapacityInFrames(), stream->getBufferSizeInFrames(),
-				stream->getFramesPerCallback(), stream->getFramesPerBurst());
+			stream->getBufferCapacityInFrames(), stream->getBufferSizeInFrames(),
+			stream->getFramesPerCallback(), stream->getFramesPerBurst());
 
 		return true;
 	}
@@ -142,7 +142,7 @@ public:
 
 	u32 push(const void* frame, u32 samples, bool wait) override
 	{
-		while (!ringBuffer.write((const u8 *)frame, samples * 4) && wait)
+		while (!ringBuffer.write((const u8*)frame, samples * 4) && wait)
 			pushWait.Wait();
 
 		return 1;
@@ -163,12 +163,12 @@ public:
 	{
 		oboe::AudioStreamBuilder builder;
 		oboe::Result result = builder.setDirection(oboe::Direction::Input)
-			->setPerformanceMode(oboe::PerformanceMode::None)
-			->setSharingMode(oboe::SharingMode::Exclusive)
-			->setFormat(oboe::AudioFormat::I16)
-			->setChannelCount(oboe::ChannelCount::Mono)
-			->setSampleRate(sampling_freq)
-			->openStream(recordStream);
+								  ->setPerformanceMode(oboe::PerformanceMode::None)
+								  ->setSharingMode(oboe::SharingMode::Exclusive)
+								  ->setFormat(oboe::AudioFormat::I16)
+								  ->setChannelCount(oboe::ChannelCount::Mono)
+								  ->setSampleRate(sampling_freq)
+								  ->openStream(recordStream);
 		if (result != oboe::Result::OK)
 		{
 			ERROR_LOG(AUDIO, "Oboe open record stream failed: %s", oboe::convertToText(result));
@@ -176,12 +176,12 @@ public:
 		}
 		recordStream->requestStart();
 		NOTICE_LOG(AUDIO, "Oboe recorder started. stream capacity: %d frames",
-				recordStream->getBufferCapacityInFrames());
+			recordStream->getBufferCapacityInFrames());
 
 		return true;
 	}
 
-	u32 record(void *data, u32 samples) override
+	u32 record(void* data, u32 samples) override
 	{
 		if (recordStream == nullptr)
 			return 0;
