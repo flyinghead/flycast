@@ -258,7 +258,6 @@ private:
 
 				case EV_ABS:
 					{
-						// TODO no way to distinguish between half and full axes
 						int min = get_axis_min_value(ie.code);
 						unsigned range = get_axis_range(ie.code);
 						gamepad_axis_input(ie.code, (ie.value - min) * 65535 / range - 32768);

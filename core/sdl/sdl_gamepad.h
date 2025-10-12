@@ -25,13 +25,6 @@ public:
 	SDLGamepad(int maple_port, int joystick_idx, SDL_Joystick *sdl_joystick);
 	void set_maple_port(int port) override;
 
-	bool gamepad_axis_input(u32 code, int value) override
-	{
-		if (isHalfAxis(code))
-			value = std::min((32768 + value * axisDirection[code]) / 2, 32767);
-		return GamepadDevice::gamepad_axis_input(code, value);
-	}
-
 	void rumble(float power, float inclination, u32 duration_ms) override;
 	void update_rumble() override;
 
@@ -48,6 +41,7 @@ public:
 
 	std::shared_ptr<InputMapping> getDefaultMapping() override;
 	void resetMappingToDefault(bool arcade, bool gamepad) override;
+	bool find_mapping(int system = settings.platform.system) override;
 
 	static void AddSDLGamepad(std::shared_ptr<SDLGamepad> gamepad)
 	{
@@ -106,7 +100,6 @@ private:
 	SDL_Joystick* sdl_joystick;
 	float vib_inclination = 0;
 	SDL_GameController *sdl_controller = nullptr;
-	std::unordered_map<int, int> axisDirection;
 	static std::map<SDL_JoystickID, std::shared_ptr<SDLGamepad>> sdl_gamepads;
 	SDL_Haptic *haptic = nullptr;
 	bool hapticRumble = false;

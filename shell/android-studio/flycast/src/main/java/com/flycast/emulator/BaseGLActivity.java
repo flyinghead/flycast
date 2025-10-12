@@ -267,9 +267,13 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
         return true;
     }
 
-    private boolean processJoystickInput(MotionEvent event, int axis) {
+    private boolean processJoystickInput(MotionEvent event, int axis, float rangeMin) {
         float v = event.getAxisValue(axis);
-        return InputDeviceManager.getInstance().axisEvent(event.getDeviceId(), axis, (int)Math.round(v * 32767.f));
+        if (rangeMin < 0.0f)
+            v *= 32767.f;
+        else
+            v = v * 65535.f - 32768.f;
+        return InputDeviceManager.getInstance().axisEvent(event.getDeviceId(), axis, (int)Math.round(v));
     }
     @Override
     public boolean onGenericMotionEvent(MotionEvent event) {
@@ -308,8 +312,9 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
                         InputDeviceManager.getInstance().buttonEvent(event.getDeviceId(), KeyEvent.KEYCODE_DPAD_DOWN, false);
                     }
                 }
-                else
-                    rc |= processJoystickInput(event, range.getAxis());
+                else {
+                    rc |= processJoystickInput(event, range.getAxis(), range.getMin());
+                }
             if (rc)
                 return true;
         }

@@ -395,6 +395,31 @@ void InputMapping::set_axis(u32 port, DreamcastKey id, u32 code, bool positive)
 	}
 }
 
+bool InputMapping::isTrigger(u32 code) const {
+	return triggers.find(code) != triggers.end();
+}
+bool InputMapping::isReverseTrigger(u32 code) const
+{
+	auto it = triggers.find(code);
+	if (it == triggers.end())
+		return false;
+	return it->second;
+}
+void InputMapping::addTrigger(u32 code, bool reverse)
+{
+	if (!isTrigger(code) || isReverseTrigger(code) != reverse) {
+		triggers[code] = reverse;
+		dirty = true;
+	}
+}
+void InputMapping::deleteTrigger(u32 code)
+{
+	if (isTrigger(code)) {
+		triggers.erase(code);
+		dirty = true;
+	}
+}
+
 using namespace emucfg;
 
 static DreamcastKey getKeyId(const std::string& name)
@@ -545,6 +570,12 @@ void InputMapping::load(FILE* fp)
 			}
 			set_button(port, id, ButtonCombo{inputs, sequential});
 		}
+	}
+	std::string triggers = mf.get("emulator", "triggers", "");
+	const char *p = strtok(triggers.data(), ",");
+	while (p != nullptr) {
+		addTrigger(atoi(p), strchr(p, '~') != nullptr);
+		p = strtok(nullptr, ",");
 	}
 	dirty = false;
 }
@@ -944,6 +975,16 @@ bool InputMapping::save(const std::string& name)
 			bindIndex++;
 		}
 	}
+	std::string triggerString;
+	for (const auto& pair : triggers)
+	{
+		if (!triggerString.empty())
+			triggerString += ',';
+		triggerString += std::to_string(pair.first);
+		if (pair.second)
+			triggerString += '~';
+	}
+	mf.set("emulator", "triggers", triggerString);
 	mf.save(fp);
 	dirty = false;
 	std::fclose(fp);

@@ -46,104 +46,134 @@ public:
 
 	DefaultInputMapping(SDL_GameController *sdlController) : DefaultInputMapping()
 	{
-		if (sdlController != nullptr)
-		{
-			name = SDL_GameControllerName(sdlController);
-			INFO_LOG(INPUT, "SDL: using SDL game controller mappings for '%s'", name.c_str());
+		if (sdlController == nullptr) {
+			INFO_LOG(INPUT, "using default mapping");
+			return;
+		}
 
-			auto map_button = [&](SDL_GameControllerButton sdl_btn, DreamcastKey dc_btn) {
-				SDL_GameControllerButtonBind bind = SDL_GameControllerGetBindForButton(sdlController, sdl_btn);
-				if (bind.bindType == SDL_CONTROLLER_BINDTYPE_BUTTON)
-					set_button(dc_btn, bind.value.button);
-				else if (bind.bindType == SDL_CONTROLLER_BINDTYPE_HAT)
+		name = SDL_GameControllerName(sdlController);
+		INFO_LOG(INPUT, "SDL: using SDL game controller mappings for '%s'", name.c_str());
+
+		auto map_button = [&](SDL_GameControllerButton sdl_btn, DreamcastKey dc_btn) {
+			SDL_GameControllerButtonBind bind = SDL_GameControllerGetBindForButton(sdlController, sdl_btn);
+			if (bind.bindType == SDL_CONTROLLER_BINDTYPE_BUTTON)
+				set_button(dc_btn, bind.value.button);
+			else if (bind.bindType == SDL_CONTROLLER_BINDTYPE_HAT)
+			{
+				int dir;
+				switch (bind.value.hat.hat_mask)
 				{
-					int dir;
-					switch (bind.value.hat.hat_mask)
-					{
-					case SDL_HAT_UP:
-						dir = 0;
-						break;
-					case SDL_HAT_DOWN:
-						dir = 1;
-						break;
-					case SDL_HAT_LEFT:
-						dir = 2;
-						break;
-					case SDL_HAT_RIGHT:
-						dir = 3;
-						break;
-					default:
-						return;
-					}
-					set_button(dc_btn, ((bind.value.hat.hat + 1) << 8) | dir);
+				case SDL_HAT_UP:
+					dir = 0;
+					break;
+				case SDL_HAT_DOWN:
+					dir = 1;
+					break;
+				case SDL_HAT_LEFT:
+					dir = 2;
+					break;
+				case SDL_HAT_RIGHT:
+					dir = 3;
+					break;
+				default:
+					return;
 				}
-			};
-			auto map_axis = [&](SDL_GameControllerAxis sdl_axis, DreamcastKey dc_axis, bool positive) {
-				SDL_GameControllerButtonBind bind = SDL_GameControllerGetBindForAxis(sdlController, sdl_axis);
-				if (bind.bindType != SDL_CONTROLLER_BINDTYPE_AXIS)
-					return false;
-
-				bool invert_axis = false;
+				set_button(dc_btn, ((bind.value.hat.hat + 1) << 8) | dir);
+			}
+		};
+		auto map_axis = [&](SDL_GameControllerAxis sdl_axis, DreamcastKey dc_axis, bool positive) {
+			SDL_GameControllerButtonBind bind = SDL_GameControllerGetBindForAxis(sdlController, sdl_axis);
+			if (bind.bindType == SDL_CONTROLLER_BINDTYPE_NONE)
+				return false;
+			if (bind.bindType == SDL_CONTROLLER_BINDTYPE_AXIS)
+			{
 				char *gcdb = SDL_GameControllerMapping(sdlController);
 				const char *axisName = SDL_GameControllerGetStringForAxis(sdl_axis);
 				if (gcdb != nullptr && axisName != nullptr)
 				{
-					const char *p = strstr(gcdb, axisName);
+					const bool isTrigger = sdl_axis == SDL_CONTROLLER_AXIS_TRIGGERLEFT
+							|| sdl_axis == SDL_CONTROLLER_AXIS_TRIGGERRIGHT;
+					const char *p = nullptr;
+					if (!isTrigger)
+					{
+						// First look for a matching axis direction
+						std::string name = (positive ? '+' : '-') + std::string(axisName);
+						p = strstr(gcdb, name.c_str());
+					}
+					if (p == nullptr)
+						// If not found, look for the axis name only
+						p = strstr(gcdb, axisName);
 					if (p != nullptr)
 					{
-						const char *pend = strchr(p, ',');
-						if (pend == nullptr)
-							pend = p + strlen(p);
-						invert_axis = pend[-1] == '~';
+						const char *pcolon = strchr(p, ':');
+						if (pcolon != nullptr)
+						{
+							const char *axisNum = strchr(pcolon, 'a');
+							if (axisNum != nullptr)
+								bind.value.axis = atoi(axisNum + 1);
+							const char *pend = strchr(p, ',');
+							if (pend == nullptr)
+								pend = p + strlen(p);
+							if (!isTrigger || pcolon[1] == '+' || pcolon[1] == '-')
+							{
+								deleteTrigger(bind.value.axis);
+								if (pcolon[1] == '+')
+									positive = true;
+								else if (pcolon[1] == '-')
+									positive = false;
+								else if (!isTrigger && pend[-1] == '~')
+									positive = !positive;
+							}
+							else if (isTrigger) {
+								addTrigger(bind.value.axis, pend[-1] == '~');
+							}
+						}
 					}
 				}
-				set_axis(dc_axis, bind.value.axis, invert_axis ^ positive);
+				set_axis(dc_axis, bind.value.axis, positive);
 				SDL_free(gcdb);
-
-				return true;
-			};
-
-			if constexpr (Arcade)
-			{
-				if constexpr (Gamepad)
-				{
-					// 1  2  3  4  5  6
-					// A  B  X  Y  R  L
-					map_button(SDL_CONTROLLER_BUTTON_A, DC_BTN_A);
-					map_button(SDL_CONTROLLER_BUTTON_B, DC_BTN_B);
-					map_button(SDL_CONTROLLER_BUTTON_X, DC_BTN_C);
-					map_button(SDL_CONTROLLER_BUTTON_Y, DC_BTN_X);
-
-					if (!map_axis(SDL_CONTROLLER_AXIS_TRIGGERLEFT, DC_AXIS_LT, true))
-						map_button(SDL_CONTROLLER_BUTTON_LEFTSHOULDER, DC_AXIS_LT);
-					else
-						map_button(SDL_CONTROLLER_BUTTON_LEFTSHOULDER, DC_BTN_Z);
-					if (!map_axis(SDL_CONTROLLER_AXIS_TRIGGERRIGHT, DC_AXIS_RT, true))
-						map_button(SDL_CONTROLLER_BUTTON_RIGHTSHOULDER, DC_AXIS_RT);
-					else
-						map_button(SDL_CONTROLLER_BUTTON_RIGHTSHOULDER, DC_BTN_Y);
-				}
-				else
-				{
-					// Hitbox
-					// 1  2  3  4  5  6  7  8
-					// X  Y  R1 A  B  R2 L1 L2
-					map_button(SDL_CONTROLLER_BUTTON_X, DC_BTN_A);
-					map_button(SDL_CONTROLLER_BUTTON_Y, DC_BTN_B);
-					map_button(SDL_CONTROLLER_BUTTON_RIGHTSHOULDER, DC_BTN_C);			// R1
-					map_button(SDL_CONTROLLER_BUTTON_A, DC_BTN_X);
-					map_button(SDL_CONTROLLER_BUTTON_B, DC_BTN_Y);
-					map_axis(SDL_CONTROLLER_AXIS_TRIGGERRIGHT, DC_BTN_Z, true);			// R2
-					map_button(SDL_CONTROLLER_BUTTON_LEFTSHOULDER, DC_DPAD2_LEFT);		// L1 (Naomi button 7)
-					map_axis(SDL_CONTROLLER_AXIS_TRIGGERLEFT, DC_DPAD2_RIGHT, true);	// L2 (Naomi button 8)
-				}
 			}
-			else
+			else if (bind.bindType == SDL_CONTROLLER_BINDTYPE_BUTTON) {
+				// TODO this won't work for full axes: need to bind 2 buttons, one for each direction
+				set_axis(dc_axis, bind.value.button, positive);
+			}
+			else if (bind.bindType == SDL_CONTROLLER_BINDTYPE_HAT)
 			{
+				// TODO this won't work for full axes: need to bind 2 buttons, one for each direction
+				int dir;
+				switch (bind.value.hat.hat_mask)
+				{
+				case SDL_HAT_UP:
+					dir = 0;
+					break;
+				case SDL_HAT_DOWN:
+					dir = 1;
+					break;
+				case SDL_HAT_LEFT:
+					dir = 2;
+					break;
+				case SDL_HAT_RIGHT:
+					dir = 3;
+					break;
+				default:
+					return false;
+				}
+				set_axis(dc_axis, ((bind.value.hat.hat + 1) << 8) | dir, positive);
+			}
+			return true;
+		};
+
+		if constexpr (Arcade)
+		{
+			if constexpr (Gamepad)
+			{
+				// 1  2  3  4  5  6
+				// A  B  X  Y  R  L
 				map_button(SDL_CONTROLLER_BUTTON_A, DC_BTN_A);
 				map_button(SDL_CONTROLLER_BUTTON_B, DC_BTN_B);
-				map_button(SDL_CONTROLLER_BUTTON_X, DC_BTN_X);
-				map_button(SDL_CONTROLLER_BUTTON_Y, DC_BTN_Y);
+				map_button(SDL_CONTROLLER_BUTTON_X, DC_BTN_C);
+				map_button(SDL_CONTROLLER_BUTTON_Y, DC_BTN_X);
+
 				if (!map_axis(SDL_CONTROLLER_AXIS_TRIGGERLEFT, DC_AXIS_LT, true))
 					map_button(SDL_CONTROLLER_BUTTON_LEFTSHOULDER, DC_AXIS_LT);
 				else
@@ -151,29 +181,56 @@ public:
 				if (!map_axis(SDL_CONTROLLER_AXIS_TRIGGERRIGHT, DC_AXIS_RT, true))
 					map_button(SDL_CONTROLLER_BUTTON_RIGHTSHOULDER, DC_AXIS_RT);
 				else
-					map_button(SDL_CONTROLLER_BUTTON_RIGHTSHOULDER, DC_BTN_C);
+					map_button(SDL_CONTROLLER_BUTTON_RIGHTSHOULDER, DC_BTN_Y);
 			}
-			map_button(SDL_CONTROLLER_BUTTON_START, DC_BTN_START);
-			map_button(SDL_CONTROLLER_BUTTON_DPAD_UP, DC_DPAD_UP);
-			map_button(SDL_CONTROLLER_BUTTON_DPAD_DOWN, DC_DPAD_DOWN);
-			map_button(SDL_CONTROLLER_BUTTON_DPAD_LEFT, DC_DPAD_LEFT);
-			map_button(SDL_CONTROLLER_BUTTON_DPAD_RIGHT, DC_DPAD_RIGHT);
-			map_button(SDL_CONTROLLER_BUTTON_GUIDE, DC_DPAD2_UP); // service
-			map_button(SDL_CONTROLLER_BUTTON_BACK, EMU_BTN_MENU);
-
-			map_axis(SDL_CONTROLLER_AXIS_LEFTX, DC_AXIS_LEFT, false);
-			map_axis(SDL_CONTROLLER_AXIS_LEFTX, DC_AXIS_RIGHT, true);
-			map_axis(SDL_CONTROLLER_AXIS_LEFTY, DC_AXIS_UP, false);
-			map_axis(SDL_CONTROLLER_AXIS_LEFTY, DC_AXIS_DOWN, true);
-			map_axis(SDL_CONTROLLER_AXIS_RIGHTX, DC_AXIS2_LEFT, false);
-			map_axis(SDL_CONTROLLER_AXIS_RIGHTX, DC_AXIS2_RIGHT, true);
-			map_axis(SDL_CONTROLLER_AXIS_RIGHTY, DC_AXIS2_UP, false);
-			map_axis(SDL_CONTROLLER_AXIS_RIGHTY, DC_AXIS2_DOWN, true);
-
-			dirty = false;
+			else
+			{
+				// Hitbox
+				// 1  2  3  4  5  6  7  8
+				// X  Y  R1 A  B  R2 L1 L2
+				map_button(SDL_CONTROLLER_BUTTON_X, DC_BTN_A);
+				map_button(SDL_CONTROLLER_BUTTON_Y, DC_BTN_B);
+				map_button(SDL_CONTROLLER_BUTTON_RIGHTSHOULDER, DC_BTN_C);			// R1
+				map_button(SDL_CONTROLLER_BUTTON_A, DC_BTN_X);
+				map_button(SDL_CONTROLLER_BUTTON_B, DC_BTN_Y);
+				map_axis(SDL_CONTROLLER_AXIS_TRIGGERRIGHT, DC_BTN_Z, true);			// R2
+				map_button(SDL_CONTROLLER_BUTTON_LEFTSHOULDER, DC_DPAD2_LEFT);		// L1 (Naomi button 7)
+				map_axis(SDL_CONTROLLER_AXIS_TRIGGERLEFT, DC_DPAD2_RIGHT, true);	// L2 (Naomi button 8)
+			}
 		}
 		else
-			INFO_LOG(INPUT, "using default mapping");
+		{
+			map_button(SDL_CONTROLLER_BUTTON_A, DC_BTN_A);
+			map_button(SDL_CONTROLLER_BUTTON_B, DC_BTN_B);
+			map_button(SDL_CONTROLLER_BUTTON_X, DC_BTN_X);
+			map_button(SDL_CONTROLLER_BUTTON_Y, DC_BTN_Y);
+			if (!map_axis(SDL_CONTROLLER_AXIS_TRIGGERLEFT, DC_AXIS_LT, true))
+				map_button(SDL_CONTROLLER_BUTTON_LEFTSHOULDER, DC_AXIS_LT);
+			else
+				map_button(SDL_CONTROLLER_BUTTON_LEFTSHOULDER, DC_BTN_Z);
+			if (!map_axis(SDL_CONTROLLER_AXIS_TRIGGERRIGHT, DC_AXIS_RT, true))
+				map_button(SDL_CONTROLLER_BUTTON_RIGHTSHOULDER, DC_AXIS_RT);
+			else
+				map_button(SDL_CONTROLLER_BUTTON_RIGHTSHOULDER, DC_BTN_C);
+		}
+		map_button(SDL_CONTROLLER_BUTTON_START, DC_BTN_START);
+		map_button(SDL_CONTROLLER_BUTTON_DPAD_UP, DC_DPAD_UP);
+		map_button(SDL_CONTROLLER_BUTTON_DPAD_DOWN, DC_DPAD_DOWN);
+		map_button(SDL_CONTROLLER_BUTTON_DPAD_LEFT, DC_DPAD_LEFT);
+		map_button(SDL_CONTROLLER_BUTTON_DPAD_RIGHT, DC_DPAD_RIGHT);
+		map_button(SDL_CONTROLLER_BUTTON_GUIDE, DC_DPAD2_UP); // service
+		map_button(SDL_CONTROLLER_BUTTON_BACK, EMU_BTN_MENU);
+
+		map_axis(SDL_CONTROLLER_AXIS_LEFTX, DC_AXIS_LEFT, false);
+		map_axis(SDL_CONTROLLER_AXIS_LEFTX, DC_AXIS_RIGHT, true);
+		map_axis(SDL_CONTROLLER_AXIS_LEFTY, DC_AXIS_UP, false);
+		map_axis(SDL_CONTROLLER_AXIS_LEFTY, DC_AXIS_DOWN, true);
+		map_axis(SDL_CONTROLLER_AXIS_RIGHTX, DC_AXIS2_LEFT, false);
+		map_axis(SDL_CONTROLLER_AXIS_RIGHTX, DC_AXIS2_RIGHT, true);
+		map_axis(SDL_CONTROLLER_AXIS_RIGHTY, DC_AXIS2_UP, false);
+		map_axis(SDL_CONTROLLER_AXIS_RIGHTY, DC_AXIS2_DOWN, true);
+
+		dirty = false;
 	}
 };
 
@@ -192,43 +249,12 @@ SDLGamepad::SDLGamepad(int maple_port, int joystick_idx, SDL_Joystick* sdl_joyst
 	NOTICE_LOG(INPUT, "SDL: Opened joystick %d on port %d: '%s' unique_id=%s", sdl_joystick_instance, maple_port, _name.c_str(), _unique_id.c_str());
 
 	const int axes = SDL_JoystickNumAxes(sdl_joystick);
-	for (int axis = 0; axis < axes; axis++)
-		axisDirection[axis] = 1;
 
 	if (SDL_IsGameController(joystick_idx))
 	{
 		sdl_controller = SDL_GameControllerOpen(joystick_idx);
 		if (sdl_controller == nullptr)
-		{
 			WARN_LOG(INPUT, "Can't open game controller %d: %s", joystick_idx, SDL_GetError());
-		}
-		else
-		{
-			// TODO the direction of the axis is set in the default mapping.
-			// It would be better to set it here so the control can be remapped correctly
-			SDL_GameControllerButtonBind bind = SDL_GameControllerGetBindForAxis(sdl_controller, SDL_CONTROLLER_AXIS_TRIGGERLEFT);
-			if (bind.bindType == SDL_CONTROLLER_BINDTYPE_AXIS)
-				halfAxes.insert(bind.value.axis);
-			bind = SDL_GameControllerGetBindForAxis(sdl_controller, SDL_CONTROLLER_AXIS_TRIGGERRIGHT);
-			if (bind.bindType == SDL_CONTROLLER_BINDTYPE_AXIS)
-				halfAxes.insert(bind.value.axis);
-		}
-	}
-	else
-	{
-		// heuristic to detect half axes and their direction
-		// Skip axis 0 since it's extremely unlikely to be a trigger, and a wheel may be fully deflected left or right
-		// and could be confused with one.
-		for (int axis = 1; axis < axes; axis++)
-		{
-			s16 state;
-			if (SDL_JoystickGetAxisInitialState(sdl_joystick, axis, &state)
-					&& std::abs(state) >= AXIS_ACTIVATION_VALUE)
-			{
-				halfAxes.insert(axis);
-				axisDirection[axis] = state >= 0 ? -1 : 1;
-			}
-		}
 	}
 
 	loadMapping();
@@ -663,6 +689,52 @@ void SDLGamepad::resetMappingToDefault(bool arcade, bool gamepad)
 	}
 	else
 		input_mapper = std::make_shared<DefaultInputMapping<false, false>>(sdl_controller);
+}
+
+bool SDLGamepad::find_mapping(int system)
+{
+	bool ret =  GamepadDevice::find_mapping(system);
+	if (ret && input_mapper != nullptr && input_mapper->getTriggers().empty()
+			&& sdl_controller != nullptr)
+	{
+		// Set the triggers from the SDL gamepad bindings in case they haven't been saved
+		auto setTrigger = [&](SDL_GameControllerAxis sdl_axis) {
+			SDL_GameControllerButtonBind bind = SDL_GameControllerGetBindForAxis(sdl_controller, sdl_axis);
+			if (bind.bindType != SDL_CONTROLLER_BINDTYPE_AXIS)
+				return;
+			const char *axisName = SDL_GameControllerGetStringForAxis(sdl_axis);
+			if (axisName == nullptr)
+				return;
+			char *gcdb = SDL_GameControllerMapping(sdl_controller);
+			if (gcdb == nullptr)
+				return;
+
+			const char *p = strstr(gcdb, axisName);
+			if (p != nullptr)
+			{
+				const char *pcolon = strchr(p, ':');
+				if (pcolon != nullptr)
+				{
+					const char *axisNum = strchr(pcolon, 'a');
+					if (axisNum != nullptr)
+					{
+						int axis = atoi(axisNum + 1);
+						const char *pend = strchr(p, ',');
+						if (pend == nullptr)
+							pend = p + strlen(p);
+						if (pcolon[1] != '+' && pcolon[1] != '-')
+							input_mapper->addTrigger(axis, pend[-1] == '~');
+					}
+				}
+			}
+			SDL_free(gcdb);
+		};
+		setTrigger(SDL_CONTROLLER_AXIS_TRIGGERLEFT);
+		setTrigger(SDL_CONTROLLER_AXIS_TRIGGERRIGHT);
+		save_mapping();
+	}
+
+	return ret;
 }
 
 SDLMouse::SDLMouse(u64 mouseId) : Mouse("SDL")
