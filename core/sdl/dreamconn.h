@@ -27,78 +27,18 @@
 
 class DreamConn : public DreamLink
 {
+public:
 	//! Base port of communication to DreamConn
 	static constexpr u16 BASE_PORT = 37393;
-
-	//! Hides some implementation details, mainly asio
-	std::unique_ptr<class DreamConnImp> mImp;
-
-public:
 	//! DreamConn VID:4457 PID:4443
 	static constexpr const char* VID_PID_GUID = "5744000043440000";
 
-public:
-	DreamConn(int bus, bool isForPhysicalController);
-
-	~DreamConn();
-
-	bool isForPhysicalController() override;
-
-	bool send(const MapleMsg& msg) override;
-
-    bool send(const MapleMsg& txMsg, MapleMsg& rxMsg) override;
-
-private:
-	bool send_no_lock(const MapleMsg& msg);
+protected:
+	DreamConn() = default;
+	virtual ~DreamConn() = default;
 
 public:
-	int getBus() const override;
-
-    u32 getFunctionCode(int forPort) const override {
-		if (forPort == 1 && hasVmu()) {
-			return 0x0E000000;
-		}
-		else if (forPort == 2 && hasRumble()) {
-			return 0x00010000;
-		}
-		return 0;
-	}
-
-	std::array<u32, 3> getFunctionDefinitions(int forPort) const override
-	{
-		if (forPort == 1 && hasVmu())
-			// For clock, LCD, storage
-			return std::array<u32, 3>{0x403f7e7e, 0x00100500, 0x00410f00};
-		else if (forPort == 2 && hasRumble())
-			return std::array<u32, 3>{0x00000101, 0, 0};
-		return std::array<u32, 3>{0, 0, 0};
-	}
-
-	bool hasVmu() const;
-
-	bool hasRumble() const;
-
-	void changeBus(int newBus) override;
-
-	std::string getName() const override {
-		return "DreamConn+ / DreamConn S Controller";
-	}
-
-	bool needsRefresh() override;
-
-private:
-	bool updateExpansionDevs();
-
-	bool isSocketDisconnected();
-
-public:
-	bool isConnected() override;
-
-	void connect() override;
-
-	void disconnect() override;
-
-	void gameTermination() override;
+	static std::shared_ptr<DreamConn> create_shared(int bus, bool isForPhysicalController);
 };
 
 #endif // USE_DREAMCASTCONTROLLER

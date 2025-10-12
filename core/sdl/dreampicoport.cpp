@@ -1050,404 +1050,435 @@ public:
 std::unordered_map<std::string, std::weak_ptr<dpp_api::DppDevice>> ApiDreamPicoPortComms::all_dpp_api_devices;
 std::mutex ApiDreamPicoPortComms::all_dpp_api_devices_mutex;
 
-DreamPicoPort::DreamPicoPort(int bus, int joystick_idx, SDL_Joystick* sdl_joystick) :
-	software_bus(bus)
+class DreamPicoPortImp : public DreamPicoPort
 {
+	//! Implements communication interface to DreamPicoPort
+	std::unique_ptr<class DreamPicoPortComms> dpp_comms;
+	//! Current timeout in milliseconds
+	std::chrono::milliseconds timeout_ms;
+	//! The bus ID dictated by flycast
+	int software_bus = -1;
+	//! The bus index of the hardware connection which will differ from the software bus
+	int hardware_bus = -1;
+	//! true iff only a single devices was found when enumerating devices
+	bool is_single_device = true;
+	//! True when initial enumeration failed
+	bool is_hardware_bus_implied = true;
+    //! The queried interface version
+    double interface_version = 0.0;
+    //! The queried peripherals; for each function, index 0 is function code and index 1 is the function definition
+    std::vector<std::vector<std::array<uint32_t, 2>>> peripherals;
+	//! The located serial number of this device or empty string if could not be found
+	std::string serial_number;
+	//! If set, the determined unique ID of this device. If not set, the serial could not be parsed.
+	std::string unique_id;
+
+public:
+    DreamPicoPortImp(int bus, int joystick_idx, SDL_Joystick* sdl_joystick) :
+		DreamPicoPort(),
+		software_bus(bus)
+	{
 #if defined(_WIN32)
-	// Workaround: Getting the instance ID here fixes some sort of L/R trigger bug in Windows dinput for some reason
-	(void)SDL_JoystickGetDeviceInstanceID(joystick_idx);
+		// Workaround: Getting the instance ID here fixes some sort of L/R trigger bug in Windows dinput for some reason
+		(void)SDL_JoystickGetDeviceInstanceID(joystick_idx);
 #endif
-	determineHardwareBus(joystick_idx, sdl_joystick);
+		determineHardwareBus(joystick_idx, sdl_joystick);
 
-	unique_id.clear();
-	if (!is_hardware_bus_implied && !serial_number.empty()) {
-		// Locking to name, which includes A-D, plus serial number will ensure correct enumeration every time
-		unique_id = std::string("sdl_") + getName("") + std::string("_") + serial_number;
+		unique_id.clear();
+		if (!is_hardware_bus_implied && !serial_number.empty()) {
+			// Locking to name, which includes A-D, plus serial number will ensure correct enumeration every time
+			unique_id = std::string("sdl_") + getName("") + std::string("_") + serial_number;
+		}
 	}
-}
 
-DreamPicoPort::~DreamPicoPort() {
-	disconnect();
-}
+	~DreamPicoPortImp() {
+		disconnect();
+	}
 
-bool DreamPicoPort::isForPhysicalController() {
-	return true;
-}
+	bool isForPhysicalController() override {
+		return true;
+	}
 
-bool DreamPicoPort::send(const MapleMsg& msg) {
-	if (!dpp_comms) {
+	bool send(const MapleMsg& msg) override {
+		if (!dpp_comms) {
+			return false;
+		}
+
+		return dpp_comms->send(msg, timeout_ms);
+	}
+
+    bool send(const MapleMsg& txMsg, MapleMsg& rxMsg) override {
+		if (!dpp_comms) {
+			return false;
+		}
+
+		return dpp_comms->send(txMsg, rxMsg, timeout_ms);
+	}
+
+	void gameTermination() override {
+		// Need a short delay to wait for last screen draw to complete
+		std::this_thread::sleep_for(std::chrono::milliseconds(10));
+		// Reset screen to selected port
+		sendPort();
+	}
+
+	int getBus() const override {
+		return software_bus;
+	}
+
+    u32 getFunctionCode(int forPort) const override {
+		u32 mask = 0;
+		if ((int)peripherals.size() > forPort) {
+			for (const auto& peripheral : peripherals[forPort]) {
+				mask |= peripheral[0];
+			}
+		}
+		// swap bytes to get the correct function code
+		return SWAP32(mask);
+	}
+
+	std::array<u32, 3> getFunctionDefinitions(int forPort) const override {
+		std::array<u32, 3> arr{0, 0, 0};
+		if ((int)peripherals.size() > forPort) {
+			std::size_t idx = 0;
+			for (const auto& peripheral : peripherals[forPort]) {
+				arr[idx++] = SWAP32(peripheral[1]);
+				if (idx >= 3) break;
+			}
+		}
+		return arr;
+	}
+
+	int getDefaultBus() const override {
+		if (!is_hardware_bus_implied && !is_single_device) {
+			return hardware_bus;
+		} else {
+			// Value of -1 means to use enumeration order
+			return -1;
+		}
+	}
+
+	void setDefaultMapping(const std::shared_ptr<InputMapping>& mapping) const override {
+		// Since this is a real DC controller, no deadzone adjustment is needed
+		mapping->dead_zone = 0.0f;
+		// Map the things not set by SDL
+		mapping->set_button(DC_BTN_C, 2);
+		mapping->set_button(DC_BTN_Z, 5);
+		mapping->set_button(DC_BTN_D, 10);
+		mapping->set_button(DC_DPAD2_UP, 9);
+		mapping->set_button(DC_DPAD2_DOWN, 8);
+		mapping->set_button(DC_DPAD2_LEFT, 7);
+		mapping->set_button(DC_DPAD2_RIGHT, 6);
+	}
+
+	const char *getButtonName(u32 code) const override {
+		switch (code) {
+			// Coincides with buttons setup in setDefaultMapping
+			case 2: return "C";
+			case 5: return "Z";
+			case 10: return "D";
+			case 9: return "DPad2 Up";
+			case 8: return "DPad2 Down";
+			case 7: return "DPad2 Left";
+			case 6: return "DPad2 Right";
+
+			// These buttons are normally not physically accessible but are mapped on DreamPicoPort
+			case 12: return "VMU1 A";
+			case 15: return "VMU1 B";
+			case 16: return "VMU1 Up";
+			case 17: return "VMU1 Down";
+			case 18: return "VMU1 Left";
+			case 19: return "VMU1 Right";
+
+			default: return nullptr; // no override
+		}
+	}
+
+	std::string getUniqueId() const override {
+		return unique_id;
+	}
+
+	void changeBus(int newBus) override {
+		software_bus = newBus;
+		if (dpp_comms) {
+			dpp_comms->changeSoftwareBus(software_bus);
+		}
+	}
+
+	std::string getName() const override {
+		return getName(" ");
+	}
+
+	bool needsRefresh() override {
+		// TODO: implementing this method may also help to support hot plugging of VMUs/rumble packs here.
 		return false;
 	}
 
-	return dpp_comms->send(msg, timeout_ms);
-}
-
-bool DreamPicoPort::send(const MapleMsg& txMsg, MapleMsg& rxMsg) {
-	if (!dpp_comms) {
-		return false;
+	bool isConnected() override {
+		return !!dpp_comms;
 	}
 
-	return dpp_comms->send(txMsg, rxMsg, timeout_ms);
-}
+	void connect() override {
+		// Timeout is 1 second while establishing connection
+		timeout_ms = std::chrono::seconds(1);
 
-inline void DreamPicoPort::gameTermination() {
-	// Need a short delay to wait for last screen draw to complete
-	std::this_thread::sleep_for(std::chrono::milliseconds(10));
-	// Reset screen to selected port
-	sendPort();
-}
-
-int DreamPicoPort::getBus() const {
-	return software_bus;
-}
-
-u32 DreamPicoPort::getFunctionCode(int forPort) const {
-	u32 mask = 0;
-	if ((int)peripherals.size() > forPort) {
-		for (const auto& peripheral : peripherals[forPort]) {
-			mask |= peripheral[0];
+		if (isConnected()) {
+			if (isConnected()) {
+				sendPort();
+			} else {
+				disconnect();
+				return;
+			}
 		}
-	}
-	// swap bytes to get the correct function code
-	return SWAP32(mask);
-}
 
-std::array<u32, 3> DreamPicoPort::getFunctionDefinitions(int forPort) const {
-	std::array<u32, 3> arr{0, 0, 0};
-	if ((int)peripherals.size() > forPort) {
-		std::size_t idx = 0;
-		for (const auto& peripheral : peripherals[forPort]) {
-			arr[idx++] = SWAP32(peripheral[1]);
-			if (idx >= 3) break;
+		// Attempt to connect to new API
+		if (!serial_number.empty()) {
+			dpp_comms = std::make_unique<ApiDreamPicoPortComms>(serial_number, software_bus, hardware_bus);
+			if (!dpp_comms->isConnected() || !dpp_comms->initialize(timeout_ms)) {
+				dpp_comms.reset();
+			}
+		} else {
+			NOTICE_LOG(INPUT, "Serial number for DreamPicoPort[%d] not found", software_bus);
 		}
-	}
-	return arr;
-}
 
-int DreamPicoPort::getDefaultBus() const {
-	if (!is_hardware_bus_implied && !is_single_device) {
-		return hardware_bus;
-	} else {
-		// Value of -1 means to use enumeration order
-		return -1;
-	}
-}
+	#ifndef TARGET_UWP
+		if (!dpp_comms) {
+			NOTICE_LOG(
+				INPUT,
+				"Could not find DppDevice for DreamPicoPort[%d]; falling back to serial interface",
+				software_bus
+			);
+			dpp_comms = std::make_unique<SerialDreamPicoPortComms>(software_bus, hardware_bus);
+			if (!dpp_comms->isConnected() || !dpp_comms->initialize(timeout_ms)) {
+				dpp_comms.reset();
+			}
+		}
+	#endif
 
-void DreamPicoPort::setDefaultMapping(const std::shared_ptr<InputMapping>& mapping) const {
-	// Since this is a real DC controller, no deadzone adjustment is needed
-	mapping->dead_zone = 0.0f;
-	// Map the things not set by SDL
-	mapping->set_button(DC_BTN_C, 2);
-	mapping->set_button(DC_BTN_Z, 5);
-	mapping->set_button(DC_BTN_D, 10);
-	mapping->set_button(DC_DPAD2_UP, 9);
-	mapping->set_button(DC_DPAD2_DOWN, 8);
-	mapping->set_button(DC_DPAD2_LEFT, 7);
-	mapping->set_button(DC_DPAD2_RIGHT, 6);
-}
-
-const char *DreamPicoPort::getButtonName(u32 code) const {
-	switch (code) {
-		// Coincides with buttons setup in setDefaultMapping
-		case 2: return "C";
-		case 5: return "Z";
-		case 10: return "D";
-		case 9: return "DPad2 Up";
-		case 8: return "DPad2 Down";
-		case 7: return "DPad2 Left";
-		case 6: return "DPad2 Right";
-
-		// These buttons are normally not physically accessible but are mapped on DreamPicoPort
-		case 12: return "VMU1 A";
-		case 15: return "VMU1 B";
-		case 16: return "VMU1 Up";
-		case 17: return "VMU1 Down";
-		case 18: return "VMU1 Left";
-		case 19: return "VMU1 Right";
-
-		default: return nullptr; // no override
-	}
-}
-
-std::string DreamPicoPort::getUniqueId() const {
-	return unique_id;
-}
-
-void DreamPicoPort::changeBus(int newBus) {
-	software_bus = newBus;
-	if (dpp_comms) {
-		dpp_comms->changeSoftwareBus(software_bus);
-	}
-}
-
-std::string DreamPicoPort::getName() const {
-	return getName(" ");
-}
-
-std::string DreamPicoPort::getName(std::string separator) const {
-	std::string name = "DreamPicoPort";
-	if (!is_hardware_bus_implied && !is_single_device) {
-		const char portChar = ('A' + hardware_bus);
-		name += separator + std::string(1, portChar);
-	}
-	return name;
-}
-
-bool DreamPicoPort::needsRefresh() {
-	// TODO: implementing this method may also help to support hot plugging of VMUs/rumble packs here.
-	return false;
-}
-
-bool DreamPicoPort::isConnected() {
-	return !!dpp_comms;
-}
-
-void DreamPicoPort::connect() {
-	// Timeout is 1 second while establishing connection
-	timeout_ms = std::chrono::seconds(1);
-
-	if (isConnected()) {
 		if (isConnected()) {
 			sendPort();
 		} else {
 			disconnect();
 			return;
 		}
+
+		if (!queryPeripherals()) {
+			disconnect();
+			return;
+		}
+
+		// Timeout is extended to 5 seconds for all other communication after connection
+		timeout_ms = std::chrono::seconds(5);
+
+		int vmuCount = 0;
+		int vibrationCount = 0;
+
+		if (software_bus >= 0 && static_cast<std::size_t>(software_bus) < config::MapleExpansionDevices.size()) {
+			u32 portOneFn = getFunctionCode(1);
+			if (portOneFn & MFID_1_Storage) {
+				config::MapleExpansionDevices[software_bus][0] = MDT_SegaVMU;
+				++vmuCount;
+			}
+			else {
+				config::MapleExpansionDevices[software_bus][0] = MDT_None;
+			}
+
+			u32 portTwoFn = getFunctionCode(2);
+			if (portTwoFn & MFID_8_Vibration) {
+				config::MapleExpansionDevices[software_bus][1] = MDT_PurupuruPack;
+				++vibrationCount;
+			}
+			else if (portTwoFn & MFID_1_Storage) {
+				config::MapleExpansionDevices[software_bus][1] = MDT_SegaVMU;
+				++vmuCount;
+			}
+			else {
+				config::MapleExpansionDevices[software_bus][1] = MDT_None;
+			}
+		}
+
+		NOTICE_LOG(INPUT, "Connected to DreamPicoPort[%d]: Type:%s, VMU:%d, Rumble Pack:%d", software_bus, getName().c_str(), vmuCount, vibrationCount);
 	}
 
-	// Attempt to connect to new API
-	if (!serial_number.empty()) {
-		dpp_comms = std::make_unique<ApiDreamPicoPortComms>(serial_number, software_bus, hardware_bus);
-		if (!dpp_comms->isConnected() || !dpp_comms->initialize(timeout_ms)) {
-			dpp_comms.reset();
-		}
-	} else {
-		NOTICE_LOG(INPUT, "Serial number for DreamPicoPort[%d] not found", software_bus);
+	void disconnect() override {
+		dpp_comms.reset();
 	}
 
-#ifndef TARGET_UWP
-	if (!dpp_comms) {
-		NOTICE_LOG(
-			INPUT,
-			"Could not find DppDevice for DreamPicoPort[%d]; falling back to serial interface",
-			software_bus
-		);
-		dpp_comms = std::make_unique<SerialDreamPicoPortComms>(software_bus, hardware_bus);
-		if (!dpp_comms->isConnected() || !dpp_comms->initialize(timeout_ms)) {
-			dpp_comms.reset();
-		}
-	}
-#endif
-
-	if (isConnected()) {
-		sendPort();
-	} else {
-		disconnect();
-		return;
-	}
-
-	if (!queryPeripherals()) {
-		disconnect();
-		return;
-	}
-
-	// Timeout is extended to 5 seconds for all other communication after connection
-	timeout_ms = std::chrono::seconds(5);
-
-	int vmuCount = 0;
-	int vibrationCount = 0;
-
-	if (software_bus >= 0 && static_cast<std::size_t>(software_bus) < config::MapleExpansionDevices.size()) {
-		u32 portOneFn = getFunctionCode(1);
-		if (portOneFn & MFID_1_Storage) {
-			config::MapleExpansionDevices[software_bus][0] = MDT_SegaVMU;
-			++vmuCount;
-		}
-		else {
-			config::MapleExpansionDevices[software_bus][0] = MDT_None;
-		}
-
-		u32 portTwoFn = getFunctionCode(2);
-		if (portTwoFn & MFID_8_Vibration) {
-			config::MapleExpansionDevices[software_bus][1] = MDT_PurupuruPack;
-			++vibrationCount;
-		}
-		else if (portTwoFn & MFID_1_Storage) {
-			config::MapleExpansionDevices[software_bus][1] = MDT_SegaVMU;
-			++vmuCount;
-		}
-		else {
-			config::MapleExpansionDevices[software_bus][1] = MDT_None;
+    void sendPort() {
+		if (dpp_comms) {
+			dpp_comms->sendPort(timeout_ms);
 		}
 	}
 
-	NOTICE_LOG(INPUT, "Connected to DreamPicoPort[%d]: Type:%s, VMU:%d, Rumble Pack:%d", software_bus, getName().c_str(), vmuCount, vibrationCount);
-}
-
-void DreamPicoPort::disconnect() {
-	dpp_comms.reset();
-}
-
-void DreamPicoPort::sendPort() {
-	if (dpp_comms) {
-		dpp_comms->sendPort(timeout_ms);
+	int hardwareBus() const {
+		return hardware_bus;
 	}
-}
 
-int DreamPicoPort::hardwareBus() const {
-	return hardware_bus;
-}
+	bool isHardwareBusImplied() const {
+		return is_hardware_bus_implied;
+	}
 
-bool DreamPicoPort::isHardwareBusImplied() const {
-	return is_hardware_bus_implied;
-}
+	bool isSingleDevice() const {
+		return is_single_device;
+	}
 
-bool DreamPicoPort::isSingleDevice() const {
-	return is_single_device;
-}
+private:
+	std::string getName(std::string separator) const {
+		std::string name = "DreamPicoPort";
+		if (!is_hardware_bus_implied && !is_single_device) {
+			const char portChar = ('A' + hardware_bus);
+			name += separator + std::string(1, portChar);
+		}
+		return name;
+	}
 
-void DreamPicoPort::determineHardwareBus(int joystick_idx, SDL_Joystick* sdl_joystick) {
-	// This function determines what bus index to use when communicating with the hardware.
+	void determineHardwareBus(int joystick_idx, SDL_Joystick* sdl_joystick) {
+		// This function determines what bus index to use when communicating with the hardware.
 
-	// Set the serial number if found by SDL Joystick
-	const char* joystick_serial = SDL_JoystickGetSerial(sdl_joystick);
-	if (joystick_serial) {
-		serial_number = joystick_serial;
-	} else {
-		// Version 1.2.0 and later embeds serial in name as a workaround for MacOS and Linux
-		// Serial is expected between a dash (-) and space ( ) character or until end of string
-		const char* joystick_name = SDL_JoystickName(sdl_joystick);
-		if (joystick_name) {
-			std::string name_str(joystick_name);
-			size_t dash_pos = name_str.find('-');
-			if (dash_pos != std::string::npos) {
-				size_t start_pos = dash_pos + 1;
-				size_t end_pos = name_str.find(' ', start_pos);
-				if (end_pos == std::string::npos) {
-					end_pos = name_str.length();
-				}
-				// Serials are normally 16 characters, but check for at least 10 to account for any future changes
-				if ((start_pos + 10) <= end_pos) {
-					serial_number = name_str.substr(start_pos, end_pos - start_pos);
+		// Set the serial number if found by SDL Joystick
+		const char* joystick_serial = SDL_JoystickGetSerial(sdl_joystick);
+		if (joystick_serial) {
+			serial_number = joystick_serial;
+		} else {
+			// Version 1.2.0 and later embeds serial in name as a workaround for MacOS and Linux
+			// Serial is expected between a dash (-) and space ( ) character or until end of string
+			const char* joystick_name = SDL_JoystickName(sdl_joystick);
+			if (joystick_name) {
+				std::string name_str(joystick_name);
+				size_t dash_pos = name_str.find('-');
+				if (dash_pos != std::string::npos) {
+					size_t start_pos = dash_pos + 1;
+					size_t end_pos = name_str.find(' ', start_pos);
+					if (end_pos == std::string::npos) {
+						end_pos = name_str.length();
+					}
+					// Serials are normally 16 characters, but check for at least 10 to account for any future changes
+					if ((start_pos + 10) <= end_pos) {
+						serial_number = name_str.substr(start_pos, end_pos - start_pos);
+					}
 				}
 			}
 		}
-	}
 
 #if defined(_WIN32)
-	// This only works in Windows because the joystick_path is not given in other OSes
-	const char* joystick_name = SDL_JoystickName(sdl_joystick);
-	const char* joystick_path = SDL_JoystickPath(sdl_joystick);
+		// This only works in Windows because the joystick_path is not given in other OSes
+		const char* joystick_name = SDL_JoystickName(sdl_joystick);
+		const char* joystick_path = SDL_JoystickPath(sdl_joystick);
 
-	struct SDL_hid_device_info* devs = SDL_hid_enumerate(VID, PID);
-	if (devs) {
-		struct SDL_hid_device_info* my_dev = nullptr;
+		struct SDL_hid_device_info* devs = SDL_hid_enumerate(VID, PID);
+		if (devs) {
+			struct SDL_hid_device_info* my_dev = nullptr;
 
-		if (!devs->next) {
-			// Only single device found, so this is simple (host-1p firmware used)
-			hardware_bus = 0;
-			is_hardware_bus_implied = false;
-			is_single_device = true;
-			my_dev = devs;
-		} else {
-			struct SDL_hid_device_info* it = devs;
+			if (!devs->next) {
+				// Only single device found, so this is simple (host-1p firmware used)
+				hardware_bus = 0;
+				is_hardware_bus_implied = false;
+				is_single_device = true;
+				my_dev = devs;
+			} else {
+				struct SDL_hid_device_info* it = devs;
 
-			if (joystick_path)
-			{
-				while (it)
+				if (joystick_path)
 				{
-					// Note: hex characters will be differing case, so case-insensitive cmp is needed
-					if (it->path && 0 == SDL_strcasecmp(it->path, joystick_path)) {
-						my_dev = it;
-						break;
-					}
-					it = it->next;
-				}
-			}
-
-			if (my_dev) {
-				it = devs;
-				int count = 0;
-				if (my_dev->serial_number) {
-					while (it) {
-						if (it->serial_number &&
-							0 == wcscmp(it->serial_number, my_dev->serial_number))
-						{
-							++count;
+					while (it)
+					{
+						// Note: hex characters will be differing case, so case-insensitive cmp is needed
+						if (it->path && 0 == SDL_strcasecmp(it->path, joystick_path)) {
+							my_dev = it;
+							break;
 						}
 						it = it->next;
 					}
+				}
 
-					if (count == 1) {
-						// Single device of this serial found
-						is_single_device = true;
-						hardware_bus = 0;
-						is_hardware_bus_implied = false;
-					} else {
-						is_single_device = false;
-						if (my_dev->release_number < 0x0102) {
-							// Interfaces go in decending order
-							hardware_bus = (count - (my_dev->interface_number % 4) - 1);
+				if (my_dev) {
+					it = devs;
+					int count = 0;
+					if (my_dev->serial_number) {
+						while (it) {
+							if (it->serial_number &&
+								0 == wcscmp(it->serial_number, my_dev->serial_number))
+							{
+								++count;
+							}
+							it = it->next;
+						}
+
+						if (count == 1) {
+							// Single device of this serial found
+							is_single_device = true;
+							hardware_bus = 0;
 							is_hardware_bus_implied = false;
 						} else {
-							// Version 1.02 of interface will make interfaces in ascending order
-							hardware_bus = (my_dev->interface_number % 4);
-							is_hardware_bus_implied = false;
+							is_single_device = false;
+							if (my_dev->release_number < 0x0102) {
+								// Interfaces go in decending order
+								hardware_bus = (count - (my_dev->interface_number % 4) - 1);
+								is_hardware_bus_implied = false;
+							} else {
+								// Version 1.02 of interface will make interfaces in ascending order
+								hardware_bus = (my_dev->interface_number % 4);
+								is_hardware_bus_implied = false;
+							}
 						}
 					}
 				}
 			}
-		}
 
-		// Set serial number if found in SDL_hid
-		if (my_dev) {
-			if (serial_number.empty() && my_dev->serial_number) {
-				int len = WideCharToMultiByte(CP_UTF8, 0, my_dev->serial_number, -1, nullptr, 0, nullptr, nullptr);
-				if (len > 0) {
-					std::vector<char> buffer(len);
-					WideCharToMultiByte(CP_UTF8, 0, my_dev->serial_number, -1, buffer.data(), len, nullptr, nullptr);
-					serial_number = std::string(buffer.data());
+			// Set serial number if found in SDL_hid
+			if (my_dev) {
+				if (serial_number.empty() && my_dev->serial_number) {
+					int len = WideCharToMultiByte(CP_UTF8, 0, my_dev->serial_number, -1, nullptr, 0, nullptr, nullptr);
+					if (len > 0) {
+						std::vector<char> buffer(len);
+						WideCharToMultiByte(CP_UTF8, 0, my_dev->serial_number, -1, buffer.data(), len, nullptr, nullptr);
+						serial_number = std::string(buffer.data());
+					}
 				}
 			}
-		}
 
-		SDL_hid_free_enumeration(devs);
-	}
+			SDL_hid_free_enumeration(devs);
+		}
 
 #endif // #if defined(_WIN32)
 
-	if (hardware_bus < 0) {
-		// The number of buttons gives a clue as to what index the controller is
-		int nbuttons = SDL_JoystickNumButtons(sdl_joystick);
+		if (hardware_bus < 0) {
+			// The number of buttons gives a clue as to what index the controller is
+			int nbuttons = SDL_JoystickNumButtons(sdl_joystick);
 
-		if (nbuttons >= 32 || nbuttons <= 27) {
-			// Older version of firmware or single player
-			hardware_bus = 0;
-			is_hardware_bus_implied = true;
-			is_single_device = true;
+			if (nbuttons >= 32 || nbuttons <= 27) {
+				// Older version of firmware or single player
+				hardware_bus = 0;
+				is_hardware_bus_implied = true;
+				is_single_device = true;
+			}
+			else {
+				hardware_bus = 31 - nbuttons;
+				is_hardware_bus_implied = false;
+				is_single_device = false;
+			}
 		}
-		else {
-			hardware_bus = 31 - nbuttons;
-			is_hardware_bus_implied = false;
-			is_single_device = false;
+	}
+
+    bool queryPeripherals() {
+		peripherals.clear();
+
+		if (!isConnected()) {
+			return false;
 		}
+
+		std::optional<std::vector<std::vector<std::array<uint32_t, 2>>>> optPeriph = dpp_comms->getPeripherals(timeout_ms);
+
+		if (!optPeriph) {
+			return false;
+		}
+
+		peripherals = std::move(optPeriph.value());
+
+		return true;
 	}
-}
+};
 
-bool DreamPicoPort::queryPeripherals() {
-	peripherals.clear();
-
-	if (!isConnected()) {
-		return false;
-	}
-
-	std::optional<std::vector<std::vector<std::array<uint32_t, 2>>>> optPeriph = dpp_comms->getPeripherals(timeout_ms);
-
-	if (!optPeriph) {
-		return false;
-	}
-
-	peripherals = std::move(optPeriph.value());
-
-	return true;
+std::shared_ptr<DreamPicoPort> DreamPicoPort::create_shared(int bus, int joystick_idx, SDL_Joystick* sdl_joystick) {
+	return std::make_shared<DreamPicoPortImp>(bus, joystick_idx, sdl_joystick);
 }

@@ -109,11 +109,11 @@ DreamLinkGamepad::DreamLinkGamepad(int maple_port, int joystick_idx, SDL_Joystic
 	if (memcmp(DreamConn::VID_PID_GUID, guid_str + 8, 16) == 0)
 	{
 		bool isForPhysicalController = true;
-		dreamlink = std::make_shared<DreamConn>(maple_port, isForPhysicalController);
+		dreamlink = DreamConn::create_shared(maple_port, isForPhysicalController);
 	}
 	else if (memcmp(DreamPicoPort::VID_PID_GUID, guid_str + 8, 16) == 0)
 	{
-		dreamlink = std::make_shared<DreamPicoPort>(maple_port, joystick_idx, sdl_joystick);
+		dreamlink = DreamPicoPort::create_shared(maple_port, joystick_idx, sdl_joystick);
 	}
 
 	if (dreamlink && maple_port >= 0 && static_cast<std::size_t>(maple_port) < DreamLink::activeDreamLinks.size()) {
