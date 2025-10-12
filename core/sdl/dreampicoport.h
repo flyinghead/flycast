@@ -22,14 +22,7 @@
 
 #include "dreamlink.h"
 
-#include "DreamPicoPortApi.hpp"
-
-#include <atomic>
-#include <chrono>
-#include <vector>
-#include <array>
-#include <unordered_map>
-#include <mutex>
+#include <memory>
 
 //! See: https://github.com/OrangeFox86/DreamPicoPort
 class DreamPicoPort : public DreamLink

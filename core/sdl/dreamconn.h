@@ -22,7 +22,6 @@
 
 #include "dreamlink.h"
 
-#include <mutex>
 #include <memory>
 
 class DreamConn : public DreamLink

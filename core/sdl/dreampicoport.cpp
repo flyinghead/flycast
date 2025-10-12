@@ -23,6 +23,8 @@
 #include "ui/gui.h"
 #include <cfg/option.h>
 
+#include "DreamPicoPortApi.hpp"
+
 // C++ standard library
 #include <iomanip>
 #include <sstream>
@@ -34,6 +36,8 @@
 #include <condition_variable>
 #include <atomic>
 #include <optional>
+#include <chrono>
+#include <unordered_map>
 
 #ifndef TARGET_UWP
 #include <asio.hpp>

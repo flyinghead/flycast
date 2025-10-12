@@ -27,6 +27,7 @@
 #include <SDL.h>
 #include <iomanip>
 #include <sstream>
+#include <mutex>
 
 #if defined(__linux__) || (defined(__APPLE__) && defined(TARGET_OS_MAC))
 #include <dirent.h>
