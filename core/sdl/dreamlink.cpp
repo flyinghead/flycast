@@ -116,8 +116,11 @@ DreamLinkGamepad::DreamLinkGamepad(int maple_port, int joystick_idx, SDL_Joystic
 		dreamlink = DreamPicoPort::create_shared(maple_port, joystick_idx, sdl_joystick);
 	}
 
-	if (dreamlink && maple_port >= 0 && static_cast<std::size_t>(maple_port) < DreamLink::activeDreamLinks.size()) {
-		DreamLink::activeDreamLinks[maple_port] = dreamlink;
+	if (dreamlink) {
+		if (maple_port >= 0 && static_cast<std::size_t>(maple_port) < DreamLink::activeDreamLinks.size()) {
+			DreamLink::activeDreamLinks[maple_port] = dreamlink;
+		}
+
 		_name = dreamlink->getName();
 		int defaultBus = dreamlink->getDefaultBus();
 		if (defaultBus >= 0 && defaultBus < 4) {
@@ -154,7 +157,7 @@ const char* DreamLinkGamepad::dreamLinkStatus()
 		!dreamlink ||
 		port < 0 ||
 		static_cast<std::size_t>(port) >= DreamLink::activeDreamLinks.size() ||
-		DreamLink::activeDreamLinks[maple_port()] != dreamlink
+		DreamLink::activeDreamLinks[port] != dreamlink
 	)
 		return "Inactive";
 
