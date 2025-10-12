@@ -955,7 +955,12 @@ public:
 	}
 
 	bool initialize(std::chrono::milliseconds timeout_ms) override {
-		return isConnected();
+		if(!isConnected()) {
+			return false;
+		}
+
+		// SDL workaround to ensure axis values are up-to-date
+		dpp_api_device->send(dpp_api::msg::tx::RefreshGamepad{static_cast<std::uint8_t>(hardware_bus)});
 	}
 
 	std::optional<std::vector<std::vector<std::array<uint32_t, 2>>>> getPeripherals(
