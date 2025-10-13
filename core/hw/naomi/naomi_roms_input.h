@@ -756,8 +756,8 @@ static InputDescriptors basschal_inputs = {
 
 static InputDescriptors aw_lightgun_inputs = {
 	{
-		{ AWAVE_BTN0_KEY, "TRIGGER" },
-		{ AWAVE_BTN1_KEY, "PUMP" },
+		{ AWAVE_TRIGGER_KEY, "TRIGGER" },
+		{ AWAVE_BTN0_KEY, "PUMP" },
 		AW_START_DESC
 		AW_BASE_BTN_DESC
 	},
