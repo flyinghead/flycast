@@ -16,6 +16,7 @@
  */
 #include "sdl_gamepad.h"
 #include "stdclass.h"
+#include "sdl_mappingparser.h"
 #include <cmath>
 
 std::map<SDL_JoystickID, std::shared_ptr<SDLGamepad>> SDLGamepad::sdl_gamepads;
@@ -81,65 +82,35 @@ public:
 				set_button(dc_btn, ((bind.value.hat.hat + 1) << 8) | dir);
 			}
 		};
-		auto map_axis = [&](SDL_GameControllerAxis sdl_axis, DreamcastKey dc_axis, bool positive) {
-			SDL_GameControllerButtonBind bind = SDL_GameControllerGetBindForAxis(sdlController, sdl_axis);
+		auto map_axis = [&](SDL_GameControllerAxis sdl_axis, DreamcastKey dc_axis, bool positive)
+		{
+			const bool isTrigger = sdl_axis == SDL_CONTROLLER_AXIS_TRIGGERLEFT
+					|| sdl_axis == SDL_CONTROLLER_AXIS_TRIGGERRIGHT;
+			SDLControllerMappingParser parser(sdlController);
+			SDL_GameControllerButtonBind2 bind = parser.getBindForAxis(sdl_axis, isTrigger ? 0 : positive ? 1 : -1);
 			if (bind.bindType == SDL_CONTROLLER_BINDTYPE_NONE)
 				return false;
 			if (bind.bindType == SDL_CONTROLLER_BINDTYPE_AXIS)
 			{
-				char *gcdb = SDL_GameControllerMapping(sdlController);
-				const char *axisName = SDL_GameControllerGetStringForAxis(sdl_axis);
-				if (gcdb != nullptr && axisName != nullptr)
+				if (isTrigger)
 				{
-					const bool isTrigger = sdl_axis == SDL_CONTROLLER_AXIS_TRIGGERLEFT
-							|| sdl_axis == SDL_CONTROLLER_AXIS_TRIGGERRIGHT;
-					const char *p = nullptr;
-					if (!isTrigger)
-					{
-						// First look for a matching axis direction
-						std::string name = (positive ? '+' : '-') + std::string(axisName);
-						p = strstr(gcdb, name.c_str());
-					}
-					if (p == nullptr)
-						// If not found, look for the axis name only
-						p = strstr(gcdb, axisName);
-					if (p != nullptr)
-					{
-						const char *pcolon = strchr(p, ':');
-						if (pcolon != nullptr)
-						{
-							const char *axisNum = strchr(pcolon, 'a');
-							if (axisNum != nullptr)
-								bind.value.axis = atoi(axisNum + 1);
-							const char *pend = strchr(p, ',');
-							if (pend == nullptr)
-								pend = p + strlen(p);
-							if (!isTrigger || pcolon[1] == '+' || pcolon[1] == '-')
-							{
-								deleteTrigger(bind.value.axis);
-								if (pcolon[1] == '+')
-									positive = true;
-								else if (pcolon[1] == '-')
-									positive = false;
-								else if (!isTrigger && pend[-1] == '~')
-									positive = !positive;
-							}
-							else if (isTrigger) {
-								addTrigger(bind.value.axis, pend[-1] == '~');
-							}
-						}
-					}
+					if (bind.value.axis.direction == 0)
+						addTrigger(bind.value.axis.axis, false);
+					else if (bind.value.axis.direction == 2)
+						addTrigger(bind.value.axis.axis, true);
+					else
+						deleteTrigger(bind.value.axis.axis);
 				}
-				set_axis(dc_axis, bind.value.axis, positive);
-				SDL_free(gcdb);
+				else {
+					deleteTrigger(bind.value.axis.axis);
+				}
+				set_axis(dc_axis, bind.value.axis.axis, bind.value.axis.direction == -1 ? false : true);
 			}
 			else if (bind.bindType == SDL_CONTROLLER_BINDTYPE_BUTTON) {
-				// TODO this won't work for full axes: need to bind 2 buttons, one for each direction
 				set_axis(dc_axis, bind.value.button, positive);
 			}
 			else if (bind.bindType == SDL_CONTROLLER_BINDTYPE_HAT)
 			{
-				// TODO this won't work for full axes: need to bind 2 buttons, one for each direction
 				int dir;
 				switch (bind.value.hat.hat_mask)
 				{
@@ -698,36 +669,15 @@ bool SDLGamepad::find_mapping(int system)
 			&& sdl_controller != nullptr)
 	{
 		// Set the triggers from the SDL gamepad bindings in case they haven't been saved
+		SDLControllerMappingParser parser(sdl_controller);
 		auto setTrigger = [&](SDL_GameControllerAxis sdl_axis) {
-			SDL_GameControllerButtonBind bind = SDL_GameControllerGetBindForAxis(sdl_controller, sdl_axis);
+			SDL_GameControllerButtonBind2 bind = parser.getBindForAxis(sdl_axis);
 			if (bind.bindType != SDL_CONTROLLER_BINDTYPE_AXIS)
 				return;
-			const char *axisName = SDL_GameControllerGetStringForAxis(sdl_axis);
-			if (axisName == nullptr)
-				return;
-			char *gcdb = SDL_GameControllerMapping(sdl_controller);
-			if (gcdb == nullptr)
-				return;
-
-			const char *p = strstr(gcdb, axisName);
-			if (p != nullptr)
-			{
-				const char *pcolon = strchr(p, ':');
-				if (pcolon != nullptr)
-				{
-					const char *axisNum = strchr(pcolon, 'a');
-					if (axisNum != nullptr)
-					{
-						int axis = atoi(axisNum + 1);
-						const char *pend = strchr(p, ',');
-						if (pend == nullptr)
-							pend = p + strlen(p);
-						if (pcolon[1] != '+' && pcolon[1] != '-')
-							input_mapper->addTrigger(axis, pend[-1] == '~');
-					}
-				}
-			}
-			SDL_free(gcdb);
+			if (bind.value.axis.direction == 0)
+				input_mapper->addTrigger(bind.value.axis.axis, false);
+			else if (bind.value.axis.direction == 2)
+				input_mapper->addTrigger(bind.value.axis.axis, true);
 		};
 		setTrigger(SDL_CONTROLLER_AXIS_TRIGGERLEFT);
 		setTrigger(SDL_CONTROLLER_AXIS_TRIGGERRIGHT);
