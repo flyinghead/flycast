@@ -701,7 +701,7 @@ static void gui_display_commands()
 		bool hasDisconnectedDreamLink = false;
 		for (auto& dreamlink : DreamLink::activeDreamLinks)
 		{
-			if (dreamlink)
+			if (dreamlink && !dreamlink->isForPhysicalController())
 			{
 				hasAnyDreamLinks = true;
 				if (!dreamlink->isConnected())
