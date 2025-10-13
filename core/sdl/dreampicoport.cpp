@@ -961,6 +961,8 @@ public:
 
 		// SDL workaround to ensure axis values are up-to-date
 		dpp_api_device->send(dpp_api::msg::tx::RefreshGamepad{static_cast<std::uint8_t>(hardware_bus)});
+
+		return true;
 	}
 
 	std::optional<std::vector<std::vector<std::array<uint32_t, 2>>>> getPeripherals(
