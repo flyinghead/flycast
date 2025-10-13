@@ -49,17 +49,7 @@ u8* icPtr;
 u8* ICache;
 void (*EntryPoints[ARAM_SIZE_MAX / 4])();
 
-#if defined(_WIN32) || defined(TARGET_IPHONE) || defined(TARGET_ARM_MAC)
-static u8 *ARM7_TCB;
-#elif defined(__OpenBSD__)
-alignas(4096) static u8 ARM7_TCB[ICacheSize] __attribute__((section(".openbsd.mutable")));
-#elif defined(__unix__) || defined(__SWITCH__)
-alignas(4096) static u8 ARM7_TCB[ICacheSize] __attribute__((section(".text")));
-#elif defined(__APPLE__)
-alignas(4096) static u8 ARM7_TCB[ICacheSize] __attribute__((section("__TEXT, .text")));
-#else
-#error ARM7_TCB ALLOC
-#endif
+DECLARE_CODE_CACHE(ARM7_TCB, ICacheSize)
 
 ptrdiff_t rx_offset;
 
