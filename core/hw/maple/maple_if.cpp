@@ -8,6 +8,10 @@
 #include "network/ggpo.h"
 #include "hw/naomi/card_reader.h"
 
+#ifdef USE_DREAMLINK_DEVICES
+#include "sdl/dreamlink.h"
+#endif
+
 #include <memory>
 
 enum MaplePattern
@@ -47,6 +51,10 @@ bool SDCKBOccupied;
 
 void maple_vblank()
 {
+#if USE_DREAMLINK_DEVICES
+	refreshDreamLinksIfNeeded();
+#endif
+
 	if (SB_MDEN & 1)
 	{
 		if (SB_MDTSEL == 1)
@@ -348,6 +356,10 @@ void maple_Init()
 #endif
 
 	maple_schid = sh4_sched_register(0, maple_schd);
+
+#if defined(USE_DREAMLINK_DEVICES)
+	registerDreamLinkEvents();
+#endif
 }
 
 void maple_Reset(bool hard)
@@ -368,6 +380,10 @@ void maple_Term()
 	mcfg_DestroyDevices();
 	sh4_sched_unregister(maple_schid);
 	maple_schid = -1;
+
+#if defined(USE_DREAMLINK_DEVICES)
+	unregisterDreamLinkEvents();
+#endif
 }
 
 static u64 reconnect_time;
@@ -384,5 +400,9 @@ static void maple_handle_reconnect()
 	{
 		reconnect_time = 0;
 		mcfg_CreateDevices();
+
+#if defined(USE_DREAMLINK_DEVICES)
+		createAllDreamLinkDevices();
+#endif
 	}
 }

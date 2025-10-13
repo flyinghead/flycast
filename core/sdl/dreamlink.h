@@ -18,7 +18,8 @@
  */
 #pragma once
 
-// This file contains abstraction layer for access to different kinds of physical controllers
+// This file contains abstraction layer for access to different kinds of remote peripherals.
+// This includes both real Dreamcast controllers, VMUs, rumble packs etc. but also emulated VMUs.
 
 #include "types.h"
 #include "emulator.h"
@@ -26,12 +27,7 @@
 
 #include <functional>
 #include <memory>
-
-#if (defined(_WIN32) || defined(__linux__) || (defined(__APPLE__) && defined(TARGET_OS_MAC))) && !defined(TARGET_UWP)
-#define USE_DREAMCASTCONTROLLER 1
-#endif
-
-#include <memory>
+#include <array>
 
 struct MapleMsg
 {
@@ -63,13 +59,19 @@ struct MapleMsg
 };
 static_assert(sizeof(MapleMsg) == 1028);
 
-// Abstract base class for physical controller implementations
-class DreamLink
+// Abstract base class for communication with physical controllers and remote expansion devices
+class DreamLink : public std::enable_shared_from_this<DreamLink>
 {
 public:
-    DreamLink() = default;
+	// The active DreamLink, if any, for each port.
+	// Note that multiple gamepad DreamLinks may exist for a given port, in which case only one is active.
+	static std::array<std::shared_ptr<DreamLink>, 4> activeDreamLinks;
+
+	DreamLink() = default;
 
 	virtual ~DreamLink() = default;
+
+	virtual bool isForPhysicalController() = 0;
 
 	//! Sends a message to the controller, ignoring the response
 	//! @note The implementation shall be thread safe
@@ -86,9 +88,38 @@ public:
     //! @return the device type for the given port
     virtual u32 getFunctionCode(int forPort) const = 0;
 
+    //! @param[in] forPort The port number to get the function definitions of (1 or 2)
+	//! @return the 3 function definitions for the supported function codes
+    virtual std::array<u32, 3> getFunctionDefinitions(int forPort) const = 0;
+
 	//! @return the default bus number to select for this controller or -1 to not select a default
 	virtual int getDefaultBus() const {
 		return -1;
+	}
+
+	//! Allows a DreamLink device to dictate the default mapping
+	virtual void setDefaultMapping(const std::shared_ptr<InputMapping>& mapping) const {
+	}
+
+	//! Allows button names to be defined by a DreamLink device
+	//! @param[in] code The button code to retrieve name of
+	//! @return the button name for the given code to override what is defined by the gamepad
+	//! @return nullptr to fall back to gamepad definitions
+	virtual const char *getButtonName(u32 code) const {
+		return nullptr;
+	}
+
+	//! Allows axis names to be defined by a DreamLink device
+	//! @param[in] code The axis code to retrieve name of
+	//! @return the axis name for the given code to override what is defined by the gamepad
+	//! @return nullptr to fall back to gamepad definitions
+	virtual const char *getAxisName(u32 code) const {
+		return nullptr;
+	}
+
+	//! @return a unique ID for this DreamLink device or empty string to use default
+	virtual std::string getUniqueId() const {
+		return std::string();
 	}
 
 	//! @return the selected bus number of the controller
@@ -99,6 +130,13 @@ public:
 
 	//! @return the display name of the controller
 	virtual std::string getName() const = 0;
+
+	//! Fetch the latest remote device configuration and return 'true' if it changed.
+	//! Caller is responsible for recreating the actual devices.
+	virtual bool needsRefresh() = 0;
+
+	//! Returns true if connected to the hardware controller (TODO: "hardware controller or remote device" throughout?)
+	virtual bool isConnected() = 0;
 
 	//! Attempt connection to the hardware controller
 	virtual void connect() = 0;
@@ -113,18 +151,35 @@ public:
     DreamLinkGamepad(int maple_port, int joystick_idx, SDL_Joystick* sdl_joystick);
 	~DreamLinkGamepad();
 
+	const char* dreamLinkStatus();
 	void set_maple_port(int port) override;
 	void registered() override;
-	bool gamepad_btn_input(u32 code, bool pressed) override;
-	bool gamepad_axis_input(u32 code, int value) override;
 	static bool isDreamcastController(int deviceIndex);
+	void resetMappingToDefault(bool arcade, bool gamepad) override;
+	const char *get_button_name(u32 code) override;
+	const char *get_axis_name(u32 code) override;
 
-private:
-	static void handleEvent(Event event, void *arg);
-	void checkKeyCombo();
+protected:
+	std::shared_ptr<InputMapping> getDefaultMapping() override;
+	void setBaseDefaultMapping(const std::shared_ptr<InputMapping>& mapping) const;
 
 	std::shared_ptr<DreamLink> dreamlink;
 	bool ltrigPressed = false;
 	bool rtrigPressed = false;
 	bool startPressed = false;
+	std::string device_guid;
 };
+
+// Creates and destroys DreamLinks according to config settings.
+// Attempts to connect/reconnect DreamLinks which are not connected.
+// Returns true if any new connection was established.
+// Note that this doesn't createDreamLinkDevices for DreamLinks created by this function. Caller is responsible for that.
+bool reconnectDreamLinks();
+
+void refreshDreamLinksIfNeeded();
+void createAllDreamLinkDevices();
+void createDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink, bool gameStart, bool stateLoaded);
+void tearDownDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink);
+
+void registerDreamLinkEvents();
+void unregisterDreamLinkEvents();

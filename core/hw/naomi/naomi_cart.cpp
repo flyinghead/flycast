@@ -45,6 +45,7 @@
 #include "netdimm.h"
 #include "systemsp.h"
 #include "hopper.h"
+#include "midiffb.h"
 
 Cartridge *CurrentCartridge;
 bool bios_loaded = false;
@@ -703,7 +704,8 @@ void naomi_cart_LoadRom(const std::string& path, const std::string& fileName, Lo
 				|| gameId == "MUSHIUSA '04 1ST VER0.900-"
 				|| gameId.substr(0, 13) == "DINOSAUR KING"
 				|| gameId == "INW PUPPY 2008 VER1.001"	// SystemSP isshoni
-				|| gameId.substr(0, 14) == "LOVE AND BERRY")
+				|| gameId.substr(0, 14) == "LOVE AND BERRY"
+				|| gameId == "BTR 2K9 VER 1.004")		// SystemSP Battle Racer
 		{
 			card_reader::barcodeInit();
 		}

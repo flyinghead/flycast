@@ -40,6 +40,7 @@ Option<bool> ForceFreePlay("ForceFreePlay", true);
 Option<bool, false> FetchBoxart("FetchBoxart", true);
 Option<bool, false> BoxartDisplayMode("BoxartDisplayMode", true);
 Option<int, false> UIScaling("UIScaling", 100);
+Option<int, false> UITheme("UITheme", 0);
 
 // Sound
 
@@ -98,6 +99,8 @@ Option<int> SkipFrame("ta.skip");
 Option<int> MaxThreads("pvr.MaxThreads", 3);
 Option<int> AutoSkipFrame("pvr.AutoSkipFrame", 0);
 Option<int> RenderResolution("rend.Resolution", 480);
+Option<bool> IntegerScale("rend.IntegerScale", false);
+Option<bool> LinearInterpolation("rend.LinearInterpolation", true);
 Option<bool> VSync("rend.vsync", true);
 Option<int64_t> PixelBufferSize("rend.PixelBufferSize", 512_MB);
 Option<int> AnisotropicFiltering("rend.AnisotropicFiltering", 1);
@@ -199,11 +202,19 @@ std::array<std::array<Option<MapleDeviceType>, 2>, 4> MapleExpansionDevices {{
 	{{Option<MapleDeviceType>("device4.1", MDT_None, "input"),
 	Option<MapleDeviceType>("device4.2", MDT_None, "input")}},
 }};
+
+std::array<Option<bool>, 4> UseNetworkExpansionDevices{
+	Option<bool>("device1.UseNetworkExpansionDevices", false, "input"),
+	Option<bool>("device2.UseNetworkExpansionDevices", false, "input"),
+	Option<bool>("device3.UseNetworkExpansionDevices", false, "input"),
+	Option<bool>("device4.UseNetworkExpansionDevices", false, "input"),
+};
+
 Option<bool> PerGameVmu("PerGameVmu", false, "config");
 #ifdef _WIN32
 Option<bool, false> UseRawInput("RawInput", false, "input");
 #endif
-Option<bool> UsePhysicalVmuMemory("UsePhysicalVmuMemory", false);
+Option<bool> UsePhysicalVmuMemory("UsePhysicalVmuMemory", true);
 
 #ifdef USE_LUA
 Option<std::string, false> LuaFileName("LuaFileName", "flycast.lua");

@@ -158,20 +158,6 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "disabled",
    },
    {
-      CORE_OPTION_NAME "_boot_to_bios",
-      "Boot to BIOS (Restart Required)",
-      NULL,
-      "Boot directly into the Dreamcast BIOS menu.",
-      NULL,
-      "system",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-      "disabled",
-   },
-   {
       CORE_OPTION_NAME "_enable_dsp",
       "Enable DSP",
       NULL,

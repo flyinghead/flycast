@@ -120,45 +120,268 @@ axis_list[] =
 
 };
 
-std::map<std::string, std::shared_ptr<InputMapping>> InputMapping::loaded_mappings;
+//
+// InputDef
+//
 
-void InputMapping::clear_button(u32 port, DreamcastKey id)
+u64 InputMapping::InputDef::get_hash() const
 {
-	if (id != EMU_BTN_NONE)
+	return (static_cast<u64>(type) << 32) | code;
+}
+
+bool InputMapping::InputDef::operator<(const InputDef& rhs) const
+{
+	return (get_hash() < rhs.get_hash());
+}
+
+bool InputMapping::InputDef::operator==(const InputDef& rhs) const
+{
+	return (get_hash() == rhs.get_hash());
+}
+
+bool InputMapping::InputDef::operator!=(const InputDef& rhs) const
+{
+	return !(*this == rhs);
+}
+
+bool InputMapping::InputDef::is_button() const
+{
+	return (type == InputType::BUTTON);
+}
+
+bool InputMapping::InputDef::is_axis() const
+{
+	return (type == InputType::AXIS_POS || type == InputType::AXIS_NEG);
+}
+
+bool InputMapping::InputDef::is_valid() const
+{
+	return (code != INVALID_CODE && (is_button() || is_axis()));
+}
+
+const char* InputMapping::InputDef::get_suffix() const
+{
+	if (type == InputType::AXIS_POS)
 	{
-		while (true)
+		return "+";
+	}
+	else if (type == InputType::AXIS_NEG)
+	{
+		return "-";
+	}
+
+	// Assume button otherwise
+	return "";
+}
+
+std::string InputMapping::InputDef::to_str() const
+{
+	return std::to_string(code) + std::string(get_suffix());
+}
+
+InputMapping::InputDef InputMapping::InputDef::from_str(const std::string& str)
+{
+	InputDef inputDef;
+	if (!str.empty())
+	{
+		std::string tmp = str;
+		if (tmp.back() == '+')
 		{
-			u32 code = get_button_code(port, id);
-			if (code == (u32)-1)
-				break;
-			buttons[port][code] = EMU_BTN_NONE;
-			dirty = true;
+			inputDef.type = InputType::AXIS_POS;
+			tmp.erase(tmp.size() - 1);
+		}
+		else if (tmp.back() == '-')
+		{
+			inputDef.type = InputType::AXIS_NEG;
+			tmp.erase(tmp.size() - 1);
+		}
+		else
+		{
+			inputDef.type = InputType::BUTTON;
+		}
+
+		try
+		{
+			inputDef.code = std::stoul(tmp);
+		}
+		catch (const std::exception&)
+		{
+			inputDef.code = INVALID_CODE;
 		}
 	}
+	return inputDef;
 }
 
-void InputMapping::set_button(u32 port, DreamcastKey id, u32 code)
+InputMapping::InputDef InputMapping::InputDef::from_button(u32 code)
 {
-	if (id != EMU_BTN_NONE)
+	return InputDef{code, InputType::BUTTON};
+}
+
+InputMapping::InputDef InputMapping::InputDef::from_axis(u32 code, bool positive)
+{
+	return InputDef{code, positive ? InputType::AXIS_POS : InputType::AXIS_NEG};
+}
+
+//
+// InputSet
+//
+
+InputMapping::InputSet::InputSet() : std::list<InputDef>() {}
+
+InputMapping::InputSet::InputSet(std::initializer_list<value_type> l) : std::list<InputDef>()
+{
+	// Do insert_back of each to ensure uniqueness
+	for (const auto& x : l)
 	{
-		clear_button(port, id);
-		buttons[port][code] = id;
-		dirty = true;
+		insert_back(x);
 	}
 }
+
+bool InputMapping::InputSet::insert_back(const InputMapping::InputDef& val)
+{
+	remove_inverse_axis(val);
+	const_iterator iter = std::find(cbegin(), cend(), val);
+	if (iter == cend())
+	{
+		push_back(val);
+		return true;
+	}
+	return false;
+}
+
+bool InputMapping::InputSet::insert_back(InputMapping::InputDef&& val)
+{
+	remove_inverse_axis(val);
+	const_iterator iter = std::find(cbegin(), cend(), val);
+	if (iter == cend())
+	{
+		push_back(std::move(val));
+		return true;
+	}
+	return false;
+}
+
+std::size_t InputMapping::InputSet::remove(const InputMapping::InputDef& val)
+{
+	std::size_t removedCount = 0;
+	const_iterator iter;
+	while ((iter = std::find(cbegin(), cend(), val)) != cend())
+	{
+		erase(iter);
+		++removedCount;
+	}
+	return removedCount;
+}
+
+bool InputMapping::InputSet::contains(const InputMapping::InputDef& val) const
+{
+	return (std::find(cbegin(), cend(), val) != cend());
+}
+
+bool InputMapping::InputSet::ends_with(const InputSet& rhs, bool sequential) const
+{
+	InputSet::const_reverse_iterator iter = crbegin();
+
+	if (sequential)
+	{
+		InputSet::const_reverse_iterator riter = rhs.crbegin();
+
+		for (; iter != crend() && riter != rhs.crend(); ++iter, ++riter)
+		{
+			if (*iter != *riter)
+			{
+				break;
+			}
+		}
+
+		return (riter == rhs.crend());
+	}
+	else
+	{
+		std::size_t foundCount = 0;
+		for (; iter != crend(); ++iter)
+		{
+			if (std::find(rhs.begin(), rhs.end(), *iter) != rhs.end())
+			{
+				++foundCount;
+			}
+			else
+			{
+				break;
+			}
+		}
+
+		return (foundCount == rhs.size());
+	}
+}
+
+void InputMapping::InputSet::remove_inverse_axis(const InputMapping::InputDef& val)
+{
+	if (val.is_axis())
+	{
+		InputMapping::InputDef::InputType inversetype(
+			val.type == InputMapping::InputDef::InputType::AXIS_POS
+			? InputMapping::InputDef::InputType::AXIS_NEG
+			: InputMapping::InputDef::InputType::AXIS_POS);
+		remove(InputMapping::InputDef{val.code, inversetype});
+	}
+}
+
+//
+// ButtonCombo
+//
+
+bool InputMapping::ButtonCombo::operator<(const ButtonCombo& rhs) const
+{
+
+	return inputs < rhs.inputs;
+}
+
+bool InputMapping::ButtonCombo::operator==(const ButtonCombo& rhs) const
+{
+	return (inputs == rhs.inputs && sequential == rhs.sequential);
+}
+
+bool InputMapping::ButtonCombo::operator!=(const ButtonCombo& rhs) const
+{
+	return !(*this == rhs);
+}
+
+bool InputMapping::ButtonCombo::intersects(const ButtonCombo& rhs) const
+{
+	if (!sequential || !rhs.sequential)
+	{
+		// Return true iff both sets contain the same elements
+		return (inputs.size() == rhs.inputs.size() && inputs.ends_with(rhs.inputs, false));
+	}
+	else
+	{
+		// Return true iff exactly matching
+		return *this == rhs;
+	}
+}
+
+//
+// InputMapping
+//
+
+std::map<std::string, std::shared_ptr<InputMapping>> InputMapping::loaded_mappings;
 
 void InputMapping::clear_axis(u32 port, DreamcastKey id)
 {
-	if (id != EMU_AXIS_NONE)
+	if (port >= NUM_PORTS || id == EMU_AXIS_NONE)
 	{
-		while (true)
-		{
-			std::pair<u32, bool> code = get_axis_code(port, id);
-			if (code.first == (u32)-1)
-				break;
-			axes[port][code] = EMU_AXIS_NONE;
-			dirty = true;
-		}
+		// Invalid port or ID not set
+		return;
+	}
+
+	while (true)
+	{
+		std::pair<u32, bool> code = get_axis_code(port, id);
+		if (code.first == (u32)-1)
+			break;
+		axes[port][code] = EMU_AXIS_NONE;
+		dirty = true;
 	}
 }
 
@@ -168,6 +391,31 @@ void InputMapping::set_axis(u32 port, DreamcastKey id, u32 code, bool positive)
 	{
 		clear_axis(port, id);
 		axes[port][std::make_pair(code, positive)] = id;
+		dirty = true;
+	}
+}
+
+bool InputMapping::isTrigger(u32 code) const {
+	return triggers.find(code) != triggers.end();
+}
+bool InputMapping::isReverseTrigger(u32 code) const
+{
+	auto it = triggers.find(code);
+	if (it == triggers.end())
+		return false;
+	return it->second;
+}
+void InputMapping::addTrigger(u32 code, bool reverse)
+{
+	if (!isTrigger(code) || isReverseTrigger(code) != reverse) {
+		triggers[code] = reverse;
+		dirty = true;
+	}
+}
+void InputMapping::deleteTrigger(u32 code)
+{
+	if (isTrigger(code)) {
+		triggers.erase(code);
 		dirty = true;
 	}
 }
@@ -265,6 +513,70 @@ void InputMapping::load(FILE* fp)
 		DreamcastKey id = getKeyId(key);
 		set_axis(port, id, code, positive);
 	}
+	bindIndex = 0;
+	if (version >= 4)
+	{
+		while (true)
+		{
+			std::string s = mf.get("combo", "bind" + std::to_string(bindIndex++), "");
+			if (s.empty())
+				break;
+			// Parse for 1 more colon than what is needed for forward compatibility
+			// (third colon and everything after it is ignored)
+			std::vector<std::string> parts = strSplit(s, ':', 3);
+			if (parts.size() < 2)
+			{
+				WARN_LOG(INPUT, "Invalid bind entry: %s", s.c_str());
+				break;
+			}
+			const std::string& codeStr = parts[0];
+			InputSet inputs;
+			bool allValid = true;
+			for (const std::string& inputStr : strSplit(codeStr, ','))
+			{
+				InputDef inputDef = InputDef::from_str(inputStr);
+				if (!inputDef.is_valid())
+				{
+					allValid = false;
+					break;
+				}
+				inputs.insert_back(inputDef);
+			}
+			std::string key = parts[1];
+			if (inputs.empty() || !allValid || key.empty())
+			{
+				WARN_LOG(INPUT, "Invalid bind entry: %s", s.c_str());
+				break;
+			}
+			int port = 0;
+			if (key[key.size() - 1] >= '1' && key[key.size() - 1] <= '3')
+			{
+				port = key[key.size() - 1] - '0';
+				key = key.substr(0, key.size() - 1);
+			}
+			DreamcastKey id = getKeyId(key);
+			bool sequential = true;
+			if (parts.size() > 2)
+			{
+				const std::string& seqStr = parts[2];
+				try
+				{
+					sequential = (std::stoul(seqStr) != 0);
+				}
+				catch (const std::exception&)
+				{
+					sequential = true;
+				}
+			}
+			set_button(port, id, ButtonCombo{inputs, sequential});
+		}
+	}
+	std::string triggers = mf.get("emulator", "triggers", "");
+	const char *p = strtok(triggers.data(), ",");
+	while (p != nullptr) {
+		addTrigger(atoi(p), strchr(p, '~') != nullptr);
+		p = strtok(nullptr, ",");
+	}
 	dirty = false;
 }
 
@@ -328,24 +640,179 @@ void InputMapping::loadv1(ConfigFile& mf)
 	dirty = true;
 }
 
-u32 InputMapping::get_button_code(u32 port, DreamcastKey key)
-{
-	for (auto& it : buttons[port])
-	{
-		if (it.second == key)
-			return it.first;
-	}
-	return -1;
-}
-
 std::pair<u32, bool> InputMapping::get_axis_code(u32 port, DreamcastKey key)
 {
+	if (port >= NUM_PORTS)
+	{
+		// Invalid port
+		return std::make_pair(InputDef::INVALID_CODE, false);
+	}
+
 	for (auto& it : axes[port])
 	{
 		if (it.second == key)
 			return it.first;
 	}
-	return std::make_pair((u32)-1, false);
+
+	return std::make_pair(InputDef::INVALID_CODE, false);
+}
+
+DreamcastKey InputMapping::get_button_id(
+	u32 port,
+	const InputMapping::InputSet& inputSet) const
+{
+	if (port >= NUM_PORTS || inputSet.empty())
+	{
+		// Invalid port or no input
+		return EMU_BTN_NONE;
+	}
+
+	DreamcastKey matchedKey = EMU_BTN_NONE;
+	size_t matchedInputSize = 0;
+
+	const std::map<ButtonCombo, DreamcastKey>& inputMap = buttonMap[port];
+	for (const auto& it : inputMap)
+	{
+		const DreamcastKey& key = it.second;
+		if (key != EMU_BTN_NONE)
+		{
+			const InputMapping::ButtonCombo& combo = it.first;
+			if (inputSet.ends_with(combo.inputs, combo.sequential))
+			{
+				if (combo.inputs.size() > matchedInputSize)
+				{
+					matchedInputSize = combo.inputs.size();
+					matchedKey = key;
+				}
+			}
+		}
+	}
+
+	return matchedKey;
+}
+
+std::list<DreamcastKey> InputMapping::get_button_released_ids(
+	u32 port,
+	const std::list<DreamcastKey>& activeKeys,
+	const InputDef& releasedInput) const
+{
+	if (port >= NUM_PORTS || activeKeys.empty())
+	{
+		// Invalid port or nothing active
+		return std::list<DreamcastKey>();
+	}
+
+	std::list<DreamcastKey> releasedKeys;
+	const std::multimap<DreamcastKey, ButtonCombo>& inputMap = reverseButtonMap[port];
+	for (const DreamcastKey& key : activeKeys)
+	{
+		const auto& range = inputMap.equal_range(key);
+		for(auto iter = range.first; iter != range.second; ++iter)
+		{
+			if (iter->second.inputs.contains(releasedInput))
+			{
+				releasedKeys.push_back(key);
+			}
+		}
+	}
+
+	return releasedKeys;
+}
+
+void InputMapping::clear_button(u32 port, DreamcastKey id)
+{
+	if (port >= NUM_PORTS)
+	{
+		// Invalid port
+		return;
+	}
+
+	std::map<ButtonCombo, DreamcastKey>& inputMap = buttonMap[port];
+	std::multimap<DreamcastKey, ButtonCombo>& revInputMap = reverseButtonMap[port];
+
+	// Remove the existing
+	const auto& range = revInputMap.equal_range(id);
+	for(auto existing = range.first; existing != range.second;)
+	{
+		inputMap.erase(existing->second);
+		existing = revInputMap.erase(existing);
+	}
+}
+
+bool InputMapping::set_button(u32 port, DreamcastKey id, const InputMapping::ButtonCombo& combo)
+{
+	if (port >= NUM_PORTS || combo.inputs.size() <= 0)
+	{
+		// Invalid port or combo
+		return false;
+	}
+
+	std::map<ButtonCombo, DreamcastKey>& inputMap = buttonMap[port];
+	std::multimap<DreamcastKey, ButtonCombo>& revInputMap = reverseButtonMap[port];
+
+	// Remove the existing by ID
+	clear_button(port, id);
+
+	// Remove all combos that intersect this
+	for (std::map<ButtonCombo, DreamcastKey>::const_iterator iter = inputMap.begin(); iter != inputMap.end();)
+	{
+		if (combo.intersects(iter->first))
+		{
+			revInputMap.erase(iter->second);
+			iter = inputMap.erase(iter);
+		}
+		else
+		{
+			++iter;
+		}
+	}
+
+	inputMap[combo] = id;
+	revInputMap.insert(std::make_pair(id, combo));
+
+	dirty = true;
+
+	return true;
+}
+
+InputMapping::ButtonCombo InputMapping::get_button_combo(u32 port, DreamcastKey key) const
+{
+	if (port >= NUM_PORTS)
+	{
+		// Invalid port
+		return ButtonCombo();
+	}
+
+	const std::multimap<DreamcastKey, ButtonCombo>& inputMap = reverseButtonMap[port];
+	std::map<DreamcastKey, ButtonCombo>::const_iterator iter = inputMap.find(key);
+
+	if (iter != inputMap.end())
+	{
+		return iter->second;
+	}
+
+	// Not found
+	return ButtonCombo();
+}
+
+u32 InputMapping::get_button_code(u32 port, DreamcastKey key) const
+{
+	if (port >= NUM_PORTS || key == DreamcastKey::EMU_BTN_NONE)
+	{
+		// Invalid port or key
+		return InputDef::INVALID_CODE;
+	}
+
+	const std::multimap<DreamcastKey, ButtonCombo>& inputMap = reverseButtonMap[port];
+	const auto& range = inputMap.equal_range(key);
+	for(auto iter = range.first; iter != range.second; ++iter)
+	{
+		if (iter->second.inputs.size() == 1 && iter->second.inputs.begin()->is_button())
+		{
+			return iter->second.inputs.begin()->code;
+		}
+	}
+	return InputDef::INVALID_CODE;
 }
 
 void InputMapping::ClearMappings()
@@ -434,14 +901,14 @@ bool InputMapping::save(const std::string& name)
 	mf.set_int("emulator", "dead_zone", (int)std::round(this->dead_zone * 100.f));
 	mf.set_int("emulator", "saturation", (int)std::round(this->saturation * 100.f));
 	mf.set_int("emulator", "rumble_power", this->rumblePower);
-	mf.set_int("emulator", "version", 3);
+	mf.set_int("emulator", "version", CURRENT_FILE_VERSION);
 
 	int bindIndex = 0;
 	for (int port = 0; port < 4; port++)
 	{
-		for (const auto& pair : buttons[port])
+		for (const auto& pair : buttonMap[port])
 		{
-			if (pair.second == EMU_BTN_NONE)
+			if (pair.first.inputs.size() != 1 || pair.second == EMU_BTN_NONE)
 				continue;
 			const char *keyName = getKeyName(pair.second);
 			if (keyName == nullptr)
@@ -451,7 +918,7 @@ bool InputMapping::save(const std::string& name)
 				option = keyName;
 			else
 				option = keyName + std::to_string(port);
-			mf.set("digital", "bind" + std::to_string(bindIndex), std::to_string(pair.first) + ":" + option);
+			mf.set("digital", "bind" + std::to_string(bindIndex), pair.first.inputs.begin()->to_str() + ":" + option);
 			bindIndex++;
 		}
 	}
@@ -471,10 +938,53 @@ bool InputMapping::save(const std::string& name)
 			else
 				option = keyName + std::to_string(port);
 			mf.set("analog", "bind" + std::to_string(bindIndex),
-					std::to_string(pair.first.first) + (pair.first.second ? "+" : "-") + ":" + option);
+				std::to_string(pair.first.first) + (pair.first.second ? "+" : "-") + ":" + option);
 			bindIndex++;
 		}
 	}
+	bindIndex = 0;
+	for (int port = 0; port < 4; port++)
+	{
+		for (const auto& pair : buttonMap[port])
+		{
+			if (pair.first.inputs.size() == 1)
+				continue; // Already covered by digital bind
+			if (pair.second == EMU_BTN_NONE)
+				continue;
+			const char *keyName = getKeyName(pair.second);
+			if (keyName == nullptr)
+				continue;
+			std::string option;
+			if (port == 0)
+				option = keyName;
+			else
+				option = keyName + std::to_string(port);
+			std::string codes;
+			for (const InputDef& inputDef : pair.first.inputs)
+			{
+				if (!codes.empty())
+				{
+					codes += ",";
+				}
+				codes += inputDef.to_str();
+			}
+			mf.set(
+				"combo",
+				"bind" + std::to_string(bindIndex),
+				codes + ":" + option + ":" + std::to_string(pair.first.sequential ? 1 : 0));
+			bindIndex++;
+		}
+	}
+	std::string triggerString;
+	for (const auto& pair : triggers)
+	{
+		if (!triggerString.empty())
+			triggerString += ',';
+		triggerString += std::to_string(pair.first);
+		if (pair.second)
+			triggerString += '~';
+	}
+	mf.set("emulator", "triggers", triggerString);
 	mf.save(fp);
 	dirty = false;
 	std::fclose(fp);
@@ -492,4 +1002,33 @@ void InputMapping::DeleteMapping(const std::string& name)
 {
 	loaded_mappings.erase(name);
 	std::remove(get_writable_config_path(std::string("mappings/") + name).c_str());
+}
+
+std::vector<std::string> InputMapping::strSplit(const std::string str, char c, size_t maxsplit)
+{
+	std::vector<std::string> out;
+	if (maxsplit > 0)
+	{
+		out.reserve(maxsplit + 1);
+	}
+
+	size_t pos = 0;
+	size_t count = 0;
+	while (maxsplit == 0 || count < maxsplit)
+	{
+		size_t nextPos = str.find(c, pos);
+		if (nextPos == std::string::npos)
+		{
+			out.push_back(str.substr(pos));
+			return out;
+		}
+
+		out.push_back(str.substr(pos, nextPos - pos));
+		pos = nextPos + 1;
+		++count;
+	}
+
+	out.push_back(str.substr(pos));
+
+	return out;
 }

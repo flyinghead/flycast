@@ -284,6 +284,33 @@ inline static float getDCFramebufferAspectRatio()
 	return aspectRatio * config::ScreenStretching / 100.f;
 }
 
+inline static void getWindowboxDimensions(int outwidth, int outheight, float renderAR, int& dx, int& dy, bool rotate) {
+	if (config::IntegerScale) {
+		int fbh = config::RenderResolution;
+		int fbw = (int)((rotate ? 1 / renderAR : renderAR) * fbh);
+		if (rotate)
+			std::swap(fbw, fbh);
+
+		int scale = std::min(outwidth / fbw, outheight / fbh);
+		if (scale == 0) {
+			scale = std::max(fbw / outwidth, fbh / outheight) + 1;
+			dx = (outwidth - fbw / scale) / 2;
+			dy = (outheight - fbh / scale) / 2;
+		}
+		else {
+			dx = (outwidth - fbw * scale) / 2;
+			dy = (outheight - fbh * scale) / 2;
+		}
+	}
+	else {
+		float screenAR = (float)outwidth / outheight;
+		if (renderAR > screenAR)
+			dy = (int)roundf(outheight * (1 - screenAR / renderAR) / 2.f);
+		else
+			dx = (int)roundf(outwidth * (1 - renderAR / screenAR) / 2.f);
+	}
+}
+
 inline static void getVideoShift(float& x, float& y)
 {
 	const bool vga = FB_R_CTRL.vclk_div == 1;

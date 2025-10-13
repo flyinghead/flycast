@@ -825,7 +825,7 @@ protected:
 				{
 					// Rumble
 					const float v = (in & 0x3f) / 63.f * motorPower / 2.f;	// additional 0.5 factor to soften it
-					MapleConfigMap::UpdateVibration(0, v, 0.f, 50);			// duration?
+					haptic::setSine(0, v, 25.f, 650);	// 25 Hz, 650 ms
 				}
 				else if (in >= 0xe0 && in <= 0xef)
 				{

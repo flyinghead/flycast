@@ -33,7 +33,12 @@ const std::array<f32, 16> D_Adjust_LoD_Bias = {
 		0.f, -4.f, -2.f, -1.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f
 };
 
-static std::vector<vram_block*> VramLocks[VRAM_SIZE_MAX / PAGE_SIZE];
+static std::vector<vram_block*> *VramLocks;
+
+static inline void initVramLocks() {
+	if (VramLocks == nullptr)
+		VramLocks = new std::vector<vram_block*>[VRAM_SIZE_MAX / PAGE_SIZE];
+}
 
 //List functions
 //
@@ -76,7 +81,7 @@ static std::mutex vramlist_lock;
 
 bool VramLockedWriteOffset(size_t offset)
 {
-	if (offset >= VRAM_SIZE)
+	if (offset >= VRAM_SIZE || VramLocks == nullptr)
 		return false;
 
 	size_t addr_hash = offset / PAGE_SIZE;
@@ -292,6 +297,8 @@ bool BaseTextureCacheData::Delete()
 
 BaseTextureCacheData::BaseTextureCacheData(TSP tsp, TCW tcw)
 {
+	initVramLocks();
+
 	if (tcw.VQ_Comp == 1 && tcw.MipMapped == 1)
 		// Star Wars Demolition
 		tcw.ScanOrder = 0;

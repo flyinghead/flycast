@@ -55,11 +55,10 @@ public:
 	void receiveEthFrame(const u8 *frame, u32 size) override;
 };
 
-template<typename SocketT>
 class PPPSocket
 {
 public:
-	PPPSocket(asio::io_context& io_context, const typename SocketT::endpoint_type& endpoint,
+	PPPSocket(asio::io_context& io_context, const asio::ip::tcp::endpoint& endpoint,
 			const std::string& endpointName = "")
 		: socket(io_context)
 	{
@@ -71,7 +70,7 @@ public:
 		receive();
 	}
 
-	~PPPSocket() {
+	virtual ~PPPSocket() {
 		if (dumpfp != nullptr)
 			fclose(dumpfp);
 	}
@@ -86,8 +85,8 @@ public:
 		doSend();
 	}
 
-private:
-	void receive()
+protected:
+	virtual void receive()
 	{
 		socket.async_read_some(asio::buffer(recvBuffer),
 			[this](const std::error_code& ec, size_t len)
@@ -172,7 +171,7 @@ private:
 #endif
 	}
 
-	SocketT socket;
+	asio::ip::tcp::socket socket;
 	std::array<u8, 1542> recvBuffer;
 	std::array<u8, 1542> sendBuffer;
 	u32 sendBufSize = 0;
@@ -182,7 +181,55 @@ private:
 	u64 dump_last_time_ms;
 };
 
-using PPPTcpSocket = PPPSocket<asio::ip::tcp::socket>;
+class PowerSmashPPPSocket : public PPPSocket
+{
+public:
+	PowerSmashPPPSocket(asio::io_context& io_context, const asio::ip::tcp::endpoint& endpoint,
+			const std::string& endpointName = "")
+		: PPPSocket(io_context, endpoint, endpointName) {}
+
+private:
+	void receive() override
+	{
+		socket.async_read_some(asio::buffer(&recvBuffer[recvBufSize], recvBuffer.size() - recvBufSize),
+			[this](const std::error_code& ec, size_t len)
+			{
+				if (ec || len == 0)
+				{
+					if (ec)
+						ERROR_LOG(NETWORK, "Receive error: %s", ec.message().c_str());
+					close();
+					return;
+				}
+				recvBufSize += len;
+				while (recvBufSize != 0)
+				{
+					u32 frameSize = 0;
+					for (u32 i = 1; i < recvBufSize; i++)
+					{
+						if (recvBuffer[i] == '~') {
+							frameSize = i + 1;
+							break;
+						}
+					}
+					if (frameSize == 0)
+						break;
+					pppdump(recvBuffer.data(), frameSize, false);
+					// Power Smash requires both start and end Flag Sequences
+					if (recvBuffer[0] != '~')
+						toModem.push('~');
+					for (size_t i = 0; i < frameSize; i++)
+						toModem.push(recvBuffer[i]);
+					recvBufSize -= frameSize;
+					if (recvBufSize != 0)
+						memmove(&recvBuffer[0], &recvBuffer[frameSize], recvBufSize);
+				}
+				receive();
+			});
+	}
+
+	u32 recvBufSize = 0;
+};
 
 class EthSocket
 {
@@ -609,11 +656,12 @@ private:
 
 	std::thread thread;
 	std::unique_ptr<asio::io_context> io_context;
-	std::unique_ptr<PPPTcpSocket> pppSocket;
+	std::unique_ptr<PPPSocket> pppSocket;
 	std::unique_ptr<EthSocket> ethSocket;
 
 	static constexpr uint16_t PPP_PORT = 7654;
 	static constexpr uint16_t TAP_PORT = 7655;
+	static constexpr uint16_t POWER_SMASH_PPP_PORT = 7656;
 	friend DCNetService;
 };
 static DCNetThread thread;
@@ -679,6 +727,8 @@ void DCNetService::receiveEthFrame(u8 const *frame, unsigned int len)
 
 void DCNetThread::connect(const asio::ip::address& address, const std::string& apname)
 {
+	const bool powerSmash = settings.content.gameId == "HDR-0113"	// Power Smash
+			|| settings.content.gameId == "HDR-0091";				// Pro Yakyuu Team de Asobou Net!
 	asio::ip::tcp::endpoint endpoint;
 	if (address.is_unspecified())
 	{
@@ -689,6 +739,8 @@ void DCNetThread::connect(const asio::ip::address& address, const std::string& a
 		std::string port;
 		if (config::EmulateBBA)
 			port = std::to_string(TAP_PORT);
+		else if (powerSmash)
+			port = std::to_string(POWER_SMASH_PPP_PORT);
 		else
 			port = std::to_string(PPP_PORT);
 		asio::ip::tcp::resolver resolver(*io_context);
@@ -700,14 +752,22 @@ void DCNetThread::connect(const asio::ip::address& address, const std::string& a
 			throw FlycastException("Host not found");
 		endpoint = *it.begin();
 	}
-	else {
+	else
+	{
 		endpoint.address(address);
-		endpoint.port(config::EmulateBBA ? TAP_PORT : PPP_PORT);
+		if (config::EmulateBBA)
+			endpoint.port(TAP_PORT);
+		else if (powerSmash)
+			endpoint.port(POWER_SMASH_PPP_PORT);
+		else
+			endpoint.port(PPP_PORT);
 	}
 	if (config::EmulateBBA)
 		ethSocket = std::make_unique<EthSocket>(*io_context, endpoint, apname);
+	else if (powerSmash)
+		pppSocket = std::make_unique<PowerSmashPPPSocket>(*io_context, endpoint, apname);
 	else
-		pppSocket = std::make_unique<PPPTcpSocket>(*io_context, endpoint, apname);
+		pppSocket = std::make_unique<PPPSocket>(*io_context, endpoint, apname);
 }
 
 void DCNetThread::run()

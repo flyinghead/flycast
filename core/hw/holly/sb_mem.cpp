@@ -10,6 +10,7 @@
 #include "hw/flashrom/nvmem.h"
 #include "hw/gdrom/gdrom_if.h"
 #include "hw/modem/modem.h"
+#include "hw/naomi/atomiswave.h"
 #include "hw/naomi/naomi.h"
 #include "hw/naomi/systemsp.h"
 #include "hw/pvr/pvr_mem.h"
@@ -107,7 +108,7 @@ T DYNACALL ReadMem_area0(u32 paddr)
 					return (T)0;
 			}
 			else if constexpr (System == DC_PLATFORM_ATOMISWAVE) {
-				return (T)libExtDevice_ReadMem_A0_006(addr, sz);
+				return (T)atomiswave::readMem_A0_006(addr, sz);
 			}
 		}
 		// AICA sound registers
@@ -219,7 +220,7 @@ void DYNACALL WriteMem_area0(u32 paddr, T data)
 				return;
 			}
 			else if constexpr (System == DC_PLATFORM_ATOMISWAVE) {
-				libExtDevice_WriteMem_A0_006(addr, data, sz);
+				atomiswave::writeMem_A0_006(addr, data, sz);
 				return;
 			}
 		}

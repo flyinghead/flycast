@@ -29,8 +29,9 @@ struct VertexShaderParams
 	bool gouraud;
 	bool naomi2;
 	bool divPosZ;
+	bool texture;
 
-	u32 hash() { return (u32)gouraud | ((u32)naomi2 << 1) | ((u32)divPosZ << 2); }
+	u32 hash() { return (u32)gouraud | ((u32)naomi2 << 1) | ((u32)divPosZ << 2) | ((u32)texture << 3); }
 };
 
 // alpha test, clip test, use alpha, texture, ignore alpha, shader instr, offset, fog, gouraud, bump, clamp, trilinear
@@ -83,7 +84,7 @@ struct FragmentShaderUniforms
 	float colorClampMax[4];
 	float sp_FOG_COL_RAM[4];	// Only using 3 elements but easier for std140
 	float sp_FOG_COL_VERT[4];	// same comment
-	float ditherColorMax[4];
+	float ditherDivisor[4];
 	float cp_AlphaTestValue;
 	float sp_FOG_DENSITY;
 };

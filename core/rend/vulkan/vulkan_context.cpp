@@ -1007,21 +1007,17 @@ void VulkanContext::DrawFrame(vk::ImageView imageView, const vk::Extent2D& exten
 	else
 		quadPipeline->BindPipeline(commandBuffer);
 
-	float screenAR = (float)width / height;
-	float dx = 0;
-	float dy = 0;
-	if (aspectRatio > screenAR)
-		dy = height * (1 - screenAR / aspectRatio) / 2;
-	else
-		dx = width * (1 - aspectRatio / screenAR) / 2;
-
+	int dx = 0;
+	int dy = 0;
+	getWindowboxDimensions(width, height, aspectRatio, dx, dy, config::Rotate90);
+	
 	vk::Viewport viewport(dx, dy, width - dx * 2, height - dy * 2);
 	commandBuffer.setViewport(0, viewport);
 	commandBuffer.setScissor(0, vk::Rect2D(vk::Offset2D(dx, dy), vk::Extent2D(width - dx * 2, height - dy * 2)));
 	if (config::Rotate90)
-		quadRotateDrawer->Draw(commandBuffer, imageView, vtx, config::TextureFiltering == 1);
+		quadRotateDrawer->Draw(commandBuffer, imageView, vtx, !config::LinearInterpolation);
 	else
-		quadDrawer->Draw(commandBuffer, imageView, vtx, config::TextureFiltering == 1);
+		quadDrawer->Draw(commandBuffer, imageView, vtx, !config::LinearInterpolation);
 }
 
 void VulkanContext::WaitIdle() const
@@ -1058,7 +1054,25 @@ void VulkanContext::PresentFrame(vk::Image image, vk::ImageView imageView, const
 			NewFrame();
 			auto overlayCmdBuffer = PrepareOverlay(config::FloatVMUs, true);
 			gui_draw_osd();
-
+			if (GetVendorID() == VulkanContext::VENDOR_NVIDIA && image)
+			{
+				vk::ImageMemoryBarrier barrier(
+						vk::AccessFlagBits::eColorAttachmentWrite,
+				        vk::AccessFlagBits::eShaderRead,
+				        vk::ImageLayout::eShaderReadOnlyOptimal,
+				        vk::ImageLayout::eShaderReadOnlyOptimal,
+				        VK_QUEUE_FAMILY_IGNORED,
+				        VK_QUEUE_FAMILY_IGNORED,
+				        image,
+				        vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1));
+				GetCurrentCommandBuffer().pipelineBarrier(
+						vk::PipelineStageFlagBits::eColorAttachmentOutput,
+						vk::PipelineStageFlagBits::eFragmentShader,
+						{},
+						nullptr, nullptr,
+						barrier
+				);
+			}
 			BeginRenderPass();
 
 			if (lastFrameView) // Might have been nullified if swap chain recreated
@@ -1158,7 +1172,7 @@ void VulkanContext::DoSwapAutomation()
 	{
 		bool supportsBlit = true;
 		vk::FormatProperties properties;
-		physicalDevice.getFormatProperties(colorFormat, &properties);
+		physicalDevice.getFormatProperties(presentFormat, &properties);
 		if (!(properties.optimalTilingFeatures & vk::FormatFeatureFlagBits::eBlitSrc))
 			supportsBlit = false;
 		physicalDevice.getFormatProperties(vk::Format::eR8G8B8A8Unorm, &properties);
@@ -1243,7 +1257,7 @@ void VulkanContext::DoSwapAutomation()
 			img += subresourceLayout.offset;
 
 			u8 *end = img + settings.display.width * settings.display.height * 4;
-			if (!supportsBlit && colorFormat == vk::Format::eB8G8R8A8Unorm)
+			if (!supportsBlit && presentFormat == vk::Format::eB8G8R8A8Unorm)
 			{
 				for (u8 *p = img; p < end; p += 4)
 				{

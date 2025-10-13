@@ -24,6 +24,7 @@
 #include "hw/sh4/sh4_sched.h"
 #include "naomi_network.h"
 #include "net_handshake.h"
+#include "ice.h"
 #include <deque>
 
 class NullModemPipe : public SerialPort::Pipe
@@ -81,8 +82,7 @@ public:
 		return b;
 	}
 
-	~NullModemPipe()
-	{
+	~NullModemPipe() {
 		shutdown();
 	}
 
@@ -90,14 +90,12 @@ public:
 	{
 #ifdef _WIN32
 		WSADATA wsaData;
-		if (WSAStartup(MAKEWORD(2, 0), &wsaData) != 0)
-		{
+		if (WSAStartup(MAKEWORD(2, 0), &wsaData) != 0) {
 			ERROR_LOG(NETWORK, "WSAStartup failed. errno=%d", get_last_error());
 			throw Exception("WSAStartup failed");
 		}
 #endif
-		if (config::EnableUPnP)
-		{
+		if (config::EnableUPnP) {
 			miniupnp.Init();
 			miniupnp.AddPortMapping(config::LocalPort, true);
 		}
@@ -114,7 +112,8 @@ public:
 		if (VALID(sock))
 			closesocket(sock);
 		sock = INVALID_SOCKET;
-		SCIFSerialPort::Instance().setPipe(nullptr);
+		if (SCIFSerialPort::Instance().getPipe() == this)
+			SCIFSerialPort::Instance().setPipe(nullptr);
 	}
 
 private:
@@ -158,8 +157,7 @@ private:
 					enableNetworkBroadcast(false);
 					NOTICE_LOG(NETWORK, "Data received from peer %x:%d", htonl(addr.sin_addr.s_addr), htons(addr.sin_port));
 				}
-				else
-				{
+				else {
 					// this is coming from us so ignore it
 					continue;
 				}
@@ -196,8 +194,7 @@ private:
 	void createSocket()
 	{
 		sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-		if (sock == INVALID_SOCKET)
-		{
+		if (sock == INVALID_SOCKET) {
 			ERROR_LOG(NETWORK, "Socket creation failed: errno %d", get_last_error());
 			throw Exception("Socket creation failed");
 		}
@@ -231,29 +228,30 @@ private:
 		{
 			auto pos = config::NetworkServer.get().find_last_of(':');
 			std::string server;
-			if (pos != std::string::npos)
-			{
+			if (pos != std::string::npos) {
 				peerAddress.sin_port = htons(atoi(config::NetworkServer.get().substr(pos + 1).c_str()));
 				server = config::NetworkServer.get().substr(0, pos);
 			}
-			else
+			else {
 				server = config::NetworkServer;
+			}
 			addrinfo *resultAddr;
-			if (getaddrinfo(server.c_str(), 0, nullptr, &resultAddr))
+			if (getaddrinfo(server.c_str(), 0, nullptr, &resultAddr)) {
 				WARN_LOG(NETWORK, "Server %s is unknown", server.c_str());
+			}
 			else
 			{
 				for (addrinfo *ptr = resultAddr; ptr != nullptr; ptr = ptr->ai_next)
-					if (ptr->ai_family == AF_INET)
-					{
+					if (ptr->ai_family == AF_INET) {
 						peerAddress.sin_addr.s_addr = ((sockaddr_in *)ptr->ai_addr)->sin_addr.s_addr;
 						break;
 					}
 				freeaddrinfo(resultAddr);
 			}
 		}
-		else
+		else {
 			enableNetworkBroadcast(true);
+		}
 	}
 
 	sock_t sock = INVALID_SOCKET;
@@ -267,9 +265,13 @@ private:
 class BattleCableHandshake : public NetworkHandshake
 {
 public:
-	std::future<bool> start() override {
+	std::future<bool> start() override
+	{
 		std::promise<bool> promise;
-		promise.set_value(pipe.init());
+		if (ice::getState() != ice::Playing)
+			promise.set_value(pipe.init());
+		else
+			promise.set_value(true);
 		return promise.get_future();
 	}
 	void stop() override {

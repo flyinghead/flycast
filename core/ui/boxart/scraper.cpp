@@ -18,6 +18,7 @@
  */
 #include "scraper.h"
 #include "oslib/http_client.h"
+#include "oslib/storage.h"
 #include "stdclass.h"
 #include "emulator.h"
 #include "imgread/common.h"
@@ -27,24 +28,70 @@
 #include <stb_image_write.h>
 #include <random>
 
-bool Scraper::downloadImage(const std::string& url, const std::string& localName)
+json GameBoxart::to_json(const std::string& baseArtPath) const
+{
+	// Convert absolute path to base path-relative ones
+	std::string artPath;
+	if (!boxartPath.empty() && boxartPath.substr(0, baseArtPath.length()) == baseArtPath)
+		artPath = boxartPath.substr(baseArtPath.length());
+	else
+		artPath = boxartPath;
+	json j = {
+		{ "file_name", fileName },
+		{ "name", name },
+		{ "unique_id", uniqueId },
+		{ "search_name", searchName },
+		{ "region", region },
+		{ "release_date", releaseDate },
+		{ "overview", overview },
+		{ "boxart_path", artPath },
+		{ "boxart_url", boxartUrl },
+		{ "parsed", parsed },
+		{ "scraped", scraped },
+		{ "arcade", arcade },
+	};
+	return j;
+}
+
+GameBoxart::GameBoxart(const json& j, const std::string& baseArtPath)
+{
+	loadProperty(fileName, j, "file_name");
+	loadProperty(name, j, "name");
+	loadProperty(uniqueId, j, "unique_id");
+	loadProperty(searchName, j, "search_name");
+	loadProperty(region, j, "region");
+	loadProperty(releaseDate, j, "release_date");
+	loadProperty(overview, j, "overview");
+	loadProperty(boxartPath, j, "boxart_path");
+	loadProperty(boxartUrl, j, "boxart_url");
+	loadProperty(parsed, j, "parsed");
+	loadProperty(scraped, j, "scraped");
+	loadProperty(arcade, j, "arcade");
+	if (!boxartPath.empty() && !isAbsolutePath(boxartPath))
+		boxartPath = baseArtPath + boxartPath;
+}
+
+bool Scraper::downloadImage(const std::string& url, const std::string& localName, bool mute)
 {
 	DEBUG_LOG(COMMON, "downloading %s", url.c_str());
 	std::vector<u8> content;
 	std::string contentType;
 	if (!http::success(http::get(url, content, contentType)))
 	{
-		WARN_LOG(COMMON, "downloadImage http error: %s", url.c_str());
+		if (!mute)
+			WARN_LOG(COMMON, "downloadImage http error: %s", url.c_str());
 		return false;
 	}
 	if (contentType.substr(0, 6) != "image/")
 	{
-		WARN_LOG(COMMON, "downloadImage bad content type %s", contentType.c_str());
+		if (!mute)
+			WARN_LOG(COMMON, "downloadImage bad content type %s", contentType.c_str());
 		return false;
 	}
 	if (content.empty())
 	{
-		WARN_LOG(COMMON, "downloadImage: empty content");
+		if (!mute)
+			WARN_LOG(COMMON, "downloadImage: empty content");
 		return false;
 	}
 	FILE *f = nowide::fopen(localName.c_str(), "wb");
@@ -209,6 +256,19 @@ void OfflineScraper::scrape(GameBoxart& item)
 			if (pos == std::string::npos)
 				break;
 			item.searchName = trim_trailing_ws(item.searchName.substr(0, pos));
+		}
+		std::string extension = get_file_extension(item.fileName);
+		if (extension != "zip" && extension != "7z" && extension != "lst")
+		{
+			FILE *file = hostfs::storage().openFile(item.gamePath, "rb");
+			if (file != nullptr)
+			{
+				fseek(file, 0x30, SEEK_SET);
+				u8 buf[0x20];
+				if (fread(buf, 1, sizeof(buf), file) == sizeof(buf))
+					item.uniqueId = trim_trailing_ws(std::string(&buf[0], &buf[0x20]));
+				fclose(file);
+			}
 		}
 	}
 }

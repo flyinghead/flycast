@@ -128,6 +128,8 @@ public:
 		set_axis(DC_AXIS2_RIGHT, IOS_AXIS_RX, true);
 		set_axis(DC_AXIS2_UP, IOS_AXIS_RY, false);
 		set_axis(DC_AXIS2_DOWN, IOS_AXIS_RY, true);
+		addTrigger(IOS_AXIS_R2, false);
+		addTrigger(IOS_AXIS_L2, false);
 		dirty = false;
 	}
 };
@@ -207,11 +209,11 @@ public:
 			
 			[gcController.extendedGamepad.rightTrigger setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
 				gamepad_btn_input(IOS_BTN_R2, pressed);
-				gamepad_axis_input(IOS_AXIS_R2, (int)std::roundf(32767.f * value));
+				gamepad_axis_input(IOS_AXIS_R2, (int)std::roundf(65535.f * value - 32768.f));
 			}];
 			[gcController.extendedGamepad.leftTrigger setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
 				gamepad_btn_input(IOS_BTN_L2, pressed);
-				gamepad_axis_input(IOS_AXIS_L2, (int)std::roundf(32767.f * value));
+				gamepad_axis_input(IOS_AXIS_L2, (int)std::roundf(65535.f * value - 32768.f));
 			}];
 			[gcController.extendedGamepad.leftThumbstick.xAxis setValueChangedHandler:^(GCControllerAxisInput *axis, float value) {
 				gamepad_axis_input(IOS_AXIS_LX, (int)std::roundf(32767.f * value));

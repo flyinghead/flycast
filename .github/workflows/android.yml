@@ -11,7 +11,7 @@ jobs:
       - name: Set up build environment
         run: |
           sudo apt-get update
-          sudo apt-get -y install ccache libcurl4-openssl-dev ninja-build
+          sudo apt-get -y install ccache cmake libcurl4-openssl-dev ninja-build
 
       - uses: actions/checkout@v4
         with:

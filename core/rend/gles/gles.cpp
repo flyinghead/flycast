@@ -147,7 +147,7 @@ uniform lowp vec2 texSize;
 #endif
 #endif
 #if DITHERING == 1
-uniform lowp vec4 ditherColorMax;
+uniform lowp vec4 ditherDivisor;
 #endif
 
 /* Vertex input*/
@@ -360,16 +360,14 @@ void main()
 
 #if DITHERING == 1
 	mediump float ditherTable[16] = float[](
-		 0.9375,  0.1875,  0.75,  0.,   
-		 0.4375,  0.6875,  0.25,  0.5,
-		 0.8125,  0.0625,  0.875, 0.125,
-		 0.3125,  0.5625,  0.375, 0.625	
+		5., 13.,  7., 15.,
+		9.,  1., 11.,  3.,
+		6., 14.,  4., 12.,
+		10., 2.,  8.,  0.
 	);
 	mediump float r = ditherTable[int(mod(gl_FragCoord.y, 4.)) * 4 + int(mod(gl_FragCoord.x, 4.))];
-	// 31 for 5-bit color, 63 for 6 bits, 15 for 4 bits
-	color += r / ditherColorMax;
-	// avoid rounding
-	color = floor(color * 255.) / 255.;
+	mediump vec4 dv = vec4(r, r, r, 1.) / ditherDivisor;
+	color = clamp(floor(color * 255. + dv) / 255., 0., 1.);
 #endif
 #endif
 	gl_FragColor = color;
@@ -601,6 +599,7 @@ void findGLVersion()
 	const char *renderer = (const char *)glGetString(GL_RENDERER);
 	gl.mesa_nouveau = !stricmp(vendor, "nouveau")
 			|| (!stricmp(vendor, "Mesa") && !strncmp(renderer, "NV", 2));
+	gl.mali = !stricmp(vendor, "arm");
 	NOTICE_LOG(RENDERER, "OpenGL%s version %d.%d", gl.is_gles ? " ES" : "", gl.gl_major, gl.gl_minor);
 	NOTICE_LOG(RENDERER, "Vendor '%s' Renderer '%s' Version '%s'", vendor, renderer, glGetString(GL_VERSION));
 	while (glGetError() != GL_NO_ERROR)
@@ -857,7 +856,7 @@ bool CompilePipelineShader(PipelineShader* s)
 		s->fog_clamp_max = -1;
 	}
 	s->ndcMat = glGetUniformLocation(s->program, "ndcMat");
-	s->ditherColorMax = glGetUniformLocation(s->program, "ditherColorMax");
+	s->ditherDivisor = glGetUniformLocation(s->program, "ditherDivisor");
 	s->texSize = glGetUniformLocation(s->program, "texSize");
 
 	if (s->naomi2)
@@ -1153,21 +1152,19 @@ bool OpenGLRenderer::renderFrame(int width, int height)
 		{
 		case 0: // 0555 KRGB 16 bit
 		case 3: // 1555 ARGB 16 bit
-			ShaderUniforms.ditherColorMax[0] = ShaderUniforms.ditherColorMax[1] = ShaderUniforms.ditherColorMax[2] = 31.f;
-			ShaderUniforms.ditherColorMax[3] = 255.f;
+			ShaderUniforms.ditherDivisor[0] = ShaderUniforms.ditherDivisor[1] = ShaderUniforms.ditherDivisor[2] = 2.f;
 			break;
 		case 1: // 565 RGB 16 bit
-			ShaderUniforms.ditherColorMax[0] = ShaderUniforms.ditherColorMax[2] = 31.f;
-			ShaderUniforms.ditherColorMax[1] = 63.f;
-			ShaderUniforms.ditherColorMax[3] = 255.f;
+			ShaderUniforms.ditherDivisor[0] = ShaderUniforms.ditherDivisor[2] = 2.f;
+			ShaderUniforms.ditherDivisor[1] = 4.f;
 			break;
 		case 2: // 4444 ARGB 16 bit
-			ShaderUniforms.ditherColorMax[0] = ShaderUniforms.ditherColorMax[1]
-				= ShaderUniforms.ditherColorMax[2] = ShaderUniforms.ditherColorMax[3] = 15.f;
+			ShaderUniforms.ditherDivisor[0] = ShaderUniforms.ditherDivisor[1] = ShaderUniforms.ditherDivisor[2] = 1.f;
 			break;
 		default:
 			break;
 		}
+		ShaderUniforms.ditherDivisor[3] = 1.f;
 	}
 	else
 	{

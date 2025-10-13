@@ -60,7 +60,7 @@ struct PipelineShader
 	GLint fog_clamp_min, fog_clamp_max;
 	GLint ndcMat;
 	GLint palette_index;
-	GLint ditherColorMax;
+	GLint ditherDivisor;
 	GLint texSize;
 
 	// Naomi2
@@ -308,6 +308,7 @@ struct gl_ctx
 	bool highp_float_supported;
 	float max_anisotropy;
 	bool mesa_nouveau;
+	bool mali;
 	bool border_clamp_supported;
 	bool prim_restart_supported;
 	bool prim_restart_fixed_supported;
@@ -411,7 +412,7 @@ extern struct ShaderUniforms_t
 		int height;
 	} base_clipping;
 	bool dithering;
-	float ditherColorMax[4];
+	float ditherDivisor[4];
 
 	void Set(const PipelineShader* s)
 	{
@@ -438,8 +439,8 @@ extern struct ShaderUniforms_t
 		if (s->ndcMat != -1)
 			glUniformMatrix4fv(s->ndcMat, 1, GL_FALSE, &ndcMat[0][0]);
 
-		if (s->ditherColorMax != -1)
-			glUniform4fv(s->ditherColorMax, 1, ditherColorMax);
+		if (s->ditherDivisor != -1)
+			glUniform4fv(s->ditherDivisor, 1, ditherDivisor);
 	}
 
 } ShaderUniforms;

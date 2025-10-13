@@ -57,7 +57,7 @@ static std::vector<void *> mapped_regions;
 
 #ifdef TARGET_UWP
 static WinLibLoader kernel32("Kernel32.dll");
-static LPVOID(*MapViewOfFileEx)(HANDLE, DWORD, DWORD, DWORD, SIZE_T, LPVOID);
+static LPVOID(WINAPI *MapViewOfFileEx)(HANDLE, DWORD, DWORD, DWORD, SIZE_T, LPVOID);
 #endif
 
 // Please read the POSIX implementation for more information. On Windows this is

@@ -394,7 +394,7 @@ void VulkanContext::PresentFrame(vk::Image image, vk::ImageView imageView, const
 	float shiftX, shiftY;
 	getVideoShift(shiftX, shiftY);
 
-	beginFrame(extent);
+	beginFrame(extent, image);
 	QuadVertex vtx[4] {
 		{ -1, -1, 0, 0, 0 },
 		{  1, -1, 0, 1, 0 },
@@ -413,14 +413,14 @@ void VulkanContext::PresentFrame(vk::Image image, vk::ImageView imageView, const
 	quadDrawer->Draw(cmdBuffer, imageView, vtx, false);
 	overlay->Draw(cmdBuffer, extent, config::EmulateFramebuffer ? 1 : (int)config::RenderResolution / 480.f,
 			true, true);
-	endFrame();
+	endFrame(image);
 
 	retro_image.image_view = (VkImageView)colorAttachments[GetCurrentImageIndex()]->GetImageView();
 	retro_image.create_info.image = (VkImage)colorAttachments[GetCurrentImageIndex()]->GetImage();
 	retro_render_if->set_image(retro_render_if->handle, &retro_image, 0, nullptr, VK_QUEUE_FAMILY_IGNORED);
 }
 
-void VulkanContext::beginFrame(vk::Extent2D extent)
+void VulkanContext::beginFrame(vk::Extent2D extent, vk::Image barrierImage)
 {
 	int currentImage = GetCurrentImageIndex();
 	if (currentImage >= (int)framebuffers.size())
@@ -456,13 +456,51 @@ void VulkanContext::beginFrame(vk::Extent2D extent)
 		setImageLayout(cmdBuffer, colorAttachments[currentImage]->GetImage(), vk::Format::eR8G8B8A8Unorm,
 				1, vk::ImageLayout::eUndefined, vk::ImageLayout::eShaderReadOnlyOptimal);
 	}
+	if (GetVendorID() == VulkanContext::VENDOR_NVIDIA && barrierImage)
+	{
+		vk::ImageMemoryBarrier barrier(
+				vk::AccessFlagBits::eColorAttachmentWrite,
+		        vk::AccessFlagBits::eShaderRead,
+		        vk::ImageLayout::eShaderReadOnlyOptimal,
+		        vk::ImageLayout::eShaderReadOnlyOptimal,
+		        VK_QUEUE_FAMILY_IGNORED,
+		        VK_QUEUE_FAMILY_IGNORED,
+				barrierImage,
+		        vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1));
+		cmdBuffer.pipelineBarrier(
+				vk::PipelineStageFlagBits::eColorAttachmentOutput,
+				vk::PipelineStageFlagBits::eFragmentShader,
+				{},
+				nullptr, nullptr,
+				barrier
+		);
+	}
 	cmdBuffer.beginRenderPass(vk::RenderPassBeginInfo(*renderPass, *framebuffers[currentImage], vk::Rect2D({0, 0}, extent), clear_colors),
 			vk::SubpassContents::eInline);
 }
 
-void VulkanContext::endFrame()
+void VulkanContext::endFrame(vk::Image barrierImage)
 {
 	cmdBuffer.endRenderPass();
+	if (GetVendorID() == VulkanContext::VENDOR_NVIDIA && barrierImage)
+	{
+		vk::ImageMemoryBarrier barrier(
+				vk::AccessFlagBits::eShaderRead,
+		        vk::AccessFlagBits::eMemoryWrite | vk::AccessFlagBits::eColorAttachmentWrite,
+		        vk::ImageLayout::eShaderReadOnlyOptimal,
+		        vk::ImageLayout::eShaderReadOnlyOptimal,
+		        VK_QUEUE_FAMILY_IGNORED,
+		        VK_QUEUE_FAMILY_IGNORED,
+				barrierImage,
+		        vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1));
+		cmdBuffer.pipelineBarrier(
+				vk::PipelineStageFlagBits::eFragmentShader,
+				vk::PipelineStageFlagBits::eAllCommands,
+				{},
+				nullptr, nullptr,
+				barrier
+		);
+	}
 	cmdBuffer.end();
 	cmdBuffer = nullptr;
 	commandPool.EndFrame();

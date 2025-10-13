@@ -21,6 +21,31 @@
 #include "hw/pvr/elan_struct.h"
 #include <unordered_map>
 
+#ifndef GL_MAX_SHADER_STORAGE_BLOCK_SIZE
+#define GL_MAX_SHADER_STORAGE_BLOCK_SIZE 0x90DE
+#endif
+#ifndef GL_SHADER_STORAGE_BUFFER
+#define GL_SHADER_STORAGE_BUFFER 0x90D2
+#endif
+#ifndef GL_READ_WRITE
+#define GL_READ_WRITE 0x88BA
+#endif
+#ifndef GL_DEPTH_STENCIL_TEXTURE_MODE
+#define GL_DEPTH_STENCIL_TEXTURE_MODE 0x90EA
+#endif
+#ifndef GL_STENCIL_INDEX
+#define GL_STENCIL_INDEX 0x1901
+#endif
+#ifndef GL_ATOMIC_COUNTER_BUFFER
+#define GL_ATOMIC_COUNTER_BUFFER 0x92C0
+#endif
+#ifndef GL_SHADER_IMAGE_ACCESS_BARRIER_BIT
+#define GL_SHADER_IMAGE_ACCESS_BARRIER_BIT 0x00000020
+#endif
+#ifndef GL_BUFFER_UPDATE_BARRIER_BIT
+#define GL_BUFFER_UPDATE_BARRIER_BIT 0x00000200
+#endif
+
 void gl4DrawStrips(GLuint output_fbo, int width, int height);
 
 enum class Pass { Depth, Color, OIT };
@@ -45,7 +70,7 @@ struct gl4PipelineShader
 	GLint fog_clamp_min, fog_clamp_max;
 	GLint ndcMat;
 	GLint palette_index;
-	GLint ditherColorMax;
+	GLint ditherDivisor;
 
 	// Naomi2
 	GLint mvMat;
@@ -187,18 +212,23 @@ void checkOverflowAndReset();
 
 extern GLuint stencilTexId;
 extern GLuint depthTexId;
-extern GLuint opaqueTexId;
-extern GLuint depthSaveTexId;
-extern GLuint geom_fbo;
+extern GLuint opaqueTexId[2];
+extern GLuint geom_fbo[2];
 extern GLuint texSamplers[2];
-extern GLuint depth_fbo;
 
 extern const char* ShaderHeader;
 
 class OpenGl4Source : public ShaderSource
 {
 public:
-	OpenGl4Source() : ShaderSource("#version 430") {}
+	OpenGl4Source()
+		: ShaderSource(gl.is_gles ? "#version 320 es" : "#version 430")
+	{
+		if (gl.is_gles)
+			addSource("precision highp float;\n"
+					"precision highp int;\n"
+					"precision highp sampler2D;");
+	}
 };
 
 void gl4SetupMainVBO();
@@ -228,7 +258,7 @@ extern struct gl4ShaderUniforms_t
 		int height;
 	} base_clipping;
 	int palette_index;
-	float ditherColorMax[4];
+	float ditherDivisor[4];
 
 	void setUniformArray(GLint location, int v0, int v1)
 	{
@@ -259,7 +289,7 @@ extern struct gl4ShaderUniforms_t
 		glUniform4fv(s->fog_clamp_max, 1, fog_clamp_max);
 		glUniformMatrix4fv(s->ndcMat, 1, GL_FALSE, &ndcMat[0][0]);
 		glUniform1i(s->palette_index, palette_index);
-		glUniform4fv(s->ditherColorMax, 1, ditherColorMax);
+		glUniform4fv(s->ditherDivisor, 1, ditherDivisor);
 	}
 
 } gl4ShaderUniforms;

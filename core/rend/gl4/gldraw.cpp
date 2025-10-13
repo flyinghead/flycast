@@ -24,13 +24,11 @@
 #include <memory>
 
 static gl4PipelineShader* CurrentShader;
-GLuint geom_fbo;
+GLuint geom_fbo[2];
 GLuint stencilTexId;
-GLuint opaqueTexId;
+GLuint opaqueTexId[2];
 GLuint depthTexId;
 GLuint texSamplers[2];
-GLuint depth_fbo;
-GLuint depthSaveTexId;
 
 static gl4PipelineShader *gl4GetProgram(bool cp_AlphaTest, bool pp_InsideClipping,
 							bool pp_Texture, bool pp_UseAlpha, bool pp_IgnoreTexA, u32 pp_ShadInstr, bool pp_Offset,
@@ -256,8 +254,10 @@ static void SetGPState(const PolyParam* gp)
 					glSamplerParameteri(texSamplers[i], GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 				}
 
-				if (mipmapped)
+#ifdef GL_TEXTURE_LOD_BIAS
+				if (mipmapped && !gl.is_gles)
 					glSamplerParameterf(texSamplers[i], GL_TEXTURE_LOD_BIAS, D_Adjust_LoD_Bias[tsp.MipMapD]);
+#endif
 
 				if (gl.max_anisotropy > 1.f)
 				{
@@ -453,42 +453,38 @@ static GLuint CreateColorFBOTexture(int width, int height)
 
 void gl4CreateTextures(int width, int height)
 {
-	if (geom_fbo == 0)
-	{
-		glGenFramebuffers(1, &geom_fbo);
-	}
-	glBindFramebuffer(GL_FRAMEBUFFER, geom_fbo);
-
+	if (geom_fbo[0] == 0)
+		glGenFramebuffers(2, geom_fbo);
 	stencilTexId = glcache.GenTexture();
-	glcache.BindTexture(GL_TEXTURE_2D, stencilTexId); glCheck();
-	glcache.TexParameteri(GL_TEXTURE_2D, GL_DEPTH_STENCIL_TEXTURE_MODE, GL_STENCIL_INDEX);		// OpenGL >= 4.3
-	glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	// Using glTexStorage2D instead of glTexImage2D to satisfy requirement GL_TEXTURE_IMMUTABLE_FORMAT=true, needed for glTextureView below
-	glTexStorage2D(GL_TEXTURE_2D, 1, GL_DEPTH32F_STENCIL8, width, height);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, stencilTexId, 0); glCheck();
-	glCheck();
-
-	opaqueTexId = CreateColorFBOTexture(width, height);
-
 	depthTexId = glcache.GenTexture();
-	glTextureView(depthTexId, GL_TEXTURE_2D, stencilTexId, GL_DEPTH32F_STENCIL8, 0, 1, 0, 1);
-	glCheck();
-	glcache.BindTexture(GL_TEXTURE_2D, depthTexId);
-	glcache.TexParameteri(GL_TEXTURE_2D, GL_DEPTH_STENCIL_TEXTURE_MODE, GL_DEPTH_COMPONENT);
-	glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glCheck();
+	for (int i = 0; i < 2; i++)
+	{
+		glBindFramebuffer(GL_FRAMEBUFFER, geom_fbo[i]);
 
-	GLuint uStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+		opaqueTexId[i] = CreateColorFBOTexture(width, height);
 
-	verify(uStatus == GL_FRAMEBUFFER_COMPLETE);
+		GLuint depthStencilId = i == 0 ? stencilTexId : depthTexId;
+		glcache.BindTexture(GL_TEXTURE_2D, depthStencilId); glCheck();
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		if (i == 0)
+			glcache.TexParameteri(GL_TEXTURE_2D, GL_DEPTH_STENCIL_TEXTURE_MODE, GL_STENCIL_INDEX);
+		else
+			glcache.TexParameteri(GL_TEXTURE_2D, GL_DEPTH_STENCIL_TEXTURE_MODE, GL_DEPTH_COMPONENT);
+		// with GL_DEPTH32F_STENCIL8 stencil doesn't work on Mali. GL_DEPTH24_STENCIL8 works but moire effect on transparent texs (nvidia)
+		glTexStorage2D(GL_TEXTURE_2D, 1, gl.mali ? GL_DEPTH24_STENCIL8 : GL_DEPTH32F_STENCIL8, width, height);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, depthStencilId, 0);
+		glCheck();
+
+		GLuint uStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+		verify(uStatus == GL_FRAMEBUFFER_COMPLETE);
+	}
 }
 
 void gl4DrawStrips(GLuint output_fbo, int width, int height)
 {
 	checkOverflowAndReset();
-	glBindFramebuffer(GL_FRAMEBUFFER, geom_fbo);
+	glBindFramebuffer(GL_FRAMEBUFFER, geom_fbo[0]);
 	if (!pvrrc.isRTT)
 	{
 		glcache.Disable(GL_SCISSOR_TEST);
@@ -502,11 +498,11 @@ void gl4DrawStrips(GLuint output_fbo, int width, int height)
 		else
 		{
 			// Copy previous framebuffer content (in case of partial render)
-			glBindFramebuffer(GL_DRAW_FRAMEBUFFER, geom_fbo);
+			glBindFramebuffer(GL_DRAW_FRAMEBUFFER, geom_fbo[1]);
 			glBindFramebuffer(GL_READ_FRAMEBUFFER, output_fbo);
 			glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
 			glCheck();
-			glBindFramebuffer(GL_FRAMEBUFFER, geom_fbo);
+			glBindFramebuffer(GL_FRAMEBUFFER, geom_fbo[0]);
 		}
 		if (gl4ShaderUniforms.base_clipping.enabled)
 			glcache.Enable(GL_SCISSOR_TEST);
@@ -515,7 +511,7 @@ void gl4DrawStrips(GLuint output_fbo, int width, int height)
 		glGenSamplers(2, texSamplers);
 
 	glcache.DepthMask(GL_TRUE);
-	glClearDepth(0.0);
+	glClearDepthf(0.f);
 	glcache.StencilMask(0xFF);
 	glClear(GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); glCheck();
 
@@ -523,7 +519,10 @@ void gl4DrawStrips(GLuint output_fbo, int width, int height)
 
 	//We use sampler 0
 	glActiveTexture(GL_TEXTURE0);
-	glProvokingVertex(GL_LAST_VERTEX_CONVENTION);
+#ifdef GL_LAST_VERTEX_CONVENTION
+	if (!gl.is_gles)
+		glProvokingVertex(GL_LAST_VERTEX_CONVENTION);
+#endif
 
 	RenderPass previous_pass = {};
 	int render_pass_count = pvrrc.render_passes.size();
@@ -570,31 +569,7 @@ void gl4DrawStrips(GLuint output_fbo, int width, int height)
 			//
 			// PASS 1: Geometry pass to update depth and stencil
 			//
-			if (render_pass > 0)
-			{
-				// Make a copy of the depth buffer that will be reused in pass 2
-				if (depth_fbo == 0)
-					glGenFramebuffers(1, &depth_fbo);
-				glBindFramebuffer(GL_FRAMEBUFFER, depth_fbo);
-				if (depthSaveTexId == 0)
-				{
-					depthSaveTexId = glcache.GenTexture();
-					glcache.BindTexture(GL_TEXTURE_2D, depthSaveTexId);
-					glcache.TexParameteri(GL_TEXTURE_2D, GL_DEPTH_STENCIL_TEXTURE_MODE, GL_DEPTH_COMPONENT);
-					glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-					glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-					glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH32F_STENCIL8, max_image_width, max_image_height, 0, GL_DEPTH_STENCIL, GL_FLOAT_32_UNSIGNED_INT_24_8_REV, NULL); glCheck();
-					glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, depthSaveTexId, 0); glCheck();
-				}
-				GLuint uStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-				verify(uStatus == GL_FRAMEBUFFER_COMPLETE);
-
-				glBindFramebuffer(GL_READ_FRAMEBUFFER, geom_fbo);
-				glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
-				glCheck();
-
-				glBindFramebuffer(GL_FRAMEBUFFER, geom_fbo);
-			}
+			glBindFramebuffer(GL_FRAMEBUFFER, geom_fbo[0]);
 			glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 			glcache.Enable(GL_DEPTH_TEST);
 			glcache.DepthMask(GL_TRUE);
@@ -611,21 +586,12 @@ void gl4DrawStrips(GLuint output_fbo, int width, int height)
 			//
 			// PASS 2: Render OP and PT to fbo
 			//
+			glBindFramebuffer(GL_FRAMEBUFFER, geom_fbo[1]);
 			if (render_pass == 0)
 			{
 				glcache.DepthMask(GL_TRUE);
-				glClearDepth(0.0);
+				glClearDepthf(0.f);
 				glClear(GL_DEPTH_BUFFER_BIT);
-			}
-			else
-			{
-				// Restore the depth buffer from the last render pass
-				// FIXME This is pretty slow apparently (CS)
-				glBindFramebuffer(GL_DRAW_FRAMEBUFFER, geom_fbo);
-				glBindFramebuffer(GL_READ_FRAMEBUFFER, depth_fbo);
-				glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
-				glCheck();
-				glBindFramebuffer(GL_FRAMEBUFFER, geom_fbo);
 			}
 
 			glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
@@ -656,12 +622,10 @@ void gl4DrawStrips(GLuint output_fbo, int width, int height)
 			//
 			if (current_pass.autosort)
 			{
+				glBindFramebuffer(GL_FRAMEBUFFER, geom_fbo[0]);
 				glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 				glcache.Disable(GL_DEPTH_TEST);
 
-				// Although the depth test is disabled and thus writes to the depth buffer are also disabled,
-				// AMD cards have serious issues when the depth/stencil texture is still bound to the framebuffer
-				glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, 0, 0);
 				glActiveTexture(GL_TEXTURE2);
 				glBindTexture(GL_TEXTURE_2D, depthTexId);
 				glActiveTexture(GL_TEXTURE0);
@@ -677,9 +641,6 @@ void gl4DrawStrips(GLuint output_fbo, int width, int height)
 						DrawTranslucentModVols(previous_pass.mvo_tr_count, current_pass.mvo_tr_count - previous_pass.mvo_tr_count, false);
 				}
 
-				// Rebind the depth/stencil texture to the framebuffer
-				glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, stencilTexId, 0);
-
 				if (render_pass < render_pass_count - 1)
 				{
 					//
@@ -690,12 +651,14 @@ void gl4DrawStrips(GLuint output_fbo, int width, int height)
 					glBindTexture(GL_TEXTURE_2D, 0);
 					glActiveTexture(GL_TEXTURE0);
 
+					glBindFramebuffer(GL_FRAMEBUFFER, geom_fbo[1]);
 					glcache.Enable(GL_DEPTH_TEST);
 					DrawList<ListType_Translucent, true, Pass::Depth>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
 				}
 			}
 			else
 			{
+				glBindFramebuffer(GL_FRAMEBUFFER, geom_fbo[1]);
 				glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 				glcache.Enable(GL_DEPTH_TEST);
 				DrawList<ListType_Translucent, false, Pass::Color>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
@@ -706,28 +669,29 @@ void gl4DrawStrips(GLuint output_fbo, int width, int height)
 			if (render_pass < render_pass_count - 1)
 			{
 				//
-				// PASS 3c: Render a-buffer to temporary texture
+				// PASS 3c: Render a-buffer to other fbo texture then swap
 				//
-				GLuint texId = CreateColorFBOTexture(max_image_width, max_image_height);
-
+				glBindFramebuffer(GL_FRAMEBUFFER, geom_fbo[0]);
 				glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 
 				glActiveTexture(GL_TEXTURE0);
 				glBindSampler(0, 0);
-				glcache.BindTexture(GL_TEXTURE_2D, opaqueTexId);
+				glcache.BindTexture(GL_TEXTURE_2D, opaqueTexId[1]);
 
 				renderABuffer(false);
-
-				glcache.DeleteTextures(1, &opaqueTexId);
-				opaqueTexId = texId;
-
+				glcache.BindTexture(GL_TEXTURE_2D, 0);
 				glCheck();
+				std::swap(opaqueTexId[0], opaqueTexId[1]);
+				glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, opaqueTexId[0], 0);
+				glBindFramebuffer(GL_FRAMEBUFFER, geom_fbo[1]);
+				glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, opaqueTexId[1], 0);
 			}
 		}
 
 		if (!skip_op_pt && render_pass < render_pass_count - 1)
 		{
 			// Clear the stencil from this pass
+			glBindFramebuffer(GL_FRAMEBUFFER, geom_fbo[0]);
 			glcache.StencilMask(0xFF);
 			glClear(GL_STENCIL_BUFFER_BIT);
 		}
@@ -743,6 +707,6 @@ void gl4DrawStrips(GLuint output_fbo, int width, int height)
 
 	glActiveTexture(GL_TEXTURE0);
 	glBindSampler(0, 0);
-	glcache.BindTexture(GL_TEXTURE_2D, opaqueTexId);
+	glcache.BindTexture(GL_TEXTURE_2D, opaqueTexId[1]);
 	renderABuffer(true);
 }

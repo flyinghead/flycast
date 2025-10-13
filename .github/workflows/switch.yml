@@ -18,7 +18,7 @@ jobs:
       - name: Set up build environment
         run: |
           sudo apt-get update
-          sudo apt-get -y install ccache
+          sudo apt-get -y install ccache cmake
 
       - uses: actions/checkout@v4
         with:
@@ -42,7 +42,9 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: flycast-switch-${{ matrix.config.name }}
-          path: artifact/bin
+          path: |
+            artifact/bin
+            artifact/lib/libretro
 
       - name: Package app
         run: zip -m artifact/bin/flycast.nro.zip artifact/bin/flycast.nro

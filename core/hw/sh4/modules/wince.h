@@ -276,7 +276,7 @@ static bool print_wince_syscall(u32 address)
 		if (address == 0xfffffde7) // GetTickCount
 		{
 			// This should make this syscall faster
-			//r[0] = sh4_sched_now64() * 1000 / SH4_MAIN_CLOCK;
+			//p_sh4rcb->cntx.r[0] = sh4_sched_now64() * 1000 / SH4_MAIN_CLOCK;
 			//next_pc = pr;
 			//skip_exception = true;
 			return true;
@@ -315,29 +315,29 @@ static bool print_wince_syscall(u32 address)
 		}
 		printf("WinCE %08x %04x.%04x %s: %s", address, getCurrentProcessId() & 0xffff, getCurrentThreadId() & 0xffff, api, method);
 		if (address == 0xfffffd51)		// SetLastError
-			printf(" dwErrCode = %x\n", r[4]);
+			printf(" dwErrCode = %x\n", p_sh4rcb->cntx.r[4]);
 		else if (address == 0xffffd5ef)	// CreateFile
-			printf(" lpFileName = %s\n", get_unicode_string(r[4]).c_str());
+			printf(" lpFileName = %s\n", get_unicode_string(p_sh4rcb->cntx.r[4]).c_str());
 		else if (address == 0xfffffd97) // CreateProc
-			printf(" imageName = %s, commandLine = %s\n", get_unicode_string(r[4]).c_str(), get_unicode_string(r[5]).c_str());
+			printf(" imageName = %s, commandLine = %s\n", get_unicode_string(p_sh4rcb->cntx.r[4]).c_str(), get_unicode_string(p_sh4rcb->cntx.r[5]).c_str());
 		else if (!strcmp("DebugNotify", method))
-			printf(" %x, %x\n", r[4], r[5]);
+			printf(" %x, %x\n", p_sh4rcb->cntx.r[4], p_sh4rcb->cntx.r[5]);
 		else if (address == 0xffffd5d3) // RegOpenKeyExW
-			printf(" hKey = %x, lpSubKey = %s\n", r[4], get_unicode_string(r[5]).c_str());
+			printf(" hKey = %x, lpSubKey = %s\n", p_sh4rcb->cntx.r[4], get_unicode_string(p_sh4rcb->cntx.r[5]).c_str());
 		else if (!strcmp("LoadLibraryW", method))
-			printf(" fileName = %s\n", get_unicode_string(r[4]).c_str());
+			printf(" fileName = %s\n", get_unicode_string(p_sh4rcb->cntx.r[4]).c_str());
 		else if (!strcmp("GetProcAddressW", method))
-			printf(" hModule = %x, procName = %s\n", r[4], get_unicode_string(r[5]).c_str());
+			printf(" hModule = %x, procName = %s\n", p_sh4rcb->cntx.r[4], get_unicode_string(p_sh4rcb->cntx.r[5]).c_str());
 		else if (!strcmp("NKvDbgPrintfW", method))
-			printf(" fmt = %s\n", get_unicode_string(r[4]).c_str());
+			printf(" fmt = %s\n", get_unicode_string(p_sh4rcb->cntx.r[4]).c_str());
 		else if (!strcmp("OutputDebugStringW", method))
-			printf(" str = %s\n", get_unicode_string(r[4]).c_str());
+			printf(" str = %s\n", get_unicode_string(p_sh4rcb->cntx.r[4]).c_str());
 		else if (!strcmp("RegisterAFSName", method))
-			printf(" name = %s\n", get_unicode_string(r[4]).c_str());
+			printf(" name = %s\n", get_unicode_string(p_sh4rcb->cntx.r[4]).c_str());
 		else if (!strcmp("CreateAPISet", method))
-			printf(" name = %s\n", get_ascii_string(r[4]).c_str());
+			printf(" name = %s\n", get_ascii_string(p_sh4rcb->cntx.r[4]).c_str());
 		else if (!strcmp("Register", method) && !strcmp("APISET", api))
-			printf(" p = %x, id = %x\n", r[4], r[5]);
+			printf(" p = %x, id = %x\n", p_sh4rcb->cntx.r[4], p_sh4rcb->cntx.r[5]);
 		else
 			printf("\n");
 		// might be useful to detect errors? (hidden & dangerous)

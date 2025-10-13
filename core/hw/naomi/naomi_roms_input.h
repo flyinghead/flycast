@@ -369,6 +369,7 @@ static InputDescriptors marine_fishing_inputs = {
 	  },
 };
 
+#ifdef NAOMI_MULTIBOARD
 static InputDescriptors f355_inputs = {
 	  {
 			{ NAOMI_UP_KEY, "ASSIST SC" },
@@ -400,6 +401,7 @@ static InputDescriptors f355_inputs = {
 			{ "CLUTCH", Half, 6 },	// Deluxe only
 	  },
 };
+#endif
 
 static InputDescriptors zombie_inputs = {
 	  {
@@ -754,8 +756,8 @@ static InputDescriptors basschal_inputs = {
 
 static InputDescriptors aw_lightgun_inputs = {
 	{
-		{ AWAVE_BTN0_KEY, "TRIGGER" },
-		{ AWAVE_BTN1_KEY, "PUMP" },
+		{ AWAVE_TRIGGER_KEY, "TRIGGER" },
+		{ AWAVE_BTN0_KEY, "PUMP" },
 		AW_START_DESC
 		AW_BASE_BTN_DESC
 	},
@@ -845,6 +847,7 @@ static InputDescriptors soulsurfer_inputs = {
 	},
 };
 
+#ifdef NAOMI_MULTIBOARD
 static InputDescriptors drvsim_inputs = {
 	{
 			{ NAOMI_BTN0_KEY, "Turn R" },
@@ -886,6 +889,7 @@ static InputDescriptors drvsim_inputs = {
 			{ "Wheel", Full, 0, true },	// only read via ffb board, not jvs
 	},
 };
+#endif
 
 static InputDescriptors beachspi_inputs = INPUT_2_BUTTONS("A", "B");
 
@@ -921,5 +925,15 @@ static InputDescriptors tetgiant_inputs = {
 		{ DC_DPAD_RIGHT, "" },
 		{ DC_BTN_START, "" },
 		NAO_BASE_BTN_DESC
+	},
+};
+
+static InputDescriptors btlracer_inputs = {
+	{
+		{ DC_BTN_A, "BUTTON" },
+		NAO_BASE_BTN_DESC
+	},
+	{
+		{ "WHEEL", Full, 0 },
 	},
 };

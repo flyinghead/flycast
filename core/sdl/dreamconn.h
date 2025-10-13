@@ -19,7 +19,7 @@
 #pragma once
 #include "dreamlink.h"
 
-#ifdef USE_DREAMCASTCONTROLLER
+#ifdef USE_DREAMLINK_DEVICES
 
 #include <asio.hpp>
 #include <mutex>
@@ -30,6 +30,7 @@ class DreamConn : public DreamLink
 	static constexpr u16 BASE_PORT = 37393;
 
 	int bus = -1;
+	bool _isForPhysicalController;
 	bool maple_io_connected = false;
 	u8 expansionDevs = 0;
 	asio::ip::tcp::iostream iostream;
@@ -40,14 +41,20 @@ public:
 	static constexpr const char* VID_PID_GUID = "5744000043440000";
 
 public:
-	DreamConn(int bus);
+	DreamConn(int bus, bool isForPhysicalController);
 
 	~DreamConn();
+
+	bool isForPhysicalController() override;
 
 	bool send(const MapleMsg& msg) override;
 
     bool send(const MapleMsg& txMsg, MapleMsg& rxMsg) override;
 
+private:
+	bool send_no_lock(const MapleMsg& msg);
+
+public:
 	int getBus() const override {
 		return bus;
 	}
@@ -60,6 +67,16 @@ public:
 			return 0x00010000;
 		}
 		return 0;
+	}
+
+	std::array<u32, 3> getFunctionDefinitions(int forPort) const override
+	{
+		if (forPort == 1 && hasVmu())
+			// For clock, LCD, storage
+			return std::array<u32, 3>{0x403f7e7e, 0x00100500, 0x00410f00};
+		else if (forPort == 2 && hasRumble())
+			return std::array<u32, 3>{0x00000101, 0, 0};
+		return std::array<u32, 3>{0, 0, 0};
 	}
 
 	bool hasVmu() const {
@@ -76,9 +93,21 @@ public:
 		return "DreamConn+ / DreamConn S Controller";
 	}
 
+	bool needsRefresh() override;
+
+private:
+	bool updateExpansionDevs();
+
+	bool isSocketDisconnected();
+
+public:
+	bool isConnected() override;
+
 	void connect() override;
 
 	void disconnect() override;
+
+	void gameTermination() override;
 };
 
 #endif // USE_DREAMCASTCONTROLLER

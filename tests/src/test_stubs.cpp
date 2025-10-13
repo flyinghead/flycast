@@ -18,5 +18,9 @@ void os_RunInstance(int argc, const char *argv[])
 void os_SetThreadName(const char *name)
 {
 }
+const char *getThreadName()
+{
+	return "threadname";
+}
 #endif
 #endif

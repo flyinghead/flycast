@@ -22,15 +22,17 @@
 #include "mapping.h"
 #include "stdclass.h"
 
-#include <map>
+#include <unordered_map>
 #include <memory>
 #include <mutex>
 #include <vector>
+#include <unordered_set>
 
 class GamepadDevice
 {
 public:
 	typedef void (*input_detected_cb)(u32 code, bool analog, bool positive);
+	typedef void (*ButtonListener)(int port, DreamcastKey key, bool pressed);
 
 	const std::string& api_name() { return _api_name; }
 	const std::string& name() { return _name; }
@@ -41,12 +43,23 @@ public:
 	virtual bool gamepad_axis_input(u32 code, int value);
 	virtual ~GamepadDevice() = default;
 
-	void detect_btn_input(input_detected_cb button_pressed);
-	void detect_axis_input(input_detected_cb axis_moved);
-	void detectButtonOrAxisInput(input_detected_cb input_changed);
+	void detectInput(bool combo, input_detected_cb input_changed);
 	void cancel_detect_input() {
 		_input_detected = nullptr;
+		_detecting_combo = false;
+		detectionInputs.clear();
 	}
+	bool is_input_detecting() const {
+		return _input_detected != nullptr;
+	}
+	void listenButtons(ButtonListener listener) {
+		buttonListener = listener;
+	}
+	void unlistenButtons(ButtonListener listener) {
+		if (buttonListener == listener)
+			buttonListener = nullptr;
+	}
+
 	std::shared_ptr<InputMapping> get_input_mapping() { return input_mapper; }
 	void save_mapping(int system = settings.platform.system);
 
@@ -111,7 +124,7 @@ public:
 	}
 
 	static void load_system_mappings();
-	bool find_mapping(int system = settings.platform.system);
+	virtual bool find_mapping(int system = settings.platform.system);
 	virtual void resetMappingToDefault(bool arcade, bool gamepad) {
 		input_mapper = getDefaultMapping();
 	}
@@ -119,22 +132,33 @@ public:
 	void setPerGameMapping(bool enabled);
 	bool isPerGameMapping() const { return perGameMapping; }
 
+	//! The axis value which causes a button activation (for axis to button mapping) (inclusive)
+	static const int AXIS_ACTIVATION_VALUE = 16384;  // Use 50% deflection as "pressed" threshold
+	//! The axis value which causes a button deactivation (for axis to button mapping) (exclusive)
+	static const int AXIS_DEACTIVATION_VALUE = 8192; // 25% deflection as "released" threshold
+
 protected:
 	GamepadDevice(int maple_port, const char *api_name, bool remappable = true)
-		: _api_name(api_name), _maple_port(maple_port), _input_detected(nullptr), _remappable(remappable),
+		: _api_name(api_name), _maple_port(maple_port), _remappable(remappable),
 		  digitalToAnalogState{}
 	{
+		// Initialize pressedButtons sets
+		currentInputs.clear();
 	}
 
 	void loadMapping() {
 		if (!find_mapping())
 			input_mapper = getDefaultMapping();
+		else
+			INFO_LOG(INPUT, "using custom mapping '%s'", input_mapper->name.c_str());
 	}
 	virtual std::shared_ptr<InputMapping> getDefaultMapping() {
 		return std::make_shared<IdentityInputMapping>();
 	}
 
-	bool is_detecting_input() { return _input_detected != nullptr; }
+	bool is_detecting_input() const {
+		return _input_detected != nullptr;
+	}
 
 	std::string _name;
 	std::string _unique_id;
@@ -142,13 +166,66 @@ protected:
 	bool rumbleEnabled = false;
 	bool hasAnalogStick = false;
 	int rumblePower = 100;
-	u32 leftTrigger = ~0;
-	u32 rightTrigger = ~0;
 
 private:
 	virtual void registered() {}
 	bool handleButtonInput(int port, DreamcastKey key, bool pressed);
+	bool handleButtonInputDef(const InputMapping::InputDef& inputDef, bool pressed);
 	std::string make_mapping_filename(bool instance, int system, bool perGame = false);
+	bool detectAxis(u32 code, int value);
+
+	// Track which inputs are currently activated (for button combos)
+	InputMapping::InputSet currentInputs;
+	// Track inputs during the current mapping session
+	InputMapping::InputSet detectionInputs;
+	// Track which keys are currently pressed
+	std::list<DreamcastKey> currentKeys;
+
+	class DetectingAxis
+	{
+	public:
+		enum NormalizedAxisValue {
+			Unknown, Negative, Zero, Positive
+		};
+
+		DetectingAxis() = default;
+		DetectingAxis(int value) : DetectingAxis() {
+			setValue(value);
+		}
+
+		void setValue(int value)
+		{
+			NormalizedAxisValue nv = Unknown;
+			if (value <= -AXIS_ACTIVATION_VALUE)
+				nv = Negative;
+			else if (value >= AXIS_ACTIVATION_VALUE)
+				nv = Positive;
+			else if (value >= -AXIS_DEACTIVATION_VALUE && value <= AXIS_DEACTIVATION_VALUE)
+				nv = Zero;
+			if (nv == Unknown)
+				return;
+
+			if (detected) {
+				if (nv == start)
+					released = true;
+			}
+			else if (start == Unknown) {
+				start = nv;
+			}
+			else if (nv != start)
+			{
+				end = nv;
+				if (start == Zero || (end != Zero && start != end))
+					detected = true;
+			}
+		}
+
+		NormalizedAxisValue start = Unknown;
+		NormalizedAxisValue end = Unknown;
+		bool detected = false;
+		bool released = false;
+	};
+	std::unordered_map<u32, DetectingAxis> detectingAxes;
 
 	enum DigAnalog {
 		DIGANA_LEFT   = 1 << 0,
@@ -186,14 +263,14 @@ private:
 
 	std::string _api_name;
 	int _maple_port;
-	bool _detecting_button = false;
-	bool _detecting_axis = false;
+	bool _detecting_combo = false;  // For button combination detection
 	u64 _detection_start_time = 0;
-	input_detected_cb _input_detected;
+	input_detected_cb _input_detected = nullptr;
+	ButtonListener buttonListener = nullptr;
 	bool _remappable;
 	bool _is_registered = false;
 	u32 digitalToAnalogState[4];
-	std::map<DreamcastKey, int> lastAxisValue[4];
+	std::unordered_map<DreamcastKey, int> lastAxisValue[4];
 	bool perGameMapping = false;
 	bool instanceMapping = false;
 

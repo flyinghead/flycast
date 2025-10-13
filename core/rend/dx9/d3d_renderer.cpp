@@ -1032,7 +1032,7 @@ bool D3DRenderer::Render()
 	matrices.CalcMatrices(&pvrrc, width, height);
 	// infamous DX9 half-pixel viewport shift
 	// https://docs.microsoft.com/en-us/windows/win32/direct3d9/directly-mapping-texels-to-pixels
-	glm::mat4 normalMat = glm::translate(glm::vec3(1.f / vpWidth, 1.f / vpHeight, 0)) * matrices.GetNormalMatrix();
+	glm::mat4 normalMat = glm::translate(glm::vec3(-1.f / vpWidth, 1.f / vpHeight, 0)) * matrices.GetNormalMatrix();
 	rc = SUCCEEDED(device->SetVertexShaderConstantF(0, &normalMat[0][0], 4));
 	verify(rc);
 
@@ -1116,27 +1116,24 @@ bool D3DRenderer::Render()
 	dithering = config::EmulateFramebuffer && pvrrc.fb_W_CTRL.fb_dither && pvrrc.fb_W_CTRL.fb_packmode <= 3;
 	if (dithering)
 	{
-		float ditherColorMax[4];
+		float ditherDivisor[4] { 0.f, 0.f, 0.f, 1.f };
 		switch (pvrrc.fb_W_CTRL.fb_packmode)
 		{
 		case 0: // 0555 KRGB 16 bit
 		case 3: // 1555 ARGB 16 bit
-			ditherColorMax[0] = ditherColorMax[1] = ditherColorMax[2] = 31.f;
-			ditherColorMax[3] = 255.f;
+			ditherDivisor[0] = ditherDivisor[1] = ditherDivisor[2] = 2.f;
 			break;
 		case 1: // 565 RGB 16 bit
-			ditherColorMax[0] = ditherColorMax[2] = 31.f;
-			ditherColorMax[1] = 63.f;
-			ditherColorMax[3] = 255.f;
+			ditherDivisor[0] = ditherDivisor[2] = 2.f;
+			ditherDivisor[1] = 4.f;
 			break;
 		case 2: // 4444 ARGB 16 bit
-			ditherColorMax[0] = ditherColorMax[1]
-				= ditherColorMax[2] = ditherColorMax[3] = 15.f;
+			ditherDivisor[0] = ditherDivisor[1] = ditherDivisor[2] = 1.f;
 			break;
 		default:
 			break;
 		}
-		device->SetPixelShaderConstantF(8, ditherColorMax, 1);
+		device->SetPixelShaderConstantF(8, ditherDivisor, 1);
 	}
 
 	devCache.SetRenderState(D3DRS_ZENABLE, D3DZB_TRUE);
@@ -1219,13 +1216,10 @@ void D3DRenderer::displayFramebuffer()
 {
 	devCache.SetRenderState(D3DRS_SCISSORTESTENABLE, FALSE);
 	device->ColorFill(backbuffer, 0, D3DCOLOR_ARGB(255, VO_BORDER_COL._red, VO_BORDER_COL._green, VO_BORDER_COL._blue));
-	float screenAR = (float)settings.display.width / settings.display.height;
+	
 	int dx = 0;
 	int dy = 0;
-	if (aspectRatio > screenAR)
-		dy = (int)roundf(settings.display.height * (1 - screenAR / aspectRatio) / 2.f);
-	else
-		dx = (int)roundf(settings.display.width * (1 - aspectRatio / screenAR) / 2.f);
+	getWindowboxDimensions(settings.display.width, settings.display.height, aspectRatio, dx, dy, config::Rotate90);
 
 	float shiftX, shiftY;
 	getVideoShift(shiftX, shiftY);
@@ -1234,7 +1228,7 @@ void D3DRenderer::displayFramebuffer()
 		RECT rs { 0, 0, (long)width, (long)height };
 		RECT rd { dx, dy, settings.display.width - dx, settings.display.height - dy };
 		device->StretchRect(framebufferSurface, &rs, backbuffer, &rd,
-				config::TextureFiltering == 1 ? D3DTEXF_POINT : D3DTEXF_LINEAR);	// This can fail if window is minimized
+				config::LinearInterpolation ? D3DTEXF_LINEAR : D3DTEXF_POINT);	// This can fail if window is minimized
 	}
 	else
 	{
@@ -1244,8 +1238,8 @@ void D3DRenderer::displayFramebuffer()
 		device->SetRenderState(D3DRS_ZENABLE, FALSE);
 		device->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
 		device->SetRenderState(D3DRS_ALPHATESTENABLE, FALSE);
-		device->SetSamplerState(0, D3DSAMP_MINFILTER, config::TextureFiltering == 1 ? D3DTEXF_POINT : D3DTEXF_LINEAR);
-		device->SetSamplerState(0, D3DSAMP_MAGFILTER, config::TextureFiltering == 1 ? D3DTEXF_POINT : D3DTEXF_LINEAR);
+		device->SetSamplerState(0, D3DSAMP_MINFILTER, config::LinearInterpolation ? D3DTEXF_LINEAR : D3DTEXF_POINT);
+		device->SetSamplerState(0, D3DSAMP_MAGFILTER, config::LinearInterpolation ? D3DTEXF_LINEAR : D3DTEXF_POINT);
 
 		glm::mat4 identity = glm::identity<glm::mat4>();
 		glm::mat4 projection = glm::translate(glm::vec3(-1.f / settings.display.width, 1.f / settings.display.height, 0));

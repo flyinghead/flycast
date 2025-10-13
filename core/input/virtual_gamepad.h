@@ -31,8 +31,8 @@ public:
 		input_mapper = std::make_shared<IdentityInputMapping>();
 		// hasAnalogStick = true; // TODO has an analog stick but input mapping isn't persisted
 
-		leftTrigger = DC_AXIS_LT;
-		rightTrigger = DC_AXIS_RT;
+		input_mapper->addTrigger(DC_AXIS_LT, false);
+		input_mapper->addTrigger(DC_AXIS_RT, false);
 	}
 
 	bool is_virtual_gamepad() override {
@@ -83,10 +83,10 @@ public:
 		if (handleButtonInput(buttonState, kcode, pressed))
 			return;
 		if (kcode == DC_AXIS_LT) {
-			gamepad_axis_input(DC_AXIS_LT, pressed ? 0x7fff : 0);
+			gamepad_axis_input(DC_AXIS_LT, pressed ? 32767 : -32768);
 		}
 		else if (kcode == DC_AXIS_RT) {
-			gamepad_axis_input(DC_AXIS_RT, pressed ? 0x7fff : 0);
+			gamepad_axis_input(DC_AXIS_RT, pressed ? 32767 : -32768);
 		}
 		else if (kcode == EMU_BTN_SRVMODE) {
 			if (pressed)
@@ -94,10 +94,13 @@ public:
 		}
 		else
 		{
-			if (pressed)
-				buttonState |= kcode;
-			else
-				buttonState &= ~kcode;
+			if (kcode <= DC_BTN_BITMAPPED_LAST)
+			{
+				if (pressed)
+					buttonState |= kcode;
+				else
+					buttonState &= ~kcode;
+			}
 			if ((kcode & (DC_DPAD_LEFT | DC_DPAD_RIGHT)) != 0
 				&& (kcode & (DC_DPAD_UP | DC_DPAD_DOWN)) != 0)
 			{
@@ -105,7 +108,10 @@ public:
 				gamepad_btn_input(kcode & (DC_DPAD_LEFT | DC_DPAD_RIGHT), pressed);
 				gamepad_btn_input(kcode & (DC_DPAD_UP | DC_DPAD_DOWN), pressed);
 			}
-			else {
+			else
+			{
+				if (kcode == EMU_BTN_FFORWARD)
+					previousFastForward = pressed;
 				gamepad_btn_input(kcode, pressed);
 			}
 		}

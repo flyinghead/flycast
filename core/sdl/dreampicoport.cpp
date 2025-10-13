@@ -19,7 +19,7 @@
 
 #include "dreampicoport.h"
 
-#ifdef USE_DREAMCASTCONTROLLER
+#ifdef USE_DREAMLINK_DEVICES
 #include "hw/maple/maple_devs.h"
 #include "ui/gui.h"
 #include <cfg/option.h>
@@ -35,6 +35,8 @@
 #include <mutex>
 #include <condition_variable>
 #include <atomic>
+#include <locale>
+#include <codecvt>
 
 #if defined(__linux__) || (defined(__APPLE__) && defined(TARGET_OS_MAC))
 #include <dirent.h>
@@ -401,7 +403,6 @@ private:
 		}
 
 		std::vector<uint32_t> words;
-		bool valid = false;
 		const char* iter = response.c_str();
 		const char* eol = iter + response.size();
 
@@ -427,12 +428,8 @@ private:
 				}
 
 				// Invalid if a partial word was given
-				valid = ((i == 4) || (i == 0));
-
 				if (i == 4)
-				{
 					words.push_back(word);
-				}
 			}
 		}
 		else
@@ -470,12 +467,8 @@ private:
 				}
 
 				// Invalid if a partial word was given
-				valid = ((i == 8) || (i == 0));
-
 				if (i == 8)
-				{
 					words.push_back(word);
-				}
 			}
 		}
 
@@ -644,10 +637,20 @@ DreamPicoPort::DreamPicoPort(int bus, int joystick_idx, SDL_Joystick* sdl_joysti
 	(void)SDL_JoystickGetDeviceInstanceID(joystick_idx);
 #endif
 	determineHardwareBus(joystick_idx, sdl_joystick);
+
+	unique_id.clear();
+	if (!is_hardware_bus_implied && !serial_number.empty()) {
+		// Locking to name, which includes A-D, plus serial number will ensure correct enumeration every time
+		unique_id = std::string("sdl_") + getName("") + std::string("_") + serial_number;
+	}
 }
 
 DreamPicoPort::~DreamPicoPort() {
 	disconnect();
+}
+
+bool DreamPicoPort::isForPhysicalController() {
+	return true;
 }
 
 bool DreamPicoPort::send(const MapleMsg& msg) {
@@ -681,13 +684,25 @@ int DreamPicoPort::getBus() const {
 
 u32 DreamPicoPort::getFunctionCode(int forPort) const {
 	u32 mask = 0;
-	if (peripherals.size() > forPort) {
+	if ((int)peripherals.size() > forPort) {
 		for (const auto& peripheral : peripherals[forPort]) {
 			mask |= peripheral[0];
 		}
 	}
 	// swap bytes to get the correct function code
 	return SWAP32(mask);
+}
+
+std::array<u32, 3> DreamPicoPort::getFunctionDefinitions(int forPort) const {
+	std::array<u32, 3> arr{0, 0, 0};
+	if ((int)peripherals.size() > forPort) {
+		std::size_t idx = 0;
+		for (const auto& peripheral : peripherals[forPort]) {
+			arr[idx++] = SWAP32(peripheral[1]);
+			if (idx >= 3) break;
+		}
+	}
+	return arr;
 }
 
 int DreamPicoPort::getDefaultBus() const {
@@ -699,17 +714,70 @@ int DreamPicoPort::getDefaultBus() const {
 	}
 }
 
+void DreamPicoPort::setDefaultMapping(const std::shared_ptr<InputMapping>& mapping) const {
+	// Since this is a real DC controller, no deadzone adjustment is needed
+	mapping->dead_zone = 0.0f;
+	// Map the things not set by SDL
+	mapping->set_button(DC_BTN_C, 2);
+	mapping->set_button(DC_BTN_Z, 5);
+	mapping->set_button(DC_BTN_D, 10);
+	mapping->set_button(DC_DPAD2_UP, 9);
+	mapping->set_button(DC_DPAD2_DOWN, 8);
+	mapping->set_button(DC_DPAD2_LEFT, 7);
+	mapping->set_button(DC_DPAD2_RIGHT, 6);
+}
+
+const char *DreamPicoPort::getButtonName(u32 code) const {
+	switch (code) {
+		// Coincides with buttons setup in setDefaultMapping
+		case 2: return "C";
+		case 5: return "Z";
+		case 10: return "D";
+		case 9: return "DPad2 Up";
+		case 8: return "DPad2 Down";
+		case 7: return "DPad2 Left";
+		case 6: return "DPad2 Right";
+
+		// These buttons are normally not physically accessible, but are mapped on DreamPicoPort
+		case 12: return "VMU1 A";
+		case 15: return "VMU1 B";
+		case 16: return "VMU1 Up";
+		case 17: return "VMU1 Down";
+		case 18: return "VMU1 Left";
+		case 19: return "VMU1 Right";
+
+		default: return nullptr; // no override
+	}
+}
+
+std::string DreamPicoPort::getUniqueId() const {
+	return unique_id;
+}
+
 void DreamPicoPort::changeBus(int newBus) {
 	software_bus = newBus;
 }
 
 std::string DreamPicoPort::getName() const {
+	return getName(" ");
+}
+
+std::string DreamPicoPort::getName(std::string separator) const {
 	std::string name = "DreamPicoPort";
 	if (!is_hardware_bus_implied && !is_single_device) {
 		const char portChar = ('A' + hardware_bus);
-		name += " " + std::string(1, portChar);
+		name += separator + std::string(1, portChar);
 	}
 	return name;
+}
+
+bool DreamPicoPort::needsRefresh() {
+	// TODO: implementing this method may also help to support hot plugging of VMUs/rumble packs here.
+	return false;
+}
+
+bool DreamPicoPort::isConnected() {
+	return connection_established;
 }
 
 void DreamPicoPort::connect() {
@@ -813,6 +881,13 @@ bool DreamPicoPort::isSingleDevice() const {
 
 void DreamPicoPort::determineHardwareBus(int joystick_idx, SDL_Joystick* sdl_joystick) {
 	// This function determines what bus index to use when communicating with the hardware.
+
+	// Set the serial number if found by SDL Joystick
+	const char* joystick_serial = SDL_JoystickGetSerial(sdl_joystick);
+	if (joystick_serial) {
+		serial_number = joystick_serial;
+	}
+
 #if defined(_WIN32)
 	// This only works in Windows because the joystick_path is not given in other OSes
 	const char* joystick_name = SDL_JoystickName(sdl_joystick);
@@ -820,14 +895,16 @@ void DreamPicoPort::determineHardwareBus(int joystick_idx, SDL_Joystick* sdl_joy
 
 	struct SDL_hid_device_info* devs = SDL_hid_enumerate(VID, PID);
 	if (devs) {
+		struct SDL_hid_device_info* my_dev = nullptr;
+
 		if (!devs->next) {
 			// Only single device found, so this is simple (host-1p firmware used)
 			hardware_bus = 0;
 			is_hardware_bus_implied = false;
 			is_single_device = true;
+			my_dev = devs;
 		} else {
 			struct SDL_hid_device_info* it = devs;
-			struct SDL_hid_device_info* my_dev = nullptr;
 
 			if (joystick_path)
 			{
@@ -875,8 +952,18 @@ void DreamPicoPort::determineHardwareBus(int joystick_idx, SDL_Joystick* sdl_joy
 				}
 			}
 		}
+
+		// Set serial number if found in SDL_hid
+		if (my_dev) {
+			if (serial_number.empty() && my_dev->serial_number) {
+				std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
+				serial_number = converter.to_bytes(my_dev->serial_number);
+			}
+		}
+
 		SDL_hid_free_enumeration(devs);
 	}
+
 #endif
 
 	if (hardware_bus < 0) {

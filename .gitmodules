@@ -44,3 +44,12 @@
 [submodule "core/deps/asio"]
 	path = core/deps/asio
 	url = https://github.com/flyinghead/asio.git
+[submodule "core/deps/xbyak"]
+	path = core/deps/xbyak
+	url = https://github.com/herumi/xbyak.git
+[submodule "core/deps/libjuice"]
+	path = core/deps/libjuice
+	url = https://github.com/paullouisageneau/libjuice.git
+[submodule "core/deps/websocketpp"]
+	path = core/deps/websocketpp
+	url = https://github.com/zaphoyd/websocketpp.git

@@ -102,15 +102,15 @@ void scaleElement(Element element, float factor);
 
 #else
 
-void show() {}
-void hide() {}
-void draw() {}
-void startEditing() {}
-void pauseEditing() {}
-void displayCommands() {}
-void applyUiScale() {}
-void loadImage(const std::string& path) {}
-void startGame() {}
+static inline void show() {}
+static inline void hide() {}
+static inline void draw() {}
+static inline void startEditing() {}
+static inline void pauseEditing() {}
+static inline void displayCommands() {}
+static inline void applyUiScale() {}
+static inline void loadImage(const std::string& path) {}
+static inline void startGame() {}
 
 #endif
 }	// namespace vgamepad

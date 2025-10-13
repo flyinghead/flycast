@@ -392,7 +392,7 @@ void PipelineManager::CreatePipeline(u32 listType, bool sortTriangles, const Pol
 	vk::PipelineDynamicStateCreateInfo pipelineDynamicStateCreateInfo(vk::PipelineDynamicStateCreateFlags(), 2, dynamicStates);
 
 	bool divPosZ = !settings.platform.isNaomi2() && config::NativeDepthInterpolation;
-	vk::ShaderModule vertex_module = shaderManager->GetVertexShader(VertexShaderParams { pp.pcw.Gouraud == 1, pp.isNaomi2(), divPosZ });
+	vk::ShaderModule vertex_module = shaderManager->GetVertexShader(VertexShaderParams { pp.pcw.Gouraud == 1, pp.isNaomi2(), divPosZ, pp.isNaomi2() && pp.pcw.Texture == 1 });
 	FragmentShaderParams params = {};
 	params.alphaTest = listType == ListType_Punch_Through;
 	params.bumpmap = pp.tcw.PixelFmt == PixelBumpMap;

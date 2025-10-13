@@ -23,6 +23,7 @@
 void sdl_setTorque(int, float);
 void sdl_setDamper(int, float, float);
 void sdl_setSpring(int, float, float);
+void sdl_setSine(int, float, float, u32);
 void sdl_stopHaptic(int);
 #endif
 
@@ -43,6 +44,12 @@ inline static void setDamper(int port, float param, float speed) {
 inline static void setSpring(int port, float saturation, float speed) {
 #ifdef USE_SDL
 	sdl_setSpring(port, saturation, speed);
+#endif
+}
+
+inline static void setSine(int port, float power, float frequency, u32 duration_ms) {
+#ifdef USE_SDL
+	sdl_setSine(port, power, frequency, duration_ms);
 #endif
 }
 

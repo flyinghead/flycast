@@ -32,13 +32,13 @@ struct GameMedia
 	std::string path;		// Full path to rom. May be an encoded uri
 	std::string fileName;	// Last component of the path, decoded
 	std::string gameName;	// for arcade games only, description from the rom list
+	bool arcade = false;	// Arcade game (naomi, atomiswave, system sp, ...)
 	bool device = false;	// Corresponds to a physical cdrom device
 };
 
 class GameScanner
 {
 	std::vector<GameMedia> game_list;
-	std::vector<GameMedia> arcade_game_list;
 	std::mutex mutex;
 	std::mutex threadMutex;
 	std::unique_ptr<std::thread> scan_thread;
@@ -49,7 +49,7 @@ class GameScanner
 	using LockGuard = std::lock_guard<std::mutex>;
 
 	void insert_game(const GameMedia& game);
-	void insert_arcade_game(const GameMedia& game);
+	void insert_arcade_game(GameMedia game);
 	void add_game_directory(const std::string& path);
 
 public:

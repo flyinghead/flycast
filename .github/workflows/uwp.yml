@@ -7,6 +7,10 @@ jobs:
     name: UWP
     runs-on: windows-latest
 
+    strategy:
+      matrix:
+        arch: [ Win32, x64, ARM64 ]
+
     steps:
       - uses: actions/checkout@v4
         with:
@@ -15,7 +19,7 @@ jobs:
 
       - name: CMake
         run: |
-          cmake -B build -DCMAKE_BUILD_TYPE=Release -G "Visual Studio 17 2022" -A x64 -DCMAKE_SYSTEM_NAME=WindowsStore -DCMAKE_SYSTEM_VERSION=10.0.22000.0
+          cmake -B build -DCMAKE_BUILD_TYPE=Release -G "Visual Studio 17 2022" -A ${{ matrix.arch }} -DCMAKE_SYSTEM_NAME=WindowsStore -DCMAKE_SYSTEM_VERSION=10.0.22000.0
           cmake --build build --config Release -- /m
         shell: cmd
 
@@ -24,7 +28,7 @@ jobs:
       - name: Package app
         run: |
           mkdir build\artifact
-          cd build\AppPackages\flycast\flycast_*_x64_Test
+          cd build\AppPackages\flycast\flycast_*_Test
           mkdir tmp
           ren *.msix flycast.msix
           makeappx.exe unpack /p .\flycast.msix /d tmp
@@ -37,7 +41,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: flycast-uwp
+          name: flycast-uwp-${{ matrix.arch }}
           path: build/artifact
 
       - name: Setup Rclone
@@ -48,4 +52,4 @@ jobs:
       - name: Upload to S3
         run: rclone copy build/artifact scaleway:flycast-builds/xbox/${GITHUB_REF#refs/}-$GITHUB_SHA
         shell: bash
-        if: github.repository == 'flyinghead/flycast' && github.event_name == 'push'
+        if: github.repository == 'flyinghead/flycast' && github.event_name == 'push' && matrix.arch == 'x64'

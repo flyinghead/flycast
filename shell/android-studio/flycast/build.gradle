@@ -79,6 +79,8 @@ android {
         resources {
             excludes += ['META-INF/DEPENDENCIES']
         }
+        // unused and not 16kb-page compatible
+        jniLibs.excludes += 'lib/*/libz.so'
     }
     packaging {
         // This is necessary for libadrenotools custom driver loading

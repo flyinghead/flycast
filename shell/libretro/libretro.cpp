@@ -109,7 +109,6 @@ extern void retro_audio_flush_buffer(void);
 extern void retro_audio_upload(void);
 
 std::string arcadeFlashPath;
-static bool boot_to_bios;
 
 static bool devices_need_refresh = false;
 static int device_type[4] = {-1,-1,-1,-1};
@@ -305,6 +304,8 @@ void retro_set_environment(retro_environment_t cb)
 			{ 0 },
 	};
 	environ_cb(RETRO_ENVIRONMENT_SET_CONTROLLER_INFO, (void*)ports);
+	const bool b = true;
+	environ_cb(RETRO_ENVIRONMENT_SET_SUPPORT_NO_GAME, (void *)&b);
 }
 
 static void retro_keyboard_event(bool down, unsigned keycode, uint32_t character, uint16_t key_modifiers);
@@ -433,8 +434,6 @@ static bool set_variable_visibility(void)
 
 		// Show/hide Dreamcast options
 		option_display.visible = platformIsDreamcast;
-		option_display.key = CORE_OPTION_NAME "_boot_to_bios";
-		environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
 		option_display.key = CORE_OPTION_NAME "_hle_bios";
 		environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
 		option_display.key = CORE_OPTION_NAME "_gdrom_fast_loading";
@@ -824,17 +823,6 @@ static void update_variables(bool first_startup)
 
 		DEBUG_LOG(COMMON, "Got height: %u", (int)config::RenderResolution);
 	}
-
-	var.key = CORE_OPTION_NAME "_boot_to_bios";
-	if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-	{
-		if (!strcmp(var.value, "enabled"))
-			boot_to_bios = true;
-		else if (!strcmp(var.value, "disabled"))
-			boot_to_bios = false;
-	}
-	else
-		boot_to_bios = false;
 
 	var.key = CORE_OPTION_NAME "_alpha_sorting";
 	var.value = nullptr;
@@ -1993,6 +1981,7 @@ static bool set_opengl_hw_render(u32 preferred)
 	if (config::RendererType == RenderType::OpenGL_OIT || config::RendererType == RenderType::DirectX11_OIT || config::RendererType == RenderType::Vulkan_OIT)
 	{
 		config::RendererType = RenderType::OpenGL_OIT;
+#ifndef HAVE_OPENGLES
 		params.context_type = (retro_hw_context_type)preferred;
 		if (preferred == RETRO_HW_CONTEXT_OPENGL)
 		{
@@ -2009,6 +1998,7 @@ static bool set_opengl_hw_render(u32 preferred)
 			params.major = 4;
 			params.minor = 3;
 		}
+#endif
 	}
 	else
 #endif
@@ -2107,14 +2097,26 @@ bool retro_load_game(const struct retro_game_info *game)
 	}
 #endif
 
-	NOTICE_LOG(BOOT, "retro_load_game: %s", game->path);
+	bool boot_to_bios = false;
+	if (game != nullptr && game->path != nullptr && game->path[0] != '\0')
+	{
+		NOTICE_LOG(BOOT, "retro_load_game: %s", game->path);
 
-	extract_basename(g_base_name, game->path, sizeof(g_base_name));
-	extract_directory(game_dir, game->path, sizeof(game_dir));
+		extract_basename(g_base_name, game->path, sizeof(g_base_name));
+		extract_directory(game_dir, game->path, sizeof(game_dir));
 
-	// Storing rom dir for later use
-	snprintf(g_roms_dir, sizeof(g_roms_dir), "%s%c", game_dir, slash);
-
+		// Storing rom dir for later use
+		snprintf(g_roms_dir, sizeof(g_roms_dir), "%s%c", game_dir, slash);
+	}
+	else
+	{
+		NOTICE_LOG(BOOT, "retro_load_game: (no content)");
+		g_base_name[0] = '\0';
+		game_dir[0] = '\0';
+		g_roms_dir[0] = '\0';
+		settings.platform.system = DC_PLATFORM_DREAMCAST;
+		boot_to_bios = true;
+	}
 	if (environ_cb(RETRO_ENVIRONMENT_GET_RUMBLE_INTERFACE, &rumble) && log_cb)
 		log_cb(RETRO_LOG_DEBUG, "Rumble interface supported!\n");
 
@@ -2182,18 +2184,9 @@ bool retro_load_game(const struct retro_game_info *game)
 		}
 	}
 
-	if (game->path[0] == '\0')
-	{
-		if (settings.platform.isConsole())
-			boot_to_bios = true;
-		else
-			return false;
-	}
-	if (settings.platform.isArcade())
-		boot_to_bios = false;
-
-	if (boot_to_bios)
+	if (boot_to_bios) {
 		game_data.clear();
+	}
 	// if an m3u file was loaded, disk_paths will already be populated so load the game from there
 	else if (disk_paths.size() > 0)
 	{

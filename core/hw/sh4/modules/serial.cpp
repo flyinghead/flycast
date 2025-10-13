@@ -475,9 +475,9 @@ struct PTYPipe : public SerialPort::Pipe
 
 	void init()
 	{
+#if defined(__unix__) || defined(__APPLE__)
 		if (config::SerialConsole && config::SerialPTY && tty == 1)
 		{
-#if defined(__unix__) || defined(__APPLE__)
 			tty = open("/dev/ptmx", O_RDWR | O_NDELAY | O_NOCTTY | O_NONBLOCK);
 			if (tty < 0)
 			{
@@ -490,7 +490,10 @@ struct PTYPipe : public SerialPort::Pipe
 				unlockpt(tty);
 				NOTICE_LOG(BOOT, "Pseudoterminal is at %s", ptsname(tty));
 			}
+		}
 #elif defined(_WIN32)
+		if (config::SerialConsole && tty == 1)
+		{
 			if (AllocConsole())
 			{
 				SetConsoleTitle(TEXT("Flycast Serial Output"));
@@ -505,8 +508,8 @@ struct PTYPipe : public SerialPort::Pipe
 			{
 				ERROR_LOG(BOOT, "Cannot AllocConsole(): errno %d", GetLastError());
 			}
-#endif
 		}
+#endif
 		SCIFSerialPort::Instance().setPipe(this);
 	}
 

@@ -445,21 +445,19 @@ void DX11Renderer::setupPixelShaderConstants()
 		{
 		case 0: // 0555 KRGB 16 bit
 		case 3: // 1555 ARGB 16 bit
-			pixelConstants.ditherColorMax[0] = pixelConstants.ditherColorMax[1] = pixelConstants.ditherColorMax[2] = 31.f;
-			pixelConstants.ditherColorMax[3] = 255.f;
-			break;
+			pixelConstants.ditherDivisor[0] = pixelConstants.ditherDivisor[1] = pixelConstants.ditherDivisor[2] = 2.f;
+		break;
 		case 1: // 565 RGB 16 bit
-			pixelConstants.ditherColorMax[0] = pixelConstants.ditherColorMax[2] = 31.f;
-			pixelConstants.ditherColorMax[1] = 63.f;
-			pixelConstants.ditherColorMax[3] = 255.f;
+			pixelConstants.ditherDivisor[0] = pixelConstants.ditherDivisor[2] = 2.f;
+			pixelConstants.ditherDivisor[1] = 4.f;
 			break;
 		case 2: // 4444 ARGB 16 bit
-			pixelConstants.ditherColorMax[0] = pixelConstants.ditherColorMax[1]
-				= pixelConstants.ditherColorMax[2] = pixelConstants.ditherColorMax[3] = 15.f;
+			pixelConstants.ditherDivisor[0] = pixelConstants.ditherDivisor[1] = pixelConstants.ditherDivisor[2] = 1.f;
 			break;
 		default:
 			break;
 		}
+		pixelConstants.ditherDivisor[3] = 1.f;
 	}
 
 	D3D11_MAPPED_SUBRESOURCE mappedSubres;
@@ -561,14 +559,12 @@ void DX11Renderer::displayFramebuffer()
 		std::swap(shiftX, shiftY);
 		renderAR = 1 / renderAR;
 	}
-	float screenAR = (float)outwidth / outheight;
+	
 	int dy = 0;
 	int dx = 0;
-	if (renderAR > screenAR)
-		dy = (int)roundf(outheight * (1 - screenAR / renderAR) / 2.f);
-	else
-		dx = (int)roundf(outwidth * (1 - renderAR / screenAR) / 2.f);
-
+	// handles the rotation on its own, so never pass config::Rotate90
+	getWindowboxDimensions(outwidth, outheight, renderAR, dx, dy, false);
+	
 	float x = (float)dx;
 	float y = (float)dy;
 	float w = (float)(outwidth - 2 * dx);
@@ -583,7 +579,7 @@ void DX11Renderer::displayFramebuffer()
 	x += shiftX;
 	y += shiftY;
 	deviceContext->OMSetBlendState(blendStates.getState(false), nullptr, 0xffffffff);
-	quad->draw(fbTextureView, samplers->getSampler(config::TextureFiltering != 1), nullptr, x, y, w, h, config::Rotate90);
+	quad->draw(fbTextureView, samplers->getSampler(config::LinearInterpolation), nullptr, x, y, w, h, config::Rotate90);
 #endif
 }
 

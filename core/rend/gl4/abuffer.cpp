@@ -47,7 +47,7 @@ static const char *final_shader_source = R"(
 layout(binding = 0) uniform sampler2D tex;
 uniform float shade_scale_factor;
 #if DITHERING == 1
-uniform vec4 ditherColorMax;
+uniform vec4 ditherDivisor;
 #endif
 
 out vec4 FragColor;
@@ -65,7 +65,7 @@ int fillAndSortFragmentArray(ivec2 coords)
 	idx = pixels[idx].next;
 	for (; idx != EOL && count < MAX_PIXELS_PER_FRAGMENT; count++)
 	{
-		const Pixel p = pixels[idx];
+		Pixel p = pixels[idx];
 		int j = count - 1;
 		Pixel jp = pixels[pixel_list[j]];
 		while (j >= 0
@@ -90,13 +90,13 @@ vec4 resolveAlphaBlend(ivec2 coords) {
 	// Copy and sort fragments into a local array
 	int num_frag = fillAndSortFragmentArray(coords);
 	
-	vec4 finalColor = texture(tex, gl_FragCoord.xy / textureSize(tex, 0));
+	vec4 finalColor = texture(tex, gl_FragCoord.xy / vec2(textureSize(tex, 0)));
 	vec4 secondaryBuffer = vec4(0.0); // Secondary accumulation buffer
 	
 	for (int i = 0; i < num_frag; i++)
 	{
-		const Pixel pixel = pixels[pixel_list[i]];
-		const PolyParam pp = tr_poly_params[getPolyNumber(pixel)];
+		Pixel pixel = pixels[pixel_list[i]];
+		PolyParam pp = tr_poly_params[getPolyNumber(pixel)];
 		bool area1 = false;
 		bool shadowed = false;
 		if (isShadowed(pixel))
@@ -175,7 +175,7 @@ vec4 resolveAlphaBlend(ivec2 coords) {
 				dstCoef = vec4(1.0 - dstColor.a);
 				break;
 		}
-		const vec4 result = clamp(dstColor * dstCoef + srcColor * srcCoef, 0.0, 1.0);
+		vec4 result = clamp(dstColor * dstCoef + srcColor * srcCoef, 0.0, 1.0);
 		if (getDstSelect(pp, area1))
 			secondaryBuffer = result;
 		else
@@ -183,16 +183,14 @@ vec4 resolveAlphaBlend(ivec2 coords) {
 	}
 #if DITHERING == 1
 	float ditherTable[16] = float[](
-		 0.9375,  0.1875,  0.75,  0.,   
-		 0.4375,  0.6875,  0.25,  0.5,
-		 0.8125,  0.0625,  0.875, 0.125,
-		 0.3125,  0.5625,  0.375, 0.625	
+		5., 13.,  7., 15.,
+		9.,  1., 11.,  3.,
+		6., 14.,  4., 12.,
+		10., 2.,  8.,  0.
 	);
 	float r = ditherTable[int(mod(gl_FragCoord.y, 4.)) * 4 + int(mod(gl_FragCoord.x, 4.))];
-	// 31 for 5-bit color, 63 for 6 bits, 15 for 4 bits
-	finalColor += r / ditherColorMax;
-	// avoid rounding
-	finalColor = floor(finalColor * 255.) / 255.;
+	vec4 dv = vec4(r, r, r, 1.) / ditherDivisor;
+	finalColor = clamp(floor(finalColor * 255. + dv) / 255., 0., 1.);
 #endif
 	
 	return finalColor;
@@ -204,7 +202,7 @@ void main(void)
 	ivec2 coords = ivec2(gl_FragCoord.xy);
 	// Compute and output final color for the frame buffer
 	// Visualize the number of layers in use
-	//FragColor = vec4(float(fillAndSortFragmentArray(coords)) / MAX_PIXELS_PER_FRAGMENT * 4, 0, 0, 1);
+	//FragColor = vec4(float(fillAndSortFragmentArray(coords)) / float(MAX_PIXELS_PER_FRAGMENT * 4), 0, 0, 1);
 	FragColor = resolveAlphaBlend(coords);
 
 	// Reset pointers
@@ -245,8 +243,8 @@ void main(void)
 	int list_len = 0;
 	while (idx != EOL && list_len < MAX_PIXELS_PER_FRAGMENT)
 	{
-		const Pixel pixel = pixels[idx];
-		const PolyParam pp = tr_poly_params[getPolyNumber(pixel)];
+		Pixel pixel = pixels[idx];
+		PolyParam pp = tr_poly_params[getPolyNumber(pixel)];
 		if (getShadowEnable(pp))
 		{
 #if MV_MODE == MV_XOR
@@ -307,6 +305,7 @@ static void compileFinalAndModVolShaders()
 			OpenGl4Source finalShader;
 			finalShader.addConstant("MAX_PIXELS_PER_FRAGMENT", config::PerPixelLayers)
 					.addConstant("DITHERING", i)
+					.addConstant("DIV_POS_Z", 0)
 					.addSource(ShaderHeader)
 					.addSource(final_shader_source);
 			gl4CompilePipelineShader(&g_abuffer_final_shader[i], finalShader.generate().c_str(), vertexShader.generate().c_str());
@@ -360,7 +359,7 @@ void initABuffer()
 		glcache.BindTexture(GL_TEXTURE_2D, pixels_pointers);
 		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_R32UI, max_image_width, max_image_height, 0, GL_RED_INTEGER, GL_UNSIGNED_INT, 0);
+		glTexStorage2D(GL_TEXTURE_2D, 1, GL_R32UI, max_image_width, max_image_height);
 		glBindImageTexture(4, pixels_pointers, 0, false, 0,  GL_READ_WRITE, GL_R32UI);
 		glCheck();
 	}
@@ -387,7 +386,8 @@ void initABuffer()
 		OpenGl4Source vertexShader;
 		vertexShader.addSource(VertexShaderSource);
 		OpenGl4Source clearShader;
-		clearShader.addSource(ShaderHeader)
+		clearShader.addConstant("DIV_POS_Z", 0)
+				.addSource(ShaderHeader)
 				.addSource(clear_shader_source);
 		gl4CompilePipelineShader(&g_abuffer_clear_shader, clearShader.generate().c_str(), vertexShader.generate().c_str());
 	}
@@ -589,21 +589,19 @@ void renderABuffer(bool lastPass)
 		{
 		case 0: // 0555 KRGB 16 bit
 		case 3: // 1555 ARGB 16 bit
-			gl4ShaderUniforms.ditherColorMax[0] = gl4ShaderUniforms.ditherColorMax[1] = gl4ShaderUniforms.ditherColorMax[2] = 31.f;
-			gl4ShaderUniforms.ditherColorMax[3] = 255.f;
+			gl4ShaderUniforms.ditherDivisor[0] = gl4ShaderUniforms.ditherDivisor[1] = gl4ShaderUniforms.ditherDivisor[2] = 2.f;
 			break;
 		case 1: // 565 RGB 16 bit
-			gl4ShaderUniforms.ditherColorMax[0] = gl4ShaderUniforms.ditherColorMax[2] = 31.f;
-			gl4ShaderUniforms.ditherColorMax[1] = 63.f;
-			gl4ShaderUniforms.ditherColorMax[3] = 255.f;
+			gl4ShaderUniforms.ditherDivisor[0] = gl4ShaderUniforms.ditherDivisor[2] = 2.f;
+			gl4ShaderUniforms.ditherDivisor[1] = 4.f;
 			break;
 		case 2: // 4444 ARGB 16 bit
-			gl4ShaderUniforms.ditherColorMax[0] = gl4ShaderUniforms.ditherColorMax[1]
-				= gl4ShaderUniforms.ditherColorMax[2] = gl4ShaderUniforms.ditherColorMax[3] = 15.f;
+			gl4ShaderUniforms.ditherDivisor[0] = gl4ShaderUniforms.ditherDivisor[1] = gl4ShaderUniforms.ditherDivisor[2] = 1.f;
 			break;
 		default:
 			break;
 		}
+		gl4ShaderUniforms.ditherDivisor[3] = 1.f;
 		gl4ShaderUniforms.Set(&g_abuffer_final_shader[1]);
 	}
 	else {

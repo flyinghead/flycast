@@ -226,13 +226,13 @@ static_assert(sizeof(Sh4Context) == 512, "Invalid Sh4Context size");
 // For other systems we could use PAGE_SIZE, except on windows that has a 64 KB granularity for memory mapping
 #define FPCB_PAD 64_KB
 #endif
-struct alignas(PAGE_SIZE) Sh4RCB
+struct Sh4RCB
 {
 	void* fpcb[FPCB_SIZE];
 	u8 _pad[FPCB_PAD - sizeof(Sh4Context)];
 	Sh4Context cntx;
 };
-static_assert((sizeof(Sh4RCB) % PAGE_SIZE) == 0, "sizeof(Sh4RCB) not multiple of PAGE_SIZE");
+static_assert((sizeof(Sh4RCB) % MAX_PAGE_SIZE) == 0, "sizeof(Sh4RCB) not multiple of MAX_PAGE_SIZE");
 
 extern Sh4RCB* p_sh4rcb;
 #define Sh4cntx (p_sh4rcb->cntx)
