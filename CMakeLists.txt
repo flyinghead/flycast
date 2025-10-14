@@ -1342,7 +1342,6 @@ if(NOT LIBRETRO)
 			shell/android-studio/flycast/src/main/jni/src/android_keyboard.h)
 
 		target_link_libraries(${PROJECT_NAME} PRIVATE android log)
-		target_link_options(${PROJECT_NAME} PRIVATE "-Wl,-z,max-page-size=16384")
 	elseif(APPLE)
 		string(TIMESTAMP YEAR "%Y")
 		string(REGEX MATCH "^[^-]+" TAG_VERSION ${GIT_VERSION})
