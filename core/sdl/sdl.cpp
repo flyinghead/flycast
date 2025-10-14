@@ -79,12 +79,14 @@ static void sdl_open_joystick(int index)
 	try {
 #ifdef __SWITCH__
 		std::shared_ptr<SDLGamepad> gamepad = std::make_shared<SwitchGamepad>(index < MAPLE_PORTS ? index : -1, index, pJoystick);
-#else
+#elif defined(USE_DREAMLINK_DEVICES)
 		std::shared_ptr<SDLGamepad> gamepad;
 		if (DreamLinkGamepad::isDreamcastController(index))
 			gamepad = std::make_shared<DreamLinkGamepad>(index < MAPLE_PORTS ? index : -1, index, pJoystick);
 		else
 			gamepad = std::make_shared<SDLGamepad>(index < MAPLE_PORTS ? index : -1, index, pJoystick);
+#else
+		std::shared_ptr<SDLGamepad> gamepad = std::make_shared<SDLGamepad>(index < MAPLE_PORTS ? index : -1, index, pJoystick);
 #endif
 		SDLGamepad::AddSDLGamepad(gamepad);
 	} catch (const FlycastException& e) {
@@ -668,7 +670,7 @@ bool sdl_recreate_window(u32 flags)
 	window_maximized = cfgLoadBool("window", "maximized", window_maximized);
 	if (window != nullptr)
 		get_window_state();
-	
+
 	// Check if the saved window position is on a valid display, preventing Flycast from opening on a screen no longer pluged in
 	bool validPosition = false;
 	int numDisplays = SDL_GetNumVideoDisplays();
@@ -684,7 +686,7 @@ bool sdl_recreate_window(u32 flags)
 				}
 			}
 		}
-		
+
 		// If position is invalid, reset to primary display, avoiding Flycast from opening in a missing window and not being seen when windowed
 		if (!validPosition) {
 			NOTICE_LOG(COMMON, "Saved window position is not on any connected display, resetting to primary display");

@@ -17,97 +17,27 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
  */
 #pragma once
-#include "dreamlink.h"
 
 #ifdef USE_DREAMLINK_DEVICES
 
-#include <asio.hpp>
-#include <mutex>
+#include "dreamlink.h"
+
+#include <memory>
 
 class DreamConn : public DreamLink
 {
+public:
 	//! Base port of communication to DreamConn
 	static constexpr u16 BASE_PORT = 37393;
-
-	int bus = -1;
-	bool _isForPhysicalController;
-	bool maple_io_connected = false;
-	u8 expansionDevs = 0;
-	asio::ip::tcp::iostream iostream;
-	std::mutex send_mutex;
-
-public:
 	//! DreamConn VID:4457 PID:4443
 	static constexpr const char* VID_PID_GUID = "5744000043440000";
 
-public:
-	DreamConn(int bus, bool isForPhysicalController);
-
-	~DreamConn();
-
-	bool isForPhysicalController() override;
-
-	bool send(const MapleMsg& msg) override;
-
-    bool send(const MapleMsg& txMsg, MapleMsg& rxMsg) override;
-
-private:
-	bool send_no_lock(const MapleMsg& msg);
+protected:
+	DreamConn() = default;
+	virtual ~DreamConn() = default;
 
 public:
-	int getBus() const override {
-		return bus;
-	}
-
-    u32 getFunctionCode(int forPort) const override {
-		if (forPort == 1 && hasVmu()) {
-			return 0x0E000000;
-		}
-		else if (forPort == 2 && hasRumble()) {
-			return 0x00010000;
-		}
-		return 0;
-	}
-
-	std::array<u32, 3> getFunctionDefinitions(int forPort) const override
-	{
-		if (forPort == 1 && hasVmu())
-			// For clock, LCD, storage
-			return std::array<u32, 3>{0x403f7e7e, 0x00100500, 0x00410f00};
-		else if (forPort == 2 && hasRumble())
-			return std::array<u32, 3>{0x00000101, 0, 0};
-		return std::array<u32, 3>{0, 0, 0};
-	}
-
-	bool hasVmu() const {
-		return expansionDevs & 1;
-	}
-
-	bool hasRumble() const {
-		return expansionDevs & 2;
-	}
-
-	void changeBus(int newBus) override;
-
-	std::string getName() const override {
-		return "DreamConn+ / DreamConn S Controller";
-	}
-
-	bool needsRefresh() override;
-
-private:
-	bool updateExpansionDevs();
-
-	bool isSocketDisconnected();
-
-public:
-	bool isConnected() override;
-
-	void connect() override;
-
-	void disconnect() override;
-
-	void gameTermination() override;
+	static std::shared_ptr<DreamConn> create_shared(int bus, bool isForPhysicalController);
 };
 
 #endif // USE_DREAMCASTCONTROLLER

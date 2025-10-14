@@ -18,6 +18,8 @@
  */
 #pragma once
 
+#ifdef USE_DREAMLINK_DEVICES
+
 // This file contains abstraction layer for access to different kinds of remote peripherals.
 // This includes both real Dreamcast controllers, VMUs, rumble packs etc. but also emulated VMUs.
 
@@ -183,3 +185,5 @@ void tearDownDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink);
 
 void registerDreamLinkEvents();
 void unregisterDreamLinkEvents();
+
+#endif // USE_DREAMLINK_DEVICES

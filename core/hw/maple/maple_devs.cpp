@@ -2510,7 +2510,7 @@ bool reconnectDreamLinks()
 		if (useNetworkExpansionDevices[i] && !dreamlink)
 		{
 			bool isForPhysicalController = false;
-			DreamLink::activeDreamLinks[i] = std::make_shared<DreamConn>(i, isForPhysicalController);
+			DreamLink::activeDreamLinks[i] = DreamConn::create_shared(i, isForPhysicalController);
 		}
 		else if (!useNetworkExpansionDevices[i] && dreamlink && !dreamlink->isForPhysicalController())
 		{
