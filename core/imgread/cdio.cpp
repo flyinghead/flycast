@@ -20,6 +20,7 @@
 #ifdef USE_LIBCDIO
 #include "types.h"
 #include "imgread/common.h"
+#include "cfg/cfg.h"
 #include <cstring>
 #include <cdio/cdio.h>
 #include <cdio/logging.h>
@@ -36,6 +37,8 @@ const std::vector<std::string>& getCdromDrives()
 	if (devicesFetched)
 		return cdromDevices;
 	devicesFetched = true;
+	if (cfgLoadBool("config", "HideCdromDrives", false))
+		return cdromDevices;
 	// Set a custom log handler
 	cdio_log_set_handler([](cdio_log_level_t level, const char message[]) {
 		switch (level)
