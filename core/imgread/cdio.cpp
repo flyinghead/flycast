@@ -37,8 +37,10 @@ const std::vector<std::string>& getCdromDrives()
 	if (devicesFetched)
 		return cdromDevices;
 	devicesFetched = true;
+#ifndef LIBRETRO
 	if (cfgLoadBool("config", "HideCdromDrives", false))
 		return cdromDevices;
+#endif
 	// Set a custom log handler
 	cdio_log_set_handler([](cdio_log_level_t level, const char message[]) {
 		switch (level)
