@@ -699,9 +699,9 @@ void Emulator::runInternal()
 		getSh4Executor()->Step();
 		singleStep = false;
 	}
-	else if(stepRangeTo != 0)
+	else if (stepRangeTo != 0)
 	{
-		while (Sh4cntx.pc >= stepRangeFrom && Sh4cntx.pc <= stepRangeTo)
+		while (Sh4cntx.pc >= stepRangeFrom && Sh4cntx.pc < stepRangeTo)
 			getSh4Executor()->Step();
 
 		stepRangeFrom = 0;

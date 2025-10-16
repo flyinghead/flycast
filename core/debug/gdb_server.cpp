@@ -667,25 +667,21 @@ private:
 		if (pkt.rfind("vAttach;", 0) == 0)
 			return { "S05" };
 		else if (pkt.rfind("vCont?", 0) == 0)
-			// supported vCont actions - (c)ontinue, (C)ontinue with signal, (s)tep, (S)tep with signal, (r)ange-step
-			return { "vCont;c;C;s;S;t;r" };
+			// supported vCont actions - (c)ontinue, (s)tep, (r)ange-step
+			return { "vCont;c;s;r" };
 		else if (pkt.rfind("vCont", 0) == 0)
 		{
 			std::string vContCmd = pkt.substr(strlen("vCont;"));
-			std::vector<std::string> replies;
 			switch (vContCmd[0])
 			{
 			case 'c':
-			case 'C':
-				doContinue(vContCmd);
+				doContinue(vContCmd.substr(0, 1));
 				return {};
 			case 's':
 				return { step(EXCEPT_NONE) };
-			case 'S':
-				replies.push_back(step());
-				[[fallthrough]];
 			case 'r':
 			{
+				std::vector<std::string> replies;
 				u32 from, to;
 				if (sscanf(vContCmd.c_str(), "r%x,%x", &from, &to) == 2)
 				{
@@ -753,7 +749,10 @@ private:
 	std::vector<std::string> stepRange(u32 from, u32 to)
 	{
 		try {
-			agent.stepRange(from, to);
+			if (from + 2 >= to)
+				agent.step();
+			else
+				agent.stepRange(from, to);
 			return { "OK", "S05" };
 		} catch (const FlycastException& e) {
 			throw Error(e.what());
