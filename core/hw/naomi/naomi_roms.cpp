@@ -7425,6 +7425,7 @@ const Game Games[] =
         },
 		nullptr,
 		&clubkart_inputs,
+		clubkprz_eeprom_dump,
     },
     {
     	"clubkpzb",
@@ -7457,6 +7458,7 @@ const Game Games[] =
         },
 		nullptr,
 		&clubkart_inputs,
+		clubkprz_eeprom_dump,
     },
     {
     	"clubkpzbp",
@@ -7488,6 +7490,7 @@ const Game Games[] =
         },
 		nullptr,
 		&clubkart_inputs,
+		clubkprz_eeprom_dump,
     },
     {
     	"clubk2k3",
@@ -7557,6 +7560,7 @@ const Game Games[] =
         },
 		nullptr,
 		&clubkart_inputs,
+		clubk2k3_eeprom_dump,
     },
     {
     	"clubk2kpa",
@@ -7594,6 +7598,7 @@ const Game Games[] =
         },
 		nullptr,
 		&clubkart_inputs,
+		clubk2k3_eeprom_dump,
     },
 #ifdef NAOMI_MULTIBOARD
     {

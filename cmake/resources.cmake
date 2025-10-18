@@ -22,6 +22,7 @@ cmrc_add_resources(flycast-resources
         resources/flash/puyomedal.nvmem.zip	# debug: comm and all errors disabled
         resources/flash/unomedal.nvmem.zip	# debug: comm and all errors disabled
         resources/flash/westdrmg.nvmem.zip	# debug: comm and all errors disabled
+        resources/flash/smarinef.nvmem.zip	# standard cabinet
         resources/picture/f355_print_template.png)
 
 cmrc_add_resources(flycast-resources
