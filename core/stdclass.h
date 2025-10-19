@@ -13,8 +13,10 @@
 #include <cassert>
 #include <time.h>
 
-#if defined(__ANDROID__) && (HOST_CPU == CPU_ARM64 || HOST_CPU == CPU_X64)
+#if defined(__ANDROID__)
 #undef PAGE_MASK
+#endif
+#if defined(__ANDROID__) && (HOST_CPU == CPU_ARM64 || HOST_CPU == CPU_X64)
 #undef PAGE_SIZE
 extern const unsigned long PAGE_SIZE;
 #define MAX_PAGE_SIZE 16384
