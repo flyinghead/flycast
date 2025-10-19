@@ -31,20 +31,7 @@ namespace aica::dsp
 {
 
 constexpr size_t CodeBufferSize = 32_KB;
-#if defined(_WIN32)
-static u8 *CodeBuffer;
-#else
-alignas(4096) static u8 CodeBuffer[CodeBufferSize]
-	#if defined(__OpenBSD__)
-		__attribute__((section(".openbsd.mutable")));
-	#elif defined(__unix__)
-		__attribute__((section(".text")));
-	#elif defined(__APPLE__)
-		__attribute__((section("__TEXT,.text")));
-	#else
-		#error CodeBuffer code section unknown
-	#endif
-#endif
+DECLARE_CODE_CACHE(CodeBuffer, CodeBufferSize)
 static u8 *pCodeBuffer;
 static ptrdiff_t rx_offset;
 

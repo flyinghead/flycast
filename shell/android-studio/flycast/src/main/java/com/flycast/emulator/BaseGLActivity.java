@@ -70,14 +70,12 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
             finish();
             return;
         }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            // Set the navigation bar color to 0 to avoid left over when it fades out on Android 10
-            Window window = getWindow();
-            window.addFlags(FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
-            window.clearFlags(FLAG_TRANSLUCENT_STATUS | FLAG_TRANSLUCENT_NAVIGATION);
-            window.setNavigationBarColor(0);
-            window.getDecorView().setSystemUiVisibility(SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
-        }
+        // Set the navigation bar color to 0 to avoid left over when it fades out on Android 10
+        Window window = getWindow();
+        window.addFlags(FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+        window.clearFlags(FLAG_TRANSLUCENT_STATUS | FLAG_TRANSLUCENT_NAVIGATION);
+        window.setNavigationBarColor(0);
+        window.getDecorView().setSystemUiVisibility(SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             getWindow().getAttributes().layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
         }

@@ -47,14 +47,7 @@ namespace dsp
 {
 
 constexpr size_t CodeSize = 4096 * 8;	//32 kb, 8 pages
-
-#if defined(__unix__)
-alignas(4096) static u8 DynCode[CodeSize] __attribute__((section(".text")));
-#elif defined(_M_ARM)
-static u8 *DynCode;
-#else
-#error "Unsupported platform for arm32 DSP dynarec"
-#endif
+DECLARE_CODE_CACHE(DynCode, CodeSize)
 
 class DSPAssembler : public MacroAssembler
 {
