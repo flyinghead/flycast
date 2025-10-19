@@ -76,7 +76,7 @@ void unregisterDreamLinkEvents()
 	EventManager::unlisten(Event::Terminate, handleEvent, nullptr);
 }
 
-std::array<std::shared_ptr<DreamLink>, 4> DreamLink::activeDreamLinks;
+std::array<std::shared_ptr<DreamLink>, DreamLink::NUM_PORTS> DreamLink::activeDreamLinks;
 
 bool DreamLinkGamepad::isDreamcastController(int deviceIndex)
 {
