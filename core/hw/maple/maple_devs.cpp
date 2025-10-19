@@ -2497,13 +2497,12 @@ struct DreamLinkPurupuru : public maple_sega_purupuru
 
 static std::list<std::shared_ptr<DreamLinkVmu>> dreamLinkVmus[2];
 static std::list<std::shared_ptr<DreamLinkPurupuru>> dreamLinkPurupurus;
-std::array<std::shared_ptr<DreamLink>, 4> DreamLink::activeDreamLinks;
 
 bool reconnectDreamLinks()
 {
 	auto& useNetworkExpansionDevices = config::UseNetworkExpansionDevices;
 	bool anyNewConnection = false;
-	for (int i = 0; i < 4; i++)
+	for (int i = 0; i < DreamLink::NUM_PORTS; i++)
 	{
 		const auto& dreamlink = DreamLink::activeDreamLinks[i];
 
@@ -2557,7 +2556,7 @@ void refreshDreamLinksIfNeeded()
 
 void createAllDreamLinkDevices()
 {
-	for (int i = 0; i < 4; i++)
+	for (int i = 0; i < DreamLink::NUM_PORTS; i++)
 	{
 		const auto& dreamlink = DreamLink::activeDreamLinks[i];
 		if (dreamlink && dreamlink->isConnected())

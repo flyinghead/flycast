@@ -143,9 +143,9 @@ public:
 			WARN_LOG(INPUT, "DreamPicoPort serial connection failed: %s", ec.message().c_str());
 			disconnect();
 			return;
-		} else {
-			NOTICE_LOG(INPUT, "DreamPicoPort serial connection successful!");
 		}
+
+		NOTICE_LOG(INPUT, "DreamPicoPort serial connection successful!");
 
 		// This must be done before the io_context is run because it will keep io_context from returning immediately
 		startSerialRead();
@@ -1069,38 +1069,46 @@ class DreamPicoPortImp : public DreamPicoPort
 	std::chrono::milliseconds timeout_ms;
 	//! The bus ID dictated by flycast
 	int software_bus = -1;
-	//! The bus index of the hardware connection which will differ from the software bus
-	int hardware_bus = -1;
-	//! true iff only a single devices was found when enumerating devices
-	bool is_single_device = true;
-	//! True when initial enumeration failed
-	bool is_hardware_bus_implied = true;
     //! The queried interface version
     double interface_version = 0.0;
     //! The queried peripherals; for each function, index 0 is function code and index 1 is the function definition
     std::vector<std::vector<std::array<uint32_t, 2>>> peripherals;
-	//! The located serial number of this device or empty string if could not be found
-	std::string serial_number;
-	//! If set, the determined unique ID of this device. If not set, the serial could not be parsed.
-	std::string unique_id;
+
+	//! Static hardware information
+	struct HardwareInfo
+	{
+		//! The bus index of the hardware connection which will differ from the software bus
+		int hardware_bus = -1;
+		//! true iff only a single devices was found when enumerating devices
+		bool is_single_device = true;
+		//! True when initial enumeration failed
+		bool is_hardware_bus_implied = true;
+		//! The located serial number of this device or empty string if could not be found
+		std::string serial_number;
+		//! If set, the determined unique ID of this device. If not set, the serial could not be parsed.
+		std::string unique_id;
+
+		//! @param[in] separator Separator string to use between name and port char
+		//! @return unique name of this device using the given separator
+		std::string getName(const std::string& separator = " ") const {
+			std::string name = "DreamPicoPort";
+			if (!is_hardware_bus_implied && !is_single_device) {
+				const char portChar = ('A' + hardware_bus);
+				name += separator + std::string(1, portChar);
+			}
+			return name;
+		}
+	};
+
+	//! Hardware information determined on instantiation
+	const HardwareInfo hw_info;
 
 public:
     DreamPicoPortImp(int bus, int joystick_idx, SDL_Joystick* sdl_joystick) :
 		DreamPicoPort(),
-		software_bus(bus)
-	{
-#if defined(_WIN32)
-		// Workaround: Getting the instance ID here fixes some sort of L/R trigger bug in Windows dinput for some reason
-		(void)SDL_JoystickGetDeviceInstanceID(joystick_idx);
-#endif
-		determineHardwareBus(joystick_idx, sdl_joystick);
-
-		unique_id.clear();
-		if (!is_hardware_bus_implied && !serial_number.empty()) {
-			// Locking to name, which includes A-D, plus serial number will ensure correct enumeration every time
-			unique_id = std::string("sdl_") + getName("") + std::string("_") + serial_number;
-		}
-	}
+		software_bus(bus),
+		hw_info(parseHardwareInfo(joystick_idx, sdl_joystick))
+	{}
 
 	~DreamPicoPortImp() {
 		disconnect();
@@ -1161,8 +1169,8 @@ public:
 	}
 
 	int getDefaultBus() const override {
-		if (!is_hardware_bus_implied && !is_single_device) {
-			return hardware_bus;
+		if (!hw_info.is_hardware_bus_implied && !hw_info.is_single_device) {
+			return hw_info.hardware_bus;
 		} else {
 			// Value of -1 means to use enumeration order
 			return -1;
@@ -1172,6 +1180,9 @@ public:
 	void setDefaultMapping(const std::shared_ptr<InputMapping>& mapping) const override {
 		// Since this is a real DC controller, no deadzone adjustment is needed
 		mapping->dead_zone = 0.0f;
+		// Workaround: explicitly set triggers
+		mapping->set_axis(DC_AXIS_LT, 2, true);
+		mapping->set_axis(DC_AXIS_RT, 5, true);
 		// Map the things not set by SDL
 		mapping->set_button(DC_BTN_C, 2);
 		mapping->set_button(DC_BTN_Z, 5);
@@ -1206,7 +1217,7 @@ public:
 	}
 
 	std::string getUniqueId() const override {
-		return unique_id;
+		return hw_info.unique_id;
 	}
 
 	void changeBus(int newBus) override {
@@ -1217,7 +1228,7 @@ public:
 	}
 
 	std::string getName() const override {
-		return getName(" ");
+		return hw_info.getName();
 	}
 
 	bool needsRefresh() override {
@@ -1226,7 +1237,7 @@ public:
 	}
 
 	bool isConnected() override {
-		return !!dpp_comms;
+		return (dpp_comms && dpp_comms->isConnected());
 	}
 
 	void connect() override {
@@ -1234,17 +1245,18 @@ public:
 		timeout_ms = std::chrono::seconds(1);
 
 		if (isConnected()) {
-			if (isConnected()) {
-				sendPort();
-			} else {
-				disconnect();
-				return;
-			}
+			sendPort();
+			return;
 		}
 
 		// Attempt to connect to new API
-		if (!serial_number.empty()) {
-			dpp_comms = std::make_unique<ApiDreamPicoPortComms>(serial_number, software_bus, hardware_bus);
+		if (!hw_info.serial_number.empty()) {
+			dpp_comms = std::make_unique<ApiDreamPicoPortComms>(
+				hw_info.serial_number,
+				software_bus,
+				hw_info.hardware_bus
+			);
+
 			if (!dpp_comms->isConnected() || !dpp_comms->initialize(timeout_ms)) {
 				dpp_comms.reset();
 			}
@@ -1259,7 +1271,7 @@ public:
 				"Could not find DppDevice for DreamPicoPort[%d]; falling back to serial interface",
 				software_bus
 			);
-			dpp_comms = std::make_unique<SerialDreamPicoPortComms>(software_bus, hardware_bus);
+			dpp_comms = std::make_unique<SerialDreamPicoPortComms>(software_bus, hw_info.hardware_bus);
 			if (!dpp_comms->isConnected() || !dpp_comms->initialize(timeout_ms)) {
 				dpp_comms.reset();
 			}
@@ -1308,7 +1320,14 @@ public:
 			}
 		}
 
-		NOTICE_LOG(INPUT, "Connected to DreamPicoPort[%d]: Type:%s, VMU:%d, Rumble Pack:%d", software_bus, getName().c_str(), vmuCount, vibrationCount);
+		NOTICE_LOG(
+			INPUT,
+			"Connected to DreamPicoPort[%d]: Type:%s, VMU:%d, Rumble Pack:%d",
+			software_bus,
+			getName().c_str(),
+			vmuCount,
+			vibrationCount
+		);
 	}
 
 	void disconnect() override {
@@ -1322,34 +1341,33 @@ public:
 	}
 
 	int hardwareBus() const {
-		return hardware_bus;
+		return hw_info.hardware_bus;
 	}
 
 	bool isHardwareBusImplied() const {
-		return is_hardware_bus_implied;
+		return hw_info.is_hardware_bus_implied;
 	}
 
 	bool isSingleDevice() const {
-		return is_single_device;
+		return hw_info.is_single_device;
 	}
 
 private:
-	std::string getName(std::string separator) const {
-		std::string name = "DreamPicoPort";
-		if (!is_hardware_bus_implied && !is_single_device) {
-			const char portChar = ('A' + hardware_bus);
-			name += separator + std::string(1, portChar);
-		}
-		return name;
-	}
+	//! Only to be called during instantiation to determine hardware information
+	//! @param[in] joystick_idx SDL joystick index
+	//! @param[in] sdl_joystick SDL joystick object
+	static HardwareInfo parseHardwareInfo(int joystick_idx, SDL_Joystick* sdl_joystick) {
+#if defined(_WIN32)
+		// Workaround: Getting the instance ID here fixes some sort of L/R trigger bug in Windows dinput for some reason
+		(void)SDL_JoystickGetDeviceInstanceID(joystick_idx);
+#endif
 
-	void determineHardwareBus(int joystick_idx, SDL_Joystick* sdl_joystick) {
-		// This function determines what bus index to use when communicating with the hardware.
+		HardwareInfo hw_info;
 
 		// Set the serial number if found by SDL Joystick
 		const char* joystick_serial = SDL_JoystickGetSerial(sdl_joystick);
 		if (joystick_serial) {
-			serial_number = joystick_serial;
+			hw_info.serial_number = joystick_serial;
 		} else {
 			// Version 1.2.0 and later embeds serial in name as a workaround for MacOS and Linux
 			// Serial is expected between a dash (-) and space ( ) character or until end of string
@@ -1365,7 +1383,7 @@ private:
 					}
 					// Serials are normally 16 characters, but check for at least 10 to account for any future changes
 					if ((start_pos + 10) <= end_pos) {
-						serial_number = name_str.substr(start_pos, end_pos - start_pos);
+						hw_info.serial_number = name_str.substr(start_pos, end_pos - start_pos);
 					}
 				}
 			}
@@ -1382,9 +1400,9 @@ private:
 
 			if (!devs->next) {
 				// Only single device found, so this is simple (host-1p firmware used)
-				hardware_bus = 0;
-				is_hardware_bus_implied = false;
-				is_single_device = true;
+				hw_info.hardware_bus = 0;
+				hw_info.is_hardware_bus_implied = false;
+				hw_info.is_single_device = true;
 				my_dev = devs;
 			} else {
 				struct SDL_hid_device_info* it = devs;
@@ -1417,19 +1435,19 @@ private:
 
 						if (count == 1) {
 							// Single device of this serial found
-							is_single_device = true;
-							hardware_bus = 0;
-							is_hardware_bus_implied = false;
+							hw_info.is_single_device = true;
+							hw_info.hardware_bus = 0;
+							hw_info.is_hardware_bus_implied = false;
 						} else {
-							is_single_device = false;
+							hw_info.is_single_device = false;
 							if (my_dev->release_number < 0x0102) {
 								// Interfaces go in decending order
-								hardware_bus = (count - (my_dev->interface_number % 4) - 1);
-								is_hardware_bus_implied = false;
+								hw_info.hardware_bus = (count - (my_dev->interface_number % 4) - 1);
+								hw_info.is_hardware_bus_implied = false;
 							} else {
 								// Version 1.02 of interface will make interfaces in ascending order
-								hardware_bus = (my_dev->interface_number % 4);
-								is_hardware_bus_implied = false;
+								hw_info.hardware_bus = (my_dev->interface_number % 4);
+								hw_info.is_hardware_bus_implied = false;
 							}
 						}
 					}
@@ -1438,12 +1456,12 @@ private:
 
 			// Set serial number if found in SDL_hid
 			if (my_dev) {
-				if (serial_number.empty() && my_dev->serial_number) {
+				if (hw_info.serial_number.empty() && my_dev->serial_number) {
 					int len = WideCharToMultiByte(CP_UTF8, 0, my_dev->serial_number, -1, nullptr, 0, nullptr, nullptr);
 					if (len > 0) {
 						std::vector<char> buffer(len);
 						WideCharToMultiByte(CP_UTF8, 0, my_dev->serial_number, -1, buffer.data(), len, nullptr, nullptr);
-						serial_number = std::string(buffer.data());
+						hw_info.serial_number = std::string(buffer.data());
 					}
 				}
 			}
@@ -1453,22 +1471,30 @@ private:
 
 #endif // #if defined(_WIN32)
 
-		if (hardware_bus < 0) {
+		if (hw_info.hardware_bus < 0) {
 			// The number of buttons gives a clue as to what index the controller is
 			int nbuttons = SDL_JoystickNumButtons(sdl_joystick);
 
 			if (nbuttons >= 32 || nbuttons <= 27) {
 				// Older version of firmware or single player
-				hardware_bus = 0;
-				is_hardware_bus_implied = true;
-				is_single_device = true;
+				hw_info.hardware_bus = 0;
+				hw_info.is_hardware_bus_implied = true;
+				hw_info.is_single_device = true;
 			}
 			else {
-				hardware_bus = 31 - nbuttons;
-				is_hardware_bus_implied = false;
-				is_single_device = false;
+				hw_info.hardware_bus = 31 - nbuttons;
+				hw_info.is_hardware_bus_implied = false;
+				hw_info.is_single_device = false;
 			}
 		}
+
+		hw_info.unique_id.clear();
+		if (!hw_info.is_hardware_bus_implied && !hw_info.serial_number.empty()) {
+			// Locking to name, which includes A-D, plus serial number will ensure correct enumeration every time
+			hw_info.unique_id = std::string("sdl_") + hw_info.getName("") + std::string("_") + hw_info.serial_number;
+		}
+
+		return hw_info;
 	}
 
     bool queryPeripherals() {

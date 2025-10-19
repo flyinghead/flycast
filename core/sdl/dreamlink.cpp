@@ -76,6 +76,8 @@ void unregisterDreamLinkEvents()
 	EventManager::unlisten(Event::Terminate, handleEvent, nullptr);
 }
 
+std::array<std::shared_ptr<DreamLink>, 4> DreamLink::activeDreamLinks;
+
 bool DreamLinkGamepad::isDreamcastController(int deviceIndex)
 {
 	char guid_str[33] {};
@@ -117,13 +119,13 @@ DreamLinkGamepad::DreamLinkGamepad(int maple_port, int joystick_idx, SDL_Joystic
 	}
 
 	if (dreamlink) {
-		if (maple_port >= 0 && static_cast<std::size_t>(maple_port) < DreamLink::activeDreamLinks.size()) {
+		if (DreamLink::isValidPort(maple_port)) {
 			DreamLink::activeDreamLinks[maple_port] = dreamlink;
 		}
 
 		_name = dreamlink->getName();
 		int defaultBus = dreamlink->getDefaultBus();
-		if (defaultBus >= 0 && defaultBus < 4) {
+		if (DreamLink::isValidPort(defaultBus)) {
 			set_maple_port(defaultBus);
 		}
 
@@ -138,7 +140,7 @@ DreamLinkGamepad::DreamLinkGamepad(int maple_port, int joystick_idx, SDL_Joystic
 
 DreamLinkGamepad::~DreamLinkGamepad() {
 	int port = maple_port();
-	if (dreamlink && port >= 0 && static_cast<std::size_t>(port) < DreamLink::activeDreamLinks.size()) {
+	if (dreamlink && DreamLink::isValidPort(port)) {
 		tearDownDreamLinkDevices(dreamlink);
 		dreamlink.reset();
 		DreamLink::activeDreamLinks[port] = nullptr;
@@ -153,12 +155,7 @@ DreamLinkGamepad::~DreamLinkGamepad() {
 const char* DreamLinkGamepad::dreamLinkStatus()
 {
 	int port = maple_port();
-	if (
-		!dreamlink ||
-		port < 0 ||
-		static_cast<std::size_t>(port) >= DreamLink::activeDreamLinks.size() ||
-		DreamLink::activeDreamLinks[port] != dreamlink
-	)
+	if (!dreamlink || !DreamLink::isValidPort(port) || DreamLink::activeDreamLinks[port] != dreamlink)
 		return "Inactive";
 
 	return dreamlink->isConnected() ? "Connected" : "Disconnected";
@@ -176,11 +173,7 @@ void DreamLinkGamepad::set_maple_port(int port)
 
 	dreamlink->changeBus(port);
 
-	if (
-		oldPort >= 0 &&
-		static_cast<std::size_t>(oldPort) < DreamLink::activeDreamLinks.size() &&
-		DreamLink::activeDreamLinks[oldPort] == dreamlink
-	) {
+	if (DreamLink::isValidPort(oldPort) && DreamLink::activeDreamLinks[oldPort] == dreamlink) {
 		// 'dreamlink' is currently active in 'oldPort'.
 		// Remove this dreamlink from 'oldPort' and repopulate with the dreamlink for a different gamepad, if any.
 		DreamLink::activeDreamLinks[oldPort] = nullptr;
@@ -197,7 +190,7 @@ void DreamLinkGamepad::set_maple_port(int port)
 		}
 	}
 
-	if (port < 0 || static_cast<std::size_t>(port) >= DreamLink::activeDreamLinks.size()) {
+	if (!DreamLink::isValidPort(port)) {
 		// Moving to a port out of range.
 		// This usually means the gamepad is just not being used for any port.
 		// Just disconnect the dreamlink and no further action needed.
