@@ -1180,9 +1180,6 @@ public:
 	void setDefaultMapping(const std::shared_ptr<InputMapping>& mapping) const override {
 		// Since this is a real DC controller, no deadzone adjustment is needed
 		mapping->dead_zone = 0.0f;
-		// Workaround: explicitly set triggers
-		mapping->set_axis(DC_AXIS_LT, 2, true);
-		mapping->set_axis(DC_AXIS_RT, 5, true);
 		// Map the things not set by SDL
 		mapping->set_button(DC_BTN_C, 2);
 		mapping->set_button(DC_BTN_Z, 5);
