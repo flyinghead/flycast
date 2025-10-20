@@ -72,7 +72,7 @@ Option<bool> ShowFPS("rend.ShowFPS");
 Option<bool> RenderToTextureBuffer("rend.RenderToTextureBuffer");
 Option<bool> TranslucentPolygonDepthMask("rend.TranslucentPolygonDepthMask");
 Option<bool> ModifierVolumes("rend.ModifierVolumes", true);
-Option<int> TextureUpscale("rend.TextureUpscale", 1);
+Option<int> TextureUpscale("rend.TextureUpscale2", 1);
 Option<int> MaxFilteredTextureSize("rend.MaxFilteredTextureSize", 256);
 Option<float> ExtraDepthScale("rend.ExtraDepthScale", 1.f);
 Option<bool> CustomTextures("rend.CustomTextures");
