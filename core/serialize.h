@@ -25,6 +25,12 @@
 class SerializeBase
 {
 public:
+	class Exception : public std::runtime_error
+	{
+	public:
+		Exception(const char *msg) : std::runtime_error(msg) {}
+	};
+	
 	enum Version : int32_t {
 		V16 = 811,
 		V17,
@@ -86,12 +92,6 @@ protected:
 class Deserializer : public SerializeBase
 {
 public:
-	class Exception : public std::runtime_error
-	{
-	public:
-		Exception(const char *msg) : std::runtime_error(msg) {}
-	};
-
 	Deserializer(const void *data, size_t limit, bool rollback = false);
 
 	template<typename T>
@@ -145,12 +145,6 @@ private:
 class Serializer : public SerializeBase
 {
 public:
-	class Exception : public std::runtime_error
-	{
-	public:
-		Exception(const char *msg) : std::runtime_error(msg) {}
-	};
-
 	Serializer()
 		: Serializer(nullptr, std::numeric_limits<size_t>::max(), false) {}
 
