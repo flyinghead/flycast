@@ -286,7 +286,9 @@ void* DYNACALL rdv_LinkBlock(u8* code,u32 dpc)
 
 	DynarecCodeEntryPtr rv = rdv_FindOrCompile();  // Returns rx ptr
 
-	if (!mmu_enabled() && !stale_block)
+	if (mmu_enabled())
+		return (void *)rv;
+	if (!stale_block)
 	{
 		if (bcls == BET_CLS_Dynamic)
 		{
