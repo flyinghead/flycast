@@ -145,6 +145,12 @@ private:
 class Serializer : public SerializeBase
 {
 public:
+	class Exception : public std::runtime_error
+	{
+	public:
+		Exception(const char *msg) : std::runtime_error(msg) {}
+	};
+
 	Serializer()
 		: Serializer(nullptr, std::numeric_limits<size_t>::max(), false) {}
 
@@ -177,6 +183,11 @@ public:
 private:
 	void doSerialize(const void *src, size_t size)
 	{
+		if (this->_size + size > limit)
+		{
+			WARN_LOG(SAVESTATE, "Serializer overflow: current %d limit %d sz %d", (int)this->_size, (int)limit, (int)size);
+			throw Exception("Serializer buffer overflow");
+		}
 		if (data != nullptr)
 		{
 			memcpy(data, src, size);

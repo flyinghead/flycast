@@ -34,3 +34,47 @@ TEST_F(SerializeTest, SizeTest)
 	dc_serialize(ser);
 	ASSERT_EQ(28050658u, ser.size());
 }
+
+TEST(SerializerBufferTest, BufferOverflowThrowsException)
+{
+	std::vector<char> smallBuffer(10);
+	Serializer ser(smallBuffer.data(), smallBuffer.size());
+	std::vector<int> largeData(100);
+	ASSERT_THROW(ser.serialize(largeData.data(), largeData.size()), Serializer::Exception);
+}
+
+TEST(SerializerBufferTest, BufferWithinLimitSucceeds)
+{
+	std::vector<char> buffer(100);
+	Serializer ser(buffer.data(), buffer.size());
+
+	// Record the header size (which includes e.g. version)
+	size_t initialSize = ser.size();
+
+	std::vector<int> data(10);
+	ASSERT_NO_THROW(ser.serialize(data.data(), data.size()));
+	ASSERT_EQ(ser.size(), initialSize + sizeof(int) * 10);
+}
+
+TEST(SerializerBufferTest, ExactBufferSizeSucceeds)
+{
+	// Determine the header size (which includes e.g. version)
+	Serializer dryRun(nullptr, 1000);
+	size_t headerSize = dryRun.size();
+
+	// Serialize data to buffer of equal size
+	std::vector<char> buffer(headerSize + sizeof(int) * 10);
+	std::vector<int> data(10);
+	Serializer ser(buffer.data(), buffer.size());
+	ASSERT_NO_THROW(ser.serialize(data.data(), data.size()));
+	ASSERT_EQ(ser.size(), buffer.size());
+}
+
+TEST(SerializerBufferTest, OffByOneOverflowThrowsException)
+{
+	// Create a buffer that's 1 byte too small
+	std::vector<char> buffer(sizeof(int) * 10 - 1);
+	std::vector<int> data(10);
+	Serializer ser(buffer.data(), buffer.size());
+	ASSERT_THROW(ser.serialize(data.data(), data.size()), Serializer::Exception);
+}
