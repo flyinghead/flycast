@@ -1158,7 +1158,7 @@ public:
 	u32 RelinkBlock(RuntimeBlockInfo *block)
 	{
 		ptrdiff_t start_offset = GetBuffer()->GetCursorOffset();
-
+		// The CpuRunning tests are needed when transitioning to disabled mmu
 		switch (block->BlockType)
 		{
 
@@ -1174,7 +1174,7 @@ public:
 			}
 			else
 			{
-				if (!mmu_enabled())
+				if (!mmu_enabled() && sh4ctx.CpuRunning)
 				{
 					GenCall(linkBlockGenericStub);
 					Nop();
@@ -1218,7 +1218,7 @@ public:
 				}
 				else
 				{
-					if (!mmu_enabled())
+					if (!mmu_enabled() && sh4ctx.CpuRunning)
 					{
 						GenCall(linkBlockBranchStub);
 						Nop();
@@ -1246,7 +1246,7 @@ public:
 				}
 				else
 				{
-					if (!mmu_enabled())
+					if (!mmu_enabled() && sh4ctx.CpuRunning)
 					{
 						GenCall(linkBlockNextStub);
 						Nop();
@@ -1271,7 +1271,7 @@ public:
 			// next_pc = *jdyn;
 
 			Str(w29, sh4_context_mem_operand(&sh4ctx.pc));
-			if (!mmu_enabled())
+			if (!mmu_enabled() && sh4ctx.CpuRunning)
 			{
 				// TODO Call no_update instead (and check CpuRunning less frequently?)
 				Sub(x2, x28, offsetof(Sh4RCB, cntx));

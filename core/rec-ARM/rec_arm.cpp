@@ -275,8 +275,8 @@ public:
 				}
 				cmp(r4, block->BlockType & 1);
 			}
-
-			if (!mmu_enabled())
+			// The CpuRunning tests are needed when transitioning to disabled mmu
+			if (!mmu_enabled() && sh4ctx.CpuRunning)
 			{
 				if (block->pBranchBlock)
 					jump((void *)block->pBranchBlock->code, CC);
@@ -305,7 +305,7 @@ public:
 		case BET_DynamicRet:
 		case BET_DynamicCall:
 		case BET_DynamicJump:
-			if (!mmu_enabled())
+			if (!mmu_enabled() && sh4ctx.CpuRunning)
 			{
 				sub(r2, r8, -rcbOffset(fpcb));
 				ubfx(r1, r4, 1, 24);
@@ -320,7 +320,7 @@ public:
 
 		case BET_StaticCall:
 		case BET_StaticJump:
-			if (!mmu_enabled())
+			if (!mmu_enabled() && sh4ctx.CpuRunning)
 			{
 				if (block->pBranchBlock == nullptr)
 					call(ngen_LinkBlock_Generic_stub);
