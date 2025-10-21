@@ -905,8 +905,11 @@ void VulkanContext::NewFrame()
 	if (!IsValid())
 		throw InvalidVulkanContext();
 	vk::Result res = device->acquireNextImageKHR(*swapChain, UINT64_MAX, *imageAcquiredSemaphores[currentSemaphore], nullptr, &currentImage);
+	if (res != vk::Result::eSuccess)
+		throw InvalidVulkanContext();
 	res = device->waitForFences(*drawFences[currentImage], true, UINT64_MAX);
-	(void)res;
+	if (res != vk::Result::eSuccess)
+		throw InvalidVulkanContext();
 	device->resetCommandPool(*commandPools[currentImage], vk::CommandPoolResetFlagBits::eReleaseResources);
 	inFlightObjects[currentImage].clear();
 	vk::CommandBuffer commandBuffer = *commandBuffers[currentImage];
@@ -966,6 +969,7 @@ void VulkanContext::Present() noexcept
 			// Happens when resizing the window
 			INFO_LOG(RENDERER, "vk::SystemError %s", e.what());
 			resized = true;
+			width = height = 0;
 		}
 		renderDone = false;
 	}
