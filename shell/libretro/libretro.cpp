@@ -2374,13 +2374,19 @@ bool retro_serialize(void *data, size_t size)
 			ERROR_LOG(COMMON, "%s", e.what());
 			return false;
 		}
+	bool result = false;
+	try {
+		Serializer ser(data, size);
+		dc_serialize(ser);
+		result = true;
+	} catch (const Serializer::Exception& e) {
+		ERROR_LOG(SAVESTATE, "Saving state failed: %s", e.what());
+	} 
 
-	Serializer ser(data, size);
-	dc_serialize(ser);
 	if (!first_run)
 		emu.start();
 
-	return true;
+	return result;
 }
 
 bool retro_unserialize(const void * data, size_t size)

@@ -80,7 +80,6 @@ void Sh4Interpreter::Stop()
 
 void Sh4Interpreter::Step()
 {
-	verify(!ctx->CpuRunning);
 	Instance = this;
 
 	ctx->restoreHostRoundingMode();

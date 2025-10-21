@@ -147,17 +147,19 @@ void GameScanner::fetch_game_list()
 			}
 			std::string dcbios = hostfs::findFlash("dc_", "%bios.bin;%boot.bin");
 			{
-				const std::vector<std::string>& cdromDrives = hostfs::getCdromDrives();
 				LockGuard _(mutex);
-				// CD-ROM devices
-				for (auto it = cdromDrives.rbegin(); it != cdromDrives.rend(); ++it)
+				if (!cfgLoadBool("config", "HideCdromDrives", false))
 				{
-					std::string name;
-					if (it->substr(0, 4) == "\\\\.\\")
-						name = it->substr(4);
-					else
-						name = *it;
-					game_list.insert(game_list.begin(), { name, *it, name, "", false, true });
+					// CD-ROM devices
+					for (const auto& drive : hostfs::getCdromDrives())
+					{
+						std::string name;
+						if (drive.substr(0, 4) == "\\\\.\\")
+							name = drive.substr(4);
+						else
+							name = drive;
+						game_list.insert(game_list.begin(), { name, drive, name, "", false, true });
+					}
 				}
 				// Dreamcast BIOS
 				if (!dcbios.empty())
