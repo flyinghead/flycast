@@ -858,7 +858,7 @@ void D3DRenderer::setBaseScissor()
 			{
 				float scaled_offs_x = matrices.GetSidebarWidth();
 
-				D3DCOLOR borderColor = D3DCOLOR_ARGB(255, VO_BORDER_COL._red, VO_BORDER_COL._green, VO_BORDER_COL._blue);
+				D3DCOLOR borderColor = D3DCOLOR_COLORVALUE(VO_BORDER_COL.red(), VO_BORDER_COL.green(), VO_BORDER_COL.blue(), 1.f);
 				devCache.SetRenderState(D3DRS_SCISSORTESTENABLE, FALSE);
 				D3DRECT rects[] {
 						{ 0, 0, lroundf(scaled_offs_x), (long)height },
@@ -1013,7 +1013,7 @@ bool D3DRenderer::Render()
 	{
 		resize(pvrrc.framebufferWidth, pvrrc.framebufferHeight);
 		if (pvrrc.clearFramebuffer)
-			device->ColorFill(framebufferSurface, 0, D3DCOLOR_ARGB(255, VO_BORDER_COL._red, VO_BORDER_COL._green, VO_BORDER_COL._blue));
+			device->ColorFill(framebufferSurface, 0, D3DCOLOR_COLORVALUE(VO_BORDER_COL.red(), VO_BORDER_COL.green(), VO_BORDER_COL.blue(), 1.f));
 		rc = SUCCEEDED(device->SetRenderTarget(0, framebufferSurface));
 		verify(rc);
 		D3DVIEWPORT9 viewport;
@@ -1215,7 +1215,7 @@ void D3DRenderer::resize(int w, int h)
 void D3DRenderer::displayFramebuffer()
 {
 	devCache.SetRenderState(D3DRS_SCISSORTESTENABLE, FALSE);
-	device->ColorFill(backbuffer, 0, D3DCOLOR_ARGB(255, VO_BORDER_COL._red, VO_BORDER_COL._green, VO_BORDER_COL._blue));
+	device->ColorFill(backbuffer, 0, D3DCOLOR_COLORVALUE(VO_BORDER_COL.red(), VO_BORDER_COL.green(), VO_BORDER_COL.blue(), 1.f));
 	
 	int dx = 0;
 	int dy = 0;
