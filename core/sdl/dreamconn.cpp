@@ -295,9 +295,44 @@ private:
 		}
 
 		expansionDevs = msg.originAP & 0x1f;
-		config::MapleExpansionDevices[bus][0] = hasVmu() ? MDT_SegaVMU : MDT_None;
-		config::MapleExpansionDevices[bus][1] = hasRumble() ? MDT_PurupuruPack : MDT_None;
+
+		// TODO: need to also store these kinds as fields so we can give the right answer from getFunctionCode etc
+		config::MapleExpansionDevices[bus][0] = getDevice(1);
+		config::MapleExpansionDevices[bus][1] = getDevice(2);
 		return true;
+	}
+
+	MapleDeviceType getDevice(int portFlag) {
+		if (!(expansionDevs & portFlag)) {
+			return MDT_None;
+		}
+
+		MapleMsg msg;
+		msg.command = MDC_DeviceRequest;
+		msg.destAP = (bus << 6) | portFlag;
+		msg.originAP = bus << 6;
+		msg.size = 0;
+		auto ec = sendMsg(msg, iostream);
+		if (ec || !receiveMsg(msg, iostream)) {
+			// TODO: this is a bad message when receive fails
+			WARN_LOG(INPUT, "DreamcastController[%d] MDC_DeviceRequest failure: %s", bus, ec.message().c_str());
+			disconnect();
+			return MDT_None;
+		}
+
+		// TODO: this seems like the opposite order of the pico. is DreamPotato failing to byte-swap something before sending it into the socket?
+		const u32 fnCode = (msg.data[0] << 0) | (msg.data[1] << 8) | (msg.data[2] << 16) | (msg.data[3] << 24);
+		const u32 vmuFnCode = MFID_1_Storage | MFID_2_LCD | MFID_3_Clock;
+		if ((fnCode & vmuFnCode) == vmuFnCode) {
+			return MDT_SegaVMU;
+		}
+		else if (fnCode & MFID_8_Vibration) {
+			return MDT_PurupuruPack;
+		}
+		else {
+			WARN_LOG(INPUT, "DreamcastController[%d] MDC_DeviceRequest unsupported function code: 0x%x", bus, fnCode);
+			return MDT_None;
+		}
 	}
 
 	bool isSocketDisconnected() {
