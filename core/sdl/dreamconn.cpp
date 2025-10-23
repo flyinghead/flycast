@@ -73,7 +73,7 @@ class DreamConnImp : public DreamConn
 	int bus = -1;
 	const bool _isForPhysicalController;
 	bool maple_io_connected = false;
-	u8 expansionDevs = 0;
+	std::array<MapleDeviceType, 2> expansionDevs;
 	asio::ip::tcp::iostream iostream;
 	std::mutex send_mutex;
 
@@ -99,11 +99,7 @@ public:
 
     bool send(const MapleMsg& txMsg, MapleMsg& rxMsg) override {
 		std::lock_guard<std::mutex> lock(send_mutex); // Ensure thread safety for send operations
-
-		if (!send_no_lock(txMsg)) {
-			return false;
-		}
-		return receiveMsg(rxMsg, iostream);
+		return send_no_lock(txMsg, rxMsg);
 	}
 
 private:
@@ -120,36 +116,39 @@ private:
 		return true;
 	}
 
+	bool send_no_lock(const MapleMsg& txMsg, MapleMsg& rxMsg) {
+		if (!send_no_lock(txMsg)) {
+			return false;
+		}
+
+		return receiveMsg(rxMsg, iostream);
+	}
+
 public:
 	int getBus() const override {
 		return bus;
 	}
 
     u32 getFunctionCode(int forPort) const override {
-		if (forPort == 1 && hasVmu()) {
+		MapleDeviceType deviceType = expansionDevs.at(forPort - 1);
+		if (deviceType == MDT_SegaVMU) {
 			return 0x0E000000;
 		}
-		else if (forPort == 2 && hasRumble()) {
+		else if (deviceType == MDT_PurupuruPack) {
 			return 0x00010000;
 		}
 		return 0;
 	}
 
 	std::array<u32, 3> getFunctionDefinitions(int forPort) const override {
-		if (forPort == 1 && hasVmu())
+		MapleDeviceType deviceType = expansionDevs.at(forPort - 1);
+		if (deviceType == MDT_SegaVMU)
 			// For clock, LCD, storage
 			return std::array<u32, 3>{0x403f7e7e, 0x00100500, 0x00410f00};
-		else if (forPort == 2 && hasRumble())
+		else if (deviceType == MDT_PurupuruPack)
 			return std::array<u32, 3>{0x00000101, 0, 0};
+
 		return std::array<u32, 3>{0, 0, 0};
-	}
-
-	bool hasVmu() const {
-		return expansionDevs & 1;
-	}
-
-	bool hasRumble() const {
-		return expansionDevs & 2;
 	}
 
 	void changeBus(int newBus) override {
@@ -189,7 +188,7 @@ public:
 			// It is a refresh message, so consume it.
 			receiveMsg(message, iostream);
 
-			if (!updateExpansionDevs())
+			if (!updateExpansionDevs_no_lock())
 				return false;
 
 			return true;
@@ -228,14 +227,24 @@ public:
 		}
 		iostream.expires_from_now(std::chrono::seconds(1));
 
-		if (!updateExpansionDevs())
+		if (!updateExpansionDevs_no_lock())
 			return;
 
 		iostream.expires_from_now(std::chrono::duration<u32>::max());	// don't use a 64-bit based duration to avoid overflow
 
 		// Remain connected even if no devices were found, so that connecting a device later will be detected
-		NOTICE_LOG(INPUT, "Connected to DreamcastController[%d]: Type:%s, VMU:%d, Rumble Pack:%d", bus, getName().c_str(), hasVmu(), hasRumble());
+		NOTICE_LOG(INPUT, "Connected to DreamcastController[%d]: Type:%s, Slot 1: %s, Slot 2: %s", bus, getName().c_str(), deviceDescription(expansionDevs[0]), deviceDescription(expansionDevs[1]));
 		maple_io_connected = true;
+	}
+
+	// TODO: should maple_expansion_device_name in settings_controls.cpp be extracted/reused here?
+	static const char* deviceDescription(MapleDeviceType deviceType) {
+		switch (deviceType) {
+			case MDT_None: return "None";
+			case MDT_SegaVMU: return "Sega VMU";
+			case MDT_PurupuruPack: return "Vibration Pack";
+			default: return "Unknown";
+		}
 	}
 
 	void disconnect() override {
@@ -273,7 +282,7 @@ public:
 	}
 
 private:
-	bool updateExpansionDevs() {
+	bool updateExpansionDevs_no_lock() {
 		// Now get the controller configuration
 		MapleMsg msg;
 		msg.command = MDCF_GetCondition;
@@ -294,36 +303,34 @@ private:
 			return false;
 		}
 
-		expansionDevs = msg.originAP & 0x1f;
+		u8 portFlags = msg.originAP & 0x1f;
 
-		// TODO: need to also store these kinds as fields so we can give the right answer from getFunctionCode etc
-		config::MapleExpansionDevices[bus][0] = getDevice(1);
-		config::MapleExpansionDevices[bus][1] = getDevice(2);
+		config::MapleExpansionDevices[bus][0] = expansionDevs[0] = getDevice_no_lock(portFlags, 1 << 0);
+		config::MapleExpansionDevices[bus][1] = expansionDevs[1] = getDevice_no_lock(portFlags, 1 << 1);
 		return true;
 	}
 
-	MapleDeviceType getDevice(int portFlag) {
+	MapleDeviceType getDevice_no_lock(u8 expansionDevs, int portFlag) {
 		if (!(expansionDevs & portFlag)) {
+			// This is the case where nothing is connected to the expansion slot.
+			// We should not send a DeviceRequest message in that case.
 			return MDT_None;
 		}
 
-		MapleMsg msg;
-		msg.command = MDC_DeviceRequest;
-		msg.destAP = (bus << 6) | portFlag;
-		msg.originAP = bus << 6;
-		msg.size = 0;
-		auto ec = sendMsg(msg, iostream);
-		if (ec || !receiveMsg(msg, iostream)) {
-			// TODO: this is a bad message when receive fails
-			WARN_LOG(INPUT, "DreamcastController[%d] MDC_DeviceRequest failure: %s", bus, ec.message().c_str());
-			disconnect();
+		MapleMsg txMsg;
+		txMsg.command = MDC_DeviceRequest;
+		txMsg.destAP = (bus << 6) | portFlag;
+		txMsg.originAP = bus << 6;
+		txMsg.size = 0;
+		
+		MapleMsg rxMsg;
+		if (!send_no_lock(txMsg, rxMsg)) {
 			return MDT_None;
 		}
 
 		// TODO: this seems like the opposite order of the pico. is DreamPotato failing to byte-swap something before sending it into the socket?
-		const u32 fnCode = (msg.data[0] << 0) | (msg.data[1] << 8) | (msg.data[2] << 16) | (msg.data[3] << 24);
-		const u32 vmuFnCode = MFID_1_Storage | MFID_2_LCD | MFID_3_Clock;
-		if ((fnCode & vmuFnCode) == vmuFnCode) {
+		const u32 fnCode = (rxMsg.data[0] << 0) | (rxMsg.data[1] << 8) | (rxMsg.data[2] << 16) | (rxMsg.data[3] << 24);
+		if (fnCode & MFID_1_Storage) {
 			return MDT_SegaVMU;
 		}
 		else if (fnCode & MFID_8_Vibration) {
