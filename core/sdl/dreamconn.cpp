@@ -73,7 +73,7 @@ class DreamConnImp : public DreamConn
 	int bus = -1;
 	const bool _isForPhysicalController;
 	bool maple_io_connected = false;
-	std::array<MapleDeviceType, 2> expansionDevs;
+	std::array<MapleDeviceType, 2> expansionDevs{};
 	asio::ip::tcp::iostream iostream;
 	std::mutex send_mutex;
 
@@ -225,6 +225,8 @@ public:
 			disconnect();
 			return;
 		}
+		// Optimistically assume we are connected to the maple server. If a send fails we will just set this flag back to false.
+		maple_io_connected = true;
 		iostream.expires_from_now(std::chrono::seconds(1));
 
 		if (!updateExpansionDevs_no_lock())
@@ -234,10 +236,10 @@ public:
 
 		// Remain connected even if no devices were found, so that connecting a device later will be detected
 		NOTICE_LOG(INPUT, "Connected to DreamcastController[%d]: Type:%s, Slot 1: %s, Slot 2: %s", bus, getName().c_str(), deviceDescription(expansionDevs[0]), deviceDescription(expansionDevs[1]));
-		maple_io_connected = true;
 	}
 
 	// TODO: should maple_expansion_device_name in settings_controls.cpp be extracted/reused here?
+	// This is just for logging
 	static const char* deviceDescription(MapleDeviceType deviceType) {
 		switch (deviceType) {
 			case MDT_None: return "None";
@@ -304,14 +306,13 @@ private:
 		}
 
 		u8 portFlags = msg.originAP & 0x1f;
-
 		config::MapleExpansionDevices[bus][0] = expansionDevs[0] = getDevice_no_lock(portFlags, 1 << 0);
 		config::MapleExpansionDevices[bus][1] = expansionDevs[1] = getDevice_no_lock(portFlags, 1 << 1);
 		return true;
 	}
 
-	MapleDeviceType getDevice_no_lock(u8 expansionDevs, int portFlag) {
-		if (!(expansionDevs & portFlag)) {
+	MapleDeviceType getDevice_no_lock(u8 portFlags, u8 portFlag) {
+		if (!(portFlags & portFlag)) {
 			// This is the case where nothing is connected to the expansion slot.
 			// We should not send a DeviceRequest message in that case.
 			return MDT_None;
@@ -322,7 +323,7 @@ private:
 		txMsg.destAP = (bus << 6) | portFlag;
 		txMsg.originAP = bus << 6;
 		txMsg.size = 0;
-		
+
 		MapleMsg rxMsg;
 		if (!send_no_lock(txMsg, rxMsg)) {
 			return MDT_None;
