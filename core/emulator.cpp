@@ -743,7 +743,8 @@ void Emulator::unloadGame()
 		} catch (const FlycastException& e) {
 			ERROR_LOG(COMMON, "%s", e.what());
 		}
-
+		// Flush the VMU files to disk
+		mcfg_DestroyDevices(true);
 		config::Settings::instance().reset();
 		config::Settings::instance().load(false);
 		settings.content.path.clear();
