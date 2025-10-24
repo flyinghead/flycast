@@ -51,9 +51,8 @@ void displayStats();
 static inline State getState() {
 	return Offline;
 }
-static inline void displayStats() {
-}
-
+static inline void term() {}
+static inline void displayStats() {}
 #endif
 
 }
