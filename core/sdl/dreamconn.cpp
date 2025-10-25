@@ -275,7 +275,7 @@ public:
 
 private:
 	void clearScreen(int deviceIndex) {
-		if (expansionDevs[0] != MDT_SegaVMU)
+		if (expansionDevs[deviceIndex] != MDT_SegaVMU)
 			return;
 
 		// Clear the remote VMU screen
