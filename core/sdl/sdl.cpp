@@ -413,6 +413,10 @@ void input_sdl_handle()
 					if (window_fullscreen)
 						SDL_ShowCursor(SDL_ENABLE);
 				}
+				else if (event.window.event == SDL_WINDOWEVENT_CLOSE)
+				{
+					dc_exit();
+				}
 				break;
 
 			case SDL_JOYBUTTONDOWN:
@@ -802,19 +806,19 @@ static void setClipboardText(void *, const char *text)
 #ifdef TARGET_UWP
 static int suspendEventFilter(void *userdata, SDL_Event *event)
 {
-	if (event->type == SDL_APP_WILLENTERBACKGROUND)
-	{
-		if (gameRunning)
-		{
-			try {
-				emu.stop();
-				if (config::AutoSaveState)
-					dc_savestate(config::SavestateSlot);
-			} catch (const FlycastException& e) { }
-		}
-		return 0;
-	}
-	return 1;
+    if (event->type == SDL_APP_WILLENTERBACKGROUND)
+    {
+        if (gameRunning)
+        {
+            try {
+                emu.stop();
+                if (config::AutoSaveState)
+                    dc_savestate(config::SavestateSlot);
+            } catch (const FlycastException& e) { }
+        }
+        return 0;
+    }
+    return 1;
 }
 #endif
 
