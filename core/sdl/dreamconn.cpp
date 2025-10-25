@@ -238,14 +238,12 @@ public:
 		NOTICE_LOG(INPUT, "Connected to DreamcastController[%d]: Type:%s, Slot 1: %s, Slot 2: %s", bus, getName().c_str(), deviceDescription(expansionDevs[0]), deviceDescription(expansionDevs[1]));
 	}
 
-	// TODO: should maple_expansion_device_name in settings_controls.cpp be extracted/reused here?
-	// This is just for logging
 	static const char* deviceDescription(MapleDeviceType deviceType) {
 		switch (deviceType) {
 			case MDT_None: return "None";
 			case MDT_SegaVMU: return "Sega VMU";
 			case MDT_PurupuruPack: return "Vibration Pack";
-			default: return "Unknown";
+			default: return "Unknown"; // note: we don't expect to reach this path, unless something has really gone wrong (e.g. somehow garbage data was written to `expansionDevs`).
 		}
 	}
 
@@ -337,7 +335,7 @@ private:
 			return MDT_None;
 		}
 
-		// TODO: this seems like the opposite order of the pico. is DreamPotato failing to byte-swap something before sending it into the socket?
+		// 32-bit words are in little-endian format on the wire
 		const u32 fnCode = (rxMsg.data[0] << 0) | (rxMsg.data[1] << 8) | (rxMsg.data[2] << 16) | (rxMsg.data[3] << 24);
 		if (fnCode & MFID_1_Storage) {
 			return MDT_SegaVMU;
