@@ -269,10 +269,19 @@ public:
 	}
 
 	void gameTermination() override {
+		clearScreen(0);
+		clearScreen(1);
+	}
+
+private:
+	void clearScreen(int deviceIndex) {
+		if (expansionDevs[0] != MDT_SegaVMU)
+			return;
+
 		// Clear the remote VMU screen
 		MapleMsg msg;
 		msg.command = MDCF_BlockWrite;
-		msg.destAP = (bus << 6) | 0x20;
+		msg.destAP = (bus << 6) | 0x20 | (1 << deviceIndex);
 		msg.originAP = bus << 6;
 
 		u32 localData[0x32];
@@ -283,7 +292,6 @@ public:
 		send(msg);
 	}
 
-private:
 	bool updateExpansionDevs_no_lock() {
 		// Now get the controller configuration
 		MapleMsg msg;
