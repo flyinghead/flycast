@@ -50,6 +50,8 @@
 #include "sdl/dreamlink.h"
 #ifdef TARGET_UWP
 extern "C" char* SDL_WinRTGetProtocolActivationURI(void);
+#include <winrt/Windows.System.h>
+#include <winrt/Windows.Foundation.h>
 #endif
 #endif
 #include "vgamepad.h"
@@ -572,6 +574,23 @@ void gui_stop_game(const std::string& message)
 			ERROR_LOG(COMMON, "Flycast has stopped: %s", message.c_str());
 		// Exit emulator
 		dc_exit();
+		
+#ifdef TARGET_UWP
+		if (!launchOnExitUri.empty()) {
+			INFO_LOG(BOOT, "Launching exit URI: %s", launchOnExitUri.c_str());
+			try {
+				using namespace winrt::Windows::System;
+				using namespace winrt::Windows::Foundation;
+				
+				auto wUri = winrt::to_hstring(launchOnExitUri);
+				Uri uri(wUri);
+				auto asyncOp = Launcher::LaunchUriAsync(uri);
+				asyncOp.get();
+			} catch (...) {
+				ERROR_LOG(BOOT, "Failed to launch exit URI");
+			}
+		}
+#endif
 	}
 }
 
