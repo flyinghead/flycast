@@ -413,10 +413,6 @@ void input_sdl_handle()
 					if (window_fullscreen)
 						SDL_ShowCursor(SDL_ENABLE);
 				}
-				else if (event.window.event == SDL_WINDOWEVENT_CLOSE)
-				{
-					dc_exit();
-				}
 				break;
 
 			case SDL_JOYBUTTONDOWN:
