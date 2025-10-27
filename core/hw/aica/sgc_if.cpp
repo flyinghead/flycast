@@ -681,10 +681,6 @@ struct ChannelEx
 		step.full = 0;
 
 		loop.looped = false;
-		if (loop.LEA <= loop.LSA && ccd->LPCTL == 1)
-			// Legacy of Kain
-			loop.LEA = 0xffff;
-
 		adpcm.Reset(this);
 
 		StepStreamInitial(this);
@@ -730,34 +726,24 @@ struct ChannelEx
 		loop.LEA = ccd->LEA;
 	}
 
-	s32 EG_BaseRate()
+	u32 EG_EffRate(u32 rate)
 	{
-		s32 effrate = 0;
-		if (ccd->KRS < 0xF)
-		{
+		u32 effrate = rate * 2;
+		if (ccd->KRS < 0xF) {
 		    effrate += (ccd->FNS >> 9) & 1;
-		    effrate += ccd->KRS * 2;
-		    effrate += (ccd->OCT ^ 8) - 8;
+		    effrate += std::max(0, (ccd->KRS + (ccd->OCT ^ 8) - 8) * 2);
 		}
-
-		return effrate;
-	}
-
-	u32 EG_EffRate(s32 base_rate, u32 rate)
-	{
-		s32 rv = base_rate + rate * 2;
-		return std::clamp(rv, 0, 0x3f);
+		return std::min(effrate, 0x3fu);
 	}
 
 	//D2R,D1R,AR,DL,RR,KRS, [OCT,FNS] for now
 	void UpdateAEG()
 	{
-		s32 base_rate = EG_BaseRate();
-		AEG.AttackRate = AEG_ATT_SPS[EG_EffRate(base_rate, ccd->AR)];
-		AEG.Decay1Rate = AEG_DSR_SPS[EG_EffRate(base_rate, ccd->D1R)];
+		AEG.AttackRate = AEG_ATT_SPS[EG_EffRate(ccd->AR)];
+		AEG.Decay1Rate = AEG_DSR_SPS[EG_EffRate(ccd->D1R)];
 		AEG.Decay2Value = ccd->DL<<5;
-		AEG.Decay2Rate = AEG_DSR_SPS[EG_EffRate(base_rate, ccd->D2R)];
-		AEG.ReleaseRate = AEG_DSR_SPS[EG_EffRate(base_rate, ccd->RR)];
+		AEG.Decay2Rate = AEG_DSR_SPS[EG_EffRate(ccd->D2R)];
+		AEG.ReleaseRate = AEG_DSR_SPS[EG_EffRate(ccd->RR)];
 	}
 	//OCT,FNS
 	void UpdatePitch()
@@ -847,11 +833,10 @@ struct ChannelEx
 					ccd->FLV0, ccd->FLV1, ccd->FLV2, ccd->FLV3, ccd->FLV4,
 					ccd->FAR, ccd->FD1R, ccd->FD2R, ccd->FRR);
 		FEG.q = qtable[ccd->Q];
-		s32 base_rate = EG_BaseRate();
-		FEG.AttackRate = FEG_SPS[EG_EffRate(base_rate, ccd->FAR)];
-		FEG.Decay1Rate = FEG_SPS[EG_EffRate(base_rate, ccd->FD1R)];
-		FEG.Decay2Rate = FEG_SPS[EG_EffRate(base_rate, ccd->FD2R)];
-		FEG.ReleaseRate = FEG_SPS[EG_EffRate(base_rate, ccd->FRR)];
+		FEG.AttackRate = FEG_SPS[EG_EffRate(ccd->FAR)];
+		FEG.Decay1Rate = FEG_SPS[EG_EffRate(ccd->FD1R)];
+		FEG.Decay2Rate = FEG_SPS[EG_EffRate(ccd->FD2R)];
+		FEG.ReleaseRate = FEG_SPS[EG_EffRate(ccd->FRR)];
 	}
 	
 	void RegWrite(u32 offset, int size)
@@ -985,7 +970,7 @@ void StepDecodeSample(ChannelEx* ch,u32 CA)
 	s8* sptr8=(s8*)sptr16;
 	u8* uptr8=(u8*)sptr16;
 	u32 next_addr = CA + 1;
-	if (next_addr >= ch->loop.LEA)
+	if (next_addr >= ch->loop.LEA && ch->loop.LEA > ch->loop.LSA)
 		next_addr = ch->loop.LSA;
 
 	SampleType s0,s1;
@@ -1096,16 +1081,30 @@ void StreamStep(ChannelEx* ch)
 
 		if (ca_t >= ch->loop.LEA)
 		{
-			ch->loop.looped = 1;
-			if (LPCTL == 0)
+			if (ch->loop.LSA > ch->loop.LEA)
 			{
-				CA = 0;
-				ch->disable();
+				// When LSA > LEA, aica won't stop when reaching LEA but will continue until LSA.
+				// It will then reset CA to 0 and stop playing, even for looping sounds.
+				if (ca_t >= ch->loop.LSA)
+				{
+					ch->loop.looped = 1;
+					CA = 0;
+					ch->disable();
+				}
 			}
 			else
 			{
-				CA = ch->loop.LSA;
-				key_printf("[%d]LPCTL : Looping LSA %x LEA %x AEG %x", ch->ChannelNumber, ch->loop.LSA, ch->loop.LEA, ch->AEG.GetValue());
+				ch->loop.looped = 1;
+				if (LPCTL == 0)
+				{
+					CA = 0;
+					ch->disable();
+				}
+				else
+				{
+					CA = ch->loop.LSA;
+					key_printf("[%d]LPCTL : Looping LSA %x LEA %x AEG %x", ch->ChannelNumber, ch->loop.LSA, ch->loop.LEA, ch->AEG.GetValue());
+				}
 			}
 		}
 
