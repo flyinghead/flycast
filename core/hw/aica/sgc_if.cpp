@@ -731,7 +731,7 @@ struct ChannelEx
 		u32 effrate = rate * 2;
 		if (ccd->KRS < 0xF) {
 		    effrate += (ccd->FNS >> 9) & 1;
-		    effrate += std::max(0, (ccd->KRS + (ccd->OCT ^ 8) - 8) * 2);
+		    effrate += std::max<int>(0, (ccd->KRS + (ccd->OCT ^ 8) - 8) * 2);
 		}
 		return std::min(effrate, 0x3fu);
 	}
