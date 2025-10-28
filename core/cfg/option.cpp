@@ -136,6 +136,12 @@ Option<bool> RamMod32MB("Dreamcast.RamMod32MB", false);
 Option<bool> OpenGlChecks("OpenGlChecks", false, "validate");
 
 Option<std::vector<std::string>, false> ContentPath("Dreamcast.ContentPath");
+Option<std::vector<std::string>, false> BiosPath("Dreamcast.BiosPath");
+Option<std::vector<std::string>, false> VMUPath("Dreamcast.VMUPath");
+Option<std::vector<std::string>, false> SavestatePath("Dreamcast.SavestatePath");
+Option<std::vector<std::string>, false> SavePath("Dreamcast.SavePath");
+Option<std::vector<std::string>, false> TexturePath("Dreamcast.TexturePath");
+Option<std::vector<std::string>, false> TextureDumpPath("Dreamcast.TextureDumpPath");
 Option<bool, false> HideLegacyNaomiRoms("Dreamcast.HideLegacyNaomiRoms", true);
 Option<bool, false> UploadCrashLogs("UploadCrashLogs", true);
 Option<bool, false> DiscordPresence("DiscordPresence", true);

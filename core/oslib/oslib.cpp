@@ -47,42 +47,58 @@ namespace hostfs
 
 std::string getVmuPath(const std::string& port, bool save)
 {
+	std::string vmuName;
+	
 	if (port == "A1" && config::PerGameVmu)
 	{
 		if (settings.platform.isConsole() && !settings.content.gameId.empty())
 		{
 			constexpr std::string_view INVALID_CHARS { " /\\:*?|<>" };
-			std::string vmuName = settings.content.gameId;
+			vmuName = settings.content.gameId;
 			for (char &c: vmuName)
 				if (INVALID_CHARS.find(c) != INVALID_CHARS.npos)
 					c = '_';
 			vmuName += "_vmu_save_A1.bin";
-			std::string wpath = get_writable_data_path(vmuName);
-            if (save || file_exists(wpath))
-            	return wpath;
-            std::string rpath = get_readonly_data_path(vmuName);
-            if (hostfs::storage().exists(rpath))
-            	return rpath;
-            if (!settings.content.path.empty())
-            {
-            	// Legacy path using the rom file name
-            	rpath = get_game_save_prefix() + "_vmu_save_A1.bin";
-            	if (file_exists(rpath))
-            		return rpath;
-            }
-            return wpath;
 		}
-		if (!settings.content.path.empty())
+		else if (!settings.content.path.empty())
+		{
 			return get_game_save_prefix() + "_vmu_save_A1.bin";
+		}
 	}
-
-	std::string vmuName = "vmu_save_" + port + ".bin";
+	
+	if (vmuName.empty())
+		vmuName = "vmu_save_" + port + ".bin";
+	
+	// Check user-defined VMU paths first
+	for (const auto& userPath : config::VMUPath.get())
+	{
+		if (!userPath.empty())
+		{
+			try {
+				std::string fullpath = hostfs::storage().getSubPath(userPath, vmuName);
+				if (save || hostfs::storage().exists(fullpath))
+					return fullpath;
+			} catch (const hostfs::StorageException& e) {
+			}
+		}
+	}
+	
+	// Fall back to default paths
 	std::string wpath = get_writable_data_path(vmuName);
 	if (save || file_exists(wpath))
 		return wpath;
 	std::string rpath = get_readonly_data_path(vmuName);
 	if (hostfs::storage().exists(rpath))
 		return rpath;
+		
+	if (port == "A1" && config::PerGameVmu && !settings.content.path.empty())
+	{
+		// Legacy path using the rom file name
+		rpath = get_game_save_prefix() + "_vmu_save_A1.bin";
+		if (file_exists(rpath))
+			return rpath;
+	}
+	
 	// VMU saves used to be stored in .reicast, not in .reicast/data
 	rpath = get_readonly_config_path(vmuName);
 	if (file_exists(rpath))
@@ -93,6 +109,27 @@ std::string getVmuPath(const std::string& port, bool save)
 std::string getArcadeFlashPath()
 {
 	std::string nvmemSuffix = cfgLoadStr("net", "nvmem", "");
+	std::string fileName = get_file_basename(settings.content.fileName) + nvmemSuffix;
+	
+	// Check user-defined save paths first (for writes, use the first path)
+	for (const auto& userPath : config::SavePath.get())
+	{
+		if (!userPath.empty())
+		{
+			try {
+				std::string fullpath = hostfs::storage().getSubPath(userPath, fileName);
+				// For saves, we use the first valid path for writing
+				// but check all paths when reading existing files
+				if (!config::SavePath.get().empty() && userPath == config::SavePath.get()[0])
+					return fullpath; // Primary save path for new files
+				if (hostfs::storage().exists(fullpath))
+					return fullpath; // Existing save found in this path
+			} catch (const hostfs::StorageException& e) {
+			}
+		}
+	}
+	
+	// Fall back to default
 	return get_game_save_prefix() + nvmemSuffix;
 }
 
@@ -109,6 +146,18 @@ std::string findFlash(const std::string& prefix, const std::string& names)
 		if (percent != npos)
 			name = name.replace(percent, 1, prefix);
 
+		// First check user-defined BIOS paths
+		for (const auto& path : config::BiosPath.get())
+		{
+			try {
+				std::string fullpath = hostfs::storage().getSubPath(path, name);
+				if (hostfs::storage().exists(fullpath))
+					return fullpath;
+			} catch (const hostfs::StorageException& e) {
+			}
+		}
+
+		// Then check default paths
 		std::string fullpath = get_readonly_data_path(name);
 		if (hostfs::storage().exists(fullpath))
 			return fullpath;
@@ -137,6 +186,18 @@ std::string getFlashSavePath(const std::string& prefix, const std::string& name)
 
 std::string findNaomiBios(const std::string& name)
 {
+	// First check user-defined BIOS paths
+	for (const auto& path : config::BiosPath.get())
+	{
+		try {
+			std::string fullpath = hostfs::storage().getSubPath(path, name);
+			if (hostfs::storage().exists(fullpath))
+				return fullpath;
+		} catch (const hostfs::StorageException& e) {
+		}
+	}
+	
+	// Then check default paths
 	std::string fullpath = get_readonly_data_path(name);
 	if (hostfs::storage().exists(fullpath))
 		return fullpath;
@@ -167,6 +228,37 @@ std::string getSavestatePath(int index, bool writable)
 	static std::string lastFile;
 	static std::string lastPath;
 
+	// Check user-defined savestate paths first
+	for (const auto& userPath : config::SavestatePath.get())
+	{
+		if (!userPath.empty())
+		{
+			try {
+				std::string fullpath = hostfs::storage().getSubPath(userPath, state_file);
+				if (writable) {
+					lastFile.clear();
+					return fullpath;
+				}
+				else {
+					if (lastFile != state_file) {
+						lastFile = state_file;
+						if (hostfs::storage().exists(fullpath))
+						{
+							lastPath = fullpath;
+							return lastPath;
+						}
+					}
+					else if (lastPath.find(userPath) != std::string::npos)
+					{
+						return lastPath; // Return cached path if it's in this user path
+					}
+				}
+			} catch (const hostfs::StorageException& e) {
+			}
+		}
+	}
+
+	// Fall back to default paths
 	if (writable) {
 		lastFile.clear();
 		return get_writable_data_path(state_file);
@@ -188,14 +280,60 @@ std::string getShaderCachePath(const std::string& filename)
 
 std::string getTextureLoadPath(const std::string& gameId)
 {
-	if (gameId.length() > 0)
-		return get_readonly_data_path("textures/" + gameId) + "/";
-	else
+	if (gameId.length() == 0)
 		return "";
+	
+	// First check user-defined texture paths
+	for (const auto& path : config::TexturePath.get())
+	{
+		try {
+			// Check for both direct game folder and textures subfolder
+			std::string texPath = hostfs::storage().getSubPath(path, gameId);
+			if (hostfs::storage().exists(texPath))
+			{
+				hostfs::FileInfo fileInfo = hostfs::storage().getFileInfo(texPath);
+				if (fileInfo.isDirectory)
+					return texPath + "/";
+			}
+			
+			// Also check for path/textures/gameId structure
+			texPath = hostfs::storage().getSubPath(path, "textures");
+			texPath = hostfs::storage().getSubPath(texPath, gameId);
+			if (hostfs::storage().exists(texPath))
+			{
+				hostfs::FileInfo fileInfo = hostfs::storage().getFileInfo(texPath);
+				if (fileInfo.isDirectory)
+					return texPath + "/";
+			}
+		} catch (const hostfs::StorageException& e) {
+		}
+	}
+	
+	// Fall back to default location
+	return get_readonly_data_path("textures/" + gameId) + "/";
 }
 
 std::string getTextureDumpPath()
 {
+	// Check user-defined texture dump paths first (for writes, use the first path)
+	if (!config::TextureDumpPath.get().empty())
+	{
+		const std::string& userPath = config::TextureDumpPath.get()[0];
+		if (!userPath.empty())
+		{
+			try {
+				// Create game-specific subfolder
+				std::string gameId = settings.content.gameId;
+				if (!gameId.empty())
+					return hostfs::storage().getSubPath(userPath, gameId) + "/";
+				else
+					return userPath + "/";
+			} catch (const hostfs::StorageException& e) {
+			}
+		}
+	}
+
+	// Fallback to default texture dump location
 	return get_writable_data_path("texdump/");
 }
 
