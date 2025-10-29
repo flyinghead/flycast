@@ -22,12 +22,24 @@
 #include "nowide/stackstring.hpp"
 #include <dirent.h>
 #include <sys/stat.h>
+#include <string>
+#include <cstring>
 
 #ifdef _MSC_VER
 #include <io.h>
 #define W_OK 2
 #define R_OK 4
 typedef unsigned short mode_t;
+#ifdef TARGET_UWP
+#include <windows.h>
+// Define dirent type constants if not already defined
+#ifndef DT_DIR
+#define DT_DIR 4
+#endif
+#ifndef DT_REG
+#define DT_REG 8
+#endif
+#endif
 #else
 #include <unistd.h>
 #endif
@@ -42,6 +54,48 @@ namespace flycast {
     using ::mkdir;
 #else
 
+#ifdef TARGET_UWP
+struct DIR_UWP {
+    HANDLE hFind;
+    WIN32_FIND_DATAW findData;
+    bool firstRead;
+    bool hasNext;
+};
+
+inline DIR *opendir(char const *dirname)
+{
+    std::string searchPath(dirname);
+    if (!searchPath.empty() && searchPath.back() != '\\' && searchPath.back() != '/')
+        searchPath += "\\";
+    searchPath += "*";
+    
+    nowide::wstackstring wsearchPath;
+    if (!wsearchPath.convert(searchPath.c_str())) {
+        errno = EINVAL;
+        return nullptr;
+    }
+    
+    DIR_UWP* dir = new DIR_UWP;
+    dir->hFind = FindFirstFileExFromAppW(wsearchPath.get(), FindExInfoBasic, &dir->findData, 
+                                          FindExSearchNameMatch, nullptr, 0);
+    
+    if (dir->hFind == INVALID_HANDLE_VALUE) {
+        DWORD error = GetLastError();
+        delete dir;
+        if (error == ERROR_ACCESS_DENIED)
+            errno = EACCES;
+        else if (error == ERROR_FILE_NOT_FOUND || error == ERROR_PATH_NOT_FOUND)
+            errno = ENOENT;
+        else
+            errno = error;
+        return nullptr;
+    }
+    
+    dir->firstRead = true;
+    dir->hasNext = true;
+    return (DIR*)dir;
+}
+#else
 inline DIR *opendir(char const *dirname)
 {
     nowide::wstackstring wname;
@@ -51,7 +105,61 @@ inline DIR *opendir(char const *dirname)
     }
     return (DIR *)::_wopendir(wname.get());
 }
+#endif
 
+#ifdef TARGET_UWP
+inline dirent *readdir(DIR *dirstream)
+{
+    DIR_UWP* dir = (DIR_UWP*)dirstream;
+    
+    if (!dir->hasNext)
+        return nullptr;
+        
+    static dirent d;
+    
+    if (dir->firstRead) {
+        dir->firstRead = false;
+    } else {
+        if (!FindNextFileW(dir->hFind, &dir->findData)) {
+            dir->hasNext = false;
+            return nullptr;
+        }
+    }
+    
+    // Skip hidden files/directories on UWP 
+    // if (dir->findData.dwFileAttributes & FILE_ATTRIBUTE_HIDDEN)
+    //     return readdir(dirstream); // Skip to next entry
+    
+    nowide::stackstring name;
+    if (!name.convert(dir->findData.cFileName)) {
+        errno = EINVAL;
+        return nullptr;
+    }
+    
+    d.d_ino = 0;
+    d.d_off = 0;
+    // Set d_type based on file attributes
+    if (dir->findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+        d.d_type = DT_DIR;
+    else
+        d.d_type = DT_REG;
+    d.d_reclen = sizeof(dirent);
+    strncpy(d.d_name, name.get(), sizeof(d.d_name) - 1);
+    d.d_name[sizeof(d.d_name) - 1] = '\0';
+    d.d_namlen = strlen(d.d_name);
+    
+    return &d;
+}
+
+inline int closedir(DIR *dirstream)
+{
+    DIR_UWP* dir = (DIR_UWP*)dirstream;
+    if (dir->hFind != INVALID_HANDLE_VALUE)
+        FindClose(dir->hFind);
+    delete dir;
+    return 0;
+}
+#else
 inline dirent *readdir(DIR *dirstream)
 {
 	_WDIR *wdir = (_WDIR *)dirstream;
@@ -81,6 +189,7 @@ inline int closedir(DIR *dirstream)
 {
 	return ::_wclosedir((_WDIR *)dirstream);
 }
+#endif
 
 inline static void _set_errno(int error)
 {
@@ -147,25 +256,28 @@ inline int access(const char *filename, int how)
     	return -1;
     }
 #ifdef TARGET_UWP
+    // For UWP just check if the file exists
     WIN32_FILE_ATTRIBUTE_DATA attrs;
-	bool rc = GetFileAttributesExFromAppW(wname.get(),  GetFileExInfoStandard, &attrs);
+	bool rc = GetFileAttributesExFromAppW(wname.get(), GetFileExInfoStandard, &attrs);
 	if (!rc)
 	{
-		if (GetLastError() == ERROR_FILE_NOT_FOUND || GetLastError() == ERROR_PATH_NOT_FOUND)
+		DWORD error = GetLastError();
+		if (error == ERROR_FILE_NOT_FOUND || error == ERROR_PATH_NOT_FOUND)
 			_set_errno(ENOENT);
-		else  if (GetLastError() == ERROR_ACCESS_DENIED)
+		else if (error == ERROR_ACCESS_DENIED)
 			_set_errno(EACCES);
 		else
-			_set_errno(GetLastError());
+			_set_errno(error);
 		return -1;
 	}
-	if (how != R_OK && (attrs.dwFileAttributes & FILE_ATTRIBUTE_READONLY))
+	// Only fail on write access check for readonly files
+	// With broadFileSystemAccess, we generally have read access
+	if (how == W_OK && (attrs.dwFileAttributes & FILE_ATTRIBUTE_READONLY))
 	{
 		_set_errno(EACCES);
 		return -1;
 	}
-	else
-		return 0;
+	return 0;
 #else
     return ::_waccess(wname.get(), how);
 #endif
