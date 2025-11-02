@@ -570,6 +570,11 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 			settings.content.path.clear();
 			settings.content.fileName.clear();
 		}
+		
+#ifndef __vita__
+		if (getGamePlatform(path) != DC_PLATFORM_DREAMCAST)
+			throw FlycastException("PS Vita doesn't support this platform");
+#endif
 
 		setPlatform(getGamePlatform(settings.content.fileName));
 		mem_map_default();
