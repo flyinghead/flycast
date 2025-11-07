@@ -265,32 +265,6 @@ void gui_settings_general()
     }
 #endif
 
-    ImGui::Spacing();
-    header("Custom Paths");
-
-    managePathList("BIOS Folders", config::BiosPath.get(),
-        "Folders containing BIOS/Flash files (e.g. dc_boot.bin, dc_flash.bin) and arcade BIOS");
-    ImGui::Spacing();
-
-    managePathList("VMU Folders", config::VMUPath.get(),
-        "Folders where VMU (.bin) saves are stored. First path is used for new saves; all are searched when loading");
-    ImGui::Spacing();
-
-    managePathList("Savestate Folders", config::SavestatePath.get(),
-        "Folders for save states. First path is used for new states; all are searched when loading");
-    ImGui::Spacing();
-
-    managePathList("Game Save Folders", config::SavePath.get(),
-        "Folders for game save data (e.g. arcade NVRAM). First path is used for new saves; all are searched when loading");
-    ImGui::Spacing();
-
-    managePathList("Texture Pack Folders", config::TexturePath.get(),
-        "Folders containing textures/<gameId> or <gameId> under a textures subfolder");
-    ImGui::Spacing();
-
-    managePathList("Texture Dump Folders", config::TextureDumpPath.get(),
-        "Folders where texture dumps are saved. Game-specific subfolders will be created automatically");
-
 	OptionCheckbox("Box Art Game List", config::BoxartDisplayMode,
 			"Display game cover art in the game list.");
 	OptionCheckbox("Fetch Box Art", config::FetchBoxart,
@@ -384,6 +358,35 @@ void gui_settings_general()
 		}
 		ImGui::Unindent();
 	}
+#endif
+
+// Custom Paths section - hidden on Android and iOS
+#if !defined(__ANDROID__) && !defined(TARGET_IPHONE)
+    ImGui::Spacing();
+    header("Custom Paths");
+
+    managePathList("BIOS Folders", config::BiosPath.get(),
+        "Folders containing BIOS/Flash files (e.g. dc_boot.bin, dc_flash.bin) and arcade BIOS");
+    ImGui::Spacing();
+
+    managePathList("VMU Folders", config::VMUPath.get(),
+        "Folders where VMU (.bin) saves are stored. First path is used for new saves; all are searched when loading");
+    ImGui::Spacing();
+
+    managePathList("Savestate Folders", config::SavestatePath.get(),
+        "Folders for save states. First path is used for new states; all are searched when loading");
+    ImGui::Spacing();
+
+    managePathList("Game Save Folders", config::SavePath.get(),
+        "Folders for game save data (e.g. arcade NVRAM). First path is used for new saves; all are searched when loading");
+    ImGui::Spacing();
+
+    managePathList("Texture Pack Folders", config::TexturePath.get(),
+        "Folders containing textures/<gameId> or <gameId> under a textures subfolder");
+    ImGui::Spacing();
+
+    managePathList("Texture Dump Folders", config::TextureDumpPath.get(),
+        "Folders where texture dumps are saved. Game-specific subfolders will be created automatically");
 #endif
 }
 
