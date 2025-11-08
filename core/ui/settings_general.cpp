@@ -25,6 +25,68 @@
 #include "achievements/achievements.h"
 #include "imgui_stdlib.h"
 
+static std::vector<std::string>* g_currentPathList = nullptr;
+static bool general_pathSelectCallback(bool cancelled, std::string selection)
+{
+    if (!cancelled && g_currentPathList != nullptr)
+    {
+        if (std::count(g_currentPathList->begin(), g_currentPathList->end(), selection) == 0)
+        {
+            g_currentPathList->push_back(selection);
+            SaveSettings();
+        }
+    }
+    return true;
+}
+
+static void managePathList(const char* label, std::vector<std::string>& paths, const char* helpText)
+{
+    ImguiID _(label);
+    ImVec2 size;
+    size.x = 0.0f;
+    size.y = (ImGui::GetTextLineHeightWithSpacing() + ImGui::GetStyle().FramePadding.y * 2.f)
+                * (paths.size() + 1);
+
+    bool openPopup = false;
+    if (BeginListBox(label, size, ImGuiWindowFlags_NavFlattened))
+    {
+        int to_delete = -1;
+        for (u32 i = 0; i < paths.size(); i++)
+        {
+            ImguiID _(std::to_string(i).c_str());
+            ImGui::AlignTextToFramePadding();
+            float maxW = ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(ICON_FA_TRASH_CAN).x - ImGui::GetStyle().FramePadding.x * 2
+                         - ImGui::GetStyle().ItemSpacing.x;
+            std::string s = middleEllipsis(paths[i], maxW);
+            ImGui::Text("%s", s.c_str());
+            ImGui::SameLine(0, maxW - ImGui::CalcTextSize(s.c_str()).x + ImGui::GetStyle().ItemSpacing.x);
+            if (ImGui::Button(ICON_FA_TRASH_CAN))
+                to_delete = (int)i;
+        }
+
+        ImguiStyleVar _(ImGuiStyleVar_FramePadding, ScaledVec2(24, 3));
+        std::string buttonLabel = std::string("Add##") + label;
+        openPopup = ImGui::Button(buttonLabel.c_str());
+        scrollWhenDraggingOnVoid();
+
+        ImGui::EndListBox();
+        if (to_delete >= 0)
+        {
+            paths.erase(paths.begin() + to_delete);
+            SaveSettings();
+        }
+    }
+    ImGui::SameLine();
+    ShowHelpMarker(helpText);
+
+    // Handle file selection popup (following the same pattern as addContentPath)
+    std::string popupTitle = std::string("Select ") + label;
+    g_currentPathList = &paths;
+    select_file_popup(popupTitle.c_str(), general_pathSelectCallback);
+    if (openPopup)
+        ImGui::OpenPopup(popupTitle.c_str());
+}
+
 static void addContentPathCallback(const std::string& path)
 {
 	auto& contentPath = config::ContentPath.get();
@@ -129,7 +191,7 @@ void gui_settings_general()
         }
 
         ImguiStyleVar _(ImGuiStyleVar_FramePadding, ScaledVec2(24, 3));
-        const bool addContent = ImGui::Button("Add");
+        const bool addContent = ImGui::Button("Add##ContentLocation");
         addContentPath(addContent);
         ImGui::SameLine();
 
@@ -296,6 +358,35 @@ void gui_settings_general()
 		}
 		ImGui::Unindent();
 	}
+#endif
+
+// Custom Paths section - hidden on Android and iOS
+#if !defined(__ANDROID__) && !defined(TARGET_IPHONE)
+    ImGui::Spacing();
+    header("Custom Paths");
+
+    managePathList("BIOS Folders", config::BiosPath.get(),
+        "Folders containing BIOS/Flash files (e.g. dc_boot.bin, dc_flash.bin) and arcade BIOS");
+    ImGui::Spacing();
+
+    managePathList("VMU Folders", config::VMUPath.get(),
+        "Folders where VMU (.bin) saves are stored. First path is used for new saves; all are searched when loading");
+    ImGui::Spacing();
+
+    managePathList("Savestate Folders", config::SavestatePath.get(),
+        "Folders for save states. First path is used for new states; all are searched when loading");
+    ImGui::Spacing();
+
+    managePathList("Game Save Folders", config::SavePath.get(),
+        "Folders for game save data (e.g. arcade NVRAM). First path is used for new saves; all are searched when loading");
+    ImGui::Spacing();
+
+    managePathList("Texture Pack Folders", config::TexturePath.get(),
+        "Folders containing textures/<gameId> or <gameId> under a textures subfolder");
+    ImGui::Spacing();
+
+    managePathList("Texture Dump Folders", config::TextureDumpPath.get(),
+        "Folders where texture dumps are saved. Game-specific subfolders will be created automatically");
 #endif
 }
 
