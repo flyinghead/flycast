@@ -448,7 +448,7 @@ extern struct ShaderUniforms_t
 class TextureCacheData final : public BaseTextureCacheData
 {
 public:
-	TextureCacheData(TSP tsp, TCW tcw) : BaseTextureCacheData(tsp, tcw) {
+	TextureCacheData(TSP tsp, TCW tcw, int area) : BaseTextureCacheData(tsp, tcw, area) {
 	}
 	TextureCacheData(TextureCacheData&& other) : BaseTextureCacheData(std::move(other)) {
 		std::swap(texID, other.texID);
@@ -513,7 +513,7 @@ struct OpenGLRenderer : Renderer
 	}
 	bool GetLastFrame(std::vector<u8>& data, int& width, int& height) override;
 
-	BaseTextureCacheData *GetTexture(TSP tsp, TCW tcw) override;
+	BaseTextureCacheData *GetTexture(TSP tsp, TCW tcw, int area) override;
 
 	bool Present() override
 	{

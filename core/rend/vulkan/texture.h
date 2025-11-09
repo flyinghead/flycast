@@ -36,7 +36,7 @@ void setImageLayout(vk::CommandBuffer const& commandBuffer, vk::Image image, vk:
 class Texture final : public BaseTextureCacheData
 {
 public:
-	Texture(TSP tsp = {}, TCW tcw = {}) : BaseTextureCacheData(tsp, tcw) {
+	Texture(TSP tsp = {}, TCW tcw = {}, int area = 0) : BaseTextureCacheData(tsp, tcw, area) {
 		this->physicalDevice = VulkanContext::Instance()->GetPhysicalDevice();
 		this->device = VulkanContext::Instance()->GetDevice();
 	}

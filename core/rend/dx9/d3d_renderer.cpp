@@ -211,12 +211,12 @@ void D3DRenderer::Term()
 	device.reset();
 }
 
-BaseTextureCacheData *D3DRenderer::GetTexture(TSP tsp, TCW tcw)
+BaseTextureCacheData *D3DRenderer::GetTexture(TSP tsp, TCW tcw, int area)
 {
 	if (!theDXContext.isReady())
 		return nullptr;
 	//lookup texture
-	D3DTexture* tf = texCache.getTextureCacheData(tsp, tcw);
+	D3DTexture* tf = texCache.getTextureCacheData(tsp, tcw, area);
 
 	//update if needed
 	if (tf->NeedsUpdate())

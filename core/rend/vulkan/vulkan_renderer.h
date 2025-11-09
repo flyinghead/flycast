@@ -35,7 +35,7 @@ protected:
 
 public:
 	void Term() override;
-	BaseTextureCacheData *GetTexture(TSP tsp, TCW tcw) override;
+	BaseTextureCacheData *GetTexture(TSP tsp, TCW tcw, int area) override;
 	void Process(TA_context* ctx) override;
 	void ReInitOSD();
 	void RenderFramebuffer(const FramebufferInfo& info) override;
