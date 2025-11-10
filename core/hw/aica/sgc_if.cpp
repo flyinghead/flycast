@@ -107,14 +107,14 @@ static const s32 adpcm_scale[16] =
 };
 
 static const s32 qtable[32] = {
-0x0E00,0x0E80,0x0F00,0x0F80,
-0x1000,0x1080,0x1100,0x1180,
-0x1200,0x1280,0x1300,0x1380,
-0x1400,0x1480,0x1500,0x1580,
-0x1600,0x1680,0x1700,0x1780,
-0x1800,0x1880,0x1900,0x1980,
-0x1A00,0x1A80,0x1B00,0x1B80,
-0x1C00,0x1D00,0x1E00,0x1F00
+	 2048,  1536,  1024,   512,
+	    0,  -256,  -512,  -768,
+	-1024, -1280, -1536, -1792,
+	-2048, -2176, -2304, -2432,
+	-2560, -2688, -2816, -2944,
+	-3072, -3136, -3200, -3264,
+	-3328, -3392, -3456, -3520,
+	-3584, -3648, -3712, -3776
 };
 
 //Remove the fractional part by chopping..
@@ -322,8 +322,8 @@ struct ChannelCommonData
 
 	//+28	TL[7:0]	--	Q[4:0]
 	u32 Q:5;
-	u32 LPOFF:1;		// confirmed but not documented: 0: LPF enabled, 1: LPF disabled
-	u32 VOFF:1;			// unconfirmed: 0: attenuation enabled, 1: attenuation disabled (TL, AEG, ALFO)
+	u32 LPOFF:1;		// not documented: 0: LPF enabled, 1: LPF disabled
+	u32 VOFF:1;			// not documented: 0: attenuation enabled, 1: attenuation disabled (TL, AEG, ALFO)
 	u32 :1;
 
 	u32 TL:8;
@@ -484,6 +484,7 @@ struct ChannelEx
 
 		SampleType prev1;
 		SampleType prev2;
+		s32 fractSave;
 		s32 q;
 		u32 AttackRate;
 		u32 Decay1Rate;
@@ -546,80 +547,89 @@ struct ChannelEx
 		return rv;
 	}
 
+	SampleType lowPassFilter(SampleType sample)
+	{
+		if (!FEG.active)
+			return sample;
+		constexpr u32 COEF_BITS = 30;
+		const u32 fv = FEG.GetValue();
+		const u32 exp = fv >> 9;
+		const u32 mant = (fv & 0x1FF) | 0x200;
+		u64 a0 = ((u64)mant << 30) >> ((15 - exp) * 2);
+		a0 *= (mant - 1) / 8;
+		a0 >>= (47 - COEF_BITS);
+		s64 f = ((s64)mant << exp) << (COEF_BITS - 25);
+		f += (s64)FEG.q * f / 4096;
+		const s64 b1 = 128ll * 1024 * (1 << (COEF_BITS - 16)) - (f + a0);
+		const s64 b2 = 64ll * 1024 * (1 << (COEF_BITS - 16)) - f;
+		if (exp == 0)
+			// avoid residual signal
+			FEG.fractSave = 0;
+
+		const s64 mac = -a0 * sample + b1 * FEG.prev1 - b2 * FEG.prev2 - FEG.fractSave;	// 20+COEF_BITS bits
+		sample = mac >> COEF_BITS;
+		FEG.fractSave = ((s64)sample << COEF_BITS) - mac;
+		FEG.prev2 = FEG.prev1;
+		sample = std::clamp(sample, -512 * 1024, 512 * 1024 - 1);
+		FEG.prev1 = sample;
+		return sample;
+	}
+
 	bool Step(SampleType& oLeft, SampleType& oRight, SampleType& oDsp)
 	{
-		if (!enabled)
-		{
-			oLeft=oRight=oDsp=0;
+		if (!enabled) {
+			oLeft = oRight = oDsp = 0;
 			return false;
+		}
+
+		SampleType sample = InterpolateSample() << 4;
+		sample = lowPassFilter(sample);
+
+
+		//Volume & Mixer processing
+		//All attenuations are added together then applied and mixed :)
+
+		//offset is up to 511
+		//*Att is up to 511
+		//logtable handles up to 1024, anything >=255 is mute
+
+		u32 ofsatt;
+		if (ccd->VOFF == 1)
+		{
+			ofsatt = 0;
 		}
 		else
 		{
-			SampleType sample = InterpolateSample();
-
-			// Low-pass filter
-			if (FEG.active)
-			{
-				u32 fv = FEG.GetValue();
-				s32 f = (((fv & 0x1FF) | 0x200) << 3) >> ((fv >> 9) ^ 0xF);
-				if (f == 0) {
-					sample = 0;
-				}
-				else
-				{
-					sample = f * sample + (0x2000 - f + FEG.q) * FEG.prev1 - FEG.q * FEG.prev2;
-					sample >>= 13;
-					sample = std::clamp(sample, -32768, 32767);
-				}
-				FEG.prev2 = FEG.prev1;
-				FEG.prev1 = sample;
-			}
-
-			//Volume & Mixer processing
-			//All attenuations are added together then applied and mixed :)
-
-			//offset is up to 511
-			//*Att is up to 511
-			//logtable handles up to 1024, anything >=255 is mute
-
-			u32 ofsatt;
-			if (ccd->VOFF == 1)
-			{
-				ofsatt = 0;
-			}
-			else
-			{
-				ofsatt = lfo.alfo + (AEG.GetValue() >> 2);
-				ofsatt = std::min(ofsatt, (u32)255); // make sure it never gets more 255 -- it can happen with some alfo/aeg combinations
-			}
-			u32 const max_att = ((16 << 4) - 1) - ofsatt;
-			
-			s32* logtable = ofsatt + tl_lut;
-
-			u32 dl = std::min(VolMix.DLAtt, max_att);
-			u32 dr = std::min(VolMix.DRAtt, max_att);
-			u32 ds = std::min(VolMix.DSPAtt, max_att);
-
-			oLeft = FPMul(sample, logtable[dl], 15);
-			oRight = FPMul(sample, logtable[dr], 15);
-			oDsp = FPMul(sample, logtable[ds], 11);	// 20 bits
-
-			clip_verify(((s16)oLeft)==oLeft);
-			clip_verify(((s16)oRight)==oRight);
-			clip_verify((oDsp << 12) >> 12 == oDsp);
-			clip_verify(sample*oLeft>=0);
-			clip_verify(sample*oRight>=0);
-			clip_verify((s64)sample*oDsp>=0);
-
-			StepAEG(this);
-			if (enabled)
-			{
-				StepFEG(this);
-				StepStream(this);
-				lfo.Step(this);
-			}
-			return true;
+			ofsatt = lfo.alfo + (AEG.GetValue() >> 2);
+			ofsatt = std::min(ofsatt, (u32)255); // make sure it never gets more 255 -- it can happen with some alfo/aeg combinations
 		}
+		u32 const max_att = ((16 << 4) - 1) - ofsatt;
+		
+		s32* logtable = ofsatt + tl_lut;
+
+		u32 dl = std::min(VolMix.DLAtt, max_att);
+		u32 dr = std::min(VolMix.DRAtt, max_att);
+		u32 ds = std::min(VolMix.DSPAtt, max_att);
+
+		oLeft = FPMul<s64>(sample, logtable[dl], 19);	// 16 bits
+		oRight = FPMul<s64>(sample, logtable[dr], 19);	// 16 bits
+		oDsp = FPMul<s64>(sample, logtable[ds], 15);	// 20 bits
+
+		clip_verify((s16)oLeft == oLeft);
+		clip_verify((s16)oRight == oRight);
+		clip_verify((oDsp << 12) >> 12 == oDsp);
+		clip_verify((s64)sample * oLeft >= 0);
+		clip_verify((s64)sample * oRight >= 0);
+		clip_verify((s64)sample * oDsp >= 0);
+
+		StepAEG(this);
+		if (enabled)
+		{
+			StepFEG(this);
+			StepStream(this);
+			lfo.Step(this);
+		}
+		return true;
 	}
 
 	void Step(SampleType& mixl, SampleType& mixr)
@@ -659,6 +669,7 @@ struct ChannelEx
 			FEG.SetValue(ccd->FLV0);
 			FEG.prev1 = 0;
 			FEG.prev2 = 0;
+			FEG.fractSave = 0;
 		}
 	}
 
@@ -822,13 +833,13 @@ struct ChannelEx
 	void UpdateFEG()
 	{
 		FEG.active = ccd->LPOFF == 0
-				&& (ccd->FLV0 < 0x1ff7 || ccd->FLV1 < 0x1ff7
-						|| ccd->FLV2 < 0x1ff7 || ccd->FLV3 < 0x1ff7
-						|| ccd->FLV4 < 0x1ff7);
+				&& (ccd->FLV0 < 0x1ff8 || ccd->FLV1 < 0x1ff8
+						|| ccd->FLV2 < 0x1ff8 || ccd->FLV3 < 0x1ff8
+						|| ccd->FLV4 < 0x1ff8 || ccd->Q != 4);
 		if (!FEG.active)
 			return;
 		if (!quiet)
-			feg_printf("FEG active channel %d Q %d FLV: %05x %05x %05x %05x %05x AR %02x FD1R %02x FD2R %02x FRR %02x",
+			feg_printf("FEG active channel %d Q %d FLV: %04d %04d %04d %04d %04d AR %02d FD1R %02d FD2R %02d FRR %02d",
 					ChannelNumber, ccd->Q,
 					ccd->FLV0, ccd->FLV1, ccd->FLV2, ccd->FLV3, ccd->FLV4,
 					ccd->FAR, ccd->FD1R, ccd->FD2R, ccd->FRR);
@@ -907,12 +918,11 @@ struct ChannelEx
 			UpdateAtts();
 			break;
 
-		case 0x28://Q, LPOFF
+		case 0x28://Q, LPOFF, VOFF
 		case 0x29://TL
 			if (size == 2 || offset == 0x28)
 				UpdateFEG();
-			if (size == 2 || offset == 0x29)
-				UpdateAtts();
+			UpdateAtts();
 			break;
 
 		case 0x2C: //FLV0
@@ -1270,7 +1280,7 @@ void FegStep(ChannelEx* ch)
 	}
 	else if (ch->FEG.state < EG_Decay2)
 	{
-		feg_printf("[%d]FEG_step : Switching to next state: %d Freq %x", ch->ChannelNumber, (int)ch->FEG.state + 1, target >> EG_STEP_BITS);
+		feg_printf("[%d]FEG_step : Switching to next state: %d Freq %d", ch->ChannelNumber, (int)ch->FEG.state + 1, target >> EG_STEP_BITS);
 		ch->SetFegState((_EG_state)((int)ch->FEG.state + 1));
 	}
 }
@@ -1366,7 +1376,7 @@ static void staticinitialise()
 	{
 		AEG_ATT_SPS[i] = CalcAttackEgSteps(AEG_Attack_Time[i]);
 		AEG_DSR_SPS[i] = CalcEgSteps(AEG_DSR_Time[i]);
-		// The AEG range is 1024, while the FEG range is 8912.
+		// The AEG range is 1024, while the FEG range is 8192.
 		// So decay times are x8 greater for FEG than AEG
 		// instead of x4 as mentioned in the doc.
 		// However it sounds better this way.
@@ -1575,6 +1585,7 @@ void serialize(Serializer& ser)
 		ser << channel.FEG.state;
 		ser << channel.FEG.prev1;
 		ser << channel.FEG.prev2;
+		ser << channel.FEG.fractSave;
 
 		ser << channel.lfo.counter;
 		ser << channel.lfo.state;
@@ -1620,6 +1631,15 @@ void deserialize(Deserializer& deser)
 		deser >> channel.FEG.state;
 		deser >> channel.FEG.prev1;
 		deser >> channel.FEG.prev2;
+		if (deser.version() >= Deserializer::V56) {
+			deser >> channel.FEG.fractSave;
+		}
+		else
+		{
+			channel.FEG.fractSave = 0;
+			channel.FEG.prev1 = 0;
+			channel.FEG.prev2 = 0;
+		}
 		channel.SetFegState(channel.FEG.state);
 		channel.UpdateFEG();
 		channel.UpdateStreamStep();
