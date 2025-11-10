@@ -28,7 +28,7 @@
 static void addCheat()
 {
 	static char cheatName[64];
-	static char cheatCode[128];
+	static char cheatCode[512];
     centerNextWindow();
     ImGui::SetNextWindowSize(min(ImGui::GetIO().DisplaySize, ScaledVec2(600.f, 400.f)));
     ImguiStyleVar _(ImGuiStyleVar_WindowBorderSize, 1);
@@ -65,7 +65,7 @@ static void addCheat()
 		ImGui::BeginChild(ImGui::GetID("input"), ImVec2(0, 0), ImGuiChildFlags_Border, ImGuiWindowFlags_NavFlattened);
 		{
 			ImGui::InputText("Name", cheatName, sizeof(cheatName), 0, nullptr, nullptr);
-			ImGui::InputTextMultiline("Code", cheatCode, sizeof(cheatCode), ImVec2(0, ImGui::GetTextLineHeight() * 8), 0, nullptr, nullptr);
+			ImGui::InputTextMultiline("Code", cheatCode, sizeof(cheatCode), ImVec2(0, ImGui::GetTextLineHeight() * 16), 0, nullptr, nullptr);
 		}
 		ImGui::EndChild();
 		ImGui::EndPopup();
