@@ -315,23 +315,9 @@ std::string getTextureLoadPath(const std::string& gameId)
 
 std::string getTextureDumpPath()
 {
-	// Check user-defined texture dump paths first (for writes, use the first path)
+	// Check user-defined texture dump path first
 	if (!config::TextureDumpPath.get().empty())
-	{
-		const std::string& userPath = config::TextureDumpPath.get()[0];
-		if (!userPath.empty())
-		{
-			try {
-				// Create game-specific subfolder
-				std::string gameId = settings.content.gameId;
-				if (!gameId.empty())
-					return hostfs::storage().getSubPath(userPath, gameId) + "/";
-				else
-					return userPath + "/";
-			} catch (const hostfs::StorageException& e) {
-			}
-		}
-	}
+		return config::TextureDumpPath.get() + "/";
 
 	// Fallback to default texture dump location
 	return get_writable_data_path("texdump/");

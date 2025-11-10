@@ -385,8 +385,39 @@ void gui_settings_general()
         "Folders containing textures/<gameId> or <gameId> under a textures subfolder");
     ImGui::Spacing();
 
-    managePathList("Texture Dump Folders", config::TextureDumpPath.get(),
-        "Folders where texture dumps are saved. Game-specific subfolders will be created automatically");
+	const static char * const TexDumpPopupName = "Select Texture Dump Folder";
+    size.x = 0.0f;
+    size.y = ImGui::GetTextLineHeightWithSpacing() + ImGui::GetStyle().FramePadding.y * 2.f;
+	bool openTexDumpPopup = false;
+    if (BeginListBox("Texture Dump Folder", size, ImGuiWindowFlags_NavFlattened))
+    {
+    	ImGui::AlignTextToFramePadding();
+		if (config::TextureDumpPath.get().empty()) {
+	        ImguiStyleVar _(ImGuiStyleVar_FramePadding, ScaledVec2(24, 3));
+			openTexDumpPopup = ImGui::Button("Set");
+		}
+		else
+		{
+	    	float w = ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(ICON_FA_TRASH_CAN).x - ImGui::GetStyle().FramePadding.x * 2
+				- ImGui::GetStyle().ItemSpacing.x;
+	    	std::string s = middleEllipsis(config::TextureDumpPath, w);
+	        ImGui::Text("%s", s.c_str());
+			ImGui::SameLine(0, w - ImGui::CalcTextSize(s.c_str()).x + ImGui::GetStyle().ItemSpacing.x);
+			if (ImGui::Button(ICON_FA_TRASH_CAN))
+				config::TextureDumpPath.get().clear();
+		}
+        ImGui::EndListBox();
+    }
+    ImGui::SameLine();
+    ShowHelpMarker("Folder where texture dumps are saved. Game-specific subfolders will be created automatically");
+    // Handle folder selection popup
+    select_file_popup(TexDumpPopupName, [](bool cancelled, std::string selection) {
+		if (!cancelled)
+			config::TextureDumpPath = selection;
+		return true;
+    });
+	if (openTexDumpPopup)
+		ImGui::OpenPopup(TexDumpPopupName);
 #endif
 }
 

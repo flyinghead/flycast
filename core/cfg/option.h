@@ -497,7 +497,7 @@ extern Option<std::vector<std::string>, false> VMUPath;
 extern Option<std::vector<std::string>, false> SavestatePath;
 extern Option<std::vector<std::string>, false> SavePath;
 extern Option<std::vector<std::string>, false> TexturePath;
-extern Option<std::vector<std::string>, false> TextureDumpPath;
+extern Option<std::string, false> TextureDumpPath;
 extern Option<bool, false> HideLegacyNaomiRoms;
 extern Option<bool, false> UploadCrashLogs;
 extern Option<bool, false> DiscordPresence;
