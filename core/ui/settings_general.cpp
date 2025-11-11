@@ -26,17 +26,13 @@
 #include "imgui_stdlib.h"
 
 static std::vector<std::string>* g_currentPathList = nullptr;
-static bool general_pathSelectCallback(bool cancelled, std::string selection)
+static void managePathListCallback(std::string selection)
 {
-    if (!cancelled && g_currentPathList != nullptr)
+    if (g_currentPathList != nullptr)
     {
         if (std::count(g_currentPathList->begin(), g_currentPathList->end(), selection) == 0)
-        {
             g_currentPathList->push_back(selection);
-            SaveSettings();
-        }
     }
-    return true;
 }
 
 static void managePathList(const char* label, std::vector<std::string>& paths, const char* helpText)
@@ -81,10 +77,27 @@ static void managePathList(const char* label, std::vector<std::string>& paths, c
 
     // Handle file selection popup (following the same pattern as addContentPath)
     std::string popupTitle = std::string("Select ") + label;
-    g_currentPathList = &paths;
-    select_file_popup(popupTitle.c_str(), general_pathSelectCallback);
+    if (openPopup)
+	    g_currentPathList = &paths;
+    select_file_popup(popupTitle.c_str(), [](bool cancelled, std::string selection) {
+    	if (!cancelled)
+    		managePathListCallback(selection);
+    	return true;
+    });
+#ifdef __ANDROID__
+    if (openPopup)
+    {
+		bool supported = hostfs::addStorage(true, false, popupTitle, [](bool cancelled, std::string selection) {
+			if (!cancelled)
+				managePathListCallback(selection);
+		});
+		if (!supported)
+			ImGui::OpenPopup(popupTitle.c_str());
+    }
+#else
     if (openPopup)
         ImGui::OpenPopup(popupTitle.c_str());
+#endif
 }
 
 static void addContentPathCallback(const std::string& path)
@@ -361,7 +374,7 @@ void gui_settings_general()
 #endif
 
 // Custom Paths section - hidden on Android and iOS
-#if !defined(__ANDROID__) && !defined(TARGET_IPHONE)
+#if !defined(TARGET_IPHONE)
     ImGui::Spacing();
     header("Custom Paths");
 
@@ -369,6 +382,7 @@ void gui_settings_general()
         "Folders containing BIOS/Flash files (e.g. dc_boot.bin, dc_flash.bin) and arcade BIOS");
     ImGui::Spacing();
 
+#if !defined(__ANDROID__)
     managePathList("VMU Folders", config::VMUPath.get(),
         "Folders where VMU (.bin) saves are stored. First path is used for new saves; all are searched when loading");
     ImGui::Spacing();
@@ -380,11 +394,13 @@ void gui_settings_general()
     managePathList("Game Save Folders", config::SavePath.get(),
         "Folders for game save data (e.g. arcade NVRAM). First path is used for new saves; all are searched when loading");
     ImGui::Spacing();
+#endif
 
     managePathList("Texture Pack Folders", config::TexturePath.get(),
         "Folders containing textures/<gameId> or <gameId> under a textures subfolder");
     ImGui::Spacing();
 
+#if !defined(__ANDROID__)
 	const static char * const TexDumpPopupName = "Select Texture Dump Folder";
     size.x = 0.0f;
     size.y = ImGui::GetTextLineHeightWithSpacing() + ImGui::GetStyle().FramePadding.y * 2.f;
@@ -418,7 +434,8 @@ void gui_settings_general()
     });
 	if (openTexDumpPopup)
 		ImGui::OpenPopup(TexDumpPopupName);
-#endif
+#endif	// !ANDROID
+#endif	// !IPHONE
 }
 
 static void applyDarkTheme()
