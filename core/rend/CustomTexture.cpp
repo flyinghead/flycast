@@ -35,6 +35,62 @@
 
 CustomTexture custom_texture;
 
+class DefaultTextureSource : public CustomTextureSource
+{
+public:
+	DefaultTextureSource(const std::string& path) : textures_path(path) { }
+	bool LoadMap() override;
+	u8* LoadCustomTexture(u32 hash, int& width, int& height) override;
+
+private:
+	std::string textures_path;
+	std::map<u32, std::string> texture_map;
+};
+
+bool DefaultTextureSource::LoadMap()
+{
+	texture_map.clear();
+	hostfs::DirectoryTree tree(textures_path);
+	for (const hostfs::FileInfo& item : tree)
+	{
+		std::string extension = get_file_extension(item.name);
+		if (extension != "jpg" && extension != "jpeg" && extension != "png")
+			continue;
+		std::string::size_type dotpos = item.name.find_last_of('.');
+		std::string basename = item.name.substr(0, dotpos);
+		char *endptr;
+		u32 hash = (u32)strtoll(basename.c_str(), &endptr, 16);
+		if (endptr - basename.c_str() < (ptrdiff_t)basename.length())
+		{
+			INFO_LOG(RENDERER, "Invalid hash %s", basename.c_str());
+			continue;
+		}
+		texture_map[hash] = item.path;
+	}
+	return !texture_map.empty();
+}
+
+u8* DefaultTextureSource::LoadCustomTexture(u32 hash, int& width, int& height)
+{
+	auto it = texture_map.find(hash);
+	if (it == texture_map.end())
+		return nullptr;
+
+	FILE *file = hostfs::storage().openFile(it->second, "rb");
+	if (file == nullptr)
+		return nullptr;
+	int n;
+	stbi_set_flip_vertically_on_load(1);
+	u8 *imgData = stbi_load_from_file(file, &width, &height, &n, STBI_rgb_alpha);
+	std::fclose(file);
+	return imgData;
+}
+
+void CustomTexture::AddSource(std::unique_ptr<CustomTextureSource> source)
+{
+	sources.emplace_back(std::move(source));
+}
+
 void CustomTexture::loadTexture(BaseTextureCacheData *texture)
 {
 	if (texture->custom_image_data != nullptr) {
@@ -89,11 +145,17 @@ bool CustomTexture::init()
 					if (fileInfo.isDirectory)
 					{
 						NOTICE_LOG(RENDERER, "Found custom textures directory: %s", textures_path.c_str());
-						custom_textures_available = true;
-						loaderThread = std::make_unique<WorkerThread>("CustomTexLoader");
-						loaderThread->run([this]() {
-							loadMap();
-						});
+						AddSource(std::make_unique<DefaultTextureSource>(textures_path));
+						for (auto& source : sources)
+							custom_textures_available |= source->Init();
+						
+						if (custom_textures_available)
+						{
+							loaderThread = std::make_unique<WorkerThread>("CustomTexLoader");
+							loaderThread->run([this]() {
+								loadMap();
+							});
+						}
 					}
 				} catch (const FlycastException& e) {
 				}
@@ -112,24 +174,21 @@ void CustomTexture::Terminate()
 	if (loaderThread)
 		loaderThread->stop();
 	loaderThread.reset();
-	texture_map.clear();
+	for (auto& source : sources)
+		source->Terminate();
+	sources.clear();
 	initialized = false;
 }
 
 u8* CustomTexture::loadTexture(u32 hash, int& width, int& height)
 {
-	auto it = texture_map.find(hash);
-	if (it == texture_map.end())
-		return nullptr;
-
-	FILE *file = hostfs::storage().openFile(it->second, "rb");
-	if (file == nullptr)
-		return nullptr;
-	int n;
-	stbi_set_flip_vertically_on_load(1);
-	u8 *imgData = stbi_load_from_file(file, &width, &height, &n, STBI_rgb_alpha);
-	std::fclose(file);
-	return imgData;
+	for (auto& source : sources)
+	{
+		u8* data = source->LoadCustomTexture(hash, width, height);
+		if (data != nullptr)
+			return data;
+	}
+	return nullptr;
 }
 
 void CustomTexture::LoadCustomTextureAsync(BaseTextureCacheData *texture_data)
@@ -277,23 +336,8 @@ void CustomTexture::DumpTexture(u32 hash, int w, int h, TextureType textype, voi
 
 void CustomTexture::loadMap()
 {
-	texture_map.clear();
-	hostfs::DirectoryTree tree(textures_path);
-	for (const hostfs::FileInfo& item : tree)
-	{
-		std::string extension = get_file_extension(item.name);
-		if (extension != "jpg" && extension != "jpeg" && extension != "png")
-			continue;
-		std::string::size_type dotpos = item.name.find_last_of('.');
-		std::string basename = item.name.substr(0, dotpos);
-		char *endptr;
-		u32 hash = (u32)strtoll(basename.c_str(), &endptr, 16);
-		if (endptr - basename.c_str() < (ptrdiff_t)basename.length())
-		{
-			INFO_LOG(RENDERER, "Invalid hash %s", basename.c_str());
-			continue;
-		}
-		texture_map[hash] = item.path;
-	}
-	custom_textures_available = !texture_map.empty();
+	bool available = false;
+	for (auto& source : sources)
+		available |= source->LoadMap();
+	custom_textures_available = available;
 }

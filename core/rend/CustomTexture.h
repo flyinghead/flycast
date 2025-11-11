@@ -21,14 +21,26 @@
 #include <string>
 #include <map>
 #include <memory>
+#include <vector>
 
 class BaseTextureCacheData;
 class WorkerThread;
+
+class CustomTextureSource
+{
+public:
+	virtual ~CustomTextureSource() { }
+	virtual bool Init() { return true; }
+	virtual bool LoadMap() = 0;
+	virtual void Terminate() { }
+	virtual u8* LoadCustomTexture(u32 hash, int& width, int& height) = 0;
+};
 
 class CustomTexture
 {
 public:
 	~CustomTexture();
+	void AddSource(std::unique_ptr<CustomTextureSource> source);
 	void LoadCustomTextureAsync(BaseTextureCacheData *texture_data);
 	void DumpTexture(u32 hash, int w, int h, TextureType textype, void *src_buffer);
 	void Terminate();
@@ -44,6 +56,7 @@ private:
 	bool custom_textures_available = false;
 	std::string textures_path;
 	std::map<u32, std::string> texture_map;
+	std::vector<std::unique_ptr<CustomTextureSource>> sources;
 	std::unique_ptr<WorkerThread> loaderThread;
 };
 
