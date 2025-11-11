@@ -19,6 +19,7 @@
 #include "storage.h"
 #include "directory.h"
 #include "stdclass.h"
+#include "nowide/stackstring.hpp"
 
 // For macOS
 std::string os_PrecomposedString(std::string string);
