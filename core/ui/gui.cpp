@@ -48,11 +48,6 @@
 #if defined(USE_SDL)
 #include "sdl/sdl.h"
 #include "sdl/dreamlink.h"
-#ifdef TARGET_UWP
-extern "C" char* SDL_WinRTGetProtocolActivationURI(void);
-#include <winrt/Windows.System.h>
-#include <winrt/Windows.Foundation.h>
-#endif
 #endif
 #include "vgamepad.h"
 #include "settings.h"
@@ -574,23 +569,6 @@ void gui_stop_game(const std::string& message)
 			ERROR_LOG(COMMON, "Flycast has stopped: %s", message.c_str());
 		// Exit emulator
 		dc_exit();
-		
-#ifdef TARGET_UWP
-		if (!launchOnExitUri.empty()) {
-			INFO_LOG(BOOT, "Launching exit URI: %s", launchOnExitUri.c_str());
-			try {
-				using namespace winrt::Windows::System;
-				using namespace winrt::Windows::Foundation;
-				
-				auto wUri = winrt::to_hstring(launchOnExitUri);
-				Uri uri(wUri);
-				auto asyncOp = Launcher::LaunchUriAsync(uri);
-				asyncOp.get();
-			} catch (...) {
-				ERROR_LOG(BOOT, "Failed to launch exit URI");
-			}
-		}
-#endif
 	}
 }
 
@@ -1301,7 +1279,7 @@ static void gui_network_start()
 		try {
 			networkStatus.get();
 		}
-		catch (const FlycastException& e) {
+		catch (const FlycastException&) {
 		}
 		gui_stop_game();
 	}
@@ -1312,102 +1290,56 @@ static void gui_network_start()
 }
 
 #ifdef TARGET_UWP
-static void checkUWPProtocolActivation()
+#include "oslib/http_client.h"
+
+static bool checkUWPProtocolActivation()
 {
 	// Check for UWP protocol-activated ROM path
-	static int checkCount = 0;
-	static int skipFrames = 0;
-	if (checkCount < 30) { // Try many times - OnAppActivated may not be called yet
-		// Skip some frames between checks to give OnAppActivated time to be called
-		if (skipFrames < 3) {
-			skipFrames++;
-		} else {
-			skipFrames = 0;
-			checkCount++;
-			char* activationUri = SDL_WinRTGetProtocolActivationURI();
-			if (activationUri != nullptr)
+	static int checkCount = 90; // Try many times - OnAppActivated may not be called yet
+	if (checkCount == 0)
+		return false;
+	checkCount--;
+	char* activationUri = SDL_WinRTGetProtocolActivationURI();
+	if (activationUri == nullptr)
+		return false;
+
+	std::string uri(activationUri);
+	SDL_free(activationUri);
+	INFO_LOG(BOOT, "Protocol activation URI: %s", uri.c_str());
+	size_t qpos = uri.find('?');
+	if (qpos != std::string::npos)
+	{
+		uri = uri.substr(qpos + 1);
+		// Parse launchOnExit parameter
+		size_t exitPos = uri.find("launchOnExit=");
+		if (exitPos != std::string::npos) {
+			exitPos += 13; // Skip "launchOnExit="
+			size_t exitEnd = uri.find('&', exitPos);
+			if (exitEnd == std::string::npos)
+				exitEnd = uri.size();
+			std::string exitUri = uri.substr(exitPos, exitEnd - exitPos);
+			launchOnExitUri = http::urlDecode(exitUri);
+			INFO_LOG(BOOT, "LaunchOnExit URI: %s", launchOnExitUri.c_str());
+			// SDL WinRT will automatically handle launchOnExit from the protocol URI
+		}
+
+		uri = http::urlDecode(uri);
+
+		// Parse ROM path (first quoted string)
+		size_t s = uri.find('"');
+		if (s != std::string::npos)
+		{
+			size_t e = uri.find('"', s + 1);
+			if (e != std::string::npos)
 			{
-				std::string uri(activationUri);
-				SDL_free(activationUri);
-				INFO_LOG(BOOT, "Protocol activation URI: %s", uri.c_str());
-				size_t qpos = uri.find('?');
-				if (qpos != std::string::npos)
-				{
-					// Parse launchOnExit parameter
-					size_t exitPos = uri.find("launchOnExit=", qpos);
-					if (exitPos != std::string::npos) {
-						exitPos += 13; // Skip "launchOnExit="
-						size_t exitEnd = uri.find('&', exitPos);
-						if (exitEnd == std::string::npos)
-							exitEnd = uri.size();
-						std::string exitUri = uri.substr(exitPos, exitEnd - exitPos);
-						
-						// URL-decode the launchOnExit URI
-						launchOnExitUri.clear();
-						launchOnExitUri.reserve(exitUri.size());
-						for (size_t i = 0; i < exitUri.size(); ++i) {
-							if (exitUri[i] == '%' && i + 2 < exitUri.size()) {
-								auto hexval = [](char c) -> int {
-									if (c >= '0' && c <= '9') return c - '0';
-									if (c >= 'A' && c <= 'F') return c - 'A' + 10;
-									if (c >= 'a' && c <= 'f') return c - 'a' + 10;
-									return 0;
-								};
-								char ch = (char)((hexval(exitUri[i + 1]) << 4) | hexval(exitUri[i + 2]));
-								launchOnExitUri.push_back(ch);
-								i += 2;
-							} else if (exitUri[i] == '+') {
-								launchOnExitUri.push_back(' ');
-							} else {
-								launchOnExitUri.push_back(exitUri[i]);
-							}
-						}
-						INFO_LOG(BOOT, "LaunchOnExit URI: %s", launchOnExitUri.c_str());
-						// SDL WinRT will automatically handle launchOnExit from the protocol URI
-					}
-					
-					// First, decode any %22 to " in the URI
-					size_t pos = 0;
-					while ((pos = uri.find("%22", pos)) != std::string::npos) {
-						uri.replace(pos, 3, "\"");
-						pos += 1;
-					}
-					
-					// Parse ROM path (first quoted string)
-					size_t s = uri.find('"', qpos + 1);
-					if (s != std::string::npos)
-					{
-						size_t e = uri.find('"', s + 1);
-						if (e != std::string::npos)
-						{
-							std::string enc = uri.substr(s + 1, e - (s + 1));
-							std::string romPath;
-							romPath.reserve(enc.size());
-							auto hexval = [](char c) -> int {
-								if (c >= '0' && c <= '9') return c - '0';
-								if (c >= 'A' && c <= 'F') return c - 'A' + 10;
-								if (c >= 'a' && c <= 'f') return c - 'a' + 10;
-								return 0;
-							};
-							for (size_t i = 0; i < enc.size(); ++i) {
-								if (enc[i] == '%' && i + 2 < enc.size()) {
-									char ch = (char)((hexval(enc[i + 1]) << 4) | hexval(enc[i + 2]));
-									romPath.push_back(ch);
-									i += 2;
-								} else if (enc[i] == '+') {
-									romPath.push_back(' ');
-								} else {
-									romPath.push_back(enc[i]);
-								}
-							}
-							commandLineStart = true;
-							gui_start_game(romPath);
-						}
-					}
-				}
+				std::string romPath = uri.substr(s + 1, e - (s + 1));
+				commandLineStart = true;
+				gui_start_game(romPath);
+				return true;
 			}
 		}
 	}
+	return false;
 }
 #endif
 
@@ -1481,8 +1413,7 @@ void gui_display_ui()
 	if (gui_state == GuiState::Main)
 	{
 #ifdef TARGET_UWP
-		checkUWPProtocolActivation();
-		if (gui_state != GuiState::Main)
+		if (checkUWPProtocolActivation())
 			return;
 #endif
 		if (!settings.content.path.empty() || settings.naomi.slave)
@@ -1490,7 +1421,10 @@ void gui_display_ui()
 #ifndef __ANDROID__
 			commandLineStart = true;
 #endif
-			gui_start_game(settings.content.path);
+			if (settings.content.path.substr(0, 7) == "dc_bios")
+				gui_start_game("");
+			else
+				gui_start_game(settings.content.path);
 			return;
 		}
 	}
