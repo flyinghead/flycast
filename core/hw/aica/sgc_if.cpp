@@ -379,12 +379,29 @@ struct ChannelCommonData
 #pragma pack(pop)
 
 
-enum _EG_state
+enum EGState
 {
 	EG_Attack = 0,
 	EG_Decay1 = 1,
 	EG_Decay2 = 2,
 	EG_Release = 3
+};
+
+enum class LFOType
+{
+	Sawtooth,
+	Square,
+	Triangle,
+	Random
+};
+
+enum PCMSType
+{
+	PCM16 = 0,
+	PCM8 = 1,
+	ADPCM = 2,
+	ADPCM_STREAM = 3,
+	NOISE = 4,
 };
 
 /*
@@ -394,27 +411,18 @@ enum _EG_state
 
 */
 
-struct ChannelEx;
-
-static void (* STREAM_STEP_LUT[5][2][2])(ChannelEx* ch);
-static void (* STREAM_INITAL_STEP_LUT[5])(ChannelEx* ch);
-static void (* AEG_STEP_LUT[4])(ChannelEx* ch);
-static void (* FEG_STEP_LUT[4])(ChannelEx* ch);
-static void (* ALFOWS_CALC[4])(ChannelEx* ch);
-static void (* PLFOWS_CALC[4])(ChannelEx* ch);
-
 struct ChannelEx
 {
 	static ChannelEx Chans[64];
 
 	ChannelCommonData* ccd;
 
-	u8* SA;
+	const u8 *SA;
 	u32 CA;
 	fp_22_10 step;
 	u32 update_rate;
 
-	SampleType s0,s1;
+	SampleType s0, s1;
 
 	struct
 	{
@@ -435,12 +443,12 @@ struct ChannelEx
 
 		void Reset(ChannelEx* ch)
 		{
-			last_quant=127;
+			last_quant = 127;
 			loopstart_quant = 0;
 			loopstart_prev_sample = 0;
 			in_loop = false;
 
-			ch->s0=0;
+			ch->s0 = 0;
 		}
 	} adpcm;
 
@@ -454,10 +462,10 @@ struct ChannelEx
 		SampleType* DSPOut;
 	} VolMix;
 	
-	void (* StepAEG)(ChannelEx* ch);
-	void (* StepFEG)(ChannelEx* ch);
-	void (* StepStream)(ChannelEx* ch);
-	void (* StepStreamInitial)(ChannelEx* ch);
+	void (ChannelEx::*StepAEG)();
+	void (ChannelEx::*StepFEG)();
+	void (ChannelEx::*StepStream)();
+	void (ChannelEx::*StepStreamInitial)();
 	
 	struct
 	{
@@ -465,7 +473,7 @@ struct ChannelEx
 		s32 GetValue() { return val >> EG_STEP_BITS;}
 		void SetValue(u32 aegb) { val = aegb << EG_STEP_BITS; }
 
-		_EG_state state=EG_Attack;
+		EGState state = EG_Attack;
 
 		u32 AttackRate;
 		u32 Decay1Rate;
@@ -480,7 +488,7 @@ struct ChannelEx
 		u32 GetValue() { return value >> EG_STEP_BITS;}
 		void SetValue(u32 fegb) { value = fegb << EG_STEP_BITS; }
 
-		_EG_state state = EG_Attack;
+		EGState state = EG_Attack;
 
 		SampleType prev1;
 		SampleType prev2;
@@ -493,7 +501,7 @@ struct ChannelEx
 		bool active = false;
 	} FEG;
 	
-	struct 
+	struct Lfo
 	{
 		u32 counter;
 		u32 start_value;
@@ -502,20 +510,67 @@ struct ChannelEx
 		u8 alfo_shft;
 		fp_22_10 plfo_step;
 		int *plfo_scale;
-		void (* alfo_calc)(ChannelEx* ch);
-		void (* plfo_calc)(ChannelEx* ch);
-		void Step(ChannelEx* ch) { counter--;if (counter==0) { state++; counter=start_value; alfo_calc(ch);plfo_calc(ch); } }
-		void Reset(ChannelEx* ch) { state=0; counter=start_value; alfo_calc(ch); plfo_calc(ch); }
-		void SetStartValue(u32 nv) { start_value = nv;}
+		void (Lfo::*alfo_calc)();
+		void (Lfo::*plfo_calc)();
+
+		template<LFOType Type>
+		void CalcAlfo();
+		template<LFOType Type>
+		void CalcPlfo();
+
+		void Step()
+		{
+			counter--;
+			if (counter == 0)
+			{
+				state++;
+				counter = start_value;
+				(this->*alfo_calc)();
+				(this->*plfo_calc)();
+			}
+		}
+		void Reset()
+		{
+			state = 0;
+			counter = start_value;
+			(this->*alfo_calc)();
+			(this->*plfo_calc)();
+		}
+		void SetStartValue(u32 nv) {
+			start_value = nv;
+		}
+
+		static void (Lfo::*ALFOWS_CALC[4])();
+		static void (Lfo::*PLFOWS_CALC[4])();
 	} lfo;
 
 	bool enabled;	//set to false to 'freeze' the channel
 	bool quiet;
 	int ChannelNumber;
 
-	void Init(int cn,u8* ccd_raw)
+	static void (ChannelEx::*STREAM_STEP_LUT[5][2][2])();
+	static void (ChannelEx::*STREAM_INITAL_STEP_LUT[5])();
+	static void (ChannelEx::*AEG_STEP_LUT[4])();
+	static void (ChannelEx::*FEG_STEP_LUT[4])();
+
+	template<PCMSType PCMS, bool Last>
+	void StepDecodeSample(u32 CA);
+
+	template<PCMSType PCMS>
+	void StepDecodeSampleInitial() {
+		StepDecodeSample<PCMS, true>(0);
+	}
+	template<PCMSType PCMS, bool LPCTL, bool LPSLNK>
+	void StreamStep();
+
+	template<EGState state>
+	void AegStep();
+	template<EGState state>
+	void FegStep();
+
+	void Init(int cn, u8* ccd_raw)
 	{
-		ccd=(ChannelCommonData*)&ccd_raw[cn*0x80];
+		ccd = (ChannelCommonData*)&ccd_raw[cn * 0x80];
 		ChannelNumber = cn;
 		quiet = true;
 		for (u32 i = 0; i < 0x80; i += 2)
@@ -526,7 +581,7 @@ struct ChannelEx
 
 	void disable()
 	{
-		enabled=false;
+		enabled = false;
 		SetAegState(EG_Release);
 		AEG.SetValue(0x3FF);
 		CA = 0;
@@ -534,15 +589,14 @@ struct ChannelEx
 
 	void enable()
 	{
-		enabled=true;
+		enabled = true;
 	}
 
 	SampleType InterpolateSample()
 	{
-		SampleType rv;
-		u32 fp=step.fp;
-		rv=FPMul(s0,(s32)(1024-fp),10);
-		rv+=FPMul(s1,(s32)(fp),10);
+		SampleType fp = step.fp;
+		SampleType rv = FPMul(s0, 1024 - fp, 10);
+		rv += FPMul(s1, fp, 10);
 
 		return rv;
 	}
@@ -622,19 +676,19 @@ struct ChannelEx
 		clip_verify((s64)sample * oRight >= 0);
 		clip_verify((s64)sample * oDsp >= 0);
 
-		StepAEG(this);
+		(this->*StepAEG)();
 		if (enabled)
 		{
-			StepFEG(this);
-			StepStream(this);
-			lfo.Step(this);
+			(this->*StepFEG)();
+			(this->*StepStream)();
+			lfo.Step();
 		}
 		return true;
 	}
 
 	void Step(SampleType& mixl, SampleType& mixr)
 	{
-		SampleType oLeft,oRight,oDsp;
+		SampleType oLeft, oRight, oDsp;
 
 		Step(oLeft, oRight, oDsp);
 
@@ -642,8 +696,8 @@ struct ChannelEx
 		if (oLeft + oRight == 0 && !config::DSPEnabled)
 			oLeft = oRight = oDsp >> 4;
 
-		mixl+=oLeft;
-		mixr+=oRight;
+		mixl += oLeft;
+		mixr += oRight;
 	}
 
 	static void StepAll(SampleType& mixl, SampleType& mixr)
@@ -652,15 +706,15 @@ struct ChannelEx
 			channel.Step(mixl, mixr);
 	}
 
-	void SetAegState(_EG_state newstate)
+	void SetAegState(EGState newstate)
 	{
-		StepAEG=AEG_STEP_LUT[newstate];
-		AEG.state=newstate;
-		if (newstate==EG_Release)
-			ccd->KYONB=0;
+		StepAEG = AEG_STEP_LUT[newstate];
+		AEG.state = newstate;
+		if (newstate == EG_Release)
+			ccd->KYONB = 0;
 	}
 
-	void SetFegState(_EG_state newstate)
+	void SetFegState(EGState newstate)
 	{
 		StepFEG = FEG_STEP_LUT[newstate];
 		FEG.state = newstate;
@@ -694,7 +748,7 @@ struct ChannelEx
 		loop.looped = false;
 		adpcm.Reset(this);
 
-		StepStreamInitial(this);
+		(this->*StepStreamInitial)();
 		key_printf("[%d] KEY_ON %s @ %f Hz, loop %d - AEG AR %d DC1R %d DC2V %d DC2R %d RR %d - KRS %d OCT %d FNS %d - PFLOS %d PFLOWS %d - SA %x LSA %x LEA %x",
 				ChannelNumber, stream_names[ccd->PCMS], (44100.0 * update_rate) / 1024, ccd->LPCTL,
 				ccd->AR, ccd->D1R, ccd->DL << 5, ccd->D2R, ccd->RR,
@@ -714,18 +768,18 @@ struct ChannelEx
 	//PCMS,SSCTL,LPCTL,LPSLNK
 	void UpdateStreamStep()
 	{
-		s32 fmt=ccd->PCMS;
+		PCMSType fmt = (PCMSType)ccd->PCMS;
 		if (ccd->SSCTL)
-			fmt=4;
+			fmt = NOISE;
 
-		StepStream=STREAM_STEP_LUT[fmt][ccd->LPCTL][ccd->LPSLNK];
-		StepStreamInitial=STREAM_INITAL_STEP_LUT[fmt];
+		StepStream = STREAM_STEP_LUT[fmt][ccd->LPCTL][ccd->LPSLNK];
+		StepStreamInitial = STREAM_INITAL_STEP_LUT[fmt];
 	}
 	//SA,PCMS
 	void UpdateSA()
 	{
 		u32 addr = (ccd->SA_hi << 16) | ccd->SA_low;
-		if (ccd->PCMS == 0)
+		if (ccd->PCMS == PCM16)
 			addr &= ~1; //0: 16 bit
 		
 		SA = &aica_ram[addr & ARAM_MASK];
@@ -759,46 +813,46 @@ struct ChannelEx
 	//OCT,FNS
 	void UpdatePitch()
 	{
-		u32 oct=ccd->OCT;
+		u32 oct = ccd->OCT;
 
 		u32 update_rate = 1024 | ccd->FNS;
-		if (oct& 8)
-			update_rate>>=(16-oct);
+		if (oct & 8)
+			update_rate >>= 16 - oct;
 		else
-			update_rate<<=oct;
+			update_rate <<= oct;
 
-		this->update_rate=update_rate;
+		this->update_rate = update_rate;
 	}
 
 	//LFORE,LFOF,PLFOWS,PLFOS,ALFOWS,ALFOS
 	void UpdateLFO(bool derivedState)
 	{
 		{
-			int N=ccd->LFOF;
+			int N = ccd->LFOF;
 			int S = N >> 2;
 			int M = (~N) & 3;
-			int G = 128>>S;
-			int L = (G-1)<<2;
-			int O = L + G * (M+1);
+			int G = 128 >> S;
+			int L = (G - 1) << 2;
+			int O = L + G * (M + 1);
 			lfo.SetStartValue(O);
 			if (!derivedState)
 				lfo.counter = O;
 		}
 
-		lfo.alfo_shft=8-ccd->ALFOS;
+		lfo.alfo_shft = 8 - ccd->ALFOS;
 
-		lfo.alfo_calc=ALFOWS_CALC[ccd->ALFOWS];
-		lfo.plfo_calc=PLFOWS_CALC[ccd->PLFOWS];
+		lfo.alfo_calc = lfo.ALFOWS_CALC[ccd->ALFOWS];
+		lfo.plfo_calc = lfo.PLFOWS_CALC[ccd->PLFOWS];
 		lfo.plfo_scale = PLFO_Scales[ccd->PLFOS];
 
 		if (ccd->LFORE && !derivedState)
 		{
-			lfo.Reset(this);
+			lfo.Reset();
 		}
 		else
 		{
-			lfo.alfo_calc(this);
-			lfo.plfo_calc(this);
+			(lfo.*lfo.alfo_calc)();
+			(lfo.*lfo.plfo_calc)();
 		}
 	}
 
@@ -815,15 +869,15 @@ struct ChannelEx
 		u32 attPan = attFull + SendLevel[(~ccd->DIPAN) & 0xF];
 
 		//0x1* -> R decreases
-		if (ccd->DIPAN&0x10)
+		if (ccd->DIPAN & 0x10)
 		{
-			VolMix.DLAtt=attFull;
-			VolMix.DRAtt=attPan;
+			VolMix.DLAtt = attFull;
+			VolMix.DRAtt = attPan;
 		}
 		else //0x0* -> L decreases
 		{
-			VolMix.DLAtt=attPan;
-			VolMix.DRAtt=attFull;
+			VolMix.DLAtt = attPan;
+			VolMix.DRAtt = attFull;
 		}
 
 		VolMix.DSPAtt = total_level + SendLevel[ccd->IMXL];
@@ -951,11 +1005,18 @@ struct ChannelEx
 	}
 };
 
-static SampleType DecodeADPCM(u32 sample,s32 prev,s32& quant)
-{
-	s32 sign=1-2*(sample/8);
+void (ChannelEx::*ChannelEx::STREAM_STEP_LUT[5][2][2])();
+void (ChannelEx::*ChannelEx::STREAM_INITAL_STEP_LUT[5])();
+void (ChannelEx::*ChannelEx::AEG_STEP_LUT[4])();
+void (ChannelEx::*ChannelEx::FEG_STEP_LUT[4])();
+void (ChannelEx::Lfo::*ChannelEx::Lfo::ALFOWS_CALC[4])();
+void (ChannelEx::Lfo::*ChannelEx::Lfo::PLFOWS_CALC[4])();
 
-	u32 data=sample&7;
+static SampleType DecodeADPCM(u32 sample, s32 prev, s32& quant)
+{
+	s32 sign = 1 - 2 * (sample / 8);
+
+	u32 data = sample & 7;
 
 	/*(1 - 2 * L4) * (L3 + L2/2 +L1/4 + 1/8) * quantized width (Dn) + decode value (Xn - 1) */
 	SampleType rv = (quant * adpcm_scale[data]) >> 3;
@@ -963,52 +1024,55 @@ static SampleType DecodeADPCM(u32 sample,s32 prev,s32& quant)
 		rv = 0x7FFF;
 	rv = sign * rv + prev;
 
-	quant = (quant * adpcm_qs[data])>>8;
+	quant = (quant * adpcm_qs[data]) >> 8;
 	quant = std::clamp(quant, 127, 24576);
 
 	return std::clamp(rv, -32768, 32767);
 }
 
-template<s32 PCMS,bool last>
-void StepDecodeSample(ChannelEx* ch,u32 CA)
+template<PCMSType PCMS, bool Last>
+void ChannelEx::StepDecodeSample(u32 CA)
 {
-	if (!last && PCMS<2)
-		return ;
+	if constexpr (!Last && (PCMS == PCM16 || PCMS == PCM8 || PCMS == NOISE))
+		return;
 
 	// TODO bound checking of sample addresses
-	s16* sptr16=(s16*)ch->SA;
-	s8* sptr8=(s8*)sptr16;
-	u8* uptr8=(u8*)sptr16;
 	u32 next_addr = CA + 1;
-	if (next_addr >= ch->loop.LEA && ch->loop.LEA > ch->loop.LSA)
-		next_addr = ch->loop.LSA;
+	if (next_addr >= loop.LEA && loop.LEA > loop.LSA)
+		next_addr = loop.LSA;
 
-	SampleType s0,s1;
+	SampleType s0, s1;
 	switch(PCMS)
 	{
-	case -1:
-		ch->noise_state = ch->noise_state*16807 + 0xbeef;	//beef is good
-
-		s0=ch->noise_state;
-		s0>>=16;
+	case NOISE:
+		noise_state = noise_state * 0x41c64e6d + 0x3039;
+		s0 = noise_state;
+		s0 >>= 16;
 		
-		s1=ch->noise_state*16807 + 0xbeef;
-		s1>>=16;
+		s1 = noise_state * 0x41c64e6d + 0x3039;
+		s1 >>= 16;
 		break;
 
-	case 0:
-		s0 = sptr16[CA];
-		s1 = sptr16[next_addr];
-		break;
-
-	case 1:
-		s0 = sptr8[CA] << 8;
-		s1 = sptr8[next_addr] << 8;
-		break;
-
-	case 2:
-	case 3:
+	case PCM16:
 		{
+			const s16 *sptr16 = (const s16 *)SA;
+			s0 = sptr16[CA];
+			s1 = sptr16[next_addr];
+			break;
+		}
+
+	case PCM8:
+		{
+			const s8 *sptr8 = (const s8 *)SA;
+			s0 = sptr8[CA] << 8;
+			s1 = sptr8[next_addr] << 8;
+			break;
+		}
+
+	case ADPCM:
+	case ADPCM_STREAM:
+		{
+			const u8 *uptr8 = (const u8 *)SA;
 			u8 ad1 = uptr8[CA >> 1];
 			u8 ad2 = uptr8[next_addr >> 1];
 
@@ -1018,270 +1082,254 @@ void StepDecodeSample(ChannelEx* ch,u32 CA)
 			ad1 &= 0xF;
 			ad2 &= 0xF;
 
-			s32 q = ch->adpcm.last_quant;
-			if (PCMS == 2 && CA == ch->loop.LSA)
+			s32 q = adpcm.last_quant;
+			if (PCMS == ADPCM && CA == loop.LSA)
 			{
-				if (!ch->adpcm.in_loop)
+				if (!adpcm.in_loop)
 				{
-					ch->adpcm.in_loop = true;
-					ch->adpcm.loopstart_quant = q;
-					ch->adpcm.loopstart_prev_sample = ch->s0;
+					adpcm.in_loop = true;
+					adpcm.loopstart_quant = q;
+					adpcm.loopstart_prev_sample = this->s0;
 				}
 				else
 				{
-					q = ch->adpcm.loopstart_quant;
-					ch->s0 = ch->adpcm.loopstart_prev_sample;
+					q = adpcm.loopstart_quant;
+					this->s0 = adpcm.loopstart_prev_sample;
 				}
 			}
-			s0 = DecodeADPCM(ad1, ch->s0, q);
-			ch->adpcm.last_quant = q;
-			if (last)
+			s0 = DecodeADPCM(ad1, this->s0, q);
+			adpcm.last_quant = q;
+			if constexpr (Last)
 			{
 				SampleType prev = s0;
-				if (PCMS == 2 && next_addr == ch->loop.LSA && ch->adpcm.in_loop)
+				if (PCMS == ADPCM && next_addr == loop.LSA && adpcm.in_loop)
 				{
-					q = ch->adpcm.loopstart_quant;
-					prev = ch->adpcm.loopstart_prev_sample;
+					q = adpcm.loopstart_quant;
+					prev = adpcm.loopstart_prev_sample;
 				}
 				s1 = DecodeADPCM(ad2, prev, q);
 			}
-			else
+			else {
 				s1 = 0;
+			}
 		}
 		break;
 	}
 	
-	ch->s0=s0;
-	ch->s1=s1;
+	this->s0 = s0;
+	this->s1 = s1;
 }
 
-
-
-template<s32 PCMS>
-void StepDecodeSampleInitial(ChannelEx* ch)
+template<PCMSType PCMS, bool LPCTL, bool LPSLNK>
+void ChannelEx::StreamStep()
 {
-	StepDecodeSample<PCMS,true>(ch,0);
-}
-template<s32 PCMS,u32 LPCTL,u32 LPSLNK>
-void StreamStep(ChannelEx* ch)
-{
-	ch->step.full += (ch->update_rate * ch->lfo.plfo_step.full) >> 10;
-	fp_22_10 sp=ch->step;
-	ch->step.ip=0;
+	step.full += (update_rate * lfo.plfo_step.full) >> 10;
+	fp_22_10 sp = step;
+	step.ip = 0;
 
-	while(sp.ip>0)
+	while (sp.ip > 0)
 	{
 		sp.ip--;
 
-		u32 CA=ch->CA + 1;
+		u32 CA = this->CA + 1;
 
-		u32 ca_t=CA;
-		if (PCMS==3)
-			ca_t&=~3;	// in adpcm "stream" mode, LEA and LSA are supposed to be 4-sample aligned
+		u32 ca_t = CA;
+		if constexpr (PCMS == ADPCM_STREAM)
+			ca_t &= ~3;	// in adpcm "stream" mode, LEA and LSA are supposed to be 4-sample aligned
 						// but some games don't respect this rule
 
-		if (LPSLNK)
+		if constexpr (LPSLNK)
 		{
-			if ((ch->AEG.state==EG_Attack) && (CA>=ch->loop.LSA))
+			if (AEG.state == EG_Attack && CA >= loop.LSA)
 			{
-				step_printf("[%d]LPSLNK : Switching to EG_Decay1 %X", ch->ChannelNumber, ch->AEG.GetValue());
-				ch->SetAegState(EG_Decay1);
+				step_printf("[%d]LPSLNK : Switching to EG_Decay1 %X", ChannelNumber, AEG.GetValue());
+				SetAegState(EG_Decay1);
 			}
 		}
 
-		if (ca_t >= ch->loop.LEA)
+		if (ca_t >= loop.LEA)
 		{
-			if (ch->loop.LSA > ch->loop.LEA)
+			if (loop.LSA > loop.LEA)
 			{
 				// When LSA > LEA, aica won't stop when reaching LEA but will continue until LSA.
 				// It will then reset CA to 0 and stop playing, even for looping sounds.
-				if (ca_t >= ch->loop.LSA)
+				if (ca_t >= loop.LSA)
 				{
-					ch->loop.looped = 1;
+					loop.looped = 1;
 					CA = 0;
-					ch->disable();
+					disable();
 				}
 			}
 			else
 			{
-				ch->loop.looped = 1;
-				if (LPCTL == 0)
+				loop.looped = 1;
+				if constexpr (!LPCTL)
 				{
 					CA = 0;
-					ch->disable();
+					disable();
 				}
 				else
 				{
-					CA = ch->loop.LSA;
-					key_printf("[%d]LPCTL : Looping LSA %x LEA %x AEG %x", ch->ChannelNumber, ch->loop.LSA, ch->loop.LEA, ch->AEG.GetValue());
+					CA = loop.LSA;
+					key_printf("[%d]LPCTL : Looping LSA %x LEA %x AEG %x", ChannelNumber, loop.LSA, loop.LEA, AEG.GetValue());
 				}
 			}
 		}
 
-		ch->CA=CA;
+		this->CA = CA;
 
 		//keep adpcm up to date
-		if (sp.ip==0)
-			StepDecodeSample<PCMS,true>(ch,CA);
+		if (sp.ip == 0)
+			StepDecodeSample<PCMS, true>(CA);
 		else
-			StepDecodeSample<PCMS,false>(ch,CA);
+			StepDecodeSample<PCMS, false>(CA);
 	}
-
-
 }
 
-enum class LFOType
-{
-	Sawtooth,
-	Square,
-	Triangle,
-	Random
-};
-
 template<LFOType Type>
-void CalcAlfo(ChannelEx* ch)
+void ChannelEx::Lfo::CalcAlfo()
 {
 	u32 rv;
 	switch(Type)
 	{
 	case LFOType::Sawtooth:
-		rv=ch->lfo.state;
+		rv = state;
 		break;
 
 	case LFOType::Square:
-		rv=ch->lfo.state&0x80?255:0;
+		rv = state & 0x80 ? 255 : 0;
 		break;
 
 	case LFOType::Triangle:
-		rv=(ch->lfo.state&0x7f)^(ch->lfo.state&0x80 ? 0x7F:0);
-		rv<<=1;
+		rv = (state & 0x7f) ^ (state & 0x80 ? 0x7F : 0);
+		rv <<= 1;
 		break;
 
 	case LFOType::Random: // ... not so much
-		rv=(ch->lfo.state>>3)^(ch->lfo.state<<3)^(ch->lfo.state&0xE3);
+		rv = (state >> 3) ^ (state << 3) ^ (state & 0xE3);
 		break;
 	}
-	ch->lfo.alfo=rv>>ch->lfo.alfo_shft;
+	alfo = rv >> alfo_shft;
 }
 
 template<LFOType Type>
-void CalcPlfo(ChannelEx* ch)
+void ChannelEx::Lfo::CalcPlfo()
 {
 	u32 rv;
 	switch(Type)
 	{
 	case LFOType::Sawtooth:
-		rv = ch->lfo.state;
+		rv = state;
 		break;
 
 	case LFOType::Square:
-		rv = ch->lfo.state & 0x80 ? 0xff : 0;
+		rv = state & 0x80 ? 0xff : 0;
 		break;
 
 	case LFOType::Triangle:
-		rv = (ch->lfo.state & 0x7f) ^ (ch->lfo.state & 0x80 ? 0x7F : 0);
+		rv = (state & 0x7f) ^ (state & 0x80 ? 0x7F : 0);
 		rv <<= 1;
 		break;
 
 	case LFOType::Random:
-		rv = (ch->lfo.state >> 3) ^ (ch->lfo.state << 3) ^ (ch->lfo.state & 0xE3);
+		rv = (state >> 3) ^ (state << 3) ^ (state & 0xE3);
 		break;
 	}
-	ch->lfo.plfo_step.full = ch->lfo.plfo_scale[(u8)rv];
+	plfo_step.full = plfo_scale[(u8)rv];
 }
 
-template<u32 state>
-void AegStep(ChannelEx* ch)
+template<EGState state>
+void ChannelEx::AegStep()
 {
 	switch(state)
 	{
 	case EG_Attack:
-		if (ch->AEG.AttackRate != 0)
+		if (AEG.AttackRate != 0)
 		{
-			ch->AEG.val -= (((u64)ch->AEG.val << AEG_ATTACK_SHIFT) / ch->AEG.AttackRate) + 1;
-			if (ch->AEG.GetValue() <= 0)
+			AEG.val -= (((u64)AEG.val << AEG_ATTACK_SHIFT) / AEG.AttackRate) + 1;
+			if (AEG.GetValue() <= 0)
 			{
-				if (!ch->ccd->LPSLNK)
+				if (!ccd->LPSLNK)
 				{
-					aeg_printf("[%d]AEG_step : Switching to EG_Decay1", ch->ChannelNumber);
-					ch->SetAegState(EG_Decay1);
+					aeg_printf("[%d]AEG_step : Switching to EG_Decay1", ChannelNumber);
+					SetAegState(EG_Decay1);
 				}
-				ch->AEG.SetValue(0);
+				AEG.SetValue(0);
 			}
 		}
 		break;
 	case EG_Decay1:
-		ch->AEG.val += ch->AEG.Decay1Rate;
-		if (((u32)ch->AEG.GetValue()) >= ch->AEG.Decay2Value)
+		AEG.val += AEG.Decay1Rate;
+		if ((u32)AEG.GetValue() >= AEG.Decay2Value)
 		{
-			aeg_printf("[%d]AEG_step : Switching to EG_Decay2", ch->ChannelNumber);
-			ch->SetAegState(EG_Decay2);
+			aeg_printf("[%d]AEG_step : Switching to EG_Decay2", ChannelNumber);
+			SetAegState(EG_Decay2);
 		}
 		break;
 	case EG_Decay2:
-		ch->AEG.val += ch->AEG.Decay2Rate;
-		if (ch->AEG.GetValue() >= 0x3FF)
+		AEG.val += AEG.Decay2Rate;
+		if (AEG.GetValue() >= 0x3FF)
 		{
-			aeg_printf("[%d]AEG_step : Switching to EG_Release", ch->ChannelNumber);
-			ch->AEG.SetValue(0x3FF);
-			ch->SetAegState(EG_Release);
+			aeg_printf("[%d]AEG_step : Switching to EG_Release", ChannelNumber);
+			AEG.SetValue(0x3FF);
+			SetAegState(EG_Release);
 		}
 		break;
 	case EG_Release: //only on key_off
-		ch->AEG.val += ch->AEG.ReleaseRate;
-		if (ch->AEG.GetValue() >= 0x3FF)
+		AEG.val += AEG.ReleaseRate;
+		if (AEG.GetValue() >= 0x3FF)
 		{
-			aeg_printf("[%d]AEG_step : EG_Release End @ %x", ch->ChannelNumber, ch->AEG.GetValue());
-			ch->disable();
+			aeg_printf("[%d]AEG_step : EG_Release End @ %x", ChannelNumber, AEG.GetValue());
+			disable();
 		}
 		break;
 	}
 }
-template<u32 state>
-void FegStep(ChannelEx* ch)
+template<EGState state>
+void ChannelEx::FegStep()
 {
-	if (!ch->FEG.active)
+	if (!FEG.active)
 		return;
 	u32 delta;
 	u32 target;
 	switch(state)
 	{
 	case EG_Attack:
-		delta = ch->FEG.AttackRate;
-		target = ch->ccd->FLV1;
+		delta = FEG.AttackRate;
+		target = ccd->FLV1;
 		break;
 	case EG_Decay1:
-		delta = ch->FEG.Decay1Rate;
-		target = ch->ccd->FLV2;
+		delta = FEG.Decay1Rate;
+		target = ccd->FLV2;
 		break;
 	case EG_Decay2:
-		delta = ch->FEG.Decay2Rate;
-		target = ch->ccd->FLV3;
+		delta = FEG.Decay2Rate;
+		target = ccd->FLV3;
 		break;
 	case EG_Release:
-		delta = ch->FEG.ReleaseRate;
-		target = ch->ccd->FLV4;
+		delta = FEG.ReleaseRate;
+		target = ccd->FLV4;
 		break;
 	}
 	target <<= EG_STEP_BITS;
-	if (ch->FEG.value < target)
+	if (FEG.value < target)
 	{
-		u32 maxd = target - ch->FEG.value;
+		u32 maxd = target - FEG.value;
 		if (delta > maxd)
 			delta = maxd;
-		ch->FEG.value += delta;
+		FEG.value += delta;
 	}
-	else if (ch->FEG.value > target)
+	else if (FEG.value > target)
 	{
-		u32 maxd = ch->FEG.value - target;
+		u32 maxd = FEG.value - target;
 		if (delta > maxd)
 			delta = maxd;
-		ch->FEG.value -= delta;
+		FEG.value -= delta;
 	}
-	else if (ch->FEG.state < EG_Decay2)
+	else if (FEG.state < EG_Decay2)
 	{
-		feg_printf("[%d]FEG_step : Switching to next state: %d Freq %d", ch->ChannelNumber, (int)ch->FEG.state + 1, target >> EG_STEP_BITS);
-		ch->SetFegState((_EG_state)((int)ch->FEG.state + 1));
+		feg_printf("[%d]FEG_step : Switching to next state: %d Freq %d", ChannelNumber, (int)FEG.state + 1, target >> EG_STEP_BITS);
+		SetFegState((EGState)((int)FEG.state + 1));
 	}
 }
 
@@ -1315,55 +1363,55 @@ static u32 CalcAttackEgSteps(float t)
 
 static void staticinitialise()
 {
-	STREAM_STEP_LUT[0][0][0]=&StreamStep<0,0,0>;
-	STREAM_STEP_LUT[1][0][0]=&StreamStep<1,0,0>;
-	STREAM_STEP_LUT[2][0][0]=&StreamStep<2,0,0>;
-	STREAM_STEP_LUT[3][0][0]=&StreamStep<3,0,0>;
-	STREAM_STEP_LUT[4][0][0]=&StreamStep<-1,0,0>;
+	ChannelEx::STREAM_STEP_LUT[PCM16][0][0] = &ChannelEx::StreamStep<PCM16, false, false>;
+	ChannelEx::STREAM_STEP_LUT[PCM8][0][0] = &ChannelEx::StreamStep<PCM8, false, false>;
+	ChannelEx::STREAM_STEP_LUT[ADPCM][0][0] = &ChannelEx::StreamStep<ADPCM, false, false>;
+	ChannelEx::STREAM_STEP_LUT[ADPCM_STREAM][0][0] = &ChannelEx::StreamStep<ADPCM_STREAM, false, false>;
+	ChannelEx::STREAM_STEP_LUT[NOISE][0][0] = &ChannelEx::StreamStep<NOISE, false, false>;
 
-	STREAM_STEP_LUT[0][0][1]=&StreamStep<0,0,1>;
-	STREAM_STEP_LUT[1][0][1]=&StreamStep<1,0,1>;
-	STREAM_STEP_LUT[2][0][1]=&StreamStep<2,0,1>;
-	STREAM_STEP_LUT[3][0][1]=&StreamStep<3,0,1>;
-	STREAM_STEP_LUT[4][0][1]=&StreamStep<-1,0,1>;
+	ChannelEx::STREAM_STEP_LUT[PCM16][0][1] = &ChannelEx::StreamStep<PCM16, false, true>;
+	ChannelEx::STREAM_STEP_LUT[PCM8][0][1] = &ChannelEx::StreamStep<PCM8, false, true>;
+	ChannelEx::STREAM_STEP_LUT[ADPCM][0][1] = &ChannelEx::StreamStep<ADPCM, false, true>;
+	ChannelEx::STREAM_STEP_LUT[ADPCM_STREAM][0][1] = &ChannelEx::StreamStep<ADPCM_STREAM, false, true>;
+	ChannelEx::STREAM_STEP_LUT[NOISE][0][1] = &ChannelEx::StreamStep<NOISE, false, true>;
 
-	STREAM_STEP_LUT[0][1][0]=&StreamStep<0,1,0>;
-	STREAM_STEP_LUT[1][1][0]=&StreamStep<1,1,0>;
-	STREAM_STEP_LUT[2][1][0]=&StreamStep<2,1,0>;
-	STREAM_STEP_LUT[3][1][0]=&StreamStep<3,1,0>;
-	STREAM_STEP_LUT[4][1][0]=&StreamStep<-1,1,0>;
+	ChannelEx::STREAM_STEP_LUT[PCM16][1][0] = &ChannelEx::StreamStep<PCM16, true, false>;
+	ChannelEx::STREAM_STEP_LUT[PCM8][1][0] = &ChannelEx::StreamStep<PCM8, true, false>;
+	ChannelEx::STREAM_STEP_LUT[ADPCM][1][0] = &ChannelEx::StreamStep<ADPCM, true, false>;
+	ChannelEx::STREAM_STEP_LUT[ADPCM_STREAM][1][0] = &ChannelEx::StreamStep<ADPCM_STREAM, true, false>;
+	ChannelEx::STREAM_STEP_LUT[NOISE][1][0] = &ChannelEx::StreamStep<NOISE, true, false>;
 
-	STREAM_STEP_LUT[0][1][1]=&StreamStep<0,1,1>;
-	STREAM_STEP_LUT[1][1][1]=&StreamStep<1,1,1>;
-	STREAM_STEP_LUT[2][1][1]=&StreamStep<2,1,1>;
-	STREAM_STEP_LUT[3][1][1]=&StreamStep<3,1,1>;
-	STREAM_STEP_LUT[4][1][1]=&StreamStep<-1,1,1>;
+	ChannelEx::STREAM_STEP_LUT[PCM16][1][1] = &ChannelEx::StreamStep<PCM16, true, true>;
+	ChannelEx::STREAM_STEP_LUT[PCM8][1][1] = &ChannelEx::StreamStep<PCM8, true, true>;
+	ChannelEx::STREAM_STEP_LUT[ADPCM][1][1] = &ChannelEx::StreamStep<ADPCM, true, true>;
+	ChannelEx::STREAM_STEP_LUT[ADPCM_STREAM][1][1] = &ChannelEx::StreamStep<ADPCM_STREAM, true, true>;
+	ChannelEx::STREAM_STEP_LUT[NOISE][1][1] = &ChannelEx::StreamStep<NOISE, true, true>;
 
-	STREAM_INITAL_STEP_LUT[0]=&StepDecodeSampleInitial<0>;
-	STREAM_INITAL_STEP_LUT[1]=&StepDecodeSampleInitial<1>;
-	STREAM_INITAL_STEP_LUT[2]=&StepDecodeSampleInitial<2>;
-	STREAM_INITAL_STEP_LUT[3]=&StepDecodeSampleInitial<3>;
-	STREAM_INITAL_STEP_LUT[4]=&StepDecodeSampleInitial<-1>;
+	ChannelEx::STREAM_INITAL_STEP_LUT[PCM16] = &ChannelEx::StepDecodeSampleInitial<PCM16>;
+	ChannelEx::STREAM_INITAL_STEP_LUT[PCM8] = &ChannelEx::StepDecodeSampleInitial<PCM8>;
+	ChannelEx::STREAM_INITAL_STEP_LUT[ADPCM] = &ChannelEx::StepDecodeSampleInitial<ADPCM>;
+	ChannelEx::STREAM_INITAL_STEP_LUT[ADPCM_STREAM] = &ChannelEx::StepDecodeSampleInitial<ADPCM_STREAM>;
+	ChannelEx::STREAM_INITAL_STEP_LUT[NOISE] = &ChannelEx::StepDecodeSampleInitial<NOISE>;
 
-	AEG_STEP_LUT[EG_Attack] = &AegStep<EG_Attack>;
-	AEG_STEP_LUT[EG_Decay1] = &AegStep<EG_Decay1>;
-	AEG_STEP_LUT[EG_Decay2] = &AegStep<EG_Decay2>;
-	AEG_STEP_LUT[EG_Release] = &AegStep<EG_Release>;
+	ChannelEx::AEG_STEP_LUT[EG_Attack] = &ChannelEx::AegStep<EG_Attack>;
+	ChannelEx::AEG_STEP_LUT[EG_Decay1] = &ChannelEx::AegStep<EG_Decay1>;
+	ChannelEx::AEG_STEP_LUT[EG_Decay2] = &ChannelEx::AegStep<EG_Decay2>;
+	ChannelEx::AEG_STEP_LUT[EG_Release] = &ChannelEx::AegStep<EG_Release>;
 
-	FEG_STEP_LUT[EG_Attack] = &FegStep<EG_Attack>;
-	FEG_STEP_LUT[EG_Decay1] = &FegStep<EG_Decay1>;
-	FEG_STEP_LUT[EG_Decay2] = &FegStep<EG_Decay2>;
-	FEG_STEP_LUT[EG_Release] = &FegStep<EG_Release>;
+	ChannelEx::FEG_STEP_LUT[EG_Attack] = &ChannelEx::FegStep<EG_Attack>;
+	ChannelEx::FEG_STEP_LUT[EG_Decay1] = &ChannelEx::FegStep<EG_Decay1>;
+	ChannelEx::FEG_STEP_LUT[EG_Decay2] = &ChannelEx::FegStep<EG_Decay2>;
+	ChannelEx::FEG_STEP_LUT[EG_Release] = &ChannelEx::FegStep<EG_Release>;
 
-	ALFOWS_CALC[(int)LFOType::Sawtooth] = &CalcAlfo<LFOType::Sawtooth>;
-	ALFOWS_CALC[(int)LFOType::Square] = &CalcAlfo<LFOType::Square>;
-	ALFOWS_CALC[(int)LFOType::Triangle] = &CalcAlfo<LFOType::Triangle>;
-	ALFOWS_CALC[(int)LFOType::Random] = &CalcAlfo<LFOType::Random>;
+	ChannelEx::Lfo::ALFOWS_CALC[(int)LFOType::Sawtooth] = &ChannelEx::Lfo::CalcAlfo<LFOType::Sawtooth>;
+	ChannelEx::Lfo::ALFOWS_CALC[(int)LFOType::Square] = &ChannelEx::Lfo::CalcAlfo<LFOType::Square>;
+	ChannelEx::Lfo::ALFOWS_CALC[(int)LFOType::Triangle] = &ChannelEx::Lfo::CalcAlfo<LFOType::Triangle>;
+	ChannelEx::Lfo::ALFOWS_CALC[(int)LFOType::Random] = &ChannelEx::Lfo::CalcAlfo<LFOType::Random>;
 
-	PLFOWS_CALC[(int)LFOType::Sawtooth] = &CalcPlfo<LFOType::Sawtooth>;
-	PLFOWS_CALC[(int)LFOType::Square] = &CalcPlfo<LFOType::Square>;
-	PLFOWS_CALC[(int)LFOType::Triangle] = &CalcPlfo<LFOType::Triangle>;
-	PLFOWS_CALC[(int)LFOType::Random] = &CalcPlfo<LFOType::Random>;
+	ChannelEx::Lfo::PLFOWS_CALC[(int)LFOType::Sawtooth] = &ChannelEx::Lfo::CalcPlfo<LFOType::Sawtooth>;
+	ChannelEx::Lfo::PLFOWS_CALC[(int)LFOType::Square] = &ChannelEx::Lfo::CalcPlfo<LFOType::Square>;
+	ChannelEx::Lfo::PLFOWS_CALC[(int)LFOType::Triangle] = &ChannelEx::Lfo::CalcPlfo<LFOType::Triangle>;
+	ChannelEx::Lfo::PLFOWS_CALC[(int)LFOType::Random] = &ChannelEx::Lfo::CalcPlfo<LFOType::Random>;
 
 	for (std::size_t i = 1; i < std::size(volume_lut); i++)
 		volume_lut[i] = (s32)((1 << 15) / pow(2.0, (15 - i) / 2.0));
@@ -1489,14 +1537,14 @@ void AICA_Sample()
 	//OK , generated all Channels  , now DSP/ect + final mix ;p
 	//CDDA EXTS input
 	
-	if (cdda_index>=CDDA_SIZE)
+	if (cdda_index >= CDDA_SIZE)
 	{
-		cdda_index=0;
+		cdda_index = 0;
 		libCore_CDDA_Sector(cdda_sector);
 	}
-	s32 EXTS0L=cdda_sector[cdda_index];
-	s32 EXTS0R=cdda_sector[cdda_index+1];
-	cdda_index+=2;
+	s32 EXTS0L = cdda_sector[cdda_index];
+	s32 EXTS0R = cdda_sector[cdda_index+1];
+	cdda_index += 2;
 
 	//Final MIX ..
 	//Add CDDA / DSP effect(s)
@@ -1512,7 +1560,7 @@ void AICA_Sample()
 	{
 		dsp::step();
 
-		for (int i=0;i<16;i++)
+		for (int i = 0; i < 16; i++)
 			VolumePan(*(s16*)&DSPData->EFREG[i], dsp_out_vol[i].EFSDL, dsp_out_vol[i].EFPAN, mixl, mixr);
 	}
 
@@ -1536,29 +1584,29 @@ void AICA_Sample()
 	
 	//MVOL !
 	//we want to make sure mix* is *At least* 23 bits wide here, so 64 bit mul !
-	u32 mvol=CommonData->MVOL;
-	s32 val=volume_lut[mvol];
+	u32 mvol = CommonData->MVOL;
+	s32 val = volume_lut[mvol];
 	mixl = (s32)FPMul<s64>(mixl, val, 15);
 	mixr = (s32)FPMul<s64>(mixr, val, 15);
 
 	if (CommonData->DAC18B)
 	{
 		//If 18 bit output , make it 16b :p
-		mixl=FPs(mixl,2);
-		mixr=FPs(mixr,2);
+		mixl = FPs(mixl, 2);
+		mixr = FPs(mixr, 2);
 	}
 
 	//Sample is ready ! clip/saturate and store :}
 
 #ifdef CLIP_WARN
-	if (((s16)mixl) != mixl || ((s16)mixr) != mixr)
+	if ((s16)mixl != mixl || (s16)mixr != mixr)
 		printf("Clipped mixl %d mixr %d\n", mixl, mixr);
 #endif
 
 	mixl = std::clamp(mixl, -32768, 32767);
 	mixr = std::clamp(mixr, -32768, 32767);
 
-	WriteSample(mixr,mixl);
+	WriteSample(mixr, mixl);
 }
 
 void serialize(Serializer& ser)
