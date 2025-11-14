@@ -20,6 +20,7 @@
 #include "rend/osd.h"
 #include "cfg/cfg.h"
 #include "imgui.h"
+#include "imgui_internal.h"
 #include "imgui_stdlib.h"
 #include "network/net_handshake.h"
 #include "network/ice.h"
@@ -80,6 +81,9 @@ static std::mutex osd_message_mutex;
 static void (*showOnScreenKeyboard)(bool show);
 static bool keysUpNextFrame[512];
 bool uiUserScaleUpdated;
+#ifdef TARGET_UWP
+static bool clearActiveIdNextFrame;
+#endif
 
 GameScanner scanner;
 static BackgroundGameLoader gameLoader;
@@ -135,6 +139,21 @@ void gui_init()
     EventManager::listen(Event::Start, emuEventCallback);
 	EventManager::listen(Event::Terminate, emuEventCallback);
     ggpo::receiveChatMessages([](int playerNum, const std::string& msg) { chat.receive(playerNum, msg); });
+
+#ifdef TARGET_UWP
+	{
+		using namespace Windows::UI::ViewManagement;
+		InputPane ^ inputPane = InputPane::GetForCurrentView();
+		if (inputPane)
+		{
+			inputPane->Hiding += ref new Windows::Foundation::TypedEventHandler<InputPane ^, InputPaneVisibilityEventArgs ^>(
+				[](InputPane ^, InputPaneVisibilityEventArgs ^)
+				{
+					clearActiveIdNextFrame = true;
+				});
+		}
+	}
+#endif
 
 }
 
@@ -442,6 +461,11 @@ static void gui_newFrame()
 		InputPane ^ inputPane = InputPane::GetForCurrentView();
 		if (inputPane)
 		{
+			if (clearActiveIdNextFrame && io.WantTextInput)
+			{
+				ImGui::ClearActiveID();
+				clearActiveIdNextFrame = false;
+			}
 			if (io.WantTextInput)
 				inputPane->TryShow();
 			else
