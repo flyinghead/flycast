@@ -676,7 +676,7 @@ bool BaseTextureCacheData::Update()
 	if (config::DumpTextures)
 	{
 		ComputeHash();
-		custom_texture.DumpTexture(texture_hash, upscaled_w, upscaled_h, tex_type, temp_tex_buffer);
+		custom_texture.DumpTexture(this, upscaled_w, upscaled_h, temp_tex_buffer);
 		NOTICE_LOG(RENDERER, "Dumped texture %x.png. Old hash %x", texture_hash, old_texture_hash);
 	}
 	PrintTextureName();

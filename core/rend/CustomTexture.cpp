@@ -35,19 +35,20 @@
 
 CustomTexture custom_texture;
 
-class DefaultTextureSource : public CustomTextureSource
+class CustomTextureSource : public BaseCustomTextureSource
 {
 public:
-	DefaultTextureSource(const std::string& path) : textures_path(path) { }
+	CustomTextureSource(const std::string& path) : textures_path(path) { }
 	bool LoadMap() override;
 	u8* LoadCustomTexture(u32 hash, int& width, int& height) override;
+	bool IsTextureReplaced(u32 hash) override final;
 
 private:
 	std::string textures_path;
 	std::map<u32, std::string> texture_map;
 };
 
-bool DefaultTextureSource::LoadMap()
+bool CustomTextureSource::LoadMap()
 {
 	texture_map.clear();
 	hostfs::DirectoryTree tree(textures_path);
@@ -70,7 +71,7 @@ bool DefaultTextureSource::LoadMap()
 	return !texture_map.empty();
 }
 
-u8* DefaultTextureSource::LoadCustomTexture(u32 hash, int& width, int& height)
+u8* CustomTextureSource::LoadCustomTexture(u32 hash, int& width, int& height)
 {
 	auto it = texture_map.find(hash);
 	if (it == texture_map.end())
@@ -86,7 +87,12 @@ u8* DefaultTextureSource::LoadCustomTexture(u32 hash, int& width, int& height)
 	return imgData;
 }
 
-void CustomTexture::AddSource(std::unique_ptr<CustomTextureSource> source)
+bool CustomTextureSource::IsTextureReplaced(u32 hash)
+{
+	return texture_map.count(hash);
+}
+
+void CustomTexture::AddSource(std::unique_ptr<BaseCustomTextureSource> source)
 {
 	sources.emplace_back(std::move(source));
 }
@@ -145,7 +151,7 @@ bool CustomTexture::init()
 					if (fileInfo.isDirectory)
 					{
 						NOTICE_LOG(RENDERER, "Found custom textures directory: %s", textures_path.c_str());
-						AddSource(std::make_unique<DefaultTextureSource>(textures_path));
+						AddSource(std::make_unique<CustomTextureSource>(textures_path));
 						for (auto& source : sources)
 							custom_textures_available |= source->Init();
 						
@@ -191,6 +197,18 @@ u8* CustomTexture::loadTexture(u32 hash, int& width, int& height)
 	return nullptr;
 }
 
+bool CustomTexture::isTextureReplaced(BaseTextureCacheData* texture)
+{
+	for (auto& source : sources)
+	{
+		if (source->IsTextureReplaced(texture->texture_hash) ||
+			(texture->old_vqtexture_hash != 0 && source->IsTextureReplaced(texture->old_vqtexture_hash)) ||
+			(texture->old_texture_hash != 0 && source->IsTextureReplaced(texture->old_texture_hash)))
+			return true;
+	}
+	return false;
+}
+
 void CustomTexture::LoadCustomTextureAsync(BaseTextureCacheData *texture_data)
 {
 	if (!init())
@@ -202,8 +220,11 @@ void CustomTexture::LoadCustomTextureAsync(BaseTextureCacheData *texture_data)
 	});
 }
 
-void CustomTexture::DumpTexture(u32 hash, int w, int h, TextureType textype, void *src_buffer)
+void CustomTexture::DumpTexture(BaseTextureCacheData* texture, int w, int h, void *src_buffer)
 {
+	if (!config::DumpReplacedTextures.get() && isTextureReplaced(texture))
+		return;
+
 	std::string base_dump_dir = hostfs::getTextureDumpPath();
 	if (!file_exists(base_dump_dir))
 		make_directory(base_dump_dir);
@@ -216,7 +237,7 @@ void CustomTexture::DumpTexture(u32 hash, int w, int h, TextureType textype, voi
 		make_directory(base_dump_dir);
 
 	std::stringstream path;
-	path << base_dump_dir << std::hex << hash << ".png";
+	path << base_dump_dir << std::hex << texture->texture_hash << ".png";
 
 	u16 *src = (u16 *)src_buffer;
 	u8 *dst_buffer = (u8 *)malloc(w * h * 4);	// 32-bit per pixel
@@ -231,7 +252,7 @@ void CustomTexture::DumpTexture(u32 hash, int w, int h, TextureType textype, voi
 	{
 		if (!isDirectX(config::RendererType))
 		{
-			switch (textype)
+			switch (texture->tex_type)
 			{
 			case TextureType::_4444:
 				for (int x = 0; x < w; x++)
@@ -267,14 +288,14 @@ void CustomTexture::DumpTexture(u32 hash, int w, int h, TextureType textype, voi
 				src += w * 2;
 				break;
 			default:
-				WARN_LOG(RENDERER, "dumpTexture: unsupported picture format %x", (u32)textype);
+				WARN_LOG(RENDERER, "dumpTexture: unsupported picture format %x", (u32)texture->tex_type);
 				free(dst_buffer);
 				return;
 			}
 		}
 		else
 		{
-			switch (textype)
+			switch (texture->tex_type)
 			{
 			case TextureType::_4444:
 				for (int x = 0; x < w; x++)
@@ -309,7 +330,7 @@ void CustomTexture::DumpTexture(u32 hash, int w, int h, TextureType textype, voi
 				}
 				break;
 			default:
-				WARN_LOG(RENDERER, "dumpTexture: unsupported picture format %x", (u32)textype);
+				WARN_LOG(RENDERER, "dumpTexture: unsupported picture format %x", (u32)texture->tex_type);
 				free(dst_buffer);
 				return;
 			}

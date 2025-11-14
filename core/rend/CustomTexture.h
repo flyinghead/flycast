@@ -26,28 +26,30 @@
 class BaseTextureCacheData;
 class WorkerThread;
 
-class CustomTextureSource
+class BaseCustomTextureSource
 {
 public:
-	virtual ~CustomTextureSource() { }
+	virtual ~BaseCustomTextureSource() { }
 	virtual bool Init() { return true; }
 	virtual bool LoadMap() = 0;
 	virtual void Terminate() { }
 	virtual u8* LoadCustomTexture(u32 hash, int& width, int& height) = 0;
+	virtual bool IsTextureReplaced(u32 hash) = 0;
 };
 
 class CustomTexture
 {
 public:
 	~CustomTexture();
-	void AddSource(std::unique_ptr<CustomTextureSource> source);
+	void AddSource(std::unique_ptr<BaseCustomTextureSource> source);
 	void LoadCustomTextureAsync(BaseTextureCacheData *texture_data);
-	void DumpTexture(u32 hash, int w, int h, TextureType textype, void *src_buffer);
+	void DumpTexture(BaseTextureCacheData* texture, int w, int h, void *src_buffer);
 	void Terminate();
 
 private:
 	bool init();
 	u8* loadTexture(u32 hash, int& width, int& height);
+	bool isTextureReplaced(BaseTextureCacheData* texture);
 	void loadTexture(BaseTextureCacheData *texture);
 	std::string getGameId();
 	void loadMap();
@@ -56,7 +58,7 @@ private:
 	bool custom_textures_available = false;
 	std::string textures_path;
 	std::map<u32, std::string> texture_map;
-	std::vector<std::unique_ptr<CustomTextureSource>> sources;
+	std::vector<std::unique_ptr<BaseCustomTextureSource>> sources;
 	std::unique_ptr<WorkerThread> loaderThread;
 };
 
