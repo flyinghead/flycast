@@ -117,6 +117,9 @@ static const s32 qtable[32] = {
 	-3584, -3648, -3712, -3776
 };
 
+static constexpr u32 RAND_FACTOR = 0x41c64e6d;
+static constexpr u32 RAND_TERM = 0x3039;
+
 //Remove the fractional part by chopping..
 static SampleType FPs(SampleType a, int bits) {
 	return a >> bits;
@@ -510,6 +513,8 @@ struct ChannelEx
 		u8 alfo_shft;
 		fp_22_10 plfo_step;
 		int *plfo_scale;
+		LFOType alfoType;
+		LFOType plfoType;
 		void (Lfo::*alfo_calc)();
 		void (Lfo::*plfo_calc)();
 
@@ -527,6 +532,14 @@ struct ChannelEx
 				counter = start_value;
 				(this->*alfo_calc)();
 				(this->*plfo_calc)();
+			}
+			else
+			{
+				// Random a/plfo doesn't depend on freq (LFOF)
+				if (alfoType == LFOType::Random)
+					(this->*alfo_calc)();
+				if (plfoType == LFOType::Random)
+					(this->*plfo_calc)();
 			}
 		}
 		void Reset()
@@ -749,11 +762,11 @@ struct ChannelEx
 		adpcm.Reset(this);
 
 		(this->*StepStreamInitial)();
-		key_printf("[%d] KEY_ON %s @ %f Hz, loop %d - AEG AR %d DC1R %d DC2V %d DC2R %d RR %d - KRS %d OCT %d FNS %d - PFLOS %d PFLOWS %d - SA %x LSA %x LEA %x",
+		key_printf("[%d] KEY_ON %s @ %g Hz, loop %d - AEG AR %d DC1R %d DC2V %d DC2R %d RR %d - KRS %d OCT %d FNS %d - SA %x LSA %x LEA %x",
 				ChannelNumber, stream_names[ccd->PCMS], (44100.0 * update_rate) / 1024, ccd->LPCTL,
 				ccd->AR, ccd->D1R, ccd->DL << 5, ccd->D2R, ccd->RR,
 				ccd->KRS, ccd->OCT, ccd->FNS,
-				ccd->PLFOS, ccd->PLFOWS, (int)(SA - &aica_ram[0]), ccd->LSA, ccd->LEA);
+				(int)(SA - &aica_ram[0]), ccd->LSA, ccd->LEA);
 	}
 
 	void KEY_OFF()
@@ -827,6 +840,15 @@ struct ChannelEx
 	//LFORE,LFOF,PLFOWS,PLFOS,ALFOWS,ALFOS
 	void UpdateLFO(bool derivedState)
 	{
+		lfo.alfoType = (LFOType)ccd->ALFOWS;
+		lfo.plfoType = (LFOType)ccd->PLFOWS;
+		if (lfo.alfoType == LFOType::Random && lfo.plfoType == LFOType::Random)
+		{
+			// Ignore LFOF if both are random
+			lfo.SetStartValue(1);
+			lfo.counter = 1;
+		}
+		else
 		{
 			int N = ccd->LFOF;
 			int S = N >> 2;
@@ -854,6 +876,10 @@ struct ChannelEx
 			(lfo.*lfo.alfo_calc)();
 			(lfo.*lfo.plfo_calc)();
 		}
+		if (ccd->ALFOS != 0)
+			aeg_printf("[%d] ALFO LFOF %d wave %d scale %d", ChannelNumber, ccd->LFOF, ccd->ALFOWS, ccd->ALFOS);
+		if (ccd->PLFOS != 0)
+			feg_printf("[%d] PLFO LFOF %d wave %d scale %d", ChannelNumber, ccd->LFOF, ccd->PLFOWS, ccd->PLFOS);
 	}
 
 	//ISEL
@@ -1045,11 +1071,11 @@ void ChannelEx::StepDecodeSample(u32 CA)
 	switch(PCMS)
 	{
 	case NOISE:
-		noise_state = noise_state * 0x41c64e6d + 0x3039;
+		noise_state = noise_state * RAND_FACTOR + RAND_TERM;
 		s0 = noise_state;
 		s0 >>= 16;
 		
-		s1 = noise_state * 0x41c64e6d + 0x3039;
+		s1 = noise_state * RAND_FACTOR + RAND_TERM;
 		s1 >>= 16;
 		break;
 
@@ -1123,7 +1149,7 @@ void ChannelEx::StepDecodeSample(u32 CA)
 template<PCMSType PCMS, bool LPCTL, bool LPSLNK>
 void ChannelEx::StreamStep()
 {
-	step.full += (update_rate * lfo.plfo_step.full) >> 10;
+	step.full += FPMul(update_rate, lfo.plfo_step.full, 10);
 	fp_22_10 sp = step;
 	step.ip = 0;
 
@@ -1205,8 +1231,8 @@ void ChannelEx::Lfo::CalcAlfo()
 		rv <<= 1;
 		break;
 
-	case LFOType::Random: // ... not so much
-		rv = (state >> 3) ^ (state << 3) ^ (state & 0xE3);
+	case LFOType::Random:
+		rv = (state * RAND_FACTOR + RAND_TERM) & 0xff;
 		break;
 	}
 	alfo = rv >> alfo_shft;
@@ -1232,7 +1258,7 @@ void ChannelEx::Lfo::CalcPlfo()
 		break;
 
 	case LFOType::Random:
-		rv = (state >> 3) ^ (state << 3) ^ (state & 0xE3);
+		rv = (state * RAND_FACTOR + RAND_TERM) & 0xff;
 		break;
 	}
 	plfo_step.full = plfo_scale[(u8)rv];
@@ -1435,8 +1461,8 @@ static void staticinitialise()
 	{
 		float limit = PLFOS_Scale[s];
 		for (int i = -128; i < 128; i++)
-			PLFO_Scales[s][i + 128] = (u32)((1 << 10) * powf(2.0f, limit * i / 128.0f / 1200.0f));
-	}
+			PLFO_Scales[s][i + 128] = (int)(1024.f * powf(2.f, limit * i / 128.f / 1200.f));
+}
 }
 static OnLoad staticInit(staticinitialise);
 
