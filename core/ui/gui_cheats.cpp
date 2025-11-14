@@ -18,6 +18,7 @@
 */
 #include "gui.h"
 #include "imgui.h"
+#include "imgui_internal.h"
 #include "gui_util.h"
 #include "cheats.h"
 #include "IconsFontAwesome6.h"
@@ -62,10 +63,17 @@ static void addCheat()
 			ImGui::Unindent(uiScaled(10));
 		}
 
+		if (ImGui::IsKeyPressed(ImGuiKey_GamepadFaceRight))
+			ImGui::CloseCurrentPopup();
+
 		ImGui::BeginChild(ImGui::GetID("input"), ImVec2(0, 0), ImGuiChildFlags_Border, ImGuiWindowFlags_NavFlattened);
 		{
 			ImGui::InputText("Name", cheatName, sizeof(cheatName), 0, nullptr, nullptr);
+			if (ImGui::IsItemActive() && ImGui::IsKeyPressed(ImGuiKey_GamepadFaceRight))
+				ImGui::ClearActiveID();
 			ImGui::InputTextMultiline("Code", cheatCode, sizeof(cheatCode), ImVec2(0, ImGui::GetTextLineHeight() * 16), 0, nullptr, nullptr);
+			if (ImGui::IsItemActive() && ImGui::IsKeyPressed(ImGuiKey_GamepadFaceRight))
+				ImGui::ClearActiveID();
 		}
 		ImGui::EndChild();
 		ImGui::EndPopup();
