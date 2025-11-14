@@ -170,6 +170,11 @@ Disc* cue_parse(const char* file, std::vector<u8> *digest)
 			cuesheet >> index_num;
 			if (index_num == 1)
 			{
+				cuesheet >> token;
+				int pregap = 0;
+				int min = 0, sec = 0, frame = 0;
+				if (sscanf(token.c_str(), "%d:%d:%d", &min, &sec, &frame) == 3)
+					pregap = frame + 75 * (sec + 60 * min);
 				Track t;
 				t.StartFAD = current_fad;
 				t.CTRL = (track_type == "AUDIO" || track_type == "CDG") ? 0 : 4;
@@ -198,6 +203,7 @@ Disc* cue_parse(const char* file, std::vector<u8> *digest)
 				if (digest != nullptr)
 					md5.add(track_file);
 				t.file = new RawTrackFile(track_file, 0, t.StartFAD, sector_size);
+				t.StartFAD += pregap;
 				disc->tracks.push_back(t);
 				
 				track_number = -1;
@@ -237,10 +243,6 @@ Disc* cue_parse(const char* file, std::vector<u8> *digest)
 		disc->EndFAD = disc->LeadOut.StartFAD = current_fad;
 	}
 
-	// Get rid of the pregap for audio tracks
-	for (Track& t : disc->tracks)
-		if (!t.isDataTrack())
-			t.StartFAD += 150;
 	if (digest != nullptr)
 		*digest = md5.getDigest();
 
