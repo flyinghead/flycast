@@ -416,7 +416,8 @@ static void gui_newFrame()
 	// shows a popup navigation window even in game because of the OSD
 	//io.AddKeyEvent(ImGuiKey_GamepadFaceLeft, ((kcode[0] & DC_BTN_X) == 0));
 	io.AddKeyEvent(ImGuiKey_GamepadFaceRight, ((kcode[0] & DC_BTN_B) == 0));
-	io.AddKeyEvent(ImGuiKey_GamepadFaceUp, ((kcode[0] & DC_BTN_Y) == 0));
+	// Use A for both Activate (FaceDown) and Text Input/OSK (FaceUp)
+	io.AddKeyEvent(ImGuiKey_GamepadFaceUp, ((kcode[0] & DC_BTN_A) == 0));
 	io.AddKeyEvent(ImGuiKey_GamepadFaceDown, ((kcode[0] & DC_BTN_A) == 0));
 	io.AddKeyEvent(ImGuiKey_GamepadDpadLeft, ((kcode[0] & DC_DPAD_LEFT) == 0));
 	io.AddKeyEvent(ImGuiKey_GamepadDpadRight, ((kcode[0] & DC_DPAD_RIGHT) == 0));
@@ -435,6 +436,19 @@ static void gui_newFrame()
 
 	ImGui::GetStyle().Colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.06f, 0.06f, 0.06f, 0.94f);
 
+#ifdef TARGET_UWP
+	{
+		using namespace Windows::UI::ViewManagement;
+		InputPane ^ inputPane = InputPane::GetForCurrentView();
+		if (inputPane)
+		{
+			if (io.WantTextInput)
+				inputPane->TryShow();
+			else
+				inputPane->TryHide();
+		}
+	}
+#else
 	if (showOnScreenKeyboard != nullptr)
 		showOnScreenKeyboard(io.WantTextInput);
 #ifdef USE_SDL
@@ -449,6 +463,7 @@ static void gui_newFrame()
 			SDL_StopTextInput();
 		}
 	}
+#endif
 #endif
 }
 

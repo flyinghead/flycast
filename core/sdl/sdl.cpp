@@ -250,16 +250,26 @@ void input_sdl_init()
 	if (SDL_HasScreenKeyboardSupport())
 	{
 		NOTICE_LOG(INPUT, "On-screen keyboard supported");
+#ifdef WINDOWS_STORE
+		// Ensure screen keyboard is enabled for UWP
+		SDL_SetHint(SDL_HINT_ENABLE_SCREEN_KEYBOARD, "1");
+#endif
 		gui_setOnScreenKeyboardCallback([](bool show) {
-			// We should be able to use SDL_IsScreenKeyboardShown() but it doesn't seem to work on Xbox
-			static bool visible;
-			if (window != nullptr && visible != show)
+			if (window != nullptr)
 			{
-				visible = show;
 				if (show)
-					SDL_StartTextInput();
+				{
+					// Always call SDL_StartTextInput when text input is wanted
+					// This ensures the keyboard shows even if called multiple times
+					if (!SDL_IsTextInputActive())
+						SDL_StartTextInput();
+				}
 				else
-					SDL_StopTextInput();
+				{
+					// Only stop text input if it's currently active
+					if (SDL_IsTextInputActive())
+						SDL_StopTextInput();
+				}
 			}
 		});
 	}
