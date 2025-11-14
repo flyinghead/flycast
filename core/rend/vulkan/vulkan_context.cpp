@@ -600,7 +600,7 @@ bool VulkanContext::InitDevice()
 	{
 		ERROR_LOG(RENDERER, "Vulkan error: %s", err.what());
 	}
-	catch (const InvalidVulkanContext& err)
+	catch (const InvalidVulkanContext&)
 	{
 	}
 	catch (...)
@@ -982,7 +982,7 @@ void VulkanContext::Present() noexcept
 		try {
 			CreateSwapChain();
 			lastFrameView = vk::ImageView();
-		} catch (const InvalidVulkanContext& err) {
+		} catch (const InvalidVulkanContext&) {
 		}
 }
 
@@ -1087,7 +1087,9 @@ void VulkanContext::PresentFrame(vk::Image image, vk::ImageView imageView, const
 			EndFrame(overlayCmdBuffer);
 			static_cast<BaseVulkanRenderer*>(renderer)->RenderVideoRouting();
 			
-		} catch (const InvalidVulkanContext& err) {
+		} catch (const InvalidVulkanContext&) {
+			// Re-create swap chain
+			resized = true;
 		}
 	}
 }
@@ -1292,7 +1294,7 @@ bool VulkanContext::HasSurfaceDimensionChanged() const
 	vk::SurfaceCapabilitiesKHR surfaceCapabilities =
 			physicalDevice.getSurfaceCapabilitiesKHR(GetSurface());
 	vk::Extent2D swapchainExtent;
-	if (surfaceCapabilities.currentExtent.width == std::numeric_limits < uint32_t > ::max())
+	if (surfaceCapabilities.currentExtent.width == std::numeric_limits<uint32_t>::max())
 	{
 		// If the surface size is undefined, the size is set to the size of the images requested.
 		swapchainExtent.width = std::min(
