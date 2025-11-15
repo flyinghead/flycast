@@ -254,53 +254,130 @@ void gui_display_settings()
 		// low width
 		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ScaledVec2(4, 6));
 
-    if (ImGui::BeginTabBar("settings", ImGuiTabBarFlags_NoTooltip))
-    {
-		if (ImGui::BeginTabItem(ICON_FA_TOOLBOX " General"))
+	// Track selected tab and handle bumper navigation
+	static int selectedTab = 0;
+	const bool l1Pressed = ImGui::IsKeyPressed(ImGuiKey_GamepadL1, false);
+	const bool r1Pressed = ImGui::IsKeyPressed(ImGuiKey_GamepadR1, false);
+	
+	// Count total tabs (adjust if debug tab is not present)
+	int totalTabs = 8;
+#if defined(NDEBUG) && !defined(DEBUGFAST) && !FC_PROFILER
+	totalTabs = 7;
+#endif
+	
+	// Bumpers: left = previous tab, right = next tab
+	if (l1Pressed)
+	{
+		selectedTab = (selectedTab - 1 + totalTabs) % totalTabs;
+	}
+	if (r1Pressed)
+	{
+		selectedTab = (selectedTab + 1) % totalTabs;
+	}
+
+	if (ImGui::BeginTabBar("settings", ImGuiTabBarFlags_NoTooltip))
+	{
+		int tabIndex = 0;
+
+		bool open = ImGui::BeginTabItem(ICON_FA_TOOLBOX " General", nullptr,
+			(selectedTab == tabIndex) ? ImGuiTabItemFlags_SetSelected : 0);
+		bool focused = ImGui::IsItemFocused();
+		if (focused)
+			selectedTab = tabIndex;
+		if (open)
 		{
 			ImguiStyleVar _(ImGuiStyleVar_FramePadding, normal_padding);
 			gui_settings_general();
 			ImGui::EndTabItem();
 		}
-		if (ImGui::BeginTabItem(ICON_FA_GAMEPAD " Controls"))
+		++tabIndex;
+
+		open = ImGui::BeginTabItem(ICON_FA_GAMEPAD " Controls", nullptr,
+			(selectedTab == tabIndex) ? ImGuiTabItemFlags_SetSelected : 0);
+		focused = ImGui::IsItemFocused();
+		if (focused)
+			selectedTab = tabIndex;
+		if (open)
 		{
 			ImguiStyleVar _(ImGuiStyleVar_FramePadding, normal_padding);
 			gui_settings_controls(maple_devices_changed);
 			ImGui::EndTabItem();
 		}
-		if (ImGui::BeginTabItem(ICON_FA_DISPLAY " Video"))
+		++tabIndex;
+
+		open = ImGui::BeginTabItem(ICON_FA_DISPLAY " Video", nullptr,
+			(selectedTab == tabIndex) ? ImGuiTabItemFlags_SetSelected : 0);
+		focused = ImGui::IsItemFocused();
+		if (focused)
+			selectedTab = tabIndex;
+		if (open)
 		{
 			ImguiStyleVar _(ImGuiStyleVar_FramePadding, normal_padding);
 			gui_settings_video();
 			ImGui::EndTabItem();
 		}
-		if (ImGui::BeginTabItem(ICON_FA_MUSIC " Audio"))
+		++tabIndex;
+
+		open = ImGui::BeginTabItem(ICON_FA_MUSIC " Audio", nullptr,
+			(selectedTab == tabIndex) ? ImGuiTabItemFlags_SetSelected : 0);
+		focused = ImGui::IsItemFocused();
+		if (focused)
+			selectedTab = tabIndex;
+		if (open)
 		{
 			ImguiStyleVar _(ImGuiStyleVar_FramePadding, normal_padding);
 			gui_settings_audio();
 			ImGui::EndTabItem();
 		}
-		if (ImGui::BeginTabItem(ICON_FA_WIFI " Network"))
+		++tabIndex;
+
+		open = ImGui::BeginTabItem(ICON_FA_WIFI " Network", nullptr,
+			(selectedTab == tabIndex) ? ImGuiTabItemFlags_SetSelected : 0);
+		focused = ImGui::IsItemFocused();
+		if (focused)
+			selectedTab = tabIndex;
+		if (open)
 		{
 			ImguiStyleVar _(ImGuiStyleVar_FramePadding, normal_padding);
 			gui_settings_network();
 			ImGui::EndTabItem();
 		}
-		if (ImGui::BeginTabItem(ICON_FA_MICROCHIP " Advanced"))
+		++tabIndex;
+
+		open = ImGui::BeginTabItem(ICON_FA_MICROCHIP " Advanced", nullptr,
+			(selectedTab == tabIndex) ? ImGuiTabItemFlags_SetSelected : 0);
+		focused = ImGui::IsItemFocused();
+		if (focused)
+			selectedTab = tabIndex;
+		if (open)
 		{
 			ImguiStyleVar _(ImGuiStyleVar_FramePadding, normal_padding);
 			gui_settings_advanced();
 			ImGui::EndTabItem();
 		}
+		++tabIndex;
+
 #if !defined(NDEBUG) || defined(DEBUGFAST) || FC_PROFILER
-		if (ImGui::BeginTabItem(ICON_FA_BUG " Debug"))
+		open = ImGui::BeginTabItem(ICON_FA_BUG " Debug", nullptr,
+			(selectedTab == tabIndex) ? ImGuiTabItemFlags_SetSelected : 0);
+		focused = ImGui::IsItemFocused();
+		if (focused)
+			selectedTab = tabIndex;
+		if (open)
 		{
 			ImguiStyleVar _(ImGuiStyleVar_FramePadding, normal_padding);
 			gui_debug_tab();
 			ImGui::EndTabItem();
 		}
+		++tabIndex;
 #endif
-		if (ImGui::BeginTabItem(ICON_FA_CIRCLE_INFO " About"))
+
+		open = ImGui::BeginTabItem(ICON_FA_CIRCLE_INFO " About", nullptr,
+			(selectedTab == tabIndex) ? ImGuiTabItemFlags_SetSelected : 0);
+		focused = ImGui::IsItemFocused();
+		if (focused)
+			selectedTab = tabIndex;
+		if (open)
 		{
 			ImguiStyleVar _(ImGuiStyleVar_FramePadding, normal_padding);
 			gui_settings_about();
