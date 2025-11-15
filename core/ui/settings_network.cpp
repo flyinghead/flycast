@@ -21,6 +21,7 @@
 #include "network/ggpo.h"
 #include "network/ice.h"
 #include "imgui_stdlib.h"
+#include "imgui_internal.h"
 
 void gui_settings_network()
 {
@@ -205,6 +206,8 @@ void gui_settings_network()
 		OptionCheckbox("Use DCNet", config::UseDCNet, "Use the DCNet cloud service for Dreamcast Internet access.");
 		ImGui::InputText("ISP User Name", &config::ISPUsername.get(), ImGuiInputTextFlags_CharsNoBlank | ImGuiInputTextFlags_CallbackCharFilter,
 				[](ImGuiInputTextCallbackData *data) { return static_cast<int>(data->EventChar <= ' ' || data->EventChar > '~'); }, nullptr);
+		if (ImGui::IsItemActive() && ImGui::IsKeyPressed(ImGuiKey_GamepadFaceRight))
+			ImGui::ClearActiveID();
 		ImGui::SameLine();
 		ShowHelpMarker("The ISP user name stored in the console Flash RAM. Used by some online games as the player name. Leave blank to keep the current Flash RAM value.");
 #if !defined(NDEBUG) || defined(DEBUGFAST)
