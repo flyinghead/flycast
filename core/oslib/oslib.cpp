@@ -53,7 +53,7 @@ std::string getVmuPath(const std::string& port, bool save)
 	{
 		if (settings.platform.isConsole() && !settings.content.gameId.empty())
 		{
-			constexpr std::string_view INVALID_CHARS { " /\\:*?|<>" };
+			constexpr std::string_view INVALID_CHARS { " /\\:*?|<>\"" };
 			vmuName = settings.content.gameId;
 			for (char &c: vmuName)
 				if (INVALID_CHARS.find(c) != INVALID_CHARS.npos)
@@ -231,30 +231,27 @@ std::string getSavestatePath(int index, bool writable)
 	// Check user-defined savestate paths first
 	for (const auto& userPath : config::SavestatePath.get())
 	{
-		if (!userPath.empty())
-		{
-			try {
-				std::string fullpath = hostfs::storage().getSubPath(userPath, state_file);
-				if (writable) {
-					lastFile.clear();
-					return fullpath;
-				}
-				else {
-					if (lastFile != state_file) {
-						lastFile = state_file;
-						if (hostfs::storage().exists(fullpath))
-						{
-							lastPath = fullpath;
-							return lastPath;
-						}
-					}
-					else if (lastPath.find(userPath) != std::string::npos)
-					{
-						return lastPath; // Return cached path if it's in this user path
-					}
-				}
-			} catch (const hostfs::StorageException& e) {
+		if (userPath.empty())
+			continue;
+		try {
+			std::string fullpath = hostfs::storage().getSubPath(userPath, state_file);
+			if (writable) {
+				lastFile.clear();
+				return fullpath;
 			}
+			if (lastFile != state_file) {
+				if (hostfs::storage().exists(fullpath))
+				{
+					lastFile = state_file;
+					lastPath = fullpath;
+					return lastPath;
+				}
+			}
+			else if (lastPath.find(userPath) != std::string::npos)
+			{
+				return lastPath; // Return cached path if it's in this user path
+			}
+		} catch (const hostfs::StorageException&) {
 		}
 	}
 
