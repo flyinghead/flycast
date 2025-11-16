@@ -62,8 +62,8 @@ public:
 				gamepad_btn_input(1 << i, false);
 		buttonState = 0;
 		joystickInput(0, 0);
-		gamepad_axis_input(DC_AXIS_LT, 0);
-		gamepad_axis_input(DC_AXIS_RT, 0);
+		gamepad_axis_input(DC_AXIS_LT, -32768);
+		gamepad_axis_input(DC_AXIS_RT, -32768);
 		if (previousFastForward)
 			gamepad_btn_input(EMU_BTN_FFORWARD, false);
 		previousFastForward = false;

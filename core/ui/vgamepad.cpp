@@ -881,14 +881,11 @@ void startGame()
 				if ((usedButtons & NAOMI_START_KEY) == 0)
 					disableControl(Start);
 			}
-			if (settings.input.lightgunGame)
-				enableTouchMouse = true;
 		}
 		else
 		{
 			if (settings.input.lightgunGame)
 			{
-				enableTouchMouse = true;
 				disableControl(A);
 				disableControl(X);
 				disableControl(Y);
@@ -910,6 +907,8 @@ void startGame()
 				disableControl(RightTrigger);
 			}
 		}
+		if (settings.input.lightgunGame || settings.input.mouseGame)
+			enableTouchMouse = true;
 	}
 	std::shared_ptr<TouchMouse> touchMouse = GamepadDevice::GetGamepad<TouchMouse>();
 	if (touchMouse != nullptr)

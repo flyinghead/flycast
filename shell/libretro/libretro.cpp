@@ -170,6 +170,7 @@ unsigned per_content_vmus = 0;
 static bool first_run = true;
 static bool rotate_screen;
 static bool rotate_game;
+static bool is_pal;
 static int framebufferWidth;
 static int framebufferHeight;
 static int maxFramebufferWidth;
@@ -1232,6 +1233,17 @@ void retro_run()
 	if (isOpenGL(config::RendererType))
 		glsm_ctl(GLSM_CTL_STATE_UNBIND, nullptr);
 #endif
+
+	// Unless VGA cable is selected, We need to update
+	// the refresh rate for PAL games with a 60Hz mode
+	bool pal_check = SPG_CONTROL.isPAL();
+	if (is_pal != pal_check)
+	{
+		retro_system_av_info avinfo;
+		is_pal = pal_check;
+		setAVInfo(avinfo);
+		environ_cb(RETRO_ENVIRONMENT_SET_SYSTEM_AV_INFO, &avinfo);
+	}
 
 	video_cb(is_dupe ? 0 : RETRO_HW_FRAME_BUFFER_VALID, framebufferWidth, framebufferHeight, 0);
 

@@ -71,7 +71,9 @@ public:
 			if (!rendering || newFrameStarted)
 				context->EndFrame();
 			newFrameStarted = false;
-		} catch (const InvalidVulkanContext& err) {
+		} catch (const InvalidVulkanContext&) {
+			// Re-create swap chain
+			context->resize();
 		}
 	}
 
