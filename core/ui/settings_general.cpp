@@ -432,10 +432,64 @@ void gui_settings_general()
 			config::TextureDumpPath = selection;
 		return true;
     });
-	if (openTexDumpPopup)
-		ImGui::OpenPopup(TexDumpPopupName);
-#endif	// !ANDROID
-#endif	// !IPHONE
+    if (openTexDumpPopup)
+        ImGui::OpenPopup(TexDumpPopupName);
+
+    ImGui::Spacing();
+	    
+    const static char * const BoxartPopupName = "Select Box Art Folder";
+    size.x = 0.0f;
+    size.y = ImGui::GetTextLineHeightWithSpacing() + ImGui::GetStyle().FramePadding.y * 2.f;
+    bool openBoxartPopup = false;
+    if (BeginListBox("Box Art Folder", size, ImGuiWindowFlags_NavFlattened))
+    {
+        ImGui::AlignTextToFramePadding();
+        auto &boxartPaths = config::BoxartPath.get();
+        if (boxartPaths.empty() || boxartPaths[0].empty())
+        {
+            ImguiStyleVar _(ImGuiStyleVar_FramePadding, ScaledVec2(24, 3));
+            openBoxartPopup = ImGui::Button("Set");
+        }
+        else
+        {
+            float w = ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(ICON_FA_TRASH_CAN).x - ImGui::GetStyle().FramePadding.x * 2
+                - ImGui::GetStyle().ItemSpacing.x;
+            std::string s = middleEllipsis(boxartPaths[0], w);
+            ImGui::Text("%s", s.c_str());
+            ImGui::SameLine(0, w - ImGui::CalcTextSize(s.c_str()).x + ImGui::GetStyle().ItemSpacing.x);
+            if (ImGui::Button(ICON_FA_TRASH_CAN))
+                boxartPaths[0].clear();
+        }
+        ImGui::EndListBox();
+    }
+    ImGui::SameLine();
+    ShowHelpMarker("Folder containing box art images (png/jpg). If empty, Flycast will use the default Home Folder/boxart for downloads and generated art");
+    // Handle box art folder selection popup
+    select_file_popup(BoxartPopupName, [](bool cancelled, std::string selection) {
+        if (!cancelled)
+        {
+            auto &boxartPaths = config::BoxartPath.get();
+            if (boxartPaths.empty())
+                boxartPaths.emplace_back(selection);
+            else
+                boxartPaths[0] = selection;
+        }
+        return true;
+    });
+    if (openBoxartPopup)
+        ImGui::OpenPopup(BoxartPopupName);
+
+    ImGui::Spacing();
+
+    managePathList("Controller Mapping Folders", config::MappingsPath.get(),
+        "Folders containing controller mapping files (.cfg). The emulator also looks in Home Folder/mappings. Per-game mappings are suffixed with _<gameId>.cfg");
+    ImGui::Spacing();
+
+    managePathList("Cheat Folders", config::CheatPath.get(),
+        "Folders containing cheat files (.cht/.txt) named with the game ID. Flycast will auto-load matching files if present");
+    ImGui::Spacing();
+#endif  // !ANDROID
+#endif  // !IPHONE
 }
 
 static void applyDarkTheme()

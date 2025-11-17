@@ -19,6 +19,7 @@
 #pragma once
 #include "scraper.h"
 #include "stdclass.h"
+#include "cfg/option.h"
 
 #include <future>
 #include <memory>
@@ -41,6 +42,12 @@ private:
 	void saveDatabase();
 	std::string getSaveDirectory() const {
 		// *must* end with a path separator
+		if (!config::BoxartPath.get().empty() && !config::BoxartPath.get()[0].empty()) {
+			std::string path = config::BoxartPath.get()[0];
+			if (!path.empty() && path.back() != '/' && path.back() != '\\')
+				path += '/';
+			return path;
+		}
 		return get_writable_data_path("/boxart/");
 	}
 	void fetchBoxart();
