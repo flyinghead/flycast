@@ -884,6 +884,7 @@ struct maple_microphone: maple_base
 				{
 				case 0x01:	// Get_Sampling_Data
 				{
+					gain = dt1;
 					w32(MFID_4_Mic);
 
 					u8 micdata[240 * 2];

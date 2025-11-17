@@ -243,7 +243,12 @@ static void createNaomiDevices()
 			insertRfidCard(1);
 		}
 	}
-	else
+	else if (gameId == "THE KING OF ROUTE66")
+	{
+		mcfg_Create(MDT_SegaController, 1, 5);
+		mcfg_Create(MDT_Microphone, 1, 0);
+	}
+	else if (settings.platform.isNaomi1())
 	{
 		// Connect VMU B1
 		mcfg_Create(MDT_SegaController, 1, 5);
