@@ -1244,43 +1244,44 @@ static void gui_network_start()
 	ImGui::SetNextWindowBgAlpha(0.8f);
 	ImguiStyleVar _1(ImGuiStyleVar_WindowPadding, ScaledVec2(20, 20));
 
-	ImGui::Begin("##network", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_AlwaysAutoResize);
-
-	ImguiStyleVar _(ImGuiStyleVar_FramePadding, ScaledVec2(20, 10));
-	ImGui::AlignTextToFramePadding();
-	ImGui::SetCursorPosX(uiScaled(20.f));
-
-	if (networkStatus.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready)
+	if (ImGui::Begin("##network", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_AlwaysAutoResize))
 	{
-		ImGui::Text("Starting...");
-		try {
-			if (networkStatus.get())
-				gui_setState(GuiState::Closed);
-			else
-				gui_stop_game();
-		} catch (const FlycastException& e) {
-			gui_stop_game(e.what());
-		}
-	}
-	else
-	{
-		ImGui::Text("Starting Network...");
-		if (NetworkHandshake::instance->canStartNow())
-			ImGui::Text("Press Start to start the game now.");
-	}
-	ImGui::Text("%s", get_notification().c_str());
+		ImguiStyleVar _(ImGuiStyleVar_FramePadding, ScaledVec2(20, 10));
+		ImGui::AlignTextToFramePadding();
+		ImGui::SetCursorPosX(uiScaled(20.f));
 
-	float currentwidth = ImGui::GetContentRegionAvail().x;
-	ImGui::SetCursorPosX((currentwidth - uiScaled(100.f)) / 2.f + ImGui::GetStyle().WindowPadding.x);
-	if (ImGui::Button("Cancel", ScaledVec2(100.f, 0)) && NetworkHandshake::instance != nullptr)
-	{
-		NetworkHandshake::instance->stop();
-		try {
-			networkStatus.get();
+		if (networkStatus.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready)
+		{
+			ImGui::Text("Starting...");
+			try {
+				if (networkStatus.get())
+					gui_setState(GuiState::Closed);
+				else
+					gui_stop_game();
+			} catch (const FlycastException& e) {
+				gui_stop_game(e.what());
+			}
 		}
-		catch (const FlycastException& e) {
+		else
+		{
+			ImGui::Text("Starting Network...");
+			if (NetworkHandshake::instance->canStartNow())
+				ImGui::Text("Press Start to start the game now.");
 		}
-		gui_stop_game();
+		ImGui::Text("%s", get_notification().c_str());
+
+		float currentwidth = ImGui::GetContentRegionAvail().x;
+		ImGui::SetCursorPosX((currentwidth - uiScaled(100.f)) / 2.f + ImGui::GetStyle().WindowPadding.x);
+		if (ImGui::Button("Cancel", ScaledVec2(100.f, 0)) && NetworkHandshake::instance != nullptr)
+		{
+			NetworkHandshake::instance->stop();
+			try {
+				networkStatus.get();
+			}
+			catch (const FlycastException& e) {
+			}
+			gui_stop_game();
+		}
 	}
 	ImGui::End();
 
