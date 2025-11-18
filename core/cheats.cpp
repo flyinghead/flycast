@@ -456,6 +456,7 @@ void CheatManager::reset(const std::string& gameId)
 			else
 			{
 				// Try to auto-locate a cheat file in user-defined CheatPath
+				std::string romName = settings.content.fileName;
 				const char* exts[] = { ".cht", ".txt" };
 				for (const auto& base : config::CheatPath.get())
 				{
@@ -465,7 +466,7 @@ void CheatManager::reset(const std::string& gameId)
 					{
 						try
 						{
-							std::string candidate = hostfs::storage().getSubPath(base, gameId + ext);
+							std::string candidate = hostfs::storage().getSubPath(base, romName + ext);
 							if (hostfs::storage().exists(candidate))
 							{
 								loadCheatFile(candidate);

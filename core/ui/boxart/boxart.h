@@ -42,8 +42,8 @@ private:
 	void saveDatabase();
 	std::string getSaveDirectory() const {
 		// *must* end with a path separator
-		if (!config::BoxartPath.get().empty() && !config::BoxartPath.get()[0].empty()) {
-			std::string path = config::BoxartPath.get()[0];
+		if (!config::BoxartPath.get().empty()) {
+			std::string path = config::BoxartPath.get();
 			if (!path.empty() && path.back() != '/' && path.back() != '\\')
 				path += '/';
 			return path;

@@ -142,7 +142,7 @@ Option<std::vector<std::string>, false> SavestatePath("Dreamcast.SavestatePath")
 Option<std::vector<std::string>, false> SavePath("Dreamcast.SavePath");
 Option<std::vector<std::string>, false> TexturePath("Dreamcast.TexturePath");
 Option<std::string, false> TextureDumpPath("Dreamcast.TextureDumpPath");
-Option<std::vector<std::string>, false> BoxartPath("Dreamcast.BoxartPath");
+Option<std::string, false> BoxartPath("Dreamcast.BoxartPath");
 Option<std::vector<std::string>, false> MappingsPath("Dreamcast.MappingsPath");
 Option<std::vector<std::string>, false> CheatPath("Dreamcast.CheatPath");
 Option<bool, false> HideLegacyNaomiRoms("Dreamcast.HideLegacyNaomiRoms", true);

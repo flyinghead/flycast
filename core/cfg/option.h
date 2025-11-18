@@ -498,7 +498,7 @@ extern Option<std::vector<std::string>, false> SavestatePath;
 extern Option<std::vector<std::string>, false> SavePath;
 extern Option<std::vector<std::string>, false> TexturePath;
 extern Option<std::string, false> TextureDumpPath;
-extern Option<std::vector<std::string>, false> BoxartPath;
+extern Option<std::string, false> BoxartPath;
 extern Option<std::vector<std::string>, false> MappingsPath;
 extern Option<std::vector<std::string>, false> CheatPath;
 extern Option<bool, false> HideLegacyNaomiRoms;
