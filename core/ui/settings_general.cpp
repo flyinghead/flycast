@@ -30,9 +30,45 @@ static void managePathListCallback(std::string selection)
 {
     if (g_currentPathList != nullptr)
     {
-        if (std::count(g_currentPathList->begin(), g_currentPathList->end(), selection) == 0)
-            g_currentPathList->push_back(selection);
+        g_currentPathList->push_back(selection);
+        g_currentPathList = nullptr;
     }
+}
+
+static bool manageSinglePath(const char* label, config::Option<std::string, false>& pathOption, const char* helpText)
+{
+    const std::string popupName = std::string("Select ") + label;
+    ImVec2 size;
+    size.x = 0.0f;
+    size.y = ImGui::GetTextLineHeightWithSpacing() + ImGui::GetStyle().FramePadding.y * 2.f;
+    bool openPopup = false;
+    
+    if (BeginListBox(label, size, ImGuiWindowFlags_NavFlattened))
+    {
+        ImGui::AlignTextToFramePadding();
+        if (pathOption.get().empty()) {
+            ImguiStyleVar _(ImGuiStyleVar_FramePadding, ScaledVec2(24, 3));
+            openPopup = ImGui::Button("Set");
+        }
+        else
+        {
+            float w = ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(ICON_FA_TRASH_CAN).x - ImGui::GetStyle().FramePadding.x * 2
+                - ImGui::GetStyle().ItemSpacing.x;
+            std::string s = middleEllipsis(pathOption, w);
+            ImGui::Text("%s", s.c_str());
+            ImGui::SameLine(0, w - ImGui::CalcTextSize(s.c_str()).x + ImGui::GetStyle().ItemSpacing.x);
+            if (ImGui::Button(ICON_FA_TRASH_CAN))
+                pathOption.get().clear();
+        }
+        ImGui::EndListBox();
+    }
+    ImGui::SameLine();
+    ShowHelpMarker(helpText);
+    
+    if (openPopup)
+        ImGui::OpenPopup(popupName.c_str());
+    
+    return openPopup;
 }
 
 static void managePathList(const char* label, std::vector<std::string>& paths, const char* helpText)
@@ -401,41 +437,35 @@ void gui_settings_general()
     ImGui::Spacing();
 
 #if !defined(__ANDROID__)
-	const static char * const TexDumpPopupName = "Select Texture Dump Folder";
-    size.x = 0.0f;
-    size.y = ImGui::GetTextLineHeightWithSpacing() + ImGui::GetStyle().FramePadding.y * 2.f;
-	bool openTexDumpPopup = false;
-    if (BeginListBox("Texture Dump Folder", size, ImGuiWindowFlags_NavFlattened))
-    {
-    	ImGui::AlignTextToFramePadding();
-		if (config::TextureDumpPath.get().empty()) {
-	        ImguiStyleVar _(ImGuiStyleVar_FramePadding, ScaledVec2(24, 3));
-			openTexDumpPopup = ImGui::Button("Set");
-		}
-		else
-		{
-	    	float w = ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(ICON_FA_TRASH_CAN).x - ImGui::GetStyle().FramePadding.x * 2
-				- ImGui::GetStyle().ItemSpacing.x;
-	    	std::string s = middleEllipsis(config::TextureDumpPath, w);
-	        ImGui::Text("%s", s.c_str());
-			ImGui::SameLine(0, w - ImGui::CalcTextSize(s.c_str()).x + ImGui::GetStyle().ItemSpacing.x);
-			if (ImGui::Button(ICON_FA_TRASH_CAN))
-				config::TextureDumpPath.get().clear();
-		}
-        ImGui::EndListBox();
-    }
-    ImGui::SameLine();
-    ShowHelpMarker("Folder where texture dumps are saved. Game-specific subfolders will be created automatically");
-    // Handle folder selection popup
-    select_file_popup(TexDumpPopupName, [](bool cancelled, std::string selection) {
-		if (!cancelled)
-			config::TextureDumpPath = selection;
-		return true;
+    manageSinglePath("Texture Dump Folder", config::TextureDumpPath, 
+        "Folder where texture dumps are saved. Game-specific subfolders will be created automatically");
+    // Handle texture dump folder popup
+    select_file_popup("Select Texture Dump Folder", [](bool cancelled, std::string selection) {
+        if (!cancelled)
+            config::TextureDumpPath = selection;
+        return true;
     });
-	if (openTexDumpPopup)
-		ImGui::OpenPopup(TexDumpPopupName);
-#endif	// !ANDROID
-#endif	// !IPHONE
+    ImGui::Spacing();
+    
+    manageSinglePath("Box Art Folder", config::BoxartPath,
+        "Folder containing box art images (png/jpg). If empty, Flycast will use the default Home Folder/boxart for downloads and generated art");
+    // Handle box art folder popup
+    select_file_popup("Select Box Art Folder", [](bool cancelled, std::string selection) {
+        if (!cancelled)
+            config::BoxartPath = selection;
+        return true;
+    });
+    ImGui::Spacing();
+
+    managePathList("Controller Mapping Folders", config::MappingsPath.get(),
+        "Folders containing controller mapping files (.cfg). The emulator also looks in Home Folder/mappings. Per-game mappings are suffixed with _<gameId>.cfg");
+    ImGui::Spacing();
+
+    managePathList("Cheat Folders", config::CheatPath.get(),
+        "Folders containing cheat files (.cht/.txt) named with the game ID. Flycast will auto-load matching files if present");
+    ImGui::Spacing();
+#endif  // !ANDROID
+#endif  // !IPHONE
 }
 
 static void applyDarkTheme()
