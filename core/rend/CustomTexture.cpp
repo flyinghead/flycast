@@ -38,12 +38,35 @@ CustomTexture custom_texture;
 class CustomTextureSource : public BaseCustomTextureSource
 {
 public:
-	CustomTextureSource(const std::string& path) : textures_path(path) { }
+	CustomTextureSource(const std::string game_id)
+	{
+		textures_path = hostfs::getTextureLoadPath(game_id);
+		if (!textures_path.empty())
+		{
+			try {
+				hostfs::FileInfo fileInfo = hostfs::storage().getFileInfo(textures_path);
+				if (fileInfo.isDirectory)
+				{
+					NOTICE_LOG(RENDERER, "Found custom textures directory: %s", textures_path.c_str());
+					custom_textures_available = true;
+				}
+			} catch (const FlycastException& e) {
+			}
+		}
+	}
+	bool customTexturesAvailable() override { return custom_textures_available; }
+	bool shouldReplace() const override { return config::CustomTextures; }
+	bool shouldPreload() const override { return config::CustomTextures && config::PreloadCustomTextures; }
 	bool LoadMap() override;
+	size_t GetTextureCount() const override { return texture_map.size(); }
+	void PreloadTextures(TextureCallback callback, std::atomic<bool>* stop_flag) override;
 	u8* LoadCustomTexture(u32 hash, int& width, int& height) override;
-	bool IsTextureReplaced(u32 hash) override final;
+	bool isTextureReplaced(u32 hash) override final;
+	
+	
 
 private:
+	bool custom_textures_available = false;
 	std::string textures_path;
 	std::map<u32, std::string> texture_map;
 };
@@ -71,6 +94,28 @@ bool CustomTextureSource::LoadMap()
 	return !texture_map.empty();
 }
 
+void CustomTextureSource::PreloadTextures(TextureCallback callback, std::atomic<bool>* stop_flag)
+{
+	for (auto const& [hash, path] : texture_map)
+	{
+		if (stop_flag != nullptr && stop_flag->load(std::memory_order_relaxed))
+			return;
+		int w, h;
+		u8* data = LoadCustomTexture(hash, w, h);
+		if (data != nullptr)
+		{
+			size_t size = (size_t)w * h * 4;
+			TextureData tex;
+			tex.w = w;
+			tex.h = h;
+			tex.data.resize(size);
+			memcpy(tex.data.data(), data, size);
+			stbi_image_free(data);
+			callback(hash, std::move(tex));
+		}
+	}
+}
+
 u8* CustomTextureSource::LoadCustomTexture(u32 hash, int& width, int& height)
 {
 	auto it = texture_map.find(hash);
@@ -87,14 +132,9 @@ u8* CustomTextureSource::LoadCustomTexture(u32 hash, int& width, int& height)
 	return imgData;
 }
 
-bool CustomTextureSource::IsTextureReplaced(u32 hash)
+bool CustomTextureSource::isTextureReplaced(u32 hash)
 {
 	return texture_map.count(hash);
-}
-
-void CustomTexture::AddSource(std::unique_ptr<BaseCustomTextureSource> source)
-{
-	sources.emplace_back(std::move(source));
 }
 
 void CustomTexture::loadTexture(BaseTextureCacheData *texture)
@@ -133,42 +173,65 @@ std::string CustomTexture::getGameId()
    return game_id;
 }
 
-bool CustomTexture::init()
+bool CustomTexture::Init()
 {
 	if (!initialized)
 	{
+		stop_preload.store(false, std::memory_order_relaxed);
+		resetPreloadProgress();
+		pending_preloads.store(0, std::memory_order_relaxed);
 		initialized = true;
-		custom_textures_available = false;
+
 		std::string game_id = getGameId();
 		if (game_id.length() > 0)
 		{
-			textures_path = hostfs::getTextureLoadPath(game_id);
-
-			if (!textures_path.empty())
-			{
-				try {
-					hostfs::FileInfo fileInfo = hostfs::storage().getFileInfo(textures_path);
-					if (fileInfo.isDirectory)
-					{
-						NOTICE_LOG(RENDERER, "Found custom textures directory: %s", textures_path.c_str());
-						AddSource(std::make_unique<CustomTextureSource>(textures_path));
-						for (auto& source : sources)
-							custom_textures_available |= source->Init();
-						
-						if (custom_textures_available)
-						{
-							loaderThread = std::make_unique<WorkerThread>("CustomTexLoader");
-							loaderThread->run([this]() {
-								loadMap();
-							});
-						}
-					}
-				} catch (const FlycastException& e) {
-				}
-			}
+			AddSource(std::make_unique<CustomTextureSource>(game_id));
 		}
 	}
-	return custom_textures_available;
+
+	return loaderThread != nullptr;
+}
+
+bool CustomTexture::enabled() {
+	return Init();
+}
+
+bool CustomTexture::preloaded() {
+	return preload_total.load(std::memory_order_relaxed) > 0;
+}
+
+bool CustomTexture::isPreloading() {
+	if (pending_preloads.load(std::memory_order_relaxed) > 0)
+		return true;
+
+	int texLoaded = 0;
+	int texTotal = 0;
+	size_t loaded_size_b = 0;
+	GetPreloadProgress(texLoaded, texTotal, loaded_size_b);
+	
+	return (texTotal > 0 && texLoaded < texTotal);
+}
+
+void CustomTexture::AddSource(std::unique_ptr<BaseCustomTextureSource> source)
+{
+	BaseCustomTextureSource* ptr = source.get();
+	sources.emplace_back(std::move(source));
+	
+	if (initialized)
+	{
+		if (!loaderThread && ptr->customTexturesAvailable())
+		{
+			loaderThread = std::make_unique<WorkerThread>("CustomTexLoader");
+		}
+		if (loaderThread)
+		{
+			if (ptr->shouldPreload())
+				pending_preloads.fetch_add(1, std::memory_order_relaxed);
+			loaderThread->run([this, ptr]() {
+				prepareSource(ptr);
+			});
+		}
+	}
 }
 
 CustomTexture::~CustomTexture() {
@@ -177,41 +240,80 @@ CustomTexture::~CustomTexture() {
 
 void CustomTexture::Terminate()
 {
+	stop_preload.store(true, std::memory_order_relaxed);
 	if (loaderThread)
 		loaderThread->stop();
 	loaderThread.reset();
 	for (auto& source : sources)
 		source->Terminate();
 	sources.clear();
+	if (!preloaded_textures.empty())
+	{
+		auto textures_to_free = std::make_shared<std::map<u32, TextureData>>(std::move(preloaded_textures));
+		std::thread([textures_to_free]() {
+			textures_to_free->clear();
+		}).detach();
+	}
+	resetPreloadProgress();
 	initialized = false;
 }
 
 u8* CustomTexture::loadTexture(u32 hash, int& width, int& height)
 {
-	for (auto& source : sources)
+	auto it = preloaded_textures.find(hash);
+	if (it != preloaded_textures.end())
 	{
-		u8* data = source->LoadCustomTexture(hash, width, height);
-		if (data != nullptr)
-			return data;
+		width = it->second.w;
+		height = it->second.h;
+		size_t size = (size_t)width * height * 4;
+		u8* buffer = (u8*)malloc(size);
+		if (buffer == nullptr)
+			return nullptr;
+		memcpy(buffer, it->second.data.data(), size);
+		return buffer;
+	}
+
+	for (auto it = sources.rbegin(); it != sources.rend(); ++it)
+	{
+		auto& source = *it;
+		if (source->shouldReplace())
+		{
+			u8* data = source->LoadCustomTexture(hash, width, height);
+			if (data != nullptr)
+				return data;
+		}
 	}
 	return nullptr;
 }
 
 bool CustomTexture::isTextureReplaced(BaseTextureCacheData* texture)
 {
-	for (auto& source : sources)
+	if (preloaded_textures.count(texture->texture_hash))
+		return true;
+	if (texture->old_vqtexture_hash != 0 && preloaded_textures.count(texture->old_vqtexture_hash))
+		return true;
+	if (texture->old_texture_hash != 0 && preloaded_textures.count(texture->old_texture_hash))
+		return true;
+
+	for (auto it = sources.rbegin(); it != sources.rend(); ++it)
 	{
-		if (source->IsTextureReplaced(texture->texture_hash) ||
-			(texture->old_vqtexture_hash != 0 && source->IsTextureReplaced(texture->old_vqtexture_hash)) ||
-			(texture->old_texture_hash != 0 && source->IsTextureReplaced(texture->old_texture_hash)))
-			return true;
+		auto& source = *it;
+		if (source->shouldReplace())
+		{
+			if (source->isTextureReplaced(texture->texture_hash))
+				return true;
+			if (texture->old_vqtexture_hash != 0 && source->isTextureReplaced(texture->old_vqtexture_hash))
+				return true;
+			if (texture->old_texture_hash != 0 && source->isTextureReplaced(texture->old_texture_hash))
+				return true;
+		}
 	}
 	return false;
 }
 
 void CustomTexture::LoadCustomTextureAsync(BaseTextureCacheData *texture_data)
 {
-	if (!init())
+	if (!Init())
 		return;
 
 	texture_data->custom_load_in_progress++;
@@ -230,7 +332,7 @@ void CustomTexture::DumpTexture(BaseTextureCacheData* texture, int w, int h, voi
 		make_directory(base_dump_dir);
 	std::string game_id = getGameId();
 	if (game_id.length() == 0)
-	   return;
+		return;
 
 	base_dump_dir += game_id + "/";
 	if (!file_exists(base_dump_dir))
@@ -355,10 +457,49 @@ void CustomTexture::DumpTexture(BaseTextureCacheData* texture, int w, int h, voi
 	free(dst_buffer);
 }
 
-void CustomTexture::loadMap()
+void CustomTexture::prepareSource(BaseCustomTextureSource* source)
 {
-	bool available = false;
-	for (auto& source : sources)
-		available |= source->LoadMap();
-	custom_textures_available = available;
+	struct PreloadGuard {
+		std::atomic<int>& counter;
+		bool shouldPreload;
+		~PreloadGuard() { if (shouldPreload) counter.fetch_sub(1, std::memory_order_relaxed); }
+	} guard{ pending_preloads, source->shouldPreload() };
+
+	if (stop_preload.load(std::memory_order_relaxed))
+		return;
+
+	if (source->LoadMap())
+	{
+		if (guard.shouldPreload)
+		{
+			int count = static_cast<int>(source->GetTextureCount());
+			if (count > 0)
+			{
+				preload_total.fetch_add(count, std::memory_order_relaxed);
+				auto callback = [this](u32 hash, TextureData&& data) {
+					size_t size = data.data.size();
+					preloaded_textures[hash] = std::move(data);
+					preload_loaded.fetch_add(1, std::memory_order_relaxed);
+					preload_loaded_size.fetch_add(size, std::memory_order_relaxed);
+				};
+				source->PreloadTextures(callback, &stop_preload);
+			}
+		}
+	}
+}
+
+void CustomTexture::GetPreloadProgress(int& completed, int& total, size_t& loaded_size) const
+{
+	total = preload_total.load(std::memory_order_relaxed);
+	if (total == 0 && pending_preloads.load(std::memory_order_relaxed) > 0)
+		total = -1; // Prints Preparing... in UI
+	completed = preload_loaded.load(std::memory_order_relaxed);
+	loaded_size = preload_loaded_size.load(std::memory_order_relaxed);
+}
+
+void CustomTexture::resetPreloadProgress()
+{
+	preload_total.store(0, std::memory_order_relaxed);
+	preload_loaded.store(0, std::memory_order_relaxed);
+	preload_loaded_size.store(0, std::memory_order_relaxed);
 }

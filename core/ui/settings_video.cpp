@@ -215,6 +215,13 @@ void gui_settings_video()
     			"Very slow and incompatible with upscaling and wide screen.");
     	OptionCheckbox("Load Custom Textures", config::CustomTextures,
     			"Load custom/high-res textures from data/textures/<game id>");
+		ImGui::Indent();
+		{
+			DisabledScope scope(!config::CustomTextures.get() || game_started);
+			OptionCheckbox("Preload Custom Textures", config::PreloadCustomTextures,
+					"Preload custom textures at game start. May improve performance but increase memory usage");
+		}
+		ImGui::Unindent();
     }
 	ImGui::Spacing();
     header("Aspect Ratio");

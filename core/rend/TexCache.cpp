@@ -505,7 +505,7 @@ bool BaseTextureCacheData::Update()
 			return false;
 		}
 	}
-	if (config::CustomTextures)
+	if (custom_texture.enabled())
 	{
 		u32 oldHash = texture_hash;
 		ComputeHash();

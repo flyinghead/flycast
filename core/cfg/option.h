@@ -446,6 +446,7 @@ extern Option<int> PerPixelLayers;
 #endif
 extern Option<float> ExtraDepthScale;
 extern Option<bool> CustomTextures;
+extern Option<bool> PreloadCustomTextures;
 extern Option<bool> DumpTextures;
 extern Option<bool> DumpReplacedTextures;
 extern Option<int> ScreenStretching;	// in percent. 150 means stretch from 4/3 to 6/3
