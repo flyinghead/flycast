@@ -1045,13 +1045,13 @@ void InputMapping::DeleteMapping(const std::string& name)
 		try
 		{
 			std::string candidate = hostfs::storage().getSubPath(config::MappingsPath.get()[0], name);
-			std::remove(candidate.c_str());
+			nowide::remove(candidate.c_str());
 		}
 		catch (const hostfs::StorageException&)
 		{
 		}
 	}
-	std::remove(get_writable_config_path(std::string("mappings/") + name).c_str());
+	nowide::remove(get_writable_config_path(std::string("mappings/") + name).c_str());
 }
 
 std::vector<std::string> InputMapping::strSplit(const std::string str, char c, size_t maxsplit)
