@@ -137,9 +137,9 @@ Option<bool> OpenGlChecks("OpenGlChecks", false, "validate");
 
 Option<std::vector<std::string>, false> ContentPath("Dreamcast.ContentPath");
 Option<std::vector<std::string>, false> BiosPath("Dreamcast.BiosPath");
-Option<std::vector<std::string>, false> VMUPath("Dreamcast.VMUPath");
+Option<std::string, false> VMUPath("Dreamcast.VMUPath");
 Option<std::vector<std::string>, false> SavestatePath("Dreamcast.SavestatePath");
-Option<std::vector<std::string>, false> SavePath("Dreamcast.SavePath");
+Option<std::string, false> SavePath("Dreamcast.SavePath");
 Option<std::vector<std::string>, false> TexturePath("Dreamcast.TexturePath");
 Option<std::string, false> TextureDumpPath("Dreamcast.TextureDumpPath");
 Option<std::string, false> BoxartPath("Dreamcast.BoxartPath");

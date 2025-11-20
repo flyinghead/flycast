@@ -493,9 +493,9 @@ extern Option<bool> OpenGlChecks;
 
 extern Option<std::vector<std::string>, false> ContentPath;
 extern Option<std::vector<std::string>, false> BiosPath;
-extern Option<std::vector<std::string>, false> VMUPath;
+extern Option<std::string, false> VMUPath;
 extern Option<std::vector<std::string>, false> SavestatePath;
-extern Option<std::vector<std::string>, false> SavePath;
+extern Option<std::string, false> SavePath;
 extern Option<std::vector<std::string>, false> TexturePath;
 extern Option<std::string, false> TextureDumpPath;
 extern Option<std::string, false> BoxartPath;

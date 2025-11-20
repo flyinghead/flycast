@@ -69,17 +69,14 @@ std::string getVmuPath(const std::string& port, bool save)
 	if (vmuName.empty())
 		vmuName = "vmu_save_" + port + ".bin";
 	
-	// Check user-defined VMU paths first
-	for (const auto& userPath : config::VMUPath.get())
+	// Check user-defined VMU path first
+	if (!config::VMUPath.get().empty())
 	{
-		if (!userPath.empty())
-		{
-			try {
-				std::string fullpath = hostfs::storage().getSubPath(userPath, vmuName);
-				if (save || hostfs::storage().exists(fullpath))
-					return fullpath;
-			} catch (const hostfs::StorageException& e) {
-			}
+		try {
+			std::string fullpath = hostfs::storage().getSubPath(config::VMUPath, vmuName);
+			if (save || hostfs::storage().exists(fullpath))
+				return fullpath;
+		} catch (const hostfs::StorageException& e) {
 		}
 	}
 	
@@ -108,29 +105,12 @@ std::string getVmuPath(const std::string& port, bool save)
 
 std::string getArcadeFlashPath()
 {
-	std::string nvmemSuffix = cfgLoadStr("net", "nvmem", "");
-	std::string fileName = get_file_basename(settings.content.fileName) + nvmemSuffix;
-	
-	// Check user-defined save paths first (for writes, use the first path)
-	for (const auto& userPath : config::SavePath.get())
-	{
-		if (!userPath.empty())
-		{
-			try {
-				std::string fullpath = hostfs::storage().getSubPath(userPath, fileName);
-				// For saves, we use the first valid path for writing
-				// but check all paths when reading existing files
-				if (!config::SavePath.get().empty() && userPath == config::SavePath.get()[0])
-					return fullpath; // Primary save path for new files
-				if (hostfs::storage().exists(fullpath))
-					return fullpath; // Existing save found in this path
-			} catch (const hostfs::StorageException& e) {
-			}
-		}
-	}
-	
-	// Fall back to default
-	return get_game_save_prefix() + nvmemSuffix;
+	// Check user-defined save path first
+	if (!config::SavePath.get().empty())
+		return config::SavePath.get() + "/" + settings.content.fileName;
+	else
+		// Fall back to default
+		return get_game_save_prefix();
 }
 
 std::string findFlash(const std::string& prefix, const std::string& names)

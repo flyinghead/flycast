@@ -35,9 +35,8 @@ static void managePathListCallback(std::string selection)
     }
 }
 
-static bool manageSinglePath(const char* label, config::Option<std::string, false>& pathOption, const char* helpText)
+static void manageSinglePath(const char* label, config::Option<std::string, false>& pathOption, const char* helpText)
 {
-    const std::string popupName = std::string("Select ") + label;
     ImVec2 size;
     size.x = 0.0f;
     size.y = ImGui::GetTextLineHeightWithSpacing() + ImGui::GetStyle().FramePadding.y * 2.f;
@@ -65,10 +64,16 @@ static bool manageSinglePath(const char* label, config::Option<std::string, fals
     ImGui::SameLine();
     ShowHelpMarker(helpText);
     
+    static std::string *pCurrentPath;
+    pCurrentPath = &pathOption.get();
+    const std::string popupName = std::string("Select ") + label;
+    select_file_popup(popupName.c_str(), [](bool cancelled, std::string selection) {
+    	if (!cancelled)
+    		*pCurrentPath = selection;
+    	return true;
+    });
     if (openPopup)
         ImGui::OpenPopup(popupName.c_str());
-    
-    return openPopup;
 }
 
 static void managePathList(const char* label, std::vector<std::string>& paths, const char* helpText)
@@ -419,16 +424,16 @@ void gui_settings_general()
     ImGui::Spacing();
 
 #if !defined(__ANDROID__)
-    managePathList("VMU Folders", config::VMUPath.get(),
-        "Folders where VMU (.bin) saves are stored. First path is used for new saves; all are searched when loading");
+    manageSinglePath("VMU Folder", config::VMUPath,
+        "Folder where VMU (.bin) saves are stored");
     ImGui::Spacing();
 
     managePathList("Savestate Folders", config::SavestatePath.get(),
         "Folders for save states. First path is used for new states; all are searched when loading");
     ImGui::Spacing();
 
-    managePathList("Game Save Folders", config::SavePath.get(),
-        "Folders for game save data (e.g. arcade NVRAM). First path is used for new saves; all are searched when loading");
+    manageSinglePath("Game Save Folder", config::SavePath,
+        "Folder for game save data (e.g. arcade NVRAM)");
     ImGui::Spacing();
 #endif
 
@@ -439,22 +444,10 @@ void gui_settings_general()
 #if !defined(__ANDROID__)
     manageSinglePath("Texture Dump Folder", config::TextureDumpPath, 
         "Folder where texture dumps are saved. Game-specific subfolders will be created automatically");
-    // Handle texture dump folder popup
-    select_file_popup("Select Texture Dump Folder", [](bool cancelled, std::string selection) {
-        if (!cancelled)
-            config::TextureDumpPath = selection;
-        return true;
-    });
     ImGui::Spacing();
     
     manageSinglePath("Box Art Folder", config::BoxartPath,
         "Folder containing box art images (png/jpg). If empty, Flycast will use the default Home Folder/boxart for downloads and generated art");
-    // Handle box art folder popup
-    select_file_popup("Select Box Art Folder", [](bool cancelled, std::string selection) {
-        if (!cancelled)
-            config::BoxartPath = selection;
-        return true;
-    });
     ImGui::Spacing();
 
     managePathList("Controller Mapping Folders", config::MappingsPath.get(),
