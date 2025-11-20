@@ -110,10 +110,14 @@ extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_periph_InputDeviceMa
 		return;
 	if (id == AndroidVirtualGamepad::GAMEPAD_ID)
 	{
-		virtualGamepad = std::make_shared<AndroidVirtualGamepad>(hasRumble);
-		GamepadDevice::Register(virtualGamepad);
-		touchMouse = std::make_shared<TouchMouse>();
-		GamepadDevice::Register(touchMouse);
+		if (virtualGamepad == nullptr) {
+			virtualGamepad = std::make_shared<AndroidVirtualGamepad>(hasRumble);
+			GamepadDevice::Register(virtualGamepad);
+		}
+		if (touchMouse == nullptr) {
+			touchMouse = std::make_shared<TouchMouse>();
+			GamepadDevice::Register(touchMouse);
+		}
 	}
 	else
 	{
