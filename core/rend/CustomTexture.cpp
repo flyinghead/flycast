@@ -249,10 +249,14 @@ void CustomTexture::Terminate()
 	sources.clear();
 	if (!preloaded_textures.empty())
 	{
+#ifndef LIBRETRO
 		auto textures_to_free = std::make_shared<std::map<u32, TextureData>>(std::move(preloaded_textures));
 		std::thread([textures_to_free]() {
 			textures_to_free->clear();
 		}).detach();
+#else
+		preloaded_textures.clear();
+#endif
 	}
 	resetPreloadProgress();
 	initialized = false;
