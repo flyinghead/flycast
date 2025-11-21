@@ -44,7 +44,7 @@ static void managePathList(const char* label, std::vector<std::string>& paths, c
                 * (paths.size() + 1);
 
     bool openPopup = false;
-    if (BeginListBox(label, size, 0))
+    if (BeginListBox(label, size, ImGuiWindowFlags_NavFlattened))
     {
         int to_delete = -1;
         for (u32 i = 0; i < paths.size(); i++)
@@ -187,7 +187,7 @@ void gui_settings_general()
     size.y = (ImGui::GetTextLineHeightWithSpacing() + ImGui::GetStyle().FramePadding.y * 2.f)
     				* (config::ContentPath.get().size() + 1);
 
-    if (BeginListBox("Content Location", size, 0))
+    if (BeginListBox("Content Location", size, ImGuiWindowFlags_NavFlattened))
     {
     	int to_delete = -1;
         for (u32 i = 0; i < config::ContentPath.get().size(); i++)
@@ -226,7 +226,7 @@ void gui_settings_general()
     size.y = ImGui::GetTextLineHeightWithSpacing() * 1.25f + ImGui::GetStyle().FramePadding.y * 2.0f;
 
 #if defined(__linux__) && !defined(__ANDROID__)
-    if (BeginListBox("Data Folder", size, 0))
+    if (BeginListBox("Data Folder", size, ImGuiWindowFlags_NavFlattened))
     {
     	ImGui::AlignTextToFramePadding();
     	float w = ImGui::GetContentRegionAvail().x - ImGui::GetStyle().FramePadding.x;
@@ -240,7 +240,7 @@ void gui_settings_general()
 #if defined(__ANDROID__) || defined(TARGET_MAC)
     size.y += ImGui::GetTextLineHeightWithSpacing() * 1.25f;
 #endif
-    if (BeginListBox("Home Folder", size, 0))
+    if (BeginListBox("Home Folder", size, ImGuiWindowFlags_NavFlattened))
     {
     	ImGui::AlignTextToFramePadding();
     	float w = ImGui::GetContentRegionAvail().x - ImGui::GetStyle().FramePadding.x;
@@ -405,7 +405,7 @@ void gui_settings_general()
     size.x = 0.0f;
     size.y = ImGui::GetTextLineHeightWithSpacing() + ImGui::GetStyle().FramePadding.y * 2.f;
 	bool openTexDumpPopup = false;
-    if (BeginListBox("Texture Dump Folder", size, 0))
+    if (BeginListBox("Texture Dump Folder", size, ImGuiWindowFlags_NavFlattened))
     {
     	ImGui::AlignTextToFramePadding();
 		if (config::TextureDumpPath.get().empty()) {
