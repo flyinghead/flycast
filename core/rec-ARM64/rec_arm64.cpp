@@ -67,7 +67,7 @@ struct DynaCode;
 static DynaCode *arm64_intc_sched;
 static DynaCode *arm64_no_update;
 static DynaCode *blockCheckFail;
-static DynaCode *checkBlockNoFpu;
+static DynaCode *checkBlockAddr;
 static DynaCode *checkBlockFpu;
 static DynaCode *linkBlockGenericStub;
 static DynaCode *linkBlockBranchStub;
@@ -1158,7 +1158,7 @@ public:
 	u32 RelinkBlock(RuntimeBlockInfo *block)
 	{
 		ptrdiff_t start_offset = GetBuffer()->GetCursorOffset();
-
+		// The CpuRunning tests are needed when transitioning to disabled mmu
 		switch (block->BlockType)
 		{
 
@@ -1174,7 +1174,7 @@ public:
 			}
 			else
 			{
-				if (!mmu_enabled())
+				if (!mmu_enabled() && sh4ctx.CpuRunning)
 				{
 					GenCall(linkBlockGenericStub);
 					Nop();
@@ -1218,7 +1218,7 @@ public:
 				}
 				else
 				{
-					if (!mmu_enabled())
+					if (!mmu_enabled() && sh4ctx.CpuRunning)
 					{
 						GenCall(linkBlockBranchStub);
 						Nop();
@@ -1246,7 +1246,7 @@ public:
 				}
 				else
 				{
-					if (!mmu_enabled())
+					if (!mmu_enabled() && sh4ctx.CpuRunning)
 					{
 						GenCall(linkBlockNextStub);
 						Nop();
@@ -1271,7 +1271,7 @@ public:
 			// next_pc = *jdyn;
 
 			Str(w29, sh4_context_mem_operand(&sh4ctx.pc));
-			if (!mmu_enabled())
+			if (!mmu_enabled() && sh4ctx.CpuRunning)
 			{
 				// TODO Call no_update instead (and check CpuRunning less frequently?)
 				Sub(x2, x28, offsetof(Sh4RCB, cntx));
@@ -1362,7 +1362,7 @@ public:
 		Label intc_sched;
 		Label end_mainloop;
 
-		// int intc_sched(int pc, int cycle_counter)
+		// int arm64_intc_sched(u32 pc, int cycle_counter)
 		arm64_intc_sched = GetCursorAddress<DynaCode *>();
 		verify((void *)arm64_intc_sched == codeBuffer.getBase());
 		B(&intc_sched);
@@ -1381,30 +1381,9 @@ public:
 		}
 		Br(x0);
 
-		// void no_update()
-		Bind(&no_update);				// next_pc _MUST_ be on w29
-
-		Ldr(w0, MemOperand(x28, offsetof(Sh4Context, CpuRunning)));
-		Cbz(w0, &end_mainloop);
-		if (!mmu_enabled())
-		{
-			Sub(x2, x28, offsetof(Sh4RCB, cntx));
-			if (RAM_SIZE == 32_MB)
-				Ubfx(w1, w29, 1, 24);	// 24+1 bits: 32 MB
-			else if (RAM_SIZE == 16_MB)
-				Ubfx(w1, w29, 1, 23);	// 23+1 bits: 16 MB
-			else
-				die("Unsupported RAM_SIZE");
-			Ldr(x0, MemOperand(x2, x1, LSL, 3));
-		}
-		else
-		{
-			Mov(w0, w29);
-			GenCallRuntime(bm_GetCodeByVAddr);
-		}
-		Br(x0);
-
+		//
 		// void mainloop(void *context)
+		//
 		mainloop = (void (*)(void *))CC_RW2RX(GetCursorAddress<uintptr_t>());
 		// For stack unwinding purposes, we pretend that the entire code block is just one function, with the same
 		// unwinding instructions everywhere. This isn't true until the end of the following prolog, but exceptions
@@ -1469,8 +1448,52 @@ public:
 
 		// w29 is next_pc
 		Ldr(w29, MemOperand(x28, offsetof(Sh4Context, pc)));
-		B(&no_update);
 
+		//
+		// void arm64_no_update()
+		//
+		Bind(&no_update);				// next_pc _MUST_ be on w29
+
+		Ldr(w0, MemOperand(x28, offsetof(Sh4Context, CpuRunning)));
+		Cbz(w0, &end_mainloop);
+		if (!mmu_enabled())
+		{
+			Sub(x2, x28, offsetof(Sh4RCB, cntx));
+			if (RAM_SIZE == 32_MB)
+				Ubfx(w1, w29, 1, 24);	// 24+1 bits: 32 MB
+			else if (RAM_SIZE == 16_MB)
+				Ubfx(w1, w29, 1, 23);	// 23+1 bits: 16 MB
+			else
+				die("Unsupported RAM_SIZE");
+			Ldr(x0, MemOperand(x2, x1, LSL, 3));
+		}
+		else
+		{
+			Mov(w0, w29);
+			GenCallRuntime(bm_GetCodeByVAddr);
+		}
+		Br(x0);
+
+		Bind(&end_mainloop);
+		if (mmu_enabled())
+			// Pop context
+			Add(sp, sp, 16);
+		// Restore registers
+		Ldp(x29, x30, MemOperand(sp, 144));
+		Ldp(d12, d13, MemOperand(sp, 128));
+		Ldp(d10, d11, MemOperand(sp, 112));
+		Ldp(d8, d9, MemOperand(sp, 96));
+		Ldp(d14, d15, MemOperand(sp, 80));
+		Ldp(x27, x28, MemOperand(sp, 64));
+		Ldp(x25, x26, MemOperand(sp, 48));
+		Ldp(x23, x24, MemOperand(sp, 32));
+		Ldp(x21, x22, MemOperand(sp, 16));
+		Ldp(x19, x20, MemOperand(sp, 160, PostIndex));
+		Ret();
+
+		//
+		// int arm64_intc_sched(u32 pc, u32 cycle_counter)
+		//
 		Bind(&intc_sched);	// w0 is pc, w1 is cycle_counter
 
 		Str(w0, sh4_context_mem_operand(&sh4ctx.pc));
@@ -1490,24 +1513,9 @@ public:
 		Ldr(w29, sh4_context_mem_operand(&sh4ctx.pc));
 		B(&no_update);
 
-		Bind(&end_mainloop);
-		if (mmu_enabled())
-			// Pop context
-			Add(sp, sp, 16);
-		// Restore registers
-		Ldp(x29, x30, MemOperand(sp, 144));
-		Ldp(d12, d13, MemOperand(sp, 128));
-		Ldp(d10, d11, MemOperand(sp, 112));
-		Ldp(d8, d9, MemOperand(sp, 96));
-		Ldp(d14, d15, MemOperand(sp, 80));
-		Ldp(x27, x28, MemOperand(sp, 64));
-		Ldp(x25, x26, MemOperand(sp, 48));
-		Ldp(x23, x24, MemOperand(sp, 32));
-		Ldp(x21, x22, MemOperand(sp, 16));
-		Ldp(x19, x20, MemOperand(sp, 160, PostIndex));
-		Ret();
-
+		//
 		// Exception handler
+		//
 		Label handleExceptionLabel;
 		Bind(&handleExceptionLabel);
 		if (mmu_enabled())
@@ -1518,8 +1526,8 @@ public:
 			B(&reenterLabel);
 		}
 
-		// MMU Block check (with fpu)
-		// w0: vaddr, w1: addr
+		// MMU Block check: SR.FD == 1 (FPU enabled)
+		// w0: vaddr
 		checkBlockFpu = GetCursorAddress<DynaCode *>();
 		Label fpu_enabled;
 		Ldr(w10, sh4_context_mem_operand(&sh4ctx.sr.status));
@@ -1530,15 +1538,15 @@ public:
 		Ldr(w29, sh4_context_mem_operand(&sh4ctx.pc));
 		B(&no_update);
 		Bind(&fpu_enabled);
-		// fallthrough
+		Ret();
 
-		Label blockCheckFailLabel;
-		// MMU Block check (no fpu)
+		// MMU Block check: pc == vaddr
 		// w0: vaddr, w1: addr
-		checkBlockNoFpu = GetCursorAddress<DynaCode *>();
+		checkBlockAddr = GetCursorAddress<DynaCode *>();
 		Ldr(w2, sh4_context_mem_operand(&sh4ctx.pc));
 		Cmp(w2, w0);
 		Mov(w0, w1);
+		Label blockCheckFailLabel;
 		B(&blockCheckFailLabel, ne);
 		Ret();
 
@@ -1550,7 +1558,7 @@ public:
 		{
 			Label jumpblockLabel;
 			Cbnz(x0, &jumpblockLabel);
-			Ldr(w0, MemOperand(x28, offsetof(Sh4Context, pc)));
+			Ldr(w0, sh4_context_mem_operand(&sh4ctx.pc));
 			GenCallRuntime(bm_GetCodeByVAddr);
 			Bind(&jumpblockLabel);
 		}
@@ -2057,61 +2065,67 @@ private:
 	{
 		if (mmu_enabled())
 		{
+			// Verify that pc == block->vaddr
 			Mov(w0, block->vaddr);
 			Mov(w1, block->addr);
-			if (block->has_fpu_op)
-				GenCall(checkBlockFpu);
-			else
-				GenCall(checkBlockNoFpu);
+			GenCall(checkBlockAddr);
 		}
 
-		if (!force_checks)
-			return;
-
-		Label blockcheck_fail;
-		s32 sz = block->sh4_code_size;
-		u8* ptr = GetMemPtr(block->addr, sz);
-		if (ptr != NULL)
+		if (force_checks)
 		{
-			Ldr(x9, reinterpret_cast<uintptr_t>(ptr));
-
-			while (sz > 0)
+			// Verify that the block hasn't been modified
+			Label blockcheck_fail;
+			s32 sz = block->sh4_code_size;
+			u8* ptr = GetMemPtr(block->addr, sz);
+			if (ptr != NULL)
 			{
-				if (sz >= 8)
+				Ldr(x9, reinterpret_cast<uintptr_t>(ptr));
+
+				while (sz > 0)
 				{
-					Ldr(x10, MemOperand(x9, 8, PostIndex));
-					Ldr(x11, *(u64*)ptr);
-					Cmp(x10, x11);
-					sz -= 8;
-					ptr += 8;
+					if (sz >= 8)
+					{
+						Ldr(x10, MemOperand(x9, 8, PostIndex));
+						Ldr(x11, *(u64*)ptr);
+						Cmp(x10, x11);
+						sz -= 8;
+						ptr += 8;
+					}
+					else if (sz >= 4)
+					{
+						Ldr(w10, MemOperand(x9, 4, PostIndex));
+						Ldr(w11, *(u32*)ptr);
+						Cmp(w10, w11);
+						sz -= 4;
+						ptr += 4;
+					}
+					else
+					{
+						Ldrh(w10, MemOperand(x9, 2, PostIndex));
+						Mov(w11, *(u16*)ptr);
+						Cmp(w10, w11);
+						sz -= 2;
+						ptr += 2;
+					}
+					B(ne, &blockcheck_fail);
 				}
-				else if (sz >= 4)
-				{
-					Ldr(w10, MemOperand(x9, 4, PostIndex));
-					Ldr(w11, *(u32*)ptr);
-					Cmp(w10, w11);
-					sz -= 4;
-					ptr += 4;
-				}
-				else
-				{
-					Ldrh(w10, MemOperand(x9, 2, PostIndex));
-					Mov(w11, *(u16*)ptr);
-					Cmp(w10, w11);
-					sz -= 2;
-					ptr += 2;
-				}
-				B(ne, &blockcheck_fail);
 			}
+
+			Label blockcheck_success;
+			B(&blockcheck_success);
+			Bind(&blockcheck_fail);
+			Mov(w0, block->addr);
+			GenBranch(blockCheckFail);
+
+			Bind(&blockcheck_success);
 		}
 
-		Label blockcheck_success;
-		B(&blockcheck_success);
-		Bind(&blockcheck_fail);
-		Mov(w0, block->addr);
-		GenBranch(blockCheckFail);
-
-		Bind(&blockcheck_success);
+		if (mmu_enabled() && block->has_fpu_op)
+		{
+			// Verify that the FPU is enabled
+			Mov(w0, block->vaddr);
+			GenCall(checkBlockFpu);
+		}
 	}
 
 	void shil_param_to_host_reg(const shil_param& param, const Register& reg)

@@ -260,16 +260,10 @@ void main()
 		vec4 texcol;
 		#if pp_TwoVolumes == 1
 			if (area1)
-				#if pp_Palette == 0
-					#if DIV_POS_Z == 1
-						texcol = texture(tex1, vtx_uv1);
-					#else
-						texcol = textureProj(tex1, vec3(vtx_uv1, vtx_uv.z));
-					#endif
-				#elif pp_Palette == 1
-					texcol = palettePixel(tex1, vec3(vtx_uv1, vtx_uv.z));
+				#if DIV_POS_Z == 1
+					texcol = texture(tex1, vtx_uv1);
 				#else
-					texcol = palettePixelBilinear(tex1, vec3(vtx_uv1, vtx_uv.z));
+					texcol = textureProj(tex1, vec3(vtx_uv1, vtx_uv.z));
 				#endif
 			else
 		#endif

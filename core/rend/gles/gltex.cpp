@@ -271,10 +271,10 @@ void ReadRTTBuffer()
 	glBindFramebuffer(GL_FRAMEBUFFER, gl.ofbo.origFbo);
 }
 
-BaseTextureCacheData *OpenGLRenderer::GetTexture(TSP tsp, TCW tcw)
+BaseTextureCacheData *OpenGLRenderer::GetTexture(TSP tsp, TCW tcw, int area)
 {
 	//lookup texture
-	TextureCacheData* tf = TexCache.getTextureCacheData(tsp, tcw);
+	TextureCacheData* tf = TexCache.getTextureCacheData(tsp, tcw, area);
 
 	//update if needed
 	if (tf->NeedsUpdate())

@@ -87,4 +87,36 @@ static inline std::string getUserAgent() {
 	return "Flycast/" + uaVersion.substr(1); // skip 'v'
 }
 
+static inline std::string urlDecode(const std::string& encoded)
+{
+	std::ostringstream decoded;
+
+	for (size_t i = 0; i < encoded.length(); i++)
+	{
+		const char c = encoded[i];
+		switch (c)
+		{
+		case '%':
+			{
+				++i;
+				if (i + 1 >= encoded.length())
+					break;
+				int n;
+				sscanf(&encoded[i], "%2x", &n);
+				decoded << (char)n;
+				++i;
+			}
+			break;
+		case '+':
+			decoded << ' ';
+			break;
+
+		default:
+			decoded << c;
+			break;
+		}
+	}
+	return decoded.str();
+}
+
 }

@@ -20,6 +20,8 @@
 #include "mapping.h"
 #include "cfg/ini.h"
 #include "stdclass.h"
+#include "cfg/option.h"
+#include "oslib/storage.h"
 
 static struct
 {
@@ -826,10 +828,35 @@ std::shared_ptr<InputMapping> InputMapping::LoadMapping(const std::string& name)
 	if (it != loaded_mappings.end())
 		return it->second;
 
-	std::string path = get_readonly_config_path(std::string("mappings/") + name);
-	FILE *fp = nowide::fopen(path.c_str(), "r");
-	if (fp == NULL)
-		return NULL;
+	std::string path;
+	FILE *fp = nullptr;
+	// Try user-defined mapping folders first
+	for (const auto& base : config::MappingsPath.get())
+	{
+		if (base.empty())
+			continue;
+		try
+		{
+			std::string candidate = hostfs::storage().getSubPath(base, name);
+			fp = hostfs::storage().openFile(candidate, "r");
+			if (fp != nullptr)
+			{
+				path = candidate;
+				break;
+			}
+		}
+		catch (const hostfs::StorageException&)
+		{
+		}
+	}
+	// Fall back to default config path
+	if (fp == nullptr)
+	{
+		path = get_readonly_config_path(std::string("mappings/") + name);
+		fp = nowide::fopen(path.c_str(), "r");
+		if (fp == NULL)
+			return NULL;
+	}
 	std::shared_ptr<InputMapping> mapping = std::make_shared<InputMapping>();
 	mapping->load(fp);
 	std::fclose(fp);
@@ -886,9 +913,20 @@ bool InputMapping::save(const std::string& name)
 	if (!dirty)
 		return true;
 
-	std::string path = get_writable_config_path("mappings/");
-	make_directory(path);
-	path = get_writable_config_path(std::string("mappings/") + name);
+	std::string path;
+	// Prefer first user-defined mapping path for writes
+	if (!config::MappingsPath.get().empty() && !config::MappingsPath.get()[0].empty())
+	{
+		std::string base = config::MappingsPath.get()[0];
+		make_directory(base);
+		path = hostfs::storage().getSubPath(base, name);
+	}
+	else
+	{
+		std::string base = get_writable_config_path("mappings/");
+		make_directory(base);
+		path = get_writable_config_path(std::string("mappings/") + name);
+	}
 	FILE *fp = nowide::fopen(path.c_str(), "w");
 	if (fp == NULL)
 	{
@@ -1001,7 +1039,19 @@ void InputMapping::SaveMapping(const std::string& name, const std::shared_ptr<In
 void InputMapping::DeleteMapping(const std::string& name)
 {
 	loaded_mappings.erase(name);
-	std::remove(get_writable_config_path(std::string("mappings/") + name).c_str());
+	// Try delete from user-defined mapping path first
+	if (!config::MappingsPath.get().empty() && !config::MappingsPath.get()[0].empty())
+	{
+		try
+		{
+			std::string candidate = hostfs::storage().getSubPath(config::MappingsPath.get()[0], name);
+			nowide::remove(candidate.c_str());
+		}
+		catch (const hostfs::StorageException&)
+		{
+		}
+	}
+	nowide::remove(get_writable_config_path(std::string("mappings/") + name).c_str());
 }
 
 std::vector<std::string> InputMapping::strSplit(const std::string str, char c, size_t maxsplit)

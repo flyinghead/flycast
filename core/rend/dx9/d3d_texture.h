@@ -24,7 +24,7 @@
 class D3DTexture final : public BaseTextureCacheData
 {
 public:
-	D3DTexture(TSP tsp = {}, TCW tcw = {}) : BaseTextureCacheData(tsp, tcw) {}
+	D3DTexture(TSP tsp = {}, TCW tcw = {}, int area = 0) : BaseTextureCacheData(tsp, tcw, area) {}
 	D3DTexture(D3DTexture&& other) : BaseTextureCacheData(std::move(other)) {
 		std::swap(texture, other.texture);
 	}

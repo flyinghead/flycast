@@ -55,9 +55,9 @@ void BaseVulkanRenderer::Term()
 	shaderManager.term();
 }
 
-BaseTextureCacheData *BaseVulkanRenderer::GetTexture(TSP tsp, TCW tcw)
+BaseTextureCacheData *BaseVulkanRenderer::GetTexture(TSP tsp, TCW tcw, int area)
 {
-	Texture* tf = textureCache.getTextureCacheData(tsp, tcw);
+	Texture* tf = textureCache.getTextureCacheData(tsp, tcw, area);
 
 	//update if needed
 	if (tf->NeedsUpdate())

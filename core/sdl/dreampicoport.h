@@ -18,114 +18,27 @@
  */
 #pragma once
 
-#include "dreamlink.h"
-
 #ifdef USE_DREAMLINK_DEVICES
 
-#include <asio.hpp>
+#include "dreamlink.h"
 
-#include <atomic>
-#include <chrono>
-#include <vector>
-#include <array>
-
-// Forward declaration of underlying serial connection
-class DreamPicoPortSerialHandler;
+#include <memory>
 
 //! See: https://github.com/OrangeFox86/DreamPicoPort
 class DreamPicoPort : public DreamLink
 {
-	u8 expansionDevs = 0;
-
-	//! The one and only serial port
-	static std::unique_ptr<DreamPicoPortSerialHandler> serial;
-	//! Number of devices using the above serial
-	static std::atomic<std::uint32_t> connected_dev_count;
-	//! Current timeout in milliseconds
-	std::chrono::milliseconds timeout_ms;
-	//! The bus ID dictated by flycast
-	int software_bus = -1;
-	//! The bus index of the hardware connection which will differ from the software bus
-	int hardware_bus = -1;
-	//! true iff only a single devices was found when enumerating devices
-	bool is_single_device = true;
-	//! True when initial enumeration failed
-	bool is_hardware_bus_implied = true;
-	//! True once connection is established
-	bool connection_established = false;
-    //! The queried interface version
-    double interface_version = 0.0;
-    //! The queried peripherals; for each function, index 0 is function code and index 1 is the function definition
-    std::vector<std::vector<std::array<uint32_t, 2>>> peripherals;
-	//! The located serial number of this device or empty string if could not be found
-	std::string serial_number;
-	//! If set, the determined unique ID of this device. If not set, the serial could not be parsed.
-	std::string unique_id;
-
 public:
     //! Dreamcast Controller USB VID:1209 PID:2f07
     static constexpr const std::uint16_t VID = 0x1209;
     static constexpr const std::uint16_t PID = 0x2f07;
     static constexpr const char* VID_PID_GUID = "09120000072f0000";
 
+protected:
+    DreamPicoPort() = default;
+	virtual ~DreamPicoPort() = default;
+
 public:
-    DreamPicoPort(int bus, int joystick_idx, SDL_Joystick* sdl_joystick);
-
-	virtual ~DreamPicoPort();
-
-	bool isForPhysicalController() override;
-
-	bool send(const MapleMsg& msg) override;
-
-    bool send(const MapleMsg& txMsg, MapleMsg& rxMsg) override;
-
-	void gameTermination() override;
-
-	int getBus() const override;
-
-    u32 getFunctionCode(int forPort) const override;
-
-	std::array<u32, 3> getFunctionDefinitions(int forPort) const override;
-
-	int getDefaultBus() const override;
-
-	void setDefaultMapping(const std::shared_ptr<InputMapping>& mapping) const override;
-
-	const char *getButtonName(u32 code) const override;
-
-	std::string getUniqueId() const override;
-
-	void changeBus(int newBus);
-
-	std::string getName() const override;
-
-	bool needsRefresh() override;
-
-	bool isConnected() override;
-
-	void connect() override;
-
-	void disconnect() override;
-
-    void sendPort();
-
-	int hardwareBus() const;
-
-	bool isHardwareBusImplied() const;
-
-	bool isSingleDevice() const;
-
-private:
-	std::string getName(std::string separator) const;
-
-private:
-    asio::error_code sendCmd(const std::string& cmd);
-    asio::error_code sendMsg(const MapleMsg& msg);
-    asio::error_code receiveCmd(std::string& cmd);
-    asio::error_code receiveMsg(MapleMsg& msg);
-	void determineHardwareBus(int joystick_idx, SDL_Joystick* sdl_joystick);
-    bool queryInterfaceVersion();
-    bool queryPeripherals();
+	static std::shared_ptr<DreamPicoPort> create_shared(int bus, int joystick_idx, SDL_Joystick* sdl_joystick);
 };
 
 #endif // USE_DREAMCASTCONTROLLER

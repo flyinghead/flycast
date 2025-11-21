@@ -294,6 +294,7 @@ static void unmapControl(const std::shared_ptr<InputMapping>& mapping, u32 gamep
 {
 	mapping->clear_button(gamepad_port, key);
 	mapping->clear_axis(gamepad_port, key);
+	buttonState.erase(key);
 }
 
 static DreamcastKey getOppositeDirectionKey(DreamcastKey key)
@@ -574,6 +575,7 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 			ImGui::EndPopup();
 			gamepad->unlistenButtons(buttonListener);
 			currentGamepad = nullptr;
+			buttonState.clear();
 			return;
 		}
 		ImGui::SetItemDefaultFocus();
@@ -762,6 +764,7 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 				map_start_time = getTimeMs() + 300; // 300ms delay before starting the countdown
 				ImGui::OpenPopup("Map Control");
 				mapped_codes.clear();  // Clear previous button codes
+				buttonState.erase(systemMapping->key);
 
 				// Detect combos only for EMU_BUTTONS
 				const bool detectCombo = (systemMapping->key & DC_BTN_GROUP_MASK) == EMU_BUTTONS;

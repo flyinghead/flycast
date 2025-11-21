@@ -149,6 +149,21 @@ struct VO_BORDER_COL_type : RGBAColorTemplate<VO_BORDER_COL_type>
 		};
 		u32 full;
 	};
+
+	float blue() const
+	{
+		if (full == 0xff)
+			return 0.f;	// avoid pure blue (dinosaur king)
+		else
+			return _blue / 255.f;
+	}
+
+	void getRGBColor(float rgb[3]) const
+	{
+		rgb[0] = red();
+		rgb[1] = green();
+		rgb[2] = blue();
+	}
 };
 
 struct RGBColor : RGBAColorTemplate<RGBColor>

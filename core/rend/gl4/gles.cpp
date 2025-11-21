@@ -326,36 +326,25 @@ void main()
 	#if pp_Texture==1
 	{
 		vec4 texcol;
+		#if pp_TwoVolumes == 1
+			if (area1)
+				#if DIV_POS_Z == 1
+					texcol = texture(tex1, vtx_uv1);
+				#else
+					texcol = textureProj(tex1, vec3(vtx_uv1.xy, vtx_uv.z));
+				#endif
+			else
+		#endif
 		#if pp_Palette == 0
 			#if DIV_POS_Z == 1
-				#if pp_TwoVolumes == 1
-					if (area1)
-						texcol = texture(tex1, vtx_uv1);
-					else
-				#endif
-						texcol = texture(tex0, vtx_uv.xy);
+				texcol = texture(tex0, vtx_uv.xy);
 			#else
-				#if pp_TwoVolumes == 1
-					if (area1)
-						texcol = textureProj(tex1, vec3(vtx_uv1.xy, vtx_uv.z));
-					else
-				#endif
-						texcol = textureProj(tex0, vtx_uv);
+				texcol = textureProj(tex0, vtx_uv);
 			#endif
 		#elif pp_Palette == 1
-			#if pp_TwoVolumes == 1
-				if (area1)
-					texcol = palettePixel(tex1, vec3(vtx_uv1.xy, vtx_uv.z));
-				else
-			#endif
-					texcol = palettePixel(tex0, vtx_uv);
+			texcol = palettePixel(tex0, vtx_uv);
 		#else
-			#if pp_TwoVolumes == 1
-				if (area1)
-					texcol = palettePixelBilinear(tex1, vec3(vtx_uv1.xy, vtx_uv.z));
-				else
-			#endif
-					texcol = palettePixelBilinear(tex0, vtx_uv);
+			texcol = palettePixelBilinear(tex0, vtx_uv);
 		#endif
 
 		#if pp_BumpMap == 1

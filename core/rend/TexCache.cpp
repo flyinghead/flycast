@@ -295,7 +295,7 @@ bool BaseTextureCacheData::Delete()
 	return true;
 }
 
-BaseTextureCacheData::BaseTextureCacheData(TSP tsp, TCW tcw)
+BaseTextureCacheData::BaseTextureCacheData(TSP tsp, TCW tcw, int area)
 {
 	initVramLocks();
 
@@ -304,6 +304,7 @@ BaseTextureCacheData::BaseTextureCacheData(TSP tsp, TCW tcw)
 		tcw.ScanOrder = 0;
 	this->tsp = tsp;
 	this->tcw = tcw;
+	this->area = area;
 
 	//Reset state info ..
 	Updates = 0;
@@ -444,7 +445,7 @@ bool BaseTextureCacheData::Update()
 	bool has_alpha = false;
 	if (IsPaletted())
 	{
-		if (IsGpuHandledPaletted(tsp, tcw))
+		if (IsGpuHandledPaletted(tsp, tcw, area))
 		{
 			tex_type = TextureType::_8;
 			gpuPalette = true;

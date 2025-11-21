@@ -75,10 +75,6 @@ jobs:
         run: HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=1 HOMEBREW_DEVELOPER=1 brew reinstall --build-from-source --formula ./shell/apple/libomp.rb
         if: matrix.config.name == 'apple-darwin'
 
-      - name: Compile OpenMP.xcframework (iOS)
-        run: ./shell/apple/emulator-ios/OpenMP/build_ios_openmp.sh --disableSimulator
-        if: matrix.config.name == 'apple-ios'
-
       - uses: actions/cache@v4
         with:
           path: ${{ env.CCACHE_DIR }}

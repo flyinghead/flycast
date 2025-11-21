@@ -33,16 +33,7 @@ namespace aica
 namespace dsp
 {
 
-alignas(4096) static u8 CodeBuffer[32_KB]
-#if defined(_WIN32)
-	;
-#elif defined(__unix__)
-	__attribute__((section(".text")));
-#elif defined(__APPLE__)
-	__attribute__((section("__TEXT,.text")));
-#else
-	#error CodeBuffer code section unknown
-#endif
+DECLARE_CODE_CACHE(CodeBuffer, 32_KB)
 static u8 *pCodeBuffer;
 
 class X86DSPAssembler : public Xbyak::CodeGenerator

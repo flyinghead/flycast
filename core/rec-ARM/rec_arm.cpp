@@ -116,7 +116,7 @@ static void (*ngen_FailedToFindBlock_)();
 static void (*mainloop)(void *);
 static void (*handleException)();
 static void (*checkBlockFpu)();
-static void (*checkBlockNoFpu)();
+static void (*checkBlockAddr)();
 
 class Arm32Assembler;
 
@@ -275,8 +275,8 @@ public:
 				}
 				cmp(r4, block->BlockType & 1);
 			}
-
-			if (!mmu_enabled())
+			// The CpuRunning tests are needed when transitioning to disabled mmu
+			if (!mmu_enabled() && sh4ctx.CpuRunning)
 			{
 				if (block->pBranchBlock)
 					jump((void *)block->pBranchBlock->code, CC);
@@ -305,7 +305,7 @@ public:
 		case BET_DynamicRet:
 		case BET_DynamicCall:
 		case BET_DynamicJump:
-			if (!mmu_enabled())
+			if (!mmu_enabled() && sh4ctx.CpuRunning)
 			{
 				sub(r2, r8, -rcbOffset(fpcb));
 				ubfx(r1, r4, 1, 24);
@@ -320,7 +320,7 @@ public:
 
 		case BET_StaticCall:
 		case BET_StaticJump:
-			if (!mmu_enabled())
+			if (!mmu_enabled() && sh4ctx.CpuRunning)
 			{
 				if (block->pBranchBlock == nullptr)
 					call(ngen_LinkBlock_Generic_stub);
@@ -2160,10 +2160,7 @@ void Arm32Assembler::compile(RuntimeBlockInfo* block, bool force_checks, bool op
 	{
 		Mov(r0, block->vaddr);
 		Mov(r1, block->addr);
-		if (block->has_fpu_op)
-			call((void *)checkBlockFpu);
-		else
-			call((void *)checkBlockNoFpu);
+		call((void *)checkBlockAddr);
 	}
 	if (force_checks)
 	{
@@ -2204,6 +2201,11 @@ void Arm32Assembler::compile(RuntimeBlockInfo* block, bool force_checks, bool op
 				sz -= 2;
 			}
 		}
+	}
+	if (mmu_enabled() && block->has_fpu_op)
+	{
+		Mov(r0, block->vaddr);
+		call((void *)checkBlockFpu);
 	}
 
 	//scheduler
@@ -2460,28 +2462,25 @@ void Arm32Assembler::genMainLoop()
 		B(&longjumpLabel);
 	}
 
-	// MMU Check block (with fpu)
-	// r0: vaddr, r1: addr
+	// MMU Check block: SR.FD == 1 (FPU enabled)
+	// r0: vaddr
 	checkBlockFpu = GetCursorAddress<void (*)()>();
-	Label fpu_enabled;
 	loadSh4Reg(r2, reg_sr_status);
-	Tst(r2, 1 << 15);		// test SR.FD bit
-	B(eq, &fpu_enabled);
+	Tst(r2, 1 << 15);			// test SR.FD bit
+	Bx(eq, lr);					// return if set
 	Mov(r1, Sh4Ex_FpuDisabled);	// exception code
 	call((void *)Do_Exception);
 	loadSh4Reg(r4, reg_nextpc);
 	B(&no_updateLabel);
-	Bind(&fpu_enabled);
-	// fallthrough
 
-	// MMU Check block (no fpu)
+	// MMU Check block: pc == vaddr
 	// r0: vaddr, r1: addr
-	checkBlockNoFpu = GetCursorAddress<void (*)()>();
+	checkBlockAddr = GetCursorAddress<void (*)()>();
 	loadSh4Reg(r2, reg_nextpc);
 	Cmp(r2, r0);
+	Bx(eq, lr);
 	Mov(r0, r1);
 	jump(ngen_blockcheckfail, ne);
-	Bx(lr);
 
     // Memory handlers
     for (int s=0;s<6;s++)

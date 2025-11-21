@@ -25,7 +25,7 @@
 class DX11Texture final : public BaseTextureCacheData
 {
 public:
-	DX11Texture(TSP tsp = {}, TCW tcw = {}) : BaseTextureCacheData(tsp, tcw) {}
+	DX11Texture(TSP tsp = {}, TCW tcw = {}, int area = 0) : BaseTextureCacheData(tsp, tcw, area) {}
 	DX11Texture(DX11Texture&& other) : BaseTextureCacheData(std::move(other)) {
 		std::swap(texture, other.texture);
 		std::swap(textureView, other.textureView);

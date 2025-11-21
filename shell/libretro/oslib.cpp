@@ -165,7 +165,7 @@ void saveScreenshot(const std::string& name, const std::vector<u8>& data)
 		throw FlycastException(path);
 	if (std::fwrite(&data[0], data.size(), 1, f) != 1) {
 		std::fclose(f);
-		unlink(path.c_str());
+		nowide::remove(path.c_str());
 		throw FlycastException(path);
 	}
 	std::fclose(f);

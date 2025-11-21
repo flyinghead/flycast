@@ -35,6 +35,7 @@
 #include "hw/pvr/Renderer_if.h"
 #include "hw/arm7/arm7_rec.h"
 #include "network/ggpo.h"
+#include "network/ice.h"
 #include "hw/mem/mem_watch.h"
 #include "network/net_handshake.h"
 #include "network/naomi_network.h"
@@ -742,7 +743,8 @@ void Emulator::unloadGame()
 		} catch (const FlycastException& e) {
 			ERROR_LOG(COMMON, "%s", e.what());
 		}
-
+		// Flush the VMU files to disk
+		mcfg_DestroyDevices(true);
 		config::Settings::instance().reset();
 		config::Settings::instance().load(false);
 		settings.content.path.clear();
@@ -779,6 +781,7 @@ void Emulator::term()
 		pvr::term();
 		mem_Term();
 		libGDR_term();
+		ice::term();
 
 		state = Terminated;
 	}

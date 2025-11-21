@@ -18,21 +18,7 @@
 constexpr u32 CODE_SIZE = 10_MB;
 constexpr u32 TEMP_CODE_SIZE = 1_MB;
 constexpr u32 FULL_SIZE = CODE_SIZE + TEMP_CODE_SIZE;
-
-#if defined(_WIN32) || FEAT_SHREC != DYNAREC_JIT || defined(TARGET_IPHONE) || defined(TARGET_ARM_MAC)
-static u8 *SH4_TCB;
-#else
-alignas(4096) static u8 SH4_TCB[FULL_SIZE]
-#if defined(__OpenBSD__)
-	__attribute__((section(".openbsd.mutable")));
-#elif defined(__unix__) || defined(__SWITCH__)
-	__attribute__((section(".text")));
-#elif defined(__APPLE__)
-	__attribute__((section("__TEXT,.text")));
-#else
-	#error SH4_TCB ALLOC
-#endif
-#endif
+DECLARE_CODE_CACHE(SH4_TCB, FULL_SIZE)
 
 static u8* CodeCache;
 static u8* TempCodeCache;
@@ -300,7 +286,9 @@ void* DYNACALL rdv_LinkBlock(u8* code,u32 dpc)
 
 	DynarecCodeEntryPtr rv = rdv_FindOrCompile();  // Returns rx ptr
 
-	if (!mmu_enabled() && !stale_block)
+	if (mmu_enabled())
+		return (void *)rv;
+	if (!stale_block)
 	{
 		if (bcls == BET_CLS_Dynamic)
 		{

@@ -16,6 +16,11 @@ set(SENTRY_UPLOAD_URL "" CACHE STRING "Sentry upload URL")
 
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/shell/cmake")
 
+# Set WINDOWS_STORE flag for UWP builds
+if(CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
+	set(WINDOWS_STORE TRUE)
+endif()
+
 if(APPLE)
 	if(CMAKE_SYSTEM_NAME STREQUAL iOS)
 		set(CMAKE_OSX_DEPLOYMENT_TARGET "12.0" CACHE STRING "Minimum iOS deployment version")
@@ -273,6 +278,8 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
 		$<$<BOOL:${MSVC}>:_WINSOCK_DEPRECATED_NO_WARNING>
 		$<$<BOOL:${MSVC}>:NOMINMAX>
 		$<$<BOOL:${TEST_AUTOMATION}>:TEST_AUTOMATION>
+		$<$<BOOL:${WINDOWS_STORE}>:WINDOWS_STORE>
+		$<$<BOOL:${WINDOWS_STORE}>:TARGET_UWP>
 		$<$<BOOL:${WINDOWS_STORE}>:NOCRYPT>
 		$<$<BOOL:${WINDOWS_STORE}>:_WIN32_WINNT=0x0A00>
 		$<$<OR:$<BOOL:${MINGW}>,$<BOOL:${MSVC}>>:_USE_MATH_DEFINES>)
@@ -403,22 +410,6 @@ if(USE_OPENMP)
 			target_link_libraries(${PROJECT_NAME} PRIVATE OpenMP::OpenMP_CXX)
 		endif()
 	endif()
-	if(IOS)
-		message("-- Finding OpenMP.xcframework for iOS")
-		set(OPENMP_XCFRAMEWORK "${CMAKE_CURRENT_SOURCE_DIR}/shell/apple/emulator-ios/OpenMP/OpenMP.xcframework")
-		if(IS_DIRECTORY ${OPENMP_XCFRAMEWORK})
-			# CMake does not support linking xcframework directly atm. (see https://gitlab.kitware.com/cmake/cmake/-/issues/21752)
-			set(OPENMP_FRAMEWORK ${OPENMP_XCFRAMEWORK}/ios-arm64_arm64e/OpenMP.framework/Versions/A/libomp.a)
-			if(EXISTS ${OPENMP_FRAMEWORK})
-				message("-- Found OpenMP.xcframework: ${OPENMP_FRAMEWORK} (Linking static library before CMake support linking xcframework)")
-				target_link_libraries(${PROJECT_NAME} PRIVATE ${OPENMP_FRAMEWORK})
-				target_include_directories(${PROJECT_NAME} PRIVATE ${OPENMP_XCFRAMEWORK}/ios-arm64_arm64e/OpenMP.framework/Versions/A/Headers)
-				target_compile_options(${PROJECT_NAME} PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-Xclang -fopenmp>)
-			endif()
-		else()
-			message("-- Could NOT find OpenMP.xcframework, compile it using shell/apple/emulator-ios/OpenMP/build_ios_openmp.sh")
-		endif()
-	endif()
 endif()
 
 option(BUILD_SHARED_LIBS "Build shared library" OFF)
@@ -464,6 +455,32 @@ if(NOT LIBRETRO)
 	endif()
 
 	if(NOT ANDROID AND NOT IOS)
+		if (NOT NINTENDO_SWITCH)
+			# DreamLink enabled for non-mobile Linux, MacOS, and Windows
+			target_compile_definitions(${PROJECT_NAME} PRIVATE USE_DREAMLINK_DEVICES=1)
+			set(USE_DREAMLINK_DEVICES ON) # Must be set before adding core/sdl
+
+			if ((WIN32 OR WINDOWS_STORE) AND NOT MINGW)
+				# Use winrt implementation of the DreamPicoPort-API
+				option(DREAMPICOPORT_WITH_LIBUSB "Use libusb to access DreamPicoPort-API" OFF)
+			elseif (CMAKE_SYSTEM_NAME STREQUAL "FreeBSD")
+				# A version of libusb is installed in FreeBSD
+				find_package(PkgConfig REQUIRED)
+   	 			pkg_check_modules(LIBUSB REQUIRED libusb-1.0)
+
+				set(DREAMPICOPORT_LIBUSB_LIBRARIES "${LIBUSB_LIBRARIES}" CACHE STRING "Name of the libusb library to link against")
+				set(DREAMPICOPORT_LIBUSB_INCLUDE_DIRS "${LIBUSB_INCLUDE_DIRS}" CACHE STRING "Path to libusb include directory, when applicable")
+			else()
+				# libusb
+				add_subdirectory(core/deps/libusb-cmake)
+			endif()
+
+			# DreamPicoPort-API
+			option(DREAMPICOPORT_ADD_LIBUSB "Add internal libusb library" OFF) # Already included above, when applicable
+			add_subdirectory(core/deps/DreamPicoPort-API)
+			target_link_libraries(${PROJECT_NAME} PRIVATE dream_pico_port_api)
+		endif()
+
 		if(USE_HOST_SDL)
 			find_package(SDL2 2.0.9)
 		endif()
@@ -1342,7 +1359,6 @@ if(NOT LIBRETRO)
 			shell/android-studio/flycast/src/main/jni/src/android_keyboard.h)
 
 		target_link_libraries(${PROJECT_NAME} PRIVATE android log)
-		target_link_options(${PROJECT_NAME} PRIVATE "-Wl,-z,max-page-size=16384")
 	elseif(APPLE)
 		string(TIMESTAMP YEAR "%Y")
 		string(REGEX MATCH "^[^-]+" TAG_VERSION ${GIT_VERSION})

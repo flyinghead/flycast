@@ -446,13 +446,42 @@ void CheatManager::reset(const std::string& gameId)
 		cheats.clear();
 		setActive(false);
 		this->gameId = gameId;
+
 #ifndef LIBRETRO
 		if (!settings.raHardcoreMode)
 		{
 			std::string cheatFile = cfgLoadStr("cheats", gameId, "");
 			if (!cheatFile.empty())
 				loadCheatFile(cheatFile);
+			else
+			{
+				// Try to auto-locate a cheat file in user-defined CheatPath
+				std::string romName = settings.content.fileName;
+				const char* exts[] = { ".cht", ".txt" };
+				for (const auto& base : config::CheatPath.get())
+				{
+					if (base.empty())
+						continue;
+					for (const char* ext : exts)
+					{
+						try
+						{
+							std::string candidate = hostfs::storage().getSubPath(base, romName + ext);
+							if (hostfs::storage().exists(candidate))
+							{
+								loadCheatFile(candidate);
+								cfgSaveStr("cheats", gameId, candidate);
+								goto found_cheats;
+							}
+						}
+						catch (const hostfs::StorageException&)
+						{
+						}
+					}
+				}
+			}
 		}
+found_cheats:
 #endif
 		size_t cheatCount = cheats.size();
 		if (gameId == "Fixed BOOT strapper")	// Extreme Hunting 2

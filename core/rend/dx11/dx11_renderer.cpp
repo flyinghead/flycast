@@ -295,10 +295,10 @@ bool DX11Renderer::ensureBufferSize(ComPtr<ID3D11Buffer>& buffer, D3D11_BIND_FLA
     return SUCCEEDED(device->CreateBuffer(&desc, nullptr, &buffer.get()));
 }
 
-BaseTextureCacheData *DX11Renderer::GetTexture(TSP tsp, TCW tcw)
+BaseTextureCacheData *DX11Renderer::GetTexture(TSP tsp, TCW tcw, int area)
 {
 	//lookup texture
-	DX11Texture* tf = texCache.getTextureCacheData(tsp, tcw);
+	DX11Texture* tf = texCache.getTextureCacheData(tsp, tcw, area);
 
 	//update if needed
 	if (tf->NeedsUpdate())
