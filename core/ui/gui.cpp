@@ -20,6 +20,7 @@
 #include "rend/osd.h"
 #include "cfg/cfg.h"
 #include "imgui.h"
+#include "imgui_internal.h"
 #include "imgui_stdlib.h"
 #include "network/net_handshake.h"
 #include "network/ice.h"
@@ -80,6 +81,9 @@ static std::mutex osd_message_mutex;
 static void (*showOnScreenKeyboard)(bool show);
 static bool keysUpNextFrame[512];
 bool uiUserScaleUpdated;
+#ifdef TARGET_UWP
+static bool clearActiveIdNextFrame;
+#endif
 
 GameScanner scanner;
 static BackgroundGameLoader gameLoader;
@@ -135,6 +139,21 @@ void gui_init()
     EventManager::listen(Event::Start, emuEventCallback);
 	EventManager::listen(Event::Terminate, emuEventCallback);
     ggpo::receiveChatMessages([](int playerNum, const std::string& msg) { chat.receive(playerNum, msg); });
+
+#ifdef TARGET_UWP
+	{
+		using namespace Windows::UI::ViewManagement;
+		InputPane ^ inputPane = InputPane::GetForCurrentView();
+		if (inputPane)
+		{
+			inputPane->Hiding += ref new Windows::Foundation::TypedEventHandler<InputPane ^, InputPaneVisibilityEventArgs ^>(
+				[](InputPane ^, InputPaneVisibilityEventArgs ^)
+				{
+					clearActiveIdNextFrame = true;
+				});
+		}
+	}
+#endif
 
 }
 
@@ -416,25 +435,58 @@ static void gui_newFrame()
 	// shows a popup navigation window even in game because of the OSD
 	//io.AddKeyEvent(ImGuiKey_GamepadFaceLeft, ((kcode[0] & DC_BTN_X) == 0));
 	io.AddKeyEvent(ImGuiKey_GamepadFaceRight, ((kcode[0] & DC_BTN_B) == 0));
-	io.AddKeyEvent(ImGuiKey_GamepadFaceUp, ((kcode[0] & DC_BTN_Y) == 0));
+	// Use A for both Activate (FaceDown) and Text Input/OSK (FaceUp)
+	io.AddKeyEvent(ImGuiKey_GamepadFaceUp, ((kcode[0] & DC_BTN_A) == 0));
 	io.AddKeyEvent(ImGuiKey_GamepadFaceDown, ((kcode[0] & DC_BTN_A) == 0));
-	io.AddKeyEvent(ImGuiKey_GamepadDpadLeft, ((kcode[0] & DC_DPAD_LEFT) == 0));
-	io.AddKeyEvent(ImGuiKey_GamepadDpadRight, ((kcode[0] & DC_DPAD_RIGHT) == 0));
-	io.AddKeyEvent(ImGuiKey_GamepadDpadUp, ((kcode[0] & DC_DPAD_UP) == 0));
-	io.AddKeyEvent(ImGuiKey_GamepadDpadDown, ((kcode[0] & DC_DPAD_DOWN) == 0));
+
+	// Treat physical shoulder bumpers as additional left/right navigation
+	const bool bumper_left  = ((kcode[0] & DC_BTN_Z) == 0);          // left shoulder
+	const bool bumper_right = ((kcode[0] & DC_BTN_C) == 0);          // right shoulder
+
+	const int stickDeadZone = 8000;
+	const bool ls_left  = joyx[0] < -stickDeadZone;
+	const bool ls_right = joyx[0] >  stickDeadZone;
+	const bool ls_up    = joyy[0] < -stickDeadZone;
+	const bool ls_down  = joyy[0] >  stickDeadZone;
+
+	const bool nav_left  = ((kcode[0] & DC_DPAD_LEFT)  == 0) || ls_left  || bumper_left;
+	const bool nav_right = ((kcode[0] & DC_DPAD_RIGHT) == 0) || ls_right || bumper_right;
+
+	io.AddKeyEvent(ImGuiKey_GamepadDpadLeft,  nav_left);
+	io.AddKeyEvent(ImGuiKey_GamepadDpadRight, nav_right);
+	io.AddKeyEvent(ImGuiKey_GamepadDpadUp,    ((kcode[0] & DC_DPAD_UP)    == 0) || ls_up);
+	io.AddKeyEvent(ImGuiKey_GamepadDpadDown,  ((kcode[0] & DC_DPAD_DOWN)  == 0) || ls_down);
 
 	float analog;
-	analog = joyx[0] < 0 ? -(float)joyx[0] / 32768.f : 0.f;
+	analog = joyrx[0] < 0 ? -(float)joyrx[0] / 32768.f : 0.f;
 	io.AddKeyAnalogEvent(ImGuiKey_GamepadLStickLeft, analog > 0.1f, analog);
-	analog = joyx[0] > 0 ? (float)joyx[0] / 32768.f : 0.f;
+	analog = joyrx[0] > 0 ? (float)joyrx[0] / 32768.f : 0.f;
 	io.AddKeyAnalogEvent(ImGuiKey_GamepadLStickRight, analog > 0.1f, analog);
-	analog = joyy[0] < 0 ? -(float)joyy[0] / 32768.f : 0.f;
+	analog = joyry[0] < 0 ? -(float)joyry[0] / 32768.f : 0.f;
 	io.AddKeyAnalogEvent(ImGuiKey_GamepadLStickUp, analog > 0.1f, analog);
-	analog = joyy[0] > 0 ? (float)joyy[0] / 32768.f : 0.f;
+	analog = joyry[0] > 0 ? (float)joyry[0] / 32768.f : 0.f;
 	io.AddKeyAnalogEvent(ImGuiKey_GamepadLStickDown, analog > 0.1f, analog);
 
 	ImGui::GetStyle().Colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.06f, 0.06f, 0.06f, 0.94f);
 
+#ifdef TARGET_UWP
+	{
+		using namespace Windows::UI::ViewManagement;
+		InputPane ^ inputPane = InputPane::GetForCurrentView();
+		if (inputPane)
+		{
+			if (clearActiveIdNextFrame && io.WantTextInput)
+			{
+				ImGui::ClearActiveID();
+				clearActiveIdNextFrame = false;
+			}
+			if (io.WantTextInput)
+				inputPane->TryShow();
+			else
+				inputPane->TryHide();
+		}
+	}
+#else
 	if (showOnScreenKeyboard != nullptr)
 		showOnScreenKeyboard(io.WantTextInput);
 #ifdef USE_SDL
@@ -449,6 +501,7 @@ static void gui_newFrame()
 			SDL_StopTextInput();
 		}
 	}
+#endif
 #endif
 }
 
