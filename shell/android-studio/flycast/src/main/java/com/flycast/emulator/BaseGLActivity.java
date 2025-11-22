@@ -272,6 +272,10 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
             boolean rc = false;
             int actionPointerIndex = event.getActionIndex();
             for (InputDevice.MotionRange range : axes)
+            {
+                if ((range.getSource() & InputDevice.SOURCE_CLASS_MASK) != InputDevice.SOURCE_CLASS_JOYSTICK)
+		            // Ignore mouse/touchpad axes (dualshock 4)
+		            continue;
                 if (range.getAxis() == MotionEvent.AXIS_HAT_X) {
                     float v = event.getAxisValue(MotionEvent.AXIS_HAT_X, actionPointerIndex);
                     if (v == -1.0) {
@@ -303,6 +307,7 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
                 else {
                     rc |= processJoystickInput(event, range);
                 }
+            }
             if (rc)
                 return true;
         }
