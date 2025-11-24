@@ -39,6 +39,18 @@ static void addContentPathCallback(const std::string& path)
 	}
 }
 
+#ifdef __ANDROID__
+static void customBoxartFolderSelected(bool cancelled, std::string selection)
+{
+	if (cancelled)
+		return;
+
+	gui_runOnUiThread([selection]() {
+		config::CustomBoxartPath = selection;
+	});
+}
+#endif
+
 void addContentPath(bool start)
 {
     const char *title = "Select a Content Folder";
@@ -203,15 +215,29 @@ void gui_settings_general()
     }
 #endif
 
-	OptionCheckbox("Box Art Game List", config::BoxartDisplayMode,
-			"Display game cover art in the game list.");
+        OptionCheckbox("Box Art Game List", config::BoxartDisplayMode,
+                        "Display game cover art in the game list.");
 	OptionCheckbox("Fetch Box Art", config::FetchBoxart,
 			"Fetch cover images from TheGamesDB.net.");
-	if (OptionSlider("UI Scaling", config::UIScaling, 50, 200, "Adjust the size of UI elements and fonts.", "%d%%"))
-		uiUserScaleUpdated = true;
-	if (uiUserScaleUpdated)
+	ImGui::TextWrapped("Drop PNG, JPG, or JPEG files named after the game into the custom folder below to override scraped bo"
+			   "x art.");
+	ImGui::InputText("Custom Box Art Folder", &config::CustomBoxartPath.get());
+#ifdef __ANDROID__
+	ImGui::SameLine();
+	const char *customBoxartTitle = "Select Custom Box Art Folder";
+	if (ImGui::Button("Browse"))
 	{
-		ImGui::SameLine();
+		if (!hostfs::addStorage(true, true, customBoxartTitle, customBoxartFolderSelected))
+		ImGui::OpenPopup(customBoxartTitle);
+	}
+#endif
+	ImGui::SameLine();
+	ShowHelpMarker("Override box art with user images in this folder. Use PNG, JPG, or JPEG named after the game file or base name.");
+        if (OptionSlider("UI Scaling", config::UIScaling, 50, 200, "Adjust the size of UI elements and fonts.", "%d%%"))
+                uiUserScaleUpdated = true;
+        if (uiUserScaleUpdated)
+        {
+                ImGui::SameLine();
 		if (ImGui::Button("Apply")) {
 			mainui_reinit();
 			uiUserScaleUpdated = false;

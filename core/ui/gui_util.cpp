@@ -784,6 +784,20 @@ bool ImguiTexture::button(const char* str_id, const ImVec2& image_size, const st
 
 static u8 *loadImage(const std::string& path, int& width, int& height)
 {
+#ifdef __ANDROID__
+	if (path.rfind("content://", 0) == 0)
+	{
+		FILE *file = hostfs::storage().openFile(path, "rb");
+		if (file == nullptr)
+			return nullptr;
+
+		int channels;
+		stbi_set_flip_vertically_on_load(0);
+		u8 *imgData = stbi_load_from_file(file, &width, &height, &channels, STBI_rgb_alpha);
+		std::fclose(file);
+		return imgData;
+	}
+#endif
 	FILE *file = nowide::fopen(path.c_str(), "rb");
 	if (file == nullptr)
 		return nullptr;
