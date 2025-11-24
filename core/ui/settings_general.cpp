@@ -219,7 +219,7 @@ void gui_settings_general()
                         "Display game cover art in the game list.");
 	OptionCheckbox("Fetch Box Art", config::FetchBoxart,
 			"Fetch cover images from TheGamesDB.net.");
-	ImGui::TextWrapped("Drop PNG, JPG, or JPEG files named after the game into the custom folder below to override scraped box art.");
+	ImGui::TextWrapped("Add/Replace rom box art from a custom folder. Jpg, Jpeg and png format allowed.");
 	ImGui::InputText("Custom Box Art Folder", &config::CustomBoxartPath.get());
 #ifdef __ANDROID__
 	ImGui::SameLine();
@@ -231,7 +231,7 @@ void gui_settings_general()
 	}
 #endif
 	ImGui::SameLine();
-	ShowHelpMarker("Override box art with user images in this folder. Use PNG, JPG, or JPEG named after the game file or base name.");
+	ShowHelpMarker("Copy name from rom file exactly, and paste on your image file. Place Folder holding images path here.");
         if (OptionSlider("UI Scaling", config::UIScaling, 50, 200, "Adjust the size of UI elements and fonts.", "%d%%"))
                 uiUserScaleUpdated = true;
         if (uiUserScaleUpdated)
