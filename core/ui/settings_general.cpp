@@ -219,8 +219,7 @@ void gui_settings_general()
                         "Display game cover art in the game list.");
 	OptionCheckbox("Fetch Box Art", config::FetchBoxart,
 			"Fetch cover images from TheGamesDB.net.");
-	ImGui::TextWrapped("Drop PNG, JPG, or JPEG files named after the game into the custom folder below to override scraped bo"
-			   "x art.");
+	ImGui::TextWrapped("Drop PNG, JPG, or JPEG files named after the game into the custom folder below to override scraped box art.");
 	ImGui::InputText("Custom Box Art Folder", &config::CustomBoxartPath.get());
 #ifdef __ANDROID__
 	ImGui::SameLine();
@@ -228,7 +227,7 @@ void gui_settings_general()
 	if (ImGui::Button("Browse"))
 	{
 		if (!hostfs::addStorage(true, true, customBoxartTitle, customBoxartFolderSelected))
-		ImGui::OpenPopup(customBoxartTitle);
+			ImGui::OpenPopup(customBoxartTitle);
 	}
 #endif
 	ImGui::SameLine();
