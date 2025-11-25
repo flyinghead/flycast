@@ -45,6 +45,9 @@ struct GameBoxart
 	bool scraped = false;
 	bool busy = false;
 
+    u64 customMtime = 0;
+    u64 customHash = 0;
+
 	enum Region { JAPAN = 1, USA = 2, EUROPE = 4 };
 
 	json to_json(const std::string& baseArtPath) const;
