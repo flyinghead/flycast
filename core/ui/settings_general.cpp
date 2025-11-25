@@ -215,8 +215,8 @@ void gui_settings_general()
     }
 #endif
 
-        OptionCheckbox("Box Art Game List", config::BoxartDisplayMode,
-                        "Display game cover art in the game list.");
+	OptionCheckbox("Box Art Game List", config::BoxartDisplayMode,
+			"Display game cover art in the game list.");
 	OptionCheckbox("Fetch Box Art", config::FetchBoxart,
 			"Fetch cover images from TheGamesDB.net.");
 	ImGui::TextWrapped("Add/Replace rom box art from a custom folder. Jpg, Jpeg and png format allowed.");
@@ -232,11 +232,11 @@ void gui_settings_general()
 #endif
 	ImGui::SameLine();
 	ShowHelpMarker("Copy name from rom file exactly, and paste on your image file. Place Folder holding images path here.");
-        if (OptionSlider("UI Scaling", config::UIScaling, 50, 200, "Adjust the size of UI elements and fonts.", "%d%%"))
-                uiUserScaleUpdated = true;
-        if (uiUserScaleUpdated)
-        {
-                ImGui::SameLine();
+	if (OptionSlider("UI Scaling", config::UIScaling, 50, 200, "Adjust the size of UI elements and fonts.", "%d%%"))
+		uiUserScaleUpdated = true;
+	if (uiUserScaleUpdated)
+	{
+		ImGui::SameLine();
 		if (ImGui::Button("Apply")) {
 			mainui_reinit();
 			uiUserScaleUpdated = false;
