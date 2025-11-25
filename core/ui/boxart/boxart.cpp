@@ -125,47 +125,57 @@ GameBoxart Boxart::getBoxartAndLoad(const GameMedia& media)
 	loadDatabase();
 	GameBoxart boxart;
 	bool scheduleFetch = false;
+
 	{
 		std::lock_guard<std::mutex> guard(mutex);
+
 		auto it = games.find(media.fileName);
 		if (it != games.end())
 		{
-			boxart = it->second;
+			GameBoxart& existingBoxart = it->second;
+			if (config::FetchBoxart && !existingBoxart.busy && !existingBoxart.scraped)
+			{
+				existingBoxart.busy = true;
+				existingBoxart.gamePath = media.path;
+				existingBoxart.arcade = media.arcade;
+				scheduleFetch = true;
+			}
 		}
 		else
 		{
-			boxart.fileName = media.fileName;
-			boxart.gamePath = media.path;
-			boxart.name = media.name;
-			boxart.searchName = media.gameName;	// for arcade games
-			boxart.busy = true;
-			boxart.arcade = media.arcade;
-			it = games.emplace(boxart.fileName, boxart).first;
+			GameBoxart newBoxart;
+			newBoxart.fileName = media.fileName;
+			newBoxart.gamePath = media.path;
+			newBoxart.name = media.name;
+			newBoxart.searchName = media.gameName;	// for arcade games
+			newBoxart.busy = true;
+			newBoxart.arcade = media.arcade;
+			it = games.emplace(media.fileName, std::move(newBoxart)).first;
 			scheduleFetch = true;
 		}
-		if (applyCustomBoxart(boxart))
+
+		GameBoxart& boxartRef = it->second;
+
+		if (applyCustomBoxart(boxartRef))
 		{
-			boxart.gamePath = media.path;
-			boxart.arcade = media.arcade;
-			it->second = boxart;
+			boxartRef.gamePath = media.path;
+			boxartRef.arcade = media.arcade;
 			databaseDirty = true;
 			scheduleFetch = false;
 			toFetch.erase(std::remove_if(toFetch.begin(), toFetch.end(),
-				[&boxart](const GameBoxart& pending) { return pending.fileName == boxart.fileName; }),
+				[&boxartRef](const GameBoxart& pending) { return pending.fileName == boxartRef.fileName; }),
 				toFetch.end());
 		}
-		if (config::FetchBoxart && !boxart.busy && !boxart.scraped)
-		{
-			boxart.busy = true;
-			boxart.gamePath = media.path;
-			boxart.arcade = media.arcade;
-			it->second = boxart;
-			scheduleFetch = true;
-		}
+
 		if (scheduleFetch)
-			toFetch.push_back(boxart);
+			toFetch.push_back(boxartRef);
+
+		// Copy boxart by value to retain after exiting locking context
+		boxart = boxartRef;
 	}
+
 	fetchBoxart();
+
 	return boxart;
 }
 
