@@ -767,8 +767,13 @@ void ImguiTexture::draw(ImDrawList *drawList, const ImVec2& pos, const ImVec2& s
 }
 
 bool ImguiTexture::button(const char* str_id, const ImVec2& image_size, const std::string& title,
-		const ImVec4& bg_col, const ImVec4& tint_col)
+		const ImVec4& bg_col, const ImVec4& tint_col, bool forceUpdate)
 {
+	if (forceUpdate)
+	{
+		deleteCache();
+	}
+
 	ImTextureID id = getId();
 	if (id == ImTextureID{})
 		return ImGui::Button(title.c_str(), image_size);
@@ -834,6 +839,13 @@ ImTextureID ImguiFileTexture::getId()
 	return id;
 }
 
+void ImguiFileTexture::deleteCache()
+{
+	if (path.empty())
+		return;
+	imguiDriver->deleteTexture(path);
+}
+
 std::future<ImguiStateTexture::LoadedPic> ImguiStateTexture::asyncLoad;
 
 bool ImguiStateTexture::exists()
@@ -881,6 +893,12 @@ ImTextureID ImguiStateTexture::getId()
 	return {};
 }
 
+void ImguiStateTexture::deleteCache()
+{
+	std::string path = hostfs::getSavestatePath(config::SavestateSlot, false);
+	imguiDriver->deleteTexture(path);
+}
+
 void ImguiStateTexture::invalidate()
 {
 	if (imguiDriver)
@@ -911,6 +929,13 @@ ImTextureID ImguiVmuTexture::getId()
 		}
 	}
 	return texid;
+}
+
+void ImguiVmuTexture::deleteCache()
+{
+	if (idPath.empty())
+		idPath = ":vmu:" + std::to_string(index);
+	imguiDriver->deleteTexture(idPath);
 }
 
 void ImguiVmuTexture::displayVmus(const ImVec2& pos)

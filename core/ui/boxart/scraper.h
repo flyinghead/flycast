@@ -45,6 +45,8 @@ struct GameBoxart
 	bool scraped = false;
 	bool busy = false;
 
+	bool forceUpdate = false;
+
     u64 customMtime = 0;
     u64 customHash = 0;
 

@@ -227,8 +227,11 @@ GameBoxart Boxart::getBoxartAndLoad(const GameMedia& media)
 			boxartRef.busy = true;
 		}
 
+		std::string originalPath = boxartRef.boxartPath;
+
 		if (applyCustomBoxart(boxartRef))
 		{
+			boxartRef.forceUpdate = (boxartRef.boxartPath != originalPath);
 			boxartRef.gamePath = media.path;
 			boxartRef.arcade = media.arcade;
 			databaseDirty = true;

@@ -206,7 +206,7 @@ public:
 	void draw(ImDrawList *drawList, const ImVec2& pos, const ImVec2& size,
 			const ImVec2& uv0 = ImVec2(0, 0), const ImVec2& uv1 = ImVec2(1, 1), const ImVec4& color = ImVec4(1, 1, 1, 1));
 	bool button(const char* str_id, const ImVec2& image_size, const std::string& title = {}, const ImVec4& bg_col = ImVec4(0, 0, 0, 0),
-			const ImVec4& tint_col = ImVec4(1, 1, 1, 1));
+			const ImVec4& tint_col = ImVec4(1, 1, 1, 1), bool forceUpdate = false);
 
 	operator ImTextureID() {
 		return getId();
@@ -216,6 +216,10 @@ public:
 	}
 
 	virtual ImTextureID getId() = 0;
+
+	//! Delete any texture cache associated with this texture
+	virtual void deleteCache() = 0;
+
 	virtual ~ImguiTexture() = default;
 
 protected:
@@ -232,6 +236,7 @@ public:
 		return other.path == path;
 	}
 	ImTextureID getId() override;
+	void deleteCache() override;
 
 	static void resetLoadCount() {
 		textureLoadCount = 0;
@@ -246,6 +251,7 @@ class ImguiStateTexture : public ImguiTexture
 {
 public:
 	ImTextureID getId() override;
+	void deleteCache() override;
 
 	bool exists();
 	void invalidate();
@@ -268,6 +274,7 @@ public:
 	// draw all active vmus in a single column at the given position
 	static void displayVmus(const ImVec2& pos);
 	ImTextureID getId() override;
+	void deleteCache() override;
 
 private:
 	int index = 0;
