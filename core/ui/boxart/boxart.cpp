@@ -145,17 +145,18 @@ static bool applyCustomBoxart(GameBoxart& boxart)
 			continue;
 		for (const auto& ext : extensions)
 		{
-			std::string path = buildCustomBoxartPath(customDir, name, ext);
-			if (customFileExists(path))
-			{
-				boxart.boxartPath = path;
-				boxart.busy = false;
-				boxart.scraped = true;
-				boxart.parsed = true;
-				return true;
+			        std::string path = buildCustomBoxartPath(customDir, name, ext);
+			        if (customFileExists(path))
+			        {
+			                boxart.boxartPath = path;
+			                boxart.busy = false;
+			                boxart.scraped = true;
+			                boxart.parsed = true;
+			                updateCustomMetadata(boxart, path);
+			                return true;
+			        }
 			}
 		}
-	}
 	return false;
 }
 
@@ -169,6 +170,8 @@ GameBoxart Boxart::getBoxart(const GameMedia& media)
 		if (it != games.end())
 		{
 			boxart = it->second;
+			if (shouldResetCustomBoxart(boxart))
+			        databaseDirty = true;
 			if (applyCustomBoxart(boxart))
 			{
 				games[boxart.fileName] = boxart;
@@ -214,6 +217,15 @@ GameBoxart Boxart::getBoxartAndLoad(const GameMedia& media)
 		}
 
 		GameBoxart& boxartRef = it->second;
+
+		if (shouldResetCustomBoxart(boxartRef))
+		{
+			boxartRef.gamePath = media.path;
+			boxartRef.arcade = media.arcade;
+			databaseDirty = true;
+			scheduleFetch = true;
+			boxartRef.busy = true;
+		}
 
 		if (applyCustomBoxart(boxartRef))
 		{
