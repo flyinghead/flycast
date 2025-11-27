@@ -38,6 +38,7 @@ struct GameBoxart
 
 	std::string gamePath;
 	std::string boxartPath;
+	std::string fallbackBoxartPath;
 	std::string boxartUrl;
 
 	bool custom = false;

@@ -108,26 +108,12 @@ GameBoxart Boxart::getBoxartAndLoad(const GameMedia& media)
 		if (it != games.end())
 		{
 			GameBoxart& existingBoxart = it->second;
-			if (config::FetchBoxart)
+			if (config::FetchBoxart && !existingBoxart.busy && !existingBoxart.scraped)
 			{
-				if (existingBoxart.custom && !customFileExists(existingBoxart.boxartPath))
-				{
-					// Custom file was deleted by the user
-					existingBoxart.busy = false;
-					existingBoxart.scraped = false;
-					existingBoxart.parsed = false;
-					existingBoxart.custom = false;
-					existingBoxart.boxartPath.clear();
-					databaseDirty = true;
-				}
-
-				if (!existingBoxart.busy && !existingBoxart.scraped)
-				{
-					existingBoxart.busy = true;
-					existingBoxart.gamePath = media.path;
-					existingBoxart.arcade = media.arcade;
-					scheduleFetch = true;
-				}
+				existingBoxart.busy = true;
+				existingBoxart.gamePath = media.path;
+				existingBoxart.arcade = media.arcade;
+				scheduleFetch = true;
 			}
 		}
 		else
@@ -304,11 +290,20 @@ bool Boxart::applyCustomBoxart(GameBoxart& boxart)
 		if (!customFileExists(boxart.boxartPath))
 		{
 			// Custom file was deleted by the user
-			boxart.busy = false;
-			boxart.scraped = false;
-			boxart.parsed = false;
+			if (!boxart.fallbackBoxartPath.empty())
+			{
+				boxart.boxartPath = std::move(boxart.fallbackBoxartPath);
+				boxart.fallbackBoxartPath.clear();
+			}
+			else
+			{
+				boxart.busy = false;
+				boxart.scraped = false;
+				boxart.parsed = false;
+				boxart.boxartPath.clear();
+			}
+
 			boxart.custom = false;
-			boxart.boxartPath.clear();
 			databaseDirty = true;
 			return false;
 		}
@@ -331,7 +326,10 @@ bool Boxart::applyCustomBoxart(GameBoxart& boxart)
 			{
 				if (boxart.boxartPath != path)
 				{
-					boxart.boxartPath = path;
+					boxart.fallbackBoxartPath = std::move(boxart.boxartPath);
+					boxart.boxartPath.clear();
+					boxart.boxartPath = std::move(path);
+					// Force update so that the cached image won't be reused
 					boxart.forceUpdate = true;
 				}
 
