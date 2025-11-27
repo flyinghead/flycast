@@ -49,8 +49,6 @@ json GameBoxart::to_json(const std::string& baseArtPath) const
 		{ "parsed", parsed },
 		{ "scraped", scraped },
 		{ "arcade", arcade },
-	    { "custom_mtime", customMtime },
-        { "custom_hash", customHash },
 	};
 	return j;
 }
@@ -69,8 +67,6 @@ GameBoxart::GameBoxart(const json& j, const std::string& baseArtPath)
 	loadProperty(parsed, j, "parsed");
 	loadProperty(scraped, j, "scraped");
 	loadProperty(arcade, j, "arcade");
-	loadProperty(customMtime, j, "custom_mtime");
-    loadProperty(customHash, j, "custom_hash");
 	if (!boxartPath.empty() && !isAbsolutePath(boxartPath))
 		boxartPath = baseArtPath + boxartPath;
 }

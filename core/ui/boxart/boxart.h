@@ -37,6 +37,7 @@ public:
 	void term();
 
 private:
+	bool applyCustomBoxart(GameBoxart& boxart);
 	void loadDatabase();
 	void saveDatabase();
 	std::string getSaveDirectory() const {
