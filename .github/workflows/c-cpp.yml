@@ -17,7 +17,13 @@ jobs:
     strategy:
       matrix:
         config:
+          - {name: i686-pc-windows-msvc, os: windows-latest, shell: cmd, arch: x86, cmakeArgs: -G Ninja, buildType: Release}
+          - {name: apple-darwin, os: macos-latest, shell: sh, cmakeArgs: -G Xcode -DUSE_DISCORD=ON, destDir: osx, buildType: RelWithDebInfo}
+          - {name: x86_64-pc-linux-gnu, os: ubuntu-22.04, shell: sh, cmakeArgs: -G Ninja -DUSE_DISCORD=ON -DUSE_LIBCDIO=ON, destDir: linux, buildType: RelWithDebInfo}
+          - {name: x86_64-pc-windows-msvc, os: windows-latest, shell: cmd, arch: x64, cmakeArgs: -G Ninja -DUSE_DISCORD=ON, buildType: Release}
           - {name: x86_64-w64-mingw32, os: windows-latest, shell: 'msys2 {0}', cmakeArgs: -G Ninja -DUSE_DISCORD=ON -DUSE_LIBCDIO=ON, destDir: win, buildType: RelWithDebInfo}
+          - {name: libretro-x86_64-pc-linux-gnu, os: ubuntu-22.04, shell: sh, cmakeArgs: -DLIBRETRO=ON -DUSE_LIBCDIO=ON -DCMAKE_POSITION_INDEPENDENT_CODE=TRUE -G Ninja, buildType: Release}
+          - {name: libretro-x86_64-w64-mingw32, os: windows-latest, shell: 'msys2 {0}', cmakeArgs: -DLIBRETRO=ON -DUSE_LIBCDIO=ON -G Ninja, buildType: Release}
 
     steps:
       - name: Set up build environment (macOS)
