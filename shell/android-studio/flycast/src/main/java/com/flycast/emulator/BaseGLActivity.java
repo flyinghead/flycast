@@ -70,14 +70,12 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
             finish();
             return;
         }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            // Set the navigation bar color to 0 to avoid left over when it fades out on Android 10
-            Window window = getWindow();
-            window.addFlags(FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
-            window.clearFlags(FLAG_TRANSLUCENT_STATUS | FLAG_TRANSLUCENT_NAVIGATION);
-            window.setNavigationBarColor(0);
-            window.getDecorView().setSystemUiVisibility(SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
-        }
+        // Set the navigation bar color to 0 to avoid left over when it fades out on Android 10
+        Window window = getWindow();
+        window.addFlags(FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+        window.clearFlags(FLAG_TRANSLUCENT_STATUS | FLAG_TRANSLUCENT_NAVIGATION);
+        window.setNavigationBarColor(0);
+        window.getDecorView().setSystemUiVisibility(SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             getWindow().getAttributes().layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
         }
@@ -119,16 +117,6 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
             return;
         }
         Log.i("flycast", "Environment initialized");
-        if ("marble".equals(Build.DEVICE) || "marblein".equals(Build.DEVICE)
-                || "garnet".equals(Build.DEVICE) || "XIG05".equals(Build.DEVICE))
-        {
-            // Disable omp affinity for POCO F5 and Redmi Note 12 Turbo (marble, marblein)
-            // and Redmi Note 13 Pro 5G and POCO X6 5G (garnet, XIG05)
-            // because it crashes with ndk 27.1 / clang 18.x
-            // See https://github.com/android/ndk/issues/1180
-            Log.i("flycast", "Disabling OpenMP thread affinity for device " + Build.DEVICE);
-            JNIdc.disableOmpAffinity();
-        }
         Emulator app = (Emulator)getApplicationContext();
         app.getConfigurationPrefs();
         storage = new AndroidStorage(this);
@@ -284,6 +272,10 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
             boolean rc = false;
             int actionPointerIndex = event.getActionIndex();
             for (InputDevice.MotionRange range : axes)
+            {
+                if ((range.getSource() & InputDevice.SOURCE_CLASS_MASK) != InputDevice.SOURCE_CLASS_JOYSTICK)
+		            // Ignore mouse/touchpad axes (dualshock 4)
+		            continue;
                 if (range.getAxis() == MotionEvent.AXIS_HAT_X) {
                     float v = event.getAxisValue(MotionEvent.AXIS_HAT_X, actionPointerIndex);
                     if (v == -1.0) {
@@ -315,6 +307,7 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
                 else {
                     rc |= processJoystickInput(event, range);
                 }
+            }
             if (rc)
                 return true;
         }

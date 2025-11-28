@@ -18,8 +18,6 @@
  */
 #include "dreamlink.h"
 
-#ifdef USE_DREAMLINK_DEVICES
-
 #include "dreamconn.h"
 #include "dreampicoport.h"
 
@@ -28,7 +26,6 @@
 #include "ui/gui.h"
 #include <cfg/option.h>
 #include <SDL.h>
-#include <asio.hpp>
 #include <iomanip>
 #include <sstream>
 #include <optional>
@@ -79,6 +76,8 @@ void unregisterDreamLinkEvents()
 	EventManager::unlisten(Event::Terminate, handleEvent, nullptr);
 }
 
+std::array<std::shared_ptr<DreamLink>, DreamLink::NUM_PORTS> DreamLink::activeDreamLinks;
+
 bool DreamLinkGamepad::isDreamcastController(int deviceIndex)
 {
 	char guid_str[33] {};
@@ -112,18 +111,21 @@ DreamLinkGamepad::DreamLinkGamepad(int maple_port, int joystick_idx, SDL_Joystic
 	if (memcmp(DreamConn::VID_PID_GUID, guid_str + 8, 16) == 0)
 	{
 		bool isForPhysicalController = true;
-		dreamlink = std::make_shared<DreamConn>(maple_port, isForPhysicalController);
+		dreamlink = DreamConn::create_shared(maple_port, isForPhysicalController);
 	}
 	else if (memcmp(DreamPicoPort::VID_PID_GUID, guid_str + 8, 16) == 0)
 	{
-		dreamlink = std::make_shared<DreamPicoPort>(maple_port, joystick_idx, sdl_joystick);
+		dreamlink = DreamPicoPort::create_shared(maple_port, joystick_idx, sdl_joystick);
 	}
 
 	if (dreamlink) {
-		DreamLink::activeDreamLinks[maple_port] = dreamlink;
+		if (DreamLink::isValidPort(maple_port)) {
+			DreamLink::activeDreamLinks[maple_port] = dreamlink;
+		}
+
 		_name = dreamlink->getName();
 		int defaultBus = dreamlink->getDefaultBus();
-		if (defaultBus >= 0 && defaultBus < 4) {
+		if (DreamLink::isValidPort(defaultBus)) {
 			set_maple_port(defaultBus);
 		}
 
@@ -137,10 +139,11 @@ DreamLinkGamepad::DreamLinkGamepad(int maple_port, int joystick_idx, SDL_Joystic
 }
 
 DreamLinkGamepad::~DreamLinkGamepad() {
-	if (dreamlink) {
+	int port = maple_port();
+	if (dreamlink && DreamLink::isValidPort(port)) {
 		tearDownDreamLinkDevices(dreamlink);
 		dreamlink.reset();
-		DreamLink::activeDreamLinks[maple_port()] = nullptr;
+		DreamLink::activeDreamLinks[port] = nullptr;
 
 		// Make sure settings are open in case disconnection happened mid-game
 		if (!gui_is_open()) {
@@ -151,7 +154,8 @@ DreamLinkGamepad::~DreamLinkGamepad() {
 
 const char* DreamLinkGamepad::dreamLinkStatus()
 {
-	if (!dreamlink || DreamLink::activeDreamLinks[maple_port()] != dreamlink)
+	int port = maple_port();
+	if (!dreamlink || !DreamLink::isValidPort(port) || DreamLink::activeDreamLinks[port] != dreamlink)
 		return "Inactive";
 
 	return dreamlink->isConnected() ? "Connected" : "Disconnected";
@@ -169,7 +173,7 @@ void DreamLinkGamepad::set_maple_port(int port)
 
 	dreamlink->changeBus(port);
 
-	if (oldPort >= 0 && oldPort < 4 && DreamLink::activeDreamLinks[oldPort] == dreamlink) {
+	if (DreamLink::isValidPort(oldPort) && DreamLink::activeDreamLinks[oldPort] == dreamlink) {
 		// 'dreamlink' is currently active in 'oldPort'.
 		// Remove this dreamlink from 'oldPort' and repopulate with the dreamlink for a different gamepad, if any.
 		DreamLink::activeDreamLinks[oldPort] = nullptr;
@@ -186,7 +190,7 @@ void DreamLinkGamepad::set_maple_port(int port)
 		}
 	}
 
-	if (port < 0 || port >= 4) {
+	if (!DreamLink::isValidPort(port)) {
 		// Moving to a port out of range.
 		// This usually means the gamepad is just not being used for any port.
 		// Just disconnect the dreamlink and no further action needed.
@@ -278,40 +282,3 @@ void DreamLinkGamepad::setBaseDefaultMapping(const std::shared_ptr<InputMapping>
 		});
 	}
 }
-
-#else // USE_DREAMCASTCONTROLLER
-
-bool DreamLinkGamepad::isDreamcastController(int deviceIndex) {
-	return false;
-}
-DreamLinkGamepad::DreamLinkGamepad(int maple_port, int joystick_idx, SDL_Joystick* sdl_joystick)
-	: SDLGamepad(maple_port, joystick_idx, sdl_joystick) {
-}
-DreamLinkGamepad::~DreamLinkGamepad() {
-}
-
-const char* DreamLinkGamepad::dreamLinkStatus() {
-	return "";
-}
-
-void DreamLinkGamepad::set_maple_port(int port) {
-	SDLGamepad::set_maple_port(port);
-}
-void DreamLinkGamepad::registered() {
-}
-void DreamLinkGamepad::resetMappingToDefault(bool arcade, bool gamepad) {
-	SDLGamepad::resetMappingToDefault(arcade, gamepad);
-}
-const char *DreamLinkGamepad::get_button_name(u32 code) {
-	return SDLGamepad::get_button_name(code);
-}
-const char *DreamLinkGamepad::get_axis_name(u32 code) {
-	return SDLGamepad::get_axis_name(code);
-}
-std::shared_ptr<InputMapping> DreamLinkGamepad::getDefaultMapping() {
-	return SDLGamepad::getDefaultMapping();
-}
-void DreamLinkGamepad::setBaseDefaultMapping(const std::shared_ptr<InputMapping>& mapping) const {
-}
-
-#endif

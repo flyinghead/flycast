@@ -81,7 +81,7 @@ struct Renderer
 
 	virtual bool Present() { return true; }
 
-	virtual BaseTextureCacheData *GetTexture(TSP tsp, TCW tcw) { return nullptr; }
+	virtual BaseTextureCacheData *GetTexture(TSP tsp, TCW tcw, int area = 0) { return nullptr; }
 
 protected:
 	bool resetTextureCache = false;

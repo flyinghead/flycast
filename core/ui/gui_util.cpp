@@ -24,7 +24,10 @@
 
 #include "types.h"
 #include "stdclass.h"
+#include "oslib/oslib.h"
+#include "oslib/directory.h"
 #include "oslib/storage.h"
+#include "oslib/http_client.h"
 #include "imgui_driver.h"
 #include "imgui.h"
 #include "imgui_internal.h"

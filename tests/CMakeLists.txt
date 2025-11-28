@@ -16,6 +16,7 @@ target_sources(${PROJECT_NAME} PRIVATE
         src/AicaArmTest.cpp
         src/Sh4InterpreterTest.cpp
         src/MmuTest.cpp
+        src/HttpTest.cpp
         src/input/ButtonComboTest.cpp
         src/input/GamepadInputHandlingTest.cpp
         src/input/MultiBindMappingTest.cpp

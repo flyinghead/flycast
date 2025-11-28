@@ -18,21 +18,21 @@ def getSentryUrl = { ->
 
 android {
     namespace 'com.flycast.emulator'
-    ndkVersion '23.2.8568313'
-    compileSdk 34
+    ndkVersion '29.0.14206865'
+    compileSdk 35
 
     defaultConfig {
         applicationId "com.flycast.emulator"
-        minSdk 16
+        minSdk 21
         //noinspection ExpiredTargetSdkVersion
-        targetSdk 34
+        targetSdk 35
         versionCode 8
         versionName getVersionName()
         vectorDrawables.useSupportLibrary = true
 
         externalNativeBuild {
             cmake {
-                arguments "-DANDROID_ARM_MODE=arm", "-DSENTRY_UPLOAD_URL=" + getSentryUrl()
+                arguments "-DANDROID_ARM_MODE=arm", "-DSENTRY_UPLOAD_URL=" + getSentryUrl(), "-DUSE_OPENMP=OFF"
             }
         }
 
@@ -40,7 +40,7 @@ android {
             moduleName 'flycast'
         }
         lintOptions {
-            // avoid Error: Google Play requires that apps target API level 31 or higher.
+            // avoid Error: Google Play requires that apps target API level X or higher.
             abortOnError false
         }
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
@@ -79,7 +79,7 @@ android {
         resources {
             excludes += ['META-INF/DEPENDENCIES']
         }
-        // unused and not 16kb-page compatible
+        // not used
         jniLibs.excludes += 'lib/*/libz.so'
     }
     packaging {

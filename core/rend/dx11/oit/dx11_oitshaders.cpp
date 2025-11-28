@@ -405,13 +405,7 @@ PSO main(in VertexIn inpix)
 		float4 texcol;
 		#if pp_TwoVolumes == 1
 			if (area1)
-				#if pp_Palette == 0
-					texcol = texture1.Sample(sampler1, uv);
-				#elif pp_Palette == 1
-					texcol = palettePixel(texture1, sampler1, uv);
-				#else
-					texcol = palettePixelBilinear(texture1, sampler1, uv);
-				#endif
+				texcol = texture1.Sample(sampler1, uv);
 			else
 		#endif
 		#if pp_Palette == 0

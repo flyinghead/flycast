@@ -108,6 +108,8 @@ public:
 		loadMapping();
 		for (int axis : halfAxes)
 			input_mapper->addTrigger(axis, false);
+		for (int axis : fullAxes)
+			input_mapper->deleteTrigger(axis);
 		save_mapping();
 		hasAnalogStick = !fullAxes.empty();
 	}

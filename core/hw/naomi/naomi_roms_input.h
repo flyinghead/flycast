@@ -778,6 +778,7 @@ static InputDescriptors kingrt66_inputs = {
 			{ NAOMI_BTN3_KEY, "SHIFT H", 0, NAOMI_UP_KEY },		// This button uses P2 inputs for P1
 			{ NAOMI_BTN4_KEY, "SHIFT R", 0, NAOMI_LEFT_KEY | NAOMI_DOWN_KEY },
 																// This button uses P2 inputs for P1
+			{ NAOMI_BTN5_KEY, "MIC SWITCH", NAOMI_BTN2_KEY },
 			NAO_START_DESC
 			NAO_BASE_BTN_DESC
 	},

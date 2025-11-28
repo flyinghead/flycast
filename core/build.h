@@ -98,7 +98,7 @@
 
 #ifdef _WIN32
 #if defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_APP)
-#define TARGET_UWP
+#define TARGET_UWP 1
 #endif
 #ifdef HAVE_D3D11
 #define USE_DX11
@@ -112,10 +112,6 @@
 #if !defined(__ANDROID__) && !defined(TARGET_IPHONE) && !defined(TARGET_UWP) \
 	&& !defined(__SWITCH__) && !defined(LIBRETRO) && !defined(__NetBSD__) && !defined(__OpenBSD__)
 #define NAOMI_MULTIBOARD
-#endif
-
-#if (defined(_WIN32) || defined(__linux__) || (defined(__APPLE__) && defined(TARGET_OS_MAC))) && !defined(TARGET_UWP) && defined(USE_SDL) && !defined(LIBRETRO)
-#define USE_DREAMLINK_DEVICES 1
 #endif
 
 // TARGET PLATFORM

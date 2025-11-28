@@ -65,7 +65,7 @@ static void juiceLogHandler(juice_log_level_t jlevel, const char *message)
 	GenericLog(level, LogTypes::LOG_TYPE::NETWORK, __FILE__, __LINE__, "%s", message);
 }
 
-class Writer;
+class IcePipe;
 
 class IceSession : public SerialPort::Pipe
 {
@@ -108,7 +108,8 @@ public:
 				room = "f355";
 			else if (settings.content.gameId == "MAXIMUM SPEED")
 				room = "maxspeed";
-			else if (settings.content.gameId == "HDR-0040")		// Cyber Troopers Virtual On: Oratorio Tangram (JP)
+			else if (isVonot())
+				// US version: press LT+RT+A+Start on the start screen to enable vs cable mode
 				room = "vonot";
 			else if (settings.content.gameId == "T6804M")		// Aero Dancing F	FIXME not working.
 				room = "aerof";
@@ -152,7 +153,7 @@ public:
 			Lock _(mutex);
 			opponent = user;
 		}
-		send("challenge " + user);
+		wsSend("challenge " + user);
 		state = ChalSent;
 	}
 
@@ -162,13 +163,14 @@ public:
 		{
 			{
 				Lock _(mutex);
-				send("chalresp " + opponent + " " + std::to_string((int)accept));
+				wsSend("chalresp " + opponent + " " + std::to_string((int)accept));
 			}
 			if (accept) {
 				state = ChalAccepted;
 				createJuiceAgent();
 			}
-			else {
+			else
+			{
 				state = Online;
 				Lock _(mutex);
 				opponent.clear();
@@ -179,7 +181,7 @@ public:
 	void say(const std::string& msg)
 	{
 		if (state != Offline)
-			send("say " + msg);
+			wsSend("say " + msg);
 		addChat(username + ": " + msg);
 	}
 
@@ -238,7 +240,7 @@ private:
 		{
 			state = Online;
 			if (!matchCode) {
-				send("join " + this->username);
+				wsSend("join " + this->username);
 				addChat(": " + this->username + " joined");
 			}
 		});
@@ -263,7 +265,8 @@ private:
 			if (state != Playing)
 			{
 				state = Offline;
-				if (con->get_remote_close_code() != websocketpp::close::status::going_away) {
+				if (con->get_remote_close_code() != websocketpp::close::status::going_away)
+				{
 					Lock _(mutex);
 					statusText = con->get_remote_close_reason().empty() ?
 							websocketpp::close::status::get_string(con->get_remote_close_code())
@@ -297,7 +300,7 @@ private:
 		}
 	}
 
-	void send(const std::string& message)
+	void wsSend(const std::string& message)
 	{
 		std::error_code ec;
    		wsclient.send(hdl, message, websocketpp::frame::opcode::text, ec);
@@ -313,7 +316,8 @@ private:
 		std::string args;
 		if (spc != std::string::npos)
 			args = message.substr(spc + 1);
-		if (op == "join") {
+		if (op == "join")
+		{
 			addChat(": " + args + " joined");
 			Lock _(mutex);
 			userlist.emplace_back(std::move(args));
@@ -325,7 +329,8 @@ private:
 			while (true)
 			{
 				spc = args.find(' ');
-				if (spc == std::string::npos) {
+				if (spc == std::string::npos)
+				{
 					if (!args.empty())
 						userlist.emplace_back(std::move(args));
 					break;
@@ -362,7 +367,7 @@ private:
 		{
 			if (state != Online && state != ChalRefused) {
 				// busy -> refused
-				send("chalresp " + args + " 0");
+				wsSend("chalresp " + args + " 0");
 			}
 			else {
 				state = ChalReceived;
@@ -380,7 +385,8 @@ private:
 		{
 			if (state == ChalSent)
 			{
-				if (args == "0") {
+				if (args == "0")
+				{
 					state = ChalRefused;
 					Lock _(mutex);
 					opponent.clear();
@@ -452,7 +458,7 @@ private:
 			return;
 		char sdp[JUICE_MAX_SDP_STRING_LEN];
 		juice_get_local_description(agent, sdp, JUICE_MAX_SDP_STRING_LEN);
-		send("candidate " + opponent + " " + std::string(sdp));
+		wsSend("candidate " + opponent + " " + std::string(sdp));
 	}
 
 	void onJuiceStateChanged(juice_state_t state)
@@ -474,7 +480,7 @@ private:
 					statusText = "NAT";
 			}
 			this->state = Playing;
-			setWriter();
+			setPipe();
 			SCIFSerialPort::Instance().setPipe(this);
 			// TODO disconnect from websocket while in game?
 		}
@@ -501,14 +507,17 @@ private:
 			statusText = "Connection lost";
 		}
 	}
-	void onJuiceReceive(const char *data, size_t size)
-	{
-		stat.rxBytes += size;
-		while (size-- != 0)
-			recvQueue.push(*data++);
-	}
+
+	void onJuiceReceive(const char *data, size_t size);
+
 	void onJuiceGatheringDone() {
 		sendCandidates();
+	}
+
+	void receive(const char *data, size_t size)
+	{
+		while (size-- != 0)
+			recvQueue.push(*data++);
 	}
 
 	bool isF355() const {
@@ -517,11 +526,17 @@ private:
 				|| settings.content.gameId == "HDR-0100";	// F355 (JP)
 	}
 
+	bool isVonot() const {
+		// Cyber Troopers Virtual On: Oratorio Tangram
+		return settings.content.gameId == "T13004N"			// US
+				|| settings.content.gameId == "HDR-0040";	// JP
+	}
+
 	void emuStartGame()
 	{
 		// If we are connected, restore the pipe interface when starting a new game
 		if (state == Playing) {
-			setWriter();
+			setPipe();
 			SCIFSerialPort::Instance().setPipe(this);
 		}
 	}
@@ -537,28 +552,10 @@ private:
 		}
 		txBufferSize = 0;
 		recvQueue.clear();
-		writer.reset();
+		icePipe.reset();
 	}
 
-	static void onEmuEvent(Event event, void *arg)
-	{
-		IceSession *ice = (IceSession *)arg;
-		switch (event)
-		{
-		case Event::Start:
-			ice->emuStartGame();
-			break;
-		case Event::Terminate:
-			ice->emuTerminateGame();
-			break;
-		case Event::LoadState:
-			ice->recvQueue.clear();
-			ice->txBufferSize = 0;
-			break;
-		default:
-			break;
-		}
-	}
+	static void onEmuEvent(Event event, void *arg);
 
 	// Serial port
 	void write(u8 data) override;
@@ -585,7 +582,7 @@ private:
 		txBufferSize = 0;
 	}
 
-	void setWriter();
+	void setPipe();
 
 	juice_agent_t *agent = nullptr;
 	WsClient wsclient;
@@ -608,36 +605,46 @@ private:
 		std::atomic_int txBytes = 0;
 		Stats last {};
 	} stat;
-	std::unique_ptr<Writer> writer;
+	std::unique_ptr<IcePipe> icePipe;
 	FILE *dump = nullptr;
 
 	using Lock = std::lock_guard<std::mutex>;
-	friend class F355Writer;
-	friend class StandardWriter;
-	friend class MaxSpeedWriter;
+	friend class IcePipe;
+	friend class F355Pipe;
+	friend class StandardPipe;
+	friend class MaxSpeedPipe;
+	friend class VonotPipe;
 };
 
-class Writer
+class IcePipe
 {
 public:
-	Writer(IceSession& ice) : ice(ice) {}
-	virtual ~Writer() {}
-	virtual void write() = 0;
+	IcePipe(IceSession& ice) : ice(ice) {}
+	virtual ~IcePipe() {}
+	// Called every time a byte is received from the serial port.
+	virtual void onWrite() = 0;
+	// Called for each packet received from the peer.
+	// The default implementation delivers the data data to the serial port.
+	virtual void receive(const char *data, size_t size) {
+		ice.receive(data, size);
+	}
+	// Reset pipe when a state is loaded
+	virtual void reset() {}
 
 protected:
 	IceSession& ice;
 };
 
-class StandardWriter : public Writer
+class StandardPipe : public IcePipe
 {
 public:
-	StandardWriter(IceSession& ice) : Writer(ice) {}
-	~StandardWriter() {
+	StandardPipe(IceSession& ice) : IcePipe(ice) {}
+	~StandardPipe() {
 		if (sh4SchedId != -1)
 			sh4_sched_unregister(sh4SchedId);
 	}
 
-	void write() override
+	void onWrite() override
 	{
 		if (sh4SchedId == -1)
 			sh4SchedId = sh4_sched_register(0, sh4ShedCallback, this);
@@ -647,7 +654,7 @@ public:
 private:
 	static int sh4ShedCallback(int tag, int cycles, int jitter, void *arg)
 	{
-		StandardWriter *self = (StandardWriter *)arg;
+		StandardPipe *self = (StandardPipe *)arg;
 		if (self->ice.txBufferSize != 0)
 			self->ice.flushTxBuffer();
 		return 0;
@@ -657,12 +664,12 @@ private:
 	constexpr static int SH4_CYCLES = SH4_MAIN_CLOCK / 10000 * 25;	// 2.5 ms seems to be fine for vonot at least
 };
 
-class F355Writer : public Writer
+class F355Pipe : public IcePipe
 {
 public:
-	F355Writer(IceSession& ice) : Writer(ice) {}
+	F355Pipe(IceSession& ice) : IcePipe(ice) {}
 
-	void write() override
+	void onWrite() override
 	{
 		curSize++;
 		// Parse F355 packets
@@ -719,12 +726,12 @@ private:
 	bool LQ = false;
 };
 
-class MaxSpeedWriter : public Writer
+class MaxSpeedPipe : public IcePipe
 {
 public:
-	MaxSpeedWriter(IceSession& ice) : Writer(ice) {}
+	MaxSpeedPipe(IceSession& ice) : IcePipe(ice) {}
 
-	void write() override
+	void onWrite() override
 	{
 		// packets:
 		// 'M' 'A' 'X' <sz> <payload>
@@ -756,14 +763,259 @@ public:
 	}
 };
 
-void IceSession::setWriter()
+//
+// Virtual On Oratorio Tangram pipe
+// Protocol spoofing inspired by eaudunord
+// See https://github.com/eaudunord/dc-taisen-netplay
+//
+class VonotPipe : public IcePipe
+{
+public:
+	VonotPipe(IceSession& ice) : IcePipe(ice) {}
+	~VonotPipe() {
+		if (sh4SchedId != -1)
+			sh4_sched_unregister(sh4SchedId);
+	}
+
+	void onWrite() override
+	{
+		switch (state)
+		{
+		case Init:
+			{
+				if (ice.txBufferSize == 1)
+				{
+					const u8 c = ice.txBuffer[0];
+					if (c == 0x01)
+					{
+						serialReceive("\x01");
+						ice.txBufferSize = 0;
+						break;
+					}
+					else if (c == 'U')
+					{
+						serialReceive("\xaa");
+						ice.txBufferSize = 0;
+						break;
+					}
+					else if (c == 0xaa)
+					{
+						serialReceive("U");
+						ice.txBufferSize = 0;
+						break;
+					}
+				}
+				int match = matcherStart.matches(&ice.txBuffer[0], ice.txBufferSize);
+				if (match > 0)
+				{
+					serialReceive("SCIXB START");
+					ice.txBufferSize = 0;
+					break;
+				}
+				bool matchingInProgress = match == 0;
+				match = matcherSynced.matches(&ice.txBuffer[0], ice.txBufferSize);
+				if (match > 0)
+				{
+					DEBUG_LOG(NETWORK, "vonot: state -> Sync");
+					serialReceive("\x02\x01\0\0\0\0\0\0\0", 9);
+					state = Sync;
+					ice.txBufferSize = 0;
+					savedData = -1;
+					break;
+				}
+				matchingInProgress = matchingInProgress || match == 0;
+				if (!matchingInProgress)
+				{
+					DEBUG_LOG(NETWORK, "vonot: ignored %02x '%c'",
+							ice.txBuffer[ice.txBufferSize - 1], ice.txBuffer[ice.txBufferSize - 1]);
+					ice.txBufferSize = 0;
+				}
+				break;
+			}
+
+		case Sync:
+			{
+				int match = matcherStart.matches(&ice.txBuffer[0], ice.txBufferSize);
+				if (match > 0)
+				{
+					serialReceive("SCIXB START");
+					ice.txBufferSize = 0;
+					state = Init;
+				}
+				if (match >= 0)
+					break;
+				if (ice.txBufferSize == 6)
+				{
+					// random seed
+					//printf("Sync: random seed: %02x %02x %02x %02x %02x %02x\n",
+					//		ice.txBuffer[0], ice.txBuffer[1], ice.txBuffer[2], ice.txBuffer[3], ice.txBuffer[4], ice.txBuffer[5]);
+					prefixTxBufferAndFlush('S');
+					std::lock_guard<std::mutex> _(mutex);
+					if (!randomSeed.empty())
+						serialReceive(randomSeed.c_str(), 6);
+					else
+						waitingForSeed = true;
+				}
+				else if (ice.txBufferSize == 1 && (ice.txBuffer[0] == 'U' || ice.txBuffer[0] == 0xaa))
+				{
+					if (sh4SchedId == -1)
+						sh4SchedId = sh4_sched_register(0, sh4ShedCallback, this);
+					// start in one sec
+					sh4_sched_request(sh4SchedId, SH4_MAIN_CLOCK);
+				}
+				break;
+			}
+
+		case Play:
+		default:
+			if (matcherStart.matches(&ice.txBuffer[0], ice.txBufferSize) > 0)
+			{
+				DEBUG_LOG(NETWORK, "vonot: local reset");
+				ice.txBuffer[0] = 'R';
+				ice.txBufferSize = 1;
+				ice.flushTxBuffer();
+				reset();
+				serialReceive("SCIXB START");
+			}
+			else if (ice.txBufferSize == 14) {
+				prefixTxBufferAndFlush('D');
+			}
+			break;
+		}
+	}
+
+	void receive(const char *data, size_t size) override
+	{
+		switch (data[0])
+		{
+		case 'S':	// random seed
+			randomSeed = std::string(data + 1, size - 1);
+			//printf("Random seed received from peer: %02x %02x %02x %02x %02x %02x\n",
+			//		(u8)data[1], (u8)data[2], (u8)data[3], (u8)data[4], (u8)data[5], (u8)data[6]);
+			if (state == Sync || state == Init)
+			{
+				std::lock_guard<std::mutex> _(mutex);
+				if (waitingForSeed) {
+					serialReceive(randomSeed.c_str(), 6);
+					waitingForSeed = false;
+				}
+			}
+			break;
+
+		case 'D':	// data
+			if (state == Play) {
+				ice.receive(data + 1, size - 1);
+			}
+			else if (state == Sync)
+			{
+				// save for later
+				if (size == 2)
+					savedData = data[1];
+			}
+			break;
+
+		case 'R':	// reset state
+			if (state == Play) {
+				reset();
+				DEBUG_LOG(NETWORK, "vonot: reset received");
+			}
+			break;
+
+		default:
+			WARN_LOG(NETWORK, "vonot: invalid packet type %02x", data[0]);
+			break;
+		}
+	}
+
+	void reset() override
+	{
+		state = Init;
+		randomSeed.clear();
+	}
+
+private:
+	struct Matcher
+	{
+		Matcher(const char* pattern, size_t size)
+			: pattern((const u8 *)pattern), patternSize(size)
+		{}
+
+		int matches(const u8 *data, size_t size) const
+		{
+			const size_t maxSize = std::min(size, patternSize);
+			for (size_t i = 0; i < maxSize; i++)
+				if (data[i] != pattern[i])
+					return -1;
+			if (size < patternSize)
+				return 0;
+			else
+				return (int)patternSize;
+		}
+
+		const u8 * const pattern;
+		const size_t patternSize;
+	};
+	const Matcher matcherStart{ "SCIXB START", 11 };
+	const Matcher matcherSynced{ "\x02\x01\0\0\0\0\0\0\0", 9 };
+
+	void serialReceive(const char *s, size_t len = 0)
+	{
+		if (len == 0) {
+			for (const char *p = s; *p != '\0'; p++)
+				ice.recvQueue.push(*p);
+		}
+		else {
+			for (size_t i = 0; i < len; i++)
+				ice.recvQueue.push(s[i]);
+		}
+	}
+
+	void prefixTxBufferAndFlush(char pktType)
+	{
+		memmove(&ice.txBuffer[1], &ice.txBuffer[0], ice.txBufferSize);
+		ice.txBuffer[0] = pktType;
+		ice.txBufferSize++;
+		ice.flushTxBuffer();
+	}
+
+	static int sh4ShedCallback(int tag, int cycles, int jitter, void *arg)
+	{
+		VonotPipe *self = (VonotPipe *)arg;
+		if (!self->randomSeed.empty())
+		{
+			DEBUG_LOG(NETWORK, "vonot: state -> Play");
+			self->state = Play;
+			self->prefixTxBufferAndFlush('D');
+			if (self->savedData != -1) {
+				self->ice.receive((const char *)&self->savedData, 1);
+				self->savedData = -1;
+			}
+		}
+		else {
+			DEBUG_LOG(NETWORK, "vonot: timeout after 1 sec");
+			self->ice.txBufferSize = 0;
+		}
+		return 0;
+	}
+
+	enum { Init, Sync, Play } state = Init;
+	std::string randomSeed;
+	int sh4SchedId = -1;
+	bool waitingForSeed = false;
+	std::mutex mutex;
+	int savedData = -1;
+};
+
+void IceSession::setPipe()
 {
 	if (isF355())
-		writer = std::make_unique<F355Writer>(*this);
+		icePipe = std::make_unique<F355Pipe>(*this);
 	else if (settings.content.gameId == "MAXIMUM SPEED")
-		writer = std::make_unique<MaxSpeedWriter>(*this);
+		icePipe = std::make_unique<MaxSpeedPipe>(*this);
+	else if (isVonot())
+		icePipe = std::make_unique<VonotPipe>(*this);
 	else
-		writer = std::make_unique<StandardWriter>(*this);
+		icePipe = std::make_unique<StandardPipe>(*this);
 }
 
 void IceSession::write(u8 data)
@@ -783,8 +1035,34 @@ void IceSession::write(u8 data)
 			flushTxBuffer();
 		}
 		else {
-			writer->write();
+			icePipe->onWrite();
 		}
+	}
+}
+
+void IceSession::onJuiceReceive(const char *data, size_t size) {
+	stat.rxBytes += size;
+	icePipe->receive(data, size);
+}
+
+void IceSession::onEmuEvent(Event event, void *arg)
+{
+	IceSession *ice = (IceSession *)arg;
+	switch (event)
+	{
+	case Event::Start:
+		ice->emuStartGame();
+		break;
+	case Event::Terminate:
+		ice->emuTerminateGame();
+		break;
+	case Event::LoadState:
+		ice->recvQueue.clear();
+		ice->txBufferSize = 0;
+		ice->icePipe->reset();
+		break;
+	default:
+		break;
 	}
 }
 

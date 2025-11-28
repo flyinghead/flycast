@@ -19,6 +19,7 @@
 #include "storage.h"
 #include "directory.h"
 #include "stdclass.h"
+#include "nowide/stackstring.hpp"
 
 // For macOS
 std::string os_PrecomposedString(std::string string);
@@ -96,12 +97,20 @@ public:
 				entry.path = path + native_separator + entry.name;
 			else
 				entry.path = path + entry.name;
+#ifndef TARGET_UWP
 			// Silently skip unreadable entries
+			// On UWP with broadFileSystemAccess, we should have read access to everything we can enumerate
 			if (flycast::access(entry.path.c_str(), R_OK) != 0)
 				continue;
+#endif
 
 			bool isDir = false;
-#ifndef _WIN32
+#ifdef TARGET_UWP
+			// On UWP, use the d_type we set in our custom readdir implementation
+			if (direntry->d_type == DT_DIR)
+				isDir = true;
+			// Skip hidden files - but we already check this in readdir
+#elif !defined(_WIN32)
 			if (direntry->d_type == DT_DIR)
 				isDir = true;
 			else if (direntry->d_type == DT_UNKNOWN || direntry->d_type == DT_LNK)
@@ -115,7 +124,7 @@ public:
 				if (S_ISDIR(st.st_mode))
 					isDir = true;
 			}
-#else // _WIN32
+#else // _WIN32 non-UWP
 			nowide::wstackstring wname;
 			if (wname.convert(entry.path.c_str()))
 			{
@@ -216,7 +225,11 @@ public:
 			else
 			{
 				WIN32_FILE_ATTRIBUTE_DATA fileAttribs;
+#ifdef TARGET_UWP
+				if (GetFileAttributesExFromAppW(wname.get(), GetFileExInfoStandard, &fileAttribs))
+#else
 				if (GetFileAttributesExW(wname.get(), GetFileExInfoStandard, &fileAttribs))
+#endif
 				{
 					info.isDirectory = (fileAttribs.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
 					info.size = fileAttribs.nFileSizeLow + ((u64)fileAttribs.nFileSizeHigh << 32);
@@ -252,8 +265,14 @@ public:
 		if (wname.convert(path.c_str()))
 		{
 			WIN32_FILE_ATTRIBUTE_DATA fileAttribs;
+#ifdef TARGET_UWP
+			// Use UWP-specific API
+			if (GetFileAttributesExFromAppW(wname.get(), GetFileExInfoStandard, &fileAttribs))
+				return true;
+#else
 			if (GetFileAttributesExW(wname.get(), GetFileExInfoStandard, &fileAttribs))
 				return true;
+#endif
 		}
 		return false;
 #endif

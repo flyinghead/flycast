@@ -603,7 +603,7 @@ private:
 		CurrentPP->tsp1.full = pp->tsp1.full;
 		CurrentPP->tcw1.full = pp->tcw1.full;
 		if (pp->pcw.Texture && fetchTextures)
-			CurrentPP->texture1 = renderer->GetTexture(pp->tsp1, pp->tcw1);
+			CurrentPP->texture1 = renderer->GetTexture(pp->tsp1, pp->tcw1, 1);
 	}
 
 	// Intensity, with Two Volumes
@@ -616,7 +616,7 @@ private:
 		CurrentPP->tsp1.full = pp->tsp1.full;
 		CurrentPP->tcw1.full = pp->tcw1.full;
 		if (pp->pcw.Texture && fetchTextures)
-			CurrentPP->texture1 = renderer->GetTexture(pp->tsp1, pp->tcw1);
+			CurrentPP->texture1 = renderer->GetTexture(pp->tsp1, pp->tcw1, 1);
 	}
 
 	static void TACALL AppendPolyParam4B(void* vpp)
@@ -1270,23 +1270,23 @@ static void ta_parse_naomi2(TA_context* ctx, bool primRestart)
 	for (PolyParam& pp : ctx->rend.global_param_op)
 	{
 		if (pp.pcw.Texture)
-			pp.texture = renderer->GetTexture(pp.tsp, pp.tcw);
+			pp.texture = renderer->GetTexture(pp.tsp, pp.tcw, 0);
 		if (pp.tsp1.full != (u32)-1)
-			pp.texture1 = renderer->GetTexture(pp.tsp1, pp.tcw1);
+			pp.texture1 = renderer->GetTexture(pp.tsp1, pp.tcw1, 1);
 	}
 	for (PolyParam& pp : ctx->rend.global_param_pt)
 	{
 		if (pp.pcw.Texture)
-			pp.texture = renderer->GetTexture(pp.tsp, pp.tcw);
+			pp.texture = renderer->GetTexture(pp.tsp, pp.tcw, 0);
 		if (pp.tsp1.full != (u32)-1)
-			pp.texture1 = renderer->GetTexture(pp.tsp1, pp.tcw1);
+			pp.texture1 = renderer->GetTexture(pp.tsp1, pp.tcw1, 1);
 	}
 	for (PolyParam& pp : ctx->rend.global_param_tr)
 	{
 		if (pp.pcw.Texture)
-			pp.texture = renderer->GetTexture(pp.tsp, pp.tcw);
+			pp.texture = renderer->GetTexture(pp.tsp, pp.tcw, 0);
 		if (pp.tsp1.full != (u32)-1)
-			pp.texture1 = renderer->GetTexture(pp.tsp1, pp.tcw1);
+			pp.texture1 = renderer->GetTexture(pp.tsp1, pp.tcw1, 1);
 	}
 
 	ctx->rend.newRenderPass();

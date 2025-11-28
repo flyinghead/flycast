@@ -112,7 +112,7 @@ struct D3DRenderer : public Renderer
 		frameRendered = false;
 		return true;
 	}
-	BaseTextureCacheData *GetTexture(TSP tsp, TCW tcw) override;
+	BaseTextureCacheData *GetTexture(TSP tsp, TCW tcw, int area) override;
 	void preReset();
 	void postReset();
 	void RenderFramebuffer(const FramebufferInfo& info) override;

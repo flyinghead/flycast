@@ -18,6 +18,8 @@
  */
 #pragma once
 
+#ifdef USE_DREAMLINK_DEVICES
+
 // This file contains abstraction layer for access to different kinds of remote peripherals.
 // This includes both real Dreamcast controllers, VMUs, rumble packs etc. but also emulated VMUs.
 
@@ -63,13 +65,22 @@ static_assert(sizeof(MapleMsg) == 1028);
 class DreamLink : public std::enable_shared_from_this<DreamLink>
 {
 public:
+	//! Number of physical dreamcast ports
+	static constexpr const int NUM_PORTS = 4;
 	// The active DreamLink, if any, for each port.
 	// Note that multiple gamepad DreamLinks may exist for a given port, in which case only one is active.
-	static std::array<std::shared_ptr<DreamLink>, 4> activeDreamLinks;
+	static std::array<std::shared_ptr<DreamLink>, NUM_PORTS> activeDreamLinks;
 
 	DreamLink() = default;
 
 	virtual ~DreamLink() = default;
+
+	//! Check if a given port is valid
+	//! @param[in] port The dreamcast port index to test
+	//! @return true iff port is a valid physical port
+	static bool isValidPort(int port) {
+		return (port >= 0 && port < NUM_PORTS);
+	}
 
 	virtual bool isForPhysicalController() = 0;
 
@@ -183,3 +194,5 @@ void tearDownDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink);
 
 void registerDreamLinkEvents();
 void unregisterDreamLinkEvents();
+
+#endif // USE_DREAMLINK_DEVICES
