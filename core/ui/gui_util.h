@@ -154,8 +154,6 @@ private:
 	bool disabled;
 };
 
-bool BeginListBox(const char* label, const ImVec2& size_arg = ImVec2(0, 0), ImGuiWindowFlags windowFlags = 0);
-
 class ImguiID
 {
 public:
@@ -315,3 +313,6 @@ private:
 };
 
 std::string middleEllipsis(const std::string& s, float width);
+
+bool beginFrame(const char *label, const ImVec2& size_arg = ImVec2(0, 0), ImVec2 *out_size = nullptr);
+void endFrame();

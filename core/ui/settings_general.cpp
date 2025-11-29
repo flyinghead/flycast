@@ -42,24 +42,27 @@ static void manageSinglePath(const char* label, config::Option<std::string, fals
     size.y = ImGui::GetTextLineHeightWithSpacing() + ImGui::GetStyle().FramePadding.y * 2.f;
     bool openPopup = false;
     
-    if (BeginListBox(label, size, ImGuiWindowFlags_NavFlattened))
+    ImVec2 childSize;
+    if (beginFrame(label, size, &childSize))
     {
         ImGui::AlignTextToFramePadding();
         if (pathOption.get().empty()) {
             ImguiStyleVar _(ImGuiStyleVar_FramePadding, ScaledVec2(24, 3));
-            openPopup = ImGui::Button("Set");
+            std::string buttonLabel = std::string("Set##") + label;
+            openPopup = ImGui::Button(buttonLabel.c_str());
         }
         else
         {
-            float w = ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(ICON_FA_TRASH_CAN).x - ImGui::GetStyle().FramePadding.x * 2
+            float w = childSize.x - ImGui::CalcTextSize(ICON_FA_TRASH_CAN).x - ImGui::GetStyle().FramePadding.x * 2
                 - ImGui::GetStyle().ItemSpacing.x;
             std::string s = middleEllipsis(pathOption, w);
             ImGui::Text("%s", s.c_str());
             ImGui::SameLine(0, w - ImGui::CalcTextSize(s.c_str()).x + ImGui::GetStyle().ItemSpacing.x);
-            if (ImGui::Button(ICON_FA_TRASH_CAN))
+            std::string buttonLabel = std::string(ICON_FA_TRASH_CAN "##") + label;
+            if (ImGui::Button(buttonLabel.c_str()))
                 pathOption.get().clear();
         }
-        ImGui::EndListBox();
+        endFrame();
     }
     ImGui::SameLine();
     ShowHelpMarker(helpText);
@@ -85,14 +88,15 @@ static void managePathList(const char* label, std::vector<std::string>& paths, c
                 * (paths.size() + 1);
 
     bool openPopup = false;
-    if (BeginListBox(label, size, ImGuiWindowFlags_NavFlattened))
+    ImVec2 childSize;
+    if (beginFrame(label, size, &childSize))
     {
+        ImGui::AlignTextToFramePadding();
         int to_delete = -1;
         for (u32 i = 0; i < paths.size(); i++)
         {
             ImguiID _(std::to_string(i).c_str());
-            ImGui::AlignTextToFramePadding();
-            float maxW = ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(ICON_FA_TRASH_CAN).x - ImGui::GetStyle().FramePadding.x * 2
+            float maxW = childSize.x - ImGui::CalcTextSize(ICON_FA_TRASH_CAN).x - ImGui::GetStyle().FramePadding.x * 2
                          - ImGui::GetStyle().ItemSpacing.x;
             std::string s = middleEllipsis(paths[i], maxW);
             ImGui::Text("%s", s.c_str());
@@ -104,9 +108,8 @@ static void managePathList(const char* label, std::vector<std::string>& paths, c
         ImguiStyleVar _(ImGuiStyleVar_FramePadding, ScaledVec2(24, 3));
         std::string buttonLabel = std::string("Add##") + label;
         openPopup = ImGui::Button(buttonLabel.c_str());
-        scrollWhenDraggingOnVoid();
 
-        ImGui::EndListBox();
+        endFrame();
         if (to_delete >= 0)
         {
             paths.erase(paths.begin() + to_delete);
@@ -228,14 +231,15 @@ void gui_settings_general()
     size.y = (ImGui::GetTextLineHeightWithSpacing() + ImGui::GetStyle().FramePadding.y * 2.f)
     				* (config::ContentPath.get().size() + 1);
 
-    if (BeginListBox("Content Location", size, ImGuiWindowFlags_NavFlattened))
+    ImVec2 childSize;
+    if (beginFrame("Content Location", size, &childSize))
     {
     	int to_delete = -1;
         for (u32 i = 0; i < config::ContentPath.get().size(); i++)
         {
         	ImguiID _(config::ContentPath.get()[i].c_str());
             ImGui::AlignTextToFramePadding();
-            float maxW = ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(ICON_FA_TRASH_CAN).x - ImGui::GetStyle().FramePadding.x * 2
+            float maxW = childSize.x - ImGui::CalcTextSize(ICON_FA_TRASH_CAN).x - ImGui::GetStyle().FramePadding.x * 2
             		 - ImGui::GetStyle().ItemSpacing.x;
             std::string s = middleEllipsis(config::ContentPath.get()[i], maxW);
         	ImGui::Text("%s", s.c_str());
@@ -251,9 +255,8 @@ void gui_settings_general()
 
         if (ImGui::Button("Rescan Content"))
 			scanner.refresh();
-        scrollWhenDraggingOnVoid();
 
-		ImGui::EndListBox();
+		endFrame();
     	if (to_delete >= 0)
     	{
     		scanner.stop();
@@ -264,27 +267,26 @@ void gui_settings_general()
     ImGui::SameLine();
     ShowHelpMarker("The folders where your games are stored");
 
-    size.y = ImGui::GetTextLineHeightWithSpacing() * 1.25f + ImGui::GetStyle().FramePadding.y * 2.0f;
+    size.y = ImGui::GetTextLineHeightWithSpacing() + ImGui::GetStyle().FramePadding.y * 2.0f;
+    ImGui::Spacing();
 
 #if defined(__linux__) && !defined(__ANDROID__)
-    if (BeginListBox("Data Folder", size, ImGuiWindowFlags_NavFlattened))
+    if (beginFrame("Data Folder", size, &childSize))
     {
-    	ImGui::AlignTextToFramePadding();
-    	float w = ImGui::GetContentRegionAvail().x - ImGui::GetStyle().FramePadding.x;
+    	float w = childSize.x - ImGui::GetStyle().FramePadding.x;
     	std::string s = middleEllipsis(get_writable_data_path(""), w);
         ImGui::Text("%s", s.c_str());
-        ImGui::EndListBox();
+        endFrame();
     }
     ImGui::SameLine();
     ShowHelpMarker("The folder containing BIOS files, as well as saved VMUs and states");
 #else
 #if defined(__ANDROID__) || defined(TARGET_MAC)
-    size.y += ImGui::GetTextLineHeightWithSpacing() * 1.25f;
+    size.y += ImGui::GetTextLineHeightWithSpacing();
 #endif
-    if (BeginListBox("Home Folder", size, ImGuiWindowFlags_NavFlattened))
+    if (beginFrame("Home Folder", size, &childSize))
     {
-    	ImGui::AlignTextToFramePadding();
-    	float w = ImGui::GetContentRegionAvail().x - ImGui::GetStyle().FramePadding.x;
+    	float w = childSize.x - ImGui::GetStyle().FramePadding.x;
     	std::string s = middleEllipsis(get_writable_config_path(""), w);
         ImGui::Text("%s", s.c_str());
         ImguiStyleVar _(ImGuiStyleVar_FramePadding, ScaledVec2(24, 3));
@@ -306,11 +308,12 @@ void gui_settings_general()
             system(temp);
         }
 #endif
-        ImGui::EndListBox();
+        endFrame();
     }
     ImGui::SameLine();
     ShowHelpMarker("The folder where Flycast saves configuration files and VMUs. BIOS files should be in a subfolder named \"data\"");
 #endif // !linux
+    ImGui::Spacing();
 #else // TARGET_IPHONE
     {
     	ImguiStyleVar _(ImGuiStyleVar_FramePadding, ScaledVec2(24, 3));
@@ -318,7 +321,7 @@ void gui_settings_general()
 			scanner.refresh();
     }
 #endif
-
+    ImGui::Spacing();
 	OptionCheckbox("Box Art Game List", config::BoxartDisplayMode,
 			"Display game cover art in the game list.");
 	OptionCheckbox("Fetch Box Art", config::FetchBoxart,

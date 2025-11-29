@@ -248,21 +248,20 @@ void input_sdl_init()
 		sdl_open_joystick(joy);
 #endif
 	if (SDL_HasScreenKeyboardSupport())
-	{
 		NOTICE_LOG(INPUT, "On-screen keyboard supported");
-		gui_setOnScreenKeyboardCallback([](bool show) {
-			// We should be able to use SDL_IsScreenKeyboardShown() but it doesn't seem to work on Xbox
-			static bool visible;
-			if (window != nullptr && visible != show)
-			{
-				visible = show;
-				if (show)
-					SDL_StartTextInput();
-				else
-					SDL_StopTextInput();
-			}
-		});
-	}
+	// This is used for both on-screen and regular keyboards. For the latter, it disables
+	// text input processing when not required, which fixes the accent menu showing up on macOS
+	// and may improve performance on all platforms.
+	gui_setOnScreenKeyboardCallback([](bool show) {
+		if (window != nullptr)
+		{
+			if (show && !SDL_IsTextInputActive())
+				SDL_StartTextInput();
+			else if (!show && SDL_IsTextInputActive())
+				SDL_StopTextInput();
+		}
+	});
+
 	if (settings.input.keyboardLangId == KeyboardLayout::US)
 		settings.input.keyboardLangId = detectKeyboardLayout();
 	barcode.clear();

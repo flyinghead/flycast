@@ -80,6 +80,7 @@ static std::mutex osd_message_mutex;
 static void (*showOnScreenKeyboard)(bool show);
 static bool keysUpNextFrame[512];
 bool uiUserScaleUpdated;
+static bool clearActiveIdNextFrame;
 
 GameScanner scanner;
 static BackgroundGameLoader gameLoader;
@@ -136,6 +137,22 @@ void gui_init()
 	EventManager::listen(Event::Terminate, emuEventCallback);
     ggpo::receiveChatMessages([](int playerNum, const std::string& msg) { chat.receive(playerNum, msg); });
 
+#ifdef TARGET_UWP
+	{
+		// Detect when the on-screen keyboard is hidden and clear the text input widget id to validate the edit.
+		// Otherwise the user will cancel the edit if he presses B, and must press A in the case of multi-line inputs.
+		using namespace Windows::UI::ViewManagement;
+		InputPane^ inputPane = InputPane::GetForCurrentView();
+		if (inputPane)
+		{
+			inputPane->Hiding += ref new Windows::Foundation::TypedEventHandler<InputPane^, InputPaneVisibilityEventArgs^>(
+				[](InputPane^, InputPaneVisibilityEventArgs^)
+				{
+					clearActiveIdNextFrame = true;
+				});
+		}
+	}
+#endif
 }
 
 static ImGuiKey keycodeToImGuiKey(u8 keycode)
@@ -437,19 +454,11 @@ static void gui_newFrame()
 
 	if (showOnScreenKeyboard != nullptr)
 		showOnScreenKeyboard(io.WantTextInput);
-#ifdef USE_SDL
-	else
+	if (clearActiveIdNextFrame && io.WantTextInput)
 	{
-		if (io.WantTextInput && !SDL_IsTextInputActive())
-		{
-			SDL_StartTextInput();
-		}
-		else if (!io.WantTextInput && SDL_IsTextInputActive())
-		{
-			SDL_StopTextInput();
-		}
+		ImGui::ClearActiveID();
+		clearActiveIdNextFrame = false;
 	}
-#endif
 }
 
 static void delayedKeysUp()
