@@ -77,7 +77,7 @@ void gui_settings_network()
 			config::NetworkEnable = false;
 			OptionCheckbox("Play as Player 1", config::ActAsServer,
 					"Deselect to play as player 2");
-			ImGui::InputText("Peer", &config::NetworkServer.get(), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
+			InputText("Peer", &config::NetworkServer.get(), ImGuiInputTextFlags_CharsNoBlank);
 			ImGui::SameLine();
 			ShowHelpMarker("Your peer IP address and optional port");
 			OptionSlider("Frame Delay", config::GGPODelay, 0, 20,
@@ -98,7 +98,7 @@ void gui_settings_network()
 				{
 					char chatTimeout[256];
 					snprintf(chatTimeout, sizeof(chatTimeout), "%d", (int)config::GGPOChatTimeout);
-					ImGui::InputText("Chat Window Timeout (seconds)", chatTimeout, sizeof(chatTimeout), ImGuiInputTextFlags_CharsDecimal, nullptr, nullptr);
+					InputText("Chat Window Timeout (seconds)", chatTimeout, sizeof(chatTimeout), ImGuiInputTextFlags_CharsDecimal);
 					ImGui::SameLine();
 					ShowHelpMarker("Sets duration that chat window stays open after new message is received.");
 					config::GGPOChatTimeout.set(atoi(chatTimeout));
@@ -113,13 +113,13 @@ void gui_settings_network()
 					"Create a local server for Naomi network games");
 			if (!config::ActAsServer)
 			{
-				ImGui::InputText("Server", &config::NetworkServer.get(), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
+				InputText("Server", &config::NetworkServer.get(), ImGuiInputTextFlags_CharsNoBlank);
 				ImGui::SameLine();
 				ShowHelpMarker("The server to connect to. Leave blank to find a server automatically on the default port");
 			}
 			char localPort[256];
 			snprintf(localPort, sizeof(localPort), "%d", (int)config::LocalPort);
-			ImGui::InputText("Local Port", localPort, sizeof(localPort), ImGuiInputTextFlags_CharsDecimal, nullptr, nullptr);
+			InputText("Local Port", localPort, sizeof(localPort), ImGuiInputTextFlags_CharsDecimal);
 			ImGui::SameLine();
 			ShowHelpMarker("The local UDP port to use");
 			config::LocalPort.set(atoi(localPort));
@@ -134,7 +134,7 @@ void gui_settings_network()
 					ice::State state = ice::getState();
 					ImGuiInputTextFlags textFlags = state == ice::Offline ? ImGuiInputTextFlags_CharsNoBlank : ImGuiInputTextFlags_ReadOnly;
 					static std::string matchCode;
-					ImGui::InputText("Code", &matchCode, textFlags);
+					InputText("Code", &matchCode, textFlags);
 					ImGui::SameLine();
 					ShowHelpMarker("Choose a unique word or number and share it with your opponent.");
 					if (state == ice::Offline) {
@@ -171,12 +171,12 @@ void gui_settings_network()
 				if (ImGui::BeginTabItem("Manual"))
 				{
 #endif
-					ImGui::InputText("Peer", &config::NetworkServer.get(), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
+					InputText("Peer", &config::NetworkServer.get(), ImGuiInputTextFlags_CharsNoBlank);
 					ImGui::SameLine();
 					ShowHelpMarker("The peer to connect to. Leave blank to find a player automatically on the default port");
 					char localPort[256];
 					snprintf(localPort, sizeof(localPort), "%d", (int)config::LocalPort);
-					ImGui::InputText("Local Port", localPort, sizeof(localPort), ImGuiInputTextFlags_CharsDecimal, nullptr, nullptr);
+					InputText("Local Port", localPort, sizeof(localPort), ImGuiInputTextFlags_CharsDecimal);
 					ImGui::SameLine();
 					ShowHelpMarker("The local UDP port to use");
 					config::LocalPort.set(atoi(localPort));
@@ -203,14 +203,19 @@ void gui_settings_network()
 					"Emulate the Ethernet Broadband Adapter (BBA) instead of the Modem");
 		}
 		OptionCheckbox("Use DCNet", config::UseDCNet, "Use the DCNet cloud service for Dreamcast Internet access.");
-		ImGui::InputText("ISP User Name", &config::ISPUsername.get(), ImGuiInputTextFlags_CharsNoBlank | ImGuiInputTextFlags_CallbackCharFilter,
-				[](ImGuiInputTextCallbackData *data) { return static_cast<int>(data->EventChar <= ' ' || data->EventChar > '~'); }, nullptr);
+
+		std::string& ispUsername = config::ISPUsername;
+		InputText("ISP User Name", &ispUsername, ImGuiInputTextFlags_CharsNoBlank | ImGuiInputTextFlags_CallbackCharFilter,
+				[](ImGuiInputTextCallbackData *data) { return static_cast<int>(data->EventChar <= ' ' || data->EventChar > '~'); });
+		// CallbackCharFilter isn't called on switch
+		auto it = std::remove_if(ispUsername.begin(), ispUsername.end(), [](char c) { return c <= ' ' || c > '~'; });
+		ispUsername.erase(it, ispUsername.end());
 		ImGui::SameLine();
 		ShowHelpMarker("The ISP user name stored in the console Flash RAM. Used by some online games as the player name. Leave blank to keep the current Flash RAM value.");
 #if !defined(NDEBUG) || defined(DEBUGFAST)
 		{
 			DisabledScope scope(config::UseDCNet);
-			ImGui::InputText("DNS", &config::DNS.get(), ImGuiInputTextFlags_CharsNoBlank);
+			InputText("DNS", &config::DNS.get(), ImGuiInputTextFlags_CharsNoBlank);
 			ImGui::SameLine();
 			ShowHelpMarker("DNS server name or IP address");
 		}

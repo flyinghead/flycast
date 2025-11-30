@@ -701,7 +701,7 @@ static void gui_display_commands()
 			char cardBuf[64] {};
 			strncpy(cardBuf, card_reader::barcodeGetCard().c_str(), sizeof(cardBuf) - 1);
 			ImGui::SetNextItemWidth(uiScaled(buttonWidth));
-			if (ImGui::InputText("##barcode", cardBuf, sizeof(cardBuf), ImGuiInputTextFlags_None, nullptr, nullptr))
+			if (InputText("##barcode", cardBuf, sizeof(cardBuf), ImGuiInputTextFlags_None))
 				card_reader::barcodeSetCard(cardBuf);
 		}
 

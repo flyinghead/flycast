@@ -31,6 +31,7 @@
 #include "imgui_driver.h"
 #include "imgui.h"
 #include "imgui_internal.h"
+#include "imgui_stdlib.h"
 #include "stdclass.h"
 #include "rend/osd.h"
 #include <stb_image.h>
@@ -1055,4 +1056,59 @@ void endFrame()
 	EndGroup();
 	PopClipRect();
 	EndGroup();
+}
+
+#ifdef __SWITCH__
+
+static constexpr unsigned Flags_Multiline = 1 << 31;
+
+bool switchEditText(char *value, size_t capacity, ImGuiInputTextFlags flags, bool multiline);
+
+static int switchInputTextCallback(ImGuiInputTextCallbackData *data)
+{
+	if (data->EventFlag == ImGuiInputTextFlags_CallbackAlways && (data->Flags & ImGuiInputTextFlags_ReadOnly) == 0)
+	{
+		data->Buf[data->BufTextLen] = '\0';
+		if (switchEditText(data->Buf, data->BufSize, data->Flags, (data->Flags & Flags_Multiline) != 0))
+		{
+			data->BufDirty = true;
+			data->BufTextLen = strlen(data->Buf);
+			ImGui::ClearActiveID();
+			return 1;
+		}
+		ImGui::ClearActiveID();
+	}
+	return 0;
+}
+#endif
+
+bool InputText(const char *label, std::string *str, ImGuiInputTextFlags flags, ImGuiInputTextCallback callback, void* user_data)
+{
+#ifdef __SWITCH__
+	if ((flags & ImGuiInputTextFlags_ReadOnly) == 0)
+	{
+		// TODO This doesn't handle growing the string capacity dynamically
+		str->reserve(512);
+		return ImGui::InputText(label, str, flags | ImGuiInputTextFlags_CallbackAlways, switchInputTextCallback);
+	}
+#endif
+	return ImGui::InputText(label, str, flags, callback, user_data);
+}
+
+bool InputText(const char *label, char *str, size_t size, ImGuiInputTextFlags flags, ImGuiInputTextCallback callback, void* user_data)
+{
+#ifdef __SWITCH__
+	if ((flags & ImGuiInputTextFlags_ReadOnly) == 0)
+		return ImGui::InputText(label, str, size, flags | ImGuiInputTextFlags_CallbackAlways, switchInputTextCallback);
+#endif
+	return ImGui::InputText(label, str, size, flags, callback, user_data);
+}
+
+bool InputTextMultiline(const char* label, char* buf, size_t buf_size, const ImVec2& size, ImGuiInputTextFlags flags, ImGuiInputTextCallback callback, void* user_data)
+{
+#ifdef __SWITCH__
+	if ((flags & ImGuiInputTextFlags_ReadOnly) == 0)
+		return ImGui::InputTextMultiline(label, buf, buf_size, size, flags | ImGuiInputTextFlags_CallbackAlways | Flags_Multiline, switchInputTextCallback);
+#endif
+	return ImGui::InputTextMultiline(label, buf, buf_size, size, flags, callback, user_data);
 }

@@ -371,8 +371,8 @@ void gui_settings_general()
 		ImGui::Indent();
 		OptionCheckbox("Hardcore Mode", config::AchievementsHardcoreMode,
 				"Enable RetroAchievements hardcore mode. Using cheats and loading a state are not allowed in this mode.");
-		ImGui::InputText("Username", &config::AchievementsUserName.get(),
-				achievements::isLoggedOn() ? ImGuiInputTextFlags_ReadOnly : ImGuiInputTextFlags_None, nullptr, nullptr);
+		InputText("Username", &config::AchievementsUserName.get(),
+				achievements::isLoggedOn() ? ImGuiInputTextFlags_ReadOnly : ImGuiInputTextFlags_None);
 		if (config::EnableAchievements)
 		{
 			static std::future<void> futureLogin;
@@ -388,7 +388,7 @@ void gui_settings_general()
 			else
 			{
 				static char password[256];
-				ImGui::InputText("Password", password, sizeof(password), ImGuiInputTextFlags_Password, nullptr, nullptr);
+				InputText("Password", password, sizeof(password), ImGuiInputTextFlags_Password);
 				if (futureLogin.valid())
 				{
 					if (futureLogin.wait_for(std::chrono::seconds::zero()) == std::future_status::timeout) {

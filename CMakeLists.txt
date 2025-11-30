@@ -944,14 +944,7 @@ else()
 			core/linux/posix_vmem.cpp
 			core/linux/unwind_info.cpp)
 	if(NINTENDO_SWITCH)
-		target_sources(${PROJECT_NAME} PRIVATE
-				shell/switch/libnx_vmem.cpp
-				shell/switch/stubs.c
-				shell/switch/context_switch.S
-				shell/switch/nswitch.h
-				shell/switch/switch_gamepad.h
-				shell/switch/switch_main.cpp
-				shell/switch/ucontext.h)
+		add_subdirectory(shell/switch)
 	endif()
 endif()
 

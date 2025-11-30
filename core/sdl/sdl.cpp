@@ -252,6 +252,7 @@ void input_sdl_init()
 	// This is used for both on-screen and regular keyboards. For the latter, it disables
 	// text input processing when not required, which fixes the accent menu showing up on macOS
 	// and may improve performance on all platforms.
+#ifndef __SWITCH__
 	gui_setOnScreenKeyboardCallback([](bool show) {
 		if (window != nullptr)
 		{
@@ -261,6 +262,7 @@ void input_sdl_init()
 				SDL_StopTextInput();
 		}
 	});
+#endif
 
 	if (settings.input.keyboardLangId == KeyboardLayout::US)
 		settings.input.keyboardLangId = detectKeyboardLayout();

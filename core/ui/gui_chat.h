@@ -100,7 +100,7 @@ public:
 			ImGui::EndChild();
 			static char buf[512];
 			ImGui::SetNextItemWidth(-0.001f);
-			if (ImGui::InputText("##input", buf, sizeof(buf), ImGuiInputTextFlags_EnterReturnsTrue))
+			if (InputText("##input", buf, sizeof(buf), ImGuiInputTextFlags_EnterReturnsTrue))
 			{
 				if (buf[0] != '\0')
 				{

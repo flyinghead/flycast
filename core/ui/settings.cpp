@@ -124,7 +124,7 @@ static void gui_settings_advanced()
 #ifdef USE_LUA
 	header("Lua Scripting");
 	{
-		ImGui::InputText("Lua Filename", &config::LuaFileName.get(), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
+		InputText("Lua Filename", &config::LuaFileName.get(), ImGuiInputTextFlags_CharsNoBlank);
 		ImGui::SameLine();
 		ShowHelpMarker("Specify lua filename to use. Should be located in Flycast config folder. Defaults to flycast.lua when empty.");
 	}
@@ -164,7 +164,7 @@ static void gui_debug_tab()
 			}
 			ImGui::EndCombo();
 		}
-		ImGui::InputText("Log Server", &config::LogServer.get(), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
+		InputText("Log Server", &config::LogServer.get(), ImGuiInputTextFlags_CharsNoBlank);
         ImGui::SameLine();
         ShowHelpMarker("Log to this hostname[:port] with UDP. Default port is 31667.");
 	}
