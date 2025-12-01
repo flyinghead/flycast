@@ -46,3 +46,12 @@ inline static void header(const char *title)
 	ImGui::ButtonEx(title, ImVec2(-1, 0));
 	ImGui::EndDisabled();
 }
+
+// ImGui InputText char filter for valid DNS names and IPv4/IPv6 addresses
+inline static int dnsCharFilter(ImGuiInputTextCallbackData *data)
+{
+	ImWchar c = data->EventChar;
+	bool good = c == '.' || c == '-' || c == ':' || (c >= '0' && c <= '9')
+			|| (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z');
+	return static_cast<int>(!good);
+}

@@ -77,7 +77,7 @@ void gui_settings_network()
 			config::NetworkEnable = false;
 			OptionCheckbox("Play as Player 1", config::ActAsServer,
 					"Deselect to play as player 2");
-			InputText("Peer", &config::NetworkServer.get(), ImGuiInputTextFlags_CharsNoBlank);
+			InputText("Peer", &config::NetworkServer.get(), ImGuiInputTextFlags_CharsNoBlank | ImGuiInputTextFlags_CallbackCharFilter, dnsCharFilter);
 			ImGui::SameLine();
 			ShowHelpMarker("Your peer IP address and optional port");
 			OptionSlider("Frame Delay", config::GGPODelay, 0, 20,
@@ -113,7 +113,7 @@ void gui_settings_network()
 					"Create a local server for Naomi network games");
 			if (!config::ActAsServer)
 			{
-				InputText("Server", &config::NetworkServer.get(), ImGuiInputTextFlags_CharsNoBlank);
+				InputText("Server", &config::NetworkServer.get(), ImGuiInputTextFlags_CharsNoBlank | ImGuiInputTextFlags_CallbackCharFilter, dnsCharFilter);
 				ImGui::SameLine();
 				ShowHelpMarker("The server to connect to. Leave blank to find a server automatically on the default port");
 			}
@@ -171,7 +171,7 @@ void gui_settings_network()
 				if (ImGui::BeginTabItem("Manual"))
 				{
 #endif
-					InputText("Peer", &config::NetworkServer.get(), ImGuiInputTextFlags_CharsNoBlank);
+					InputText("Peer", &config::NetworkServer.get(), ImGuiInputTextFlags_CharsNoBlank | ImGuiInputTextFlags_CallbackCharFilter, dnsCharFilter);
 					ImGui::SameLine();
 					ShowHelpMarker("The peer to connect to. Leave blank to find a player automatically on the default port");
 					char localPort[256];
@@ -215,7 +215,7 @@ void gui_settings_network()
 #if !defined(NDEBUG) || defined(DEBUGFAST)
 		{
 			DisabledScope scope(config::UseDCNet);
-			InputText("DNS", &config::DNS.get(), ImGuiInputTextFlags_CharsNoBlank);
+			InputText("DNS", &config::DNS.get(), ImGuiInputTextFlags_CharsNoBlank | ImGuiInputTextFlags_CallbackCharFilter, dnsCharFilter);
 			ImGui::SameLine();
 			ShowHelpMarker("DNS server name or IP address");
 		}

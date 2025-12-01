@@ -164,7 +164,7 @@ static void gui_debug_tab()
 			}
 			ImGui::EndCombo();
 		}
-		InputText("Log Server", &config::LogServer.get(), ImGuiInputTextFlags_CharsNoBlank);
+		InputText("Log Server", &config::LogServer.get(), ImGuiInputTextFlags_CharsNoBlank | ImGuiInputTextFlags_CallbackCharFilter, dnsCharFilter);
         ImGui::SameLine();
         ShowHelpMarker("Log to this hostname[:port] with UDP. Default port is 31667.");
 	}
