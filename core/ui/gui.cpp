@@ -1388,7 +1388,7 @@ static void gui_display_loadscreen()
 				int texLoaded = 0;
 				int texTotal = 0;
 				size_t loaded_size_b = 0;
-				custom_texture.GetPreloadProgress(texLoaded, texTotal, loaded_size_b);
+				custom_texture.getPreloadProgress(texLoaded, texTotal, loaded_size_b);
 				
 				ImGui::Text("%s", label);
 				float progress = 0;

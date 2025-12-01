@@ -752,7 +752,7 @@ void Emulator::unloadGame()
 		settings.content.fileName.clear();
 		settings.content.title.clear();
 		settings.platform.system = DC_PLATFORM_DREAMCAST;
-		custom_texture.Terminate();
+		custom_texture.terminate();
 		state = Init;
 		EventManager::event(Event::Terminate);
 	}
@@ -776,7 +776,7 @@ void Emulator::term()
 			delete recompiler;
 			recompiler = nullptr;
 		}
-		custom_texture.Terminate();	// lr: avoid deadlock on exit (win32)
+		custom_texture.terminate();	// lr: avoid deadlock on exit (win32)
 		reios_term();
 		aica::term();
 		pvr::term();
@@ -852,7 +852,7 @@ void loadGameSpecificSettings()
 	loadSpecialSettings();
 
 	config::Settings::instance().setGameId(settings.content.gameId);
-	custom_texture.Init();
+	custom_texture.init();
 
 	// Reload per-game settings
 	config::Settings::instance().load(true);
@@ -885,7 +885,7 @@ void Emulator::stepRange(u32 from, u32 to)
 void Emulator::loadstate(Deserializer& deser)
 {
 	if (!custom_texture.preloaded())
-		custom_texture.Terminate();
+		custom_texture.terminate();
 #if FEAT_AREC == DYNAREC_JIT
 	aica::arm::recompiler::flush();
 #endif
@@ -1122,7 +1122,7 @@ void Emulator::diskChange()
 	cheatManager.reset(settings.content.gameId);
 	if (cheatManager.isWidescreen())
 		config::ScreenStretching.override(134);	// 4:3 -> 16:9
-	custom_texture.Terminate();
+	custom_texture.terminate();
 	EventManager::event(Event::DiskChange);
 }
 

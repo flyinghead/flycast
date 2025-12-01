@@ -1200,7 +1200,7 @@ void retro_run()
 	{
 		int texLoaded, texTotal;
 		size_t loaded_size;
-		custom_texture.GetPreloadProgress(texLoaded, texTotal, loaded_size);
+		custom_texture.getPreloadProgress(texLoaded, texTotal, loaded_size);
 
 		static char msg_buf[64];
 		float loaded_size_mb = (float)loaded_size / (1024 * 1024);

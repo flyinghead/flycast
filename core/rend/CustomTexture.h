@@ -40,30 +40,29 @@ public:
 	using TextureCallback = std::function<void(u32 hash, TextureData&& data)>;
 
 	virtual ~BaseCustomTextureSource() { }
-	virtual bool customTexturesAvailable() { return true; }
 	virtual bool shouldReplace() const { return false; }
 	virtual bool shouldPreload() const { return false; }
-	virtual bool LoadMap() = 0;
-	virtual size_t GetTextureCount() const { return 0; }
-	virtual void Terminate() { }
-	virtual u8* LoadCustomTexture(u32 hash, int& width, int& height) = 0;
+	virtual bool loadMap() = 0;
+	virtual size_t getTextureCount() const { return 0; }
+	virtual void terminate() { }
+	virtual u8* loadCustomTexture(u32 hash, int& width, int& height) = 0;
 	virtual bool isTextureReplaced(u32 hash) = 0;
-	virtual void PreloadTextures(TextureCallback callback, std::atomic<bool>* stop_flag) { }
+	virtual void preloadTextures(TextureCallback callback, std::atomic<bool>* stop_flag) { }
 };
 
 class CustomTexture
 {
 public:
 	~CustomTexture();
-	bool Init();
+	bool init();
 	bool enabled();
 	bool preloaded();
 	bool isPreloading();
-	void AddSource(std::unique_ptr<BaseCustomTextureSource> source);
-	void LoadCustomTextureAsync(BaseTextureCacheData *texture_data);
-	void DumpTexture(BaseTextureCacheData* texture, int w, int h, void *src_buffer);
-	void Terminate();
-	void GetPreloadProgress(int& completed, int& total, size_t& loaded_size) const;
+	void addSource(std::unique_ptr<BaseCustomTextureSource> source);
+	void loadCustomTextureAsync(BaseTextureCacheData *texture_data);
+	void dumpTexture(BaseTextureCacheData* texture, int w, int h, void *src_buffer);
+	void terminate();
+	void getPreloadProgress(int& completed, int& total, size_t& loaded_size) const;
 
 private:
 	u8* loadTexture(u32 hash, int& width, int& height);

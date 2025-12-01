@@ -780,7 +780,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       CORE_OPTION_NAME "_preload_custom_textures",
       "Preload Custom Textures",
       NULL,
-      "Preload custom textures at game start. May improve performance but increase memory usage.",
+      "Preload custom textures at game start. May improve performance but increases memory usage.",
       NULL,
       "hacks",
       {
