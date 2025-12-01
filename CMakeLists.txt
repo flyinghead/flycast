@@ -460,7 +460,7 @@ if(NOT LIBRETRO)
 			target_compile_definitions(${PROJECT_NAME} PRIVATE USE_DREAMLINK_DEVICES=1)
 			set(USE_DREAMLINK_DEVICES ON) # Must be set before adding core/sdl
 
-			if ((WIN32 OR WINDOWS_STORE) AND NOT MINGW)
+			if (WINDOWS_STORE)
 				# Use winrt implementation of the DreamPicoPort-API
 				option(DREAMPICOPORT_WITH_LIBUSB "Use libusb to access DreamPicoPort-API" OFF)
 			elseif (CMAKE_SYSTEM_NAME STREQUAL "FreeBSD")
