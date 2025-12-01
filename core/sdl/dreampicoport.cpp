@@ -974,23 +974,6 @@ public:
 
 		std::vector<std::vector<std::array<uint32_t, 2>>> peripherals;
 
-		MapleMsg msg;
-		msg.command = MDCF_GetCondition;
-		msg.destAP = (hardware_bus << 6) | 0x20;
-		msg.originAP = hardware_bus << 6;
-		msg.setData(MFID_0_Input);
-
-		bool success = send(msg, msg, timeout_ms);
-		if (!success) {
-			WARN_LOG(
-				INPUT,
-				"DreamPicoPort[%d] send(condition) failed (%s)",
-				software_bus,
-				dpp_api_device->getLastErrorStr().c_str()
-			);
-			return peripherals; // assume simply controller not connected yet
-		}
-
 		dpp_api::msg::rx::GetDcSummary summary =
 			dpp_api_device->sendSync(dpp_api::msg::tx::GetDcSummary{static_cast<uint8_t>(hardware_bus)});
 		peripherals = summary.summary;
