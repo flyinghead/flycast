@@ -43,6 +43,7 @@
 #include "IconsFontAwesome6.h"
 #include <stb_image_write.h>
 #include "hw/pvr/Renderer_if.h"
+#include "rend/CustomTexture.h"
 #include "hw/mem/addrspace.h"
 #include "hw/maple/maple_if.h"
 #if defined(USE_SDL)
@@ -1375,8 +1376,10 @@ static void gui_display_loadscreen()
 				else
 					label = "Loading...";
 			}
+			
+			const bool customTexPreloading = custom_texture.isPreloading();
 
-			if (gameLoader.ready())
+			if (gameLoader.ready() && !customTexPreloading)
 			{
 				if (NetworkHandshake::instance != nullptr)
 				{
@@ -1391,11 +1394,35 @@ static void gui_display_loadscreen()
 			}
 			else
 			{
+				int texLoaded = 0;
+				int texTotal = 0;
+				size_t loaded_size_b = 0;
+				custom_texture.getPreloadProgress(texLoaded, texTotal, loaded_size_b);
+				
 				ImGui::Text("%s", label);
+				float progress = 0;
+				char overlay[64] = "";
+				
+				if (!gameLoader.ready())
 				{
-					ImguiStyleColor _(ImGuiCol_PlotHistogram, ImVec4(0.557f, 0.268f, 0.965f, 1.f));
-					ImGui::ProgressBar(gameLoader.getProgress().progress, ImVec2(-1, uiScaled(20.f)), "");
+					progress = gameLoader.getProgress().progress;
 				}
+				else if (customTexPreloading)
+				{
+					ImGui::Spacing();
+					ImGui::Text("Preloading custom textures");
+					progress = (texTotal == -1 || texTotal == 0) ? 0.f : (float)texLoaded / (float)texTotal;
+					if (texTotal == -1)
+						snprintf(overlay, sizeof(overlay), "Preparing...");
+					else
+					{
+						float loaded_size_mb = (float)loaded_size_b / (1024 * 1024);
+						snprintf(overlay, sizeof(overlay), "%d / %d (%.1f MB)", texLoaded, texTotal, loaded_size_mb);
+					}
+				}
+				
+				ImguiStyleColor _(ImGuiCol_PlotHistogram, ImVec4(0.557f, 0.268f, 0.965f, 1.f));
+				ImGui::ProgressBar(progress, ImVec2(-1, uiScaled(20.f)), overlay);
 
 				float currentwidth = ImGui::GetContentRegionAvail().x;
 				ImGui::SetCursorPosX((currentwidth - uiScaled(100.f)) / 2.f + ImGui::GetStyle().WindowPadding.x);

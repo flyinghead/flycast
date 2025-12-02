@@ -64,6 +64,7 @@
 #include "cfg/option.h"
 #include "version.h"
 #include "oslib/oslib.h"
+#include "rend/CustomTexture.h"
 
 constexpr char slash = path_default_slash_c();
 
@@ -1194,6 +1195,26 @@ void retro_run()
 
 	if (devices_need_refresh)
 		refresh_devices(false);
+
+	if (custom_texture.isPreloading())
+	{
+		int texLoaded, texTotal;
+		size_t loaded_size;
+		custom_texture.getPreloadProgress(texLoaded, texTotal, loaded_size);
+
+		static char msg_buf[64];
+		float loaded_size_mb = (float)loaded_size / (1024 * 1024);
+		snprintf(msg_buf, sizeof(msg_buf), "Preloading custom textures: %d / %d (%.1f MB)", texLoaded, texTotal, loaded_size_mb);
+
+		struct retro_message msg;
+		msg.msg = msg_buf;
+		msg.frames = 1;
+		environ_cb(RETRO_ENVIRONMENT_SET_MESSAGE, &msg);
+
+		video_cb(NULL, 0, 0, 0);
+		poll_cb();
+		return;
+	}
 
 #if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES)
 	if (isOpenGL(config::RendererType))

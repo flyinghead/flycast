@@ -110,6 +110,13 @@ static void gui_settings_advanced()
 		}
         OptionCheckbox("Dump Textures", config::DumpTextures,
         		"Dump all textures into data/texdump/<game id>");
+		ImGui::Indent();
+		{
+			DisabledScope scope(!config::DumpTextures.get());
+			OptionCheckbox("Dump Replaced Textures", config::DumpReplacedTextures,
+					"Always dump textures that are already replaced by custom textures");
+		}
+		ImGui::Unindent();
         bool logToFile = cfgLoadBool("log", "LogToFile", false);
 		if (ImGui::Checkbox("Log to File", &logToFile))
 			cfgSaveBool("log", "LogToFile", logToFile);

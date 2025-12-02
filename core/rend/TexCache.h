@@ -262,7 +262,8 @@ public:
 
 	void Clear()
 	{
-		custom_texture.Terminate();
+		if (!custom_texture.preloaded())
+			custom_texture.terminate();
 		for (auto& [id, texture] : cache)
 			texture.Delete();
 

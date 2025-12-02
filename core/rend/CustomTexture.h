@@ -21,30 +21,66 @@
 #include <string>
 #include <map>
 #include <memory>
+#include <vector>
+#include <atomic>
+#include <functional>
 
 class BaseTextureCacheData;
 class WorkerThread;
+
+struct TextureData {
+	std::vector<u8> data;
+	int w = 0;
+	int h = 0;
+};
+
+class BaseCustomTextureSource
+{
+public:
+	using TextureCallback = std::function<void(u32 hash, TextureData&& data)>;
+
+	virtual ~BaseCustomTextureSource() { }
+	virtual bool shouldReplace() const { return false; }
+	virtual bool shouldPreload() const { return false; }
+	virtual bool loadMap() = 0;
+	virtual size_t getTextureCount() const { return 0; }
+	virtual void terminate() { }
+	virtual u8* loadCustomTexture(u32 hash, int& width, int& height) = 0;
+	virtual bool isTextureReplaced(u32 hash) = 0;
+	virtual void preloadTextures(TextureCallback callback, std::atomic<bool>* stop_flag) { }
+};
 
 class CustomTexture
 {
 public:
 	~CustomTexture();
-	void LoadCustomTextureAsync(BaseTextureCacheData *texture_data);
-	void DumpTexture(u32 hash, int w, int h, TextureType textype, void *src_buffer);
-	void Terminate();
+	bool init();
+	bool enabled();
+	bool preloaded();
+	bool isPreloading();
+	void addSource(std::unique_ptr<BaseCustomTextureSource> source);
+	void loadCustomTextureAsync(BaseTextureCacheData *texture_data);
+	void dumpTexture(BaseTextureCacheData* texture, int w, int h, void *src_buffer);
+	void terminate();
+	void getPreloadProgress(int& completed, int& total, size_t& loaded_size) const;
 
 private:
-	bool init();
 	u8* loadTexture(u32 hash, int& width, int& height);
+	bool isTextureReplaced(BaseTextureCacheData* texture);
 	void loadTexture(BaseTextureCacheData *texture);
 	std::string getGameId();
-	void loadMap();
+	void prepareSource(BaseCustomTextureSource* source);
+	void resetPreloadProgress();
 	
 	bool initialized = false;
-	bool custom_textures_available = false;
-	std::string textures_path;
-	std::map<u32, std::string> texture_map;
+	std::vector<std::unique_ptr<BaseCustomTextureSource>> sources;
 	std::unique_ptr<WorkerThread> loaderThread;
+	std::map<u32, TextureData> preloaded_textures;
+	std::atomic<int> preload_total { 0 };
+	std::atomic<int> preload_loaded { 0 };
+	std::atomic<size_t> preload_loaded_size { 0 };
+	std::atomic<int> pending_preloads { 0 };
+	std::atomic<bool> stop_preload { false };
 };
 
 extern CustomTexture custom_texture;

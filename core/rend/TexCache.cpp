@@ -505,7 +505,7 @@ bool BaseTextureCacheData::Update()
 			return false;
 		}
 	}
-	if (config::CustomTextures)
+	if (custom_texture.enabled())
 	{
 		u32 oldHash = texture_hash;
 		ComputeHash();
@@ -516,7 +516,7 @@ bool BaseTextureCacheData::Update()
 			size = originalSize;
 			return true;
 		}
-		custom_texture.LoadCustomTextureAsync(this);
+		custom_texture.loadCustomTextureAsync(this);
 	}
 
 	void *temp_tex_buffer = NULL;
@@ -676,7 +676,7 @@ bool BaseTextureCacheData::Update()
 	if (config::DumpTextures)
 	{
 		ComputeHash();
-		custom_texture.DumpTexture(texture_hash, upscaled_w, upscaled_h, tex_type, temp_tex_buffer);
+		custom_texture.dumpTexture(this, upscaled_w, upscaled_h, temp_tex_buffer);
 		NOTICE_LOG(RENDERER, "Dumped texture %x.png. Old hash %x", texture_hash, old_texture_hash);
 	}
 	PrintTextureName();
