@@ -777,10 +777,38 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_preload_custom_textures",
+      "Preload Custom Textures",
+      NULL,
+      "Preload custom textures at game start. May improve performance but increases memory usage.",
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_dump_textures",
       "Dump Textures",
       NULL,
       "Every time a new texture is used by the game, it will be saved as a .png file in the 'system/dc/texdump/<game-id>/' folder.",
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_dump_replaced_textures",
+      "Dump Replaced Textures",
+      NULL,
+      "Always dump textures that are already replaced by custom textures.",
       NULL,
       "hacks",
       {

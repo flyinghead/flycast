@@ -213,8 +213,18 @@ void gui_settings_video()
     	OptionCheckbox("Full Framebuffer Emulation", config::EmulateFramebuffer,
     			"Fully accurate VRAM framebuffer emulation. Helps games that directly access the framebuffer for special effects. "
     			"Very slow and incompatible with upscaling and wide screen.");
-    	OptionCheckbox("Load Custom Textures", config::CustomTextures,
-    			"Load custom/high-res textures from data/textures/<game id>");
+		{
+			DisabledScope scope(game_started);
+			OptionCheckbox("Load Custom Textures", config::CustomTextures,
+						   "Load custom/high-res textures from data/textures/<game id>");
+			ImGui::Indent();
+			{
+				DisabledScope scope(!config::CustomTextures.get());
+				OptionCheckbox("Preload Custom Textures", config::PreloadCustomTextures,
+							   "Preload custom textures at game start. May improve performance but increases memory usage");
+			}
+			ImGui::Unindent();
+		}
     }
 	ImGui::Spacing();
     header("Aspect Ratio");
