@@ -20,6 +20,10 @@
 #include "resources.h"
 #include "cfg/ini.h"
 #include "stdclass.h"
+#ifdef _WIN32
+#include <windows.h>
+#include <nowide/stackstring.hpp>
+#endif
 
 namespace i18n
 {
@@ -51,7 +55,8 @@ void init()
 	try {
 		std::locale::global(std::locale(""));
 	} catch (const std::runtime_error& e) {
-		ERROR_LOG(BOOT, "Error setting locale: %s", e.what());
+		INFO_LOG(BOOT, "Error setting c++ locale: %s", e.what());
+		setlocale(LC_ALL, "");
 	}
 #endif
 	messages.clear();
@@ -99,4 +104,19 @@ const char *Tcs(const char *msg)
 		return out.c_str();
 }
 
+#ifdef _WIN32
+std::string getCurrentLocale()
+{
+	wchar_t wname[128];
+	if (GetLocaleInfoEx(LOCALE_NAME_USER_DEFAULT, LOCALE_SNAME, wname, std::size(wname)) == 0) {
+		ERROR_LOG(COMMON, "GetLocaleEx failed: %x", GetLastError());
+		return "en";
+	}
+	nowide::stackstring name;
+	if (name.convert(wname))
+		return name.get();
+	else
+		return "en";
+}
+#endif
 }

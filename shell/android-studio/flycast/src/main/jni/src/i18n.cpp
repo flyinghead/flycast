@@ -19,6 +19,7 @@
 #include "oslib/i18n.h"
 #include "jni_util.h"
 #include <string>
+#include <vector>
 #include <locale>
 #include <time.h>
 #include <unicode/utypes.h>

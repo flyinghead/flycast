@@ -39,7 +39,7 @@ using std::locale;
 
 void init();
 
-#if !defined(LIBRETRO) && !defined(__SWITCH__)
+#if !defined(LIBRETRO) && !defined(__SWITCH__) && !defined(_WIN32)
 
 static inline std::string getCurrentLocale() {
 	return setlocale(LC_MESSAGES, nullptr);
@@ -54,8 +54,15 @@ std::string getCurrentLocale();
 static inline std::string formatShortDateTime(time_t time)
 {
 	tm t;
+#ifdef  _WIN32
+	tm *ptm = localtime(&time);
+	if (ptm == nullptr)
+		return {};
+	t = *ptm;
+#else
 	if (localtime_r(&time, &t) == nullptr)
 		return {};
+#endif
 	std::string s(256, '\0');
 	// %x The preferred date representation for the current locale without the time (posix: %m/%d/%y)
 	// %X same for the time (posix: %H:%M:%S)
