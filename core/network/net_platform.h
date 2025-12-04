@@ -146,3 +146,33 @@ void enableNetworkBroadcast(bool enable);
 #else
 static inline void enableNetworkBroadcast(bool enable) {}
 #endif
+
+#ifdef __ANDROID__
+#include <ifaddrs.h>
+
+extern "C" {
+
+int android_getifaddrs(struct ifaddrs **ifap);
+void android_freeifaddrs(struct ifaddrs *ifa);
+
+static inline int my_getifaddrs(struct ifaddrs **ifap)
+{
+	if (__builtin_available(android 24, *))
+		return ::getifaddrs(ifap);
+	else
+		return ::android_getifaddrs(ifap);
+}
+
+static inline void my_freeifaddrs(struct ifaddrs *ifa)
+{
+	if (__builtin_available(android 24, *))
+		::freeifaddrs(ifa);
+	else
+		::android_freeifaddrs(ifa);
+}
+
+}
+
+#define getifaddrs my_getifaddrs
+#define freeifaddrs my_freeifaddrs
+#endif
