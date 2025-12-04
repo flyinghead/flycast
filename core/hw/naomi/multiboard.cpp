@@ -47,7 +47,7 @@ Multiboard::Multiboard()
 {
 	sharedMem = nullptr;
 
-	boardId = cfgLoadInt("naomi", "BoardId", 0);
+	boardId = config::loadInt("naomi", "BoardId");
 #ifdef _WIN32
 	const char *FileName = "Local\\naomi_multiboard_mem";
 	if (isMaster())
@@ -124,9 +124,9 @@ void Multiboard::startSlave()
 	for (int i = 0; i < boardCount; i++)
 		sharedMem->boardReady[i] = false;
 
-	int x = cfgLoadInt("window", "left", (1920 - 640) / 2);
-	int y = cfgLoadInt("window", "top", (1080 - 480) / 2);
-	int width = cfgLoadInt("window", "width", 640);
+	int x = config::loadInt("window", "left", (1920 - 640) / 2);
+	int y = config::loadInt("window", "top", (1080 - 480) / 2);
+	int width = config::loadInt("window", "width", 640);
 	std::string biosFile = CurrentCartridge->game->bios == nullptr ? "naomi" : CurrentCartridge->game->bios;
 	std::string biosPath = hostfs::findNaomiBios(biosFile + ".zip");
 	if (biosPath.empty())

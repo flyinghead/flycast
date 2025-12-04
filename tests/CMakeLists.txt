@@ -17,6 +17,7 @@ target_sources(${PROJECT_NAME} PRIVATE
         src/Sh4InterpreterTest.cpp
         src/MmuTest.cpp
         src/HttpTest.cpp
+        src/IniFileTest.cpp
         src/input/ButtonComboTest.cpp
         src/input/GamepadInputHandlingTest.cpp
         src/input/MultiBindMappingTest.cpp

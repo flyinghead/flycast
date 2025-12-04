@@ -6,6 +6,7 @@ target_sources(${PROJECT_NAME} PRIVATE
 		ucontext.h)
 if(NOT LIBRETRO)
 	target_sources(${PROJECT_NAME} PRIVATE
+		i18n.cpp
 		keyboard.cpp
 		switch_gamepad.h
 		switch_main.cpp)

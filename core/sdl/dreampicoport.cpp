@@ -21,7 +21,7 @@
 
 #include "hw/maple/maple_devs.h"
 #include "ui/gui.h"
-#include <cfg/option.h>
+#include "cfg/option.h"
 
 #include "DreamPicoPortApi.hpp"
 
@@ -125,7 +125,7 @@ public:
 		std::string serial_device = "";
 
 		// use user-configured serial device if available, fallback to first available
-		serial_device = cfgLoadStr("input", "DreamPicoPortSerialDevice", "");
+		serial_device = config::loadStr("input", "DreamPicoPortSerialDevice");
 		if (!serial_device.empty())
 		{
 			NOTICE_LOG(INPUT, "DreamPicoPort connecting to user-configured serial device: %s", serial_device.c_str());

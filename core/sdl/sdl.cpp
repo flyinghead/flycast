@@ -105,7 +105,7 @@ static void sdl_close_joystick(SDL_JoystickID instance)
 static void setWindowTitleGame()
 {
 	if (settings.naomi.slave)
-		SDL_SetWindowTitle(window, ("Flycast - Multiboard Slave " + cfgLoadStr("naomi", "BoardId", "")).c_str());
+		SDL_SetWindowTitle(window, ("Flycast - Multiboard Slave " + config::loadStr("naomi", "BoardId")).c_str());
 	else
 		SDL_SetWindowTitle(window, ("Flycast - " + settings.content.title).c_str());
 }
@@ -204,7 +204,7 @@ void input_sdl_init()
 		// We want joystick events even if we loose focus
 		SDL_SetHint(SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS, "1");
 #ifdef _WIN32
-		if (cfgLoadBool("input", "DisableXInput", false))
+		if (config::loadBool("input", "DisableXInput", false))
 		{
 			// Disable XInput for some old joysticks
 			NOTICE_LOG(INPUT, "Disabling XInput, using DirectInput");
@@ -663,12 +663,12 @@ bool sdl_recreate_window(u32 flags)
 		settings.display.uiScale = 1.4f;
 	}
 #else
-	windowPos.x = cfgLoadInt("window", "left", windowPos.x);
-	windowPos.y = cfgLoadInt("window", "top", windowPos.y);
-	windowPos.w = cfgLoadInt("window", "width", windowPos.w);
-	windowPos.h = cfgLoadInt("window", "height", windowPos.h);
-	window_fullscreen = cfgLoadBool("window", "fullscreen", window_fullscreen);
-	window_maximized = cfgLoadBool("window", "maximized", window_maximized);
+	windowPos.x = config::loadInt("window", "left", windowPos.x);
+	windowPos.y = config::loadInt("window", "top", windowPos.y);
+	windowPos.w = config::loadInt("window", "width", windowPos.w);
+	windowPos.h = config::loadInt("window", "height", windowPos.h);
+	window_fullscreen = config::loadBool("window", "fullscreen", window_fullscreen);
+	window_maximized = config::loadBool("window", "maximized", window_maximized);
 	if (window != nullptr)
 		get_window_state();
 
@@ -850,12 +850,12 @@ void sdl_window_destroy()
 	if (!settings.naomi.slave && settings.naomi.drivingSimSlave == 0)
 	{
 		get_window_state();
-		cfgSaveInt("window", "left", windowPos.x);
-		cfgSaveInt("window", "top", windowPos.y);
-		cfgSaveInt("window", "width", windowPos.w);
-		cfgSaveInt("window", "height", windowPos.h);
-		cfgSaveBool("window", "maximized", window_maximized);
-		cfgSaveBool("window", "fullscreen", window_fullscreen);
+		config::saveInt("window", "left", windowPos.x);
+		config::saveInt("window", "top", windowPos.y);
+		config::saveInt("window", "width", windowPos.w);
+		config::saveInt("window", "height", windowPos.h);
+		config::saveBool("window", "maximized", window_maximized);
+		config::saveBool("window", "fullscreen", window_fullscreen);
 	}
 #endif
 	termRenderApi();

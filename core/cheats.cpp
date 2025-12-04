@@ -395,18 +395,18 @@ void CheatManager::loadCheatFile(const std::string& filename)
 		WARN_LOG(COMMON, "Cannot open cheat file '%s'", filename.c_str());
 		return;
 	}
-	emucfg::ConfigFile cfg;
-	cfg.parse(cheatfile);
+	config::IniFile cfg;
+	cfg.load(cheatfile);
 	fclose(cheatfile);
 
-	int count = cfg.get_int("", "cheats", 0);
+	int count = cfg.getInt("", "cheats", 0);
 	cheats.clear();
 	for (int i = 0; count == 0 || i < count; i++)
 	{
 		std::string prefix = "cheat" + std::to_string(i) + "_";
 		Cheat cheat{};
-		cheat.description = cfg.get("", prefix + "desc", "Cheat " + std::to_string(i + 1));
-		cheat.address = cfg.get_int("", prefix + "address", -1);
+		cheat.description = cfg.getString("", prefix + "desc", "Cheat " + std::to_string(i + 1));
+		cheat.address = cfg.getInt("", prefix + "address", -1);
 		if (count == 0 && cheat.address == (u32)-1)
 			break;
 		if (cheat.address >= RAM_SIZE)
@@ -414,27 +414,27 @@ void CheatManager::loadCheatFile(const std::string& filename)
 			WARN_LOG(COMMON, "Invalid address %x", cheat.address);
 			continue;
 		}
-		cheat.type = (Cheat::Type)cfg.get_int("", prefix + "cheat_type", (int)Cheat::Type::disabled);
-		cheat.size = 1 << cfg.get_int("", prefix + "memory_search_size", 0);
-		cheat.value = cfg.get_int("", prefix + "value", cheat.value);
-		cheat.repeatCount = cfg.get_int("", prefix + "repeat_count", cheat.repeatCount);
-		cheat.repeatValueIncrement = cfg.get_int("", prefix + "repeat_add_to_value", cheat.repeatValueIncrement);
-		cheat.repeatAddressIncrement = cfg.get_int("", prefix + "repeat_add_to_address", cheat.repeatAddressIncrement);
-		cheat.enabled = cfg.get_bool("", prefix + "enable", false);
-		cheat.destAddress = cfg.get_int("", prefix + "dest_address", 0);
+		cheat.type = (Cheat::Type)cfg.getInt("", prefix + "cheat_type", (int)Cheat::Type::disabled);
+		cheat.size = 1 << cfg.getInt("", prefix + "memory_search_size", 0);
+		cheat.value = cfg.getInt("", prefix + "value", cheat.value);
+		cheat.repeatCount = cfg.getInt("", prefix + "repeat_count", cheat.repeatCount);
+		cheat.repeatValueIncrement = cfg.getInt("", prefix + "repeat_add_to_value", cheat.repeatValueIncrement);
+		cheat.repeatAddressIncrement = cfg.getInt("", prefix + "repeat_add_to_address", cheat.repeatAddressIncrement);
+		cheat.enabled = cfg.getBool("", prefix + "enable", false);
+		cheat.destAddress = cfg.getInt("", prefix + "dest_address", 0);
 		if (cheat.destAddress >= RAM_SIZE)
 		{
 			WARN_LOG(COMMON, "Invalid address %x", cheat.destAddress);
 			continue;
 		}
-		cheat.valueMask = cfg.get_int("", prefix + "address_bit_position", 0);
+		cheat.valueMask = cfg.getInt("", prefix + "address_bit_position", 0);
 		if (cheat.type != Cheat::Type::disabled)
 			cheats.push_back(cheat);
 	}
 	setActive(!cheats.empty());
 	INFO_LOG(COMMON, "%d cheats loaded", (int)cheats.size());
 	if (!cheats.empty())
-		cfgSaveStr("cheats", gameId, filename);
+		config::saveStr("cheats", gameId, filename);
 #endif
 }
 
@@ -450,7 +450,7 @@ void CheatManager::reset(const std::string& gameId)
 #ifndef LIBRETRO
 		if (!settings.raHardcoreMode)
 		{
-			std::string cheatFile = cfgLoadStr("cheats", gameId, "");
+			std::string cheatFile = config::loadStr("cheats", gameId);
 			if (!cheatFile.empty())
 				loadCheatFile(cheatFile);
 			else
@@ -470,7 +470,7 @@ void CheatManager::reset(const std::string& gameId)
 							if (hostfs::storage().exists(candidate))
 							{
 								loadCheatFile(candidate);
-								cfgSaveStr("cheats", gameId, candidate);
+								config::saveStr("cheats", gameId, candidate);
 								goto found_cheats;
 							}
 						}
@@ -1070,11 +1070,11 @@ void CheatManager::addGameSharkCheat(const std::string& name, const std::string&
 			}
 		}
 #ifndef LIBRETRO
-		std::string path = cfgLoadStr("cheats", gameId, "");
+		std::string path = config::loadStr("cheats", gameId);
 		if (path == "")
 		{
 			path = get_game_save_prefix() + ".cht";
-			cfgSaveStr("cheats", gameId, path);
+			config::saveStr("cheats", gameId, path);
 		}
 		saveCheatFile(path);
 #endif
@@ -1088,7 +1088,7 @@ void CheatManager::addGameSharkCheat(const std::string& name, const std::string&
 void CheatManager::saveCheatFile(const std::string& filename)
 {
 #ifndef LIBRETRO
-	emucfg::ConfigFile cfg;
+	config::IniFile cfg;
 
 	int i = 0;
 	for (const Cheat& cheat : cheats)
@@ -1096,15 +1096,15 @@ void CheatManager::saveCheatFile(const std::string& filename)
 		if (cheat.builtIn)
 			continue;
 		std::string prefix = "cheat" + std::to_string(i) + "_";
-		cfg.set_int("", prefix + "address", cheat.address);
-		cfg.set_int("", prefix + "address_bit_position", cheat.valueMask);
-		cfg.set_bool("", prefix + "big_endian", false);
-		cfg.set_int("", prefix + "cheat_type", (int)cheat.type);
+		cfg.set("", prefix + "address", cheat.address);
+		cfg.set("", prefix + "address_bit_position", cheat.valueMask);
+		cfg.set("", prefix + "big_endian", false);
+		cfg.set("", prefix + "cheat_type", (int)cheat.type);
 		cfg.set("", prefix + "code", "");
 		cfg.set("", prefix + "desc", cheat.description);
-		cfg.set_int("", prefix + "dest_address", cheat.destAddress);
-		cfg.set_bool("", prefix + "enable", false);	// force all cheats disabled at start
-		cfg.set_int("", prefix + "handler", 1);
+		cfg.set("", prefix + "dest_address", cheat.destAddress);
+		cfg.set("", prefix + "enable", false);	// force all cheats disabled at start
+		cfg.set("", prefix + "handler", 1);
 		int memSize;
 		switch (cheat.size) {
 		case 1:
@@ -1127,14 +1127,14 @@ void CheatManager::saveCheatFile(const std::string& filename)
 			memSize = 5;
 			break;
 		}
-		cfg.set_int("", prefix + "memory_search_size", memSize);
-		cfg.set_int("", prefix + "value", cheat.value);
-		cfg.set_int("", prefix + "repeat_count", cheat.repeatCount);
-		cfg.set_int("", prefix + "repeat_add_to_value", cheat.repeatValueIncrement);
-		cfg.set_int("", prefix + "repeat_add_to_address", cheat.repeatAddressIncrement);
+		cfg.set("", prefix + "memory_search_size", memSize);
+		cfg.set("", prefix + "value", cheat.value);
+		cfg.set("", prefix + "repeat_count", cheat.repeatCount);
+		cfg.set("", prefix + "repeat_add_to_value", cheat.repeatValueIncrement);
+		cfg.set("", prefix + "repeat_add_to_address", cheat.repeatAddressIncrement);
 		i++;
 	}
-	cfg.set_int("", "cheats", i);
+	cfg.set("", "cheats", i);
 	FILE *fp = hostfs::storage().openFile(filename.c_str(), "w");
 	if (fp == nullptr)
 		throw FlycastException("Can't save cheat file");

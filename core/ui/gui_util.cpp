@@ -28,6 +28,7 @@
 #include "oslib/directory.h"
 #include "oslib/storage.h"
 #include "oslib/http_client.h"
+#include "oslib/i18n.h"
 #include "imgui_driver.h"
 #include "imgui.h"
 #include "imgui_internal.h"
@@ -47,9 +48,8 @@ void error_popup();
 
 namespace hostfs
 {
-	bool operator<(const FileInfo& a, const FileInfo& b)
-	{
-		return a.name < b.name;
+	bool operator<(const FileInfo& a, const FileInfo& b) {
+		return i18n::locale()(a.name, b.name);
 	}
 }
 

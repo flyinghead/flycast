@@ -38,7 +38,7 @@
 
 - (void)showController:(UIView *)parentView
 {
-	if (!cfgLoadBool("help", "EditPadTip", false))
+	if (!config::loadBool("help", "EditPadTip", false))
 	{
 		UIAlertController* alert = [UIAlertController alertControllerWithTitle:@"Help Tip"
 								   message:@"Double tap to exit."
@@ -46,7 +46,7 @@
 		[self presentViewController:alert animated:YES completion:nil];
 		UIAlertAction* defaultAction = [UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault
 									   handler:^(UIAlertAction * action) {
-			cfgSaveBool("help", "EditPadTip", true);
+			config::saveBool("help", "EditPadTip", true);
 		}];
 		[alert addAction:defaultAction];
 	}

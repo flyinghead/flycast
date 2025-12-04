@@ -21,6 +21,7 @@
 #include "emulator.h"
 #include "ui/mainui.h"
 #include "oslib/directory.h"
+#include "oslib/i18n.h"
 #include <vector>
 #include <string>
 
@@ -31,6 +32,7 @@ int main(int argc, char *argv[])
 	//appletSetFocusHandlingMode(AppletFocusHandlingMode_NoSuspend);
 
 	LogManager::Init();
+	i18n::init();
 
 	// Set directories
 	flycast::mkdir("/flycast", 0755);

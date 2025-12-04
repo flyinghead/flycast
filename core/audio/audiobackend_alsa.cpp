@@ -20,7 +20,7 @@ public:
 	{
 		snd_pcm_hw_params_t *params;
 
-		std::string device = cfgLoadStr("alsa", "device", "");
+		std::string device = config::loadStr("alsa", "device");
 
 		int rc = -1;
 		if (!device.empty() && device != "auto") {

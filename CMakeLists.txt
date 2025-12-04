@@ -929,7 +929,7 @@ add_subdirectory(core/lua)
 add_subdirectory(core/profiler)
 add_subdirectory(core/wsi)
 
-include(cmake/resources.cmake)
+include(resources/resources.cmake)
 
 if(WIN32)
 	target_sources(${PROJECT_NAME} PRIVATE
@@ -1341,17 +1341,9 @@ if(NOT LIBRETRO)
 
 	if(ANDROID)
 		target_compile_definitions(${PROJECT_NAME} PRIVATE GLES GLES3)
-
-		target_sources(${PROJECT_NAME} PRIVATE
-			shell/android-studio/flycast/src/main/jni/src/Android.cpp
-			shell/android-studio/flycast/src/main/jni/src/android_gamepad.h
-			shell/android-studio/flycast/src/main/jni/src/android_storage.h
-			shell/android-studio/flycast/src/main/jni/src/http_client.h
-			shell/android-studio/flycast/src/main/jni/src/jni_util.h
-			shell/android-studio/flycast/src/main/jni/src/android_input.cpp
-			shell/android-studio/flycast/src/main/jni/src/android_keyboard.h)
-
+		add_subdirectory(shell/android-studio/flycast/src/main/jni/src)
 		target_link_libraries(${PROJECT_NAME} PRIVATE android log)
+
 	elseif(APPLE)
 		string(TIMESTAMP YEAR "%Y")
 		string(REGEX MATCH "^[^-]+" TAG_VERSION ${GIT_VERSION})

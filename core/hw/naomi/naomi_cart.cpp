@@ -740,8 +740,8 @@ void naomi_cart_LoadRom(const std::string& path, const std::string& fileName, Lo
 			config::LocalPort.override(config::LocalPort + settings.naomi.drivingSimSlave);
 			if (settings.naomi.drivingSimSlave == 0)
 			{
-				int x = cfgLoadInt("window", "left", (1920 - 640) / 2);
-				int w = cfgLoadInt("window", "width", 640);
+				int x = config::loadInt("window", "left", (1920 - 640) / 2);
+				int w = config::loadInt("window", "width", 640);
 				std::string region = "config:Dreamcast.Region=" + std::to_string(config::Region);
 				for (int i = 0; i < 2; i++)
 				{

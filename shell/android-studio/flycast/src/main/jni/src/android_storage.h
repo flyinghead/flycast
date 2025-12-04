@@ -279,7 +279,7 @@ extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_AndroidStorage_init(
 
 extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_AndroidStorage_reloadConfig(JNIEnv *env)
 {
-	if (cfgOpen())
+	if (config::open())
 	{
 		const RenderType render = config::RendererType;
 		config::Settings::instance().load(false);

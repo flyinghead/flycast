@@ -18,6 +18,7 @@
 #include "jni_util.h"
 #include "android_storage.h"
 #include "http_client.h"
+#include "android_locale.h"
 
 #include <android/log.h>
 #include <android/native_window.h>
@@ -116,7 +117,10 @@ extern "C" JNIEXPORT jstring JNICALL Java_com_flycast_emulator_emu_JNIdc_initEnv
         saveAndroidSettingsMid = env->GetMethodID(env->GetObjectClass(emulator), "SaveAndroidSettings", "(Ljava/lang/String;)V");
     }
     if (first_init)
+    {
     	LogManager::Init();
+    	i18n::init(env);
+    }
 
 #if defined(USE_BREAKPAD)
     if (exceptionHandler == nullptr)
@@ -154,9 +158,6 @@ extern "C" JNIEXPORT jstring JNICALL Java_com_flycast_emulator_emu_JNIdc_initEnv
     }
     INFO_LOG(BOOT, "Config dir is: %s", get_writable_config_path("").c_str());
     INFO_LOG(BOOT, "Data dir is:   %s", get_writable_data_path("").c_str());
-	jni::String locale(jlocale, false);
-    if (!locale.empty())
-        setenv("FLYCAST_LOCALE", locale.to_string().c_str(), 1);
 
     if (first_init)
     {

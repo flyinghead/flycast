@@ -32,7 +32,7 @@ android {
 
         externalNativeBuild {
             cmake {
-                arguments "-DANDROID_ARM_MODE=arm", "-DSENTRY_UPLOAD_URL=" + getSentryUrl(), "-DUSE_OPENMP=OFF"
+                arguments "-DANDROID_ARM_MODE=arm", "-DSENTRY_UPLOAD_URL=" + getSentryUrl(), "-DUSE_OPENMP=OFF", "-DANDROID_WEAK_API_DEFS=ON"
             }
         }
 

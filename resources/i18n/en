@@ -1,0 +1,65 @@
+;
+; Master message file
+;
+; Empty lines and lines starting with ';' are ignored.
+; Message keys and values can contain C-style escape sequences: \n, \t, \r, \f and \\ (backslash characters must be doubled)
+;
+GAMES=GAMES
+Filter=Filter
+Settings=Settings
+Load...=Load...
+Exit=Exit
+OK=OK
+Cancel=Cancel
+Your game list is empty=Your game list is empty
+Add Game Folder=Add Game Folder
+Invalid selection:=Invalid selection:
+Flycast cannot write to this folder.=Flycast cannot write to this folder.
+Select Flycast Home Folder=Select Flycast Home Folder
+Loading...=Loading...
+Starting...=Starting...
+Starting Network...=Starting Network...
+Press Start to start the game now.=Press Start to start the game now.
+Flycast has stopped.=Flycast has stopped.
+Resume=Resume
+Cheats=Cheats
+Achievements=Achievements
+Barcode Card=Barcode Card
+Connect DreamLink=Connect DreamLink
+Disconnect\nDreamLink=Disconnect\nDreamLink
+Port=Port
+Connected=Connected
+Disconnected=Disconnected
+Insert Disk=Insert Disk
+Eject Disk=Eject Disk
+Close Game=Close Game
+Load State=Load State
+Save State=Save State
+Slot %d=Slot %d
+Empty=Empty
+Incorrect Content Location?=Incorrect Content Location?
+Scanned %d folders but no game can be found!=Scanned %d folders but no game can be found!
+Reselect=Reselect
+Select a Content Folder=Select a Content Folder
+Preloading custom textures=Preloading custom textures
+Preparing...=Preparing...
+Fatal Error=Fatal Error
+No screenshot available=No screenshot available
+Screenshot saved=Screenshot saved
+Error saving screenshot=Error saving screenshot
+Waiting for players...=Waiting for players...
+%d player(s) connected. Waiting...=%d player(s) connected. Waiting...
+Starting game=Starting game
+No player connected=No player connected
+Connecting to server=Connecting to server
+Connected as slot %d=Connected as slot %d
+This game requires a real BIOS=This game requires a real BIOS
+Widescreen cheat activated=Widescreen cheat activated
+Save state failed - memory full=Save state failed - memory full
+Cannot open save file=Cannot open save file
+State saved=State saved
+Error saving state=Error saving state
+Save state not found=Save state not found
+Failed to load state=Failed to load state
+Not enough memory=Not enough memory
+I/O error=I/O error

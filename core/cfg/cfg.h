@@ -1,24 +1,28 @@
 #pragma once
-
 #include "types.h"
 
-bool cfgOpen();
-s32 cfgLoadInt(const std::string& section, const std::string& key, s32 def);
-void cfgSaveInt(const std::string& section, const std::string& key, s32 value);
-int64_t cfgLoadInt64(const std::string& section, const std::string& key, int64_t def);
-void cfgSaveInt64(const std::string& section, const std::string& key, int64_t value);
-std::string cfgLoadStr(const std::string& section, const std::string& key, const std::string& def);
-void cfgSaveStr(const std::string& section, const std::string& key, const std::string& value);
-void cfgSaveBool(const std::string& section, const std::string& key, bool value);
-bool cfgLoadBool(const std::string& section, const std::string& key, bool def);
-void cfgSaveFloat(const std::string& section, const std::string& key, float value);
-float cfgLoadFloat(const std::string& section, const std::string& key, float def);
-void cfgSetVirtual(const std::string& section, const std::string& key, const std::string& value);
-bool cfgIsVirtual(const std::string& section, const std::string& key);
+namespace config
+{
 
-void ParseCommandLine(int argc, char *argv[]);
+bool open();
+int loadInt(const std::string& section, const std::string& key, int def = 0);
+void saveInt(const std::string& section, const std::string& key, int value);
+int64_t loadInt64(const std::string& section, const std::string& key, int64_t def = 0);
+void saveInt64(const std::string& section, const std::string& key, int64_t value);
+std::string loadStr(const std::string& section, const std::string& key, const std::string& def = {});
+void saveStr(const std::string& section, const std::string& key, const std::string& value);
+bool loadBool(const std::string& section, const std::string& key, bool def = false);
+void saveBool(const std::string& section, const std::string& key, bool value);
+float loadFloat(const std::string& section, const std::string& key, float def = 0.f);
+void saveFloat(const std::string& section, const std::string& key, float value);
+void setTransient(const std::string& section, const std::string& key, const std::string& value);
+bool isTransient(const std::string& section, const std::string& key);
 
-void cfgSetAutoSave(bool autoSave);
-bool cfgHasSection(const std::string& section);
-void cfgDeleteSection(const std::string& section);
-void cfgDeleteEntry(const std::string& section, const std::string& key);
+void parseCommandLine(int argc, const char * const argv[]);
+
+void setAutoSave(bool autoSave);
+bool hasSection(const std::string& section);
+void deleteSection(const std::string& section);
+void deleteEntry(const std::string& section, const std::string& key);
+
+}

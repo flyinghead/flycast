@@ -256,7 +256,7 @@ public:
 	void send(const u8 *frame, u32 size)
 	{
 		if (sendBufferIdx + size >= sendBuffer.size()) {
-			WARN_LOG(NETWORK, "Dropped out frame (buffer:%d + %d bytes). Increase send buffer size\n", sendBufferIdx, size);
+			WARN_LOG(NETWORK, "Dropped out frame (buffer:%d + %d bytes). Increase send buffer size", sendBufferIdx, size);
 			return;
 		}
 		if (size >= 32) // skip prolog
@@ -567,7 +567,7 @@ private:
 					continue;
 				}
 				const int ping = ap.ping / ap.count;
-				INFO_LOG(NETWORK, "AP %s (%s): ping %d ms", ap.name.c_str(), ap.endpoint.address().to_string().c_str(), ping);
+				INFO_LOG(NETWORK, "AP %s (%s): ping %d ms (%d pings)", ap.name.c_str(), ap.endpoint.address().to_string().c_str(), ping, ap.count);
 				if (ping < bestPing) {
 					bestPing = ping;
 					bestAP = &ap;
@@ -734,7 +734,7 @@ void DCNetThread::connect(const asio::ip::address& address, const std::string& a
 	{
 		std::string hostname = "dcnet.flyca.st";
 #ifndef LIBRETRO
-		hostname = cfgLoadStr("network", "DCNetServer", hostname);
+		hostname = config::loadStr("network", "DCNetServer", hostname);
 #endif
 		std::string port;
 		if (config::EmulateBBA)
@@ -776,7 +776,7 @@ void DCNetThread::run()
 	try {
 		std::string hostname;
 #ifndef LIBRETRO
-		hostname = cfgLoadStr("network", "DCNetServer", "");
+		hostname = config::loadStr("network", "DCNetServer");
 		if (!hostname.empty())
 			connect();
 #endif

@@ -9,6 +9,7 @@
 #include "ui/mainui.h"
 #include "oslib/directory.h"
 #include "oslib/oslib.h"
+#include "oslib/i18n.h"
 #include "stdclass.h"
 
 #include <csignal>
@@ -238,6 +239,7 @@ int main(int argc, char* argv[])
 #endif
 
 	LogManager::Init();
+	i18n::init();
 
 	// Set directories
 	set_user_config_dir(find_user_config_dir());

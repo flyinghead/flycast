@@ -407,7 +407,7 @@ glm::mat4 ViewportMatrix;
 #ifdef TEST_AUTOMATION
 void do_swap_automation()
 {
-	static FILE* video_file = fopen(cfgLoadStr("record", "rawvid","").c_str(), "wb");
+	static FILE* video_file = fopen(config::loadStr("record", "rawvid").c_str(), "wb");
 	extern bool do_screenshot;
 
 	GlFramebuffer *framebuffer = gl.ofbo2.ready ? gl.ofbo2.framebuffer.get() : gl.ofbo.framebuffer.get();

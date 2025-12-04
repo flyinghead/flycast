@@ -214,7 +214,7 @@ TEST_F(CheatManagerTest, TestSave)
 	mgr.addGameSharkCheat("cheat5", "030100ff 8c050000");
 	mgr.addGameSharkCheat("cheat6", "0304ffff 8c060000");
 
-	mgr.loadCheatFile(cfgLoadStr("cheats", "TESTSAVE", ""));
+	mgr.loadCheatFile(config::loadStr("cheats", "TESTSAVE"));
 	ASSERT_EQ(Cheat::Type::setValue, mgr.cheats[0].type);
 	ASSERT_EQ(0x010000u, mgr.cheats[0].address);
 	ASSERT_EQ(0xd3u, mgr.cheats[0].value);

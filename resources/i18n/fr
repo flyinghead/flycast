@@ -1,0 +1,65 @@
+;
+; French message file
+;
+; Empty lines and lines starting with ';' are ignored.
+; Message keys and values can contain C-style escape sequences: \n, \t, \r, \f and \\ (backslash characters must be doubled)
+;
+GAMES=JEUX
+Filter=Filtre
+Settings=Préférences
+Load...=Charger...
+Exit=Quitter
+OK=OK
+Cancel=Annuler
+Your game list is empty=Votre librairie est vide
+Add Game Folder=Ajouter des jeux
+Invalid selection:=Sélection invalide:
+Flycast cannot write to this folder.=Flycast ne peut pas écrire dans ce dosier.
+Select Flycast Home Folder=Sélectionner le dossier principal de Flycast
+Loading...=Chargement...
+Starting...=Démarrage...
+Starting Network...=Démarrage du réseau...
+Press Start to start the game now.=Appuyer sur Start pour démarrer le jeu maintenant.
+Flycast has stopped.=Flycast a stoppé.
+Resume=Continuer
+Cheats=Cheats
+Achievements=Succès
+Barcode Card=Code Barre
+Connect DreamLink=Connecter DreamLink
+Disconnect\nDreamLink=Déconnecter\nDreamLink
+Port=Port
+Connected=Connecté
+Disconnected=Déconnecté
+Insert Disk=Insérer Disque
+Eject Disk=Ejecter Disque
+Close Game=Quitter Jeu
+Load State=Charger Etat
+Save State=Sauver Etat
+Slot %d=N° %d
+Empty=Vide
+Incorrect Content Location?=Dossier de contenu incorrect?
+Scanned %d folders but no game can be found!=%d dossiers parcourus mais pas de jeu trouvé!
+Reselect=Resélectionner
+Select a Content Folder=Sélectionner un dossier de jeux
+Preloading custom textures=Préchargement des textures custom
+Preparing...=Préparation...
+Fatal Error=Erreur Fatale
+No screenshot available=Pas de capture d'écran disponible
+Screenshot saved=Capture d'écran sauvegardée
+Error saving screenshot=Erreur de capture d'écran
+Waiting for players...=En attente des joueurs...
+%d player(s) connected. Waiting...=%d joueurs connectés. En attente...
+Starting game=Démarrage du jeu
+No player connected=Aucun joueur connecté
+Connecting to server=Connexion au serveur
+Connected as slot %d=Connecté comme noeud %d
+This game requires a real BIOS=Ce jeu demande un BIOS authentique
+Widescreen cheat activated=Cheat écran large activé
+Save state failed - memory full=Echec de sauvegarde - mémoire pleine
+Cannot open save file=Impossible d'ouvrir le fichier de sauvegarde
+State saved=Etat sauvegardé
+Error saving state=Echec de sauvegarde
+Save state not found=Etat introuvable
+Failed to load state=Echec de chargement
+Not enough memory=Pas assez de mémoire
+I/O error=Erreur d'entrée/sortie

@@ -27,8 +27,8 @@
 #include <vector>
 #include <limits>
 
-namespace emucfg {
-struct ConfigFile;
+namespace config {
+class IniFile;
 }
 
 class InputMapping
@@ -265,7 +265,7 @@ protected:
 	bool dirty = false;
 
 private:
-	void loadv1(emucfg::ConfigFile& mf);
+	void loadv1(config::IniFile& mf);
 	static std::vector<std::string> strSplit(const std::string str, char c, size_t maxsplit = 0);
 
 	std::map<std::pair<u32, bool>, DreamcastKey> axes[NUM_PORTS];

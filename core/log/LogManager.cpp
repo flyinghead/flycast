@@ -120,7 +120,7 @@ LogManager::LogManager()
 	m_log[LogTypes::SH4] = {"SH4", "SH4 Modules"};
 
 	// Set up log listeners
-	int verbosity = cfgLoadInt("log", "Verbosity", LogTypes::LDEBUG);
+	int verbosity = config::loadInt("log", "Verbosity", LogTypes::LDEBUG);
 
 	// Ensure the verbosity level is valid
 	if (verbosity < 1)
@@ -130,12 +130,12 @@ LogManager::LogManager()
 	SetLogLevel(static_cast<LogTypes::LOG_LEVELS>(verbosity));
 
 	RegisterListener(LogListener::CONSOLE_LISTENER, new ConsoleListener());
-	EnableListener(LogListener::CONSOLE_LISTENER, cfgLoadBool("log", "LogToConsole", true));
+	EnableListener(LogListener::CONSOLE_LISTENER, config::loadBool("log", "LogToConsole", true));
 	RegisterListener(LogListener::IN_MEMORY_LISTENER, new InMemoryListener());
 	EnableListener(LogListener::IN_MEMORY_LISTENER, true);
 
 	for (LogContainer& container : m_log)
-		container.m_enable = cfgLoadBool("log", container.m_short_name, true);
+		container.m_enable = config::loadBool("log", container.m_short_name, true);
 
 	m_path_cutoff_point = DeterminePathCutOffPoint();
 
@@ -144,7 +144,7 @@ LogManager::LogManager()
 
 void LogManager::UpdateConfig()
 {
-	bool logToFile = cfgLoadBool("log", "LogToFile", false);
+	bool logToFile = config::loadBool("log", "LogToFile", false);
 	if (logToFile != IsListenerEnabled(LogListener::FILE_LISTENER))
 	{
 		if (!logToFile) {
@@ -170,7 +170,7 @@ void LogManager::UpdateConfig()
 		}
 		EnableListener(LogListener::FILE_LISTENER, logToFile);
 	}
-	std::string newLogServer = cfgLoadStr("log", "LogServer", "");
+	std::string newLogServer = config::loadStr("log", "LogServer");
 	if (logServer != newLogServer)
 	{
 		logServer = newLogServer;

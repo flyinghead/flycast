@@ -127,7 +127,7 @@ static ImTextureID loadOSDButtons()
 {
 	ImTextureID id{};
 	// custom image
-	std::string path = cfgLoadStr(CFG_SECTION, getButtonsCfgName(), "");
+	std::string path = config::loadStr(CFG_SECTION, getButtonsCfgName());
 	if (loadOSDButtons(path))
 		return id;
 	if (settings.platform.isConsole())
@@ -452,15 +452,15 @@ struct LayoutElement
 
 	void load()
 	{
-		x = cfgLoadFloat(CFG_SECTION, name + "_x", x);
-		y = cfgLoadFloat(CFG_SECTION, name + "_y", y);
-		scale = cfgLoadFloat(CFG_SECTION, name + "_scale", scale);
+		x = config::loadFloat(CFG_SECTION, name + "_x", x);
+		y = config::loadFloat(CFG_SECTION, name + "_y", y);
+		scale = config::loadFloat(CFG_SECTION, name + "_scale", scale);
 	}
 	void save() const
 	{
-		cfgSaveFloat(CFG_SECTION, name + "_x", x);
-		cfgSaveFloat(CFG_SECTION, name + "_y", y);
-		cfgSaveFloat(CFG_SECTION, name + "_scale", scale);
+		config::saveFloat(CFG_SECTION, name + "_x", x);
+		config::saveFloat(CFG_SECTION, name + "_y", y);
+		config::saveFloat(CFG_SECTION, name + "_scale", scale);
 	}
 
 	bool hitTest(float nx, float ny) const {
@@ -613,10 +613,10 @@ static void loadLayout()
 
 static void saveLayout()
 {
-	cfgSetAutoSave(false);
+	config::setAutoSave(false);
 	for (auto& element : Layout)
 		element.save();
-	cfgSetAutoSave(false);
+	config::setAutoSave(false);
 }
 
 static void resetLayout()
@@ -655,11 +655,11 @@ void scaleElement(Element element, float factor)
 void loadImage(const std::string& path)
 {
 	if (path.empty()) {
-		cfgSaveStr(CFG_SECTION, getButtonsCfgName(), "");
+		config::saveStr(CFG_SECTION, getButtonsCfgName(), "");
 		loadOSDButtons();
 	}
 	else if (loadOSDButtons(path)) {
-		cfgSaveStr(CFG_SECTION, getButtonsCfgName(), path);
+		config::saveStr(CFG_SECTION, getButtonsCfgName(), path);
 	}
 }
 

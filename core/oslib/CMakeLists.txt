@@ -2,6 +2,8 @@ target_sources(${PROJECT_NAME} PRIVATE
         directory.cpp
         directory.h
         host_context.h
+        i18n.cpp
+        i18n.h
         oslib.h
         resources.cpp
         resources.h

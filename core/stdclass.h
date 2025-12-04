@@ -224,6 +224,7 @@ public:
 
 u64 getTimeMs();
 std::string timeToISO8601(time_t time);
+std::string timeToShortDateTimeString(time_t time);
 
 class ThreadRunner
 {

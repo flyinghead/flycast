@@ -65,6 +65,7 @@
 #include "version.h"
 #include "oslib/oslib.h"
 #include "rend/CustomTexture.h"
+#include "oslib/i18n.h"
 
 constexpr char slash = path_default_slash_c();
 
@@ -364,6 +365,7 @@ void retro_init()
 #endif
 	os_InstallFaultHandler();
 	MapleConfigMap::UpdateVibration = updateVibration;
+	i18n::init();
 
 #if defined(__APPLE__) || (defined(__GNUC__) && defined(__linux__) && !defined(__ANDROID__))
 	if (!emuInited)

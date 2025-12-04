@@ -87,7 +87,7 @@ void gui_settings_audio()
 
 		for (int o = 0; o < option_count; o++)
 		{
-			std::string value = cfgLoadStr(current_backend->slug, options->name, "");
+			std::string value = config::loadStr(current_backend->slug, options->name);
 
 			if (options->type == AudioBackend::Option::integer)
 			{
@@ -95,14 +95,14 @@ void gui_settings_audio()
 				if (ImGui::SliderInt(options->caption.c_str(), &val, options->minValue, options->maxValue))
 				{
 					std::string s = std::to_string(val);
-					cfgSaveStr(current_backend->slug, options->name, s);
+					config::saveStr(current_backend->slug, options->name, s);
 				}
 			}
 			else if (options->type == AudioBackend::Option::checkbox)
 			{
 				bool check = value == "1";
 				if (ImGui::Checkbox(options->caption.c_str(), &check))
-					cfgSaveStr(current_backend->slug, options->name,
+					config::saveStr(current_backend->slug, options->name,
 							check ? "1" : "0");
 			}
 			else if (options->type == AudioBackend::Option::list)
@@ -114,7 +114,7 @@ void gui_settings_audio()
 					{
 						is_selected = value == cur;
 						if (ImGui::Selectable(cur.c_str(), &is_selected))
-							cfgSaveStr(current_backend->slug, options->name, cur);
+							config::saveStr(current_backend->slug, options->name, cur);
 
 						if (is_selected)
 							ImGui::SetItemDefaultFocus();

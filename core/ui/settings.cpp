@@ -117,9 +117,9 @@ static void gui_settings_advanced()
 					"Always dump textures that are already replaced by custom textures");
 		}
 		ImGui::Unindent();
-        bool logToFile = cfgLoadBool("log", "LogToFile", false);
+        bool logToFile = config::loadBool("log", "LogToFile", false);
 		if (ImGui::Checkbox("Log to File", &logToFile))
-			cfgSaveBool("log", "LogToFile", logToFile);
+			config::saveBool("log", "LogToFile", logToFile);
         ImGui::SameLine();
         ShowHelpMarker("Log debug information to flycast.log");
 #ifdef SENTRY_UPLOAD
@@ -151,7 +151,7 @@ static void gui_debug_tab()
 			std::string name = std::string(logManager->GetShortName(type)) + " - " + logManager->GetFullName(type);
 			if (ImGui::Checkbox(name.c_str(), &enabled) && logManager->GetLogLevel() > LogTypes::LWARNING) {
 				logManager->SetEnable(type, enabled);
-				cfgSaveBool("log", logManager->GetShortName(type), enabled);
+				config::saveBool("log", logManager->GetShortName(type), enabled);
 			}
 		}
 		ImGui::Spacing();
@@ -164,7 +164,7 @@ static void gui_debug_tab()
 				bool is_selected = logManager->GetLogLevel() - 1 == (int)i;
 				if (ImGui::Selectable(levels[i], &is_selected)) {
 					logManager->SetLogLevel((LogTypes::LOG_LEVELS)(i + 1));
-					cfgSaveInt("log", "Verbosity", i + 1);
+					config::saveInt("log", "Verbosity", i + 1);
 				}
 				if (is_selected)
 					ImGui::SetItemDefaultFocus();

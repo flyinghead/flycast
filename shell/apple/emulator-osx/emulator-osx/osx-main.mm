@@ -20,6 +20,7 @@
 #endif
 #include "stdclass.h"
 #include "oslib/oslib.h"
+#include "oslib/i18n.h"
 #include "emulator.h"
 #include "ui/mainui.h"
 #include <future>
@@ -107,7 +108,7 @@ extern "C" int SDL_main(int argc, char *argv[])
 
 	emu_flycast_init();
 	
-	int boardId = cfgLoadInt("naomi", "BoardId", 0);
+	int boardId = config::loadInt("naomi", "BoardId");
 	if (boardId > 0)
 	{
 		NSString *label = @"S";		// Slave
@@ -142,6 +143,7 @@ extern "C" int SDL_main(int argc, char *argv[])
 static int emu_flycast_init()
 {
 	LogManager::Init();
+	i18n::init();
 	os_InstallFaultHandler();
 	NSArray *arguments = [[NSProcessInfo processInfo] arguments];
 	unsigned long argc = [arguments count];
@@ -178,10 +180,6 @@ static int emu_flycast_init()
 	return rc;
 }
 
-std::string os_Locale(){
-    return [[[NSLocale preferredLanguages] objectAtIndex:0] UTF8String];
-}
-
 std::string os_PrecomposedString(std::string string){
     return [[[NSString stringWithUTF8String:string.c_str()] precomposedStringWithCanonicalMapping] UTF8String];
 }
@@ -213,7 +211,7 @@ void os_VideoRoutingPublishFrameTexture(GLuint texID, GLuint texTarget, float w,
 {
 	if (syphonGLServer == NULL)
 	{
-		int boardID = cfgLoadInt("naomi", "BoardId", 0);
+		int boardID = config::loadInt("naomi", "BoardId");
 		syphonGLServer = [[SyphonOpenGLServer alloc] initWithName:[NSString stringWithFormat:(boardID == 0 ? @"Video Content" : @"Video Content - %d"), boardID] context:[SDL_GL_GetCurrentContext() CGLContextObj] options:nil];
 	}
 	CGLLockContext([syphonGLServer context]);
@@ -236,7 +234,7 @@ void os_VideoRoutingPublishFrameTexture(const vk::Device& device, const vk::Imag
 		auto objectsInfo = vk::ExportMetalObjectsInfoEXT(&deviceInfo);
 		device.exportMetalObjectsEXT(&objectsInfo);
 		
-		int boardID = cfgLoadInt("naomi", "BoardId", 0);
+		int boardID = config::loadInt("naomi", "BoardId");
 		syphonMtlServer = [[SyphonMetalServer alloc] initWithName:[NSString stringWithFormat:(boardID == 0 ? @"Video Content" : @"Video Content - %d"), boardID] device:deviceInfo.mtlDevice options:nil];
 	}
 	
