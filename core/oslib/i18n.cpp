@@ -104,7 +104,7 @@ const char *Tcs(const char *msg)
 		return out.c_str();
 }
 
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(LIBRETRO)
 std::string getCurrentLocale()
 {
 	wchar_t wname[128];
