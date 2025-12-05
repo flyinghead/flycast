@@ -166,6 +166,11 @@ ImTextureID ImguiVGamepadTexture::getId()
 	return id;
 }
 
+void ImguiVGamepadTexture::deleteCache()
+{
+	imguiDriver->deleteTexture(getButtonsResPath());
+}
+
 constexpr float vjoy_tex[_Count][4] = {
 	// L
 	{   0,   0,  64,  64 },
@@ -331,7 +336,7 @@ void setAnalogStick(float x, float y) {
 }
 
 float getControlWidth(ControlId control) {
-	return Controls[control].size.x;	
+	return Controls[control].size.x;
 }
 
 void toggleServiceMode()
@@ -404,7 +409,7 @@ void draw()
 			// mark done
 			Controls[Left].pos.x = 1e-12f;
 	}
-		
+
 	ImDrawList *drawList = ImGui::GetBackgroundDrawList();
 	drawButton(drawList, Controls[Left], kcode[0] & buttonMap[Left]);
 	drawButton(drawList, Controls[Up], kcode[0] & buttonMap[Up]);
