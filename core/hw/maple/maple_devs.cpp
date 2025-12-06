@@ -2615,7 +2615,7 @@ void createDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink, bool gameStart
 							"Reconnect manually to resume using physical VMU memory");
 					}
 				}
-
+				vmu->OnSetup();
 				vmu->Setup(bus, i);
 
 				if (!vmuFound && dev && dev->get_device_type() == MDT_SegaVMU && !vmu->useRealVmuMemory) {
