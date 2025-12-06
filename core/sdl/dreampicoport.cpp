@@ -1139,7 +1139,7 @@ public:
 		dpp_comms->send(msg, timeout_ms);
 	}
 
-		void gameTermination() override {
+	void gameTermination() override {
 		// Need a short delay to wait for last screen draw to complete
 		std::this_thread::sleep_for(std::chrono::milliseconds(10));
 		// Reset screen to selected port
