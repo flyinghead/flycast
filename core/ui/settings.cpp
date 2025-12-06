@@ -56,18 +56,18 @@ static void gui_settings_advanced()
 		void *ram_base, *ram, *vram, *aram;
 		addrspace::getAddress(&ram_base, &ram, &vram, &aram);
 
-		ImGui::Text("Base Address: %p", ram_base);
+		ImGui::Text(Tcs("Base Address: %p"), ram_base);
 
 		if (ram == nullptr) {
 			const ImVec4 gray(0.75f, 0.75f, 0.75f, 1.f);
-			ImGui::TextColored(gray, "RAM adresses are not available until the emulation is started");
+			ImGui::TextColored(gray, "%s", Tcs("RAM adresses are not available until the emulation is started"));
 		} else {
 			ImGui::Columns(3, "virtualMemoryAddress", false);
-			ImGui::Text("RAM: %p", ram);
+			ImGui::Text(Tcs("RAM: %p"), ram);
 			ImGui::NextColumn();
-			ImGui::Text("VRAM64: %p", vram);
+			ImGui::Text(Tcs("VRAM64: %p"), vram);
 			ImGui::NextColumn();
-			ImGui::Text("ARAM: %p", aram);
+			ImGui::Text(Tcs("ARAM: %p"), aram);
 			ImGui::Columns(1, nullptr, false);
 		}
 
@@ -83,7 +83,7 @@ static void gui_settings_advanced()
 #endif
 
 		static int gdbport = config::GDBPort;
-		if (ImGui::InputInt("GDB port", &gdbport))
+		if (ImGui::InputInt(Tcs("GDB port"), &gdbport))
 		{
 			config::GDBPort = gdbport;
 		}
@@ -118,7 +118,7 @@ static void gui_settings_advanced()
 		}
 		ImGui::Unindent();
         bool logToFile = config::loadBool("log", "LogToFile", false);
-		if (ImGui::Checkbox("Log to File", &logToFile))
+		if (ImGui::Checkbox(Tcs("Log to File"), &logToFile))
 			config::saveBool("log", "LogToFile", logToFile);
         ImGui::SameLine();
         ShowHelpMarker("Log debug information to flycast.log");
@@ -157,7 +157,7 @@ static void gui_debug_tab()
 		ImGui::Spacing();
 
 		static const char *levels[] = { "Notice", "Error", "Warning", "Info", "Debug" };
-		if (ImGui::BeginCombo("Log Verbosity", levels[logManager->GetLogLevel() - 1], ImGuiComboFlags_None))
+		if (ImGui::BeginCombo(Tcs("Log Verbosity"), levels[logManager->GetLogLevel() - 1], ImGuiComboFlags_None))
 		{
 			for (std::size_t i = 0; i < std::size(levels); i++)
 			{
@@ -199,6 +199,10 @@ static void gui_debug_tab()
 }
 #endif
 
+static bool beginTabItem(const char *icon, const char *label) {
+	return ImGui::BeginTabItem((std::string(icon) + " " + T(label)).c_str());
+}
+
 void gui_display_settings()
 {
 	static bool maple_devices_changed;
@@ -206,11 +210,11 @@ void gui_display_settings()
 	fullScreenWindow(false);
 	ImguiStyleVar _(ImGuiStyleVar_WindowRounding, 0);
 
-    ImGui::Begin("Settings", NULL, ImGuiWindowFlags_DragScrolling | ImGuiWindowFlags_NoResize
+    ImGui::Begin(Tcs("Settings"), NULL, ImGuiWindowFlags_DragScrolling | ImGuiWindowFlags_NoResize
     		| ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
 	ImVec2 normal_padding = ImGui::GetStyle().FramePadding;
 
-    if (ImGui::Button("Done", ScaledVec2(100, 30)))
+    if (ImGui::Button(Tcs("Done"), ScaledVec2(100, 30)))
     {
     	if (uiUserScaleUpdated)
     	{
@@ -241,7 +245,7 @@ void gui_display_settings()
 		ImguiStyleVar _(ImGuiStyleVar_FramePadding, ImVec2(uiScaled(16), normal_padding.y));
 		if (config::Settings::instance().hasPerGameConfig())
 		{
-			if (ImGui::Button("Delete Game Config", ScaledVec2(0, 30)))
+			if (ImGui::Button(Tcs("Delete Game Config"), ScaledVec2(0, 30)))
 			{
 				config::Settings::instance().setPerGameConfig(false);
 				config::Settings::instance().load(false);
@@ -250,7 +254,7 @@ void gui_display_settings()
 		}
 		else
 		{
-			if (ImGui::Button("Make Game Config", ScaledVec2(0, 30)))
+			if (ImGui::Button(Tcs("Make Game Config"), ScaledVec2(0, 30)))
 				config::Settings::instance().setPerGameConfig(true);
 		}
 	}
@@ -263,51 +267,51 @@ void gui_display_settings()
 
     if (ImGui::BeginTabBar("settings", ImGuiTabBarFlags_NoTooltip))
     {
-		if (ImGui::BeginTabItem(ICON_FA_TOOLBOX " General"))
+		if (beginTabItem(ICON_FA_TOOLBOX, "General"))
 		{
 			ImguiStyleVar _(ImGuiStyleVar_FramePadding, normal_padding);
 			gui_settings_general();
 			ImGui::EndTabItem();
 		}
-		if (ImGui::BeginTabItem(ICON_FA_GAMEPAD " Controls"))
+		if (beginTabItem(ICON_FA_GAMEPAD, "Controls"))
 		{
 			ImguiStyleVar _(ImGuiStyleVar_FramePadding, normal_padding);
 			gui_settings_controls(maple_devices_changed);
 			ImGui::EndTabItem();
 		}
-		if (ImGui::BeginTabItem(ICON_FA_DISPLAY " Video"))
+		if (beginTabItem(ICON_FA_DISPLAY, "Video"))
 		{
 			ImguiStyleVar _(ImGuiStyleVar_FramePadding, normal_padding);
 			gui_settings_video();
 			ImGui::EndTabItem();
 		}
-		if (ImGui::BeginTabItem(ICON_FA_MUSIC " Audio"))
+		if (beginTabItem(ICON_FA_MUSIC, "Audio"))
 		{
 			ImguiStyleVar _(ImGuiStyleVar_FramePadding, normal_padding);
 			gui_settings_audio();
 			ImGui::EndTabItem();
 		}
-		if (ImGui::BeginTabItem(ICON_FA_WIFI " Network"))
+		if (beginTabItem(ICON_FA_WIFI, "Network"))
 		{
 			ImguiStyleVar _(ImGuiStyleVar_FramePadding, normal_padding);
 			gui_settings_network();
 			ImGui::EndTabItem();
 		}
-		if (ImGui::BeginTabItem(ICON_FA_MICROCHIP " Advanced"))
+		if (beginTabItem(ICON_FA_MICROCHIP, "Advanced"))
 		{
 			ImguiStyleVar _(ImGuiStyleVar_FramePadding, normal_padding);
 			gui_settings_advanced();
 			ImGui::EndTabItem();
 		}
 #if !defined(NDEBUG) || defined(DEBUGFAST) || FC_PROFILER
-		if (ImGui::BeginTabItem(ICON_FA_BUG " Debug"))
+		if (beginTabItem(ICON_FA_BUG, "Debug"))
 		{
 			ImguiStyleVar _(ImGuiStyleVar_FramePadding, normal_padding);
 			gui_debug_tab();
 			ImGui::EndTabItem();
 		}
 #endif
-		if (ImGui::BeginTabItem(ICON_FA_CIRCLE_INFO " About"))
+		if (beginTabItem(ICON_FA_CIRCLE_INFO, "About"))
 		{
 			ImguiStyleVar _(ImGuiStyleVar_FramePadding, normal_padding);
 			gui_settings_about();

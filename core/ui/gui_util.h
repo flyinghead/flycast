@@ -25,6 +25,7 @@
 #include "gui.h"
 #include "emulator.h"
 #include "oslib/oslib.h"
+#include "oslib/i18n.h"
 
 #include <algorithm>
 #include <chrono>
@@ -275,21 +276,36 @@ private:
 	static std::array<ImguiVmuTexture, 8> Vmus;
 };
 
-static inline bool iconButton(const char *icon, const std::string& label, const ImVec2& size = {})
+class IconButton
 {
-	ImguiStyleVar _{ImGuiStyleVar_ButtonTextAlign, ImVec2(0.f, 0.5f)};	// left aligned
-	std::string s(5 + label.size(), '\0');
-	s.resize(snprintf(s.data(), s.size() + 1, "%s  %s", icon, label.c_str()));
-	return ImGui::Button(s.c_str(), size);
-}
+public:
+	IconButton(const char *icon, const std::string& label, const ImVec2& size = {})
+		: size(size)
+	{
+		const std::string& tl = i18n::T(label);
+		str.resize((icon == nullptr ? 0 : 5) + tl.size(), '\0');
+		str.resize(
+				icon == nullptr ? snprintf(str.data(), str.size() + 1, "%s", tl.c_str())
+								: snprintf(str.data(), str.size() + 1, "%s  %s", icon, tl.c_str())
+			);
+	}
 
-static inline float iconButtonWidth(const char *icon, const std::string& label)
-{
-	// TODO avoid doing stuff twice
-	std::string s(5 + label.size(), '\0');
-	s.resize(snprintf(s.data(), s.size() + 1, "%s  %s", icon, label.c_str()));
-	return ImGui::CalcTextSize(s.c_str()).x + ImGui::GetStyle().FramePadding.x * 2;
-}
+	IconButton(const std::string& label, const ImVec2& size = {})
+		: IconButton(nullptr, label, size)
+	{}
+
+	bool realize() {
+		return ImGui::Button(str.c_str(), size);
+	}
+
+	float width() {
+		return ImGui::CalcTextSize(str.c_str()).x + ImGui::GetStyle().FramePadding.x * 2;
+	}
+
+private:
+	std::string str;
+	ImVec2 size;
+};
 
 static inline ImU32 alphaOverride(ImU32 color, float alpha) {
 	return (color & ~IM_COL32_A_MASK) | (IM_F32_TO_INT8_SAT(alpha) << IM_COL32_A_SHIFT);

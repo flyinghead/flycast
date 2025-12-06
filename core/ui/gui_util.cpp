@@ -37,6 +37,8 @@
 #include "rend/osd.h"
 #include <stb_image.h>
 
+using namespace i18n;
+
 static std::string select_current_directory = "**home**";
 static std::vector<hostfs::FileInfo> subfolders;
 static std::vector<hostfs::FileInfo> folderFiles;
@@ -49,7 +51,7 @@ void error_popup();
 namespace hostfs
 {
 	bool operator<(const FileInfo& a, const FileInfo& b) {
-		return i18n::locale()(a.name, b.name);
+		return locale()(a.name, b.name);
 	}
 }
 
@@ -59,6 +61,7 @@ void select_file_popup(const char *prompt, StringCallback callback,
 	fullScreenWindow(true);
 	ImguiStyleVar _(ImGuiStyleVar_WindowRounding, 0);
 	ImguiStyleVar _1(ImGuiStyleVar_FramePadding, ImVec2(4, 3)); // default
+	prompt = Tcs(prompt);
 
 	if (ImGui::BeginPopup(prompt, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize ))
 	{
@@ -116,7 +119,7 @@ void select_file_popup(const char *prompt, StringCallback callback,
 		if (!error_message.empty())
 			title = error_message;
 		else if (select_current_directory.empty())
-			title = "Storage";
+			title = T("Storage");
 		else
 			title = select_current_directory;
 
@@ -128,7 +131,7 @@ void select_file_popup(const char *prompt, StringCallback callback,
 
 			if (!select_current_directory.empty() && select_current_directory != "/")
 			{
-				if (ImGui::Selectable(".. Up to Parent Folder"))
+				if (ImGui::Selectable(Tcs(".. Up to Parent Folder")))
 				{
 					subfolders_read = false;
 					select_current_directory = hostfs::storage().getParentPath(select_current_directory);
@@ -166,7 +169,7 @@ void select_file_popup(const char *prompt, StringCallback callback,
 		ImGui::EndChild();
 		if (!selectFile)
 		{
-			if (ImGui::Button("Select Current Folder", ScaledVec2(0, 30)))
+			if (ImGui::Button(Tcs("Select Current Folder"), ScaledVec2(0, 30)))
 			{
 				if (callback(false, select_current_directory))
 				{
@@ -176,7 +179,7 @@ void select_file_popup(const char *prompt, StringCallback callback,
 			}
 			ImGui::SameLine();
 		}
-		if (ImGui::Button("Cancel", ScaledVec2(0, 30)))
+		if (ImGui::Button(Tcs("Cancel"), ScaledVec2(0, 30)))
 		{
 			subfolders_read = false;
 			callback(true, "");
@@ -474,12 +477,12 @@ const ImWchar* GetGlyphRangesChineseTraditionalOfficial()
 // Helper to display a little (?) mark which shows a tooltip when hovered.
 void ShowHelpMarker(const char* desc)
 {
-    ImGui::TextDisabled("(?)");
+    ImGui::TextDisabled("%s", Tcs("(?)"));
     if (ImGui::IsItemHovered())
     {
         ImGui::BeginTooltip();
         ImGui::PushTextWrapPos(ImGui::GetFontSize() * 25.0f);
-        ImGui::TextUnformatted(desc);
+        ImGui::TextUnformatted(Tcs(desc));
         ImGui::PopTextWrapPos();
         ImGui::EndTooltip();
     }
@@ -493,7 +496,7 @@ bool OptionCheckbox(const char *name, config::Option<bool, PerGameOption>& optio
 		DisabledScope scope(option.isReadOnly());
 
 		bool b = option;
-		pressed = ImGui::Checkbox(name, &b);
+		pressed = ImGui::Checkbox(Tcs(name), &b);
 		if (pressed)
 			option.set(b);
 	}
@@ -515,7 +518,7 @@ bool OptionSlider(const char *name, config::Option<int, PerGameOption>& option, 
 		DisabledScope scope(option.isReadOnly());
 
 		int v = option;
-		valueChanged = ImGui::SliderInt(name, &v, min, max, format);
+		valueChanged = ImGui::SliderInt(Tcs(name), &v, min, max, format);
 		if (valueChanged)
 			option.set(v);
 	}
@@ -563,7 +566,7 @@ bool OptionArrowButtons(const char *name, config::Option<int>& option, int min, 
 	}
 	ImGui::PopButtonRepeat();
 	ImGui::SameLine(0.0f, innerSpacing);
-	ImGui::Text("%s", name);
+	ImGui::Text("%s", Tcs(name));
 	if (help != nullptr)
 	{
 		ImGui::SameLine();
@@ -580,7 +583,7 @@ bool OptionRadioButton(const char *name, config::Option<T>& option, T value, con
 		DisabledScope scope(option.isReadOnly());
 
 		int v = (int)option;
-		pressed = ImGui::RadioButton(name, &v, (int)value);
+		pressed = ImGui::RadioButton(Tcs(name), &v, (int)value);
 		if (pressed)
 			option.set((T)v);
 	}
@@ -602,7 +605,7 @@ void OptionComboBox(const char *name, config::Option<int, PerGameOption>& option
 		DisabledScope scope(option.isReadOnly());
 
 		const char *value = option >= 0 && option < count ? values[option] : "?";
-		if (ImGui::BeginCombo(name, value, ImGuiComboFlags_None))
+		if (ImGui::BeginCombo(Tcs(name), value, ImGuiComboFlags_None))
 		{
 			for (int i = 0; i < count; i++)
 			{
@@ -1023,6 +1026,7 @@ bool beginFrame(const char *label, const ImVec2& size_arg, ImVec2 *out_size)
     ImGuiWindow* window = GetCurrentWindow();
     if (window->SkipItems)
         return false;
+    label = Tcs(label);
     const ImGuiStyle& style = g.Style;
 	const ImVec2 label_size = CalcTextSize(label, NULL, true);
     ImVec2 size = ImTrunc(CalcItemSize(size_arg, CalcItemWidth(), GetTextLineHeightWithSpacing() * 7.25f + style.FramePadding.y * 2.0f));
@@ -1089,26 +1093,26 @@ bool InputText(const char *label, std::string *str, ImGuiInputTextFlags flags, I
 	{
 		// TODO This doesn't handle growing the string capacity dynamically
 		str->reserve(512);
-		return ImGui::InputText(label, str, flags | ImGuiInputTextFlags_CallbackAlways, switchInputTextCallback);
+		return ImGui::InputText(Tcs(label), str, flags | ImGuiInputTextFlags_CallbackAlways, switchInputTextCallback);
 	}
 #endif
-	return ImGui::InputText(label, str, flags, callback, user_data);
+	return ImGui::InputText(Tcs(label), str, flags, callback, user_data);
 }
 
 bool InputText(const char *label, char *str, size_t size, ImGuiInputTextFlags flags, ImGuiInputTextCallback callback, void* user_data)
 {
 #ifdef __SWITCH__
 	if ((flags & ImGuiInputTextFlags_ReadOnly) == 0)
-		return ImGui::InputText(label, str, size, flags | ImGuiInputTextFlags_CallbackAlways, switchInputTextCallback);
+		return ImGui::InputText(Tcs(label), str, size, flags | ImGuiInputTextFlags_CallbackAlways, switchInputTextCallback);
 #endif
-	return ImGui::InputText(label, str, size, flags, callback, user_data);
+	return ImGui::InputText(Tcs(label), str, size, flags, callback, user_data);
 }
 
 bool InputTextMultiline(const char* label, char* buf, size_t buf_size, const ImVec2& size, ImGuiInputTextFlags flags, ImGuiInputTextCallback callback, void* user_data)
 {
 #ifdef __SWITCH__
 	if ((flags & ImGuiInputTextFlags_ReadOnly) == 0)
-		return ImGui::InputTextMultiline(label, buf, buf_size, size, flags | ImGuiInputTextFlags_CallbackAlways | Flags_Multiline, switchInputTextCallback);
+		return ImGui::InputTextMultiline(Tcs(label), buf, buf_size, size, flags | ImGuiInputTextFlags_CallbackAlways | Flags_Multiline, switchInputTextCallback);
 #endif
-	return ImGui::InputTextMultiline(label, buf, buf_size, size, flags, callback, user_data);
+	return ImGui::InputTextMultiline(Tcs(label), buf, buf_size, size, flags, callback, user_data);
 }

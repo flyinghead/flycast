@@ -675,7 +675,7 @@ static void gui_display_commands()
 		ImguiStyleVar _1{ImGuiStyleVar_FramePadding, ScaledVec2(12.f, 3.f)};
 
 		// Resume
-		if (ImGui::Button((ICON_FA_PLAY "  " + T("Resume")).c_str(), ScaledVec2(buttonWidth, 50)))
+		if (IconButton(ICON_FA_PLAY, "Resume", ScaledVec2(buttonWidth, 50)).realize())
 		{
 			GamepadDevice::load_system_mappings();
 			gui_setState(GuiState::Closed);
@@ -684,14 +684,14 @@ static void gui_display_commands()
 		{
 			DisabledScope _{settings.network.online || settings.raHardcoreMode};
 
-			if (ImGui::Button((ICON_FA_MASK "  " + T("Cheats")).c_str(), ScaledVec2(buttonWidth, 50)) && !settings.network.online)
+			if (IconButton(ICON_FA_MASK, "Cheats", ScaledVec2(buttonWidth, 50)).realize() && !settings.network.online)
 				gui_setState(GuiState::Cheats);
 		}
 		// Achievements
 		{
 			DisabledScope _{!achievements::isActive()};
 
-			if (ImGui::Button((ICON_FA_TROPHY "  " + T("Achievements")).c_str(), ScaledVec2(buttonWidth, 50)) && achievements::isActive())
+			if (IconButton(ICON_FA_TROPHY, "Achievements", ScaledVec2(buttonWidth, 50)).realize() && achievements::isActive())
 				gui_setState(GuiState::Achievements);
 		}
 		// Barcode
@@ -758,8 +758,8 @@ static void gui_display_commands()
 		ImGui::NextColumn();
 
 		// Insert/Eject Disk
-		std::string disk_label = gdr::isOpen() ? ICON_FA_COMPACT_DISC "  " + T("Insert Disk") : ICON_FA_COMPACT_DISC "  " + T("Eject Disk");
-		if (ImGui::Button(disk_label.c_str(), ScaledVec2(buttonWidth, 50)))
+		std::string disk_label = gdr::isOpen() ? "Insert Disk" : "Eject Disk";
+		if (IconButton(ICON_FA_COMPACT_DISC, disk_label, ScaledVec2(buttonWidth, 50)).realize())
 		{
 			if (gdr::isOpen()) {
 				gui_setState(GuiState::SelectDisk);
@@ -770,11 +770,11 @@ static void gui_display_commands()
 			}
 		}
 		// Settings
-		if (ImGui::Button((ICON_FA_GEAR "  " + T("Settings")).c_str(), ScaledVec2(buttonWidth, 50)))
+		if (IconButton(ICON_FA_GEAR, "Settings", ScaledVec2(buttonWidth, 50)).realize())
 			gui_setState(GuiState::Settings);
 
 		// Exit
-		if (ImGui::Button(commandLineStart ? (ICON_FA_POWER_OFF "  " + T("Exit")).c_str() : (ICON_FA_POWER_OFF "  " + T("Close Game")).c_str(), ScaledVec2(buttonWidth, 50)))
+		if (IconButton(ICON_FA_POWER_OFF, commandLineStart ?  "Exit" : "Close Game", ScaledVec2(buttonWidth, 50)).realize())
 			gui_stop_game();
 
 		ImGui::NextColumn();
@@ -786,7 +786,7 @@ static void gui_display_commands()
 			// Load State
 			{
 				DisabledScope _{settings.raHardcoreMode || savestateDate == 0};
-				if (ImGui::Button((ICON_FA_CLOCK_ROTATE_LEFT "  " + T("Load State")).c_str(), ScaledVec2(buttonWidth, 50)) && savestateAllowed())
+				if (IconButton(ICON_FA_CLOCK_ROTATE_LEFT, "Load State", ScaledVec2(buttonWidth, 50)).realize() && savestateAllowed())
 				{
 					gui_setState(GuiState::Closed);
 					dc_loadstate(config::SavestateSlot);
@@ -794,7 +794,7 @@ static void gui_display_commands()
 			}
 
 			// Save State
-			if (ImGui::Button((ICON_FA_DOWNLOAD "  " + T("Save State")).c_str(), ScaledVec2(buttonWidth, 50)) && savestateAllowed())
+			if (IconButton(ICON_FA_DOWNLOAD, "Save State", ScaledVec2(buttonWidth, 50)).realize() && savestateAllowed())
 			{
 				gui_setState(GuiState::Closed);
 				savestate();
@@ -1020,37 +1020,38 @@ static void gui_display_content()
     ImGui::Unindent(uiScaled(10));
 
     static ImGuiTextFilter filter;
-    const float settingsBtnW = iconButtonWidth(ICON_FA_GEAR, T("Settings"));
+    IconButton settingsBtn(ICON_FA_GEAR, "Settings");
 #if !defined(__ANDROID__) && !defined(TARGET_IPHONE) && !defined(TARGET_UWP) && !defined(__SWITCH__)
 	ImGui::SameLine(0, uiScaled(32));
 	filter.Draw(Tcs("Filter"), ImGui::GetContentRegionAvail().x - ImGui::GetStyle().ItemSpacing.x - uiScaled(32)
-			- settingsBtnW - ImGui::GetStyle().ItemSpacing.x);
+			- settingsBtn.width() - ImGui::GetStyle().ItemSpacing.x);
 #endif
     if (gui_state != GuiState::SelectDisk)
     {
 #ifdef TARGET_UWP
-		ImGui::SameLine(ImGui::GetContentRegionMax().x - settingsBtnW
+		ImGui::SameLine(ImGui::GetContentRegionMax().x - settingsBtn.width()
 				- ImGui::GetStyle().FramePadding.x * 2.0f  - ImGui::GetStyle().ItemSpacing.x - ImGui::CalcTextSize(Tcs("Load...")).x);
 		if (ImGui::Button(Tcs("Load...")))
 			gui_load_game();
 		ImGui::SameLine();
 #elif defined(__SWITCH__)
-		ImGui::SameLine(ImGui::GetContentRegionMax().x - settingsBtnW
-				- ImGui::GetStyle().ItemSpacing.x - iconButtonWidth(ICON_FA_POWER_OFF, T("Exit")));
-		if (iconButton(ICON_FA_POWER_OFF, T("Exit")))
+		IconButton exitBtn(ICON_FA_POWER_OFF, "Exit");
+		ImGui::SameLine(ImGui::GetContentRegionMax().x - settingsBtn.width()
+				- ImGui::GetStyle().ItemSpacing.x - exitBtn.width());
+		if (exitBtn.realize())
 			dc_exit();
 		ImGui::SameLine();
 #else
-		ImGui::SameLine(ImGui::GetContentRegionMax().x - settingsBtnW);
+		ImGui::SameLine(ImGui::GetContentRegionMax().x - settingsBtn.width());
 #endif
-		if (iconButton(ICON_FA_GEAR, T("Settings")))
+		if (settingsBtn.realize())
 			gui_setState(GuiState::Settings);
     }
     else
     {
-		ImGui::SameLine(ImGui::GetContentRegionMax().x
-				- ImGui::GetStyle().FramePadding.x * 2.0f - ImGui::CalcTextSize(Tcs("Cancel")).x);
-		if (ImGui::Button(Tcs("Cancel")))
+    	IconButton cancelBtn("Cancel");
+		ImGui::SameLine(ImGui::GetContentRegionMax().x - cancelBtn.width());
+		if (cancelBtn.realize())
 			gui_setState(GuiState::Commands);
     }
     ImGui::PopStyleVar();

@@ -39,7 +39,7 @@ void gui_settings_audio()
     		|| (config::AudioBackend.get() != "auto" && config::AudioBackend.get() != "android"))
     {
 		int latency = (int)roundf(config::AudioBufferSize * 1000.f / 44100.f);
-		ImGui::SliderInt("Latency", &latency, 12, 512, "%d ms");
+		ImGui::SliderInt(Tcs("Latency"), &latency, 12, 512, "%d ms");
 		config::AudioBufferSize = (int)roundf(latency * 44100.f / 1000.f);
 		ImGui::SameLine();
 		ShowHelpMarker("Sets the maximum audio latency. Not supported by all audio drivers.");
@@ -55,10 +55,10 @@ void gui_settings_audio()
 	}
 
 	AudioBackend *current_backend = backend;
-	if (ImGui::BeginCombo("Audio Driver", backend_name.c_str(), ImGuiComboFlags_None))
+	if (ImGui::BeginCombo(Tcs("Audio Driver"), backend_name.c_str(), ImGuiComboFlags_None))
 	{
 		bool is_selected = (config::AudioBackend.get() == "auto");
-		if (ImGui::Selectable("auto - Automatic driver selection", &is_selected))
+		if (ImGui::Selectable(Tcs("auto - Automatic driver selection"), &is_selected))
 			config::AudioBackend.set("auto");
 
 		for (u32 i = 0; i < AudioBackend::getCount(); i++)

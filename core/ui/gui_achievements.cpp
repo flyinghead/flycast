@@ -24,8 +24,10 @@
 #include "stdclass.h"
 #include "achievements/achievements.h"
 #include "IconsFontAwesome6.h"
+#include "oslib/i18n.h"
 #include <cmath>
 #include <sstream>
+using namespace i18n;
 
 extern ImFont *largeFont;
 extern int insetLeft;
@@ -280,7 +282,8 @@ void achievementList()
 	ImGui::Begin("##achievements", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize);
 
 	{
-		float w = ImGui::GetWindowContentRegionMax().x - ImGui::CalcTextSize("Close").x - ImGui::GetStyle().ItemSpacing.x * 2 - ImGui::GetStyle().WindowPadding.x
+		const char *closeLabel = Tcs("Close");
+		float w = ImGui::GetWindowContentRegionMax().x - ImGui::CalcTextSize(closeLabel).x - ImGui::GetStyle().ItemSpacing.x * 2 - ImGui::GetStyle().WindowPadding.x
 				- uiScaled(80.f + 20.f * 2);	// image width and button frame padding
 		Game game = getCurrentGame();
 		ImguiFileTexture tex(game.image);
@@ -290,20 +293,21 @@ void achievementList()
 		ImGui::PushFont(largeFont);
 		ImGui::Text("%s", game.title.c_str());
 		ImGui::PopFont();
-		std::stringstream ss;
-		ss << "You have unlocked " << game.unlockedAchievements << " of " << game.totalAchievements
-				<< " achievements and " << game.points << " of " << game.totalPoints << " points.";
+		std::string str;
+		str.resize(128);
+		str.resize(snprintf(str.data(), str.length() + 1, Tcs("You have unlocked %d of %d achievements and %d of %d points."),
+				game.unlockedAchievements, game.totalAchievements, game.points, game.totalPoints));
 		{
 			ImguiStyleColor _(ImGuiCol_Text, ImVec4(0.75f, 0.75f, 0.75f, 1.f));
-			ImGui::TextWrapped("%s", ss.str().c_str());
+			ImGui::TextWrapped("%s", str.c_str());
 		}
 		if (settings.raHardcoreMode)
-			ImGui::Text("Hardcore Mode");
+			ImGui::Text("%s", Tcs("Hardcore Mode"));
 		ImGui::EndChild();
 
 		ImGui::SameLine();
 		ImguiStyleVar _(ImGuiStyleVar_FramePadding, ScaledVec2(20, 8));
-		if (ImGui::Button("Close"))
+		if (ImGui::Button(closeLabel))
 			gui_setState(GuiState::Commands);
     }
 
@@ -325,7 +329,7 @@ void achievementList()
 					ImGui::Text(ICON_FA_LOCK_OPEN);
 				ImGui::SameLine();
 				ImGui::PushFont(largeFont);
-				ImGui::Text("%s", category.c_str());
+				ImGui::Text("%s", T(category).c_str());
 				ImGui::PopFont();
 				ImGui::Unindent(uiScaled(10));
 			}

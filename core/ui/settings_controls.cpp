@@ -30,34 +30,38 @@
 #include "sdl/dreamlink.h" // For USE_DREAMCASTCONTROLLER
 #endif
 
-static float calcComboWidth(const char *biggestLabel) {
-	return ImGui::CalcTextSize(biggestLabel).x + ImGui::GetStyle().FramePadding.x * 2.0f + ImGui::GetFrameHeight();
+static float calcComboWidth(const char *labels[], size_t size)
+{
+	float w = 0.f;
+	for (size_t i = 0; i != size; i++)
+		w = std::max(w, ImGui::CalcTextSize(labels[i]).x);
+	return w + ImGui::GetStyle().FramePadding.x * 2.0f + ImGui::GetFrameHeight();
 }
 
 static const char *maple_device_types[] =
 {
-	"None",
-	"Sega Controller",
-	"Light Gun",
-	"Keyboard",
-	"Mouse",
-	"Twin Stick",
-	"Arcade/Ascii Stick",
-	"Maracas Controller",
-	"Fishing Controller",
-	"Pop'n Music controller",
-	"Racing Controller",
-	"Densha de Go! Controller",
-	"Panther DC/Full Controller",
-//	"Dreameye",
+	Tcs("None"),
+	Tcs("Sega Controller"),
+	Tcs("Light Gun"),
+	Tcs("Keyboard"),
+	Tcs("Mouse"),
+	Tcs("Twin Stick"),
+	Tcs("Arcade/Ascii Stick"),
+	Tcs("Maracas Controller"),
+	Tcs("Fishing Controller"),
+	Tcs("Pop'n Music controller"),
+	Tcs("Racing Controller"),
+	Tcs("Densha de Go! Controller"),
+	Tcs("Panther DC/Full Controller"),
+//	Tcs("Dreameye"),
 };
 
 static const char *maple_expansion_device_types[] =
 {
-	"None",
-	"Sega VMU",
-	"Vibration Pack",
-	"Microphone",
+	Tcs("None"),
+	Tcs("Sega VMU"),
+	Tcs("Vibration Pack"),
+	Tcs("Microphone"),
 };
 
 static const char *maple_device_name(MapleDeviceType type)
@@ -148,7 +152,7 @@ static const char *maple_expansion_device_name(MapleDeviceType type)
 	}
 }
 
-static const char *maple_ports[] = { "None", "A", "B", "C", "D", "All" };
+static const char *maple_ports[] = { Tcs("None"), "A", "B", "C", "D", Tcs("All") };
 
 struct Mapping {
 	DreamcastKey key;
@@ -157,30 +161,30 @@ struct Mapping {
 
 static const Mapping dcButtons[] = {
 	{ EMU_BTN_NONE, "Directions" },
-	{ DC_DPAD_UP, "Up" },
-	{ DC_DPAD_DOWN, "Down" },
-	{ DC_DPAD_LEFT, "Left" },
-	{ DC_DPAD_RIGHT, "Right" },
+	{ DC_DPAD_UP, Tcs("Up") },
+	{ DC_DPAD_DOWN, Tcs("Down") },
+	{ DC_DPAD_LEFT, Tcs("Left") },
+	{ DC_DPAD_RIGHT, Tcs("Right") },
 
-	{ DC_AXIS_UP, "Thumbstick Up" },
-	{ DC_AXIS_DOWN, "Thumbstick Down" },
-	{ DC_AXIS_LEFT, "Thumbstick Left" },
-	{ DC_AXIS_RIGHT, "Thumbstick Right" },
+	{ DC_AXIS_UP, Tcs("Thumbstick Up") },
+	{ DC_AXIS_DOWN, Tcs("Thumbstick Down") },
+	{ DC_AXIS_LEFT, Tcs("Thumbstick Left") },
+	{ DC_AXIS_RIGHT, Tcs("Thumbstick Right") },
 
-	{ DC_AXIS2_UP, "R.Thumbstick Up" },
-	{ DC_AXIS2_DOWN, "R.Thumbstick Down" },
-	{ DC_AXIS2_LEFT, "R.Thumbstick Left" },
-	{ DC_AXIS2_RIGHT, "R.Thumbstick Right" },
+	{ DC_AXIS2_UP, Tcs("R.Thumbstick Up") },
+	{ DC_AXIS2_DOWN, Tcs("R.Thumbstick Down") },
+	{ DC_AXIS2_LEFT, Tcs("R.Thumbstick Left") },
+	{ DC_AXIS2_RIGHT, Tcs("R.Thumbstick Right") },
 
-	{ DC_AXIS3_UP,    "Axis 3 Up"    },
-	{ DC_AXIS3_DOWN,  "Axis 3 Down"  },
-	{ DC_AXIS3_LEFT,  "Axis 3 Left"  },
-	{ DC_AXIS3_RIGHT, "Axis 3 Right" },
+	{ DC_AXIS3_UP,    Tcs("Axis 3 Up")    },
+	{ DC_AXIS3_DOWN,  Tcs("Axis 3 Down")  },
+	{ DC_AXIS3_LEFT,  Tcs("Axis 3 Left")  },
+	{ DC_AXIS3_RIGHT, Tcs("Axis 3 Right") },
 
-	{ DC_DPAD2_UP,    "DPad2 Up"    },
-	{ DC_DPAD2_DOWN,  "DPad2 Down"  },
-	{ DC_DPAD2_LEFT,  "DPad2 Left"  },
-	{ DC_DPAD2_RIGHT, "DPad2 Right" },
+	{ DC_DPAD2_UP,    Tcs("DPad2 Up")    },
+	{ DC_DPAD2_DOWN,  Tcs("DPad2 Down")  },
+	{ DC_DPAD2_LEFT,  Tcs("DPad2 Left")  },
+	{ DC_DPAD2_RIGHT, Tcs("DPad2 Right") },
 
 	{ EMU_BTN_NONE, "Buttons" },
 	{ DC_BTN_A, "A" },
@@ -191,78 +195,78 @@ static const Mapping dcButtons[] = {
 	{ DC_BTN_D, "D" },
 	{ DC_BTN_Z, "Z" },
 
-	{ EMU_BTN_NONE, "Triggers"      },
-	{ DC_AXIS_LT,   "Left Trigger"  },
-	{ DC_AXIS_RT,   "Right Trigger" },
-	{ DC_AXIS_LT2,   "Left Trigger 2" },
-	{ DC_AXIS_RT2,   "Right Trigger 2" },
+	{ EMU_BTN_NONE, "Triggers" },
+	{ DC_AXIS_LT,   Tcs("Left Trigger")  },
+	{ DC_AXIS_RT,   Tcs("Right Trigger") },
+	{ DC_AXIS_LT2,  Tcs("Left Trigger 2") },
+	{ DC_AXIS_RT2,  Tcs("Right Trigger 2") },
 
 	{ EMU_BTN_NONE, "System Buttons" },
-	{ DC_BTN_START, "Start" },
-	{ DC_BTN_RELOAD, "Reload" },
+	{ DC_BTN_START, Tcs("Start") },
+	{ DC_BTN_RELOAD, Tcs("Reload") },
 
 	{ EMU_BTN_NONE, "Emulator" },
-	{ EMU_BTN_MENU, "Menu" },
-	{ EMU_BTN_ESCAPE, "Exit" },
-	{ EMU_BTN_FFORWARD, "Fast-forward" },
-	{ EMU_BTN_LOADSTATE, "Load State" },
-	{ EMU_BTN_SAVESTATE, "Save State" },
-	{ EMU_BTN_BYPASS_KB, "Bypass Emulated Keyboard" },
-	{ EMU_BTN_SCREENSHOT, "Save Screenshot" },
+	{ EMU_BTN_MENU, Tcs("Menu") },
+	{ EMU_BTN_ESCAPE, Tcs("Exit") },
+	{ EMU_BTN_FFORWARD, Tcs("Fast-forward") },
+	{ EMU_BTN_LOADSTATE, Tcs("Load State") },
+	{ EMU_BTN_SAVESTATE, Tcs("Save State") },
+	{ EMU_BTN_BYPASS_KB, Tcs("Bypass Emulated Keyboard") },
+	{ EMU_BTN_SCREENSHOT, Tcs("Save Screenshot") },
 
 	{ EMU_BTN_NONE, nullptr }
 };
 
 static const Mapping arcadeButtons[] = {
 	{ EMU_BTN_NONE, "Directions" },
-	{ DC_DPAD_UP, "Up" },
-	{ DC_DPAD_DOWN, "Down" },
-	{ DC_DPAD_LEFT, "Left" },
-	{ DC_DPAD_RIGHT, "Right" },
+	{ DC_DPAD_UP, Tcs("Up") },
+	{ DC_DPAD_DOWN, Tcs("Down") },
+	{ DC_DPAD_LEFT, Tcs("Left") },
+	{ DC_DPAD_RIGHT, Tcs("Right") },
 
-	{ DC_AXIS_UP, "Thumbstick Up" },
-	{ DC_AXIS_DOWN, "Thumbstick Down" },
-	{ DC_AXIS_LEFT, "Thumbstick Left" },
-	{ DC_AXIS_RIGHT, "Thumbstick Right" },
+	{ DC_AXIS_UP, Tcs("Thumbstick Up") },
+	{ DC_AXIS_DOWN, Tcs("Thumbstick Down") },
+	{ DC_AXIS_LEFT, Tcs("Thumbstick Left") },
+	{ DC_AXIS_RIGHT, Tcs("Thumbstick Right") },
 
-	{ DC_AXIS2_UP, "R.Thumbstick Up" },
-	{ DC_AXIS2_DOWN, "R.Thumbstick Down" },
-	{ DC_AXIS2_LEFT, "R.Thumbstick Left" },
-	{ DC_AXIS2_RIGHT, "R.Thumbstick Right" },
+	{ DC_AXIS2_UP, Tcs("R.Thumbstick Up") },
+	{ DC_AXIS2_DOWN, Tcs("R.Thumbstick Down") },
+	{ DC_AXIS2_LEFT, Tcs("R.Thumbstick Left") },
+	{ DC_AXIS2_RIGHT, Tcs("R.Thumbstick Right") },
 
 	{ EMU_BTN_NONE, "Buttons" },
-	{ DC_BTN_A, "Button 1" },
-	{ DC_BTN_B, "Button 2" },
-	{ DC_BTN_C, "Button 3" },
-	{ DC_BTN_X, "Button 4" },
-	{ DC_BTN_Y, "Button 5" },
-	{ DC_BTN_Z, "Button 6" },
-	{ DC_DPAD2_LEFT, "Button 7" },
-	{ DC_DPAD2_RIGHT, "Button 8" },
-//	{ DC_DPAD2_RIGHT, "Button 9" }, // TODO
+	{ DC_BTN_A, Tcs("Button 1") },
+	{ DC_BTN_B, Tcs("Button 2") },
+	{ DC_BTN_C, Tcs("Button 3") },
+	{ DC_BTN_X, Tcs("Button 4") },
+	{ DC_BTN_Y, Tcs("Button 5") },
+	{ DC_BTN_Z, Tcs("Button 6") },
+	{ DC_DPAD2_LEFT, Tcs("Button 7") },
+	{ DC_DPAD2_RIGHT, Tcs("Button 8") },
+//	{ DC_DPAD2_RIGHT, Tcs("Button 9") }, // TODO
 
 	{ EMU_BTN_NONE, "Triggers" },
-	{ DC_AXIS_LT, "Left Trigger" },
-	{ DC_AXIS_RT, "Right Trigger" },
-	{ DC_AXIS_LT2,   "Left Trigger 2" },
-	{ DC_AXIS_RT2,   "Right Trigger 2" },
+	{ DC_AXIS_LT, Tcs("Left Trigger") },
+	{ DC_AXIS_RT, Tcs("Right Trigger") },
+	{ DC_AXIS_LT2, Tcs("Left Trigger 2") },
+	{ DC_AXIS_RT2, Tcs("Right Trigger 2") },
 
 	{ EMU_BTN_NONE, "System Buttons" },
-	{ DC_BTN_START, "Start" },
-	{ DC_BTN_RELOAD, "Reload" },
-	{ DC_BTN_D, "Coin" },
-	{ DC_DPAD2_UP, "Service" },
-	{ DC_DPAD2_DOWN, "Test" },
-	{ DC_BTN_INSERT_CARD, "Insert Card" },
+	{ DC_BTN_START, Tcs("Start") },
+	{ DC_BTN_RELOAD, Tcs("Reload") },
+	{ DC_BTN_D, Tcs("Coin") },
+	{ DC_DPAD2_UP, Tcs("Service") },
+	{ DC_DPAD2_DOWN, Tcs("Test") },
+	{ DC_BTN_INSERT_CARD, Tcs("Insert Card") },
 
 	{ EMU_BTN_NONE, "Emulator" },
-	{ EMU_BTN_MENU, "Menu" },
-	{ EMU_BTN_ESCAPE, "Exit" },
-	{ EMU_BTN_FFORWARD, "Fast-forward" },
-	{ EMU_BTN_LOADSTATE, "Load State" },
-	{ EMU_BTN_SAVESTATE, "Save State" },
-	{ EMU_BTN_BYPASS_KB, "Bypass Emulated Keyboard" },
-	{ EMU_BTN_SCREENSHOT, "Save Screenshot" },
+	{ EMU_BTN_MENU, Tcs("Menu") },
+	{ EMU_BTN_ESCAPE, Tcs("Exit") },
+	{ EMU_BTN_FFORWARD, Tcs("Fast-forward") },
+	{ EMU_BTN_LOADSTATE, Tcs("Load State") },
+	{ EMU_BTN_SAVESTATE, Tcs("Save State") },
+	{ EMU_BTN_BYPASS_KB, Tcs("Bypass Emulated Keyboard") },
+	{ EMU_BTN_SCREENSHOT, Tcs("Save Screenshot") },
 
 	{ EMU_BTN_NONE, nullptr }
 };
@@ -359,9 +363,9 @@ static void detect_input_popup(const Mapping *mapping)
 	ImVec2 padding = ScaledVec2(20, 20);
 	ImguiStyleVar _(ImGuiStyleVar_WindowPadding, padding);
 	ImguiStyleVar _1(ImGuiStyleVar_ItemSpacing, padding);
-	if (ImGui::BeginPopupModal("Map Control", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
+	if (ImGui::BeginPopupModal(Tcs("Map Control"), NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
 	{
-		ImGui::Text("Waiting for control '%s'...", mapping->name);
+		ImGui::Text(Tcs("Waiting for control '%s'..."), mapping->name);
 		u64 now = getTimeMs();
 
 		// Check if we're still in the initial delay period
@@ -377,12 +381,12 @@ static void detect_input_popup(const Mapping *mapping)
 				remaining = 5;
 
 			if (still_detecting)
-				ImGui::Text("Time out in %d s", remaining);
+				ImGui::Text(Tcs("Time out in %d s"), remaining);
 
 			// Display currently detected buttons during the countdown
 			if (!mapped_codes.empty())
 			{
-				ImGui::Text("Current inputs: ");
+				ImGui::Text("%s ", Tcs("Current inputs:"));
 				ImGui::SameLine();
 				bool first = true;
 				for (const InputMapping::InputDef& inputDef : mapped_codes)
@@ -406,7 +410,7 @@ static void detect_input_popup(const Mapping *mapping)
 				}
 
 				// Allow early completion with Confirm button if at least one button is detected
-				if (ImGui::Button("Confirm"))
+				if (ImGui::Button(Tcs("Confirm")))
 					remaining = 0;
 			}
 
@@ -488,7 +492,7 @@ static void displayMappedControl(const std::shared_ptr<GamepadDevice>& gamepad, 
 
 		if (combo.inputs.size() > 1)
 		{
-			if (ImGui::Checkbox("Sequential", &(combo.sequential)))
+			if (ImGui::Checkbox(Tcs("Sequential"), &(combo.sequential)))
 				// Update mapping with updated combo settings
 				input_mapping->set_button(gamepad_port, key, combo);
 			ImGui::SameLine();
@@ -550,13 +554,15 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 {
 	fullScreenWindow(true);
 	ImguiStyleVar _(ImGuiStyleVar_WindowRounding, 0);
-	if (ImGui::BeginPopupModal("Controller Mapping", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove))
+	if (ImGui::BeginPopupModal(Tcs("Controller Mapping"), NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove))
 	{
+		const char *mapLbl = Tcs("Map");
+		const char *unmapLbl = Tcs("Unmap");
 		const ImGuiStyle& style = ImGui::GetStyle();
 		const float winWidth = ImGui::GetIO().DisplaySize.x - insetLeft - insetRight - (style.WindowBorderSize + style.WindowPadding.x) * 2;
 		const float col_width = (winWidth - style.GrabMinSize - style.ItemSpacing.x
-				- (ImGui::CalcTextSize("Map").x + style.FramePadding.x * 2.0f + style.ItemSpacing.x)
-				- (ImGui::CalcTextSize("Unmap").x + style.FramePadding.x * 2.0f + style.ItemSpacing.x)) / 3;
+				- (ImGui::CalcTextSize(mapLbl).x + style.FramePadding.x * 2.0f + style.ItemSpacing.x)
+				- (ImGui::CalcTextSize(unmapLbl).x + style.FramePadding.x * 2.0f + style.ItemSpacing.x)) / 3;
 
 		static int map_system;
 		static int item_current_map_idx = 0;
@@ -567,7 +573,7 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 		}
 
 		std::shared_ptr<InputMapping> input_mapping = gamepad->get_input_mapping();
-		if (input_mapping == NULL || ImGui::Button("Done", ScaledVec2(100, 30)))
+		if (input_mapping == NULL || ImGui::Button(Tcs("Done"), ScaledVec2(100, 30)))
 		{
 			ImGui::CloseCurrentPopup();
 			gamepad->save_mapping(map_system);
@@ -587,7 +593,7 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 			ImguiStyleVar _(ImGuiStyleVar_FramePadding, ImVec2(ImGui::GetStyle().FramePadding.x, (uiScaled(30) - ImGui::GetFontSize()) / 2));
 			portWidth = ImGui::CalcTextSize("AA").x + ImGui::GetStyle().ItemSpacing.x * 2.0f + ImGui::GetFontSize();
 			ImGui::SetNextItemWidth(portWidth);
-			if (ImGui::BeginCombo("Port", maple_ports[gamepad_port + 1]))
+			if (ImGui::BeginCombo(Tcs("Port"), maple_ports[gamepad_port + 1]))
 			{
 				for (u32 j = 0; j < MAPLE_PORTS; j++)
 				{
@@ -599,12 +605,12 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 				}
 				ImGui::EndCombo();
 			}
-			portWidth += ImGui::CalcTextSize("Port").x + ImGui::GetStyle().ItemSpacing.x + ImGui::GetStyle().FramePadding.x;
+			portWidth += ImGui::CalcTextSize(Tcs("Port")).x + ImGui::GetStyle().ItemSpacing.x + ImGui::GetStyle().FramePadding.x;
 		}
-		float comboWidth = ImGui::CalcTextSize("Dreamcast Controls").x + ImGui::GetStyle().ItemSpacing.x + ImGui::GetFontSize() + ImGui::GetStyle().FramePadding.x * 4;
+		float comboWidth = ImGui::CalcTextSize(Tcs("Dreamcast Controls")).x + ImGui::GetStyle().ItemSpacing.x + ImGui::GetFontSize() + ImGui::GetStyle().FramePadding.x * 4;
 		float gameConfigWidth = 0;
 		if (!settings.content.gameId.empty())
-			gameConfigWidth = ImGui::CalcTextSize(gamepad->isPerGameMapping() ? "Delete Game Config" : "Make Game Config").x + ImGui::GetStyle().ItemSpacing.x + ImGui::GetStyle().FramePadding.x * 2;
+			gameConfigWidth = ImGui::CalcTextSize(gamepad->isPerGameMapping() ? Tcs("Delete Game Config") : Tcs("Make Game Config")).x + ImGui::GetStyle().ItemSpacing.x + ImGui::GetStyle().FramePadding.x * 2;
 		ImGui::SameLine(0, ImGui::GetContentRegionAvail().x - comboWidth - gameConfigWidth - ImGui::GetStyle().ItemSpacing.x - uiScaled(100) * 2 - portWidth);
 
 		ImGui::AlignTextToFramePadding();
@@ -613,7 +619,7 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 		{
 			if (gamepad->isPerGameMapping())
 			{
-				if (ImGui::Button("Delete Game Config", ScaledVec2(0, 30)))
+				if (ImGui::Button(Tcs("Delete Game Config"), ScaledVec2(0, 30)))
 				{
 					gamepad->setPerGameMapping(false);
 					if (!gamepad->find_mapping(map_system))
@@ -622,41 +628,41 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 			}
 			else
 			{
-				if (ImGui::Button("Make Game Config", ScaledVec2(0, 30)))
+				if (ImGui::Button(Tcs("Make Game Config"), ScaledVec2(0, 30)))
 					gamepad->setPerGameMapping(true);
 			}
 			ImGui::SameLine();
 		}
-		if (ImGui::Button("Reset...", ScaledVec2(100, 30)))
-			ImGui::OpenPopup("Confirm Reset");
+		if (ImGui::Button(Tcs("Reset..."), ScaledVec2(100, 30)))
+			ImGui::OpenPopup(Tcs("Confirm Reset"));
 
 		{
 			ImguiStyleVar _(ImGuiStyleVar_WindowPadding, ScaledVec2(20, 20));
-			if (ImGui::BeginPopupModal("Confirm Reset", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
+			if (ImGui::BeginPopupModal(Tcs("Confirm Reset"), NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
 			{
-				ImGui::Text("Are you sure you want to reset the mappings to default?");
+				ImGui::Text("%s", Tcs("Are you sure you want to reset the mappings to default?"));
 				static bool hitbox;
 				if (arcade_button_mode)
 				{
-					ImGui::Text("Controller Type:");
-					if (ImGui::RadioButton("Gamepad", !hitbox))
+					ImGui::Text("%s", Tcs("Controller Type:"));
+					if (ImGui::RadioButton(Tcs("Gamepad"), !hitbox))
 						hitbox = false;
 					ImGui::SameLine();
-					if (ImGui::RadioButton("Arcade / Hit Box", hitbox))
+					if (ImGui::RadioButton(Tcs("Arcade / Hit Box"), hitbox))
 						hitbox = true;
 				}
 				ImGui::NewLine();
 				{
 	 				ImguiStyleVar _(ImGuiStyleVar_ItemSpacing, ImVec2(uiScaled(20), ImGui::GetStyle().ItemSpacing.y));
 					ImguiStyleVar _1(ImGuiStyleVar_FramePadding, ScaledVec2(10, 10));
-					if (ImGui::Button("Yes"))
+					if (ImGui::Button(Tcs("Yes")))
 					{
 						gamepad->resetMappingToDefault(arcade_button_mode, !hitbox);
 						gamepad->save_mapping(map_system);
 						ImGui::CloseCurrentPopup();
 					}
 					ImGui::SameLine();
-					if (ImGui::Button("No"))
+					if (ImGui::Button(Tcs("No")))
 						ImGui::CloseCurrentPopup();
 				}
 				ImGui::EndPopup();
@@ -665,7 +671,7 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 
 		ImGui::SameLine();
 
-		const char* items[] = { "Dreamcast Controls", "Arcade Controls" };
+		const char* items[] = { Tcs("Dreamcast Controls"), Tcs("Arcade Controls") };
 
 		if (last_item_current_map_idx == 2 && game_started)
 			// Select the right mappings for the current game
@@ -758,11 +764,11 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 			}
 
 			ImGui::NextColumn();
-			if (ImGui::Button("Map"))
+			if (ImGui::Button(mapLbl))
 			{
 				// Set a small delay to avoid capturing the button press used to click "Map"
 				map_start_time = getTimeMs() + 300; // 300ms delay before starting the countdown
-				ImGui::OpenPopup("Map Control");
+				ImGui::OpenPopup(Tcs("Map Control"));
 				mapped_codes.clear();  // Clear previous button codes
 				buttonState.erase(systemMapping->key);
 
@@ -780,7 +786,7 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 			}
 			detect_input_popup(systemMapping);
 			ImGui::SameLine();
-			if (ImGui::Button("Unmap"))
+			if (ImGui::Button(unmapLbl))
 			{
 				input_mapping = gamepad->get_input_mapping();
 				unmapControl(input_mapping, gamepad_port, systemMapping->key);
@@ -811,9 +817,9 @@ static void gamepadSettingsPopup(const std::shared_ptr<GamepadDevice>& gamepad)
 	ImGui::SetNextWindowSize(min(ImGui::GetIO().DisplaySize, ScaledVec2(450.f, 300.f)));
 
 	ImguiStyleVar _(ImGuiStyleVar_WindowRounding, 0);
-	if (ImGui::BeginPopupModal("Gamepad Settings", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_DragScrolling))
+	if (ImGui::BeginPopupModal(Tcs("Gamepad Settings"), NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_DragScrolling))
 	{
-		if (ImGui::Button("Done", ScaledVec2(100, 30)))
+		if (ImGui::Button(Tcs("Done"), ScaledVec2(100, 30)))
 		{
 			gamepad->save_mapping();
 			// Update both console and arcade profile/mapping
@@ -865,8 +871,8 @@ static void gamepadSettingsPopup(const std::shared_ptr<GamepadDevice>& gamepad)
 			vgamepad::ImguiVGamepadTexture tex;
 			ImGui::Image(tex.getId(), ScaledVec2(300.f, 150.f), ImVec2(0, 1), ImVec2(1, 0));
 #endif
-			const char *gamepadPngTitle = "Select a PNG file";
-			if (ImGui::Button("Choose Image...", ScaledVec2(150, 30)))
+			const char *gamepadPngTitle = Tcs("Select a PNG file");
+			if (ImGui::Button(Tcs("Choose Image..."), ScaledVec2(150, 30)))
 #ifdef __ANDROID__
 			{
 				if (!hostfs::addStorage(false, false, gamepadPngTitle, gamepadPngFileSelected, "image/png"))
@@ -878,7 +884,7 @@ static void gamepadSettingsPopup(const std::shared_ptr<GamepadDevice>& gamepad)
 			}
 #endif
 			ImGui::SameLine();
-			if (ImGui::Button("Use Default", ScaledVec2(150, 30)))
+			if (ImGui::Button(Tcs("Use Default"), ScaledVec2(150, 30)))
 				vgamepad::loadImage("");
 
 			select_file_popup(gamepadPngTitle, [](bool cancelled, std::string selection)
@@ -892,7 +898,7 @@ static void gamepadSettingsPopup(const std::shared_ptr<GamepadDevice>& gamepad)
 			header("Rumble");
 			int power = gamepad->get_rumble_power();
 			ImGui::SetNextItemWidth(uiScaled(300));
-			if (ImGui::SliderInt("Power", &power, 0, 100, "%d%%"))
+			if (ImGui::SliderInt(Tcs("Power"), &power, 0, 100, "%d%%"))
 				gamepad->set_rumble_power(power);
 			ImGui::SameLine();
 			ShowHelpMarker("Rumble power");
@@ -902,13 +908,13 @@ static void gamepadSettingsPopup(const std::shared_ptr<GamepadDevice>& gamepad)
 			header("Thumbsticks");
 			int deadzone = std::round(gamepad->get_dead_zone() * 100.f);
 			ImGui::SetNextItemWidth(uiScaled(300));
-			if (ImGui::SliderInt("Dead zone", &deadzone, 0, 100, "%d%%"))
+			if (ImGui::SliderInt(Tcs("Dead zone"), &deadzone, 0, 100, "%d%%"))
 				gamepad->set_dead_zone(deadzone / 100.f);
 			ImGui::SameLine();
 			ShowHelpMarker("Minimum deflection to register as input");
 			int saturation = std::round(gamepad->get_saturation() * 100.f);
 			ImGui::SetNextItemWidth(uiScaled(300));
-			if (ImGui::SliderInt("Saturation", &saturation, 50, 200, "%d%%"))
+			if (ImGui::SliderInt(Tcs("Saturation"), &saturation, 50, 200, "%d%%"))
 				gamepad->set_saturation(saturation / 100.f);
 			ImGui::SameLine();
 			ShowHelpMarker("Value sent to the game at 100% thumbstick deflection. "
@@ -926,24 +932,24 @@ void gui_settings_controls(bool& maple_devices_changed)
     {
 		if (ImGui::BeginTable("physicalDevices", 5, ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_NoSavedSettings))
 		{
-			ImGui::TableSetupColumn("System", ImGuiTableColumnFlags_WidthFixed);
-			ImGui::TableSetupColumn("Name", ImGuiTableColumnFlags_WidthStretch);
+			ImGui::TableSetupColumn(Tcs("System"), ImGuiTableColumnFlags_WidthFixed);
+			ImGui::TableSetupColumn(Tcs("Name"), ImGuiTableColumnFlags_WidthStretch);
 			ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed);
-			ImGui::TableSetupColumn("Port", ImGuiTableColumnFlags_WidthFixed);
+			ImGui::TableSetupColumn(Tcs("Port"), ImGuiTableColumnFlags_WidthFixed);
 			ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed);
 
-			const float portComboWidth = calcComboWidth("None");
+			const float portComboWidth = calcComboWidth(maple_ports, std::size(maple_ports));
 			const ImVec4 gray{ 0.5f, 0.5f, 0.5f, 1.f };
 
 			ImGui::TableNextRow();
 			ImGui::TableSetColumnIndex(0);
-			ImGui::TextColored(gray, "System");
+			ImGui::TextColored(gray, "%s", Tcs("System"));
 
 			ImGui::TableSetColumnIndex(1);
-			ImGui::TextColored(gray, "Name");
+			ImGui::TextColored(gray, "%s", Tcs("Name"));
 
 			ImGui::TableSetColumnIndex(3);
-			ImGui::TextColored(gray, "Port");
+			ImGui::TextColored(gray, "%s", Tcs("Port"));
 
 			for (int i = 0; i < GamepadDevice::GetGamepadCount(); i++)
 			{
@@ -961,7 +967,7 @@ void gui_settings_controls(bool& maple_devices_changed)
 				ImGui::TableSetColumnIndex(2);
 				DreamLinkGamepad* dreamLinkGamepad = dynamic_cast<DreamLinkGamepad*>(gamepad.get());
 				if (dreamLinkGamepad != nullptr) {
-					ImGui::Text("DreamLink status: %s", dreamLinkGamepad->dreamLinkStatus());
+					ImGui::Text(Tcs("DreamLink status: %s"), dreamLinkGamepad->dreamLinkStatus());
 				}
 #endif
 
@@ -992,10 +998,10 @@ void gui_settings_controls(bool& maple_devices_changed)
 
 				ImGui::TableSetColumnIndex(4);
 				ImGui::SameLine(0, uiScaled(8));
-				if (gamepad->remappable() && ImGui::Button("Map"))
+				if (gamepad->remappable() && ImGui::Button(Tcs("Map")))
 				{
 					gamepad_port = 0;
-					ImGui::OpenPopup("Controller Mapping");
+					ImGui::OpenPopup(Tcs("Controller Mapping"));
 				}
 
 				controller_mapping_popup(gamepad);
@@ -1003,7 +1009,7 @@ void gui_settings_controls(bool& maple_devices_changed)
 #if defined(__ANDROID__) || defined(TARGET_IPHONE)
 				if (gamepad->is_virtual_gamepad())
 				{
-					if (ImGui::Button("Edit Layout"))
+					if (ImGui::Button(Tcs("Edit Layout")))
 					{
 						vgamepad::startEditing();
 						gui_setState(GuiState::VJoyEdit);
@@ -1014,8 +1020,8 @@ void gui_settings_controls(bool& maple_devices_changed)
 					|| gamepad->is_virtual_gamepad())
 				{
 					ImGui::SameLine(0, uiScaled(16));
-					if (ImGui::Button("Settings"))
-						ImGui::OpenPopup("Gamepad Settings");
+					if (ImGui::Button(Tcs("Settings")))
+						ImGui::OpenPopup(Tcs("Gamepad Settings"));
 					gamepadSettingsPopup(gamepad);
 				}
 			}
@@ -1044,14 +1050,14 @@ void gui_settings_controls(bool& maple_devices_changed)
 		if (ImGui::BeginTable("dreamcastDevices", 4, ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_NoSavedSettings,
 				ImVec2(0, 0), uiScaled(8)))
 		{
-			const float mainComboWidth = calcComboWidth(maple_device_types[11]); 			// densha de go! controller
-			const float expComboWidth = calcComboWidth(maple_expansion_device_types[2]);	// vibration pack
+			const float mainComboWidth = calcComboWidth(maple_device_types, std::size(maple_device_types));
+			const float expComboWidth = calcComboWidth(maple_expansion_device_types, std::size(maple_expansion_device_types));
 
 			for (int bus = 0; bus < MAPLE_PORTS; bus++)
 			{
 				ImGui::TableNextRow();
 				ImGui::TableSetColumnIndex(0);
-				ImGui::Text("Port %c", bus + 'A');
+				ImGui::Text(Tcs("Port %c"), bus + 'A');
 
 				ImGui::TableSetColumnIndex(1);
 				char device_name[32];
@@ -1122,11 +1128,11 @@ void gui_settings_controls(bool& maple_devices_changed)
 						((color >> 16) & 0xff) / 255.f,
 						((color >> 24) & 0xff) / 255.f
 					};
-					bool colorChanged = ImGui::ColorEdit4("Crosshair color", xhairColor, ImGuiColorEditFlags_AlphaBar | ImGuiColorEditFlags_AlphaPreviewHalf
+					bool colorChanged = ImGui::ColorEdit4(Tcs("Crosshair color"), xhairColor, ImGuiColorEditFlags_AlphaBar | ImGuiColorEditFlags_AlphaPreviewHalf
 							| ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoTooltip | ImGuiColorEditFlags_NoLabel);
 					ImGui::SameLine();
 					bool enabled = color != 0;
-					if (ImGui::Checkbox("Crosshair", &enabled) || colorChanged)
+					if (ImGui::Checkbox(Tcs("Crosshair"), &enabled) || colorChanged)
 					{
 						if (enabled)
 						{

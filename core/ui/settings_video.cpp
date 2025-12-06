@@ -111,17 +111,17 @@ void gui_settings_video()
 		const bool has_per_pixel = GraphicsContext::Instance()->hasPerPixel();
     	int renderer = perPixel ? 2 : config::PerStripSorting ? 1 : 0;
     	ImGui::Columns(has_per_pixel ? 3 : 2, "renderers", false);
-    	ImGui::RadioButton("Per Triangle", &renderer, 0);
+    	ImGui::RadioButton(Tcs("Per Triangle"), &renderer, 0);
         ImGui::SameLine();
         ShowHelpMarker("Sort transparent polygons per triangle. Fast but may produce graphical glitches");
     	ImGui::NextColumn();
-    	ImGui::RadioButton("Per Strip", &renderer, 1);
+    	ImGui::RadioButton(Tcs("Per Strip"), &renderer, 1);
         ImGui::SameLine();
         ShowHelpMarker("Sort transparent polygons per strip. Faster but may produce graphical glitches");
         if (has_per_pixel)
         {
         	ImGui::NextColumn();
-        	ImGui::RadioButton("Per Pixel", &renderer, 2);
+        	ImGui::RadioButton(Tcs("Per Pixel"), &renderer, 2);
         	ImGui::SameLine();
         	ShowHelpMarker("Sort transparent polygons per pixel. Slower but accurate");
         }
@@ -146,7 +146,7 @@ void gui_settings_video()
     header("Rendering Options");
     {
         const std::array<float, 13> scalings{ 0.5f, 1.f, 1.5f, 2.f, 2.5f, 3.f, 4.f, 4.5f, 5.f, 6.f, 7.f, 8.f, 9.f };
-        const std::array<std::string, 13> scalingsText{ "Half", "Native", "x1.5", "x2", "x2.5", "x3", "x4", "x4.5", "x5", "x6", "x7", "x8", "x9" };
+        const std::array<std::string, 13> scalingsText{ Tcs("Half"), Tcs("Native"), "x1.5", "x2", "x2.5", "x3", "x4", "x4.5", "x5", "x6", "x7", "x8", "x9" };
         std::array<int, scalings.size()> vres;
         std::array<std::string, scalings.size()> resLabels;
         u32 selected = 0;
@@ -191,7 +191,7 @@ void gui_settings_video()
         }
         ImGui::SameLine(0, innerSpacing);
 
-        ImGui::Text("Internal Resolution");
+        ImGui::Text("%s", Tcs("Internal Resolution"));
         ImGui::SameLine();
         ShowHelpMarker("Internal render resolution. Higher is better, but more demanding on the GPU. Values higher than your display resolution (but no more than double your display resolution) can be used for supersampling, which provides high-quality antialiasing without reducing sharpness.");
 		OptionCheckbox("Integer Scaling", config::IntegerScale, "Scales the output by the maximum integer multiple allowed by the display resolution.");
@@ -251,7 +251,7 @@ void gui_settings_video()
 		header("Per Pixel Settings");
 
 		const std::array<int64_t, 4> bufSizes{ 512_MB, 1_GB, 2_GB, 4_GB };
-		const std::array<std::string, 4> bufSizesText{ "512 MB", "1 GB", "2 GB", "4 GB" };
+		const std::array<std::string, 4> bufSizesText{ Tcs("512 MB"), Tcs("1 GB"), Tcs("2 GB"), Tcs("4 GB") };
         ImGui::PushItemWidth(ImGui::CalcItemWidth() - innerSpacing * 2.0f - ImGui::GetFrameHeight() * 2.0f);
 		u32 selected = 0;
 		for (; selected < bufSizes.size(); selected++)
@@ -289,7 +289,7 @@ void gui_settings_video()
 		}
 		ImGui::SameLine(0, innerSpacing);
 
-        ImGui::Text("Pixel Buffer Size");
+        ImGui::Text("%s", Tcs("Pixel Buffer Size"));
         ImGui::SameLine();
         ShowHelpMarker("The size of the pixel buffer. May need to be increased when upscaling by a large factor.");
 
@@ -299,7 +299,7 @@ void gui_settings_video()
 	ImGui::Spacing();
     header("Performance");
     {
-    	ImGui::Text("Automatic Frame Skipping:");
+    	ImGui::Text("%s", Tcs("Automatic Frame Skipping:"));
     	ImGui::Columns(3, "autoskip", false);
     	OptionRadioButton("Disabled", config::AutoSkipFrame, 0, "No frame skipping");
     	ImGui::NextColumn();
@@ -326,7 +326,7 @@ void gui_settings_video()
     	OptionCheckbox("Copy Rendered Textures to VRAM", config::RenderToTextureBuffer,
     			"Copy rendered-to textures back to VRAM. Slower but accurate");
 		const std::array<int, 5> aniso{ 1, 2, 4, 8, 16 };
-        const std::array<std::string, 5> anisoText{ "Disabled", "2x", "4x", "8x", "16x" };
+        const std::array<std::string, 5> anisoText{ Tcs("Disabled"), "2x", "4x", "8x", "16x" };
         u32 afSelected = 0;
         for (u32 i = 0; i < aniso.size(); i++)
         {
@@ -363,11 +363,11 @@ void gui_settings_video()
         }
         ImGui::SameLine(0, innerSpacing);
 
-        ImGui::Text("Anisotropic Filtering");
+        ImGui::Text("%s", Tcs("Anisotropic Filtering"));
         ImGui::SameLine();
         ShowHelpMarker("Higher values make textures viewed at oblique angles look sharper, but are more demanding on the GPU. This option only has a visible impact on mipmapped textures.");
 
-    	ImGui::Text("Texture Filtering:");
+    	ImGui::Text("%s", Tcs("Texture Filtering:"));
     	ImGui::Columns(3, "textureFiltering", false);
     	OptionRadioButton("Default", config::TextureFiltering, 0, "Use the game's default texture filtering");
     	ImGui::NextColumn();
@@ -403,7 +403,7 @@ void gui_settings_video()
 					config::VideoRoutingVRes = vres;
 				}
 			}
-			ImGui::Text("Output texture size: %d x %d", config::VideoRoutingScale ? config::VideoRoutingVRes * settings.display.width / settings.display.height : settings.display.width, config::VideoRoutingScale ? config::VideoRoutingVRes : settings.display.height);
+			ImGui::Text(Tcs("Output texture size: %d x %d"), config::VideoRoutingScale ? config::VideoRoutingVRes * settings.display.width / settings.display.height : settings.display.width, config::VideoRoutingScale ? config::VideoRoutingVRes : settings.display.height);
 		}
 	}
 #endif

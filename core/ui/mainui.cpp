@@ -26,6 +26,7 @@
 #include "emulator.h"
 #include "imgui_driver.h"
 #include "profiler/fc_profiler.h"
+#include "oslib/i18n.h"
 
 #include <chrono>
 #include <thread>
@@ -69,7 +70,7 @@ void mainui_init()
 {
 	if (!rend_init_renderer()) {
 		ERROR_LOG(RENDERER, "Renderer initialization failed");
-		gui_error("Renderer initialization failed.\nPlease select a different graphics API");
+		gui_error(i18n::T("Renderer initialization failed.\nPlease select a different graphics API"));
 	}
 }
 

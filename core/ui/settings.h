@@ -20,6 +20,8 @@
 #include "game_scanner.h"
 #include "gui_util.h"
 #include "imgui.h"
+#include "oslib/i18n.h"
+using namespace i18n;
 
 void gui_display_settings();
 void gui_settings_general();
@@ -43,7 +45,7 @@ inline static void header(const char *title)
 	ImguiStyleVar _(ImGuiStyleVar_ButtonTextAlign, ImVec2(0.f, 0.5f)); // Left
 	ImguiStyleVar _1(ImGuiStyleVar_DisabledAlpha, 1.0f);
 	ImGui::BeginDisabled();
-	ImGui::ButtonEx(title, ImVec2(-1, 0));
+	ImGui::ButtonEx(Tcs(title), ImVec2(-1, 0));
 	ImGui::EndDisabled();
 }
 

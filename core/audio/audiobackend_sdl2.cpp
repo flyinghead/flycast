@@ -66,7 +66,7 @@ class SDLAudioBackend : AudioBackend
 
 public:
 	SDLAudioBackend()
-		: AudioBackend("sdl2", "Simple DirectMedia Layer 2 Audio") {}
+		: AudioBackend("sdl2", "Simple DirectMedia Layer 2") {}
 
 	bool init() override
 	{

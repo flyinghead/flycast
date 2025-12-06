@@ -24,12 +24,15 @@
 #include <windows.h>
 #include <nowide/stackstring.hpp>
 #endif
+#include <set>
 
 namespace i18n
 {
 
 static bool inited;
 static std::map<std::string, std::string> messages;
+static std::set<std::string> missed;
+static std::string temp;
 
 static void load(const std::string& language)
 {
@@ -40,10 +43,8 @@ static void load(const std::string& language)
 	config::IniFile cat;
 	cat.load(std::string((char *)data.get(), size), true);
 	std::vector<std::string> msgs = cat.getEntryNames("");
-	for (const auto& msgId : msgs) {
+	for (const auto& msgId : msgs)
 		messages[msgId] = cat.getString("", msgId);
-		DEBUG_LOG(BOOT, "Loaded: %s=%s", msgId.c_str(), messages[msgId].c_str());
-	}
 }
 
 void init()
@@ -87,15 +88,37 @@ void init()
 const std::string& T(const std::string& msg)
 {
 	init();
-	auto it = messages.find(msg);
+	std::string key { msg };
+	std::string imguiId;
+	size_t hash2 = msg.find("##");
+	if (hash2 != msg.npos) {
+		imguiId = msg.substr(hash2);
+		key = msg.substr(0, hash2);
+	}
+	auto it = messages.find(key);
 	if (it == messages.end())
+	{
+#if !defined(NDEBUG) || defined(DEBUGFAST)
+		if (!messages.empty() && missed.count(msg) == 0) {
+			INFO_LOG(COMMON, "Missing message: %s", msg.c_str());
+			missed.insert(msg);
+		}
+#endif
 		return msg;
+	}
 	else
-		return it->second;
+	{
+		if (imguiId.empty())
+			return it->second;
+		temp = it->second + imguiId;
+		return temp;
+	}
 }
 
 const char *Tcs(const char *msg)
 {
+	if (msg == nullptr)
+		return nullptr;
 	std::string in { msg };
 	const std::string& out = T(in);
 	if (&out == &in)

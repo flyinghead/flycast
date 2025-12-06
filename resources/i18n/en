@@ -4,6 +4,8 @@
 ; Empty lines and lines starting with ';' are ignored.
 ; Message keys and values can contain C-style escape sequences: \n, \t, \r, \f and \\ (backslash characters must be doubled)
 ;
+; ui/gui.cpp
+;
 GAMES=GAMES
 Filter=Filter
 Settings=Settings
@@ -55,6 +57,9 @@ Connecting to server=Connecting to server
 Connected as slot %d=Connected as slot %d
 This game requires a real BIOS=This game requires a real BIOS
 Widescreen cheat activated=Widescreen cheat activated
+;
+; nullDC.cpp
+;
 Save state failed - memory full=Save state failed - memory full
 Cannot open save file=Cannot open save file
 State saved=State saved
@@ -63,3 +68,551 @@ Save state not found=Save state not found
 Failed to load state=Failed to load state
 Not enough memory=Not enough memory
 I/O error=I/O error
+;
+; ui/mainui.cpp
+;
+Renderer initialization failed.\nPlease select a different graphics API=Renderer initialization failed.\nPlease select a different graphics API
+;
+; ui/game_scanner.cpp
+;
+Dreamcast BIOS=Dreamcast BIOS
+;
+; ui/gui_achievements.cpp
+;
+Close=Close
+; FIXME need positional args here
+You have unlocked %d of %d achievements and %d of %d points.=You have unlocked %d of %d achievements and %d of %d points.
+Hardcore Mode=Hardcore Mode
+Locked=Locked
+Active Challenges=Active Challenges
+Almost There=Almost There
+Unlocked=Unlocked
+Recently Unlocked=Recently Unlocked
+Unsupported=Unsupported
+Unofficial=Unofficial
+Unlocks Not Synced to Server=Unlocks Not Synced to Server
+;
+; ui/gui_chat.h
+;
+P1=P1
+P2=P2
+;
+; ui/gui_cheats.cpp
+;
+Select a cheat file=Select a cheat file
+ADD CHEAT=ADD CHEAT
+Name=Name
+Code=Code
+CHEATS=CHEATS
+Add=Add
+Load=Load
+(No cheat loaded)=(No cheat loaded)
+;
+; ui/gui_util.cpp
+;
+Storage=Storage
+.. Up to Parent Folder=.. Up to Parent Folder
+Select Current Folder=Select Current Folder
+(?)=(?)
+;
+; ui/settings.cpp
+;
+CPU Mode=CPU Mode
+Virtual memory addresses=Virtual memory addresses
+Debugging=Debugging
+Other=Other
+Lua Scripting=Lua Scripting
+Logging=Logging
+Profiling=Profiling
+Done=Done
+Delete Game Config=Delete Game Config
+Make Game Config=Make Game Config
+General=General
+Controls=Controls
+Video=Video
+Audio=Audio
+Network=Network
+Advanced=Advanced
+Debug=Debug
+About=About
+Dynarec=Dynarec
+Use the dynamic recompiler. Recommended in most cases=Use the dynamic recompiler. Recommended in most cases
+Interpreter=Interpreter
+Use the interpreter. Very slow but may help in case of a dynarec problem=Use the interpreter. Very slow but may help in case of a dynarec problem
+SH4 Clock=SH4 Clock
+Over/Underclock the main SH4 CPU. Default is 200 MHz. Other values may crash, freeze or trigger unexpected nuclear reactions.=Over/Underclock the main SH4 CPU. Default is 200 MHz. Other values may crash, freeze or trigger unexpected nuclear reactions.
+Base Address: %p=Base Address: %p
+RAM adresses are not available until the emulation is started=RAM adresses are not available until the emulation is started
+RAM: %p=RAM: %p
+VRAM64: %p=VRAM64: %p
+ARAM: %p=ARAM: %p
+Enable GDB=Enable GDB
+GDB debugging support, disables Dynarec and dramatically reduces performance when a debugger is connected.=GDB debugging support, disables Dynarec and dramatically reduces performance when a debugger is connected.
+Wait for connection=Wait for connection
+Start emulation once the debugger is connected.=Start emulation once the debugger is connected.
+Serial Console=Serial Console
+Dump the Dreamcast serial console to stdout=Dump the Dreamcast serial console to stdout
+Serial PTY=Serial PTY
+Requires the option "Serial Console" to work=Requires the option "Serial Console" to work
+GDB port=GDB port
+Default port is 3263=Default port is 3263
+HLE BIOS=HLE BIOS
+Force high-level BIOS emulation=Force high-level BIOS emulation
+Multi-threaded emulation=Multi-threaded emulation
+Run the emulated CPU and GPU on different threads=Run the emulated CPU and GPU on different threads
+Dreamcast 32MB RAM Mod=Dreamcast 32MB RAM Mod
+Enables 32MB RAM Mod for Dreamcast. May affect compatibility=Enables 32MB RAM Mod for Dreamcast. May affect compatibility
+Dump Textures=Dump Textures
+Dump all textures into data/texdump/<game id>=Dump all textures into data/texdump/<game id>
+Dump Replaced Textures=Dump Replaced Textures
+Always dump textures that are already replaced by custom textures=Always dump textures that are already replaced by custom textures
+Log to File=Log to File
+Log debug information to flycast.log=Log debug information to flycast.log
+Automatically Report Crashes=Automatically Report Crashes
+Automatically upload crash reports to sentry.io to help in troubleshooting. No personal information is included.=Automatically upload crash reports to sentry.io to help in troubleshooting. No personal information is included.
+Lua Filename=Lua Filename
+Specify lua filename to use. Should be located in Flycast config folder. Defaults to flycast.lua when empty.=Specify lua filename to use. Should be located in Flycast config folder. Defaults to flycast.lua when empty.
+Log Verbosity=Log Verbosity
+Log Server=Log Server
+Log to this hostname[:port] with UDP. Default port is 31667.=Log to this hostname[:port] with UDP. Default port is 31667.
+Enable=Enable
+Enable the profiler.=Enable the profiler.
+Display=Display
+Draw the profiler output in an overlay.=Draw the profiler output in an overlay.
+Output to terminal=Output to terminal
+Write the profiler output to the terminal=Write the profiler output to the terminal
+;
+; ui/settings_about.cpp
+;
+Version: %s=Version: %s
+Git Hash: %s=Git Hash: %s
+Build Date: %s=Build Date: %s
+Platform=Platform
+CPU: %s=CPU: %s
+Unknown=Unknown
+Operating System: %s=Operating System: %s
+Windows Universal Platform=Windows Universal Platform
+JIT Status: %s=JIT Status: %s
+Driver Name: %s=Driver Name: %s
+Select a custom GPU driver=Select a custom GPU driver
+Custom Driver:=Custom Driver:
+Use Default Driver=Use Default Driver
+Reset Vulkan=Reset Vulkan
+Upload Custom Driver=Upload Custom Driver
+Do you want to reset Vulkan to use new driver?=Do you want to reset Vulkan to use new driver?
+Yes=Yes
+No=No
+;
+; ui/settings_audio.cpp
+;
+Enable DSP=Enable DSP
+Enable the Dreamcast Digital Sound Processor. Only recommended on fast platforms=Enable the Dreamcast Digital Sound Processor. Only recommended on fast platforms
+Enable VMU Sounds=Enable VMU Sounds
+Play VMU beeps when enabled.=Play VMU beeps when enabled.
+Volume Level=Volume Level
+Adjust the emulator's audio level=Adjust the emulator's audio level
+Automatic Latency=Automatic Latency
+Automatically set audio latency. Recommended=Automatically set audio latency. Recommended
+Latency=Latency
+Sets the maximum audio latency. Not supported by all audio drivers.=Sets the maximum audio latency. Not supported by all audio drivers.
+Audio Driver=Audio Driver
+auto - Automatic driver selection=auto - Automatic driver selection
+The audio driver to use=The audio driver to use
+;
+; audio/audiobackend_null.cpp
+;
+No Audio=No Audio
+;
+; audio/audiobackend_oboe.cpp
+;
+Automatic AAudio / OpenSL selection=Automatic AAudio / OpenSL selection
+;
+; ui/vgamepad.cpp
+;
+Save=Save
+Reset=Reset
+;
+; ui/settings_general.cpp
+;
+Set=Set
+Add=Add
+Select a Content Folder=Select a Content Folder
+Language=Language
+Japanese=Japanese
+English=English
+German=German
+French=French
+Spanish=Spanish
+Italian=Italian
+Default=Default
+The language as configured in the Dreamcast BIOS=The language as configured in the Dreamcast BIOS
+Broadcast=Broadcast
+TV broadcasting standard for non-VGA modes=TV broadcasting standard for non-VGA modes
+Region=Region
+Japan=Japan
+USA=USA
+Europe=Europe
+Export=Export
+Korea=Korea
+BIOS region=BIOS region
+Cable=Cable
+VGA=VGA
+RGB Component=RGB Component
+TV Composite=TV Composite
+Video connection type=Video connection type
+Content Location=Content Location
+Rescan Content=Rescan Content
+The folders where your games are stored=The folders where your games are stored
+Data Folder=Data Folder
+The folder containing BIOS files, as well as saved VMUs and states=The folder containing BIOS files, as well as saved VMUs and states
+Home Folder=Home Folder
+Import=Import
+Export=Export
+Reveal in Finder=Reveal in Finder
+The folder where Flycast saves configuration files and VMUs. BIOS files should be in a subfolder named "data"=The folder where Flycast saves configuration files and VMUs. BIOS files should be in a subfolder named "data"
+Box Art Game List=Box Art Game List
+Display game cover art in the game list.=Display game cover art in the game list.
+Fetch Box Art=Fetch Box Art
+Fetch cover images from TheGamesDB.net.=Fetch cover images from TheGamesDB.net.
+UI Scaling=UI Scaling
+Adjust the size of UI elements and fonts.=Adjust the size of UI elements and fonts.
+Apply=Apply
+UI Theme=UI Theme
+Dark=Dark
+Light=Light
+Dreamcast=Dreamcast
+High Contrast=High Contrast
+Nintendo=Nintendo
+Aqua Chill=Aqua Chill
+Select the UI color theme.=Select the UI color theme.
+Hide Legacy Naomi Roms=Hide Legacy Naomi Roms
+Hide .bin, .dat and .lst files from the content browser=Hide .bin, .dat and .lst files from the content browser
+Use SAF File Picker=Use SAF File Picker
+Use Android Storage Access Framework file picker to select folders and files. Ignored on Android 10 and later.=Use Android Storage Access Framework file picker to select folders and files. Ignored on Android 10 and later.
+Automatic State:=Automatic State:
+Load the last saved state of the game when starting=Load the last saved state of the game when starting
+Save the state of the game when stopping=Save the state of the game when stopping
+Naomi Free Play=Naomi Free Play
+Configure Naomi games in Free Play mode.=Configure Naomi games in Free Play mode.
+Discord Presence=Discord Presence
+Show which game you are playing on Discord=Show which game you are playing on Discord
+Enable RetroAchievements=Enable RetroAchievements
+Track your game achievements using RetroAchievements.org=Track your game achievements using RetroAchievements.org
+Hardcore Mode=Hardcore Mode
+Enable RetroAchievements hardcore mode. Using cheats and loading a state are not allowed in this mode.=Enable RetroAchievements hardcore mode. Using cheats and loading a state are not allowed in this mode.
+Username=Username
+Authentication successful=Authentication successful
+Logout=Logout
+Password=Password
+Authenticating...=Authenticating...
+Login=Login
+Custom Paths=Custom Paths
+BIOS Folders=BIOS Folders
+Select a BIOS folder=Select a BIOS folder
+Folders containing BIOS files (e.g. dc_boot.bin or dc_bios.bin) and arcade BIOS=Folders containing BIOS files (e.g. dc_boot.bin or dc_bios.bin) and arcade BIOS
+VMU Folder=VMU Folder
+Select the VMU folder=Select the VMU folder
+Folder where VMU (.bin) saves are stored=Folder where VMU (.bin) saves are stored
+Savestate Folders=Savestate Folders
+Select a savestate folder=Select a savestate folder
+Folders for save states. First path is used for new states; all are searched when loading=Folders for save states. First path is used for new states; all are searched when loading
+Game Save Folder=Game Save Folder
+Select the game save folder=Select the game save folder
+Folder for game save data (e.g. arcade NVRAM)=Folder for game save data (e.g. arcade NVRAM)
+Texture Pack Folders=Texture Pack Folders
+Select a texture pack folder=Select a texture pack folder
+Folders containing textures/<gameId> or <gameId> under a textures subfolder=Folders containing textures/<gameId> or <gameId> under a textures subfolder
+Texture Dump Folder=Texture Dump Folder
+Select the texture dump folder=Select the texture dump folder
+Folder where texture dumps are saved. Game-specific subfolders will be created automatically=Folder where texture dumps are saved. Game-specific subfolders will be created automatically
+Box Art Folder=Box Art Folder
+Select the box art folder=Select the box art folder
+Folder containing box art images (png/jpg). If empty, Flycast will use the default Home Folder/boxart for downloads and generated art=Folder containing box art images (png/jpg). If empty, Flycast will use the default Home Folder/boxart for downloads and generated art
+Controller Mapping Folders=Controller Mapping Folders
+Select a controller mapping folder=Select a controller mapping folder
+Folders containing controller mapping files (.cfg). The emulator also looks in Home Folder/mappings. Per-game mappings are suffixed with _<gameId>.cfg=Folders containing controller mapping files (.cfg). The emulator also looks in Home Folder/mappings. Per-game mappings are suffixed with _<gameId>.cfg
+Cheat Folders=Cheat Folders
+Select a cheat folder=Select a cheat folder
+Folders containing cheat files (.cht/.txt) named with the game ID. Flycast will auto-load matching files if present=Folders containing cheat files (.cht/.txt) named with the game ID. Flycast will auto-load matching files if present
+;
+; ui/settings_controls.cpp
+;
+None=None
+Sega Controller=Sega Controller
+Light Gun=Light Gun
+Keyboard=Keyboard
+Mouse=Mouse
+Twin Stick=Twin Stick
+Arcade/Ascii Stick=Arcade/Ascii Stick
+Maracas Controller=Maracas Controller
+Fishing Controller=Fishing Controller
+Pop'n Music controller=Pop'n Music controller
+Racing Controller=Racing Controller
+Densha de Go! Controller=Densha de Go! Controller
+Panther DC/Full Controller=Panther DC/Full Controller
+Sega VMU=Sega VMU
+Vibration Pack=Vibration Pack
+Microphone=Microphone
+All=All
+Directions=Directions
+Up=Up
+Down=Down
+Left=Left
+Right=Right
+Thumbstick Up=Thumbstick Up
+Thumbstick Down=Thumbstick Down
+Thumbstick Left=Thumbstick Left
+Thumbstick Right=Thumbstick Right
+R.Thumbstick Up=R.Thumbstick Up
+R.Thumbstick Down=R.Thumbstick Down
+R.Thumbstick Left=R.Thumbstick Left
+R.Thumbstick Right=R.Thumbstick Right
+Axis 3 Up=Axis 3 Up
+Axis 3 Down=Axis 3 Down
+Axis 3 Left=Axis 3 Left
+Axis 3 Right=Axis 3 Right
+DPad2 Up=DPad2 Up
+DPad2 Down=DPad2 Down
+DPad2 Left=DPad2 Left
+DPad2 Right=DPad2 Right
+Buttons=Buttons
+Triggers=Triggers
+Left Trigger=Left Trigger
+Right Trigger=Right Trigger
+Left Trigger 2=Left Trigger 2
+Right Trigger 2=Right Trigger 2
+System Buttons=System Buttons
+Start=Start
+Reload=Reload
+Emulator=Emulator
+Menu=Menu
+Exit=Exit
+Fast-forward=Fast-forward
+Load State=Load State
+Save State=Save State
+Bypass Emulated Keyboard=Bypass Emulated Keyboard
+Save Screenshot=Save Screenshot
+Button 1=Button 1
+Button 2=Button 2
+Button 3=Button 3
+Button 4=Button 4
+Button 5=Button 5
+Button 6=Button 6
+Button 7=Button 7
+Button 8=Button 8
+Button 9=Button 9
+Coin=Coin
+Service=Service
+Test=Test
+Insert Card=Insert Card
+Map Control=Map Control
+Waiting for control '%s'...=Waiting for control '%s'...
+Time out in %d s=Time out in %d s
+Current inputs:=Current inputs:
+Confirm=Confirm
+Sequential=Sequential
+When checked, this combo will only activate when all keys are pressed in the given sequence.\nWhen not checked, the combo will activate when all keys are pressed in any order.=When checked, this combo will only activate when all keys are pressed in the given sequence.\nWhen not checked, the combo will activate when all keys are pressed in any order.
+Controller Mapping=Controller Mapping
+Map=Map
+Unmap=Unmap
+Dreamcast Controls=Dreamcast Controls
+Reset...=Reset...
+Confirm Reset=Confirm Reset
+Are you sure you want to reset the mappings to default?=Are you sure you want to reset the mappings to default?
+Controller Type:=Controller Type:
+Gamepad=Gamepad
+Arcade / Hit Box=Arcade / Hit Box
+Arcade Controls=Arcade Controls
+Gamepad Settings=Gamepad Settings
+Haptic=Haptic
+Power=Power
+Haptic feedback power=Haptic feedback power
+View=View
+Transparency=Transparency
+Virtual gamepad buttons transparency=Virtual gamepad buttons transparency
+Select a PNG file=Select a PNG file
+Choose Image...=Choose Image...
+Use Default=Use Default
+Rumble=Rumble
+Rumble power=Rumble power
+Thumbsticks=Thumbsticks
+Dead zone=Dead zone
+Minimum deflection to register as input=Minimum deflection to register as input
+Saturation=Saturation
+Value sent to the game at 100% thumbstick deflection. Values greater than 100% will saturate before full deflection of the thumbstick.=Value sent to the game at 100% thumbstick deflection. Values greater than 100% will saturate before full deflection of the thumbstick.
+Physical Devices=Physical Devices
+System=System
+DreamLink status: %s=DreamLink status: %s
+Edit Layout=Edit Layout
+Mouse sensitivity=Mouse sensitivity
+Use Raw Input=Use Raw Input
+Supports multiple pointing devices (mice, light guns) and keyboards=Supports multiple pointing devices (mice, light guns) and keyboards
+Use Physical VMU Memory=Use Physical VMU Memory
+Enables direct read/write access to physical VMU memory via DreamPicoPort/DreamConn. This is not compatible with load state events.=Enables direct read/write access to physical VMU memory via DreamPicoPort/DreamConn. This is not compatible with load state events.
+Dreamcast Devices=Dreamcast Devices
+Port %c=Port %c
+Crosshair=Crosshair
+Use Network Expansion Devices=Use Network Expansion Devices
+Connect to expansion devices such as VMUs over local TCP.=Connect to expansion devices such as VMUs over local TCP.
+Crosshair Size=Crosshair Size
+Per Game VMU A1=Per Game VMU A1
+When enabled, each game has its own VMU on port 1 of controller A.=When enabled, each game has its own VMU on port 1 of controller A.
+Crosshair color=Crosshair color
+;
+; ui/settings_network.cpp
+;
+Network Type=Network Type
+Disabled=Disabled
+Enable networking using GGPO=Enable networking using GGPO
+Enable networking for supported Naomi and Atomiswave games=Enable networking for supported Naomi and Atomiswave games
+Battle Cable=Battle Cable
+Emulate the Taisen (Battle) null modem cable for games that support it=Emulate the Taisen (Battle) null modem cable for games that support it
+Configuration=Configuration
+Play as Player 1=Play as Player 1
+Deselect to play as player 2=Deselect to play as player 2
+Peer=Peer
+Your peer IP address and optional port=Your peer IP address and optional port
+Frame Delay=Frame Delay
+Sets Frame Delay, advisable for sessions with ping >100 ms=Sets Frame Delay, advisable for sessions with ping >100 ms
+Left Thumbstick:=Left Thumbstick:
+Left thumbstick not used=Left thumbstick not used
+Horizontal=Horizontal
+Use the left thumbstick horizontal axis only=Use the left thumbstick horizontal axis only
+Full=Full
+Use the left thumbstick horizontal and vertical axes=Use the left thumbstick horizontal and vertical axes
+Enable Chat=Enable Chat
+Open the chat window when a chat message is received=Open the chat window when a chat message is received
+Enable Chat Window Timeout=Enable Chat Window Timeout
+Automatically close chat window after 20 seconds=Automatically close chat window after 20 seconds
+Chat Window Timeout (seconds)=Chat Window Timeout (seconds)
+Sets duration that chat window stays open after new message is received.=Sets duration that chat window stays open after new message is received.
+Network Statistics=Network Statistics
+Display network statistics on screen=Display network statistics on screen
+Act as Server=Act as Server
+Create a local server for Naomi network games=Create a local server for Naomi network games
+Server=Server
+The server to connect to. Leave blank to find a server automatically on the default port=The server to connect to. Leave blank to find a server automatically on the default port
+Local Port=Local Port
+The local UDP port to use=The local UDP port to use
+Match Code=Match Code
+Choose a unique word or number and share it with your opponent.=Choose a unique word or number and share it with your opponent.
+Connect=Connect
+Disconnect=Disconnect
+Waiting at meeting point...=Waiting at meeting point...
+Preparing game...=Preparing game...
+Playing %s (%s)=Playing %s (%s)
+Manual=Manual
+The peer to connect to. Leave blank to find a player automatically on the default port=The peer to connect to. Leave blank to find a player automatically on the default port
+Act as Master=Act as Master
+Only used for Maximum Speed. One of the peer must be master.=Only used for Maximum Speed. One of the peer must be master.
+Network Options=Network Options
+Enable UPnP=Enable UPnP
+Automatically configure your network router for netplay=Automatically configure your network router for netplay
+Broadcast Digital Outputs=Broadcast Digital Outputs
+Broadcast digital outputs and force-feedback state on TCP port 8000. Compatible with the "-output network" MAME option. Arcade games only.=Broadcast digital outputs and force-feedback state on TCP port 8000. Compatible with the "-output network" MAME option. Arcade games only.
+Broadband Adapter Emulation=Broadband Adapter Emulation
+Emulate the Ethernet Broadband Adapter (BBA) instead of the Modem=Emulate the Ethernet Broadband Adapter (BBA) instead of the Modem
+Use DCNet=Use DCNet
+Use the DCNet cloud service for Dreamcast Internet access.=Use the DCNet cloud service for Dreamcast Internet access.
+ISP User Name=ISP User Name
+The ISP user name stored in the console Flash RAM. Used by some online games as the player name. Leave blank to keep the current Flash RAM value.=The ISP user name stored in the console Flash RAM. Used by some online games as the player name. Leave blank to keep the current Flash RAM value.
+DNS=DNS
+DNS server name or IP address=DNS server name or IP address
+Multiboard Screens=Multiboard Screens
+1 (Twin)=1 (Twin)
+One screen configuration (F355 Twin)=One screen configuration (F355 Twin)
+3 (Deluxe)=3 (Deluxe)
+Three screens configuration=Three screens configuration
+;
+; ui/settings_video.cpp
+;
+Graphics API=Graphics API
+MoltenVK: An implementation of Vulkan that runs on Apple's Metal graphics framework=MoltenVK: An implementation of Vulkan that runs on Apple's Metal graphics framework
+Transparent Sorting=Transparent Sorting
+Per Triangle=Per Triangle
+Sort transparent polygons per triangle. Fast but may produce graphical glitches=Sort transparent polygons per triangle. Fast but may produce graphical glitches
+Per Strip=Per Strip
+Sort transparent polygons per strip. Faster but may produce graphical glitches=Sort transparent polygons per strip. Faster but may produce graphical glitches
+Per Pixel=Per Pixel
+Sort transparent polygons per pixel. Slower but accurate=Sort transparent polygons per pixel. Slower but accurate
+Rendering Options=Rendering Options
+Half=Half
+Native=Native
+Internal Resolution=Internal Resolution
+Internal render resolution. Higher is better, but more demanding on the GPU. Values higher than your display resolution (but no more than double your display resolution) can be used for supersampling, which provides high-quality antialiasing without reducing sharpness.=Internal render resolution. Higher is better, but more demanding on the GPU. Values higher than your display resolution (but no more than double your display resolution) can be used for supersampling, which provides high-quality antialiasing without reducing sharpness.
+Integer Scaling=Integer Scaling
+Scales the output by the maximum integer multiple allowed by the display resolution.=Scales the output by the maximum integer multiple allowed by the display resolution.
+Linear Interpolation=Linear Interpolation
+Scales the output with linear interpolation. Will use nearest neighbor interpolation otherwise. Disable with integer scaling.=Scales the output with linear interpolation. Will use nearest neighbor interpolation otherwise. Disable with integer scaling.
+VSync=VSync
+Synchronizes the frame rate with the screen refresh rate. Recommended=Synchronizes the frame rate with the screen refresh rate. Recommended
+Duplicate frames=Duplicate frames
+Duplicate frames on high refresh rate monitors (120 Hz and higher)=Duplicate frames on high refresh rate monitors (120 Hz and higher)
+Show VMU In-game=Show VMU In-game
+Show the VMU LCD screens while in-game=Show the VMU LCD screens while in-game
+Full Framebuffer Emulation=Full Framebuffer Emulation
+Fully accurate VRAM framebuffer emulation. Helps games that directly access the framebuffer for special effects. Very slow and incompatible with upscaling and wide screen.=Fully accurate VRAM framebuffer emulation. Helps games that directly access the framebuffer for special effects. Very slow and incompatible with upscaling and wide screen.
+Load Custom Textures=Load Custom Textures
+Load custom/high-res textures from data/textures/<game id>=Load custom/high-res textures from data/textures/<game id>
+Preload Custom Textures=Preload Custom Textures
+Preload custom textures at game start. May improve performance but increases memory usage=Preload custom textures at game start. May improve performance but increases memory usage
+Aspect Ratio=Aspect Ratio
+Widescreen=Widescreen
+Draw geometry outside of the normal 4:3 aspect ratio. May produce graphical glitches in the revealed areas.\nAspect Fit and shows the full 16:9 content.=Draw geometry outside of the normal 4:3 aspect ratio. May produce graphical glitches in the revealed areas.\nAspect Fit and shows the full 16:9 content.
+Super Widescreen=Super Widescreen
+Use the full width of the screen or window when its aspect ratio is greater than 16:9.\nAspect Fill and remove black bars. Not compatible with integer scaling.=Use the full width of the screen or window when its aspect ratio is greater than 16:9.\nAspect Fill and remove black bars. Not compatible with integer scaling.
+Widescreen Game Cheats=Widescreen Game Cheats
+Modify the game so that it displays in 16:9 anamorphic format and use horizontal screen stretching. Only some games are supported.=Modify the game so that it displays in 16:9 anamorphic format and use horizontal screen stretching. Only some games are supported.
+Horizontal Stretching=Horizontal Stretching
+Stretch the screen horizontally=Stretch the screen horizontally
+Rotate Screen 90°=Rotate Screen 90°
+Rotate the screen 90° counterclockwise=Rotate the screen 90° counterclockwise
+Per Pixel Settings=Per Pixel Settings
+512 MB=512 MB
+1 GB=1 GB
+2 GB=2 GB
+4 GB=4 GB
+Pixel Buffer Size=Pixel Buffer Size
+The size of the pixel buffer. May need to be increased when upscaling by a large factor.=The size of the pixel buffer. May need to be increased when upscaling by a large factor.
+Maximum Layers=Maximum Layers
+Maximum number of transparent layers. May need to be increased for some complex scenes. Decreasing it may improve performance.=Maximum number of transparent layers. May need to be increased for some complex scenes. Decreasing it may improve performance.
+Performance=Performance
+Automatic Frame Skipping:=Automatic Frame Skipping:
+No frame skipping=No frame skipping
+Normal=Normal
+Skip a frame when the GPU and CPU are both running slow=Skip a frame when the GPU and CPU are both running slow
+Maximum=Maximum
+Skip a frame when the GPU is running slow=Skip a frame when the GPU is running slow
+Frame Skipping=Frame Skipping
+Number of frames to skip between two actually rendered frames=Number of frames to skip between two actually rendered frames
+Shadows=Shadows
+Enable modifier volumes, usually used for shadows=Enable modifier volumes, usually used for shadows
+Fog=Fog
+Enable fog effects=Enable fog effects
+Delay Frame Swapping=Delay Frame Swapping
+Useful to avoid flashing screen or glitchy videos. Not recommended on slow platforms=Useful to avoid flashing screen or glitchy videos. Not recommended on slow platforms
+Fix Upscale Bleeding Edge=Fix Upscale Bleeding Edge
+Helps with texture bleeding case when upscaling. Disabling it can help if pixels are warping when upscaling in 2D games (MVC2, CVS, KOF, etc.)=Helps with texture bleeding case when upscaling. Disabling it can help if pixels are warping when upscaling in 2D games (MVC2, CVS, KOF, etc.)
+Native Depth Interpolation=Native Depth Interpolation
+Helps with texture corruption and depth issues on AMD GPUs. Can also help Intel GPUs in some cases.=Helps with texture corruption and depth issues on AMD GPUs. Can also help Intel GPUs in some cases.
+Copy Rendered Textures to VRAM=Copy Rendered Textures to VRAM
+Copy rendered-to textures back to VRAM. Slower but accurate=Copy rendered-to textures back to VRAM. Slower but accurate
+Anisotropic Filtering=Anisotropic Filtering
+Higher values make textures viewed at oblique angles look sharper, but are more demanding on the GPU. This option only has a visible impact on mipmapped textures.=Higher values make textures viewed at oblique angles look sharper, but are more demanding on the GPU. This option only has a visible impact on mipmapped textures.
+Texture Filtering:=Texture Filtering:
+Use the game's default texture filtering=Use the game's default texture filtering
+Force Nearest-Neighbor=Force Nearest-Neighbor
+Force nearest-neighbor filtering for all textures. Crisper appearance, but may cause various rendering issues. This option usually does not affect performance.=Force nearest-neighbor filtering for all textures. Crisper appearance, but may cause various rendering issues. This option usually does not affect performance.
+Force Linear=Force Linear
+Force linear filtering for all textures. Smoother appearance, but may cause various rendering issues. This option usually does not affect performance.=Force linear filtering for all textures. Smoother appearance, but may cause various rendering issues. This option usually does not affect performance.
+Show FPS Counter=Show FPS Counter
+Show on-screen frame/sec counter=Show on-screen frame/sec counter
+Video Routing (Syphon)=Video Routing (Syphon)
+Video Routing (Spout)=Video Routing (Spout)
+Video Routing (Only available with OpenGL or DirectX 11)=Video Routing (Only available with OpenGL or DirectX 11)
+Send video content to another program=Send video content to another program
+e.g. Route GPU texture to OBS Studio directly instead of using CPU intensive Display/Window Capture=e.g. Route GPU texture to OBS Studio directly instead of using CPU intensive Display/Window Capture
+Scale down before sending=Scale down before sending
+Could increase performance when sharing a smaller texture, YMMV=Could increase performance when sharing a smaller texture, YMMV
+Output vertical resolution=Output vertical resolution
+Output texture size: %d x %d=Output texture size: %d x %d

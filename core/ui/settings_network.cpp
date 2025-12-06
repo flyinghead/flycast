@@ -37,7 +37,7 @@ void gui_settings_network()
 		else if (config::BattleCableEnable)
 			netType = 3;
 		ImGui::Columns(4, "networkType", false);
-		ImGui::RadioButton("Disabled##network", &netType, 0);
+		ImGui::RadioButton((T("Disabled") + "##network").c_str(), &netType, 0);
 		ImGui::NextColumn();
 		ImGui::RadioButton("GGPO", &netType, 1);
 		ImGui::SameLine(0, style.ItemInnerSpacing.x);
@@ -47,7 +47,7 @@ void gui_settings_network()
 		ImGui::SameLine(0, style.ItemInnerSpacing.x);
 		ShowHelpMarker("Enable networking for supported Naomi and Atomiswave games");
 		ImGui::NextColumn();
-		ImGui::RadioButton("Battle Cable", &netType, 3);
+		ImGui::RadioButton(Tcs("Battle Cable"), &netType, 3);
 		ImGui::SameLine(0, style.ItemInnerSpacing.x);
 		ShowHelpMarker("Emulate the Taisen (Battle) null modem cable for games that support it");
 		ImGui::Columns(1, nullptr, false);
@@ -83,7 +83,7 @@ void gui_settings_network()
 			OptionSlider("Frame Delay", config::GGPODelay, 0, 20,
 				"Sets Frame Delay, advisable for sessions with ping >100 ms");
 
-			ImGui::Text("Left Thumbstick:");
+			ImGui::Text("%s", Tcs("Left Thumbstick:"));
 			OptionRadioButton<int>("Disabled##analogaxis", config::GGPOAnalogAxes, 0, "Left thumbstick not used");
 			ImGui::SameLine();
 			OptionRadioButton<int>("Horizontal", config::GGPOAnalogAxes, 1, "Use the left thumbstick horizontal axis only");
@@ -129,7 +129,7 @@ void gui_settings_network()
 #ifdef USE_ICE
 		    if (ImGui::BeginTabBar("battleMode", ImGuiTabBarFlags_NoTooltip))
 		    {
-				if (ImGui::BeginTabItem("Match Code"))
+				if (ImGui::BeginTabItem(Tcs("Match Code")))
 				{
 					ice::State state = ice::getState();
 					ImGuiInputTextFlags textFlags = state == ice::Offline ? ImGuiInputTextFlags_CharsNoBlank : ImGuiInputTextFlags_ReadOnly;
@@ -138,11 +138,11 @@ void gui_settings_network()
 					ImGui::SameLine();
 					ShowHelpMarker("Choose a unique word or number and share it with your opponent.");
 					if (state == ice::Offline) {
-						if (ImGui::Button("Connect") && !matchCode.empty())
+						if (ImGui::Button(Tcs("Connect")) && !matchCode.empty())
 							ice::init(matchCode, true);
 					}
 					else {
-						if (ImGui::Button("Disconnect"))
+						if (ImGui::Button(Tcs("Disconnect")))
 							try { ice::term(); } catch (...) {}
 					}
 					std::string status;
@@ -158,8 +158,11 @@ void gui_settings_network()
 						status = "Preparing game...";
 						break;
 					case ice::Playing:
-						status = "Playing " + matchCode + " (" + ice::getStatusText() + ")";
-						break;
+						{
+							status.resize(256);
+							status.resize(snprintf(status.data(), status.length() + 1, "Playing %s (%s)", matchCode.c_str(), ice::getStatusText().c_str()));
+							break;
+						}
 					default:
 						break;
 					}

@@ -28,6 +28,7 @@
 #include "input/gamepad_device.h"
 #include "oslib/storage.h"
 #include "oslib/resources.h"
+#include "oslib/i18n.h"
 #include "cfg/cfg.h"
 #include "input/gamepad.h"
 #include "input/mouse.h"
@@ -69,13 +70,13 @@ void displayCommands()
 
     ImGui::Begin("##vgamepad", NULL, ImGuiWindowFlags_NoDecoration);
 
-	if (ImGui::Button("Save", ScaledVec2(150, 50)))
+	if (ImGui::Button(i18n::Tcs("Save"), ScaledVec2(150, 50)))
 	{
 		stopEditing(false);
 		gui_setState(GuiState::Settings);
 	}
 	ImGui::SameLine();
-	if (ImGui::Button("Reset", ScaledVec2(150, 50)))
+	if (ImGui::Button(i18n::Tcs("Reset"), ScaledVec2(150, 50)))
 	{
 		resetEditing();
 		startEditing();
@@ -83,7 +84,7 @@ void displayCommands()
 	}
 
 	ImGui::SameLine();
-	if (ImGui::Button("Cancel", ScaledVec2(150, 50)))
+	if (ImGui::Button(i18n::Tcs("Cancel"), ScaledVec2(150, 50)))
 	{
 		stopEditing(true);
 		gui_setState(GuiState::Settings);
