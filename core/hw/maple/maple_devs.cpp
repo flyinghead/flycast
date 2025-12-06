@@ -14,7 +14,6 @@
 #include <thread>
 #include <chrono>
 
-
 const char* maple_sega_controller_name = "Dreamcast Controller";
 const char* maple_sega_vmu_name        = "Visual Memory";
 const char* maple_sega_kbd_name        = "Emulated Dreamcast Keyboard";
