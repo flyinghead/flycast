@@ -1126,7 +1126,7 @@ public:
 
 		MapleMsg msg{};
 		msg.command = 33;
-		msg.destAP = (hw_info.hardware_bus << 6) | (0x21 + expansion);
+		msg.destAP = (hw_info.hardware_bus << 6) | (1u << expansion);
 		msg.originAP = hw_info.hardware_bus << 6;
 		msg.setWord(MFID_1_Storage, 0);
 
