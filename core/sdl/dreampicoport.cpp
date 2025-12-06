@@ -1133,8 +1133,8 @@ public:
 		std::array<char, 12> idBuffer{};
 		const size_t copyLength = (std::min)(gameId.size(), idBuffer.size());
 		memcpy(idBuffer.data(), gameId.data(), copyLength);
-		memcpy(&msg.data[0], idBuffer.data(), idBuffer.size());
-		msg.size = 3;
+		memcpy(&msg.data[4], idBuffer.data(), idBuffer.size());
+		msg.size = 4;
 
 		dpp_comms->send(msg, timeout_ms);
 	}
