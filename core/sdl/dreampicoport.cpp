@@ -1117,6 +1117,28 @@ public:
 		return dpp_comms->send(txMsg, rxMsg, timeout_ms);
 	}
 
+	void sendGameId(int expansion, const std::string& gameId) override {
+		if (!dpp_comms || hw_info.hardware_bus < 0)
+				return;
+
+		if (gameId.empty() || expansion < 0 || expansion > 1)
+				return;
+
+		MapleMsg msg{};
+		msg.command = 33;
+		msg.destAP = (hw_info.hardware_bus << 6) | (1u << expansion);
+		msg.originAP = hw_info.hardware_bus << 6;
+		msg.setWord(MFID_1_Storage, 0);
+
+		std::array<char, 12> idBuffer{};
+		const size_t copyLength = (std::min)(gameId.size(), idBuffer.size());
+		memcpy(idBuffer.data(), gameId.data(), copyLength);
+		memcpy(&msg.data[4], idBuffer.data(), idBuffer.size());
+		msg.size = 4;
+
+		dpp_comms->send(msg, timeout_ms);
+	}
+
 	void gameTermination() override {
 		// Need a short delay to wait for last screen draw to complete
 		std::this_thread::sleep_for(std::chrono::milliseconds(10));
