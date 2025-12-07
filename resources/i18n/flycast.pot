@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Flycast 2.5\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-12-07 11:27+0100\n"
+"POT-Creation-Date: 2025-12-07 20:01+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: \n"
@@ -23,65 +23,65 @@ msgstr ""
 msgid "Automatic AAudio / OpenSL selection"
 msgstr ""
 
-#: core/ui/settings_video.cpp:78
+#: core/ui/settings_video.cpp:85
 msgid "Graphics API"
 msgstr ""
 
-#: core/ui/settings_video.cpp:89
+#: core/ui/settings_video.cpp:96
 msgid ""
 "MoltenVK: An implementation of Vulkan that runs on Apple's Metal graphics "
 "framework"
 msgstr ""
 
-#: core/ui/settings_video.cpp:109
+#: core/ui/settings_video.cpp:116
 msgid "Transparent Sorting"
 msgstr ""
 
-#: core/ui/settings_video.cpp:114
+#: core/ui/settings_video.cpp:121
 msgid "Per Triangle"
 msgstr ""
 
-#: core/ui/settings_video.cpp:116
+#: core/ui/settings_video.cpp:123
 msgid ""
 "Sort transparent polygons per triangle. Fast but may produce graphical "
 "glitches"
 msgstr ""
 
-#: core/ui/settings_video.cpp:118
+#: core/ui/settings_video.cpp:125
 msgid "Per Strip"
 msgstr ""
 
-#: core/ui/settings_video.cpp:120
+#: core/ui/settings_video.cpp:127
 msgid ""
 "Sort transparent polygons per strip. Faster but may produce graphical "
 "glitches"
 msgstr ""
 
-#: core/ui/settings_video.cpp:124
+#: core/ui/settings_video.cpp:131
 msgid "Per Pixel"
 msgstr ""
 
-#: core/ui/settings_video.cpp:126
+#: core/ui/settings_video.cpp:133
 msgid "Sort transparent polygons per pixel. Slower but accurate"
 msgstr ""
 
-#: core/ui/settings_video.cpp:146
+#: core/ui/settings_video.cpp:153
 msgid "Rendering Options"
 msgstr ""
 
-#: core/ui/settings_video.cpp:149
+#: core/ui/settings_video.cpp:156
 msgid "Half"
 msgstr ""
 
-#: core/ui/settings_video.cpp:149
+#: core/ui/settings_video.cpp:156
 msgid "Native"
 msgstr ""
 
-#: core/ui/settings_video.cpp:194
+#: core/ui/settings_video.cpp:201
 msgid "Internal Resolution"
 msgstr ""
 
-#: core/ui/settings_video.cpp:196
+#: core/ui/settings_video.cpp:203
 msgid ""
 "Internal render resolution. Higher is better, but more demanding on the GPU. "
 "Values higher than your display resolution (but no more than double your "
@@ -89,358 +89,358 @@ msgid ""
 "quality antialiasing without reducing sharpness."
 msgstr ""
 
-#: core/ui/settings_video.cpp:197
+#: core/ui/settings_video.cpp:204
 msgid "Integer Scaling"
 msgstr ""
 
-#: core/ui/settings_video.cpp:197
+#: core/ui/settings_video.cpp:204
 msgid ""
 "Scales the output by the maximum integer multiple allowed by the display "
 "resolution."
 msgstr ""
 
-#: core/ui/settings_video.cpp:198
+#: core/ui/settings_video.cpp:205
 msgid "Linear Interpolation"
 msgstr ""
 
-#: core/ui/settings_video.cpp:198
+#: core/ui/settings_video.cpp:205
 msgid ""
 "Scales the output with linear interpolation. Will use nearest neighbor "
 "interpolation otherwise. Disable with integer scaling."
 msgstr ""
 
-#: core/ui/settings_video.cpp:200
+#: core/ui/settings_video.cpp:207
 msgid "VSync"
 msgstr ""
 
-#: core/ui/settings_video.cpp:200
+#: core/ui/settings_video.cpp:207
 msgid "Synchronizes the frame rate with the screen refresh rate. Recommended"
 msgstr ""
 
-#: core/ui/settings_video.cpp:207
+#: core/ui/settings_video.cpp:214
 msgid "Duplicate frames"
 msgstr ""
 
-#: core/ui/settings_video.cpp:207
+#: core/ui/settings_video.cpp:214
 msgid "Duplicate frames on high refresh rate monitors (120 Hz and higher)"
 msgstr ""
 
-#: core/ui/settings_video.cpp:212
+#: core/ui/settings_video.cpp:219
 msgid "Show VMU In-game"
 msgstr ""
 
-#: core/ui/settings_video.cpp:212
+#: core/ui/settings_video.cpp:219
 msgid "Show the VMU LCD screens while in-game"
 msgstr ""
 
-#: core/ui/settings_video.cpp:213
+#: core/ui/settings_video.cpp:220
 msgid "Full Framebuffer Emulation"
 msgstr ""
 
-#: core/ui/settings_video.cpp:214
+#: core/ui/settings_video.cpp:221
 msgid ""
 "Fully accurate VRAM framebuffer emulation. Helps games that directly access "
 "the framebuffer for special effects. Very slow and incompatible with "
 "upscaling and wide screen."
 msgstr ""
 
-#: core/ui/settings_video.cpp:218
+#: core/ui/settings_video.cpp:225
 msgid "Load Custom Textures"
 msgstr ""
 
-#: core/ui/settings_video.cpp:219
+#: core/ui/settings_video.cpp:226
 msgid "Load custom/high-res textures from data/textures/<game id>"
 msgstr ""
 
-#: core/ui/settings_video.cpp:223
+#: core/ui/settings_video.cpp:230
 msgid "Preload Custom Textures"
 msgstr ""
 
-#: core/ui/settings_video.cpp:224
+#: core/ui/settings_video.cpp:231
 msgid ""
 "Preload custom textures at game start. May improve performance but increases "
 "memory usage"
 msgstr ""
 
-#: core/ui/settings_video.cpp:230
+#: core/ui/settings_video.cpp:237
 msgid "Aspect Ratio"
 msgstr ""
 
-#: core/ui/settings_video.cpp:232
+#: core/ui/settings_video.cpp:239
 msgid "Widescreen"
 msgstr ""
 
-#: core/ui/settings_video.cpp:233
+#: core/ui/settings_video.cpp:240
 msgid ""
 "Draw geometry outside of the normal 4:3 aspect ratio. May produce graphical "
 "glitches in the revealed areas.\n"
 "Aspect Fit and shows the full 16:9 content."
 msgstr ""
 
-#: core/ui/settings_video.cpp:238
+#: core/ui/settings_video.cpp:245
 msgid "Super Widescreen"
 msgstr ""
 
-#: core/ui/settings_video.cpp:239
+#: core/ui/settings_video.cpp:246
 msgid ""
 "Use the full width of the screen or window when its aspect ratio is greater "
 "than 16:9.\n"
 "Aspect Fill and remove black bars. Not compatible with integer scaling."
 msgstr ""
 
-#: core/ui/settings_video.cpp:242
+#: core/ui/settings_video.cpp:249
 msgid "Widescreen Game Cheats"
 msgstr ""
 
-#: core/ui/settings_video.cpp:243
+#: core/ui/settings_video.cpp:250
 msgid ""
 "Modify the game so that it displays in 16:9 anamorphic format and use "
 "horizontal screen stretching. Only some games are supported."
 msgstr ""
 
-#: core/ui/settings_video.cpp:245
+#: core/ui/settings_video.cpp:252
 msgid "Horizontal Stretching"
 msgstr ""
 
-#: core/ui/settings_video.cpp:246
+#: core/ui/settings_video.cpp:253
 msgid "Stretch the screen horizontally"
 msgstr ""
 
-#: core/ui/settings_video.cpp:247
+#: core/ui/settings_video.cpp:254
 msgid "Rotate Screen 90°"
 msgstr ""
 
-#: core/ui/settings_video.cpp:247
+#: core/ui/settings_video.cpp:254
 msgid "Rotate the screen 90° counterclockwise"
 msgstr ""
 
-#: core/ui/settings_video.cpp:252
+#: core/ui/settings_video.cpp:259
 msgid "Per Pixel Settings"
 msgstr ""
 
-#: core/ui/settings_video.cpp:255
+#: core/ui/settings_video.cpp:262
 msgid "512 MB"
 msgstr ""
 
-#: core/ui/settings_video.cpp:255
+#: core/ui/settings_video.cpp:262
 msgid "1 GB"
 msgstr ""
 
-#: core/ui/settings_video.cpp:255
+#: core/ui/settings_video.cpp:262
 msgid "2 GB"
 msgstr ""
 
-#: core/ui/settings_video.cpp:255
+#: core/ui/settings_video.cpp:262
 msgid "4 GB"
 msgstr ""
 
-#: core/ui/settings_video.cpp:293
+#: core/ui/settings_video.cpp:300
 msgid "Pixel Buffer Size"
 msgstr ""
 
-#: core/ui/settings_video.cpp:295
+#: core/ui/settings_video.cpp:302
 msgid ""
 "The size of the pixel buffer. May need to be increased when upscaling by a "
 "large factor."
 msgstr ""
 
-#: core/ui/settings_video.cpp:297
+#: core/ui/settings_video.cpp:304
 msgid "Maximum Layers"
 msgstr ""
 
-#: core/ui/settings_video.cpp:298
+#: core/ui/settings_video.cpp:305
 msgid ""
 "Maximum number of transparent layers. May need to be increased for some "
 "complex scenes. Decreasing it may improve performance."
 msgstr ""
 
-#: core/ui/settings_video.cpp:301
+#: core/ui/settings_video.cpp:308
 msgid "Performance"
 msgstr ""
 
-#: core/ui/settings_video.cpp:303
+#: core/ui/settings_video.cpp:310
 msgid "Automatic Frame Skipping:"
 msgstr ""
 
-#: core/ui/settings_video.cpp:305 core/ui/settings_video.cpp:330
-#: core/ui/settings_network.cpp:40
+#: core/ui/settings_video.cpp:312 core/ui/settings_video.cpp:337
+#: core/ui/settings_network.cpp:40 core/ui/settings_network.cpp:87
 msgid "Disabled"
 msgstr ""
 
-#: core/ui/settings_video.cpp:305
+#: core/ui/settings_video.cpp:312
 msgid "No frame skipping"
 msgstr ""
 
-#: core/ui/settings_video.cpp:307
+#: core/ui/settings_video.cpp:314
 msgid "Normal"
 msgstr ""
 
-#: core/ui/settings_video.cpp:307
+#: core/ui/settings_video.cpp:314
 msgid "Skip a frame when the GPU and CPU are both running slow"
 msgstr ""
 
-#: core/ui/settings_video.cpp:309
+#: core/ui/settings_video.cpp:316
 msgid "Maximum"
 msgstr ""
 
-#: core/ui/settings_video.cpp:309
+#: core/ui/settings_video.cpp:316
 msgid "Skip a frame when the GPU is running slow"
 msgstr ""
 
-#: core/ui/settings_video.cpp:312
+#: core/ui/settings_video.cpp:319
 msgid "Frame Skipping"
 msgstr ""
 
-#: core/ui/settings_video.cpp:313
+#: core/ui/settings_video.cpp:320
 msgid "Number of frames to skip between two actually rendered frames"
 msgstr ""
 
-#: core/ui/settings_video.cpp:314
+#: core/ui/settings_video.cpp:321
 msgid "Shadows"
 msgstr ""
 
-#: core/ui/settings_video.cpp:315
+#: core/ui/settings_video.cpp:322
 msgid "Enable modifier volumes, usually used for shadows"
 msgstr ""
 
-#: core/ui/settings_video.cpp:316
+#: core/ui/settings_video.cpp:323
 msgid "Fog"
 msgstr ""
 
-#: core/ui/settings_video.cpp:316
+#: core/ui/settings_video.cpp:323
 msgid "Enable fog effects"
 msgstr ""
 
-#: core/ui/settings_video.cpp:319 core/ui/settings.cpp:300
+#: core/ui/settings_video.cpp:326 core/ui/settings.cpp:300
 msgid "Advanced"
 msgstr ""
 
-#: core/ui/settings_video.cpp:321
+#: core/ui/settings_video.cpp:328
 msgid "Delay Frame Swapping"
 msgstr ""
 
-#: core/ui/settings_video.cpp:322
+#: core/ui/settings_video.cpp:329
 msgid ""
 "Useful to avoid flashing screen or glitchy videos. Not recommended on slow "
 "platforms"
 msgstr ""
 
-#: core/ui/settings_video.cpp:323
+#: core/ui/settings_video.cpp:330
 msgid "Fix Upscale Bleeding Edge"
 msgstr ""
 
-#: core/ui/settings_video.cpp:324
+#: core/ui/settings_video.cpp:331
 msgid ""
 "Helps with texture bleeding case when upscaling. Disabling it can help if "
 "pixels are warping when upscaling in 2D games (MVC2, CVS, KOF, etc.)"
 msgstr ""
 
-#: core/ui/settings_video.cpp:325
+#: core/ui/settings_video.cpp:332
 msgid "Native Depth Interpolation"
 msgstr ""
 
-#: core/ui/settings_video.cpp:326
+#: core/ui/settings_video.cpp:333
 msgid ""
 "Helps with texture corruption and depth issues on AMD GPUs. Can also help "
 "Intel GPUs in some cases."
 msgstr ""
 
-#: core/ui/settings_video.cpp:327
+#: core/ui/settings_video.cpp:334
 msgid "Copy Rendered Textures to VRAM"
 msgstr ""
 
-#: core/ui/settings_video.cpp:328
+#: core/ui/settings_video.cpp:335
 msgid "Copy rendered-to textures back to VRAM. Slower but accurate"
 msgstr ""
 
-#: core/ui/settings_video.cpp:367
+#: core/ui/settings_video.cpp:374
 msgid "Anisotropic Filtering"
 msgstr ""
 
-#: core/ui/settings_video.cpp:369
+#: core/ui/settings_video.cpp:376
 msgid ""
 "Higher values make textures viewed at oblique angles look sharper, but are "
 "more demanding on the GPU. This option only has a visible impact on "
 "mipmapped textures."
 msgstr ""
 
-#: core/ui/settings_video.cpp:371
+#: core/ui/settings_video.cpp:378
 msgid "Texture Filtering:"
 msgstr ""
 
-#: core/ui/settings_video.cpp:373 core/ui/settings_general.cpp:188
+#: core/ui/settings_video.cpp:380 core/ui/settings_general.cpp:188
 #: core/ui/settings_general.cpp:192 core/ui/settings_general.cpp:197
 msgid "Default"
 msgstr ""
 
-#: core/ui/settings_video.cpp:373
+#: core/ui/settings_video.cpp:380
 msgid "Use the game's default texture filtering"
 msgstr ""
 
-#: core/ui/settings_video.cpp:375
+#: core/ui/settings_video.cpp:382
 msgid "Force Nearest-Neighbor"
 msgstr ""
 
-#: core/ui/settings_video.cpp:375
+#: core/ui/settings_video.cpp:382
 msgid ""
 "Force nearest-neighbor filtering for all textures. Crisper appearance, but "
 "may cause various rendering issues. This option usually does not affect "
 "performance."
 msgstr ""
 
-#: core/ui/settings_video.cpp:377
+#: core/ui/settings_video.cpp:384
 msgid "Force Linear"
 msgstr ""
 
-#: core/ui/settings_video.cpp:377
+#: core/ui/settings_video.cpp:384
 msgid ""
 "Force linear filtering for all textures. Smoother appearance, but may cause "
 "various rendering issues. This option usually does not affect performance."
 msgstr ""
 
-#: core/ui/settings_video.cpp:380
+#: core/ui/settings_video.cpp:387
 msgid "Show FPS Counter"
 msgstr ""
 
-#: core/ui/settings_video.cpp:380
+#: core/ui/settings_video.cpp:387
 msgid "Show on-screen frame/sec counter"
 msgstr ""
 
-#: core/ui/settings_video.cpp:385
+#: core/ui/settings_video.cpp:392
 msgid "Video Routing (Syphon)"
 msgstr ""
 
-#: core/ui/settings_video.cpp:387
+#: core/ui/settings_video.cpp:395
 msgid "Video Routing (Spout))"
 msgstr ""
 
-#: core/ui/settings_video.cpp:387
+#: core/ui/settings_video.cpp:397
 msgid "Video Routing (Only available with OpenGL or DirectX 11)"
 msgstr ""
 
-#: core/ui/settings_video.cpp:393
+#: core/ui/settings_video.cpp:403
 msgid "Send video content to another program"
 msgstr ""
 
-#: core/ui/settings_video.cpp:394
+#: core/ui/settings_video.cpp:404
 msgid ""
 "e.g. Route GPU texture to OBS Studio directly instead of using CPU intensive "
 "Display/Window Capture"
 msgstr ""
 
-#: core/ui/settings_video.cpp:398
+#: core/ui/settings_video.cpp:408
 msgid "Scale down before sending"
 msgstr ""
 
-#: core/ui/settings_video.cpp:398
+#: core/ui/settings_video.cpp:408
 msgid "Could increase performance when sharing a smaller texture, YMMV"
 msgstr ""
 
-#: core/ui/settings_video.cpp:402
+#: core/ui/settings_video.cpp:412
 msgid "Output vertical resolution"
 msgstr ""
 
-#: core/ui/settings_video.cpp:407
+#: core/ui/settings_video.cpp:417
 #, c-format
 msgid "Output texture size: %d x %d"
 msgstr ""
@@ -1149,33 +1149,33 @@ msgstr ""
 msgid "Insert Card"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:366 core/ui/settings_controls.cpp:771
+#: core/ui/settings_controls.cpp:385 core/ui/settings_controls.cpp:790
 msgid "Map Control"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:368
+#: core/ui/settings_controls.cpp:387
 #, c-format
 msgid "Waiting for control '%s'..."
 msgstr ""
 
-#: core/ui/settings_controls.cpp:384
+#: core/ui/settings_controls.cpp:403
 #, c-format
 msgid "Time out in %d s"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:389
+#: core/ui/settings_controls.cpp:408
 msgid "Current inputs:"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:413
+#: core/ui/settings_controls.cpp:432
 msgid "Confirm"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:495
+#: core/ui/settings_controls.cpp:514
 msgid "Sequential"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:500
+#: core/ui/settings_controls.cpp:519
 msgid ""
 "When checked, this combo will only activate when all keys are pressed in the "
 "given sequence.\n"
@@ -1183,232 +1183,232 @@ msgid ""
 "order."
 msgstr ""
 
-#: core/ui/settings_controls.cpp:557 core/ui/settings_controls.cpp:1004
+#: core/ui/settings_controls.cpp:576 core/ui/settings_controls.cpp:1025
 msgid "Controller Mapping"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:559 core/ui/settings_controls.cpp:1001
+#: core/ui/settings_controls.cpp:578 core/ui/settings_controls.cpp:1022
 msgid "Map"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:560
+#: core/ui/settings_controls.cpp:579
 msgid "Unmap"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:576 core/ui/settings_controls.cpp:822
+#: core/ui/settings_controls.cpp:595 core/ui/settings_controls.cpp:841
 #: core/ui/settings.cpp:217
 msgid "Done"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:596 core/ui/settings_controls.cpp:608
-#: core/ui/settings_controls.cpp:938 core/ui/settings_controls.cpp:952
+#: core/ui/settings_controls.cpp:615 core/ui/settings_controls.cpp:627
+#: core/ui/settings_controls.cpp:959 core/ui/settings_controls.cpp:973
 #: core/ui/gui.cpp:752
 msgid "Port"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:610 core/ui/settings_controls.cpp:674
+#: core/ui/settings_controls.cpp:629 core/ui/settings_controls.cpp:693
 msgid "Dreamcast Controls"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:613 core/ui/settings_controls.cpp:622
+#: core/ui/settings_controls.cpp:632 core/ui/settings_controls.cpp:641
 #: core/ui/settings.cpp:248
 msgid "Delete Game Config"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:613 core/ui/settings_controls.cpp:631
+#: core/ui/settings_controls.cpp:632 core/ui/settings_controls.cpp:650
 #: core/ui/settings.cpp:257
 msgid "Make Game Config"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:636
+#: core/ui/settings_controls.cpp:655
 msgid "Reset..."
 msgstr ""
 
-#: core/ui/settings_controls.cpp:637 core/ui/settings_controls.cpp:641
+#: core/ui/settings_controls.cpp:656 core/ui/settings_controls.cpp:660
 msgid "Confirm Reset"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:643
+#: core/ui/settings_controls.cpp:662
 msgid "Are you sure you want to reset the mappings to default?"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:647
+#: core/ui/settings_controls.cpp:666
 msgid "Controller Type:"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:648
+#: core/ui/settings_controls.cpp:667
 msgid "Gamepad"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:651
+#: core/ui/settings_controls.cpp:670
 msgid "Arcade / Hit Box"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:658 core/ui/settings_about.cpp:149
+#: core/ui/settings_controls.cpp:677 core/ui/settings_about.cpp:149
 msgid "Yes"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:665 core/ui/settings_about.cpp:155
+#: core/ui/settings_controls.cpp:684 core/ui/settings_about.cpp:155
 msgid "No"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:674
+#: core/ui/settings_controls.cpp:693
 msgid "Arcade Controls"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:820 core/ui/settings_controls.cpp:1024
+#: core/ui/settings_controls.cpp:839 core/ui/settings_controls.cpp:1045
 msgid "Gamepad Settings"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:864
+#: core/ui/settings_controls.cpp:883
 msgid "Haptic"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:865 core/ui/settings_controls.cpp:901
+#: core/ui/settings_controls.cpp:884 core/ui/settings_controls.cpp:920
 msgid "Power"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:865
+#: core/ui/settings_controls.cpp:884
 msgid "Haptic feedback power"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:867
+#: core/ui/settings_controls.cpp:886
 msgid "View"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:868
+#: core/ui/settings_controls.cpp:887
 msgid "Transparency"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:868
+#: core/ui/settings_controls.cpp:887
 msgid "Virtual gamepad buttons transparency"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:874
+#: core/ui/settings_controls.cpp:893
 msgid "Select a PNG file"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:875
+#: core/ui/settings_controls.cpp:894
 msgid "Choose Image..."
 msgstr ""
 
-#: core/ui/settings_controls.cpp:887
+#: core/ui/settings_controls.cpp:906
 msgid "Use Default"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:898
+#: core/ui/settings_controls.cpp:917
 msgid "Rumble"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:904
+#: core/ui/settings_controls.cpp:923
 msgid "Rumble power"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:908
+#: core/ui/settings_controls.cpp:927
 msgid "Thumbsticks"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:911
+#: core/ui/settings_controls.cpp:930
 msgid "Dead zone"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:914
+#: core/ui/settings_controls.cpp:933
 msgid "Minimum deflection to register as input"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:917
+#: core/ui/settings_controls.cpp:936
 msgid "Saturation"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:920
+#: core/ui/settings_controls.cpp:939
 msgid ""
 "Value sent to the game at 100% thumbstick deflection. Values greater than "
 "100% will saturate before full deflection of the thumbstick."
 msgstr ""
 
-#: core/ui/settings_controls.cpp:931
+#: core/ui/settings_controls.cpp:952
 msgid "Physical Devices"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:935 core/ui/settings_controls.cpp:946
+#: core/ui/settings_controls.cpp:956 core/ui/settings_controls.cpp:967
 msgid "System"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:936 core/ui/settings_controls.cpp:949
+#: core/ui/settings_controls.cpp:957 core/ui/settings_controls.cpp:970
 #: core/ui/gui_cheats.cpp:71
 msgid "Name"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:970
+#: core/ui/settings_controls.cpp:991
 #, c-format
 msgid "DreamLink status: %s"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:1012
+#: core/ui/settings_controls.cpp:1033
 msgid "Edit Layout"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:1023 core/ui/gui.cpp:773 core/ui/gui.cpp:1023
+#: core/ui/settings_controls.cpp:1044 core/ui/gui.cpp:773 core/ui/gui.cpp:1023
 #: core/ui/settings.cpp:213
 msgid "Settings"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:1033
+#: core/ui/settings_controls.cpp:1054
 msgid "Mouse sensitivity"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:1035
+#: core/ui/settings_controls.cpp:1056
 msgid "Use Raw Input"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:1035
+#: core/ui/settings_controls.cpp:1056
 msgid "Supports multiple pointing devices (mice, light guns) and keyboards"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:1040
+#: core/ui/settings_controls.cpp:1061
 msgid "Use Physical VMU Memory"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:1041
+#: core/ui/settings_controls.cpp:1062
 msgid ""
 "Enables direct read/write access to physical VMU memory via DreamPicoPort/"
 "DreamConn. This is not compatible with load state events."
 msgstr ""
 
-#: core/ui/settings_controls.cpp:1047
+#: core/ui/settings_controls.cpp:1068
 msgid "Dreamcast Devices"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:1060
+#: core/ui/settings_controls.cpp:1081
 #, c-format
 msgid "Port %c"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:1131
+#: core/ui/settings_controls.cpp:1152
 msgid "Crosshair color"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:1135
+#: core/ui/settings_controls.cpp:1156
 msgid "Crosshair"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:1159
+#: core/ui/settings_controls.cpp:1180
 msgid "Use Network Expansion Devices"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:1160
+#: core/ui/settings_controls.cpp:1181
 msgid "Connect to expansion devices such as VMUs over local TCP."
 msgstr ""
 
-#: core/ui/settings_controls.cpp:1174
+#: core/ui/settings_controls.cpp:1195
 msgid "Crosshair Size"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:1176
+#: core/ui/settings_controls.cpp:1197
 msgid "Per Game VMU A1"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:1176
+#: core/ui/settings_controls.cpp:1197
 msgid "When enabled, each game has its own VMU on port 1 of controller A."
 msgstr ""
 
@@ -1419,6 +1419,26 @@ msgstr ""
 #: core/ui/gui_achievements.cpp:298
 #, c-format
 msgid "You have unlocked %d of %d achievements and %d of %d points."
+msgstr ""
+
+#: core/ui/gui_achievements.cpp:326
+msgid "Locked"
+msgstr ""
+
+#: core/ui/gui_achievements.cpp:326
+msgid "Active Challenges"
+msgstr ""
+
+#: core/ui/gui_achievements.cpp:326
+msgid "Almost There"
+msgstr ""
+
+#: core/ui/gui_achievements.cpp:328
+msgid "Unlocked"
+msgstr ""
+
+#: core/ui/gui_achievements.cpp:328
+msgid "Recently Unlocked"
 msgstr ""
 
 #: core/ui/mainui.cpp:73
@@ -1563,10 +1583,6 @@ msgstr ""
 
 #: core/ui/gui.cpp:1418
 msgid "Preparing..."
-msgstr ""
-
-#: core/ui/gui.cpp:1671
-msgid "Fatal Error"
 msgstr ""
 
 #: core/ui/gui.cpp:1764
@@ -1981,10 +1997,6 @@ msgid "Left Thumbstick:"
 msgstr ""
 
 #: core/ui/settings_network.cpp:87
-msgid "Disabled##analogaxis"
-msgstr ""
-
-#: core/ui/settings_network.cpp:87
 msgid "Left thumbstick not used"
 msgstr ""
 
@@ -2322,24 +2334,4 @@ msgstr ""
 
 #: core/emulator.cpp:684
 msgid "Waiting for debugger..."
-msgstr ""
-
-#: core/ui/gui_achievements.cpp:326
-msgid "Locked"
-msgstr ""
-
-#: core/ui/gui_achievements.cpp:326
-msgid "Active Challenges"
-msgstr ""
-
-#: core/ui/gui_achievements.cpp:326
-msgid "Almost There"
-msgstr ""
-
-#: core/ui/gui_achievements.cpp:328
-msgid "Unlocked"
-msgstr ""
-
-#: core/ui/gui_achievements.cpp:328
-msgid "Recently Unlocked"
 msgstr ""
