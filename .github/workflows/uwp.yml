@@ -1,4 +1,4 @@
-name: Windows UWP CI
+name: Xbox, UWP
 
 on: [push, pull_request]
 
@@ -15,7 +15,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          submodules: true
+          submodules: recursive
 
       - name: CMake
         run: |

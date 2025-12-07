@@ -1,4 +1,4 @@
-name: BSD CI
+name: BSD
 
 on: [push, pull_request]
 
@@ -28,7 +28,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          submodules: true
+          submodules: recursive
 
       - uses: actions/cache@v4
         with:
