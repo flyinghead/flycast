@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-12-07 20:01+0100\n"
-"PO-Revision-Date: 2025-12-07 21:58\n"
+"PO-Revision-Date: 2025-12-07 23:27\n"
 "Last-Translator: \n"
 "Language: fr_FR\n"
 "MIME-Version: 1.0\n"
@@ -369,7 +369,7 @@ msgstr "Affiche le compteur d'images par seconde à l'écran"
 
 #: core/ui/settings_video.cpp:392
 msgid "Video Routing (Syphon)"
-msgstr ""
+msgstr "Routage Vidéo (Syphon)"
 
 #: core/ui/settings_video.cpp:395
 msgid "Video Routing (Spout))"
@@ -377,15 +377,15 @@ msgstr "Routage Vidéo (Spout)"
 
 #: core/ui/settings_video.cpp:397
 msgid "Video Routing (Only available with OpenGL or DirectX 11)"
-msgstr ""
+msgstr "Routage Vidéo (Seulement disponible avec OpenGL ou DirectX 11)"
 
 #: core/ui/settings_video.cpp:403
 msgid "Send video content to another program"
-msgstr ""
+msgstr "Envoie la sortie vidéo vers une autre application"
 
 #: core/ui/settings_video.cpp:404
 msgid "e.g. Route GPU texture to OBS Studio directly instead of using CPU intensive Display/Window Capture"
-msgstr ""
+msgstr "Permet le partage du flux de sortie vidéo avec OBS Studio sans utiliser la capture de fenêtre ou d'écran"
 
 #: core/ui/settings_video.cpp:408
 msgid "Scale down before sending"
@@ -393,16 +393,16 @@ msgstr "Réduit la taille de l'image avant l'envoi"
 
 #: core/ui/settings_video.cpp:408
 msgid "Could increase performance when sharing a smaller texture, YMMV"
-msgstr ""
+msgstr "Peut améliorer les performances en partageant une texture plus petite"
 
 #: core/ui/settings_video.cpp:412
 msgid "Output vertical resolution"
-msgstr ""
+msgstr "Résolution verticale de sortie"
 
 #: core/ui/settings_video.cpp:417
 #, c-format
 msgid "Output texture size: %d x %d"
-msgstr ""
+msgstr "Taille de la texture de sortie : %d x %d"
 
 #: core/ui/settings_general.cpp:51
 msgid "Set"
@@ -1647,17 +1647,17 @@ msgstr "Les adresses de RAM ne sont pas disponibles avant que l'émulation ne d�
 #: core/ui/settings.cpp:66
 #, c-format
 msgid "RAM: %p"
-msgstr ""
+msgstr "RAM : %p"
 
 #: core/ui/settings.cpp:68
 #, c-format
 msgid "VRAM64: %p"
-msgstr ""
+msgstr "VRAM64 : %p"
 
 #: core/ui/settings.cpp:70
 #, c-format
 msgid "ARAM: %p"
-msgstr ""
+msgstr "ARAM : %p"
 
 #: core/ui/settings.cpp:76
 msgid "Debugging"
@@ -2111,7 +2111,7 @@ msgstr "Borne de luxe avec trois écrans"
 #: core/ui/settings_about.cpp:53 core/ui/settings_about.cpp:107
 #, c-format
 msgid "Version: %s"
-msgstr ""
+msgstr "Version : %s"
 
 #: core/ui/settings_about.cpp:54
 #, c-format
@@ -2130,7 +2130,7 @@ msgstr "Plateforme"
 #: core/ui/settings_about.cpp:60
 #, c-format
 msgid "CPU: %s"
-msgstr ""
+msgstr "CPU : %s"
 
 #: core/ui/settings_about.cpp:70 core/ui/settings_about.cpp:91
 msgid "Unknown"
@@ -2219,7 +2219,7 @@ msgstr "En attente des joueurs..."
 #: core/network/naomi_network.cpp:113
 #, c-format
 msgid "%d player(s) connected. Waiting..."
-msgstr "%d joueurs connectés. En attente..."
+msgstr "%d joueur(s) connecté(s). En attente..."
 
 #: core/network/naomi_network.cpp:136
 msgid "Starting game"
