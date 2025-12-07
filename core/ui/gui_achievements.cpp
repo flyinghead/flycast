@@ -282,7 +282,7 @@ void achievementList()
 	ImGui::Begin("##achievements", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize);
 
 	{
-		const char *closeLabel = Tcs("Close");
+		const char *closeLabel = T("Close");
 		float w = ImGui::GetWindowContentRegionMax().x - ImGui::CalcTextSize(closeLabel).x - ImGui::GetStyle().ItemSpacing.x * 2 - ImGui::GetStyle().WindowPadding.x
 				- uiScaled(80.f + 20.f * 2);	// image width and button frame padding
 		Game game = getCurrentGame();
@@ -295,14 +295,14 @@ void achievementList()
 		ImGui::PopFont();
 		std::string str;
 		str.resize(128);
-		str.resize(snprintf(str.data(), str.length() + 1, Tcs("You have unlocked %d of %d achievements and %d of %d points."),
+		str.resize(snprintf(str.data(), str.length() + 1, T("You have unlocked %d of %d achievements and %d of %d points."),
 				game.unlockedAchievements, game.totalAchievements, game.points, game.totalPoints));
 		{
 			ImguiStyleColor _(ImGuiCol_Text, ImVec4(0.75f, 0.75f, 0.75f, 1.f));
 			ImGui::TextWrapped("%s", str.c_str());
 		}
 		if (settings.raHardcoreMode)
-			ImGui::Text("%s", Tcs("Hardcore Mode"));
+			ImGui::Text("%s", T("Hardcore Mode"));
 		ImGui::EndChild();
 
 		ImGui::SameLine();
@@ -323,13 +323,13 @@ void achievementList()
 			{
 				category = ach.category;
 				ImGui::Indent(uiScaled(10));
-				if (category == "Locked" || category == "Active Challenges" || category == "Almost There")
+				if (category == Tnop("Locked") || category == Tnop("Active Challenges") || category == Tnop("Almost There"))
 					ImGui::Text(ICON_FA_LOCK);
-				else if (category == "Unlocked" || category == "Recently Unlocked")
+				else if (category == Tnop("Unlocked") || category == Tnop("Recently Unlocked"))
 					ImGui::Text(ICON_FA_LOCK_OPEN);
 				ImGui::SameLine();
 				ImGui::PushFont(largeFont);
-				ImGui::Text("%s", T(category).c_str());
+				ImGui::Text("%s", T(category.c_str()));
 				ImGui::PopFont();
 				ImGui::Unindent(uiScaled(10));
 			}

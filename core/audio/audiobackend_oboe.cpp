@@ -78,7 +78,7 @@ class OboeBackend : AudioBackend
 
 public:
 	OboeBackend()
-		: AudioBackend("Oboe", i18n::Tcs("Automatic AAudio / OpenSL selection")), audioCallback(this), errorCallback(this) {}
+		: AudioBackend("Oboe", Tnop("Automatic AAudio / OpenSL selection")), audioCallback(this), errorCallback(this) {}
 
 	bool init() override
 	{
@@ -195,6 +195,11 @@ public:
 			initRecord(sampleRate);
 		}
 		return std::max(0, result.value());
+	}
+
+
+	std::string getName() const override {
+		return i18n::Ts(name);
 	}
 };
 static OboeBackend oboeBackend;

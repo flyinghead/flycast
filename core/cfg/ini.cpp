@@ -141,6 +141,7 @@ static std::string handleEscapeSeq(const std::string& s)
 				ret += '\\';
 				break;
 			default:
+				WARN_LOG(COMMON, "Unrecognized escape sequence [\\%c] in [%s]", s[i], s.c_str());
 				ret += '\\';
 				--i;
 				break;

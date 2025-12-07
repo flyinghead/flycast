@@ -18,33 +18,85 @@
  */
 #include "i18n.h"
 #include "resources.h"
-#include "cfg/ini.h"
-#include "stdclass.h"
+#include "tinygettext/tinygettext.hpp"
+#include "tinygettext/file_system.hpp"
+#include "tinygettext/log.hpp"
+#include "log/Log.h"
 #ifdef _WIN32
 #include <windows.h>
 #include <nowide/stackstring.hpp>
 #endif
-#include <set>
+#include <vector>
+#include <sstream>
+
+using namespace tinygettext;
 
 namespace i18n
 {
 
 static bool inited;
-static std::map<std::string, std::string> messages;
-static std::set<std::string> missed;
-static std::string temp;
 
-static void load(const std::string& language)
+class ResourceFileSystem : public FileSystem
 {
-	size_t size;
-	std::unique_ptr<u8[]> data = resource::load("i18n/" + language, size);
-	if (data == nullptr)
+	std::vector<std::string> open_directory(const std::string& pathname) override {
+		return resource::listDirectory(pathname);
+	}
+	std::unique_ptr<std::istream> open_file(const std::string& filename) override
+	{
+		size_t size;
+		std::unique_ptr<u8[]> data = resource::load(filename, size);
+		if (data == nullptr)
+			return nullptr;
+		std::string str((const char *)&data[0], (const char *)&data[size]);
+		return std::make_unique<std::stringstream>(str);
+	}
+};
+
+static Dictionary *dictionary;
+
+static std::string getUnixLocaleVariant(const std::string& locale)
+{
+	size_t at = locale.find('@');
+	if (at == locale.npos)
+		return {};
+	size_t end = locale.find_first_of("_-.@", ++at);
+	if (end == locale.npos)
+		return locale.substr(at);
+	else
+		return locale.substr(at, end - at);
+}
+
+void parseLocale(const std::string& locale, std::string& language, std::string& country, std::string& variant)
+{
+	size_t sep = locale.find_first_of("_-.@");
+	language = locale.substr(0, sep);
+	country.clear();
+	variant.clear();
+	if (sep == locale.npos)
 		return;
-	config::IniFile cat;
-	cat.load(std::string((char *)data.get(), size), true);
-	std::vector<std::string> msgs = cat.getEntryNames("");
-	for (const auto& msgId : msgs)
-		messages[msgId] = cat.getString("", msgId);
+	if (locale[sep] == '.') {
+		variant = getUnixLocaleVariant(locale);
+		return;
+	}
+	size_t sep2 = locale.find_first_of("_-.@", ++sep);
+	if (sep2 == locale.npos) {
+		country = locale.substr(sep);
+		return;
+	}
+	country = locale.substr(sep, sep2 - sep);
+	if (locale[sep2] == '.') {
+		variant = getUnixLocaleVariant(locale);
+		return;
+	}
+	bool lastIsVariant = locale[sep2] == '@';
+	sep = ++sep2;
+	sep2 = locale.find_first_of("_-.@", sep);
+	if (sep2 == locale.npos)
+		variant = locale.substr(sep);
+	else
+		variant = locale.substr(sep, sep2 - sep);
+	if (!lastIsVariant)
+		std::swap(country, variant);
 }
 
 void init()
@@ -60,71 +112,48 @@ void init()
 		setlocale(LC_ALL, "");
 	}
 #endif
-	messages.clear();
+	Log::set_log_info_callback([](const std::string& msg) {
+		if (!msg.empty())
+			INFO_LOG(COMMON, "%s", msg.substr(0, msg.length() - 1).c_str());
+	});
+	Log::set_log_warning_callback([](const std::string& msg) {
+		if (!msg.empty())
+			WARN_LOG(COMMON, "%s", msg.substr(0, msg.length() - 1).c_str());
+	});
+	Log::set_log_error_callback([](const std::string& msg) {
+		if (!msg.empty())
+			ERROR_LOG(COMMON, "%s", msg.substr(0, msg.length() - 1).c_str());
+	});
+
 	std::string locale = getCurrentLocale();
-	size_t pos = locale.find_first_of("_-.");
-	if (pos == locale.npos)
-		pos = locale.length();
-	std::string language = locale.substr(0, pos);
-	if (language.length() < 2)
-		return;
-	load(language);
-	if (pos == locale.length())
-		return;
-	++pos;
-	size_t pos2 = locale.find_first_of("_-.", pos);
-	if (pos2 == locale.npos)
-		pos2 = locale.length();
-	std::string variant = locale.substr(pos, pos2 - pos);
-	std::string lowvar = variant;
-	string_tolower(lowvar);
-	if (lowvar == "hans")
-		variant = "CH";
-	else if (lowvar == "hant")
-		variant = "TW";
-	load(language + "_" + variant);
+	std::string language, country, variant;
+	parseLocale(locale, language, country, variant);
+
+	static DictionaryManager dictMgr(std::make_unique<ResourceFileSystem>());
+	dictMgr.set_language(Language::from_spec(language, country, variant));
+	dictMgr.add_directory("i18n");
+	dictionary = &dictMgr.get_dictionary();
 }
 
-const std::string& T(const std::string& msg)
-{
+static const std::string& translate(const std::string& msg) {
 	init();
-	std::string key { msg };
-	std::string imguiId;
-	size_t hash2 = msg.find("##");
-	if (hash2 != msg.npos) {
-		imguiId = msg.substr(hash2);
-		key = msg.substr(0, hash2);
-	}
-	auto it = messages.find(key);
-	if (it == messages.end())
-	{
-#if !defined(NDEBUG) || defined(DEBUGFAST)
-		if (!messages.empty() && missed.count(msg) == 0) {
-			INFO_LOG(COMMON, "Missing message: %s", msg.c_str());
-			missed.insert(msg);
-		}
-#endif
-		return msg;
-	}
-	else
-	{
-		if (imguiId.empty())
-			return it->second;
-		temp = it->second + imguiId;
-		return temp;
-	}
+	return dictionary->translate(msg);
 }
 
-const char *Tcs(const char *msg)
+std::string Ts(const std::string& msg) {
+	return translate(msg);
+}
+
+const char *T(const char *msg)
 {
 	if (msg == nullptr)
 		return nullptr;
-	std::string in { msg };
-	const std::string& out = T(in);
-	if (&out == &in)
+	std::string smsg(msg);
+	const std::string& tr = translate(smsg);
+	if (&tr == &smsg)
 		return msg;
 	else
-		return out.c_str();
+		return tr.c_str();
 }
 
 #if defined(_WIN32) && !defined(LIBRETRO)

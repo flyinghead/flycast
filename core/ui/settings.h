@@ -45,7 +45,7 @@ inline static void header(const char *title)
 	ImguiStyleVar _(ImGuiStyleVar_ButtonTextAlign, ImVec2(0.f, 0.5f)); // Left
 	ImguiStyleVar _1(ImGuiStyleVar_DisabledAlpha, 1.0f);
 	ImGui::BeginDisabled();
-	ImGui::ButtonEx(Tcs(title), ImVec2(-1, 0));
+	ImGui::ButtonEx(title, ImVec2(-1, 0));
 	ImGui::EndDisabled();
 }
 

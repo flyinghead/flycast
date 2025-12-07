@@ -64,5 +64,17 @@ std::unique_ptr<u8[]> load(const std::string& path, size_t& size)
 	return nullptr;
 }
 
+std::vector<std::string> listDirectory(const std::string& path)
+{
+	std::vector<std::string> v;
+	try {
+		cmrc::embedded_filesystem fs = cmrc::flycast::get_filesystem();
+		for (auto entry : fs.iterate_directory(path))
+			v.push_back(entry.filename());
+	} catch (const std::system_error& e) {
+		WARN_LOG(COMMON, "listDirectory(%s) error: %s", path.c_str(), e.what());
+	}
+	return v;
 }
 
+}

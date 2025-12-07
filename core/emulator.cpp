@@ -602,7 +602,7 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 							nvmem::loadHle();
 							NOTICE_LOG(BOOT, "Did not load BIOS, using reios");
 							if (!config::UseReios && config::UseReios.isReadOnly())
-								os_notify(i18n::Tcs("This game requires a real BIOS"), 15000);
+								os_notify(i18n::T("This game requires a real BIOS"), 15000);
 						}
 					}
 					else
@@ -659,7 +659,7 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 		cheatManager.reset(settings.content.gameId);
 		if (cheatManager.isWidescreen())
 		{
-			os_notify(i18n::Tcs("Widescreen cheat activated"), 2000);
+			os_notify(i18n::T("Widescreen cheat activated"), 2000);
 			config::ScreenStretching.override(134);	// 4:3 -> 16:9
 		}
 		// reload settings so that all settings can be overridden
@@ -681,10 +681,10 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 		{
 #ifdef GDB_SERVER
 			if(config::GDBWaitForConnection)
-				progress->label = i18n::Tcs("Waiting for debugger...");
+				progress->label = i18n::T("Waiting for debugger...");
 			else
 #endif
-				progress->label = i18n::Tcs("Starting...");
+				progress->label = i18n::T("Starting...");
 		}
 
 		state = Loaded;

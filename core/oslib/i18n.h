@@ -20,7 +20,6 @@
 #ifdef __ANDROID__
 #include "android_locale.h"
 #endif
-#include "log/Log.h"
 #include <string>
 #include <time.h>
 #include <locale>
@@ -72,16 +71,10 @@ static inline std::string formatShortDateTime(time_t time)
 
 #endif	// !ANDROID
 
-// Note: if the message isn't found (or in English) and has no ImGui id (...##imguiId), the 'msg' argument will be returned.
-// If needed, it is the responsibility of the caller to make sure the reference is still valid after the statement is executed.
-// Examples:
-// printf("%s", T("something").c_str());	// this is ok, the reference is still valid when printf is called.
-// const std::string& tr = T("crash");		// tr is a reference to a temporary string that has been deleted -> crash
-// std::string str = T("no crash");			// this is ok, the temporary string is copied before being deleted.
-// Furthermore, this function may use a static variable to store the result and thus isn't re-entrant
-//
-const std::string& T(const std::string& msg);
+std::string Ts(const std::string& msg);
+const char *T(const char *msg);
 
-const char *Tcs(const char *msg);
+// To mark a string as needing translation only
+#define Tnop(string) ((char *)(string))
 
 }

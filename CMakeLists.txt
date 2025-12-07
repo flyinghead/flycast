@@ -772,6 +772,11 @@ if(NOT LIBRETRO AND NOT NINTENDO_SWITCH)
 	endif()
 endif()
 
+set(TINYGETTEXT_WO_ICONV ON)
+add_subdirectory(core/deps/tinygettext EXCLUDE_FROM_ALL)
+target_include_directories(${PROJECT_NAME} PRIVATE core/deps/tinygettext/include)
+target_link_libraries(${PROJECT_NAME} PRIVATE tinygettext::tinygettext)
+
 target_include_directories(${PROJECT_NAME} PRIVATE core/deps/picotcp/include core/deps/picotcp/modules)
 target_sources(${PROJECT_NAME} PRIVATE
 		core/deps/picotcp/include/arch/pico_arm9.h

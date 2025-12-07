@@ -25,6 +25,7 @@ target_sources(${PROJECT_NAME} PRIVATE
         src/input/InputMappingConfigFileTest.cpp
         src/input/InputSetTest.cpp
         src/input/SDLControllerMappingTest.cpp
+        src/oslib/I18nTest.cpp
         src/util/PeriodicThreadTest.cpp
         src/util/TsQueueTest.cpp
         src/util/WorkerThreadTest.cpp)

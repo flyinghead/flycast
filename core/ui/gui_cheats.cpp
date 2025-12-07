@@ -42,10 +42,10 @@ static void addCheat()
 			ImguiStyleVar _(ImGuiStyleVar_FramePadding, ScaledVec2(20, 8));
 			ImGui::AlignTextToFramePadding();
 			ImGui::Indent(uiScaled(10));
-			ImGui::Text("%s", Tcs("ADD CHEAT"));
+			ImGui::Text("%s", T("ADD CHEAT"));
 
-			const char *cancelLbl = Tcs("Cancel");
-			const char *okLbl = Tcs("OK");
+			const char *cancelLbl = T("Cancel");
+			const char *okLbl = T("OK");
 			ImGui::SameLine(ImGui::GetWindowContentRegionMax().x - ImGui::CalcTextSize(cancelLbl).x - ImGui::GetStyle().FramePadding.x * 4.f
 				- ImGui::CalcTextSize(okLbl).x - ImGui::GetStyle().ItemSpacing.x);
 			if (ImGui::Button(cancelLbl))
@@ -68,8 +68,8 @@ static void addCheat()
 
 		ImGui::BeginChild(ImGui::GetID("input"), ImVec2(0, 0), ImGuiChildFlags_Border, ImGuiWindowFlags_NavFlattened);
 		{
-			InputText("Name", cheatName, sizeof(cheatName));
-			InputTextMultiline("Code", cheatCode, sizeof(cheatCode), ImVec2(0, ImGui::GetTextLineHeight() * 16));
+			InputText(T("Name"), cheatName, sizeof(cheatName));
+			InputTextMultiline(T("Code"), cheatCode, sizeof(cheatCode), ImVec2(0, ImGui::GetTextLineHeight() * 16));
 		}
 		ImGui::EndChild();
 		ImGui::EndPopup();
@@ -92,16 +92,16 @@ void gui_cheats()
     ImGui::Begin("##main", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar
     		| ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize);
 
-	const char *title = "Select a cheat file";
+	const char *title = T("Select a cheat file");
     {
 		ImguiStyleVar _(ImGuiStyleVar_FramePadding, ScaledVec2(20, 8));
 		ImGui::AlignTextToFramePadding();
 		ImGui::Indent(uiScaled(10));
-		ImGui::Text("%s", (ICON_FA_MASK "  " + T("CHEATS")).c_str());
+		ImGui::Text("%s", (std::string(ICON_FA_MASK "  ") + T("CHEATS")).c_str());
 
-		const char *addLbl = Tcs("Add");
-		const char *closeLbl = Tcs("Close");
-		const char *loadLbl = Tcs("Load");
+		const char *addLbl = T("Add");
+		const char *closeLbl = T("Close");
+		const char *loadLbl = T("Load");
 		ImGui::SameLine(ImGui::GetWindowContentRegionMax().x - ImGui::CalcTextSize(addLbl).x  - ImGui::CalcTextSize(closeLbl).x - ImGui::GetStyle().FramePadding.x * 6.f
 			- ImGui::CalcTextSize(loadLbl).x - ImGui::GetStyle().ItemSpacing.x * 2);
 		if (ImGui::Button(addLbl))
@@ -111,12 +111,12 @@ void gui_cheats()
 #ifdef __ANDROID__
 		if (ImGui::Button(loadLbl))
 		{
-			if (!hostfs::addStorage(false, true, Tcs(title), cheatFileSelected))
-				ImGui::OpenPopup(Tcs(title));
+			if (!hostfs::addStorage(false, true, title, cheatFileSelected))
+				ImGui::OpenPopup(title);
 		}
 #else
 		if (ImGui::Button(loadLbl))
-			ImGui::OpenPopup(Tcs(title));
+			ImGui::OpenPopup(title);
 #endif
 
 		ImGui::SameLine();
@@ -134,7 +134,7 @@ void gui_cheats()
 	ImGui::BeginChild(ImGui::GetID("cheats"), ImVec2(0, 0), ImGuiChildFlags_Border, ImGuiWindowFlags_DragScrolling | ImGuiWindowFlags_NavFlattened);
     {
 		if (cheatManager.cheatCount() == 0)
-			ImGui::Text("%s", Tcs("(No cheat loaded)"));
+			ImGui::Text("%s", T("(No cheat loaded)"));
 		else
 			for (size_t i = 0; i < cheatManager.cheatCount(); i++)
 			{

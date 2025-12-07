@@ -110,7 +110,7 @@ bool NaomiNetwork::startNetwork()
 			}
 			else {
 				notif.resize(256);
-				notif.resize(snprintf(notif.data(), notif.capacity(), Tcs("%d player(s) connected. Waiting..."), (int)slaves.size()));
+				notif.resize(snprintf(notif.data(), notif.capacity(), T("%d player(s) connected. Waiting..."), (int)slaves.size()));
 			}
 			os_notify(notif.c_str(), timeout.count() * 2000);
 
@@ -133,12 +133,12 @@ bool NaomiNetwork::startNetwork()
 
 			nextPeer = slaves[0].addr;
 
-			os_notify(Tcs("Starting game"), 2000);
+			os_notify(T("Starting game"), 2000);
 			SetNaomiNetworkConfig(0);
 
 			return true;
 		}
-		os_notify(Tcs("No player connected"), 8000);
+		os_notify(T("No player connected"), 8000);
 	}
 	else
 	{
@@ -172,7 +172,7 @@ bool NaomiNetwork::startNetwork()
 		}
 
 		NOTICE_LOG(NETWORK, "Connecting to server");
-		os_notify(Tcs("Connecting to server"), 10000);
+		os_notify(T("Connecting to server"), 10000);
 		steady_clock::time_point start_time = steady_clock::now();
 
 		while (!networkStopping && !_startNow && steady_clock::now() - start_time < timeout)
@@ -258,7 +258,7 @@ bool NaomiNetwork::receive(const sockaddr_in *addr, const Packet *packet, u32 si
 			nextPeer.sin_addr.s_addr = packet->sync.nextNodeIp == 0 ? addr->sin_addr.s_addr : packet->sync.nextNodeIp;
 			std::string notif;
 			notif.resize(128);
-			notif.resize(snprintf(notif.data(), notif.capacity(), Tcs("Connected as slot %d"), slotId));
+			notif.resize(snprintf(notif.data(), notif.capacity(), T("Connected as slot %d"), slotId));
 			os_notify(notif.c_str(), 2000);
 		}
 		break;

@@ -70,13 +70,13 @@ void displayCommands()
 
     ImGui::Begin("##vgamepad", NULL, ImGuiWindowFlags_NoDecoration);
 
-	if (ImGui::Button(i18n::Tcs("Save"), ScaledVec2(150, 50)))
+	if (ImGui::Button(i18n::T("Save"), ScaledVec2(150, 50)))
 	{
 		stopEditing(false);
 		gui_setState(GuiState::Settings);
 	}
 	ImGui::SameLine();
-	if (ImGui::Button(i18n::Tcs("Reset"), ScaledVec2(150, 50)))
+	if (ImGui::Button(i18n::T("Reset"), ScaledVec2(150, 50)))
 	{
 		resetEditing();
 		startEditing();
@@ -84,7 +84,7 @@ void displayCommands()
 	}
 
 	ImGui::SameLine();
-	if (ImGui::Button(i18n::Tcs("Cancel"), ScaledVec2(150, 50)))
+	if (ImGui::Button(i18n::T("Cancel"), ScaledVec2(150, 50)))
 	{
 		stopEditing(true);
 		gui_setState(GuiState::Settings);

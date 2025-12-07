@@ -1,0 +1,17 @@
+"base_path": "."
+"pull_request_title": "Crowdin Translations"
+"commit_message": "New translations for {languageName} [ci skip]"
+
+"files" : [
+  {
+    "source" : "/resources/i18n/flycast.pot",
+    "translation" : "/resources/i18n/%two_letters_code%.po",
+    "languages_mapping" : {
+      "two_letters_code" : {
+        "zh-CN" : "zh_CH",
+        "zh-TW" : "zh_TW",
+        "en-GB" : "en_GB",
+      }
+    }
+  }
+]
