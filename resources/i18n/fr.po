@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-12-08 11:35+0100\n"
-"PO-Revision-Date: 2025-12-08 15:01\n"
+"POT-Creation-Date: 2025-12-08 16:00+0100\n"
+"PO-Revision-Date: 2025-12-08 18:08\n"
 "Last-Translator: \n"
 "Language: fr_FR\n"
 "MIME-Version: 1.0\n"
@@ -17,85 +17,85 @@ msgstr ""
 "X-Crowdin-File-ID: 13\n"
 "Language-Team: French\n"
 
-#: core/achievements/achievements.cpp:347
+#: core/achievements/achievements.cpp:345
 #, c-format
 msgid "User %s authenticated"
 msgstr "Utilisateur %s authentifié"
 
-#: core/achievements/achievements.cpp:363
+#: core/achievements/achievements.cpp:361
 msgid "RetroAchievements authentication failed"
 msgstr "L'authentification de RetroAchievements a échoué"
 
-#: core/achievements/achievements.cpp:398
+#: core/achievements/achievements.cpp:396
 msgid "No user token returned"
 msgstr "Pas de jeton utilisateur renvoyé"
 
-#: core/achievements/achievements.cpp:550
+#: core/achievements/achievements.cpp:548
 msgid "RetroAchievements disconnected"
 msgstr "RetroAchievements déconnecté"
 
-#: core/achievements/achievements.cpp:554
+#: core/achievements/achievements.cpp:552
 msgid "RetroAchievements reconnected"
 msgstr "RetroAchievements reconnecté"
 
-#: core/achievements/achievements.cpp:586
+#: core/achievements/achievements.cpp:582
 #, c-format
 msgid "Achievement %s unlocked!"
 msgstr "Succès %s débloqué !"
 
-#: core/achievements/achievements.cpp:628
+#: core/achievements/achievements.cpp:622
 #, c-format
 msgid "Leaderboard %s started"
 msgstr "Podium %s démarré"
 
-#: core/achievements/achievements.cpp:637
+#: core/achievements/achievements.cpp:629
 #, c-format
 msgid "Leaderboard %s failed"
 msgstr "Le podium %s a échoué"
 
-#: core/achievements/achievements.cpp:646
+#: core/achievements/achievements.cpp:636
 #, c-format
 msgid "Leaderboard %s submitted"
 msgstr "Podium %s envoyé"
 
-#: core/achievements/achievements.cpp:674
+#: core/achievements/achievements.cpp:661
 #, c-format
 msgid "Mastered %s"
 msgstr "Maîtrise de %s"
 
-#: core/achievements/achievements.cpp:674
+#: core/achievements/achievements.cpp:661
 #, c-format
 msgid "Completed %s"
 msgstr "%s terminé"
 
-#: core/achievements/achievements.cpp:680
+#: core/achievements/achievements.cpp:664
 #, c-format
 msgid "%d achievements, %d points"
 msgstr "%d succès, %d points"
 
-#: core/achievements/achievements.cpp:930
+#: core/achievements/achievements.cpp:910
 #, c-format
 msgid "You have %d of %d achievements unlocked."
 msgstr "Vous avez %d succès sur %d débloqués."
 
-#: core/achievements/achievements.cpp:933
+#: core/achievements/achievements.cpp:912
 msgid "This game has no achievements."
 msgstr "Ce jeu n'a pas de succès."
 
-#: core/achievements/achievements.cpp:939 core/ui/settings_general.cpp:370
-#: core/ui/gui_achievements.cpp:305
+#: core/achievements/achievements.cpp:917 core/ui/settings_general.cpp:370
+#: core/ui/gui_achievements.cpp:303
 msgid "Hardcore Mode"
 msgstr "Mode Hardcore"
 
-#: core/achievements/achievements.cpp:970
+#: core/achievements/achievements.cpp:948
 msgid "Hardcore mode disabled"
 msgstr "Mode hardcore désactivé"
 
-#: core/achievements/achievements.cpp:970
+#: core/achievements/achievements.cpp:948
 msgid "Unrecognized media inserted"
 msgstr "Média inconnu inséré"
 
-#: core/achievements/achievements.cpp:977
+#: core/achievements/achievements.cpp:955
 msgid "Media change failed"
 msgstr "Erreur de changement de média"
 
@@ -112,12 +112,157 @@ msgstr "Pas de son"
 msgid "Automatic AAudio / OpenSL selection"
 msgstr "Sélection AAudio / OpenSL automatique"
 
+#: core/oslib/oslib.cpp:351
+msgid "Can't find Pictures library"
+msgstr "Impossible de trouver la librairie Images"
+
+#: core/oslib/storage.cpp:81
+#, c-format
+msgid "Can't read directory %s"
+msgstr "Impossible de lire le dossier %s"
+
+#: core/oslib/storage.cpp:201
+#, c-format
+msgid "Cannot stat %s"
+msgstr "Impossible de connaître le statut de %s"
+
+#: core/oslib/storage.cpp:222
+#, c-format
+msgid "Invalid device %s"
+msgstr "Périphérique %s invalide"
+
+#: core/oslib/storage.cpp:246
+#, c-format
+msgid "Cannot get attributes of %s"
+msgstr "Impossible d'obtenir les attributs de %s"
+
+#: core/oslib/storage.cpp:253
+#, c-format
+msgid "Invalid file name %s"
+msgstr "Nom de fichier %s invalide"
+
+#: core/imgread/common.cpp:97
+msgid "Unknown disk format"
+msgstr "Format de disque inconnu"
+
+#: core/imgread/common.cpp:370 core/emulator.cpp:613
+msgid "This media cannot be loaded"
+msgstr "Ce média ne peut pas être chargé"
+
+#: core/imgread/cue.cpp:57
+#, c-format
+msgid "Cannot open CUE file %s"
+msgstr "Impossible d'ouvrir le fichier CUE %s"
+
+#: core/imgread/cue.cpp:68
+msgid "CUE parse error: CUE file too big"
+msgstr "CUE invalide : fichier trop grand"
+
+#: core/imgread/cue.cpp:187
+#, c-format
+msgid "CUE file: cannot open track %s"
+msgstr "Fichier CUE : impossible d'ouvrir la piste %s"
+
+#: core/imgread/cue.cpp:194
+#, c-format
+msgid "CUE file: track has unknown sector type: %s"
+msgstr "Fichier CUE : la piste a un secteur de type inconnu : %s"
+
+#: core/imgread/cue.cpp:228
+msgid "CUE parse error: failed to parse or invalid file with 0 tracks"
+msgstr "CUE invalide : fichier corrompu ou sans piste"
+
+#: core/imgread/cue.cpp:235
+msgid "CUE parse error: less than 3 tracks"
+msgstr "CUE invalide : moins de 3 pistes"
+
+#: core/imgread/chd.cpp:109
+#, c-format
+msgid "chd: track type %s is not supported"
+msgstr "CHD : piste de type %s non supportée"
+
+#: core/imgread/chd.cpp:118
+#, c-format
+msgid "Cannot open CHD file %s"
+msgstr "Impossible d'ouvrir le fichier CHD %s"
+
+#: core/imgread/chd.cpp:124
+#, c-format
+msgid "Invalid CHD file %s"
+msgstr "Fichier CHD invalide"
+
+#: core/imgread/chd.cpp:137
+#, c-format
+msgid "Invalid hunkbytes for CHD file %s"
+msgstr "Valeur 'hunkbytes' invalide pour le fichier CHD %s"
+
+#: core/imgread/chd.cpp:183
+msgid "Unexpected track number"
+msgstr "Numéro de piste invalide"
+
+#: core/imgread/chd.cpp:186
+msgid "Unsupported subtype or pre/postgap"
+msgstr "Sous-type ou pre/postgap non supporté"
+
+#: core/imgread/chd.cpp:212
+msgid "Invalid CHD: less than 3 tracks"
+msgstr "CHD invalide : moins de 3 pistes"
+
+#: core/imgread/chd.cpp:218
+msgid "Invalid CHD: no track found"
+msgstr "CHD invalide : aucune piste trouvée"
+
+#: core/imgread/gdi.cpp:13
+#, c-format
+msgid "Cannot open GDI file %s"
+msgstr "Impossible d'ouvrir le fichier GDI %s"
+
+#: core/imgread/gdi.cpp:24
+msgid "GDI file too big"
+msgstr "Fichier GDI trop grand"
+
+#: core/imgread/gdi.cpp:36
+msgid "GDI: empty or invalid GDI file"
+msgstr "GDI : fichier GDI vide ou invalide"
+
+#: core/imgread/gdi.cpp:95
+#, c-format
+msgid "GDI file: Cannot open track %s"
+msgstr "Fichier GDI : impossible d'ouvrir la piste %s"
+
+#: core/imgread/gdi.cpp:110
+msgid "GDI parse error: less than 3 tracks"
+msgstr "GDI invalide : moins de 3 pistes"
+
+#: core/imgread/cdi.cpp:17
+#, c-format
+msgid "Cannot open CDI file %s"
+msgstr "Impossible d'ouvrir le fichier CDI %s"
+
+#: core/imgread/cdi.cpp:23
+#, c-format
+msgid "Invalid CDI file %s"
+msgstr "Fichier CDI %s invalide"
+
+#: core/imgread/cdi.cpp:27 core/imgread/cdi.cpp:31 core/imgread/cdi.cpp:49
+#: core/imgread/cdi.cpp:60 core/imgread/cdi.cpp:73
+msgid "Invalid CDI image"
+msgstr "Image CDI invalide"
+
+#: core/imgread/cdi.cpp:78
+msgid "Invalid CDI sector size"
+msgstr "Taille de secteur CDI invalide"
+
+#: core/imgread/cdi.cpp:126
+msgid "Cannot re-open CDI file"
+msgstr "Impossible de rouvrir le fichier CDI"
+
 #: core/hw/naomi/card_reader.cpp:291 core/hw/naomi/card_reader.cpp:585
 #: core/hw/maple/maple_devs.cpp:1842
 msgid "Card ejected"
 msgstr "Carte éjectée"
 
-#: core/hw/naomi/naomi.cpp:352
+#: core/hw/naomi/naomi.cpp:350
 #, c-format
 msgid "Speed: %3d"
 msgstr "Vitesse : %3d"
@@ -126,9 +271,78 @@ msgstr "Vitesse : %3d"
 msgid "Print out saved"
 msgstr "Impression sauvegardée"
 
+#: core/hw/naomi/systemsp.cpp:2188
+#, c-format
+msgid "SystemSP: Cannot open CompactFlash file %s"
+msgstr "SystemSP : Impossible d'ouvrir le fichier CompactFlash %s"
+
 #: core/hw/naomi/naomi_m3comm.cpp:76
 msgid "Network started"
 msgstr "Réseau démarré"
+
+#: core/hw/naomi/naomi_cart.cpp:148 core/hw/naomi/naomi_cart.cpp:386
+#: core/hw/naomi/naomi_cart.cpp:406 core/hw/naomi/naomi_cart.cpp:432
+#: core/hw/naomi/naomi_cart.cpp:844 core/hw/naomi/gdcartridge.cpp:597
+msgid "Memory allocation failed"
+msgstr "Erreur d'allocation mémoire"
+
+#: core/hw/naomi/naomi_cart.cpp:192 core/hw/naomi/naomi_cart.cpp:224
+#, c-format
+msgid "Error: cannot load BIOS %s"
+msgstr "Erreur : impossible de charger le BIOS %s"
+
+#: core/hw/naomi/naomi_cart.cpp:236
+msgid "Unknown game"
+msgstr "Jeu inconnu"
+
+#: core/hw/naomi/naomi_cart.cpp:262
+#, c-format
+msgid "Cannot open %s or %s"
+msgstr "Impossible d'ouvrir %s ou %s"
+
+#: core/hw/naomi/naomi_cart.cpp:264
+#, c-format
+msgid "Cannot open %s"
+msgstr "Impossible d'ouvrir %s"
+
+#: core/hw/naomi/naomi_cart.cpp:343
+msgid "Invalid ROM"
+msgstr "ROM invalide"
+
+#: core/hw/naomi/naomi_cart.cpp:364
+#, c-format
+msgid "Cannot find %s"
+msgstr "Impossible de trouver %s"
+
+#: core/hw/naomi/naomi_cart.cpp:374 core/hw/naomi/naomi_cart.cpp:391
+#, c-format
+msgid "Invalid ROM: truncated %s"
+msgstr "ROM invalide : %s tronqué"
+
+#: core/hw/naomi/naomi_cart.cpp:484
+msgid "Error: cannot load BIOS from naomi.zip"
+msgstr "Erreur : impossible de charger le BIOS de 'naomi.zip'"
+
+#: core/hw/naomi/naomi_cart.cpp:500 core/hw/naomi/naomi_cart.cpp:550
+#, c-format
+msgid "Error: can't open %s"
+msgstr "Erreur : impossible d'ouvrir %s"
+
+#: core/hw/naomi/naomi_cart.cpp:508 core/hw/naomi/naomi_cart.cpp:524
+msgid "Error: Invalid LST file"
+msgstr "Erreur : fichier LST invalide"
+
+#: core/hw/naomi/naomi_cart.cpp:563
+msgid "Invalid empty ROM"
+msgstr "ROM vide invalide"
+
+#: core/hw/naomi/naomi_cart.cpp:570
+msgid "Out of memory"
+msgstr "Mémoire saturée"
+
+#: core/hw/naomi/naomi_cart.cpp:621
+msgid "Error: Failed to load BIN/DAT file"
+msgstr "Erreur : échec de chargement du fichier BIN/DAT"
 
 #: core/hw/naomi/midiffb.cpp:76
 msgid "Calibration done"
@@ -137,6 +351,15 @@ msgstr "Calibration terminée"
 #: core/hw/naomi/midiffb.cpp:201
 msgid "Calibrating the wheel. Keep it centered."
 msgstr "Calibration du volant en cours. Gardez-le centré."
+
+#: core/hw/naomi/gdcartridge.cpp:524
+#, c-format
+msgid "Naomi GDROM: Cannot open %s.chd"
+msgstr "GDROM Naomi : impossible d'ouvrir %s.chd"
+
+#: core/hw/naomi/gdcartridge.cpp:609
+msgid "Naomi GDROM: Could not find the file to decrypt."
+msgstr "GDROM Naomi : impossible de trouver le fichier à décrypter"
 
 #: core/hw/maple/maple_devs.cpp:2218
 msgid "ATTENTION: Loading from a physical VMU"
@@ -169,6 +392,24 @@ msgstr "Reconnecter manuellement pour continuer à utiliser le VMU physique"
 #: core/reios/reios.cpp:400 core/reios/reios.cpp:403
 msgid "Reboot to BIOS"
 msgstr "Redémarrage vers le BIOS"
+
+#: core/reios/reios.cpp:696
+#, c-format
+msgid "Failed to open ELF %s"
+msgstr "Échec d'ouverture du fichier ELF %s"
+
+#: core/reios/reios.cpp:705
+#, c-format
+msgid "Failed to locate bootfile %s"
+msgstr "Impossible de trouver le fichier de démarrage %s"
+
+#: core/reios/reios.cpp:718
+msgid "Naomi boot failure"
+msgstr "Erreur de démarrage Naomi"
+
+#: core/reios/reios.cpp:724
+msgid "Invalid cart size"
+msgstr "Taille de cartouche invalide"
 
 #: core/cheats.cpp:824 core/cheats.cpp:829
 msgid "Invalid cheat code"
@@ -602,7 +843,7 @@ msgstr "Choisir"
 msgid "Add"
 msgstr "Ajouter"
 
-#: core/ui/settings_general.cpp:161 core/ui/gui.cpp:911
+#: core/ui/settings_general.cpp:161 core/ui/gui.cpp:909
 msgid "Select a Content Folder"
 msgstr "Sélectionner un dossier de jeux"
 
@@ -1207,7 +1448,7 @@ msgid "Menu"
 msgstr ""
 
 #: core/ui/settings_controls.cpp:210 core/ui/settings_controls.cpp:264
-#: core/ui/gui.cpp:777 core/ui/gui.cpp:1038
+#: core/ui/gui.cpp:777 core/ui/gui.cpp:1036
 msgid "Exit"
 msgstr "Quitter"
 
@@ -1476,7 +1717,7 @@ msgstr "Statut DreamLink : %s"
 msgid "Edit Layout"
 msgstr "Éditer le Plan"
 
-#: core/ui/settings_controls.cpp:1044 core/ui/gui.cpp:773 core/ui/gui.cpp:1023
+#: core/ui/settings_controls.cpp:1044 core/ui/gui.cpp:773 core/ui/gui.cpp:1021
 #: core/ui/settings.cpp:213
 msgid "Settings"
 msgstr "Préférences"
@@ -1542,28 +1783,28 @@ msgstr "Si activé, chaque jeu à son propre VMU sur le port 1 du contrôleur A.
 msgid "Close"
 msgstr "Fermer"
 
-#: core/ui/gui_achievements.cpp:298
+#: core/ui/gui_achievements.cpp:296
 #, c-format
 msgid "You have unlocked %d of %d achievements and %d of %d points."
 msgstr "Vous avez débloqué %d succès sur %d et %d points sur %d."
 
-#: core/ui/gui_achievements.cpp:326
+#: core/ui/gui_achievements.cpp:324
 msgid "Locked"
 msgstr "Bloqué"
 
-#: core/ui/gui_achievements.cpp:326
+#: core/ui/gui_achievements.cpp:324
 msgid "Active Challenges"
 msgstr "Challenges Actifs"
 
-#: core/ui/gui_achievements.cpp:326
+#: core/ui/gui_achievements.cpp:324
 msgid "Almost There"
 msgstr "On y est presque"
 
-#: core/ui/gui_achievements.cpp:328
+#: core/ui/gui_achievements.cpp:326
 msgid "Unlocked"
 msgstr "Débloqué"
 
-#: core/ui/gui_achievements.cpp:328
+#: core/ui/gui_achievements.cpp:326
 msgid "Recently Unlocked"
 msgstr "Débloqué récemment"
 
@@ -1623,103 +1864,103 @@ msgstr "Éjecter Disque"
 msgid "Close Game"
 msgstr "Quitter Jeu"
 
-#: core/ui/gui.cpp:814
+#: core/ui/gui.cpp:812
 #, c-format
 msgid "Slot %d"
 msgstr "N° %d"
 
-#: core/ui/gui.cpp:830
+#: core/ui/gui.cpp:828
 msgid "Empty"
 msgstr "Vide"
 
-#: core/ui/gui.cpp:858 core/ui/gui_cheats.cpp:48
+#: core/ui/gui.cpp:856 core/ui/gui_cheats.cpp:48
 msgid "OK"
 msgstr ""
 
-#: core/ui/gui.cpp:878 core/ui/gui.cpp:879
+#: core/ui/gui.cpp:876 core/ui/gui.cpp:877
 msgid "Incorrect Content Location?"
 msgstr "Dossier de contenu incorrect ?"
 
-#: core/ui/gui.cpp:882
+#: core/ui/gui.cpp:880
 #, c-format
 msgid "Scanned %d folders but no game can be found!"
 msgstr "%d dossiers parcourus mais pas de jeu trouvé !"
 
-#: core/ui/gui.cpp:887
+#: core/ui/gui.cpp:885
 msgid "Reselect"
 msgstr "Re-sélectionner"
 
-#: core/ui/gui.cpp:896 core/ui/gui.cpp:1052 core/ui/gui.cpp:1288
-#: core/ui/gui.cpp:1431 core/ui/gui_cheats.cpp:47 core/ui/gui_util.cpp:181
+#: core/ui/gui.cpp:894 core/ui/gui.cpp:1050 core/ui/gui.cpp:1286
+#: core/ui/gui.cpp:1429 core/ui/gui_cheats.cpp:47 core/ui/gui_util.cpp:181
 #: core/ui/vgamepad.cpp:87
 msgid "Cancel"
 msgstr "Annuler"
 
-#: core/ui/gui.cpp:1019
+#: core/ui/gui.cpp:1017
 msgid "GAMES"
 msgstr "JEUX"
 
-#: core/ui/gui.cpp:1026
+#: core/ui/gui.cpp:1024
 msgid "Filter"
 msgstr "Filtre"
 
-#: core/ui/gui.cpp:1033 core/ui/gui.cpp:1034
+#: core/ui/gui.cpp:1031 core/ui/gui.cpp:1032
 msgid "Load..."
 msgstr "Charger..."
 
-#: core/ui/gui.cpp:1153
+#: core/ui/gui.cpp:1151
 msgid "Your game list is empty"
 msgstr "Votre librairie est vide"
 
-#: core/ui/gui.cpp:1163
+#: core/ui/gui.cpp:1161
 msgid "Add Game Folder"
 msgstr "Ajouter des jeux"
 
-#: core/ui/gui.cpp:1195 core/ui/gui.cpp:1206
+#: core/ui/gui.cpp:1193 core/ui/gui.cpp:1204
 msgid "Invalid selection:"
 msgstr "Sélection invalide :"
 
-#: core/ui/gui.cpp:1195 core/ui/gui.cpp:1206
+#: core/ui/gui.cpp:1193 core/ui/gui.cpp:1204
 msgid "Flycast cannot write to this folder."
 msgstr "Flycast ne peut pas écrire dans ce dossier."
 
-#: core/ui/gui.cpp:1234
+#: core/ui/gui.cpp:1232
 msgid "Select Flycast Home Folder"
 msgstr "Sélectionner le dossier principal de Flycast"
 
-#: core/ui/gui.cpp:1268 core/ui/gui.cpp:1377 core/emulator.cpp:687
+#: core/ui/gui.cpp:1266 core/ui/gui.cpp:1375 core/emulator.cpp:687
 msgid "Starting..."
 msgstr "Démarrage..."
 
-#: core/ui/gui.cpp:1280
+#: core/ui/gui.cpp:1278
 msgid "Starting Network..."
 msgstr "Démarrage du réseau..."
 
-#: core/ui/gui.cpp:1282
+#: core/ui/gui.cpp:1280
 msgid "Press Start to start the game now."
 msgstr "Appuyer sur Démarrer pour démarrer le jeu maintenant."
 
-#: core/ui/gui.cpp:1379
+#: core/ui/gui.cpp:1377
 msgid "Loading..."
 msgstr "Chargement..."
 
-#: core/ui/gui.cpp:1415
+#: core/ui/gui.cpp:1413
 msgid "Preloading custom textures"
 msgstr "Préchargement des textures personnalisées"
 
-#: core/ui/gui.cpp:1418
+#: core/ui/gui.cpp:1416
 msgid "Preparing..."
 msgstr "Préparation..."
 
-#: core/ui/gui.cpp:1764
+#: core/ui/gui.cpp:1762
 msgid "No screenshot available"
 msgstr "Pas de capture d'écran disponible"
 
-#: core/ui/gui.cpp:1770
+#: core/ui/gui.cpp:1768
 msgid "Screenshot saved"
 msgstr "Capture d'écran sauvegardée"
 
-#: core/ui/gui.cpp:1772
+#: core/ui/gui.cpp:1770
 msgid "Error saving screenshot"
 msgstr "Erreur de capture d'écran"
 
@@ -1979,7 +2220,7 @@ msgstr "Jouer comme Joueur 1"
 msgid "Deselect to play as player 2"
 msgstr "Désélectionner pour jouer comme joueur 2"
 
-#: core/ui/settings_network.cpp:80 core/ui/settings_network.cpp:177
+#: core/ui/settings_network.cpp:80 core/ui/settings_network.cpp:174
 msgid "Peer"
 msgstr "Adversaire"
 
@@ -2043,11 +2284,11 @@ msgstr "Délai de fermeture (secondes)"
 msgid "Sets duration that chat window stays open after new message is received."
 msgstr "Le délai entre la réception d'un message et la fermeture de la fenêtre de discussion."
 
-#: core/ui/settings_network.cpp:107 core/ui/settings_network.cpp:170
+#: core/ui/settings_network.cpp:107 core/ui/settings_network.cpp:167
 msgid "Network Statistics"
 msgstr "Statistiques Réseau"
 
-#: core/ui/settings_network.cpp:108 core/ui/settings_network.cpp:171
+#: core/ui/settings_network.cpp:108 core/ui/settings_network.cpp:168
 msgid "Display network statistics on screen"
 msgstr "Affiche des statistiques réseau en temps réel"
 
@@ -2067,11 +2308,11 @@ msgstr "Serveur"
 msgid "The server to connect to. Leave blank to find a server automatically on the default port"
 msgstr "Le serveur à contacter. Laisser vide pour trouver un serveur automatiquement sur le port par défaut"
 
-#: core/ui/settings_network.cpp:122 core/ui/settings_network.cpp:182
+#: core/ui/settings_network.cpp:122 core/ui/settings_network.cpp:179
 msgid "Local Port"
 msgstr "Port Local"
 
-#: core/ui/settings_network.cpp:124 core/ui/settings_network.cpp:184
+#: core/ui/settings_network.cpp:124 core/ui/settings_network.cpp:181
 msgid "The local UDP port to use"
 msgstr "Le port UDP local à utiliser"
 
@@ -2099,84 +2340,84 @@ msgstr "En attente au point de rendez-vous..."
 msgid "Preparing game..."
 msgstr "Préparation du jeu..."
 
-#: core/ui/settings_network.cpp:163
+#: core/ui/settings_network.cpp:161
 #, c-format
 msgid "Playing %s (%s)"
 msgstr "Jeu %s (%s)"
 
-#: core/ui/settings_network.cpp:179
+#: core/ui/settings_network.cpp:176
 msgid "The peer to connect to. Leave blank to find a player automatically on the default port"
 msgstr "L'adresse de l'adversaire. Laisser vide pour trouver un joueur automatiquement sur le port par défaut"
 
-#: core/ui/settings_network.cpp:192
+#: core/ui/settings_network.cpp:189
 msgid "Act as Master"
 msgstr "Rôle Maître"
 
-#: core/ui/settings_network.cpp:193
+#: core/ui/settings_network.cpp:190
 msgid "Only used for Maximum Speed. One of the peer must be master."
 msgstr "Uniquement pour Maximum Speed. Un des deux joueurs doit avoir ce rôle."
 
-#: core/ui/settings_network.cpp:197
+#: core/ui/settings_network.cpp:194
 msgid "Network Options"
 msgstr "Options Réseau"
 
-#: core/ui/settings_network.cpp:199
+#: core/ui/settings_network.cpp:196
 msgid "Enable UPnP"
 msgstr "Activer UPnP"
 
-#: core/ui/settings_network.cpp:199
+#: core/ui/settings_network.cpp:196
 msgid "Automatically configure your network router for netplay"
 msgstr "Configure automatiquement votre routeur pour les jeux en réseau"
 
-#: core/ui/settings_network.cpp:200
+#: core/ui/settings_network.cpp:197
 msgid "Broadcast Digital Outputs"
 msgstr "Diffusion des Sorties Digitales"
 
-#: core/ui/settings_network.cpp:200
+#: core/ui/settings_network.cpp:197
 msgid "Broadcast digital outputs and force-feedback state on TCP port 8000. Compatible with the \"-output network\" MAME option. Arcade games only."
 msgstr "Transmet les sorties digitales et le retour de force sur le port TCP 8000. Compatible avec l'option \"-output network\" de MAME. Jeux d'arcade uniquement."
 
-#: core/ui/settings_network.cpp:205
+#: core/ui/settings_network.cpp:202
 msgid "Broadband Adapter Emulation"
 msgstr "Émulation de l'adaptateur réseau haut-débit"
 
-#: core/ui/settings_network.cpp:206
+#: core/ui/settings_network.cpp:203
 msgid "Emulate the Ethernet Broadband Adapter (BBA) instead of the Modem"
 msgstr "Émule la carte Ethernet (BBA) au lieu du modem"
 
-#: core/ui/settings_network.cpp:208
+#: core/ui/settings_network.cpp:205
 msgid "Use DCNet"
 msgstr "Utiliser DCNet"
 
-#: core/ui/settings_network.cpp:208
+#: core/ui/settings_network.cpp:205
 msgid "Use the DCNet cloud service for Dreamcast Internet access."
 msgstr "Utiliser le VPN DCNet pour l'accès à Internet Dreamcast."
 
-#: core/ui/settings_network.cpp:211
+#: core/ui/settings_network.cpp:208
 msgid "ISP User Name"
 msgstr "Nom d'utilisateur FAI"
 
-#: core/ui/settings_network.cpp:217
+#: core/ui/settings_network.cpp:214
 msgid "The ISP user name stored in the console Flash RAM. Used by some online games as the player name. Leave blank to keep the current Flash RAM value."
 msgstr "Le nom d'utilisateur FAI stocké dans la mémoire flash de la console. Utilisé comme nom de joueur par certains jeux en ligne. Laisser vide pour garder le nom stocké en mémoire flash."
 
-#: core/ui/settings_network.cpp:229
+#: core/ui/settings_network.cpp:226
 msgid "Multiboard Screens"
 msgstr "Écrans Multi-cartes"
 
-#: core/ui/settings_network.cpp:232
+#: core/ui/settings_network.cpp:229
 msgid "1 (Twin)"
 msgstr ""
 
-#: core/ui/settings_network.cpp:232
+#: core/ui/settings_network.cpp:229
 msgid "One screen configuration (F355 Twin)"
 msgstr "Borne avec écran unique (F355 Twin)"
 
-#: core/ui/settings_network.cpp:234
+#: core/ui/settings_network.cpp:231
 msgid "3 (Deluxe)"
 msgstr ""
 
-#: core/ui/settings_network.cpp:234
+#: core/ui/settings_network.cpp:231
 msgid "Three screens configuration"
 msgstr "Borne de luxe avec trois écrans"
 
@@ -2296,6 +2537,10 @@ msgstr "Connecté à DCNet avec Ethernet"
 msgid "DCNet disconnected"
 msgstr "DCNet déconnecté"
 
+#: core/network/dcnet.cpp:753
+msgid "Host not found"
+msgstr "Nom de serveur inconnu"
+
 #: core/network/dcnet.cpp:797
 msgid "Can't connect to DCNet"
 msgstr "Connexion à DCNet impossible"
@@ -2360,11 +2605,11 @@ msgstr "Translation d'adresse (NAT)"
 msgid "Connection lost"
 msgstr "Connexion perdue"
 
-#: core/network/naomi_network.cpp:109
+#: core/network/naomi_network.cpp:110
 msgid "Waiting for players..."
 msgstr "En attente des joueurs..."
 
-#: core/network/naomi_network.cpp:114
+#: core/network/naomi_network.cpp:113
 #, c-format
 msgid "%d player connected. Waiting..."
 msgid_plural "%d players connected. Waiting..."
@@ -2383,10 +2628,39 @@ msgstr "Aucun joueur connecté"
 msgid "Connecting to server"
 msgstr "Connexion au serveur"
 
-#: core/network/naomi_network.cpp:262
+#: core/network/naomi_network.cpp:260
 #, c-format
 msgid "Connected as slot %d"
 msgstr "Connecté comme nœud %d"
+
+#: core/rend/dx9/d3d_renderer.cpp:318
+msgid "DirectX 9 doesn't support Naomi 2 games. Select a different graphics API"
+msgstr "DirectX 9 ne supporte les jeux Naomi 2. Sélectionnez une API graphique différente"
+
+#: core/rend/vulkan/adreno.cpp:154
+msgid "Can't open zip file"
+msgstr "Impossible d'ouvrir le fichier Zip"
+
+#: core/rend/vulkan/adreno.cpp:157
+msgid "Invalid zip file"
+msgstr "Fichier Zip invalide"
+
+#: core/rend/vulkan/adreno.cpp:185 core/rend/vulkan/adreno.cpp:203
+msgid "Can't save files"
+msgstr "Impossible de sauvegarder les fichiers"
+
+#: core/rend/vulkan/adreno.cpp:195
+msgid "Can't read zip"
+msgstr "Impossible de lire le fichier Zip"
+
+#: core/rend/gles/gles.cpp:1058
+msgid "OpenGL ES 3.0+ required for Naomi 2"
+msgstr "OpenGL ES 3.0+ est requis pour les jeux Naomi 2"
+
+#: core/emulator.cpp:589
+#, c-format
+msgid "No BIOS file found in %s"
+msgstr "Pas de fichier BIOS trouvé dans %s"
 
 #: core/emulator.cpp:605
 msgid "This game requires a real BIOS"
@@ -2396,11 +2670,11 @@ msgstr "Ce jeu demande un BIOS authentique"
 msgid "Widescreen cheat activated"
 msgstr "Cheat écran large activé"
 
-#: core/emulator.cpp:684
-msgid "Waiting for debugger..."
-msgstr ""
-
 #: shell/libretro/libretro.cpp:2130
 msgid "Cannot run without JIT"
 msgstr "Impossible de fonctionner sans JIT"
+
+#: shell/switch/switch_main.cpp:70
+msgid "Not supported on Switch"
+msgstr "Pas supporté sur Switch"
 
