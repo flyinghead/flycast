@@ -391,7 +391,7 @@ void gui_settings_video()
 	header(T("Video Routing (Syphon)"));
 #elif defined(_WIN32)
 	if (renderApi == OpenGL || renderApi == DirectX11)
-		header(T("Video Routing (Spout))"));
+		header(T("Video Routing (Spout)"));
 	else
 		header(T("Video Routing (Only available with OpenGL or DirectX 11)"));
 #endif

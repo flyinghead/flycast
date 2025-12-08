@@ -28,6 +28,7 @@
 #endif
 #include <vector>
 #include <sstream>
+#include <unordered_set>
 
 using namespace tinygettext;
 
@@ -112,9 +113,14 @@ void init()
 		setlocale(LC_ALL, "");
 	}
 #endif
-	Log::set_log_info_callback([](const std::string& msg) {
-		if (!msg.empty())
+	Log::set_log_info_callback([](const std::string& msg)
+	{
+		static std::unordered_set<std::string> msgFilter;
+		if (!msg.empty() && msgFilter.count(msg) == 0)
+		{
 			INFO_LOG(COMMON, "%s", msg.substr(0, msg.length() - 1).c_str());
+			msgFilter.insert(msg);
+		}
 	});
 	Log::set_log_warning_callback([](const std::string& msg) {
 		if (!msg.empty())
@@ -152,6 +158,40 @@ const char *T(const char *msg)
 	const std::string& tr = translate(smsg);
 	if (&tr == &smsg)
 		return msg;
+	else
+		return tr.c_str();
+}
+
+std::string translateCtx_s(const std::string& context, const std::string& msg) {
+	return dictionary->translate_ctxt(context, msg);
+}
+
+const char *translateCtx(const std::string& context, const char *msg)
+{
+	if (msg == nullptr)
+		return nullptr;
+	std::string smsg(msg);
+	const std::string& tr = dictionary->translate_ctxt(context, smsg);
+	if (&tr == &smsg)
+		return msg;
+	else
+		return tr.c_str();
+}
+
+std::string translatePlural_s(const std::string& msg, const std::string& msgPlural, int num) {
+	return dictionary->translate_plural(msg, msgPlural, num);
+}
+
+const char *translatePlural(const char *msg, const char *msgPlural, int num) {
+	if (msg == nullptr)
+		return nullptr;
+	std::string smsg(msg);
+	std::string smsgPlural(msgPlural);
+	const std::string& tr = dictionary->translate_plural(smsg, smsgPlural, num);
+	if (&tr == &smsg)
+		return msg;
+	else if (&tr == &smsgPlural)
+		return msgPlural;
 	else
 		return tr.c_str();
 }

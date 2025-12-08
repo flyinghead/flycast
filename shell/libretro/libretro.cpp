@@ -2127,7 +2127,7 @@ bool retro_load_game(const struct retro_game_info *game)
 	if (environ_cb(RETRO_ENVIRONMENT_GET_JIT_CAPABLE, &can_jit) && !can_jit) {
 		// jit is required both for performance and for audio. trying to run
 		// without the jit will cause a crash.
-		os_notify("Cannot run without JIT", 5000);
+		os_notify(i18n::T("Cannot run without JIT"), 5000);
 		return false;
 	}
 #endif

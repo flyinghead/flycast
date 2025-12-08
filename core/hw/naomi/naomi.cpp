@@ -33,6 +33,7 @@
 #include "hw/flashrom/x76f100.h"
 #include "midiffb.h"
 #include "atomiswave.h"
+#include "oslib/i18n.h"
 
 #include <algorithm>
 
@@ -346,9 +347,10 @@ struct DriveSimPipe : public SerialPort::Pipe
 				}
 				if (!config::NetworkOutput)
 				{
-					char message[16];
-					snprintf(message, sizeof(message), "Speed: %3d", speed);
-					os_notify(message, 1000);
+					std::string message;
+					message.resize(128);
+					message.resize(snprintf(message.data(), message.size(), i18n::T("Speed: %3d"), speed));
+					os_notify(message.c_str(), 1000);
 				}
 			}
 			buffer.clear();

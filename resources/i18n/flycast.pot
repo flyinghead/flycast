@@ -7,13 +7,101 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Flycast 2.5\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-12-07 20:01+0100\n"
+"POT-Creation-Date: 2025-12-08 11:35+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+
+#: core/achievements/achievements.cpp:347
+#, c-format
+msgid "User %s authenticated"
+msgstr ""
+
+#: core/achievements/achievements.cpp:363
+msgid "RetroAchievements authentication failed"
+msgstr ""
+
+#: core/achievements/achievements.cpp:398
+msgid "No user token returned"
+msgstr ""
+
+#: core/achievements/achievements.cpp:550
+msgid "RetroAchievements disconnected"
+msgstr ""
+
+#: core/achievements/achievements.cpp:554
+msgid "RetroAchievements reconnected"
+msgstr ""
+
+#: core/achievements/achievements.cpp:586
+#, c-format
+msgid "Achievement %s unlocked!"
+msgstr ""
+
+#: core/achievements/achievements.cpp:628
+#, c-format
+msgid "Leaderboard %s started"
+msgstr ""
+
+#: core/achievements/achievements.cpp:637
+#, c-format
+msgid "Leaderboard %s failed"
+msgstr ""
+
+#: core/achievements/achievements.cpp:646
+#, c-format
+msgid "Leaderboard %s submitted"
+msgstr ""
+
+#: core/achievements/achievements.cpp:674
+#, c-format
+msgid "Mastered %s"
+msgstr ""
+
+#: core/achievements/achievements.cpp:674
+#, c-format
+msgid "Completed %s"
+msgstr ""
+
+#: core/achievements/achievements.cpp:680
+#, c-format
+msgid "%d achievements, %d points"
+msgstr ""
+
+#: core/achievements/achievements.cpp:930
+#, c-format
+msgid "You have %d of %d achievements unlocked."
+msgstr ""
+
+#: core/achievements/achievements.cpp:933
+msgid "This game has no achievements."
+msgstr ""
+
+#: core/achievements/achievements.cpp:939 core/ui/settings_general.cpp:370
+#: core/ui/gui_achievements.cpp:305
+msgid "Hardcore Mode"
+msgstr ""
+
+#: core/achievements/achievements.cpp:970
+msgid "Hardcore mode disabled"
+msgstr ""
+
+#: core/achievements/achievements.cpp:970
+msgid "Unrecognized media inserted"
+msgstr ""
+
+#: core/achievements/achievements.cpp:977
+msgid "Media change failed"
+msgstr ""
+
+#: core/sdl/dreamconn.cpp:263
+#, c-format
+msgid "WARNING: DreamLink disconnected from port %c"
+msgstr ""
 
 #: core/audio/audiobackend_null.cpp:12
 msgid "No Audio"
@@ -21,6 +109,108 @@ msgstr ""
 
 #: core/audio/audiobackend_oboe.cpp:81
 msgid "Automatic AAudio / OpenSL selection"
+msgstr ""
+
+#: core/hw/naomi/card_reader.cpp:291 core/hw/naomi/card_reader.cpp:585
+#: core/hw/maple/maple_devs.cpp:1842
+msgid "Card ejected"
+msgstr ""
+
+#: core/hw/naomi/naomi.cpp:352
+#, c-format
+msgid "Speed: %3d"
+msgstr ""
+
+#: core/hw/naomi/printer.cpp:857
+msgid "Print out saved"
+msgstr ""
+
+#: core/hw/naomi/naomi_m3comm.cpp:76
+msgid "Network started"
+msgstr ""
+
+#: core/hw/naomi/midiffb.cpp:76
+msgid "Calibration done"
+msgstr ""
+
+#: core/hw/naomi/midiffb.cpp:201
+msgid "Calibrating the wheel. Keep it centered."
+msgstr ""
+
+#: core/hw/maple/maple_devs.cpp:2218
+msgid "ATTENTION: Loading from a physical VMU"
+msgstr ""
+
+#: core/hw/maple/maple_devs.cpp:2219
+msgid "Game data is being loaded from your physical VMU"
+msgstr ""
+
+#: core/hw/maple/maple_devs.cpp:2386
+msgid "ATTENTION: You are saving to a physical VMU"
+msgstr ""
+
+#: core/hw/maple/maple_devs.cpp:2387
+msgid "Do not disconnect the VMU or close the game"
+msgstr ""
+
+#: core/hw/maple/maple_devs.cpp:2458
+msgid "ATTENTION: Write to VMU failed"
+msgstr ""
+
+#: core/hw/maple/maple_devs.cpp:2614
+msgid "WARNING: Disconnected from physical VMU memory due to load state"
+msgstr ""
+
+#: core/hw/maple/maple_devs.cpp:2615
+msgid "Reconnect manually to resume using physical VMU memory"
+msgstr ""
+
+#: core/reios/reios.cpp:400 core/reios/reios.cpp:403
+msgid "Reboot to BIOS"
+msgstr ""
+
+#: core/cheats.cpp:824 core/cheats.cpp:829
+msgid "Invalid cheat code"
+msgstr ""
+
+#: core/cheats.cpp:911 core/cheats.cpp:950 core/cheats.cpp:963
+msgid "Missing value"
+msgstr ""
+
+#: core/cheats.cpp:929
+msgid "Missing values"
+msgstr ""
+
+#: core/cheats.cpp:976
+msgid "Missing address or value"
+msgstr ""
+
+#: core/cheats.cpp:985 core/cheats.cpp:1089
+msgid "Unsupported cheat type"
+msgstr ""
+
+#: core/cheats.cpp:993
+msgid "Missing count or value"
+msgstr ""
+
+#: core/cheats.cpp:1007 core/cheats.cpp:1031
+msgid "Missing count or destination address"
+msgstr ""
+
+#: core/cheats.cpp:1019
+msgid "Master codes aren't supported"
+msgstr ""
+
+#: core/cheats.cpp:1049 core/cheats.cpp:1078
+msgid "Unsupported conditional code"
+msgstr ""
+
+#: core/cheats.cpp:1059
+msgid "Missing test address"
+msgstr ""
+
+#: core/cheats.cpp:1160
+msgid "Can't save cheat file"
 msgstr ""
 
 #: core/ui/settings_video.cpp:85
@@ -411,7 +601,7 @@ msgid "Video Routing (Syphon)"
 msgstr ""
 
 #: core/ui/settings_video.cpp:395
-msgid "Video Routing (Spout))"
+msgid "Video Routing (Spout)"
 msgstr ""
 
 #: core/ui/settings_video.cpp:397
@@ -510,7 +700,8 @@ msgstr ""
 msgid "Europe"
 msgstr ""
 
-#: core/ui/settings_general.cpp:198 core/ui/settings_general.cpp:297
+#: core/ui/settings_general.cpp:198
+msgctxt "region"
 msgid "Export"
 msgstr ""
 
@@ -571,7 +762,13 @@ msgid "Home Folder"
 msgstr ""
 
 #: core/ui/settings_general.cpp:294
+msgctxt "action"
 msgid "Import"
+msgstr ""
+
+#: core/ui/settings_general.cpp:297
+msgctxt "action"
+msgid "Export"
 msgstr ""
 
 #: core/ui/settings_general.cpp:302
@@ -704,10 +901,6 @@ msgstr ""
 
 #: core/ui/settings_general.cpp:366
 msgid "Track your game achievements using RetroAchievements.org"
-msgstr ""
-
-#: core/ui/settings_general.cpp:370 core/ui/gui_achievements.cpp:305
-msgid "Hardcore Mode"
 msgstr ""
 
 #: core/ui/settings_general.cpp:371
@@ -1702,80 +1895,6 @@ msgid ""
 "crash, freeze or trigger unexpected nuclear reactions."
 msgstr ""
 
-#: core/ui/settings.cpp:54
-msgid "Virtual memory addresses"
-msgstr ""
-
-#: core/ui/settings.cpp:59
-#, c-format
-msgid "Base Address: %p"
-msgstr ""
-
-#: core/ui/settings.cpp:63
-msgid "RAM adresses are not available until the emulation is started"
-msgstr ""
-
-#: core/ui/settings.cpp:66
-#, c-format
-msgid "RAM: %p"
-msgstr ""
-
-#: core/ui/settings.cpp:68
-#, c-format
-msgid "VRAM64: %p"
-msgstr ""
-
-#: core/ui/settings.cpp:70
-#, c-format
-msgid "ARAM: %p"
-msgstr ""
-
-#: core/ui/settings.cpp:76
-msgid "Debugging"
-msgstr ""
-
-#: core/ui/settings.cpp:78
-msgid "Enable GDB"
-msgstr ""
-
-#: core/ui/settings.cpp:78
-msgid ""
-"GDB debugging support, disables Dynarec and dramatically reduces performance "
-"when a debugger is connected."
-msgstr ""
-
-#: core/ui/settings.cpp:79
-msgid "Wait for connection"
-msgstr ""
-
-#: core/ui/settings.cpp:79
-msgid "Start emulation once the debugger is connected."
-msgstr ""
-
-#: core/ui/settings.cpp:81 core/ui/settings.cpp:103
-msgid "Serial Console"
-msgstr ""
-
-#: core/ui/settings.cpp:81 core/ui/settings.cpp:104
-msgid "Dump the Dreamcast serial console to stdout"
-msgstr ""
-
-#: core/ui/settings.cpp:82
-msgid "Serial PTY"
-msgstr ""
-
-#: core/ui/settings.cpp:82
-msgid "Requires the option \"Serial Console\" to work"
-msgstr ""
-
-#: core/ui/settings.cpp:86
-msgid "GDB port"
-msgstr ""
-
-#: core/ui/settings.cpp:92
-msgid "Default port is 3263"
-msgstr ""
-
 #: core/ui/settings.cpp:97
 msgid "Other"
 msgstr ""
@@ -1794,6 +1913,14 @@ msgstr ""
 
 #: core/ui/settings.cpp:101
 msgid "Run the emulated CPU and GPU on different threads"
+msgstr ""
+
+#: core/ui/settings.cpp:103
+msgid "Serial Console"
+msgstr ""
+
+#: core/ui/settings.cpp:104
+msgid "Dump the Dreamcast serial console to stdout"
 msgstr ""
 
 #: core/ui/settings.cpp:108
@@ -1852,50 +1979,6 @@ msgid ""
 "Defaults to flycast.lua when empty."
 msgstr ""
 
-#: core/ui/settings.cpp:145
-msgid "Logging"
-msgstr ""
-
-#: core/ui/settings.cpp:160
-msgid "Log Verbosity"
-msgstr ""
-
-#: core/ui/settings.cpp:174
-msgid "Log Server"
-msgstr ""
-
-#: core/ui/settings.cpp:176
-msgid "Log to this hostname[:port] with UDP. Default port is 31667."
-msgstr ""
-
-#: core/ui/settings.cpp:180
-msgid "Profiling"
-msgstr ""
-
-#: core/ui/settings.cpp:183
-msgid "Enable"
-msgstr ""
-
-#: core/ui/settings.cpp:183
-msgid "Enable the profiler."
-msgstr ""
-
-#: core/ui/settings.cpp:189
-msgid "Display"
-msgstr ""
-
-#: core/ui/settings.cpp:189
-msgid "Draw the profiler output in an overlay."
-msgstr ""
-
-#: core/ui/settings.cpp:190
-msgid "Output to terminal"
-msgstr ""
-
-#: core/ui/settings.cpp:190
-msgid "Write the profiler output to the terminal"
-msgstr ""
-
 #: core/ui/settings.cpp:270
 msgid "General"
 msgstr ""
@@ -1914,10 +1997,6 @@ msgstr ""
 
 #: core/ui/settings.cpp:294
 msgid "Network"
-msgstr ""
-
-#: core/ui/settings.cpp:307
-msgid "Debug"
 msgstr ""
 
 #: core/ui/settings.cpp:314
@@ -2166,14 +2245,6 @@ msgid ""
 "as the player name. Leave blank to keep the current Flash RAM value."
 msgstr ""
 
-#: core/ui/settings_network.cpp:221
-msgid "DNS"
-msgstr ""
-
-#: core/ui/settings_network.cpp:223
-msgid "DNS server name or IP address"
-msgstr ""
-
 #: core/ui/settings_network.cpp:229
 msgid "Multiboard Screens"
 msgstr ""
@@ -2298,28 +2369,106 @@ msgstr ""
 msgid "I/O error"
 msgstr ""
 
+#: core/network/dcnet.cpp:70
+msgid "Connected to DCNet with modem"
+msgstr ""
+
+#: core/network/dcnet.cpp:246
+msgid "Connected to DCNet with Ethernet"
+msgstr ""
+
+#: core/network/dcnet.cpp:628
+msgid "DCNet disconnected"
+msgstr ""
+
+#: core/network/dcnet.cpp:797
+msgid "Can't connect to DCNet"
+msgstr ""
+
+#: core/network/ggpo.cpp:221
+msgid "Connected to peer"
+msgstr ""
+
+#: core/network/ggpo.cpp:225
+msgid "Synchronizing with peer"
+msgstr ""
+
+#: core/network/ggpo.cpp:229
+msgid "Synchronized with peer"
+msgstr ""
+
+#: core/network/ggpo.cpp:233
+msgid "Running"
+msgstr ""
+
+#: core/network/ggpo.cpp:238
+msgid "Disconnected from peer"
+msgstr ""
+
+#: core/network/ggpo.cpp:247
+msgid "Connection interrupted"
+msgstr ""
+
+#: core/network/ggpo.cpp:251
+msgid "Connection resumed"
+msgstr ""
+
+#: core/network/null_modem.h:181
+msgid "Network connected"
+msgstr ""
+
+#: core/network/ice.cpp:121
+msgid "Game not supported"
+msgstr ""
+
+#: core/network/ice.cpp:237
+msgid "Connection to lobby failed:"
+msgstr ""
+
+#: core/network/ice.cpp:444
+msgid "Connection failed"
+msgstr ""
+
+#: core/network/ice.cpp:475
+msgid "Direct peer to peer"
+msgstr ""
+
+#: core/network/ice.cpp:477
+msgid "Using relay"
+msgstr ""
+
+#: core/network/ice.cpp:481
+msgid "NAT"
+msgstr ""
+
+#: core/network/ice.cpp:490 core/network/ice.cpp:508
+msgid "Connection lost"
+msgstr ""
+
 #: core/network/naomi_network.cpp:109
 msgid "Waiting for players..."
 msgstr ""
 
-#: core/network/naomi_network.cpp:113
+#: core/network/naomi_network.cpp:114
 #, c-format
-msgid "%d player(s) connected. Waiting..."
-msgstr ""
+msgid "%d player connected. Waiting..."
+msgid_plural "%d players connected. Waiting..."
+msgstr[0] ""
+msgstr[1] ""
 
-#: core/network/naomi_network.cpp:136
+#: core/network/naomi_network.cpp:137
 msgid "Starting game"
 msgstr ""
 
-#: core/network/naomi_network.cpp:141
+#: core/network/naomi_network.cpp:142
 msgid "No player connected"
 msgstr ""
 
-#: core/network/naomi_network.cpp:175
+#: core/network/naomi_network.cpp:176
 msgid "Connecting to server"
 msgstr ""
 
-#: core/network/naomi_network.cpp:261
+#: core/network/naomi_network.cpp:262
 #, c-format
 msgid "Connected as slot %d"
 msgstr ""
@@ -2334,4 +2483,8 @@ msgstr ""
 
 #: core/emulator.cpp:684
 msgid "Waiting for debugger..."
+msgstr ""
+
+#: shell/libretro/libretro.cpp:2130
+msgid "Cannot run without JIT"
 msgstr ""

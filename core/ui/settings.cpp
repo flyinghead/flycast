@@ -51,45 +51,45 @@ static void gui_settings_advanced()
     }
 #ifdef GDB_SERVER
 	ImGui::Spacing();
-	header(T("Virtual memory addresses"));
+	header("Virtual memory addresses");
 	{
 		void *ram_base, *ram, *vram, *aram;
 		addrspace::getAddress(&ram_base, &ram, &vram, &aram);
 
-		ImGui::Text(T("Base Address: %p"), ram_base);
+		ImGui::Text("Base Address: %p", ram_base);
 
 		if (ram == nullptr) {
 			const ImVec4 gray(0.75f, 0.75f, 0.75f, 1.f);
-			ImGui::TextColored(gray, "%s", T("RAM adresses are not available until the emulation is started"));
+			ImGui::TextColored(gray, "%s", "RAM adresses are not available until the emulation is started");
 		} else {
 			ImGui::Columns(3, "virtualMemoryAddress", false);
-			ImGui::Text(T("RAM: %p"), ram);
+			ImGui::Text("RAM: %p", ram);
 			ImGui::NextColumn();
-			ImGui::Text(T("VRAM64: %p"), vram);
+			ImGui::Text("VRAM64: %p", vram);
 			ImGui::NextColumn();
-			ImGui::Text(T("ARAM: %p"), aram);
+			ImGui::Text("ARAM: %p", aram);
 			ImGui::Columns(1, nullptr, false);
 		}
 
 	}
 	ImGui::Spacing();
-	header(T("Debugging"));
+	header("Debugging");
 	{
-		OptionCheckbox(T("Enable GDB"), config::GDB, T("GDB debugging support, disables Dynarec and dramatically reduces performance when a debugger is connected."));
-		OptionCheckbox(T("Wait for connection"), config::GDBWaitForConnection, T("Start emulation once the debugger is connected."));
+		OptionCheckbox("Enable GDB", config::GDB, "GDB debugging support, disables Dynarec and dramatically reduces performance when a debugger is connected.");
+		OptionCheckbox("Wait for connection", config::GDBWaitForConnection, "Start emulation once the debugger is connected.");
 #ifndef __ANDROID
-		OptionCheckbox(T("Serial Console"), config::SerialConsole, T("Dump the Dreamcast serial console to stdout"));
-		OptionCheckbox(T("Serial PTY"), config::SerialPTY, T("Requires the option \"Serial Console\" to work"));
+		OptionCheckbox("Serial Console", config::SerialConsole, "Dump the Dreamcast serial console to stdout");
+		OptionCheckbox("Serial PTY", config::SerialPTY, "Requires the option \"Serial Console\" to work");
 #endif
 
 		static int gdbport = config::GDBPort;
-		if (ImGui::InputInt(T("GDB port"), &gdbport))
+		if (ImGui::InputInt("GDB port", &gdbport))
 		{
 			config::GDBPort = gdbport;
 		}
 		const ImGuiStyle& style = ImGui::GetStyle();
 		ImGui::SameLine(0, style.ItemInnerSpacing.x);
-		ShowHelpMarker(T("Default port is 3263"));
+		ShowHelpMarker("Default port is 3263");
 	}
 #endif
 	ImGui::Spacing();
@@ -142,7 +142,7 @@ static void gui_settings_advanced()
 
 static void gui_debug_tab()
 {
-	header(T("Logging"));
+	header("Logging");
 	{
 		LogManager *logManager = LogManager::GetInstance();
 		for (LogTypes::LOG_TYPE type = LogTypes::AICA; type < LogTypes::NUMBER_OF_LOGS; type = (LogTypes::LOG_TYPE)(type + 1))
@@ -157,7 +157,7 @@ static void gui_debug_tab()
 		ImGui::Spacing();
 
 		static const char *levels[] = { "Notice", "Error", "Warning", "Info", "Debug" };
-		if (ImGui::BeginCombo(T("Log Verbosity"), levels[logManager->GetLogLevel() - 1], ImGuiComboFlags_None))
+		if (ImGui::BeginCombo("Log Verbosity", levels[logManager->GetLogLevel() - 1], ImGuiComboFlags_None))
 		{
 			for (std::size_t i = 0; i < std::size(levels); i++)
 			{
@@ -171,23 +171,23 @@ static void gui_debug_tab()
 			}
 			ImGui::EndCombo();
 		}
-		InputText(T("Log Server"), &config::LogServer.get(), ImGuiInputTextFlags_CharsNoBlank | ImGuiInputTextFlags_CallbackCharFilter, dnsCharFilter);
+		InputText("Log Server", &config::LogServer.get(), ImGuiInputTextFlags_CharsNoBlank | ImGuiInputTextFlags_CallbackCharFilter, dnsCharFilter);
         ImGui::SameLine();
-        ShowHelpMarker(T("Log to this hostname[:port] with UDP. Default port is 31667."));
+        ShowHelpMarker("Log to this hostname[:port] with UDP. Default port is 31667.");
 	}
 #if FC_PROFILER
 	ImGui::Spacing();
-	header(T("Profiling"));
+	header("Profiling");
 	{
 
-		OptionCheckbox(T("Enable"), config::ProfilerEnabled, T("Enable the profiler."));
+		OptionCheckbox("Enable", config::ProfilerEnabled, "Enable the profiler.");
 		if (!config::ProfilerEnabled)
 		{
 			ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
 			ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
 		}
-		OptionCheckbox(T("Display"), config::ProfilerDrawToGUI, T("Draw the profiler output in an overlay."));
-		OptionCheckbox(T("Output to terminal"), config::ProfilerOutputTTY, T("Write the profiler output to the terminal"));
+		OptionCheckbox("Display", config::ProfilerDrawToGUI, "Draw the profiler output in an overlay.");
+		OptionCheckbox("Output to terminal", config::ProfilerOutputTTY, "Write the profiler output to the terminal");
 		// TODO frame warning time
 		if (!config::ProfilerEnabled)
 		{
@@ -304,7 +304,7 @@ void gui_display_settings()
 			ImGui::EndTabItem();
 		}
 #if !defined(NDEBUG) || defined(DEBUGFAST) || FC_PROFILER
-		if (beginTabItem(ICON_FA_BUG, T("Debug")))
+		if (beginTabItem(ICON_FA_BUG, "Debug"))
 		{
 			ImguiStyleVar _(ImGuiStyleVar_FramePadding, normal_padding);
 			gui_debug_tab();

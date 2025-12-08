@@ -570,7 +570,7 @@ void gui_stop_game(const std::string& message)
 		gui_setState(GuiState::Main);
 		reset_vmus();
 		if (!message.empty())
-			gui_error(std::string(T("Flycast has stopped.")) + "\n\n" + message);
+			gui_error(Ts("Flycast has stopped.") + "\n\n" + message);
 	}
 	else
 	{
@@ -1192,7 +1192,7 @@ static bool systemdir_selected_callback(bool cancelled, std::string selection)
 		if (!make_directory(data_path))
 		{
 			WARN_LOG(BOOT, "Cannot create 'data' directory: %s", data_path.c_str());
-			gui_error(std::string(T("Invalid selection:")) + std::string("\n") + T("Flycast cannot write to this folder."));
+			gui_error(Ts("Invalid selection:") + '\n' + Ts("Flycast cannot write to this folder."));
 			return false;
 		}
 	}
@@ -1203,7 +1203,7 @@ static bool systemdir_selected_callback(bool cancelled, std::string selection)
 	if (file == nullptr)
 	{
 		WARN_LOG(BOOT, "Cannot write in the 'data' directory");
-		gui_error(std::string(T("Invalid selection:")) + std::string("\n") + T("Flycast cannot write to this folder."));
+		gui_error(Ts("Invalid selection:") + '\n' + Ts("Flycast cannot write to this folder."));
 		return false;
 	}
 	fclose(file);

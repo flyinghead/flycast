@@ -195,7 +195,7 @@ void gui_settings_general()
 	}
 
 	const char *consoleRegion[] = { T("Japan"), T("USA"), T("Europe"), T("Default") };
-	const char *arcadeRegion[] = { T("Japan"), T("USA"), T("Export"), T("Korea") };
+	const char *arcadeRegion[] = { T("Japan"), T("USA"), i18n::translateCtx("region", "Export"), T("Korea") };
 	const char **region = settings.platform.isArcade() ? arcadeRegion : consoleRegion;
 	OptionComboBox(T("Region"), config::Region, region, std::size(consoleRegion),
 			T("BIOS region"));
@@ -291,10 +291,10 @@ void gui_settings_general()
 #ifdef __ANDROID__
         {
         	DisabledScope _(!config::UseSafFilePicker);
-			if (ImGui::Button(T("Import")))
+			if (ImGui::Button(i18n::translateCtx("action", "Import")))
 				hostfs::importHomeDirectory();
 			ImGui::SameLine();
-			if (ImGui::Button(T("Export")))
+			if (ImGui::Button(i18n::translateCtx("action", "Export")))
 				hostfs::exportHomeDirectory();
         }
 #endif

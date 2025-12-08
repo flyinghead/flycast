@@ -77,4 +77,8 @@ const char *T(const char *msg);
 // To mark a string as needing translation only
 #define Tnop(string) ((char *)(string))
 
+const char *translateCtx(const std::string& context, const char *msg);
+
+const char *translatePlural(const char *msg, const char *msgPlural, int num);
+
 }

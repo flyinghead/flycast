@@ -24,6 +24,7 @@
 #include "oslib/oslib.h"
 #include "ui/gui.h"
 #include <cfg/option.h>
+#include "oslib/i18n.h"
 #include <SDL.h>
 #include <iomanip>
 #include <sstream>
@@ -259,7 +260,7 @@ public:
 		// Notify the user of the disconnect
 		NOTICE_LOG(INPUT, "Disconnected from DreamcastController[%d]", bus);
 		char buf[128];
-		snprintf(buf, sizeof(buf), "WARNING: DreamLink disconnected from port %c", 'A' + bus);
+		snprintf(buf, sizeof(buf), i18n::T("WARNING: DreamLink disconnected from port %c"), 'A' + bus);
 		os_notify(buf, 6000);
 
 		tearDownDreamLinkDevices(shared_from_this());

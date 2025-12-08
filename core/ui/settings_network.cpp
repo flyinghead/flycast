@@ -37,7 +37,7 @@ void gui_settings_network()
 		else if (config::BattleCableEnable)
 			netType = 3;
 		ImGui::Columns(4, "networkType", false);
-		ImGui::RadioButton((std::string(T("Disabled")) + "##network").c_str(), &netType, 0);
+		ImGui::RadioButton((Ts("Disabled") + "##network").c_str(), &netType, 0);
 		ImGui::NextColumn();
 		ImGui::RadioButton("GGPO", &netType, 1);
 		ImGui::SameLine(0, style.ItemInnerSpacing.x);
@@ -218,9 +218,9 @@ void gui_settings_network()
 #if !defined(NDEBUG) || defined(DEBUGFAST)
 		{
 			DisabledScope scope(config::UseDCNet);
-			InputText(T("DNS"), &config::DNS.get(), ImGuiInputTextFlags_CharsNoBlank | ImGuiInputTextFlags_CallbackCharFilter, dnsCharFilter);
+			InputText("DNS", &config::DNS.get(), ImGuiInputTextFlags_CharsNoBlank | ImGuiInputTextFlags_CallbackCharFilter, dnsCharFilter);
 			ImGui::SameLine();
-			ShowHelpMarker(T("DNS server name or IP address"));
+			ShowHelpMarker("DNS server name or IP address");
 		}
 #endif
 	}

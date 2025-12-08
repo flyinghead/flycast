@@ -27,6 +27,7 @@
 #include "hw/sh4/sh4_mmr.h"
 #include "oslib/resources.h"
 #include "oslib/oslib.h"
+#include "oslib/i18n.h"
 
 #include <map>
 
@@ -357,10 +358,10 @@ static void reios_sys_misc()
 			if (gdr::isLoaded()) {
 				// just restart the game
 				p_sh4rcb->cntx.pc = 0xa0000000;
-				os_notify("Reboot to BIOS", 5000);
+				os_notify(i18n::T("Reboot to BIOS"), 5000);
 			}
 			else {
-				throw FlycastException("Reboot to BIOS");
+				throw FlycastException(i18n::T("Reboot to BIOS"));
 			}
 		}
 		break;

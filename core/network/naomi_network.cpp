@@ -110,7 +110,8 @@ bool NaomiNetwork::startNetwork()
 			}
 			else {
 				notif.resize(256);
-				notif.resize(snprintf(notif.data(), notif.capacity(), T("%d player(s) connected. Waiting..."), (int)slaves.size()));
+				notif.resize(snprintf(notif.data(), notif.capacity(),
+						translatePlural("%d player connected. Waiting...", "%d players connected. Waiting...", slaves.size()), (int)slaves.size()));
 			}
 			os_notify(notif.c_str(), timeout.count() * 2000);
 

@@ -28,6 +28,8 @@
 #include "cfg/option.h"
 #include "emulator.h"
 #include "oslib/storage.h"
+#include "oslib/i18n.h"
+using namespace i18n;
 
 const WidescreenCheat CheatManager::widescreen_cheats[] =
 {
@@ -801,12 +803,12 @@ static std::vector<u32> parseCodes(const std::string& s)
 			}
 		}
 		else if (!curCode.empty())
-			throw FlycastException("Invalid cheat code");
+			throw FlycastException(Ts("Invalid cheat code"));
 	}
 	if (!curCode.empty())
 	{
 		if (curCode.length() != 8)
-			throw FlycastException("Invalid cheat code");
+			throw FlycastException(Ts("Invalid cheat code"));
 		codes.push_back(strtoul(curCode.c_str(), nullptr, 16));
 	}
 
@@ -888,7 +890,7 @@ void CheatManager::addGameSharkCheat(const std::string& name, const std::string&
 				{
 					// 8/16/32-bit write
 					if (i + 1 >= codes.size())
-						throw FlycastException("Missing value");
+						throw FlycastException(Ts("Missing value"));
 					cheat.type = Cheat::Type::setValue;
 					cheat.size = code == 0 ? 8 : code == 1 ? 16 : 32;
 					cheat.address = codes[i] & 0x00ffffff;
@@ -906,7 +908,7 @@ void CheatManager::addGameSharkCheat(const std::string& name, const std::string&
 							// Group write
 							int count = codes[i] & 0xffff;
 							if (i + count + 1 >= codes.size())
-								throw FlycastException("Missing values");
+								throw FlycastException(Ts("Missing values"));
 							cheat.type = Cheat::Type::setValue;
 							cheat.size = 32;
 							cheat.address = codes[++i] & 0x00ffffff;
@@ -927,7 +929,7 @@ void CheatManager::addGameSharkCheat(const std::string& name, const std::string&
 						{
 							// 8-bit inc/decrement
 							if (i + 1 >= codes.size())
-								throw FlycastException("Missing value");
+								throw FlycastException(Ts("Missing value"));
 							cheat.type = subcode == 1 ? Cheat::Type::increase : Cheat::Type::decrease;
 							cheat.size = 8;
 							cheat.value = codes[i] & 0xff;
@@ -940,7 +942,7 @@ void CheatManager::addGameSharkCheat(const std::string& name, const std::string&
 						{
 							// 16-bit inc/decrement
 							if (i + 1 >= codes.size())
-								throw FlycastException("Missing value");
+								throw FlycastException(Ts("Missing value"));
 							cheat.type = subcode == 3 ? Cheat::Type::increase : Cheat::Type::decrease;
 							cheat.size = 16;
 							cheat.value = codes[i] & 0xffff;
@@ -953,7 +955,7 @@ void CheatManager::addGameSharkCheat(const std::string& name, const std::string&
 						{
 							// 32-bit inc/decrement
 							if (i + 2 >= codes.size())
-								throw FlycastException("Missing address or value");
+								throw FlycastException(Ts("Missing address or value"));
 							cheat.type = subcode == 5 ? Cheat::Type::increase : Cheat::Type::decrease;
 							cheat.size = 32;
 							cheat.address = codes[++i] & 0x00ffffff;
@@ -962,7 +964,7 @@ void CheatManager::addGameSharkCheat(const std::string& name, const std::string&
 						}
 						break;
 					default:
-						throw FlycastException("Unsupported cheat type");
+						throw FlycastException(Ts("Unsupported cheat type"));
 					}
 				}
 				break;
@@ -970,7 +972,7 @@ void CheatManager::addGameSharkCheat(const std::string& name, const std::string&
 				{
 					// 32-bit repeat write
 					if (i + 2 >= codes.size())
-						throw FlycastException("Missing count or value");
+						throw FlycastException(Ts("Missing count or value"));
 					cheat.type = Cheat::Type::setValue;
 					cheat.size = 32;
 					cheat.address = codes[i] & 0x00ffffff;
@@ -984,7 +986,7 @@ void CheatManager::addGameSharkCheat(const std::string& name, const std::string&
 				{
 					// copy bytes
 					if (i + 2 >= codes.size())
-						throw FlycastException("Missing count or destination address");
+						throw FlycastException(Ts("Missing count or destination address"));
 					cheat.type = Cheat::Type::copy;
 					cheat.size = 8;
 					cheat.address = codes[i] & 0x00ffffff;
@@ -996,7 +998,7 @@ void CheatManager::addGameSharkCheat(const std::string& name, const std::string&
 
 			case 7:
 				// change decryption type: 071000XX (example: 07100005)
-				throw FlycastException("Master codes aren't supported");
+				throw FlycastException(Ts("Master codes aren't supported"));
 
 			// TODO 0xb delay applying codes: 0b0xxxxx
 			//     Delay putting on codes for xxxxx cycles. Default 1000 (0x3e7)
@@ -1008,7 +1010,7 @@ void CheatManager::addGameSharkCheat(const std::string& name, const std::string&
 				{
 					// enable next code if eq/neq/lt/gt
 					if (i + 1 >= codes.size())
-						throw FlycastException("Missing count or destination address");
+						throw FlycastException(Ts("Missing count or destination address"));
 					cheat.size = 16;
 					cheat.address = codes[i] & 0x00ffffff;
 					switch (codes[++i] >> 16)
@@ -1026,7 +1028,7 @@ void CheatManager::addGameSharkCheat(const std::string& name, const std::string&
 						cheat.type = Cheat::Type::runNextIfGt;
 						break;
 					default:
-						throw FlycastException("Unsupported conditional code");
+						throw FlycastException(Ts("Unsupported conditional code"));
 					}
 					cheat.value = codes[i] & 0xffff;
 					cheats.push_back(cheat);
@@ -1036,7 +1038,7 @@ void CheatManager::addGameSharkCheat(const std::string& name, const std::string&
 				{
 					// multiline enable codes if eq/neq/lt/gt
 					if (i + 1 >= codes.size())
-						throw FlycastException("Missing test address");
+						throw FlycastException(Ts("Missing test address"));
 					cheat.size = 16;
 					cheat.value = codes[i] & 0xffff;
 					conditionLimit = i + 1 + ((codes[i] >> 16) & 0xff);
@@ -1055,7 +1057,7 @@ void CheatManager::addGameSharkCheat(const std::string& name, const std::string&
 						cheat.type = Cheat::Type::runNextIfGt;
 						break;
 					default:
-						throw FlycastException("Unsupported conditional code");
+						throw FlycastException(Ts("Unsupported conditional code"));
 					}
 					cheat.address = codes[i] & 0x00ffffff;
 					conditionCheat = cheat;
@@ -1066,7 +1068,7 @@ void CheatManager::addGameSharkCheat(const std::string& name, const std::string&
 			//    16-Bit Write Once Immediately. (Activator code)
 
 			default:
-				throw FlycastException("Unsupported cheat type");
+				throw FlycastException(Ts("Unsupported cheat type"));
 			}
 		}
 #ifndef LIBRETRO
@@ -1137,7 +1139,7 @@ void CheatManager::saveCheatFile(const std::string& filename)
 	cfg.set("", "cheats", i);
 	FILE *fp = hostfs::storage().openFile(filename.c_str(), "w");
 	if (fp == nullptr)
-		throw FlycastException("Can't save cheat file");
+		throw FlycastException(Ts("Can't save cheat file"));
 	cfg.save(fp);
 	fclose(fp);
 #endif

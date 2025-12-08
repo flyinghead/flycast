@@ -25,6 +25,7 @@
 #include "hw/bba/bba.h"
 #include "cfg/option.h"
 #include "stdclass.h"
+#include "oslib/i18n.h"
 #ifndef LIBRETRO
 #include "cfg/cfg.h"
 #endif
@@ -66,7 +67,7 @@ public:
 		socket.connect(endpoint, ec);
 		if (ec)
 			throw FlycastException(ec.message().c_str());
-		os_notify("Connected to DCNet with modem", 5000, endpointName.c_str());
+		os_notify(i18n::T("Connected to DCNet with modem"), 5000, endpointName.c_str());
 		receive();
 	}
 
@@ -242,7 +243,7 @@ public:
 		socket.connect(endpoint, ec);
 		if (ec)
 			throw FlycastException(ec.message().c_str());
-		os_notify("Connected to DCNet with Ethernet", 5000, endpointName.c_str());
+		os_notify(i18n::T("Connected to DCNet with Ethernet"), 5000, endpointName.c_str());
 		receive();
 		u8 prolog[] = { 'D', 'C', 'N', 'E', 'T', 1 };
 		send(prolog, sizeof(prolog));
@@ -624,7 +625,7 @@ public:
 		pppSocket.reset();
 		ethSocket.reset();
 		io_context.reset();
-		os_notify("DCNet disconnected", 3000);
+		os_notify(i18n::T("DCNet disconnected"), 3000);
 	}
 
 	void sendModem(u8 v)
@@ -793,7 +794,7 @@ void DCNetThread::run()
 		io_context->run();
 	} catch (const FlycastException& e) {
 		ERROR_LOG(NETWORK, "DCNet connection error: %s", e.what());
-		os_notify("Can't connect to DCNet", 8000, e.what());
+		os_notify(i18n::T("Can't connect to DCNet"), 8000, e.what());
 	} catch (const std::runtime_error& e) {
 		ERROR_LOG(NETWORK, "DCNetThread::run error: %s", e.what());
 	}

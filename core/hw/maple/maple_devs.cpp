@@ -6,6 +6,7 @@
 #include "audio/audiostream.h"
 #include "oslib/oslib.h"
 #include "oslib/storage.h"
+#include "oslib/i18n.h"
 #include "hw/aica/sgc_if.h"
 #include "cfg/option.h"
 #include <zlib.h>
@@ -1838,7 +1839,7 @@ struct RFIDReaderWriter : maple_base
 			cardInserted = false;
 			w32(getStatus());
 			NOTICE_LOG(MAPLE, "RFID card %d unlocked", player_num);
-			os_notify("Card ejected", 2000);
+			os_notify(i18n::T("Card ejected"), 2000);
 			return (MapleDeviceRV)0xfe;
 
 		case 0xB1:	// write to card
@@ -2214,8 +2215,8 @@ struct DreamLinkVmu : public maple_sega_vmu
 						(currentTime - lastErrorNotifyTime) > 4000)
 					{
 						// This is a read operation (loading)
-						os_notify("ATTENTION: Loading from a physical VMU", 6000,
-								"Game data is being loaded from your physical VMU");
+						os_notify(i18n::T("ATTENTION: Loading from a physical VMU"), 6000,
+								i18n::T("Game data is being loaded from your physical VMU"));
 						lastNotifyTime = currentTime;
 					}
 
@@ -2382,8 +2383,8 @@ private:
 			if ((currentTime - lastNotifyTime) > 4000 && (currentTime - lastErrorNotifyTime) > 4000)
 			{
 				// This is a write operation (saving)
-				os_notify("ATTENTION: You are saving to a physical VMU", 6000,
-						"Do not disconnect the VMU or close the game");
+				os_notify(i18n::T("ATTENTION: You are saving to a physical VMU"), 6000,
+						i18n::T("Do not disconnect the VMU or close the game"));
 				lastNotifyTime = currentTime;
 			}
 
@@ -2454,7 +2455,7 @@ private:
 
 				if ((currentTime - lastErrorNotifyTime) > 4000)
 				{
-					os_notify("ATTENTION: Write to VMU failed", 6000);
+					os_notify(i18n::T("ATTENTION: Write to VMU failed"), 6000);
 					lastErrorNotifyTime = currentTime;
 				}
 			}
@@ -2610,8 +2611,8 @@ void createDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink, bool gameStart
 					{
 						// Disconnect from real VMU memory when a state is loaded
 						vmu->useRealVmuMemory = false;
-						os_notify("WARNING: Disconnected from physical VMU memory due to load state", 6000,
-							"Reconnect manually to resume using physical VMU memory");
+						os_notify(i18n::T("WARNING: Disconnected from physical VMU memory due to load state"), 6000,
+								i18n::T("Reconnect manually to resume using physical VMU memory"));
 					}
 				}
 
