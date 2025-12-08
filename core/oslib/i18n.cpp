@@ -49,7 +49,7 @@ class ResourceFileSystem : public FileSystem
 		if (data == nullptr)
 			return nullptr;
 		std::string str((const char *)&data[0], (const char *)&data[size]);
-		return std::make_unique<std::stringstream>(str);
+		return std::make_unique<std::istringstream>(str);
 	}
 };
 

@@ -28,6 +28,8 @@ public:
 		virtual bool isDirectory() const = 0;
 		virtual ~Entry() = default;
 		const std::string& getName() const { return name; }
+		u32 getStartFAD() const { return startFad; }
+		u32 getLength() const { return len; }
 
 	protected:
 		Entry(IsoFs *fs) : fs(fs) {}

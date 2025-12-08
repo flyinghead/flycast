@@ -769,17 +769,21 @@ public:
 
 			{
 				std::istringstream stream(buffer);
+				stream.imbue(std::locale::classic());
+
 				std::string outerGroup;
 				while (std::getline(stream, outerGroup, ';')) {
 					if (outerGroup.empty() || outerGroup == ",") continue;
 					std::vector<std::array<uint32_t, 2>> outerList;
 					std::istringstream outerStream(outerGroup.substr(1)); // Skip the leading '{'
+					outerStream.imbue(std::locale::classic());
 					std::string innerGroup;
 
 					while (std::getline(outerStream, innerGroup, '}')) {
 						if (innerGroup.empty() || innerGroup == ",") continue;
 						std::array<uint32_t, 2> innerList = {{0, 0}};
 						std::istringstream innerStream(innerGroup.substr(1)); // Skip the leading '{'
+						innerStream.imbue(std::locale::classic());
 						std::string number;
 						std::size_t idx = 0;
 

@@ -331,7 +331,7 @@ void CustomTexture::dumpTexture(BaseTextureCacheData* texture, int w, int h, voi
 	if (!file_exists(base_dump_dir))
 		make_directory(base_dump_dir);
 
-	std::stringstream path;
+	std::ostringstream path;
 	path << base_dump_dir << std::hex << texture->texture_hash << ".png";
 
 	u16 *src = (u16 *)src_buffer;

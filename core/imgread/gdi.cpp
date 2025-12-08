@@ -29,6 +29,7 @@ Disc* load_gdi(const char* file, std::vector<u8> *digest)
 	std::fclose(t);
 
 	std::istringstream gdi(gdi_data);
+	gdi.imbue(std::locale::classic());
 
 	u32 iso_tc = 0;
 	gdi >> iso_tc;

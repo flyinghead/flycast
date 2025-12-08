@@ -71,6 +71,9 @@ TEST_F(IniFileTest, getSet)
 
 	ini.set("s", "e", 1.732f);
 	ASSERT_EQ(1.732f, ini.getFloat("s", "e"));
+
+	ini.set("s", "e", " \t+1.414 \t");
+	ASSERT_EQ(1.414f, ini.getFloat("s", "e"));
 }
 
 TEST_F(IniFileTest, transient)

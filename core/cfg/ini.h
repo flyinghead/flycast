@@ -22,6 +22,8 @@
 #include <string>
 #include <cstdint>
 #include <vector>
+#include <charconv>
+#include <system_error>
 
 namespace config {
 
@@ -89,6 +91,14 @@ inline void IniFile::set(const std::string& section, const std::string& entry, c
 template<>
 inline void IniFile::set(const std::string& section, const std::string& entry, bool value, bool transient) {
 	setRaw(section, entry, value ? "yes" : "no", transient);
+}
+template<>
+inline void IniFile::set(const std::string& section, const std::string& entry, float value, bool transient)
+{
+	char buf[16]{};
+	std::to_chars_result result = std::to_chars(buf, buf + sizeof(buf), value);
+	if (result.ec == std::errc())
+		setRaw(section, entry, std::string(buf, result.ptr), transient);
 }
 
 } // namespace config

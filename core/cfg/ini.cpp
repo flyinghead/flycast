@@ -100,9 +100,12 @@ int64_t IniFile::getInt64(const std::string& section, const std::string& entry, 
 float IniFile::getFloat(const std::string& section, const std::string& entry, float defaultValue) const
 {
 	const std::string *pValue = getRaw(section, entry);
-	if (pValue == nullptr)
+	if (pValue == nullptr || pValue->empty())
 		return defaultValue;
-	return std::stof(*pValue);
+	std::string strValue = trim_ws(*pValue, " \t+");
+	float value {};
+	std::from_chars(&strValue[0], &strValue.back() + 1, value);
+	return value;
 }
 
 void IniFile::setRaw(const std::string& sectionName, const std::string& entryName, const std::string& value, bool transient)
@@ -156,7 +159,7 @@ static std::string handleEscapeSeq(const std::string& s)
 
 void IniFile::load(const std::string& data, bool cEscape)
 {
-	std::stringstream fss(data);
+	std::istringstream fss(data);
 	int cline = 1;
 	std::string curSection;
 	for (std::string line; std::getline(fss, line); cline++)
@@ -229,7 +232,7 @@ void IniFile::load(FILE *file, bool cEscape)
 
 void IniFile::save(std::string& data) const
 {
-	std::stringstream ss;
+	std::ostringstream ss;
 	for (const auto& [sectionName, section] : sections)
 	{
 		if (!sectionName.empty())

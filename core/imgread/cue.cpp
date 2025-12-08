@@ -73,6 +73,7 @@ Disc* cue_parse(const char* file, std::vector<u8> *digest)
 	std::fclose(fsource);
 
 	std::istringstream istream(cue_data);
+	istream.imbue(std::locale::classic());
 
 	std::string basepath = hostfs::storage().getParentPath(file);
 
@@ -89,7 +90,8 @@ Disc* cue_parse(const char* file, std::vector<u8> *digest)
 
 	while (std::getline(istream, line))
 	{
-		std::stringstream cuesheet(line);
+		std::istringstream cuesheet(line);
+		cuesheet.imbue(std::locale::classic());
 		std::string token;
 		cuesheet >> token;
 
