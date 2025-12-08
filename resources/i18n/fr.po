@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-12-08 11:35+0100\n"
-"PO-Revision-Date: 2025-12-08 13:05\n"
+"PO-Revision-Date: 2025-12-08 15:01\n"
 "Last-Translator: \n"
 "Language: fr_FR\n"
 "MIME-Version: 1.0\n"
@@ -320,15 +320,15 @@ msgstr "Émulation complète du framebuffer en VRAM. Améliore les jeux qui acc�
 
 #: core/ui/settings_video.cpp:225
 msgid "Load Custom Textures"
-msgstr "Chargement Textures Custom"
+msgstr "Chargement Textures Personnalisées"
 
 #: core/ui/settings_video.cpp:226
 msgid "Load custom/high-res textures from data/textures/<game id>"
-msgstr "Charge les textures custom/haute résolution de data/textures/<id jeu>"
+msgstr "Charge les textures personnalisées/haute résolution situées dans le dossier 'data/textures/<id jeu>'"
 
 #: core/ui/settings_video.cpp:230
 msgid "Preload Custom Textures"
-msgstr "Préchargement Textures Custom"
+msgstr "Préchargement Textures Personnalisées"
 
 #: core/ui/settings_video.cpp:231
 msgid "Preload custom textures at game start. May improve performance but increases memory usage"
@@ -404,11 +404,11 @@ msgstr "4 Go"
 
 #: core/ui/settings_video.cpp:300
 msgid "Pixel Buffer Size"
-msgstr "Taille Tampon Pixel"
+msgstr "Taille Tampon Pixels"
 
 #: core/ui/settings_video.cpp:302
 msgid "The size of the pixel buffer. May need to be increased when upscaling by a large factor."
-msgstr "La taille du tampon de pixels. Augmenter la résolution interne demande un tampon de pixel plus grand."
+msgstr "La taille du tampon de pixels. Augmenter la résolution interne demande un tampon de pixels plus grand."
 
 #: core/ui/settings_video.cpp:304
 msgid "Maximum Layers"
@@ -420,11 +420,11 @@ msgstr "Nombre maximum de couches transparentes. Des scènes complexes peuvent n
 
 #: core/ui/settings_video.cpp:308
 msgid "Performance"
-msgstr ""
+msgstr "Performances"
 
 #: core/ui/settings_video.cpp:310
 msgid "Automatic Frame Skipping:"
-msgstr "Saut de Trame Automatique :"
+msgstr "Saut d'Image Automatique :"
 
 #: core/ui/settings_video.cpp:312 core/ui/settings_video.cpp:337
 #: core/ui/settings_network.cpp:40 core/ui/settings_network.cpp:87
@@ -441,7 +441,7 @@ msgstr ""
 
 #: core/ui/settings_video.cpp:314
 msgid "Skip a frame when the GPU and CPU are both running slow"
-msgstr "Saute une trame quand le CPU et le GPU sont surchargés"
+msgstr "Saute une image quand le CPU et le GPU sont surchargés"
 
 #: core/ui/settings_video.cpp:316
 msgid "Maximum"
@@ -449,15 +449,15 @@ msgstr ""
 
 #: core/ui/settings_video.cpp:316
 msgid "Skip a frame when the GPU is running slow"
-msgstr "Saute une trame quand le GPU est surchargé"
+msgstr "Saute une image quand le GPU est surchargé"
 
 #: core/ui/settings_video.cpp:319
 msgid "Frame Skipping"
-msgstr "Saut de Trame"
+msgstr "Saut d'Image"
 
 #: core/ui/settings_video.cpp:320
 msgid "Number of frames to skip between two actually rendered frames"
-msgstr "Nombre de trames à sauter entre deux trames affichées"
+msgstr "Nombre d'images à sauter entre chaque image affichée"
 
 #: core/ui/settings_video.cpp:321
 msgid "Shadows"
@@ -489,11 +489,11 @@ msgstr "Utile pour éviter les écrans clignotants et les problèmes vidéo. Pas
 
 #: core/ui/settings_video.cpp:330
 msgid "Fix Upscale Bleeding Edge"
-msgstr "Correction Coordonnées Texture"
+msgstr "Correction du Bord Débordant des Textures"
 
 #: core/ui/settings_video.cpp:331
 msgid "Helps with texture bleeding case when upscaling. Disabling it can help if pixels are warping when upscaling in 2D games (MVC2, CVS, KOF, etc.)"
-msgstr "Améliore les problèmes des limites de textures avec une résolution interne non native. Peut créer des problèmes avec certains jeux 2D (MvsC2, CVS, KOF, etc.)"
+msgstr "Améliore les problèmes de bord débordant des textures avec une résolution interne non native. Peut créer des problèmes avec certains jeux 2D (MvsC2, CVS, KOF, etc.)"
 
 #: core/ui/settings_video.cpp:332
 msgid "Native Depth Interpolation"
@@ -513,7 +513,7 @@ msgstr "Copie les textures générées par le jeu en VRAM. Plus lent mais plus f
 
 #: core/ui/settings_video.cpp:374
 msgid "Anisotropic Filtering"
-msgstr "Filtre Anisotropique"
+msgstr "Filtre Anisotrope"
 
 #: core/ui/settings_video.cpp:376
 msgid "Higher values make textures viewed at oblique angles look sharper, but are more demanding on the GPU. This option only has a visible impact on mipmapped textures."
@@ -939,11 +939,11 @@ msgstr "Dossier pour les sauvegardes de jeu (NVRAM arcade)"
 
 #: core/ui/settings_general.cpp:441
 msgid "Texture Pack Folders"
-msgstr "Dossiers Textures Custom"
+msgstr "Dossiers Textures Personnalisées"
 
 #: core/ui/settings_general.cpp:441
 msgid "Select a texture pack folder"
-msgstr "Sélectionner un dossier de textures custom"
+msgstr "Sélectionner un dossier de textures personnalisées"
 
 #: core/ui/settings_general.cpp:442
 msgid "Folders containing textures/<gameId> or <gameId> under a textures subfolder"
@@ -983,7 +983,7 @@ msgstr "Sélectionner un dossier de configuration contrôleurs"
 
 #: core/ui/settings_general.cpp:455
 msgid "Folders containing controller mapping files (.cfg). The emulator also looks in Home Folder/mappings. Per-game mappings are suffixed with _<gameId>.cfg"
-msgstr "Dossiers contenant les fichiers de configuration des contrôleurs (.cfg). Flycast recherche aussi dans Dossier Principal/mappings. Les configurations spécifiques à un jeu utilisent le suffixe _<id jeu>.cfg"
+msgstr "Dossiers contenant les fichiers de configuration des contrôleurs (.cfg). Flycast recherche aussi dans Dossier Principal/mappings. Les configurations spécifiques à un jeu utilisent le suffixe '_<id jeu>.cfg'"
 
 #: core/ui/settings_general.cpp:458
 msgid "Cheat Folders"
@@ -1705,7 +1705,7 @@ msgstr "Chargement..."
 
 #: core/ui/gui.cpp:1415
 msgid "Preloading custom textures"
-msgstr "Préchargement des textures custom"
+msgstr "Préchargement des textures personnalisées"
 
 #: core/ui/gui.cpp:1418
 msgid "Preparing..."
@@ -1865,7 +1865,7 @@ msgstr "Sauvegarde Textures"
 
 #: core/ui/settings.cpp:112
 msgid "Dump all textures into data/texdump/<game id>"
-msgstr "Sauvegarde toutes les textures du jeu dans data/texdump/<id jeu>"
+msgstr "Sauvegarde toutes les textures du jeu dans 'data/texdump/<id jeu>'"
 
 #: core/ui/settings.cpp:116
 msgid "Dump Replaced Textures"
@@ -2146,11 +2146,11 @@ msgstr "Émule la carte Ethernet (BBA) au lieu du modem"
 
 #: core/ui/settings_network.cpp:208
 msgid "Use DCNet"
-msgstr "DCNet VPN"
+msgstr "Utiliser DCNet"
 
 #: core/ui/settings_network.cpp:208
 msgid "Use the DCNet cloud service for Dreamcast Internet access."
-msgstr "Utilise le VPN DCNet pour l'accès Internet Dreamcast."
+msgstr "Utiliser le VPN DCNet pour l'accès à Internet Dreamcast."
 
 #: core/ui/settings_network.cpp:211
 msgid "ISP User Name"
@@ -2229,11 +2229,11 @@ msgstr "Nom du pilote : %s"
 
 #: core/ui/settings_about.cpp:112
 msgid "Select a custom GPU driver"
-msgstr "Sélectionner un pilote graphique custom"
+msgstr "Sélectionner un pilote graphique personnalisé"
 
 #: core/ui/settings_about.cpp:120
 msgid "Custom Driver:"
-msgstr "Pilote custom :"
+msgstr "Pilote personnalisé :"
 
 #: core/ui/settings_about.cpp:127
 msgid "Use Default Driver"
@@ -2246,7 +2246,7 @@ msgstr "Réinitialiser Vulkan"
 
 #: core/ui/settings_about.cpp:132
 msgid "Upload Custom Driver"
-msgstr "Ajouter un pilote custom"
+msgstr "Ajouter un pilote personnalisé"
 
 #: core/ui/settings_about.cpp:145
 msgid "Do you want to reset Vulkan to use new driver?"
