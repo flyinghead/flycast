@@ -1,6 +1,6 @@
 "base_path": "."
 "pull_request_title": "Crowdin Translations"
-"commit_message": "New translations for {languageName} [ci skip]"
+"commit_message": "New translations for {languageName}"
 
 "files" : [
   {
