@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-12-08 16:00+0100\n"
-"PO-Revision-Date: 2025-12-08 16:00\n"
+"PO-Revision-Date: 2025-12-08 18:08\n"
 "Last-Translator: \n"
 "Language: sv_SE\n"
 "MIME-Version: 1.0\n"
@@ -93,11 +93,11 @@ msgstr "Hardcore-läget inaktiverat"
 
 #: core/achievements/achievements.cpp:948
 msgid "Unrecognized media inserted"
-msgstr ""
+msgstr "Inmatat media känns inte igen"
 
 #: core/achievements/achievements.cpp:955
 msgid "Media change failed"
-msgstr ""
+msgstr "Mediabyte misslyckades"
 
 #: core/sdl/dreamconn.cpp:263
 #, c-format
@@ -114,148 +114,148 @@ msgstr "Automatiskt val av AAudio / OpenSL"
 
 #: core/oslib/oslib.cpp:351
 msgid "Can't find Pictures library"
-msgstr ""
+msgstr "Kan inte hitta bildbiblioteket"
 
 #: core/oslib/storage.cpp:81
 #, c-format
 msgid "Can't read directory %s"
-msgstr ""
+msgstr "Kan inte läsa katalogen %s"
 
 #: core/oslib/storage.cpp:201
 #, c-format
 msgid "Cannot stat %s"
-msgstr ""
+msgstr "Kan inte ta status på %s"
 
 #: core/oslib/storage.cpp:222
 #, c-format
 msgid "Invalid device %s"
-msgstr ""
+msgstr "Ogiltig enhet %s"
 
 #: core/oslib/storage.cpp:246
 #, c-format
 msgid "Cannot get attributes of %s"
-msgstr ""
+msgstr "Kan inte få attributen för %s"
 
 #: core/oslib/storage.cpp:253
 #, c-format
 msgid "Invalid file name %s"
-msgstr ""
+msgstr "Ogiltigt filnamn %s"
 
 #: core/imgread/common.cpp:97
 msgid "Unknown disk format"
-msgstr ""
+msgstr "Okänt skivformat"
 
 #: core/imgread/common.cpp:370 core/emulator.cpp:613
 msgid "This media cannot be loaded"
-msgstr ""
+msgstr "Detta media kan inte läsas in"
 
 #: core/imgread/cue.cpp:57
 #, c-format
 msgid "Cannot open CUE file %s"
-msgstr ""
+msgstr "Kan inte öppna CUE-filen %s"
 
 #: core/imgread/cue.cpp:68
 msgid "CUE parse error: CUE file too big"
-msgstr ""
+msgstr "Tolkningsfel för CUE: CUE-filen är för stor"
 
 #: core/imgread/cue.cpp:187
 #, c-format
 msgid "CUE file: cannot open track %s"
-msgstr ""
+msgstr "CUE-fil: kan inte öppna spår %s"
 
 #: core/imgread/cue.cpp:194
 #, c-format
 msgid "CUE file: track has unknown sector type: %s"
-msgstr ""
+msgstr "CUE-fil: spåret har okänd sektortyp: %s"
 
 #: core/imgread/cue.cpp:228
 msgid "CUE parse error: failed to parse or invalid file with 0 tracks"
-msgstr ""
+msgstr "Tolkningsfel för CUE: misslyckades med att tolka eller ogiltig fil med 0 spår"
 
 #: core/imgread/cue.cpp:235
 msgid "CUE parse error: less than 3 tracks"
-msgstr ""
+msgstr "Tolkningsfel för CUE: mindre än 3 spår"
 
 #: core/imgread/chd.cpp:109
 #, c-format
 msgid "chd: track type %s is not supported"
-msgstr ""
+msgstr "chd: spårtypen %s stöds inte"
 
 #: core/imgread/chd.cpp:118
 #, c-format
 msgid "Cannot open CHD file %s"
-msgstr ""
+msgstr "Kan inte öppna CHD-filen %s"
 
 #: core/imgread/chd.cpp:124
 #, c-format
 msgid "Invalid CHD file %s"
-msgstr ""
+msgstr "Ogiltig CHD-fil %s"
 
 #: core/imgread/chd.cpp:137
 #, c-format
 msgid "Invalid hunkbytes for CHD file %s"
-msgstr ""
+msgstr "Ogiltig hunkbytes för CHD-filen %s"
 
 #: core/imgread/chd.cpp:183
 msgid "Unexpected track number"
-msgstr ""
+msgstr "Oväntat spårnummer"
 
 #: core/imgread/chd.cpp:186
 msgid "Unsupported subtype or pre/postgap"
-msgstr ""
+msgstr "Undertypen stöds inte eller pre/postgap"
 
 #: core/imgread/chd.cpp:212
 msgid "Invalid CHD: less than 3 tracks"
-msgstr ""
+msgstr "Ogiltig CHD: mindre än 3 spår"
 
 #: core/imgread/chd.cpp:218
 msgid "Invalid CHD: no track found"
-msgstr ""
+msgstr "Ogiltig CHD: inga spår hittades"
 
 #: core/imgread/gdi.cpp:13
 #, c-format
 msgid "Cannot open GDI file %s"
-msgstr ""
+msgstr "Kan inte öppna GDI-filen %s"
 
 #: core/imgread/gdi.cpp:24
 msgid "GDI file too big"
-msgstr ""
+msgstr "GDI-filen är för stor"
 
 #: core/imgread/gdi.cpp:36
 msgid "GDI: empty or invalid GDI file"
-msgstr ""
+msgstr "GDI: tom eller ogiltig GDI-fil"
 
 #: core/imgread/gdi.cpp:95
 #, c-format
 msgid "GDI file: Cannot open track %s"
-msgstr ""
+msgstr "GDI-fil: Kan inte öppna spår %s"
 
 #: core/imgread/gdi.cpp:110
 msgid "GDI parse error: less than 3 tracks"
-msgstr ""
+msgstr "Tolkningsfel för GDI: mindre än 3 spår"
 
 #: core/imgread/cdi.cpp:17
 #, c-format
 msgid "Cannot open CDI file %s"
-msgstr ""
+msgstr "Kan inte öppna CDI-filen %s"
 
 #: core/imgread/cdi.cpp:23
 #, c-format
 msgid "Invalid CDI file %s"
-msgstr ""
+msgstr "Ogiltig CDI-fil %s"
 
 #: core/imgread/cdi.cpp:27 core/imgread/cdi.cpp:31 core/imgread/cdi.cpp:49
 #: core/imgread/cdi.cpp:60 core/imgread/cdi.cpp:73
 msgid "Invalid CDI image"
-msgstr ""
+msgstr "Ogiltig CDI-avbildning"
 
 #: core/imgread/cdi.cpp:78
 msgid "Invalid CDI sector size"
-msgstr ""
+msgstr "Ogiltig sektorstorlek för CDI"
 
 #: core/imgread/cdi.cpp:126
 msgid "Cannot re-open CDI file"
-msgstr ""
+msgstr "Kan inte återöppna CDI-fil"
 
 #: core/hw/naomi/card_reader.cpp:291 core/hw/naomi/card_reader.cpp:585
 #: core/hw/maple/maple_devs.cpp:1842
@@ -274,7 +274,7 @@ msgstr ""
 #: core/hw/naomi/systemsp.cpp:2188
 #, c-format
 msgid "SystemSP: Cannot open CompactFlash file %s"
-msgstr ""
+msgstr "SystemSP: Kan inte öppna CompactFlash-filen %s"
 
 #: core/hw/naomi/naomi_m3comm.cpp:76
 msgid "Network started"
@@ -284,61 +284,61 @@ msgstr "Nätverk startat"
 #: core/hw/naomi/naomi_cart.cpp:406 core/hw/naomi/naomi_cart.cpp:432
 #: core/hw/naomi/naomi_cart.cpp:844 core/hw/naomi/gdcartridge.cpp:597
 msgid "Memory allocation failed"
-msgstr ""
+msgstr "Minnesallokering misslyckades"
 
 #: core/hw/naomi/naomi_cart.cpp:192 core/hw/naomi/naomi_cart.cpp:224
 #, c-format
 msgid "Error: cannot load BIOS %s"
-msgstr ""
+msgstr "Fel: kan inte läsa in BIOS %s"
 
 #: core/hw/naomi/naomi_cart.cpp:236
 msgid "Unknown game"
-msgstr ""
+msgstr "Okänt spel"
 
 #: core/hw/naomi/naomi_cart.cpp:262
 #, c-format
 msgid "Cannot open %s or %s"
-msgstr ""
+msgstr "Kan inte öppna %s eller %s"
 
 #: core/hw/naomi/naomi_cart.cpp:264
 #, c-format
 msgid "Cannot open %s"
-msgstr ""
+msgstr "Kan inte öppna %s"
 
 #: core/hw/naomi/naomi_cart.cpp:343
 msgid "Invalid ROM"
-msgstr ""
+msgstr "Ogiltigt ROM"
 
 #: core/hw/naomi/naomi_cart.cpp:364
 #, c-format
 msgid "Cannot find %s"
-msgstr ""
+msgstr "Kan inte hitta %s"
 
 #: core/hw/naomi/naomi_cart.cpp:374 core/hw/naomi/naomi_cart.cpp:391
 #, c-format
 msgid "Invalid ROM: truncated %s"
-msgstr ""
+msgstr "Ogiltigt ROM: trunkerad %s"
 
 #: core/hw/naomi/naomi_cart.cpp:484
 msgid "Error: cannot load BIOS from naomi.zip"
-msgstr ""
+msgstr "Fel: kan inte läsa in BIOS från naomi.zip"
 
 #: core/hw/naomi/naomi_cart.cpp:500 core/hw/naomi/naomi_cart.cpp:550
 #, c-format
 msgid "Error: can't open %s"
-msgstr ""
+msgstr "Fel: kan inte öppna %s"
 
 #: core/hw/naomi/naomi_cart.cpp:508 core/hw/naomi/naomi_cart.cpp:524
 msgid "Error: Invalid LST file"
-msgstr ""
+msgstr "Fel: Ogiltig LST-fil"
 
 #: core/hw/naomi/naomi_cart.cpp:563
 msgid "Invalid empty ROM"
-msgstr ""
+msgstr "Ogiltig tom ROM"
 
 #: core/hw/naomi/naomi_cart.cpp:570
 msgid "Out of memory"
-msgstr ""
+msgstr "Slut på minne"
 
 #: core/hw/naomi/naomi_cart.cpp:621
 msgid "Error: Failed to load BIN/DAT file"
@@ -363,15 +363,15 @@ msgstr "Naomi GDROM: Kunde inte hitta filen att avkryptera."
 
 #: core/hw/maple/maple_devs.cpp:2218
 msgid "ATTENTION: Loading from a physical VMU"
-msgstr ""
+msgstr "OBSERVERA: Inläsning från en fysisk VMU"
 
 #: core/hw/maple/maple_devs.cpp:2219
 msgid "Game data is being loaded from your physical VMU"
-msgstr ""
+msgstr "Speldata läses in från din fysiska VMU"
 
 #: core/hw/maple/maple_devs.cpp:2386
 msgid "ATTENTION: You are saving to a physical VMU"
-msgstr ""
+msgstr "OBSERVERA: Du sparar till en fysisk VMU"
 
 #: core/hw/maple/maple_devs.cpp:2387
 msgid "Do not disconnect the VMU or close the game"
@@ -379,11 +379,11 @@ msgstr "Koppla inte från VMU:n eller stäng spelet"
 
 #: core/hw/maple/maple_devs.cpp:2458
 msgid "ATTENTION: Write to VMU failed"
-msgstr ""
+msgstr "OBSERVERA: Skrivning till VMU misslyckades"
 
 #: core/hw/maple/maple_devs.cpp:2614
 msgid "WARNING: Disconnected from physical VMU memory due to load state"
-msgstr ""
+msgstr "VARNING: Frånkopplad från fysiskt VMU-minne på grund av inläst tillstånd"
 
 #: core/hw/maple/maple_devs.cpp:2615
 msgid "Reconnect manually to resume using physical VMU memory"
@@ -405,7 +405,7 @@ msgstr "Misslyckades med att hitta bootfile %s"
 
 #: core/reios/reios.cpp:718
 msgid "Naomi boot failure"
-msgstr ""
+msgstr "Uppstartsfel för Naomi"
 
 #: core/reios/reios.cpp:724
 msgid "Invalid cart size"
@@ -545,7 +545,7 @@ msgstr ""
 
 #: core/ui/settings_video.cpp:219
 msgid "Show VMU In-game"
-msgstr ""
+msgstr "Visa VMU i spelet"
 
 #: core/ui/settings_video.cpp:219
 msgid "Show the VMU LCD screens while in-game"
@@ -623,7 +623,7 @@ msgstr "Rotera skärmen 90° motsols"
 
 #: core/ui/settings_video.cpp:259
 msgid "Per Pixel Settings"
-msgstr ""
+msgstr "Inställningar per pixel"
 
 #: core/ui/settings_video.cpp:262
 msgid "512 MB"
@@ -643,19 +643,19 @@ msgstr "4 GB"
 
 #: core/ui/settings_video.cpp:300
 msgid "Pixel Buffer Size"
-msgstr ""
+msgstr "Storlek för pixelbuffert"
 
 #: core/ui/settings_video.cpp:302
 msgid "The size of the pixel buffer. May need to be increased when upscaling by a large factor."
-msgstr ""
+msgstr "Storleken för pixelbufferten. Kan behöva att ökas vid större uppskalningar."
 
 #: core/ui/settings_video.cpp:304
 msgid "Maximum Layers"
-msgstr ""
+msgstr "Maximala lager"
 
 #: core/ui/settings_video.cpp:305
 msgid "Maximum number of transparent layers. May need to be increased for some complex scenes. Decreasing it may improve performance."
-msgstr ""
+msgstr "Maximalt antal transparenta lager. Kan behöva att ökas för vissa komplexa scener. Minska det kan förbättra prestandan."
 
 #: core/ui/settings_video.cpp:308
 msgid "Performance"
@@ -663,7 +663,7 @@ msgstr "Prestanda"
 
 #: core/ui/settings_video.cpp:310
 msgid "Automatic Frame Skipping:"
-msgstr ""
+msgstr "Hoppa automatiskt över bildrutor:"
 
 #: core/ui/settings_video.cpp:312 core/ui/settings_video.cpp:337
 #: core/ui/settings_network.cpp:40 core/ui/settings_network.cpp:87
@@ -680,7 +680,7 @@ msgstr "Normal"
 
 #: core/ui/settings_video.cpp:314
 msgid "Skip a frame when the GPU and CPU are both running slow"
-msgstr ""
+msgstr "Hoppa över en bildruta när GPU och CPU båda kör långsamt"
 
 #: core/ui/settings_video.cpp:316
 msgid "Maximum"
@@ -688,7 +688,7 @@ msgstr "Maximal"
 
 #: core/ui/settings_video.cpp:316
 msgid "Skip a frame when the GPU is running slow"
-msgstr ""
+msgstr "Hoppa över en bildruta när GPU kör långsamt"
 
 #: core/ui/settings_video.cpp:319
 msgid "Frame Skipping"
@@ -696,7 +696,7 @@ msgstr "Hoppa över bildrutor"
 
 #: core/ui/settings_video.cpp:320
 msgid "Number of frames to skip between two actually rendered frames"
-msgstr ""
+msgstr "Antal bildrutor att hoppa över mellan två faktiskt renderade bildrutor"
 
 #: core/ui/settings_video.cpp:321
 msgid "Shadows"
@@ -752,7 +752,7 @@ msgstr ""
 
 #: core/ui/settings_video.cpp:374
 msgid "Anisotropic Filtering"
-msgstr ""
+msgstr "Anisotropisk filtrering"
 
 #: core/ui/settings_video.cpp:376
 msgid "Higher values make textures viewed at oblique angles look sharper, but are more demanding on the GPU. This option only has a visible impact on mipmapped textures."
@@ -760,7 +760,7 @@ msgstr ""
 
 #: core/ui/settings_video.cpp:378
 msgid "Texture Filtering:"
-msgstr ""
+msgstr "Texturfiltrering:"
 
 #: core/ui/settings_video.cpp:380 core/ui/settings_general.cpp:188
 #: core/ui/settings_general.cpp:192 core/ui/settings_general.cpp:197
@@ -769,11 +769,11 @@ msgstr "Standard"
 
 #: core/ui/settings_video.cpp:380
 msgid "Use the game's default texture filtering"
-msgstr ""
+msgstr "Använd spelets standardfiltrering för texturer"
 
 #: core/ui/settings_video.cpp:382
 msgid "Force Nearest-Neighbor"
-msgstr ""
+msgstr "Tvinga närmaste granne"
 
 #: core/ui/settings_video.cpp:382
 msgid "Force nearest-neighbor filtering for all textures. Crisper appearance, but may cause various rendering issues. This option usually does not affect performance."
@@ -781,7 +781,7 @@ msgstr ""
 
 #: core/ui/settings_video.cpp:384
 msgid "Force Linear"
-msgstr ""
+msgstr "Tvinga linjär"
 
 #: core/ui/settings_video.cpp:384
 msgid "Force linear filtering for all textures. Smoother appearance, but may cause various rendering issues. This option usually does not affect performance."
@@ -1226,15 +1226,15 @@ msgstr ""
 
 #: core/ui/settings_general.cpp:458
 msgid "Cheat Folders"
-msgstr ""
+msgstr "Mappar för fusk"
 
 #: core/ui/settings_general.cpp:458
 msgid "Select a cheat folder"
-msgstr ""
+msgstr "Välj en mapp för fusk"
 
 #: core/ui/settings_general.cpp:459
 msgid "Folders containing cheat files (.cht/.txt) named with the game ID. Flycast will auto-load matching files if present"
-msgstr ""
+msgstr "Mappar som innehåller fuskfiler (.cht/.txt) namngivna med spel-ID. Flycast kommer automatiskt läsa in matchande filer om de finns"
 
 #: core/ui/gui_chat.h:46 core/ui/gui_chat.h:48
 msgid "P2"
@@ -1303,7 +1303,7 @@ msgstr ""
 
 #: core/ui/settings_controls.cpp:62
 msgid "Sega VMU"
-msgstr ""
+msgstr "Sega VMU"
 
 #: core/ui/settings_controls.cpp:63
 msgid "Vibration Pack"
@@ -1391,39 +1391,39 @@ msgstr "DPad2 upp"
 
 #: core/ui/settings_controls.cpp:185
 msgid "DPad2 Down"
-msgstr ""
+msgstr "DPad2 ner"
 
 #: core/ui/settings_controls.cpp:186
 msgid "DPad2 Left"
-msgstr ""
+msgstr "DPad2 vänster"
 
 #: core/ui/settings_controls.cpp:187
 msgid "DPad2 Right"
-msgstr ""
+msgstr "DPad2 höger"
 
 #: core/ui/settings_controls.cpp:189 core/ui/settings_controls.cpp:237
 msgid "Buttons"
-msgstr ""
+msgstr "Knappar"
 
 #: core/ui/settings_controls.cpp:198 core/ui/settings_controls.cpp:248
 msgid "Triggers"
-msgstr ""
+msgstr "Avtryckare"
 
 #: core/ui/settings_controls.cpp:199 core/ui/settings_controls.cpp:249
 msgid "Left Trigger"
-msgstr ""
+msgstr "Vänster avtryckare"
 
 #: core/ui/settings_controls.cpp:200 core/ui/settings_controls.cpp:250
 msgid "Right Trigger"
-msgstr ""
+msgstr "Höger avtryckare"
 
 #: core/ui/settings_controls.cpp:201 core/ui/settings_controls.cpp:251
 msgid "Left Trigger 2"
-msgstr ""
+msgstr "Vänster avtryckare 2"
 
 #: core/ui/settings_controls.cpp:202 core/ui/settings_controls.cpp:252
 msgid "Right Trigger 2"
-msgstr ""
+msgstr "Höger avtryckare 2"
 
 #: core/ui/settings_controls.cpp:204 core/ui/settings_controls.cpp:254
 msgid "System Buttons"
@@ -1527,12 +1527,12 @@ msgstr ""
 #: core/ui/settings_controls.cpp:387
 #, c-format
 msgid "Waiting for control '%s'..."
-msgstr ""
+msgstr "Väntar på kontroller '%s'..."
 
 #: core/ui/settings_controls.cpp:403
 #, c-format
 msgid "Time out in %d s"
-msgstr ""
+msgstr "Tidsgräns om %d s"
 
 #: core/ui/settings_controls.cpp:408
 msgid "Current inputs:"
@@ -1553,7 +1553,7 @@ msgstr ""
 
 #: core/ui/settings_controls.cpp:576 core/ui/settings_controls.cpp:1025
 msgid "Controller Mapping"
-msgstr ""
+msgstr "Kontrollermappning"
 
 #: core/ui/settings_controls.cpp:578 core/ui/settings_controls.cpp:1022
 msgid "Map"
@@ -1725,15 +1725,15 @@ msgstr "Muskänslighet"
 
 #: core/ui/settings_controls.cpp:1056
 msgid "Use Raw Input"
-msgstr ""
+msgstr "Använd rå inmatning"
 
 #: core/ui/settings_controls.cpp:1056
 msgid "Supports multiple pointing devices (mice, light guns) and keyboards"
-msgstr ""
+msgstr "Stöder flera pekenheter (möss, ljuspistoler) och tangentbord"
 
 #: core/ui/settings_controls.cpp:1061
 msgid "Use Physical VMU Memory"
-msgstr ""
+msgstr "Använd fysiskt VMU-minne"
 
 #: core/ui/settings_controls.cpp:1062
 msgid "Enables direct read/write access to physical VMU memory via DreamPicoPort/DreamConn. This is not compatible with load state events."
@@ -1803,12 +1803,13 @@ msgstr "Upplåst"
 
 #: core/ui/gui_achievements.cpp:326
 msgid "Recently Unlocked"
-msgstr ""
+msgstr "Senaste upplåsta"
 
 #: core/ui/mainui.cpp:73
 msgid "Renderer initialization failed.\n"
 "Please select a different graphics API"
-msgstr ""
+msgstr "Initiering av renderaren misslyckades.\n"
+"Välj ett annat grafik-API"
 
 #: core/ui/gui.cpp:573
 msgid "Flycast has stopped."
@@ -1850,11 +1851,11 @@ msgstr "Frånkopplad"
 
 #: core/ui/gui.cpp:761
 msgid "Insert Disk"
-msgstr ""
+msgstr "Mata in skiva"
 
 #: core/ui/gui.cpp:761
 msgid "Eject Disk"
-msgstr ""
+msgstr "Mata ut skiva"
 
 #: core/ui/gui.cpp:777
 msgid "Close Game"
@@ -1875,16 +1876,16 @@ msgstr "Ok"
 
 #: core/ui/gui.cpp:876 core/ui/gui.cpp:877
 msgid "Incorrect Content Location?"
-msgstr ""
+msgstr "Felaktig innehållsplats?"
 
 #: core/ui/gui.cpp:880
 #, c-format
 msgid "Scanned %d folders but no game can be found!"
-msgstr ""
+msgstr "Sökte igenom %d mappar men hittade inga spel!"
 
 #: core/ui/gui.cpp:885
 msgid "Reselect"
-msgstr ""
+msgstr "Välj igen"
 
 #: core/ui/gui.cpp:894 core/ui/gui.cpp:1050 core/ui/gui.cpp:1286
 #: core/ui/gui.cpp:1429 core/ui/gui_cheats.cpp:47 core/ui/gui_util.cpp:181
@@ -1954,11 +1955,11 @@ msgstr "Ingen skärmdump tillgänglig"
 
 #: core/ui/gui.cpp:1768
 msgid "Screenshot saved"
-msgstr ""
+msgstr "Skärmbild sparades"
 
 #: core/ui/gui.cpp:1770
 msgid "Error saving screenshot"
-msgstr ""
+msgstr "Fel vid sparning av skärmbild"
 
 #: core/ui/settings_audio.cpp:25
 msgid "Enable DSP"
@@ -1966,7 +1967,7 @@ msgstr "Aktivera DSP"
 
 #: core/ui/settings_audio.cpp:26
 msgid "Enable the Dreamcast Digital Sound Processor. Only recommended on fast platforms"
-msgstr ""
+msgstr "Aktivera Dreamcast Digital Sound Processor. Rekommenderas endast på snabba plattformar"
 
 #: core/ui/settings_audio.cpp:27
 msgid "Enable VMU Sounds"
@@ -1982,7 +1983,7 @@ msgstr "Volymnivå"
 
 #: core/ui/settings_audio.cpp:29
 msgid "Adjust the emulator's audio level"
-msgstr ""
+msgstr "Justera emulatorns ljudnivå"
 
 #: core/ui/settings_audio.cpp:35
 msgid "Automatic Latency"
@@ -1990,7 +1991,7 @@ msgstr "Automatisk latens"
 
 #: core/ui/settings_audio.cpp:36
 msgid "Automatically set audio latency. Recommended"
-msgstr ""
+msgstr "Ställ in ljudlatens automatiskt. Rekommenderas"
 
 #: core/ui/settings_audio.cpp:42
 msgid "Latency"
@@ -1998,7 +1999,7 @@ msgstr "Latens"
 
 #: core/ui/settings_audio.cpp:45
 msgid "Sets the maximum audio latency. Not supported by all audio drivers."
-msgstr ""
+msgstr "Ställer in maximal ljudlatens. Stöds inte av alla ljuddrivrutiner."
 
 #: core/ui/settings_audio.cpp:58
 msgid "Audio Driver"
@@ -2006,7 +2007,7 @@ msgstr "Ljuddrivrutin"
 
 #: core/ui/settings_audio.cpp:61
 msgid "auto - Automatic driver selection"
-msgstr ""
+msgstr "auto - Automatiskt val av drivrutin"
 
 #: core/ui/settings_audio.cpp:80
 msgid "The audio driver to use"
@@ -2042,7 +2043,7 @@ msgstr "Dynarec"
 
 #: core/ui/settings.cpp:42
 msgid "Use the dynamic recompiler. Recommended in most cases"
-msgstr ""
+msgstr "Använd dynamisk omkompilerare. Rekommenderas i de flesta fall"
 
 #: core/ui/settings.cpp:44
 msgid "Interpreter"
@@ -2050,11 +2051,11 @@ msgstr "Tolk"
 
 #: core/ui/settings.cpp:45
 msgid "Use the interpreter. Very slow but may help in case of a dynarec problem"
-msgstr ""
+msgstr "Använd tolken. Mycket långsam men kan hjälpa i de fall dynarec har problem"
 
 #: core/ui/settings.cpp:48
 msgid "SH4 Clock"
-msgstr ""
+msgstr "SH4-klocka"
 
 #: core/ui/settings.cpp:49
 msgid "Over/Underclock the main SH4 CPU. Default is 200 MHz. Other values may crash, freeze or trigger unexpected nuclear reactions."
@@ -2078,7 +2079,7 @@ msgstr "Flertrådad emulering"
 
 #: core/ui/settings.cpp:101
 msgid "Run the emulated CPU and GPU on different threads"
-msgstr ""
+msgstr "Kör emulerad CPU och GPU på olika trådar"
 
 #: core/ui/settings.cpp:103
 msgid "Serial Console"
@@ -2170,7 +2171,7 @@ msgstr "Lagring"
 
 #: core/ui/gui_util.cpp:133
 msgid ".. Up to Parent Folder"
-msgstr ""
+msgstr ".. Upp till överliggande mapp"
 
 #: core/ui/gui_util.cpp:171
 msgid "Select Current Folder"
@@ -2190,7 +2191,7 @@ msgstr "Nätverkstyp"
 
 #: core/ui/settings_network.cpp:44
 msgid "Enable networking using GGPO"
-msgstr ""
+msgstr "Aktivera nätverk med GGPO"
 
 #: core/ui/settings_network.cpp:48
 msgid "Enable networking for supported Naomi and Atomiswave games"
@@ -2222,7 +2223,7 @@ msgstr "Motpart"
 
 #: core/ui/settings_network.cpp:82
 msgid "Your peer IP address and optional port"
-msgstr ""
+msgstr "Din IP-adress och valfri port"
 
 #: core/ui/settings_network.cpp:83
 msgid "Frame Delay"
@@ -2238,7 +2239,7 @@ msgstr "Vänster tumspak:"
 
 #: core/ui/settings_network.cpp:87
 msgid "Left thumbstick not used"
-msgstr ""
+msgstr "Vänster tumspak används inte"
 
 #: core/ui/settings_network.cpp:89
 msgid "Horizontal"
@@ -2262,19 +2263,19 @@ msgstr "Aktivera chatt"
 
 #: core/ui/settings_network.cpp:93
 msgid "Open the chat window when a chat message is received"
-msgstr ""
+msgstr "Öppna chattfönstret när ett chattmeddelande tas emot"
 
 #: core/ui/settings_network.cpp:96
 msgid "Enable Chat Window Timeout"
-msgstr ""
+msgstr "Aktivera tidsgräns för chattfönster"
 
 #: core/ui/settings_network.cpp:96
 msgid "Automatically close chat window after 20 seconds"
-msgstr ""
+msgstr "Stäng chattfönstret automatiskt efter 20 sekunder"
 
 #: core/ui/settings_network.cpp:101
 msgid "Chat Window Timeout (seconds)"
-msgstr ""
+msgstr "Tidsgräns för chattfönster (sekunder)"
 
 #: core/ui/settings_network.cpp:103
 msgid "Sets duration that chat window stays open after new message is received."
@@ -2286,7 +2287,7 @@ msgstr "Nätverksstatistik"
 
 #: core/ui/settings_network.cpp:108 core/ui/settings_network.cpp:168
 msgid "Display network statistics on screen"
-msgstr ""
+msgstr "Visa nätverksstatistik på skärmen"
 
 #: core/ui/settings_network.cpp:112
 msgid "Act as Server"
@@ -2330,7 +2331,7 @@ msgstr "Koppla från"
 
 #: core/ui/settings_network.cpp:155
 msgid "Waiting at meeting point..."
-msgstr ""
+msgstr "Väntar vid mötespunkten..."
 
 #: core/ui/settings_network.cpp:158
 msgid "Preparing game..."
@@ -2343,7 +2344,7 @@ msgstr "Spelar %s (%s)"
 
 #: core/ui/settings_network.cpp:176
 msgid "The peer to connect to. Leave blank to find a player automatically on the default port"
-msgstr ""
+msgstr "Motparten att ansluta till. Lämna tom för att hitta en spelare automatiskt på standardporten"
 
 #: core/ui/settings_network.cpp:189
 msgid "Act as Master"
@@ -2363,7 +2364,7 @@ msgstr "Aktivera UPnP"
 
 #: core/ui/settings_network.cpp:196
 msgid "Automatically configure your network router for netplay"
-msgstr ""
+msgstr "Konfigurera din nätverksrouter automatiskt för netplay"
 
 #: core/ui/settings_network.cpp:197
 msgid "Broadcast Digital Outputs"
@@ -2379,7 +2380,7 @@ msgstr ""
 
 #: core/ui/settings_network.cpp:203
 msgid "Emulate the Ethernet Broadband Adapter (BBA) instead of the Modem"
-msgstr ""
+msgstr "Emulera Ethernet Broadband Adapter (BBA) istället för modemet"
 
 #: core/ui/settings_network.cpp:205
 msgid "Use DCNet"
@@ -2387,15 +2388,15 @@ msgstr "Använd DCNet"
 
 #: core/ui/settings_network.cpp:205
 msgid "Use the DCNet cloud service for Dreamcast Internet access."
-msgstr ""
+msgstr "Använd molntjänsten DCNet för internetåtkomst för Dreamcast."
 
 #: core/ui/settings_network.cpp:208
 msgid "ISP User Name"
-msgstr ""
+msgstr "ISP-användarnamn"
 
 #: core/ui/settings_network.cpp:214
 msgid "The ISP user name stored in the console Flash RAM. Used by some online games as the player name. Leave blank to keep the current Flash RAM value."
-msgstr ""
+msgstr "ISP-användarnamn som lagras i konsolens Flash RAM-minne. Används av vissa nätspel som spelarens namn. Lämna tomt för att behålla det aktuella Flash RAM-värdet."
 
 #: core/ui/settings_network.cpp:226
 msgid "Multiboard Screens"
@@ -2407,15 +2408,15 @@ msgstr ""
 
 #: core/ui/settings_network.cpp:229
 msgid "One screen configuration (F355 Twin)"
-msgstr ""
+msgstr "Konfiguration för en skärm (F355 Twin)"
 
 #: core/ui/settings_network.cpp:231
 msgid "3 (Deluxe)"
-msgstr ""
+msgstr "3 (Deluxe)"
 
 #: core/ui/settings_network.cpp:231
 msgid "Three screens configuration"
-msgstr ""
+msgstr "Konfiguration med tre skärmar"
 
 #: core/ui/settings_about.cpp:53 core/ui/settings_about.cpp:107
 #, c-format
@@ -2535,7 +2536,7 @@ msgstr "DCNet frånkopplat"
 
 #: core/network/dcnet.cpp:753
 msgid "Host not found"
-msgstr ""
+msgstr "Värden hittades inte"
 
 #: core/network/dcnet.cpp:797
 msgid "Can't connect to DCNet"
@@ -2631,32 +2632,32 @@ msgstr "Ansluten som plats %d"
 
 #: core/rend/dx9/d3d_renderer.cpp:318
 msgid "DirectX 9 doesn't support Naomi 2 games. Select a different graphics API"
-msgstr ""
+msgstr "DirectX 9 saknar stöd för Naomi 2-spel. Välj ett annat grafik-API"
 
 #: core/rend/vulkan/adreno.cpp:154
 msgid "Can't open zip file"
-msgstr ""
+msgstr "Kan inte öppna zip-fil"
 
 #: core/rend/vulkan/adreno.cpp:157
 msgid "Invalid zip file"
-msgstr ""
+msgstr "Ogiltig zip-fil"
 
 #: core/rend/vulkan/adreno.cpp:185 core/rend/vulkan/adreno.cpp:203
 msgid "Can't save files"
-msgstr ""
+msgstr "Kan inte spara filer"
 
 #: core/rend/vulkan/adreno.cpp:195
 msgid "Can't read zip"
-msgstr ""
+msgstr "Kan inte läsa zip"
 
 #: core/rend/gles/gles.cpp:1058
 msgid "OpenGL ES 3.0+ required for Naomi 2"
-msgstr ""
+msgstr "OpenGL ES 3.0+ krävs för Naomi 2"
 
 #: core/emulator.cpp:589
 #, c-format
 msgid "No BIOS file found in %s"
-msgstr ""
+msgstr "Ingen BIOS-fil hittades i %s"
 
 #: core/emulator.cpp:605
 msgid "This game requires a real BIOS"
@@ -2664,7 +2665,7 @@ msgstr "Detta spel kräver ett riktigt BIOS"
 
 #: core/emulator.cpp:662
 msgid "Widescreen cheat activated"
-msgstr ""
+msgstr "Bredskärmsfusk aktiverat"
 
 #: shell/libretro/libretro.cpp:2130
 msgid "Cannot run without JIT"
@@ -2672,5 +2673,5 @@ msgstr "Kan inte köra utan JIT"
 
 #: shell/switch/switch_main.cpp:70
 msgid "Not supported on Switch"
-msgstr ""
+msgstr "Stöds inte på Switch"
 
