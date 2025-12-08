@@ -1,7 +1,7 @@
 #include "common.h"
 #include "stdclass.h"
 #include "oslib/storage.h"
-
+#include "oslib/i18n.h"
 #include <libchdr/chd.h>
 
 struct CHDDisc : Disc
@@ -106,7 +106,7 @@ static u32 getSectorSize(const std::string& type)
 	else if (type == "MODE2_RAW" || type == "MODE2/2352" || type == "CDI/2352")
 		return 2352;	// CDROM XA Mode2 Data
 
-	throw FlycastException("chd: track type " + type + " is not supported");
+	throw FlycastException(strprintf(i18n::T("chd: track type %s is not supported"), type.c_str()));
 }
 
 void CHDDisc::tryOpen(const char* file)
@@ -115,13 +115,13 @@ void CHDDisc::tryOpen(const char* file)
 	if (fp == nullptr)
 	{
 		WARN_LOG(COMMON, "Cannot open file '%s' errno %d", file, errno);
-		throw FlycastException(std::string("Cannot open CHD file ") + file);
+		throw FlycastException(strprintf(i18n::T("Cannot open CHD file %s"), file));
 	}
 
 	chd_error err = chd_open_file(fp, CHD_OPEN_READ, 0, &chd);
 
 	if (err != CHDERR_NONE)
-		throw FlycastException(std::string("Invalid CHD file ") + file);
+		throw FlycastException(strprintf(i18n::T("Invalid CHD file %s"), file));
 
 	INFO_LOG(GDROM, "chd: parsing file %s", file);
 
@@ -134,7 +134,7 @@ void CHDDisc::tryOpen(const char* file)
 	sph = hunkbytes/(2352+96);
 
 	if (hunkbytes % (2352 + 96) != 0)
-		throw FlycastException(std::string("Invalid hunkbytes for CHD file ") + file);
+		throw FlycastException(strprintf(i18n::T("Invalid hunkbytes for CHD file %s"), file));
 
 	u32 tag;
 	u8 flags;
@@ -180,10 +180,10 @@ void CHDDisc::tryOpen(const char* file)
 		}
 
 		if (tkid != (int)tracks.size() + 1)
-			throw FlycastException("Unexpected track number");
+			throw FlycastException(i18n::Ts("Unexpected track number"));
 
 		if (strcmp(subtype, "NONE") != 0 || pregap != 0 || postgap != 0)
-			throw FlycastException("Unsupported subtype or pre/postgap");
+			throw FlycastException(i18n::Ts("Unsupported subtype or pre/postgap"));
 
 		DEBUG_LOG(GDROM, "%s", temp);
 		Track t;
@@ -209,13 +209,13 @@ void CHDDisc::tryOpen(const char* file)
 		if (total_frames != 549300)
 			WARN_LOG(GDROM, "WARNING: chd: Total GD-Rom frames is wrong: %u frames (549300 expected) in %zu tracks", total_frames, tracks.size());
 		if (tracks.size() < 3)
-			throw FlycastException("Invalid CHD: less than 3 tracks");
+			throw FlycastException(i18n::Ts("Invalid CHD: less than 3 tracks"));
 		FillGDSession();
 	}
 	else
 	{
 		if (tracks.empty())
-			throw FlycastException("Invalid CHD: no track found");
+			throw FlycastException(i18n::Ts("Invalid CHD: no track found"));
 
 		Session ses;
 		ses.FirstTrack = 1;

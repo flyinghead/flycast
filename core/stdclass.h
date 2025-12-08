@@ -176,6 +176,16 @@ static inline bool isAbsolutePath(const std::string& path)
 #endif
 }
 
+template<typename ... Args>
+std::string strprintf(const char *format, Args ... args)
+{
+	int size = std::snprintf(nullptr, 0, format, args...);
+	std::string out(size + 1, '\0');
+	std::snprintf(out.data(), size + 1, format, args...);
+	out.resize(size);
+	return out;
+}
+
 class MD5Sum
 {
 	MD5_CTX ctx;

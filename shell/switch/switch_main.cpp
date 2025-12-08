@@ -67,7 +67,7 @@ namespace hostfs
 
 void saveScreenshot(const std::string& name, const std::vector<u8>& data)
 {
-	throw FlycastException("Not supported on Switch");
+	throw FlycastException(i18n::Ts("Not supported on Switch"));
 }
 
 }

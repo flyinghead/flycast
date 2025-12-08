@@ -48,4 +48,5 @@ cmrc_add_resources(flycast-resources fonts/biosfont.bin.zip)
 
 cmrc_add_resources(flycast-resources
 	WHENCE resources
-	resources/i18n/fr.po)
+	resources/i18n/fr.po
+	resources/i18n/sv.po)

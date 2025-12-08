@@ -21,6 +21,7 @@
 #include "hw/pvr/pvr_mem.h"
 #include "ui/gui.h"
 #include "rend/sorter.h"
+#include "oslib/i18n.h"
 
 const u32 DstBlendGL[]
 {
@@ -314,7 +315,7 @@ void D3DRenderer::Process(TA_context* ctx)
 		return;
 	}
 	if (settings.platform.isNaomi2())
-		throw FlycastException("DirectX 9 doesn't support Naomi 2 games. Select a different graphics API");
+		throw FlycastException(i18n::Ts("DirectX 9 doesn't support Naomi 2 games. Select a different graphics API"));
 
 	if (resetTextureCache) {
 		texCache.Clear();

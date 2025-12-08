@@ -293,10 +293,8 @@ void achievementList()
 		ImGui::PushFont(largeFont);
 		ImGui::Text("%s", game.title.c_str());
 		ImGui::PopFont();
-		std::string str;
-		str.resize(128);
-		str.resize(snprintf(str.data(), str.length() + 1, T("You have unlocked %d of %d achievements and %d of %d points."),
-				game.unlockedAchievements, game.totalAchievements, game.points, game.totalPoints));
+		std::string str = strprintf(T("You have unlocked %d of %d achievements and %d of %d points."),
+				game.unlockedAchievements, game.totalAchievements, game.points, game.totalPoints);
 		{
 			ImguiStyleColor _(ImGuiCol_Text, ImVec4(0.75f, 0.75f, 0.75f, 1.f));
 			ImGui::TextWrapped("%s", str.c_str());

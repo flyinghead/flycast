@@ -19,6 +19,7 @@
 #include "naomi_network.h"
 #include "hw/naomi/naomi_flashrom.h"
 #include "cfg/option.h"
+#include "stdclass.h"
 #include "oslib/oslib.h"
 #include "oslib/i18n.h"
 using namespace i18n;
@@ -109,9 +110,8 @@ bool NaomiNetwork::startNetwork()
 				notif = T("Waiting for players...");
 			}
 			else {
-				notif.resize(256);
-				notif.resize(snprintf(notif.data(), notif.capacity(),
-						translatePlural("%d player connected. Waiting...", "%d players connected. Waiting...", slaves.size()), (int)slaves.size()));
+				notif = strprintf(translatePlural("%d player connected. Waiting...", "%d players connected. Waiting...", slaves.size()),
+						(int)slaves.size());
 			}
 			os_notify(notif.c_str(), timeout.count() * 2000);
 
@@ -257,9 +257,7 @@ bool NaomiNetwork::receive(const sockaddr_in *addr, const Packet *packet, u32 si
 			nextPeer.sin_family = AF_INET;
 			nextPeer.sin_port = packet->sync.nextNodePort;
 			nextPeer.sin_addr.s_addr = packet->sync.nextNodeIp == 0 ? addr->sin_addr.s_addr : packet->sync.nextNodeIp;
-			std::string notif;
-			notif.resize(128);
-			notif.resize(snprintf(notif.data(), notif.capacity(), T("Connected as slot %d"), slotId));
+			std::string notif = strprintf(T("Connected as slot %d"), slotId);
 			os_notify(notif.c_str(), 2000);
 		}
 		break;

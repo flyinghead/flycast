@@ -12,6 +12,7 @@
 #include "wsi/gl_context.h"
 #include "emulator.h"
 #include "naomi2.h"
+#include "oslib/i18n.h"
 
 #ifdef TEST_AUTOMATION
 #include "cfg/cfg.h"
@@ -1054,7 +1055,7 @@ void OpenGLRenderer::drawOSD()
 void OpenGLRenderer::Process(TA_context* ctx)
 {
 	if (gl.gl_major < 3 && settings.platform.isNaomi2())
-		throw FlycastException("OpenGL ES 3.0+ required for Naomi 2");
+		throw FlycastException(i18n::Ts("OpenGL ES 3.0+ required for Naomi 2"));
 
 	if (resetTextureCache) {
 		TexCache.Clear();

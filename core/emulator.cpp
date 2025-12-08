@@ -586,7 +586,7 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 			{
 				// Boot BIOS
 				if (!nvmem::loadFiles())
-					throw FlycastException("No BIOS file found in " + hostfs::getFlashSavePath("", ""));
+					throw FlycastException(strprintf(i18n::T("No BIOS file found in %s"), hostfs::getFlashSavePath("", "").c_str()));
 				gdr::initDrive("");
 			}
 			else
@@ -610,7 +610,7 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 						// Content load failed. Boot the BIOS
 						settings.content.path.clear();
 						if (!nvmem::loadFiles())
-							throw FlycastException("This media cannot be loaded");
+							throw FlycastException(i18n::Ts("This media cannot be loaded"));
 						gdr::initDrive("");
 					}
 				}
@@ -681,7 +681,7 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 		{
 #ifdef GDB_SERVER
 			if(config::GDBWaitForConnection)
-				progress->label = i18n::T("Waiting for debugger...");
+				progress->label = "Waiting for debugger...";
 			else
 #endif
 				progress->label = i18n::T("Starting...");

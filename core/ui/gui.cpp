@@ -809,9 +809,7 @@ static void gui_display_commands()
 					config::SavestateSlot--;
 				SaveSettings();
 			}
-			std::string slot;
-			slot.resize(128);
-			slot.resize(snprintf(slot.data(), slot.capacity(), T("Slot %d"), (int)config::SavestateSlot + 1));
+			std::string slot = strprintf(T("Slot %d"), (int)config::SavestateSlot + 1);
 			float spacingW = (uiScaled(buttonWidth) - ImGui::GetFrameHeight() * 2 - ImGui::CalcTextSize(slot.c_str()).x) / 2;
 			ImGui::SameLine(0, spacingW);
 			ImGui::Text("%s", slot.c_str());

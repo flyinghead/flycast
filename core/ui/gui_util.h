@@ -26,6 +26,7 @@
 #include "emulator.h"
 #include "oslib/oslib.h"
 #include "oslib/i18n.h"
+#include "stdclass.h"
 
 #include <algorithm>
 #include <chrono>
@@ -282,11 +283,10 @@ public:
 	IconButton(const char *icon, const std::string& label, const ImVec2& size = {})
 		: size(size)
 	{
-		str.resize((icon == nullptr ? 0 : 5) + label.size(), '\0');
-		str.resize(
-				icon == nullptr ? snprintf(str.data(), str.size() + 1, "%s", label.c_str())
-								: snprintf(str.data(), str.size() + 1, "%s  %s", icon, label.c_str())
-			);
+		if (icon == nullptr)
+			str = strprintf("%s", label.c_str());
+		else
+			str = strprintf("%s  %s", icon, label.c_str());
 	}
 
 	IconButton(const std::string& label, const ImVec2& size = {})

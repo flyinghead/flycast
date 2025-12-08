@@ -66,7 +66,7 @@ public:
 		asio::error_code ec;
 		socket.connect(endpoint, ec);
 		if (ec)
-			throw FlycastException(ec.message().c_str());
+			throw FlycastException(ec.message());
 		os_notify(i18n::T("Connected to DCNet with modem"), 5000, endpointName.c_str());
 		receive();
 	}
@@ -242,7 +242,7 @@ public:
 		asio::error_code ec;
 		socket.connect(endpoint, ec);
 		if (ec)
-			throw FlycastException(ec.message().c_str());
+			throw FlycastException(ec.message());
 		os_notify(i18n::T("Connected to DCNet with Ethernet"), 5000, endpointName.c_str());
 		receive();
 		u8 prolog[] = { 'D', 'C', 'N', 'E', 'T', 1 };
@@ -750,7 +750,7 @@ void DCNetThread::connect(const asio::ip::address& address, const std::string& a
 		if (ec)
 			throw FlycastException(ec.message());
 		if (it.empty())
-			throw FlycastException("Host not found");
+			throw FlycastException(i18n::Ts("Host not found"));
 		endpoint = *it.begin();
 	}
 	else

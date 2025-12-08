@@ -541,14 +541,7 @@ bool OptionArrowButtons(const char *name, config::Option<int>& option, int min, 
 		const float width = ImGui::CalcItemWidth() - innerSpacing * 2.0f - ImGui::GetFrameHeight() * 2.0f;
 		ImguiStyleVar _2(ImGuiStyleVar_DisabledAlpha, 1.0f);
 		ImGui::BeginDisabled();
-		int size = snprintf(nullptr, 0, format, (int)option);
-		std::string value;
-		if (size >= 0)
-		{
-			value.resize(size + 1);
-			snprintf(value.data(), size + 1, format, (int)option);
-			value.resize(size);
-		}
+		std::string value = strprintf(format, (int)option);
 		ImGui::ButtonEx((value + id).c_str(), ImVec2(width, 0));
 		ImGui::EndDisabled();
 	}

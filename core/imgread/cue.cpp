@@ -20,6 +20,7 @@
 #include "common.h"
 #include "stdclass.h"
 #include "oslib/storage.h"
+#include "oslib/i18n.h"
 #include <sstream>
 
 static u32 getSectorSize(const std::string& type) {
@@ -53,7 +54,7 @@ Disc* cue_parse(const char* file, std::vector<u8> *digest)
 	if (fsource == nullptr)
 	{
 		WARN_LOG(COMMON, "Cannot open file '%s' errno %d", file, errno);
-		throw FlycastException(std::string("Cannot open CUE file ") + file);
+		throw FlycastException(strprintf(i18n::T("Cannot open CUE file %s"), file));
 	}
 
 	hostfs::FileInfo fileInfo = hostfs::storage().getFileInfo(file);
@@ -64,7 +65,7 @@ Disc* cue_parse(const char* file, std::vector<u8> *digest)
 	if (cue_len >= sizeof(cue_data))
 	{
 		std::fclose(fsource);
-		throw FlycastException("CUE parse error: CUE file too big");
+		throw FlycastException(i18n::Ts("CUE parse error: CUE file too big"));
 	}
 
 	if (std::fread(cue_data, 1, cue_len, fsource) != cue_len)
@@ -183,14 +184,14 @@ Disc* cue_parse(const char* file, std::vector<u8> *digest)
 				if (track_file == nullptr)
 				{
 					delete disc;
-					throw FlycastException("CUE file: cannot open track " + path);
+					throw FlycastException(strprintf(i18n::T("CUE file: cannot open track %s"), path.c_str()));
 				}
 				u32 sector_size = getSectorSize(track_type);
 				if (sector_size == 0)
 				{
 					std::fclose(track_file);
 					delete disc;
-					throw FlycastException("CUE file: track has unknown sector type: " + track_type);
+					throw FlycastException(strprintf(i18n::T("CUE file: track has unknown sector type: %s"), track_type.c_str()));
 				}
 				fileInfo = hostfs::storage().getFileInfo(path);
 				if (fileInfo.size % sector_size != 0)
@@ -224,14 +225,14 @@ Disc* cue_parse(const char* file, std::vector<u8> *digest)
 	if (disc->tracks.empty())
 	{
 		delete disc;
-		throw FlycastException("CUE parse error: failed to parse or invalid file with 0 tracks");
+		throw FlycastException(i18n::Ts("CUE parse error: failed to parse or invalid file with 0 tracks"));
 	}
 
 	if (session_number == 0)
 	{
 		if (disc->tracks.size() < 3) {
 			delete disc;
-			throw FlycastException("CUE parse error: less than 3 tracks");
+			throw FlycastException(i18n::Ts("CUE parse error: less than 3 tracks"));
 		}
 		disc->FillGDSession();
 	}

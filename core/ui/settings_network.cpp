@@ -158,11 +158,8 @@ void gui_settings_network()
 						status = T("Preparing game...");
 						break;
 					case ice::Playing:
-						{
-							status.resize(256);
-							status.resize(snprintf(status.data(), status.length() + 1, T("Playing %s (%s)"), matchCode.c_str(), ice::getStatusText().c_str()));
-							break;
-						}
+						status = strprintf(T("Playing %s (%s)"), matchCode.c_str(), ice::getStatusText().c_str());
+						break;
 					default:
 						break;
 					}

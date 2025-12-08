@@ -347,9 +347,7 @@ struct DriveSimPipe : public SerialPort::Pipe
 				}
 				if (!config::NetworkOutput)
 				{
-					std::string message;
-					message.resize(128);
-					message.resize(snprintf(message.data(), message.size(), i18n::T("Speed: %3d"), speed));
+					std::string message = strprintf(i18n::T("Speed: %3d"), speed);
 					os_notify(message.c_str(), 1000);
 				}
 			}

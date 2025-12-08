@@ -342,9 +342,7 @@ void Achievements::authenticationSuccess(const rc_client_user_t *user)
 		asyncTask([this, url]()
 		{
 			std::string image = getOrDownloadImage(url.c_str());
-			std::string text;
-			text.resize(128);
-			text.resize(snprintf(text.data(), text.capacity(), i18n::T("User %s authenticated"), config::AchievementsUserName.get().c_str()));
+			std::string text = strprintf(i18n::T("User %s authenticated"), config::AchievementsUserName.get().c_str());
 			notifier.notify(Notification::Login, image, text);
 		});
 	}
@@ -581,9 +579,7 @@ void Achievements::handleUnlockEvent(const rc_client_event_t *event)
 	{
 		asyncTask([this, url, title, description]() {
 			std::string image = getOrDownloadImage(url.c_str());
-			std::string text;
-			text.resize(128);
-			text.resize(snprintf(text.data(), text.capacity(), i18n::T("Achievement %s unlocked!"), title.c_str()));
+			std::string text = strprintf(i18n::T("Achievement %s unlocked!"), title.c_str());
 			notifier.notify(Notification::Login, image, text, description);
 		});
 	}
@@ -623,27 +619,21 @@ void Achievements::handleLeaderboardStarted(const rc_client_event_t *event)
 {
 	const rc_client_leaderboard_t *leaderboard = event->leaderboard;
 	INFO_LOG(COMMON, "RA: Leaderboard started: %s", leaderboard->title);
-	std::string text;
-	text.resize(128);
-	text.resize(snprintf(text.data(), text.capacity(), i18n::T("Leaderboard %s started"), leaderboard->title));
+	std::string text = strprintf(i18n::T("Leaderboard %s started"), leaderboard->title);
 	notifier.notify(Notification::Unlocked, "", text, leaderboard->description);
 }
 void Achievements::handleLeaderboardFailed(const rc_client_event_t *event)
 {
 	const rc_client_leaderboard_t *leaderboard = event->leaderboard;
 	INFO_LOG(COMMON, "RA: Leaderboard failed: %s", leaderboard->title);
-	std::string text;
-	text.resize(128);
-	text.resize(snprintf(text.data(), text.capacity(), i18n::T("Leaderboard %s failed"), leaderboard->title));
+	std::string text = strprintf(i18n::T("Leaderboard %s failed"), leaderboard->title);
 	notifier.notify(Notification::Unlocked, "", text, leaderboard->description);
 }
 void Achievements::handleLeaderboardSubmitted(const rc_client_event_t *event)
 {
 	const rc_client_leaderboard_t *leaderboard = event->leaderboard;
 	INFO_LOG(COMMON, "RA: Leaderboard submitted: %s", leaderboard->title);
-	std::string text;
-	text.resize(128);
-	text.resize(snprintf(text.data(), text.capacity(), i18n::T("Leaderboard %s submitted"), leaderboard->title));
+	std::string text = strprintf(i18n::T("Leaderboard %s submitted"), leaderboard->title);
 	notifier.notify(Notification::Unlocked, "", text, leaderboard->description);
 }
 void Achievements::handleShowLeaderboardTracker(const rc_client_event_t *event)
@@ -668,16 +658,10 @@ void Achievements::handleUpdateLeaderboardTracker(const rc_client_event_t *event
 void Achievements::handleGameCompleted(const rc_client_event_t *event)
 {
 	const rc_client_game_t* game = rc_client_get_game_info(rc_client);
-	std::string text1;
-	text1.resize(128);
-	text1.resize(snprintf(text1.data(), text1.capacity(),
-			rc_client_get_hardcore_enabled(rc_client) ? i18n::T("Mastered %s") : i18n::T("Completed %s"), game->title));
+	std::string text1 = strprintf(rc_client_get_hardcore_enabled(rc_client) ? i18n::T("Mastered %s") : i18n::T("Completed %s"), game->title);
 	rc_client_user_game_summary_t summary;
 	rc_client_get_user_game_summary(rc_client, &summary);
-	std::string text2;
-	text2.resize(128);
-	text2.resize(snprintf(text2.data(), text2.capacity(),
-			i18n::T("%d achievements, %d points"), summary.num_unlocked_achievements, summary.points_unlocked));
+	std::string text2 = strprintf(i18n::T("%d achievements, %d points"), summary.num_unlocked_achievements, summary.points_unlocked);
 	std::string text3 = rc_client_get_user_info(rc_client)->display_name;
 	std::string url(512, '\0');
 	if (rc_client_game_get_image_url(game, url.data(), url.size()) != RC_OK)
@@ -923,15 +907,9 @@ void Achievements::gameLoaded(int result, const char *errorMessage)
 	rc_client_get_user_game_summary(rc_client, &summary);
 	std::string text2;
 	if (summary.num_core_achievements > 0)
-	{
-		std::string text2;
-		text2.resize(128);
-		text2.resize(snprintf(text2.data(), text2.capacity(),
-				i18n::T("You have %d of %d achievements unlocked."), summary.num_unlocked_achievements, summary.num_core_achievements));
-	}
-	else {
+		text2 = strprintf(i18n::T("You have %d of %d achievements unlocked."), summary.num_unlocked_achievements, summary.num_core_achievements);
+	else
 		text2 = i18n::Ts("This game has no achievements.");
-	}
 	asyncTask([this, url, text1, text2]() {
 		std::string image;
 		if (!url.empty())

@@ -28,6 +28,7 @@ using namespace nlohmann;
 #include "oslib/directory.h"
 #include "oslib/storage.h"
 #include "stdclass.h"
+#include "oslib/i18n.h"
 
 std::string getNativeLibraryPath();
 std::string getFilesPath();
@@ -150,10 +151,10 @@ void uploadCustomGpuDriver(const std::string& zipPath)
 {
 	FILE *zipf = hostfs::storage().openFile(zipPath, "r");
 	if (zipf == nullptr)
-		throw FlycastException("Can't open zip file");
+		throw FlycastException(i18n::Ts("Can't open zip file"));
 	ZipArchive archive;
 	if (!archive.Open(zipf))
-		throw FlycastException("Invalid zip file");
+		throw FlycastException(i18n::Ts("Invalid zip file"));
 	std::string fullPath = getFilesPath() + DRIVER_PATH;
 	flycast::mkdir(fullPath.c_str(), 0755);
 	// Clean driver directory
@@ -181,7 +182,7 @@ void uploadCustomGpuDriver(const std::string& zipPath)
 		FILE *f = fopen((fullPath + afile->getName()).c_str(), "wb");
 		if (f == nullptr) {
 			delete afile;
-			throw FlycastException("Can't save files");
+			throw FlycastException(i18n::Ts("Can't save files"));
 		}
 		u8 buf[8_KB];
 		while (true)
@@ -191,7 +192,7 @@ void uploadCustomGpuDriver(const std::string& zipPath)
 			{
 				fclose(f);
 				delete afile;
-				throw FlycastException("Can't read zip");
+				throw FlycastException(i18n::Ts("Can't read zip"));
 			}
 			if (len == 0)
 				break;
@@ -199,7 +200,7 @@ void uploadCustomGpuDriver(const std::string& zipPath)
 			{
 				fclose(f);
 				delete afile;
-				throw FlycastException("Can't save files");
+				throw FlycastException(i18n::Ts("Can't save files"));
 			}
 		}
 		fclose(f);

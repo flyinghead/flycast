@@ -21,6 +21,7 @@
 #include "serialize.h"
 #include "hw/sh4/sh4_sched.h"
 #include "naomi.h"
+#include "oslib/i18n.h"
 #include <algorithm>
 
 /*
@@ -520,7 +521,7 @@ void GDCartridge::device_start(LoadProgress *progress, std::vector<u8> *digest)
 				}
 			}
 			if (gdrom == nullptr)
-				throw NaomiCartException("Naomi GDROM: Cannot open " + gdrom_path + ".chd");
+				throw NaomiCartException(strprintf(i18n::T("Naomi GDROM: Cannot open %s.chd"), gdrom_path.c_str()));
 		}
 
 		// primary volume descriptor
@@ -593,7 +594,7 @@ void GDCartridge::device_start(LoadProgress *progress, std::vector<u8> *digest)
 				;
 			dimm_data = (u8 *)malloc(dimm_data_size);
 			if (dimm_data == nullptr)
-				throw NaomiCartException("Memory allocation failed");
+				throw NaomiCartException(i18n::Ts("Memory allocation failed"));
 			if (dimm_data_size != file_rounded_size)
 				memset(dimm_data + file_rounded_size, 0, dimm_data_size - file_rounded_size);
 
@@ -605,7 +606,7 @@ void GDCartridge::device_start(LoadProgress *progress, std::vector<u8> *digest)
 		}
 
 		if (!dimm_data)
-			throw NaomiCartException("Naomi GDROM: Could not find the file to decrypt.");
+			throw NaomiCartException(i18n::Ts("Naomi GDROM: Could not find the file to decrypt."));
 	}
 }
 

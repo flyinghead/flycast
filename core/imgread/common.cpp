@@ -4,6 +4,7 @@
 #include "stdclass.h"
 #include "hw/sh4/sh4_sched.h"
 #include "serialize.h"
+#include "oslib/i18n.h"
 
 Disc* chd_parse(const char* file, std::vector<u8> *digest);
 Disc* gdi_parse(const char* file, std::vector<u8> *digest);
@@ -93,7 +94,7 @@ Disc* OpenDisc(const std::string& path, std::vector<u8> *digest)
 			return disc;
 	}
 
-	throw FlycastException("Unknown disk format");
+	throw FlycastException(i18n::Ts("Unknown disk format"));
 }
 
 namespace gdr {
@@ -366,7 +367,7 @@ namespace gdr
 void insertDisk(const std::string& path)
 {
 	if (!doDiscSwap(path))
-		throw FlycastException("This media cannot be loaded");
+		throw FlycastException(i18n::Ts("This media cannot be loaded"));
 	settings.content.path = path;
 	// Drive is busy after the lid was closed
 	sns_asc = 4;

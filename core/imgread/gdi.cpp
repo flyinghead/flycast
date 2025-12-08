@@ -1,6 +1,7 @@
 #include "common.h"
 #include "stdclass.h"
 #include "oslib/storage.h"
+#include "oslib/i18n.h"
 #include <sstream>
 
 Disc* load_gdi(const char* file, std::vector<u8> *digest)
@@ -9,7 +10,7 @@ Disc* load_gdi(const char* file, std::vector<u8> *digest)
 	if (t == nullptr)
 	{
 		WARN_LOG(COMMON, "Cannot open file '%s' errno %d", file, errno);
-		throw FlycastException(std::string("Cannot open GDI file ") + file);
+		throw FlycastException(strprintf(i18n::T("Cannot open GDI file %s"), file));
 	}
 
 	hostfs::FileInfo fileInfo = hostfs::storage().getFileInfo(file);
@@ -20,7 +21,7 @@ Disc* load_gdi(const char* file, std::vector<u8> *digest)
 	if (gdi_len >= sizeof(gdi_data))
 	{
 		std::fclose(t);
-		throw FlycastException("GDI file too big");
+		throw FlycastException(i18n::Ts("GDI file too big"));
 	}
 
 	if (std::fread(gdi_data, 1, gdi_len, t) != gdi_len)
@@ -32,7 +33,7 @@ Disc* load_gdi(const char* file, std::vector<u8> *digest)
 	u32 iso_tc = 0;
 	gdi >> iso_tc;
 	if (iso_tc == 0)
-		throw FlycastException("GDI: empty or invalid GDI file");
+		throw FlycastException(i18n::Ts("GDI: empty or invalid GDI file"));
 
 	INFO_LOG(GDROM, "GDI : %d tracks", iso_tc);
 
@@ -91,7 +92,7 @@ Disc* load_gdi(const char* file, std::vector<u8> *digest)
 			if (file == nullptr)
 			{
 				delete disc;
-				throw FlycastException("GDI file: Cannot open track " + path);
+				throw FlycastException(strprintf(i18n::T("GDI file: Cannot open track %s"), path.c_str()));
 			}
 			if (digest != nullptr)
 				md5.add(file);
@@ -106,7 +107,7 @@ Disc* load_gdi(const char* file, std::vector<u8> *digest)
 
 	if (disc->tracks.size() < 3) {
 		delete disc;
-		throw FlycastException("GDI parse error: less than 3 tracks");
+		throw FlycastException(i18n::Ts("GDI parse error: less than 3 tracks"));
 	}
 	disc->FillGDSession();
 	if (digest != nullptr)
