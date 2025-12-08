@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-12-08 16:00+0100\n"
-"PO-Revision-Date: 2025-12-08 18:08\n"
+"PO-Revision-Date: 2025-12-08 19:05\n"
 "Last-Translator: \n"
 "Language: sv_SE\n"
 "MIME-Version: 1.0\n"
@@ -260,7 +260,7 @@ msgstr "Kan inte återöppna CDI-fil"
 #: core/hw/naomi/card_reader.cpp:291 core/hw/naomi/card_reader.cpp:585
 #: core/hw/maple/maple_devs.cpp:1842
 msgid "Card ejected"
-msgstr ""
+msgstr "Kortet utmatat"
 
 #: core/hw/naomi/naomi.cpp:350
 #, c-format
@@ -387,7 +387,7 @@ msgstr "VARNING: Frånkopplad från fysiskt VMU-minne på grund av inläst tills
 
 #: core/hw/maple/maple_devs.cpp:2615
 msgid "Reconnect manually to resume using physical VMU memory"
-msgstr ""
+msgstr "Återanslut manuellt för att återuppta användning av fysiskt VMU-minne"
 
 #: core/reios/reios.cpp:400 core/reios/reios.cpp:403
 msgid "Reboot to BIOS"
@@ -565,15 +565,15 @@ msgstr "Läs in anpassade texturer"
 
 #: core/ui/settings_video.cpp:226
 msgid "Load custom/high-res textures from data/textures/<game id>"
-msgstr ""
+msgstr "Läs in anpassade/högupplösta texturer från data/textures/<game id>"
 
 #: core/ui/settings_video.cpp:230
 msgid "Preload Custom Textures"
-msgstr ""
+msgstr "Förinläs anpassade texturer"
 
 #: core/ui/settings_video.cpp:231
 msgid "Preload custom textures at game start. May improve performance but increases memory usage"
-msgstr ""
+msgstr "Förinläs anpassade texturer vid spelstart. Kan förbättra prestandan men ökar minnesanvändningen"
 
 #: core/ui/settings_video.cpp:237
 msgid "Aspect Ratio"
@@ -595,15 +595,16 @@ msgstr ""
 #: core/ui/settings_video.cpp:246
 msgid "Use the full width of the screen or window when its aspect ratio is greater than 16:9.\n"
 "Aspect Fill and remove black bars. Not compatible with integer scaling."
-msgstr ""
+msgstr "Använd hela skärmens eller fönstrets bredd när bildförhållandet är större än 16:9.\n"
+"Bildfyllning och ta bort svarta fält. Inte kompatibelt med heltalsskalning."
 
 #: core/ui/settings_video.cpp:249
 msgid "Widescreen Game Cheats"
-msgstr ""
+msgstr "Fusk för bredbildsspel"
 
 #: core/ui/settings_video.cpp:250
 msgid "Modify the game so that it displays in 16:9 anamorphic format and use horizontal screen stretching. Only some games are supported."
-msgstr ""
+msgstr "Ändra spelet så att det visas i 16:9 anamorfiskt format och använd horisontell skärmutsträckning. Endast vissa spel stöds."
 
 #: core/ui/settings_video.cpp:252
 msgid "Horizontal Stretching"
@@ -732,7 +733,7 @@ msgstr ""
 
 #: core/ui/settings_video.cpp:331
 msgid "Helps with texture bleeding case when upscaling. Disabling it can help if pixels are warping when upscaling in 2D games (MVC2, CVS, KOF, etc.)"
-msgstr ""
+msgstr "Hjälper till med texturblödning vid uppskalning. Att inaktivera den kan hjälpa om pixlarna förvrängs vid uppskalning i 2D-spel (MVC2, CVS, KOF, etc.)"
 
 #: core/ui/settings_video.cpp:332
 msgid "Native Depth Interpolation"
@@ -740,7 +741,7 @@ msgstr ""
 
 #: core/ui/settings_video.cpp:333
 msgid "Helps with texture corruption and depth issues on AMD GPUs. Can also help Intel GPUs in some cases."
-msgstr ""
+msgstr "Hjälper till med texturförvrängning och djupproblem på AMD-grafikprocessorer. Kan även hjälpa Intel-grafikprocessorer i vissa fall."
 
 #: core/ui/settings_video.cpp:334
 msgid "Copy Rendered Textures to VRAM"
@@ -756,7 +757,7 @@ msgstr "Anisotropisk filtrering"
 
 #: core/ui/settings_video.cpp:376
 msgid "Higher values make textures viewed at oblique angles look sharper, but are more demanding on the GPU. This option only has a visible impact on mipmapped textures."
-msgstr ""
+msgstr "Högre värden gör att texturer som ses i sneda vinklar ser skarpare ut, men ställer högre krav på GPU:n. Det här alternativet har bara en synlig effekt på mipmappade texturer."
 
 #: core/ui/settings_video.cpp:378
 msgid "Texture Filtering:"
@@ -777,7 +778,7 @@ msgstr "Tvinga närmaste granne"
 
 #: core/ui/settings_video.cpp:382
 msgid "Force nearest-neighbor filtering for all textures. Crisper appearance, but may cause various rendering issues. This option usually does not affect performance."
-msgstr ""
+msgstr "Tvinga närmaste grannfiltrering för alla texturer. Skarpare utseende, men kan orsaka olika renderingsproblem. Det här alternativet påverkar vanligtvis inte prestandan."
 
 #: core/ui/settings_video.cpp:384
 msgid "Force Linear"
@@ -785,11 +786,11 @@ msgstr "Tvinga linjär"
 
 #: core/ui/settings_video.cpp:384
 msgid "Force linear filtering for all textures. Smoother appearance, but may cause various rendering issues. This option usually does not affect performance."
-msgstr ""
+msgstr "Tvinga linjär filtrering för alla texturer. Jämnare utseende, men kan orsaka olika renderingsproblem. Det här alternativet påverkar vanligtvis inte prestandan."
 
 #: core/ui/settings_video.cpp:387
 msgid "Show FPS Counter"
-msgstr ""
+msgstr "Visa bildfrekvensräknare"
 
 #: core/ui/settings_video.cpp:387
 msgid "Show on-screen frame/sec counter"
@@ -821,16 +822,16 @@ msgstr "Skala ner före sändning"
 
 #: core/ui/settings_video.cpp:408
 msgid "Could increase performance when sharing a smaller texture, YMMV"
-msgstr ""
+msgstr "Kan öka prestandan vid delning av en mindre textur, din upplevelse kan variera"
 
 #: core/ui/settings_video.cpp:412
 msgid "Output vertical resolution"
-msgstr ""
+msgstr "Vertikal upplösning för utdata"
 
 #: core/ui/settings_video.cpp:417
 #, c-format
 msgid "Output texture size: %d x %d"
-msgstr ""
+msgstr "Texturstorlek för utdata: %d x %d"
 
 #: core/ui/settings_general.cpp:51
 msgid "Set"
@@ -990,15 +991,15 @@ msgstr "Hämta omslagsbilder"
 
 #: core/ui/settings_general.cpp:326
 msgid "Fetch cover images from TheGamesDB.net."
-msgstr ""
+msgstr "Hämta omslagsbilder från TheGamesDB.net."
 
 #: core/ui/settings_general.cpp:327
 msgid "UI Scaling"
-msgstr ""
+msgstr "Skalning av grafiskt gränssnitt"
 
 #: core/ui/settings_general.cpp:327
 msgid "Adjust the size of UI elements and fonts."
-msgstr ""
+msgstr "Justera storlek för gränssnittselement och typsnitt."
 
 #: core/ui/settings_general.cpp:332
 msgid "Apply"
@@ -1030,11 +1031,11 @@ msgstr ""
 
 #: core/ui/settings_general.cpp:340
 msgid "UI Theme"
-msgstr ""
+msgstr "Tema för grafiskt gränssnitt"
 
 #: core/ui/settings_general.cpp:341
 msgid "Select the UI color theme."
-msgstr ""
+msgstr "Välj färgtema för grafiskt gränssnitt."
 
 #: core/ui/settings_general.cpp:347
 msgid "Hide Legacy Naomi Roms"
@@ -1042,7 +1043,7 @@ msgstr "Dölj föråldrade Naomi-roms"
 
 #: core/ui/settings_general.cpp:348
 msgid "Hide .bin, .dat and .lst files from the content browser"
-msgstr ""
+msgstr "Dölj .bin, .dat och .lst-filer från innehållsbläddraren"
 
 #: core/ui/settings_general.cpp:351
 msgid "Use SAF File Picker"
@@ -1050,7 +1051,7 @@ msgstr "Använd SAF-filväljare"
 
 #: core/ui/settings_general.cpp:352
 msgid "Use Android Storage Access Framework file picker to select folders and files. Ignored on Android 10 and later."
-msgstr ""
+msgstr "Använd Android Storage Access Framework-filväljaren för att välja mappar och filer. Ignoreras i Android 10 och senare."
 
 #: core/ui/settings_general.cpp:355
 msgid "Automatic State:"
@@ -1186,7 +1187,7 @@ msgstr "Välj mapp för texturpaket"
 
 #: core/ui/settings_general.cpp:442
 msgid "Folders containing textures/<gameId> or <gameId> under a textures subfolder"
-msgstr ""
+msgstr "Mappar som innehåller textures/<gameId> eller <gameId> under en undermapp med namnet textures"
 
 #: core/ui/settings_general.cpp:446
 msgid "Texture Dump Folder"
@@ -1198,7 +1199,7 @@ msgstr "Välj mappen för texturdumpning"
 
 #: core/ui/settings_general.cpp:447
 msgid "Folder where texture dumps are saved. Game-specific subfolders will be created automatically"
-msgstr ""
+msgstr "Mapp där texturdumpningar sparas. Spelspecifika undermappar skapas automatiskt"
 
 #: core/ui/settings_general.cpp:450
 msgid "Box Art Folder"
@@ -1210,19 +1211,19 @@ msgstr "Välj mappen för omslagsbilder"
 
 #: core/ui/settings_general.cpp:451
 msgid "Folder containing box art images (png/jpg). If empty, Flycast will use the default Home Folder/boxart for downloads and generated art"
-msgstr ""
+msgstr "Mapp som innehåller omslagsbilder (png/jpg). Om den är tom kommer Flycast att använda standardiserad hemmapp/boxart för hämtningar och genererade omslag"
 
 #: core/ui/settings_general.cpp:454
 msgid "Controller Mapping Folders"
-msgstr ""
+msgstr "Mappar för kontrollermappning"
 
 #: core/ui/settings_general.cpp:454
 msgid "Select a controller mapping folder"
-msgstr ""
+msgstr "Välj en mapp för kontrollermappning"
 
 #: core/ui/settings_general.cpp:455
 msgid "Folders containing controller mapping files (.cfg). The emulator also looks in Home Folder/mappings. Per-game mappings are suffixed with _<gameId>.cfg"
-msgstr ""
+msgstr "Mappar som innehåller mappningsfiler (.cfg) för kontroller. Emulatorn letar också i hemmapp/mappings. Per-spelsmapparna har suffixet _<gameId>.cfg"
 
 #: core/ui/settings_general.cpp:458
 msgid "Cheat Folders"
@@ -1275,31 +1276,31 @@ msgstr "Twin Stick"
 
 #: core/ui/settings_controls.cpp:49
 msgid "Arcade/Ascii Stick"
-msgstr ""
+msgstr "Arkad/Ascii Stick"
 
 #: core/ui/settings_controls.cpp:50
 msgid "Maracas Controller"
-msgstr ""
+msgstr "Maracas-kontroller"
 
 #: core/ui/settings_controls.cpp:51
 msgid "Fishing Controller"
-msgstr ""
+msgstr "Fishing-kontroller"
 
 #: core/ui/settings_controls.cpp:52
 msgid "Pop'n Music controller"
-msgstr ""
+msgstr "Pop'n Music-kontroller"
 
 #: core/ui/settings_controls.cpp:53
 msgid "Racing Controller"
-msgstr ""
+msgstr "Racing-kontroller"
 
 #: core/ui/settings_controls.cpp:54
 msgid "Densha de Go! Controller"
-msgstr ""
+msgstr "Densha de Go!-kontroller"
 
 #: core/ui/settings_controls.cpp:55
 msgid "Panther DC/Full Controller"
-msgstr ""
+msgstr "Panther DC/Full kontroller"
 
 #: core/ui/settings_controls.cpp:62
 msgid "Sega VMU"
@@ -1522,7 +1523,7 @@ msgstr "Infoga kort"
 
 #: core/ui/settings_controls.cpp:385 core/ui/settings_controls.cpp:790
 msgid "Map Control"
-msgstr ""
+msgstr "Mappa kontroll"
 
 #: core/ui/settings_controls.cpp:387
 #, c-format
@@ -1549,7 +1550,8 @@ msgstr "Sekventiell"
 #: core/ui/settings_controls.cpp:519
 msgid "When checked, this combo will only activate when all keys are pressed in the given sequence.\n"
 "When not checked, the combo will activate when all keys are pressed in any order."
-msgstr ""
+msgstr "När detta markeras aktiveras endast när alla tangenter trycks in i den angivna sekvensen.\n"
+"När den inte är markerad så aktiveras kombinationen när alla tangenter trycks in i valfri ordning."
 
 #: core/ui/settings_controls.cpp:576 core/ui/settings_controls.cpp:1025
 msgid "Controller Mapping"
@@ -1598,7 +1600,7 @@ msgstr "Bekräfta återställning"
 
 #: core/ui/settings_controls.cpp:662
 msgid "Are you sure you want to reset the mappings to default?"
-msgstr ""
+msgstr "Är du säker på att du vill återställa mappningarna till standard?"
 
 #: core/ui/settings_controls.cpp:666
 msgid "Controller Type:"
@@ -1610,7 +1612,7 @@ msgstr "Gamepad"
 
 #: core/ui/settings_controls.cpp:670
 msgid "Arcade / Hit Box"
-msgstr ""
+msgstr "Arkad / Hit Box"
 
 #: core/ui/settings_controls.cpp:677 core/ui/settings_about.cpp:149
 msgid "Yes"
@@ -1622,7 +1624,7 @@ msgstr "Nej"
 
 #: core/ui/settings_controls.cpp:693
 msgid "Arcade Controls"
-msgstr ""
+msgstr "Arkadkontroller"
 
 #: core/ui/settings_controls.cpp:839 core/ui/settings_controls.cpp:1045
 msgid "Gamepad Settings"
@@ -1642,7 +1644,7 @@ msgstr ""
 
 #: core/ui/settings_controls.cpp:886
 msgid "View"
-msgstr ""
+msgstr "Visning"
 
 #: core/ui/settings_controls.cpp:887
 msgid "Transparency"
@@ -1666,11 +1668,11 @@ msgstr "Använd standard"
 
 #: core/ui/settings_controls.cpp:917
 msgid "Rumble"
-msgstr ""
+msgstr "Rumble"
 
 #: core/ui/settings_controls.cpp:923
 msgid "Rumble power"
-msgstr ""
+msgstr "Rumble-kraft"
 
 #: core/ui/settings_controls.cpp:927
 msgid "Thumbsticks"
@@ -1758,11 +1760,11 @@ msgstr "Hårkors"
 
 #: core/ui/settings_controls.cpp:1180
 msgid "Use Network Expansion Devices"
-msgstr ""
+msgstr "Använd Network Expansion-enheter"
 
 #: core/ui/settings_controls.cpp:1181
 msgid "Connect to expansion devices such as VMUs over local TCP."
-msgstr ""
+msgstr "Anslut till expansionsenheter så som VMUer över lokal TCP."
 
 #: core/ui/settings_controls.cpp:1195
 msgid "Crosshair Size"
@@ -1829,7 +1831,7 @@ msgstr "Prestationer"
 
 #: core/ui/gui.cpp:700
 msgid "Barcode Card"
-msgstr ""
+msgstr "Streckkodskort"
 
 #: core/ui/gui.cpp:729
 msgid "Connect DreamLink"
@@ -1943,7 +1945,7 @@ msgstr "Läser in..."
 
 #: core/ui/gui.cpp:1413
 msgid "Preloading custom textures"
-msgstr ""
+msgstr "Förinläser anpassade texturer"
 
 #: core/ui/gui.cpp:1416
 msgid "Preparing..."
@@ -2059,11 +2061,11 @@ msgstr "SH4-klocka"
 
 #: core/ui/settings.cpp:49
 msgid "Over/Underclock the main SH4 CPU. Default is 200 MHz. Other values may crash, freeze or trigger unexpected nuclear reactions."
-msgstr ""
+msgstr "Över/underklocka huvudprocessorn SH4. Standard är 200 MHz. Övriga värden kan krascha, frysa eller utlösa oväntade kärnreaktioner."
 
 #: core/ui/settings.cpp:97
 msgid "Other"
-msgstr ""
+msgstr "Övriga"
 
 #: core/ui/settings.cpp:99
 msgid "HLE BIOS"
@@ -2087,15 +2089,15 @@ msgstr "Seriekonsol"
 
 #: core/ui/settings.cpp:104
 msgid "Dump the Dreamcast serial console to stdout"
-msgstr ""
+msgstr "Dumpa Dreamcasts seriekonsol till stdout"
 
 #: core/ui/settings.cpp:108
 msgid "Dreamcast 32MB RAM Mod"
-msgstr ""
+msgstr "Dreamcast 32MB RAM Mod"
 
 #: core/ui/settings.cpp:109
 msgid "Enables 32MB RAM Mod for Dreamcast. May affect compatibility"
-msgstr ""
+msgstr "Aktiverar 32MB RAM Mod för Dreamcast. Kan påverka kompatibiliteten"
 
 #: core/ui/settings.cpp:111
 msgid "Dump Textures"
@@ -2103,7 +2105,7 @@ msgstr "Dumpa texturer"
 
 #: core/ui/settings.cpp:112
 msgid "Dump all textures into data/texdump/<game id>"
-msgstr ""
+msgstr "Dumpa alla texturer till data/texdump/<game id>"
 
 #: core/ui/settings.cpp:116
 msgid "Dump Replaced Textures"
@@ -2111,7 +2113,7 @@ msgstr "Dumpa ersatta texturer"
 
 #: core/ui/settings.cpp:117
 msgid "Always dump textures that are already replaced by custom textures"
-msgstr ""
+msgstr "Dumpa alltid texturer som redan har ersatts av anpassade texturer"
 
 #: core/ui/settings.cpp:121
 msgid "Log to File"
@@ -2119,7 +2121,7 @@ msgstr "Logga till fil"
 
 #: core/ui/settings.cpp:124
 msgid "Log debug information to flycast.log"
-msgstr ""
+msgstr "Logga felsökningsinformation till flycast.log"
 
 #: core/ui/settings.cpp:126
 msgid "Automatically Report Crashes"
@@ -2127,7 +2129,7 @@ msgstr "Rapportera krascher automatiskt"
 
 #: core/ui/settings.cpp:127
 msgid "Automatically upload crash reports to sentry.io to help in troubleshooting. No personal information is included."
-msgstr ""
+msgstr "Skicka automatiskt upp rapporter till sentry.io för att hjälpa vid felsökning. Ingen personlig information inkluderas."
 
 #: core/ui/settings.cpp:132
 msgid "Lua Scripting"
@@ -2139,7 +2141,7 @@ msgstr "Lua-filnamn"
 
 #: core/ui/settings.cpp:136
 msgid "Specify lua filename to use. Should be located in Flycast config folder. Defaults to flycast.lua when empty."
-msgstr ""
+msgstr "Ange lua-filnamn att använda. Bör ligga i Flycasts konfigurationsmapp. Standard är flycast.lua när den är tom."
 
 #: core/ui/settings.cpp:270
 msgid "General"
@@ -2183,7 +2185,7 @@ msgstr "(?)"
 
 #: core/ui/vgamepad.cpp:79
 msgid "Reset"
-msgstr ""
+msgstr "Återställ"
 
 #: core/ui/settings_network.cpp:28
 msgid "Network Type"
@@ -2195,15 +2197,15 @@ msgstr "Aktivera nätverk med GGPO"
 
 #: core/ui/settings_network.cpp:48
 msgid "Enable networking for supported Naomi and Atomiswave games"
-msgstr ""
+msgstr "Aktivera nätverk för Naomi och Atomiswave-spel som har stöd för det"
 
 #: core/ui/settings_network.cpp:50
 msgid "Battle Cable"
-msgstr ""
+msgstr "Battle Cable"
 
 #: core/ui/settings_network.cpp:52
 msgid "Emulate the Taisen (Battle) null modem cable for games that support it"
-msgstr ""
+msgstr "Emulera nollmodemkabel för Taisen (Battle) för spel som har stöd för det"
 
 #: core/ui/settings_network.cpp:72
 msgid "Configuration"
@@ -2227,11 +2229,11 @@ msgstr "Din IP-adress och valfri port"
 
 #: core/ui/settings_network.cpp:83
 msgid "Frame Delay"
-msgstr ""
+msgstr "Bildfördröjning"
 
 #: core/ui/settings_network.cpp:84
 msgid "Sets Frame Delay, advisable for sessions with ping >100 ms"
-msgstr ""
+msgstr "Ställer in bildfördröjning, lämpligt för sessioner med ping >100 ms"
 
 #: core/ui/settings_network.cpp:86
 msgid "Left Thumbstick:"
@@ -2247,7 +2249,7 @@ msgstr "Horisontell"
 
 #: core/ui/settings_network.cpp:89
 msgid "Use the left thumbstick horizontal axis only"
-msgstr ""
+msgstr "Använd endast den horisontella axeln på vänstra tumspaken"
 
 #: core/ui/settings_network.cpp:91
 msgid "Full"
@@ -2255,7 +2257,7 @@ msgstr "Fullständig"
 
 #: core/ui/settings_network.cpp:91
 msgid "Use the left thumbstick horizontal and vertical axes"
-msgstr ""
+msgstr "Använd vertikala och horisontella axlar på vänstra tumspaken"
 
 #: core/ui/settings_network.cpp:93
 msgid "Enable Chat"
@@ -2279,7 +2281,7 @@ msgstr "Tidsgräns för chattfönster (sekunder)"
 
 #: core/ui/settings_network.cpp:103
 msgid "Sets duration that chat window stays open after new message is received."
-msgstr ""
+msgstr "Ställer in längden som chattfönstret är öppet efter nytt meddelande tagits emot."
 
 #: core/ui/settings_network.cpp:107 core/ui/settings_network.cpp:167
 msgid "Network Statistics"
@@ -2319,7 +2321,7 @@ msgstr "Matcha kod"
 
 #: core/ui/settings_network.cpp:139
 msgid "Choose a unique word or number and share it with your opponent."
-msgstr ""
+msgstr "Välj ett unikt ord eller nummer och dela det med din motståndare."
 
 #: core/ui/settings_network.cpp:141
 msgid "Connect"
@@ -2352,7 +2354,7 @@ msgstr "Agera som Master"
 
 #: core/ui/settings_network.cpp:190
 msgid "Only used for Maximum Speed. One of the peer must be master."
-msgstr ""
+msgstr "Används endast för Maximum Speed. En av motparterna måste vara master."
 
 #: core/ui/settings_network.cpp:194
 msgid "Network Options"
@@ -2372,11 +2374,11 @@ msgstr ""
 
 #: core/ui/settings_network.cpp:197
 msgid "Broadcast digital outputs and force-feedback state on TCP port 8000. Compatible with the \"-output network\" MAME option. Arcade games only."
-msgstr ""
+msgstr "Sänder digitala utgångar och force feedback-tillstånd på TCP-port 8000. Kompatibel med MAME-alternativet ”-output network”. Endast arkadspel."
 
 #: core/ui/settings_network.cpp:202
 msgid "Broadband Adapter Emulation"
-msgstr ""
+msgstr "Emulering av Broadband Adapter"
 
 #: core/ui/settings_network.cpp:203
 msgid "Emulate the Ethernet Broadband Adapter (BBA) instead of the Modem"
