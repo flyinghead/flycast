@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-12-08 11:35+0100\n"
-"PO-Revision-Date: 2025-12-08 13:06\n"
+"PO-Revision-Date: 2025-12-08 15:01\n"
 "Last-Translator: \n"
 "Language: sv_SE\n"
 "MIME-Version: 1.0\n"
@@ -32,11 +32,11 @@ msgstr ""
 
 #: core/achievements/achievements.cpp:550
 msgid "RetroAchievements disconnected"
-msgstr ""
+msgstr "RetroAchievements frånkopplad"
 
 #: core/achievements/achievements.cpp:554
 msgid "RetroAchievements reconnected"
-msgstr ""
+msgstr "RetroAchievements återansluten"
 
 #: core/achievements/achievements.cpp:586
 #, c-format
@@ -85,7 +85,7 @@ msgstr ""
 #: core/achievements/achievements.cpp:939 core/ui/settings_general.cpp:370
 #: core/ui/gui_achievements.cpp:305
 msgid "Hardcore Mode"
-msgstr ""
+msgstr "Hardcore-läge"
 
 #: core/achievements/achievements.cpp:970
 msgid "Hardcore mode disabled"
@@ -106,7 +106,7 @@ msgstr ""
 
 #: core/audio/audiobackend_null.cpp:12
 msgid "No Audio"
-msgstr ""
+msgstr "Inget ljud"
 
 #: core/audio/audiobackend_oboe.cpp:81
 msgid "Automatic AAudio / OpenSL selection"
@@ -120,7 +120,7 @@ msgstr ""
 #: core/hw/naomi/naomi.cpp:352
 #, c-format
 msgid "Speed: %3d"
-msgstr ""
+msgstr "Hastighet: %3d"
 
 #: core/hw/naomi/printer.cpp:857
 msgid "Print out saved"
@@ -168,23 +168,23 @@ msgstr ""
 
 #: core/reios/reios.cpp:400 core/reios/reios.cpp:403
 msgid "Reboot to BIOS"
-msgstr ""
+msgstr "Starta om till BIOS"
 
 #: core/cheats.cpp:824 core/cheats.cpp:829
 msgid "Invalid cheat code"
-msgstr ""
+msgstr "Ogiltig fuskkod"
 
 #: core/cheats.cpp:911 core/cheats.cpp:950 core/cheats.cpp:963
 msgid "Missing value"
-msgstr ""
+msgstr "Saknar värde"
 
 #: core/cheats.cpp:929
 msgid "Missing values"
-msgstr ""
+msgstr "Saknar värden"
 
 #: core/cheats.cpp:976
 msgid "Missing address or value"
-msgstr ""
+msgstr "Saknad adress eller värde"
 
 #: core/cheats.cpp:985 core/cheats.cpp:1089
 msgid "Unsupported cheat type"
@@ -216,7 +216,7 @@ msgstr ""
 
 #: core/ui/settings_video.cpp:85
 msgid "Graphics API"
-msgstr ""
+msgstr "Grafik-API"
 
 #: core/ui/settings_video.cpp:96
 msgid "MoltenVK: An implementation of Vulkan that runs on Apple's Metal graphics framework"
@@ -228,7 +228,7 @@ msgstr ""
 
 #: core/ui/settings_video.cpp:121
 msgid "Per Triangle"
-msgstr ""
+msgstr "Per triangel"
 
 #: core/ui/settings_video.cpp:123
 msgid "Sort transparent polygons per triangle. Fast but may produce graphical glitches"
@@ -244,7 +244,7 @@ msgstr ""
 
 #: core/ui/settings_video.cpp:131
 msgid "Per Pixel"
-msgstr ""
+msgstr "Per pixel"
 
 #: core/ui/settings_video.cpp:133
 msgid "Sort transparent polygons per pixel. Slower but accurate"
@@ -320,7 +320,7 @@ msgstr ""
 
 #: core/ui/settings_video.cpp:225
 msgid "Load Custom Textures"
-msgstr ""
+msgstr "Läs in anpassade texturer"
 
 #: core/ui/settings_video.cpp:226
 msgid "Load custom/high-res textures from data/textures/<game id>"
@@ -336,11 +336,11 @@ msgstr ""
 
 #: core/ui/settings_video.cpp:237
 msgid "Aspect Ratio"
-msgstr ""
+msgstr "Bildförhållande"
 
 #: core/ui/settings_video.cpp:239
 msgid "Widescreen"
-msgstr ""
+msgstr "Bredbild"
 
 #: core/ui/settings_video.cpp:240
 msgid "Draw geometry outside of the normal 4:3 aspect ratio. May produce graphical glitches in the revealed areas.\n"
@@ -366,19 +366,19 @@ msgstr ""
 
 #: core/ui/settings_video.cpp:252
 msgid "Horizontal Stretching"
-msgstr ""
+msgstr "Horisontell utsträckning"
 
 #: core/ui/settings_video.cpp:253
 msgid "Stretch the screen horizontally"
-msgstr ""
+msgstr "Sträck ut skärmen horisontellt"
 
 #: core/ui/settings_video.cpp:254
 msgid "Rotate Screen 90°"
-msgstr ""
+msgstr "Rotera skärm 90°"
 
 #: core/ui/settings_video.cpp:254
 msgid "Rotate the screen 90° counterclockwise"
-msgstr ""
+msgstr "Rotera skärmen 90° motsols"
 
 #: core/ui/settings_video.cpp:259
 msgid "Per Pixel Settings"
@@ -386,19 +386,19 @@ msgstr ""
 
 #: core/ui/settings_video.cpp:262
 msgid "512 MB"
-msgstr ""
+msgstr "512 MB"
 
 #: core/ui/settings_video.cpp:262
 msgid "1 GB"
-msgstr ""
+msgstr "1 GB"
 
 #: core/ui/settings_video.cpp:262
 msgid "2 GB"
-msgstr ""
+msgstr "2 GB"
 
 #: core/ui/settings_video.cpp:262
 msgid "4 GB"
-msgstr ""
+msgstr "4 GB"
 
 #: core/ui/settings_video.cpp:300
 msgid "Pixel Buffer Size"
@@ -418,7 +418,7 @@ msgstr ""
 
 #: core/ui/settings_video.cpp:308
 msgid "Performance"
-msgstr ""
+msgstr "Prestanda"
 
 #: core/ui/settings_video.cpp:310
 msgid "Automatic Frame Skipping:"
@@ -427,7 +427,7 @@ msgstr ""
 #: core/ui/settings_video.cpp:312 core/ui/settings_video.cpp:337
 #: core/ui/settings_network.cpp:40 core/ui/settings_network.cpp:87
 msgid "Disabled"
-msgstr ""
+msgstr "Inaktiverad"
 
 #: core/ui/settings_video.cpp:312
 msgid "No frame skipping"
@@ -435,7 +435,7 @@ msgstr ""
 
 #: core/ui/settings_video.cpp:314
 msgid "Normal"
-msgstr ""
+msgstr "Normal"
 
 #: core/ui/settings_video.cpp:314
 msgid "Skip a frame when the GPU and CPU are both running slow"
@@ -459,7 +459,7 @@ msgstr ""
 
 #: core/ui/settings_video.cpp:321
 msgid "Shadows"
-msgstr ""
+msgstr "Skuggor"
 
 #: core/ui/settings_video.cpp:322
 msgid "Enable modifier volumes, usually used for shadows"
@@ -467,15 +467,15 @@ msgstr ""
 
 #: core/ui/settings_video.cpp:323
 msgid "Fog"
-msgstr ""
+msgstr "Dimma"
 
 #: core/ui/settings_video.cpp:323
 msgid "Enable fog effects"
-msgstr ""
+msgstr "Aktivera dimmeffekter"
 
 #: core/ui/settings_video.cpp:326 core/ui/settings.cpp:300
 msgid "Advanced"
-msgstr ""
+msgstr "Avancerat"
 
 #: core/ui/settings_video.cpp:328
 msgid "Delay Frame Swapping"
@@ -524,7 +524,7 @@ msgstr ""
 #: core/ui/settings_video.cpp:380 core/ui/settings_general.cpp:188
 #: core/ui/settings_general.cpp:192 core/ui/settings_general.cpp:197
 msgid "Default"
-msgstr ""
+msgstr "Standard"
 
 #: core/ui/settings_video.cpp:380
 msgid "Use the game's default texture filtering"
@@ -593,12 +593,12 @@ msgstr ""
 
 #: core/ui/settings_general.cpp:51
 msgid "Set"
-msgstr ""
+msgstr "Ställ in"
 
 #: core/ui/settings_general.cpp:108 core/ui/settings_general.cpp:250
 #: core/ui/gui_cheats.cpp:102
 msgid "Add"
-msgstr ""
+msgstr "Lägg till"
 
 #: core/ui/settings_general.cpp:161 core/ui/gui.cpp:911
 msgid "Select a Content Folder"
@@ -606,31 +606,31 @@ msgstr ""
 
 #: core/ui/settings_general.cpp:188
 msgid "Japanese"
-msgstr ""
+msgstr "Japanska"
 
 #: core/ui/settings_general.cpp:188
 msgid "English"
-msgstr ""
+msgstr "Engelska"
 
 #: core/ui/settings_general.cpp:188
 msgid "German"
-msgstr ""
+msgstr "Tyska"
 
 #: core/ui/settings_general.cpp:188
 msgid "French"
-msgstr ""
+msgstr "Franska"
 
 #: core/ui/settings_general.cpp:188
 msgid "Spanish"
-msgstr ""
+msgstr "Spanska"
 
 #: core/ui/settings_general.cpp:188
 msgid "Italian"
-msgstr ""
+msgstr "Italienska"
 
 #: core/ui/settings_general.cpp:189
 msgid "Language"
-msgstr ""
+msgstr "Språk"
 
 #: core/ui/settings_general.cpp:190
 msgid "The language as configured in the Dreamcast BIOS"
@@ -646,36 +646,36 @@ msgstr ""
 
 #: core/ui/settings_general.cpp:197 core/ui/settings_general.cpp:198
 msgid "Japan"
-msgstr ""
+msgstr "Japan"
 
 #: core/ui/settings_general.cpp:197 core/ui/settings_general.cpp:198
 msgid "USA"
-msgstr ""
+msgstr "USA"
 
 #: core/ui/settings_general.cpp:197
 msgid "Europe"
-msgstr ""
+msgstr "Europa"
 
 #: core/ui/settings_general.cpp:198
 msgctxt "region"
 msgid "Export"
-msgstr ""
+msgstr "Exportera"
 
 #: core/ui/settings_general.cpp:198
 msgid "Korea"
-msgstr ""
+msgstr "Korea"
 
 #: core/ui/settings_general.cpp:200
 msgid "Region"
-msgstr ""
+msgstr "Region"
 
 #: core/ui/settings_general.cpp:201
 msgid "BIOS region"
-msgstr ""
+msgstr "BIOS-region"
 
 #: core/ui/settings_general.cpp:203
 msgid "VGA"
-msgstr ""
+msgstr "VGA"
 
 #: core/ui/settings_general.cpp:203
 msgid "RGB Component"
@@ -687,7 +687,7 @@ msgstr ""
 
 #: core/ui/settings_general.cpp:210
 msgid "Cable"
-msgstr ""
+msgstr "Kabel"
 
 #: core/ui/settings_general.cpp:223
 msgid "Video connection type"
@@ -817,7 +817,7 @@ msgstr ""
 
 #: core/ui/settings_general.cpp:356 core/ui/gui_cheats.cpp:104
 msgid "Load"
-msgstr ""
+msgstr "Läs in"
 
 #: core/ui/settings_general.cpp:357
 msgid "Load the last saved state of the game when starting"
@@ -825,7 +825,7 @@ msgstr ""
 
 #: core/ui/settings_general.cpp:359 core/ui/vgamepad.cpp:73
 msgid "Save"
-msgstr ""
+msgstr "Spara"
 
 #: core/ui/settings_general.cpp:360
 msgid "Save the state of the game when stopping"
@@ -849,7 +849,7 @@ msgstr ""
 
 #: core/ui/settings_general.cpp:366
 msgid "Enable RetroAchievements"
-msgstr ""
+msgstr "Aktivera RetroAchievements"
 
 #: core/ui/settings_general.cpp:366
 msgid "Track your game achievements using RetroAchievements.org"
@@ -861,39 +861,39 @@ msgstr ""
 
 #: core/ui/settings_general.cpp:372
 msgid "Username"
-msgstr ""
+msgstr "Användarnamn"
 
 #: core/ui/settings_general.cpp:380
 msgid "Authentication successful"
-msgstr ""
+msgstr "Autentisering lyckades"
 
 #: core/ui/settings_general.cpp:383
 msgid "Logout"
-msgstr ""
+msgstr "Logga ut"
 
 #: core/ui/settings_general.cpp:389
 msgid "Password"
-msgstr ""
+msgstr "Lösenord"
 
 #: core/ui/settings_general.cpp:393
 msgid "Authenticating..."
-msgstr ""
+msgstr "Autentiserar..."
 
 #: core/ui/settings_general.cpp:406
 msgid "Login"
-msgstr ""
+msgstr "Logga in"
 
 #: core/ui/settings_general.cpp:421
 msgid "Custom Paths"
-msgstr ""
+msgstr "Anpassade sökvägar"
 
 #: core/ui/settings_general.cpp:423
 msgid "BIOS Folders"
-msgstr ""
+msgstr "BIOS-mappar"
 
 #: core/ui/settings_general.cpp:423
 msgid "Select a BIOS folder"
-msgstr ""
+msgstr "Välj en BIOS-mapp"
 
 #: core/ui/settings_general.cpp:424
 msgid "Folders containing BIOS files (e.g. dc_boot.bin or dc_bios.bin) and arcade BIOS"
@@ -901,7 +901,7 @@ msgstr ""
 
 #: core/ui/settings_general.cpp:428
 msgid "VMU Folder"
-msgstr ""
+msgstr "VMU-mapp"
 
 #: core/ui/settings_general.cpp:428
 msgid "Select the VMU folder"
@@ -1070,31 +1070,31 @@ msgstr ""
 
 #: core/ui/settings_controls.cpp:64
 msgid "Microphone"
-msgstr ""
+msgstr "Mikrofon"
 
 #: core/ui/settings_controls.cpp:155
 msgid "All"
-msgstr ""
+msgstr "Alla"
 
 #: core/ui/settings_controls.cpp:163 core/ui/settings_controls.cpp:221
 msgid "Directions"
-msgstr ""
+msgstr "Riktningar"
 
 #: core/ui/settings_controls.cpp:164 core/ui/settings_controls.cpp:222
 msgid "Up"
-msgstr ""
+msgstr "Upp"
 
 #: core/ui/settings_controls.cpp:165 core/ui/settings_controls.cpp:223
 msgid "Down"
-msgstr ""
+msgstr "Ner"
 
 #: core/ui/settings_controls.cpp:166 core/ui/settings_controls.cpp:224
 msgid "Left"
-msgstr ""
+msgstr "Vänster"
 
 #: core/ui/settings_controls.cpp:167 core/ui/settings_controls.cpp:225
 msgid "Right"
-msgstr ""
+msgstr "Höger"
 
 #: core/ui/settings_controls.cpp:169 core/ui/settings_controls.cpp:227
 msgid "Thumbstick Up"
@@ -1186,28 +1186,28 @@ msgstr ""
 
 #: core/ui/settings_controls.cpp:204 core/ui/settings_controls.cpp:254
 msgid "System Buttons"
-msgstr ""
+msgstr "Systemknappar"
 
 #: core/ui/settings_controls.cpp:205 core/ui/settings_controls.cpp:255
 msgid "Start"
-msgstr ""
+msgstr "Starta"
 
 #: core/ui/settings_controls.cpp:206 core/ui/settings_controls.cpp:256
 msgid "Reload"
-msgstr ""
+msgstr "Läs om"
 
 #: core/ui/settings_controls.cpp:208 core/ui/settings_controls.cpp:262
 msgid "Emulator"
-msgstr ""
+msgstr "Emulator"
 
 #: core/ui/settings_controls.cpp:209 core/ui/settings_controls.cpp:263
 msgid "Menu"
-msgstr ""
+msgstr "Meny"
 
 #: core/ui/settings_controls.cpp:210 core/ui/settings_controls.cpp:264
 #: core/ui/gui.cpp:777 core/ui/gui.cpp:1038
 msgid "Exit"
-msgstr ""
+msgstr "Avsluta"
 
 #: core/ui/settings_controls.cpp:211 core/ui/settings_controls.cpp:265
 msgid "Fast-forward"
@@ -1229,15 +1229,15 @@ msgstr ""
 
 #: core/ui/settings_controls.cpp:215 core/ui/settings_controls.cpp:269
 msgid "Save Screenshot"
-msgstr ""
+msgstr "Spara skärmbild"
 
 #: core/ui/settings_controls.cpp:238
 msgid "Button 1"
-msgstr ""
+msgstr "Knapp 1"
 
 #: core/ui/settings_controls.cpp:239
 msgid "Button 2"
-msgstr ""
+msgstr "Knapp 2"
 
 #: core/ui/settings_controls.cpp:240
 msgid "Button 3"
@@ -1373,11 +1373,11 @@ msgstr ""
 
 #: core/ui/settings_controls.cpp:677 core/ui/settings_about.cpp:149
 msgid "Yes"
-msgstr ""
+msgstr "Ja"
 
 #: core/ui/settings_controls.cpp:684 core/ui/settings_about.cpp:155
 msgid "No"
-msgstr ""
+msgstr "Nej"
 
 #: core/ui/settings_controls.cpp:693
 msgid "Arcade Controls"
@@ -1421,7 +1421,7 @@ msgstr ""
 
 #: core/ui/settings_controls.cpp:906
 msgid "Use Default"
-msgstr ""
+msgstr "Använd standard"
 
 #: core/ui/settings_controls.cpp:917
 msgid "Rumble"
@@ -1437,7 +1437,7 @@ msgstr ""
 
 #: core/ui/settings_controls.cpp:930
 msgid "Dead zone"
-msgstr ""
+msgstr "Dödzon"
 
 #: core/ui/settings_controls.cpp:933
 msgid "Minimum deflection to register as input"
@@ -1445,7 +1445,7 @@ msgstr ""
 
 #: core/ui/settings_controls.cpp:936
 msgid "Saturation"
-msgstr ""
+msgstr "Mättnad"
 
 #: core/ui/settings_controls.cpp:939
 msgid "Value sent to the game at 100% thumbstick deflection. Values greater than 100% will saturate before full deflection of the thumbstick."
@@ -1453,34 +1453,34 @@ msgstr ""
 
 #: core/ui/settings_controls.cpp:952
 msgid "Physical Devices"
-msgstr ""
+msgstr "Fysiska enheter"
 
 #: core/ui/settings_controls.cpp:956 core/ui/settings_controls.cpp:967
 msgid "System"
-msgstr ""
+msgstr "System"
 
 #: core/ui/settings_controls.cpp:957 core/ui/settings_controls.cpp:970
 #: core/ui/gui_cheats.cpp:71
 msgid "Name"
-msgstr ""
+msgstr "Namn"
 
 #: core/ui/settings_controls.cpp:991
 #, c-format
 msgid "DreamLink status: %s"
-msgstr ""
+msgstr "DreamLink-status: %s"
 
 #: core/ui/settings_controls.cpp:1033
 msgid "Edit Layout"
-msgstr ""
+msgstr "Redigera layout"
 
 #: core/ui/settings_controls.cpp:1044 core/ui/gui.cpp:773 core/ui/gui.cpp:1023
 #: core/ui/settings.cpp:213
 msgid "Settings"
-msgstr ""
+msgstr "Inställningar"
 
 #: core/ui/settings_controls.cpp:1054
 msgid "Mouse sensitivity"
-msgstr ""
+msgstr "Muskänslighet"
 
 #: core/ui/settings_controls.cpp:1056
 msgid "Use Raw Input"
@@ -1505,7 +1505,7 @@ msgstr ""
 #: core/ui/settings_controls.cpp:1081
 #, c-format
 msgid "Port %c"
-msgstr ""
+msgstr "Port %c"
 
 #: core/ui/settings_controls.cpp:1152
 msgid "Crosshair color"
@@ -1513,7 +1513,7 @@ msgstr ""
 
 #: core/ui/settings_controls.cpp:1156
 msgid "Crosshair"
-msgstr ""
+msgstr "Hårkors"
 
 #: core/ui/settings_controls.cpp:1180
 msgid "Use Network Expansion Devices"
@@ -1575,15 +1575,15 @@ msgstr ""
 
 #: core/ui/gui.cpp:678
 msgid "Resume"
-msgstr ""
+msgstr "Återuppta"
 
 #: core/ui/gui.cpp:687
 msgid "Cheats"
-msgstr ""
+msgstr "Fusk"
 
 #: core/ui/gui.cpp:694
 msgid "Achievements"
-msgstr ""
+msgstr "Prestationer"
 
 #: core/ui/gui.cpp:700
 msgid "Barcode Card"
@@ -1591,20 +1591,21 @@ msgstr ""
 
 #: core/ui/gui.cpp:729
 msgid "Connect DreamLink"
-msgstr ""
+msgstr "Anslut DreamLink"
 
 #: core/ui/gui.cpp:737
 msgid "Disconnect\n"
 "DreamLink"
-msgstr ""
+msgstr "Koppla från\n"
+"DreamLink"
 
 #: core/ui/gui.cpp:752
 msgid "Connected"
-msgstr ""
+msgstr "Ansluten"
 
 #: core/ui/gui.cpp:752
 msgid "Disconnected"
-msgstr ""
+msgstr "Frånkopplad"
 
 #: core/ui/gui.cpp:761
 msgid "Insert Disk"
@@ -1616,20 +1617,20 @@ msgstr ""
 
 #: core/ui/gui.cpp:777
 msgid "Close Game"
-msgstr ""
+msgstr "Stäng spel"
 
 #: core/ui/gui.cpp:814
 #, c-format
 msgid "Slot %d"
-msgstr ""
+msgstr "Plats %d"
 
 #: core/ui/gui.cpp:830
 msgid "Empty"
-msgstr ""
+msgstr "Tom"
 
 #: core/ui/gui.cpp:858 core/ui/gui_cheats.cpp:48
 msgid "OK"
-msgstr ""
+msgstr "Ok"
 
 #: core/ui/gui.cpp:878 core/ui/gui.cpp:879
 msgid "Incorrect Content Location?"
@@ -1648,55 +1649,55 @@ msgstr ""
 #: core/ui/gui.cpp:1431 core/ui/gui_cheats.cpp:47 core/ui/gui_util.cpp:181
 #: core/ui/vgamepad.cpp:87
 msgid "Cancel"
-msgstr ""
+msgstr "Avbryt"
 
 #: core/ui/gui.cpp:1019
 msgid "GAMES"
-msgstr ""
+msgstr "SPEL"
 
 #: core/ui/gui.cpp:1026
 msgid "Filter"
-msgstr ""
+msgstr "Filter"
 
 #: core/ui/gui.cpp:1033 core/ui/gui.cpp:1034
 msgid "Load..."
-msgstr ""
+msgstr "Läs in..."
 
 #: core/ui/gui.cpp:1153
 msgid "Your game list is empty"
-msgstr ""
+msgstr "Din spellista är tom"
 
 #: core/ui/gui.cpp:1163
 msgid "Add Game Folder"
-msgstr ""
+msgstr "Lägg till spelmapp"
 
 #: core/ui/gui.cpp:1195 core/ui/gui.cpp:1206
 msgid "Invalid selection:"
-msgstr ""
+msgstr "Ogiltigt val:"
 
 #: core/ui/gui.cpp:1195 core/ui/gui.cpp:1206
 msgid "Flycast cannot write to this folder."
-msgstr ""
+msgstr "Flycast kan inte skriva till denna mapp."
 
 #: core/ui/gui.cpp:1234
 msgid "Select Flycast Home Folder"
-msgstr ""
+msgstr "Välj Flycast-hemmapp"
 
 #: core/ui/gui.cpp:1268 core/ui/gui.cpp:1377 core/emulator.cpp:687
 msgid "Starting..."
-msgstr ""
+msgstr "Startar..."
 
 #: core/ui/gui.cpp:1280
 msgid "Starting Network..."
-msgstr ""
+msgstr "Startar nätverk..."
 
 #: core/ui/gui.cpp:1282
 msgid "Press Start to start the game now."
-msgstr ""
+msgstr "Tryck på Start för att starta spelet nu."
 
 #: core/ui/gui.cpp:1379
 msgid "Loading..."
-msgstr ""
+msgstr "Läser in..."
 
 #: core/ui/gui.cpp:1415
 msgid "Preloading custom textures"
@@ -1704,11 +1705,11 @@ msgstr ""
 
 #: core/ui/gui.cpp:1418
 msgid "Preparing..."
-msgstr ""
+msgstr "Förbereder..."
 
 #: core/ui/gui.cpp:1764
 msgid "No screenshot available"
-msgstr ""
+msgstr "Ingen skärmdump tillgänglig"
 
 #: core/ui/gui.cpp:1770
 msgid "Screenshot saved"
@@ -1720,7 +1721,7 @@ msgstr ""
 
 #: core/ui/settings_audio.cpp:25
 msgid "Enable DSP"
-msgstr ""
+msgstr "Aktivera DSP"
 
 #: core/ui/settings_audio.cpp:26
 msgid "Enable the Dreamcast Digital Sound Processor. Only recommended on fast platforms"
@@ -1736,7 +1737,7 @@ msgstr ""
 
 #: core/ui/settings_audio.cpp:29
 msgid "Volume Level"
-msgstr ""
+msgstr "Volymnivå"
 
 #: core/ui/settings_audio.cpp:29
 msgid "Adjust the emulator's audio level"
@@ -1752,7 +1753,7 @@ msgstr ""
 
 #: core/ui/settings_audio.cpp:42
 msgid "Latency"
-msgstr ""
+msgstr "Latens"
 
 #: core/ui/settings_audio.cpp:45
 msgid "Sets the maximum audio latency. Not supported by all audio drivers."
@@ -1760,7 +1761,7 @@ msgstr ""
 
 #: core/ui/settings_audio.cpp:58
 msgid "Audio Driver"
-msgstr ""
+msgstr "Ljuddrivrutin"
 
 #: core/ui/settings_audio.cpp:61
 msgid "auto - Automatic driver selection"
@@ -1772,11 +1773,11 @@ msgstr ""
 
 #: core/ui/gui_cheats.cpp:45
 msgid "ADD CHEAT"
-msgstr ""
+msgstr "LÄGG TILL FUSK"
 
 #: core/ui/gui_cheats.cpp:72 core/ui/settings_network.cpp:137
 msgid "Code"
-msgstr ""
+msgstr "Kod"
 
 #: core/ui/gui_cheats.cpp:95
 msgid "Select a cheat file"
@@ -1908,23 +1909,23 @@ msgstr ""
 
 #: core/ui/settings.cpp:282
 msgid "Video"
-msgstr ""
+msgstr "Video"
 
 #: core/ui/settings.cpp:288
 msgid "Audio"
-msgstr ""
+msgstr "Ljud"
 
 #: core/ui/settings.cpp:294
 msgid "Network"
-msgstr ""
+msgstr "Nätverk"
 
 #: core/ui/settings.cpp:314
 msgid "About"
-msgstr ""
+msgstr "Om"
 
 #: core/ui/gui_util.cpp:121
 msgid "Storage"
-msgstr ""
+msgstr "Lagring"
 
 #: core/ui/gui_util.cpp:133
 msgid ".. Up to Parent Folder"
@@ -1936,7 +1937,7 @@ msgstr ""
 
 #: core/ui/gui_util.cpp:479
 msgid "(?)"
-msgstr ""
+msgstr "(?)"
 
 #: core/ui/vgamepad.cpp:79
 msgid "Reset"
@@ -1944,7 +1945,7 @@ msgstr ""
 
 #: core/ui/settings_network.cpp:28
 msgid "Network Type"
-msgstr ""
+msgstr "Nätverkstyp"
 
 #: core/ui/settings_network.cpp:44
 msgid "Enable networking using GGPO"
@@ -1964,7 +1965,7 @@ msgstr ""
 
 #: core/ui/settings_network.cpp:72
 msgid "Configuration"
-msgstr ""
+msgstr "Konfiguration"
 
 #: core/ui/settings_network.cpp:78
 msgid "Play as Player 1"
@@ -2016,7 +2017,7 @@ msgstr ""
 
 #: core/ui/settings_network.cpp:93
 msgid "Enable Chat"
-msgstr ""
+msgstr "Aktivera chatt"
 
 #: core/ui/settings_network.cpp:93
 msgid "Open the chat window when a chat message is received"
@@ -2040,7 +2041,7 @@ msgstr ""
 
 #: core/ui/settings_network.cpp:107 core/ui/settings_network.cpp:170
 msgid "Network Statistics"
-msgstr ""
+msgstr "Nätverksstatistik"
 
 #: core/ui/settings_network.cpp:108 core/ui/settings_network.cpp:171
 msgid "Display network statistics on screen"
@@ -2056,7 +2057,7 @@ msgstr ""
 
 #: core/ui/settings_network.cpp:116
 msgid "Server"
-msgstr ""
+msgstr "Server"
 
 #: core/ui/settings_network.cpp:118
 msgid "The server to connect to. Leave blank to find a server automatically on the default port"
@@ -2064,7 +2065,7 @@ msgstr ""
 
 #: core/ui/settings_network.cpp:122 core/ui/settings_network.cpp:182
 msgid "Local Port"
-msgstr ""
+msgstr "Lokal port"
 
 #: core/ui/settings_network.cpp:124 core/ui/settings_network.cpp:184
 msgid "The local UDP port to use"
@@ -2080,11 +2081,11 @@ msgstr ""
 
 #: core/ui/settings_network.cpp:141
 msgid "Connect"
-msgstr ""
+msgstr "Anslut"
 
 #: core/ui/settings_network.cpp:145
 msgid "Disconnect"
-msgstr ""
+msgstr "Koppla från"
 
 #: core/ui/settings_network.cpp:155
 msgid "Waiting at meeting point..."
@@ -2092,12 +2093,12 @@ msgstr ""
 
 #: core/ui/settings_network.cpp:158
 msgid "Preparing game..."
-msgstr ""
+msgstr "Förbereder spel..."
 
 #: core/ui/settings_network.cpp:163
 #, c-format
 msgid "Playing %s (%s)"
-msgstr ""
+msgstr "Spelar %s (%s)"
 
 #: core/ui/settings_network.cpp:179
 msgid "The peer to connect to. Leave blank to find a player automatically on the default port"
@@ -2178,7 +2179,7 @@ msgstr ""
 #: core/ui/settings_about.cpp:53 core/ui/settings_about.cpp:107
 #, c-format
 msgid "Version: %s"
-msgstr ""
+msgstr "Version: %s"
 
 #: core/ui/settings_about.cpp:54
 #, c-format
@@ -2192,21 +2193,21 @@ msgstr ""
 
 #: core/ui/settings_about.cpp:58
 msgid "Platform"
-msgstr ""
+msgstr "Plattform"
 
 #: core/ui/settings_about.cpp:60
 #, c-format
 msgid "CPU: %s"
-msgstr ""
+msgstr "CPU: %s"
 
 #: core/ui/settings_about.cpp:70 core/ui/settings_about.cpp:91
 msgid "Unknown"
-msgstr ""
+msgstr "Okänt"
 
 #: core/ui/settings_about.cpp:73
 #, c-format
 msgid "Operating System: %s"
-msgstr ""
+msgstr "Operativsystem: %s"
 
 #: core/ui/settings_about.cpp:85
 msgid "Windows Universal Platform"
@@ -2228,7 +2229,7 @@ msgstr ""
 
 #: core/ui/settings_about.cpp:120
 msgid "Custom Driver:"
-msgstr ""
+msgstr "Anpassad drivrutin:"
 
 #: core/ui/settings_about.cpp:127
 msgid "Use Default Driver"
@@ -2273,11 +2274,11 @@ msgstr ""
 
 #: core/nullDC.cpp:269
 msgid "Not enough memory"
-msgstr ""
+msgstr "Inte tillräckligt med minne"
 
 #: core/nullDC.cpp:291
 msgid "I/O error"
-msgstr ""
+msgstr "I/O-fel"
 
 #: core/network/dcnet.cpp:70
 msgid "Connected to DCNet with modem"
@@ -2309,7 +2310,7 @@ msgstr ""
 
 #: core/network/ggpo.cpp:233
 msgid "Running"
-msgstr ""
+msgstr "Kör"
 
 #: core/network/ggpo.cpp:238
 msgid "Disconnected from peer"
@@ -2349,39 +2350,39 @@ msgstr ""
 
 #: core/network/ice.cpp:481
 msgid "NAT"
-msgstr ""
+msgstr "NAT"
 
 #: core/network/ice.cpp:490 core/network/ice.cpp:508
 msgid "Connection lost"
-msgstr ""
+msgstr "Anslutning förlorad"
 
 #: core/network/naomi_network.cpp:109
 msgid "Waiting for players..."
-msgstr ""
+msgstr "Väntar på spelare..."
 
 #: core/network/naomi_network.cpp:114
 #, c-format
 msgid "%d player connected. Waiting..."
 msgid_plural "%d players connected. Waiting..."
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%d spelare ansluten. Väntar..."
+msgstr[1] "%d spelare anslutna. Väntar..."
 
 #: core/network/naomi_network.cpp:137
 msgid "Starting game"
-msgstr ""
+msgstr "Startar spelet"
 
 #: core/network/naomi_network.cpp:142
 msgid "No player connected"
-msgstr ""
+msgstr "Ingen spelare ansluten"
 
 #: core/network/naomi_network.cpp:176
 msgid "Connecting to server"
-msgstr ""
+msgstr "Ansluter till server"
 
 #: core/network/naomi_network.cpp:262
 #, c-format
 msgid "Connected as slot %d"
-msgstr ""
+msgstr "Ansluten som plats %d"
 
 #: core/emulator.cpp:605
 msgid "This game requires a real BIOS"
