@@ -1,6 +1,10 @@
 name: Linux, macOS, Windows
 
-on: [push, pull_request]
+on:
+  push:
+    branches-ignore:
+      - 'l10n_**'
+  pull_request:
 
 jobs:
   build:
