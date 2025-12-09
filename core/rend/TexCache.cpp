@@ -15,7 +15,7 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #include "TexCache.h"
-#include "deps/xbrz/xbrz.h"
+#include "xbrz/xbrz.h"
 #include "hw/pvr/pvr_mem.h"
 #include "hw/mem/addrspace.h"
 

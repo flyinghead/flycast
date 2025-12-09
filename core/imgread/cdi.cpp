@@ -2,7 +2,7 @@
 #include "stdclass.h"
 #include "oslib/storage.h"
 #include "oslib/i18n.h"
-#include "deps/chdpsr/cdipsr.h"
+#include "chdpsr/cdipsr.h"
 
 Disc* cdi_parse(const char* file, std::vector<u8> *digest)
 {
