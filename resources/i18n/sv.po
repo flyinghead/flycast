@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-12-08 16:00+0100\n"
-"PO-Revision-Date: 2025-12-08 19:05\n"
+"PO-Revision-Date: 2025-12-09 06:48\n"
 "Last-Translator: \n"
 "Language: sv_SE\n"
 "MIME-Version: 1.0\n"
@@ -590,7 +590,7 @@ msgstr ""
 
 #: core/ui/settings_video.cpp:245
 msgid "Super Widescreen"
-msgstr ""
+msgstr "Superbredbild"
 
 #: core/ui/settings_video.cpp:246
 msgid "Use the full width of the screen or window when its aspect ratio is greater than 16:9.\n"
@@ -705,7 +705,7 @@ msgstr "Skuggor"
 
 #: core/ui/settings_video.cpp:322
 msgid "Enable modifier volumes, usually used for shadows"
-msgstr ""
+msgstr "Aktivera modifieringsvolymer, oftast använda för skuggor"
 
 #: core/ui/settings_video.cpp:323
 msgid "Fog"
@@ -737,7 +737,7 @@ msgstr "Hjälper till med texturblödning vid uppskalning. Att inaktivera den ka
 
 #: core/ui/settings_video.cpp:332
 msgid "Native Depth Interpolation"
-msgstr ""
+msgstr "Inbyggd djupinterpolering"
 
 #: core/ui/settings_video.cpp:333
 msgid "Helps with texture corruption and depth issues on AMD GPUs. Can also help Intel GPUs in some cases."
@@ -749,7 +749,7 @@ msgstr "Kopiera renderade texturer till VRAM"
 
 #: core/ui/settings_video.cpp:335
 msgid "Copy rendered-to textures back to VRAM. Slower but accurate"
-msgstr ""
+msgstr "Kopiera renderade-till-texturer tillbaka till VRAM. Långsammare men exakta"
 
 #: core/ui/settings_video.cpp:374
 msgid "Anisotropic Filtering"
@@ -979,7 +979,7 @@ msgstr "Mappen där Flycast sparar konfigurationsfiler och VMUer. BIOS-filer bö
 
 #: core/ui/settings_general.cpp:323
 msgid "Box Art Game List"
-msgstr ""
+msgstr "Spellista med omslagsbilder"
 
 #: core/ui/settings_general.cpp:324
 msgid "Display game cover art in the game list."
@@ -1027,7 +1027,7 @@ msgstr "Nintendo"
 
 #: core/ui/settings_general.cpp:338
 msgid "Aqua Chill"
-msgstr ""
+msgstr "Lugnt vatten"
 
 #: core/ui/settings_general.cpp:340
 msgid "UI Theme"
@@ -1252,7 +1252,7 @@ msgstr "Dreamcast BIOS"
 #: core/ui/settings_controls.cpp:43 core/ui/settings_controls.cpp:61
 #: core/ui/settings_controls.cpp:155
 msgid "None"
-msgstr "Inget"
+msgstr "Ingen"
 
 #: core/ui/settings_controls.cpp:44
 msgid "Sega Controller"
@@ -1559,11 +1559,11 @@ msgstr "Kontrollermappning"
 
 #: core/ui/settings_controls.cpp:578 core/ui/settings_controls.cpp:1022
 msgid "Map"
-msgstr ""
+msgstr "Mappa"
 
 #: core/ui/settings_controls.cpp:579
 msgid "Unmap"
-msgstr ""
+msgstr "Avmappa"
 
 #: core/ui/settings_controls.cpp:595 core/ui/settings_controls.cpp:841
 #: core/ui/settings.cpp:217
@@ -1640,7 +1640,7 @@ msgstr ""
 
 #: core/ui/settings_controls.cpp:884
 msgid "Haptic feedback power"
-msgstr ""
+msgstr "Kraft för haptisk feedback"
 
 #: core/ui/settings_controls.cpp:886
 msgid "View"
@@ -1652,7 +1652,7 @@ msgstr "Transparens"
 
 #: core/ui/settings_controls.cpp:887
 msgid "Virtual gamepad buttons transparency"
-msgstr ""
+msgstr "Knapptransparens för virtuell gamepad"
 
 #: core/ui/settings_controls.cpp:893
 msgid "Select a PNG file"
@@ -1739,7 +1739,7 @@ msgstr "Använd fysiskt VMU-minne"
 
 #: core/ui/settings_controls.cpp:1062
 msgid "Enables direct read/write access to physical VMU memory via DreamPicoPort/DreamConn. This is not compatible with load state events."
-msgstr ""
+msgstr "Möjliggör direkt läs-/skrivåtkomst till fysiskt VMU-minne via DreamPicoPort/DreamConn. Detta är inte kompatibelt med händelser vid inläsning av tillstånd."
 
 #: core/ui/settings_controls.cpp:1068
 msgid "Dreamcast Devices"
@@ -1772,11 +1772,11 @@ msgstr "Storlek på hårkorset"
 
 #: core/ui/settings_controls.cpp:1197
 msgid "Per Game VMU A1"
-msgstr ""
+msgstr "VMU A1 per spel"
 
 #: core/ui/settings_controls.cpp:1197
 msgid "When enabled, each game has its own VMU on port 1 of controller A."
-msgstr ""
+msgstr "När aktiverad har varje spel sin egna VMU på port 1 för kontroller A."
 
 #: core/ui/gui_achievements.cpp:285 core/ui/gui_cheats.cpp:103
 msgid "Close"
@@ -1977,7 +1977,7 @@ msgstr "Aktivera VMU-ljud"
 
 #: core/ui/settings_audio.cpp:27
 msgid "Play VMU beeps when enabled."
-msgstr ""
+msgstr "Spela VMU-pip när aktiverad."
 
 #: core/ui/settings_audio.cpp:29
 msgid "Volume Level"
@@ -2073,7 +2073,7 @@ msgstr "HLE BIOS"
 
 #: core/ui/settings.cpp:99
 msgid "Force high-level BIOS emulation"
-msgstr ""
+msgstr "Tvinga högnivåemulering av BIOS"
 
 #: core/ui/settings.cpp:100
 msgid "Multi-threaded emulation"
@@ -2370,7 +2370,7 @@ msgstr "Konfigurera din nätverksrouter automatiskt för netplay"
 
 #: core/ui/settings_network.cpp:197
 msgid "Broadcast Digital Outputs"
-msgstr ""
+msgstr "Sänd ut digitala utgångar"
 
 #: core/ui/settings_network.cpp:197
 msgid "Broadcast digital outputs and force-feedback state on TCP port 8000. Compatible with the \"-output network\" MAME option. Arcade games only."
@@ -2402,11 +2402,11 @@ msgstr "ISP-användarnamn som lagras i konsolens Flash RAM-minne. Används av vi
 
 #: core/ui/settings_network.cpp:226
 msgid "Multiboard Screens"
-msgstr ""
+msgstr "Multiboard-skärmar"
 
 #: core/ui/settings_network.cpp:229
 msgid "1 (Twin)"
-msgstr ""
+msgstr "1 (Tvilling)"
 
 #: core/ui/settings_network.cpp:229
 msgid "One screen configuration (F355 Twin)"
