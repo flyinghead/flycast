@@ -18,6 +18,8 @@ target_sources(${PROJECT_NAME} PRIVATE
         src/MmuTest.cpp
         src/HttpTest.cpp
         src/IniFileTest.cpp
+        src/imgread/CueTest.cpp
+        src/imgread/GdiTest.cpp
         src/input/ButtonComboTest.cpp
         src/input/GamepadInputHandlingTest.cpp
         src/input/MultiBindMappingTest.cpp

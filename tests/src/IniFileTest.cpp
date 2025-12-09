@@ -58,7 +58,7 @@ TEST_F(IniFileTest, save)
 
 TEST_F(IniFileTest, getSet)
 {
-	// TODO std::locale::global(std::locale("fr_FR.UTF-8"));
+	std::locale::global(std::locale("fr_FR.UTF-8"));
 	IniFile ini;
 	ini.set("s", "e", 1);
 	ASSERT_EQ(1, ini.getInt("s", "e"));

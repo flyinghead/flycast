@@ -1,6 +1,4 @@
 target_sources(${PROJECT_NAME} PRIVATE
-        ini.cpp
-        ini.h
         option.h)
 
 if(NOT LIBRETRO)
@@ -8,5 +6,7 @@ if(NOT LIBRETRO)
             cfg.cpp
             cfg.h
             cl.cpp
+            ini.cpp
+            ini.h
             option.cpp)
 endif()
