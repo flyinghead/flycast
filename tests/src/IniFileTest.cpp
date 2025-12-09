@@ -1,6 +1,7 @@
 #include "gtest/gtest.h"
 #include "cfg/ini.h"
 #include "types.h"
+#include <locale>
 using namespace config;
 
 class IniFileTest : public ::testing::Test {
@@ -9,7 +10,13 @@ class IniFileTest : public ::testing::Test {
 TEST_F(IniFileTest, load)
 {
 	IniFile ini;
-	ini.load(" [section1] \n\n\n   ; comment\nentry1=\n entry2 = value2\n\tentry3\t=  value3 \n");
+	ini.load(" [section1] \n"
+			"\n"
+			"\n"
+			"   ; comment\n"
+			"entry1=\n"
+			" entry2 = value2\n"
+			"\tentry3\t=  value3 \n");
 	ASSERT_TRUE(ini.hasSection("section1"));
 	ASSERT_TRUE(ini.hasEntry("section1", "entry1"));
 	ASSERT_FALSE(ini.hasSection("section2"));
@@ -51,6 +58,7 @@ TEST_F(IniFileTest, save)
 
 TEST_F(IniFileTest, getSet)
 {
+	// TODO std::locale::global(std::locale("fr_FR.UTF-8"));
 	IniFile ini;
 	ini.set("s", "e", 1);
 	ASSERT_EQ(1, ini.getInt("s", "e"));
@@ -71,9 +79,38 @@ TEST_F(IniFileTest, getSet)
 
 	ini.set("s", "e", 1.732f);
 	ASSERT_EQ(1.732f, ini.getFloat("s", "e"));
+	ASSERT_EQ("1.732", ini.getString("s", "e"));
 
 	ini.set("s", "e", " \t+1.414 \t");
 	ASSERT_EQ(1.414f, ini.getFloat("s", "e"));
+
+	ini.set("s", "e", "  0XFFFF ");
+	ASSERT_EQ(0xffff, ini.getInt("s", "e"));
+	ASSERT_EQ(0xffff, ini.getInt64("s", "e"));
+
+	ini.set("s", "e", "-123456");
+	ASSERT_EQ(-123456, ini.getInt("s", "e"));
+	ASSERT_EQ(-123456, ini.getInt64("s", "e"));
+
+	ini.set("s", "e", "+420");
+	ASSERT_EQ(420, ini.getInt("s", "e"));
+	ASSERT_EQ(420, ini.getInt64("s", "e"));
+
+	ini.set("s", "e", " \t ");
+	ASSERT_EQ(0, ini.getInt("s", "e"));
+	ASSERT_EQ(0, ini.getInt64("s", "e"));
+	ASSERT_EQ(0.f, ini.getFloat("s", "e"));
+	ASSERT_FALSE(ini.getBool("s", "e"));
+
+	ini.set("s", "e", "");
+	ASSERT_EQ(0, ini.getInt("s", "e"));
+	ASSERT_EQ(0, ini.getInt64("s", "e"));
+	ASSERT_EQ(0.f, ini.getFloat("s", "e"));
+	ASSERT_FALSE(ini.getBool("s", "e"));
+
+	ini.set("s", "e", "1 000");
+	ASSERT_EQ(1, ini.getInt("s", "e"));
+	ASSERT_EQ(1, ini.getInt64("s", "e"));
 }
 
 TEST_F(IniFileTest, transient)

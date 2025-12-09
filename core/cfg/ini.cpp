@@ -19,7 +19,6 @@
 #include "ini.h"
 #include "types.h"
 #include "stdclass.h"
-#include <sstream>
 
 namespace config {
 
@@ -84,8 +83,15 @@ int IniFile::getInt(const std::string& section, const std::string& entry, int de
 	const std::string *pValue = getRaw(section, entry);
 	if (pValue == nullptr)
 		return defaultValue;
-	int base = hasHexPrefix(*pValue) ? 16 : 10;
-	return (int)std::stoul(*pValue, nullptr, base);
+	std::istringstream ss(*pValue);
+	ss.imbue(std::locale::classic());
+	if (hasHexPrefix(*pValue))
+		ss.setf(std::ios_base::hex, std::ios_base::basefield);
+	else
+		ss.setf(std::ios_base::dec, std::ios_base::basefield);
+	unsigned value = defaultValue;
+	ss >> value;
+	return (int)value;
 }
 
 int64_t IniFile::getInt64(const std::string& section, const std::string& entry, int64_t defaultValue) const
@@ -93,8 +99,15 @@ int64_t IniFile::getInt64(const std::string& section, const std::string& entry, 
 	const std::string *pValue = getRaw(section, entry);
 	if (pValue == nullptr)
 		return defaultValue;
-	int base = hasHexPrefix(*pValue) ? 16 : 10;
-	return (int64_t)std::stoll(*pValue, nullptr, base);
+	std::istringstream ss(*pValue);
+	ss.imbue(std::locale::classic());
+	if (hasHexPrefix(*pValue))
+		ss.setf(std::ios_base::hex, std::ios_base::basefield);
+	else
+		ss.setf(std::ios_base::dec, std::ios_base::basefield);
+	int64_t value = defaultValue;
+	ss >> value;
+	return value;
 }
 
 float IniFile::getFloat(const std::string& section, const std::string& entry, float defaultValue) const
@@ -102,9 +115,10 @@ float IniFile::getFloat(const std::string& section, const std::string& entry, fl
 	const std::string *pValue = getRaw(section, entry);
 	if (pValue == nullptr || pValue->empty())
 		return defaultValue;
-	std::string strValue = trim_ws(*pValue, " \t+");
-	float value {};
-	std::from_chars(&strValue[0], &strValue.back() + 1, value);
+	std::istringstream ss(*pValue);
+	ss.imbue(std::locale::classic());
+	float value = defaultValue;
+	ss >> value;
 	return value;
 }
 

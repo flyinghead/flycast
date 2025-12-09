@@ -22,8 +22,8 @@
 #include <string>
 #include <cstdint>
 #include <vector>
-#include <charconv>
-#include <system_error>
+#include <locale>
+#include <sstream>
 
 namespace config {
 
@@ -95,10 +95,11 @@ inline void IniFile::set(const std::string& section, const std::string& entry, b
 template<>
 inline void IniFile::set(const std::string& section, const std::string& entry, float value, bool transient)
 {
-	char buf[16]{};
-	std::to_chars_result result = std::to_chars(buf, buf + sizeof(buf), value);
-	if (result.ec == std::errc())
-		setRaw(section, entry, std::string(buf, result.ptr), transient);
+	std::ostringstream ss;
+	ss.imbue(std::locale::classic());
+	ss.precision(7);
+	ss << value;
+	setRaw(section, entry, ss.str(), transient);
 }
 
 } // namespace config
