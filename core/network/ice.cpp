@@ -1059,7 +1059,8 @@ void IceSession::onEmuEvent(Event event, void *arg)
 	case Event::LoadState:
 		ice->recvQueue.clear();
 		ice->txBufferSize = 0;
-		ice->icePipe->reset();
+		if (ice->icePipe != nullptr)
+			ice->icePipe->reset();
 		break;
 	default:
 		break;
