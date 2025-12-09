@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-12-08 16:00+0100\n"
-"PO-Revision-Date: 2025-12-09 06:48\n"
+"PO-Revision-Date: 2025-12-09 08:12\n"
 "Last-Translator: \n"
 "Language: sv_SE\n"
 "MIME-Version: 1.0\n"
@@ -269,7 +269,7 @@ msgstr "Hastighet: %3d"
 
 #: core/hw/naomi/printer.cpp:857
 msgid "Print out saved"
-msgstr ""
+msgstr "Utdata sparades"
 
 #: core/hw/naomi/systemsp.cpp:2188
 #, c-format
@@ -409,7 +409,7 @@ msgstr "Uppstartsfel för Naomi"
 
 #: core/reios/reios.cpp:724
 msgid "Invalid cart size"
-msgstr ""
+msgstr "Ogiltig kortstorlek"
 
 #: core/cheats.cpp:824 core/cheats.cpp:829
 msgid "Invalid cheat code"
@@ -477,11 +477,11 @@ msgstr "Sortera transparenta polygoner per triangel. Snabbt men kan orsaka grafi
 
 #: core/ui/settings_video.cpp:125
 msgid "Per Strip"
-msgstr ""
+msgstr "Per remsa"
 
 #: core/ui/settings_video.cpp:127
 msgid "Sort transparent polygons per strip. Faster but may produce graphical glitches"
-msgstr ""
+msgstr "Sortera transparenta polygoner per remsa. Snabbare men kan producera grafiska artefakter"
 
 #: core/ui/settings_video.cpp:131
 msgid "Per Pixel"
@@ -537,11 +537,11 @@ msgstr "Synkroniserar bildfrekvensen med skärmens uppdateringsfrekvens. Rekomme
 
 #: core/ui/settings_video.cpp:214
 msgid "Duplicate frames"
-msgstr ""
+msgstr "Duplikata bildrutor"
 
 #: core/ui/settings_video.cpp:214
 msgid "Duplicate frames on high refresh rate monitors (120 Hz and higher)"
-msgstr ""
+msgstr "Duplikata bildrutor på skärmar med hög uppdatingsfrekvens (120 Hz och högre)"
 
 #: core/ui/settings_video.cpp:219
 msgid "Show VMU In-game"
@@ -549,15 +549,15 @@ msgstr "Visa VMU i spelet"
 
 #: core/ui/settings_video.cpp:219
 msgid "Show the VMU LCD screens while in-game"
-msgstr ""
+msgstr "Visa VMU-LCD-skärmarna i spelet"
 
 #: core/ui/settings_video.cpp:220
 msgid "Full Framebuffer Emulation"
-msgstr ""
+msgstr "Fullständig emulering av framebuffer"
 
 #: core/ui/settings_video.cpp:221
 msgid "Fully accurate VRAM framebuffer emulation. Helps games that directly access the framebuffer for special effects. Very slow and incompatible with upscaling and wide screen."
-msgstr ""
+msgstr "Helt korrekt VRAM-rambuffertemulering. Hjälper spel som direkt använder rambuffert för specialeffekter. Mycket långsam och oförenlig med uppskalning och bredbild."
 
 #: core/ui/settings_video.cpp:225
 msgid "Load Custom Textures"
@@ -586,7 +586,8 @@ msgstr "Bredbild"
 #: core/ui/settings_video.cpp:240
 msgid "Draw geometry outside of the normal 4:3 aspect ratio. May produce graphical glitches in the revealed areas.\n"
 "Aspect Fit and shows the full 16:9 content."
-msgstr ""
+msgstr "Rita geometri utanför det normala bildförhållandet 4:3. Kan orsaka grafiska fel i de synliga områdena.\n"
+"Bildanpassning och visar hela innehållet i 16:9."
 
 #: core/ui/settings_video.cpp:245
 msgid "Super Widescreen"
@@ -721,15 +722,15 @@ msgstr "Avancerat"
 
 #: core/ui/settings_video.cpp:328
 msgid "Delay Frame Swapping"
-msgstr ""
+msgstr "Fördröj växling av bildrutor"
 
 #: core/ui/settings_video.cpp:329
 msgid "Useful to avoid flashing screen or glitchy videos. Not recommended on slow platforms"
-msgstr ""
+msgstr "Användbart för att undvika blinkande skärm eller hackiga videor. Rekommenderas inte på långsamma plattformar"
 
 #: core/ui/settings_video.cpp:330
 msgid "Fix Upscale Bleeding Edge"
-msgstr ""
+msgstr "Fixa blödande kant vid uppskalning"
 
 #: core/ui/settings_video.cpp:331
 msgid "Helps with texture bleeding case when upscaling. Disabling it can help if pixels are warping when upscaling in 2D games (MVC2, CVS, KOF, etc.)"
@@ -794,19 +795,19 @@ msgstr "Visa bildfrekvensräknare"
 
 #: core/ui/settings_video.cpp:387
 msgid "Show on-screen frame/sec counter"
-msgstr ""
+msgstr "Visa skärmräknare för bildfrekvens"
 
 #: core/ui/settings_video.cpp:392
 msgid "Video Routing (Syphon)"
-msgstr ""
+msgstr "Videorouting (Syphon)"
 
 #: core/ui/settings_video.cpp:395
 msgid "Video Routing (Spout)"
-msgstr ""
+msgstr "Videorouting (Spout)"
 
 #: core/ui/settings_video.cpp:397
 msgid "Video Routing (Only available with OpenGL or DirectX 11)"
-msgstr ""
+msgstr "Videorouting (Endast tillgängligt med OpenGL eller DirectX 11)"
 
 #: core/ui/settings_video.cpp:403
 msgid "Send video content to another program"
@@ -814,7 +815,7 @@ msgstr "Skicka videoinnehåll till ett annat program"
 
 #: core/ui/settings_video.cpp:404
 msgid "e.g. Route GPU texture to OBS Studio directly instead of using CPU intensive Display/Window Capture"
-msgstr ""
+msgstr "t.ex. route GPU-textur till OBS Studio direkt istället för att använda CPU-intensiv skärm-/fönsterfångst"
 
 #: core/ui/settings_video.cpp:408
 msgid "Scale down before sending"
@@ -1636,11 +1637,11 @@ msgstr "Haptisk"
 
 #: core/ui/settings_controls.cpp:884 core/ui/settings_controls.cpp:920
 msgid "Power"
-msgstr ""
+msgstr "Styrka"
 
 #: core/ui/settings_controls.cpp:884
 msgid "Haptic feedback power"
-msgstr "Kraft för haptisk feedback"
+msgstr "Styrka för haptisk feedback"
 
 #: core/ui/settings_controls.cpp:886
 msgid "View"
@@ -1684,7 +1685,7 @@ msgstr "Dödzon"
 
 #: core/ui/settings_controls.cpp:933
 msgid "Minimum deflection to register as input"
-msgstr ""
+msgstr "Minsta spakrörelse för att registreras som inmatning"
 
 #: core/ui/settings_controls.cpp:936
 msgid "Saturation"
@@ -1692,7 +1693,7 @@ msgstr "Mättnad"
 
 #: core/ui/settings_controls.cpp:939
 msgid "Value sent to the game at 100% thumbstick deflection. Values greater than 100% will saturate before full deflection of the thumbstick."
-msgstr ""
+msgstr "Värde som skickas till spelet vid 100% spakrörelse med tumspak. Värden över 100% mättas innan tumspaken är helt flyttad."
 
 #: core/ui/settings_controls.cpp:952
 msgid "Physical Devices"
