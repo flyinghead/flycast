@@ -8,5 +8,6 @@ files:
       two_letters_code:
         zh-CN: zh_CH
         zh-TW: zh_TW
+        zh-HK: zh_HK
         en-GB: en_GB
         pt-PR: pt_BR
