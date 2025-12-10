@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-12-08 16:00+0100\n"
-"PO-Revision-Date: 2025-12-08 22:27\n"
+"PO-Revision-Date: 2025-12-10 08:12\n"
 "Last-Translator: \n"
 "Language: pt_BR\n"
 "MIME-Version: 1.0\n"
@@ -166,7 +166,7 @@ msgstr ""
 #: core/imgread/cue.cpp:194
 #, c-format
 msgid "CUE file: track has unknown sector type: %s"
-msgstr ""
+msgstr "Arquivo CUE: Faixa com tipo de setor desconhecido %s"
 
 #: core/imgread/cue.cpp:228
 msgid "CUE parse error: failed to parse or invalid file with 0 tracks"
