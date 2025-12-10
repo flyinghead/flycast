@@ -79,7 +79,7 @@ Disc* cue_parse(const char* file, std::vector<u8> *digest)
 
 	MD5Sum md5;
 
-	Disc* disc = new Disc();
+	std::unique_ptr<Disc> disc = std::make_unique<Disc>();
 	u32 current_fad = 150;
 	std::string track_filename;
 	u32 track_number = -1;
@@ -122,8 +122,10 @@ Disc* cue_parse(const char* file, std::vector<u8> *digest)
 			else
 			{
 				// GD-Rom
-				if (token == "HIGH-DENSITY")
+				if (token == "HIGH-DENSITY") {
 					current_fad = 45000 + 150;
+					disc->type = GdRom;
+				}
 				else if (token != "SINGLE-DENSITY")
 				{
 					INFO_LOG(GDROM, "CUE parse: unrecognized REM token %s. Expected SINGLE-DENSITY, HIGH-DENSITY or SESSION", token.c_str());
@@ -184,15 +186,10 @@ Disc* cue_parse(const char* file, std::vector<u8> *digest)
 				std::string path = hostfs::storage().getSubPath(basepath, track_filename);
 				FILE *track_file = hostfs::storage().openFile(path, "rb");
 				if (track_file == nullptr)
-				{
-					delete disc;
 					throw FlycastException(strprintf(i18n::T("CUE file: cannot open track %s"), path.c_str()));
-				}
 				u32 sector_size = getSectorSize(track_type);
-				if (sector_size == 0)
-				{
+				if (sector_size == 0) {
 					std::fclose(track_file);
-					delete disc;
 					throw FlycastException(strprintf(i18n::T("CUE file: track has unknown sector type: %s"), track_type.c_str()));
 				}
 				fileInfo = hostfs::storage().getFileInfo(path);
@@ -225,21 +222,41 @@ Disc* cue_parse(const char* file, std::vector<u8> *digest)
 		}
 	}
 	if (disc->tracks.empty())
-	{
-		delete disc;
 		throw FlycastException(i18n::Ts("CUE parse error: failed to parse or invalid file with 0 tracks"));
+	if (disc->tracks.size() > 99) {
+		WARN_LOG(GDROM, "CUE: more than 99 tracks");
+		throw FlycastException(i18n::Ts("Invalid CUE file"));
 	}
 
 	if (session_number == 0)
 	{
-		if (disc->tracks.size() < 3) {
-			delete disc;
-			throw FlycastException(i18n::Ts("CUE parse error: less than 3 tracks"));
+		if (disc->type == GdRom)
+		{
+			// GD-Rom
+			if (disc->tracks.size() < 3)
+				throw FlycastException(i18n::Ts("CUE parse error: less than 3 tracks"));
+			if (!disc->tracks[0].isDataTrack()) {
+				WARN_LOG(GDROM, "CUE: track 1 must be a data track");
+				throw FlycastException(i18n::Ts("Invalid CUE file"));
+			}
+			if (disc->tracks[1].isDataTrack()) {
+				WARN_LOG(GDROM, "CUE: track 2 must be an audio track");
+				throw FlycastException(i18n::Ts("Invalid CUE file"));
+			}
+			if (!disc->tracks[2].isDataTrack()) {
+				WARN_LOG(GDROM, "CUE: track 3 must be a data track");
+				throw FlycastException(i18n::Ts("Invalid CUE file"));
+			}
+			if (disc->tracks[2].StartFAD != 45150) {
+				WARN_LOG(GDROM, "CUE: track 3 must start at FAD 45000+150, not %d", disc->tracks[2].StartFAD);
+				throw FlycastException(i18n::Ts("Invalid CUE file"));
+			}
+			disc->FillGDSession();
 		}
-		disc->FillGDSession();
 	}
 	else
 	{
+		// CD-Rom XA
 		disc->type = CdRom_XA;
 		disc->LeadOut.ADR = 1;
 		disc->LeadOut.CTRL = 4;
@@ -249,5 +266,5 @@ Disc* cue_parse(const char* file, std::vector<u8> *digest)
 	if (digest != nullptr)
 		*digest = md5.getDigest();
 
-	return disc;
+	return disc.release();
 }

@@ -111,11 +111,11 @@ struct Track
 
 struct Disc
 {
-	std::vector<Session> sessions;	//info for sessions
-	std::vector<Track> tracks;		//info for tracks
-	Track LeadOut;				//info for lead out track (can't read from here)
-	u32 EndFAD;					//Last valid disc sector
-	DiscType type;
+	std::vector<Session> sessions;	// info for sessions
+	std::vector<Track> tracks;		// info for tracks
+	Track LeadOut;					// info for lead out track (can't read from here)
+	u32 EndFAD = 0;					// Last valid disc sector
+	DiscType type = CdRom;
 	std::string catalog;
 
 	u32 ReadSectors(u32 FAD, u32 count, u8 *dst, u32 fmt, bool stopOnMiss = false, LoadProgress *progress = nullptr);
