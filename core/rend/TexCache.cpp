@@ -747,6 +747,10 @@ void ReadFramebuffer(const FramebufferInfo& info, PixelBuffer<u32>& pb, int& wid
 			addr = info.spg_status.fieldnum ? info.fb_r_sof2 : info.fb_r_sof1;
 		}
 	}
+	else if (info.fb_r_ctrl.vclk_div == 0) {
+		// 240p if PAL or NTSC
+		height = std::min(height, 240);
+	}
 
 	pb.init(width, height);
 	u32 *dst = (u32 *)pb.data();
