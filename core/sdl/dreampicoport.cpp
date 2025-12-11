@@ -1130,10 +1130,9 @@ public:
 		msg.originAP = hw_info.hardware_bus << 6;
 		msg.setWord(MFID_1_Storage, 0);
 
-		std::array<char, 12> idBuffer{};
-		const size_t copyLength = (std::min)(gameId.size(), idBuffer.size());
-		memcpy(idBuffer.data(), gameId.data(), copyLength);
-		memcpy(&msg.data[4], idBuffer.data(), idBuffer.size());
+		const size_t idSize = 12;
+		const size_t copyLength = std::min(gameId.size(), idSize);
+		memcpy(&msg.data[4], gameId.data(), copyLength);
 		msg.size = 4;
 
 		dpp_comms->send(msg, timeout_ms);
