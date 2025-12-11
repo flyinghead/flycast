@@ -1872,7 +1872,11 @@ u32 maple_naomi_jamma::RawDma(u32* buffer_in, u32 buffer_in_len, u32* buffer_out
 				for (int i = 0; i < 32; i++)
 					jvs_repeat_request[i][0] = 0;
 
-				return MDRS_DeviceReply;
+				w8(MDRS_DeviceReply);
+				w8(0x00);
+				w8(0x20);
+				w8(0x00);
+				break;
 			}
 			int xfer_bytes;
 			if (dma_buffer_in[0] == 0xff)
