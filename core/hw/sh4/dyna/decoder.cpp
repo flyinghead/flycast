@@ -659,9 +659,10 @@ static bool dec_generic(u32 op)
 		state.info.has_fpu=true;
 		if (state.cpu.FPR64) {
 			// fallback to interpreter for double float ops
-			// except fmov, flds and fsts that don't depend on PR
+			// except fmov, flds, fsts and fneg that don't depend on PR
 			if (((op & 0xf) < 6 || (op & 0xf) > 0xc)	// fmov
-					&& (op & 0xef) != 0x0d)				// flds, flts
+					&& (op & 0xef) != 0x0d				// flds, fsts
+					&& (op & 0xff) != 0x4d)				// fneg
 				return false;
 		}
 

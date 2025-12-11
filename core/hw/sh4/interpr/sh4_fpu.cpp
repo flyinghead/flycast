@@ -474,11 +474,7 @@ sh4op(i1111_nnnn_0010_1101)
 sh4op(i1111_nnnn_0100_1101)
 {
 	u32 n = GetN(op);
-
-	if (ctx->fpscr.PR == 0)
-		ctx->fr_hex(n) ^= 0x80000000;
-	else
-		ctx->fr_hex(n & 0xE) ^= 0x80000000;
+	ctx->fr_hex(n) ^= 0x80000000;
 }
 
 
