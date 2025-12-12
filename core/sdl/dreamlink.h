@@ -154,6 +154,9 @@ public:
 
 	//! Disconnect from the hardware controller
 	virtual void disconnect() = 0;
+	
+	//! Sends the current game id to a DreamLink backed expansion device if supported
+	virtual void sendGameId(int expansion, const std::string& gameId) {}
 };
 
 class DreamLinkGamepad : public SDLGamepad
