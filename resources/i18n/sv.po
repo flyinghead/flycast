@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-12-08 16:00+0100\n"
-"PO-Revision-Date: 2025-12-09 08:12\n"
+"POT-Creation-Date: 2025-12-10 11:34+0100\n"
+"PO-Revision-Date: 2025-12-12 21:15\n"
 "Last-Translator: \n"
 "Language: sv_SE\n"
 "MIME-Version: 1.0\n"
@@ -158,21 +158,26 @@ msgstr "Kan inte öppna CUE-filen %s"
 msgid "CUE parse error: CUE file too big"
 msgstr "Tolkningsfel för CUE: CUE-filen är för stor"
 
-#: core/imgread/cue.cpp:187
+#: core/imgread/cue.cpp:189
 #, c-format
 msgid "CUE file: cannot open track %s"
 msgstr "CUE-fil: kan inte öppna spår %s"
 
-#: core/imgread/cue.cpp:194
+#: core/imgread/cue.cpp:193
 #, c-format
 msgid "CUE file: track has unknown sector type: %s"
 msgstr "CUE-fil: spåret har okänd sektortyp: %s"
 
-#: core/imgread/cue.cpp:228
+#: core/imgread/cue.cpp:225
 msgid "CUE parse error: failed to parse or invalid file with 0 tracks"
 msgstr "Tolkningsfel för CUE: misslyckades med att tolka eller ogiltig fil med 0 spår"
 
-#: core/imgread/cue.cpp:235
+#: core/imgread/cue.cpp:228 core/imgread/cue.cpp:240 core/imgread/cue.cpp:244
+#: core/imgread/cue.cpp:248 core/imgread/cue.cpp:252
+msgid "Invalid CUE file"
+msgstr "Ogiltig CUE-fil"
+
+#: core/imgread/cue.cpp:237
 msgid "CUE parse error: less than 3 tracks"
 msgstr "Tolkningsfel för CUE: mindre än 3 spår"
 
@@ -221,18 +226,16 @@ msgstr "Kan inte öppna GDI-filen %s"
 msgid "GDI file too big"
 msgstr "GDI-filen är för stor"
 
-#: core/imgread/gdi.cpp:36
-msgid "GDI: empty or invalid GDI file"
-msgstr "GDI: tom eller ogiltig GDI-fil"
+#: core/imgread/gdi.cpp:38 core/imgread/gdi.cpp:85 core/imgread/gdi.cpp:89
+#: core/imgread/gdi.cpp:96 core/imgread/gdi.cpp:102 core/imgread/gdi.cpp:108
+#: core/imgread/gdi.cpp:112 core/imgread/gdi.cpp:120 core/imgread/gdi.cpp:145
+msgid "Invalid GDI file"
+msgstr "Ogiltig GDI-fil"
 
-#: core/imgread/gdi.cpp:95
+#: core/imgread/gdi.cpp:132
 #, c-format
 msgid "GDI file: Cannot open track %s"
 msgstr "GDI-fil: Kan inte öppna spår %s"
-
-#: core/imgread/gdi.cpp:110
-msgid "GDI parse error: less than 3 tracks"
-msgstr "Tolkningsfel för GDI: mindre än 3 spår"
 
 #: core/imgread/cdi.cpp:17
 #, c-format
@@ -2529,19 +2532,19 @@ msgstr "I/O-fel"
 msgid "Connected to DCNet with modem"
 msgstr "Ansluten till DCNet med modem"
 
-#: core/network/dcnet.cpp:246
+#: core/network/dcnet.cpp:269
 msgid "Connected to DCNet with Ethernet"
 msgstr "Ansluten till DCNet med ethernet"
 
-#: core/network/dcnet.cpp:628
+#: core/network/dcnet.cpp:648
 msgid "DCNet disconnected"
 msgstr "DCNet frånkopplat"
 
-#: core/network/dcnet.cpp:753
+#: core/network/dcnet.cpp:773
 msgid "Host not found"
 msgstr "Värden hittades inte"
 
-#: core/network/dcnet.cpp:797
+#: core/network/dcnet.cpp:817
 msgid "Can't connect to DCNet"
 msgstr "Kan inte ansluta till DCNet"
 
