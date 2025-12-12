@@ -1155,6 +1155,15 @@ public:
 		EnsureCodeSize(start_instruction, write_memory_rewrite_size);
 	}
 
+	void Mov_2ops(const Register& rd, uint64_t imm)
+	{
+		Mov(rd, imm);
+		int ops = MoveImmediateHelper(this, rd, imm);
+		verify(ops == 1 || ops == 2);
+		if (ops == 1)
+			Nop();
+	}
+
 	u32 RelinkBlock(RuntimeBlockInfo *block)
 	{
 		ptrdiff_t start_offset = GetBuffer()->GetCursorOffset();
@@ -1171,6 +1180,7 @@ public:
 				GenBranch((DynaCode *)block->pBranchBlock->code);
 				Nop();
 				Nop();
+				Nop();
 			}
 			else
 			{
@@ -1179,13 +1189,14 @@ public:
 					GenCall(linkBlockGenericStub);
 					Nop();
 					Nop();
+					Nop();
 				}
 				else
 #else
 			{
 #endif
 				{
-					Mov(w29, block->BranchBlock);
+					Mov_2ops(w29, block->BranchBlock);
 					Str(w29, sh4_context_mem_operand(&sh4ctx.pc));
 					GenBranch(arm64_no_update);
 				}
@@ -1215,6 +1226,7 @@ public:
 					GenBranch((DynaCode *)block->pBranchBlock->code);
 					Nop();
 					Nop();
+					Nop();
 				}
 				else
 				{
@@ -1223,13 +1235,14 @@ public:
 						GenCall(linkBlockBranchStub);
 						Nop();
 						Nop();
+						Nop();
 					}
 					else
 #else
 				{
 #endif
 					{
-						Mov(w29, block->BranchBlock);
+						Mov_2ops(w29, block->BranchBlock);
 						Str(w29, sh4_context_mem_operand(&sh4ctx.pc));
 						GenBranch(arm64_no_update);
 					}
@@ -1243,6 +1256,7 @@ public:
 					GenBranch((DynaCode *)block->pNextBlock->code);
 					Nop();
 					Nop();
+					Nop();
 				}
 				else
 				{
@@ -1251,13 +1265,14 @@ public:
 						GenCall(linkBlockNextStub);
 						Nop();
 						Nop();
+						Nop();
 					}
 					else
 #else
 				{
 #endif
 					{
-						Mov(w29, block->NextBlock);
+						Mov_2ops(w29, block->NextBlock);
 						Str(w29, sh4_context_mem_operand(&sh4ctx.pc));
 						GenBranch(arm64_no_update);
 					}
@@ -1273,21 +1288,23 @@ public:
 			Str(w29, sh4_context_mem_operand(&sh4ctx.pc));
 			if (!mmu_enabled() && sh4ctx.CpuRunning)
 			{
+				ptrdiff_t start = GetBuffer()->GetCursorOffset();
 				// TODO Call no_update instead (and check CpuRunning less frequently?)
-				Sub(x2, x28, offsetof(Sh4RCB, cntx));
+				Sub(x2, x28, offsetof(Sh4RCB, cntx));	// 3 ops
 				if (RAM_SIZE == 32_MB)
 					Ubfx(w1, w29, 1, 24);
 				else
 					Ubfx(w1, w29, 1, 23);
 				Ldr(x15, MemOperand(x2, x1, LSL, 3));	// Get block entry point
 				Br(x15);
+				// sadly no any easy way to check this at compile time
+				verify(GetBuffer()->GetCursorOffset() - start == 6 * 4);
 			}
 			else
 			{
 				GenBranch(arm64_no_update);
-				Nop();
-				Nop();
-				Nop();
+				for (int i = 0 ; i < 5; i++)
+					Nop();
 			}
 
 			break;

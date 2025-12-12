@@ -74,7 +74,15 @@ GameBoxart Boxart::getBoxartAndLoad(const GameMedia& media)
 void Boxart::fetchBoxart()
 {
 	if (fetching.valid() && fetching.wait_for(std::chrono::seconds(0)) == std::future_status::ready)
-		fetching.get();
+	{
+		try {
+			fetching.get();
+		} catch (const std::runtime_error& e) {
+			ERROR_LOG(COMMON, "Boxart scraper thread exception: %s", e.what());
+		} catch (...) {
+			ERROR_LOG(COMMON, "Boxart scraper thread unknown exception");
+		}
+	}
 	if (fetching.valid())
 		return;
 	if (toFetch.empty())
