@@ -2628,6 +2628,11 @@ void createDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink, bool gameStart
 				if (!vmuFound) {
 					dreamLinkVmus[i].push_back(vmu);
 				}
+
+				if (gameStart && vmu->useRealVmuMemory)
+				{
+					dreamlink->sendGameId(i, settings.content.gameId);
+				}				
 			}
 		}
 		else if (i == 1 && ((dreamlink->getFunctionCode(i + 1) & MFID_8_Vibration)))
