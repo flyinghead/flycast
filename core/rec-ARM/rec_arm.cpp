@@ -298,6 +298,11 @@ public:
 				mov(CC, r4, block->BranchBlock);
 				storeSh4Reg(r4, reg_nextpc);
 				jump(no_update);
+				// Make sure to use 6 ops in all cases
+				if (isImmA32Or16Bits(block->NextBlock))
+					nop();
+				if (isImmA32Or16Bits(block->BranchBlock))
+					nop();
 			}
 			break;
 		}
@@ -315,6 +320,7 @@ public:
 			{
 				storeSh4Reg(r4, reg_nextpc);
 				jump(no_update);
+				nop();
 			}
 			break;
 
@@ -335,8 +341,10 @@ public:
 				mov(r4, block->BranchBlock);
 				storeSh4Reg(r4, reg_nextpc);
 				jump(no_update);
+				// Make sure to use 4 ops in all cases
+				if (isImmA32Or16Bits(block->BranchBlock))
+					nop();
 			}
-
 			break;
 
 		case BET_StaticIntr:
@@ -370,6 +378,10 @@ private:
 	bool writeMemImmediate(RuntimeBlockInfo* block, shil_opcode* op, bool optimise);
 	void genMmuLookup(RuntimeBlockInfo* block, const shil_opcode& op, u32 write, Register& raddr);
 	void compileOp(RuntimeBlockInfo* block, shil_opcode* op, bool optimise);
+
+	static bool isImmA32Or16Bits(u32 v) {
+		return v <= 65535 || ImmediateA32::IsImmediateA32(v);
+	}
 
 	Sh4Context& sh4ctx;
 	Sh4CodeBuffer& codeBuffer;
