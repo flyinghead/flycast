@@ -1034,15 +1034,17 @@ void IceSession::write(u8 data)
 			WARN_LOG(NETWORK, "txBuffer full");
 			flushTxBuffer();
 		}
-		else {
+		else if (icePipe != nullptr) {
 			icePipe->onWrite();
 		}
 	}
 }
 
-void IceSession::onJuiceReceive(const char *data, size_t size) {
+void IceSession::onJuiceReceive(const char *data, size_t size)
+{
 	stat.rxBytes += size;
-	icePipe->receive(data, size);
+	if (icePipe != nullptr)
+		icePipe->receive(data, size);
 }
 
 void IceSession::onEmuEvent(Event event, void *arg)
