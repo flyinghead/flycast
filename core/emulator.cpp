@@ -843,6 +843,8 @@ void loadGameSpecificSettings()
 	{
 		reios_disk_id();
 		settings.content.gameId = trim_trailing_ws(std::string(ip_meta.product_number, sizeof(ip_meta.product_number)));
+		// in case there is a null character followed by garbage, which happens
+		settings.content.gameId = settings.content.gameId.c_str();
 
 		if (settings.content.gameId.empty())
 			return;
