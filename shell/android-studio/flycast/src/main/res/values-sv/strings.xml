@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="OK">OK</string>
-    <string name="storage_error">Storage Error</string>
+    <string name="storage_error">Lagringsfel</string>
     <string name="folder_permissions">Can\'t get permissions to access this folder.\nPlease select a different one.</string>
     <string name="file_manager_not_found">File Manager not found</string>
     <string name="no_file_manager_android10">No appropriate file manager was found on your device.\nPlease install a Storage Access Framework compatible file manager</string>
