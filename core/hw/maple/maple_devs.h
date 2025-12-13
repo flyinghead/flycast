@@ -9,6 +9,7 @@
 
 #include <memory>
 #include <vector>
+#include <future>
 
 enum MapleFunctionID
 {
@@ -136,7 +137,7 @@ struct maple_device : public std::enable_shared_from_this<maple_device>
 	virtual void OnSetup() {};
 	virtual ~maple_device();
 
-	virtual std::vector<u32> RawDma(u32* buffer_in, u32 buffer_in_len) = 0;
+	virtual std::future<std::vector<u32>> RawDma(u32* buffer_in, u32 buffer_in_len) = 0;
 
 	virtual void serialize(Serializer& ser) const {
 		ser << player_num;
@@ -174,9 +175,9 @@ const char *GetCurrentGameButtonName(DreamcastKey key);
 const char *GetCurrentGameAxisName(DreamcastKey axis);
 
 /*
-	Base class with dma helpers and stuff
+	Asynchronous base class with dma helpers and stuff
 */
-struct maple_base: maple_device
+struct maple_async_base: maple_device
 {
 	std::vector<u8> dma_buffer_out;
 
@@ -247,7 +248,9 @@ struct maple_base: maple_device
 			reci |= maple_GetAttachedDevices(bus_id);
 
 		verify(u8(dma_buffer_out.size() / 4) * 4 == dma_buffer_out.size());
-		output.push_back(frame(resp, send, reci, dma_buffer_out.size()));
+
+		// Frame always goes at the front
+		output.insert(output.begin(), frame(resp, send, reci, dma_buffer_out.size()));
 	}
 
 	void pack_payload(std::vector<u32>& output)
@@ -264,43 +267,62 @@ struct maple_base: maple_device
 				(dma_buffer_out[i + 3] << 24)
 			);
 		}
-	}
 
-	u32 Dma(u32 Command, u32* buffer_in, u32 buffer_in_len)
-	{
 		dma_buffer_out.clear();
-
-		dma_buffer_in = (u8*)buffer_in;
-		dma_count_in = buffer_in_len;
-
-		return dma(Command);
+		dma_buffer_out.shrink_to_fit();
 	}
 
-	virtual u32 dma(u32 cmd) = 0;
+	virtual std::future<std::vector<u32>> Dma(u32 Command, u32 reci, u32 send) = 0;
 
 	virtual u32 frame(u32 resp, u32 send, u32 reci, u32 size)
 	{
 		return ((resp << 0 ) | (send << 8) | (reci << 16) | ((size / 4) << 24));
 	}
 
-	std::vector<u32> RawDma(u32* buffer_in, u32 buffer_in_len) override
+	std::future<std::vector<u32>> RawDma(u32* buffer_in, u32 buffer_in_len) override
 	{
+		dma_buffer_out.clear();
+
 		u32 command=buffer_in[0] &0xFF;
 		//Recipient address
 		u32 reci = (buffer_in[0] >> 8) & 0xFF;
 		//Sender address
 		u32 send = (buffer_in[0] >> 16) & 0xFF;
-		u32 resp = Dma(command, &buffer_in[1], buffer_in_len - 4);
+
+		dma_buffer_in = (u8*)&buffer_in[1];
+		dma_count_in = buffer_in_len - 4;
+
+		return Dma(command, reci, send);
+	}
+};
+
+/*
+	Synchronous base class with dma helpers and stuff
+*/
+struct maple_base: maple_async_base
+{
+	std::future<std::vector<u32>> output_to_future(std::vector<u32>&& output)
+	{
+		std::promise<std::vector<u32>> promiseOutput;
+		std::future<std::vector<u32>> futureOutput;
+		futureOutput = promiseOutput.get_future();
+		promiseOutput.set_value(std::move(output));
+
+		return futureOutput;
+	}
+
+	std::future<std::vector<u32>> Dma(u32 Command, u32 reci, u32 send) override final
+	{
+		u32 resp = dma(Command);
 
 		std::vector<u32> output;
 		pack_frame(output, resp, send, reci);
 		pack_payload(output);
 
-		dma_buffer_out.clear();
-		dma_buffer_out.shrink_to_fit();
-
-		return output;
+		return output_to_future(std::move(output));
 	}
+
+	virtual u32 dma(u32 cmd) = 0;
 };
 
 class jvs_io_board;
@@ -338,7 +360,7 @@ struct maple_naomi_jamma : maple_base, SerialPort
 
 	void handle_86_subcommand();
 
-	std::vector<u32> RawDma(u32* buffer_in, u32 buffer_in_len) override;
+	std::future<std::vector<u32>> RawDma(u32* buffer_in, u32 buffer_in_len) override;
 	u32 dma(u32 cmd) override { return 0; }
 
 	void serialize(Serializer& ser) const override;

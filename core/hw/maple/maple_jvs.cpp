@@ -1793,7 +1793,7 @@ void maple_naomi_jamma::handle_86_subcommand()
 	}
 }
 
-std::vector<u32> maple_naomi_jamma::RawDma(u32* buffer_in, u32 buffer_in_len)
+std::future<std::vector<u32>> maple_naomi_jamma::RawDma(u32* buffer_in, u32 buffer_in_len)
 {
 #ifdef DUMP_JVS
 	printf("JVS IN: ");
@@ -1969,7 +1969,7 @@ std::vector<u32> maple_naomi_jamma::RawDma(u32* buffer_in, u32 buffer_in_len)
 	dma_buffer_out.clear();
 	dma_buffer_out.shrink_to_fit();
 
-	return output;
+	return output_to_future(std::move(output));
 }
 
 void maple_naomi_jamma::serialize(Serializer& ser) const
