@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-12-10 11:34+0100\n"
-"PO-Revision-Date: 2025-12-12 21:15\n"
+"POT-Creation-Date: 2025-12-13 17:19+0100\n"
+"PO-Revision-Date: 2025-12-13 16:26\n"
 "Last-Translator: \n"
 "Language: zh_HK\n"
 "MIME-Version: 1.0\n"
@@ -102,6 +102,10 @@ msgstr ""
 #: core/sdl/dreamconn.cpp:263
 #, c-format
 msgid "WARNING: DreamLink disconnected from port %c"
+msgstr ""
+
+#: core/sdl/sdl.cpp:843 core/windows/winmain.cpp:370
+msgid "Flycast Error"
 msgstr ""
 
 #: core/audio/audiobackend_null.cpp:12
@@ -1264,7 +1268,7 @@ msgstr ""
 msgid "Light Gun"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:46
+#: core/ui/settings_controls.cpp:46 core/input/keyboard_device.h:77
 msgid "Keyboard"
 msgstr ""
 
@@ -2491,35 +2495,35 @@ msgstr ""
 msgid "Do you want to reset Vulkan to use new driver?"
 msgstr ""
 
-#: core/nullDC.cpp:164
+#: core/nullDC.cpp:172
 msgid "Save state failed - memory full"
 msgstr ""
 
-#: core/nullDC.cpp:176
+#: core/nullDC.cpp:184
 msgid "Cannot open save file"
 msgstr ""
 
-#: core/nullDC.cpp:204
+#: core/nullDC.cpp:212
 msgid "State saved"
 msgstr ""
 
-#: core/nullDC.cpp:209
+#: core/nullDC.cpp:217
 msgid "Error saving state"
 msgstr ""
 
-#: core/nullDC.cpp:229
+#: core/nullDC.cpp:237
 msgid "Save state not found"
 msgstr ""
 
-#: core/nullDC.cpp:269 core/nullDC.cpp:291 core/nullDC.cpp:305
+#: core/nullDC.cpp:277 core/nullDC.cpp:299 core/nullDC.cpp:313
 msgid "Failed to load state"
 msgstr ""
 
-#: core/nullDC.cpp:269
+#: core/nullDC.cpp:277
 msgid "Not enough memory"
 msgstr ""
 
-#: core/nullDC.cpp:291
+#: core/nullDC.cpp:299
 msgid "I/O error"
 msgstr ""
 
@@ -2667,11 +2671,15 @@ msgstr ""
 msgid "Widescreen cheat activated"
 msgstr ""
 
+#: core/wsi/switcher.cpp:91
+msgid "Cannot initialize the graphics API"
+msgstr ""
+
 #: shell/libretro/libretro.cpp:2130
 msgid "Cannot run without JIT"
 msgstr ""
 
-#: shell/switch/switch_main.cpp:70
+#: shell/switch/switch_main.cpp:76
 msgid "Not supported on Switch"
 msgstr ""
 
