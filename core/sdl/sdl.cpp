@@ -30,6 +30,7 @@
 #include "switch_gamepad.h"
 #endif
 #include "dreamlink.h"
+#include "oslib/i18n.h"
 #include <unordered_map>
 
 static SDL_Window* window = NULL;
@@ -834,7 +835,12 @@ void sdl_window_create()
 #endif
 	}
 	sdlDeInit.initialized = true;
-	initRenderApi();
+	try {
+		initRenderApi();
+	} catch (const FlycastException& e) {
+		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, i18n::T("Flycast Error"), e.what(), nullptr);
+		throw;
+	}
 	// ImGui copy & paste
 	ImGui::GetIO().GetClipboardTextFn = getClipboardText;
 	ImGui::GetIO().SetClipboardTextFn = setClipboardText;

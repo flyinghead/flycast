@@ -82,9 +82,9 @@ public class AndroidStorage {
             } catch (SecurityException e) {
                 Log.w("Flycast", "takePersistableUriPermission failed", e);
                 AlertDialog.Builder dlgAlert  = new AlertDialog.Builder(activity);
-                dlgAlert.setMessage("Can't get permissions to access this folder.\nPlease select a different one.");
-                dlgAlert.setTitle("Storage Error");
-                dlgAlert.setPositiveButton("Ok",
+                dlgAlert.setMessage(R.string.folder_permissions);
+                dlgAlert.setTitle(R.string.storage_error);
+                dlgAlert.setPositiveButton(R.string.OK,
                         new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog,int id) {
@@ -262,6 +262,10 @@ public class AndroidStorage {
         return newDirUri.toString();
     }
 
+    private String getResString(int id) {
+        return activity.getResources().getString(id);
+    }
+
     public boolean addStorage(boolean isDirectory, boolean writeAccess, String description, String mimeType)
     {
         Intent intent = new Intent(isDirectory ? Intent.ACTION_OPEN_DOCUMENT_TREE : Intent.ACTION_OPEN_DOCUMENT);
@@ -284,15 +288,13 @@ public class AndroidStorage {
                     String message;
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
                         // Android 10+ requires SAF
-                        message = "No appropriate file manager was found on your device.\n"
-                                + "Please install a Storage Access Framework compatible file manager";
+                        message = getResString(R.string.no_file_manager_android10);
                     else
-                        message = "No appropriate file manager was found on your device.\n"
-                                + "Please install a file manager or try to disable 'Use SAF File Picker' in the general settings";
+                        message = getResString(R.string.no_file_manager_android9);
                     new AlertDialog.Builder(activity)
-                            .setTitle("File Manager not found")
+                            .setTitle(R.string.file_manager_not_found)
                             .setMessage(message)
-                            .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                            .setPositiveButton(R.string.OK, new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, int id) {
                                     addStorageCallback(null);
@@ -550,7 +552,7 @@ public class AndroidStorage {
     public void exportHomeDirectory()
     {
         Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
-        intent = Intent.createChooser(intent, "Select an export folder");
+        intent = Intent.createChooser(intent, getResString(R.string.select_an_export_folder));
         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
         activity.startActivityForResult(intent, EXPORT_HOME_ACTIVITY_REQUEST);
     }
@@ -562,13 +564,13 @@ public class AndroidStorage {
             // Cancelled
             return;
         HomeMover mover = new HomeMover(activity, this);
-        mover.copyHome(activity.getExternalFilesDir(null).toURI().toString(), uri.toString(), "Exporting home folder");
+        mover.copyHome(activity.getExternalFilesDir(null).toURI().toString(), uri.toString(), getResString(R.string.exporting_home_folder));
     }
 
     public void importHomeDirectory()
     {
         Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
-        intent = Intent.createChooser(intent, "Select an import folder");
+        intent = Intent.createChooser(intent, getResString(R.string.select_an_import_folder));
         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
         activity.startActivityForResult(intent, IMPORT_HOME_ACTIVITY_REQUEST);
     }
@@ -581,7 +583,7 @@ public class AndroidStorage {
             return;
         HomeMover mover = new HomeMover(activity, this);
         mover.setReloadConfigOnCompletion(true);
-        mover.copyHome(uri.toString(), activity.getExternalFilesDir(null).toURI().toString(), "Importing home folder");
+        mover.copyHome(uri.toString(), activity.getExternalFilesDir(null).toURI().toString(), getResString(R.string.importing_home_folder));
     }
 
     public boolean requiresSafFilePicker() {

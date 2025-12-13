@@ -49,7 +49,13 @@ int main(int argc, char *argv[])
 	if (flycast_init(argc, argv))
 		die("Flycast initialization failed");
 
-	mainui_loop();
+	try {
+		mainui_loop();
+	} catch (const std::exception& e) {
+		ERROR_LOG(BOOT, "mainui_loop error: %s", e.what());
+	} catch (...) {
+		ERROR_LOG(BOOT, "mainui_loop unknown exception");
+	}
 
 	flycast_term();
 

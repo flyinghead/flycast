@@ -56,44 +56,52 @@ int flycast_init(int argc, char* argv[])
 	setbuf(stderr, 0);
 	settings.aica.muteAudio = true;
 #endif
-	if (!addrspace::reserve())
-	{
-		ERROR_LOG(VMEM, "Failed to alloc mem");
-		return -1;
-	}
-	config::parseCommandLine(argc, argv);
-	if (config::loadInt("naomi", "BoardId") != 0)
-	{
-		settings.naomi.multiboard = true;
-		settings.naomi.slave = true;
-	}
-	settings.naomi.drivingSimSlave = config::loadInt("naomi", "DrivingSimSlave");
+	try {
+		if (!addrspace::reserve())
+		{
+			ERROR_LOG(VMEM, "Failed to alloc mem");
+			return -1;
+		}
+		config::parseCommandLine(argc, argv);
+		if (config::loadInt("naomi", "BoardId") != 0)
+		{
+			settings.naomi.multiboard = true;
+			settings.naomi.slave = true;
+		}
+		settings.naomi.drivingSimSlave = config::loadInt("naomi", "DrivingSimSlave");
 
-	config::Settings::instance().reset();
-	LogManager::Shutdown();
-	if (!config::open())
-	{
-		LogManager::Init();
-		NOTICE_LOG(BOOT, "Config directory is not set. Starting onboarding");
-		gui_open_onboarding();
+		config::Settings::instance().reset();
+		LogManager::Shutdown();
+		if (!config::open())
+		{
+			LogManager::Init();
+			NOTICE_LOG(BOOT, "Config directory is not set. Starting onboarding");
+			gui_open_onboarding();
+		}
+		else
+		{
+			LogManager::Init();
+			config::Settings::instance().load(false);
+		}
+		gui_init();
+		os_CreateWindow();
+		os_SetupInput();
+
+		if(config::GDB)
+			debugger::init(config::GDBPort);
+		lua::init();
+
+		if(config::ProfilerEnabled)
+			LogManager::GetInstance()->SetEnable(LogTypes::PROFILER, true);
+
+		return 0;
+	} catch (const std::exception& e) {
+		ERROR_LOG(BOOT, "flycast_init failed: %s", e.what());
+		return 1;
+	} catch (...) {
+		ERROR_LOG(BOOT, "flycast_init: unknown exception");
+		return 1;
 	}
-	else
-	{
-		LogManager::Init();
-		config::Settings::instance().load(false);
-	}
-	gui_init();
-	os_CreateWindow();
-	os_SetupInput();
-
-	if(config::GDB)
-		debugger::init(config::GDBPort);
-	lua::init();
-
-	if(config::ProfilerEnabled)
-		LogManager::GetInstance()->SetEnable(LogTypes::PROFILER, true);
-
-	return 0;
 }
 
 #ifndef __ANDROID__

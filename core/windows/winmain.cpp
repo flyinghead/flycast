@@ -47,6 +47,7 @@
 
 #include <nowide/args.hpp>
 #include <nowide/stackstring.hpp>
+#include <exception>
 
 #include <windows.h>
 #include <windowsx.h>
@@ -361,7 +362,16 @@ int main(int argc, char* argv[])
 #endif
 	os_InstallFaultHandler();
 
-	mainui_loop();
+	try {
+		mainui_loop();
+	} catch (const std::exception& e) {
+		ERROR_LOG(BOOT, "mainui_loop error: %s", e.what());
+#ifndef TARGET_UWP
+		MessageBox(NULL, i18n::T("Flycast Error"), e.what(), MB_ICONSTOP | MB_OK);
+#endif
+	} catch (...) {
+		ERROR_LOG(BOOT, "mainui_loop unknown exception");
+	}
 
 	flycast_term();
 	os_UninstallFaultHandler();

@@ -16,6 +16,7 @@
 #include <string>
 #include <unistd.h>
 #include <vector>
+#include <exception>
 
 #if defined(SUPPORT_X11)
 	#include "x11.h"
@@ -268,7 +269,13 @@ int main(int argc, char* argv[])
 	auto async = std::async(std::launch::async, uploadCrashes, "/tmp");
 #endif
 
-	mainui_loop();
+	try {
+		mainui_loop();
+	} catch (const std::exception& e) {
+		ERROR_LOG(BOOT, "mainui_loop error: %s", e.what());
+	} catch (...) {
+		ERROR_LOG(BOOT, "mainui_loop unknown exception");
+	}
 
 	flycast_term();
 	os_UninstallFaultHandler();

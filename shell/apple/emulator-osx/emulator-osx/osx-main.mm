@@ -24,6 +24,7 @@
 #include "emulator.h"
 #include "ui/mainui.h"
 #include <future>
+#include <exception>
 
 int darw_printf(const char* text, ...)
 {
@@ -106,7 +107,8 @@ extern "C" int SDL_main(int argc, char *argv[])
     CFRelease(resourcesURL);
     CFRelease(mainBundle);
 
-	emu_flycast_init();
+	if (emu_flycast_init() != 0)
+		return 1;
 	
 	int boardId = config::loadInt("naomi", "BoardId");
 	if (boardId > 0)
@@ -132,7 +134,13 @@ extern "C" int SDL_main(int argc, char *argv[])
 	auto async = std::async(std::launch::async, uploadCrashes, "/tmp");
 #endif
 
-	mainui_loop();
+	try {
+		mainui_loop();
+	} catch (const std::exception& e) {
+		ERROR_LOG(BOOT, "mainui_loop error: %s", e.what());
+	} catch (...) {
+		ERROR_LOG(BOOT, "mainui_loop unknown exception");
+	}
 
 	emu_flycast_term();
 	os_UninstallFaultHandler();
