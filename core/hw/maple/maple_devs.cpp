@@ -1718,31 +1718,9 @@ struct RFIDReaderWriter : maple_base
 
 	// Surprisingly recipient and sender aren't swapped in the response so we override RawDma for this reason
 	// vf4tuned and mushiking do care
-	std::vector<u32> RawDma(u32* buffer_in, u32 buffer_in_len) override
+	u32 frame(u32 resp, u32 send, u32 reci, u32 size) override
 	{
-		u32 command=buffer_in[0] &0xFF;
-		//Recipient address
-		u32 reci = (buffer_in[0] >> 8) & 0xFF;
-		//Sender address
-		u32 send = (buffer_in[0] >> 16) & 0xFF;
-		u32 resp = Dma(command, &buffer_in[1], buffer_in_len - 4);
-
-		if (reci & 0x20)
-			reci |= maple_GetAttachedDevices(bus_id);
-
-		verify(u8(dma_buffer_out.size() / 4) * 4 == dma_buffer_out.size());
-		std::vector<u32> output;
-		output.reserve(1 + (dma_buffer_out.size() / 4));
-		output.push_back((resp << 0 ) | (reci << 8) | (send << 16) | ((dma_buffer_out.size() / 4) << 24));
-
-		for (std::size_t i = 0; i < dma_buffer_out.size(); i+=4)
-		{
-			output.push_back(*(u32*)&dma_buffer_out[i]);
-		}
-
-		dma_buffer_out.clear();
-
-		return output;
+		return ((resp << 0 ) | (reci << 8) | (send << 16) | ((size / 4) << 24));
 	}
 
 	u32 dma(u32 cmd) override

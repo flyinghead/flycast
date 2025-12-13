@@ -190,33 +190,39 @@ struct maple_base: maple_device
 
 	void w16(u16 data)
 	{
-		dma_buffer_out.resize(dma_buffer_out.size() + sizeof(data));
-		*(u16*)&dma_buffer_out[dma_buffer_out.size() - sizeof(data)] = data;
+		dma_buffer_out.reserve(dma_buffer_out.size() + sizeof(data));
+		dma_buffer_out.push_back(data & 0xFF);
+		dma_buffer_out.push_back((data >> 8) & 0xFF);
 	}
 
 	void w32(u32 data)
 	{
-		dma_buffer_out.resize(dma_buffer_out.size() + sizeof(data));
-		*(u32*)&dma_buffer_out[dma_buffer_out.size() - sizeof(data)] = data;
+		dma_buffer_out.reserve(dma_buffer_out.size() + sizeof(data));
+		dma_buffer_out.push_back(data & 0xFF);
+		dma_buffer_out.push_back((data >> 8) & 0xFF);
+		dma_buffer_out.push_back((data >> 16) & 0xFF);
+		dma_buffer_out.push_back((data >> 24) & 0xFF);
 	}
 
 	void wptr(const void* src, u32 len)
 	{
 		u8* src8 = (u8*)src;
-		while (len--)
-			w8(*src8++);
+		dma_buffer_out.insert(dma_buffer_out.end(), src8, src8 + len);
+	}
+
+	void wset(u8 val, u32 len)
+	{
+		dma_buffer_out.resize(dma_buffer_out.size() + len, val);
 	}
 
 	void wstr(const char* str, u32 len)
 	{
+		dma_buffer_out.reserve(dma_buffer_out.size() + len);
 		u32 ln = (u32)strlen(str);
 		verify(len >= ln);
 		len -= ln;
-		while (ln--)
-			w8(*str++);
-
-		while (len--)
-			w8(' ');
+		wptr(str, ln);
+		wset(' ', len);
 	}
 
 	u8 r8() { u8  rv = *(u8*)dma_buffer_in; dma_buffer_in += 1; dma_count_in -= 1; return rv; }
@@ -235,6 +241,31 @@ struct maple_base: maple_device
 	}
 	u32 r_count() { return dma_count_in; }
 
+	void pack_frame(std::vector<u32>& output, u32 resp, u32 send, u32 reci)
+	{
+		if (reci & 0x20)
+			reci |= maple_GetAttachedDevices(bus_id);
+
+		verify(u8(dma_buffer_out.size() / 4) * 4 == dma_buffer_out.size());
+		output.push_back(frame(resp, send, reci, dma_buffer_out.size()));
+	}
+
+	void pack_payload(std::vector<u32>& output)
+	{
+		verify(u8(dma_buffer_out.size() / 4) * 4 == dma_buffer_out.size());
+		output.reserve(output.size() + (dma_buffer_out.size() / 4));
+
+		for (std::size_t i = 0; i < dma_buffer_out.size(); i+=4)
+		{
+			output.push_back(
+				dma_buffer_out[i] |
+				(dma_buffer_out[i + 1] << 8) |
+				(dma_buffer_out[i + 2] << 16) |
+				(dma_buffer_out[i + 3] << 24)
+			);
+		}
+	}
+
 	u32 Dma(u32 Command, u32* buffer_in, u32 buffer_in_len)
 	{
 		dma_buffer_out.clear();
@@ -247,6 +278,11 @@ struct maple_base: maple_device
 
 	virtual u32 dma(u32 cmd) = 0;
 
+	virtual u32 frame(u32 resp, u32 send, u32 reci, u32 size)
+	{
+		return ((resp << 0 ) | (send << 8) | (reci << 16) | ((size / 4) << 24));
+	}
+
 	std::vector<u32> RawDma(u32* buffer_in, u32 buffer_in_len) override
 	{
 		u32 command=buffer_in[0] &0xFF;
@@ -256,19 +292,9 @@ struct maple_base: maple_device
 		u32 send = (buffer_in[0] >> 16) & 0xFF;
 		u32 resp = Dma(command, &buffer_in[1], buffer_in_len - 4);
 
-		if (reci & 0x20)
-			reci |= maple_GetAttachedDevices(bus_id);
-
-
-		verify(u8(dma_buffer_out.size() / 4) * 4 == dma_buffer_out.size());
 		std::vector<u32> output;
-		output.reserve(1 + (dma_buffer_out.size() / 4));
-		output.push_back((resp << 0 ) | (send << 8) | (reci << 16) | ((dma_buffer_out.size() / 4) << 24));
-
-		for (std::size_t i = 0; i < dma_buffer_out.size(); i+=4)
-		{
-			output.push_back(*(u32*)&dma_buffer_out[i]);
-		}
+		pack_frame(output, resp, send, reci);
+		pack_payload(output);
 
 		dma_buffer_out.clear();
 		dma_buffer_out.shrink_to_fit();
