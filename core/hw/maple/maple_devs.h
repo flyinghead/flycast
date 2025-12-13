@@ -136,7 +136,7 @@ struct maple_device : public std::enable_shared_from_this<maple_device>
 	virtual void OnSetup() {};
 	virtual ~maple_device();
 
-	virtual u32 RawDma(u32* buffer_in, u32 buffer_in_len, u32* buffer_out) = 0;
+	virtual std::vector<u32> RawDma(u32* buffer_in, u32 buffer_in_len) = 0;
 
 	virtual void serialize(Serializer& ser) const {
 		ser << player_num;
@@ -178,15 +178,27 @@ const char *GetCurrentGameAxisName(DreamcastKey axis);
 */
 struct maple_base: maple_device
 {
-	u8* dma_buffer_out;
-	u32* dma_count_out;
+	std::vector<u8> dma_buffer_out;
 
 	u8* dma_buffer_in;
 	u32 dma_count_in;
 
-	void w8(u8 data) { *(u8*)dma_buffer_out = data; dma_buffer_out += 1; dma_count_out[0] += 1; }
-	void w16(u16 data) { *(u16*)dma_buffer_out = data; dma_buffer_out += 2; dma_count_out[0] += 2; }
-	void w32(u32 data) { *(u32*)dma_buffer_out = data; dma_buffer_out += 4; dma_count_out[0] += 4; }
+	void w8(u8 data)
+	{
+		dma_buffer_out.push_back(data);
+	}
+
+	void w16(u16 data)
+	{
+		dma_buffer_out.resize(dma_buffer_out.size() + sizeof(data));
+		*(u16*)&dma_buffer_out[dma_buffer_out.size() - sizeof(data)] = data;
+	}
+
+	void w32(u32 data)
+	{
+		dma_buffer_out.resize(dma_buffer_out.size() + sizeof(data));
+		*(u32*)&dma_buffer_out[dma_buffer_out.size() - sizeof(data)] = data;
+	}
 
 	void wptr(const void* src, u32 len)
 	{
@@ -223,35 +235,45 @@ struct maple_base: maple_device
 	}
 	u32 r_count() { return dma_count_in; }
 
-	u32 Dma(u32 Command, u32* buffer_in, u32 buffer_in_len, u32* buffer_out, u32& buffer_out_len)
+	u32 Dma(u32 Command, u32* buffer_in, u32 buffer_in_len)
 	{
-		dma_buffer_out = (u8*)buffer_out;
-		dma_count_out = &buffer_out_len;
+		dma_buffer_out.clear();
 
 		dma_buffer_in = (u8*)buffer_in;
 		dma_count_in = buffer_in_len;
 
 		return dma(Command);
 	}
+
 	virtual u32 dma(u32 cmd) = 0;
 
-	u32 RawDma(u32* buffer_in, u32 buffer_in_len, u32* buffer_out) override
+	std::vector<u32> RawDma(u32* buffer_in, u32 buffer_in_len) override
 	{
 		u32 command=buffer_in[0] &0xFF;
 		//Recipient address
 		u32 reci = (buffer_in[0] >> 8) & 0xFF;
 		//Sender address
 		u32 send = (buffer_in[0] >> 16) & 0xFF;
-		u32 outlen = 0;
-		u32 resp = Dma(command, &buffer_in[1], buffer_in_len - 4, &buffer_out[1], outlen);
+		u32 resp = Dma(command, &buffer_in[1], buffer_in_len - 4);
 
 		if (reci & 0x20)
 			reci |= maple_GetAttachedDevices(bus_id);
 
-		verify(u8(outlen / 4) * 4 == outlen);
-		buffer_out[0] = (resp << 0 ) | (send << 8) | (reci << 16) | ((outlen / 4) << 24);
 
-		return outlen + 4;
+		verify(u8(dma_buffer_out.size() / 4) * 4 == dma_buffer_out.size());
+		std::vector<u32> output;
+		output.reserve(1 + (dma_buffer_out.size() / 4));
+		output.push_back((resp << 0 ) | (send << 8) | (reci << 16) | ((dma_buffer_out.size() / 4) << 24));
+
+		for (std::size_t i = 0; i < dma_buffer_out.size(); i+=4)
+		{
+			output.push_back(*(u32*)&dma_buffer_out[i]);
+		}
+
+		dma_buffer_out.clear();
+		dma_buffer_out.shrink_to_fit();
+
+		return output;
 	}
 };
 
@@ -290,7 +312,7 @@ struct maple_naomi_jamma : maple_base, SerialPort
 
 	void handle_86_subcommand();
 
-	u32 RawDma(u32* buffer_in, u32 buffer_in_len, u32* buffer_out) override;
+	std::vector<u32> RawDma(u32* buffer_in, u32 buffer_in_len) override;
 	u32 dma(u32 cmd) override { return 0; }
 
 	void serialize(Serializer& ser) const override;

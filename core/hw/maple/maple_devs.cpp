@@ -616,7 +616,7 @@ struct maple_sega_vmu: maple_base
 						time(&now);
 						tm* timenow=localtime(&now);
 
-						u8* timebuf=dma_buffer_out;
+						const std::size_t timeMarker = dma_buffer_out.size();
 
 						w8((timenow->tm_year+1900)%256);
 						w8((timenow->tm_year+1900)/256);
@@ -628,6 +628,8 @@ struct maple_sega_vmu: maple_base
 						w8(timenow->tm_min);
 						w8(timenow->tm_sec);
 						w8(0);
+
+						u8* timebuf=&dma_buffer_out[timeMarker];
 
 						DEBUG_LOG(MAPLE, "VMU: CLOCK Read-> datetime is %04d/%02d/%02d ~ %02d:%02d:%02d!",
 								timebuf[0] + timebuf[1] * 256,
@@ -1716,23 +1718,31 @@ struct RFIDReaderWriter : maple_base
 
 	// Surprisingly recipient and sender aren't swapped in the response so we override RawDma for this reason
 	// vf4tuned and mushiking do care
-	u32 RawDma(u32* buffer_in, u32 buffer_in_len, u32* buffer_out) override
+	std::vector<u32> RawDma(u32* buffer_in, u32 buffer_in_len) override
 	{
 		u32 command=buffer_in[0] &0xFF;
 		//Recipient address
 		u32 reci = (buffer_in[0] >> 8) & 0xFF;
 		//Sender address
 		u32 send = (buffer_in[0] >> 16) & 0xFF;
-		u32 outlen = 0;
-		u32 resp = Dma(command, &buffer_in[1], buffer_in_len - 4, &buffer_out[1], outlen);
+		u32 resp = Dma(command, &buffer_in[1], buffer_in_len - 4);
 
 		if (reci & 0x20)
 			reci |= maple_GetAttachedDevices(bus_id);
 
-		verify(u8(outlen / 4) * 4 == outlen);
-		buffer_out[0] = (resp << 0 ) | (reci << 8) | (send << 16) | ((outlen / 4) << 24);
+		verify(u8(dma_buffer_out.size() / 4) * 4 == dma_buffer_out.size());
+		std::vector<u32> output;
+		output.reserve(1 + (dma_buffer_out.size() / 4));
+		output.push_back((resp << 0 ) | (reci << 8) | (send << 16) | ((dma_buffer_out.size() / 4) << 24));
 
-		return outlen + 4;
+		for (std::size_t i = 0; i < dma_buffer_out.size(); i+=4)
+		{
+			output.push_back(*(u32*)&dma_buffer_out[i]);
+		}
+
+		dma_buffer_out.clear();
+
+		return output;
 	}
 
 	u32 dma(u32 cmd) override
