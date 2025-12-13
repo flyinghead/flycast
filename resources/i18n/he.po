@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-12-08 16:00+0100\n"
-"PO-Revision-Date: 2025-12-08 16:00\n"
+"POT-Creation-Date: 2025-12-10 11:34+0100\n"
+"PO-Revision-Date: 2025-12-12 21:15\n"
 "Last-Translator: \n"
 "Language: he_IL\n"
 "MIME-Version: 1.0\n"
@@ -158,21 +158,26 @@ msgstr ""
 msgid "CUE parse error: CUE file too big"
 msgstr ""
 
-#: core/imgread/cue.cpp:187
+#: core/imgread/cue.cpp:189
 #, c-format
 msgid "CUE file: cannot open track %s"
 msgstr ""
 
-#: core/imgread/cue.cpp:194
+#: core/imgread/cue.cpp:193
 #, c-format
 msgid "CUE file: track has unknown sector type: %s"
 msgstr ""
 
-#: core/imgread/cue.cpp:228
+#: core/imgread/cue.cpp:225
 msgid "CUE parse error: failed to parse or invalid file with 0 tracks"
 msgstr ""
 
-#: core/imgread/cue.cpp:235
+#: core/imgread/cue.cpp:228 core/imgread/cue.cpp:240 core/imgread/cue.cpp:244
+#: core/imgread/cue.cpp:248 core/imgread/cue.cpp:252
+msgid "Invalid CUE file"
+msgstr ""
+
+#: core/imgread/cue.cpp:237
 msgid "CUE parse error: less than 3 tracks"
 msgstr ""
 
@@ -221,17 +226,15 @@ msgstr ""
 msgid "GDI file too big"
 msgstr ""
 
-#: core/imgread/gdi.cpp:36
-msgid "GDI: empty or invalid GDI file"
+#: core/imgread/gdi.cpp:38 core/imgread/gdi.cpp:85 core/imgread/gdi.cpp:89
+#: core/imgread/gdi.cpp:96 core/imgread/gdi.cpp:102 core/imgread/gdi.cpp:108
+#: core/imgread/gdi.cpp:112 core/imgread/gdi.cpp:120 core/imgread/gdi.cpp:145
+msgid "Invalid GDI file"
 msgstr ""
 
-#: core/imgread/gdi.cpp:95
+#: core/imgread/gdi.cpp:132
 #, c-format
 msgid "GDI file: Cannot open track %s"
-msgstr ""
-
-#: core/imgread/gdi.cpp:110
-msgid "GDI parse error: less than 3 tracks"
 msgstr ""
 
 #: core/imgread/cdi.cpp:17
@@ -2524,19 +2527,19 @@ msgstr ""
 msgid "Connected to DCNet with modem"
 msgstr ""
 
-#: core/network/dcnet.cpp:246
+#: core/network/dcnet.cpp:269
 msgid "Connected to DCNet with Ethernet"
 msgstr ""
 
-#: core/network/dcnet.cpp:628
+#: core/network/dcnet.cpp:648
 msgid "DCNet disconnected"
 msgstr ""
 
-#: core/network/dcnet.cpp:753
+#: core/network/dcnet.cpp:773
 msgid "Host not found"
 msgstr ""
 
-#: core/network/dcnet.cpp:797
+#: core/network/dcnet.cpp:817
 msgid "Can't connect to DCNet"
 msgstr ""
 

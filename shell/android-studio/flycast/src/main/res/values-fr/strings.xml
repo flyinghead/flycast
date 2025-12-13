@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="OK">OK</string>
+    <string name="storage_error">Erreur de Stockage</string>
+    <string name="folder_permissions">Impossible d\'obtenir les permissions pour accéder à ce dossier.\nVeuillez en sélectionner un autre.</string>
+    <string name="file_manager_not_found">Gestionnaire de Fichier introuvable</string>
+    <string name="no_file_manager_android10">Aucun gestionnaire de fichier disponible sur cet appareil.\nVeuillez installer un gestionnaire de fichier compatible avec \"Android Storage Framework\"</string>
+    <string name="no_file_manager_android9">Aucun gestionnaire de fichier disponible sur cet appareil.\nVeuillez installer un gestionnaire de fichier ou désélectionner \"Utiliser le sélecteur de fichiers SAF\" dans les préférences générales</string>
+    <string name="select_an_export_folder">Sélectionnez un dossier d\'export</string>
+    <string name="exporting_home_folder">Export du dossier principal</string>
+    <string name="select_an_import_folder">Sélectionnez un dossier d\'import</string>
+    <string name="importing_home_folder">Import du dossier principal</string>
+    <string name="flycast_error">Erreur Flycast</string>
+    <string name="init_failed_message">L\'initialisation a échoué. Veuillez réessayer ou réinstaller l\'application.\n\nErreur: </string>
+    <string name="exit">Quitter</string>
+    <string name="copying">Copie en cours</string>
+</resources>
