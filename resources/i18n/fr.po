@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-12-10 11:34+0100\n"
-"PO-Revision-Date: 2025-12-12 21:15\n"
+"POT-Creation-Date: 2025-12-13 17:19+0100\n"
+"PO-Revision-Date: 2025-12-13 16:25\n"
 "Last-Translator: \n"
 "Language: fr_FR\n"
 "MIME-Version: 1.0\n"
@@ -103,6 +103,10 @@ msgstr "Erreur de changement de média"
 #, c-format
 msgid "WARNING: DreamLink disconnected from port %c"
 msgstr "Attention : DreamLink déconnecté du port %c"
+
+#: core/sdl/sdl.cpp:843 core/windows/winmain.cpp:370
+msgid "Flycast Error"
+msgstr ""
 
 #: core/audio/audiobackend_null.cpp:12
 msgid "No Audio"
@@ -1266,7 +1270,7 @@ msgstr "Manette Sega"
 msgid "Light Gun"
 msgstr "Pistolet optique"
 
-#: core/ui/settings_controls.cpp:46
+#: core/ui/settings_controls.cpp:46 core/input/keyboard_device.h:77
 msgid "Keyboard"
 msgstr "Clavier"
 
@@ -2496,35 +2500,35 @@ msgstr "Ajouter un pilote personnalisé"
 msgid "Do you want to reset Vulkan to use new driver?"
 msgstr "Voulez-vous réinitialiser Vulkan pour utiliser le nouveau pilote ?"
 
-#: core/nullDC.cpp:164
+#: core/nullDC.cpp:172
 msgid "Save state failed - memory full"
 msgstr "Échec de sauvegarde - mémoire pleine"
 
-#: core/nullDC.cpp:176
+#: core/nullDC.cpp:184
 msgid "Cannot open save file"
 msgstr "Impossible d'ouvrir le fichier de sauvegarde"
 
-#: core/nullDC.cpp:204
+#: core/nullDC.cpp:212
 msgid "State saved"
 msgstr "État sauvegardé"
 
-#: core/nullDC.cpp:209
+#: core/nullDC.cpp:217
 msgid "Error saving state"
 msgstr "Échec de sauvegarde"
 
-#: core/nullDC.cpp:229
+#: core/nullDC.cpp:237
 msgid "Save state not found"
 msgstr "État introuvable"
 
-#: core/nullDC.cpp:269 core/nullDC.cpp:291 core/nullDC.cpp:305
+#: core/nullDC.cpp:277 core/nullDC.cpp:299 core/nullDC.cpp:313
 msgid "Failed to load state"
 msgstr "Échec de chargement"
 
-#: core/nullDC.cpp:269
+#: core/nullDC.cpp:277
 msgid "Not enough memory"
 msgstr "Pas assez de mémoire"
 
-#: core/nullDC.cpp:291
+#: core/nullDC.cpp:299
 msgid "I/O error"
 msgstr "Erreur d'entrée/sortie"
 
@@ -2673,11 +2677,15 @@ msgstr "Ce jeu demande un BIOS authentique"
 msgid "Widescreen cheat activated"
 msgstr "Cheat écran large activé"
 
+#: core/wsi/switcher.cpp:91
+msgid "Cannot initialize the graphics API"
+msgstr ""
+
 #: shell/libretro/libretro.cpp:2130
 msgid "Cannot run without JIT"
 msgstr "Impossible de fonctionner sans JIT"
 
-#: shell/switch/switch_main.cpp:70
+#: shell/switch/switch_main.cpp:76
 msgid "Not supported on Switch"
 msgstr "Pas supporté sur Switch"
 
