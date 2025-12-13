@@ -235,10 +235,9 @@ static void maple_DoDma()
 					p_data = maple_in_buf;
 				}
 				inlen = (inlen + 1) * 4;
-				u32 outbuf[1024 / 4];
-				u32 outlen = MapleDevices[bus][port]->RawDma(&p_data[0], inlen, outbuf);
+				std::vector<u32> outbuf = MapleDevices[bus][port]->RawDma(&p_data[0], inlen);
 				xferIn += inlen + 3; // start, parity and stop bytes
-				xferOut += outlen + 3;
+				xferOut += (outbuf.size() * 4) + 3;
 #ifdef STRICT_MODE
 				if (!check_mdapro(header_2 + outlen - 1))
 				{
@@ -249,9 +248,9 @@ static void maple_DoDma()
 				}
 #endif
 				if (swap_msb)
-					for (u32 i = 0; i < outlen / 4; i++)
+					for (u32 i = 0; i < outbuf.size(); i++)
 						outbuf[i] = SWAP32(outbuf[i]);
-				mapleDmaOut.emplace_back(header_2, std::vector<u32>(outbuf, outbuf + outlen / 4));
+				mapleDmaOut.emplace_back(header_2, outbuf);
 			}
 			else
 			{

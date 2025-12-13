@@ -260,7 +260,7 @@ protected:
 			y = mapleInputState[playerNum].absPos.y;
 		}
 	}
-	
+
 	virtual s16 readRotaryEncoders(int channel, s16 relX, s16 relY)
 	{
 		switch (channel)
@@ -1483,10 +1483,11 @@ bool maple_naomi_jamma::receive_jvs_messages(u32 channel)
 	else
 		w8(sense_line(jvs_receive_buffer[channel][0]));	// bit 0 is sense line level. If set during F1 <n>, more I/O boards need addressing
 
-	memcpy(dma_buffer_out, jvs_receive_buffer[channel], jvs_receive_length[channel]);
-	memset(dma_buffer_out + jvs_receive_length[channel], 0, dword_length * 4 - headerLength - jvs_receive_length[channel]);
-	dma_buffer_out += dword_length * 4 - headerLength;
-	*dma_count_out += dword_length * 4 - headerLength;
+	const std::size_t footerStart = dma_buffer_out.size();
+	const std::size_t footerSize = dword_length * 4 - headerLength;
+	dma_buffer_out.resize(dma_buffer_out.size() + footerSize);
+	memcpy(&dma_buffer_out[footerStart], jvs_receive_buffer[channel], jvs_receive_length[channel]);
+	memset(&dma_buffer_out[footerStart + jvs_receive_length[channel]], 0, footerSize - jvs_receive_length[channel]);
 	jvs_receive_length[channel] = 0;
 
 	return true;
@@ -1682,9 +1683,7 @@ void maple_naomi_jamma::handle_86_subcommand()
 			w8(0x00);
 			w8(0x20);
 			w8(0x01);
-			memcpy(dma_buffer_out, eeprom, 4);
-			dma_buffer_out += 4;
-			*dma_count_out += 4;
+			dma_buffer_out.insert(dma_buffer_out.end(), &eeprom[0], &eeprom[4]);
 		}
 		break;
 
@@ -1698,9 +1697,7 @@ void maple_naomi_jamma::handle_86_subcommand()
 			w8(0x20);
 			w8(0x20);
 			int size = sizeof(eeprom) - address;
-			memcpy(dma_buffer_out, eeprom + address, size);
-			dma_buffer_out += size;
-			*dma_count_out += size;
+			dma_buffer_out.insert(dma_buffer_out.end(), eeprom + address, eeprom + address + size);
 		}
 		break;
 
@@ -1798,7 +1795,7 @@ void maple_naomi_jamma::handle_86_subcommand()
 	}
 }
 
-u32 maple_naomi_jamma::RawDma(u32* buffer_in, u32 buffer_in_len, u32* buffer_out)
+std::vector<u32> maple_naomi_jamma::RawDma(u32* buffer_in, u32 buffer_in_len)
 {
 #ifdef DUMP_JVS
 	printf("JVS IN: ");
@@ -1807,9 +1804,7 @@ u32 maple_naomi_jamma::RawDma(u32* buffer_in, u32 buffer_in_len, u32* buffer_out
 	printf("\n");
 #endif
 
-	u32 out_len = 0;
-	dma_buffer_out = (u8 *)buffer_out;
-	dma_count_out = &out_len;
+	dma_buffer_out.clear();
 
 	dma_buffer_in = (u8 *)buffer_in + 4;
 	dma_count_in = buffer_in_len - 4;
@@ -1872,7 +1867,11 @@ u32 maple_naomi_jamma::RawDma(u32* buffer_in, u32 buffer_in_len, u32* buffer_out
 				for (int i = 0; i < 32; i++)
 					jvs_repeat_request[i][0] = 0;
 
-				return MDRS_DeviceReply;
+				w8(MDRS_DeviceReply);
+				w8(0x00);
+				w8(0x20);
+				w8(0x00);
+				break;
 			}
 			int xfer_bytes;
 			if (dma_buffer_in[0] == 0xff)
@@ -1966,7 +1965,19 @@ u32 maple_naomi_jamma::RawDma(u32* buffer_in, u32 buffer_in_len, u32* buffer_out
 	printf("\n");
 #endif
 
-	return out_len;
+	verify(u8(dma_buffer_out.size() / 4) * 4 == dma_buffer_out.size());
+	std::vector<u32> output;
+	output.reserve(dma_buffer_out.size() / 4);
+
+	for (std::size_t i = 0; i < dma_buffer_out.size(); i+=4)
+	{
+		output.push_back(*(u32*)&dma_buffer_out[i]);
+	}
+
+	dma_buffer_out.clear();
+	dma_buffer_out.shrink_to_fit();
+
+	return output;
 }
 
 void maple_naomi_jamma::serialize(Serializer& ser) const
