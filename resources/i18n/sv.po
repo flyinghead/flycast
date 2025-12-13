@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-12-13 17:19+0100\n"
-"PO-Revision-Date: 2025-12-13 16:25\n"
+"PO-Revision-Date: 2025-12-13 17:21\n"
 "Last-Translator: \n"
 "Language: sv_SE\n"
 "MIME-Version: 1.0\n"
@@ -106,7 +106,7 @@ msgstr "VARNING: DreamLink kopplade från port %c"
 
 #: core/sdl/sdl.cpp:843 core/windows/winmain.cpp:370
 msgid "Flycast Error"
-msgstr ""
+msgstr "Fel i Flycast"
 
 #: core/audio/audiobackend_null.cpp:12
 msgid "No Audio"
@@ -2679,7 +2679,7 @@ msgstr "Bredskärmsfusk aktiverat"
 
 #: core/wsi/switcher.cpp:91
 msgid "Cannot initialize the graphics API"
-msgstr ""
+msgstr "Kan inte initiera grafik-API"
 
 #: shell/libretro/libretro.cpp:2130
 msgid "Cannot run without JIT"
