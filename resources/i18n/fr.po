@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-12-13 17:19+0100\n"
-"PO-Revision-Date: 2025-12-13 16:25\n"
+"PO-Revision-Date: 2025-12-13 17:21\n"
 "Last-Translator: \n"
 "Language: fr_FR\n"
 "MIME-Version: 1.0\n"
@@ -106,7 +106,7 @@ msgstr "Attention : DreamLink déconnecté du port %c"
 
 #: core/sdl/sdl.cpp:843 core/windows/winmain.cpp:370
 msgid "Flycast Error"
-msgstr ""
+msgstr "Erreur Flycast"
 
 #: core/audio/audiobackend_null.cpp:12
 msgid "No Audio"
@@ -420,7 +420,7 @@ msgstr "Taille de cartouche invalide"
 
 #: core/cheats.cpp:824 core/cheats.cpp:829
 msgid "Invalid cheat code"
-msgstr "Code de cheat invalide"
+msgstr "Code de triche invalide"
 
 #: core/cheats.cpp:911 core/cheats.cpp:950 core/cheats.cpp:963
 msgid "Missing value"
@@ -436,7 +436,7 @@ msgstr "Adresse ou valeur manquante"
 
 #: core/cheats.cpp:985 core/cheats.cpp:1089
 msgid "Unsupported cheat type"
-msgstr "Type de cheat non supporté"
+msgstr "Type de code de triche non supporté"
 
 #: core/cheats.cpp:993
 msgid "Missing count or value"
@@ -460,7 +460,7 @@ msgstr "Adresse de test manquante"
 
 #: core/cheats.cpp:1160
 msgid "Can't save cheat file"
-msgstr "Échec de sauvegarde du fichier de cheat"
+msgstr "Échec de sauvegarde du fichier de triche"
 
 #: core/ui/settings_video.cpp:85
 msgid "Graphics API"
@@ -608,7 +608,7 @@ msgstr "Utilise la largeur complète l'écran ou de la fenêtre lorsque son form
 
 #: core/ui/settings_video.cpp:249
 msgid "Widescreen Game Cheats"
-msgstr "Cheat Écran Large"
+msgstr "Codes de Triche Écran Large"
 
 #: core/ui/settings_video.cpp:250
 msgid "Modify the game so that it displays in 16:9 anamorphic format and use horizontal screen stretching. Only some games are supported."
@@ -1107,7 +1107,7 @@ msgstr "Suivez vos succès de jeu avec RetroAchievements.org"
 
 #: core/ui/settings_general.cpp:371
 msgid "Enable RetroAchievements hardcore mode. Using cheats and loading a state are not allowed in this mode."
-msgstr "Active le mode Hardcore des succès. L'utilisation des cheats et le chargement d'un état sont désactivés dans ce mode."
+msgstr "Active le mode Hardcore des succès. L'utilisation des codes de triche et le chargement d'un état sont désactivés dans ce mode."
 
 #: core/ui/settings_general.cpp:372
 msgid "Username"
@@ -1235,15 +1235,15 @@ msgstr "Dossiers contenant les fichiers de configuration des contrôleurs (.cfg)
 
 #: core/ui/settings_general.cpp:458
 msgid "Cheat Folders"
-msgstr "Dossiers Cheats"
+msgstr "Dossiers Triches"
 
 #: core/ui/settings_general.cpp:458
 msgid "Select a cheat folder"
-msgstr "Sélectionner un dossier de cheats"
+msgstr "Sélectionner un dossier de fichiers de triche"
 
 #: core/ui/settings_general.cpp:459
 msgid "Folders containing cheat files (.cht/.txt) named with the game ID. Flycast will auto-load matching files if present"
-msgstr "Dossiers contenant les fichiers de cheats (.cht/.txt) nommés avec l'identifiant jeu. Flycast charge automatiquement le fichier correspondant au jeu actif"
+msgstr "Dossiers contenant les fichiers de triche (.cht/.txt) nommés avec l'identifiant jeu. Flycast charge automatiquement le fichier correspondant au jeu actif"
 
 #: core/ui/gui_chat.h:46 core/ui/gui_chat.h:48
 msgid "P2"
@@ -1831,7 +1831,7 @@ msgstr "Continuer"
 
 #: core/ui/gui.cpp:687
 msgid "Cheats"
-msgstr ""
+msgstr "Codes de triche"
 
 #: core/ui/gui.cpp:694
 msgid "Achievements"
@@ -2025,7 +2025,7 @@ msgstr "Le pilote audio à utiliser"
 
 #: core/ui/gui_cheats.cpp:45
 msgid "ADD CHEAT"
-msgstr "AJOUTER CHEAT"
+msgstr "AJOUTER CODE"
 
 #: core/ui/gui_cheats.cpp:72 core/ui/settings_network.cpp:137
 msgid "Code"
@@ -2033,15 +2033,15 @@ msgstr ""
 
 #: core/ui/gui_cheats.cpp:95
 msgid "Select a cheat file"
-msgstr "Sélectionner un fichier de cheats"
+msgstr "Sélectionner un fichier de triche"
 
 #: core/ui/gui_cheats.cpp:100
 msgid "CHEATS"
-msgstr ""
+msgstr "CODES DE TRICHE"
 
 #: core/ui/gui_cheats.cpp:137
 msgid "(No cheat loaded)"
-msgstr "(Pas de cheat chargé)"
+msgstr "(Pas de code de triche chargé)"
 
 #: core/ui/settings.cpp:38
 msgid "CPU Mode"
@@ -2675,11 +2675,11 @@ msgstr "Ce jeu demande un BIOS authentique"
 
 #: core/emulator.cpp:662
 msgid "Widescreen cheat activated"
-msgstr "Cheat écran large activé"
+msgstr "Code de triche écran large activé"
 
 #: core/wsi/switcher.cpp:91
 msgid "Cannot initialize the graphics API"
-msgstr ""
+msgstr "Impossible d'initialiser l'API graphique"
 
 #: shell/libretro/libretro.cpp:2130
 msgid "Cannot run without JIT"
