@@ -13,6 +13,8 @@
 #endif
 
 #include <memory>
+#include <future>
+#include <optional>
 
 enum MaplePattern
 {
@@ -38,6 +40,9 @@ int maple_schid;
 
 static void maple_DoDma();
 static void maple_handle_reconnect();
+static u32 compute_delay_cycles(u32 xferIn, u32 xferOut);
+static void maple_add_processing_cmd(u32 xferIn, u32 header_2, std::future<std::vector<u32>>&& future);
+static std::optional<u32> maple_check_processing_cmd();
 static int maple_schd(int tag, int cycles, int jitter, void *arg);
 
 //really hackish
@@ -48,6 +53,21 @@ bool maple_ddt_pending_reset;
 // pending DMA xfers
 std::vector<std::pair<u32, std::vector<u32>>> mapleDmaOut;
 bool SDCKBOccupied;
+
+struct ProcessingMapleCmd
+{
+	// Number of bytes transfered in before processing this command
+	u32 xferIn;
+	// The second header to use on mapleDmaOut when command is done processing
+	u32 header_2;
+	// The future handle to the processing command
+	std::future<std::vector<u32>> future;
+	// The 64-bit cycle marker that this command was created
+	u64 added_cycle;
+};
+
+// Check this for currently processing maple command
+std::optional<ProcessingMapleCmd> processingMapleCmd;
 
 void maple_vblank()
 {
@@ -235,23 +255,24 @@ static void maple_DoDma()
 					p_data = maple_in_buf;
 				}
 				inlen = (inlen + 1) * 4;
-				std::future<std::vector<u32>> futureOut = MapleDevices[bus][port]->RawDma(&p_data[0], inlen);
-				std::vector<u32> outbuf = futureOut.get(); // TODO: block elsewhere
 				xferIn += inlen + 3; // start, parity and stop bytes
-				xferOut += (outbuf.size() * 4) + 3;
-#ifdef STRICT_MODE
-				if (!check_mdapro(header_2 + outlen - 1))
+
+				std::future<std::vector<u32>> futureOut = MapleDevices[bus][port]->RawDma(&p_data[0], inlen);
+
+				if (futureOut.wait_for(std::chrono::milliseconds(0)) != std::future_status::timeout)
 				{
-					asic_RaiseInterrupt(holly_MAPLE_OVERRUN);
-					SB_MDST = 0;
-					mapleDmaOut.clear();
-					return;
+					// TODO: duplication of code here and in maple_check_processing_cmd()
+					std::vector<u32> outbuf = futureOut.get();
+					xferOut += (outbuf.size() * 4) + 3;
+					if (swap_msb)
+						for (u32 i = 0; i < outbuf.size(); i++)
+							outbuf[i] = SWAP32(outbuf[i]);
+					mapleDmaOut.emplace_back(header_2, std::move(outbuf));
 				}
-#endif
-				if (swap_msb)
-					for (u32 i = 0; i < outbuf.size(); i++)
-						outbuf[i] = SWAP32(outbuf[i]);
-				mapleDmaOut.emplace_back(header_2, std::move(outbuf));
+				else
+				{
+					maple_add_processing_cmd(xferIn, header_2, std::move(futureOut));
+				}
 			}
 			else
 			{
@@ -296,22 +317,107 @@ static void maple_DoDma()
 		}
 	}
 
+	if (!SDCKBOccupied)
+	{
+		sh4_sched_request(maple_schid, compute_delay_cycles(xferIn, xferOut));
+	}
+}
+
+static u32 compute_delay_cycles(u32 xferIn, u32 xferOut)
+{
 	// Maple bus max speed: 2 Mb/s, actual speed: 1 Mb/s
 	// actual measured speed with protocol analyzer for devices (vmu?) is 724-738Kb/s
 	// See https://github.com/OrangeFox86/DreamcastControllerUsbPico/blob/main/measurements/Dreamcast-Power-Up-Digital-and-Analog-Player1-Controller-VMU-JumpPack.sal
-	if (!SDCKBOccupied)
+
+	// 2 Mb/s from console
+	u32 cycles = sh4CyclesForXfer(xferIn, 2'000'000 / 8);
+	// 740 Kb/s from devices
+	cycles += sh4CyclesForXfer(xferOut, 740'000 / 8);
+	cycles = std::min<u32>(cycles, SH4_MAIN_CLOCK);
+
+	return cycles;
+}
+
+static void maple_add_processing_cmd(u32 xferIn, u32 header_2, std::future<std::vector<u32>>&& future)
+{
+	processingMapleCmd = {xferIn, header_2, std::move(future), sh4_sched_now64()};
+}
+
+static std::optional<u32> maple_check_processing_cmd()
+{
+	if (!processingMapleCmd)
 	{
-		// 2 Mb/s from console
-		u32 cycles = sh4CyclesForXfer(xferIn, 2'000'000 / 8);
-		// 740 Kb/s from devices
-		cycles += sh4CyclesForXfer(xferOut, 740'000 / 8);
-		cycles = std::min<u32>(cycles, SH4_MAIN_CLOCK);
-		sh4_sched_request(maple_schid, cycles);
+		// Not processing any command
+		return std::nullopt;
+	}
+
+	std::future_status status = processingMapleCmd->future.wait_for(std::chrono::milliseconds(0));
+	if (status == std::future_status::timeout)
+	{
+		// Still processing
+		return std::nullopt;
+	}
+
+	// Command is now fully processed
+	ProcessingMapleCmd processedMapleCmd = std::move(processingMapleCmd.value());
+	processingMapleCmd.reset();
+
+	std::vector<u32> outbuf = processedMapleCmd.future.get();
+	const u32 xferOut = (outbuf.size() * 4) + 3;
+
+#ifdef STRICT_MODE
+	if (!check_mdapro(header_2 + (outbuf.size() * 4) - 1))
+	{
+		asic_RaiseInterrupt(holly_MAPLE_OVERRUN);
+		SB_MDST = 0;
+		mapleDmaOut.clear();
+		return;
+	}
+#endif
+
+	const bool swap_msb = (SB_MMSEL == 0);
+	if (swap_msb)
+		for (u32 i = 0; i < outbuf.size(); i++)
+			outbuf[i] = SWAP32(outbuf[i]);
+	mapleDmaOut.emplace_back(processedMapleCmd.header_2, std::move(outbuf));
+
+	const u32 cycles = compute_delay_cycles(processedMapleCmd.xferIn, xferOut);
+	const u64 elapsed = sh4_sched_now64() - processedMapleCmd.added_cycle;
+
+
+	if (elapsed >= cycles)
+	{
+		return 0;
+	}
+	else
+	{
+		return cycles - static_cast<u32>(elapsed);
 	}
 }
 
 static int maple_schd(int tag, int cycles, int jitter, void *arg)
 {
+	if (processingMapleCmd)
+	{
+		// Check if the command has finished processing
+		std::optional<u32> delayCycles = maple_check_processing_cmd();
+		if (!delayCycles)
+		{
+			// Not done processing yet, delay for 5 ms before trying again
+			// TODO: does there need to be a hard timeout here?
+			sh4_sched_request(maple_schid, sh4CyclesForXfer(5, 1000));
+			return 0;
+		}
+
+		if (delayCycles.value() > 0)
+		{
+			// Delay a bit longer to get to target cycles
+			sh4_sched_request(maple_schid, delayCycles.value());
+			return 0;
+		}
+		// else: continue to processing below
+	}
+
 	if (SB_MDEN & 1)
 	{
 		for (const auto& pair : mapleDmaOut)
