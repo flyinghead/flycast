@@ -97,8 +97,12 @@ public:
 
 class SystemMouse : public Mouse
 {
+	bool touchMouse;
+
 protected:
-	SystemMouse(const char *apiName, int maplePort = 0) : Mouse(apiName, maplePort) {}
+	SystemMouse(const char *apiName, int maplePort = 0, bool touchMouse = false)
+		: Mouse(apiName, maplePort), touchMouse(touchMouse)
+	{}
 
 public:
 	void setAbsPos(int x, int y, int width, int height);
@@ -109,7 +113,7 @@ public:
 class TouchMouse : public SystemMouse
 {
 public:
-	TouchMouse() : SystemMouse("Flycast", -1)
+	TouchMouse() : SystemMouse("Flycast", -1, true)
 	{
 		_name = i18n::Ts("Touch Mouse");
 		_unique_id = "touch_mouse";

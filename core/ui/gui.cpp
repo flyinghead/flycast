@@ -75,6 +75,7 @@ std::string launchOnExitUri;
 static u32 mouseButtons;
 static int mouseX, mouseY;
 static float mouseWheel;
+static bool mouseTouchscreen;
 static std::string error_msg;
 static bool error_msg_shown;
 static std::string osd_message;
@@ -381,21 +382,25 @@ bool gui_mouse_captured() {
 	return io.WantCaptureMouse;
 }
 
-void gui_set_mouse_position(int x, int y) {
+void gui_set_mouse_position(int x, int y, bool touchscreen)
+{
 	mouseX = std::round(x * settings.display.pointScale);
 	mouseY = std::round(y * settings.display.pointScale);
+	mouseTouchscreen = touchscreen;
 }
 
-void gui_set_mouse_button(int button, bool pressed)
+void gui_set_mouse_button(int button, bool pressed, bool touchscreen)
 {
 	if (pressed)
 		mouseButtons |= 1 << button;
 	else
 		mouseButtons &= ~(1 << button);
+	mouseTouchscreen = touchscreen;
 }
 
 void gui_set_mouse_wheel(float delta) {
 	mouseWheel += delta;
+	mouseTouchscreen = false;
 }
 
 static void gui_newFrame()
@@ -406,26 +411,17 @@ static void gui_newFrame()
 
 	ImGuiIO& io = ImGui::GetIO();
 
+	io.AddMouseSourceEvent(mouseTouchscreen ? ImGuiMouseSource_TouchScreen : ImGuiMouseSource_Mouse);
 	if (mouseX < 0 || mouseX >= settings.display.width || mouseY < 0 || mouseY >= settings.display.height)
 		io.AddMousePosEvent(-FLT_MAX, -FLT_MAX);
 	else
 		io.AddMousePosEvent(mouseX, mouseY);
-	static bool delayTouch;
-#if defined(__ANDROID__) || defined(TARGET_IPHONE) || defined(__SWITCH__)
-	// Delay touch by one frame to allow widgets to be hovered before click
-	// This is required for widgets using ImGuiButtonFlags_AllowItemOverlap such as TabItem's
-	if (!delayTouch && (mouseButtons & (1 << 0)) != 0 && !io.MouseDown[ImGuiMouseButton_Left])
-		delayTouch = true;
-	else
-		delayTouch = false;
-#endif
 	if (io.WantCaptureMouse)
 	{
 		io.AddMouseWheelEvent(0, -mouseWheel / 16);
 		mouseWheel = 0;
 	}
-	if (!delayTouch)
-		io.AddMouseButtonEvent(ImGuiMouseButton_Left, (mouseButtons & (1 << 0)) != 0);
+	io.AddMouseButtonEvent(ImGuiMouseButton_Left, (mouseButtons & (1 << 0)) != 0);
 	io.AddMouseButtonEvent(ImGuiMouseButton_Right, (mouseButtons & (1 << 1)) != 0);
 	io.AddMouseButtonEvent(ImGuiMouseButton_Middle, (mouseButtons & (1 << 2)) != 0);
 	io.AddMouseButtonEvent(3, (mouseButtons & (1 << 3)) != 0);
@@ -461,6 +457,7 @@ static void gui_newFrame()
 	}
 }
 
+// SDL on-screen keyboard: Delay keys up by one frame to allow quick key presses.
 static void delayedKeysUp()
 {
 	ImGuiIO& io = ImGui::GetIO();

@@ -475,7 +475,7 @@ void input_sdl_handle()
 				break;
 
 			case SDL_MOUSEMOTION:
-				gui_set_mouse_position(event.motion.x, event.motion.y);
+				gui_set_mouse_position(event.motion.x, event.motion.y, false);
 				checkRawInput();
 				if (!config::UseRawInput)
 				{
@@ -500,12 +500,12 @@ void input_sdl_handle()
 			case SDL_MOUSEBUTTONUP:
 				{
 					Uint8 button;
-					gui_set_mouse_position(event.button.x, event.button.y);
+					gui_set_mouse_position(event.button.x, event.button.y, false);
 					// Swap middle and right clicks for GUI
 					button = event.button.button;
 					if (button == SDL_BUTTON_MIDDLE || button == SDL_BUTTON_RIGHT)
 						button ^= 1;
-					gui_set_mouse_button(button - 1, event.button.state == SDL_PRESSED);
+					gui_set_mouse_button(button - 1, event.button.state == SDL_PRESSED, false);
 					checkRawInput();
 					if (!config::UseRawInput)
 					{
@@ -562,7 +562,7 @@ void input_sdl_handle()
 					auto mouse = getMouse(0);
 					int x = event.tfinger.x * settings.display.width;
 					int y = event.tfinger.y * settings.display.height;
-					gui_set_mouse_position(x, y);
+					gui_set_mouse_position(x, y, true);
 					if (mouseCaptured && gameRunning && event.type == SDL_FINGERMOTION)
 					{
 						int dx = event.tfinger.dx * settings.display.width;
@@ -573,7 +573,7 @@ void input_sdl_handle()
 						mouse->setAbsPos(x, y);
 					if (event.type == SDL_FINGERDOWN) {
 						mouse->setButton(Mouse::LEFT_BUTTON, true);
-						gui_set_mouse_button(0, true);
+						gui_set_mouse_button(0, true, true);
 					}
 				}
 				break;
@@ -582,8 +582,8 @@ void input_sdl_handle()
 					auto mouse = getMouse(0);
 					int x = event.tfinger.x * settings.display.width;
 					int y = event.tfinger.y * settings.display.height;
-					gui_set_mouse_position(x, y);
-					gui_set_mouse_button(0, false);
+					gui_set_mouse_position(x, y, true);
+					gui_set_mouse_button(0, false, true);
 					mouse->setAbsPos(x, y);
 					mouse->setButton(Mouse::LEFT_BUTTON, false);
 				}
