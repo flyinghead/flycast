@@ -10,3 +10,4 @@ void maple_Term();
 void maple_ReconnectDevices();
 
 void maple_vblank();
+void maple_pre_serialize();

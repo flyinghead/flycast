@@ -426,6 +426,9 @@ void mcfg_DestroyDevices(bool full)
 
 void mcfg_SerializeDevices(Serializer& ser)
 {
+	// This is needed to purge current hardware operations
+	maple_pre_serialize();
+
 	ser << maple_ddt_pending_reset;
 	ser << SDCKBOccupied;
 	ser << (u32)mapleDmaOut.size();
