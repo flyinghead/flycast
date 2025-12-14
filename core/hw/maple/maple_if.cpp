@@ -42,6 +42,7 @@ static void maple_DoDma();
 static void maple_handle_reconnect();
 static u32 compute_delay_cycles(u32 xferIn, u32 xferOut);
 static void maple_add_processing_cmd(u32 xferIn, u32 header_2, std::future<std::vector<u32>>&& future);
+static void maple_add_dma_out(u32 header, std::vector<u32>&& data);
 static std::optional<u32> maple_check_processing_cmd();
 static int maple_schd(int tag, int cycles, int jitter, void *arg);
 
@@ -261,13 +262,9 @@ static void maple_DoDma()
 
 				if (futureOut.wait_for(std::chrono::milliseconds(0)) != std::future_status::timeout)
 				{
-					// TODO: duplication of code here and in maple_check_processing_cmd()
 					std::vector<u32> outbuf = futureOut.get();
 					xferOut += (outbuf.size() * 4) + 3;
-					if (swap_msb)
-						for (u32 i = 0; i < outbuf.size(); i++)
-							outbuf[i] = SWAP32(outbuf[i]);
-					mapleDmaOut.emplace_back(header_2, std::move(outbuf));
+					maple_add_dma_out(header_2, std::move(outbuf));
 				}
 				else
 				{
@@ -343,6 +340,15 @@ static void maple_add_processing_cmd(u32 xferIn, u32 header_2, std::future<std::
 	processingMapleCmd = {xferIn, header_2, std::move(future), sh4_sched_now64()};
 }
 
+static void maple_add_dma_out(u32 header, std::vector<u32>&& data)
+{
+	const bool swap_msb = (SB_MMSEL == 0);
+	if (swap_msb)
+		for (u32& word : data)
+			word = SWAP32(word);
+	mapleDmaOut.emplace_back(header, std::move(data));
+}
+
 static std::optional<u32> maple_check_processing_cmd()
 {
 	if (!processingMapleCmd)
@@ -375,15 +381,10 @@ static std::optional<u32> maple_check_processing_cmd()
 	}
 #endif
 
-	const bool swap_msb = (SB_MMSEL == 0);
-	if (swap_msb)
-		for (u32 i = 0; i < outbuf.size(); i++)
-			outbuf[i] = SWAP32(outbuf[i]);
-	mapleDmaOut.emplace_back(processedMapleCmd.header_2, std::move(outbuf));
+	maple_add_dma_out(processedMapleCmd.header_2, std::move(outbuf));
 
 	const u32 cycles = compute_delay_cycles(processedMapleCmd.xferIn, xferOut);
 	const u64 elapsed = sh4_sched_now64() - processedMapleCmd.added_cycle;
-
 
 	if (elapsed >= cycles)
 	{
@@ -403,13 +404,12 @@ static int maple_schd(int tag, int cycles, int jitter, void *arg)
 		std::optional<u32> delayCycles = maple_check_processing_cmd();
 		if (!delayCycles)
 		{
-			// Not done processing yet, delay for 5 ms before trying again
-			// TODO: does there need to be a hard timeout here?
+			// Not done processing yet
+			// Delay for 5 ms before trying again
 			sh4_sched_request(maple_schid, sh4CyclesForXfer(5, 1000));
 			return 0;
 		}
-
-		if (delayCycles.value() > 0)
+		else if (delayCycles.value() > 0)
 		{
 			// Delay a bit longer to get to target cycles
 			sh4_sched_request(maple_schid, delayCycles.value());
