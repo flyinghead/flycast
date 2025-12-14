@@ -1966,9 +1966,6 @@ std::future<std::vector<u32>> maple_naomi_jamma::RawDma(u32* buffer_in, u32 buff
 	std::vector<u32> output;
 	pack_payload(output);
 
-	dma_buffer_out.clear();
-	dma_buffer_out.shrink_to_fit();
-
 	return output_to_future(std::move(output));
 }
 
