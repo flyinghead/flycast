@@ -2579,7 +2579,36 @@ void createDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink, bool gameStart
 	{
 		std::shared_ptr<maple_device> dev = MapleDevices[bus][i];
 
-		if ((dreamlink->getFunctionCode(i + 1) & MFID_1_Storage))
+		const bool isStorage = ((dreamlink->getFunctionCode(i) & MFID_1_Storage) != 0);
+		const bool isVibration = ((dreamlink->getFunctionCode(i) & MFID_8_Vibration) != 0);
+
+		if (i == 1 && isVibration)
+		{
+			bool rumbleFound = false;
+			std::shared_ptr<DreamLinkPurupuru> rumble;
+			for (const std::shared_ptr<DreamLinkPurupuru>& purupuru : dreamLinkPurupurus)
+			{
+				if (purupuru->dreamlink.get() == dreamlink.get())
+				{
+					rumbleFound = true;
+					rumble = purupuru;
+					break;
+				}
+			}
+
+			if (gameStart || stateLoaded || !rumbleFound)
+			{
+				if (!rumble)
+				{
+					rumble = std::make_shared<DreamLinkPurupuru>(dreamlink);
+				}
+
+				rumble->Setup(bus, i);
+
+				if (!rumbleFound) dreamLinkPurupurus.push_back(rumble);
+			}
+		}
+		else if (isStorage)
 		{
 			bool vmuFound = false;
 			std::shared_ptr<DreamLinkVmu> vmu;
@@ -2633,33 +2662,7 @@ void createDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink, bool gameStart
 				if (gameStart && vmu->useRealVmuMemory)
 				{
 					dreamlink->sendGameId(i, settings.content.gameId);
-				}				
-			}
-		}
-		else if (i == 1 && ((dreamlink->getFunctionCode(i + 1) & MFID_8_Vibration)))
-		{
-			bool rumbleFound = false;
-			std::shared_ptr<DreamLinkPurupuru> rumble;
-			for (const std::shared_ptr<DreamLinkPurupuru>& purupuru : dreamLinkPurupurus)
-			{
-				if (purupuru->dreamlink.get() == dreamlink.get())
-				{
-					rumbleFound = true;
-					rumble = purupuru;
-					break;
 				}
-			}
-
-			if (gameStart || stateLoaded || !rumbleFound)
-			{
-				if (!rumble)
-				{
-					rumble = std::make_shared<DreamLinkPurupuru>(dreamlink);
-				}
-
-				rumble->Setup(bus, i);
-
-				if (!rumbleFound) dreamLinkPurupurus.push_back(rumble);
 			}
 		}
 	}
