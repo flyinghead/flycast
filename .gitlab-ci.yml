@@ -45,7 +45,7 @@
     - mv $BUILD_DIR/${CORENAME}_libretro.so $LIBNAME
     - if [ $STRIP_CORE_LIB -eq 1 ]; then $NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip $LIBNAME; fi
   variables:
-    API_LEVEL: 18
+    API_LEVEL: 21
 
 # Inclusion templates, required for the build to work
 include:

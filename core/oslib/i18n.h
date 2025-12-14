@@ -17,7 +17,7 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
  */
 #pragma once
-#ifdef __ANDROID__
+#if defined(__ANDROID__) && !defined(LIBRETRO)
 #include "android_locale.h"
 #endif
 #include <string>
