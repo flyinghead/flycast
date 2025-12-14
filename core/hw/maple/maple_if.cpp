@@ -42,6 +42,7 @@ int maple_schid;
 static void maple_DoDma();
 static void maple_handle_reconnect();
 static u32 compute_delay_cycles(u32 xferIn, u32 xferOut);
+static u64 get_max_scheduled_cycle();
 static void maple_add_dma_out(u32 header, std::vector<u32>&& data);
 static s32 maple_check_processing_cmd(bool block = false);
 static int maple_schd(int tag, int cycles, int jitter, void *arg);
@@ -65,10 +66,14 @@ struct ProcessingMapleCmd
 	std::future<std::vector<u32>> future;
 };
 
+// The following values are purged on maple_pre_serialize()
+
 // Check this for currently processing maple commands
 static std::list<ProcessingMapleCmd> processingCmds;
-// The current accumulated cycle that the command will return data
+// The current accumulated cycle that the command will return data for each bus (use max of these)
 static u64 processingCmdsScheduledCycle[MAPLE_PORTS] = {};
+// The cycle number at which a hard block will be made on processing commands
+static u64 processingCmdsTimeoutCycle = 0;
 
 void maple_vblank()
 {
@@ -334,6 +339,8 @@ static void maple_DoDma()
 			}
 			processingCmdsScheduledCycle[i] = now + delay;
 		}
+		// Timeout after 16 ms which is about one 60Hz frame
+		processingCmdsTimeoutCycle = now + sh4CyclesForXfer(16, 1000);
 		sh4_sched_request(maple_schid, maxDelay);
 	}
 }
@@ -351,6 +358,19 @@ static u32 compute_delay_cycles(u32 xferIn, u32 xferOut)
 	cycles = std::min<u32>(cycles, SH4_MAIN_CLOCK);
 
 	return cycles;
+}
+
+static u64 get_max_scheduled_cycle()
+{
+	u64 maxCycle = 0;
+	for (int i = 0; i < MAPLE_PORTS; ++i)
+	{
+		if (processingCmdsScheduledCycle[i] > maxCycle)
+		{
+			maxCycle = processingCmdsScheduledCycle[i];
+		}
+	}
+	return maxCycle;
 }
 
 static void maple_add_dma_out(u32 header, std::vector<u32>&& data)
@@ -399,7 +419,7 @@ static s32 maple_check_processing_cmd(bool block)
 		ProcessingMapleCmd processedMapleCmd = std::move(*iter);
 		iter = processingCmds.erase(iter);
 
-		std::vector<u32> outbuf = processedMapleCmd.future.get();
+		std::vector<u32> outbuf = processedMapleCmd.future.get(); // will block if block==true
 		const u32 xferOut = (outbuf.size() * 4) + 3;
 
 		maple_add_dma_out(processedMapleCmd.header_2, std::move(outbuf));
@@ -419,6 +439,13 @@ static int maple_schd(int tag, int cycles, int jitter, void *arg)
 	// Check if the command has finished processing
 	if (maple_check_processing_cmd() >= 0)
 	{
+		const u64 now = sh4_sched_now64();
+		if (now >= processingCmdsTimeoutCycle)
+		{
+			// Timeout - Force blocking operation
+			maple_check_processing_cmd(true);
+		}
+
 		if (!processingCmds.empty())
 		{
 			// Still not done processing yet
@@ -428,20 +455,11 @@ static int maple_schd(int tag, int cycles, int jitter, void *arg)
 		}
 		else
 		{
-			u64 maxTimestamp = 0;
-			for (int i = 0; i < MAPLE_PORTS; ++i)
-			{
-				if (processingCmdsScheduledCycle[i] > maxTimestamp)
-				{
-					maxTimestamp = processingCmdsScheduledCycle[i];
-				}
-			}
-
-			const u64 now = sh4_sched_now64();
-			if (maxTimestamp > now)
+			u64 maxCycle = get_max_scheduled_cycle();
+			if (maxCycle > now)
 			{
 				// Delay a bit longer to get to target cycles
-				sh4_sched_request(maple_schid, maxTimestamp - now);
+				sh4_sched_request(maple_schid, maxCycle - now);
 				return 0;
 			}
 			// else: continue to processing below
@@ -545,6 +563,13 @@ static void maple_handle_reconnect()
 
 void maple_pre_serialize()
 {
-	// Force blocking operation to purge waiting commands
-	maple_check_processing_cmd(true);
+	// Force blocking operation to purge waiting commands before serialization is needed
+	if (maple_check_processing_cmd(true) > 0)
+	{
+		// Update the schedule to reflect purged command execution cycle
+		u64 maxCycle = get_max_scheduled_cycle();
+		const u64 now = sh4_sched_now64();
+		const u32 delay = (maxCycle > now) ? maxCycle - now : 0;
+		sh4_sched_request(maple_schid, delay);
+	}
 }
