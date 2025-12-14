@@ -111,6 +111,15 @@ public:
 			if (direntry->d_type == DT_DIR)
 				isDir = true;
 			// Skip hidden files - but we already check this in readdir
+#elif defined(__HAIKU__)
+			struct stat st;
+			if (flycast::stat(entry.path.c_str(), &st) != 0)
+			{
+				WARN_LOG(COMMON, "Cannot stat file '%s' errno 0x%x", entry.path.c_str(), errno);
+				continue;
+			}
+			if (S_ISDIR(st.st_mode))
+				isDir = true;
 #elif !defined(_WIN32)
 			if (direntry->d_type == DT_DIR)
 				isDir = true;
