@@ -1154,7 +1154,19 @@ public:
 		return software_bus;
 	}
 
+	//! Transform flycast port index into DreamPicoPort port index
+	static int fcPortToDppPort(int forPort) {
+		// Flycast uses port index 5 for main peripheral and 0 is the first sub-peripheral slot
+		// DreamPicoPort uses port index 0 for main peripheral and 1 is the first sub-peripheral slot
+		if (forPort >= 5) {
+			return 0;
+		} else {
+			return forPort + 1;
+		}
+	}
+
     u32 getFunctionCode(int forPort) const override {
+		forPort = fcPortToDppPort(forPort);
 		u32 mask = 0;
 		if ((int)peripherals.size() > forPort) {
 			for (const auto& peripheral : peripherals[forPort]) {
@@ -1166,6 +1178,7 @@ public:
 	}
 
 	std::array<u32, 3> getFunctionDefinitions(int forPort) const override {
+		forPort = fcPortToDppPort(forPort);
 		std::array<u32, 3> arr{0, 0, 0};
 		if ((int)peripherals.size() > forPort) {
 			std::size_t idx = 0;
@@ -1239,7 +1252,7 @@ public:
 	}
 
 	bool needsRefresh() override {
-		// TODO: implementing this method may also help to support hot plugging of VMUs/rumble packs here.
+		// TODO: implementing this method may also help to support hot plugging of VMUs/jump packs here.
 		return false;
 	}
 
@@ -1304,7 +1317,7 @@ public:
 		int vibrationCount = 0;
 
 		if (software_bus >= 0 && static_cast<std::size_t>(software_bus) < config::MapleExpansionDevices.size()) {
-			u32 portOneFn = getFunctionCode(1);
+			u32 portOneFn = getFunctionCode(0);
 			if (portOneFn & MFID_1_Storage) {
 				config::MapleExpansionDevices[software_bus][0] = MDT_SegaVMU;
 				++vmuCount;
@@ -1313,7 +1326,7 @@ public:
 				config::MapleExpansionDevices[software_bus][0] = MDT_None;
 			}
 
-			u32 portTwoFn = getFunctionCode(2);
+			u32 portTwoFn = getFunctionCode(1);
 			if (portTwoFn & MFID_8_Vibration) {
 				config::MapleExpansionDevices[software_bus][1] = MDT_PurupuruPack;
 				++vibrationCount;
@@ -1329,7 +1342,7 @@ public:
 
 		NOTICE_LOG(
 			INPUT,
-			"Connected to DreamPicoPort[%d]: Type:%s, VMU:%d, Rumble Pack:%d",
+			"Connected to DreamPicoPort[%d]: Type:%s, VMU:%d, Jump Pack:%d",
 			software_bus,
 			getName().c_str(),
 			vmuCount,

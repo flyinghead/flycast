@@ -21,7 +21,7 @@
 #ifdef USE_DREAMLINK_DEVICES
 
 // This file contains abstraction layer for access to different kinds of remote peripherals.
-// This includes both real Dreamcast controllers, VMUs, rumble packs etc. but also emulated VMUs.
+// This includes both real Dreamcast controllers, VMUs, jump packs etc. but also emulated VMUs.
 
 #include "types.h"
 #include "emulator.h"
@@ -95,11 +95,11 @@ public:
 	//! When called, do teardown stuff like reset screen
 	virtual inline void gameTermination() {}
 
-    //! @param[in] forPort The port number to get the function code of (1 or 2)
+    //! @param[in] forPort The port number to get the function code of
     //! @return the device type for the given port
     virtual u32 getFunctionCode(int forPort) const = 0;
 
-    //! @param[in] forPort The port number to get the function definitions of (1 or 2)
+    //! @param[in] forPort The port number to get the function definitions of
 	//! @return the 3 function definitions for the supported function codes
     virtual std::array<u32, 3> getFunctionDefinitions(int forPort) const = 0;
 
@@ -154,7 +154,7 @@ public:
 
 	//! Disconnect from the hardware controller
 	virtual void disconnect() = 0;
-	
+
 	//! Sends the current game id to a DreamLink backed expansion device if supported
 	virtual void sendGameId(int expansion, const std::string& gameId) {}
 };
