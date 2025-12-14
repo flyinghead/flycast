@@ -301,7 +301,7 @@ std::string getTextureDumpPath()
 	return get_writable_data_path("texdump/");
 }
 
-#if defined(__unix__) && !defined(__ANDROID__)
+#if (defined(__unix__) && !defined(__ANDROID__)) || defined(__HAIKU__)
 
 static std::string runCommand(const std::string& cmd)
 {

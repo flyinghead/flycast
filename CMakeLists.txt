@@ -43,7 +43,7 @@ endif()
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-if(CMAKE_SYSTEM_NAME STREQUAL "NetBSD" OR NINTENDO_SWITCH)
+if(CMAKE_SYSTEM_NAME MATCHES "(NetBSD|Haiku)" OR NINTENDO_SWITCH)
 	set(CMAKE_CXX_EXTENSIONS ON)
 else()
 	set(CMAKE_CXX_EXTENSIONS OFF)
@@ -56,7 +56,7 @@ endif()
 message(STATUS "Target architecture: ${ARCHITECTURE}")
 
 set(USE_HOST_SDL_DEFAULT OFF)
-if(NOT APPLE AND (NOT UNIX OR CMAKE_SYSTEM_NAME MATCHES "(FreeBSD|OpenBSD|NetBSD)"))
+if(NOT APPLE AND (NOT UNIX OR CMAKE_SYSTEM_NAME MATCHES "(FreeBSD|OpenBSD|NetBSD|Haiku)"))
 	set(USE_HOST_SDL_DEFAULT ON)
 endif()
 
@@ -474,7 +474,7 @@ if(NOT LIBRETRO)
 			if (WINDOWS_STORE)
 				# Use winrt implementation of the DreamPicoPort-API
 				option(DREAMPICOPORT_WITH_LIBUSB "Use libusb to access DreamPicoPort-API" OFF)
-			elseif (CMAKE_SYSTEM_NAME STREQUAL "FreeBSD")
+			elseif (CMAKE_SYSTEM_NAME MATCHES "(FreeBSD|Haiku)")
 				# A version of libusb is installed in FreeBSD
 				find_package(PkgConfig REQUIRED)
    	 			pkg_check_modules(LIBUSB REQUIRED libusb-1.0)
