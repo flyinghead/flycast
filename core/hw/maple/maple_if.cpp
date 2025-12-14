@@ -14,7 +14,6 @@
 
 #include <memory>
 #include <future>
-#include <optional>
 #include <list>
 #include <vector>
 
@@ -44,7 +43,7 @@ static void maple_DoDma();
 static void maple_handle_reconnect();
 static u32 compute_delay_cycles(u32 xferIn, u32 xferOut);
 static void maple_add_dma_out(u32 header, std::vector<u32>&& data);
-static std::optional<u32> maple_check_processing_cmd(bool block = false);
+static s32 maple_check_processing_cmd(bool block = false);
 static int maple_schd(int tag, int cycles, int jitter, void *arg);
 
 //really hackish
@@ -58,6 +57,8 @@ bool SDCKBOccupied;
 
 struct ProcessingMapleCmd
 {
+	// The bus the command is processing for
+	u32 bus;
 	// The second header to use on mapleDmaOut when command is done processing
 	u32 header_2;
 	// The future handle to the processing command
@@ -67,7 +68,7 @@ struct ProcessingMapleCmd
 // Check this for currently processing maple commands
 static std::list<ProcessingMapleCmd> processingCmds;
 // The current accumulated cycle that the command will return data
-static u64 processingCmdsScheduledCycle = 0;
+static u64 processingCmdsScheduledCycle[MAPLE_PORTS] = {};
 
 void maple_vblank()
 {
@@ -162,6 +163,10 @@ static u32 getPort(u32 addr)
 	return 5;
 }
 
+// For each maple_DoDma:
+// - Data for every bus needs to be delivered together at the same time
+// - Must delay for at least the amount of time it takes the longest bus command to process
+//    - This is total time: TX time, process time, RX time
 static void maple_DoDma()
 {
 	verify(SB_MDEN & 1);
@@ -193,8 +198,8 @@ static void maple_DoDma()
 	}
 
 	const bool swap_msb = (SB_MMSEL == 0);
-	u32 xferOut = 0;
-	u32 xferIn = 0;
+	u32 xferOut[MAPLE_PORTS] = {};
+	u32 xferIn[MAPLE_PORTS] = {};
 	bool last = false;
 	while (!last)
 	{
@@ -255,19 +260,19 @@ static void maple_DoDma()
 					p_data = maple_in_buf;
 				}
 				inlen = (inlen + 1) * 4; // payload plus frame word length in bytes
-				xferIn += inlen + 3; // start, parity and stop bytes
+				xferIn[bus] = inlen + 3; // start, parity and stop bytes
 
 				std::future<std::vector<u32>> futureOut = MapleDevices[bus][port]->RawDma(&p_data[0], inlen);
 
 				if (futureOut.wait_for(std::chrono::milliseconds(0)) != std::future_status::timeout)
 				{
 					std::vector<u32> outbuf = futureOut.get();
-					xferOut += (outbuf.size() * 4) + 3;
+					xferOut[bus] = (outbuf.size() * 4) + 3;
 					maple_add_dma_out(header_2, std::move(outbuf));
 				}
 				else
 				{
-					processingCmds.push_back({header_2, std::move(futureOut)});
+					processingCmds.push_back({bus, header_2, std::move(futureOut)});
 				}
 			}
 			else
@@ -287,7 +292,7 @@ static void maple_DoDma()
 			u32 bus = (header_1 >> 16) & 3;
 			if (MapleDevices[bus][5]) {
 				SDCKBOccupied = SDCKBOccupied || MapleDevices[bus][5]->get_lightgun_pos();
-				xferIn++;
+				xferIn[bus]++;
 			}
 			addr += 1 * 4;
 		}
@@ -299,9 +304,12 @@ static void maple_DoDma()
 			break;
 
 		case MP_Reset:
+		{
 			addr += 1 * 4;
-			xferIn++;
-			break;
+			u32 bus = (header_1 >> 16) & 3;
+			xferIn[bus]++;
+		}
+		break;
 
 		case MP_NOP:
 			addr += 1 * 4;
@@ -315,9 +323,18 @@ static void maple_DoDma()
 
 	if (!SDCKBOccupied)
 	{
-		const u32 delay = compute_delay_cycles(xferIn, xferOut);
-		processingCmdsScheduledCycle = sh4_sched_now64() + delay;
-		sh4_sched_request(maple_schid, delay);
+		u32 maxDelay = 1;
+		const u64 now = sh4_sched_now64();
+		for (int i = 0; i < MAPLE_PORTS; ++i)
+		{
+			const u32 delay = compute_delay_cycles(xferIn[i], xferOut[i]);
+			if (delay > maxDelay)
+			{
+				maxDelay = delay;
+			}
+			processingCmdsScheduledCycle[i] = now + delay;
+		}
+		sh4_sched_request(maple_schid, maxDelay);
 	}
 }
 
@@ -355,15 +372,15 @@ static void maple_add_dma_out(u32 header, std::vector<u32>&& data)
 	mapleDmaOut.emplace_back(header, std::move(data));
 }
 
-static std::optional<u32> maple_check_processing_cmd(bool block)
+static s32 maple_check_processing_cmd(bool block)
 {
 	if (processingCmds.empty())
 	{
 		// Not processing any command
-		return std::nullopt;
+		return -1;
 	}
 
-	std::optional<u32> delay;
+	s32 processed = 0;
 
 	for (auto iter = processingCmds.begin(); iter != processingCmds.end();)
 	{
@@ -389,30 +406,19 @@ static std::optional<u32> maple_check_processing_cmd(bool block)
 
 		const u32 cycles = compute_delay_cycles(0, xferOut);
 
-		if (!delay)
-		{
-			delay = cycles;
-		}
-		else
-		{
-			delay.value() += cycles;
-		}
+		processingCmdsScheduledCycle[processedMapleCmd.bus] += cycles;
+
+		++processed;
 	}
 
-	return delay;
+	return processed;
 }
 
 static int maple_schd(int tag, int cycles, int jitter, void *arg)
 {
-	if (!processingCmds.empty())
+	// Check if the command has finished processing
+	if (maple_check_processing_cmd() >= 0)
 	{
-		// Check if the command has finished processing
-		std::optional<u32> delayCycles = maple_check_processing_cmd();
-		if (delayCycles)
-		{
-			processingCmdsScheduledCycle += delayCycles.value();
-		}
-
 		if (!processingCmds.empty())
 		{
 			// Still not done processing yet
@@ -422,11 +428,20 @@ static int maple_schd(int tag, int cycles, int jitter, void *arg)
 		}
 		else
 		{
+			u64 maxTimestamp = 0;
+			for (int i = 0; i < MAPLE_PORTS; ++i)
+			{
+				if (processingCmdsScheduledCycle[i] > maxTimestamp)
+				{
+					maxTimestamp = processingCmdsScheduledCycle[i];
+				}
+			}
+
 			const u64 now = sh4_sched_now64();
-			if (processingCmdsScheduledCycle > now)
+			if (maxTimestamp > now)
 			{
 				// Delay a bit longer to get to target cycles
-				sh4_sched_request(maple_schid, processingCmdsScheduledCycle - now);
+				sh4_sched_request(maple_schid, maxTimestamp - now);
 				return 0;
 			}
 			// else: continue to processing below
