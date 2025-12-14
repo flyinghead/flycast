@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-12-10 11:34+0100\n"
-"PO-Revision-Date: 2025-12-12 21:15\n"
+"POT-Creation-Date: 2025-12-13 17:19+0100\n"
+"PO-Revision-Date: 2025-12-13 17:21\n"
 "Last-Translator: \n"
 "Language: sv_SE\n"
 "MIME-Version: 1.0\n"
@@ -103,6 +103,10 @@ msgstr "Mediabyte misslyckades"
 #, c-format
 msgid "WARNING: DreamLink disconnected from port %c"
 msgstr "VARNING: DreamLink kopplade från port %c"
+
+#: core/sdl/sdl.cpp:843 core/windows/winmain.cpp:370
+msgid "Flycast Error"
+msgstr "Fel i Flycast"
 
 #: core/audio/audiobackend_null.cpp:12
 msgid "No Audio"
@@ -1266,7 +1270,7 @@ msgstr "Sega Controller"
 msgid "Light Gun"
 msgstr "Ljuspistol"
 
-#: core/ui/settings_controls.cpp:46
+#: core/ui/settings_controls.cpp:46 core/input/keyboard_device.h:77
 msgid "Keyboard"
 msgstr "Tangentbord"
 
@@ -2496,35 +2500,35 @@ msgstr "Skicka upp anpassad drivrutin"
 msgid "Do you want to reset Vulkan to use new driver?"
 msgstr "Vill du återställa Vulkan för att använda ny drivrutin?"
 
-#: core/nullDC.cpp:164
+#: core/nullDC.cpp:172
 msgid "Save state failed - memory full"
 msgstr "Sparat tillstånd misslyckades - minnet är fullt"
 
-#: core/nullDC.cpp:176
+#: core/nullDC.cpp:184
 msgid "Cannot open save file"
 msgstr "Kan inte öppna sparad fil"
 
-#: core/nullDC.cpp:204
+#: core/nullDC.cpp:212
 msgid "State saved"
 msgstr "Tillstånd sparat"
 
-#: core/nullDC.cpp:209
+#: core/nullDC.cpp:217
 msgid "Error saving state"
 msgstr "Fel vid sparning av tillstånd"
 
-#: core/nullDC.cpp:229
+#: core/nullDC.cpp:237
 msgid "Save state not found"
 msgstr "Sparat tillstånd hittades inte"
 
-#: core/nullDC.cpp:269 core/nullDC.cpp:291 core/nullDC.cpp:305
+#: core/nullDC.cpp:277 core/nullDC.cpp:299 core/nullDC.cpp:313
 msgid "Failed to load state"
 msgstr "Misslyckades med att läsa in tillstånd"
 
-#: core/nullDC.cpp:269
+#: core/nullDC.cpp:277
 msgid "Not enough memory"
 msgstr "Inte tillräckligt med minne"
 
-#: core/nullDC.cpp:291
+#: core/nullDC.cpp:299
 msgid "I/O error"
 msgstr "I/O-fel"
 
@@ -2673,11 +2677,15 @@ msgstr "Detta spel kräver ett riktigt BIOS"
 msgid "Widescreen cheat activated"
 msgstr "Bredskärmsfusk aktiverat"
 
+#: core/wsi/switcher.cpp:91
+msgid "Cannot initialize the graphics API"
+msgstr "Kan inte initiera grafik-API"
+
 #: shell/libretro/libretro.cpp:2130
 msgid "Cannot run without JIT"
 msgstr "Kan inte köra utan JIT"
 
-#: shell/switch/switch_main.cpp:70
+#: shell/switch/switch_main.cpp:76
 msgid "Not supported on Switch"
 msgstr "Stöds inte på Switch"
 
