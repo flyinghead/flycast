@@ -400,8 +400,8 @@ sh4op(i1111_nnnn_1010_1101)
 //fipr <FV_M>,<FV_N>
 sh4op(i1111_nnmm_1110_1101)
 {
-	int n=GetN(op)&0xC;
-	int m=(GetN(op)&0x3)<<2;
+	int n = GetN(op) & 0xC;
+	int m = (GetN(op) & 0x3) << 2;
 	if (ctx->fpscr.PR == 0)
 	{
 		double idp = (double)ctx->fr[n + 0] * ctx->fr[m + 0];
@@ -411,9 +411,8 @@ sh4op(i1111_nnmm_1110_1101)
 
 		ctx->fr[n + 3] = fixNaN((float)idp);
 	}
-	else
-	{
-		die("FIPR Precision=1");
+	else {
+		iNimp("FIPR with FPSCR.PR=1");
 	}
 }
 
@@ -577,7 +576,7 @@ sh4op(i1111_nn01_1111_1101)
 	XF[3] XF[7] XF[11] XF[15]   FR[n+3]    FR[n+3]
 	*/
 
-	u32 n=GetN(op)&0xC;
+	u32 n = GetN(op) & 0xC;
 
 	if (ctx->fpscr.PR==0)
 	{
@@ -606,13 +605,12 @@ sh4op(i1111_nn01_1111_1101)
 		ctx->fr[n + 2] = fixNaN((float)v3);
 		ctx->fr[n + 3] = fixNaN((float)v4);
 	}
-	else
-	{
-		iNimp("FTRV in dp mode");
+	else {
+		iNimp("FTRV with FPSCR.PR=1");
 	}
 }
 
 static void iNimp(const char *str)
 {
-	WARN_LOG(INTERPRETER, "Unimplemented sh4 FPU instruction: %s", str);
+	WARN_LOG(INTERPRETER, "Unimplemented SH4 FPU op: %s", str);
 }
