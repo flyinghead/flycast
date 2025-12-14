@@ -114,6 +114,6 @@ private:
 class SDLMouse : public Mouse
 {
 public:
-	SDLMouse(u64 mouseId);
+	SDLMouse(u32 mouseId);
 	void setAbsPos(int x, int y);
 };

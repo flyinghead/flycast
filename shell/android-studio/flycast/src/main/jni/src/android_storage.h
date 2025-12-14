@@ -19,6 +19,7 @@
 #pragma once
 #include "types.h"
 #include "oslib/storage.h"
+#include "oslib/i18n.h"
 #include "jni_util.h"
 #include <jni.h>
 
@@ -188,7 +189,7 @@ private:
 			return;
 
 		jni::env()->ExceptionClear();
-		throw StorageException("Storage access failed: " + throwable.getMessage());
+		throw StorageException(strprintf(i18n::T("Storage access failed: %s"), throwable.getMessage().c_str()));
 	}
 
 	FileInfo fromJavaFileInfo(const jni::Object& jinfo)

@@ -22,6 +22,7 @@
 #include "hw/maple/maple_devs.h"
 #include "ui/gui.h"
 #include "cfg/option.h"
+#include "oslib/i18n.h"
 
 #include "DreamPicoPortApi.hpp"
 
@@ -1199,23 +1200,24 @@ public:
 	}
 
 	const char *getButtonName(u32 code) const override {
+		using namespace i18n;
 		switch (code) {
 			// Coincides with buttons setup in setDefaultMapping
 			case 2: return "C";
 			case 5: return "Z";
 			case 10: return "D";
-			case 9: return "DPad2 Up";
-			case 8: return "DPad2 Down";
-			case 7: return "DPad2 Left";
-			case 6: return "DPad2 Right";
+			case 9: return T("DPad2 Up");
+			case 8: return T("DPad2 Down");
+			case 7: return T("DPad2 Left");
+			case 6: return T("DPad2 Right");
 
 			// These buttons are normally not physically accessible but are mapped on DreamPicoPort
-			case 12: return "VMU1 A";
-			case 15: return "VMU1 B";
-			case 16: return "VMU1 Up";
-			case 17: return "VMU1 Down";
-			case 18: return "VMU1 Left";
-			case 19: return "VMU1 Right";
+			case 12: return T("VMU1 A");
+			case 15: return T("VMU1 B");
+			case 16: return T("VMU1 Up");
+			case 17: return T("VMU1 Down");
+			case 18: return T("VMU1 Left");
+			case 19: return T("VMU1 Right");
 
 			default: return nullptr; // no override
 		}

@@ -169,7 +169,7 @@ extern "C" JNIEXPORT jstring JNICALL Java_com_flycast_emulator_emu_JNIdc_initEnv
         jstring msg = nullptr;
         int rc = flycast_init(0, nullptr);
         if (rc == -1)
-            msg = env->NewStringUTF("Memory initialization failed");
+            msg = env->NewStringUTF(i18n::T("Memory initialization failed"));
 #ifdef USE_BREAKPAD
         else
         {

@@ -25,6 +25,7 @@
 #include "input/mouse.h"
 #include "input/virtual_gamepad.h"
 #include "ui/gui.h"
+#include "oslib/i18n.h"
 
 enum IOSButton {
 	IOS_BTN_A = 1,
@@ -143,7 +144,7 @@ public:
 		if (gcController.vendorName != nullptr)
 			_name = [gcController.vendorName UTF8String];
 		else
-			_name = "MFi Gamepad";
+			_name = i18n::Ts("MFi Gamepad");
 		_unique_id = "ios-" + std::to_string(index);
 		INFO_LOG(INPUT, "iOS: Opened joystick %d: '%s'", port, _name.c_str());
 		loadMapping();
@@ -336,6 +337,7 @@ public:
 
 	const char *get_button_name(u32 code) override
 	{
+		using namespace i18n;
 		switch ((IOSButton)code) {
 			case IOS_BTN_A:
 				return "A";
@@ -346,66 +348,67 @@ public:
 			case IOS_BTN_Y:
 				return "Y";
 			case IOS_BTN_UP:
-				return "DPad Up";
+				return T("DPad Up");
 			case IOS_BTN_DOWN:
-				return "DPad Down";
+				return T("DPad Down");
 			case IOS_BTN_LEFT:
-				return "DPad Left";
+				return T("DPad Left");
 			case IOS_BTN_RIGHT:
-				return "DPad Right";
+				return T("DPad Right");
 			case IOS_BTN_MENU:
-				return "Menu";
+				return T("Menu");
 			case IOS_BTN_OPTIONS:
-				return "Options";
+				return T("Options");
 			case IOS_BTN_HOME:
-				return "Home";
+				return T("Home");
 			case IOS_BTN_L1:
-				return "L Shoulder";
+				return "L1";
 			case IOS_BTN_R1:
-				return "R Shoulder";
+				return "R1";
 			case IOS_BTN_L2:
-				return "L Trigger";
+				return T("Left Trigger");
 			case IOS_BTN_R2:
-				return "R Trigger";
+				return T("Right Trigger");
 			case IOS_BTN_L3:
-				return "L Thumbstick";
+				return "L3";
 			case IOS_BTN_R3:
-				return "R Thumbstick";
+				return "R3";
 			case IOS_BTN_SHARE:
-				return "Share";
+				return T("Share");
 			case IOS_BTN_PADDLE1:
-				return "Paddle 1";
+				return T("Paddle 1");
 			case IOS_BTN_PADDLE2:
-				return "Paddle 2";
+				return T("Paddle 2");
 			case IOS_BTN_PADDLE3:
-				return "Paddle 3";
+				return T("Paddle 3");
 			case IOS_BTN_PADDLE4:
-				return "Paddle 4";
+				return T("Paddle 4");
 			case IOS_BTN_TOUCHPAD:
-				return "Touchpad";
+				return T("Touchpad");
 			default:
 				return nullptr;
 		}
 	}
 	const char *get_axis_name(u32 code) override
 	{
+		using namespace i18n;
 		switch ((IOSAxis)code) {
 			case IOS_AXIS_L1:
-				return "L Shoulder";
+				return "L1";
 			case IOS_AXIS_R1:
-				return "R Shoulder";
+				return "R1";
 			case IOS_AXIS_L2:
-				return "L Trigger";
+				return T("Left Trigger");
 			case IOS_AXIS_R2:
-				return "R Trigger";
+				return T("Right Trigger");
 			case IOS_AXIS_LX:
-				return "L Stick X";
+				return T("Left Stick X");
 			case IOS_AXIS_LY:
-				return "L Stick Y";
+				return T("Left Stick Y");
 			case IOS_AXIS_RX:
-				return "R Stick X";
+				return T("Right Stick X");
 			case IOS_AXIS_RY:
-				return "R Stick Y";
+				return T("Right Stick Y");
 			default:
 				return nullptr;
 		}

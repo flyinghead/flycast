@@ -24,6 +24,7 @@
 #include "hw/maple/maple_devs.h"
 #include "hw/maple/maple_if.h"
 #include "ui/gui.h"
+#include "oslib/i18n.h"
 #include <cfg/option.h>
 #include <SDL.h>
 #include <iomanip>
@@ -154,11 +155,12 @@ DreamLinkGamepad::~DreamLinkGamepad() {
 
 const char* DreamLinkGamepad::dreamLinkStatus()
 {
+	using namespace i18n;
 	int port = maple_port();
 	if (!dreamlink || !DreamLink::isValidPort(port) || DreamLink::activeDreamLinks[port] != dreamlink)
-		return "Inactive";
+		return T("Inactive");
 
-	return dreamlink->isConnected() ? "Connected" : "Disconnected";
+	return dreamlink->isConnected() ? T("Connected") : T("Disconnected");
 }
 
 void DreamLinkGamepad::set_maple_port(int port)

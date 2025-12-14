@@ -39,7 +39,7 @@ static u32 windowFlags;
 #define WINDOW_WIDTH  640
 #define WINDOW_HEIGHT  480
 
-static std::unordered_map<u64, std::shared_ptr<SDLMouse>> sdl_mice;
+static std::unordered_map<u32, std::shared_ptr<SDLMouse>> sdl_mice;
 static std::shared_ptr<SDLKeyboardDevice> sdl_keyboard;
 static bool window_fullscreen;
 static bool window_maximized;
@@ -296,7 +296,7 @@ inline void SDLMouse::setAbsPos(int x, int y)
 		Mouse::setAbsPos(x, y, width, height);
 }
 
-static std::shared_ptr<SDLMouse> getMouse(u64 mouseId)
+static std::shared_ptr<SDLMouse> getMouse(u32 mouseId)
 {
 	auto& mouse = sdl_mice[mouseId];
 	if (mouse == nullptr)

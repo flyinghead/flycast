@@ -19,6 +19,7 @@
 #pragma once
 #include "gamepad_device.h"
 #include "ui/vgamepad.h"
+#include "oslib/i18n.h"
 
 class VirtualGamepad : public GamepadDevice
 {
@@ -26,7 +27,7 @@ public:
 	VirtualGamepad(const char *api_name, int maple_port = 0)
 		: GamepadDevice(maple_port, api_name, false)
 	{
-		_name = "Virtual Gamepad";
+		_name = i18n::Ts("Virtual Gamepad");
 		_unique_id = "virtual_gamepad_uid";
 		input_mapper = std::make_shared<IdentityInputMapping>();
 		// hasAnalogStick = true; // TODO has an analog stick but input mapping isn't persisted
