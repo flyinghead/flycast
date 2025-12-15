@@ -27,7 +27,7 @@
 
 namespace i18n
 {
-#ifdef __ANDROID__
+#if defined(__ANDROID__) && !defined(LIBRETRO)
 
 std::string getCurrentLocale();
 std::string formatShortDateTime(time_t time);
