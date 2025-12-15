@@ -440,18 +440,21 @@ static int maple_schd(int tag, int cycles, int jitter, void *arg)
 	if (maple_check_processing_cmd() >= 0)
 	{
 		const u64 now = sh4_sched_now64();
-		if (now >= processingCmdsTimeoutCycle)
-		{
-			// Timeout - Force blocking operation
-			maple_check_processing_cmd(true);
-		}
 
 		if (!processingCmds.empty())
 		{
-			// Still not done processing yet
-			// Delay for 5 ms before trying again
-			sh4_sched_request(maple_schid, sh4CyclesForXfer(5, 1000));
-			return 0;
+			if (now >= processingCmdsTimeoutCycle)
+			{
+				// Timeout - Force blocking operation then continue to processing below
+				maple_check_processing_cmd(true);
+			}
+			else
+			{
+				// Still not done processing yet
+				// Delay for 5 ms before trying again
+				sh4_sched_request(maple_schid, sh4CyclesForXfer(5, 1000));
+				return 0;
+			}
 		}
 		else
 		{
