@@ -72,7 +72,7 @@ jobs:
           arch: ${{ matrix.config.arch }}
         if: matrix.config.shell == 'cmd'
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
           submodules: recursive
@@ -81,7 +81,7 @@ jobs:
         run: HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=1 HOMEBREW_DEVELOPER=1 brew reinstall --build-from-source --formula ./shell/apple/libomp.rb
         if: matrix.config.name == 'apple-darwin'
 
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         with:
           path: ${{ env.CCACHE_DIR }}
           key: ccache-${{ matrix.config.name }}-${{ github.sha }}
@@ -127,7 +127,7 @@ jobs:
           rm artifact/bin/flycast
         if: matrix.config.name == 'x86_64-pc-linux-gnu'
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: flycast-${{ matrix.config.name }}
           path: |

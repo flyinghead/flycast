@@ -30,18 +30,18 @@ jobs:
           - architecture: arm64
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
           submodules: recursive
 
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         with:
           path: ${{ env.CCACHE_DIR }}
           key: ccache-${{ matrix.operating_system }}-${{ matrix.architecture }}-${{ github.sha }}
           restore-keys: ccache-${{ matrix.operating_system }}-${{ matrix.architecture }}-
 
-      - uses: cross-platform-actions/action@v0.29.0
+      - uses: cross-platform-actions/action@v0.31.0
         with:
           operating_system: ${{ matrix.operating_system }}
           architecture: ${{ matrix.architecture }}
