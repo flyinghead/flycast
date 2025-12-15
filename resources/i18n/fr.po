@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-12-13 17:19+0100\n"
-"PO-Revision-Date: 2025-12-13 17:21\n"
+"POT-Creation-Date: 2025-12-14 14:32+0100\n"
+"PO-Revision-Date: 2025-12-14 15:09\n"
 "Last-Translator: \n"
 "Language: fr_FR\n"
 "MIME-Version: 1.0\n"
@@ -103,6 +103,155 @@ msgstr "Erreur de changement de média"
 #, c-format
 msgid "WARNING: DreamLink disconnected from port %c"
 msgstr "Attention : DreamLink déconnecté du port %c"
+
+#: core/sdl/dreampicoport.cpp:1209 core/ui/settings_controls.cpp:184
+msgid "DPad2 Up"
+msgstr "Direction 2 Haut"
+
+#: core/sdl/dreampicoport.cpp:1210 core/ui/settings_controls.cpp:185
+msgid "DPad2 Down"
+msgstr "Direction 2 Bas"
+
+#: core/sdl/dreampicoport.cpp:1211 core/ui/settings_controls.cpp:186
+msgid "DPad2 Left"
+msgstr "Direction 2 Gauche"
+
+#: core/sdl/dreampicoport.cpp:1212 core/ui/settings_controls.cpp:187
+msgid "DPad2 Right"
+msgstr "Direction 2 Droite"
+
+#: core/sdl/dreampicoport.cpp:1215
+msgid "VMU1 A"
+msgstr "VMU1 A"
+
+#: core/sdl/dreampicoport.cpp:1216
+msgid "VMU1 B"
+msgstr "VMU1 B"
+
+#: core/sdl/dreampicoport.cpp:1217
+msgid "VMU1 Up"
+msgstr "VMU1 Haut"
+
+#: core/sdl/dreampicoport.cpp:1218
+msgid "VMU1 Down"
+msgstr "VMU1 Bas"
+
+#: core/sdl/dreampicoport.cpp:1219
+msgid "VMU1 Left"
+msgstr "VMU1 Gauche"
+
+#: core/sdl/dreampicoport.cpp:1220
+msgid "VMU1 Right"
+msgstr "VMU1 Droite"
+
+#: core/sdl/dreamlink.cpp:161
+msgid "Inactive"
+msgstr "Inactif"
+
+#: core/sdl/dreamlink.cpp:163 core/ui/gui.cpp:752
+msgid "Connected"
+msgstr "Connecté"
+
+#: core/sdl/dreamlink.cpp:163 core/ui/gui.cpp:752
+msgid "Disconnected"
+msgstr "Déconnecté"
+
+#: core/sdl/sdl_gamepad.cpp:610
+#: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:135
+msgid "Back"
+msgstr "Retour"
+
+#: core/sdl/sdl_gamepad.cpp:611
+msgid "Guide"
+msgstr "Guide"
+
+#: core/sdl/sdl_gamepad.cpp:612 core/ui/settings_controls.cpp:205
+#: core/ui/settings_controls.cpp:255
+#: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:171
+msgid "Start"
+msgstr "Démarrer"
+
+#: core/sdl/sdl_gamepad.cpp:617 core/sdl/sdl_gamepad.cpp:650
+#: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:137
+#: shell/apple/emulator-ios/emulator/ios_gamepad.h:351
+msgid "DPad Up"
+msgstr "Direction Haut"
+
+#: core/sdl/sdl_gamepad.cpp:618 core/sdl/sdl_gamepad.cpp:654
+#: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:139
+#: shell/apple/emulator-ios/emulator/ios_gamepad.h:353
+msgid "DPad Down"
+msgstr "Direction Bas"
+
+#: core/sdl/sdl_gamepad.cpp:619 core/sdl/sdl_gamepad.cpp:658
+#: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:141
+#: shell/apple/emulator-ios/emulator/ios_gamepad.h:355
+msgid "DPad Left"
+msgstr "Direction Gauche"
+
+#: core/sdl/sdl_gamepad.cpp:620 core/sdl/sdl_gamepad.cpp:662
+#: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:143
+#: shell/apple/emulator-ios/emulator/ios_gamepad.h:357
+msgid "DPad Right"
+msgstr "Direction Droite"
+
+#: core/sdl/sdl_gamepad.cpp:621
+msgid "Misc"
+msgstr "Divers"
+
+#: core/sdl/sdl_gamepad.cpp:622
+#: shell/apple/emulator-ios/emulator/ios_gamepad.h:379
+msgid "Paddle 1"
+msgstr "Palette 1"
+
+#: core/sdl/sdl_gamepad.cpp:623
+#: shell/apple/emulator-ios/emulator/ios_gamepad.h:381
+msgid "Paddle 2"
+msgstr "Palette 2"
+
+#: core/sdl/sdl_gamepad.cpp:624
+#: shell/apple/emulator-ios/emulator/ios_gamepad.h:383
+msgid "Paddle 3"
+msgstr "Palette 3"
+
+#: core/sdl/sdl_gamepad.cpp:625
+#: shell/apple/emulator-ios/emulator/ios_gamepad.h:385
+msgid "Paddle 4"
+msgstr "Palette 4"
+
+#: core/sdl/sdl_gamepad.cpp:626
+#: shell/apple/emulator-ios/emulator/ios_gamepad.h:387
+msgid "Touchpad"
+msgstr "Pavé tactile"
+
+#: core/sdl/sdl_gamepad.cpp:685
+#: shell/apple/emulator-ios/emulator/ios_gamepad.h:405
+msgid "Left Stick X"
+msgstr "Stick gauche X"
+
+#: core/sdl/sdl_gamepad.cpp:686
+#: shell/apple/emulator-ios/emulator/ios_gamepad.h:407
+msgid "Left Stick Y"
+msgstr "Stick gauche Y"
+
+#: core/sdl/sdl_gamepad.cpp:687
+#: shell/apple/emulator-ios/emulator/ios_gamepad.h:409
+msgid "Right Stick X"
+msgstr "Stick droit X"
+
+#: core/sdl/sdl_gamepad.cpp:688
+#: shell/apple/emulator-ios/emulator/ios_gamepad.h:411
+msgid "Right Stick Y"
+msgstr "Stick droit Y"
+
+#: core/sdl/sdl_gamepad.cpp:757
+msgid "Default Mouse"
+msgstr "Souris standard"
+
+#: core/sdl/sdl_gamepad.cpp:761
+#, c-format
+msgid "Mouse %d"
+msgstr "Souris %d"
 
 #: core/sdl/sdl.cpp:843 core/windows/winmain.cpp:370
 msgid "Flycast Error"
@@ -685,7 +834,7 @@ msgstr "Pas de saut"
 
 #: core/ui/settings_video.cpp:314
 msgid "Normal"
-msgstr ""
+msgstr "Normal"
 
 #: core/ui/settings_video.cpp:314
 msgid "Skip a frame when the GPU and CPU are both running slow"
@@ -693,7 +842,7 @@ msgstr "Saute une image quand le CPU et le GPU sont surchargés"
 
 #: core/ui/settings_video.cpp:316
 msgid "Maximum"
-msgstr ""
+msgstr "Maximum"
 
 #: core/ui/settings_video.cpp:316
 msgid "Skip a frame when the GPU is running slow"
@@ -904,12 +1053,12 @@ msgstr "États-Unis"
 
 #: core/ui/settings_general.cpp:197
 msgid "Europe"
-msgstr ""
+msgstr "Europe"
 
 #: core/ui/settings_general.cpp:198
 msgctxt "region"
 msgid "Export"
-msgstr ""
+msgstr "Export"
 
 #: core/ui/settings_general.cpp:198
 msgid "Korea"
@@ -925,7 +1074,7 @@ msgstr "Région du BIOS"
 
 #: core/ui/settings_general.cpp:203
 msgid "VGA"
-msgstr ""
+msgstr "VGA"
 
 #: core/ui/settings_general.cpp:203
 msgid "RGB Component"
@@ -1023,7 +1172,7 @@ msgstr "Clair"
 
 #: core/ui/settings_general.cpp:338
 msgid "Dreamcast"
-msgstr ""
+msgstr "Dreamcast"
 
 #: core/ui/settings_general.cpp:338
 msgid "High Contrast"
@@ -1031,11 +1180,11 @@ msgstr "Contraste élevé"
 
 #: core/ui/settings_general.cpp:338
 msgid "Nintendo"
-msgstr ""
+msgstr "Nintendo"
 
 #: core/ui/settings_general.cpp:338
 msgid "Aqua Chill"
-msgstr ""
+msgstr "Aqua Chill"
 
 #: core/ui/settings_general.cpp:340
 msgid "UI Theme"
@@ -1247,11 +1396,11 @@ msgstr "Dossiers contenant les fichiers de triche (.cht/.txt) nommés avec l'ide
 
 #: core/ui/gui_chat.h:46 core/ui/gui_chat.h:48
 msgid "P2"
-msgstr ""
+msgstr "P2"
 
 #: core/ui/gui_chat.h:46 core/ui/gui_chat.h:48
 msgid "P1"
-msgstr ""
+msgstr "P1"
 
 #: core/ui/game_scanner.cpp:167
 msgid "Dreamcast BIOS"
@@ -1274,13 +1423,13 @@ msgstr "Pistolet optique"
 msgid "Keyboard"
 msgstr "Clavier"
 
-#: core/ui/settings_controls.cpp:47
+#: core/ui/settings_controls.cpp:47 core/input/mouse.h:57
 msgid "Mouse"
 msgstr "Souris"
 
 #: core/ui/settings_controls.cpp:48
 msgid "Twin Stick"
-msgstr ""
+msgstr "Twin Stick"
 
 #: core/ui/settings_controls.cpp:49
 msgid "Arcade/Ascii Stick"
@@ -1320,7 +1469,7 @@ msgstr "Vibreur"
 
 #: core/ui/settings_controls.cpp:64
 msgid "Microphone"
-msgstr ""
+msgstr "Microphone"
 
 #: core/ui/settings_controls.cpp:155
 msgid "All"
@@ -1328,7 +1477,7 @@ msgstr "Tous"
 
 #: core/ui/settings_controls.cpp:163 core/ui/settings_controls.cpp:221
 msgid "Directions"
-msgstr ""
+msgstr "Directions"
 
 #: core/ui/settings_controls.cpp:164 core/ui/settings_controls.cpp:222
 msgid "Up"
@@ -1364,19 +1513,19 @@ msgstr "Stick Droite"
 
 #: core/ui/settings_controls.cpp:174 core/ui/settings_controls.cpp:232
 msgid "R.Thumbstick Up"
-msgstr "Stick Droit Haut"
+msgstr "Stick droit Haut"
 
 #: core/ui/settings_controls.cpp:175 core/ui/settings_controls.cpp:233
 msgid "R.Thumbstick Down"
-msgstr "Stick Droit Bas"
+msgstr "Stick droit Bas"
 
 #: core/ui/settings_controls.cpp:176 core/ui/settings_controls.cpp:234
 msgid "R.Thumbstick Left"
-msgstr "Stick Droit Gauche"
+msgstr "Stick droit Gauche"
 
 #: core/ui/settings_controls.cpp:177 core/ui/settings_controls.cpp:235
 msgid "R.Thumbstick Right"
-msgstr "Stick Droit Droite"
+msgstr "Stick droit Droite"
 
 #: core/ui/settings_controls.cpp:179
 msgid "Axis 3 Up"
@@ -1394,22 +1543,6 @@ msgstr "Axe 3 Gauche"
 msgid "Axis 3 Right"
 msgstr "Axe 3 Droite"
 
-#: core/ui/settings_controls.cpp:184
-msgid "DPad2 Up"
-msgstr "DPad2 Haut"
-
-#: core/ui/settings_controls.cpp:185
-msgid "DPad2 Down"
-msgstr "DPad2 Bas"
-
-#: core/ui/settings_controls.cpp:186
-msgid "DPad2 Left"
-msgstr "DPad2 Gauche"
-
-#: core/ui/settings_controls.cpp:187
-msgid "DPad2 Right"
-msgstr "DPad2 Droite"
-
 #: core/ui/settings_controls.cpp:189 core/ui/settings_controls.cpp:237
 msgid "Buttons"
 msgstr "Boutons"
@@ -1419,10 +1552,16 @@ msgid "Triggers"
 msgstr "Gâchettes"
 
 #: core/ui/settings_controls.cpp:199 core/ui/settings_controls.cpp:249
+#: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:199
+#: shell/apple/emulator-ios/emulator/ios_gamepad.h:369
+#: shell/apple/emulator-ios/emulator/ios_gamepad.h:401
 msgid "Left Trigger"
 msgstr "Gâchette Gauche"
 
 #: core/ui/settings_controls.cpp:200 core/ui/settings_controls.cpp:250
+#: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:201
+#: shell/apple/emulator-ios/emulator/ios_gamepad.h:371
+#: shell/apple/emulator-ios/emulator/ios_gamepad.h:403
 msgid "Right Trigger"
 msgstr "Gâchette Droite"
 
@@ -1438,10 +1577,6 @@ msgstr "Gâchette 2 Droite"
 msgid "System Buttons"
 msgstr "Boutons Système"
 
-#: core/ui/settings_controls.cpp:205 core/ui/settings_controls.cpp:255
-msgid "Start"
-msgstr "Démarrer"
-
 #: core/ui/settings_controls.cpp:206 core/ui/settings_controls.cpp:256
 msgid "Reload"
 msgstr "Recharger"
@@ -1451,8 +1586,9 @@ msgid "Emulator"
 msgstr "Émulateur"
 
 #: core/ui/settings_controls.cpp:209 core/ui/settings_controls.cpp:263
+#: shell/apple/emulator-ios/emulator/ios_gamepad.h:359
 msgid "Menu"
-msgstr ""
+msgstr "Menu"
 
 #: core/ui/settings_controls.cpp:210 core/ui/settings_controls.cpp:264
 #: core/ui/gui.cpp:777 core/ui/gui.cpp:1036
@@ -1493,11 +1629,11 @@ msgstr "Bouton 2"
 msgid "Button 3"
 msgstr "Bouton 3"
 
-#: core/ui/settings_controls.cpp:241
+#: core/ui/settings_controls.cpp:241 core/input/mouse.h:84
 msgid "Button 4"
 msgstr "Bouton 4"
 
-#: core/ui/settings_controls.cpp:242
+#: core/ui/settings_controls.cpp:242 core/input/mouse.h:86
 msgid "Button 5"
 msgstr "Bouton 5"
 
@@ -1519,11 +1655,11 @@ msgstr "Pièce"
 
 #: core/ui/settings_controls.cpp:258
 msgid "Service"
-msgstr ""
+msgstr "Service"
 
 #: core/ui/settings_controls.cpp:259
 msgid "Test"
-msgstr ""
+msgstr "Test"
 
 #: core/ui/settings_controls.cpp:260
 msgid "Insert Card"
@@ -1582,7 +1718,7 @@ msgstr "Fermer"
 #: core/ui/settings_controls.cpp:959 core/ui/settings_controls.cpp:973
 #: core/ui/gui.cpp:752
 msgid "Port"
-msgstr ""
+msgstr "Port"
 
 #: core/ui/settings_controls.cpp:629 core/ui/settings_controls.cpp:693
 msgid "Dreamcast Controls"
@@ -1696,7 +1832,7 @@ msgstr "Amplitude minimum détectée par le jeu"
 
 #: core/ui/settings_controls.cpp:936
 msgid "Saturation"
-msgstr ""
+msgstr "Saturation"
 
 #: core/ui/settings_controls.cpp:939
 msgid "Value sent to the game at 100% thumbstick deflection. Values greater than 100% will saturate before full deflection of the thumbstick."
@@ -1756,7 +1892,7 @@ msgstr "Périphériques Dreamcast"
 #: core/ui/settings_controls.cpp:1081
 #, c-format
 msgid "Port %c"
-msgstr ""
+msgstr "Port %c"
 
 #: core/ui/settings_controls.cpp:1152
 msgid "Crosshair color"
@@ -1851,14 +1987,6 @@ msgid "Disconnect\n"
 msgstr "Déconnecter\n"
 "DreamLink"
 
-#: core/ui/gui.cpp:752
-msgid "Connected"
-msgstr "Connecté"
-
-#: core/ui/gui.cpp:752
-msgid "Disconnected"
-msgstr "Déconnecté"
-
 #: core/ui/gui.cpp:761
 msgid "Insert Disk"
 msgstr "Insérer Disque"
@@ -1882,7 +2010,7 @@ msgstr "Vide"
 
 #: core/ui/gui.cpp:856 core/ui/gui_cheats.cpp:48
 msgid "OK"
-msgstr ""
+msgstr "OK"
 
 #: core/ui/gui.cpp:876 core/ui/gui.cpp:877
 msgid "Incorrect Content Location?"
@@ -2029,7 +2157,7 @@ msgstr "AJOUTER CODE"
 
 #: core/ui/gui_cheats.cpp:72 core/ui/settings_network.cpp:137
 msgid "Code"
-msgstr ""
+msgstr "Code"
 
 #: core/ui/gui_cheats.cpp:95
 msgid "Select a cheat file"
@@ -2049,7 +2177,7 @@ msgstr "Mode CPU"
 
 #: core/ui/settings.cpp:41
 msgid "Dynarec"
-msgstr ""
+msgstr "Dynarec"
 
 #: core/ui/settings.cpp:42
 msgid "Use the dynamic recompiler. Recommended in most cases"
@@ -2189,7 +2317,7 @@ msgstr "Sélectionner ce dossier"
 
 #: core/ui/gui_util.cpp:479
 msgid "(?)"
-msgstr ""
+msgstr "(?)"
 
 #: core/ui/vgamepad.cpp:79
 msgid "Reset"
@@ -2209,7 +2337,7 @@ msgstr "Active le réseau pour les jeux Naomi et Atomiswave supportés"
 
 #: core/ui/settings_network.cpp:50
 msgid "Battle Cable"
-msgstr ""
+msgstr "Battle Cable"
 
 #: core/ui/settings_network.cpp:52
 msgid "Emulate the Taisen (Battle) null modem cable for games that support it"
@@ -2217,7 +2345,7 @@ msgstr "Émule le câble null modem (Battle Cable ou Taisen Cable) pour les jeux
 
 #: core/ui/settings_network.cpp:72
 msgid "Configuration"
-msgstr ""
+msgstr "Configuration"
 
 #: core/ui/settings_network.cpp:78
 msgid "Play as Player 1"
@@ -2253,7 +2381,7 @@ msgstr "Stick gauche non utilisé"
 
 #: core/ui/settings_network.cpp:89
 msgid "Horizontal"
-msgstr ""
+msgstr "Horizontal"
 
 #: core/ui/settings_network.cpp:89
 msgid "Use the left thumbstick horizontal axis only"
@@ -2414,7 +2542,7 @@ msgstr "Écrans Multi-cartes"
 
 #: core/ui/settings_network.cpp:229
 msgid "1 (Twin)"
-msgstr ""
+msgstr "1 (Twin)"
 
 #: core/ui/settings_network.cpp:229
 msgid "One screen configuration (F355 Twin)"
@@ -2422,7 +2550,7 @@ msgstr "Borne avec écran unique (F355 Twin)"
 
 #: core/ui/settings_network.cpp:231
 msgid "3 (Deluxe)"
-msgstr ""
+msgstr "3 (Deluxe)"
 
 #: core/ui/settings_network.cpp:231
 msgid "Three screens configuration"
@@ -2677,6 +2805,26 @@ msgstr "Ce jeu demande un BIOS authentique"
 msgid "Widescreen cheat activated"
 msgstr "Code de triche écran large activé"
 
+#: core/input/virtual_gamepad.h:30
+msgid "Virtual Gamepad"
+msgstr "Manette virtuelle"
+
+#: core/input/mouse.h:78
+msgid "Left Button"
+msgstr "Bouton gauche"
+
+#: core/input/mouse.h:80
+msgid "Right Button"
+msgstr "Bouton droit"
+
+#: core/input/mouse.h:82
+msgid "Middle Button"
+msgstr "Bouton du milieu"
+
+#: core/input/mouse.h:114
+msgid "Touch Mouse"
+msgstr "Souris tactile"
+
 #: core/wsi/switcher.cpp:91
 msgid "Cannot initialize the graphics API"
 msgstr "Impossible d'initialiser l'API graphique"
@@ -2684,6 +2832,71 @@ msgstr "Impossible d'initialiser l'API graphique"
 #: shell/libretro/libretro.cpp:2130
 msgid "Cannot run without JIT"
 msgstr "Impossible de fonctionner sans JIT"
+
+#: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:145
+msgid "DPad Center"
+msgstr "Direction Centre"
+
+#: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:173
+msgid "Select"
+msgstr "Sélection"
+
+#: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:175
+msgid "Mode"
+msgstr "Mode"
+
+#: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:203
+msgid "Hat X"
+msgstr "Direction X"
+
+#: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:205
+msgid "Hat Y"
+msgstr "Direction Y"
+
+#: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:207
+msgid "Gas"
+msgstr "Accélérateur"
+
+#: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:209
+msgid "Brake"
+msgstr "Frein"
+
+#: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:211
+msgid "Rudder"
+msgstr "Gouvernail"
+
+#: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:213
+msgid "Wheel"
+msgstr "Volant"
+
+#: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:215
+msgid "Throttle"
+msgstr "Gaz"
+
+#: shell/android-studio/flycast/src/main/jni/src/Android.cpp:172
+msgid "Memory initialization failed"
+msgstr "Échec d'initialisation de la mémoire"
+
+#: shell/android-studio/flycast/src/main/jni/src/android_storage.h:192
+#, c-format
+msgid "Storage access failed: %s"
+msgstr "Erreur de stockage : %s"
+
+#: shell/apple/emulator-ios/emulator/ios_gamepad.h:147
+msgid "MFi Gamepad"
+msgstr "Manette MFi"
+
+#: shell/apple/emulator-ios/emulator/ios_gamepad.h:361
+msgid "Options"
+msgstr "Options"
+
+#: shell/apple/emulator-ios/emulator/ios_gamepad.h:363
+msgid "Home"
+msgstr "Accueil"
+
+#: shell/apple/emulator-ios/emulator/ios_gamepad.h:377
+msgid "Share"
+msgstr "Partage"
 
 #: shell/switch/switch_main.cpp:76
 msgid "Not supported on Switch"
