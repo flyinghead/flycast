@@ -15,6 +15,7 @@ jobs:
       matrix:
         operating_system: [ freebsd, netbsd, openbsd ]
         architecture: [ arm64, x86-64 ]
+        libretro: [ OFF, ON ]
         include:
           - operating_system: freebsd
             version: '14.3'
@@ -48,5 +49,5 @@ jobs:
           environment_variables: CCACHE_DIR
           run: |
             ${{ matrix.pkginstall }}
-            cmake -B build -DUSE_LIBCDIO=ON -DCMAKE_BUILD_TYPE=Release -G Ninja
+            cmake -B build -DUSE_LIBCDIO=ON -DCMAKE_BUILD_TYPE=Release -G Ninja -DLIBRETRO=${{ matrix.libretro }}
             cmake --build build --config Release
