@@ -40,12 +40,15 @@
 .core-defs-android:
   extends: .core-defs
   script:
-    - cmake -DLIBRETRO=ON -DUSE_OPENMP=OFF -DANDROID_PLATFORM=android-$API_LEVEL -DCMAKE_TOOLCHAIN_FILE=$NDK_ROOT/build/cmake/android.toolchain.cmake -DANDROID_STL=c++_static -DANDROID_ABI=$ANDROID_ABI -DANDROID_ARM_MODE=arm "$CMAKE_SOURCE_ROOT" -B$BUILD_DIR
+    - echo y | /android-sdk-linux/cmdline-tools/latest/bin/sdkmanager "ndk;${ANDROID_NDK_VERSION}"
+    - cmake -DLIBRETRO=ON -DUSE_OPENMP=OFF -DANDROID_PLATFORM=android-$API_LEVEL -DCMAKE_TOOLCHAIN_FILE=$NDK_ROOT/build/cmake/android.toolchain.cmake -DANDROID_STL=c++_static -DANDROID_ABI=$ANDROID_ABI -DANDROID_ARM_MODE=arm -DANDROID_WEAK_API_DEFS=ON "$CMAKE_SOURCE_ROOT" -B$BUILD_DIR
     - cmake --build $BUILD_DIR --target ${CORENAME}_libretro --config Release -- -j $NUMPROC
     - mv $BUILD_DIR/${CORENAME}_libretro.so $LIBNAME
     - if [ $STRIP_CORE_LIB -eq 1 ]; then $NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip $LIBNAME; fi
   variables:
+    ANDROID_NDK_VERSION: 29.0.14206865
     API_LEVEL: 21
+    NDK_ROOT: /android-sdk-linux/ndk/$ANDROID_NDK_VERSION
 
 # Inclusion templates, required for the build to work
 include:
