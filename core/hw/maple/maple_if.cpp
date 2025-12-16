@@ -70,7 +70,7 @@ struct ProcessingMapleCmd
 // The following values are purged on maple_pre_serialize()
 
 // Check this for currently processing maple commands
-static std::list<ProcessingMapleCmd> processingCmds;
+static std::list<std::unique_ptr<ProcessingMapleCmd>> processingCmds;
 // The current accumulated cycle that the command will return data for each bus (use max of these)
 static u64 processingCmdsScheduledCycle[MAPLE_PORTS] = {};
 // The cycle number at which a hard block will be made on processing commands
@@ -282,7 +282,8 @@ static void maple_DoDma()
 				}
 				else
 				{
-					processingCmds.push_back({bus, header_2, std::move(futureOut)});
+					processingCmds.push_back(
+						std::make_unique<ProcessingMapleCmd>(ProcessingMapleCmd{bus, header_2, std::move(futureOut)}));
 				}
 			}
 			else
@@ -411,7 +412,7 @@ static s32 maple_check_processing_cmds(bool block)
 	{
 		if (!block)
 		{
-			std::future_status status = iter->future.wait_for(std::chrono::milliseconds(0));
+			std::future_status status = (*iter)->future.wait_for(std::chrono::milliseconds(0));
 			if (status == std::future_status::timeout)
 			{
 				// Still processing
@@ -420,18 +421,19 @@ static s32 maple_check_processing_cmds(bool block)
 			}
 		}
 
-		// Command is now fully processed
-		ProcessingMapleCmd processedMapleCmd = std::move(*iter);
+		std::unique_ptr<ProcessingMapleCmd> processingCmd = std::move(*iter);
 		iter = processingCmds.erase(iter);
+		std::vector<u32> outbuf = processingCmd->future.get(); // will block if block==true
 
-		std::vector<u32> outbuf = processedMapleCmd.future.get(); // will block if block==true
+		// Command is now fully processed
 		const u32 xferOut = (outbuf.size() * 4) + 3;
 
-		maple_add_dma_out(processedMapleCmd.header_2, std::move(outbuf));
+		maple_add_dma_out(processingCmd->header_2, std::move(outbuf));
+		outbuf.clear();
 
 		const u32 cycles = compute_delay_cycles(0, xferOut);
 
-		processingCmdsScheduledCycle[processedMapleCmd.bus] += cycles;
+		processingCmdsScheduledCycle[processingCmd->bus] += cycles;
 
 		++processed;
 	}
