@@ -466,8 +466,9 @@ static int maple_schd(int tag, int cycles, int jitter, void *arg)
 			else
 			{
 				// Still not done processing yet
-				// Delay for 5 ms before trying again
-				sh4_sched_request(maple_schid, sh4CyclesForXfer(5, 1000));
+				// Delay for up to 5 ms before trying again
+				const u32 delay = std::min(static_cast<u32>(processingCmdsTimeoutCycle - now), sh4CyclesForXfer(5, 1000));
+				sh4_sched_request(maple_schid, delay);
 				return 0;
 			}
 		}
