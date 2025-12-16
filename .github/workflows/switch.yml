@@ -24,7 +24,7 @@ jobs:
           sudo apt-get update
           sudo apt-get -y install ccache cmake
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
           submodules: recursive
@@ -32,7 +32,7 @@ jobs:
       - name: Mark git repository as safe
         run: git config --global --add safe.directory $PWD
 
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         with:
           path: ~/.ccache
           key: ccache-switch-${{ matrix.config.name }}-${{ github.sha }}
@@ -43,7 +43,7 @@ jobs:
           $DEVKITPRO/portlibs/switch/bin/aarch64-none-elf-cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=artifact -G Ninja ${{ matrix.config.cmakeArgs }}
           cmake --build build --config Release --target install
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: flycast-switch-${{ matrix.config.name }}
           path: |

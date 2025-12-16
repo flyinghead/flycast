@@ -16,7 +16,7 @@ jobs:
         arch: [ Win32, x64, ARM64 ]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
           submodules: recursive
@@ -43,7 +43,7 @@ jobs:
         run: signtool sign /f shell\uwp\sign_cert.pfx /p '${{ secrets.SIGN_CERT_PWD }}' /v /fd SHA256 build\artifact\flycast.appx
         if: github.repository == 'flyinghead/flycast' && github.event_name == 'push'
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: flycast-uwp-${{ matrix.arch }}
           path: build/artifact
