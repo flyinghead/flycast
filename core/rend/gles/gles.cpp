@@ -1009,12 +1009,12 @@ static void updateFogTexture(u8 *fog_table, GLenum texture_slot, GLint fog_image
 	u8 temp_tex_buffer[256];
 	MakeFogTexture(temp_tex_buffer);
 
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    GLint internalformat;
-    if (gl.is_gles && fog_image_format == GL_RED)
-    	internalformat = GL_R8;
-    else
-    	internalformat = fog_image_format;
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+	GLint internalformat;
+	if (gl.is_gles && fog_image_format == GL_RED)
+		internalformat = GL_R8;
+	else
+		internalformat = fog_image_format;
 	glTexImage2D(GL_TEXTURE_2D, 0, internalformat, 128, 2, 0, fog_image_format, GL_UNSIGNED_BYTE, temp_tex_buffer);
 	glCheck();
 
