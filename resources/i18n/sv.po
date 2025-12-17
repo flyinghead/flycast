@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-12-14 14:32+0100\n"
-"PO-Revision-Date: 2025-12-16 20:35\n"
+"PO-Revision-Date: 2025-12-17 08:35\n"
 "Last-Translator: \n"
 "Language: sv_SE\n"
 "MIME-Version: 1.0\n"
@@ -2241,7 +2241,7 @@ msgstr "Dumpa texturer"
 
 #: core/ui/settings.cpp:112
 msgid "Dump all textures into data/texdump/<game id>"
-msgstr "Dumpa alla texturer till data/texdump/<game id>"
+msgstr "Dumpa alla texturer till data/texdump/<spel-id>"
 
 #: core/ui/settings.cpp:116
 msgid "Dump Replaced Textures"
@@ -2542,7 +2542,7 @@ msgstr "Multiboard-skärmar"
 
 #: core/ui/settings_network.cpp:229
 msgid "1 (Twin)"
-msgstr "1 (Tvilling)"
+msgstr "1 (Twin)"
 
 #: core/ui/settings_network.cpp:229
 msgid "One screen configuration (F355 Twin)"
@@ -2875,12 +2875,12 @@ msgstr "Hastighetsreglage"
 
 #: shell/android-studio/flycast/src/main/jni/src/Android.cpp:172
 msgid "Memory initialization failed"
-msgstr ""
+msgstr "Minnesinitiering misslyckades"
 
 #: shell/android-studio/flycast/src/main/jni/src/android_storage.h:192
 #, c-format
 msgid "Storage access failed: %s"
-msgstr ""
+msgstr "Lagringsåtkomst misslyckades: %s"
 
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:147
 msgid "MFi Gamepad"
