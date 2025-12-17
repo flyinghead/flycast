@@ -12,6 +12,6 @@
     <string name="importing_home_folder">Importing home folder</string>
     <string name="flycast_error">Flycast Error</string>
     <string name="init_failed_message">Initialization failed. Please try again or reinstall.\n\nError: </string>
-    <string name="exit">Exit</string>
+    <string name="exit">Kilépés</string>
     <string name="copying">Copying</string>
 </resources>
