@@ -345,9 +345,16 @@ static void maple_DoDma()
 			}
 			processingCmdsScheduledCycle[i] = now + delay;
 		}
-		// Timeout after 16 ms which is about one 60Hz frame
-		processingCmdsTimeoutCycle = now + sh4CyclesForXfer(16, 1000);
 		sh4_sched_request(maple_schid, maxDelay);
+
+		// Timeout and hard block after 15 ms which is a bit less than one 60Hz frame
+		// This gives the game about 1.6 ms to process and queue up the next set of commands in the next frame
+		processingCmdsTimeoutCycle = now + sh4CyclesForXfer(15, 1000);
+	}
+	else
+	{
+		// Next call to maple_schd() will force all std::future to block
+		processingCmdsTimeoutCycle = 0;
 	}
 }
 
@@ -464,6 +471,7 @@ static int maple_schd(int tag, int cycles, int jitter, void *arg)
 			{
 				// Timeout - Force blocking operation then continue to processing below
 				maple_check_processing_cmds(true);
+				// processingCmds is now empty - continue below
 			}
 			else
 			{
@@ -474,17 +482,15 @@ static int maple_schd(int tag, int cycles, int jitter, void *arg)
 				return 0;
 			}
 		}
-		else
+
+		u64 maxCycle = get_max_scheduled_cycle();
+		if (maxCycle > now)
 		{
-			u64 maxCycle = get_max_scheduled_cycle();
-			if (maxCycle > now)
-			{
-				// Delay a bit longer to get to target cycles
-				sh4_sched_request(maple_schid, maxCycle - now);
-				return 0;
-			}
-			// else: continue to processing below
+			// Delay a bit longer to get to target cycles
+			sh4_sched_request(maple_schid, maxCycle - now);
+			return 0;
 		}
+		// else: continue to processing below
 	}
 
 	if (SB_MDEN & 1)
