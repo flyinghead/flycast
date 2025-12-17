@@ -604,12 +604,13 @@ static void getScreenshot(std::vector<u8>& data, int width = 0)
 	stbi_write_png_to_func(appendVectorData, &data, width, height, 3, &rawData[0], 0);
 }
 
-static void savestate()
+static void savestate(int slotIndex = -1)
 {
 	// TODO save state async: png compression, savestate file compression/write
+	if (slotIndex < 0) slotIndex = config::SavestateSlot;
 	std::vector<u8> pngData;
 	getScreenshot(pngData, 640);
-	dc_savestate(config::SavestateSlot, pngData.empty() ? nullptr : &pngData[0], pngData.size());
+	dc_savestate(slotIndex, pngData.empty() ? nullptr : &pngData[0], pngData.size());
 	ImguiStateTexture savestatePic;
 	savestatePic.invalidate();
 }
@@ -1697,14 +1698,15 @@ void gui_error(const std::string& what) {
 	error_msg = what;
 }
 
-void gui_loadState()
+void gui_loadState(int slotIndex)
 {
+	if (slotIndex < 0) slotIndex = config::SavestateSlot;
 	const LockGuard lock(guiMutex);
 	if (gui_state == GuiState::Closed && savestateAllowed())
 	{
 		try {
 			emu.stop();
-			dc_loadstate(config::SavestateSlot);
+			dc_loadstate(slotIndex);
 			emu.start();
 		} catch (const FlycastException& e) {
 			gui_stop_game(e.what());
@@ -1712,15 +1714,16 @@ void gui_loadState()
 	}
 }
 
-void gui_saveState(bool stopRestart)
+void gui_saveState(int slotIndex, bool stopRestart)
 {
+	if (slotIndex < 0) slotIndex = config::SavestateSlot;
 	const LockGuard lock(guiMutex);
 	if ((gui_state == GuiState::Closed || !stopRestart) && savestateAllowed())
 	{
 		try {
 			if (stopRestart)
 				emu.stop();
-			savestate();
+			savestate(slotIndex);
 			if (stopRestart)
 				emu.start();
 		} catch (const FlycastException& e) {
