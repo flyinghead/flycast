@@ -1020,10 +1020,13 @@ static void gui_display_content()
 
     static ImGuiTextFilter filter;
     const float settingsBtnW = iconButtonWidth(ICON_FA_GEAR, "Settings");
+	const float exitBtnW = ImGui::GetStyle().ItemSpacing.x + iconButtonWidth(ICON_FA_POWER_OFF, "Exit");
+	const bool isFullscreen_PC = sdl_is_fullscreen();
+	const float exitBtnW_PC = isFullscreen_PC ? exitBtnW : 0;
 #if !defined(__ANDROID__) && !defined(TARGET_IPHONE) && !defined(TARGET_UWP) && !defined(__SWITCH__)
 	ImGui::SameLine(0, uiScaled(32));
 	filter.Draw("Filter", ImGui::GetContentRegionAvail().x - ImGui::GetStyle().ItemSpacing.x - uiScaled(32)
-			- settingsBtnW - ImGui::GetStyle().ItemSpacing.x);
+			- settingsBtnW - exitBtnW_PC - ImGui::GetStyle().ItemSpacing.x);
 #endif
     if (gui_state != GuiState::SelectDisk)
     {
@@ -1033,17 +1036,26 @@ static void gui_display_content()
 		if (ImGui::Button("Load..."))
 			gui_load_game();
 		ImGui::SameLine();
+		if (iconButton(ICON_FA_GEAR, "Settings"))
+			gui_setState(GuiState::Settings);
 #elif defined(__SWITCH__)
-		ImGui::SameLine(ImGui::GetContentRegionMax().x - settingsBtnW
-				- ImGui::GetStyle().ItemSpacing.x - iconButtonWidth(ICON_FA_POWER_OFF, "Exit"));
+		ImGui::SameLine(ImGui::GetContentRegionMax().x - settingsBtnW - exitBtnW);
 		if (iconButton(ICON_FA_POWER_OFF, "Exit"))
 			dc_exit();
 		ImGui::SameLine();
-#else
-		ImGui::SameLine(ImGui::GetContentRegionMax().x - settingsBtnW);
-#endif
 		if (iconButton(ICON_FA_GEAR, "Settings"))
 			gui_setState(GuiState::Settings);
+#else
+		ImGui::SameLine(ImGui::GetContentRegionMax().x - settingsBtnW - exitBtnW_PC);
+		if (iconButton(ICON_FA_GEAR, "Settings"))
+			gui_setState(GuiState::Settings);
+		if (isFullscreen_PC)
+		{
+			ImGui::SameLine();
+			if (iconButton(ICON_FA_POWER_OFF, "Exit"))
+				dc_exit();
+		}
+#endif
     }
     else
     {
