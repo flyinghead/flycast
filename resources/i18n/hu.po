@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-12-14 14:32+0100\n"
-"PO-Revision-Date: 2025-12-17 14:39\n"
+"PO-Revision-Date: 2025-12-18 13:44\n"
 "Last-Translator: \n"
 "Language: hu_HU\n"
 "MIME-Version: 1.0\n"
@@ -255,7 +255,7 @@ msgstr ""
 
 #: core/sdl/sdl.cpp:843 core/windows/winmain.cpp:370
 msgid "Flycast Error"
-msgstr ""
+msgstr "Flycast hiba"
 
 #: core/audio/audiobackend_null.cpp:12
 msgid "No Audio"
@@ -377,13 +377,13 @@ msgstr ""
 
 #: core/imgread/gdi.cpp:24
 msgid "GDI file too big"
-msgstr ""
+msgstr "Túl nagy GDI fájl"
 
 #: core/imgread/gdi.cpp:38 core/imgread/gdi.cpp:85 core/imgread/gdi.cpp:89
 #: core/imgread/gdi.cpp:96 core/imgread/gdi.cpp:102 core/imgread/gdi.cpp:108
 #: core/imgread/gdi.cpp:112 core/imgread/gdi.cpp:120 core/imgread/gdi.cpp:145
 msgid "Invalid GDI file"
-msgstr ""
+msgstr "Hibás GDI fájl"
 
 #: core/imgread/gdi.cpp:132
 #, c-format
@@ -403,7 +403,7 @@ msgstr ""
 #: core/imgread/cdi.cpp:27 core/imgread/cdi.cpp:31 core/imgread/cdi.cpp:49
 #: core/imgread/cdi.cpp:60 core/imgread/cdi.cpp:73
 msgid "Invalid CDI image"
-msgstr ""
+msgstr "Hibás CDI fájl"
 
 #: core/imgread/cdi.cpp:78
 msgid "Invalid CDI sector size"
@@ -421,7 +421,7 @@ msgstr ""
 #: core/hw/naomi/naomi.cpp:350
 #, c-format
 msgid "Speed: %3d"
-msgstr ""
+msgstr "Sebesség: %3d"
 
 #: core/hw/naomi/printer.cpp:857
 msgid "Print out saved"
@@ -463,7 +463,7 @@ msgstr ""
 
 #: core/hw/naomi/naomi_cart.cpp:343
 msgid "Invalid ROM"
-msgstr ""
+msgstr "Érvénytelen ROM"
 
 #: core/hw/naomi/naomi_cart.cpp:364
 #, c-format
@@ -795,7 +795,7 @@ msgstr "2 GB"
 
 #: core/ui/settings_video.cpp:262
 msgid "4 GB"
-msgstr ""
+msgstr "4 GB"
 
 #: core/ui/settings_video.cpp:300
 msgid "Pixel Buffer Size"
@@ -815,7 +815,7 @@ msgstr ""
 
 #: core/ui/settings_video.cpp:308
 msgid "Performance"
-msgstr ""
+msgstr "Teljesítmény"
 
 #: core/ui/settings_video.cpp:310
 msgid "Automatic Frame Skipping:"
@@ -824,7 +824,7 @@ msgstr ""
 #: core/ui/settings_video.cpp:312 core/ui/settings_video.cpp:337
 #: core/ui/settings_network.cpp:40 core/ui/settings_network.cpp:87
 msgid "Disabled"
-msgstr ""
+msgstr "Letiltva"
 
 #: core/ui/settings_video.cpp:312
 msgid "No frame skipping"
@@ -1035,7 +1035,7 @@ msgstr ""
 
 #: core/ui/settings_general.cpp:193
 msgid "Broadcast"
-msgstr ""
+msgstr "Közvetítés"
 
 #: core/ui/settings_general.cpp:194
 msgid "TV broadcasting standard for non-VGA modes"
@@ -1043,36 +1043,36 @@ msgstr ""
 
 #: core/ui/settings_general.cpp:197 core/ui/settings_general.cpp:198
 msgid "Japan"
-msgstr ""
+msgstr "Japán"
 
 #: core/ui/settings_general.cpp:197 core/ui/settings_general.cpp:198
 msgid "USA"
-msgstr ""
+msgstr "Egyesült Államok"
 
 #: core/ui/settings_general.cpp:197
 msgid "Europe"
-msgstr ""
+msgstr "Európa"
 
 #: core/ui/settings_general.cpp:198
 msgctxt "region"
 msgid "Export"
-msgstr ""
+msgstr "Exportálás"
 
 #: core/ui/settings_general.cpp:198
 msgid "Korea"
-msgstr ""
+msgstr "Korea"
 
 #: core/ui/settings_general.cpp:200
 msgid "Region"
-msgstr ""
+msgstr "Régió"
 
 #: core/ui/settings_general.cpp:201
 msgid "BIOS region"
-msgstr ""
+msgstr "BIOS régió"
 
 #: core/ui/settings_general.cpp:203
 msgid "VGA"
-msgstr ""
+msgstr "VGA"
 
 #: core/ui/settings_general.cpp:203
 msgid "RGB Component"
@@ -1084,7 +1084,7 @@ msgstr ""
 
 #: core/ui/settings_general.cpp:210
 msgid "Cable"
-msgstr ""
+msgstr "Kábel"
 
 #: core/ui/settings_general.cpp:223
 msgid "Video connection type"
@@ -1282,15 +1282,15 @@ msgstr "Bejelentkezés"
 
 #: core/ui/settings_general.cpp:421
 msgid "Custom Paths"
-msgstr ""
+msgstr "Egyedi útvonalak"
 
 #: core/ui/settings_general.cpp:423
 msgid "BIOS Folders"
-msgstr ""
+msgstr "BIOS mappák"
 
 #: core/ui/settings_general.cpp:423
 msgid "Select a BIOS folder"
-msgstr ""
+msgstr "BIOS mappa kiválasztása"
 
 #: core/ui/settings_general.cpp:424
 msgid "Folders containing BIOS files (e.g. dc_boot.bin or dc_bios.bin) and arcade BIOS"
@@ -1298,7 +1298,7 @@ msgstr ""
 
 #: core/ui/settings_general.cpp:428
 msgid "VMU Folder"
-msgstr ""
+msgstr "VMU mappa"
 
 #: core/ui/settings_general.cpp:428
 msgid "Select the VMU folder"
