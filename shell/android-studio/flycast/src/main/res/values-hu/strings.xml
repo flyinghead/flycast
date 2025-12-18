@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="OK">OK</string>
-    <string name="storage_error">Storage Error</string>
-    <string name="folder_permissions">Can\'t get permissions to access this folder.\nPlease select a different one.</string>
-    <string name="file_manager_not_found">File Manager not found</string>
-    <string name="no_file_manager_android10">No appropriate file manager was found on your device.\nPlease install a Storage Access Framework compatible file manager</string>
-    <string name="no_file_manager_android9">No appropriate file manager was found on your device.\nPlease install a file manager or try to disable \'Use SAF File Picker\' in the general settings</string>
-    <string name="select_an_export_folder">Select an export folder</string>
-    <string name="exporting_home_folder">Exporting home folder</string>
-    <string name="select_an_import_folder">Select an import folder</string>
-    <string name="importing_home_folder">Importing home folder</string>
-    <string name="flycast_error">Flycast Error</string>
-    <string name="init_failed_message">Initialization failed. Please try again or reinstall.\n\nError: </string>
-    <string name="exit">Exit</string>
-    <string name="copying">Copying</string>
+    <string name="storage_error">Tárhelyhiba</string>
+    <string name="folder_permissions">Nincs engedély a mappa eléréséhez.\nVálasszon másikat.</string>
+    <string name="file_manager_not_found">Fájlkezelő nem található</string>
+    <string name="no_file_manager_android10">Nincs megfelelő fájlkezelő az eszközön.\nTelepítsen egy „Storage Access Framework” kompatibilis fájlkezelőt</string>
+    <string name="no_file_manager_android9">Nincs megfelelő fájlkezelő az eszközön.\nTelepítsen egy fájlkezelőt, vagy próbálja meg letiltani a „SAF fájlválasztó használata” opciót az általános beállításokban</string>
+    <string name="select_an_export_folder">Válasszon egy export mappát</string>
+    <string name="exporting_home_folder">Kezdőmappa exportálása</string>
+    <string name="select_an_import_folder">Válasszon egy import mappát</string>
+    <string name="importing_home_folder">Kezdőmappa importálása</string>
+    <string name="flycast_error">Flycast hiba</string>
+    <string name="init_failed_message">Sikertelen inicializálás. Próbálkozzon újra, vagy telepítse újra a programot.\n\nHiba: </string>
+    <string name="exit">Kilépés</string>
+    <string name="copying">Másolás</string>
 </resources>
