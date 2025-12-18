@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-12-14 14:32+0100\n"
-"PO-Revision-Date: 2025-12-18 13:44\n"
+"PO-Revision-Date: 2025-12-18 15:40\n"
 "Last-Translator: \n"
 "Language: hu_HU\n"
 "MIME-Version: 1.0\n"
@@ -1402,7 +1402,7 @@ msgstr "P1"
 
 #: core/ui/game_scanner.cpp:167
 msgid "Dreamcast BIOS"
-msgstr ""
+msgstr "Dreamcast BIOS"
 
 #: core/ui/settings_controls.cpp:43 core/ui/settings_controls.cpp:61
 #: core/ui/settings_controls.cpp:155
@@ -2060,7 +2060,7 @@ msgstr ""
 
 #: core/ui/gui.cpp:1266 core/ui/gui.cpp:1375 core/emulator.cpp:687
 msgid "Starting..."
-msgstr ""
+msgstr "Indítás..."
 
 #: core/ui/gui.cpp:1278
 msgid "Starting Network..."
@@ -2416,7 +2416,7 @@ msgstr ""
 
 #: core/ui/settings_network.cpp:107 core/ui/settings_network.cpp:167
 msgid "Network Statistics"
-msgstr ""
+msgstr "Hálózati statisztika"
 
 #: core/ui/settings_network.cpp:108 core/ui/settings_network.cpp:168
 msgid "Display network statistics on screen"
@@ -2649,11 +2649,11 @@ msgstr ""
 
 #: core/nullDC.cpp:277
 msgid "Not enough memory"
-msgstr ""
+msgstr "Nincs elég memória"
 
 #: core/nullDC.cpp:299
 msgid "I/O error"
-msgstr ""
+msgstr "I/O hiba"
 
 #: core/network/dcnet.cpp:70
 msgid "Connected to DCNet with modem"
@@ -2705,7 +2705,7 @@ msgstr ""
 
 #: core/network/null_modem.h:181
 msgid "Network connected"
-msgstr ""
+msgstr "Hálózat csatlakoztatva"
 
 #: core/network/ice.cpp:121
 msgid "Game not supported"
@@ -2717,7 +2717,7 @@ msgstr ""
 
 #: core/network/ice.cpp:444
 msgid "Connection failed"
-msgstr ""
+msgstr "Csatlakozás sikertelen"
 
 #: core/network/ice.cpp:475
 msgid "Direct peer to peer"
@@ -2729,7 +2729,7 @@ msgstr ""
 
 #: core/network/ice.cpp:481
 msgid "NAT"
-msgstr ""
+msgstr "NAT"
 
 #: core/network/ice.cpp:490 core/network/ice.cpp:508
 msgid "Connection lost"
