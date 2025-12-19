@@ -23,6 +23,8 @@
 #include "cfg/option.h"
 #include "arcade_scraper.h"
 #include <chrono>
+#include <filesystem>
+#include <fstream>
 
 GameBoxart Boxart::getBoxart(const GameMedia& media)
 {
@@ -173,10 +175,10 @@ void Boxart::saveDatabase()
 {
 	if (!databaseDirty)
 		return;
-	std::string basePath = getSaveDirectory();
-	std::string db_name = basePath + DB_NAME;
-	FILE *file = nowide::fopen(db_name.c_str(), "wt");
-	if (file == nullptr)
+	std::filesystem::path basePath = getSaveDirectory();
+    std::filesystem::path db_name = basePath / DB_NAME;
+    std::ofstream file(db_name, std::ios::out | std::ios::trunc);
+	if (!file.is_open())
 	{
 		WARN_LOG(COMMON, "Can't save boxart database to %s: error %d", db_name.c_str(), errno);
 		return;
@@ -191,9 +193,13 @@ void Boxart::saveDatabase()
 				array.push_back(game.second.to_json(basePath));
 	}
 	std::string serialized = array.dump(4);
-	fwrite(serialized.c_str(), 1, serialized.size(), file);
-	fclose(file);
-	databaseDirty = false;
+    file.write(serialized.c_str(), serialized.size());
+    if (!file.good())
+    {
+        WARN_LOG(COMMON, "Error writing to boxart database %s",
+                 db_name.string().c_str());
+    }
+    databaseDirty = false;
 }
 
 void Boxart::loadDatabase()
@@ -202,25 +208,19 @@ void Boxart::loadDatabase()
 		return;
 	databaseLoaded = true;
 	databaseDirty = false;
-	std::string save_dir = getSaveDirectory();
-	if (!file_exists(save_dir))
-		make_directory(save_dir);
-	std::string db_name = save_dir + DB_NAME;
-	FILE *f = nowide::fopen(db_name.c_str(), "rt");
-	if (f == nullptr)
+	std::filesystem::path save_dir = getSaveDirectory();
+	if (!std::filesystem::exists(save_dir))
+        std::filesystem::create_directory(save_dir);
+	std::filesystem::path db_name = save_dir / DB_NAME;
+    std::ifstream file(db_name, std::ios::in);
+	if (!file.is_open())
 		return;
 
 	DEBUG_LOG(COMMON, "Loading boxart database from %s", db_name.c_str());
-	std::string all_data;
-	char buf[4096];
-	while (true)
-	{
-		int s = fread(buf, 1, sizeof(buf), f);
-		if (s <= 0)
-			break;
-		all_data.append(buf, s);
-	}
-	fclose(f);
+	std::string all_data((std::istreambuf_iterator<char>(file)),
+                         std::istreambuf_iterator<char>());
+    file.close();
+
 	try {
 		std::lock_guard<std::mutex> guard(mutex);
 
