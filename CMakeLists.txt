@@ -55,6 +55,11 @@ if(NOT DEFINED ARCHITECTURE)
 endif()
 message(STATUS "Target architecture: ${ARCHITECTURE}")
 
+if(CMAKE_CXX_COMPILER MATCHES "webos" OR
+   CMAKE_CXX_COMPILER MATCHES "starfish")
+	set(WEBOS ON)
+endif()
+
 set(USE_HOST_SDL_DEFAULT OFF)
 if(NOT APPLE AND (NOT UNIX OR CMAKE_SYSTEM_NAME MATCHES "(FreeBSD|OpenBSD|NetBSD)"))
 	set(USE_HOST_SDL_DEFAULT ON)
@@ -92,6 +97,11 @@ option(USE_LIBCDIO "Use libcdio for CDROM access" OFF)
 
 if(IOS AND NOT LIBRETRO)
 	set(USE_VULKAN OFF CACHE BOOL "Force vulkan off" FORCE)
+endif()
+
+if(WEBOS)
+	set(USE_VULKAN OFF CACHE BOOL "Force vulkan off" FORCE)
+	set(USE_GLES2 ON CACHE BOOL "Use GLES2 API" FORCE)
 endif()
 
 include(GNUInstallDirs)
