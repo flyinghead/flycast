@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-12-14 14:32+0100\n"
-"PO-Revision-Date: 2025-12-21 10:21\n"
+"PO-Revision-Date: 2025-12-21 11:22\n"
 "Last-Translator: \n"
 "Language: pt_BR\n"
 "MIME-Version: 1.0\n"
@@ -473,7 +473,7 @@ msgstr "Não foi possível encontrar %s"
 #: core/hw/naomi/naomi_cart.cpp:374 core/hw/naomi/naomi_cart.cpp:391
 #, c-format
 msgid "Invalid ROM: truncated %s"
-msgstr "ROM inválida: Corrompida"
+msgstr "ROM inválida: Corrompida %s"
 
 #: core/hw/naomi/naomi_cart.cpp:484
 msgid "Error: cannot load BIOS from naomi.zip"
@@ -506,7 +506,7 @@ msgstr "Calibração finalizada"
 
 #: core/hw/naomi/midiffb.cpp:201
 msgid "Calibrating the wheel. Keep it centered."
-msgstr "Calibrando o volante. Mantenha-o centralizado"
+msgstr "Calibrando o volante. Mantenha-o centralizado."
 
 #: core/hw/naomi/gdcartridge.cpp:524
 #, c-format
@@ -531,7 +531,7 @@ msgstr "ATENÇÃO: Você está salvando em um VMU físico"
 
 #: core/hw/maple/maple_devs.cpp:2387
 msgid "Do not disconnect the VMU or close the game"
-msgstr "Não desconecte o VMU ou feche o jogo."
+msgstr "Não desconecte o VMU ou feche o jogo"
 
 #: core/hw/maple/maple_devs.cpp:2458
 msgid "ATTENTION: Write to VMU failed"
@@ -552,7 +552,7 @@ msgstr "Reiniciar para BIOS"
 #: core/reios/reios.cpp:696
 #, c-format
 msgid "Failed to open ELF %s"
-msgstr "Falhou em abrir  o ELF %s"
+msgstr "Falhou em abrir o ELF %s"
 
 #: core/reios/reios.cpp:705
 #, c-format
@@ -637,7 +637,7 @@ msgstr "Por Faixa"
 
 #: core/ui/settings_video.cpp:127
 msgid "Sort transparent polygons per strip. Faster but may produce graphical glitches"
-msgstr "Ordena os polígonos transparentes por faixa. Mais rápido, mas pode gerar mais falhas gráficas."
+msgstr "Ordena os polígonos transparentes por faixa. Mais rápido, mas pode gerar mais falhas gráficas"
 
 #: core/ui/settings_video.cpp:131
 msgid "Per Pixel"
@@ -665,7 +665,7 @@ msgstr "Resolução Interna"
 
 #: core/ui/settings_video.cpp:203
 msgid "Internal render resolution. Higher is better, but more demanding on the GPU. Values higher than your display resolution (but no more than double your display resolution) can be used for supersampling, which provides high-quality antialiasing without reducing sharpness."
-msgstr "Resolução de renderização Interna. Maior é melhor, mas demanda mais GPU. Valores mais alto que a resolução da sua tela  (mas não mais do que o dobro da sua resolução) pode ser usada para superamostragem, que fornece  alta qualidade de antialising sem reduzir a nitidez."
+msgstr "Resolução de renderização Interna. Maior é melhor, mas demanda mais GPU. Valores mais alto que a resolução da sua tela  (mas não mais do que o dobro da sua resolução) pode ser usada para superamostragem, que fornece alta qualidade de antialising sem reduzir a nitidez."
 
 #: core/ui/settings_video.cpp:204
 msgid "Integer Scaling"
@@ -693,7 +693,7 @@ msgstr "Sincroniza a taxa de quadros com a taxa de atualização de tela. Recome
 
 #: core/ui/settings_video.cpp:214
 msgid "Duplicate frames"
-msgstr "Duplicar frames"
+msgstr "Duplicar quadros"
 
 #: core/ui/settings_video.cpp:214
 msgid "Duplicate frames on high refresh rate monitors (120 Hz and higher)"
@@ -709,11 +709,11 @@ msgstr "Mostrar a tela LCD do VMU enquanto joga"
 
 #: core/ui/settings_video.cpp:220
 msgid "Full Framebuffer Emulation"
-msgstr "Emulação completa do FrameBuffer"
+msgstr "Emulação completa do Framebuffer"
 
 #: core/ui/settings_video.cpp:221
 msgid "Fully accurate VRAM framebuffer emulation. Helps games that directly access the framebuffer for special effects. Very slow and incompatible with upscaling and wide screen."
-msgstr "Emulação totalmente precisa do framebuffer da VRAM. Útil em jogos que acessam diretamente o framebuffer para efeitos especiais. Muito lento e incompatível com upscaling e widescreen."
+msgstr "Emulação totalmente precisa do framebuffer da VRAM. Útil em jogos que acessam diretamente o framebuffer para efeitos especiais. Muito lento e incompatível com upscaling e tela cheia."
 
 #: core/ui/settings_video.cpp:225
 msgid "Load Custom Textures"
@@ -820,7 +820,7 @@ msgstr "Desempenho"
 
 #: core/ui/settings_video.cpp:310
 msgid "Automatic Frame Skipping:"
-msgstr "Pular Quadros Automaticamente"
+msgstr "Pular Quadros Automaticamente:"
 
 #: core/ui/settings_video.cpp:312 core/ui/settings_video.cpp:337
 #: core/ui/settings_network.cpp:40 core/ui/settings_network.cpp:87
@@ -837,7 +837,7 @@ msgstr "Normal"
 
 #: core/ui/settings_video.cpp:314
 msgid "Skip a frame when the GPU and CPU are both running slow"
-msgstr "Pular um quadro quando a GPU e a CPU estiverem lentas."
+msgstr "Pular um quadro quando a GPU e a CPU estiverem lentas"
 
 #: core/ui/settings_video.cpp:316
 msgid "Maximum"
@@ -881,7 +881,7 @@ msgstr "Atrasar troca de quadro"
 
 #: core/ui/settings_video.cpp:329
 msgid "Useful to avoid flashing screen or glitchy videos. Not recommended on slow platforms"
-msgstr "Útil para evitar telas intermitentes ou defeitos de vídeo.\\nOBSERVAÇÃO: não é recomendado em plataformas lentas."
+msgstr "Útil para evitar telas intermitentes ou defeitos de vídeo. Não recomendado em plataformas lentas"
 
 #: core/ui/settings_video.cpp:330
 msgid "Fix Upscale Bleeding Edge"
@@ -970,7 +970,7 @@ msgstr "Enviar conteúdo de vídeo para outro programa"
 
 #: core/ui/settings_video.cpp:404
 msgid "e.g. Route GPU texture to OBS Studio directly instead of using CPU intensive Display/Window Capture"
-msgstr "Ex.: encaminhar a textura da GPU diretamente para o OBS Studio em vez de usar a captura de Tela/Janela, que consome muita CPU."
+msgstr "ex.: encaminhar a textura da GPU diretamente para o OBS Estúdio em vez de usar a captura de Tela/Janela, que consome muita CPU"
 
 #: core/ui/settings_video.cpp:408
 msgid "Scale down before sending"
@@ -978,7 +978,7 @@ msgstr "Diminuir escala antes de enviar"
 
 #: core/ui/settings_video.cpp:408
 msgid "Could increase performance when sharing a smaller texture, YMMV"
-msgstr "Pode aumentar a performance ao compartilhar uma textura menor, YMMV"
+msgstr "Pode aumentar o desempenho ao compartilhar uma textura menor, YMMV"
 
 #: core/ui/settings_video.cpp:412
 msgid "Output vertical resolution"
@@ -1061,7 +1061,7 @@ msgstr "Exportar"
 
 #: core/ui/settings_general.cpp:198
 msgid "Korea"
-msgstr "Korea"
+msgstr "Coreia"
 
 #: core/ui/settings_general.cpp:200
 msgid "Region"
@@ -1097,7 +1097,7 @@ msgstr "Localização do conteúdo"
 
 #: core/ui/settings_general.cpp:254 core/ui/settings_general.cpp:318
 msgid "Rescan Content"
-msgstr "Reescanear conteúdo"
+msgstr "Escanear conteúdo novamente"
 
 #: core/ui/settings_general.cpp:266
 msgid "The folders where your games are stored"
@@ -1155,7 +1155,7 @@ msgstr "Dimensionamento da Interface"
 
 #: core/ui/settings_general.cpp:327
 msgid "Adjust the size of UI elements and fonts."
-msgstr "Ajuste o tamanho dos elementos e fontes da interface."
+msgstr "Ajuste o tamanho dos elementos e fontes da ‘interface’."
 
 #: core/ui/settings_general.cpp:332
 msgid "Apply"
@@ -1195,11 +1195,11 @@ msgstr "Selecione a cor da Interface do usuário."
 
 #: core/ui/settings_general.cpp:347
 msgid "Hide Legacy Naomi Roms"
-msgstr "Esconder Roms Legadas da Naomi "
+msgstr "Esconder Roms Legadas da Naomi"
 
 #: core/ui/settings_general.cpp:348
 msgid "Hide .bin, .dat and .lst files from the content browser"
-msgstr "Ocultar arquivos .bin, .dat e .lst do navegador de conteúdo"
+msgstr "Ocultar arquivos .bin, dat e lst do navegador de conteúdo."
 
 #: core/ui/settings_general.cpp:351
 msgid "Use SAF File Picker"
@@ -1231,7 +1231,7 @@ msgstr "Salvar o estado do jogo quando parar"
 
 #: core/ui/settings_general.cpp:361
 msgid "Naomi Free Play"
-msgstr "Jogar Naomi no modo sem fichas."
+msgstr "Jogar Naomi no modo sem fichas"
 
 #: core/ui/settings_general.cpp:361
 msgid "Configure Naomi games in Free Play mode."
@@ -2522,131 +2522,131 @@ msgstr ""
 
 #: core/ui/settings_network.cpp:205
 msgid "Use DCNet"
-msgstr ""
+msgstr "Usar DCNet"
 
 #: core/ui/settings_network.cpp:205
 msgid "Use the DCNet cloud service for Dreamcast Internet access."
-msgstr ""
+msgstr "Use o serviço de nuvem DCNet para o acesso à Internet Dreamcast."
 
 #: core/ui/settings_network.cpp:208
 msgid "ISP User Name"
-msgstr ""
+msgstr "Nome de Usuário do Provedor"
 
 #: core/ui/settings_network.cpp:214
 msgid "The ISP user name stored in the console Flash RAM. Used by some online games as the player name. Leave blank to keep the current Flash RAM value."
-msgstr ""
+msgstr "O nome de usuário do provedor armazenado na memória Flash do console. É usado por alguns jogos online como o nome do jogador. Deixe em branco para manter o valor atual da memória Flash."
 
 #: core/ui/settings_network.cpp:226
 msgid "Multiboard Screens"
-msgstr ""
+msgstr "Telas Múltiplas"
 
 #: core/ui/settings_network.cpp:229
 msgid "1 (Twin)"
-msgstr ""
+msgstr "1(Dupla)"
 
 #: core/ui/settings_network.cpp:229
 msgid "One screen configuration (F355 Twin)"
-msgstr ""
+msgstr "Configuração de uma tela (F355 Dupla)"
 
 #: core/ui/settings_network.cpp:231
 msgid "3 (Deluxe)"
-msgstr ""
+msgstr "3 (De luxo)"
 
 #: core/ui/settings_network.cpp:231
 msgid "Three screens configuration"
-msgstr ""
+msgstr "Configuração de três telas"
 
 #: core/ui/settings_about.cpp:53 core/ui/settings_about.cpp:107
 #, c-format
 msgid "Version: %s"
-msgstr ""
+msgstr "Versão: %s"
 
 #: core/ui/settings_about.cpp:54
 #, c-format
 msgid "Git Hash: %s"
-msgstr ""
+msgstr "Hash do Gil"
 
 #: core/ui/settings_about.cpp:55
 #, c-format
 msgid "Build Date: %s"
-msgstr ""
+msgstr "Data da Compilação: %s"
 
 #: core/ui/settings_about.cpp:58
 msgid "Platform"
-msgstr ""
+msgstr "Plataforma"
 
 #: core/ui/settings_about.cpp:60
 #, c-format
 msgid "CPU: %s"
-msgstr ""
+msgstr "CPU: %s"
 
 #: core/ui/settings_about.cpp:70 core/ui/settings_about.cpp:91
 msgid "Unknown"
-msgstr ""
+msgstr "Desconhecido"
 
 #: core/ui/settings_about.cpp:73
 #, c-format
 msgid "Operating System: %s"
-msgstr ""
+msgstr "Sistema Operacional: %s"
 
 #: core/ui/settings_about.cpp:85
 msgid "Windows Universal Platform"
-msgstr ""
+msgstr "Plataforma Universal do Windows"
 
 #: core/ui/settings_about.cpp:96
 #, c-format
 msgid "JIT Status: %s"
-msgstr ""
+msgstr "Estatuto do JIT: %s"
 
 #: core/ui/settings_about.cpp:106
 #, c-format
 msgid "Driver Name: %s"
-msgstr ""
+msgstr "Nome do controlador: %s"
 
 #: core/ui/settings_about.cpp:112
 msgid "Select a custom GPU driver"
-msgstr ""
+msgstr "Selecionar um controlador personalizado para GPU"
 
 #: core/ui/settings_about.cpp:120
 msgid "Custom Driver:"
-msgstr ""
+msgstr "Controlador Personalizado:"
 
 #: core/ui/settings_about.cpp:127
 msgid "Use Default Driver"
-msgstr ""
+msgstr "Usar Controlador Padrão"
 
 #: core/ui/settings_about.cpp:129 core/ui/settings_about.cpp:138
 #: core/ui/settings_about.cpp:143
 msgid "Reset Vulkan"
-msgstr ""
+msgstr "Reiniciar Vulkan"
 
 #: core/ui/settings_about.cpp:132
 msgid "Upload Custom Driver"
-msgstr ""
+msgstr "Carregar Controlador Personalizado"
 
 #: core/ui/settings_about.cpp:145
 msgid "Do you want to reset Vulkan to use new driver?"
-msgstr ""
+msgstr "Deseja reiniciar o Vulkan para usar um novo controlador?"
 
 #: core/nullDC.cpp:172
 msgid "Save state failed - memory full"
-msgstr ""
+msgstr "Falha ao salvar estado - memória cheia"
 
 #: core/nullDC.cpp:184
 msgid "Cannot open save file"
-msgstr ""
+msgstr "Impossível abrir o arquivo de salvamento"
 
 #: core/nullDC.cpp:212
 msgid "State saved"
-msgstr ""
+msgstr "Estado salvo"
 
 #: core/nullDC.cpp:217
 msgid "Error saving state"
-msgstr ""
+msgstr "Erro ao salvar estado"
 
 #: core/nullDC.cpp:237
 msgid "Save state not found"
-msgstr ""
+msgstr "Estado salvo não encontrado"
 
 #: core/nullDC.cpp:277 core/nullDC.cpp:299 core/nullDC.cpp:313
 msgid "Failed to load state"
@@ -2654,251 +2654,251 @@ msgstr "Falha no carregamento do estado"
 
 #: core/nullDC.cpp:277
 msgid "Not enough memory"
-msgstr ""
+msgstr "Memória insuficiente"
 
 #: core/nullDC.cpp:299
 msgid "I/O error"
-msgstr ""
+msgstr "Erro de entrada ou saída"
 
 #: core/network/dcnet.cpp:70
 msgid "Connected to DCNet with modem"
-msgstr ""
+msgstr "Conectado à DCNet com o modem"
 
 #: core/network/dcnet.cpp:269
 msgid "Connected to DCNet with Ethernet"
-msgstr ""
+msgstr "Conectado à DCNet com Ethernet"
 
 #: core/network/dcnet.cpp:648
 msgid "DCNet disconnected"
-msgstr ""
+msgstr "DCNet desconectada"
 
 #: core/network/dcnet.cpp:773
 msgid "Host not found"
-msgstr ""
+msgstr "Servidor não encontrado"
 
 #: core/network/dcnet.cpp:817
 msgid "Can't connect to DCNet"
-msgstr ""
+msgstr "Não é possível conectar-se a DCNet"
 
 #: core/network/ggpo.cpp:221
 msgid "Connected to peer"
-msgstr ""
+msgstr "Conectado ao par"
 
 #: core/network/ggpo.cpp:225
 msgid "Synchronizing with peer"
-msgstr ""
+msgstr "Sincronizando com o par"
 
 #: core/network/ggpo.cpp:229
 msgid "Synchronized with peer"
-msgstr ""
+msgstr "Sincronizado com o par"
 
 #: core/network/ggpo.cpp:233
 msgid "Running"
-msgstr ""
+msgstr "Executando"
 
 #: core/network/ggpo.cpp:238
 msgid "Disconnected from peer"
-msgstr ""
+msgstr "Desconectado do par"
 
 #: core/network/ggpo.cpp:247
 msgid "Connection interrupted"
-msgstr ""
+msgstr "Conexão interrompida"
 
 #: core/network/ggpo.cpp:251
 msgid "Connection resumed"
-msgstr ""
+msgstr "Conexão retomada"
 
 #: core/network/null_modem.h:181
 msgid "Network connected"
-msgstr ""
+msgstr "Rede conectada"
 
 #: core/network/ice.cpp:121
 msgid "Game not supported"
-msgstr ""
+msgstr "Jogo não suportado"
 
 #: core/network/ice.cpp:237
 msgid "Connection to lobby failed:"
-msgstr ""
+msgstr "Falha na conexão com a sala:"
 
 #: core/network/ice.cpp:444
 msgid "Connection failed"
-msgstr ""
+msgstr "Conexão falhou"
 
 #: core/network/ice.cpp:475
 msgid "Direct peer to peer"
-msgstr ""
+msgstr "Direcionar ponto a ponto"
 
 #: core/network/ice.cpp:477
 msgid "Using relay"
-msgstr ""
+msgstr "Usando retransmissão"
 
 #: core/network/ice.cpp:481
 msgid "NAT"
-msgstr ""
+msgstr "NAT"
 
 #: core/network/ice.cpp:490 core/network/ice.cpp:508
 msgid "Connection lost"
-msgstr ""
+msgstr "Conexão perdida"
 
 #: core/network/naomi_network.cpp:110
 msgid "Waiting for players..."
-msgstr ""
+msgstr "Esperando por jogadores..."
 
 #: core/network/naomi_network.cpp:113
 #, c-format
 msgid "%d player connected. Waiting..."
 msgid_plural "%d players connected. Waiting..."
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%d jogador conectado. Aguardando..."
+msgstr[1] "%d jogadores conectados. Aguardando..."
 
 #: core/network/naomi_network.cpp:137
 msgid "Starting game"
-msgstr ""
+msgstr "Iniciando jogo"
 
 #: core/network/naomi_network.cpp:142
 msgid "No player connected"
-msgstr ""
+msgstr "Nenhum jogador conectado"
 
 #: core/network/naomi_network.cpp:176
 msgid "Connecting to server"
-msgstr ""
+msgstr "Conectando ao servidor"
 
 #: core/network/naomi_network.cpp:260
 #, c-format
 msgid "Connected as slot %d"
-msgstr ""
+msgstr "Conectado como slot %d"
 
 #: core/rend/dx9/d3d_renderer.cpp:318
 msgid "DirectX 9 doesn't support Naomi 2 games. Select a different graphics API"
-msgstr ""
+msgstr "DirectX 9 não suporta jogos Naomi 2. Selecione uma API gráfica diferente"
 
 #: core/rend/vulkan/adreno.cpp:154
 msgid "Can't open zip file"
-msgstr ""
+msgstr "Não foi possível abrir o arquivo zip"
 
 #: core/rend/vulkan/adreno.cpp:157
 msgid "Invalid zip file"
-msgstr ""
+msgstr "Arquivo zip inválido"
 
 #: core/rend/vulkan/adreno.cpp:185 core/rend/vulkan/adreno.cpp:203
 msgid "Can't save files"
-msgstr ""
+msgstr "Não foi possível salvar arquivos"
 
 #: core/rend/vulkan/adreno.cpp:195
 msgid "Can't read zip"
-msgstr ""
+msgstr "Não foi possível ler zip"
 
 #: core/rend/gles/gles.cpp:1058
 msgid "OpenGL ES 3.0+ required for Naomi 2"
-msgstr ""
+msgstr "OpenGL ES 3.0+ necessário para Naomi 2"
 
 #: core/emulator.cpp:589
 #, c-format
 msgid "No BIOS file found in %s"
-msgstr ""
+msgstr "Nenhum arquivo BIOS encontrado no %s"
 
 #: core/emulator.cpp:605
 msgid "This game requires a real BIOS"
-msgstr ""
+msgstr "Este jogo requer uma Bios verdadeira"
 
 #: core/emulator.cpp:662
 msgid "Widescreen cheat activated"
-msgstr ""
+msgstr "Trapaça de Tela Cheia ativada"
 
 #: core/input/virtual_gamepad.h:30
 msgid "Virtual Gamepad"
-msgstr ""
+msgstr "Controle Virtual"
 
 #: core/input/mouse.h:78
 msgid "Left Button"
-msgstr ""
+msgstr "Botão esquerdo"
 
 #: core/input/mouse.h:80
 msgid "Right Button"
-msgstr ""
+msgstr "Botão direito"
 
 #: core/input/mouse.h:82
 msgid "Middle Button"
-msgstr ""
+msgstr "Botão do meio"
 
 #: core/input/mouse.h:114
 msgid "Touch Mouse"
-msgstr ""
+msgstr "Toque do Mouse"
 
 #: core/wsi/switcher.cpp:91
 msgid "Cannot initialize the graphics API"
-msgstr ""
+msgstr "Não é possível inicializar a API gráfica"
 
 #: shell/libretro/libretro.cpp:2130
 msgid "Cannot run without JIT"
-msgstr ""
+msgstr "Não é possível executar sem JIT"
 
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:145
 msgid "DPad Center"
-msgstr ""
+msgstr "Dpad Centro"
 
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:173
 msgid "Select"
-msgstr ""
+msgstr "Selecionar"
 
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:175
 msgid "Mode"
-msgstr ""
+msgstr "Modo"
 
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:203
 msgid "Hat X"
-msgstr ""
+msgstr "Hat X"
 
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:205
 msgid "Hat Y"
-msgstr ""
+msgstr "Hat Y"
 
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:207
 msgid "Gas"
-msgstr ""
+msgstr "Gás"
 
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:209
 msgid "Brake"
-msgstr ""
+msgstr "Freio"
 
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:211
 msgid "Rudder"
-msgstr ""
+msgstr "Leme"
 
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:213
 msgid "Wheel"
-msgstr ""
+msgstr "Roda"
 
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:215
 msgid "Throttle"
-msgstr ""
+msgstr "Acelerador"
 
 #: shell/android-studio/flycast/src/main/jni/src/Android.cpp:172
 msgid "Memory initialization failed"
-msgstr ""
+msgstr "Falha na alocação de memória"
 
 #: shell/android-studio/flycast/src/main/jni/src/android_storage.h:192
 #, c-format
 msgid "Storage access failed: %s"
-msgstr ""
+msgstr "Falha no acesso ao armazenamento: %s"
 
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:147
 msgid "MFi Gamepad"
-msgstr ""
+msgstr "Iphone Gamepad"
 
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:361
 msgid "Options"
-msgstr ""
+msgstr "Opções"
 
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:363
 msgid "Home"
-msgstr ""
+msgstr "Início"
 
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:377
 msgid "Share"
-msgstr ""
+msgstr "Compartilhar"
 
 #: shell/switch/switch_main.cpp:76
 msgid "Not supported on Switch"
-msgstr ""
+msgstr "Não suportado no Switch"
 
