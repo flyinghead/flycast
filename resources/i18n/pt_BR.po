@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-12-14 14:32+0100\n"
-"PO-Revision-Date: 2025-12-14 13:55\n"
+"PO-Revision-Date: 2025-12-21 12:37\n"
 "Last-Translator: \n"
 "Language: pt_BR\n"
 "MIME-Version: 1.0\n"
@@ -24,7 +24,7 @@ msgstr "Usuário %s autenticado"
 
 #: core/achievements/achievements.cpp:361
 msgid "RetroAchievements authentication failed"
-msgstr "A autenticação de RetroAchievements falhou"
+msgstr "A autenticação de RetroConquistas falhou"
 
 #: core/achievements/achievements.cpp:396
 msgid "No user token returned"
@@ -32,11 +32,11 @@ msgstr "Nenhum token de usuário retornou"
 
 #: core/achievements/achievements.cpp:548
 msgid "RetroAchievements disconnected"
-msgstr "RetroAchievements desconectada"
+msgstr "RetroConquistas desconectada"
 
 #: core/achievements/achievements.cpp:552
 msgid "RetroAchievements reconnected"
-msgstr "RetroAchievements reconectada"
+msgstr "RetroConquistas reconectada"
 
 #: core/achievements/achievements.cpp:582
 #, c-format
@@ -106,156 +106,156 @@ msgstr "AVISO: DreamLink desconectado da porta %c"
 
 #: core/sdl/dreampicoport.cpp:1209 core/ui/settings_controls.cpp:184
 msgid "DPad2 Up"
-msgstr ""
+msgstr "Dpad2 Cima"
 
 #: core/sdl/dreampicoport.cpp:1210 core/ui/settings_controls.cpp:185
 msgid "DPad2 Down"
-msgstr ""
+msgstr "Dpad2 Baixo"
 
 #: core/sdl/dreampicoport.cpp:1211 core/ui/settings_controls.cpp:186
 msgid "DPad2 Left"
-msgstr ""
+msgstr "Dpad2 Esquerda"
 
 #: core/sdl/dreampicoport.cpp:1212 core/ui/settings_controls.cpp:187
 msgid "DPad2 Right"
-msgstr ""
+msgstr "Dpad2 Direita"
 
 #: core/sdl/dreampicoport.cpp:1215
 msgid "VMU1 A"
-msgstr ""
+msgstr "VMU1 A"
 
 #: core/sdl/dreampicoport.cpp:1216
 msgid "VMU1 B"
-msgstr ""
+msgstr "VMU1 B"
 
 #: core/sdl/dreampicoport.cpp:1217
 msgid "VMU1 Up"
-msgstr ""
+msgstr "VMU1 Cima"
 
 #: core/sdl/dreampicoport.cpp:1218
 msgid "VMU1 Down"
-msgstr ""
+msgstr "VMU1 Baixo"
 
 #: core/sdl/dreampicoport.cpp:1219
 msgid "VMU1 Left"
-msgstr ""
+msgstr "VMU1 Esquerda"
 
 #: core/sdl/dreampicoport.cpp:1220
 msgid "VMU1 Right"
-msgstr ""
+msgstr "VMU1 Direita"
 
 #: core/sdl/dreamlink.cpp:161
 msgid "Inactive"
-msgstr ""
+msgstr "Inativo"
 
 #: core/sdl/dreamlink.cpp:163 core/ui/gui.cpp:752
 msgid "Connected"
-msgstr ""
+msgstr "Conectado"
 
 #: core/sdl/dreamlink.cpp:163 core/ui/gui.cpp:752
 msgid "Disconnected"
-msgstr ""
+msgstr "Desconectado"
 
 #: core/sdl/sdl_gamepad.cpp:610
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:135
 msgid "Back"
-msgstr ""
+msgstr "Voltar"
 
 #: core/sdl/sdl_gamepad.cpp:611
 msgid "Guide"
-msgstr ""
+msgstr "Guia"
 
 #: core/sdl/sdl_gamepad.cpp:612 core/ui/settings_controls.cpp:205
 #: core/ui/settings_controls.cpp:255
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:171
 msgid "Start"
-msgstr ""
+msgstr "Iniciar"
 
 #: core/sdl/sdl_gamepad.cpp:617 core/sdl/sdl_gamepad.cpp:650
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:137
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:351
 msgid "DPad Up"
-msgstr ""
+msgstr "Dpad Cima"
 
 #: core/sdl/sdl_gamepad.cpp:618 core/sdl/sdl_gamepad.cpp:654
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:139
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:353
 msgid "DPad Down"
-msgstr ""
+msgstr "Dpad Baixo"
 
 #: core/sdl/sdl_gamepad.cpp:619 core/sdl/sdl_gamepad.cpp:658
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:141
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:355
 msgid "DPad Left"
-msgstr ""
+msgstr "Dpad Esquerda"
 
 #: core/sdl/sdl_gamepad.cpp:620 core/sdl/sdl_gamepad.cpp:662
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:143
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:357
 msgid "DPad Right"
-msgstr ""
+msgstr "Dpad Direita"
 
 #: core/sdl/sdl_gamepad.cpp:621
 msgid "Misc"
-msgstr ""
+msgstr "Diversos"
 
 #: core/sdl/sdl_gamepad.cpp:622
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:379
 msgid "Paddle 1"
-msgstr ""
+msgstr "Paddle 1"
 
 #: core/sdl/sdl_gamepad.cpp:623
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:381
 msgid "Paddle 2"
-msgstr ""
+msgstr "Pandale 2"
 
 #: core/sdl/sdl_gamepad.cpp:624
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:383
 msgid "Paddle 3"
-msgstr ""
+msgstr "Paddle 3"
 
 #: core/sdl/sdl_gamepad.cpp:625
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:385
 msgid "Paddle 4"
-msgstr ""
+msgstr "Paddle 4"
 
 #: core/sdl/sdl_gamepad.cpp:626
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:387
 msgid "Touchpad"
-msgstr ""
+msgstr "Touchpad"
 
 #: core/sdl/sdl_gamepad.cpp:685
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:405
 msgid "Left Stick X"
-msgstr ""
+msgstr "Analógico Esquerdo X"
 
 #: core/sdl/sdl_gamepad.cpp:686
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:407
 msgid "Left Stick Y"
-msgstr ""
+msgstr "Analógico Esquerdo Y"
 
 #: core/sdl/sdl_gamepad.cpp:687
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:409
 msgid "Right Stick X"
-msgstr ""
+msgstr "Analógico direito X"
 
 #: core/sdl/sdl_gamepad.cpp:688
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:411
 msgid "Right Stick Y"
-msgstr ""
+msgstr "Analógico direito Y"
 
 #: core/sdl/sdl_gamepad.cpp:757
 msgid "Default Mouse"
-msgstr ""
+msgstr "Mouse padrão"
 
 #: core/sdl/sdl_gamepad.cpp:761
 #, c-format
 msgid "Mouse %d"
-msgstr ""
+msgstr "Mouse %d"
 
 #: core/sdl/sdl.cpp:843 core/windows/winmain.cpp:370
 msgid "Flycast Error"
-msgstr ""
+msgstr "Erro no Flycast"
 
 #: core/audio/audiobackend_null.cpp:12
 msgid "No Audio"
@@ -328,7 +328,7 @@ msgstr "Erro ao processar o CUE: Falha ao processar ou arquivo inválido com 0 f
 #: core/imgread/cue.cpp:228 core/imgread/cue.cpp:240 core/imgread/cue.cpp:244
 #: core/imgread/cue.cpp:248 core/imgread/cue.cpp:252
 msgid "Invalid CUE file"
-msgstr ""
+msgstr "Arquivo CUE inválido"
 
 #: core/imgread/cue.cpp:237
 msgid "CUE parse error: less than 3 tracks"
@@ -383,7 +383,7 @@ msgstr "Arquivo GDI muito grande"
 #: core/imgread/gdi.cpp:96 core/imgread/gdi.cpp:102 core/imgread/gdi.cpp:108
 #: core/imgread/gdi.cpp:112 core/imgread/gdi.cpp:120 core/imgread/gdi.cpp:145
 msgid "Invalid GDI file"
-msgstr ""
+msgstr "Arquivo GDI inválido"
 
 #: core/imgread/gdi.cpp:132
 #, c-format
@@ -473,7 +473,7 @@ msgstr "Não foi possível encontrar %s"
 #: core/hw/naomi/naomi_cart.cpp:374 core/hw/naomi/naomi_cart.cpp:391
 #, c-format
 msgid "Invalid ROM: truncated %s"
-msgstr "ROM inválida: Corrompida"
+msgstr "ROM inválida: Corrompida %s"
 
 #: core/hw/naomi/naomi_cart.cpp:484
 msgid "Error: cannot load BIOS from naomi.zip"
@@ -506,7 +506,7 @@ msgstr "Calibração finalizada"
 
 #: core/hw/naomi/midiffb.cpp:201
 msgid "Calibrating the wheel. Keep it centered."
-msgstr "Calibrando o volante. Mantenha-o centralizado"
+msgstr "Calibrando o volante. Mantenha-o centralizado."
 
 #: core/hw/naomi/gdcartridge.cpp:524
 #, c-format
@@ -531,7 +531,7 @@ msgstr "ATENÇÃO: Você está salvando em um VMU físico"
 
 #: core/hw/maple/maple_devs.cpp:2387
 msgid "Do not disconnect the VMU or close the game"
-msgstr "Não desconecte o VMU ou feche o jogo."
+msgstr "Não desconecte o VMU ou feche o jogo"
 
 #: core/hw/maple/maple_devs.cpp:2458
 msgid "ATTENTION: Write to VMU failed"
@@ -552,7 +552,7 @@ msgstr "Reiniciar para BIOS"
 #: core/reios/reios.cpp:696
 #, c-format
 msgid "Failed to open ELF %s"
-msgstr "Falhou em abrir  o ELF %s"
+msgstr "Falhou em abrir o ELF %s"
 
 #: core/reios/reios.cpp:705
 #, c-format
@@ -637,7 +637,7 @@ msgstr "Por Faixa"
 
 #: core/ui/settings_video.cpp:127
 msgid "Sort transparent polygons per strip. Faster but may produce graphical glitches"
-msgstr "Ordena os polígonos transparentes por faixa. Mais rápido, mas pode gerar mais falhas gráficas."
+msgstr "Ordena os polígonos transparentes por faixa. Mais rápido, mas pode gerar mais falhas gráficas"
 
 #: core/ui/settings_video.cpp:131
 msgid "Per Pixel"
@@ -665,7 +665,7 @@ msgstr "Resolução Interna"
 
 #: core/ui/settings_video.cpp:203
 msgid "Internal render resolution. Higher is better, but more demanding on the GPU. Values higher than your display resolution (but no more than double your display resolution) can be used for supersampling, which provides high-quality antialiasing without reducing sharpness."
-msgstr "Resolução de renderização Interna. Maior é melhor, mas demanda mais GPU. Valores mais alto que a resolução da sua tela  (mas não mais do que o dobro da sua resolução) pode ser usada para superamostragem, que fornece  alta qualidade de antialising sem reduzir a nitidez."
+msgstr "Resolução de renderização Interna. Maior é melhor, mas demanda mais GPU. Valores mais alto que a resolução da sua tela  (mas não mais do que o dobro da sua resolução) pode ser usada para superamostragem, que fornece alta qualidade de antialising sem reduzir a nitidez."
 
 #: core/ui/settings_video.cpp:204
 msgid "Integer Scaling"
@@ -693,7 +693,7 @@ msgstr "Sincroniza a taxa de quadros com a taxa de atualização de tela. Recome
 
 #: core/ui/settings_video.cpp:214
 msgid "Duplicate frames"
-msgstr "Duplicar frames"
+msgstr "Duplicar quadros"
 
 #: core/ui/settings_video.cpp:214
 msgid "Duplicate frames on high refresh rate monitors (120 Hz and higher)"
@@ -709,11 +709,11 @@ msgstr "Mostrar a tela LCD do VMU enquanto joga"
 
 #: core/ui/settings_video.cpp:220
 msgid "Full Framebuffer Emulation"
-msgstr "Emulação completa do FrameBuffer"
+msgstr "Emulação completa do Framebuffer"
 
 #: core/ui/settings_video.cpp:221
 msgid "Fully accurate VRAM framebuffer emulation. Helps games that directly access the framebuffer for special effects. Very slow and incompatible with upscaling and wide screen."
-msgstr "Emulação totalmente precisa do framebuffer da VRAM. Útil em jogos que acessam diretamente o framebuffer para efeitos especiais. Muito lento e incompatível com upscaling e widescreen."
+msgstr "Emulação totalmente precisa do framebuffer da VRAM. Útil em jogos que acessam diretamente o framebuffer para efeitos especiais. Muito lento e incompatível com upscaling e tela cheia."
 
 #: core/ui/settings_video.cpp:225
 msgid "Load Custom Textures"
@@ -820,207 +820,207 @@ msgstr "Desempenho"
 
 #: core/ui/settings_video.cpp:310
 msgid "Automatic Frame Skipping:"
-msgstr ""
+msgstr "Pular Quadros Automaticamente:"
 
 #: core/ui/settings_video.cpp:312 core/ui/settings_video.cpp:337
 #: core/ui/settings_network.cpp:40 core/ui/settings_network.cpp:87
 msgid "Disabled"
-msgstr ""
+msgstr "Desabilitado"
 
 #: core/ui/settings_video.cpp:312
 msgid "No frame skipping"
-msgstr ""
+msgstr "Não Pular Quadros"
 
 #: core/ui/settings_video.cpp:314
 msgid "Normal"
-msgstr ""
+msgstr "Normal"
 
 #: core/ui/settings_video.cpp:314
 msgid "Skip a frame when the GPU and CPU are both running slow"
-msgstr ""
+msgstr "Pular um quadro quando a GPU e a CPU estiverem lentas"
 
 #: core/ui/settings_video.cpp:316
 msgid "Maximum"
-msgstr ""
+msgstr "Máximo"
 
 #: core/ui/settings_video.cpp:316
 msgid "Skip a frame when the GPU is running slow"
-msgstr ""
+msgstr "Pular um quadro quando a GPU estiver lenta"
 
 #: core/ui/settings_video.cpp:319
 msgid "Frame Skipping"
-msgstr ""
+msgstr "Pular Quadros"
 
 #: core/ui/settings_video.cpp:320
 msgid "Number of frames to skip between two actually rendered frames"
-msgstr ""
+msgstr "Número de quadros para pular entre dois quadros renderizados"
 
 #: core/ui/settings_video.cpp:321
 msgid "Shadows"
-msgstr ""
+msgstr "Sombras"
 
 #: core/ui/settings_video.cpp:322
 msgid "Enable modifier volumes, usually used for shadows"
-msgstr ""
+msgstr "Ativar modificadores de volumes, geralmente usados para sombras"
 
 #: core/ui/settings_video.cpp:323
 msgid "Fog"
-msgstr ""
+msgstr "Névoa"
 
 #: core/ui/settings_video.cpp:323
 msgid "Enable fog effects"
-msgstr ""
+msgstr "Ativar efeito de Névoa"
 
 #: core/ui/settings_video.cpp:326 core/ui/settings.cpp:300
 msgid "Advanced"
-msgstr ""
+msgstr "Avançado"
 
 #: core/ui/settings_video.cpp:328
 msgid "Delay Frame Swapping"
-msgstr ""
+msgstr "Atrasar troca de quadro"
 
 #: core/ui/settings_video.cpp:329
 msgid "Useful to avoid flashing screen or glitchy videos. Not recommended on slow platforms"
-msgstr ""
+msgstr "Útil para evitar telas intermitentes ou defeitos de vídeo. Não recomendado em plataformas lentas"
 
 #: core/ui/settings_video.cpp:330
 msgid "Fix Upscale Bleeding Edge"
-msgstr ""
+msgstr "Corrigir vazamento nas bordas do upscaling"
 
 #: core/ui/settings_video.cpp:331
 msgid "Helps with texture bleeding case when upscaling. Disabling it can help if pixels are warping when upscaling in 2D games (MVC2, CVS, KOF, etc.)"
-msgstr ""
+msgstr "Ajuda com vazamento de textura ao mudar escala. Desativar pode ajudar se os píxeis estão deformados pela mudança de escala em jogos 2D (MVC2, CVS, KOF etc.)"
 
 #: core/ui/settings_video.cpp:332
 msgid "Native Depth Interpolation"
-msgstr ""
+msgstr "Interpolação de Profundidade Nativa"
 
 #: core/ui/settings_video.cpp:333
 msgid "Helps with texture corruption and depth issues on AMD GPUs. Can also help Intel GPUs in some cases."
-msgstr ""
+msgstr "Ajuda com corrupção de textura e problemas de profundidade em GPU da AMD. Pode ajudar em GPU da Intel em alguns casos."
 
 #: core/ui/settings_video.cpp:334
 msgid "Copy Rendered Textures to VRAM"
-msgstr ""
+msgstr "Copiar Texturas Renderizadas para VRAM"
 
 #: core/ui/settings_video.cpp:335
 msgid "Copy rendered-to textures back to VRAM. Slower but accurate"
-msgstr ""
+msgstr "Copiar texturas renderizadas de volta para VRAM. Mais lento porém preciso"
 
 #: core/ui/settings_video.cpp:374
 msgid "Anisotropic Filtering"
-msgstr ""
+msgstr "Filtragem anisotrópica"
 
 #: core/ui/settings_video.cpp:376
 msgid "Higher values make textures viewed at oblique angles look sharper, but are more demanding on the GPU. This option only has a visible impact on mipmapped textures."
-msgstr ""
+msgstr "Valores maiores fazem com que as texturas vistas em ângulos ofuscados pareçam mais nítidos, mas são mais exigentes com a GPU. Esta opção só tem um impacto visível em texturas mipmapeadas."
 
 #: core/ui/settings_video.cpp:378
 msgid "Texture Filtering:"
-msgstr ""
+msgstr "Filtragem de Texturas:"
 
 #: core/ui/settings_video.cpp:380 core/ui/settings_general.cpp:188
 #: core/ui/settings_general.cpp:192 core/ui/settings_general.cpp:197
 msgid "Default"
-msgstr ""
+msgstr "Padrão"
 
 #: core/ui/settings_video.cpp:380
 msgid "Use the game's default texture filtering"
-msgstr ""
+msgstr "Usar filtragem de texturas padrão do jogo"
 
 #: core/ui/settings_video.cpp:382
 msgid "Force Nearest-Neighbor"
-msgstr ""
+msgstr "Forçar Mais Próximo"
 
 #: core/ui/settings_video.cpp:382
 msgid "Force nearest-neighbor filtering for all textures. Crisper appearance, but may cause various rendering issues. This option usually does not affect performance."
-msgstr ""
+msgstr "Forçar filtragem mais próxima para todas as texturas. Aparência mais nítida, mas pode causar vários problemas de renderização. Esta opção geralmente não afeta o desempenho."
 
 #: core/ui/settings_video.cpp:384
 msgid "Force Linear"
-msgstr ""
+msgstr "Força Linear"
 
 #: core/ui/settings_video.cpp:384
 msgid "Force linear filtering for all textures. Smoother appearance, but may cause various rendering issues. This option usually does not affect performance."
-msgstr ""
+msgstr "Forçar filtragem linear para todas as texturas. Aparência suave, mas pode causar vários problemas de renderização. Esta opção geralmente não afeta o desempenho."
 
 #: core/ui/settings_video.cpp:387
 msgid "Show FPS Counter"
-msgstr ""
+msgstr "Mostrar contador de FPS"
 
 #: core/ui/settings_video.cpp:387
 msgid "Show on-screen frame/sec counter"
-msgstr ""
+msgstr "Mostrar contador de quadros/segundos na tela"
 
 #: core/ui/settings_video.cpp:392
 msgid "Video Routing (Syphon)"
-msgstr ""
+msgstr "Roteamento de Vídeo (Syphon)"
 
 #: core/ui/settings_video.cpp:395
 msgid "Video Routing (Spout)"
-msgstr ""
+msgstr "Roteamento de Vídeo (Spout)"
 
 #: core/ui/settings_video.cpp:397
 msgid "Video Routing (Only available with OpenGL or DirectX 11)"
-msgstr ""
+msgstr "Roteamento de Vídeo (Somente disponível com OpenGL ou DirectX 11)"
 
 #: core/ui/settings_video.cpp:403
 msgid "Send video content to another program"
-msgstr ""
+msgstr "Enviar conteúdo de vídeo para outro programa"
 
 #: core/ui/settings_video.cpp:404
 msgid "e.g. Route GPU texture to OBS Studio directly instead of using CPU intensive Display/Window Capture"
-msgstr ""
+msgstr "ex.: encaminhar a textura da GPU diretamente para o OBS Estúdio em vez de usar a captura de Tela/Janela, que consome muita CPU"
 
 #: core/ui/settings_video.cpp:408
 msgid "Scale down before sending"
-msgstr ""
+msgstr "Diminuir escala antes de enviar"
 
 #: core/ui/settings_video.cpp:408
 msgid "Could increase performance when sharing a smaller texture, YMMV"
-msgstr ""
+msgstr "Pode aumentar o desempenho ao compartilhar uma textura menor, YMMV"
 
 #: core/ui/settings_video.cpp:412
 msgid "Output vertical resolution"
-msgstr ""
+msgstr "Resolução vertical de saída"
 
 #: core/ui/settings_video.cpp:417
 #, c-format
 msgid "Output texture size: %d x %d"
-msgstr ""
+msgstr "Tamanho da textura de saída: %d x %d"
 
 #: core/ui/settings_general.cpp:51
 msgid "Set"
-msgstr ""
+msgstr "Definir"
 
 #: core/ui/settings_general.cpp:108 core/ui/settings_general.cpp:250
 #: core/ui/gui_cheats.cpp:102
 msgid "Add"
-msgstr ""
+msgstr "Adicionar"
 
 #: core/ui/settings_general.cpp:161 core/ui/gui.cpp:909
 msgid "Select a Content Folder"
-msgstr ""
+msgstr "Selecionar uma pasta de conteúdo"
 
 #: core/ui/settings_general.cpp:188
 msgid "Japanese"
-msgstr ""
+msgstr "Japonês"
 
 #: core/ui/settings_general.cpp:188
 msgid "English"
-msgstr ""
+msgstr "Inglês"
 
 #: core/ui/settings_general.cpp:188
 msgid "German"
-msgstr ""
+msgstr "Alemão"
 
 #: core/ui/settings_general.cpp:188
 msgid "French"
-msgstr ""
+msgstr "Francês"
 
 #: core/ui/settings_general.cpp:188
 msgid "Spanish"
-msgstr ""
+msgstr "Espanhol"
 
 #: core/ui/settings_general.cpp:188
 msgid "Italian"
@@ -1061,7 +1061,7 @@ msgstr "Exportar"
 
 #: core/ui/settings_general.cpp:198
 msgid "Korea"
-msgstr "Korea"
+msgstr "Coreia"
 
 #: core/ui/settings_general.cpp:200
 msgid "Region"
@@ -1097,7 +1097,7 @@ msgstr "Localização do conteúdo"
 
 #: core/ui/settings_general.cpp:254 core/ui/settings_general.cpp:318
 msgid "Rescan Content"
-msgstr "Reescanear conteúdo"
+msgstr "Escanear conteúdo novamente"
 
 #: core/ui/settings_general.cpp:266
 msgid "The folders where your games are stored"
@@ -1155,7 +1155,7 @@ msgstr "Dimensionamento da Interface"
 
 #: core/ui/settings_general.cpp:327
 msgid "Adjust the size of UI elements and fonts."
-msgstr "Ajuste o tamanho dos elementos e fontes da interface."
+msgstr "Ajuste o tamanho dos elementos e fontes da ‘interface’."
 
 #: core/ui/settings_general.cpp:332
 msgid "Apply"
@@ -1195,11 +1195,11 @@ msgstr "Selecione a cor da Interface do usuário."
 
 #: core/ui/settings_general.cpp:347
 msgid "Hide Legacy Naomi Roms"
-msgstr "Esconder Roms Legadas da Naomi "
+msgstr "Esconder Roms Legadas da Naomi"
 
 #: core/ui/settings_general.cpp:348
 msgid "Hide .bin, .dat and .lst files from the content browser"
-msgstr "Ocultar arquivos .bin, .dat e .lst do navegador de conteúdo"
+msgstr "Ocultar arquivos .bin, dat e lst do navegador de conteúdo."
 
 #: core/ui/settings_general.cpp:351
 msgid "Use SAF File Picker"
@@ -1227,1422 +1227,1426 @@ msgstr "Salvar"
 
 #: core/ui/settings_general.cpp:360
 msgid "Save the state of the game when stopping"
-msgstr ""
+msgstr "Salvar o estado do jogo quando parar"
 
 #: core/ui/settings_general.cpp:361
 msgid "Naomi Free Play"
-msgstr ""
+msgstr "Jogar Naomi no modo sem fichas"
 
 #: core/ui/settings_general.cpp:361
 msgid "Configure Naomi games in Free Play mode."
-msgstr ""
+msgstr "Configure os jogos Naomi no modo sem fichas."
 
 #: core/ui/settings_general.cpp:363
 msgid "Discord Presence"
-msgstr ""
+msgstr "Presença no Discord"
 
 #: core/ui/settings_general.cpp:363
 msgid "Show which game you are playing on Discord"
-msgstr ""
+msgstr "Mostra qual jogo você está jogando no Discord"
 
 #: core/ui/settings_general.cpp:366
 msgid "Enable RetroAchievements"
-msgstr ""
+msgstr "Habilitar Retro-Conquistas"
 
 #: core/ui/settings_general.cpp:366
 msgid "Track your game achievements using RetroAchievements.org"
-msgstr ""
+msgstr "Acompanhe as conquistas do seu jogo usando RetroAchievements.org"
 
 #: core/ui/settings_general.cpp:371
 msgid "Enable RetroAchievements hardcore mode. Using cheats and loading a state are not allowed in this mode."
-msgstr ""
+msgstr "Ativar modo hardcore de Retro-Conquistas. Neste modo, não é permitido usar trapaças nem carregar estado salvo."
 
 #: core/ui/settings_general.cpp:372
 msgid "Username"
-msgstr ""
+msgstr "Nome de usuário"
 
 #: core/ui/settings_general.cpp:380
 msgid "Authentication successful"
-msgstr ""
+msgstr "Autenticação bem-sucedida"
 
 #: core/ui/settings_general.cpp:383
 msgid "Logout"
-msgstr ""
+msgstr "Sair"
 
 #: core/ui/settings_general.cpp:389
 msgid "Password"
-msgstr ""
+msgstr "Senha"
 
 #: core/ui/settings_general.cpp:393
 msgid "Authenticating..."
-msgstr ""
+msgstr "Autenticando..."
 
 #: core/ui/settings_general.cpp:406
 msgid "Login"
-msgstr ""
+msgstr "Entrar"
 
 #: core/ui/settings_general.cpp:421
 msgid "Custom Paths"
-msgstr ""
+msgstr "Paths Personalizados"
 
 #: core/ui/settings_general.cpp:423
 msgid "BIOS Folders"
-msgstr ""
+msgstr "Pastas da BIOS"
 
 #: core/ui/settings_general.cpp:423
 msgid "Select a BIOS folder"
-msgstr ""
+msgstr "Selecione uma pasta BIOS"
 
 #: core/ui/settings_general.cpp:424
 msgid "Folders containing BIOS files (e.g. dc_boot.bin or dc_bios.bin) and arcade BIOS"
-msgstr ""
+msgstr "Pastas que contêm arquivos BIOS (por exemplo, dc_boot.bin ou dc_bios.bin) e BIOS de arcade"
 
 #: core/ui/settings_general.cpp:428
 msgid "VMU Folder"
-msgstr ""
+msgstr "Pasta do VMU"
 
 #: core/ui/settings_general.cpp:428
 msgid "Select the VMU folder"
-msgstr ""
+msgstr "Selecionar pasta do VMU"
 
 #: core/ui/settings_general.cpp:429
 msgid "Folder where VMU (.bin) saves are stored"
-msgstr ""
+msgstr "Pasta onde os saves do VMU (.bin) são armazenados"
 
 #: core/ui/settings_general.cpp:432
 msgid "Savestate Folders"
-msgstr ""
+msgstr "Pastas de Save State"
 
 #: core/ui/settings_general.cpp:432
 msgid "Select a savestate folder"
-msgstr ""
+msgstr "Selecionar uma pasta de save state"
 
 #: core/ui/settings_general.cpp:433
 msgid "Folders for save states. First path is used for new states; all are searched when loading"
-msgstr ""
+msgstr "Pastas para estados salvos. O primeiro caminho é usado para novos estados; todas são pesquisadas ao carregar"
 
 #: core/ui/settings_general.cpp:436
 msgid "Game Save Folder"
-msgstr ""
+msgstr "Pasta de Save do Jogo"
 
 #: core/ui/settings_general.cpp:436
 msgid "Select the game save folder"
-msgstr ""
+msgstr "Selecionar a pasta para salvar o jogo"
 
 #: core/ui/settings_general.cpp:437
 msgid "Folder for game save data (e.g. arcade NVRAM)"
-msgstr ""
+msgstr "Pasta para dados de jogo salvo (ex. arcade NVRAM)"
 
 #: core/ui/settings_general.cpp:441
 msgid "Texture Pack Folders"
-msgstr ""
+msgstr "Pastas de Pacotes de Texturas"
 
 #: core/ui/settings_general.cpp:441
 msgid "Select a texture pack folder"
-msgstr ""
+msgstr "Selecionar uma pasta de pacote de textura"
 
 #: core/ui/settings_general.cpp:442
 msgid "Folders containing textures/<gameId> or <gameId> under a textures subfolder"
-msgstr ""
+msgstr "Pastas contendo texturas/<gameId> ou <gameId> sob uma subpasta de texturas"
 
 #: core/ui/settings_general.cpp:446
 msgid "Texture Dump Folder"
-msgstr ""
+msgstr "Pasta de Descarga de Textura"
 
 #: core/ui/settings_general.cpp:446
 msgid "Select the texture dump folder"
-msgstr ""
+msgstr "Selecionar pasta de despejo de texturas"
 
 #: core/ui/settings_general.cpp:447
 msgid "Folder where texture dumps are saved. Game-specific subfolders will be created automatically"
-msgstr ""
+msgstr "Pasta onde os despejos de texturas são salvos. As subpastas específicas dos jogos serão criadas automaticamente"
 
 #: core/ui/settings_general.cpp:450
 msgid "Box Art Folder"
-msgstr ""
+msgstr "Pasta de Capas"
 
 #: core/ui/settings_general.cpp:450
 msgid "Select the box art folder"
-msgstr ""
+msgstr "Selecionar pasta de Capas"
 
 #: core/ui/settings_general.cpp:451
 msgid "Folder containing box art images (png/jpg). If empty, Flycast will use the default Home Folder/boxart for downloads and generated art"
-msgstr ""
+msgstr "Pasta que contém imagens de capa (png/jpg). Se estiver vazia, o Flycast usará a pasta padrão Home Folder/boxart para downloads e capas geradas"
 
 #: core/ui/settings_general.cpp:454
 msgid "Controller Mapping Folders"
-msgstr ""
+msgstr "Pasta de Mapeamento de Controles"
 
 #: core/ui/settings_general.cpp:454
 msgid "Select a controller mapping folder"
-msgstr ""
+msgstr "Selecionar Pasta de Mapeamento de Controles"
 
 #: core/ui/settings_general.cpp:455
 msgid "Folders containing controller mapping files (.cfg). The emulator also looks in Home Folder/mappings. Per-game mappings are suffixed with _<gameId>.cfg"
-msgstr ""
+msgstr "Pastas contendo arquivos de mapeamento de controle (.cfg). O emulador também procura em Home Folder/mappings.\n"
+"Mapeamentos por jogos usam o sufixo  _<gameId>.cfg"
 
 #: core/ui/settings_general.cpp:458
 msgid "Cheat Folders"
-msgstr ""
+msgstr "Pastas de trapaças"
 
 #: core/ui/settings_general.cpp:458
 msgid "Select a cheat folder"
-msgstr ""
+msgstr "Selecionar uma pasta trapaça"
 
 #: core/ui/settings_general.cpp:459
 msgid "Folders containing cheat files (.cht/.txt) named with the game ID. Flycast will auto-load matching files if present"
-msgstr ""
+msgstr "Pastas que contêm arquivos de trapaça (.cht/.txt) nomeadas com o ID do jogo. Flycast carregará automaticamente arquivos correspondentes se estiver presente"
 
 #: core/ui/gui_chat.h:46 core/ui/gui_chat.h:48
 msgid "P2"
-msgstr ""
+msgstr "P2"
 
 #: core/ui/gui_chat.h:46 core/ui/gui_chat.h:48
 msgid "P1"
-msgstr ""
+msgstr "P1"
 
 #: core/ui/game_scanner.cpp:167
 msgid "Dreamcast BIOS"
-msgstr ""
+msgstr "Bios do Dreamcast"
 
 #: core/ui/settings_controls.cpp:43 core/ui/settings_controls.cpp:61
 #: core/ui/settings_controls.cpp:155
 msgid "None"
-msgstr ""
+msgstr "Nenhum"
 
 #: core/ui/settings_controls.cpp:44
 msgid "Sega Controller"
-msgstr ""
+msgstr "Controle Sega"
 
 #: core/ui/settings_controls.cpp:45
 msgid "Light Gun"
-msgstr ""
+msgstr "Pistola de luz"
 
 #: core/ui/settings_controls.cpp:46 core/input/keyboard_device.h:77
 msgid "Keyboard"
-msgstr ""
+msgstr "Teclado"
 
 #: core/ui/settings_controls.cpp:47 core/input/mouse.h:57
 msgid "Mouse"
-msgstr ""
+msgstr "Mouse"
 
 #: core/ui/settings_controls.cpp:48
 msgid "Twin Stick"
-msgstr ""
+msgstr "Controle de Alavanca Dupla"
 
 #: core/ui/settings_controls.cpp:49
 msgid "Arcade/Ascii Stick"
-msgstr ""
+msgstr "Controle de Arcade/Ascii"
 
 #: core/ui/settings_controls.cpp:50
 msgid "Maracas Controller"
-msgstr ""
+msgstr "Controle Marcas"
 
 #: core/ui/settings_controls.cpp:51
 msgid "Fishing Controller"
-msgstr ""
+msgstr "Controle de Pesca"
 
 #: core/ui/settings_controls.cpp:52
 msgid "Pop'n Music controller"
-msgstr ""
+msgstr "Controle de música Pop'n"
 
 #: core/ui/settings_controls.cpp:53
 msgid "Racing Controller"
-msgstr ""
+msgstr "Controle de Corrida"
 
 #: core/ui/settings_controls.cpp:54
 msgid "Densha de Go! Controller"
-msgstr ""
+msgstr "Controle Densha de Go"
 
 #: core/ui/settings_controls.cpp:55
 msgid "Panther DC/Full Controller"
-msgstr ""
+msgstr "Controle Panther DC"
 
 #: core/ui/settings_controls.cpp:62
 msgid "Sega VMU"
-msgstr ""
+msgstr "Sega VMU"
 
 #: core/ui/settings_controls.cpp:63
 msgid "Vibration Pack"
-msgstr ""
+msgstr "Pacote de Vibração"
 
 #: core/ui/settings_controls.cpp:64
 msgid "Microphone"
-msgstr ""
+msgstr "Microfone"
 
 #: core/ui/settings_controls.cpp:155
 msgid "All"
-msgstr ""
+msgstr "Todos"
 
 #: core/ui/settings_controls.cpp:163 core/ui/settings_controls.cpp:221
 msgid "Directions"
-msgstr ""
+msgstr "Direção"
 
 #: core/ui/settings_controls.cpp:164 core/ui/settings_controls.cpp:222
 msgid "Up"
-msgstr ""
+msgstr "Cima"
 
 #: core/ui/settings_controls.cpp:165 core/ui/settings_controls.cpp:223
 msgid "Down"
-msgstr ""
+msgstr "Baixo"
 
 #: core/ui/settings_controls.cpp:166 core/ui/settings_controls.cpp:224
 msgid "Left"
-msgstr ""
+msgstr "Esquerda"
 
 #: core/ui/settings_controls.cpp:167 core/ui/settings_controls.cpp:225
 msgid "Right"
-msgstr ""
+msgstr "Direita"
 
 #: core/ui/settings_controls.cpp:169 core/ui/settings_controls.cpp:227
 msgid "Thumbstick Up"
-msgstr ""
+msgstr "Analógico Cima"
 
 #: core/ui/settings_controls.cpp:170 core/ui/settings_controls.cpp:228
 msgid "Thumbstick Down"
-msgstr ""
+msgstr "Analógico Baixo"
 
 #: core/ui/settings_controls.cpp:171 core/ui/settings_controls.cpp:229
 msgid "Thumbstick Left"
-msgstr ""
+msgstr "Analógico Esquerda"
 
 #: core/ui/settings_controls.cpp:172 core/ui/settings_controls.cpp:230
 msgid "Thumbstick Right"
-msgstr ""
+msgstr "Analógico Direita"
 
 #: core/ui/settings_controls.cpp:174 core/ui/settings_controls.cpp:232
 msgid "R.Thumbstick Up"
-msgstr ""
+msgstr "Analógico Direito Cima"
 
 #: core/ui/settings_controls.cpp:175 core/ui/settings_controls.cpp:233
 msgid "R.Thumbstick Down"
-msgstr ""
+msgstr "Analógico Direito Baixo"
 
 #: core/ui/settings_controls.cpp:176 core/ui/settings_controls.cpp:234
 msgid "R.Thumbstick Left"
-msgstr ""
+msgstr "Analógico Direito Esquerda"
 
 #: core/ui/settings_controls.cpp:177 core/ui/settings_controls.cpp:235
 msgid "R.Thumbstick Right"
-msgstr ""
+msgstr "Analógico Direito Direita"
 
 #: core/ui/settings_controls.cpp:179
 msgid "Axis 3 Up"
-msgstr ""
+msgstr "Eixo 3 Cima"
 
 #: core/ui/settings_controls.cpp:180
 msgid "Axis 3 Down"
-msgstr ""
+msgstr "Eixo 3 Baixo"
 
 #: core/ui/settings_controls.cpp:181
 msgid "Axis 3 Left"
-msgstr ""
+msgstr "Eixo 3 Esquerda"
 
 #: core/ui/settings_controls.cpp:182
 msgid "Axis 3 Right"
-msgstr ""
+msgstr "Eixo 3 Direita"
 
 #: core/ui/settings_controls.cpp:189 core/ui/settings_controls.cpp:237
 msgid "Buttons"
-msgstr ""
+msgstr "Botões"
 
 #: core/ui/settings_controls.cpp:198 core/ui/settings_controls.cpp:248
 msgid "Triggers"
-msgstr ""
+msgstr "Gatilhos"
 
 #: core/ui/settings_controls.cpp:199 core/ui/settings_controls.cpp:249
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:199
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:369
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:401
 msgid "Left Trigger"
-msgstr ""
+msgstr "Gatilho Esquerdo"
 
 #: core/ui/settings_controls.cpp:200 core/ui/settings_controls.cpp:250
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:201
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:371
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:403
 msgid "Right Trigger"
-msgstr ""
+msgstr "Gatilho Direito"
 
 #: core/ui/settings_controls.cpp:201 core/ui/settings_controls.cpp:251
 msgid "Left Trigger 2"
-msgstr ""
+msgstr "Gatilho Esquerdo 2"
 
 #: core/ui/settings_controls.cpp:202 core/ui/settings_controls.cpp:252
 msgid "Right Trigger 2"
-msgstr ""
+msgstr "Gatilho Direito 2"
 
 #: core/ui/settings_controls.cpp:204 core/ui/settings_controls.cpp:254
 msgid "System Buttons"
-msgstr ""
+msgstr "Botões do Sistema"
 
 #: core/ui/settings_controls.cpp:206 core/ui/settings_controls.cpp:256
 msgid "Reload"
-msgstr ""
+msgstr "Recarregar"
 
 #: core/ui/settings_controls.cpp:208 core/ui/settings_controls.cpp:262
 msgid "Emulator"
-msgstr ""
+msgstr "Emulador"
 
 #: core/ui/settings_controls.cpp:209 core/ui/settings_controls.cpp:263
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:359
 msgid "Menu"
-msgstr ""
+msgstr "Menu"
 
 #: core/ui/settings_controls.cpp:210 core/ui/settings_controls.cpp:264
 #: core/ui/gui.cpp:777 core/ui/gui.cpp:1036
 msgid "Exit"
-msgstr ""
+msgstr "Sair"
 
 #: core/ui/settings_controls.cpp:211 core/ui/settings_controls.cpp:265
 msgid "Fast-forward"
-msgstr ""
+msgstr "Adiantar"
 
 #: core/ui/settings_controls.cpp:212 core/ui/settings_controls.cpp:266
 #: core/ui/gui.cpp:789
 msgid "Load State"
-msgstr ""
+msgstr "Carregador Estado"
 
 #: core/ui/settings_controls.cpp:213 core/ui/settings_controls.cpp:267
 #: core/ui/gui.cpp:797
 msgid "Save State"
-msgstr ""
+msgstr "Salvar Estado"
 
 #: core/ui/settings_controls.cpp:214 core/ui/settings_controls.cpp:268
 msgid "Bypass Emulated Keyboard"
-msgstr ""
+msgstr "Ignorar Teclado Emulado"
 
 #: core/ui/settings_controls.cpp:215 core/ui/settings_controls.cpp:269
 msgid "Save Screenshot"
-msgstr ""
+msgstr "Salvar Captura de Tela"
 
 #: core/ui/settings_controls.cpp:238
 msgid "Button 1"
-msgstr ""
+msgstr "Botão 1"
 
 #: core/ui/settings_controls.cpp:239
 msgid "Button 2"
-msgstr ""
+msgstr "Botão 2"
 
 #: core/ui/settings_controls.cpp:240
 msgid "Button 3"
-msgstr ""
+msgstr "Botão 3"
 
 #: core/ui/settings_controls.cpp:241 core/input/mouse.h:84
 msgid "Button 4"
-msgstr ""
+msgstr "Botão 4"
 
 #: core/ui/settings_controls.cpp:242 core/input/mouse.h:86
 msgid "Button 5"
-msgstr ""
+msgstr "Botão 5"
 
 #: core/ui/settings_controls.cpp:243
 msgid "Button 6"
-msgstr ""
+msgstr "Botão 6"
 
 #: core/ui/settings_controls.cpp:244
 msgid "Button 7"
-msgstr ""
+msgstr "Botão 7"
 
 #: core/ui/settings_controls.cpp:245
 msgid "Button 8"
-msgstr ""
+msgstr "Botão 8"
 
 #: core/ui/settings_controls.cpp:257
 msgid "Coin"
-msgstr ""
+msgstr "Ficha"
 
 #: core/ui/settings_controls.cpp:258
 msgid "Service"
-msgstr ""
+msgstr "Serviço"
 
 #: core/ui/settings_controls.cpp:259
 msgid "Test"
-msgstr ""
+msgstr "Teste"
 
 #: core/ui/settings_controls.cpp:260
 msgid "Insert Card"
-msgstr ""
+msgstr "Inserir Cartão"
 
 #: core/ui/settings_controls.cpp:385 core/ui/settings_controls.cpp:790
 msgid "Map Control"
-msgstr ""
+msgstr "Controle de Mapeamento"
 
 #: core/ui/settings_controls.cpp:387
 #, c-format
 msgid "Waiting for control '%s'..."
-msgstr ""
+msgstr "Esperando por Controle '%s'..."
 
 #: core/ui/settings_controls.cpp:403
 #, c-format
 msgid "Time out in %d s"
-msgstr ""
+msgstr "Tempo esgotado em %d s"
 
 #: core/ui/settings_controls.cpp:408
 msgid "Current inputs:"
-msgstr ""
+msgstr "Entradas atuais:"
 
 #: core/ui/settings_controls.cpp:432
 msgid "Confirm"
-msgstr ""
+msgstr "Confirmar"
 
 #: core/ui/settings_controls.cpp:514
 msgid "Sequential"
-msgstr ""
+msgstr "Sequencial"
 
 #: core/ui/settings_controls.cpp:519
 msgid "When checked, this combo will only activate when all keys are pressed in the given sequence.\n"
 "When not checked, the combo will activate when all keys are pressed in any order."
-msgstr ""
+msgstr "Quando marcado, este combo só será ativado quando todas as teclas forem pressionadas na sequência indicada.\n"
+"Quando não selecionado, a combinação será ativada quando todas as teclas forem pressionadas em qualquer ordem."
 
 #: core/ui/settings_controls.cpp:576 core/ui/settings_controls.cpp:1025
 msgid "Controller Mapping"
-msgstr ""
+msgstr "Mapeamento de Controle"
 
 #: core/ui/settings_controls.cpp:578 core/ui/settings_controls.cpp:1022
 msgid "Map"
-msgstr ""
+msgstr "Mapa"
 
 #: core/ui/settings_controls.cpp:579
 msgid "Unmap"
-msgstr ""
+msgstr "Anular Mapeamento"
 
 #: core/ui/settings_controls.cpp:595 core/ui/settings_controls.cpp:841
 #: core/ui/settings.cpp:217
 msgid "Done"
-msgstr ""
+msgstr "Feito"
 
 #: core/ui/settings_controls.cpp:615 core/ui/settings_controls.cpp:627
 #: core/ui/settings_controls.cpp:959 core/ui/settings_controls.cpp:973
 #: core/ui/gui.cpp:752
 msgid "Port"
-msgstr ""
+msgstr "Porta"
 
 #: core/ui/settings_controls.cpp:629 core/ui/settings_controls.cpp:693
 msgid "Dreamcast Controls"
-msgstr ""
+msgstr "Controles de Dreamcast"
 
 #: core/ui/settings_controls.cpp:632 core/ui/settings_controls.cpp:641
 #: core/ui/settings.cpp:248
 msgid "Delete Game Config"
-msgstr ""
+msgstr "Excluir configuração do jogo"
 
 #: core/ui/settings_controls.cpp:632 core/ui/settings_controls.cpp:650
 #: core/ui/settings.cpp:257
 msgid "Make Game Config"
-msgstr ""
+msgstr "Criar Configuração de Jogo"
 
 #: core/ui/settings_controls.cpp:655
 msgid "Reset..."
-msgstr ""
+msgstr "Reiniciar..."
 
 #: core/ui/settings_controls.cpp:656 core/ui/settings_controls.cpp:660
 msgid "Confirm Reset"
-msgstr ""
+msgstr "Confirmar reinício"
 
 #: core/ui/settings_controls.cpp:662
 msgid "Are you sure you want to reset the mappings to default?"
-msgstr ""
+msgstr "Tem certeza que deseja redefinir os mapeamentos para o padrão?"
 
 #: core/ui/settings_controls.cpp:666
 msgid "Controller Type:"
-msgstr ""
+msgstr "APAGAR Controle:"
 
 #: core/ui/settings_controls.cpp:667
 msgid "Gamepad"
-msgstr ""
+msgstr "Gamepad"
 
 #: core/ui/settings_controls.cpp:670
 msgid "Arcade / Hit Box"
-msgstr ""
+msgstr "Caixa de Arvade"
 
 #: core/ui/settings_controls.cpp:677 core/ui/settings_about.cpp:149
 msgid "Yes"
-msgstr ""
+msgstr "Sim"
 
 #: core/ui/settings_controls.cpp:684 core/ui/settings_about.cpp:155
 msgid "No"
-msgstr ""
+msgstr "Não"
 
 #: core/ui/settings_controls.cpp:693
 msgid "Arcade Controls"
-msgstr ""
+msgstr "Controles de Arcade"
 
 #: core/ui/settings_controls.cpp:839 core/ui/settings_controls.cpp:1045
 msgid "Gamepad Settings"
-msgstr ""
+msgstr "Configuração do Gamepad"
 
 #: core/ui/settings_controls.cpp:883
 msgid "Haptic"
-msgstr ""
+msgstr "Resposta Tátil"
 
 #: core/ui/settings_controls.cpp:884 core/ui/settings_controls.cpp:920
 msgid "Power"
-msgstr ""
+msgstr "Ligar"
 
 #: core/ui/settings_controls.cpp:884
 msgid "Haptic feedback power"
-msgstr ""
+msgstr "Potencia da Resposta Tátil"
 
 #: core/ui/settings_controls.cpp:886
 msgid "View"
-msgstr ""
+msgstr "Exibir"
 
 #: core/ui/settings_controls.cpp:887
 msgid "Transparency"
-msgstr ""
+msgstr "Transparência"
 
 #: core/ui/settings_controls.cpp:887
 msgid "Virtual gamepad buttons transparency"
-msgstr ""
+msgstr "Transparência dos botões do gamepad virtual"
 
 #: core/ui/settings_controls.cpp:893
 msgid "Select a PNG file"
-msgstr ""
+msgstr "Selecionar um arquivo PNG"
 
 #: core/ui/settings_controls.cpp:894
 msgid "Choose Image..."
-msgstr ""
+msgstr "Escolher imagem..."
 
 #: core/ui/settings_controls.cpp:906
 msgid "Use Default"
-msgstr ""
+msgstr "Usar padrão"
 
 #: core/ui/settings_controls.cpp:917
 msgid "Rumble"
-msgstr ""
+msgstr "Vibrar"
 
 #: core/ui/settings_controls.cpp:923
 msgid "Rumble power"
-msgstr ""
+msgstr "Potência da Vibração"
 
 #: core/ui/settings_controls.cpp:927
 msgid "Thumbsticks"
-msgstr ""
+msgstr "Analógicos"
 
 #: core/ui/settings_controls.cpp:930
 msgid "Dead zone"
-msgstr ""
+msgstr "Zona inativa"
 
 #: core/ui/settings_controls.cpp:933
 msgid "Minimum deflection to register as input"
-msgstr ""
+msgstr "Desvio mínimo para registrar como entrada"
 
 #: core/ui/settings_controls.cpp:936
 msgid "Saturation"
-msgstr ""
+msgstr "Saturação"
 
 #: core/ui/settings_controls.cpp:939
 msgid "Value sent to the game at 100% thumbstick deflection. Values greater than 100% will saturate before full deflection of the thumbstick."
-msgstr ""
+msgstr "Valor enviado ao jogo com o analógico 100% inclinado. Valores acima de 100% saturam antes de o analógico atingir o fim do curso."
 
 #: core/ui/settings_controls.cpp:952
 msgid "Physical Devices"
-msgstr ""
+msgstr "Dispositivos Físicos"
 
 #: core/ui/settings_controls.cpp:956 core/ui/settings_controls.cpp:967
 msgid "System"
-msgstr ""
+msgstr "Sistema"
 
 #: core/ui/settings_controls.cpp:957 core/ui/settings_controls.cpp:970
 #: core/ui/gui_cheats.cpp:71
 msgid "Name"
-msgstr ""
+msgstr "Nome"
 
 #: core/ui/settings_controls.cpp:991
 #, c-format
 msgid "DreamLink status: %s"
-msgstr ""
+msgstr "DreamLink status: %s"
 
 #: core/ui/settings_controls.cpp:1033
 msgid "Edit Layout"
-msgstr ""
+msgstr "Editar Layout"
 
 #: core/ui/settings_controls.cpp:1044 core/ui/gui.cpp:773 core/ui/gui.cpp:1021
 #: core/ui/settings.cpp:213
 msgid "Settings"
-msgstr ""
+msgstr "Configurações"
 
 #: core/ui/settings_controls.cpp:1054
 msgid "Mouse sensitivity"
-msgstr ""
+msgstr "Sensibilidade do mouse"
 
 #: core/ui/settings_controls.cpp:1056
 msgid "Use Raw Input"
-msgstr ""
+msgstr "Usar Entrada Raw"
 
 #: core/ui/settings_controls.cpp:1056
 msgid "Supports multiple pointing devices (mice, light guns) and keyboards"
-msgstr ""
+msgstr "Suporta vários dispositivos de apontamento (microfone, armas de luz) e teclados"
 
 #: core/ui/settings_controls.cpp:1061
 msgid "Use Physical VMU Memory"
-msgstr ""
+msgstr "Usar VMU Físico"
 
 #: core/ui/settings_controls.cpp:1062
 msgid "Enables direct read/write access to physical VMU memory via DreamPicoPort/DreamConn. This is not compatible with load state events."
-msgstr ""
+msgstr "Permite o acesso direto de leitura/gravação à memória física VMU via DreamPicoPort/DreamConn. Isso não é compatível em carregar estados salvos."
 
 #: core/ui/settings_controls.cpp:1068
 msgid "Dreamcast Devices"
-msgstr ""
+msgstr "Dispositivos Dreamcast"
 
 #: core/ui/settings_controls.cpp:1081
 #, c-format
 msgid "Port %c"
-msgstr ""
+msgstr "Porta %c"
 
 #: core/ui/settings_controls.cpp:1152
 msgid "Crosshair color"
-msgstr ""
+msgstr "Cor da mira"
 
 #: core/ui/settings_controls.cpp:1156
 msgid "Crosshair"
-msgstr ""
+msgstr "Mira"
 
 #: core/ui/settings_controls.cpp:1180
 msgid "Use Network Expansion Devices"
-msgstr ""
+msgstr "Usar dispositivos de expansão de rede"
 
 #: core/ui/settings_controls.cpp:1181
 msgid "Connect to expansion devices such as VMUs over local TCP."
-msgstr ""
+msgstr "Conectar a dispositivos de expansão, como VMUs, via TCP local."
 
 #: core/ui/settings_controls.cpp:1195
 msgid "Crosshair Size"
-msgstr ""
+msgstr "Tamanho da Mira"
 
 #: core/ui/settings_controls.cpp:1197
 msgid "Per Game VMU A1"
-msgstr ""
+msgstr "Por jogo VMU A1"
 
 #: core/ui/settings_controls.cpp:1197
 msgid "When enabled, each game has its own VMU on port 1 of controller A."
-msgstr ""
+msgstr "Quando ativado, cada jogo tem sua própria VMU na porta 1 do controle A."
 
 #: core/ui/gui_achievements.cpp:285 core/ui/gui_cheats.cpp:103
 msgid "Close"
-msgstr ""
+msgstr "Fechar"
 
 #: core/ui/gui_achievements.cpp:296
 #, c-format
 msgid "You have unlocked %d of %d achievements and %d of %d points."
-msgstr ""
+msgstr "Você desbloqueou %d conquistas das %d e %d pontos dos %d."
 
 #: core/ui/gui_achievements.cpp:324
 msgid "Locked"
-msgstr ""
+msgstr "Bloqueado"
 
 #: core/ui/gui_achievements.cpp:324
 msgid "Active Challenges"
-msgstr ""
+msgstr "Desafios Ativos"
 
 #: core/ui/gui_achievements.cpp:324
 msgid "Almost There"
-msgstr ""
+msgstr "Quase lá"
 
 #: core/ui/gui_achievements.cpp:326
 msgid "Unlocked"
-msgstr ""
+msgstr "Desbloqueado"
 
 #: core/ui/gui_achievements.cpp:326
 msgid "Recently Unlocked"
-msgstr ""
+msgstr "Desbloqueado recentemente"
 
 #: core/ui/mainui.cpp:73
 msgid "Renderer initialization failed.\n"
 "Please select a different graphics API"
-msgstr ""
+msgstr "Inicialização de renderização falhou.\n"
+"Por favor, selecione uma API gráfica diferente"
 
 #: core/ui/gui.cpp:573
 msgid "Flycast has stopped."
-msgstr ""
+msgstr "Flycast parou."
 
 #: core/ui/gui.cpp:678
 msgid "Resume"
-msgstr ""
+msgstr "Continuar"
 
 #: core/ui/gui.cpp:687
 msgid "Cheats"
-msgstr ""
+msgstr "Trapaças"
 
 #: core/ui/gui.cpp:694
 msgid "Achievements"
-msgstr ""
+msgstr "Conquistas"
 
 #: core/ui/gui.cpp:700
 msgid "Barcode Card"
-msgstr ""
+msgstr "Cartão de código de barras"
 
 #: core/ui/gui.cpp:729
 msgid "Connect DreamLink"
-msgstr ""
+msgstr "Conectar DreamLink"
 
 #: core/ui/gui.cpp:737
 msgid "Disconnect\n"
 "DreamLink"
-msgstr ""
+msgstr "Desconectar\n"
+"DreamLink"
 
 #: core/ui/gui.cpp:761
 msgid "Insert Disk"
-msgstr ""
+msgstr "Inserir Disco"
 
 #: core/ui/gui.cpp:761
 msgid "Eject Disk"
-msgstr ""
+msgstr "Ejetar Disco"
 
 #: core/ui/gui.cpp:777
 msgid "Close Game"
-msgstr ""
+msgstr "Fechar Jogo"
 
 #: core/ui/gui.cpp:812
 #, c-format
 msgid "Slot %d"
-msgstr ""
+msgstr "Slot %d"
 
 #: core/ui/gui.cpp:828
 msgid "Empty"
-msgstr ""
+msgstr "Vazio"
 
 #: core/ui/gui.cpp:856 core/ui/gui_cheats.cpp:48
 msgid "OK"
-msgstr ""
+msgstr "OK"
 
 #: core/ui/gui.cpp:876 core/ui/gui.cpp:877
 msgid "Incorrect Content Location?"
-msgstr ""
+msgstr "Localização de conteúdo incorreta?"
 
 #: core/ui/gui.cpp:880
 #, c-format
 msgid "Scanned %d folders but no game can be found!"
-msgstr ""
+msgstr "Foram escaneadas %d pastas, mas nenhum jogo foi encontrado!"
 
 #: core/ui/gui.cpp:885
 msgid "Reselect"
-msgstr ""
+msgstr "Selecionar novamente"
 
 #: core/ui/gui.cpp:894 core/ui/gui.cpp:1050 core/ui/gui.cpp:1286
 #: core/ui/gui.cpp:1429 core/ui/gui_cheats.cpp:47 core/ui/gui_util.cpp:181
 #: core/ui/vgamepad.cpp:87
 msgid "Cancel"
-msgstr ""
+msgstr "Cancelar"
 
 #: core/ui/gui.cpp:1017
 msgid "GAMES"
-msgstr ""
+msgstr "JOGOS"
 
 #: core/ui/gui.cpp:1024
 msgid "Filter"
-msgstr ""
+msgstr "Filtrar"
 
 #: core/ui/gui.cpp:1031 core/ui/gui.cpp:1032
 msgid "Load..."
-msgstr ""
+msgstr "Carregar..."
 
 #: core/ui/gui.cpp:1151
 msgid "Your game list is empty"
-msgstr ""
+msgstr "Sua lista de jogos está vazia"
 
 #: core/ui/gui.cpp:1161
 msgid "Add Game Folder"
-msgstr ""
+msgstr "Adicionar Pasta de Jogos"
 
 #: core/ui/gui.cpp:1193 core/ui/gui.cpp:1204
 msgid "Invalid selection:"
-msgstr ""
+msgstr "Seleção inválida:"
 
 #: core/ui/gui.cpp:1193 core/ui/gui.cpp:1204
 msgid "Flycast cannot write to this folder."
-msgstr ""
+msgstr "O Flycast não pode escrever nesta pasta."
 
 #: core/ui/gui.cpp:1232
 msgid "Select Flycast Home Folder"
-msgstr ""
+msgstr "Selecione a pasta inicial do Flycast"
 
 #: core/ui/gui.cpp:1266 core/ui/gui.cpp:1375 core/emulator.cpp:687
 msgid "Starting..."
-msgstr ""
+msgstr "Iniciando..."
 
 #: core/ui/gui.cpp:1278
 msgid "Starting Network..."
-msgstr ""
+msgstr "Iniciando Rede..."
 
 #: core/ui/gui.cpp:1280
 msgid "Press Start to start the game now."
-msgstr ""
+msgstr "Pressione Start para iniciar o jogo agora."
 
 #: core/ui/gui.cpp:1377
 msgid "Loading..."
-msgstr ""
+msgstr "Carregando..."
 
 #: core/ui/gui.cpp:1413
 msgid "Preloading custom textures"
-msgstr ""
+msgstr "Pré-carregar texturas customizadas"
 
 #: core/ui/gui.cpp:1416
 msgid "Preparing..."
-msgstr ""
+msgstr "Preparando..."
 
 #: core/ui/gui.cpp:1762
 msgid "No screenshot available"
-msgstr ""
+msgstr "Nenhuma captura de tela disponível"
 
 #: core/ui/gui.cpp:1768
 msgid "Screenshot saved"
-msgstr ""
+msgstr "Captura de tela salva"
 
 #: core/ui/gui.cpp:1770
 msgid "Error saving screenshot"
-msgstr ""
+msgstr "Erro ao salvar captura de tela"
 
 #: core/ui/settings_audio.cpp:25
 msgid "Enable DSP"
-msgstr ""
+msgstr "Ativar DSP"
 
 #: core/ui/settings_audio.cpp:26
 msgid "Enable the Dreamcast Digital Sound Processor. Only recommended on fast platforms"
-msgstr ""
+msgstr "Ative o Processador de Som Digital do Dreamcast. Recomendado apenas em plataformas rápidas"
 
 #: core/ui/settings_audio.cpp:27
 msgid "Enable VMU Sounds"
-msgstr ""
+msgstr "Ativar sons do VMU"
 
 #: core/ui/settings_audio.cpp:27
 msgid "Play VMU beeps when enabled."
-msgstr ""
+msgstr "Tocar bipe do VMU quando ativo."
 
 #: core/ui/settings_audio.cpp:29
 msgid "Volume Level"
-msgstr ""
+msgstr "Nível de volume"
 
 #: core/ui/settings_audio.cpp:29
 msgid "Adjust the emulator's audio level"
-msgstr ""
+msgstr "Ajustar nível de áudio do emulador"
 
 #: core/ui/settings_audio.cpp:35
 msgid "Automatic Latency"
-msgstr ""
+msgstr "Latência Automática"
 
 #: core/ui/settings_audio.cpp:36
 msgid "Automatically set audio latency. Recommended"
-msgstr ""
+msgstr "Definir automaticamente a latência do áudio. Recomendado"
 
 #: core/ui/settings_audio.cpp:42
 msgid "Latency"
-msgstr ""
+msgstr "Latência"
 
 #: core/ui/settings_audio.cpp:45
 msgid "Sets the maximum audio latency. Not supported by all audio drivers."
-msgstr ""
+msgstr "Define a latência máxima de áudio. Não suportado por todos os controladores."
 
 #: core/ui/settings_audio.cpp:58
 msgid "Audio Driver"
-msgstr ""
+msgstr "Controlador de Áudio"
 
 #: core/ui/settings_audio.cpp:61
 msgid "auto - Automatic driver selection"
-msgstr ""
+msgstr "auto - Seleção automática do controlador"
 
 #: core/ui/settings_audio.cpp:80
 msgid "The audio driver to use"
-msgstr ""
+msgstr "O Controlador de áudio a ser utilizado"
 
 #: core/ui/gui_cheats.cpp:45
 msgid "ADD CHEAT"
-msgstr ""
+msgstr "ADICIONAR TRAPAÇA"
 
 #: core/ui/gui_cheats.cpp:72 core/ui/settings_network.cpp:137
 msgid "Code"
-msgstr ""
+msgstr "Código"
 
 #: core/ui/gui_cheats.cpp:95
 msgid "Select a cheat file"
-msgstr ""
+msgstr "Selecione um arquivo de trapaça"
 
 #: core/ui/gui_cheats.cpp:100
 msgid "CHEATS"
-msgstr ""
+msgstr "TRAPAÇAS"
 
 #: core/ui/gui_cheats.cpp:137
 msgid "(No cheat loaded)"
-msgstr ""
+msgstr "(Nenhuma trapaça carregada)"
 
 #: core/ui/settings.cpp:38
 msgid "CPU Mode"
-msgstr ""
+msgstr "Modo da CPU"
 
 #: core/ui/settings.cpp:41
 msgid "Dynarec"
-msgstr ""
+msgstr "Recompilação Dinâmica"
 
 #: core/ui/settings.cpp:42
 msgid "Use the dynamic recompiler. Recommended in most cases"
-msgstr ""
+msgstr "Use o recompilador dinâmico. Recomendado em muitos casos"
 
 #: core/ui/settings.cpp:44
 msgid "Interpreter"
-msgstr ""
+msgstr "Intérprete"
 
 #: core/ui/settings.cpp:45
 msgid "Use the interpreter. Very slow but may help in case of a dynarec problem"
-msgstr ""
+msgstr "Use o intérprete. Muito lento, mas pode ajudar em caso de problemas na recompilação dinâmica"
 
 #: core/ui/settings.cpp:48
 msgid "SH4 Clock"
-msgstr ""
+msgstr "Frequência do SH4"
 
 #: core/ui/settings.cpp:49
 msgid "Over/Underclock the main SH4 CPU. Default is 200 MHz. Other values may crash, freeze or trigger unexpected nuclear reactions."
-msgstr ""
+msgstr "Ajustar overclock/underclock da CPU principal SH4. O padrão é 200 MHz. Outros valores podem causar travamentos, congelamentos ou reações nucleares inesperadas."
 
 #: core/ui/settings.cpp:97
 msgid "Other"
-msgstr ""
+msgstr "Outros"
 
 #: core/ui/settings.cpp:99
 msgid "HLE BIOS"
-msgstr ""
+msgstr "BIOS HLE"
 
 #: core/ui/settings.cpp:99
 msgid "Force high-level BIOS emulation"
-msgstr ""
+msgstr "Forçar emulação de alto nível da BIOS"
 
 #: core/ui/settings.cpp:100
 msgid "Multi-threaded emulation"
-msgstr ""
+msgstr "Emulação multi-threads"
 
 #: core/ui/settings.cpp:101
 msgid "Run the emulated CPU and GPU on different threads"
-msgstr ""
+msgstr "Executar a CPU e a GPU emuladas em diferentes threads"
 
 #: core/ui/settings.cpp:103
 msgid "Serial Console"
-msgstr ""
+msgstr "Console serial"
 
 #: core/ui/settings.cpp:104
 msgid "Dump the Dreamcast serial console to stdout"
-msgstr ""
+msgstr "Despejar o serial do console Dreamcast para stdout"
 
 #: core/ui/settings.cpp:108
 msgid "Dreamcast 32MB RAM Mod"
-msgstr ""
+msgstr "Dreamcast modificação de 32 MB de RAM"
 
 #: core/ui/settings.cpp:109
 msgid "Enables 32MB RAM Mod for Dreamcast. May affect compatibility"
-msgstr ""
+msgstr "Ativa a modificação de 32 MB de RAM para o Dreamcast.\\nOBSERVAÇÃO: pode afetar compatibilidade."
 
 #: core/ui/settings.cpp:111
 msgid "Dump Textures"
-msgstr ""
+msgstr "Despejar Texturas"
 
 #: core/ui/settings.cpp:112
 msgid "Dump all textures into data/texdump/<game id>"
-msgstr ""
+msgstr "Despejar todas as texturas em data/texdump/<game id>"
 
 #: core/ui/settings.cpp:116
 msgid "Dump Replaced Textures"
-msgstr ""
+msgstr "Despejar Texturas Substituídas"
 
 #: core/ui/settings.cpp:117
 msgid "Always dump textures that are already replaced by custom textures"
-msgstr ""
+msgstr "Sempre despeje texturas que já foram substituídas por texturas personalizadas"
 
 #: core/ui/settings.cpp:121
 msgid "Log to File"
-msgstr ""
+msgstr "Log para  o Arquivo"
 
 #: core/ui/settings.cpp:124
 msgid "Log debug information to flycast.log"
-msgstr ""
+msgstr "Registrar informações de depuração em flycast.log"
 
 #: core/ui/settings.cpp:126
 msgid "Automatically Report Crashes"
-msgstr ""
+msgstr "Relatar falhas automaticamente"
 
 #: core/ui/settings.cpp:127
 msgid "Automatically upload crash reports to sentry.io to help in troubleshooting. No personal information is included."
-msgstr ""
+msgstr "Enviar automaticamente relatórios de falha para sentry.io para ajudar na resolução de problemas. Nenhuma informação pessoal será incluída."
 
 #: core/ui/settings.cpp:132
 msgid "Lua Scripting"
-msgstr ""
+msgstr "Lua Scripting"
 
 #: core/ui/settings.cpp:134
 msgid "Lua Filename"
-msgstr ""
+msgstr "Nome do Arquivo Lua"
 
 #: core/ui/settings.cpp:136
 msgid "Specify lua filename to use. Should be located in Flycast config folder. Defaults to flycast.lua when empty."
-msgstr ""
+msgstr "Especifique o nome do arquivo a ser usado. Deve ser localizado na pasta de configuração do Flycast. O padrão é flycast.lua quando vazio."
 
 #: core/ui/settings.cpp:270
 msgid "General"
-msgstr ""
+msgstr "Geral"
 
 #: core/ui/settings.cpp:276
 msgid "Controls"
-msgstr ""
+msgstr "Controles"
 
 #: core/ui/settings.cpp:282
 msgid "Video"
-msgstr ""
+msgstr "Vídeo"
 
 #: core/ui/settings.cpp:288
 msgid "Audio"
-msgstr ""
+msgstr "Áudio"
 
 #: core/ui/settings.cpp:294
 msgid "Network"
-msgstr ""
+msgstr "Rede"
 
 #: core/ui/settings.cpp:314
 msgid "About"
-msgstr ""
+msgstr "Sobre"
 
 #: core/ui/gui_util.cpp:121
 msgid "Storage"
-msgstr ""
+msgstr "Armazenamento"
 
 #: core/ui/gui_util.cpp:133
 msgid ".. Up to Parent Folder"
-msgstr ""
+msgstr ".. Até a Pasta Pai"
 
 #: core/ui/gui_util.cpp:171
 msgid "Select Current Folder"
-msgstr ""
+msgstr "Selecionar Pasta Atual"
 
 #: core/ui/gui_util.cpp:479
 msgid "(?)"
-msgstr ""
+msgstr "(?)"
 
 #: core/ui/vgamepad.cpp:79
 msgid "Reset"
-msgstr ""
+msgstr "Reiniciar"
 
 #: core/ui/settings_network.cpp:28
 msgid "Network Type"
-msgstr ""
+msgstr "Tipo de rede"
 
 #: core/ui/settings_network.cpp:44
 msgid "Enable networking using GGPO"
-msgstr ""
+msgstr "Ativar rede usando GGPO"
 
 #: core/ui/settings_network.cpp:48
 msgid "Enable networking for supported Naomi and Atomiswave games"
-msgstr ""
+msgstr "Habilitar rede para jogos suportados na Naomi e Atomiswave"
 
 #: core/ui/settings_network.cpp:50
 msgid "Battle Cable"
-msgstr ""
+msgstr "Cabo de Batalha"
 
 #: core/ui/settings_network.cpp:52
 msgid "Emulate the Taisen (Battle) null modem cable for games that support it"
-msgstr ""
+msgstr "Emule o modem Taisen (Batalha) para jogos que o suportam"
 
 #: core/ui/settings_network.cpp:72
 msgid "Configuration"
-msgstr ""
+msgstr "Configuração"
 
 #: core/ui/settings_network.cpp:78
 msgid "Play as Player 1"
-msgstr ""
+msgstr "Jogue como Jogador 1"
 
 #: core/ui/settings_network.cpp:79
 msgid "Deselect to play as player 2"
-msgstr ""
+msgstr "Desmarque para jogar como jogador 2"
 
 #: core/ui/settings_network.cpp:80 core/ui/settings_network.cpp:174
 msgid "Peer"
-msgstr ""
+msgstr "Par"
 
 #: core/ui/settings_network.cpp:82
 msgid "Your peer IP address and optional port"
-msgstr ""
+msgstr "Seu endereço IP de par e porta opcional"
 
 #: core/ui/settings_network.cpp:83
 msgid "Frame Delay"
-msgstr ""
+msgstr "Atraso de quadro"
 
 #: core/ui/settings_network.cpp:84
 msgid "Sets Frame Delay, advisable for sessions with ping >100 ms"
-msgstr ""
+msgstr "Define o atraso do quadro, aconselhável para sessões com ping >100 ms"
 
 #: core/ui/settings_network.cpp:86
 msgid "Left Thumbstick:"
-msgstr ""
+msgstr "Analógico Esquerdo:"
 
 #: core/ui/settings_network.cpp:87
 msgid "Left thumbstick not used"
-msgstr ""
+msgstr "Analógico esquerdo não usado"
 
 #: core/ui/settings_network.cpp:89
 msgid "Horizontal"
-msgstr ""
+msgstr "Horizontal"
 
 #: core/ui/settings_network.cpp:89
 msgid "Use the left thumbstick horizontal axis only"
-msgstr ""
+msgstr "Usar apenas o eixo horizontal do analógico esquerdo"
 
 #: core/ui/settings_network.cpp:91
 msgid "Full"
-msgstr ""
+msgstr "Completo"
 
 #: core/ui/settings_network.cpp:91
 msgid "Use the left thumbstick horizontal and vertical axes"
-msgstr ""
+msgstr "Usar os eixos horizontais e verticais do analógico esquerdo"
 
 #: core/ui/settings_network.cpp:93
 msgid "Enable Chat"
-msgstr ""
+msgstr "Habilitar bate-papo"
 
 #: core/ui/settings_network.cpp:93
 msgid "Open the chat window when a chat message is received"
-msgstr ""
+msgstr "Abrir a janela de bate-papo quando uma mensagem é recebida"
 
 #: core/ui/settings_network.cpp:96
 msgid "Enable Chat Window Timeout"
-msgstr ""
+msgstr "Habilitar tempo limite da janela de bate-papo"
 
 #: core/ui/settings_network.cpp:96
 msgid "Automatically close chat window after 20 seconds"
-msgstr ""
+msgstr "Fechar janela de bate-papo automaticamente após 20 segundos"
 
 #: core/ui/settings_network.cpp:101
 msgid "Chat Window Timeout (seconds)"
-msgstr ""
+msgstr "Tempo limite da janela de bate-papo (segundos)"
 
 #: core/ui/settings_network.cpp:103
 msgid "Sets duration that chat window stays open after new message is received."
-msgstr ""
+msgstr "Define a duração que a janela de bate-papo permanece aberta depois que uma nova mensagem for recebida."
 
 #: core/ui/settings_network.cpp:107 core/ui/settings_network.cpp:167
 msgid "Network Statistics"
-msgstr ""
+msgstr "Estatísticas da Rede"
 
 #: core/ui/settings_network.cpp:108 core/ui/settings_network.cpp:168
 msgid "Display network statistics on screen"
-msgstr ""
+msgstr "Mostrar estatísticas da rede na tela"
 
 #: core/ui/settings_network.cpp:112
 msgid "Act as Server"
-msgstr ""
+msgstr "Agir como Servidor"
 
 #: core/ui/settings_network.cpp:113
 msgid "Create a local server for Naomi network games"
-msgstr ""
+msgstr "Crie um servidor local para jogos de rede Naomi"
 
 #: core/ui/settings_network.cpp:116
 msgid "Server"
-msgstr ""
+msgstr "Servidor"
 
 #: core/ui/settings_network.cpp:118
 msgid "The server to connect to. Leave blank to find a server automatically on the default port"
-msgstr ""
+msgstr "O servidor para se conectar. Deixe em branco para encontrar um servidor automaticamente na porta padrão"
 
 #: core/ui/settings_network.cpp:122 core/ui/settings_network.cpp:179
 msgid "Local Port"
-msgstr ""
+msgstr "Porta Local"
 
 #: core/ui/settings_network.cpp:124 core/ui/settings_network.cpp:181
 msgid "The local UDP port to use"
-msgstr ""
+msgstr "A porta UDP local a ser usada"
 
 #: core/ui/settings_network.cpp:132
 msgid "Match Code"
-msgstr ""
+msgstr "Código da partida"
 
 #: core/ui/settings_network.cpp:139
 msgid "Choose a unique word or number and share it with your opponent."
-msgstr ""
+msgstr "Escolha uma palavra ou número único e compartilhe-a com seu oponente."
 
 #: core/ui/settings_network.cpp:141
 msgid "Connect"
-msgstr ""
+msgstr "Conectar"
 
 #: core/ui/settings_network.cpp:145
 msgid "Disconnect"
-msgstr ""
+msgstr "Desconectar"
 
 #: core/ui/settings_network.cpp:155
 msgid "Waiting at meeting point..."
-msgstr ""
+msgstr "Aguardando no ponto de encontro…"
 
 #: core/ui/settings_network.cpp:158
 msgid "Preparing game..."
-msgstr ""
+msgstr "Preparando o jogo..."
 
 #: core/ui/settings_network.cpp:161
 #, c-format
 msgid "Playing %s (%s)"
-msgstr ""
+msgstr "Jogando %s (%s)"
 
 #: core/ui/settings_network.cpp:176
 msgid "The peer to connect to. Leave blank to find a player automatically on the default port"
-msgstr ""
+msgstr "O par para se conectar. Deixe em branco para encontrar um jogador automaticamente na porta padrão"
 
 #: core/ui/settings_network.cpp:189
 msgid "Act as Master"
-msgstr ""
+msgstr "Agir como Mestre"
 
 #: core/ui/settings_network.cpp:190
 msgid "Only used for Maximum Speed. One of the peer must be master."
-msgstr ""
+msgstr "Usado apenas para o jogo \"Maximum Speed\". Um dos pares deve ser o mestre."
 
 #: core/ui/settings_network.cpp:194
 msgid "Network Options"
-msgstr ""
+msgstr "Opções de Rede"
 
 #: core/ui/settings_network.cpp:196
 msgid "Enable UPnP"
-msgstr ""
+msgstr "Ativar UPnP"
 
 #: core/ui/settings_network.cpp:196
 msgid "Automatically configure your network router for netplay"
-msgstr ""
+msgstr "Configurar automaticamente o roteador de rede para netplay"
 
 #: core/ui/settings_network.cpp:197
 msgid "Broadcast Digital Outputs"
-msgstr ""
+msgstr "Transmitir Saídas Digitais"
 
 #: core/ui/settings_network.cpp:197
 msgid "Broadcast digital outputs and force-feedback state on TCP port 8000. Compatible with the \"-output network\" MAME option. Arcade games only."
-msgstr ""
+msgstr "Transmita saídas digitais e estado de feedback forçado na porta TCP 8000. Compatível com a opção \"rede de saída\" opção do MAME. Jogos Arcade apenas."
 
 #: core/ui/settings_network.cpp:202
 msgid "Broadband Adapter Emulation"
-msgstr ""
+msgstr "Emulação do adaptador de banda larga"
 
 #: core/ui/settings_network.cpp:203
 msgid "Emulate the Ethernet Broadband Adapter (BBA) instead of the Modem"
-msgstr ""
+msgstr "Emular o adaptador de banda larga Ethernet (BBA) em vez do Modem"
 
 #: core/ui/settings_network.cpp:205
 msgid "Use DCNet"
-msgstr ""
+msgstr "Usar DCNet"
 
 #: core/ui/settings_network.cpp:205
 msgid "Use the DCNet cloud service for Dreamcast Internet access."
-msgstr ""
+msgstr "Use o serviço de nuvem DCNet para o acesso à Internet Dreamcast."
 
 #: core/ui/settings_network.cpp:208
 msgid "ISP User Name"
-msgstr ""
+msgstr "Nome de Usuário do Provedor"
 
 #: core/ui/settings_network.cpp:214
 msgid "The ISP user name stored in the console Flash RAM. Used by some online games as the player name. Leave blank to keep the current Flash RAM value."
-msgstr ""
+msgstr "O nome de usuário do provedor armazenado na memória Flash do console. É usado por alguns jogos online como o nome do jogador. Deixe em branco para manter o valor atual da memória Flash."
 
 #: core/ui/settings_network.cpp:226
 msgid "Multiboard Screens"
-msgstr ""
+msgstr "Telas Múltiplas"
 
 #: core/ui/settings_network.cpp:229
 msgid "1 (Twin)"
-msgstr ""
+msgstr "1(Dupla)"
 
 #: core/ui/settings_network.cpp:229
 msgid "One screen configuration (F355 Twin)"
-msgstr ""
+msgstr "Configuração de uma tela (F355 Dupla)"
 
 #: core/ui/settings_network.cpp:231
 msgid "3 (Deluxe)"
-msgstr ""
+msgstr "3 (De luxo)"
 
 #: core/ui/settings_network.cpp:231
 msgid "Three screens configuration"
-msgstr ""
+msgstr "Configuração de três telas"
 
 #: core/ui/settings_about.cpp:53 core/ui/settings_about.cpp:107
 #, c-format
 msgid "Version: %s"
-msgstr ""
+msgstr "Versão: %s"
 
 #: core/ui/settings_about.cpp:54
 #, c-format
 msgid "Git Hash: %s"
-msgstr ""
+msgstr "Hash do Gil"
 
 #: core/ui/settings_about.cpp:55
 #, c-format
 msgid "Build Date: %s"
-msgstr ""
+msgstr "Data da Compilação: %s"
 
 #: core/ui/settings_about.cpp:58
 msgid "Platform"
-msgstr ""
+msgstr "Plataforma"
 
 #: core/ui/settings_about.cpp:60
 #, c-format
 msgid "CPU: %s"
-msgstr ""
+msgstr "CPU: %s"
 
 #: core/ui/settings_about.cpp:70 core/ui/settings_about.cpp:91
 msgid "Unknown"
-msgstr ""
+msgstr "Desconhecido"
 
 #: core/ui/settings_about.cpp:73
 #, c-format
 msgid "Operating System: %s"
-msgstr ""
+msgstr "Sistema Operacional: %s"
 
 #: core/ui/settings_about.cpp:85
 msgid "Windows Universal Platform"
-msgstr ""
+msgstr "Plataforma Universal do Windows"
 
 #: core/ui/settings_about.cpp:96
 #, c-format
 msgid "JIT Status: %s"
-msgstr ""
+msgstr "Estatuto do JIT: %s"
 
 #: core/ui/settings_about.cpp:106
 #, c-format
 msgid "Driver Name: %s"
-msgstr ""
+msgstr "Nome do controlador: %s"
 
 #: core/ui/settings_about.cpp:112
 msgid "Select a custom GPU driver"
-msgstr ""
+msgstr "Selecionar um controlador personalizado para GPU"
 
 #: core/ui/settings_about.cpp:120
 msgid "Custom Driver:"
-msgstr ""
+msgstr "Controlador Personalizado:"
 
 #: core/ui/settings_about.cpp:127
 msgid "Use Default Driver"
-msgstr ""
+msgstr "Usar Controlador Padrão"
 
 #: core/ui/settings_about.cpp:129 core/ui/settings_about.cpp:138
 #: core/ui/settings_about.cpp:143
 msgid "Reset Vulkan"
-msgstr ""
+msgstr "Reiniciar Vulkan"
 
 #: core/ui/settings_about.cpp:132
 msgid "Upload Custom Driver"
-msgstr ""
+msgstr "Carregar Controlador Personalizado"
 
 #: core/ui/settings_about.cpp:145
 msgid "Do you want to reset Vulkan to use new driver?"
-msgstr ""
+msgstr "Deseja reiniciar o Vulkan para usar um novo controlador?"
 
 #: core/nullDC.cpp:172
 msgid "Save state failed - memory full"
-msgstr ""
+msgstr "Falha ao salvar estado - memória cheia"
 
 #: core/nullDC.cpp:184
 msgid "Cannot open save file"
-msgstr ""
+msgstr "Impossível abrir o arquivo de salvamento"
 
 #: core/nullDC.cpp:212
 msgid "State saved"
-msgstr ""
+msgstr "Estado salvo"
 
 #: core/nullDC.cpp:217
 msgid "Error saving state"
-msgstr ""
+msgstr "Erro ao salvar estado"
 
 #: core/nullDC.cpp:237
 msgid "Save state not found"
-msgstr ""
+msgstr "Estado salvo não encontrado"
 
 #: core/nullDC.cpp:277 core/nullDC.cpp:299 core/nullDC.cpp:313
 msgid "Failed to load state"
@@ -2650,251 +2654,251 @@ msgstr "Falha no carregamento do estado"
 
 #: core/nullDC.cpp:277
 msgid "Not enough memory"
-msgstr ""
+msgstr "Memória insuficiente"
 
 #: core/nullDC.cpp:299
 msgid "I/O error"
-msgstr ""
+msgstr "Erro de entrada ou saída"
 
 #: core/network/dcnet.cpp:70
 msgid "Connected to DCNet with modem"
-msgstr ""
+msgstr "Conectado à DCNet com o modem"
 
 #: core/network/dcnet.cpp:269
 msgid "Connected to DCNet with Ethernet"
-msgstr ""
+msgstr "Conectado à DCNet com Ethernet"
 
 #: core/network/dcnet.cpp:648
 msgid "DCNet disconnected"
-msgstr ""
+msgstr "DCNet desconectada"
 
 #: core/network/dcnet.cpp:773
 msgid "Host not found"
-msgstr ""
+msgstr "Servidor não encontrado"
 
 #: core/network/dcnet.cpp:817
 msgid "Can't connect to DCNet"
-msgstr ""
+msgstr "Não é possível conectar-se a DCNet"
 
 #: core/network/ggpo.cpp:221
 msgid "Connected to peer"
-msgstr ""
+msgstr "Conectado ao par"
 
 #: core/network/ggpo.cpp:225
 msgid "Synchronizing with peer"
-msgstr ""
+msgstr "Sincronizando com o par"
 
 #: core/network/ggpo.cpp:229
 msgid "Synchronized with peer"
-msgstr ""
+msgstr "Sincronizado com o par"
 
 #: core/network/ggpo.cpp:233
 msgid "Running"
-msgstr ""
+msgstr "Executando"
 
 #: core/network/ggpo.cpp:238
 msgid "Disconnected from peer"
-msgstr ""
+msgstr "Desconectado do par"
 
 #: core/network/ggpo.cpp:247
 msgid "Connection interrupted"
-msgstr ""
+msgstr "Conexão interrompida"
 
 #: core/network/ggpo.cpp:251
 msgid "Connection resumed"
-msgstr ""
+msgstr "Conexão retomada"
 
 #: core/network/null_modem.h:181
 msgid "Network connected"
-msgstr ""
+msgstr "Rede conectada"
 
 #: core/network/ice.cpp:121
 msgid "Game not supported"
-msgstr ""
+msgstr "Jogo não suportado"
 
 #: core/network/ice.cpp:237
 msgid "Connection to lobby failed:"
-msgstr ""
+msgstr "Falha na conexão com a sala:"
 
 #: core/network/ice.cpp:444
 msgid "Connection failed"
-msgstr ""
+msgstr "Conexão falhou"
 
 #: core/network/ice.cpp:475
 msgid "Direct peer to peer"
-msgstr ""
+msgstr "Direcionar ponto a ponto"
 
 #: core/network/ice.cpp:477
 msgid "Using relay"
-msgstr ""
+msgstr "Usando retransmissão"
 
 #: core/network/ice.cpp:481
 msgid "NAT"
-msgstr ""
+msgstr "NAT"
 
 #: core/network/ice.cpp:490 core/network/ice.cpp:508
 msgid "Connection lost"
-msgstr ""
+msgstr "Conexão perdida"
 
 #: core/network/naomi_network.cpp:110
 msgid "Waiting for players..."
-msgstr ""
+msgstr "Esperando por jogadores..."
 
 #: core/network/naomi_network.cpp:113
 #, c-format
 msgid "%d player connected. Waiting..."
 msgid_plural "%d players connected. Waiting..."
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%d jogador conectado. Aguardando..."
+msgstr[1] "%d jogadores conectados. Aguardando..."
 
 #: core/network/naomi_network.cpp:137
 msgid "Starting game"
-msgstr ""
+msgstr "Iniciando jogo"
 
 #: core/network/naomi_network.cpp:142
 msgid "No player connected"
-msgstr ""
+msgstr "Nenhum jogador conectado"
 
 #: core/network/naomi_network.cpp:176
 msgid "Connecting to server"
-msgstr ""
+msgstr "Conectando ao servidor"
 
 #: core/network/naomi_network.cpp:260
 #, c-format
 msgid "Connected as slot %d"
-msgstr ""
+msgstr "Conectado como slot %d"
 
 #: core/rend/dx9/d3d_renderer.cpp:318
 msgid "DirectX 9 doesn't support Naomi 2 games. Select a different graphics API"
-msgstr ""
+msgstr "DirectX 9 não suporta jogos Naomi 2. Selecione uma API gráfica diferente"
 
 #: core/rend/vulkan/adreno.cpp:154
 msgid "Can't open zip file"
-msgstr ""
+msgstr "Não foi possível abrir o arquivo zip"
 
 #: core/rend/vulkan/adreno.cpp:157
 msgid "Invalid zip file"
-msgstr ""
+msgstr "Arquivo zip inválido"
 
 #: core/rend/vulkan/adreno.cpp:185 core/rend/vulkan/adreno.cpp:203
 msgid "Can't save files"
-msgstr ""
+msgstr "Não foi possível salvar arquivos"
 
 #: core/rend/vulkan/adreno.cpp:195
 msgid "Can't read zip"
-msgstr ""
+msgstr "Não foi possível ler zip"
 
 #: core/rend/gles/gles.cpp:1058
 msgid "OpenGL ES 3.0+ required for Naomi 2"
-msgstr ""
+msgstr "OpenGL ES 3.0+ necessário para Naomi 2"
 
 #: core/emulator.cpp:589
 #, c-format
 msgid "No BIOS file found in %s"
-msgstr ""
+msgstr "Nenhum arquivo BIOS encontrado no %s"
 
 #: core/emulator.cpp:605
 msgid "This game requires a real BIOS"
-msgstr ""
+msgstr "Este jogo requer uma Bios verdadeira"
 
 #: core/emulator.cpp:662
 msgid "Widescreen cheat activated"
-msgstr ""
+msgstr "Trapaça de Tela Cheia ativada"
 
 #: core/input/virtual_gamepad.h:30
 msgid "Virtual Gamepad"
-msgstr ""
+msgstr "Controle Virtual"
 
 #: core/input/mouse.h:78
 msgid "Left Button"
-msgstr ""
+msgstr "Botão esquerdo"
 
 #: core/input/mouse.h:80
 msgid "Right Button"
-msgstr ""
+msgstr "Botão direito"
 
 #: core/input/mouse.h:82
 msgid "Middle Button"
-msgstr ""
+msgstr "Botão do meio"
 
 #: core/input/mouse.h:114
 msgid "Touch Mouse"
-msgstr ""
+msgstr "Toque do Mouse"
 
 #: core/wsi/switcher.cpp:91
 msgid "Cannot initialize the graphics API"
-msgstr ""
+msgstr "Não é possível inicializar a API gráfica"
 
 #: shell/libretro/libretro.cpp:2130
 msgid "Cannot run without JIT"
-msgstr ""
+msgstr "Não é possível executar sem JIT"
 
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:145
 msgid "DPad Center"
-msgstr ""
+msgstr "Dpad Centro"
 
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:173
 msgid "Select"
-msgstr ""
+msgstr "Selecionar"
 
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:175
 msgid "Mode"
-msgstr ""
+msgstr "Modo"
 
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:203
 msgid "Hat X"
-msgstr ""
+msgstr "Hat X"
 
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:205
 msgid "Hat Y"
-msgstr ""
+msgstr "Hat Y"
 
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:207
 msgid "Gas"
-msgstr ""
+msgstr "Gás"
 
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:209
 msgid "Brake"
-msgstr ""
+msgstr "Freio"
 
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:211
 msgid "Rudder"
-msgstr ""
+msgstr "Leme"
 
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:213
 msgid "Wheel"
-msgstr ""
+msgstr "Roda"
 
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:215
 msgid "Throttle"
-msgstr ""
+msgstr "Acelerador"
 
 #: shell/android-studio/flycast/src/main/jni/src/Android.cpp:172
 msgid "Memory initialization failed"
-msgstr ""
+msgstr "Falha na alocação de memória"
 
 #: shell/android-studio/flycast/src/main/jni/src/android_storage.h:192
 #, c-format
 msgid "Storage access failed: %s"
-msgstr ""
+msgstr "Falha no acesso ao armazenamento: %s"
 
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:147
 msgid "MFi Gamepad"
-msgstr ""
+msgstr "Iphone Gamepad"
 
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:361
 msgid "Options"
-msgstr ""
+msgstr "Opções"
 
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:363
 msgid "Home"
-msgstr ""
+msgstr "Início"
 
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:377
 msgid "Share"
-msgstr ""
+msgstr "Compartilhar"
 
 #: shell/switch/switch_main.cpp:76
 msgid "Not supported on Switch"
-msgstr ""
+msgstr "Não suportado no Switch"
 
