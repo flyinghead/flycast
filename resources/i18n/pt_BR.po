@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-12-14 14:32+0100\n"
-"PO-Revision-Date: 2025-12-21 11:22\n"
+"PO-Revision-Date: 2025-12-21 12:37\n"
 "Last-Translator: \n"
 "Language: pt_BR\n"
 "MIME-Version: 1.0\n"
@@ -917,7 +917,7 @@ msgstr "Valores maiores fazem com que as texturas vistas em ângulos ofuscados p
 
 #: core/ui/settings_video.cpp:378
 msgid "Texture Filtering:"
-msgstr ""
+msgstr "Filtragem de Texturas:"
 
 #: core/ui/settings_video.cpp:380 core/ui/settings_general.cpp:188
 #: core/ui/settings_general.cpp:192 core/ui/settings_general.cpp:197
@@ -2125,400 +2125,400 @@ msgstr "Ajustar nível de áudio do emulador"
 
 #: core/ui/settings_audio.cpp:35
 msgid "Automatic Latency"
-msgstr ""
+msgstr "Latência Automática"
 
 #: core/ui/settings_audio.cpp:36
 msgid "Automatically set audio latency. Recommended"
-msgstr ""
+msgstr "Definir automaticamente a latência do áudio. Recomendado"
 
 #: core/ui/settings_audio.cpp:42
 msgid "Latency"
-msgstr ""
+msgstr "Latência"
 
 #: core/ui/settings_audio.cpp:45
 msgid "Sets the maximum audio latency. Not supported by all audio drivers."
-msgstr ""
+msgstr "Define a latência máxima de áudio. Não suportado por todos os controladores."
 
 #: core/ui/settings_audio.cpp:58
 msgid "Audio Driver"
-msgstr ""
+msgstr "Controlador de Áudio"
 
 #: core/ui/settings_audio.cpp:61
 msgid "auto - Automatic driver selection"
-msgstr ""
+msgstr "auto - Seleção automática do controlador"
 
 #: core/ui/settings_audio.cpp:80
 msgid "The audio driver to use"
-msgstr ""
+msgstr "O Controlador de áudio a ser utilizado"
 
 #: core/ui/gui_cheats.cpp:45
 msgid "ADD CHEAT"
-msgstr ""
+msgstr "ADICIONAR TRAPAÇA"
 
 #: core/ui/gui_cheats.cpp:72 core/ui/settings_network.cpp:137
 msgid "Code"
-msgstr ""
+msgstr "Código"
 
 #: core/ui/gui_cheats.cpp:95
 msgid "Select a cheat file"
-msgstr ""
+msgstr "Selecione um arquivo de trapaça"
 
 #: core/ui/gui_cheats.cpp:100
 msgid "CHEATS"
-msgstr ""
+msgstr "TRAPAÇAS"
 
 #: core/ui/gui_cheats.cpp:137
 msgid "(No cheat loaded)"
-msgstr ""
+msgstr "(Nenhuma trapaça carregada)"
 
 #: core/ui/settings.cpp:38
 msgid "CPU Mode"
-msgstr ""
+msgstr "Modo da CPU"
 
 #: core/ui/settings.cpp:41
 msgid "Dynarec"
-msgstr ""
+msgstr "Recompilação Dinâmica"
 
 #: core/ui/settings.cpp:42
 msgid "Use the dynamic recompiler. Recommended in most cases"
-msgstr ""
+msgstr "Use o recompilador dinâmico. Recomendado em muitos casos"
 
 #: core/ui/settings.cpp:44
 msgid "Interpreter"
-msgstr ""
+msgstr "Intérprete"
 
 #: core/ui/settings.cpp:45
 msgid "Use the interpreter. Very slow but may help in case of a dynarec problem"
-msgstr ""
+msgstr "Use o intérprete. Muito lento, mas pode ajudar em caso de problemas na recompilação dinâmica"
 
 #: core/ui/settings.cpp:48
 msgid "SH4 Clock"
-msgstr ""
+msgstr "Frequência do SH4"
 
 #: core/ui/settings.cpp:49
 msgid "Over/Underclock the main SH4 CPU. Default is 200 MHz. Other values may crash, freeze or trigger unexpected nuclear reactions."
-msgstr ""
+msgstr "Ajustar overclock/underclock da CPU principal SH4. O padrão é 200 MHz. Outros valores podem causar travamentos, congelamentos ou reações nucleares inesperadas."
 
 #: core/ui/settings.cpp:97
 msgid "Other"
-msgstr ""
+msgstr "Outros"
 
 #: core/ui/settings.cpp:99
 msgid "HLE BIOS"
-msgstr ""
+msgstr "BIOS HLE"
 
 #: core/ui/settings.cpp:99
 msgid "Force high-level BIOS emulation"
-msgstr ""
+msgstr "Forçar emulação de alto nível da BIOS"
 
 #: core/ui/settings.cpp:100
 msgid "Multi-threaded emulation"
-msgstr ""
+msgstr "Emulação multi-threads"
 
 #: core/ui/settings.cpp:101
 msgid "Run the emulated CPU and GPU on different threads"
-msgstr ""
+msgstr "Executar a CPU e a GPU emuladas em diferentes threads"
 
 #: core/ui/settings.cpp:103
 msgid "Serial Console"
-msgstr ""
+msgstr "Console serial"
 
 #: core/ui/settings.cpp:104
 msgid "Dump the Dreamcast serial console to stdout"
-msgstr ""
+msgstr "Despejar o serial do console Dreamcast para stdout"
 
 #: core/ui/settings.cpp:108
 msgid "Dreamcast 32MB RAM Mod"
-msgstr ""
+msgstr "Dreamcast modificação de 32 MB de RAM"
 
 #: core/ui/settings.cpp:109
 msgid "Enables 32MB RAM Mod for Dreamcast. May affect compatibility"
-msgstr ""
+msgstr "Ativa a modificação de 32 MB de RAM para o Dreamcast.\\nOBSERVAÇÃO: pode afetar compatibilidade."
 
 #: core/ui/settings.cpp:111
 msgid "Dump Textures"
-msgstr ""
+msgstr "Despejar Texturas"
 
 #: core/ui/settings.cpp:112
 msgid "Dump all textures into data/texdump/<game id>"
-msgstr ""
+msgstr "Despejar todas as texturas em data/texdump/<game id>"
 
 #: core/ui/settings.cpp:116
 msgid "Dump Replaced Textures"
-msgstr ""
+msgstr "Despejar Texturas Substituídas"
 
 #: core/ui/settings.cpp:117
 msgid "Always dump textures that are already replaced by custom textures"
-msgstr ""
+msgstr "Sempre despeje texturas que já foram substituídas por texturas personalizadas"
 
 #: core/ui/settings.cpp:121
 msgid "Log to File"
-msgstr ""
+msgstr "Log para  o Arquivo"
 
 #: core/ui/settings.cpp:124
 msgid "Log debug information to flycast.log"
-msgstr ""
+msgstr "Registrar informações de depuração em flycast.log"
 
 #: core/ui/settings.cpp:126
 msgid "Automatically Report Crashes"
-msgstr ""
+msgstr "Relatar falhas automaticamente"
 
 #: core/ui/settings.cpp:127
 msgid "Automatically upload crash reports to sentry.io to help in troubleshooting. No personal information is included."
-msgstr ""
+msgstr "Enviar automaticamente relatórios de falha para sentry.io para ajudar na resolução de problemas. Nenhuma informação pessoal será incluída."
 
 #: core/ui/settings.cpp:132
 msgid "Lua Scripting"
-msgstr ""
+msgstr "Lua Scripting"
 
 #: core/ui/settings.cpp:134
 msgid "Lua Filename"
-msgstr ""
+msgstr "Nome do Arquivo Lua"
 
 #: core/ui/settings.cpp:136
 msgid "Specify lua filename to use. Should be located in Flycast config folder. Defaults to flycast.lua when empty."
-msgstr ""
+msgstr "Especifique o nome do arquivo a ser usado. Deve ser localizado na pasta de configuração do Flycast. O padrão é flycast.lua quando vazio."
 
 #: core/ui/settings.cpp:270
 msgid "General"
-msgstr ""
+msgstr "Geral"
 
 #: core/ui/settings.cpp:276
 msgid "Controls"
-msgstr ""
+msgstr "Controles"
 
 #: core/ui/settings.cpp:282
 msgid "Video"
-msgstr ""
+msgstr "Vídeo"
 
 #: core/ui/settings.cpp:288
 msgid "Audio"
-msgstr ""
+msgstr "Áudio"
 
 #: core/ui/settings.cpp:294
 msgid "Network"
-msgstr ""
+msgstr "Rede"
 
 #: core/ui/settings.cpp:314
 msgid "About"
-msgstr ""
+msgstr "Sobre"
 
 #: core/ui/gui_util.cpp:121
 msgid "Storage"
-msgstr ""
+msgstr "Armazenamento"
 
 #: core/ui/gui_util.cpp:133
 msgid ".. Up to Parent Folder"
-msgstr ""
+msgstr ".. Até a Pasta Pai"
 
 #: core/ui/gui_util.cpp:171
 msgid "Select Current Folder"
-msgstr ""
+msgstr "Selecionar Pasta Atual"
 
 #: core/ui/gui_util.cpp:479
 msgid "(?)"
-msgstr ""
+msgstr "(?)"
 
 #: core/ui/vgamepad.cpp:79
 msgid "Reset"
-msgstr ""
+msgstr "Reiniciar"
 
 #: core/ui/settings_network.cpp:28
 msgid "Network Type"
-msgstr ""
+msgstr "Tipo de rede"
 
 #: core/ui/settings_network.cpp:44
 msgid "Enable networking using GGPO"
-msgstr ""
+msgstr "Ativar rede usando GGPO"
 
 #: core/ui/settings_network.cpp:48
 msgid "Enable networking for supported Naomi and Atomiswave games"
-msgstr ""
+msgstr "Habilitar rede para jogos suportados na Naomi e Atomiswave"
 
 #: core/ui/settings_network.cpp:50
 msgid "Battle Cable"
-msgstr ""
+msgstr "Cabo de Batalha"
 
 #: core/ui/settings_network.cpp:52
 msgid "Emulate the Taisen (Battle) null modem cable for games that support it"
-msgstr ""
+msgstr "Emule o modem Taisen (Batalha) para jogos que o suportam"
 
 #: core/ui/settings_network.cpp:72
 msgid "Configuration"
-msgstr ""
+msgstr "Configuração"
 
 #: core/ui/settings_network.cpp:78
 msgid "Play as Player 1"
-msgstr ""
+msgstr "Jogue como Jogador 1"
 
 #: core/ui/settings_network.cpp:79
 msgid "Deselect to play as player 2"
-msgstr ""
+msgstr "Desmarque para jogar como jogador 2"
 
 #: core/ui/settings_network.cpp:80 core/ui/settings_network.cpp:174
 msgid "Peer"
-msgstr ""
+msgstr "Par"
 
 #: core/ui/settings_network.cpp:82
 msgid "Your peer IP address and optional port"
-msgstr ""
+msgstr "Seu endereço IP de par e porta opcional"
 
 #: core/ui/settings_network.cpp:83
 msgid "Frame Delay"
-msgstr ""
+msgstr "Atraso de quadro"
 
 #: core/ui/settings_network.cpp:84
 msgid "Sets Frame Delay, advisable for sessions with ping >100 ms"
-msgstr ""
+msgstr "Define o atraso do quadro, aconselhável para sessões com ping >100 ms"
 
 #: core/ui/settings_network.cpp:86
 msgid "Left Thumbstick:"
-msgstr ""
+msgstr "Analógico Esquerdo:"
 
 #: core/ui/settings_network.cpp:87
 msgid "Left thumbstick not used"
-msgstr ""
+msgstr "Analógico esquerdo não usado"
 
 #: core/ui/settings_network.cpp:89
 msgid "Horizontal"
-msgstr ""
+msgstr "Horizontal"
 
 #: core/ui/settings_network.cpp:89
 msgid "Use the left thumbstick horizontal axis only"
-msgstr ""
+msgstr "Usar apenas o eixo horizontal do analógico esquerdo"
 
 #: core/ui/settings_network.cpp:91
 msgid "Full"
-msgstr ""
+msgstr "Completo"
 
 #: core/ui/settings_network.cpp:91
 msgid "Use the left thumbstick horizontal and vertical axes"
-msgstr ""
+msgstr "Usar os eixos horizontais e verticais do analógico esquerdo"
 
 #: core/ui/settings_network.cpp:93
 msgid "Enable Chat"
-msgstr ""
+msgstr "Habilitar bate-papo"
 
 #: core/ui/settings_network.cpp:93
 msgid "Open the chat window when a chat message is received"
-msgstr ""
+msgstr "Abrir a janela de bate-papo quando uma mensagem é recebida"
 
 #: core/ui/settings_network.cpp:96
 msgid "Enable Chat Window Timeout"
-msgstr ""
+msgstr "Habilitar tempo limite da janela de bate-papo"
 
 #: core/ui/settings_network.cpp:96
 msgid "Automatically close chat window after 20 seconds"
-msgstr ""
+msgstr "Fechar janela de bate-papo automaticamente após 20 segundos"
 
 #: core/ui/settings_network.cpp:101
 msgid "Chat Window Timeout (seconds)"
-msgstr ""
+msgstr "Tempo limite da janela de bate-papo (segundos)"
 
 #: core/ui/settings_network.cpp:103
 msgid "Sets duration that chat window stays open after new message is received."
-msgstr ""
+msgstr "Define a duração que a janela de bate-papo permanece aberta depois que uma nova mensagem for recebida."
 
 #: core/ui/settings_network.cpp:107 core/ui/settings_network.cpp:167
 msgid "Network Statistics"
-msgstr ""
+msgstr "Estatísticas da Rede"
 
 #: core/ui/settings_network.cpp:108 core/ui/settings_network.cpp:168
 msgid "Display network statistics on screen"
-msgstr ""
+msgstr "Mostrar estatísticas da rede na tela"
 
 #: core/ui/settings_network.cpp:112
 msgid "Act as Server"
-msgstr ""
+msgstr "Agir como Servidor"
 
 #: core/ui/settings_network.cpp:113
 msgid "Create a local server for Naomi network games"
-msgstr ""
+msgstr "Crie um servidor local para jogos de rede Naomi"
 
 #: core/ui/settings_network.cpp:116
 msgid "Server"
-msgstr ""
+msgstr "Servidor"
 
 #: core/ui/settings_network.cpp:118
 msgid "The server to connect to. Leave blank to find a server automatically on the default port"
-msgstr ""
+msgstr "O servidor para se conectar. Deixe em branco para encontrar um servidor automaticamente na porta padrão"
 
 #: core/ui/settings_network.cpp:122 core/ui/settings_network.cpp:179
 msgid "Local Port"
-msgstr ""
+msgstr "Porta Local"
 
 #: core/ui/settings_network.cpp:124 core/ui/settings_network.cpp:181
 msgid "The local UDP port to use"
-msgstr ""
+msgstr "A porta UDP local a ser usada"
 
 #: core/ui/settings_network.cpp:132
 msgid "Match Code"
-msgstr ""
+msgstr "Código da partida"
 
 #: core/ui/settings_network.cpp:139
 msgid "Choose a unique word or number and share it with your opponent."
-msgstr ""
+msgstr "Escolha uma palavra ou número único e compartilhe-a com seu oponente."
 
 #: core/ui/settings_network.cpp:141
 msgid "Connect"
-msgstr ""
+msgstr "Conectar"
 
 #: core/ui/settings_network.cpp:145
 msgid "Disconnect"
-msgstr ""
+msgstr "Desconectar"
 
 #: core/ui/settings_network.cpp:155
 msgid "Waiting at meeting point..."
-msgstr ""
+msgstr "Aguardando no ponto de encontro…"
 
 #: core/ui/settings_network.cpp:158
 msgid "Preparing game..."
-msgstr ""
+msgstr "Preparando o jogo..."
 
 #: core/ui/settings_network.cpp:161
 #, c-format
 msgid "Playing %s (%s)"
-msgstr ""
+msgstr "Jogando %s (%s)"
 
 #: core/ui/settings_network.cpp:176
 msgid "The peer to connect to. Leave blank to find a player automatically on the default port"
-msgstr ""
+msgstr "O par para se conectar. Deixe em branco para encontrar um jogador automaticamente na porta padrão"
 
 #: core/ui/settings_network.cpp:189
 msgid "Act as Master"
-msgstr ""
+msgstr "Agir como Mestre"
 
 #: core/ui/settings_network.cpp:190
 msgid "Only used for Maximum Speed. One of the peer must be master."
-msgstr ""
+msgstr "Usado apenas para o jogo \"Maximum Speed\". Um dos pares deve ser o mestre."
 
 #: core/ui/settings_network.cpp:194
 msgid "Network Options"
-msgstr ""
+msgstr "Opções de Rede"
 
 #: core/ui/settings_network.cpp:196
 msgid "Enable UPnP"
-msgstr ""
+msgstr "Ativar UPnP"
 
 #: core/ui/settings_network.cpp:196
 msgid "Automatically configure your network router for netplay"
-msgstr ""
+msgstr "Configurar automaticamente o roteador de rede para netplay"
 
 #: core/ui/settings_network.cpp:197
 msgid "Broadcast Digital Outputs"
-msgstr ""
+msgstr "Transmitir Saídas Digitais"
 
 #: core/ui/settings_network.cpp:197
 msgid "Broadcast digital outputs and force-feedback state on TCP port 8000. Compatible with the \"-output network\" MAME option. Arcade games only."
-msgstr ""
+msgstr "Transmita saídas digitais e estado de feedback forçado na porta TCP 8000. Compatível com a opção \"rede de saída\" opção do MAME. Jogos Arcade apenas."
 
 #: core/ui/settings_network.cpp:202
 msgid "Broadband Adapter Emulation"
-msgstr ""
+msgstr "Emulação do adaptador de banda larga"
 
 #: core/ui/settings_network.cpp:203
 msgid "Emulate the Ethernet Broadband Adapter (BBA) instead of the Modem"
-msgstr ""
+msgstr "Emular o adaptador de banda larga Ethernet (BBA) em vez do Modem"
 
 #: core/ui/settings_network.cpp:205
 msgid "Use DCNet"
