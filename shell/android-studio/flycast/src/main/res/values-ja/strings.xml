@@ -13,5 +13,5 @@
     <string name="flycast_error">Flycast Error</string>
     <string name="init_failed_message">Initialization failed. Please try again or reinstall.\n\nError: </string>
     <string name="exit">Exit</string>
-    <string name="copying">Copying</string>
+    <string name="copying">コピー中</string>
 </resources>
