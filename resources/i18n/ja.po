@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-12-14 14:32+0100\n"
-"PO-Revision-Date: 2025-12-22 13:47\n"
+"PO-Revision-Date: 2025-12-22 15:11\n"
 "Last-Translator: \n"
 "Language: ja_JP\n"
 "MIME-Version: 1.0\n"
@@ -2352,7 +2352,7 @@ msgstr "プレイヤー1としてプレイ"
 
 #: core/ui/settings_network.cpp:79
 msgid "Deselect to play as player 2"
-msgstr ""
+msgstr "プレイヤー2としてプレイするには選択を解除してください"
 
 #: core/ui/settings_network.cpp:80 core/ui/settings_network.cpp:174
 msgid "Peer"
@@ -2360,543 +2360,543 @@ msgstr "ピア"
 
 #: core/ui/settings_network.cpp:82
 msgid "Your peer IP address and optional port"
-msgstr ""
+msgstr "あなたのピアIPアドレスとオプションのポート"
 
 #: core/ui/settings_network.cpp:83
 msgid "Frame Delay"
-msgstr ""
+msgstr "フレーム遅延"
 
 #: core/ui/settings_network.cpp:84
 msgid "Sets Frame Delay, advisable for sessions with ping >100 ms"
-msgstr ""
+msgstr "フレーム遅延を設定します。pingが100ミリ秒を超えるセッションに推奨されます。"
 
 #: core/ui/settings_network.cpp:86
 msgid "Left Thumbstick:"
-msgstr ""
+msgstr "左アナログスティック"
 
 #: core/ui/settings_network.cpp:87
 msgid "Left thumbstick not used"
-msgstr ""
+msgstr "左のサムネイルは使用されていません"
 
 #: core/ui/settings_network.cpp:89
 msgid "Horizontal"
-msgstr ""
+msgstr "水平"
 
 #: core/ui/settings_network.cpp:89
 msgid "Use the left thumbstick horizontal axis only"
-msgstr ""
+msgstr "左スティックの水平軸のみを使用する"
 
 #: core/ui/settings_network.cpp:91
 msgid "Full"
-msgstr ""
+msgstr "フル"
 
 #: core/ui/settings_network.cpp:91
 msgid "Use the left thumbstick horizontal and vertical axes"
-msgstr ""
+msgstr "左スティックの水平軸と垂直軸を使用する"
 
 #: core/ui/settings_network.cpp:93
 msgid "Enable Chat"
-msgstr ""
+msgstr "チャットを有効にする"
 
 #: core/ui/settings_network.cpp:93
 msgid "Open the chat window when a chat message is received"
-msgstr ""
+msgstr "チャットメッセージを受信したときにチャットウィンドウを開く"
 
 #: core/ui/settings_network.cpp:96
 msgid "Enable Chat Window Timeout"
-msgstr ""
+msgstr "チャットウィンドウのタイムアウトを有効にする"
 
 #: core/ui/settings_network.cpp:96
 msgid "Automatically close chat window after 20 seconds"
-msgstr ""
+msgstr "20 秒後にチャットウィンドウを自動的に閉じます"
 
 #: core/ui/settings_network.cpp:101
 msgid "Chat Window Timeout (seconds)"
-msgstr ""
+msgstr "チャットウィンドウのタイムアウト(秒)"
 
 #: core/ui/settings_network.cpp:103
 msgid "Sets duration that chat window stays open after new message is received."
-msgstr ""
+msgstr "新しいメッセージを受信した後にチャットウィンドウを開いたままにする期間を設定します。"
 
 #: core/ui/settings_network.cpp:107 core/ui/settings_network.cpp:167
 msgid "Network Statistics"
-msgstr ""
+msgstr "ネットワーク統計"
 
 #: core/ui/settings_network.cpp:108 core/ui/settings_network.cpp:168
 msgid "Display network statistics on screen"
-msgstr ""
+msgstr "ネットワーク統計を画面に表示する"
 
 #: core/ui/settings_network.cpp:112
 msgid "Act as Server"
-msgstr ""
+msgstr "サーバーとして実行"
 
 #: core/ui/settings_network.cpp:113
 msgid "Create a local server for Naomi network games"
-msgstr ""
+msgstr "Naomiネットワークゲーム用のローカルサーバーを作成する"
 
 #: core/ui/settings_network.cpp:116
 msgid "Server"
-msgstr ""
+msgstr "サーバー"
 
 #: core/ui/settings_network.cpp:118
 msgid "The server to connect to. Leave blank to find a server automatically on the default port"
-msgstr ""
+msgstr "接続先のサーバー。空白のままにすると自動的にデフォルトのポートでサーバーを検索します"
 
 #: core/ui/settings_network.cpp:122 core/ui/settings_network.cpp:179
 msgid "Local Port"
-msgstr ""
+msgstr "ローカルポート"
 
 #: core/ui/settings_network.cpp:124 core/ui/settings_network.cpp:181
 msgid "The local UDP port to use"
-msgstr ""
+msgstr "使用するローカルUDPポート"
 
 #: core/ui/settings_network.cpp:132
 msgid "Match Code"
-msgstr ""
+msgstr "マッチコード"
 
 #: core/ui/settings_network.cpp:139
 msgid "Choose a unique word or number and share it with your opponent."
-msgstr ""
+msgstr "ユニークな単語または番号を選択し、相手と共有します。"
 
 #: core/ui/settings_network.cpp:141
 msgid "Connect"
-msgstr ""
+msgstr "接続"
 
 #: core/ui/settings_network.cpp:145
 msgid "Disconnect"
-msgstr ""
+msgstr "切断"
 
 #: core/ui/settings_network.cpp:155
 msgid "Waiting at meeting point..."
-msgstr ""
+msgstr "ミーティングポイントで待機中..."
 
 #: core/ui/settings_network.cpp:158
 msgid "Preparing game..."
-msgstr ""
+msgstr "ゲームを準備中..."
 
 #: core/ui/settings_network.cpp:161
 #, c-format
 msgid "Playing %s (%s)"
-msgstr ""
+msgstr "プレイ中 %s (%s)"
 
 #: core/ui/settings_network.cpp:176
 msgid "The peer to connect to. Leave blank to find a player automatically on the default port"
-msgstr ""
+msgstr "接続先のピア。空白にすると、デフォルトのポートで自動的にプレイヤーが検索されます。"
 
 #: core/ui/settings_network.cpp:189
 msgid "Act as Master"
-msgstr ""
+msgstr "マスターとして実行"
 
 #: core/ui/settings_network.cpp:190
 msgid "Only used for Maximum Speed. One of the peer must be master."
-msgstr ""
+msgstr "最大速度にのみ使用されます。ピアの 1 つがマスターである必要があります。"
 
 #: core/ui/settings_network.cpp:194
 msgid "Network Options"
-msgstr ""
+msgstr "ネットワークオプション"
 
 #: core/ui/settings_network.cpp:196
 msgid "Enable UPnP"
-msgstr ""
+msgstr "UPnPを有効にする"
 
 #: core/ui/settings_network.cpp:196
 msgid "Automatically configure your network router for netplay"
-msgstr ""
+msgstr "ネットプレイ用にネットワークルーターを自動的に構成する"
 
 #: core/ui/settings_network.cpp:197
 msgid "Broadcast Digital Outputs"
-msgstr ""
+msgstr "ブロードキャストデジタル出力"
 
 #: core/ui/settings_network.cpp:197
 msgid "Broadcast digital outputs and force-feedback state on TCP port 8000. Compatible with the \"-output network\" MAME option. Arcade games only."
-msgstr ""
+msgstr "TCPポート8000でデジタル出力とフォースフィードバックの状態をブロードキャストします。MAMEオプションの -output network と互換性があります。アーケードゲームのみ。"
 
 #: core/ui/settings_network.cpp:202
 msgid "Broadband Adapter Emulation"
-msgstr ""
+msgstr "ブロードバンドアダプタエミュレーション"
 
 #: core/ui/settings_network.cpp:203
 msgid "Emulate the Ethernet Broadband Adapter (BBA) instead of the Modem"
-msgstr ""
+msgstr "モデムの代わりにイーサネットブロードバンドアダプタ(BBA)をエミュレートします"
 
 #: core/ui/settings_network.cpp:205
 msgid "Use DCNet"
-msgstr ""
+msgstr "DCNetを使用する"
 
 #: core/ui/settings_network.cpp:205
 msgid "Use the DCNet cloud service for Dreamcast Internet access."
-msgstr ""
+msgstr "Dreamcast インターネットへのアクセスには DCNet クラウドサービスを使用します。"
 
 #: core/ui/settings_network.cpp:208
 msgid "ISP User Name"
-msgstr ""
+msgstr "ISPユーザー名"
 
 #: core/ui/settings_network.cpp:214
 msgid "The ISP user name stored in the console Flash RAM. Used by some online games as the player name. Leave blank to keep the current Flash RAM value."
-msgstr ""
+msgstr "コンソールのフラッシュRAMに格納されているISPユーザー名。 一部のオンラインゲームでプレイヤー名として使用されます。現在のFlashのRAM値を維持するには空白のままにしてください。"
 
 #: core/ui/settings_network.cpp:226
 msgid "Multiboard Screens"
-msgstr ""
+msgstr "マルチボードスクリーン"
 
 #: core/ui/settings_network.cpp:229
 msgid "1 (Twin)"
-msgstr ""
+msgstr "1 (ツイン)"
 
 #: core/ui/settings_network.cpp:229
 msgid "One screen configuration (F355 Twin)"
-msgstr ""
+msgstr "1画面構成(F355ツイン)"
 
 #: core/ui/settings_network.cpp:231
 msgid "3 (Deluxe)"
-msgstr ""
+msgstr "3 (デラックス)"
 
 #: core/ui/settings_network.cpp:231
 msgid "Three screens configuration"
-msgstr ""
+msgstr "3画面構成"
 
 #: core/ui/settings_about.cpp:53 core/ui/settings_about.cpp:107
 #, c-format
 msgid "Version: %s"
-msgstr ""
+msgstr "バージョン: %s"
 
 #: core/ui/settings_about.cpp:54
 #, c-format
 msgid "Git Hash: %s"
-msgstr ""
+msgstr "Gitハッシュ: %s"
 
 #: core/ui/settings_about.cpp:55
 #, c-format
 msgid "Build Date: %s"
-msgstr ""
+msgstr "ビルド日時: %s"
 
 #: core/ui/settings_about.cpp:58
 msgid "Platform"
-msgstr ""
+msgstr "プラットフォーム"
 
 #: core/ui/settings_about.cpp:60
 #, c-format
 msgid "CPU: %s"
-msgstr ""
+msgstr "CPU: %s"
 
 #: core/ui/settings_about.cpp:70 core/ui/settings_about.cpp:91
 msgid "Unknown"
-msgstr ""
+msgstr "不明"
 
 #: core/ui/settings_about.cpp:73
 #, c-format
 msgid "Operating System: %s"
-msgstr ""
+msgstr "OS: %s"
 
 #: core/ui/settings_about.cpp:85
 msgid "Windows Universal Platform"
-msgstr ""
+msgstr "UWP"
 
 #: core/ui/settings_about.cpp:96
 #, c-format
 msgid "JIT Status: %s"
-msgstr ""
+msgstr "JITステータス: %s"
 
 #: core/ui/settings_about.cpp:106
 #, c-format
 msgid "Driver Name: %s"
-msgstr ""
+msgstr "ドライバ名: %s"
 
 #: core/ui/settings_about.cpp:112
 msgid "Select a custom GPU driver"
-msgstr ""
+msgstr "カスタムGPUドライバを選択"
 
 #: core/ui/settings_about.cpp:120
 msgid "Custom Driver:"
-msgstr ""
+msgstr "カスタムドライバー:"
 
 #: core/ui/settings_about.cpp:127
 msgid "Use Default Driver"
-msgstr ""
+msgstr "デフォルトのドライバーを使用"
 
 #: core/ui/settings_about.cpp:129 core/ui/settings_about.cpp:138
 #: core/ui/settings_about.cpp:143
 msgid "Reset Vulkan"
-msgstr ""
+msgstr "Vulkanをリセットする"
 
 #: core/ui/settings_about.cpp:132
 msgid "Upload Custom Driver"
-msgstr ""
+msgstr "カスタムドライバーをアップロード"
 
 #: core/ui/settings_about.cpp:145
 msgid "Do you want to reset Vulkan to use new driver?"
-msgstr ""
+msgstr "Vulkanをリセットして新しいドライバを使用しますか？"
 
 #: core/nullDC.cpp:172
 msgid "Save state failed - memory full"
-msgstr ""
+msgstr "ステートのセーブに失敗しました - メモリがいっぱいです"
 
 #: core/nullDC.cpp:184
 msgid "Cannot open save file"
-msgstr ""
+msgstr "セーブファイルを開けません"
 
 #: core/nullDC.cpp:212
 msgid "State saved"
-msgstr ""
+msgstr "ステートをセーブしました"
 
 #: core/nullDC.cpp:217
 msgid "Error saving state"
-msgstr ""
+msgstr "ステートセーブ中にエラーが発生しました"
 
 #: core/nullDC.cpp:237
 msgid "Save state not found"
-msgstr ""
+msgstr "セーブステートが見つかりません"
 
 #: core/nullDC.cpp:277 core/nullDC.cpp:299 core/nullDC.cpp:313
 msgid "Failed to load state"
-msgstr ""
+msgstr "ステートのロードに失敗しました"
 
 #: core/nullDC.cpp:277
 msgid "Not enough memory"
-msgstr ""
+msgstr "メモリが足りません"
 
 #: core/nullDC.cpp:299
 msgid "I/O error"
-msgstr ""
+msgstr "I/Oエラー"
 
 #: core/network/dcnet.cpp:70
 msgid "Connected to DCNet with modem"
-msgstr ""
+msgstr "モデムでDCNetに接続しました"
 
 #: core/network/dcnet.cpp:269
 msgid "Connected to DCNet with Ethernet"
-msgstr ""
+msgstr "イーサネットで DCNet に接続しました"
 
 #: core/network/dcnet.cpp:648
 msgid "DCNet disconnected"
-msgstr ""
+msgstr "DCNetが切断されました"
 
 #: core/network/dcnet.cpp:773
 msgid "Host not found"
-msgstr ""
+msgstr "ホストが見つかりません"
 
 #: core/network/dcnet.cpp:817
 msgid "Can't connect to DCNet"
-msgstr ""
+msgstr "DCNetに接続できません"
 
 #: core/network/ggpo.cpp:221
 msgid "Connected to peer"
-msgstr ""
+msgstr "ピアに接続しました"
 
 #: core/network/ggpo.cpp:225
 msgid "Synchronizing with peer"
-msgstr ""
+msgstr "ピアと同期中"
 
 #: core/network/ggpo.cpp:229
 msgid "Synchronized with peer"
-msgstr ""
+msgstr "ピアと同期"
 
 #: core/network/ggpo.cpp:233
 msgid "Running"
-msgstr ""
+msgstr "実行中"
 
 #: core/network/ggpo.cpp:238
 msgid "Disconnected from peer"
-msgstr ""
+msgstr "ピアから切断されました"
 
 #: core/network/ggpo.cpp:247
 msgid "Connection interrupted"
-msgstr ""
+msgstr "接続が中断されました"
 
 #: core/network/ggpo.cpp:251
 msgid "Connection resumed"
-msgstr ""
+msgstr "接続を再開しました"
 
 #: core/network/null_modem.h:181
 msgid "Network connected"
-msgstr ""
+msgstr "ネットワークに接続しました"
 
 #: core/network/ice.cpp:121
 msgid "Game not supported"
-msgstr ""
+msgstr "ゲームはサポートされてません"
 
 #: core/network/ice.cpp:237
 msgid "Connection to lobby failed:"
-msgstr ""
+msgstr "ロビーへの接続に失敗しました:"
 
 #: core/network/ice.cpp:444
 msgid "Connection failed"
-msgstr ""
+msgstr "接続に失敗しました"
 
 #: core/network/ice.cpp:475
 msgid "Direct peer to peer"
-msgstr ""
+msgstr "ピアからピアへ"
 
 #: core/network/ice.cpp:477
 msgid "Using relay"
-msgstr ""
+msgstr "リレーの使用"
 
 #: core/network/ice.cpp:481
 msgid "NAT"
-msgstr ""
+msgstr "NAT"
 
 #: core/network/ice.cpp:490 core/network/ice.cpp:508
 msgid "Connection lost"
-msgstr ""
+msgstr "接続が失われました"
 
 #: core/network/naomi_network.cpp:110
 msgid "Waiting for players..."
-msgstr ""
+msgstr "プレイヤーを待っています..."
 
 #: core/network/naomi_network.cpp:113
 #, c-format
 msgid "%d player connected. Waiting..."
 msgid_plural "%d players connected. Waiting..."
-msgstr[0] ""
+msgstr[0] "%d 人のプレイヤーが接続しました。お待ちください..."
 
 #: core/network/naomi_network.cpp:137
 msgid "Starting game"
-msgstr ""
+msgstr "ゲームを開始"
 
 #: core/network/naomi_network.cpp:142
 msgid "No player connected"
-msgstr ""
+msgstr "プレイヤーが接続されていません"
 
 #: core/network/naomi_network.cpp:176
 msgid "Connecting to server"
-msgstr ""
+msgstr "サーバに接続中"
 
 #: core/network/naomi_network.cpp:260
 #, c-format
 msgid "Connected as slot %d"
-msgstr ""
+msgstr "スロット %dとして接続しました"
 
 #: core/rend/dx9/d3d_renderer.cpp:318
 msgid "DirectX 9 doesn't support Naomi 2 games. Select a different graphics API"
-msgstr ""
+msgstr "DirectX 9 は Naomi 2 ゲームをサポートしていません。別のグラフィックス API を選択してください。"
 
 #: core/rend/vulkan/adreno.cpp:154
 msgid "Can't open zip file"
-msgstr ""
+msgstr "zipファイルを開けません"
 
 #: core/rend/vulkan/adreno.cpp:157
 msgid "Invalid zip file"
-msgstr ""
+msgstr "無効なzipファイル"
 
 #: core/rend/vulkan/adreno.cpp:185 core/rend/vulkan/adreno.cpp:203
 msgid "Can't save files"
-msgstr ""
+msgstr "ファイルを保存できません"
 
 #: core/rend/vulkan/adreno.cpp:195
 msgid "Can't read zip"
-msgstr ""
+msgstr "zipを読み込めません"
 
 #: core/rend/gles/gles.cpp:1058
 msgid "OpenGL ES 3.0+ required for Naomi 2"
-msgstr ""
+msgstr "Naomi 2にはOpenGL ES 3.0+ が必要です"
 
 #: core/emulator.cpp:589
 #, c-format
 msgid "No BIOS file found in %s"
-msgstr ""
+msgstr "%s に BIOS ファイルが見つかりません"
 
 #: core/emulator.cpp:605
 msgid "This game requires a real BIOS"
-msgstr ""
+msgstr "このゲームには実際のBIOSが必要です"
 
 #: core/emulator.cpp:662
 msgid "Widescreen cheat activated"
-msgstr ""
+msgstr "ワイドスクリーンチートが有効になりました"
 
 #: core/input/virtual_gamepad.h:30
 msgid "Virtual Gamepad"
-msgstr ""
+msgstr "仮想ゲームパッド"
 
 #: core/input/mouse.h:78
 msgid "Left Button"
-msgstr ""
+msgstr "左ボタン"
 
 #: core/input/mouse.h:80
 msgid "Right Button"
-msgstr ""
+msgstr "右ボタン"
 
 #: core/input/mouse.h:82
 msgid "Middle Button"
-msgstr ""
+msgstr "中央ボタン"
 
 #: core/input/mouse.h:114
 msgid "Touch Mouse"
-msgstr ""
+msgstr "タッチマウス"
 
 #: core/wsi/switcher.cpp:91
 msgid "Cannot initialize the graphics API"
-msgstr ""
+msgstr "グラフィックAPIを初期化できません"
 
 #: shell/libretro/libretro.cpp:2130
 msgid "Cannot run without JIT"
-msgstr ""
+msgstr "JITなしでは実行できません"
 
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:145
 msgid "DPad Center"
-msgstr ""
+msgstr "DPad 中央"
 
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:173
 msgid "Select"
-msgstr ""
+msgstr "選択"
 
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:175
 msgid "Mode"
-msgstr ""
+msgstr "モード"
 
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:203
 msgid "Hat X"
-msgstr ""
+msgstr "Hat X"
 
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:205
 msgid "Hat Y"
-msgstr ""
+msgstr "Hat Y"
 
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:207
 msgid "Gas"
-msgstr ""
+msgstr "ガス"
 
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:209
 msgid "Brake"
-msgstr ""
+msgstr "ブレーキ"
 
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:211
 msgid "Rudder"
-msgstr ""
+msgstr "ラダー"
 
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:213
 msgid "Wheel"
-msgstr ""
+msgstr "ホイール"
 
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:215
 msgid "Throttle"
-msgstr ""
+msgstr "スロットル"
 
 #: shell/android-studio/flycast/src/main/jni/src/Android.cpp:172
 msgid "Memory initialization failed"
-msgstr ""
+msgstr "メモリの初期化に失敗しました"
 
 #: shell/android-studio/flycast/src/main/jni/src/android_storage.h:192
 #, c-format
 msgid "Storage access failed: %s"
-msgstr ""
+msgstr "ストレージへのアクセスに失敗しました: %s"
 
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:147
 msgid "MFi Gamepad"
-msgstr ""
+msgstr "MFiゲームパッド"
 
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:361
 msgid "Options"
-msgstr ""
+msgstr "オプション"
 
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:363
 msgid "Home"
-msgstr ""
+msgstr "ホーム"
 
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:377
 msgid "Share"
-msgstr ""
+msgstr "共有"
 
 #: shell/switch/switch_main.cpp:76
 msgid "Not supported on Switch"
-msgstr ""
+msgstr "Switchではサポートされていません"
 
