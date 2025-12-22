@@ -190,7 +190,7 @@ bool reconnectDreamLinks();
 void refreshDreamLinksIfNeeded();
 void createAllDreamLinkDevices();
 void createDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink, bool gameStart, bool stateLoaded);
-void tearDownDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink);
+void tearDownDreamLinkDevices(DreamLink* dreamlink);
 
 void registerDreamLinkEvents();
 void unregisterDreamLinkEvents();

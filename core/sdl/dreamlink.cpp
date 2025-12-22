@@ -141,7 +141,7 @@ DreamLinkGamepad::DreamLinkGamepad(int maple_port, int joystick_idx, SDL_Joystic
 DreamLinkGamepad::~DreamLinkGamepad() {
 	int port = maple_port();
 	if (dreamlink && DreamLink::isValidPort(port)) {
-		tearDownDreamLinkDevices(dreamlink);
+		tearDownDreamLinkDevices(dreamlink.get());
 		dreamlink.reset();
 		DreamLink::activeDreamLinks[port] = nullptr;
 

@@ -262,7 +262,7 @@ public:
 		snprintf(buf, sizeof(buf), "WARNING: DreamLink disconnected from port %c", 'A' + bus);
 		os_notify(buf, 6000);
 
-		tearDownDreamLinkDevices(shared_from_this());
+		tearDownDreamLinkDevices(this);
 		maple_ReconnectDevices();
 	}
 

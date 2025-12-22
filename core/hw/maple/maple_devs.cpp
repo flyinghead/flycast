@@ -2549,7 +2549,7 @@ void refreshDreamLinksIfNeeded()
 	for (auto& dreamlink : DreamLink::activeDreamLinks)
 	{
 		if (dreamlink)
-			tearDownDreamLinkDevices(dreamlink);
+			tearDownDreamLinkDevices(dreamlink.get());
 	}
 
 	maple_ReconnectDevices();
@@ -2660,7 +2660,7 @@ void createDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink, bool gameStart
 }
 
 // Replaces DreamLink devices associated with 'dreamlink' with ordinary Maple devices.
-void tearDownDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink)
+void tearDownDreamLinkDevices(DreamLink* dreamlink)
 {
 	const int bus = dreamlink->getBus();
 
@@ -2669,7 +2669,7 @@ void tearDownDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink)
 		for (std::list<std::shared_ptr<DreamLinkVmu>>::const_iterator iter = dreamLinkVmus[i].begin();
 			iter != dreamLinkVmus[i].end();)
 		{
-			if ((*iter)->dreamlink.get() == dreamlink.get())
+			if ((*iter)->dreamlink.get() == dreamlink)
 			{
 				DEBUG_LOG(MAPLE, "VMU teardown - Physical VMU: %s", (*iter)->useRealVmuMemory ? "true" : "false");
 				std::shared_ptr<maple_device> dev = maple_Create(MDT_SegaVMU);
@@ -2698,7 +2698,7 @@ void tearDownDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink)
 	for (std::list<std::shared_ptr<DreamLinkPurupuru>>::const_iterator iter = dreamLinkPurupurus.begin();
 		iter != dreamLinkPurupurus.end();)
 	{
-		if ((*iter)->dreamlink.get() == dreamlink.get())
+		if ((*iter)->dreamlink.get() == dreamlink)
 		{
 			std::shared_ptr<maple_device> dev = maple_Create(MDT_PurupuruPack);
 			dev->Setup(bus, 1);
