@@ -113,6 +113,8 @@ static void gui_settings_advanced()
 		ImGui::Indent();
 		{
 			DisabledScope scope(!config::DumpTextures.get());
+			OptionCheckbox(T("Disable YUV Texture Dumping"), config::DisableYuvTextureDumping,
+					T("Disables Dumping of YUV textures ,which are mostly found in FMVs, but might prevent other YUV textures from dumping."));			
 			OptionCheckbox(T("Dump Replaced Textures"), config::DumpReplacedTextures,
 					T("Always dump textures that are already replaced by custom textures"));
 		}
