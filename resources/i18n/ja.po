@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-12-14 14:32+0100\n"
-"PO-Revision-Date: 2025-12-22 11:11\n"
+"PO-Revision-Date: 2025-12-22 12:13\n"
 "Last-Translator: \n"
 "Language: ja_JP\n"
 "MIME-Version: 1.0\n"
@@ -1318,422 +1318,422 @@ msgstr ""
 
 #: core/ui/settings_general.cpp:433
 msgid "Folders for save states. First path is used for new states; all are searched when loading"
-msgstr ""
+msgstr "セーブステート用のフォルダー。最初のパスは新しいステートに使用され、ロード時にすべてのパスが検索されます"
 
 #: core/ui/settings_general.cpp:436
 msgid "Game Save Folder"
-msgstr ""
+msgstr "ゲームセーブフォルダー"
 
 #: core/ui/settings_general.cpp:436
 msgid "Select the game save folder"
-msgstr ""
+msgstr "ゲームのセーブフォルダーを選択"
 
 #: core/ui/settings_general.cpp:437
 msgid "Folder for game save data (e.g. arcade NVRAM)"
-msgstr ""
+msgstr "ゲームのセーブデータ用のフォルダー(例：アーケードNVRAM)"
 
 #: core/ui/settings_general.cpp:441
 msgid "Texture Pack Folders"
-msgstr ""
+msgstr "テクスチャ パックフォルダー"
 
 #: core/ui/settings_general.cpp:441
 msgid "Select a texture pack folder"
-msgstr ""
+msgstr "テクスチャパックフォルダーを選択"
 
 #: core/ui/settings_general.cpp:442
 msgid "Folders containing textures/<gameId> or <gameId> under a textures subfolder"
-msgstr ""
+msgstr "テクスチャサブフォルダーの下にあるテクスチャ/<gameId> または <gameId> を含むフォルダー"
 
 #: core/ui/settings_general.cpp:446
 msgid "Texture Dump Folder"
-msgstr ""
+msgstr "テクスチャダンプフォルダー"
 
 #: core/ui/settings_general.cpp:446
 msgid "Select the texture dump folder"
-msgstr ""
+msgstr "テクスチャダンプフォルダーを選択"
 
 #: core/ui/settings_general.cpp:447
 msgid "Folder where texture dumps are saved. Game-specific subfolders will be created automatically"
-msgstr ""
+msgstr "テクスチャダンプが保存されるフォルダー。ゲーム固有のサブフォルダーは自動的に作成されます"
 
 #: core/ui/settings_general.cpp:450
 msgid "Box Art Folder"
-msgstr ""
+msgstr "ボックスアートフォルダー"
 
 #: core/ui/settings_general.cpp:450
 msgid "Select the box art folder"
-msgstr ""
+msgstr "ボックスアートフォルダーを選択"
 
 #: core/ui/settings_general.cpp:451
 msgid "Folder containing box art images (png/jpg). If empty, Flycast will use the default Home Folder/boxart for downloads and generated art"
-msgstr ""
+msgstr "ボックスアート画像(png/jpg)を含むフォルダー。空白の場合、Flycastはダウンロードと生成されたアートに対してデフォルトのホームフォルダー/ボックスアートを使用します"
 
 #: core/ui/settings_general.cpp:454
 msgid "Controller Mapping Folders"
-msgstr ""
+msgstr "コントローラーマッピングフォルダー"
 
 #: core/ui/settings_general.cpp:454
 msgid "Select a controller mapping folder"
-msgstr ""
+msgstr "コントローラーマッピングフォルダーを選択"
 
 #: core/ui/settings_general.cpp:455
 msgid "Folders containing controller mapping files (.cfg). The emulator also looks in Home Folder/mappings. Per-game mappings are suffixed with _<gameId>.cfg"
-msgstr ""
+msgstr "コントローラのマッピングファイル (.cfg)を含むフォルダー. エミュレータはホームフォルダー/mappingsも参照します. ゲーム毎のマッピングは _<gameId>.cfg でサフィックスされます"
 
 #: core/ui/settings_general.cpp:458
 msgid "Cheat Folders"
-msgstr ""
+msgstr "チートフォルダー"
 
 #: core/ui/settings_general.cpp:458
 msgid "Select a cheat folder"
-msgstr ""
+msgstr "チートフォルダーを選択"
 
 #: core/ui/settings_general.cpp:459
 msgid "Folders containing cheat files (.cht/.txt) named with the game ID. Flycast will auto-load matching files if present"
-msgstr ""
+msgstr "チートファイル(.cht/.txt)を含むフォルダーにはゲームIDが指定されています。Flycastはマッチするファイルを自動的にロードします"
 
 #: core/ui/gui_chat.h:46 core/ui/gui_chat.h:48
 msgid "P2"
-msgstr ""
+msgstr "P2"
 
 #: core/ui/gui_chat.h:46 core/ui/gui_chat.h:48
 msgid "P1"
-msgstr ""
+msgstr "P1"
 
 #: core/ui/game_scanner.cpp:167
 msgid "Dreamcast BIOS"
-msgstr ""
+msgstr "ドリームキャストBIOS"
 
 #: core/ui/settings_controls.cpp:43 core/ui/settings_controls.cpp:61
 #: core/ui/settings_controls.cpp:155
 msgid "None"
-msgstr ""
+msgstr "なし"
 
 #: core/ui/settings_controls.cpp:44
 msgid "Sega Controller"
-msgstr ""
+msgstr "セガコントローラー"
 
 #: core/ui/settings_controls.cpp:45
 msgid "Light Gun"
-msgstr ""
+msgstr "ライトガン"
 
 #: core/ui/settings_controls.cpp:46 core/input/keyboard_device.h:77
 msgid "Keyboard"
-msgstr ""
+msgstr "キーボード"
 
 #: core/ui/settings_controls.cpp:47 core/input/mouse.h:57
 msgid "Mouse"
-msgstr ""
+msgstr "マウス"
 
 #: core/ui/settings_controls.cpp:48
 msgid "Twin Stick"
-msgstr ""
+msgstr "ツインスティック"
 
 #: core/ui/settings_controls.cpp:49
 msgid "Arcade/Ascii Stick"
-msgstr ""
+msgstr "アーケード / アスキースティック"
 
 #: core/ui/settings_controls.cpp:50
 msgid "Maracas Controller"
-msgstr ""
+msgstr "マラカスコントローラー"
 
 #: core/ui/settings_controls.cpp:51
 msgid "Fishing Controller"
-msgstr ""
+msgstr "釣りコントローラー"
 
 #: core/ui/settings_controls.cpp:52
 msgid "Pop'n Music controller"
-msgstr ""
+msgstr "ポップンミュージックコントローラー"
 
 #: core/ui/settings_controls.cpp:53
 msgid "Racing Controller"
-msgstr ""
+msgstr "レーシングコントローラー"
 
 #: core/ui/settings_controls.cpp:54
 msgid "Densha de Go! Controller"
-msgstr ""
+msgstr "電車でGO!コントローラー"
 
 #: core/ui/settings_controls.cpp:55
 msgid "Panther DC/Full Controller"
-msgstr ""
+msgstr "Panther DC/フルコントローラー"
 
 #: core/ui/settings_controls.cpp:62
 msgid "Sega VMU"
-msgstr ""
+msgstr "Sega VMU"
 
 #: core/ui/settings_controls.cpp:63
 msgid "Vibration Pack"
-msgstr ""
+msgstr "ぷるぷるぱっく"
 
 #: core/ui/settings_controls.cpp:64
 msgid "Microphone"
-msgstr ""
+msgstr "マイク"
 
 #: core/ui/settings_controls.cpp:155
 msgid "All"
-msgstr ""
+msgstr "全て"
 
 #: core/ui/settings_controls.cpp:163 core/ui/settings_controls.cpp:221
 msgid "Directions"
-msgstr ""
+msgstr "方向"
 
 #: core/ui/settings_controls.cpp:164 core/ui/settings_controls.cpp:222
 msgid "Up"
-msgstr ""
+msgstr "上"
 
 #: core/ui/settings_controls.cpp:165 core/ui/settings_controls.cpp:223
 msgid "Down"
-msgstr ""
+msgstr "下"
 
 #: core/ui/settings_controls.cpp:166 core/ui/settings_controls.cpp:224
 msgid "Left"
-msgstr ""
+msgstr "左"
 
 #: core/ui/settings_controls.cpp:167 core/ui/settings_controls.cpp:225
 msgid "Right"
-msgstr ""
+msgstr "右"
 
 #: core/ui/settings_controls.cpp:169 core/ui/settings_controls.cpp:227
 msgid "Thumbstick Up"
-msgstr ""
+msgstr "アナログスティック上"
 
 #: core/ui/settings_controls.cpp:170 core/ui/settings_controls.cpp:228
 msgid "Thumbstick Down"
-msgstr ""
+msgstr "アナログスティック下"
 
 #: core/ui/settings_controls.cpp:171 core/ui/settings_controls.cpp:229
 msgid "Thumbstick Left"
-msgstr ""
+msgstr "アナログスティック左"
 
 #: core/ui/settings_controls.cpp:172 core/ui/settings_controls.cpp:230
 msgid "Thumbstick Right"
-msgstr ""
+msgstr "アナログスティック右"
 
 #: core/ui/settings_controls.cpp:174 core/ui/settings_controls.cpp:232
 msgid "R.Thumbstick Up"
-msgstr ""
+msgstr "右アナログスティック上"
 
 #: core/ui/settings_controls.cpp:175 core/ui/settings_controls.cpp:233
 msgid "R.Thumbstick Down"
-msgstr ""
+msgstr "右アナログスティック下"
 
 #: core/ui/settings_controls.cpp:176 core/ui/settings_controls.cpp:234
 msgid "R.Thumbstick Left"
-msgstr ""
+msgstr "右アナログスティック左"
 
 #: core/ui/settings_controls.cpp:177 core/ui/settings_controls.cpp:235
 msgid "R.Thumbstick Right"
-msgstr ""
+msgstr "右アナログスティック右"
 
 #: core/ui/settings_controls.cpp:179
 msgid "Axis 3 Up"
-msgstr ""
+msgstr "Axis3上"
 
 #: core/ui/settings_controls.cpp:180
 msgid "Axis 3 Down"
-msgstr ""
+msgstr "Axis3下"
 
 #: core/ui/settings_controls.cpp:181
 msgid "Axis 3 Left"
-msgstr ""
+msgstr "Axis3左"
 
 #: core/ui/settings_controls.cpp:182
 msgid "Axis 3 Right"
-msgstr ""
+msgstr "Axis3右"
 
 #: core/ui/settings_controls.cpp:189 core/ui/settings_controls.cpp:237
 msgid "Buttons"
-msgstr ""
+msgstr "ボタン"
 
 #: core/ui/settings_controls.cpp:198 core/ui/settings_controls.cpp:248
 msgid "Triggers"
-msgstr ""
+msgstr "トリガー"
 
 #: core/ui/settings_controls.cpp:199 core/ui/settings_controls.cpp:249
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:199
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:369
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:401
 msgid "Left Trigger"
-msgstr ""
+msgstr "左トリガー"
 
 #: core/ui/settings_controls.cpp:200 core/ui/settings_controls.cpp:250
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:201
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:371
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:403
 msgid "Right Trigger"
-msgstr ""
+msgstr "右トリガー"
 
 #: core/ui/settings_controls.cpp:201 core/ui/settings_controls.cpp:251
 msgid "Left Trigger 2"
-msgstr ""
+msgstr "左トリガー2"
 
 #: core/ui/settings_controls.cpp:202 core/ui/settings_controls.cpp:252
 msgid "Right Trigger 2"
-msgstr ""
+msgstr "右トリガー2"
 
 #: core/ui/settings_controls.cpp:204 core/ui/settings_controls.cpp:254
 msgid "System Buttons"
-msgstr ""
+msgstr "システム ボタン"
 
 #: core/ui/settings_controls.cpp:206 core/ui/settings_controls.cpp:256
 msgid "Reload"
-msgstr ""
+msgstr "リロード"
 
 #: core/ui/settings_controls.cpp:208 core/ui/settings_controls.cpp:262
 msgid "Emulator"
-msgstr ""
+msgstr "エミュレーター"
 
 #: core/ui/settings_controls.cpp:209 core/ui/settings_controls.cpp:263
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:359
 msgid "Menu"
-msgstr ""
+msgstr "メニュー"
 
 #: core/ui/settings_controls.cpp:210 core/ui/settings_controls.cpp:264
 #: core/ui/gui.cpp:777 core/ui/gui.cpp:1036
 msgid "Exit"
-msgstr ""
+msgstr "終了"
 
 #: core/ui/settings_controls.cpp:211 core/ui/settings_controls.cpp:265
 msgid "Fast-forward"
-msgstr ""
+msgstr "早送り"
 
 #: core/ui/settings_controls.cpp:212 core/ui/settings_controls.cpp:266
 #: core/ui/gui.cpp:789
 msgid "Load State"
-msgstr ""
+msgstr "ロードステート"
 
 #: core/ui/settings_controls.cpp:213 core/ui/settings_controls.cpp:267
 #: core/ui/gui.cpp:797
 msgid "Save State"
-msgstr ""
+msgstr "セーブステート"
 
 #: core/ui/settings_controls.cpp:214 core/ui/settings_controls.cpp:268
 msgid "Bypass Emulated Keyboard"
-msgstr ""
+msgstr "エミュレートされたキーボードをバイパス"
 
 #: core/ui/settings_controls.cpp:215 core/ui/settings_controls.cpp:269
 msgid "Save Screenshot"
-msgstr ""
+msgstr "スクリーンショットを保存"
 
 #: core/ui/settings_controls.cpp:238
 msgid "Button 1"
-msgstr ""
+msgstr "ボタン 1"
 
 #: core/ui/settings_controls.cpp:239
 msgid "Button 2"
-msgstr ""
+msgstr "ボタン 2"
 
 #: core/ui/settings_controls.cpp:240
 msgid "Button 3"
-msgstr ""
+msgstr "ボタン 3"
 
 #: core/ui/settings_controls.cpp:241 core/input/mouse.h:84
 msgid "Button 4"
-msgstr ""
+msgstr "ボタン 4"
 
 #: core/ui/settings_controls.cpp:242 core/input/mouse.h:86
 msgid "Button 5"
-msgstr ""
+msgstr "ボタン 5"
 
 #: core/ui/settings_controls.cpp:243
 msgid "Button 6"
-msgstr ""
+msgstr "ボタン 6"
 
 #: core/ui/settings_controls.cpp:244
 msgid "Button 7"
-msgstr ""
+msgstr "ボタン 7"
 
 #: core/ui/settings_controls.cpp:245
 msgid "Button 8"
-msgstr ""
+msgstr "ボタン 8"
 
 #: core/ui/settings_controls.cpp:257
 msgid "Coin"
-msgstr ""
+msgstr "コイン"
 
 #: core/ui/settings_controls.cpp:258
 msgid "Service"
-msgstr ""
+msgstr "サービス"
 
 #: core/ui/settings_controls.cpp:259
 msgid "Test"
-msgstr ""
+msgstr "テスト"
 
 #: core/ui/settings_controls.cpp:260
 msgid "Insert Card"
-msgstr ""
+msgstr "カードを挿入"
 
 #: core/ui/settings_controls.cpp:385 core/ui/settings_controls.cpp:790
 msgid "Map Control"
-msgstr ""
+msgstr "マップコントロール"
 
 #: core/ui/settings_controls.cpp:387
 #, c-format
 msgid "Waiting for control '%s'..."
-msgstr ""
+msgstr "%s 'のコントロールを待っています..."
 
 #: core/ui/settings_controls.cpp:403
 #, c-format
 msgid "Time out in %d s"
-msgstr ""
+msgstr "%d 秒でタイムアウト"
 
 #: core/ui/settings_controls.cpp:408
 msgid "Current inputs:"
-msgstr ""
+msgstr "現在の入力:"
 
 #: core/ui/settings_controls.cpp:432
 msgid "Confirm"
-msgstr ""
+msgstr "確認"
 
 #: core/ui/settings_controls.cpp:514
 msgid "Sequential"
-msgstr ""
+msgstr "連続"
 
 #: core/ui/settings_controls.cpp:519
 msgid "When checked, this combo will only activate when all keys are pressed in the given sequence.\n"
 "When not checked, the combo will activate when all keys are pressed in any order."
-msgstr ""
+msgstr "チェックを入れると、このコンボはすべてのキーが指定された順序で押された場合にのみ有効になります。チェックを入れないと、すべてのキーが任意の順序で押されたときにコンボが起動します。"
 
 #: core/ui/settings_controls.cpp:576 core/ui/settings_controls.cpp:1025
 msgid "Controller Mapping"
-msgstr ""
+msgstr "コントローラーマッピング"
 
 #: core/ui/settings_controls.cpp:578 core/ui/settings_controls.cpp:1022
 msgid "Map"
-msgstr ""
+msgstr "割り当て"
 
 #: core/ui/settings_controls.cpp:579
 msgid "Unmap"
-msgstr ""
+msgstr "解除"
 
 #: core/ui/settings_controls.cpp:595 core/ui/settings_controls.cpp:841
 #: core/ui/settings.cpp:217
 msgid "Done"
-msgstr ""
+msgstr "完了"
 
 #: core/ui/settings_controls.cpp:615 core/ui/settings_controls.cpp:627
 #: core/ui/settings_controls.cpp:959 core/ui/settings_controls.cpp:973
 #: core/ui/gui.cpp:752
 msgid "Port"
-msgstr ""
+msgstr "ポート"
 
 #: core/ui/settings_controls.cpp:629 core/ui/settings_controls.cpp:693
 msgid "Dreamcast Controls"
-msgstr ""
+msgstr "Dreamcast コントロール"
 
 #: core/ui/settings_controls.cpp:632 core/ui/settings_controls.cpp:641
 #: core/ui/settings.cpp:248
 msgid "Delete Game Config"
-msgstr ""
+msgstr "ゲーム設定を削除"
 
 #: core/ui/settings_controls.cpp:632 core/ui/settings_controls.cpp:650
 #: core/ui/settings.cpp:257
 msgid "Make Game Config"
-msgstr ""
+msgstr "ゲーム設定の作成"
 
 #: core/ui/settings_controls.cpp:655
 msgid "Reset..."
-msgstr ""
+msgstr "リセット…"
 
 #: core/ui/settings_controls.cpp:656 core/ui/settings_controls.cpp:660
 msgid "Confirm Reset"
