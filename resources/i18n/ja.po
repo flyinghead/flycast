@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-12-14 14:32+0100\n"
-"PO-Revision-Date: 2025-12-22 09:00\n"
+"PO-Revision-Date: 2025-12-22 11:11\n"
 "Last-Translator: \n"
 "Language: ja_JP\n"
 "MIME-Version: 1.0\n"
@@ -896,7 +896,7 @@ msgstr ""
 
 #: core/ui/settings_video.cpp:333
 msgid "Helps with texture corruption and depth issues on AMD GPUs. Can also help Intel GPUs in some cases."
-msgstr ""
+msgstr "AMD GPUのテクスチャ破損や深度の問題の解決に役立ちます。場合によってはIntel GPUでも効果があります。"
 
 #: core/ui/settings_video.cpp:334
 msgid "Copy Rendered Textures to VRAM"
@@ -1104,7 +1104,7 @@ msgstr ""
 
 #: core/ui/settings_general.cpp:272
 msgid "Data Folder"
-msgstr ""
+msgstr "データ フォルダー"
 
 #: core/ui/settings_general.cpp:280
 msgid "The folder containing BIOS files, as well as saved VMUs and states"
@@ -1310,7 +1310,7 @@ msgstr ""
 
 #: core/ui/settings_general.cpp:432
 msgid "Savestate Folders"
-msgstr ""
+msgstr "セーブステートフォルダ"
 
 #: core/ui/settings_general.cpp:432
 msgid "Select a savestate folder"
