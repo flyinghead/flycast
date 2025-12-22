@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-12-14 14:32+0100\n"
-"PO-Revision-Date: 2025-12-22 15:11\n"
+"PO-Revision-Date: 2025-12-22 20:13\n"
 "Last-Translator: \n"
 "Language: ja_JP\n"
 "MIME-Version: 1.0\n"
@@ -272,12 +272,12 @@ msgstr "画像ライブラリが見つかりません"
 #: core/oslib/storage.cpp:81
 #, c-format
 msgid "Can't read directory %s"
-msgstr "ディレクトリ %sを読み取ることができません"
+msgstr "ディレクトリ %s を読み取ることができません"
 
 #: core/oslib/storage.cpp:201
 #, c-format
 msgid "Cannot stat %s"
-msgstr "%sの状態を確認できません"
+msgstr "%s の状態を確認できません"
 
 #: core/oslib/storage.cpp:222
 #, c-format
@@ -287,7 +287,7 @@ msgstr "無効なデバイス %s"
 #: core/oslib/storage.cpp:246
 #, c-format
 msgid "Cannot get attributes of %s"
-msgstr "%sの属性を取得できません"
+msgstr "%s の属性を取得できません"
 
 #: core/oslib/storage.cpp:253
 #, c-format
@@ -305,7 +305,7 @@ msgstr "このメディアを読み込むことができません"
 #: core/imgread/cue.cpp:57
 #, c-format
 msgid "Cannot open CUE file %s"
-msgstr "CUEファイル %sを開くことができません"
+msgstr "CUEファイル %s を開くことができません"
 
 #: core/imgread/cue.cpp:68
 msgid "CUE parse error: CUE file too big"
@@ -314,7 +314,7 @@ msgstr "CUE解析エラー: CUEファイルが大きすぎます"
 #: core/imgread/cue.cpp:189
 #, c-format
 msgid "CUE file: cannot open track %s"
-msgstr "CUEファイル: トラック %sを開くことができません"
+msgstr "CUEファイル: トラック %s を開くことができません"
 
 #: core/imgread/cue.cpp:193
 #, c-format
@@ -332,7 +332,7 @@ msgstr "CUEファイルが無効です"
 
 #: core/imgread/cue.cpp:237
 msgid "CUE parse error: less than 3 tracks"
-msgstr "CUE解析エラー: 3トラック未満です"
+msgstr "CUE解析エラー: 3 トラック未満です"
 
 #: core/imgread/chd.cpp:109
 #, c-format
@@ -342,7 +342,7 @@ msgstr "chd: トラックタイプ %s はサポートされていません"
 #: core/imgread/chd.cpp:118
 #, c-format
 msgid "Cannot open CHD file %s"
-msgstr "CHDファイル %sを開くことができません"
+msgstr "CHDファイル %s を開くことができません"
 
 #: core/imgread/chd.cpp:124
 #, c-format
@@ -352,7 +352,7 @@ msgstr "無効なCHDファイル %s"
 #: core/imgread/chd.cpp:137
 #, c-format
 msgid "Invalid hunkbytes for CHD file %s"
-msgstr "CHDファイル %sのハンクサイズが無効です"
+msgstr "CHDファイル %s のハンクサイズが無効です"
 
 #: core/imgread/chd.cpp:183
 msgid "Unexpected track number"
@@ -364,7 +364,7 @@ msgstr "サポートされていないサブタイプまたはプリ/ポスト�
 
 #: core/imgread/chd.cpp:212
 msgid "Invalid CHD: less than 3 tracks"
-msgstr "無効なCHD：3トラック未満です"
+msgstr "無効なCHD：3 トラック未満です"
 
 #: core/imgread/chd.cpp:218
 msgid "Invalid CHD: no track found"
@@ -373,7 +373,7 @@ msgstr "無効なCHD：トラックが見つかりません"
 #: core/imgread/gdi.cpp:13
 #, c-format
 msgid "Cannot open GDI file %s"
-msgstr "GDIファイル %sを開くことができません"
+msgstr "GDIファイル %s を開くことができません"
 
 #: core/imgread/gdi.cpp:24
 msgid "GDI file too big"
@@ -388,12 +388,12 @@ msgstr "GDIファイルが無効です"
 #: core/imgread/gdi.cpp:132
 #, c-format
 msgid "GDI file: Cannot open track %s"
-msgstr "GDIファイル: トラック %sを開くことができません"
+msgstr "GDIファイル: トラック %s を開くことができません"
 
 #: core/imgread/cdi.cpp:17
 #, c-format
 msgid "Cannot open CDI file %s"
-msgstr "CDIファイル %sを開くことができません"
+msgstr "CDIファイル %s を開くことができません"
 
 #: core/imgread/cdi.cpp:23
 #, c-format
@@ -430,7 +430,7 @@ msgstr "印刷を保存しました"
 #: core/hw/naomi/systemsp.cpp:2188
 #, c-format
 msgid "SystemSP: Cannot open CompactFlash file %s"
-msgstr "SystemSP: CompactFlashファイル %sを開くことができません"
+msgstr "SystemSP: CompactFlashファイル %s を開くことができません"
 
 #: core/hw/naomi/naomi_m3comm.cpp:76
 msgid "Network started"
@@ -459,7 +459,7 @@ msgstr "%s または %s を開くことができません"
 #: core/hw/naomi/naomi_cart.cpp:264
 #, c-format
 msgid "Cannot open %s"
-msgstr "%sを開くことができません"
+msgstr "%s を開くことができません"
 
 #: core/hw/naomi/naomi_cart.cpp:343
 msgid "Invalid ROM"
@@ -468,12 +468,12 @@ msgstr "無効なROM"
 #: core/hw/naomi/naomi_cart.cpp:364
 #, c-format
 msgid "Cannot find %s"
-msgstr "%sが見つかりません"
+msgstr "%s が見つかりません"
 
 #: core/hw/naomi/naomi_cart.cpp:374 core/hw/naomi/naomi_cart.cpp:391
 #, c-format
 msgid "Invalid ROM: truncated %s"
-msgstr "無効なROM: %sが切り捨てられました"
+msgstr "無効なROM: %s が切り捨てられました"
 
 #: core/hw/naomi/naomi_cart.cpp:484
 msgid "Error: cannot load BIOS from naomi.zip"
@@ -511,7 +511,7 @@ msgstr "ホイールを調整中です。中心にしてください。"
 #: core/hw/naomi/gdcartridge.cpp:524
 #, c-format
 msgid "Naomi GDROM: Cannot open %s.chd"
-msgstr "Naomi GDROM: %s.chdを開くことができません "
+msgstr "Naomi GDROM: %s.chdを開くことができません"
 
 #: core/hw/naomi/gdcartridge.cpp:609
 msgid "Naomi GDROM: Could not find the file to decrypt."
@@ -552,7 +552,7 @@ msgstr "BIOSへ再起動"
 #: core/reios/reios.cpp:696
 #, c-format
 msgid "Failed to open ELF %s"
-msgstr "ELF %sを開けませんでした"
+msgstr "ELF %s を開けませんでした"
 
 #: core/reios/reios.cpp:705
 #, c-format
@@ -561,7 +561,7 @@ msgstr "ブートファイル %sの場所を特定できませんでした"
 
 #: core/reios/reios.cpp:718
 msgid "Naomi boot failure"
-msgstr "Naomi ブートエラー"
+msgstr "Naomiブートエラー"
 
 #: core/reios/reios.cpp:724
 msgid "Invalid cart size"
@@ -637,7 +637,7 @@ msgstr "ストリップ単位"
 
 #: core/ui/settings_video.cpp:127
 msgid "Sort transparent polygons per strip. Faster but may produce graphical glitches"
-msgstr "透明ポリゴンをストリップ単位でソートします。高速ですが、グラフィックの不具合が発生する可能性があります。"
+msgstr "透明ポリゴンをストリップ単位でソートします。高速ですが、グラフィックの不具合が発生する可能性があります"
 
 #: core/ui/settings_video.cpp:131
 msgid "Per Pixel"
@@ -673,7 +673,7 @@ msgstr "整数スケーリング"
 
 #: core/ui/settings_video.cpp:204
 msgid "Scales the output by the maximum integer multiple allowed by the display resolution."
-msgstr "ディスプレイ解像度で許可される最大の整数倍で出力をスケーリングします"
+msgstr "ディスプレイ解像度で許可される最大の整数倍で出力をスケーリングします。"
 
 #: core/ui/settings_video.cpp:205
 msgid "Linear Interpolation"
@@ -697,7 +697,7 @@ msgstr "重複フレーム"
 
 #: core/ui/settings_video.cpp:214
 msgid "Duplicate frames on high refresh rate monitors (120 Hz and higher)"
-msgstr "高リフレッシュレートモニター上でフレームを複製（120Hz以上）"
+msgstr "高リフレッシュレートモニター上でフレームを複製(120 Hz以上)"
 
 #: core/ui/settings_video.cpp:219
 msgid "Show VMU In-game"
@@ -742,8 +742,8 @@ msgstr "ワイドスクリーン"
 #: core/ui/settings_video.cpp:240
 msgid "Draw geometry outside of the normal 4:3 aspect ratio. May produce graphical glitches in the revealed areas.\n"
 "Aspect Fit and shows the full 16:9 content."
-msgstr "通常の4:3アスペクト比の外側にジオメトリを描画します。表示されている領域にグラフィックの不具合が発生する可能性があります。\n"
-"アスペクトフィットで、16:9の全コンテンツを表示します。"
+msgstr "通常の 4:3 アスペクト比の外側にジオメトリを描画します。表示されている領域にグラフィックの不具合が発生する可能性があります。\n"
+"アスペクトフィットで、16:9 の全コンテンツを表示します。"
 
 #: core/ui/settings_video.cpp:245
 msgid "Super Widescreen"
@@ -761,7 +761,7 @@ msgstr "ワイドスクリーンゲームチート"
 
 #: core/ui/settings_video.cpp:250
 msgid "Modify the game so that it displays in 16:9 anamorphic format and use horizontal screen stretching. Only some games are supported."
-msgstr "16:9アナモルフィック形式で表示されるようにゲームを変更し、水平スクリーンストレッチを使用します。一部のゲームのみサポートされています。"
+msgstr "16:9 アナモルフィック形式で表示されるようにゲームを変更し、水平スクリーンストレッチを使用します。一部のゲームのみサポートされています。"
 
 #: core/ui/settings_video.cpp:252
 msgid "Horizontal Stretching"
@@ -773,11 +773,11 @@ msgstr "画面を水平方向に伸ばします"
 
 #: core/ui/settings_video.cpp:254
 msgid "Rotate Screen 90°"
-msgstr "画面を90°回転"
+msgstr "画面を 90°回転"
 
 #: core/ui/settings_video.cpp:254
 msgid "Rotate the screen 90° counterclockwise"
-msgstr "画面を反時計回りに90°回転します"
+msgstr "画面を反時計回りに 90°回転します"
 
 #: core/ui/settings_video.cpp:259
 msgid "Per Pixel Settings"
@@ -789,15 +789,15 @@ msgstr "512 MB"
 
 #: core/ui/settings_video.cpp:262
 msgid "1 GB"
-msgstr "1GB"
+msgstr "1 GB"
 
 #: core/ui/settings_video.cpp:262
 msgid "2 GB"
-msgstr "2GB"
+msgstr "2 GB"
 
 #: core/ui/settings_video.cpp:262
 msgid "4 GB"
-msgstr "4GB"
+msgstr "4 GB"
 
 #: core/ui/settings_video.cpp:300
 msgid "Pixel Buffer Size"
@@ -882,7 +882,7 @@ msgstr "遅延フレームスワッピング"
 
 #: core/ui/settings_video.cpp:329
 msgid "Useful to avoid flashing screen or glitchy videos. Not recommended on slow platforms"
-msgstr "画面の点滅や動画の不具合を防ぐのに役立ちます。ただし、低速なプラットフォームでは推奨されません。"
+msgstr "画面の点滅や動画の不具合を防ぐのに役立ちます。ただし、低速なプラットフォームでは推奨されません"
 
 #: core/ui/settings_video.cpp:330
 msgid "Fix Upscale Bleeding Edge"
@@ -890,7 +890,7 @@ msgstr "アップスケーリング滲み修正"
 
 #: core/ui/settings_video.cpp:331
 msgid "Helps with texture bleeding case when upscaling. Disabling it can help if pixels are warping when upscaling in 2D games (MVC2, CVS, KOF, etc.)"
-msgstr "アップスケーリング時のテクスチャの滲みを軽減します。2Dゲーム(MVC2、CVS、KOFなど)でアップスケーリング時にピクセルが歪む場合は、無効にすることで改善される可能性があります。"
+msgstr "アップスケーリング時のテクスチャの滲みを軽減します。2Dゲーム(MVC2、CVS、KOFなど)でアップスケーリング時にピクセルが歪む場合は、無効にすることで改善される可能性があります"
 
 #: core/ui/settings_video.cpp:332
 msgid "Native Depth Interpolation"
@@ -918,7 +918,7 @@ msgstr "値を大きくすると、斜めから見たテクスチャがより鮮
 
 #: core/ui/settings_video.cpp:378
 msgid "Texture Filtering:"
-msgstr "テクスチャフィルタリング:"
+msgstr "テクスチャフィルタリング："
 
 #: core/ui/settings_video.cpp:380 core/ui/settings_general.cpp:188
 #: core/ui/settings_general.cpp:192 core/ui/settings_general.cpp:197
