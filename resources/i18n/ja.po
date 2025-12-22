@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-12-14 14:32+0100\n"
-"PO-Revision-Date: 2025-12-22 22:53\n"
+"PO-Revision-Date: 2025-12-22 23:50\n"
 "Last-Translator: \n"
 "Language: ja_JP\n"
 "MIME-Version: 1.0\n"
@@ -323,7 +323,7 @@ msgstr "CUEファイル: トラックに不明なセクタータイプがあり�
 
 #: core/imgread/cue.cpp:225
 msgid "CUE parse error: failed to parse or invalid file with 0 tracks"
-msgstr "CUE 解析エラー: 解析に失敗したか、トラックが 0 個の無効なファイルです"
+msgstr "CUE 解析エラー: 解析に失敗したか、トラックが0個の無効なファイルです"
 
 #: core/imgread/cue.cpp:228 core/imgread/cue.cpp:240 core/imgread/cue.cpp:244
 #: core/imgread/cue.cpp:248 core/imgread/cue.cpp:252
@@ -407,7 +407,7 @@ msgstr "無効なCDIイメージ"
 
 #: core/imgread/cdi.cpp:78
 msgid "Invalid CDI sector size"
-msgstr "無効な CDI セクターサイズ"
+msgstr "無効なCDIセクターサイズ"
 
 #: core/imgread/cdi.cpp:126
 msgid "Cannot re-open CDI file"
@@ -2628,7 +2628,7 @@ msgstr "Vulkanをリセットして新しいドライバを使用しますか？
 
 #: core/nullDC.cpp:172
 msgid "Save state failed - memory full"
-msgstr "ステートのセーブに失敗しました - メモリがいっぱいです"
+msgstr "ステートの保存に失敗しました - メモリがいっぱいです"
 
 #: core/nullDC.cpp:184
 msgid "Cannot open save file"
@@ -2636,7 +2636,7 @@ msgstr "セーブファイルを開けません"
 
 #: core/nullDC.cpp:212
 msgid "State saved"
-msgstr "ステートをセーブしました"
+msgstr "ステートを保存しました"
 
 #: core/nullDC.cpp:217
 msgid "Error saving state"
@@ -2664,7 +2664,7 @@ msgstr "モデムでDCNetに接続しました"
 
 #: core/network/dcnet.cpp:269
 msgid "Connected to DCNet with Ethernet"
-msgstr "イーサネットで DCNet に接続しました"
+msgstr "イーサネットでDCNetに接続しました"
 
 #: core/network/dcnet.cpp:648
 msgid "DCNet disconnected"
@@ -2688,7 +2688,7 @@ msgstr "ピアと同期中"
 
 #: core/network/ggpo.cpp:229
 msgid "Synchronized with peer"
-msgstr "ピアと同期"
+msgstr "ピアと同期しました"
 
 #: core/network/ggpo.cpp:233
 msgid "Running"
@@ -2716,7 +2716,7 @@ msgstr "ゲームはサポートされてません"
 
 #: core/network/ice.cpp:237
 msgid "Connection to lobby failed:"
-msgstr "ロビーへの接続に失敗しました:"
+msgstr "ロビーへの接続に失敗しました："
 
 #: core/network/ice.cpp:444
 msgid "Connection failed"
@@ -2724,7 +2724,7 @@ msgstr "接続に失敗しました"
 
 #: core/network/ice.cpp:475
 msgid "Direct peer to peer"
-msgstr "ピアからピアへ"
+msgstr "ダイレクトP2P"
 
 #: core/network/ice.cpp:477
 msgid "Using relay"
@@ -2740,13 +2740,13 @@ msgstr "接続が失われました"
 
 #: core/network/naomi_network.cpp:110
 msgid "Waiting for players..."
-msgstr "プレイヤーを待っています..."
+msgstr "プレイヤーを待っています…"
 
 #: core/network/naomi_network.cpp:113
 #, c-format
 msgid "%d player connected. Waiting..."
 msgid_plural "%d players connected. Waiting..."
-msgstr[0] "%d 人のプレイヤーが接続しました。お待ちください..."
+msgstr[0] "%d 人のプレイヤーが接続しました。おまちください…"
 
 #: core/network/naomi_network.cpp:137
 msgid "Starting game"
@@ -2767,7 +2767,7 @@ msgstr "スロット %dとして接続しました"
 
 #: core/rend/dx9/d3d_renderer.cpp:318
 msgid "DirectX 9 doesn't support Naomi 2 games. Select a different graphics API"
-msgstr "DirectX 9 は Naomi 2 ゲームをサポートしていません。別のグラフィックス API を選択してください。"
+msgstr "DirectX9はNaomi2ゲームをサポートしていません。別のグラフィックス API を選択してください"
 
 #: core/rend/vulkan/adreno.cpp:154
 msgid "Can't open zip file"
@@ -2787,12 +2787,12 @@ msgstr "zipを読み込めません"
 
 #: core/rend/gles/gles.cpp:1058
 msgid "OpenGL ES 3.0+ required for Naomi 2"
-msgstr "Naomi 2にはOpenGL ES 3.0+ が必要です"
+msgstr "Naomi2にはOpenGL ES 3.0+ が必要です"
 
 #: core/emulator.cpp:589
 #, c-format
 msgid "No BIOS file found in %s"
-msgstr "%s に BIOS ファイルが見つかりません"
+msgstr "%s にBIOSファイルが見つかりません"
 
 #: core/emulator.cpp:605
 msgid "This game requires a real BIOS"
