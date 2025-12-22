@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-12-14 14:32+0100\n"
-"PO-Revision-Date: 2025-12-22 06:32\n"
+"PO-Revision-Date: 2025-12-22 09:00\n"
 "Last-Translator: \n"
 "Language: ja_JP\n"
 "MIME-Version: 1.0\n"
@@ -246,7 +246,7 @@ msgstr ""
 
 #: core/sdl/sdl_gamepad.cpp:757
 msgid "Default Mouse"
-msgstr ""
+msgstr "デフォルトマウス"
 
 #: core/sdl/sdl_gamepad.cpp:761
 #, c-format
@@ -482,7 +482,7 @@ msgstr ""
 #: core/hw/naomi/naomi_cart.cpp:500 core/hw/naomi/naomi_cart.cpp:550
 #, c-format
 msgid "Error: can't open %s"
-msgstr ""
+msgstr "エラー: %s を開くことができません"
 
 #: core/hw/naomi/naomi_cart.cpp:508 core/hw/naomi/naomi_cart.cpp:524
 msgid "Error: Invalid LST file"
@@ -689,7 +689,7 @@ msgstr ""
 
 #: core/ui/settings_video.cpp:207
 msgid "Synchronizes the frame rate with the screen refresh rate. Recommended"
-msgstr ""
+msgstr "フレームレートを画面のリフレッシュレートと同期します。推奨"
 
 #: core/ui/settings_video.cpp:214
 msgid "Duplicate frames"
