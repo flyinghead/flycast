@@ -197,6 +197,18 @@ static ImGuiKey keycodeToImGuiKey(u8 keycode)
 	}
 }
 
+static bool addFont(const char *path, float size, ImFontConfig& fontConfig, const ImWchar *glyphRanges) {
+	ImFont *font = ImGui::GetIO().Fonts->AddFontFromFileTTF(path, size, &fontConfig, glyphRanges);
+	return font != nullptr;
+}
+
+static void addFont(const char *path[], float size, ImFontConfig& fontConfig, const ImWchar *glyphRanges)
+{
+	while (*path != nullptr)
+		if (addFont(*path++, size, fontConfig, glyphRanges))
+			break;
+}
+
 void gui_initFonts()
 {
 	static float uiScale;
@@ -363,7 +375,83 @@ void gui_initFonts()
         }
     }
 
-   	// TODO Linux, iOS, ...
+#elif defined(__linux__)
+	std::string locale = i18n::getCurrentLocale();
+	if (locale.find("ja_") == 0)			// Japanese
+	{
+		const char *fonts[] = {
+				"/usr/share/fonts/opentype/ipafont-gothic/ipagp.ttf",
+				"/usr/share/fonts/ipa-pgothic-fonts/ipagp.ttf",	// redhat
+				"/usr/share/fonts/truetype/takao-gothic/TakaoPGothic.ttf",
+				"/usr/share/fonts/truetype/droid/DroidSansFallbackFull.ttf",
+				"/usr/share/fonts/adobe-source-han-sans-jp-fonts/SourceHanSansJP-Regular.otf", // redhat
+				"/usr/share/fonts/vl-gothic-fonts/VL-Gothic-Regular.ttf", // redhat
+				"/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",
+				"/usr/share/fonts/google-noto-cjk/NotoSansCJK-Regular.ttc", // redhat
+				nullptr
+		};
+		const char *largeFonts[] = {
+				"/usr/share/fonts/opentype/ipafont-gothic/ipagp.ttf",
+				"/usr/share/fonts/ipa-pgothic-fonts/ipagp.ttf",	// redhat
+				"/usr/share/fonts/truetype/takao-gothic/TakaoPGothic.ttf",
+				"/usr/share/fonts/truetype/droid/DroidSansFallbackFull.ttf",
+				"/usr/share/fonts/adobe-source-han-sans-jp-fonts/SourceHanSansJP-Bold.otf", // redhat
+				"/usr/share/fonts/vl-gothic-fonts/VL-Gothic-Regular.ttf", // redhat
+				"/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc",
+				"/usr/share/fonts/google-noto-cjk/NotoSansCJK-Bold.ttc", // redhat
+				nullptr
+		};
+		addFont(fonts, fontSize, fontConfig, io.Fonts->GetGlyphRangesJapanese());
+		addFont(largeFonts, largeFontSize, largeFontConfig, io.Fonts->GetGlyphRangesJapanese());
+	}
+	else if (locale.find("ko_") == 0)		// Korean
+	{
+		const char *fonts[] = {
+				"/usr/share/fonts/truetype/unfonts-core/UnDotum.ttf",
+				"/usr/share/fonts-droid-fallback/truetype/DroidSansFallback.ttf",
+				"/usr/share/fonts/baekmuk-dotum-fonts/dotum.ttf", // redhat
+				"/usr/share/fonts/adobe-source-han-sans-kr-fonts/SourceHanSansKR-Regular.otf", // redhat
+				"/usr/share/fonts/naver-nanum-gothic-coding-fonts/NanumGothic_Coding.ttf", // redhat
+				"/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",
+				"/usr/share/fonts/google-noto-cjk/NotoSansCJK-Regular.ttc", // redhat
+				nullptr
+		};
+		const char *largeFonts[] = {
+				"/usr/share/fonts/truetype/unfonts-core/UnDotumBold.ttf",
+				"/usr/share/fonts-droid-fallback/truetype/DroidSansFallback.ttf",
+				"/usr/share/fonts/adobe-source-han-sans-kr-fonts/SourceHanSansKR-Bold.otf", // redhat
+				"/usr/share/fonts/naver-nanum-gothic-coding-fonts/NanumGothic_Coding_Bold.ttf", // redhat
+				"/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc",
+				"/usr/share/fonts/google-noto-cjk/NotoSansCJK-Bold.ttc", // redhat
+				nullptr
+		};
+		addFont(fonts, fontSize, fontConfig, io.Fonts->GetGlyphRangesKorean());
+		addFont(largeFonts, largeFontSize, largeFontConfig, io.Fonts->GetGlyphRangesKorean());
+	}
+	else if (locale.find("zh_") == 0)		// Chinese
+	{
+		const ImWchar *glyphRanges = GetGlyphRangesChineseSimplifiedOfficial();
+		if (locale.find("zh_TW") == 0 || locale.find("zh_HK") == 0)
+			glyphRanges = GetGlyphRangesChineseTraditionalOfficial();
+		const char *fonts[] = {
+				"/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc",
+				"/usr/share/fonts/wqy-zenhei-fonts/wqy-zenhei.ttc", // redhat
+				"/usr/share/fonts/truetype/droid/DroidSansFallbackFull.ttf",
+				"/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",
+				"/usr/share/fonts/google-noto-cjk/NotoSansCJK-Regular.ttc", // redhat
+		};
+		const char *largeFonts[] = {
+				"/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc",
+				"/usr/share/fonts/wqy-zenhei-fonts/wqy-zenhei.ttc", // redhat
+				"/usr/share/fonts/truetype/droid/DroidSansFallbackFull.ttf",
+				"/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc",
+				"/usr/share/fonts/google-noto-cjk/NotoSansCJK-Bold.ttc", // redhat
+		};
+		addFont(fonts, fontSize, fontConfig, glyphRanges);
+		addFont(largeFonts, largeFontSize, largeFontConfig, glyphRanges);
+	}
+
+	// TODO BSD, iOS, ...
 #endif
     NOTICE_LOG(RENDERER, "Screen DPI is %.0f, size %d x %d. Scaling by %.2f", settings.display.dpi, settings.display.width, settings.display.height, settings.display.uiScale);
 	vgamepad::applyUiScale();
@@ -1045,8 +1133,8 @@ static void gui_display_content()
     IconButton settingsBtn(ICON_FA_GEAR, T("Settings"));
 #if !defined(__ANDROID__) && !defined(TARGET_IPHONE) && !defined(TARGET_UWP) && !defined(__SWITCH__)
 	ImGui::SameLine(0, uiScaled(32));
-	filter.Draw(T("Filter"), ImGui::GetContentRegionAvail().x - ImGui::GetStyle().ItemSpacing.x - uiScaled(32)
-			- settingsBtn.width() - ImGui::GetStyle().ItemSpacing.x);
+	filter.Draw(T("Filter"), ImGui::GetContentRegionAvail().x - ImGui::GetStyle().ItemSpacing.x
+			- settingsBtn.width() - ImGui::GetStyle().ItemSpacing.x - ImGui::CalcTextSize(T("Filter")).x);
 #endif
     if (gui_state != GuiState::SelectDisk)
     {
