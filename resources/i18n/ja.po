@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-12-14 14:32+0100\n"
-"PO-Revision-Date: 2025-12-23 00:54\n"
+"PO-Revision-Date: 2025-12-23 02:06\n"
 "Last-Translator: \n"
 "Language: ja_JP\n"
 "MIME-Version: 1.0\n"
@@ -255,7 +255,7 @@ msgstr "マウス %d"
 
 #: core/sdl/sdl.cpp:843 core/windows/winmain.cpp:370
 msgid "Flycast Error"
-msgstr "Flycast エラー"
+msgstr "Flycastエラー"
 
 #: core/audio/audiobackend_null.cpp:12
 msgid "No Audio"
@@ -539,7 +539,7 @@ msgstr "注意: VMUへの書き込みに失敗しました"
 
 #: core/hw/maple/maple_devs.cpp:2614
 msgid "WARNING: Disconnected from physical VMU memory due to load state"
-msgstr "警告: 負荷状態が原因で物理VMUメモリから切断されました"
+msgstr "警告: ロードステートが原因で物理VMUメモリから切断されました"
 
 #: core/hw/maple/maple_devs.cpp:2615
 msgid "Reconnect manually to resume using physical VMU memory"
@@ -629,7 +629,7 @@ msgstr "三角形単位"
 
 #: core/ui/settings_video.cpp:123
 msgid "Sort transparent polygons per triangle. Fast but may produce graphical glitches"
-msgstr "透明ポリゴンを三角形単位でソートします。高速ですが、グラフィックの不具合が発生する可能性があります。"
+msgstr "透明ポリゴンを三角形単位でソートします。高速ですが、グラフィックの不具合が発生する可能性があります"
 
 #: core/ui/settings_video.cpp:125
 msgid "Per Strip"
@@ -742,8 +742,8 @@ msgstr "ワイドスクリーン"
 #: core/ui/settings_video.cpp:240
 msgid "Draw geometry outside of the normal 4:3 aspect ratio. May produce graphical glitches in the revealed areas.\n"
 "Aspect Fit and shows the full 16:9 content."
-msgstr "通常の 4:3 アスペクト比の外側にジオメトリを描画します。表示されている領域にグラフィックの不具合が発生する可能性があります。\n"
-"アスペクトフィットで、16:9 の全コンテンツを表示します。"
+msgstr "通常の4:3 アスペクト比の外側にジオメトリを描画します。表示されている領域にグラフィックの不具合が発生する可能性があります。\n"
+"アスペクトフィットで、16:9の全コンテンツを表示します。"
 
 #: core/ui/settings_video.cpp:245
 msgid "Super Widescreen"
@@ -963,7 +963,7 @@ msgstr "ビデオルーティング(Spout)"
 
 #: core/ui/settings_video.cpp:397
 msgid "Video Routing (Only available with OpenGL or DirectX 11)"
-msgstr "ビデオルーティング(OpenGL または DirectX 11でのみ利用可能)"
+msgstr "ビデオルーティング(OpenGLまたはDirectX 11でのみ利用可能)"
 
 #: core/ui/settings_video.cpp:403
 msgid "Send video content to another program"
@@ -1208,7 +1208,7 @@ msgstr "SAFファイルピッカーを使用"
 
 #: core/ui/settings_general.cpp:352
 msgid "Use Android Storage Access Framework file picker to select folders and files. Ignored on Android 10 and later."
-msgstr "Android Storage Access Framework ファイルピッカーを使用してフォルダとファイルを選択します。Android 10 以降では無視されます。"
+msgstr "Android Storage Access Framework ファイルピッカーを使用してフォルダとファイルを選択します。Android 10以降では無視されます。"
 
 #: core/ui/settings_general.cpp:355
 msgid "Automatic State:"
@@ -1380,7 +1380,7 @@ msgstr "コントローラーマッピングフォルダーを選択"
 
 #: core/ui/settings_general.cpp:455
 msgid "Folders containing controller mapping files (.cfg). The emulator also looks in Home Folder/mappings. Per-game mappings are suffixed with _<gameId>.cfg"
-msgstr "コントローラのマッピングファイル (.cfg)を含むフォルダー. エミュレータはホームフォルダー/mappingsも参照します. ゲーム毎のマッピングは _<gameId>.cfg でサフィックスされます"
+msgstr "コントローラーのマッピングファイル (.cfg)を含むフォルダー. エミュレーターはホームフォルダー/mappingsも参照します. ゲーム毎のマッピングは _<gameId>.cfg でサフィックスされます"
 
 #: core/ui/settings_general.cpp:458
 msgid "Cheat Folders"
@@ -2136,7 +2136,7 @@ msgstr "レイテンシー"
 
 #: core/ui/settings_audio.cpp:45
 msgid "Sets the maximum audio latency. Not supported by all audio drivers."
-msgstr "オーディオの最大レイテンシを設定します。すべてのオーディオドライバーでサポートされているわけではありません。"
+msgstr "オーディオの最大レイテンシーを設定します。すべてのオーディオドライバーでサポートされているわけではありません。"
 
 #: core/ui/settings_audio.cpp:58
 msgid "Audio Driver"
@@ -2368,7 +2368,7 @@ msgstr "フレーム遅延"
 
 #: core/ui/settings_network.cpp:84
 msgid "Sets Frame Delay, advisable for sessions with ping >100 ms"
-msgstr "フレーム遅延を設定します。pingが100ミリ秒を超えるセッションに推奨されます。"
+msgstr "フレーム遅延を設定します。pingが100ミリ秒を超えるセッションに推奨されます"
 
 #: core/ui/settings_network.cpp:86
 msgid "Left Thumbstick:"
@@ -2641,7 +2641,7 @@ msgstr "ステートを保存しました"
 
 #: core/nullDC.cpp:217
 msgid "Error saving state"
-msgstr "ステートセーブ中にエラーが発生しました"
+msgstr "ステートの保存に失敗しました"
 
 #: core/nullDC.cpp:237
 msgid "Save state not found"
@@ -2649,7 +2649,7 @@ msgstr "セーブステートが見つかりません"
 
 #: core/nullDC.cpp:277 core/nullDC.cpp:299 core/nullDC.cpp:313
 msgid "Failed to load state"
-msgstr "ステートのロードに失敗しました"
+msgstr "ステートの読み込みに失敗しました"
 
 #: core/nullDC.cpp:277
 msgid "Not enough memory"
@@ -2768,7 +2768,7 @@ msgstr "スロット %dとして接続しました"
 
 #: core/rend/dx9/d3d_renderer.cpp:318
 msgid "DirectX 9 doesn't support Naomi 2 games. Select a different graphics API"
-msgstr "DirectX9はNaomi2ゲームをサポートしていません。別のグラフィックス API を選択してください"
+msgstr "DirectX 9はNaomi 2ゲームをサポートしていません。別のグラフィックスAPIを選択してください"
 
 #: core/rend/vulkan/adreno.cpp:154
 msgid "Can't open zip file"
