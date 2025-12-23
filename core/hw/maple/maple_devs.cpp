@@ -2133,12 +2133,12 @@ struct DreamLinkVmu : public maple_sega_vmu
 	static u64 lastNotifyTime;
 	static u64 lastErrorNotifyTime;
 
-	DreamLinkVmu(std::shared_ptr<DreamLink> dreamlink) :
+	DreamLinkVmu(std::shared_ptr<DreamLink> dreamlink, bool hasStorage) :
 		dreamlink(dreamlink),
 		writeThread([this](){writeEntrypoint();})
 	{
 		// Initialize useRealVmuMemory with our config setting
-		useRealVmuMemory = config::UsePhysicalVmuMemory;
+		useRealVmuMemory = config::UsePhysicalVmuMemory && hasStorage;
 	}
 
 	virtual ~DreamLinkVmu() {
@@ -2578,8 +2578,10 @@ void createDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink, bool gameStart
 	{
 		std::shared_ptr<maple_device> dev = MapleDevices[bus][i];
 
-		const bool isStorage = ((dreamlink->getFunctionCode(i) & MFID_1_Storage) != 0);
-		const bool isVibration = ((dreamlink->getFunctionCode(i) & MFID_8_Vibration) != 0);
+		const u32 fnCode = dreamlink->getFunctionCode(i);
+		const bool isStorage = ((fnCode & MFID_1_Storage) != 0);
+		const bool isScreen = ((fnCode & MFID_2_LCD) != 0);
+		const bool isVibration = ((fnCode & MFID_8_Vibration) != 0);
 
 		if (i == 1 && isVibration)
 		{
@@ -2607,7 +2609,7 @@ void createDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink, bool gameStart
 				if (!rumbleFound) dreamLinkPurupurus.push_back(rumble);
 			}
 		}
-		else if (isStorage)
+		else if (isStorage || isScreen)
 		{
 			bool vmuFound = false;
 			std::shared_ptr<DreamLinkVmu> vmu;
@@ -2625,13 +2627,13 @@ void createDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink, bool gameStart
 			{
 				if (!vmu)
 				{
-					vmu = std::make_shared<DreamLinkVmu>(dreamlink);
+					vmu = std::make_shared<DreamLinkVmu>(dreamlink, isStorage);
 				}
 
 				if (gameStart)
 				{
 					// Update useRealVmuMemory in case config changed
-					vmu->useRealVmuMemory = config::UsePhysicalVmuMemory;
+					vmu->useRealVmuMemory = config::UsePhysicalVmuMemory && isStorage;
 				}
 				else if (stateLoaded)
 				{

@@ -132,10 +132,10 @@ public:
     u32 getFunctionCode(int forPort) const override {
 		MapleDeviceType deviceType = expansionDevs.at(forPort);
 		if (deviceType == MDT_SegaVMU) {
-			return 0x0E000000;
+			return MFID_2_LCD | MFID_3_Clock; // storage not supported
 		}
 		else if (deviceType == MDT_PurupuruPack) {
-			return 0x00010000;
+			return MFID_8_Vibration;
 		}
 		return 0;
 	}
