@@ -92,6 +92,11 @@ public:
 		return _isForPhysicalController;
 	}
 
+	bool isPhysicalVMUMemorySupported() override {
+		// DreamConn controllers don't support physical VMU memory access
+		return !isForPhysicalController();
+	}
+
 	bool send(const MapleMsg& msg) override {
 		std::lock_guard<std::mutex> lock(send_mutex); // Ensure thread safety for send operations
 		return send_no_lock(msg);

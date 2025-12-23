@@ -2137,8 +2137,7 @@ struct DreamLinkVmu : public maple_sega_vmu
 		dreamlink(dreamlink),
 		writeThread([this](){writeEntrypoint();})
 	{
-		// Initialize useRealVmuMemory with our config setting
-		useRealVmuMemory = config::UsePhysicalVmuMemory;
+		useRealVmuMemory = config::UsePhysicalVmuMemory && dreamlink->isPhysicalVMUMemorySupported();
 	}
 
 	virtual ~DreamLinkVmu() {
@@ -2602,7 +2601,7 @@ void createDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink, bool gameStart
 				if (gameStart)
 				{
 					// Update useRealVmuMemory in case config changed
-					vmu->useRealVmuMemory = config::UsePhysicalVmuMemory;
+					vmu->useRealVmuMemory = config::UsePhysicalVmuMemory && dreamlink->isPhysicalVMUMemorySupported();
 				}
 				else if (stateLoaded)
 				{

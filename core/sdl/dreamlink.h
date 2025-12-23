@@ -84,6 +84,8 @@ public:
 
 	virtual bool isForPhysicalController() = 0;
 
+	virtual bool isPhysicalVMUMemorySupported() = 0;
+
 	//! Sends a message to the controller, ignoring the response
 	//! @note The implementation shall be thread safe
 	virtual bool send(const MapleMsg& msg) = 0;

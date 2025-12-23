@@ -1101,6 +1101,10 @@ public:
 		return true;
 	}
 
+	bool isPhysicalVMUMemorySupported() override {
+		return true;
+	}
+
 	bool send(const MapleMsg& msg) override {
 		if (!dpp_comms) {
 			return false;
