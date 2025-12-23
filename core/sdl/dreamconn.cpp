@@ -268,7 +268,8 @@ public:
 		os_notify(buf, 6000);
 
 		tearDownDreamLinkDevices(this);
-		maple_ReconnectDevices();
+		if (!isForPhysicalController())
+			maple_ReconnectDevices();
 	}
 
 	void gameTermination() override {
