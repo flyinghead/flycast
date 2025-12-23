@@ -319,9 +319,14 @@ private:
 
 	MapleDeviceType getDevice_no_lock(u8 portFlags, u8 portFlag) {
 		if (!(portFlags & portFlag)) {
-			// This is the case where nothing is connected to the expansion slot.
-			// We should not send a DeviceRequest message in that case.
+			// No device connected to this slot
 			return MDT_None;
+		}
+
+		if (isForPhysicalController()) {
+			// DreamConn physical controllers don't support the DeviceRequest message.
+			// Assume that a device in slot 1 is a VMU and a device in slot 2 is a purupuru.
+			return portFlag == (1 << 0) ? MDT_SegaVMU : MDT_PurupuruPack;
 		}
 
 		MapleMsg txMsg;
@@ -344,10 +349,8 @@ private:
 			return MDT_PurupuruPack;
 		}
 		else {
-			// Fall back to assuming a device in slot 1 is a VMU, and a device in slot 2 is a purupuru
-			MapleDeviceType deviceType = portFlag == (1 << 0) ? MDT_SegaVMU : MDT_PurupuruPack;
-			WARN_LOG(INPUT, "DreamcastController[%d] MDC_DeviceRequest unsupported function code: 0x%x. Assuming expansion slot %d contains %s.", bus, fnCode, portFlag, deviceDescription(deviceType));
-			return deviceType;
+			WARN_LOG(INPUT, "DreamcastController[%d] MDC_DeviceRequest unsupported function code: 0x%x", bus, fnCode);
+			return MDT_None;
 		}
 	}
 
