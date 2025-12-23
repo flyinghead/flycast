@@ -29,7 +29,7 @@ union modemreg_t
 	struct
 	{
 		//00 Receive Data Buffer (RBUFFER)/Voice Receive Data Buffer (VBUFR)
-		u8 reg00;
+		u8 RBUFFER;
 		//01 VOLUME VPAUSE - - TXHF RXHF RXP
 		struct
 		{
@@ -231,7 +231,7 @@ union modemreg_t
 			u8 BRKS:1;
 		} reg11;
 		//12 Configuration (CONF)
-		u8 reg12;
+		u8 CONF;
 		//13 TLVL RTH TXCLK
 		struct
 		{
@@ -240,7 +240,7 @@ union modemreg_t
 			u8 TXCLK:2;	// Transmit Clock Select
 		} reg13;
 		//14 ABCODE
-		u8 reg14;
+		u8 ABCODE;
 		//15 SLEEP - RDWK HWRWK AUTO RREN EXL3 EARC
 		struct
 		{
@@ -254,12 +254,12 @@ union modemreg_t
 			u8 SLEEP:1;
 		} reg15;
 		//16 Secondary Receive Data Buffer/V.34 Receive Status (SECRXB)
-		u8 reg16;
+		u8 SECRXB;
 		//17 Secondary Transmit Data Buffer/V.34 Transmit Status(SECTXB)
-		u8 reg17;
+		u8 SECTXB;
 		//18 Memory Access Data LSB B7-B0 (MEDAL)
 		//19 Memory Access Data MSB B15-B8 (MEDAM)
-		u16 reg18_19;
+		u16 MEDA;
 		//1A SFRES RIEN RION DMAE - SCOBF SCIBE SECEN
 		struct
 		{
@@ -320,7 +320,7 @@ union modemreg_t
 };
 #pragma pack(pop)
 
-u8 regs_write_mask[] = {
+static constexpr u8 regs_write_mask[] = {
 		//00 Receive Data Buffer (RBUFFER)/Voice Receive Data Buffer (VBUFR)
 		0xFF,
 		//01 VOLUME VPAUSE - - (TXHF RXHF RXP)
@@ -390,7 +390,7 @@ u8 regs_write_mask[] = {
 		0xFF,
 };
 
-u32 regs_int_mask_addr[0x21] {
+static constexpr u32 regs_int_mask_addr[0x21] {
 		0,
 		0x247,	// 01
 		0,
@@ -423,7 +423,7 @@ u32 regs_int_mask_addr[0x21] {
 };
 
 // Power-on reset DSP RAM
-static const u8 por_dspram[] =
+static constexpr u8 por_dspram[] =
 {
 /* 0x000 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 /* 0x010 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -697,3 +697,5 @@ static const u8 por_dspram[] =
 /* 0xFE0 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 /* 0xFF0 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 };
+
+constexpr unsigned rxFifoTrigger[] { 1u, 4u, 8u, 12u };
