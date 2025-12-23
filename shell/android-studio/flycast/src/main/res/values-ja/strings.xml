@@ -2,15 +2,15 @@
 <resources>
     <string name="OK">OK</string>
     <string name="storage_error">ストレージエラー</string>
-    <string name="folder_permissions">このフォルダにアクセスする権限を取得できません。\n別のフォルダを選択してください。</string>
+    <string name="folder_permissions">このフォルダーにアクセスする権限を取得できません。\n別のフォルダーを選択してください。</string>
     <string name="file_manager_not_found">ファイルマネージャーが見つかりません</string>
-    <string name="no_file_manager_android10">デバイスに適切なファイルマネージャが見つかりませんでした。\nStorage Access Frameworkと互換性のあるファイルマネージャをインストールしてください</string>
-    <string name="no_file_manager_android9">デバイスに適切なファイルマネージャが見つかりませんでした。\nファイルマネージャーをインストールするか、一般設定で「SAFファイルピッカーを使用」を無効にしてください</string>
-    <string name="select_an_export_folder">エクスポート フォルダーを選択</string>
+    <string name="no_file_manager_android10">デバイスに適切なファイルマネージャーが見つかりませんでした。\nStorage Access Frameworkと互換性のあるファイルマネージャーをインストールしてください</string>
+    <string name="no_file_manager_android9">デバイスに適切なファイルマネージャーが見つかりませんでした。\nファイルマネージャーをインストールするか、一般設定で「SAFファイルピッカーを使用」を無効にしてください</string>
+    <string name="select_an_export_folder">エクスポートフォルダーを選択</string>
     <string name="exporting_home_folder">ホームフォルダーをエクスポート中</string>
     <string name="select_an_import_folder">インポートフォルダーを選択</string>
     <string name="importing_home_folder">ホームフォルダーをインポート中</string>
-    <string name="flycast_error">Flycast エラー</string>
+    <string name="flycast_error">Flycastエラー</string>
     <string name="init_failed_message">初期化に失敗しました。もう一度試すか、再インストールしてください。\n\nエラー: </string>
     <string name="exit">終了</string>
     <string name="copying">コピー中</string>
