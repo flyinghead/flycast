@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-12-14 14:32+0100\n"
-"PO-Revision-Date: 2025-12-22 23:50\n"
+"PO-Revision-Date: 2025-12-23 00:54\n"
 "Last-Translator: \n"
 "Language: ja_JP\n"
 "MIME-Version: 1.0\n"
@@ -477,7 +477,7 @@ msgstr "無効なROM: %s が切り捨てられました"
 
 #: core/hw/naomi/naomi_cart.cpp:484
 msgid "Error: cannot load BIOS from naomi.zip"
-msgstr "エラー：naomi.zipからBIOSを読み込むことができません"
+msgstr "エラー: naomi.zipからBIOSを読み込むことができません"
 
 #: core/hw/naomi/naomi_cart.cpp:500 core/hw/naomi/naomi_cart.cpp:550
 #, c-format
@@ -519,15 +519,15 @@ msgstr "Naomi GDROM: 復号するファイルが見つかりませんでした�
 
 #: core/hw/maple/maple_devs.cpp:2218
 msgid "ATTENTION: Loading from a physical VMU"
-msgstr "注意: 物理的なVMUからの読み込み"
+msgstr "注意: 物理VMUからの読み込み"
 
 #: core/hw/maple/maple_devs.cpp:2219
 msgid "Game data is being loaded from your physical VMU"
-msgstr "ゲームデータが物理的なVMUから読み込まれています"
+msgstr "ゲームデータが物理VMUから読み込まれています"
 
 #: core/hw/maple/maple_devs.cpp:2386
 msgid "ATTENTION: You are saving to a physical VMU"
-msgstr "注意: 物理的なVMUに保存しています"
+msgstr "注意: 物理VMUに保存しています"
 
 #: core/hw/maple/maple_devs.cpp:2387
 msgid "Do not disconnect the VMU or close the game"
@@ -543,7 +543,7 @@ msgstr "警告: 負荷状態が原因で物理VMUメモリから切断されま�
 
 #: core/hw/maple/maple_devs.cpp:2615
 msgid "Reconnect manually to resume using physical VMU memory"
-msgstr "物理的なVMUメモリの使用を再開するには手動で再接続してください"
+msgstr "物理VMUメモリの使用を再開するには手動で再接続してください"
 
 #: core/reios/reios.cpp:400 core/reios/reios.cpp:403
 msgid "Reboot to BIOS"
@@ -752,7 +752,7 @@ msgstr "スーパーワイドスクリーン"
 #: core/ui/settings_video.cpp:246
 msgid "Use the full width of the screen or window when its aspect ratio is greater than 16:9.\n"
 "Aspect Fill and remove black bars. Not compatible with integer scaling."
-msgstr "アスペクト比が 16:9 より大きい場合は、画面またはウィンドウの最大幅を使用します。\n"
+msgstr "アスペクト比が16:9より大きい場合は、画面またはウィンドウの最大幅を使用します。\n"
 "アスペクト塗りつぶしと黒いバーを削除します。整数のスケーリングと互換性がありません。"
 
 #: core/ui/settings_video.cpp:249
@@ -821,7 +821,7 @@ msgstr "パフォーマンス"
 
 #: core/ui/settings_video.cpp:310
 msgid "Automatic Frame Skipping:"
-msgstr "自動フレームスキップ:"
+msgstr "自動フレームスキップ："
 
 #: core/ui/settings_video.cpp:312 core/ui/settings_video.cpp:337
 #: core/ui/settings_network.cpp:40 core/ui/settings_network.cpp:87
@@ -951,7 +951,7 @@ msgstr "FPSカウンターを表示"
 
 #: core/ui/settings_video.cpp:387
 msgid "Show on-screen frame/sec counter"
-msgstr "画面上にフレームレートを表示する"
+msgstr "FPSカウンターを表示する"
 
 #: core/ui/settings_video.cpp:392
 msgid "Video Routing (Syphon)"
@@ -963,7 +963,7 @@ msgstr "ビデオルーティング(Spout)"
 
 #: core/ui/settings_video.cpp:397
 msgid "Video Routing (Only available with OpenGL or DirectX 11)"
-msgstr "ビデオルーティング(OpenGL または DirectX 11 でのみ利用可能)"
+msgstr "ビデオルーティング(OpenGL または DirectX 11でのみ利用可能)"
 
 #: core/ui/settings_video.cpp:403
 msgid "Send video content to another program"
@@ -1102,7 +1102,7 @@ msgstr "コンテンツを再スキャン"
 
 #: core/ui/settings_general.cpp:266
 msgid "The folders where your games are stored"
-msgstr "ゲームが保存されているフォルダ"
+msgstr "ゲームが保存されているフォルダー"
 
 #: core/ui/settings_general.cpp:272
 msgid "Data Folder"
@@ -1114,7 +1114,7 @@ msgstr "BIOSファイル、保存されたVMU、ステートを含むフォル�
 
 #: core/ui/settings_general.cpp:285
 msgid "Home Folder"
-msgstr "ホームフォルダ"
+msgstr "ホームフォルダー"
 
 #: core/ui/settings_general.cpp:294
 msgctxt "action"
@@ -1132,7 +1132,7 @@ msgstr "Finderで表示"
 
 #: core/ui/settings_general.cpp:312
 msgid "The folder where Flycast saves configuration files and VMUs. BIOS files should be in a subfolder named \"data\""
-msgstr "Flycastが設定ファイルとVMUを保存するフォルダ。BIOSファイルはdataという名前のサブフォルダに保存されます"
+msgstr "Flycastが設定ファイルとVMUを保存するフォルダー。BIOSファイルはdataという名前のサブフォルダーに保存されます"
 
 #: core/ui/settings_general.cpp:323
 msgid "Box Art Game List"
@@ -1212,7 +1212,7 @@ msgstr "Android Storage Access Framework ファイルピッカーを使用して
 
 #: core/ui/settings_general.cpp:355
 msgid "Automatic State:"
-msgstr "自動ステート:"
+msgstr "自動ステート："
 
 #: core/ui/settings_general.cpp:356 core/ui/gui_cheats.cpp:104
 msgid "Load"
@@ -1220,7 +1220,7 @@ msgstr "ロード"
 
 #: core/ui/settings_general.cpp:357
 msgid "Load the last saved state of the game when starting"
-msgstr "ゲームの起動時に最後に保存したステートをロードします"
+msgstr "ゲームの起動時に最後に保存したステートを読み込みます"
 
 #: core/ui/settings_general.cpp:359 core/ui/vgamepad.cpp:73
 msgid "Save"
@@ -1252,11 +1252,11 @@ msgstr "レトロアチーブメントを有効にする"
 
 #: core/ui/settings_general.cpp:366
 msgid "Track your game achievements using RetroAchievements.org"
-msgstr "RetroAchievements.org を使用してゲームの実績を追跡する"
+msgstr "RetroAchievements.orgを使用してゲームの実績を追跡する"
 
 #: core/ui/settings_general.cpp:371
 msgid "Enable RetroAchievements hardcore mode. Using cheats and loading a state are not allowed in this mode."
-msgstr "レトロアチーブメントのハードコアモードを有効にします。このモードではチートの使用やステートのロードは許可されません。"
+msgstr "レトロアチーブメントのハードコアモードを有効にします。このモードではチートの使用やステートの読み込みは許可されません。"
 
 #: core/ui/settings_general.cpp:372
 msgid "Username"
@@ -1296,7 +1296,7 @@ msgstr "BIOSフォルダーを選択"
 
 #: core/ui/settings_general.cpp:424
 msgid "Folders containing BIOS files (e.g. dc_boot.bin or dc_bios.bin) and arcade BIOS"
-msgstr "BIOSファイル（例：dc_boot.bin、dc_bios.bin）とアーケードBIOSを含むフォルダー"
+msgstr "BIOSファイル(例：dc_boot.bin、dc_bios.bin)とアーケードBIOSを含むフォルダー"
 
 #: core/ui/settings_general.cpp:428
 msgid "VMU Folder"
@@ -1320,7 +1320,7 @@ msgstr "セーブステートフォルダーを選択"
 
 #: core/ui/settings_general.cpp:433
 msgid "Folders for save states. First path is used for new states; all are searched when loading"
-msgstr "セーブステート用のフォルダー。最初のパスは新しいステートに使用され、ロード時にすべてのパスが検索されます"
+msgstr "セーブステート用のフォルダー。最初のパスは新しいステートに使用され、読み込み時にすべてのパスが検索されます"
 
 #: core/ui/settings_general.cpp:436
 msgid "Game Save Folder"
@@ -1672,7 +1672,7 @@ msgstr "マップコントロール"
 #: core/ui/settings_controls.cpp:387
 #, c-format
 msgid "Waiting for control '%s'..."
-msgstr "'%s'のコントロールを待っています..."
+msgstr "'%s'のコントロールを待っています…"
 
 #: core/ui/settings_controls.cpp:403
 #, c-format
@@ -1681,7 +1681,7 @@ msgstr "%d 秒でタイムアウト"
 
 #: core/ui/settings_controls.cpp:408
 msgid "Current inputs:"
-msgstr "現在の入力:"
+msgstr "現在の入力："
 
 #: core/ui/settings_controls.cpp:432
 msgid "Confirm"
@@ -1747,7 +1747,7 @@ msgstr "マッピングをデフォルトにリセットしてもよろしいで
 
 #: core/ui/settings_controls.cpp:666
 msgid "Controller Type:"
-msgstr "コントローラーの種類:"
+msgstr "コントローラーの種類："
 
 #: core/ui/settings_controls.cpp:667
 msgid "Gamepad"
@@ -1983,7 +1983,8 @@ msgstr "DreamLinkに接続"
 #: core/ui/gui.cpp:737
 msgid "Disconnect\n"
 "DreamLink"
-msgstr "切断\\nDreamLink"
+msgstr "切断\n"
+"DreamLink"
 
 #: core/ui/gui.cpp:761
 msgid "Insert Disk"
