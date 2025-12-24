@@ -5,161 +5,161 @@ msgstr ""
 "POT-Creation-Date: 2025-12-14 14:32+0100\n"
 "PO-Revision-Date: 2025-12-23 14:46\n"
 "Last-Translator: \n"
-"Language: sv_SE\n"
+"Language: zh_CN\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
 "X-Crowdin-Project: flycast\n"
 "X-Crowdin-Project-ID: 852682\n"
-"X-Crowdin-Language: sv-SE\n"
+"X-Crowdin-Language: zh-CN\n"
 "X-Crowdin-File: /dev/resources/i18n/flycast.pot\n"
 "X-Crowdin-File-ID: 13\n"
-"Language-Team: Swedish\n"
+"Language-Team: Chinese Simplified\n"
 
 #: core/achievements/achievements.cpp:345
 #, c-format
 msgid "User %s authenticated"
-msgstr "Användare %s autentiserad"
+msgstr ""
 
 #: core/achievements/achievements.cpp:361
 msgid "RetroAchievements authentication failed"
-msgstr "Autentisering för RetroAchievements misslyckades"
+msgstr ""
 
 #: core/achievements/achievements.cpp:396
 msgid "No user token returned"
-msgstr "Ingen användartoken returnerades"
+msgstr ""
 
 #: core/achievements/achievements.cpp:548
 msgid "RetroAchievements disconnected"
-msgstr "RetroAchievements frånkopplad"
+msgstr ""
 
 #: core/achievements/achievements.cpp:552
 msgid "RetroAchievements reconnected"
-msgstr "RetroAchievements återansluten"
+msgstr ""
 
 #: core/achievements/achievements.cpp:582
 #, c-format
 msgid "Achievement %s unlocked!"
-msgstr "Prestationen %s låstes upp!"
+msgstr ""
 
 #: core/achievements/achievements.cpp:622
 #, c-format
 msgid "Leaderboard %s started"
-msgstr "Ledartavlan %s startad"
+msgstr ""
 
 #: core/achievements/achievements.cpp:629
 #, c-format
 msgid "Leaderboard %s failed"
-msgstr "Ledartavlan %s misslyckades"
+msgstr ""
 
 #: core/achievements/achievements.cpp:636
 #, c-format
 msgid "Leaderboard %s submitted"
-msgstr "Ledartavlan %s inskickad"
+msgstr ""
 
 #: core/achievements/achievements.cpp:661
 #, c-format
 msgid "Mastered %s"
-msgstr "Bemästrade %s"
+msgstr ""
 
 #: core/achievements/achievements.cpp:661
 #, c-format
 msgid "Completed %s"
-msgstr "Färdigställde %s"
+msgstr ""
 
 #: core/achievements/achievements.cpp:664
 #, c-format
 msgid "%d achievements, %d points"
-msgstr "%d prestationer, %d poäng"
+msgstr ""
 
 #: core/achievements/achievements.cpp:910
 #, c-format
 msgid "You have %d of %d achievements unlocked."
-msgstr "Du har %d av %d prestationer upplåsta."
+msgstr ""
 
 #: core/achievements/achievements.cpp:912
 msgid "This game has no achievements."
-msgstr "Detta spel har inga prestationer."
+msgstr ""
 
 #: core/achievements/achievements.cpp:917 core/ui/settings_general.cpp:370
 #: core/ui/gui_achievements.cpp:303
 msgid "Hardcore Mode"
-msgstr "Hardcore-läge"
+msgstr ""
 
 #: core/achievements/achievements.cpp:948
 msgid "Hardcore mode disabled"
-msgstr "Hardcore-läget inaktiverat"
+msgstr ""
 
 #: core/achievements/achievements.cpp:948
 msgid "Unrecognized media inserted"
-msgstr "Inmatat media känns inte igen"
+msgstr ""
 
 #: core/achievements/achievements.cpp:955
 msgid "Media change failed"
-msgstr "Mediabyte misslyckades"
+msgstr ""
 
 #: core/sdl/dreamconn.cpp:263
 #, c-format
 msgid "WARNING: DreamLink disconnected from port %c"
-msgstr "VARNING: DreamLink kopplade från port %c"
+msgstr ""
 
 #: core/sdl/dreampicoport.cpp:1209 core/ui/settings_controls.cpp:184
 msgid "DPad2 Up"
-msgstr "DPad2 upp"
+msgstr ""
 
 #: core/sdl/dreampicoport.cpp:1210 core/ui/settings_controls.cpp:185
 msgid "DPad2 Down"
-msgstr "DPad2 ner"
+msgstr ""
 
 #: core/sdl/dreampicoport.cpp:1211 core/ui/settings_controls.cpp:186
 msgid "DPad2 Left"
-msgstr "DPad2 vänster"
+msgstr ""
 
 #: core/sdl/dreampicoport.cpp:1212 core/ui/settings_controls.cpp:187
 msgid "DPad2 Right"
-msgstr "DPad2 höger"
+msgstr ""
 
 #: core/sdl/dreampicoport.cpp:1215
 msgid "VMU1 A"
-msgstr "VMU1 A"
+msgstr ""
 
 #: core/sdl/dreampicoport.cpp:1216
 msgid "VMU1 B"
-msgstr "VMU1 B"
+msgstr ""
 
 #: core/sdl/dreampicoport.cpp:1217
 msgid "VMU1 Up"
-msgstr "VMU1 Upp"
+msgstr ""
 
 #: core/sdl/dreampicoport.cpp:1218
 msgid "VMU1 Down"
-msgstr "VMU1 Ner"
+msgstr ""
 
 #: core/sdl/dreampicoport.cpp:1219
 msgid "VMU1 Left"
-msgstr "VMU1 Vänster"
+msgstr ""
 
 #: core/sdl/dreampicoport.cpp:1220
 msgid "VMU1 Right"
-msgstr "VMU1 Höger"
+msgstr ""
 
 #: core/sdl/dreamlink.cpp:161
 msgid "Inactive"
-msgstr "Inaktiv"
+msgstr ""
 
 #: core/sdl/dreamlink.cpp:163 core/ui/gui.cpp:752
 msgid "Connected"
-msgstr "Ansluten"
+msgstr ""
 
 #: core/sdl/dreamlink.cpp:163 core/ui/gui.cpp:752
 msgid "Disconnected"
-msgstr "Frånkopplad"
+msgstr ""
 
 #: core/sdl/sdl_gamepad.cpp:610
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:135
 msgid "Back"
-msgstr "Bakåt"
+msgstr ""
 
 #: core/sdl/sdl_gamepad.cpp:611
 msgid "Guide"
@@ -169,7 +169,7 @@ msgstr ""
 #: core/ui/settings_controls.cpp:255
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:171
 msgid "Start"
-msgstr "Starta"
+msgstr ""
 
 #: core/sdl/sdl_gamepad.cpp:617 core/sdl/sdl_gamepad.cpp:650
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:137
@@ -197,2629 +197,2623 @@ msgstr ""
 
 #: core/sdl/sdl_gamepad.cpp:621
 msgid "Misc"
-msgstr "Diverse"
+msgstr ""
 
 #: core/sdl/sdl_gamepad.cpp:622
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:379
 msgid "Paddle 1"
-msgstr "Paddel 1"
+msgstr ""
 
 #: core/sdl/sdl_gamepad.cpp:623
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:381
 msgid "Paddle 2"
-msgstr "Paddel 2"
+msgstr ""
 
 #: core/sdl/sdl_gamepad.cpp:624
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:383
 msgid "Paddle 3"
-msgstr "Paddel 3"
+msgstr ""
 
 #: core/sdl/sdl_gamepad.cpp:625
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:385
 msgid "Paddle 4"
-msgstr "Paddel 4"
+msgstr ""
 
 #: core/sdl/sdl_gamepad.cpp:626
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:387
 msgid "Touchpad"
-msgstr "Pekplatta"
+msgstr ""
 
 #: core/sdl/sdl_gamepad.cpp:685
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:405
 msgid "Left Stick X"
-msgstr "Vänsterspak X"
+msgstr ""
 
 #: core/sdl/sdl_gamepad.cpp:686
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:407
 msgid "Left Stick Y"
-msgstr "Vänsterspak Y"
+msgstr ""
 
 #: core/sdl/sdl_gamepad.cpp:687
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:409
 msgid "Right Stick X"
-msgstr "Högerspak X"
+msgstr ""
 
 #: core/sdl/sdl_gamepad.cpp:688
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:411
 msgid "Right Stick Y"
-msgstr "Högerspak Y"
+msgstr ""
 
 #: core/sdl/sdl_gamepad.cpp:757
 msgid "Default Mouse"
-msgstr "Standardmus"
+msgstr ""
 
 #: core/sdl/sdl_gamepad.cpp:761
 #, c-format
 msgid "Mouse %d"
-msgstr "Mus %d"
+msgstr ""
 
 #: core/sdl/sdl.cpp:843 core/windows/winmain.cpp:370
 msgid "Flycast Error"
-msgstr "Fel i Flycast"
+msgstr ""
 
 #: core/audio/audiobackend_null.cpp:12
 msgid "No Audio"
-msgstr "Inget ljud"
+msgstr ""
 
 #: core/audio/audiobackend_oboe.cpp:81
 msgid "Automatic AAudio / OpenSL selection"
-msgstr "Automatiskt val av AAudio / OpenSL"
+msgstr ""
 
 #: core/oslib/oslib.cpp:351
 msgid "Can't find Pictures library"
-msgstr "Kan inte hitta bildbiblioteket"
+msgstr ""
 
 #: core/oslib/storage.cpp:81
 #, c-format
 msgid "Can't read directory %s"
-msgstr "Kan inte läsa katalogen %s"
+msgstr ""
 
 #: core/oslib/storage.cpp:201
 #, c-format
 msgid "Cannot stat %s"
-msgstr "Kan inte ta status på %s"
+msgstr ""
 
 #: core/oslib/storage.cpp:222
 #, c-format
 msgid "Invalid device %s"
-msgstr "Ogiltig enhet %s"
+msgstr ""
 
 #: core/oslib/storage.cpp:246
 #, c-format
 msgid "Cannot get attributes of %s"
-msgstr "Kan inte få attributen för %s"
+msgstr ""
 
 #: core/oslib/storage.cpp:253
 #, c-format
 msgid "Invalid file name %s"
-msgstr "Ogiltigt filnamn %s"
+msgstr ""
 
 #: core/imgread/common.cpp:97
 msgid "Unknown disk format"
-msgstr "Okänt skivformat"
+msgstr ""
 
 #: core/imgread/common.cpp:370 core/emulator.cpp:613
 msgid "This media cannot be loaded"
-msgstr "Detta media kan inte läsas in"
+msgstr ""
 
 #: core/imgread/cue.cpp:57
 #, c-format
 msgid "Cannot open CUE file %s"
-msgstr "Kan inte öppna CUE-filen %s"
+msgstr ""
 
 #: core/imgread/cue.cpp:68
 msgid "CUE parse error: CUE file too big"
-msgstr "Tolkningsfel för CUE: CUE-filen är för stor"
+msgstr ""
 
 #: core/imgread/cue.cpp:189
 #, c-format
 msgid "CUE file: cannot open track %s"
-msgstr "CUE-fil: kan inte öppna spår %s"
+msgstr ""
 
 #: core/imgread/cue.cpp:193
 #, c-format
 msgid "CUE file: track has unknown sector type: %s"
-msgstr "CUE-fil: spåret har okänd sektortyp: %s"
+msgstr ""
 
 #: core/imgread/cue.cpp:225
 msgid "CUE parse error: failed to parse or invalid file with 0 tracks"
-msgstr "Tolkningsfel för CUE: misslyckades med att tolka eller ogiltig fil med 0 spår"
+msgstr ""
 
 #: core/imgread/cue.cpp:228 core/imgread/cue.cpp:240 core/imgread/cue.cpp:244
 #: core/imgread/cue.cpp:248 core/imgread/cue.cpp:252
 msgid "Invalid CUE file"
-msgstr "Ogiltig CUE-fil"
+msgstr ""
 
 #: core/imgread/cue.cpp:237
 msgid "CUE parse error: less than 3 tracks"
-msgstr "Tolkningsfel för CUE: mindre än 3 spår"
+msgstr ""
 
 #: core/imgread/chd.cpp:109
 #, c-format
 msgid "chd: track type %s is not supported"
-msgstr "chd: spårtypen %s stöds inte"
+msgstr ""
 
 #: core/imgread/chd.cpp:118
 #, c-format
 msgid "Cannot open CHD file %s"
-msgstr "Kan inte öppna CHD-filen %s"
+msgstr ""
 
 #: core/imgread/chd.cpp:124
 #, c-format
 msgid "Invalid CHD file %s"
-msgstr "Ogiltig CHD-fil %s"
+msgstr ""
 
 #: core/imgread/chd.cpp:137
 #, c-format
 msgid "Invalid hunkbytes for CHD file %s"
-msgstr "Ogiltig hunkbytes för CHD-filen %s"
+msgstr ""
 
 #: core/imgread/chd.cpp:183
 msgid "Unexpected track number"
-msgstr "Oväntat spårnummer"
+msgstr ""
 
 #: core/imgread/chd.cpp:186
 msgid "Unsupported subtype or pre/postgap"
-msgstr "Undertypen stöds inte eller pre/postgap"
+msgstr ""
 
 #: core/imgread/chd.cpp:212
 msgid "Invalid CHD: less than 3 tracks"
-msgstr "Ogiltig CHD: mindre än 3 spår"
+msgstr ""
 
 #: core/imgread/chd.cpp:218
 msgid "Invalid CHD: no track found"
-msgstr "Ogiltig CHD: inga spår hittades"
+msgstr ""
 
 #: core/imgread/gdi.cpp:13
 #, c-format
 msgid "Cannot open GDI file %s"
-msgstr "Kan inte öppna GDI-filen %s"
+msgstr ""
 
 #: core/imgread/gdi.cpp:24
 msgid "GDI file too big"
-msgstr "GDI-filen är för stor"
+msgstr ""
 
 #: core/imgread/gdi.cpp:38 core/imgread/gdi.cpp:85 core/imgread/gdi.cpp:89
 #: core/imgread/gdi.cpp:96 core/imgread/gdi.cpp:102 core/imgread/gdi.cpp:108
 #: core/imgread/gdi.cpp:112 core/imgread/gdi.cpp:120 core/imgread/gdi.cpp:145
 msgid "Invalid GDI file"
-msgstr "Ogiltig GDI-fil"
+msgstr ""
 
 #: core/imgread/gdi.cpp:132
 #, c-format
 msgid "GDI file: Cannot open track %s"
-msgstr "GDI-fil: Kan inte öppna spår %s"
+msgstr ""
 
 #: core/imgread/cdi.cpp:17
 #, c-format
 msgid "Cannot open CDI file %s"
-msgstr "Kan inte öppna CDI-filen %s"
+msgstr ""
 
 #: core/imgread/cdi.cpp:23
 #, c-format
 msgid "Invalid CDI file %s"
-msgstr "Ogiltig CDI-fil %s"
+msgstr ""
 
 #: core/imgread/cdi.cpp:27 core/imgread/cdi.cpp:31 core/imgread/cdi.cpp:49
 #: core/imgread/cdi.cpp:60 core/imgread/cdi.cpp:73
 msgid "Invalid CDI image"
-msgstr "Ogiltig CDI-avbildning"
+msgstr ""
 
 #: core/imgread/cdi.cpp:78
 msgid "Invalid CDI sector size"
-msgstr "Ogiltig sektorstorlek för CDI"
+msgstr ""
 
 #: core/imgread/cdi.cpp:126
 msgid "Cannot re-open CDI file"
-msgstr "Kan inte återöppna CDI-fil"
+msgstr ""
 
 #: core/hw/naomi/card_reader.cpp:291 core/hw/naomi/card_reader.cpp:585
 #: core/hw/maple/maple_devs.cpp:1842
 msgid "Card ejected"
-msgstr "Kortet utmatat"
+msgstr ""
 
 #: core/hw/naomi/naomi.cpp:350
 #, c-format
 msgid "Speed: %3d"
-msgstr "Hastighet: %3d"
+msgstr ""
 
 #: core/hw/naomi/printer.cpp:857
 msgid "Print out saved"
-msgstr "Utdata sparades"
+msgstr ""
 
 #: core/hw/naomi/systemsp.cpp:2188
 #, c-format
 msgid "SystemSP: Cannot open CompactFlash file %s"
-msgstr "SystemSP: Kan inte öppna CompactFlash-filen %s"
+msgstr ""
 
 #: core/hw/naomi/naomi_m3comm.cpp:76
 msgid "Network started"
-msgstr "Nätverk startat"
+msgstr ""
 
 #: core/hw/naomi/naomi_cart.cpp:148 core/hw/naomi/naomi_cart.cpp:386
 #: core/hw/naomi/naomi_cart.cpp:406 core/hw/naomi/naomi_cart.cpp:432
 #: core/hw/naomi/naomi_cart.cpp:844 core/hw/naomi/gdcartridge.cpp:597
 msgid "Memory allocation failed"
-msgstr "Minnesallokering misslyckades"
+msgstr ""
 
 #: core/hw/naomi/naomi_cart.cpp:192 core/hw/naomi/naomi_cart.cpp:224
 #, c-format
 msgid "Error: cannot load BIOS %s"
-msgstr "Fel: kan inte läsa in BIOS %s"
+msgstr ""
 
 #: core/hw/naomi/naomi_cart.cpp:236
 msgid "Unknown game"
-msgstr "Okänt spel"
+msgstr ""
 
 #: core/hw/naomi/naomi_cart.cpp:262
 #, c-format
 msgid "Cannot open %s or %s"
-msgstr "Kan inte öppna %s eller %s"
+msgstr ""
 
 #: core/hw/naomi/naomi_cart.cpp:264
 #, c-format
 msgid "Cannot open %s"
-msgstr "Kan inte öppna %s"
+msgstr ""
 
 #: core/hw/naomi/naomi_cart.cpp:343
 msgid "Invalid ROM"
-msgstr "Ogiltigt ROM"
+msgstr ""
 
 #: core/hw/naomi/naomi_cart.cpp:364
 #, c-format
 msgid "Cannot find %s"
-msgstr "Kan inte hitta %s"
+msgstr ""
 
 #: core/hw/naomi/naomi_cart.cpp:374 core/hw/naomi/naomi_cart.cpp:391
 #, c-format
 msgid "Invalid ROM: truncated %s"
-msgstr "Ogiltigt ROM: trunkerad %s"
+msgstr ""
 
 #: core/hw/naomi/naomi_cart.cpp:484
 msgid "Error: cannot load BIOS from naomi.zip"
-msgstr "Fel: kan inte läsa in BIOS från naomi.zip"
+msgstr ""
 
 #: core/hw/naomi/naomi_cart.cpp:500 core/hw/naomi/naomi_cart.cpp:550
 #, c-format
 msgid "Error: can't open %s"
-msgstr "Fel: kan inte öppna %s"
+msgstr ""
 
 #: core/hw/naomi/naomi_cart.cpp:508 core/hw/naomi/naomi_cart.cpp:524
 msgid "Error: Invalid LST file"
-msgstr "Fel: Ogiltig LST-fil"
+msgstr ""
 
 #: core/hw/naomi/naomi_cart.cpp:563
 msgid "Invalid empty ROM"
-msgstr "Ogiltig tom ROM"
+msgstr ""
 
 #: core/hw/naomi/naomi_cart.cpp:570
 msgid "Out of memory"
-msgstr "Slut på minne"
+msgstr ""
 
 #: core/hw/naomi/naomi_cart.cpp:621
 msgid "Error: Failed to load BIN/DAT file"
-msgstr "Fel: Misslyckades med att läsa in BIN/DAT-fil"
+msgstr ""
 
 #: core/hw/naomi/midiffb.cpp:76
 msgid "Calibration done"
-msgstr "Kalibreringen är klar"
+msgstr ""
 
 #: core/hw/naomi/midiffb.cpp:201
 msgid "Calibrating the wheel. Keep it centered."
-msgstr "Kalibrerar ratten. Håll den centrerad."
+msgstr ""
 
 #: core/hw/naomi/gdcartridge.cpp:524
 #, c-format
 msgid "Naomi GDROM: Cannot open %s.chd"
-msgstr "Naomi GDROM: Kan inte öppna %s.chd"
+msgstr ""
 
 #: core/hw/naomi/gdcartridge.cpp:609
 msgid "Naomi GDROM: Could not find the file to decrypt."
-msgstr "Naomi GDROM: Kunde inte hitta filen att avkryptera."
+msgstr ""
 
 #: core/hw/maple/maple_devs.cpp:2218
 msgid "ATTENTION: Loading from a physical VMU"
-msgstr "OBSERVERA: Inläsning från en fysisk VMU"
+msgstr ""
 
 #: core/hw/maple/maple_devs.cpp:2219
 msgid "Game data is being loaded from your physical VMU"
-msgstr "Speldata läses in från din fysiska VMU"
+msgstr ""
 
 #: core/hw/maple/maple_devs.cpp:2386
 msgid "ATTENTION: You are saving to a physical VMU"
-msgstr "OBSERVERA: Du sparar till en fysisk VMU"
+msgstr ""
 
 #: core/hw/maple/maple_devs.cpp:2387
 msgid "Do not disconnect the VMU or close the game"
-msgstr "Koppla inte från VMU:n eller stäng spelet"
+msgstr ""
 
 #: core/hw/maple/maple_devs.cpp:2458
 msgid "ATTENTION: Write to VMU failed"
-msgstr "OBSERVERA: Skrivning till VMU misslyckades"
+msgstr ""
 
 #: core/hw/maple/maple_devs.cpp:2614
 msgid "WARNING: Disconnected from physical VMU memory due to load state"
-msgstr "VARNING: Frånkopplad från fysiskt VMU-minne på grund av inläst tillstånd"
+msgstr ""
 
 #: core/hw/maple/maple_devs.cpp:2615
 msgid "Reconnect manually to resume using physical VMU memory"
-msgstr "Återanslut manuellt för att återuppta användning av fysiskt VMU-minne"
+msgstr ""
 
 #: core/reios/reios.cpp:400 core/reios/reios.cpp:403
 msgid "Reboot to BIOS"
-msgstr "Starta om till BIOS"
+msgstr ""
 
 #: core/reios/reios.cpp:696
 #, c-format
 msgid "Failed to open ELF %s"
-msgstr "Misslyckades med att öppna ELF %s"
+msgstr ""
 
 #: core/reios/reios.cpp:705
 #, c-format
 msgid "Failed to locate bootfile %s"
-msgstr "Misslyckades med att hitta bootfile %s"
+msgstr ""
 
 #: core/reios/reios.cpp:718
 msgid "Naomi boot failure"
-msgstr "Uppstartsfel för Naomi"
+msgstr ""
 
 #: core/reios/reios.cpp:724
 msgid "Invalid cart size"
-msgstr "Ogiltig kortstorlek"
+msgstr ""
 
 #: core/cheats.cpp:824 core/cheats.cpp:829
 msgid "Invalid cheat code"
-msgstr "Ogiltig fuskkod"
+msgstr ""
 
 #: core/cheats.cpp:911 core/cheats.cpp:950 core/cheats.cpp:963
 msgid "Missing value"
-msgstr "Saknar värde"
+msgstr ""
 
 #: core/cheats.cpp:929
 msgid "Missing values"
-msgstr "Saknar värden"
+msgstr ""
 
 #: core/cheats.cpp:976
 msgid "Missing address or value"
-msgstr "Saknad adress eller värde"
+msgstr ""
 
 #: core/cheats.cpp:985 core/cheats.cpp:1089
 msgid "Unsupported cheat type"
-msgstr "Fusktypen stöds inte"
+msgstr ""
 
 #: core/cheats.cpp:993
 msgid "Missing count or value"
-msgstr "Saknar antal eller värde"
+msgstr ""
 
 #: core/cheats.cpp:1007 core/cheats.cpp:1031
 msgid "Missing count or destination address"
-msgstr "Saknar antal eller måladress"
+msgstr ""
 
 #: core/cheats.cpp:1019
 msgid "Master codes aren't supported"
-msgstr "Masterkoder stöds inte"
+msgstr ""
 
 #: core/cheats.cpp:1049 core/cheats.cpp:1078
 msgid "Unsupported conditional code"
-msgstr "Villkorskoden stöds inte"
+msgstr ""
 
 #: core/cheats.cpp:1059
 msgid "Missing test address"
-msgstr "Saknar testadress"
+msgstr ""
 
 #: core/cheats.cpp:1160
 msgid "Can't save cheat file"
-msgstr "Kan inte spara fuskfil"
+msgstr ""
 
 #: core/ui/settings_video.cpp:85
 msgid "Graphics API"
-msgstr "Grafik-API"
+msgstr ""
 
 #: core/ui/settings_video.cpp:96
 msgid "MoltenVK: An implementation of Vulkan that runs on Apple's Metal graphics framework"
-msgstr "MoltenVK: En implementation av Vulkan som körs på Apples grafiska ramverk Metal"
+msgstr ""
 
 #: core/ui/settings_video.cpp:116
 msgid "Transparent Sorting"
-msgstr "Transparent sortering"
+msgstr ""
 
 #: core/ui/settings_video.cpp:121
 msgid "Per Triangle"
-msgstr "Per triangel"
+msgstr ""
 
 #: core/ui/settings_video.cpp:123
 msgid "Sort transparent polygons per triangle. Fast but may produce graphical glitches"
-msgstr "Sortera transparenta polygoner per triangel. Snabbt men kan orsaka grafiska fel"
+msgstr ""
 
 #: core/ui/settings_video.cpp:125
 msgid "Per Strip"
-msgstr "Per remsa"
+msgstr ""
 
 #: core/ui/settings_video.cpp:127
 msgid "Sort transparent polygons per strip. Faster but may produce graphical glitches"
-msgstr "Sortera transparenta polygoner per remsa. Snabbare men kan producera grafiska artefakter"
+msgstr ""
 
 #: core/ui/settings_video.cpp:131
 msgid "Per Pixel"
-msgstr "Per pixel"
+msgstr ""
 
 #: core/ui/settings_video.cpp:133
 msgid "Sort transparent polygons per pixel. Slower but accurate"
-msgstr "Sortera transparenta polygoner per pixel. Långsammare men exakt"
+msgstr ""
 
 #: core/ui/settings_video.cpp:153
 msgid "Rendering Options"
-msgstr "Renderingsalternativ"
+msgstr ""
 
 #: core/ui/settings_video.cpp:156
 msgid "Half"
-msgstr "Halv"
+msgstr ""
 
 #: core/ui/settings_video.cpp:156
 msgid "Native"
-msgstr "Inbyggd"
+msgstr ""
 
 #: core/ui/settings_video.cpp:201
 msgid "Internal Resolution"
-msgstr "Intern upplösning"
+msgstr ""
 
 #: core/ui/settings_video.cpp:203
 msgid "Internal render resolution. Higher is better, but more demanding on the GPU. Values higher than your display resolution (but no more than double your display resolution) can be used for supersampling, which provides high-quality antialiasing without reducing sharpness."
-msgstr "Intern renderingsupplösning. Ju högre desto bättre, men desto högre krav på GPU:n. Värden som är högre än din skärmupplösning (men inte mer än dubbelt så höga som din skärmupplösning) kan användas för supersampling, vilket ger högkvalitativ antialiasing utan att skärpan minskar."
+msgstr ""
 
 #: core/ui/settings_video.cpp:204
 msgid "Integer Scaling"
-msgstr "Heltalsskalning"
+msgstr ""
 
 #: core/ui/settings_video.cpp:204
 msgid "Scales the output by the maximum integer multiple allowed by the display resolution."
-msgstr "Skalar utdata med det maximala heltal som tillåts av skärmupplösningen."
+msgstr ""
 
 #: core/ui/settings_video.cpp:205
 msgid "Linear Interpolation"
-msgstr "Linjär interpolering"
+msgstr ""
 
 #: core/ui/settings_video.cpp:205
 msgid "Scales the output with linear interpolation. Will use nearest neighbor interpolation otherwise. Disable with integer scaling."
-msgstr "Skalar utdata med linjär interpolering. Annars används närmaste granninterpolering. Inaktivera med heltalsskalning."
+msgstr ""
 
 #: core/ui/settings_video.cpp:207
 msgid "VSync"
-msgstr "VSync"
+msgstr ""
 
 #: core/ui/settings_video.cpp:207
 msgid "Synchronizes the frame rate with the screen refresh rate. Recommended"
-msgstr "Synkroniserar bildfrekvensen med skärmens uppdateringsfrekvens. Rekommenderas"
+msgstr ""
 
 #: core/ui/settings_video.cpp:214
 msgid "Duplicate frames"
-msgstr "Duplikata bildrutor"
+msgstr ""
 
 #: core/ui/settings_video.cpp:214
 msgid "Duplicate frames on high refresh rate monitors (120 Hz and higher)"
-msgstr "Duplikata bildrutor på skärmar med hög uppdatingsfrekvens (120 Hz och högre)"
+msgstr ""
 
 #: core/ui/settings_video.cpp:219
 msgid "Show VMU In-game"
-msgstr "Visa VMU i spelet"
+msgstr ""
 
 #: core/ui/settings_video.cpp:219
 msgid "Show the VMU LCD screens while in-game"
-msgstr "Visa VMU-LCD-skärmarna i spelet"
+msgstr ""
 
 #: core/ui/settings_video.cpp:220
 msgid "Full Framebuffer Emulation"
-msgstr "Fullständig emulering av framebuffer"
+msgstr ""
 
 #: core/ui/settings_video.cpp:221
 msgid "Fully accurate VRAM framebuffer emulation. Helps games that directly access the framebuffer for special effects. Very slow and incompatible with upscaling and wide screen."
-msgstr "Helt korrekt VRAM-rambuffertemulering. Hjälper spel som direkt använder rambuffert för specialeffekter. Mycket långsam och oförenlig med uppskalning och bredbild."
+msgstr ""
 
 #: core/ui/settings_video.cpp:225
 msgid "Load Custom Textures"
-msgstr "Läs in anpassade texturer"
+msgstr ""
 
 #: core/ui/settings_video.cpp:226
 msgid "Load custom/high-res textures from data/textures/<game id>"
-msgstr "Läs in anpassade/högupplösta texturer från data/textures/<game id>"
+msgstr ""
 
 #: core/ui/settings_video.cpp:230
 msgid "Preload Custom Textures"
-msgstr "Förinläs anpassade texturer"
+msgstr ""
 
 #: core/ui/settings_video.cpp:231
 msgid "Preload custom textures at game start. May improve performance but increases memory usage"
-msgstr "Förinläs anpassade texturer vid spelstart. Kan förbättra prestandan men ökar minnesanvändningen"
+msgstr ""
 
 #: core/ui/settings_video.cpp:237
 msgid "Aspect Ratio"
-msgstr "Bildförhållande"
+msgstr ""
 
 #: core/ui/settings_video.cpp:239
 msgid "Widescreen"
-msgstr "Bredbild"
+msgstr ""
 
 #: core/ui/settings_video.cpp:240
 msgid "Draw geometry outside of the normal 4:3 aspect ratio. May produce graphical glitches in the revealed areas.\n"
 "Aspect Fit and shows the full 16:9 content."
-msgstr "Rita geometri utanför det normala bildförhållandet 4:3. Kan orsaka grafiska fel i de synliga områdena.\n"
-"Bildanpassning och visar hela innehållet i 16:9."
+msgstr ""
 
 #: core/ui/settings_video.cpp:245
 msgid "Super Widescreen"
-msgstr "Superbredbild"
+msgstr ""
 
 #: core/ui/settings_video.cpp:246
 msgid "Use the full width of the screen or window when its aspect ratio is greater than 16:9.\n"
 "Aspect Fill and remove black bars. Not compatible with integer scaling."
-msgstr "Använd hela skärmens eller fönstrets bredd när bildförhållandet är större än 16:9.\n"
-"Bildfyllning och ta bort svarta fält. Inte kompatibelt med heltalsskalning."
+msgstr ""
 
 #: core/ui/settings_video.cpp:249
 msgid "Widescreen Game Cheats"
-msgstr "Fusk för bredbildsspel"
+msgstr ""
 
 #: core/ui/settings_video.cpp:250
 msgid "Modify the game so that it displays in 16:9 anamorphic format and use horizontal screen stretching. Only some games are supported."
-msgstr "Ändra spelet så att det visas i 16:9 anamorfiskt format och använd horisontell skärmutsträckning. Endast vissa spel stöds."
+msgstr ""
 
 #: core/ui/settings_video.cpp:252
 msgid "Horizontal Stretching"
-msgstr "Horisontell utsträckning"
+msgstr ""
 
 #: core/ui/settings_video.cpp:253
 msgid "Stretch the screen horizontally"
-msgstr "Sträck ut skärmen horisontellt"
+msgstr ""
 
 #: core/ui/settings_video.cpp:254
 msgid "Rotate Screen 90°"
-msgstr "Rotera skärm 90°"
+msgstr ""
 
 #: core/ui/settings_video.cpp:254
 msgid "Rotate the screen 90° counterclockwise"
-msgstr "Rotera skärmen 90° motsols"
+msgstr ""
 
 #: core/ui/settings_video.cpp:259
 msgid "Per Pixel Settings"
-msgstr "Inställningar per pixel"
+msgstr ""
 
 #: core/ui/settings_video.cpp:262
 msgid "512 MB"
-msgstr "512 MB"
+msgstr ""
 
 #: core/ui/settings_video.cpp:262
 msgid "1 GB"
-msgstr "1 GB"
+msgstr ""
 
 #: core/ui/settings_video.cpp:262
 msgid "2 GB"
-msgstr "2 GB"
+msgstr ""
 
 #: core/ui/settings_video.cpp:262
 msgid "4 GB"
-msgstr "4 GB"
+msgstr ""
 
 #: core/ui/settings_video.cpp:300
 msgid "Pixel Buffer Size"
-msgstr "Storlek för pixelbuffert"
+msgstr ""
 
 #: core/ui/settings_video.cpp:302
 msgid "The size of the pixel buffer. May need to be increased when upscaling by a large factor."
-msgstr "Storleken för pixelbufferten. Kan behöva att ökas vid större uppskalningar."
+msgstr ""
 
 #: core/ui/settings_video.cpp:304
 msgid "Maximum Layers"
-msgstr "Maximala lager"
+msgstr ""
 
 #: core/ui/settings_video.cpp:305
 msgid "Maximum number of transparent layers. May need to be increased for some complex scenes. Decreasing it may improve performance."
-msgstr "Maximalt antal transparenta lager. Kan behöva att ökas för vissa komplexa scener. Minska det kan förbättra prestandan."
+msgstr ""
 
 #: core/ui/settings_video.cpp:308
 msgid "Performance"
-msgstr "Prestanda"
+msgstr ""
 
 #: core/ui/settings_video.cpp:310
 msgid "Automatic Frame Skipping:"
-msgstr "Hoppa automatiskt över bildrutor:"
+msgstr ""
 
 #: core/ui/settings_video.cpp:312 core/ui/settings_video.cpp:337
 #: core/ui/settings_network.cpp:40 core/ui/settings_network.cpp:87
 msgid "Disabled"
-msgstr "Inaktiverad"
+msgstr ""
 
 #: core/ui/settings_video.cpp:312
 msgid "No frame skipping"
-msgstr "Hoppa inte över bildrutor"
+msgstr ""
 
 #: core/ui/settings_video.cpp:314
 msgid "Normal"
-msgstr "Normal"
+msgstr ""
 
 #: core/ui/settings_video.cpp:314
 msgid "Skip a frame when the GPU and CPU are both running slow"
-msgstr "Hoppa över en bildruta när GPU och CPU båda kör långsamt"
+msgstr ""
 
 #: core/ui/settings_video.cpp:316
 msgid "Maximum"
-msgstr "Maximal"
+msgstr ""
 
 #: core/ui/settings_video.cpp:316
 msgid "Skip a frame when the GPU is running slow"
-msgstr "Hoppa över en bildruta när GPU kör långsamt"
+msgstr ""
 
 #: core/ui/settings_video.cpp:319
 msgid "Frame Skipping"
-msgstr "Hoppa över bildrutor"
+msgstr ""
 
 #: core/ui/settings_video.cpp:320
 msgid "Number of frames to skip between two actually rendered frames"
-msgstr "Antal bildrutor att hoppa över mellan två faktiskt renderade bildrutor"
+msgstr ""
 
 #: core/ui/settings_video.cpp:321
 msgid "Shadows"
-msgstr "Skuggor"
+msgstr ""
 
 #: core/ui/settings_video.cpp:322
 msgid "Enable modifier volumes, usually used for shadows"
-msgstr "Aktivera modifieringsvolymer, oftast använda för skuggor"
+msgstr ""
 
 #: core/ui/settings_video.cpp:323
 msgid "Fog"
-msgstr "Dimma"
+msgstr ""
 
 #: core/ui/settings_video.cpp:323
 msgid "Enable fog effects"
-msgstr "Aktivera dimmeffekter"
+msgstr ""
 
 #: core/ui/settings_video.cpp:326 core/ui/settings.cpp:300
 msgid "Advanced"
-msgstr "Avancerat"
+msgstr ""
 
 #: core/ui/settings_video.cpp:328
 msgid "Delay Frame Swapping"
-msgstr "Fördröj växling av bildrutor"
+msgstr ""
 
 #: core/ui/settings_video.cpp:329
 msgid "Useful to avoid flashing screen or glitchy videos. Not recommended on slow platforms"
-msgstr "Användbart för att undvika blinkande skärm eller hackiga videor. Rekommenderas inte på långsamma plattformar"
+msgstr ""
 
 #: core/ui/settings_video.cpp:330
 msgid "Fix Upscale Bleeding Edge"
-msgstr "Fixa blödande kant vid uppskalning"
+msgstr ""
 
 #: core/ui/settings_video.cpp:331
 msgid "Helps with texture bleeding case when upscaling. Disabling it can help if pixels are warping when upscaling in 2D games (MVC2, CVS, KOF, etc.)"
-msgstr "Hjälper till med texturblödning vid uppskalning. Att inaktivera den kan hjälpa om pixlarna förvrängs vid uppskalning i 2D-spel (MVC2, CVS, KOF, etc.)"
+msgstr ""
 
 #: core/ui/settings_video.cpp:332
 msgid "Native Depth Interpolation"
-msgstr "Inbyggd djupinterpolering"
+msgstr ""
 
 #: core/ui/settings_video.cpp:333
 msgid "Helps with texture corruption and depth issues on AMD GPUs. Can also help Intel GPUs in some cases."
-msgstr "Hjälper till med texturförvrängning och djupproblem på AMD-grafikprocessorer. Kan även hjälpa Intel-grafikprocessorer i vissa fall."
+msgstr ""
 
 #: core/ui/settings_video.cpp:334
 msgid "Copy Rendered Textures to VRAM"
-msgstr "Kopiera renderade texturer till VRAM"
+msgstr ""
 
 #: core/ui/settings_video.cpp:335
 msgid "Copy rendered-to textures back to VRAM. Slower but accurate"
-msgstr "Kopiera renderade-till-texturer tillbaka till VRAM. Långsammare men exakta"
+msgstr ""
 
 #: core/ui/settings_video.cpp:374
 msgid "Anisotropic Filtering"
-msgstr "Anisotropisk filtrering"
+msgstr ""
 
 #: core/ui/settings_video.cpp:376
 msgid "Higher values make textures viewed at oblique angles look sharper, but are more demanding on the GPU. This option only has a visible impact on mipmapped textures."
-msgstr "Högre värden gör att texturer som ses i sneda vinklar ser skarpare ut, men ställer högre krav på GPU:n. Det här alternativet har bara en synlig effekt på mipmappade texturer."
+msgstr ""
 
 #: core/ui/settings_video.cpp:378
 msgid "Texture Filtering:"
-msgstr "Texturfiltrering:"
+msgstr ""
 
 #: core/ui/settings_video.cpp:380 core/ui/settings_general.cpp:188
 #: core/ui/settings_general.cpp:192 core/ui/settings_general.cpp:197
 msgid "Default"
-msgstr "Standard"
+msgstr ""
 
 #: core/ui/settings_video.cpp:380
 msgid "Use the game's default texture filtering"
-msgstr "Använd spelets standardfiltrering för texturer"
+msgstr ""
 
 #: core/ui/settings_video.cpp:382
 msgid "Force Nearest-Neighbor"
-msgstr "Tvinga närmaste granne"
+msgstr ""
 
 #: core/ui/settings_video.cpp:382
 msgid "Force nearest-neighbor filtering for all textures. Crisper appearance, but may cause various rendering issues. This option usually does not affect performance."
-msgstr "Tvinga närmaste grannfiltrering för alla texturer. Skarpare utseende, men kan orsaka olika renderingsproblem. Det här alternativet påverkar vanligtvis inte prestandan."
+msgstr ""
 
 #: core/ui/settings_video.cpp:384
 msgid "Force Linear"
-msgstr "Tvinga linjär"
+msgstr ""
 
 #: core/ui/settings_video.cpp:384
 msgid "Force linear filtering for all textures. Smoother appearance, but may cause various rendering issues. This option usually does not affect performance."
-msgstr "Tvinga linjär filtrering för alla texturer. Jämnare utseende, men kan orsaka olika renderingsproblem. Det här alternativet påverkar vanligtvis inte prestandan."
+msgstr ""
 
 #: core/ui/settings_video.cpp:387
 msgid "Show FPS Counter"
-msgstr "Visa bildfrekvensräknare"
+msgstr ""
 
 #: core/ui/settings_video.cpp:387
 msgid "Show on-screen frame/sec counter"
-msgstr "Visa skärmräknare för bildfrekvens"
+msgstr ""
 
 #: core/ui/settings_video.cpp:392
 msgid "Video Routing (Syphon)"
-msgstr "Videorouting (Syphon)"
+msgstr ""
 
 #: core/ui/settings_video.cpp:395
 msgid "Video Routing (Spout)"
-msgstr "Videorouting (Spout)"
+msgstr ""
 
 #: core/ui/settings_video.cpp:397
 msgid "Video Routing (Only available with OpenGL or DirectX 11)"
-msgstr "Videorouting (Endast tillgängligt med OpenGL eller DirectX 11)"
+msgstr ""
 
 #: core/ui/settings_video.cpp:403
 msgid "Send video content to another program"
-msgstr "Skicka videoinnehåll till ett annat program"
+msgstr ""
 
 #: core/ui/settings_video.cpp:404
 msgid "e.g. Route GPU texture to OBS Studio directly instead of using CPU intensive Display/Window Capture"
-msgstr "t.ex. route GPU-textur till OBS Studio direkt istället för att använda CPU-intensiv skärm-/fönsterfångst"
+msgstr ""
 
 #: core/ui/settings_video.cpp:408
 msgid "Scale down before sending"
-msgstr "Skala ner före sändning"
+msgstr ""
 
 #: core/ui/settings_video.cpp:408
 msgid "Could increase performance when sharing a smaller texture, YMMV"
-msgstr "Kan öka prestandan vid delning av en mindre textur, din upplevelse kan variera"
+msgstr ""
 
 #: core/ui/settings_video.cpp:412
 msgid "Output vertical resolution"
-msgstr "Vertikal upplösning för utdata"
+msgstr ""
 
 #: core/ui/settings_video.cpp:417
 #, c-format
 msgid "Output texture size: %d x %d"
-msgstr "Texturstorlek för utdata: %d x %d"
+msgstr ""
 
 #: core/ui/settings_general.cpp:51
 msgid "Set"
-msgstr "Ställ in"
+msgstr ""
 
 #: core/ui/settings_general.cpp:108 core/ui/settings_general.cpp:250
 #: core/ui/gui_cheats.cpp:102
 msgid "Add"
-msgstr "Lägg till"
+msgstr ""
 
 #: core/ui/settings_general.cpp:161 core/ui/gui.cpp:909
 msgid "Select a Content Folder"
-msgstr "Välj en innehållsmapp"
+msgstr ""
 
 #: core/ui/settings_general.cpp:188
 msgid "Japanese"
-msgstr "Japanska"
+msgstr ""
 
 #: core/ui/settings_general.cpp:188
 msgid "English"
-msgstr "Engelska"
+msgstr ""
 
 #: core/ui/settings_general.cpp:188
 msgid "German"
-msgstr "Tyska"
+msgstr ""
 
 #: core/ui/settings_general.cpp:188
 msgid "French"
-msgstr "Franska"
+msgstr ""
 
 #: core/ui/settings_general.cpp:188
 msgid "Spanish"
-msgstr "Spanska"
+msgstr ""
 
 #: core/ui/settings_general.cpp:188
 msgid "Italian"
-msgstr "Italienska"
+msgstr ""
 
 #: core/ui/settings_general.cpp:189
 msgid "Language"
-msgstr "Språk"
+msgstr ""
 
 #: core/ui/settings_general.cpp:190
 msgid "The language as configured in the Dreamcast BIOS"
-msgstr "Språket som konfigurerats i Dreamcast BIOS"
+msgstr ""
 
 #: core/ui/settings_general.cpp:193
 msgid "Broadcast"
-msgstr "Sändning"
+msgstr ""
 
 #: core/ui/settings_general.cpp:194
 msgid "TV broadcasting standard for non-VGA modes"
-msgstr "TV-sändningens standard för icke-VGA-lägen"
+msgstr ""
 
 #: core/ui/settings_general.cpp:197 core/ui/settings_general.cpp:198
 msgid "Japan"
-msgstr "Japan"
+msgstr ""
 
 #: core/ui/settings_general.cpp:197 core/ui/settings_general.cpp:198
 msgid "USA"
-msgstr "USA"
+msgstr ""
 
 #: core/ui/settings_general.cpp:197
 msgid "Europe"
-msgstr "Europa"
+msgstr ""
 
 #: core/ui/settings_general.cpp:198
 msgctxt "region"
 msgid "Export"
-msgstr "Exportera"
+msgstr ""
 
 #: core/ui/settings_general.cpp:198
 msgid "Korea"
-msgstr "Korea"
+msgstr ""
 
 #: core/ui/settings_general.cpp:200
 msgid "Region"
-msgstr "Region"
+msgstr ""
 
 #: core/ui/settings_general.cpp:201
 msgid "BIOS region"
-msgstr "BIOS-region"
+msgstr ""
 
 #: core/ui/settings_general.cpp:203
 msgid "VGA"
-msgstr "VGA"
+msgstr ""
 
 #: core/ui/settings_general.cpp:203
 msgid "RGB Component"
-msgstr "RGB-komponent"
+msgstr ""
 
 #: core/ui/settings_general.cpp:203
 msgid "TV Composite"
-msgstr "Tv-komposit"
+msgstr ""
 
 #: core/ui/settings_general.cpp:210
 msgid "Cable"
-msgstr "Kabel"
+msgstr ""
 
 #: core/ui/settings_general.cpp:223
 msgid "Video connection type"
-msgstr "Typ av videoanslutning"
+msgstr ""
 
 #: core/ui/settings_general.cpp:233
 msgid "Content Location"
-msgstr "Innehållsplats"
+msgstr ""
 
 #: core/ui/settings_general.cpp:254 core/ui/settings_general.cpp:318
 msgid "Rescan Content"
-msgstr "Sök igenom innehåll igen"
+msgstr ""
 
 #: core/ui/settings_general.cpp:266
 msgid "The folders where your games are stored"
-msgstr "Mappar där dina spel lagras"
+msgstr ""
 
 #: core/ui/settings_general.cpp:272
 msgid "Data Folder"
-msgstr "Datamapp"
+msgstr ""
 
 #: core/ui/settings_general.cpp:280
 msgid "The folder containing BIOS files, as well as saved VMUs and states"
-msgstr "Mappen som innehåller BIOS-filer, samt sparade VMUer och tillstånd"
+msgstr ""
 
 #: core/ui/settings_general.cpp:285
 msgid "Home Folder"
-msgstr "Hemmapp"
+msgstr ""
 
 #: core/ui/settings_general.cpp:294
 msgctxt "action"
 msgid "Import"
-msgstr "Importera"
+msgstr ""
 
 #: core/ui/settings_general.cpp:297
 msgctxt "action"
 msgid "Export"
-msgstr "Exportera"
+msgstr ""
 
 #: core/ui/settings_general.cpp:302
 msgid "Reveal in Finder"
-msgstr "Visa i Finder"
+msgstr ""
 
 #: core/ui/settings_general.cpp:312
 msgid "The folder where Flycast saves configuration files and VMUs. BIOS files should be in a subfolder named \"data\""
-msgstr "Mappen där Flycast sparar konfigurationsfiler och VMUer. BIOS-filer bör vara i en undermapp som heter \"data\""
+msgstr ""
 
 #: core/ui/settings_general.cpp:323
 msgid "Box Art Game List"
-msgstr "Spellista med omslagsbilder"
+msgstr ""
 
 #: core/ui/settings_general.cpp:324
 msgid "Display game cover art in the game list."
-msgstr "Visa spelets omslagsbild i spellistan."
+msgstr ""
 
 #: core/ui/settings_general.cpp:325
 msgid "Fetch Box Art"
-msgstr "Hämta omslagsbilder"
+msgstr ""
 
 #: core/ui/settings_general.cpp:326
 msgid "Fetch cover images from TheGamesDB.net."
-msgstr "Hämta omslagsbilder från TheGamesDB.net."
+msgstr ""
 
 #: core/ui/settings_general.cpp:327
 msgid "UI Scaling"
-msgstr "Skalning av grafiskt gränssnitt"
+msgstr ""
 
 #: core/ui/settings_general.cpp:327
 msgid "Adjust the size of UI elements and fonts."
-msgstr "Justera storlek för gränssnittselement och typsnitt."
+msgstr ""
 
 #: core/ui/settings_general.cpp:332
 msgid "Apply"
-msgstr "Tillämpa"
+msgstr ""
 
 #: core/ui/settings_general.cpp:338
 msgid "Dark"
-msgstr "Mörk"
+msgstr ""
 
 #: core/ui/settings_general.cpp:338
 msgid "Light"
-msgstr "Ljus"
+msgstr ""
 
 #: core/ui/settings_general.cpp:338
 msgid "Dreamcast"
-msgstr "Dreamcast"
+msgstr ""
 
 #: core/ui/settings_general.cpp:338
 msgid "High Contrast"
-msgstr "Hög kontrast"
+msgstr ""
 
 #: core/ui/settings_general.cpp:338
 msgid "Nintendo"
-msgstr "Nintendo"
+msgstr ""
 
 #: core/ui/settings_general.cpp:338
 msgid "Aqua Chill"
-msgstr "Lugnt vatten"
+msgstr ""
 
 #: core/ui/settings_general.cpp:340
 msgid "UI Theme"
-msgstr "Tema för grafiskt gränssnitt"
+msgstr ""
 
 #: core/ui/settings_general.cpp:341
 msgid "Select the UI color theme."
-msgstr "Välj färgtema för grafiskt gränssnitt."
+msgstr ""
 
 #: core/ui/settings_general.cpp:347
 msgid "Hide Legacy Naomi Roms"
-msgstr "Dölj föråldrade Naomi-roms"
+msgstr ""
 
 #: core/ui/settings_general.cpp:348
 msgid "Hide .bin, .dat and .lst files from the content browser"
-msgstr "Dölj .bin, .dat och .lst-filer från innehållsbläddraren"
+msgstr ""
 
 #: core/ui/settings_general.cpp:351
 msgid "Use SAF File Picker"
-msgstr "Använd SAF-filväljare"
+msgstr ""
 
 #: core/ui/settings_general.cpp:352
 msgid "Use Android Storage Access Framework file picker to select folders and files. Ignored on Android 10 and later."
-msgstr "Använd Android Storage Access Framework-filväljaren för att välja mappar och filer. Ignoreras i Android 10 och senare."
+msgstr ""
 
 #: core/ui/settings_general.cpp:355
 msgid "Automatic State:"
-msgstr "Automatiskt tillstånd:"
+msgstr ""
 
 #: core/ui/settings_general.cpp:356 core/ui/gui_cheats.cpp:104
 msgid "Load"
-msgstr "Läs in"
+msgstr ""
 
 #: core/ui/settings_general.cpp:357
 msgid "Load the last saved state of the game when starting"
-msgstr "Läs in senast sparade tillstånd för spelet vid start"
+msgstr ""
 
 #: core/ui/settings_general.cpp:359 core/ui/vgamepad.cpp:73
 msgid "Save"
-msgstr "Spara"
+msgstr ""
 
 #: core/ui/settings_general.cpp:360
 msgid "Save the state of the game when stopping"
-msgstr "Spara tillståndet för spelet vid stopp"
+msgstr ""
 
 #: core/ui/settings_general.cpp:361
 msgid "Naomi Free Play"
-msgstr "Naomi Free Play"
+msgstr ""
 
 #: core/ui/settings_general.cpp:361
 msgid "Configure Naomi games in Free Play mode."
-msgstr "Konfigurera Naomi-spel i Free Play-läge."
+msgstr ""
 
 #: core/ui/settings_general.cpp:363
 msgid "Discord Presence"
-msgstr "Discord-närvaro"
+msgstr ""
 
 #: core/ui/settings_general.cpp:363
 msgid "Show which game you are playing on Discord"
-msgstr "Visa vilket spel du spelar på Discord"
+msgstr ""
 
 #: core/ui/settings_general.cpp:366
 msgid "Enable RetroAchievements"
-msgstr "Aktivera RetroAchievements"
+msgstr ""
 
 #: core/ui/settings_general.cpp:366
 msgid "Track your game achievements using RetroAchievements.org"
-msgstr "Spåra dina spelprestationer med RetroAchievements.org"
+msgstr ""
 
 #: core/ui/settings_general.cpp:371
 msgid "Enable RetroAchievements hardcore mode. Using cheats and loading a state are not allowed in this mode."
-msgstr "Aktivera ReroAchievements hardcore-läge. Användning av fusk och läsa in tillstånd är inte tillåtna i detta läge."
+msgstr ""
 
 #: core/ui/settings_general.cpp:372
 msgid "Username"
-msgstr "Användarnamn"
+msgstr ""
 
 #: core/ui/settings_general.cpp:380
 msgid "Authentication successful"
-msgstr "Autentisering lyckades"
+msgstr ""
 
 #: core/ui/settings_general.cpp:383
 msgid "Logout"
-msgstr "Logga ut"
+msgstr ""
 
 #: core/ui/settings_general.cpp:389
 msgid "Password"
-msgstr "Lösenord"
+msgstr ""
 
 #: core/ui/settings_general.cpp:393
 msgid "Authenticating..."
-msgstr "Autentiserar..."
+msgstr ""
 
 #: core/ui/settings_general.cpp:406
 msgid "Login"
-msgstr "Logga in"
+msgstr ""
 
 #: core/ui/settings_general.cpp:421
 msgid "Custom Paths"
-msgstr "Anpassade sökvägar"
+msgstr ""
 
 #: core/ui/settings_general.cpp:423
 msgid "BIOS Folders"
-msgstr "BIOS-mappar"
+msgstr ""
 
 #: core/ui/settings_general.cpp:423
 msgid "Select a BIOS folder"
-msgstr "Välj en BIOS-mapp"
+msgstr ""
 
 #: core/ui/settings_general.cpp:424
 msgid "Folders containing BIOS files (e.g. dc_boot.bin or dc_bios.bin) and arcade BIOS"
-msgstr "Mappar som innehåller BIOS-filer (t.ex. dc_boot.bin eller dc_bios.bin) och arcade BIOS"
+msgstr ""
 
 #: core/ui/settings_general.cpp:428
 msgid "VMU Folder"
-msgstr "VMU-mapp"
+msgstr ""
 
 #: core/ui/settings_general.cpp:428
 msgid "Select the VMU folder"
-msgstr "Välj VMU-mappen"
+msgstr ""
 
 #: core/ui/settings_general.cpp:429
 msgid "Folder where VMU (.bin) saves are stored"
-msgstr "Mapp där VMU (.bin) sparningar lagras"
+msgstr ""
 
 #: core/ui/settings_general.cpp:432
 msgid "Savestate Folders"
-msgstr "Mappar för sparade tillstånd"
+msgstr ""
 
 #: core/ui/settings_general.cpp:432
 msgid "Select a savestate folder"
-msgstr "Välj en mapp för sparade tillstånd"
+msgstr ""
 
 #: core/ui/settings_general.cpp:433
 msgid "Folders for save states. First path is used for new states; all are searched when loading"
-msgstr "Mappar för sparade tillstånd. Första sökvägen används för nya tillstånd; alla söks igenom vid inläsning"
+msgstr ""
 
 #: core/ui/settings_general.cpp:436
 msgid "Game Save Folder"
-msgstr "Mapp för sparade spel"
+msgstr ""
 
 #: core/ui/settings_general.cpp:436
 msgid "Select the game save folder"
-msgstr "Välj mappen för sparade spel"
+msgstr ""
 
 #: core/ui/settings_general.cpp:437
 msgid "Folder for game save data (e.g. arcade NVRAM)"
-msgstr "Mapp för sparat data för spel (t.ex. arcade NVRAM)"
+msgstr ""
 
 #: core/ui/settings_general.cpp:441
 msgid "Texture Pack Folders"
-msgstr "Mappar för texturpaket"
+msgstr ""
 
 #: core/ui/settings_general.cpp:441
 msgid "Select a texture pack folder"
-msgstr "Välj mapp för texturpaket"
+msgstr ""
 
 #: core/ui/settings_general.cpp:442
 msgid "Folders containing textures/<gameId> or <gameId> under a textures subfolder"
-msgstr "Mappar som innehåller textures/<gameId> eller <gameId> under en undermapp med namnet textures"
+msgstr ""
 
 #: core/ui/settings_general.cpp:446
 msgid "Texture Dump Folder"
-msgstr "Mapp för texturdumpning"
+msgstr ""
 
 #: core/ui/settings_general.cpp:446
 msgid "Select the texture dump folder"
-msgstr "Välj mappen för texturdumpning"
+msgstr ""
 
 #: core/ui/settings_general.cpp:447
 msgid "Folder where texture dumps are saved. Game-specific subfolders will be created automatically"
-msgstr "Mapp där texturdumpningar sparas. Spelspecifika undermappar skapas automatiskt"
+msgstr ""
 
 #: core/ui/settings_general.cpp:450
 msgid "Box Art Folder"
-msgstr "Mapp för omslagsbilder"
+msgstr ""
 
 #: core/ui/settings_general.cpp:450
 msgid "Select the box art folder"
-msgstr "Välj mappen för omslagsbilder"
+msgstr ""
 
 #: core/ui/settings_general.cpp:451
 msgid "Folder containing box art images (png/jpg). If empty, Flycast will use the default Home Folder/boxart for downloads and generated art"
-msgstr "Mapp som innehåller omslagsbilder (png/jpg). Om den är tom kommer Flycast att använda standardiserad hemmapp/boxart för hämtningar och genererade omslag"
+msgstr ""
 
 #: core/ui/settings_general.cpp:454
 msgid "Controller Mapping Folders"
-msgstr "Mappar för kontrollermappning"
+msgstr ""
 
 #: core/ui/settings_general.cpp:454
 msgid "Select a controller mapping folder"
-msgstr "Välj en mapp för kontrollermappning"
+msgstr ""
 
 #: core/ui/settings_general.cpp:455
 msgid "Folders containing controller mapping files (.cfg). The emulator also looks in Home Folder/mappings. Per-game mappings are suffixed with _<gameId>.cfg"
-msgstr "Mappar som innehåller mappningsfiler (.cfg) för kontroller. Emulatorn letar också i hemmapp/mappings. Per-spelsmapparna har suffixet _<gameId>.cfg"
+msgstr ""
 
 #: core/ui/settings_general.cpp:458
 msgid "Cheat Folders"
-msgstr "Mappar för fusk"
+msgstr ""
 
 #: core/ui/settings_general.cpp:458
 msgid "Select a cheat folder"
-msgstr "Välj en mapp för fusk"
+msgstr ""
 
 #: core/ui/settings_general.cpp:459
 msgid "Folders containing cheat files (.cht/.txt) named with the game ID. Flycast will auto-load matching files if present"
-msgstr "Mappar som innehåller fuskfiler (.cht/.txt) namngivna med spel-ID. Flycast kommer automatiskt läsa in matchande filer om de finns"
+msgstr ""
 
 #: core/ui/gui_chat.h:46 core/ui/gui_chat.h:48
 msgid "P2"
-msgstr "P2"
+msgstr ""
 
 #: core/ui/gui_chat.h:46 core/ui/gui_chat.h:48
 msgid "P1"
-msgstr "P1"
+msgstr ""
 
 #: core/ui/game_scanner.cpp:167
 msgid "Dreamcast BIOS"
-msgstr "Dreamcast BIOS"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:43 core/ui/settings_controls.cpp:61
 #: core/ui/settings_controls.cpp:155
 msgid "None"
-msgstr "Ingen"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:44
 msgid "Sega Controller"
-msgstr "Sega Controller"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:45
 msgid "Light Gun"
-msgstr "Ljuspistol"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:46 core/input/keyboard_device.h:77
 msgid "Keyboard"
-msgstr "Tangentbord"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:47 core/input/mouse.h:57
 msgid "Mouse"
-msgstr "Mus"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:48
 msgid "Twin Stick"
-msgstr "Twin Stick"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:49
 msgid "Arcade/Ascii Stick"
-msgstr "Arkad/Ascii Stick"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:50
 msgid "Maracas Controller"
-msgstr "Maracas-kontroller"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:51
 msgid "Fishing Controller"
-msgstr "Fishing-kontroller"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:52
 msgid "Pop'n Music controller"
-msgstr "Pop'n Music-kontroller"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:53
 msgid "Racing Controller"
-msgstr "Racing-kontroller"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:54
 msgid "Densha de Go! Controller"
-msgstr "Densha de Go!-kontroller"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:55
 msgid "Panther DC/Full Controller"
-msgstr "Panther DC/Full kontroller"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:62
 msgid "Sega VMU"
-msgstr "Sega VMU"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:63
 msgid "Vibration Pack"
-msgstr "Vibrationspack"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:64
 msgid "Microphone"
-msgstr "Mikrofon"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:155
 msgid "All"
-msgstr "Alla"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:163 core/ui/settings_controls.cpp:221
 msgid "Directions"
-msgstr "Riktningar"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:164 core/ui/settings_controls.cpp:222
 msgid "Up"
-msgstr "Upp"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:165 core/ui/settings_controls.cpp:223
 msgid "Down"
-msgstr "Ner"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:166 core/ui/settings_controls.cpp:224
 msgid "Left"
-msgstr "Vänster"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:167 core/ui/settings_controls.cpp:225
 msgid "Right"
-msgstr "Höger"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:169 core/ui/settings_controls.cpp:227
 msgid "Thumbstick Up"
-msgstr "Tumspak upp"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:170 core/ui/settings_controls.cpp:228
 msgid "Thumbstick Down"
-msgstr "Tumspak ner"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:171 core/ui/settings_controls.cpp:229
 msgid "Thumbstick Left"
-msgstr "Tumspak vänster"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:172 core/ui/settings_controls.cpp:230
 msgid "Thumbstick Right"
-msgstr "Tumspak höger"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:174 core/ui/settings_controls.cpp:232
 msgid "R.Thumbstick Up"
-msgstr "H. tumspak upp"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:175 core/ui/settings_controls.cpp:233
 msgid "R.Thumbstick Down"
-msgstr "H. tumspak ner"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:176 core/ui/settings_controls.cpp:234
 msgid "R.Thumbstick Left"
-msgstr "H. tumspak vänster"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:177 core/ui/settings_controls.cpp:235
 msgid "R.Thumbstick Right"
-msgstr "H. tumspak höger"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:179
 msgid "Axis 3 Up"
-msgstr "Axel 3 upp"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:180
 msgid "Axis 3 Down"
-msgstr "Axel 3 ner"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:181
 msgid "Axis 3 Left"
-msgstr "Axel 3 vänster"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:182
 msgid "Axis 3 Right"
-msgstr "Axel 3 höger"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:189 core/ui/settings_controls.cpp:237
 msgid "Buttons"
-msgstr "Knappar"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:198 core/ui/settings_controls.cpp:248
 msgid "Triggers"
-msgstr "Avtryckare"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:199 core/ui/settings_controls.cpp:249
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:199
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:369
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:401
 msgid "Left Trigger"
-msgstr "Vänster avtryckare"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:200 core/ui/settings_controls.cpp:250
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:201
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:371
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:403
 msgid "Right Trigger"
-msgstr "Höger avtryckare"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:201 core/ui/settings_controls.cpp:251
 msgid "Left Trigger 2"
-msgstr "Vänster avtryckare 2"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:202 core/ui/settings_controls.cpp:252
 msgid "Right Trigger 2"
-msgstr "Höger avtryckare 2"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:204 core/ui/settings_controls.cpp:254
 msgid "System Buttons"
-msgstr "Systemknappar"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:206 core/ui/settings_controls.cpp:256
 msgid "Reload"
-msgstr "Läs om"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:208 core/ui/settings_controls.cpp:262
 msgid "Emulator"
-msgstr "Emulator"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:209 core/ui/settings_controls.cpp:263
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:359
 msgid "Menu"
-msgstr "Meny"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:210 core/ui/settings_controls.cpp:264
 #: core/ui/gui.cpp:777 core/ui/gui.cpp:1036
 msgid "Exit"
-msgstr "Avsluta"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:211 core/ui/settings_controls.cpp:265
 msgid "Fast-forward"
-msgstr "Snabbspola"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:212 core/ui/settings_controls.cpp:266
 #: core/ui/gui.cpp:789
 msgid "Load State"
-msgstr "Läs in tillstånd"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:213 core/ui/settings_controls.cpp:267
 #: core/ui/gui.cpp:797
 msgid "Save State"
-msgstr "Spara tillstånd"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:214 core/ui/settings_controls.cpp:268
 msgid "Bypass Emulated Keyboard"
-msgstr "Kringgå emulerat tangentbord"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:215 core/ui/settings_controls.cpp:269
 msgid "Save Screenshot"
-msgstr "Spara skärmbild"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:238
 msgid "Button 1"
-msgstr "Knapp 1"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:239
 msgid "Button 2"
-msgstr "Knapp 2"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:240
 msgid "Button 3"
-msgstr "Knapp 3"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:241 core/input/mouse.h:84
 msgid "Button 4"
-msgstr "Knapp 4"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:242 core/input/mouse.h:86
 msgid "Button 5"
-msgstr "Knapp 5"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:243
 msgid "Button 6"
-msgstr "Knapp 6"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:244
 msgid "Button 7"
-msgstr "Knapp 7"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:245
 msgid "Button 8"
-msgstr "Knapp 8"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:257
 msgid "Coin"
-msgstr "Mynt"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:258
 msgid "Service"
-msgstr "Service"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:259
 msgid "Test"
-msgstr "Testa"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:260
 msgid "Insert Card"
-msgstr "Infoga kort"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:385 core/ui/settings_controls.cpp:790
 msgid "Map Control"
-msgstr "Mappa kontroll"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:387
 #, c-format
 msgid "Waiting for control '%s'..."
-msgstr "Väntar på kontroller '%s'..."
+msgstr ""
 
 #: core/ui/settings_controls.cpp:403
 #, c-format
 msgid "Time out in %d s"
-msgstr "Tidsgräns om %d s"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:408
 msgid "Current inputs:"
-msgstr "Aktuella inmatningar:"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:432
 msgid "Confirm"
-msgstr "Bekräfta"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:514
 msgid "Sequential"
-msgstr "Sekventiell"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:519
 msgid "When checked, this combo will only activate when all keys are pressed in the given sequence.\n"
 "When not checked, the combo will activate when all keys are pressed in any order."
-msgstr "När detta markeras aktiveras endast när alla tangenter trycks in i den angivna sekvensen.\n"
-"När den inte är markerad så aktiveras kombinationen när alla tangenter trycks in i valfri ordning."
+msgstr ""
 
 #: core/ui/settings_controls.cpp:576 core/ui/settings_controls.cpp:1025
 msgid "Controller Mapping"
-msgstr "Kontrollermappning"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:578 core/ui/settings_controls.cpp:1022
 msgid "Map"
-msgstr "Mappa"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:579
 msgid "Unmap"
-msgstr "Avmappa"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:595 core/ui/settings_controls.cpp:841
 #: core/ui/settings.cpp:217
 msgid "Done"
-msgstr "Klar"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:615 core/ui/settings_controls.cpp:627
 #: core/ui/settings_controls.cpp:959 core/ui/settings_controls.cpp:973
 #: core/ui/gui.cpp:752
 msgid "Port"
-msgstr "Port"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:629 core/ui/settings_controls.cpp:693
 msgid "Dreamcast Controls"
-msgstr "Dreamcast-kontroller"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:632 core/ui/settings_controls.cpp:641
 #: core/ui/settings.cpp:248
 msgid "Delete Game Config"
-msgstr "Ta bort spelkonfig"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:632 core/ui/settings_controls.cpp:650
 #: core/ui/settings.cpp:257
 msgid "Make Game Config"
-msgstr "Skapa spelkonfig"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:655
 msgid "Reset..."
-msgstr "Återställ..."
+msgstr ""
 
 #: core/ui/settings_controls.cpp:656 core/ui/settings_controls.cpp:660
 msgid "Confirm Reset"
-msgstr "Bekräfta återställning"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:662
 msgid "Are you sure you want to reset the mappings to default?"
-msgstr "Är du säker på att du vill återställa mappningarna till standard?"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:666
 msgid "Controller Type:"
-msgstr "Kontrollertyp:"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:667
 msgid "Gamepad"
-msgstr "Gamepad"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:670
 msgid "Arcade / Hit Box"
-msgstr "Arkad / Hit Box"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:677 core/ui/settings_about.cpp:149
 msgid "Yes"
-msgstr "Ja"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:684 core/ui/settings_about.cpp:155
 msgid "No"
-msgstr "Nej"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:693
 msgid "Arcade Controls"
-msgstr "Arkadkontroller"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:839 core/ui/settings_controls.cpp:1045
 msgid "Gamepad Settings"
-msgstr "Inställningar för gamepad"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:883
 msgid "Haptic"
-msgstr "Haptisk"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:884 core/ui/settings_controls.cpp:920
 msgid "Power"
-msgstr "Styrka"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:884
 msgid "Haptic feedback power"
-msgstr "Styrka för haptisk feedback"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:886
 msgid "View"
-msgstr "Visning"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:887
 msgid "Transparency"
-msgstr "Transparens"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:887
 msgid "Virtual gamepad buttons transparency"
-msgstr "Knapptransparens för virtuell gamepad"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:893
 msgid "Select a PNG file"
-msgstr "Välj en PNG-fil"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:894
 msgid "Choose Image..."
-msgstr "Välj bild..."
+msgstr ""
 
 #: core/ui/settings_controls.cpp:906
 msgid "Use Default"
-msgstr "Använd standard"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:917
 msgid "Rumble"
-msgstr "Rumble"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:923
 msgid "Rumble power"
-msgstr "Rumble-kraft"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:927
 msgid "Thumbsticks"
-msgstr "Tumspakar"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:930
 msgid "Dead zone"
-msgstr "Dödzon"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:933
 msgid "Minimum deflection to register as input"
-msgstr "Minsta spakrörelse för att registreras som inmatning"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:936
 msgid "Saturation"
-msgstr "Mättnad"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:939
 msgid "Value sent to the game at 100% thumbstick deflection. Values greater than 100% will saturate before full deflection of the thumbstick."
-msgstr "Värde som skickas till spelet vid 100% spakrörelse med tumspak. Värden över 100% mättas innan tumspaken är helt flyttad."
+msgstr ""
 
 #: core/ui/settings_controls.cpp:952
 msgid "Physical Devices"
-msgstr "Fysiska enheter"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:956 core/ui/settings_controls.cpp:967
 msgid "System"
-msgstr "System"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:957 core/ui/settings_controls.cpp:970
 #: core/ui/gui_cheats.cpp:71
 msgid "Name"
-msgstr "Namn"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:991
 #, c-format
 msgid "DreamLink status: %s"
-msgstr "DreamLink-status: %s"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:1033
 msgid "Edit Layout"
-msgstr "Redigera layout"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:1044 core/ui/gui.cpp:773 core/ui/gui.cpp:1021
 #: core/ui/settings.cpp:213
 msgid "Settings"
-msgstr "Inställningar"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:1054
 msgid "Mouse sensitivity"
-msgstr "Muskänslighet"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:1056
 msgid "Use Raw Input"
-msgstr "Använd rå inmatning"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:1056
 msgid "Supports multiple pointing devices (mice, light guns) and keyboards"
-msgstr "Stöder flera pekenheter (möss, ljuspistoler) och tangentbord"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:1061
 msgid "Use Physical VMU Memory"
-msgstr "Använd fysiskt VMU-minne"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:1062
 msgid "Enables direct read/write access to physical VMU memory via DreamPicoPort/DreamConn. This is not compatible with load state events."
-msgstr "Möjliggör direkt läs-/skrivåtkomst till fysiskt VMU-minne via DreamPicoPort/DreamConn. Detta är inte kompatibelt med händelser vid inläsning av tillstånd."
+msgstr ""
 
 #: core/ui/settings_controls.cpp:1068
 msgid "Dreamcast Devices"
-msgstr "Dreamcast-enheter"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:1081
 #, c-format
 msgid "Port %c"
-msgstr "Port %c"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:1152
 msgid "Crosshair color"
-msgstr "Hårkorsets färg"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:1156
 msgid "Crosshair"
-msgstr "Hårkors"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:1180
 msgid "Use Network Expansion Devices"
-msgstr "Använd Network Expansion-enheter"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:1181
 msgid "Connect to expansion devices such as VMUs over local TCP."
-msgstr "Anslut till expansionsenheter så som VMUer över lokal TCP."
+msgstr ""
 
 #: core/ui/settings_controls.cpp:1195
 msgid "Crosshair Size"
-msgstr "Storlek på hårkorset"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:1197
 msgid "Per Game VMU A1"
-msgstr "VMU A1 per spel"
+msgstr ""
 
 #: core/ui/settings_controls.cpp:1197
 msgid "When enabled, each game has its own VMU on port 1 of controller A."
-msgstr "När aktiverad har varje spel sin egna VMU på port 1 för kontroller A."
+msgstr ""
 
 #: core/ui/gui_achievements.cpp:285 core/ui/gui_cheats.cpp:103
 msgid "Close"
-msgstr "Stäng"
+msgstr ""
 
 #: core/ui/gui_achievements.cpp:296
 #, c-format
 msgid "You have unlocked %d of %d achievements and %d of %d points."
-msgstr "Du har låst upp %d av %d prestationer och %d av %d poäng."
+msgstr ""
 
 #: core/ui/gui_achievements.cpp:324
 msgid "Locked"
-msgstr "Låst"
+msgstr ""
 
 #: core/ui/gui_achievements.cpp:324
 msgid "Active Challenges"
-msgstr "Aktiva utmaningar"
+msgstr ""
 
 #: core/ui/gui_achievements.cpp:324
 msgid "Almost There"
-msgstr "Nästan där"
+msgstr ""
 
 #: core/ui/gui_achievements.cpp:326
 msgid "Unlocked"
-msgstr "Upplåst"
+msgstr ""
 
 #: core/ui/gui_achievements.cpp:326
 msgid "Recently Unlocked"
-msgstr "Senaste upplåsta"
+msgstr ""
 
 #: core/ui/mainui.cpp:73
 msgid "Renderer initialization failed.\n"
 "Please select a different graphics API"
-msgstr "Initiering av renderaren misslyckades.\n"
-"Välj ett annat grafik-API"
+msgstr ""
 
 #: core/ui/gui.cpp:573
 msgid "Flycast has stopped."
-msgstr "Flycast har stoppat."
+msgstr ""
 
 #: core/ui/gui.cpp:678
 msgid "Resume"
-msgstr "Återuppta"
+msgstr ""
 
 #: core/ui/gui.cpp:687
 msgid "Cheats"
-msgstr "Fusk"
+msgstr ""
 
 #: core/ui/gui.cpp:694
 msgid "Achievements"
-msgstr "Prestationer"
+msgstr ""
 
 #: core/ui/gui.cpp:700
 msgid "Barcode Card"
-msgstr "Streckkodskort"
+msgstr ""
 
 #: core/ui/gui.cpp:729
 msgid "Connect DreamLink"
-msgstr "Anslut DreamLink"
+msgstr ""
 
 #: core/ui/gui.cpp:737
 msgid "Disconnect\n"
 "DreamLink"
-msgstr "Koppla från\n"
-"DreamLink"
+msgstr ""
 
 #: core/ui/gui.cpp:761
 msgid "Insert Disk"
-msgstr "Mata in skiva"
+msgstr ""
 
 #: core/ui/gui.cpp:761
 msgid "Eject Disk"
-msgstr "Mata ut skiva"
+msgstr ""
 
 #: core/ui/gui.cpp:777
 msgid "Close Game"
-msgstr "Stäng spel"
+msgstr ""
 
 #: core/ui/gui.cpp:812
 #, c-format
 msgid "Slot %d"
-msgstr "Plats %d"
+msgstr ""
 
 #: core/ui/gui.cpp:828
 msgid "Empty"
-msgstr "Tom"
+msgstr ""
 
 #: core/ui/gui.cpp:856 core/ui/gui_cheats.cpp:48
 msgid "OK"
-msgstr "Ok"
+msgstr ""
 
 #: core/ui/gui.cpp:876 core/ui/gui.cpp:877
 msgid "Incorrect Content Location?"
-msgstr "Felaktig innehållsplats?"
+msgstr ""
 
 #: core/ui/gui.cpp:880
 #, c-format
 msgid "Scanned %d folders but no game can be found!"
-msgstr "Sökte igenom %d mappar men hittade inga spel!"
+msgstr ""
 
 #: core/ui/gui.cpp:885
 msgid "Reselect"
-msgstr "Välj igen"
+msgstr ""
 
 #: core/ui/gui.cpp:894 core/ui/gui.cpp:1050 core/ui/gui.cpp:1286
 #: core/ui/gui.cpp:1429 core/ui/gui_cheats.cpp:47 core/ui/gui_util.cpp:181
 #: core/ui/vgamepad.cpp:87
 msgid "Cancel"
-msgstr "Avbryt"
+msgstr ""
 
 #: core/ui/gui.cpp:1017
 msgid "GAMES"
-msgstr "SPEL"
+msgstr ""
 
 #: core/ui/gui.cpp:1024
 msgid "Filter"
-msgstr "Filter"
+msgstr ""
 
 #: core/ui/gui.cpp:1031 core/ui/gui.cpp:1032
 msgid "Load..."
-msgstr "Läs in..."
+msgstr ""
 
 #: core/ui/gui.cpp:1151
 msgid "Your game list is empty"
-msgstr "Din spellista är tom"
+msgstr ""
 
 #: core/ui/gui.cpp:1161
 msgid "Add Game Folder"
-msgstr "Lägg till spelmapp"
+msgstr ""
 
 #: core/ui/gui.cpp:1193 core/ui/gui.cpp:1204
 msgid "Invalid selection:"
-msgstr "Ogiltigt val:"
+msgstr ""
 
 #: core/ui/gui.cpp:1193 core/ui/gui.cpp:1204
 msgid "Flycast cannot write to this folder."
-msgstr "Flycast kan inte skriva till denna mapp."
+msgstr ""
 
 #: core/ui/gui.cpp:1232
 msgid "Select Flycast Home Folder"
-msgstr "Välj Flycast-hemmapp"
+msgstr ""
 
 #: core/ui/gui.cpp:1266 core/ui/gui.cpp:1375 core/emulator.cpp:687
 msgid "Starting..."
-msgstr "Startar..."
+msgstr ""
 
 #: core/ui/gui.cpp:1278
 msgid "Starting Network..."
-msgstr "Startar nätverk..."
+msgstr ""
 
 #: core/ui/gui.cpp:1280
 msgid "Press Start to start the game now."
-msgstr "Tryck på Start för att starta spelet nu."
+msgstr ""
 
 #: core/ui/gui.cpp:1377
 msgid "Loading..."
-msgstr "Läser in..."
+msgstr ""
 
 #: core/ui/gui.cpp:1413
 msgid "Preloading custom textures"
-msgstr "Förinläser anpassade texturer"
+msgstr ""
 
 #: core/ui/gui.cpp:1416
 msgid "Preparing..."
-msgstr "Förbereder..."
+msgstr ""
 
 #: core/ui/gui.cpp:1762
 msgid "No screenshot available"
-msgstr "Ingen skärmdump tillgänglig"
+msgstr ""
 
 #: core/ui/gui.cpp:1768
 msgid "Screenshot saved"
-msgstr "Skärmbild sparades"
+msgstr ""
 
 #: core/ui/gui.cpp:1770
 msgid "Error saving screenshot"
-msgstr "Fel vid sparning av skärmbild"
+msgstr ""
 
 #: core/ui/settings_audio.cpp:25
 msgid "Enable DSP"
-msgstr "Aktivera DSP"
+msgstr ""
 
 #: core/ui/settings_audio.cpp:26
 msgid "Enable the Dreamcast Digital Sound Processor. Only recommended on fast platforms"
-msgstr "Aktivera Dreamcast Digital Sound Processor. Rekommenderas endast på snabba plattformar"
+msgstr ""
 
 #: core/ui/settings_audio.cpp:27
 msgid "Enable VMU Sounds"
-msgstr "Aktivera VMU-ljud"
+msgstr ""
 
 #: core/ui/settings_audio.cpp:27
 msgid "Play VMU beeps when enabled."
-msgstr "Spela VMU-pip när aktiverad."
+msgstr ""
 
 #: core/ui/settings_audio.cpp:29
 msgid "Volume Level"
-msgstr "Volymnivå"
+msgstr ""
 
 #: core/ui/settings_audio.cpp:29
 msgid "Adjust the emulator's audio level"
-msgstr "Justera emulatorns ljudnivå"
+msgstr ""
 
 #: core/ui/settings_audio.cpp:35
 msgid "Automatic Latency"
-msgstr "Automatisk latens"
+msgstr ""
 
 #: core/ui/settings_audio.cpp:36
 msgid "Automatically set audio latency. Recommended"
-msgstr "Ställ in ljudlatens automatiskt. Rekommenderas"
+msgstr ""
 
 #: core/ui/settings_audio.cpp:42
 msgid "Latency"
-msgstr "Latens"
+msgstr ""
 
 #: core/ui/settings_audio.cpp:45
 msgid "Sets the maximum audio latency. Not supported by all audio drivers."
-msgstr "Ställer in maximal ljudlatens. Stöds inte av alla ljuddrivrutiner."
+msgstr ""
 
 #: core/ui/settings_audio.cpp:58
 msgid "Audio Driver"
-msgstr "Ljuddrivrutin"
+msgstr ""
 
 #: core/ui/settings_audio.cpp:61
 msgid "auto - Automatic driver selection"
-msgstr "auto - Automatiskt val av drivrutin"
+msgstr ""
 
 #: core/ui/settings_audio.cpp:80
 msgid "The audio driver to use"
-msgstr "Ljuddrivrutin att använda"
+msgstr ""
 
 #: core/ui/gui_cheats.cpp:45
 msgid "ADD CHEAT"
-msgstr "LÄGG TILL FUSK"
+msgstr ""
 
 #: core/ui/gui_cheats.cpp:72 core/ui/settings_network.cpp:137
 msgid "Code"
-msgstr "Kod"
+msgstr ""
 
 #: core/ui/gui_cheats.cpp:95
 msgid "Select a cheat file"
-msgstr "Välj en fuskfil"
+msgstr ""
 
 #: core/ui/gui_cheats.cpp:100
 msgid "CHEATS"
-msgstr "FUSK"
+msgstr ""
 
 #: core/ui/gui_cheats.cpp:137
 msgid "(No cheat loaded)"
-msgstr "(Inget fusk inläst)"
+msgstr ""
 
 #: core/ui/settings.cpp:38
 msgid "CPU Mode"
-msgstr "CPU-läge"
+msgstr ""
 
 #: core/ui/settings.cpp:41
 msgid "Dynarec"
-msgstr "Dynarec"
+msgstr ""
 
 #: core/ui/settings.cpp:42
 msgid "Use the dynamic recompiler. Recommended in most cases"
-msgstr "Använd dynamisk omkompilerare. Rekommenderas i de flesta fall"
+msgstr ""
 
 #: core/ui/settings.cpp:44
 msgid "Interpreter"
-msgstr "Tolk"
+msgstr ""
 
 #: core/ui/settings.cpp:45
 msgid "Use the interpreter. Very slow but may help in case of a dynarec problem"
-msgstr "Använd tolken. Mycket långsam men kan hjälpa i de fall dynarec har problem"
+msgstr ""
 
 #: core/ui/settings.cpp:48
 msgid "SH4 Clock"
-msgstr "SH4-klocka"
+msgstr ""
 
 #: core/ui/settings.cpp:49
 msgid "Over/Underclock the main SH4 CPU. Default is 200 MHz. Other values may crash, freeze or trigger unexpected nuclear reactions."
-msgstr "Över/underklocka huvudprocessorn SH4. Standard är 200 MHz. Övriga värden kan krascha, frysa eller utlösa oväntade kärnreaktioner."
+msgstr ""
 
 #: core/ui/settings.cpp:97
 msgid "Other"
-msgstr "Övriga"
+msgstr ""
 
 #: core/ui/settings.cpp:99
 msgid "HLE BIOS"
-msgstr "HLE BIOS"
+msgstr ""
 
 #: core/ui/settings.cpp:99
 msgid "Force high-level BIOS emulation"
-msgstr "Tvinga högnivåemulering av BIOS"
+msgstr ""
 
 #: core/ui/settings.cpp:100
 msgid "Multi-threaded emulation"
-msgstr "Flertrådad emulering"
+msgstr ""
 
 #: core/ui/settings.cpp:101
 msgid "Run the emulated CPU and GPU on different threads"
-msgstr "Kör emulerad CPU och GPU på olika trådar"
+msgstr ""
 
 #: core/ui/settings.cpp:103
 msgid "Serial Console"
-msgstr "Seriekonsol"
+msgstr ""
 
 #: core/ui/settings.cpp:104
 msgid "Dump the Dreamcast serial console to stdout"
-msgstr "Dumpa Dreamcasts seriekonsol till stdout"
+msgstr ""
 
 #: core/ui/settings.cpp:108
 msgid "Dreamcast 32MB RAM Mod"
-msgstr "Dreamcast 32MB RAM Mod"
+msgstr ""
 
 #: core/ui/settings.cpp:109
 msgid "Enables 32MB RAM Mod for Dreamcast. May affect compatibility"
-msgstr "Aktiverar 32MB RAM Mod för Dreamcast. Kan påverka kompatibiliteten"
+msgstr ""
 
 #: core/ui/settings.cpp:111
 msgid "Dump Textures"
-msgstr "Dumpa texturer"
+msgstr ""
 
 #: core/ui/settings.cpp:112
 msgid "Dump all textures into data/texdump/<game id>"
-msgstr "Dumpa alla texturer till data/texdump/<spel-id>"
+msgstr ""
 
 #: core/ui/settings.cpp:116
 msgid "Dump Replaced Textures"
-msgstr "Dumpa ersatta texturer"
+msgstr ""
 
 #: core/ui/settings.cpp:117
 msgid "Always dump textures that are already replaced by custom textures"
-msgstr "Dumpa alltid texturer som redan har ersatts av anpassade texturer"
+msgstr ""
 
 #: core/ui/settings.cpp:121
 msgid "Log to File"
-msgstr "Logga till fil"
+msgstr ""
 
 #: core/ui/settings.cpp:124
 msgid "Log debug information to flycast.log"
-msgstr "Logga felsökningsinformation till flycast.log"
+msgstr ""
 
 #: core/ui/settings.cpp:126
 msgid "Automatically Report Crashes"
-msgstr "Rapportera krascher automatiskt"
+msgstr ""
 
 #: core/ui/settings.cpp:127
 msgid "Automatically upload crash reports to sentry.io to help in troubleshooting. No personal information is included."
-msgstr "Skicka automatiskt upp rapporter till sentry.io för att hjälpa vid felsökning. Ingen personlig information inkluderas."
+msgstr ""
 
 #: core/ui/settings.cpp:132
 msgid "Lua Scripting"
-msgstr "Lua-skript"
+msgstr ""
 
 #: core/ui/settings.cpp:134
 msgid "Lua Filename"
-msgstr "Lua-filnamn"
+msgstr ""
 
 #: core/ui/settings.cpp:136
 msgid "Specify lua filename to use. Should be located in Flycast config folder. Defaults to flycast.lua when empty."
-msgstr "Ange lua-filnamn att använda. Bör ligga i Flycasts konfigurationsmapp. Standard är flycast.lua när den är tom."
+msgstr ""
 
 #: core/ui/settings.cpp:270
 msgid "General"
-msgstr "Allmänt"
+msgstr ""
 
 #: core/ui/settings.cpp:276
 msgid "Controls"
-msgstr "Kontroller"
+msgstr ""
 
 #: core/ui/settings.cpp:282
 msgid "Video"
-msgstr "Video"
+msgstr ""
 
 #: core/ui/settings.cpp:288
 msgid "Audio"
-msgstr "Ljud"
+msgstr ""
 
 #: core/ui/settings.cpp:294
 msgid "Network"
-msgstr "Nätverk"
+msgstr ""
 
 #: core/ui/settings.cpp:314
 msgid "About"
-msgstr "Om"
+msgstr ""
 
 #: core/ui/gui_util.cpp:121
 msgid "Storage"
-msgstr "Lagring"
+msgstr ""
 
 #: core/ui/gui_util.cpp:133
 msgid ".. Up to Parent Folder"
-msgstr ".. Upp till överliggande mapp"
+msgstr ""
 
 #: core/ui/gui_util.cpp:171
 msgid "Select Current Folder"
-msgstr "Välj aktuell mapp"
+msgstr ""
 
 #: core/ui/gui_util.cpp:479
 msgid "(?)"
-msgstr "(?)"
+msgstr ""
 
 #: core/ui/vgamepad.cpp:79
 msgid "Reset"
-msgstr "Återställ"
+msgstr ""
 
 #: core/ui/settings_network.cpp:28
 msgid "Network Type"
-msgstr "Nätverkstyp"
+msgstr ""
 
 #: core/ui/settings_network.cpp:44
 msgid "Enable networking using GGPO"
-msgstr "Aktivera nätverk med GGPO"
+msgstr ""
 
 #: core/ui/settings_network.cpp:48
 msgid "Enable networking for supported Naomi and Atomiswave games"
-msgstr "Aktivera nätverk för Naomi och Atomiswave-spel som har stöd för det"
+msgstr ""
 
 #: core/ui/settings_network.cpp:50
 msgid "Battle Cable"
-msgstr "Battle Cable"
+msgstr ""
 
 #: core/ui/settings_network.cpp:52
 msgid "Emulate the Taisen (Battle) null modem cable for games that support it"
-msgstr "Emulera nollmodemkabel för Taisen (Battle) för spel som har stöd för det"
+msgstr ""
 
 #: core/ui/settings_network.cpp:72
 msgid "Configuration"
-msgstr "Konfiguration"
+msgstr ""
 
 #: core/ui/settings_network.cpp:78
 msgid "Play as Player 1"
-msgstr "Spela som spelare 1"
+msgstr ""
 
 #: core/ui/settings_network.cpp:79
 msgid "Deselect to play as player 2"
-msgstr "Avmarkera för att spela som spelare 2"
+msgstr ""
 
 #: core/ui/settings_network.cpp:80 core/ui/settings_network.cpp:174
 msgid "Peer"
-msgstr "Motpart"
+msgstr ""
 
 #: core/ui/settings_network.cpp:82
 msgid "Your peer IP address and optional port"
-msgstr "Din IP-adress och valfri port"
+msgstr ""
 
 #: core/ui/settings_network.cpp:83
 msgid "Frame Delay"
-msgstr "Bildfördröjning"
+msgstr ""
 
 #: core/ui/settings_network.cpp:84
 msgid "Sets Frame Delay, advisable for sessions with ping >100 ms"
-msgstr "Ställer in bildfördröjning, lämpligt för sessioner med ping >100 ms"
+msgstr ""
 
 #: core/ui/settings_network.cpp:86
 msgid "Left Thumbstick:"
-msgstr "Vänster tumspak:"
+msgstr ""
 
 #: core/ui/settings_network.cpp:87
 msgid "Left thumbstick not used"
-msgstr "Vänster tumspak används inte"
+msgstr ""
 
 #: core/ui/settings_network.cpp:89
 msgid "Horizontal"
-msgstr "Horisontell"
+msgstr ""
 
 #: core/ui/settings_network.cpp:89
 msgid "Use the left thumbstick horizontal axis only"
-msgstr "Använd endast den horisontella axeln på vänstra tumspaken"
+msgstr ""
 
 #: core/ui/settings_network.cpp:91
 msgid "Full"
-msgstr "Fullständig"
+msgstr ""
 
 #: core/ui/settings_network.cpp:91
 msgid "Use the left thumbstick horizontal and vertical axes"
-msgstr "Använd vertikala och horisontella axlar på vänstra tumspaken"
+msgstr ""
 
 #: core/ui/settings_network.cpp:93
 msgid "Enable Chat"
-msgstr "Aktivera chatt"
+msgstr ""
 
 #: core/ui/settings_network.cpp:93
 msgid "Open the chat window when a chat message is received"
-msgstr "Öppna chattfönstret när ett chattmeddelande tas emot"
+msgstr ""
 
 #: core/ui/settings_network.cpp:96
 msgid "Enable Chat Window Timeout"
-msgstr "Aktivera tidsgräns för chattfönster"
+msgstr ""
 
 #: core/ui/settings_network.cpp:96
 msgid "Automatically close chat window after 20 seconds"
-msgstr "Stäng chattfönstret automatiskt efter 20 sekunder"
+msgstr ""
 
 #: core/ui/settings_network.cpp:101
 msgid "Chat Window Timeout (seconds)"
-msgstr "Tidsgräns för chattfönster (sekunder)"
+msgstr ""
 
 #: core/ui/settings_network.cpp:103
 msgid "Sets duration that chat window stays open after new message is received."
-msgstr "Ställer in längden som chattfönstret är öppet efter nytt meddelande tagits emot."
+msgstr ""
 
 #: core/ui/settings_network.cpp:107 core/ui/settings_network.cpp:167
 msgid "Network Statistics"
-msgstr "Nätverksstatistik"
+msgstr ""
 
 #: core/ui/settings_network.cpp:108 core/ui/settings_network.cpp:168
 msgid "Display network statistics on screen"
-msgstr "Visa nätverksstatistik på skärmen"
+msgstr ""
 
 #: core/ui/settings_network.cpp:112
 msgid "Act as Server"
-msgstr "Agera som server"
+msgstr ""
 
 #: core/ui/settings_network.cpp:113
 msgid "Create a local server for Naomi network games"
-msgstr "Skapa en lokal server för Naomi nätverksspel"
+msgstr ""
 
 #: core/ui/settings_network.cpp:116
 msgid "Server"
-msgstr "Server"
+msgstr ""
 
 #: core/ui/settings_network.cpp:118
 msgid "The server to connect to. Leave blank to find a server automatically on the default port"
-msgstr "Servern att ansluta till. Lämna tomt för att hitta en server automatiskt på standardporten"
+msgstr ""
 
 #: core/ui/settings_network.cpp:122 core/ui/settings_network.cpp:179
 msgid "Local Port"
-msgstr "Lokal port"
+msgstr ""
 
 #: core/ui/settings_network.cpp:124 core/ui/settings_network.cpp:181
 msgid "The local UDP port to use"
-msgstr "Den lokala UDP-porten att använda"
+msgstr ""
 
 #: core/ui/settings_network.cpp:132
 msgid "Match Code"
-msgstr "Matcha kod"
+msgstr ""
 
 #: core/ui/settings_network.cpp:139
 msgid "Choose a unique word or number and share it with your opponent."
-msgstr "Välj ett unikt ord eller nummer och dela det med din motståndare."
+msgstr ""
 
 #: core/ui/settings_network.cpp:141
 msgid "Connect"
-msgstr "Anslut"
+msgstr ""
 
 #: core/ui/settings_network.cpp:145
 msgid "Disconnect"
-msgstr "Koppla från"
+msgstr ""
 
 #: core/ui/settings_network.cpp:155
 msgid "Waiting at meeting point..."
-msgstr "Väntar vid mötespunkten..."
+msgstr ""
 
 #: core/ui/settings_network.cpp:158
 msgid "Preparing game..."
-msgstr "Förbereder spel..."
+msgstr ""
 
 #: core/ui/settings_network.cpp:161
 #, c-format
 msgid "Playing %s (%s)"
-msgstr "Spelar %s (%s)"
+msgstr ""
 
 #: core/ui/settings_network.cpp:176
 msgid "The peer to connect to. Leave blank to find a player automatically on the default port"
-msgstr "Motparten att ansluta till. Lämna tom för att hitta en spelare automatiskt på standardporten"
+msgstr ""
 
 #: core/ui/settings_network.cpp:189
 msgid "Act as Master"
-msgstr "Agera som Master"
+msgstr ""
 
 #: core/ui/settings_network.cpp:190
 msgid "Only used for Maximum Speed. One of the peer must be master."
-msgstr "Används endast för Maximum Speed. En av motparterna måste vara master."
+msgstr ""
 
 #: core/ui/settings_network.cpp:194
 msgid "Network Options"
-msgstr "Nätverksalternativ"
+msgstr ""
 
 #: core/ui/settings_network.cpp:196
 msgid "Enable UPnP"
-msgstr "Aktivera UPnP"
+msgstr ""
 
 #: core/ui/settings_network.cpp:196
 msgid "Automatically configure your network router for netplay"
-msgstr "Konfigurera din nätverksrouter automatiskt för netplay"
+msgstr ""
 
 #: core/ui/settings_network.cpp:197
 msgid "Broadcast Digital Outputs"
-msgstr "Sänd ut digitala utgångar"
+msgstr ""
 
 #: core/ui/settings_network.cpp:197
 msgid "Broadcast digital outputs and force-feedback state on TCP port 8000. Compatible with the \"-output network\" MAME option. Arcade games only."
-msgstr "Sänder digitala utgångar och force feedback-tillstånd på TCP-port 8000. Kompatibel med MAME-alternativet ”-output network”. Endast arkadspel."
+msgstr ""
 
 #: core/ui/settings_network.cpp:202
 msgid "Broadband Adapter Emulation"
-msgstr "Emulering av Broadband Adapter"
+msgstr ""
 
 #: core/ui/settings_network.cpp:203
 msgid "Emulate the Ethernet Broadband Adapter (BBA) instead of the Modem"
-msgstr "Emulera Ethernet Broadband Adapter (BBA) istället för modemet"
+msgstr ""
 
 #: core/ui/settings_network.cpp:205
 msgid "Use DCNet"
-msgstr "Använd DCNet"
+msgstr ""
 
 #: core/ui/settings_network.cpp:205
 msgid "Use the DCNet cloud service for Dreamcast Internet access."
-msgstr "Använd molntjänsten DCNet för internetåtkomst för Dreamcast."
+msgstr ""
 
 #: core/ui/settings_network.cpp:208
 msgid "ISP User Name"
-msgstr "ISP-användarnamn"
+msgstr ""
 
 #: core/ui/settings_network.cpp:214
 msgid "The ISP user name stored in the console Flash RAM. Used by some online games as the player name. Leave blank to keep the current Flash RAM value."
-msgstr "ISP-användarnamn som lagras i konsolens Flash RAM-minne. Används av vissa nätspel som spelarens namn. Lämna tomt för att behålla det aktuella Flash RAM-värdet."
+msgstr ""
 
 #: core/ui/settings_network.cpp:226
 msgid "Multiboard Screens"
-msgstr "Multiboard-skärmar"
+msgstr ""
 
 #: core/ui/settings_network.cpp:229
 msgid "1 (Twin)"
-msgstr "1 (Twin)"
+msgstr ""
 
 #: core/ui/settings_network.cpp:229
 msgid "One screen configuration (F355 Twin)"
-msgstr "Konfiguration för en skärm (F355 Twin)"
+msgstr ""
 
 #: core/ui/settings_network.cpp:231
 msgid "3 (Deluxe)"
-msgstr "3 (Deluxe)"
+msgstr ""
 
 #: core/ui/settings_network.cpp:231
 msgid "Three screens configuration"
-msgstr "Konfiguration med tre skärmar"
+msgstr ""
 
 #: core/ui/settings_about.cpp:53 core/ui/settings_about.cpp:107
 #, c-format
 msgid "Version: %s"
-msgstr "Version: %s"
+msgstr ""
 
 #: core/ui/settings_about.cpp:54
 #, c-format
 msgid "Git Hash: %s"
-msgstr "Git Hash: %s"
+msgstr ""
 
 #: core/ui/settings_about.cpp:55
 #, c-format
 msgid "Build Date: %s"
-msgstr "Byggdatum: %s"
+msgstr ""
 
 #: core/ui/settings_about.cpp:58
 msgid "Platform"
-msgstr "Plattform"
+msgstr ""
 
 #: core/ui/settings_about.cpp:60
 #, c-format
 msgid "CPU: %s"
-msgstr "CPU: %s"
+msgstr ""
 
 #: core/ui/settings_about.cpp:70 core/ui/settings_about.cpp:91
 msgid "Unknown"
-msgstr "Okänt"
+msgstr ""
 
 #: core/ui/settings_about.cpp:73
 #, c-format
 msgid "Operating System: %s"
-msgstr "Operativsystem: %s"
+msgstr ""
 
 #: core/ui/settings_about.cpp:85
 msgid "Windows Universal Platform"
-msgstr "Windows Universal Platform"
+msgstr ""
 
 #: core/ui/settings_about.cpp:96
 #, c-format
 msgid "JIT Status: %s"
-msgstr "JIT-status: %s"
+msgstr ""
 
 #: core/ui/settings_about.cpp:106
 #, c-format
 msgid "Driver Name: %s"
-msgstr "Drivrutinsnamn: %s"
+msgstr ""
 
 #: core/ui/settings_about.cpp:112
 msgid "Select a custom GPU driver"
-msgstr "Välj en anpassad GPU-drivrutin"
+msgstr ""
 
 #: core/ui/settings_about.cpp:120
 msgid "Custom Driver:"
-msgstr "Anpassad drivrutin:"
+msgstr ""
 
 #: core/ui/settings_about.cpp:127
 msgid "Use Default Driver"
-msgstr "Använd standarddrivrutin"
+msgstr ""
 
 #: core/ui/settings_about.cpp:129 core/ui/settings_about.cpp:138
 #: core/ui/settings_about.cpp:143
 msgid "Reset Vulkan"
-msgstr "Återställ Vulkan"
+msgstr ""
 
 #: core/ui/settings_about.cpp:132
 msgid "Upload Custom Driver"
-msgstr "Skicka upp anpassad drivrutin"
+msgstr ""
 
 #: core/ui/settings_about.cpp:145
 msgid "Do you want to reset Vulkan to use new driver?"
-msgstr "Vill du återställa Vulkan för att använda ny drivrutin?"
+msgstr ""
 
 #: core/nullDC.cpp:172
 msgid "Save state failed - memory full"
-msgstr "Sparat tillstånd misslyckades - minnet är fullt"
+msgstr ""
 
 #: core/nullDC.cpp:184
 msgid "Cannot open save file"
-msgstr "Kan inte öppna sparad fil"
+msgstr ""
 
 #: core/nullDC.cpp:212
 msgid "State saved"
-msgstr "Tillstånd sparat"
+msgstr ""
 
 #: core/nullDC.cpp:217
 msgid "Error saving state"
-msgstr "Fel vid sparning av tillstånd"
+msgstr ""
 
 #: core/nullDC.cpp:237
 msgid "Save state not found"
-msgstr "Sparat tillstånd hittades inte"
+msgstr ""
 
 #: core/nullDC.cpp:277 core/nullDC.cpp:299 core/nullDC.cpp:313
 msgid "Failed to load state"
-msgstr "Misslyckades med att läsa in tillstånd"
+msgstr ""
 
 #: core/nullDC.cpp:277
 msgid "Not enough memory"
-msgstr "Inte tillräckligt med minne"
+msgstr ""
 
 #: core/nullDC.cpp:299
 msgid "I/O error"
-msgstr "I/O-fel"
+msgstr ""
 
 #: core/network/dcnet.cpp:70
 msgid "Connected to DCNet with modem"
-msgstr "Ansluten till DCNet med modem"
+msgstr ""
 
 #: core/network/dcnet.cpp:269
 msgid "Connected to DCNet with Ethernet"
-msgstr "Ansluten till DCNet med ethernet"
+msgstr ""
 
 #: core/network/dcnet.cpp:648
 msgid "DCNet disconnected"
-msgstr "DCNet frånkopplat"
+msgstr ""
 
 #: core/network/dcnet.cpp:773
 msgid "Host not found"
-msgstr "Värden hittades inte"
+msgstr ""
 
 #: core/network/dcnet.cpp:817
 msgid "Can't connect to DCNet"
-msgstr "Kan inte ansluta till DCNet"
+msgstr ""
 
 #: core/network/ggpo.cpp:221
 msgid "Connected to peer"
-msgstr "Ansluten till motpart"
+msgstr ""
 
 #: core/network/ggpo.cpp:225
 msgid "Synchronizing with peer"
-msgstr "Synkroniserar med motpart"
+msgstr ""
 
 #: core/network/ggpo.cpp:229
 msgid "Synchronized with peer"
-msgstr "Synkroniserad med motpart"
+msgstr ""
 
 #: core/network/ggpo.cpp:233
 msgid "Running"
-msgstr "Kör"
+msgstr ""
 
 #: core/network/ggpo.cpp:238
 msgid "Disconnected from peer"
-msgstr "Kopplade från motpart"
+msgstr ""
 
 #: core/network/ggpo.cpp:247
 msgid "Connection interrupted"
-msgstr "Anslutningen avbröts"
+msgstr ""
 
 #: core/network/ggpo.cpp:251
 msgid "Connection resumed"
-msgstr "Anslutningen återupptogs"
+msgstr ""
 
 #: core/network/null_modem.h:181
 msgid "Network connected"
-msgstr "Nätverk anslutet"
+msgstr ""
 
 #: core/network/ice.cpp:121
 msgid "Game not supported"
-msgstr "Spelet stöds inte"
+msgstr ""
 
 #: core/network/ice.cpp:237
 msgid "Connection to lobby failed:"
-msgstr "Anslutning till lobby misslyckades:"
+msgstr ""
 
 #: core/network/ice.cpp:444
 msgid "Connection failed"
-msgstr "Anslutning misslyckades"
+msgstr ""
 
 #: core/network/ice.cpp:475
 msgid "Direct peer to peer"
-msgstr "Direkt motpart till motpart"
+msgstr ""
 
 #: core/network/ice.cpp:477
 msgid "Using relay"
-msgstr "Använder relä"
+msgstr ""
 
 #: core/network/ice.cpp:481
 msgid "NAT"
-msgstr "NAT"
+msgstr ""
 
 #: core/network/ice.cpp:490 core/network/ice.cpp:508
 msgid "Connection lost"
-msgstr "Anslutning förlorad"
+msgstr ""
 
 #: core/network/naomi_network.cpp:110
 msgid "Waiting for players..."
-msgstr "Väntar på spelare..."
+msgstr ""
 
 #: core/network/naomi_network.cpp:113
 #, c-format
 msgid "%d player connected. Waiting..."
 msgid_plural "%d players connected. Waiting..."
-msgstr[0] "%d spelare ansluten. Väntar..."
-msgstr[1] "%d spelare anslutna. Väntar..."
+msgstr[0] ""
 
 #: core/network/naomi_network.cpp:137
 msgid "Starting game"
-msgstr "Startar spelet"
+msgstr ""
 
 #: core/network/naomi_network.cpp:142
 msgid "No player connected"
-msgstr "Ingen spelare ansluten"
+msgstr ""
 
 #: core/network/naomi_network.cpp:176
 msgid "Connecting to server"
-msgstr "Ansluter till server"
+msgstr ""
 
 #: core/network/naomi_network.cpp:260
 #, c-format
 msgid "Connected as slot %d"
-msgstr "Ansluten som plats %d"
+msgstr ""
 
 #: core/rend/dx9/d3d_renderer.cpp:318
 msgid "DirectX 9 doesn't support Naomi 2 games. Select a different graphics API"
-msgstr "DirectX 9 saknar stöd för Naomi 2-spel. Välj ett annat grafik-API"
+msgstr ""
 
 #: core/rend/vulkan/adreno.cpp:154
 msgid "Can't open zip file"
-msgstr "Kan inte öppna zip-fil"
+msgstr ""
 
 #: core/rend/vulkan/adreno.cpp:157
 msgid "Invalid zip file"
-msgstr "Ogiltig zip-fil"
+msgstr ""
 
 #: core/rend/vulkan/adreno.cpp:185 core/rend/vulkan/adreno.cpp:203
 msgid "Can't save files"
-msgstr "Kan inte spara filer"
+msgstr ""
 
 #: core/rend/vulkan/adreno.cpp:195
 msgid "Can't read zip"
-msgstr "Kan inte läsa zip"
+msgstr ""
 
 #: core/rend/gles/gles.cpp:1058
 msgid "OpenGL ES 3.0+ required for Naomi 2"
-msgstr "OpenGL ES 3.0+ krävs för Naomi 2"
+msgstr ""
 
 #: core/emulator.cpp:589
 #, c-format
 msgid "No BIOS file found in %s"
-msgstr "Ingen BIOS-fil hittades i %s"
+msgstr ""
 
 #: core/emulator.cpp:605
 msgid "This game requires a real BIOS"
-msgstr "Detta spel kräver ett riktigt BIOS"
+msgstr ""
 
 #: core/emulator.cpp:662
 msgid "Widescreen cheat activated"
-msgstr "Bredskärmsfusk aktiverat"
+msgstr ""
 
 #: core/input/virtual_gamepad.h:30
 msgid "Virtual Gamepad"
-msgstr "Virtuell gamepad"
+msgstr ""
 
 #: core/input/mouse.h:78
 msgid "Left Button"
-msgstr "Vänsterknapp"
+msgstr ""
 
 #: core/input/mouse.h:80
 msgid "Right Button"
-msgstr "Högerknapp"
+msgstr ""
 
 #: core/input/mouse.h:82
 msgid "Middle Button"
-msgstr "Mittenknapp"
+msgstr ""
 
 #: core/input/mouse.h:114
 msgid "Touch Mouse"
@@ -2827,11 +2821,11 @@ msgstr ""
 
 #: core/wsi/switcher.cpp:91
 msgid "Cannot initialize the graphics API"
-msgstr "Kan inte initiera grafik-API"
+msgstr ""
 
 #: shell/libretro/libretro.cpp:2130
 msgid "Cannot run without JIT"
-msgstr "Kan inte köra utan JIT"
+msgstr ""
 
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:145
 msgid "DPad Center"
@@ -2839,11 +2833,11 @@ msgstr ""
 
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:173
 msgid "Select"
-msgstr "Select"
+msgstr ""
 
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:175
 msgid "Mode"
-msgstr "Läge"
+msgstr ""
 
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:203
 msgid "Hat X"
@@ -2855,32 +2849,32 @@ msgstr ""
 
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:207
 msgid "Gas"
-msgstr "Gas"
+msgstr ""
 
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:209
 msgid "Brake"
-msgstr "Broms"
+msgstr ""
 
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:211
 msgid "Rudder"
-msgstr "Roder"
+msgstr ""
 
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:213
 msgid "Wheel"
-msgstr "Ratt"
+msgstr ""
 
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:215
 msgid "Throttle"
-msgstr "Hastighetsreglage"
+msgstr ""
 
 #: shell/android-studio/flycast/src/main/jni/src/Android.cpp:172
 msgid "Memory initialization failed"
-msgstr "Minnesinitiering misslyckades"
+msgstr ""
 
 #: shell/android-studio/flycast/src/main/jni/src/android_storage.h:192
 #, c-format
 msgid "Storage access failed: %s"
-msgstr "Lagringsåtkomst misslyckades: %s"
+msgstr ""
 
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:147
 msgid "MFi Gamepad"
@@ -2900,5 +2894,5 @@ msgstr ""
 
 #: shell/switch/switch_main.cpp:76
 msgid "Not supported on Switch"
-msgstr "Stöds inte på Switch"
+msgstr ""
 
