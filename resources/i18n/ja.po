@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-12-14 14:32+0100\n"
-"PO-Revision-Date: 2025-12-24 19:49\n"
+"PO-Revision-Date: 2025-12-24 21:49\n"
 "Last-Translator: \n"
 "Language: ja_JP\n"
 "MIME-Version: 1.0\n"
@@ -1368,7 +1368,7 @@ msgstr "ボックスアートフォルダーを選択"
 
 #: core/ui/settings_general.cpp:451
 msgid "Folder containing box art images (png/jpg). If empty, Flycast will use the default Home Folder/boxart for downloads and generated art"
-msgstr "ボックスアート画像(png/jpg)を含むフォルダー。空白の場合、Flycastはダウンロードと生成されたアートに対してデフォルトのホームフォルダー/ボックスアートを使用します"
+msgstr "ボックスアート画像(png/jpg)を含むフォルダー。空白の場合、Flycastはダウンロードと生成されたアートに対してデフォルトのホームフォルダー (data/boxart) を使用します"
 
 #: core/ui/settings_general.cpp:454
 msgid "Controller Mapping Folders"
@@ -1672,7 +1672,7 @@ msgstr "マップコントロール"
 #: core/ui/settings_controls.cpp:387
 #, c-format
 msgid "Waiting for control '%s'..."
-msgstr "'%s'のコントロールを待っています…"
+msgstr "'%s' の入力待ち…"
 
 #: core/ui/settings_controls.cpp:403
 #, c-format
@@ -1689,12 +1689,13 @@ msgstr "確認"
 
 #: core/ui/settings_controls.cpp:514
 msgid "Sequential"
-msgstr "シーケンシャル"
+msgstr "順次入力"
 
 #: core/ui/settings_controls.cpp:519
 msgid "When checked, this combo will only activate when all keys are pressed in the given sequence.\n"
 "When not checked, the combo will activate when all keys are pressed in any order."
-msgstr "チェックを入れると、このコンボはすべてのキーが指定された順序で押された場合にのみ有効になります。チェックを入れないと、すべてのキーが任意の順序で押されたときにコンボが起動します。"
+msgstr "チェックを入れると、このコンボはすべてのキーが指定された順序で押された場合にのみ有効になります。\n"
+"チェックを入れないと、すべてのキーが任意の順序で押されたときにコンボが起動します。"
 
 #: core/ui/settings_controls.cpp:576 core/ui/settings_controls.cpp:1025
 msgid "Controller Mapping"
@@ -2018,7 +2019,7 @@ msgstr "コンテンツの場所が間違っていませんか？"
 #: core/ui/gui.cpp:880
 #, c-format
 msgid "Scanned %d folders but no game can be found!"
-msgstr "%d フォルダをスキャンしましたが、ゲームが見つかりません！"
+msgstr "%d フォルダーをスキャンしましたが、ゲームが見つかりません！"
 
 #: core/ui/gui.cpp:885
 msgid "Reselect"
@@ -2056,7 +2057,7 @@ msgstr "無効な選択："
 
 #: core/ui/gui.cpp:1193 core/ui/gui.cpp:1204
 msgid "Flycast cannot write to this folder."
-msgstr "Flycast はこのフォルダへの書き込みができません。"
+msgstr "Flycastはこのフォルダーへの書き込みができません。"
 
 #: core/ui/gui.cpp:1232
 msgid "Select Flycast Home Folder"
@@ -2080,7 +2081,7 @@ msgstr "ロード中…"
 
 #: core/ui/gui.cpp:1413
 msgid "Preloading custom textures"
-msgstr "カスタムテクスチャのプリロード"
+msgstr "カスタムテクスチャーのプリロード"
 
 #: core/ui/gui.cpp:1416
 msgid "Preparing..."
@@ -2240,15 +2241,15 @@ msgstr "テクスチャをダンプする"
 
 #: core/ui/settings.cpp:112
 msgid "Dump all textures into data/texdump/<game id>"
-msgstr "すべてのテクスチャをdata/texdump/<ゲーム id>にダンプします"
+msgstr "すべてのテクスチャーを data/texdump/<game id> にダンプします"
 
 #: core/ui/settings.cpp:116
 msgid "Dump Replaced Textures"
-msgstr "置き換えられたテクスチャをダンプする"
+msgstr "置き換えられたテクスチャーをダンプする"
 
 #: core/ui/settings.cpp:117
 msgid "Always dump textures that are already replaced by custom textures"
-msgstr "既にカスタムテクスチャに置き換えられたテクスチャを常にダンプします"
+msgstr "既にカスタムテクスチャーに置き換えられたテクスチャーを常にダンプします"
 
 #: core/ui/settings.cpp:121
 msgid "Log to File"
@@ -2308,7 +2309,7 @@ msgstr "ストレージ"
 
 #: core/ui/gui_util.cpp:133
 msgid ".. Up to Parent Folder"
-msgstr "..親フォルダまで"
+msgstr "..親フォルダへ"
 
 #: core/ui/gui_util.cpp:171
 msgid "Select Current Folder"
