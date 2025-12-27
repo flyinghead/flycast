@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-12-14 14:32+0100\n"
-"PO-Revision-Date: 2025-12-18 15:40\n"
+"PO-Revision-Date: 2025-12-27 19:50\n"
 "Last-Translator: \n"
 "Language: hu_HU\n"
 "MIME-Version: 1.0\n"
@@ -20,43 +20,43 @@ msgstr ""
 #: core/achievements/achievements.cpp:345
 #, c-format
 msgid "User %s authenticated"
-msgstr ""
+msgstr "A %s felhasználó hitelesítve"
 
 #: core/achievements/achievements.cpp:361
 msgid "RetroAchievements authentication failed"
-msgstr ""
+msgstr "Sikertelen RetroAchievements hitelesítés"
 
 #: core/achievements/achievements.cpp:396
 msgid "No user token returned"
-msgstr ""
+msgstr "Nincs visszaküldött felhasználói token"
 
 #: core/achievements/achievements.cpp:548
 msgid "RetroAchievements disconnected"
-msgstr ""
+msgstr "RetroAchievements leválasztva"
 
 #: core/achievements/achievements.cpp:552
 msgid "RetroAchievements reconnected"
-msgstr ""
+msgstr "RetroAchievements újra csatlakozott"
 
 #: core/achievements/achievements.cpp:582
 #, c-format
 msgid "Achievement %s unlocked!"
-msgstr ""
+msgstr "%s trófea feloldva!"
 
 #: core/achievements/achievements.cpp:622
 #, c-format
 msgid "Leaderboard %s started"
-msgstr ""
+msgstr "Ranglista %s elindult"
 
 #: core/achievements/achievements.cpp:629
 #, c-format
 msgid "Leaderboard %s failed"
-msgstr ""
+msgstr "A ranglista %s sikertelen"
 
 #: core/achievements/achievements.cpp:636
 #, c-format
 msgid "Leaderboard %s submitted"
-msgstr ""
+msgstr "Ranglista %s beküldve"
 
 #: core/achievements/achievements.cpp:661
 #, c-format
@@ -66,12 +66,12 @@ msgstr ""
 #: core/achievements/achievements.cpp:661
 #, c-format
 msgid "Completed %s"
-msgstr ""
+msgstr "Teljesítve: %s"
 
 #: core/achievements/achievements.cpp:664
 #, c-format
 msgid "%d achievements, %d points"
-msgstr ""
+msgstr "%d trófea, %d pont"
 
 #: core/achievements/achievements.cpp:910
 #, c-format
@@ -80,7 +80,7 @@ msgstr ""
 
 #: core/achievements/achievements.cpp:912
 msgid "This game has no achievements."
-msgstr ""
+msgstr "Ez a játék nem tartalmaz trófeákat."
 
 #: core/achievements/achievements.cpp:917 core/ui/settings_general.cpp:370
 #: core/ui/gui_achievements.cpp:303
@@ -93,16 +93,16 @@ msgstr "Hardcore mód letiltva"
 
 #: core/achievements/achievements.cpp:948
 msgid "Unrecognized media inserted"
-msgstr ""
+msgstr "Ismeretlen adathordozó behelyezve"
 
 #: core/achievements/achievements.cpp:955
 msgid "Media change failed"
-msgstr ""
+msgstr "A média váltás sikertelen volt"
 
 #: core/sdl/dreamconn.cpp:263
 #, c-format
 msgid "WARNING: DreamLink disconnected from port %c"
-msgstr ""
+msgstr "FIGYELEM: A DreamLink leválasztódott a %c portról"
 
 #: core/sdl/dreampicoport.cpp:1209 core/ui/settings_controls.cpp:184
 msgid "DPad2 Up"
@@ -222,36 +222,36 @@ msgstr ""
 #: core/sdl/sdl_gamepad.cpp:626
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:387
 msgid "Touchpad"
-msgstr ""
+msgstr "Érintőpad"
 
 #: core/sdl/sdl_gamepad.cpp:685
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:405
 msgid "Left Stick X"
-msgstr ""
+msgstr "Bal joystick X"
 
 #: core/sdl/sdl_gamepad.cpp:686
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:407
 msgid "Left Stick Y"
-msgstr ""
+msgstr "Bal joystick Y"
 
 #: core/sdl/sdl_gamepad.cpp:687
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:409
 msgid "Right Stick X"
-msgstr ""
+msgstr "Jobb joystick X"
 
 #: core/sdl/sdl_gamepad.cpp:688
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:411
 msgid "Right Stick Y"
-msgstr ""
+msgstr "Jobb joystick Y"
 
 #: core/sdl/sdl_gamepad.cpp:757
 msgid "Default Mouse"
-msgstr ""
+msgstr "Alapértelmezett egér"
 
 #: core/sdl/sdl_gamepad.cpp:761
 #, c-format
 msgid "Mouse %d"
-msgstr ""
+msgstr "Egér %d"
 
 #: core/sdl/sdl.cpp:843 core/windows/winmain.cpp:370
 msgid "Flycast Error"
@@ -267,12 +267,12 @@ msgstr ""
 
 #: core/oslib/oslib.cpp:351
 msgid "Can't find Pictures library"
-msgstr ""
+msgstr "Nem találom a Képek könyvtárat"
 
 #: core/oslib/storage.cpp:81
 #, c-format
 msgid "Can't read directory %s"
-msgstr ""
+msgstr "Nem lehet olvasni a %s könyvtárat"
 
 #: core/oslib/storage.cpp:201
 #, c-format
@@ -282,98 +282,98 @@ msgstr ""
 #: core/oslib/storage.cpp:222
 #, c-format
 msgid "Invalid device %s"
-msgstr ""
+msgstr "Érvénytelen eszköz %s"
 
 #: core/oslib/storage.cpp:246
 #, c-format
 msgid "Cannot get attributes of %s"
-msgstr ""
+msgstr "Nem lehet lekérni a %s attribútumait"
 
 #: core/oslib/storage.cpp:253
 #, c-format
 msgid "Invalid file name %s"
-msgstr ""
+msgstr "Érvénytelen fájlnév %s"
 
 #: core/imgread/common.cpp:97
 msgid "Unknown disk format"
-msgstr ""
+msgstr "Ismeretlen lemezformátum"
 
 #: core/imgread/common.cpp:370 core/emulator.cpp:613
 msgid "This media cannot be loaded"
-msgstr ""
+msgstr "Ez a média nem tölthető be"
 
 #: core/imgread/cue.cpp:57
 #, c-format
 msgid "Cannot open CUE file %s"
-msgstr ""
+msgstr "Nem lehet megnyitni a CUE fájlt %s"
 
 #: core/imgread/cue.cpp:68
 msgid "CUE parse error: CUE file too big"
-msgstr ""
+msgstr "CUE elemzési hiba: A CUE fájl túl nagy"
 
 #: core/imgread/cue.cpp:189
 #, c-format
 msgid "CUE file: cannot open track %s"
-msgstr ""
+msgstr "CUE fájl: nem lehet megnyitni ezt a sávot %s"
 
 #: core/imgread/cue.cpp:193
 #, c-format
 msgid "CUE file: track has unknown sector type: %s"
-msgstr ""
+msgstr "CUE fájl: a sáv ismeretlen szektortípusú: %s"
 
 #: core/imgread/cue.cpp:225
 msgid "CUE parse error: failed to parse or invalid file with 0 tracks"
-msgstr ""
+msgstr "CUE-elemzési hiba: az elemzés sikertelen volt, vagy a fájl érvénytelen, 0 sávval"
 
 #: core/imgread/cue.cpp:228 core/imgread/cue.cpp:240 core/imgread/cue.cpp:244
 #: core/imgread/cue.cpp:248 core/imgread/cue.cpp:252
 msgid "Invalid CUE file"
-msgstr ""
+msgstr "Érvénytelen CUE fájl"
 
 #: core/imgread/cue.cpp:237
 msgid "CUE parse error: less than 3 tracks"
-msgstr ""
+msgstr "CUE elemzési hiba: kevesebb mint 3 sáv"
 
 #: core/imgread/chd.cpp:109
 #, c-format
 msgid "chd: track type %s is not supported"
-msgstr ""
+msgstr "chd: a %s típusú sáv nem támogatott"
 
 #: core/imgread/chd.cpp:118
 #, c-format
 msgid "Cannot open CHD file %s"
-msgstr ""
+msgstr "Nem lehet megnyitni a CHD fájlt %s"
 
 #: core/imgread/chd.cpp:124
 #, c-format
 msgid "Invalid CHD file %s"
-msgstr ""
+msgstr "Érvénytelen CHD fájl %s"
 
 #: core/imgread/chd.cpp:137
 #, c-format
 msgid "Invalid hunkbytes for CHD file %s"
-msgstr ""
+msgstr "Érvénytelen hunkbytes a CHD fájlban %s"
 
 #: core/imgread/chd.cpp:183
 msgid "Unexpected track number"
-msgstr ""
+msgstr "Váratlan sáv szám"
 
 #: core/imgread/chd.cpp:186
 msgid "Unsupported subtype or pre/postgap"
-msgstr ""
+msgstr "Nem támogatott altípus vagy pre/postgap"
 
 #: core/imgread/chd.cpp:212
 msgid "Invalid CHD: less than 3 tracks"
-msgstr ""
+msgstr "Érvénytelen CHD: kevesebb mint 3 sáv"
 
 #: core/imgread/chd.cpp:218
 msgid "Invalid CHD: no track found"
-msgstr ""
+msgstr "Érvénytelen CHD: nincsenek sávok"
 
 #: core/imgread/gdi.cpp:13
 #, c-format
 msgid "Cannot open GDI file %s"
-msgstr ""
+msgstr "Nem lehet megnyitni a GDI fájlt %s"
 
 #: core/imgread/gdi.cpp:24
 msgid "GDI file too big"
@@ -388,17 +388,17 @@ msgstr "Hibás GDI fájl"
 #: core/imgread/gdi.cpp:132
 #, c-format
 msgid "GDI file: Cannot open track %s"
-msgstr ""
+msgstr "GDI fájl: Nem lehet megnyitni a %s sávot"
 
 #: core/imgread/cdi.cpp:17
 #, c-format
 msgid "Cannot open CDI file %s"
-msgstr ""
+msgstr "Nem lehet megnyitni a CDI fájlt %s"
 
 #: core/imgread/cdi.cpp:23
 #, c-format
 msgid "Invalid CDI file %s"
-msgstr ""
+msgstr "Érvénytelen CDI fájl %s"
 
 #: core/imgread/cdi.cpp:27 core/imgread/cdi.cpp:31 core/imgread/cdi.cpp:49
 #: core/imgread/cdi.cpp:60 core/imgread/cdi.cpp:73
@@ -407,16 +407,16 @@ msgstr "Hibás CDI fájl"
 
 #: core/imgread/cdi.cpp:78
 msgid "Invalid CDI sector size"
-msgstr ""
+msgstr "Érvénytelen CDI szektorméret"
 
 #: core/imgread/cdi.cpp:126
 msgid "Cannot re-open CDI file"
-msgstr ""
+msgstr "A CDI fájl nem nyitható meg újra"
 
 #: core/hw/naomi/card_reader.cpp:291 core/hw/naomi/card_reader.cpp:585
 #: core/hw/maple/maple_devs.cpp:1842
 msgid "Card ejected"
-msgstr ""
+msgstr "Kártya kilökve"
 
 #: core/hw/naomi/naomi.cpp:350
 #, c-format
@@ -430,22 +430,22 @@ msgstr ""
 #: core/hw/naomi/systemsp.cpp:2188
 #, c-format
 msgid "SystemSP: Cannot open CompactFlash file %s"
-msgstr ""
+msgstr "SystemSP: Nem lehet megnyitni a CompactFlash fájlt %s"
 
 #: core/hw/naomi/naomi_m3comm.cpp:76
 msgid "Network started"
-msgstr ""
+msgstr "Hálózat elindítva"
 
 #: core/hw/naomi/naomi_cart.cpp:148 core/hw/naomi/naomi_cart.cpp:386
 #: core/hw/naomi/naomi_cart.cpp:406 core/hw/naomi/naomi_cart.cpp:432
 #: core/hw/naomi/naomi_cart.cpp:844 core/hw/naomi/gdcartridge.cpp:597
 msgid "Memory allocation failed"
-msgstr ""
+msgstr "Memóriaallokáció sikertelen"
 
 #: core/hw/naomi/naomi_cart.cpp:192 core/hw/naomi/naomi_cart.cpp:224
 #, c-format
 msgid "Error: cannot load BIOS %s"
-msgstr ""
+msgstr "Hiba: nem lehet betölteni a BIOS-t %s"
 
 #: core/hw/naomi/naomi_cart.cpp:236
 msgid "Unknown game"
@@ -454,12 +454,12 @@ msgstr "Ismeretlen játék"
 #: core/hw/naomi/naomi_cart.cpp:262
 #, c-format
 msgid "Cannot open %s or %s"
-msgstr ""
+msgstr "Cannot open %s / %s"
 
 #: core/hw/naomi/naomi_cart.cpp:264
 #, c-format
 msgid "Cannot open %s"
-msgstr ""
+msgstr "Nem lehet megnyitni %s"
 
 #: core/hw/naomi/naomi_cart.cpp:343
 msgid "Invalid ROM"
@@ -649,7 +649,7 @@ msgstr ""
 
 #: core/ui/settings_video.cpp:153
 msgid "Rendering Options"
-msgstr ""
+msgstr "Renderelési beállítások"
 
 #: core/ui/settings_video.cpp:156
 msgid "Half"
@@ -669,7 +669,7 @@ msgstr ""
 
 #: core/ui/settings_video.cpp:204
 msgid "Integer Scaling"
-msgstr ""
+msgstr "Egész számú skálázás"
 
 #: core/ui/settings_video.cpp:204
 msgid "Scales the output by the maximum integer multiple allowed by the display resolution."
@@ -677,7 +677,7 @@ msgstr ""
 
 #: core/ui/settings_video.cpp:205
 msgid "Linear Interpolation"
-msgstr ""
+msgstr "Lineáris interpoláció"
 
 #: core/ui/settings_video.cpp:205
 msgid "Scales the output with linear interpolation. Will use nearest neighbor interpolation otherwise. Disable with integer scaling."
@@ -693,23 +693,23 @@ msgstr ""
 
 #: core/ui/settings_video.cpp:214
 msgid "Duplicate frames"
-msgstr ""
+msgstr "Duplikált képkockák"
 
 #: core/ui/settings_video.cpp:214
 msgid "Duplicate frames on high refresh rate monitors (120 Hz and higher)"
-msgstr ""
+msgstr "Duplikált képkockák magas frissítési frekvenciájú monitorokon (120 Hz és magasabb)"
 
 #: core/ui/settings_video.cpp:219
 msgid "Show VMU In-game"
-msgstr ""
+msgstr "VMU megjelenítése a játékban"
 
 #: core/ui/settings_video.cpp:219
 msgid "Show the VMU LCD screens while in-game"
-msgstr ""
+msgstr "A VMU LCD képernyők megjelenítése játék közben"
 
 #: core/ui/settings_video.cpp:220
 msgid "Full Framebuffer Emulation"
-msgstr ""
+msgstr "Teljes képkockabuffer emuláció"
 
 #: core/ui/settings_video.cpp:221
 msgid "Fully accurate VRAM framebuffer emulation. Helps games that directly access the framebuffer for special effects. Very slow and incompatible with upscaling and wide screen."
@@ -717,19 +717,19 @@ msgstr ""
 
 #: core/ui/settings_video.cpp:225
 msgid "Load Custom Textures"
-msgstr ""
+msgstr "Egyéni textúrák betöltése"
 
 #: core/ui/settings_video.cpp:226
 msgid "Load custom/high-res textures from data/textures/<game id>"
-msgstr ""
+msgstr "Egyéni/nagy felbontású textúrák betöltése innen data/textures/<game id>"
 
 #: core/ui/settings_video.cpp:230
 msgid "Preload Custom Textures"
-msgstr ""
+msgstr "Egyéni textúrák előzetes betöltése"
 
 #: core/ui/settings_video.cpp:231
 msgid "Preload custom textures at game start. May improve performance but increases memory usage"
-msgstr ""
+msgstr "A játék indításakor előre betölti az egyéni textúrákat. Javíthatja a teljesítményt, de növeli a memóriahasználatot"
 
 #: core/ui/settings_video.cpp:237
 msgid "Aspect Ratio"
@@ -746,36 +746,37 @@ msgstr ""
 
 #: core/ui/settings_video.cpp:245
 msgid "Super Widescreen"
-msgstr ""
+msgstr "Szuper széles képernyő"
 
 #: core/ui/settings_video.cpp:246
 msgid "Use the full width of the screen or window when its aspect ratio is greater than 16:9.\n"
 "Aspect Fill and remove black bars. Not compatible with integer scaling."
-msgstr ""
+msgstr "Használja a képernyő vagy ablak teljes szélességét, ha annak képaránya nagyobb, mint 16:9.\n"
+"Kitölti a képernyőt, eltávolítja a fekete sávokat. Nem kompatibilis az egész számú méretezéssel."
 
 #: core/ui/settings_video.cpp:249
 msgid "Widescreen Game Cheats"
-msgstr ""
+msgstr "Szélesképernyős játék csalások"
 
 #: core/ui/settings_video.cpp:250
 msgid "Modify the game so that it displays in 16:9 anamorphic format and use horizontal screen stretching. Only some games are supported."
-msgstr ""
+msgstr "Módosítja a játékot, hogy 16:9 anamorf formátumban jelenjen meg, és vízszintes képernyőnyújtást használ. Csak néhány játék támogatott."
 
 #: core/ui/settings_video.cpp:252
 msgid "Horizontal Stretching"
-msgstr ""
+msgstr "Vízszintes nyújtás"
 
 #: core/ui/settings_video.cpp:253
 msgid "Stretch the screen horizontally"
-msgstr ""
+msgstr "Kinyújtja a képernyőt vízszintesen"
 
 #: core/ui/settings_video.cpp:254
 msgid "Rotate Screen 90°"
-msgstr ""
+msgstr "Képernyő elforgatása 90°-kal"
 
 #: core/ui/settings_video.cpp:254
 msgid "Rotate the screen 90° counterclockwise"
-msgstr ""
+msgstr "Elforgatja a képernyőt 90°-kal az óramutató járásával ellentétes irányban"
 
 #: core/ui/settings_video.cpp:259
 msgid "Per Pixel Settings"
