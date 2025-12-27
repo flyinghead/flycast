@@ -92,6 +92,11 @@ public:
 		return _isForPhysicalController;
 	}
 
+	bool isPhysicalVMUMemorySupported() override {
+		// DreamConn controllers don't support physical VMU memory access
+		return !isForPhysicalController();
+	}
+
 	bool send(const MapleMsg& msg) override {
 		std::lock_guard<std::mutex> lock(send_mutex); // Ensure thread safety for send operations
 		return send_no_lock(msg);
@@ -262,8 +267,9 @@ public:
 		snprintf(buf, sizeof(buf), "WARNING: DreamLink disconnected from port %c", 'A' + bus);
 		os_notify(buf, 6000);
 
-		tearDownDreamLinkDevices(shared_from_this());
-		maple_ReconnectDevices();
+		tearDownDreamLinkDevices(this);
+		if (!isForPhysicalController())
+			maple_ReconnectDevices();
 	}
 
 	void gameTermination() override {
@@ -319,9 +325,14 @@ private:
 
 	MapleDeviceType getDevice_no_lock(u8 portFlags, u8 portFlag) {
 		if (!(portFlags & portFlag)) {
-			// This is the case where nothing is connected to the expansion slot.
-			// We should not send a DeviceRequest message in that case.
+			// No device connected to this slot
 			return MDT_None;
+		}
+
+		if (isForPhysicalController()) {
+			// DreamConn physical controllers don't support the DeviceRequest message.
+			// Assume that a device in slot 1 is a VMU and a device in slot 2 is a purupuru.
+			return portFlag == (1 << 0) ? MDT_SegaVMU : MDT_PurupuruPack;
 		}
 
 		MapleMsg txMsg;
