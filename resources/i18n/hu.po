@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-12-14 14:32+0100\n"
-"PO-Revision-Date: 2025-12-27 19:50\n"
+"PO-Revision-Date: 2025-12-27 21:06\n"
 "Last-Translator: \n"
 "Language: hu_HU\n"
 "MIME-Version: 1.0\n"
@@ -780,7 +780,7 @@ msgstr "Elforgatja a képernyőt 90°-kal az óramutató járásával ellentéte
 
 #: core/ui/settings_video.cpp:259
 msgid "Per Pixel Settings"
-msgstr ""
+msgstr "Pixelenkénti beállítások"
 
 #: core/ui/settings_video.cpp:262
 msgid "512 MB"
@@ -800,19 +800,19 @@ msgstr "4 GB"
 
 #: core/ui/settings_video.cpp:300
 msgid "Pixel Buffer Size"
-msgstr ""
+msgstr "Pixel puffer mérete"
 
 #: core/ui/settings_video.cpp:302
 msgid "The size of the pixel buffer. May need to be increased when upscaling by a large factor."
-msgstr ""
+msgstr "A pixelpuffer mérete. Nagy mértékű felbontásnövelés esetén növelni kell."
 
 #: core/ui/settings_video.cpp:304
 msgid "Maximum Layers"
-msgstr ""
+msgstr "Rétegek max. száma"
 
 #: core/ui/settings_video.cpp:305
 msgid "Maximum number of transparent layers. May need to be increased for some complex scenes. Decreasing it may improve performance."
-msgstr ""
+msgstr "Az átlátszó rétegek maximális száma. Bizonyos összetett jelenetek esetén növelni kell. Csökkentésével javulhat a teljesítmény."
 
 #: core/ui/settings_video.cpp:308
 msgid "Performance"
@@ -820,7 +820,7 @@ msgstr "Teljesítmény"
 
 #: core/ui/settings_video.cpp:310
 msgid "Automatic Frame Skipping:"
-msgstr ""
+msgstr "Automatikus képkocka-kihagyás:"
 
 #: core/ui/settings_video.cpp:312 core/ui/settings_video.cpp:337
 #: core/ui/settings_network.cpp:40 core/ui/settings_network.cpp:87
@@ -829,7 +829,7 @@ msgstr "Letiltva"
 
 #: core/ui/settings_video.cpp:312
 msgid "No frame skipping"
-msgstr ""
+msgstr "Nincs képkocka kihagyás"
 
 #: core/ui/settings_video.cpp:314
 msgid "Normal"
@@ -837,7 +837,7 @@ msgstr "Normál"
 
 #: core/ui/settings_video.cpp:314
 msgid "Skip a frame when the GPU and CPU are both running slow"
-msgstr ""
+msgstr "Képkockák kihagyása, ha a GPU és a CPU egyaránt lassú"
 
 #: core/ui/settings_video.cpp:316
 msgid "Maximum"
@@ -845,7 +845,7 @@ msgstr "Maximum"
 
 #: core/ui/settings_video.cpp:316
 msgid "Skip a frame when the GPU is running slow"
-msgstr ""
+msgstr "Képkocka kihagyása, ha a GPU lassú"
 
 #: core/ui/settings_video.cpp:319
 msgid "Frame Skipping"
@@ -853,7 +853,7 @@ msgstr "Képkocka kihagyás"
 
 #: core/ui/settings_video.cpp:320
 msgid "Number of frames to skip between two actually rendered frames"
-msgstr ""
+msgstr "Két ténylegesen renderelt képkocka között kihagyott képkockák száma"
 
 #: core/ui/settings_video.cpp:321
 msgid "Shadows"
@@ -869,7 +869,7 @@ msgstr "Köd"
 
 #: core/ui/settings_video.cpp:323
 msgid "Enable fog effects"
-msgstr ""
+msgstr "Ködhatások engedélyezése"
 
 #: core/ui/settings_video.cpp:326 core/ui/settings.cpp:300
 msgid "Advanced"
@@ -877,7 +877,7 @@ msgstr "Haladó"
 
 #: core/ui/settings_video.cpp:328
 msgid "Delay Frame Swapping"
-msgstr ""
+msgstr "Késleltetett képkocka-csere"
 
 #: core/ui/settings_video.cpp:329
 msgid "Useful to avoid flashing screen or glitchy videos. Not recommended on slow platforms"
@@ -901,19 +901,19 @@ msgstr ""
 
 #: core/ui/settings_video.cpp:334
 msgid "Copy Rendered Textures to VRAM"
-msgstr ""
+msgstr "Renderelt textúrák másolása a VRAM-ba"
 
 #: core/ui/settings_video.cpp:335
 msgid "Copy rendered-to textures back to VRAM. Slower but accurate"
-msgstr ""
+msgstr "A renderelt textúrákat visszamásolja a VRAM-ba. Lassabb, de pontos"
 
 #: core/ui/settings_video.cpp:374
 msgid "Anisotropic Filtering"
-msgstr ""
+msgstr "Anizotropikus szűrés"
 
 #: core/ui/settings_video.cpp:376
 msgid "Higher values make textures viewed at oblique angles look sharper, but are more demanding on the GPU. This option only has a visible impact on mipmapped textures."
-msgstr ""
+msgstr "A magasabb értékek a ferde szögből nézett textúrákat élesebbé teszik, de nagyobb terhelést jelentenek a GPU-ra. Ez az opció csak a mipmappelt textúrákra gyakorol látható hatást."
 
 #: core/ui/settings_video.cpp:378
 msgid "Texture Filtering:"
@@ -1199,19 +1199,19 @@ msgstr ""
 
 #: core/ui/settings_general.cpp:348
 msgid "Hide .bin, .dat and .lst files from the content browser"
-msgstr ""
+msgstr "A .bin, .dat és .lst fájlok elrejtése a tartalom böngészőből"
 
 #: core/ui/settings_general.cpp:351
 msgid "Use SAF File Picker"
-msgstr ""
+msgstr "SAF fájlválasztó használata"
 
 #: core/ui/settings_general.cpp:352
 msgid "Use Android Storage Access Framework file picker to select folders and files. Ignored on Android 10 and later."
-msgstr ""
+msgstr "Az Android Storage Access Framework fájlválasztóját használja a mappák és fájlok kiválasztásához. Android 10 és újabb verziókban figyelmen kívül hagyva."
 
 #: core/ui/settings_general.cpp:355
 msgid "Automatic State:"
-msgstr ""
+msgstr "Automatikus állapot:"
 
 #: core/ui/settings_general.cpp:356 core/ui/gui_cheats.cpp:104
 msgid "Load"
@@ -1219,7 +1219,7 @@ msgstr "Betöltés"
 
 #: core/ui/settings_general.cpp:357
 msgid "Load the last saved state of the game when starting"
-msgstr ""
+msgstr "A játék indításakor betölti a legutóbb mentett állapotot"
 
 #: core/ui/settings_general.cpp:359 core/ui/vgamepad.cpp:73
 msgid "Save"
@@ -1227,35 +1227,35 @@ msgstr "Mentés"
 
 #: core/ui/settings_general.cpp:360
 msgid "Save the state of the game when stopping"
-msgstr ""
+msgstr "Játékállapot mentése leállításkor"
 
 #: core/ui/settings_general.cpp:361
 msgid "Naomi Free Play"
-msgstr ""
+msgstr "Naomi Ingyenes játék"
 
 #: core/ui/settings_general.cpp:361
 msgid "Configure Naomi games in Free Play mode."
-msgstr ""
+msgstr "Beállítja a Naomi játékokat szabad játék módba."
 
 #: core/ui/settings_general.cpp:363
 msgid "Discord Presence"
-msgstr ""
+msgstr "Discord jelenlét"
 
 #: core/ui/settings_general.cpp:363
 msgid "Show which game you are playing on Discord"
-msgstr ""
+msgstr "Mutatja Discordon, melyik játékot játszod"
 
 #: core/ui/settings_general.cpp:366
 msgid "Enable RetroAchievements"
-msgstr ""
+msgstr "RetroAchievements engedélyezése"
 
 #: core/ui/settings_general.cpp:366
 msgid "Track your game achievements using RetroAchievements.org"
-msgstr ""
+msgstr "Nyomon követi a játékbeli eredményeket a RetroAchievements.org segítségével"
 
 #: core/ui/settings_general.cpp:371
 msgid "Enable RetroAchievements hardcore mode. Using cheats and loading a state are not allowed in this mode."
-msgstr ""
+msgstr "Engedélyezi a RetroAchievements hardcore módot. Ebben a módban nem engedélyezett a csalás és az állapot betöltés."
 
 #: core/ui/settings_general.cpp:372
 msgid "Username"
@@ -1295,7 +1295,7 @@ msgstr "BIOS mappa kiválasztása"
 
 #: core/ui/settings_general.cpp:424
 msgid "Folders containing BIOS files (e.g. dc_boot.bin or dc_bios.bin) and arcade BIOS"
-msgstr ""
+msgstr "A BIOS fájlokat (pl. dc_boot.bin vagy dc_bios.bin) és az arcade BIOS-t tartalmazó mappák"
 
 #: core/ui/settings_general.cpp:428
 msgid "VMU Folder"
@@ -1303,11 +1303,11 @@ msgstr "VMU mappa"
 
 #: core/ui/settings_general.cpp:428
 msgid "Select the VMU folder"
-msgstr ""
+msgstr "Válassza ki a VMU mappát"
 
 #: core/ui/settings_general.cpp:429
 msgid "Folder where VMU (.bin) saves are stored"
-msgstr ""
+msgstr "A VMU (.bin) mentések tárolási helye"
 
 #: core/ui/settings_general.cpp:432
 msgid "Savestate Folders"
@@ -1323,23 +1323,23 @@ msgstr ""
 
 #: core/ui/settings_general.cpp:436
 msgid "Game Save Folder"
-msgstr ""
+msgstr "Játék mentési mappa"
 
 #: core/ui/settings_general.cpp:436
 msgid "Select the game save folder"
-msgstr ""
+msgstr "Válassza ki a játék mentési mappáját"
 
 #: core/ui/settings_general.cpp:437
 msgid "Folder for game save data (e.g. arcade NVRAM)"
-msgstr ""
+msgstr "Mappa a játék mentési adataihoz (pl. arcade NVRAM)"
 
 #: core/ui/settings_general.cpp:441
 msgid "Texture Pack Folders"
-msgstr ""
+msgstr "Textúra csomag mappák"
 
 #: core/ui/settings_general.cpp:441
 msgid "Select a texture pack folder"
-msgstr ""
+msgstr "Válasszon ki egy textúracsomag mappát"
 
 #: core/ui/settings_general.cpp:442
 msgid "Folders containing textures/<gameId> or <gameId> under a textures subfolder"
@@ -1359,15 +1359,15 @@ msgstr ""
 
 #: core/ui/settings_general.cpp:450
 msgid "Box Art Folder"
-msgstr ""
+msgstr "Borító mappa"
 
 #: core/ui/settings_general.cpp:450
 msgid "Select the box art folder"
-msgstr ""
+msgstr "Válassza ki a borító mappát"
 
 #: core/ui/settings_general.cpp:451
 msgid "Folder containing box art images (png/jpg). If empty, Flycast will use the default Home Folder/boxart for downloads and generated art"
-msgstr ""
+msgstr "A borító képeket (png/jpg) tartalmazó mappa. Ha üres, a Flycast az alapértelmezett Saját mappát/borítót használja a letöltésekhez és a generált képekhez"
 
 #: core/ui/settings_general.cpp:454
 msgid "Controller Mapping Folders"
@@ -1383,15 +1383,15 @@ msgstr ""
 
 #: core/ui/settings_general.cpp:458
 msgid "Cheat Folders"
-msgstr ""
+msgstr "Csalás mappák"
 
 #: core/ui/settings_general.cpp:458
 msgid "Select a cheat folder"
-msgstr ""
+msgstr "Válasszon ki egy csalás mappát"
 
 #: core/ui/settings_general.cpp:459
 msgid "Folders containing cheat files (.cht/.txt) named with the game ID. Flycast will auto-load matching files if present"
-msgstr ""
+msgstr "A játék azonosítójával elnevezett csaló fájlokat (.cht/.txt) tartalmazó mappák. A Flycast automatikusan betölti a megfelelő fájlokat, ha azok léteznek"
 
 #: core/ui/gui_chat.h:46 core/ui/gui_chat.h:48
 msgid "P2"
@@ -1412,7 +1412,7 @@ msgstr "Nincs"
 
 #: core/ui/settings_controls.cpp:44
 msgid "Sega Controller"
-msgstr ""
+msgstr "Sega vezérlő"
 
 #: core/ui/settings_controls.cpp:45
 msgid "Light Gun"
@@ -1436,7 +1436,7 @@ msgstr ""
 
 #: core/ui/settings_controls.cpp:50
 msgid "Maracas Controller"
-msgstr ""
+msgstr "Maracas vezérlő"
 
 #: core/ui/settings_controls.cpp:51
 msgid "Fishing Controller"
@@ -1464,7 +1464,7 @@ msgstr "Sega VMU"
 
 #: core/ui/settings_controls.cpp:63
 msgid "Vibration Pack"
-msgstr ""
+msgstr "Rezgő csomag"
 
 #: core/ui/settings_controls.cpp:64
 msgid "Microphone"
@@ -1472,7 +1472,7 @@ msgstr "Mikrofon"
 
 #: core/ui/settings_controls.cpp:155
 msgid "All"
-msgstr ""
+msgstr "Összes"
 
 #: core/ui/settings_controls.cpp:163 core/ui/settings_controls.cpp:221
 msgid "Directions"
@@ -1766,15 +1766,15 @@ msgstr "Nem"
 
 #: core/ui/settings_controls.cpp:693
 msgid "Arcade Controls"
-msgstr ""
+msgstr "Arcade vezérlők"
 
 #: core/ui/settings_controls.cpp:839 core/ui/settings_controls.cpp:1045
 msgid "Gamepad Settings"
-msgstr ""
+msgstr "Gamepad beállítások"
 
 #: core/ui/settings_controls.cpp:883
 msgid "Haptic"
-msgstr ""
+msgstr "Haptikus"
 
 #: core/ui/settings_controls.cpp:884 core/ui/settings_controls.cpp:920
 msgid "Power"
@@ -1798,15 +1798,15 @@ msgstr ""
 
 #: core/ui/settings_controls.cpp:893
 msgid "Select a PNG file"
-msgstr ""
+msgstr "Válasszon ki egy PNG fájlt"
 
 #: core/ui/settings_controls.cpp:894
 msgid "Choose Image..."
-msgstr ""
+msgstr "Kép kiválasztása..."
 
 #: core/ui/settings_controls.cpp:906
 msgid "Use Default"
-msgstr ""
+msgstr "Alapértelmezés használata"
 
 #: core/ui/settings_controls.cpp:917
 msgid "Rumble"
@@ -1822,7 +1822,7 @@ msgstr ""
 
 #: core/ui/settings_controls.cpp:930
 msgid "Dead zone"
-msgstr ""
+msgstr "Holtzóna"
 
 #: core/ui/settings_controls.cpp:933
 msgid "Minimum deflection to register as input"
@@ -1838,7 +1838,7 @@ msgstr ""
 
 #: core/ui/settings_controls.cpp:952
 msgid "Physical Devices"
-msgstr ""
+msgstr "Fizikai eszközök"
 
 #: core/ui/settings_controls.cpp:956 core/ui/settings_controls.cpp:967
 msgid "System"
@@ -1852,7 +1852,7 @@ msgstr "Név"
 #: core/ui/settings_controls.cpp:991
 #, c-format
 msgid "DreamLink status: %s"
-msgstr ""
+msgstr "DreamLink állapot: %s"
 
 #: core/ui/settings_controls.cpp:1033
 msgid "Edit Layout"
@@ -1885,12 +1885,12 @@ msgstr ""
 
 #: core/ui/settings_controls.cpp:1068
 msgid "Dreamcast Devices"
-msgstr ""
+msgstr "Dreamcast eszközök"
 
 #: core/ui/settings_controls.cpp:1081
 #, c-format
 msgid "Port %c"
-msgstr ""
+msgstr "Port %c"
 
 #: core/ui/settings_controls.cpp:1152
 msgid "Crosshair color"
@@ -1956,7 +1956,7 @@ msgstr ""
 
 #: core/ui/gui.cpp:573
 msgid "Flycast has stopped."
-msgstr ""
+msgstr "A Flycast leállt."
 
 #: core/ui/gui.cpp:678
 msgid "Resume"
@@ -1972,16 +1972,16 @@ msgstr "Trófeák"
 
 #: core/ui/gui.cpp:700
 msgid "Barcode Card"
-msgstr ""
+msgstr "Vonalkódos kártya"
 
 #: core/ui/gui.cpp:729
 msgid "Connect DreamLink"
-msgstr ""
+msgstr "DreamLink kapcsolódás"
 
 #: core/ui/gui.cpp:737
 msgid "Disconnect\n"
 "DreamLink"
-msgstr ""
+msgstr "DreamLink leválasztása"
 
 #: core/ui/gui.cpp:761
 msgid "Insert Disk"
@@ -2041,11 +2041,11 @@ msgstr "Betöltés..."
 
 #: core/ui/gui.cpp:1151
 msgid "Your game list is empty"
-msgstr ""
+msgstr "A játéklista üres"
 
 #: core/ui/gui.cpp:1161
 msgid "Add Game Folder"
-msgstr ""
+msgstr "Játékmappa hozzáadása"
 
 #: core/ui/gui.cpp:1193 core/ui/gui.cpp:1204
 msgid "Invalid selection:"
@@ -2053,11 +2053,11 @@ msgstr ""
 
 #: core/ui/gui.cpp:1193 core/ui/gui.cpp:1204
 msgid "Flycast cannot write to this folder."
-msgstr ""
+msgstr "A Flycast nem tud ebbe a mappába írni."
 
 #: core/ui/gui.cpp:1232
 msgid "Select Flycast Home Folder"
-msgstr ""
+msgstr "Válassza ki a Flycast Sajátmappát"
 
 #: core/ui/gui.cpp:1266 core/ui/gui.cpp:1375 core/emulator.cpp:687
 msgid "Starting..."
@@ -2065,11 +2065,11 @@ msgstr "Indítás..."
 
 #: core/ui/gui.cpp:1278
 msgid "Starting Network..."
-msgstr ""
+msgstr "Hálózat indítása..."
 
 #: core/ui/gui.cpp:1280
 msgid "Press Start to start the game now."
-msgstr ""
+msgstr "Nyomja meg a Start gombot a játék elindításához."
 
 #: core/ui/gui.cpp:1377
 msgid "Loading..."
@@ -2265,15 +2265,15 @@ msgstr ""
 
 #: core/ui/settings.cpp:132
 msgid "Lua Scripting"
-msgstr ""
+msgstr "Lua szkriptelés"
 
 #: core/ui/settings.cpp:134
 msgid "Lua Filename"
-msgstr ""
+msgstr "Lua fájlnév"
 
 #: core/ui/settings.cpp:136
 msgid "Specify lua filename to use. Should be located in Flycast config folder. Defaults to flycast.lua when empty."
-msgstr ""
+msgstr "Adja meg a használni kívánt lua fájl nevét. A Flycast konfigurációs mappában kell lennie. Ha üres, akkor alapértelmezés szerint flycast.lua."
 
 #: core/ui/settings.cpp:270
 msgid "General"
@@ -2305,11 +2305,11 @@ msgstr "Tárhely"
 
 #: core/ui/gui_util.cpp:133
 msgid ".. Up to Parent Folder"
-msgstr ""
+msgstr ".. Fel a szülő mappába"
 
 #: core/ui/gui_util.cpp:171
 msgid "Select Current Folder"
-msgstr ""
+msgstr "Aktuális mappa kiválasztása"
 
 #: core/ui/gui_util.cpp:479
 msgid "(?)"
