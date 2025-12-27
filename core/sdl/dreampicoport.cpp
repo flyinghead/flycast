@@ -153,9 +153,11 @@ public:
 		io_context_thread = std::make_unique<std::thread>([this](){contextThreadEnty();});
 	}
 
-	~DreamPicoPortSerialHandler() {
+	~DreamPicoPortSerialHandler()
+	{
 		disconnect();
-		io_context_thread->join();
+		if (io_context_thread != nullptr)
+			io_context_thread->join();
 	}
 
 	bool is_open() const {
