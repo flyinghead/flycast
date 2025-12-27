@@ -148,7 +148,7 @@ void flycast_term()
 
 void dc_savestate(int index, const u8 *pngData, u32 pngSize)
 {
-	if (settings.network.online)
+	if (settings.network.online || settings.content.fileName.empty())
 		return;
 
 	lastStateFile.clear();
