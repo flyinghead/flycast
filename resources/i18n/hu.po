@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-12-14 14:32+0100\n"
-"PO-Revision-Date: 2025-12-18 15:40\n"
+"PO-Revision-Date: 2025-12-27 21:06\n"
 "Last-Translator: \n"
 "Language: hu_HU\n"
 "MIME-Version: 1.0\n"
@@ -20,43 +20,43 @@ msgstr ""
 #: core/achievements/achievements.cpp:345
 #, c-format
 msgid "User %s authenticated"
-msgstr ""
+msgstr "A %s felhasználó hitelesítve"
 
 #: core/achievements/achievements.cpp:361
 msgid "RetroAchievements authentication failed"
-msgstr ""
+msgstr "Sikertelen RetroAchievements hitelesítés"
 
 #: core/achievements/achievements.cpp:396
 msgid "No user token returned"
-msgstr ""
+msgstr "Nincs visszaküldött felhasználói token"
 
 #: core/achievements/achievements.cpp:548
 msgid "RetroAchievements disconnected"
-msgstr ""
+msgstr "RetroAchievements leválasztva"
 
 #: core/achievements/achievements.cpp:552
 msgid "RetroAchievements reconnected"
-msgstr ""
+msgstr "RetroAchievements újra csatlakozott"
 
 #: core/achievements/achievements.cpp:582
 #, c-format
 msgid "Achievement %s unlocked!"
-msgstr ""
+msgstr "%s trófea feloldva!"
 
 #: core/achievements/achievements.cpp:622
 #, c-format
 msgid "Leaderboard %s started"
-msgstr ""
+msgstr "Ranglista %s elindult"
 
 #: core/achievements/achievements.cpp:629
 #, c-format
 msgid "Leaderboard %s failed"
-msgstr ""
+msgstr "A ranglista %s sikertelen"
 
 #: core/achievements/achievements.cpp:636
 #, c-format
 msgid "Leaderboard %s submitted"
-msgstr ""
+msgstr "Ranglista %s beküldve"
 
 #: core/achievements/achievements.cpp:661
 #, c-format
@@ -66,12 +66,12 @@ msgstr ""
 #: core/achievements/achievements.cpp:661
 #, c-format
 msgid "Completed %s"
-msgstr ""
+msgstr "Teljesítve: %s"
 
 #: core/achievements/achievements.cpp:664
 #, c-format
 msgid "%d achievements, %d points"
-msgstr ""
+msgstr "%d trófea, %d pont"
 
 #: core/achievements/achievements.cpp:910
 #, c-format
@@ -80,7 +80,7 @@ msgstr ""
 
 #: core/achievements/achievements.cpp:912
 msgid "This game has no achievements."
-msgstr ""
+msgstr "Ez a játék nem tartalmaz trófeákat."
 
 #: core/achievements/achievements.cpp:917 core/ui/settings_general.cpp:370
 #: core/ui/gui_achievements.cpp:303
@@ -93,16 +93,16 @@ msgstr "Hardcore mód letiltva"
 
 #: core/achievements/achievements.cpp:948
 msgid "Unrecognized media inserted"
-msgstr ""
+msgstr "Ismeretlen adathordozó behelyezve"
 
 #: core/achievements/achievements.cpp:955
 msgid "Media change failed"
-msgstr ""
+msgstr "A média váltás sikertelen volt"
 
 #: core/sdl/dreamconn.cpp:263
 #, c-format
 msgid "WARNING: DreamLink disconnected from port %c"
-msgstr ""
+msgstr "FIGYELEM: A DreamLink leválasztódott a %c portról"
 
 #: core/sdl/dreampicoport.cpp:1209 core/ui/settings_controls.cpp:184
 msgid "DPad2 Up"
@@ -222,36 +222,36 @@ msgstr ""
 #: core/sdl/sdl_gamepad.cpp:626
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:387
 msgid "Touchpad"
-msgstr ""
+msgstr "Érintőpad"
 
 #: core/sdl/sdl_gamepad.cpp:685
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:405
 msgid "Left Stick X"
-msgstr ""
+msgstr "Bal joystick X"
 
 #: core/sdl/sdl_gamepad.cpp:686
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:407
 msgid "Left Stick Y"
-msgstr ""
+msgstr "Bal joystick Y"
 
 #: core/sdl/sdl_gamepad.cpp:687
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:409
 msgid "Right Stick X"
-msgstr ""
+msgstr "Jobb joystick X"
 
 #: core/sdl/sdl_gamepad.cpp:688
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:411
 msgid "Right Stick Y"
-msgstr ""
+msgstr "Jobb joystick Y"
 
 #: core/sdl/sdl_gamepad.cpp:757
 msgid "Default Mouse"
-msgstr ""
+msgstr "Alapértelmezett egér"
 
 #: core/sdl/sdl_gamepad.cpp:761
 #, c-format
 msgid "Mouse %d"
-msgstr ""
+msgstr "Egér %d"
 
 #: core/sdl/sdl.cpp:843 core/windows/winmain.cpp:370
 msgid "Flycast Error"
@@ -267,12 +267,12 @@ msgstr ""
 
 #: core/oslib/oslib.cpp:351
 msgid "Can't find Pictures library"
-msgstr ""
+msgstr "Nem találom a Képek könyvtárat"
 
 #: core/oslib/storage.cpp:81
 #, c-format
 msgid "Can't read directory %s"
-msgstr ""
+msgstr "Nem lehet olvasni a %s könyvtárat"
 
 #: core/oslib/storage.cpp:201
 #, c-format
@@ -282,98 +282,98 @@ msgstr ""
 #: core/oslib/storage.cpp:222
 #, c-format
 msgid "Invalid device %s"
-msgstr ""
+msgstr "Érvénytelen eszköz %s"
 
 #: core/oslib/storage.cpp:246
 #, c-format
 msgid "Cannot get attributes of %s"
-msgstr ""
+msgstr "Nem lehet lekérni a %s attribútumait"
 
 #: core/oslib/storage.cpp:253
 #, c-format
 msgid "Invalid file name %s"
-msgstr ""
+msgstr "Érvénytelen fájlnév %s"
 
 #: core/imgread/common.cpp:97
 msgid "Unknown disk format"
-msgstr ""
+msgstr "Ismeretlen lemezformátum"
 
 #: core/imgread/common.cpp:370 core/emulator.cpp:613
 msgid "This media cannot be loaded"
-msgstr ""
+msgstr "Ez a média nem tölthető be"
 
 #: core/imgread/cue.cpp:57
 #, c-format
 msgid "Cannot open CUE file %s"
-msgstr ""
+msgstr "Nem lehet megnyitni a CUE fájlt %s"
 
 #: core/imgread/cue.cpp:68
 msgid "CUE parse error: CUE file too big"
-msgstr ""
+msgstr "CUE elemzési hiba: A CUE fájl túl nagy"
 
 #: core/imgread/cue.cpp:189
 #, c-format
 msgid "CUE file: cannot open track %s"
-msgstr ""
+msgstr "CUE fájl: nem lehet megnyitni ezt a sávot %s"
 
 #: core/imgread/cue.cpp:193
 #, c-format
 msgid "CUE file: track has unknown sector type: %s"
-msgstr ""
+msgstr "CUE fájl: a sáv ismeretlen szektortípusú: %s"
 
 #: core/imgread/cue.cpp:225
 msgid "CUE parse error: failed to parse or invalid file with 0 tracks"
-msgstr ""
+msgstr "CUE-elemzési hiba: az elemzés sikertelen volt, vagy a fájl érvénytelen, 0 sávval"
 
 #: core/imgread/cue.cpp:228 core/imgread/cue.cpp:240 core/imgread/cue.cpp:244
 #: core/imgread/cue.cpp:248 core/imgread/cue.cpp:252
 msgid "Invalid CUE file"
-msgstr ""
+msgstr "Érvénytelen CUE fájl"
 
 #: core/imgread/cue.cpp:237
 msgid "CUE parse error: less than 3 tracks"
-msgstr ""
+msgstr "CUE elemzési hiba: kevesebb mint 3 sáv"
 
 #: core/imgread/chd.cpp:109
 #, c-format
 msgid "chd: track type %s is not supported"
-msgstr ""
+msgstr "chd: a %s típusú sáv nem támogatott"
 
 #: core/imgread/chd.cpp:118
 #, c-format
 msgid "Cannot open CHD file %s"
-msgstr ""
+msgstr "Nem lehet megnyitni a CHD fájlt %s"
 
 #: core/imgread/chd.cpp:124
 #, c-format
 msgid "Invalid CHD file %s"
-msgstr ""
+msgstr "Érvénytelen CHD fájl %s"
 
 #: core/imgread/chd.cpp:137
 #, c-format
 msgid "Invalid hunkbytes for CHD file %s"
-msgstr ""
+msgstr "Érvénytelen hunkbytes a CHD fájlban %s"
 
 #: core/imgread/chd.cpp:183
 msgid "Unexpected track number"
-msgstr ""
+msgstr "Váratlan sáv szám"
 
 #: core/imgread/chd.cpp:186
 msgid "Unsupported subtype or pre/postgap"
-msgstr ""
+msgstr "Nem támogatott altípus vagy pre/postgap"
 
 #: core/imgread/chd.cpp:212
 msgid "Invalid CHD: less than 3 tracks"
-msgstr ""
+msgstr "Érvénytelen CHD: kevesebb mint 3 sáv"
 
 #: core/imgread/chd.cpp:218
 msgid "Invalid CHD: no track found"
-msgstr ""
+msgstr "Érvénytelen CHD: nincsenek sávok"
 
 #: core/imgread/gdi.cpp:13
 #, c-format
 msgid "Cannot open GDI file %s"
-msgstr ""
+msgstr "Nem lehet megnyitni a GDI fájlt %s"
 
 #: core/imgread/gdi.cpp:24
 msgid "GDI file too big"
@@ -388,17 +388,17 @@ msgstr "Hibás GDI fájl"
 #: core/imgread/gdi.cpp:132
 #, c-format
 msgid "GDI file: Cannot open track %s"
-msgstr ""
+msgstr "GDI fájl: Nem lehet megnyitni a %s sávot"
 
 #: core/imgread/cdi.cpp:17
 #, c-format
 msgid "Cannot open CDI file %s"
-msgstr ""
+msgstr "Nem lehet megnyitni a CDI fájlt %s"
 
 #: core/imgread/cdi.cpp:23
 #, c-format
 msgid "Invalid CDI file %s"
-msgstr ""
+msgstr "Érvénytelen CDI fájl %s"
 
 #: core/imgread/cdi.cpp:27 core/imgread/cdi.cpp:31 core/imgread/cdi.cpp:49
 #: core/imgread/cdi.cpp:60 core/imgread/cdi.cpp:73
@@ -407,16 +407,16 @@ msgstr "Hibás CDI fájl"
 
 #: core/imgread/cdi.cpp:78
 msgid "Invalid CDI sector size"
-msgstr ""
+msgstr "Érvénytelen CDI szektorméret"
 
 #: core/imgread/cdi.cpp:126
 msgid "Cannot re-open CDI file"
-msgstr ""
+msgstr "A CDI fájl nem nyitható meg újra"
 
 #: core/hw/naomi/card_reader.cpp:291 core/hw/naomi/card_reader.cpp:585
 #: core/hw/maple/maple_devs.cpp:1842
 msgid "Card ejected"
-msgstr ""
+msgstr "Kártya kilökve"
 
 #: core/hw/naomi/naomi.cpp:350
 #, c-format
@@ -430,22 +430,22 @@ msgstr ""
 #: core/hw/naomi/systemsp.cpp:2188
 #, c-format
 msgid "SystemSP: Cannot open CompactFlash file %s"
-msgstr ""
+msgstr "SystemSP: Nem lehet megnyitni a CompactFlash fájlt %s"
 
 #: core/hw/naomi/naomi_m3comm.cpp:76
 msgid "Network started"
-msgstr ""
+msgstr "Hálózat elindítva"
 
 #: core/hw/naomi/naomi_cart.cpp:148 core/hw/naomi/naomi_cart.cpp:386
 #: core/hw/naomi/naomi_cart.cpp:406 core/hw/naomi/naomi_cart.cpp:432
 #: core/hw/naomi/naomi_cart.cpp:844 core/hw/naomi/gdcartridge.cpp:597
 msgid "Memory allocation failed"
-msgstr ""
+msgstr "Memóriaallokáció sikertelen"
 
 #: core/hw/naomi/naomi_cart.cpp:192 core/hw/naomi/naomi_cart.cpp:224
 #, c-format
 msgid "Error: cannot load BIOS %s"
-msgstr ""
+msgstr "Hiba: nem lehet betölteni a BIOS-t %s"
 
 #: core/hw/naomi/naomi_cart.cpp:236
 msgid "Unknown game"
@@ -454,12 +454,12 @@ msgstr "Ismeretlen játék"
 #: core/hw/naomi/naomi_cart.cpp:262
 #, c-format
 msgid "Cannot open %s or %s"
-msgstr ""
+msgstr "Cannot open %s / %s"
 
 #: core/hw/naomi/naomi_cart.cpp:264
 #, c-format
 msgid "Cannot open %s"
-msgstr ""
+msgstr "Nem lehet megnyitni %s"
 
 #: core/hw/naomi/naomi_cart.cpp:343
 msgid "Invalid ROM"
@@ -649,7 +649,7 @@ msgstr ""
 
 #: core/ui/settings_video.cpp:153
 msgid "Rendering Options"
-msgstr ""
+msgstr "Renderelési beállítások"
 
 #: core/ui/settings_video.cpp:156
 msgid "Half"
@@ -669,7 +669,7 @@ msgstr ""
 
 #: core/ui/settings_video.cpp:204
 msgid "Integer Scaling"
-msgstr ""
+msgstr "Egész számú skálázás"
 
 #: core/ui/settings_video.cpp:204
 msgid "Scales the output by the maximum integer multiple allowed by the display resolution."
@@ -677,7 +677,7 @@ msgstr ""
 
 #: core/ui/settings_video.cpp:205
 msgid "Linear Interpolation"
-msgstr ""
+msgstr "Lineáris interpoláció"
 
 #: core/ui/settings_video.cpp:205
 msgid "Scales the output with linear interpolation. Will use nearest neighbor interpolation otherwise. Disable with integer scaling."
@@ -693,23 +693,23 @@ msgstr ""
 
 #: core/ui/settings_video.cpp:214
 msgid "Duplicate frames"
-msgstr ""
+msgstr "Duplikált képkockák"
 
 #: core/ui/settings_video.cpp:214
 msgid "Duplicate frames on high refresh rate monitors (120 Hz and higher)"
-msgstr ""
+msgstr "Duplikált képkockák magas frissítési frekvenciájú monitorokon (120 Hz és magasabb)"
 
 #: core/ui/settings_video.cpp:219
 msgid "Show VMU In-game"
-msgstr ""
+msgstr "VMU megjelenítése a játékban"
 
 #: core/ui/settings_video.cpp:219
 msgid "Show the VMU LCD screens while in-game"
-msgstr ""
+msgstr "A VMU LCD képernyők megjelenítése játék közben"
 
 #: core/ui/settings_video.cpp:220
 msgid "Full Framebuffer Emulation"
-msgstr ""
+msgstr "Teljes képkockabuffer emuláció"
 
 #: core/ui/settings_video.cpp:221
 msgid "Fully accurate VRAM framebuffer emulation. Helps games that directly access the framebuffer for special effects. Very slow and incompatible with upscaling and wide screen."
@@ -717,19 +717,19 @@ msgstr ""
 
 #: core/ui/settings_video.cpp:225
 msgid "Load Custom Textures"
-msgstr ""
+msgstr "Egyéni textúrák betöltése"
 
 #: core/ui/settings_video.cpp:226
 msgid "Load custom/high-res textures from data/textures/<game id>"
-msgstr ""
+msgstr "Egyéni/nagy felbontású textúrák betöltése innen data/textures/<game id>"
 
 #: core/ui/settings_video.cpp:230
 msgid "Preload Custom Textures"
-msgstr ""
+msgstr "Egyéni textúrák előzetes betöltése"
 
 #: core/ui/settings_video.cpp:231
 msgid "Preload custom textures at game start. May improve performance but increases memory usage"
-msgstr ""
+msgstr "A játék indításakor előre betölti az egyéni textúrákat. Javíthatja a teljesítményt, de növeli a memóriahasználatot"
 
 #: core/ui/settings_video.cpp:237
 msgid "Aspect Ratio"
@@ -746,40 +746,41 @@ msgstr ""
 
 #: core/ui/settings_video.cpp:245
 msgid "Super Widescreen"
-msgstr ""
+msgstr "Szuper széles képernyő"
 
 #: core/ui/settings_video.cpp:246
 msgid "Use the full width of the screen or window when its aspect ratio is greater than 16:9.\n"
 "Aspect Fill and remove black bars. Not compatible with integer scaling."
-msgstr ""
+msgstr "Használja a képernyő vagy ablak teljes szélességét, ha annak képaránya nagyobb, mint 16:9.\n"
+"Kitölti a képernyőt, eltávolítja a fekete sávokat. Nem kompatibilis az egész számú méretezéssel."
 
 #: core/ui/settings_video.cpp:249
 msgid "Widescreen Game Cheats"
-msgstr ""
+msgstr "Szélesképernyős játék csalások"
 
 #: core/ui/settings_video.cpp:250
 msgid "Modify the game so that it displays in 16:9 anamorphic format and use horizontal screen stretching. Only some games are supported."
-msgstr ""
+msgstr "Módosítja a játékot, hogy 16:9 anamorf formátumban jelenjen meg, és vízszintes képernyőnyújtást használ. Csak néhány játék támogatott."
 
 #: core/ui/settings_video.cpp:252
 msgid "Horizontal Stretching"
-msgstr ""
+msgstr "Vízszintes nyújtás"
 
 #: core/ui/settings_video.cpp:253
 msgid "Stretch the screen horizontally"
-msgstr ""
+msgstr "Kinyújtja a képernyőt vízszintesen"
 
 #: core/ui/settings_video.cpp:254
 msgid "Rotate Screen 90°"
-msgstr ""
+msgstr "Képernyő elforgatása 90°-kal"
 
 #: core/ui/settings_video.cpp:254
 msgid "Rotate the screen 90° counterclockwise"
-msgstr ""
+msgstr "Elforgatja a képernyőt 90°-kal az óramutató járásával ellentétes irányban"
 
 #: core/ui/settings_video.cpp:259
 msgid "Per Pixel Settings"
-msgstr ""
+msgstr "Pixelenkénti beállítások"
 
 #: core/ui/settings_video.cpp:262
 msgid "512 MB"
@@ -799,19 +800,19 @@ msgstr "4 GB"
 
 #: core/ui/settings_video.cpp:300
 msgid "Pixel Buffer Size"
-msgstr ""
+msgstr "Pixel puffer mérete"
 
 #: core/ui/settings_video.cpp:302
 msgid "The size of the pixel buffer. May need to be increased when upscaling by a large factor."
-msgstr ""
+msgstr "A pixelpuffer mérete. Nagy mértékű felbontásnövelés esetén növelni kell."
 
 #: core/ui/settings_video.cpp:304
 msgid "Maximum Layers"
-msgstr ""
+msgstr "Rétegek max. száma"
 
 #: core/ui/settings_video.cpp:305
 msgid "Maximum number of transparent layers. May need to be increased for some complex scenes. Decreasing it may improve performance."
-msgstr ""
+msgstr "Az átlátszó rétegek maximális száma. Bizonyos összetett jelenetek esetén növelni kell. Csökkentésével javulhat a teljesítmény."
 
 #: core/ui/settings_video.cpp:308
 msgid "Performance"
@@ -819,7 +820,7 @@ msgstr "Teljesítmény"
 
 #: core/ui/settings_video.cpp:310
 msgid "Automatic Frame Skipping:"
-msgstr ""
+msgstr "Automatikus képkocka-kihagyás:"
 
 #: core/ui/settings_video.cpp:312 core/ui/settings_video.cpp:337
 #: core/ui/settings_network.cpp:40 core/ui/settings_network.cpp:87
@@ -828,7 +829,7 @@ msgstr "Letiltva"
 
 #: core/ui/settings_video.cpp:312
 msgid "No frame skipping"
-msgstr ""
+msgstr "Nincs képkocka kihagyás"
 
 #: core/ui/settings_video.cpp:314
 msgid "Normal"
@@ -836,7 +837,7 @@ msgstr "Normál"
 
 #: core/ui/settings_video.cpp:314
 msgid "Skip a frame when the GPU and CPU are both running slow"
-msgstr ""
+msgstr "Képkockák kihagyása, ha a GPU és a CPU egyaránt lassú"
 
 #: core/ui/settings_video.cpp:316
 msgid "Maximum"
@@ -844,7 +845,7 @@ msgstr "Maximum"
 
 #: core/ui/settings_video.cpp:316
 msgid "Skip a frame when the GPU is running slow"
-msgstr ""
+msgstr "Képkocka kihagyása, ha a GPU lassú"
 
 #: core/ui/settings_video.cpp:319
 msgid "Frame Skipping"
@@ -852,7 +853,7 @@ msgstr "Képkocka kihagyás"
 
 #: core/ui/settings_video.cpp:320
 msgid "Number of frames to skip between two actually rendered frames"
-msgstr ""
+msgstr "Két ténylegesen renderelt képkocka között kihagyott képkockák száma"
 
 #: core/ui/settings_video.cpp:321
 msgid "Shadows"
@@ -868,7 +869,7 @@ msgstr "Köd"
 
 #: core/ui/settings_video.cpp:323
 msgid "Enable fog effects"
-msgstr ""
+msgstr "Ködhatások engedélyezése"
 
 #: core/ui/settings_video.cpp:326 core/ui/settings.cpp:300
 msgid "Advanced"
@@ -876,7 +877,7 @@ msgstr "Haladó"
 
 #: core/ui/settings_video.cpp:328
 msgid "Delay Frame Swapping"
-msgstr ""
+msgstr "Késleltetett képkocka-csere"
 
 #: core/ui/settings_video.cpp:329
 msgid "Useful to avoid flashing screen or glitchy videos. Not recommended on slow platforms"
@@ -900,19 +901,19 @@ msgstr ""
 
 #: core/ui/settings_video.cpp:334
 msgid "Copy Rendered Textures to VRAM"
-msgstr ""
+msgstr "Renderelt textúrák másolása a VRAM-ba"
 
 #: core/ui/settings_video.cpp:335
 msgid "Copy rendered-to textures back to VRAM. Slower but accurate"
-msgstr ""
+msgstr "A renderelt textúrákat visszamásolja a VRAM-ba. Lassabb, de pontos"
 
 #: core/ui/settings_video.cpp:374
 msgid "Anisotropic Filtering"
-msgstr ""
+msgstr "Anizotropikus szűrés"
 
 #: core/ui/settings_video.cpp:376
 msgid "Higher values make textures viewed at oblique angles look sharper, but are more demanding on the GPU. This option only has a visible impact on mipmapped textures."
-msgstr ""
+msgstr "A magasabb értékek a ferde szögből nézett textúrákat élesebbé teszik, de nagyobb terhelést jelentenek a GPU-ra. Ez az opció csak a mipmappelt textúrákra gyakorol látható hatást."
 
 #: core/ui/settings_video.cpp:378
 msgid "Texture Filtering:"
@@ -1198,19 +1199,19 @@ msgstr ""
 
 #: core/ui/settings_general.cpp:348
 msgid "Hide .bin, .dat and .lst files from the content browser"
-msgstr ""
+msgstr "A .bin, .dat és .lst fájlok elrejtése a tartalom böngészőből"
 
 #: core/ui/settings_general.cpp:351
 msgid "Use SAF File Picker"
-msgstr ""
+msgstr "SAF fájlválasztó használata"
 
 #: core/ui/settings_general.cpp:352
 msgid "Use Android Storage Access Framework file picker to select folders and files. Ignored on Android 10 and later."
-msgstr ""
+msgstr "Az Android Storage Access Framework fájlválasztóját használja a mappák és fájlok kiválasztásához. Android 10 és újabb verziókban figyelmen kívül hagyva."
 
 #: core/ui/settings_general.cpp:355
 msgid "Automatic State:"
-msgstr ""
+msgstr "Automatikus állapot:"
 
 #: core/ui/settings_general.cpp:356 core/ui/gui_cheats.cpp:104
 msgid "Load"
@@ -1218,7 +1219,7 @@ msgstr "Betöltés"
 
 #: core/ui/settings_general.cpp:357
 msgid "Load the last saved state of the game when starting"
-msgstr ""
+msgstr "A játék indításakor betölti a legutóbb mentett állapotot"
 
 #: core/ui/settings_general.cpp:359 core/ui/vgamepad.cpp:73
 msgid "Save"
@@ -1226,35 +1227,35 @@ msgstr "Mentés"
 
 #: core/ui/settings_general.cpp:360
 msgid "Save the state of the game when stopping"
-msgstr ""
+msgstr "Játékállapot mentése leállításkor"
 
 #: core/ui/settings_general.cpp:361
 msgid "Naomi Free Play"
-msgstr ""
+msgstr "Naomi Ingyenes játék"
 
 #: core/ui/settings_general.cpp:361
 msgid "Configure Naomi games in Free Play mode."
-msgstr ""
+msgstr "Beállítja a Naomi játékokat szabad játék módba."
 
 #: core/ui/settings_general.cpp:363
 msgid "Discord Presence"
-msgstr ""
+msgstr "Discord jelenlét"
 
 #: core/ui/settings_general.cpp:363
 msgid "Show which game you are playing on Discord"
-msgstr ""
+msgstr "Mutatja Discordon, melyik játékot játszod"
 
 #: core/ui/settings_general.cpp:366
 msgid "Enable RetroAchievements"
-msgstr ""
+msgstr "RetroAchievements engedélyezése"
 
 #: core/ui/settings_general.cpp:366
 msgid "Track your game achievements using RetroAchievements.org"
-msgstr ""
+msgstr "Nyomon követi a játékbeli eredményeket a RetroAchievements.org segítségével"
 
 #: core/ui/settings_general.cpp:371
 msgid "Enable RetroAchievements hardcore mode. Using cheats and loading a state are not allowed in this mode."
-msgstr ""
+msgstr "Engedélyezi a RetroAchievements hardcore módot. Ebben a módban nem engedélyezett a csalás és az állapot betöltés."
 
 #: core/ui/settings_general.cpp:372
 msgid "Username"
@@ -1294,7 +1295,7 @@ msgstr "BIOS mappa kiválasztása"
 
 #: core/ui/settings_general.cpp:424
 msgid "Folders containing BIOS files (e.g. dc_boot.bin or dc_bios.bin) and arcade BIOS"
-msgstr ""
+msgstr "A BIOS fájlokat (pl. dc_boot.bin vagy dc_bios.bin) és az arcade BIOS-t tartalmazó mappák"
 
 #: core/ui/settings_general.cpp:428
 msgid "VMU Folder"
@@ -1302,11 +1303,11 @@ msgstr "VMU mappa"
 
 #: core/ui/settings_general.cpp:428
 msgid "Select the VMU folder"
-msgstr ""
+msgstr "Válassza ki a VMU mappát"
 
 #: core/ui/settings_general.cpp:429
 msgid "Folder where VMU (.bin) saves are stored"
-msgstr ""
+msgstr "A VMU (.bin) mentések tárolási helye"
 
 #: core/ui/settings_general.cpp:432
 msgid "Savestate Folders"
@@ -1322,23 +1323,23 @@ msgstr ""
 
 #: core/ui/settings_general.cpp:436
 msgid "Game Save Folder"
-msgstr ""
+msgstr "Játék mentési mappa"
 
 #: core/ui/settings_general.cpp:436
 msgid "Select the game save folder"
-msgstr ""
+msgstr "Válassza ki a játék mentési mappáját"
 
 #: core/ui/settings_general.cpp:437
 msgid "Folder for game save data (e.g. arcade NVRAM)"
-msgstr ""
+msgstr "Mappa a játék mentési adataihoz (pl. arcade NVRAM)"
 
 #: core/ui/settings_general.cpp:441
 msgid "Texture Pack Folders"
-msgstr ""
+msgstr "Textúra csomag mappák"
 
 #: core/ui/settings_general.cpp:441
 msgid "Select a texture pack folder"
-msgstr ""
+msgstr "Válasszon ki egy textúracsomag mappát"
 
 #: core/ui/settings_general.cpp:442
 msgid "Folders containing textures/<gameId> or <gameId> under a textures subfolder"
@@ -1358,15 +1359,15 @@ msgstr ""
 
 #: core/ui/settings_general.cpp:450
 msgid "Box Art Folder"
-msgstr ""
+msgstr "Borító mappa"
 
 #: core/ui/settings_general.cpp:450
 msgid "Select the box art folder"
-msgstr ""
+msgstr "Válassza ki a borító mappát"
 
 #: core/ui/settings_general.cpp:451
 msgid "Folder containing box art images (png/jpg). If empty, Flycast will use the default Home Folder/boxart for downloads and generated art"
-msgstr ""
+msgstr "A borító képeket (png/jpg) tartalmazó mappa. Ha üres, a Flycast az alapértelmezett Saját mappát/borítót használja a letöltésekhez és a generált képekhez"
 
 #: core/ui/settings_general.cpp:454
 msgid "Controller Mapping Folders"
@@ -1382,15 +1383,15 @@ msgstr ""
 
 #: core/ui/settings_general.cpp:458
 msgid "Cheat Folders"
-msgstr ""
+msgstr "Csalás mappák"
 
 #: core/ui/settings_general.cpp:458
 msgid "Select a cheat folder"
-msgstr ""
+msgstr "Válasszon ki egy csalás mappát"
 
 #: core/ui/settings_general.cpp:459
 msgid "Folders containing cheat files (.cht/.txt) named with the game ID. Flycast will auto-load matching files if present"
-msgstr ""
+msgstr "A játék azonosítójával elnevezett csaló fájlokat (.cht/.txt) tartalmazó mappák. A Flycast automatikusan betölti a megfelelő fájlokat, ha azok léteznek"
 
 #: core/ui/gui_chat.h:46 core/ui/gui_chat.h:48
 msgid "P2"
@@ -1411,7 +1412,7 @@ msgstr "Nincs"
 
 #: core/ui/settings_controls.cpp:44
 msgid "Sega Controller"
-msgstr ""
+msgstr "Sega vezérlő"
 
 #: core/ui/settings_controls.cpp:45
 msgid "Light Gun"
@@ -1435,7 +1436,7 @@ msgstr ""
 
 #: core/ui/settings_controls.cpp:50
 msgid "Maracas Controller"
-msgstr ""
+msgstr "Maracas vezérlő"
 
 #: core/ui/settings_controls.cpp:51
 msgid "Fishing Controller"
@@ -1463,7 +1464,7 @@ msgstr "Sega VMU"
 
 #: core/ui/settings_controls.cpp:63
 msgid "Vibration Pack"
-msgstr ""
+msgstr "Rezgő csomag"
 
 #: core/ui/settings_controls.cpp:64
 msgid "Microphone"
@@ -1471,7 +1472,7 @@ msgstr "Mikrofon"
 
 #: core/ui/settings_controls.cpp:155
 msgid "All"
-msgstr ""
+msgstr "Összes"
 
 #: core/ui/settings_controls.cpp:163 core/ui/settings_controls.cpp:221
 msgid "Directions"
@@ -1765,15 +1766,15 @@ msgstr "Nem"
 
 #: core/ui/settings_controls.cpp:693
 msgid "Arcade Controls"
-msgstr ""
+msgstr "Arcade vezérlők"
 
 #: core/ui/settings_controls.cpp:839 core/ui/settings_controls.cpp:1045
 msgid "Gamepad Settings"
-msgstr ""
+msgstr "Gamepad beállítások"
 
 #: core/ui/settings_controls.cpp:883
 msgid "Haptic"
-msgstr ""
+msgstr "Haptikus"
 
 #: core/ui/settings_controls.cpp:884 core/ui/settings_controls.cpp:920
 msgid "Power"
@@ -1797,15 +1798,15 @@ msgstr ""
 
 #: core/ui/settings_controls.cpp:893
 msgid "Select a PNG file"
-msgstr ""
+msgstr "Válasszon ki egy PNG fájlt"
 
 #: core/ui/settings_controls.cpp:894
 msgid "Choose Image..."
-msgstr ""
+msgstr "Kép kiválasztása..."
 
 #: core/ui/settings_controls.cpp:906
 msgid "Use Default"
-msgstr ""
+msgstr "Alapértelmezés használata"
 
 #: core/ui/settings_controls.cpp:917
 msgid "Rumble"
@@ -1821,7 +1822,7 @@ msgstr ""
 
 #: core/ui/settings_controls.cpp:930
 msgid "Dead zone"
-msgstr ""
+msgstr "Holtzóna"
 
 #: core/ui/settings_controls.cpp:933
 msgid "Minimum deflection to register as input"
@@ -1837,7 +1838,7 @@ msgstr ""
 
 #: core/ui/settings_controls.cpp:952
 msgid "Physical Devices"
-msgstr ""
+msgstr "Fizikai eszközök"
 
 #: core/ui/settings_controls.cpp:956 core/ui/settings_controls.cpp:967
 msgid "System"
@@ -1851,7 +1852,7 @@ msgstr "Név"
 #: core/ui/settings_controls.cpp:991
 #, c-format
 msgid "DreamLink status: %s"
-msgstr ""
+msgstr "DreamLink állapot: %s"
 
 #: core/ui/settings_controls.cpp:1033
 msgid "Edit Layout"
@@ -1884,12 +1885,12 @@ msgstr ""
 
 #: core/ui/settings_controls.cpp:1068
 msgid "Dreamcast Devices"
-msgstr ""
+msgstr "Dreamcast eszközök"
 
 #: core/ui/settings_controls.cpp:1081
 #, c-format
 msgid "Port %c"
-msgstr ""
+msgstr "Port %c"
 
 #: core/ui/settings_controls.cpp:1152
 msgid "Crosshair color"
@@ -1955,7 +1956,7 @@ msgstr ""
 
 #: core/ui/gui.cpp:573
 msgid "Flycast has stopped."
-msgstr ""
+msgstr "A Flycast leállt."
 
 #: core/ui/gui.cpp:678
 msgid "Resume"
@@ -1971,16 +1972,16 @@ msgstr "Trófeák"
 
 #: core/ui/gui.cpp:700
 msgid "Barcode Card"
-msgstr ""
+msgstr "Vonalkódos kártya"
 
 #: core/ui/gui.cpp:729
 msgid "Connect DreamLink"
-msgstr ""
+msgstr "DreamLink kapcsolódás"
 
 #: core/ui/gui.cpp:737
 msgid "Disconnect\n"
 "DreamLink"
-msgstr ""
+msgstr "DreamLink leválasztása"
 
 #: core/ui/gui.cpp:761
 msgid "Insert Disk"
@@ -2040,11 +2041,11 @@ msgstr "Betöltés..."
 
 #: core/ui/gui.cpp:1151
 msgid "Your game list is empty"
-msgstr ""
+msgstr "A játéklista üres"
 
 #: core/ui/gui.cpp:1161
 msgid "Add Game Folder"
-msgstr ""
+msgstr "Játékmappa hozzáadása"
 
 #: core/ui/gui.cpp:1193 core/ui/gui.cpp:1204
 msgid "Invalid selection:"
@@ -2052,11 +2053,11 @@ msgstr ""
 
 #: core/ui/gui.cpp:1193 core/ui/gui.cpp:1204
 msgid "Flycast cannot write to this folder."
-msgstr ""
+msgstr "A Flycast nem tud ebbe a mappába írni."
 
 #: core/ui/gui.cpp:1232
 msgid "Select Flycast Home Folder"
-msgstr ""
+msgstr "Válassza ki a Flycast Sajátmappát"
 
 #: core/ui/gui.cpp:1266 core/ui/gui.cpp:1375 core/emulator.cpp:687
 msgid "Starting..."
@@ -2064,11 +2065,11 @@ msgstr "Indítás..."
 
 #: core/ui/gui.cpp:1278
 msgid "Starting Network..."
-msgstr ""
+msgstr "Hálózat indítása..."
 
 #: core/ui/gui.cpp:1280
 msgid "Press Start to start the game now."
-msgstr ""
+msgstr "Nyomja meg a Start gombot a játék elindításához."
 
 #: core/ui/gui.cpp:1377
 msgid "Loading..."
@@ -2264,15 +2265,15 @@ msgstr ""
 
 #: core/ui/settings.cpp:132
 msgid "Lua Scripting"
-msgstr ""
+msgstr "Lua szkriptelés"
 
 #: core/ui/settings.cpp:134
 msgid "Lua Filename"
-msgstr ""
+msgstr "Lua fájlnév"
 
 #: core/ui/settings.cpp:136
 msgid "Specify lua filename to use. Should be located in Flycast config folder. Defaults to flycast.lua when empty."
-msgstr ""
+msgstr "Adja meg a használni kívánt lua fájl nevét. A Flycast konfigurációs mappában kell lennie. Ha üres, akkor alapértelmezés szerint flycast.lua."
 
 #: core/ui/settings.cpp:270
 msgid "General"
@@ -2304,11 +2305,11 @@ msgstr "Tárhely"
 
 #: core/ui/gui_util.cpp:133
 msgid ".. Up to Parent Folder"
-msgstr ""
+msgstr ".. Fel a szülő mappába"
 
 #: core/ui/gui_util.cpp:171
 msgid "Select Current Folder"
-msgstr ""
+msgstr "Aktuális mappa kiválasztása"
 
 #: core/ui/gui_util.cpp:479
 msgid "(?)"
