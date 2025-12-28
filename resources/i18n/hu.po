@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-12-14 14:32+0100\n"
-"PO-Revision-Date: 2025-12-27 21:06\n"
+"PO-Revision-Date: 2025-12-28 18:26\n"
 "Last-Translator: \n"
 "Language: hu_HU\n"
 "MIME-Version: 1.0\n"
@@ -486,11 +486,11 @@ msgstr ""
 
 #: core/hw/naomi/naomi_cart.cpp:508 core/hw/naomi/naomi_cart.cpp:524
 msgid "Error: Invalid LST file"
-msgstr ""
+msgstr "Hiba: Érvénytelen LST fájl"
 
 #: core/hw/naomi/naomi_cart.cpp:563
 msgid "Invalid empty ROM"
-msgstr ""
+msgstr "Érvénytelen üres ROM"
 
 #: core/hw/naomi/naomi_cart.cpp:570
 msgid "Out of memory"
@@ -498,7 +498,7 @@ msgstr "Elfogyott a memória"
 
 #: core/hw/naomi/naomi_cart.cpp:621
 msgid "Error: Failed to load BIN/DAT file"
-msgstr ""
+msgstr "Hiba: A BIN/DAT fájl betöltése sikertelen"
 
 #: core/hw/naomi/midiffb.cpp:76
 msgid "Calibration done"
@@ -506,142 +506,142 @@ msgstr "Kalibráció kész"
 
 #: core/hw/naomi/midiffb.cpp:201
 msgid "Calibrating the wheel. Keep it centered."
-msgstr ""
+msgstr "A kormány kalibrálása. Tartsa középen."
 
 #: core/hw/naomi/gdcartridge.cpp:524
 #, c-format
 msgid "Naomi GDROM: Cannot open %s.chd"
-msgstr ""
+msgstr "Naomi GDROM: Nem lehet megnyitni a %s.chd fájlt"
 
 #: core/hw/naomi/gdcartridge.cpp:609
 msgid "Naomi GDROM: Could not find the file to decrypt."
-msgstr ""
+msgstr "Naomi GDROM: Nem sikerült megtalálni a visszafejtendő fájlt."
 
 #: core/hw/maple/maple_devs.cpp:2218
 msgid "ATTENTION: Loading from a physical VMU"
-msgstr ""
+msgstr "FIGYELEM: Betöltés fizikai VMU-ról"
 
 #: core/hw/maple/maple_devs.cpp:2219
 msgid "Game data is being loaded from your physical VMU"
-msgstr ""
+msgstr "A játékadatok betöltése a fizikai VMU-ról történik"
 
 #: core/hw/maple/maple_devs.cpp:2386
 msgid "ATTENTION: You are saving to a physical VMU"
-msgstr ""
+msgstr "FIGYELEM: Fizikai VMU-ra ment"
 
 #: core/hw/maple/maple_devs.cpp:2387
 msgid "Do not disconnect the VMU or close the game"
-msgstr ""
+msgstr "Ne válassza le a VMU-t és ne zárja be a játékot"
 
 #: core/hw/maple/maple_devs.cpp:2458
 msgid "ATTENTION: Write to VMU failed"
-msgstr ""
+msgstr "FIGYELEM: A VMU-ba történő írás sikertelen volt"
 
 #: core/hw/maple/maple_devs.cpp:2614
 msgid "WARNING: Disconnected from physical VMU memory due to load state"
-msgstr ""
+msgstr "FIGYELEM: A terhelés állapot miatt leválasztva a fizikai VMU memóriáról"
 
 #: core/hw/maple/maple_devs.cpp:2615
 msgid "Reconnect manually to resume using physical VMU memory"
-msgstr ""
+msgstr "Csatlakoztassa újra manuálisan a fizikai VMU-t a folytatásához"
 
 #: core/reios/reios.cpp:400 core/reios/reios.cpp:403
 msgid "Reboot to BIOS"
-msgstr ""
+msgstr "Újraindítás a BIOS-ba"
 
 #: core/reios/reios.cpp:696
 #, c-format
 msgid "Failed to open ELF %s"
-msgstr ""
+msgstr "Az ELF %s megnyitása sikertelen"
 
 #: core/reios/reios.cpp:705
 #, c-format
 msgid "Failed to locate bootfile %s"
-msgstr ""
+msgstr "Nem sikerült megtalálni a %s rendszerindító fájlt"
 
 #: core/reios/reios.cpp:718
 msgid "Naomi boot failure"
-msgstr ""
+msgstr "Naomi rendszerindítási hiba"
 
 #: core/reios/reios.cpp:724
 msgid "Invalid cart size"
-msgstr ""
+msgstr "Érvénytelen kártyaméret"
 
 #: core/cheats.cpp:824 core/cheats.cpp:829
 msgid "Invalid cheat code"
-msgstr ""
+msgstr "Érvénytelen csalókód"
 
 #: core/cheats.cpp:911 core/cheats.cpp:950 core/cheats.cpp:963
 msgid "Missing value"
-msgstr ""
+msgstr "Hiányzó érték"
 
 #: core/cheats.cpp:929
 msgid "Missing values"
-msgstr ""
+msgstr "Hiányzó értékek"
 
 #: core/cheats.cpp:976
 msgid "Missing address or value"
-msgstr ""
+msgstr "Hiányzó cím vagy érték"
 
 #: core/cheats.cpp:985 core/cheats.cpp:1089
 msgid "Unsupported cheat type"
-msgstr ""
+msgstr "Nem támogatott csalási típus"
 
 #: core/cheats.cpp:993
 msgid "Missing count or value"
-msgstr ""
+msgstr "Hiányzó számláló vagy érték"
 
 #: core/cheats.cpp:1007 core/cheats.cpp:1031
 msgid "Missing count or destination address"
-msgstr ""
+msgstr "Hiányzó számláló vagy célcím"
 
 #: core/cheats.cpp:1019
 msgid "Master codes aren't supported"
-msgstr ""
+msgstr "A mester kódok nem támogatottak"
 
 #: core/cheats.cpp:1049 core/cheats.cpp:1078
 msgid "Unsupported conditional code"
-msgstr ""
+msgstr "Nem támogatott feltételes kód"
 
 #: core/cheats.cpp:1059
 msgid "Missing test address"
-msgstr ""
+msgstr "Hiányzó tesztcím"
 
 #: core/cheats.cpp:1160
 msgid "Can't save cheat file"
-msgstr ""
+msgstr "Nem lehet menteni a csaló fájlt"
 
 #: core/ui/settings_video.cpp:85
 msgid "Graphics API"
-msgstr ""
+msgstr "Grafikus API"
 
 #: core/ui/settings_video.cpp:96
 msgid "MoltenVK: An implementation of Vulkan that runs on Apple's Metal graphics framework"
-msgstr ""
+msgstr "MoltenVK: A Vulkan implementációja, amely az Apple Metal grafikus keretrendszerén fut"
 
 #: core/ui/settings_video.cpp:116
 msgid "Transparent Sorting"
-msgstr ""
+msgstr "Transzparens rendezés"
 
 #: core/ui/settings_video.cpp:121
 msgid "Per Triangle"
-msgstr ""
+msgstr "Háromszögenként"
 
 #: core/ui/settings_video.cpp:123
 msgid "Sort transparent polygons per triangle. Fast but may produce graphical glitches"
-msgstr ""
+msgstr "Átlátszó sokszögek rendezése háromszögek szerint. Gyors, de grafikai hibákat okozhat"
 
 #: core/ui/settings_video.cpp:125
 msgid "Per Strip"
-msgstr ""
+msgstr "Sávonként"
 
 #: core/ui/settings_video.cpp:127
 msgid "Sort transparent polygons per strip. Faster but may produce graphical glitches"
-msgstr ""
+msgstr "Átlátszó sokszögek rendezése sávok szerint. Gyorsabb, de grafikai hibákat okozhat"
 
 #: core/ui/settings_video.cpp:131
 msgid "Per Pixel"
-msgstr ""
+msgstr "Képpontonként"
 
 #: core/ui/settings_video.cpp:133
 msgid "Sort transparent polygons per pixel. Slower but accurate"
@@ -1097,7 +1097,7 @@ msgstr ""
 
 #: core/ui/settings_general.cpp:254 core/ui/settings_general.cpp:318
 msgid "Rescan Content"
-msgstr ""
+msgstr "Tartalom újbóli beolvasása"
 
 #: core/ui/settings_general.cpp:266
 msgid "The folders where your games are stored"
@@ -1109,7 +1109,7 @@ msgstr "Adatmappa"
 
 #: core/ui/settings_general.cpp:280
 msgid "The folder containing BIOS files, as well as saved VMUs and states"
-msgstr ""
+msgstr "A BIOS fájlokat, valamint a mentett VMU-kat és állapotokat tartalmazó mappa"
 
 #: core/ui/settings_general.cpp:285
 msgid "Home Folder"
@@ -1127,27 +1127,27 @@ msgstr "Exportálás"
 
 #: core/ui/settings_general.cpp:302
 msgid "Reveal in Finder"
-msgstr ""
+msgstr "Megjelenítés a Finderben"
 
 #: core/ui/settings_general.cpp:312
 msgid "The folder where Flycast saves configuration files and VMUs. BIOS files should be in a subfolder named \"data\""
-msgstr ""
+msgstr "A mappa, amelyben a Flycast a konfigurációs fájlokat és a VMU-kat tárolja. A BIOS-fájloknak a „data” nevű almappában kell lenniük"
 
 #: core/ui/settings_general.cpp:323
 msgid "Box Art Game List"
-msgstr ""
+msgstr "Borítóképes lista"
 
 #: core/ui/settings_general.cpp:324
 msgid "Display game cover art in the game list."
-msgstr ""
+msgstr "A játékborító megjelenítése a játéklistán."
 
 #: core/ui/settings_general.cpp:325
 msgid "Fetch Box Art"
-msgstr ""
+msgstr "Borítóképek letöltése"
 
 #: core/ui/settings_general.cpp:326
 msgid "Fetch cover images from TheGamesDB.net."
-msgstr ""
+msgstr "Borítóképek letöltése a TheGamesDB.net webhelyről."
 
 #: core/ui/settings_general.cpp:327
 msgid "UI Scaling"
@@ -1155,7 +1155,7 @@ msgstr "UI méretezés"
 
 #: core/ui/settings_general.cpp:327
 msgid "Adjust the size of UI elements and fonts."
-msgstr ""
+msgstr "Az UI elemek és betűtípusok méretének beállítása."
 
 #: core/ui/settings_general.cpp:332
 msgid "Apply"
@@ -1195,7 +1195,7 @@ msgstr ""
 
 #: core/ui/settings_general.cpp:347
 msgid "Hide Legacy Naomi Roms"
-msgstr ""
+msgstr "Legacy Naomi ROM-ok elrejtése"
 
 #: core/ui/settings_general.cpp:348
 msgid "Hide .bin, .dat and .lst files from the content browser"
@@ -1548,33 +1548,33 @@ msgstr "Gombok"
 
 #: core/ui/settings_controls.cpp:198 core/ui/settings_controls.cpp:248
 msgid "Triggers"
-msgstr ""
+msgstr "Ravaszok"
 
 #: core/ui/settings_controls.cpp:199 core/ui/settings_controls.cpp:249
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:199
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:369
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:401
 msgid "Left Trigger"
-msgstr ""
+msgstr "Bal ravasz"
 
 #: core/ui/settings_controls.cpp:200 core/ui/settings_controls.cpp:250
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:201
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:371
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:403
 msgid "Right Trigger"
-msgstr ""
+msgstr "Jobb ravasz"
 
 #: core/ui/settings_controls.cpp:201 core/ui/settings_controls.cpp:251
 msgid "Left Trigger 2"
-msgstr ""
+msgstr "Bal ravasz 2"
 
 #: core/ui/settings_controls.cpp:202 core/ui/settings_controls.cpp:252
 msgid "Right Trigger 2"
-msgstr ""
+msgstr "Jobb ravasz 2"
 
 #: core/ui/settings_controls.cpp:204 core/ui/settings_controls.cpp:254
 msgid "System Buttons"
-msgstr ""
+msgstr "Rendszer billentyűk"
 
 #: core/ui/settings_controls.cpp:206 core/ui/settings_controls.cpp:256
 msgid "Reload"
@@ -1596,7 +1596,7 @@ msgstr "Kilépés"
 
 #: core/ui/settings_controls.cpp:211 core/ui/settings_controls.cpp:265
 msgid "Fast-forward"
-msgstr ""
+msgstr "Gyors-előrepörgetés"
 
 #: core/ui/settings_controls.cpp:212 core/ui/settings_controls.cpp:266
 #: core/ui/gui.cpp:789
@@ -1856,7 +1856,7 @@ msgstr "DreamLink állapot: %s"
 
 #: core/ui/settings_controls.cpp:1033
 msgid "Edit Layout"
-msgstr ""
+msgstr "Elrendezés szerkesztése"
 
 #: core/ui/settings_controls.cpp:1044 core/ui/gui.cpp:773 core/ui/gui.cpp:1021
 #: core/ui/settings.cpp:213
@@ -2149,7 +2149,7 @@ msgstr ""
 
 #: core/ui/gui_cheats.cpp:45
 msgid "ADD CHEAT"
-msgstr ""
+msgstr "CSALÁS HOZZÁADÁSA"
 
 #: core/ui/gui_cheats.cpp:72 core/ui/settings_network.cpp:137
 msgid "Code"
@@ -2157,7 +2157,7 @@ msgstr "Kód"
 
 #: core/ui/gui_cheats.cpp:95
 msgid "Select a cheat file"
-msgstr ""
+msgstr "Válasszon ki egy csalásfájlt"
 
 #: core/ui/gui_cheats.cpp:100
 msgid "CHEATS"
@@ -2165,7 +2165,7 @@ msgstr "CSALÁSOK"
 
 #: core/ui/gui_cheats.cpp:137
 msgid "(No cheat loaded)"
-msgstr ""
+msgstr "(Nincs betöltött csalás)"
 
 #: core/ui/settings.cpp:38
 msgid "CPU Mode"
@@ -2614,7 +2614,7 @@ msgstr ""
 #: core/ui/settings_about.cpp:129 core/ui/settings_about.cpp:138
 #: core/ui/settings_about.cpp:143
 msgid "Reset Vulkan"
-msgstr ""
+msgstr "Vulkán alaphelyzetbe"
 
 #: core/ui/settings_about.cpp:132
 msgid "Upload Custom Driver"
@@ -2630,19 +2630,19 @@ msgstr ""
 
 #: core/nullDC.cpp:184
 msgid "Cannot open save file"
-msgstr ""
+msgstr "Nem lehet megnyitni a mentett fájlt"
 
 #: core/nullDC.cpp:212
 msgid "State saved"
-msgstr ""
+msgstr "Az állapot mentve"
 
 #: core/nullDC.cpp:217
 msgid "Error saving state"
-msgstr ""
+msgstr "Hiba állapotmentés közben"
 
 #: core/nullDC.cpp:237
 msgid "Save state not found"
-msgstr ""
+msgstr "Állapotmentés nem található"
 
 #: core/nullDC.cpp:277 core/nullDC.cpp:299 core/nullDC.cpp:313
 msgid "Failed to load state"
@@ -2710,7 +2710,7 @@ msgstr "Hálózat csatlakoztatva"
 
 #: core/network/ice.cpp:121
 msgid "Game not supported"
-msgstr ""
+msgstr "A játék nem támogatott"
 
 #: core/network/ice.cpp:237
 msgid "Connection to lobby failed:"
@@ -2738,14 +2738,14 @@ msgstr ""
 
 #: core/network/naomi_network.cpp:110
 msgid "Waiting for players..."
-msgstr ""
+msgstr "Várakozás a játékosokra..."
 
 #: core/network/naomi_network.cpp:113
 #, c-format
 msgid "%d player connected. Waiting..."
 msgid_plural "%d players connected. Waiting..."
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%d játékos csatlakozott. Várakozás..."
+msgstr[1] "%d játékos csatlakozott. Várakozás..."
 
 #: core/network/naomi_network.cpp:137
 msgid "Starting game"
@@ -2753,11 +2753,11 @@ msgstr "Játék elinditása"
 
 #: core/network/naomi_network.cpp:142
 msgid "No player connected"
-msgstr ""
+msgstr "Nincs csatlakozott játékos"
 
 #: core/network/naomi_network.cpp:176
 msgid "Connecting to server"
-msgstr ""
+msgstr "Csatlakozás a szerverhez"
 
 #: core/network/naomi_network.cpp:260
 #, c-format
@@ -2770,7 +2770,7 @@ msgstr ""
 
 #: core/rend/vulkan/adreno.cpp:154
 msgid "Can't open zip file"
-msgstr ""
+msgstr "Nem lehet megnyitni a zip fájlt"
 
 #: core/rend/vulkan/adreno.cpp:157
 msgid "Invalid zip file"
@@ -2778,11 +2778,11 @@ msgstr "Hibás zip fájl"
 
 #: core/rend/vulkan/adreno.cpp:185 core/rend/vulkan/adreno.cpp:203
 msgid "Can't save files"
-msgstr ""
+msgstr "Nem lehet menteni a fájlokat"
 
 #: core/rend/vulkan/adreno.cpp:195
 msgid "Can't read zip"
-msgstr ""
+msgstr "Nem lehet olvasni a zip fájlt"
 
 #: core/rend/gles/gles.cpp:1058
 msgid "OpenGL ES 3.0+ required for Naomi 2"
@@ -2795,11 +2795,11 @@ msgstr ""
 
 #: core/emulator.cpp:605
 msgid "This game requires a real BIOS"
-msgstr ""
+msgstr "Ehhez a játékhoz valódi BIOS szükséges"
 
 #: core/emulator.cpp:662
 msgid "Widescreen cheat activated"
-msgstr ""
+msgstr "Széles képernyős csalás aktiválva"
 
 #: core/input/virtual_gamepad.h:30
 msgid "Virtual Gamepad"
