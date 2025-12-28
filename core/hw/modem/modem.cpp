@@ -41,14 +41,16 @@
 #define MODEM_MAKER_SEGA 0
 #define MODEM_MAKER_ROCKWELL 1
 
-#define MODEM_DEVICE_TYPE_336K 0
+#define MODEM_TYPE_336K 0
+// according to XDP
+#define MODEM_TYPE_WIRELESS 2
 
 #define LOG(...) DEBUG_LOG(MODEM, __VA_ARGS__)
 
 const static u32 MODEM_ID[2] =
 {
-	MODEM_COUNTRY_RES,
-	(MODEM_MAKER_ROCKWELL<<4) | (MODEM_DEVICE_TYPE_336K),
+	MODEM_COUNTRY_USA,
+	(MODEM_MAKER_ROCKWELL << 4) | MODEM_TYPE_336K,
 };
 
 static modemreg_t modem_regs;
@@ -218,10 +220,8 @@ static int modem_sched_func(int tag, int cycles, int jitter, void *arg)
 			break;
 		case HANDSHAKING:
 			LOG("\t\t *** HANDSHAKING STATE ***");
-			if (modem_regs.CONF == 0xAA)
-			{
+			if (modem_regs.CONF == 0xAA) {
 				// V8 AUTO mode
-				dspram[0x301] |= 1 << 5;				// ANS detected
 				dspram[0x302] |= 1 << 3;				// ANSam detected
 			}
 			modem_regs.reg1f.NEWS = 1;
@@ -242,7 +242,7 @@ static int modem_sched_func(int tag, int cycles, int jitter, void *arg)
 				dspram[0x302] |= 1 << 4;				// protocol octet received
 				dspram[0x302] = (dspram[0x302] & 0x1f) | (dspram[0x304] & 0xe0);	// Received Call Function
 				dspram[0x301] |= 1 << 4;				// JM detected
-				dspram[0x303] |= 0xE0;					// Received protocol bits (?)
+				dspram[0x303] |= 0xE1;					// Received protocol bits (?), Received GSTN Octet
 				dspram[0x2e3] = 5;						// Symbol rate 3429
 				// set the negotiated speed to the max configured by the game
 				modem_regs.CONF = dspram[0x309];
@@ -571,6 +571,7 @@ static void ModemNormalWrite(u32 reg, u32 data)
 	{
 	case 0x02:	// TDE SQDIS S511/DCDEN CDEN RTSDE V54TE V54AE V54PE / CODBITS
 		modem_regs.reg0f.RTSDT = modem_regs.reg02.v0.RTSDE && connect_state == CONNECTED;
+		LOG("reg02 = %x", modem_regs.ptr[reg]);
 		break;
 
 	case 0x06:	// EXOS CCRTN HDLC PEN STB WDSZ/DECBITS
@@ -587,6 +588,7 @@ static void ModemNormalWrite(u32 reg, u32 data)
 		break;
 
 	case 0x09:	// NV25 CC DTMF ORG LL DATA RRTSE DTR
+		LOG("reg09 = %x", modem_regs.ptr[reg]);
 		check_start_handshake();	// DTR and DATA
 		break;
 
@@ -634,6 +636,7 @@ static void ModemNormalWrite(u32 reg, u32 data)
 		break;
 
 	case 0x14:	// ABCODE
+		LOG("ABCODE = %x", modem_regs.ptr[reg]);
 		if (data == 0x4f || data == 0x5f)
 		{
 			reg1b_save = modem_regs.ptr[0x1b];
@@ -655,6 +658,7 @@ static void ModemNormalWrite(u32 reg, u32 data)
 		break;
 
 	case 0x15:	// SLEEP STOP RDWK HWRWK AUTO RREN EXL3 EARC
+		LOG("reg15 = %x", modem_regs.ptr[reg]);
 		check_start_handshake();	// AUTO
 		break;
 
@@ -667,6 +671,7 @@ static void ModemNormalWrite(u32 reg, u32 data)
 		break;
 
 	case 0x1a:	// SFRES RIEN RION DMAE SCOBF SCIBE SECEN
+		LOG("reg1a = %x", modem_regs.ptr[reg]);
 		if (connect_state == CONNECTED && modem_regs.reg1a.SCIBE)
 			WARN_LOG(MODEM, "Unexpected state: connected and SCIBE==1");
 		break;
@@ -721,6 +726,8 @@ static void ModemNormalWrite(u32 reg, u32 data)
 		//LOG("TDBIE=%d RDBIE=%d", modem_regs.reg1e.TDBIE, modem_regs.reg1e.RDBIE);
 		break;
 	case 0x1F:	// NSIA NCIA NSIE NEWS NCIE NEWC
+		if (old != modem_regs.ptr[reg])
+			LOG("reg1f = %x", modem_regs.ptr[reg]);
 		if (!modem_regs.reg1f.NCIE)
 			modem_regs.reg1f.NCIA = 0;
 		if (modem_regs.reg1f.NEWC)
@@ -752,7 +759,7 @@ static void ModemNormalWrite(u32 reg, u32 data)
 		break;
 
 	default:
-		//LOG("ModemNormalWrite: reg %02x = %x", reg, data);
+		LOG("ModemNormalWrite: reg %02x = %x", reg, data);
 		break;
 	}
 	update_interrupt();
@@ -1013,6 +1020,13 @@ static const std::map<u32, const char *> dspRamDesc
 	{ 0xb57,	"Transmitter Output Level Gain (G) - FSK Modes" },
 	{ 0x3a5,	"ARA-in-RAM Enable" },
 	{ 0x10d,	"V.21/V.23 CTS Mark Qualify / RLSD Overwrite Control / Extended RTH Control" },
+	{ 0x6c1,	"V.90 Server DPCM Tx Data Rate Mask 1" },
+	{ 0x6c2,	"V.90 Server DPCM Tx Data Rate Mask 2" },
+	{ 0x6c3,	"V.90 Server DPCM Tx Data Rate Mask 3" },
+	{ 0x09f,	"V.90 modulation available?" },
+	{ 0x439,	"V.8bis Detector / Host AudioSpan" },
+	{ 0x3e1,	"Voice path control bits" },
+
 };
 
 static const char *getDSPRamLabel(u32 addr)

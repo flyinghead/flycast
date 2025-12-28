@@ -18,6 +18,8 @@ target_sources(${PROJECT_NAME} PRIVATE
         src/MmuTest.cpp
         src/HttpTest.cpp
         src/IniFileTest.cpp
+        src/hw/modem/v42Test.cpp
+        src/hw/modem/v42bisTest.cpp
         src/imgread/CueTest.cpp
         src/imgread/GdiTest.cpp
         src/input/ButtonComboTest.cpp

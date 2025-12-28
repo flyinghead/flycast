@@ -18,6 +18,7 @@
 */
 #pragma once
 #include "types.h"
+#include "v42bis.h"
 #include <vector>
 #include <deque>
 #include <unordered_map>
@@ -88,15 +89,17 @@ private:
 	int rxOnes = 0;
 	int rxPosition = 0;
 	u8 rxCurByte = 0;
-	int txOnes = 0;
-	int txPosition = 0;
-	u8 txCurByte = 0;
+	u32 txBitBuffer = 0;
+	int txBitCount = 0;
 	u8 txSeqNum = 0;
 	u8 rxSeqNum = 0;
 	u8 txSeqAck = 0;
 	unsigned txMaxSize = 128;
 	int txWindow = 15;
 	std::unordered_map<int, std::vector<u8>> sentIFrames;
+	v42b::Compressor compressor;
+	v42b::Decompressor decompressor;
+	bool compressionEnabled = false;
 
 	class Timer
 	{
@@ -122,10 +125,12 @@ private:
 	void handleIFrame();
 	void handleXid();
 	void handleReject();
-	void sendBit(u8 b);
+	void sendByte(u8 byte);
 	void sendFlag();
 	void sendFrame(const std::vector<u8>& data);
 	void sendIFrame();
 	void ackIFrame(int seqNum);
+
+	friend class V42Test;
 };
 

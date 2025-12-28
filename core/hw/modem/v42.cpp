@@ -251,7 +251,7 @@ void V42Protocol::handleFrame()
 		WARN_LOG(MODEM, "Invalid frame: Unknown address %02x", rxFrame[0] >> 2);
 		return;
 	}
-	DEBUG_LOG(MODEM, "Received frame: addr %02x control %02x FCS %02x%02x", rxFrame[0], rxFrame[1], rxFrame[rxFrame.size() - 1], rxFrame[rxFrame.size() - 2]);
+	//DEBUG_LOG(MODEM, "Received frame: addr %02x control %02x FCS %02x%02x", rxFrame[0], rxFrame[1], rxFrame[rxFrame.size() - 1], rxFrame[rxFrame.size() - 2]);
 
 	if ((rxFrame[1] & 3) != 3 && rxFrame[1] != 0xd)
 	{
@@ -345,8 +345,32 @@ void V42Protocol::handleIFrame()
 		return;
 	}
 	rxSeqNum = incMod128(rxSeqNum);
-	for (auto it = rxFrame.begin() + 3; it < rxFrame.end() - 2; ++it)
-		net::modbba::writeModem(*it);
+	if (compressionEnabled)
+	{
+		try {
+			for (auto it = rxFrame.begin() + 3; it < rxFrame.end() - 2; ++it)
+				decompressor.decompress(*it);
+			while (true)
+			{
+				int c = decompressor.getOutput();
+				if (c == -1)
+					break;
+				net::modbba::writeModem(c);
+			}
+		} catch (const v42b::Exception& e) {
+			// send DISC
+			std::vector<u8> disc { 1, 0x43 };
+			sendFrame(disc);
+			phase = Release;
+			sentIFrames.clear();
+			return;
+		}
+	}
+	else {
+		for (auto it = rxFrame.begin() + 3; it < rxFrame.end() - 2; ++it)
+			net::modbba::writeModem(*it);
+	}
+
 	// if P bit set, respond with RR
 	// if not set, respond with RR if no I-frame available to send
 	if ((rxFrame[2] & 1) || net::modbba::modemAvailable() == 0)
@@ -358,41 +382,38 @@ void V42Protocol::handleIFrame()
 
 void V42Protocol::handleXid()
 {
+	u32 maxCodeWords = 512;
+	int maxStringLength = 6;
+	compressionEnabled = false;
+
 	// format identifier
 	if (rxFrame[2] != 0x82) {
 		WARN_LOG(MODEM, "Unexpected XID format: %02x", rxFrame[2]);
 		return;
 	}
 	size_t userDataOffset = 0;
-	// Iterate data link layer subfields
+	// Iterate over parameter groups
 	for (size_t i = 3; i < rxFrame.size() - 2;)
 	{
 		u16 groupSize = rxFrame[i + 1] * 256 + rxFrame[i + 2];
-		bool privParam;
-		bool userDataParam;
 		// Group identifier
-		switch (rxFrame[i])
-		{
-		case 0x80: // parameter negotiation
-			privParam = false;
-			userDataParam = false;
-			break;
-		case 0xf0: // private parameter negotiation
-			privParam = true;
-			userDataParam = false;
-			break;
-		case 0xff: // user data negotiation
-			privParam = false;
-			userDataParam = true;
+		enum GroupId : u8 {
+			GID_PARAM = 0x80,
+			GID_PRIVATE = 0xf0,
+			GID_USER_DATA = 0xff,
+		};
+		GroupId gid = (GroupId)rxFrame[i];
+		if (gid == GID_USER_DATA) {
 			userDataOffset = i;
-			break;
-		default:
+		}
+		else if (gid != GID_PARAM && gid != GID_PRIVATE)
+		{
 			INFO_LOG(MODEM, "Unexpected XID GI: %02x", rxFrame[i]);
 			i += groupSize + 3;
 			continue;
-			break;
 		}
 		i += 3;
+		// Parameters
 		const size_t end = i + groupSize;
 		while (i < end)
 		{
@@ -403,15 +424,18 @@ void V42Protocol::handleXid()
 			case 0:	// (private) Parameter set identification
 				break;
 			case 1:	// (private) Data compression request
-				if (privParam)
+				if (gid == GID_PRIVATE)
 				{
 					DEBUG_LOG(MODEM, "xid: Data compression request %x", rxFrame[i]);
-					// TODO set compression to None for now
-					rxFrame[i] = 0;
+					if (rxFrame[i] == 3)
+						compressionEnabled = true;
+					else
+						// Disable all compression if only one direction is compressed (not used anyway)
+						rxFrame[i] = 0;
 				}
 				break;
 			case 2:	// (private) Number of codewords
-				if (privParam)
+				if (gid == GID_PRIVATE)
 				{
 					if (paramSize <= 4)
 					{
@@ -419,6 +443,7 @@ void V42Protocol::handleXid()
 						for (u8 j = 0; j < paramSize; j++)
 							v = (v << 8) | rxFrame[i + j];
 						DEBUG_LOG(MODEM, "xid: Number of codewords %d", v);
+						maxCodeWords = v;
 					}
 					else {
 						WARN_LOG(MODEM, "Unexpected param length for PI %d: %x", paramId, paramSize);
@@ -426,7 +451,7 @@ void V42Protocol::handleXid()
 				}
 				break;
 			case 3:
-				if (!privParam && !userDataParam)
+				if (gid == GID_PARAM)
 				{
 					// HDLC optional function (public)
 					if (paramSize <= 4)
@@ -440,7 +465,7 @@ void V42Protocol::handleXid()
 						WARN_LOG(MODEM, "Unexpected param length for PI %d: %x", paramId, paramSize);
 					}
 				}
-				else if (privParam)
+				else if (gid == GID_PRIVATE)
 				{
 					// (private) Maximum string length
 					if (paramSize <= 4)
@@ -449,6 +474,7 @@ void V42Protocol::handleXid()
 						for (u8 j = 0; j < paramSize; j++)
 							v = (v << 8) | rxFrame[i + j];
 						DEBUG_LOG(MODEM, "xid: Maximum string length %d", v);
+						maxStringLength = v;
 					}
 					else {
 						WARN_LOG(MODEM, "Unexpected param length for PI %d: %x", paramId, paramSize);
@@ -456,7 +482,7 @@ void V42Protocol::handleXid()
 				}
 				break;
 			case 5:	// Maximum length of information field: tx
-				if (!privParam && !userDataParam)
+				if (gid == GID_PARAM)
 				{
 					if (paramSize <= 4)
 					{
@@ -472,7 +498,7 @@ void V42Protocol::handleXid()
 				}
 				break;
 			case 6:	// Maximum length of information field: rx
-				if (!privParam && !userDataParam)
+				if (gid == GID_PARAM)
 				{
 					if (paramSize <= 4)
 					{
@@ -487,7 +513,7 @@ void V42Protocol::handleXid()
 				}
 				break;
 			case 7:	// Window size: tx
-				if (!privParam && !userDataParam)
+				if (gid == GID_PARAM)
 				{
 					if (paramSize <= 4)
 					{
@@ -503,7 +529,7 @@ void V42Protocol::handleXid()
 				}
 				break;
 			case 8:	// Window size: rx
-				if (!privParam && !userDataParam)
+				if (gid == GID_PARAM)
 				{
 					if (paramSize <= 4)
 					{
@@ -518,7 +544,7 @@ void V42Protocol::handleXid()
 				}
 				break;
 			default:
-				WARN_LOG(MODEM, "Unexpected PI %d (size %x, private %d, user data %d)", paramId, paramSize, privParam, userDataParam);
+				WARN_LOG(MODEM, "Unexpected PI %d (size %x, group id %x)", paramId, paramSize, gid);
 				break;
 			}
 			i += paramSize;
@@ -527,6 +553,13 @@ void V42Protocol::handleXid()
 	if (userDataOffset != 0)
 		rxFrame.resize(userDataOffset);
 	sendFrame(rxFrame);
+
+	if (compressionEnabled)
+	{
+		NOTICE_LOG(MODEM, "V.42bis compression enabled: max dictionary size %d", maxCodeWords);
+		compressor = { maxCodeWords, maxStringLength };
+		decompressor = { maxCodeWords, maxStringLength };
+	}
 }
 
 void V42Protocol::handleReject()
@@ -547,30 +580,34 @@ void V42Protocol::handleReject()
 	}
 }
 
-void V42Protocol::sendBit(u8 b)
+void V42Protocol::sendByte(u8 byte)
 {
-	txCurByte = (txCurByte >> 1) | ((b & 1) << 7);
-	if (++txPosition == 8)
+	txBitBuffer |= (u32)byte << (8 + txBitCount);
+	u32 mask = 0x1f0 << txBitCount;
+	for (int i = 0; i < 8; i++)
 	{
-		txPosition = 0;
-		txBuffer.push_back(txCurByte);
-		txCurByte = 0;
+		if ((txBitBuffer & mask) == mask)
+		{
+			u32 lShiftMask = 0xffffffff << (8 + txBitCount + i + 1);
+			txBitBuffer = ((txBitBuffer & lShiftMask) << 1) | (txBitBuffer & ~lShiftMask);
+			txBitCount++;
+			mask <<= 1;
+		}
+		mask <<= 1;
 	}
-	if (b == 1) {
-		if (++txOnes == 5)
-			sendBit(0);
-	}
-	else {
-		txOnes = 0;
+	txBitCount += 8;
+	while (txBitCount >= 8)
+	{
+		txBitBuffer >>= 8;
+		txBuffer.push_back(txBitBuffer & 0xff);
+		txBitCount -= 8;
 	}
 }
-
 void V42Protocol::sendFlag()
 {
-	for (int i = 0; i < 8; i++) {
-		sendBit((0x7e >> i) & 1);
-		txOnes = 0;
-	}
+	txBitBuffer |= 0x7e << (8 + txBitCount);
+	txBitBuffer >>= 8;
+	txBuffer.push_back(txBitBuffer & 0xff);
 }
 
 void V42Protocol::sendFrame(const std::vector<u8>& data)
@@ -579,18 +616,11 @@ void V42Protocol::sendFrame(const std::vector<u8>& data)
 	sendFlag();
 	// data
 	for (u8 b : data)
-	{
-		for (int i = 0; i < 8; i++) {
-			sendBit(b & 1);
-			b >>= 1;
-		}
-	}
+		sendByte(b);
 	// crc
 	u16 crc = calcCrc16(data, data.size());
-	for (int i = 0; i < 16; i++) {
-		sendBit(crc & 1);
-		crc >>= 1;
-	}
+	sendByte(crc & 0xff);
+	sendByte(crc >> 8);
 	// closing flag
 	sendFlag();
 	inactivityTimer.start();
@@ -607,20 +637,48 @@ void V42Protocol::sendIFrame()
 		window =+ 128;
 	if (window >= txWindow)
 		return;
+
 	std::vector<u8> frame;
 	frame.reserve(modemAvailable() + 3);
 	frame.push_back(1);
-	DEBUG_LOG(MODEM, "Sending I-frame %d", txSeqNum);
 	frame.push_back(txSeqNum << 1);
 	txSeqNum = incMod128(txSeqNum);
 	frame.push_back(rxSeqNum << 1);
-	while (frame.size() - 3u < txMaxSize)
+	if (compressionEnabled)
 	{
-		int c = readModem();
-		if (c == -1)
-			break;
-		frame.push_back(c & 0xff);
+		while (compressor.available() < txMaxSize)
+		{
+			int c = readModem();
+			if (c == -1)
+				break;
+			compressor.compress(c);
+		}
+		compressor.flush();
+		while (frame.size() - 3u < txMaxSize)
+		{
+			int cc = compressor.getOutput();
+			if (cc == -1)
+				break;
+			frame.push_back(cc & 0xff);
+		}
+		if (frame.size() == 3)
+		{
+			// don't send an empty frame
+			txSeqNum = decMod128(txSeqNum);
+			return;
+		}
 	}
+	else
+	{
+		while (frame.size() - 3u < txMaxSize)
+		{
+			int c = readModem();
+			if (c == -1)
+				break;
+			frame.push_back(c & 0xff);
+		}
+	}
+	//DEBUG_LOG(MODEM, "Sending I-frame %d", frame[1] >> 1);
 	sendFrame(frame);
 	sentIFrames[frame[1] >> 1] = frame;
 }
@@ -737,9 +795,8 @@ void V42Protocol::reset()
 	rxOnes = 0;
 	rxPosition = 0;
 	rxCurByte = 0;
-	txOnes = 0;
-	txPosition = 0;
-	txCurByte = 0;
+	txBitBuffer = 0;
+	txBitCount = 0;
 	txSeqNum = 0;
 	rxSeqNum = 0;
 	txSeqAck = 0;
@@ -747,6 +804,8 @@ void V42Protocol::reset()
 	txWindow = 15;
 	sentIFrames.clear();
 	detectionTimer.start();
+	compressor.reset();
+	decompressor.reset();
 }
 
 void V42Protocol::ackIFrame(int seqNum)
