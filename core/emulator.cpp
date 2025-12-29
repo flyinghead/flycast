@@ -155,7 +155,9 @@ static void loadSpecialSettings()
 				// Silent Scope (JP)
 				|| prod_id == "T9513M"
 				// Pro Pinball - Trilogy (EU)
-				|| prod_id == "T30701D 50")
+				|| prod_id == "T30701D 50"
+				// Jikkyo Powerful Pro Yakyu
+				|| prod_id == "T9507M")
 		{
 			INFO_LOG(BOOT, "Enabling RTT Copy to VRAM for game %s", prod_id.c_str());
 			config::RenderToTextureBuffer.override(true);
