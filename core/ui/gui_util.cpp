@@ -43,6 +43,9 @@ static std::string select_current_directory = "**home**";
 static std::vector<hostfs::FileInfo> subfolders;
 static std::vector<hostfs::FileInfo> folderFiles;
 bool subfolders_read;
+#ifdef __vita__
+bool folder_reset = true;
+#endif
 
 extern int insetLeft, insetRight, insetTop, insetBottom;
 extern ImFont *largeFont;
@@ -55,9 +58,20 @@ namespace hostfs
 	}
 }
 
+#ifdef __vita__
+void select_file_popup(const char *prompt, StringCallback callback,
+		bool selectFile, const std::string& selectExtension, std::string startDir)
+#else
 void select_file_popup(const char *prompt, StringCallback callback,
 		bool selectFile, const std::string& selectExtension)
+#endif
 {
+#ifdef __vita__
+	if (folder_reset) {
+		select_current_directory = startDir.c_str();
+		folder_reset = false;
+	}
+#endif
 	fullScreenWindow(true);
 	ImguiStyleVar _(ImGuiStyleVar_WindowRounding, 0);
 	ImguiStyleVar _1(ImGuiStyleVar_FramePadding, ImVec2(4, 3)); // default
@@ -68,6 +82,11 @@ void select_file_popup(const char *prompt, StringCallback callback,
 
 		if (select_current_directory == "**home**")
 			select_current_directory = hostfs::storage().getDefaultDirectory();
+		
+#if defined(__vita__)
+		if (select_current_directory.empty())
+			select_current_directory = startDir.c_str();
+#endif
 
 		if (!subfolders_read)
 		{
