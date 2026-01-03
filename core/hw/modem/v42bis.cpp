@@ -20,7 +20,7 @@
 #include <algorithm>
 #include "stdclass.h"
 
-namespace v42b
+namespace modem::v42b
 {
 
 enum
@@ -43,10 +43,10 @@ void V42Base::Dictionary::reset()
 	std::fill(nodes.begin() + CW_FIRST, nodes.end(), Node{});
 }
 
-void V42Base::Dictionary::addChild(u16 childCode, Node *parent, u8 childChar)
+void V42Base::Dictionary::addChild(u16 childCode, Node& parent, u8 childChar)
 {
-	nodes[childCode] = { childChar, parent };
-	parent->addChild(nodes[childCode]);
+	nodes[childCode] = { childChar, &parent };
+	parent.addChild(nodes[childCode]);
 
 #if 0 // !defined(NDEBUG) || defined(DEBUGFAST)
 	std::string newString;
@@ -90,14 +90,14 @@ void V42Base::recoverNode()
 		// 6.5(a) and (b) counter C1 shall be incremented; if the value of C1 exceeds N2-1 then C1 shall be set to N5
 		if (++nextCodeWord >= maxCodeWords)
 			nextCodeWord = CW_FIRST;
-		Node *node = dict.get(nextCodeWord);
+		Node& node = dict.get(nextCodeWord);
 		// 6.5(c) We need to reuse a leaf or find a free node
-		if (!node->isLeaf())
+		if (!node.isLeaf())
 			continue;
-		if (node->isFree())
+		if (node.isFree())
 			break;
 		// 6.5(d) if the node is a leaf node, then it shall be detached from its parent
-		node->parent->removeChild(*node);
+		node.parent->removeChild(node);
 		break;
 	}
 }
@@ -167,7 +167,7 @@ void Compressor::pushCode(u16 code)
     }
 }
 
-void Compressor::compress(u8 b)
+void Compressor::write(u8 b)
 {
 	if (transparent)
 		push(b);
@@ -288,7 +288,7 @@ Decompressor::Decompressor(u32 maxCodeWords, int maxStringLength)
 	decodeBuf.reserve(maxStringLength);
 }
 
-void Decompressor::decompress(u8 b)
+void Decompressor::write(u8 b)
 {
 	if (transparent)
 	{
@@ -366,25 +366,14 @@ void Decompressor::decompress(u8 b)
             return;
 		}
 		modeTransition = false;
-		if (curCode == -1)
-		{
-			if (newCode >= CW_FIRST)
-				WARN_LOG(MODEM,"V.42bis decomp: invalid first code %x\n", newCode);
-			u8 character = newCode - CW_RESERVED;
-			push(character);
-			if (character == escapeCode)
-				escapeCode += 51;
-			curCode = newCode;
-			return;
-		}
+		Node *node = &dict.get(newCode);
 		// 5.8(c) receipt of a codeword representing an empty dictionary entry is an error condition
-		if (dict.get(newCode)->isFree()) {
+		if (node->isFree()) {
 			WARN_LOG(MODEM, "Unknown code %x", newCode);
 			throw Exception("Unknown V.42bis code");
 		}
 		// Walk up the tree one character at a time
 		decodeBuf.clear();
-		Node *node = dict.get(newCode);
 		u8 firstChar;
 		while (true)
 		{
@@ -408,7 +397,6 @@ void Decompressor::decompress(u8 b)
 			// 6.4(b) The string is not already in the dictionary
 			&& dict.getChild(curCode, firstChar) == nullptr)
 		{
-			// 6.4(b) The string is not in the table
 			dict.addChild(nextCodeWord, dict.get(curCode), firstChar);
 			recoverNode();
 			lastAddedCode = nextCodeWord;
@@ -437,4 +425,4 @@ void Decompressor::reset()
 	inputBitCount = 0;
 }
 
-} // namespace v42b
+} // namespace modem::v42b

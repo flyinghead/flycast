@@ -1,4 +1,5 @@
 target_sources(${PROJECT_NAME} PRIVATE
+		internal.h
         modem.cpp
         modem.h
         modem_regs.h

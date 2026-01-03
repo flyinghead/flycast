@@ -1,33 +1,47 @@
 #include "gtest/gtest.h"
 #include "hw/modem/v42.h"
-#include "network/netservice.h"
 
-namespace net::modbba
+namespace modem
 {
-void forceService(Service *service);
-}
 
-class TestNetService : public net::modbba::Service
+class TestNetOut : public OutStream
 {
-	bool start() override { return true; }
-	void stop() override {}
+public:
+	void write(u8 v) override {
+		buffer.push_back(v);
+	}
 
-	void writeModem(u8 b) override {}
-	int readModem()  override { return -1; }
-	int modemAvailable()  override { return 0; }
+	std::vector<u8> buffer;
+};
 
-	void receiveEthFrame(const u8 *frame, u32 size)  override {};
+class TestNetIn : public InStream
+{
+public:
+	TestNetIn(const std::vector<u8>& data = {})
+		: buffer(data)
+	{}
+	int read() override
+	{
+		if (buffer.empty()) {
+			return -1;
+		}
+		else
+		{
+			u8 v = buffer.front();
+			buffer.erase(buffer.begin());
+			return v;
+		}
+	}
+	int available() override {
+		return buffer.size();
+	}
 
+	std::vector<u8> buffer;
 };
 
 class V42Test : public ::testing::Test
 {
 protected:
-	void SetUp() override
-	{
-		net::modbba::forceService(&netService);
-	}
-
 	void setConnected(V42Protocol& v42) {
 		v42.phase = V42Protocol::Connected;
 	}
@@ -38,61 +52,62 @@ protected:
 		v42.sendFlag();
 	}
 
-	TestNetService netService;
+	TestNetOut netOut;
+	TestNetIn netIn;
 };
 
 TEST_F(V42Test, bitStuffing)
 {
 	// nothing to escape
-	V42Protocol v42;
+	V42Protocol v42 { netIn, netOut };
 	setConnected(v42);
 	sendFrame(v42, { 0x0f, 0x0f, 0x0f });
-	ASSERT_EQ(0x7e, v42.transmit());
-	ASSERT_EQ(0x0f, v42.transmit());
-	ASSERT_EQ(0x0f, v42.transmit());
-	ASSERT_EQ(0x0f, v42.transmit());
+	ASSERT_EQ(0x7e, v42.read());
+	ASSERT_EQ(0x0f, v42.read());
+	ASSERT_EQ(0x0f, v42.read());
+	ASSERT_EQ(0x0f, v42.read());
 
 	// flags only
-	v42 = {};
+	v42.reset();
 	setConnected(v42);
 	sendFlag(v42);
 	sendFlag(v42);
-	ASSERT_EQ(0x7e, v42.transmit());
-	ASSERT_EQ(0x7e, v42.transmit());
+	ASSERT_EQ(0x7e, v42.read());
+	ASSERT_EQ(0x7e, v42.read());
 
-	v42 = {};
+	v42.reset();
 	setConnected(v42);
 	sendFrame(v42, { 0xff, 0xff });
-	ASSERT_EQ(0x7e, v42.transmit());
-	ASSERT_EQ(0xdf, v42.transmit());
-	ASSERT_EQ(0xf7, v42.transmit());
-	ASSERT_TRUE((v42.transmit() & 7) == 5);
+	ASSERT_EQ(0x7e, v42.read());
+	ASSERT_EQ(0xdf, v42.read());
+	ASSERT_EQ(0xf7, v42.read());
+	ASSERT_TRUE((v42.read() & 7) == 5);
 
-	v42 = {};
+	v42.reset();
 	setConnected(v42);
 	sendFrame(v42, { 0xff, 0xff, 0xff });
-	ASSERT_EQ(0x7e, v42.transmit());
-	ASSERT_EQ(0xdf, v42.transmit());
-	ASSERT_EQ(0xf7, v42.transmit());
-	ASSERT_EQ(0x7d, v42.transmit());
-	ASSERT_TRUE((v42.transmit() & 3) == 3);
+	ASSERT_EQ(0x7e, v42.read());
+	ASSERT_EQ(0xdf, v42.read());
+	ASSERT_EQ(0xf7, v42.read());
+	ASSERT_EQ(0x7d, v42.read());
+	ASSERT_TRUE((v42.read() & 3) == 3);
 
-	v42 = {};
+	v42.reset();
 	setConnected(v42);
 	sendFrame(v42, { 0xdf, 0xf7, 0x7d });
-	ASSERT_EQ(0x7e, v42.transmit());
-	ASSERT_EQ(0x9f, v42.transmit());
-	ASSERT_EQ(0xcf, v42.transmit());
-	ASSERT_EQ(0xe7, v42.transmit());
-	ASSERT_TRUE((v42.transmit() & 0xf) == 3);
+	ASSERT_EQ(0x7e, v42.read());
+	ASSERT_EQ(0x9f, v42.read());
+	ASSERT_EQ(0xcf, v42.read());
+	ASSERT_EQ(0xe7, v42.read());
+	ASSERT_TRUE((v42.read() & 0xf) == 3);
 
-	v42 = {};
+	v42.reset();
 	setConnected(v42);
 	sendFrame(v42, { 0xf8, 0x01, 0x00 });
-	ASSERT_EQ(0x7e, v42.transmit());
-	ASSERT_EQ(0xf8, v42.transmit());
-	ASSERT_EQ(0x02, v42.transmit());
-	ASSERT_EQ(0x00, v42.transmit());
+	ASSERT_EQ(0x7e, v42.read());
+	ASSERT_EQ(0xf8, v42.read());
+	ASSERT_EQ(0x02, v42.read());
+	ASSERT_EQ(0x00, v42.read());
 }
 
 TEST_F(V42Test, txMultipleFrames)
@@ -102,7 +117,7 @@ TEST_F(V42Test, txMultipleFrames)
 		std::vector<u8> out;
 		while (out.size() < count)
 		{
-			u8 b = v42.transmit();
+			u8 b = v42.read();
 			int i = 0;
 			if (ones == 5)
 			{
@@ -149,7 +164,7 @@ TEST_F(V42Test, txMultipleFrames)
 	};
 
 	srand(42);
-	V42Protocol v42;
+	V42Protocol v42 { netIn, netOut };
 	setConnected(v42);
 	u32 bitBuf = 0;
 	int bitBufSize = 0;
@@ -174,3 +189,5 @@ TEST_F(V42Test, txMultipleFrames)
 		ASSERT_EQ(0x7e, out[2]);
 	}
 }
+
+} // namespace modem

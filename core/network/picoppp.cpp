@@ -205,8 +205,12 @@ static int modem_write(pico_device *dev, const void *data, int len)
     return len;
 }
 
-static void write_pico(u8 b) {
-	passiveMode = false;
+static void write_pico(u8 b)
+{
+	if (passiveMode) {
+		in_buffer.clear();
+		passiveMode = false;
+	}
 	out_buffer.push(b);
 }
 

@@ -6,7 +6,7 @@
 			"Donec nec ornare odio, eu cursus nulla. Cras quis iaculis odio. Vestibulum in lacus vel sapien feugiat congue a vitae tortor. " \
 			"Curabitur fringilla dolor et ex condimentum, et elementum neque iaculis. Proin gravida facilisis facilisis. "
 
-namespace v42b
+namespace modem::v42b
 {
 
 class V42bisTest : public ::testing::Test
@@ -15,20 +15,20 @@ protected:
 	std::string compDecomp(const std::string& in, Compressor& comp, Decompressor& decomp)
 	{
 		for (char c : in)
-			comp.compress(c);
+			comp.write(c);
 		comp.flush();
 
 		while (true)
 		{
-			int c = comp.getOutput();
+			int c = comp.read();
 			if (c == -1)
 				break;
-			decomp.decompress(c);
+			decomp.write(c);
 		}
 		std::string out;
 		while (true)
 		{
-			int c = decomp.getOutput();
+			int c = decomp.read();
 			if (c == -1)
 				break;
 			out += (char)c;
@@ -50,35 +50,35 @@ TEST_F(V42bisTest, escapeCharacter)
 {
 	constexpr int EID = 1;
 	Compressor comp;
-	comp.compress('\0');
-	ASSERT_EQ('\0', comp.getOutput());
-	ASSERT_EQ(EID, comp.getOutput());
-	ASSERT_EQ(-1, comp.getOutput());
+	comp.write('\0');
+	ASSERT_EQ('\0', comp.read());
+	ASSERT_EQ(EID, comp.read());
+	ASSERT_EQ(-1, comp.read());
 
-	comp.compress('\0');
-	ASSERT_EQ('\0', comp.getOutput());
+	comp.write('\0');
+	ASSERT_EQ('\0', comp.read());
 	// no longer escaped
-	ASSERT_EQ(-1, comp.getOutput());
+	ASSERT_EQ(-1, comp.read());
 
-	comp.compress('3');
-	ASSERT_EQ('3', comp.getOutput());
-	ASSERT_EQ(EID, comp.getOutput());
-	ASSERT_EQ(-1, comp.getOutput());
+	comp.write('3');
+	ASSERT_EQ('3', comp.read());
+	ASSERT_EQ(EID, comp.read());
+	ASSERT_EQ(-1, comp.read());
 
 	Decompressor decomp;
-	decomp.decompress('\0');
-	decomp.decompress(EID);
-	ASSERT_EQ('\0', decomp.getOutput());
-	ASSERT_EQ(-1, decomp.getOutput());
+	decomp.write('\0');
+	decomp.write(EID);
+	ASSERT_EQ('\0', decomp.read());
+	ASSERT_EQ(-1, decomp.read());
 
-	decomp.decompress('\0');
-	ASSERT_EQ('\0', decomp.getOutput());
-	ASSERT_EQ(-1, decomp.getOutput());
+	decomp.write('\0');
+	ASSERT_EQ('\0', decomp.read());
+	ASSERT_EQ(-1, decomp.read());
 
-	decomp.decompress('3');
-	decomp.decompress(EID);
-	ASSERT_EQ('3', decomp.getOutput());
-	ASSERT_EQ(-1, decomp.getOutput());
+	decomp.write('3');
+	decomp.write(EID);
+	ASSERT_EQ('3', decomp.read());
+	ASSERT_EQ(-1, decomp.read());
 }
 
 TEST_F(V42bisTest, compressMode)
@@ -126,7 +126,7 @@ TEST_F(V42bisTest, switchToCompressed)
 	Decompressor decomp;
 	size_t i = 0;
 	for (; i < in.length() / 2; i++)
-		comp.compress(in[i]);
+		comp.write(in[i]);
 	comp.changeMode();
 	std::string out = compDecomp(in.substr(i), comp, decomp);
 	ASSERT_EQ(out, in);
@@ -140,7 +140,7 @@ TEST_F(V42bisTest, switchToTransparent)
 	comp.changeMode();
 	size_t i = 0;
 	for (; i < in.length() / 2; i++)
-		comp.compress(in[i]);
+		comp.write(in[i]);
 	comp.changeMode();
 	std::string out = compDecomp(in.substr(i), comp, decomp);
 	ASSERT_EQ(out, in);
@@ -170,7 +170,7 @@ TEST_F(V42bisTest, flush)
 			{
 				if (i + k == in.size())
 					break;
-				comp.compress(in[i + k]);
+				comp.write(in[i + k]);
 			}
 			comp.flush();
 		}
@@ -193,7 +193,7 @@ TEST_F(V42bisTest, changeMode)
 			{
 				if (i + k == in.size())
 					break;
-				comp.compress(in[i + k]);
+				comp.write(in[i + k]);
 			}
 			comp.changeMode();
 		}

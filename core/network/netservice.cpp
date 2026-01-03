@@ -65,9 +65,4 @@ void receiveEthFrame(const u8 *frame, u32 size) {
 	service->receiveEthFrame(frame, size);
 }
 
-// for tests
-void forceService(Service *service) {
-	modbba::service = service;
-}
-
 }

@@ -18,12 +18,13 @@
 */
 #pragma once
 #include "types.h"
+#include "internal.h"
 #include <deque>
 #include <map>
 #include <vector>
 #include <stdexcept>
 
-namespace v42b
+namespace modem::v42b
 {
 // N3 Character size (bits)
 static constexpr u32 CHAR_SIZE = 8;
@@ -47,24 +48,8 @@ public:
 	{}
 };
 
-class V42Base
+class V42Base : public BufferedTransformer
 {
-public:
-	~V42Base() = default;
-
-	int getOutput()
-	{
-		if (outBuf.empty())
-			return -1;
-		u8 b = outBuf.front();
-		outBuf.pop_front();
-		return b;
-	}
-
-	size_t available() const {
-		return outBuf.size();
-	}
-
 protected:
 	struct Node
 	{
@@ -118,8 +103,8 @@ protected:
 
 		void reset();
 
-		Node *get(u16 code) {
-			return &nodes[code];
+		Node& get(u16 code) {
+			return nodes[code];
 		}
 
 		u16 getCode(Node *node) const {
@@ -130,7 +115,7 @@ protected:
 			return nodes[code].getChild(childCharacter);
 		}
 
-		void addChild(u16 childCode, Node *parent, u8 childCharacter);
+		void addChild(u16 childCode, Node& parent, u8 childCharacter);
 
 	private:
 		std::vector<Node> nodes;
@@ -142,7 +127,7 @@ protected:
 	}
 
 	void push(u8 b) {
-		outBuf.push_back(b);
+		buffer.push_back(b);
 	}
 
 	void reset();
@@ -156,7 +141,6 @@ protected:
 	u32 codeWordSize = CHAR_SIZE + 1;			// V.42 param C2
 	u32 codeWordThreshold = 2 * ALPHABET_SIZE;	// V.42 param C3
 	Dictionary dict;
-	std::deque<u8> outBuf;
 	int lastAddedCode = -1;
 	int matchLen = 0;
 	int curCode = -1;
@@ -173,7 +157,7 @@ class Compressor : public V42Base
 public:
 	Compressor(u32 maxCodeWords = MIN_TOTAL_CODEWORDS, int maxStringLength = DEF_STRING_SIZE);
 
-	void compress(u8 b);
+	void write(u8 v) override;
 	void changeMode();
 	void reset();
 
@@ -198,7 +182,7 @@ class Decompressor : public V42Base
 public:
 	Decompressor(u32 maxCodeWords = MIN_TOTAL_CODEWORDS, int maxStringLength = DEF_STRING_SIZE);
 
-	void decompress(u8 b);
+	void write(u8 v) override;
 	void reset();
 
 private:
@@ -210,5 +194,5 @@ private:
 	std::vector<u8> decodeBuf;
 };
 
-} // namespace 42b
+} // namespace modem::42b
 
