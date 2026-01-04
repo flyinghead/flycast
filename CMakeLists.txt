@@ -100,8 +100,9 @@ if(IOS AND NOT LIBRETRO)
 endif()
 
 if(WEBOS)
-	set(USE_VULKAN OFF CACHE BOOL "Force vulkan off" FORCE)
 	set(USE_GLES2 ON CACHE BOOL "Use GLES2 API" FORCE)
+	set(USE_OPENMP OFF CACHE BOOL "Force openmp off" FORCE)
+	set(USE_VULKAN OFF CACHE BOOL "Force vulkan off" FORCE)
 endif()
 
 include(GNUInstallDirs)
