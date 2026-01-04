@@ -1169,7 +1169,7 @@ static void gui_display_content()
     scanner.fetch_game_list();
 
 	// Only if Filter and Settings aren't focused... ImGui::SetNextWindowFocus();
-	ImGui::BeginChild(ImGui::GetID("library"), ImVec2(0, 0), ImGuiChildFlags_Borders, ImGuiWindowFlags_DragScrolling | ImGuiChildFlags_NavFlattened);
+	ImGui::BeginChild(ImGui::GetID("library"), ImVec2(0, 0), ImGuiChildFlags_Borders | ImGuiChildFlags_NavFlattened, ImGuiWindowFlags_DragScrolling);
     {
 		const float totalWidth = ImGui::GetContentRegionMax().x - (!ImGui::GetCurrentWindow()->ScrollbarY ? ImGui::GetStyle().ScrollbarSize : 0);
 		const int itemsPerLine = std::max<int>(totalWidth / (uiScaled(150) + ImGui::GetStyle().ItemSpacing.x), 1);
@@ -1216,7 +1216,7 @@ static void gui_display_content()
 							ImGui::SameLine();
 						counter++;
 						// Put the image inside a child window so we can detect when it's fully clipped and doesn't need to be loaded
-						if (ImGui::BeginChild("img", ImVec2(0, 0), ImGuiChildFlags_AutoResizeX | ImGuiChildFlags_AutoResizeY, ImGuiChildFlags_NavFlattened))
+						if (ImGui::BeginChild("img", ImVec2(0, 0), ImGuiChildFlags_AutoResizeX | ImGuiChildFlags_AutoResizeY | ImGuiChildFlags_NavFlattened))
 						{
 							ImguiFileTexture tex(art.boxartPath);
 							pressed = gameImageButton(tex, game.name, responsiveBoxVec2, gameName);
@@ -1264,7 +1264,7 @@ static void gui_display_content()
 			// center horizontally
 			const float w = largeFont->CalcTextSizeA(largeFont->LegacySize, FLT_MAX, -1.f, label).x + ImGui::GetStyle().FramePadding.x * 2;
 			ImGui::SameLine((ImGui::GetContentRegionMax().x - w) / 2);
-			if (ImGui::BeginChild("empty", ImVec2(0, 0), ImGuiChildFlags_AutoResizeX | ImGuiChildFlags_AutoResizeY, ImGuiChildFlags_NavFlattened))
+			if (ImGui::BeginChild("empty", ImVec2(0, 0), ImGuiChildFlags_AutoResizeX | ImGuiChildFlags_AutoResizeY | ImGuiChildFlags_NavFlattened))
 			{
 				ImGui::PushFont(largeFont);
 				ImGui::NewLine();
