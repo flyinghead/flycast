@@ -124,7 +124,7 @@ void select_file_popup(const char *prompt, StringCallback callback,
 
 		ImGui::Text("%s", title.c_str());
 		ImGui::BeginChild(ImGui::GetID("dir_list"), ImVec2(0, - uiScaled(30) - ImGui::GetStyle().ItemSpacing.y),
-				ImGuiChildFlags_Border, ImGuiWindowFlags_DragScrolling | ImGuiWindowFlags_NavFlattened);
+				ImGuiChildFlags_Borders, ImGuiWindowFlags_DragScrolling | ImGuiChildFlags_NavFlattened);
 		{
 			ImguiStyleVar _(ImGuiStyleVar_ItemSpacing, ScaledVec2(8, 20));
 
