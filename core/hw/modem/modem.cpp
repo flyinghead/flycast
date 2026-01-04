@@ -85,9 +85,10 @@ enum ConnectState
 	NEGO_COMPLETE
 };
 static ConnectState connect_state = DISCONNECTED;
-static int txFifoSize = 0;
+static float txFifoSize = 0.f;
 static std::deque<u8> rxFifo;
 static int cyclesPerByte;
+static float txRxRatio = 1.f;
 
 static void schedule_callback(int ms);
 static const char *getDSPRamLabel(u32 addr);
@@ -303,9 +304,11 @@ static bool setModemSpeedFromCONF()
 
 	if (rxSpeed == 0)
 		rxSpeed = speed;
-	if (speed == 0) {
+	if (speed == 0)
+	{
 		modem_regs.reg0e.SPEED = 0;
 		cyclesPerByte = SH4_MAIN_CLOCK * 8 / 300;
+		txRxRatio = 1.f;
 	}
 	else
 	{
@@ -325,6 +328,7 @@ static bool setModemSpeedFromCONF()
 			}
 		}
 		cyclesPerByte = SH4_MAIN_CLOCK * 8 / speed;
+		txRxRatio = (float)speed / rxSpeed;
 	}
 	NOTICE_LOG(MODEM, "MODEM Connected %s %d/%d bps", modem_regs.reg08.ASYN ? "ASYNC" : "SYNC", rxSpeed, speed);
 	return speed != 0;
@@ -497,9 +501,8 @@ static int modem_sched_func(int tag, int cycles, int jitter, void *arg)
 			}
 #endif
 			callback_cycles = cyclesPerByte;
-			if (txFifoSize > 0)
-				txFifoSize--;
-			modem_regs.reg1e.TDBE = txFifoSize == 0;
+			txFifoSize = std::max(txFifoSize - txRxRatio, 0.f);
+			modem_regs.reg1e.TDBE = txFifoSize == 0.f;
 
 			if (v8bis && v8bisProto.completed()) {
 				connect_state = NEGO_COMPLETE;
@@ -573,7 +576,7 @@ static void NormalDefaultRegs()
 	modem_regs.reg1e.TDBE = 1;
 	connect_state = DISCONNECTED;
 	last_dial_time = 0;
-	txFifoSize = 0;
+	txFifoSize = 0.f;
 	rxFifo.clear();
 	v8bis = false;
 	configureStreams();
@@ -757,10 +760,10 @@ static void ModemNormalWrite(u32 reg, u32 data)
 			curOutput->write(data);
 
 			modem_regs.reg1e.TDBE = 0;
-			txFifoSize++;
+			txFifoSize += 1.f;
 			if (modem_regs.reg04.FIFOEN) {
-				SET_STATUS_BIT(0x0d, modem_regs.reg0d.TXFNF, (u8)(txFifoSize < 16));
-				SET_STATUS_BIT(0x01, modem_regs.reg01.TXHF, (u8)(txFifoSize >= 8));
+				SET_STATUS_BIT(0x0d, modem_regs.reg0d.TXFNF, (u8)(txFifoSize <= 15.f));
+				SET_STATUS_BIT(0x01, modem_regs.reg01.TXHF, (u8)(txFifoSize >= 8.f));
 			}
 			else {
 				SET_STATUS_BIT(0x0d, modem_regs.reg0d.TXFNF, 0);
@@ -934,12 +937,12 @@ u32 ModemReadMem_A0_006(u32 addr, u32 size)
 					SET_STATUS_BIT(0x0b, modem_regs.reg0b.TONEB, connect_state == DISCONNECTED || connect_state == NEGO_COMPLETE);
 					SET_STATUS_BIT(0x0b, modem_regs.reg0b.TONEC, connect_state == DISCONNECTED || connect_state == NEGO_COMPLETE);
 					if (modem_regs.reg04.FIFOEN || module_download) {
-						SET_STATUS_BIT(0x0d, modem_regs.reg0d.TXFNF, (u8)(txFifoSize < 16));
-						SET_STATUS_BIT(0x01, modem_regs.reg01.TXHF, (u8)(txFifoSize >= 8));
+						SET_STATUS_BIT(0x0d, modem_regs.reg0d.TXFNF, (u8)(txFifoSize <= 15.f));
+						SET_STATUS_BIT(0x01, modem_regs.reg01.TXHF, (u8)(txFifoSize >= 8.f));
 					}
 					else {
-						SET_STATUS_BIT(0x0d, modem_regs.reg0d.TXFNF, (u8)(txFifoSize == 0));
-						SET_STATUS_BIT(0x01, modem_regs.reg01.TXHF, (u8)(txFifoSize >= 1));
+						SET_STATUS_BIT(0x0d, modem_regs.reg0d.TXFNF, (u8)(txFifoSize == 0.f));
+						SET_STATUS_BIT(0x01, modem_regs.reg01.TXHF, (u8)(txFifoSize >= 1.f));
 					}
 				}
 				u8 data = modem_regs.ptr[reg];
