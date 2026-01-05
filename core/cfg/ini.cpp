@@ -125,10 +125,16 @@ float IniFile::getFloat(const std::string& section, const std::string& entry, fl
 void IniFile::setRaw(const std::string& sectionName, const std::string& entryName, const std::string& value, bool transient)
 {
 	Section& section = sections[sectionName];
-	if (transient)
-		section.entries[entryName] = { entryName, {}, value, true };
-	else
-		section.entries[entryName] = { entryName, value };
+	Entry& entry = section.entries[entryName];
+	if (entry.name.empty())
+		entry.name = entryName;
+	if (transient) {
+		entry.transientValue = value;
+		entry.transient = true;
+	}
+	else {
+		entry.value = value;
+	}
 }
 
 static std::string handleEscapeSeq(const std::string& s)

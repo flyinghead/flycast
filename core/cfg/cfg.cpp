@@ -84,12 +84,12 @@ void saveInt64(const std::string& section, const std::string& key, int64_t value
 	autoSave();
 }
 
-void  saveBool(const std::string& section, const std::string& key, bool value) {
+void saveBool(const std::string& section, const std::string& key, bool value) {
 	cfgdb.set(section, key, value);
 	autoSave();
 }
 
-bool  loadBool(const std::string& section, const std::string& key, bool def) {
+bool loadBool(const std::string& section, const std::string& key, bool def) {
 	return cfgdb.getBool(section, key, def);
 }
 
