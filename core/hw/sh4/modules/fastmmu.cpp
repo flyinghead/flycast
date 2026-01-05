@@ -198,9 +198,10 @@ bool UTLB_Sync(u32 entry)
 			u32 vpn_sq = ((tlb_entry.Address.VPN & 0x7FFFF) >> 10) & 0x3F;//upper bits are always known [0xE0/E1/E2/E3]
 			sq_remap[vpn_sq] = tlb_entry.Data.PPN << 10;
 		}
-		else if (CCN_MMUCR.AT == 1)
+		else if (CCN_MMUCR.AT == 1 && tlb_entry.Address.VPN != 0x30040 && tlb_entry.Address.VPN != 0x30000 && tlb_entry.Data.V == 1)
 		{
 			// Enable Full MMU if not an expected store queue mapping
+			// VPN checks to ignore many arcade and Visual Concepts games presumably bogus mappings
 			mmuOn = true;
 			NOTICE_LOG(SH4, "Enabling on-demand Full MMU support");
 			mmu_set_state();
