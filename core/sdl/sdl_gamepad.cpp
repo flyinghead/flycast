@@ -343,7 +343,7 @@ void SDLGamepad::setSine(float power, float freq, u32 duration_ms)
 		return;
 	if (hapticRumble)
 	{
-		if (power != 0.f && freq != 0.f && duration_ms != 0)
+		if (power != 0.f && freq != 0.f && duration_ms != 0 && rumblePower != 0)
 		{
 			SDL_HapticEffect effect{};
 			effect.type = SDL_HAPTIC_SINE;
