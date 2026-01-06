@@ -78,6 +78,7 @@ Option<float> ExtraDepthScale("rend.ExtraDepthScale", 1.f);
 Option<bool> CustomTextures("rend.CustomTextures");
 Option<bool> PreloadCustomTextures("rend.PreloadCustomTextures");
 Option<bool> DumpTextures("rend.DumpTextures");
+Option<bool> DisableYuvTextureDumping("rend.DisableYuvTextureDumping", true);
 Option<bool> DumpReplacedTextures("rend.DumpReplacedTextures");
 Option<int> ScreenStretching("rend.ScreenStretching", 100);
 Option<bool> Fog("rend.Fog", true);
