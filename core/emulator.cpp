@@ -974,7 +974,10 @@ void Emulator::start()
 {
 	if (state == Running)
 		return;
-	verify(state == Loaded);
+	if (state != Loaded) {
+		WARN_LOG(COMMON, "Unexpected emu state %d", state);
+		return;
+	}
 	state = Running;
 	SetMemoryHandlers();
 	if (config::GGPOEnable && config::ThreadedRendering)

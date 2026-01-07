@@ -283,7 +283,9 @@ extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_emu_JNIdc_pause(JNIE
 
 extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_emu_JNIdc_resume(JNIEnv *env,jobject obj)
 {
-    if (game_started) {
+    if (game_started)
+    {
+    	game_started = false;
 		savestateThread.WaitToEnd();
         emu.start();
     }
