@@ -87,6 +87,8 @@ void gui_settings_about()
 			"Windows"
 #elif defined(__SWITCH__)
 			"Switch"
+#elif defined(__vita__)
+			"PSVita"
 #else
 			T("Unknown")
 #endif
