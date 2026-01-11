@@ -102,6 +102,26 @@ bool GamepadDevice::handleButtonInput(int port, DreamcastKey key, bool pressed)
 			if (pressed)
 				gui_saveState();
 			break;
+		case EMU_BTN_LOADSTATE_SLOT1: if (pressed) gui_loadState(0); break;
+		case EMU_BTN_LOADSTATE_SLOT2: if (pressed) gui_loadState(1); break;
+		case EMU_BTN_LOADSTATE_SLOT3: if (pressed) gui_loadState(2); break;
+		case EMU_BTN_LOADSTATE_SLOT4: if (pressed) gui_loadState(3); break;
+		case EMU_BTN_LOADSTATE_SLOT5: if (pressed) gui_loadState(4); break;
+		case EMU_BTN_LOADSTATE_SLOT6: if (pressed) gui_loadState(5); break;
+		case EMU_BTN_LOADSTATE_SLOT7: if (pressed) gui_loadState(6); break;
+		case EMU_BTN_LOADSTATE_SLOT8: if (pressed) gui_loadState(7); break;
+		case EMU_BTN_LOADSTATE_SLOT9: if (pressed) gui_loadState(8); break;
+		case EMU_BTN_LOADSTATE_SLOT10: if (pressed) gui_loadState(9); break;
+		case EMU_BTN_SAVESTATE_SLOT1: if (pressed) gui_saveState(0); break;
+		case EMU_BTN_SAVESTATE_SLOT2: if (pressed) gui_saveState(1); break;
+		case EMU_BTN_SAVESTATE_SLOT3: if (pressed) gui_saveState(2); break;
+		case EMU_BTN_SAVESTATE_SLOT4: if (pressed) gui_saveState(3); break;
+		case EMU_BTN_SAVESTATE_SLOT5: if (pressed) gui_saveState(4); break;
+		case EMU_BTN_SAVESTATE_SLOT6: if (pressed) gui_saveState(5); break;
+		case EMU_BTN_SAVESTATE_SLOT7: if (pressed) gui_saveState(6); break;
+		case EMU_BTN_SAVESTATE_SLOT8: if (pressed) gui_saveState(7); break;
+		case EMU_BTN_SAVESTATE_SLOT9: if (pressed) gui_saveState(8); break;
+		case EMU_BTN_SAVESTATE_SLOT10: if (pressed) gui_saveState(9); break;
 		case EMU_BTN_SCREENSHOT:
 			if (pressed)
 				gui_takeScreenshot();
