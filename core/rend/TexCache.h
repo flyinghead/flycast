@@ -168,6 +168,7 @@ public:
 		return (tcw.PixelFmt == PixelPal4 || tcw.PixelFmt == PixelPal8)
 				&& config::TextureUpscale == 1
 				&& !config::DumpTextures
+				&& !custom_texture.enabled()
 				&& tsp.FilterMode <= 1
 				&& !tcw.MipMapped
 				&& !tcw.VQ_Comp
