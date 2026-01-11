@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-12-14 14:32+0100\n"
-"PO-Revision-Date: 2025-12-24 21:49\n"
+"PO-Revision-Date: 2026-01-11 22:52\n"
 "Last-Translator: \n"
 "Language: ja_JP\n"
 "MIME-Version: 1.0\n"
@@ -61,12 +61,12 @@ msgstr "リーダーボード %s が提出されました"
 #: core/achievements/achievements.cpp:661
 #, c-format
 msgid "Mastered %s"
-msgstr "マスター済み %s"
+msgstr "%s をマスターしました"
 
 #: core/achievements/achievements.cpp:661
 #, c-format
 msgid "Completed %s"
-msgstr "%sを完了しました"
+msgstr "%s をコンプリートしました"
 
 #: core/achievements/achievements.cpp:664
 #, c-format
@@ -89,7 +89,7 @@ msgstr "ハードコアモード"
 
 #: core/achievements/achievements.cpp:948
 msgid "Hardcore mode disabled"
-msgstr "ハードコア モードは無効です"
+msgstr "ハードコアモードは無効です"
 
 #: core/achievements/achievements.cpp:948
 msgid "Unrecognized media inserted"
