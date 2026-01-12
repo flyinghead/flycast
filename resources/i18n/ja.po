@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-12-14 14:32+0100\n"
-"PO-Revision-Date: 2026-01-11 22:52\n"
+"PO-Revision-Date: 2026-01-12 00:06\n"
 "Last-Translator: \n"
 "Language: ja_JP\n"
 "MIME-Version: 1.0\n"
@@ -894,7 +894,7 @@ msgstr "アップスケーリング時のテクスチャの滲みを軽減しま
 
 #: core/ui/settings_video.cpp:332
 msgid "Native Depth Interpolation"
-msgstr "ネイティブ深度補完"
+msgstr "ネイティブ深度補間"
 
 #: core/ui/settings_video.cpp:333
 msgid "Helps with texture corruption and depth issues on AMD GPUs. Can also help Intel GPUs in some cases."
@@ -951,7 +951,7 @@ msgstr "FPSカウンターを表示"
 
 #: core/ui/settings_video.cpp:387
 msgid "Show on-screen frame/sec counter"
-msgstr "FPSカウンターを表示する"
+msgstr "フレームレート(秒間フレーム数)を画面に表示します"
 
 #: core/ui/settings_video.cpp:392
 msgid "Video Routing (Syphon)"
@@ -1001,7 +1001,7 @@ msgstr "追加"
 
 #: core/ui/settings_general.cpp:161 core/ui/gui.cpp:909
 msgid "Select a Content Folder"
-msgstr "コンテンツフォルダを選択"
+msgstr "コンテンツフォルダーを選択"
 
 #: core/ui/settings_general.cpp:188
 msgid "Japanese"
@@ -1368,7 +1368,7 @@ msgstr "ボックスアートフォルダーを選択"
 
 #: core/ui/settings_general.cpp:451
 msgid "Folder containing box art images (png/jpg). If empty, Flycast will use the default Home Folder/boxart for downloads and generated art"
-msgstr "ボックスアート画像(png/jpg)を含むフォルダー。空白の場合、Flycastはダウンロードと生成されたアートに対してデフォルトのホームフォルダー (data/boxart) を使用します"
+msgstr "ボックスアート画像(png/jpg)を含むフォルダー。空白の場合、Flycastはダウンロードと生成されたアートに対してデフォルトホームフォルダーの data/boxart を使用します"
 
 #: core/ui/settings_general.cpp:454
 msgid "Controller Mapping Folders"
@@ -1380,7 +1380,7 @@ msgstr "コントローラーマッピングフォルダーを選択"
 
 #: core/ui/settings_general.cpp:455
 msgid "Folders containing controller mapping files (.cfg). The emulator also looks in Home Folder/mappings. Per-game mappings are suffixed with _<gameId>.cfg"
-msgstr "コントローラーのマッピングファイル (.cfg)を含むフォルダー. エミュレーターはホームフォルダー/mappingsも参照します. ゲーム毎のマッピングは _<gameId>.cfg でサフィックスされます"
+msgstr "コントローラーのマッピングファイル (.cfg)を含むフォルダー。エミュレーターはホームフォルダー/mappingsも参照します. ゲーム毎のマッピングは _<gameId>.cfg でサフィックスされます"
 
 #: core/ui/settings_general.cpp:458
 msgid "Cheat Folders"
@@ -1929,11 +1929,11 @@ msgstr "閉じる"
 #: core/ui/gui_achievements.cpp:296
 #, c-format
 msgid "You have unlocked %d of %d achievements and %d of %d points."
-msgstr "あなたは %d / %d の実績と %d / %d ポイントを解除しました。"
+msgstr "%d / %d の実績を解除、 %d / %d ポイントを獲得。"
 
 #: core/ui/gui_achievements.cpp:324
 msgid "Locked"
-msgstr "ロックされています"
+msgstr "未解除"
 
 #: core/ui/gui_achievements.cpp:324
 msgid "Active Challenges"
@@ -1945,7 +1945,7 @@ msgstr "あと少しです"
 
 #: core/ui/gui_achievements.cpp:326
 msgid "Unlocked"
-msgstr "解除"
+msgstr "解除済み"
 
 #: core/ui/gui_achievements.cpp:326
 msgid "Recently Unlocked"
