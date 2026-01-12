@@ -21,6 +21,9 @@
 #include "stdclass.h"
 #include "emulator.h"
 
+#include <filesystem>
+#include <fstream>
+
 #define APIKEY "3fcc5e726a129924972be97abfd577ac5311f8f12398a9d9bcb5a377d4656fa8"
 
 std::string TheGamesDb::makeUrl(const std::string& endpoint)
@@ -41,29 +44,27 @@ bool TheGamesDb::initialize(const std::string& saveDirectory)
 
 void TheGamesDb::copyFile(const std::string& from, const std::string& to)
 {
-	FILE *ffrom = nowide::fopen(from.c_str(), "rb");
-	if (ffrom == nullptr)
+    std::ifstream ffrom(from, std::ios::in | std::ios::binary);
+	if (!ffrom.is_open())
 	{
-		WARN_LOG(COMMON, "Can't open %s: error %d", from.c_str(), errno);
+		WARN_LOG(COMMON, "Can't open %s:", from.c_str());
 		return;
 	}
-	FILE *fto = nowide::fopen(to.c_str(), "wb");
-	if (fto == nullptr)
+    std::ofstream fto(to, std::ios::out | std::ios::binary);
+	if (!fto.is_open())
 	{
-		WARN_LOG(COMMON, "Can't open %s: error %d", to.c_str(), errno);
-		fclose(ffrom);
+		WARN_LOG(COMMON, "Can't open %s:", to.c_str());
+        ffrom.close();
 		return;
 	}
-	u8 buffer[4096];
-	while (true)
-	{
-		int l = fread(buffer, 1, sizeof(buffer), ffrom);
-		if (l == 0)
-			break;
-		fwrite(buffer, 1, l, fto);
-	}
-	fclose(ffrom);
-	fclose(fto);
+
+    u8 buffer[4096];
+    while (ffrom.read(reinterpret_cast<char*>(buffer), sizeof(buffer)) || ffrom.gcount() > 0)
+    {
+        fto.write(reinterpret_cast<char*>(buffer), ffrom.gcount());
+    }
+    ffrom.close();
+    fto.close();
 }
 
 json TheGamesDb::httpGet(const std::string& url)

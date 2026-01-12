@@ -29,6 +29,8 @@
 #include <algorithm>
 #include <array>
 #include <memory>
+#include <filesystem>
+#include <fstream>
 
 #define LOGJVS(...) DEBUG_LOG(JVS, __VA_ARGS__)
 
@@ -1355,13 +1357,14 @@ maple_naomi_jamma::maple_naomi_jamma()
 		}
 	}
 
-	std::string eeprom_file = hostfs::getArcadeFlashPath() + ".eeprom";
-	FILE* f = nowide::fopen(eeprom_file.c_str(), "rb");
-	if (f)
+	std::filesystem::path eeprom_file = hostfs::getArcadeFlashPath() + ".eeprom";
+    std::ifstream file(eeprom_file, std::ios::in | std::ios::binary);
+	if (file.is_open())
 	{
-		if (std::fread(eeprom, 1, 0x80, f) != 0x80)
+        file.read(reinterpret_cast<char *>(eeprom), sizeof(eeprom));
+        if (file.gcount() != sizeof(eeprom))
 			WARN_LOG(MAPLE, "Failed or truncated read of EEPROM '%s'", eeprom_file.c_str());
-		std::fclose(f);
+		file.close();
 		DEBUG_LOG(MAPLE, "Loaded EEPROM from %s", eeprom_file.c_str());
 	}
 	else if (naomi_default_eeprom != NULL)
@@ -1667,12 +1670,12 @@ void maple_naomi_jamma::handle_86_subcommand()
 			size = std::min((int)sizeof(eeprom) - address, size);
 			memcpy(eeprom + address, dma_buffer_in + 4, size);
 
-			std::string eeprom_file = hostfs::getArcadeFlashPath() + ".eeprom";
-			FILE* f = nowide::fopen(eeprom_file.c_str(), "wb");
-			if (f)
+			std::filesystem::path eeprom_file = hostfs::getArcadeFlashPath() + ".eeprom";
+            std::ofstream f(eeprom_file, std::ios::out | std::ios::binary);
+			if (f.is_open())
 			{
-				std::fwrite(eeprom, 1, sizeof(eeprom), f);
-				std::fclose(f);
+                f.write(reinterpret_cast<char *>(eeprom), sizeof(eeprom));
+				f.close();
 				INFO_LOG(MAPLE, "Saved EEPROM to %s", eeprom_file.c_str());
 			}
 			else
