@@ -26,6 +26,7 @@
 #include "types.h"
 #include "emulator.h"
 #include "sdl_gamepad.h"
+#include "hw/maple/maple_devs.h"
 
 #include <functional>
 #include <memory>
@@ -66,7 +67,7 @@ class DreamLink : public std::enable_shared_from_this<DreamLink>
 {
 public:
 	//! Number of physical dreamcast ports
-	static constexpr const int NUM_PORTS = 4;
+	static constexpr const int NUM_PORTS = MAPLE_PORTS;
 	// The active DreamLink, if any, for each port.
 	// Note that multiple gamepad DreamLinks may exist for a given port, in which case only one is active.
 	static std::array<std::shared_ptr<DreamLink>, NUM_PORTS> activeDreamLinks;
