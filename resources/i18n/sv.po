@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-12-14 14:32+0100\n"
-"PO-Revision-Date: 2025-12-14 13:55\n"
+"PO-Revision-Date: 2025-12-23 14:46\n"
 "Last-Translator: \n"
 "Language: sv_SE\n"
 "MIME-Version: 1.0\n"
@@ -122,31 +122,31 @@ msgstr "DPad2 höger"
 
 #: core/sdl/dreampicoport.cpp:1215
 msgid "VMU1 A"
-msgstr ""
+msgstr "VMU1 A"
 
 #: core/sdl/dreampicoport.cpp:1216
 msgid "VMU1 B"
-msgstr ""
+msgstr "VMU1 B"
 
 #: core/sdl/dreampicoport.cpp:1217
 msgid "VMU1 Up"
-msgstr ""
+msgstr "VMU1 Upp"
 
 #: core/sdl/dreampicoport.cpp:1218
 msgid "VMU1 Down"
-msgstr ""
+msgstr "VMU1 Ner"
 
 #: core/sdl/dreampicoport.cpp:1219
 msgid "VMU1 Left"
-msgstr ""
+msgstr "VMU1 Vänster"
 
 #: core/sdl/dreampicoport.cpp:1220
 msgid "VMU1 Right"
-msgstr ""
+msgstr "VMU1 Höger"
 
 #: core/sdl/dreamlink.cpp:161
 msgid "Inactive"
-msgstr ""
+msgstr "Inaktiv"
 
 #: core/sdl/dreamlink.cpp:163 core/ui/gui.cpp:752
 msgid "Connected"
@@ -159,7 +159,7 @@ msgstr "Frånkopplad"
 #: core/sdl/sdl_gamepad.cpp:610
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:135
 msgid "Back"
-msgstr ""
+msgstr "Bakåt"
 
 #: core/sdl/sdl_gamepad.cpp:611
 msgid "Guide"
@@ -197,61 +197,61 @@ msgstr ""
 
 #: core/sdl/sdl_gamepad.cpp:621
 msgid "Misc"
-msgstr ""
+msgstr "Diverse"
 
 #: core/sdl/sdl_gamepad.cpp:622
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:379
 msgid "Paddle 1"
-msgstr ""
+msgstr "Paddel 1"
 
 #: core/sdl/sdl_gamepad.cpp:623
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:381
 msgid "Paddle 2"
-msgstr ""
+msgstr "Paddel 2"
 
 #: core/sdl/sdl_gamepad.cpp:624
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:383
 msgid "Paddle 3"
-msgstr ""
+msgstr "Paddel 3"
 
 #: core/sdl/sdl_gamepad.cpp:625
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:385
 msgid "Paddle 4"
-msgstr ""
+msgstr "Paddel 4"
 
 #: core/sdl/sdl_gamepad.cpp:626
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:387
 msgid "Touchpad"
-msgstr ""
+msgstr "Pekplatta"
 
 #: core/sdl/sdl_gamepad.cpp:685
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:405
 msgid "Left Stick X"
-msgstr ""
+msgstr "Vänsterspak X"
 
 #: core/sdl/sdl_gamepad.cpp:686
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:407
 msgid "Left Stick Y"
-msgstr ""
+msgstr "Vänsterspak Y"
 
 #: core/sdl/sdl_gamepad.cpp:687
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:409
 msgid "Right Stick X"
-msgstr ""
+msgstr "Högerspak X"
 
 #: core/sdl/sdl_gamepad.cpp:688
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:411
 msgid "Right Stick Y"
-msgstr ""
+msgstr "Högerspak Y"
 
 #: core/sdl/sdl_gamepad.cpp:757
 msgid "Default Mouse"
-msgstr ""
+msgstr "Standardmus"
 
 #: core/sdl/sdl_gamepad.cpp:761
 #, c-format
 msgid "Mouse %d"
-msgstr ""
+msgstr "Mus %d"
 
 #: core/sdl/sdl.cpp:843 core/windows/winmain.cpp:370
 msgid "Flycast Error"
@@ -2241,7 +2241,7 @@ msgstr "Dumpa texturer"
 
 #: core/ui/settings.cpp:112
 msgid "Dump all textures into data/texdump/<game id>"
-msgstr "Dumpa alla texturer till data/texdump/<game id>"
+msgstr "Dumpa alla texturer till data/texdump/<spel-id>"
 
 #: core/ui/settings.cpp:116
 msgid "Dump Replaced Textures"
@@ -2542,7 +2542,7 @@ msgstr "Multiboard-skärmar"
 
 #: core/ui/settings_network.cpp:229
 msgid "1 (Twin)"
-msgstr "1 (Tvilling)"
+msgstr "1 (Twin)"
 
 #: core/ui/settings_network.cpp:229
 msgid "One screen configuration (F355 Twin)"
@@ -2807,19 +2807,19 @@ msgstr "Bredskärmsfusk aktiverat"
 
 #: core/input/virtual_gamepad.h:30
 msgid "Virtual Gamepad"
-msgstr ""
+msgstr "Virtuell gamepad"
 
 #: core/input/mouse.h:78
 msgid "Left Button"
-msgstr ""
+msgstr "Vänsterknapp"
 
 #: core/input/mouse.h:80
 msgid "Right Button"
-msgstr ""
+msgstr "Högerknapp"
 
 #: core/input/mouse.h:82
 msgid "Middle Button"
-msgstr ""
+msgstr "Mittenknapp"
 
 #: core/input/mouse.h:114
 msgid "Touch Mouse"
@@ -2839,11 +2839,11 @@ msgstr ""
 
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:173
 msgid "Select"
-msgstr ""
+msgstr "Select"
 
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:175
 msgid "Mode"
-msgstr ""
+msgstr "Läge"
 
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:203
 msgid "Hat X"
@@ -2855,32 +2855,32 @@ msgstr ""
 
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:207
 msgid "Gas"
-msgstr ""
+msgstr "Gas"
 
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:209
 msgid "Brake"
-msgstr ""
+msgstr "Broms"
 
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:211
 msgid "Rudder"
-msgstr ""
+msgstr "Roder"
 
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:213
 msgid "Wheel"
-msgstr ""
+msgstr "Ratt"
 
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:215
 msgid "Throttle"
-msgstr ""
+msgstr "Hastighetsreglage"
 
 #: shell/android-studio/flycast/src/main/jni/src/Android.cpp:172
 msgid "Memory initialization failed"
-msgstr ""
+msgstr "Minnesinitiering misslyckades"
 
 #: shell/android-studio/flycast/src/main/jni/src/android_storage.h:192
 #, c-format
 msgid "Storage access failed: %s"
-msgstr ""
+msgstr "Lagringsåtkomst misslyckades: %s"
 
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:147
 msgid "MFi Gamepad"

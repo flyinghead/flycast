@@ -533,6 +533,7 @@ private:
 		u8 hwOriginAP = (hardware_bus << 6) | (msg.originAP & 0x3F);
 
 		std::ostringstream s;
+		s.imbue(std::locale::classic());
 		s << "X "; // 'X' prefix triggers flycast command parser
 		s.fill('0');
 		s << std::hex << std::uppercase
@@ -794,6 +795,7 @@ public:
 							}
 							uint32_t value;
 							std::stringstream ss;
+							ss.imbue(std::locale::classic());
 							ss << std::hex << number;
 							ss >> value;
 							if (idx < 2) {
@@ -874,6 +876,7 @@ public:
 	void sendPort(std::chrono::milliseconds timeout_ms) override {
 		// This will update the displayed port letter on the screen
 		std::ostringstream s;
+		s.imbue(std::locale::classic());
 		s << "XP "; // XP is flycast "set port" command
 		s << hardware_bus << " " << software_bus << "\n";
 		serial->sendCmd(s.str(), timeout_ms);

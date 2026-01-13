@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-12-13 17:19+0100\n"
-"PO-Revision-Date: 2025-12-13 16:25\n"
+"POT-Creation-Date: 2025-12-14 14:32+0100\n"
+"PO-Revision-Date: 2025-12-22 22:53\n"
 "Last-Translator: \n"
 "Language: de_DE\n"
 "MIME-Version: 1.0\n"
@@ -102,6 +102,155 @@ msgstr ""
 #: core/sdl/dreamconn.cpp:263
 #, c-format
 msgid "WARNING: DreamLink disconnected from port %c"
+msgstr ""
+
+#: core/sdl/dreampicoport.cpp:1209 core/ui/settings_controls.cpp:184
+msgid "DPad2 Up"
+msgstr ""
+
+#: core/sdl/dreampicoport.cpp:1210 core/ui/settings_controls.cpp:185
+msgid "DPad2 Down"
+msgstr ""
+
+#: core/sdl/dreampicoport.cpp:1211 core/ui/settings_controls.cpp:186
+msgid "DPad2 Left"
+msgstr ""
+
+#: core/sdl/dreampicoport.cpp:1212 core/ui/settings_controls.cpp:187
+msgid "DPad2 Right"
+msgstr ""
+
+#: core/sdl/dreampicoport.cpp:1215
+msgid "VMU1 A"
+msgstr ""
+
+#: core/sdl/dreampicoport.cpp:1216
+msgid "VMU1 B"
+msgstr ""
+
+#: core/sdl/dreampicoport.cpp:1217
+msgid "VMU1 Up"
+msgstr ""
+
+#: core/sdl/dreampicoport.cpp:1218
+msgid "VMU1 Down"
+msgstr ""
+
+#: core/sdl/dreampicoport.cpp:1219
+msgid "VMU1 Left"
+msgstr ""
+
+#: core/sdl/dreampicoport.cpp:1220
+msgid "VMU1 Right"
+msgstr ""
+
+#: core/sdl/dreamlink.cpp:161
+msgid "Inactive"
+msgstr ""
+
+#: core/sdl/dreamlink.cpp:163 core/ui/gui.cpp:752
+msgid "Connected"
+msgstr ""
+
+#: core/sdl/dreamlink.cpp:163 core/ui/gui.cpp:752
+msgid "Disconnected"
+msgstr ""
+
+#: core/sdl/sdl_gamepad.cpp:610
+#: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:135
+msgid "Back"
+msgstr ""
+
+#: core/sdl/sdl_gamepad.cpp:611
+msgid "Guide"
+msgstr ""
+
+#: core/sdl/sdl_gamepad.cpp:612 core/ui/settings_controls.cpp:205
+#: core/ui/settings_controls.cpp:255
+#: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:171
+msgid "Start"
+msgstr ""
+
+#: core/sdl/sdl_gamepad.cpp:617 core/sdl/sdl_gamepad.cpp:650
+#: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:137
+#: shell/apple/emulator-ios/emulator/ios_gamepad.h:351
+msgid "DPad Up"
+msgstr ""
+
+#: core/sdl/sdl_gamepad.cpp:618 core/sdl/sdl_gamepad.cpp:654
+#: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:139
+#: shell/apple/emulator-ios/emulator/ios_gamepad.h:353
+msgid "DPad Down"
+msgstr ""
+
+#: core/sdl/sdl_gamepad.cpp:619 core/sdl/sdl_gamepad.cpp:658
+#: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:141
+#: shell/apple/emulator-ios/emulator/ios_gamepad.h:355
+msgid "DPad Left"
+msgstr ""
+
+#: core/sdl/sdl_gamepad.cpp:620 core/sdl/sdl_gamepad.cpp:662
+#: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:143
+#: shell/apple/emulator-ios/emulator/ios_gamepad.h:357
+msgid "DPad Right"
+msgstr ""
+
+#: core/sdl/sdl_gamepad.cpp:621
+msgid "Misc"
+msgstr ""
+
+#: core/sdl/sdl_gamepad.cpp:622
+#: shell/apple/emulator-ios/emulator/ios_gamepad.h:379
+msgid "Paddle 1"
+msgstr ""
+
+#: core/sdl/sdl_gamepad.cpp:623
+#: shell/apple/emulator-ios/emulator/ios_gamepad.h:381
+msgid "Paddle 2"
+msgstr ""
+
+#: core/sdl/sdl_gamepad.cpp:624
+#: shell/apple/emulator-ios/emulator/ios_gamepad.h:383
+msgid "Paddle 3"
+msgstr ""
+
+#: core/sdl/sdl_gamepad.cpp:625
+#: shell/apple/emulator-ios/emulator/ios_gamepad.h:385
+msgid "Paddle 4"
+msgstr ""
+
+#: core/sdl/sdl_gamepad.cpp:626
+#: shell/apple/emulator-ios/emulator/ios_gamepad.h:387
+msgid "Touchpad"
+msgstr ""
+
+#: core/sdl/sdl_gamepad.cpp:685
+#: shell/apple/emulator-ios/emulator/ios_gamepad.h:405
+msgid "Left Stick X"
+msgstr ""
+
+#: core/sdl/sdl_gamepad.cpp:686
+#: shell/apple/emulator-ios/emulator/ios_gamepad.h:407
+msgid "Left Stick Y"
+msgstr ""
+
+#: core/sdl/sdl_gamepad.cpp:687
+#: shell/apple/emulator-ios/emulator/ios_gamepad.h:409
+msgid "Right Stick X"
+msgstr ""
+
+#: core/sdl/sdl_gamepad.cpp:688
+#: shell/apple/emulator-ios/emulator/ios_gamepad.h:411
+msgid "Right Stick Y"
+msgstr ""
+
+#: core/sdl/sdl_gamepad.cpp:757
+msgid "Default Mouse"
+msgstr ""
+
+#: core/sdl/sdl_gamepad.cpp:761
+#, c-format
+msgid "Mouse %d"
 msgstr ""
 
 #: core/sdl/sdl.cpp:843 core/windows/winmain.cpp:370
@@ -1272,7 +1421,7 @@ msgstr ""
 msgid "Keyboard"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:47
+#: core/ui/settings_controls.cpp:47 core/input/mouse.h:57
 msgid "Mouse"
 msgstr ""
 
@@ -1392,22 +1541,6 @@ msgstr ""
 msgid "Axis 3 Right"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:184
-msgid "DPad2 Up"
-msgstr ""
-
-#: core/ui/settings_controls.cpp:185
-msgid "DPad2 Down"
-msgstr ""
-
-#: core/ui/settings_controls.cpp:186
-msgid "DPad2 Left"
-msgstr ""
-
-#: core/ui/settings_controls.cpp:187
-msgid "DPad2 Right"
-msgstr ""
-
 #: core/ui/settings_controls.cpp:189 core/ui/settings_controls.cpp:237
 msgid "Buttons"
 msgstr ""
@@ -1417,10 +1550,16 @@ msgid "Triggers"
 msgstr ""
 
 #: core/ui/settings_controls.cpp:199 core/ui/settings_controls.cpp:249
+#: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:199
+#: shell/apple/emulator-ios/emulator/ios_gamepad.h:369
+#: shell/apple/emulator-ios/emulator/ios_gamepad.h:401
 msgid "Left Trigger"
 msgstr ""
 
 #: core/ui/settings_controls.cpp:200 core/ui/settings_controls.cpp:250
+#: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:201
+#: shell/apple/emulator-ios/emulator/ios_gamepad.h:371
+#: shell/apple/emulator-ios/emulator/ios_gamepad.h:403
 msgid "Right Trigger"
 msgstr ""
 
@@ -1436,10 +1575,6 @@ msgstr ""
 msgid "System Buttons"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:205 core/ui/settings_controls.cpp:255
-msgid "Start"
-msgstr ""
-
 #: core/ui/settings_controls.cpp:206 core/ui/settings_controls.cpp:256
 msgid "Reload"
 msgstr ""
@@ -1449,6 +1584,7 @@ msgid "Emulator"
 msgstr ""
 
 #: core/ui/settings_controls.cpp:209 core/ui/settings_controls.cpp:263
+#: shell/apple/emulator-ios/emulator/ios_gamepad.h:359
 msgid "Menu"
 msgstr ""
 
@@ -1491,11 +1627,11 @@ msgstr ""
 msgid "Button 3"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:241
+#: core/ui/settings_controls.cpp:241 core/input/mouse.h:84
 msgid "Button 4"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:242
+#: core/ui/settings_controls.cpp:242 core/input/mouse.h:86
 msgid "Button 5"
 msgstr ""
 
@@ -1844,14 +1980,6 @@ msgstr ""
 #: core/ui/gui.cpp:737
 msgid "Disconnect\n"
 "DreamLink"
-msgstr ""
-
-#: core/ui/gui.cpp:752
-msgid "Connected"
-msgstr ""
-
-#: core/ui/gui.cpp:752
-msgid "Disconnected"
 msgstr ""
 
 #: core/ui/gui.cpp:761
@@ -2672,12 +2800,97 @@ msgstr ""
 msgid "Widescreen cheat activated"
 msgstr ""
 
+#: core/input/virtual_gamepad.h:30
+msgid "Virtual Gamepad"
+msgstr ""
+
+#: core/input/mouse.h:78
+msgid "Left Button"
+msgstr ""
+
+#: core/input/mouse.h:80
+msgid "Right Button"
+msgstr ""
+
+#: core/input/mouse.h:82
+msgid "Middle Button"
+msgstr ""
+
+#: core/input/mouse.h:114
+msgid "Touch Mouse"
+msgstr ""
+
 #: core/wsi/switcher.cpp:91
 msgid "Cannot initialize the graphics API"
 msgstr ""
 
 #: shell/libretro/libretro.cpp:2130
 msgid "Cannot run without JIT"
+msgstr ""
+
+#: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:145
+msgid "DPad Center"
+msgstr ""
+
+#: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:173
+msgid "Select"
+msgstr ""
+
+#: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:175
+msgid "Mode"
+msgstr ""
+
+#: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:203
+msgid "Hat X"
+msgstr ""
+
+#: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:205
+msgid "Hat Y"
+msgstr ""
+
+#: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:207
+msgid "Gas"
+msgstr ""
+
+#: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:209
+msgid "Brake"
+msgstr ""
+
+#: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:211
+msgid "Rudder"
+msgstr ""
+
+#: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:213
+msgid "Wheel"
+msgstr ""
+
+#: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:215
+msgid "Throttle"
+msgstr ""
+
+#: shell/android-studio/flycast/src/main/jni/src/Android.cpp:172
+msgid "Memory initialization failed"
+msgstr ""
+
+#: shell/android-studio/flycast/src/main/jni/src/android_storage.h:192
+#, c-format
+msgid "Storage access failed: %s"
+msgstr ""
+
+#: shell/apple/emulator-ios/emulator/ios_gamepad.h:147
+msgid "MFi Gamepad"
+msgstr ""
+
+#: shell/apple/emulator-ios/emulator/ios_gamepad.h:361
+msgid "Options"
+msgstr ""
+
+#: shell/apple/emulator-ios/emulator/ios_gamepad.h:363
+msgid "Home"
+msgstr ""
+
+#: shell/apple/emulator-ios/emulator/ios_gamepad.h:377
+msgid "Share"
 msgstr ""
 
 #: shell/switch/switch_main.cpp:76

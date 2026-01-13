@@ -26,6 +26,7 @@
 #include "util/worker_thread.h"
 
 #include <sstream>
+#include <locale>
 #define STB_IMAGE_IMPLEMENTATION
 #define STBI_ONLY_JPEG
 #define STBI_ONLY_PNG
@@ -332,6 +333,7 @@ void CustomTexture::dumpTexture(BaseTextureCacheData* texture, int w, int h, voi
 		make_directory(base_dump_dir);
 
 	std::ostringstream path;
+	path.imbue(std::locale::classic());
 	path << base_dump_dir << std::hex << texture->texture_hash << ".png";
 
 	u16 *src = (u16 *)src_buffer;

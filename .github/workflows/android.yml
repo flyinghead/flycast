@@ -106,4 +106,4 @@ jobs:
         shell: bash
         env:
           SENTRY_TOKEN: ${{ secrets.SENTRY_TOKEN }}
-        if: ${{ env.SENTRY_TOKEN != '' }}
+        if: ${{ env.SENTRY_TOKEN != '' && github.event_name == 'push' }}

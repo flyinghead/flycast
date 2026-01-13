@@ -6,7 +6,7 @@ files:
     translation: /resources/i18n/%two_letters_code%.po
     languages_mapping:
       two_letters_code:
-        zh-CN: zh_CH
+        zh-CN: zh_CN
         zh-TW: zh_TW
         zh-HK: zh_HK
         en-GB: en_GB
@@ -15,7 +15,7 @@ files:
     translation: /shell/android-studio/flycast/src/main/res/values-%two_letters_code%/strings.xml
     languages_mapping:
       two_letters_code:
-        zh-CN: zh-rCH
+        zh-CN: zh-rCN
         zh-TW: zh-rTW
         zh-HK: zh-rHK
         en-GB: en-rGB

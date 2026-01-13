@@ -29,7 +29,10 @@
 #include "serialize.h"
 #include "cfg/option.h"
 #include "stdclass.h"
+#include "v42.h"
 #include <cassert>
+#include <map>
+#include <deque>
 
 #define MODEM_COUNTRY_RES 0
 #define MODEM_COUNTRY_JAP 1
@@ -38,14 +41,16 @@
 #define MODEM_MAKER_SEGA 0
 #define MODEM_MAKER_ROCKWELL 1
 
-#define MODEM_DEVICE_TYPE_336K 0
+#define MODEM_TYPE_336K 0
+// according to XDP
+#define MODEM_TYPE_WIRELESS 2
 
 #define LOG(...) DEBUG_LOG(MODEM, __VA_ARGS__)
 
 const static u32 MODEM_ID[2] =
 {
-	MODEM_COUNTRY_RES,
-	(MODEM_MAKER_ROCKWELL<<4) | (MODEM_DEVICE_TYPE_336K),
+	MODEM_COUNTRY_USA,
+	(MODEM_MAKER_ROCKWELL << 4) | MODEM_TYPE_336K,
 };
 
 static modemreg_t modem_regs;
@@ -77,10 +82,16 @@ enum ConnectState
 	HANDSHAKING,
 	PRE_CONNECTED,
 	CONNECTED,
+	NEGO_COMPLETE
 };
 static ConnectState connect_state = DISCONNECTED;
+static float txFifoSize = 0.f;
+static std::deque<u8> rxFifo;
+static int cyclesPerByte;
+static float txRxRatio = 1.f;
 
 static void schedule_callback(int ms);
+static const char *getDSPRamLabel(u32 addr);
 
 static void update_interrupt()
 {
@@ -114,20 +125,214 @@ static u32 get_masked_status(u32 reg)
 				modem_regs.reg1f.NSIA = 1;			\
 		}											\
 	}												\
-} while (false);
+} while (false)
 
 static void ControllerTestEnd();
 static void DSPTestStart();
 static void DSPTestEnd();
 
 static u64 last_dial_time;
-static bool data_sent;
 
 #ifndef NDEBUG
 static u64 last_comm_stats;
 static int sent_bytes;
 static int recvd_bytes;
 #endif
+
+using namespace modem;
+
+class NetIn : public InStream
+{
+public:
+	int read() override {
+		return net::modbba::readModem();
+	}
+	int available() override {
+		return net::modbba::modemAvailable();
+	}
+};
+
+class NetOut : public OutStream
+{
+public:
+	void write(u8 v) override {
+		net::modbba::writeModem(v);
+	}
+};
+
+static NetIn netIn;
+static NetOut netOut;
+static InStream *curInput = &netIn;
+static OutStream *curOutput = &netOut;
+
+static V42Protocol v42Proto { netIn, netOut };
+
+static bool v8bis;
+static V8bisProtocol v8bisProto { netIn, netOut };
+
+static void updateRxFifoStatus()
+{
+	// The rx fifo timeout set in dspram[0x32c]:2-4 doesn't seem to be used
+	if (!rxFifo.empty())
+	{
+		modem_regs.RBUFFER = rxFifo.front();
+		modem_regs.reg1e.RDBF = (u8)(rxFifo.size() >= rxFifoTrigger[(dspram[0x32c] >> 6) & 3]);
+		if (modem_regs.reg04.FIFOEN)
+			SET_STATUS_BIT(0x0c, modem_regs.reg0c.RXFNE, 1);
+		SET_STATUS_BIT(0x01, modem_regs.reg01.RXHF, rxFifo.size() >= 8);
+	}
+	else
+	{
+		modem_regs.reg1e.RDBF = 0;
+		if (modem_regs.reg04.FIFOEN)
+			SET_STATUS_BIT(0x0c, modem_regs.reg0c.RXFNE, 0);
+		SET_STATUS_BIT(0x01, modem_regs.reg01.RXHF, 0);
+	}
+}
+
+static void configureStreams()
+{
+	if (v8bis) {
+		curInput = &v8bisProto;
+		curOutput = &v8bisProto;
+	}
+	else if (modem_regs.reg08.ASYN == 0) {
+		curInput = &v42Proto;
+		curOutput = &v42Proto;
+	}
+	else {
+		curInput = &netIn;
+		curOutput = &netOut;
+	}
+}
+
+static bool setModemSpeedFromCONF()
+{
+	static constexpr int v90Speeds[] = {
+		0, 28800, 29333, 30667, 32000, 33333, 34667, 36000, 37333, 38667, 40000, 41333,
+		42667, 44000, 45333, 46667, 48000, 49333, 50667, 52000, 53333, 54667, 56000
+	};
+	static constexpr int v34Speeds[] = {
+		0, 2400, 4800, 7200, 9600, 12000, 14400, 16800, 19200, 21600, 24000, 26400, 28800, 31200, 33600
+	};
+	modem_regs.reg0e.SPEED = 0;
+	int speed;
+	int rxSpeed = 0;
+	switch (modem_regs.CONF)
+	{
+	default:
+		if (modem_regs.CONF >= 0xe0 && modem_regs.CONF <= 0xf6)
+		{
+			// V.90
+			rxSpeed = v90Speeds[modem_regs.CONF - 0xe0];
+			if (rxSpeed == 0) {
+				speed = 0;
+			}
+			else
+			{
+				dspram[0x2e4] = modem_regs.CONF - 0xe0;
+				speed = 33600;
+				modem_regs.reg0e.SPEED = 0x10;
+				dspram[0x2e5] = 0xd;
+			}
+		}
+		else if (modem_regs.CONF >= 0x90 && modem_regs.CONF <= 0x9d)
+		{
+			// K56flex
+			if (modem_regs.CONF == 0x90) {
+				speed = 0;
+			}
+			else
+			{
+				rxSpeed = 30000 + (modem_regs.CONF - 0x90) * 2000;
+				speed = 33600;
+				modem_regs.reg0e.SPEED = 0x10;
+			}
+		}
+		else if (modem_regs.CONF >= 0xc0 && modem_regs.CONF <= 0xce)
+		{
+			// V.34
+			speed = v34Speeds[modem_regs.CONF - 0xc0];
+			if (speed != 0)
+				modem_regs.reg0e.SPEED = modem_regs.CONF - 0xc0 + 2;
+			dspram[0x2e4] = modem_regs.CONF - 0xc0;
+			dspram[0x2e5] = dspram[0x2e4];
+		}
+		else {
+			speed = 0;
+		}
+		break;
+
+	// V.33
+	case 0x31: speed = 14400; break;
+	case 0x32: speed = 12000; break;
+	case 0x34: speed = 9600; break;
+	case 0x38: speed = 7200; break;
+	// V.32 [bis]
+	case 0x76: speed = 14400; break;
+	case 0x72: speed = 12000; break;
+	case 0x74: speed = 9600; break;
+	case 0x75: speed = 9600; break;
+	case 0x78: speed = 7200; break;
+	case 0x71: speed = 4800; break;
+	case 0x70: speed = 0; break;
+	// V.17
+	case 0xb1: speed = 14400; break;
+	case 0xb2: speed = 12000; break;
+	case 0xb4: speed = 9600; break;
+	case 0xb8: speed = 7200; break;
+	// V.29
+	case 0x14: speed = 9600; break;
+	case 0x12: speed = 7200; break;
+	case 0x11: speed = 4800; break;
+	// V.27 ter, V.22 bis, V.22, V.21
+	case 0x02: speed = 4800; break;
+	case 0x01: speed = 2400; break;
+	case 0x84: speed = 2400; break;
+	case 0x82: speed = 1200; break;
+	case 0x52: speed = 1200; break;
+	case 0x51: speed = 600; break;
+	case 0xa0: speed = 300; break;
+	case 0xa8: speed = 300; break;
+	// Bell, V.23
+	case 0x23: speed = 4800; break;
+	case 0x62: speed = 1200; break;
+	case 0x60: speed = 300; break;
+	case 0xa4: speed = 1200; rxSpeed = 75; break;
+	case 0xa1: speed = 75; rxSpeed = 1200; break;
+	}
+
+	if (rxSpeed == 0)
+		rxSpeed = speed;
+	if (speed == 0)
+	{
+		modem_regs.reg0e.SPEED = 0;
+		cyclesPerByte = SH4_MAIN_CLOCK * 8 / 300;
+		txRxRatio = 1.f;
+	}
+	else
+	{
+		if (modem_regs.reg0e.SPEED == 0)
+		{
+			switch (speed)
+			{
+			case 14400: modem_regs.reg0e.SPEED = 7; break;
+			case 12000: modem_regs.reg0e.SPEED = 6; break;
+			case 9600: modem_regs.reg0e.SPEED = 5; break;
+			case 7200: modem_regs.reg0e.SPEED = 8; break;
+			case 4800: modem_regs.reg0e.SPEED = 4; break;
+			case 2400: modem_regs.reg0e.SPEED = 3; break;
+			case 1200: modem_regs.reg0e.SPEED = 2; break;
+			case 600: modem_regs.reg0e.SPEED = 1; break;
+			default: modem_regs.reg0e.SPEED = 0; break;
+			}
+		}
+		cyclesPerByte = SH4_MAIN_CLOCK * 8 / speed;
+		txRxRatio = (float)speed / rxSpeed;
+	}
+	NOTICE_LOG(MODEM, "MODEM Connected %s %d/%d bps", modem_regs.reg08.ASYN ? "ASYNC" : "SYNC", rxSpeed, speed);
+	return speed != 0;
+}
 
 static int modem_sched_func(int tag, int cycles, int jitter, void *arg)
 {
@@ -164,7 +369,7 @@ static int modem_sched_func(int tag, int cycles, int jitter, void *arg)
 		switch (connect_state)
 		{
 		case DIALING:
-			if (last_dial_time != 0 && sh4_sched_now64() - last_dial_time >= (u64)(SH4_MAIN_CLOCK + jitter))
+			if (last_dial_time != 0 && sh4_sched_now64() - last_dial_time >= SH4_MAIN_CLOCK)
 			{
 				LOG("Switching to RINGING state");
 				connect_state = RINGING;
@@ -179,10 +384,11 @@ static int modem_sched_func(int tag, int cycles, int jitter, void *arg)
 			}
 			break;
 		case RINGING:
+		case NEGO_COMPLETE:
 			last_dial_time = 0;
-			LOG("\t\t *** RINGING STATE ***");
+			LOG("\t\t *** %s STATE ***", connect_state == RINGING ? "RINGING" : "NEGO COMPLETE");
 			modem_regs.reg1f.NEWS = 1;
-			if (!modem_regs.reg09.DATA)
+			if (!modem_regs.reg09.DATA && connect_state == RINGING)
 			{
 				SET_STATUS_BIT(0x0f, modem_regs.reg0f.RI, 1);
 				SET_STATUS_BIT(0x0b, modem_regs.reg0b.ATV25, 1);
@@ -190,8 +396,7 @@ static int modem_sched_func(int tag, int cycles, int jitter, void *arg)
 			break;
 		case HANDSHAKING:
 			LOG("\t\t *** HANDSHAKING STATE ***");
-			if (modem_regs.reg12 == 0xAA)
-			{
+			if (modem_regs.CONF == 0xAA) {
 				// V8 AUTO mode
 				dspram[0x302] |= 1 << 3;				// ANSam detected
 			}
@@ -205,44 +410,69 @@ static int modem_sched_func(int tag, int cycles, int jitter, void *arg)
 			break;
 
 		case PRE_CONNECTED:
-			INFO_LOG(MODEM, "MODEM Connected");
 			if (modem_regs.reg03.RLSDE)
 				SET_STATUS_BIT(0x0f, modem_regs.reg0f.RLSD, 1);
-			if (modem_regs.reg12 == 0xAA)
+			bool validConfig;
+			if (modem_regs.CONF == 0xAA)
 			{
 				// V8 AUTO mode
 				dspram[0x302] |= 1 << 4;				// protocol octet received
 				dspram[0x302] = (dspram[0x302] & 0x1f) | (dspram[0x304] & 0xe0);	// Received Call Function
 				dspram[0x301] |= 1 << 4;				// JM detected
-				dspram[0x303] |= 0xE0;					// Received protocol bits (?)
+				dspram[0x303] |= 0xE1;					// Received protocol bits (?), Received GSTN Octet
 				dspram[0x2e3] = 5;						// Symbol rate 3429
-				dspram[0x2e4] = 0xe;					// V.34 Receiver Speed 33.6
-				dspram[0x2e5] = 0xe;					// V.34 Transmitter Speed 33.6
+				// set the negotiated speed to the max configured by the game
+				if ((dspram[0x6a3] & 1) == 1 && (dspram[0x6a2] & 0x20) == 0x20)
+				{
+					// V.90
+					modem_regs.CONF = 0xE0 | (dspram[0x6a2] & 0x1F);
+					dspram[0x6c1] = 0xff;		// V90 Server DPCM Transmit Data Rate Mask
+					dspram[0x6c2] = 0xff;
+					dspram[0x6c3] = 0x3f;
+				}
+				else {
+					modem_regs.CONF = dspram[0x309];
+				}
+				validConfig = setModemSpeedFromCONF();
 				dspram[0x239] = 12;						// RTD 0 @ 3429 sym rate
-				if (modem_regs.reg08.ASYN)
-				{
-					modem_regs.reg12 = 0xce;		// CONF V34 - K56flex
-					modem_regs.reg0e.SPEED = 0x10;	// 33.6k
-				}
-				else
-				{
-					// Force the driver to ASYN=1 so it sends raw data
-					modem_regs.reg12 = 0xa1;		// CONF V23 75 TX/1200 RX
-					modem_regs.reg0e.SPEED = 0x02;	// 1.2k
-				}
 				if (modem_regs.reg1f.NSIE)
 				{
 					// CONF
 					if (dspram[regs_int_mask_addr[0x12]] & (1 << 7))
 						modem_regs.reg1f.NSIA = 1;
-					// SPEED
-					if (dspram[regs_int_mask_addr[0x0e]] & 0x1f)
-						modem_regs.reg1f.NSIA = 1;
 				}
+			}
+			else {
+				validConfig = setModemSpeedFromCONF();
+			}
+			if (modem_regs.reg1f.NSIE)
+			{
+				// SPEED
+				if (dspram[regs_int_mask_addr[0x0e]] & 0x1f)
+					modem_regs.reg1f.NSIA = 1;
+			}
+			if (modem_regs.reg15.AUTO == 1) {
 				modem_regs.reg09.DATA = 1;
 				modem_regs.reg15.AUTO = 0;
 			}
-			modem_regs.reg14 = 0x00;			// ABCODE: no error
+			if (!validConfig)
+			{
+				modem_regs.ABCODE = 1;	// (fake) FED turned off while waiting to get into round trip delay estimate (RTDE)
+				connect_state = DISCONNECTED;
+				// TODO proper failure
+			}
+			else
+			{
+				modem_regs.ABCODE = 0;	// no error
+				SET_STATUS_BIT(0x0f, modem_regs.reg0f.DSR, 1);
+				if (modem_regs.reg02.v0.RTSDE)
+					SET_STATUS_BIT(0x0f, modem_regs.reg0f.RTSDT, 1);
+
+				// Energy detected. Required for games to detect the connection
+				SET_STATUS_BIT(0x0f, modem_regs.reg0f.FED, 1);
+				net::modbba::start();
+				connect_state = CONNECTED;
+			}
 			if (modem_regs.reg1f.NSIE)
 			{
 				// ABCODE
@@ -250,21 +480,13 @@ static int modem_sched_func(int tag, int cycles, int jitter, void *arg)
 					modem_regs.reg1f.NSIA = 1;
 			}
 			modem_regs.reg1f.NEWS = 1;
-			SET_STATUS_BIT(0x0f, modem_regs.reg0f.DSR, 1);
-			if (modem_regs.reg02.v0.RTSDE)
-				SET_STATUS_BIT(0x0f, modem_regs.reg0f.RTSDT, 1);
-
-			// Energy detected. Required for games to detect the connection
-			SET_STATUS_BIT(0x0f, modem_regs.reg0f.FED, 1);
 
 			// V.34 Remote Modem Data Rate Capability
 			dspram[0x208] = 0xff;	// 2.4 - 19.2 kpbs supported
 			dspram[0x209] = 0xbf;	// 21.6 - 33.6 kpbs supported, asymmetric supported
 
-			net::modbba::start();
-			connect_state = CONNECTED;
 			callback_cycles = SH4_MAIN_CLOCK / 1000000 * 238;	// 238 us
-			data_sent = false;
+			v42Proto.reset();
 
 			break;
 
@@ -278,32 +500,23 @@ static int modem_sched_func(int tag, int cycles, int jitter, void *arg)
 					LOG("modem_regs %02x == %02x", i, modem_regs.ptr[i]);
 			}
 #endif
-			// This value is critical. Setting it too low will cause some sockets to stall.
-			// Check Sonic Adventure 2 and Samba de Amigo (PAL) integrated browsers.
-			// 143 us/bytes corresponds to 56K
-			// 57600 @ 10b: 174
-			// 38400 @ 10b: 260
-			callback_cycles = SH4_MAIN_CLOCK / 1000000 * 143;
-			modem_regs.reg1e.TDBE = 1;
+			callback_cycles = cyclesPerByte;
+			txFifoSize = std::max(txFifoSize - txRxRatio, 0.f);
+			modem_regs.reg1e.TDBE = txFifoSize == 0.f;
 
-			// Let WinCE send data first to avoid choking it
-			if (!modem_regs.reg1e.RDBF && data_sent)
+			if (v8bis && v8bisProto.completed()) {
+				connect_state = NEGO_COMPLETE;
+				v8bis = false;
+				configureStreams();
+			}
+			if (rxFifo.size() < 16)
 			{
-				int c = net::modbba::readModem();
-				if (c >= 0)
-				{
-					//LOG("pppd received %02x", c);
-#ifndef NDEBUG
-					recvd_bytes++;
-#endif
-					modem_regs.reg00 = c & 0xFF;
-					modem_regs.reg1e.RDBF = 1;
-					if (modem_regs.reg04.FIFOEN)
-						SET_STATUS_BIT(0x0c, modem_regs.reg0c.RXFNE, 1);
-					SET_STATUS_BIT(0x01, modem_regs.reg01.RXHF, 1);
+				int c = curInput->read();
+				if (c >= 0) {
+					rxFifo.push_back(c);
+					updateRxFifoStatus();
 				}
 			}
-
 			break;
 
 		default:
@@ -350,7 +563,7 @@ static void NormalDefaultRegs()
 	memset(&modem_regs, 0, sizeof(modem_regs));
 	memcpy(dspram, por_dspram, sizeof(dspram));
 	modem_regs.reg05.CEQ = 1;
-	modem_regs.reg12 = 0x76;	// CONF: V.32 bis TCM 14400
+	modem_regs.CONF = 0x76;	// CONF: V.32 bis TCM 14400
 	modem_regs.reg09.DATA = 1;
 	modem_regs.reg09.DTMF = 1;
 	modem_regs.reg15.HWRWK = 1;
@@ -363,6 +576,10 @@ static void NormalDefaultRegs()
 	modem_regs.reg1e.TDBE = 1;
 	connect_state = DISCONNECTED;
 	last_dial_time = 0;
+	txFifoSize = 0.f;
+	rxFifo.clear();
+	v8bis = false;
+	configureStreams();
 }
 static void DSPTestEnd()
 {
@@ -453,7 +670,7 @@ static void check_start_handshake()
 {
 	if (modem_regs.reg09.DTR
 			&& (modem_regs.reg09.DATA || modem_regs.reg15.AUTO)
-			&& connect_state == RINGING)
+			&& (connect_state == RINGING || connect_state == NEGO_COMPLETE))
 	{
 		LOG("DTR asserted. starting handshaking");
 		connect_state = HANDSHAKING;
@@ -475,11 +692,12 @@ static void ModemNormalWrite(u32 reg, u32 data)
 
 	switch(reg)
 	{
-	case 0x02:
+	case 0x02:	// TDE SQDIS S511/DCDEN CDEN RTSDE V54TE V54AE V54PE / CODBITS
 		modem_regs.reg0f.RTSDT = modem_regs.reg02.v0.RTSDE && connect_state == CONNECTED;
+		LOG("reg02 = %x", modem_regs.ptr[reg]);
 		break;
 
-	case 0x06:
+	case 0x06:	// EXOS CCRTN HDLC PEN STB WDSZ/DECBITS
 		LOG("PEN = %d", modem_regs.reg06.PEN);
 		if (modem_regs.reg06.PEN)
 			WARN_LOG(MODEM, "Parity not supported");
@@ -487,16 +705,38 @@ static void ModemNormalWrite(u32 reg, u32 data)
 			WARN_LOG(MODEM, "HDLC mode not supported");
 		break;
 
-	case 0x08:
-		LOG("TPDM = %d ASYN = %d", modem_regs.reg08.TPDM, modem_regs.reg08.ASYN);
+	case 0x08:	// ASYN TPDM V21S V54T V54A V54P RTRN RTS
+		LOG("TPDM = %d ASYN = %d V54T,A,P = %d,%d,%d RTS = %d", modem_regs.reg08.TPDM, modem_regs.reg08.ASYN,
+				modem_regs.reg08.V54T, modem_regs.reg08.V54A, modem_regs.reg08.V54P, modem_regs.reg08.RTS);
+		if ((old ^ data) & 0x80)
+			// ASYN changed
+			configureStreams();
 		break;
 
-	case 0x09:
+	case 0x09:	// NV25 CC DTMF ORG LL DATA RRTSE DTR
+		LOG("reg09 = %x", modem_regs.ptr[reg]);
 		check_start_handshake();	// DTR and DATA
+		if (connect_state == CONNECTED)
+		{
+			if (modem_regs.reg09.DTR) {
+				LOG("DTR asserted");
+				SET_STATUS_BIT(0x0f, modem_regs.reg0f.DSR, 1);
+			}
+			else
+			{
+				LOG("DTR reset");
+				SET_STATUS_BIT(0x0f, modem_regs.reg0f.DSR, 0);
+				SET_STATUS_BIT(0x0f, modem_regs.reg0f.RLSD, 0);
+			}
+		}
 		break;
 
 	case 0x10:	// TBUFFER
-		if (module_download)
+		if (v8bis && modem_regs.reg08.RTS == 0) {
+			// emit V8 bis tone
+			v8bisProto.emitTone((u8)data);
+		}
+		else if (module_download)
 		{
 			download_crc = (download_crc << 1) + ((download_crc & 0x80) >> 7) + (data & 0xFF);
 		}
@@ -507,26 +747,37 @@ static void ModemNormalWrite(u32 reg, u32 data)
 			{
 				INFO_LOG(MODEM, "MODEM Dialing");
 				connect_state = DIALING;
+				modem_regs.SECRXB = 0;
 			}
 			schedule_callback(100);
 		}
 		else if (connect_state == CONNECTED && modem_regs.reg08.RTS)
 		{
 			//LOG("ModemNormalWrite : TBUFFER = %X", data);
-			data_sent = true;
 #ifndef NDEBUG
 			sent_bytes++;
 #endif
-			net::modbba::writeModem(data);
+			curOutput->write(data);
+
 			modem_regs.reg1e.TDBE = 0;
+			txFifoSize += 1.f;
+			if (modem_regs.reg04.FIFOEN) {
+				SET_STATUS_BIT(0x0d, modem_regs.reg0d.TXFNF, (u8)(txFifoSize <= 15.f));
+				SET_STATUS_BIT(0x01, modem_regs.reg01.TXHF, (u8)(txFifoSize >= 8.f));
+			}
+			else {
+				SET_STATUS_BIT(0x0d, modem_regs.reg0d.TXFNF, 0);
+				SET_STATUS_BIT(0x01, modem_regs.reg01.TXHF, 1);
+			}
 		}
 		break;
 
-	case 0x11:
+	case 0x11:	// BRKS PARSL TXV RXV V23HDX TEOF TXP
 		LOG("PARSL = %d", modem_regs.reg11.PARSL);
 		break;
 
 	case 0x14:	// ABCODE
+		LOG("ABCODE = %x", modem_regs.ptr[reg]);
 		if (data == 0x4f || data == 0x5f)
 		{
 			reg1b_save = modem_regs.ptr[0x1b];
@@ -538,8 +789,8 @@ static void ModemNormalWrite(u32 reg, u32 data)
 		else if (data == 0 && module_download)
 		{
 			// If module download is in progress, this signals the end of it
-			modem_regs.reg17 = 0xFF;
-			modem_regs.reg16 = download_crc;
+			modem_regs.SECTXB = 0xFF;
+			modem_regs.SECRXB = download_crc;
 			// Restore reg 1b
 			modem_regs.ptr[0x1b] = reg1b_save;
 			module_download = false;
@@ -547,7 +798,8 @@ static void ModemNormalWrite(u32 reg, u32 data)
 		}
 		break;
 
-	case 0x15:
+	case 0x15:	// SLEEP STOP RDWK HWRWK AUTO RREN EXL3 EARC
+		LOG("reg15 = %x", modem_regs.ptr[reg]);
 		check_start_handshake();	// AUTO
 		break;
 
@@ -559,7 +811,8 @@ static void ModemNormalWrite(u32 reg, u32 data)
 		word_dspram_write = true;
 		break;
 
-	case 0x1a:
+	case 0x1a:	// SFRES RIEN RION DMAE SCOBF SCIBE SECEN
+		LOG("reg1a = %x", modem_regs.ptr[reg]);
 		if (connect_state == CONNECTED && modem_regs.reg1a.SCIBE)
 			WARN_LOG(MODEM, "Unexpected state: connected and SCIBE==1");
 		break;
@@ -568,7 +821,7 @@ static void ModemNormalWrite(u32 reg, u32 data)
 	case 0x1C:	// MEADDL
 		break;
 
-	case 0x1D:	// MEADDH
+	case 0x1D:	// MEACC MEADDHB12 MEMW MEMCR MEADDH
 		if (modem_regs.reg1c_1d.MEMW && !(old & (1 << 5)))
 		{
 			word_dspram_write = false;
@@ -580,32 +833,42 @@ static void ModemNormalWrite(u32 reg, u32 data)
 			u32 dspram_addr = modem_regs.reg1c_1d.MEMADD_l | (modem_regs.reg1c_1d.MEMADD_h << 8);
 			if (modem_regs.reg1c_1d.MEMW)
 			{
-				LOG("DSP mem Write%s address %08x = %x", word_dspram_write ? " (w)" : "", dspram_addr, modem_regs.reg18_19);
+				LOG("DSPRam Write<%d> %03x (%s) = %x", word_dspram_write ? 16 : 8,
+						dspram_addr, getDSPRamLabel(dspram_addr),
+						modem_regs.MEDA & (word_dspram_write ? 0xffff : 0xff));
 				if (word_dspram_write)
 				{
 					if (dspram_addr & 1)
 					{
-						dspram[dspram_addr] = modem_regs.reg18_19 & 0xFF;
-						dspram[dspram_addr + 1] = (modem_regs.reg18_19 >> 8) & 0xFF;
+						dspram[dspram_addr] = modem_regs.MEDA & 0xFF;
+						dspram[dspram_addr + 1] = (modem_regs.MEDA >> 8) & 0xFF;
 					}
-					else
-						*(u16*)&dspram[dspram_addr] = modem_regs.reg18_19;
+					else {
+						*(u16*)&dspram[dspram_addr] = modem_regs.MEDA;
+					}
 				}
-				else
-					dspram[dspram_addr] = modem_regs.reg18_19 & 0xFF;
+				else {
+					dspram[dspram_addr] = modem_regs.MEDA & 0xFF;
+				}
+				if ((dspram_addr == 0x26B || dspram_addr == 0x26c) && (modem_regs.MEDA & 0xFF) != 0)
+					dspram[0x26F] = 1; // Saved Filtered EQM
 			}
 			else
 			{
 				if (dspram_addr & 1)
-					modem_regs.reg18_19 = dspram[dspram_addr] | (dspram[dspram_addr + 1] << 8);
+					modem_regs.MEDA = dspram[dspram_addr] | (dspram[dspram_addr + 1] << 8);
 				else
-					modem_regs.reg18_19 = *(u16*)&dspram[dspram_addr];
-				LOG("DSP mem Read address %08x == %x", dspram_addr, modem_regs.reg18_19 );
+					modem_regs.MEDA = *(u16*)&dspram[dspram_addr];
+				LOG("DSPRam Read<16> %03x (%s) == %x", dspram_addr, getDSPRamLabel(dspram_addr), modem_regs.MEDA);
 			}
 		}
 		break;
-
-	case 0x1F:
+	case 0x1E:	// TDBIA RDBIA TDBIE TDBE RDBIE RDBF
+		//LOG("TDBIE=%d RDBIE=%d", modem_regs.reg1e.TDBIE, modem_regs.reg1e.RDBIE);
+		break;
+	case 0x1F:	// NSIA NCIA NSIE NEWS NCIE NEWC
+		if (old != modem_regs.ptr[reg])
+			LOG("reg1f = %x", modem_regs.ptr[reg]);
 		if (!modem_regs.reg1f.NCIE)
 			modem_regs.reg1f.NCIA = 0;
 		if (modem_regs.reg1f.NEWC)
@@ -624,7 +887,16 @@ static void ModemNormalWrite(u32 reg, u32 data)
 				modem_regs.reg1f.NEWC = 0;	// accept the settings
 				if (modem_regs.reg1f.NCIE)
 					modem_regs.reg1f.NCIA = 1;
-				LOG("NEWC CONF=%x", modem_regs.reg12);
+				LOG("NEWC CONF=%x", modem_regs.CONF);
+			}
+			if (modem_regs.CONF == 0x81 && !v8bis)
+			{
+				// V.8 bis detector
+				v8bis = (dspram[0x439] & 1) == 1;
+				if (v8bis) {
+					v8bisProto.reset();
+					configureStreams();
+				}
 			}
 		}
 		// Don't allow NEWS to be set if 0
@@ -637,7 +909,7 @@ static void ModemNormalWrite(u32 reg, u32 data)
 		break;
 
 	default:
-		//LOG("ModemNormalWrite : undef %03X = %X", reg, data);
+		LOG("ModemNormalWrite: reg %02x = %x", reg, data);
 		break;
 	}
 	update_interrupt();
@@ -661,28 +933,47 @@ u32 ModemReadMem_A0_006(u32 addr, u32 size)
 				//if (reg==0xF)
 				{
 					SET_STATUS_BIT(0x0f, modem_regs.reg0f.CTS, modem_regs.reg08.RTS && connect_state == CONNECTED);
-					SET_STATUS_BIT(0x0b, modem_regs.reg0b.TONEA, connect_state == DISCONNECTED);
-					SET_STATUS_BIT(0x0b, modem_regs.reg0b.TONEB, connect_state == DISCONNECTED);
-					SET_STATUS_BIT(0x0b, modem_regs.reg0b.TONEC, connect_state == DISCONNECTED);
-					// FIXME This should be reset if transmit buffer is full
-					if (modem_regs.reg04.FIFOEN || module_download)
-						SET_STATUS_BIT(0x0d, modem_regs.reg0d.TXFNF, 1);
+					SET_STATUS_BIT(0x0b, modem_regs.reg0b.TONEA, connect_state == DISCONNECTED || connect_state == NEGO_COMPLETE);
+					SET_STATUS_BIT(0x0b, modem_regs.reg0b.TONEB, connect_state == DISCONNECTED || connect_state == NEGO_COMPLETE);
+					SET_STATUS_BIT(0x0b, modem_regs.reg0b.TONEC, connect_state == DISCONNECTED || connect_state == NEGO_COMPLETE);
+					if (modem_regs.reg04.FIFOEN || module_download) {
+						SET_STATUS_BIT(0x0d, modem_regs.reg0d.TXFNF, (u8)(txFifoSize <= 15.f));
+						SET_STATUS_BIT(0x01, modem_regs.reg01.TXHF, (u8)(txFifoSize >= 8.f));
+					}
+					else {
+						SET_STATUS_BIT(0x0d, modem_regs.reg0d.TXFNF, (u8)(txFifoSize == 0.f));
+						SET_STATUS_BIT(0x01, modem_regs.reg01.TXHF, (u8)(txFifoSize >= 1.f));
+					}
 				}
 				u8 data = modem_regs.ptr[reg];
 				if (reg == 0x00)	// RBUFFER
 				{
 					//LOG("Read RBUFFER = %X", data);
-					modem_regs.reg1e.RDBF = 0;
-					SET_STATUS_BIT(0x0c, modem_regs.reg0c.RXFNE, 0);
-					SET_STATUS_BIT(0x01, modem_regs.reg01.RXHF, 0);
-					update_interrupt();
+					if (!rxFifo.empty())
+					{
+						rxFifo.pop_front();
+						updateRxFifoStatus();
+						update_interrupt();
+					}
 				}
-				else if (reg == 0x16 || reg == 0x17)
+				else if (reg == 0x16)
 				{
-					//LOG("SECTXB / SECTXB being read %02x", reg)
+					if (v8bis)
+					{
+						if (connect_state == CONNECTED)
+							data = 0;
+						else
+							data = v8bisProto.detectTone();
+						modem_regs.SECRXB = data;
+					}
+					LOG("Read SECRXB == %x", data);
 				}
-				//else
-				//	LOG("Read Reg %03x = %x", reg, data);
+				else if (reg == 0x17) {
+					LOG("Read SECTXB == %x", data);
+				}
+				else {
+					//LOG("Read reg%02x == %x", reg, data);
+				}
 
 				return data;
 			}
@@ -746,7 +1037,7 @@ void ModemSerialize(Serializer& ser)
 	ser << state;
 	ser << connect_state;
 	ser << last_dial_time;
-	ser << data_sent;
+	ser << false;	// data_sent TODO get rid of this in the next savestate version
 }
 void ModemDeserialize(Deserializer& deser)
 {
@@ -759,6 +1050,158 @@ void ModemDeserialize(Deserializer& deser)
 		deser >> state;
 		deser >> connect_state;
 		deser >> last_dial_time;
+		bool data_sent;
 		deser >> data_sent;
 	}
+	rxFifo.clear();
+	v42Proto.reset();
+	v8bis = false;
+	v8bisProto.reset();
+	configureStreams();
+}
+
+static const std::map<u32, const char *> dspRamDesc
+{
+	{ 0x26b,	"EQM Baud Interval" },
+	{ 0x26C,	"Num EQM Samples" },
+	{ 0x26F,	"Saved Filtered EQM" },
+	{ 0x208,	"V.34 Remote Mode Data Rate Capability" },
+	{ 0x209,	"V.34 Remote Mode Data Rate Capability 2" },
+	{ 0x302,	"V.8 Status Bits 2" },
+	{ 0x303,	"V.8 Status Bits 3" },
+	{ 0x2e5,	"K56flex/V.34 Transmitter Speed" },
+	{ 0x2e4,	"K56flex/V.34 Receiver Speed" },
+	{ 0x239,	"Round Trip Far Echo Delay" },
+	{ 0x2e3,	"V.34 Symbol Rate Value" },
+	{ 0x247,	"NEWS Masking Register for 01" },
+	{ 0x246,	"NEWS Masking Register for 0A" },
+	{ 0x245,	"NEWS Masking Register for 0B" },
+	{ 0x244,	"NEWS Masking Register for 0C" },
+	{ 0x243,	"NEWS Masking Register for 0D" },
+	{ 0x242,	"NEWS Masking Register for 0E" },
+	{ 0x241,	"NEWS Masking Register for 0F" },
+	{ 0x089,	"NEWS Masking Register for CONF" },
+	{ 0x38a,	"NEWS Masking Register for ABCODE" },
+	{ 0x370,	"NEWS Masking Register for SECRXB" },
+	{ 0x371,	"NEWS Masking Register for SECTXB" },
+	{ 0x27d,	"NEWS Masking Register for 1A" },
+	{ 0x27c,	"NEWS Masking Register for 1B" },
+	{ 0x32c,	"Receive FIFO Trigger Level" },
+	{ 0x701,	"Receive FIFO Extension Enable" },
+	{ 0x702,	"Transmit FIFO Extension Enable" },
+	{ 0x309,	"V.34 Full-Duplex configuration" },
+	{ 0x312,	"Modulation mode V23 full" },
+	{ 0x313,	"Modulation mode V23 half" },
+	{ 0x382,	"V.34 Data Rate Mask" },
+	{ 0x383,	"V.34 Data Rate Mask 2" },
+
+	{ 0x21e,	"Minimum Period of Valid Ring Signal" },
+	{ 0x21f,	"Maximum Period of Valid Ring Signal" },
+	{ 0xaa0,	"TONEA LPGAIN" },
+	{ 0xaa1,	"TONEA Biquad1 A3" },
+	{ 0xaa2,	"TONEA Biquad1 A2" },
+	{ 0xaa3,	"TONEA Biquad1 A1" },
+	{ 0xaa4,	"TONEA Biquad1 B2" },
+	{ 0xaa5,	"TONEA Biquad1 B1" },
+	{ 0xaa6,	"TONEB LPGAIN" },
+	{ 0xaa7,	"TONEB Biquad1 A3" },
+	{ 0xaa8,	"TONEB Biquad1 A2" },
+	{ 0xaa9,	"TONEB Biquad1 A1" },
+	{ 0xaaa,	"TONEB Biquad1 B2" },
+	{ 0xaab,	"TONEB Biquad1 B1" },
+	{ 0xaac,	"TONEC LPGAIN" },
+	{ 0xaad,	"TONEC Biquad1 A3" },
+	{ 0xaae,	"TONEC Biquad1 A2" },
+	{ 0xaaf,	"TONEC Biquad1 A1" },
+	{ 0xab0,	"TONEC Biquad1 B2" },
+	{ 0xab1,	"TONEC Biquad1 B1" },
+	{ 0xab2,	"PreFilter Biquad1 A3" },
+	{ 0xab3,	"PreFilter Biquad1 A2" },
+	{ 0xab4,	"PreFilter Biquad1 A1" },
+	{ 0xab5,	"PreFilter Biquad1 B2" },
+	{ 0xab6,	"PreFilter Biquad1 B1" },
+	{ 0xab8,	"TONEA THRESHU" },
+	{ 0xab9,	"TONEB THRESHU" },
+	{ 0xaba,	"TONEC THRESHU" },
+
+	{ 0xba0,	"TONEA LPFBK" },
+	{ 0xba1,	"TONEA Biquad2 A3" },
+	{ 0xba2,	"TONEA Biquad2 A2" },
+	{ 0xba3,	"TONEA Biquad2 A1" },
+	{ 0xba4,	"TONEA Biquad2 B2" },
+	{ 0xba5,	"TONEA Biquad2 B1" },
+	{ 0xba6,	"TONEB LPFBK" },
+	{ 0xba7,	"TONEB Biquad2 A3" },
+	{ 0xba8,	"TONEB Biquad2 A2" },
+	{ 0xba9,	"TONEB Biquad2 A1" },
+	{ 0xbaa,	"TONEB Biquad2 B2" },
+	{ 0xbab,	"TONEB Biquad2 B1" },
+	{ 0xbac,	"TONEC LPFBK" },
+	{ 0xbad,	"TONEC Biquad2 A3" },
+	{ 0xbae,	"TONEC Biquad2 A2" },
+	{ 0xbaf,	"TONEC Biquad2 A1" },
+	{ 0xbb0,	"TONEC Biquad2 B2" },
+	{ 0xbb1,	"TONEC Biquad2 B1" },
+	{ 0xbb2,	"PreFilter Biquad2 A3" },
+	{ 0xbb3,	"PreFilter Biquad2 A2" },
+	{ 0xbb4,	"PreFilter Biquad2 A1" },
+	{ 0xbb5,	"PreFilter Biquad2 B2" },
+	{ 0xbb6,	"PreFilter Biquad2 B1" },
+	{ 0xbb8,	"TONEA THRESHL" },
+	{ 0xbb9,	"TONEB THRESHL" },
+	{ 0xbba,	"TONEC THRESHL" },
+
+	{ 0x29c,	"DTMF Low Band Power Level" },
+	{ 0x29b,	"DTMF Low Band Power Level 2" },
+	{ 0x29e,	"DTMF High Band Power Level" },
+	{ 0x29d,	"DTMF High Band Power Level 2" },
+	{ 0x218,	"DTMF Tone Duration 2" },
+	{ 0x2db,	"DTMF Tone Duration" },
+	{ 0x219,	"DTMF Interdigit Delay 2" },
+	{ 0x2dc,	"DTMF Interdigit Delay" },
+	{ 0x304,	"V.8 Control Register 1" },
+	{ 0x305,	"V.8 Control Register 2" },
+	{ 0x306,	"V.8 Control Register 3" },
+	{ 0x307,	"V.8 Control Register 4" },
+	{ 0x308,	"V.8 Control Register 5" },
+	{ 0x13f,	"V.34 Asymmetric Data Rates Enable / No Automode to FSK" },
+	{ 0x100,	"V.34 PREDIS and TLDDIS" },
+	{ 0x105,	"V.34 Spectral Parameters Control" },
+	{ 0x101,	"V.34 Baud Rate Mask (BRM)" },
+	{ 0x2c1,	"V.32/V.32 bis R1 Mask" },
+	{ 0x2c0,	"V.32/V.32 bis R1 Mask 2" },
+	{ 0x2c3,	"V.32/V.32 bis R2 Mask" },
+	{ 0x2c2,	"V.32/V.32 bis R2 Mask 2" },
+	{ 0x2c5,	"V.32 bis R4 Mask" },
+	{ 0x2c4,	"V.32 bis R4 Mask 2" },
+	{ 0x2c7,	"V.32 bis R5 Mask" },
+	{ 0x2c6,	"V.32 bis R5 Mask 2" },
+	{ 0x6a2,	"Desired V.90 Receive Speed" },
+	{ 0x6a3,	"V.90 Host Control" },
+	{ 0x3db,	"Transmitter Output Level Gain (G) - All Modes" },
+	{ 0x3da,	"Transmitter Output Level Gain (G) - All Modes 2" },
+	{ 0xb57,	"Transmitter Output Level Gain (G) - FSK Modes" },
+	{ 0x3a5,	"ARA-in-RAM Enable" },
+	{ 0x10d,	"V.21/V.23 CTS Mark Qualify / RLSD Overwrite Control / Extended RTH Control" },
+	{ 0x6c1,	"V.90 Server DPCM Tx Data Rate Mask 1" },
+	{ 0x6c2,	"V.90 Server DPCM Tx Data Rate Mask 2" },
+	{ 0x6c3,	"V.90 Server DPCM Tx Data Rate Mask 3" },
+	{ 0x09f,	"Available modulation types?" },
+	{ 0x439,	"V.8bis Detector / Host AudioSpan" },
+	{ 0x3e1,	"Voice path control bits" },
+	{ 0x20c,	"Eye Quality Monitor" },
+	{ 0x810,	"V.90/K56 Eye Quality Monitor" },
+	{ 0x202,	"RTS-CTS Delay" },
+	{ 0x203,	"RTS-CTS Delay 2" },
+	{ 0x270,	"RLSD Drop Out Timer" },
+	{ 0x271,	"RLSD Drop Out Timer 2" },
+};
+
+static const char *getDSPRamLabel(u32 addr)
+{
+	auto it = dspRamDesc.find(addr);
+	if (it == dspRamDesc.end())
+		return "?";
+	else
+		return it->second;
 }

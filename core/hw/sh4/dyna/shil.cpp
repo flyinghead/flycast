@@ -5,6 +5,7 @@
 #include "ngen.h"
 #include "ssa.h"
 #include <sstream>
+#include <locale>
 
 void AnalyseBlock(RuntimeBlockInfo* blk)
 {
@@ -65,6 +66,7 @@ u32* GetRegPtr(Sh4Context& ctx, u32 reg)
 std::string name_reg(Sh4RegType reg)
 {
 	std::ostringstream ss;
+	ss.imbue(std::locale::classic());
 
 	if (reg >= reg_fr_0 && reg <= reg_xf_15)
 		ss << "f" << (reg - reg_fr_0);
@@ -127,6 +129,7 @@ std::string name_reg(Sh4RegType reg)
 static std::string dissasm_param(const shil_param& prm, bool comma)
 {
 	std::ostringstream ss;
+	ss.imbue(std::locale::classic());
 
 	if (!prm.is_null() && comma)
 			ss << ", ";
@@ -171,6 +174,7 @@ static std::string dissasm_param(const shil_param& prm, bool comma)
 std::string shil_opcode::dissasm() const
 {
 	std::ostringstream ss;
+	ss.imbue(std::locale::classic());
 	ss << shilop_str[op] << " " << dissasm_param(rd,false) << dissasm_param(rd2,true) << " <- " << dissasm_param(rs1,false) << dissasm_param(rs2,true) << dissasm_param(rs3,true);
 	return ss.str();
 }

@@ -285,6 +285,7 @@ std::pair<std::string, bool> Achievements::getCachedImage(const char *url)
 	else
 	{
 		std::ostringstream stream;
+		stream.imbue(std::locale::classic());
 		stream << std::hex << hash << ".png";
 		return std::make_pair(cachePath + stream.str(), false);
 	}
@@ -305,6 +306,7 @@ std::string Achievements::getOrDownloadImage(const char *url)
 	if (!http::success(rc))
 		return {};
 	std::ostringstream stream;
+	stream.imbue(std::locale::classic());
 	stream << std::hex << hash << ".png";
 	std::string localPath = cachePath + stream.str();
 	FILE *f = nowide::fopen(localPath.c_str(), "wb");

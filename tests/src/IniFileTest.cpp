@@ -120,10 +120,11 @@ TEST_F(IniFileTest, transient)
 	ASSERT_FALSE(ini.isTransient("s", "e"));
 	ini.set("s", "e", 43, true);
 	ASSERT_TRUE(ini.isTransient("s", "e"));
+	// this is pretty much a nop
+	ini.set("s", "e", 42);
+	// transient values hide non-transient ones
+	ASSERT_TRUE(ini.isTransient("s", "e"));
 	ASSERT_EQ(43, ini.getInt("s", "e"));
-	ini.set("s", "e", 44);
-	ASSERT_FALSE(ini.isTransient("s", "e"));
-	ASSERT_EQ(44, ini.getInt("s", "e"));
 }
 
 TEST_F(IniFileTest, errors)

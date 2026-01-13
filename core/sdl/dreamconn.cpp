@@ -28,6 +28,7 @@
 #include <SDL.h>
 #include <iomanip>
 #include <sstream>
+#include <locale>
 #include <mutex>
 
 #if defined(__linux__) || (defined(__APPLE__) && defined(TARGET_OS_MAC))
@@ -37,6 +38,7 @@
 static asio::error_code sendMsg(const MapleMsg& msg, asio::ip::tcp::iostream& stream)
 {
 	std::ostringstream s;
+	s.imbue(std::locale::classic());
 	s.fill('0');
 	s << std::hex << std::uppercase
 		<< std::setw(2) << (u32)msg.command << " "

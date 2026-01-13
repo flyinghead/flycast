@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="OK">OK</string>
-    <string name="storage_error">Storage Error</string>
-    <string name="folder_permissions">Can\'t get permissions to access this folder.\nPlease select a different one.</string>
-    <string name="file_manager_not_found">File Manager not found</string>
-    <string name="no_file_manager_android10">No appropriate file manager was found on your device.\nPlease install a Storage Access Framework compatible file manager</string>
-    <string name="no_file_manager_android9">No appropriate file manager was found on your device.\nPlease install a file manager or try to disable \'Use SAF File Picker\' in the general settings</string>
-    <string name="select_an_export_folder">Select an export folder</string>
-    <string name="exporting_home_folder">Exporting home folder</string>
-    <string name="select_an_import_folder">Select an import folder</string>
-    <string name="importing_home_folder">Importing home folder</string>
-    <string name="flycast_error">Flycast Error</string>
-    <string name="init_failed_message">Initialization failed. Please try again or reinstall.\n\nError: </string>
-    <string name="exit">Exit</string>
-    <string name="copying">Copying</string>
+    <string name="storage_error">ストレージエラー</string>
+    <string name="folder_permissions">このフォルダーにアクセスする権限を取得できません。\n別のフォルダーを選択してください。</string>
+    <string name="file_manager_not_found">ファイルマネージャーが見つかりません</string>
+    <string name="no_file_manager_android10">デバイスに適切なファイルマネージャーが見つかりませんでした。\nStorage Access Frameworkと互換性のあるファイルマネージャーをインストールしてください</string>
+    <string name="no_file_manager_android9">デバイスに適切なファイルマネージャーが見つかりませんでした。\nファイルマネージャーをインストールするか、一般設定で「SAFファイルピッカーを使用」を無効にしてください</string>
+    <string name="select_an_export_folder">エクスポートフォルダーを選択</string>
+    <string name="exporting_home_folder">ホームフォルダーをエクスポート中</string>
+    <string name="select_an_import_folder">インポートフォルダーを選択</string>
+    <string name="importing_home_folder">ホームフォルダーをインポート中</string>
+    <string name="flycast_error">Flycastエラー</string>
+    <string name="init_failed_message">初期化に失敗しました。もう一度試すか、再インストールしてください。\n\nエラー: </string>
+    <string name="exit">終了</string>
+    <string name="copying">コピー中</string>
 </resources>

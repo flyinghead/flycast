@@ -66,7 +66,7 @@ static void addCheat()
 			ImGui::Unindent(uiScaled(10));
 		}
 
-		ImGui::BeginChild(ImGui::GetID("input"), ImVec2(0, 0), ImGuiChildFlags_Border, ImGuiWindowFlags_NavFlattened);
+		ImGui::BeginChild(ImGui::GetID("input"), ImVec2(0, 0), ImGuiChildFlags_Borders, ImGuiChildFlags_NavFlattened);
 		{
 			InputText(T("Name"), cheatName, sizeof(cheatName));
 			InputTextMultiline(T("Code"), cheatCode, sizeof(cheatCode), ImVec2(0, ImGui::GetTextLineHeight() * 16));
@@ -131,7 +131,7 @@ void gui_cheats()
 			return true;
 		}, true, "cht");
 
-	ImGui::BeginChild(ImGui::GetID("cheats"), ImVec2(0, 0), ImGuiChildFlags_Border, ImGuiWindowFlags_DragScrolling | ImGuiWindowFlags_NavFlattened);
+	ImGui::BeginChild(ImGui::GetID("cheats"), ImVec2(0, 0), ImGuiChildFlags_Borders, ImGuiWindowFlags_DragScrolling | ImGuiChildFlags_NavFlattened);
     {
 		if (cheatManager.cheatCount() == 0)
 			ImGui::Text("%s", T("(No cheat loaded)"));

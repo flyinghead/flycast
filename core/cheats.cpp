@@ -570,44 +570,9 @@ found_cheats:
 			cheats.emplace_back(Cheat::Type::runNextIfEq, "bypass auth ifeq", true, 32, 0x00800524, 0x2fd62fe6, true);
 			cheats.emplace_back(Cheat::Type::setValue, "bypass dricas auth", true, 32, 0x00800524, 0xe000000b, true);
 		}
-		else if (gameId == "T40214N") {		// The Next Tetris (US)
-			cheats.emplace_back(Cheat::Type::runNextIfEq, "bypass speed ifeq", true, 32, 0x0016d5d4, 0x2f862fe6, true);
-			cheats.emplace_back(Cheat::Type::setValue, "bypass speed check", true, 32, 0x0016d5d4, 0xe001000b, true);
-		}
-		else if (gameId == "MK-51065") {	// Bomberman Online
-			cheats.emplace_back(Cheat::Type::runNextIfEq, "modem automode ifeq", true, 32, 0x00196da8, 0x2c302c30, true);	// 0,0,
-			cheats.emplace_back(Cheat::Type::setValue, "modem automode set", true, 32, 0x00196da8, 0x2c302c31, true);		// 1,0,
-		}
-		else if (gameId == "MK-51102") {	// Outtrigger (US)
-			cheats.emplace_back(Cheat::Type::runNextIfEq, "modem automode ifeq", true, 32, 0x001bdb48, 0x2c302c30, true);	// 0,0,
-			cheats.emplace_back(Cheat::Type::setValue, "modem automode set", true, 32, 0x001bdb48, 0x2c302c31, true);		// 1,0,
-		}
 		else if (gameId == "HDR-0118") {	// Outtrigger (JP)
 			cheats.emplace_back(Cheat::Type::runNextIfEq, "bypass auth ifeq", true, 32, 0x00139f54, 0x2fd62fe6, true);
 			cheats.emplace_back(Cheat::Type::setValue, "bypass dricas auth", true, 32, 0x00139f54, 0xe000000b, true);
-		}
-		else if (gameId == "T13306M")		// Mobile Suit Gundam: Federation vs. Zeon
-		{
-			cheats.emplace_back(Cheat::Type::runNextIfEq, "modem rxspeed ifeq", true, 32, 0x0016e710, 0x3434312c, true);	// ",144"
-			cheats.emplace_back(Cheat::Type::setValue, "modem rxspeed set", true, 32, 0x0016e710, 0x2020202c, true);		// ",   "
-			cheats.emplace_back(Cheat::Type::runNextIfEq, "modem txspeed ifeq", true, 32, 0x0016e71c, 0x3434312c, true);	// ",144"
-			cheats.emplace_back(Cheat::Type::setValue, "modem txspeed set", true, 32, 0x0016e71c, 0x2020202c, true);		// ",   "
-		}
-		else if (gameId == "MK-51162")		// Propeller Arena
-		{
-			// 0c1f56f0: ,0,28800,28800,28800,28800\\r"\n
-			// 0c1f5770: ,0,28800,28800,28800,28800\\r"\n
-			for (u32 addr = 0x001f56f0; addr <= 0x001f5770; addr += 0x80)
-			{
-				cheats.emplace_back(Cheat::Type::runNextIfEq, "modem automode1 ifeq", true, 32, addr + 0x00, 0x322c302c, true);	// ",0,2"
-				cheats.emplace_back(Cheat::Type::setValue, "modem automode1 set", true, 32,     addr + 0x00, 0x202c312c, true);	// ",1, "
-				cheats.emplace_back(Cheat::Type::runNextIfEq, "modem automode2 ifeq", true, 32, addr + 0x04, 0x30303838, true);	// "8800"
-				cheats.emplace_back(Cheat::Type::setValue, "modem automode2 set", true, 32,     addr + 0x04, 0x30202020, true);	// "   0"
-				cheats.emplace_back(Cheat::Type::runNextIfEq, "modem automode3 ifeq", true, 32, addr + 0x0c, 0x322c3030, true);	// "00,2"
-				cheats.emplace_back(Cheat::Type::setValue, "modem automode3 set", true, 32,     addr + 0x0c, 0x202c3030, true);	// "00, "
-				cheats.emplace_back(Cheat::Type::runNextIfEq, "modem automode4 ifeq", true, 32, addr + 0x10, 0x30303838, true);	// "8800"
-				cheats.emplace_back(Cheat::Type::setValue, "modem automode4 set", true, 32,     addr + 0x10, 0x30202020, true);	// "   0"
-			}
 		}
 		else if (gameId == "HDR-0113")	// Power Smash
 		{
