@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-12-14 14:32+0100\n"
-"PO-Revision-Date: 2025-12-24 21:49\n"
+"PO-Revision-Date: 2026-01-12 01:16\n"
 "Last-Translator: \n"
 "Language: ja_JP\n"
 "MIME-Version: 1.0\n"
@@ -46,7 +46,7 @@ msgstr "実績 %s が解除されました！"
 #: core/achievements/achievements.cpp:622
 #, c-format
 msgid "Leaderboard %s started"
-msgstr "リーダーボード %s が開始しました"
+msgstr "リーダーボード %s が開始されました"
 
 #: core/achievements/achievements.cpp:629
 #, c-format
@@ -56,17 +56,17 @@ msgstr "リーダーボード %s が失敗しました"
 #: core/achievements/achievements.cpp:636
 #, c-format
 msgid "Leaderboard %s submitted"
-msgstr "リーダーボード %s が提出されました"
+msgstr "リーダーボード %s を送信しました"
 
 #: core/achievements/achievements.cpp:661
 #, c-format
 msgid "Mastered %s"
-msgstr "マスター済み %s"
+msgstr "%s をマスターしました"
 
 #: core/achievements/achievements.cpp:661
 #, c-format
 msgid "Completed %s"
-msgstr "%sを完了しました"
+msgstr "%s をコンプリートしました"
 
 #: core/achievements/achievements.cpp:664
 #, c-format
@@ -89,7 +89,7 @@ msgstr "ハードコアモード"
 
 #: core/achievements/achievements.cpp:948
 msgid "Hardcore mode disabled"
-msgstr "ハードコア モードは無効です"
+msgstr "ハードコアモードは無効です"
 
 #: core/achievements/achievements.cpp:948
 msgid "Unrecognized media inserted"
@@ -506,7 +506,7 @@ msgstr "キャリブレーション完了"
 
 #: core/hw/naomi/midiffb.cpp:201
 msgid "Calibrating the wheel. Keep it centered."
-msgstr "ホイールを調整中です。中心にしてください。"
+msgstr "ハンドルを調整中です。中央で保持してください。"
 
 #: core/hw/naomi/gdcartridge.cpp:524
 #, c-format
@@ -597,7 +597,7 @@ msgstr "カウントまたは宛先アドレスがありません"
 
 #: core/cheats.cpp:1019
 msgid "Master codes aren't supported"
-msgstr "マスター コードはサポートされていません"
+msgstr "マスターコードはサポートされていません"
 
 #: core/cheats.cpp:1049 core/cheats.cpp:1078
 msgid "Unsupported conditional code"
@@ -709,11 +709,11 @@ msgstr "ゲーム中にVMUのLCD画面を表示する"
 
 #: core/ui/settings_video.cpp:220
 msgid "Full Framebuffer Emulation"
-msgstr "完全なフレームバッファエミュレーション"
+msgstr "フルフレームバッファエミュレーション"
 
 #: core/ui/settings_video.cpp:221
 msgid "Fully accurate VRAM framebuffer emulation. Helps games that directly access the framebuffer for special effects. Very slow and incompatible with upscaling and wide screen."
-msgstr "完全に正確なVRAMフレームバッファエミュレーション。特殊効果のためにフレームバッファに直接アクセスするゲームに役立ちます。非常に遅く、アップスケーリングやワイドスクリーンには対応していません。"
+msgstr "VRAMのフレームバッファを完全に再現します。特殊効果のためにフレームバッファに直接アクセスするゲームに役立ちます。非常に遅く、アップスケーリングやワイドスクリーンには対応していません。"
 
 #: core/ui/settings_video.cpp:225
 msgid "Load Custom Textures"
@@ -721,7 +721,7 @@ msgstr "カスタムテクスチャをロード"
 
 #: core/ui/settings_video.cpp:226
 msgid "Load custom/high-res textures from data/textures/<game id>"
-msgstr "data/textures/<ゲーム id>からカスタム/高解像度テクスチャをロードします"
+msgstr "data/textures/<game id> からカスタム/高解像度テクスチャをロードします"
 
 #: core/ui/settings_video.cpp:230
 msgid "Preload Custom Textures"
@@ -742,8 +742,8 @@ msgstr "ワイドスクリーン"
 #: core/ui/settings_video.cpp:240
 msgid "Draw geometry outside of the normal 4:3 aspect ratio. May produce graphical glitches in the revealed areas.\n"
 "Aspect Fit and shows the full 16:9 content."
-msgstr "通常の4:3 アスペクト比の外側にジオメトリを描画します。表示されている領域にグラフィックの不具合が発生する可能性があります。\n"
-"アスペクトフィットで、16:9の全コンテンツを表示します。"
+msgstr "通常の4:3アスペクト比の外側にあるジオメトリを描画します。表示されている領域にグラフィックの不具合が発生する可能性があります。\n"
+"アスペクト比を維持して、16:9のコンテンツを全て表示します。"
 
 #: core/ui/settings_video.cpp:245
 msgid "Super Widescreen"
@@ -753,7 +753,7 @@ msgstr "スーパーワイドスクリーン"
 msgid "Use the full width of the screen or window when its aspect ratio is greater than 16:9.\n"
 "Aspect Fill and remove black bars. Not compatible with integer scaling."
 msgstr "アスペクト比が16:9より大きい場合は、画面またはウィンドウの最大幅を使用します。\n"
-"アスペクト塗りつぶしと黒いバーを削除します。整数のスケーリングと互換性がありません。"
+"アスペクト比を維持して画面を満たし黒帯を除去します。整数のスケーリングと互換性がありません。"
 
 #: core/ui/settings_video.cpp:249
 msgid "Widescreen Game Cheats"
@@ -894,7 +894,7 @@ msgstr "アップスケーリング時のテクスチャの滲みを軽減しま
 
 #: core/ui/settings_video.cpp:332
 msgid "Native Depth Interpolation"
-msgstr "ネイティブ深度補完"
+msgstr "ネイティブ深度補間"
 
 #: core/ui/settings_video.cpp:333
 msgid "Helps with texture corruption and depth issues on AMD GPUs. Can also help Intel GPUs in some cases."
@@ -951,7 +951,7 @@ msgstr "FPSカウンターを表示"
 
 #: core/ui/settings_video.cpp:387
 msgid "Show on-screen frame/sec counter"
-msgstr "FPSカウンターを表示する"
+msgstr "フレームレート(秒間フレーム数)を画面に表示します"
 
 #: core/ui/settings_video.cpp:392
 msgid "Video Routing (Syphon)"
@@ -1001,7 +1001,7 @@ msgstr "追加"
 
 #: core/ui/settings_general.cpp:161 core/ui/gui.cpp:909
 msgid "Select a Content Folder"
-msgstr "コンテンツフォルダを選択"
+msgstr "コンテンツフォルダーを選択"
 
 #: core/ui/settings_general.cpp:188
 msgid "Japanese"
@@ -1368,7 +1368,7 @@ msgstr "ボックスアートフォルダーを選択"
 
 #: core/ui/settings_general.cpp:451
 msgid "Folder containing box art images (png/jpg). If empty, Flycast will use the default Home Folder/boxart for downloads and generated art"
-msgstr "ボックスアート画像(png/jpg)を含むフォルダー。空白の場合、Flycastはダウンロードと生成されたアートに対してデフォルトのホームフォルダー (data/boxart) を使用します"
+msgstr "ボックスアート画像(png/jpg)を含むフォルダー。空白の場合、Flycastはダウンロードと生成されたアートに対してデフォルトホームフォルダーの data/boxart を使用します"
 
 #: core/ui/settings_general.cpp:454
 msgid "Controller Mapping Folders"
@@ -1380,7 +1380,7 @@ msgstr "コントローラーマッピングフォルダーを選択"
 
 #: core/ui/settings_general.cpp:455
 msgid "Folders containing controller mapping files (.cfg). The emulator also looks in Home Folder/mappings. Per-game mappings are suffixed with _<gameId>.cfg"
-msgstr "コントローラーのマッピングファイル (.cfg)を含むフォルダー. エミュレーターはホームフォルダー/mappingsも参照します. ゲーム毎のマッピングは _<gameId>.cfg でサフィックスされます"
+msgstr "コントローラーのマッピングファイル (.cfg)を含むフォルダー。エミュレーターはホームフォルダー/mappingsも参照します. ゲーム毎のマッピングは _<gameId>.cfg でサフィックスされます"
 
 #: core/ui/settings_general.cpp:458
 msgid "Cheat Folders"
@@ -1929,11 +1929,11 @@ msgstr "閉じる"
 #: core/ui/gui_achievements.cpp:296
 #, c-format
 msgid "You have unlocked %d of %d achievements and %d of %d points."
-msgstr "あなたは %d / %d の実績と %d / %d ポイントを解除しました。"
+msgstr "%d / %d の実績を解除、 %d / %d ポイントを獲得。"
 
 #: core/ui/gui_achievements.cpp:324
 msgid "Locked"
-msgstr "ロックされています"
+msgstr "未解除"
 
 #: core/ui/gui_achievements.cpp:324
 msgid "Active Challenges"
@@ -1945,7 +1945,7 @@ msgstr "あと少しです"
 
 #: core/ui/gui_achievements.cpp:326
 msgid "Unlocked"
-msgstr "解除"
+msgstr "解除済み"
 
 #: core/ui/gui_achievements.cpp:326
 msgid "Recently Unlocked"
@@ -2241,7 +2241,7 @@ msgstr "テクスチャをダンプする"
 
 #: core/ui/settings.cpp:112
 msgid "Dump all textures into data/texdump/<game id>"
-msgstr "すべてのテクスチャーを data/texdump/<game id> にダンプします"
+msgstr "すべてのテクスチャを data/texdump/<game id> にダンプします"
 
 #: core/ui/settings.cpp:116
 msgid "Dump Replaced Textures"

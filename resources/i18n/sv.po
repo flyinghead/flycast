@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-12-14 14:32+0100\n"
-"PO-Revision-Date: 2025-12-23 14:46\n"
+"PO-Revision-Date: 2026-01-11 19:39\n"
 "Last-Translator: \n"
 "Language: sv_SE\n"
 "MIME-Version: 1.0\n"
@@ -163,7 +163,7 @@ msgstr "Bakåt"
 
 #: core/sdl/sdl_gamepad.cpp:611
 msgid "Guide"
-msgstr ""
+msgstr "Guide"
 
 #: core/sdl/sdl_gamepad.cpp:612 core/ui/settings_controls.cpp:205
 #: core/ui/settings_controls.cpp:255
@@ -175,25 +175,25 @@ msgstr "Starta"
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:137
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:351
 msgid "DPad Up"
-msgstr ""
+msgstr "DPad upp"
 
 #: core/sdl/sdl_gamepad.cpp:618 core/sdl/sdl_gamepad.cpp:654
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:139
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:353
 msgid "DPad Down"
-msgstr ""
+msgstr "DPad ner"
 
 #: core/sdl/sdl_gamepad.cpp:619 core/sdl/sdl_gamepad.cpp:658
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:141
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:355
 msgid "DPad Left"
-msgstr ""
+msgstr "DPad vänster"
 
 #: core/sdl/sdl_gamepad.cpp:620 core/sdl/sdl_gamepad.cpp:662
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:143
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:357
 msgid "DPad Right"
-msgstr ""
+msgstr "DPad höger"
 
 #: core/sdl/sdl_gamepad.cpp:621
 msgid "Misc"
@@ -2888,15 +2888,15 @@ msgstr ""
 
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:361
 msgid "Options"
-msgstr ""
+msgstr "Alternativ"
 
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:363
 msgid "Home"
-msgstr ""
+msgstr "Hem"
 
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:377
 msgid "Share"
-msgstr ""
+msgstr "Dela"
 
 #: shell/switch/switch_main.cpp:76
 msgid "Not supported on Switch"
