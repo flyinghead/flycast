@@ -498,7 +498,7 @@ if(NOT LIBRETRO)
 
 			# DreamPicoPort-API
 			option(DREAMPICOPORT_ADD_LIBUSB "Add internal libusb library" OFF) # Already included above, when applicable
-			add_subdirectory(core/deps/DreamPicoPort-API)
+			add_subdirectory(core/deps/DreamPicoPort-API EXCLUDE_FROM_ALL)
 			target_link_libraries(${PROJECT_NAME} PRIVATE dream_pico_port_api)
 		endif()
 
