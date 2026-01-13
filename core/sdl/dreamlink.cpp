@@ -87,6 +87,7 @@ bool DreamLinkGamepad::isDreamcastController(int deviceIndex)
 			guid_str[10], guid_str[11], guid_str[8], guid_str[9],
 			guid_str[18], guid_str[19], guid_str[16], guid_str[17]);
 
+#ifdef USE_DREAMCONN
 	// DreamConn VID:4457 PID:4443
 	// Dreamcast Controller USB VID:1209 PID:2f07
     const char* pid_vid_guid_str = guid_str + 8;
@@ -96,6 +97,7 @@ bool DreamLinkGamepad::isDreamcastController(int deviceIndex)
 		NOTICE_LOG(INPUT, "Dreamcast controller found!");
 		return true;
 	}
+#endif
 	return false;
 }
 
@@ -107,14 +109,16 @@ DreamLinkGamepad::DreamLinkGamepad(int maple_port, int joystick_idx, SDL_Joystic
 	SDL_JoystickGetGUIDString(SDL_JoystickGetDeviceGUID(joystick_idx), guid_str, sizeof(guid_str));
 	device_guid = guid_str;
 
+#ifdef USE_DREAMCONN
 	// DreamConn VID:4457 PID:4443
 	// Dreamcast Controller USB VID:1209 PID:2f07
 	if (memcmp(DreamConn::VID_PID_GUID, guid_str + 8, 16) == 0)
 	{
-		bool isForPhysicalController = true;
-		dreamlink = DreamConn::create_shared(maple_port, isForPhysicalController);
+		dreamlink = DreamConn::create_shared(maple_port);
 	}
-	else if (memcmp(DreamPicoPort::VID_PID_GUID, guid_str + 8, 16) == 0)
+	else
+#endif
+	if (memcmp(DreamPicoPort::VID_PID_GUID, guid_str + 8, 16) == 0)
 	{
 		dreamlink = DreamPicoPort::create_shared(maple_port, joystick_idx, sdl_joystick);
 	}
@@ -142,7 +146,7 @@ DreamLinkGamepad::DreamLinkGamepad(int maple_port, int joystick_idx, SDL_Joystic
 DreamLinkGamepad::~DreamLinkGamepad() {
 	int port = maple_port();
 	if (dreamlink && DreamLink::isValidPort(port)) {
-		tearDownDreamLinkDevices(dreamlink);
+		tearDownDreamLinkDevices(dreamlink.get());
 		dreamlink.reset();
 		DreamLink::activeDreamLinks[port] = nullptr;
 

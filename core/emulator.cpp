@@ -156,7 +156,9 @@ static void loadSpecialSettings()
 				// Silent Scope (JP)
 				|| prod_id == "T9513M"
 				// Pro Pinball - Trilogy (EU)
-				|| prod_id == "T30701D 50")
+				|| prod_id == "T30701D 50"
+				// Jikkyo Powerful Pro Yakyu
+				|| prod_id == "T9507M")
 		{
 			INFO_LOG(BOOT, "Enabling RTT Copy to VRAM for game %s", prod_id.c_str());
 			config::RenderToTextureBuffer.override(true);
@@ -888,7 +890,10 @@ void Emulator::stepRange(u32 from, u32 to)
 void Emulator::loadstate(Deserializer& deser)
 {
 	if (!custom_texture.preloaded())
+	{
 		custom_texture.terminate();
+		custom_texture.init();
+	}
 #if FEAT_AREC == DYNAREC_JIT
 	aica::arm::recompiler::flush();
 #endif
@@ -970,7 +975,10 @@ void Emulator::start()
 {
 	if (state == Running)
 		return;
-	verify(state == Loaded);
+	if (state != Loaded) {
+		WARN_LOG(COMMON, "Unexpected emu state %d", state);
+		return;
+	}
 	state = Running;
 	SetMemoryHandlers();
 	if (config::GGPOEnable && config::ThreadedRendering)
@@ -1110,6 +1118,7 @@ void Emulator::diskChange()
 {
 	config::Settings::instance().reset();
 	config::Settings::instance().load(false);
+	custom_texture.terminate();
 	if (!settings.content.path.empty())
 	{
 		hostfs::FileInfo info = hostfs::storage().getFileInfo(settings.content.path);
@@ -1125,7 +1134,6 @@ void Emulator::diskChange()
 	cheatManager.reset(settings.content.gameId);
 	if (cheatManager.isWidescreen())
 		config::ScreenStretching.override(134);	// 4:3 -> 16:9
-	custom_texture.terminate();
 	EventManager::event(Event::DiskChange);
 }
 

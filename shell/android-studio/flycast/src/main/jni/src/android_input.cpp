@@ -232,6 +232,8 @@ extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_periph_InputDeviceMa
 extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_periph_InputDeviceManager_touchMouseEvent(JNIEnv *env, jobject obj,
 		jint xpos, jint ypos, jint buttons)
 {
+	if (touchMouse == nullptr)
+		return;
 	touchMouse->setAbsPos(xpos, ypos, settings.display.width, settings.display.height);
 	touchMouse->setButton(Mouse::LEFT_BUTTON, (buttons & 1) != 0);
 	touchMouse->setButton(Mouse::RIGHT_BUTTON, (buttons & 2) != 0);

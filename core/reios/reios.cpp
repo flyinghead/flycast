@@ -98,15 +98,20 @@ static bool reios_locate_bootfile(const char* bootfile)
 	}
 	bootSectors = size / 2048;
 
+	u8 *dest = GetMemPtr(0x8c010000, size);
+	if (dest == nullptr) {
+		ERROR_LOG(REIOS, "Boot file too large: %d", size);
+		return false;
+	}
 	if (descrambl)
 	{
 		std::vector<u8> buf(size);
 		bootFile->read(buf.data(), size, offset);
-		descrambl_buffer(buf.data(), GetMemPtr(0x8c010000, size), size);
+		descrambl_buffer(buf.data(), dest, size);
 	}
 	else
 	{
-		bootFile->read(GetMemPtr(0x8c010000, size), size, offset);
+		bootFile->read(dest, size, offset);
 	}
 
 	u8 data[24] = {0};

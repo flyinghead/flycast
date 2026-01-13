@@ -39101,12 +39101,12 @@ struct retro_core_options_v2 options_ga = {
 #define OPTION_VAL_500_GL NULL
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_GL "Carga as texturas personalizadas"
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_INFO_0_GL "Carga texturas personalizadas situadas no cartafol \"system/dc/textures/<game-id>/\"."
-#define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_LABEL_GL NULL
-#define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_INFO_0_GL NULL
+#define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_LABEL_GL "Precargar texturas personalizadas"
+#define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_INFO_0_GL "Precarga as texturas personalizadas ao iniciar o xogo. Pode mellorar o rendemento, pero aumenta o uso de memoria."
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_GL "Texturas de volcado"
 #define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_GL "Cada vez que o xogo use unha textura nova, gardarase como ficheiro .png no cartafol 'system/dc/texdump/<game-id>/'."
-#define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_GL NULL
-#define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_INFO_0_GL NULL
+#define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_GL "Exportar texturas substituídas"
+#define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_INFO_0_GL "Exporta sempre as texturas que xa foron substituídas por texturas personalizadas."
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_GL "Zona morta panca analóxica"
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_INFO_0_GL "Selecciona ata onde tes que empuxar o stick analóxico antes de que comece a procesarse."
 #define OPTION_VAL_0_GL NULL
@@ -63461,7 +63461,7 @@ struct retro_core_options_v2 options_pl = {
 #define CATEGORY_HACKS_LABEL_PT_BR "Hacks de emulação"
 #define CATEGORY_HACKS_INFO_0_PT_BR "Altera as configurações de tela panorâmica, velocidade de carregamento do GD-ROM e substituição de textura."
 #define CATEGORY_INPUT_LABEL_PT_BR "Entrada"
-#define CATEGORY_INPUT_INFO_0_PT_BR "Altera as configurações de controle e pistola de luz."
+#define CATEGORY_INPUT_INFO_0_PT_BR "Altera as configurações do controle e pistola de luz."
 #define CATEGORY_EXPANSIONS_LABEL_PT_BR "Encaixe de expansão dos controles"
 #define CATEGORY_EXPANSIONS_INFO_0_PT_BR "Define o dispositivo (VMU ou Aparelho de Vibração) conectado em cada encaixe de expansão do controle."
 #define CATEGORY_VMU_LABEL_PT_BR "Unidade de Memória Visual (VMU)"
@@ -63482,7 +63482,7 @@ struct retro_core_options_v2 options_pl = {
 #define CORE_OPTION_NAME_HLE_BIOS_LABEL_PT_BR "BIOS HLE (requer reinício)"
 #define CORE_OPTION_NAME_HLE_BIOS_INFO_0_PT_BR "Força o uso de um BIOS de emulação de alto nível (HLE)."
 #define CORE_OPTION_NAME_ENABLE_DSP_LABEL_PT_BR "Ativar DSP"
-#define CORE_OPTION_NAME_ENABLE_DSP_INFO_0_PT_BR "Ativa a emulação do DSP (processador de sinal digital) de áudio do Dreamcast. Otimizar a precisão do som gerado, mas aumenta os requisitos de desempenho."
+#define CORE_OPTION_NAME_ENABLE_DSP_INFO_0_PT_BR "Ativa a emulação de áudio do DSP (processador de sinal digital) do Dreamcast. Otimiza a precisão de emulação do som, mas aumenta os requisitos mínimos de desempenho."
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_PT_BR "Permitir botão Assistência do fliperama"
 #define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_PT_BR "Habilita o botão ASSISTÊNCIA em jogos de fliperama, para entrar nas configurações."
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_PT_BR "Definir jogos NAOMI como gratuitos"
@@ -63571,7 +63571,7 @@ struct retro_core_options_v2 options_pl = {
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_PT_BR "Processa a imagem renderizada para simular efeitos específicos da GPU PowerVR2 e sinais de vídeo analógicos."
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_PT_BR "Mudar escala de textura (xBRZ)"
 #define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_PT_BR "Realça os gráficos 2D de arte píxel feitos à mão.\nOBSERVAÇÃO: usar apenas em jogos 2D pixelado."
-#define OPTION_VAL_2_O26_PT_BR NULL
+#define OPTION_VAL_2_O26_PT_BR "200%"
 #define OPTION_VAL_4_PT_BR "400%"
 #define OPTION_VAL_6_PT_BR "600%"
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_PT_BR "Tamanho máximo das texturas"
@@ -63641,12 +63641,12 @@ struct retro_core_options_v2 options_pl = {
 #define OPTION_VAL_500_PT_BR NULL
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_PT_BR "Carregar texturas personalizadas"
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_INFO_0_PT_BR "Carrega as texturas personalizadas.\nEndereço da pasta: \"system/dc/textures/<game-id>/\"."
-#define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_LABEL_PT_BR NULL
-#define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_INFO_0_PT_BR NULL
+#define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_LABEL_PT_BR "Pré-carregar texturas personalizadas"
+#define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_INFO_0_PT_BR "Pré-carrega as texturas personalizadas ao iniciar um jogo. Otimiza o desempenho, mas aumenta o uso de memória."
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_PT_BR "Descarregar texturas"
 #define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_PT_BR "Toda vez que uma nova textura for usada pelo jogo, a textura será salva como um .PNG na pasta \"system/dc/texdump/<game-id>/\"."
-#define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_PT_BR NULL
-#define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_INFO_0_PT_BR NULL
+#define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_PT_BR "Descarregar texturas substituídas"
+#define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_INFO_0_PT_BR "Descarrega as texturas que já foram substituídas pelas texturas personalizadas."
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_PT_BR "Zona morta do direcional analógico"
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_INFO_0_PT_BR "Define a distância mínima do direcional analógico para ser ativado."
 #define OPTION_VAL_0_PT_BR NULL

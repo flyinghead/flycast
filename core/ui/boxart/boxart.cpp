@@ -77,7 +77,7 @@ void Boxart::fetchBoxart()
 	{
 		try {
 			fetching.get();
-		} catch (const std::runtime_error& e) {
+		} catch (const std::exception& e) {
 			ERROR_LOG(COMMON, "Boxart scraper thread exception: %s", e.what());
 		} catch (...) {
 			ERROR_LOG(COMMON, "Boxart scraper thread unknown exception");
@@ -175,12 +175,6 @@ void Boxart::saveDatabase()
 		return;
 	std::string basePath = getSaveDirectory();
 	std::string db_name = basePath + DB_NAME;
-	FILE *file = nowide::fopen(db_name.c_str(), "wt");
-	if (file == nullptr)
-	{
-		WARN_LOG(COMMON, "Can't save boxart database to %s: error %d", db_name.c_str(), errno);
-		return;
-	}
 	DEBUG_LOG(COMMON, "Saving boxart database to %s", db_name.c_str());
 
 	json array;
@@ -190,7 +184,13 @@ void Boxart::saveDatabase()
 			if (game.second.scraped || game.second.parsed)
 				array.push_back(game.second.to_json(basePath));
 	}
-	std::string serialized = array.dump(4);
+	std::string serialized = array.dump(4, ' ', false, json::error_handler_t::replace);
+
+	FILE *file = nowide::fopen(db_name.c_str(), "wt");
+	if (file == nullptr) {
+		WARN_LOG(COMMON, "Can't save boxart database to %s: error %d", db_name.c_str(), errno);
+		return;
+	}
 	fwrite(serialized.c_str(), 1, serialized.size(), file);
 	fclose(file);
 	databaseDirty = false;

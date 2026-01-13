@@ -2112,7 +2112,6 @@ std::shared_ptr<maple_device> maple_Create(MapleDeviceType type)
 
 #if defined(USE_DREAMLINK_DEVICES)
 #include "sdl/dreamlink.h"
-#include "sdl/dreamconn.h"
 #include <list>
 #include <memory>
 
@@ -2138,8 +2137,7 @@ struct DreamLinkVmu : public maple_sega_vmu
 		dreamlink(dreamlink),
 		writeThread([this](){writeEntrypoint();})
 	{
-		// Initialize useRealVmuMemory with our config setting
-		useRealVmuMemory = config::UsePhysicalVmuMemory;
+		useRealVmuMemory = config::UsePhysicalVmuMemory && dreamlink->isPhysicalVMUMemorySupported();
 	}
 
 	virtual ~DreamLinkVmu() {
@@ -2508,12 +2506,7 @@ bool reconnectDreamLinks()
 	{
 		const auto& dreamlink = DreamLink::activeDreamLinks[i];
 
-		if (useNetworkExpansionDevices[i] && !dreamlink)
-		{
-			bool isForPhysicalController = false;
-			DreamLink::activeDreamLinks[i] = DreamConn::create_shared(i, isForPhysicalController);
-		}
-		else if (!useNetworkExpansionDevices[i] && dreamlink && !dreamlink->isForPhysicalController())
+		if (!useNetworkExpansionDevices[i] && dreamlink && !dreamlink->isForPhysicalController())
 		{
 			// This bus is not using network expansion devices.
 			// Dispose of the dreamlink for the bus, unless it is for a physical controller (and therefore not managed by this setting).
@@ -2550,7 +2543,7 @@ void refreshDreamLinksIfNeeded()
 	for (auto& dreamlink : DreamLink::activeDreamLinks)
 	{
 		if (dreamlink)
-			tearDownDreamLinkDevices(dreamlink);
+			tearDownDreamLinkDevices(dreamlink.get());
 	}
 
 	maple_ReconnectDevices();
@@ -2632,7 +2625,7 @@ void createDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink, bool gameStart
 				if (gameStart)
 				{
 					// Update useRealVmuMemory in case config changed
-					vmu->useRealVmuMemory = config::UsePhysicalVmuMemory;
+					vmu->useRealVmuMemory = config::UsePhysicalVmuMemory && dreamlink->isPhysicalVMUMemorySupported();
 				}
 				else if (stateLoaded)
 				{
@@ -2669,7 +2662,7 @@ void createDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink, bool gameStart
 }
 
 // Replaces DreamLink devices associated with 'dreamlink' with ordinary Maple devices.
-void tearDownDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink)
+void tearDownDreamLinkDevices(DreamLink* dreamlink)
 {
 	const int bus = dreamlink->getBus();
 
@@ -2678,7 +2671,7 @@ void tearDownDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink)
 		for (std::list<std::shared_ptr<DreamLinkVmu>>::const_iterator iter = dreamLinkVmus[i].begin();
 			iter != dreamLinkVmus[i].end();)
 		{
-			if ((*iter)->dreamlink.get() == dreamlink.get())
+			if ((*iter)->dreamlink.get() == dreamlink)
 			{
 				DEBUG_LOG(MAPLE, "VMU teardown - Physical VMU: %s", (*iter)->useRealVmuMemory ? "true" : "false");
 				std::shared_ptr<maple_device> dev = maple_Create(MDT_SegaVMU);
@@ -2707,7 +2700,7 @@ void tearDownDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink)
 	for (std::list<std::shared_ptr<DreamLinkPurupuru>>::const_iterator iter = dreamLinkPurupurus.begin();
 		iter != dreamLinkPurupurus.end();)
 	{
-		if ((*iter)->dreamlink.get() == dreamlink.get())
+		if ((*iter)->dreamlink.get() == dreamlink)
 		{
 			std::shared_ptr<maple_device> dev = maple_Create(MDT_PurupuruPack);
 			dev->Setup(bus, 1);
