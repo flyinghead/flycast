@@ -255,10 +255,18 @@ void IniFile::save(std::string& data) const
 	std::ostringstream ss;
 	for (const auto& [sectionName, section] : sections)
 	{
-		if (!sectionName.empty())
-			ss << '[' << sectionName << ']' << std::endl;
+		bool sectionSaved = sectionName.empty();
 		for (const auto& [name, entry] : section.entries)
+		{
+			if (entry.transient && entry.value.empty())
+				// Don't save transient-only values
+				continue;
+			if (!sectionSaved) {
+				ss << '[' << sectionName << ']' << std::endl;
+				sectionSaved = true;
+			}
 			ss << name << " = " << entry.value << std::endl;
+		}
 		ss << std::endl;
 	}
 	data = ss.str();
