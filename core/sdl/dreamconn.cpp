@@ -89,6 +89,8 @@ public:
 	}
 
 	~DreamConnImp() {
+		EventManager::unlisten(Event::Start, &onEvent, this);
+		EventManager::unlisten(Event::Terminate, &onEvent, this);
 		disconnect();
 	}
 
