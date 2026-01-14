@@ -29,7 +29,9 @@
 #include <sstream>
 #include <mutex>
 
-#ifdef USE_DREAMCONN
+#if defined(__linux__) || (defined(__APPLE__) && defined(TARGET_OS_MAC))
+#include <dirent.h>
+#endif
 
 static asio::error_code sendMsg(const MapleMsg& msg, asio::ip::tcp::iostream& stream)
 {
@@ -69,15 +71,17 @@ static bool receiveMsg(MapleMsg& msg, std::istream& stream)
 class DreamConnImp : public DreamConn
 {
 	int bus = -1;
+	const bool _isForPhysicalController;
 	bool maple_io_connected = false;
 	std::array<MapleDeviceType, 2> expansionDevs{};
 	asio::ip::tcp::iostream iostream;
 	std::mutex send_mutex;
 
 public:
-	DreamConnImp(int bus) :
+	DreamConnImp(int bus, bool isForPhysicalController) :
 		DreamConn(),
-		bus(bus)
+		bus(bus),
+		_isForPhysicalController(isForPhysicalController)
 	{}
 
 	~DreamConnImp() {
@@ -85,12 +89,12 @@ public:
 	}
 
 	bool isForPhysicalController() override {
-		return true;
+		return _isForPhysicalController;
 	}
 
 	bool isPhysicalVMUMemorySupported() override {
 		// DreamConn controllers don't support physical VMU memory access
-		return false;
+		return !isForPhysicalController();
 	}
 
 	bool send(const MapleMsg& msg) override {
@@ -166,6 +170,34 @@ public:
 	}
 
 	bool needsRefresh() override {
+		if (!isConnected())
+			return false;
+
+		std::lock_guard<std::mutex> lock(send_mutex);
+
+		// Check if there is a refresh message waiting in the socket buffer.
+		// Avoid reading (consuming) any other kind of message in this context.
+		const int REFRESH_MESSAGE_SIZE = 13;
+		asio::ip::tcp::socket& sock = static_cast<asio::ip::tcp::socket&>(iostream.socket());
+		if (sock.available() < REFRESH_MESSAGE_SIZE)
+			return false;
+
+		char buffer[REFRESH_MESSAGE_SIZE];
+		int bytesPeeked = recv(sock.native_handle(), buffer, REFRESH_MESSAGE_SIZE, MSG_PEEK);
+		if (bytesPeeked != REFRESH_MESSAGE_SIZE)
+			return false;
+
+		MapleMsg message;
+		sscanf(buffer, "%hhx %hhx %hhx %hhx", &message.command, &message.destAP, &message.originAP, &message.size);
+		if (message.command == 0xff && message.destAP == 0xff && message.originAP == 0xff && message.size == 0xff) {
+			// It is a refresh message, so consume it.
+			receiveMsg(message, iostream);
+
+			if (!updateExpansionDevs_no_lock())
+				return false;
+
+			return true;
+		}
 		return false;
 	}
 
@@ -182,9 +214,15 @@ public:
 		return true;
 	}
 
-	void connect() override
-	{
+	void connect() override {
 		maple_io_connected = false;
+
+#if !defined(_WIN32)
+		if (isForPhysicalController()) {
+			WARN_LOG(INPUT, "DreamcastController[%d] connection failed: DreamConn+ / DreamConn S Controller supported on Windows only", bus);
+			return;
+		}
+#endif
 
 		iostream = asio::ip::tcp::iostream("localhost", std::to_string(DreamConn::BASE_PORT + bus));
 		if (!iostream) {
@@ -230,6 +268,8 @@ public:
 		os_notify(buf, 6000);
 
 		tearDownDreamLinkDevices(this);
+		if (!isForPhysicalController())
+			maple_ReconnectDevices();
 	}
 
 	void gameTermination() override {
@@ -283,15 +323,41 @@ private:
 		return true;
 	}
 
-	MapleDeviceType getDevice_no_lock(u8 portFlags, u8 portFlag)
-	{
+	MapleDeviceType getDevice_no_lock(u8 portFlags, u8 portFlag) {
 		if (!(portFlags & portFlag)) {
 			// No device connected to this slot
 			return MDT_None;
 		}
 
-		// Assume that a device in slot 1 is a VMU and a device in slot 2 is a purupuru.
-		return portFlag == (1 << 0) ? MDT_SegaVMU : MDT_PurupuruPack;
+		if (isForPhysicalController()) {
+			// DreamConn physical controllers don't support the DeviceRequest message.
+			// Assume that a device in slot 1 is a VMU and a device in slot 2 is a purupuru.
+			return portFlag == (1 << 0) ? MDT_SegaVMU : MDT_PurupuruPack;
+		}
+
+		MapleMsg txMsg;
+		txMsg.command = MDC_DeviceRequest;
+		txMsg.destAP = (bus << 6) | portFlag;
+		txMsg.originAP = bus << 6;
+		txMsg.size = 0;
+
+		MapleMsg rxMsg;
+		if (!send_no_lock(txMsg, rxMsg)) {
+			return MDT_None;
+		}
+
+		// 32-bit words are in little-endian format on the wire
+		const u32 fnCode = (rxMsg.data[0] << 0) | (rxMsg.data[1] << 8) | (rxMsg.data[2] << 16) | (rxMsg.data[3] << 24);
+		if (fnCode & MFID_1_Storage) {
+			return MDT_SegaVMU;
+		}
+		else if (fnCode & MFID_8_Vibration) {
+			return MDT_PurupuruPack;
+		}
+		else {
+			WARN_LOG(INPUT, "DreamcastController[%d] MDC_DeviceRequest unsupported function code: 0x%x", bus, fnCode);
+			return MDT_None;
+		}
 	}
 
 	bool isSocketDisconnected() {
@@ -318,8 +384,6 @@ private:
 	}
 };
 
-std::shared_ptr<DreamConn> DreamConn::create_shared(int bus) {
-	return std::make_shared<DreamConnImp>(bus);
+std::shared_ptr<DreamConn> DreamConn::create_shared(int bus, bool isForPhysicalController) {
+	return std::make_shared<DreamConnImp>(bus, isForPhysicalController);
 }
-
-#endif // USE_DREAMCONN

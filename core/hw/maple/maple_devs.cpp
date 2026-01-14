@@ -2111,6 +2111,7 @@ std::shared_ptr<maple_device> maple_Create(MapleDeviceType type)
 
 #if defined(USE_DREAMLINK_DEVICES)
 #include "sdl/dreamlink.h"
+#include "sdl/dreamconn.h"
 #include <list>
 #include <memory>
 
@@ -2505,7 +2506,12 @@ bool reconnectDreamLinks()
 	{
 		const auto& dreamlink = DreamLink::activeDreamLinks[i];
 
-		if (!useNetworkExpansionDevices[i] && dreamlink && !dreamlink->isForPhysicalController())
+		if (useNetworkExpansionDevices[i] && !dreamlink)
+		{
+			bool isForPhysicalController = false;
+			DreamLink::activeDreamLinks[i] = DreamConn::create_shared(i, isForPhysicalController);
+		}
+		else if (!useNetworkExpansionDevices[i] && dreamlink && !dreamlink->isForPhysicalController())
 		{
 			// This bus is not using network expansion devices.
 			// Dispose of the dreamlink for the bus, unless it is for a physical controller (and therefore not managed by this setting).
