@@ -110,8 +110,7 @@ DreamLinkGamepad::DreamLinkGamepad(int maple_port, int joystick_idx, SDL_Joystic
 	// Dreamcast Controller USB VID:1209 PID:2f07
 	if (memcmp(DreamConn::VID_PID_GUID, guid_str + 8, 16) == 0)
 	{
-		bool isForPhysicalController = true;
-		dreamlink = DreamConn::create_shared(maple_port, isForPhysicalController);
+		dreamlink = DreamConn::create_shared(maple_port, /* isForPhysicalController: */ true);
 	}
 	else if (memcmp(DreamPicoPort::VID_PID_GUID, guid_str + 8, 16) == 0)
 	{

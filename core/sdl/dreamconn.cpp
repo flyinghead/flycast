@@ -384,6 +384,11 @@ private:
 	}
 };
 
+/**
+ * @param isForPhysicalController: true when using a DreamConn controller, false when connecting to DreamPotato
+ */
 std::shared_ptr<DreamConn> DreamConn::create_shared(int bus, bool isForPhysicalController) {
+	// TODO: extract a different DreamLink subtype or other appropriate refactoring,
+	// to separate out the DreamConn controller support from DreamPotato support.
 	return std::make_shared<DreamConnImp>(bus, isForPhysicalController);
 }
