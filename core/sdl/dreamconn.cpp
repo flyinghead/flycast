@@ -73,6 +73,7 @@ class DreamConnImp : public DreamConn
 	int bus = -1;
 	const bool _isForPhysicalController;
 	bool maple_io_connected = false;
+	bool emulator_started = false;
 	std::array<MapleDeviceType, 2> expansionDevs{};
 	asio::ip::tcp::iostream iostream;
 	std::mutex send_mutex;
@@ -82,12 +83,24 @@ public:
 		DreamConn(),
 		bus(bus),
 		_isForPhysicalController(isForPhysicalController)
-	{}
+	{
+		EventManager::listen(Event::Start, &onEvent, this);
+		EventManager::listen(Event::Terminate, &onEvent, this);
+	}
 
 	~DreamConnImp() {
 		disconnect();
 	}
 
+private:
+	static void onEvent(Event event, void* arg)
+	{
+		assert(event == Event::Start || event == Event::Terminate);
+		DreamConnImp* dreamconn = static_cast<DreamConnImp*>(arg);
+		dreamconn->emulator_started = event == Event::Start;
+	}
+
+public:
 	bool isForPhysicalController() override {
 		return _isForPhysicalController;
 	}
@@ -267,9 +280,11 @@ public:
 		snprintf(buf, sizeof(buf), "WARNING: DreamLink disconnected from port %c", 'A' + bus);
 		os_notify(buf, 6000);
 
-		tearDownDreamLinkDevices(this);
-		if (!isForPhysicalController())
+		if (emulator_started)
+		{
+			tearDownDreamLinkDevices(this);
 			maple_ReconnectDevices();
+		}
 	}
 
 	void gameTermination() override {
