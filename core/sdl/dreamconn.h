@@ -20,24 +20,22 @@
 
 #ifdef USE_DREAMLINK_DEVICES
 
+#if defined(_WIN32) && !defined(TARGET_UWP)
+#define USE_DREAMCONN 1
+
 #include "dreamlink.h"
 
-#include <memory>
-
-class DreamConn : public DreamLink
+class DreamConnGamepad : public DreamLinkGamepad
 {
 public:
-	//! Base port of communication to DreamConn
-	static constexpr u16 BASE_PORT = 37393;
+	DreamConnGamepad(int maple_port, int joystick_idx, SDL_Joystick* sdl_joystick);
+
+	static bool identify(int deviceIndex);
+
+private:
 	//! DreamConn VID:4457 PID:4443
 	static constexpr const char* VID_PID_GUID = "5744000043440000";
-
-protected:
-	DreamConn() = default;
-	virtual ~DreamConn() = default;
-
-public:
-	static std::shared_ptr<DreamConn> create_shared(int bus, bool isForPhysicalController);
 };
 
-#endif // USE_DREAMCASTCONTROLLER
+#endif // WIN32 && !UWP
+#endif // USE_DREAMLINK_DEVICES

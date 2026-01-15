@@ -48,7 +48,6 @@
 #include "hw/maple/maple_if.h"
 #if defined(USE_SDL)
 #include "sdl/sdl.h"
-#include "sdl/dreamlink.h"
 #endif
 #include "vgamepad.h"
 #include "settings.h"
@@ -816,56 +815,6 @@ static void gui_display_commands()
 			if (InputText("##barcode", cardBuf, sizeof(cardBuf), ImGuiInputTextFlags_None))
 				card_reader::barcodeSetCard(cardBuf);
 		}
-
-#if defined(USE_DREAMLINK_DEVICES)
-		// DreamLink connection status
-		bool hasAnyDreamLinks = false;
-		bool hasDisconnectedDreamLink = false;
-		for (auto& dreamlink : DreamLink::activeDreamLinks)
-		{
-			if (dreamlink && !dreamlink->isForPhysicalController())
-			{
-				hasAnyDreamLinks = true;
-				if (!dreamlink->isConnected())
-					hasDisconnectedDreamLink = true;
-			}
-
-			if (hasAnyDreamLinks && hasDisconnectedDreamLink)
-				break;
-		}
-
-		if (hasAnyDreamLinks)
-		{
-			if (hasDisconnectedDreamLink)
-			{
-				if (ImGui::Button(T("Connect DreamLink"), ScaledVec2(buttonWidth, 50)))
-				{
-					if (reconnectDreamLinks())
-						maple_ReconnectDevices();
-				}
-			}
-			else
-			{
-				if (ImGui::Button(T("Disconnect\nDreamLink"), ScaledVec2(buttonWidth, 50)))
-				{
-					for (auto& dreamlink : DreamLink::activeDreamLinks)
-					{
-						if (dreamlink)
-							dreamlink->disconnect();
-					}
-				}
-			}
-
-			for (int i = 0; i < 4; i++)
-			{
-				auto dreamlink = DreamLink::activeDreamLinks[i];
-				if (dreamlink)
-				{
-					ImGui::Text("%s %c: %s", T("Port"), 'A' + i, dreamlink->isConnected() ? T("Connected") : T("Disconnected"));
-				}
-			}
-		}
-#endif
 
 		ImGui::NextColumn();
 

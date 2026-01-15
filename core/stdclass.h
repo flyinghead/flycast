@@ -242,9 +242,13 @@ public:
 	void init() {
 		threadId = std::this_thread::get_id();
 	}
+	void term() {
+		threadId = {};
+	}
 	void runOnThread(std::function<void()> func)
 	{
-		if (threadId == std::this_thread::get_id()) {
+		if (threadId == std::thread::id{}
+			|| threadId == std::this_thread::get_id()) {
 			func();
 		}
 		else {

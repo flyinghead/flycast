@@ -117,6 +117,23 @@ void mcfg_DestroyDevices(bool full = true);
 void mcfg_SerializeDevices(Serializer& ser);
 void mcfg_DeserializeDevices(Deserializer& deser);
 
+constexpr int maple_getPortCount(MapleDeviceType type)
+{
+	switch (type)
+	{
+		case MDT_SegaController:
+		case MDT_SegaControllerXL:
+			return 2;
+		case MDT_LightGun:
+		case MDT_TwinStick:
+		case MDT_AsciiStick:
+		case MDT_RacingController:
+			return 1;
+		default:
+			return 0;
+	}
+}
+
 bool maple_atomiswave_coin_chute(int slot);
 void push_vmu_screen(int bus_id, int bus_port, u8* buffer);
 void insertRfidCard(int playerNum);

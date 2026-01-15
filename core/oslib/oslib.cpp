@@ -41,6 +41,7 @@
 #endif
 #include "profiler/fc_profiler.h"
 #include "input/gamepad_device.h"
+#include "input/dreampotato.h"
 #include "i18n.h"
 
 namespace hostfs
@@ -460,10 +461,12 @@ void os_SetupInput()
 	if (config::UseRawInput)
 		rawinput::init();
 #endif
+	dreampotato::update();
 }
 
 void os_TermInput()
 {
+	dreampotato::term();
 #if defined(USE_SDL)
 	input_sdl_quit();
 #else

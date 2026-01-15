@@ -50,9 +50,6 @@
 #endif
 #include "hw/sh4/sh4_interpreter.h"
 #include "hw/sh4/dyna/ngen.h"
-#ifdef USE_DREAMLINK_DEVICES
-#include "sdl/dreamlink.h"
-#endif
 #include "oslib/i18n.h"
 
 settings_t settings;
@@ -639,11 +636,6 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 		}
 		if (!settings.naomi.slave)
 		{
-#ifdef USE_DREAMLINK_DEVICES
-			// Note: ordinarily we would like to use the 'events' system for this step.
-			// However, this call can change 'config::MapleExpansionDevices', and therefore needs to run before 'mcfg_CreateDevices'.
-			reconnectDreamLinks();
-#endif
 			mcfg_DestroyDevices();
 			mcfg_CreateDevices();
 			if (settings.platform.isNaomi())
@@ -668,6 +660,7 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 		loadGameSpecificSettings();
 		NetworkHandshake::init();
 		settings.input.fastForwardMode = false;
+		EventManager::event(Event::Start);
 		if (!settings.content.path.empty())
 		{
 #ifndef LIBRETRO
@@ -677,12 +670,11 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 				dc_loadstate(config::SavestateSlot);
 #endif
 		}
-		EventManager::event(Event::Start);
 
 		if (progress)
 		{
 #ifdef GDB_SERVER
-			if(config::GDBWaitForConnection)
+			if (config::GDB && config::GDBWaitForConnection)
 				progress->label = "Waiting for debugger...";
 			else
 #endif
@@ -698,34 +690,40 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 
 void Emulator::runInternal()
 {
-	if (singleStep)
-	{
-		getSh4Executor()->Step();
-		singleStep = false;
-	}
-	else if (stepRangeTo != 0)
-	{
-		while (Sh4cntx.pc >= stepRangeFrom && Sh4cntx.pc < stepRangeTo)
+	runner.init();
+	try {
+		if (singleStep)
+		{
 			getSh4Executor()->Step();
+			singleStep = false;
+		}
+		else if (stepRangeTo != 0)
+		{
+			while (Sh4cntx.pc >= stepRangeFrom && Sh4cntx.pc < stepRangeTo)
+				getSh4Executor()->Step();
 
-		stepRangeFrom = 0;
-		stepRangeTo = 0;
-	}
-	else
-	{
-		do {
-			resetRequested = false;
+			stepRangeFrom = 0;
+			stepRangeTo = 0;
+		}
+		else
+		{
+			do {
+				resetRequested = false;
 
-			getSh4Executor()->Run();
+				getSh4Executor()->Run();
 
-			if (resetRequested)
-			{
-				nvmem::saveFiles();
-				dc_reset(false);
-				if (!restartCpu())
-					resetRequested = false;
-			}
-		} while (resetRequested);
+				if (resetRequested)
+				{
+					nvmem::saveFiles();
+					dc_reset(false);
+					if (!restartCpu())
+						resetRequested = false;
+				}
+			} while (resetRequested);
+		}
+	} catch (...) {
+		runner.term();
+		throw;
 	}
 }
 
@@ -956,13 +954,13 @@ void Emulator::run()
 	startTime = sh4_sched_now64();
 	renderTimeout = false;
 	if (!singleStep && stepRangeTo == 0)
-		getSh4Executor()->Start();
+	getSh4Executor()->Start();
 	try {
 		runInternal();
 		if (ggpo::active())
 			ggpo::nextFrame();
 	} catch (const std::exception& e) {
-		ERROR_LOG(COMMON, "Exception: %s\n", e.what());
+		ERROR_LOG(COMMON, "Exception: %s", e.what());
 		setNetworkState(false);
 		state = Error;
 		getSh4Executor()->Stop();
@@ -1079,6 +1077,7 @@ bool Emulator::render()
 void Emulator::vblank()
 {
 	EventManager::event(Event::VBlank);
+	runner.execTasks();
 	// Time out if a frame hasn't been rendered for 50 ms
 	if (sh4_sched_now64() - startTime <= 10000000)
 		return;
