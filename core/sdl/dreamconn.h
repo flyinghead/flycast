@@ -20,9 +20,6 @@
 
 #ifdef USE_DREAMLINK_DEVICES
 
-#if defined(_WIN32) && !defined(TARGET_UWP)
-#define USE_DREAMCONN 1
-
 #include "dreamlink.h"
 
 #include <memory>
@@ -40,8 +37,7 @@ protected:
 	virtual ~DreamConn() = default;
 
 public:
-	static std::shared_ptr<DreamConn> create_shared(int bus);
+	static std::shared_ptr<DreamConn> create_shared(int bus, bool isForPhysicalController);
 };
 
-#endif // WIN32 && !UWP
-#endif // USE_DREAMLINK_DEVICES
+#endif // USE_DREAMCASTCONTROLLER
