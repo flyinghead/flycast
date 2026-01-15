@@ -159,7 +159,7 @@ public:
 
 	void write(u8 v) override;
 	void changeMode();
-	void reset();
+	void reset() override;
 
 	void flush() {
 		flush(false);
@@ -183,7 +183,7 @@ public:
 	Decompressor(u32 maxCodeWords = MIN_TOTAL_CODEWORDS, int maxStringLength = DEF_STRING_SIZE);
 
 	void write(u8 v) override;
-	void reset();
+	void reset() override;
 
 private:
 	void flush();

@@ -663,7 +663,7 @@ void V42Protocol::sendIFrame()
 	// check that tx window isn't reached
 	int window = txSeqNum - txSeqAck;
 	if (window < 0)
-		window =+ 128;
+		window += 128;
 	if (window >= txWindow)
 		return;
 

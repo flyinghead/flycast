@@ -192,10 +192,6 @@ private:
 class V8bisProtocol : public InStream, public OutStream
 {
 public:
-	V8bisProtocol(InStream& in, OutStream& out)
-		: inputStream(in), outputStream(out)
-	{}
-
 	void emitTone(u8 tone);
 	u8 detectTone();
 	int read() override;
@@ -212,8 +208,6 @@ private:
 	void sendAck(int n = 1);
 	void sendNak(int n = 1);
 
-	InStream& inputStream;
-	OutStream& outputStream;
 	HdlcEncoder encoder;
 	HdlcDecoder decoder;
 	int toneState = 0;

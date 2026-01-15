@@ -168,7 +168,7 @@ static OutStream *curOutput = &netOut;
 static V42Protocol v42Proto { netIn, netOut };
 
 static bool v8bis;
-static V8bisProtocol v8bisProto { netIn, netOut };
+static V8bisProtocol v8bisProto;
 
 static void updateRxFifoStatus()
 {
