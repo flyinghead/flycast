@@ -8,10 +8,6 @@
 #include "network/ggpo.h"
 #include "hw/naomi/card_reader.h"
 
-#ifdef USE_DREAMLINK_DEVICES
-#include "sdl/dreamlink.h"
-#endif
-
 #include <memory>
 
 enum MaplePattern
@@ -51,10 +47,6 @@ bool SDCKBOccupied;
 
 void maple_vblank()
 {
-#if USE_DREAMLINK_DEVICES
-	refreshDreamLinksIfNeeded();
-#endif
-
 	if (SB_MDEN & 1)
 	{
 		if (SB_MDTSEL == 1)
@@ -65,7 +57,7 @@ void maple_vblank()
 			}
 			else
 			{
-				DEBUG_LOG(MAPLE, "DDT vblank");
+				//DEBUG_LOG(MAPLE, "DDT vblank");
 				SB_MDST = 1;
 				maple_DoDma();
 				// if trigger reset is manual, mark it as pending
@@ -356,11 +348,9 @@ void maple_Init()
 #endif
 
 	maple_schid = sh4_sched_register(0, maple_schd);
-
-#if defined(USE_DREAMLINK_DEVICES)
-	registerDreamLinkEvents();
-#endif
 }
+
+static u64 reconnect_time;
 
 void maple_Reset(bool hard)
 {
@@ -373,6 +363,7 @@ void maple_Reset(bool hard)
 	SB_MDAPRO = 0x00007F00;
 	SB_MMSEL  = 1;
 	mapleDmaOut.clear();
+	reconnect_time = 0;
 }
 
 void maple_Term()
@@ -380,13 +371,7 @@ void maple_Term()
 	mcfg_DestroyDevices();
 	sh4_sched_unregister(maple_schid);
 	maple_schid = -1;
-
-#if defined(USE_DREAMLINK_DEVICES)
-	unregisterDreamLinkEvents();
-#endif
 }
-
-static u64 reconnect_time;
 
 void maple_ReconnectDevices()
 {
@@ -400,9 +385,5 @@ static void maple_handle_reconnect()
 	{
 		reconnect_time = 0;
 		mcfg_CreateDevices();
-
-#if defined(USE_DREAMLINK_DEVICES)
-		createAllDreamLinkDevices();
-#endif
 	}
 }

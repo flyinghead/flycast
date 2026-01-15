@@ -20,6 +20,7 @@
  */
 #pragma once
 #include "types.h"
+#include "stdclass.h"
 
 #include <atomic>
 #include <future>
@@ -185,6 +186,10 @@ public:
 
 	Sh4Executor *getSh4Executor();
 
+	void run(std::function<void()> func) {
+		runner.runOnThread(func);
+	}
+
 	void dc_reset(bool hard); // for tests only
 
 private:
@@ -212,6 +217,7 @@ private:
 	std::mutex mutex;
 	Sh4Executor *interpreter = nullptr;
 	Sh4Executor *recompiler = nullptr;
+	ThreadRunner runner;
 };
 extern Emulator emu;
 

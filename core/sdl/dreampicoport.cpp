@@ -20,6 +20,7 @@
 #include "dreampicoport.h"
 
 #include "hw/maple/maple_devs.h"
+#include "hw/maple/maple_if.h"
 #include "ui/gui.h"
 #include "cfg/option.h"
 #include "oslib/i18n.h"
@@ -751,7 +752,7 @@ public:
 		msg.command = MDCF_GetCondition;
 		msg.destAP = (hardware_bus << 6) | 0x20;
 		msg.originAP = hardware_bus << 6;
-		msg.setData(MFID_0_Input);
+		msg.pushData(MFID_0_Input);
 
 		asio::error_code error = serial->sendMsg(msg, hardware_bus, msg, timeout_ms);
 		if (error)
@@ -1054,7 +1055,7 @@ public:
 std::unordered_map<std::string, std::weak_ptr<dpp_api::DppDevice>> ApiDreamPicoPortComms::all_dpp_api_devices;
 std::mutex ApiDreamPicoPortComms::all_dpp_api_devices_mutex;
 
-class DreamPicoPortImp : public DreamPicoPort
+class DreamPicoPort : public DreamLink
 {
 	//! Implements communication interface to DreamPicoPort
 	std::unique_ptr<class DreamPicoPortComms> dpp_comms;
@@ -1066,6 +1067,9 @@ class DreamPicoPortImp : public DreamPicoPort
     double interface_version = 0.0;
     //! The queried peripherals; for each function, index 0 is function code and index 1 is the function definition
     std::vector<std::vector<std::array<uint32_t, 2>>> peripherals;
+    //! Dreamcast Controller USB VID:1209 PID:2f07
+    static constexpr std::uint16_t VID = 0x1209;
+    static constexpr std::uint16_t PID = 0x2f07;
 
 	//! Static hardware information
 	struct HardwareInfo
@@ -1097,23 +1101,10 @@ class DreamPicoPortImp : public DreamPicoPort
 	const HardwareInfo hw_info;
 
 public:
-    DreamPicoPortImp(int bus, int joystick_idx, SDL_Joystick* sdl_joystick) :
-		DreamPicoPort(),
+    DreamPicoPort(int bus, int joystick_idx, SDL_Joystick* sdl_joystick) :
 		software_bus(bus),
 		hw_info(parseHardwareInfo(joystick_idx, sdl_joystick))
 	{}
-
-	~DreamPicoPortImp() {
-		disconnect();
-	}
-
-	bool isForPhysicalController() override {
-		return true;
-	}
-
-	bool isPhysicalVMUMemorySupported() override {
-		return true;
-	}
 
 	bool send(const MapleMsg& msg) override {
 		if (!dpp_comms) {
@@ -1123,7 +1114,7 @@ public:
 		return dpp_comms->send(msg, timeout_ms);
 	}
 
-    bool send(const MapleMsg& txMsg, MapleMsg& rxMsg) override {
+    bool sendReceive(const MapleMsg& txMsg, MapleMsg& rxMsg) override {
 		if (!dpp_comms) {
 			return false;
 		}
@@ -1131,10 +1122,12 @@ public:
 		return dpp_comms->send(txMsg, rxMsg, timeout_ms);
 	}
 
-	void sendGameId(int expansion, const std::string& gameId) override {
+	//! Sends the current game id to a DreamLink backed expansion device if supported
+	void sendGameId(int expansion) {
 		if (!dpp_comms || hw_info.hardware_bus < 0)
 				return;
 
+		const std::string& gameId = settings.content.gameId;
 		if (gameId.empty() || expansion < 0 || expansion > 1)
 				return;
 
@@ -1142,11 +1135,8 @@ public:
 		msg.command = 33;
 		msg.destAP = (hw_info.hardware_bus << 6) | (1u << expansion);
 		msg.originAP = hw_info.hardware_bus << 6;
-		msg.setWord(MFID_1_Storage, 0);
-
-		const size_t idSize = 12;
-		const size_t copyLength = std::min(gameId.size(), idSize);
-		memcpy(&msg.data[4], gameId.data(), copyLength);
+		msg.pushData(MFID_1_Storage);
+		msg.pushData(gameId.data(), std::min<u32>(gameId.size() + 1, 12));
 		msg.size = 4;
 
 		dpp_comms->send(msg, timeout_ms);
@@ -1157,10 +1147,6 @@ public:
 		std::this_thread::sleep_for(std::chrono::milliseconds(10));
 		// Reset screen to selected port
 		sendPort();
-	}
-
-	int getBus() const override {
-		return software_bus;
 	}
 
 	//! Transform flycast port index into DreamPicoPort port index
@@ -1174,7 +1160,7 @@ public:
 		}
 	}
 
-    u32 getFunctionCode(int forPort) const override {
+    u32 getFunctionCode(int forPort) const {
 		forPort = fcPortToDppPort(forPort);
 		u32 mask = 0;
 		if ((int)peripherals.size() > forPort) {
@@ -1186,7 +1172,7 @@ public:
 		return SWAP32(mask);
 	}
 
-	std::array<u32, 3> getFunctionDefinitions(int forPort) const override {
+	std::array<u32, 3> getFunctionDefinitions(int forPort) const {
 		forPort = fcPortToDppPort(forPort);
 		std::array<u32, 3> arr{0, 0, 0};
 		if ((int)peripherals.size() > forPort) {
@@ -1199,7 +1185,7 @@ public:
 		return arr;
 	}
 
-	int getDefaultBus() const override {
+	int getDefaultBus() const {
 		if (!hw_info.is_hardware_bus_implied && !hw_info.is_single_device) {
 			return hw_info.hardware_bus;
 		} else {
@@ -1208,61 +1194,69 @@ public:
 		}
 	}
 
-	void setDefaultMapping(const std::shared_ptr<InputMapping>& mapping) const override {
-		// Since this is a real DC controller, no deadzone adjustment is needed
-		mapping->dead_zone = 0.0f;
-		// Map the things not set by SDL
-		mapping->set_button(DC_BTN_C, 2);
-		mapping->set_button(DC_BTN_Z, 5);
-		mapping->set_button(DC_BTN_D, 10);
-		mapping->set_button(DC_DPAD2_UP, 9);
-		mapping->set_button(DC_DPAD2_DOWN, 8);
-		mapping->set_button(DC_DPAD2_LEFT, 7);
-		mapping->set_button(DC_DPAD2_RIGHT, 6);
-	}
-
-	const char *getButtonName(u32 code) const override {
-		using namespace i18n;
-		switch (code) {
-			// Coincides with buttons setup in setDefaultMapping
-			case 2: return "C";
-			case 5: return "Z";
-			case 10: return "D";
-			case 9: return T("DPad2 Up");
-			case 8: return T("DPad2 Down");
-			case 7: return T("DPad2 Left");
-			case 6: return T("DPad2 Right");
-
-			// These buttons are normally not physically accessible but are mapped on DreamPicoPort
-			case 12: return T("VMU1 A");
-			case 15: return T("VMU1 B");
-			case 16: return T("VMU1 Up");
-			case 17: return T("VMU1 Down");
-			case 18: return T("VMU1 Left");
-			case 19: return T("VMU1 Right");
-
-			default: return nullptr; // no override
-		}
-	}
-
-	std::string getUniqueId() const override {
+	std::string getUniqueId() const {
 		return hw_info.unique_id;
 	}
 
 	void changeBus(int newBus) override {
+		if (software_bus == newBus)
+			return;
+		unregisterLink(software_bus, 0);
+		unregisterLink(software_bus, 1);
 		software_bus = newBus;
+		setMapleDevices();
 		if (dpp_comms) {
 			dpp_comms->changeSoftwareBus(software_bus);
 		}
 	}
 
-	std::string getName() const override {
+	std::string getName() const {
 		return hw_info.getName();
 	}
 
-	bool needsRefresh() override {
-		// TODO: implementing this method may also help to support hot plugging of VMUs/jump packs here.
-		return false;
+	void setMapleDevices()
+	{
+		if (!DreamLink::isValidPort(software_bus))
+			return;
+		int portCount = maple_getPortCount(config::MapleMainDevices[software_bus]);
+		if (portCount == 0)
+			return;
+
+		bool needReconnect = false;
+		u32 portOneFn = getFunctionCode(0);
+		if (portOneFn & MFID_1_Storage) {
+			config::MapleExpansionDevices[software_bus][0] = MDT_SegaVMU;
+			registerLink(software_bus, 0);
+			if (storageEnabled()) {
+				sendGameId(0);
+				needReconnect = true;
+			}
+		}
+		else {
+			config::MapleExpansionDevices[software_bus][0] = MDT_None;
+		}
+
+		if (portCount >= 2)
+		{
+			u32 portTwoFn = getFunctionCode(1);
+			if (portTwoFn & MFID_8_Vibration) {
+				config::MapleExpansionDevices[software_bus][1] = MDT_PurupuruPack;
+				registerLink(software_bus, 1);
+			}
+			else if (portTwoFn & MFID_1_Storage) {
+				config::MapleExpansionDevices[software_bus][1] = MDT_SegaVMU;
+				registerLink(software_bus, 1);
+				if (storageEnabled()) {
+					sendGameId(1);
+					needReconnect = true;
+				}
+			}
+			else {
+				config::MapleExpansionDevices[software_bus][1] = MDT_None;
+			}
+		}
+		if (needReconnect && isGameStarted())
+			emu.run(maple_ReconnectDevices);
 	}
 
 	bool isConnected() override {
@@ -1293,7 +1287,7 @@ public:
 			NOTICE_LOG(INPUT, "Serial number for DreamPicoPort[%d] not found", software_bus);
 		}
 
-	#ifndef TARGET_UWP
+#ifndef TARGET_UWP
 		if (!dpp_comms) {
 			NOTICE_LOG(
 				INPUT,
@@ -1305,7 +1299,7 @@ public:
 				dpp_comms.reset();
 			}
 		}
-	#endif
+#endif
 
 		if (isConnected()) {
 			sendPort();
@@ -1322,45 +1316,23 @@ public:
 		// Timeout is extended to 5 seconds for all other communication after connection
 		timeout_ms = std::chrono::seconds(5);
 
-		int vmuCount = 0;
-		int vibrationCount = 0;
-
-		if (software_bus >= 0 && static_cast<std::size_t>(software_bus) < config::MapleExpansionDevices.size()) {
-			u32 portOneFn = getFunctionCode(0);
-			if (portOneFn & MFID_1_Storage) {
-				config::MapleExpansionDevices[software_bus][0] = MDT_SegaVMU;
-				++vmuCount;
-			}
-			else {
-				config::MapleExpansionDevices[software_bus][0] = MDT_None;
-			}
-
-			u32 portTwoFn = getFunctionCode(1);
-			if (portTwoFn & MFID_8_Vibration) {
-				config::MapleExpansionDevices[software_bus][1] = MDT_PurupuruPack;
-				++vibrationCount;
-			}
-			else if (portTwoFn & MFID_1_Storage) {
-				config::MapleExpansionDevices[software_bus][1] = MDT_SegaVMU;
-				++vmuCount;
-			}
-			else {
-				config::MapleExpansionDevices[software_bus][1] = MDT_None;
-			}
-		}
+		setMapleDevices();
 
 		NOTICE_LOG(
 			INPUT,
 			"Connected to DreamPicoPort[%d]: Type:%s, VMU:%d, Jump Pack:%d",
 			software_bus,
 			getName().c_str(),
-			vmuCount,
-			vibrationCount
+			(getFunctionCode(0) & MFID_1_Storage) != 0,
+			(getFunctionCode(1) & MFID_8_Vibration) != 0
 		);
 	}
 
 	void disconnect() override {
 		dpp_comms.reset();
+		unregisterLink(software_bus, 0);
+		unregisterLink(software_bus, 1);
+		disableStorage();
 	}
 
     void sendPort() {
@@ -1420,7 +1392,6 @@ private:
 
 #if defined(_WIN32)
 		// This only works in Windows because the joystick_path is not given in other OSes
-		const char* joystick_name = SDL_JoystickName(sdl_joystick);
 		const char* joystick_path = SDL_JoystickPath(sdl_joystick);
 
 		struct SDL_hid_device_info* devs = SDL_hid_enumerate(VID, PID);
@@ -1545,6 +1516,70 @@ private:
 	}
 };
 
-std::shared_ptr<DreamPicoPort> DreamPicoPort::create_shared(int bus, int joystick_idx, SDL_Joystick* sdl_joystick) {
-	return std::make_shared<DreamPicoPortImp>(bus, joystick_idx, sdl_joystick);
+DreamPicoPortGamepad::DreamPicoPortGamepad(int maple_port, int joystick_idx, SDL_Joystick* sdl_joystick)
+	: DreamLinkGamepad(std::make_shared<DreamPicoPort>(maple_port, joystick_idx, sdl_joystick), maple_port, joystick_idx, sdl_joystick)
+{
+	DreamPicoPort *picoPort = dynamic_cast<DreamPicoPort*>(dreamlink.get());
+	_name = picoPort->getName();
+
+	std::string uniqueId = picoPort->getUniqueId();
+	if (!uniqueId.empty()) {
+		_unique_id = uniqueId;
+		loadMapping();
+	}
+	int bus = picoPort->getDefaultBus();
+	if (DreamLink::isValidPort(bus))
+		set_maple_port(bus);
+}
+
+bool DreamPicoPortGamepad::identify(int deviceIndex)
+{
+	char guid_str[33] {};
+	SDL_JoystickGetGUIDString(SDL_JoystickGetDeviceGUID(deviceIndex), guid_str, sizeof(guid_str));
+	// Dreamcast Controller USB VID:1209 PID:2f07
+	const char* pid_vid_guid_str = guid_str + 8;
+	if (memcmp(VID_PID_GUID, pid_vid_guid_str, 16) == 0) {
+		NOTICE_LOG(INPUT, "Dreamcast controller found!");
+		return true;
+	}
+	return false;
+}
+
+void DreamPicoPortGamepad::setCustomMapping(const std::shared_ptr<InputMapping>& mapping)
+{
+	// Since this is a real DC controller, no deadzone adjustment is needed
+	mapping->dead_zone = 0.0f;
+	// Map the things not set by SDL
+	mapping->set_button(DC_BTN_C, 2);
+	mapping->set_button(DC_BTN_Z, 5);
+	mapping->set_button(DC_BTN_D, 10);
+	mapping->set_button(DC_DPAD2_UP, 9);
+	mapping->set_button(DC_DPAD2_DOWN, 8);
+	mapping->set_button(DC_DPAD2_LEFT, 7);
+	mapping->set_button(DC_DPAD2_RIGHT, 6);
+}
+
+const char *DreamPicoPortGamepad::get_button_name(u32 code)
+{
+	using namespace i18n;
+	switch (code) {
+		// Coincides with buttons setup in setDefaultMapping
+		case 2: return "C";
+		case 5: return "Z";
+		case 10: return "D";
+		case 9: return T("DPad2 Up");
+		case 8: return T("DPad2 Down");
+		case 7: return T("DPad2 Left");
+		case 6: return T("DPad2 Right");
+
+		// These buttons are normally not physically accessible but are mapped on DreamPicoPort
+		case 12: return T("VMU1 A");
+		case 15: return T("VMU1 B");
+		case 16: return T("VMU1 Up");
+		case 17: return T("VMU1 Down");
+		case 18: return T("VMU1 Left");
+		case 19: return T("VMU1 Right");
+
+		default: return DreamLinkGamepad::get_button_name(code); // default name
+	}
 }

@@ -23,13 +23,10 @@
 #include "log/LogManager.h"
 #include "hw/maple/maple_if.h"
 #include "imgui_stdlib.h"
+#include "input/dreampotato.h"
 
 #ifdef GDB_SERVER
 #include "hw/mem/addrspace.h"
-#endif
-
-#if defined(USE_DREAMLINK_DEVICES)
-#include "sdl/dreamlink.h"
 #endif
 
 static void gui_settings_advanced()
@@ -228,11 +225,9 @@ void gui_display_settings()
     	if (maple_devices_changed)
     	{
     		maple_devices_changed = false;
+    		dreampotato::update();
     		if (game_started && settings.platform.isConsole())
     		{
-#if defined(USE_DREAMLINK_DEVICES)
-				reconnectDreamLinks();
-#endif
     			maple_ReconnectDevices();
     			reset_vmus();
     		}

@@ -34,7 +34,7 @@ public:
 	void setDamper(float param, float speed);
 	void stopHaptic();
 
-	void close();
+	virtual void close();
 
 	const char *get_button_name(u32 code) override;
 	const char *get_axis_name(u32 code) override;

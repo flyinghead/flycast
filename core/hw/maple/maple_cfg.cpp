@@ -6,6 +6,7 @@
 #include "cfg/option.h"
 #include "stdclass.h"
 #include "serialize.h"
+#include "input/maplelink.h"
 
 MapleInputState mapleInputState[4];
 extern bool maple_ddt_pending_reset;
@@ -214,6 +215,14 @@ bool maple_atomiswave_coin_chute(int slot)
 static void mcfg_Create(MapleDeviceType type, u32 bus, u32 port, s32 player_num = -1)
 {
 	MapleDevices[bus][port].reset();
+	if (settings.platform.isConsole() && type == MDT_SegaVMU)
+	{
+		MapleLink::Ptr link = MapleLink::getMapleLink(bus, port);
+		if (link != nullptr && link->storageEnabled()) {
+			createMapleLinkVmu(bus, port);
+			return;
+		}
+	}
 	std::shared_ptr<maple_device> dev = maple_Create(type);
 	dev->Setup(bus, port, player_num);
 }

@@ -56,12 +56,15 @@ static char *maple_device_types[] =
 //	Tnop("Dreameye"),
 };
 
+constexpr int MDT_DreamPotato = 100;
+
 static char *maple_expansion_device_types[] =
 {
 	Tnop("None"),
 	Tnop("Sega VMU"),
 	Tnop("Vibration Pack"),
 	Tnop("Microphone"),
+	Tnop("DreamPotato"),
 };
 
 static const char *maple_device_name(MapleDeviceType type)
@@ -138,7 +141,7 @@ static MapleDeviceType maple_device_type_from_index(int idx)
 
 static const char *maple_expansion_device_name(MapleDeviceType type)
 {
-	switch (type)
+	switch ((int)type)
 	{
 	case MDT_SegaVMU:
 		return maple_expansion_device_types[1];
@@ -146,6 +149,8 @@ static const char *maple_expansion_device_name(MapleDeviceType type)
 		return maple_expansion_device_types[2];
 	case MDT_Microphone:
 		return maple_expansion_device_types[3];
+	case MDT_DreamPotato:
+		return maple_expansion_device_types[4];
 	case MDT_None:
 	default:
 		return maple_expansion_device_types[0];
@@ -300,6 +305,8 @@ static MapleDeviceType maple_expansion_device_type_from_index(int idx)
 		return MDT_PurupuruPack;
 	case 3:
 		return MDT_Microphone;
+	case 4:
+		return (MapleDeviceType)MDT_DreamPotato;
 	case 0:
 	default:
 		return MDT_None;
@@ -988,7 +995,7 @@ void gui_settings_controls(bool& maple_devices_changed)
 				ImGui::TableSetColumnIndex(2);
 				DreamLinkGamepad* dreamLinkGamepad = dynamic_cast<DreamLinkGamepad*>(gamepad.get());
 				if (dreamLinkGamepad != nullptr) {
-					ImGui::Text(T("DreamLink status: %s"), dreamLinkGamepad->dreamLinkStatus());
+					ImGui::Text(T("DreamLink: %s"), dreamLinkGamepad->dreamLinkStatus());
 				}
 #endif
 
@@ -1002,14 +1009,8 @@ void gui_settings_controls(bool& maple_devices_changed)
 					for (int j = -1; j < (int)std::size(maple_ports) - 1; j++)
 					{
 						bool is_selected = gamepad->maple_port() == j;
-						if (ImGui::Selectable(maple_ports[j + 1], &is_selected)) {
+						if (ImGui::Selectable(maple_ports[j + 1], &is_selected))
 							gamepad->set_maple_port(j);
-#if defined(USE_DREAMLINK_DEVICES)
-							if (dreamLinkGamepad != nullptr) {
-								maple_devices_changed = true;
-							}
-#endif
-						}
 						if (is_selected)
 							ImGui::SetItemDefaultFocus();
 					}
@@ -1055,14 +1056,6 @@ void gui_settings_controls(bool& maple_devices_changed)
 #if defined(_WIN32) && !defined(TARGET_UWP)
 	OptionCheckbox(T("Use Raw Input"), config::UseRawInput, T("Supports multiple pointing devices (mice, light guns) and keyboards"));
 #endif
-#ifdef USE_DREAMLINK_DEVICES
-	{
-		DisabledScope scope(game_started);
-		OptionCheckbox(T("Use Physical VMU Memory"), config::UsePhysicalVmuMemory,
-				T("Enables direct read/write access to physical VMU memory via DreamPicoPort/DreamConn. "
-			"This is not compatible with load state events."));
-	}
-#endif
 
 	ImGui::Spacing();
 	header(T("Dreamcast Devices"));
@@ -1101,34 +1094,32 @@ void gui_settings_controls(bool& maple_devices_changed)
 					}
 					ImGui::EndCombo();
 				}
-				int port_count = 0;
-				switch (config::MapleMainDevices[bus]) {
-					case MDT_SegaController:
-					case MDT_SegaControllerXL:
-						port_count = 2;
-						break;
-					case MDT_LightGun:
-					case MDT_TwinStick:
-					case MDT_AsciiStick:
-					case MDT_RacingController:
-						port_count = 1;
-						break;
-					default: break;
-				}
+				int port_count = maple_getPortCount(config::MapleMainDevices[bus]);
 				for (int port = 0; port < port_count; port++)
 				{
 					ImGui::TableSetColumnIndex(2 + port);
 					snprintf(device_name, sizeof(device_name), "##device%d.%d", bus, port + 1);
 					ImguiID _(device_name);
 					ImGui::SetNextItemWidth(expComboWidth);
-					if (ImGui::BeginCombo(device_name, maple_expansion_device_name(config::MapleExpansionDevices[bus][port]), ImGuiComboFlags_None))
+					int subtype = config::MapleExpansionDevices[bus][port];
+					if (subtype == MDT_SegaVMU && config::NetworkExpansionDevices[bus][port] == 1)
+						subtype = MDT_DreamPotato;
+					if (ImGui::BeginCombo(device_name, maple_expansion_device_name((MapleDeviceType)subtype), ImGuiComboFlags_None))
 					{
 						for (int i = 0; i < IM_ARRAYSIZE(maple_expansion_device_types); i++)
 						{
-							bool is_selected = config::MapleExpansionDevices[bus][port] == maple_expansion_device_type_from_index(i);
+							bool is_selected = subtype == maple_expansion_device_type_from_index(i);
 							if (ImGui::Selectable(maple_expansion_device_types[i], &is_selected))
 							{
-								config::MapleExpansionDevices[bus][port] = maple_expansion_device_type_from_index(i);
+								subtype = maple_expansion_device_type_from_index(i);
+								if (subtype == MDT_DreamPotato) {
+									config::MapleExpansionDevices[bus][port] = MDT_SegaVMU;
+									config::NetworkExpansionDevices[bus][port] = 1;
+								}
+								else {
+									config::MapleExpansionDevices[bus][port] = (MapleDeviceType)subtype;
+									config::NetworkExpansionDevices[bus][port] = 0;
+								}
 								maple_devices_changed = true;
 							}
 							if (is_selected)
@@ -1172,28 +1163,20 @@ void gui_settings_controls(bool& maple_devices_changed)
 					is_there_any_xhair |= enabled;
 				}
 
-#ifdef USE_DREAMLINK_DEVICES
-				if (port_count > 0)
-				{
-					ImGui::SameLine();
-					ImGui::PushID(bus);
-					bool pressed = OptionCheckbox(T("Use Network Expansion Devices"), config::UseNetworkExpansionDevices[bus],
-							T("Connect to expansion devices such as VMUs over local TCP."));
-					ImGui::PopID();
-
-					if (pressed)
-						maple_devices_changed = true;
-				}
-#endif
-
 				ImGui::PopItemWidth();
 			}
 			ImGui::EndTable();
+		}
+		OptionCheckbox(T("Per Game VMU A1"), config::PerGameVmu, T("When enabled, each game has its own VMU on port 1 of controller A."));
+		{
+			DisabledScope scope(game_started);
+			OptionCheckbox(T("Use Physical VMU Storage"), config::UsePhysicalVmuMemory,
+					T("Enables read and write access to physical VMU storage via DreamPicoPort or DreamPotato. "
+				"This is not compatible with load state events."));
 		}
 		{
 			DisabledScope scope(!is_there_any_xhair);
 			OptionSlider(T("Crosshair Size"), config::CrosshairSize, 10, 100);
 		}
-		OptionCheckbox(T("Per Game VMU A1"), config::PerGameVmu, T("When enabled, each game has its own VMU on port 1 of controller A."));
     }
 }

@@ -157,7 +157,7 @@ public:
 	}
 	virtual ~jvs_io_board() = default;
 
-	u32 handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_out);
+	u32 handle_jvs_message(const u8 *buffer_in, u32 length_in, u8 *buffer_out);
 	virtual void serialize(Serializer& ser) const;
 	virtual void deserialize(Deserializer& deser);
 
@@ -229,7 +229,7 @@ protected:
 		}
 	}
 
-	virtual void write_digital_out(int count, u8 *data)
+	virtual void write_digital_out(int count, const u8 *data)
 	{
 		u32 newOutput = digOutput;
 		for (int i = 0; i < count && i < 4; i++)
@@ -613,7 +613,7 @@ protected:
 			v[1] &= ~NAOMI_BTN2_KEY;
 	}
 
-	void write_digital_out(int count, u8 *data) override
+	void write_digital_out(int count, const u8 *data) override
 	{
 		if (count != 3)
 			return;
@@ -1382,7 +1382,7 @@ maple_naomi_jamma::~maple_naomi_jamma()
 	EEPROM = nullptr;
 }
 
-void maple_naomi_jamma::send_jvs_message(u32 node_id, u32 channel, u32 length, u8 *data)
+void maple_naomi_jamma::send_jvs_message(u32 node_id, u32 channel, u32 length, const u8 *data)
 {
 	if (node_id - 1 < io_boards.size())
 	{
@@ -1413,7 +1413,7 @@ void maple_naomi_jamma::send_jvs_message(u32 node_id, u32 channel, u32 length, u
 	}
 }
 
-void maple_naomi_jamma::send_jvs_messages(u32 node_id, u32 channel, bool use_repeat, u32 length, u8 *data, bool repeat_first)
+void maple_naomi_jamma::send_jvs_messages(u32 node_id, u32 channel, bool use_repeat, u32 length, const u8 *data, bool repeat_first)
 {
 	u8 temp_buffer[256];
 	if (data)
@@ -1519,7 +1519,7 @@ void maple_naomi_jamma::handle_86_subcommand()
 		}
 	}
 	u8 node_id = 0;
-	u8 *cmd = NULL;
+	const u8 *cmd = NULL;
 	u32 len = 0;
 	u8 channel = 0;
 	if (dma_count_in >= 3)
@@ -1798,7 +1798,7 @@ void maple_naomi_jamma::handle_86_subcommand()
 	}
 }
 
-u32 maple_naomi_jamma::RawDma(u32* buffer_in, u32 buffer_in_len, u32* buffer_out)
+u32 maple_naomi_jamma::RawDma(const u32* buffer_in, u32 buffer_in_len, u32* buffer_out)
 {
 #ifdef DUMP_JVS
 	printf("JVS IN: ");
@@ -2020,7 +2020,7 @@ u16 jvs_io_board::read_analog_axis(int player_num, int player_axis, bool inverte
 #define JVS_OUT(b) buffer_out[length++] = b
 #define JVS_STATUS1() JVS_OUT(1)
 
-u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_out)
+u32 jvs_io_board::handle_jvs_message(const u8 *buffer_in, u32 length_in, u8 *buffer_out)
 {
 	u8 jvs_cmd = buffer_in[0];
 	if (jvs_cmd == 0xF0)		// JVS reset
