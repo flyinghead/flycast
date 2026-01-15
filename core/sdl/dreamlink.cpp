@@ -157,7 +157,9 @@ std::shared_ptr<DreamLinkGamepad> createDreamLinkGamepad(int maple_port, int joy
 {
 	if (DreamPicoPortGamepad::identify(joystick_idx))
 		return std::make_shared<DreamPicoPortGamepad>(maple_port, joystick_idx, sdl_joystick);
+#ifdef USE_DREAMCONN
 	else if (DreamConnGamepad::identify(joystick_idx))
 		return std::make_shared<DreamConnGamepad>(maple_port, joystick_idx, sdl_joystick);
+#endif
 	return nullptr;
 }
