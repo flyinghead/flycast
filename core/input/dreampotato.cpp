@@ -14,6 +14,7 @@
     You should have received a copy of the GNU General Public License
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
  */
+#include "types.h"
 #include <asio.hpp> // Must be included first to avoid winsock issues on Windows
 #include "dreampotato.h"
 #include "maplelink.h"
