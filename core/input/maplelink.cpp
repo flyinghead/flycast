@@ -66,6 +66,18 @@ void MapleLink::unregisterLink(int bus, int port)
 	}
 }
 
+bool MapleLink::StorageEnabled()
+{
+	std::lock_guard<std::mutex> _(Mutex);
+	for (const auto& ports : Links)
+	{
+		for (auto link : ports)
+			if (link != nullptr && link->storageEnabled())
+				return true;
+	}
+	return false;
+}
+
 BaseMapleLink::BaseMapleLink(bool storageSupported)
 	: storageSupported(storageSupported)
 {
@@ -89,11 +101,10 @@ void BaseMapleLink::eventStart(Event event, void *p)
 void BaseMapleLink::eventLoadState(Event event, void *p)
 {
 	BaseMapleLink *self = (BaseMapleLink *)p;
-	self->disableStorage();
-	// FIXME at this point, if storage is enabled, the save state VMU content has been loaded into the MapleLinkVmu.
-	// when maple_ReconnectDevices is called, it will be replaced by a regular maple vmu AND WILL LOOSE ITS CONTENT...
-	// Add Event::PreLoadState? -> can disable storage at this point and switch to regular maple_vmu (which will be loaded by the savestate)
-	// Or: ignore savestate vmu data and reconnect self after load state? -> no need for PreLoadState event and clean behavior but no need to disable storage then...
+	if (self->vmuStorage) {
+		WARN_LOG(INPUT, "State loaded but VMU has storage enabled");
+		self->disableStorage();
+	}
 }
 
 void BaseMapleLink::disableStorage()

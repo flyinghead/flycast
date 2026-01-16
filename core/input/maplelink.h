@@ -39,13 +39,16 @@ public:
 	//! True if the link is operational
 	virtual bool isConnected() = 0;
 
-	static Ptr getMapleLink(int bus, int port) {
+	//! Returns the maple link at the given location if any
+	static Ptr GetMapleLink(int bus, int port) {
 		std::lock_guard<std::mutex> _(Mutex);
 		return Links[bus][port];
 	}
+	//! True if any maple link currently has storage enabled
+	static bool StorageEnabled();
 
 protected:
-	//! True if game has been started
+	//! True if a game has been started
 	bool isGameStarted() const;
 	void registerLink(int bus, int port);
 	void unregisterLink(int bus, int port);

@@ -57,7 +57,7 @@ maple_device::~maple_device()
 
 bool maple_base::relayMapleLink()
 {
-	auto link = MapleLink::getMapleLink(bus_id, bus_port);
+	auto link = MapleLink::GetMapleLink(bus_id, bus_port);
 	if (link == nullptr)
 		return true;
 	else
@@ -385,7 +385,7 @@ struct maple_sega_vmu: maple_base
 
 	void updateMapleLinkScreen()
 	{
-		auto link = MapleLink::getMapleLink(bus_id, bus_port);
+		auto link = MapleLink::GetMapleLink(bus_id, bus_port);
 		if (link == nullptr)
 			return;
 
@@ -2186,7 +2186,7 @@ struct MapleLinkVmu : public maple_sega_vmu
 		if (cachedBlocks[block])
 			return MDRS_JVSNone;
 
-		auto link = MapleLink::getMapleLink(bus_id, bus_port);
+		auto link = MapleLink::GetMapleLink(bus_id, bus_port);
 		if (link == nullptr) {
 			ERROR_LOG(MAPLE, "MapleLinkVmu[%s]::readBlock: MapleLink is null", logical_port);
 			return MDRS_JVSNone;
@@ -2225,7 +2225,7 @@ struct MapleLinkVmu : public maple_sega_vmu
 				{
 				case MDCF_BlockWrite:
 				{
-					auto link = MapleLink::getMapleLink(bus_id, bus_port);
+					auto link = MapleLink::GetMapleLink(bus_id, bus_port);
 					if (link == nullptr) {
 						ERROR_LOG(MAPLE, "MapleLinkVmu[%s]::BlockWrite: MapleLink is null", logical_port);
 						return MDRE_FileError;

@@ -227,11 +227,11 @@ std::array<std::array<Option<int>, 2>, 4> NetworkExpansionDevices{{
 	{{Option<int>("device4.1.net", 0, "input"),
 	Option<int>("device4.2.net", 0, "input")}},
 }};
-Option<bool> PerGameVmu("PerGameVmu", false, "config");
+Option<bool> PerGameVmu("PerGameVmu", true, "config");
 #ifdef _WIN32
 Option<bool, false> UseRawInput("RawInput", false, "input");
 #endif
-Option<bool> UsePhysicalVmuMemory("UsePhysicalVmuMemory", true);
+Option<bool> UsePhysicalVmuMemory("UsePhysicalVmuMemory", false);
 
 #ifdef USE_LUA
 Option<std::string, false> LuaFileName("LuaFileName", "flycast.lua");
