@@ -4525,7 +4525,7 @@ static float ImFontBaked_BuildLoadGlyphAdvanceX(ImFontBaked* baked, ImWchar code
 
 // The point of this indirection is to not be inlined in debug mode in order to not bloat inner loop.b
 IM_MSVC_RUNTIME_CHECKS_OFF
-static float BuildLoadGlyphGetAdvanceOrFallback(ImFontBaked* baked, unsigned int codepoint)
+float BuildLoadGlyphGetAdvanceOrFallback(ImFontBaked* baked, unsigned int codepoint)
 {
     return ImFontBaked_BuildLoadGlyphAdvanceX(baked, (ImWchar)codepoint);
 }
