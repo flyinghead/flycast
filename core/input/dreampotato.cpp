@@ -108,7 +108,7 @@ void DreamPotato::connect()
 		return;
 	}
 	connected = true;
-	iostream.expires_from_now(std::chrono::seconds(1));
+	iostream.expires_from_now(std::chrono::milliseconds(500));
 
 	MapleMsg txMsg;
 	txMsg.command = MDC_DeviceRequest;
@@ -126,7 +126,6 @@ void DreamPotato::connect()
 		disconnect();
 		return;
 	}
-	iostream.expires_from_now(std::chrono::duration<u32>::max());	// don't use a 64-bit based duration to avoid overflow
 
 	NOTICE_LOG(INPUT, "Connected to DreamPotato[%d]", bus);
 }
@@ -148,7 +147,8 @@ bool DreamPotato::send(const MapleMsg& msg)
 	if (!connected)
 		return false;
 
-	auto ec = sendMsg(msg, iostream);
+	iostream.expires_from_now(std::chrono::milliseconds(100));
+	asio::error_code ec = sendMsg(msg, iostream);
 	if (ec)
 	{
 		WARN_LOG(INPUT, "DreamPotato[%d] send failed: %s", bus, ec.message().c_str());
@@ -163,7 +163,12 @@ bool DreamPotato::sendReceive(const MapleMsg& txMsg, MapleMsg& rxMsg)
 	if (!send(txMsg))
 		return false;
 
-	return receiveMsg(rxMsg, iostream);
+	if (!receiveMsg(rxMsg, iostream)) {
+		WARN_LOG(INPUT, "DreamPotato[%d] receive failed", bus);
+		disconnect();
+		return false;
+	}
+	return true;
 }
 
 // Instantiate DreamPotato devices where needed and delete the others
