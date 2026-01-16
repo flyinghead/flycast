@@ -692,10 +692,6 @@ void gui_stop_game(const std::string& message)
 	}
 }
 
-static bool savestateAllowed() {
-	return !settings.content.path.empty() && !settings.network.online && !settings.naomi.multiboard;
-}
-
 static void appendVectorData(void *context, void *data, int size)
 {
 	std::vector<u8>& v = *(std::vector<u8> *)context;
@@ -840,14 +836,14 @@ static void gui_display_commands()
 
 		ImGui::NextColumn();
 		{
-			DisabledScope _{!savestateAllowed()};
+			DisabledScope _{!dc_savestateAllowed()};
 			ImguiStateTexture savestatePic;
 			time_t savestateDate = dc_getStateCreationDate(config::SavestateSlot);
 
 			// Load State
 			{
 				DisabledScope _{settings.raHardcoreMode || savestateDate == 0};
-				if (IconButton(ICON_FA_CLOCK_ROTATE_LEFT, T("Load State"), ScaledVec2(buttonWidth, 50)).realize() && savestateAllowed())
+				if (IconButton(ICON_FA_CLOCK_ROTATE_LEFT, T("Load State"), ScaledVec2(buttonWidth, 50)).realize() && dc_savestateAllowed())
 				{
 					gui_setState(GuiState::Closed);
 					dc_loadstate(config::SavestateSlot);
@@ -855,7 +851,7 @@ static void gui_display_commands()
 			}
 
 			// Save State
-			if (IconButton(ICON_FA_DOWNLOAD, T("Save State"), ScaledVec2(buttonWidth, 50)).realize() && savestateAllowed())
+			if (IconButton(ICON_FA_DOWNLOAD, T("Save State"), ScaledVec2(buttonWidth, 50)).realize() && dc_savestateAllowed())
 			{
 				gui_setState(GuiState::Closed);
 				savestate();
@@ -1749,7 +1745,7 @@ void gui_error(const std::string& what) {
 void gui_loadState()
 {
 	const LockGuard lock(guiMutex);
-	if (gui_state == GuiState::Closed && savestateAllowed())
+	if (gui_state == GuiState::Closed && dc_savestateAllowed())
 	{
 		try {
 			emu.stop();
@@ -1764,7 +1760,7 @@ void gui_loadState()
 void gui_saveState(bool stopRestart)
 {
 	const LockGuard lock(guiMutex);
-	if ((gui_state == GuiState::Closed || !stopRestart) && savestateAllowed())
+	if ((gui_state == GuiState::Closed || !stopRestart) && dc_savestateAllowed())
 	{
 		try {
 			if (stopRestart)

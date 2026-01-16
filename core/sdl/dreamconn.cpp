@@ -61,7 +61,7 @@ public:
 
 		auto ec = sendMsg(msg, iostream);
 		if (ec) {
-			WARN_LOG(INPUT, "DreamcastController[%d] send failed: %s", bus, ec.message().c_str());
+			WARN_LOG(INPUT, "DreamConn[%d] send failed: %s", bus, ec.message().c_str());
 			disconnect();
 			return false;
 		}
@@ -73,7 +73,12 @@ public:
 		if (!send(txMsg))
 			return false;
 
-		return receiveMsg(rxMsg, iostream);
+		if (!receiveMsg(rxMsg, iostream)) {
+			WARN_LOG(INPUT, "DreamConn[%d] receive failed", bus);
+			disconnect();
+			return false;
+		}
+		return true;
 	}
 
 	void changeBus(int newBus) override
@@ -98,7 +103,7 @@ public:
 
 		iostream = asio::ip::tcp::iostream("localhost", std::to_string(BASE_PORT + bus));
 		if (!iostream) {
-			WARN_LOG(INPUT, "DreamcastController[%d] connection failed: %s", bus, iostream.error().message().c_str());
+			WARN_LOG(INPUT, "DreamConn[%d] connection failed: %s", bus, iostream.error().message().c_str());
 			disconnect();
 			return;
 		}
@@ -150,9 +155,9 @@ public:
 			iostream.close();
 
 		// Notify the user of the disconnect
-		NOTICE_LOG(INPUT, "Disconnected from DreamcastController[%d]", bus);
+		NOTICE_LOG(INPUT, "Disconnected from DreamConn[%d]", bus);
 		char buf[128];
-		snprintf(buf, sizeof(buf), i18n::T("WARNING: DreamLink disconnected from port %c"), 'A' + bus);
+		snprintf(buf, sizeof(buf), i18n::T("WARNING: DreamConn disconnected from port %c"), 'A' + bus);
 		os_notify(buf, 6000);
 	}
 };

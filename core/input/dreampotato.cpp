@@ -23,27 +23,20 @@
 #include <memory>
 #include <array>
 #include <iomanip>
-#include <sstream>
-#include <locale>
 
 asio::error_code sendMsg(const MapleMsg& msg, asio::ip::tcp::iostream& stream)
 {
-	std::ostringstream s;
-	s.imbue(std::locale::classic());
-	s.fill('0');
-	s << std::hex << std::uppercase
-		<< std::setw(2) << (u32)msg.command << " "
-		<< std::setw(2) << (u32)msg.destAP << " "
-		<< std::setw(2) << (u32)msg.originAP << " "
-		<< std::setw(2) << (u32)msg.size;
+	static char buffer[1024 * 3 + 2];
+	char *p = buffer;
+	p += sprintf(p, "%02X %02X %02X %02X", msg.command, msg.destAP, msg.originAP, msg.size);
 	const u32 sz = msg.getDataSize();
 	for (u32 i = 0; i < sz; i++)
-		s << " " << std::setw(2) << (u32)msg.data[i];
-	s << "\r\n";
-
+		p += sprintf(p, " %02X", msg.data[i]);
+	strcpy(p, "\r\n");
+	p += 2;
 	asio::ip::tcp::socket& sock = static_cast<asio::ip::tcp::socket&>(stream.socket());
 	asio::error_code ec;
-	asio::write(sock, asio::buffer(s.str()), ec);
+	asio::write(sock, asio::buffer(buffer, p - buffer), ec);
 	return ec;
 }
 

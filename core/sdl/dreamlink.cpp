@@ -87,11 +87,15 @@ DreamLinkGamepad::DreamLinkGamepad(std::shared_ptr<DreamLink> dreamlink, int map
 
 void DreamLinkGamepad::close()
 {
-	dreamlink->disconnect();
-	dreamlink.reset();
-	// Make sure settings are open in case disconnection happened mid-game
-	if (!gui_is_open())
-		gui_open_settings();
+	if (dreamlink != nullptr)
+	{
+		dreamlink->disconnect();
+		dreamlink.reset();
+		// Make sure settings are open in case disconnection happened mid-game
+		if (!gui_is_open())
+			gui_open_settings();
+	}
+	SDLGamepad::close();
 }
 
 const char* DreamLinkGamepad::dreamLinkStatus()
@@ -113,6 +117,7 @@ void DreamLinkGamepad::set_maple_port(int port)
 
 void DreamLinkGamepad::registered()
 {
+	SDLGamepad::registered();
 	dreamlink->connect();
 }
 

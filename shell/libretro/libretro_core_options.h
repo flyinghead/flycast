@@ -1014,6 +1014,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       {
          { "VMU",      NULL },
          { "Purupuru", "Vibration Pack" },
+         { "DreamPotato", NULL },
          { "None",     NULL },
          { NULL, NULL },
       },
@@ -1044,6 +1045,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       {
          { "VMU",      NULL },
          { "Purupuru", "Vibration Pack" },
+         { "DreamPotato", NULL },
          { "None",     NULL },
          { NULL, NULL },
       },
@@ -1074,6 +1076,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       {
          { "VMU",      NULL },
          { "Purupuru", "Vibration Pack" },
+         { "DreamPotato", NULL },
          { "None",     NULL },
          { NULL, NULL },
       },
@@ -1104,6 +1107,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       {
          { "VMU",      NULL },
          { "Purupuru", "Vibration Pack" },
+         { "DreamPotato", NULL },
          { "None",     NULL },
          { NULL, NULL },
       },

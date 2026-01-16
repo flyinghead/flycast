@@ -17,6 +17,7 @@
 #include "stdclass.h"
 #include "serialize.h"
 #include "oslib/i18n.h"
+#include "input/maplelink.h"
 #include <time.h>
 #ifdef TARGET_UWP
 #include <winrt/Windows.System.h>
@@ -155,9 +156,14 @@ void flycast_term()
 	os_TermInput();
 }
 
+bool dc_savestateAllowed() {
+	return !settings.content.path.empty() && !settings.network.online
+			&& !settings.naomi.multiboard && !MapleLink::StorageEnabled();
+}
+
 void dc_savestate(int index, const u8 *pngData, u32 pngSize)
 {
-	if (settings.network.online || settings.content.fileName.empty())
+	if (!dc_savestateAllowed())
 		return;
 
 	lastStateFile.clear();
@@ -225,7 +231,7 @@ fail:
 
 void dc_loadstate(int index)
 {
-	if (settings.raHardcoreMode)
+	if (!dc_savestateAllowed() || settings.raHardcoreMode)
 		return;
 	u32 total_size = 0;
 
