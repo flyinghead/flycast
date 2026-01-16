@@ -872,6 +872,7 @@ if(NOT LIBRETRO)
 		core/deps/imgui/imgui.cpp
 		core/deps/imgui/imgui_demo.cpp
 		core/deps/imgui/imgui_draw.cpp
+		core/deps/imgui/imgui_cjk.cpp
 		core/deps/imgui/imgui_stdlib.cpp
 		core/deps/imgui/imgui_tables.cpp
 		core/deps/imgui/imgui_widgets.cpp)
