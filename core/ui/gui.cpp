@@ -331,7 +331,7 @@ void gui_initFonts()
 
 	// Large font
     const float largeFontSize = uiScaled(21.f);
-	data = resource::load("fonts/Roboto-Regular.ttf", dataSize);
+	data = resource::load("fonts/Roboto-Medium.ttf", dataSize);
 	verify(data != nullptr);
 	largeFont = io.Fonts->AddFontFromMemoryTTF(data.release(), dataSize, largeFontSize, nullptr, ranges);
 	ImFontConfig largeFontConfig;
@@ -365,18 +365,18 @@ void gui_initFonts()
 	
 #elif defined(__APPLE__) && !defined(TARGET_IPHONE)
 	// Japanese
-	registerFont(fonts,      "ja", "/System/Library/Fonts/ヒラギノ角ゴシック W4.ttc", fontSize * 0.8f);
-	registerFont(largeFonts, "ja", "/System/Library/Fonts/ヒラギノ角ゴシック W4.ttc", largeFontSize * 0.8f);
+	registerFont(fonts,      "ja", "/System/Library/Fonts/ヒラギノ角ゴシック W5.ttc", fontSize * 0.85f);
+	registerFont(largeFonts, "ja", "/System/Library/Fonts/ヒラギノ角ゴシック W5.ttc", largeFontSize * 0.85f);
 	// Korean
-	registerFont(fonts,      "ko", "/System/Library/Fonts/AppleSDGothicNeo.ttc", fontSize);
-	registerFont(largeFonts, "ko", "/System/Library/Fonts/AppleSDGothicNeo.ttc", largeFontSize);
+	registerFont(fonts,      "ko", "/System/Library/Fonts/AppleSDGothicNeo.ttc", fontSize, 4); // SemiBold
+	registerFont(largeFonts, "ko", "/System/Library/Fonts/AppleSDGothicNeo.ttc", largeFontSize, 4); // SemiBold
 	// Chinese
-	registerFont(fonts,      "zh", "/System/Library/Fonts/PingFang.ttc", fontSize * 1.15f);
-	registerFont(largeFonts, "zh", "/System/Library/Fonts/PingFang.ttc", largeFontSize * 1.15f);
+	registerFont(fonts,      "zh", "/System/Library/Fonts/PingFang.ttc", fontSize * 1.18f, 3); // Medium
+	registerFont(largeFonts, "zh", "/System/Library/Fonts/PingFang.ttc", largeFontSize * 1.18f, 3); // Medium
 	
 #elif defined(__ANDROID__)
-	registerFont(fonts,      "cjk", "/system/fonts/NotoSansCJK-Regular.ttc", fontSize);
-	registerFont(largeFonts, "cjk", "/system/fonts/NotoSansCJK-Regular.ttc", largeFontSize);
+	registerFont(fonts,      "cjk", "/system/fonts/NotoSansCJK-Medium.ttc", fontSize);
+	registerFont(largeFonts, "cjk", "/system/fonts/NotoSansCJK-Medium.ttc", largeFontSize);
 	
 #elif defined(__linux__)
 	
@@ -410,11 +410,11 @@ void gui_initFonts()
 	
 	// CJK
 	registerFont(fonts,      "cjk", "/usr/share/fonts/truetype/droid/DroidSansFallbackFull.ttf", fontSize);
-	registerFont(fonts,      "cjk", "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc", fontSize);
-	registerFont(fonts,      "cjk", "/usr/share/fonts/google-noto-cjk/NotoSansCJK-Regular.ttc", fontSize); // redhat
+	registerFont(fonts,      "cjk", "/usr/share/fonts/opentype/noto/NotoSansCJK-Medium.ttc", fontSize);
+	registerFont(fonts,      "cjk", "/usr/share/fonts/google-noto-cjk/NotoSansCJK-Medium.ttc", fontSize); // redhat
 	registerFont(largeFonts, "cjk", "/usr/share/fonts/truetype/droid/DroidSansFallbackFull.ttf", largeFontSize);
-	registerFont(largeFonts, "cjk", "/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc", largeFontSize);
-	registerFont(largeFonts, "cjk", "/usr/share/fonts/google-noto-cjk/NotoSansCJK-Bold.ttc", largeFontSize); // redhat
+	registerFont(largeFonts, "cjk", "/usr/share/fonts/opentype/noto/NotoSansCJK-Medium.ttc", largeFontSize);
+	registerFont(largeFonts, "cjk", "/usr/share/fonts/google-noto-cjk/NotoSansCJK-Medium.ttc", largeFontSize); // redhat
 
 	// TODO BSD, iOS, ...
 #endif
