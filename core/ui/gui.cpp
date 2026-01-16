@@ -211,8 +211,7 @@ struct FontEntry
 
 static void registerFont(std::vector<FontEntry>& target, const char* lang, const std::string& path, float size, int fontNo = 0)
 {
-	static std::string locale = i18n::getCurrentLocale();
-	
+	std::string locale = i18n::getCurrentLocale();
 	auto bucketRank = [&](const char* l) -> int
 	{
 		if (!l) return 3;                      // generic last

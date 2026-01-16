@@ -24,6 +24,7 @@
 #include "stdclass.h"
 #include "achievements/achievements.h"
 #include "imgui_stdlib.h"
+#include "input/gamepad_device.h"
 
 static std::vector<std::string>* g_currentPathList = nullptr;
 static void managePathListCallback(std::string selection)
@@ -185,8 +186,64 @@ void gui_settings_general()
 	{
 		DisabledScope scope(settings.platform.isArcade());
 
+		struct LangItem {
+			const char* label;
+			const char* value;
+		};
+		static constexpr LangItem kLanguages[] = {
+			{ "English", "en" },
+			{ "Français", "fr" },
+			{ "Magyar", "hu" },
+			{ "日本語", "ja" },
+			{ "Português (Brasil)", "pt_BR" },
+			{ "Svenska", "sv" },
+		};
+
+		std::string currentLocale = i18n::getCurrentLocale();
+
+		for (auto& c : currentLocale) if (c == '-') c = '_';
+
+		const char* preview = "English";
+		const char* currentCode = "en";
+		bool matchFound = false;
+
+		for (const auto& it : kLanguages) {
+			if (currentLocale == it.value) {
+				preview = it.label;
+				currentCode = it.value;
+				matchFound = true;
+				break;
+			}
+		}
+		if (!matchFound) {
+			for (const auto& it : kLanguages) {
+				if (currentLocale.find(it.value) == 0) {
+					preview = it.label;
+					currentCode = it.value;
+					matchFound = true;
+					break;
+				}
+			}
+		}
+
+		if (ImGui::BeginCombo("UI Language", preview)) {
+			for (const auto& it : kLanguages) {
+				ImGui::PushID(it.value);
+				bool selected = !strcmp(currentCode, it.value);
+				                if (ImGui::Selectable(it.label, selected)) {
+				                    config::UILanguage = it.value;
+				                    i18n::reload_language();
+				                    GamepadDevice::RefreshAllNames();
+				                }				if (selected)
+					ImGui::SetItemDefaultFocus();
+
+				ImGui::PopID();
+			}
+			ImGui::EndCombo();
+		}
+		
 		const char *languages[] = { T("Japanese"), T("English"), T("German"), T("French"), T("Spanish"), T("Italian"), T("Default") };
-		OptionComboBox(T("Language"), config::Language, languages, std::size(languages),
+		OptionComboBox(T("Dreamcast Language"), config::Language, languages, std::size(languages),
 				T("The language as configured in the Dreamcast BIOS"));
 
 		const char *broadcast[] = { "NTSC", "PAL", "PAL/M", "PAL/N", T("Default") };

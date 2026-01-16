@@ -18,6 +18,7 @@
  */
 #include "nswitch.h"
 #include "oslib/i18n.h"
+#include "cfg/option.h"
 
 namespace i18n
 {
@@ -25,6 +26,9 @@ static std::string systemLanguage;
 
 std::string getCurrentLocale()
 {
+	std::string locale = config::UILanguage;
+	if (!locale.empty())
+		return locale;
 	if (systemLanguage.empty())
 	{
 		setInitialize();
