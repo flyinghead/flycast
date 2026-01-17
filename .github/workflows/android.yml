@@ -35,13 +35,13 @@ jobs:
           restore-keys: android-ccache-
             
       - name: Disable release signing
-        run: sed -i 's/signingConfig signingConfigs.release/signingConfig signingConfigs.debug/g' shell/android-studio/flycast/build.gradle
+        run: sed -i 's/signingConfigs.getByName("release")/signingConfigs.getByName("debug")/g' shell/android-studio/flycast/build.gradle.kts
         if: github.repository != 'flyinghead/flycast' || github.event_name != 'push'
 
       - name: Bump version code
         uses: chkfung/android-version-actions@v1.2.2
         with:
-          gradlePath: shell/android-studio/flycast/build.gradle 
+          gradlePath: shell/android-studio/flycast/build.gradle.kts
           versionCode: ${{ github.run_number }}
 
       - name: Gradle
