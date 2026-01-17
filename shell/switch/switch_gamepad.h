@@ -29,6 +29,7 @@ public:
 	SwitchGamepad(int maple_port, int joystick_idx, SDL_Joystick* sdl_joystick)
 		: SDLGamepad(maple_port, joystick_idx, sdl_joystick)
 	{
+		rumbleEnabled = true;
 		// A dual joycon controller has 2 vibration devices (left and right joycons)
 		// Joystick 0 is either HidNpadIdType_Handheld or HidNpadIdType_No1 depending on the joycon configuration
 		Result rc = hidInitializeVibrationDevices(vibDeviceHandlesNoN, 2,  (HidNpadIdType)(HidNpadIdType_No1 + joystick_idx),

@@ -109,6 +109,7 @@ public:
 	u32 custom_width;
 	u32 custom_height;
 	std::atomic_int custom_load_in_progress;
+	bool is_custom_replaced;	// True if the texture currently on the GPU is the custom replacement
 	bool gpuPalette;
 	u8 area;
 
@@ -167,6 +168,7 @@ public:
 		return (tcw.PixelFmt == PixelPal4 || tcw.PixelFmt == PixelPal8)
 				&& config::TextureUpscale == 1
 				&& !config::DumpTextures
+				&& !custom_texture.enabled()
 				&& tsp.FilterMode <= 1
 				&& !tcw.MipMapped
 				&& !tcw.VQ_Comp
