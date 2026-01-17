@@ -2264,6 +2264,13 @@ struct MapleLinkVmu : public maple_sega_vmu
 		return maple_sega_vmu::dma(cmd);
 	}
 
+	bool linkStatus() override
+	{
+		auto link = MapleLink::GetMapleLink(bus_id, bus_port);
+		if (link == nullptr)
+			return false;
+		return link->isConnected();
+	}
 };
 
 void createMapleLinkVmu(int bus, int port)

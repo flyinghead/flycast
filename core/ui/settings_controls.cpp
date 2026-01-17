@@ -952,7 +952,7 @@ static void gamepadSettingsPopup(const std::shared_ptr<GamepadDevice>& gamepad)
 	}
 }
 
-void gui_settings_controls(bool& maple_devices_changed)
+void gui_settings_controls(std::array<bool, 4>& mapleDevicesChanges, std::array<std::array<bool, 2>, 4>& expDevicesChanges)
 {
 	staticInit();
 
@@ -1087,7 +1087,7 @@ void gui_settings_controls(bool& maple_devices_changed)
 						if (ImGui::Selectable(maple_device_types[i], &is_selected))
 						{
 							config::MapleMainDevices[bus] = maple_device_type_from_index(i);
-							maple_devices_changed = true;
+							mapleDevicesChanges[bus] = true;
 						}
 						if (is_selected)
 							ImGui::SetItemDefaultFocus();
@@ -1120,7 +1120,7 @@ void gui_settings_controls(bool& maple_devices_changed)
 									config::MapleExpansionDevices[bus][port] = (MapleDeviceType)subtype;
 									config::NetworkExpansionDevices[bus][port] = 0;
 								}
-								maple_devices_changed = true;
+								expDevicesChanges[bus][port] = true;
 							}
 							if (is_selected)
 								ImGui::SetItemDefaultFocus();

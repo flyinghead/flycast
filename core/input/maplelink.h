@@ -52,6 +52,8 @@ protected:
 	bool isGameStarted() const;
 	void registerLink(int bus, int port);
 	void unregisterLink(int bus, int port);
+	int bus = -1;
+	u32 ports = 0;
 
 private:
 	static std::mutex Mutex;

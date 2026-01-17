@@ -1207,6 +1207,7 @@ public:
 		setMapleDevices();
 		if (dpp_comms) {
 			dpp_comms->changeSoftwareBus(software_bus);
+			sendPort();
 		}
 	}
 
@@ -1222,14 +1223,15 @@ public:
 		if (portCount == 0)
 			return;
 
-		bool needReconnect = false;
 		u32 portOneFn = getFunctionCode(0);
 		if (portOneFn & MFID_1_Storage) {
 			config::MapleExpansionDevices[software_bus][0] = MDT_SegaVMU;
 			registerLink(software_bus, 0);
-			if (storageEnabled()) {
+			if (storageEnabled())
+			{
 				sendGameId(0);
-				needReconnect = true;
+				if (isGameStarted())
+					emu.run([bus=this->software_bus]() { maple_ReconnectDevice(bus, 0); });
 			}
 		}
 		else {
@@ -1246,17 +1248,17 @@ public:
 			else if (portTwoFn & MFID_1_Storage) {
 				config::MapleExpansionDevices[software_bus][1] = MDT_SegaVMU;
 				registerLink(software_bus, 1);
-				if (storageEnabled()) {
+				if (storageEnabled())
+				{
 					sendGameId(1);
-					needReconnect = true;
+					if (isGameStarted())
+						emu.run([bus=this->software_bus]() { maple_ReconnectDevice(bus, 1); });
 				}
 			}
 			else {
 				config::MapleExpansionDevices[software_bus][1] = MDT_None;
 			}
 		}
-		if (needReconnect && isGameStarted())
-			emu.run(maple_ReconnectDevices);
 	}
 
 	bool isConnected() override {

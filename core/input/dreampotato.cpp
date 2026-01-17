@@ -62,6 +62,7 @@ class DreamPotato : public BaseMapleLink
 	asio::ip::tcp::iostream iostream;
 	bool connected = false;
 	static constexpr u16 BASE_PORT = 37393;
+	time_t lastMsg = 0;
 
 public:
 	DreamPotato(int bus)
@@ -72,6 +73,7 @@ public:
 	bool sendReceive(const MapleMsg& txMsg, MapleMsg& rxMsg) override;
 
 	bool isConnected() override {
+		checkConnection();
 		return connected;
 	}
 
@@ -79,6 +81,31 @@ public:
 	void disconnect();
 	void init();
 	void term();
+
+	void checkConnection()
+	{
+		if (!connected)
+			return;
+		time_t now = getTimeMs();
+		if (now - lastMsg < 1000)
+			return;
+
+		lastMsg = now;
+		asio::ip::tcp::socket& sock = static_cast<asio::ip::tcp::socket&>(iostream.socket());
+		bool nonBlocking = sock.non_blocking();
+		std::error_code ec;
+		if (!nonBlocking)
+			sock.non_blocking(true, ec);
+		// We don't expect to have anything to read
+		u8 buf;
+		size_t read = sock.read_some(asio::buffer(&buf, 1), ec);
+		if (!nonBlocking) {
+			std::error_code ignored;
+			sock.non_blocking(false, ignored);
+		}
+		if (read != 1 && !!ec && ec != asio::error::would_block)
+			disconnect();
+	}
 };
 
 static std::array<std::shared_ptr<DreamPotato>, 4> Potatoes;
@@ -155,6 +182,7 @@ bool DreamPotato::send(const MapleMsg& msg)
 		disconnect();
 		return false;
 	}
+	lastMsg = getTimeMs();
 	return true;
 }
 

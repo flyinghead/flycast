@@ -202,7 +202,8 @@ static bool beginTabItem(const char *icon, const char *label) {
 
 void gui_display_settings()
 {
-	static bool maple_devices_changed;
+	static std::array<bool, 4> mapleDevicesChanges;
+	static std::array<std::array<bool, 2>, 4> expDevicesChanges;
 
 	fullScreenWindow(false);
 	ImguiStyleVar _(ImGuiStyleVar_WindowRounding, 0);
@@ -222,16 +223,29 @@ void gui_display_settings()
     		gui_setState(GuiState::Commands);
     	else
     		gui_setState(GuiState::Main);
-    	if (maple_devices_changed)
-    	{
-    		maple_devices_changed = false;
-    		dreampotato::update();
-    		if (game_started && settings.platform.isConsole())
-    		{
-    			maple_ReconnectDevices();
-    			reset_vmus();
-    		}
+    	dreampotato::update();
+ 		if (game_started && settings.platform.isConsole())
+		{
+			for (unsigned bus = 0; bus < mapleDevicesChanges.size(); bus++)
+			{
+				if (mapleDevicesChanges[bus]) {
+					maple_ReconnectDevice(bus, 5);
+				}
+				else
+				{
+					if (expDevicesChanges[bus][0]) {
+						maple_ReconnectDevice(bus, 0);
+						reset_vmus();
+					}
+					if (expDevicesChanges[bus][1]) {
+						maple_ReconnectDevice(bus, 1);
+						reset_vmus();
+					}
+				}
+			}
     	}
+    	mapleDevicesChanges = {};
+    	expDevicesChanges = {};
        	SaveSettings();
     }
 	if (game_started)
@@ -271,7 +285,7 @@ void gui_display_settings()
 		if (beginTabItem(ICON_FA_GAMEPAD, T("Controls")))
 		{
 			ImguiStyleVar _(ImGuiStyleVar_FramePadding, normal_padding);
-			gui_settings_controls(maple_devices_changed);
+			gui_settings_controls(mapleDevicesChanges, expDevicesChanges);
 			ImGui::EndTabItem();
 		}
 		if (beginTabItem(ICON_FA_DISPLAY, T("Video")))

@@ -379,6 +379,21 @@ void maple_ReconnectDevices()
 	reconnect_time = sh4_sched_now64() + SH4_MAIN_CLOCK / 10;
 }
 
+void maple_ReconnectDevice(int bus, int port)
+{
+	if (port == 5)
+	{
+		// main device
+		for (int i = 0; i <= 5; i++)
+			MapleDevices[bus][i].reset();
+	}
+	else {
+		// sub device
+		MapleDevices[bus][port].reset();
+	}
+	reconnect_time = sh4_sched_now64() + SH4_MAIN_CLOCK / 10;
+}
+
 static void maple_handle_reconnect()
 {
 	if (reconnect_time != 0 && reconnect_time <= sh4_sched_now64())

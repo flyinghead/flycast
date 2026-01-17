@@ -50,6 +50,11 @@ void MapleLink::registerLink(int bus, int port)
 	if (bus >= 0 && bus < (int)Links.size()
 			&& port >= 0 && port < (int)Links[0].size())
 	{
+		if (this->bus != bus) {
+			this->bus = bus;
+			this->ports = 0;
+		}
+		this->ports |= 1 << port;
 		std::lock_guard<std::mutex> _(Mutex);
 		Links[bus][port] = shared_from_this();
 	}
@@ -59,6 +64,13 @@ void MapleLink::unregisterLink(int bus, int port)
 	if (bus >= 0 && bus < (int)Links.size()
 			&& port >= 0 && port < (int)Links[0].size())
 	{
+		if (this->bus != bus) {
+			this->bus = -1;
+			this->ports = 0;
+		}
+		else {
+			this->ports &= ~(1 << port);
+		}
 		std::lock_guard<std::mutex> _(Mutex);
 		Ptr& existing = Links[bus][port];
 		if (existing == shared_from_this())
@@ -113,7 +125,14 @@ void BaseMapleLink::disableStorage()
 		return;
 	vmuStorage = false;
 	if (isGameStarted())
-		emu.run(maple_ReconnectDevices);
+	{
+		emu.run([bus=this->bus, ports=this->ports]() {
+			if (bus != -1 && (ports & 1))
+				maple_ReconnectDevice(bus, 0);
+			if (bus != -1 && (ports & 2))
+				maple_ReconnectDevice(bus, 1);
+		});
+	}
 }
 
 bool BaseMapleLink::storageEnabled()
