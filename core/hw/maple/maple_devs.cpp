@@ -2145,6 +2145,7 @@ std::shared_ptr<maple_device> maple_Create(MapleDeviceType type)
 struct MapleLinkVmu : public maple_sega_vmu
 {
 	bool cachedBlocks[256]; //!< Set to true for block that has been loaded/written
+	bool userNotified = false;
 
 	void OnSetup() override
 	{
@@ -2225,6 +2226,11 @@ struct MapleLinkVmu : public maple_sega_vmu
 				{
 				case MDCF_BlockWrite:
 				{
+					if (!userNotified) {
+						os_notify("ATTENTION: You are saving to a physical VMU", 6000,
+								"Do not disconnect the VMU or close the game");
+						userNotified = true;
+					}
 					auto link = MapleLink::GetMapleLink(bus_id, bus_port);
 					if (link == nullptr) {
 						ERROR_LOG(MAPLE, "MapleLinkVmu[%s]::BlockWrite: MapleLink is null", logical_port);
