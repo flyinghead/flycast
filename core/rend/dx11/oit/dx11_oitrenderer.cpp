@@ -216,7 +216,7 @@ struct DX11OITRenderer : public DX11Renderer
 		}
 		else
 		{
-			bool color_clamp = gp->tsp.ColorClamp && (pvrrc.fog_clamp_min.full != 0 || pvrrc.fog_clamp_max.full != 0xffffffff);
+			bool color_clamp = gp->tsp.ColorClamp && (rendContext->fog_clamp_min.full != 0 || rendContext->fog_clamp_max.full != 0xffffffff);
 
 			int fog_ctrl = config::Fog ? gp->tsp.FogCtrl : 2;
 			useTexture = gp->pcw.Texture;
@@ -333,7 +333,7 @@ struct DX11OITRenderer : public DX11Renderer
 		deviceContext->OMSetDepthStencilState(depthStencilStates.getState(true, zwriteEnable, zfunc, needStencil), stencil);
 
 		if (gp->isNaomi2())
-			n2Helper.setConstants(*gp, polyNumber, pvrrc);
+			n2Helper.setConstants(*gp, polyNumber, *rendContext);
 	}
 
 	template <u32 Type, bool SortingEnabled, DX11OITShaders::Pass pass>
@@ -345,7 +345,7 @@ struct DX11OITRenderer : public DX11Renderer
 
 		const PolyParam *params = &gply[first];
 
-		u32 firstVertexIdx = Type == ListType_Translucent ? pvrrc.idx[gply[0].first] : 0;
+		u32 firstVertexIdx = Type == ListType_Translucent ? rendContext->idx[gply[0].first] : 0;
 		while (count-- > 0)
 		{
 			if (params->count > 2)
@@ -367,7 +367,7 @@ struct DX11OITRenderer : public DX11Renderer
 	template<bool Transparent>
 	void drawModVols(int first, int count, const ModifierVolumeParam *modVolParams)
 	{
-		if (count == 0 || pvrrc.modtrig.empty() || !config::ModifierVolumes)
+		if (count == 0 || rendContext->modtrig.empty() || !config::ModifierVolumes)
 			return;
 
 		deviceContext->IASetInputLayout(modVolInputLayout);
@@ -399,7 +399,7 @@ struct DX11OITRenderer : public DX11Renderer
 				{
 					curMVMat = param.mvMatrix;
 					curProjMat = param.projMatrix;
-					n2Helper.setConstants(pvrrc.matrices[param.mvMatrix].mat, pvrrc.matrices[param.projMatrix].mat);
+					n2Helper.setConstants(rendContext->matrices[param.mvMatrix].mat, rendContext->matrices[param.projMatrix].mat);
 				}
 				deviceContext->VSSetShader(shaders.getMVVertexShader(param.isNaomi2()), nullptr, 0);
 				if (Transparent)
@@ -448,7 +448,7 @@ struct DX11OITRenderer : public DX11Renderer
 	{
 		if (!lastPass)
 			deviceContext->OMSetRenderTargetsAndUnorderedAccessViews(1, &multipassRenderTarget.get(), nullptr, 0, D3D11_KEEP_UNORDERED_ACCESS_VIEWS, nullptr, nullptr);
-		else if (pvrrc.isRTT)
+		else if (rendContext->isRTT)
 			deviceContext->OMSetRenderTargetsAndUnorderedAccessViews(1, &rttRenderTarget.get(), nullptr, 0, D3D11_KEEP_UNORDERED_ACCESS_VIEWS, nullptr, nullptr);
 		else
 			deviceContext->OMSetRenderTargetsAndUnorderedAccessViews(1, &fbRenderTarget.get(), nullptr, 0, D3D11_KEEP_UNORDERED_ACCESS_VIEWS, nullptr, nullptr);
@@ -472,9 +472,9 @@ struct DX11OITRenderer : public DX11Renderer
 	{
 		{
 			// tr_poly_params
-			std::vector<u32> trPolyParams(pvrrc.global_param_tr.size() * 2);
+			std::vector<u32> trPolyParams(rendContext->global_param_tr.size() * 2);
 			int i = 0;
-			for (const PolyParam& pp : pvrrc.global_param_tr)
+			for (const PolyParam& pp : rendContext->global_param_tr)
 			{
 				trPolyParams[i++] = (pp.tsp.full & 0xffff00c0) | ((pp.isp.full >> 16) & 0xe400) | ((pp.pcw.full >> 7) & 1);
 				trPolyParams[i++] = pp.tsp1.full;
@@ -522,7 +522,7 @@ struct DX11OITRenderer : public DX11Renderer
 		buffers.bind();
 		deviceContext->ClearDepthStencilView(depthTexView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 0.f, 0);
 		deviceContext->ClearDepthStencilView(depthStencilView2, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 0.f, 0);
-		if (pvrrc.clearFramebuffer && !pvrrc.isRTT)
+		if (rendContext->clearFramebuffer && !rendContext->isRTT)
 		{
 			float colors[4];
 			VO_BORDER_COL.getRGBColor(colors);
@@ -531,10 +531,10 @@ struct DX11OITRenderer : public DX11Renderer
 		}
 
 		RenderPass previous_pass {};
-		const int render_pass_count = (int)pvrrc.render_passes.size();
+		const int render_pass_count = (int)rendContext->render_passes.size();
 		for (int render_pass = 0; render_pass < render_pass_count; render_pass++)
 		{
-			const RenderPass& current_pass = pvrrc.render_passes[render_pass];
+			const RenderPass& current_pass = rendContext->render_passes[render_pass];
 			u32 op_count = current_pass.op_count - previous_pass.op_count;
 			u32 pt_count = current_pass.pt_count - previous_pass.pt_count;
 			u32 tr_count = current_pass.tr_count - previous_pass.tr_count;
@@ -554,9 +554,9 @@ struct DX11OITRenderer : public DX11Renderer
 			deviceContext->OMSetBlendState(blendStates.getState(false, 0, 0, true), nullptr, 0xffffffff);
 			deviceContext->OMSetRenderTargetsAndUnorderedAccessViews(1, &opaqueRenderTarget.get(), depthStencilView2, 0, D3D11_KEEP_UNORDERED_ACCESS_VIEWS, nullptr, nullptr);
 
-			drawList<ListType_Opaque, false, DX11OITShaders::Depth>(pvrrc.global_param_op, previous_pass.op_count, op_count);
-			drawList<ListType_Punch_Through, false, DX11OITShaders::Depth>(pvrrc.global_param_pt, previous_pass.pt_count, pt_count);
-			drawModVols<false>(previous_pass.mvo_count, mvo_count, pvrrc.global_param_mvo.data());
+			drawList<ListType_Opaque, false, DX11OITShaders::Depth>(rendContext->global_param_op, previous_pass.op_count, op_count);
+			drawList<ListType_Punch_Through, false, DX11OITShaders::Depth>(rendContext->global_param_pt, previous_pass.pt_count, pt_count);
+			drawModVols<false>(previous_pass.mvo_count, mvo_count, rendContext->global_param_mvo.data());
 
 			//
 			// PASS 2: Render OP and PT to opaque render target
@@ -564,8 +564,8 @@ struct DX11OITRenderer : public DX11Renderer
 			deviceContext->OMSetRenderTargetsAndUnorderedAccessViews(1, &opaqueRenderTarget.get(), depthTexView, 0, D3D11_KEEP_UNORDERED_ACCESS_VIEWS, nullptr, nullptr);
 		    deviceContext->PSSetShaderResources(4, 1, &stencilView.get());
 
-			drawList<ListType_Opaque, false, DX11OITShaders::Color>(pvrrc.global_param_op, previous_pass.op_count, op_count);
-			drawList<ListType_Punch_Through, false, DX11OITShaders::Color>(pvrrc.global_param_pt, previous_pass.pt_count, pt_count);
+			drawList<ListType_Opaque, false, DX11OITShaders::Color>(rendContext->global_param_op, previous_pass.op_count, op_count);
+			drawList<ListType_Punch_Through, false, DX11OITShaders::Color>(rendContext->global_param_pt, previous_pass.pt_count, pt_count);
 		    deviceContext->PSSetShaderResources(4, 1, &nullView);
 
 			//
@@ -577,22 +577,22 @@ struct DX11OITRenderer : public DX11Renderer
 			    deviceContext->PSSetShaderResources(4, 1, &depthView.get());
 			    // disable color writes
 				deviceContext->OMSetBlendState(blendStates.getState(false, 0, 0, true), nullptr, 0xffffffff);
-				drawList<ListType_Translucent, true, DX11OITShaders::OIT>(pvrrc.global_param_tr, previous_pass.tr_count, tr_count);
+				drawList<ListType_Translucent, true, DX11OITShaders::OIT>(rendContext->global_param_tr, previous_pass.tr_count, tr_count);
 				// unbind depth tex
 			    deviceContext->PSSetShaderResources(4, 1, &nullView);
 			    if (!theDX11Context.isIntel())
 			    {
 			    	// Intel Iris Plus 640 just crashes
 			    	if (current_pass.mv_op_tr_shared)
-			    		drawModVols<true>(previous_pass.mvo_count, mvo_count, pvrrc.global_param_mvo.data());
+			    		drawModVols<true>(previous_pass.mvo_count, mvo_count, rendContext->global_param_mvo.data());
 			    	else
-			    		drawModVols<true>(previous_pass.mvo_tr_count, current_pass.mvo_tr_count - previous_pass.mvo_tr_count, pvrrc.global_param_mvo_tr.data());
+			    		drawModVols<true>(previous_pass.mvo_tr_count, current_pass.mvo_tr_count - previous_pass.mvo_tr_count, rendContext->global_param_mvo_tr.data());
 			    }
 			}
 			else
 			{
 				deviceContext->OMSetRenderTargetsAndUnorderedAccessViews(1, &opaqueRenderTarget.get(), depthTexView, 0, D3D11_KEEP_UNORDERED_ACCESS_VIEWS, nullptr, nullptr);
-				drawList<ListType_Translucent, false, DX11OITShaders::Color>(pvrrc.global_param_tr, previous_pass.tr_count, tr_count);
+				drawList<ListType_Translucent, false, DX11OITShaders::Color>(rendContext->global_param_tr, previous_pass.tr_count, tr_count);
 			}
 			if (render_pass < render_pass_count - 1)
 			{
@@ -601,9 +601,9 @@ struct DX11OITRenderer : public DX11Renderer
 				//
 				deviceContext->OMSetRenderTargetsAndUnorderedAccessViews(1, &opaqueRenderTarget.get(), depthStencilView2, 0, D3D11_KEEP_UNORDERED_ACCESS_VIEWS, nullptr, nullptr);
 				if (current_pass.autosort)
-					drawList<ListType_Translucent, true, DX11OITShaders::Depth>(pvrrc.global_param_tr, previous_pass.tr_count, tr_count);
+					drawList<ListType_Translucent, true, DX11OITShaders::Depth>(rendContext->global_param_tr, previous_pass.tr_count, tr_count);
 				else
-					drawList<ListType_Translucent, false, DX11OITShaders::Depth>(pvrrc.global_param_tr, previous_pass.tr_count, tr_count);
+					drawList<ListType_Translucent, false, DX11OITShaders::Depth>(rendContext->global_param_tr, previous_pass.tr_count, tr_count);
 				//
 				// PASS 3c: Render a-buffer to temporary texture
 				//
@@ -641,10 +641,10 @@ struct DX11OITRenderer : public DX11Renderer
 	bool Render() override
 	{
 		resetContextState();
-		bool is_rtt = pvrrc.isRTT;
+		bool is_rtt = rendContext->isRTT;
 
 		if (!is_rtt)
-			resize(pvrrc.framebufferWidth, pvrrc.framebufferHeight);
+			resize(rendContext->framebufferWidth, rendContext->framebufferHeight);
 		if (pixelBufferSize != config::PixelBufferSize)
 		{
 			buffers.init(device, deviceContext);
@@ -672,7 +672,7 @@ struct DX11OITRenderer : public DX11Renderer
 
 		if (is_rtt)
 		{
-			readRttRenderTarget(pvrrc.fb_W_SOF1 & VRAM_MASK);
+			readRttRenderTarget(rendContext->fb_W_SOF1 & VRAM_MASK);
 		}
 		else if (config::EmulateFramebuffer)
 		{

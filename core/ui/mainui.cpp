@@ -44,7 +44,13 @@ bool mainui_rend_frame()
 
 	if (gui_is_open())
 	{
-		gui_display_ui();
+		try {
+			gui_display_ui();
+		} catch (const FlycastException& e) {
+			// Assume this is a graphics API issue
+			forceReinit = true;
+			return false;
+		}
 #ifndef TARGET_IPHONE
 		std::this_thread::sleep_for(std::chrono::milliseconds(16));
 #endif
@@ -56,6 +62,12 @@ bool mainui_rend_frame()
 				return false;
 			if (config::ProfilerEnabled && config::ProfilerDrawToGUI)
 				gui_display_profiler();
+		} catch (const RendererException& e) {
+			gui_stop_game(e.what());
+			rend_term_renderer();
+			if (!rend_init_renderer())
+				ERROR_LOG(RENDERER, "Renderer re-initialization failed");
+			return false;
 		} catch (const FlycastException& e) {
 			gui_stop_game(e.what());
 			return false;
@@ -91,11 +103,16 @@ void mainui_loop(bool forceStart)
 	{
 		fc_profiler::startThread("main");
 
-		mainui_rend_frame();
+		if (mainui_rend_frame() && imguiDriver != nullptr)
+		{
+			try {
+				imguiDriver->present();
+			} catch (const FlycastException& e) {
+				forceReinit = true;
+			}
+		}
 		if (imguiDriver == nullptr)
 			forceReinit = true;
-		else
-			imguiDriver->present();
 
 		if (config::RendererType != currentRenderer || forceReinit)
 		{
@@ -108,11 +125,16 @@ void mainui_loop(bool forceStart)
 					switchRenderApi();
 				} catch (const FlycastException& e) {
 					ERROR_LOG(RENDERER, "switchRenderApi failed: %s", e.what());
+					if (prevApi == newApi)
+						// fatal
+						throw;
+					// try to go back to the previous API
 					config::RendererType = currentRenderer;
 					try {
 						switchRenderApi();
 					} catch (const FlycastException& e) {
 						ERROR_LOG(RENDERER, "Falling back to previous renderer also failed: %s", e.what());
+						// fatal
 						throw;
 					}
 				}

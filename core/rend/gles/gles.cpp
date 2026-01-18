@@ -496,6 +496,11 @@ static void gles_term()
 	termGLCommon();
 
 	gl_delete_shaders();
+	// Restore the gl context to a decent state in case of exception
+	if (gl.ofbo.origFbo != 0)
+		glBindFramebuffer(GL_FRAMEBUFFER, gl.ofbo.origFbo);
+	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+	glActiveTexture(GL_TEXTURE0);
 }
 
 bool testBlitFramebuffer();
@@ -695,7 +700,8 @@ GLuint gl_CompileAndLink(const char *vertexShader, const char *fragmentShader)
 		// Dump the shaders source for troubleshooting
 		INFO_LOG(RENDERER, "// VERTEX SHADER\n%s\n// END", vertexShader);
 		INFO_LOG(RENDERER, "// FRAGMENT SHADER\n%s\n// END", fragmentShader);
-		die("shader compile fail\n");
+		throw RendererException(i18n::T("OpenGL shader compilation failed"));
+		// FIXME MINIDUMP-8A1, MINIDUMP-8A2, MINIDUMP-7YE
 	}
 	glDetachShader(program, vs);
 	glDetachShader(program, ps);
@@ -1055,8 +1061,8 @@ void OpenGLRenderer::drawOSD()
 void OpenGLRenderer::Process(TA_context* ctx)
 {
 	if (gl.gl_major < 3 && settings.platform.isNaomi2())
-		throw FlycastException(i18n::Ts("OpenGL ES 3.0+ required for Naomi 2"));
-
+		throw RendererException(i18n::T("OpenGL ES 3.0+ required for Naomi 2"));
+	gl.rendContext = &ctx->rend;
 	if (resetTextureCache) {
 		TexCache.Clear();
 		resetTextureCache = false;
@@ -1080,13 +1086,13 @@ static void upload_vertex_indices()
 	{
 		static std::vector<u16> short_idx;
 		short_idx.clear();
-		short_idx.reserve(pvrrc.idx.size());
-		for (u32 i : pvrrc.idx)
+		short_idx.reserve(gl.rendContext->idx.size());
+		for (u32 i : gl.rendContext->idx)
 			short_idx.push_back(i);
 		gl.vbo.idxs->update(short_idx.data(), short_idx.size() * sizeof(u16));
 	}
 	else
-		gl.vbo.idxs->update(pvrrc.idx.data(), pvrrc.idx.size() * sizeof(decltype(*pvrrc.idx.data())));
+		gl.vbo.idxs->update(gl.rendContext->idx.data(), gl.rendContext->idx.size() * sizeof(decltype(*gl.rendContext->idx.data())));
 	glCheck();
 }
 
@@ -1095,9 +1101,9 @@ bool OpenGLRenderer::renderFrame(int width, int height)
 	if (!config::EmulateFramebuffer)
 		initVideoRoutingFrameBuffer();
 	
-	bool is_rtt = pvrrc.isRTT;
+	bool is_rtt = gl.rendContext->isRTT;
 
-	float vtx_max_fZ = pvrrc.fZ_max;
+	float vtx_max_fZ = gl.rendContext->fZ_max;
 
 	//sanitise the values, now with NaN detection (for omap)
 	//0x49800000 is 1024*1024. Using integer math to avoid issues w/ infs and nans
@@ -1107,8 +1113,8 @@ bool OpenGLRenderer::renderFrame(int width, int height)
 	//add some extra range to avoid clipping border cases
 	vtx_max_fZ *= 1.001f;
 
-	TransformMatrix<COORD_OPENGL> matrices(pvrrc, is_rtt ? pvrrc.getFramebufferWidth() : width,
-			is_rtt ? pvrrc.getFramebufferHeight() : height);
+	TransformMatrix<COORD_OPENGL> matrices(*gl.rendContext, is_rtt ? gl.rendContext->getFramebufferWidth() : width,
+			is_rtt ? gl.rendContext->getFramebufferHeight() : height);
 	ShaderUniforms.ndcMat = matrices.GetNormalMatrix();
 	const glm::mat4& scissor_mat = matrices.GetScissorMatrix();
 	ViewportMatrix = matrices.GetViewportMatrix();
@@ -1125,8 +1131,8 @@ bool OpenGLRenderer::renderFrame(int width, int height)
 	//Fog density constant
 	ShaderUniforms.fog_den_float = FOG_DENSITY.get() * config::ExtraDepthScale;
 
-	pvrrc.fog_clamp_min.getRGBAColor(ShaderUniforms.fog_clamp_min);
-	pvrrc.fog_clamp_max.getRGBAColor(ShaderUniforms.fog_clamp_max);
+	gl.rendContext->fog_clamp_min.getRGBAColor(ShaderUniforms.fog_clamp_min);
+	gl.rendContext->fog_clamp_max.getRGBAColor(ShaderUniforms.fog_clamp_max);
 	
 	if (config::ModifierVolumes)
 	{
@@ -1146,10 +1152,10 @@ bool OpenGLRenderer::renderFrame(int width, int height)
 
 	ShaderUniforms.PT_ALPHA=(PT_ALPHA_REF&0xFF)/255.0f;
 
-	if (config::EmulateFramebuffer && pvrrc.fb_W_CTRL.fb_dither && pvrrc.fb_W_CTRL.fb_packmode <= 3)
+	if (config::EmulateFramebuffer && gl.rendContext->fb_W_CTRL.fb_dither && gl.rendContext->fb_W_CTRL.fb_packmode <= 3)
 	{
 		ShaderUniforms.dithering = true;
-		switch (pvrrc.fb_W_CTRL.fb_packmode)
+		switch (gl.rendContext->fb_W_CTRL.fb_packmode)
 		{
 		case 0: // 0555 KRGB 16 bit
 		case 3: // 1555 ARGB 16 bit
@@ -1233,17 +1239,17 @@ bool OpenGLRenderer::renderFrame(int width, int height)
 	else
 		glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
 
-	if (is_rtt || pvrrc.clearFramebuffer)
+	if (is_rtt || gl.rendContext->clearFramebuffer)
 		glClear(GL_COLOR_BUFFER_BIT);
 	//move vertex to gpu
 	//Main VBO
-	gl.vbo.geometry->update(&pvrrc.verts[0], pvrrc.verts.size() * sizeof(decltype(pvrrc.verts[0])));
+	gl.vbo.geometry->update(&gl.rendContext->verts[0], gl.rendContext->verts.size() * sizeof(decltype(gl.rendContext->verts[0])));
 
 	upload_vertex_indices();
 
 	//Modvol VBO
-	if (!pvrrc.modtrig.empty())
-		gl.vbo.modvols->update(&pvrrc.modtrig[0], pvrrc.modtrig.size() * sizeof(decltype(pvrrc.modtrig[0])));
+	if (!gl.rendContext->modtrig.empty())
+		gl.vbo.modvols->update(&gl.rendContext->modtrig[0], gl.rendContext->modtrig.size() * sizeof(decltype(gl.rendContext->modtrig[0])));
 
 	if (!wide_screen_on)
 	{
@@ -1253,9 +1259,9 @@ bool OpenGLRenderer::renderFrame(int width, int height)
 		float min_y;
 		if (!is_rtt)
 		{
-			glm::vec4 clip_min(pvrrc.fb_X_CLIP.min, pvrrc.fb_Y_CLIP.min, 0, 1);
-			glm::vec4 clip_dim(pvrrc.fb_X_CLIP.max - pvrrc.fb_X_CLIP.min + 1,
-							   pvrrc.fb_Y_CLIP.max - pvrrc.fb_Y_CLIP.min + 1, 0, 0);
+			glm::vec4 clip_min(gl.rendContext->fb_X_CLIP.min, gl.rendContext->fb_Y_CLIP.min, 0, 1);
+			glm::vec4 clip_dim(gl.rendContext->fb_X_CLIP.max - gl.rendContext->fb_X_CLIP.min + 1,
+							   gl.rendContext->fb_Y_CLIP.max - gl.rendContext->fb_Y_CLIP.min + 1, 0, 0);
 			clip_min = scissor_mat * clip_min;
 			clip_dim = scissor_mat * clip_dim;
 
@@ -1286,10 +1292,10 @@ bool OpenGLRenderer::renderFrame(int width, int height)
 		}
 		else
 		{
-			min_x = (float)pvrrc.getFramebufferMinX();
-			min_y = (float)pvrrc.getFramebufferMinY();
-			fWidth = (float)pvrrc.getFramebufferWidth() - min_x;
-			fHeight = (float)pvrrc.getFramebufferHeight() - min_y;
+			min_x = (float)gl.rendContext->getFramebufferMinX();
+			min_y = (float)gl.rendContext->getFramebufferMinY();
+			fWidth = (float)gl.rendContext->getFramebufferWidth() - min_x;
+			fHeight = (float)gl.rendContext->getFramebufferHeight() - min_y;
 			if (config::RenderResolution > 480 && !config::RenderToTextureBuffer)
 			{
 				float scale = config::RenderResolution / 480.f;
@@ -1359,8 +1365,8 @@ void OpenGLRenderer::Term()
 bool OpenGLRenderer::Render()
 {
 	saveCurrentFramebuffer();
-	renderFrame(pvrrc.framebufferWidth, pvrrc.framebufferHeight);
-	if (pvrrc.isRTT) {
+	renderFrame(gl.rendContext->framebufferWidth, gl.rendContext->framebufferHeight);
+	if (gl.rendContext->isRTT) {
 		restoreCurrentFramebuffer();
 		return false;
 	}

@@ -74,11 +74,19 @@ public:
 		} catch (const InvalidVulkanContext&) {
 			// Re-create swap chain
 			context->resize();
+		} catch (const vk::SystemError& e) {
+			ERROR_LOG(RENDERER, "Vulkan system error: %s", e.what());
+			throw FlycastException("Vulkan system error");
 		}
 	}
 
 	void present() override {
-		getContext()->Present(); // may reset this driver
+		try {
+			getContext()->Present(); // may reset this driver
+		} catch (const vk::SystemError& e) {
+			ERROR_LOG(RENDERER, "Vulkan system error: %s", e.what());
+			throw FlycastException("Vulkan system error");
+		}
 	}
 
 	ImTextureID getTexture(const std::string& name) override {
@@ -94,54 +102,59 @@ public:
 		if (justStarted)
 			// give it some more time
 			return {};
-		VkTexture vkTex(std::make_unique<Texture>());
-		vkTex.texture->tex_type = TextureType::_8888;
-		vkTex.texture->SetCommandBuffer(getCommandBuffer());
-		vkTex.texture->UploadToGPU(width, height, data, false);
-		vkTex.texture->SetCommandBuffer(nullptr);
-		VkSampler sampler;
-		if (nearestSampling)
-		{
-			if (!pointSampler)
+		try {
+			VkTexture vkTex(std::make_unique<Texture>());
+			vkTex.texture->tex_type = TextureType::_8888;
+			vkTex.texture->SetCommandBuffer(getCommandBuffer());
+			vkTex.texture->UploadToGPU(width, height, data, false);
+			vkTex.texture->SetCommandBuffer(nullptr);
+			VkSampler sampler;
+			if (nearestSampling)
 			{
-				pointSampler = getContext()->GetDevice().createSamplerUnique(
-						vk::SamplerCreateInfo(vk::SamplerCreateFlags(),
-								vk::Filter::eNearest, vk::Filter::eNearest,
-								vk::SamplerMipmapMode::eNearest,
-								vk::SamplerAddressMode::eClampToBorder,
-								vk::SamplerAddressMode::eClampToBorder,
-								vk::SamplerAddressMode::eClampToBorder, 0.0f, false,
-								0.f, false, vk::CompareOp::eNever, 0.0f, vk::LodClampNone,
-								vk::BorderColor::eFloatTransparentBlack));
+				if (!pointSampler)
+				{
+					pointSampler = getContext()->GetDevice().createSamplerUnique(
+							vk::SamplerCreateInfo(vk::SamplerCreateFlags(),
+									vk::Filter::eNearest, vk::Filter::eNearest,
+									vk::SamplerMipmapMode::eNearest,
+									vk::SamplerAddressMode::eClampToBorder,
+									vk::SamplerAddressMode::eClampToBorder,
+									vk::SamplerAddressMode::eClampToBorder, 0.0f, false,
+									0.f, false, vk::CompareOp::eNever, 0.0f, vk::LodClampNone,
+									vk::BorderColor::eFloatTransparentBlack));
+				}
+				sampler = (VkSampler)*pointSampler;
 			}
-			sampler = (VkSampler)*pointSampler;
-		}
-		else
-		{
-			if (!linearSampler)
+			else
 			{
-				linearSampler = getContext()->GetDevice().createSamplerUnique(
-						vk::SamplerCreateInfo(vk::SamplerCreateFlags(),
-								vk::Filter::eLinear, vk::Filter::eLinear,
-								vk::SamplerMipmapMode::eLinear,
-								vk::SamplerAddressMode::eClampToBorder,
-								vk::SamplerAddressMode::eClampToBorder,
-								vk::SamplerAddressMode::eClampToBorder, 0.0f, false,
-								0.f, false, vk::CompareOp::eNever, 0.0f, vk::LodClampNone,
-								vk::BorderColor::eFloatTransparentBlack));
+				if (!linearSampler)
+				{
+					linearSampler = getContext()->GetDevice().createSamplerUnique(
+							vk::SamplerCreateInfo(vk::SamplerCreateFlags(),
+									vk::Filter::eLinear, vk::Filter::eLinear,
+									vk::SamplerMipmapMode::eLinear,
+									vk::SamplerAddressMode::eClampToBorder,
+									vk::SamplerAddressMode::eClampToBorder,
+									vk::SamplerAddressMode::eClampToBorder, 0.0f, false,
+									0.f, false, vk::CompareOp::eNever, 0.0f, vk::LodClampNone,
+									vk::BorderColor::eFloatTransparentBlack));
+				}
+				sampler = (VkSampler)*linearSampler;
 			}
-			sampler = (VkSampler)*linearSampler;
+			ImTextureID texId = vkTex.textureId = (ImTextureID)ImGui_ImplVulkan_AddTexture(sampler, (VkImageView)vkTex.texture->GetImageView(),
+					VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+			// TODO update existing texture
+			//auto it = textures.find(name);
+			//if (it != textures.end() && it->second.texture != nullptr)
+			//	textureCache.DestroyLater(it->second.texture.get());
+
+			textures[name] = std::move(vkTex);
+
+			return texId;
+		} catch (const vk::SystemError& e) {
+			ERROR_LOG(RENDERER, "Vulkan system error: %s", e.what());
+			throw FlycastException("Vulkan system error");
 		}
-		ImTextureID texId = vkTex.textureId = (ImTextureID)ImGui_ImplVulkan_AddTexture(sampler, (VkImageView)vkTex.texture->GetImageView(),
-				VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-		// TODO update existing texture
-		//auto it = textures.find(name);
-		//if (it != textures.end() && it->second.texture != nullptr)
-		//	textureCache.DestroyLater(it->second.texture.get());
-
-		textures[name] = std::move(vkTex);
-
-		return texId;
 	}
 
 	void deleteTexture(const std::string& name) override

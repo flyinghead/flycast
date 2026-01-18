@@ -36,8 +36,6 @@ bool fb_dirty;
 static bool pend_rend;
 static bool rendererEnabled = true;
 
-TA_context* _pvrrc;
-
 static bool presented;
 static u32 fbAddrHistory[2] { 1, 1 };
 
@@ -174,26 +172,26 @@ private:
 	{
 		FC_PROFILE_SCOPE;
 
-		_pvrrc = DequeueRender();
-		if (_pvrrc == nullptr)
+		TA_context *taContext = DequeueRender();
+		if (taContext == nullptr)
 			return;
 
-		if (!_pvrrc->rend.isRTT)
+		if (!taContext->rend.isRTT)
 		{
 			int width, height;
-			getScaledFramebufferSize(_pvrrc->rend, width, height);
-			_pvrrc->rend.framebufferWidth = width;
-			_pvrrc->rend.framebufferHeight = height;
+			getScaledFramebufferSize(taContext->rend, width, height);
+			taContext->rend.framebufferWidth = width;
+			taContext->rend.framebufferHeight = height;
 		}
-		bool renderToScreen = !_pvrrc->rend.isRTT && !config::EmulateFramebuffer;
+		bool renderToScreen = !taContext->rend.isRTT && !config::EmulateFramebuffer;
 #ifdef LIBRETRO
 		if (renderToScreen)
-			retro_resize_renderer(_pvrrc->rend.framebufferWidth, _pvrrc->rend.framebufferHeight,
+			retro_resize_renderer(taContext->rend.framebufferWidth, taContext->rend.framebufferHeight,
 					getOutputFramebufferAspectRatio());
 #endif
 		{
 			FC_PROFILE_SCOPE_NAMED("Renderer::Process");
-			renderer->Process(_pvrrc);
+			renderer->Process(taContext);
 		}
 
 		if (renderToScreen)
@@ -211,8 +209,7 @@ private:
 			present();
 
 		//clear up & free data ..
-		FinishRender(_pvrrc);
-		_pvrrc = nullptr;
+		FinishRender(taContext);
 	}
 
 	void renderFramebuffer(const FramebufferInfo& config)

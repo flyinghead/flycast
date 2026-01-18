@@ -25,7 +25,7 @@
 TileClipping BaseDrawer::SetTileClip(vk::CommandBuffer cmdBuffer, u32 val, vk::Rect2D& clipRect)
 {
 	int rect[4] = {};
-	TileClipping clipmode = ::GetTileClip(val, matrices.GetViewportMatrix(), rect);
+	TileClipping clipmode = ::GetTileClip(val, matrices.GetViewportMatrix(), rect, *rendContext);
 	if (clipmode != TileClipping::Off)
 	{
 		clipRect.offset.x = rect[0];
@@ -51,9 +51,9 @@ void BaseDrawer::SetBaseScissor(const vk::Extent2D& viewport)
 		float height;
 		float min_x;
 		float min_y;
-		glm::vec4 clip_min(pvrrc.fb_X_CLIP.min, pvrrc.fb_Y_CLIP.min, 0, 1);
-		glm::vec4 clip_dim(pvrrc.fb_X_CLIP.max - pvrrc.fb_X_CLIP.min + 1,
-		pvrrc.fb_Y_CLIP.max - pvrrc.fb_Y_CLIP.min + 1, 0, 0);
+		glm::vec4 clip_min(rendContext->fb_X_CLIP.min, rendContext->fb_Y_CLIP.min, 0, 1);
+		glm::vec4 clip_dim(rendContext->fb_X_CLIP.max - rendContext->fb_X_CLIP.min + 1,
+		rendContext->fb_Y_CLIP.max - rendContext->fb_Y_CLIP.min + 1, 0, 0);
 		clip_min = matrices.GetScissorMatrix() * clip_min;
 		clip_dim = matrices.GetScissorMatrix() * clip_dim;
 
@@ -89,17 +89,17 @@ void BaseDrawer::scaleAndWriteFramebuffer(vk::CommandBuffer commandBuffer, Frame
 	static const float scopeColor[4] = { 0.25f, 0.25f, 0.25f, 0.25f };
 	CommandBufferDebugScope _(commandBuffer, "scaleAndWriteFramebuffer", scopeColor);
 
-	u32 width = (pvrrc.ta_GLOB_TILE_CLIP.tile_x_num + 1) * 32;
-	u32 height = (pvrrc.ta_GLOB_TILE_CLIP.tile_y_num + 1) * 32;
+	u32 width = (rendContext->ta_GLOB_TILE_CLIP.tile_x_num + 1) * 32;
+	u32 height = (rendContext->ta_GLOB_TILE_CLIP.tile_y_num + 1) * 32;
 
-	float xscale = pvrrc.scaler_ctl.hscale == 1 ? 0.5f : 1.f;
-	float yscale = 1024.f / pvrrc.scaler_ctl.vscalefactor;
+	float xscale = rendContext->scaler_ctl.hscale == 1 ? 0.5f : 1.f;
+	float yscale = 1024.f / rendContext->scaler_ctl.vscalefactor;
 	if (std::abs(yscale - 1.f) < 0.01f)
 		yscale = 1.f;
 
 	FramebufferAttachment *scaledFB = nullptr;
-	FB_X_CLIP_type xClip = pvrrc.fb_X_CLIP;
-	FB_Y_CLIP_type yClip = pvrrc.fb_Y_CLIP;
+	FB_X_CLIP_type xClip = rendContext->fb_X_CLIP;
+	FB_Y_CLIP_type yClip = rendContext->fb_Y_CLIP;
 
 	if (xscale != 1.f || yscale != 1.f)
 	{
@@ -161,8 +161,8 @@ void BaseDrawer::scaleAndWriteFramebuffer(vk::CommandBuffer commandBuffer, Frame
 	xClip.max = std::min(xClip.max, width - 1);
 	yClip.min = std::min(yClip.min, height - 1);
 	yClip.max = std::min(yClip.max, height - 1);
-	WriteFramebuffer(width, height, (u8 *)tmpBuf.data(), pvrrc.fb_W_SOF1 & VRAM_MASK,
-			pvrrc.fb_W_CTRL, pvrrc.fb_W_LINESTRIDE * 8, xClip, yClip);
+	WriteFramebuffer(width, height, (u8 *)tmpBuf.data(), rendContext->fb_W_SOF1 & VRAM_MASK,
+			rendContext->fb_W_CTRL, rendContext->fb_W_LINESTRIDE * 8, xClip, yClip);
 
 	delete scaledFB;
 }
@@ -223,15 +223,15 @@ void Drawer::DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sor
 			{
 			case ListType_Opaque:
 				offset = offsets.naomi2OpaqueOffset;
-				index = &poly - &pvrrc.global_param_op[0];
+				index = &poly - &rendContext->global_param_op[0];
 				break;
 			case ListType_Punch_Through:
 				offset = offsets.naomi2PunchThroughOffset;
-				index = &poly - &pvrrc.global_param_pt[0];
+				index = &poly - &rendContext->global_param_pt[0];
 				break;
 			case ListType_Translucent:
 				offset = offsets.naomi2TranslucentOffset;
-				index = &poly - &pvrrc.global_param_tr[0];
+				index = &poly - &rendContext->global_param_tr[0];
 				break;
 			}
 		}
@@ -250,21 +250,21 @@ void Drawer::DrawSorted(const vk::CommandBuffer& cmdBuffer, const std::vector<So
 	CommandBufferDebugScope _(cmdBuffer, "DrawSorted", scopeColor);
 
 	for (u32 idx = first; idx < last; idx++)
-		DrawPoly(cmdBuffer, ListType_Translucent, true, pvrrc.global_param_tr[polys[idx].polyIndex], polys[idx].first, polys[idx].count);
+		DrawPoly(cmdBuffer, ListType_Translucent, true, rendContext->global_param_tr[polys[idx].polyIndex], polys[idx].first, polys[idx].count);
 	if (multipass && config::TranslucentPolygonDepthMask)
 	{
 		// Write to the depth buffer now. The next render pass might need it. (Cosmic Smash)
 		for (u32 idx = first; idx < last; idx++)
 		{
 			const SortedTriangle& param = polys[idx];
-			const PolyParam& polyParam = pvrrc.global_param_tr[param.polyIndex];
+			const PolyParam& polyParam = rendContext->global_param_tr[param.polyIndex];
 			if (polyParam.isp.ZWriteDis)
 				continue;
 			vk::Pipeline pipeline = pipelineManager->GetDepthPassPipeline(polyParam.isp.CullMode, polyParam.isNaomi2());
 			cmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
 			vk::Rect2D scissorRect;
 			SetTileClip(cmdBuffer, polyParam.tileclip, scissorRect);
-			cmdBuffer.drawIndexed(param.count, 1, pvrrc.idx.size() + param.first, 0, 0);
+			cmdBuffer.drawIndexed(param.count, 1, rendContext->idx.size() + param.first, 0, 0);
 		}
 	}
 }
@@ -285,7 +285,7 @@ void Drawer::DrawList(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sor
 
 void Drawer::DrawModVols(const vk::CommandBuffer& cmdBuffer, int first, int count)
 {
-	if (count == 0 || pvrrc.modtrig.empty() || !config::ModifierVolumes)
+	if (count == 0 || rendContext->modtrig.empty() || !config::ModifierVolumes)
 		return;
 
 	static const float scopeColor[4] = { 0.75f, 0.25f, 0.25f, 1.0f };
@@ -293,7 +293,7 @@ void Drawer::DrawModVols(const vk::CommandBuffer& cmdBuffer, int first, int coun
 
 	cmdBuffer.bindVertexBuffers(0, curMainBuffer, offsets.modVolOffset);
 
-	ModifierVolumeParam* params = &pvrrc.global_param_mvo[first];
+	ModifierVolumeParam* params = &rendContext->global_param_mvo[first];
 
 	int mod_base = -1;
 	vk::Pipeline pipeline;
@@ -348,11 +348,11 @@ void Drawer::UploadMainBuffer(const VertexShaderUniforms& vertexUniforms, const 
 	BufferPacker packer;
 
 	// Vertex
-	packer.add(pvrrc.verts.data(), pvrrc.verts.size() * sizeof(decltype(*pvrrc.verts.data())));
+	packer.add(rendContext->verts.data(), rendContext->verts.size() * sizeof(decltype(*rendContext->verts.data())));
 	// Modifier Volumes
-	offsets.modVolOffset = packer.add(pvrrc.modtrig.data(), pvrrc.modtrig.size() * sizeof(decltype(*pvrrc.modtrig.data())));
+	offsets.modVolOffset = packer.add(rendContext->modtrig.data(), rendContext->modtrig.size() * sizeof(decltype(*rendContext->modtrig.data())));
 	// Index
-	offsets.indexOffset = packer.add(pvrrc.idx.data(), pvrrc.idx.size() * sizeof(decltype(*pvrrc.idx.data())));
+	offsets.indexOffset = packer.add(rendContext->idx.data(), rendContext->idx.size() * sizeof(decltype(*rendContext->idx.data())));
 	// Uniform buffers
 	offsets.vertexUniformOffset = packer.addUniform(&vertexUniforms, sizeof(vertexUniforms));
 	offsets.fragmentUniformOffset = packer.addUniform(&fragmentUniforms, sizeof(fragmentUniforms));
@@ -372,10 +372,10 @@ void Drawer::UploadMainBuffer(const VertexShaderUniforms& vertexUniforms, const 
 bool Drawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 {
 	FragmentShaderUniforms fragUniforms = MakeFragmentUniforms<FragmentShaderUniforms>();
-	dithering = config::EmulateFramebuffer && pvrrc.fb_W_CTRL.fb_dither && pvrrc.fb_W_CTRL.fb_packmode <= 3;
+	dithering = config::EmulateFramebuffer && rendContext->fb_W_CTRL.fb_dither && rendContext->fb_W_CTRL.fb_packmode <= 3;
 	if (dithering)
 	{
-		switch (pvrrc.fb_W_CTRL.fb_packmode)
+		switch (rendContext->fb_W_CTRL.fb_packmode)
 		{
 		case 0: // 0555 KRGB 16 bit
 		case 3: // 1555 ARGB 16 bit
@@ -408,7 +408,7 @@ bool Drawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 	}
 	else
 	{
-		setFirstProvokingVertex(pvrrc);
+		setFirstProvokingVertex(*rendContext);
 	}
 
 	// Upload vertex and index buffers
@@ -431,32 +431,32 @@ bool Drawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 	cmdBuffer.pushConstants<float>(pipelineManager->GetPipelineLayout(), vk::ShaderStageFlagBits::eFragment, 0, pushConstants);
 
 	RenderPass previous_pass{};
-    for (int render_pass = 0; render_pass < (int)pvrrc.render_passes.size(); render_pass++)
+    for (int render_pass = 0; render_pass < (int)rendContext->render_passes.size(); render_pass++)
     {
-        const RenderPass& current_pass = pvrrc.render_passes[render_pass];
+        const RenderPass& current_pass = rendContext->render_passes[render_pass];
 
         DEBUG_LOG(RENDERER, "Render pass %d OP %d PT %d TR %d MV %d autosort %d", render_pass + 1,
         		current_pass.op_count - previous_pass.op_count,
 				current_pass.pt_count - previous_pass.pt_count,
 				current_pass.tr_count - previous_pass.tr_count,
 				current_pass.mvo_count - previous_pass.mvo_count, current_pass.autosort);
-		DrawList(cmdBuffer, ListType_Opaque, false, pvrrc.global_param_op, previous_pass.op_count, current_pass.op_count);
-		DrawList(cmdBuffer, ListType_Punch_Through, false, pvrrc.global_param_pt, previous_pass.pt_count, current_pass.pt_count);
+		DrawList(cmdBuffer, ListType_Opaque, false, rendContext->global_param_op, previous_pass.op_count, current_pass.op_count);
+		DrawList(cmdBuffer, ListType_Punch_Through, false, rendContext->global_param_pt, previous_pass.pt_count, current_pass.pt_count);
 		DrawModVols(cmdBuffer, previous_pass.mvo_count, current_pass.mvo_count - previous_pass.mvo_count);
 		if (current_pass.autosort)
         {
 			if (!config::PerStripSorting)
-				DrawSorted(cmdBuffer, pvrrc.sortedTriangles, previous_pass.sorted_tr_count, current_pass.sorted_tr_count, render_pass + 1 < (int)pvrrc.render_passes.size());
+				DrawSorted(cmdBuffer, rendContext->sortedTriangles, previous_pass.sorted_tr_count, current_pass.sorted_tr_count, render_pass + 1 < (int)rendContext->render_passes.size());
 			else
-				DrawList(cmdBuffer, ListType_Translucent, true, pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count);
+				DrawList(cmdBuffer, ListType_Translucent, true, rendContext->global_param_tr, previous_pass.tr_count, current_pass.tr_count);
         }
 		else
-			DrawList(cmdBuffer, ListType_Translucent, false, pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count);
+			DrawList(cmdBuffer, ListType_Translucent, false, rendContext->global_param_tr, previous_pass.tr_count, current_pass.tr_count);
 		previous_pass = current_pass;
     }
     curMainBuffer = nullptr;
 
-	return !pvrrc.isRTT;
+	return !rendContext->isRTT;
 }
 
 void TextureDrawer::Init(SamplerManager *samplerManager, ShaderManager *shaderManager, TextureCache *textureCache)
@@ -471,13 +471,13 @@ void TextureDrawer::Init(SamplerManager *samplerManager, ShaderManager *shaderMa
 
 vk::CommandBuffer TextureDrawer::BeginRenderPass()
 {
-	DEBUG_LOG(RENDERER, "RenderToTexture packmode=%d stride=%d - %d x %d @ %06x", pvrrc.fb_W_CTRL.fb_packmode, pvrrc.fb_W_LINESTRIDE * 8,
-			pvrrc.fb_X_CLIP.max + 1, pvrrc.fb_Y_CLIP.max + 1, pvrrc.fb_W_SOF1 & VRAM_MASK);
-	matrices.CalcMatrices(&pvrrc);
+	DEBUG_LOG(RENDERER, "RenderToTexture packmode=%d stride=%d - %d x %d @ %06x", rendContext->fb_W_CTRL.fb_packmode, rendContext->fb_W_LINESTRIDE * 8,
+			rendContext->fb_X_CLIP.max + 1, rendContext->fb_Y_CLIP.max + 1, rendContext->fb_W_SOF1 & VRAM_MASK);
+	matrices.CalcMatrices(rendContext);
 
-	textureAddr = pvrrc.fb_W_SOF1 & VRAM_MASK;
-	u32 origWidth = pvrrc.getFramebufferWidth();
-	u32 origHeight = pvrrc.getFramebufferHeight();
+	textureAddr = rendContext->fb_W_SOF1 & VRAM_MASK;
+	u32 origWidth = rendContext->getFramebufferWidth();
+	u32 origHeight = rendContext->getFramebufferHeight();
 	u32 upscaledWidth = origWidth;
 	u32 upscaledHeight = origHeight;
 	u32 widthPow2;
@@ -508,7 +508,7 @@ vk::CommandBuffer TextureDrawer::BeginRenderPass()
 
 	if (!config::RenderToTextureBuffer)
 	{
-		texture = textureCache->getRTTexture(textureAddr, pvrrc.fb_W_CTRL.fb_packmode, origWidth, origHeight);
+		texture = textureCache->getRTTexture(textureAddr, rendContext->fb_W_CTRL.fb_packmode, origWidth, origHeight);
 		if (textureCache->IsInFlight(texture, false))
 		{
 			texture->readOnlyImageView = *texture->imageView;
@@ -570,8 +570,8 @@ vk::CommandBuffer TextureDrawer::BeginRenderPass()
 	commandBuffer.beginRenderPass(vk::RenderPassBeginInfo(rttPipelineManager->GetRenderPass(),	*framebuffers[GetCurrentImage()],
 			vk::Rect2D( { 0, 0 }, { width, height }), clear_colors), vk::SubpassContents::eInline);
 	commandBuffer.setViewport(0, vk::Viewport(0.0f, 0.0f, (float)upscaledWidth, (float)upscaledHeight, 1.0f, 0.0f));
-	u32 minX = pvrrc.getFramebufferMinX() * upscaledWidth / origWidth;
-	u32 minY = pvrrc.getFramebufferMinY() * upscaledHeight / origHeight;
+	u32 minX = rendContext->getFramebufferMinX() * upscaledWidth / origWidth;
+	u32 minY = rendContext->getFramebufferMinY() * upscaledHeight / origHeight;
 	getRenderToTextureDimensions(minX, minY, widthPow2, heightPow2);
 	baseScissor = vk::Rect2D(vk::Offset2D(minX, minY), vk::Extent2D(upscaledWidth, upscaledHeight));
 	commandBuffer.setScissor(0, baseScissor);
@@ -584,8 +584,8 @@ void TextureDrawer::EndRenderPass()
 {
 	currentCommandBuffer.endRenderPass();
 
-	u32 clippedWidth = pvrrc.getFramebufferWidth();
-	u32 clippedHeight = pvrrc.getFramebufferHeight();
+	u32 clippedWidth = rendContext->getFramebufferWidth();
+	u32 clippedHeight = rendContext->getFramebufferHeight();
 
 	if (config::RenderToTextureBuffer)
 	{
@@ -618,7 +618,7 @@ void TextureDrawer::EndRenderPass()
 		PixelBuffer<u32> tmpBuf;
 		tmpBuf.init(clippedWidth, clippedHeight);
 		colorAttachment->GetBufferData()->download(clippedWidth * clippedHeight * 4, tmpBuf.data());
-		WriteTextureToVRam(clippedWidth, clippedHeight, (u8 *)tmpBuf.data(), dst, pvrrc.fb_W_CTRL, pvrrc.fb_W_LINESTRIDE * 8);
+		WriteTextureToVRam(clippedWidth, clippedHeight, (u8 *)tmpBuf.data(), dst, rendContext->fb_W_CTRL, rendContext->fb_W_LINESTRIDE * 8);
 	}
 	else
 	{
@@ -754,7 +754,7 @@ vk::CommandBuffer ScreenDrawer::BeginRenderPass()
 			transitionNeeded[GetCurrentImage()] = false;
 		}
 
-		vk::RenderPass renderPass = clearNeeded[GetCurrentImage()] || pvrrc.clearFramebuffer ? *renderPassClear : *renderPassLoad;
+		vk::RenderPass renderPass = clearNeeded[GetCurrentImage()] || rendContext->clearFramebuffer ? *renderPassClear : *renderPassLoad;
 		clearNeeded[GetCurrentImage()] = false;
 		const std::array<vk::ClearValue, 2> clear_colors = { vk::ClearColorValue(std::array<float, 4> { 0.f, 0.f, 0.f, 1.f }), vk::ClearDepthStencilValue { 0.f, 0 } };
 		commandBuffer.beginRenderPass(vk::RenderPassBeginInfo(renderPass, *framebuffers[GetCurrentImage()],
@@ -764,7 +764,7 @@ vk::CommandBuffer ScreenDrawer::BeginRenderPass()
 	}
 	currentCommandBuffer.setViewport(0, vk::Viewport(0.0f, 0.0f, (float)viewport.width, (float)viewport.height, 1.0f, 0.0f));
 
-	matrices.CalcMatrices(&pvrrc, viewport.width, viewport.height);
+	matrices.CalcMatrices(rendContext, viewport.width, viewport.height);
 
 	SetBaseScissor(viewport);
 	currentCommandBuffer.setScissor(0, baseScissor);

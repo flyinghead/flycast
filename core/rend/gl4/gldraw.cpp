@@ -113,7 +113,7 @@ static void SetGPState(const PolyParam* gp)
 		gl4ShaderUniforms.trilinear_alpha = 1.0;
 
 	int clip_rect[4] = {};
-	TileClipping clipmode = GetTileClip(gp->tileclip, ViewportMatrix, clip_rect);
+	TileClipping clipmode = GetTileClip(gp->tileclip, ViewportMatrix, clip_rect, *gl.rendContext);
 	int gpuPalette = gp->texture == nullptr || !gp->texture->gpuPalette ? 0
 			: gp->tsp.FilterMode + 1;
 	if (gpuPalette != 0)
@@ -148,7 +148,7 @@ static void SetGPState(const PolyParam* gp)
 	{
 		// Two volumes mode only supported for OP and PT
 		bool two_volumes_mode = (gp->tsp1.full != (u32)-1) && Type != ListType_Translucent;
-		bool color_clamp = gp->tsp.ColorClamp && (pvrrc.fog_clamp_min.full != 0 || pvrrc.fog_clamp_max.full != 0xffffffff);
+		bool color_clamp = gp->tsp.ColorClamp && (gl.rendContext->fog_clamp_min.full != 0 || gl.rendContext->fog_clamp_max.full != 0xffffffff);
 		int fog_ctrl = config::Fog ? gp->tsp.FogCtrl : 2;
 
 		CurrentShader = gl4GetProgram(Type == ListType_Punch_Through ? true : false,
@@ -296,7 +296,7 @@ static void SetGPState(const PolyParam* gp)
 	else
 		glcache.DepthMask(GL_FALSE);
 	if (gp->isNaomi2())
-		setN2Uniforms(gp, CurrentShader, pvrrc);
+		setN2Uniforms(gp, CurrentShader, *gl.rendContext);
 }
 
 template <u32 Type, bool SortingEnabled, Pass pass>
@@ -306,7 +306,7 @@ static void DrawList(const std::vector<PolyParam>& gply, int first, int count)
 		return;
 	const PolyParam* params = &gply[first];
 
-	u32 firstVertexIdx = Type == ListType_Translucent ? pvrrc.idx[gply[0].first] : 0;
+	u32 firstVertexIdx = Type == ListType_Translucent ? gl.rendContext->idx[gply[0].first] : 0;
 	while (count-- > 0)
 	{
 		if (params->count > 2)
@@ -378,7 +378,7 @@ void Gl4ModvolVertexArray::defineVtxAttribs()
 
 static void DrawModVols(int first, int count)
 {
-	if (count == 0 || pvrrc.modtrig.empty())
+	if (count == 0 || gl.rendContext->modtrig.empty())
 		return;
 
 	gl4SetupModvolVBO();
@@ -392,7 +392,7 @@ static void DrawModVols(int first, int count)
 
 	glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 
-	ModifierVolumeParam* params = &pvrrc.global_param_mvo[first];
+	ModifierVolumeParam* params = &gl.rendContext->global_param_mvo[first];
 
 	int mod_base = -1;
 
@@ -405,8 +405,8 @@ static void DrawModVols(int first, int count)
 		if (param.isNaomi2())
 		{
 			glcache.UseProgram(gl4.n2ModVolShader.program);
-			glUniformMatrix4fv(gl4.n2ModVolShader.mvMat, 1, GL_FALSE, pvrrc.matrices[param.mvMatrix].mat);
-			glUniformMatrix4fv(gl4.n2ModVolShader.projMat, 1, GL_FALSE, pvrrc.matrices[param.projMatrix].mat);
+			glUniformMatrix4fv(gl4.n2ModVolShader.mvMat, 1, GL_FALSE, gl.rendContext->matrices[param.mvMatrix].mat);
+			glUniformMatrix4fv(gl4.n2ModVolShader.projMat, 1, GL_FALSE, gl.rendContext->matrices[param.projMatrix].mat);
 		}
 		else
 			glcache.UseProgram(gl4.modvol_shader.program);
@@ -485,11 +485,11 @@ void gl4DrawStrips(GLuint output_fbo, int width, int height)
 {
 	checkOverflowAndReset();
 	glBindFramebuffer(GL_FRAMEBUFFER, geom_fbo[0]);
-	if (!pvrrc.isRTT)
+	if (!gl.rendContext->isRTT)
 	{
 		glcache.Disable(GL_SCISSOR_TEST);
 		glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-		if (pvrrc.clearFramebuffer)
+		if (gl.rendContext->clearFramebuffer)
 		{
 			// Clear framebuffer
 			glcache.ClearColor(VO_BORDER_COL.red(), VO_BORDER_COL.green(), VO_BORDER_COL.blue(), 1.f);
@@ -525,28 +525,28 @@ void gl4DrawStrips(GLuint output_fbo, int width, int height)
 #endif
 
 	RenderPass previous_pass = {};
-	int render_pass_count = pvrrc.render_passes.size();
+	int render_pass_count = gl.rendContext->render_passes.size();
 
 	for (int render_pass = 0; render_pass < render_pass_count; render_pass++)
     {
-        const RenderPass& current_pass = pvrrc.render_passes[render_pass];
+        const RenderPass& current_pass = gl.rendContext->render_passes[render_pass];
 
         // Check if we can skip this pass, in part or completely, in case nothing is drawn (Cosmic Smash)
 		bool skip_op_pt = true;
 		bool skip_tr = true;
 		for (u32 j = previous_pass.op_count; skip_op_pt && j < current_pass.op_count; j++)
 		{
-			if (pvrrc.global_param_op[j].count > 2)
+			if (gl.rendContext->global_param_op[j].count > 2)
 				skip_op_pt = false;
 		}
 		for (u32 j = previous_pass.pt_count; skip_op_pt && j < current_pass.pt_count; j++)
 		{
-			if (pvrrc.global_param_pt[j].count > 2)
+			if (gl.rendContext->global_param_pt[j].count > 2)
 				skip_op_pt = false;
 		}
 		for (u32 j = previous_pass.tr_count; skip_tr && j < current_pass.tr_count; j++)
 		{
-			if (pvrrc.global_param_tr[j].count > 2)
+			if (gl.rendContext->global_param_tr[j].count > 2)
 				skip_tr = false;
 		}
 		if (skip_op_pt && skip_tr)
@@ -576,8 +576,8 @@ void gl4DrawStrips(GLuint output_fbo, int width, int height)
 			glcache.Enable(GL_STENCIL_TEST);
 			glcache.StencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 
-			DrawList<ListType_Opaque, false, Pass::Depth>(pvrrc.global_param_op, previous_pass.op_count, current_pass.op_count - previous_pass.op_count);
-			DrawList<ListType_Punch_Through, false, Pass::Depth>(pvrrc.global_param_pt, previous_pass.pt_count, current_pass.pt_count - previous_pass.pt_count);
+			DrawList<ListType_Opaque, false, Pass::Depth>(gl.rendContext->global_param_op, previous_pass.op_count, current_pass.op_count - previous_pass.op_count);
+			DrawList<ListType_Punch_Through, false, Pass::Depth>(gl.rendContext->global_param_pt, previous_pass.pt_count, current_pass.pt_count - previous_pass.pt_count);
 
 			// Modifier volumes
 			if (config::ModifierVolumes)
@@ -604,10 +604,10 @@ void gl4DrawStrips(GLuint output_fbo, int width, int height)
 			glCheck();
 
 			//Opaque
-			DrawList<ListType_Opaque, false, Pass::Color>(pvrrc.global_param_op, previous_pass.op_count, current_pass.op_count - previous_pass.op_count);
+			DrawList<ListType_Opaque, false, Pass::Color>(gl.rendContext->global_param_op, previous_pass.op_count, current_pass.op_count - previous_pass.op_count);
 
 			//Alpha tested
-			DrawList<ListType_Punch_Through, false, Pass::Color>(pvrrc.global_param_pt, previous_pass.pt_count, current_pass.pt_count - previous_pass.pt_count);
+			DrawList<ListType_Punch_Through, false, Pass::Color>(gl.rendContext->global_param_pt, previous_pass.pt_count, current_pass.pt_count - previous_pass.pt_count);
 
 			// Unbind stencil
 			glActiveTexture(GL_TEXTURE3);
@@ -629,7 +629,7 @@ void gl4DrawStrips(GLuint output_fbo, int width, int height)
 				glActiveTexture(GL_TEXTURE2);
 				glBindTexture(GL_TEXTURE_2D, depthTexId);
 				glActiveTexture(GL_TEXTURE0);
-				DrawList<ListType_Translucent, true, Pass::OIT>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
+				DrawList<ListType_Translucent, true, Pass::OIT>(gl.rendContext->global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
 
 				// Translucent modifier volumes
 				if (config::ModifierVolumes)
@@ -653,7 +653,7 @@ void gl4DrawStrips(GLuint output_fbo, int width, int height)
 
 					glBindFramebuffer(GL_FRAMEBUFFER, geom_fbo[1]);
 					glcache.Enable(GL_DEPTH_TEST);
-					DrawList<ListType_Translucent, true, Pass::Depth>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
+					DrawList<ListType_Translucent, true, Pass::Depth>(gl.rendContext->global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
 				}
 			}
 			else
@@ -661,7 +661,7 @@ void gl4DrawStrips(GLuint output_fbo, int width, int height)
 				glBindFramebuffer(GL_FRAMEBUFFER, geom_fbo[1]);
 				glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 				glcache.Enable(GL_DEPTH_TEST);
-				DrawList<ListType_Translucent, false, Pass::Color>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
+				DrawList<ListType_Translucent, false, Pass::Color>(gl.rendContext->global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
 				glcache.Disable(GL_BLEND);
 			}
 			glCheck();

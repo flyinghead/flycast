@@ -232,6 +232,7 @@ class FlycastException : public std::runtime_error
 {
 public:
 	FlycastException(const std::string& reason) : std::runtime_error(reason) {}
+	FlycastException(const char *reason) : std::runtime_error(reason) {}
 };
 
 class LoadCancelledException : public FlycastException

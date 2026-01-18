@@ -907,9 +907,14 @@ void VulkanContext::NewFrame()
 	vk::Result res = device->acquireNextImageKHR(*swapChain, UINT64_MAX, *imageAcquiredSemaphores[currentSemaphore], nullptr, &currentImage);
 	if (res != vk::Result::eSuccess)
 		throw InvalidVulkanContext();
-	res = device->waitForFences(*drawFences[currentImage], true, UINT64_MAX);
-	if (res != vk::Result::eSuccess)
-		throw InvalidVulkanContext();
+	try {
+		res = device->waitForFences(*drawFences[currentImage], true, UINT64_MAX);
+		if (res != vk::Result::eSuccess)
+			throw InvalidVulkanContext();
+	} catch (const vk::SystemError& e) {
+		WARN_LOG(RENDERER, "vk:SystemError: %s", e.what());
+		throw FlycastException("Vulkan system error");
+	}
 	device->resetCommandPool(*commandPools[currentImage], vk::CommandPoolResetFlagBits::eReleaseResources);
 	inFlightObjects[currentImage].clear();
 	vk::CommandBuffer commandBuffer = *commandBuffers[currentImage];
@@ -1109,9 +1114,12 @@ void VulkanContext::term()
 	if (device && !drawFences.empty())
 	{
 		std::vector<vk::Fence> allFences = vk::uniqueToRaw(drawFences);
-		vk::Result res = device->waitForFences(allFences, true, UINT64_MAX);
-		if (res != vk::Result::eSuccess)
-			WARN_LOG(RENDERER, "VulkanContext::term: waitForFences failed %d", (int)res);
+		try {
+			vk::Result res = device->waitForFences(allFences, true, UINT64_MAX);
+			if (res != vk::Result::eSuccess)
+				INFO_LOG(RENDERER, "VulkanContext::term: waitForFences failed %d", (int)res);
+		} catch (const vk::SystemError& e) {
+		}
 	}
 	inFlightObjects.clear();
 	imguiDriver.reset();

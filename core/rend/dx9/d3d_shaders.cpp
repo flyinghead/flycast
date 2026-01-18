@@ -18,6 +18,7 @@
 */
 #include "d3d_shaders.h"
 #include "cfg/option.h"
+#include "hw/pvr/Renderer_if.h"
 
 #define SHADER_DEBUG 0 // D3DXSHADER_DEBUG|D3DXSHADER_SKIPOPTIMIZATION
 
@@ -463,14 +464,14 @@ void D3DShaders::init(const ComPtr<IDirect3DDevice9>& device)
 	}
 	if (!d3dx9Library.loaded()) {
 		ERROR_LOG(RENDERER, "Cannot load d3dx9_??.dll");
-		throw FlycastException("Cannot load d3dx9_??.dll");
+		throw RendererException("Cannot load d3dx9_??.dll");
 	}
 	pD3DXCompileShader = d3dx9Library.getFunc("D3DXCompileShader", pD3DXCompileShader);
 	pD3DXGetVertexShaderProfile = d3dx9Library.getFunc("D3DXGetVertexShaderProfile", pD3DXGetVertexShaderProfile);
 	pD3DXGetPixelShaderProfile = d3dx9Library.getFunc("D3DXGetPixelShaderProfile", pD3DXGetPixelShaderProfile);
 	if (pD3DXCompileShader == nullptr || pD3DXGetVertexShaderProfile == nullptr || pD3DXGetPixelShaderProfile == nullptr) {
 		ERROR_LOG(RENDERER, "Cannot find entry point in d3dx9_??.dll");
-		throw FlycastException("Cannot load d3dx9_??.dll");
+		throw RendererException("Cannot load d3dx9_??.dll");
 	}
 }
 
