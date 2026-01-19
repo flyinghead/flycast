@@ -22,6 +22,55 @@
 #include "build.h"
 #include "oslib/unwind_info.h"
 
+#if defined(__APPLE__) && HOST_CPU == CPU_ARM64
+#include <dlfcn.h>
+#include <mach-o/loader.h>
+
+struct unw_dynamic_unwind_sections {
+	uintptr_t dso_base;
+	uintptr_t dwarf_section;
+	size_t dwarf_section_length;
+	uintptr_t compact_unwind_section;
+	size_t compact_unwind_section_length;
+};
+
+typedef int (*unw_find_dynamic_unwind_sections)(uintptr_t addr, struct unw_dynamic_unwind_sections *info);
+
+static struct mach_header_64 fake_mach_header = {
+	MH_MAGIC_64,
+	CPU_TYPE_ARM64,
+	CPU_SUBTYPE_ARM64_ALL,
+	MH_DYLIB,
+	0,
+	0,
+	0,
+	0
+};
+
+static int find_dynamic_unwind_sections(uintptr_t addr, struct unw_dynamic_unwind_sections *info) {
+	info->dso_base = (uintptr_t)&fake_mach_header;
+	info->dwarf_section = 0;
+	info->dwarf_section_length = 0;
+	info->compact_unwind_section = 0;
+	info->compact_unwind_section_length = 0;
+	return 1;
+}
+
+static void register_unwind_shim() {
+	if (auto *unw_add_find_dynamic_unwind_sections =
+		(int (*)(unw_find_dynamic_unwind_sections))dlsym(RTLD_DEFAULT, "__unw_add_find_dynamic_unwind_sections")) {
+		unw_add_find_dynamic_unwind_sections(find_dynamic_unwind_sections);
+	}
+}
+
+struct UnwindShimRegistrar {
+	UnwindShimRegistrar() {
+		register_unwind_shim();
+	}
+};
+static UnwindShimRegistrar shimRegistrar;
+#endif
+
 extern "C"
 {
 #if HOST_CPU != CPU_ARM
