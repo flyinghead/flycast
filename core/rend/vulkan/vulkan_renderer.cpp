@@ -120,6 +120,7 @@ void BaseVulkanRenderer::ReInitOSD()
 
 void BaseVulkanRenderer::RenderFramebuffer(const FramebufferInfo& info)
 {
+	rendContext = nullptr;
 	framebufferTexIndex = (framebufferTexIndex + 1) % GetContext()->GetSwapChainSize();
 
 	if (framebufferTextures.size() != GetContext()->GetSwapChainSize())
