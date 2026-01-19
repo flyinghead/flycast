@@ -1106,7 +1106,14 @@ public:
     DreamPicoPort(int bus, int joystick_idx, SDL_Joystick* sdl_joystick) :
 		software_bus(bus),
 		hw_info(parseHardwareInfo(joystick_idx, sdl_joystick))
-	{}
+	{
+		EventManager::listen(Event::Start, &DreamPicoPort::handleGameStartEvent, this);
+	}
+
+	~DreamPicoPort()
+	{
+		EventManager::unlisten(Event::Start, &DreamPicoPort::handleGameStartEvent, this);
+	}
 
 	bool send(const MapleMsg& msg) override {
 		if (!dpp_comms) {
@@ -1150,23 +1157,46 @@ public:
 	}
 
 	//! Sends the current game id to a DreamLink backed expansion device if supported
-	void sendGameId(int expansion) {
-		if (!dpp_comms || hw_info.hardware_bus < 0)
+	//! @param[in] expansion The expansion port to send to or -1 to send to all storage devices
+	void sendGameId(int expansion = -1) {
+		if (!dpp_comms || hw_info.hardware_bus < 0 || !storageEnabled()) {
+			return;
+		}
+
+		const int startPort = (expansion >= 0) ? expansion : 0;
+		const int endPort = (expansion >= 0) ? (expansion + 1) : 2;
+
+		for (int port = startPort; port < endPort; ++port) {
+			u32 fnCode = getFunctionCode(port);
+
+			if ((fnCode & MFID_1_Storage) == 0) {
+				// Not a storage device
+				continue;
+			}
+
+			const std::string& gameId = settings.content.gameId;
+			if (gameId.empty()) {
 				return;
+			}
 
-		const std::string& gameId = settings.content.gameId;
-		if (gameId.empty() || expansion < 0 || expansion > 1)
-				return;
+			MapleMsg msg{};
+			msg.command = 33;
+			msg.destAP = (hw_info.hardware_bus << 6) | (1u << port);
+			msg.originAP = hw_info.hardware_bus << 6;
+			msg.pushData(MFID_1_Storage);
+			msg.pushData(gameId.data(), std::min<u32>(gameId.size() + 1, 12));
+			msg.size = 4;
 
-		MapleMsg msg{};
-		msg.command = 33;
-		msg.destAP = (hw_info.hardware_bus << 6) | (1u << expansion);
-		msg.originAP = hw_info.hardware_bus << 6;
-		msg.pushData(MFID_1_Storage);
-		msg.pushData(gameId.data(), std::min<u32>(gameId.size() + 1, 12));
-		msg.size = 4;
+			dpp_comms->send(msg, timeout_ms);
+		}
+	}
 
-		dpp_comms->send(msg, timeout_ms);
+	static void handleGameStartEvent(Event event, void* arg)
+	{
+		if (event == Event::Start && arg) {
+			DreamPicoPort* dpp = static_cast<DreamPicoPort*>(arg);
+			dpp->sendGameId();
+		}
 	}
 
 	void gameTermination() override {
@@ -1254,11 +1284,10 @@ public:
 		if (portOneFn & MFID_1_Storage) {
 			config::MapleExpansionDevices[software_bus][0] = MDT_SegaVMU;
 			registerLink(software_bus, 0);
-			if (storageEnabled())
+			if (storageEnabled() && isGameStarted())
 			{
 				sendGameId(0);
-				if (isGameStarted())
-					emu.run([bus=this->software_bus]() { maple_ReconnectDevice(bus, 0); });
+				emu.run([bus=this->software_bus]() { maple_ReconnectDevice(bus, 0); });
 			}
 		}
 		else {
@@ -1275,11 +1304,10 @@ public:
 			else if (portTwoFn & MFID_1_Storage) {
 				config::MapleExpansionDevices[software_bus][1] = MDT_SegaVMU;
 				registerLink(software_bus, 1);
-				if (storageEnabled())
+				if (storageEnabled() && isGameStarted())
 				{
 					sendGameId(1);
-					if (isGameStarted())
-						emu.run([bus=this->software_bus]() { maple_ReconnectDevice(bus, 1); });
+					emu.run([bus=this->software_bus]() { maple_ReconnectDevice(bus, 1); });
 				}
 			}
 			else {
