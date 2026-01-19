@@ -144,3 +144,9 @@ bool BaseMapleLink::storageEnabled()
 	else
 		return vmuStorage;
 }
+
+bool BaseMapleLink::handleGetLastError(const MapleMsg&)
+{
+	// Just acknowledge by default
+	return true;
+}

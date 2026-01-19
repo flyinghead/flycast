@@ -1067,6 +1067,8 @@ class DreamPicoPort : public DreamLink
     double interface_version = 0.0;
     //! The queried peripherals; for each function, index 0 is function code and index 1 is the function definition
     std::vector<std::vector<std::array<uint32_t, 2>>> peripherals;
+	//! The last time write operation was performed
+	std::chrono::steady_clock::time_point lastWriteTime = {};
     //! Dreamcast Controller USB VID:1209 PID:2f07
     static constexpr std::uint16_t VID = 0x1209;
     static constexpr std::uint16_t PID = 0x2f07;
@@ -1119,7 +1121,32 @@ public:
 			return false;
 		}
 
-		return dpp_comms->send(txMsg, rxMsg, timeout_ms);
+		if (txMsg.command == MDCF_BlockWrite) {
+			// Ensure proper timing between write calls
+			std::this_thread::sleep_until(lastWriteTime + std::chrono::milliseconds(10));
+		}
+
+		bool sent = dpp_comms->send(txMsg, rxMsg, timeout_ms);
+
+		if (txMsg.command == MDCF_BlockWrite) {
+			// Save time of last write operation
+			lastWriteTime = std::chrono::steady_clock::now();
+		}
+
+		return sent;
+	}
+
+	bool handleGetLastError(const MapleMsg& msg) override {
+		// Ensure proper timing between write calls
+		std::this_thread::sleep_until(lastWriteTime + std::chrono::milliseconds(10));
+
+		MapleMsg rxMsg;
+		bool acknowledged = (dpp_comms->send(msg, rxMsg, timeout_ms) && rxMsg.command == MDRS_DeviceReply);
+
+		// Save time of last write operation
+		lastWriteTime = std::chrono::steady_clock::now();
+
+		return acknowledged;
 	}
 
 	//! Sends the current game id to a DreamLink backed expansion device if supported

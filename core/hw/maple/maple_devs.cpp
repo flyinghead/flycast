@@ -2256,10 +2256,23 @@ struct MapleLinkVmu : public maple_sega_vmu
 						return rc;
 					break;
 				}
+
 				case MDCF_GetMediaInfo:
 					// block 255 contains the media info
 					readBlock(255);
 					break;
+
+				case MDCF_GetLastError:
+				{
+					auto link = MapleLink::GetMapleLink(bus_id, bus_port);
+					if (link == nullptr) {
+						ERROR_LOG(MAPLE, "MapleLinkVmu[%s]::GetLastError: MapleLink is null", logical_port);
+						return MDRE_FileError;
+					} else if (!link->handleGetLastError(*inMsg)) {
+						ERROR_LOG(MAPLE, "MapleLinkVmu[%s]::GetLastError: I/O error", logical_port);
+						return MDRE_FileError;
+					}
+				}
 
 				default:
 					// do nothing
