@@ -297,6 +297,7 @@ struct maple_base: maple_device
 };
 
 void createMapleLinkVmu(int bus, int port);
+void createMapleLinkDevice(int bus, int port);
 
 class jvs_io_board;
 

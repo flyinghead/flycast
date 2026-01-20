@@ -38,10 +38,18 @@ public:
 	//! @param[in] msg The message which contains GetLastError command
 	//! @return true iff successful
 	virtual bool handleGetLastError(const MapleMsg& msg) = 0;
+	//! True if full Maple access is allowed (not just VMU and PuruPuru)
+	virtual bool fullAccessEnabled() = 0;
 	//! True if VMU reads and writes should be sent to the device
 	virtual bool storageEnabled() = 0;
 	//! True if the link is operational
 	virtual bool isConnected() = 0;
+    //! @param[in] forPort The port number to get the function code of
+    //! @return the device type for the given port
+    virtual u32 getFunctionCode(int forPort) const = 0;
+    //! @param[in] forPort The port number to get the function definitions of
+	//! @return the 3 function definitions for the supported function codes
+    virtual std::array<u32, 3> getFunctionDefinitions(int forPort) const = 0;
 
 	//! Returns the maple link at the given location if any
 	static Ptr GetMapleLink(int bus, int port) {
@@ -56,6 +64,7 @@ protected:
 	bool isGameStarted() const;
 	void registerLink(int bus, int port);
 	void unregisterLink(int bus, int port);
+	bool isRegistered(int bus, int port) const;
 	int bus = -1;
 	u32 ports = 0;
 
@@ -68,16 +77,23 @@ class BaseMapleLink : public MapleLink
 {
 public:
 	~BaseMapleLink();
+	bool fullAccessEnabled() override;
 	bool storageEnabled() override;
 	bool handleGetLastError(const MapleMsg& msg) override;
 
 protected:
-	BaseMapleLink(bool storageSupported);
+	enum class AccessType {
+		Basic, //!< Basic support for screen and vibration only
+		StorageSupport, //!< Support basic functions plus storage
+		FullAccess //!< Support full access to all maple commands
+	};
+
+	BaseMapleLink(AccessType accessType);
 	void disableStorage(); // Disable VMU storage for this link
 
 	static void eventStart(Event event, void *p);
 	static void eventLoadState(Event event, void *p);
 
-	const bool storageSupported;
+	const AccessType accessType;
 	bool vmuStorage = false;
 };

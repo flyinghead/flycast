@@ -46,12 +46,34 @@ class DreamConn : public DreamLink
 
 public:
 	DreamConn(int bus)
-		: DreamLink(false), bus(bus)
+		: DreamLink(AccessType::Basic), bus(bus)
 	{}
 
 	bool storageEnabled() override {
 		// DreamConn controllers don't support physical VMU memory access
 		return false;
+	}
+
+    u32 getFunctionCode(int forPort) const override {
+		MapleDeviceType deviceType = expansionDevs.at(forPort - 1);
+		if (deviceType == MDT_SegaVMU) {
+			return 0x0E000000;
+		}
+		else if (deviceType == MDT_PurupuruPack) {
+			return 0x00010000;
+		}
+		return 0;
+	}
+
+	std::array<u32, 3> getFunctionDefinitions(int forPort) const override {
+		MapleDeviceType deviceType = expansionDevs.at(forPort);
+		if (deviceType == MDT_SegaVMU)
+			// For clock, LCD, storage
+			return std::array<u32, 3>{0x403f7e7e, 0x00100500, 0x00410f00};
+		else if (deviceType == MDT_PurupuruPack)
+			return std::array<u32, 3>{0x00000101, 0, 0};
+
+		return std::array<u32, 3>{0, 0, 0};
 	}
 
 	bool send(const MapleMsg& msg) override

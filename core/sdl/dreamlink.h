@@ -37,7 +37,7 @@ class DreamLink : public BaseMapleLink
 {
 public:
 	//! Number of physical dreamcast ports
-	static constexpr int NUM_PORTS = 4;
+	static constexpr int NUM_PORTS = MAPLE_PORTS;
 
 	//! Check if a given port is valid
 	//! @param[in] port The dreamcast port index to test
@@ -61,8 +61,18 @@ public:
 	//! Disconnect from the hardware controller
 	virtual void disconnect() = 0;
 
+	//! @return true iff registered as any port on the given bus
+	inline std::size_t registeredCount(int bus) {
+		std::size_t count = 0;
+		for (int i = 0; i < 6; ++i) {
+			if (BaseMapleLink::isRegistered(bus, i))
+				++count;
+		}
+		return count;
+	}
+
 protected:
-	DreamLink(bool storageSupported = true);
+	DreamLink(AccessType accessType = AccessType::FullAccess);
 	~DreamLink();
 
 private:

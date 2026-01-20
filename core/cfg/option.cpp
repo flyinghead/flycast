@@ -227,6 +227,28 @@ std::array<std::array<Option<int>, 2>, 4> NetworkExpansionDevices{{
 	{{Option<int>("device4.1.net", 0, "input"),
 	Option<int>("device4.2.net", 0, "input")}},
 }};
+
+// When 1, automatically select hardware device when present
+std::array<Option<int>, 4> PhysicalMainDevices {
+	Option<int>("device1.hw", 1, "input"),
+	Option<int>("device2.hw", 1, "input"),
+	Option<int>("device3.hw", 1, "input"),
+	Option<int>("device4.hw", 1, "input"),
+};
+std::array<std::array<Option<int>, 2>, 4> PhysicalExpansionDevices {{
+	{{Option<int>("device1.1.hw", 1, "input"),
+	Option<int>("device1.2.hw", 1, "input")}},
+
+	{{Option<int>("device2.1.hw", 1, "input"),
+	Option<int>("device2.2.hw", 1, "input")}},
+
+	{{Option<int>("device3.1.hw", 1, "input"),
+	Option<int>("device3.2.hw", 1, "input")}},
+
+	{{Option<int>("device4.1.hw", 1, "input"),
+	Option<int>("device4.2.hw", 1, "input")}},
+}};
+
 Option<bool> PerGameVmu("PerGameVmu", true, "config");
 #ifdef _WIN32
 Option<bool, false> UseRawInput("RawInput", false, "input");

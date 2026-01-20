@@ -78,6 +78,20 @@ void MapleLink::unregisterLink(int bus, int port)
 	}
 }
 
+bool MapleLink::isRegistered(int bus, int port) const
+{
+	if (bus >= 0 && bus < (int)Links.size()
+			&& port >= 0 && port < (int)Links[0].size())
+	{
+		std::lock_guard<std::mutex> _(Mutex);
+		Ptr& existing = Links[bus][port];
+		if (existing.get() == this)
+			return true;
+	}
+
+	return false;
+}
+
 bool MapleLink::StorageEnabled()
 {
 	std::lock_guard<std::mutex> _(Mutex);
@@ -90,13 +104,13 @@ bool MapleLink::StorageEnabled()
 	return false;
 }
 
-BaseMapleLink::BaseMapleLink(bool storageSupported)
-	: storageSupported(storageSupported)
+BaseMapleLink::BaseMapleLink(AccessType accessType)
+	: accessType(accessType)
 {
 	EventManager::listen(Event::LoadState, eventLoadState, this);
 	EventManager::listen(Event::Start, eventStart, this);
 	if (isGameStarted())
-		vmuStorage = storageSupported && config::UsePhysicalVmuMemory;
+		vmuStorage = (accessType >= AccessType::StorageSupport) && config::UsePhysicalVmuMemory;
 }
 
 BaseMapleLink::~BaseMapleLink()
@@ -108,7 +122,7 @@ BaseMapleLink::~BaseMapleLink()
 void BaseMapleLink::eventStart(Event event, void *p)
 {
 	BaseMapleLink *self = (BaseMapleLink *)p;
-	self->vmuStorage = self->storageSupported && config::UsePhysicalVmuMemory && self->isConnected();
+	self->vmuStorage = (self->accessType >= AccessType::StorageSupport) && config::UsePhysicalVmuMemory && self->isConnected();
 }
 void BaseMapleLink::eventLoadState(Event event, void *p)
 {
@@ -135,12 +149,17 @@ void BaseMapleLink::disableStorage()
 	}
 }
 
+bool BaseMapleLink::fullAccessEnabled()
+{
+	return (accessType == AccessType::FullAccess);
+}
+
 bool BaseMapleLink::storageEnabled()
 {
 	if (!isConnected())
 		return false;
 	if (!isGameStarted())
-		return storageSupported && config::UsePhysicalVmuMemory;
+		return (accessType >= AccessType::StorageSupport) && config::UsePhysicalVmuMemory;
 	else
 		return vmuStorage;
 }

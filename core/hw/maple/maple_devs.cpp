@@ -2292,9 +2292,216 @@ struct MapleLinkVmu : public maple_sega_vmu
 	}
 };
 
+//! Generically handles any MapleLink device when supported
+struct MapleLinkDevice : public maple_base
+{
+	//! The supported functions mask for this device
+	const u32 supportedFns;
+	//! The last time write was performed
+	std::chrono::steady_clock::time_point lastWriteTime;
+	//! Mutex serializing write operations
+	std::mutex writeMutex;
+	//! Virtual VMU used when physical memory should not be used
+	std::unique_ptr<maple_sega_vmu> virtualVmu;
+
+	//! Constructor
+	//! @param[in] supportedFns Supported functions mask (default: any function)
+	MapleLinkDevice(u32 supportedFns = std::numeric_limits<u32>::max()) : supportedFns(supportedFns)
+	{}
+
+	bool linkStatus() override
+	{
+		auto link = MapleLink::GetMapleLink(bus_id, bus_port);
+		return (
+			link &&
+			link->isConnected() &&
+			((link->getFunctionCode(bus_port) & supportedFns) != 0)
+		);
+	}
+
+	MapleDeviceType get_device_type() override
+	{
+		// This is mainly used by the serializer, so it's ok if it's not completely correct
+
+		auto link = MapleLink::GetMapleLink(bus_id, bus_port);
+		if (!link)
+			return MDT_None;
+
+		u32 fn = link->getFunctionCode(bus_port);
+		if (fn | MFID_0_Input)
+			return MDT_SegaController;
+		else if (fn | (MFID_1_Storage & MFID_2_LCD & MFID_3_Clock))
+			return MDT_SegaVMU;
+		else if (fn | MFID_4_Mic)
+			return MDT_Microphone;
+		else if (fn | (MFID_5_ARGun & MFID_7_LightGun))
+			return MDT_LightGun;
+		else if (fn | MFID_6_Keyboard)
+			return MDT_Keyboard;
+		else if (fn | MFID_8_Vibration)
+			return MDT_PurupuruPack;
+		else if (fn | MFID_9_Mouse)
+			return MDT_Mouse;
+		else if (fn | MFID_11_Camera)
+			return MDT_Dreameye;
+
+		return MDT_None;
+	}
+
+	u32 virtualVmuDma(u32 cmd)
+	{
+		if (!virtualVmu)
+		{
+			// Create the virtual VMU and have it share my data
+			virtualVmu = std::make_unique<maple_sega_vmu>();
+			virtualVmu->maple_port = maple_port;
+			virtualVmu->bus_port = bus_port;
+			virtualVmu->bus_id = bus_id;
+			memcpy(&virtualVmu->logical_port[0], &logical_port[0], sizeof(logical_port));
+			virtualVmu->player_num = player_num;
+			virtualVmu->config = config;
+			virtualVmu->OnSetup();
+		}
+
+		return virtualVmu->dma(cmd);
+	}
+
+	u32 dma(u32 cmd) override
+	{
+		auto link = MapleLink::GetMapleLink(bus_id, bus_port);
+		if (!link)
+			return MDRS_JVSNone;
+
+		// Deserialize the first data word without popping off of dma
+		u32 firstWord = 0;
+		if (inMsg->size >= 1) {
+			firstWord = *(const u32 *)&inMsg->data[0];
+		}
+
+		if (
+			!link->storageEnabled() &&
+			(cmd == MDCF_GetMediaInfo || cmd == MDCF_BlockRead || cmd == MDCF_BlockWrite || cmd == MDCF_GetLastError) &&
+			firstWord == MFID_1_Storage
+		) {
+			// Use virtual memory and return without accessing physical memory
+			return virtualVmuDma(cmd);
+		} else if (cmd == MDCF_BlockWrite && firstWord == MFID_2_LCD) {
+			// Send to virtual screen and also continue below
+			virtualVmuDma(cmd);
+		}
+
+		u32 response = MDRS_JVSNone;
+		std::unique_lock<std::mutex> lock(writeMutex, std::defer_lock);
+
+		// If doing write operation, serialize operation and delay 10 ms between writes
+		const bool isWriteOp = (cmd == MDCF_BlockWrite || cmd == MDCF_GetLastError);
+		if (isWriteOp) {
+			lock.lock();
+			std::this_thread::sleep_until(lastWriteTime + std::chrono::milliseconds(10));
+		}
+
+		const MapleMsg& txMsg = *inMsg;
+		MapleMsg rxMsg;
+		std::vector<u32> output;
+		if (link && link->sendReceive(txMsg, rxMsg)) {
+			// If this message came from a main peripheral, clear out attached flags (will be handled by base)
+			if (rxMsg.originAP & 0x20) {
+				rxMsg.originAP = (rxMsg.originAP & 0xE0);
+			}
+
+			for (u32 i = 0; i < rxMsg.getDataSize(); ++i) {
+				w8(rxMsg.data[i]);
+			}
+		} else {
+			rxMsg.command = MDRS_JVSNone;
+		}
+
+		// If doing write operation, save time at this point
+		if (isWriteOp) {
+			lastWriteTime = std::chrono::steady_clock::now();
+			lock.unlock();
+		}
+
+		return rxMsg.command;
+	}
+};
+
+//! Generically handles a MapleLink main device (normally a controller)
+struct MapleLinkMainDevice : public MapleLinkDevice
+{
+	//! Constructor
+	//! Only input devices are currently supported here - even lightguns and DreamEye implement MFID_0_Input
+	//! This should support everything except for keyboard & mouse
+	MapleLinkMainDevice() : MapleLinkDevice(MFID_0_Input) {}
+
+	MapleDeviceType get_device_type() override
+	{
+		// This is mainly used by the serializer
+		return MDT_SegaController;
+	}
+
+	u32 dma(u32 cmd) override
+	{
+		// Since MDCF_GetCondition gets called very often and is very well defined, handle it here
+		if (cmd == MDCF_GetCondition)
+		{
+			std::vector<u32> output;
+
+			PlainJoystickState pjs;
+			config->GetInput(&pjs);
+
+			auto link = MapleLink::GetMapleLink(bus_id, bus_port);
+			if (!link || !link->isConnected())
+			{
+				// Not connected
+				return MDRS_JVSNone;
+			}
+			else
+			{
+				// Function definition is analog/button mask
+				// byte 0: 0  0  0  0  0  0  0  0
+				// byte 1: 0  0  a5 a4 a3 a2 a1 a0
+				// byte 2: R2 L2 D2 U2 D  X  Y  Z
+				// byte 3: R  L  D  U  St A  B  C
+				const u32 fnDef = link->getFunctionDefinitions(bus_port)[0]; // MFID_0_Input def is always at [0]
+
+				// Function
+				w32(MFID_0_Input);
+
+				// state data
+				// 2 key code
+				w16(pjs.kcode | ~(((fnDef >> 8) & 0xFF00) | ((fnDef >> 24) & 0xFF))); // 0==pressed
+
+				// analog axes
+				w8(((fnDef & 0x0100) != 0) ? pjs.trigger[PJTI_R] : 0x80);
+				w8(((fnDef & 0x0200) != 0) ? pjs.trigger[PJTI_L] : 0x80);
+				w8(((fnDef & 0x0400) != 0) ? pjs.joy[PJAI_X1] : 0x80);
+				w8(((fnDef & 0x0800) != 0) ? pjs.joy[PJAI_Y1] : 0x80);
+				w8(((fnDef & 0x1000) != 0) ? pjs.joy[PJAI_X2] : 0x80);
+				w8(((fnDef & 0x2000) != 0) ? pjs.joy[PJAI_Y2] : 0x80);
+
+				return MDRS_DataTransfer;
+			}
+		}
+
+		return MapleLinkDevice::dma(cmd);
+	}
+};
+
 void createMapleLinkVmu(int bus, int port)
 {
 	INFO_LOG(MAPLE, "MapleLinkVmu created on %d,%d", bus, port);
 	auto vmu = std::make_shared<MapleLinkVmu>();
 	vmu->Setup(bus, port);
+}
+
+void createMapleLinkDevice(int bus, int port)
+{
+	INFO_LOG(MAPLE, "MapleLinkDevice created on %d,%d", bus, port);
+	std::shared_ptr<MapleLinkDevice> dev;
+	if (port == 5)
+		dev = std::make_shared<MapleLinkMainDevice>();
+	else
+		dev = std::make_shared<MapleLinkDevice>();
+	dev->Setup(bus, port);
 }
