@@ -43,6 +43,7 @@ public:
 	virtual bool storageEnabled() = 0;
 	//! True if the link is operational
 	virtual bool isConnected() = 0;
+	//! @return number of active links made for this MapleLink on the given bus
 	std::size_t activeLinkCount(int bus) const;
 
 	//! Returns the maple link at the given location if any
