@@ -19,6 +19,7 @@
 #include "hw/maple/maple_devs.h"
 #include "emulator.h"
 #include <array>
+#include <list>
 #include <memory>
 #include <mutex>
 
