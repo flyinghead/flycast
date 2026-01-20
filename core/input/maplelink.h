@@ -74,10 +74,13 @@ public:
 protected:
 	BaseMapleLink(bool storageSupported);
 	void disableStorage(); // Disable VMU storage for this link
-
-	static void eventStart(Event event, void *p);
-	static void eventLoadState(Event event, void *p);
+	virtual void gameStarted();
+	//! When called, do teardown stuff (vmu screen reset is handled by maple_sega_vmu)
+	virtual void gameTermination() {}
 
 	const bool storageSupported;
 	bool vmuStorage = false;
+
+private:
+	static void eventHandler(Event event, void *p);
 };

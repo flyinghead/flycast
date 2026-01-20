@@ -2182,16 +2182,22 @@ struct MapleLinkVmu : public maple_sega_vmu
 		memcpy(flash_data, savedData, sizeof(savedData));
 	}
 
+	MapleLink::Ptr getMapleLink()
+	{
+		MapleLink::Ptr link = MapleLink::GetMapleLink(bus_id, bus_port);
+		if (link == nullptr)
+			ERROR_LOG(MAPLE, "MapleLinkVmu[%s]: MapleLink is null", logical_port);
+		return link;
+	}
+
 	MapleDeviceRV readBlock(unsigned block)
 	{
 		if (cachedBlocks[block])
 			return MDRS_JVSNone;
 
-		auto link = MapleLink::GetMapleLink(bus_id, bus_port);
-		if (link == nullptr) {
-			ERROR_LOG(MAPLE, "MapleLinkVmu[%s]::readBlock: MapleLink is null", logical_port);
+		MapleLink::Ptr link = getMapleLink();
+		if (link == nullptr)
 			return MDRS_JVSNone;
-		}
 
 		MapleMsg txMsg;
 		txMsg.command = MDCF_BlockRead;
@@ -2226,16 +2232,15 @@ struct MapleLinkVmu : public maple_sega_vmu
 				{
 				case MDCF_BlockWrite:
 				{
-					if (!userNotified) {
+					if (!userNotified)
+					{
 						os_notify("ATTENTION: You are saving to a physical VMU", 6000,
 								"Do not disconnect the VMU or close the game");
 						userNotified = true;
 					}
-					auto link = MapleLink::GetMapleLink(bus_id, bus_port);
-					if (link == nullptr) {
-						ERROR_LOG(MAPLE, "MapleLinkVmu[%s]::BlockWrite: MapleLink is null", logical_port);
+					MapleLink::Ptr link = getMapleLink();
+					if (link == nullptr)
 						return MDRE_FileError;
-					}
 					MapleMsg rxMsg;
 					if (!link->sendReceive(*inMsg, rxMsg)) {
 						ERROR_LOG(MAPLE, "Failed to write VMU %s: I/O error", logical_port);
@@ -2264,14 +2269,14 @@ struct MapleLinkVmu : public maple_sega_vmu
 
 				case MDCF_GetLastError:
 				{
-					auto link = MapleLink::GetMapleLink(bus_id, bus_port);
-					if (link == nullptr) {
-						ERROR_LOG(MAPLE, "MapleLinkVmu[%s]::GetLastError: MapleLink is null", logical_port);
+					MapleLink::Ptr link = getMapleLink();
+					if (link == nullptr)
 						return MDRE_FileError;
-					} else if (!link->handleGetLastError(*inMsg)) {
+					if (!link->handleGetLastError(*inMsg)) {
 						ERROR_LOG(MAPLE, "MapleLinkVmu[%s]::GetLastError: I/O error", logical_port);
 						return MDRE_FileError;
 					}
+					break;
 				}
 
 				default:

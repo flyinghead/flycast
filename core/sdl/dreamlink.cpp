@@ -45,23 +45,6 @@
 #include <setupapi.h>
 #endif
 
-DreamLink::DreamLink(bool storageSupported)
-	: BaseMapleLink(storageSupported)
-{
-	EventManager::listen(Event::Terminate, DreamLink::eventTerminate, this);
-}
-
-DreamLink::~DreamLink()
-{
-	EventManager::unlisten(Event::Terminate, DreamLink::eventTerminate, this);
-}
-
-void DreamLink::eventTerminate(Event event, void *param)
-{
-	DreamLink *self = static_cast<DreamLink *>(param);
-	self->gameTermination();
-}
-
 bool DreamLinkGamepad::isDreamcastController(int deviceIndex)
 {
 	char guid_str[33] {};

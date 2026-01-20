@@ -93,29 +93,43 @@ bool MapleLink::StorageEnabled()
 BaseMapleLink::BaseMapleLink(bool storageSupported)
 	: storageSupported(storageSupported)
 {
-	EventManager::listen(Event::LoadState, eventLoadState, this);
-	EventManager::listen(Event::Start, eventStart, this);
+	EventManager::listen(Event::LoadState, eventHandler, this);
+	EventManager::listen(Event::Start, eventHandler, this);
+	EventManager::listen(Event::Terminate, eventHandler, this);
 	if (isGameStarted())
 		vmuStorage = storageSupported && config::UsePhysicalVmuMemory;
 }
 
 BaseMapleLink::~BaseMapleLink()
 {
-	EventManager::unlisten(Event::LoadState, eventLoadState, this);
-	EventManager::unlisten(Event::Start, eventStart, this);
+	EventManager::unlisten(Event::LoadState, eventHandler, this);
+	EventManager::unlisten(Event::Start, eventHandler, this);
+	EventManager::unlisten(Event::Terminate, eventHandler, this);
 }
 
-void BaseMapleLink::eventStart(Event event, void *p)
-{
-	BaseMapleLink *self = (BaseMapleLink *)p;
-	self->vmuStorage = self->storageSupported && config::UsePhysicalVmuMemory && self->isConnected();
+void BaseMapleLink::gameStarted() {
+	vmuStorage = storageSupported && config::UsePhysicalVmuMemory && isConnected();
 }
-void BaseMapleLink::eventLoadState(Event event, void *p)
+
+void BaseMapleLink::eventHandler(Event event, void *p)
 {
 	BaseMapleLink *self = (BaseMapleLink *)p;
-	if (self->vmuStorage) {
-		WARN_LOG(INPUT, "State loaded but VMU has storage enabled");
-		self->disableStorage();
+	switch (event)
+	{
+	case Event::Start:
+		self->gameStarted();
+		break;
+	case Event::Terminate:
+		self->gameTermination();
+		break;
+	case Event::LoadState:
+		if (self->vmuStorage) {
+			WARN_LOG(INPUT, "State loaded but VMU has storage enabled");
+			self->disableStorage();
+		}
+		break;
+	default:
+		break;
 	}
 }
 

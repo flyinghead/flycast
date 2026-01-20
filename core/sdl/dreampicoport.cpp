@@ -1107,12 +1107,6 @@ public:
 		software_bus(bus),
 		hw_info(parseHardwareInfo(joystick_idx, sdl_joystick))
 	{
-		EventManager::listen(Event::Start, &DreamPicoPort::handleGameStartEvent, this);
-	}
-
-	~DreamPicoPort()
-	{
-		EventManager::unlisten(Event::Start, &DreamPicoPort::handleGameStartEvent, this);
 	}
 
 	bool send(const MapleMsg& msg) override {
@@ -1191,15 +1185,13 @@ public:
 		}
 	}
 
-	static void handleGameStartEvent(Event event, void* arg)
-	{
-		if (event == Event::Start && arg) {
-			DreamPicoPort* dpp = static_cast<DreamPicoPort*>(arg);
-			dpp->sendGameId();
-		}
+	void gameStarted() override {
+		DreamLink::gameStarted();
+		sendGameId();
 	}
 
 	void gameTermination() override {
+		DreamLink::gameTermination();
 		// Need a short delay to wait for last screen draw to complete
 		std::this_thread::sleep_for(std::chrono::milliseconds(10));
 		// Reset screen to selected port

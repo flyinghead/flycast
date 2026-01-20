@@ -173,9 +173,10 @@ static void maple_DoDma()
 		u32 header_1 = ReadMem32_nommu(addr);
 		u32 header_2 = ReadMem32_nommu(addr + 4) & 0x1FFFFFE0;
 
-		last = (header_1 >> 31) == 1;		// is last transfer ?
-		u32 plen = (header_1 & 0xFF) + 1;	// transfer length (32-bit unit)
-		u32 maple_op = (header_1 >> 8) & 7;	// Pattern selection: 0 - START, 2 - SDCKB occupy permission, 3 - RESET, 4 - SDCKB occupy cancel, 7 - NOP
+		last = (header_1 >> 31) == 1;				// is last transfer ?
+		u32 plen = (header_1 & 0xFF) + 1;			// transfer length (32-bit unit)
+		const u32 maple_op = (header_1 >> 8) & 7;	// Pattern selection: 0 - START, 2 - SDCKB occupy permission, 3 - RESET, 4 - SDCKB occupy cancel, 7 - NOP
+		const u32 bus = (header_1 >> 16) & 3;		// maple bus [0..3]
 
 		//this is kinda wrong .. but meh
 		//really need to properly process the commands at some point
@@ -184,7 +185,7 @@ static void maple_DoDma()
 		case MP_Start:
 		{
 #ifdef STRICT_MODE
-			if (!check_mdapro(header_2) || !check_mdapro(addr + 8 + plen * sizeof(u32) - 1))
+			if (!check_mdapro(header_2) || !check_mdapro(addr + (2 + plen) * sizeof(u32) - 1))
 			{
 #else
 			if (GetMemPtr(header_2, 1) == nullptr)
@@ -205,31 +206,34 @@ static void maple_DoDma()
 			const u32 frame_header = swap_msb ? SWAP32(p_data[0]) : p_data[0];
 
 			//Command code
-			u32 command = frame_header & 0xFF;
+			const u32 command = frame_header & 0xFF;
 			//Recipient address
-			u32 reci = (frame_header >> 8) & 0xFF;//0-5;
+			const u32 reci = (frame_header >> 8) & 0xFF;//0-5;
 			//Sender address
 			//u32 send = (frame_header >> 16) & 0xFF;
 			//Number of additional words in frame
-			u32 inlen = (frame_header >> 24) & 0xFF;
+			//u32 inlen = (frame_header >> 24) & 0xFF;
 
-			u32 port = getPort(reci);
-			u32 bus = reci >> 6;
+			u32 port = 5;
+			// If the connected device doesn't have expansion ports, ignore the message header
+			// and send everything to the main device.
+			if (MapleDevices[bus][5] != nullptr
+					&& maple_getPortCount(MapleDevices[bus][5]->get_device_type()) != 0)
+				port = getPort(reci);
 
-			if (MapleDevices[bus][5] && MapleDevices[bus][port])
+			if (MapleDevices[bus][5] != nullptr && MapleDevices[bus][port] != nullptr)
 			{
 				if (swap_msb)
 				{
-					static u32 maple_in_buf[1024 / 4];
+					static u32 maple_in_buf[1024 / sizeof(u32)];
 					maple_in_buf[0] = frame_header;
-					for (u32 i = 1; i < inlen; i++)
+					for (u32 i = 1; i < plen; i++)
 						maple_in_buf[i] = SWAP32(p_data[i]);
 					p_data = maple_in_buf;
 				}
-				inlen = (inlen + 1) * 4;
-				u32 outbuf[1024 / 4];
-				u32 outlen = MapleDevices[bus][port]->RawDma(&p_data[0], inlen, outbuf);
-				xferIn += inlen + 3; // start, parity and stop bytes
+				u32 outbuf[1024 / sizeof(u32)];
+				u32 outlen = MapleDevices[bus][port]->RawDma(&p_data[0], plen * sizeof(u32), outbuf);
+				xferIn += plen * sizeof(u32) + 3; // start, parity and stop bytes
 				xferOut += outlen + 3;
 #ifdef STRICT_MODE
 				if (!check_mdapro(header_2 + outlen - 1))
@@ -253,7 +257,7 @@ static void maple_DoDma()
 			}
 
 			//goto next command
-			addr += 2 * 4 + plen * 4;
+			addr += (2 + plen) * sizeof(u32);
 		}
 		break;
 
@@ -264,27 +268,27 @@ static void maple_DoDma()
 				SDCKBOccupied = SDCKBOccupied || MapleDevices[bus][5]->get_lightgun_pos();
 				xferIn++;
 			}
-			addr += 1 * 4;
+			addr += 1 * sizeof(u32);
 		}
 		break;
 
 		case MP_SDCKBOccupyCancel:
 			SDCKBOccupied = false;
-			addr += 1 * 4;
+			addr += 1 * sizeof(u32);
 			break;
 
 		case MP_Reset:
-			addr += 1 * 4;
+			addr += 1 * sizeof(u32);
 			xferIn++;
 			break;
 
 		case MP_NOP:
-			addr += 1 * 4;
+			addr += 1 * sizeof(u32);
 			break;
 
 		default:
 			INFO_LOG(MAPLE, "MAPLE: Unknown maple_op == %d length %d", maple_op, plen * 4);
-			addr += 1 * 4;
+			addr += 1 * sizeof(u32);
 		}
 	}
 

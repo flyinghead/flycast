@@ -46,9 +46,6 @@ public:
 		return (port >= 0 && port < NUM_PORTS);
 	}
 
-	//! When called, do teardown stuff (vmu screen reset is handled by maple_sega_vmu)
-	virtual void gameTermination() {}
-
 	//! Changes the selected maple port is changed by the user
 	virtual void changeBus(int newBus) = 0;
 
@@ -62,12 +59,9 @@ public:
 	virtual void disconnect() = 0;
 
 protected:
-	DreamLink(bool storageSupported = true);
-	~DreamLink();
-
-private:
-	static void eventTerminate(Event event, void *param);
-	static void eventStartAndLoadState(Event event, void *param);
+	DreamLink(bool storageSupported = true)
+		: BaseMapleLink(storageSupported)
+	{}
 };
 
 class DreamLinkGamepad : public SDLGamepad
