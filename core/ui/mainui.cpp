@@ -63,10 +63,12 @@ bool mainui_rend_frame()
 			if (config::ProfilerEnabled && config::ProfilerDrawToGUI)
 				gui_display_profiler();
 		} catch (const RendererException& e) {
-			gui_stop_game(e.what());
+			gui_error(i18n::Ts("Renderer error:") + "\n" + e.what() + "\n\n"
+					+ i18n::Ts("The game has been paused but it is recommended to restart Flycast"));
 			rend_term_renderer();
 			if (!rend_init_renderer())
 				ERROR_LOG(RENDERER, "Renderer re-initialization failed");
+			gui_open_settings();
 			return false;
 		} catch (const FlycastException& e) {
 			gui_stop_game(e.what());

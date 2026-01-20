@@ -274,7 +274,7 @@ void gui_display_settings()
 		// low width
 		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ScaledVec2(4, 6));
 
-    if (ImGui::BeginTabBar("settings", ImGuiTabBarFlags_NoTooltip))
+    if (ImGui::BeginTabBar("settings", ImGuiTabBarFlags_NoTooltip | ImGuiTabBarFlags_NoTabListScrollingButtons))
     {
 		if (beginTabItem(ICON_FA_TOOLBOX, T("General")))
 		{

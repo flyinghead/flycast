@@ -191,7 +191,14 @@ private:
 #endif
 		{
 			FC_PROFILE_SCOPE_NAMED("Renderer::Process");
-			renderer->Process(taContext);
+			try {
+				renderer->Process(taContext);
+			} catch (...) {
+				renderEnd.Set();
+				rend_allow_rollback();
+				FinishRender(taContext);
+				throw;
+			}
 		}
 
 		if (renderToScreen)
@@ -200,7 +207,14 @@ private:
 		rend_allow_rollback();
 		{
 			FC_PROFILE_SCOPE_NAMED("Renderer::Render");
-			renderer->Render();
+			try {
+				renderer->Render();
+			} catch (...) {
+				if (!renderToScreen)
+					renderEnd.Set();
+				FinishRender(taContext);
+				throw;
+			}
 		}
 
 		if (!renderToScreen)

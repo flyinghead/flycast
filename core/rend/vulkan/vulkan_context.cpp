@@ -633,6 +633,8 @@ void VulkanContext::CreateSwapChain()
 		commandPools.clear();
 		for (auto& img : imageViews)
 			img.reset();
+		rendering = false;
+		renderDone = false;
 
 		// Determine surface format and color-space
 		std::vector<vk::SurfaceFormatKHR> surfaceFormats = physicalDevice.getSurfaceFormatsKHR(GetSurface());
