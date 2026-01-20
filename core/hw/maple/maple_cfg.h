@@ -17,13 +17,14 @@ enum MapleDeviceType
 	MDT_NaomiJamma       =  9,
 	MDT_None             = 10,
 	MDT_RFIDReaderWriter = 11,
-	MDT_MaracasController    = 12,
-	MDT_FishingController    = 13,
-	MDT_PopnMusicController  = 14,
-	MDT_RacingController     = 15,
-	MDT_DenshaDeGoController = 16,
-	MDT_Dreameye             = 17,
-	MDT_SegaControllerXL     = 18,
+	MDT_MaracasController       = 12,
+	MDT_FishingController       = 13,
+	MDT_PopnMusicController     = 14,
+	MDT_RacingController        = 15,
+	MDT_DenshaDeGoController    = 16,
+	MDT_Dreameye                = 17,
+	MDT_SegaControllerXL        = 18,
+	MDT_DreamParaParaController = 19,
 	MDT_Count
 };
 
