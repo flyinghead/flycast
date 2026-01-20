@@ -1276,9 +1276,6 @@ public:
 	{
 		if (!DreamLink::isValidPort(software_bus))
 			return;
-		int portCount = maple_getPortCount(config::MapleMainDevices[software_bus]);
-		if (portCount == 0)
-			return;
 
 		u32 portOneFn = getFunctionCode(0);
 		if (portOneFn & MFID_1_Storage) {
@@ -1294,25 +1291,22 @@ public:
 			config::MapleExpansionDevices[software_bus][0] = MDT_None;
 		}
 
-		if (portCount >= 2)
-		{
-			u32 portTwoFn = getFunctionCode(1);
-			if (portTwoFn & MFID_8_Vibration) {
-				config::MapleExpansionDevices[software_bus][1] = MDT_PurupuruPack;
-				registerLink(software_bus, 1);
+		u32 portTwoFn = getFunctionCode(1);
+		if (portTwoFn & MFID_8_Vibration) {
+			config::MapleExpansionDevices[software_bus][1] = MDT_PurupuruPack;
+			registerLink(software_bus, 1);
+		}
+		else if (portTwoFn & MFID_1_Storage) {
+			config::MapleExpansionDevices[software_bus][1] = MDT_SegaVMU;
+			registerLink(software_bus, 1);
+			if (storageEnabled() && isGameStarted())
+			{
+				sendGameId(1);
+				emu.run([bus=this->software_bus]() { maple_ReconnectDevice(bus, 1); });
 			}
-			else if (portTwoFn & MFID_1_Storage) {
-				config::MapleExpansionDevices[software_bus][1] = MDT_SegaVMU;
-				registerLink(software_bus, 1);
-				if (storageEnabled() && isGameStarted())
-				{
-					sendGameId(1);
-					emu.run([bus=this->software_bus]() { maple_ReconnectDevice(bus, 1); });
-				}
-			}
-			else {
-				config::MapleExpansionDevices[software_bus][1] = MDT_None;
-			}
+		}
+		else {
+			config::MapleExpansionDevices[software_bus][1] = MDT_None;
 		}
 	}
 

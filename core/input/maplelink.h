@@ -42,11 +42,15 @@ public:
 	virtual bool storageEnabled() = 0;
 	//! True if the link is operational
 	virtual bool isConnected() = 0;
+	std::size_t activeLinkCount(int bus) const;
 
 	//! Returns the maple link at the given location if any
 	static Ptr GetMapleLink(int bus, int port) {
 		std::lock_guard<std::mutex> _(Mutex);
-		return Links[bus][port];
+		std::list<MapleLink::Ptr>& list = Links[bus][port];
+		if (list.empty())
+			return nullptr;
+		return list.front();
 	}
 	//! True if any maple link currently has storage enabled
 	static bool StorageEnabled();
@@ -61,7 +65,9 @@ protected:
 
 private:
 	static std::mutex Mutex;
-	static std::array<std::array<Ptr, 2>, 4> Links;
+	//! Indexed by [bus][extension port][priority idx]
+	//! Multiple links may be registered for a bus/port, and the last added to front takes precedence
+	static std::array<std::array<std::list<Ptr>, 2>, 4> Links;
 };
 
 class BaseMapleLink : public MapleLink

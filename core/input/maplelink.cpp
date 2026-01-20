@@ -18,7 +18,7 @@
 #include "cfg/option.h"
 #include "hw/maple/maple_if.h"
 
-std::array<std::array<MapleLink::Ptr, 2>, 4> MapleLink::Links;
+std::array<std::array<std::list<MapleLink::Ptr>, 2>, 4> MapleLink::Links;
 std::mutex MapleLink::Mutex;
 
 namespace
@@ -41,6 +41,20 @@ bool GameState::started;
 GameState GameState::instance;
 }
 
+std::size_t MapleLink::activeLinkCount(int bus) const
+{
+	std::size_t count = 0;
+	if (bus >= 0 && bus < (int)Links.size())
+	{
+		std::lock_guard<std::mutex> _(Mutex);
+		for (const std::list<MapleLink::Ptr>& list : Links[bus]) {
+			if (!list.empty() && list.front().get() == this)
+				++count;
+		}
+	}
+	return count;
+}
+
 bool MapleLink::isGameStarted() const {
 	return GameState::started;
 }
@@ -56,7 +70,7 @@ void MapleLink::registerLink(int bus, int port)
 		}
 		this->ports |= 1 << port;
 		std::lock_guard<std::mutex> _(Mutex);
-		Links[bus][port] = shared_from_this();
+		Links[bus][port].push_front(shared_from_this());
 	}
 }
 void MapleLink::unregisterLink(int bus, int port)
@@ -72,9 +86,7 @@ void MapleLink::unregisterLink(int bus, int port)
 			this->ports &= ~(1 << port);
 		}
 		std::lock_guard<std::mutex> _(Mutex);
-		Ptr& existing = Links[bus][port];
-		if (existing == shared_from_this())
-			existing = nullptr;
+		Links[bus][port].remove_if([this](const Ptr& item) { return item.get() == this; });
 	}
 }
 
@@ -83,8 +95,8 @@ bool MapleLink::StorageEnabled()
 	std::lock_guard<std::mutex> _(Mutex);
 	for (const auto& ports : Links)
 	{
-		for (auto link : ports)
-			if (link != nullptr && link->storageEnabled())
+		for (const std::list<MapleLink::Ptr>& list : ports)
+			if (!list.empty() && list.front()->storageEnabled())
 				return true;
 	}
 	return false;
