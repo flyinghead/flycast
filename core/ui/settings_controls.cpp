@@ -53,6 +53,7 @@ static char *maple_device_types[] =
 	Tnop("Racing Controller"),
 	Tnop("Densha de Go! Controller"),
 	Tnop("Panther DC/Full Controller"),
+	Tnop("DreamParaPara Controller"),
 //	Tnop("Dreameye"),
 };
 
@@ -95,8 +96,10 @@ static const char *maple_device_name(MapleDeviceType type)
 		return maple_device_types[11];
 	case MDT_SegaControllerXL:
 		return maple_device_types[12];
+	case MDT_DreamParaParaController:
+		return maple_device_types[13];
 	case MDT_Dreameye:
-//		return maple_device_types[13];
+//		return maple_device_types[14];
 	case MDT_None:
 	default:
 		return maple_device_types[0];
@@ -132,6 +135,8 @@ static MapleDeviceType maple_device_type_from_index(int idx)
 	case 12:
 		return MDT_SegaControllerXL;
 	case 13:
+		return MDT_DreamParaParaController;
+	case 14:
 		return MDT_Dreameye;
 	case 0:
 	default:

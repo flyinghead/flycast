@@ -1724,6 +1724,140 @@ struct FullController : maple_sega_controller
 	}
 };
 
+struct maple_dreamparapara_controller : maple_device
+{
+	static constexpr u16 START    = 1 << 0;
+	static constexpr u16 LEFT     = 1 << 1;
+	static constexpr u16 SELECT   = 1 << 2;
+	static constexpr u16 RIGHT    = 1 << 3;
+	static constexpr u16 ARROW_UL = 1 << 9;
+	static constexpr u16 ARROW_U  = 1 << 10;
+	static constexpr u16 ARROW_L  = 1 << 11;
+	static constexpr u16 ARROW_UR = 1 << 12;
+	static constexpr u16 ARROW_R  = 1 << 15;
+
+	static u16 unshift(u32 value)
+	{
+		u16 result = 0;
+		for (u32 i = 1, o = 0; i < 32; i += 2, o++)
+		{
+			if (value & (1 << i))
+				result |= (1 << o);
+		}
+		return result;
+	}
+
+	MapleDeviceType get_device_type() override
+	{
+		return MDT_DreamParaParaController;
+	}
+
+	u16 get_state()
+	{
+		u16 state = 0;
+		PlainJoystickState pjs;
+		config->GetInput(&pjs);
+		if (pjs.kcode & DC_BTN_START)  state |= START;
+		if (pjs.kcode & DC_DPAD_LEFT)  state |= LEFT;
+		if (pjs.kcode & DC_BTN_RELOAD) state |= SELECT;
+		if (pjs.kcode & DC_DPAD_RIGHT) state |= RIGHT;
+		if (pjs.kcode & DC_BTN_A)      state |= ARROW_L;
+		if (pjs.kcode & DC_BTN_B)      state |= ARROW_UL;
+		if (pjs.kcode & DC_BTN_X)      state |= ARROW_U;
+		if (pjs.kcode & DC_BTN_Y)      state |= ARROW_UR;
+		if (pjs.kcode & DC_BTN_C)      state |= ARROW_R;
+		return state;
+	}
+
+	u32 RawDma(const u32 *buffer_in, u32 buffer_in_len, u32 *buffer_out) override
+	{
+		u32 outlen = 0;
+
+		if (buffer_in[0] == 0x08000000)
+		{
+			*buffer_out++ = 0x80888888;
+			strncpy((char*)buffer_out, "Flycast DreamParaPara", 24); // official name unknown
+			outlen = 4 + 24;
+		}
+		else
+		{
+			u16 state = ~get_state();
+			u8 method = (unshift(buffer_in[0]) >> 11) & 3;
+			u8 val14 = unshift(buffer_in[0]) & 0xff;
+			u16 val18 = unshift(buffer_in[1]);
+			u8 key0 = val18 & 0xff;
+			u8 key1 = val18 >> 8;
+			u16 chk = 0;
+
+			buffer_out[0] = 0;
+			buffer_out[1] = 0;
+
+			switch (method)
+			{
+			case 0:
+				buffer_out[1] |= (((state >>  0) & 0xff) ^ key1) << 24;
+				buffer_out[0] |= (((state >>  8) & 0xff) ^ key0) <<  8;
+				buffer_out[1] |= (((state >> 16) & 0xff) ^ key1) << 16;
+				buffer_out[0] |= (((state >> 24) & 0xff) ^ key0) << 16;
+
+				chk |= (val14 & 0xf) << 4;
+				chk |= val14 >> 4;
+				chk ^= key0;
+				chk |= (val18 & 0xff & key1 & 0xf8) << 5;
+
+				buffer_out[0] |= (chk & 0x1f00) << 16;
+				buffer_out[0] |= (chk & 0x00ff);
+				break;
+
+			case 1:
+				buffer_out[1] |= (((state >>  0) & 0xff)       ) <<  8;
+				buffer_out[1] |= (((state >>  8) & 0xff) ^ key1) << 16;
+				buffer_out[1] |= (((state >> 16) & 0xff) ^ key0) <<  0;
+				buffer_out[1] |= (((state >> 24) & 0xff)       ) << 24;
+
+				chk |= val14 ^ key1;
+				chk |= ((val14 | key0) & 0x1f) << 8;
+
+				buffer_out[0] |= (chk & 0x1f00) << 16;
+				buffer_out[0] |= (chk & 0x00ff);
+				break;
+
+			case 2:
+				buffer_out[1] |= (((state >>  0) & 0xff) ^ key1) << 24;
+				buffer_out[1] |= (((state >>  8) & 0xff) ^ key1) <<  8;
+				buffer_out[1] |= (((state >> 16) & 0xff)       ) << 16;
+				buffer_out[0] |= (((state >> 24) & 0xff) ^ key0) <<  0;
+
+				chk |= (val14 & 0xc0) >> 6;
+				chk |= (val14 & 0x3f) << 2;
+				chk |= (val18 & 0x7c) << 6;
+
+				buffer_out[0] |= (chk & 0x1f00) << 16;
+				buffer_out[1] |= (chk & 0x00ff);
+				break;
+
+			case 3:
+				buffer_out[1] |= (((state >>  0) & 0xff)       ) <<  8;
+				buffer_out[1] |= (((state >>  8) & 0xff) ^ key0) <<  0;
+				buffer_out[0] |= (((state >> 16) & 0xff)       ) << 16;
+				buffer_out[1] |= (((state >> 24) & 0xff) ^ key1) << 24;
+
+				chk |= ~key1 & 0xff;
+				chk |= ((key0 ^ val14) & 0x1f) << 8;
+
+				buffer_out[0] |= (chk & 0x1f00) << 16;
+				buffer_out[1] |= (chk & 0x00ff) << 16;
+				break;
+			}
+
+			outlen = 8;
+		}
+
+		verify(u8(outlen / 4) * 4 == outlen);
+		return outlen;
+	}
+};
+
 // Emulates a 838-14245-92 maple to RS232 converter
 // wired to a 838-14243 RFID reader/writer (apparently Saxa HW210)
 struct RFIDReaderWriter : maple_base
@@ -2132,6 +2266,7 @@ std::shared_ptr<maple_device> maple_Create(MapleDeviceType type)
 	case MDT_RacingController:	return std::make_shared<maple_racing_controller>();
 	case MDT_DenshaDeGoController:	return std::make_shared<maple_densha_controller>();
 	case MDT_SegaControllerXL:	return std::make_shared<FullController>();
+	case MDT_DreamParaParaController:	return std::make_shared<maple_dreamparapara_controller>();
 	case MDT_RFIDReaderWriter:	return std::make_shared<RFIDReaderWriter>();
 
 	default:
