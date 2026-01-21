@@ -296,11 +296,11 @@ u32 Disc::ReadSectors(u32 FAD, u32 count, u8* dst, u32 fmt, bool stopOnMiss, Loa
 			progress->label = "Loading...";
 			progress->progress = (float)i / count;
 		}
+		if (FAD >= LeadOut.StartFAD && stopOnMiss)
+			return i;
 		if (!readSector(FAD, temp, &secfmt, q_subchannel, &subfmt))
 		{
 			WARN_LOG(GDROM, "Sector Read miss FAD: %d", FAD);
-			if (stopOnMiss)
-				return i;
 			memset(temp, 0, sizeof(temp));
 			secfmt = SECFMT_2352;
 		}
