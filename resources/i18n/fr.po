@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-22 12:49+0100\n"
-"PO-Revision-Date: 2026-01-22 13:51\n"
+"PO-Revision-Date: 2026-01-22 17:50\n"
 "Last-Translator: \n"
 "Language: fr_FR\n"
 "MIME-Version: 1.0\n"
@@ -102,7 +102,7 @@ msgstr "Erreur de changement de média"
 #: core/sdl/dreamconn.cpp:160
 #, c-format
 msgid "WARNING: DreamConn disconnected from port %c"
-msgstr ""
+msgstr "ATTENTION : DreamConn déconnecté du port %c"
 
 #: core/sdl/dreampicoport.cpp:1619 core/ui/settings_controls.cpp:194
 msgid "DPad2 Up"
@@ -1430,7 +1430,7 @@ msgstr "Contrôleur Panther DC/complet"
 
 #: core/ui/settings_controls.cpp:56
 msgid "DreamParaPara Controller"
-msgstr ""
+msgstr "Contrôleur DreamParaPara"
 
 #: core/ui/settings_controls.cpp:65
 msgid "Sega VMU"
@@ -1446,7 +1446,7 @@ msgstr "Microphone"
 
 #: core/ui/settings_controls.cpp:68
 msgid "DreamPotato"
-msgstr ""
+msgstr "DreamPotato"
 
 #: core/ui/settings_controls.cpp:165
 msgid "All"
@@ -1830,7 +1830,7 @@ msgstr "Nom"
 #: core/ui/settings_controls.cpp:1003
 #, c-format
 msgid "DreamLink: %s"
-msgstr ""
+msgstr "DreamLink: %s"
 
 #: core/ui/settings_controls.cpp:1039
 msgid "Edit Layout"
@@ -1880,11 +1880,11 @@ msgstr "Si activé, chaque jeu à son propre VMU sur le port 1 du contrôleur A.
 
 #: core/ui/settings_controls.cpp:1178
 msgid "Use Physical VMU Storage"
-msgstr ""
+msgstr "Utiliser le stockage VMU physique"
 
 #: core/ui/settings_controls.cpp:1179
 msgid "Enables read and write access to physical VMU storage via DreamPicoPort or DreamPotato. This is not compatible with load state events."
-msgstr ""
+msgstr "Autorise l'accès en lecture et écriture du stockage sur VMU via DreamPicoPort et DreamPotato. Cette option n'est pas compatible avec la sauvegarde d'état."
 
 #: core/ui/settings_controls.cpp:1184
 msgid "Crosshair Size"
@@ -1921,11 +1921,11 @@ msgstr "Débloqué récemment"
 
 #: core/ui/mainui.cpp:66
 msgid "Renderer error:"
-msgstr ""
+msgstr "Erreur de rendu :"
 
 #: core/ui/mainui.cpp:67
 msgid "The game has been paused but it is recommended to restart Flycast"
-msgstr ""
+msgstr "Le jeu a été mis en pause mais il est recommandé de redémarrer Flycast"
 
 #: core/ui/mainui.cpp:87
 msgid "Renderer initialization failed.\n"
@@ -2756,7 +2756,7 @@ msgstr "Impossible de lire le fichier Zip"
 
 #: core/rend/gles/gles.cpp:703
 msgid "OpenGL shader compilation failed"
-msgstr ""
+msgstr "Erreur de compilation de nuanceur OpenGL"
 
 #: core/rend/gles/gles.cpp:1064
 msgid "OpenGL ES 3.0+ required for Naomi 2"
