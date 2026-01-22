@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-22 12:49+0100\n"
-"PO-Revision-Date: 2026-01-22 13:51\n"
+"PO-Revision-Date: 2026-01-22 19:02\n"
 "Last-Translator: \n"
 "Language: ja_JP\n"
 "MIME-Version: 1.0\n"
@@ -102,7 +102,7 @@ msgstr "メディアの変更に失敗しました"
 #: core/sdl/dreamconn.cpp:160
 #, c-format
 msgid "WARNING: DreamConn disconnected from port %c"
-msgstr ""
+msgstr "警告: DreamLinkがポート %c から切断されました"
 
 #: core/sdl/dreampicoport.cpp:1619 core/ui/settings_controls.cpp:194
 msgid "DPad2 Up"
@@ -590,7 +590,7 @@ msgstr "MoltenVK: AppleのMetalグラフィックフレームワーク上で動�
 
 #: core/ui/settings_video.cpp:116
 msgid "Transparent Sorting"
-msgstr "透明な並べ替え"
+msgstr "透過ソート"
 
 #: core/ui/settings_video.cpp:121
 msgid "Per Triangle"
@@ -598,7 +598,7 @@ msgstr "三角形単位"
 
 #: core/ui/settings_video.cpp:123
 msgid "Sort transparent polygons per triangle. Fast but may produce graphical glitches"
-msgstr "透明ポリゴンを三角形単位でソートします。高速ですが、グラフィックの不具合が発生する可能性があります"
+msgstr "透過ポリゴンを三角形単位でソートします。高速ですが、グラフィックの不具合が発生する可能性があります"
 
 #: core/ui/settings_video.cpp:125
 msgid "Per Strip"
@@ -606,7 +606,7 @@ msgstr "ストリップ単位"
 
 #: core/ui/settings_video.cpp:127
 msgid "Sort transparent polygons per strip. Faster but may produce graphical glitches"
-msgstr "透明ポリゴンをストリップ単位でソートします。高速ですが、グラフィックの不具合が発生する可能性があります"
+msgstr "透過ポリゴンをストリップ単位でソートします。高速ですが、グラフィックの不具合が発生する可能性があります"
 
 #: core/ui/settings_video.cpp:131
 msgid "Per Pixel"
@@ -614,7 +614,7 @@ msgstr "ピクセル単位"
 
 #: core/ui/settings_video.cpp:133
 msgid "Sort transparent polygons per pixel. Slower but accurate"
-msgstr "透明ポリゴンをピクセル単位でソートします。遅いですが正確です"
+msgstr "透過ポリゴンをピクセル単位でソートします。遅いですが正確です"
 
 #: core/ui/settings_video.cpp:153
 msgid "Rendering Options"
@@ -1018,11 +1018,11 @@ msgstr "日本"
 
 #: core/ui/settings_general.cpp:197 core/ui/settings_general.cpp:198
 msgid "USA"
-msgstr "米国"
+msgstr "北米"
 
 #: core/ui/settings_general.cpp:197
 msgid "Europe"
-msgstr "ヨーロッパ"
+msgstr "欧州"
 
 #: core/ui/settings_general.cpp:198
 msgctxt "region"
@@ -1430,7 +1430,7 @@ msgstr "Panther DC/フルコントローラー"
 
 #: core/ui/settings_controls.cpp:56
 msgid "DreamParaPara Controller"
-msgstr ""
+msgstr "DreamParaParaコントローラー"
 
 #: core/ui/settings_controls.cpp:65
 msgid "Sega VMU"
@@ -1446,7 +1446,7 @@ msgstr "マイク"
 
 #: core/ui/settings_controls.cpp:68
 msgid "DreamPotato"
-msgstr ""
+msgstr "DreamPotato"
 
 #: core/ui/settings_controls.cpp:165
 msgid "All"
@@ -1830,7 +1830,7 @@ msgstr "名前"
 #: core/ui/settings_controls.cpp:1003
 #, c-format
 msgid "DreamLink: %s"
-msgstr ""
+msgstr "DreamLink: %s"
 
 #: core/ui/settings_controls.cpp:1039
 msgid "Edit Layout"
@@ -1864,11 +1864,11 @@ msgstr "ポート %c"
 
 #: core/ui/settings_controls.cpp:1148
 msgid "Crosshair color"
-msgstr "十字線の色"
+msgstr "照準の色"
 
 #: core/ui/settings_controls.cpp:1152
 msgid "Crosshair"
-msgstr "十字線"
+msgstr "照準"
 
 #: core/ui/settings_controls.cpp:1175
 msgid "Per Game VMU A1"
@@ -1880,15 +1880,15 @@ msgstr "有効にすると、各ゲームはコントローラーAのポート1�
 
 #: core/ui/settings_controls.cpp:1178
 msgid "Use Physical VMU Storage"
-msgstr ""
+msgstr "物理VMUを使用"
 
 #: core/ui/settings_controls.cpp:1179
 msgid "Enables read and write access to physical VMU storage via DreamPicoPort or DreamPotato. This is not compatible with load state events."
-msgstr ""
+msgstr "DreamPicoPortまたはDreamConnを経由して物理VMUへの読み書きを有効にします。これはロードステートイベントと互換性がありません。"
 
 #: core/ui/settings_controls.cpp:1184
 msgid "Crosshair Size"
-msgstr "十字線のサイズ"
+msgstr "照準のサイズ"
 
 #: core/ui/gui_achievements.cpp:285 core/ui/gui_cheats.cpp:103
 msgid "Close"
@@ -1921,11 +1921,11 @@ msgstr "最近解除されたもの"
 
 #: core/ui/mainui.cpp:66
 msgid "Renderer error:"
-msgstr ""
+msgstr "レンダラーエラー："
 
 #: core/ui/mainui.cpp:67
 msgid "The game has been paused but it is recommended to restart Flycast"
-msgstr ""
+msgstr "ゲームは一時停止されたため、Flycastの再起動をお勧めします"
 
 #: core/ui/mainui.cpp:87
 msgid "Renderer initialization failed.\n"
@@ -2087,7 +2087,7 @@ msgstr "音量レベル"
 
 #: core/ui/settings_audio.cpp:29
 msgid "Adjust the emulator's audio level"
-msgstr "エミュレータのオーディオレベルを調整する"
+msgstr "エミュレーターのオーディオレベルを調整する"
 
 #: core/ui/settings_audio.cpp:35
 msgid "Automatic Latency"
@@ -2219,7 +2219,7 @@ msgstr "既にカスタムテクスチャーに置き換えられたテクスチ
 
 #: core/ui/settings.cpp:118
 msgid "Log to File"
-msgstr "ファイルにログを記録"
+msgstr "ログをファイルに保存"
 
 #: core/ui/settings.cpp:121
 msgid "Log debug information to flycast.log"
@@ -2755,7 +2755,7 @@ msgstr "zipを読み込めません"
 
 #: core/rend/gles/gles.cpp:703
 msgid "OpenGL shader compilation failed"
-msgstr ""
+msgstr "OpenGLシェーダのコンパイルに失敗しました"
 
 #: core/rend/gles/gles.cpp:1064
 msgid "OpenGL ES 3.0+ required for Naomi 2"
