@@ -217,11 +217,16 @@ static void maple_DoDma()
 			u32 port = 5;
 			// If the connected device doesn't have expansion ports, ignore the message header
 			// and send everything to the main device.
-			if (MapleDevices[bus][5] != nullptr
-					&& maple_getPortCount(MapleDevices[bus][5]->get_device_type()) != 0)
+			auto pDevice = MapleDevices[bus][5];
+			if (pDevice != nullptr
+					&& maple_getPortCount(pDevice->get_device_type()) != 0)
+			{
 				port = getPort(reci);
+				if (port != 5)
+					pDevice = MapleDevices[bus][port];
+			}
 
-			if (MapleDevices[bus][5] != nullptr && MapleDevices[bus][port] != nullptr)
+			if (pDevice != nullptr)
 			{
 				if (swap_msb)
 				{
@@ -232,7 +237,7 @@ static void maple_DoDma()
 					p_data = maple_in_buf;
 				}
 				u32 outbuf[1024 / sizeof(u32)];
-				u32 outlen = MapleDevices[bus][port]->RawDma(&p_data[0], plen * sizeof(u32), outbuf);
+				u32 outlen = pDevice->RawDma(&p_data[0], plen * sizeof(u32), outbuf);
 				xferIn += plen * sizeof(u32) + 3; // start, parity and stop bytes
 				xferOut += outlen + 3;
 #ifdef STRICT_MODE
@@ -264,8 +269,9 @@ static void maple_DoDma()
 		case MP_SDCKBOccupy:
 		{
 			u32 bus = (header_1 >> 16) & 3;
-			if (MapleDevices[bus][5]) {
-				SDCKBOccupied = SDCKBOccupied || MapleDevices[bus][5]->get_lightgun_pos();
+			auto pDevice = MapleDevices[bus][5];
+			if (pDevice) {
+				SDCKBOccupied = SDCKBOccupied || pDevice->get_lightgun_pos();
 				xferIn++;
 			}
 			addr += 1 * sizeof(u32);
