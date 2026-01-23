@@ -424,11 +424,19 @@ static int modem_sched_func(int tag, int cycles, int jitter, void *arg)
 				// set the negotiated speed to the max configured by the game
 				if ((dspram[0x6a3] & 1) == 1 && (dspram[0x6a2] & 0x20) == 0x20)
 				{
-					// V.90
-					modem_regs.CONF = 0xE0 | (dspram[0x6a2] & 0x1F);
-					dspram[0x6c1] = 0xff;		// V90 Server DPCM Transmit Data Rate Mask
-					dspram[0x6c2] = 0xff;
-					dspram[0x6c3] = 0x3f;
+					if (settings.content.gameId == "HDR-0113"
+							|| settings.content.gameId == "HDR-0091") {
+						// Set symmetric speed (V.34 33.6) for Power Smash and Pro Yakyuu Team to avoid lag
+						modem_regs.CONF = 0xCE;
+					}
+					else
+					{
+						// V.90
+						modem_regs.CONF = 0xE0 | (dspram[0x6a2] & 0x1F);
+						dspram[0x6c1] = 0xff;		// V90 Server DPCM Transmit Data Rate Mask
+						dspram[0x6c2] = 0xff;
+						dspram[0x6c3] = 0x3f;
+					}
 				}
 				else {
 					modem_regs.CONF = dspram[0x309];
