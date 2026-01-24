@@ -49,7 +49,7 @@ enum ControlId
 	RightUp,
 	LeftDown,
 	RightDown,
-	
+
 	_Count,
 	_VisibleCount = LeftUp,
 };
@@ -74,6 +74,7 @@ class ImguiVGamepadTexture : public ImguiTexture
 {
 public:
 	ImTextureID getId() override;
+	void deleteCache() override;
 };
 
 #if defined(__ANDROID__) || defined(TARGET_IPHONE)
