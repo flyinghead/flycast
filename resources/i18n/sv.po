@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-22 12:49+0100\n"
-"PO-Revision-Date: 2026-01-22 13:51\n"
+"PO-Revision-Date: 2026-01-25 14:51\n"
 "Last-Translator: \n"
 "Language: sv_SE\n"
 "MIME-Version: 1.0\n"
@@ -102,7 +102,7 @@ msgstr "Mediabyte misslyckades"
 #: core/sdl/dreamconn.cpp:160
 #, c-format
 msgid "WARNING: DreamConn disconnected from port %c"
-msgstr ""
+msgstr "VARNING: DreamConn kopplades från port %c"
 
 #: core/sdl/dreampicoport.cpp:1619 core/ui/settings_controls.cpp:194
 msgid "DPad2 Up"
@@ -1430,7 +1430,7 @@ msgstr "Panther DC/Full kontroller"
 
 #: core/ui/settings_controls.cpp:56
 msgid "DreamParaPara Controller"
-msgstr ""
+msgstr "DreamParaPara-kontroller"
 
 #: core/ui/settings_controls.cpp:65
 msgid "Sega VMU"
@@ -1446,7 +1446,7 @@ msgstr "Mikrofon"
 
 #: core/ui/settings_controls.cpp:68
 msgid "DreamPotato"
-msgstr ""
+msgstr "DreamPotato"
 
 #: core/ui/settings_controls.cpp:165
 msgid "All"
@@ -1830,7 +1830,7 @@ msgstr "Namn"
 #: core/ui/settings_controls.cpp:1003
 #, c-format
 msgid "DreamLink: %s"
-msgstr ""
+msgstr "DreamLink: %s"
 
 #: core/ui/settings_controls.cpp:1039
 msgid "Edit Layout"
@@ -1880,11 +1880,11 @@ msgstr "När aktiverad har varje spel sin egna VMU på port 1 för kontroller A.
 
 #: core/ui/settings_controls.cpp:1178
 msgid "Use Physical VMU Storage"
-msgstr ""
+msgstr "Använd fysisk VMU-lagring"
 
 #: core/ui/settings_controls.cpp:1179
 msgid "Enables read and write access to physical VMU storage via DreamPicoPort or DreamPotato. This is not compatible with load state events."
-msgstr ""
+msgstr "Aktiverar läs- och skrivåtkomst till fysisk VMU-lagring via DreamPicoPort eller DreamPotato. Detta är inte kompatibelt med händelser för inläsningstillstånd."
 
 #: core/ui/settings_controls.cpp:1184
 msgid "Crosshair Size"
@@ -1921,11 +1921,11 @@ msgstr "Senaste upplåsta"
 
 #: core/ui/mainui.cpp:66
 msgid "Renderer error:"
-msgstr ""
+msgstr "Fel i renderare:"
 
 #: core/ui/mainui.cpp:67
 msgid "The game has been paused but it is recommended to restart Flycast"
-msgstr ""
+msgstr "Spelet har pausats men det rekommenderas att starta om Flycast"
 
 #: core/ui/mainui.cpp:87
 msgid "Renderer initialization failed.\n"
@@ -2756,7 +2756,7 @@ msgstr "Kan inte läsa zip"
 
 #: core/rend/gles/gles.cpp:703
 msgid "OpenGL shader compilation failed"
-msgstr ""
+msgstr "Shader-kompilering för OpenGL misslyckades"
 
 #: core/rend/gles/gles.cpp:1064
 msgid "OpenGL ES 3.0+ required for Naomi 2"
@@ -2793,7 +2793,7 @@ msgstr "Mittenknapp"
 
 #: core/input/mouse.h:118
 msgid "Touch Mouse"
-msgstr ""
+msgstr "Tryck på musen"
 
 #: core/wsi/switcher.cpp:91
 msgid "Cannot initialize the graphics API"
@@ -2805,7 +2805,7 @@ msgstr "Kan inte köra utan JIT"
 
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:105
 msgid "DPad Center"
-msgstr ""
+msgstr "DPad Center"
 
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:133
 msgid "Select"
@@ -2817,11 +2817,11 @@ msgstr "Läge"
 
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:163
 msgid "Hat X"
-msgstr ""
+msgstr "Hat X"
 
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:165
 msgid "Hat Y"
-msgstr ""
+msgstr "Hat Y"
 
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:167
 msgid "Gas"
@@ -2854,7 +2854,7 @@ msgstr "Lagringsåtkomst misslyckades: %s"
 
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:147
 msgid "MFi Gamepad"
-msgstr ""
+msgstr "MFi Gamepad"
 
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:361
 msgid "Options"
