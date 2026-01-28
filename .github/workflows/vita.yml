@@ -1,0 +1,66 @@
+name: PlayStation Vita
+
+on:
+  push:
+    branches-ignore:
+      - 'l10n_**'
+  pull_request:
+
+jobs:
+  build:
+    name: Vita ${{ matrix.config.name }}
+    runs-on: ubuntu-latest
+    container: vitasdk/vitasdk:latest
+
+    strategy:
+      matrix:
+        config:
+          - {name: standalone, destDir: vita}
+
+    steps:
+      - name: Set up build environment
+        run: |
+          apk add --no-cache ccache git ninja
+          vdpm curl kubridge libzip openssl SceShaccCgExt vitaShaRK taihen zlib
+          git clone --depth 1 https://github.com/Rinnegatamante/vitaGL.git
+          make -C vitaGL CIRCULAR_VERTEX_POOL=2 DEPTH_STENCIL_HACK=1 HAVE_SHADER_CACHE=1 HAVE_WRAPPED_ALLOCATORS=1 NO_DEBUG=1 -j4 install
+          git clone -b vitagl --depth 1 https://github.com/Northfear/SDL.git
+          cmake -S SDL -B SDL_build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -DCMAKE_TOOLCHAIN_FILE=${VITASDK}/share/vita.toolchain.cmake -DVIDEO_VITA_VGL=ON
+          cmake --build SDL_build --config Release
+          cmake --install SDL_build
+
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: Mark git repository as safe
+        run: git config --global --add safe.directory $PWD
+
+      - uses: actions/cache@v5
+        with:
+          path: ~/.ccache
+          key: ccache-vita-${{ matrix.config.name }}-${{ github.sha }}
+          restore-keys: ccache-vita-${{ matrix.config.name }}-
+
+      - name: CMake
+        run: |
+          cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=$VITASDK/share/vita.toolchain.cmake -G Ninja ${{ matrix.config.cmakeArgs }}
+          cmake --build build --config Release --target Flycast.vpk-vpk
+
+      - uses: actions/upload-artifact@v6
+        with:
+          name: flycast-vita-${{ matrix.config.name }}
+          path: |
+            build/flycast
+            build/Flycast.vpk
+
+      - name: Setup Rclone
+        uses: AnimMouse/setup-rclone@v1
+        with:
+          rclone_config: ${{ secrets.RCLONE_CONFIG }}
+          version: v1.69.1
+
+      - name: Upload to S3
+        run: rclone copy build scaleway:flycast-builds/${{ matrix.config.destDir }}/${GITHUB_REF#refs/}-$GITHUB_SHA
+        if: github.repository == 'flyinghead/flycast' && github.event_name == 'push' && matrix.config.destDir != ''
