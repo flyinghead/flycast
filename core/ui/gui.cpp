@@ -62,6 +62,15 @@ using namespace i18n;
 #include <mutex>
 #include <algorithm>
 
+#ifdef __vita__
+#include <vitasdk.h>
+extern bool is_standalone;
+extern bool is_ap_on;
+extern bool is_bypass_on;
+extern bool folder_reset;
+extern bool subfolders_read;
+#endif
+
 bool game_started;
 
 int insetLeft, insetRight, insetTop, insetBottom;
@@ -215,7 +224,7 @@ void gui_initFonts()
 	verify(inited);
 	uiThreadRunner.init();
 
-#if !defined(TARGET_UWP) && !defined(__SWITCH__)
+#if !defined(TARGET_UWP) && !defined(__SWITCH__) && !defined(__vita__)
 	settings.display.uiScale = std::max(1.f, settings.display.dpi / 100.f * 0.75f);
    	// Limit scaling on small low-res screens
     if (settings.display.width <= 640 || settings.display.height <= 480)
@@ -667,6 +676,11 @@ void gui_start_game(const std::string& path)
     chat.reset();
 
 	scanner.stop();
+#ifdef __vita__
+	// FIXME: Workaround to get the json database be generated at all
+	if (config::BoxartDisplayMode)
+		boxart.term();
+#endif
 	gui_setState(GuiState::Loading);
 	gameLoader.load(path);
 }
@@ -832,6 +846,11 @@ static void gui_display_commands()
 
 		// Exit
 		if (IconButton(ICON_FA_POWER_OFF, commandLineStart ?  T("Exit") : T("Close Game"), ScaledVec2(buttonWidth, 50)).realize())
+#ifdef __vita__
+			if (is_standalone)
+				sceKernelExitProcess(0);
+			else
+#endif
 			gui_stop_game();
 
 		ImGui::NextColumn();
@@ -1433,7 +1452,7 @@ static void gui_display_loadscreen()
 				else
 					label = T("Loading...");
 			}
-			
+
 			const bool customTexPreloading = custom_texture.isPreloading();
 
 			if (gameLoader.ready() && !customTexPreloading)
@@ -1455,11 +1474,11 @@ static void gui_display_loadscreen()
 				int texTotal = 0;
 				size_t loaded_size_b = 0;
 				custom_texture.getPreloadProgress(texLoaded, texTotal, loaded_size_b);
-				
+
 				ImGui::Text("%s", label);
 				float progress = 0;
 				char overlay[64] = "";
-				
+
 				if (!gameLoader.ready())
 				{
 					progress = gameLoader.getProgress().progress;
@@ -1477,7 +1496,7 @@ static void gui_display_loadscreen()
 						snprintf(overlay, sizeof(overlay), "%d / %d (%.1f MB)", texLoaded, texTotal, loaded_size_mb);
 					}
 				}
-				
+
 				ImguiStyleColor _(ImGuiCol_PlotHistogram, ImVec4(0.557f, 0.268f, 0.965f, 1.f));
 				ImGui::ProgressBar(progress, ImVec2(-1, uiScaled(20.f)), overlay);
 

@@ -151,7 +151,7 @@ void LogManager::UpdateConfig()
 			m_listeners[LogListener::FILE_LISTENER].reset();
 		}
 		else {
-#if defined(__ANDROID__) || defined(__APPLE__) || defined(TARGET_UWP)
+#if defined(__ANDROID__) || defined(__APPLE__) || defined(TARGET_UWP) || defined(__vita__)
 			std::string logPath = get_writable_data_path("flycast.log");
 #else
 			std::string logPath = "flycast.log";
