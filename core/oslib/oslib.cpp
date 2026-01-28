@@ -399,7 +399,12 @@ std::string getScreenshotsPath();
 
 #endif
 
-#if !defined(__ANDROID__) && !defined(TARGET_UWP) && !defined(TARGET_IPHONE) && !defined(__SWITCH__)
+#ifdef __vita__
+void saveScreenshot(const std::string& name, const std::vector<u8>& data)
+{
+	throw FlycastException("Not supported on Vita");
+}
+#elif !defined(__ANDROID__) && !defined(TARGET_UWP) && !defined(TARGET_IPHONE) && !defined(__SWITCH__)
 
 void saveScreenshot(const std::string& name, const std::vector<u8>& data)
 {

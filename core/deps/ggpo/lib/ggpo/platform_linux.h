@@ -23,7 +23,7 @@
 #include <netinet/in.h>
 #ifdef __SWITCH__
 #include "nswitch.h"
-#else
+#elif !defined(__vita__)
 #include <netinet/ip.h>
 #endif
 #include <netinet/tcp.h>
