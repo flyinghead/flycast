@@ -284,9 +284,19 @@ inline static float getDCFramebufferAspectRatio()
 	return aspectRatio * config::ScreenStretching / 100.f;
 }
 
-inline static void getWindowboxDimensions(int outwidth, int outheight, float renderAR, int& dx, int& dy, bool rotate) {
-	if (config::IntegerScale) {
+inline static void getWindowboxDimensions(int outwidth, int outheight, float renderAR, int& dx, int& dy, bool rotate)
+{
+	if (outwidth == 0 || outheight == 0 || renderAR == 0.f) {
+		dx = dy = 0;
+		return;
+	}
+	if (config::IntegerScale)
+	{
 		int fbh = config::RenderResolution;
+		if (fbh == 0) {
+			dx = dy = 0;
+			return;
+		}
 		int fbw = (int)((rotate ? 1 / renderAR : renderAR) * fbh);
 		if (rotate)
 			std::swap(fbw, fbh);
@@ -302,7 +312,8 @@ inline static void getWindowboxDimensions(int outwidth, int outheight, float ren
 			dy = (outheight - fbh * scale) / 2;
 		}
 	}
-	else {
+	else
+	{
 		float screenAR = (float)outwidth / outheight;
 		if (renderAR > screenAR)
 			dy = (int)roundf(outheight * (1 - screenAR / renderAR) / 2.f);
