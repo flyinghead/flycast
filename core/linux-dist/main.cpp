@@ -22,7 +22,7 @@
 #include <vitasdk.h>
 #include <vitaGL.h>
 #include <xxhash.h>
-int _newlib_heap_size_user = 246 * 1024 * 1024;
+int _newlib_heap_size_user = 250 * 1024 * 1024;
 unsigned int sceUserMainThreadStackSize = 1 * 1024 * 1024;
 bool is_standalone = false;
 
