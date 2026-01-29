@@ -141,5 +141,5 @@ void insertRfidCard(int playerNum);
 const u8 *getRfidCardData(int playerNum);
 void setRfidCardData(int playerNum, u8 *data);
 
-struct maple_naomi_jamma;
-std::shared_ptr<maple_naomi_jamma> getMieDevice();
+struct MIE;
+std::shared_ptr<MIE> getMieDevice();

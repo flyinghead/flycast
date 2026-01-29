@@ -463,7 +463,7 @@ void mcfg_DeserializeDevices(Deserializer& deser)
 {
 	if (!deser.rollback())
 		mcfg_DestroyDevices(false);
-	u8 eeprom[sizeof(maple_naomi_jamma::eeprom)];
+	u8 eeprom[128];
 	if (deser.version() < Deserializer::V23)
 	{
 		deser >> eeprom;
@@ -505,9 +505,9 @@ void mcfg_DeserializeDevices(Deserializer& deser)
 		memcpy(EEPROM, eeprom, sizeof(eeprom));
 }
 
-std::shared_ptr<maple_naomi_jamma> getMieDevice()
+std::shared_ptr<MIE> getMieDevice()
 {
 	if (MapleDevices[0][5] == nullptr || MapleDevices[0][5]->get_device_type() != MDT_NaomiJamma)
 		return nullptr;
-	return std::static_pointer_cast<maple_naomi_jamma>(MapleDevices[0][5]);
+	return std::static_pointer_cast<MIE>(MapleDevices[0][5]);
 }
