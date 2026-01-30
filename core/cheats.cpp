@@ -504,12 +504,6 @@ found_cheats:
 		else if (gameId == "T8120D  50") {	// Dave Mirra BMX (EU)
 			cheats.emplace_back(Cheat::Type::setValue, "fix main loop time", true, 32, 0x003011cc, 0x42200000, true); // 40.0 ms
 		}
-		else if (gameId == "MK-0100") {		// F355 US
-			cheats.emplace_back(Cheat::Type::setValue, "increase datapump timeout", true, 16, 0x00131668, 1000, true);
-		}
-		else if (gameId == "T8118D  50") {	// F355 EU
-			cheats.emplace_back(Cheat::Type::setValue, "increase datapump timeout", true, 16, 0x00135588, 1000, true);
-		}
 		else if (gameId == "SAMURAI SPIRITS 6" || gameId == "T0002M") {
 			cheats.emplace_back(Cheat::Type::setValue, "fix depth", true, 16, 0x0003e602, 0x0009, true); // nop (shift by 8 bits instead of 10)
 		}
@@ -573,6 +567,13 @@ found_cheats:
 		else if (gameId == "HDR-0118") {	// Outtrigger (JP)
 			cheats.emplace_back(Cheat::Type::runNextIfEq, "bypass auth ifeq", true, 32, 0x00139f54, 0x2fd62fe6, true);
 			cheats.emplace_back(Cheat::Type::setValue, "bypass dricas auth", true, 32, 0x00139f54, 0xe000000b, true);
+		}
+		else if (gameId == "HDR-0100")		// F355 (JP)
+		{
+			cheats.emplace_back(Cheat::Type::runNextIfEq, "bypass auth ifeq", true, 32, 0x0ba980, 0x2fd62fe6, true);
+			cheats.emplace_back(Cheat::Type::setValue, "bypass dricas auth",  true, 32, 0x0ba980, 0xe000000b, true);
+			cheats.emplace_back(Cheat::Type::runNextIfEq, "bypass auth check ifeq", true, 32, 0x0a2d3c, 0xed048900, true);
+			cheats.emplace_back(Cheat::Type::setValue, "bypass dricas auth check",  true, 32, 0x0a2d3c, 0xed048b00, true); // BT -> BF
 		}
 
 		if (cheats.size() > cheatCount)
