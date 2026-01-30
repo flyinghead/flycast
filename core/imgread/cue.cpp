@@ -182,11 +182,11 @@ Disc* cue_parse(const char* file, std::vector<u8> *digest)
 			FILE *track_file = hostfs::storage().openFile(track_filename, "rb");
 			if (track_file == nullptr)
 				throw FlycastException(strprintf(i18n::T("CUE file: cannot open track %s"), track_filename.c_str()));
+			if (digest != nullptr)
+				md5.add(track_file);
 			std::fclose(track_file);
 			fileInfo = hostfs::storage().getFileInfo(track_filename);
 			fileStartFAD = currentFAD;
-			if (digest != nullptr)
-				md5.add(track_file);
 			// Clear track context
 			track_number = -1;
 			track_type.clear();
