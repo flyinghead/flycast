@@ -1952,7 +1952,8 @@ static void retro_vk_context_reset()
 		ERROR_LOG(RENDERER, "Get Vulkan HW interface failed");
 		return;
 	}
-	theVulkanContext.init((retro_hw_render_interface_vulkan *)vulkan);
+	if (!theVulkanContext.init((retro_hw_render_interface_vulkan *)vulkan))
+		return;
 	rend_term_renderer();
 	rend_init_renderer();
 	if (!perPixelChecked)

@@ -343,9 +343,7 @@ void VulkanContext::InitImgui()
 #endif
 
 	if (!ImGui_ImplVulkan_Init(&initInfo))
-	{
-		die("ImGui initialization failed");
-	}
+		throw FlycastException("Vulkan ImGui initialization failed");
 }
 
 bool VulkanContext::InitDevice()
@@ -398,8 +396,10 @@ bool VulkanContext::InitDevice()
 				}
 			}
 		}
-		if (graphicsQueueIndex == queueFamilyProperties.size() || presentQueueIndex == queueFamilyProperties.size())
-			die("Could not find a queue for graphics or present -> terminating");
+		if (graphicsQueueIndex == queueFamilyProperties.size() || presentQueueIndex == queueFamilyProperties.size()) {
+			ERROR_LOG(RENDERER, "Could not find a queue for graphics or present");
+			return false;
+		}
 		if (graphicsQueueIndex == presentQueueIndex)
 			DEBUG_LOG(RENDERER, "Using Graphics+Present queue family");
 		else
@@ -764,6 +764,10 @@ void VulkanContext::CreateSwapChain()
 		}
 
 	    depthFormat = findDepthFormat(physicalDevice);
+		if (depthFormat == vk::Format::eUndefined) {
+			SetWindowSize(0, 0);
+			throw InvalidVulkanContext();
+		}
 
 	    // Render pass
 	    vk::AttachmentDescription attachmentDescription = vk::AttachmentDescription(vk::AttachmentDescriptionFlags(), presentFormat, vk::SampleCountFlagBits::e1,
