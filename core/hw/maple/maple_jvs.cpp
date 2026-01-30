@@ -1254,6 +1254,14 @@ private:
 //
 // Base class for the regular MIE and the RFID card reader/writer
 //
+void BaseMIE::reply(u8 code, u8 sizew)
+{
+	w8(code);
+	w8(0x00);
+	w8(0x20);
+	w8(sizew);
+}
+
 u32 BaseMIE::RawDma(const u32 *buffer_in, u32 buffer_in_len, u32 *buffer_out)
 {
 #ifdef DUMP_JVS
@@ -1328,10 +1336,7 @@ u32 BaseMIE::RawDma(const u32 *buffer_in, u32 buffer_in_len, u32 *buffer_out)
 				free(ram);
 				ram = nullptr;
 
-				w8(MDRS_DeviceReply);
-				w8(0x00);
-				w8(0x20);
-				w8(0x00);
+				reply(MDRS_DeviceReply);
 				break;
 			}
 			int xfer_bytes;
@@ -1345,19 +1350,10 @@ u32 BaseMIE::RawDma(const u32 *buffer_in, u32 buffer_in_len, u32 *buffer_out)
 			for (int i = 0; i < 0x1C; i++)
 				sum += dma_buffer_in[i];
 
-			w8(MDC_JVSUploadFirmware);	// or 0x81 on bootrom?
-			w8(0x00);
-			w8(0x20);
-			w8(0x01);
-			w8(sum);
-			w8(0);
-			w8(0);
-			w8(0);
+			reply(MDC_JVSUploadFirmware, 1);	// or 0x81 on bootrom?
+			w32(sum);
 
-			w8(MDRS_DeviceReply);
-			w8(0x00);
-			w8(0x20);
-			w8(0x00);
+			reply(MDRS_DeviceReply);
 		}
 		break;
 
@@ -1365,26 +1361,18 @@ u32 BaseMIE::RawDma(const u32 *buffer_in, u32 buffer_in_len, u32 *buffer_out)
 		{
 			DEBUG_LOG(JVS, "bus[%d] JVS Get Id", bus_id);
 			static const char ID[56] = "315-6149    COPYRIGHT SEGA ENTERPRISES CO,LTD.  1998";
-			w8(MDRS_JVSGetIdReply);
-			w8(0x00);
-			w8(0x20);
-			w8(0x07);
+			reply(MDRS_JVSGetIdReply, 7);
 			wptr(ID, 28);
 
-			w8(MDRS_JVSGetIdReply);
-			w8(0x00);
-			w8(0x20);
-			w8(0x05); 			// TODO 7 breaks card reader... It looks like the reader returns 2*7 words so why?
+			// TODO 6 or 7 breaks card reader... It looks like the reader returns 2*7 words so why?
+			reply(MDRS_JVSGetIdReply, 5);
 			wptr(ID + 28, 20);
 		}
 		break;
 
 	default:
 		INFO_LOG(MAPLE, "BaseMIE: Unknown Maple command %x", cmd);
-		w8(MDRE_UnknownCmd);
-		w8(0x00);
-		w8(0x20);
-		w8(0x00);
+		reply(MDRE_UnknownCmd);
 		break;;
 	}
 
@@ -1424,10 +1412,7 @@ u32 BaseMIE::dma(u32 cmd)
 void BaseMIE::handle_86_subcommand()
 {
 	INFO_LOG(JVS, "BaseMIE: Unhandled JVS command (0x86) subcode %x", dma_buffer_in[0]);
-	w8(MDRE_UnknownCmd);
-	w8(0x00);
-	w8(0x20);
-	w8(0x00);
+	reply(MDRE_UnknownCmd);
 }
 
 MIEImpl::MIEImpl()
@@ -1677,17 +1662,12 @@ bool MIEImpl::receive_jvs_messages(u32 channel)
 	constexpr u32 headerLength = sizeof(u32) * 5 + 3;
 	u32 dword_length = (jvs_receive_length[channel] + headerLength - 1) / 4 + 1;
 
-	w8(MDRS_JVSReply);
-	w8(0x00);
-	w8(0x20);
-	if (jvs_receive_length[channel] == 0)
-	{
-		w8(0x05);
+	if (jvs_receive_length[channel] == 0) {
+		reply(MDRS_JVSReply, 5);
 		w8(0x32);
 	}
-	else
-	{
-		w8(dword_length);
+	else {
+		reply(MDRS_JVSReply, dword_length);
 		w8(0x16);
 	}
 	w8(0xff);
@@ -1721,13 +1701,8 @@ bool MIEImpl::receive_jvs_messages(u32 channel)
 
 void MIEImpl::handle_86_subcommand()
 {
-	if (dma_count_in == 0)
-	{
-		w8(MDRS_JVSReply);
-		w8(0);
-		w8(0x20);
-		w8(0x00);
-
+	if (dma_count_in == 0) {
+		reply(MDRS_JVSReply);
 		return;
 	}
 	u32 subcode = dma_buffer_in[0];
@@ -1775,10 +1750,7 @@ void MIEImpl::handle_86_subcommand()
 				jvs_repeat_request[node_id - 1][0] = len;
 				memcpy(&jvs_repeat_request[node_id - 1][1], cmd, len);
 			}
-			w8(MDRS_JVSReply);
-			w8(0);
-			w8(0x20);
-			w8(0x01);
+			reply(MDRS_JVSReply, 1);
 			w8(dma_buffer_in[0] + 1);	// subcommand + 1
 			w8(0);
 			w8(len + 1);
@@ -1790,10 +1762,7 @@ void MIEImpl::handle_86_subcommand()
 			if (hotd2p)
 			{
 				send_jvs_messages(node_id, channel, true, len, cmd, false);
-				w8(MDRS_JVSReply);
-				w8(0);
-				w8(0x20);
-				w8(0x01);
+				reply(MDRS_JVSReply, 1);
 				w8(0x18);	// always
 				w8(channel);
 				w8(sense_line(node_id));
@@ -1804,10 +1773,7 @@ void MIEImpl::handle_86_subcommand()
 		case 0x17:	// Transmit without repeat
 			jvs_receive_length[channel] = 0;
 			send_jvs_messages(node_id, channel, false, len, cmd, false);
-			w8(MDRS_JVSReply);
-			w8(0);
-			w8(0x20);
-			w8(0x01);
+			reply(MDRS_JVSReply, 1);
 			w8(0x18);	// always
 			w8(channel);
 			w8(0x8E);	//sense_line(node_id));
@@ -1817,10 +1783,7 @@ void MIEImpl::handle_86_subcommand()
 		case 0x19:	// Transmit with repeat
 			jvs_receive_length[channel] = 0;
 			send_jvs_messages(node_id, channel, true, len, cmd, true);
-			w8(MDRS_JVSReply);
-			w8(0);
-			w8(0x20);
-			w8(0x01);
+			reply(MDRS_JVSReply, 1);
 			w8(0x18);	// always
 			w8(channel);
 			w8(sense_line(node_id));
@@ -1830,10 +1793,7 @@ void MIEImpl::handle_86_subcommand()
 		case 0x21:	// Transmit with repeat
 			jvs_receive_length[channel] = 0;
 			send_jvs_messages(node_id, channel, true, len, cmd, false);
-			w8(MDRS_JVSReply);
-			w8(0);
-			w8(0x20);
-			w8(0x01);
+			reply(MDRS_JVSReply, 1);
 			w8(0x18);	// always
 			w8(channel);
 			w8(sense_line(node_id));
@@ -1860,10 +1820,7 @@ void MIEImpl::handle_86_subcommand()
 					send_jvs_messages(node_id, channel, true, len, cmd, false);
 				}
 
-				w8(MDRS_JVSReply);
-				w8(0);
-				w8(0x20);
-				w8(0x01);
+				reply(MDRS_JVSReply, 1);
 				w8(0x26);
 				w8(channel);
 				w8(sense_line(node_id));
@@ -1874,10 +1831,7 @@ void MIEImpl::handle_86_subcommand()
 		case 0x33:	// Receive then transmit with repeat (15 then 21)
 			receive_jvs_messages(channel);
 			send_jvs_messages(node_id, channel, true, len, cmd, false);
-			w8(MDRS_JVSReply);
-			w8(0);
-			w8(0x20);
-			w8(0x01);
+			reply(MDRS_JVSReply, 1);
 			w8(0x18);	// always
 			w8(channel);
 			w8(sense_line(node_id));
@@ -1905,10 +1859,7 @@ void MIEImpl::handle_86_subcommand()
 			else
 				WARN_LOG(MAPLE, "EEPROM SAVE FAILED to %s", eeprom_file.c_str());
 
-			w8(MDRS_JVSReply);
-			w8(0x00);
-			w8(0x20);
-			w8(0x01);
+			reply(MDRS_JVSReply, 1);
 			memcpy(dma_buffer_out, eeprom, 4);
 			dma_buffer_out += 4;
 			*dma_count_out += 4;
@@ -1920,10 +1871,7 @@ void MIEImpl::handle_86_subcommand()
 			//printf("EEprom READ\n");
 			int address = dma_buffer_in[1] % sizeof(eeprom);
 			//printState(Command,buffer_in,buffer_in_len);
-			w8(MDRS_JVSReply);
-			w8(0x00);
-			w8(0x20);
-			w8(0x20);
+			reply(MDRS_JVSReply, sizeof(eeprom) / 4);
 			int size = sizeof(eeprom) - address;
 			memcpy(dma_buffer_out, eeprom + address, size);
 			dma_buffer_out += size;
@@ -1933,10 +1881,7 @@ void MIEImpl::handle_86_subcommand()
 
 		case 0x31:	// DIP switches
 		{
-			w8(MDRS_JVSReply);
-			w8(0x00);
-			w8(0x20);
-			w8(0x05);
+			reply(MDRS_JVSReply, 5);
 
 			w8(0x32);
 			w8(0xff);		// in(0)
@@ -1963,11 +1908,7 @@ void MIEImpl::handle_86_subcommand()
 		//	break;
 
 		case 0x1:
-			w8(MDRS_JVSReply);
-			w8(0x00);
-			w8(0x20);
-			w8(0x01);
-
+			reply(MDRS_JVSReply, 1);
 			w8(0x2);
 			w8(0x0);
 			w8(0x0);
@@ -1994,11 +1935,7 @@ void MIEImpl::handle_86_subcommand()
 				if (serialPipe != nullptr)
 					avail = std::min(serialPipe->available(), 0xfe);
 				DEBUG_LOG(MAPLE, "JVS: RS422 receive %d bytes", avail);
-				w8(MDRS_JVSReply);
-				w8(0);
-				w8(0x20);
-				w8(1 + (avail + 3) / 4);
-
+				reply(MDRS_JVSReply, 1 + (avail + 3) / 4);
 				w8(0);
 				w8(0);
 				w8(0);
@@ -2017,10 +1954,7 @@ void MIEImpl::handle_86_subcommand()
 
 		default:
 			INFO_LOG(MAPLE, "JVS: Unknown 0x86 sub-command %x", subcode);
-			w8(MDRE_UnknownCmd);
-			w8(0x00);
-			w8(0x20);
-			w8(0x00);
+			reply(MDRE_UnknownCmd);
 			break;
 	}
 }

@@ -303,6 +303,7 @@ struct BaseMIE : public maple_base
 {
 	u32 RawDma(const u32 *buffer_in, u32 buffer_in_len, u32 *buffer_out) override;
 	u32 dma(u32 cmd) override;
+	void reply(u8 code, u8 sizew = 0);
 
 	virtual void handle_86_subcommand();
 	virtual void firmwareLoaded(u32 hash) {}
