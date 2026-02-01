@@ -185,6 +185,8 @@ bool CustomTexture::init()
 		std::string game_id = getGameId();
 		if (game_id.length() > 0)
 		{
+			// The first source added has highest priority.
+			// Add your source after the default `CustomTextureSource`(data/textures/<game id> folder), so end-users can override your textures.
 			addSource(std::make_unique<CustomTextureSource>(game_id));
 		}
 	}
@@ -267,7 +269,7 @@ u8* CustomTexture::loadTexture(u32 hash, int& width, int& height)
 		return buffer;
 	}
 
-	for (auto it = sources.rbegin(); it != sources.rend(); ++it)
+	for (auto it = sources.begin(); it != sources.end(); ++it)
 	{
 		auto& source = *it;
 		if (source->shouldReplace())
@@ -289,7 +291,7 @@ bool CustomTexture::isTextureReplaced(BaseTextureCacheData* texture)
 	if (texture->old_texture_hash != 0 && preloaded_textures.count(texture->old_texture_hash))
 		return true;
 
-	for (auto it = sources.rbegin(); it != sources.rend(); ++it)
+	for (auto it = sources.begin(); it != sources.end(); ++it)
 	{
 		auto& source = *it;
 		if (source->shouldReplace())
