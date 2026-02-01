@@ -16,6 +16,8 @@
 #include "lua/lua.h"
 #include "stdclass.h"
 #include "serialize.h"
+#include "oslib/i18n.h"
+#include "input/maplelink.h"
 #include <time.h>
 #ifdef TARGET_UWP
 #include <winrt/Windows.System.h>
@@ -55,44 +57,52 @@ int flycast_init(int argc, char* argv[])
 	setbuf(stderr, 0);
 	settings.aica.muteAudio = true;
 #endif
-	if (!addrspace::reserve())
-	{
-		ERROR_LOG(VMEM, "Failed to alloc mem");
-		return -1;
-	}
-	ParseCommandLine(argc, argv);
-	if (cfgLoadInt("naomi", "BoardId", 0) != 0)
-	{
-		settings.naomi.multiboard = true;
-		settings.naomi.slave = true;
-	}
-	settings.naomi.drivingSimSlave = cfgLoadInt("naomi", "DrivingSimSlave", 0);
+	try {
+		if (!addrspace::reserve())
+		{
+			ERROR_LOG(VMEM, "Failed to alloc mem");
+			return -1;
+		}
+		config::parseCommandLine(argc, argv);
+		if (config::loadInt("naomi", "BoardId") != 0)
+		{
+			settings.naomi.multiboard = true;
+			settings.naomi.slave = true;
+		}
+		settings.naomi.drivingSimSlave = config::loadInt("naomi", "DrivingSimSlave");
 
-	config::Settings::instance().reset();
-	LogManager::Shutdown();
-	if (!cfgOpen())
-	{
-		LogManager::Init();
-		NOTICE_LOG(BOOT, "Config directory is not set. Starting onboarding");
-		gui_open_onboarding();
+		config::Settings::instance().reset();
+		LogManager::Shutdown();
+		if (!config::open())
+		{
+			LogManager::Init();
+			NOTICE_LOG(BOOT, "Config directory is not set. Starting onboarding");
+			gui_open_onboarding();
+		}
+		else
+		{
+			LogManager::Init();
+			config::Settings::instance().load(false);
+		}
+		gui_init();
+		os_CreateWindow();
+		os_SetupInput();
+
+		if(config::GDB)
+			debugger::init(config::GDBPort);
+		lua::init();
+
+		if(config::ProfilerEnabled)
+			LogManager::GetInstance()->SetEnable(LogTypes::PROFILER, true);
+
+		return 0;
+	} catch (const std::exception& e) {
+		ERROR_LOG(BOOT, "flycast_init failed: %s", e.what());
+		return 1;
+	} catch (...) {
+		ERROR_LOG(BOOT, "flycast_init: unknown exception");
+		return 1;
 	}
-	else
-	{
-		LogManager::Init();
-		config::Settings::instance().load(false);
-	}
-	gui_init();
-	os_CreateWindow();
-	os_SetupInput();
-
-	if(config::GDB)
-		debugger::init(config::GDBPort);
-	lua::init();
-
-	if(config::ProfilerEnabled)
-		LogManager::GetInstance()->SetEnable(LogTypes::PROFILER, true);
-
-	return 0;
 }
 
 #ifndef __ANDROID__
@@ -146,9 +156,14 @@ void flycast_term()
 	os_TermInput();
 }
 
+bool dc_savestateAllowed() {
+	return !settings.content.path.empty() && !settings.network.online
+			&& !settings.naomi.multiboard && !MapleLink::StorageEnabled();
+}
+
 void dc_savestate(int index, const u8 *pngData, u32 pngSize)
 {
-	if (settings.network.online)
+	if (!dc_savestateAllowed())
 		return;
 
 	lastStateFile.clear();
@@ -160,7 +175,7 @@ void dc_savestate(int index, const u8 *pngData, u32 pngSize)
 	if (data == nullptr)
 	{
 		WARN_LOG(SAVESTATE, "Failed to save state - could not malloc %d bytes", (int)ser.size());
-		os_notify("Save state failed - memory full", 5000);
+		os_notify(i18n::T("Save state failed - memory full"), 5000);
     	return;
 	}
 
@@ -172,7 +187,7 @@ void dc_savestate(int index, const u8 *pngData, u32 pngSize)
 	if (f == nullptr)
 	{
 		WARN_LOG(SAVESTATE, "Failed to save state - could not open %s for writing", filename.c_str());
-		os_notify("Cannot open save file", 5000);
+		os_notify(i18n::T("Cannot open save file"), 5000);
 		free(data);
     	return;
 	}
@@ -200,12 +215,12 @@ void dc_savestate(int index, const u8 *pngData, u32 pngSize)
 
 	free(data);
 	NOTICE_LOG(SAVESTATE, "Saved state to %s size %d", filename.c_str(), (int)ser.size());
-	os_notify("State saved", 2000);
+	os_notify(i18n::T("State saved"), 2000);
 	return;
 
 fail:
 	WARN_LOG(SAVESTATE, "Failed to save state - error writing %s", filename.c_str());
-	os_notify("Error saving state", 5000);
+	os_notify(i18n::T("Error saving state"), 5000);
 	if (zipFile.rawFile() != nullptr)
 		zipFile.Close();
 	else
@@ -216,7 +231,7 @@ fail:
 
 void dc_loadstate(int index)
 {
-	if (settings.raHardcoreMode)
+	if (!dc_savestateAllowed() || settings.raHardcoreMode)
 		return;
 	u32 total_size = 0;
 
@@ -225,7 +240,7 @@ void dc_loadstate(int index)
 	if (f == nullptr)
 	{
 		WARN_LOG(SAVESTATE, "Failed to load state - could not open %s for reading", filename.c_str());
-		os_notify("Save state not found", 2000);
+		os_notify(i18n::T("Save state not found"), 2000);
 		return;
 	}
 	SavestateHeader header;
@@ -265,7 +280,7 @@ void dc_loadstate(int index)
 	if (data == nullptr)
 	{
 		WARN_LOG(SAVESTATE, "Failed to load state - could not malloc %d bytes", total_size);
-		os_notify("Failed to load state", 5000, "Not enough memory");
+		os_notify(i18n::T("Failed to load state"), 5000, i18n::T("Not enough memory"));
 		if (zipFile.rawFile() == nullptr)
 			std::fclose(f);
 		else
@@ -287,7 +302,7 @@ void dc_loadstate(int index)
 	if (read_size != total_size)
 	{
 		WARN_LOG(SAVESTATE, "Failed to load state - I/O error");
-		os_notify("Failed to load state", 5000, "I/O error");
+		os_notify(i18n::T("Failed to load state"), 5000, i18n::T("I/O error"));
 		free(data);
 		return;
 	}
@@ -301,7 +316,7 @@ void dc_loadstate(int index)
 			WARN_LOG(SAVESTATE, "Savestate size %d but only %d bytes used", total_size, (int)deser.size());
 	} catch (const Deserializer::Exception& e) {
 		ERROR_LOG(SAVESTATE, "%s", e.what());
-		os_notify("Failed to load state", 5000, e.what());
+		os_notify(i18n::T("Failed to load state"), 5000, e.what());
 	}
 
 	free(data);

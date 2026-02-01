@@ -35,6 +35,7 @@
 #include "naomi_roms.h"
 #include "stdclass.h"
 #include "hw/mem/addrspace.h"
+#include "oslib/i18n.h"
 #include <cerrno>
 #include <deque>
 
@@ -2184,7 +2185,7 @@ void SystemSpCart::Init(LoadProgress *progress, std::vector<u8> *digest)
 			}
 		}
 		if (chd == nullptr)
-			throw NaomiCartException("SystemSP: Cannot open CompactFlash file " + gdrom_path);
+			throw NaomiCartException(strprintf(i18n::T("SystemSP: Cannot open CompactFlash file %s"), gdrom_path.c_str()));
 
 		BootIdLoader loader(*this);
 		romBootId.reset(loader.load());

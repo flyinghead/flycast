@@ -3,18 +3,20 @@
 #endif
 #include "types.h"
 
-#if defined(__unix__)
+#if defined(__unix__) || defined(__HAIKU__)
 #include "log/LogManager.h"
 #include "emulator.h"
 #include "ui/mainui.h"
 #include "oslib/directory.h"
 #include "oslib/oslib.h"
+#include "oslib/i18n.h"
 #include "stdclass.h"
 
 #include <csignal>
 #include <string>
 #include <unistd.h>
 #include <vector>
+#include <exception>
 
 #if defined(SUPPORT_X11)
 	#include "x11.h"
@@ -238,6 +240,7 @@ int main(int argc, char* argv[])
 #endif
 
 	LogManager::Init();
+	i18n::init();
 
 	// Set directories
 	set_user_config_dir(find_user_config_dir());
@@ -266,7 +269,13 @@ int main(int argc, char* argv[])
 	auto async = std::async(std::launch::async, uploadCrashes, "/tmp");
 #endif
 
-	mainui_loop();
+	try {
+		mainui_loop();
+	} catch (const std::exception& e) {
+		ERROR_LOG(BOOT, "mainui_loop error: %s", e.what());
+	} catch (...) {
+		ERROR_LOG(BOOT, "mainui_loop unknown exception");
+	}
 
 	flycast_term();
 	os_UninstallFaultHandler();

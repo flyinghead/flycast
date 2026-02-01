@@ -1,6 +1,10 @@
-name: Android CI
+name: Android
 
-on: [push, pull_request]
+on:
+  push:
+    branches-ignore:
+      - 'l10n_**'
+  pull_request:
 
 jobs:
   build:
@@ -13,31 +17,31 @@ jobs:
           sudo apt-get update
           sudo apt-get -y install ccache cmake libcurl4-openssl-dev ninja-build
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
           submodules: recursive
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           java-version: '17'
           distribution: 'temurin'
           cache: 'gradle'
 
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         with:
           path: ~/.ccache
           key: android-ccache-${{ github.sha }}
           restore-keys: android-ccache-
             
       - name: Disable release signing
-        run: sed -i 's/signingConfig signingConfigs.release/signingConfig signingConfigs.debug/g' shell/android-studio/flycast/build.gradle
+        run: sed -i 's/signingConfigs.getByName("release")/signingConfigs.getByName("debug")/g' shell/android-studio/flycast/build.gradle.kts
         if: github.repository != 'flyinghead/flycast' || github.event_name != 'push'
 
       - name: Bump version code
         uses: chkfung/android-version-actions@v1.2.2
         with:
-          gradlePath: shell/android-studio/flycast/build.gradle 
+          gradlePath: shell/android-studio/flycast/build.gradle.kts
           versionCode: ${{ github.run_number }}
 
       - name: Gradle
@@ -47,7 +51,7 @@ jobs:
           SENTRY_UPLOAD_URL: ${{ secrets.SENTRY_UPLOAD_URL }}
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: flycast-release.apk
           path: shell/android-studio/flycast/build/outputs/apk/release/flycast-release.apk
@@ -102,4 +106,4 @@ jobs:
         shell: bash
         env:
           SENTRY_TOKEN: ${{ secrets.SENTRY_TOKEN }}
-        if: ${{ env.SENTRY_TOKEN != '' }}
+        if: ${{ env.SENTRY_TOKEN != '' && github.event_name == 'push' }}

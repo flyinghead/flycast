@@ -17,6 +17,7 @@
 #include "sdl_gamepad.h"
 #include "stdclass.h"
 #include "sdl_mappingparser.h"
+#include "oslib/i18n.h"
 #include <cmath>
 
 std::map<SDL_JoystickID, std::shared_ptr<SDLGamepad>> SDLGamepad::sdl_gamepads;
@@ -343,7 +344,7 @@ void SDLGamepad::setSine(float power, float freq, u32 duration_ms)
 		return;
 	if (hapticRumble)
 	{
-		if (power != 0.f && freq != 0.f && duration_ms != 0)
+		if (power != 0.f && freq != 0.f && duration_ms != 0 && rumblePower != 0)
 		{
 			SDL_HapticEffect effect{};
 			effect.type = SDL_HAPTIC_SINE;
@@ -534,6 +535,7 @@ void SDLGamepad::close()
 
 const char *SDLGamepad::get_button_name(u32 code)
 {
+	using namespace i18n;
 	static struct
 	{
 		const char *sdlButton;
@@ -544,23 +546,23 @@ const char *SDLGamepad::get_button_name(u32 code)
 			{ "b", "B" },
 			{ "x", "X" },
 			{ "y", "Y" },
-			{ "back", "Back" },
-			{ "guide", "Guide" },
-			{ "start", "Start" },
+			{ "back", Tnop("Back") },
+			{ "guide", Tnop("Guide") },
+			{ "start", Tnop("Start") },
 			{ "leftstick", "L3" },
 			{ "rightstick", "R3" },
 			{ "leftshoulder", "L1" },
 			{ "rightshoulder", "R1" },
-			{ "dpup", "DPad Up" },
-			{ "dpdown", "DPad Down" },
-			{ "dpleft", "DPad Left" },
-			{ "dpright", "DPad Right" },
-			{ "misc1", "Misc" },
-			{ "paddle1", "Paddle 1" },
-			{ "paddle2", "Paddle 2" },
-			{ "paddle3", "Paddle 3" },
-			{ "paddle4", "Paddle 4" },
-			{ "touchpad", "Touchpad" },
+			{ "dpup", Tnop("DPad Up") },
+			{ "dpdown", Tnop("DPad Down") },
+			{ "dpleft", Tnop("DPad Left") },
+			{ "dpright", Tnop("DPad Right") },
+			{ "misc1", Tnop("Misc") },
+			{ "paddle1", Tnop("Paddle 1") },
+			{ "paddle2", Tnop("Paddle 2") },
+			{ "paddle3", Tnop("Paddle 3") },
+			{ "paddle4", Tnop("Paddle 4") },
+			{ "touchpad", Tnop("Touchpad") },
 	};
 	if (sdl_controller != nullptr)
 		for (SDL_GameControllerButton button = SDL_CONTROLLER_BUTTON_A; button < SDL_CONTROLLER_BUTTON_MAX; button = (SDL_GameControllerButton)(button + 1))
@@ -573,7 +575,7 @@ const char *SDLGamepad::get_button_name(u32 code)
 					return nullptr;
 				for (const auto& button : buttonsTable)
 					if (!strcmp(button.sdlButton, sdlButton))
-						return button.label;
+						return T(button.label);
 				return sdlButton;
 			}
 			if (bind.bindType == SDL_CONTROLLER_BINDTYPE_HAT && (code >> 8) - 1 == (u32)bind.value.hat.hat)
@@ -584,19 +586,19 @@ const char *SDLGamepad::get_button_name(u32 code)
 				{
 				case 0:
 					hat = SDL_HAT_UP;
-					name =  "DPad Up";
+					name =  T("DPad Up");
 					break;
 				case 1:
 					hat = SDL_HAT_DOWN;
-					name =  "DPad Down";
+					name =  T("DPad Down");
 					break;
 				case 2:
 					hat = SDL_HAT_LEFT;
-					name =  "DPad Left";
+					name =  T("DPad Left");
 					break;
 				case 3:
 					hat = SDL_HAT_RIGHT;
-					name =  "DPad Right";
+					name =  T("DPad Right");
 					break;
 				default:
 					hat = 0;
@@ -612,16 +614,17 @@ const char *SDLGamepad::get_button_name(u32 code)
 
 const char *SDLGamepad::get_axis_name(u32 code)
 {
+	using namespace i18n;
 	static struct
 	{
 		const char *sdlAxis;
 		const char *label;
 	} axesTable[] =
 	{
-			{ "leftx", "Left Stick X" },
-			{ "lefty", "Left Stick Y" },
-			{ "rightx", "Right Stick X" },
-			{ "righty", "Right Stick Y" },
+			{ "leftx", Tnop("Left Stick X") },
+			{ "lefty", Tnop("Left Stick Y") },
+			{ "rightx", Tnop("Right Stick X") },
+			{ "righty", Tnop("Right Stick Y") },
 			{ "lefttrigger", "L2" },
 			{ "righttrigger", "R2" },
 	};
@@ -637,7 +640,7 @@ const char *SDLGamepad::get_axis_name(u32 code)
 					return nullptr;
 				for (const auto& axis : axesTable)
 					if (!strcmp(axis.sdlAxis, sdlAxis))
-						return axis.label;
+						return T(axis.label);
 				return sdlAxis;
 			}
 		}
@@ -687,14 +690,14 @@ bool SDLGamepad::find_mapping(int system)
 	return ret;
 }
 
-SDLMouse::SDLMouse(u64 mouseId) : Mouse("SDL")
+SDLMouse::SDLMouse(u32 mouseId) : Mouse("SDL")
 {
 	if (mouseId == 0) {
-		this->_name = "Default Mouse";
+		this->_name = i18n::Ts("Default Mouse");
 		this->_unique_id = "sdl_mouse";
 	}
 	else {
-		this->_name = "Mouse " + std::to_string(mouseId);
+		this->_name = strprintf(i18n::T("Mouse %d"), mouseId);
 		this->_unique_id = "sdl_mouse_" + std::to_string(mouseId);
 	}
 	loadMapping();

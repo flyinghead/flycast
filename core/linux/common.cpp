@@ -1,6 +1,6 @@
 #include "types.h"
 
-#if defined(__unix__) || defined(__APPLE__) || defined(__SWITCH__)
+#if defined(__unix__) || defined(__APPLE__) || defined(__SWITCH__) || defined(__HAIKU__)
 #if defined(__APPLE__)
 	#define _XOPEN_SOURCE 1
 	#define __USE_GNU 1
@@ -111,7 +111,7 @@ void os_UninstallFaultHandler()
 #endif
 }
 
-#if !defined(__unix__) && !defined(LIBRETRO) && !defined(__SWITCH__)
+#if !defined(__unix__) && !defined(LIBRETRO) && !defined(__SWITCH__) && !defined(__HAIKU__)
 [[noreturn]] void os_DebugBreak()
 {
 	__builtin_trap();

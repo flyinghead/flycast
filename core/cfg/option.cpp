@@ -214,18 +214,24 @@ std::array<std::array<Option<MapleDeviceType>, 2>, 4> MapleExpansionDevices {{
 	Option<MapleDeviceType>("device4.2", MDT_None, "input")}},
 }};
 
-std::array<Option<bool>, 4> UseNetworkExpansionDevices{
-	Option<bool>("device1.UseNetworkExpansionDevices", false, "input"),
-	Option<bool>("device2.UseNetworkExpansionDevices", false, "input"),
-	Option<bool>("device3.UseNetworkExpansionDevices", false, "input"),
-	Option<bool>("device4.UseNetworkExpansionDevices", false, "input"),
-};
+std::array<std::array<Option<int>, 2>, 4> NetworkExpansionDevices{{
+	{{Option<int>("device1.1.net", 0, "input"),
+	Option<int>("device1.2.net", 0, "input")}},
 
-Option<bool> PerGameVmu("PerGameVmu", false, "config");
+	{{Option<int>("device2.1.net", 0, "input"),
+	Option<int>("device2.2.net", 0, "input")}},
+
+	{{Option<int>("device3.1.net", 0, "input"),
+	Option<int>("device3.2.net", 0, "input")}},
+
+	{{Option<int>("device4.1.net", 0, "input"),
+	Option<int>("device4.2.net", 0, "input")}},
+}};
+Option<bool> PerGameVmu("PerGameVmu", true, "config");
 #ifdef _WIN32
 Option<bool, false> UseRawInput("RawInput", false, "input");
 #endif
-Option<bool> UsePhysicalVmuMemory("UsePhysicalVmuMemory", true);
+Option<bool> UsePhysicalVmuMemory("UsePhysicalVmuMemory", false);
 
 #ifdef USE_LUA
 Option<std::string, false> LuaFileName("LuaFileName", "flycast.lua");

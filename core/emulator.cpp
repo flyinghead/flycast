@@ -50,9 +50,7 @@
 #endif
 #include "hw/sh4/sh4_interpreter.h"
 #include "hw/sh4/dyna/ngen.h"
-#ifdef USE_DREAMLINK_DEVICES
-#include "sdl/dreamlink.h"
-#endif
+#include "oslib/i18n.h"
 
 settings_t settings;
 constexpr char const *BIOS_TITLE = "Dreamcast BIOS";
@@ -155,7 +153,9 @@ static void loadSpecialSettings()
 				// Silent Scope (JP)
 				|| prod_id == "T9513M"
 				// Pro Pinball - Trilogy (EU)
-				|| prod_id == "T30701D 50")
+				|| prod_id == "T30701D 50"
+				// Jikkyo Powerful Pro Yakyu
+				|| prod_id == "T9507M")
 		{
 			INFO_LOG(BOOT, "Enabling RTT Copy to VRAM for game %s", prod_id.c_str());
 			config::RenderToTextureBuffer.override(true);
@@ -585,7 +585,7 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 			{
 				// Boot BIOS
 				if (!nvmem::loadFiles())
-					throw FlycastException("No BIOS file found in " + hostfs::getFlashSavePath("", ""));
+					throw FlycastException(strprintf(i18n::T("No BIOS file found in %s"), hostfs::getFlashSavePath("", "").c_str()));
 				gdr::initDrive("");
 			}
 			else
@@ -601,7 +601,7 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 							nvmem::loadHle();
 							NOTICE_LOG(BOOT, "Did not load BIOS, using reios");
 							if (!config::UseReios && config::UseReios.isReadOnly())
-								os_notify("This game requires a real BIOS", 15000);
+								os_notify(i18n::T("This game requires a real BIOS"), 15000);
 						}
 					}
 					else
@@ -609,7 +609,7 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 						// Content load failed. Boot the BIOS
 						settings.content.path.clear();
 						if (!nvmem::loadFiles())
-							throw FlycastException("This media cannot be loaded");
+							throw FlycastException(i18n::Ts("This media cannot be loaded"));
 						gdr::initDrive("");
 					}
 				}
@@ -636,11 +636,6 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 		}
 		if (!settings.naomi.slave)
 		{
-#ifdef USE_DREAMLINK_DEVICES
-			// Note: ordinarily we would like to use the 'events' system for this step.
-			// However, this call can change 'config::MapleExpansionDevices', and therefore needs to run before 'mcfg_CreateDevices'.
-			reconnectDreamLinks();
-#endif
 			mcfg_DestroyDevices();
 			mcfg_CreateDevices();
 			if (settings.platform.isNaomi())
@@ -658,13 +653,14 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 		cheatManager.reset(settings.content.gameId);
 		if (cheatManager.isWidescreen())
 		{
-			os_notify("Widescreen cheat activated", 2000);
+			os_notify(i18n::T("Widescreen cheat activated"), 2000);
 			config::ScreenStretching.override(134);	// 4:3 -> 16:9
 		}
 		// reload settings so that all settings can be overridden
 		loadGameSpecificSettings();
 		NetworkHandshake::init();
 		settings.input.fastForwardMode = false;
+		EventManager::event(Event::Start);
 		if (!settings.content.path.empty())
 		{
 #ifndef LIBRETRO
@@ -674,16 +670,15 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 				dc_loadstate(config::SavestateSlot);
 #endif
 		}
-		EventManager::event(Event::Start);
 
 		if (progress)
 		{
 #ifdef GDB_SERVER
-			if(config::GDBWaitForConnection)
+			if (config::GDB && config::GDBWaitForConnection)
 				progress->label = "Waiting for debugger...";
 			else
 #endif
-				progress->label = "Starting...";
+				progress->label = i18n::T("Starting...");
 		}
 
 		state = Loaded;
@@ -695,34 +690,40 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 
 void Emulator::runInternal()
 {
-	if (singleStep)
-	{
-		getSh4Executor()->Step();
-		singleStep = false;
-	}
-	else if (stepRangeTo != 0)
-	{
-		while (Sh4cntx.pc >= stepRangeFrom && Sh4cntx.pc < stepRangeTo)
+	runner.init();
+	try {
+		if (singleStep)
+		{
 			getSh4Executor()->Step();
+			singleStep = false;
+		}
+		else if (stepRangeTo != 0)
+		{
+			while (Sh4cntx.pc >= stepRangeFrom && Sh4cntx.pc < stepRangeTo)
+				getSh4Executor()->Step();
 
-		stepRangeFrom = 0;
-		stepRangeTo = 0;
-	}
-	else
-	{
-		do {
-			resetRequested = false;
+			stepRangeFrom = 0;
+			stepRangeTo = 0;
+		}
+		else
+		{
+			do {
+				resetRequested = false;
 
-			getSh4Executor()->Run();
+				getSh4Executor()->Run();
 
-			if (resetRequested)
-			{
-				nvmem::saveFiles();
-				dc_reset(false);
-				if (!restartCpu())
-					resetRequested = false;
-			}
-		} while (resetRequested);
+				if (resetRequested)
+				{
+					nvmem::saveFiles();
+					dc_reset(false);
+					if (!restartCpu())
+						resetRequested = false;
+				}
+			} while (resetRequested);
+		}
+	} catch (...) {
+		runner.term();
+		throw;
 	}
 }
 
@@ -953,13 +954,13 @@ void Emulator::run()
 	startTime = sh4_sched_now64();
 	renderTimeout = false;
 	if (!singleStep && stepRangeTo == 0)
-		getSh4Executor()->Start();
+	getSh4Executor()->Start();
 	try {
 		runInternal();
 		if (ggpo::active())
 			ggpo::nextFrame();
 	} catch (const std::exception& e) {
-		ERROR_LOG(COMMON, "Exception: %s\n", e.what());
+		ERROR_LOG(COMMON, "Exception: %s", e.what());
 		setNetworkState(false);
 		state = Error;
 		getSh4Executor()->Stop();
@@ -972,7 +973,10 @@ void Emulator::start()
 {
 	if (state == Running)
 		return;
-	verify(state == Loaded);
+	if (state != Loaded) {
+		WARN_LOG(COMMON, "Unexpected emu state %d", state);
+		return;
+	}
 	state = Running;
 	SetMemoryHandlers();
 	if (config::GGPOEnable && config::ThreadedRendering)
@@ -1073,6 +1077,7 @@ bool Emulator::render()
 void Emulator::vblank()
 {
 	EventManager::event(Event::VBlank);
+	runner.execTasks();
 	// Time out if a frame hasn't been rendered for 50 ms
 	if (sh4_sched_now64() - startTime <= 10000000)
 		return;

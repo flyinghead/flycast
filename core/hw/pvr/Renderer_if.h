@@ -26,11 +26,6 @@ void rend_deserialize(Deserializer& deser);
 static void rend_updatePalette();
 static void rend_updateFogTable();
 
-///////
-extern TA_context* _pvrrc;
-
-#define pvrrc (_pvrrc->rend)
-
 struct FramebufferInfo
 {
 	void update()
@@ -118,3 +113,10 @@ static inline void rend_updateFogTable() {
 	if (renderer != nullptr)
 		renderer->updateFogTable = true;
 }
+
+class RendererException : public FlycastException
+{
+public:
+	RendererException(const std::string& reason) : FlycastException(reason) {}
+	RendererException(const char *reason) : FlycastException(reason) {}
+};

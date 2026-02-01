@@ -1157,7 +1157,6 @@ public:
 
 	void Mov_2ops(const Register& rd, uint64_t imm)
 	{
-		Mov(rd, imm);
 		int ops = MoveImmediateHelper(this, rd, imm);
 		verify(ops == 1 || ops == 2);
 		if (ops == 1)

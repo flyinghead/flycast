@@ -15,7 +15,7 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #include "TexCache.h"
-#include "deps/xbrz/xbrz.h"
+#include "xbrz/xbrz.h"
 #include "hw/pvr/pvr_mem.h"
 #include "hw/mem/addrspace.h"
 
@@ -313,6 +313,7 @@ BaseTextureCacheData::BaseTextureCacheData(TSP tsp, TCW tcw, int area)
 	custom_image_data = nullptr;
 	custom_load_in_progress = 0;
 	gpuPalette = false;
+	is_custom_replaced = false;
 
 	//decode info from tsp/tcw into the texture struct
 	tex = &pvrTexInfo[tcw.PixelFmt == PixelReserved ? Pixel1555 : tcw.PixelFmt];	//texture format table entry
@@ -512,12 +513,18 @@ bool BaseTextureCacheData::Update()
 		if (Updates > 1 && oldHash == texture_hash)
 		{
 			// Texture hasn't changed so skip the update.
+			if (is_custom_replaced)
+			{
+				tex_type = TextureType::_8888;
+				gpuPalette = false;
+			}
 			protectVRam();
 			size = originalSize;
 			return true;
 		}
 		custom_texture.loadCustomTextureAsync(this);
 	}
+	is_custom_replaced = false;
 
 	void *temp_tex_buffer = NULL;
 	u32 upscaled_w = width;
@@ -692,6 +699,7 @@ void BaseTextureCacheData::CheckCustomTexture()
 	{
 		tex_type = TextureType::_8888;
 		gpuPalette = false;
+		is_custom_replaced = true;
 		UploadToGPU(custom_width, custom_height, custom_image_data, IsMipmapped(), false);
 		free(custom_image_data);
 		custom_image_data = nullptr;
@@ -746,6 +754,10 @@ void ReadFramebuffer(const FramebufferInfo& info, PixelBuffer<u32>& pb, int& wid
 		{
 			addr = info.spg_status.fieldnum ? info.fb_r_sof2 : info.fb_r_sof1;
 		}
+	}
+	else if (info.fb_r_ctrl.vclk_div == 0) {
+		// 240p if PAL or NTSC
+		height = std::min(height, 240);
 	}
 
 	pb.init(width, height);

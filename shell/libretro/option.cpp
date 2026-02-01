@@ -154,4 +154,19 @@ std::array<std::array<Option<MapleDeviceType>, 2>, 4> MapleExpansionDevices {
 	Option<MapleDeviceType>("", MDT_None),
 };
 
+std::array<std::array<Option<int>, 2>, 4> NetworkExpansionDevices{{
+	{{Option<int>("", 0),
+	Option<int>("", 0)}},
+
+	{{Option<int>("", 0),
+	Option<int>("", 0)}},
+
+	{{Option<int>("", 0),
+	Option<int>("", 0)}},
+
+	{{Option<int>("", 0),
+	Option<int>("", 0)}},
+}};
+Option<bool> UsePhysicalVmuMemory(CORE_OPTION_NAME "_linked_vmu_storage", false);
+
 } // namespace config

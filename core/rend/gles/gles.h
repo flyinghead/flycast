@@ -268,7 +268,7 @@ struct gl_ctx
 	{
 		std::unique_ptr<GlFramebuffer> framebuffer;
 		float aspectRatio;
-		GLuint origFbo;
+		GLuint origFbo = 0;
 		float shiftX, shiftY;
 	} ofbo;
 
@@ -313,6 +313,7 @@ struct gl_ctx
 	bool prim_restart_supported;
 	bool prim_restart_fixed_supported;
 	bool bogusBlitFramebuffer;
+	rend_context *rendContext = nullptr;
 
 	size_t get_index_size() { return index_type == GL_UNSIGNED_INT ? sizeof(u32) : sizeof(u16); }
 };

@@ -17,6 +17,11 @@ target_sources(${PROJECT_NAME} PRIVATE
         src/Sh4InterpreterTest.cpp
         src/MmuTest.cpp
         src/HttpTest.cpp
+        src/IniFileTest.cpp
+        src/hw/modem/v42Test.cpp
+        src/hw/modem/v42bisTest.cpp
+        src/imgread/CueTest.cpp
+        src/imgread/GdiTest.cpp
         src/input/ButtonComboTest.cpp
         src/input/GamepadInputHandlingTest.cpp
         src/input/MultiBindMappingTest.cpp
@@ -24,6 +29,7 @@ target_sources(${PROJECT_NAME} PRIVATE
         src/input/InputMappingConfigFileTest.cpp
         src/input/InputSetTest.cpp
         src/input/SDLControllerMappingTest.cpp
+        src/oslib/I18nTest.cpp
         src/util/PeriodicThreadTest.cpp
         src/util/TsQueueTest.cpp
         src/util/WorkerThreadTest.cpp)

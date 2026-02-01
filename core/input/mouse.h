@@ -18,6 +18,7 @@
 */
 #pragma once
 #include "gamepad_device.h"
+#include "oslib/i18n.h"
 #include <mutex>
 
 // Mouse position and buttons
@@ -53,7 +54,7 @@ class Mouse : public GamepadDevice
 {
 protected:
 	Mouse(const char *apiName, int maplePort = 0) : GamepadDevice(maplePort, apiName) {
-		this->_name = "Mouse";
+		this->_name = i18n::Ts("Mouse");
 	}
 
 	std::shared_ptr<InputMapping> getDefaultMapping() override {
@@ -74,15 +75,15 @@ public:
 		switch((Button)code)
 		{
 		case LEFT_BUTTON:
-			return "Left Button";
+			return i18n::T("Left Button");
 		case RIGHT_BUTTON:
-			return "Right Button";
+			return i18n::T("Right Button");
 		case MIDDLE_BUTTON:
-			return "Middle Button";
+			return i18n::T("Middle Button");
 		case BUTTON_4:
-			return "Button 4";
+			return i18n::T("Button 4");
 		case BUTTON_5:
-			return "Button 5";
+			return i18n::T("Button 5");
 		default:
 			return nullptr;
 		}
@@ -96,8 +97,12 @@ public:
 
 class SystemMouse : public Mouse
 {
+	bool touchMouse;
+
 protected:
-	SystemMouse(const char *apiName, int maplePort = 0) : Mouse(apiName, maplePort) {}
+	SystemMouse(const char *apiName, int maplePort = 0, bool touchMouse = false)
+		: Mouse(apiName, maplePort), touchMouse(touchMouse)
+	{}
 
 public:
 	void setAbsPos(int x, int y, int width, int height);
@@ -108,9 +113,9 @@ public:
 class TouchMouse : public SystemMouse
 {
 public:
-	TouchMouse() : SystemMouse("Flycast", -1)
+	TouchMouse() : SystemMouse("Flycast", -1, true)
 	{
-		_name = "Touch Mouse";
+		_name = i18n::Ts("Touch Mouse");
 		_unique_id = "touch_mouse";
 		loadMapping();
 	}

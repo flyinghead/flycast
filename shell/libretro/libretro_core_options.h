@@ -1014,6 +1014,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       {
          { "VMU",      NULL },
          { "Purupuru", "Vibration Pack" },
+         { "DreamPotato", NULL },
          { "None",     NULL },
          { NULL, NULL },
       },
@@ -1044,6 +1045,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       {
          { "VMU",      NULL },
          { "Purupuru", "Vibration Pack" },
+         { "DreamPotato", NULL },
          { "None",     NULL },
          { NULL, NULL },
       },
@@ -1074,6 +1076,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       {
          { "VMU",      NULL },
          { "Purupuru", "Vibration Pack" },
+         { "DreamPotato", NULL },
          { "None",     NULL },
          { NULL, NULL },
       },
@@ -1104,6 +1107,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       {
          { "VMU",      NULL },
          { "Purupuru", "Vibration Pack" },
+         { "DreamPotato", NULL },
          { "None",     NULL },
          { NULL, NULL },
       },
@@ -1144,6 +1148,19 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "Visual Memory Units/Systems (VMU) Sounds",
       "VMU Sounds",
       "When enabled, VMU beeps are played.",
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",   NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_linked_vmu_storage",
+      "DreamPotato VMU storage",
+      NULL,
+      "Enable storage of VMU data on the connected DreamPotato emulator. When enabled, the local VMU save file is not used.",
       NULL,
       "vmu",
       {

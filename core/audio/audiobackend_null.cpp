@@ -1,5 +1,5 @@
 #include "audiostream.h"
-
+#include "oslib/i18n.h"
 #include <chrono>
 #include <thread>
 
@@ -9,7 +9,7 @@ class NullAudioBackend : public AudioBackend
 
 public:
 	NullAudioBackend()
-		: AudioBackend("null", "No Audio") {}
+		: AudioBackend("null", Tnop("No Audio")) {}
 
 	bool init() override
 	{
@@ -46,6 +46,10 @@ public:
 	{
 		memset(buffer, 0, samples * 2);
 		return samples;
+	}
+
+	std::string getName() const override {
+		return i18n::Ts(name);
 	}
 
 private:

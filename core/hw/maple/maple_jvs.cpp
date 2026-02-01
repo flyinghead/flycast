@@ -17,9 +17,11 @@
 	 along with flycast.  If not, see <https://www.gnu.org/licenses/>.
  */
 #include "maple_devs.h"
+#include "maple_if.h"
 #include "hw/naomi/naomi_cart.h"
 #include <xxhash.h>
 #include "oslib/oslib.h"
+#include "oslib/i18n.h"
 #include "stdclass.h"
 #include "cfg/option.h"
 #include "network/output.h"
@@ -140,6 +142,57 @@ const char *GetCurrentGameAxisName(DreamcastKey axis)
 	return nullptr;
 }
 
+class jvs_io_board;
+
+struct MIEImpl : public MIE
+{
+	static constexpr u8 ALL_NODES = 0xff;
+
+	std::vector<std::unique_ptr<jvs_io_board>> io_boards;
+	bool crazy_mode = false;
+	bool hotd2p = false;
+
+	u8 jvs_repeat_request[32][256];
+	u8 jvs_receive_buffer[32][258];
+	u32 jvs_receive_length[32] = { 0 };
+	u8 eeprom[128];
+
+	MIEImpl();
+	~MIEImpl() {
+		EEPROM = nullptr;
+	}
+
+	MapleDeviceType get_device_type() override {
+		return MDT_NaomiJamma;
+	}
+
+	u8 sense_line(u32 node_id) {
+		bool last_node = node_id == io_boards.size();
+		return last_node ? 0x8E : 0x8F;
+	}
+
+	void send_jvs_message(u32 node_id, u32 channel, u32 length, const u8 *data);
+	void send_jvs_messages(u32 node_id, u32 channel, bool use_repeat, u32 length, const u8 *data, bool repeat_first);
+	bool receive_jvs_messages(u32 channel);
+
+	void handle_86_subcommand() override;
+	void firmwareLoaded(u32 hash) override;
+
+	void serialize(Serializer& ser) const override;
+	void deserialize(Deserializer& deser) override;
+
+	void setPipe(Pipe *pipe) override {
+		serialPipe = pipe;
+	}
+	void updateStatus() override {}
+
+	Pipe *serialPipe = nullptr;
+};
+
+std::shared_ptr<maple_device> MIE::Create() {
+	return std::make_shared<MIEImpl>();
+}
+
 /*
  * Sega JVS I/O board
 */
@@ -148,7 +201,7 @@ static bool old_coin_chute[4];
 class jvs_io_board
 {
 public:
-	jvs_io_board(u8 node_id, maple_naomi_jamma *parent, int first_player = 0)
+	jvs_io_board(u8 node_id, MIEImpl *parent, int first_player = 0)
 	{
 		this->node_id = node_id;
 		this->parent = parent;
@@ -157,7 +210,7 @@ public:
 	}
 	virtual ~jvs_io_board() = default;
 
-	u32 handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_out);
+	u32 handle_jvs_message(const u8 *buffer_in, u32 length_in, u8 *buffer_out);
 	virtual void serialize(Serializer& ser) const;
 	virtual void deserialize(Deserializer& deser);
 
@@ -229,7 +282,7 @@ protected:
 		}
 	}
 
-	virtual void write_digital_out(int count, u8 *data)
+	virtual void write_digital_out(int count, const u8 *data)
 	{
 		u32 newOutput = digOutput;
 		for (int i = 0; i < count && i < 4; i++)
@@ -279,7 +332,7 @@ protected:
 	u32 light_gun_count = 0;
 	u32 output_count = 0;
 	bool init_in_progress = false;
-	maple_naomi_jamma *parent;
+	MIEImpl *parent;
 	u8 first_player;
 
 private:
@@ -324,7 +377,7 @@ private:
 class jvs_837_13551 : public jvs_io_board
 {
 public:
-	jvs_837_13551(u8 node_id, maple_naomi_jamma *parent, int first_player = 0)
+	jvs_837_13551(u8 node_id, MIEImpl *parent, int first_player = 0)
 		: jvs_io_board(node_id, parent, first_player)
 	{
 		player_count = 2;
@@ -341,7 +394,7 @@ protected:
 class jvs_837_13551_noanalog : public jvs_837_13551
 {
 public:
-	jvs_837_13551_noanalog(u8 node_id, maple_naomi_jamma *parent, int first_player = 0)
+	jvs_837_13551_noanalog(u8 node_id, MIEImpl *parent, int first_player = 0)
 		: jvs_837_13551(node_id, parent, first_player)
 	{
 		analog_count = 0;
@@ -352,7 +405,7 @@ public:
 class jvs_837_13551_4P : public jvs_837_13551
 {
 public:
-	jvs_837_13551_4P(u8 node_id, maple_naomi_jamma *parent, int first_player = 0)
+	jvs_837_13551_4P(u8 node_id, MIEImpl *parent, int first_player = 0)
 		: jvs_837_13551(node_id, parent, first_player)
 	{
 		player_count = 4;
@@ -367,7 +420,7 @@ public:
 class jvs_837_13938 : public jvs_io_board
 {
 public:
-	jvs_837_13938(u8 node_id, maple_naomi_jamma *parent, int first_player = 0)
+	jvs_837_13938(u8 node_id, MIEImpl *parent, int first_player = 0)
 		: jvs_io_board(node_id, parent, first_player)
 	{
 		player_count = 1;
@@ -383,7 +436,7 @@ protected:
 class jvs_837_13938_shootout : public jvs_837_13938
 {
 public:
-	jvs_837_13938_shootout(u8 node_id, maple_naomi_jamma *parent, int first_player = 0)
+	jvs_837_13938_shootout(u8 node_id, MIEImpl *parent, int first_player = 0)
 		: jvs_837_13938(node_id, parent, first_player)
 	{
 		memset(lastValue, 0, sizeof(lastValue));
@@ -429,7 +482,7 @@ protected:
 class jvs_837_13938_kick4cash : public jvs_837_13938
 {
 public:
-	jvs_837_13938_kick4cash(u8 node_id, maple_naomi_jamma *parent, int first_player = 0)
+	jvs_837_13938_kick4cash(u8 node_id, MIEImpl *parent, int first_player = 0)
 		: jvs_837_13938(node_id, parent, first_player)
 	{}
 
@@ -470,7 +523,7 @@ protected:
 class jvs_837_13938_crackindj : public jvs_837_13938
 {
 public:
-	jvs_837_13938_crackindj(u8 node_id, maple_naomi_jamma *parent, int first_player = 0)
+	jvs_837_13938_crackindj(u8 node_id, MIEImpl *parent, int first_player = 0)
 		: jvs_837_13938(node_id, parent, first_player)
 	{}
 
@@ -517,7 +570,7 @@ private:
 class jvs_837_13844 : public jvs_io_board
 {
 public:
-	jvs_837_13844(u8 node_id, maple_naomi_jamma *parent, int first_player = 0)
+	jvs_837_13844(u8 node_id, MIEImpl *parent, int first_player = 0)
 		: jvs_io_board(node_id, parent, first_player)
 	{
 		player_count = 2;
@@ -534,7 +587,7 @@ protected:
 class jvs_837_13844_encoders : public jvs_837_13844
 {
 public:
-	jvs_837_13844_encoders(u8 node_id, maple_naomi_jamma *parent, int first_player = 0)
+	jvs_837_13844_encoders(u8 node_id, MIEImpl *parent, int first_player = 0)
 		: jvs_837_13844(node_id, parent, first_player)
 	{
 		digital_in_count = 8;
@@ -545,7 +598,7 @@ public:
 class jvs_837_13844_touch : public jvs_837_13844
 {
 public:
-	jvs_837_13844_touch(u8 node_id, maple_naomi_jamma *parent, int first_player = 0)
+	jvs_837_13844_touch(u8 node_id, MIEImpl *parent, int first_player = 0)
 		: jvs_837_13844(node_id, parent, first_player)
 	{
 		light_gun_count = 1;
@@ -568,7 +621,7 @@ public:
 class jvs_837_13844_motor_board : public jvs_837_13844
 {
 public:
-	jvs_837_13844_motor_board(u8 node_id, maple_naomi_jamma *parent, int first_player = 0)
+	jvs_837_13844_motor_board(u8 node_id, MIEImpl *parent, int first_player = 0)
 		: jvs_837_13844(node_id, parent, first_player)
 	{
 	}
@@ -613,7 +666,7 @@ protected:
 			v[1] &= ~NAOMI_BTN2_KEY;
 	}
 
-	void write_digital_out(int count, u8 *data) override
+	void write_digital_out(int count, const u8 *data) override
 	{
 		if (count != 3)
 			return;
@@ -642,7 +695,7 @@ protected:
 class jvs_837_13844_wrungp : public jvs_837_13844_motor_board
 {
 public:
-	jvs_837_13844_wrungp(u8 node_id, maple_naomi_jamma *parent, int first_player = 0)
+	jvs_837_13844_wrungp(u8 node_id, MIEImpl *parent, int first_player = 0)
 		: jvs_837_13844_motor_board(node_id, parent, first_player)
 	{
 	}
@@ -682,7 +735,7 @@ protected:
 class jvs_837_13844_racing : public jvs_837_13844_motor_board
 {
 public:
-	jvs_837_13844_racing(u8 node_id, maple_naomi_jamma *parent, int first_player = 0)
+	jvs_837_13844_racing(u8 node_id, MIEImpl *parent, int first_player = 0)
 		: jvs_837_13844_motor_board(node_id, parent, first_player)
 	{
 	}
@@ -875,7 +928,7 @@ private:
 class jvs_837_13844_18wheeler : public jvs_837_13844_racing
 {
 public:
-	jvs_837_13844_18wheeler(u8 node_id, maple_naomi_jamma *parent, int first_player = 0)
+	jvs_837_13844_18wheeler(u8 node_id, MIEImpl *parent, int first_player = 0)
 		: jvs_837_13844_racing(node_id, parent, first_player)
 	{
 	}
@@ -949,7 +1002,7 @@ private:
 class jvs_namco_jyu : public jvs_io_board
 {
 public:
-	jvs_namco_jyu(u8 node_id, maple_naomi_jamma *parent, int first_player = 0)
+	jvs_namco_jyu(u8 node_id, MIEImpl *parent, int first_player = 0)
 		: jvs_io_board(node_id, parent, first_player)
 	{
 		player_count = 2;
@@ -966,7 +1019,7 @@ protected:
 class jvs_namco_fcb : public jvs_io_board
 {
 public:
-	jvs_namco_fcb(u8 node_id, maple_naomi_jamma *parent, int first_player = 0)
+	jvs_namco_fcb(u8 node_id, MIEImpl *parent, int first_player = 0)
 		: jvs_io_board(node_id, parent, first_player)
 	{
 		player_count = 1;
@@ -995,7 +1048,7 @@ protected:
 class jvs_namco_fca : public jvs_io_board
 {
 public:
-	jvs_namco_fca(u8 node_id, maple_naomi_jamma *parent, int first_player = 0)
+	jvs_namco_fca(u8 node_id, MIEImpl *parent, int first_player = 0)
 		: jvs_io_board(node_id, parent, first_player)
 	{
 		player_count = 1;
@@ -1013,7 +1066,7 @@ protected:
 class jvs_namco_v226 : public jvs_io_board
 {
 public:
-	jvs_namco_v226(u8 node_id, maple_naomi_jamma *parent, int first_player = 0)
+	jvs_namco_v226(u8 node_id, MIEImpl *parent, int first_player = 0)
 		: jvs_io_board(node_id, parent, first_player)
 	{
 		player_count = 1;
@@ -1092,7 +1145,7 @@ private:
 class jvs_namco_v226_pcb : public jvs_io_board
 {
 public:
-	jvs_namco_v226_pcb(u8 node_id, maple_naomi_jamma *parent, int first_player = 0)
+	jvs_namco_v226_pcb(u8 node_id, MIEImpl *parent, int first_player = 0)
 		: jvs_io_board(node_id, parent, first_player)
 	{
 		player_count = 2;
@@ -1171,7 +1224,7 @@ private:
 class jvs_837_13551_mushiking : public jvs_837_13551
 {
 public:
-	jvs_837_13551_mushiking(u8 node_id, maple_naomi_jamma *parent, int first_player = 0)
+	jvs_837_13551_mushiking(u8 node_id, MIEImpl *parent, int first_player = 0)
 		: jvs_837_13551(node_id, parent, first_player) { }
 
 protected:
@@ -1198,7 +1251,171 @@ private:
 	bool testDown = false;
 };
 
-maple_naomi_jamma::maple_naomi_jamma()
+//
+// Base class for the regular MIE and the RFID card reader/writer
+//
+void BaseMIE::reply(u8 code, u8 sizew)
+{
+	w8(code);
+	w8(0x00);
+	w8(0x20);
+	w8(sizew);
+}
+
+u32 BaseMIE::RawDma(const u32 *buffer_in, u32 buffer_in_len, u32 *buffer_out)
+{
+#ifdef DUMP_JVS
+	printf("JVS IN: ");
+	u8 *p = (u8*)buffer_in;
+	for (int i = 0; i < buffer_in_len; i++) printf("%02x ", *p++);
+	printf("\n");
+#endif
+
+	u32 out_len = 0;
+	dma_buffer_out = (u8 *)buffer_out;
+	dma_count_out = &out_len;
+
+	dma_buffer_in = (u8 *)buffer_in + 4;
+	dma_count_in = buffer_in_len - 4;
+
+	const u32 cmd = *(u8*)buffer_in;
+
+	// delegate to subclass first
+	dma_buffer_out += 4;
+	u32 resp = dma(cmd);
+	if (resp != MDRE_UnknownCmd)
+	{
+		const u32 reci = (buffer_in[0] >> 8) & 0xFF;
+		const u32 sender = (buffer_in[0] >> 16) & 0xFF;
+		buffer_out[0] = (resp << 0 ) | (sender << 8) | (reci << 16) | ((out_len / 4) << 24);
+		return out_len + 4;
+	}
+	else {
+		// reset buffer index and continue
+		dma_buffer_out -= 4;
+	}
+
+	switch (cmd)
+	{
+		case MDC_JVSCommand:
+			handle_86_subcommand();
+			break;
+
+		case MDC_JVSUploadFirmware:
+		{
+			static u8 *ram;
+
+			if (ram == nullptr)
+				ram = (u8 *)calloc(0x10000, 1);
+
+			if (dma_buffer_in[1] == 0xff)
+			{
+				u32 hash = XXH32(ram, 0x10000, 0);
+				LOGJVS("JVS Firmware hash %08x", hash);
+				firmwareLoaded(hash);
+#ifdef DUMP_JVS_FW
+				FILE *fw_dump;
+				char filename[128];
+				for (int i = 0; ; i++)
+				{
+					snprintf(filename, sizeof(filename), "z80_fw_%d.bin", i);
+					fw_dump = fopen(filename, "r");
+					if (fw_dump == NULL)
+					{
+						fw_dump = fopen(filename, "w");
+						INFO_LOG(JVS, "Saving JVS firmware to %s", filename);
+						break;
+					}
+				}
+				if (fw_dump)
+				{
+					fwrite(ram, 1, 0x10000, fw_dump);
+					fclose(fw_dump);
+				}
+#endif
+				free(ram);
+				ram = nullptr;
+
+				reply(MDRS_DeviceReply);
+				break;
+			}
+			int xfer_bytes;
+			if (dma_buffer_in[0] == 0xff)
+				xfer_bytes = 0x1C;
+			else
+				xfer_bytes = 0x18;
+			u16 addr = (dma_buffer_in[2] << 8) + dma_buffer_in[3];
+			memcpy(ram + addr, &dma_buffer_in[4], xfer_bytes);
+			u8 sum = 0;
+			for (int i = 0; i < 0x1C; i++)
+				sum += dma_buffer_in[i];
+
+			reply(MDC_JVSUploadFirmware, 1);	// or 0x81 on bootrom?
+			w32(sum);
+
+			reply(MDRS_DeviceReply);
+		}
+		break;
+
+	case MDC_JVSGetId:
+		{
+			DEBUG_LOG(JVS, "bus[%d] JVS Get Id", bus_id);
+			static const char ID[56] = "315-6149    COPYRIGHT SEGA ENTERPRISES CO,LTD.  1998";
+			reply(MDRS_JVSGetIdReply, 7);
+			wptr(ID, 28);
+
+			// TODO 6 or 7 breaks card reader... It looks like the reader returns 2*7 words so why?
+			reply(MDRS_JVSGetIdReply, 5);
+			wptr(ID + 28, 20);
+		}
+		break;
+
+	default:
+		INFO_LOG(MAPLE, "BaseMIE: Unknown Maple command %x", cmd);
+		reply(MDRE_UnknownCmd);
+		break;;
+	}
+
+#ifdef DUMP_JVS
+	printf("JVS OUT: ");
+	p = (u8 *)buffer_out;
+	for (int i = 0; i < out_len; i++) printf("%02x ", p[i]);
+	printf("\n");
+#endif
+
+	return out_len;
+}
+
+u32 BaseMIE::dma(u32 cmd)
+{
+	switch (cmd)
+	{
+	case MDC_JVSSelfTest:
+		w32(0);
+		return MDRS_JVSSelfTestReply;
+
+	case MDC_DeviceRequest:
+		return MDRS_DeviceStatus;
+
+	case MDC_AllStatusReq:
+		return MDRS_DeviceStatusAll;
+
+	case MDC_DeviceReset:
+	case MDC_DeviceKill:
+		return MDRS_DeviceReply;
+
+	default:
+		return MDRE_UnknownCmd;
+	}
+}
+
+void BaseMIE::handle_86_subcommand()
+{
+	INFO_LOG(JVS, "BaseMIE: Unhandled JVS command (0x86) subcode %x", dma_buffer_in[0]);
+	reply(MDRE_UnknownCmd);
+}
+
+MIEImpl::MIEImpl()
 {
 	if (settings.naomi.drivingSimSlave == 0 && !settings.naomi.slave)
 	{
@@ -1377,12 +1594,7 @@ maple_naomi_jamma::maple_naomi_jamma()
 	EEPROM = eeprom;
 }
 
-maple_naomi_jamma::~maple_naomi_jamma()
-{
-	EEPROM = nullptr;
-}
-
-void maple_naomi_jamma::send_jvs_message(u32 node_id, u32 channel, u32 length, u8 *data)
+void MIEImpl::send_jvs_message(u32 node_id, u32 channel, u32 length, const u8 *data)
 {
 	if (node_id - 1 < io_boards.size())
 	{
@@ -1413,7 +1625,7 @@ void maple_naomi_jamma::send_jvs_message(u32 node_id, u32 channel, u32 length, u
 	}
 }
 
-void maple_naomi_jamma::send_jvs_messages(u32 node_id, u32 channel, bool use_repeat, u32 length, u8 *data, bool repeat_first)
+void MIEImpl::send_jvs_messages(u32 node_id, u32 channel, bool use_repeat, u32 length, const u8 *data, bool repeat_first)
 {
 	u8 temp_buffer[256];
 	if (data)
@@ -1445,22 +1657,17 @@ void maple_naomi_jamma::send_jvs_messages(u32 node_id, u32 channel, bool use_rep
 	}
 }
 
-bool maple_naomi_jamma::receive_jvs_messages(u32 channel)
+bool MIEImpl::receive_jvs_messages(u32 channel)
 {
 	constexpr u32 headerLength = sizeof(u32) * 5 + 3;
 	u32 dword_length = (jvs_receive_length[channel] + headerLength - 1) / 4 + 1;
 
-	w8(MDRS_JVSReply);
-	w8(0x00);
-	w8(0x20);
-	if (jvs_receive_length[channel] == 0)
-	{
-		w8(0x05);
+	if (jvs_receive_length[channel] == 0) {
+		reply(MDRS_JVSReply, 5);
 		w8(0x32);
 	}
-	else
-	{
-		w8(dword_length);
+	else {
+		reply(MDRS_JVSReply, dword_length);
 		w8(0x16);
 	}
 	w8(0xff);
@@ -1492,15 +1699,10 @@ bool maple_naomi_jamma::receive_jvs_messages(u32 channel)
 	return true;
 }
 
-void maple_naomi_jamma::handle_86_subcommand()
+void MIEImpl::handle_86_subcommand()
 {
-	if (dma_count_in == 0)
-	{
-		w8(MDRS_JVSReply);
-		w8(0);
-		w8(0x20);
-		w8(0x00);
-
+	if (dma_count_in == 0) {
+		reply(MDRS_JVSReply);
 		return;
 	}
 	u32 subcode = dma_buffer_in[0];
@@ -1519,7 +1721,7 @@ void maple_naomi_jamma::handle_86_subcommand()
 		}
 	}
 	u8 node_id = 0;
-	u8 *cmd = NULL;
+	const u8 *cmd = NULL;
 	u32 len = 0;
 	u8 channel = 0;
 	if (dma_count_in >= 3)
@@ -1548,10 +1750,7 @@ void maple_naomi_jamma::handle_86_subcommand()
 				jvs_repeat_request[node_id - 1][0] = len;
 				memcpy(&jvs_repeat_request[node_id - 1][1], cmd, len);
 			}
-			w8(MDRS_JVSReply);
-			w8(0);
-			w8(0x20);
-			w8(0x01);
+			reply(MDRS_JVSReply, 1);
 			w8(dma_buffer_in[0] + 1);	// subcommand + 1
 			w8(0);
 			w8(len + 1);
@@ -1563,10 +1762,7 @@ void maple_naomi_jamma::handle_86_subcommand()
 			if (hotd2p)
 			{
 				send_jvs_messages(node_id, channel, true, len, cmd, false);
-				w8(MDRS_JVSReply);
-				w8(0);
-				w8(0x20);
-				w8(0x01);
+				reply(MDRS_JVSReply, 1);
 				w8(0x18);	// always
 				w8(channel);
 				w8(sense_line(node_id));
@@ -1577,10 +1773,7 @@ void maple_naomi_jamma::handle_86_subcommand()
 		case 0x17:	// Transmit without repeat
 			jvs_receive_length[channel] = 0;
 			send_jvs_messages(node_id, channel, false, len, cmd, false);
-			w8(MDRS_JVSReply);
-			w8(0);
-			w8(0x20);
-			w8(0x01);
+			reply(MDRS_JVSReply, 1);
 			w8(0x18);	// always
 			w8(channel);
 			w8(0x8E);	//sense_line(node_id));
@@ -1590,10 +1783,7 @@ void maple_naomi_jamma::handle_86_subcommand()
 		case 0x19:	// Transmit with repeat
 			jvs_receive_length[channel] = 0;
 			send_jvs_messages(node_id, channel, true, len, cmd, true);
-			w8(MDRS_JVSReply);
-			w8(0);
-			w8(0x20);
-			w8(0x01);
+			reply(MDRS_JVSReply, 1);
 			w8(0x18);	// always
 			w8(channel);
 			w8(sense_line(node_id));
@@ -1603,10 +1793,7 @@ void maple_naomi_jamma::handle_86_subcommand()
 		case 0x21:	// Transmit with repeat
 			jvs_receive_length[channel] = 0;
 			send_jvs_messages(node_id, channel, true, len, cmd, false);
-			w8(MDRS_JVSReply);
-			w8(0);
-			w8(0x20);
-			w8(0x01);
+			reply(MDRS_JVSReply, 1);
 			w8(0x18);	// always
 			w8(channel);
 			w8(sense_line(node_id));
@@ -1633,10 +1820,7 @@ void maple_naomi_jamma::handle_86_subcommand()
 					send_jvs_messages(node_id, channel, true, len, cmd, false);
 				}
 
-				w8(MDRS_JVSReply);
-				w8(0);
-				w8(0x20);
-				w8(0x01);
+				reply(MDRS_JVSReply, 1);
 				w8(0x26);
 				w8(channel);
 				w8(sense_line(node_id));
@@ -1647,10 +1831,7 @@ void maple_naomi_jamma::handle_86_subcommand()
 		case 0x33:	// Receive then transmit with repeat (15 then 21)
 			receive_jvs_messages(channel);
 			send_jvs_messages(node_id, channel, true, len, cmd, false);
-			w8(MDRS_JVSReply);
-			w8(0);
-			w8(0x20);
-			w8(0x01);
+			reply(MDRS_JVSReply, 1);
 			w8(0x18);	// always
 			w8(channel);
 			w8(sense_line(node_id));
@@ -1678,10 +1859,7 @@ void maple_naomi_jamma::handle_86_subcommand()
 			else
 				WARN_LOG(MAPLE, "EEPROM SAVE FAILED to %s", eeprom_file.c_str());
 
-			w8(MDRS_JVSReply);
-			w8(0x00);
-			w8(0x20);
-			w8(0x01);
+			reply(MDRS_JVSReply, 1);
 			memcpy(dma_buffer_out, eeprom, 4);
 			dma_buffer_out += 4;
 			*dma_count_out += 4;
@@ -1693,10 +1871,7 @@ void maple_naomi_jamma::handle_86_subcommand()
 			//printf("EEprom READ\n");
 			int address = dma_buffer_in[1] % sizeof(eeprom);
 			//printState(Command,buffer_in,buffer_in_len);
-			w8(MDRS_JVSReply);
-			w8(0x00);
-			w8(0x20);
-			w8(0x20);
+			reply(MDRS_JVSReply, sizeof(eeprom) / 4);
 			int size = sizeof(eeprom) - address;
 			memcpy(dma_buffer_out, eeprom + address, size);
 			dma_buffer_out += size;
@@ -1706,10 +1881,7 @@ void maple_naomi_jamma::handle_86_subcommand()
 
 		case 0x31:	// DIP switches
 		{
-			w8(MDRS_JVSReply);
-			w8(0x00);
-			w8(0x20);
-			w8(0x05);
+			reply(MDRS_JVSReply, 5);
 
 			w8(0x32);
 			w8(0xff);		// in(0)
@@ -1736,11 +1908,7 @@ void maple_naomi_jamma::handle_86_subcommand()
 		//	break;
 
 		case 0x1:
-			w8(MDRS_JVSReply);
-			w8(0x00);
-			w8(0x20);
-			w8(0x01);
-
+			reply(MDRS_JVSReply, 1);
 			w8(0x2);
 			w8(0x0);
 			w8(0x0);
@@ -1767,11 +1935,7 @@ void maple_naomi_jamma::handle_86_subcommand()
 				if (serialPipe != nullptr)
 					avail = std::min(serialPipe->available(), 0xfe);
 				DEBUG_LOG(MAPLE, "JVS: RS422 receive %d bytes", avail);
-				w8(MDRS_JVSReply);
-				w8(0);
-				w8(0x20);
-				w8(1 + (avail + 3) / 4);
-
+				reply(MDRS_JVSReply, 1 + (avail + 3) / 4);
 				w8(0);
 				w8(0);
 				w8(0);
@@ -1790,186 +1954,25 @@ void maple_naomi_jamma::handle_86_subcommand()
 
 		default:
 			INFO_LOG(MAPLE, "JVS: Unknown 0x86 sub-command %x", subcode);
-			w8(MDRE_UnknownCmd);
-			w8(0x00);
-			w8(0x20);
-			w8(0x00);
+			reply(MDRE_UnknownCmd);
 			break;
 	}
 }
 
-u32 maple_naomi_jamma::RawDma(u32* buffer_in, u32 buffer_in_len, u32* buffer_out)
+void MIEImpl::firmwareLoaded(u32 hash)
 {
-#ifdef DUMP_JVS
-	printf("JVS IN: ");
-	u8 *p = (u8*)buffer_in;
-	for (int i = 0; i < buffer_in_len; i++) printf("%02x ", *p++);
-	printf("\n");
-#endif
-
-	u32 out_len = 0;
-	dma_buffer_out = (u8 *)buffer_out;
-	dma_count_out = &out_len;
-
-	dma_buffer_in = (u8 *)buffer_in + 4;
-	dma_count_in = buffer_in_len - 4;
-
-	u32 cmd = *(u8*)buffer_in;
-	switch (cmd)
-	{
-		case MDC_JVSSelfTest:
-			w8(MDRS_JVSSelfTestReply);
-			w8(0x00);
-			w8(0x20);
-			w8(0x01);
-			w8(0x00);
-			break;
-
-		case MDC_JVSCommand:
-			handle_86_subcommand();
-			break;
-
-		case MDC_JVSUploadFirmware:
-		{
-			static u8 *ram;
-
-			if (ram == NULL)
-				ram = (u8 *)calloc(0x10000, 1);
-
-			if (dma_buffer_in[1] == 0xff)
-			{
-				u32 hash = XXH32(ram, 0x10000, 0);
-				LOGJVS("JVS Firmware hash %08x\n", hash);
-				hotd2p = hash == 0xa6784e26;
-				if (hash == 0xa7c50459	// CT
-						|| hash == 0xae841e36	// HOTD2
-						|| hotd2p)
-					crazy_mode = true;
-				else
-					crazy_mode = false;
-#ifdef DUMP_JVS_FW
-				FILE *fw_dump;
-				char filename[128];
-				for (int i = 0; ; i++)
-				{
-					snprintf(filename, sizeof(filename), "z80_fw_%d.bin", i);
-					fw_dump = fopen(filename, "r");
-					if (fw_dump == NULL)
-					{
-						fw_dump = fopen(filename, "w");
-						INFO_LOG(MAPLE, "Saving JVS firmware to %s", filename);
-						break;
-					}
-				}
-				if (fw_dump)
-				{
-					fwrite(ram, 1, 0x10000, fw_dump);
-					fclose(fw_dump);
-				}
-#endif
-				free(ram);
-				ram = NULL;
-				for (int i = 0; i < 32; i++)
-					jvs_repeat_request[i][0] = 0;
-
-				return MDRS_DeviceReply;
-			}
-			int xfer_bytes;
-			if (dma_buffer_in[0] == 0xff)
-				xfer_bytes = 0x1C;
-			else
-				xfer_bytes = 0x18;
-			u16 addr = (dma_buffer_in[2] << 8) + dma_buffer_in[3];
-			memcpy(ram + addr, &dma_buffer_in[4], xfer_bytes);
-			u8 sum = 0;
-			for (int i = 0; i < 0x1C; i++)
-				sum += dma_buffer_in[i];
-
-			w8(0x80);	// or 0x81 on bootrom?
-			w8(0);
-			w8(0x20);
-			w8(0x01);
-			w8(sum);
-			w8(0);
-			w8(0);
-			w8(0);
-
-			w8(MDRS_DeviceReply);
-			w8(0x00);
-			w8(0x20);
-			w8(0x00);
-		}
-		break;
-
-	case MDC_JVSGetId:
-		{
-			const char ID1[] = "315-6149    COPYRIGHT SEGA E";
-			const char ID2[] = "NTERPRISES CO,LTD.  1998    ";
-			w8(0x83);
-			w8(0x00);
-			w8(0x20);
-			w8(0x07);
-			wstr(ID1, 28);
-
-			w8(0x83);
-			w8(0x00);
-			w8(0x20);
-			w8(0x05);
-			wstr(ID2, 28);
-		}
-		break;
-
-	case MDC_DeviceRequest:
-		w8(MDRS_DeviceStatus);
-		w8(0x00);
-		w8(0x20);
-		w8(0x00);
-		break;
-
-	case MDC_AllStatusReq:
-		w8(MDRS_DeviceStatusAll);
-		w8(0x00);
-		w8(0x20);
-		w8(0x00);
-		break;
-
-	case MDC_DeviceReset:
-	case MDC_DeviceKill:
-		w8(MDRS_DeviceReply);
-		w8(0x00);
-		w8(0x20);
-		w8(0x00);
-		break;
-
-	case MDCF_GetCondition:
-		w8(MDRE_UnknownCmd);
-		w8(0x00);
-		w8(0x00);
-		w8(0x00);
-
-		break;
-
-	default:
-		INFO_LOG(MAPLE, "Unknown Maple command %x", cmd);
-		w8(MDRE_UnknownCmd);
-		w8(0x00);
-		w8(0x00);
-		w8(0x00);
-
-		break;
-	}
-
-#ifdef DUMP_JVS
-	printf("JVS OUT: ");
-	p = (u8 *)buffer_out;
-	for (int i = 0; i < out_len; i++) printf("%02x ", p[i]);
-	printf("\n");
-#endif
-
-	return out_len;
+	hotd2p = hash == 0xa6784e26;
+	if (hash == 0xa7c50459	// CT
+			|| hash == 0xae841e36	// HOTD2
+			|| hotd2p)
+		crazy_mode = true;
+	else
+		crazy_mode = false;
+	for (int i = 0; i < 32; i++)
+		jvs_repeat_request[i][0] = 0;
 }
 
-void maple_naomi_jamma::serialize(Serializer& ser) const
+void MIEImpl::serialize(Serializer& ser) const
 {
 	maple_base::serialize(ser);
 	ser << crazy_mode;
@@ -1983,7 +1986,7 @@ void maple_naomi_jamma::serialize(Serializer& ser) const
 	for (u32 i = 0; i < io_boards.size(); i++)
 		io_boards[i]->serialize(ser);
 }
-void maple_naomi_jamma::deserialize(Deserializer& deser)
+void MIEImpl::deserialize(Deserializer& deser)
 {
 	maple_base::deserialize(deser);
 	deser >> crazy_mode;
@@ -2016,7 +2019,7 @@ u16 jvs_io_board::read_analog_axis(int player_num, int player_axis, bool inverte
 #define JVS_OUT(b) buffer_out[length++] = b
 #define JVS_STATUS1() JVS_OUT(1)
 
-u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_out)
+u32 jvs_io_board::handle_jvs_message(const u8 *buffer_in, u32 length_in, u8 *buffer_out)
 {
 	u8 jvs_cmd = buffer_in[0];
 	if (jvs_cmd == 0xF0)		// JVS reset
@@ -2442,4 +2445,388 @@ void jvs_io_board::deserialize(Deserializer& deser)
 		deser >> coin_count;
 	else
 		memset(coin_count, 0, sizeof(coin_count));
+}
+
+// Emulates a 838-14245-92 maple to RS232 converter
+// wired to a 838-14243 RFID reader/writer (apparently Saxa HW210)
+struct RFIDReaderWriterImpl : public RFIDReaderWriter
+{
+	MapleDeviceType get_device_type() override {
+		return MDT_RFIDReaderWriter;
+	}
+	void OnSetup() override;
+
+	u32 RawDma(const u32 *buffer_in, u32 buffer_in_len, u32 *buffer_out) override;
+	u32 dma(u32 command) override;
+	void serialize(Serializer& ser) const override;
+	void deserialize(Deserializer& deser) override;
+
+	void insertCard();
+	const u8 *getCardData();
+	void setCardData(u8 *data);
+
+private:
+	u32 getStatus() const;
+	std::string getCardPath() const;
+	void loadCard();
+	void saveCard() const;
+
+	u8 cardData[128];
+	bool d4Seen = false;
+	bool cardInserted = false;
+	bool cardLocked = false;
+	bool transientData = false;
+};
+
+std::shared_ptr<maple_device> RFIDReaderWriter::Create() {
+	return std::make_shared<RFIDReaderWriterImpl>();
+}
+
+u32 RFIDReaderWriterImpl::getStatus() const
+{
+	// b0: !card switch
+	// b1: state=4	errors?
+	// b2: state=5
+	// b3: state=6
+	// b4: state=7
+	// b5: state=8
+	// b6: card lock
+	// when 0x40 trying to read the card
+	u32 status = 1;
+	if (cardInserted)
+		status &= ~1;
+	if (cardLocked)
+		status |= 0x40;
+	return status;
+}
+
+// Surprisingly recipient and sender aren't swapped in the 0xFE responses so we override RawDma for this reason
+// vf4tuned and mushiking do care
+u32 RFIDReaderWriterImpl::RawDma(const u32 *buffer_in, u32 buffer_in_len, u32 *buffer_out)
+{
+	const u32 len = BaseMIE::RawDma(buffer_in, buffer_in_len, buffer_out);
+	const u8 reply = *(u8 *)buffer_out;
+	if (reply == 0xfe)
+		std::swap(*((u8 *)buffer_out + 1), *((u8 *)buffer_out + 2));
+	return len;
+}
+
+u32 RFIDReaderWriterImpl::dma(u32 cmd)
+{
+	switch (cmd)
+	{
+	case MDC_DeviceRequest:
+	case MDC_AllStatusReq:
+		// custom function
+		w32(0x00100000);
+		// function flags
+		w32(0);
+		w32(0);
+		w32(0);
+		//1	area code
+		w8(0xff);				// FF: Worldwide, 01: North America
+		//1	direction
+		w8(0);
+		// Product name (totally made up)
+		wstr("MAPLE/232C CONVERT BD", 30);
+
+		// License (60)
+		wstr("Produced By or Under License From SEGA ENTERPRISES,LTD.", 60);
+
+		// Low-consumption standby current (2)
+		w16(0x0069);	// 10.5 mA
+
+		// Maximum current consumption (2)
+		w16(0x0120);	// 28.8 mA
+
+		return cmd == MDC_DeviceRequest ? MDRS_DeviceStatus : MDRS_DeviceStatusAll;
+
+	case MDCF_GetCondition:
+		w32(0x00100000); // custom function
+		return MDRS_DataTransfer;
+
+	// 90	get status
+	//
+	// read test:
+	// d0	?
+	// 91	get last cmd status?
+	// a0	?
+	// 91
+	// a1	read md5 in data
+	//			or data itself if after D4 xx xx xx xx
+	// d4	in=d2 03 aa db
+	// 91
+	//
+	// d9	lock
+	// da	unlock
+	//
+	// write test:
+	// D0
+	// 91
+	// B1 05 06 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 (28 bytes)
+	// 91
+	// B1 0b 06 00 00 00 00 c6 41 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 (28 bytes)
+	// 91
+	// B1 11 06 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 (28 bytes)
+	// 91
+	// B1 17 06 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 (28 bytes)
+	// 91
+	// B1 1d 03 00 00 00 00 00 00 00 00 00 00 00 00 00 00 (16 bytes)
+	// 91
+	// C1: 00 00 00 00
+	// 91
+
+	case 0xD0:
+		d4Seen = false;
+		[[fallthrough]];
+	case 0x90:
+	case 0x91:
+	case 0xA0:
+	case 0xD4:
+	case 0xC1:
+		w32(getStatus());
+		if (cmd == 0xd4)
+			d4Seen = true;
+		return (MapleDeviceRV)0xfe;
+
+	case 0xA1:	// read card data
+		DEBUG_LOG(JVS, "RFID card read (data? %d)", d4Seen);
+		w32(getStatus());
+		if (!d4Seen)
+			// serial0 and serial1 only
+			wptr(cardData, 8);
+		else
+			wptr(cardData, sizeof(cardData));
+		return (MapleDeviceRV)0xfe;
+
+	case 0xD9:	// lock card
+		cardLocked = true;
+		w32(getStatus());
+		INFO_LOG(JVS, "RFID card %d locked", player_num);
+		return (MapleDeviceRV)0xfe;
+
+	case 0xDA:	// unlock card
+		cardLocked = false;
+		cardInserted = false;
+		w32(getStatus());
+		NOTICE_LOG(JVS, "RFID card %d unlocked", player_num);
+		os_notify(i18n::T("Card ejected"), 2000);
+		return (MapleDeviceRV)0xfe;
+
+	case 0xB1:	// write to card
+		{
+			w32(getStatus());
+			u32 offset = r8() * 4;
+			size_t size = r8() * 4;
+			skip(2);
+			DEBUG_LOG(JVS, "RFID card write: offset 0x%x len %d", offset, (int)size);
+			rptr(cardData + offset, std::min(size, sizeof(cardData) - offset));
+			saveCard();
+			return (MapleDeviceRV)0xfe;
+		}
+
+	case 0xD1:	// decrement counter
+		{
+			int counter = r8();
+			switch (counter) {
+			case 0x03:
+				counter = 0;
+				break;
+			case 0x0c:
+				counter = 1;
+				break;
+			case 0x30:
+				counter = 2;
+				break;
+			case 0xc0:
+				counter = 3;
+				break;
+			default:
+				WARN_LOG(JVS, "Unknown counter selector %x", counter);
+				counter = 0;
+				break;
+			}
+			DEBUG_LOG(JVS, "RFID decrement %d", counter);
+			cardData[19 - counter]--;
+			saveCard();
+			w32(getStatus());
+			return (MapleDeviceRV)0xfe;
+		}
+
+	default:
+		return BaseMIE::dma(cmd);
+	}
+}
+
+void RFIDReaderWriterImpl::OnSetup()
+{
+	memset(cardData, 0, sizeof(cardData));
+	transientData = false;
+}
+
+std::string RFIDReaderWriterImpl::getCardPath() const
+{
+	int playerNum;
+	if (config::GGPOEnable && !config::ActAsServer)
+		// Always load P1 card with GGPO to be consistent with P1 inputs being used
+		playerNum = 1;
+	else
+		playerNum = player_num + 1;
+	return hostfs::getArcadeFlashPath() + "-p" + std::to_string(playerNum) + ".card";
+}
+
+void RFIDReaderWriterImpl::loadCard()
+{
+	if (transientData)
+		return;
+	std::string path = getCardPath();
+	FILE *fp = nowide::fopen(path.c_str(), "rb");
+	if (fp == nullptr)
+	{
+		if (settings.content.gameId.substr(0, 8) == "MKG TKOB")
+		{
+			constexpr u8 MUSHIKING_CHIP_DATA[128] = {
+				0x12, 0x34, 0x56, 0x78, // Serial No.0
+				0x31, 0x00, 0x86, 0x07, // Serial No.1
+				0x00, 0x00, 0x00, 0x00, // Key
+				0x04, 0xf6, 0x00, 0xAA, // Extend  Extend  Access  Mode
+				0x23, 0xFF, 0xFF, 0xFF, // Counter4  Counter3  Counter2  Counter1
+				0x00, 0x00, 0x00, 0x00, // User Data (first set date: day bits 0-4, month bits 5-8, year bits 9-... + 2000)
+				0x00, 0x00, 0x00, 0x00, // User Data
+				0x00, 0x00, 0x00, 0x00, // User Data
+				0x00, 0x00, 0x00, 0x00, // User Data
+				0x00, 0x00, 0x00, 0x00, // User Data
+				0x00, 0x00, 0x00, 0x00, // User Data
+				0x23, 0xFF, 0xFF, 0xFF, // User Data (max counters)
+			};
+			memcpy(cardData, MUSHIKING_CHIP_DATA, sizeof(MUSHIKING_CHIP_DATA));
+			for (int i = 0; i < 8; i++)
+				cardData[i] = rand() & 0xff;
+			u32 mask = 0;
+			if (settings.content.gameId == "MKG TKOB 2 JPN VER2.001-"			// mushik2e
+					|| settings.content.gameId == "MKG TKOB 4 JPN VER2.000-")	// mushik4e
+				mask = 0x40;
+			cardData[4] &= ~0xc0;
+			cardData[4] |= mask;
+
+			u32 serial1 = (cardData[4] << 24) | (cardData[5] << 16) | (cardData[6] << 8) | cardData[7];
+			u32 key = ~serial1;
+			key = ((key >> 4) & 0x0f0f0f0f)
+				  | ((key << 4) & 0xf0f0f0f0);
+			cardData[8] = key >> 24;
+			cardData[9] = key >> 16;
+			cardData[10] = key >> 8;
+			cardData[11] = key;
+		}
+		else
+		{
+			constexpr u8 VF4_CARD_DATA[128] = {
+					0x10,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   4,0x6c,   0,   0,
+					   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+					   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+					   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+					   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+					   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+					   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+					   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,0xff
+			};
+			memcpy(cardData, VF4_CARD_DATA, sizeof(VF4_CARD_DATA));
+			// Generate random bytes used by vf4 vanilla to make the card id
+			srand(time(0));
+			cardData[2] = rand() & 0xff;
+			cardData[4] = rand() & 0xff;
+			cardData[5] = rand() & 0xff;
+			cardData[6] = rand() & 0xff;
+			cardData[7] = rand() & 0xff;
+		}
+		INFO_LOG(NAOMI, "Card P%d initialized", player_num + 1);
+	}
+	else
+	{
+		INFO_LOG(NAOMI, "Loading card file from %s", path.c_str());
+		if (fread(cardData, 1, sizeof(cardData), fp) != sizeof(cardData))
+			WARN_LOG(NAOMI, "Truncated or empty card file: %s" ,path.c_str());
+		fclose(fp);
+	}
+}
+
+void RFIDReaderWriterImpl::saveCard() const
+{
+	if (transientData)
+		return;
+	std::string path = getCardPath();
+	FILE *fp = nowide::fopen(path.c_str(), "wb");
+	if (fp == nullptr)
+	{
+		WARN_LOG(NAOMI, "Can't create card file %s: errno %d", path.c_str(), errno);
+		return;
+	}
+	INFO_LOG(NAOMI, "Saving card file to %s", path.c_str());
+	if (fwrite(cardData, 1, sizeof(cardData), fp) != sizeof(cardData))
+		WARN_LOG(NAOMI, "Truncated write to file: %s", path.c_str());
+	fclose(fp);
+}
+
+void RFIDReaderWriterImpl::serialize(Serializer& ser) const
+{
+	BaseMIE::serialize(ser);
+	ser << cardData;
+	ser << d4Seen;
+	ser << cardInserted;
+	ser << cardLocked;
+}
+void RFIDReaderWriterImpl::deserialize(Deserializer& deser)
+{
+	BaseMIE::deserialize(deser);
+	deser >> cardData;
+	deser >> d4Seen;
+	deser >> cardInserted;
+	deser >> cardLocked;
+}
+
+void RFIDReaderWriterImpl::insertCard()
+{
+	if (!cardInserted) {
+		cardInserted = true;
+		loadCard();
+	}
+	else if (!cardLocked)
+	{
+		cardInserted = false;
+		if (!transientData)
+			memset(cardData, 0, sizeof(cardData));
+	}
+}
+
+const u8 *RFIDReaderWriterImpl::getCardData() {
+	loadCard();
+	return cardData;
+}
+
+void RFIDReaderWriterImpl::setCardData(u8 *data) {
+	memcpy(cardData, data, sizeof(cardData));
+	transientData = true;
+}
+
+void insertRfidCard(int playerNum)
+{
+	std::shared_ptr<maple_device> mapleDev = MapleDevices[1 + playerNum][5];
+	if (mapleDev != nullptr && mapleDev->get_device_type() == MDT_RFIDReaderWriter)
+		std::static_pointer_cast<RFIDReaderWriterImpl>(mapleDev)->insertCard();
+}
+
+void setRfidCardData(int playerNum, u8 *data)
+{
+	std::shared_ptr<maple_device> mapleDev = MapleDevices[1 + playerNum][5];
+	if (mapleDev != nullptr && mapleDev->get_device_type() == MDT_RFIDReaderWriter)
+		std::static_pointer_cast<RFIDReaderWriterImpl>(mapleDev)->setCardData(data);
+}
+
+const u8 *getRfidCardData(int playerNum)
+{
+	std::shared_ptr<maple_device> mapleDev = MapleDevices[1 + playerNum][5];
+	if (mapleDev != nullptr && mapleDev->get_device_type() == MDT_RFIDReaderWriter)
+		return std::static_pointer_cast<RFIDReaderWriterImpl>(mapleDev)->getCardData();
+	else
+		return nullptr;
 }

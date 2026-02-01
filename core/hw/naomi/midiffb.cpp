@@ -24,6 +24,7 @@
 #include "input/haptic.h"
 #include "oslib/oslib.h"
 #include "network/output.h"
+#include "oslib/i18n.h"
 
 namespace midiffb {
 
@@ -72,7 +73,7 @@ static void midiReceiver(u8 data)
 				haptic::stopAll(0);
 				if (calibrating) {
 					calibrating = false;
-					os_notify("Calibration done", 2000);
+					os_notify(i18n::T("Calibration done"), 2000);
 				}
 			}
 			else if (midiTxBuf[2] == 1)
@@ -197,7 +198,7 @@ static void midiReceiver(u8 data)
 		case 0x7f:
 			// Reset board
 			// FIXME also set when entering the service menu (kingrt66)
-			os_notify("Calibrating the wheel. Keep it centered.", 10000);
+			os_notify(i18n::T("Calibrating the wheel. Keep it centered."), 10000);
 			calibrating = true;
 			haptic::setSpring(0, 0.8f, 1.f);
 			position = 8192.f;

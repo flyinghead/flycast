@@ -343,9 +343,7 @@ void VulkanContext::InitImgui()
 #endif
 
 	if (!ImGui_ImplVulkan_Init(&initInfo))
-	{
-		die("ImGui initialization failed");
-	}
+		throw FlycastException("Vulkan ImGui initialization failed");
 }
 
 bool VulkanContext::InitDevice()
@@ -398,8 +396,10 @@ bool VulkanContext::InitDevice()
 				}
 			}
 		}
-		if (graphicsQueueIndex == queueFamilyProperties.size() || presentQueueIndex == queueFamilyProperties.size())
-			die("Could not find a queue for graphics or present -> terminating");
+		if (graphicsQueueIndex == queueFamilyProperties.size() || presentQueueIndex == queueFamilyProperties.size()) {
+			ERROR_LOG(RENDERER, "Could not find a queue for graphics or present");
+			return false;
+		}
 		if (graphicsQueueIndex == presentQueueIndex)
 			DEBUG_LOG(RENDERER, "Using Graphics+Present queue family");
 		else
@@ -633,6 +633,8 @@ void VulkanContext::CreateSwapChain()
 		commandPools.clear();
 		for (auto& img : imageViews)
 			img.reset();
+		rendering = false;
+		renderDone = false;
 
 		// Determine surface format and color-space
 		std::vector<vk::SurfaceFormatKHR> surfaceFormats = physicalDevice.getSurfaceFormatsKHR(GetSurface());
@@ -762,6 +764,10 @@ void VulkanContext::CreateSwapChain()
 		}
 
 	    depthFormat = findDepthFormat(physicalDevice);
+		if (depthFormat == vk::Format::eUndefined) {
+			SetWindowSize(0, 0);
+			throw InvalidVulkanContext();
+		}
 
 	    // Render pass
 	    vk::AttachmentDescription attachmentDescription = vk::AttachmentDescription(vk::AttachmentDescriptionFlags(), presentFormat, vk::SampleCountFlagBits::e1,
@@ -907,9 +913,14 @@ void VulkanContext::NewFrame()
 	vk::Result res = device->acquireNextImageKHR(*swapChain, UINT64_MAX, *imageAcquiredSemaphores[currentSemaphore], nullptr, &currentImage);
 	if (res != vk::Result::eSuccess)
 		throw InvalidVulkanContext();
-	res = device->waitForFences(*drawFences[currentImage], true, UINT64_MAX);
-	if (res != vk::Result::eSuccess)
-		throw InvalidVulkanContext();
+	try {
+		res = device->waitForFences(*drawFences[currentImage], true, UINT64_MAX);
+		if (res != vk::Result::eSuccess)
+			throw InvalidVulkanContext();
+	} catch (const vk::SystemError& e) {
+		WARN_LOG(RENDERER, "vk:SystemError: %s", e.what());
+		throw FlycastException("Vulkan system error");
+	}
 	device->resetCommandPool(*commandPools[currentImage], vk::CommandPoolResetFlagBits::eReleaseResources);
 	inFlightObjects[currentImage].clear();
 	vk::CommandBuffer commandBuffer = *commandBuffers[currentImage];
@@ -1109,9 +1120,12 @@ void VulkanContext::term()
 	if (device && !drawFences.empty())
 	{
 		std::vector<vk::Fence> allFences = vk::uniqueToRaw(drawFences);
-		vk::Result res = device->waitForFences(allFences, true, UINT64_MAX);
-		if (res != vk::Result::eSuccess)
-			WARN_LOG(RENDERER, "VulkanContext::term: waitForFences failed %d", (int)res);
+		try {
+			vk::Result res = device->waitForFences(allFences, true, UINT64_MAX);
+			if (res != vk::Result::eSuccess)
+				INFO_LOG(RENDERER, "VulkanContext::term: waitForFences failed %d", (int)res);
+		} catch (const vk::SystemError& e) {
+		}
 	}
 	inFlightObjects.clear();
 	imguiDriver.reset();

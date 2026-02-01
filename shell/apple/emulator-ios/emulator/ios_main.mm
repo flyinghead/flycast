@@ -39,10 +39,6 @@ int darw_printf(const char* text,...)
 void os_DoEvents() {
 }
 
-std::string os_Locale(){
-    return [[[NSLocale preferredLanguages] objectAtIndex:0] UTF8String];
-}
-
 std::string os_PrecomposedString(std::string string){
     return [[[NSString stringWithUTF8String:string.c_str()] precomposedStringWithCanonicalMapping] UTF8String];
 }

@@ -39101,12 +39101,12 @@ struct retro_core_options_v2 options_ga = {
 #define OPTION_VAL_500_GL NULL
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_GL "Carga as texturas personalizadas"
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_INFO_0_GL "Carga texturas personalizadas situadas no cartafol \"system/dc/textures/<game-id>/\"."
-#define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_LABEL_GL NULL
-#define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_INFO_0_GL NULL
+#define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_LABEL_GL "Precargar texturas personalizadas"
+#define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_INFO_0_GL "Precarga as texturas personalizadas ao iniciar o xogo. Pode mellorar o rendemento, pero aumenta o uso de memoria."
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_GL "Texturas de volcado"
 #define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_GL "Cada vez que o xogo use unha textura nova, gardarase como ficheiro .png no cartafol 'system/dc/texdump/<game-id>/'."
-#define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_GL NULL
-#define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_INFO_0_GL NULL
+#define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_GL "Exportar texturas substituídas"
+#define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_INFO_0_GL "Exporta sempre as texturas que xa foron substituídas por texturas personalizadas."
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_GL "Zona morta panca analóxica"
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_INFO_0_GL "Selecciona ata onde tes que empuxar o stick analóxico antes de que comece a procesarse."
 #define OPTION_VAL_0_GL NULL
@@ -63457,7 +63457,7 @@ struct retro_core_options_v2 options_pl = {
 #define CATEGORY_VIDEO_LABEL_PT_BR "Vídeo"
 #define CATEGORY_VIDEO_INFO_0_PT_BR "Altera as configurações de resolução, transparência e efeitos visuais."
 #define CATEGORY_PERFORMANCE_LABEL_PT_BR "Desempenho"
-#define CATEGORY_PERFORMANCE_INFO_0_PT_BR "Altera as configurações de renderização multithread e pulo de quadro."
+#define CATEGORY_PERFORMANCE_INFO_0_PT_BR "Altera as configurações da renderização multithread e pulo de quadros."
 #define CATEGORY_HACKS_LABEL_PT_BR "Hacks de emulação"
 #define CATEGORY_HACKS_INFO_0_PT_BR "Altera as configurações de tela panorâmica, velocidade de carregamento do GD-ROM e substituição de textura."
 #define CATEGORY_INPUT_LABEL_PT_BR "Entrada"
@@ -63540,7 +63540,7 @@ struct retro_core_options_v2 options_pl = {
 #define OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_PT_BR "Faixa (rapidez)"
 #define OPTION_VAL_PER_TRIANGLE_NORMAL_PT_BR "Triângulo (normal)"
 #define OPTION_VAL_PER_PIXEL_ACCURATE_PT_BR "Píxel (precisão)"
-#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_PT_BR "Memória intermédia da acumulação de píxel"
+#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_PT_BR "Buffer da acumulação de píxel"
 #define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_INFO_0_PT_BR "Valores maiores podem ser necessários em resoluções maiores."
 #define OPTION_VAL_512MB_PT_BR "512 MB"
 #define OPTION_VAL_1GB_PT_BR "1 GB"
@@ -63550,7 +63550,7 @@ struct retro_core_options_v2 options_pl = {
 #define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_PT_BR "Valores maiores podem se necessários em cenários complexos."
 #define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_PT_BR "Emulação completa de framebuffer"
 #define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_PT_BR "Ativa a emulação completa de framebuffer na VRAM. É útil em jogos que leem ou gravam o framebuffer na VRAM.\nOBSERVAÇÃO: a resolução interna é forçada à 640x480 e o desempenho pode ser gravemente afetado."
-#define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_PT_BR "Ativar memória intermédia RTT (renderização para texturas)"
+#define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_PT_BR "Ativar buffer RTT (renderização para texturas)"
 #define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_PT_BR "Copia as texturas renderizadas da GPU de volta para a VRAM. É normalmente ativada em jogos que necessitam dessa opção.\nOBSERVAÇÃO: a mudança de escala (upscaling) da renderização de textura é desativada e o desempenho pode ser afetado."
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_PT_BR "Piramidar (mipmapping)"
 #define CORE_OPTION_NAME_MIPMAPPING_INFO_0_PT_BR "As texturas usam uma versão menor delas mesmas, ao aparecer mais de longe, pode aumentar o desempenho e reduzir a tremeluzência."
@@ -63566,7 +63566,7 @@ struct retro_core_options_v2 options_pl = {
 #define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_PT_BR "Atrasar troca de quadro"
 #define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_PT_BR "Útil para evitar telas intermitentes ou defeitos de vídeo.\nOBSERVAÇÃO: não é recomendado em plataformas lentas."
 #define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_PT_BR "Detectar alterações da taxa de quadros"
-#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_PT_BR "Notifica quando a taxa de quadros interna é alterada (por ex.: de 60 qps para 30 qps). Otimiza a frequência de quadros em jogos travados a 30 qps ou 20 qps, mas não deve ser habilitado em jogos com taxa de quadros instável (por ex.: Ecco the Dolphin, Unreal Tournament etc.).\nOBSERVAÇÃO: requer \"Pulo de quadro automático\" desativado."
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_PT_BR "Notifica quando a taxa de quadros interna é alterada (por ex.: de 60 qps para 30 qps). Otimiza a frequência de quadros em jogos travados a 30 qps ou 20 qps, mas não deve ser habilitado em jogos com taxa de quadros instável (por ex.: Ecco the Dolphin, Unreal Tournament etc.). OBSERVAÇÃO: requer \"Pulo de quadros automático\" desativado."
 #define CORE_OPTION_NAME_PVR2_FILTERING_LABEL_PT_BR "Filtro de pós-processamento (PowerVR2)"
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_PT_BR "Processa a imagem renderizada para simular efeitos específicos da GPU PowerVR2 e sinais de vídeo analógicos."
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_PT_BR "Mudar escala de textura (xBRZ)"
@@ -63582,7 +63582,7 @@ struct retro_core_options_v2 options_pl = {
 #define CORE_OPTION_NAME_FIX_UPSCALE_BLEEDING_EDGE_INFO_0_PT_BR "Ajuda com vazamento de textura ao mudar escala. Desativar pode ajudar se os píxeis são deformados pela mudança de escala em jogos 2D (MVC2, CVS, KOF etc.)"
 #define CORE_OPTION_NAME_THREADED_RENDERING_LABEL_PT_BR "Renderização multithread"
 #define CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_PT_BR "Executa a GPU e a CPU em diferentes threads. Altamente recomendado."
-#define CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_PT_BR "Pulo de quadro automático"
+#define CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_PT_BR "Pulo de quadros automático"
 #define CORE_OPTION_NAME_AUTO_SKIP_FRAME_INFO_0_PT_BR "Pula quadros automaticamente quando o emulador está lento.\nOBSERVAÇÃO: requer \"Renderização multithread\" ativada."
 #define OPTION_VAL_SOME_PT_BR NULL
 #define OPTION_VAL_MORE_PT_BR "Máximo"

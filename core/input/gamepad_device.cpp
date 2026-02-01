@@ -683,9 +683,9 @@ void GamepadDevice::detectInput(bool combo, input_detected_cb input_changed)
 #ifdef TEST_AUTOMATION
 static FILE *get_record_input(bool write)
 {
-	if (write && !cfgLoadBool("record", "record_input", false))
+	if (write && !config::loadBool("record", "record_input", false))
 		return NULL;
-	if (!write && !cfgLoadBool("record", "replay_input", false))
+	if (!write && !config::loadBool("record", "replay_input", false))
 		return NULL;
 	std::string game_dir = settings.content.path;
 	size_t slash = game_dir.find_last_of("/");
@@ -697,7 +697,7 @@ static FILE *get_record_input(bool write)
 
 void GamepadDevice::Register(const std::shared_ptr<GamepadDevice>& gamepad)
 {
-	int maple_port = cfgLoadInt("input",
+	int maple_port = config::loadInt("input",
 			MAPLE_PORT_CFG_PREFIX + gamepad->unique_id(), 12345);
 	if (maple_port != 12345)
 		gamepad->set_maple_port(maple_port);
@@ -733,7 +733,7 @@ void GamepadDevice::SaveMaplePorts()
 	{
 		std::shared_ptr<GamepadDevice> gamepad = GamepadDevice::GetGamepad(i);
 		if (gamepad != NULL && !gamepad->unique_id().empty())
-			cfgSaveInt("input", MAPLE_PORT_CFG_PREFIX + gamepad->unique_id(), gamepad->maple_port());
+			config::saveInt("input", MAPLE_PORT_CFG_PREFIX + gamepad->unique_id(), gamepad->maple_port());
 	}
 }
 

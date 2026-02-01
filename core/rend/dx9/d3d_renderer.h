@@ -20,6 +20,7 @@
 #include "types.h"
 #include <array>
 #include "hw/pvr/Renderer_if.h"
+#include "hw/pvr/ta_ctx.h"
 #include <d3d9.h>
 #include "dxcontext.h"
 #include "rend/transform_matrix.h"
@@ -179,5 +180,6 @@ private:
 	int maxAnisotropy = 1;
 	float aspectRatio = 4.f / 3.f;
 	bool dithering = false;
+	rend_context *rendContext;
 };
 

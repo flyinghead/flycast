@@ -19,12 +19,13 @@
 #ifdef USE_OBOE
 #include "audiostream.h"
 #include "cfg/option.h"
+#include "stdclass.h"
+#include "oslib/i18n.h"
 #include <oboe/Oboe.h>
 #include <vector>
 #include <algorithm>
 #include <atomic>
 #include <memory>
-#include "stdclass.h"
 
 class OboeBackend : AudioBackend
 {
@@ -77,7 +78,7 @@ class OboeBackend : AudioBackend
 
 public:
 	OboeBackend()
-		: AudioBackend("Oboe", "Automatic AAudio / OpenSL selection"), audioCallback(this), errorCallback(this) {}
+		: AudioBackend("Oboe", Tnop("Automatic AAudio / OpenSL selection")), audioCallback(this), errorCallback(this) {}
 
 	bool init() override
 	{
@@ -194,6 +195,11 @@ public:
 			initRecord(sampleRate);
 		}
 		return std::max(0, result.value());
+	}
+
+
+	std::string getName() const override {
+		return i18n::Ts(name);
 	}
 };
 static OboeBackend oboeBackend;

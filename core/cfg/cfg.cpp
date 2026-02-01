@@ -1,37 +1,33 @@
 #include "cfg.h"
 #include "ini.h"
 #include "stdclass.h"
-
 #include <cerrno>
 
+namespace config
+{
+
 static std::string cfgPath;
-static bool save_config = true;
-static bool autoSave = true;
+static bool autoSaving = true;
+static IniFile cfgdb;
 
-static emucfg::ConfigFile cfgdb;
-
-static void saveConfigFile()
+static void saveFile()
 {
 	FILE* cfgfile = nowide::fopen(cfgPath.c_str(), "wt");
-	if (!cfgfile)
-	{
+	if (!cfgfile) {
 		WARN_LOG(COMMON, "Error: Unable to open file '%s' for saving", cfgPath.c_str());
 	}
-	else
-	{
+	else {
 		cfgdb.save(cfgfile);
 		std::fclose(cfgfile);
 	}
 }
-void cfgSaveStr(const std::string& section, const std::string& key, const std::string& value)
-{
-	cfgdb.set(section, key, value);
 
-	if (save_config && autoSave)
-		saveConfigFile();
+static void autoSave() {
+	if (autoSaving)
+		saveFile();
 }
 
-bool cfgOpen()
+bool open()
 {
 	if (get_writable_config_path("").empty())
 		// Config dir not set (android onboarding)
@@ -41,9 +37,9 @@ bool cfgOpen()
 	std::string config_path_read = get_readonly_config_path(filename);
 	cfgPath = get_writable_config_path(filename);
 
-	FILE* cfgfile = nowide::fopen(config_path_read.c_str(), "r");
-	if(cfgfile != NULL) {
-		cfgdb.parse(cfgfile);
+	FILE* cfgfile = nowide::fopen(config_path_read.c_str(), "rt");
+	if (cfgfile != nullptr) {
+		cfgdb.load(cfgfile);
 		std::fclose(cfgfile);
 	}
 	else
@@ -55,87 +51,81 @@ bool cfgOpen()
 		{
 			// Config file didn't exist
 			INFO_LOG(COMMON, "Creating new empty config file at '%s'", cfgPath.c_str());
-			saveConfigFile();
-		}
-		else
-		{
-			// There was some other error (may be a permissions problem or something like that)
-			save_config = false;
+			saveFile();
 		}
 	}
 
 	return true;
 }
 
-std::string cfgLoadStr(const std::string& section, const std::string& key, const std::string& def)
-{
-	return cfgdb.get(section, key, def);
+void saveStr(const std::string& section, const std::string& key, const std::string& value) {
+	cfgdb.set(section, key, value);
+	autoSave();
 }
 
-void  cfgSaveInt(const std::string& section, const std::string& key, s32 value)
-{
-	cfgSaveStr(section, key, std::to_string(value));
+std::string loadStr(const std::string& section, const std::string& key, const std::string& def) {
+	return cfgdb.getString(section, key, def);
 }
 
-s32 cfgLoadInt(const std::string& section, const std::string& key, s32 def)
-{
-	return cfgdb.get_int(section, key, def);
+void saveInt(const std::string& section, const std::string& key, int value) {
+	cfgdb.set(section, key, value);
+	autoSave();
 }
 
-int64_t cfgLoadInt64(const std::string& section, const std::string& key, int64_t def) {
-	return cfgdb.get_int64(section, key, def);
-}
-void cfgSaveInt64(const std::string& section, const std::string& key, int64_t value) {
-	cfgdb.set_int64(section, key, value);
+int loadInt(const std::string& section, const std::string& key, int def) {
+	return cfgdb.getInt(section, key, def);
 }
 
-void  cfgSaveBool(const std::string& section, const std::string& key, bool value)
-{
-	cfgSaveStr(section, key, value ? "yes" : "no");
+int64_t loadInt64(const std::string& section, const std::string& key, int64_t def) {
+	return cfgdb.getInt64(section, key, def);
+}
+void saveInt64(const std::string& section, const std::string& key, int64_t value) {
+	cfgdb.set(section, key, value);
+	autoSave();
 }
 
-bool  cfgLoadBool(const std::string& section, const std::string& key, bool def)
-{
-	return cfgdb.get_bool(section, key, def);
+void saveBool(const std::string& section, const std::string& key, bool value) {
+	cfgdb.set(section, key, value);
+	autoSave();
 }
 
-void cfgSetVirtual(const std::string& section, const std::string& key, const std::string& value)
-{
+bool loadBool(const std::string& section, const std::string& key, bool def) {
+	return cfgdb.getBool(section, key, def);
+}
+
+void setTransient(const std::string& section, const std::string& key, const std::string& value) {
 	cfgdb.set(section, key, value, true);
 }
 
-bool cfgIsVirtual(const std::string& section, const std::string& key)
-{
-	return cfgdb.is_virtual(section, key);
+bool isTransient(const std::string& section, const std::string& key) {
+	return cfgdb.isTransient(section, key);
 }
 
-bool cfgHasSection(const std::string& section)
-{
-	return cfgdb.has_section(section);
+bool hasSection(const std::string& section) {
+	return cfgdb.hasSection(section);
 }
 
-void cfgDeleteSection(const std::string& section)
-{
-	cfgdb.delete_section(section);
+void deleteSection(const std::string& section) {
+	cfgdb.deleteSection(section);
 }
 
-void cfgDeleteEntry(const std::string& section, const std::string& key)
-{
-	cfgdb.delete_entry(section, key);
+void deleteEntry(const std::string& section, const std::string& key) {
+	cfgdb.deleteEntry(section, key);
 }
 
-void cfgSetAutoSave(bool autoSave)
+void setAutoSave(bool autoSaving)
 {
-	::autoSave = autoSave;
-	if (autoSave)
-		saveConfigFile();
+	config::autoSaving = autoSaving;
+	if (autoSaving)
+		saveFile();
 }
 
-void cfgSaveFloat(const std::string& section, const std::string& key, float value)
-{
-	cfgdb.set_float(section, key, value);
+void saveFloat(const std::string& section, const std::string& key, float value) {
+	cfgdb.set(section, key, value);
+	autoSave();
 }
-float cfgLoadFloat(const std::string& section, const std::string& key, float def)
-{
-	return cfgdb.get_float(section, key, def);
+float loadFloat(const std::string& section, const std::string& key, float def) {
+	return cfgdb.getFloat(section, key, def);
 }
+
+}	// namespace config

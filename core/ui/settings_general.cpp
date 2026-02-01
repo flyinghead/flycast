@@ -35,7 +35,7 @@ static void managePathListCallback(std::string selection)
     }
 }
 
-static void manageSinglePath(const char* label, config::Option<std::string, false>& pathOption, const char* helpText)
+static void manageSinglePath(const char* label, const char *popupName, config::Option<std::string, false>& pathOption, const char* helpText)
 {
     ImVec2 size;
     size.x = 0.0f;
@@ -48,7 +48,7 @@ static void manageSinglePath(const char* label, config::Option<std::string, fals
         ImGui::AlignTextToFramePadding();
         if (pathOption.get().empty()) {
             ImguiStyleVar _(ImGuiStyleVar_FramePadding, ScaledVec2(24, 3));
-            std::string buttonLabel = std::string("Set##") + label;
+            std::string buttonLabel = T("Set") + std::string("##") + label;
             openPopup = ImGui::Button(buttonLabel.c_str());
         }
         else
@@ -69,17 +69,16 @@ static void manageSinglePath(const char* label, config::Option<std::string, fals
     
     static std::string *pCurrentPath;
     pCurrentPath = &pathOption.get();
-    const std::string popupName = std::string("Select ") + label;
-    select_file_popup(popupName.c_str(), [](bool cancelled, std::string selection) {
+    select_file_popup(popupName, [](bool cancelled, std::string selection) {
     	if (!cancelled)
     		*pCurrentPath = selection;
     	return true;
     });
     if (openPopup)
-        ImGui::OpenPopup(popupName.c_str());
+        ImGui::OpenPopup(T(popupName));
 }
 
-static void managePathList(const char* label, std::vector<std::string>& paths, const char* helpText)
+static void managePathList(const char* label, const char *popupName, std::vector<std::string>& paths, const char* helpText)
 {
     ImguiID _(label);
     ImVec2 size;
@@ -106,7 +105,7 @@ static void managePathList(const char* label, std::vector<std::string>& paths, c
         }
 
         ImguiStyleVar _(ImGuiStyleVar_FramePadding, ScaledVec2(24, 3));
-        std::string buttonLabel = std::string("Add##") + label;
+        std::string buttonLabel = T("Add") + std::string("##") + label;
         openPopup = ImGui::Button(buttonLabel.c_str());
 
         endFrame();
@@ -120,10 +119,9 @@ static void managePathList(const char* label, std::vector<std::string>& paths, c
     ShowHelpMarker(helpText);
 
     // Handle file selection popup (following the same pattern as addContentPath)
-    std::string popupTitle = std::string("Select ") + label;
     if (openPopup)
 	    g_currentPathList = &paths;
-    select_file_popup(popupTitle.c_str(), [](bool cancelled, std::string selection) {
+    select_file_popup(popupName, [](bool cancelled, std::string selection) {
     	if (!cancelled)
     		managePathListCallback(selection);
     	return true;
@@ -131,16 +129,16 @@ static void managePathList(const char* label, std::vector<std::string>& paths, c
 #ifdef __ANDROID__
     if (openPopup)
     {
-		bool supported = hostfs::addStorage(true, false, popupTitle, [](bool cancelled, std::string selection) {
+		bool supported = hostfs::addStorage(true, false, T(popupName), [](bool cancelled, std::string selection) {
 			if (!cancelled)
 				managePathListCallback(selection);
 		});
 		if (!supported)
-			ImGui::OpenPopup(popupTitle.c_str());
+			ImGui::OpenPopup(T(popupName));
     }
 #else
     if (openPopup)
-        ImGui::OpenPopup(popupTitle.c_str());
+        ImGui::OpenPopup(T(popupName));
 #endif
 }
 
@@ -160,7 +158,7 @@ static void addContentPathCallback(const std::string& path)
 
 void addContentPath(bool start)
 {
-    const char *title = "Select a Content Folder";
+    const char *title = T("Select a Content Folder");
     select_file_popup(title, [](bool cancelled, std::string selection) {
 		if (!cancelled)
 			addContentPathCallback(selection);
@@ -187,29 +185,29 @@ void gui_settings_general()
 	{
 		DisabledScope scope(settings.platform.isArcade());
 
-		const char *languages[] = { "Japanese", "English", "German", "French", "Spanish", "Italian", "Default" };
-		OptionComboBox("Language", config::Language, languages, std::size(languages),
-			"The language as configured in the Dreamcast BIOS");
+		const char *languages[] = { T("Japanese"), T("English"), T("German"), T("French"), T("Spanish"), T("Italian"), T("Default") };
+		OptionComboBox(T("Language"), config::Language, languages, std::size(languages),
+				T("The language as configured in the Dreamcast BIOS"));
 
-		const char *broadcast[] = { "NTSC", "PAL", "PAL/M", "PAL/N", "Default" };
-		OptionComboBox("Broadcast", config::Broadcast, broadcast, std::size(broadcast),
-				"TV broadcasting standard for non-VGA modes");
+		const char *broadcast[] = { "NTSC", "PAL", "PAL/M", "PAL/N", T("Default") };
+		OptionComboBox(T("Broadcast"), config::Broadcast, broadcast, std::size(broadcast),
+				T("TV broadcasting standard for non-VGA modes"));
 	}
 
-	const char *consoleRegion[] = { "Japan", "USA", "Europe", "Default" };
-	const char *arcadeRegion[] = { "Japan", "USA", "Export", "Korea" };
+	const char *consoleRegion[] = { T("Japan"), T("USA"), T("Europe"), T("Default") };
+	const char *arcadeRegion[] = { T("Japan"), T("USA"), i18n::translateCtx("region", "Export"), T("Korea") };
 	const char **region = settings.platform.isArcade() ? arcadeRegion : consoleRegion;
-	OptionComboBox("Region", config::Region, region, std::size(consoleRegion),
-				"BIOS region");
+	OptionComboBox(T("Region"), config::Region, region, std::size(consoleRegion),
+			T("BIOS region"));
 
-	const char *cable[] = { "VGA", "RGB Component", "TV Composite" };
+	const char *cable[] = { T("VGA"), T("RGB Component"), T("TV Composite") };
 	{
 		DisabledScope scope(config::Cable.isReadOnly() || settings.platform.isArcade());
 
 		const char *value = config::Cable == 0 ? cable[0]
 				: config::Cable > 0 && config::Cable <= (int)std::size(cable) ? cable[config::Cable - 1]
 				: "?";
-		if (ImGui::BeginCombo("Cable", value, ImGuiComboFlags_None))
+		if (ImGui::BeginCombo(T("Cable"), value, ImGuiComboFlags_None))
 		{
 			for (int i = 0; i < IM_ARRAYSIZE(cable); i++)
 			{
@@ -222,7 +220,7 @@ void gui_settings_general()
 			ImGui::EndCombo();
 		}
         ImGui::SameLine();
-        ShowHelpMarker("Video connection type");
+        ShowHelpMarker(T("Video connection type"));
 	}
 
 #if !defined(TARGET_IPHONE)
@@ -232,7 +230,7 @@ void gui_settings_general()
     				* (config::ContentPath.get().size() + 1);
 
     ImVec2 childSize;
-    if (beginFrame("Content Location", size, &childSize))
+    if (beginFrame(T("Content Location"), size, &childSize))
     {
     	int to_delete = -1;
         for (u32 i = 0; i < config::ContentPath.get().size(); i++)
@@ -249,11 +247,11 @@ void gui_settings_general()
         }
 
         ImguiStyleVar _(ImGuiStyleVar_FramePadding, ScaledVec2(24, 3));
-        const bool addContent = ImGui::Button("Add##ContentLocation");
+        const bool addContent = ImGui::Button((T("Add") + std::string("##") + "ContentLocation").c_str());
         addContentPath(addContent);
         ImGui::SameLine();
 
-        if (ImGui::Button("Rescan Content"))
+        if (ImGui::Button(T("Rescan Content")))
 			scanner.refresh();
 
 		endFrame();
@@ -265,13 +263,13 @@ void gui_settings_general()
     	}
     }
     ImGui::SameLine();
-    ShowHelpMarker("The folders where your games are stored");
+    ShowHelpMarker(T("The folders where your games are stored"));
 
     size.y = ImGui::GetTextLineHeightWithSpacing() + ImGui::GetStyle().FramePadding.y * 2.0f;
     ImGui::Spacing();
 
 #if defined(__linux__) && !defined(__ANDROID__)
-    if (beginFrame("Data Folder", size, &childSize))
+    if (beginFrame(T("Data Folder"), size, &childSize))
     {
     	float w = childSize.x - ImGui::GetStyle().FramePadding.x;
     	std::string s = middleEllipsis(get_writable_data_path(""), w);
@@ -279,12 +277,12 @@ void gui_settings_general()
         endFrame();
     }
     ImGui::SameLine();
-    ShowHelpMarker("The folder containing BIOS files, as well as saved VMUs and states");
+    ShowHelpMarker(T("The folder containing BIOS files, as well as saved VMUs and states"));
 #else
 #if defined(__ANDROID__) || defined(TARGET_MAC)
     size.y += ImGui::GetTextLineHeightWithSpacing();
 #endif
-    if (beginFrame("Home Folder", size, &childSize))
+    if (beginFrame(T("Home Folder"), size, &childSize))
     {
     	float w = childSize.x - ImGui::GetStyle().FramePadding.x;
     	std::string s = middleEllipsis(get_writable_config_path(""), w);
@@ -293,15 +291,15 @@ void gui_settings_general()
 #ifdef __ANDROID__
         {
         	DisabledScope _(!config::UseSafFilePicker);
-			if (ImGui::Button("Import"))
+			if (ImGui::Button(i18n::translateCtx("action", "Import")))
 				hostfs::importHomeDirectory();
 			ImGui::SameLine();
-			if (ImGui::Button("Export"))
+			if (ImGui::Button(i18n::translateCtx("action", "Export")))
 				hostfs::exportHomeDirectory();
         }
 #endif
 #ifdef TARGET_MAC
-        if (ImGui::Button("Reveal in Finder"))
+        if (ImGui::Button(T("Reveal in Finder")))
         {
             char temp[512];
             snprintf(temp, sizeof(temp), "open \"%s\"", get_writable_config_path("").c_str());
@@ -311,67 +309,67 @@ void gui_settings_general()
         endFrame();
     }
     ImGui::SameLine();
-    ShowHelpMarker("The folder where Flycast saves configuration files and VMUs. BIOS files should be in a subfolder named \"data\"");
+    ShowHelpMarker(T("The folder where Flycast saves configuration files and VMUs. BIOS files should be in a subfolder named \"data\""));
 #endif // !linux
     ImGui::Spacing();
 #else // TARGET_IPHONE
     {
     	ImguiStyleVar _(ImGuiStyleVar_FramePadding, ScaledVec2(24, 3));
-		if (ImGui::Button("Rescan Content"))
+		if (ImGui::Button(T("Rescan Content")))
 			scanner.refresh();
     }
 #endif
     ImGui::Spacing();
-	OptionCheckbox("Box Art Game List", config::BoxartDisplayMode,
-			"Display game cover art in the game list.");
-	OptionCheckbox("Fetch Box Art", config::FetchBoxart,
-			"Fetch cover images from TheGamesDB.net.");
-	if (OptionSlider("UI Scaling", config::UIScaling, 50, 200, "Adjust the size of UI elements and fonts.", "%d%%"))
+	OptionCheckbox(T("Box Art Game List"), config::BoxartDisplayMode,
+			T("Display game cover art in the game list."));
+	OptionCheckbox(T("Fetch Box Art"), config::FetchBoxart,
+			T("Fetch cover images from TheGamesDB.net."));
+	if (OptionSlider(T("UI Scaling"), config::UIScaling, 50, 200, T("Adjust the size of UI elements and fonts."), "%d%%"))
 		uiUserScaleUpdated = true;
 	if (uiUserScaleUpdated)
 	{
 		ImGui::SameLine();
-		if (ImGui::Button("Apply")) {
+		if (ImGui::Button(T("Apply"))) {
 			mainui_reinit();
 			uiUserScaleUpdated = false;
 		}
 	}
 
-	const char *themes[] = { "Dark", "Light", "Dreamcast", "High Contrast", "Nintendo", "Aqua Chill" };
+	const char *themes[] = { T("Dark"), T("Light"), T("Dreamcast"), T("High Contrast"), T("Nintendo"), T("Aqua Chill") };
 	int previousUITheme = config::UITheme;
-	OptionComboBox("UI Theme", config::UITheme, themes, std::size(themes),
-			"Select the UI color theme.");
+	OptionComboBox(T("UI Theme"), config::UITheme, themes, std::size(themes),
+			T("Select the UI color theme."));
 	// Auto-apply theme when selection changes
 	if (previousUITheme != config::UITheme) {
 		applyCurrentTheme();
 	}
 
-	if (OptionCheckbox("Hide Legacy Naomi Roms", config::HideLegacyNaomiRoms,
-			"Hide .bin, .dat and .lst files from the content browser"))
+	if (OptionCheckbox(T("Hide Legacy Naomi Roms"), config::HideLegacyNaomiRoms,
+			T("Hide .bin, .dat and .lst files from the content browser")))
 		scanner.refresh();
 #ifdef __ANDROID__
-	OptionCheckbox("Use SAF File Picker", config::UseSafFilePicker,
-			"Use Android Storage Access Framework file picker to select folders and files. Ignored on Android 10 and later.");
+	OptionCheckbox(T("Use SAF File Picker"), config::UseSafFilePicker,
+			T("Use Android Storage Access Framework file picker to select folders and files. Ignored on Android 10 and later."));
 #endif
 
-	ImGui::Text("Automatic State:");
-	OptionCheckbox("Load", config::AutoLoadState,
-			"Load the last saved state of the game when starting");
+	ImGui::Text("%s", T("Automatic State:"));
+	OptionCheckbox(T("Load"), config::AutoLoadState,
+			T("Load the last saved state of the game when starting"));
 	ImGui::SameLine();
-	OptionCheckbox("Save", config::AutoSaveState,
-			"Save the state of the game when stopping");
-	OptionCheckbox("Naomi Free Play", config::ForceFreePlay, "Configure Naomi games in Free Play mode.");
+	OptionCheckbox(T("Save"), config::AutoSaveState,
+			T("Save the state of the game when stopping"));
+	OptionCheckbox(T("Naomi Free Play"), config::ForceFreePlay, T("Configure Naomi games in Free Play mode."));
 #if USE_DISCORD
-	OptionCheckbox("Discord Presence", config::DiscordPresence, "Show which game you are playing on Discord");
+	OptionCheckbox(T("Discord Presence"), config::DiscordPresence, T("Show which game you are playing on Discord"));
 #endif
 #ifdef USE_RACHIEVEMENTS
-	OptionCheckbox("Enable RetroAchievements", config::EnableAchievements, "Track your game achievements using RetroAchievements.org");
+	OptionCheckbox(T("Enable RetroAchievements"), config::EnableAchievements, T("Track your game achievements using RetroAchievements.org"));
 	{
 		DisabledScope _(!config::EnableAchievements);
 		ImGui::Indent();
-		OptionCheckbox("Hardcore Mode", config::AchievementsHardcoreMode,
-				"Enable RetroAchievements hardcore mode. Using cheats and loading a state are not allowed in this mode.");
-		InputText("Username", &config::AchievementsUserName.get(),
+		OptionCheckbox(T("Hardcore Mode"), config::AchievementsHardcoreMode,
+				T("Enable RetroAchievements hardcore mode. Using cheats and loading a state are not allowed in this mode."));
+		InputText(T("Username"), &config::AchievementsUserName.get(),
 				achievements::isLoggedOn() ? ImGuiInputTextFlags_ReadOnly : ImGuiInputTextFlags_None);
 		if (config::EnableAchievements)
 		{
@@ -379,20 +377,20 @@ void gui_settings_general()
 			achievements::init();
 			if (achievements::isLoggedOn())
 			{
-				ImGui::Text("Authentication successful");
+				ImGui::Text("%s", T("Authentication successful"));
 				if (futureLogin.valid())
 					futureLogin.get();
-				if (ImGui::Button("Logout", ScaledVec2(100, 0)))
+				if (ImGui::Button(T("Logout"), ScaledVec2(100, 0)))
 					achievements::logout();
 			}
 			else
 			{
 				static char password[256];
-				InputText("Password", password, sizeof(password), ImGuiInputTextFlags_Password);
+				InputText(T("Password"), password, sizeof(password), ImGuiInputTextFlags_Password);
 				if (futureLogin.valid())
 				{
 					if (futureLogin.wait_for(std::chrono::seconds::zero()) == std::future_status::timeout) {
-						ImGui::Text("Authenticating...");
+						ImGui::Text("%s", T("Authenticating..."));
 					}
 					else
 					{
@@ -405,7 +403,7 @@ void gui_settings_general()
 				}
 				{
 					DisabledScope _(config::AchievementsUserName.get().empty() || password[0] == '\0');
-					if (ImGui::Button("Login", ScaledVec2(100, 0)) && !futureLogin.valid())
+					if (ImGui::Button(T("Login"), ScaledVec2(100, 0)) && !futureLogin.valid())
 					{
 						futureLogin = achievements::login(config::AchievementsUserName.get().c_str(), password);
 						memset(password, 0, sizeof(password));
@@ -420,45 +418,45 @@ void gui_settings_general()
 // Custom Paths section - hidden on Android and iOS
 #if !defined(TARGET_IPHONE)
     ImGui::Spacing();
-    header("Custom Paths");
+    header(T("Custom Paths"));
 
-    managePathList("BIOS Folders", config::BiosPath.get(),
-        "Folders containing BIOS/Flash files (e.g. dc_boot.bin, dc_flash.bin) and arcade BIOS");
+    managePathList(T("BIOS Folders"), T("Select a BIOS folder"), config::BiosPath.get(),
+    		T("Folders containing BIOS files (e.g. dc_boot.bin or dc_bios.bin) and arcade BIOS"));
     ImGui::Spacing();
 
 #if !defined(__ANDROID__)
-    manageSinglePath("VMU Folder", config::VMUPath,
-        "Folder where VMU (.bin) saves are stored");
+    manageSinglePath(T("VMU Folder"), T("Select the VMU folder"), config::VMUPath,
+    		T("Folder where VMU (.bin) saves are stored"));
     ImGui::Spacing();
 
-    managePathList("Savestate Folders", config::SavestatePath.get(),
-        "Folders for save states. First path is used for new states; all are searched when loading");
+    managePathList(T("Savestate Folders"), T("Select a savestate folder"), config::SavestatePath.get(),
+    		T("Folders for save states. First path is used for new states; all are searched when loading"));
     ImGui::Spacing();
 
-    manageSinglePath("Game Save Folder", config::SavePath,
-        "Folder for game save data (e.g. arcade NVRAM)");
+    manageSinglePath(T("Game Save Folder"), T("Select the game save folder"), config::SavePath,
+    		T("Folder for game save data (e.g. arcade NVRAM)"));
     ImGui::Spacing();
 #endif
 
-    managePathList("Texture Pack Folders", config::TexturePath.get(),
-        "Folders containing textures/<gameId> or <gameId> under a textures subfolder");
+    managePathList(T("Texture Pack Folders"), T("Select a texture pack folder"), config::TexturePath.get(),
+    		T("Folders containing textures/<gameId> or <gameId> under a textures subfolder"));
     ImGui::Spacing();
 
 #if !defined(__ANDROID__)
-    manageSinglePath("Texture Dump Folder", config::TextureDumpPath, 
-        "Folder where texture dumps are saved. Game-specific subfolders will be created automatically");
+    manageSinglePath(T("Texture Dump Folder"), T("Select the texture dump folder"), config::TextureDumpPath,
+    		T("Folder where texture dumps are saved. Game-specific subfolders will be created automatically"));
     ImGui::Spacing();
     
-    manageSinglePath("Box Art Folder", config::BoxartPath,
-        "Folder containing box art images (png/jpg). If empty, Flycast will use the default Home Folder/boxart for downloads and generated art");
+    manageSinglePath(T("Box Art Folder"), T("Select the box art folder"), config::BoxartPath,
+    		T("Folder containing box art images (png/jpg). If empty, Flycast will use the default Home Folder/boxart for downloads and generated art"));
     ImGui::Spacing();
 
-    managePathList("Controller Mapping Folders", config::MappingsPath.get(),
-        "Folders containing controller mapping files (.cfg). The emulator also looks in Home Folder/mappings. Per-game mappings are suffixed with _<gameId>.cfg");
+    managePathList(T("Controller Mapping Folders"), T("Select a controller mapping folder"), config::MappingsPath.get(),
+    		T("Folders containing controller mapping files (.cfg). The emulator also looks in Home Folder/mappings. Per-game mappings are suffixed with _<gameId>.cfg"));
     ImGui::Spacing();
 
-    managePathList("Cheat Folders", config::CheatPath.get(),
-        "Folders containing cheat files (.cht/.txt) named with the game ID. Flycast will auto-load matching files if present");
+    managePathList(T("Cheat Folders"), T("Select a cheat folder"), config::CheatPath.get(),
+    		T("Folders containing cheat files (.cht/.txt) named with the game ID. Flycast will auto-load matching files if present"));
     ImGui::Spacing();
 #endif  // !ANDROID
 #endif  // !IPHONE

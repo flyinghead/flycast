@@ -35,7 +35,7 @@ public:
 	virtual void termRecord() {}
 
 	std::string slug;
-	std::string name;
+	virtual std::string getName() const { return name; }
 
 	static size_t getCount() { return backends == nullptr ? 0 : backends->size(); }
 	static AudioBackend *getBackend(size_t index) { return backends == nullptr ? nullptr : (*backends)[index]; }
@@ -46,6 +46,7 @@ protected:
 		: slug(slug), name(name) {
 		registerAudioBackend(this);
 	}
+	std::string name;
 
 private:
 	static void registerAudioBackend(AudioBackend *backend)

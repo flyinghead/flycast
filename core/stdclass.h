@@ -176,6 +176,16 @@ static inline bool isAbsolutePath(const std::string& path)
 #endif
 }
 
+template<typename ... Args>
+std::string strprintf(const char *format, Args ... args)
+{
+	int size = std::snprintf(nullptr, 0, format, args...);
+	std::string out(size + 1, '\0');
+	std::snprintf(out.data(), size + 1, format, args...);
+	out.resize(size);
+	return out;
+}
+
 class MD5Sum
 {
 	MD5_CTX ctx;
@@ -224,6 +234,7 @@ public:
 
 u64 getTimeMs();
 std::string timeToISO8601(time_t time);
+std::string timeToShortDateTimeString(time_t time);
 
 class ThreadRunner
 {
@@ -231,9 +242,13 @@ public:
 	void init() {
 		threadId = std::this_thread::get_id();
 	}
+	void term() {
+		threadId = {};
+	}
 	void runOnThread(std::function<void()> func)
 	{
-		if (threadId == std::this_thread::get_id()) {
+		if (threadId == std::thread::id{}
+			|| threadId == std::this_thread::get_id()) {
 			func();
 		}
 		else {

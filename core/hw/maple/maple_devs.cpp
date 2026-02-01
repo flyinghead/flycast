@@ -6,8 +6,10 @@
 #include "audio/audiostream.h"
 #include "oslib/oslib.h"
 #include "oslib/storage.h"
+#include "oslib/i18n.h"
 #include "hw/aica/sgc_if.h"
 #include "cfg/option.h"
+#include "input/maplelink.h"
 #include <zlib.h>
 #include <cerrno>
 #include <ctime>
@@ -51,6 +53,15 @@ void maple_device::Setup(u32 bus, u32 port, int playerNum)
 maple_device::~maple_device()
 {
     delete config;
+}
+
+bool maple_base::relayMapleLink()
+{
+	auto link = MapleLink::GetMapleLink(bus_id, bus_port);
+	if (link == nullptr)
+		return true;
+	else
+		return link->send(*inMsg);
 }
 
 static inline void mutualExclusion(u32& keycode, u32 mask)
@@ -366,9 +377,26 @@ struct maple_sega_vmu: maple_base
 			if (b != 0)
 			{
 				config->SetImage(lcd_data_decoded);
+				updateMapleLinkScreen();
 				break;
 			}
 		fullSaveNeeded = true;
+	}
+
+	void updateMapleLinkScreen()
+	{
+		auto link = MapleLink::GetMapleLink(bus_id, bus_port);
+		if (link == nullptr)
+			return;
+
+		MapleMsg msg;
+		msg.command = MDCF_BlockWrite;
+		msg.destAP = maple_port;
+		msg.originAP = bus_id << 6;
+		msg.pushData(MFID_2_LCD);
+		msg.pushData(0);    // PT, phase, block#
+		msg.pushData(lcd_data);
+		link->send(msg);
 	}
 
 	virtual bool fullSave()
@@ -450,6 +478,8 @@ struct maple_sega_vmu: maple_base
 	{
 		if (file != nullptr)
 			std::fclose(file);
+		memset(lcd_data, 0, sizeof(lcd_data));
+		updateMapleLinkScreen();
 	}
 
 	u32 dma(u32 cmd) override
@@ -680,9 +710,6 @@ struct maple_sega_vmu: maple_base
 								return MDRE_FileError; // I/O error
 							}
 						}
-						else {
-							WARN_LOG(MAPLE, "Failed to save VMU %s data", logical_port);
-						}
 						return MDRS_DeviceReply;
 					}
 
@@ -709,6 +736,7 @@ struct maple_sega_vmu: maple_base
 							}
 						}
 						config->SetImage(lcd_data_decoded);
+						relayMapleLink();
 
 						return  MDRS_DeviceReply;
 					}
@@ -743,14 +771,16 @@ struct maple_sega_vmu: maple_base
 				switch(r32())
 				{
 				case MFID_3_Clock:
-					{
-						u8 alw = r8();
-						u8 ald = r8();
-						r16(); // Alarm 2
-						INFO_LOG(MAPLE, "BEEP: %d/%d", alw, ald);
-						aica::sgc::vmuBeep(alw, ald);
-					}
+				{
+					u8 alw = r8();
+					u8 ald = r8();
+					r16(); // Alarm 2
+					INFO_LOG(MAPLE, "BEEP: %d/%d", alw, ald);
+					aica::sgc::vmuBeep(alw, ald);
+
+					relayMapleLink();
 					return MDRS_DeviceReply;
+				}
 
 				default:
 					INFO_LOG(MAPLE, "VMU: command MDCF_SetCondition -> Bad function used, returning MDRE_UnknownFunction");
@@ -1060,6 +1090,7 @@ struct maple_sega_purupuru : maple_base
 			//Auto-stop time
 			AST = dma_buffer_in[10];
 			AST_ms = AST * 250 + 250;
+			relayMapleLink();
 
 			return MDRS_DeviceReply;
 
@@ -1091,6 +1122,8 @@ struct maple_sega_purupuru : maple_base
 				else
 					inclination = FREQ / (1000.0 * INC * std::max(POW_POS, POW_NEG));
 				config->SetVibration(power, inclination, duration_ms);
+
+				relayMapleLink();
 			}
 
 			return MDRS_DeviceReply;
@@ -1691,385 +1724,139 @@ struct FullController : maple_sega_controller
 	}
 };
 
-// Emulates a 838-14245-92 maple to RS232 converter
-// wired to a 838-14243 RFID reader/writer (apparently Saxa HW210)
-struct RFIDReaderWriter : maple_base
+struct maple_dreamparapara_controller : maple_device
 {
-	u32 getStatus() const
+	static constexpr u16 START    = 1 << 0;
+	static constexpr u16 LEFT     = 1 << 1;
+	static constexpr u16 SELECT   = 1 << 2;
+	static constexpr u16 RIGHT    = 1 << 3;
+	static constexpr u16 ARROW_UL = 1 << 9;
+	static constexpr u16 ARROW_U  = 1 << 10;
+	static constexpr u16 ARROW_L  = 1 << 11;
+	static constexpr u16 ARROW_UR = 1 << 12;
+	static constexpr u16 ARROW_R  = 1 << 15;
+
+	static u16 unshift(u32 value)
 	{
-		// b0: !card switch
-		// b1: state=4	errors?
-		// b2: state=5
-		// b3: state=6
-		// b4: state=7
-		// b5: state=8
-		// b6: card lock
-		// when 0x40 trying to read the card
-		u32 status = 1;
-		if (cardInserted)
-			status &= ~1;
-		if (cardLocked)
-			status |= 0x40;
-		return status;
+		u16 result = 0;
+		for (u32 i = 1, o = 0; i < 32; i += 2, o++)
+		{
+			if (value & (1 << i))
+				result |= (1 << o);
+		}
+		return result;
 	}
 
-	// Surprisingly recipient and sender aren't swapped in the response so we override RawDma for this reason
-	// vf4tuned and mushiking do care
-	u32 RawDma(u32* buffer_in, u32 buffer_in_len, u32* buffer_out) override
+	MapleDeviceType get_device_type() override
 	{
-		u32 command=buffer_in[0] &0xFF;
-		//Recipient address
-		u32 reci = (buffer_in[0] >> 8) & 0xFF;
-		//Sender address
-		u32 send = (buffer_in[0] >> 16) & 0xFF;
-		u32 outlen = 0;
-		u32 resp = Dma(command, &buffer_in[1], buffer_in_len - 4, &buffer_out[1], outlen);
+		return MDT_DreamParaParaController;
+	}
 
-		if (reci & 0x20)
-			reci |= maple_GetAttachedDevices(bus_id);
+	u16 get_state()
+	{
+		u16 state = 0;
+		PlainJoystickState pjs;
+		config->GetInput(&pjs);
+		if (pjs.kcode & DC_BTN_START)  state |= START;
+		if (pjs.kcode & DC_DPAD_LEFT)  state |= LEFT;
+		if (pjs.kcode & DC_BTN_RELOAD) state |= SELECT;
+		if (pjs.kcode & DC_DPAD_RIGHT) state |= RIGHT;
+		if (pjs.kcode & DC_BTN_A)      state |= ARROW_L;
+		if (pjs.kcode & DC_BTN_B)      state |= ARROW_UL;
+		if (pjs.kcode & DC_BTN_X)      state |= ARROW_U;
+		if (pjs.kcode & DC_BTN_Y)      state |= ARROW_UR;
+		if (pjs.kcode & DC_BTN_C)      state |= ARROW_R;
+		return state;
+	}
+
+	u32 RawDma(const u32 *buffer_in, u32 buffer_in_len, u32 *buffer_out) override
+	{
+		u32 outlen = 0;
+
+		if (buffer_in[0] == 0x08000000)
+		{
+			*buffer_out++ = 0x80888888;
+			strncpy((char*)buffer_out, "Flycast DreamParaPara", 24); // official name unknown
+			outlen = 4 + 24;
+		}
+		else
+		{
+			u16 state = ~get_state();
+			u8 method = (unshift(buffer_in[0]) >> 11) & 3;
+			u8 val14 = unshift(buffer_in[0]) & 0xff;
+			u16 val18 = unshift(buffer_in[1]);
+			u8 key0 = val18 & 0xff;
+			u8 key1 = val18 >> 8;
+			u16 chk = 0;
+
+			buffer_out[0] = 0;
+			buffer_out[1] = 0;
+
+			switch (method)
+			{
+			case 0:
+				buffer_out[1] |= (((state >>  0) & 0xff) ^ key1) << 24;
+				buffer_out[0] |= (((state >>  8) & 0xff) ^ key0) <<  8;
+				buffer_out[1] |= (((state >> 16) & 0xff) ^ key1) << 16;
+				buffer_out[0] |= (((state >> 24) & 0xff) ^ key0) << 16;
+
+				chk |= (val14 & 0xf) << 4;
+				chk |= val14 >> 4;
+				chk ^= key0;
+				chk |= (val18 & 0xff & key1 & 0xf8) << 5;
+
+				buffer_out[0] |= (chk & 0x1f00) << 16;
+				buffer_out[0] |= (chk & 0x00ff);
+				break;
+
+			case 1:
+				buffer_out[1] |= (((state >>  0) & 0xff)       ) <<  8;
+				buffer_out[1] |= (((state >>  8) & 0xff) ^ key1) << 16;
+				buffer_out[1] |= (((state >> 16) & 0xff) ^ key0) <<  0;
+				buffer_out[1] |= (((state >> 24) & 0xff)       ) << 24;
+
+				chk |= val14 ^ key1;
+				chk |= ((val14 | key0) & 0x1f) << 8;
+
+				buffer_out[0] |= (chk & 0x1f00) << 16;
+				buffer_out[0] |= (chk & 0x00ff);
+				break;
+
+			case 2:
+				buffer_out[1] |= (((state >>  0) & 0xff) ^ key1) << 24;
+				buffer_out[1] |= (((state >>  8) & 0xff) ^ key1) <<  8;
+				buffer_out[1] |= (((state >> 16) & 0xff)       ) << 16;
+				buffer_out[0] |= (((state >> 24) & 0xff) ^ key0) <<  0;
+
+				chk |= (val14 & 0xc0) >> 6;
+				chk |= (val14 & 0x3f) << 2;
+				chk |= (val18 & 0x7c) << 6;
+
+				buffer_out[0] |= (chk & 0x1f00) << 16;
+				buffer_out[1] |= (chk & 0x00ff);
+				break;
+
+			case 3:
+				buffer_out[1] |= (((state >>  0) & 0xff)       ) <<  8;
+				buffer_out[1] |= (((state >>  8) & 0xff) ^ key0) <<  0;
+				buffer_out[0] |= (((state >> 16) & 0xff)       ) << 16;
+				buffer_out[1] |= (((state >> 24) & 0xff) ^ key1) << 24;
+
+				chk |= ~key1 & 0xff;
+				chk |= ((key0 ^ val14) & 0x1f) << 8;
+
+				buffer_out[0] |= (chk & 0x1f00) << 16;
+				buffer_out[1] |= (chk & 0x00ff) << 16;
+				break;
+			}
+
+			outlen = 8;
+		}
 
 		verify(u8(outlen / 4) * 4 == outlen);
-		buffer_out[0] = (resp << 0 ) | (reci << 8) | (send << 16) | ((outlen / 4) << 24);
-
-		return outlen + 4;
+		return outlen;
 	}
-
-	u32 dma(u32 cmd) override
-	{
-		switch (cmd)
-		{
-		case MDC_DeviceRequest:
-		case MDC_AllStatusReq:
-			// custom function
-			w32(0x00100000);
-			// function flags
-			w32(0);
-			w32(0);
-			w32(0);
-			//1	area code
-			w8(0xff);				// FF: Worldwide, 01: North America
-			//1	direction
-			w8(0);
-			// Product name (totally made up)
-			wstr("MAPLE/232C CONVERT BD", 30);
-
-			// License (60)
-			wstr(maple_sega_brand, 60);
-
-			// Low-consumption standby current (2)
-			w16(0x0069);	// 10.5 mA
-
-			// Maximum current consumption (2)
-			w16(0x0120);	// 28.8 mA
-
-			return cmd == MDC_DeviceRequest ? MDRS_DeviceStatus : MDRS_DeviceStatusAll;
-
-		case MDCF_GetCondition:
-			w32(0x00100000); // custom function
-
-			return MDRS_DataTransfer;
-
-		case MDC_DeviceReset:
-		case MDC_DeviceKill:
-			return MDRS_DeviceReply;
-
-		// 90	get status
-		//
-		// read test:
-		// d0	?
-		// 91	get last cmd status?
-		// a0	?
-		// 91
-		// a1	read md5 in data
-		//			or data itself if after D4 xx xx xx xx
-		// d4	in=d2 03 aa db
-		// 91
-		//
-		// d9	lock
-		// da	unlock
-		//
-		// write test:
-		// D0
-		// 91
-		// B1 05 06 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 (28 bytes)
-		// 91
-		// B1 0b 06 00 00 00 00 c6 41 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 (28 bytes)
-		// 91
-		// B1 11 06 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 (28 bytes)
-		// 91
-		// B1 17 06 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 (28 bytes)
-		// 91
-		// B1 1d 03 00 00 00 00 00 00 00 00 00 00 00 00 00 00 (16 bytes)
-		// 91
-		// C1: 00 00 00 00
-		// 91
-
-		case 0xD0:
-			d4Seen = false;
-			[[fallthrough]];
-		case 0x90:
-		case 0x91:
-		case 0xA0:
-		case 0xD4:
-		case 0xC1:
-			w32(getStatus());
-			if (cmd == 0xd4)
-				d4Seen = true;
-			return (MapleDeviceRV)0xfe;
-
-		case 0xA1:	// read card data
-			DEBUG_LOG(MAPLE, "RFID card read (data? %d)", d4Seen);
-			w32(getStatus());
-			if (!d4Seen)
-				// serial0 and serial1 only
-				wptr(cardData, 8);
-			else
-				wptr(cardData, sizeof(cardData));
-			return (MapleDeviceRV)0xfe;
-
-		case 0xD9:	// lock card
-			cardLocked = true;
-			w32(getStatus());
-			INFO_LOG(MAPLE, "RFID card %d locked", player_num);
-			return (MapleDeviceRV)0xfe;
-
-		case 0xDA:	// unlock card
-			cardLocked = false;
-			cardInserted = false;
-			w32(getStatus());
-			NOTICE_LOG(MAPLE, "RFID card %d unlocked", player_num);
-			os_notify("Card ejected", 2000);
-			return (MapleDeviceRV)0xfe;
-
-		case 0xB1:	// write to card
-			{
-				w32(getStatus());
-				u32 offset = r8() * 4;
-				size_t size = r8() * 4;
-				skip(2);
-				DEBUG_LOG(MAPLE, "RFID card write: offset 0x%x len %d", offset, (int)size);
-				rptr(cardData + offset, std::min(size, sizeof(cardData) - offset));
-				saveCard();
-				return (MapleDeviceRV)0xfe;
-			}
-
-		case 0xD1:	// decrement counter
-			{
-				int counter = r8();
-				switch (counter) {
-				case 0x03:
-					counter = 0;
-					break;
-				case 0x0c:
-					counter = 1;
-					break;
-				case 0x30:
-					counter = 2;
-					break;
-				case 0xc0:
-					counter = 3;
-					break;
-				default:
-					WARN_LOG(MAPLE, "Unknown counter selector %x", counter);
-					counter = 0;
-					break;
-				}
-				DEBUG_LOG(MAPLE, "RFID decrement %d", counter);
-				cardData[19 - counter]--;
-				saveCard();
-				w32(getStatus());
-				return (MapleDeviceRV)0xfe;
-			}
-
-		default:
-			INFO_LOG(MAPLE, "RFIDReaderWriter: unknown MAPLE COMMAND %d", cmd);
-			return MDRE_UnknownCmd;
-		}
-	}
-
-	MapleDeviceType get_device_type() override {
-		return MDT_RFIDReaderWriter;
-	}
-
-	void OnSetup() override
-	{
-		memset(cardData, 0, sizeof(cardData));
-		transientData = false;
-	}
-
-	std::string getCardPath() const
-	{
-		int playerNum;
-		if (config::GGPOEnable && !config::ActAsServer)
-			// Always load P1 card with GGPO to be consistent with P1 inputs being used
-			playerNum = 1;
-		else
-			playerNum = player_num + 1;
-		return hostfs::getArcadeFlashPath() + "-p" + std::to_string(playerNum) + ".card";
-	}
-
-	void loadCard()
-	{
-		if (transientData)
-			return;
-		std::string path = getCardPath();
-		FILE *fp = nowide::fopen(path.c_str(), "rb");
-		if (fp == nullptr)
-		{
-			if (settings.content.gameId.substr(0, 8) == "MKG TKOB")
-			{
-				constexpr u8 MUSHIKING_CHIP_DATA[128] = {
-					0x12, 0x34, 0x56, 0x78, // Serial No.0
-					0x31, 0x00, 0x86, 0x07, // Serial No.1
-					0x00, 0x00, 0x00, 0x00, // Key
-					0x04, 0xf6, 0x00, 0xAA, // Extend  Extend  Access  Mode
-					0x23, 0xFF, 0xFF, 0xFF, // Counter4  Counter3  Counter2  Counter1
-					0x00, 0x00, 0x00, 0x00, // User Data (first set date: day bits 0-4, month bits 5-8, year bits 9-... + 2000)
-					0x00, 0x00, 0x00, 0x00, // User Data
-					0x00, 0x00, 0x00, 0x00, // User Data
-					0x00, 0x00, 0x00, 0x00, // User Data
-					0x00, 0x00, 0x00, 0x00, // User Data
-					0x00, 0x00, 0x00, 0x00, // User Data
-					0x23, 0xFF, 0xFF, 0xFF, // User Data (max counters)
-				};
-				memcpy(cardData, MUSHIKING_CHIP_DATA, sizeof(MUSHIKING_CHIP_DATA));
-				for (int i = 0; i < 8; i++)
-					cardData[i] = rand() & 0xff;
-				u32 mask = 0;
-				if (settings.content.gameId == "MKG TKOB 2 JPN VER2.001-"			// mushik2e
-						|| settings.content.gameId == "MKG TKOB 4 JPN VER2.000-")	// mushik4e
-					mask = 0x40;
-				cardData[4] &= ~0xc0;
-				cardData[4] |= mask;
-
-				u32 serial1 = (cardData[4] << 24) | (cardData[5] << 16) | (cardData[6] << 8) | cardData[7];
-				u32 key = ~serial1;
-				key = ((key >> 4) & 0x0f0f0f0f)
-					  | ((key << 4) & 0xf0f0f0f0);
-				cardData[8] = key >> 24;
-				cardData[9] = key >> 16;
-				cardData[10] = key >> 8;
-				cardData[11] = key;
-			}
-			else
-			{
-				constexpr u8 VF4_CARD_DATA[128] = {
-						0x10,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   4,0x6c,   0,   0,
-						   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
-						   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
-						   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
-						   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
-						   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
-						   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
-						   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,0xff
-				};
-				memcpy(cardData, VF4_CARD_DATA, sizeof(VF4_CARD_DATA));
-				// Generate random bytes used by vf4 vanilla to make the card id
-				srand(time(0));
-				cardData[2] = rand() & 0xff;
-				cardData[4] = rand() & 0xff;
-				cardData[5] = rand() & 0xff;
-				cardData[6] = rand() & 0xff;
-				cardData[7] = rand() & 0xff;
-			}
-			INFO_LOG(NAOMI, "Card P%d initialized", player_num + 1);
-		}
-		else
-		{
-			INFO_LOG(NAOMI, "Loading card file from %s", path.c_str());
-			if (fread(cardData, 1, sizeof(cardData), fp) != sizeof(cardData))
-				WARN_LOG(NAOMI, "Truncated or empty card file: %s" ,path.c_str());
-			fclose(fp);
-		}
-	}
-
-	void saveCard() const
-	{
-		if (transientData)
-			return;
-		std::string path = getCardPath();
-		FILE *fp = nowide::fopen(path.c_str(), "wb");
-		if (fp == nullptr)
-		{
-			WARN_LOG(NAOMI, "Can't create card file %s: errno %d", path.c_str(), errno);
-			return;
-		}
-		INFO_LOG(NAOMI, "Saving card file to %s", path.c_str());
-		if (fwrite(cardData, 1, sizeof(cardData), fp) != sizeof(cardData))
-			WARN_LOG(NAOMI, "Truncated write to file: %s", path.c_str());
-		fclose(fp);
-	}
-
-	void serialize(Serializer& ser) const override
-	{
-		maple_device::serialize(ser);
-		ser << cardData;
-		ser << d4Seen;
-		ser << cardInserted;
-		ser << cardLocked;
-	}
-	void deserialize(Deserializer& deser) override
-	{
-		maple_device::deserialize(deser);
-		deser >> cardData;
-		deser >> d4Seen;
-		deser >> cardInserted;
-		deser >> cardLocked;
-	}
-
-	void insertCard()
-	{
-		if (!cardInserted) {
-			cardInserted = true;
-			loadCard();
-		}
-		else if (!cardLocked)
-		{
-			cardInserted = false;
-			if (!transientData)
-				memset(cardData, 0, sizeof(cardData));
-		}
-	}
-
-	const u8 *getCardData() {
-		loadCard();
-		return cardData;
-	}
-
-	void setCardData(u8 *data) {
-		memcpy(cardData, data, sizeof(cardData));
-		transientData = true;
-	}
-
-	u8 cardData[128];
-	bool d4Seen = false;
-	bool cardInserted = false;
-	bool cardLocked = false;
-	bool transientData = false;
 };
-
-void insertRfidCard(int playerNum)
-{
-	std::shared_ptr<maple_device> mapleDev = MapleDevices[1 + playerNum][5];
-	if (mapleDev != nullptr && mapleDev->get_device_type() == MDT_RFIDReaderWriter)
-		std::static_pointer_cast<RFIDReaderWriter>(mapleDev)->insertCard();
-}
-
-void setRfidCardData(int playerNum, u8 *data)
-{
-	std::shared_ptr<maple_device> mapleDev = MapleDevices[1 + playerNum][5];
-	if (mapleDev != nullptr && mapleDev->get_device_type() == MDT_RFIDReaderWriter)
-		std::static_pointer_cast<RFIDReaderWriter>(mapleDev)->setCardData(data);
-}
-
-const u8 *getRfidCardData(int playerNum)
-{
-	std::shared_ptr<maple_device> mapleDev = MapleDevices[1 + playerNum][5];
-	if (mapleDev != nullptr && mapleDev->get_device_type() == MDT_RFIDReaderWriter)
-		return std::static_pointer_cast<RFIDReaderWriter>(mapleDev)->getCardData();
-	else
-		return nullptr;
-}
 
 std::shared_ptr<maple_device> maple_Create(MapleDeviceType type)
 {
@@ -2090,7 +1877,7 @@ std::shared_ptr<maple_device> maple_Create(MapleDeviceType type)
 			return std::make_shared<maple_lightgun>();
 		else
 			return std::make_shared<atomiswave_lightgun>();
-	case MDT_NaomiJamma:		return std::make_shared<maple_naomi_jamma>();
+	case MDT_NaomiJamma:		return MIE::Create();
 	case MDT_TwinStick:			return std::make_shared<maple_sega_twinstick>();
 	case MDT_AsciiStick:		return std::make_shared<maple_ascii_stick>();
 	case MDT_MaracasController:	return std::make_shared<maple_maracas_controller>();
@@ -2099,7 +1886,8 @@ std::shared_ptr<maple_device> maple_Create(MapleDeviceType type)
 	case MDT_RacingController:	return std::make_shared<maple_racing_controller>();
 	case MDT_DenshaDeGoController:	return std::make_shared<maple_densha_controller>();
 	case MDT_SegaControllerXL:	return std::make_shared<FullController>();
-	case MDT_RFIDReaderWriter:	return std::make_shared<RFIDReaderWriter>();
+	case MDT_DreamParaParaController:	return std::make_shared<maple_dreamparapara_controller>();
+	case MDT_RFIDReaderWriter:	return RFIDReaderWriter::Create();
 
 	default:
 		ERROR_LOG(MAPLE, "Invalid device type %d", type);
@@ -2109,88 +1897,81 @@ std::shared_ptr<maple_device> maple_Create(MapleDeviceType type)
 	return nullptr;
 }
 
-#if defined(USE_DREAMLINK_DEVICES)
-#include "sdl/dreamlink.h"
-#include "sdl/dreamconn.h"
-#include <list>
-#include <memory>
-
-struct DreamLinkVmu : public maple_sega_vmu
+struct MapleLinkVmu : public maple_sega_vmu
 {
-	bool running = true;
-
-	std::shared_ptr<DreamLink> dreamlink;
-	bool useRealVmuMemory;  //!< Set this to true to use physical VMU memory, false for virtual memory
-	std::chrono::time_point<std::chrono::system_clock> lastWriteTime;
-	bool mirroredBlocks[256]; //!< Set to true for block that has been loaded/written
-	s16 lastWriteBlock = -1;
-
-	std::list<u8> blocksToWrite;
-	std::mutex writeMutex;
-	std::condition_variable writeCv;
-	std::thread writeThread;
-
-	static u64 lastNotifyTime;
-	static u64 lastErrorNotifyTime;
-
-	DreamLinkVmu(std::shared_ptr<DreamLink> dreamlink) :
-		dreamlink(dreamlink),
-		writeThread([this](){writeEntrypoint();})
-	{
-		// Initialize useRealVmuMemory with our config setting
-		useRealVmuMemory = config::UsePhysicalVmuMemory;
-	}
-
-	virtual ~DreamLinkVmu() {
-		running = false;
-
-		// Entering lock context
-		{
-			std::unique_lock<std::mutex> lock(writeMutex);
-			writeCv.notify_all();
-		}
-
-		writeThread.join();
-	}
+	bool cachedBlocks[256]; //!< Set to true for block that has been loaded/written
+	bool userNotified = false;
 
 	void OnSetup() override
 	{
 		// All data must be re-read
-		memset(mirroredBlocks, 0, sizeof(mirroredBlocks));
+		memset(cachedBlocks, 0, sizeof(cachedBlocks));
 
-		if (useRealVmuMemory)
-		{
-			// Ensure file is not being used
-			if (file != nullptr)
-			{
-				std::fclose(file);
-				file = nullptr;
-			}
-
-			memset(flash_data, 0, sizeof(flash_data));
-			memset(lcd_data, 0, sizeof(lcd_data));
-
+		// Ensure file is not being used
+		if (file != nullptr) {
+			std::fclose(file);
+			file = nullptr;
 		}
-		else
-		{
-			maple_sega_vmu::OnSetup();
-		}
+
+		memset(flash_data, 0, sizeof(flash_data));
+		memset(lcd_data, 0, sizeof(lcd_data));
 	}
 
 	bool fullSave() override
 	{
-		if (useRealVmuMemory)
-		{
-			// Skip virtual save when using physical VMU
-			//DEBUG_LOG(MAPLE, "Not saving because this is a real vmu");
-			NOTICE_LOG(MAPLE, "Saving to physical VMU");
+		// Skip virtual save when using MapleLink VMU
+		DEBUG_LOG(MAPLE, "Full save ignored for MapleLink VMU");
+		return true;
+	}
 
-			return true;
-		}
-		else
+	void serialize(Serializer& ser) const override {
+		throw Serializer::Exception("Can't save linked VMU data");
+	}
+
+	void deserialize(Deserializer& deser) override
+	{
+		// Ignore the VMU data from the loaded state
+		u8 savedData[sizeof(flash_data)];
+		memcpy(savedData, flash_data, sizeof(savedData));
+		maple_sega_vmu::deserialize(deser);
+		memcpy(flash_data, savedData, sizeof(savedData));
+	}
+
+	MapleLink::Ptr getMapleLink()
+	{
+		MapleLink::Ptr link = MapleLink::GetMapleLink(bus_id, bus_port);
+		if (link == nullptr)
+			ERROR_LOG(MAPLE, "MapleLinkVmu[%s]: MapleLink is null", logical_port);
+		return link;
+	}
+
+	MapleDeviceRV readBlock(unsigned block)
+	{
+		if (cachedBlocks[block])
+			return MDRS_JVSNone;
+
+		MapleLink::Ptr link = getMapleLink();
+		if (link == nullptr)
+			return MDRS_JVSNone;
+
+		MapleMsg txMsg;
+		txMsg.command = MDCF_BlockRead;
+		txMsg.originAP = inMsg->originAP;
+		txMsg.destAP = inMsg->destAP;
+		txMsg.pushData(MFID_1_Storage);
+		txMsg.pushData<u32>(block << 24); // (BE) partition #, phase, block #
+		MapleMsg rxMsg;
+		if (link->sendReceive(txMsg, rxMsg) && rxMsg.size == 130)
 		{
-			return maple_sega_vmu::fullSave();
+			DEBUG_LOG(MAPLE, "MapleLinkVmu[%s]: read block %d", logical_port, block);
+			memcpy(&flash_data[block * 4 * 128], &rxMsg.data[8], 4 * 128);
+			cachedBlocks[block] = true;
 		}
+		else {
+			ERROR_LOG(MAPLE, "Failed to read VMU %s: I/O error", logical_port);
+			return MDRE_FileError; // I/O error
+		}
+		return MDRS_JVSNone;
 	}
 
 	u32 dma(u32 cmd) override
@@ -2198,518 +1979,82 @@ struct DreamLinkVmu : public maple_sega_vmu
 		// Physical VMU logic
 		if (dma_count_in >= 4)
 		{
-			const u32 functionId = *(u32*)dma_buffer_in;
-			const MapleMsg* msg = reinterpret_cast<const MapleMsg*>(dma_buffer_in - 4);
+			const u32 functionId = inMsg->readData<u32>(0);
 
 			if (functionId == MFID_1_Storage)
 			{
-				if (useRealVmuMemory)
+				switch (cmd)
 				{
-					const u64 currentTime = std::chrono::duration_cast<std::chrono::milliseconds>(
-						std::chrono::steady_clock::now().time_since_epoch()).count();
-
-					// Only show notification once every 6 seconds to avoid spam
-					if (cmd == MDCF_BlockRead &&
-						(currentTime - lastNotifyTime) > 4000 &&
-						(currentTime - lastErrorNotifyTime) > 4000)
+				case MDCF_BlockWrite:
+				{
+					if (!userNotified)
 					{
-						// This is a read operation (loading)
-						os_notify("ATTENTION: Loading from a physical VMU", 6000,
-								"Game data is being loaded from your physical VMU");
-						lastNotifyTime = currentTime;
+						os_notify("ATTENTION: You are saving to a physical VMU", 6000,
+								"Do not disconnect the VMU or close the game");
+						userNotified = true;
 					}
-
-					switch (cmd)
-					{
-					case MDCF_BlockWrite:
-					{
-						// Throw away function
-						r32();
-
-						// Save the write to RAM
-						u32 bph=r32();
-						u32 Block = lastWriteBlock = (SWAP32(bph))&0xffff;
-						u32 Phase = ((SWAP32(bph))>>16)&0xff;
-						u32 write_adr=Block*512+Phase*(512/4);
-						u32 write_len=r_count();
-						DEBUG_LOG(MAPLE, "VMU %s block write: Block %d Phase %d addr %x len %d", logical_port, Block, Phase, write_adr, write_len);
-						if (write_adr + write_len > sizeof(flash_data))
-						{
-							INFO_LOG(MAPLE, "Failed to write VMU %s: overflow", logical_port);
-							skip(write_len);
-							return MDRE_FileError; //invalid params
-						}
-						rptr(&flash_data[write_adr],write_len);
-
-						// All done - wait until GetLastError to queue the write
-						return MDRS_DeviceReply;
+					MapleLink::Ptr link = getMapleLink();
+					if (link == nullptr)
+						return MDRE_FileError;
+					MapleMsg rxMsg;
+					if (!link->sendReceive(*inMsg, rxMsg)) {
+						ERROR_LOG(MAPLE, "Failed to write VMU %s: I/O error", logical_port);
+						return MDRE_FileError;
 					}
-
-					case MDCF_GetLastError:
-					{
-						mirroredBlocks[lastWriteBlock] = true;
-
-						// Entering lock context
-						{
-							std::unique_lock<std::mutex> lock(writeMutex);
-							if (std::find(blocksToWrite.begin(), blocksToWrite.end(), lastWriteBlock) == blocksToWrite.end())
-							{
-								blocksToWrite.push_back(lastWriteBlock);
-								writeCv.notify_all();
-							}
-						}
-
-						lastWriteTime = std::chrono::system_clock::now();
-						return MDRS_DeviceReply;
-					}
-
-					case MDCF_BlockRead:
-					{
-						u8 requestBlock = msg->data[7];
-						if (!mirroredBlocks[requestBlock]) {
-							// Try up to 4 times to read
-							bool readSuccess = false;
-							for (u32 i = 0; i < 4; ++i) {
-								if (i > 0) {
-									std::this_thread::sleep_for(std::chrono::milliseconds(30));
-								}
-
-								MapleMsg rcvMsg;
-								if (dreamlink->send(*msg, rcvMsg) && rcvMsg.size == 130) {
-									// Something read!
-									u8 block = rcvMsg.data[7];
-									memcpy(&flash_data[block * 4 * 128], &rcvMsg.data[8], 4 * 128);
-									mirroredBlocks[block] = true;
-									readSuccess = true;
-									break;
-								}
-							}
-
-							if (!readSuccess) {
-								ERROR_LOG(MAPLE, "Failed to read VMU %s: I/O error", logical_port);
-								return MDRE_FileError; // I/O error
-							}
-						}
-
-						break;
-					}
-
-					default:
-						// do nothing
-						break;
-					}
+					if (rxMsg.command != MDRS_DeviceReply)
+						return rxMsg.command;
+					cachedBlocks[inMsg->data[7]] = true;
+					DEBUG_LOG(MAPLE, "MapleLinkVmu[%s]: write block %d", logical_port, inMsg->data[7]);
+					break;
 				}
-			}
-			else if (functionId == MFID_2_LCD)
-			{
-				if (cmd == MDCF_BlockWrite)
+
+				case MDCF_BlockRead:
 				{
-					dreamlink->send(*msg);
+					u8 block = inMsg->data[7];
+					MapleDeviceRV rc = readBlock(block);
+					if (rc != MDRS_JVSNone)
+						return rc;
+					break;
 				}
-			}
-			else if (functionId == MFID_3_Clock)
-			{
-				if (cmd == MDCF_SetCondition)
+
+				case MDCF_GetMediaInfo:
+					// block 255 contains the media info
+					readBlock(255);
+					break;
+
+				case MDCF_GetLastError:
 				{
-					dreamlink->send(*msg);
+					MapleLink::Ptr link = getMapleLink();
+					if (link == nullptr)
+						return MDRE_FileError;
+					if (!link->handleGetLastError(*inMsg)) {
+						ERROR_LOG(MAPLE, "MapleLinkVmu[%s]::GetLastError: I/O error", logical_port);
+						return MDRE_FileError;
+					}
+					break;
+				}
+
+				default:
+					// do nothing
+					break;
 				}
 			}
 		}
-
-		// If made it here, call base's dma to handle return value
 		return maple_sega_vmu::dma(cmd);
 	}
 
-	void copyIn(std::shared_ptr<maple_sega_vmu> other)
+	bool linkStatus() override
 	{
-		memcpy(flash_data, other->flash_data, sizeof(flash_data));
-		memcpy(lcd_data, other->lcd_data, sizeof(lcd_data));
-		memcpy(lcd_data_decoded, other->lcd_data_decoded, sizeof(lcd_data_decoded));
-		fullSaveNeeded = other->fullSaveNeeded;
-	}
-
-	void copyOut(std::shared_ptr<maple_sega_vmu> other)
-	{
-		// Never copy data to virtual VMU if physical VMU is enabled
-		if (!config::UsePhysicalVmuMemory && !useRealVmuMemory)
-		{
-			memcpy(other->flash_data, flash_data, sizeof(other->flash_data));
-			memcpy(other->lcd_data, lcd_data, sizeof(other->lcd_data));
-			memcpy(other->lcd_data_decoded, lcd_data_decoded, sizeof(other->lcd_data_decoded));
-			other->fullSaveNeeded = fullSaveNeeded;
-		}
-	}
-
-	void updateScreen()
-	{
-		MapleMsg msg;
-		msg.command = MDCF_BlockWrite;
-		msg.destAP = maple_port;
-		msg.originAP = bus_id << 6;
-		msg.size = 2 + sizeof(lcd_data) / 4;
-		*(u32*)&msg.data[0] = MFID_2_LCD;
-		*(u32*)&msg.data[4] = 0;    // PT, phase, block#
-		memcpy(&msg.data[8], lcd_data, sizeof(lcd_data));
-		dreamlink->send(msg);
-	}
-
-private:
-	//! Thread entrypoint for write operations
-	void writeEntrypoint()
-	{
-		while (true)
-		{
-			u8 block = 0;
-
-			// Entering lock context
-			{
-				std::unique_lock<std::mutex> lock(writeMutex);
-				writeCv.wait(lock, [this](){ return (!running || !blocksToWrite.empty()); });
-
-				if (!running)
-				{
-					break;
-				}
-
-				block = blocksToWrite.front();
-				blocksToWrite.pop_front();
-			}
-
-			const u64 currentTime = std::chrono::duration_cast<std::chrono::milliseconds>(
-				std::chrono::steady_clock::now().time_since_epoch()).count();
-
-			// Only show notification once every 6 seconds to avoid spam
-			if ((currentTime - lastNotifyTime) > 4000 && (currentTime - lastErrorNotifyTime) > 4000)
-			{
-				// This is a write operation (saving)
-				os_notify("ATTENTION: You are saving to a physical VMU", 6000,
-						"Do not disconnect the VMU or close the game");
-				lastNotifyTime = currentTime;
-			}
-
-			bool writeSuccess = true;
-			const u8* blockData = &flash_data[block * 4 * 128];
-			std::chrono::milliseconds delay(10);
-			const std::chrono::milliseconds delayInc(5);
-			// Try up to 4 times to write
-			for (u32 i = 0; i < 4; ++i) {
-				if (i > 0) {
-					// Slow down writes to avoid overloading the VMU
-					delay += delayInc;
-				}
-
-				writeSuccess = true;
-
-				// 4 write phases per block
-				for (u32 phase = 0; phase < 4; ++phase) {
-					MapleMsg writeMsg;
-					writeMsg.command = MDCF_BlockWrite;
-					writeMsg.destAP = (bus_id << 6) | (1 << bus_port);
-					writeMsg.originAP = (bus_id << 6);
-					writeMsg.size = 34;
-					writeMsg.setWord(MFID_1_Storage, 0);
-					const u32 locationWord = (block << 24) | (phase << 8);
-					writeMsg.setWord(locationWord, 1);
-					memcpy(&writeMsg.data[8], &blockData[phase * 128], 128);
-
-					// Delay before writing
-					std::this_thread::sleep_for(delay);
-
-					MapleMsg rcvMsg;
-					if (!dreamlink->send(writeMsg, rcvMsg) || rcvMsg.command != MDRS_DeviceReply) {
-						// Not acknowledged
-						writeSuccess = false;
-						break;
-					}
-				}
-
-				if (writeSuccess) {
-					// Delay before committing
-					std::this_thread::sleep_for(delay);
-
-					// Send the GetLastError command to commit the data
-					MapleMsg writeMsg;
-					writeMsg.command = MDCF_GetLastError;
-					writeMsg.destAP = (bus_id << 6) | (1 << bus_port);
-					writeMsg.originAP = (bus_id << 6);
-					writeMsg.size = 2;
-					writeMsg.setWord(MFID_1_Storage, 0);
-					const u32 phase = 4;
-					const u32 locationWord = (block << 24) | (phase << 8);
-					writeMsg.setWord(locationWord, 1);
-					MapleMsg rcvMsg;
-					if (dreamlink->send(writeMsg, rcvMsg) && rcvMsg.command == MDRS_DeviceReply) {
-						// Acknowledged
-						break;
-					}
-				}
-				// else: continue to retry
-			}
-
-			if (!writeSuccess) {
-				ERROR_LOG(MAPLE, "Failed to save VMU %s: I/O error", logical_port);
-
-				const u64 currentTime = std::chrono::duration_cast<std::chrono::milliseconds>(
-					std::chrono::steady_clock::now().time_since_epoch()).count();
-
-				if ((currentTime - lastErrorNotifyTime) > 4000)
-				{
-					os_notify("ATTENTION: Write to VMU failed", 6000);
-					lastErrorNotifyTime = currentTime;
-				}
-			}
-		}
+		auto link = MapleLink::GetMapleLink(bus_id, bus_port);
+		if (link == nullptr)
+			return false;
+		return link->isConnected();
 	}
 };
 
-u64 DreamLinkVmu::lastNotifyTime = 0;
-u64 DreamLinkVmu::lastErrorNotifyTime = 0;
-
-struct DreamLinkPurupuru : public maple_sega_purupuru
+void createMapleLinkVmu(int bus, int port)
 {
-	std::shared_ptr<DreamLink> dreamlink;
-
-	//! Number of consecutive stop conditions sent
-	u32 stopSendCount = 0;
-
-	DreamLinkPurupuru(std::shared_ptr<DreamLink> dreamlink) : dreamlink(dreamlink) {
-	}
-
-	u32 dma(u32 cmd) override
-	{
-		if (cmd == MDCF_BlockWrite || cmd == MDCF_SetCondition) {
-			const MapleMsg *msg = reinterpret_cast<const MapleMsg*>(dma_buffer_in - 4);
-			const u32 functionId = *(u32*)dma_buffer_in;
-			const u32 condition = *(u32*)(dma_buffer_in + 4);
-			if (functionId == MFID_8_Vibration && condition == 0x00000010) {
-				++stopSendCount;
-			} else {
-				stopSendCount = 0;
-			}
-
-			// Only send 2 consecutive stop commands; ignore the rest to avoid unnecessary communications
-			if (stopSendCount <= 2) {
-				dreamlink->send(*msg);
-			}
-		}
-		return maple_sega_purupuru::dma(cmd);
-	}
-};
-
-static std::list<std::shared_ptr<DreamLinkVmu>> dreamLinkVmus[2];
-static std::list<std::shared_ptr<DreamLinkPurupuru>> dreamLinkPurupurus;
-
-bool reconnectDreamLinks()
-{
-	auto& useNetworkExpansionDevices = config::UseNetworkExpansionDevices;
-	bool anyNewConnection = false;
-	for (int i = 0; i < DreamLink::NUM_PORTS; i++)
-	{
-		const auto& dreamlink = DreamLink::activeDreamLinks[i];
-
-		if (useNetworkExpansionDevices[i] && !dreamlink)
-		{
-			bool isForPhysicalController = false;
-			DreamLink::activeDreamLinks[i] = DreamConn::create_shared(i, isForPhysicalController);
-		}
-		else if (!useNetworkExpansionDevices[i] && dreamlink && !dreamlink->isForPhysicalController())
-		{
-			// This bus is not using network expansion devices.
-			// Dispose of the dreamlink for the bus, unless it is for a physical controller (and therefore not managed by this setting).
-			dreamlink->disconnect();
-			DreamLink::activeDreamLinks[i] = nullptr;
-		}
-
-		if (dreamlink && !dreamlink->isConnected())
-		{
-			dreamlink->connect();
-			if (dreamlink->isConnected())
-			{
-				anyNewConnection = true;
-			}
-		}
-	}
-
-	return anyNewConnection;
+	INFO_LOG(MAPLE, "MapleLinkVmu created on %d,%d", bus, port);
+	auto vmu = std::make_shared<MapleLinkVmu>();
+	vmu->Setup(bus, port);
 }
-
-// Checks for and handles a message from server telling us to refresh the expansion devices.
-void refreshDreamLinksIfNeeded()
-{
-	bool anyNeedsRefresh = false;
-	for (auto& dreamlink : DreamLink::activeDreamLinks)
-	{
-		if (dreamlink && dreamlink->needsRefresh())
-			anyNeedsRefresh = true;
-	}
-
-	if (!anyNeedsRefresh)
-		return;
-
-	for (auto& dreamlink : DreamLink::activeDreamLinks)
-	{
-		if (dreamlink)
-			tearDownDreamLinkDevices(dreamlink);
-	}
-
-	maple_ReconnectDevices();
-}
-
-void createAllDreamLinkDevices()
-{
-	for (int i = 0; i < DreamLink::NUM_PORTS; i++)
-	{
-		const auto& dreamlink = DreamLink::activeDreamLinks[i];
-		if (dreamlink && dreamlink->isConnected())
-		{
-			bool gameStart = false;
-			bool stateLoaded = false;
-			createDreamLinkDevices(dreamlink, gameStart, stateLoaded);
-		}
-	}
-}
-
-// Replaces certain ordinary MapleDevices entries with specialized devices that communicate thru a DreamLink.
-void createDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink, bool gameStart, bool stateLoaded)
-{
-	const int bus = dreamlink->getBus();
-
-	for (int i = 0; i < 2; ++i)
-	{
-		std::shared_ptr<maple_device> dev = MapleDevices[bus][i];
-
-		if ((dreamlink->getFunctionCode(i + 1) & MFID_1_Storage))
-		{
-			bool vmuFound = false;
-			std::shared_ptr<DreamLinkVmu> vmu;
-			for (const std::shared_ptr<DreamLinkVmu>& vmuIter : dreamLinkVmus[i])
-			{
-				if (vmuIter->dreamlink.get() == dreamlink.get())
-				{
-					vmuFound = true;
-					vmu = vmuIter;
-					break;
-				}
-			}
-
-			if (gameStart || stateLoaded || !vmuFound)
-			{
-				if (!vmu)
-				{
-					vmu = std::make_shared<DreamLinkVmu>(dreamlink);
-				}
-
-				if (gameStart)
-				{
-					// Update useRealVmuMemory in case config changed
-					vmu->useRealVmuMemory = config::UsePhysicalVmuMemory;
-				}
-				else if (stateLoaded)
-				{
-					if (vmu->useRealVmuMemory)
-					{
-						// Disconnect from real VMU memory when a state is loaded
-						vmu->useRealVmuMemory = false;
-						os_notify("WARNING: Disconnected from physical VMU memory due to load state", 6000,
-							"Reconnect manually to resume using physical VMU memory");
-					}
-				}
-
-				vmu->Setup(bus, i);
-
-				if (!vmuFound && dev && dev->get_device_type() == MDT_SegaVMU && !vmu->useRealVmuMemory) {
-					// Only copy data from virtual VMU if Physical VMU Only is disabled
-					vmu->copyIn(std::static_pointer_cast<maple_sega_vmu>(dev));
-					if (!gameStart) {
-						vmu->updateScreen();
-					}
-				}
-
-				if (!vmuFound) {
-					dreamLinkVmus[i].push_back(vmu);
-				}
-			}
-		}
-		else if (i == 1 && ((dreamlink->getFunctionCode(i + 1) & MFID_8_Vibration)))
-		{
-			bool rumbleFound = false;
-			std::shared_ptr<DreamLinkPurupuru> rumble;
-			for (const std::shared_ptr<DreamLinkPurupuru>& purupuru : dreamLinkPurupurus)
-			{
-				if (purupuru->dreamlink.get() == dreamlink.get())
-				{
-					rumbleFound = true;
-					rumble = purupuru;
-					break;
-				}
-			}
-
-			if (gameStart || stateLoaded || !rumbleFound)
-			{
-				if (!rumble)
-				{
-					rumble = std::make_shared<DreamLinkPurupuru>(dreamlink);
-				}
-
-				rumble->Setup(bus, i);
-
-				if (!rumbleFound) dreamLinkPurupurus.push_back(rumble);
-			}
-		}
-	}
-}
-
-// Replaces DreamLink devices associated with 'dreamlink' with ordinary Maple devices.
-void tearDownDreamLinkDevices(std::shared_ptr<DreamLink> dreamlink)
-{
-	const int bus = dreamlink->getBus();
-
-	for (int i = 0; i < 2; ++i)
-	{
-		for (std::list<std::shared_ptr<DreamLinkVmu>>::const_iterator iter = dreamLinkVmus[i].begin();
-			iter != dreamLinkVmus[i].end();)
-		{
-			if ((*iter)->dreamlink.get() == dreamlink.get())
-			{
-				DEBUG_LOG(MAPLE, "VMU teardown - Physical VMU: %s", (*iter)->useRealVmuMemory ? "true" : "false");
-				std::shared_ptr<maple_device> dev = maple_Create(MDT_SegaVMU);
-				dev->Setup(bus, 0);
-				if (!(*iter)->useRealVmuMemory)
-				{
-					(*iter)->copyOut(std::static_pointer_cast<maple_sega_vmu>(dev));
-				}
-				DEBUG_LOG(MAPLE, "VMU teardown - Copy completed");
-				iter = dreamLinkVmus[i].erase(iter);
-				break;
-			}
-			else
-			{
-				++iter;
-			}
-		}
-	}
-
-	std::size_t dreamLinkVmuCount = 0;
-	for (int i = 0; i < 2; ++i)
-	{
-		dreamLinkVmuCount += dreamLinkVmus[i].size();
-	}
-
-	for (std::list<std::shared_ptr<DreamLinkPurupuru>>::const_iterator iter = dreamLinkPurupurus.begin();
-		iter != dreamLinkPurupurus.end();)
-	{
-		if ((*iter)->dreamlink.get() == dreamlink.get())
-		{
-			std::shared_ptr<maple_device> dev = maple_Create(MDT_PurupuruPack);
-			dev->Setup(bus, 1);
-			iter = dreamLinkPurupurus.erase(iter);
-			break;
-		}
-		else
-		{
-			++iter;
-		}
-	}
-}
-
-#endif

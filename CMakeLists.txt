@@ -43,7 +43,7 @@ endif()
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-if(CMAKE_SYSTEM_NAME STREQUAL "NetBSD" OR NINTENDO_SWITCH)
+if(CMAKE_SYSTEM_NAME MATCHES "NetBSD|Haiku" OR NINTENDO_SWITCH)
 	set(CMAKE_CXX_EXTENSIONS ON)
 else()
 	set(CMAKE_CXX_EXTENSIONS OFF)
@@ -55,8 +55,13 @@ if(NOT DEFINED ARCHITECTURE)
 endif()
 message(STATUS "Target architecture: ${ARCHITECTURE}")
 
+if(CMAKE_CXX_COMPILER MATCHES "webos" OR
+   CMAKE_CXX_COMPILER MATCHES "starfish")
+	set(WEBOS ON)
+endif()
+
 set(USE_HOST_SDL_DEFAULT OFF)
-if(NOT APPLE AND (NOT UNIX OR CMAKE_SYSTEM_NAME MATCHES "(FreeBSD|OpenBSD|NetBSD)"))
+if(NOT APPLE AND (NOT UNIX OR CMAKE_SYSTEM_NAME MATCHES "DragonFly|FreeBSD|OpenBSD|NetBSD|Haiku"))
 	set(USE_HOST_SDL_DEFAULT ON)
 endif()
 
@@ -94,11 +99,18 @@ if(IOS AND NOT LIBRETRO)
 	set(USE_VULKAN OFF CACHE BOOL "Force vulkan off" FORCE)
 endif()
 
+if(WEBOS)
+	set(USE_GLES2 ON CACHE BOOL "Use GLES2 API" FORCE)
+	set(USE_OPENMP OFF CACHE BOOL "Force openmp off" FORCE)
+	set(USE_VULKAN OFF CACHE BOOL "Force vulkan off" FORCE)
+endif()
+
 include(GNUInstallDirs)
 include(CMakeRC)
 
 if(ENABLE_CTEST)
 	include(CTest)
+	add_compile_definitions(FLYCAST_TEST_FILES="${CMAKE_CURRENT_SOURCE_DIR}/tests/files")
 endif()
 
 if(IOS AND NOT LIBRETRO)
@@ -175,7 +187,9 @@ elseif(LIBRETRO)
 		endif()
 		set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-exported_symbols_list,${CMAKE_CURRENT_SOURCE_DIR}/shell/libretro/libretro.osx.def")
 	else()
-		set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--no-undefined")
+		if(NOT CMAKE_SYSTEM_NAME STREQUAL "OpenBSD")
+			set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--no-undefined")
+		endif()
 	endif()
 	set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "flycast_libretro"
 	  XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED "NO"
@@ -184,7 +198,6 @@ elseif(LIBRETRO)
 	set(CMAKE_SHARED_LIBRARY_PREFIX "")
 	set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 	target_compile_definitions(${PROJECT_NAME} PRIVATE LIBRETRO)
-	target_compile_options(${PROJECT_NAME} PRIVATE -Wno-misleading-indentation)
 	if(APPLE)
 		find_library(FOUNDATION Foundation)
 		target_link_libraries(${PROJECT_NAME} PRIVATE ${FOUNDATION})
@@ -206,6 +219,14 @@ elseif(LIBRETRO)
 			target_link_libraries(${PROJECT_NAME} PRIVATE "-lGLESv2")
 		endif()
 	elseif(USE_OPENGL)
+		if (CMAKE_SYSTEM_NAME MATCHES "FreeBSD|OpenBSD|NetBSD")
+			find_package(OpenGL REQUIRED)
+			if(CMAKE_VERSION VERSION_LESS 3.29.0)
+				target_include_directories(${PROJECT_NAME} PRIVATE ${OPENGL_INCLUDE_DIR})
+			else()
+				target_include_directories(${PROJECT_NAME} PRIVATE ${OPENGL_INCLUDE_DIRS})
+			endif()
+		endif()
 		target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_OPENGL)
 		if(APPLE)
 			set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-framework,OpenGL")
@@ -463,8 +484,7 @@ if(NOT LIBRETRO)
 			if (WINDOWS_STORE)
 				# Use winrt implementation of the DreamPicoPort-API
 				option(DREAMPICOPORT_WITH_LIBUSB "Use libusb to access DreamPicoPort-API" OFF)
-			elseif (CMAKE_SYSTEM_NAME STREQUAL "FreeBSD")
-				# A version of libusb is installed in FreeBSD
+			elseif (CMAKE_SYSTEM_NAME MATCHES "DragonFly|FreeBSD|NetBSD|OpenBSD|Haiku")
 				find_package(PkgConfig REQUIRED)
    	 			pkg_check_modules(LIBUSB REQUIRED libusb-1.0)
 
@@ -472,12 +492,12 @@ if(NOT LIBRETRO)
 				set(DREAMPICOPORT_LIBUSB_INCLUDE_DIRS "${LIBUSB_INCLUDE_DIRS}" CACHE STRING "Path to libusb include directory, when applicable")
 			else()
 				# libusb
-				add_subdirectory(core/deps/libusb-cmake)
+				add_subdirectory(core/deps/DreamPicoPort-API/ext/libusb-cmake)
 			endif()
 
 			# DreamPicoPort-API
 			option(DREAMPICOPORT_ADD_LIBUSB "Add internal libusb library" OFF) # Already included above, when applicable
-			add_subdirectory(core/deps/DreamPicoPort-API)
+			add_subdirectory(core/deps/DreamPicoPort-API EXCLUDE_FROM_ALL)
 			target_link_libraries(${PROJECT_NAME} PRIVATE dream_pico_port_api)
 		endif()
 
@@ -772,6 +792,11 @@ if(NOT LIBRETRO AND NOT NINTENDO_SWITCH)
 	endif()
 endif()
 
+set(TINYGETTEXT_WO_ICONV ON)
+add_subdirectory(core/deps/tinygettext EXCLUDE_FROM_ALL)
+target_include_directories(${PROJECT_NAME} PRIVATE core/deps/tinygettext/include)
+target_link_libraries(${PROJECT_NAME} PRIVATE tinygettext::tinygettext)
+
 target_include_directories(${PROJECT_NAME} PRIVATE core/deps/picotcp/include core/deps/picotcp/modules)
 target_sources(${PROJECT_NAME} PRIVATE
 		core/deps/picotcp/include/arch/pico_arm9.h
@@ -846,6 +871,7 @@ if(NOT LIBRETRO)
 		core/deps/imgui/imgui.cpp
 		core/deps/imgui/imgui_demo.cpp
 		core/deps/imgui/imgui_draw.cpp
+		core/deps/imgui/imgui_cjk.cpp
 		core/deps/imgui/imgui_stdlib.cpp
 		core/deps/imgui/imgui_tables.cpp
 		core/deps/imgui/imgui_widgets.cpp)
@@ -932,7 +958,7 @@ add_subdirectory(core/lua)
 add_subdirectory(core/profiler)
 add_subdirectory(core/wsi)
 
-include(cmake/resources.cmake)
+include(resources/resources.cmake)
 
 if(WIN32)
 	target_sources(${PROJECT_NAME} PRIVATE
@@ -1344,17 +1370,9 @@ if(NOT LIBRETRO)
 
 	if(ANDROID)
 		target_compile_definitions(${PROJECT_NAME} PRIVATE GLES GLES3)
-
-		target_sources(${PROJECT_NAME} PRIVATE
-			shell/android-studio/flycast/src/main/jni/src/Android.cpp
-			shell/android-studio/flycast/src/main/jni/src/android_gamepad.h
-			shell/android-studio/flycast/src/main/jni/src/android_storage.h
-			shell/android-studio/flycast/src/main/jni/src/http_client.h
-			shell/android-studio/flycast/src/main/jni/src/jni_util.h
-			shell/android-studio/flycast/src/main/jni/src/android_input.cpp
-			shell/android-studio/flycast/src/main/jni/src/android_keyboard.h)
-
+		add_subdirectory(shell/android-studio/flycast/src/main/jni/src)
 		target_link_libraries(${PROJECT_NAME} PRIVATE android log)
+
 	elseif(APPLE)
 		string(TIMESTAMP YEAR "%Y")
 		string(REGEX MATCH "^[^-]+" TAG_VERSION ${GIT_VERSION})
