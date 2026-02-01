@@ -163,7 +163,9 @@ static void setApplicationMenu(void)
     
     [appleMenu addItemWithTitle:@"New Instance" action:@selector(newInstance:) keyEquivalent:@"n"];
 
-    [appleMenu addItemWithTitle:@"Toggle Menu" action:@selector(toggleMenu:) keyEquivalent:@"m"];
+    NSMenuItem *toggleMenuItem = [appleMenu addItemWithTitle:@"Toggle Menu" action:@selector(toggleMenu:) keyEquivalent:@"M"];
+    [toggleMenuItem setTag:MENU_TAG_TOGGLE_MENU];
+    [appleMenu setAutoenablesItems:NO];
 
     [appleMenu addItem:[NSMenuItem separatorItem]];
     
@@ -171,7 +173,7 @@ static void setApplicationMenu(void)
     [appleMenu addItemWithTitle:title action:@selector(hide:) keyEquivalent:@"h"];
     
     menuItem = (NSMenuItem *)[appleMenu addItemWithTitle:@"Hide Others" action:@selector(hideOtherApplications:) keyEquivalent:@"h"];
-    [menuItem setKeyEquivalentModifierMask:(NSAlternateKeyMask|NSCommandKeyMask)];
+    [menuItem setKeyEquivalentModifierMask:(NSEventModifierFlagOption | NSEventModifierFlagCommand)];
     
     [appleMenu addItemWithTitle:@"Show All" action:@selector(unhideAllApplications:) keyEquivalent:@""];
     
@@ -222,6 +224,20 @@ static void setupWindowMenu(void)
     [windowMenu addItem:menuItem];
     [menuItem release];
     
+    menuItem = [[NSMenuItem alloc] initWithTitle:@"Enter Full Screen" action:@selector(toggleFullScreen:) keyEquivalent:@"f"];
+    /* Hides Globe key from keyboard shortcuts, only prints it when user is holding the Globe key */
+    [menuItem setKeyEquivalentModifierMask:NSEventModifierFlagHelp];
+    [windowMenu addItem:menuItem];
+    [menuItem release];
+    
+    /* "Ctrl + Cmd + F" was the standard Full Screen shortcut from OS X 10.7 Lion through macOS 11 Big Sur.
+       Add it back as an alternative shortcut for user without an Apple keyboard */
+    menuItem = [[NSMenuItem alloc] initWithTitle:@"Enter Full Screen" action:@selector(toggleFullScreen:) keyEquivalent:@"f"];
+    [menuItem setKeyEquivalentModifierMask:(NSEventModifierFlagControl | NSEventModifierFlagCommand)];
+    [menuItem setAlternate:YES];
+    [windowMenu addItem:menuItem];
+    [menuItem release];
+    
     /* Put menu into the menubar */
     windowMenuItem = [[NSMenuItem alloc] initWithTitle:@"Window" action:nil keyEquivalent:@""];
     [windowMenuItem setSubmenu:windowMenu];
@@ -240,13 +256,9 @@ static void setupHelpMenu(void)
 {
     NSMenu      *helpMenu;
     NSMenuItem  *helpMenuItem;
-    NSMenuItem  *menuItem;
     
     helpMenu = [[NSMenu alloc] initWithTitle:@"Help"];
     
-    /* Standard Apple Help item */
-    menuItem = [[NSMenuItem alloc] initWithTitle:@"" action:@selector(showHelp:) keyEquivalent:@"/"];
-
     /* Put menu into the menubar */
     helpMenuItem = [[NSMenuItem alloc] initWithTitle:@"Help" action:nil keyEquivalent:@""];
     [helpMenuItem setSubmenu:helpMenu];

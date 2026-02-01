@@ -12,5 +12,7 @@
 @interface SDLApplicationDelegate : NSObject <NSApplicationDelegate>
 @end
 
+#define MENU_TAG_TOGGLE_MENU 501
+
 #endif /* _SDLMain_h_ */
 
