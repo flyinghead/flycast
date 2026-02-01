@@ -22,6 +22,8 @@
 #include "oslib/oslib.h"
 #include "emulator.h"
 #include "ui/mainui.h"
+#include "ui/gui.h"
+#include "SDLApplicationDelegate.h"
 #include <future>
 
 int darw_printf(const char* text, ...)
@@ -53,6 +55,11 @@ void os_DoEvents() {
 #if defined(USE_SDL)
 	NSMenuItem *editMenuItem = [[NSApp mainMenu] itemAtIndex:1];
 	[editMenuItem setEnabled:SDL_IsTextInputActive()];
+
+	NSMenuItem *toggleMenuItem = [[[[NSApp mainMenu] itemAtIndex:0] submenu] itemWithTag:MENU_TAG_TOGGLE_MENU];
+	if (toggleMenuItem) {
+		[toggleMenuItem setEnabled:emu.running() || gui_state == GuiState::Commands];
+	}
 #endif
 }
 
