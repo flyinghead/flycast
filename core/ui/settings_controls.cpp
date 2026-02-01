@@ -157,25 +157,25 @@ struct Mapping {
 
 static const Mapping dcButtons[] = {
 	{ EMU_BTN_NONE, "Directions" },
-	{ DC_DPAD_UP, "DPad Up" },
-	{ DC_DPAD_DOWN, "DPad Down" },
-	{ DC_DPAD_LEFT, "DPad Left" },
-	{ DC_DPAD_RIGHT, "DPad Right" },
+	{ DC_DPAD_UP, "Up" },
+	{ DC_DPAD_DOWN, "Down" },
+	{ DC_DPAD_LEFT, "Left" },
+	{ DC_DPAD_RIGHT, "Right" },
 
-	{ DC_AXIS_UP, "L.Thumbstick Up" },
-	{ DC_AXIS_DOWN, "L.Thumbstick Down" },
-	{ DC_AXIS_LEFT, "L.Thumbstick Left" },
-	{ DC_AXIS_RIGHT, "L.Thumbstick Right" },
+	{ DC_AXIS_UP, "Thumbstick Up" },
+	{ DC_AXIS_DOWN, "Thumbstick Down" },
+	{ DC_AXIS_LEFT, "Thumbstick Left" },
+	{ DC_AXIS_RIGHT, "Thumbstick Right" },
 
 	{ DC_AXIS2_UP, "R.Thumbstick Up" },
 	{ DC_AXIS2_DOWN, "R.Thumbstick Down" },
 	{ DC_AXIS2_LEFT, "R.Thumbstick Left" },
 	{ DC_AXIS2_RIGHT, "R.Thumbstick Right" },
 
-	{ DC_AXIS3_UP,    "Axis3 Up"    },
-	{ DC_AXIS3_DOWN,  "Axis3 Down"  },
-	{ DC_AXIS3_LEFT,  "Axis3 Left"  },
-	{ DC_AXIS3_RIGHT, "Axis3 Right" },
+	{ DC_AXIS3_UP,    "Axis 3 Up"    },
+	{ DC_AXIS3_DOWN,  "Axis 3 Down"  },
+	{ DC_AXIS3_LEFT,  "Axis 3 Left"  },
+	{ DC_AXIS3_RIGHT, "Axis 3 Right" },
 
 	{ DC_DPAD2_UP,    "DPad2 Up"    },
 	{ DC_DPAD2_DOWN,  "DPad2 Down"  },
@@ -217,15 +217,15 @@ static const Mapping dcButtons[] = {
 
 static const Mapping arcadeButtons[] = {
 	{ EMU_BTN_NONE, "Directions" },
-	{ DC_DPAD_UP, "DPad Up" },
-	{ DC_DPAD_DOWN, "DPad Down" },
-	{ DC_DPAD_LEFT, "DPad Left" },
-	{ DC_DPAD_RIGHT, "DPad Right" },
+	{ DC_DPAD_UP, "Up" },
+	{ DC_DPAD_DOWN, "Down" },
+	{ DC_DPAD_LEFT, "Left" },
+	{ DC_DPAD_RIGHT, "Right" },
 
-	{ DC_AXIS_UP, "L.Thumbstick Up" },
-	{ DC_AXIS_DOWN, "L.Thumbstick Down" },
-	{ DC_AXIS_LEFT, "L.Thumbstick Left" },
-	{ DC_AXIS_RIGHT, "L.Thumbstick Right" },
+	{ DC_AXIS_UP, "Thumbstick Up" },
+	{ DC_AXIS_DOWN, "Thumbstick Down" },
+	{ DC_AXIS_LEFT, "Thumbstick Left" },
+	{ DC_AXIS_RIGHT, "Thumbstick Right" },
 
 	{ DC_AXIS2_UP, "R.Thumbstick Up" },
 	{ DC_AXIS2_DOWN, "R.Thumbstick Down" },

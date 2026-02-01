@@ -604,13 +604,12 @@ static void getScreenshot(std::vector<u8>& data, int width = 0)
 	stbi_write_png_to_func(appendVectorData, &data, width, height, 3, &rawData[0], 0);
 }
 
-static void savestate(int slotIndex = -1)
+static void savestate()
 {
 	// TODO save state async: png compression, savestate file compression/write
-	if (slotIndex < 0) slotIndex = config::SavestateSlot;
 	std::vector<u8> pngData;
 	getScreenshot(pngData, 640);
-	dc_savestate(slotIndex, pngData.empty() ? nullptr : &pngData[0], pngData.size());
+	dc_savestate(config::SavestateSlot, pngData.empty() ? nullptr : &pngData[0], pngData.size());
 	ImguiStateTexture savestatePic;
 	savestatePic.invalidate();
 }
@@ -1021,13 +1020,10 @@ static void gui_display_content()
 
     static ImGuiTextFilter filter;
     const float settingsBtnW = iconButtonWidth(ICON_FA_GEAR, "Settings");
-	const float exitBtnW = ImGui::GetStyle().ItemSpacing.x + iconButtonWidth(ICON_FA_POWER_OFF, "Exit");
-	const bool isFullscreen_PC = sdl_is_fullscreen();
-	const float exitBtnW_PC = isFullscreen_PC ? exitBtnW : 0;
 #if !defined(__ANDROID__) && !defined(TARGET_IPHONE) && !defined(TARGET_UWP) && !defined(__SWITCH__)
 	ImGui::SameLine(0, uiScaled(32));
 	filter.Draw("Filter", ImGui::GetContentRegionAvail().x - ImGui::GetStyle().ItemSpacing.x - uiScaled(32)
-			- settingsBtnW - exitBtnW_PC - ImGui::GetStyle().ItemSpacing.x);
+			- settingsBtnW - ImGui::GetStyle().ItemSpacing.x);
 #endif
     if (gui_state != GuiState::SelectDisk)
     {
@@ -1037,26 +1033,17 @@ static void gui_display_content()
 		if (ImGui::Button("Load..."))
 			gui_load_game();
 		ImGui::SameLine();
-		if (iconButton(ICON_FA_GEAR, "Settings"))
-			gui_setState(GuiState::Settings);
 #elif defined(__SWITCH__)
-		ImGui::SameLine(ImGui::GetContentRegionMax().x - settingsBtnW - exitBtnW);
+		ImGui::SameLine(ImGui::GetContentRegionMax().x - settingsBtnW
+				- ImGui::GetStyle().ItemSpacing.x - iconButtonWidth(ICON_FA_POWER_OFF, "Exit"));
 		if (iconButton(ICON_FA_POWER_OFF, "Exit"))
 			dc_exit();
 		ImGui::SameLine();
-		if (iconButton(ICON_FA_GEAR, "Settings"))
-			gui_setState(GuiState::Settings);
 #else
-		ImGui::SameLine(ImGui::GetContentRegionMax().x - settingsBtnW - exitBtnW_PC);
+		ImGui::SameLine(ImGui::GetContentRegionMax().x - settingsBtnW);
+#endif
 		if (iconButton(ICON_FA_GEAR, "Settings"))
 			gui_setState(GuiState::Settings);
-		if (isFullscreen_PC)
-		{
-			ImGui::SameLine();
-			if (iconButton(ICON_FA_POWER_OFF, "Exit"))
-				dc_exit();
-		}
-#endif
     }
     else
     {
@@ -1698,15 +1685,14 @@ void gui_error(const std::string& what) {
 	error_msg = what;
 }
 
-void gui_loadState(int slotIndex)
+void gui_loadState()
 {
-	if (slotIndex < 0) slotIndex = config::SavestateSlot;
 	const LockGuard lock(guiMutex);
 	if (gui_state == GuiState::Closed && savestateAllowed())
 	{
 		try {
 			emu.stop();
-			dc_loadstate(slotIndex);
+			dc_loadstate(config::SavestateSlot);
 			emu.start();
 		} catch (const FlycastException& e) {
 			gui_stop_game(e.what());
@@ -1714,16 +1700,15 @@ void gui_loadState(int slotIndex)
 	}
 }
 
-void gui_saveState(int slotIndex, bool stopRestart)
+void gui_saveState(bool stopRestart)
 {
-	if (slotIndex < 0) slotIndex = config::SavestateSlot;
 	const LockGuard lock(guiMutex);
 	if ((gui_state == GuiState::Closed || !stopRestart) && savestateAllowed())
 	{
 		try {
 			if (stopRestart)
 				emu.stop();
-			savestate(slotIndex);
+			savestate();
 			if (stopRestart)
 				emu.start();
 		} catch (const FlycastException& e) {

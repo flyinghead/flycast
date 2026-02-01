@@ -1353,17 +1353,3 @@ void sdl_displayHapticStats()
 	ImGui::End();
 }
 #endif
-
-bool sdl_is_fullscreen()
-{
-#if !defined(__ANDROID__) && !defined(TARGET_IPHONE) && !defined(TARGET_UWP) && !defined(__SWITCH__)
-	if (!window)
-		return false;
-
-	Uint32 flags = SDL_GetWindowFlags(window);
-	return (flags & SDL_WINDOW_FULLSCREEN) ||
-		(flags & SDL_WINDOW_FULLSCREEN_DESKTOP);
-#else
-	return false;
-#endif
-}
