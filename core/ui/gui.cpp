@@ -860,7 +860,7 @@ static void gui_display_commands()
 			// Slot #
 			if (ImGui::ArrowButton("##prev-slot", ImGuiDir_Left))
 			{
-				gui_setToPrevSlot();
+				gui_cycleSaveStateSlotBackward();
 			}
 			std::string slot = strprintf(T("Slot %d"), (int)config::SavestateSlot + 1);
 			float spacingW = (uiScaled(buttonWidth) - ImGui::GetFrameHeight() * 2 - ImGui::CalcTextSize(slot.c_str()).x) / 2;
@@ -869,7 +869,7 @@ static void gui_display_commands()
 			ImGui::SameLine(0, spacingW);
 			if (ImGui::ArrowButton("##next-slot", ImGuiDir_Right))
 			{
-				gui_setToNextSlot();
+				gui_cycleSaveStateSlotForward();
 			}
 			{
 				ImVec4 gray(0.75f, 0.75f, 0.75f, 1.f);
@@ -1769,7 +1769,7 @@ void gui_saveState(bool stopRestart)
 	}
 }
 
-void gui_setToNextSlot()
+void gui_cycleSaveStateSlotForward()
 {
 	if (config::SavestateSlot == 9)
 		config::SavestateSlot = 0;
@@ -1778,7 +1778,7 @@ void gui_setToNextSlot()
 	SaveSettings();
 }
 
-void gui_setToPrevSlot()
+void gui_cycleSaveStateSlotBackward()
 {
 	if (config::SavestateSlot == 0)
 		config::SavestateSlot = 9;
