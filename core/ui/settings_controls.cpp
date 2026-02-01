@@ -221,6 +221,8 @@ static Mapping dcButtons[] = {
 	{ EMU_BTN_FFORWARD, Tnop("Fast-forward") },
 	{ EMU_BTN_LOADSTATE, Tnop("Load State") },
 	{ EMU_BTN_SAVESTATE, Tnop("Save State") },
+	{ EMU_BTN_NEXTSLOT, Tnop("Next Save State Slot") },
+	{ EMU_BTN_PREVSLOT, Tnop("Previous Save State Slot") },
 	{ EMU_BTN_BYPASS_KB, Tnop("Bypass Emulated Keyboard") },
 	{ EMU_BTN_SCREENSHOT, Tnop("Save Screenshot") },
 
@@ -275,6 +277,8 @@ static Mapping arcadeButtons[] = {
 	{ EMU_BTN_FFORWARD, Tnop("Fast-forward") },
 	{ EMU_BTN_LOADSTATE, Tnop("Load State") },
 	{ EMU_BTN_SAVESTATE, Tnop("Save State") },
+	{ EMU_BTN_NEXTSLOT, Tnop("Next Save State Slot") },
+	{ EMU_BTN_PREVSLOT, Tnop("Previous Save State Slot") },
 	{ EMU_BTN_BYPASS_KB, Tnop("Bypass Emulated Keyboard") },
 	{ EMU_BTN_SCREENSHOT, Tnop("Save Screenshot") },
 

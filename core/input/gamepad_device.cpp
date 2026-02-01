@@ -102,6 +102,14 @@ bool GamepadDevice::handleButtonInput(int port, DreamcastKey key, bool pressed)
 			if (pressed)
 				gui_saveState();
 			break;
+		case EMU_BTN_NEXTSLOT:
+			if (pressed)
+				gui_setToNextSlot();
+			break;
+		case EMU_BTN_PREVSLOT:
+			if (pressed)
+				gui_setToPrevSlot();
+			break;
 		case EMU_BTN_SCREENSHOT:
 			if (pressed)
 				gui_takeScreenshot();
