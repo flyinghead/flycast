@@ -1045,7 +1045,6 @@ void ModemSerialize(Serializer& ser)
 	ser << state;
 	ser << connect_state;
 	ser << last_dial_time;
-	ser << false;	// data_sent TODO get rid of this in the next savestate version
 }
 void ModemDeserialize(Deserializer& deser)
 {
@@ -1058,8 +1057,7 @@ void ModemDeserialize(Deserializer& deser)
 		deser >> state;
 		deser >> connect_state;
 		deser >> last_dial_time;
-		bool data_sent;
-		deser >> data_sent;
+		deser.skip<bool>(Deserializer::V58);
 	}
 	rxFifo.clear();
 	v42Proto.reset();

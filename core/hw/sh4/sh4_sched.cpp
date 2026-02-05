@@ -180,7 +180,7 @@ void sh4_sched_tick(int cycles)
 		for (sched_list& sched : sch_list)
 		{
 			int remaining = sh4_sched_remaining(sched, fztime);
-			if (remaining >= 0 && remaining <= (int)cycles)
+			if (remaining >= 0 && remaining <= cycles)
 				handle_cb(sched);
 		}
 	}
@@ -241,8 +241,6 @@ void sh4_sched_serialize(Serializer& ser)
 	sh4_sched_serialize(ser, gdrom_schid);
 	sh4_sched_serialize(ser, maple_schid);
 	sh4_sched_serialize(ser, aica::dma_sched_id);
-	for (int id : tmu_sched)
-		sh4_sched_serialize(ser, id);
 	sh4_sched_serialize(ser, render_end_schid);
 	sh4_sched_serialize(ser, vblank_schid);
 }
@@ -259,8 +257,10 @@ void sh4_sched_deserialize(Deserializer& deser)
 	sh4_sched_deserialize(deser, gdrom_schid);
 	sh4_sched_deserialize(deser, maple_schid);
 	sh4_sched_deserialize(deser, aica::dma_sched_id);
-	for (int id : tmu_sched)
-		sh4_sched_deserialize(deser, id);
+	if (deser.version() < Deserializer::V58) {
+		for (int id : tmu_sched)
+			sh4_sched_deserialize(deser, id);
+	}
 	sh4_sched_deserialize(deser, render_end_schid);
 	sh4_sched_deserialize(deser, vblank_schid);
 }
