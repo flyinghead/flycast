@@ -720,6 +720,12 @@ static void savestate()
 	savestatePic.invalidate();
 }
 
+void cycleSaveStateSlot(int step)
+{
+	config::SavestateSlot = (config::SavestateSlot + 10 + step) % 10;
+	SaveSettings();
+}
+
 static void gui_display_commands()
 {
 	fullScreenWindow(false);
@@ -859,18 +865,14 @@ static void gui_display_commands()
 
 			// Slot #
 			if (ImGui::ArrowButton("##prev-slot", ImGuiDir_Left))
-			{
-				gui_cycleSaveStateSlotBackward();
-			}
+				cycleSaveStateSlot(-1);
 			std::string slot = strprintf(T("Slot %d"), (int)config::SavestateSlot + 1);
 			float spacingW = (uiScaled(buttonWidth) - ImGui::GetFrameHeight() * 2 - ImGui::CalcTextSize(slot.c_str()).x) / 2;
 			ImGui::SameLine(0, spacingW);
 			ImGui::Text("%s", slot.c_str());
 			ImGui::SameLine(0, spacingW);
 			if (ImGui::ArrowButton("##next-slot", ImGuiDir_Right))
-			{
-				gui_cycleSaveStateSlotForward();
-			}
+				cycleSaveStateSlot(1);
 			{
 				ImVec4 gray(0.75f, 0.75f, 0.75f, 1.f);
 				if (savestateDate == 0)
@@ -1769,22 +1771,10 @@ void gui_saveState(bool stopRestart)
 	}
 }
 
-void gui_cycleSaveStateSlotForward()
+void gui_cycleSaveStateSlot(int step)
 {
-	if (config::SavestateSlot == 9)
-		config::SavestateSlot = 0;
-	else
-		config::SavestateSlot++;
-	SaveSettings();
-}
-
-void gui_cycleSaveStateSlotBackward()
-{
-	if (config::SavestateSlot == 0)
-		config::SavestateSlot = 9;
-	else
-		config::SavestateSlot--;
-	SaveSettings();
+	cycleSaveStateSlot(step);
+	os_notify(strprintf(T("Save state slot %d"), config::SavestateSlot + 1).c_str(), 2000);
 }
 
 void gui_setState(GuiState newState)
