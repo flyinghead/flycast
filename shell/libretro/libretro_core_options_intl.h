@@ -14408,11 +14408,11 @@ struct retro_core_options_v2 options_cht = {
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_CS "Nastavení her NAOMI na volné hraní"
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_CS "Upravte nastavení mincí ve hře na volnou hru."
 #define CORE_OPTION_NAME_EMULATE_BBA_LABEL_CS "Emulace širokopásmového adaptéru"
-#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_CS NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_CS "Emulujte širokopásmový adaptér Ethernet namísto modemu. (Je nutný restart.)"
 #define CORE_OPTION_NAME_UPNP_LABEL_CS "Povolit UPnP"
 #define CORE_OPTION_NAME_UPNP_INFO_0_CS "Pomocí UPnP můžete automaticky nakonfigurovat svůj internetový směrovač pro online hry."
-#define CORE_OPTION_NAME_DCNET_LABEL_CS NULL
-#define CORE_OPTION_NAME_DCNET_INFO_0_CS NULL
+#define CORE_OPTION_NAME_DCNET_LABEL_CS "Použít DCNet"
+#define CORE_OPTION_NAME_DCNET_INFO_0_CS "Pro přístup k internetu na Dreamcastu použijte cloudovou službu DCNet."
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_CS "Vnitřní rozlišení"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_CS "Úprava rozlišení vykreslování."
 #define OPTION_VAL_320X240_CS "320x240 (Poloviční)"
@@ -14561,12 +14561,12 @@ struct retro_core_options_v2 options_cht = {
 #define OPTION_VAL_500_CS NULL
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_CS "Načíst Vlastní Textury"
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_INFO_0_CS "Načtení vlastních textur umístěných ve složce 'system/dc/textures/<game-id>/'."
-#define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_LABEL_CS NULL
-#define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_INFO_0_CS NULL
+#define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_LABEL_CS "Přednačíst vlastní textury"
+#define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_INFO_0_CS "Načíst vlastní textury při spuštění hry. Může zlepšit výkon, ale zvyšuje využití paměti."
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_CS "Skladiště Textur"
 #define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_CS "Pokaždé, když hra použije novou texturu, uloží ji jako soubor .png do složky 'system/dc/texdump/<game-id>/'."
-#define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_CS NULL
-#define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_INFO_0_CS NULL
+#define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_CS "Vymazat nahrazené textury"
+#define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_INFO_0_CS "Vždy vymažte textury, které již byly nahrazeny vlastními texturami."
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_CS "Analogova Páčka Mrtvé Zóny"
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_INFO_0_CS "Zvolte, jak daleko musíte zatlačit na analogovou páčku, než se začne zpracovávat."
 #define OPTION_VAL_0_CS NULL
@@ -67656,7 +67656,7 @@ struct retro_core_options_v2 options_pt_pt = {
 #define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_RU "Задержка замены кадров"
 #define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_RU "Помогает избежать мерцания экрана или искажения заставок. Не рекомендуется на медленных платформах."
 #define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_RU "Определять изменение частоты кадров"
-#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_RU "Уведомлять фронтенд об изменениях внутренней частоты кадров (напр. с 60 до 30 к/с). Улучшает распределение кадров в играх с постоянной частотой в 30 или 20 к/с, но должно быть выключено для игр с плавающим значением частоты кадров (напр. Ecco the Dolphin, Unreal Tournament). Недоступно при вкл. опции 'Автопропуск кадров'."
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_RU "Уведомлять фронтенд при изменениях внутренней частоты кадров (напр., с 60 до 30 к/с). Улучшает смену кадров в играх с постоянной частотой в 30 или 20 к/с. В играх с динамической частотой кадров (напр., Ecco the Dolphin, Unreal Tournament) должно быть выключено. Недоступно при включении опции 'Автопропуск кадров'."
 #define CORE_OPTION_NAME_PVR2_FILTERING_LABEL_RU "Фильтр постобработки PowerVR2"
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_RU "Включает постобработку изображения для имитации эффектов графического процессора PowerVR2 и аналоговых видеосигналов."
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_RU "Апскейлинг текстур (xBRZ)"
