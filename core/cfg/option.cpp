@@ -180,7 +180,7 @@ Option<int> GGPOChatTimeout("GGPOChatTimeout", 10, "network");
 Option<bool> NetworkOutput("NetworkOutput", false, "network");
 Option<int> MultiboardSlaves("MultiboardSlaves", 1, "network");
 Option<bool> BattleCableEnable("BattleCable", false, "network");
-Option<bool> UseDCNet("DCNet", false, "network");
+Option<bool> UseDCNet("DCNet", true, "network");
 OptionString ISPUsername("ISPUsername", "flycast1", "network");
 
 #ifdef USE_OMX
