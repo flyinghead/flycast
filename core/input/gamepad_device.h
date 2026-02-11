@@ -128,6 +128,8 @@ public:
 	virtual void resetMappingToDefault(bool arcade, bool gamepad) {
 		input_mapper = getDefaultMapping();
 	}
+	void clearButtonMapping(u32 port, DreamcastKey key);
+	void clearAxisMapping(u32 port, DreamcastKey key);
 
 	void setPerGameMapping(bool enabled);
 	bool isPerGameMapping() const { return perGameMapping; }

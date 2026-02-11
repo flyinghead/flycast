@@ -329,10 +329,10 @@ static bool arcade_button_mode;
 static u32 gamepad_port;
 static std::unordered_set<DreamcastKey> buttonState;
 
-static void unmapControl(const std::shared_ptr<InputMapping>& mapping, u32 gamepad_port, DreamcastKey key)
+static void unmapControl(std::shared_ptr<GamepadDevice> gamepad, u32 gamepad_port, DreamcastKey key)
 {
-	mapping->clear_button(gamepad_port, key);
-	mapping->clear_axis(gamepad_port, key);
+	gamepad->clearButtonMapping(gamepad_port, key);
+	gamepad->clearAxisMapping(gamepad_port, key);
 	buttonState.erase(key);
 }
 
@@ -455,7 +455,7 @@ static void detect_input_popup(const Mapping *mapping)
 				std::shared_ptr<InputMapping> input_mapping = currentGamepad->get_input_mapping();
 				if (input_mapping != NULL && !mapped_codes.empty())
 				{
-					unmapControl(input_mapping, gamepad_port, mapping->key);
+					unmapControl(currentGamepad, gamepad_port, mapping->key);
 					if (mapped_codes.size() == 1 && mapped_codes.front().is_axis())
 					{
 						// Single axis mapping
@@ -822,10 +822,7 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 			detect_input_popup(systemMapping);
 			ImGui::SameLine();
 			if (ImGui::Button(unmapLbl))
-			{
-				input_mapping = gamepad->get_input_mapping();
-				unmapControl(input_mapping, gamepad_port, systemMapping->key);
-			}
+				unmapControl(gamepad, gamepad_port, systemMapping->key);
 			ImGui::NextColumn();
 		}
 		ImGui::Columns(1, nullptr, false);
