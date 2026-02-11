@@ -683,9 +683,12 @@ void VulkanContext::CreateSwapChain()
 
 			// The FIFO present mode is guaranteed by the spec to be supported
 			vk::PresentModeKHR swapchainPresentMode = vk::PresentModeKHR::eFifo;
+			bool mailboxSupported = false;
 			// Use FIFO on mobile, prefer Mailbox on desktop
 			for (auto& presentMode : physicalDevice.getSurfacePresentModesKHR(GetSurface()))
 			{
+				if (presentMode == vk::PresentModeKHR::eMailbox)
+					mailboxSupported = true;
 #if HOST_CPU != CPU_ARM && HOST_CPU != CPU_ARM64 && !defined(__ANDROID__)
 				if (swapOnVSync && presentMode == vk::PresentModeKHR::eMailbox
 						&& vendorID != VENDOR_ATI && vendorID != VENDOR_AMD)
@@ -701,6 +704,12 @@ void VulkanContext::CreateSwapChain()
 					swapchainPresentMode = vk::PresentModeKHR::eImmediate;
 					break;
 				}
+			}
+			if (!swapOnVSync && swapchainPresentMode == vk::PresentModeKHR::eFifo && mailboxSupported)
+			{
+				// prefer mailbox over FIFO if immediate isn't available
+				INFO_LOG(RENDERER, "Using mailbox present mode");
+				swapchainPresentMode = vk::PresentModeKHR::eMailbox;
 			}
 			if (swapOnVSync && config::DupeFrames && settings.display.refreshRate > 60.f)
 				swapInterval = settings.display.refreshRate / 60.f;
