@@ -35,6 +35,16 @@ if(APPLE)
 	set(ZLIB_LIBRARY "-lz" CACHE STRING "Use generic linker flag for Xcode to support multiple SDKs")
 endif()
 
+if(VITA)
+	if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
+		if(DEFINED ENV{VITASDK})
+			set(CMAKE_TOOLCHAIN_FILE "$ENV{VITASDK}/share/vita.toolchain.cmake" CACHE PATH "toolchain file")
+		else()
+			message(FATAL_ERROR "Please define VITASDK to point to your SDK path!")
+		endif()
+	endif()
+endif()
+
 if(LIBRETRO)
 	project(flycast_libretro)
 else()
@@ -43,7 +53,7 @@ endif()
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-if(CMAKE_SYSTEM_NAME MATCHES "NetBSD|Haiku" OR NINTENDO_SWITCH)
+if(CMAKE_SYSTEM_NAME MATCHES "NetBSD|Haiku" OR NINTENDO_SWITCH OR VITA)
 	set(CMAKE_CXX_EXTENSIONS ON)
 else()
 	set(CMAKE_CXX_EXTENSIONS OFF)
@@ -153,7 +163,32 @@ endif()
 string(TIMESTAMP BUILD_TIMESTAMP UTC)
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/core/version.h.in" "${CMAKE_CURRENT_SOURCE_DIR}/core/version.h" @ONLY)
 
-if(NINTENDO_SWITCH)
+if(VITA)
+	include("${VITASDK}/share/vita.cmake" REQUIRED)
+
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wl,-q,--wrap,memcpy,--wrap,memset,--wrap,malloc,--wrap,memalign,--wrap,free,--wrap,calloc,--wrap,realloc -fno-optimize-sibling-calls -fsigned-char -fno-short-enums -marm")
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wl,-q,--wrap,malloc,--wrap,memalign,--wrap,free,--wrap,calloc,--wrap,realloc -fno-optimize-sibling-calls -fsigned-char -fno-short-enums -marm")
+
+	set(VITA_APP_NAME "Flycast")
+	set(VITA_TITLEID  "FLYCASTDC")
+	set(VITA_VPKNAME  "Flycast")
+	set(VITA_VERSION  "01.00")
+	set(VITA_MKSFOEX_FLAGS "-d ATTRIBUTE2=12")
+
+	set(USE_VULKAN OFF)
+	set(USE_GLES2 ON)
+	enable_language(ASM)
+
+	if(LIBRETRO)
+		add_library(${PROJECT_NAME} STATIC core/emulator.cpp)
+		target_compile_definitions(${PROJECT_NAME} PRIVATE LIBRETRO VITA)
+		set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "flycast_libretro_vita")
+	else()
+		add_executable(${PROJECT_NAME} core/emulator.cpp)
+	endif()
+
+	target_compile_definitions(${PROJECT_NAME} PRIVATE GLES IMGUI_DISABLE_DEFAULT_SHELL_FUNCTIONS)
+elseif(NINTENDO_SWITCH)
 	set(USE_VULKAN OFF)
 	enable_language(ASM)
 
@@ -270,7 +305,9 @@ if(WINDOWS_STORE)
 	set(USE_VULKAN OFF)
 endif()
 
-set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS_RELEASE -s)
+if(NOT VITA)
+	set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS_RELEASE -s)
+endif()
 if(MSVC)
 	target_compile_options(${PROJECT_NAME} PRIVATE /GR /GS-)
 	if(WINDOWS_STORE)
@@ -314,7 +351,10 @@ if(NOT "${SENTRY_UPLOAD_URL}" STREQUAL "")
 	target_compile_definitions(${PROJECT_NAME} PRIVATE SENTRY_UPLOAD="${SENTRY_UPLOAD_URL}")
 endif()
 
-target_include_directories(${PROJECT_NAME} PRIVATE core core/deps core/deps/stb core/deps/json core/deps/asio/asio/include)
+target_include_directories(${PROJECT_NAME} PRIVATE core core/deps core/deps/stb core/deps/json)
+if (NOT VITA)
+	target_include_directories(${PROJECT_NAME} PRIVATE core/deps/asio/asio/include)
+endif()
 if(LIBRETRO)
 	target_include_directories(${PROJECT_NAME} PRIVATE shell/libretro)
 endif()
@@ -476,7 +516,7 @@ if(NOT LIBRETRO)
 	endif()
 
 	if(NOT ANDROID AND NOT IOS)
-		if (NOT NINTENDO_SWITCH)
+		if (NOT NINTENDO_SWITCH AND NOT VITA)
 			# DreamLink enabled for non-mobile Linux, MacOS, and Windows
 			target_compile_definitions(${PROJECT_NAME} PRIVATE USE_DREAMLINK_DEVICES=1)
 			set(USE_DREAMLINK_DEVICES ON) # Must be set before adding core/sdl
@@ -504,6 +544,9 @@ if(NOT LIBRETRO)
 		if(USE_HOST_SDL)
 			find_package(SDL2 2.0.9)
 		endif()
+		if(VITA)
+			set(SDL2_FOUND 1)
+		endif()
 		if(NOT SDL2_FOUND)
 			set(SDL_TEST_ENABLED_BY_DEFAULT OFF)
 			add_subdirectory(core/deps/SDL EXCLUDE_FROM_ALL)
@@ -516,7 +559,7 @@ if(NOT LIBRETRO)
 			target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2main)
 		endif()
 
-		if((APPLE OR WIN32) AND TARGET SDL2::SDL2-static)
+		if((APPLE OR WIN32 OR VITA) AND TARGET SDL2::SDL2-static)
 			target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2-static)
 		elseif(TARGET SDL2::SDL2)
 			target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2)
@@ -528,7 +571,7 @@ if(NOT LIBRETRO)
 		target_compile_definitions(${PROJECT_NAME} PRIVATE USE_SDL USE_SDL_AUDIO)
 		add_subdirectory(core/sdl)
 
-		if((UNIX AND NOT APPLE) OR NINTENDO_SWITCH)
+		if((UNIX AND NOT APPLE) OR NINTENDO_SWITCH OR VITA)
 			find_package(CURL REQUIRED)
 			target_link_libraries(${PROJECT_NAME} PRIVATE CURL::libcurl)
 		endif()
@@ -629,6 +672,10 @@ if(PKG_CONFIG_FOUND AND NOT ANDROID AND NOT APPLE AND NOT LIBRETRO)
 	endif()
 endif()
 
+if(VITA)
+	target_link_libraries(${PROJECT_NAME} PRIVATE vitaGL vitashark SceShaccCg_stub SceShaccCgExt taihen_stub mathneon ssl crypto)
+endif()
+
 if(UNIX AND NOT APPLE AND NOT ANDROID)
 	add_definitions(
 		-DFLYCAST_DATADIR="${CMAKE_INSTALL_FULL_DATADIR}/${PROJECT_NAME}/"
@@ -704,7 +751,7 @@ add_subdirectory(core/deps/nowide EXCLUDE_FROM_ALL)
 target_link_libraries(${PROJECT_NAME} PRIVATE nowide::nowide)
 
 if(NOT MINIUPNP_FOUND)
-	if(NINTENDO_SWITCH)
+	if(NINTENDO_SWITCH OR VITA)
 		target_compile_definitions(${PROJECT_NAME} PRIVATE FEAT_NO_MINIUPNPC)
 	else()
 		option(UPNPC_BUILD_SHARED "Build shared library" OFF)
@@ -762,11 +809,37 @@ if(USE_LIBCDIO)
 	endif()
 endif()
 
+if(VITA)
+	target_link_libraries(${PROJECT_NAME} PRIVATE
+			-Wl,--whole-archive pthread -Wl,--no-whole-archive
+			stdc++
+			SDL2
+			kubridge_stub
+			ScePgf_stub
+			SceHid_stub
+			SceAppMgr_stub
+			SceAppUtil_stub
+			SceAudio_stub
+			SceAudioIn_stub
+			SceDisplay_stub
+			SceKernelDmacMgr_stub
+			SceIme_stub
+			ScePower_stub
+			SceSysmodule_stub
+			SceTouch_stub
+			SceMotion_stub
+			SceCommonDialog_stub
+			SceCtrl_stub
+			SceGxm_stub
+			SceVshBridge_stub
+	)
+endif()
+
 if(WIN32)
 	target_include_directories(${PROJECT_NAME} PRIVATE core/deps/dirent)
 endif()
 
-if(NOT LIBRETRO AND NOT NINTENDO_SWITCH)
+if(NOT LIBRETRO AND NOT NINTENDO_SWITCH AND NOT VITA)
 	target_compile_definitions(${PROJECT_NAME} PRIVATE USE_ICE)
 	# libjuice
 	option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
@@ -966,6 +1039,12 @@ if(WIN32)
 			core/windows/fault_handler.cpp
 			core/windows/unwind_info.cpp
 			core/windows/win_vmem.cpp)
+elseif(VITA)
+	target_sources(${PROJECT_NAME} PRIVATE
+		core/linux/common.cpp
+		core/linux/unwind_info.cpp
+		core/linux/vita_fault_handler.cpp
+		core/linux/vita_vmem.cpp)
 else()
 	target_sources(${PROJECT_NAME} PRIVATE
 			core/linux/common.cpp
@@ -1526,7 +1605,7 @@ if(NOT LIBRETRO)
 				COMMAND ${CMAKE_COMMAND} -E copy "$ENV{VULKAN_SDK}/lib/libMoltenVK.dylib"
 				$<TARGET_FILE_DIR:flycast>/../Frameworks/libvulkan.dylib)
 		endif()
-	elseif(UNIX)
+	elseif(UNIX OR VITA)
 		if(NOT BUILD_TESTING)
 			target_sources(${PROJECT_NAME} PRIVATE
 					core/linux-dist/main.cpp)
@@ -1597,6 +1676,23 @@ if(NINTENDO_SWITCH)
 	else()
 		nx_generate_nacp(flycast.nacp NAME "Flycast" AUTHOR "flyinghead, M4xw" VERSION "${GIT_VERSION}")
 		nx_create_nro(flycast NACP flycast.nacp ICON "${CMAKE_SOURCE_DIR}/shell/switch/flycast.jpeg")
+	endif()
+endif()
+
+if(VITA)
+	if(LIBRETRO)
+		# TODO?
+	else()
+		vita_create_self(eboot.bin ${PROJECT_NAME} UNSAFE STRIPPED NOASLR)
+		vita_create_vpk(${VITA_VPKNAME}.vpk ${VITA_TITLEID} eboot.bin
+			VERSION ${VITA_VERSION}
+			NAME ${VITA_APP_NAME}
+			FILE ${CMAKE_SOURCE_DIR}/shell/vita/icon0.png sce_sys/icon0.png
+			${CMAKE_SOURCE_DIR}/shell/vita/startup.png sce_sys/livearea/contents/startup.png
+			${CMAKE_SOURCE_DIR}/shell/vita/bg.png sce_sys/livearea/contents/bg.png
+			${CMAKE_SOURCE_DIR}/shell/vita/template.xml sce_sys/livearea/contents/template.xml
+			${VPK_INCLUDES}
+		)
 	endif()
 endif()
 
