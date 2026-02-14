@@ -38,12 +38,16 @@ struct GameBoxart
 
 	std::string gamePath;
 	std::string boxartPath;
+	std::string fallbackBoxartPath;
 	std::string boxartUrl;
 
+	bool custom = false;
 	bool arcade = false;
 	bool parsed = false;
 	bool scraped = false;
 	bool busy = false;
+
+	bool forceUpdate = false;
 
 	enum Region { JAPAN = 1, USA = 2, EUROPE = 4 };
 

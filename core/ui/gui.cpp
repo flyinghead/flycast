@@ -960,9 +960,10 @@ static void gameTooltip(const std::string& tip)
     }
 }
 
-static bool gameImageButton(ImguiTexture& texture, const std::string& tooltip, ImVec2 size, const std::string& gameName)
+static bool gameImageButton(ImguiTexture& texture, const std::string& tooltip, ImVec2 size, const std::string& gameName, bool forceUpdate)
 {
-	bool pressed = texture.button("##imagebutton", size, gameName);
+	bool pressed = texture.button("##imagebutton", size, gameName, ImVec4(0, 0, 0, 0), ImVec4(1, 1, 1, 1), forceUpdate);
+
 	gameTooltip(tooltip);
 
     return pressed;
@@ -1107,7 +1108,7 @@ static void gui_display_content()
 						if (ImGui::BeginChild("img", ImVec2(0, 0), ImGuiChildFlags_AutoResizeX | ImGuiChildFlags_AutoResizeY, ImGuiWindowFlags_NavFlattened))
 						{
 							ImguiFileTexture tex(art.boxartPath);
-							pressed = gameImageButton(tex, game.name, responsiveBoxVec2, gameName);
+							pressed = gameImageButton(tex, game.name, responsiveBoxVec2, gameName, art.forceUpdate);
 						}
 						ImGui::EndChild();
 					}

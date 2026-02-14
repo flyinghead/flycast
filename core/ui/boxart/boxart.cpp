@@ -20,9 +20,60 @@
 #include "gamesdb.h"
 #include "../game_scanner.h"
 #include "oslib/oslib.h"
+#include "oslib/storage.h"
 #include "cfg/option.h"
 #include "arcade_scraper.h"
+#include <algorithm>
+#include <array>
 #include <chrono>
+
+static bool isContentUri(const std::string& path)
+{
+#ifdef __ANDROID__
+	return path.rfind("content://", 0) == 0;
+#else
+	return false;
+#endif
+}
+
+static bool hasTrailingSeparator(const std::string& path)
+{
+	if (path.empty())
+		return false;
+	return path.find_last_of("/\\") == path.size() - 1;
+}
+
+static std::string getCustomBoxartDirectory()
+{
+	std::string customPath = config::CustomBoxartPath.get();
+	if (customPath.empty())
+	{
+		customPath = get_writable_data_path("/boxart/custom/");
+	}
+	else if (!isContentUri(customPath) && !hasTrailingSeparator(customPath))
+	{
+		customPath += '/';
+	}
+	if (!isContentUri(customPath) && !file_exists(customPath))
+		make_directory(customPath);
+	return customPath;
+}
+
+static std::string buildCustomBoxartPath(const std::string& dir, const std::string& name, const std::string& ext)
+{
+	if (isContentUri(dir))
+		return hostfs::storage().getSubPath(dir, name + "." + ext);
+	return dir + name + "." + ext;
+}
+
+static bool customFileExists(const std::string& path)
+{
+	if (isContentUri(path))
+		return hostfs::storage().exists(path);
+	return file_exists(path);
+}
+
+
 
 GameBoxart Boxart::getBoxart(const GameMedia& media)
 {
@@ -32,7 +83,14 @@ GameBoxart Boxart::getBoxart(const GameMedia& media)
 		std::lock_guard<std::mutex> guard(mutex);
 		auto it = games.find(media.fileName);
 		if (it != games.end())
-			boxart = it->second;
+		{
+			GameBoxart& existingBoxart = it->second;
+
+			applyCustomBoxart(existingBoxart);
+
+			// Copy boxart by value to retain after exiting locking context
+			boxart = existingBoxart;
+		}
 	}
 	return boxart;
 }
@@ -41,33 +99,66 @@ GameBoxart Boxart::getBoxartAndLoad(const GameMedia& media)
 {
 	loadDatabase();
 	GameBoxart boxart;
+	bool scheduleFetch = false;
+
 	{
 		std::lock_guard<std::mutex> guard(mutex);
+
 		auto it = games.find(media.fileName);
 		if (it != games.end())
 		{
-			boxart = it->second;
-			if (config::FetchBoxart && !boxart.busy && !boxart.scraped)
+			GameBoxart& existingBoxart = it->second;
+			if (config::FetchBoxart && !existingBoxart.busy && !existingBoxart.scraped)
 			{
-				boxart.busy = it->second.busy = true;
-				boxart.gamePath = media.path;
-				boxart.arcade = media.arcade;
-				toFetch.push_back(boxart);
+				existingBoxart.busy = true;
+				existingBoxart.gamePath = media.path;
+				existingBoxart.arcade = media.arcade;
+				scheduleFetch = true;
 			}
 		}
 		else
 		{
-			boxart.fileName = media.fileName;
-			boxart.gamePath = media.path;
-			boxart.name = media.name;
-			boxart.searchName = media.gameName;	// for arcade games
-			boxart.busy = true;
-			boxart.arcade = media.arcade;
-			games[boxart.fileName] = boxart;
-			toFetch.push_back(boxart);
+			GameBoxart newBoxart;
+			newBoxart.fileName = media.fileName;
+			newBoxart.gamePath = media.path;
+			newBoxart.name = media.name;
+			newBoxart.searchName = media.gameName;	// for arcade games
+			newBoxart.busy = true;
+			newBoxart.arcade = media.arcade;
+			it = games.emplace(media.fileName, std::move(newBoxart)).first;
+			scheduleFetch = true;
 		}
+
+		GameBoxart& boxartRef = it->second;
+
+		if (applyCustomBoxart(boxartRef))
+		{
+			boxartRef.gamePath = media.path;
+			boxartRef.arcade = media.arcade;
+			databaseDirty = true;
+			scheduleFetch = false;
+			toFetch.erase(
+				std::remove_if(
+					toFetch.begin(),
+					toFetch.end(),
+					[&boxartRef](const GameBoxart& pending)
+					{
+						return pending.fileName == boxartRef.fileName;
+					}
+				),
+				toFetch.end()
+			);
+		}
+
+		if (scheduleFetch)
+			toFetch.push_back(boxartRef);
+
+		// Copy boxart by value to retain after exiting locking context
+		boxart = boxartRef;
 	}
+
 	fetchBoxart();
+
 	return boxart;
 }
 
@@ -194,6 +285,72 @@ void Boxart::saveDatabase()
 	fwrite(serialized.c_str(), 1, serialized.size(), file);
 	fclose(file);
 	databaseDirty = false;
+}
+
+bool Boxart::applyCustomBoxart(GameBoxart& boxart)
+{
+	if (boxart.fileName.empty())
+		return false;
+
+	if (boxart.custom)
+	{
+		// Already set to custom
+		if (!customFileExists(boxart.boxartPath))
+		{
+			// Custom file was deleted by the user
+			if (!boxart.fallbackBoxartPath.empty())
+			{
+				boxart.boxartPath = std::move(boxart.fallbackBoxartPath);
+				boxart.fallbackBoxartPath.clear();
+			}
+			else
+			{
+				boxart.busy = false;
+				boxart.scraped = false;
+				boxart.parsed = false;
+				boxart.boxartPath.clear();
+			}
+
+			boxart.custom = false;
+			databaseDirty = true;
+			return false;
+		}
+
+		// Still valid
+		return true;
+	}
+
+	const std::string customDir = getCustomBoxartDirectory();
+	const std::array<std::string, 6> extensions{ "png", "jpg", "jpeg", "PNG", "JPG", "JPEG" };
+	const std::array<std::string, 2> names{ get_file_basename(boxart.fileName), boxart.fileName };
+	for (const auto& name : names)
+	{
+		if (name.empty())
+			continue;
+		for (const auto& ext : extensions)
+		{
+			std::string path = buildCustomBoxartPath(customDir, name, ext);
+			if (customFileExists(path))
+			{
+				if (boxart.boxartPath != path)
+				{
+					boxart.fallbackBoxartPath = std::move(boxart.boxartPath);
+					boxart.boxartPath.clear();
+					boxart.boxartPath = std::move(path);
+					// Force update so that the cached image won't be reused
+					boxart.forceUpdate = true;
+				}
+
+				boxart.custom = true;
+				boxart.busy = false;
+				boxart.scraped = true;
+				boxart.parsed = true;
+				databaseDirty = true;
+				return true;
+			}
+		}
+	}
+	return false;
 }
 
 void Boxart::loadDatabase()
