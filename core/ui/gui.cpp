@@ -1685,13 +1685,15 @@ void gui_error(const std::string& what) {
 	error_msg = what;
 }
 
-void gui_loadState()
+void gui_loadState(bool inRam)
 {
 	const LockGuard lock(guiMutex);
 	if (gui_state == GuiState::Closed && savestateAllowed())
 	{
 		try {
 			emu.stop();
+			if (inRam)
+				config::SavestateSlot = -1;  // special value used for inRam states
 			dc_loadstate(config::SavestateSlot);
 			emu.start();
 		} catch (const FlycastException& e) {
@@ -1700,7 +1702,7 @@ void gui_loadState()
 	}
 }
 
-void gui_saveState(bool stopRestart)
+void gui_saveState(bool stopRestart, bool inRam)
 {
 	const LockGuard lock(guiMutex);
 	if ((gui_state == GuiState::Closed || !stopRestart) && savestateAllowed())
@@ -1708,6 +1710,8 @@ void gui_saveState(bool stopRestart)
 		try {
 			if (stopRestart)
 				emu.stop();
+			if (inRam)
+				config::SavestateSlot = -1;  // special value used for inRam states
 			savestate();
 			if (stopRestart)
 				emu.start();

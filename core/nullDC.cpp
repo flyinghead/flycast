@@ -24,6 +24,8 @@
 
 static std::string lastStateFile;
 static time_t lastStateTime;
+const u32 QUICKSAVE_DEFAULT_SIZE = 32 * 1024 * 1024; // 32 MB
+static int quicksave_buf[QUICKSAVE_DEFAULT_SIZE] = {0};
 
 struct SavestateHeader
 {
@@ -167,8 +169,21 @@ void dc_savestate(int index, const u8 *pngData, u32 pngSize)
 	ser = Serializer(data, ser.size());
 	dc_serialize(ser);
 
-	std::string filename = hostfs::getSavestatePath(index, true);
-	FILE *f = nowide::fopen(filename.c_str(), "wb");
+	FILE *f = nullptr;
+	std::string filename = "";
+	if (index >= 0)
+	{
+		// regular permament savestates
+		filename = hostfs::getSavestatePath(index, true);
+		f = nowide::fopen(filename.c_str(), "wb");
+	}
+	else  // index == -1
+	{
+		// in-ram savestate
+		filename = "in-ram";
+		f = fmemopen(quicksave_buf, QUICKSAVE_DEFAULT_SIZE, "wb");
+	}
+	
 	if (f == nullptr)
 	{
 		WARN_LOG(SAVESTATE, "Failed to save state - could not open %s for writing", filename.c_str());
@@ -220,8 +235,20 @@ void dc_loadstate(int index)
 		return;
 	u32 total_size = 0;
 
-	std::string filename = hostfs::getSavestatePath(index, false);
-	FILE *f = hostfs::storage().openFile(filename, "rb");
+	FILE *f = nullptr;
+	std::string filename = "";
+	if (index >= 0)
+	{
+		filename = hostfs::getSavestatePath(index, false);
+		FILE *f = hostfs::storage().openFile(filename, "rb");
+	}
+	else // index == -1
+	{
+		// in-ram savestate
+		filename = "in-ram";
+		f = fmemopen(quicksave_buf, QUICKSAVE_DEFAULT_SIZE, "rb");
+	}
+	
 	if (f == nullptr)
 	{
 		WARN_LOG(SAVESTATE, "Failed to load state - could not open %s for reading", filename.c_str());
