@@ -24,10 +24,6 @@ DynarecCodeEntryPtr DYNACALL rdv_FailedToFindBlock(u32 pc);
 DynarecCodeEntryPtr DYNACALL rdv_FailedToFindBlock_pc();
 //Called when a block check failed, and the block needs to be invalidated
 DynarecCodeEntryPtr DYNACALL rdv_BlockCheckFail(u32 addr);
-//Called to compile code @pc
-DynarecCodeEntryPtr rdv_CompilePC(u32 blockcheck_failures);
-//Finds or compiles code @pc
-DynarecCodeEntryPtr rdv_FindOrCompile();
 // Registers a custom FailedToFindBlock handler function
 void rdv_SetFailedToFindBlockHandler(void (*handler)());
 

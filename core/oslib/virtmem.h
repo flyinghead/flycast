@@ -7,7 +7,7 @@
 #define DECLARE_CODE_CACHE(Name, Size) alignas(4096) static u8 Name[Size];
 #elif defined(__OpenBSD__)
 #define DECLARE_CODE_CACHE(Name, Size) alignas(4096) static u8 Name[Size] __attribute__((section(".openbsd.mutable")));
-#elif defined(__unix__) || defined(__SWITCH__)
+#elif defined(__unix__) || defined(__SWITCH__) || defined(__HAIKU__)
 #define DECLARE_CODE_CACHE(Name, Size) alignas(4096) static u8 Name[Size] __attribute__((section(".text")));
 #elif defined(__APPLE__)
 #define DECLARE_CODE_CACHE(Name, Size) alignas(4096) static u8 Name[Size] __attribute__((section("__TEXT,.text")));

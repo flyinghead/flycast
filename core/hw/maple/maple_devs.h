@@ -47,7 +47,7 @@ enum MapleDeviceCommand
 
 	MDC_JVSUploadFirmware = 0x80, // JVS bridge firmware
 	MDC_JVSGetId		 = 0x82,
-	MDC_JVSSelfTest		 = 0x84, // JVS Self Test
+	MDC_JVSSelfTest		 = 0x84,
 	MDC_JVSCommand		 = 0x86, // JVS I/O
 };
 
@@ -66,8 +66,9 @@ enum MapleDeviceRV
 	MDRE_FileError       = 0xFB, //1 word, bitfield
 	MDRE_LCDError        = 0xFA, //1 word, bitfield
 	MDRE_ARGunError      = 0xF9, //1 word, bitfield
-	MDRS_JVSSelfTestReply= 0x85, // JVS I/O SelfTest
 
+	MDRS_JVSGetIdReply   = 0x83,
+	MDRS_JVSSelfTestReply= 0x85,
 	MDRS_JVSReply		 = 0x87, // JVS I/O
 };
 
@@ -121,6 +122,42 @@ enum AWAVE_KEYS
 	AWAVE_TRIGGER_KEY = 1 << 17,
 };
 
+struct MapleMsg
+{
+	u8 command = 0;
+	u8 destAP = 0;
+	u8 originAP = 0;
+	u8 size = 0;
+	u8 data[1020];
+
+	u32 getDataSize() const {
+		return size * 4;
+	}
+
+	template<typename T>
+	void pushData(const T& p) {
+		static_assert(sizeof(T) >= 4);
+		pushData(&p, sizeof(T));
+	}
+
+	void pushData(const void *p, u32 size)
+	{
+		u32 offset = this->size * 4;
+		memcpy(&data[offset], p, size);
+		offset += size;
+		this->size = (offset + 3) / 4;
+	}
+
+	template<typename T>
+	T readData(int index = 0) const
+	{
+		T v;
+		memcpy(&v, &data[index * sizeof(T)], sizeof(T));
+		return v;
+	}
+};
+static_assert(sizeof(MapleMsg) == 1024);
+
 struct maple_device : public std::enable_shared_from_this<maple_device>
 {
 	u8 maple_port;          //raw maple port
@@ -136,7 +173,7 @@ struct maple_device : public std::enable_shared_from_this<maple_device>
 	virtual void OnSetup() {};
 	virtual ~maple_device();
 
-	virtual u32 RawDma(u32* buffer_in, u32 buffer_in_len, u32* buffer_out) = 0;
+	virtual u32 RawDma(const u32 *buffer_in, u32 buffer_in_len, u32 *buffer_out) = 0;
 
 	virtual void serialize(Serializer& ser) const {
 		ser << player_num;
@@ -148,6 +185,7 @@ struct maple_device : public std::enable_shared_from_this<maple_device>
 	virtual MapleDeviceType get_device_type() = 0;
 	virtual bool get_lightgun_pos() { return false; }
 	virtual const void *getData(size_t& size) const { size = 0; return nullptr; }
+	virtual bool linkStatus() { return true; }
 };
 
 std::shared_ptr<maple_device> maple_Create(MapleDeviceType type);
@@ -181,7 +219,8 @@ struct maple_base: maple_device
 	u8* dma_buffer_out;
 	u32* dma_count_out;
 
-	u8* dma_buffer_in;
+	const MapleMsg *inMsg;
+	const u8* dma_buffer_in;
 	u32 dma_count_in;
 
 	void w8(u8 data) { *(u8*)dma_buffer_out = data; dma_buffer_out += 1; dma_count_out[0] += 1; }
@@ -207,9 +246,9 @@ struct maple_base: maple_device
 			w8(' ');
 	}
 
-	u8 r8() { u8  rv = *(u8*)dma_buffer_in; dma_buffer_in += 1; dma_count_in -= 1; return rv; }
-	u16 r16() { u16 rv = *(u16*)dma_buffer_in; dma_buffer_in += 2; dma_count_in -= 2; return rv; }
-	u32 r32() { u32 rv = *(u32*)dma_buffer_in; dma_buffer_in += 4; dma_count_in -= 4; return rv; }
+	u8 r8() { u8  rv = *dma_buffer_in; dma_buffer_in += 1; dma_count_in -= 1; return rv; }
+	u16 r16() { u16 rv = *(const u16 *)dma_buffer_in; dma_buffer_in += 2; dma_count_in -= 2; return rv; }
+	u32 r32() { u32 rv = *(const u32 *)dma_buffer_in; dma_buffer_in += 4; dma_count_in -= 4; return rv; }
 	void skip(u32 len) {
 		dma_buffer_in += len;
 		dma_count_in -= len;
@@ -223,20 +262,21 @@ struct maple_base: maple_device
 	}
 	u32 r_count() { return dma_count_in; }
 
-	u32 Dma(u32 Command, u32* buffer_in, u32 buffer_in_len, u32* buffer_out, u32& buffer_out_len)
+	u32 Dma(u32 Command, const u32* buffer_in, u32 buffer_in_len, u32* buffer_out, u32& buffer_out_len)
 	{
 		dma_buffer_out = (u8*)buffer_out;
 		dma_count_out = &buffer_out_len;
 
-		dma_buffer_in = (u8*)buffer_in;
+		dma_buffer_in = (const u8 *)buffer_in;
 		dma_count_in = buffer_in_len;
 
 		return dma(Command);
 	}
 	virtual u32 dma(u32 cmd) = 0;
 
-	u32 RawDma(u32* buffer_in, u32 buffer_in_len, u32* buffer_out) override
+	u32 RawDma(const u32* buffer_in, u32 buffer_in_len, u32* buffer_out) override
 	{
+		inMsg = (const MapleMsg *)buffer_in;
 		u32 command=buffer_in[0] &0xFF;
 		//Recipient address
 		u32 reci = (buffer_in[0] >> 8) & 0xFF;
@@ -253,53 +293,28 @@ struct maple_base: maple_device
 
 		return outlen + 4;
 	}
+
+	bool relayMapleLink();
 };
 
-class jvs_io_board;
+void createMapleLinkVmu(int bus, int port);
 
-struct maple_naomi_jamma : maple_base, SerialPort
+struct BaseMIE : public maple_base
 {
-	static constexpr u8 ALL_NODES = 0xff;
+	u32 RawDma(const u32 *buffer_in, u32 buffer_in_len, u32 *buffer_out) override;
+	u32 dma(u32 cmd) override;
+	void reply(u8 code, u8 sizew = 0);
 
-	std::vector<std::unique_ptr<jvs_io_board>> io_boards;
-	bool crazy_mode = false;
-	bool hotd2p = false;
+	virtual void handle_86_subcommand();
+	virtual void firmwareLoaded(u32 hash) {}
+};
 
-	u8 jvs_repeat_request[32][256];
-	u8 jvs_receive_buffer[32][258];
-	u32 jvs_receive_length[32] = { 0 };
-	u8 eeprom[128];
+struct MIE : public BaseMIE, public SerialPort
+{
+	static std::shared_ptr<maple_device> Create();
+};
 
-	maple_naomi_jamma();
-	~maple_naomi_jamma() override;
-
-	MapleDeviceType get_device_type() override
-	{
-		return MDT_NaomiJamma;
-	}
-
-	u8 sense_line(u32 node_id)
-	{
-		bool last_node = node_id == io_boards.size();
-		return last_node ? 0x8E : 0x8F;
-	}
-
-	void send_jvs_message(u32 node_id, u32 channel, u32 length, u8 *data);
-	void send_jvs_messages(u32 node_id, u32 channel, bool use_repeat, u32 length, u8 *data, bool repeat_first);
-	bool receive_jvs_messages(u32 channel);
-
-	void handle_86_subcommand();
-
-	u32 RawDma(u32* buffer_in, u32 buffer_in_len, u32* buffer_out) override;
-	u32 dma(u32 cmd) override { return 0; }
-
-	void serialize(Serializer& ser) const override;
-	void deserialize(Deserializer& deser) override;
-
-	void setPipe(Pipe *pipe) override {
-		serialPipe = pipe;
-	}
-	void updateStatus() override {}
-
-	Pipe *serialPipe = nullptr;
+struct RFIDReaderWriter : public BaseMIE
+{
+	static std::shared_ptr<maple_device> Create();
 };

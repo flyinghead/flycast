@@ -75,7 +75,7 @@ void Mouse::setButton(Button button, bool pressed)
 
 
 void SystemMouse::setAbsPos(int x, int y, int width, int height) {
-	gui_set_mouse_position(x, y);
+	gui_set_mouse_position(x, y, touchMouse);
 	Mouse::setAbsPos(x, y, width, height);
 }
 
@@ -83,7 +83,7 @@ void SystemMouse::setButton(Button button, bool pressed) {
 	int uiBtn = (int)button - 1;
 	if (uiBtn < 2)
 		uiBtn ^= 1;
-	gui_set_mouse_button(uiBtn, pressed);
+	gui_set_mouse_button(uiBtn, pressed, touchMouse);
 	Mouse::setButton(button, pressed);
 }
 

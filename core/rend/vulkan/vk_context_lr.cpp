@@ -345,6 +345,8 @@ bool VulkanContext::init(retro_hw_render_interface_vulkan *retro_render_if)
 	}
 	allocator.Init(physicalDevice, device, instance);
 	depthFormat = findDepthFormat(physicalDevice);
+	if (depthFormat == vk::Format::eUndefined)
+		return false;
 
 	retro_image.image_layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 	retro_image.create_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;

@@ -30,34 +30,42 @@
 #include "sdl/dreamlink.h" // For USE_DREAMCASTCONTROLLER
 #endif
 
-static float calcComboWidth(const char *biggestLabel) {
-	return ImGui::CalcTextSize(biggestLabel).x + ImGui::GetStyle().FramePadding.x * 2.0f + ImGui::GetFrameHeight();
+static float calcComboWidth(const char *labels[], size_t size)
+{
+	float w = 0.f;
+	for (size_t i = 0; i != size; i++)
+		w = std::max(w, ImGui::CalcTextSize(labels[i]).x);
+	return w + ImGui::GetStyle().FramePadding.x * 2.0f + ImGui::GetFrameHeight();
 }
 
-static const char *maple_device_types[] =
+static char *maple_device_types[] =
 {
-	"None",
-	"Sega Controller",
-	"Light Gun",
-	"Keyboard",
-	"Mouse",
-	"Twin Stick",
-	"Arcade/Ascii Stick",
-	"Maracas Controller",
-	"Fishing Controller",
-	"Pop'n Music controller",
-	"Racing Controller",
-	"Densha de Go! Controller",
-	"Panther DC/Full Controller",
-//	"Dreameye",
+	Tnop("None"),
+	Tnop("Sega Controller"),
+	Tnop("Light Gun"),
+	Tnop("Keyboard"),
+	Tnop("Mouse"),
+	Tnop("Twin Stick"),
+	Tnop("Arcade/Ascii Stick"),
+	Tnop("Maracas Controller"),
+	Tnop("Fishing Controller"),
+	Tnop("Pop'n Music controller"),
+	Tnop("Racing Controller"),
+	Tnop("Densha de Go! Controller"),
+	Tnop("Panther DC/Full Controller"),
+	Tnop("DreamParaPara Controller"),
+//	Tnop("Dreameye"),
 };
 
-static const char *maple_expansion_device_types[] =
+constexpr int MDT_DreamPotato = 100;
+
+static char *maple_expansion_device_types[] =
 {
-	"None",
-	"Sega VMU",
-	"Vibration Pack",
-	"Microphone",
+	Tnop("None"),
+	Tnop("Sega VMU"),
+	Tnop("Vibration Pack"),
+	Tnop("Microphone"),
+	Tnop("DreamPotato"),
 };
 
 static const char *maple_device_name(MapleDeviceType type)
@@ -88,8 +96,10 @@ static const char *maple_device_name(MapleDeviceType type)
 		return maple_device_types[11];
 	case MDT_SegaControllerXL:
 		return maple_device_types[12];
+	case MDT_DreamParaParaController:
+		return maple_device_types[13];
 	case MDT_Dreameye:
-//		return maple_device_types[13];
+//		return maple_device_types[14];
 	case MDT_None:
 	default:
 		return maple_device_types[0];
@@ -125,6 +135,8 @@ static MapleDeviceType maple_device_type_from_index(int idx)
 	case 12:
 		return MDT_SegaControllerXL;
 	case 13:
+		return MDT_DreamParaParaController;
+	case 14:
 		return MDT_Dreameye;
 	case 0:
 	default:
@@ -134,7 +146,7 @@ static MapleDeviceType maple_device_type_from_index(int idx)
 
 static const char *maple_expansion_device_name(MapleDeviceType type)
 {
-	switch (type)
+	switch ((int)type)
 	{
 	case MDT_SegaVMU:
 		return maple_expansion_device_types[1];
@@ -142,47 +154,49 @@ static const char *maple_expansion_device_name(MapleDeviceType type)
 		return maple_expansion_device_types[2];
 	case MDT_Microphone:
 		return maple_expansion_device_types[3];
+	case MDT_DreamPotato:
+		return maple_expansion_device_types[4];
 	case MDT_None:
 	default:
 		return maple_expansion_device_types[0];
 	}
 }
 
-static const char *maple_ports[] = { "None", "A", "B", "C", "D", "All" };
+static const char *maple_ports[] = { Tnop("None"), "A", "B", "C", "D", Tnop("All") };
 
 struct Mapping {
 	DreamcastKey key;
 	const char *name;
 };
 
-static const Mapping dcButtons[] = {
-	{ EMU_BTN_NONE, "Directions" },
-	{ DC_DPAD_UP, "Up" },
-	{ DC_DPAD_DOWN, "Down" },
-	{ DC_DPAD_LEFT, "Left" },
-	{ DC_DPAD_RIGHT, "Right" },
+static Mapping dcButtons[] = {
+	{ EMU_BTN_NONE, Tnop("Directions") },
+	{ DC_DPAD_UP, Tnop("Up") },
+	{ DC_DPAD_DOWN, Tnop("Down") },
+	{ DC_DPAD_LEFT, Tnop("Left") },
+	{ DC_DPAD_RIGHT, Tnop("Right") },
 
-	{ DC_AXIS_UP, "Thumbstick Up" },
-	{ DC_AXIS_DOWN, "Thumbstick Down" },
-	{ DC_AXIS_LEFT, "Thumbstick Left" },
-	{ DC_AXIS_RIGHT, "Thumbstick Right" },
+	{ DC_AXIS_UP, Tnop("Thumbstick Up") },
+	{ DC_AXIS_DOWN, Tnop("Thumbstick Down") },
+	{ DC_AXIS_LEFT, Tnop("Thumbstick Left") },
+	{ DC_AXIS_RIGHT, Tnop("Thumbstick Right") },
 
-	{ DC_AXIS2_UP, "R.Thumbstick Up" },
-	{ DC_AXIS2_DOWN, "R.Thumbstick Down" },
-	{ DC_AXIS2_LEFT, "R.Thumbstick Left" },
-	{ DC_AXIS2_RIGHT, "R.Thumbstick Right" },
+	{ DC_AXIS2_UP, Tnop("R.Thumbstick Up") },
+	{ DC_AXIS2_DOWN, Tnop("R.Thumbstick Down") },
+	{ DC_AXIS2_LEFT, Tnop("R.Thumbstick Left") },
+	{ DC_AXIS2_RIGHT, Tnop("R.Thumbstick Right") },
 
-	{ DC_AXIS3_UP,    "Axis 3 Up"    },
-	{ DC_AXIS3_DOWN,  "Axis 3 Down"  },
-	{ DC_AXIS3_LEFT,  "Axis 3 Left"  },
-	{ DC_AXIS3_RIGHT, "Axis 3 Right" },
+	{ DC_AXIS3_UP,    Tnop("Axis 3 Up")    },
+	{ DC_AXIS3_DOWN,  Tnop("Axis 3 Down")  },
+	{ DC_AXIS3_LEFT,  Tnop("Axis 3 Left")  },
+	{ DC_AXIS3_RIGHT, Tnop("Axis 3 Right") },
 
-	{ DC_DPAD2_UP,    "DPad2 Up"    },
-	{ DC_DPAD2_DOWN,  "DPad2 Down"  },
-	{ DC_DPAD2_LEFT,  "DPad2 Left"  },
-	{ DC_DPAD2_RIGHT, "DPad2 Right" },
+	{ DC_DPAD2_UP,    Tnop("DPad2 Up")    },
+	{ DC_DPAD2_DOWN,  Tnop("DPad2 Down")  },
+	{ DC_DPAD2_LEFT,  Tnop("DPad2 Left")  },
+	{ DC_DPAD2_RIGHT, Tnop("DPad2 Right") },
 
-	{ EMU_BTN_NONE, "Buttons" },
+	{ EMU_BTN_NONE, Tnop("Buttons") },
 	{ DC_BTN_A, "A" },
 	{ DC_BTN_B, "B" },
 	{ DC_BTN_X, "X" },
@@ -191,85 +205,108 @@ static const Mapping dcButtons[] = {
 	{ DC_BTN_D, "D" },
 	{ DC_BTN_Z, "Z" },
 
-	{ EMU_BTN_NONE, "Triggers"      },
-	{ DC_AXIS_LT,   "Left Trigger"  },
-	{ DC_AXIS_RT,   "Right Trigger" },
-	{ DC_AXIS_LT2,   "Left Trigger 2" },
-	{ DC_AXIS_RT2,   "Right Trigger 2" },
+	{ EMU_BTN_NONE, Tnop("Triggers") },
+	{ DC_AXIS_LT,   Tnop("Left Trigger")  },
+	{ DC_AXIS_RT,   Tnop("Right Trigger") },
+	{ DC_AXIS_LT2,  Tnop("Left Trigger 2") },
+	{ DC_AXIS_RT2,  Tnop("Right Trigger 2") },
 
-	{ EMU_BTN_NONE, "System Buttons" },
-	{ DC_BTN_START, "Start" },
-	{ DC_BTN_RELOAD, "Reload" },
+	{ EMU_BTN_NONE, Tnop("System Buttons") },
+	{ DC_BTN_START, Tnop("Start") },
+	{ DC_BTN_RELOAD, Tnop("Reload") },
 
-	{ EMU_BTN_NONE, "Emulator" },
-	{ EMU_BTN_MENU, "Menu" },
-	{ EMU_BTN_ESCAPE, "Exit" },
-	{ EMU_BTN_FFORWARD, "Fast-forward" },
-	{ EMU_BTN_LOADSTATE, "Load State" },
-	{ EMU_BTN_SAVESTATE, "Save State" },
-	{ EMU_BTN_LOADSTATE_RAM, "Load RAM State" },
-	{ EMU_BTN_SAVESTATE_RAM, "Save RAM State" },
-	{ EMU_BTN_BYPASS_KB, "Bypass Emulated Keyboard" },
-	{ EMU_BTN_SCREENSHOT, "Save Screenshot" },
+	{ EMU_BTN_NONE, Tnop("Emulator") },
+	{ EMU_BTN_MENU, Tnop("Menu") },
+	{ EMU_BTN_ESCAPE, Tnop("Exit") },
+	{ EMU_BTN_FFORWARD, Tnop("Fast-forward") },
+	{ EMU_BTN_LOADSTATE, Tnop("Load State") },
+	{ EMU_BTN_SAVESTATE, Tnop("Save State") },
+	{ EMU_BTN_LOADSTATE_RAM, "Load State in RAM" },
+	{ EMU_BTN_SAVESTATE_RAM, "Save State in RAM" },
+	{ EMU_BTN_NEXTSLOT, Tnop("Next Save State Slot") },
+	{ EMU_BTN_PREVSLOT, Tnop("Previous Save State Slot") },
+	{ EMU_BTN_BYPASS_KB, Tnop("Bypass Emulated Keyboard") },
+	{ EMU_BTN_SCREENSHOT, Tnop("Save Screenshot") },
+
+	{ EMU_BTN_NONE, nullptr }
+};
+
+static Mapping arcadeButtons[] = {
+	{ EMU_BTN_NONE, Tnop("Directions") },
+	{ DC_DPAD_UP, Tnop("Up") },
+	{ DC_DPAD_DOWN, Tnop("Down") },
+	{ DC_DPAD_LEFT, Tnop("Left") },
+	{ DC_DPAD_RIGHT, Tnop("Right") },
+
+	{ DC_AXIS_UP, Tnop("Thumbstick Up") },
+	{ DC_AXIS_DOWN, Tnop("Thumbstick Down") },
+	{ DC_AXIS_LEFT, Tnop("Thumbstick Left") },
+	{ DC_AXIS_RIGHT, Tnop("Thumbstick Right") },
+
+	{ DC_AXIS2_UP, Tnop("R.Thumbstick Up") },
+	{ DC_AXIS2_DOWN, Tnop("R.Thumbstick Down") },
+	{ DC_AXIS2_LEFT, Tnop("R.Thumbstick Left") },
+	{ DC_AXIS2_RIGHT, Tnop("R.Thumbstick Right") },
+
+	{ EMU_BTN_NONE, Tnop("Buttons") },
+	{ DC_BTN_A, Tnop("Button 1") },
+	{ DC_BTN_B, Tnop("Button 2") },
+	{ DC_BTN_C, Tnop("Button 3") },
+	{ DC_BTN_X, Tnop("Button 4") },
+	{ DC_BTN_Y, Tnop("Button 5") },
+	{ DC_BTN_Z, Tnop("Button 6") },
+	{ DC_DPAD2_LEFT, Tnop("Button 7") },
+	{ DC_DPAD2_RIGHT, Tnop("Button 8") },
+//	{ DC_DPAD2_RIGHT, Tnop("Button 9") }, // TODO
+
+	{ EMU_BTN_NONE, Tnop("Triggers") },
+	{ DC_AXIS_LT, Tnop("Left Trigger") },
+	{ DC_AXIS_RT, Tnop("Right Trigger") },
+	{ DC_AXIS_LT2, Tnop("Left Trigger 2") },
+	{ DC_AXIS_RT2, Tnop("Right Trigger 2") },
+
+	{ EMU_BTN_NONE, Tnop("System Buttons" )},
+	{ DC_BTN_START, Tnop("Start") },
+	{ DC_BTN_RELOAD, Tnop("Reload") },
+	{ DC_BTN_D, Tnop("Coin") },
+	{ DC_DPAD2_UP, Tnop("Service") },
+	{ DC_DPAD2_DOWN, Tnop("Test") },
+	{ DC_BTN_INSERT_CARD, Tnop("Insert Card") },
+
+	{ EMU_BTN_NONE, Tnop("Emulator") },
+	{ EMU_BTN_MENU, Tnop("Menu") },
+	{ EMU_BTN_ESCAPE, Tnop("Exit") },
+	{ EMU_BTN_FFORWARD, Tnop("Fast-forward") },
+	{ EMU_BTN_LOADSTATE, Tnop("Load State") },
+	{ EMU_BTN_SAVESTATE, Tnop("Save State") },
+	{ EMU_BTN_LOADSTATE_RAM, "Load State in RAM" },
+	{ EMU_BTN_SAVESTATE_RAM, "Save State in RAM" },
+	{ EMU_BTN_NEXTSLOT, Tnop("Next Save State Slot") },
+	{ EMU_BTN_PREVSLOT, Tnop("Previous Save State Slot") },
+	{ EMU_BTN_BYPASS_KB, Tnop("Bypass Emulated Keyboard") },
+	{ EMU_BTN_SCREENSHOT, Tnop("Save Screenshot") },
 
 	{ EMU_BTN_NONE, nullptr }
 };
 
-static const Mapping arcadeButtons[] = {
-	{ EMU_BTN_NONE, "Directions" },
-	{ DC_DPAD_UP, "Up" },
-	{ DC_DPAD_DOWN, "Down" },
-	{ DC_DPAD_LEFT, "Left" },
-	{ DC_DPAD_RIGHT, "Right" },
+static void staticInit()
+{
+	static bool inited;
 
-	{ DC_AXIS_UP, "Thumbstick Up" },
-	{ DC_AXIS_DOWN, "Thumbstick Down" },
-	{ DC_AXIS_LEFT, "Thumbstick Left" },
-	{ DC_AXIS_RIGHT, "Thumbstick Right" },
-
-	{ DC_AXIS2_UP, "R.Thumbstick Up" },
-	{ DC_AXIS2_DOWN, "R.Thumbstick Down" },
-	{ DC_AXIS2_LEFT, "R.Thumbstick Left" },
-	{ DC_AXIS2_RIGHT, "R.Thumbstick Right" },
-
-	{ EMU_BTN_NONE, "Buttons" },
-	{ DC_BTN_A, "Button 1" },
-	{ DC_BTN_B, "Button 2" },
-	{ DC_BTN_C, "Button 3" },
-	{ DC_BTN_X, "Button 4" },
-	{ DC_BTN_Y, "Button 5" },
-	{ DC_BTN_Z, "Button 6" },
-	{ DC_DPAD2_LEFT, "Button 7" },
-	{ DC_DPAD2_RIGHT, "Button 8" },
-//	{ DC_DPAD2_RIGHT, "Button 9" }, // TODO
-
-	{ EMU_BTN_NONE, "Triggers" },
-	{ DC_AXIS_LT, "Left Trigger" },
-	{ DC_AXIS_RT, "Right Trigger" },
-	{ DC_AXIS_LT2,   "Left Trigger 2" },
-	{ DC_AXIS_RT2,   "Right Trigger 2" },
-
-	{ EMU_BTN_NONE, "System Buttons" },
-	{ DC_BTN_START, "Start" },
-	{ DC_BTN_RELOAD, "Reload" },
-	{ DC_BTN_D, "Coin" },
-	{ DC_DPAD2_UP, "Service" },
-	{ DC_DPAD2_DOWN, "Test" },
-	{ DC_BTN_INSERT_CARD, "Insert Card" },
-
-	{ EMU_BTN_NONE, "Emulator" },
-	{ EMU_BTN_MENU, "Menu" },
-	{ EMU_BTN_ESCAPE, "Exit" },
-	{ EMU_BTN_FFORWARD, "Fast-forward" },
-	{ EMU_BTN_LOADSTATE, "Load State" },
-	{ EMU_BTN_SAVESTATE, "Save State" },
-	{ EMU_BTN_LOADSTATE_RAM, "Load RAM State" },
-	{ EMU_BTN_SAVESTATE_RAM, "Save RAM State" },
-	{ EMU_BTN_BYPASS_KB, "Bypass Emulated Keyboard" },
-	{ EMU_BTN_SCREENSHOT, "Save Screenshot" },
-
-	{ EMU_BTN_NONE, nullptr }
-};
+	if (inited)
+		return;
+	inited = true;
+	for (auto& label : maple_device_types)
+		label = (char *)T(label);
+	for (auto& label : maple_expansion_device_types)
+		label = (char *)T(label);
+	maple_ports[0] = (char *)T(maple_ports[0]);
+	maple_ports[5] = (char *)T(maple_ports[5]);
+	for (auto&  button : dcButtons)
+		button.name = (char *)T(button.name);
+	for (auto&  button : arcadeButtons)
+		button.name = (char *)T(button.name);
+}
 
 static MapleDeviceType maple_expansion_device_type_from_index(int idx)
 {
@@ -281,6 +318,8 @@ static MapleDeviceType maple_expansion_device_type_from_index(int idx)
 		return MDT_PurupuruPack;
 	case 3:
 		return MDT_Microphone;
+	case 4:
+		return (MapleDeviceType)MDT_DreamPotato;
 	case 0:
 	default:
 		return MDT_None;
@@ -294,10 +333,10 @@ static bool arcade_button_mode;
 static u32 gamepad_port;
 static std::unordered_set<DreamcastKey> buttonState;
 
-static void unmapControl(const std::shared_ptr<InputMapping>& mapping, u32 gamepad_port, DreamcastKey key)
+static void unmapControl(std::shared_ptr<GamepadDevice> gamepad, u32 gamepad_port, DreamcastKey key)
 {
-	mapping->clear_button(gamepad_port, key);
-	mapping->clear_axis(gamepad_port, key);
+	gamepad->clearButtonMapping(gamepad_port, key);
+	gamepad->clearAxisMapping(gamepad_port, key);
 	buttonState.erase(key);
 }
 
@@ -363,9 +402,9 @@ static void detect_input_popup(const Mapping *mapping)
 	ImVec2 padding = ScaledVec2(20, 20);
 	ImguiStyleVar _(ImGuiStyleVar_WindowPadding, padding);
 	ImguiStyleVar _1(ImGuiStyleVar_ItemSpacing, padding);
-	if (ImGui::BeginPopupModal("Map Control", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
+	if (ImGui::BeginPopupModal(T("Map Control"), NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
 	{
-		ImGui::Text("Waiting for control '%s'...", mapping->name);
+		ImGui::Text(T("Waiting for control '%s'..."), mapping->name);
 		u64 now = getTimeMs();
 
 		// Check if we're still in the initial delay period
@@ -381,12 +420,12 @@ static void detect_input_popup(const Mapping *mapping)
 				remaining = 5;
 
 			if (still_detecting)
-				ImGui::Text("Time out in %d s", remaining);
+				ImGui::Text(T("Time out in %d s"), remaining);
 
 			// Display currently detected buttons during the countdown
 			if (!mapped_codes.empty())
 			{
-				ImGui::Text("Current inputs: ");
+				ImGui::Text("%s ", T("Current inputs:"));
 				ImGui::SameLine();
 				bool first = true;
 				for (const InputMapping::InputDef& inputDef : mapped_codes)
@@ -410,7 +449,7 @@ static void detect_input_popup(const Mapping *mapping)
 				}
 
 				// Allow early completion with Confirm button if at least one button is detected
-				if (ImGui::Button("Confirm"))
+				if (ImGui::Button(T("Confirm")))
 					remaining = 0;
 			}
 
@@ -420,7 +459,7 @@ static void detect_input_popup(const Mapping *mapping)
 				std::shared_ptr<InputMapping> input_mapping = currentGamepad->get_input_mapping();
 				if (input_mapping != NULL && !mapped_codes.empty())
 				{
-					unmapControl(input_mapping, gamepad_port, mapping->key);
+					unmapControl(currentGamepad, gamepad_port, mapping->key);
 					if (mapped_codes.size() == 1 && mapped_codes.front().is_axis())
 					{
 						// Single axis mapping
@@ -492,13 +531,13 @@ static void displayMappedControl(const std::shared_ptr<GamepadDevice>& gamepad, 
 
 		if (combo.inputs.size() > 1)
 		{
-			if (ImGui::Checkbox("Sequential", &(combo.sequential)))
+			if (ImGui::Checkbox(T("Sequential"), &(combo.sequential)))
 				// Update mapping with updated combo settings
 				input_mapping->set_button(gamepad_port, key, combo);
 			ImGui::SameLine();
 			ShowHelpMarker(
-				"When checked, this combo will only activate when all keys are pressed in the given sequence.\n"
-				"When not checked, the combo will activate when all keys are pressed in any order.");
+					T("When checked, this combo will only activate when all keys are pressed in the given sequence.\n"
+						"When not checked, the combo will activate when all keys are pressed in any order."));
 		}
 	}
 }
@@ -554,13 +593,15 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 {
 	fullScreenWindow(true);
 	ImguiStyleVar _(ImGuiStyleVar_WindowRounding, 0);
-	if (ImGui::BeginPopupModal("Controller Mapping", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove))
+	if (ImGui::BeginPopupModal(T("Controller Mapping"), NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove))
 	{
+		const char *mapLbl = T("Map");
+		const char *unmapLbl = T("Unmap");
 		const ImGuiStyle& style = ImGui::GetStyle();
 		const float winWidth = ImGui::GetIO().DisplaySize.x - insetLeft - insetRight - (style.WindowBorderSize + style.WindowPadding.x) * 2;
 		const float col_width = (winWidth - style.GrabMinSize - style.ItemSpacing.x
-				- (ImGui::CalcTextSize("Map").x + style.FramePadding.x * 2.0f + style.ItemSpacing.x)
-				- (ImGui::CalcTextSize("Unmap").x + style.FramePadding.x * 2.0f + style.ItemSpacing.x)) / 3;
+				- (ImGui::CalcTextSize(mapLbl).x + style.FramePadding.x * 2.0f + style.ItemSpacing.x)
+				- (ImGui::CalcTextSize(unmapLbl).x + style.FramePadding.x * 2.0f + style.ItemSpacing.x)) / 3;
 
 		static int map_system;
 		static int item_current_map_idx = 0;
@@ -571,7 +612,7 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 		}
 
 		std::shared_ptr<InputMapping> input_mapping = gamepad->get_input_mapping();
-		if (input_mapping == NULL || ImGui::Button("Done", ScaledVec2(100, 30)))
+		if (input_mapping == NULL || ImGui::Button(T("Done"), ScaledVec2(100, 30)))
 		{
 			ImGui::CloseCurrentPopup();
 			gamepad->save_mapping(map_system);
@@ -591,7 +632,7 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 			ImguiStyleVar _(ImGuiStyleVar_FramePadding, ImVec2(ImGui::GetStyle().FramePadding.x, (uiScaled(30) - ImGui::GetFontSize()) / 2));
 			portWidth = ImGui::CalcTextSize("AA").x + ImGui::GetStyle().ItemSpacing.x * 2.0f + ImGui::GetFontSize();
 			ImGui::SetNextItemWidth(portWidth);
-			if (ImGui::BeginCombo("Port", maple_ports[gamepad_port + 1]))
+			if (ImGui::BeginCombo(T("Port"), maple_ports[gamepad_port + 1]))
 			{
 				for (u32 j = 0; j < MAPLE_PORTS; j++)
 				{
@@ -603,12 +644,12 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 				}
 				ImGui::EndCombo();
 			}
-			portWidth += ImGui::CalcTextSize("Port").x + ImGui::GetStyle().ItemSpacing.x + ImGui::GetStyle().FramePadding.x;
+			portWidth += ImGui::CalcTextSize(T("Port")).x + ImGui::GetStyle().ItemSpacing.x + ImGui::GetStyle().FramePadding.x;
 		}
-		float comboWidth = ImGui::CalcTextSize("Dreamcast Controls").x + ImGui::GetStyle().ItemSpacing.x + ImGui::GetFontSize() + ImGui::GetStyle().FramePadding.x * 4;
+		float comboWidth = ImGui::CalcTextSize(T("Dreamcast Controls")).x + ImGui::GetStyle().ItemSpacing.x + ImGui::GetFontSize() + ImGui::GetStyle().FramePadding.x * 4;
 		float gameConfigWidth = 0;
 		if (!settings.content.gameId.empty())
-			gameConfigWidth = ImGui::CalcTextSize(gamepad->isPerGameMapping() ? "Delete Game Config" : "Make Game Config").x + ImGui::GetStyle().ItemSpacing.x + ImGui::GetStyle().FramePadding.x * 2;
+			gameConfigWidth = ImGui::CalcTextSize(gamepad->isPerGameMapping() ? T("Delete Game Config") : T("Make Game Config")).x + ImGui::GetStyle().ItemSpacing.x + ImGui::GetStyle().FramePadding.x * 2;
 		ImGui::SameLine(0, ImGui::GetContentRegionAvail().x - comboWidth - gameConfigWidth - ImGui::GetStyle().ItemSpacing.x - uiScaled(100) * 2 - portWidth);
 
 		ImGui::AlignTextToFramePadding();
@@ -617,7 +658,7 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 		{
 			if (gamepad->isPerGameMapping())
 			{
-				if (ImGui::Button("Delete Game Config", ScaledVec2(0, 30)))
+				if (ImGui::Button(T("Delete Game Config"), ScaledVec2(0, 30)))
 				{
 					gamepad->setPerGameMapping(false);
 					if (!gamepad->find_mapping(map_system))
@@ -626,41 +667,41 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 			}
 			else
 			{
-				if (ImGui::Button("Make Game Config", ScaledVec2(0, 30)))
+				if (ImGui::Button(T("Make Game Config"), ScaledVec2(0, 30)))
 					gamepad->setPerGameMapping(true);
 			}
 			ImGui::SameLine();
 		}
-		if (ImGui::Button("Reset...", ScaledVec2(100, 30)))
-			ImGui::OpenPopup("Confirm Reset");
+		if (ImGui::Button(T("Reset..."), ScaledVec2(100, 30)))
+			ImGui::OpenPopup(T("Confirm Reset"));
 
 		{
 			ImguiStyleVar _(ImGuiStyleVar_WindowPadding, ScaledVec2(20, 20));
-			if (ImGui::BeginPopupModal("Confirm Reset", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
+			if (ImGui::BeginPopupModal(T("Confirm Reset"), NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
 			{
-				ImGui::Text("Are you sure you want to reset the mappings to default?");
+				ImGui::Text("%s", T("Are you sure you want to reset the mappings to default?"));
 				static bool hitbox;
 				if (arcade_button_mode)
 				{
-					ImGui::Text("Controller Type:");
-					if (ImGui::RadioButton("Gamepad", !hitbox))
+					ImGui::Text("%s", T("Controller Type:"));
+					if (ImGui::RadioButton(T("Gamepad"), !hitbox))
 						hitbox = false;
 					ImGui::SameLine();
-					if (ImGui::RadioButton("Arcade / Hit Box", hitbox))
+					if (ImGui::RadioButton(T("Arcade / Hit Box"), hitbox))
 						hitbox = true;
 				}
 				ImGui::NewLine();
 				{
 	 				ImguiStyleVar _(ImGuiStyleVar_ItemSpacing, ImVec2(uiScaled(20), ImGui::GetStyle().ItemSpacing.y));
 					ImguiStyleVar _1(ImGuiStyleVar_FramePadding, ScaledVec2(10, 10));
-					if (ImGui::Button("Yes"))
+					if (ImGui::Button(T("Yes")))
 					{
 						gamepad->resetMappingToDefault(arcade_button_mode, !hitbox);
 						gamepad->save_mapping(map_system);
 						ImGui::CloseCurrentPopup();
 					}
 					ImGui::SameLine();
-					if (ImGui::Button("No"))
+					if (ImGui::Button(T("No")))
 						ImGui::CloseCurrentPopup();
 				}
 				ImGui::EndPopup();
@@ -669,7 +710,7 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 
 		ImGui::SameLine();
 
-		const char* items[] = { "Dreamcast Controls", "Arcade Controls" };
+		const char* items[] = { T("Dreamcast Controls"), T("Arcade Controls") };
 
 		if (last_item_current_map_idx == 2 && game_started)
 			// Select the right mappings for the current game
@@ -711,7 +752,7 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 
 		char key_id[32];
 
-		ImGui::BeginChild(ImGui::GetID("buttons"), ImVec2(0, 0), ImGuiChildFlags_FrameStyle, ImGuiWindowFlags_DragScrolling | ImGuiWindowFlags_NavFlattened);
+		ImGui::BeginChild(ImGui::GetID("buttons"), ImVec2(0, 0), ImGuiChildFlags_FrameStyle, ImGuiWindowFlags_DragScrolling | ImGuiChildFlags_NavFlattened);
 
 		for (; systemMapping->name != nullptr; systemMapping++)
 		{
@@ -762,11 +803,11 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 			}
 
 			ImGui::NextColumn();
-			if (ImGui::Button("Map"))
+			if (ImGui::Button(mapLbl))
 			{
 				// Set a small delay to avoid capturing the button press used to click "Map"
 				map_start_time = getTimeMs() + 300; // 300ms delay before starting the countdown
-				ImGui::OpenPopup("Map Control");
+				ImGui::OpenPopup(T("Map Control"));
 				mapped_codes.clear();  // Clear previous button codes
 				buttonState.erase(systemMapping->key);
 
@@ -784,11 +825,8 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 			}
 			detect_input_popup(systemMapping);
 			ImGui::SameLine();
-			if (ImGui::Button("Unmap"))
-			{
-				input_mapping = gamepad->get_input_mapping();
-				unmapControl(input_mapping, gamepad_port, systemMapping->key);
-			}
+			if (ImGui::Button(unmapLbl))
+				unmapControl(gamepad, gamepad_port, systemMapping->key);
 			ImGui::NextColumn();
 		}
 		ImGui::Columns(1, nullptr, false);
@@ -815,9 +853,9 @@ static void gamepadSettingsPopup(const std::shared_ptr<GamepadDevice>& gamepad)
 	ImGui::SetNextWindowSize(min(ImGui::GetIO().DisplaySize, ScaledVec2(450.f, 300.f)));
 
 	ImguiStyleVar _(ImGuiStyleVar_WindowRounding, 0);
-	if (ImGui::BeginPopupModal("Gamepad Settings", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_DragScrolling))
+	if (ImGui::BeginPopupModal(T("Gamepad Settings"), NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_DragScrolling))
 	{
-		if (ImGui::Button("Done", ScaledVec2(100, 30)))
+		if (ImGui::Button(T("Done"), ScaledVec2(100, 30)))
 		{
 			gamepad->save_mapping();
 			// Update both console and arcade profile/mapping
@@ -859,18 +897,18 @@ static void gamepadSettingsPopup(const std::shared_ptr<GamepadDevice>& gamepad)
 		if (gamepad->is_virtual_gamepad())
 		{
 			if (gamepad->is_rumble_enabled()) {
-				header("Haptic");
-				OptionSlider("Power", config::VirtualGamepadVibration, 0, 100, "Haptic feedback power", "%d%%");
+				header(T("Haptic"));
+				OptionSlider(T("Power"), config::VirtualGamepadVibration, 0, 100, T("Haptic feedback power"), "%d%%");
 			}
-			header("View");
-			OptionSlider("Transparency", config::VirtualGamepadTransparency, 0, 100, "Virtual gamepad buttons transparency", "%d%%");
+			header(T("View"));
+			OptionSlider(T("Transparency"), config::VirtualGamepadTransparency, 0, 100, T("Virtual gamepad buttons transparency"), "%d%%");
 
 #if defined(__ANDROID__) || defined(TARGET_IPHONE)
 			vgamepad::ImguiVGamepadTexture tex;
 			ImGui::Image(tex.getId(), ScaledVec2(300.f, 150.f), ImVec2(0, 1), ImVec2(1, 0));
 #endif
-			const char *gamepadPngTitle = "Select a PNG file";
-			if (ImGui::Button("Choose Image...", ScaledVec2(150, 30)))
+			const char *gamepadPngTitle = T("Select a PNG file");
+			if (ImGui::Button(T("Choose Image..."), ScaledVec2(150, 30)))
 #ifdef __ANDROID__
 			{
 				if (!hostfs::addStorage(false, false, gamepadPngTitle, gamepadPngFileSelected, "image/png"))
@@ -882,7 +920,7 @@ static void gamepadSettingsPopup(const std::shared_ptr<GamepadDevice>& gamepad)
 			}
 #endif
 			ImGui::SameLine();
-			if (ImGui::Button("Use Default", ScaledVec2(150, 30)))
+			if (ImGui::Button(T("Use Default"), ScaledVec2(150, 30)))
 				vgamepad::loadImage("");
 
 			select_file_popup(gamepadPngTitle, [](bool cancelled, std::string selection)
@@ -893,30 +931,30 @@ static void gamepadSettingsPopup(const std::shared_ptr<GamepadDevice>& gamepad)
 		}
 		else if (gamepad->is_rumble_enabled())
 		{
-			header("Rumble");
+			header(T("Rumble"));
 			int power = gamepad->get_rumble_power();
 			ImGui::SetNextItemWidth(uiScaled(300));
-			if (ImGui::SliderInt("Power", &power, 0, 100, "%d%%"))
+			if (ImGui::SliderInt(T("Power"), &power, 0, 100, "%d%%"))
 				gamepad->set_rumble_power(power);
 			ImGui::SameLine();
-			ShowHelpMarker("Rumble power");
+			ShowHelpMarker(T("Rumble power"));
 		}
 		if (gamepad->has_analog_stick())
 		{
-			header("Thumbsticks");
+			header(T("Thumbsticks"));
 			int deadzone = std::round(gamepad->get_dead_zone() * 100.f);
 			ImGui::SetNextItemWidth(uiScaled(300));
-			if (ImGui::SliderInt("Dead zone", &deadzone, 0, 100, "%d%%"))
+			if (ImGui::SliderInt(T("Dead zone"), &deadzone, 0, 100, "%d%%"))
 				gamepad->set_dead_zone(deadzone / 100.f);
 			ImGui::SameLine();
-			ShowHelpMarker("Minimum deflection to register as input");
+			ShowHelpMarker(T("Minimum deflection to register as input"));
 			int saturation = std::round(gamepad->get_saturation() * 100.f);
 			ImGui::SetNextItemWidth(uiScaled(300));
-			if (ImGui::SliderInt("Saturation", &saturation, 50, 200, "%d%%"))
+			if (ImGui::SliderInt(T("Saturation"), &saturation, 50, 200, "%d%%"))
 				gamepad->set_saturation(saturation / 100.f);
 			ImGui::SameLine();
-			ShowHelpMarker("Value sent to the game at 100% thumbstick deflection. "
-					"Values greater than 100% will saturate before full deflection of the thumbstick.");
+			ShowHelpMarker(T("Value sent to the game at 100% thumbstick deflection. "
+					"Values greater than 100% will saturate before full deflection of the thumbstick."));
 		}
 	    scrollWhenDraggingOnVoid();
 	    windowDragScroll();
@@ -924,30 +962,32 @@ static void gamepadSettingsPopup(const std::shared_ptr<GamepadDevice>& gamepad)
 	}
 }
 
-void gui_settings_controls(bool& maple_devices_changed)
+void gui_settings_controls(std::array<bool, 4>& mapleDevicesChanges, std::array<std::array<bool, 2>, 4>& expDevicesChanges)
 {
-	header("Physical Devices");
+	staticInit();
+
+	header(T("Physical Devices"));
     {
 		if (ImGui::BeginTable("physicalDevices", 5, ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_NoSavedSettings))
 		{
-			ImGui::TableSetupColumn("System", ImGuiTableColumnFlags_WidthFixed);
-			ImGui::TableSetupColumn("Name", ImGuiTableColumnFlags_WidthStretch);
+			ImGui::TableSetupColumn(T("System"), ImGuiTableColumnFlags_WidthFixed);
+			ImGui::TableSetupColumn(T("Name"), ImGuiTableColumnFlags_WidthStretch);
 			ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed);
-			ImGui::TableSetupColumn("Port", ImGuiTableColumnFlags_WidthFixed);
+			ImGui::TableSetupColumn(T("Port"), ImGuiTableColumnFlags_WidthFixed);
 			ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed);
 
-			const float portComboWidth = calcComboWidth("None");
+			const float portComboWidth = calcComboWidth(maple_ports, std::size(maple_ports));
 			const ImVec4 gray{ 0.5f, 0.5f, 0.5f, 1.f };
 
 			ImGui::TableNextRow();
 			ImGui::TableSetColumnIndex(0);
-			ImGui::TextColored(gray, "System");
+			ImGui::TextColored(gray, "%s", T("System"));
 
 			ImGui::TableSetColumnIndex(1);
-			ImGui::TextColored(gray, "Name");
+			ImGui::TextColored(gray, "%s", T("Name"));
 
 			ImGui::TableSetColumnIndex(3);
-			ImGui::TextColored(gray, "Port");
+			ImGui::TextColored(gray, "%s", T("Port"));
 
 			for (int i = 0; i < GamepadDevice::GetGamepadCount(); i++)
 			{
@@ -965,7 +1005,7 @@ void gui_settings_controls(bool& maple_devices_changed)
 				ImGui::TableSetColumnIndex(2);
 				DreamLinkGamepad* dreamLinkGamepad = dynamic_cast<DreamLinkGamepad*>(gamepad.get());
 				if (dreamLinkGamepad != nullptr) {
-					ImGui::Text("DreamLink status: %s", dreamLinkGamepad->dreamLinkStatus());
+					ImGui::Text(T("DreamLink: %s"), dreamLinkGamepad->dreamLinkStatus());
 				}
 #endif
 
@@ -979,14 +1019,8 @@ void gui_settings_controls(bool& maple_devices_changed)
 					for (int j = -1; j < (int)std::size(maple_ports) - 1; j++)
 					{
 						bool is_selected = gamepad->maple_port() == j;
-						if (ImGui::Selectable(maple_ports[j + 1], &is_selected)) {
+						if (ImGui::Selectable(maple_ports[j + 1], &is_selected))
 							gamepad->set_maple_port(j);
-#if defined(USE_DREAMLINK_DEVICES)
-							if (dreamLinkGamepad != nullptr) {
-								maple_devices_changed = true;
-							}
-#endif
-						}
 						if (is_selected)
 							ImGui::SetItemDefaultFocus();
 					}
@@ -996,10 +1030,10 @@ void gui_settings_controls(bool& maple_devices_changed)
 
 				ImGui::TableSetColumnIndex(4);
 				ImGui::SameLine(0, uiScaled(8));
-				if (gamepad->remappable() && ImGui::Button("Map"))
+				if (gamepad->remappable() && ImGui::Button(T("Map")))
 				{
 					gamepad_port = 0;
-					ImGui::OpenPopup("Controller Mapping");
+					ImGui::OpenPopup(T("Controller Mapping"));
 				}
 
 				controller_mapping_popup(gamepad);
@@ -1007,7 +1041,7 @@ void gui_settings_controls(bool& maple_devices_changed)
 #if defined(__ANDROID__) || defined(TARGET_IPHONE)
 				if (gamepad->is_virtual_gamepad())
 				{
-					if (ImGui::Button("Edit Layout"))
+					if (ImGui::Button(T("Edit Layout")))
 					{
 						vgamepad::startEditing();
 						gui_setState(GuiState::VJoyEdit);
@@ -1018,8 +1052,8 @@ void gui_settings_controls(bool& maple_devices_changed)
 					|| gamepad->is_virtual_gamepad())
 				{
 					ImGui::SameLine(0, uiScaled(16));
-					if (ImGui::Button("Settings"))
-						ImGui::OpenPopup("Gamepad Settings");
+					if (ImGui::Button(T("Settings")))
+						ImGui::OpenPopup(T("Gamepad Settings"));
 					gamepadSettingsPopup(gamepad);
 				}
 			}
@@ -1028,34 +1062,26 @@ void gui_settings_controls(bool& maple_devices_changed)
     }
 
 	ImGui::Spacing();
-	OptionSlider("Mouse sensitivity", config::MouseSensitivity, 1, 500);
+	OptionSlider(T("Mouse sensitivity"), config::MouseSensitivity, 1, 500);
 #if defined(_WIN32) && !defined(TARGET_UWP)
-	OptionCheckbox("Use Raw Input", config::UseRawInput, "Supports multiple pointing devices (mice, light guns) and keyboards");
-#endif
-#ifdef USE_DREAMLINK_DEVICES
-	{
-		DisabledScope scope(game_started);
-		OptionCheckbox("Use Physical VMU Memory", config::UsePhysicalVmuMemory,
-			"Enables direct read/write access to physical VMU memory via DreamPicoPort/DreamConn. "
-			"This is not compatible with load state events.");
-	}
+	OptionCheckbox(T("Use Raw Input"), config::UseRawInput, T("Supports multiple pointing devices (mice, light guns) and keyboards"));
 #endif
 
 	ImGui::Spacing();
-	header("Dreamcast Devices");
+	header(T("Dreamcast Devices"));
     {
 		bool is_there_any_xhair = false;
 		if (ImGui::BeginTable("dreamcastDevices", 4, ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_NoSavedSettings,
 				ImVec2(0, 0), uiScaled(8)))
 		{
-			const float mainComboWidth = calcComboWidth(maple_device_types[11]); 			// densha de go! controller
-			const float expComboWidth = calcComboWidth(maple_expansion_device_types[2]);	// vibration pack
+			const float mainComboWidth = calcComboWidth((const char **)maple_device_types, std::size(maple_device_types));
+			const float expComboWidth = calcComboWidth((const char **)maple_expansion_device_types, std::size(maple_expansion_device_types));
 
 			for (int bus = 0; bus < MAPLE_PORTS; bus++)
 			{
 				ImGui::TableNextRow();
 				ImGui::TableSetColumnIndex(0);
-				ImGui::Text("Port %c", bus + 'A');
+				ImGui::Text(T("Port %c"), bus + 'A');
 
 				ImGui::TableSetColumnIndex(1);
 				char device_name[32];
@@ -1071,42 +1097,40 @@ void gui_settings_controls(bool& maple_devices_changed)
 						if (ImGui::Selectable(maple_device_types[i], &is_selected))
 						{
 							config::MapleMainDevices[bus] = maple_device_type_from_index(i);
-							maple_devices_changed = true;
+							mapleDevicesChanges[bus] = true;
 						}
 						if (is_selected)
 							ImGui::SetItemDefaultFocus();
 					}
 					ImGui::EndCombo();
 				}
-				int port_count = 0;
-				switch (config::MapleMainDevices[bus]) {
-					case MDT_SegaController:
-					case MDT_SegaControllerXL:
-						port_count = 2;
-						break;
-					case MDT_LightGun:
-					case MDT_TwinStick:
-					case MDT_AsciiStick:
-					case MDT_RacingController:
-						port_count = 1;
-						break;
-					default: break;
-				}
+				int port_count = maple_getPortCount(config::MapleMainDevices[bus]);
 				for (int port = 0; port < port_count; port++)
 				{
 					ImGui::TableSetColumnIndex(2 + port);
 					snprintf(device_name, sizeof(device_name), "##device%d.%d", bus, port + 1);
 					ImguiID _(device_name);
 					ImGui::SetNextItemWidth(expComboWidth);
-					if (ImGui::BeginCombo(device_name, maple_expansion_device_name(config::MapleExpansionDevices[bus][port]), ImGuiComboFlags_None))
+					int subtype = config::MapleExpansionDevices[bus][port];
+					if (subtype == MDT_SegaVMU && config::NetworkExpansionDevices[bus][port] == 1)
+						subtype = MDT_DreamPotato;
+					if (ImGui::BeginCombo(device_name, maple_expansion_device_name((MapleDeviceType)subtype), ImGuiComboFlags_None))
 					{
 						for (int i = 0; i < IM_ARRAYSIZE(maple_expansion_device_types); i++)
 						{
-							bool is_selected = config::MapleExpansionDevices[bus][port] == maple_expansion_device_type_from_index(i);
+							bool is_selected = subtype == maple_expansion_device_type_from_index(i);
 							if (ImGui::Selectable(maple_expansion_device_types[i], &is_selected))
 							{
-								config::MapleExpansionDevices[bus][port] = maple_expansion_device_type_from_index(i);
-								maple_devices_changed = true;
+								subtype = maple_expansion_device_type_from_index(i);
+								if (subtype == MDT_DreamPotato) {
+									config::MapleExpansionDevices[bus][port] = MDT_SegaVMU;
+									config::NetworkExpansionDevices[bus][port] = 1;
+								}
+								else {
+									config::MapleExpansionDevices[bus][port] = (MapleDeviceType)subtype;
+									config::NetworkExpansionDevices[bus][port] = 0;
+								}
+								expDevicesChanges[bus][port] = true;
 							}
 							if (is_selected)
 								ImGui::SetItemDefaultFocus();
@@ -1126,11 +1150,11 @@ void gui_settings_controls(bool& maple_devices_changed)
 						((color >> 16) & 0xff) / 255.f,
 						((color >> 24) & 0xff) / 255.f
 					};
-					bool colorChanged = ImGui::ColorEdit4("Crosshair color", xhairColor, ImGuiColorEditFlags_AlphaBar | ImGuiColorEditFlags_AlphaPreviewHalf
+					bool colorChanged = ImGui::ColorEdit4(T("Crosshair color"), xhairColor, ImGuiColorEditFlags_AlphaBar | ImGuiColorEditFlags_AlphaPreviewHalf
 							| ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoTooltip | ImGuiColorEditFlags_NoLabel);
 					ImGui::SameLine();
 					bool enabled = color != 0;
-					if (ImGui::Checkbox("Crosshair", &enabled) || colorChanged)
+					if (ImGui::Checkbox(T("Crosshair"), &enabled) || colorChanged)
 					{
 						if (enabled)
 						{
@@ -1149,28 +1173,20 @@ void gui_settings_controls(bool& maple_devices_changed)
 					is_there_any_xhair |= enabled;
 				}
 
-#ifdef USE_DREAMLINK_DEVICES
-				if (port_count > 0)
-				{
-					ImGui::SameLine();
-					ImGui::PushID(bus);
-					bool pressed = OptionCheckbox("Use Network Expansion Devices", config::UseNetworkExpansionDevices[bus],
-						"Connect to expansion devices such as VMUs over local TCP.");
-					ImGui::PopID();
-
-					if (pressed)
-						maple_devices_changed = true;
-				}
-#endif
-
 				ImGui::PopItemWidth();
 			}
 			ImGui::EndTable();
 		}
+		OptionCheckbox(T("Per Game VMU A1"), config::PerGameVmu, T("When enabled, each game has its own VMU on port 1 of controller A."));
+		{
+			DisabledScope scope(game_started);
+			OptionCheckbox(T("Use Physical VMU Storage"), config::UsePhysicalVmuMemory,
+					T("Enables read and write access to physical VMU storage via DreamPicoPort or DreamPotato. "
+				"This is not compatible with load state events."));
+		}
 		{
 			DisabledScope scope(!is_there_any_xhair);
-			OptionSlider("Crosshair Size", config::CrosshairSize, 10, 100);
+			OptionSlider(T("Crosshair Size"), config::CrosshairSize, 10, 100);
 		}
-		OptionCheckbox("Per Game VMU A1", config::PerGameVmu, "When enabled, each game has its own VMU on port 1 of controller A.");
     }
 }

@@ -29,6 +29,7 @@
 #include "oslib/oslib.h"
 #include "emulator.h"
 #include "stdclass.h"
+#include "oslib/i18n.h"
 #include <cassert>
 #include <rc_client.h>
 #include <rc_hash.h>
@@ -283,7 +284,8 @@ std::pair<std::string, bool> Achievements::getCachedImage(const char *url)
 	}
 	else
 	{
-		std::stringstream stream;
+		std::ostringstream stream;
+		stream.imbue(std::locale::classic());
 		stream << std::hex << hash << ".png";
 		return std::make_pair(cachePath + stream.str(), false);
 	}
@@ -303,7 +305,8 @@ std::string Achievements::getOrDownloadImage(const char *url)
 	int rc = http::get(url, content, content_type);
 	if (!http::success(rc))
 		return {};
-	std::stringstream stream;
+	std::ostringstream stream;
+	stream.imbue(std::locale::classic());
 	stream << std::hex << hash << ".png";
 	std::string localPath = cachePath + stream.str();
 	FILE *f = nowide::fopen(localPath.c_str(), "wb");
@@ -338,9 +341,10 @@ void Achievements::authenticationSuccess(const rc_client_user_t *user)
 	int rc = rc_client_user_get_image_url(user, url.data(), url.size());
 	if (rc == RC_OK)
 	{
-		asyncTask([this, url]() {
+		asyncTask([this, url]()
+		{
 			std::string image = getOrDownloadImage(url.c_str());
-			std::string text = "User " + config::AchievementsUserName.get() + " authenticated";
+			std::string text = strprintf(i18n::T("User %s authenticated"), config::AchievementsUserName.get().c_str());
 			notifier.notify(Notification::Login, image, text);
 		});
 	}
@@ -356,7 +360,7 @@ void Achievements::clientLoginWithTokenCallback(int result, const char *error_me
 	if (result != RC_OK)
 	{
 		WARN_LOG(COMMON, "RA Login failed: %s", error_message);
-		notifier.notify(Notification::Login, "", "RetroAchievements authentication failed", error_message);
+		notifier.notify(Notification::Login, "", i18n::Ts("RetroAchievements authentication failed"), error_message);
 		return;
 	}
 	achievements->authenticationSuccess(rc_client_get_user_info(client));
@@ -391,7 +395,7 @@ void Achievements::clientLoginWithPasswordCallback(int result, const char *error
 	if (!user || !user->token)
 	{
 		WARN_LOG(COMMON, "RA: rc_client_get_user_info() returned NULL");
-		promise->set_exception(std::make_exception_ptr(FlycastException("No user token returned")));
+		promise->set_exception(std::make_exception_ptr(FlycastException(i18n::Ts("No user token returned"))));
 		delete promise;
 		return;
 	}
@@ -543,11 +547,11 @@ void Achievements::clientEventHandler(const rc_client_event_t* event, rc_client_
 // TODO case RC_CLIENT_EVENT_LEADERBOARD_SCOREBOARD:
 
 	case RC_CLIENT_EVENT_DISCONNECTED:
-		notifyError("RetroAchievements disconnected");
+		notifyError(i18n::Ts("RetroAchievements disconnected"));
 		break;
 
 	case RC_CLIENT_EVENT_RECONNECTED:
-		notifyError("RetroAchievements reconnected");
+		notifyError(i18n::Ts("RetroAchievements reconnected"));
 		break;
 
 	default:
@@ -577,7 +581,7 @@ void Achievements::handleUnlockEvent(const rc_client_event_t *event)
 	{
 		asyncTask([this, url, title, description]() {
 			std::string image = getOrDownloadImage(url.c_str());
-			std::string text = "Achievement " + title + " unlocked!";
+			std::string text = strprintf(i18n::T("Achievement %s unlocked!"), title.c_str());
 			notifier.notify(Notification::Login, image, text, description);
 		});
 	}
@@ -617,21 +621,21 @@ void Achievements::handleLeaderboardStarted(const rc_client_event_t *event)
 {
 	const rc_client_leaderboard_t *leaderboard = event->leaderboard;
 	INFO_LOG(COMMON, "RA: Leaderboard started: %s", leaderboard->title);
-	std::string text = "Leaderboard " + std::string(leaderboard->title) + " started";
+	std::string text = strprintf(i18n::T("Leaderboard %s started"), leaderboard->title);
 	notifier.notify(Notification::Unlocked, "", text, leaderboard->description);
 }
 void Achievements::handleLeaderboardFailed(const rc_client_event_t *event)
 {
 	const rc_client_leaderboard_t *leaderboard = event->leaderboard;
 	INFO_LOG(COMMON, "RA: Leaderboard failed: %s", leaderboard->title);
-	std::string text = "Leaderboard " + std::string(leaderboard->title) + " failed";
+	std::string text = strprintf(i18n::T("Leaderboard %s failed"), leaderboard->title);
 	notifier.notify(Notification::Unlocked, "", text, leaderboard->description);
 }
 void Achievements::handleLeaderboardSubmitted(const rc_client_event_t *event)
 {
 	const rc_client_leaderboard_t *leaderboard = event->leaderboard;
 	INFO_LOG(COMMON, "RA: Leaderboard submitted: %s", leaderboard->title);
-	std::string text = "Leaderboard " + std::string(leaderboard->title) + " submitted";
+	std::string text = strprintf(i18n::T("Leaderboard %s submitted"), leaderboard->title);
 	notifier.notify(Notification::Unlocked, "", text, leaderboard->description);
 }
 void Achievements::handleShowLeaderboardTracker(const rc_client_event_t *event)
@@ -656,12 +660,10 @@ void Achievements::handleUpdateLeaderboardTracker(const rc_client_event_t *event
 void Achievements::handleGameCompleted(const rc_client_event_t *event)
 {
 	const rc_client_game_t* game = rc_client_get_game_info(rc_client);
-	std::string text1 = (rc_client_get_hardcore_enabled(rc_client) ? "Mastered " : "Completed ") + std::string(game->title);
+	std::string text1 = strprintf(rc_client_get_hardcore_enabled(rc_client) ? i18n::T("Mastered %s") : i18n::T("Completed %s"), game->title);
 	rc_client_user_game_summary_t summary;
 	rc_client_get_user_game_summary(rc_client, &summary);
-	std::stringstream ss;
-	ss << summary.num_unlocked_achievements << " achievements, " << summary.points_unlocked << " points";
-	std::string text2(ss.str());
+	std::string text2 = strprintf(i18n::T("%d achievements, %d points"), summary.num_unlocked_achievements, summary.points_unlocked);
 	std::string text3 = rc_client_get_user_info(rc_client)->display_name;
 	std::string url(512, '\0');
 	if (rc_client_game_get_image_url(game, url.data(), url.size()) != RC_OK)
@@ -907,15 +909,14 @@ void Achievements::gameLoaded(int result, const char *errorMessage)
 	rc_client_get_user_game_summary(rc_client, &summary);
 	std::string text2;
 	if (summary.num_core_achievements > 0)
-		text2 = "You have " + std::to_string(summary.num_unlocked_achievements)
-				+ " of " + std::to_string(summary.num_core_achievements) + " achievements unlocked.";
+		text2 = strprintf(i18n::T("You have %d of %d achievements unlocked."), summary.num_unlocked_achievements, summary.num_core_achievements);
 	else
-		text2 = "This game has no achievements.";
+		text2 = i18n::Ts("This game has no achievements.");
 	asyncTask([this, url, text1, text2]() {
 		std::string image;
 		if (!url.empty())
 			image = getOrDownloadImage(url.c_str());
-		std::string text3 = settings.raHardcoreMode ? "Hardcore Mode" : "";
+		std::string text3 = settings.raHardcoreMode ? i18n::T("Hardcore Mode") : "";
 		notifier.notify(Notification::Login, image, text1, text2, text3);
 	});
 }
@@ -946,14 +947,14 @@ void Achievements::diskChange()
 	rc_client_begin_change_media_from_hash(rc_client, hash.c_str(), [](int result, const char *errorMessage, rc_client_t *client, void *userdata) {
 			if (result == RC_HARDCORE_DISABLED) {
 				settings.raHardcoreMode = false;
-				notifier.notify(Notification::Login, "", "Hardcore mode disabled", "Unrecognized media inserted");
+				notifier.notify(Notification::Login, "", i18n::Ts("Hardcore mode disabled"), i18n::Ts("Unrecognized media inserted"));
 			}
 			else if (result != RC_OK)
 			{
 				settings.raHardcoreMode = false;
 				if (errorMessage == nullptr)
 					errorMessage = rc_error_str(result);
-				notifier.notify(Notification::Login, "", "Media change failed", errorMessage);
+				notifier.notify(Notification::Login, "", i18n::Ts("Media change failed"), errorMessage);
 			}
 		}, this);
 }

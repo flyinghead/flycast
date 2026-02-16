@@ -22,6 +22,7 @@
 #include "input/mouse.h"
 #include "input/virtual_gamepad.h"
 #include "jni_util.h"
+#include "oslib/i18n.h"
 #include <algorithm>
 
 static jobject input_device_manager;
@@ -126,20 +127,21 @@ public:
 
 	const char *get_button_name(u32 code) override
 	{
+		using namespace i18n;
 		switch(code)
 		{
 		case KEYCODE_BACK:
-			return "Back";
+			return T("Back");
 		case KEYCODE_DPAD_UP:
-			return "DPad Up";
+			return T("DPad Up");
 		case KEYCODE_DPAD_DOWN:
-			return "DPad Down";
+			return T("DPad Down");
 		case KEYCODE_DPAD_LEFT:
-			return "DPad Left";
+			return T("DPad Left");
 		case KEYCODE_DPAD_RIGHT:
-			return "DPad Right";
+			return T("DPad Right");
 		case KEYCODE_DPAD_CENTER:
-			return "DPad Center";
+			return T("DPad Center");
 		case KEYCODE_BUTTON_A:
 			return "A";
 		case KEYCODE_BUTTON_B:
@@ -161,15 +163,15 @@ public:
 		case KEYCODE_BUTTON_R2:
 			return "R2";
 		case KEYCODE_BUTTON_THUMBL:
-			return "Thumb L";
+			return "L3";
 		case KEYCODE_BUTTON_THUMBR:
-			return "Thumb R";
+			return "R3";
 		case KEYCODE_BUTTON_START:
-			return "Start";
+			return T("Start");
 		case KEYCODE_BUTTON_SELECT:
-			return "Select";
+			return T("Select");
 		case KEYCODE_BUTTON_MODE:
-			return "Mode";
+			return T("Mode");
 		default:
 			return nullptr;
 		}
@@ -177,6 +179,7 @@ public:
 
 	const char *get_axis_name(u32 code) override
 	{
+		using namespace i18n;
 		switch(code)
 		{
 		case AXIS_X:
@@ -192,23 +195,23 @@ public:
 		case AXIS_RZ:
 			return "RZ";
 		case AXIS_LTRIGGER:
-			return "Left Trigger";
+			return T("Left Trigger");
 		case AXIS_RTRIGGER:
-			return "Right Trigger";
+			return T("Right Trigger");
 		case AXIS_HAT_X:
-			return "Hat X";
+			return T("Hat X");
 		case AXIS_HAT_Y:
-			return "Hat Y";
+			return T("Hat Y");
 		case AXIS_GAS:
-			return "Gas";
+			return T("Gas");
 		case AXIS_BRAKE:
-			return "Brake";
+			return T("Brake");
 		case AXIS_RUDDER:
-			return "Rudder";
+			return T("Rudder");
 		case AXIS_WHEEL:
-			return "Wheel";
+			return T("Wheel");
 		case AXIS_THROTTLE:
-			return "Throttle";
+			return T("Throttle");
 		default:
 			return nullptr;
 		}

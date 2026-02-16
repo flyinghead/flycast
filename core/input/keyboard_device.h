@@ -22,6 +22,7 @@
 #include "gamepad_device.h"
 #include "ui/gui.h"
 #include "hw/maple/maple_devs.h"
+#include "oslib/i18n.h"
 #include <memory>
 
 extern u8 kb_key[4][6];	// normal keys pressed
@@ -73,7 +74,7 @@ class KeyboardDevice : public GamepadDevice
 protected:
 	KeyboardDevice(int maple_port, const char* apiName, bool remappable = true)
 		: GamepadDevice(maple_port, apiName, remappable) {
-		_name = "Keyboard";
+		_name = i18n::Ts("Keyboard");
 	}
 
 	std::shared_ptr<InputMapping> getDefaultMapping() override {

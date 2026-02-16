@@ -28,6 +28,8 @@
 #include "cfg/option.h"
 #include "emulator.h"
 #include "oslib/storage.h"
+#include "oslib/i18n.h"
+using namespace i18n;
 
 const WidescreenCheat CheatManager::widescreen_cheats[] =
 {
@@ -395,18 +397,18 @@ void CheatManager::loadCheatFile(const std::string& filename)
 		WARN_LOG(COMMON, "Cannot open cheat file '%s'", filename.c_str());
 		return;
 	}
-	emucfg::ConfigFile cfg;
-	cfg.parse(cheatfile);
+	config::IniFile cfg;
+	cfg.load(cheatfile);
 	fclose(cheatfile);
 
-	int count = cfg.get_int("", "cheats", 0);
+	int count = cfg.getInt("", "cheats", 0);
 	cheats.clear();
 	for (int i = 0; count == 0 || i < count; i++)
 	{
 		std::string prefix = "cheat" + std::to_string(i) + "_";
 		Cheat cheat{};
-		cheat.description = cfg.get("", prefix + "desc", "Cheat " + std::to_string(i + 1));
-		cheat.address = cfg.get_int("", prefix + "address", -1);
+		cheat.description = cfg.getString("", prefix + "desc", "Cheat " + std::to_string(i + 1));
+		cheat.address = cfg.getInt("", prefix + "address", -1);
 		if (count == 0 && cheat.address == (u32)-1)
 			break;
 		if (cheat.address >= RAM_SIZE)
@@ -414,27 +416,27 @@ void CheatManager::loadCheatFile(const std::string& filename)
 			WARN_LOG(COMMON, "Invalid address %x", cheat.address);
 			continue;
 		}
-		cheat.type = (Cheat::Type)cfg.get_int("", prefix + "cheat_type", (int)Cheat::Type::disabled);
-		cheat.size = 1 << cfg.get_int("", prefix + "memory_search_size", 0);
-		cheat.value = cfg.get_int("", prefix + "value", cheat.value);
-		cheat.repeatCount = cfg.get_int("", prefix + "repeat_count", cheat.repeatCount);
-		cheat.repeatValueIncrement = cfg.get_int("", prefix + "repeat_add_to_value", cheat.repeatValueIncrement);
-		cheat.repeatAddressIncrement = cfg.get_int("", prefix + "repeat_add_to_address", cheat.repeatAddressIncrement);
-		cheat.enabled = cfg.get_bool("", prefix + "enable", false);
-		cheat.destAddress = cfg.get_int("", prefix + "dest_address", 0);
+		cheat.type = (Cheat::Type)cfg.getInt("", prefix + "cheat_type", (int)Cheat::Type::disabled);
+		cheat.size = 1 << cfg.getInt("", prefix + "memory_search_size", 0);
+		cheat.value = cfg.getInt("", prefix + "value", cheat.value);
+		cheat.repeatCount = cfg.getInt("", prefix + "repeat_count", cheat.repeatCount);
+		cheat.repeatValueIncrement = cfg.getInt("", prefix + "repeat_add_to_value", cheat.repeatValueIncrement);
+		cheat.repeatAddressIncrement = cfg.getInt("", prefix + "repeat_add_to_address", cheat.repeatAddressIncrement);
+		cheat.enabled = cfg.getBool("", prefix + "enable", false);
+		cheat.destAddress = cfg.getInt("", prefix + "dest_address", 0);
 		if (cheat.destAddress >= RAM_SIZE)
 		{
 			WARN_LOG(COMMON, "Invalid address %x", cheat.destAddress);
 			continue;
 		}
-		cheat.valueMask = cfg.get_int("", prefix + "address_bit_position", 0);
+		cheat.valueMask = cfg.getInt("", prefix + "address_bit_position", 0);
 		if (cheat.type != Cheat::Type::disabled)
 			cheats.push_back(cheat);
 	}
 	setActive(!cheats.empty());
 	INFO_LOG(COMMON, "%d cheats loaded", (int)cheats.size());
 	if (!cheats.empty())
-		cfgSaveStr("cheats", gameId, filename);
+		config::saveStr("cheats", gameId, filename);
 #endif
 }
 
@@ -450,7 +452,7 @@ void CheatManager::reset(const std::string& gameId)
 #ifndef LIBRETRO
 		if (!settings.raHardcoreMode)
 		{
-			std::string cheatFile = cfgLoadStr("cheats", gameId, "");
+			std::string cheatFile = config::loadStr("cheats", gameId);
 			if (!cheatFile.empty())
 				loadCheatFile(cheatFile);
 			else
@@ -470,7 +472,7 @@ void CheatManager::reset(const std::string& gameId)
 							if (hostfs::storage().exists(candidate))
 							{
 								loadCheatFile(candidate);
-								cfgSaveStr("cheats", gameId, candidate);
+								config::saveStr("cheats", gameId, candidate);
 								goto found_cheats;
 							}
 						}
@@ -501,12 +503,6 @@ found_cheats:
 		}
 		else if (gameId == "T8120D  50") {	// Dave Mirra BMX (EU)
 			cheats.emplace_back(Cheat::Type::setValue, "fix main loop time", true, 32, 0x003011cc, 0x42200000, true); // 40.0 ms
-		}
-		else if (gameId == "MK-0100") {		// F355 US
-			cheats.emplace_back(Cheat::Type::setValue, "increase datapump timeout", true, 16, 0x00131668, 1000, true);
-		}
-		else if (gameId == "T8118D  50") {	// F355 EU
-			cheats.emplace_back(Cheat::Type::setValue, "increase datapump timeout", true, 16, 0x00135588, 1000, true);
 		}
 		else if (gameId == "SAMURAI SPIRITS 6" || gameId == "T0002M") {
 			cheats.emplace_back(Cheat::Type::setValue, "fix depth", true, 16, 0x0003e602, 0x0009, true); // nop (shift by 8 bits instead of 10)
@@ -568,58 +564,16 @@ found_cheats:
 			cheats.emplace_back(Cheat::Type::runNextIfEq, "bypass auth ifeq", true, 32, 0x00800524, 0x2fd62fe6, true);
 			cheats.emplace_back(Cheat::Type::setValue, "bypass dricas auth", true, 32, 0x00800524, 0xe000000b, true);
 		}
-		else if (gameId == "T40214N") {		// The Next Tetris (US)
-			cheats.emplace_back(Cheat::Type::runNextIfEq, "bypass speed ifeq", true, 32, 0x0016d5d4, 0x2f862fe6, true);
-			cheats.emplace_back(Cheat::Type::setValue, "bypass speed check", true, 32, 0x0016d5d4, 0xe001000b, true);
-		}
-		else if (gameId == "MK-51065") {	// Bomberman Online
-			cheats.emplace_back(Cheat::Type::runNextIfEq, "modem automode ifeq", true, 32, 0x00196da8, 0x2c302c30, true);	// 0,0,
-			cheats.emplace_back(Cheat::Type::setValue, "modem automode set", true, 32, 0x00196da8, 0x2c302c31, true);		// 1,0,
-		}
-		else if (gameId == "MK-51102") {	// Outtrigger (US)
-			cheats.emplace_back(Cheat::Type::runNextIfEq, "modem automode ifeq", true, 32, 0x001bdb48, 0x2c302c30, true);	// 0,0,
-			cheats.emplace_back(Cheat::Type::setValue, "modem automode set", true, 32, 0x001bdb48, 0x2c302c31, true);		// 1,0,
-		}
 		else if (gameId == "HDR-0118") {	// Outtrigger (JP)
 			cheats.emplace_back(Cheat::Type::runNextIfEq, "bypass auth ifeq", true, 32, 0x00139f54, 0x2fd62fe6, true);
 			cheats.emplace_back(Cheat::Type::setValue, "bypass dricas auth", true, 32, 0x00139f54, 0xe000000b, true);
 		}
-		else if (gameId == "T13306M")		// Mobile Suit Gundam: Federation vs. Zeon
+		else if (gameId == "HDR-0100")		// F355 (JP)
 		{
-			cheats.emplace_back(Cheat::Type::runNextIfEq, "modem rxspeed ifeq", true, 32, 0x0016e710, 0x3434312c, true);	// ",144"
-			cheats.emplace_back(Cheat::Type::setValue, "modem rxspeed set", true, 32, 0x0016e710, 0x2020202c, true);		// ",   "
-			cheats.emplace_back(Cheat::Type::runNextIfEq, "modem txspeed ifeq", true, 32, 0x0016e71c, 0x3434312c, true);	// ",144"
-			cheats.emplace_back(Cheat::Type::setValue, "modem txspeed set", true, 32, 0x0016e71c, 0x2020202c, true);		// ",   "
-		}
-		else if (gameId == "MK-51162")		// Propeller Arena
-		{
-			// 0c1f56f0: ,0,28800,28800,28800,28800\\r"\n
-			// 0c1f5770: ,0,28800,28800,28800,28800\\r"\n
-			for (u32 addr = 0x001f56f0; addr <= 0x001f5770; addr += 0x80)
-			{
-				cheats.emplace_back(Cheat::Type::runNextIfEq, "modem automode1 ifeq", true, 32, addr + 0x00, 0x322c302c, true);	// ",0,2"
-				cheats.emplace_back(Cheat::Type::setValue, "modem automode1 set", true, 32,     addr + 0x00, 0x202c312c, true);	// ",1, "
-				cheats.emplace_back(Cheat::Type::runNextIfEq, "modem automode2 ifeq", true, 32, addr + 0x04, 0x30303838, true);	// "8800"
-				cheats.emplace_back(Cheat::Type::setValue, "modem automode2 set", true, 32,     addr + 0x04, 0x30202020, true);	// "   0"
-				cheats.emplace_back(Cheat::Type::runNextIfEq, "modem automode3 ifeq", true, 32, addr + 0x0c, 0x322c3030, true);	// "00,2"
-				cheats.emplace_back(Cheat::Type::setValue, "modem automode3 set", true, 32,     addr + 0x0c, 0x202c3030, true);	// "00, "
-				cheats.emplace_back(Cheat::Type::runNextIfEq, "modem automode4 ifeq", true, 32, addr + 0x10, 0x30303838, true);	// "8800"
-				cheats.emplace_back(Cheat::Type::setValue, "modem automode4 set", true, 32,     addr + 0x10, 0x30202020, true);	// "   0"
-			}
-		}
-		else if (gameId == "HDR-0113")	// Power Smash
-		{
-			cheats.emplace_back(Cheat::Type::runNextIfEq, "no dupe SYN ifeq", true, 16, 0x14d258, 0xbbce, true);	// bsr SendNormalSYN
-			cheats.emplace_back(Cheat::Type::setValue,     "no dupe SYN set", true, 16, 0x14d258, 0x0009, true);	// nop
-			cheats.emplace_back(Cheat::Type::runNextIfEq, "no dupe ACK ifeq", true, 16, 0x14af42, 0x430b, true);	// jsr TCPInternalSendPacket
-			cheats.emplace_back(Cheat::Type::setValue,     "no dupe ACK set", true, 16, 0x14af42, 0x0009, true);	// nop
-		}
-		else if (gameId == "HDR-0091")	// Pro Yakyuu Team de Asobou Net!
-		{
-			cheats.emplace_back(Cheat::Type::runNextIfEq, "no dupe SYN ifeq", true, 16, 0xe13e0c, 0xbbce, true);	// bsr SendNormalSYN
-			cheats.emplace_back(Cheat::Type::setValue,     "no dupe SYN set", true, 16, 0xe13e0c, 0x0009, true);	// nop
-			cheats.emplace_back(Cheat::Type::runNextIfEq, "no dupe ACK ifeq", true, 16, 0xe11af6, 0x430b, true);	// jsr TCPInternalSendPacket
-			cheats.emplace_back(Cheat::Type::setValue,     "no dupe ACK set", true, 16, 0xe11af6, 0x0009, true);	// nop
+			cheats.emplace_back(Cheat::Type::runNextIfEq, "bypass auth ifeq", true, 32, 0x0ba980, 0x2fd62fe6, true);
+			cheats.emplace_back(Cheat::Type::setValue, "bypass dricas auth",  true, 32, 0x0ba980, 0xe000000b, true);
+			cheats.emplace_back(Cheat::Type::runNextIfEq, "bypass auth check ifeq", true, 32, 0x0a2d3c, 0xed048900, true);
+			cheats.emplace_back(Cheat::Type::setValue, "bypass dricas auth check",  true, 32, 0x0a2d3c, 0xed048b00, true); // BT -> BF
 		}
 
 		if (cheats.size() > cheatCount)
@@ -801,12 +755,12 @@ static std::vector<u32> parseCodes(const std::string& s)
 			}
 		}
 		else if (!curCode.empty())
-			throw FlycastException("Invalid cheat code");
+			throw FlycastException(Ts("Invalid cheat code"));
 	}
 	if (!curCode.empty())
 	{
 		if (curCode.length() != 8)
-			throw FlycastException("Invalid cheat code");
+			throw FlycastException(Ts("Invalid cheat code"));
 		codes.push_back(strtoul(curCode.c_str(), nullptr, 16));
 	}
 
@@ -888,7 +842,7 @@ void CheatManager::addGameSharkCheat(const std::string& name, const std::string&
 				{
 					// 8/16/32-bit write
 					if (i + 1 >= codes.size())
-						throw FlycastException("Missing value");
+						throw FlycastException(Ts("Missing value"));
 					cheat.type = Cheat::Type::setValue;
 					cheat.size = code == 0 ? 8 : code == 1 ? 16 : 32;
 					cheat.address = codes[i] & 0x00ffffff;
@@ -906,7 +860,7 @@ void CheatManager::addGameSharkCheat(const std::string& name, const std::string&
 							// Group write
 							int count = codes[i] & 0xffff;
 							if (i + count + 1 >= codes.size())
-								throw FlycastException("Missing values");
+								throw FlycastException(Ts("Missing values"));
 							cheat.type = Cheat::Type::setValue;
 							cheat.size = 32;
 							cheat.address = codes[++i] & 0x00ffffff;
@@ -927,7 +881,7 @@ void CheatManager::addGameSharkCheat(const std::string& name, const std::string&
 						{
 							// 8-bit inc/decrement
 							if (i + 1 >= codes.size())
-								throw FlycastException("Missing value");
+								throw FlycastException(Ts("Missing value"));
 							cheat.type = subcode == 1 ? Cheat::Type::increase : Cheat::Type::decrease;
 							cheat.size = 8;
 							cheat.value = codes[i] & 0xff;
@@ -940,7 +894,7 @@ void CheatManager::addGameSharkCheat(const std::string& name, const std::string&
 						{
 							// 16-bit inc/decrement
 							if (i + 1 >= codes.size())
-								throw FlycastException("Missing value");
+								throw FlycastException(Ts("Missing value"));
 							cheat.type = subcode == 3 ? Cheat::Type::increase : Cheat::Type::decrease;
 							cheat.size = 16;
 							cheat.value = codes[i] & 0xffff;
@@ -953,7 +907,7 @@ void CheatManager::addGameSharkCheat(const std::string& name, const std::string&
 						{
 							// 32-bit inc/decrement
 							if (i + 2 >= codes.size())
-								throw FlycastException("Missing address or value");
+								throw FlycastException(Ts("Missing address or value"));
 							cheat.type = subcode == 5 ? Cheat::Type::increase : Cheat::Type::decrease;
 							cheat.size = 32;
 							cheat.address = codes[++i] & 0x00ffffff;
@@ -962,7 +916,7 @@ void CheatManager::addGameSharkCheat(const std::string& name, const std::string&
 						}
 						break;
 					default:
-						throw FlycastException("Unsupported cheat type");
+						throw FlycastException(Ts("Unsupported cheat type"));
 					}
 				}
 				break;
@@ -970,7 +924,7 @@ void CheatManager::addGameSharkCheat(const std::string& name, const std::string&
 				{
 					// 32-bit repeat write
 					if (i + 2 >= codes.size())
-						throw FlycastException("Missing count or value");
+						throw FlycastException(Ts("Missing count or value"));
 					cheat.type = Cheat::Type::setValue;
 					cheat.size = 32;
 					cheat.address = codes[i] & 0x00ffffff;
@@ -984,7 +938,7 @@ void CheatManager::addGameSharkCheat(const std::string& name, const std::string&
 				{
 					// copy bytes
 					if (i + 2 >= codes.size())
-						throw FlycastException("Missing count or destination address");
+						throw FlycastException(Ts("Missing count or destination address"));
 					cheat.type = Cheat::Type::copy;
 					cheat.size = 8;
 					cheat.address = codes[i] & 0x00ffffff;
@@ -996,7 +950,7 @@ void CheatManager::addGameSharkCheat(const std::string& name, const std::string&
 
 			case 7:
 				// change decryption type: 071000XX (example: 07100005)
-				throw FlycastException("Master codes aren't supported");
+				throw FlycastException(Ts("Master codes aren't supported"));
 
 			// TODO 0xb delay applying codes: 0b0xxxxx
 			//     Delay putting on codes for xxxxx cycles. Default 1000 (0x3e7)
@@ -1008,7 +962,7 @@ void CheatManager::addGameSharkCheat(const std::string& name, const std::string&
 				{
 					// enable next code if eq/neq/lt/gt
 					if (i + 1 >= codes.size())
-						throw FlycastException("Missing count or destination address");
+						throw FlycastException(Ts("Missing count or destination address"));
 					cheat.size = 16;
 					cheat.address = codes[i] & 0x00ffffff;
 					switch (codes[++i] >> 16)
@@ -1026,7 +980,7 @@ void CheatManager::addGameSharkCheat(const std::string& name, const std::string&
 						cheat.type = Cheat::Type::runNextIfGt;
 						break;
 					default:
-						throw FlycastException("Unsupported conditional code");
+						throw FlycastException(Ts("Unsupported conditional code"));
 					}
 					cheat.value = codes[i] & 0xffff;
 					cheats.push_back(cheat);
@@ -1036,7 +990,7 @@ void CheatManager::addGameSharkCheat(const std::string& name, const std::string&
 				{
 					// multiline enable codes if eq/neq/lt/gt
 					if (i + 1 >= codes.size())
-						throw FlycastException("Missing test address");
+						throw FlycastException(Ts("Missing test address"));
 					cheat.size = 16;
 					cheat.value = codes[i] & 0xffff;
 					conditionLimit = i + 1 + ((codes[i] >> 16) & 0xff);
@@ -1055,7 +1009,7 @@ void CheatManager::addGameSharkCheat(const std::string& name, const std::string&
 						cheat.type = Cheat::Type::runNextIfGt;
 						break;
 					default:
-						throw FlycastException("Unsupported conditional code");
+						throw FlycastException(Ts("Unsupported conditional code"));
 					}
 					cheat.address = codes[i] & 0x00ffffff;
 					conditionCheat = cheat;
@@ -1066,15 +1020,15 @@ void CheatManager::addGameSharkCheat(const std::string& name, const std::string&
 			//    16-Bit Write Once Immediately. (Activator code)
 
 			default:
-				throw FlycastException("Unsupported cheat type");
+				throw FlycastException(Ts("Unsupported cheat type"));
 			}
 		}
 #ifndef LIBRETRO
-		std::string path = cfgLoadStr("cheats", gameId, "");
+		std::string path = config::loadStr("cheats", gameId);
 		if (path == "")
 		{
 			path = get_game_save_prefix() + ".cht";
-			cfgSaveStr("cheats", gameId, path);
+			config::saveStr("cheats", gameId, path);
 		}
 		saveCheatFile(path);
 #endif
@@ -1088,7 +1042,7 @@ void CheatManager::addGameSharkCheat(const std::string& name, const std::string&
 void CheatManager::saveCheatFile(const std::string& filename)
 {
 #ifndef LIBRETRO
-	emucfg::ConfigFile cfg;
+	config::IniFile cfg;
 
 	int i = 0;
 	for (const Cheat& cheat : cheats)
@@ -1096,15 +1050,15 @@ void CheatManager::saveCheatFile(const std::string& filename)
 		if (cheat.builtIn)
 			continue;
 		std::string prefix = "cheat" + std::to_string(i) + "_";
-		cfg.set_int("", prefix + "address", cheat.address);
-		cfg.set_int("", prefix + "address_bit_position", cheat.valueMask);
-		cfg.set_bool("", prefix + "big_endian", false);
-		cfg.set_int("", prefix + "cheat_type", (int)cheat.type);
+		cfg.set("", prefix + "address", cheat.address);
+		cfg.set("", prefix + "address_bit_position", cheat.valueMask);
+		cfg.set("", prefix + "big_endian", false);
+		cfg.set("", prefix + "cheat_type", (int)cheat.type);
 		cfg.set("", prefix + "code", "");
 		cfg.set("", prefix + "desc", cheat.description);
-		cfg.set_int("", prefix + "dest_address", cheat.destAddress);
-		cfg.set_bool("", prefix + "enable", false);	// force all cheats disabled at start
-		cfg.set_int("", prefix + "handler", 1);
+		cfg.set("", prefix + "dest_address", cheat.destAddress);
+		cfg.set("", prefix + "enable", false);	// force all cheats disabled at start
+		cfg.set("", prefix + "handler", 1);
 		int memSize;
 		switch (cheat.size) {
 		case 1:
@@ -1127,17 +1081,17 @@ void CheatManager::saveCheatFile(const std::string& filename)
 			memSize = 5;
 			break;
 		}
-		cfg.set_int("", prefix + "memory_search_size", memSize);
-		cfg.set_int("", prefix + "value", cheat.value);
-		cfg.set_int("", prefix + "repeat_count", cheat.repeatCount);
-		cfg.set_int("", prefix + "repeat_add_to_value", cheat.repeatValueIncrement);
-		cfg.set_int("", prefix + "repeat_add_to_address", cheat.repeatAddressIncrement);
+		cfg.set("", prefix + "memory_search_size", memSize);
+		cfg.set("", prefix + "value", cheat.value);
+		cfg.set("", prefix + "repeat_count", cheat.repeatCount);
+		cfg.set("", prefix + "repeat_add_to_value", cheat.repeatValueIncrement);
+		cfg.set("", prefix + "repeat_add_to_address", cheat.repeatAddressIncrement);
 		i++;
 	}
-	cfg.set_int("", "cheats", i);
+	cfg.set("", "cheats", i);
 	FILE *fp = hostfs::storage().openFile(filename.c_str(), "w");
 	if (fp == nullptr)
-		throw FlycastException("Can't save cheat file");
+		throw FlycastException(Ts("Can't save cheat file"));
 	cfg.save(fp);
 	fclose(fp);
 #endif

@@ -109,6 +109,13 @@ bool GamepadDevice::handleButtonInput(int port, DreamcastKey key, bool pressed)
 		case EMU_BTN_SAVESTATE_RAM:
 			if (pressed)
 				gui_saveState(false, true);
+		case EMU_BTN_NEXTSLOT:
+			if (pressed)
+				gui_cycleSaveStateSlot(1);
+			break;
+		case EMU_BTN_PREVSLOT:
+			if (pressed)
+				gui_cycleSaveStateSlot(-1);
 			break;
 		case EMU_BTN_SCREENSHOT:
 			if (pressed)
@@ -660,6 +667,67 @@ void GamepadDevice::setPerGameMapping(bool enabled)
 	}
 }
 
+void GamepadDevice::clearButtonMapping(u32 port, DreamcastKey key)
+{
+	if (input_mapper == nullptr)
+		return;
+	// Release the button
+	if (key <= DC_BTN_BITMAPPED_LAST && port >= 0 && port < std::size(kcode))
+		kcode[port] |= key;
+	input_mapper->clear_button(port, key);
+}
+void GamepadDevice::clearAxisMapping(u32 port, DreamcastKey key)
+{
+	if (input_mapper == nullptr)
+		return;
+	// Reset the axis value
+	if (port >= 0 && port < MAPLE_PORTS)
+	{
+		switch (key)
+		{
+		case DC_AXIS_UP:
+		case DC_AXIS_DOWN:
+			joyy[port] = 0;
+			break;
+		case DC_AXIS_LEFT:
+		case DC_AXIS_RIGHT:
+			joyx[port] = 0;
+			break;
+		case DC_AXIS2_UP:
+		case DC_AXIS2_DOWN:
+			joyry[port] = 0;
+			break;
+		case DC_AXIS2_LEFT:
+		case DC_AXIS2_RIGHT:
+			joyrx[port] = 0;
+			break;
+		case DC_AXIS3_UP:
+		case DC_AXIS3_DOWN:
+			joy3y[port] = 0;
+			break;
+		case DC_AXIS3_LEFT:
+		case DC_AXIS3_RIGHT:
+			joy3x[port] = 0;
+			break;
+		case DC_AXIS_RT:
+			rt[port] = 0;
+			break;
+		case DC_AXIS_LT:
+			lt[port] = 0;
+			break;
+		case DC_AXIS_RT2:
+			rt2[port] = 0;
+			break;
+		case DC_AXIS_LT2:
+			lt2[port] = 0;
+			break;
+		default:
+			break;
+		}
+	}
+	input_mapper->clear_axis(port, key);
+}
+
 static void updateVibration(u32 port, float power, float inclination, u32 duration_ms)
 {
 	int i = GamepadDevice::GetGamepadCount() - 1;
@@ -683,9 +751,9 @@ void GamepadDevice::detectInput(bool combo, input_detected_cb input_changed)
 #ifdef TEST_AUTOMATION
 static FILE *get_record_input(bool write)
 {
-	if (write && !cfgLoadBool("record", "record_input", false))
+	if (write && !config::loadBool("record", "record_input", false))
 		return NULL;
-	if (!write && !cfgLoadBool("record", "replay_input", false))
+	if (!write && !config::loadBool("record", "replay_input", false))
 		return NULL;
 	std::string game_dir = settings.content.path;
 	size_t slash = game_dir.find_last_of("/");
@@ -697,7 +765,7 @@ static FILE *get_record_input(bool write)
 
 void GamepadDevice::Register(const std::shared_ptr<GamepadDevice>& gamepad)
 {
-	int maple_port = cfgLoadInt("input",
+	int maple_port = config::loadInt("input",
 			MAPLE_PORT_CFG_PREFIX + gamepad->unique_id(), 12345);
 	if (maple_port != 12345)
 		gamepad->set_maple_port(maple_port);
@@ -733,7 +801,7 @@ void GamepadDevice::SaveMaplePorts()
 	{
 		std::shared_ptr<GamepadDevice> gamepad = GamepadDevice::GetGamepad(i);
 		if (gamepad != NULL && !gamepad->unique_id().empty())
-			cfgSaveInt("input", MAPLE_PORT_CFG_PREFIX + gamepad->unique_id(), gamepad->maple_port());
+			config::saveInt("input", MAPLE_PORT_CFG_PREFIX + gamepad->unique_id(), gamepad->maple_port());
 	}
 }
 

@@ -19,10 +19,13 @@
 #pragma once
 #include "types.h"
 #include <memory>
+#include <vector>
+#include <string>
 
 namespace resource
 {
 
 std::unique_ptr<u8[]> load(const std::string& path, size_t& size);
+std::vector<std::string> listDirectory(const std::string& path);
 
 }

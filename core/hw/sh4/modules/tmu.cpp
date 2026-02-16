@@ -13,185 +13,130 @@
 
 TMURegisters tmu;
 static u32 tmu_shift[3];
-static u32 tmu_mask[3];
-static u64 tmu_mask64[3];
-
+static u64 tmu_mask[3];
 static u32 old_mode[3] = { 0xFFFF, 0xFFFF, 0xFFFF};
 
-static const InterruptID tmu_intID[3] = { sh4_TMU0_TUNI0, sh4_TMU1_TUNI1, sh4_TMU2_TUNI2 };
+static constexpr InterruptID tmu_intID[3] = { sh4_TMU0_TUNI0, sh4_TMU1_TUNI1, sh4_TMU2_TUNI2 };
 int tmu_sched[3];
+static s64 tmu_ch_base[3];
 
-#if 0
-const u32 tmu_ch_bit[3]={1,2,4};
-
-u32 tmu_prescaler[3];
-u32 tmu_prescaler_shift[3];
-u32 tmu_prescaler_mask[3];
-
-//Accurate counts for the channel ch
-template<u32 ch>
-void UpdateTMU_chan(u32 clc)
-{
-	//if channel is on
-	//if ((TMU_TSTR & tmu_ch_bit[ch])!=0)
-	//{
-		//count :D
-		tmu_prescaler[ch]+=clc;
-		u32 steps=tmu_prescaler[ch]>>tmu_prescaler_shift[ch];
-		
-		//remove the full steps from the prescaler counter
-		tmu_prescaler[ch]&=tmu_prescaler_mask[ch];
-
-		if (unlikely(steps>TMU_TCNT(ch)))
-		{
-			//remove the 'extra' steps to overflow
-			steps-=TMU_TCNT(ch);
-			//refill the counter
-			TMU_TCNT(ch) = TMU_TCOR(ch);
-			//raise the interrupt
-			TMU_TCR(ch) |= tmu_underflow;
-			InterruptPend(tmu_intID[ch], true);
-			
-			//remove the full underflows (possible because we only check every 448 cycles)
-			//this can be done with a div, but its very very very rare so this is probably faster
-			//THIS can probably be replaced with a verify check on counter setup (haven't seen any game do this)
-			while(steps>TMU_TCOR(ch))
-				steps-=TMU_TCOR(ch);
-
-			//steps now has the partial steps needed for update, guaranteed it won't cause an overflow
-		}
-		//count down
-		TMU_TCNT(ch)-=steps;
-	//}
+inline static u64 now() {
+	return sh4_sched_now64() + SH4_TIMESLICE - p_sh4rcb->cntx.cycle_counter;
 }
 
-template<u32 chans>
-void UpdateTMU_i(u32 Cycles)
-{
-	if (chans & 1) UpdateTMU_chan<0>(Cycles);
-	if (chans & 2) UpdateTMU_chan<1>(Cycles);
-	if (chans & 4) UpdateTMU_chan<2>(Cycles);
-}
-#endif
-
-static u32 tmu_ch_base[3];
-static u64 tmu_ch_base64[3];
-
-static u32 read_TMU_TCNTch(u32 ch)
-{
-	return tmu_ch_base[ch] - ((sh4_sched_now64() >> tmu_shift[ch])&tmu_mask[ch]);
-}
-
-static s64 read_TMU_TCNTch64(u32 ch)
-{
-	return tmu_ch_base64[ch] - ((sh4_sched_now64() >> tmu_shift[ch])&tmu_mask64[ch]);
+static s64 read_TMU_TCNTch(u32 ch) {
+	return tmu_ch_base[ch] - ((now() >> tmu_shift[ch]) & tmu_mask[ch]);
 }
 
 static void sched_chan_tick(int ch)
 {
 	//schedule next interrupt
-	//return TMU_TCOR(ch) << tmu_shift[ch];
-
-	u32 togo = read_TMU_TCNTch(ch);
-
-	if (togo > SH4_MAIN_CLOCK)
-		togo = SH4_MAIN_CLOCK;
-
-	u32 cycles = togo << tmu_shift[ch];
-
-	if (cycles > SH4_MAIN_CLOCK)
-		cycles = SH4_MAIN_CLOCK;
-
 	if (tmu_mask[ch])
+	{
+		const s64 cnt = read_TMU_TCNTch(ch);
+		const u32 cycles = std::clamp<s64>(cnt << tmu_shift[ch], 0, SH4_MAIN_CLOCK);
 		sh4_sched_request(tmu_sched[ch], cycles);
-	else
+	}
+	else {
 		sh4_sched_request(tmu_sched[ch], -1);
+	}
 }
 
-static void write_TMU_TCNTch(u32 ch, u32 data)
-{
-	//u32 TCNT=read_TMU_TCNTch(ch);
-	tmu_ch_base[ch]=data+((sh4_sched_now64()>>tmu_shift[ch])&tmu_mask[ch]);
-	tmu_ch_base64[ch] = data + ((sh4_sched_now64() >> tmu_shift[ch])&tmu_mask64[ch]);
-
+static void write_TMU_TCNTch(u32 ch, s64 data) {
+	tmu_ch_base[ch] = data + ((now() >> tmu_shift[ch]) & tmu_mask[ch]);
 	sched_chan_tick(ch);
+}
+
+static u32 reloadCounter(int ch, s64 curValue)
+{
+	// raise interrupt, timer counted down
+	TMU_TCR(ch) |= tmu_underflow;
+	InterruptPend(tmu_intID[ch], true);
+
+	// schedule next trigger by writing the TCNT register
+	u32 tcor = TMU_TCOR(ch);
+	// Don't miss an underflow if tcor is less than -curValue
+	curValue = std::max<s64>((s64)tcor + curValue, 0);
+	write_TMU_TCNTch(ch, curValue);
+	return curValue;
 }
 
 template<u32 ch>
 static u32 read_TMU_TCNT(u32 addr)
 {
-	return read_TMU_TCNTch(ch);
+	s64 v = read_TMU_TCNTch(ch);
+	if (v < 0)
+		return reloadCounter(ch, v);
+	else
+		return (u32)v;
 }
 
 template<u32 ch>
-static void write_TMU_TCNT(u32 addr, u32 data)
-{
-	write_TMU_TCNTch(ch,data);
+static void write_TMU_TCNT(u32 addr, u32 data) {
+	write_TMU_TCNTch(ch, data);
 }
 
 static void turn_on_off_ch(u32 ch, bool on)
 {
-	u32 TCNT=read_TMU_TCNTch(ch);
-	tmu_mask[ch]=on?0xFFFFFFFF:0x00000000;
-	tmu_mask64[ch] = on ? 0xFFFFFFFFFFFFFFFF : 0x0000000000000000;
-	write_TMU_TCNTch(ch,TCNT);
+	s64 TCNT = read_TMU_TCNTch(ch);
+	tmu_mask[ch] = on ? 0xFFFFFFFFFFFFFFFFllu : 0;
+	write_TMU_TCNTch(ch, TCNT);
 }
 
 //Update internal counter registers
 static void UpdateTMUCounts(u32 reg)
 {
-	InterruptPend(tmu_intID[reg],TMU_TCR(reg) & tmu_underflow);
-	InterruptMask(tmu_intID[reg],TMU_TCR(reg) & tmu_UNIE);
+	InterruptPend(tmu_intID[reg], TMU_TCR(reg) & tmu_underflow);
+	InterruptMask(tmu_intID[reg], TMU_TCR(reg) & tmu_UNIE);
 
-	if (old_mode[reg]==(TMU_TCR(reg) & 0x7))
+	if (old_mode[reg] == (TMU_TCR(reg) & 7))
 		return;
-	else
-		old_mode[reg]=(TMU_TCR(reg) & 0x7);
+	old_mode[reg] = TMU_TCR(reg) & 7;
 
-	u32 TCNT=read_TMU_TCNTch(reg);
-	switch(TMU_TCR(reg) & 0x7)
+	s64 TCNT = read_TMU_TCNTch(reg);
+	switch (TMU_TCR(reg) & 7)
 	{
 		case 0: //4
-			tmu_shift[reg]=2;
+			tmu_shift[reg] = 2;
 			break;
 
 		case 1: //16
-			tmu_shift[reg]=4;
+			tmu_shift[reg] = 4;
 			break;
 
 		case 2: //64
-			tmu_shift[reg]=6;
+			tmu_shift[reg] = 6;
 			break;
 
 		case 3: //256
-			tmu_shift[reg]=8;
+			tmu_shift[reg] = 8;
 			break;
 
 		case 4: //1024
-			tmu_shift[reg]=10;
+			tmu_shift[reg] = 10;
 			break;
 
 		case 5: //reserved
-			INFO_LOG(SH4, "TMU ch%d - TCR%d mode is reserved (5)",reg,reg);
+			INFO_LOG(SH4, "TMU ch%d - TCR%d mode is reserved (5)", reg, reg);
 			break;
 
 		case 6: //RTC
-			INFO_LOG(SH4, "TMU ch%d - TCR%d mode is RTC (6), can't be used on Dreamcast",reg,reg);
+			INFO_LOG(SH4, "TMU ch%d - TCR%d mode is RTC (6), can't be used on Dreamcast", reg, reg);
 			break;
 
 		case 7: //external
-			INFO_LOG(SH4, "TMU ch%d - TCR%d mode is External (7), can't be used on Dreamcast",reg,reg);
+			INFO_LOG(SH4, "TMU ch%d - TCR%d mode is External (7), can't be used on Dreamcast", reg, reg);
 			break;
 	}
-	tmu_shift[reg]+=2;
-	write_TMU_TCNTch(reg,TCNT);
+	tmu_shift[reg] += 2;
+	write_TMU_TCNTch(reg, TCNT);
 }
 
 //Write to status registers
 template<int ch>
 static void TMU_TCR_write(u32 addr, u16 data)
 {
-	if (ch == 2)
+	if constexpr (ch == 2)
 		TMU_TCR(ch) = data & 0x03ff;
 	else
 		TMU_TCR(ch) = data & 0x013f;
@@ -199,14 +144,12 @@ static void TMU_TCR_write(u32 addr, u16 data)
 }
 
 //Chan 2 not used functions
-static u32 TMU_TCPR2_read(u32 addr)
-{
+static u32 TMU_TCPR2_read(u32 addr) {
 	INFO_LOG(SH4, "Read from TMU_TCPR2 - this register should be not used on Dreamcast according to docs");
 	return 0;
 }
 
-static void TMU_TCPR2_write(u32 addr, u32 data)
-{
+static void TMU_TCPR2_write(u32 addr, u32 data) {
 	INFO_LOG(SH4, "Write to TMU_TCPR2 - this register should be not used on Dreamcast according to docs, data=%d", data);
 }
 
@@ -220,36 +163,18 @@ static void write_TMU_TSTR(u32 addr, u8 data)
 
 static int sched_tmu_cb(int ch, int sch_cycl, int jitter, void *arg)
 {
-	if (tmu_mask[ch]) {
-		
-		u32 tcnt = read_TMU_TCNTch(ch);
-		
-		s64 tcnt64 = (s64)read_TMU_TCNTch64(ch);
+	if (tmu_mask[ch])
+	{
+		s64 tcnt = (s64)read_TMU_TCNTch(ch);
 
-		//64 bit maths to differentiate big values from overflows
-		if (tcnt64 <= jitter) {
-			//raise interrupt, timer counted down
-			TMU_TCR(ch) |= tmu_underflow;
-			InterruptPend(tmu_intID[ch], true);
-			
-			//printf("Interrupt for %d, %d cycles\n", ch, sch_cycl);
-
-			//schedule next trigger by writing the TCNT register
-			u32 tcor = TMU_TCOR(ch);
-			// Don't miss an underflow if tcor is less than -tcnt
-			write_TMU_TCNTch(ch, (u32)std::max<s64>((u64)tcor + (s32)tcnt, 0));
-		}
-		else {
-			
-			//schedule next trigger by writing the TCNT register
+		// 64 bit maths to differentiate big values from overflows
+		if (tcnt < 0)
+			reloadCounter(ch, tcnt);
+		else
+			// schedule next trigger by writing the TCNT register
 			write_TMU_TCNTch(ch, tcnt);
-		}
-
-		return 0;	//has already been scheduled by TCNT write
 	}
-	else {
-		return 0;	//this channel is disabled, no need to schedule next event
-	}
+	return 0;	// already scheduled if needed
 }
 
 //Init/Res/Term
@@ -306,10 +231,8 @@ void TMURegisters::reset()
 
 	memset(tmu_shift, 0, sizeof(tmu_shift));
 	memset(tmu_mask, 0, sizeof(tmu_mask));
-	memset(tmu_mask64, 0, sizeof(tmu_mask64));
 	memset(old_mode, 0xFF, sizeof(old_mode));
 	memset(tmu_ch_base, 0, sizeof(tmu_ch_base));
-	memset(tmu_ch_base64, 0, sizeof(tmu_ch_base64));
 
 	TMU_TCOR(0) = TMU_TCOR(1) = TMU_TCOR(2) = 0xffffffff;
 
@@ -337,18 +260,22 @@ void TMURegisters::serialize(Serializer& ser)
 {
 	ser << tmu_shift;
 	ser << tmu_mask;
-	ser << tmu_mask64;
 	ser << old_mode;
 	ser << tmu_ch_base;
-	ser << tmu_ch_base64;
+	for (int schedId : tmu_sched)
+		sh4_sched_serialize(ser, schedId);
 }
 
 void TMURegisters::deserialize(Deserializer& deser)
 {
 	deser >> tmu_shift;
+	deser.skip(sizeof(u32) * 3, Deserializer::V58); // u32 tmu_mask[3]
 	deser >> tmu_mask;
-	deser >> tmu_mask64;
 	deser >> old_mode;
+	deser.skip(sizeof(u32) * 3, Deserializer::V58); // u32 tmu_ch_base[3]
 	deser >> tmu_ch_base;
-	deser >> tmu_ch_base64;
+	if (deser.version() >= Deserializer::V58) {
+		for (int schedId : tmu_sched)
+			sh4_sched_deserialize(deser, schedId);
+	}
 }

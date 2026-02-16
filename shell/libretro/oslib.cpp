@@ -19,6 +19,7 @@
 #include "oslib/oslib.h"
 #include "stdclass.h"
 #include "file/file_path.h"
+#include "oslib/i18n.h"
 #ifndef _WIN32
 #include <unistd.h>
 #endif
@@ -31,6 +32,7 @@ extern char content_name[PATH_MAX];
 extern char g_roms_dir[PATH_MAX];
 extern unsigned per_content_vmus;
 extern std::string arcadeFlashPath;
+extern retro_environment_t environ_cb;
 
 namespace hostfs
 {
@@ -177,3 +179,49 @@ void saveScreenshot(const std::string& name, const std::vector<u8>& data)
 void os_SetThreadName(const char *name) {
 }
 #endif
+
+namespace i18n
+{
+
+std::string getCurrentLocale()
+{
+	unsigned language;
+	if (!environ_cb(RETRO_ENVIRONMENT_GET_LANGUAGE, &language))
+		return "en";
+	switch (language)
+	{
+	case RETRO_LANGUAGE_JAPANESE: return "ja";
+	case RETRO_LANGUAGE_FRENCH: return "fr";
+	case RETRO_LANGUAGE_SPANISH: return "es";
+	case RETRO_LANGUAGE_GERMAN: return "de";
+	case RETRO_LANGUAGE_ITALIAN: return "it";
+	case RETRO_LANGUAGE_DUTCH: return "nl";
+	case RETRO_LANGUAGE_PORTUGUESE_BRAZIL: return "pt_BR";
+	case RETRO_LANGUAGE_PORTUGUESE_PORTUGAL: return "pt_PT";
+	case RETRO_LANGUAGE_RUSSIAN: return "uk";
+	case RETRO_LANGUAGE_KOREAN: return "ko";
+	case RETRO_LANGUAGE_CHINESE_TRADITIONAL: return "zh_TW";
+	case RETRO_LANGUAGE_CHINESE_SIMPLIFIED: return "zh_CN";
+	case RETRO_LANGUAGE_ESPERANTO: return "eo";
+	case RETRO_LANGUAGE_POLISH: return "pl";
+	case RETRO_LANGUAGE_VIETNAMESE: return "vi";
+	case RETRO_LANGUAGE_ARABIC: return "ar";
+	case RETRO_LANGUAGE_GREEK: return "el";
+	case RETRO_LANGUAGE_TURKISH: return "tr";
+	case RETRO_LANGUAGE_SLOVAK: return "sk";
+	case RETRO_LANGUAGE_PERSIAN: return "fa";
+	case RETRO_LANGUAGE_HEBREW: return "he";
+	case RETRO_LANGUAGE_FINNISH: return "fi";
+	case RETRO_LANGUAGE_INDONESIAN: return "id";
+	case RETRO_LANGUAGE_SWEDISH: return "sv";
+	case RETRO_LANGUAGE_UKRAINIAN: return "uk";
+	case RETRO_LANGUAGE_CZECH: return "cs";
+	case RETRO_LANGUAGE_CATALAN_VALENCIA: return "ca";
+	case RETRO_LANGUAGE_CATALAN: return "ca";
+	case RETRO_LANGUAGE_BRITISH_ENGLISH: return "en_GB";
+	case RETRO_LANGUAGE_HUNGARIAN: return "hu";
+	default: return "en";
+	}
+}
+
+}

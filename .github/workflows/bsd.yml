@@ -1,6 +1,10 @@
-name: BSD CI
+name: BSD
 
-on: [push, pull_request]
+on:
+  push:
+    branches-ignore:
+      - 'l10n_**'
+  pull_request:
 
 jobs:
   build:
@@ -11,32 +15,33 @@ jobs:
       matrix:
         operating_system: [ freebsd, netbsd, openbsd ]
         architecture: [ arm64, x86-64 ]
+        libretro: [ OFF, ON ]
         include:
           - operating_system: freebsd
-            version: '14.3'
-            pkginstall: sudo pkg update && sudo pkg install -y alsa-lib ccache cmake evdev-proto git libao libevdev libudev-devd libzip lua54 miniupnpc ninja pkgconf pulseaudio sdl2 libcdio
+            version: '15.0'
+            pkginstall: sudo pkg update && sudo pkg install -y alsa-lib ccache cmake evdev-proto git libao libcdio libevdev libudev-devd libzip lua54 miniupnpc ninja pkgconf pulseaudio sdl2
           - operating_system: netbsd
             version: '10.1'
-            pkginstall: sudo pkgin update && sudo pkgin -y install alsa-lib ccache clang cmake git libao libzip lua54 miniupnpc ninja-build pkgconf pulseaudio SDL2 libcdio
+            pkginstall: sudo pkgin update && sudo pkgin -y install alsa-lib ccache clang cmake git libao libcdio libusb1-1.0.29 libzip lua54 miniupnpc ninja-build pkgconf pulseaudio SDL2
           - operating_system: openbsd
-            version: '7.7'
-            pkginstall: sudo pkg_add -u && sudo pkg_add ccache cmake git libao libzip miniupnpc ninja pkgconf pulseaudio sdl2 libcdio
+            version: '7.8'
+            pkginstall: sudo pkg_add -u && sudo pkg_add ccache cmake git libao libcdio libusb1-1.0.29 libzip lua-5.4.7 miniupnpc ninja pulseaudio sdl2
         exclude:
           - architecture: arm64
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
-          submodules: true
+          submodules: recursive
 
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         with:
           path: ${{ env.CCACHE_DIR }}
           key: ccache-${{ matrix.operating_system }}-${{ matrix.architecture }}-${{ github.sha }}
           restore-keys: ccache-${{ matrix.operating_system }}-${{ matrix.architecture }}-
 
-      - uses: cross-platform-actions/action@v0.29.0
+      - uses: cross-platform-actions/action@v0.32.0
         with:
           operating_system: ${{ matrix.operating_system }}
           architecture: ${{ matrix.architecture }}
@@ -44,5 +49,5 @@ jobs:
           environment_variables: CCACHE_DIR
           run: |
             ${{ matrix.pkginstall }}
-            cmake -B build -DUSE_LIBCDIO=ON -DCMAKE_BUILD_TYPE=Release -G Ninja
+            cmake -B build -DUSE_LIBCDIO=ON -DCMAKE_BUILD_TYPE=Release -G Ninja -DLIBRETRO=${{ matrix.libretro }}
             cmake --build build --config Release

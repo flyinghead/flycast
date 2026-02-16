@@ -37,6 +37,7 @@
 #include "emulator.h"
 #include "ui/mainui.h"
 #include "oslib/directory.h"
+#include "oslib/i18n.h"
 #include "dynlink.h"
 #ifdef USE_BREAKPAD
 #include "breakpad/client/windows/handler/exception_handler.h"
@@ -46,6 +47,7 @@
 
 #include <nowide/args.hpp>
 #include <nowide/stackstring.hpp>
+#include <exception>
 
 #include <windows.h>
 #include <windowsx.h>
@@ -337,6 +339,7 @@ int main(int argc, char* argv[])
 	setbuf(stderr, NULL);
 #endif
 	LogManager::Init();
+	i18n::init();
 
 	reserveBottomMemory();
 	setupPath();
@@ -359,7 +362,16 @@ int main(int argc, char* argv[])
 #endif
 	os_InstallFaultHandler();
 
-	mainui_loop();
+	try {
+		mainui_loop();
+	} catch (const std::exception& e) {
+		ERROR_LOG(BOOT, "mainui_loop error: %s", e.what());
+#ifndef TARGET_UWP
+		MessageBox(NULL, i18n::T("Flycast Error"), e.what(), MB_ICONSTOP | MB_OK);
+#endif
+	} catch (...) {
+		ERROR_LOG(BOOT, "mainui_loop unknown exception");
+	}
 
 	flycast_term();
 	os_UninstallFaultHandler();
@@ -490,7 +502,7 @@ void os_VideoRoutingPublishFrameTexture(GLuint texID, GLuint texTarget, float w,
 	if (spoutSender == nullptr)
 	{
 		spoutSender = new SpoutSender();
-		int boardID = cfgLoadInt("naomi", "BoardId", 0);
+		int boardID = config::loadInt("naomi", "BoardId");
 		char buf[32] = { 0 };
 		vsnprintf(buf, sizeof(buf), (boardID == 0 ? "Flycast - Video Content" : "Flycast - Video Content - %d"), std::va_list(&boardID));
 		spoutSender->SetSenderName(buf);
@@ -521,7 +533,7 @@ void os_VideoRoutingPublishFrameTexture(ID3D11Texture2D* pTexture)
 			resource->Release();
 			spoutDXSender->OpenDirectX11(pDevice);
 			pDevice->Release();
-			int boardID = cfgLoadInt("naomi", "BoardId", 0);
+			int boardID = config::loadInt("naomi", "BoardId");
 			char buf[32] = { 0 };
 			vsnprintf(buf, sizeof(buf), (boardID == 0 ? "Flycast - Video Content" : "Flycast - Video Content - %d"), std::va_list(&boardID));
 			spoutDXSender->SetSenderName(buf);

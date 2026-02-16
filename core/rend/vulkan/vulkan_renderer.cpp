@@ -86,6 +86,7 @@ BaseTextureCacheData *BaseVulkanRenderer::GetTexture(TSP tsp, TCW tcw, int area)
 
 void BaseVulkanRenderer::Process(TA_context* ctx)
 {
+	rendContext = &ctx->rend;
 	if (!ctx->rend.isRTT) {
 		framebufferRendered = false;
 		if (!config::EmulateFramebuffer)
@@ -119,6 +120,7 @@ void BaseVulkanRenderer::ReInitOSD()
 
 void BaseVulkanRenderer::RenderFramebuffer(const FramebufferInfo& info)
 {
+	rendContext = nullptr;
 	framebufferTexIndex = (framebufferTexIndex + 1) % GetContext()->GetSwapChainSize();
 
 	if (framebufferTextures.size() != GetContext()->GetSwapChainSize())
@@ -238,68 +240,86 @@ public:
 	bool Init() override
 	{
 		NOTICE_LOG(RENDERER, "VulkanRenderer::Init");
+		try {
+			textureDrawer.Init(&samplerManager, &shaderManager, &textureCache);
+			textureDrawer.SetCommandPool(&texCommandPool);
 
-		textureDrawer.Init(&samplerManager, &shaderManager, &textureCache);
-		textureDrawer.SetCommandPool(&texCommandPool);
+			screenDrawer.Init(&samplerManager, &shaderManager, viewport);
+			screenDrawer.SetCommandPool(&texCommandPool);
+			BaseInit(screenDrawer.GetRenderPass());
+			emulateFramebuffer = config::EmulateFramebuffer;
 
-		screenDrawer.Init(&samplerManager, &shaderManager, viewport);
-		screenDrawer.SetCommandPool(&texCommandPool);
-		BaseInit(screenDrawer.GetRenderPass());
-		emulateFramebuffer = config::EmulateFramebuffer;
-
-		return true;
+			return true;
+		} catch (const vk::SystemError& e) {
+			ERROR_LOG(RENDERER, "Vulkan system error %s", e.what());
+			return false;
+		}
 	}
 
 	void Term() override
 	{
-		DEBUG_LOG(RENDERER, "VulkanRenderer::Term");
-		GetContext()->WaitIdle();
-		texCommandPool.Term(); // make sure all in-flight buffers are returned
-		screenDrawer.Term();
-		textureDrawer.Term();
-		samplerManager.term();
-		BaseVulkanRenderer::Term();
+		try {
+			DEBUG_LOG(RENDERER, "VulkanRenderer::Term");
+			GetContext()->WaitIdle();
+			texCommandPool.Term(); // make sure all in-flight buffers are returned
+			screenDrawer.Term();
+			textureDrawer.Term();
+			samplerManager.term();
+			BaseVulkanRenderer::Term();
+		} catch (const vk::SystemError& e) {
+			ERROR_LOG(RENDERER, "Vulkan system error %s", e.what());
+		}
 	}
 
 	void Process(TA_context* ctx) override
 	{
-		if (emulateFramebuffer != config::EmulateFramebuffer)
-		{
-			screenDrawer.EndRenderPass();
-			VulkanContext::Instance()->WaitIdle();
-			screenDrawer.Term();
-			screenDrawer.Init(&samplerManager, &shaderManager, viewport);
-			BaseInit(screenDrawer.GetRenderPass());
-			emulateFramebuffer = config::EmulateFramebuffer;
+		try {
+			if (emulateFramebuffer != config::EmulateFramebuffer)
+			{
+				screenDrawer.EndRenderPass();
+				VulkanContext::Instance()->WaitIdle();
+				screenDrawer.Term();
+				screenDrawer.Init(&samplerManager, &shaderManager, viewport);
+				BaseInit(screenDrawer.GetRenderPass());
+				emulateFramebuffer = config::EmulateFramebuffer;
+			}
+			else if (ctx->rend.isRTT) {
+				screenDrawer.EndRenderPass();
+			}
+			BaseVulkanRenderer::Process(ctx);
+		} catch (const vk::OutOfDeviceMemoryError& e) {
+			ERROR_LOG(RENDERER, "Vulkan out of device memory: %s", e.what());
+			throw RendererException("Out of device memory");
+		} catch (const vk::SystemError& e) {
+			ERROR_LOG(RENDERER, "Vulkan system error %s", e.what());
+			throw RendererException("Vulkan system error");
 		}
-		else if (ctx->rend.isRTT) {
-			screenDrawer.EndRenderPass();
-		}
-		BaseVulkanRenderer::Process(ctx);
 	}
 
 	bool Render() override
 	{
 		try {
 			Drawer *drawer;
-			if (pvrrc.isRTT)
+			if (rendContext->isRTT)
 				drawer = &textureDrawer;
 			else {
-				resize(pvrrc.framebufferWidth, pvrrc.framebufferHeight);
+				resize(rendContext->framebufferWidth, rendContext->framebufferHeight);
 				drawer = &screenDrawer;
 			}
-
+			drawer->setRendContext(rendContext);
 			drawer->Draw(fogTexture.get(), paletteTexture.get());
-			if (config::EmulateFramebuffer || pvrrc.isRTT)
+			if (config::EmulateFramebuffer || rendContext->isRTT)
 				// delay ending the render pass in case of multi render
 				drawer->EndRenderPass();
 
-			return !pvrrc.isRTT;
+			return !rendContext->isRTT;
+		} catch (const vk::OutOfDeviceMemoryError& e) {
+			ERROR_LOG(RENDERER, "Vulkan out of device memory: %s", e.what());
+			throw RendererException("Out of device memory");
 		} catch (const vk::SystemError& e) {
 			// Sometimes happens when resizing the window
-			WARN_LOG(RENDERER, "Vulkan system error %s", e.what());
-
-			return false;
+			ERROR_LOG(RENDERER, "Vulkan system error %s", e.what());
+			throw RendererException("Vulkan system error");
 		}
 	}
 
@@ -307,10 +327,15 @@ public:
 	{
 		if (clearLastFrame)
 			return false;
-		if (config::EmulateFramebuffer || framebufferRendered)
-			return presentFramebuffer();
-		else
-			return screenDrawer.PresentFrame();
+		try {
+			if (config::EmulateFramebuffer || framebufferRendered)
+				return presentFramebuffer();
+			else
+				return screenDrawer.PresentFrame();
+		} catch (const vk::SystemError& e) {
+			ERROR_LOG(RENDERER, "Vulkan system error %s", e.what());
+			throw RendererException("Vulkan system error");
+		}
 	}
 
 protected:

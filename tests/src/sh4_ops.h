@@ -1363,9 +1363,16 @@ protected:
 
 		ClearRegs();
 		setDr(4, 64.0);
-		PrepareOp(0xF84D);	// fneg dr4
+		PrepareOp(0xF84D);	// fneg fr8
 		RunOp();
 		ASSERT_EQ(getDr(4), -64.0);
+		AssertState();
+
+		ClearRegs();
+		fr(9) = 5.f;
+		PrepareOp(0xF94D);	// fneg fr9 (fneg doesn't depend on PR)
+		RunOp();
+		ASSERT_EQ(fr(9), -5.f);
 		AssertState();
 
 		ClearRegs();

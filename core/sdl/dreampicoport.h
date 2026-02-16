@@ -25,20 +25,18 @@
 #include <memory>
 
 //! See: https://github.com/OrangeFox86/DreamPicoPort
-class DreamPicoPort : public DreamLink
+
+class DreamPicoPortGamepad : public DreamLinkGamepad
 {
 public:
-    //! Dreamcast Controller USB VID:1209 PID:2f07
-    static constexpr const std::uint16_t VID = 0x1209;
-    static constexpr const std::uint16_t PID = 0x2f07;
-    static constexpr const char* VID_PID_GUID = "09120000072f0000";
+	DreamPicoPortGamepad(int maple_port, int joystick_idx, SDL_Joystick* sdl_joystick);
+	const char *get_button_name(u32 code) override;
+	static bool identify(int deviceIndex);
 
 protected:
-    DreamPicoPort() = default;
-	virtual ~DreamPicoPort() = default;
+	void setCustomMapping(const std::shared_ptr<InputMapping>& mapping) override;
 
-public:
-	static std::shared_ptr<DreamPicoPort> create_shared(int bus, int joystick_idx, SDL_Joystick* sdl_joystick);
+    //! Dreamcast Controller USB VID:1209 PID:2f07
+    static constexpr const char* VID_PID_GUID = "09120000072f0000";
 };
-
-#endif // USE_DREAMCASTCONTROLLER
+#endif // USE_DREAMLINK_DEVICES

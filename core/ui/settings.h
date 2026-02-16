@@ -20,12 +20,15 @@
 #include "game_scanner.h"
 #include "gui_util.h"
 #include "imgui.h"
+#include "oslib/i18n.h"
+#include <array>
+using namespace i18n;
 
 void gui_display_settings();
 void gui_settings_general();
 void applyCurrentTheme();
 void addContentPath(bool start);
-void gui_settings_controls(bool& maple_devices_changed);
+void gui_settings_controls(std::array<bool, 4>& mapleDevicesChanges, std::array<std::array<bool, 2>, 4>& expDevicesChanges);
 void gui_settings_video();
 void gui_settings_audio();
 void gui_settings_network();

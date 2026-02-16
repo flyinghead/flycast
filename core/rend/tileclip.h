@@ -20,7 +20,7 @@
 #include <glm/glm.hpp>
 
 #include "types.h"
-#include "hw/pvr/Renderer_if.h"
+#include "hw/pvr/ta_ctx.h"
 #include "cfg/option.h"
 
 enum class TileClipping {
@@ -30,7 +30,7 @@ enum class TileClipping {
 };
 
 // clip_rect[] will contain x, y, width, height
-static inline TileClipping GetTileClip(u32 val, const glm::mat4& viewport, int *clip_rect)
+static inline TileClipping GetTileClip(u32 val, const glm::mat4& viewport, int *clip_rect, const rend_context& ctx)
 {
 	if (!config::Clipping)
 		return TileClipping::Off;
@@ -57,15 +57,15 @@ static inline TileClipping GetTileClip(u32 val, const glm::mat4& viewport, int *
 	if (csx == 0 && csy == 0 && cex >= 640 && cey >= 480)
 		return TileClipping::Off;
 
-	if (!pvrrc.isRTT)
+	if (!ctx.isRTT)
 	{
 		if (tileClippingMode == TileClipping::Outside && !config::EmulateFramebuffer)
 		{
 			// Intersect with framebuffer clipping
-			csx = std::max<float>(csx, pvrrc.fb_X_CLIP.min);
-			csy = std::max<float>(csy, pvrrc.fb_Y_CLIP.min);
-			cex = std::min<float>(cex, pvrrc.fb_X_CLIP.max + 1);
-			cey = std::min<float>(cey, pvrrc.fb_Y_CLIP.max + 1);
+			csx = std::max<float>(csx, ctx.fb_X_CLIP.min);
+			csy = std::max<float>(csy, ctx.fb_Y_CLIP.min);
+			cex = std::min<float>(cex, ctx.fb_X_CLIP.max + 1);
+			cey = std::min<float>(cey, ctx.fb_Y_CLIP.max + 1);
 		}
 		glm::vec4 clip_start(csx, csy, 0, 1);
 		glm::vec4 clip_end(cex, cey, 0, 1);

@@ -99,21 +99,7 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
         String result = JNIdc.initEnvironment((Emulator)getApplicationContext(), getFilesDir().getAbsolutePath(), homeDir,
                 Locale.getDefault().toString());
         if (result != null) {
-            AlertDialog.Builder dlgAlert  = new AlertDialog.Builder(this);
-            dlgAlert.setMessage("Initialization failed. Please try again and/or reinstall.\n\n"
-                    + "Error: " + result);
-            dlgAlert.setTitle("Flycast Error");
-            dlgAlert.setPositiveButton("Exit",
-                    new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog,int id) {
-                            BaseGLActivity.this.finish();
-                        }
-                    });
-            dlgAlert.setIcon(android.R.drawable.ic_dialog_alert);
-            dlgAlert.setCancelable(false);
-            dlgAlert.create().show();
-
+            showAlertDialog(result);
             return;
         }
         Log.i("flycast", "Environment initialized");
@@ -166,6 +152,29 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
             }
         }
         Log.i("flycast", "BaseGLActivity.onCreate done");
+    }
+
+	// Called from native code
+    private void showAlertDialog(String message)
+    {
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+                AlertDialog.Builder dlgAlert = new AlertDialog.Builder(BaseGLActivity.this);
+                dlgAlert.setMessage(getResources().getString(R.string.init_failed_message) + message);
+                dlgAlert.setTitle(R.string.flycast_error);
+                dlgAlert.setPositiveButton(R.string.exit,
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int id) {
+                                BaseGLActivity.this.finish();
+                            }
+                        });
+                dlgAlert.setIcon(android.R.drawable.ic_dialog_alert);
+                dlgAlert.setCancelable(false);
+                dlgAlert.create().show();
+            }
+        });
     }
 
     private void setStorageDirectories()

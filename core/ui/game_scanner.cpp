@@ -21,11 +21,12 @@
 #include "oslib/oslib.h"
 #include "oslib/storage.h"
 #include "cfg/option.h"
+#include "oslib/i18n.h"
 
 static bool operator<(const GameMedia &left, const GameMedia &right)
 {
 	return (int)left.arcade < (int)right.arcade
-			|| (left.arcade == right.arcade && left.name < right.name);
+			|| (left.arcade == right.arcade && i18n::locale()(left.name, right.name));
 }
 
 void GameScanner::insert_game(const GameMedia& game)
@@ -148,7 +149,7 @@ void GameScanner::fetch_game_list()
 			std::string dcbios = hostfs::findFlash("dc_", "%bios.bin;%boot.bin");
 			{
 				LockGuard _(mutex);
-				if (!cfgLoadBool("config", "HideCdromDrives", false))
+				if (!config::loadBool("config", "HideCdromDrives", false))
 				{
 					// CD-ROM devices
 					for (const auto& drive : hostfs::getCdromDrives())
@@ -163,7 +164,7 @@ void GameScanner::fetch_game_list()
 				}
 				// Dreamcast BIOS
 				if (!dcbios.empty())
-					game_list.insert(game_list.begin(), { "Dreamcast BIOS" });
+					game_list.insert(game_list.begin(), { i18n::T("Dreamcast BIOS") });
 			}
 			if (running)
 				scan_done = true;

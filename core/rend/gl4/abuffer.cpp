@@ -481,7 +481,7 @@ static void abufferDrawQuad()
 
 void DrawTranslucentModVols(int first, int count, bool useOpaqueGeom)
 {
-	if (count == 0 || pvrrc.modtrig.empty())
+	if (count == 0 || gl.rendContext->modtrig.empty())
 		return;
 	compileFinalAndModVolShaders();
 	gl4SetupModvolVBO();
@@ -500,7 +500,7 @@ void DrawTranslucentModVols(int first, int count, bool useOpaqueGeom)
 
 	glCheck();
 
-	ModifierVolumeParam* params = useOpaqueGeom ? &pvrrc.global_param_mvo[first] : &pvrrc.global_param_mvo_tr[first];
+	ModifierVolumeParam* params = useOpaqueGeom ? &gl.rendContext->global_param_mvo[first] : &gl.rendContext->global_param_mvo_tr[first];
 
 	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_BUFFER_UPDATE_BARRIER_BIT);
 
@@ -515,7 +515,7 @@ void DrawTranslucentModVols(int first, int count, bool useOpaqueGeom)
 
 		u32 mv_mode = param.isp.DepthMode;
 
-		verify(param.first >= 0 && param.first + param.count <= (u32)pvrrc.modtrig.size());
+		verify(param.first >= 0 && param.first + param.count <= (u32)gl.rendContext->modtrig.size());
 
 		if (mod_base == -1)
 			mod_base = param.first;
@@ -582,10 +582,10 @@ void renderABuffer(bool lastPass)
 {
 	// Render to output FBO
 	compileFinalAndModVolShaders();
-	if (lastPass && config::EmulateFramebuffer && pvrrc.fb_W_CTRL.fb_dither && pvrrc.fb_W_CTRL.fb_packmode <= 3)
+	if (lastPass && config::EmulateFramebuffer && gl.rendContext->fb_W_CTRL.fb_dither && gl.rendContext->fb_W_CTRL.fb_packmode <= 3)
 	{
 		glcache.UseProgram(g_abuffer_final_shader[1].program);
-		switch (pvrrc.fb_W_CTRL.fb_packmode)
+		switch (gl.rendContext->fb_W_CTRL.fb_packmode)
 		{
 		case 0: // 0555 KRGB 16 bit
 		case 3: // 1555 ARGB 16 bit

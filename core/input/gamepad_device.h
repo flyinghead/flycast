@@ -128,6 +128,8 @@ public:
 	virtual void resetMappingToDefault(bool arcade, bool gamepad) {
 		input_mapper = getDefaultMapping();
 	}
+	void clearButtonMapping(u32 port, DreamcastKey key);
+	void clearAxisMapping(u32 port, DreamcastKey key);
 
 	void setPerGameMapping(bool enabled);
 	bool isPerGameMapping() const { return perGameMapping; }
@@ -160,6 +162,8 @@ protected:
 		return _input_detected != nullptr;
 	}
 
+	virtual void registered() {}
+
 	std::string _name;
 	std::string _unique_id;
 	std::shared_ptr<InputMapping> input_mapper;
@@ -168,7 +172,6 @@ protected:
 	int rumblePower = 100;
 
 private:
-	virtual void registered() {}
 	bool handleButtonInput(int port, DreamcastKey key, bool pressed);
 	bool handleButtonInputDef(const InputMapping::InputDef& inputDef, bool pressed);
 	std::string make_mapping_filename(bool instance, int system, bool perGame = false);

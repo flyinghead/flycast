@@ -36,6 +36,7 @@
 #else
 #include "oslib/resources.h"
 #endif
+#include "oslib/i18n.h"
 #include <stb/stb_image.h>
 #include <stb/stb_image_write.h>
 
@@ -853,7 +854,7 @@ private:
 				const bool success = bitmapWriter->save(s);
 				bitmapWriter.reset();
 				if (success) {
-					os_notify("Print out saved", 5000, s.c_str());
+					os_notify(i18n::T("Print out saved"), 5000, s.c_str());
 					NOTICE_LOG(NAOMI, "%s", s.c_str());
 				}
 			}

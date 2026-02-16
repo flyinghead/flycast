@@ -25,6 +25,7 @@
 #include "hw/bba/bba.h"
 #include "cfg/option.h"
 #include "stdclass.h"
+#include "oslib/i18n.h"
 #ifndef LIBRETRO
 #include "cfg/cfg.h"
 #endif
@@ -65,8 +66,8 @@ public:
 		asio::error_code ec;
 		socket.connect(endpoint, ec);
 		if (ec)
-			throw FlycastException(ec.message().c_str());
-		os_notify("Connected to DCNet with modem", 5000, endpointName.c_str());
+			throw FlycastException(ec.message());
+		os_notify(i18n::T("Connected to DCNet with modem"), 5000, endpointName.c_str());
 		receive();
 	}
 
@@ -241,8 +242,8 @@ public:
 		asio::error_code ec;
 		socket.connect(endpoint, ec);
 		if (ec)
-			throw FlycastException(ec.message().c_str());
-		os_notify("Connected to DCNet with Ethernet", 5000, endpointName.c_str());
+			throw FlycastException(ec.message());
+		os_notify(i18n::T("Connected to DCNet with Ethernet"), 5000, endpointName.c_str());
 		receive();
 		u8 prolog[] = { 'D', 'C', 'N', 'E', 'T', 1 };
 		send(prolog, sizeof(prolog));
@@ -256,7 +257,7 @@ public:
 	void send(const u8 *frame, u32 size)
 	{
 		if (sendBufferIdx + size >= sendBuffer.size()) {
-			WARN_LOG(NETWORK, "Dropped out frame (buffer:%d + %d bytes). Increase send buffer size\n", sendBufferIdx, size);
+			WARN_LOG(NETWORK, "Dropped out frame (buffer:%d + %d bytes). Increase send buffer size", sendBufferIdx, size);
 			return;
 		}
 		if (size >= 32) // skip prolog
@@ -567,7 +568,7 @@ private:
 					continue;
 				}
 				const int ping = ap.ping / ap.count;
-				INFO_LOG(NETWORK, "AP %s (%s): ping %d ms", ap.name.c_str(), ap.endpoint.address().to_string().c_str(), ping);
+				INFO_LOG(NETWORK, "AP %s (%s): ping %d ms (%d pings)", ap.name.c_str(), ap.endpoint.address().to_string().c_str(), ping, ap.count);
 				if (ping < bestPing) {
 					bestPing = ping;
 					bestAP = &ap;
@@ -624,7 +625,7 @@ public:
 		pppSocket.reset();
 		ethSocket.reset();
 		io_context.reset();
-		os_notify("DCNet disconnected", 3000);
+		os_notify(i18n::T("DCNet disconnected"), 3000);
 	}
 
 	void sendModem(u8 v)
@@ -734,7 +735,7 @@ void DCNetThread::connect(const asio::ip::address& address, const std::string& a
 	{
 		std::string hostname = "dcnet.flyca.st";
 #ifndef LIBRETRO
-		hostname = cfgLoadStr("network", "DCNetServer", hostname);
+		hostname = config::loadStr("network", "DCNetServer", hostname);
 #endif
 		std::string port;
 		if (config::EmulateBBA)
@@ -749,7 +750,7 @@ void DCNetThread::connect(const asio::ip::address& address, const std::string& a
 		if (ec)
 			throw FlycastException(ec.message());
 		if (it.empty())
-			throw FlycastException("Host not found");
+			throw FlycastException(i18n::Ts("Host not found"));
 		endpoint = *it.begin();
 	}
 	else
@@ -776,7 +777,7 @@ void DCNetThread::run()
 	try {
 		std::string hostname;
 #ifndef LIBRETRO
-		hostname = cfgLoadStr("network", "DCNetServer", "");
+		hostname = config::loadStr("network", "DCNetServer");
 		if (!hostname.empty())
 			connect();
 #endif
@@ -793,7 +794,7 @@ void DCNetThread::run()
 		io_context->run();
 	} catch (const FlycastException& e) {
 		ERROR_LOG(NETWORK, "DCNet connection error: %s", e.what());
-		os_notify("Can't connect to DCNet", 8000, e.what());
+		os_notify(i18n::T("Can't connect to DCNet"), 8000, e.what());
 	} catch (const std::runtime_error& e) {
 		ERROR_LOG(NETWORK, "DCNetThread::run error: %s", e.what());
 	}

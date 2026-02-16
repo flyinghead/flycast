@@ -19,9 +19,9 @@
     along with reicast.  If not, see <https://www.gnu.org/licenses/>.
  */
 #include "7zArchive.h"
-#include "deps/lzma/7z.h"
-#include "deps/lzma/7zCrc.h"
-#include "deps/lzma/Alloc.h"
+#include "lzma/7z.h"
+#include "lzma/7zCrc.h"
+#include "lzma/Alloc.h"
 
 #include <cstring>
 

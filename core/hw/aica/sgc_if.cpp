@@ -1515,28 +1515,31 @@ void ReadCommonReg(u32 reg,bool byte)
 	case 0x2810: // EG, SGC, LP
 	case 0x2811:
 		{
-			u32 chan=CommonData->MSLC;
+			ChannelEx& channel = Chans[CommonData->MSLC];
 			
-			CommonData->LP=Chans[chan].loop.looped;
+			CommonData->LP = channel.loop.looped;
 			if (CommonData->AFSEL == 1)
 				WARN_LOG(AICA, "FEG monitor (AFSEL=1) not supported");
-			s32 aeg = Chans[chan].AEG.GetValue();
+			s32 aeg = channel.AEG.GetValue();
 			if (aeg > 0x3BF)
 				CommonData->EG = 0x1FFF;
 			else
 				CommonData->EG = aeg; //AEG is only 10 bits, FEG is 13 bits
-			CommonData->SGC=Chans[chan].AEG.state;
+			CommonData->SGC = channel.AEG.state;
 
 			if (!byte || reg == 0x2811)
-				Chans[chan].loop.looped = 0;
+				channel.loop.looped = 0;
 		}
 		break;
 	case 0x2814: //CA
 	case 0x2815: //CA
 		{
-			u32 chan=CommonData->MSLC;
-			CommonData->CA = Chans[chan].CA;
-			//printf("[%d] CA read %d\n",chan,Chans[chan].CA);
+			const ChannelEx& channel = Chans[CommonData->MSLC];
+			CommonData->CA = channel.CA;
+			// This helps VC 2K sport games, which don't detect the end of a sound when CA is too close to LEA.
+			// Not sure how real hw works but simple tests show it's difficult to get any CA higher than LEA-60 if not worse.
+			if (channel.loop.LEA > channel.loop.LSA && channel.loop.LEA > 3)
+				CommonData->CA = std::min(CommonData->CA, channel.loop.LEA - 3);
 		}
 		break;
 	}

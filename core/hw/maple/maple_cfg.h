@@ -17,13 +17,14 @@ enum MapleDeviceType
 	MDT_NaomiJamma       =  9,
 	MDT_None             = 10,
 	MDT_RFIDReaderWriter = 11,
-	MDT_MaracasController    = 12,
-	MDT_FishingController    = 13,
-	MDT_PopnMusicController  = 14,
-	MDT_RacingController     = 15,
-	MDT_DenshaDeGoController = 16,
-	MDT_Dreameye             = 17,
-	MDT_SegaControllerXL     = 18,
+	MDT_MaracasController       = 12,
+	MDT_FishingController       = 13,
+	MDT_PopnMusicController     = 14,
+	MDT_RacingController        = 15,
+	MDT_DenshaDeGoController    = 16,
+	MDT_Dreameye                = 17,
+	MDT_SegaControllerXL        = 18,
+	MDT_DreamParaParaController = 19,
 	MDT_Count
 };
 
@@ -117,11 +118,28 @@ void mcfg_DestroyDevices(bool full = true);
 void mcfg_SerializeDevices(Serializer& ser);
 void mcfg_DeserializeDevices(Deserializer& deser);
 
+constexpr int maple_getPortCount(MapleDeviceType type)
+{
+	switch (type)
+	{
+		case MDT_SegaController:
+		case MDT_SegaControllerXL:
+			return 2;
+		case MDT_LightGun:
+		case MDT_TwinStick:
+		case MDT_AsciiStick:
+		case MDT_RacingController:
+			return 1;
+		default:
+			return 0;
+	}
+}
+
 bool maple_atomiswave_coin_chute(int slot);
 void push_vmu_screen(int bus_id, int bus_port, u8* buffer);
 void insertRfidCard(int playerNum);
 const u8 *getRfidCardData(int playerNum);
 void setRfidCardData(int playerNum, u8 *data);
 
-struct maple_naomi_jamma;
-std::shared_ptr<maple_naomi_jamma> getMieDevice();
+struct MIE;
+std::shared_ptr<MIE> getMieDevice();

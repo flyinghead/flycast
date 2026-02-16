@@ -170,6 +170,8 @@ static const GamePortList GamesPorts[] = {
 
 static bool pico_thread_running = false;
 extern "C" int dont_reject_opt_vj_hack;
+// ppp: wait until the game sends some data before responding. Required for WinCE games.
+static bool passiveMode = true;
 
 static bool start_pico();
 u32 makeDnsQueryPacket(void *buf, const char *host);
@@ -203,20 +205,25 @@ static int modem_write(pico_device *dev, const void *data, int len)
     return len;
 }
 
-static void write_pico(u8 b) {
+static void write_pico(u8 b)
+{
+	if (passiveMode) {
+		in_buffer.clear();
+		passiveMode = false;
+	}
 	out_buffer.push(b);
 }
 
 static int read_pico()
 {
-	if (in_buffer.empty())
+	if (in_buffer.empty() || passiveMode)
 		return -1;
 	else
 		return in_buffer.pop();
 }
 
 static int pico_available() {
-	return in_buffer.size();
+	return passiveMode ? 0 : in_buffer.size();
 }
 
 class DirectPlay
@@ -1225,6 +1232,7 @@ private:
 void PicoThread::run()
 {
 	ThreadName _("PicoTCP");
+	passiveMode = true;
 	// Find the network ports for the current game
 	ports = nullptr;
 	for (u32 i = 0; i < std::size(GamesPorts) && ports == nullptr; i++)

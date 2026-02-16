@@ -69,6 +69,9 @@ struct Cheat
 class CheatManager
 {
 public:
+	~CheatManager() {
+		reset("");
+	}
 	void reset(const std::string& gameId);
 	void apply();
 	size_t cheatCount() const { return cheats.size(); }

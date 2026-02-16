@@ -19,6 +19,7 @@
 #pragma once
 #include "types.h"
 #include "hw/pvr/Renderer_if.h"
+#include "hw/pvr/ta_ctx.h"
 #include <d3d11.h>
 #include "dx11context.h"
 #include "rend/transform_matrix.h"
@@ -131,6 +132,7 @@ protected:
 	Naomi2Helper n2Helper;
 	float aspectRatio = 4.f / 3.f;
 	bool dithering = false;
+	rend_context *rendContext;
 
 private:
 	void prepareRttRenderTarget(u32 texAddress);

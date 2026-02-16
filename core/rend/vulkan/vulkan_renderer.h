@@ -19,6 +19,7 @@
 #pragma once
 #include "vulkan.h"
 #include "hw/pvr/Renderer_if.h"
+#include "hw/pvr/ta_ctx.h"
 #include "commandpool.h"
 #include "pipeline.h"
 #include "shaders.h"
@@ -76,4 +77,5 @@ protected:
 	std::unique_ptr<QuadDrawer> framebufferDrawer;
 	CommandPool fbCommandPool;
 	bool framebufferRendered = false;
+	rend_context *rendContext = nullptr;
 };

@@ -21,6 +21,7 @@
 #ifndef LIBRETRO
 #include "context.h"
 #include "cfg/option.h"
+#include "oslib/i18n.h"
 
 #include "gl_context.h"
 #include "rend/dx9/dxcontext.h"
@@ -87,7 +88,7 @@ void initRenderApi(void *window, void *display)
 			return;
 	}
 #endif
-	die("Cannot initialize the graphics API");
+	throw FlycastException(i18n::T("Cannot initialize the graphics API"));
 }
 
 void termRenderApi()

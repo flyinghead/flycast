@@ -1,3 +1,8 @@
+target_sources(${PROJECT_NAME} PRIVATE
+		dreampotato.cpp
+		dreampotato.h
+        maplelink.cpp
+        maplelink.h)
 if(NOT LIBRETRO)
     target_sources(${PROJECT_NAME} PRIVATE
             gamepad.h

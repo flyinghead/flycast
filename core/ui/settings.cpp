@@ -23,30 +23,27 @@
 #include "log/LogManager.h"
 #include "hw/maple/maple_if.h"
 #include "imgui_stdlib.h"
+#include "input/dreampotato.h"
 
 #ifdef GDB_SERVER
 #include "hw/mem/addrspace.h"
 #endif
 
-#if defined(USE_DREAMLINK_DEVICES)
-#include "sdl/dreamlink.h"
-#endif
-
 static void gui_settings_advanced()
 {
 #if FEAT_SHREC != DYNAREC_NONE
-    header("CPU Mode");
+    header(T("CPU Mode"));
     {
 		ImGui::Columns(2, "cpu_modes", false);
-		OptionRadioButton("Dynarec", config::DynarecEnabled, true,
-			"Use the dynamic recompiler. Recommended in most cases");
+		OptionRadioButton(T("Dynarec"), config::DynarecEnabled, true,
+				T("Use the dynamic recompiler. Recommended in most cases"));
 		ImGui::NextColumn();
-		OptionRadioButton("Interpreter", config::DynarecEnabled, false,
-			"Use the interpreter. Very slow but may help in case of a dynarec problem");
+		OptionRadioButton(T("Interpreter"), config::DynarecEnabled, false,
+				T("Use the interpreter. Very slow but may help in case of a dynarec problem"));
 		ImGui::Columns(1, NULL, false);
 
-		OptionSlider("SH4 Clock", config::Sh4Clock, 100, 300,
-				"Over/Underclock the main SH4 CPU. Default is 200 MHz. Other values may crash, freeze or trigger unexpected nuclear reactions.",
+		OptionSlider(T("SH4 Clock"), config::Sh4Clock, 100, 300,
+				T("Over/Underclock the main SH4 CPU. Default is 200 MHz. Other values may crash, freeze or trigger unexpected nuclear reactions."),
 				"%d MHz");
     }
 #ifdef GDB_SERVER
@@ -60,7 +57,7 @@ static void gui_settings_advanced()
 
 		if (ram == nullptr) {
 			const ImVec4 gray(0.75f, 0.75f, 0.75f, 1.f);
-			ImGui::TextColored(gray, "RAM adresses are not available until the emulation is started");
+			ImGui::TextColored(gray, "%s", "RAM adresses are not available until the emulation is started");
 		} else {
 			ImGui::Columns(3, "virtualMemoryAddress", false);
 			ImGui::Text("RAM: %p", ram);
@@ -94,46 +91,46 @@ static void gui_settings_advanced()
 #endif
 	ImGui::Spacing();
 #endif
-    header("Other");
+    header(T("Other"));
     {
-    	OptionCheckbox("HLE BIOS", config::UseReios, "Force high-level BIOS emulation");
-        OptionCheckbox("Multi-threaded emulation", config::ThreadedRendering,
-        		"Run the emulated CPU and GPU on different threads");
+    	OptionCheckbox(T("HLE BIOS"), config::UseReios, T("Force high-level BIOS emulation"));
+        OptionCheckbox(T("Multi-threaded emulation"), config::ThreadedRendering,
+        		T("Run the emulated CPU and GPU on different threads"));
 #if !defined(__ANDROID) && !defined(GDB_SERVER)
-        OptionCheckbox("Serial Console", config::SerialConsole,
-        		"Dump the Dreamcast serial console to stdout");
+        OptionCheckbox(T("Serial Console"), config::SerialConsole,
+        		T("Dump the Dreamcast serial console to stdout"));
 #endif
 		{
 			DisabledScope scope(game_started);
-			OptionCheckbox("Dreamcast 32MB RAM Mod", config::RamMod32MB,
-				"Enables 32MB RAM Mod for Dreamcast. May affect compatibility");
+			OptionCheckbox(T("Dreamcast 32MB RAM Mod"), config::RamMod32MB,
+					T("Enables 32MB RAM Mod for Dreamcast. May affect compatibility"));
 		}
-        OptionCheckbox("Dump Textures", config::DumpTextures,
-        		"Dump all textures into data/texdump/<game id>");
+        OptionCheckbox(T("Dump Textures"), config::DumpTextures,
+        		T("Dump all textures into data/texdump/<game id>"));
 		ImGui::Indent();
 		{
 			DisabledScope scope(!config::DumpTextures.get());
-			OptionCheckbox("Dump Replaced Textures", config::DumpReplacedTextures,
-					"Always dump textures that are already replaced by custom textures");
+			OptionCheckbox(T("Dump Replaced Textures"), config::DumpReplacedTextures,
+					T("Always dump textures that are already replaced by custom textures"));
 		}
 		ImGui::Unindent();
-        bool logToFile = cfgLoadBool("log", "LogToFile", false);
-		if (ImGui::Checkbox("Log to File", &logToFile))
-			cfgSaveBool("log", "LogToFile", logToFile);
+        bool logToFile = config::loadBool("log", "LogToFile", false);
+		if (ImGui::Checkbox(T("Log to File"), &logToFile))
+			config::saveBool("log", "LogToFile", logToFile);
         ImGui::SameLine();
-        ShowHelpMarker("Log debug information to flycast.log");
+        ShowHelpMarker(T("Log debug information to flycast.log"));
 #ifdef SENTRY_UPLOAD
-        OptionCheckbox("Automatically Report Crashes", config::UploadCrashLogs,
-        		"Automatically upload crash reports to sentry.io to help in troubleshooting. No personal information is included.");
+        OptionCheckbox(T("Automatically Report Crashes"), config::UploadCrashLogs,
+        		T("Automatically upload crash reports to sentry.io to help in troubleshooting. No personal information is included."));
 #endif
     }
 
 #ifdef USE_LUA
-	header("Lua Scripting");
+	header(T("Lua Scripting"));
 	{
-		InputText("Lua Filename", &config::LuaFileName.get(), ImGuiInputTextFlags_CharsNoBlank);
+		InputText(T("Lua Filename"), &config::LuaFileName.get(), ImGuiInputTextFlags_CharsNoBlank);
 		ImGui::SameLine();
-		ShowHelpMarker("Specify lua filename to use. Should be located in Flycast config folder. Defaults to flycast.lua when empty.");
+		ShowHelpMarker(T("Specify lua filename to use. Should be located in Flycast config folder. Defaults to flycast.lua when empty."));
 	}
 #endif
 }
@@ -151,7 +148,7 @@ static void gui_debug_tab()
 			std::string name = std::string(logManager->GetShortName(type)) + " - " + logManager->GetFullName(type);
 			if (ImGui::Checkbox(name.c_str(), &enabled) && logManager->GetLogLevel() > LogTypes::LWARNING) {
 				logManager->SetEnable(type, enabled);
-				cfgSaveBool("log", logManager->GetShortName(type), enabled);
+				config::saveBool("log", logManager->GetShortName(type), enabled);
 			}
 		}
 		ImGui::Spacing();
@@ -164,7 +161,7 @@ static void gui_debug_tab()
 				bool is_selected = logManager->GetLogLevel() - 1 == (int)i;
 				if (ImGui::Selectable(levels[i], &is_selected)) {
 					logManager->SetLogLevel((LogTypes::LOG_LEVELS)(i + 1));
-					cfgSaveInt("log", "Verbosity", i + 1);
+					config::saveInt("log", "Verbosity", i + 1);
 				}
 				if (is_selected)
 					ImGui::SetItemDefaultFocus();
@@ -199,18 +196,23 @@ static void gui_debug_tab()
 }
 #endif
 
+static bool beginTabItem(const char *icon, const char *label) {
+	return ImGui::BeginTabItem((std::string(icon) + " " + label).c_str());
+}
+
 void gui_display_settings()
 {
-	static bool maple_devices_changed;
+	static std::array<bool, 4> mapleDevicesChanges;
+	static std::array<std::array<bool, 2>, 4> expDevicesChanges;
 
 	fullScreenWindow(false);
 	ImguiStyleVar _(ImGuiStyleVar_WindowRounding, 0);
 
-    ImGui::Begin("Settings", NULL, ImGuiWindowFlags_DragScrolling | ImGuiWindowFlags_NoResize
+    ImGui::Begin(T("Settings"), NULL, ImGuiWindowFlags_DragScrolling | ImGuiWindowFlags_NoResize
     		| ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
 	ImVec2 normal_padding = ImGui::GetStyle().FramePadding;
 
-    if (ImGui::Button("Done", ScaledVec2(100, 30)))
+    if (ImGui::Button(T("Done"), ScaledVec2(100, 30)))
     {
     	if (uiUserScaleUpdated)
     	{
@@ -221,18 +223,29 @@ void gui_display_settings()
     		gui_setState(GuiState::Commands);
     	else
     		gui_setState(GuiState::Main);
-    	if (maple_devices_changed)
-    	{
-    		maple_devices_changed = false;
-    		if (game_started && settings.platform.isConsole())
-    		{
-#if defined(USE_DREAMLINK_DEVICES)
-				reconnectDreamLinks();
-#endif
-    			maple_ReconnectDevices();
-    			reset_vmus();
-    		}
+    	dreampotato::update();
+ 		if (game_started && settings.platform.isConsole())
+		{
+			for (unsigned bus = 0; bus < mapleDevicesChanges.size(); bus++)
+			{
+				if (mapleDevicesChanges[bus]) {
+					maple_ReconnectDevice(bus, 5);
+				}
+				else
+				{
+					if (expDevicesChanges[bus][0]) {
+						maple_ReconnectDevice(bus, 0);
+						reset_vmus();
+					}
+					if (expDevicesChanges[bus][1]) {
+						maple_ReconnectDevice(bus, 1);
+						reset_vmus();
+					}
+				}
+			}
     	}
+    	mapleDevicesChanges = {};
+    	expDevicesChanges = {};
        	SaveSettings();
     }
 	if (game_started)
@@ -241,7 +254,7 @@ void gui_display_settings()
 		ImguiStyleVar _(ImGuiStyleVar_FramePadding, ImVec2(uiScaled(16), normal_padding.y));
 		if (config::Settings::instance().hasPerGameConfig())
 		{
-			if (ImGui::Button("Delete Game Config", ScaledVec2(0, 30)))
+			if (ImGui::Button(T("Delete Game Config"), ScaledVec2(0, 30)))
 			{
 				config::Settings::instance().setPerGameConfig(false);
 				config::Settings::instance().load(false);
@@ -250,7 +263,7 @@ void gui_display_settings()
 		}
 		else
 		{
-			if (ImGui::Button("Make Game Config", ScaledVec2(0, 30)))
+			if (ImGui::Button(T("Make Game Config"), ScaledVec2(0, 30)))
 				config::Settings::instance().setPerGameConfig(true);
 		}
 	}
@@ -261,53 +274,53 @@ void gui_display_settings()
 		// low width
 		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ScaledVec2(4, 6));
 
-    if (ImGui::BeginTabBar("settings", ImGuiTabBarFlags_NoTooltip))
+    if (ImGui::BeginTabBar("settings", ImGuiTabBarFlags_NoTooltip | ImGuiTabBarFlags_NoTabListScrollingButtons))
     {
-		if (ImGui::BeginTabItem(ICON_FA_TOOLBOX " General"))
+		if (beginTabItem(ICON_FA_TOOLBOX, T("General")))
 		{
 			ImguiStyleVar _(ImGuiStyleVar_FramePadding, normal_padding);
 			gui_settings_general();
 			ImGui::EndTabItem();
 		}
-		if (ImGui::BeginTabItem(ICON_FA_GAMEPAD " Controls"))
+		if (beginTabItem(ICON_FA_GAMEPAD, T("Controls")))
 		{
 			ImguiStyleVar _(ImGuiStyleVar_FramePadding, normal_padding);
-			gui_settings_controls(maple_devices_changed);
+			gui_settings_controls(mapleDevicesChanges, expDevicesChanges);
 			ImGui::EndTabItem();
 		}
-		if (ImGui::BeginTabItem(ICON_FA_DISPLAY " Video"))
+		if (beginTabItem(ICON_FA_DISPLAY, T("Video")))
 		{
 			ImguiStyleVar _(ImGuiStyleVar_FramePadding, normal_padding);
 			gui_settings_video();
 			ImGui::EndTabItem();
 		}
-		if (ImGui::BeginTabItem(ICON_FA_MUSIC " Audio"))
+		if (beginTabItem(ICON_FA_MUSIC, T("Audio")))
 		{
 			ImguiStyleVar _(ImGuiStyleVar_FramePadding, normal_padding);
 			gui_settings_audio();
 			ImGui::EndTabItem();
 		}
-		if (ImGui::BeginTabItem(ICON_FA_WIFI " Network"))
+		if (beginTabItem(ICON_FA_WIFI, T("Network")))
 		{
 			ImguiStyleVar _(ImGuiStyleVar_FramePadding, normal_padding);
 			gui_settings_network();
 			ImGui::EndTabItem();
 		}
-		if (ImGui::BeginTabItem(ICON_FA_MICROCHIP " Advanced"))
+		if (beginTabItem(ICON_FA_MICROCHIP, T("Advanced")))
 		{
 			ImguiStyleVar _(ImGuiStyleVar_FramePadding, normal_padding);
 			gui_settings_advanced();
 			ImGui::EndTabItem();
 		}
 #if !defined(NDEBUG) || defined(DEBUGFAST) || FC_PROFILER
-		if (ImGui::BeginTabItem(ICON_FA_BUG " Debug"))
+		if (beginTabItem(ICON_FA_BUG, "Debug"))
 		{
 			ImguiStyleVar _(ImGuiStyleVar_FramePadding, normal_padding);
 			gui_debug_tab();
 			ImGui::EndTabItem();
 		}
 #endif
-		if (ImGui::BeginTabItem(ICON_FA_CIRCLE_INFO " About"))
+		if (beginTabItem(ICON_FA_CIRCLE_INFO, T("About")))
 		{
 			ImguiStyleVar _(ImGuiStyleVar_FramePadding, normal_padding);
 			gui_settings_about();

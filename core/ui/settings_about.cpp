@@ -50,14 +50,14 @@ void gui_settings_about()
 {
     header("Flycast");
     {
-		ImGui::Text("Version: %s", GIT_VERSION);
-		ImGui::Text("Git Hash: %s", GIT_HASH);
-		ImGui::Text("Build Date: %s", BUILD_DATE);
+		ImGui::Text(T("Version: %s"), GIT_VERSION);
+		ImGui::Text(T("Git Hash: %s"), GIT_HASH);
+		ImGui::Text(T("Build Date: %s"), BUILD_DATE);
     }
 	ImGui::Spacing();
-    header("Platform");
+    header(T("Platform"));
     {
-    	ImGui::Text("CPU: %s",
+    	ImGui::Text(T("CPU: %s"),
 #if HOST_CPU == CPU_X86
 			"x86"
 #elif HOST_CPU == CPU_ARM
@@ -67,10 +67,10 @@ void gui_settings_about()
 #elif HOST_CPU == CPU_ARM64
 			"ARM64"
 #else
-			"Unknown"
+			T("Unknown")
 #endif
 				);
-    	ImGui::Text("Operating System: %s",
+    	ImGui::Text(T("Operating System: %s"),
 #ifdef __ANDROID__
 			"Android"
 #elif defined(__unix__)
@@ -82,18 +82,18 @@ void gui_settings_about()
 			"macOS"
 #endif
 #elif defined(TARGET_UWP)
-			"Windows Universal Platform"
+			T("Windows Universal Platform")
 #elif defined(_WIN32)
 			"Windows"
 #elif defined(__SWITCH__)
 			"Switch"
 #else
-			"Unknown"
+			T("Unknown")
 #endif
 				);
 #ifdef TARGET_IPHONE
 		const char *getIosJitStatus();
-		ImGui::Text("JIT Status: %s", getIosJitStatus());
+		ImGui::Text(T("JIT Status: %s"), getIosJitStatus());
 #endif
     }
 	ImGui::Spacing();
@@ -103,13 +103,13 @@ void gui_settings_about()
 		header("Vulkan");
 	else if (isDirectX(config::RendererType))
 		header("DirectX");
-	ImGui::Text("Driver Name: %s", GraphicsContext::Instance()->getDriverName().c_str());
-	ImGui::Text("Version: %s", GraphicsContext::Instance()->getDriverVersion().c_str());
+	ImGui::Text(T("Driver Name: %s"), GraphicsContext::Instance()->getDriverName().c_str());
+	ImGui::Text(T("Version: %s"), GraphicsContext::Instance()->getDriverVersion().c_str());
 
 #if defined(__ANDROID__) && HOST_CPU == CPU_ARM64 && USE_VULKAN
 	if (isVulkan(config::RendererType))
 	{
-		const char *fileSelectTitle = "Select a custom GPU driver";
+		const char *fileSelectTitle = T("Select a custom GPU driver");
 		{
 			ImguiStyleVar _(ImGuiStyleVar_FramePadding, ScaledVec2(20, 10));
 			if (config::CustomGpuDriver)
@@ -117,42 +117,42 @@ void gui_settings_about()
 				std::string name, description, vendor, version;
 				if (getCustomGpuDriverInfo(name, description, vendor, version))
 				{
-					ImGui::Text("Custom Driver:");
+					ImGui::Text("%s", T("Custom Driver:"));
 					ImGui::Indent();
 					ImGui::Text("%s - %s", name.c_str(), description.c_str());
 					ImGui::Text("%s - %s", vendor.c_str(), version.c_str());
 					ImGui::Unindent();
 				}
 
-				if (ImGui::Button("Use Default Driver")) {
+				if (ImGui::Button(T("Use Default Driver"))) {
 					config::CustomGpuDriver = false;
-					ImGui::OpenPopup("Reset Vulkan");
+					ImGui::OpenPopup(T("Reset Vulkan"));
 				}
 			}
-			else if (ImGui::Button("Upload Custom Driver")) {
+			else if (ImGui::Button(T("Upload Custom Driver"))) {
 				if (!hostfs::addStorage(false, false, fileSelectTitle, customDriverCallback))
 					ImGui::OpenPopup(fileSelectTitle);
 			}
 
 			if (driverDirty) {
-				ImGui::OpenPopup("Reset Vulkan");
+				ImGui::OpenPopup(T("Reset Vulkan"));
 				driverDirty = false;
 			}
 
 			ImguiStyleVar _1(ImGuiStyleVar_WindowPadding, ScaledVec2(20, 20));
-			if (ImGui::BeginPopupModal("Reset Vulkan", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar))
+			if (ImGui::BeginPopupModal(T("Reset Vulkan"), NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar))
 			{
-				ImGui::Text("Do you want to reset Vulkan to use new driver?");
+				ImGui::Text("%s", T("Do you want to reset Vulkan to use new driver?"));
 				ImGui::NewLine();
 				ImguiStyleVar _(ImGuiStyleVar_ItemSpacing, ImVec2(uiScaled(20), ImGui::GetStyle().ItemSpacing.y));
 				ImguiStyleVar _1(ImGuiStyleVar_FramePadding, ScaledVec2(10, 10));
-				if (ImGui::Button("Yes"))
+				if (ImGui::Button(T("Yes")))
 				{
 					mainui_reinit();
 					ImGui::CloseCurrentPopup();
 				}
 				ImGui::SameLine();
-				if (ImGui::Button("No"))
+				if (ImGui::Button(T("No")))
 					ImGui::CloseCurrentPopup();
 				ImGui::EndPopup();
 			}

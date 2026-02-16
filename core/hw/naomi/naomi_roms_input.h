@@ -531,6 +531,7 @@ static InputDescriptors mushik_inputs = {
 		{ NAOMI_BTN0_KEY, "HIT" },
 		{ NAOMI_BTN1_KEY, "PINCH" },
 		{ NAOMI_BTN2_KEY, "THROW" },
+		{ NAOMI_BTN3_KEY, "HIT P2", 0, NAOMI_BTN0_KEY },
 		NAO_BASE_BTN_DESC
 	},
 };

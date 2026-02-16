@@ -202,7 +202,9 @@ bool is_local_address(u32 addr)
 
 #elif defined(__SWITCH__)
 		// TODO
-#else // !_WIN32 && !__SWITCH__
+#elif defined(__HAIKU__)
+		// TODO
+#else // !_WIN32 && !__SWITCH__ && !__HAIKU__
 
 		ifaddrs *myaddrs;
 		if (getifaddrs(&myaddrs) != 0)

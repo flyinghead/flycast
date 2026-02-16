@@ -22,27 +22,27 @@
 
 void gui_settings_audio()
 {
-	OptionCheckbox("Enable DSP", config::DSPEnabled,
-			"Enable the Dreamcast Digital Sound Processor. Only recommended on fast platforms");
-    OptionCheckbox("Enable VMU Sounds", config::VmuSound, "Play VMU beeps when enabled.");
+	OptionCheckbox(T("Enable DSP"), config::DSPEnabled,
+			T("Enable the Dreamcast Digital Sound Processor. Only recommended on fast platforms"));
+    OptionCheckbox(T("Enable VMU Sounds"), config::VmuSound, T("Play VMU beeps when enabled."));
 
-	if (OptionSlider("Volume Level", config::AudioVolume, 0, 100, "Adjust the emulator's audio level", "%d%%"))
+	if (OptionSlider(T("Volume Level"), config::AudioVolume, 0, 100, T("Adjust the emulator's audio level"), "%d%%"))
 	{
 		config::AudioVolume.calcDbPower();
 	};
 #ifdef __ANDROID__
 	if (config::AudioBackend.get() == "auto" || config::AudioBackend.get() == "android")
-		OptionCheckbox("Automatic Latency", config::AutoLatency,
-				"Automatically set audio latency. Recommended");
+		OptionCheckbox(T("Automatic Latency"), config::AutoLatency,
+				T("Automatically set audio latency. Recommended"));
 #endif
     if (!config::AutoLatency
     		|| (config::AudioBackend.get() != "auto" && config::AudioBackend.get() != "android"))
     {
 		int latency = (int)roundf(config::AudioBufferSize * 1000.f / 44100.f);
-		ImGui::SliderInt("Latency", &latency, 12, 512, "%d ms");
+		ImGui::SliderInt(T("Latency"), &latency, 12, 512, "%d ms");
 		config::AudioBufferSize = (int)roundf(latency * 44100.f / 1000.f);
 		ImGui::SameLine();
-		ShowHelpMarker("Sets the maximum audio latency. Not supported by all audio drivers.");
+		ShowHelpMarker(T("Sets the maximum audio latency. Not supported by all audio drivers."));
     }
 
 	AudioBackend *backend = nullptr;
@@ -55,10 +55,10 @@ void gui_settings_audio()
 	}
 
 	AudioBackend *current_backend = backend;
-	if (ImGui::BeginCombo("Audio Driver", backend_name.c_str(), ImGuiComboFlags_None))
+	if (ImGui::BeginCombo(T("Audio Driver"), backend_name.c_str(), ImGuiComboFlags_None))
 	{
 		bool is_selected = (config::AudioBackend.get() == "auto");
-		if (ImGui::Selectable("auto - Automatic driver selection", &is_selected))
+		if (ImGui::Selectable(T("auto - Automatic driver selection"), &is_selected))
 			config::AudioBackend.set("auto");
 
 		for (u32 i = 0; i < AudioBackend::getCount(); i++)
@@ -69,7 +69,7 @@ void gui_settings_audio()
 			if (is_selected)
 				current_backend = backend;
 
-			if (ImGui::Selectable((backend->slug + " - " + backend->name).c_str(), &is_selected))
+			if (ImGui::Selectable((backend->slug + " - " + backend->getName()).c_str(), &is_selected))
 				config::AudioBackend.set(backend->slug);
 			if (is_selected)
 				ImGui::SetItemDefaultFocus();
@@ -77,7 +77,7 @@ void gui_settings_audio()
 		ImGui::EndCombo();
 	}
 	ImGui::SameLine();
-	ShowHelpMarker("The audio driver to use");
+	ShowHelpMarker(T("The audio driver to use"));
 
 	if (current_backend != nullptr)
 	{
@@ -87,7 +87,7 @@ void gui_settings_audio()
 
 		for (int o = 0; o < option_count; o++)
 		{
-			std::string value = cfgLoadStr(current_backend->slug, options->name, "");
+			std::string value = config::loadStr(current_backend->slug, options->name);
 
 			if (options->type == AudioBackend::Option::integer)
 			{
@@ -95,14 +95,14 @@ void gui_settings_audio()
 				if (ImGui::SliderInt(options->caption.c_str(), &val, options->minValue, options->maxValue))
 				{
 					std::string s = std::to_string(val);
-					cfgSaveStr(current_backend->slug, options->name, s);
+					config::saveStr(current_backend->slug, options->name, s);
 				}
 			}
 			else if (options->type == AudioBackend::Option::checkbox)
 			{
 				bool check = value == "1";
 				if (ImGui::Checkbox(options->caption.c_str(), &check))
-					cfgSaveStr(current_backend->slug, options->name,
+					config::saveStr(current_backend->slug, options->name,
 							check ? "1" : "0");
 			}
 			else if (options->type == AudioBackend::Option::list)
@@ -114,7 +114,7 @@ void gui_settings_audio()
 					{
 						is_selected = value == cur;
 						if (ImGui::Selectable(cur.c_str(), &is_selected))
-							cfgSaveStr(current_backend->slug, options->name, cur);
+							config::saveStr(current_backend->slug, options->name, cur);
 
 						if (is_selected)
 							ImGui::SetItemDefaultFocus();

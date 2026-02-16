@@ -6,6 +6,7 @@
 #include "cfg/option.h"
 #include "stdclass.h"
 #include "serialize.h"
+#include "input/maplelink.h"
 
 MapleInputState mapleInputState[4];
 extern bool maple_ddt_pending_reset;
@@ -213,7 +214,16 @@ bool maple_atomiswave_coin_chute(int slot)
 
 static void mcfg_Create(MapleDeviceType type, u32 bus, u32 port, s32 player_num = -1)
 {
-	MapleDevices[bus][port].reset();
+	if (MapleDevices[bus][port] != nullptr)
+		return;
+	if (type == MDT_SegaVMU)
+	{
+		MapleLink::Ptr link = MapleLink::GetMapleLink(bus, port);
+		if (link != nullptr && link->storageEnabled()) {
+			createMapleLinkVmu(bus, port);
+			return;
+		}
+	}
 	std::shared_ptr<maple_device> dev = maple_Create(type);
 	dev->Setup(bus, port, player_num);
 }
@@ -336,6 +346,7 @@ static void createDreamcastDevices()
 		case MDT_PopnMusicController:
 		case MDT_DenshaDeGoController:
 		case MDT_Dreameye:
+		case MDT_DreamParaParaController:
 			mcfg_Create(config::MapleMainDevices[bus], bus, 5);
 			if (config::MapleMainDevices[bus] == MDT_FishingController)
 				// integrated vibration pack
@@ -452,7 +463,7 @@ void mcfg_DeserializeDevices(Deserializer& deser)
 {
 	if (!deser.rollback())
 		mcfg_DestroyDevices(false);
-	u8 eeprom[sizeof(maple_naomi_jamma::eeprom)];
+	u8 eeprom[128];
 	if (deser.version() < Deserializer::V23)
 	{
 		deser >> eeprom;
@@ -494,9 +505,9 @@ void mcfg_DeserializeDevices(Deserializer& deser)
 		memcpy(EEPROM, eeprom, sizeof(eeprom));
 }
 
-std::shared_ptr<maple_naomi_jamma> getMieDevice()
+std::shared_ptr<MIE> getMieDevice()
 {
 	if (MapleDevices[0][5] == nullptr || MapleDevices[0][5]->get_device_type() != MDT_NaomiJamma)
 		return nullptr;
-	return std::static_pointer_cast<maple_naomi_jamma>(MapleDevices[0][5]);
+	return std::static_pointer_cast<MIE>(MapleDevices[0][5]);
 }

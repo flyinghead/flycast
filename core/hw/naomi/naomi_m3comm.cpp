@@ -31,6 +31,7 @@
 #include "network/naomi_network.h"
 #include "emulator.h"
 #include "oslib/oslib.h"
+#include "oslib/i18n.h"
 
 #include <chrono>
 #include <memory>
@@ -72,7 +73,7 @@ void NaomiM3Comm::closeNetwork()
 
 void NaomiM3Comm::connectNetwork()
 {
-	os_notify("Network started", 5000);
+	os_notify(i18n::T("Network started"), 5000);
 	packet_number = 0;
 	slot_count = naomiNetwork.getSlotCount();
 	slot_id = naomiNetwork.getSlotId();

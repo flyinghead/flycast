@@ -18,7 +18,16 @@
 */
 #pragma once
 #include "types.h"
+#include <vector>
+#include <string>
 #include <jni.h>
+
+#ifndef JNIEXPORT
+#define JNIEXPORT
+#endif
+#ifndef JNICALL
+#define JNICALL
+#endif
 
 extern JavaVM* g_jvm;
 
@@ -111,7 +120,7 @@ public:
 
 	template<typename T>
 	T globalRef() {
-		return T(env()->NewGlobalRef(object), true, true);
+		return T(static_cast<typename T::jtype>(env()->NewGlobalRef(object)), true, true);
 	}
 
 protected:
@@ -136,9 +145,15 @@ private:
 class Class : public Object
 {
 public:
+	using jtype = jclass;
+
 	Class(jclass clazz = nullptr, bool ownRef = true, bool globalRef = false)
 		: Object(clazz, ownRef, globalRef) {}
 	Class(Class &&other) : Object(std::move(other)) {}
+
+	Class& operator=(const Class& other) {
+		return (Class&)Object::operator=(other);
+	}
 
 	operator jclass() const { return (jclass)object; }
 };

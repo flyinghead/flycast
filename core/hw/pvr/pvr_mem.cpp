@@ -116,12 +116,8 @@ static void YUV_ConvertMacroBlock(const u8 *datap)
 		}
 	}
 
-	if (YUV_blockcount==TA_YUV_TEX_CNT)
-	{
-		YUV_init();
-		
+	if (YUV_blockcount == TA_YUV_TEX_CNT)
 		asic_RaiseInterrupt(holly_YUV_DMA);
-	}
 }
 
 static void YUV_data(const SQBuffer *data, u32 count)
@@ -131,6 +127,8 @@ static void YUV_data(const SQBuffer *data, u32 count)
 		WARN_LOG(PVR, "YUV_data: YUV decoder not inited");
 		return;
 	}
+	if (YUV_blockcount == TA_YUV_TEX_CNT)
+		YUV_init();
 
 	u32 block_size = TA_YUV_TEX_CTRL.yuv_form == 0 ? 384 : 512;
 	if (block_size != 384)

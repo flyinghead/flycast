@@ -320,8 +320,10 @@ static inline vk::Format findDepthFormat(vk::PhysicalDevice physicalDevice)
 				break;
 			}
 		}
-		if (depthFormat == vk::Format::eUndefined)
-			die("No supported depth/stencil format found");
+		if (depthFormat == vk::Format::eUndefined) {
+			ERROR_LOG(RENDERER, "No supported depth/stencil format found");
+			return depthFormat;
+		}
 	}
 	NOTICE_LOG(RENDERER, "Using depth format %s tiling %s", vk::to_string(depthFormat).c_str(), vk::to_string(tiling).c_str());
 

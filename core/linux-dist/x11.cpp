@@ -262,7 +262,7 @@ void input_x11_init()
 
 void x11_window_create()
 {
-	if (cfgLoadInt("pvr", "nox11", 0) == 0)
+	if (config::loadInt("pvr", "nox11") == 0)
 	{
 		XInitThreads();
 
@@ -300,15 +300,15 @@ void x11_window_create()
 		sWA.event_mask |= PointerMotionMask | FocusChangeMask;
 		unsigned long ui32Mask = CWBackPixel | CWBorderPixel | CWEventMask | CWColormap;
 
-		x11_width = cfgLoadInt("window", "width", 0);
+		x11_width = config::loadInt("window", "width");
 		if (x11_width == 0)
-			x11_width = cfgLoadInt("x11", "width", DEFAULT_WINDOW_WIDTH);
-		x11_height = cfgLoadInt("window", "height", 0);
-		x11_fullscreen = cfgLoadBool("window", "fullscreen", DEFAULT_FULLSCREEN);
+			x11_width = config::loadInt("x11", "width", DEFAULT_WINDOW_WIDTH);
+		x11_height = config::loadInt("window", "height");
+		x11_fullscreen = config::loadBool("window", "fullscreen", DEFAULT_FULLSCREEN);
 		if (x11_height == 0)
 		{
-			x11_height = cfgLoadInt("x11", "height", DEFAULT_WINDOW_HEIGHT);
-			x11_fullscreen = cfgLoadBool("x11", "fullscreen", DEFAULT_FULLSCREEN);
+			x11_height = config::loadInt("x11", "height", DEFAULT_WINDOW_HEIGHT);
+			x11_fullscreen = config::loadBool("x11", "fullscreen", DEFAULT_FULLSCREEN);
 		}
 
 		if (x11_width < 0 || x11_height < 0)
@@ -380,10 +380,10 @@ void x11_window_destroy()
 	{
 		if (!x11_fullscreen)
 		{
-			cfgSaveInt("window", "width", x11_width);
-			cfgSaveInt("window", "height", x11_height);
+			config::saveInt("window", "width", x11_width);
+			config::saveInt("window", "height", x11_height);
 		}
-		cfgSaveBool("window", "fullscreen", x11_fullscreen);
+		config::saveBool("window", "fullscreen", x11_fullscreen);
 		XDestroyWindow(x11_disp, x11_win);
 		x11_win = (Window)0;
 	}
