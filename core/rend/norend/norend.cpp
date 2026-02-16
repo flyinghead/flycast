@@ -10,13 +10,18 @@ struct norend : Renderer
 	void Term() override { }
 
 	void Process(TA_context* ctx) override {
+		rendContext = &ctx->rend;
 		ta_parse(ctx, true);
 	}
 
 	bool Render() override {
-		return !pvrrc.isRTT;
+		return !rendContext->isRTT;
 	}
-	void RenderFramebuffer(const FramebufferInfo& info) override { }
+	void RenderFramebuffer(const FramebufferInfo& info) override {
+		rendContext = nullptr;
+	}
+
+	rend_context *rendContext;
 };
 
 Renderer *rend_norend() {

@@ -619,6 +619,12 @@ static void gl4_term()
 		vao.term();
 	for (auto& vao : gl4.vbo.modvol_vao)
 		vao.term();
+	// Restore the gl context to a decent state in case of exception
+	if (gl.ofbo.origFbo != 0)
+		glBindFramebuffer(GL_FRAMEBUFFER, gl.ofbo.origFbo);
+	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+	glActiveTexture(GL_TEXTURE0);
+	glBindSampler(0, 0);
 }
 
 static void create_modvol_shader()
@@ -693,8 +699,8 @@ struct OpenGL4Renderer : OpenGLRenderer
 	bool Render() override
 	{
 		saveCurrentFramebuffer();
-		renderFrame(pvrrc.framebufferWidth, pvrrc.framebufferHeight);
-		if (pvrrc.isRTT) {
+		renderFrame(gl.rendContext->framebufferWidth, gl.rendContext->framebufferHeight);
+		if (gl.rendContext->isRTT) {
 			restoreCurrentFramebuffer();
 			return false;
 		}
@@ -795,10 +801,10 @@ bool OpenGL4Renderer::renderFrame(int width, int height)
 	if (!config::EmulateFramebuffer)
 		initVideoRoutingFrameBuffer();
 	
-	const bool is_rtt = pvrrc.isRTT;
+	const bool is_rtt = gl.rendContext->isRTT;
 
-	TransformMatrix<COORD_OPENGL> matrices(pvrrc, is_rtt ? pvrrc.getFramebufferWidth() : width,
-			is_rtt ? pvrrc.getFramebufferHeight() : height);
+	TransformMatrix<COORD_OPENGL> matrices(*gl.rendContext, is_rtt ? gl.rendContext->getFramebufferWidth() : width,
+			is_rtt ? gl.rendContext->getFramebufferHeight() : height);
 	gl4ShaderUniforms.ndcMat = matrices.GetNormalMatrix();
 	const glm::mat4& scissor_mat = matrices.GetScissorMatrix();
 	ViewportMatrix = matrices.GetViewportMatrix();
@@ -811,8 +817,8 @@ bool OpenGL4Renderer::renderFrame(int width, int height)
 	if (is_rtt)
 	{
 		float scaling = config::RenderToTextureBuffer ? 1.f : config::RenderResolution / 480.f;
-		rendering_width = pvrrc.getFramebufferWidth() * scaling; // FIXME hscale?
-		rendering_height = pvrrc.getFramebufferHeight() * scaling;
+		rendering_width = gl.rendContext->getFramebufferWidth() * scaling; // FIXME hscale?
+		rendering_height = gl.rendContext->getFramebufferHeight() * scaling;
 	}
 	else
 	{
@@ -829,8 +835,8 @@ bool OpenGL4Renderer::renderFrame(int width, int height)
 	//Fog density constant
 	gl4ShaderUniforms.fog_den_float = FOG_DENSITY.get() * config::ExtraDepthScale;
 
-	pvrrc.fog_clamp_min.getRGBAColor(gl4ShaderUniforms.fog_clamp_min);
-	pvrrc.fog_clamp_max.getRGBAColor(gl4ShaderUniforms.fog_clamp_max);
+	gl.rendContext->fog_clamp_min.getRGBAColor(gl4ShaderUniforms.fog_clamp_min);
+	gl.rendContext->fog_clamp_max.getRGBAColor(gl4ShaderUniforms.fog_clamp_max);
 	
 	if (config::ModifierVolumes)
 	{
@@ -875,19 +881,19 @@ bool OpenGL4Renderer::renderFrame(int width, int height)
 
 	//Main VBO
 	//move vertex to gpu
-	gl4.vbo.getVertexBuffer()->update(pvrrc.verts.data(), pvrrc.verts.size() * sizeof(decltype(*pvrrc.verts.data())));
-	gl4.vbo.getIndexBuffer()->update(pvrrc.idx.data(), pvrrc.idx.size() * sizeof(decltype(*pvrrc.idx.data())));
+	gl4.vbo.getVertexBuffer()->update(gl.rendContext->verts.data(), gl.rendContext->verts.size() * sizeof(decltype(*gl.rendContext->verts.data())));
+	gl4.vbo.getIndexBuffer()->update(gl.rendContext->idx.data(), gl.rendContext->idx.size() * sizeof(decltype(*gl.rendContext->idx.data())));
 
 	//Modvol VBO
-	if (!pvrrc.modtrig.empty())
-		gl4.vbo.getModVolBuffer()->update(pvrrc.modtrig.data(), pvrrc.modtrig.size() * sizeof(decltype(*pvrrc.modtrig.data())));
+	if (!gl.rendContext->modtrig.empty())
+		gl4.vbo.getModVolBuffer()->update(gl.rendContext->modtrig.data(), gl.rendContext->modtrig.size() * sizeof(decltype(*gl.rendContext->modtrig.data())));
 
 	// TR PolyParam data
-	if (!pvrrc.global_param_tr.empty())
+	if (!gl.rendContext->global_param_tr.empty())
 	{
-		std::vector<u32> trPolyParams(pvrrc.global_param_tr.size() * 2);
+		std::vector<u32> trPolyParams(gl.rendContext->global_param_tr.size() * 2);
 		int i = 0;
-		for (const PolyParam& pp : pvrrc.global_param_tr)
+		for (const PolyParam& pp : gl.rendContext->global_param_tr)
 		{
 			trPolyParams[i++] = (pp.tsp.full & 0xffff00c0) | ((pp.isp.full >> 16) & 0xe400) | ((pp.pcw.full >> 7) & 1);
 			trPolyParams[i++] = pp.tsp1.full;
@@ -911,9 +917,9 @@ bool OpenGL4Renderer::renderFrame(int width, int height)
 		float min_y;
 		if (!is_rtt)
 		{
-			glm::vec4 clip_min(pvrrc.fb_X_CLIP.min, pvrrc.fb_Y_CLIP.min, 0, 1);
-			glm::vec4 clip_dim(pvrrc.fb_X_CLIP.max - pvrrc.fb_X_CLIP.min + 1,
-							   pvrrc.fb_Y_CLIP.max - pvrrc.fb_Y_CLIP.min + 1, 0, 0);
+			glm::vec4 clip_min(gl.rendContext->fb_X_CLIP.min, gl.rendContext->fb_Y_CLIP.min, 0, 1);
+			glm::vec4 clip_dim(gl.rendContext->fb_X_CLIP.max - gl.rendContext->fb_X_CLIP.min + 1,
+							   gl.rendContext->fb_Y_CLIP.max - gl.rendContext->fb_Y_CLIP.min + 1, 0, 0);
 			clip_min = scissor_mat * clip_min;
 			clip_dim = scissor_mat * clip_dim;
 
@@ -944,10 +950,10 @@ bool OpenGL4Renderer::renderFrame(int width, int height)
 		}
 		else
 		{
-			min_x = (float)pvrrc.getFramebufferMinX();
-			min_y = (float)pvrrc.getFramebufferMinY();
-			fWidth = (float)pvrrc.getFramebufferWidth() - min_x;
-			fHeight = (float)pvrrc.getFramebufferHeight() - min_y;
+			min_x = (float)gl.rendContext->getFramebufferMinX();
+			min_y = (float)gl.rendContext->getFramebufferMinY();
+			fWidth = (float)gl.rendContext->getFramebufferWidth() - min_x;
+			fHeight = (float)gl.rendContext->getFramebufferHeight() - min_y;
 			if (config::RenderResolution > 480 && !config::RenderToTextureBuffer)
 			{
 				float scale = config::RenderResolution / 480.f;

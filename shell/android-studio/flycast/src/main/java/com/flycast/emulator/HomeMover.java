@@ -136,7 +136,7 @@ public class HomeMover {
     {
         migrationThreadCancelled = false;
         ProgressDialog progress = new ProgressDialog(activity);
-        progress.setTitle("Copying");
+        progress.setTitle(R.string.copying);
         progress.setMessage(message);
         progress.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
         progress.setMax(1);

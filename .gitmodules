@@ -56,6 +56,6 @@
 [submodule "core/deps/DreamPicoPort-API"]
 	path = core/deps/DreamPicoPort-API
 	url = https://github.com/OrangeFox86/DreamPicoPort-API.git
-[submodule "core/deps/libusb-cmake"]
-	path = core/deps/libusb-cmake
-	url = https://github.com/libusb/libusb-cmake.git
+[submodule "core/deps/tinygettext"]
+	path = core/deps/tinygettext
+	url = https://github.com/flyinghead/tinygettext

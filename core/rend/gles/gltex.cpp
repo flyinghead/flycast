@@ -151,7 +151,7 @@ bool TextureCacheData::Delete()
 GLuint BindRTT(bool withDepthBuffer)
 {
 	GLenum channels, format;
-	switch(pvrrc.fb_W_CTRL.fb_packmode)
+	switch(gl.rendContext->fb_W_CTRL.fb_packmode)
 	{
 	case 0: //0x0   0555 KRGB 16 bit  (default)	Bit 15 is the value of fb_kval[7].
 		channels = GL_RGBA;
@@ -176,17 +176,17 @@ GLuint BindRTT(bool withDepthBuffer)
 	case 4: //0x4   888 RGB 24 bit packed
 	case 5: //0x5   0888 KRGB 32 bit    K is the value of fk_kval.
 	case 6: //0x6   8888 ARGB 32 bit
-		WARN_LOG(RENDERER, "Unsupported render to texture format: %d", pvrrc.fb_W_CTRL.fb_packmode);
+		WARN_LOG(RENDERER, "Unsupported render to texture format: %d", gl.rendContext->fb_W_CTRL.fb_packmode);
 		return 0;
 
 	case 7: //7     invalid
 		WARN_LOG(RENDERER, "Invalid framebuffer format: 7");
 		return 0;
 	}
-	u32 fbw = pvrrc.getFramebufferWidth();
-	u32 fbh = pvrrc.getFramebufferHeight();
-	u32 texAddress = pvrrc.fb_W_SOF1 & VRAM_MASK;
-	DEBUG_LOG(RENDERER, "RTT packmode=%d stride=%d - %d x %d @ %06x", pvrrc.fb_W_CTRL.fb_packmode, pvrrc.fb_W_LINESTRIDE * 8,
+	u32 fbw = gl.rendContext->getFramebufferWidth();
+	u32 fbh = gl.rendContext->getFramebufferHeight();
+	u32 texAddress = gl.rendContext->fb_W_SOF1 & VRAM_MASK;
+	DEBUG_LOG(RENDERER, "RTT packmode=%d stride=%d - %d x %d @ %06x", gl.rendContext->fb_W_CTRL.fb_packmode, gl.rendContext->fb_W_LINESTRIDE * 8,
 			fbw, fbh, texAddress);
 
 	gl.rtt.framebuffer.reset();
@@ -209,11 +209,11 @@ GLuint BindRTT(bool withDepthBuffer)
 
 void ReadRTTBuffer()
 {
-	u32 w = pvrrc.getFramebufferWidth();
-	u32 h = pvrrc.getFramebufferHeight();
+	u32 w = gl.rendContext->getFramebufferWidth();
+	u32 h = gl.rendContext->getFramebufferHeight();
 
-	const u8 fb_packmode = pvrrc.fb_W_CTRL.fb_packmode;
-	const u32 tex_addr = pvrrc.fb_W_SOF1 & VRAM_MASK;
+	const u8 fb_packmode = gl.rendContext->fb_W_CTRL.fb_packmode;
+	const u32 tex_addr = gl.rendContext->fb_W_SOF1 & VRAM_MASK;
 
 	if (config::RenderToTextureBuffer)
 	{
@@ -232,7 +232,7 @@ void ReadRTTBuffer()
 
 		u16 *dst = (u16 *)&vram[tex_addr];
 
-		u32 linestride = pvrrc.fb_W_LINESTRIDE * 8;
+		u32 linestride = gl.rendContext->fb_W_LINESTRIDE * 8;
 		if (linestride == 0)
 			linestride = w * 2;
 
@@ -252,7 +252,7 @@ void ReadRTTBuffer()
 			u8 *p = (u8 *)tmp_buf.data();
 			glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, p);
 
-			WriteTextureToVRam(w, h, p, dst, pvrrc.fb_W_CTRL, linestride);
+			WriteTextureToVRam(w, h, p, dst, gl.rendContext->fb_W_CTRL, linestride);
 		}
 		glCheck();
 	}

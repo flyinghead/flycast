@@ -35,7 +35,7 @@ AudioBackend *AudioBackend::getBackend(const std::string& slug)
 			autoBackend = sdlBackend;
 		if (autoBackend == nullptr)
 			autoBackend = backends->front();
-		INFO_LOG(AUDIO, "Auto-selected audio backend \"%s\" (%s).", autoBackend->slug.c_str(), autoBackend->name.c_str());
+		INFO_LOG(AUDIO, "Auto-selected audio backend \"%s\" (%s).", autoBackend->slug.c_str(), autoBackend->getName().c_str());
 
 		return autoBackend;
 	}
@@ -75,7 +75,7 @@ void InitAudio()
 	}
 	if (currentBackend != nullptr)
 	{
-		INFO_LOG(AUDIO, "Initializing audio backend \"%s\" (%s)...", currentBackend->slug.c_str(), currentBackend->name.c_str());
+		INFO_LOG(AUDIO, "Initializing audio backend \"%s\" (%s)...", currentBackend->slug.c_str(), currentBackend->getName().c_str());
 		if (!currentBackend->init())
 		{
 			currentBackend = nullptr;
@@ -114,7 +114,7 @@ void TermAudio()
 	StopAudioRecording();
 	audio_recording_started = rec_started;
 	currentBackend->term();
-	INFO_LOG(AUDIO, "Terminating audio backend \"%s\" (%s)...", currentBackend->slug.c_str(), currentBackend->name.c_str());
+	INFO_LOG(AUDIO, "Terminating audio backend \"%s\" (%s)...", currentBackend->slug.c_str(), currentBackend->getName().c_str());
 	currentBackend = nullptr;
 }
 

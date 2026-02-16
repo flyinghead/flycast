@@ -21,8 +21,8 @@
 #pragma once
 
 #include "archive.h"
-#include "deps/lzma/7z.h"
-#include "deps/lzma/7zFile.h"
+#include "lzma/7z.h"
+#include "lzma/7zFile.h"
 
 #include <algorithm>
 #include <cstring>

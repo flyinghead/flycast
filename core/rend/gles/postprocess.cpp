@@ -322,13 +322,13 @@ void PostProcessor::render(GLuint output_fbo)
 		return;
 	}
 
-	if (_pvrrc == nullptr)
+	if (gl.rendContext == nullptr)
 		// Framebuffer render: no dithering
 		PostProcessShader::select(false,
 				SPG_CONTROL.interlace,
 				FB_R_CTRL.vclk_div == 1 && SPG_CONTROL.interlace == 0);
 	else
-		PostProcessShader::select(pvrrc.fb_W_CTRL.fb_dither == 1 && pvrrc.fb_W_CTRL.fb_packmode <= 3 && !config::EmulateFramebuffer,
+		PostProcessShader::select(gl.rendContext->fb_W_CTRL.fb_dither == 1 && gl.rendContext->fb_W_CTRL.fb_packmode <= 3 && !config::EmulateFramebuffer,
 				SPG_CONTROL.interlace,
 				FB_R_CTRL.vclk_div == 1 && SPG_CONTROL.interlace == 0);
 	vertexArray.bind(vertexBuffer.get());

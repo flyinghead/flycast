@@ -642,7 +642,7 @@ static int interpretAddrs(int p_socket, NetlinkList *p_netlinkList, struct ifadd
     return 0;
 }
 
-int getifaddrs(struct ifaddrs **ifap)
+int android_getifaddrs(struct ifaddrs **ifap)
 {
     int l_socket;
     int l_result;
@@ -690,7 +690,7 @@ int getifaddrs(struct ifaddrs **ifap)
     return l_result;
 }
 
-void freeifaddrs(struct ifaddrs *ifa)
+void android_freeifaddrs(struct ifaddrs *ifa)
 {
     struct ifaddrs *l_cur;
     while(ifa)

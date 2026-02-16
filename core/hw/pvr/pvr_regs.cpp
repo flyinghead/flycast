@@ -129,8 +129,8 @@ void pvr_WriteReg(u32 paddr,u32 data)
 		return; // read only
 
 	case STARTRENDER_addr:
-		//start render
 		rend_start_render();
+		YUV_init();
 		return;
 
 	case TA_LIST_INIT_addr:

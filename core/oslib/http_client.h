@@ -22,6 +22,7 @@
 #include <cctype>
 #include <iomanip>
 #include <sstream>
+#include <locale>
 #include "types.h"
 #include "version.h"
 
@@ -60,6 +61,7 @@ static inline bool success(int status) {
 static inline std::string urlEncode(const std::string& value)
 {
 	std::ostringstream escaped;
+	escaped.imbue(std::locale::classic());
 	escaped.fill('0');
 	escaped << std::hex;
 
@@ -90,6 +92,7 @@ static inline std::string getUserAgent() {
 static inline std::string urlDecode(const std::string& encoded)
 {
 	std::ostringstream decoded;
+	decoded.imbue(std::locale::classic());
 
 	for (size_t i = 0; i < encoded.length(); i++)
 	{

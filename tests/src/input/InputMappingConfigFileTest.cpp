@@ -90,7 +90,7 @@ TEST_F(InputMappingConfigFileTest, save)
 
     // Assert
     std::ifstream configFile(getConfigFilepath());
-    std::stringstream buffer;
+    std::ostringstream buffer;
     buffer << configFile.rdbuf();
     ASSERT_EQ(buffer.str(), R"([analog]
 bind0 = 1+:btn_trigger_left

@@ -65,6 +65,8 @@
 #include "version.h"
 #include "oslib/oslib.h"
 #include "rend/CustomTexture.h"
+#include "oslib/i18n.h"
+#include "input/dreampotato.h"
 
 constexpr char slash = path_default_slash_c();
 
@@ -364,6 +366,7 @@ void retro_init()
 #endif
 	os_InstallFaultHandler();
 	MapleConfigMap::UpdateVibration = updateVibration;
+	i18n::init();
 
 #if defined(__APPLE__) || (defined(__GNUC__) && defined(__linux__) && !defined(__ANDROID__))
 	if (!emuInited)
@@ -995,6 +998,7 @@ static void update_variables(bool first_startup)
 					}
 
 					snprintf(key, sizeof(key), CORE_OPTION_NAME "_device_port%d_slot%d", i + 1, slot + 1);
+					config::NetworkExpansionDevices[i][slot] = 0;
 
 					if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
 					{
@@ -1004,6 +1008,10 @@ static void update_variables(bool first_startup)
 							config::MapleExpansionDevices[i][slot] = MDT_PurupuruPack;
 						else if (!strcmp("None", var.value))
 							config::MapleExpansionDevices[i][slot] = MDT_None;
+						else if (!strcmp("DreamPotato", var.value)) {
+							config::MapleExpansionDevices[i][slot] = MDT_SegaVMU;
+							config::NetworkExpansionDevices[i][slot] = 1;
+						}
 					}
 					else if (slot == 0) // Default to VMU in case the above is false somehow
 						config::MapleExpansionDevices[i][0] = MDT_SegaVMU;
@@ -1184,6 +1192,7 @@ static void update_variables(bool first_startup)
 		}
 		// must *not* be changed once a game is started
 		config::EmulateBBA.override(emulateBba);
+		dreampotato::update();
 	}
 }
 
@@ -1943,7 +1952,8 @@ static void retro_vk_context_reset()
 		ERROR_LOG(RENDERER, "Get Vulkan HW interface failed");
 		return;
 	}
-	theVulkanContext.init((retro_hw_render_interface_vulkan *)vulkan);
+	if (!theVulkanContext.init((retro_hw_render_interface_vulkan *)vulkan))
+		return;
 	rend_term_renderer();
 	rend_init_renderer();
 	if (!perPixelChecked)
@@ -2125,7 +2135,7 @@ bool retro_load_game(const struct retro_game_info *game)
 	if (environ_cb(RETRO_ENVIRONMENT_GET_JIT_CAPABLE, &can_jit) && !can_jit) {
 		// jit is required both for performance and for audio. trying to run
 		// without the jit will cause a crash.
-		os_notify("Cannot run without JIT", 5000);
+		os_notify(i18n::T("Cannot run without JIT"), 5000);
 		return false;
 	}
 #endif
@@ -2335,6 +2345,7 @@ bool retro_load_game(const struct retro_game_info *game)
 	setRotation();
 
 	haveCardReader = card_reader::readerAvailable();
+	dreampotato::update();
 	refresh_devices(true);
 
 	// System may have changed - have to update hidden core options
@@ -2352,6 +2363,7 @@ void retro_unload_game()
 {
 	INFO_LOG(COMMON, "Flycast unloading game");
 	emu.unloadGame();
+	dreampotato::term();
 	game_data.clear();
 	disk_paths.clear();
 	disk_labels.clear();

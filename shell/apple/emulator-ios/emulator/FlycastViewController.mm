@@ -43,6 +43,7 @@
 #include "ios_keyboard.h"
 #include "ios_mouse.h"
 #include "oslib/oslib.h"
+#include "oslib/i18n.h"
 
 #import "AltKit-Swift.h"
 
@@ -192,6 +193,7 @@ static void updateAudioSession(Event event, void *)
     [super viewDidLoad];
 
 	LogManager::Init();
+	i18n::init();
 
 	std::string homedir = [[[[[NSFileManager defaultManager] URLsForDirectory:NSDocumentDirectory inDomains:NSUserDomainMask] objectAtIndex:0] path] UTF8String];
 	homedir += "/";

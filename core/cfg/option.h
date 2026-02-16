@@ -56,7 +56,7 @@ public:
 		{
 			if (gameId.empty())
 				return;
-			if (!cfgHasSection(gameId))
+			if (!hasSection(gameId))
 				return;
 			perGameConfig = true;
 		}
@@ -65,10 +65,10 @@ public:
 	}
 
 	void save() {
-		cfgSetAutoSave(false);
+		setAutoSave(false);
 		for (const auto& o : options)
 			o->save();
-		cfgSetAutoSave(true);
+		setAutoSave(true);
 	}
 
 	void setGameId(const std::string& gameId) {
@@ -82,7 +82,7 @@ public:
 		this->perGameConfig = perGameConfig;
 		if (!perGameConfig) {
 			if (!gameId.empty())
-				cfgDeleteSection(gameId);
+				deleteSection(gameId);
 			reset();
 		}
 	}
@@ -122,7 +122,7 @@ public:
 		else
 		{
 			set(doLoad(section, name));
-			if (cfgIsVirtual(section, name))
+			if (isTransient(section, name))
 				override(value);
 		}
 	}
@@ -141,7 +141,7 @@ public:
 			if (value == doLoad(section, name))
 			{
 				// delete existing per-game option if any
-				cfgDeleteEntry(settings.gameId, section + "." + name);
+				deleteEntry(settings.gameId, section + "." + name);
 				return;
 			}
 		}
@@ -173,14 +173,14 @@ protected:
 	std::enable_if_t<std::is_same_v<U, bool>, T>
 	doLoad(const std::string& section, const std::string& name) const
 	{
-		return cfgLoadBool(section, name, value);
+		return loadBool(section, name, value);
 	}
 
 	template <typename U = T>
 	std::enable_if_t<std::is_same<U, int64_t>::value, T>
 	doLoad(const std::string& section, const std::string& name) const
 	{
-		return cfgLoadInt64(section, name, value);
+		return loadInt64(section, name, value);
 	}
 
 	template <typename U = T>
@@ -188,28 +188,28 @@ protected:
 			&& !std::is_same_v<U, bool> && !std::is_same_v<U, int64_t>, T>
 	doLoad(const std::string& section, const std::string& name) const
 	{
-		return (T)cfgLoadInt(section, name, (int)value);
+		return (T)loadInt(section, name, (int)value);
 	}
 
 	template <typename U = T>
 	std::enable_if_t<std::is_same_v<U, std::string>, T>
 	doLoad(const std::string& section, const std::string& name) const
 	{
-		return cfgLoadStr(section, name, value);
+		return loadStr(section, name, value);
 	}
 
 	template <typename U = T>
 	std::enable_if_t<std::is_same_v<float, U>, T>
 	doLoad(const std::string& section, const std::string& name) const
 	{
-		return cfgLoadFloat(section, name, value);
+		return loadFloat(section, name, value);
 	}
 
 	template <typename U = T>
 	std::enable_if_t<std::is_same_v<std::vector<std::string>, U>, T>
 	doLoad(const std::string& section, const std::string& name) const
 	{
-		std::string paths = cfgLoadStr(section, name, "");
+		std::string paths = loadStr(section, name);
 		if (paths.empty())
 			return value;
 		std::string::size_type start = 0;
@@ -268,14 +268,14 @@ protected:
 	std::enable_if_t<std::is_same_v<U, bool>>
 	doSave(const std::string& section, const std::string& name) const
 	{
-		cfgSaveBool(section, name, value);
+		saveBool(section, name, value);
 	}
 
 	template <typename U = T>
 	std::enable_if_t<std::is_same<U, int64_t>::value>
 	doSave(const std::string& section, const std::string& name) const
 	{
-		cfgSaveInt64(section, name, value);
+		saveInt64(section, name, value);
 	}
 
 	template <typename U = T>
@@ -283,21 +283,21 @@ protected:
 		&& !std::is_same_v<U, bool> && !std::is_same_v<U, int64_t>>
 	doSave(const std::string& section, const std::string& name) const
 	{
-		cfgSaveInt(section, name, (int)value);
+		saveInt(section, name, (int)value);
 	}
 
 	template <typename U = T>
 	std::enable_if_t<std::is_same_v<U, std::string>>
 	doSave(const std::string& section, const std::string& name) const
 	{
-		cfgSaveStr(section, name, value);
+		saveStr(section, name, value);
 	}
 
 	template <typename U = T>
 	std::enable_if_t<std::is_same_v<float, U>>
 	doSave(const std::string& section, const std::string& name) const
 	{
-		cfgSaveFloat(section, name, value);
+		saveFloat(section, name, value);
 	}
 
 	template <typename U = T>
@@ -332,7 +332,7 @@ protected:
 			else
 				s += v;
 		}
-		cfgSaveStr(section, name, s);
+		saveStr(section, name, s);
 	}
 
 	std::string section;
@@ -551,7 +551,7 @@ extern Option<int> VirtualGamepadVibration;
 extern Option<int> VirtualGamepadTransparency;
 extern std::array<Option<MapleDeviceType>, 4> MapleMainDevices;
 extern std::array<std::array<Option<MapleDeviceType>, 2>, 4> MapleExpansionDevices;
-extern std::array<Option<bool>, 4> UseNetworkExpansionDevices;
+extern std::array<std::array<Option<int>, 2>, 4> NetworkExpansionDevices;
 extern Option<bool> PerGameVmu;
 #ifdef _WIN32
 extern Option<bool, false> UseRawInput;

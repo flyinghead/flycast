@@ -25,6 +25,7 @@
 #include "naomi_network.h"
 #include "net_handshake.h"
 #include "ice.h"
+#include "oslib/i18n.h"
 #include <deque>
 
 class NullModemPipe : public SerialPort::Pipe
@@ -177,7 +178,7 @@ private:
 						inet_ntop(AF_INET, &addr.sin_addr, name, sizeof(name));
 						std::string s(name);
 						s += ":" + std::to_string(htons(addr.sin_port));
-						os_notify("Network connected", 5000, s.c_str());
+						os_notify(i18n::T("Network connected"), 5000, s.c_str());
 					}
 				}
 			}

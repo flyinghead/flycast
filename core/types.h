@@ -232,6 +232,7 @@ class FlycastException : public std::runtime_error
 {
 public:
 	FlycastException(const std::string& reason) : std::runtime_error(reason) {}
+	FlycastException(const char *reason) : std::runtime_error(reason) {}
 };
 
 class LoadCancelledException : public FlycastException
@@ -262,3 +263,10 @@ constexpr u32 RAM_SIZE_MAX = 32_MB;
 constexpr u32 VRAM_SIZE_MAX = 16_MB;
 constexpr u32 ARAM_SIZE_MAX = 8_MB;
 
+constexpr unsigned operator""_sh4ms(unsigned long long t) {
+	return SH4_MAIN_CLOCK / 1'000 * t;
+}
+
+constexpr unsigned operator""_sh4us(unsigned long long t) {
+	return SH4_MAIN_CLOCK / 1'000'000 * t;
+}

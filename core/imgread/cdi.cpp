@@ -1,8 +1,8 @@
 #include "common.h"
 #include "stdclass.h"
 #include "oslib/storage.h"
-
-#include "deps/chdpsr/cdipsr.h"
+#include "oslib/i18n.h"
+#include "chdpsr/cdipsr.h"
 
 Disc* cdi_parse(const char* file, std::vector<u8> *digest)
 {
@@ -14,21 +14,21 @@ Disc* cdi_parse(const char* file, std::vector<u8> *digest)
 	if (fsource == nullptr)
 	{
 		WARN_LOG(GDROM, "Cannot open file '%s' errno %d", file, errno);
-		throw FlycastException(std::string("Cannot open CDI file ") + file);
+		throw FlycastException(strprintf(i18n::T("Cannot open CDI file %s"), file));
 	}
 	try {
 		image_s image = { 0 };
 		track_s track = { 0 };
 		if (!CDI_init(fsource, &image, file))
-			throw FlycastException(std::string("Invalid CDI file ") + file);
+			throw FlycastException(strprintf(i18n::T("Invalid CDI file %s"), file));
 	
 		if (!CDI_get_sessions(fsource, &image)) {
 			WARN_LOG(GDROM, "Invalid CDI file '%s': can't get sessions", file);
-			throw FlycastException("Invalid CDI image");
+			throw FlycastException(i18n::Ts("Invalid CDI image"));
 		}
 		if (image.sessions > 255) {
 			WARN_LOG(GDROM, "Invalid CDI file '%s': too many sessions (%d)", file, image.sessions);
-			throw FlycastException("Invalid CDI image");
+			throw FlycastException(i18n::Ts("Invalid CDI image"));
 		}
 
 		std::unique_ptr<Disc> rv = std::make_unique<Disc>();
@@ -46,7 +46,7 @@ Disc* cdi_parse(const char* file, std::vector<u8> *digest)
 
 			if (!CDI_get_tracks(fsource, &image)) {
 				WARN_LOG(GDROM, "Invalid CDI file '%s': can't get tracks", file);
-				throw FlycastException("Invalid CDI image");
+				throw FlycastException(i18n::Ts("Invalid CDI image"));
 			}
 
 			image.header_position = std::ftell(fsource);
@@ -57,7 +57,7 @@ Disc* cdi_parse(const char* file, std::vector<u8> *digest)
 			{
 				if (image.tracks > 100) {
 					WARN_LOG(GDROM, "Invalid CDI file '%s': too many tracks (%d)", file, image.tracks);
-					throw FlycastException("Invalid CDI image");
+					throw FlycastException(i18n::Ts("Invalid CDI image"));
 				}
 				// Clear cuesheet
 				image.remaining_tracks = image.tracks;
@@ -70,12 +70,12 @@ Disc* cdi_parse(const char* file, std::vector<u8> *digest)
 					track.number = image.tracks - image.remaining_tracks + 1;
 
 					if (!CDI_read_track (fsource, &image, &track))
-						throw FlycastException("Invalid CDI image");
+						throw FlycastException(i18n::Ts("Invalid CDI image"));
 
 					if (track.sector_size != 2048 && track.sector_size != 2336 && track.sector_size != 2352 && track.sector_size != 2448)
 					{
 						WARN_LOG(GDROM, "Invalid sector size: %lu", track.sector_size);
-						throw FlycastException("Invalid CDI sector size");
+						throw FlycastException(i18n::Ts("Invalid CDI sector size"));
 					}
 
 					image.header_position = std::ftell(fsource);
@@ -123,7 +123,7 @@ Disc* cdi_parse(const char* file, std::vector<u8> *digest)
 					FILE *trackFile = hostfs::storage().openFile(file, "rb");
 					if (trackFile == nullptr) {
 						WARN_LOG(GDROM, "Cannot re-open file '%s' errno %d", file, errno);
-						throw FlycastException("Cannot re-open CDI file");
+						throw FlycastException(i18n::Ts("Cannot re-open CDI file"));
 					}
 					t.file = new RawTrackFile(trackFile, track.position + track.pregap_length * track.sector_size, t.StartFAD, track.sector_size);
 

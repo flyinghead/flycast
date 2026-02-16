@@ -108,7 +108,7 @@ static void SetBaseClipping()
 
 static TileClipping setTileClip(u32 tileclip, int clip_rect[4])
 {
-	TileClipping clipmode = GetTileClip(tileclip, ViewportMatrix, clip_rect);
+	TileClipping clipmode = GetTileClip(tileclip, ViewportMatrix, clip_rect, *gl.rendContext);
 	if (clipmode == TileClipping::Outside)
 	{
 		glcache.Enable(GL_SCISSOR_TEST);
@@ -134,7 +134,7 @@ void SetGPState(const PolyParam* gp,u32 cflip=0)
 	else
 		trilinear_alpha = 1.f;
 
-	bool color_clamp = gp->tsp.ColorClamp && (pvrrc.fog_clamp_min.full != 0 || pvrrc.fog_clamp_max.full != 0xffffffff);
+	bool color_clamp = gp->tsp.ColorClamp && (gl.rendContext->fog_clamp_min.full != 0 || gl.rendContext->fog_clamp_max.full != 0xffffffff);
 	int fog_ctrl = config::Fog ? gp->tsp.FogCtrl : 2;
 
 	int clip_rect[4] = {};
@@ -281,7 +281,7 @@ void SetGPState(const PolyParam* gp,u32 cflip=0)
 			glcache.DepthMask(!gp->isp.ZWriteDis);
 	}
 	if (CurrentShader->naomi2)
-		setN2Uniforms(gp, CurrentShader, pvrrc);
+		setN2Uniforms(gp, CurrentShader, *gl.rendContext);
 }
 
 template <u32 Type, bool SortingEnabled>
@@ -320,10 +320,10 @@ static void drawSorted(int first, int count, bool multipass)
 	int end = first + count;
 	for (int p = first; p < end; p++)
 	{
-		const PolyParam* params = &pvrrc.global_param_tr[pvrrc.sortedTriangles[p].polyIndex];
+		const PolyParam* params = &gl.rendContext->global_param_tr[gl.rendContext->sortedTriangles[p].polyIndex];
 		SetGPState<ListType_Translucent,true>(params);
-		glDrawElements(GL_TRIANGLES, pvrrc.sortedTriangles[p].count, gl.index_type,
-				(GLvoid*)(gl.get_index_size() * pvrrc.sortedTriangles[p].first));
+		glDrawElements(GL_TRIANGLES, gl.rendContext->sortedTriangles[p].count, gl.index_type,
+				(GLvoid*)(gl.get_index_size() * gl.rendContext->sortedTriangles[p].first));
 	}
 
 	if (multipass && config::TranslucentPolygonDepthMask)
@@ -343,7 +343,7 @@ static void drawSorted(int first, int count, bool multipass)
 
 		for (int p = first; p < end; p++)
 		{
-			const PolyParam* params = &pvrrc.global_param_tr[pvrrc.sortedTriangles[p].polyIndex];
+			const PolyParam* params = &gl.rendContext->global_param_tr[gl.rendContext->sortedTriangles[p].polyIndex];
 			if (!params->isp.ZWriteDis)
 			{
 				// FIXME no clipping in modvol shader
@@ -351,8 +351,8 @@ static void drawSorted(int first, int count, bool multipass)
 
 				SetCull(params->isp.CullMode ^ 1);
 
-				glDrawElements(GL_TRIANGLES, pvrrc.sortedTriangles[p].count, gl.index_type,
-						(GLvoid*)(gl.get_index_size() * pvrrc.sortedTriangles[p].first));
+				glDrawElements(GL_TRIANGLES, gl.rendContext->sortedTriangles[p].count, gl.index_type,
+						(GLvoid*)(gl.get_index_size() * gl.rendContext->sortedTriangles[p].first));
 			}
 		}
 		glcache.StencilMask(0xFF);
@@ -498,7 +498,7 @@ static void SetupModvolVBO()
 
 void DrawModVols(int first, int count)
 {
-	if (count == 0 || pvrrc.modtrig.empty())
+	if (count == 0 || gl.rendContext->modtrig.empty())
 		return;
 
 	SetupModvolVBO();
@@ -512,7 +512,7 @@ void DrawModVols(int first, int count)
 
 	glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 
-	ModifierVolumeParam* params = &pvrrc.global_param_mvo[first];
+	ModifierVolumeParam* params = &gl.rendContext->global_param_mvo[first];
 
 	int mod_base = -1;
 	int curMVMat = -1;
@@ -530,12 +530,12 @@ void DrawModVols(int first, int count)
 			if (param.mvMatrix != curMVMat)
 			{
 				curMVMat = param.mvMatrix;
-				glUniformMatrix4fv(gl.n2ModVolShader.mvMat, 1, GL_FALSE, pvrrc.matrices[curMVMat].mat);
+				glUniformMatrix4fv(gl.n2ModVolShader.mvMat, 1, GL_FALSE, gl.rendContext->matrices[curMVMat].mat);
 			}
 			if (param.projMatrix != curProjMat)
 			{
 				curProjMat = param.projMatrix;
-				glUniformMatrix4fv(gl.n2ModVolShader.projMat, 1, GL_FALSE, pvrrc.matrices[curProjMat].mat);
+				glUniformMatrix4fv(gl.n2ModVolShader.projMat, 1, GL_FALSE, gl.rendContext->matrices[curProjMat].mat);
 			}
 		}
 		else
@@ -602,9 +602,9 @@ void DrawStrips()
 	glActiveTexture(GL_TEXTURE0);
 
 	RenderPass previous_pass = {};
-    for (int render_pass = 0; render_pass < (int)pvrrc.render_passes.size(); render_pass++)
+    for (int render_pass = 0; render_pass < (int)gl.rendContext->render_passes.size(); render_pass++)
     {
-        const RenderPass& current_pass = pvrrc.render_passes[render_pass];
+        const RenderPass& current_pass = gl.rendContext->render_passes[render_pass];
 
         DEBUG_LOG(RENDERER, "Render pass %d OP %d PT %d TR %d MV %d", render_pass + 1,
         		current_pass.op_count - previous_pass.op_count,
@@ -617,10 +617,10 @@ void DrawStrips()
 		glcache.DepthMask(GL_TRUE);
 
 		//Opaque
-		DrawList<ListType_Opaque,false>(pvrrc.global_param_op, previous_pass.op_count, current_pass.op_count - previous_pass.op_count);
+		DrawList<ListType_Opaque,false>(gl.rendContext->global_param_op, previous_pass.op_count, current_pass.op_count - previous_pass.op_count);
 
 		//Alpha tested
-		DrawList<ListType_Punch_Through,false>(pvrrc.global_param_pt, previous_pass.pt_count, current_pass.pt_count - previous_pass.pt_count);
+		DrawList<ListType_Punch_Through,false>(gl.rendContext->global_param_pt, previous_pass.pt_count, current_pass.pt_count - previous_pass.pt_count);
 
 		// Modifier volumes
 		if (config::ModifierVolumes)
@@ -631,12 +631,12 @@ void DrawStrips()
 			if (current_pass.autosort)
             {
 				if (!config::PerStripSorting)
-					drawSorted(previous_pass.sorted_tr_count, current_pass.sorted_tr_count - previous_pass.sorted_tr_count, render_pass < (int)pvrrc.render_passes.size() - 1);
+					drawSorted(previous_pass.sorted_tr_count, current_pass.sorted_tr_count - previous_pass.sorted_tr_count, render_pass < (int)gl.rendContext->render_passes.size() - 1);
 				else
-					DrawList<ListType_Translucent,true>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
+					DrawList<ListType_Translucent,true>(gl.rendContext->global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
             }
 			else
-				DrawList<ListType_Translucent,false>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
+				DrawList<ListType_Translucent,false>(gl.rendContext->global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
 		}
 		previous_pass = current_pass;
 	}
@@ -644,6 +644,7 @@ void DrawStrips()
 
 void OpenGLRenderer::RenderFramebuffer(const FramebufferInfo& info)
 {
+	gl.rendContext = nullptr;
 	glReadFramebuffer(info);
 	saveCurrentFramebuffer();
 	initVideoRoutingFrameBuffer();
@@ -696,15 +697,15 @@ void OpenGLRenderer::RenderFramebuffer(const FramebufferInfo& info)
 
 void writeFramebufferToVRAM()
 {
-	u32 width = (pvrrc.ta_GLOB_TILE_CLIP.tile_x_num + 1) * 32;
-	u32 height = (pvrrc.ta_GLOB_TILE_CLIP.tile_y_num + 1) * 32;
+	u32 width = (gl.rendContext->ta_GLOB_TILE_CLIP.tile_x_num + 1) * 32;
+	u32 height = (gl.rendContext->ta_GLOB_TILE_CLIP.tile_y_num + 1) * 32;
 
-	float xscale = pvrrc.scaler_ctl.hscale == 1 ? 0.5f : 1.f;
-	float yscale = 1024.f / pvrrc.scaler_ctl.vscalefactor;
+	float xscale = gl.rendContext->scaler_ctl.hscale == 1 ? 0.5f : 1.f;
+	float yscale = 1024.f / gl.rendContext->scaler_ctl.vscalefactor;
 	if (std::abs(yscale - 1.f) < 0.01)
 		yscale = 1.f;
-	FB_X_CLIP_type xClip = pvrrc.fb_X_CLIP;
-	FB_Y_CLIP_type yClip = pvrrc.fb_Y_CLIP;
+	FB_X_CLIP_type xClip = gl.rendContext->fb_X_CLIP;
+	FB_Y_CLIP_type yClip = gl.rendContext->fb_Y_CLIP;
 
 	if (xscale != 1.f || yscale != 1.f)
 	{
@@ -751,10 +752,10 @@ void writeFramebufferToVRAM()
 			yClip.max = std::round(yClip.max * yscale);
 		}
 	}
-	u32 tex_addr = pvrrc.fb_W_SOF1 & VRAM_MASK; // TODO SCALER_CTL.interlace, SCALER_CTL.fieldselect
+	u32 tex_addr = gl.rendContext->fb_W_SOF1 & VRAM_MASK; // TODO SCALER_CTL.interlace, SCALER_CTL.fieldselect
 
 	glPixelStorei(GL_PACK_ALIGNMENT, 1);
-	u32 linestride = pvrrc.fb_W_LINESTRIDE * 8;
+	u32 linestride = gl.rendContext->fb_W_LINESTRIDE * 8;
 
 	PixelBuffer<u32> tmp_buf;
 	tmp_buf.init(width, height);
@@ -766,7 +767,7 @@ void writeFramebufferToVRAM()
 	xClip.max = std::min(xClip.max, width - 1);
 	yClip.min = std::min(yClip.min, height - 1);
 	yClip.max = std::min(yClip.max, height - 1);
-	WriteFramebuffer(width, height, p, tex_addr, pvrrc.fb_W_CTRL, linestride, xClip, yClip);
+	WriteFramebuffer(width, height, p, tex_addr, gl.rendContext->fb_W_CTRL, linestride, xClip, yClip);
 
 	glBindFramebuffer(GL_FRAMEBUFFER, gl.ofbo.origFbo);
 	glCheck();

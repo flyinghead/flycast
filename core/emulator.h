@@ -20,6 +20,7 @@
  */
 #pragma once
 #include "types.h"
+#include "stdclass.h"
 
 #include <atomic>
 #include <future>
@@ -39,6 +40,7 @@ void dc_savestate(int index = 0, const u8 *pngData = nullptr, u32 pngSize = 0);
 void dc_loadstate(int index = 0);
 time_t dc_getStateCreationDate(int index);
 void dc_getStateScreenshot(int index, std::vector<u8>& pngData);
+bool dc_savestateAllowed();
 
 enum class Event {
 	Start,
@@ -185,6 +187,10 @@ public:
 
 	Sh4Executor *getSh4Executor();
 
+	void run(std::function<void()> func) {
+		runner.runOnThread(func);
+	}
+
 	void dc_reset(bool hard); // for tests only
 
 private:
@@ -212,6 +218,7 @@ private:
 	std::mutex mutex;
 	Sh4Executor *interpreter = nullptr;
 	Sh4Executor *recompiler = nullptr;
+	ThreadRunner runner;
 };
 extern Emulator emu;
 

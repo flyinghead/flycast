@@ -15,7 +15,7 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #include "TexCache.h"
-#include "deps/xbrz/xbrz.h"
+#include "xbrz/xbrz.h"
 #include "hw/pvr/pvr_mem.h"
 #include "hw/mem/addrspace.h"
 
@@ -754,6 +754,10 @@ void ReadFramebuffer(const FramebufferInfo& info, PixelBuffer<u32>& pb, int& wid
 		{
 			addr = info.spg_status.fieldnum ? info.fb_r_sof2 : info.fb_r_sof1;
 		}
+	}
+	else if (info.fb_r_ctrl.vclk_div == 0) {
+		// 240p if PAL or NTSC
+		height = std::min(height, 240);
 	}
 
 	pb.init(width, height);

@@ -18,6 +18,7 @@
 #include "jni_util.h"
 #include "android_storage.h"
 #include "http_client.h"
+#include "android_locale.h"
 
 #include <android/log.h>
 #include <android/native_window.h>
@@ -29,6 +30,7 @@
 #include <cstring>
 #include <jni.h>
 #include <unistd.h>
+#include <exception>
 
 JavaVM* g_jvm;
 namespace jni
@@ -47,13 +49,14 @@ static bool game_started;
 //stuff for saving prefs
 jobject g_emulator;
 jmethodID saveAndroidSettingsMid;
-static ANativeWindow *g_window = 0;
+static ANativeWindow *g_window = nullptr;
 
 // Activity
 jobject g_activity;
 extern jmethodID showScreenKeyboardMid;
 static jmethodID onGameStateChangeMid;
 extern jmethodID setVGamepadEditModeMid;
+static jmethodID showAlertDialogMid;
 
 static void emuEventCallback(Event event, void *)
 {
@@ -116,7 +119,10 @@ extern "C" JNIEXPORT jstring JNICALL Java_com_flycast_emulator_emu_JNIdc_initEnv
         saveAndroidSettingsMid = env->GetMethodID(env->GetObjectClass(emulator), "SaveAndroidSettings", "(Ljava/lang/String;)V");
     }
     if (first_init)
+    {
     	LogManager::Init();
+    	i18n::init(env);
+    }
 
 #if defined(USE_BREAKPAD)
     if (exceptionHandler == nullptr)
@@ -154,19 +160,16 @@ extern "C" JNIEXPORT jstring JNICALL Java_com_flycast_emulator_emu_JNIdc_initEnv
     }
     INFO_LOG(BOOT, "Config dir is: %s", get_writable_config_path("").c_str());
     INFO_LOG(BOOT, "Data dir is:   %s", get_writable_data_path("").c_str());
-	jni::String locale(jlocale, false);
-    if (!locale.empty())
-        setenv("FLYCAST_LOCALE", locale.to_string().c_str(), 1);
 
     if (first_init)
     {
         // Do one-time initialization
     	EventManager::listen(Event::Pause, emuEventCallback);
     	EventManager::listen(Event::Resume, emuEventCallback);
-        jstring msg = NULL;
-        int rc = flycast_init(0, NULL);
+        jstring msg = nullptr;
+        int rc = flycast_init(0, nullptr);
         if (rc == -1)
-            msg = env->NewStringUTF("Memory initialization failed");
+            msg = env->NewStringUTF(i18n::T("Memory initialization failed"));
 #ifdef USE_BREAKPAD
         else
         {
@@ -179,8 +182,9 @@ extern "C" JNIEXPORT jstring JNICALL Java_com_flycast_emulator_emu_JNIdc_initEnv
 
         return msg;
     }
-    else
-        return NULL;
+    else {
+		return nullptr;
+	}
 }
 
 extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_emu_JNIdc_setExternalStorageDirectories(JNIEnv *env, jobject obj, jobjectArray jpathList)
@@ -300,9 +304,17 @@ extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_emu_JNIdc_stop(JNIEn
 
 static void *render_thread_func(void *)
 {
-	initRenderApi(g_window);
+	try {
+		initRenderApi(g_window);
 
-	mainui_loop(false);
+		mainui_loop(false);
+	} catch (const std::exception& e) {
+		ANativeWindow_release(g_window);
+	    g_window = nullptr;
+	    jni::String message(e.what());
+	    jni::env()->CallVoidMethod(g_activity, showAlertDialogMid, (jstring)message);
+	    return nullptr;
+	}
 
 	termRenderApi();
 	ANativeWindow_release(g_window);
@@ -456,6 +468,7 @@ extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_BaseGLActivity_regis
         showScreenKeyboardMid = env->GetMethodID(actClass, "showScreenKeyboard", "(Z)V");
         onGameStateChangeMid = env->GetMethodID(actClass, "onGameStateChange", "(Z)V");
         setVGamepadEditModeMid = env->GetMethodID(actClass, "setVGamepadEditMode", "(Z)V");
+        showAlertDialogMid = env->GetMethodID(actClass, "showAlertDialog", "(Ljava/lang/String;)V");
     }
 }
 

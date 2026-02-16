@@ -153,7 +153,8 @@ bool RuntimeBlockInfo::Setup(u32 rpc,fpscr_t rfpu_cfg)
 	return true;
 }
 
-DynarecCodeEntryPtr rdv_CompilePC(u32 blockcheck_failures)
+//Called to compile code @pc
+static DynarecCodeEntryPtr compilePC(u32 blockcheck_failures)
 {
 	const u32 pc = Sh4cntx.pc;
 
@@ -198,7 +199,7 @@ DynarecCodeEntryPtr DYNACALL rdv_FailedToFindBlock(u32 pc)
 {
 	//DEBUG_LOG(DYNAREC, "rdv_FailedToFindBlock %08x", pc);
 	Sh4cntx.pc=pc;
-	DynarecCodeEntryPtr code = rdv_CompilePC(0);
+	DynarecCodeEntryPtr code = compilePC(0);
 	if (code == NULL)
 		code = bm_GetCodeByVAddr(Sh4cntx.pc);
 	else
@@ -237,14 +238,15 @@ DynarecCodeEntryPtr DYNACALL rdv_BlockCheckFail(u32 addr)
 		Sh4cntx.pc = addr;
 		Sh4Recompiler::Instance->ResetCache();
 	}
-	return (DynarecCodeEntryPtr)CC_RW2RX(rdv_CompilePC(blockcheck_failures));
+	return (DynarecCodeEntryPtr)CC_RW2RX(compilePC(blockcheck_failures));
 }
 
-DynarecCodeEntryPtr rdv_FindOrCompile()
+//Finds or compiles code @pc
+static DynarecCodeEntryPtr findOrCompile()
 {
 	DynarecCodeEntryPtr rv = bm_GetCodeByVAddr(Sh4cntx.pc);  // Returns exec addr
 	if (rv == ngen_FailedToFindBlock)
-		rv = (DynarecCodeEntryPtr)CC_RW2RX(rdv_CompilePC(0));  // Returns rw addr
+		rv = (DynarecCodeEntryPtr)CC_RW2RX(compilePC(0));  // Returns rw addr
 	
 	return rv;
 }
@@ -284,7 +286,7 @@ void* DYNACALL rdv_LinkBlock(u8* code,u32 dpc)
 			Sh4cntx.pc = rbi->NextBlock;
 	}
 
-	DynarecCodeEntryPtr rv = rdv_FindOrCompile();  // Returns rx ptr
+	DynarecCodeEntryPtr rv = findOrCompile();  // Returns rx ptr
 
 	if (mmu_enabled())
 		return (void *)rv;

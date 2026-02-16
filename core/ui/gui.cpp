@@ -48,10 +48,11 @@
 #include "hw/maple/maple_if.h"
 #if defined(USE_SDL)
 #include "sdl/sdl.h"
-#include "sdl/dreamlink.h"
 #endif
 #include "vgamepad.h"
 #include "settings.h"
+#include "oslib/i18n.h"
+using namespace i18n;
 
 #ifdef _WIN32
 #include <windows.h>
@@ -73,6 +74,7 @@ std::string launchOnExitUri;
 static u32 mouseButtons;
 static int mouseX, mouseY;
 static float mouseWheel;
+static bool mouseTouchscreen;
 static std::string error_msg;
 static bool error_msg_shown;
 static std::string osd_message;
@@ -194,6 +196,18 @@ static ImGuiKey keycodeToImGuiKey(u8 keycode)
 	}
 }
 
+static bool addFont(const char *path, float size, ImFontConfig& fontConfig, const ImWchar *glyphRanges) {
+	ImFont *font = ImGui::GetIO().Fonts->AddFontFromFileTTF(path, size, &fontConfig, glyphRanges);
+	return font != nullptr;
+}
+
+static void addFont(const char *path[], float size, ImFontConfig& fontConfig, const ImWchar *glyphRanges)
+{
+	while (*path != nullptr)
+		if (addFont(*path++, size, fontConfig, glyphRanges))
+			break;
+}
+
 void gui_initFonts()
 {
 	static float uiScale;
@@ -236,14 +250,32 @@ void gui_initFonts()
 
 	ImGuiIO& io = ImGui::GetIO();
 	io.Fonts->Clear();
-	largeFont = nullptr;
+
+	// Regular font
 	const float fontSize = uiScaled(17.f);
 	size_t dataSize;
 	std::unique_ptr<u8[]> data = resource::load("fonts/Roboto-Medium.ttf", dataSize);
 	verify(data != nullptr);
-	io.Fonts->AddFontFromMemoryTTF(data.release(), dataSize, fontSize, nullptr, ranges);
-    ImFontConfig font_cfg;
-    font_cfg.MergeMode = true;
+	ImFont *regularFont = io.Fonts->AddFontFromMemoryTTF(data.release(), dataSize, fontSize, nullptr, ranges);
+    ImFontConfig fontConfig;
+    fontConfig.MergeMode = true;
+    fontConfig.DstFont = regularFont;
+	// Font Awesome symbols (added to default font)
+	data = resource::load("fonts/" FONT_ICON_FILE_NAME_FAS, dataSize);
+	verify(data != nullptr);
+    fontConfig.FontNo = 0;
+	static ImWchar faRanges[] = { ICON_MIN_FA, ICON_MAX_FA, 0 };
+	io.Fonts->AddFontFromMemoryTTF(data.release(), dataSize, fontSize, &fontConfig, faRanges);
+
+	// Large font
+    const float largeFontSize = uiScaled(21.f);
+	data = resource::load("fonts/Roboto-Regular.ttf", dataSize);
+	verify(data != nullptr);
+	largeFont = io.Fonts->AddFontFromMemoryTTF(data.release(), dataSize, largeFontSize, nullptr, ranges);
+	ImFontConfig largeFontConfig;
+	largeFontConfig.MergeMode = true;
+	largeFontConfig.DstFont = largeFont;
+
 #ifdef _WIN32
     u32 cp = GetACP();
     std::string fontDir = std::string(nowide::getenv("SYSTEMROOT")) + "\\Fonts\\";
@@ -251,65 +283,81 @@ void gui_initFonts()
     {
     case 932:	// Japanese
 		{
-			font_cfg.FontNo = 2;	// UIGothic
-			ImFont* font = io.Fonts->AddFontFromFileTTF((fontDir + "msgothic.ttc").c_str(), fontSize, &font_cfg, io.Fonts->GetGlyphRangesJapanese());
-			font_cfg.FontNo = 2;	// Meiryo UI
-			if (font == nullptr)
-				io.Fonts->AddFontFromFileTTF((fontDir + "Meiryo.ttc").c_str(), fontSize, &font_cfg, io.Fonts->GetGlyphRangesJapanese());
+			fontConfig.FontNo = 2;	// UIGothic
+			largeFontConfig.FontNo = 2;
+			ImFont* font = io.Fonts->AddFontFromFileTTF((fontDir + "msgothic.ttc").c_str(), fontSize, &fontConfig, io.Fonts->GetGlyphRangesJapanese());
+			io.Fonts->AddFontFromFileTTF((fontDir + "msgothic.ttc").c_str(), largeFontSize, &largeFontConfig, io.Fonts->GetGlyphRangesJapanese());
+			fontConfig.FontNo = 2;	// Meiryo UI
+			largeFontConfig.FontNo = 2;
+			if (font == nullptr) {
+				io.Fonts->AddFontFromFileTTF((fontDir + "Meiryo.ttc").c_str(), fontSize, &fontConfig, io.Fonts->GetGlyphRangesJapanese());
+				io.Fonts->AddFontFromFileTTF((fontDir + "Meiryo.ttc").c_str(), largeFontSize, &largeFontConfig, io.Fonts->GetGlyphRangesJapanese());
+			}
 		}
 		break;
     case 949:	// Korean
 		{
-			ImFont* font = io.Fonts->AddFontFromFileTTF((fontDir + "Malgun.ttf").c_str(), fontSize, &font_cfg, io.Fonts->GetGlyphRangesKorean());
+			ImFont* font = io.Fonts->AddFontFromFileTTF((fontDir + "Malgun.ttf").c_str(), fontSize, &fontConfig, io.Fonts->GetGlyphRangesKorean());
+			io.Fonts->AddFontFromFileTTF((fontDir + "Malgun.ttf").c_str(), largeFontSize, &largeFontConfig, io.Fonts->GetGlyphRangesKorean());
 			if (font == nullptr)
 			{
-				font_cfg.FontNo = 2;	// Dotum
-				io.Fonts->AddFontFromFileTTF((fontDir + "Gulim.ttc").c_str(), fontSize, &font_cfg, io.Fonts->GetGlyphRangesKorean());
+				fontConfig.FontNo = 2;	// Dotum
+				io.Fonts->AddFontFromFileTTF((fontDir + "Gulim.ttc").c_str(), fontSize, &fontConfig, io.Fonts->GetGlyphRangesKorean());
+				largeFontConfig.FontNo = 2;	// Dotum
+				io.Fonts->AddFontFromFileTTF((fontDir + "Gulim.ttc").c_str(), largeFontSize, &largeFontConfig, io.Fonts->GetGlyphRangesKorean());
 			}
 		}
     	break;
     case 950:	// Traditional Chinese
 		{
-			font_cfg.FontNo = 1; // Microsoft JhengHei UI Regular
-			ImFont* font = io.Fonts->AddFontFromFileTTF((fontDir + "Msjh.ttc").c_str(), fontSize, &font_cfg, GetGlyphRangesChineseTraditionalOfficial());
-			font_cfg.FontNo = 0;
+			fontConfig.FontNo = 1; // Microsoft JhengHei UI Regular
+			ImFont* font = io.Fonts->AddFontFromFileTTF((fontDir + "Msjh.ttc").c_str(), fontSize, &fontConfig, GetGlyphRangesChineseTraditionalOfficial());
+			largeFontConfig.FontNo = 1;
+			io.Fonts->AddFontFromFileTTF((fontDir + "Msjh.ttc").c_str(), largeFontSize, &largeFontConfig, GetGlyphRangesChineseTraditionalOfficial());
 			if (font == nullptr)
-				io.Fonts->AddFontFromFileTTF((fontDir + "MSJH.ttf").c_str(), fontSize, &font_cfg, GetGlyphRangesChineseTraditionalOfficial());
+			{
+				fontConfig.FontNo = 0;
+				io.Fonts->AddFontFromFileTTF((fontDir + "MSJH.ttf").c_str(), fontSize, &fontConfig, GetGlyphRangesChineseTraditionalOfficial());
+				largeFontConfig.FontNo = 0;
+				io.Fonts->AddFontFromFileTTF((fontDir + "MSJH.ttf").c_str(), largeFontSize, &largeFontConfig, GetGlyphRangesChineseTraditionalOfficial());
+			}
 		}
     	break;
     case 936:	// Simplified Chinese
-		io.Fonts->AddFontFromFileTTF((fontDir + "Simsun.ttc").c_str(), fontSize, &font_cfg, GetGlyphRangesChineseSimplifiedOfficial());
+		io.Fonts->AddFontFromFileTTF((fontDir + "Simsun.ttc").c_str(), fontSize, &fontConfig, GetGlyphRangesChineseSimplifiedOfficial());
+		io.Fonts->AddFontFromFileTTF((fontDir + "Simsun.ttc").c_str(), largeFontSize, &largeFontConfig, GetGlyphRangesChineseSimplifiedOfficial());
     	break;
     default:
     	break;
     }
 #elif defined(__APPLE__) && !defined(TARGET_IPHONE)
     std::string fontDir = std::string("/System/Library/Fonts/");
-
-    extern std::string os_Locale();
-    std::string locale = os_Locale();
+    std::string locale = i18n::getCurrentLocale();
 
     if (locale.find("ja") == 0)             // Japanese
     {
-        io.Fonts->AddFontFromFileTTF((fontDir + "ヒラギノ角ゴシック W4.ttc").c_str(), fontSize, &font_cfg, io.Fonts->GetGlyphRangesJapanese());
+        io.Fonts->AddFontFromFileTTF((fontDir + "ヒラギノ角ゴシック W4.ttc").c_str(), fontSize, &fontConfig, io.Fonts->GetGlyphRangesJapanese());
+        io.Fonts->AddFontFromFileTTF((fontDir + "ヒラギノ角ゴシック W4.ttc").c_str(), largeFontSize, &largeFontConfig, io.Fonts->GetGlyphRangesJapanese());
     }
     else if (locale.find("ko") == 0)       // Korean
     {
-        io.Fonts->AddFontFromFileTTF((fontDir + "AppleSDGothicNeo.ttc").c_str(), fontSize, &font_cfg, io.Fonts->GetGlyphRangesKorean());
+        io.Fonts->AddFontFromFileTTF((fontDir + "AppleSDGothicNeo.ttc").c_str(), fontSize, &fontConfig, io.Fonts->GetGlyphRangesKorean());
+        io.Fonts->AddFontFromFileTTF((fontDir + "AppleSDGothicNeo.ttc").c_str(), largeFontSize, &largeFontConfig, io.Fonts->GetGlyphRangesKorean());
     }
     else if (locale.find("zh-Hant") == 0)  // Traditional Chinese
     {
-        io.Fonts->AddFontFromFileTTF((fontDir + "PingFang.ttc").c_str(), fontSize, &font_cfg, GetGlyphRangesChineseTraditionalOfficial());
+        io.Fonts->AddFontFromFileTTF((fontDir + "PingFang.ttc").c_str(), fontSize, &fontConfig, GetGlyphRangesChineseTraditionalOfficial());
+        io.Fonts->AddFontFromFileTTF((fontDir + "PingFang.ttc").c_str(), largeFontSize, &largeFontConfig, GetGlyphRangesChineseTraditionalOfficial());
     }
     else if (locale.find("zh-Hans") == 0)  // Simplified Chinese
     {
-        io.Fonts->AddFontFromFileTTF((fontDir + "PingFang.ttc").c_str(), fontSize, &font_cfg, GetGlyphRangesChineseSimplifiedOfficial());
+        io.Fonts->AddFontFromFileTTF((fontDir + "PingFang.ttc").c_str(), fontSize, &fontConfig, GetGlyphRangesChineseSimplifiedOfficial());
+        io.Fonts->AddFontFromFileTTF((fontDir + "PingFang.ttc").c_str(), largeFontSize, &largeFontConfig, GetGlyphRangesChineseSimplifiedOfficial());
     }
 #elif defined(__ANDROID__)
-    if (getenv("FLYCAST_LOCALE") != nullptr)
     {
     	const ImWchar *glyphRanges = nullptr;
-    	std::string locale = getenv("FLYCAST_LOCALE");
+        std::string locale = i18n::getCurrentLocale();
         if (locale.find("ja") == 0)				// Japanese
         	glyphRanges = io.Fonts->GetGlyphRangesJapanese();
         else if (locale.find("ko") == 0)		// Korean
@@ -320,24 +368,90 @@ void gui_initFonts()
         else if (locale.find("zh_CN") == 0)		// Simplified Chinese
         	glyphRanges = GetGlyphRangesChineseSimplifiedOfficial();
 
-        if (glyphRanges != nullptr)
-        	io.Fonts->AddFontFromFileTTF("/system/fonts/NotoSansCJK-Regular.ttc", fontSize, &font_cfg, glyphRanges);
+        if (glyphRanges != nullptr) {
+        	io.Fonts->AddFontFromFileTTF("/system/fonts/NotoSansCJK-Regular.ttc", fontSize, &fontConfig, glyphRanges);
+        	io.Fonts->AddFontFromFileTTF("/system/fonts/NotoSansCJK-Regular.ttc", largeFontSize, &largeFontConfig, glyphRanges);
+        }
     }
 
-    // TODO Linux, iOS, ...
-#endif
-	// Font Awesome symbols (added to default font)
-	data = resource::load("fonts/" FONT_ICON_FILE_NAME_FAS, dataSize);
-	verify(data != nullptr);
-    font_cfg.FontNo = 0;
-	static ImWchar faRanges[] = { ICON_MIN_FA, ICON_MAX_FA, 0 };
-	io.Fonts->AddFontFromMemoryTTF(data.release(), dataSize, fontSize, &font_cfg, faRanges);
-    // Large font without Asian glyphs
-	data = resource::load("fonts/Roboto-Regular.ttf", dataSize);
-	verify(data != nullptr);
-	const float largeFontSize = uiScaled(21.f);
-	largeFont = io.Fonts->AddFontFromMemoryTTF(data.release(), dataSize, largeFontSize, nullptr, ranges);
+#elif defined(__linux__)
+	std::string locale = i18n::getCurrentLocale();
+	if (locale.find("ja_") == 0)			// Japanese
+	{
+		const char *fonts[] = {
+				"/usr/share/fonts/opentype/ipafont-gothic/ipagp.ttf",
+				"/usr/share/fonts/ipa-pgothic-fonts/ipagp.ttf",	// redhat
+				"/usr/share/fonts/truetype/takao-gothic/TakaoPGothic.ttf",
+				"/usr/share/fonts/truetype/droid/DroidSansFallbackFull.ttf",
+				"/usr/share/fonts/adobe-source-han-sans-jp-fonts/SourceHanSansJP-Regular.otf", // redhat
+				"/usr/share/fonts/vl-gothic-fonts/VL-Gothic-Regular.ttf", // redhat
+				"/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",
+				"/usr/share/fonts/google-noto-cjk/NotoSansCJK-Regular.ttc", // redhat
+				nullptr
+		};
+		const char *largeFonts[] = {
+				"/usr/share/fonts/opentype/ipafont-gothic/ipagp.ttf",
+				"/usr/share/fonts/ipa-pgothic-fonts/ipagp.ttf",	// redhat
+				"/usr/share/fonts/truetype/takao-gothic/TakaoPGothic.ttf",
+				"/usr/share/fonts/truetype/droid/DroidSansFallbackFull.ttf",
+				"/usr/share/fonts/adobe-source-han-sans-jp-fonts/SourceHanSansJP-Bold.otf", // redhat
+				"/usr/share/fonts/vl-gothic-fonts/VL-Gothic-Regular.ttf", // redhat
+				"/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc",
+				"/usr/share/fonts/google-noto-cjk/NotoSansCJK-Bold.ttc", // redhat
+				nullptr
+		};
+		addFont(fonts, fontSize, fontConfig, io.Fonts->GetGlyphRangesJapanese());
+		addFont(largeFonts, largeFontSize, largeFontConfig, io.Fonts->GetGlyphRangesJapanese());
+	}
+	else if (locale.find("ko_") == 0)		// Korean
+	{
+		const char *fonts[] = {
+				"/usr/share/fonts/truetype/unfonts-core/UnDotum.ttf",
+				"/usr/share/fonts-droid-fallback/truetype/DroidSansFallback.ttf",
+				"/usr/share/fonts/baekmuk-dotum-fonts/dotum.ttf", // redhat
+				"/usr/share/fonts/adobe-source-han-sans-kr-fonts/SourceHanSansKR-Regular.otf", // redhat
+				"/usr/share/fonts/naver-nanum-gothic-coding-fonts/NanumGothic_Coding.ttf", // redhat
+				"/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",
+				"/usr/share/fonts/google-noto-cjk/NotoSansCJK-Regular.ttc", // redhat
+				nullptr
+		};
+		const char *largeFonts[] = {
+				"/usr/share/fonts/truetype/unfonts-core/UnDotumBold.ttf",
+				"/usr/share/fonts-droid-fallback/truetype/DroidSansFallback.ttf",
+				"/usr/share/fonts/adobe-source-han-sans-kr-fonts/SourceHanSansKR-Bold.otf", // redhat
+				"/usr/share/fonts/naver-nanum-gothic-coding-fonts/NanumGothic_Coding_Bold.ttf", // redhat
+				"/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc",
+				"/usr/share/fonts/google-noto-cjk/NotoSansCJK-Bold.ttc", // redhat
+				nullptr
+		};
+		addFont(fonts, fontSize, fontConfig, io.Fonts->GetGlyphRangesKorean());
+		addFont(largeFonts, largeFontSize, largeFontConfig, io.Fonts->GetGlyphRangesKorean());
+	}
+	else if (locale.find("zh_") == 0)		// Chinese
+	{
+		const ImWchar *glyphRanges = GetGlyphRangesChineseSimplifiedOfficial();
+		if (locale.find("zh_TW") == 0 || locale.find("zh_HK") == 0)
+			glyphRanges = GetGlyphRangesChineseTraditionalOfficial();
+		const char *fonts[] = {
+				"/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc",
+				"/usr/share/fonts/wqy-zenhei-fonts/wqy-zenhei.ttc", // redhat
+				"/usr/share/fonts/truetype/droid/DroidSansFallbackFull.ttf",
+				"/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",
+				"/usr/share/fonts/google-noto-cjk/NotoSansCJK-Regular.ttc", // redhat
+		};
+		const char *largeFonts[] = {
+				"/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc",
+				"/usr/share/fonts/wqy-zenhei-fonts/wqy-zenhei.ttc", // redhat
+				"/usr/share/fonts/truetype/droid/DroidSansFallbackFull.ttf",
+				"/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc",
+				"/usr/share/fonts/google-noto-cjk/NotoSansCJK-Bold.ttc", // redhat
+		};
+		addFont(fonts, fontSize, fontConfig, glyphRanges);
+		addFont(largeFonts, largeFontSize, largeFontConfig, glyphRanges);
+	}
 
+	// TODO BSD, iOS, ...
+#endif
     NOTICE_LOG(RENDERER, "Screen DPI is %.0f, size %d x %d. Scaling by %.2f", settings.display.dpi, settings.display.width, settings.display.height, settings.display.uiScale);
 	vgamepad::applyUiScale();
 }
@@ -382,21 +496,25 @@ bool gui_mouse_captured() {
 	return io.WantCaptureMouse;
 }
 
-void gui_set_mouse_position(int x, int y) {
+void gui_set_mouse_position(int x, int y, bool touchscreen)
+{
 	mouseX = std::round(x * settings.display.pointScale);
 	mouseY = std::round(y * settings.display.pointScale);
+	mouseTouchscreen = touchscreen;
 }
 
-void gui_set_mouse_button(int button, bool pressed)
+void gui_set_mouse_button(int button, bool pressed, bool touchscreen)
 {
 	if (pressed)
 		mouseButtons |= 1 << button;
 	else
 		mouseButtons &= ~(1 << button);
+	mouseTouchscreen = touchscreen;
 }
 
 void gui_set_mouse_wheel(float delta) {
 	mouseWheel += delta;
+	mouseTouchscreen = false;
 }
 
 static void gui_newFrame()
@@ -407,26 +525,17 @@ static void gui_newFrame()
 
 	ImGuiIO& io = ImGui::GetIO();
 
+	io.AddMouseSourceEvent(mouseTouchscreen ? ImGuiMouseSource_TouchScreen : ImGuiMouseSource_Mouse);
 	if (mouseX < 0 || mouseX >= settings.display.width || mouseY < 0 || mouseY >= settings.display.height)
 		io.AddMousePosEvent(-FLT_MAX, -FLT_MAX);
 	else
 		io.AddMousePosEvent(mouseX, mouseY);
-	static bool delayTouch;
-#if defined(__ANDROID__) || defined(TARGET_IPHONE) || defined(__SWITCH__)
-	// Delay touch by one frame to allow widgets to be hovered before click
-	// This is required for widgets using ImGuiButtonFlags_AllowItemOverlap such as TabItem's
-	if (!delayTouch && (mouseButtons & (1 << 0)) != 0 && !io.MouseDown[ImGuiMouseButton_Left])
-		delayTouch = true;
-	else
-		delayTouch = false;
-#endif
 	if (io.WantCaptureMouse)
 	{
 		io.AddMouseWheelEvent(0, -mouseWheel / 16);
 		mouseWheel = 0;
 	}
-	if (!delayTouch)
-		io.AddMouseButtonEvent(ImGuiMouseButton_Left, (mouseButtons & (1 << 0)) != 0);
+	io.AddMouseButtonEvent(ImGuiMouseButton_Left, (mouseButtons & (1 << 0)) != 0);
 	io.AddMouseButtonEvent(ImGuiMouseButton_Right, (mouseButtons & (1 << 1)) != 0);
 	io.AddMouseButtonEvent(ImGuiMouseButton_Middle, (mouseButtons & (1 << 2)) != 0);
 	io.AddMouseButtonEvent(3, (mouseButtons & (1 << 3)) != 0);
@@ -462,6 +571,7 @@ static void gui_newFrame()
 	}
 }
 
+// SDL on-screen keyboard: Delay keys up by one frame to allow quick key presses.
 static void delayedKeysUp()
 {
 	ImGuiIO& io = ImGui::GetIO();
@@ -571,7 +681,7 @@ void gui_stop_game(const std::string& message)
 		gui_setState(GuiState::Main);
 		reset_vmus();
 		if (!message.empty())
-			gui_error("Flycast has stopped.\n\n" + message);
+			gui_error(Ts("Flycast has stopped.") + "\n\n" + message);
 	}
 	else
 	{
@@ -580,10 +690,6 @@ void gui_stop_game(const std::string& message)
 		// Exit emulator
 		dc_exit();
 	}
-}
-
-static bool savestateAllowed() {
-	return !settings.content.path.empty() && !settings.network.online && !settings.naomi.multiboard;
 }
 
 static void appendVectorData(void *context, void *data, int size)
@@ -612,6 +718,12 @@ static void savestate()
 	dc_savestate(config::SavestateSlot, pngData.empty() ? nullptr : &pngData[0], pngData.size());
 	ImguiStateTexture savestatePic;
 	savestatePic.invalidate();
+}
+
+void cycleSaveStateSlot(int step)
+{
+	config::SavestateSlot = (config::SavestateSlot + 10 + step) % 10;
+	SaveSettings();
 }
 
 static void gui_display_commands()
@@ -648,7 +760,7 @@ static void gui_display_commands()
 		ImGui::SameLine();
 		if (!lowHeight)
 		{
-			ImGui::BeginChild("game_info", ScaledVec2(0, 100.f), ImGuiChildFlags_Border, ImGuiWindowFlags_None);
+			ImGui::BeginChild("game_info", ScaledVec2(0, 100.f), ImGuiChildFlags_Borders, ImGuiWindowFlags_None);
 			ImGui::PushFont(largeFont);
 			ImGui::Text("%s", art.name.c_str());
 			ImGui::PopFont();
@@ -676,7 +788,7 @@ static void gui_display_commands()
 		ImguiStyleVar _1{ImGuiStyleVar_FramePadding, ScaledVec2(12.f, 3.f)};
 
 		// Resume
-		if (ImGui::Button(ICON_FA_PLAY "  Resume", ScaledVec2(buttonWidth, 50)))
+		if (IconButton(ICON_FA_PLAY, T("Resume"), ScaledVec2(buttonWidth, 50)).realize())
 		{
 			GamepadDevice::load_system_mappings();
 			gui_setState(GuiState::Closed);
@@ -685,20 +797,20 @@ static void gui_display_commands()
 		{
 			DisabledScope _{settings.network.online || settings.raHardcoreMode};
 
-			if (ImGui::Button(ICON_FA_MASK "  Cheats", ScaledVec2(buttonWidth, 50)) && !settings.network.online)
+			if (IconButton(ICON_FA_MASK, T("Cheats"), ScaledVec2(buttonWidth, 50)).realize() && !settings.network.online)
 				gui_setState(GuiState::Cheats);
 		}
 		// Achievements
 		{
 			DisabledScope _{!achievements::isActive()};
 
-			if (ImGui::Button(ICON_FA_TROPHY "  Achievements", ScaledVec2(buttonWidth, 50)) && achievements::isActive())
+			if (IconButton(ICON_FA_TROPHY, T("Achievements"), ScaledVec2(buttonWidth, 50)).realize() && achievements::isActive())
 				gui_setState(GuiState::Achievements);
 		}
 		// Barcode
 		if (card_reader::barcodeAvailable())
 		{
-			ImGui::Text("Barcode Card");
+			ImGui::Text("%s", T("Barcode Card"));
 			char cardBuf[64] {};
 			strncpy(cardBuf, card_reader::barcodeGetCard().c_str(), sizeof(cardBuf) - 1);
 			ImGui::SetNextItemWidth(uiScaled(buttonWidth));
@@ -706,61 +818,11 @@ static void gui_display_commands()
 				card_reader::barcodeSetCard(cardBuf);
 		}
 
-#if defined(USE_DREAMLINK_DEVICES)
-		// DreamLink connection status
-		bool hasAnyDreamLinks = false;
-		bool hasDisconnectedDreamLink = false;
-		for (auto& dreamlink : DreamLink::activeDreamLinks)
-		{
-			if (dreamlink && !dreamlink->isForPhysicalController())
-			{
-				hasAnyDreamLinks = true;
-				if (!dreamlink->isConnected())
-					hasDisconnectedDreamLink = true;
-			}
-
-			if (hasAnyDreamLinks && hasDisconnectedDreamLink)
-				break;
-		}
-
-		if (hasAnyDreamLinks)
-		{
-			if (hasDisconnectedDreamLink)
-			{
-				if (ImGui::Button("Connect DreamLink", ScaledVec2(buttonWidth, 50)))
-				{
-					if (reconnectDreamLinks())
-						maple_ReconnectDevices();
-				}
-			}
-			else
-			{
-				if (ImGui::Button("Disconnect\nDreamLink", ScaledVec2(buttonWidth, 50)))
-				{
-					for (auto& dreamlink : DreamLink::activeDreamLinks)
-					{
-						if (dreamlink)
-							dreamlink->disconnect();
-					}
-				}
-			}
-
-			for (int i = 0; i < 4; i++)
-			{
-				auto dreamlink = DreamLink::activeDreamLinks[i];
-				if (dreamlink)
-				{
-					ImGui::Text("Port %c: %s", 'A' + i, dreamlink->isConnected() ? "Connected" : "Disconnected");
-				}
-			}
-		}
-#endif
-
 		ImGui::NextColumn();
 
 		// Insert/Eject Disk
-		const char *disk_label = gdr::isOpen() ? ICON_FA_COMPACT_DISC "  Insert Disk" : ICON_FA_COMPACT_DISC "  Eject Disk";
-		if (ImGui::Button(disk_label, ScaledVec2(buttonWidth, 50)))
+		std::string disk_label = gdr::isOpen() ? T("Insert Disk") : T("Eject Disk");
+		if (IconButton(ICON_FA_COMPACT_DISC, disk_label, ScaledVec2(buttonWidth, 50)).realize())
 		{
 			if (gdr::isOpen()) {
 				gui_setState(GuiState::SelectDisk);
@@ -771,23 +833,23 @@ static void gui_display_commands()
 			}
 		}
 		// Settings
-		if (ImGui::Button(ICON_FA_GEAR "  Settings", ScaledVec2(buttonWidth, 50)))
+		if (IconButton(ICON_FA_GEAR, T("Settings"), ScaledVec2(buttonWidth, 50)).realize())
 			gui_setState(GuiState::Settings);
 
 		// Exit
-		if (ImGui::Button(commandLineStart ? ICON_FA_POWER_OFF "  Exit" : ICON_FA_POWER_OFF "  Close Game", ScaledVec2(buttonWidth, 50)))
+		if (IconButton(ICON_FA_POWER_OFF, commandLineStart ?  T("Exit") : T("Close Game"), ScaledVec2(buttonWidth, 50)).realize())
 			gui_stop_game();
 
 		ImGui::NextColumn();
 		{
-			DisabledScope _{!savestateAllowed()};
+			DisabledScope _{!dc_savestateAllowed()};
 			ImguiStateTexture savestatePic;
 			time_t savestateDate = dc_getStateCreationDate(config::SavestateSlot);
 
 			// Load State
 			{
 				DisabledScope _{settings.raHardcoreMode || savestateDate == 0};
-				if (ImGui::Button(ICON_FA_CLOCK_ROTATE_LEFT "  Load State", ScaledVec2(buttonWidth, 50)) && savestateAllowed())
+				if (IconButton(ICON_FA_CLOCK_ROTATE_LEFT, T("Load State"), ScaledVec2(buttonWidth, 50)).realize() && dc_savestateAllowed())
 				{
 					gui_setState(GuiState::Closed);
 					dc_loadstate(config::SavestateSlot);
@@ -795,7 +857,7 @@ static void gui_display_commands()
 			}
 
 			// Save State
-			if (ImGui::Button(ICON_FA_DOWNLOAD "  Save State", ScaledVec2(buttonWidth, 50)) && savestateAllowed())
+			if (IconButton(ICON_FA_DOWNLOAD, T("Save State"), ScaledVec2(buttonWidth, 50)).realize() && dc_savestateAllowed())
 			{
 				gui_setState(GuiState::Closed);
 				savestate();
@@ -803,32 +865,20 @@ static void gui_display_commands()
 
 			// Slot #
 			if (ImGui::ArrowButton("##prev-slot", ImGuiDir_Left))
-			{
-				if (config::SavestateSlot == 0)
-					config::SavestateSlot = 9;
-				else
-					config::SavestateSlot--;
-				SaveSettings();
-			}
-			std::string slot = "Slot " + std::to_string((int)config::SavestateSlot + 1);
+				cycleSaveStateSlot(-1);
+			std::string slot = strprintf(T("Slot %d"), (int)config::SavestateSlot + 1);
 			float spacingW = (uiScaled(buttonWidth) - ImGui::GetFrameHeight() * 2 - ImGui::CalcTextSize(slot.c_str()).x) / 2;
 			ImGui::SameLine(0, spacingW);
 			ImGui::Text("%s", slot.c_str());
 			ImGui::SameLine(0, spacingW);
 			if (ImGui::ArrowButton("##next-slot", ImGuiDir_Right))
-			{
-				if (config::SavestateSlot == 9)
-					config::SavestateSlot = 0;
-				else
-					config::SavestateSlot++;
-				SaveSettings();
-			}
+				cycleSaveStateSlot(1);
 			{
 				ImVec4 gray(0.75f, 0.75f, 0.75f, 1.f);
 				if (savestateDate == 0)
-					ImGui::TextColored(gray, "Empty");
+					ImGui::TextColored(gray, "%s", T("Empty"));
 				else
-					ImGui::TextColored(gray, "%s", timeToISO8601(savestateDate).c_str());
+					ImGui::TextColored(gray, "%s", timeToShortDateTimeString(savestateDate).c_str());
 			}
 			savestatePic.draw(ScaledVec2(buttonWidth, 0.f));
 		}
@@ -854,7 +904,7 @@ void error_popup()
 				ImguiStyleVar _(ImGuiStyleVar_FramePadding, ScaledVec2(16, 3));
 				float currentwidth = ImGui::GetContentRegionAvail().x;
 				ImGui::SetCursorPosX((currentwidth - uiScaled(80.f)) / 2.f + ImGui::GetStyle().WindowPadding.x);
-				if (ImGui::Button("OK", ScaledVec2(80.f, 0)))
+				if (ImGui::Button(T("OK"), ScaledVec2(80.f, 0)))
 				{
 					error_msg.clear();
 					ImGui::CloseCurrentPopup();
@@ -874,16 +924,16 @@ static void contentpath_warning_popup()
 
     if (scanner.content_path_looks_incorrect)
     {
-        ImGui::OpenPopup("Incorrect Content Location?");
-        if (ImGui::BeginPopupModal("Incorrect Content Location?", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
+        ImGui::OpenPopup(T("Incorrect Content Location?"));
+        if (ImGui::BeginPopupModal(T("Incorrect Content Location?"), NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
         {
             ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + uiScaled(400.f));
-            ImGui::TextWrapped("  Scanned %d folders but no game can be found!  ", scanner.empty_folders_scanned);
+            ImGui::TextWrapped((std::string("  ") + T("Scanned %d folders but no game can be found!") + std::string("  ")).c_str(), scanner.empty_folders_scanned);
 			{
 				ImguiStyleVar _(ImGuiStyleVar_FramePadding, ScaledVec2(16, 3));
 				float currentwidth = ImGui::GetContentRegionAvail().x;
 				ImGui::SetCursorPosX((currentwidth - uiScaled(100.f)) / 2.f + ImGui::GetStyle().WindowPadding.x - uiScaled(55.f));
-				if (ImGui::Button("Reselect", ScaledVec2(100.f, 0)))
+				if (ImGui::Button(T("Reselect"), ScaledVec2(100.f, 0)))
 				{
 					scanner.content_path_looks_incorrect = false;
 					ImGui::CloseCurrentPopup();
@@ -892,7 +942,7 @@ static void contentpath_warning_popup()
 
 				ImGui::SameLine();
 				ImGui::SetCursorPosX((currentwidth - uiScaled(100.f)) / 2.f + ImGui::GetStyle().WindowPadding.x + uiScaled(55.f));
-				if (ImGui::Button("Cancel", ScaledVec2(100.f, 0)))
+				if (ImGui::Button(T("Cancel"), ScaledVec2(100.f, 0)))
 				{
 					scanner.content_path_looks_incorrect = false;
 					ImGui::CloseCurrentPopup();
@@ -907,7 +957,7 @@ static void contentpath_warning_popup()
     if (show_contentpath_selection)
     {
         scanner.stop();
-        const char *title = "Select a Content Folder";
+        const char *title = T("Select a Content Folder");
         ImGui::OpenPopup(title);
         select_file_popup(title, [](bool cancelled, std::string selection)
         {
@@ -1015,41 +1065,42 @@ static void gui_display_content()
     ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ScaledVec2(20, 8));
     ImGui::AlignTextToFramePadding();
     ImGui::Indent(uiScaled(10));
-    ImGui::Text("GAMES");
+    ImGui::Text("%s", T("GAMES"));
     ImGui::Unindent(uiScaled(10));
 
     static ImGuiTextFilter filter;
-    const float settingsBtnW = iconButtonWidth(ICON_FA_GEAR, "Settings");
+    IconButton settingsBtn(ICON_FA_GEAR, T("Settings"));
 #if !defined(__ANDROID__) && !defined(TARGET_IPHONE) && !defined(TARGET_UWP) && !defined(__SWITCH__)
 	ImGui::SameLine(0, uiScaled(32));
-	filter.Draw("Filter", ImGui::GetContentRegionAvail().x - ImGui::GetStyle().ItemSpacing.x - uiScaled(32)
-			- settingsBtnW - ImGui::GetStyle().ItemSpacing.x);
+	filter.Draw(T("Filter"), ImGui::GetContentRegionAvail().x - ImGui::GetStyle().ItemSpacing.x
+			- settingsBtn.width() - ImGui::GetStyle().ItemSpacing.x - ImGui::CalcTextSize(T("Filter")).x);
 #endif
     if (gui_state != GuiState::SelectDisk)
     {
 #ifdef TARGET_UWP
-		ImGui::SameLine(ImGui::GetContentRegionMax().x - settingsBtnW
-				- ImGui::GetStyle().FramePadding.x * 2.0f  - ImGui::GetStyle().ItemSpacing.x - ImGui::CalcTextSize("Load...").x);
-		if (ImGui::Button("Load..."))
+		ImGui::SameLine(ImGui::GetContentRegionMax().x - settingsBtn.width()
+				- ImGui::GetStyle().FramePadding.x * 2.0f  - ImGui::GetStyle().ItemSpacing.x - ImGui::CalcTextSize(T("Load...")).x);
+		if (ImGui::Button(T("Load...")))
 			gui_load_game();
 		ImGui::SameLine();
 #elif defined(__SWITCH__)
-		ImGui::SameLine(ImGui::GetContentRegionMax().x - settingsBtnW
-				- ImGui::GetStyle().ItemSpacing.x - iconButtonWidth(ICON_FA_POWER_OFF, "Exit"));
-		if (iconButton(ICON_FA_POWER_OFF, "Exit"))
+		IconButton exitBtn(ICON_FA_POWER_OFF, T("Exit"));
+		ImGui::SameLine(ImGui::GetContentRegionMax().x - settingsBtn.width()
+				- ImGui::GetStyle().ItemSpacing.x - exitBtn.width());
+		if (exitBtn.realize())
 			dc_exit();
 		ImGui::SameLine();
 #else
-		ImGui::SameLine(ImGui::GetContentRegionMax().x - settingsBtnW);
+		ImGui::SameLine(ImGui::GetContentRegionMax().x - settingsBtn.width());
 #endif
-		if (iconButton(ICON_FA_GEAR, "Settings"))
+		if (settingsBtn.realize())
 			gui_setState(GuiState::Settings);
     }
     else
     {
-		ImGui::SameLine(ImGui::GetContentRegionMax().x
-				- ImGui::GetStyle().FramePadding.x * 2.0f - ImGui::CalcTextSize("Cancel").x);
-		if (ImGui::Button("Cancel"))
+    	IconButton cancelBtn(T("Cancel"));
+		ImGui::SameLine(ImGui::GetContentRegionMax().x - cancelBtn.width());
+		if (cancelBtn.realize())
 			gui_setState(GuiState::Commands);
     }
     ImGui::PopStyleVar();
@@ -1057,7 +1108,7 @@ static void gui_display_content()
     scanner.fetch_game_list();
 
 	// Only if Filter and Settings aren't focused... ImGui::SetNextWindowFocus();
-	ImGui::BeginChild(ImGui::GetID("library"), ImVec2(0, 0), ImGuiChildFlags_Border, ImGuiWindowFlags_DragScrolling | ImGuiWindowFlags_NavFlattened);
+	ImGui::BeginChild(ImGui::GetID("library"), ImVec2(0, 0), ImGuiChildFlags_Borders | ImGuiChildFlags_NavFlattened, ImGuiWindowFlags_DragScrolling);
     {
 		const float totalWidth = ImGui::GetContentRegionMax().x - (!ImGui::GetCurrentWindow()->ScrollbarY ? ImGui::GetStyle().ScrollbarSize : 0);
 		const int itemsPerLine = std::max<int>(totalWidth / (uiScaled(150) + ImGui::GetStyle().ItemSpacing.x), 1);
@@ -1104,7 +1155,7 @@ static void gui_display_content()
 							ImGui::SameLine();
 						counter++;
 						// Put the image inside a child window so we can detect when it's fully clipped and doesn't need to be loaded
-						if (ImGui::BeginChild("img", ImVec2(0, 0), ImGuiChildFlags_AutoResizeX | ImGuiChildFlags_AutoResizeY, ImGuiWindowFlags_NavFlattened))
+						if (ImGui::BeginChild("img", ImVec2(0, 0), ImGuiChildFlags_AutoResizeX | ImGuiChildFlags_AutoResizeY | ImGuiChildFlags_NavFlattened))
 						{
 							ImguiFileTexture tex(art.boxartPath);
 							pressed = gameImageButton(tex, game.name, responsiveBoxVec2, gameName);
@@ -1148,17 +1199,17 @@ static void gui_display_content()
 #if !defined(TARGET_IPHONE)
 		if (gameListEmpty && gui_state != GuiState::SelectDisk)
 		{
-			const char *label = "Your game list is empty";
+			const char *label = T("Your game list is empty");
 			// center horizontally
 			const float w = largeFont->CalcTextSizeA(largeFont->LegacySize, FLT_MAX, -1.f, label).x + ImGui::GetStyle().FramePadding.x * 2;
 			ImGui::SameLine((ImGui::GetContentRegionMax().x - w) / 2);
-			if (ImGui::BeginChild("empty", ImVec2(0, 0), ImGuiChildFlags_AutoResizeX | ImGuiChildFlags_AutoResizeY, ImGuiWindowFlags_NavFlattened))
+			if (ImGui::BeginChild("empty", ImVec2(0, 0), ImGuiChildFlags_AutoResizeX | ImGuiChildFlags_AutoResizeY | ImGuiChildFlags_NavFlattened))
 			{
 				ImGui::PushFont(largeFont);
 				ImGui::NewLine();
 				ImGui::Text("%s", label);
 				ImguiStyleVar _(ImGuiStyleVar_FramePadding, ScaledVec2(20, 8));
-				addContent = ImGui::Button("Add Game Folder");
+				addContent = ImGui::Button(T("Add Game Folder"));
 				ImGui::PopFont();
 			}
 			ImGui::EndChild();
@@ -1190,7 +1241,7 @@ static bool systemdir_selected_callback(bool cancelled, std::string selection)
 		if (!make_directory(data_path))
 		{
 			WARN_LOG(BOOT, "Cannot create 'data' directory: %s", data_path.c_str());
-			gui_error("Invalid selection:\nFlycast cannot write to this folder.");
+			gui_error(Ts("Invalid selection:") + '\n' + Ts("Flycast cannot write to this folder."));
 			return false;
 		}
 	}
@@ -1201,7 +1252,7 @@ static bool systemdir_selected_callback(bool cancelled, std::string selection)
 	if (file == nullptr)
 	{
 		WARN_LOG(BOOT, "Cannot write in the 'data' directory");
-		gui_error("Invalid selection:\nFlycast cannot write to this folder.");
+		gui_error(Ts("Invalid selection:") + '\n' + Ts("Flycast cannot write to this folder."));
 		return false;
 	}
 	fclose(file);
@@ -1211,7 +1262,7 @@ static bool systemdir_selected_callback(bool cancelled, std::string selection)
 	add_system_data_dir(selection);
 	set_user_data_dir(data_path);
 
-	if (cfgOpen())
+	if (config::open())
 	{
 		config::Settings::instance().load(false);
 		// Make sure the renderer type doesn't change mid-flight
@@ -1229,7 +1280,7 @@ static bool systemdir_selected_callback(bool cancelled, std::string selection)
 
 static void gui_display_onboarding()
 {
-	const char *title = "Select Flycast Home Folder";
+	const char *title = T("Select Flycast Home Folder");
 	ImGui::OpenPopup(title);
 	select_file_popup(title, &systemdir_selected_callback);
 }
@@ -1263,7 +1314,7 @@ static void gui_network_start()
 
 		if (networkStatus.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready)
 		{
-			ImGui::Text("Starting...");
+			ImGui::Text("%s", T("Starting..."));
 			try {
 				if (networkStatus.get())
 					gui_setState(GuiState::Closed);
@@ -1275,15 +1326,15 @@ static void gui_network_start()
 		}
 		else
 		{
-			ImGui::Text("Starting Network...");
+			ImGui::Text("%s", T("Starting Network..."));
 			if (NetworkHandshake::instance->canStartNow())
-				ImGui::Text("Press Start to start the game now.");
+				ImGui::TextWrapped("%s", T("Press Start to start the game now."));
 		}
 		ImGui::Text("%s", get_notification().c_str());
 
 		float currentwidth = ImGui::GetContentRegionAvail().x;
 		ImGui::SetCursorPosX((currentwidth - uiScaled(100.f)) / 2.f + ImGui::GetStyle().WindowPadding.x);
-		if (ImGui::Button("Cancel", ScaledVec2(100.f, 0)) && NetworkHandshake::instance != nullptr)
+		if (ImGui::Button(T("Cancel"), ScaledVec2(100.f, 0)) && NetworkHandshake::instance != nullptr)
 		{
 			NetworkHandshake::instance->stop();
 			try {
@@ -1372,9 +1423,9 @@ static void gui_display_loadscreen()
 			if (label == nullptr)
 			{
 				if (gameLoader.ready())
-					label = "Starting...";
+					label = T("Starting...");
 				else
-					label = "Loading...";
+					label = T("Loading...");
 			}
 			
 			const bool customTexPreloading = custom_texture.isPreloading();
@@ -1410,10 +1461,10 @@ static void gui_display_loadscreen()
 				else if (customTexPreloading)
 				{
 					ImGui::Spacing();
-					ImGui::Text("Preloading custom textures");
+					ImGui::Text("%s", T("Preloading custom textures"));
 					progress = (texTotal == -1 || texTotal == 0) ? 0.f : (float)texLoaded / (float)texTotal;
 					if (texTotal == -1)
-						snprintf(overlay, sizeof(overlay), "Preparing...");
+						snprintf(overlay, sizeof(overlay), "%s", T("Preparing..."));
 					else
 					{
 						float loaded_size_mb = (float)loaded_size_b / (1024 * 1024);
@@ -1426,7 +1477,7 @@ static void gui_display_loadscreen()
 
 				float currentwidth = ImGui::GetContentRegionAvail().x;
 				ImGui::SetCursorPosX((currentwidth - uiScaled(100.f)) / 2.f + ImGui::GetStyle().WindowPadding.x);
-				if (ImGui::Button("Cancel", ScaledVec2(100.f, 0)))
+				if (ImGui::Button(T("Cancel"), ScaledVec2(100.f, 0)))
 					gameLoader.cancel();
 			}
 		} catch (const FlycastException& ex) {
@@ -1688,7 +1739,7 @@ void gui_error(const std::string& what) {
 void gui_loadState()
 {
 	const LockGuard lock(guiMutex);
-	if (gui_state == GuiState::Closed && savestateAllowed())
+	if (gui_state == GuiState::Closed && dc_savestateAllowed())
 	{
 		try {
 			emu.stop();
@@ -1703,7 +1754,7 @@ void gui_loadState()
 void gui_saveState(bool stopRestart)
 {
 	const LockGuard lock(guiMutex);
-	if ((gui_state == GuiState::Closed || !stopRestart) && savestateAllowed())
+	if ((gui_state == GuiState::Closed || !stopRestart) && dc_savestateAllowed())
 	{
 		try {
 			if (stopRestart)
@@ -1718,6 +1769,12 @@ void gui_saveState(bool stopRestart)
 				WARN_LOG(COMMON, "gui_saveState: %s", e.what());
 		}
 	}
+}
+
+void gui_cycleSaveStateSlot(int step)
+{
+	cycleSaveStateSlot(step);
+	os_notify(strprintf(T("Save state slot %d"), config::SavestateSlot + 1).c_str(), 2000);
 }
 
 void gui_setState(GuiState newState)
@@ -1759,15 +1816,15 @@ void gui_takeScreenshot()
 		std::vector<u8> data;
 		getScreenshot(data);
 		if (data.empty()) {
-			os_notify("No screenshot available", 2000);
+			os_notify(T("No screenshot available"), 2000);
 		}
 		else
 		{
 			try {
 				hostfs::saveScreenshot(name, data);
-				os_notify("Screenshot saved", 2000, name.c_str());
+				os_notify(T("Screenshot saved"), 2000, name.c_str());
 			} catch (const FlycastException& e) {
-				os_notify("Error saving screenshot", 5000, e.what());
+				os_notify(T("Error saving screenshot"), 5000, e.what());
 			}
 		}
 	});

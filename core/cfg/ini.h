@@ -1,62 +1,105 @@
-#pragma once
+/*
+	Copyright 2025 flyinghead
 
+	This file is part of Flycast.
+
+    Flycast is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 2 of the License, or
+    (at your option) any later version.
+
+    Flycast is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
+*/
+#pragma once
 #include <cstdio>
 #include <map>
 #include <string>
 #include <cstdint>
+#include <vector>
+#include <locale>
+#include <sstream>
 
-namespace emucfg {
+namespace config {
 
-struct ConfigEntry {
-	std::string value;
-	const std::string& get_string() const;
-	int get_int();
-	bool get_bool();
-	int64_t get_int64();
-	float get_float();
+class IniFile
+{
+public:
+	void load(FILE *file, bool cEscape = false);
+	void load(const std::string& data, bool cEscape = false);
+	void save(FILE *file) const;
+	void save(std::string& data) const;
+	bool hasSection(const std::string& section) const;
+	bool hasEntry(const std::string& section, const std::string& name) const;
+	bool isTransient(const std::string& section, const std::string& name) const;
+	void deleteSection(const std::string& section);
+	void deleteEntry(const std::string& section, const std::string& name);
+
+	template<typename T>
+	void set(const std::string& section, const std::string& entry, T value, bool transient = false) {
+		setRaw(section, entry, std::to_string(value), transient);
+	}
+
+	const std::string& getString(const std::string& section, const std::string& entry, const std::string& defaultValue = {}) const;
+	const std::string& get(const std::string& section, const std::string& entry, const std::string& defaultValue = {}) const {
+		return getString(section, entry, defaultValue);
+	}
+	bool getBool(const std::string& section, const std::string& entry, bool defaultValue = false) const;
+	int getInt(const std::string& section, const std::string& entry, int defaultValue = 0) const;
+	int64_t getInt64(const std::string& section, const std::string& entry, int64_t defaultValue = 0ll) const;
+	float getFloat(const std::string& section, const std::string& entry, float defaultValue = 0.f) const;
+
+	std::vector<std::string> getEntryNames(const std::string& section) const;
+
+private:
+	struct Entry
+	{
+		std::string name;
+		std::string value;
+		std::string transientValue;
+		bool transient = false;
+	};
+	struct Section
+	{
+		std::string name;
+		std::map<std::string, Entry> entries;
+	};
+	const Entry *getEntry(const std::string& section, const std::string& entry) const;
+	const std::string *getRaw(const std::string& section, const std::string& name) const;
+	void setRaw(const std::string& section, const std::string& name, const std::string& value, bool transient);
+
+	std::map<std::string, Section> sections;
 };
 
-struct ConfigSection {
-	std::map<std::string, ConfigEntry> entries;
-	bool has_entry(const std::string& name);
-	void set(const std::string& name, const std::string& value);
-	void delete_entry(const std::string& name);
-	ConfigEntry* get_entry(const std::string& name);
-};
+template<>
+inline void IniFile::set(const std::string& section, const std::string& entry, const std::string& value, bool transient) {
+	setRaw(section, entry, value, transient);
+}
+template<>
+inline void IniFile::set(const std::string& section, const std::string& entry, std::string value, bool transient) {
+	setRaw(section, entry, value, transient);
+}
+template<>
+inline void IniFile::set(const std::string& section, const std::string& entry, const char *value, bool transient) {
+	setRaw(section, entry, value, transient);
+}
+template<>
+inline void IniFile::set(const std::string& section, const std::string& entry, bool value, bool transient) {
+	setRaw(section, entry, value ? "yes" : "no", transient);
+}
+template<>
+inline void IniFile::set(const std::string& section, const std::string& entry, float value, bool transient)
+{
+	std::ostringstream ss;
+	ss.imbue(std::locale::classic());
+	ss.precision(7);
+	ss << value;
+	setRaw(section, entry, ss.str(), transient);
+}
 
-struct ConfigFile {
-	private:
-		std::map<std::string, ConfigSection> sections;
-		std::map<std::string, ConfigSection> virtual_sections;
-		ConfigSection* add_section(const std::string& name, bool is_virtual);
-		ConfigSection* get_section(const std::string& name, bool is_virtual);
-		ConfigEntry* get_entry(const std::string& section_name, const std::string& entry_name);
-
-
-	public:
-		bool has_section(const std::string& name);
-		bool has_entry(const std::string& section_name, const std::string& entry_name);
-		bool is_virtual(const std::string& section_name, const std::string& entry_name);
-
-		void parse(FILE* file);
-		void save(FILE* file);
-
-		/* getting values */
-		std::string get(const std::string& section_name, const std::string& entry_name, const std::string& default_value = "");
-		int get_int(const std::string& section_name, const std::string& entry_name, int default_value = 0);
-		int64_t get_int64(const std::string& section_name, const std::string& entry_name, int64_t default_value = 0);
-		bool get_bool(const std::string& section_name, const std::string& entry_name, bool default_value = false);
-		float get_float(const std::string& section_name, const std::string& entry_name, float default_value = 0.f);
-		/* setting values */
-		void set(const std::string& section_name, const std::string& entry_name, const std::string& value, bool is_virtual = false);
-		void set_int(const std::string& section_name, const std::string& entry_name, int value, bool is_virtual = false);
-		void set_int64(const std::string& section_name, const std::string& entry_name, int64_t value, bool is_virtual = false);
-		void set_bool(const std::string& section_name, const std::string& entry_name, bool value, bool is_virtual = false);
-		void set_float(const std::string& section_name, const std::string& entry_name, float value, bool is_virtual = false);
-
-		void delete_section(const std::string& section_name);
-		void delete_entry(const std::string& section_name, const std::string& entry_name);
-};
-
-} // namespace emucfg
-
+} // namespace config

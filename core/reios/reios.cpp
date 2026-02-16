@@ -27,6 +27,7 @@
 #include "hw/sh4/sh4_mmr.h"
 #include "oslib/resources.h"
 #include "oslib/oslib.h"
+#include "oslib/i18n.h"
 
 #include <map>
 
@@ -362,10 +363,10 @@ static void reios_sys_misc()
 			if (gdr::isLoaded()) {
 				// just restart the game
 				p_sh4rcb->cntx.pc = 0xa0000000;
-				os_notify("Reboot to BIOS", 5000);
+				os_notify(i18n::T("Reboot to BIOS"), 5000);
 			}
 			else {
-				throw FlycastException("Reboot to BIOS");
+				throw FlycastException(i18n::Ts("Reboot to BIOS"));
 			}
 		}
 		break;
@@ -658,7 +659,7 @@ static void reios_boot()
 	if (extension == "elf")
 	{
 		if (!reios_loadElf(settings.content.path))
-			throw FlycastException(std::string("Failed to open ELF ") + settings.content.path);
+			throw FlycastException(strprintf(i18n::T("Failed to open ELF %s"), settings.content.path.c_str()));
 		reios_setup_state(0x8C010000);
 	}
 	else {
@@ -667,7 +668,7 @@ static void reios_boot()
 			char bootfile[sizeof(ip_meta.boot_filename) + 1] = {0};
 			memcpy(bootfile, ip_meta.boot_filename, sizeof(ip_meta.boot_filename));
 			if (bootfile[0] == '\0' || !reios_locate_bootfile(bootfile))
-				throw FlycastException(std::string("Failed to locate bootfile ") + bootfile);
+				throw FlycastException(strprintf(i18n::T("Failed to locate bootfile %s"), bootfile));
 			reios_setup_state(0xac008300);
 		}
 		else {
@@ -680,13 +681,13 @@ static void reios_boot()
 			u32 data_size = 4;
 			u32* sz = (u32*)CurrentCartridge->GetPtr(0x368, data_size);
 			if (sz == nullptr || data_size != 4)
-				throw FlycastException("Naomi boot failure");
+				throw FlycastException(i18n::Ts("Naomi boot failure"));
 
 			const u32 size = *sz;
 
 			data_size = 1;
 			if (size > RAM_SIZE || CurrentCartridge->GetPtr(size - 1, data_size) == nullptr)
-				throw FlycastException("Invalid cart size");
+				throw FlycastException(i18n::Ts("Invalid cart size"));
 
 			data_size = size;
 			WriteMemBlock_nommu_ptr(0x0c020000, (u32*)CurrentCartridge->GetPtr(0, data_size), size);
