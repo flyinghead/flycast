@@ -550,7 +550,7 @@ void GamepadDevice::load_system_mappings()
 	for (int i = 0; i < GetGamepadCount(); i++)
 	{
 		std::shared_ptr<GamepadDevice> gamepad = GetGamepad(i);
-		if (!gamepad->find_mapping())
+		if (gamepad != nullptr && !gamepad->find_mapping())
 			gamepad->resetMappingToDefault(settings.platform.isArcade(), true);
 	}
 }
@@ -580,6 +580,8 @@ std::string GamepadDevice::make_mapping_filename(bool instance, int system, bool
 
 bool GamepadDevice::find_mapping(int system /* = settings.platform.system */)
 {
+	// FIXME this is called on Event::Start in the game loader thread
+	// race condition with the UI thread?
 	if (!_remappable)
 		return true;
 	instanceMapping = false;
