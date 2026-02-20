@@ -534,10 +534,10 @@ private:
 					{
 						ap.ping += ping;
 						ap.count++;
-						if (ap.count < 3)
+						if (ap.count < 5)
 							sendPing(ap.endpoint);
 						else
-							// we have 3 answers from one AP so let's stop here
+							// we have 5 answers from one AP so let's stop here
 							finish();
 						return;
 					}
