@@ -308,6 +308,7 @@ extern "C" {
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_INFO_0_AR NULL
 #define OPTION_VAL_VMU_AR NULL
 #define OPTION_VAL_PURUPURU_AR NULL
+#define OPTION_VAL_DREAMPOTATO_AR NULL
 #define OPTION_VAL_NONE_AR "لاشيء"
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_LABEL_AR NULL
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_INFO_0_AR NULL
@@ -331,6 +332,8 @@ extern "C" {
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_AR NULL
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_AR NULL
 #define CORE_OPTION_NAME_VMU_SOUND_INFO_0_AR NULL
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_AR NULL
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_AR NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_AR NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_AR NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_AR NULL
@@ -566,7 +569,7 @@ struct retro_core_option_v2_definition option_defs_ar[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
 
    {
@@ -1337,6 +1340,7 @@ struct retro_core_option_v2_definition option_defs_ar[] = {
       {
          { "VMU",      OPTION_VAL_VMU_AR },
          { "Purupuru", OPTION_VAL_PURUPURU_AR },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_AR },
          { "None",     OPTION_VAL_NONE_AR },
          { NULL, NULL },
       },
@@ -1367,6 +1371,7 @@ struct retro_core_option_v2_definition option_defs_ar[] = {
       {
          { "VMU",      OPTION_VAL_VMU_AR },
          { "Purupuru", OPTION_VAL_PURUPURU_AR },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_AR },
          { "None",     OPTION_VAL_NONE_AR },
          { NULL, NULL },
       },
@@ -1397,6 +1402,7 @@ struct retro_core_option_v2_definition option_defs_ar[] = {
       {
          { "VMU",      OPTION_VAL_VMU_AR },
          { "Purupuru", OPTION_VAL_PURUPURU_AR },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_AR },
          { "None",     OPTION_VAL_NONE_AR },
          { NULL, NULL },
       },
@@ -1427,6 +1433,7 @@ struct retro_core_option_v2_definition option_defs_ar[] = {
       {
          { "VMU",      OPTION_VAL_VMU_AR },
          { "Purupuru", OPTION_VAL_PURUPURU_AR },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_AR },
          { "None",     OPTION_VAL_NONE_AR },
          { NULL, NULL },
       },
@@ -1467,6 +1474,19 @@ struct retro_core_option_v2_definition option_defs_ar[] = {
       CORE_OPTION_NAME_VMU_SOUND_LABEL_AR,
       CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_AR,
       CORE_OPTION_NAME_VMU_SOUND_INFO_0_AR,
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",   NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_linked_vmu_storage",
+      CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_AR,
+      NULL,
+      CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_AR,
       NULL,
       "vmu",
       {
@@ -2353,6 +2373,7 @@ struct retro_core_options_v2 options_ar = {
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_INFO_0_AST NULL
 #define OPTION_VAL_VMU_AST NULL
 #define OPTION_VAL_PURUPURU_AST NULL
+#define OPTION_VAL_DREAMPOTATO_AST NULL
 #define OPTION_VAL_NONE_AST NULL
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_LABEL_AST NULL
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_INFO_0_AST NULL
@@ -2376,6 +2397,8 @@ struct retro_core_options_v2 options_ar = {
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_AST NULL
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_AST "Soníos de la VMU"
 #define CORE_OPTION_NAME_VMU_SOUND_INFO_0_AST "Cuando s'activa esta opción, reprodúcense los pitíos de la VMU."
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_AST NULL
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_AST NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_AST NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_AST NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_AST NULL
@@ -2611,7 +2634,7 @@ struct retro_core_option_v2_definition option_defs_ast[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
 
    {
@@ -3382,6 +3405,7 @@ struct retro_core_option_v2_definition option_defs_ast[] = {
       {
          { "VMU",      OPTION_VAL_VMU_AST },
          { "Purupuru", OPTION_VAL_PURUPURU_AST },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_AST },
          { "None",     OPTION_VAL_NONE_AST },
          { NULL, NULL },
       },
@@ -3412,6 +3436,7 @@ struct retro_core_option_v2_definition option_defs_ast[] = {
       {
          { "VMU",      OPTION_VAL_VMU_AST },
          { "Purupuru", OPTION_VAL_PURUPURU_AST },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_AST },
          { "None",     OPTION_VAL_NONE_AST },
          { NULL, NULL },
       },
@@ -3442,6 +3467,7 @@ struct retro_core_option_v2_definition option_defs_ast[] = {
       {
          { "VMU",      OPTION_VAL_VMU_AST },
          { "Purupuru", OPTION_VAL_PURUPURU_AST },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_AST },
          { "None",     OPTION_VAL_NONE_AST },
          { NULL, NULL },
       },
@@ -3472,6 +3498,7 @@ struct retro_core_option_v2_definition option_defs_ast[] = {
       {
          { "VMU",      OPTION_VAL_VMU_AST },
          { "Purupuru", OPTION_VAL_PURUPURU_AST },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_AST },
          { "None",     OPTION_VAL_NONE_AST },
          { NULL, NULL },
       },
@@ -3512,6 +3539,19 @@ struct retro_core_option_v2_definition option_defs_ast[] = {
       CORE_OPTION_NAME_VMU_SOUND_LABEL_AST,
       CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_AST,
       CORE_OPTION_NAME_VMU_SOUND_INFO_0_AST,
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",   NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_linked_vmu_storage",
+      CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_AST,
+      NULL,
+      CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_AST,
       NULL,
       "vmu",
       {
@@ -4398,6 +4438,7 @@ struct retro_core_options_v2 options_ast = {
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_INFO_0_BE "Выбар прылады, уключанай у слот пашырэння A1 (порт А слот 1)."
 #define OPTION_VAL_VMU_BE NULL
 #define OPTION_VAL_PURUPURU_BE "Вібрапак"
+#define OPTION_VAL_DREAMPOTATO_BE NULL
 #define OPTION_VAL_NONE_BE "Няма"
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_LABEL_BE "Прылада ў слоце пашырэння A2"
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_INFO_0_BE "Выбар прылады, уключанай у слот пашырэння A2 (порт А слот 2)."
@@ -4421,6 +4462,8 @@ struct retro_core_options_v2 options_ast = {
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_BE "Гукавыя сігналы візуальных карт памяці (VMU)"
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_BE "Сігналы VMU"
 #define CORE_OPTION_NAME_VMU_SOUND_INFO_0_BE "Уключае прайграванне сігналаў VMU."
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_BE NULL
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_BE NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_BE "Паказваць настройкі адлюстравання візуальных карт памяці (VMU)"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_BE "Паказваць наладкі адлюстравання VMU"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_BE "Уключае канфігурацыю памеру, становішча, колеру і бачнасці якая эмулюецца LCD-экранам VMU. Для прымянення наладкі патрабуецца пераключэнне хуткага меню."
@@ -4656,7 +4699,7 @@ struct retro_core_option_v2_definition option_defs_be[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
 
    {
@@ -5427,6 +5470,7 @@ struct retro_core_option_v2_definition option_defs_be[] = {
       {
          { "VMU",      OPTION_VAL_VMU_BE },
          { "Purupuru", OPTION_VAL_PURUPURU_BE },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_BE },
          { "None",     OPTION_VAL_NONE_BE },
          { NULL, NULL },
       },
@@ -5457,6 +5501,7 @@ struct retro_core_option_v2_definition option_defs_be[] = {
       {
          { "VMU",      OPTION_VAL_VMU_BE },
          { "Purupuru", OPTION_VAL_PURUPURU_BE },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_BE },
          { "None",     OPTION_VAL_NONE_BE },
          { NULL, NULL },
       },
@@ -5487,6 +5532,7 @@ struct retro_core_option_v2_definition option_defs_be[] = {
       {
          { "VMU",      OPTION_VAL_VMU_BE },
          { "Purupuru", OPTION_VAL_PURUPURU_BE },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_BE },
          { "None",     OPTION_VAL_NONE_BE },
          { NULL, NULL },
       },
@@ -5517,6 +5563,7 @@ struct retro_core_option_v2_definition option_defs_be[] = {
       {
          { "VMU",      OPTION_VAL_VMU_BE },
          { "Purupuru", OPTION_VAL_PURUPURU_BE },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_BE },
          { "None",     OPTION_VAL_NONE_BE },
          { NULL, NULL },
       },
@@ -5557,6 +5604,19 @@ struct retro_core_option_v2_definition option_defs_be[] = {
       CORE_OPTION_NAME_VMU_SOUND_LABEL_BE,
       CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_BE,
       CORE_OPTION_NAME_VMU_SOUND_INFO_0_BE,
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",   NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_linked_vmu_storage",
+      CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_BE,
+      NULL,
+      CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_BE,
       NULL,
       "vmu",
       {
@@ -6443,6 +6503,7 @@ struct retro_core_options_v2 options_be = {
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_INFO_0_BG NULL
 #define OPTION_VAL_VMU_BG NULL
 #define OPTION_VAL_PURUPURU_BG NULL
+#define OPTION_VAL_DREAMPOTATO_BG NULL
 #define OPTION_VAL_NONE_BG NULL
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_LABEL_BG NULL
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_INFO_0_BG NULL
@@ -6466,6 +6527,8 @@ struct retro_core_options_v2 options_be = {
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_BG NULL
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_BG NULL
 #define CORE_OPTION_NAME_VMU_SOUND_INFO_0_BG NULL
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_BG NULL
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_BG NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_BG NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_BG NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_BG NULL
@@ -6701,7 +6764,7 @@ struct retro_core_option_v2_definition option_defs_bg[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
 
    {
@@ -7472,6 +7535,7 @@ struct retro_core_option_v2_definition option_defs_bg[] = {
       {
          { "VMU",      OPTION_VAL_VMU_BG },
          { "Purupuru", OPTION_VAL_PURUPURU_BG },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_BG },
          { "None",     OPTION_VAL_NONE_BG },
          { NULL, NULL },
       },
@@ -7502,6 +7566,7 @@ struct retro_core_option_v2_definition option_defs_bg[] = {
       {
          { "VMU",      OPTION_VAL_VMU_BG },
          { "Purupuru", OPTION_VAL_PURUPURU_BG },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_BG },
          { "None",     OPTION_VAL_NONE_BG },
          { NULL, NULL },
       },
@@ -7532,6 +7597,7 @@ struct retro_core_option_v2_definition option_defs_bg[] = {
       {
          { "VMU",      OPTION_VAL_VMU_BG },
          { "Purupuru", OPTION_VAL_PURUPURU_BG },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_BG },
          { "None",     OPTION_VAL_NONE_BG },
          { NULL, NULL },
       },
@@ -7562,6 +7628,7 @@ struct retro_core_option_v2_definition option_defs_bg[] = {
       {
          { "VMU",      OPTION_VAL_VMU_BG },
          { "Purupuru", OPTION_VAL_PURUPURU_BG },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_BG },
          { "None",     OPTION_VAL_NONE_BG },
          { NULL, NULL },
       },
@@ -7602,6 +7669,19 @@ struct retro_core_option_v2_definition option_defs_bg[] = {
       CORE_OPTION_NAME_VMU_SOUND_LABEL_BG,
       CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_BG,
       CORE_OPTION_NAME_VMU_SOUND_INFO_0_BG,
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",   NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_linked_vmu_storage",
+      CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_BG,
+      NULL,
+      CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_BG,
       NULL,
       "vmu",
       {
@@ -8488,6 +8568,7 @@ struct retro_core_options_v2 options_bg = {
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_INFO_0_CA "Selecciona el dispositiu connectat a la ranura d'expansió A1 (port A ranura 1)."
 #define OPTION_VAL_VMU_CA NULL
 #define OPTION_VAL_PURUPURU_CA "Pack de vibració"
+#define OPTION_VAL_DREAMPOTATO_CA NULL
 #define OPTION_VAL_NONE_CA "Cap"
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_LABEL_CA "Dispositiu en el port d'expansió A2"
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_INFO_0_CA "Selecciona el dispositiu connectat a la ranura d'expansió A2 (port A ranura 2)."
@@ -8511,6 +8592,8 @@ struct retro_core_options_v2 options_bg = {
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_CA "Sons de les Visual Memory (VMU)"
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_CA "Sons VMU"
 #define CORE_OPTION_NAME_VMU_SOUND_INFO_0_CA "Quan està actiu, es reprodueixen els sons de la VMU."
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_CA "Emmagatzematge VMU DreamPotato"
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_CA "Activa l'emmagatzematge de dades VMU a l'emulador DreamPotato. Quan estigui actiu, no es fa servir l'emmagatzematge local."
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CA "Mostra la configuració de visualització de les Visual Memory (VMU)"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_CA "Mostra la configuració de pantalla de VMU"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_CA "Permet configurar la visibilitat, mida i posició de les pantalles LCD emulades. NOTA: cal sortir i tornar a entrar al menú ràpid perquè el canvi funcioni."
@@ -8746,7 +8829,7 @@ struct retro_core_option_v2_definition option_defs_ca[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
 
    {
@@ -9517,6 +9600,7 @@ struct retro_core_option_v2_definition option_defs_ca[] = {
       {
          { "VMU",      OPTION_VAL_VMU_CA },
          { "Purupuru", OPTION_VAL_PURUPURU_CA },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_CA },
          { "None",     OPTION_VAL_NONE_CA },
          { NULL, NULL },
       },
@@ -9547,6 +9631,7 @@ struct retro_core_option_v2_definition option_defs_ca[] = {
       {
          { "VMU",      OPTION_VAL_VMU_CA },
          { "Purupuru", OPTION_VAL_PURUPURU_CA },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_CA },
          { "None",     OPTION_VAL_NONE_CA },
          { NULL, NULL },
       },
@@ -9577,6 +9662,7 @@ struct retro_core_option_v2_definition option_defs_ca[] = {
       {
          { "VMU",      OPTION_VAL_VMU_CA },
          { "Purupuru", OPTION_VAL_PURUPURU_CA },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_CA },
          { "None",     OPTION_VAL_NONE_CA },
          { NULL, NULL },
       },
@@ -9607,6 +9693,7 @@ struct retro_core_option_v2_definition option_defs_ca[] = {
       {
          { "VMU",      OPTION_VAL_VMU_CA },
          { "Purupuru", OPTION_VAL_PURUPURU_CA },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_CA },
          { "None",     OPTION_VAL_NONE_CA },
          { NULL, NULL },
       },
@@ -9647,6 +9734,19 @@ struct retro_core_option_v2_definition option_defs_ca[] = {
       CORE_OPTION_NAME_VMU_SOUND_LABEL_CA,
       CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_CA,
       CORE_OPTION_NAME_VMU_SOUND_INFO_0_CA,
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",   NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_linked_vmu_storage",
+      CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_CA,
+      NULL,
+      CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_CA,
       NULL,
       "vmu",
       {
@@ -10533,6 +10633,7 @@ struct retro_core_options_v2 options_ca = {
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_INFO_0_CHS "选择插入 A1 扩展插槽（端口 A 插槽 1）中的设备。"
 #define OPTION_VAL_VMU_CHS NULL
 #define OPTION_VAL_PURUPURU_CHS "震动包"
+#define OPTION_VAL_DREAMPOTATO_CHS NULL
 #define OPTION_VAL_NONE_CHS "无"
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_LABEL_CHS "A2 扩展插槽设备"
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_INFO_0_CHS "选择插入 A2 扩展插槽（端口 A 插槽 2）中的设备。"
@@ -10556,6 +10657,8 @@ struct retro_core_options_v2 options_ca = {
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_CHS "视觉内存单元/系统（VMU）声音"
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_CHS "VMU 声音"
 #define CORE_OPTION_NAME_VMU_SOUND_INFO_0_CHS "启用时，会播放 VMU 的“哔”声。"
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_CHS NULL
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_CHS NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CHS "显示视觉内存单元/系统（VMU）屏幕设置"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_CHS "显示 VMU 屏幕设置"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_CHS "启用对模拟 VMU LCD 屏幕可见性、大小、位置和颜色的配置。注意：快速菜单可能需要切换才能使此设置生效。"
@@ -10791,7 +10894,7 @@ struct retro_core_option_v2_definition option_defs_chs[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
 
    {
@@ -11562,6 +11665,7 @@ struct retro_core_option_v2_definition option_defs_chs[] = {
       {
          { "VMU",      OPTION_VAL_VMU_CHS },
          { "Purupuru", OPTION_VAL_PURUPURU_CHS },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_CHS },
          { "None",     OPTION_VAL_NONE_CHS },
          { NULL, NULL },
       },
@@ -11592,6 +11696,7 @@ struct retro_core_option_v2_definition option_defs_chs[] = {
       {
          { "VMU",      OPTION_VAL_VMU_CHS },
          { "Purupuru", OPTION_VAL_PURUPURU_CHS },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_CHS },
          { "None",     OPTION_VAL_NONE_CHS },
          { NULL, NULL },
       },
@@ -11622,6 +11727,7 @@ struct retro_core_option_v2_definition option_defs_chs[] = {
       {
          { "VMU",      OPTION_VAL_VMU_CHS },
          { "Purupuru", OPTION_VAL_PURUPURU_CHS },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_CHS },
          { "None",     OPTION_VAL_NONE_CHS },
          { NULL, NULL },
       },
@@ -11652,6 +11758,7 @@ struct retro_core_option_v2_definition option_defs_chs[] = {
       {
          { "VMU",      OPTION_VAL_VMU_CHS },
          { "Purupuru", OPTION_VAL_PURUPURU_CHS },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_CHS },
          { "None",     OPTION_VAL_NONE_CHS },
          { NULL, NULL },
       },
@@ -11692,6 +11799,19 @@ struct retro_core_option_v2_definition option_defs_chs[] = {
       CORE_OPTION_NAME_VMU_SOUND_LABEL_CHS,
       CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_CHS,
       CORE_OPTION_NAME_VMU_SOUND_INFO_0_CHS,
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",   NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_linked_vmu_storage",
+      CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_CHS,
+      NULL,
+      CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_CHS,
       NULL,
       "vmu",
       {
@@ -12578,6 +12698,7 @@ struct retro_core_options_v2 options_chs = {
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_INFO_0_CHT NULL
 #define OPTION_VAL_VMU_CHT NULL
 #define OPTION_VAL_PURUPURU_CHT NULL
+#define OPTION_VAL_DREAMPOTATO_CHT NULL
 #define OPTION_VAL_NONE_CHT "無"
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_LABEL_CHT NULL
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_INFO_0_CHT NULL
@@ -12601,6 +12722,8 @@ struct retro_core_options_v2 options_chs = {
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_CHT NULL
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_CHT NULL
 #define CORE_OPTION_NAME_VMU_SOUND_INFO_0_CHT NULL
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_CHT NULL
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_CHT NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CHT NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_CHT NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_CHT NULL
@@ -12836,7 +12959,7 @@ struct retro_core_option_v2_definition option_defs_cht[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
 
    {
@@ -13607,6 +13730,7 @@ struct retro_core_option_v2_definition option_defs_cht[] = {
       {
          { "VMU",      OPTION_VAL_VMU_CHT },
          { "Purupuru", OPTION_VAL_PURUPURU_CHT },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_CHT },
          { "None",     OPTION_VAL_NONE_CHT },
          { NULL, NULL },
       },
@@ -13637,6 +13761,7 @@ struct retro_core_option_v2_definition option_defs_cht[] = {
       {
          { "VMU",      OPTION_VAL_VMU_CHT },
          { "Purupuru", OPTION_VAL_PURUPURU_CHT },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_CHT },
          { "None",     OPTION_VAL_NONE_CHT },
          { NULL, NULL },
       },
@@ -13667,6 +13792,7 @@ struct retro_core_option_v2_definition option_defs_cht[] = {
       {
          { "VMU",      OPTION_VAL_VMU_CHT },
          { "Purupuru", OPTION_VAL_PURUPURU_CHT },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_CHT },
          { "None",     OPTION_VAL_NONE_CHT },
          { NULL, NULL },
       },
@@ -13697,6 +13823,7 @@ struct retro_core_option_v2_definition option_defs_cht[] = {
       {
          { "VMU",      OPTION_VAL_VMU_CHT },
          { "Purupuru", OPTION_VAL_PURUPURU_CHT },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_CHT },
          { "None",     OPTION_VAL_NONE_CHT },
          { NULL, NULL },
       },
@@ -13737,6 +13864,19 @@ struct retro_core_option_v2_definition option_defs_cht[] = {
       CORE_OPTION_NAME_VMU_SOUND_LABEL_CHT,
       CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_CHT,
       CORE_OPTION_NAME_VMU_SOUND_INFO_0_CHT,
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",   NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_linked_vmu_storage",
+      CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_CHT,
+      NULL,
+      CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_CHT,
       NULL,
       "vmu",
       {
@@ -14623,6 +14763,7 @@ struct retro_core_options_v2 options_cht = {
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_INFO_0_CS "Vyberte zařízení zapojené do rozšiřujícího slotu A1 (port A slot 1)."
 #define OPTION_VAL_VMU_CS NULL
 #define OPTION_VAL_PURUPURU_CS "Balíček vibrací"
+#define OPTION_VAL_DREAMPOTATO_CS NULL
 #define OPTION_VAL_NONE_CS "Žádné"
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_LABEL_CS "Zařízení v rozšiřujícím slotu A2"
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_INFO_0_CS "Vyberte zařízení zapojené do rozšiřujícího slotu A2 (port A slot 2)."
@@ -14646,6 +14787,8 @@ struct retro_core_options_v2 options_cht = {
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_CS "Vizuální paměťové jednotky/systémy (VMU) Zvuky"
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_CS "Zvuky VMU"
 #define CORE_OPTION_NAME_VMU_SOUND_INFO_0_CS "Pokud je tato funkce povolena, přehrávají se zvukové signály VMU."
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_CS NULL
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_CS NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CS "Zobrazit Nastavení Displeje Vizuální Paměťové Jednotky/Systému (VMU)"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_CS "Zobrazit Nastavení VMU Displeje"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_CS "Umožňuje konfiguraci viditelnosti, velikosti, polohy a barvy obrazovky LCD emulovaného VMU. POZNÁMKA: Může být nutné přepnout Rychlé Menu, aby se toto nastavení projevilo."
@@ -14881,7 +15024,7 @@ struct retro_core_option_v2_definition option_defs_cs[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
 
    {
@@ -15652,6 +15795,7 @@ struct retro_core_option_v2_definition option_defs_cs[] = {
       {
          { "VMU",      OPTION_VAL_VMU_CS },
          { "Purupuru", OPTION_VAL_PURUPURU_CS },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_CS },
          { "None",     OPTION_VAL_NONE_CS },
          { NULL, NULL },
       },
@@ -15682,6 +15826,7 @@ struct retro_core_option_v2_definition option_defs_cs[] = {
       {
          { "VMU",      OPTION_VAL_VMU_CS },
          { "Purupuru", OPTION_VAL_PURUPURU_CS },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_CS },
          { "None",     OPTION_VAL_NONE_CS },
          { NULL, NULL },
       },
@@ -15712,6 +15857,7 @@ struct retro_core_option_v2_definition option_defs_cs[] = {
       {
          { "VMU",      OPTION_VAL_VMU_CS },
          { "Purupuru", OPTION_VAL_PURUPURU_CS },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_CS },
          { "None",     OPTION_VAL_NONE_CS },
          { NULL, NULL },
       },
@@ -15742,6 +15888,7 @@ struct retro_core_option_v2_definition option_defs_cs[] = {
       {
          { "VMU",      OPTION_VAL_VMU_CS },
          { "Purupuru", OPTION_VAL_PURUPURU_CS },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_CS },
          { "None",     OPTION_VAL_NONE_CS },
          { NULL, NULL },
       },
@@ -15782,6 +15929,19 @@ struct retro_core_option_v2_definition option_defs_cs[] = {
       CORE_OPTION_NAME_VMU_SOUND_LABEL_CS,
       CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_CS,
       CORE_OPTION_NAME_VMU_SOUND_INFO_0_CS,
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",   NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_linked_vmu_storage",
+      CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_CS,
+      NULL,
+      CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_CS,
       NULL,
       "vmu",
       {
@@ -16668,6 +16828,7 @@ struct retro_core_options_v2 options_cs = {
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_INFO_0_CY NULL
 #define OPTION_VAL_VMU_CY NULL
 #define OPTION_VAL_PURUPURU_CY NULL
+#define OPTION_VAL_DREAMPOTATO_CY NULL
 #define OPTION_VAL_NONE_CY "Dim"
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_LABEL_CY NULL
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_INFO_0_CY NULL
@@ -16691,6 +16852,8 @@ struct retro_core_options_v2 options_cs = {
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_CY NULL
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_CY NULL
 #define CORE_OPTION_NAME_VMU_SOUND_INFO_0_CY NULL
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_CY NULL
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_CY NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CY NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_CY NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_CY NULL
@@ -16926,7 +17089,7 @@ struct retro_core_option_v2_definition option_defs_cy[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
 
    {
@@ -17697,6 +17860,7 @@ struct retro_core_option_v2_definition option_defs_cy[] = {
       {
          { "VMU",      OPTION_VAL_VMU_CY },
          { "Purupuru", OPTION_VAL_PURUPURU_CY },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_CY },
          { "None",     OPTION_VAL_NONE_CY },
          { NULL, NULL },
       },
@@ -17727,6 +17891,7 @@ struct retro_core_option_v2_definition option_defs_cy[] = {
       {
          { "VMU",      OPTION_VAL_VMU_CY },
          { "Purupuru", OPTION_VAL_PURUPURU_CY },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_CY },
          { "None",     OPTION_VAL_NONE_CY },
          { NULL, NULL },
       },
@@ -17757,6 +17922,7 @@ struct retro_core_option_v2_definition option_defs_cy[] = {
       {
          { "VMU",      OPTION_VAL_VMU_CY },
          { "Purupuru", OPTION_VAL_PURUPURU_CY },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_CY },
          { "None",     OPTION_VAL_NONE_CY },
          { NULL, NULL },
       },
@@ -17787,6 +17953,7 @@ struct retro_core_option_v2_definition option_defs_cy[] = {
       {
          { "VMU",      OPTION_VAL_VMU_CY },
          { "Purupuru", OPTION_VAL_PURUPURU_CY },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_CY },
          { "None",     OPTION_VAL_NONE_CY },
          { NULL, NULL },
       },
@@ -17827,6 +17994,19 @@ struct retro_core_option_v2_definition option_defs_cy[] = {
       CORE_OPTION_NAME_VMU_SOUND_LABEL_CY,
       CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_CY,
       CORE_OPTION_NAME_VMU_SOUND_INFO_0_CY,
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",   NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_linked_vmu_storage",
+      CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_CY,
+      NULL,
+      CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_CY,
       NULL,
       "vmu",
       {
@@ -18713,6 +18893,7 @@ struct retro_core_options_v2 options_cy = {
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_INFO_0_DA NULL
 #define OPTION_VAL_VMU_DA NULL
 #define OPTION_VAL_PURUPURU_DA NULL
+#define OPTION_VAL_DREAMPOTATO_DA NULL
 #define OPTION_VAL_NONE_DA NULL
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_LABEL_DA NULL
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_INFO_0_DA NULL
@@ -18736,6 +18917,8 @@ struct retro_core_options_v2 options_cy = {
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_DA NULL
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_DA NULL
 #define CORE_OPTION_NAME_VMU_SOUND_INFO_0_DA NULL
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_DA NULL
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_DA NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_DA NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_DA NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_DA NULL
@@ -18971,7 +19154,7 @@ struct retro_core_option_v2_definition option_defs_da[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
 
    {
@@ -19742,6 +19925,7 @@ struct retro_core_option_v2_definition option_defs_da[] = {
       {
          { "VMU",      OPTION_VAL_VMU_DA },
          { "Purupuru", OPTION_VAL_PURUPURU_DA },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_DA },
          { "None",     OPTION_VAL_NONE_DA },
          { NULL, NULL },
       },
@@ -19772,6 +19956,7 @@ struct retro_core_option_v2_definition option_defs_da[] = {
       {
          { "VMU",      OPTION_VAL_VMU_DA },
          { "Purupuru", OPTION_VAL_PURUPURU_DA },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_DA },
          { "None",     OPTION_VAL_NONE_DA },
          { NULL, NULL },
       },
@@ -19802,6 +19987,7 @@ struct retro_core_option_v2_definition option_defs_da[] = {
       {
          { "VMU",      OPTION_VAL_VMU_DA },
          { "Purupuru", OPTION_VAL_PURUPURU_DA },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_DA },
          { "None",     OPTION_VAL_NONE_DA },
          { NULL, NULL },
       },
@@ -19832,6 +20018,7 @@ struct retro_core_option_v2_definition option_defs_da[] = {
       {
          { "VMU",      OPTION_VAL_VMU_DA },
          { "Purupuru", OPTION_VAL_PURUPURU_DA },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_DA },
          { "None",     OPTION_VAL_NONE_DA },
          { NULL, NULL },
       },
@@ -19872,6 +20059,19 @@ struct retro_core_option_v2_definition option_defs_da[] = {
       CORE_OPTION_NAME_VMU_SOUND_LABEL_DA,
       CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_DA,
       CORE_OPTION_NAME_VMU_SOUND_INFO_0_DA,
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",   NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_linked_vmu_storage",
+      CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_DA,
+      NULL,
+      CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_DA,
       NULL,
       "vmu",
       {
@@ -20758,6 +20958,7 @@ struct retro_core_options_v2 options_da = {
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_INFO_0_DE "Das Gerät auswählen, das im Erweiterungsslot A1 angeschlossen ist (Port A Slot 1)."
 #define OPTION_VAL_VMU_DE NULL
 #define OPTION_VAL_PURUPURU_DE "Vibrationspaket"
+#define OPTION_VAL_DREAMPOTATO_DE NULL
 #define OPTION_VAL_NONE_DE "Nein"
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_LABEL_DE "Gerät im Erweiterungsslot A2"
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_INFO_0_DE "Das Gerät auswählen, das im Erweiterungsslot A2 angeschlossen ist (Port A Slot 2)."
@@ -20781,6 +20982,8 @@ struct retro_core_options_v2 options_da = {
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_DE NULL
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_DE NULL
 #define CORE_OPTION_NAME_VMU_SOUND_INFO_0_DE "Wenn aktiviert, werden VMU-Signaltöne abgespielt."
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_DE "DreamPotato VMU-Speicher"
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_DE "Die Speicherung von VMU-Daten auf dem verbundenen DreamPotato-Emulator aktivieren. Wenn diese Option aktiviert ist, wird die lokale VMU-Speicherdatei nicht verwendet."
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_DE "Visual Memory Unit/System (VMU) Anzeigeeinstellungen anzeigen"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_DE "VMU-Bildschirmeinstellungen anzeigen"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_DE "Konfiguration von emulierten VMU LCD-Bildschirmen über Sichtbarkeit, Größe, Position und Farbe aktivieren. HINWEIS: Das Schnellmenü muss aktiviert sein, damit diese Einstellung wirksam wird."
@@ -21016,7 +21219,7 @@ struct retro_core_option_v2_definition option_defs_de[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
 
    {
@@ -21787,6 +21990,7 @@ struct retro_core_option_v2_definition option_defs_de[] = {
       {
          { "VMU",      OPTION_VAL_VMU_DE },
          { "Purupuru", OPTION_VAL_PURUPURU_DE },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_DE },
          { "None",     OPTION_VAL_NONE_DE },
          { NULL, NULL },
       },
@@ -21817,6 +22021,7 @@ struct retro_core_option_v2_definition option_defs_de[] = {
       {
          { "VMU",      OPTION_VAL_VMU_DE },
          { "Purupuru", OPTION_VAL_PURUPURU_DE },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_DE },
          { "None",     OPTION_VAL_NONE_DE },
          { NULL, NULL },
       },
@@ -21847,6 +22052,7 @@ struct retro_core_option_v2_definition option_defs_de[] = {
       {
          { "VMU",      OPTION_VAL_VMU_DE },
          { "Purupuru", OPTION_VAL_PURUPURU_DE },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_DE },
          { "None",     OPTION_VAL_NONE_DE },
          { NULL, NULL },
       },
@@ -21877,6 +22083,7 @@ struct retro_core_option_v2_definition option_defs_de[] = {
       {
          { "VMU",      OPTION_VAL_VMU_DE },
          { "Purupuru", OPTION_VAL_PURUPURU_DE },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_DE },
          { "None",     OPTION_VAL_NONE_DE },
          { NULL, NULL },
       },
@@ -21917,6 +22124,19 @@ struct retro_core_option_v2_definition option_defs_de[] = {
       CORE_OPTION_NAME_VMU_SOUND_LABEL_DE,
       CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_DE,
       CORE_OPTION_NAME_VMU_SOUND_INFO_0_DE,
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",   NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_linked_vmu_storage",
+      CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_DE,
+      NULL,
+      CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_DE,
       NULL,
       "vmu",
       {
@@ -22803,6 +23023,7 @@ struct retro_core_options_v2 options_de = {
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_INFO_0_EL NULL
 #define OPTION_VAL_VMU_EL NULL
 #define OPTION_VAL_PURUPURU_EL NULL
+#define OPTION_VAL_DREAMPOTATO_EL NULL
 #define OPTION_VAL_NONE_EL "Κανείς"
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_LABEL_EL NULL
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_INFO_0_EL NULL
@@ -22826,6 +23047,8 @@ struct retro_core_options_v2 options_de = {
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_EL NULL
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_EL NULL
 #define CORE_OPTION_NAME_VMU_SOUND_INFO_0_EL NULL
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_EL NULL
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_EL NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_EL NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_EL NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_EL NULL
@@ -23061,7 +23284,7 @@ struct retro_core_option_v2_definition option_defs_el[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
 
    {
@@ -23832,6 +24055,7 @@ struct retro_core_option_v2_definition option_defs_el[] = {
       {
          { "VMU",      OPTION_VAL_VMU_EL },
          { "Purupuru", OPTION_VAL_PURUPURU_EL },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_EL },
          { "None",     OPTION_VAL_NONE_EL },
          { NULL, NULL },
       },
@@ -23862,6 +24086,7 @@ struct retro_core_option_v2_definition option_defs_el[] = {
       {
          { "VMU",      OPTION_VAL_VMU_EL },
          { "Purupuru", OPTION_VAL_PURUPURU_EL },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_EL },
          { "None",     OPTION_VAL_NONE_EL },
          { NULL, NULL },
       },
@@ -23892,6 +24117,7 @@ struct retro_core_option_v2_definition option_defs_el[] = {
       {
          { "VMU",      OPTION_VAL_VMU_EL },
          { "Purupuru", OPTION_VAL_PURUPURU_EL },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_EL },
          { "None",     OPTION_VAL_NONE_EL },
          { NULL, NULL },
       },
@@ -23922,6 +24148,7 @@ struct retro_core_option_v2_definition option_defs_el[] = {
       {
          { "VMU",      OPTION_VAL_VMU_EL },
          { "Purupuru", OPTION_VAL_PURUPURU_EL },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_EL },
          { "None",     OPTION_VAL_NONE_EL },
          { NULL, NULL },
       },
@@ -23962,6 +24189,19 @@ struct retro_core_option_v2_definition option_defs_el[] = {
       CORE_OPTION_NAME_VMU_SOUND_LABEL_EL,
       CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_EL,
       CORE_OPTION_NAME_VMU_SOUND_INFO_0_EL,
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",   NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_linked_vmu_storage",
+      CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_EL,
+      NULL,
+      CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_EL,
       NULL,
       "vmu",
       {
@@ -24848,6 +25088,7 @@ struct retro_core_options_v2 options_el = {
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_INFO_0_EN NULL
 #define OPTION_VAL_VMU_EN NULL
 #define OPTION_VAL_PURUPURU_EN NULL
+#define OPTION_VAL_DREAMPOTATO_EN NULL
 #define OPTION_VAL_NONE_EN NULL
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_LABEL_EN NULL
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_INFO_0_EN NULL
@@ -24871,6 +25112,8 @@ struct retro_core_options_v2 options_el = {
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_EN NULL
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_EN NULL
 #define CORE_OPTION_NAME_VMU_SOUND_INFO_0_EN NULL
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_EN NULL
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_EN NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_EN NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_EN NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_EN "Enable configuration of emulated VMU LCD screen visibility, size, position and colour. NOTE: Quick Menu may need to be toggled for this setting to take effect."
@@ -25106,7 +25349,7 @@ struct retro_core_option_v2_definition option_defs_en[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
 
    {
@@ -25877,6 +26120,7 @@ struct retro_core_option_v2_definition option_defs_en[] = {
       {
          { "VMU",      OPTION_VAL_VMU_EN },
          { "Purupuru", OPTION_VAL_PURUPURU_EN },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_EN },
          { "None",     OPTION_VAL_NONE_EN },
          { NULL, NULL },
       },
@@ -25907,6 +26151,7 @@ struct retro_core_option_v2_definition option_defs_en[] = {
       {
          { "VMU",      OPTION_VAL_VMU_EN },
          { "Purupuru", OPTION_VAL_PURUPURU_EN },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_EN },
          { "None",     OPTION_VAL_NONE_EN },
          { NULL, NULL },
       },
@@ -25937,6 +26182,7 @@ struct retro_core_option_v2_definition option_defs_en[] = {
       {
          { "VMU",      OPTION_VAL_VMU_EN },
          { "Purupuru", OPTION_VAL_PURUPURU_EN },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_EN },
          { "None",     OPTION_VAL_NONE_EN },
          { NULL, NULL },
       },
@@ -25967,6 +26213,7 @@ struct retro_core_option_v2_definition option_defs_en[] = {
       {
          { "VMU",      OPTION_VAL_VMU_EN },
          { "Purupuru", OPTION_VAL_PURUPURU_EN },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_EN },
          { "None",     OPTION_VAL_NONE_EN },
          { NULL, NULL },
       },
@@ -26007,6 +26254,19 @@ struct retro_core_option_v2_definition option_defs_en[] = {
       CORE_OPTION_NAME_VMU_SOUND_LABEL_EN,
       CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_EN,
       CORE_OPTION_NAME_VMU_SOUND_INFO_0_EN,
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",   NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_linked_vmu_storage",
+      CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_EN,
+      NULL,
+      CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_EN,
       NULL,
       "vmu",
       {
@@ -26893,6 +27153,7 @@ struct retro_core_options_v2 options_en = {
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_INFO_0_EO NULL
 #define OPTION_VAL_VMU_EO NULL
 #define OPTION_VAL_PURUPURU_EO NULL
+#define OPTION_VAL_DREAMPOTATO_EO NULL
 #define OPTION_VAL_NONE_EO NULL
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_LABEL_EO NULL
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_INFO_0_EO NULL
@@ -26916,6 +27177,8 @@ struct retro_core_options_v2 options_en = {
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_EO NULL
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_EO NULL
 #define CORE_OPTION_NAME_VMU_SOUND_INFO_0_EO NULL
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_EO NULL
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_EO NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_EO NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_EO NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_EO NULL
@@ -27151,7 +27414,7 @@ struct retro_core_option_v2_definition option_defs_eo[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
 
    {
@@ -27922,6 +28185,7 @@ struct retro_core_option_v2_definition option_defs_eo[] = {
       {
          { "VMU",      OPTION_VAL_VMU_EO },
          { "Purupuru", OPTION_VAL_PURUPURU_EO },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_EO },
          { "None",     OPTION_VAL_NONE_EO },
          { NULL, NULL },
       },
@@ -27952,6 +28216,7 @@ struct retro_core_option_v2_definition option_defs_eo[] = {
       {
          { "VMU",      OPTION_VAL_VMU_EO },
          { "Purupuru", OPTION_VAL_PURUPURU_EO },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_EO },
          { "None",     OPTION_VAL_NONE_EO },
          { NULL, NULL },
       },
@@ -27982,6 +28247,7 @@ struct retro_core_option_v2_definition option_defs_eo[] = {
       {
          { "VMU",      OPTION_VAL_VMU_EO },
          { "Purupuru", OPTION_VAL_PURUPURU_EO },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_EO },
          { "None",     OPTION_VAL_NONE_EO },
          { NULL, NULL },
       },
@@ -28012,6 +28278,7 @@ struct retro_core_option_v2_definition option_defs_eo[] = {
       {
          { "VMU",      OPTION_VAL_VMU_EO },
          { "Purupuru", OPTION_VAL_PURUPURU_EO },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_EO },
          { "None",     OPTION_VAL_NONE_EO },
          { NULL, NULL },
       },
@@ -28052,6 +28319,19 @@ struct retro_core_option_v2_definition option_defs_eo[] = {
       CORE_OPTION_NAME_VMU_SOUND_LABEL_EO,
       CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_EO,
       CORE_OPTION_NAME_VMU_SOUND_INFO_0_EO,
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",   NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_linked_vmu_storage",
+      CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_EO,
+      NULL,
+      CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_EO,
       NULL,
       "vmu",
       {
@@ -28938,6 +29218,7 @@ struct retro_core_options_v2 options_eo = {
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_INFO_0_ES "Selecciona el dispositivo conectado al puerto de expansión A1 (puerto de mando A, ranura 1)."
 #define OPTION_VAL_VMU_ES "Visual Memory (VMU)"
 #define OPTION_VAL_PURUPURU_ES "Vibration Pack (vibración)"
+#define OPTION_VAL_DREAMPOTATO_ES NULL
 #define OPTION_VAL_NONE_ES "No compartir"
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_LABEL_ES "Dispositivo del puerto de expansión A2"
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_INFO_0_ES "Selecciona el dispositivo conectado al puerto de expansión A2 (puerto de mando A, ranura 2)."
@@ -28961,6 +29242,8 @@ struct retro_core_options_v2 options_eo = {
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_ES "Sonidos de las Visual Memory (VMU)"
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_ES "Sonidos de Visual Memory/VMU"
 #define CORE_OPTION_NAME_VMU_SOUND_INFO_0_ES "Al activar esta opción, se reproducirán los pitidos de las Visual Memory/VMU."
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_ES "Almacenar VMU en DreamPotato"
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_ES "Activa el almacenamiento de datos de la Visual Memory/VMU al emulador DreamPotato conectado. Al activar esta opción, no se utilizará el archivo de guardado local como Visual Memory/VMU."
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_ES "Mostrar ajustes de visualización de las Visual Memory (VMU)"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_ES "Mostrar ajustes de visualización de las VMU"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_ES "Permite configurar la visibilidad, tamaño, posición y color de las pantallas LCD emuladas de las VMU. NOTA: es necesario salir y volver a entrar del menú rápido para que el cambio surta efecto."
@@ -29196,7 +29479,7 @@ struct retro_core_option_v2_definition option_defs_es[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
 
    {
@@ -29967,6 +30250,7 @@ struct retro_core_option_v2_definition option_defs_es[] = {
       {
          { "VMU",      OPTION_VAL_VMU_ES },
          { "Purupuru", OPTION_VAL_PURUPURU_ES },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_ES },
          { "None",     OPTION_VAL_NONE_ES },
          { NULL, NULL },
       },
@@ -29997,6 +30281,7 @@ struct retro_core_option_v2_definition option_defs_es[] = {
       {
          { "VMU",      OPTION_VAL_VMU_ES },
          { "Purupuru", OPTION_VAL_PURUPURU_ES },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_ES },
          { "None",     OPTION_VAL_NONE_ES },
          { NULL, NULL },
       },
@@ -30027,6 +30312,7 @@ struct retro_core_option_v2_definition option_defs_es[] = {
       {
          { "VMU",      OPTION_VAL_VMU_ES },
          { "Purupuru", OPTION_VAL_PURUPURU_ES },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_ES },
          { "None",     OPTION_VAL_NONE_ES },
          { NULL, NULL },
       },
@@ -30057,6 +30343,7 @@ struct retro_core_option_v2_definition option_defs_es[] = {
       {
          { "VMU",      OPTION_VAL_VMU_ES },
          { "Purupuru", OPTION_VAL_PURUPURU_ES },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_ES },
          { "None",     OPTION_VAL_NONE_ES },
          { NULL, NULL },
       },
@@ -30097,6 +30384,19 @@ struct retro_core_option_v2_definition option_defs_es[] = {
       CORE_OPTION_NAME_VMU_SOUND_LABEL_ES,
       CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_ES,
       CORE_OPTION_NAME_VMU_SOUND_INFO_0_ES,
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",   NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_linked_vmu_storage",
+      CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_ES,
+      NULL,
+      CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_ES,
       NULL,
       "vmu",
       {
@@ -30983,6 +31283,7 @@ struct retro_core_options_v2 options_es = {
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_INFO_0_FA NULL
 #define OPTION_VAL_VMU_FA NULL
 #define OPTION_VAL_PURUPURU_FA NULL
+#define OPTION_VAL_DREAMPOTATO_FA NULL
 #define OPTION_VAL_NONE_FA "هیچکدام"
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_LABEL_FA NULL
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_INFO_0_FA NULL
@@ -31006,6 +31307,8 @@ struct retro_core_options_v2 options_es = {
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_FA NULL
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_FA NULL
 #define CORE_OPTION_NAME_VMU_SOUND_INFO_0_FA NULL
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_FA NULL
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_FA NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_FA NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_FA NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_FA NULL
@@ -31241,7 +31544,7 @@ struct retro_core_option_v2_definition option_defs_fa[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
 
    {
@@ -32012,6 +32315,7 @@ struct retro_core_option_v2_definition option_defs_fa[] = {
       {
          { "VMU",      OPTION_VAL_VMU_FA },
          { "Purupuru", OPTION_VAL_PURUPURU_FA },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_FA },
          { "None",     OPTION_VAL_NONE_FA },
          { NULL, NULL },
       },
@@ -32042,6 +32346,7 @@ struct retro_core_option_v2_definition option_defs_fa[] = {
       {
          { "VMU",      OPTION_VAL_VMU_FA },
          { "Purupuru", OPTION_VAL_PURUPURU_FA },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_FA },
          { "None",     OPTION_VAL_NONE_FA },
          { NULL, NULL },
       },
@@ -32072,6 +32377,7 @@ struct retro_core_option_v2_definition option_defs_fa[] = {
       {
          { "VMU",      OPTION_VAL_VMU_FA },
          { "Purupuru", OPTION_VAL_PURUPURU_FA },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_FA },
          { "None",     OPTION_VAL_NONE_FA },
          { NULL, NULL },
       },
@@ -32102,6 +32408,7 @@ struct retro_core_option_v2_definition option_defs_fa[] = {
       {
          { "VMU",      OPTION_VAL_VMU_FA },
          { "Purupuru", OPTION_VAL_PURUPURU_FA },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_FA },
          { "None",     OPTION_VAL_NONE_FA },
          { NULL, NULL },
       },
@@ -32142,6 +32449,19 @@ struct retro_core_option_v2_definition option_defs_fa[] = {
       CORE_OPTION_NAME_VMU_SOUND_LABEL_FA,
       CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_FA,
       CORE_OPTION_NAME_VMU_SOUND_INFO_0_FA,
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",   NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_linked_vmu_storage",
+      CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_FA,
+      NULL,
+      CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_FA,
       NULL,
       "vmu",
       {
@@ -33028,6 +33348,7 @@ struct retro_core_options_v2 options_fa = {
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_INFO_0_FI NULL
 #define OPTION_VAL_VMU_FI NULL
 #define OPTION_VAL_PURUPURU_FI NULL
+#define OPTION_VAL_DREAMPOTATO_FI NULL
 #define OPTION_VAL_NONE_FI "Ei mitään"
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_LABEL_FI NULL
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_INFO_0_FI NULL
@@ -33051,6 +33372,8 @@ struct retro_core_options_v2 options_fa = {
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_FI NULL
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_FI "VMU-äänet"
 #define CORE_OPTION_NAME_VMU_SOUND_INFO_0_FI "Kun käytössä, VMU-piippaukset toistetaan."
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_FI NULL
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_FI NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_FI NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_FI NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_FI NULL
@@ -33286,7 +33609,7 @@ struct retro_core_option_v2_definition option_defs_fi[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
 
    {
@@ -34057,6 +34380,7 @@ struct retro_core_option_v2_definition option_defs_fi[] = {
       {
          { "VMU",      OPTION_VAL_VMU_FI },
          { "Purupuru", OPTION_VAL_PURUPURU_FI },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_FI },
          { "None",     OPTION_VAL_NONE_FI },
          { NULL, NULL },
       },
@@ -34087,6 +34411,7 @@ struct retro_core_option_v2_definition option_defs_fi[] = {
       {
          { "VMU",      OPTION_VAL_VMU_FI },
          { "Purupuru", OPTION_VAL_PURUPURU_FI },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_FI },
          { "None",     OPTION_VAL_NONE_FI },
          { NULL, NULL },
       },
@@ -34117,6 +34442,7 @@ struct retro_core_option_v2_definition option_defs_fi[] = {
       {
          { "VMU",      OPTION_VAL_VMU_FI },
          { "Purupuru", OPTION_VAL_PURUPURU_FI },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_FI },
          { "None",     OPTION_VAL_NONE_FI },
          { NULL, NULL },
       },
@@ -34147,6 +34473,7 @@ struct retro_core_option_v2_definition option_defs_fi[] = {
       {
          { "VMU",      OPTION_VAL_VMU_FI },
          { "Purupuru", OPTION_VAL_PURUPURU_FI },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_FI },
          { "None",     OPTION_VAL_NONE_FI },
          { NULL, NULL },
       },
@@ -34187,6 +34514,19 @@ struct retro_core_option_v2_definition option_defs_fi[] = {
       CORE_OPTION_NAME_VMU_SOUND_LABEL_FI,
       CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_FI,
       CORE_OPTION_NAME_VMU_SOUND_INFO_0_FI,
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",   NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_linked_vmu_storage",
+      CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_FI,
+      NULL,
+      CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_FI,
       NULL,
       "vmu",
       {
@@ -35073,6 +35413,7 @@ struct retro_core_options_v2 options_fi = {
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_INFO_0_FR "Sélectionner le périphérique branché dans le port d'extension A1 (port A emplacement 1)."
 #define OPTION_VAL_VMU_FR NULL
 #define OPTION_VAL_PURUPURU_FR NULL
+#define OPTION_VAL_DREAMPOTATO_FR NULL
 #define OPTION_VAL_NONE_FR "Ne pas partager"
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_LABEL_FR "Périphérique dans le port d'extension A2"
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_INFO_0_FR "Sélectionner le périphérique branché dans le port d'extension A2 (port A emplacement 2)."
@@ -35096,6 +35437,8 @@ struct retro_core_options_v2 options_fi = {
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_FR "Sons des unités/systèmes de mémoire visuelle (VMU)"
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_FR "Sons des VMU"
 #define CORE_OPTION_NAME_VMU_SOUND_INFO_0_FR "Si cette option est activée, les bips des VMU sont joués."
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_FR "Stockage VMU DreamPotato"
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_FR "Activer le stockage des données VMU sur l'émulateur DreamPotato connecté. Lorsque cette option est activée, le fichier de sauvegarde VMU local n'est pas utilisé."
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_FR "Afficher les réglage d'affichage de l'unité/système de mémoire visuelle (VMU)"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_FR "Afficher les réglages d'affichage du VMU"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_FR "Activer la configuration de la visibilité, de la taille, de la position et de la couleur de l'écran du VMU émulé. REMARQUE : Le menu rapide devrait être réouvert pour que ce réglage prenne effet."
@@ -35331,7 +35674,7 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
 
    {
@@ -36102,6 +36445,7 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
       {
          { "VMU",      OPTION_VAL_VMU_FR },
          { "Purupuru", OPTION_VAL_PURUPURU_FR },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_FR },
          { "None",     OPTION_VAL_NONE_FR },
          { NULL, NULL },
       },
@@ -36132,6 +36476,7 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
       {
          { "VMU",      OPTION_VAL_VMU_FR },
          { "Purupuru", OPTION_VAL_PURUPURU_FR },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_FR },
          { "None",     OPTION_VAL_NONE_FR },
          { NULL, NULL },
       },
@@ -36162,6 +36507,7 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
       {
          { "VMU",      OPTION_VAL_VMU_FR },
          { "Purupuru", OPTION_VAL_PURUPURU_FR },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_FR },
          { "None",     OPTION_VAL_NONE_FR },
          { NULL, NULL },
       },
@@ -36192,6 +36538,7 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
       {
          { "VMU",      OPTION_VAL_VMU_FR },
          { "Purupuru", OPTION_VAL_PURUPURU_FR },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_FR },
          { "None",     OPTION_VAL_NONE_FR },
          { NULL, NULL },
       },
@@ -36232,6 +36579,19 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
       CORE_OPTION_NAME_VMU_SOUND_LABEL_FR,
       CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_FR,
       CORE_OPTION_NAME_VMU_SOUND_INFO_0_FR,
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",   NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_linked_vmu_storage",
+      CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_FR,
+      NULL,
+      CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_FR,
       NULL,
       "vmu",
       {
@@ -37118,6 +37478,7 @@ struct retro_core_options_v2 options_fr = {
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_INFO_0_GA "Roghnaigh an gléas atá plugáilte isteach sa sliotán leathnúcháin A1 (port A sliotán 1)."
 #define OPTION_VAL_VMU_GA NULL
 #define OPTION_VAL_PURUPURU_GA "Pacáiste Creathadh"
+#define OPTION_VAL_DREAMPOTATO_GA NULL
 #define OPTION_VAL_NONE_GA "Dada"
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_LABEL_GA "Gléas i Sliotán Leathnaithe A2"
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_INFO_0_GA "Roghnaigh an gléas atá plugáilte isteach sa sliotán leathnúcháin A2 (port A sliotán 2)."
@@ -37141,6 +37502,8 @@ struct retro_core_options_v2 options_fr = {
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_GA "Fuaimeanna Aonaid/Córais Cuimhne Amhairc (VMU)"
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_GA "Fuaimeanna VMU"
 #define CORE_OPTION_NAME_VMU_SOUND_INFO_0_GA "Nuair a bhíonn sé cumasaithe, seinntear bípeanna VMU."
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_GA NULL
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_GA NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_GA "Taispeáin Socruithe Taispeána Aonaid/Córais Cuimhne Amhairc (VMU)"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_GA "Taispeáin Socruithe Taispeána VMU"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_GA "Cumasaigh cumraíocht infheictheachta, méide, suíomh agus datha scáileáin LCD VMU aithrisithe. TABHAIR FAOI DEARA: B’fhéidir go mbeidh ort an Roghchlár Tapa a athrú chun an socrú seo a chur i bhfeidhm."
@@ -37376,7 +37739,7 @@ struct retro_core_option_v2_definition option_defs_ga[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
 
    {
@@ -38147,6 +38510,7 @@ struct retro_core_option_v2_definition option_defs_ga[] = {
       {
          { "VMU",      OPTION_VAL_VMU_GA },
          { "Purupuru", OPTION_VAL_PURUPURU_GA },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_GA },
          { "None",     OPTION_VAL_NONE_GA },
          { NULL, NULL },
       },
@@ -38177,6 +38541,7 @@ struct retro_core_option_v2_definition option_defs_ga[] = {
       {
          { "VMU",      OPTION_VAL_VMU_GA },
          { "Purupuru", OPTION_VAL_PURUPURU_GA },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_GA },
          { "None",     OPTION_VAL_NONE_GA },
          { NULL, NULL },
       },
@@ -38207,6 +38572,7 @@ struct retro_core_option_v2_definition option_defs_ga[] = {
       {
          { "VMU",      OPTION_VAL_VMU_GA },
          { "Purupuru", OPTION_VAL_PURUPURU_GA },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_GA },
          { "None",     OPTION_VAL_NONE_GA },
          { NULL, NULL },
       },
@@ -38237,6 +38603,7 @@ struct retro_core_option_v2_definition option_defs_ga[] = {
       {
          { "VMU",      OPTION_VAL_VMU_GA },
          { "Purupuru", OPTION_VAL_PURUPURU_GA },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_GA },
          { "None",     OPTION_VAL_NONE_GA },
          { NULL, NULL },
       },
@@ -38277,6 +38644,19 @@ struct retro_core_option_v2_definition option_defs_ga[] = {
       CORE_OPTION_NAME_VMU_SOUND_LABEL_GA,
       CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_GA,
       CORE_OPTION_NAME_VMU_SOUND_INFO_0_GA,
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",   NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_linked_vmu_storage",
+      CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_GA,
+      NULL,
+      CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_GA,
       NULL,
       "vmu",
       {
@@ -39163,6 +39543,7 @@ struct retro_core_options_v2 options_ga = {
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_INFO_0_GL "Seleccione o dispositivo conectado a rañura de expansión A1 (porto A rañura 1)."
 #define OPTION_VAL_VMU_GL NULL
 #define OPTION_VAL_PURUPURU_GL "Paquete de vibracións"
+#define OPTION_VAL_DREAMPOTATO_GL NULL
 #define OPTION_VAL_NONE_GL "Ningún"
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_LABEL_GL "Dispositivo na rañura de expansión A2"
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_INFO_0_GL "Seleccione o dispositivo conectado a rañura de expansión A2 (porto A rañura 2)."
@@ -39186,6 +39567,8 @@ struct retro_core_options_v2 options_ga = {
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_GL "Sons de sistemas/unidades de memoria visual (VMU)"
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_GL "Sons VMU"
 #define CORE_OPTION_NAME_VMU_SOUND_INFO_0_GL "Cando está activado, reprodúcense os pitidos VMU."
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_GL NULL
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_GL NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_GL "Amosa as opcións de pantalla da Unidade/Sistema de Memoria visual (VMU)"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_GL "Amosa as opcións de pantalla da VMU"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_GL "Activa a configuración da visibilidade, tamaño, posición e cor da pantalla LCD VMU emulada. NOTA: É posible que teña que cambiar o menú rápido para que esta configuración teña efecto."
@@ -39421,7 +39804,7 @@ struct retro_core_option_v2_definition option_defs_gl[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
 
    {
@@ -40192,6 +40575,7 @@ struct retro_core_option_v2_definition option_defs_gl[] = {
       {
          { "VMU",      OPTION_VAL_VMU_GL },
          { "Purupuru", OPTION_VAL_PURUPURU_GL },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_GL },
          { "None",     OPTION_VAL_NONE_GL },
          { NULL, NULL },
       },
@@ -40222,6 +40606,7 @@ struct retro_core_option_v2_definition option_defs_gl[] = {
       {
          { "VMU",      OPTION_VAL_VMU_GL },
          { "Purupuru", OPTION_VAL_PURUPURU_GL },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_GL },
          { "None",     OPTION_VAL_NONE_GL },
          { NULL, NULL },
       },
@@ -40252,6 +40637,7 @@ struct retro_core_option_v2_definition option_defs_gl[] = {
       {
          { "VMU",      OPTION_VAL_VMU_GL },
          { "Purupuru", OPTION_VAL_PURUPURU_GL },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_GL },
          { "None",     OPTION_VAL_NONE_GL },
          { NULL, NULL },
       },
@@ -40282,6 +40668,7 @@ struct retro_core_option_v2_definition option_defs_gl[] = {
       {
          { "VMU",      OPTION_VAL_VMU_GL },
          { "Purupuru", OPTION_VAL_PURUPURU_GL },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_GL },
          { "None",     OPTION_VAL_NONE_GL },
          { NULL, NULL },
       },
@@ -40322,6 +40709,19 @@ struct retro_core_option_v2_definition option_defs_gl[] = {
       CORE_OPTION_NAME_VMU_SOUND_LABEL_GL,
       CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_GL,
       CORE_OPTION_NAME_VMU_SOUND_INFO_0_GL,
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",   NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_linked_vmu_storage",
+      CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_GL,
+      NULL,
+      CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_GL,
       NULL,
       "vmu",
       {
@@ -41208,6 +41608,7 @@ struct retro_core_options_v2 options_gl = {
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_INFO_0_HE NULL
 #define OPTION_VAL_VMU_HE NULL
 #define OPTION_VAL_PURUPURU_HE NULL
+#define OPTION_VAL_DREAMPOTATO_HE NULL
 #define OPTION_VAL_NONE_HE NULL
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_LABEL_HE NULL
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_INFO_0_HE NULL
@@ -41231,6 +41632,8 @@ struct retro_core_options_v2 options_gl = {
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_HE NULL
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_HE NULL
 #define CORE_OPTION_NAME_VMU_SOUND_INFO_0_HE NULL
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_HE NULL
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_HE NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_HE NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_HE NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_HE NULL
@@ -41466,7 +41869,7 @@ struct retro_core_option_v2_definition option_defs_he[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
 
    {
@@ -42237,6 +42640,7 @@ struct retro_core_option_v2_definition option_defs_he[] = {
       {
          { "VMU",      OPTION_VAL_VMU_HE },
          { "Purupuru", OPTION_VAL_PURUPURU_HE },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_HE },
          { "None",     OPTION_VAL_NONE_HE },
          { NULL, NULL },
       },
@@ -42267,6 +42671,7 @@ struct retro_core_option_v2_definition option_defs_he[] = {
       {
          { "VMU",      OPTION_VAL_VMU_HE },
          { "Purupuru", OPTION_VAL_PURUPURU_HE },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_HE },
          { "None",     OPTION_VAL_NONE_HE },
          { NULL, NULL },
       },
@@ -42297,6 +42702,7 @@ struct retro_core_option_v2_definition option_defs_he[] = {
       {
          { "VMU",      OPTION_VAL_VMU_HE },
          { "Purupuru", OPTION_VAL_PURUPURU_HE },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_HE },
          { "None",     OPTION_VAL_NONE_HE },
          { NULL, NULL },
       },
@@ -42327,6 +42733,7 @@ struct retro_core_option_v2_definition option_defs_he[] = {
       {
          { "VMU",      OPTION_VAL_VMU_HE },
          { "Purupuru", OPTION_VAL_PURUPURU_HE },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_HE },
          { "None",     OPTION_VAL_NONE_HE },
          { NULL, NULL },
       },
@@ -42367,6 +42774,19 @@ struct retro_core_option_v2_definition option_defs_he[] = {
       CORE_OPTION_NAME_VMU_SOUND_LABEL_HE,
       CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_HE,
       CORE_OPTION_NAME_VMU_SOUND_INFO_0_HE,
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",   NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_linked_vmu_storage",
+      CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_HE,
+      NULL,
+      CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_HE,
       NULL,
       "vmu",
       {
@@ -43253,6 +43673,7 @@ struct retro_core_options_v2 options_he = {
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_INFO_0_HR NULL
 #define OPTION_VAL_VMU_HR NULL
 #define OPTION_VAL_PURUPURU_HR NULL
+#define OPTION_VAL_DREAMPOTATO_HR NULL
 #define OPTION_VAL_NONE_HR "Ništa"
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_LABEL_HR NULL
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_INFO_0_HR NULL
@@ -43276,6 +43697,8 @@ struct retro_core_options_v2 options_he = {
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_HR NULL
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_HR NULL
 #define CORE_OPTION_NAME_VMU_SOUND_INFO_0_HR NULL
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_HR NULL
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_HR NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_HR NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_HR NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_HR NULL
@@ -43511,7 +43934,7 @@ struct retro_core_option_v2_definition option_defs_hr[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
 
    {
@@ -44282,6 +44705,7 @@ struct retro_core_option_v2_definition option_defs_hr[] = {
       {
          { "VMU",      OPTION_VAL_VMU_HR },
          { "Purupuru", OPTION_VAL_PURUPURU_HR },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_HR },
          { "None",     OPTION_VAL_NONE_HR },
          { NULL, NULL },
       },
@@ -44312,6 +44736,7 @@ struct retro_core_option_v2_definition option_defs_hr[] = {
       {
          { "VMU",      OPTION_VAL_VMU_HR },
          { "Purupuru", OPTION_VAL_PURUPURU_HR },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_HR },
          { "None",     OPTION_VAL_NONE_HR },
          { NULL, NULL },
       },
@@ -44342,6 +44767,7 @@ struct retro_core_option_v2_definition option_defs_hr[] = {
       {
          { "VMU",      OPTION_VAL_VMU_HR },
          { "Purupuru", OPTION_VAL_PURUPURU_HR },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_HR },
          { "None",     OPTION_VAL_NONE_HR },
          { NULL, NULL },
       },
@@ -44372,6 +44798,7 @@ struct retro_core_option_v2_definition option_defs_hr[] = {
       {
          { "VMU",      OPTION_VAL_VMU_HR },
          { "Purupuru", OPTION_VAL_PURUPURU_HR },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_HR },
          { "None",     OPTION_VAL_NONE_HR },
          { NULL, NULL },
       },
@@ -44412,6 +44839,19 @@ struct retro_core_option_v2_definition option_defs_hr[] = {
       CORE_OPTION_NAME_VMU_SOUND_LABEL_HR,
       CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_HR,
       CORE_OPTION_NAME_VMU_SOUND_INFO_0_HR,
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",   NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_linked_vmu_storage",
+      CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_HR,
+      NULL,
+      CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_HR,
       NULL,
       "vmu",
       {
@@ -45236,12 +45676,12 @@ struct retro_core_options_v2 options_hr = {
 #define OPTION_VAL_500_HU NULL
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_HU "Egyedi textúrák betöltése"
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_INFO_0_HU "Egyedi textúrák betöltése a 'system/dc/textures/<game-id>/' mappából."
-#define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_LABEL_HU NULL
-#define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_INFO_0_HU NULL
+#define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_LABEL_HU "Egyéni textúrák előzetes betöltése"
+#define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_INFO_0_HU "A játék indításakor előre betölti az egyéni textúrákat. Javíthatja a teljesítményt, de növeli a memóriahasználatot."
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_HU "Textúrák lementése"
 #define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_HU "A textúrák lementése .png fájlként a 'system/dc/texdump/<game-id>/' mappába, amint a játék új textúrát használ."
-#define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_HU NULL
-#define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_INFO_0_HU NULL
+#define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_HU "Lecserélt textúrák kimentése"
+#define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_INFO_0_HU "Az egyéni textúrák által lecserélt textúrák kiírása."
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_HU "Analóg kar holtsávja"
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_INFO_0_HU "Az analóg kart ilyen mértékben kell elmozdítani ahhoz, hogy hatása legyen."
 #define OPTION_VAL_0_HU NULL
@@ -45298,6 +45738,7 @@ struct retro_core_options_v2 options_hr = {
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_INFO_0_HU "Az A1 bővítőhelybe csatlakoztatott eszköz (A csatlakozó, 1. hely)."
 #define OPTION_VAL_VMU_HU NULL
 #define OPTION_VAL_PURUPURU_HU NULL
+#define OPTION_VAL_DREAMPOTATO_HU NULL
 #define OPTION_VAL_NONE_HU "Nincs"
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_LABEL_HU "Az A2 bővítőhelyen található eszköz"
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_INFO_0_HU "Az A2 bővítőhelybe csatlakoztatott eszköz (A csatlakozó, 2. hely)."
@@ -45321,6 +45762,8 @@ struct retro_core_options_v2 options_hr = {
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_HU "A Visual Memory Unit / System (VMU) hangjai"
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_HU "VMU hangok"
 #define CORE_OPTION_NAME_VMU_SOUND_INFO_0_HU "Bekapcsolva a VMU csipogása is hallható."
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_HU "DreamPotato VMU tárhely"
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_HU "A VMU tárolása a csatlakoztatott DreamPotato emulátoron. Bekapcsolt állapotban a helyi VMU mentés fájl nincs használatban."
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_HU "Visual Memory Unit/System (VMU) megjelenítési beállítások jelenjenek meg"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_HU "VMU megjelenítési beállítások jelenjenek meg"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_HU "Az emulált VMU LCD képernyő láthatósági, méret, helyzet, és szín beállításainak engedélyezése. Figyelem: a gyorsmenüt ki-be kell kapcsolni, hogy ez a beállítás érvényre jusson."
@@ -45556,7 +45999,7 @@ struct retro_core_option_v2_definition option_defs_hu[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
 
    {
@@ -46327,6 +46770,7 @@ struct retro_core_option_v2_definition option_defs_hu[] = {
       {
          { "VMU",      OPTION_VAL_VMU_HU },
          { "Purupuru", OPTION_VAL_PURUPURU_HU },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_HU },
          { "None",     OPTION_VAL_NONE_HU },
          { NULL, NULL },
       },
@@ -46357,6 +46801,7 @@ struct retro_core_option_v2_definition option_defs_hu[] = {
       {
          { "VMU",      OPTION_VAL_VMU_HU },
          { "Purupuru", OPTION_VAL_PURUPURU_HU },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_HU },
          { "None",     OPTION_VAL_NONE_HU },
          { NULL, NULL },
       },
@@ -46387,6 +46832,7 @@ struct retro_core_option_v2_definition option_defs_hu[] = {
       {
          { "VMU",      OPTION_VAL_VMU_HU },
          { "Purupuru", OPTION_VAL_PURUPURU_HU },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_HU },
          { "None",     OPTION_VAL_NONE_HU },
          { NULL, NULL },
       },
@@ -46417,6 +46863,7 @@ struct retro_core_option_v2_definition option_defs_hu[] = {
       {
          { "VMU",      OPTION_VAL_VMU_HU },
          { "Purupuru", OPTION_VAL_PURUPURU_HU },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_HU },
          { "None",     OPTION_VAL_NONE_HU },
          { NULL, NULL },
       },
@@ -46457,6 +46904,19 @@ struct retro_core_option_v2_definition option_defs_hu[] = {
       CORE_OPTION_NAME_VMU_SOUND_LABEL_HU,
       CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_HU,
       CORE_OPTION_NAME_VMU_SOUND_INFO_0_HU,
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",   NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_linked_vmu_storage",
+      CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_HU,
+      NULL,
+      CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_HU,
       NULL,
       "vmu",
       {
@@ -47343,6 +47803,7 @@ struct retro_core_options_v2 options_hu = {
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_INFO_0_ID NULL
 #define OPTION_VAL_VMU_ID NULL
 #define OPTION_VAL_PURUPURU_ID NULL
+#define OPTION_VAL_DREAMPOTATO_ID NULL
 #define OPTION_VAL_NONE_ID "Tak ada"
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_LABEL_ID NULL
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_INFO_0_ID NULL
@@ -47366,6 +47827,8 @@ struct retro_core_options_v2 options_hu = {
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_ID NULL
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_ID NULL
 #define CORE_OPTION_NAME_VMU_SOUND_INFO_0_ID NULL
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_ID NULL
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_ID NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_ID NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_ID NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_ID NULL
@@ -47601,7 +48064,7 @@ struct retro_core_option_v2_definition option_defs_id[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
 
    {
@@ -48372,6 +48835,7 @@ struct retro_core_option_v2_definition option_defs_id[] = {
       {
          { "VMU",      OPTION_VAL_VMU_ID },
          { "Purupuru", OPTION_VAL_PURUPURU_ID },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_ID },
          { "None",     OPTION_VAL_NONE_ID },
          { NULL, NULL },
       },
@@ -48402,6 +48866,7 @@ struct retro_core_option_v2_definition option_defs_id[] = {
       {
          { "VMU",      OPTION_VAL_VMU_ID },
          { "Purupuru", OPTION_VAL_PURUPURU_ID },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_ID },
          { "None",     OPTION_VAL_NONE_ID },
          { NULL, NULL },
       },
@@ -48432,6 +48897,7 @@ struct retro_core_option_v2_definition option_defs_id[] = {
       {
          { "VMU",      OPTION_VAL_VMU_ID },
          { "Purupuru", OPTION_VAL_PURUPURU_ID },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_ID },
          { "None",     OPTION_VAL_NONE_ID },
          { NULL, NULL },
       },
@@ -48462,6 +48928,7 @@ struct retro_core_option_v2_definition option_defs_id[] = {
       {
          { "VMU",      OPTION_VAL_VMU_ID },
          { "Purupuru", OPTION_VAL_PURUPURU_ID },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_ID },
          { "None",     OPTION_VAL_NONE_ID },
          { NULL, NULL },
       },
@@ -48502,6 +48969,19 @@ struct retro_core_option_v2_definition option_defs_id[] = {
       CORE_OPTION_NAME_VMU_SOUND_LABEL_ID,
       CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_ID,
       CORE_OPTION_NAME_VMU_SOUND_INFO_0_ID,
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",   NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_linked_vmu_storage",
+      CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_ID,
+      NULL,
+      CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_ID,
       NULL,
       "vmu",
       {
@@ -49388,6 +49868,7 @@ struct retro_core_options_v2 options_id = {
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_INFO_0_IT "Selezionare il dispositivo collegato allo slot di espansione A1 (porta A slot 1)."
 #define OPTION_VAL_VMU_IT NULL
 #define OPTION_VAL_PURUPURU_IT NULL
+#define OPTION_VAL_DREAMPOTATO_IT NULL
 #define OPTION_VAL_NONE_IT "Nessuno"
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_LABEL_IT "Dispositivo nello slot di espansione A2"
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_INFO_0_IT "Selezionare il dispositivo collegato allo slot di espansione A2 (porta A slot 2)."
@@ -49411,6 +49892,8 @@ struct retro_core_options_v2 options_id = {
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_IT "Suoni Delle Unità Di Memoria Visiva/Sistemi (VMU)"
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_IT "Suoni VMU"
 #define CORE_OPTION_NAME_VMU_SOUND_INFO_0_IT "Se abilitato, vengono riprodotti i segnali acustici VMU."
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_IT NULL
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_IT NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_IT "Mostra Le Impostazioni Di Visualizzazione della Visual Memory Unit/System (VMU)"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_IT "Mostra Impostazioni Di Visualizzazione VMU"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_IT "Abilita la configurazione dello schermo LCD VMU emulato, la dimensione, la posizione e il colore. NOTA: potrebbe essere necessario attivare il menu rapido affinché questa impostazione abbia effetto."
@@ -49646,7 +50129,7 @@ struct retro_core_option_v2_definition option_defs_it[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
 
    {
@@ -50417,6 +50900,7 @@ struct retro_core_option_v2_definition option_defs_it[] = {
       {
          { "VMU",      OPTION_VAL_VMU_IT },
          { "Purupuru", OPTION_VAL_PURUPURU_IT },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_IT },
          { "None",     OPTION_VAL_NONE_IT },
          { NULL, NULL },
       },
@@ -50447,6 +50931,7 @@ struct retro_core_option_v2_definition option_defs_it[] = {
       {
          { "VMU",      OPTION_VAL_VMU_IT },
          { "Purupuru", OPTION_VAL_PURUPURU_IT },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_IT },
          { "None",     OPTION_VAL_NONE_IT },
          { NULL, NULL },
       },
@@ -50477,6 +50962,7 @@ struct retro_core_option_v2_definition option_defs_it[] = {
       {
          { "VMU",      OPTION_VAL_VMU_IT },
          { "Purupuru", OPTION_VAL_PURUPURU_IT },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_IT },
          { "None",     OPTION_VAL_NONE_IT },
          { NULL, NULL },
       },
@@ -50507,6 +50993,7 @@ struct retro_core_option_v2_definition option_defs_it[] = {
       {
          { "VMU",      OPTION_VAL_VMU_IT },
          { "Purupuru", OPTION_VAL_PURUPURU_IT },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_IT },
          { "None",     OPTION_VAL_NONE_IT },
          { NULL, NULL },
       },
@@ -50547,6 +51034,19 @@ struct retro_core_option_v2_definition option_defs_it[] = {
       CORE_OPTION_NAME_VMU_SOUND_LABEL_IT,
       CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_IT,
       CORE_OPTION_NAME_VMU_SOUND_INFO_0_IT,
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",   NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_linked_vmu_storage",
+      CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_IT,
+      NULL,
+      CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_IT,
       NULL,
       "vmu",
       {
@@ -51433,6 +51933,7 @@ struct retro_core_options_v2 options_it = {
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_INFO_0_JA "拡張スロット A1 (ポート A スロット 1) に接続するデバイスを選択します。"
 #define OPTION_VAL_VMU_JA NULL
 #define OPTION_VAL_PURUPURU_JA "ぷるぷるぱっく"
+#define OPTION_VAL_DREAMPOTATO_JA NULL
 #define OPTION_VAL_NONE_JA "なし"
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_LABEL_JA "拡張スロット A2 デバイス"
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_INFO_0_JA "拡張スロット A2 (ポート A スロット 2) に接続するデバイスを選択します。"
@@ -51456,6 +51957,8 @@ struct retro_core_options_v2 options_it = {
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_JA "ビジュアルメモリユニット/システム (VMU) サウンド"
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_JA "VMU サウンド"
 #define CORE_OPTION_NAME_VMU_SOUND_INFO_0_JA "有効にすると、VMU ビープ音が再生されます。"
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_JA NULL
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_JA NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_JA "ビジュアルメモリユニット/システム (VMU) 表示設定を表示"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_JA "VMU 表示設定を表示"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_JA "エミュレートされた VMU 液晶ディスプレイの表示/非表示、サイズ、位置および色の設定を有効にします。注意: この設定を反映するにはクイックメニューを開き直す必要があります。"
@@ -51691,7 +52194,7 @@ struct retro_core_option_v2_definition option_defs_ja[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
 
    {
@@ -52462,6 +52965,7 @@ struct retro_core_option_v2_definition option_defs_ja[] = {
       {
          { "VMU",      OPTION_VAL_VMU_JA },
          { "Purupuru", OPTION_VAL_PURUPURU_JA },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_JA },
          { "None",     OPTION_VAL_NONE_JA },
          { NULL, NULL },
       },
@@ -52492,6 +52996,7 @@ struct retro_core_option_v2_definition option_defs_ja[] = {
       {
          { "VMU",      OPTION_VAL_VMU_JA },
          { "Purupuru", OPTION_VAL_PURUPURU_JA },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_JA },
          { "None",     OPTION_VAL_NONE_JA },
          { NULL, NULL },
       },
@@ -52522,6 +53027,7 @@ struct retro_core_option_v2_definition option_defs_ja[] = {
       {
          { "VMU",      OPTION_VAL_VMU_JA },
          { "Purupuru", OPTION_VAL_PURUPURU_JA },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_JA },
          { "None",     OPTION_VAL_NONE_JA },
          { NULL, NULL },
       },
@@ -52552,6 +53058,7 @@ struct retro_core_option_v2_definition option_defs_ja[] = {
       {
          { "VMU",      OPTION_VAL_VMU_JA },
          { "Purupuru", OPTION_VAL_PURUPURU_JA },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_JA },
          { "None",     OPTION_VAL_NONE_JA },
          { NULL, NULL },
       },
@@ -52592,6 +53099,19 @@ struct retro_core_option_v2_definition option_defs_ja[] = {
       CORE_OPTION_NAME_VMU_SOUND_LABEL_JA,
       CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_JA,
       CORE_OPTION_NAME_VMU_SOUND_INFO_0_JA,
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",   NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_linked_vmu_storage",
+      CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_JA,
+      NULL,
+      CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_JA,
       NULL,
       "vmu",
       {
@@ -53478,6 +53998,7 @@ struct retro_core_options_v2 options_ja = {
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_INFO_0_KO "확장 슬롯 A1(포트 A 슬롯 1)에 연결할 장치를 선택합니다."
 #define OPTION_VAL_VMU_KO NULL
 #define OPTION_VAL_PURUPURU_KO "진동 팩"
+#define OPTION_VAL_DREAMPOTATO_KO NULL
 #define OPTION_VAL_NONE_KO "없음"
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_LABEL_KO "확장 슬롯 A2의 장치"
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_INFO_0_KO "확장 슬롯 A2(포트 A 슬롯 2)에 연결할 장치를 선택합니다."
@@ -53501,6 +54022,8 @@ struct retro_core_options_v2 options_ja = {
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_KO "비주얼 메모리 유닛/시스템 (VMU) 사운드"
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_KO "VMU 사운드"
 #define CORE_OPTION_NAME_VMU_SOUND_INFO_0_KO "활성화하면 VMU 신호음이 재생됩니다."
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_KO "DreamPotato VMU 저장소 사용"
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_KO "VMU 데이터를 연결된 DreamPotato 에뮬레이터에 저장합니다. 활성화할 경우, 로컬 VMU 세이브 파일은 사용되지 않습니다."
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_KO "Visual Memory Unit/System(VMU) 디스플레이 설정 표시"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_KO "VMU 디스플레이 설정 표시"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_KO "에뮬레이트되는 VMU LCD 화면의 표시 여부, 크기, 위치, 색상 설정을 표시합니다. 주의: 변경 사항이 적용되려면 빠른 메뉴를 껐다 켜야 할 수도 있습니다."
@@ -53736,7 +54259,7 @@ struct retro_core_option_v2_definition option_defs_ko[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
 
    {
@@ -54507,6 +55030,7 @@ struct retro_core_option_v2_definition option_defs_ko[] = {
       {
          { "VMU",      OPTION_VAL_VMU_KO },
          { "Purupuru", OPTION_VAL_PURUPURU_KO },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_KO },
          { "None",     OPTION_VAL_NONE_KO },
          { NULL, NULL },
       },
@@ -54537,6 +55061,7 @@ struct retro_core_option_v2_definition option_defs_ko[] = {
       {
          { "VMU",      OPTION_VAL_VMU_KO },
          { "Purupuru", OPTION_VAL_PURUPURU_KO },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_KO },
          { "None",     OPTION_VAL_NONE_KO },
          { NULL, NULL },
       },
@@ -54567,6 +55092,7 @@ struct retro_core_option_v2_definition option_defs_ko[] = {
       {
          { "VMU",      OPTION_VAL_VMU_KO },
          { "Purupuru", OPTION_VAL_PURUPURU_KO },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_KO },
          { "None",     OPTION_VAL_NONE_KO },
          { NULL, NULL },
       },
@@ -54597,6 +55123,7 @@ struct retro_core_option_v2_definition option_defs_ko[] = {
       {
          { "VMU",      OPTION_VAL_VMU_KO },
          { "Purupuru", OPTION_VAL_PURUPURU_KO },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_KO },
          { "None",     OPTION_VAL_NONE_KO },
          { NULL, NULL },
       },
@@ -54637,6 +55164,19 @@ struct retro_core_option_v2_definition option_defs_ko[] = {
       CORE_OPTION_NAME_VMU_SOUND_LABEL_KO,
       CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_KO,
       CORE_OPTION_NAME_VMU_SOUND_INFO_0_KO,
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",   NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_linked_vmu_storage",
+      CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_KO,
+      NULL,
+      CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_KO,
       NULL,
       "vmu",
       {
@@ -55523,6 +56063,7 @@ struct retro_core_options_v2 options_ko = {
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_INFO_0_NL NULL
 #define OPTION_VAL_VMU_NL NULL
 #define OPTION_VAL_PURUPURU_NL NULL
+#define OPTION_VAL_DREAMPOTATO_NL NULL
 #define OPTION_VAL_NONE_NL "Geen"
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_LABEL_NL NULL
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_INFO_0_NL NULL
@@ -55546,6 +56087,8 @@ struct retro_core_options_v2 options_ko = {
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_NL NULL
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_NL NULL
 #define CORE_OPTION_NAME_VMU_SOUND_INFO_0_NL NULL
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_NL NULL
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_NL NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_NL NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_NL NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_NL NULL
@@ -55781,7 +56324,7 @@ struct retro_core_option_v2_definition option_defs_nl[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
 
    {
@@ -56552,6 +57095,7 @@ struct retro_core_option_v2_definition option_defs_nl[] = {
       {
          { "VMU",      OPTION_VAL_VMU_NL },
          { "Purupuru", OPTION_VAL_PURUPURU_NL },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_NL },
          { "None",     OPTION_VAL_NONE_NL },
          { NULL, NULL },
       },
@@ -56582,6 +57126,7 @@ struct retro_core_option_v2_definition option_defs_nl[] = {
       {
          { "VMU",      OPTION_VAL_VMU_NL },
          { "Purupuru", OPTION_VAL_PURUPURU_NL },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_NL },
          { "None",     OPTION_VAL_NONE_NL },
          { NULL, NULL },
       },
@@ -56612,6 +57157,7 @@ struct retro_core_option_v2_definition option_defs_nl[] = {
       {
          { "VMU",      OPTION_VAL_VMU_NL },
          { "Purupuru", OPTION_VAL_PURUPURU_NL },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_NL },
          { "None",     OPTION_VAL_NONE_NL },
          { NULL, NULL },
       },
@@ -56642,6 +57188,7 @@ struct retro_core_option_v2_definition option_defs_nl[] = {
       {
          { "VMU",      OPTION_VAL_VMU_NL },
          { "Purupuru", OPTION_VAL_PURUPURU_NL },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_NL },
          { "None",     OPTION_VAL_NONE_NL },
          { NULL, NULL },
       },
@@ -56682,6 +57229,19 @@ struct retro_core_option_v2_definition option_defs_nl[] = {
       CORE_OPTION_NAME_VMU_SOUND_LABEL_NL,
       CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_NL,
       CORE_OPTION_NAME_VMU_SOUND_INFO_0_NL,
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",   NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_linked_vmu_storage",
+      CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_NL,
+      NULL,
+      CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_NL,
       NULL,
       "vmu",
       {
@@ -57568,6 +58128,7 @@ struct retro_core_options_v2 options_nl = {
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_INFO_0_NO NULL
 #define OPTION_VAL_VMU_NO NULL
 #define OPTION_VAL_PURUPURU_NO NULL
+#define OPTION_VAL_DREAMPOTATO_NO NULL
 #define OPTION_VAL_NONE_NO "Ingen"
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_LABEL_NO NULL
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_INFO_0_NO NULL
@@ -57591,6 +58152,8 @@ struct retro_core_options_v2 options_nl = {
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_NO NULL
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_NO NULL
 #define CORE_OPTION_NAME_VMU_SOUND_INFO_0_NO NULL
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_NO NULL
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_NO NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_NO NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_NO NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_NO NULL
@@ -57826,7 +58389,7 @@ struct retro_core_option_v2_definition option_defs_no[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
 
    {
@@ -58597,6 +59160,7 @@ struct retro_core_option_v2_definition option_defs_no[] = {
       {
          { "VMU",      OPTION_VAL_VMU_NO },
          { "Purupuru", OPTION_VAL_PURUPURU_NO },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_NO },
          { "None",     OPTION_VAL_NONE_NO },
          { NULL, NULL },
       },
@@ -58627,6 +59191,7 @@ struct retro_core_option_v2_definition option_defs_no[] = {
       {
          { "VMU",      OPTION_VAL_VMU_NO },
          { "Purupuru", OPTION_VAL_PURUPURU_NO },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_NO },
          { "None",     OPTION_VAL_NONE_NO },
          { NULL, NULL },
       },
@@ -58657,6 +59222,7 @@ struct retro_core_option_v2_definition option_defs_no[] = {
       {
          { "VMU",      OPTION_VAL_VMU_NO },
          { "Purupuru", OPTION_VAL_PURUPURU_NO },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_NO },
          { "None",     OPTION_VAL_NONE_NO },
          { NULL, NULL },
       },
@@ -58687,6 +59253,7 @@ struct retro_core_option_v2_definition option_defs_no[] = {
       {
          { "VMU",      OPTION_VAL_VMU_NO },
          { "Purupuru", OPTION_VAL_PURUPURU_NO },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_NO },
          { "None",     OPTION_VAL_NONE_NO },
          { NULL, NULL },
       },
@@ -58727,6 +59294,19 @@ struct retro_core_option_v2_definition option_defs_no[] = {
       CORE_OPTION_NAME_VMU_SOUND_LABEL_NO,
       CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_NO,
       CORE_OPTION_NAME_VMU_SOUND_INFO_0_NO,
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",   NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_linked_vmu_storage",
+      CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_NO,
+      NULL,
+      CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_NO,
       NULL,
       "vmu",
       {
@@ -59613,6 +60193,7 @@ struct retro_core_options_v2 options_no = {
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_INFO_0_OR NULL
 #define OPTION_VAL_VMU_OR NULL
 #define OPTION_VAL_PURUPURU_OR NULL
+#define OPTION_VAL_DREAMPOTATO_OR NULL
 #define OPTION_VAL_NONE_OR NULL
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_LABEL_OR NULL
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_INFO_0_OR NULL
@@ -59636,6 +60217,8 @@ struct retro_core_options_v2 options_no = {
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_OR NULL
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_OR NULL
 #define CORE_OPTION_NAME_VMU_SOUND_INFO_0_OR NULL
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_OR NULL
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_OR NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_OR NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_OR NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_OR NULL
@@ -59871,7 +60454,7 @@ struct retro_core_option_v2_definition option_defs_or[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
 
    {
@@ -60642,6 +61225,7 @@ struct retro_core_option_v2_definition option_defs_or[] = {
       {
          { "VMU",      OPTION_VAL_VMU_OR },
          { "Purupuru", OPTION_VAL_PURUPURU_OR },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_OR },
          { "None",     OPTION_VAL_NONE_OR },
          { NULL, NULL },
       },
@@ -60672,6 +61256,7 @@ struct retro_core_option_v2_definition option_defs_or[] = {
       {
          { "VMU",      OPTION_VAL_VMU_OR },
          { "Purupuru", OPTION_VAL_PURUPURU_OR },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_OR },
          { "None",     OPTION_VAL_NONE_OR },
          { NULL, NULL },
       },
@@ -60702,6 +61287,7 @@ struct retro_core_option_v2_definition option_defs_or[] = {
       {
          { "VMU",      OPTION_VAL_VMU_OR },
          { "Purupuru", OPTION_VAL_PURUPURU_OR },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_OR },
          { "None",     OPTION_VAL_NONE_OR },
          { NULL, NULL },
       },
@@ -60732,6 +61318,7 @@ struct retro_core_option_v2_definition option_defs_or[] = {
       {
          { "VMU",      OPTION_VAL_VMU_OR },
          { "Purupuru", OPTION_VAL_PURUPURU_OR },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_OR },
          { "None",     OPTION_VAL_NONE_OR },
          { NULL, NULL },
       },
@@ -60772,6 +61359,19 @@ struct retro_core_option_v2_definition option_defs_or[] = {
       CORE_OPTION_NAME_VMU_SOUND_LABEL_OR,
       CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_OR,
       CORE_OPTION_NAME_VMU_SOUND_INFO_0_OR,
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",   NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_linked_vmu_storage",
+      CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_OR,
+      NULL,
+      CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_OR,
       NULL,
       "vmu",
       {
@@ -61658,6 +62258,7 @@ struct retro_core_options_v2 options_or = {
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_INFO_0_PL NULL
 #define OPTION_VAL_VMU_PL NULL
 #define OPTION_VAL_PURUPURU_PL NULL
+#define OPTION_VAL_DREAMPOTATO_PL NULL
 #define OPTION_VAL_NONE_PL "Brak"
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_LABEL_PL NULL
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_INFO_0_PL NULL
@@ -61681,6 +62282,8 @@ struct retro_core_options_v2 options_or = {
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_PL NULL
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_PL "Dźwięki VMU"
 #define CORE_OPTION_NAME_VMU_SOUND_INFO_0_PL "Po włączeniu dźwięk VMU jest odtwarzany."
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_PL NULL
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_PL NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_PL NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_PL NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_PL NULL
@@ -61916,7 +62519,7 @@ struct retro_core_option_v2_definition option_defs_pl[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
 
    {
@@ -62687,6 +63290,7 @@ struct retro_core_option_v2_definition option_defs_pl[] = {
       {
          { "VMU",      OPTION_VAL_VMU_PL },
          { "Purupuru", OPTION_VAL_PURUPURU_PL },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_PL },
          { "None",     OPTION_VAL_NONE_PL },
          { NULL, NULL },
       },
@@ -62717,6 +63321,7 @@ struct retro_core_option_v2_definition option_defs_pl[] = {
       {
          { "VMU",      OPTION_VAL_VMU_PL },
          { "Purupuru", OPTION_VAL_PURUPURU_PL },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_PL },
          { "None",     OPTION_VAL_NONE_PL },
          { NULL, NULL },
       },
@@ -62747,6 +63352,7 @@ struct retro_core_option_v2_definition option_defs_pl[] = {
       {
          { "VMU",      OPTION_VAL_VMU_PL },
          { "Purupuru", OPTION_VAL_PURUPURU_PL },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_PL },
          { "None",     OPTION_VAL_NONE_PL },
          { NULL, NULL },
       },
@@ -62777,6 +63383,7 @@ struct retro_core_option_v2_definition option_defs_pl[] = {
       {
          { "VMU",      OPTION_VAL_VMU_PL },
          { "Purupuru", OPTION_VAL_PURUPURU_PL },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_PL },
          { "None",     OPTION_VAL_NONE_PL },
          { NULL, NULL },
       },
@@ -62817,6 +63424,19 @@ struct retro_core_option_v2_definition option_defs_pl[] = {
       CORE_OPTION_NAME_VMU_SOUND_LABEL_PL,
       CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_PL,
       CORE_OPTION_NAME_VMU_SOUND_INFO_0_PL,
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",   NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_linked_vmu_storage",
+      CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_PL,
+      NULL,
+      CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_PL,
       NULL,
       "vmu",
       {
@@ -63703,6 +64323,7 @@ struct retro_core_options_v2 options_pl = {
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_INFO_0_PT_BR "Define o dispositivo conectado no encaixe de expansão A1 (porta A, compartimento 1)."
 #define OPTION_VAL_VMU_PT_BR NULL
 #define OPTION_VAL_PURUPURU_PT_BR "Aparelho de Vibração"
+#define OPTION_VAL_DREAMPOTATO_PT_BR NULL
 #define OPTION_VAL_NONE_PT_BR "Nenhum"
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_LABEL_PT_BR "Encaixe A2"
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_INFO_0_PT_BR "Define o dispositivo conectado no encaixe de expansão A2 (porta A, compartimento 2)."
@@ -63726,6 +64347,8 @@ struct retro_core_options_v2 options_pl = {
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_PT_BR "Som do VMU"
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_PT_BR "Som do VMU"
 #define CORE_OPTION_NAME_VMU_SOUND_INFO_0_PT_BR "Permite reproduzir os bipes do VMU."
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_PT_BR "Armazenamento de VMU do DreamPotato"
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_PT_BR "Ativa o armazenamento de dados de VMU no emulador DreamPotato conectado. Quando ativado, o arquivo de save local da VMU não é utilizado."
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_PT_BR "Mostrar configurações de tela do VMU"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_PT_BR "Mostrar configurações de tela do VMU"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_PT_BR "Permite a configuração de visibilidade, tamanho, posição e cor das telas LCD do VMU emulado.\nOBSERVAÇÃO: requer reinício do menu rápido."
@@ -63961,7 +64584,7 @@ struct retro_core_option_v2_definition option_defs_pt_br[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
 
    {
@@ -64732,6 +65355,7 @@ struct retro_core_option_v2_definition option_defs_pt_br[] = {
       {
          { "VMU",      OPTION_VAL_VMU_PT_BR },
          { "Purupuru", OPTION_VAL_PURUPURU_PT_BR },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_PT_BR },
          { "None",     OPTION_VAL_NONE_PT_BR },
          { NULL, NULL },
       },
@@ -64762,6 +65386,7 @@ struct retro_core_option_v2_definition option_defs_pt_br[] = {
       {
          { "VMU",      OPTION_VAL_VMU_PT_BR },
          { "Purupuru", OPTION_VAL_PURUPURU_PT_BR },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_PT_BR },
          { "None",     OPTION_VAL_NONE_PT_BR },
          { NULL, NULL },
       },
@@ -64792,6 +65417,7 @@ struct retro_core_option_v2_definition option_defs_pt_br[] = {
       {
          { "VMU",      OPTION_VAL_VMU_PT_BR },
          { "Purupuru", OPTION_VAL_PURUPURU_PT_BR },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_PT_BR },
          { "None",     OPTION_VAL_NONE_PT_BR },
          { NULL, NULL },
       },
@@ -64822,6 +65448,7 @@ struct retro_core_option_v2_definition option_defs_pt_br[] = {
       {
          { "VMU",      OPTION_VAL_VMU_PT_BR },
          { "Purupuru", OPTION_VAL_PURUPURU_PT_BR },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_PT_BR },
          { "None",     OPTION_VAL_NONE_PT_BR },
          { NULL, NULL },
       },
@@ -64862,6 +65489,19 @@ struct retro_core_option_v2_definition option_defs_pt_br[] = {
       CORE_OPTION_NAME_VMU_SOUND_LABEL_PT_BR,
       CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_PT_BR,
       CORE_OPTION_NAME_VMU_SOUND_INFO_0_PT_BR,
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",   NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_linked_vmu_storage",
+      CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_PT_BR,
+      NULL,
+      CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_PT_BR,
       NULL,
       "vmu",
       {
@@ -65748,6 +66388,7 @@ struct retro_core_options_v2 options_pt_br = {
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_INFO_0_PT_PT NULL
 #define OPTION_VAL_VMU_PT_PT NULL
 #define OPTION_VAL_PURUPURU_PT_PT NULL
+#define OPTION_VAL_DREAMPOTATO_PT_PT NULL
 #define OPTION_VAL_NONE_PT_PT "Não partilhar"
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_LABEL_PT_PT NULL
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_INFO_0_PT_PT NULL
@@ -65771,6 +66412,8 @@ struct retro_core_options_v2 options_pt_br = {
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_PT_PT NULL
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_PT_PT NULL
 #define CORE_OPTION_NAME_VMU_SOUND_INFO_0_PT_PT NULL
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_PT_PT NULL
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_PT_PT NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_PT_PT NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_PT_PT NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_PT_PT NULL
@@ -66006,7 +66649,7 @@ struct retro_core_option_v2_definition option_defs_pt_pt[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
 
    {
@@ -66777,6 +67420,7 @@ struct retro_core_option_v2_definition option_defs_pt_pt[] = {
       {
          { "VMU",      OPTION_VAL_VMU_PT_PT },
          { "Purupuru", OPTION_VAL_PURUPURU_PT_PT },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_PT_PT },
          { "None",     OPTION_VAL_NONE_PT_PT },
          { NULL, NULL },
       },
@@ -66807,6 +67451,7 @@ struct retro_core_option_v2_definition option_defs_pt_pt[] = {
       {
          { "VMU",      OPTION_VAL_VMU_PT_PT },
          { "Purupuru", OPTION_VAL_PURUPURU_PT_PT },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_PT_PT },
          { "None",     OPTION_VAL_NONE_PT_PT },
          { NULL, NULL },
       },
@@ -66837,6 +67482,7 @@ struct retro_core_option_v2_definition option_defs_pt_pt[] = {
       {
          { "VMU",      OPTION_VAL_VMU_PT_PT },
          { "Purupuru", OPTION_VAL_PURUPURU_PT_PT },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_PT_PT },
          { "None",     OPTION_VAL_NONE_PT_PT },
          { NULL, NULL },
       },
@@ -66867,6 +67513,7 @@ struct retro_core_option_v2_definition option_defs_pt_pt[] = {
       {
          { "VMU",      OPTION_VAL_VMU_PT_PT },
          { "Purupuru", OPTION_VAL_PURUPURU_PT_PT },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_PT_PT },
          { "None",     OPTION_VAL_NONE_PT_PT },
          { NULL, NULL },
       },
@@ -66907,6 +67554,19 @@ struct retro_core_option_v2_definition option_defs_pt_pt[] = {
       CORE_OPTION_NAME_VMU_SOUND_LABEL_PT_PT,
       CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_PT_PT,
       CORE_OPTION_NAME_VMU_SOUND_INFO_0_PT_PT,
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",   NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_linked_vmu_storage",
+      CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_PT_PT,
+      NULL,
+      CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_PT_PT,
       NULL,
       "vmu",
       {
@@ -67793,6 +68453,7 @@ struct retro_core_options_v2 options_pt_pt = {
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_INFO_0_RU "Выбор устройства, включенного в слот расширения A1 (порт А слот 1)."
 #define OPTION_VAL_VMU_RU NULL
 #define OPTION_VAL_PURUPURU_RU "Вибропак"
+#define OPTION_VAL_DREAMPOTATO_RU NULL
 #define OPTION_VAL_NONE_RU "Нет"
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_LABEL_RU "Устройство в слоте расширения A2"
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_INFO_0_RU "Выбор устройства, включенного в слот расширения A2 (порт А слот 2)."
@@ -67816,6 +68477,8 @@ struct retro_core_options_v2 options_pt_pt = {
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_RU "Звуковые сигналы визуальных карт памяти (VMU)"
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_RU "Сигналы VMU"
 #define CORE_OPTION_NAME_VMU_SOUND_INFO_0_RU "Включает воспроизведение сигналов VMU."
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_RU NULL
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_RU NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_RU "Показывать настройки отображения визуальных карт памяти (VMU)"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_RU "Показывать настройки отображения VMU"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_RU "Включает конфигурацию размера, положения, цвета и видимости эмулируемого ЖК-экрана VMU. Для применения настройки требуется переключить быстрое меню."
@@ -68051,7 +68714,7 @@ struct retro_core_option_v2_definition option_defs_ru[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
 
    {
@@ -68822,6 +69485,7 @@ struct retro_core_option_v2_definition option_defs_ru[] = {
       {
          { "VMU",      OPTION_VAL_VMU_RU },
          { "Purupuru", OPTION_VAL_PURUPURU_RU },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_RU },
          { "None",     OPTION_VAL_NONE_RU },
          { NULL, NULL },
       },
@@ -68852,6 +69516,7 @@ struct retro_core_option_v2_definition option_defs_ru[] = {
       {
          { "VMU",      OPTION_VAL_VMU_RU },
          { "Purupuru", OPTION_VAL_PURUPURU_RU },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_RU },
          { "None",     OPTION_VAL_NONE_RU },
          { NULL, NULL },
       },
@@ -68882,6 +69547,7 @@ struct retro_core_option_v2_definition option_defs_ru[] = {
       {
          { "VMU",      OPTION_VAL_VMU_RU },
          { "Purupuru", OPTION_VAL_PURUPURU_RU },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_RU },
          { "None",     OPTION_VAL_NONE_RU },
          { NULL, NULL },
       },
@@ -68912,6 +69578,7 @@ struct retro_core_option_v2_definition option_defs_ru[] = {
       {
          { "VMU",      OPTION_VAL_VMU_RU },
          { "Purupuru", OPTION_VAL_PURUPURU_RU },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_RU },
          { "None",     OPTION_VAL_NONE_RU },
          { NULL, NULL },
       },
@@ -68952,6 +69619,19 @@ struct retro_core_option_v2_definition option_defs_ru[] = {
       CORE_OPTION_NAME_VMU_SOUND_LABEL_RU,
       CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_RU,
       CORE_OPTION_NAME_VMU_SOUND_INFO_0_RU,
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",   NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_linked_vmu_storage",
+      CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_RU,
+      NULL,
+      CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_RU,
       NULL,
       "vmu",
       {
@@ -69838,6 +70518,7 @@ struct retro_core_options_v2 options_ru = {
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_INFO_0_SK NULL
 #define OPTION_VAL_VMU_SK NULL
 #define OPTION_VAL_PURUPURU_SK NULL
+#define OPTION_VAL_DREAMPOTATO_SK NULL
 #define OPTION_VAL_NONE_SK "Žiadne"
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_LABEL_SK NULL
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_INFO_0_SK NULL
@@ -69861,6 +70542,8 @@ struct retro_core_options_v2 options_ru = {
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_SK NULL
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_SK NULL
 #define CORE_OPTION_NAME_VMU_SOUND_INFO_0_SK NULL
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_SK NULL
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_SK NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_SK NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_SK NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_SK NULL
@@ -70096,7 +70779,7 @@ struct retro_core_option_v2_definition option_defs_sk[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
 
    {
@@ -70867,6 +71550,7 @@ struct retro_core_option_v2_definition option_defs_sk[] = {
       {
          { "VMU",      OPTION_VAL_VMU_SK },
          { "Purupuru", OPTION_VAL_PURUPURU_SK },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_SK },
          { "None",     OPTION_VAL_NONE_SK },
          { NULL, NULL },
       },
@@ -70897,6 +71581,7 @@ struct retro_core_option_v2_definition option_defs_sk[] = {
       {
          { "VMU",      OPTION_VAL_VMU_SK },
          { "Purupuru", OPTION_VAL_PURUPURU_SK },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_SK },
          { "None",     OPTION_VAL_NONE_SK },
          { NULL, NULL },
       },
@@ -70927,6 +71612,7 @@ struct retro_core_option_v2_definition option_defs_sk[] = {
       {
          { "VMU",      OPTION_VAL_VMU_SK },
          { "Purupuru", OPTION_VAL_PURUPURU_SK },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_SK },
          { "None",     OPTION_VAL_NONE_SK },
          { NULL, NULL },
       },
@@ -70957,6 +71643,7 @@ struct retro_core_option_v2_definition option_defs_sk[] = {
       {
          { "VMU",      OPTION_VAL_VMU_SK },
          { "Purupuru", OPTION_VAL_PURUPURU_SK },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_SK },
          { "None",     OPTION_VAL_NONE_SK },
          { NULL, NULL },
       },
@@ -70997,6 +71684,19 @@ struct retro_core_option_v2_definition option_defs_sk[] = {
       CORE_OPTION_NAME_VMU_SOUND_LABEL_SK,
       CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_SK,
       CORE_OPTION_NAME_VMU_SOUND_INFO_0_SK,
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",   NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_linked_vmu_storage",
+      CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_SK,
+      NULL,
+      CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_SK,
       NULL,
       "vmu",
       {
@@ -71883,6 +72583,7 @@ struct retro_core_options_v2 options_sk = {
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_INFO_0_SR NULL
 #define OPTION_VAL_VMU_SR NULL
 #define OPTION_VAL_PURUPURU_SR NULL
+#define OPTION_VAL_DREAMPOTATO_SR NULL
 #define OPTION_VAL_NONE_SR NULL
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_LABEL_SR NULL
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_INFO_0_SR NULL
@@ -71906,6 +72607,8 @@ struct retro_core_options_v2 options_sk = {
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_SR NULL
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_SR NULL
 #define CORE_OPTION_NAME_VMU_SOUND_INFO_0_SR NULL
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_SR NULL
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_SR NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_SR NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_SR NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_SR NULL
@@ -72141,7 +72844,7 @@ struct retro_core_option_v2_definition option_defs_sr[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
 
    {
@@ -72912,6 +73615,7 @@ struct retro_core_option_v2_definition option_defs_sr[] = {
       {
          { "VMU",      OPTION_VAL_VMU_SR },
          { "Purupuru", OPTION_VAL_PURUPURU_SR },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_SR },
          { "None",     OPTION_VAL_NONE_SR },
          { NULL, NULL },
       },
@@ -72942,6 +73646,7 @@ struct retro_core_option_v2_definition option_defs_sr[] = {
       {
          { "VMU",      OPTION_VAL_VMU_SR },
          { "Purupuru", OPTION_VAL_PURUPURU_SR },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_SR },
          { "None",     OPTION_VAL_NONE_SR },
          { NULL, NULL },
       },
@@ -72972,6 +73677,7 @@ struct retro_core_option_v2_definition option_defs_sr[] = {
       {
          { "VMU",      OPTION_VAL_VMU_SR },
          { "Purupuru", OPTION_VAL_PURUPURU_SR },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_SR },
          { "None",     OPTION_VAL_NONE_SR },
          { NULL, NULL },
       },
@@ -73002,6 +73708,7 @@ struct retro_core_option_v2_definition option_defs_sr[] = {
       {
          { "VMU",      OPTION_VAL_VMU_SR },
          { "Purupuru", OPTION_VAL_PURUPURU_SR },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_SR },
          { "None",     OPTION_VAL_NONE_SR },
          { NULL, NULL },
       },
@@ -73042,6 +73749,19 @@ struct retro_core_option_v2_definition option_defs_sr[] = {
       CORE_OPTION_NAME_VMU_SOUND_LABEL_SR,
       CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_SR,
       CORE_OPTION_NAME_VMU_SOUND_INFO_0_SR,
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",   NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_linked_vmu_storage",
+      CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_SR,
+      NULL,
+      CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_SR,
       NULL,
       "vmu",
       {
@@ -73928,6 +74648,7 @@ struct retro_core_options_v2 options_sr = {
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_INFO_0_SV "Välj den enhet som är ansluten till expansionsfack A1 (port A plats 1)."
 #define OPTION_VAL_VMU_SV NULL
 #define OPTION_VAL_PURUPURU_SV "Vibrationspaket"
+#define OPTION_VAL_DREAMPOTATO_SV NULL
 #define OPTION_VAL_NONE_SV "Ingen"
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_LABEL_SV "Enhet i expansionsfack A2"
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_INFO_0_SV "Välj den enhet som är ansluten till expansionsfack A2 (port A plats 2)."
@@ -73951,6 +74672,8 @@ struct retro_core_options_v2 options_sr = {
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_SV "Ljud för visuella minnesenheter/System (VMU)"
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_SV "VMU-ljud"
 #define CORE_OPTION_NAME_VMU_SOUND_INFO_0_SV "När detta är aktiverad, spelas VMU-pipen."
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_SV "DreamPotato VMU-lagring"
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_SV "Aktivera lagring av VMU-data på den anslutna DreamPotato-emulatorn. När denna funktion är aktiverad används inte den lokala VMU-sparfil."
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_SV "Visa inställningar för Visual Memory Unit/System (VMU)-skärmen"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_SV "Visa VMU-skärminställningar"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_SV "Möjliggör konfiguration av emulerad VMU LCD-skärmens synlighet, storlek, position och färg. OBS!: Snabbmenyn kan behöva aktiveras/dras fram för att den här inställningen ska träda i kraft."
@@ -74186,7 +74909,7 @@ struct retro_core_option_v2_definition option_defs_sv[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
 
    {
@@ -74957,6 +75680,7 @@ struct retro_core_option_v2_definition option_defs_sv[] = {
       {
          { "VMU",      OPTION_VAL_VMU_SV },
          { "Purupuru", OPTION_VAL_PURUPURU_SV },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_SV },
          { "None",     OPTION_VAL_NONE_SV },
          { NULL, NULL },
       },
@@ -74987,6 +75711,7 @@ struct retro_core_option_v2_definition option_defs_sv[] = {
       {
          { "VMU",      OPTION_VAL_VMU_SV },
          { "Purupuru", OPTION_VAL_PURUPURU_SV },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_SV },
          { "None",     OPTION_VAL_NONE_SV },
          { NULL, NULL },
       },
@@ -75017,6 +75742,7 @@ struct retro_core_option_v2_definition option_defs_sv[] = {
       {
          { "VMU",      OPTION_VAL_VMU_SV },
          { "Purupuru", OPTION_VAL_PURUPURU_SV },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_SV },
          { "None",     OPTION_VAL_NONE_SV },
          { NULL, NULL },
       },
@@ -75047,6 +75773,7 @@ struct retro_core_option_v2_definition option_defs_sv[] = {
       {
          { "VMU",      OPTION_VAL_VMU_SV },
          { "Purupuru", OPTION_VAL_PURUPURU_SV },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_SV },
          { "None",     OPTION_VAL_NONE_SV },
          { NULL, NULL },
       },
@@ -75087,6 +75814,19 @@ struct retro_core_option_v2_definition option_defs_sv[] = {
       CORE_OPTION_NAME_VMU_SOUND_LABEL_SV,
       CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_SV,
       CORE_OPTION_NAME_VMU_SOUND_INFO_0_SV,
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",   NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_linked_vmu_storage",
+      CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_SV,
+      NULL,
+      CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_SV,
       NULL,
       "vmu",
       {
@@ -75973,6 +76713,7 @@ struct retro_core_options_v2 options_sv = {
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_INFO_0_TR "Genişletme yuvası A1 için takılı cihazı seçin (port A yuva 1)."
 #define OPTION_VAL_VMU_TR NULL
 #define OPTION_VAL_PURUPURU_TR "Titreşim Paketi"
+#define OPTION_VAL_DREAMPOTATO_TR NULL
 #define OPTION_VAL_NONE_TR "Yok"
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_LABEL_TR "Genişletme Yuvası Cihaz A2"
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_INFO_0_TR "Genişletme yuvası A2 için takılı cihazı seçin (port A yuva 2)."
@@ -75996,6 +76737,8 @@ struct retro_core_options_v2 options_sv = {
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_TR "Görsel Bellek Birimleri/Sistemleri (VMU) Sesleri"
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_TR "VMU Sesleri"
 #define CORE_OPTION_NAME_VMU_SOUND_INFO_0_TR "Etkinleştirildiğinde VMU bip sesleri oynatılır."
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_TR NULL
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_TR NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_TR "Görsel Bellek Birimi/Sistem (VMU) Görüntü Ayarlarını Göster"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_TR "VMU Görüntü Ayarlarını Göster"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_TR "Taklit edilmiş VMU LCD ekran görünürlüğünün, boyutunun, konumunun ve renginin yapılandırılmasını etkinleştirin. NOT: Bu ayarın etkili olması için Hızlı Menü'nün değiştirilmesi gerekebilir."
@@ -76231,7 +76974,7 @@ struct retro_core_option_v2_definition option_defs_tr[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
 
    {
@@ -77002,6 +77745,7 @@ struct retro_core_option_v2_definition option_defs_tr[] = {
       {
          { "VMU",      OPTION_VAL_VMU_TR },
          { "Purupuru", OPTION_VAL_PURUPURU_TR },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_TR },
          { "None",     OPTION_VAL_NONE_TR },
          { NULL, NULL },
       },
@@ -77032,6 +77776,7 @@ struct retro_core_option_v2_definition option_defs_tr[] = {
       {
          { "VMU",      OPTION_VAL_VMU_TR },
          { "Purupuru", OPTION_VAL_PURUPURU_TR },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_TR },
          { "None",     OPTION_VAL_NONE_TR },
          { NULL, NULL },
       },
@@ -77062,6 +77807,7 @@ struct retro_core_option_v2_definition option_defs_tr[] = {
       {
          { "VMU",      OPTION_VAL_VMU_TR },
          { "Purupuru", OPTION_VAL_PURUPURU_TR },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_TR },
          { "None",     OPTION_VAL_NONE_TR },
          { NULL, NULL },
       },
@@ -77092,6 +77838,7 @@ struct retro_core_option_v2_definition option_defs_tr[] = {
       {
          { "VMU",      OPTION_VAL_VMU_TR },
          { "Purupuru", OPTION_VAL_PURUPURU_TR },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_TR },
          { "None",     OPTION_VAL_NONE_TR },
          { NULL, NULL },
       },
@@ -77132,6 +77879,19 @@ struct retro_core_option_v2_definition option_defs_tr[] = {
       CORE_OPTION_NAME_VMU_SOUND_LABEL_TR,
       CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_TR,
       CORE_OPTION_NAME_VMU_SOUND_INFO_0_TR,
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",   NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_linked_vmu_storage",
+      CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_TR,
+      NULL,
+      CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_TR,
       NULL,
       "vmu",
       {
@@ -78018,6 +78778,7 @@ struct retro_core_options_v2 options_tr = {
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_INFO_0_TT NULL
 #define OPTION_VAL_VMU_TT NULL
 #define OPTION_VAL_PURUPURU_TT NULL
+#define OPTION_VAL_DREAMPOTATO_TT NULL
 #define OPTION_VAL_NONE_TT NULL
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_LABEL_TT NULL
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_INFO_0_TT NULL
@@ -78041,6 +78802,8 @@ struct retro_core_options_v2 options_tr = {
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_TT NULL
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_TT NULL
 #define CORE_OPTION_NAME_VMU_SOUND_INFO_0_TT NULL
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_TT NULL
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_TT NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_TT NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_TT NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_TT NULL
@@ -78276,7 +79039,7 @@ struct retro_core_option_v2_definition option_defs_tt[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
 
    {
@@ -79047,6 +79810,7 @@ struct retro_core_option_v2_definition option_defs_tt[] = {
       {
          { "VMU",      OPTION_VAL_VMU_TT },
          { "Purupuru", OPTION_VAL_PURUPURU_TT },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_TT },
          { "None",     OPTION_VAL_NONE_TT },
          { NULL, NULL },
       },
@@ -79077,6 +79841,7 @@ struct retro_core_option_v2_definition option_defs_tt[] = {
       {
          { "VMU",      OPTION_VAL_VMU_TT },
          { "Purupuru", OPTION_VAL_PURUPURU_TT },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_TT },
          { "None",     OPTION_VAL_NONE_TT },
          { NULL, NULL },
       },
@@ -79107,6 +79872,7 @@ struct retro_core_option_v2_definition option_defs_tt[] = {
       {
          { "VMU",      OPTION_VAL_VMU_TT },
          { "Purupuru", OPTION_VAL_PURUPURU_TT },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_TT },
          { "None",     OPTION_VAL_NONE_TT },
          { NULL, NULL },
       },
@@ -79137,6 +79903,7 @@ struct retro_core_option_v2_definition option_defs_tt[] = {
       {
          { "VMU",      OPTION_VAL_VMU_TT },
          { "Purupuru", OPTION_VAL_PURUPURU_TT },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_TT },
          { "None",     OPTION_VAL_NONE_TT },
          { NULL, NULL },
       },
@@ -79177,6 +79944,19 @@ struct retro_core_option_v2_definition option_defs_tt[] = {
       CORE_OPTION_NAME_VMU_SOUND_LABEL_TT,
       CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_TT,
       CORE_OPTION_NAME_VMU_SOUND_INFO_0_TT,
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",   NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_linked_vmu_storage",
+      CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_TT,
+      NULL,
+      CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_TT,
       NULL,
       "vmu",
       {
@@ -80063,6 +80843,7 @@ struct retro_core_options_v2 options_tt = {
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_INFO_0_UK "Виберіть пристрій підключений до слоту розширення A1 (порт A слот 1)."
 #define OPTION_VAL_VMU_UK "ВМУ"
 #define OPTION_VAL_PURUPURU_UK "Пакунок Вібрації"
+#define OPTION_VAL_DREAMPOTATO_UK NULL
 #define OPTION_VAL_NONE_UK "Немає"
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_LABEL_UK "Пристрій у слоті розширення A2"
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_INFO_0_UK "Виберіть пристрій підключений до слоту розширення A2 (порт A slot 2)."
@@ -80086,6 +80867,8 @@ struct retro_core_options_v2 options_tt = {
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_UK "Звуки візуальної пам'яті/системи (VMU)"
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_UK "Звук VMU"
 #define CORE_OPTION_NAME_VMU_SOUND_INFO_0_UK "Коли увімкнено, відео відтворюються VMU біки."
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_UK NULL
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_UK NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_UK "Показати параметри показу юніту/системи (VMU)"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_UK "Показати параметри показу vMU"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_UK "Увімкніть конфігурацію емуляції видимості екрана VMU LCD, розміру, позиції та кольору. Примітка: Швидке Меню потрібно перемкнути для застосування цього параметру."
@@ -80321,7 +81104,7 @@ struct retro_core_option_v2_definition option_defs_uk[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
 
    {
@@ -81092,6 +81875,7 @@ struct retro_core_option_v2_definition option_defs_uk[] = {
       {
          { "VMU",      OPTION_VAL_VMU_UK },
          { "Purupuru", OPTION_VAL_PURUPURU_UK },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_UK },
          { "None",     OPTION_VAL_NONE_UK },
          { NULL, NULL },
       },
@@ -81122,6 +81906,7 @@ struct retro_core_option_v2_definition option_defs_uk[] = {
       {
          { "VMU",      OPTION_VAL_VMU_UK },
          { "Purupuru", OPTION_VAL_PURUPURU_UK },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_UK },
          { "None",     OPTION_VAL_NONE_UK },
          { NULL, NULL },
       },
@@ -81152,6 +81937,7 @@ struct retro_core_option_v2_definition option_defs_uk[] = {
       {
          { "VMU",      OPTION_VAL_VMU_UK },
          { "Purupuru", OPTION_VAL_PURUPURU_UK },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_UK },
          { "None",     OPTION_VAL_NONE_UK },
          { NULL, NULL },
       },
@@ -81182,6 +81968,7 @@ struct retro_core_option_v2_definition option_defs_uk[] = {
       {
          { "VMU",      OPTION_VAL_VMU_UK },
          { "Purupuru", OPTION_VAL_PURUPURU_UK },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_UK },
          { "None",     OPTION_VAL_NONE_UK },
          { NULL, NULL },
       },
@@ -81222,6 +82009,19 @@ struct retro_core_option_v2_definition option_defs_uk[] = {
       CORE_OPTION_NAME_VMU_SOUND_LABEL_UK,
       CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_UK,
       CORE_OPTION_NAME_VMU_SOUND_INFO_0_UK,
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",   NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_linked_vmu_storage",
+      CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_UK,
+      NULL,
+      CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_UK,
       NULL,
       "vmu",
       {
@@ -82108,6 +82908,7 @@ struct retro_core_options_v2 options_uk = {
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_INFO_0_VAL NULL
 #define OPTION_VAL_VMU_VAL NULL
 #define OPTION_VAL_PURUPURU_VAL NULL
+#define OPTION_VAL_DREAMPOTATO_VAL NULL
 #define OPTION_VAL_NONE_VAL "Cap"
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_LABEL_VAL NULL
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_INFO_0_VAL NULL
@@ -82131,6 +82932,8 @@ struct retro_core_options_v2 options_uk = {
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_VAL NULL
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_VAL NULL
 #define CORE_OPTION_NAME_VMU_SOUND_INFO_0_VAL NULL
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_VAL NULL
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_VAL NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_VAL NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_VAL NULL
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_VAL NULL
@@ -82366,7 +83169,7 @@ struct retro_core_option_v2_definition option_defs_val[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
 
    {
@@ -83137,6 +83940,7 @@ struct retro_core_option_v2_definition option_defs_val[] = {
       {
          { "VMU",      OPTION_VAL_VMU_VAL },
          { "Purupuru", OPTION_VAL_PURUPURU_VAL },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_VAL },
          { "None",     OPTION_VAL_NONE_VAL },
          { NULL, NULL },
       },
@@ -83167,6 +83971,7 @@ struct retro_core_option_v2_definition option_defs_val[] = {
       {
          { "VMU",      OPTION_VAL_VMU_VAL },
          { "Purupuru", OPTION_VAL_PURUPURU_VAL },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_VAL },
          { "None",     OPTION_VAL_NONE_VAL },
          { NULL, NULL },
       },
@@ -83197,6 +84002,7 @@ struct retro_core_option_v2_definition option_defs_val[] = {
       {
          { "VMU",      OPTION_VAL_VMU_VAL },
          { "Purupuru", OPTION_VAL_PURUPURU_VAL },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_VAL },
          { "None",     OPTION_VAL_NONE_VAL },
          { NULL, NULL },
       },
@@ -83227,6 +84033,7 @@ struct retro_core_option_v2_definition option_defs_val[] = {
       {
          { "VMU",      OPTION_VAL_VMU_VAL },
          { "Purupuru", OPTION_VAL_PURUPURU_VAL },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_VAL },
          { "None",     OPTION_VAL_NONE_VAL },
          { NULL, NULL },
       },
@@ -83267,6 +84074,19 @@ struct retro_core_option_v2_definition option_defs_val[] = {
       CORE_OPTION_NAME_VMU_SOUND_LABEL_VAL,
       CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_VAL,
       CORE_OPTION_NAME_VMU_SOUND_INFO_0_VAL,
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",   NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_linked_vmu_storage",
+      CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_VAL,
+      NULL,
+      CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_VAL,
       NULL,
       "vmu",
       {
@@ -84153,6 +84973,7 @@ struct retro_core_options_v2 options_val = {
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_INFO_0_VN "Chọn thiết bị cắm ở khe mở rộng A1 (cổng A, khe 1)."
 #define OPTION_VAL_VMU_VN NULL
 #define OPTION_VAL_PURUPURU_VN "Gói rung tay cầm"
+#define OPTION_VAL_DREAMPOTATO_VN NULL
 #define OPTION_VAL_NONE_VN "Không"
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_LABEL_VN "Thiết bị trong khe mở rộng A2"
 #define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_INFO_0_VN "Chọn thiết bị cắm vào khe mở rộng A2 (cổng A khe 2)."
@@ -84176,6 +84997,8 @@ struct retro_core_options_v2 options_val = {
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_VN "Âm thanh của Bộ nhớ ảo/VMU"
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_VN "Âm thanh VMU"
 #define CORE_OPTION_NAME_VMU_SOUND_INFO_0_VN "Khi bật, VMU sẽ phát tiếng bíp."
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_VN "Bộ lưu trữ VMU DreamPotato"
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_VN "Cho phép lưu trữ dữ liệu VMU trên trình giả lập DreamPotato đã kết nối. Khi được bật, tệp lưu VMU cục bộ sẽ không được sử dụng."
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_VN "Hiển thị cài đặt Bộ Nhớ Hình Ảnh/Hệ thống (VMU)"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_VN "Hiển thị Cài đặt VMU"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_VN "Bật cấu hình hiển thị màn hình LCD VMU giả lập, bao gồm: độ hiển thị, kích thước, vị trí và màu sắc.LƯU Ý: Có thể cần mở lại Menu Nhanh để thiết lập có hiệu lực."
@@ -84411,7 +85234,7 @@ struct retro_core_option_v2_definition option_defs_vn[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
+      "enabled",
    },
 
    {
@@ -85182,6 +86005,7 @@ struct retro_core_option_v2_definition option_defs_vn[] = {
       {
          { "VMU",      OPTION_VAL_VMU_VN },
          { "Purupuru", OPTION_VAL_PURUPURU_VN },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_VN },
          { "None",     OPTION_VAL_NONE_VN },
          { NULL, NULL },
       },
@@ -85212,6 +86036,7 @@ struct retro_core_option_v2_definition option_defs_vn[] = {
       {
          { "VMU",      OPTION_VAL_VMU_VN },
          { "Purupuru", OPTION_VAL_PURUPURU_VN },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_VN },
          { "None",     OPTION_VAL_NONE_VN },
          { NULL, NULL },
       },
@@ -85242,6 +86067,7 @@ struct retro_core_option_v2_definition option_defs_vn[] = {
       {
          { "VMU",      OPTION_VAL_VMU_VN },
          { "Purupuru", OPTION_VAL_PURUPURU_VN },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_VN },
          { "None",     OPTION_VAL_NONE_VN },
          { NULL, NULL },
       },
@@ -85272,6 +86098,7 @@ struct retro_core_option_v2_definition option_defs_vn[] = {
       {
          { "VMU",      OPTION_VAL_VMU_VN },
          { "Purupuru", OPTION_VAL_PURUPURU_VN },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_VN },
          { "None",     OPTION_VAL_NONE_VN },
          { NULL, NULL },
       },
@@ -85312,6 +86139,19 @@ struct retro_core_option_v2_definition option_defs_vn[] = {
       CORE_OPTION_NAME_VMU_SOUND_LABEL_VN,
       CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_VN,
       CORE_OPTION_NAME_VMU_SOUND_INFO_0_VN,
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",   NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_linked_vmu_storage",
+      CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_VN,
+      NULL,
+      CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_VN,
       NULL,
       "vmu",
       {
