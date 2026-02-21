@@ -78,6 +78,23 @@ static inline u32 findMemoryType(vk::PhysicalDeviceMemoryProperties const& memor
 	return typeIndex;
 }
 
+static inline void addPointerToChain(void* head, const void* ptr)
+{
+	vk::BaseInStructure* prevInStructure = static_cast<vk::BaseInStructure*>(head);
+	while (prevInStructure->pNext)
+	{
+		// Structure already in chain
+		if (prevInStructure->pNext == ptr)
+		{
+			return;
+		}
+		prevInStructure = const_cast<vk::BaseInStructure*>(prevInStructure->pNext);
+	}
+
+	// Add structure to end
+	prevInStructure->pNext = static_cast<const vk::BaseInStructure*>(ptr);
+}
+
 static const char GouraudSource[] = R"(
 #if pp_Gouraud == 0
 #define INTERPOLATION flat
