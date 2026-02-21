@@ -3,18 +3,18 @@
 
 	This file is part of Flycast.
 
-    Flycast is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 2 of the License, or
-    (at your option) any later version.
+	Flycast is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 2 of the License, or
+	(at your option) any later version.
 
-    Flycast is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+	Flycast is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
+	You should have received a copy of the GNU General Public License
+	along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #pragma once
 #include "types.h"
@@ -65,6 +65,24 @@ public:
 		set_button(DC_BTN_D, 4);				// Q (Coin)
 		set_button(EMU_BTN_SCREENSHOT, 69);		// F12
 
+		// Save/Load State Defaults (Slots 1-10)
+		// F1 (0x3A) to F10 (0x43)
+		for (int i = 0; i < 10; i++)
+		{
+			u32 fkey = 0x3A + i;
+
+			// Load: F#
+			set_button((DreamcastKey)(EMU_BTN_LOAD_SLOT_1 + i), fkey);
+
+			// Save: Left Shift (0xE1) + F#
+			InputMapping::InputSet saveCombo;
+			saveCombo.insert_back(InputMapping::InputDef::from_button(0xE1)); // Left Shift
+			saveCombo.insert_back(InputMapping::InputDef::from_button(fkey)); // F#
+
+			// By setting sequential to true, the user MUST press Left Shift first, then F#
+			set_button((DreamcastKey)(EMU_BTN_SAVE_SLOT_1 + i), InputMapping::ButtonCombo{ saveCombo, true });
+		}
+
 		dirty = false;
 	}
 };
@@ -90,7 +108,7 @@ protected:
 		// then check if the "Bypass Emulated Keyboard" hotkey is held and we're not in GUI,
 		// if so: send emu hotkeys only and return earlier.
 		if ((settings.platform.isConsole() && portIsValid && config::MapleMainDevices[port] == MDT_Keyboard)
-				|| (settings.platform.isArcade() && settings.input.keyboardGame))
+			|| (settings.platform.isArcade() && settings.input.keyboardGame))
 		{
 			if (keycode == input_mapper->get_button_code(0, EMU_BTN_BYPASS_KB))
 				bypass_kb = pressed && !gui_keyboard_captured();
@@ -109,25 +127,25 @@ protected:
 		// keyboards.
 		switch (keycode)
 		{
-			case 0xE1: // Left Shift
-			case 0xE5: // Right Shift
-				setFlag(_modifier_keys, DC_KBMOD_LEFTSHIFT | DC_KBMOD_RIGHTSHIFT, pressed);
-				break;
-			case 0xE0: // Left Ctrl
-			case 0xE4: // Right Ctrl
-				setFlag(_modifier_keys, DC_KBMOD_LEFTCTRL | DC_KBMOD_RIGHTCTRL, pressed);
-				break;
-			case 0xE2: // Left Alt
-				setFlag(_modifier_keys, DC_KBMOD_LEFTALT, pressed);
-				break;
-			case 0xE6: // Right Alt
-				setFlag(_modifier_keys, DC_KBMOD_RIGHTALT, pressed);
-				break;
-			case 0xE7: // S2 special key
-				setFlag(_modifier_keys, DC_KBMOD_S2, pressed);
-				break;
-			default:
-				break;
+		case 0xE1: // Left Shift
+		case 0xE5: // Right Shift
+			setFlag(_modifier_keys, DC_KBMOD_LEFTSHIFT | DC_KBMOD_RIGHTSHIFT, pressed);
+			break;
+		case 0xE0: // Left Ctrl
+		case 0xE4: // Right Ctrl
+			setFlag(_modifier_keys, DC_KBMOD_LEFTCTRL | DC_KBMOD_RIGHTCTRL, pressed);
+			break;
+		case 0xE2: // Left Alt
+			setFlag(_modifier_keys, DC_KBMOD_LEFTALT, pressed);
+			break;
+		case 0xE6: // Right Alt
+			setFlag(_modifier_keys, DC_KBMOD_RIGHTALT, pressed);
+			break;
+		case 0xE7: // S2 special key
+			setFlag(_modifier_keys, DC_KBMOD_S2, pressed);
+			break;
+		default:
+			break;
 		}
 		if (portIsValid)
 			kb_shift[port] = _modifier_keys;
@@ -178,9 +196,9 @@ protected:
 		// Do not map keyboard keys to gamepad buttons unless the GUI is open
 		// or the corresponding maple device (if any) isn't a keyboard
 		else if (gui_is_open()
-				|| port == (int)std::size(kb_key)
-				|| (settings.platform.isConsole() && (!portIsValid || config::MapleMainDevices[port] != MDT_Keyboard))
-				|| (settings.platform.isArcade() && !settings.input.keyboardGame))
+			|| port == (int)std::size(kb_key)
+			|| (settings.platform.isConsole() && (!portIsValid || config::MapleMainDevices[port] != MDT_Keyboard))
+			|| (settings.platform.isArcade() && !settings.input.keyboardGame))
 			gamepad_btn_input(keycode, pressed);
 	}
 
@@ -189,292 +207,292 @@ public:
 	{
 		switch (code)
 		{
-		case 0x04:
+		case 0x04: 
 			return "A";
-		case 0x05:
+		case 0x05: 
 			return "B";
-		case 0x06:
+		case 0x06: 
 			return "C";
-		case 0x07:
+		case 0x07: 
 			return "D";
-		case 0x08:
+		case 0x08: 
 			return "E";
-		case 0x09:
+		case 0x09: 
 			return "F";
-		case 0x0A:
+		case 0x0A: 
 			return "G";
-		case 0x0B:
+		case 0x0B: 
 			return "H";
-		case 0x0C:
+		case 0x0C: 
 			return "I";
-		case 0x0D:
+		case 0x0D: 
 			return "J";
-		case 0x0E:
+		case 0x0E: 
 			return "K";
-		case 0x0F:
+		case 0x0F: 
 			return "L";
-		case 0x10:
+		case 0x10: 
 			return "M";
-		case 0x11:
+		case 0x11: 
 			return "N";
-		case 0x12:
+		case 0x12: 
 			return "O";
-		case 0x13:
+		case 0x13: 
 			return "P";
-		case 0x14:
+		case 0x14: 
 			return "Q";
-		case 0x15:
+		case 0x15: 
 			return "R";
-		case 0x16:
+		case 0x16: 
 			return "S";
-		case 0x17:
+		case 0x17: 
 			return "T";
-		case 0x18:
+		case 0x18: 
 			return "U";
-		case 0x19:
+		case 0x19: 
 			return "V";
-		case 0x1A:
+		case 0x1A: 
 			return "W";
-		case 0x1B:
+		case 0x1B: 
 			return "X";
-		case 0x1C:
+		case 0x1C: 
 			return "Y";
-		case 0x1D:
+		case 0x1D: 
 			return "Z";
 
-		case 0x1E:
+		case 0x1E: 
 			return "1";
-		case 0x1F:
+		case 0x1F: 
 			return "2";
-		case 0x20:
+		case 0x20: 
 			return "3";
-		case 0x21:
+		case 0x21: 
 			return "4";
-		case 0x22:
+		case 0x22: 
 			return "5";
-		case 0x23:
+		case 0x23: 
 			return "6";
-		case 0x24:
+		case 0x24: 
 			return "7";
-		case 0x25:
+		case 0x25: 
 			return "8";
-		case 0x26:
+		case 0x26: 
 			return "9";
-		case 0x27:
+		case 0x27: 
 			return "0";
 
-		case 0x28:
+		case 0x28: 
 			return "Return";
-		case 0x29:
+		case 0x29: 
 			return "Escape";
-		case 0x2A:
+		case 0x2A: 
 			return "Backspace";
-		case 0x2B:
+		case 0x2B: 
 			return "Tab";
-		case 0x2C:
+		case 0x2C: 
 			return "Space";
 
-		case 0x2D:
+		case 0x2D: 
 			return "-";
-		case 0x2E:
+		case 0x2E: 
 			return "=";
-		case 0x2F:
+		case 0x2F: 
 			return "[";
-		case 0x30:
+		case 0x30: 
 			return "]";
-		case 0x31:
+		case 0x31: 
 			return "\\";
-		case 0x32:
+		case 0x32: 
 			return "#";		// non-US
-		case 0x33:
+		case 0x33: 
 			return ";";
-		case 0x34:
+		case 0x34: 
 			return "'";
-		case 0x35:
+		case 0x35: 
 			return "`";
-		case 0x36:
+		case 0x36: 
 			return ",";
-		case 0x37:
+		case 0x37: 
 			return ".";
-		case 0x38:
+		case 0x38: 
 			return "/";
-		case 0x39:
+		case 0x39: 
 			return "CapsLock";
 
-		case 0x3A:
+		case 0x3A: 
 			return "F1";
-		case 0x3B:
+		case 0x3B: 
 			return "F2";
-		case 0x3C:
+		case 0x3C: 
 			return "F3";
-		case 0x3D:
+		case 0x3D: 
 			return "F4";
-		case 0x3E:
+		case 0x3E: 
 			return "F5";
-		case 0x3F:
+		case 0x3F: 
 			return "F6";
-		case 0x40:
+		case 0x40: 
 			return "F7";
-		case 0x41:
+		case 0x41: 
 			return "F8";
-		case 0x42:
+		case 0x42: 
 			return "F9";
-		case 0x43:
+		case 0x43: 
 			return "F10";
-		case 0x44:
+		case 0x44: 
 			return "F11";
-		case 0x45:
+		case 0x45: 
 			return "F12";
 
-		case 0x46:
+		case 0x46: 
 			return "PrintScreen";
-		case 0x47:
+		case 0x47: 
 			return "ScrollLock";
-		case 0x48:
+		case 0x48: 
 			return "Pause";
-		case 0x49:
+		case 0x49: 
 			return "Insert";
-		case 0x4A:
+		case 0x4A: 
 			return "Home";
-		case 0x4B:
+		case 0x4B: 
 			return "Page Up";
-		case 0x4C:
+		case 0x4C: 
 			return "Delete";
-		case 0x4D:
+		case 0x4D: 
 			return "End";
-		case 0x4E:
+		case 0x4E: 
 			return "Page Down";
-		case 0x4F:
+		case 0x4F: 
 			return "Right";
-		case 0x50:
+		case 0x50: 
 			return "Left";
-		case 0x51:
+		case 0x51: 
 			return "Down";
-		case 0x52:
+		case 0x52: 
 			return "Up";
 
-		case 0x53:
+		case 0x53: 
 			return "NumLock";
-		case 0x54:
+		case 0x54: 
 			return "Num /";
-		case 0x55:
+		case 0x55: 
 			return "Num *";
-		case 0x56:
+		case 0x56: 
 			return "Num -";
-		case 0x57:
+		case 0x57: 
 			return "Num +";
-		case 0x58:
+		case 0x58: 
 			return "Num Enter";
-		case 0x59:
+		case 0x59: 
 			return "Num 1";
-		case 0x5A:
+		case 0x5A: 
 			return "Num 2";
-		case 0x5B:
+		case 0x5B: 
 			return "Num 3";
-		case 0x5C:
+		case 0x5C: 
 			return "Num 4";
-		case 0x5D:
+		case 0x5D: 
 			return "Num 5";
-		case 0x5E:
+		case 0x5E: 
 			return "Num 6";
-		case 0x5F:
+		case 0x5F: 
 			return "Num 7";
-		case 0x60:
+		case 0x60: 
 			return "Num 8";
-		case 0x61:
+		case 0x61: 
 			return "Num 9";
-		case 0x62:
+		case 0x62: 
 			return "Num 0";
-		case 0x63:
+		case 0x63: 
 			return "Num .";
 
-		case 0x64:
+		case 0x64: 
 			return "\\";	// non-US
-		case 0x65:
+		case 0x65: 
 			return "Application";
-		case 0x66:
+		case 0x66: 
 			return "Power";
-		case 0x67:
+		case 0x67: 
 			return "Num =";
 
-		case 0x68:
+		case 0x68: 
 			return "F13";
-		case 0x69:
+		case 0x69: 
 			return "F14";
-		case 0x6A:
+		case 0x6A: 
 			return "F15";
-		case 0x6B:
+		case 0x6B: 
 			return "F16";
-		case 0x6C:
+		case 0x6C: 
 			return "F17";
-		case 0x6D:
+		case 0x6D: 
 			return "F18";
-		case 0x6E:
+		case 0x6E: 
 			return "F19";
-		case 0x6F:
+		case 0x6F: 
 			return "F20";
-		case 0x70:
+		case 0x70: 
 			return "F21";
-		case 0x71:
+		case 0x71: 
 			return "F22";
-		case 0x72:
+		case 0x72: 
 			return "F23";
-		case 0x73:
+		case 0x73: 
 			return "F24";
 
-		case 0x87:
+		case 0x87: 
 			return "Int1";
-		case 0x88:
+		case 0x88: 
 			return "Int2";
-		case 0x89:
+		case 0x89: 
 			return "Yen";
-		case 0x8A:
+		case 0x8A: 
 			return "Int4";
-		case 0x8B:
+		case 0x8B: 
 			return "Int5";
-		case 0x8C:
+		case 0x8C: 
 			return "Int6";
-		case 0x8D:
+		case 0x8D: 
 			return "Int7";
-		case 0x8E:
+		case 0x8E: 
 			return "Int8";
-		case 0x8F:
+		case 0x8F: 
 			return "Int9";
 
-		case 0x90:
+		case 0x90: 
 			return "Hangul";
-		case 0x91:
+		case 0x91: 
 			return "Hanja";
-		case 0x92:
+		case 0x92: 
 			return "Katakana";
-		case 0x93:
+		case 0x93: 
 			return "Hiragana";
-		case 0x94:
+		case 0x94: 
 			return "Zenkaku/Hankaku";
-		case 0x95:
+		case 0x95: 
 			return "Lang6";
-		case 0x96:
+		case 0x96: 
 			return "Lang7";
-		case 0x97:
+		case 0x97: 
 			return "Lang8";
-		case 0x98:
+		case 0x98: 
 			return "Lang9";
 
-		case 0xE0:
+		case 0xE0: 
 			return "Left Ctrl";
-		case 0xE1:
+		case 0xE1: 
 			return "Left Shift";
-		case 0xE2:
+		case 0xE2: 
 			return "Left Alt";
-		case 0xE3:
+		case 0xE3: 
 			return "Left Meta";
-		case 0xE4:
+		case 0xE4: 
 			return "Right Ctrl";
-		case 0xE5:
+		case 0xE5: 
 			return "Right Shift";
-		case 0xE6:
+		case 0xE6: 
 			return "Right Alt";
-		case 0xE7:
+		case 0xE7: 
 			return "Right Meta";
 
 		default:

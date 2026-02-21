@@ -23,6 +23,8 @@ void rend_enable_renderer(bool enabled);
 bool rend_is_enabled();
 void rend_serialize(Serializer& ser);
 void rend_deserialize(Deserializer& deser);
+// Force a present of the current frame (useful for OSD updates when paused)
+void rend_present();
 static void rend_updatePalette();
 static void rend_updateFogTable();
 

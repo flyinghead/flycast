@@ -57,6 +57,7 @@ extern jmethodID showScreenKeyboardMid;
 static jmethodID onGameStateChangeMid;
 extern jmethodID setVGamepadEditModeMid;
 static jmethodID showAlertDialogMid;
+static jmethodID playRASoundMid;
 
 static void emuEventCallback(Event event, void *)
 {
@@ -86,11 +87,11 @@ void common_linux_setup();
 #if defined(USE_BREAKPAD)
 static bool dumpCallback(const google_breakpad::MinidumpDescriptor& descriptor, void* context, bool succeeded)
 {
-    if (succeeded)
-    {
-    	__android_log_print(ANDROID_LOG_ERROR, "Flycast", "Minidump saved to '%s'\n", descriptor.path());
-    	registerCrash(descriptor.directory().c_str(), descriptor.path());
-    }
+	if (succeeded)
+	{
+		__android_log_print(ANDROID_LOG_ERROR, "Flycast", "Minidump saved to '%s'\n", descriptor.path());
+		registerCrash(descriptor.directory().c_str(), descriptor.path());
+	}
 	return succeeded;
 }
 
@@ -107,42 +108,42 @@ static google_breakpad::ExceptionHandler *exceptionHandler;
 
 extern "C" JNIEXPORT jstring JNICALL Java_com_flycast_emulator_emu_JNIdc_initEnvironment(JNIEnv *env, jobject obj, jobject emulator, jstring filesDirectory, jstring homeDirectory, jstring jlocale)
 {
-    bool first_init = false;
+	bool first_init = false;
 
-    // Keep reference to global JVM and Emulator objects
-    if (g_jvm == NULL)
-        env->GetJavaVM(&g_jvm);
-    if (g_emulator == NULL)
-    {
-        first_init = true;
-        g_emulator = env->NewGlobalRef(emulator);
-        saveAndroidSettingsMid = env->GetMethodID(env->GetObjectClass(emulator), "SaveAndroidSettings", "(Ljava/lang/String;)V");
-    }
-    if (first_init)
-    {
-    	LogManager::Init();
-    	i18n::init(env);
-    }
+	// Keep reference to global JVM and Emulator objects
+	if (g_jvm == NULL)
+		env->GetJavaVM(&g_jvm);
+	if (g_emulator == NULL)
+	{
+		first_init = true;
+		g_emulator = env->NewGlobalRef(emulator);
+		saveAndroidSettingsMid = env->GetMethodID(env->GetObjectClass(emulator), "SaveAndroidSettings", "(Ljava/lang/String;)V");
+	}
+	if (first_init)
+	{
+		LogManager::Init();
+		i18n::init(env);
+	}
 
 #if defined(USE_BREAKPAD)
-    if (exceptionHandler == nullptr)
-    {
-    	jni::String directory(homeDirectory, false);
-    	if (directory.empty())
-    		directory = jni::String(filesDirectory, false);
+	if (exceptionHandler == nullptr)
+	{
+		jni::String directory(homeDirectory, false);
+		if (directory.empty())
+			directory = jni::String(filesDirectory, false);
 
-        google_breakpad::MinidumpDescriptor descriptor(directory.to_string());
-        exceptionHandler = new google_breakpad::ExceptionHandler(descriptor, nullptr, dumpCallback, nullptr, true, -1);
-    }
+		google_breakpad::MinidumpDescriptor descriptor(directory.to_string());
+		exceptionHandler = new google_breakpad::ExceptionHandler(descriptor, nullptr, dumpCallback, nullptr, true, -1);
+	}
 #endif
-    // Initialize platform-specific stuff
-    common_linux_setup();
+	// Initialize platform-specific stuff
+	common_linux_setup();
 
-    // Set home directory based on User config
+	// Set home directory based on User config
 	jni::String home(homeDirectory, false);
-    if (!home.empty())
-    {
-    	std::string path = home.to_string();
+	if (!home.empty())
+	{
+		std::string path = home.to_string();
 		if (path.back() != '/')
 			path += '/';
 		set_user_config_dir(path);
@@ -157,32 +158,32 @@ extern "C" JNIEXPORT jstring JNICALL Java_com_flycast_emulator_emu_JNIdc_initEnv
 				set_user_data_dir(path);
 			}
 		}
-    }
-    INFO_LOG(BOOT, "Config dir is: %s", get_writable_config_path("").c_str());
-    INFO_LOG(BOOT, "Data dir is:   %s", get_writable_data_path("").c_str());
+	}
+	INFO_LOG(BOOT, "Config dir is: %s", get_writable_config_path("").c_str());
+	INFO_LOG(BOOT, "Data dir is:   %s", get_writable_data_path("").c_str());
 
-    if (first_init)
-    {
-        // Do one-time initialization
-    	EventManager::listen(Event::Pause, emuEventCallback);
-    	EventManager::listen(Event::Resume, emuEventCallback);
-        jstring msg = nullptr;
-        int rc = flycast_init(0, nullptr);
-        if (rc == -1)
-            msg = env->NewStringUTF(i18n::T("Memory initialization failed"));
+	if (first_init)
+	{
+		// Do one-time initialization
+		EventManager::listen(Event::Pause, emuEventCallback);
+		EventManager::listen(Event::Resume, emuEventCallback);
+		jstring msg = nullptr;
+		int rc = flycast_init(0, nullptr);
+		if (rc == -1)
+			msg = env->NewStringUTF(i18n::T("Memory initialization failed"));
 #ifdef USE_BREAKPAD
-        else
-        {
+		else
+		{
 			static std::string crashPath;
 			static cThread uploadThread(uploadCrashThread, &crashPath, "SentryUpload");
 			crashPath = get_writable_config_path("");
 			uploadThread.Start();
-        }
+		}
 #endif
 
-        return msg;
-    }
-    else {
+		return msg;
+	}
+	else {
 		return nullptr;
 	}
 }
@@ -190,16 +191,16 @@ extern "C" JNIEXPORT jstring JNICALL Java_com_flycast_emulator_emu_JNIdc_initEnv
 extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_emu_JNIdc_setExternalStorageDirectories(JNIEnv *env, jobject obj, jobjectArray jpathList)
 {
 	jni::ObjectArray<jni::String> pathList(jpathList, false);
-    std::string paths;
-    int obj_len = pathList.size();
-    for (int i = 0; i < obj_len; ++i)
-    {
-        if (!paths.empty())
-            paths += ":";
-        paths += pathList[i].to_string();
-    }
-    setenv("FLYCAST_HOME", paths.c_str(), 1);
-    gui_refresh_files();
+	std::string paths;
+	int obj_len = pathList.size();
+	for (int i = 0; i < obj_len; ++i)
+	{
+		if (!paths.empty())
+			paths += ":";
+		paths += pathList[i].to_string();
+	}
+	setenv("FLYCAST_HOME", paths.c_str(), 1);
+	gui_refresh_files();
 }
 
 static bool stopEmu()
@@ -212,7 +213,8 @@ static bool stopEmu()
 	{
 		try {
 			emu.stop();
-		} catch (const FlycastException& e) {
+		}
+		catch (const FlycastException& e) {
 			game_started = false;
 			return false;
 		}
@@ -225,7 +227,7 @@ static bool stopEmu()
 
 extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_emu_JNIdc_setGameUri(JNIEnv *env, jobject obj, jstring jfileName)
 {
-    std::string fileName = jni::String(jfileName, false).to_string();
+	std::string fileName = jni::String(jfileName, false).to_string();
 	if (!fileName.empty())
 	{
 		NOTICE_LOG(BOOT, "Game Disk URI: '%s'", fileName.c_str());
@@ -252,12 +254,12 @@ jmethodID audioInitMid;
 jmethodID audioTermMid;
 static jobject g_audioBackend;
 
-extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_emu_JNIdc_setupMic(JNIEnv *env,jobject obj,jobject sip)
+extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_emu_JNIdc_setupMic(JNIEnv *env, jobject obj, jobject sip)
 {
-    sipemu = env->NewGlobalRef(sip);
-    getmicdata = env->GetMethodID(env->GetObjectClass(sipemu),"getData","(I)[B");
-    startRecordingMid = env->GetMethodID(env->GetObjectClass(sipemu),"startRecording","(I)V");
-    stopRecordingMid = env->GetMethodID(env->GetObjectClass(sipemu),"stopRecording","()V");
+	sipemu = env->NewGlobalRef(sip);
+	getmicdata = env->GetMethodID(env->GetObjectClass(sipemu), "getData", "(I)[B");
+	startRecordingMid = env->GetMethodID(env->GetObjectClass(sipemu), "startRecording", "(I)V");
+	stopRecordingMid = env->GetMethodID(env->GetObjectClass(sipemu), "stopRecording", "()V");
 }
 
 static void *savestateThreadFunc(void *)
@@ -268,7 +270,7 @@ static void *savestateThreadFunc(void *)
 
 static cThread savestateThread(savestateThreadFunc, nullptr, "Flycast-save");
 
-extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_emu_JNIdc_pause(JNIEnv *env,jobject obj)
+extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_emu_JNIdc_pause(JNIEnv *env, jobject obj)
 {
 	if (config::GGPOEnable)
 	{
@@ -285,17 +287,17 @@ extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_emu_JNIdc_pause(JNIE
 	}
 }
 
-extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_emu_JNIdc_resume(JNIEnv *env,jobject obj)
+extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_emu_JNIdc_resume(JNIEnv *env, jobject obj)
 {
-    if (game_started)
-    {
-    	game_started = false;
+	if (game_started)
+	{
+		game_started = false;
 		savestateThread.WaitToEnd();
-        emu.start();
-    }
+		emu.start();
+	}
 }
 
-extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_emu_JNIdc_stop(JNIEnv *env,jobject obj)
+extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_emu_JNIdc_stop(JNIEnv *env, jobject obj)
 {
 	stopEmu();
 	savestateThread.WaitToEnd();
@@ -308,19 +310,20 @@ static void *render_thread_func(void *)
 		initRenderApi(g_window);
 
 		mainui_loop(false);
-	} catch (const std::exception& e) {
+	}
+	catch (const std::exception& e) {
 		ANativeWindow_release(g_window);
-	    g_window = nullptr;
-	    jni::String message(e.what());
-	    jni::env()->CallVoidMethod(g_activity, showAlertDialogMid, (jstring)message);
-	    return nullptr;
+		g_window = nullptr;
+		jni::String message(e.what());
+		jni::env()->CallVoidMethod(g_activity, showAlertDialogMid, (jstring)message);
+		return nullptr;
 	}
 
 	termRenderApi();
 	ANativeWindow_release(g_window);
-    g_window = nullptr;
+	g_window = nullptr;
 
-    return nullptr;
+	return nullptr;
 }
 
 static cThread render_thread(render_thread_func, nullptr, "Flycast-rend");
@@ -332,36 +335,36 @@ extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_emu_JNIdc_rendinitNa
 		if (surface == nullptr)
 		{
 			mainui_stop();
-	        render_thread.WaitToEnd();
+			render_thread.WaitToEnd();
 		}
 		else
 		{
 			settings.display.width = width;
 			settings.display.height = height;
-		    mainui_reinit();
+			mainui_reinit();
 		}
 	}
 	else if (surface != nullptr)
 	{
-        g_window = ANativeWindow_fromSurface(env, surface);
-        mainui_start();
-        render_thread.Start();
+		g_window = ANativeWindow_fromSurface(env, surface);
+		mainui_start();
+		render_thread.Start();
 	}
 }
 
 extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_emu_JNIdc_guiOpenSettings(JNIEnv *env, jobject obj)
 {
-    gui_open_settings();
+	gui_open_settings();
 }
 
 extern "C" JNIEXPORT jboolean JNICALL Java_com_flycast_emulator_emu_JNIdc_guiIsOpen(JNIEnv *env, jobject obj)
 {
-    return gui_is_open();
+	return gui_is_open();
 }
 
-extern "C" JNIEXPORT jboolean JNICALL Java_com_flycast_emulator_emu_JNIdc_guiIsContentBrowser(JNIEnv *env,jobject obj)
+extern "C" JNIEXPORT jboolean JNICALL Java_com_flycast_emulator_emu_JNIdc_guiIsContentBrowser(JNIEnv *env, jobject obj)
 {
-    return gui_is_content_browser();
+	return gui_is_content_browser();
 }
 
 extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_emu_JNIdc_guiSetInsets(JNIEnv *env, jobject obj, jint left, jint right, jint top, jint bottom)
@@ -374,7 +377,8 @@ class AndroidAudioBackend : AudioBackend
 {
 public:
 	AndroidAudioBackend()
-		: AudioBackend("android", "Android Audio") {}
+		: AudioBackend("android", "Android Audio") {
+	}
 
 	u32 push(const void* frame, u32 amt, bool wait) override
 	{
@@ -421,62 +425,74 @@ static AndroidAudioBackend androidAudioBackend;
 
 extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_emu_AudioBackend_setInstance(JNIEnv *env, jobject obj, jobject instance)
 {
-    if (g_audioBackend != nullptr)
-        env->DeleteGlobalRef(g_audioBackend);
-    if (instance == nullptr) {
-        g_audioBackend = nullptr;
-        jsamples = {};
-    }
-    else {
-        g_audioBackend = env->NewGlobalRef(instance);
-        writeBufferMid = env->GetMethodID(env->GetObjectClass(g_audioBackend), "writeBuffer", "([SZ)I");
-        audioInitMid = env->GetMethodID(env->GetObjectClass(g_audioBackend), "init", "(I)Z");
-        audioTermMid = env->GetMethodID(env->GetObjectClass(g_audioBackend), "term", "()V");
-        if (jsamples.isNull())
-            jsamples = jni::ShortArray(SAMPLE_COUNT * 2).globalRef<jni::ShortArray>();
-    }
+	if (g_audioBackend != nullptr)
+		env->DeleteGlobalRef(g_audioBackend);
+	if (instance == nullptr) {
+		g_audioBackend = nullptr;
+		jsamples = {};
+	}
+	else {
+		g_audioBackend = env->NewGlobalRef(instance);
+		writeBufferMid = env->GetMethodID(env->GetObjectClass(g_audioBackend), "writeBuffer", "([SZ)I");
+		audioInitMid = env->GetMethodID(env->GetObjectClass(g_audioBackend), "init", "(I)Z");
+		audioTermMid = env->GetMethodID(env->GetObjectClass(g_audioBackend), "term", "()V");
+		if (jsamples.isNull())
+			jsamples = jni::ShortArray(SAMPLE_COUNT * 2).globalRef<jni::ShortArray>();
+	}
 }
 
 [[noreturn]] void os_DebugBreak()
 {
-    // TODO: notify the parent thread about it ...
+	// TODO: notify the parent thread about it ...
 
 	raise(SIGABRT);
-    //pthread_exit(NULL);
+	//pthread_exit(NULL);
 
-    // Attach debugger here to figure out what went wrong
-    for(;;) ;
+	// Attach debugger here to figure out what went wrong
+	for (;;);
 }
 
 void SaveAndroidSettings()
 {
-    jni::String homeDirectory(get_writable_config_path(""));
+	jni::String homeDirectory(get_writable_config_path(""));
 
-    jni::env()->CallVoidMethod(g_emulator, saveAndroidSettingsMid, (jstring)homeDirectory);
+	jni::env()->CallVoidMethod(g_emulator, saveAndroidSettingsMid, (jstring)homeDirectory);
 }
 
 extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_BaseGLActivity_register(JNIEnv *env, jobject obj, jobject activity)
 {
-    if (g_activity != nullptr) {
-        env->DeleteGlobalRef(g_activity);
-        g_activity = nullptr;
-    }
-    if (activity != nullptr)
-    {
-        g_activity = env->NewGlobalRef(activity);
-        jclass actClass = env->GetObjectClass(activity);
-        showScreenKeyboardMid = env->GetMethodID(actClass, "showScreenKeyboard", "(Z)V");
-        onGameStateChangeMid = env->GetMethodID(actClass, "onGameStateChange", "(Z)V");
-        setVGamepadEditModeMid = env->GetMethodID(actClass, "setVGamepadEditMode", "(Z)V");
-        showAlertDialogMid = env->GetMethodID(actClass, "showAlertDialog", "(Ljava/lang/String;)V");
-    }
+	if (g_activity != nullptr) {
+		env->DeleteGlobalRef(g_activity);
+		g_activity = nullptr;
+	}
+	if (activity != nullptr)
+	{
+		g_activity = env->NewGlobalRef(activity);
+		jclass actClass = env->GetObjectClass(activity);
+		showScreenKeyboardMid = env->GetMethodID(actClass, "showScreenKeyboard", "(Z)V");
+		onGameStateChangeMid = env->GetMethodID(actClass, "onGameStateChange", "(Z)V");
+		setVGamepadEditModeMid = env->GetMethodID(actClass, "setVGamepadEditMode", "(Z)V");
+		showAlertDialogMid = env->GetMethodID(actClass, "showAlertDialog", "(Ljava/lang/String;)V");
+		playRASoundMid = env->GetMethodID(actClass, "playRASound", "(Ljava/lang/String;)V");
+	}
+}
+
+void android_play_sound(const char* filename)
+{
+	if (g_activity != nullptr && playRASoundMid != nullptr)
+	{
+		JNIEnv *env = jni::env();
+		jstring jstr = env->NewStringUTF(filename);
+		env->CallVoidMethod(g_activity, playRASoundMid, jstr);
+		env->DeleteLocalRef(jstr);
+	}
 }
 
 void enableNetworkBroadcast(bool enable)
 {
-    JNIEnv *env = jni::env();
-    jmethodID enableNetworkBroadcastMID = env->GetMethodID(env->GetObjectClass(g_emulator), "enableNetworkBroadcast", "(Z)V");
-    env->CallVoidMethod(g_emulator, enableNetworkBroadcastMID, enable);
+	JNIEnv *env = jni::env();
+	jmethodID enableNetworkBroadcastMID = env->GetMethodID(env->GetObjectClass(g_emulator), "enableNetworkBroadcast", "(Z)V");
+	env->CallVoidMethod(g_emulator, enableNetworkBroadcastMID, enable);
 }
 
 // Useful for armv7 since exceptions cannot traverse dynarec blocks and terminate the process

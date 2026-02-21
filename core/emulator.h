@@ -5,18 +5,18 @@
 
 	This file is part of flycast.
 
-    flycast is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 2 of the License, or
-    (at your option) any later version.
+	flycast is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 2 of the License, or
+	(at your option) any later version.
 
-    flycast is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+	flycast is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with flycast.  If not, see <https://www.gnu.org/licenses/>.
+	You should have received a copy of the GNU General Public License
+	along with flycast.  If not, see <https://www.gnu.org/licenses/>.
  */
 #pragma once
 #include "types.h"
@@ -193,16 +193,34 @@ public:
 
 	void dc_reset(bool hard); // for tests only
 
+#ifndef LIBRETRO
+	// Accessor for Hardcore Mode check
+	u64 getLastPauseTime() const { return lastPauseToggleTime; }
+#endif
+
 private:
 	bool checkStatus(bool wait = false);
 	void runInternal();
 	void diskChange();
+
+#ifndef LIBRETRO
+	// Helper functions for Hotkeys
+	void checkHotkeys();
+	void performSaveState(int slot);
+	void performLoadState(int slot);
+	void pause();
+	void resume();
+
+	static void appendVectorData(void *context, void *data, int size);
+	static void getScreenshot(std::vector<u8>& data, int width);
+#endif
 
 	enum State {
 		Uninitialized = 0,
 		Init,
 		Loaded,
 		Running,
+		Paused,
 		Error,
 		Terminated,
 	};
@@ -215,6 +233,13 @@ private:
 	u32 stepRangeFrom = 0;
 	u32 stepRangeTo = 0;
 	bool stopRequested = false;
+
+#ifndef LIBRETRO
+	// Hotkey Logic
+	std::atomic<bool> stopAfterNextFrame = false; // For Frame Advance
+	u64 lastPauseToggleTime = 0; // For Hardcore Mode anti-abuse
+#endif
+
 	std::mutex mutex;
 	Sh4Executor *interpreter = nullptr;
 	Sh4Executor *recompiler = nullptr;

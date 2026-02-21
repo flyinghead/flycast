@@ -3,18 +3,18 @@
 
 	This file is part of Flycast.
 
-    Flycast is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 2 of the License, or
-    (at your option) any later version.
+	Flycast is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 2 of the License, or
+	(at your option) any later version.
 
-    Flycast is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+	Flycast is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
+	You should have received a copy of the GNU General Public License
+	along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
  */
 #include "gui.h"
 #include "rend/osd.h"
@@ -135,10 +135,10 @@ void gui_init()
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;  // Enable Keyboard Controls
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;   // Enable Gamepad Controls
 
-    EventManager::listen(Event::Resume, emuEventCallback);
-    EventManager::listen(Event::Start, emuEventCallback);
+	EventManager::listen(Event::Resume, emuEventCallback);
+	EventManager::listen(Event::Start, emuEventCallback);
 	EventManager::listen(Event::Terminate, emuEventCallback);
-    ggpo::receiveChatMessages([](int playerNum, const std::string& msg) { chat.receive(playerNum, msg); });
+	ggpo::receiveChatMessages([](int playerNum, const std::string& msg) { chat.receive(playerNum, msg); });
 
 #ifdef TARGET_UWP
 	{
@@ -162,37 +162,37 @@ static ImGuiKey keycodeToImGuiKey(u8 keycode)
 {
 	switch (keycode)
 	{
-		case 0x2B: return ImGuiKey_Tab;
-		case 0x50: return ImGuiKey_LeftArrow;
-		case 0x4F: return ImGuiKey_RightArrow;
-		case 0x52: return ImGuiKey_UpArrow;
-		case 0x51: return ImGuiKey_DownArrow;
-		case 0x4B: return ImGuiKey_PageUp;
-		case 0x4E: return ImGuiKey_PageDown;
-		case 0x4A: return ImGuiKey_Home;
-		case 0x4D: return ImGuiKey_End;
-		case 0x49: return ImGuiKey_Insert;
-		case 0x4C: return ImGuiKey_Delete;
-		case 0x2A: return ImGuiKey_Backspace;
-		case 0x2C: return ImGuiKey_Space;
-		case 0x28: return ImGuiKey_Enter;
-		case 0x29: return ImGuiKey_Escape;
-		case 0x04: return ImGuiKey_A;
-		case 0x06: return ImGuiKey_C;
-		case 0x19: return ImGuiKey_V;
-		case 0x1B: return ImGuiKey_X;
-		case 0x1C: return ImGuiKey_Y;
-		case 0x1D: return ImGuiKey_Z;
-		case 0xE0:
-		case 0xE4:
-			return ImGuiMod_Ctrl;
-		case 0xE1:
-		case 0xE5:
-			return ImGuiMod_Shift;
-		case 0xE3:
-		case 0xE7:
-			return ImGuiMod_Super;
-		default: return ImGuiKey_None;
+	case 0x2B: return ImGuiKey_Tab;
+	case 0x50: return ImGuiKey_LeftArrow;
+	case 0x4F: return ImGuiKey_RightArrow;
+	case 0x52: return ImGuiKey_UpArrow;
+	case 0x51: return ImGuiKey_DownArrow;
+	case 0x4B: return ImGuiKey_PageUp;
+	case 0x4E: return ImGuiKey_PageDown;
+	case 0x4A: return ImGuiKey_Home;
+	case 0x4D: return ImGuiKey_End;
+	case 0x49: return ImGuiKey_Insert;
+	case 0x4C: return ImGuiKey_Delete;
+	case 0x2A: return ImGuiKey_Backspace;
+	case 0x2C: return ImGuiKey_Space;
+	case 0x28: return ImGuiKey_Enter;
+	case 0x29: return ImGuiKey_Escape;
+	case 0x04: return ImGuiKey_A;
+	case 0x06: return ImGuiKey_C;
+	case 0x19: return ImGuiKey_V;
+	case 0x1B: return ImGuiKey_X;
+	case 0x1C: return ImGuiKey_Y;
+	case 0x1D: return ImGuiKey_Z;
+	case 0xE0:
+	case 0xE4:
+		return ImGuiMod_Ctrl;
+	case 0xE1:
+	case 0xE5:
+		return ImGuiMod_Shift;
+	case 0xE3:
+	case 0xE7:
+		return ImGuiMod_Super;
+	default: return ImGuiKey_None;
 	}
 }
 
@@ -217,36 +217,36 @@ void gui_initFonts()
 
 #if !defined(TARGET_UWP) && !defined(__SWITCH__)
 	settings.display.uiScale = std::max(1.f, settings.display.dpi / 100.f * 0.75f);
-   	// Limit scaling on small low-res screens
-    if (settings.display.width <= 640 || settings.display.height <= 480)
-    	settings.display.uiScale = std::min(1.2f, settings.display.uiScale);
+	// Limit scaling on small low-res screens
+	if (settings.display.width <= 640 || settings.display.height <= 480)
+		settings.display.uiScale = std::min(1.2f, settings.display.uiScale);
 #endif
-    settings.display.uiScale *= config::UIScaling / 100.f;
+	settings.display.uiScale *= config::UIScaling / 100.f;
 	if (settings.display.uiScale == uiScale && ImGui::GetIO().Fonts->IsBuilt())
 		return;
 	uiScale = settings.display.uiScale;
 
-    // Setup Dear ImGui style
+	// Setup Dear ImGui style
 	ImGui::GetStyle() = ImGuiStyle{};
 
-    // Apply the current theme
-    applyCurrentTheme();
+	// Apply the current theme
+	applyCurrentTheme();
 
-    ImGui::GetStyle().TabRounding = 5.0f;
-    ImGui::GetStyle().FrameRounding = 3.0f;
-    ImGui::GetStyle().ItemSpacing = ImVec2(8, 8);		// from 8,4
-    ImGui::GetStyle().ItemInnerSpacing = ImVec2(4, 6);	// from 4,4
+	ImGui::GetStyle().TabRounding = 5.0f;
+	ImGui::GetStyle().FrameRounding = 3.0f;
+	ImGui::GetStyle().ItemSpacing = ImVec2(8, 8);		// from 8,4
+	ImGui::GetStyle().ItemInnerSpacing = ImVec2(4, 6);	// from 4,4
 #if defined(__ANDROID__) || defined(TARGET_IPHONE) || defined(__SWITCH__)
-    ImGui::GetStyle().TouchExtraPadding = ImVec2(1, 1);	// from 0,0
+	ImGui::GetStyle().TouchExtraPadding = ImVec2(1, 1);	// from 0,0
 #endif
 	if (settings.display.uiScale > 1)
 		ImGui::GetStyle().ScaleAllSizes(settings.display.uiScale);
 
-    static const ImWchar ranges[] =
-    {
-    	0x0020, 0xFFFF, // All chars
-        0,
-    };
+	static const ImWchar ranges[] =
+	{
+		0x0020, 0xFFFF, // All chars
+		0,
+	};
 
 	ImGuiIO& io = ImGui::GetIO();
 	io.Fonts->Clear();
@@ -257,18 +257,18 @@ void gui_initFonts()
 	std::unique_ptr<u8[]> data = resource::load("fonts/Roboto-Medium.ttf", dataSize);
 	verify(data != nullptr);
 	ImFont *regularFont = io.Fonts->AddFontFromMemoryTTF(data.release(), dataSize, fontSize, nullptr, ranges);
-    ImFontConfig fontConfig;
-    fontConfig.MergeMode = true;
-    fontConfig.DstFont = regularFont;
+	ImFontConfig fontConfig;
+	fontConfig.MergeMode = true;
+	fontConfig.DstFont = regularFont;
 	// Font Awesome symbols (added to default font)
 	data = resource::load("fonts/" FONT_ICON_FILE_NAME_FAS, dataSize);
 	verify(data != nullptr);
-    fontConfig.FontNo = 0;
+	fontConfig.FontNo = 0;
 	static ImWchar faRanges[] = { ICON_MIN_FA, ICON_MAX_FA, 0 };
 	io.Fonts->AddFontFromMemoryTTF(data.release(), dataSize, fontSize, &fontConfig, faRanges);
 
 	// Large font
-    const float largeFontSize = uiScaled(21.f);
+	const float largeFontSize = uiScaled(21.f);
 	data = resource::load("fonts/Roboto-Regular.ttf", dataSize);
 	verify(data != nullptr);
 	largeFont = io.Fonts->AddFontFromMemoryTTF(data.release(), dataSize, largeFontSize, nullptr, ranges);
@@ -276,103 +276,109 @@ void gui_initFonts()
 	largeFontConfig.MergeMode = true;
 	largeFontConfig.DstFont = largeFont;
 
+	// MERGE FontAwesome into largeFont for OSD
+	data = resource::load("fonts/" FONT_ICON_FILE_NAME_FAS, dataSize);
+	if (data != nullptr) {
+		io.Fonts->AddFontFromMemoryTTF(data.release(), dataSize, largeFontSize, &largeFontConfig, faRanges);
+	}
+
 #ifdef _WIN32
-    u32 cp = GetACP();
-    std::string fontDir = std::string(nowide::getenv("SYSTEMROOT")) + "\\Fonts\\";
-    switch (cp)
-    {
-    case 932:	// Japanese
-		{
-			fontConfig.FontNo = 2;	// UIGothic
-			largeFontConfig.FontNo = 2;
-			ImFont* font = io.Fonts->AddFontFromFileTTF((fontDir + "msgothic.ttc").c_str(), fontSize, &fontConfig, io.Fonts->GetGlyphRangesJapanese());
-			io.Fonts->AddFontFromFileTTF((fontDir + "msgothic.ttc").c_str(), largeFontSize, &largeFontConfig, io.Fonts->GetGlyphRangesJapanese());
-			fontConfig.FontNo = 2;	// Meiryo UI
-			largeFontConfig.FontNo = 2;
-			if (font == nullptr) {
-				io.Fonts->AddFontFromFileTTF((fontDir + "Meiryo.ttc").c_str(), fontSize, &fontConfig, io.Fonts->GetGlyphRangesJapanese());
-				io.Fonts->AddFontFromFileTTF((fontDir + "Meiryo.ttc").c_str(), largeFontSize, &largeFontConfig, io.Fonts->GetGlyphRangesJapanese());
-			}
+	u32 cp = GetACP();
+	std::string fontDir = std::string(nowide::getenv("SYSTEMROOT")) + "\\Fonts\\";
+	switch (cp)
+	{
+	case 932:	// Japanese
+	{
+		fontConfig.FontNo = 2;	// UIGothic
+		largeFontConfig.FontNo = 2;
+		ImFont* font = io.Fonts->AddFontFromFileTTF((fontDir + "msgothic.ttc").c_str(), fontSize, &fontConfig, io.Fonts->GetGlyphRangesJapanese());
+		io.Fonts->AddFontFromFileTTF((fontDir + "msgothic.ttc").c_str(), largeFontSize, &largeFontConfig, io.Fonts->GetGlyphRangesJapanese());
+		fontConfig.FontNo = 2;	// Meiryo UI
+		largeFontConfig.FontNo = 2;
+		if (font == nullptr) {
+			io.Fonts->AddFontFromFileTTF((fontDir + "Meiryo.ttc").c_str(), fontSize, &fontConfig, io.Fonts->GetGlyphRangesJapanese());
+			io.Fonts->AddFontFromFileTTF((fontDir + "Meiryo.ttc").c_str(), largeFontSize, &largeFontConfig, io.Fonts->GetGlyphRangesJapanese());
 		}
-		break;
-    case 949:	// Korean
+	}
+	break;
+	case 949:	// Korean
+	{
+		ImFont* font = io.Fonts->AddFontFromFileTTF((fontDir + "Malgun.ttf").c_str(), fontSize, &fontConfig, io.Fonts->GetGlyphRangesKorean());
+		io.Fonts->AddFontFromFileTTF((fontDir + "Malgun.ttf").c_str(), largeFontSize, &largeFontConfig, io.Fonts->GetGlyphRangesKorean());
+		if (font == nullptr)
 		{
-			ImFont* font = io.Fonts->AddFontFromFileTTF((fontDir + "Malgun.ttf").c_str(), fontSize, &fontConfig, io.Fonts->GetGlyphRangesKorean());
-			io.Fonts->AddFontFromFileTTF((fontDir + "Malgun.ttf").c_str(), largeFontSize, &largeFontConfig, io.Fonts->GetGlyphRangesKorean());
-			if (font == nullptr)
-			{
-				fontConfig.FontNo = 2;	// Dotum
-				io.Fonts->AddFontFromFileTTF((fontDir + "Gulim.ttc").c_str(), fontSize, &fontConfig, io.Fonts->GetGlyphRangesKorean());
-				largeFontConfig.FontNo = 2;	// Dotum
-				io.Fonts->AddFontFromFileTTF((fontDir + "Gulim.ttc").c_str(), largeFontSize, &largeFontConfig, io.Fonts->GetGlyphRangesKorean());
-			}
+			fontConfig.FontNo = 2;	// Dotum
+			io.Fonts->AddFontFromFileTTF((fontDir + "Gulim.ttc").c_str(), fontSize, &fontConfig, io.Fonts->GetGlyphRangesKorean());
+			largeFontConfig.FontNo = 2;	// Dotum
+			io.Fonts->AddFontFromFileTTF((fontDir + "Gulim.ttc").c_str(), largeFontSize, &largeFontConfig, io.Fonts->GetGlyphRangesKorean());
 		}
-    	break;
-    case 950:	// Traditional Chinese
+	}
+	break;
+	case 950:	// Traditional Chinese
+	{
+		fontConfig.FontNo = 1; // Microsoft JhengHei UI Regular
+		ImFont* font = io.Fonts->AddFontFromFileTTF((fontDir + "Msjh.ttc").c_str(), fontSize, &fontConfig, GetGlyphRangesChineseTraditionalOfficial());
+		largeFontConfig.FontNo = 1;
+		io.Fonts->AddFontFromFileTTF((fontDir + "Msjh.ttc").c_str(), largeFontSize, &largeFontConfig, GetGlyphRangesChineseTraditionalOfficial());
+		if (font == nullptr)
 		{
-			fontConfig.FontNo = 1; // Microsoft JhengHei UI Regular
-			ImFont* font = io.Fonts->AddFontFromFileTTF((fontDir + "Msjh.ttc").c_str(), fontSize, &fontConfig, GetGlyphRangesChineseTraditionalOfficial());
-			largeFontConfig.FontNo = 1;
-			io.Fonts->AddFontFromFileTTF((fontDir + "Msjh.ttc").c_str(), largeFontSize, &largeFontConfig, GetGlyphRangesChineseTraditionalOfficial());
-			if (font == nullptr)
-			{
-				fontConfig.FontNo = 0;
-				io.Fonts->AddFontFromFileTTF((fontDir + "MSJH.ttf").c_str(), fontSize, &fontConfig, GetGlyphRangesChineseTraditionalOfficial());
-				largeFontConfig.FontNo = 0;
-				io.Fonts->AddFontFromFileTTF((fontDir + "MSJH.ttf").c_str(), largeFontSize, &largeFontConfig, GetGlyphRangesChineseTraditionalOfficial());
-			}
+			fontConfig.FontNo = 0;
+			io.Fonts->AddFontFromFileTTF((fontDir + "MSJH.ttf").c_str(), fontSize, &fontConfig, GetGlyphRangesChineseTraditionalOfficial());
+			largeFontConfig.FontNo = 0;
+			io.Fonts->AddFontFromFileTTF((fontDir + "MSJH.ttf").c_str(), largeFontSize, &largeFontConfig, GetGlyphRangesChineseTraditionalOfficial());
 		}
-    	break;
-    case 936:	// Simplified Chinese
+	}
+	break;
+	case 936:	// Simplified Chinese
 		io.Fonts->AddFontFromFileTTF((fontDir + "Simsun.ttc").c_str(), fontSize, &fontConfig, GetGlyphRangesChineseSimplifiedOfficial());
 		io.Fonts->AddFontFromFileTTF((fontDir + "Simsun.ttc").c_str(), largeFontSize, &largeFontConfig, GetGlyphRangesChineseSimplifiedOfficial());
-    	break;
-    default:
-    	break;
-    }
+		break;
+	default:
+		break;
+	}
 #elif defined(__APPLE__) && !defined(TARGET_IPHONE)
-    std::string fontDir = std::string("/System/Library/Fonts/");
-    std::string locale = i18n::getCurrentLocale();
+	std::string fontDir = std::string("/System/Library/Fonts/");
+	std::string locale = i18n::getCurrentLocale();
 
-    if (locale.find("ja") == 0)             // Japanese
-    {
-        io.Fonts->AddFontFromFileTTF((fontDir + "ヒラギノ角ゴシック W4.ttc").c_str(), fontSize, &fontConfig, io.Fonts->GetGlyphRangesJapanese());
-        io.Fonts->AddFontFromFileTTF((fontDir + "ヒラギノ角ゴシック W4.ttc").c_str(), largeFontSize, &largeFontConfig, io.Fonts->GetGlyphRangesJapanese());
-    }
-    else if (locale.find("ko") == 0)       // Korean
-    {
-        io.Fonts->AddFontFromFileTTF((fontDir + "AppleSDGothicNeo.ttc").c_str(), fontSize, &fontConfig, io.Fonts->GetGlyphRangesKorean());
-        io.Fonts->AddFontFromFileTTF((fontDir + "AppleSDGothicNeo.ttc").c_str(), largeFontSize, &largeFontConfig, io.Fonts->GetGlyphRangesKorean());
-    }
-    else if (locale.find("zh-Hant") == 0)  // Traditional Chinese
-    {
-        io.Fonts->AddFontFromFileTTF((fontDir + "PingFang.ttc").c_str(), fontSize, &fontConfig, GetGlyphRangesChineseTraditionalOfficial());
-        io.Fonts->AddFontFromFileTTF((fontDir + "PingFang.ttc").c_str(), largeFontSize, &largeFontConfig, GetGlyphRangesChineseTraditionalOfficial());
-    }
-    else if (locale.find("zh-Hans") == 0)  // Simplified Chinese
-    {
-        io.Fonts->AddFontFromFileTTF((fontDir + "PingFang.ttc").c_str(), fontSize, &fontConfig, GetGlyphRangesChineseSimplifiedOfficial());
-        io.Fonts->AddFontFromFileTTF((fontDir + "PingFang.ttc").c_str(), largeFontSize, &largeFontConfig, GetGlyphRangesChineseSimplifiedOfficial());
-    }
+	if (locale.find("ja") == 0)             // Japanese
+	{
+		io.Fonts->AddFontFromFileTTF((fontDir + "ヒラギノ角ゴシック W4.ttc").c_str(), fontSize, &fontConfig, io.Fonts->GetGlyphRangesJapanese());
+		io.Fonts->AddFontFromFileTTF((fontDir + "ヒラギノ角ゴシック W4.ttc").c_str(), largeFontSize, &largeFontConfig, io.Fonts->GetGlyphRangesJapanese());
+	}
+	else if (locale.find("ko") == 0)       // Korean
+	{
+		io.Fonts->AddFontFromFileTTF((fontDir + "AppleSDGothicNeo.ttc").c_str(), fontSize, &fontConfig, io.Fonts->GetGlyphRangesKorean());
+		io.Fonts->AddFontFromFileTTF((fontDir + "AppleSDGothicNeo.ttc").c_str(), largeFontSize, &largeFontConfig, io.Fonts->GetGlyphRangesKorean());
+	}
+	else if (locale.find("zh-Hant") == 0)  // Traditional Chinese
+	{
+		io.Fonts->AddFontFromFileTTF((fontDir + "PingFang.ttc").c_str(), fontSize, &fontConfig, GetGlyphRangesChineseTraditionalOfficial());
+		io.Fonts->AddFontFromFileTTF((fontDir + "PingFang.ttc").c_str(), largeFontSize, &largeFontConfig, GetGlyphRangesChineseTraditionalOfficial());
+	}
+	else if (locale.find("zh-Hans") == 0)  // Simplified Chinese
+	{
+		io.Fonts->AddFontFromFileTTF((fontDir + "PingFang.ttc").c_str(), fontSize, &fontConfig, GetGlyphRangesChineseSimplifiedOfficial());
+		io.Fonts->AddFontFromFileTTF((fontDir + "PingFang.ttc").c_str(), largeFontSize, &largeFontConfig, GetGlyphRangesChineseSimplifiedOfficial());
+	}
 #elif defined(__ANDROID__)
-    {
-    	const ImWchar *glyphRanges = nullptr;
-        std::string locale = i18n::getCurrentLocale();
-        if (locale.find("ja") == 0)				// Japanese
-        	glyphRanges = io.Fonts->GetGlyphRangesJapanese();
-        else if (locale.find("ko") == 0)		// Korean
-        	glyphRanges = io.Fonts->GetGlyphRangesKorean();
-        else if (locale.find("zh_TW") == 0
-        		|| locale.find("zh_HK") == 0)	// Traditional Chinese
-        	glyphRanges = GetGlyphRangesChineseTraditionalOfficial();
-        else if (locale.find("zh_CN") == 0)		// Simplified Chinese
-        	glyphRanges = GetGlyphRangesChineseSimplifiedOfficial();
+	{
+		const ImWchar *glyphRanges = nullptr;
+		std::string locale = i18n::getCurrentLocale();
+		if (locale.find("ja") == 0)				// Japanese
+			glyphRanges = io.Fonts->GetGlyphRangesJapanese();
+		else if (locale.find("ko") == 0)		// Korean
+			glyphRanges = io.Fonts->GetGlyphRangesKorean();
+		else if (locale.find("zh_TW") == 0
+			|| locale.find("zh_HK") == 0)	// Traditional Chinese
+			glyphRanges = GetGlyphRangesChineseTraditionalOfficial();
+		else if (locale.find("zh_CN") == 0)		// Simplified Chinese
+			glyphRanges = GetGlyphRangesChineseSimplifiedOfficial();
 
-        if (glyphRanges != nullptr) {
-        	io.Fonts->AddFontFromFileTTF("/system/fonts/NotoSansCJK-Regular.ttc", fontSize, &fontConfig, glyphRanges);
-        	io.Fonts->AddFontFromFileTTF("/system/fonts/NotoSansCJK-Regular.ttc", largeFontSize, &largeFontConfig, glyphRanges);
-        }
-    }
+		if (glyphRanges != nullptr) {
+			io.Fonts->AddFontFromFileTTF("/system/fonts/NotoSansCJK-Regular.ttc", fontSize, &fontConfig, glyphRanges);
+			io.Fonts->AddFontFromFileTTF("/system/fonts/NotoSansCJK-Regular.ttc", largeFontSize, &largeFontConfig, glyphRanges);
+		}
+	}
 
 #elif defined(__linux__)
 	std::string locale = i18n::getCurrentLocale();
@@ -452,7 +458,7 @@ void gui_initFonts()
 
 	// TODO BSD, iOS, ...
 #endif
-    NOTICE_LOG(RENDERER, "Screen DPI is %.0f, size %d x %d. Scaling by %.2f", settings.display.dpi, settings.display.width, settings.display.height, settings.display.uiScale);
+	NOTICE_LOG(RENDERER, "Screen DPI is %.0f, size %d x %d. Scaling by %.2f", settings.display.dpi, settings.display.width, settings.display.height, settings.display.uiScale);
 	vgamepad::applyUiScale();
 }
 
@@ -582,8 +588,8 @@ static void delayedKeysUp()
 }
 
 static void gui_endFrame(bool gui_open) {
-    imguiDriver->renderDrawData(ImGui::GetDrawData(), gui_open);
-    delayedKeysUp();
+	imguiDriver->renderDrawData(ImGui::GetDrawData(), gui_open);
+	delayedKeysUp();
 }
 
 void gui_setOnScreenKeyboardCallback(void (*callback)(bool show)) {
@@ -620,6 +626,15 @@ void gui_open_settings()
 	const LockGuard lock(guiMutex);
 	if (gui_state == GuiState::Closed && !settings.naomi.slave)
 	{
+		// Hardcore Mode Restriction for Opening Settings
+		if (settings.raHardcoreMode) {
+			u64 now = getTimeMs();
+			if (now - emu.getLastPauseTime() < 3000) {
+				os_notify(i18n::Ts("Please wait 3 seconds before opening the menu.").c_str(), 2000);
+				return;
+			}
+		}
+
 		if (!ggpo::active())
 		{
 			if (achievements::canPause())
@@ -664,7 +679,7 @@ void gui_start_game(const std::string& path)
 		return;
 	emu.unloadGame();
 	reset_vmus();
-    chat.reset();
+	chat.reset();
 
 	scanner.stop();
 	gui_setState(GuiState::Loading);
@@ -737,17 +752,17 @@ static void gui_display_commands()
 		ImguiStyleVar _{ImGuiStyleVar_ButtonTextAlign, ImVec2(0.f, 0.5f)};	// left aligned
 
 		float columnWidth = std::min(200.f,
-				(ImGui::GetContentRegionAvail().x - uiScaled(100 + 150) - ImGui::GetStyle().FramePadding.x * 2)
-				/ 2 / uiScaled(1));
+			(ImGui::GetContentRegionAvail().x - uiScaled(100 + 150) - ImGui::GetStyle().FramePadding.x * 2)
+			/ 2 / uiScaled(1));
 		float buttonWidth = 150.f;	// not scaled
 		bool lowWidth = ImGui::GetContentRegionAvail().x < uiScaled(100 + buttonWidth * 3)
-				+ ImGui::GetStyle().FramePadding.x * 2 + ImGui::GetStyle().ItemSpacing.x * 2;
+			+ ImGui::GetStyle().FramePadding.x * 2 + ImGui::GetStyle().ItemSpacing.x * 2;
 		if (lowWidth)
 			buttonWidth = std::min(150.f,
-					(ImGui::GetContentRegionAvail().x - ImGui::GetStyle().FramePadding.x * 2 - ImGui::GetStyle().ItemSpacing.x * 2)
-					/ 3 / uiScaled(1));
+				(ImGui::GetContentRegionAvail().x - ImGui::GetStyle().FramePadding.x * 2 - ImGui::GetStyle().ItemSpacing.x * 2)
+				/ 3 / uiScaled(1));
 		bool lowHeight = ImGui::GetContentRegionAvail().y < uiScaled(100 + 50 * 2 + buttonWidth * 3 / 4) + ImGui::GetTextLineHeightWithSpacing() * 2
-				+ ImGui::GetStyle().ItemSpacing.y * 2 + ImGui::GetStyle().WindowPadding.y;
+			+ ImGui::GetStyle().ItemSpacing.y * 2 + ImGui::GetStyle().WindowPadding.y;
 
 		GameMedia game;
 		game.path = settings.content.path;
@@ -781,7 +796,7 @@ static void gui_display_commands()
 			ImGui::SetColumnWidth(1, uiScaled(columnWidth));
 			ImGui::SetColumnWidth(2, uiScaled(columnWidth));
 			const ImVec2 vmuPos = ImGui::GetStyle().WindowPadding + ScaledVec2(0.f, 100.f)
-					+ ImVec2(insetLeft, ImGui::GetStyle().ItemSpacing.y);
+				+ ImVec2(insetLeft, ImGui::GetStyle().ItemSpacing.y);
 			ImguiVmuTexture::displayVmus(vmuPos);
 			ImGui::NextColumn();
 		}
@@ -835,6 +850,13 @@ static void gui_display_commands()
 		// Settings
 		if (IconButton(ICON_FA_GEAR, T("Settings"), ScaledVec2(buttonWidth, 50)).realize())
 			gui_setState(GuiState::Settings);
+
+		// Reset Button
+		if (IconButton(ICON_FA_ROTATE_RIGHT, T("Reset"), ScaledVec2(buttonWidth, 50)).realize())
+		{
+			std::string gamePath = settings.content.path;
+			gui_start_game(gamePath);
+		}
 
 		// Exit
 		if (IconButton(ICON_FA_POWER_OFF, commandLineStart ?  T("Exit") : T("Close Game"), ScaledVec2(buttonWidth, 50)).realize())
@@ -920,15 +942,15 @@ void error_popup()
 
 static void contentpath_warning_popup()
 {
-    static bool show_contentpath_selection;
+	static bool show_contentpath_selection;
 
-    if (scanner.content_path_looks_incorrect)
-    {
-        ImGui::OpenPopup(T("Incorrect Content Location?"));
-        if (ImGui::BeginPopupModal(T("Incorrect Content Location?"), NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
-        {
-            ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + uiScaled(400.f));
-            ImGui::TextWrapped((std::string("  ") + T("Scanned %d folders but no game can be found!") + std::string("  ")).c_str(), scanner.empty_folders_scanned);
+	if (scanner.content_path_looks_incorrect)
+	{
+		ImGui::OpenPopup(T("Incorrect Content Location?"));
+		if (ImGui::BeginPopupModal(T("Incorrect Content Location?"), NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
+		{
+			ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + uiScaled(400.f));
+			ImGui::TextWrapped((std::string("  ") + T("Scanned %d folders but no game can be found!") + std::string("  ")).c_str(), scanner.empty_folders_scanned);
 			{
 				ImguiStyleVar _(ImGuiStyleVar_FramePadding, ScaledVec2(16, 3));
 				float currentwidth = ImGui::GetContentRegionAvail().x;
@@ -950,28 +972,103 @@ static void contentpath_warning_popup()
 					config::ContentPath.get().clear();
 				}
 			}
-            ImGui::SetItemDefaultFocus();
-            ImGui::EndPopup();
-        }
-    }
-    if (show_contentpath_selection)
-    {
-        scanner.stop();
-        const char *title = T("Select a Content Folder");
-        ImGui::OpenPopup(title);
-        select_file_popup(title, [](bool cancelled, std::string selection)
-        {
-            show_contentpath_selection = false;
-            if (!cancelled)
-            {
-            	config::ContentPath.get().clear();
-                config::ContentPath.get().push_back(selection);
-            }
-            scanner.refresh();
-            return true;
-        });
-    }
+			ImGui::SetItemDefaultFocus();
+			ImGui::EndPopup();
+		}
+	}
+	if (show_contentpath_selection)
+	{
+		scanner.stop();
+		const char *title = T("Select a Content Folder");
+		ImGui::OpenPopup(title);
+		select_file_popup(title, [](bool cancelled, std::string selection)
+			{
+				show_contentpath_selection = false;
+				if (!cancelled)
+				{
+					config::ContentPath.get().clear();
+					config::ContentPath.get().push_back(selection);
+				}
+				scanner.refresh();
+				return true;
+			});
+	}
 }
+
+// Custom OSD Implementation
+struct OSDOverlay {
+	std::string message;
+	u64 endTime = 0;
+	float alpha = 0.0f;
+	float currentY = 20.0f; // Track vertical position for sliding
+
+	void set(const std::string& msg, int duration) {
+		message = msg;
+		endTime = getTimeMs() + duration;
+		alpha = 1.0f;
+	}
+
+	bool active() const {
+		return getTimeMs() < endTime;
+	}
+
+	void draw(float targetY) {
+		if (!active()) return;
+
+		u64 now = getTimeMs();
+		if (endTime - now < 500) // Fade out last 500ms
+			alpha = (float)(endTime - now) / 500.0f;
+		else
+			alpha = 1.0f;
+
+		if (message.empty()) return;
+
+		// Smoothly interpolate currentY towards targetY
+		// Using a simple lerp for smooth sliding
+		float diff = targetY - currentY;
+		if (std::abs(diff) > 0.5f) {
+			currentY += diff * 0.2f;
+		}
+		else {
+			currentY = targetY;
+		}
+
+		ImDrawList *dl = ImGui::GetForegroundDrawList();
+		const float fontSize = largeFont->LegacySize;
+		const ScaledVec2 padding(10.f, 5.f);
+
+		// Calculate text size
+		const ImVec2 size = largeFont->CalcTextSizeA(fontSize, FLT_MAX, 0.0f, message.c_str()) + padding * 2.f;
+
+		// Position logic: Top Right for status icons, Bottom Center for text
+		const float screenW = ImGui::GetIO().DisplaySize.x;
+		const float screenH = ImGui::GetIO().DisplaySize.y;
+		ImVec2 pos;
+
+		// Check for specific FontAwesome icons
+		// Note: We use string comparisons against the specific icon definitions from IconsFontAwesome6.h
+		if (message == ICON_FA_PAUSE || message == ICON_FA_PLAY || message == ICON_FA_FORWARD_STEP)
+		{
+			// Top Right, using dynamic Y for stacking
+			pos = ImVec2(screenW - size.x - uiScaled(20.f), currentY);
+		}
+		else
+		{
+			// Bottom Center (Standard OSD) - ignore vertical stacking logic
+			pos = ImVec2((screenW - size.x) / 2.0f, screenH - size.y - uiScaled(60.f));
+		}
+
+		// Background
+		const ImU32 bg_col = alphaOverride(0x00202020, alpha * 0.8f);
+		dl->AddRectFilled(pos, pos + size, bg_col, 5.0f); // Rounded corners
+
+		// Text
+		pos += padding;
+		const ImU32 col = alphaOverride(0xFF00FFFF, alpha); // Yellow text
+
+		dl->AddText(largeFont, fontSize, pos, col, message.c_str());
+	}
+} osdOverlay;
 
 void os_notify(const char *msg, int durationMs, const char *details)
 {
@@ -982,7 +1079,11 @@ void os_notify(const char *msg, int durationMs, const char *details)
 		osd_message_end = getTimeMs() + durationMs;
 	}
 	else {
-		toast.show(msg, details != nullptr ? details : "", durationMs);
+		// Use custom overlay when GUI is closed (game running)
+		if (details)
+			osdOverlay.set(std::string(msg) + " " + details, durationMs);
+		else
+			osdOverlay.set(msg, durationMs);
 	}
 }
 
@@ -1000,14 +1101,14 @@ inline static void gui_display_demo() {
 
 static void gameTooltip(const std::string& tip)
 {
-    if (ImGui::IsItemHovered())
-    {
-        ImGui::BeginTooltip();
-        ImGui::PushTextWrapPos(ImGui::GetFontSize() * 25.0f);
-        ImGui::TextUnformatted(tip.c_str());
-        ImGui::PopTextWrapPos();
-        ImGui::EndTooltip();
-    }
+	if (ImGui::IsItemHovered())
+	{
+		ImGui::BeginTooltip();
+		ImGui::PushTextWrapPos(ImGui::GetFontSize() * 25.0f);
+		ImGui::TextUnformatted(tip.c_str());
+		ImGui::PopTextWrapPos();
+		ImGui::EndTooltip();
+	}
 }
 
 static bool gameImageButton(ImguiTexture& texture, const std::string& tooltip, ImVec2 size, const std::string& gameName)
@@ -1015,7 +1116,7 @@ static bool gameImageButton(ImguiTexture& texture, const std::string& tooltip, I
 	bool pressed = texture.button("##imagebutton", size, gameName);
 	gameTooltip(tooltip);
 
-    return pressed;
+	return pressed;
 }
 
 #ifdef TARGET_UWP
@@ -1050,7 +1151,7 @@ void gui_load_game()
 			if (path.convert(file->Path->Data()))
 				gui_start_game(path.get());
 		}
-	});
+		});
 }
 #endif
 
@@ -1060,33 +1161,33 @@ static void gui_display_content()
 	ImguiStyleVar _(ImGuiStyleVar_WindowRounding, 0);
 	ImguiStyleVar _1(ImGuiStyleVar_WindowBorderSize, 0);
 
-    ImGui::Begin("##main", NULL, ImGuiWindowFlags_NoDecoration);
+	ImGui::Begin("##main", NULL, ImGuiWindowFlags_NoDecoration);
 
-    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ScaledVec2(20, 8));
-    ImGui::AlignTextToFramePadding();
-    ImGui::Indent(uiScaled(10));
-    ImGui::Text("%s", T("GAMES"));
-    ImGui::Unindent(uiScaled(10));
+	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ScaledVec2(20, 8));
+	ImGui::AlignTextToFramePadding();
+	ImGui::Indent(uiScaled(10));
+	ImGui::Text("%s", T("GAMES"));
+	ImGui::Unindent(uiScaled(10));
 
-    static ImGuiTextFilter filter;
-    IconButton settingsBtn(ICON_FA_GEAR, T("Settings"));
+	static ImGuiTextFilter filter;
+	IconButton settingsBtn(ICON_FA_GEAR, T("Settings"));
 #if !defined(__ANDROID__) && !defined(TARGET_IPHONE) && !defined(TARGET_UWP) && !defined(__SWITCH__)
 	ImGui::SameLine(0, uiScaled(32));
 	filter.Draw(T("Filter"), ImGui::GetContentRegionAvail().x - ImGui::GetStyle().ItemSpacing.x
-			- settingsBtn.width() - ImGui::GetStyle().ItemSpacing.x - ImGui::CalcTextSize(T("Filter")).x);
+		- settingsBtn.width() - ImGui::GetStyle().ItemSpacing.x - ImGui::CalcTextSize(T("Filter")).x);
 #endif
-    if (gui_state != GuiState::SelectDisk)
-    {
+	if (gui_state != GuiState::SelectDisk)
+	{
 #ifdef TARGET_UWP
 		ImGui::SameLine(ImGui::GetContentRegionMax().x - settingsBtn.width()
-				- ImGui::GetStyle().FramePadding.x * 2.0f  - ImGui::GetStyle().ItemSpacing.x - ImGui::CalcTextSize(T("Load...")).x);
+			- ImGui::GetStyle().FramePadding.x * 2.0f  - ImGui::GetStyle().ItemSpacing.x - ImGui::CalcTextSize(T("Load...")).x);
 		if (ImGui::Button(T("Load...")))
 			gui_load_game();
 		ImGui::SameLine();
 #elif defined(__SWITCH__)
 		IconButton exitBtn(ICON_FA_POWER_OFF, T("Exit"));
 		ImGui::SameLine(ImGui::GetContentRegionMax().x - settingsBtn.width()
-				- ImGui::GetStyle().ItemSpacing.x - exitBtn.width());
+			- ImGui::GetStyle().ItemSpacing.x - exitBtn.width());
 		if (exitBtn.realize())
 			dc_exit();
 		ImGui::SameLine();
@@ -1095,21 +1196,21 @@ static void gui_display_content()
 #endif
 		if (settingsBtn.realize())
 			gui_setState(GuiState::Settings);
-    }
-    else
-    {
-    	IconButton cancelBtn(T("Cancel"));
+	}
+	else
+	{
+		IconButton cancelBtn(T("Cancel"));
 		ImGui::SameLine(ImGui::GetContentRegionMax().x - cancelBtn.width());
 		if (cancelBtn.realize())
 			gui_setState(GuiState::Commands);
-    }
-    ImGui::PopStyleVar();
+	}
+	ImGui::PopStyleVar();
 
-    scanner.fetch_game_list();
+	scanner.fetch_game_list();
 
 	// Only if Filter and Settings aren't focused... ImGui::SetNextWindowFocus();
 	ImGui::BeginChild(ImGui::GetID("library"), ImVec2(0, 0), ImGuiChildFlags_Borders | ImGuiChildFlags_NavFlattened, ImGuiWindowFlags_DragScrolling);
-    {
+	{
 		const float totalWidth = ImGui::GetContentRegionMax().x - (!ImGui::GetCurrentWindow()->ScrollbarY ? ImGui::GetStyle().ScrollbarSize : 0);
 		const int itemsPerLine = std::max<int>(totalWidth / (uiScaled(150) + ImGui::GetStyle().ItemSpacing.x), 1);
 		const float responsiveBoxSize = totalWidth / itemsPerLine - ImGui::GetStyle().FramePadding.x * 2;
@@ -1131,7 +1232,7 @@ static void gui_display_content()
 				{
 					std::string extension = get_file_extension(game.path);
 					if (!game.device && extension != "gdi" && extension != "chd"
-							&& extension != "cdi" && extension != "cue")
+						&& extension != "cdi" && extension != "cue")
 						// Only dreamcast disks
 						continue;
 					if (game.path.empty())
@@ -1215,15 +1316,15 @@ static void gui_display_content()
 			ImGui::EndChild();
 		}
 #endif
-        ImGui::PopStyleVar();
-        addContentPath(addContent);
-    }
-    scrollWhenDraggingOnVoid();
-    windowDragScroll();
+		ImGui::PopStyleVar();
+		addContentPath(addContent);
+	}
+	scrollWhenDraggingOnVoid();
+	windowDragScroll();
 	ImGui::EndChild();
 	ImGui::End();
 
-    contentpath_warning_popup();
+	contentpath_warning_popup();
 }
 
 static bool systemdir_selected_callback(bool cancelled, std::string selection)
@@ -1413,8 +1514,8 @@ static void gui_display_loadscreen()
 	ImGui::SetNextWindowBgAlpha(0.8f);
 	ImguiStyleVar _(ImGuiStyleVar_WindowPadding, ScaledVec2(20, 20));
 
-    if (ImGui::Begin("##loading", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_AlwaysAutoResize))
-    {
+	if (ImGui::Begin("##loading", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_AlwaysAutoResize))
+	{
 		ImguiStyleVar _(ImGuiStyleVar_FramePadding, ScaledVec2(20, 10));
 		ImGui::AlignTextToFramePadding();
 		ImGui::SetCursorPosX(uiScaled(20.f));
@@ -1427,7 +1528,7 @@ static void gui_display_loadscreen()
 				else
 					label = T("Loading...");
 			}
-			
+
 			const bool customTexPreloading = custom_texture.isPreloading();
 
 			if (gameLoader.ready() && !customTexPreloading)
@@ -1449,11 +1550,11 @@ static void gui_display_loadscreen()
 				int texTotal = 0;
 				size_t loaded_size_b = 0;
 				custom_texture.getPreloadProgress(texLoaded, texTotal, loaded_size_b);
-				
+
 				ImGui::Text("%s", label);
 				float progress = 0;
 				char overlay[64] = "";
-				
+
 				if (!gameLoader.ready())
 				{
 					progress = gameLoader.getProgress().progress;
@@ -1471,7 +1572,7 @@ static void gui_display_loadscreen()
 						snprintf(overlay, sizeof(overlay), "%d / %d (%.1f MB)", texLoaded, texTotal, loaded_size_mb);
 					}
 				}
-				
+
 				ImguiStyleColor _(ImGuiCol_PlotHistogram, ImVec4(0.557f, 0.268f, 0.965f, 1.f));
 				ImGui::ProgressBar(progress, ImVec2(-1, uiScaled(20.f)), overlay);
 
@@ -1487,8 +1588,8 @@ static void gui_display_loadscreen()
 #endif
 			gui_stop_game(ex.what());
 		}
-    }
-    ImGui::End();
+	}
+	ImGui::End();
 }
 
 void gui_display_ui()
@@ -1567,7 +1668,7 @@ void gui_display_ui()
 		break;
 	}
 	error_popup();
-    ImGui::Render();
+	ImGui::Render();
 	gui_endFrame(gui_open);
 	uiThreadRunner.execTasks();
 	ImguiFileTexture::resetLoadCount();
@@ -1592,12 +1693,40 @@ static std::string getFPSNotification()
 		}
 		if (fps >= 0.f && fps < 9999.f) {
 			char text[32];
-			snprintf(text, sizeof(text), "F:%4.1f%s", fps, settings.input.fastForwardMode ? " >>" : "");
+			// No longer appending '>>' for FF here
+			snprintf(text, sizeof(text), "F:%4.1f", fps);
 
 			return std::string(text);
 		}
 	}
-	return std::string(settings.input.fastForwardMode ? ">>" : "");
+	return std::string("");
+}
+
+// Helper to draw status icons in the top-right corner
+static void drawStatusIcon(const char *icon, float alpha, float *cursorRight)
+{
+	ImDrawList *dl = ImGui::GetForegroundDrawList();
+	const float fontSize = largeFont->LegacySize;
+	const ScaledVec2 padding(10.f, 5.f);
+
+	// Calculate text size
+	const ImVec2 size = largeFont->CalcTextSizeA(fontSize, FLT_MAX, 0.0f, icon) + padding * 2.f;
+
+	// Update cursor for stacking
+	*cursorRight -= (size.x + uiScaled(5.f)); // Add a small gap between icons
+
+	// Position logic: Top Right
+	ImVec2 pos(*cursorRight, uiScaled(20.f));
+
+	// Background
+	const ImU32 bg_col = alphaOverride(0x00202020, alpha * 0.8f);
+	dl->AddRectFilled(pos, pos + size, bg_col, 5.0f); // Rounded corners
+
+	// Text
+	pos += padding;
+	const ImU32 col = alphaOverride(0xFF00FFFF, alpha); // Yellow text
+
+	dl->AddText(largeFont, fontSize, pos, col, icon);
 }
 
 void gui_draw_osd()
@@ -1610,6 +1739,21 @@ void gui_draw_osd()
 #endif
 		if (!toast.draw())
 		{
+			// Draw custom OSD overlay (Transient Notifications)
+			float targetY = uiScaled(20.f);
+			float nextIconRight = ImGui::GetIO().DisplaySize.x - uiScaled(20.f);
+
+			// Draw Persistent Status Icons (Top-Right)
+			if (settings.input.fastForwardMode) {
+				drawStatusIcon(ICON_FA_FORWARD_FAST, 1.0f, &nextIconRight);
+				// Push OSD overlay down if FF is active (Vertical Stacking Logic)
+				targetY += largeFont->LegacySize + uiScaled(15.f);
+			}
+
+			// Draw Transient OSD Notification (stacked below persistent icons if needed)
+			osdOverlay.draw(targetY);
+
+			// Draw FPS Counter (Bottom-Left)
 			std::string message = getFPSNotification();
 			if (!message.empty())
 			{
@@ -1617,7 +1761,7 @@ void gui_draw_osd()
 				ImDrawList *dl = ImGui::GetForegroundDrawList();
 				const ScaledVec2 padding(5.f, 5.f);
 				const ImVec2 size = largeFont->CalcTextSizeA(largeFont->LegacySize, FLT_MAX, maxW, &message.front(), &message.back() + 1)
-						+ padding * 2.f;
+					+ padding * 2.f;
 				ImVec2 pos(insetLeft, ImGui::GetIO().DisplaySize.y - size.y);
 				constexpr float alpha = 0.7f;
 				const ImU32 bg_col = alphaOverride(0x00202020, alpha / 2.f);
@@ -1640,7 +1784,7 @@ void gui_draw_osd()
 	if (!settings.raHardcoreMode)
 		lua::overlay();
 	vgamepad::draw();
-    ImGui::Render();
+	ImGui::Render();
 	uiThreadRunner.execTasks();
 }
 
@@ -1680,7 +1824,7 @@ void gui_display_profiler()
 	}
 
 	ImGui::End();
-    ImGui::Render();
+	ImGui::Render();
 	gui_endFrame(true);
 #endif
 }
@@ -1700,24 +1844,24 @@ void gui_term()
 		inited = false;
 		scanner.stop();
 		ImGui::DestroyContext();
-	    EventManager::unlisten(Event::Resume, emuEventCallback);
-	    EventManager::unlisten(Event::Start, emuEventCallback);
-	    EventManager::unlisten(Event::Terminate, emuEventCallback);
-	    boxart.term();
+		EventManager::unlisten(Event::Resume, emuEventCallback);
+		EventManager::unlisten(Event::Start, emuEventCallback);
+		EventManager::unlisten(Event::Terminate, emuEventCallback);
+		boxart.term();
 	}
 }
 
 void fatal_error(const char* text, ...)
 {
-    va_list args;
+	va_list args;
 
-    char temp[2048];
-    va_start(args, text);
-    vsnprintf(temp, sizeof(temp), text, args);
-    va_end(args);
-    ERROR_LOG(COMMON, "%s", temp);
+	char temp[2048];
+	va_start(args, text);
+	vsnprintf(temp, sizeof(temp), text, args);
+	va_end(args);
+	ERROR_LOG(COMMON, "%s", temp);
 
-    os_notify("Fatal Error", 20000, temp);
+	os_notify("Fatal Error", 20000, temp);
 }
 
 extern bool subfolders_read;
@@ -1827,7 +1971,7 @@ void gui_takeScreenshot()
 				os_notify(T("Error saving screenshot"), 5000, e.what());
 			}
 		}
-	});
+		});
 }
 
 #ifdef TARGET_UWP

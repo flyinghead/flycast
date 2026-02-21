@@ -8,6 +8,8 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.media.AudioAttributes;
+import android.media.SoundPool;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -35,8 +37,10 @@ import com.flycast.emulator.periph.SipEmulator;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 import static android.content.res.Configuration.HARDKEYBOARDHIDDEN_NO;
 import static android.view.View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
@@ -473,5 +477,43 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
     
 	public String getInternalFilesDir() {
         return getFilesDir().getAbsolutePath();
+    }
+
+    // RA Sound Support
+    private SoundPool raSoundPool;
+    private Map<String, Integer> raSoundMap = new HashMap<>();
+
+    public void playRASound(String filename) {
+        runOnUiThread(() -> {
+            if (raSoundPool == null) {
+                AudioAttributes attributes = new AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_GAME)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                        .build();
+                raSoundPool = new SoundPool.Builder()
+                        .setAudioAttributes(attributes)
+                        .setMaxStreams(3)
+                        .build();
+            }
+
+            if (!raSoundMap.containsKey(filename)) {
+                try {
+                    android.content.res.AssetFileDescriptor fd = getAssets().openFd("data/sounds/" + filename);
+                    int soundId = raSoundPool.load(fd, 1);
+                    raSoundMap.put(filename, soundId);
+
+                    raSoundPool.setOnLoadCompleteListener((pool, sampleId, status) -> {
+                        if (status == 0) pool.play(sampleId, 1.0f, 1.0f, 0, 0, 1.0f);
+                    });
+                } catch (java.io.IOException e) {
+                    Log.e("Flycast", "Failed to load sound asset: " + filename);
+                }
+            } else {
+                Integer soundId = raSoundMap.get(filename);
+                if (soundId != null) {
+                    raSoundPool.play(soundId, 1.0f, 1.0f, 0, 0, 1.0f);
+                }
+            }
+        });
     }
 }

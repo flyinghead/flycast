@@ -3,18 +3,18 @@
 
 	This file is part of Flycast.
 
-    Flycast is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 2 of the License, or
-    (at your option) any later version.
+	Flycast is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 2 of the License, or
+	(at your option) any later version.
 
-    Flycast is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+	Flycast is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
+	You should have received a copy of the GNU General Public License
+	along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 #include "mainui.h"
@@ -27,6 +27,7 @@
 #include "imgui_driver.h"
 #include "profiler/fc_profiler.h"
 #include "oslib/i18n.h"
+#include "achievements/achievements.h" // Required for RA Integration
 
 #include <chrono>
 #include <thread>
@@ -64,7 +65,7 @@ bool mainui_rend_frame()
 				gui_display_profiler();
 		} catch (const RendererException& e) {
 			gui_error(i18n::Ts("Renderer error:") + "\n" + e.what() + "\n\n"
-					+ i18n::Ts("The game has been paused but it is recommended to restart Flycast"));
+				+ i18n::Ts("The game has been paused but it is recommended to restart Flycast"));
 			rend_term_renderer();
 			if (!rend_init_renderer())
 				ERROR_LOG(RENDERER, "Renderer re-initialization failed");
@@ -104,6 +105,10 @@ void mainui_loop(bool forceStart)
 	while (mainui_enabled)
 	{
 		fc_profiler::startThread("main");
+
+		// This line is MANDATORY for the RA Menu Bar to appear.
+		// It checks if the menu needs to be installed and handles RA popups.
+		achievements::RA_UpdateFrame();
 
 		if (mainui_rend_frame() && imguiDriver != nullptr)
 		{

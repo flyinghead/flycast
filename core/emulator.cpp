@@ -1,20 +1,20 @@
 /*
-    Copyright 2021 flyinghead
+	Copyright 2021 flyinghead
 
-    This file is part of Flycast.
+	This file is part of Flycast.
 
-    Flycast is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 2 of the License, or
-    (at your option) any later version.
+	Flycast is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 2 of the License, or
+	(at your option) any later version.
 
-    Flycast is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+	Flycast is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
+	You should have received a copy of the GNU General Public License
+	along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
  */
 #include "emulator.h"
 #include "types.h"
@@ -47,6 +47,15 @@
 #include <chrono>
 #ifndef LIBRETRO
 #include "ui/gui.h"
+#include "ui/IconsFontAwesome6.h"
+#include "input/mapping.h"
+#include "input/gamepad_device.h"
+#include <stb_image_write.h>
+#else
+ // Libretro fallbacks for OSD icons
+#define ICON_FA_PAUSE "Paused"
+#define ICON_FA_PLAY "Resumed"
+#define ICON_FA_FORWARD_STEP "Frame Advance"
 #endif
 #include "hw/sh4/sh4_interpreter.h"
 #include "hw/sh4/dyna/ngen.h"
@@ -64,98 +73,98 @@ static void loadSpecialSettings()
 	{
 		// Tony Hawk's Pro Skater 2
 		if (prod_id == "T13008D 05" || prod_id == "T13006N"
-				// Tony Hawk's Pro Skater 1
-				|| prod_id == "T40205N"
-				// Tony Hawk's Skateboarding
-				|| prod_id == "T40204D 50"
-				// Skies of Arcadia
-				|| prod_id == "MK-51052"
-				// Eternal Arcadia (JP)
-				|| prod_id == "HDR-0076"
-				// Flag to Flag (US)
-				|| prod_id == "MK-51007"
-				// Super Speed Racing (JP)
-				|| prod_id == "HDR-0013"
-				// Yu Suzuki Game Works Vol. 1
-				|| prod_id == "6108099"
-				// L.O.L
-				|| prod_id == "T2106M"
-				// Miss Moonlight
-				|| prod_id == "T18702M"
-				// Tom Clancy's Rainbow Six (US)
-				|| prod_id == "T40401N"
-				// Tom Clancy's Rainbow Six incl. Eagle Watch Missions (EU)
-				|| prod_id == "T-45001D05"
-				// Jet Grind Radio (US)
-				|| prod_id == "MK-51058"
-				// JSR (JP)
-				|| prod_id == "HDR-0078"
-				// JSR (EU)
-				|| prod_id == "MK-5105850"
-				// Worms World Party (US)
-				|| prod_id == "T22904N"
-				// Worms World Party (EU)
-				|| prod_id == "T7016D  50"
-				// Shenmue (US)
-				|| prod_id == "MK-51059"
-				// Shenmue (EU)
-				|| prod_id == "MK-5105950"
-				// Shenmue (JP)
-				|| prod_id == "HDR-0016"
-				// Izumo
-				|| prod_id == "T46902M"
-				// Cardcaptor Sakura
-				|| prod_id == "HDR-0115"
-				// Grandia II (US)
-				|| prod_id == "T17716N"
-				// Grandia II (EU)
-				|| prod_id == "T17715D"
-				// Grandia II (JP)
-				|| prod_id == "T4503M"
-				// Canvas: Sepia Iro no Motif
-				|| prod_id == "T20108M"
-				// Kimi ga Nozomu Eien
-				|| prod_id == "T47101M"
-				// Pro Mahjong Kiwame D
-				|| prod_id == "T16801M"
-				// Yoshia no Oka de Nekoronde...
-				|| prod_id == "T18704M"
-				// Tamakyuu (a.k.a. Tama-cue)
-				|| prod_id == "T20133M"
-				// Sakura Taisen 1
-				|| prod_id == "HDR-0072"
-				// Sakura Taisen 3
-				|| prod_id == "HDR-0152"
-				// Hundred Swords
-				|| prod_id == "HDR-0124"
-				// Musapey's Choco Marker
-				|| prod_id == "T23203M"
-				// Sister Princess Premium Edition
-				|| prod_id == "T27802M"
-				// Sentimental Graffiti
-				|| prod_id == "T20128M"
-				// Sentimental Graffiti 2
-				|| prod_id == "T20104M"
-				// Kanon
-				|| prod_id == "T20105M"
-				// Aikagi
-				|| prod_id == "T20130M"
-				// AIR
-				|| prod_id == "T20112M"
-				// Cool Boarders Burrrn (JP)
-				|| prod_id == "T36901M"
-				// Castle Fantasia - Seima Taisen (JP)
-				|| prod_id == "T46901M"
-				// Silent Scope (US)
-				|| prod_id == "T9507N"
-				// Silent Scope (EU)
-				|| prod_id == "T9505D"
-				// Silent Scope (JP)
-				|| prod_id == "T9513M"
-				// Pro Pinball - Trilogy (EU)
-				|| prod_id == "T30701D 50"
-				// Jikkyo Powerful Pro Yakyu
-				|| prod_id == "T9507M")
+			// Tony Hawk's Pro Skater 1
+			|| prod_id == "T40205N"
+			// Tony Hawk's Skateboarding
+			|| prod_id == "T40204D 50"
+			// Skies of Arcadia
+			|| prod_id == "MK-51052"
+			// Eternal Arcadia (JP)
+			|| prod_id == "HDR-0076"
+			// Flag to Flag (US)
+			|| prod_id == "MK-51007"
+			// Super Speed Racing (JP)
+			|| prod_id == "HDR-0013"
+			// Yu Suzuki Game Works Vol. 1
+			|| prod_id == "6108099"
+			// L.O.L
+			|| prod_id == "T2106M"
+			// Miss Moonlight
+			|| prod_id == "T18702M"
+			// Tom Clancy's Rainbow Six (US)
+			|| prod_id == "T40401N"
+			// Tom Clancy's Rainbow Six incl. Eagle Watch Missions (EU)
+			|| prod_id == "T-45001D05"
+			// Jet Grind Radio (US)
+			|| prod_id == "MK-51058"
+			// JSR (JP)
+			|| prod_id == "HDR-0078"
+			// JSR (EU)
+			|| prod_id == "MK-5105850"
+			// Worms World Party (US)
+			|| prod_id == "T22904N"
+			// Worms World Party (EU)
+			|| prod_id == "T7016D  50"
+			// Shenmue (US)
+			|| prod_id == "MK-51059"
+			// Shenmue (EU)
+			|| prod_id == "MK-5105950"
+			// Shenmue (JP)
+			|| prod_id == "HDR-0016"
+			// Izumo
+			|| prod_id == "T46902M"
+			// Cardcaptor Sakura
+			|| prod_id == "HDR-0115"
+			// Grandia II (US)
+			|| prod_id == "T17716N"
+			// Grandia II (EU)
+			|| prod_id == "T17715D"
+			// Grandia II (JP)
+			|| prod_id == "T4503M"
+			// Canvas: Sepia Iro no Motif
+			|| prod_id == "T20108M"
+			// Kimi ga Nozomu Eien
+			|| prod_id == "T47101M"
+			// Pro Mahjong Kiwame D
+			|| prod_id == "T16801M"
+			// Yoshia no Oka de Nekoronde...
+			|| prod_id == "T18704M"
+			// Tamakyuu (a.k.a. Tama-cue)
+			|| prod_id == "T20133M"
+			// Sakura Taisen 1
+			|| prod_id == "HDR-0072"
+			// Sakura Taisen 3
+			|| prod_id == "HDR-0152"
+			// Hundred Swords
+			|| prod_id == "HDR-0124"
+			// Musapey's Choco Marker
+			|| prod_id == "T23203M"
+			// Sister Princess Premium Edition
+			|| prod_id == "T27802M"
+			// Sentimental Graffiti
+			|| prod_id == "T20128M"
+			// Sentimental Graffiti 2
+			|| prod_id == "T20104M"
+			// Kanon
+			|| prod_id == "T20105M"
+			// Aikagi
+			|| prod_id == "T20130M"
+			// AIR
+			|| prod_id == "T20112M"
+			// Cool Boarders Burrrn (JP)
+			|| prod_id == "T36901M"
+			// Castle Fantasia - Seima Taisen (JP)
+			|| prod_id == "T46901M"
+			// Silent Scope (US)
+			|| prod_id == "T9507N"
+			// Silent Scope (EU)
+			|| prod_id == "T9505D"
+			// Silent Scope (JP)
+			|| prod_id == "T9513M"
+			// Pro Pinball - Trilogy (EU)
+			|| prod_id == "T30701D 50"
+			// Jikkyo Powerful Pro Yakyu
+			|| prod_id == "T9507M")
 		{
 			INFO_LOG(BOOT, "Enabling RTT Copy to VRAM for game %s", prod_id.c_str());
 			config::RenderToTextureBuffer.override(true);
@@ -173,21 +182,21 @@ static void loadSpecialSettings()
 			config::ExtraDepthScale.override(1e8f);
 		}
 		else if (prod_id == "T-8109N"		// Re-Volt (US, EU, JP)
-				|| prod_id == "T8107D  50"
-				|| prod_id == "T-8101M"
-				|| prod_id ==  "DR001")		// Sturmwind
+			|| prod_id == "T8107D  50"
+			|| prod_id == "T-8101M"
+			|| prod_id ==  "DR001")		// Sturmwind
 		{
 			INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s", prod_id.c_str());
 			config::ExtraDepthScale.override(100.f);
 		}
 		else if (prod_id == "T15110N"		// Test Drive V-Rally
-				|| prod_id == "T15105D 50")
+			|| prod_id == "T15105D 50")
 		{
 			INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s", prod_id.c_str());
 			config::ExtraDepthScale.override(0.1f);
 		}
 		else if (prod_id == "T-8116N"		// South Park Rally
-				|| prod_id == "T-8112D-50")
+			|| prod_id == "T-8112D-50")
 		{
 			INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s", prod_id.c_str());
 			config::ExtraDepthScale.override(1000.f);
@@ -240,14 +249,14 @@ static void loadSpecialSettings()
 		else
 			WARN_LOG(BOOT, "No region specified in IP.BIN");
 		if (config::Cable <= 1 && (!ip_meta.supportsVGA()
-				|| prod_id == "T-12504N"	// Caesar's Palace (NTSC)
-				|| prod_id == "12502D-50"))	// Caesar's Palace (PAL)
+			|| prod_id == "T-12504N"	// Caesar's Palace (NTSC)
+			|| prod_id == "12502D-50"))	// Caesar's Palace (PAL)
 		{
 			NOTICE_LOG(BOOT, "Game doesn't support VGA. Using TV Composite instead");
 			config::Cable.override(3);
 		}
 		if (config::Cable == 2 &&
-				(prod_id == "T40602N"	 // Centipede
+			(prod_id == "T40602N"	 // Centipede
 				|| prod_id == "T9710N"   // Gauntlet Legends (US)
 				|| prod_id == "MK-51152" // World Series Baseball 2K2
 				|| prod_id == "T-9701N"	 // Mortal Kombat Gold (US)
@@ -305,11 +314,11 @@ static void loadSpecialSettings()
 			config::Broadcast.override(1);
 		}
 		if (prod_id == "T1102M"				// Densha de Go! 2
-				|| prod_id == "T00000A"		// The Ring of the Nibelungen (demo, hack)
-				|| prod_id == "T15124N 00"	// Worms Pinball (prototype)
-				|| prod_id == "T9503M"		// Eisei Meijin III
-				|| prod_id == "T5202M"		// Marionette Company
-				|| prod_id == "T5301M")		// World Neverland Plus
+			|| prod_id == "T00000A"		// The Ring of the Nibelungen (demo, hack)
+			|| prod_id == "T15124N 00"	// Worms Pinball (prototype)
+			|| prod_id == "T9503M"		// Eisei Meijin III
+			|| prod_id == "T5202M"		// Marionette Company
+			|| prod_id == "T5301M")		// World Neverland Plus
 		{
 			NOTICE_LOG(BOOT, "Forcing Full Framebuffer Emulation");
 			config::EmulateFramebuffer.override(true);
@@ -320,7 +329,7 @@ static void loadSpecialSettings()
 			config::Language.override(1);
 		}
 		if (prod_id == "T-9701N"			// Mortal Kombat (US)
-				|| prod_id == "T9701D")		// Mortal Kombat (EU)
+			|| prod_id == "T9701D")		// Mortal Kombat (EU)
 		{
 			NOTICE_LOG(BOOT, "Disabling Native Depth Interpolation");
 			config::NativeDepthInterpolation.override(false);
@@ -328,55 +337,55 @@ static void loadSpecialSettings()
 		// Per-pixel transparent layers
 		int layers = 0;
 		if (prod_id == "MK-51011"			// Time Stalkers (US)
-				|| prod_id == "MK-5101153")	// Time Stalkers (EU)
+			|| prod_id == "MK-5101153")	// Time Stalkers (EU)
 			layers = 72;
 		else if (prod_id == "T13001N"		// Blue Stinger (US)
-				|| prod_id == "HDR-0003"	// Blue Stinger (JP)
-				|| prod_id == "T13001D-05"	// Blue Stinger (EU)
-				|| prod_id == "T13001D 18")	// Blue Stinger (DE)
+			|| prod_id == "HDR-0003"	// Blue Stinger (JP)
+			|| prod_id == "T13001D-05"	// Blue Stinger (EU)
+			|| prod_id == "T13001D 18")	// Blue Stinger (DE)
 			layers = 80;
 		else if (prod_id == "T2102M"		// Panzer Front
-				|| prod_id == "T-8118N"		// Spirit of Speed (US)
-				|| prod_id == "T-8117D-50"	// Spirit of Speed (EU)
-				|| prod_id == "T13002N"		// Vigilante 8 (US)
-				|| prod_id == "T13002D")	// Vigilante 8 (EU)
+			|| prod_id == "T-8118N"		// Spirit of Speed (US)
+			|| prod_id == "T-8117D-50"	// Spirit of Speed (EU)
+			|| prod_id == "T13002N"		// Vigilante 8 (US)
+			|| prod_id == "T13002D")	// Vigilante 8 (EU)
 			layers = 64;
 		else if (prod_id == "T2106M")		// L.O.L. Lack of Love
 			layers = 48;
 		else if (prod_id == "T1212M")		// Gaiamaster - Kessen! Seikioh Densetsu
 			layers = 96;
 		else if (prod_id == "T-9707N"		// San Francisco Rush 2049 (US)
-				|| prod_id == "T-9709D-50"	// San Francisco Rush 2049 (EU)
-				|| prod_id == "T17721N"		// Conflict Zone (US)
-				|| prod_id == "T46604D")	// Conflict Zone (EU)
+			|| prod_id == "T-9709D-50"	// San Francisco Rush 2049 (EU)
+			|| prod_id == "T17721N"		// Conflict Zone (US)
+			|| prod_id == "T46604D")	// Conflict Zone (EU)
 			layers = 152;
 		else if (prod_id == "MK-51033"		// ECCO the Dolphin (US)
-				|| prod_id == "MK-5103350"	// ECCO the Dolphin (EU)
-				|| prod_id == "HDR-0103")	// ECCO the Dolphin (JP)
+			|| prod_id == "MK-5103350"	// ECCO the Dolphin (EU)
+			|| prod_id == "HDR-0103")	// ECCO the Dolphin (JP)
 			layers = 96;
 		else if (prod_id == "T40203N")		// Draconus: Cult of the Wyrm
 			layers = 80;
 		else if (prod_id == "T40212N"		// Soldier of Fortune (US)
-				|| prod_id == "T17726D 50")	// Soldier of Fortune (EU)
+			|| prod_id == "T17726D 50")	// Soldier of Fortune (EU)
 			layers = 86;
 		else if (prod_id == "T44102N")		// BANG! Gunship Elite
 			layers = 100;
 		else if (prod_id == "T12502N"		// MDK 2 (US)
-				|| prod_id == "T12501D 50")	// MDK 2 (EU)
+			|| prod_id == "T12501D 50")	// MDK 2 (EU)
 			layers = 200;
 		else if (prod_id == "T9708D  50")	// Army Men
 			layers = 173;
 		else if (prod_id == "MK-51038"		// Zombie Revenge (US)
-				|| prod_id == "MK-5103850"	// Zombie Revenge (EU)
-				|| prod_id == "HDR-0026"	// Zombie Revenge (JP)
-				|| prod_id == "36801N"		// Fighting Force 2 (US)
-				|| prod_id == "36802D 80"	// Fighting Force 2 (PAL, en-fr)
-				|| prod_id == "36802D 18")	// Fighting Force 2 (PAL, de)
+			|| prod_id == "MK-5103850"	// Zombie Revenge (EU)
+			|| prod_id == "HDR-0026"	// Zombie Revenge (JP)
+			|| prod_id == "36801N"		// Fighting Force 2 (US)
+			|| prod_id == "36802D 80"	// Fighting Force 2 (PAL, en-fr)
+			|| prod_id == "36802D 18")	// Fighting Force 2 (PAL, de)
 			layers = 116;
 		else if (prod_id == "T15112N")		// Demolition Racer (US)
 			layers = 44;
 		else if (prod_id == "T1208N"		// Tech Romancer (US)
-				|| prod_id == "T7009D50")	// Tech Romancer (EU)
+			|| prod_id == "T7009D50")	// Tech Romancer (EU)
 			layers = 56;
 		if (layers != 0) {
 			NOTICE_LOG(BOOT, "Forcing %d transparent layers", layers);
@@ -391,9 +400,9 @@ static void loadSpecialSettings()
 			config::TranslucentPolygonDepthMask.override(true);
 		}
 		if (prod_id == "BEACH SPIKERS JAPAN"
-				|| prod_id == "CHOCO MARKER"
-				|| prod_id == "LOVE AND BERRY USA VER1.003"		// lovebero
-				|| prod_id == "LOVE AND BERRY USA VER2.000")	// lovebery
+			|| prod_id == "CHOCO MARKER"
+			|| prod_id == "LOVE AND BERRY USA VER1.003"		// lovebero
+			|| prod_id == "LOVE AND BERRY USA VER2.000")	// lovebery
 		{
 			INFO_LOG(BOOT, "Enabling RTT Copy to VRAM for game %s", prod_id.c_str());
 			config::RenderToTextureBuffer.override(true);
@@ -731,12 +740,12 @@ void Emulator::unloadGame()
 {
 	try {
 		stop();
-	} catch (...) { }
-	if (state == Loaded || state == Error)
+	} catch (...) {}
+	if (state == Loaded || state == Error || state == Paused) // Handle Paused state too
 	{
 #ifndef LIBRETRO
-		if (state == Loaded && config::AutoSaveState && !settings.content.path.empty()
-				&& !settings.naomi.multiboard && !config::GGPOEnable && !NaomiNetworkSupported())
+		if ((state == Loaded || state == Paused) && config::AutoSaveState && !settings.content.path.empty()
+			&& !settings.naomi.multiboard && !config::GGPOEnable && !NaomiNetworkSupported())
 			gui_saveState(false);
 #endif
 		try {
@@ -792,7 +801,7 @@ void Emulator::term()
 
 void Emulator::stop()
 {
-	if (state != Running)
+	if (state != Running && state != Paused)
 		return;
 	// Avoid race condition with GGPO restarting the sh4 for a new frame
 	if (config::GGPOEnable)
@@ -828,6 +837,26 @@ void Emulator::stop()
 #endif
 	}
 }
+
+#ifndef LIBRETRO
+void Emulator::pause()
+{
+	if (state == Running)
+	{
+		stop();
+		// Override state to Paused so we know it wasn't a full stop
+		state = Paused;
+	}
+}
+
+void Emulator::resume()
+{
+	if (state == Paused)
+	{
+		start();
+	}
+}
+#endif
 
 // Called on the emulator thread for soft reset
 void Emulator::requestReset()
@@ -916,7 +945,7 @@ void Emulator::setNetworkState(bool online)
 		settings.network.online = online;
 		DEBUG_LOG(NETWORK, "Network state %d", online);
 		if (online && settings.platform.isConsole()
-				&& config::Sh4Clock != 200)
+			&& config::Sh4Clock != 200)
 		{
 			config::Sh4Clock.override(200);
 			getSh4Executor()->ResetCache();
@@ -954,7 +983,7 @@ void Emulator::run()
 	startTime = sh4_sched_now64();
 	renderTimeout = false;
 	if (!singleStep && stepRangeTo == 0)
-	getSh4Executor()->Start();
+		getSh4Executor()->Start();
 	try {
 		runInternal();
 		if (ggpo::active())
@@ -973,7 +1002,14 @@ void Emulator::start()
 {
 	if (state == Running)
 		return;
-	if (state != Loaded) {
+
+	// Note: We deliberately treat Paused -> Running as a fresh start here
+	// because we terminated the thread on Pause to ensure stability.
+	// We just need to reset state to Running before continuing.
+	if (state == Paused)
+		state = Running;
+
+	if (state != Loaded && state != Running) {
 		WARN_LOG(COMMON, "Unexpected emu state %d", state);
 		return;
 	}
@@ -991,26 +1027,26 @@ void Emulator::start()
 		const std::lock_guard<std::mutex> lock(mutex);
 		getSh4Executor()->Start();
 		threadResult = std::async(std::launch::async, [this] {
-				ThreadName _("Flycast-emu");
-				InitAudio();
+			ThreadName _("Flycast-emu");
+			InitAudio();
 
-				try {
-					while (state == Running || singleStep || stepRangeTo != 0)
-					{
-						startTime = sh4_sched_now64();
-						renderTimeout = false;
-						runInternal();
-						if (!ggpo::nextFrame())
-							break;
-					}
-					TermAudio();
-				} catch (...) {
-					setNetworkState(false);
-					getSh4Executor()->Stop();
-					TermAudio();
-					throw;
+			try {
+				while (state == Running || singleStep || stepRangeTo != 0)
+				{
+					startTime = sh4_sched_now64();
+					renderTimeout = false;
+					runInternal();
+					if (!ggpo::nextFrame())
+						break;
 				}
-		});
+				TermAudio();
+			} catch (...) {
+				setNetworkState(false);
+				getSh4Executor()->Stop();
+				TermAudio();
+				throw;
+			}
+			});
 	}
 	else
 	{
@@ -1027,7 +1063,7 @@ bool Emulator::checkStatus(bool wait)
 		std::unique_lock<std::mutex> lock(mutex);
 		if (threadResult.valid())
 		{
-            auto localResult = threadResult;
+			auto localResult = threadResult;
 			lock.unlock();
 			if (wait) {
 				localResult.wait();
@@ -1047,9 +1083,228 @@ bool Emulator::checkStatus(bool wait)
 	}
 }
 
+#ifndef LIBRETRO
+void Emulator::appendVectorData(void *context, void *data, int size)
+{
+	std::vector<u8>& v = *(std::vector<u8> *)context;
+	const u8 *bytes = (const u8 *)data;
+	v.insert(v.end(), bytes, bytes + size);
+}
+
+void Emulator::getScreenshot(std::vector<u8>& data, int width)
+{
+	data.clear();
+	std::vector<u8> rawData;
+	int height = 0;
+	if (renderer == nullptr || !renderer->GetLastFrame(rawData, width, height))
+		return;
+	stbi_flip_vertically_on_write(0);
+	stbi_write_png_to_func(appendVectorData, &data, width, height, 3, &rawData[0], 0);
+}
+
+void Emulator::performSaveState(int slot)
+{
+	if (state == Uninitialized || state == Error || state == Terminated) return;
+
+	// Ensure screenshots are taken correctly
+	std::vector<u8> pngData;
+	getScreenshot(pngData, 640);
+
+	bool wasRunning = (state == Running);
+	if (wasRunning) {
+		stop();
+	}
+
+	try {
+		dc_savestate(slot, pngData.empty() ? nullptr : &pngData[0], pngData.size());
+
+		char msg[64];
+		snprintf(msg, sizeof(msg), "%s %d", i18n::Ts("State Saved - Slot").c_str(), slot + 1);
+		os_notify(msg, 2000);
+	}
+	catch (...) {
+		os_notify(i18n::Ts("Error saving state").c_str(), 2000);
+	}
+
+	if (wasRunning) {
+		start();
+	}
+}
+
+void Emulator::performLoadState(int slot)
+{
+	if (state == Uninitialized || state == Error || state == Terminated) return;
+
+	if (settings.raHardcoreMode) {
+		os_notify(i18n::Ts("Load States disabled in Hardcore Mode").c_str(), 2000);
+		return;
+	}
+
+	// QoL: Check if state exists before attempting to load to prevent stuttering
+	if (dc_getStateCreationDate(slot) == 0) {
+		char msg[64];
+		snprintf(msg, sizeof(msg), "%s %d %s", i18n::Ts("Slot").c_str(), slot + 1, i18n::Ts("is empty").c_str());
+		os_notify(msg, 2000);
+		return;
+	}
+
+	try {
+		// Stop emulator if running to ensure thread safety during load
+		bool wasRunning = (state == Running);
+		if (wasRunning) {
+			stop();
+		}
+
+		dc_loadstate(slot);
+
+		if (wasRunning) {
+			start();
+		}
+
+		char msg[64];
+		snprintf(msg, sizeof(msg), "%s %d", i18n::Ts("State Loaded - Slot").c_str(), slot + 1);
+		os_notify(msg, 2000);
+	}
+	catch (...) {
+		os_notify(i18n::Ts("Error loading state").c_str(), 2000);
+	}
+}
+
+void Emulator::checkHotkeys()
+{
+	static bool ff_toggle = false;
+	static u32 pressed_keys = 0;
+
+	u32 current_keys = 0;
+
+	auto check_action = [](u32 action) -> bool {
+		for (int i = 0; i < GamepadDevice::GetGamepadCount(); i++)
+		{
+			std::shared_ptr<GamepadDevice> gamepad = GamepadDevice::GetGamepad(i);
+			if (gamepad && gamepad->get_input_mapping()) {
+				if (gamepad->get_input_mapping()->get_button_id(0, gamepad->get_input_state()) == (DreamcastKey)action)
+					return true;
+			}
+		}
+		return false;
+		};
+
+	// Toggle Fast Forward
+	if (check_action(EMU_BTN_TOGGLE_FF)) {
+		if (!(pressed_keys & EMU_BTN_TOGGLE_FF)) {
+			ff_toggle = !ff_toggle;
+			settings.input.fastForwardMode = ff_toggle;
+			// Use the OSD icon instead of text
+			// No os_notify here, gui_draw_osd will pick up the state
+		}
+		current_keys |= EMU_BTN_TOGGLE_FF;
+	}
+
+	// Toggle Pause - Hardcore Mode Restriction
+	if (check_action(EMU_BTN_PAUSE)) {
+		if (!(pressed_keys & EMU_BTN_PAUSE)) {
+			bool allowed = true;
+			u64 now = getTimeMs();
+
+			// Hardcore Mode Restriction Logic
+			if (settings.raHardcoreMode) {
+				if (state == Running) {
+					// We are attempting to Pause.
+					// Check if we recently Resumed (within 3 seconds)
+					if (now - lastPauseToggleTime < 3000) {
+						allowed = false;
+						os_notify(i18n::Ts("Please wait 3 seconds before pausing again.").c_str(), 2000);
+					}
+				}
+				// If state == Paused, we are Resuming. Always allowed.
+			}
+
+			if (allowed) {
+				if (state == Running) {
+					pause();
+					os_notify(ICON_FA_PAUSE, 2000);
+				}
+				else if (state == Paused) {
+					resume();
+					// Update lastPauseToggleTime only on RESUME
+					lastPauseToggleTime = now;
+					os_notify(ICON_FA_PLAY, 2000);
+				}
+			}
+		}
+		current_keys |= EMU_BTN_PAUSE;
+	}
+
+	// Frame Advance - Hardcore Mode Restriction
+	if (check_action(EMU_BTN_FRAME_ADV)) {
+		if (!(pressed_keys & EMU_BTN_FRAME_ADV)) {
+			if (settings.raHardcoreMode) {
+				os_notify(i18n::Ts("Frame Advance disabled in Hardcore Mode").c_str(), 2000);
+			}
+			else {
+				// Force fast forward OFF for accurate frame stepping
+				settings.input.fastForwardMode = false;
+				stopAfterNextFrame = true;
+				if (state == Paused) {
+					resume();
+				}
+				// Use FontAwesome icon
+				os_notify(ICON_FA_FORWARD_STEP, 2000);
+			}
+		}
+		current_keys |= EMU_BTN_FRAME_ADV;
+	}
+
+	// Save/Load Slots
+	for (int i = 0; i < 10; i++) {
+		u32 save_btn = EMU_BTN_SAVE_SLOT_1 + i;
+		u32 load_btn = EMU_BTN_LOAD_SLOT_1 + i;
+
+		if (check_action(save_btn)) {
+			if (!(pressed_keys & save_btn)) {
+				performSaveState(i);
+			}
+			current_keys |= save_btn;
+		}
+
+		if (check_action(load_btn)) {
+			if (!(pressed_keys & load_btn)) {
+				performLoadState(i);
+			}
+			current_keys |= load_btn;
+		}
+	}
+
+	// NOTE: Menu, Escape, FastForward Hold, Screenshot are handled in GamepadDevice/KeyboardDevice
+	// to avoid duplicate actions.
+
+	pressed_keys = current_keys;
+}
+#endif
+
 bool Emulator::render()
 {
 	FC_PROFILE_SCOPE;
+
+#ifndef LIBRETRO
+	// Check hotkeys (on UI thread)
+	checkHotkeys();
+
+	if (state == Paused) {
+		// Even if paused, we want to render the last frame to keep OSD active
+		// Just returning true keeps main loop alive without advancing emulation
+		// But we must present something to screen.
+		// Important: We must manually trigger the OSD display generation here
+		// because the normal render loop (which calls pvr::rend_frame -> gui_display_osd) is skipped.
+		try {
+			gui_display_osd();
+		}
+		catch (...) {
+			WARN_LOG(COMMON, "Exception in OSD render during pause");
+		}
+		return true;
+	}
+#endif
 
 	if (!config::ThreadedRendering)
 	{
@@ -1086,6 +1341,29 @@ void Emulator::vblank()
 		ggpo::endOfFrame();
 	else if (!config::ThreadedRendering)
 		getSh4Executor()->Stop();
+
+#ifndef LIBRETRO
+	// Frame Advance Logic
+	if (stopAfterNextFrame) {
+		stopAfterNextFrame = false;
+		if (state == Running) {
+			// Stop execution (will exit thread loop)
+			getSh4Executor()->Stop();
+
+			if (config::ThreadedRendering) {
+				// Mark as Paused so main thread knows to keep calling render() for OSD
+				// Note: stop() isn't called here because we are ON the emu thread.
+				// The main loop in start() will exit because Stop() was called.
+				// We just need to flag the state change.
+				state = Paused;
+			}
+			else {
+				stopRequested = true;
+				state = Paused;
+			}
+		}
+	}
+#endif
 }
 
 bool Emulator::restartCpu()

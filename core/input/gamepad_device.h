@@ -61,6 +61,7 @@ public:
 	}
 
 	std::shared_ptr<InputMapping> get_input_mapping() { return input_mapper; }
+	const InputMapping::InputSet& get_input_state() const { return currentInputs; }
 	void save_mapping(int system = settings.platform.system);
 
 	virtual const char *get_button_name(u32 code) { return nullptr; }
