@@ -38,7 +38,7 @@ using std::locale;
 
 void init();
 
-#if !defined(LIBRETRO) && !defined(__SWITCH__) && !defined(_WIN32)
+#if !defined(LIBRETRO) && !defined(__SWITCH__) && !defined(_WIN32) && !defined(TARGET_MAC)
 
 static inline std::string getCurrentLocale() {
 	return setlocale(LC_MESSAGES, nullptr);
