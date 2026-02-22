@@ -193,16 +193,34 @@ public:
 
 	void dc_reset(bool hard); // for tests only
 
+#ifndef LIBRETRO
+	// Accessor for Hardcore Mode check
+	u64 getLastPauseTime() const { return lastPauseToggleTime; }
+#endif
+
 private:
 	bool checkStatus(bool wait = false);
 	void runInternal();
 	void diskChange();
+
+#ifndef LIBRETRO
+	// Helper functions for Hotkeys
+	void checkHotkeys();
+	void performSaveState(int slot);
+	void performLoadState(int slot);
+	void pause();
+	void resume();
+
+	static void appendVectorData(void *context, void *data, int size);
+	static void getScreenshot(std::vector<u8>& data, int width);
+#endif
 
 	enum State {
 		Uninitialized = 0,
 		Init,
 		Loaded,
 		Running,
+		Paused,
 		Error,
 		Terminated,
 	};
@@ -215,6 +233,13 @@ private:
 	u32 stepRangeFrom = 0;
 	u32 stepRangeTo = 0;
 	bool stopRequested = false;
+
+#ifndef LIBRETRO
+	// Hotkey Logic
+	std::atomic<bool> stopAfterNextFrame = false; // For Frame Advance
+	u64 lastPauseToggleTime = 0; // For Hardcore Mode anti-abuse
+#endif
+
 	std::mutex mutex;
 	Sh4Executor *interpreter = nullptr;
 	Sh4Executor *recompiler = nullptr;

@@ -47,6 +47,15 @@
 #include <chrono>
 #ifndef LIBRETRO
 #include "ui/gui.h"
+#include "ui/IconsFontAwesome6.h"
+#include "input/mapping.h"
+#include "input/gamepad_device.h"
+#include <stb_image_write.h>
+#else
+ // Libretro fallbacks for OSD icons
+#define ICON_FA_PAUSE "Paused"
+#define ICON_FA_PLAY "Resumed"
+#define ICON_FA_FORWARD_STEP "Frame Advance"
 #endif
 #include "hw/sh4/sh4_interpreter.h"
 #include "hw/sh4/dyna/ngen.h"
@@ -732,11 +741,11 @@ void Emulator::unloadGame()
 	try {
 		stop();
 	} catch (...) { }
-	if (state == Loaded || state == Error)
+	if (state == Loaded || state == Error || state == Paused) // Handle Paused state too
 	{
 #ifndef LIBRETRO
-		if (state == Loaded && config::AutoSaveState && !settings.content.path.empty()
-				&& !settings.naomi.multiboard && !config::GGPOEnable && !NaomiNetworkSupported())
+		if ((state == Loaded || state == Paused) && config::AutoSaveState && !settings.content.path.empty()
+			&& !settings.naomi.multiboard && !config::GGPOEnable && !NaomiNetworkSupported())
 			gui_saveState(false);
 #endif
 		try {
@@ -792,7 +801,7 @@ void Emulator::term()
 
 void Emulator::stop()
 {
-	if (state != Running)
+	if (state != Running && state != Paused)
 		return;
 	// Avoid race condition with GGPO restarting the sh4 for a new frame
 	if (config::GGPOEnable)
@@ -828,6 +837,26 @@ void Emulator::stop()
 #endif
 	}
 }
+
+#ifndef LIBRETRO
+void Emulator::pause()
+{
+	if (state == Running)
+	{
+		stop();
+		// Override state to Paused so we know it wasn't a full stop
+		state = Paused;
+	}
+}
+
+void Emulator::resume()
+{
+	if (state == Paused)
+	{
+		start();
+	}
+}
+#endif
 
 // Called on the emulator thread for soft reset
 void Emulator::requestReset()
@@ -973,7 +1002,14 @@ void Emulator::start()
 {
 	if (state == Running)
 		return;
-	if (state != Loaded) {
+
+	// Note: We deliberately treat Paused -> Running as a fresh start here
+	// because we terminated the thread on Pause to ensure stability.
+	// We just need to reset state to Running before continuing.
+	if (state == Paused)
+		state = Running;
+
+	if (state != Loaded && state != Running) {
 		WARN_LOG(COMMON, "Unexpected emu state %d", state);
 		return;
 	}
@@ -1047,9 +1083,228 @@ bool Emulator::checkStatus(bool wait)
 	}
 }
 
+#ifndef LIBRETRO
+void Emulator::appendVectorData(void *context, void *data, int size)
+{
+	std::vector<u8>& v = *(std::vector<u8> *)context;
+	const u8 *bytes = (const u8 *)data;
+	v.insert(v.end(), bytes, bytes + size);
+}
+
+void Emulator::getScreenshot(std::vector<u8>& data, int width)
+{
+	data.clear();
+	std::vector<u8> rawData;
+	int height = 0;
+	if (renderer == nullptr || !renderer->GetLastFrame(rawData, width, height))
+		return;
+	stbi_flip_vertically_on_write(0);
+	stbi_write_png_to_func(appendVectorData, &data, width, height, 3, &rawData[0], 0);
+}
+
+void Emulator::performSaveState(int slot)
+{
+	if (state == Uninitialized || state == Error || state == Terminated) return;
+
+	// Ensure screenshots are taken correctly
+	std::vector<u8> pngData;
+	getScreenshot(pngData, 640);
+
+	bool wasRunning = (state == Running);
+	if (wasRunning) {
+		stop();
+	}
+
+	try {
+		dc_savestate(slot, pngData.empty() ? nullptr : &pngData[0], pngData.size());
+
+		char msg[64];
+		snprintf(msg, sizeof(msg), "%s %d", i18n::Ts("State Saved - Slot").c_str(), slot + 1);
+		os_notify(msg, 2000);
+	}
+	catch (...) {
+		os_notify(i18n::Ts("Error saving state").c_str(), 2000);
+	}
+
+	if (wasRunning) {
+		start();
+	}
+}
+
+void Emulator::performLoadState(int slot)
+{
+	if (state == Uninitialized || state == Error || state == Terminated) return;
+
+	if (settings.raHardcoreMode) {
+		os_notify(i18n::Ts("Load States disabled in Hardcore Mode").c_str(), 2000);
+		return;
+	}
+
+	// QoL: Check if state exists before attempting to load to prevent stuttering
+	if (dc_getStateCreationDate(slot) == 0) {
+		char msg[64];
+		snprintf(msg, sizeof(msg), "%s %d %s", i18n::Ts("Slot").c_str(), slot + 1, i18n::Ts("is empty").c_str());
+		os_notify(msg, 2000);
+		return;
+	}
+
+	try {
+		// Stop emulator if running to ensure thread safety during load
+		bool wasRunning = (state == Running);
+		if (wasRunning) {
+			stop();
+		}
+
+		dc_loadstate(slot);
+
+		if (wasRunning) {
+			start();
+		}
+
+		char msg[64];
+		snprintf(msg, sizeof(msg), "%s %d", i18n::Ts("State Loaded - Slot").c_str(), slot + 1);
+		os_notify(msg, 2000);
+	}
+	catch (...) {
+		os_notify(i18n::Ts("Error loading state").c_str(), 2000);
+	}
+}
+
+void Emulator::checkHotkeys()
+{
+	static bool ff_toggle = false;
+	static u32 pressed_keys = 0;
+
+	u32 current_keys = 0;
+
+	auto check_action = [](u32 action) -> bool {
+		for (int i = 0; i < GamepadDevice::GetGamepadCount(); i++)
+		{
+			std::shared_ptr<GamepadDevice> gamepad = GamepadDevice::GetGamepad(i);
+			if (gamepad && gamepad->get_input_mapping()) {
+				if (gamepad->get_input_mapping()->get_button_id(0, gamepad->get_input_state()) == (DreamcastKey)action)
+					return true;
+			}
+		}
+		return false;
+		};
+
+	// Toggle Fast Forward
+	if (check_action(EMU_BTN_TOGGLE_FF)) {
+		if (!(pressed_keys & EMU_BTN_TOGGLE_FF)) {
+			ff_toggle = !ff_toggle;
+			settings.input.fastForwardMode = ff_toggle;
+			// Use the OSD icon instead of text
+			// No os_notify here, gui_draw_osd will pick up the state
+		}
+		current_keys |= EMU_BTN_TOGGLE_FF;
+	}
+
+	// Toggle Pause - Hardcore Mode Restriction
+	if (check_action(EMU_BTN_PAUSE)) {
+		if (!(pressed_keys & EMU_BTN_PAUSE)) {
+			bool allowed = true;
+			u64 now = getTimeMs();
+
+			// Hardcore Mode Restriction Logic
+			if (settings.raHardcoreMode) {
+				if (state == Running) {
+					// We are attempting to Pause.
+					// Check if we recently Resumed (within 3 seconds)
+					if (now - lastPauseToggleTime < 3000) {
+						allowed = false;
+						os_notify(i18n::Ts("Please wait 3 seconds before pausing again.").c_str(), 2000);
+					}
+				}
+				// If state == Paused, we are Resuming. Always allowed.
+			}
+
+			if (allowed) {
+				if (state == Running) {
+					pause();
+					os_notify(ICON_FA_PAUSE, 2000);
+				}
+				else if (state == Paused) {
+					resume();
+					// Update lastPauseToggleTime only on RESUME
+					lastPauseToggleTime = now;
+					os_notify(ICON_FA_PLAY, 2000);
+				}
+			}
+		}
+		current_keys |= EMU_BTN_PAUSE;
+	}
+
+	// Frame Advance - Hardcore Mode Restriction
+	if (check_action(EMU_BTN_FRAME_ADV)) {
+		if (!(pressed_keys & EMU_BTN_FRAME_ADV)) {
+			if (settings.raHardcoreMode) {
+				os_notify(i18n::Ts("Frame Advance disabled in Hardcore Mode").c_str(), 2000);
+			}
+			else {
+				// Force fast forward OFF for accurate frame stepping
+				settings.input.fastForwardMode = false;
+				stopAfterNextFrame = true;
+				if (state == Paused) {
+					resume();
+				}
+				// Use FontAwesome icon
+				os_notify(ICON_FA_FORWARD_STEP, 2000);
+			}
+		}
+		current_keys |= EMU_BTN_FRAME_ADV;
+	}
+
+	// Save/Load Slots
+	for (int i = 0; i < 10; i++) {
+		u32 save_btn = EMU_BTN_SAVE_SLOT_1 + i;
+		u32 load_btn = EMU_BTN_LOAD_SLOT_1 + i;
+
+		if (check_action(save_btn)) {
+			if (!(pressed_keys & save_btn)) {
+				performSaveState(i);
+			}
+			current_keys |= save_btn;
+		}
+
+		if (check_action(load_btn)) {
+			if (!(pressed_keys & load_btn)) {
+				performLoadState(i);
+			}
+			current_keys |= load_btn;
+		}
+	}
+
+	// NOTE: Menu, Escape, FastForward Hold, Screenshot are handled in GamepadDevice/KeyboardDevice
+	// to avoid duplicate actions.
+
+	pressed_keys = current_keys;
+}
+#endif
+
 bool Emulator::render()
 {
 	FC_PROFILE_SCOPE;
+
+#ifndef LIBRETRO
+	// Check hotkeys (on UI thread)
+	checkHotkeys();
+
+	if (state == Paused) {
+		// Even if paused, we want to render the last frame to keep OSD active
+		// Just returning true keeps main loop alive without advancing emulation
+		// But we must present something to screen.
+		// Important: We must manually trigger the OSD display generation here
+		// because the normal render loop (which calls pvr::rend_frame -> gui_display_osd) is skipped.
+		try {
+			gui_display_osd();
+		}
+		catch (...) {
+			WARN_LOG(COMMON, "Exception in OSD render during pause");
+		}
+		return true;
+	}
+#endif
 
 	if (!config::ThreadedRendering)
 	{
@@ -1086,6 +1341,29 @@ void Emulator::vblank()
 		ggpo::endOfFrame();
 	else if (!config::ThreadedRendering)
 		getSh4Executor()->Stop();
+
+#ifndef LIBRETRO
+	// Frame Advance Logic
+	if (stopAfterNextFrame) {
+		stopAfterNextFrame = false;
+		if (state == Running) {
+			// Stop execution (will exit thread loop)
+			getSh4Executor()->Stop();
+
+			if (config::ThreadedRendering) {
+				// Mark as Paused so main thread knows to keep calling render() for OSD
+				// Note: stop() isn't called here because we are ON the emu thread.
+				// The main loop in start() will exit because Stop() was called.
+				// We just need to flag the state change.
+				state = Paused;
+			}
+			else {
+				stopRequested = true;
+				state = Paused;
+			}
+		}
+	}
+#endif
 }
 
 bool Emulator::restartCpu()

@@ -27,6 +27,35 @@
 #include <vector>
 #include <limits>
 
+ // Extended Emulator Hotkeys
+const u32 EMU_BTN_TOGGLE_FF = 0x40000000;
+const u32 EMU_BTN_PAUSE = 0x20000000;
+const u32 EMU_BTN_FRAME_ADV = 0x10000000;
+
+// Save/Load Slots (Base 0x00100000)
+// Using distinct bits/IDs to ensure no collision
+const u32 EMU_BTN_SAVE_SLOT_1 = 0x00100001;
+const u32 EMU_BTN_SAVE_SLOT_2 = 0x00100002;
+const u32 EMU_BTN_SAVE_SLOT_3 = 0x00100003;
+const u32 EMU_BTN_SAVE_SLOT_4 = 0x00100004;
+const u32 EMU_BTN_SAVE_SLOT_5 = 0x00100005;
+const u32 EMU_BTN_SAVE_SLOT_6 = 0x00100006;
+const u32 EMU_BTN_SAVE_SLOT_7 = 0x00100007;
+const u32 EMU_BTN_SAVE_SLOT_8 = 0x00100008;
+const u32 EMU_BTN_SAVE_SLOT_9 = 0x00100009;
+const u32 EMU_BTN_SAVE_SLOT_10 = 0x0010000A;
+
+const u32 EMU_BTN_LOAD_SLOT_1 = 0x00200001;
+const u32 EMU_BTN_LOAD_SLOT_2 = 0x00200002;
+const u32 EMU_BTN_LOAD_SLOT_3 = 0x00200003;
+const u32 EMU_BTN_LOAD_SLOT_4 = 0x00200004;
+const u32 EMU_BTN_LOAD_SLOT_5 = 0x00200005;
+const u32 EMU_BTN_LOAD_SLOT_6 = 0x00200006;
+const u32 EMU_BTN_LOAD_SLOT_7 = 0x00200007;
+const u32 EMU_BTN_LOAD_SLOT_8 = 0x00200008;
+const u32 EMU_BTN_LOAD_SLOT_9 = 0x00200009;
+const u32 EMU_BTN_LOAD_SLOT_10 = 0x0020000A;
+
 namespace config {
 class IniFile;
 }

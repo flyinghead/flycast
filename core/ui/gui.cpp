@@ -276,6 +276,12 @@ void gui_initFonts()
 	largeFontConfig.MergeMode = true;
 	largeFontConfig.DstFont = largeFont;
 
+	// MERGE FontAwesome into largeFont for OSD
+	data = resource::load("fonts/" FONT_ICON_FILE_NAME_FAS, dataSize);
+	if (data != nullptr) {
+		io.Fonts->AddFontFromMemoryTTF(data.release(), dataSize, largeFontSize, &largeFontConfig, faRanges);
+	}
+
 #ifdef _WIN32
     u32 cp = GetACP();
     std::string fontDir = std::string(nowide::getenv("SYSTEMROOT")) + "\\Fonts\\";
@@ -620,6 +626,15 @@ void gui_open_settings()
 	const LockGuard lock(guiMutex);
 	if (gui_state == GuiState::Closed && !settings.naomi.slave)
 	{
+		// Hardcore Mode Restriction for Opening Settings
+		if (settings.raHardcoreMode) {
+			u64 now = getTimeMs();
+			if (now - emu.getLastPauseTime() < 3000) {
+				os_notify(i18n::Ts("Please wait 3 seconds before opening the menu.").c_str(), 2000);
+				return;
+			}
+		}
+
 		if (!ggpo::active())
 		{
 			if (achievements::canPause())
@@ -836,6 +851,13 @@ static void gui_display_commands()
 		if (IconButton(ICON_FA_GEAR, T("Settings"), ScaledVec2(buttonWidth, 50)).realize())
 			gui_setState(GuiState::Settings);
 
+		// Reset Button
+		if (IconButton(ICON_FA_ROTATE_RIGHT, T("Reset"), ScaledVec2(buttonWidth, 50)).realize())
+		{
+			std::string gamePath = settings.content.path;
+			gui_start_game(gamePath);
+		}
+
 		// Exit
 		if (IconButton(ICON_FA_POWER_OFF, commandLineStart ?  T("Exit") : T("Close Game"), ScaledVec2(buttonWidth, 50)).realize())
 			gui_stop_game();
@@ -973,6 +995,81 @@ static void contentpath_warning_popup()
     }
 }
 
+// Custom OSD Implementation
+struct OSDOverlay {
+	std::string message;
+	u64 endTime = 0;
+	float alpha = 0.0f;
+	float currentY = 20.0f; // Track vertical position for sliding
+
+	void set(const std::string& msg, int duration) {
+		message = msg;
+		endTime = getTimeMs() + duration;
+		alpha = 1.0f;
+	}
+
+	bool active() const {
+		return getTimeMs() < endTime;
+	}
+
+	void draw(float targetY) {
+		if (!active()) return;
+
+		u64 now = getTimeMs();
+		if (endTime - now < 500) // Fade out last 500ms
+			alpha = (float)(endTime - now) / 500.0f;
+		else
+			alpha = 1.0f;
+
+		if (message.empty()) return;
+
+		// Smoothly interpolate currentY towards targetY
+		// Using a simple lerp for smooth sliding
+		float diff = targetY - currentY;
+		if (std::abs(diff) > 0.5f) {
+			currentY += diff * 0.2f;
+		}
+		else {
+			currentY = targetY;
+		}
+
+		ImDrawList *dl = ImGui::GetForegroundDrawList();
+		const float fontSize = largeFont->LegacySize;
+		const ScaledVec2 padding(10.f, 5.f);
+
+		// Calculate text size
+		const ImVec2 size = largeFont->CalcTextSizeA(fontSize, FLT_MAX, 0.0f, message.c_str()) + padding * 2.f;
+
+		// Position logic: Top Right for status icons, Bottom Center for text
+		const float screenW = ImGui::GetIO().DisplaySize.x;
+		const float screenH = ImGui::GetIO().DisplaySize.y;
+		ImVec2 pos;
+
+		// Check for specific FontAwesome icons
+		// Note: We use string comparisons against the specific icon definitions from IconsFontAwesome6.h
+		if (message == ICON_FA_PAUSE || message == ICON_FA_PLAY || message == ICON_FA_FORWARD_STEP)
+		{
+			// Top Right, using dynamic Y for stacking
+			pos = ImVec2(screenW - size.x - uiScaled(20.f), currentY);
+		}
+		else
+		{
+			// Bottom Center (Standard OSD) - ignore vertical stacking logic
+			pos = ImVec2((screenW - size.x) / 2.0f, screenH - size.y - uiScaled(60.f));
+		}
+
+		// Background
+		const ImU32 bg_col = alphaOverride(0x00202020, alpha * 0.8f);
+		dl->AddRectFilled(pos, pos + size, bg_col, 5.0f); // Rounded corners
+
+		// Text
+		pos += padding;
+		const ImU32 col = alphaOverride(0xFF00FFFF, alpha); // Yellow text
+
+		dl->AddText(largeFont, fontSize, pos, col, message.c_str());
+	}
+} osdOverlay;
+
 void os_notify(const char *msg, int durationMs, const char *details)
 {
 	if (gui_state != GuiState::Closed)
@@ -982,7 +1079,11 @@ void os_notify(const char *msg, int durationMs, const char *details)
 		osd_message_end = getTimeMs() + durationMs;
 	}
 	else {
-		toast.show(msg, details != nullptr ? details : "", durationMs);
+		// Use custom overlay when GUI is closed (game running)
+		if (details)
+			osdOverlay.set(std::string(msg) + " " + details, durationMs);
+		else
+			osdOverlay.set(msg, durationMs);
 	}
 }
 
@@ -1592,12 +1693,40 @@ static std::string getFPSNotification()
 		}
 		if (fps >= 0.f && fps < 9999.f) {
 			char text[32];
+			// No longer appending '>>' for FF here
 			snprintf(text, sizeof(text), "F:%4.1f%s", fps, settings.input.fastForwardMode ? " >>" : "");
 
 			return std::string(text);
 		}
 	}
-	return std::string(settings.input.fastForwardMode ? ">>" : "");
+	return std::string("");
+}
+
+// Helper to draw status icons in the top-right corner
+static void drawStatusIcon(const char *icon, float alpha, float *cursorRight)
+{
+	ImDrawList *dl = ImGui::GetForegroundDrawList();
+	const float fontSize = largeFont->LegacySize;
+	const ScaledVec2 padding(10.f, 5.f);
+
+	// Calculate text size
+	const ImVec2 size = largeFont->CalcTextSizeA(fontSize, FLT_MAX, 0.0f, icon) + padding * 2.f;
+
+	// Update cursor for stacking
+	*cursorRight -= (size.x + uiScaled(5.f)); // Add a small gap between icons
+
+	// Position logic: Top Right
+	ImVec2 pos(*cursorRight, uiScaled(20.f));
+
+	// Background
+	const ImU32 bg_col = alphaOverride(0x00202020, alpha * 0.8f);
+	dl->AddRectFilled(pos, pos + size, bg_col, 5.0f); // Rounded corners
+
+	// Text
+	pos += padding;
+	const ImU32 col = alphaOverride(0xFF00FFFF, alpha); // Yellow text
+
+	dl->AddText(largeFont, fontSize, pos, col, icon);
 }
 
 void gui_draw_osd()
@@ -1610,6 +1739,21 @@ void gui_draw_osd()
 #endif
 		if (!toast.draw())
 		{
+			// Draw custom OSD overlay (Transient Notifications)
+			float targetY = uiScaled(20.f);
+			float nextIconRight = ImGui::GetIO().DisplaySize.x - uiScaled(20.f);
+
+			// Draw Persistent Status Icons (Top-Right)
+			if (settings.input.fastForwardMode) {
+				drawStatusIcon(ICON_FA_FORWARD_FAST, 1.0f, &nextIconRight);
+				// Push OSD overlay down if FF is active (Vertical Stacking Logic)
+				targetY += largeFont->LegacySize + uiScaled(15.f);
+			}
+
+			// Draw Transient OSD Notification (stacked below persistent icons if needed)
+			osdOverlay.draw(targetY);
+
+			// Draw FPS Counter (Bottom-Left)
 			std::string message = getFPSNotification();
 			if (!message.empty())
 			{
