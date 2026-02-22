@@ -622,21 +622,22 @@ void Achievements::handleLeaderboardStarted(const rc_client_event_t *event)
 	const rc_client_leaderboard_t *leaderboard = event->leaderboard;
 	INFO_LOG(COMMON, "RA: Leaderboard started: %s", leaderboard->title);
 	std::string text = strprintf(i18n::T("Leaderboard %s started"), leaderboard->title);
-	notifier.notify(Notification::Unlocked, "", text, leaderboard->description);
+	// Changed to map to the new top-left notifications
+	notifier.notify(Notification::Leaderboard, "", text, leaderboard->description);
 }
 void Achievements::handleLeaderboardFailed(const rc_client_event_t *event)
 {
 	const rc_client_leaderboard_t *leaderboard = event->leaderboard;
 	INFO_LOG(COMMON, "RA: Leaderboard failed: %s", leaderboard->title);
 	std::string text = strprintf(i18n::T("Leaderboard %s failed"), leaderboard->title);
-	notifier.notify(Notification::Unlocked, "", text, leaderboard->description);
+	notifier.notify(Notification::Leaderboard, "", text, leaderboard->description);
 }
 void Achievements::handleLeaderboardSubmitted(const rc_client_event_t *event)
 {
 	const rc_client_leaderboard_t *leaderboard = event->leaderboard;
 	INFO_LOG(COMMON, "RA: Leaderboard submitted: %s", leaderboard->title);
 	std::string text = strprintf(i18n::T("Leaderboard %s submitted"), leaderboard->title);
-	notifier.notify(Notification::Unlocked, "", text, leaderboard->description);
+	notifier.notify(Notification::Leaderboard, "", text, leaderboard->description);
 }
 void Achievements::handleShowLeaderboardTracker(const rc_client_event_t *event)
 {
