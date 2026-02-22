@@ -42,6 +42,16 @@
 #include "util/worker_thread.h"
 #include "util/periodic_thread.h"
 
+#if defined(USE_SDL)
+#include <SDL.h>
+#endif
+
+#include <json.hpp>
+
+#if defined(__ANDROID__)
+extern void android_play_sound(const char *filename);
+#endif
+
 namespace achievements
 {
 
@@ -78,6 +88,12 @@ private:
 	void diskChange();
 	void asyncTask(std::function<void()>&& f);
 	void stopThreads();
+
+	void playSound(const std::string& filename);
+	void fetchRarityData(u32 gameId);
+	void parseRarityJson(const char *json, size_t length);
+	std::unordered_map<u32, float> rarityMap;
+	std::mutex rarityMutex;
 
 	static void clientLoginWithTokenCallback(int result, const char *error_message, rc_client_t *client, void *userdata);
 	static void clientLoginWithPasswordCallback(int result, const char *error_message, rc_client_t *client, void *userdata);
@@ -118,6 +134,11 @@ private:
 		if (active)
 			rc_client_idle(rc_client);
 	}};
+
+#if defined(USE_SDL)
+	SDL_AudioDeviceID audioDevice = 0;
+	SDL_AudioSpec audioDeviceSpec = {};
+#endif
 };
 
 bool init() {
@@ -199,29 +220,216 @@ void Achievements::stopThreads() {
 	idleThread.stop();
 }
 
-bool Achievements::init()
+void Achievements::playSound(const std::string& filename)
 {
-	if (rc_client != nullptr)
-		return true;
+#if defined(__ANDROID__)
+	android_play_sound(filename.c_str());
+#elif defined(USE_SDL)
+	if (audioDevice == 0) return;
 
-	if (!createClient())
-		return false;
+	asyncTask([this, filename]() {
+		SDL_AudioSpec wavSpec;
+		Uint32 wavLength;
+		Uint8 *wavBuffer;
+		bool loaded = false;
 
-	rc_client_set_event_handler(rc_client, clientEventHandler);
-	rc_client_set_hardcore_enabled(rc_client, 0);
-	// TODO Expose these settings?
-	//rc_client_set_encore_mode_enabled(rc_client, 0);
-	//rc_client_set_unofficial_enabled(rc_client, 0);
-	//rc_client_set_spectator_mode_enabled(rc_client, 0);
-	loadCache();
+		std::string userPath = get_writable_data_path("sounds/" + filename);
+		if (SDL_LoadWAV(userPath.c_str(), &wavSpec, &wavBuffer, &wavLength) != NULL) {
+			loaded = true;
+		}
 
-	if (!config::AchievementsUserName.get().empty() && !config::AchievementsToken.get().empty())
-	{
-		INFO_LOG(COMMON, "RA: Attempting login with user '%s'...", config::AchievementsUserName.get().c_str());
-		rc_client_begin_login_with_token(rc_client, config::AchievementsUserName.get().c_str(),
-				config::AchievementsToken.get().c_str(), clientLoginWithTokenCallback, nullptr);
+		if (!loaded) {
+			std::string assetPath = "data/sounds/" + filename;
+			SDL_RWops *rw = SDL_RWFromFile(assetPath.c_str(), "rb");
+			if (rw) {
+				if (SDL_LoadWAV_RW(rw, 1, &wavSpec, &wavBuffer, &wavLength) != NULL) {
+					loaded = true;
+				}
+			}
+		}
+
+		if (!loaded) return;
+
+		SDL_AudioCVT cvt;
+		if (SDL_BuildAudioCVT(&cvt, wavSpec.format, wavSpec.channels, wavSpec.freq,
+			audioDeviceSpec.format, audioDeviceSpec.channels, audioDeviceSpec.freq) > 0)
+		{
+			cvt.len = wavLength;
+			cvt.buf = (Uint8 *)SDL_malloc(cvt.len * cvt.len_mult);
+			if (cvt.buf) {
+				memcpy(cvt.buf, wavBuffer, wavLength);
+				if (SDL_ConvertAudio(&cvt) == 0) {
+					SDL_QueueAudio(audioDevice, cvt.buf, cvt.len_cvt);
+				}
+				SDL_free(cvt.buf);
+			}
+		}
+		else {
+			SDL_QueueAudio(audioDevice, wavBuffer, wavLength);
+		}
+
+		SDL_FreeWAV(wavBuffer);
+		});
+#endif
+}
+
+void Achievements::parseRarityJson(const char *json_data, size_t length)
+{
+	nlohmann::json doc;
+	try {
+		doc = nlohmann::json::parse(json_data, json_data + length);
+	}
+	catch (const std::exception& e) {
+		WARN_LOG(COMMON, "RA: Failed to parse rarity JSON: %s", e.what());
+		return;
 	}
 
+	std::lock_guard<std::mutex> _(rarityMutex);
+	rarityMap.clear();
+
+	if (doc.contains("Success") && doc["Success"].is_boolean() && !doc["Success"].get<bool>()) {
+		WARN_LOG(COMMON, "RA: API returned Success: false");
+		return;
+	}
+
+	if (doc.contains("Sets") && doc["Sets"].is_array()) {
+		for (const auto& set : doc["Sets"]) {
+			if (set.contains("Achievements") && set["Achievements"].is_array()) {
+				for (const auto& ach : set["Achievements"]) {
+					if (ach.contains("ID") && (ach.contains("Rarity") || ach.contains("RarityHardcore"))) {
+						u32 id = ach["ID"].get<u32>();
+						const char *rarityField = settings.raHardcoreMode ? "RarityHardcore" : "Rarity";
+						if (ach.contains(rarityField) && ach[rarityField].is_number()) {
+							rarityMap[id] = ach[rarityField].get<float>();
+						}
+						else if (ach.contains("Rarity") && ach["Rarity"].is_number()) {
+							rarityMap[id] = ach["Rarity"].get<float>();
+						}
+					}
+				}
+			}
+		}
+	}
+	else if (doc.contains("Achievements") && doc["Achievements"].is_object()) {
+		const auto& achs = doc["Achievements"];
+		for (auto it = achs.begin(); it != achs.end(); ++it) {
+			const auto& ach = it.value();
+			if (ach.contains("ID") && ach.contains("Rarity")) {
+				u32 id = 0;
+				if (ach["ID"].is_string()) id = (u32)std::stoul(ach["ID"].get<std::string>());
+				else if (ach["ID"].is_number()) id = ach["ID"].get<u32>();
+
+				if (id == 0) continue;
+
+				if (ach["Rarity"].is_number()) {
+					rarityMap[id] = ach["Rarity"].get<float>();
+				}
+			}
+		}
+	}
+
+	INFO_LOG(COMMON, "RA: Rarity data parsed. Found %d achievements.", (int)rarityMap.size());
+}
+
+void Achievements::fetchRarityData(u32 gameId)
+{
+	asyncTask([this, gameId]() {
+		std::vector<std::string> candidatePaths = {
+			get_writable_data_path("../RACache/Data/" + std::to_string(gameId) + ".json"),
+			get_writable_data_path("RACache/Data/" + std::to_string(gameId) + ".json")
+		};
+
+		for (const auto& path : candidatePaths) {
+			FILE *f = nowide::fopen(path.c_str(), "rb");
+			if (f) {
+				fseek(f, 0, SEEK_END);
+				long size = ftell(f);
+				fseek(f, 0, SEEK_SET);
+
+				if (size > 0) {
+					std::vector<char> buf(size + 1);
+					if (fread(buf.data(), 1, size, f) > 0) {
+						buf[size] = 0;
+						fclose(f);
+						INFO_LOG(COMMON, "RA: Loading rarity from cache: %s", path.c_str());
+						parseRarityJson(buf.data(), size);
+						return;
+					}
+				}
+				fclose(f);
+			}
+		}
+
+		std::string user = config::AchievementsUserName.get();
+		std::string token = config::AchievementsToken.get();
+
+		if (user.empty() || token.empty()) {
+			WARN_LOG(COMMON, "RA: Cannot fetch rarity data, missing credentials.");
+			return;
+		}
+
+		INFO_LOG(COMMON, "RA: Fetching rarity data from server for game %u...", gameId);
+		std::string url = "https://retroachievements.org/dorequest.php?r=getgameextended&i="
+			+ std::to_string(gameId) + "&u=" + user + "&t=" + token;
+
+		std::vector<u8> data;
+		int httpCode = http::get(url, data);
+
+		if (httpCode == 200 && !data.empty()) {
+			data.push_back(0);
+			parseRarityJson((const char *)data.data(), data.size());
+		}
+		else {
+			WARN_LOG(COMMON, "RA: Failed to fetch rarity data. HTTP Code: %d", httpCode);
+		}
+		});
+}
+
+bool Achievements::init()
+{
+	if (rc_client == nullptr)
+	{
+#if defined(USE_SDL)
+		if (SDL_InitSubSystem(SDL_INIT_AUDIO) < 0) {
+			WARN_LOG(COMMON, "RA: SDL Audio Init failed: %s", SDL_GetError());
+		}
+		else {
+			SDL_AudioSpec want;
+			SDL_zero(want);
+			want.freq = 44100;
+			want.format = AUDIO_S16SYS;
+			want.channels = 2;
+			want.samples = 4096;
+			want.callback = NULL;
+
+			audioDevice = SDL_OpenAudioDevice(NULL, 0, &want, &audioDeviceSpec, 0);
+			if (audioDevice == 0) {
+				WARN_LOG(COMMON, "RA: Failed to open audio device: %s", SDL_GetError());
+			}
+			else {
+				SDL_PauseAudioDevice(audioDevice, 0);
+			}
+		}
+#endif
+
+		if (!createClient())
+			return false;
+
+	    rc_client_set_event_handler(rc_client, clientEventHandler);
+	    rc_client_set_hardcore_enabled(rc_client, 0);
+	    // TODO Expose these settings?
+	    //rc_client_set_encore_mode_enabled(rc_client, 0);
+	    //rc_client_set_unofficial_enabled(rc_client, 0);
+	    //rc_client_set_spectator_mode_enabled(rc_client, 0);
+	    loadCache();
+
+	    if (!config::AchievementsUserName.get().empty() && !config::AchievementsToken.get().empty())
+	    {
+	    	INFO_LOG(COMMON, "RA: Attempting login with user '%s'...", config::AchievementsUserName.get().c_str());
+		    rc_client_begin_login_with_token(rc_client, config::AchievementsUserName.get().c_str(),
+			 config::AchievementsToken.get().c_str(), clientLoginWithTokenCallback, nullptr);
+	    }
+	}
 	return true;
 }
 
@@ -330,13 +538,24 @@ void Achievements::term()
 		return;
 	unloadGame();
 	stopThreads();
+
 	rc_client_destroy(rc_client);
 	rc_client = nullptr;
+	loggedOn = false;
+
+#if defined(USE_SDL)
+	if (audioDevice > 0) {
+		SDL_CloseAudioDevice(audioDevice);
+		audioDevice = 0;
+	}
+#endif
 }
 
 void Achievements::authenticationSuccess(const rc_client_user_t *user)
 {
 	NOTICE_LOG(COMMON, "RA Login successful");
+	playSound("login.wav");
+
 	std::string url(512, '\0');
 	int rc = rc_client_user_get_image_url(user, url.data(), url.size());
 	if (rc == RC_OK)
@@ -572,6 +791,23 @@ void Achievements::handleUnlockEvent(const rc_client_event_t *event)
 	const rc_client_achievement_t* cheevo = event->achievement;
 	assert(cheevo != nullptr);
 
+	float rarity = 100.0f;
+	{
+		std::lock_guard<std::mutex> _(rarityMutex);
+		if (rarityMap.find(cheevo->id) != rarityMap.end()) {
+			rarity = rarityMap[cheevo->id];
+		}
+	}
+
+	INFO_LOG(COMMON, "RA: Achievement unlocked ID:%u Rarity:%f", cheevo->id, rarity);
+
+	if (rarity < 5.0f) {
+		playSound("rareunlock.wav");
+	}
+	else {
+		playSound("unlock.wav");
+	}
+
 	INFO_LOG(COMMON, "RA: Achievement %s (%u) for game %s unlocked", cheevo->title, cheevo->id, settings.content.title.c_str());
 	std::string title(cheevo->title);
 	std::string description(cheevo->description);
@@ -621,6 +857,8 @@ void Achievements::handleLeaderboardStarted(const rc_client_event_t *event)
 {
 	const rc_client_leaderboard_t *leaderboard = event->leaderboard;
 	INFO_LOG(COMMON, "RA: Leaderboard started: %s", leaderboard->title);
+	playSound("lb.wav");
+
 	std::string text = strprintf(i18n::T("Leaderboard %s started"), leaderboard->title);
 	// Changed to map to the new top-left notifications
 	notifier.notify(Notification::Leaderboard, "", text, leaderboard->description);
@@ -629,6 +867,8 @@ void Achievements::handleLeaderboardFailed(const rc_client_event_t *event)
 {
 	const rc_client_leaderboard_t *leaderboard = event->leaderboard;
 	INFO_LOG(COMMON, "RA: Leaderboard failed: %s", leaderboard->title);
+	playSound("lbcancel.wav");
+
 	std::string text = strprintf(i18n::T("Leaderboard %s failed"), leaderboard->title);
 	notifier.notify(Notification::Leaderboard, "", text, leaderboard->description);
 }
@@ -636,6 +876,8 @@ void Achievements::handleLeaderboardSubmitted(const rc_client_event_t *event)
 {
 	const rc_client_leaderboard_t *leaderboard = event->leaderboard;
 	INFO_LOG(COMMON, "RA: Leaderboard submitted: %s", leaderboard->title);
+	playSound("lbsubmit.wav");
+
 	std::string text = strprintf(i18n::T("Leaderboard %s submitted"), leaderboard->title);
 	notifier.notify(Notification::Leaderboard, "", text, leaderboard->description);
 }
@@ -893,6 +1135,10 @@ void Achievements::gameLoaded(int result, const char *errorMessage)
 		loadingGame = false;
 		return;
 	}
+
+	fetchRarityData(info->id);
+	playSound("info.wav");
+
 	active = true;
 	loadingGame = false;
 	EventManager::listen(Event::VBlank, emuEventCallback, this);

@@ -1651,3 +1651,27 @@ if(${CMAKE_GENERATOR} MATCHES "^Xcode.*|^Visual Studio.*")
 	file(GLOB_RECURSE SRC_FILES *.h *.cpp *.c *.cc *.mm)
 	source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SRC_FILES})
 endif()
+
+set(SOUND_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/resources/sounds")
+if(EXISTS "${SOUND_SRC_DIR}")
+	if(NOT ANDROID AND NOT LIBRETRO AND NOT APPLE)
+		add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+			COMMAND ${CMAKE_COMMAND} -E make_directory $<TARGET_FILE_DIR:${PROJECT_NAME}>/data/sounds
+			COMMAND ${CMAKE_COMMAND} -E copy_directory "${SOUND_SRC_DIR}" $<TARGET_FILE_DIR:${PROJECT_NAME}>/data/sounds
+			COMMENT "Copying sound resources to executable directory..."
+		)
+	endif()
+
+	if(APPLE AND NOT LIBRETRO)
+		file(GLOB SOUND_FILES "${SOUND_SRC_DIR}/*.wav")
+		target_sources(${PROJECT_NAME} PRIVATE ${SOUND_FILES})
+		set_source_files_properties(${SOUND_FILES} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources/data/sounds")
+	endif()
+
+	if(ANDROID)
+		set(ANDROID_ASSETS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/shell/android-studio/flycast/src/main/assets/data/sounds")
+		file(MAKE_DIRECTORY "${ANDROID_ASSETS_DIR}")
+		file(COPY "${SOUND_SRC_DIR}/" DESTINATION "${ANDROID_ASSETS_DIR}")
+		message(STATUS "Copied sound resources to Android Assets: ${ANDROID_ASSETS_DIR}")
+	endif()
+endif()

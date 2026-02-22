@@ -57,6 +57,7 @@ extern jmethodID showScreenKeyboardMid;
 static jmethodID onGameStateChangeMid;
 extern jmethodID setVGamepadEditModeMid;
 static jmethodID showAlertDialogMid;
+static jmethodID playRASoundMid;
 
 static void emuEventCallback(Event event, void *)
 {
@@ -468,8 +469,20 @@ extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_BaseGLActivity_regis
         showScreenKeyboardMid = env->GetMethodID(actClass, "showScreenKeyboard", "(Z)V");
         onGameStateChangeMid = env->GetMethodID(actClass, "onGameStateChange", "(Z)V");
         setVGamepadEditModeMid = env->GetMethodID(actClass, "setVGamepadEditMode", "(Z)V");
-        showAlertDialogMid = env->GetMethodID(actClass, "showAlertDialog", "(Ljava/lang/String;)V");
-    }
+		showAlertDialogMid = env->GetMethodID(actClass, "showAlertDialog", "(Ljava/lang/String;)V");
+		playRASoundMid = env->GetMethodID(actClass, "playRASound", "(Ljava/lang/String;)V");
+	}
+}
+
+void android_play_sound(const char* filename)
+{
+	if (g_activity != nullptr && playRASoundMid != nullptr)
+	{
+		JNIEnv *env = jni::env();
+		jstring jstr = env->NewStringUTF(filename);
+		env->CallVoidMethod(g_activity, playRASoundMid, jstr);
+		env->DeleteLocalRef(jstr);
+	}
 }
 
 void enableNetworkBroadcast(bool enable)
