@@ -273,6 +273,12 @@ bool rend_single_frame(const bool& enabled)
 	return true;
 }
 
+void rend_present()
+{
+	if (rend_is_enabled())
+		pvrQueue.enqueue(PvrMessageQueue::Present);
+}
+
 Renderer* rend_GLES2();
 Renderer* rend_GL4();
 Renderer* rend_norend();

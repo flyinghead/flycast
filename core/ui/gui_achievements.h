@@ -41,22 +41,40 @@ public:
 	};
 	void notify(Type type, const std::string& image, const std::string& text1,
 			const std::string& text2 = {}, const std::string& text3 = {});
-	void showChallenge(const std::string& image);
-	void hideChallenge(const std::string& image);
-	void showLeaderboard(u32 id, const std::string& text);
-	void hideLeaderboard(u32 id);
-	bool draw();
+		void showChallenge(const std::string& image);
+		void hideChallenge(const std::string& image);
+		void showLeaderboard(u32 id, const std::string& text);
+		void hideLeaderboard(u32 id);
+		bool draw();
 
-private:
-	u64 startTime = 0;
-	u64 endTime = 0;
-	Type type = Type::None;
-	ImguiFileTexture image;
-	std::string text[3];
-	std::mutex mutex;
-	std::vector<ImguiFileTexture> challenges;
-	std::map<u32, std::string> leaderboards;
-};
+	private:
+		// General Notifications (Progress, Mastery, Login, Unlocks - Bottom-Left)
+		u64 startTime = 0;
+		u64 endTime = 0;
+		Type type = Type::None;
+		ImguiFileTexture image;
+		std::string text[3];
+
+		// Leaderboard Trackers (Counters - Bottom-Left stacked)
+		std::map<u32, std::string> leaderboards;
+
+		// Leaderboard Event Cards (Start/Submit/Cancel - Top-Left)
+		struct LboardNote {
+			u64 startTime;
+			u64 endTime;
+			std::string text1;
+			std::string text2;
+		};
+		std::vector<LboardNote> lboardNotes;
+
+		// Independent Trigger (Challenge) Indicators (Bottom-Right)
+		u64 challengeStartTime = 0;
+		u64 challengeEndTime = 0;
+		bool challengeActive = false;
+		std::vector<ImguiFileTexture> challenges;
+
+		std::mutex mutex;
+	};
 
 extern Notification notifier;
 

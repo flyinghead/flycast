@@ -570,5 +570,6 @@ extern Option<bool> EnableAchievements;
 extern Option<bool> AchievementsHardcoreMode;
 extern OptionString AchievementsUserName;
 extern OptionString AchievementsToken;
+extern Option<bool> EnableRAIntegration;
 
 } // namespace config

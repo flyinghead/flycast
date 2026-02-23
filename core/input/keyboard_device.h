@@ -65,6 +65,24 @@ public:
 		set_button(DC_BTN_D, 4);				// Q (Coin)
 		set_button(EMU_BTN_SCREENSHOT, 69);		// F12
 
+		// Save/Load State Defaults (Slots 1-10)
+		// F1 (0x3A) to F10 (0x43)
+		for (int i = 0; i < 10; i++)
+		{
+			u32 fkey = 0x3A + i;
+
+			// Load: F#
+			set_button((DreamcastKey)(EMU_BTN_LOAD_SLOT_1 + i), fkey);
+
+			// Save: Left Shift (0xE1) + F#
+			InputMapping::InputSet saveCombo;
+			saveCombo.insert_back(InputMapping::InputDef::from_button(0xE1)); // Left Shift
+			saveCombo.insert_back(InputMapping::InputDef::from_button(fkey)); // F#
+
+			// By setting sequential to true, the user MUST press Left Shift first, then F#
+			set_button((DreamcastKey)(EMU_BTN_SAVE_SLOT_1 + i), InputMapping::ButtonCombo{ saveCombo, true });
+		}
+
 		dirty = false;
 	}
 };
