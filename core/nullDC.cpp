@@ -26,8 +26,26 @@
 
 static std::string lastStateFile;
 static time_t lastStateTime;
+
+// check if fmemopen is available
+#if defined(__ANDROID__)
+    #include <android/api-level.h>
+    #if __ANDROID_API__ >= 23
+        #define HAS_FMEMOPEN 1
+    #else
+        #define HAS_FMEMOPEN 0
+    #endif
+#elif defined(_WIN32)
+    #define HAS_FMEMOPEN 0
+#else
+    // Assume POSIX compliance for Linux/BSD/etc.
+    #define HAS_FMEMOPEN 1
+#endif
+
+#if HAS_FMEMOPEN
 const u32 QUICKSAVE_DEFAULT_SIZE = 32 * 1024 * 1024; // 32 MB
 static int quicksave_buf[QUICKSAVE_DEFAULT_SIZE] = {0};
+#endif
 
 struct SavestateHeader
 {
@@ -186,6 +204,7 @@ void dc_savestate(int index, const u8 *pngData, u32 pngSize)
 
 	FILE *f = nullptr;
 	std::string filename = "";
+#if HAS_FMEMOPEN
 	if (index == -2)
 	{
 		// in-ram savestate
@@ -193,6 +212,7 @@ void dc_savestate(int index, const u8 *pngData, u32 pngSize)
 		f = fmemopen(quicksave_buf, QUICKSAVE_DEFAULT_SIZE, "wb");
 	}
 	else
+#endif
 	{
 		// regular file savestate
 		filename = hostfs::getSavestatePath(index, true);
@@ -252,6 +272,7 @@ void dc_loadstate(int index)
 
 	FILE *f = nullptr;
 	std::string filename = "";
+#if HAS_FMEMOPEN
 	if (index == -2)
 	{
 		// in-ram savestate
@@ -259,6 +280,7 @@ void dc_loadstate(int index)
 		f = fmemopen(quicksave_buf, QUICKSAVE_DEFAULT_SIZE, "rb");
 	}
 	else
+#endif
 	{
 		// regular file savestate
 		filename = hostfs::getSavestatePath(index, false);

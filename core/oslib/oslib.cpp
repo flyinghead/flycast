@@ -206,6 +206,8 @@ std::string getSavestatePath(int index, bool writable)
 	state_file = state_file + index_str + ".state";
 	if (index == -1)
 		state_file += ".net";
+	if (index == -2)
+		state_file += ".tmp";
 
 	static std::string lastFile;
 	static std::string lastPath;
