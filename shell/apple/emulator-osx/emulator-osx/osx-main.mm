@@ -281,3 +281,13 @@ std::string getScreenshotsPath()
 }
 
 }
+
+namespace i18n
+{
+
+std::string getCurrentLocale()
+{
+	return [[[NSLocale preferredLanguages] objectAtIndex:0] UTF8String];
+}
+
+}
