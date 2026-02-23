@@ -32,10 +32,6 @@
 
 using namespace tinygettext;
 
-#if defined(TARGET_MAC) && !defined(LIBRETRO)
-extern std::string os_Locale();
-#endif
-
 namespace i18n
 {
 
@@ -200,12 +196,9 @@ const char *translatePlural(const char *msg, const char *msgPlural, int num) {
 		return tr.c_str();
 }
 
-#if !defined(LIBRETRO) && (defined(TARGET_MAC) || defined(_WIN32))
+#if !defined(LIBRETRO) && defined(_WIN32)
 std::string getCurrentLocale()
 {
-#if defined(TARGET_MAC)
-	return os_Locale();
-#elif defined(_WIN32)
 	ULONG numLanguages = 0;
 	ULONG bufferSize = 0;
 	if (!GetUserPreferredUILanguages(MUI_LANGUAGE_NAME, &numLanguages, nullptr, &bufferSize) || bufferSize == 0)
@@ -227,7 +220,6 @@ std::string getCurrentLocale()
 
 	ERROR_LOG(COMMON, "UTF-16 to UTF-8 conversion failed");
 	return "en";
-#endif
 }
 #endif
 }
