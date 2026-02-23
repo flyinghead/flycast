@@ -369,6 +369,19 @@ void gui_settings_general()
 		ImGui::Indent();
 		OptionCheckbox(T("Hardcore Mode"), config::AchievementsHardcoreMode,
 				T("Enable RetroAchievements hardcore mode. Using cheats and loading a state are not allowed in this mode."));
+
+		// Use the native configuration system for the new RA Integration toggle
+		if (OptionCheckbox(T("Enable RA Integration"), config::EnableRAIntegration,
+			T("Manually enable the RA Integration Toolkit (Menu Bar and DLL).")))
+		{
+			achievements::enableRAIntegration(config::EnableRAIntegration.get());
+		}
+		ImGui::SameLine();
+		const char *status = achievements::getRAIntegrationStatus();
+		if (status && status[0]) {
+			ImGui::TextDisabled("(%s)", status);
+		}
+
 		InputText(T("Username"), &config::AchievementsUserName.get(),
 				achievements::isLoggedOn() ? ImGuiInputTextFlags_ReadOnly : ImGuiInputTextFlags_None);
 		if (config::EnableAchievements)

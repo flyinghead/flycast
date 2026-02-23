@@ -26,12 +26,18 @@
 #include "ui/gui_achievements.h"
 #include "imgread/common.h"
 #include "cfg/option.h"
+#include "cfg/cfg.h"
 #include "oslib/oslib.h"
 #include "emulator.h"
 #include "stdclass.h"
 #include "oslib/i18n.h"
 #include <cassert>
 #include <rc_client.h>
+
+#ifdef RC_CLIENT_SUPPORTS_RAINTEGRATION
+#include <rc_client_raintegration.h>
+#endif
+
 #include <rc_hash.h>
 #include <unordered_map>
 #include <sstream>
@@ -39,8 +45,11 @@
 #include <utility>
 #include <xxhash.h>
 #include <functional>
+#include <thread>
+#include <chrono>
 #include "util/worker_thread.h"
 #include "util/periodic_thread.h"
+#include "ui/gui.h"
 
 #if defined(USE_SDL)
 #include <SDL.h>
@@ -48,12 +57,143 @@
 
 #include <json.hpp>
 
+#ifdef _WIN32
+#include <windows.h>
+#include "RA_Defs.h"
+#endif
+
+#ifndef RAM_SIZE
+#define RAM_SIZE 0x01000000
+#endif
+
+#undef RA_DREAMCAST_ID
+#define RA_DREAMCAST_ID 40
+
+extern void SaveSettings();
+
 #if defined(__ANDROID__)
 extern void android_play_sound(const char *filename);
 #endif
 
 namespace achievements
 {
+	static void RC_CCONV RA_WriteMemory(uint32_t address, uint8_t *buffer, uint32_t num_bytes, rc_client_t *client);
+	static void RC_CCONV RA_GetGameTitle(char *buffer, uint32_t buffer_size, rc_client_t *client);
+
+#ifdef _WIN32
+	static WNDPROC g_pOldWndProc = nullptr;
+	static HWND g_hWndSubclassed = nullptr;
+	static HWND g_hDummyWnd = nullptr;
+	const char *g_szDummyClassName = "FlycastRADummy";
+
+#define WM_RA_SERVER_CALLBACK (WM_USER + 234)
+#define WM_RA_INVOKE_DIALOG   (WM_USER + 235)
+
+	struct ServerCallbackData {
+		rc_client_server_callback_t callback;
+		void *callback_data;
+		int http_status_code;
+		std::vector<char> body;
+	};
+
+	static LRESULT CALLBACK DummyWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+		switch (msg) {
+		case WM_RA_SERVER_CALLBACK: {
+			ServerCallbackData *data = (ServerCallbackData *)lParam;
+			if (data && data->callback) {
+				rc_api_server_response_t response;
+				memset(&response, 0, sizeof(response));
+				response.http_status_code = data->http_status_code;
+				response.body_length = data->body.size();
+				response.body = data->body.empty() ? nullptr : data->body.data();
+				data->callback(&response, data->callback_data);
+			}
+			delete data;
+			return 0;
+		}
+		case WM_RA_INVOKE_DIALOG: {
+			int id = (int)wParam;
+			achievements::RA_InvokeDialog(id);
+			return 0;
+		}
+		}
+		return DefWindowProc(hWnd, msg, wParam, lParam);
+	}
+
+	static HWND CreateDummyWindow() {
+		if (g_hDummyWnd) return g_hDummyWnd;
+
+		WNDCLASSEXA wc = { 0 };
+		wc.cbSize = sizeof(WNDCLASSEXA);
+		wc.lpfnWndProc = DummyWndProc;
+		wc.hInstance = GetModuleHandle(NULL);
+		wc.lpszClassName = g_szDummyClassName;
+		RegisterClassExA(&wc);
+
+		g_hDummyWnd = CreateWindowExA(0, g_szDummyClassName, "RA Toolkit",
+			0, 0, 0, 0, 0, HWND_MESSAGE, NULL, GetModuleHandle(NULL), NULL);
+
+		return g_hDummyWnd;
+	}
+
+	static void DestroyDummyWindow() {
+		if (g_hDummyWnd) {
+			DestroyWindow(g_hDummyWnd);
+			g_hDummyWnd = nullptr;
+		}
+		UnregisterClassA(g_szDummyClassName, GetModuleHandle(NULL));
+	}
+
+	struct FindWindowData {
+		DWORD processId;
+		HWND hWnd;
+	};
+
+	static BOOL CALLBACK EnumWindowsCallback(HWND hWnd, LPARAM lParam) {
+		FindWindowData *data = (FindWindowData *)lParam;
+		DWORD processId = 0;
+		GetWindowThreadProcessId(hWnd, &processId);
+		if (data->processId != processId) return TRUE;
+		if (!IsWindowVisible(hWnd)) return TRUE;
+		if (GetWindow(hWnd, GW_OWNER) != NULL) return TRUE;
+		char className[256];
+		GetClassNameA(hWnd, className, sizeof(className));
+		if (strcmp(className, "Flycast") == 0 || strcmp(className, "SDL_app") == 0) {
+			data->hWnd = hWnd;
+			return FALSE;
+		}
+		if (!data->hWnd) data->hWnd = hWnd;
+		return TRUE;
+	}
+
+	static HWND GetFlycastMainWindow() {
+		FindWindowData data;
+		data.processId = GetCurrentProcessId();
+		data.hWnd = nullptr;
+		EnumWindows(EnumWindowsCallback, (LPARAM)&data);
+		if (!data.hWnd) {
+			return GetActiveWindow();
+		}
+		return data.hWnd;
+	}
+
+	static LRESULT CALLBACK RA_WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+	{
+		if (uMsg == WM_COMMAND)
+		{
+			if (achievements::IsRAIntegrationLoaded() && HIWORD(wParam) == 0)
+			{
+				int id = LOWORD(wParam);
+				achievements::RA_InvokeDialog(id);
+			}
+		}
+
+		if (g_pOldWndProc)
+			return CallWindowProc(g_pOldWndProc, hWnd, uMsg, wParam, lParam);
+
+		return DefWindowProc(hWnd, uMsg, wParam, lParam);
+	}
+#endif
 
 class Achievements
 {
@@ -71,13 +211,19 @@ public:
 	bool canPause();
 	void serialize(Serializer& ser);
 	void deserialize(Deserializer& deser);
+	void runFrame();
+	bool isRAIntegrationActive() const { return raIntegrationLoaded; }
+	void activateMenuItem(int id);
+	void setManualIntegrationEnable(bool enable);
+	bool isManualIntegrationEnabled() const { return manualIntegrationEnabled; }
+	const char *getIntegrationStatus() const;
 
 	static Achievements& Instance();
 
 private:
 	bool createClient();
 	std::string getGameHash();
-	void loadGame();
+	void loadGame(bool force = false);
 	void gameLoaded(int result, const char *errorMessage);
 	void unloadGame();
 	void pauseGame();
@@ -94,7 +240,10 @@ private:
 	void parseRarityJson(const char *json, size_t length);
 	std::unordered_map<u32, float> rarityMap;
 	std::mutex rarityMutex;
-
+	void initRAIntegration();
+	bool installRAMenu();
+	void uninstallRAMenu();
+	static void raintegrationCallback(int result, const char *error_message, rc_client_t *client, void *userdata);
 	static void clientLoginWithTokenCallback(int result, const char *error_message, rc_client_t *client, void *userdata);
 	static void clientLoginWithPasswordCallback(int result, const char *error_message, rc_client_t *client, void *userdata);
 	void authenticationSuccess(const rc_client_user_t *user);
@@ -121,16 +270,27 @@ private:
 
 	rc_client_t *rc_client = nullptr;
 	bool loggedOn = false;
-	std::atomic_bool loadingGame {};
+	std::atomic_bool loadingGame{};
 	bool active = false;
 	bool paused = false;
+
+	bool raIntegrationLoaded = false;
+	bool raIntegrationAttempted = false;
+	bool raMenuNeedsRebuild = false;
+	bool manualIntegrationEnabled = false;
+	bool startupLoginAttempted = false;
+	int pendingGameLoadRetryFrames = 0;
+	std::string raStatusMessage = "Not Loaded";
+
+	std::atomic<bool> resetPending = false;
+
 	std::string lastError;
 	std::string cachePath;
 	std::unordered_map<u64, std::string> cacheMap;
 	std::mutex cacheMutex;
-	WorkerThread taskThread {"RA-background"};
+	WorkerThread taskThread{"RA-background"};
 
-	PeriodicThread idleThread { "RA-idle", [this]() {
+	PeriodicThread idleThread{ "RA-idle", [this]() {
 		if (active)
 			rc_client_idle(rc_client);
 	}};
@@ -175,6 +335,30 @@ std::vector<Achievement> getAchievementList() {
 
 bool canPause() {
 	return Achievements::Instance().canPause();
+}
+
+bool IsRAIntegrationLoaded() {
+	return Achievements::Instance().isRAIntegrationActive();
+}
+
+void RA_InvokeDialog(int id) {
+	Achievements::Instance().activateMenuItem(id);
+}
+
+void RA_UpdateFrame() {
+	Achievements::Instance().runFrame();
+}
+
+void enableRAIntegration(bool enable) {
+	Achievements::Instance().setManualIntegrationEnable(enable);
+}
+
+bool isRAIntegrationEnabled() {
+	return Achievements::Instance().isManualIntegrationEnabled();
+}
+
+const char *getRAIntegrationStatus() {
+	return Achievements::Instance().getIntegrationStatus();
 }
 
 void serialize(Serializer& ser) {
@@ -385,6 +569,190 @@ void Achievements::fetchRarityData(u32 gameId)
 		});
 }
 
+void Achievements::setManualIntegrationEnable(bool enable) {
+	manualIntegrationEnabled = enable;
+	config::EnableRAIntegration = enable;
+
+	if (enable) {
+		if (!raIntegrationLoaded) {
+			if (isLoggedOn()) {
+				raStatusMessage = "Restart Required";
+			}
+			else if (rc_client) {
+				raIntegrationAttempted = false;
+				raStatusMessage = "Initializing...";
+				initRAIntegration();
+			}
+		}
+	}
+}
+const char *Achievements::getIntegrationStatus() const {
+	return raStatusMessage.c_str();
+}
+
+void Achievements::runFrame() {
+	if (rc_client) {
+		bool clientHardcore = (bool)rc_client_get_hardcore_enabled(rc_client);
+		if (isLoggedOn() && clientHardcore != settings.raHardcoreMode) {
+			settings.raHardcoreMode = clientHardcore;
+			config::AchievementsHardcoreMode = clientHardcore;
+			INFO_LOG(COMMON, "RA: Synced Hardcore Mode state from client: %s", clientHardcore ? "ON" : "OFF");
+		}
+	}
+
+	if (resetPending) {
+		resetPending = false;
+		INFO_LOG(COMMON, "RA: Performing scheduled emulator reset (Reloading game)");
+		std::string gamePath = settings.content.path;
+		gui_start_game(gamePath);
+	}
+
+	if (!startupLoginAttempted) {
+		startupLoginAttempted = true;
+		if (!config::AchievementsUserName.get().empty() && !config::AchievementsToken.get().empty()) {
+			init();
+		}
+	}
+
+	if (rc_client) {
+		if (manualIntegrationEnabled && !raIntegrationLoaded && !raIntegrationAttempted && !isLoggedOn()) {
+			initRAIntegration();
+		}
+	}
+
+	if (raMenuNeedsRebuild) {
+		if (installRAMenu()) {
+			raMenuNeedsRebuild = false;
+		}
+	}
+
+	if (pendingGameLoadRetryFrames > 0) {
+		pendingGameLoadRetryFrames--;
+		if (pendingGameLoadRetryFrames == 0) {
+			loadGame(true);
+		}
+	}
+}
+
+void Achievements::activateMenuItem(int id) {
+#ifdef RC_CLIENT_SUPPORTS_RAINTEGRATION
+	if (rc_client && raIntegrationLoaded) {
+		rc_client_raintegration_activate_menu_item(rc_client, id);
+		}
+#endif
+	}
+
+bool Achievements::installRAMenu() {
+#ifdef _WIN32
+	if (!rc_client || !raIntegrationLoaded) return false;
+
+	HWND hWnd = GetFlycastMainWindow();
+	if (!hWnd) return false;
+
+	HMENU hMainMenu = GetMenu(hWnd);
+	if (!hMainMenu) {
+		hMainMenu = CreateMenu();
+		SetMenu(hWnd, hMainMenu);
+	}
+
+	int menuCount = GetMenuItemCount(hMainMenu);
+	char menuString[256];
+	for (int i = 0; i < menuCount; ++i) {
+		GetMenuStringA(hMainMenu, i, menuString, 256, MF_BYPOSITION);
+		if (strcmp(menuString, "RetroAchievements") == 0) {
+			RemoveMenu(hMainMenu, i, MF_BYPOSITION);
+			DrawMenuBar(hWnd);
+			break;
+		}
+	}
+
+#ifdef RC_CLIENT_SUPPORTS_RAINTEGRATION
+		rc_client_raintegration_rebuild_submenu(rc_client, hMainMenu);
+#endif
+	DrawMenuBar(hWnd);
+
+	if (!g_pOldWndProc) {
+		g_hWndSubclassed = hWnd;
+		g_pOldWndProc = (WNDPROC)SetWindowLongPtr(hWnd, GWLP_WNDPROC, (LONG_PTR)RA_WndProc);
+	}
+
+		return true;
+#else
+		return true;
+#endif
+	}
+
+void Achievements::uninstallRAMenu() {
+#ifdef _WIN32
+	if (g_pOldWndProc && g_hWndSubclassed) {
+		SetWindowLongPtr(g_hWndSubclassed, GWLP_WNDPROC, (LONG_PTR)g_pOldWndProc);
+		g_pOldWndProc = nullptr;
+		g_hWndSubclassed = nullptr;
+	}
+
+	HWND hWnd = GetFlycastMainWindow();
+	HMENU hMainMenu = hWnd ? GetMenu(hWnd) : nullptr;
+
+	if (hMainMenu) {
+		int menuCount = GetMenuItemCount(hMainMenu);
+		char menuString[256];
+		for (int i = 0; i < menuCount; ++i) {
+			GetMenuStringA(hMainMenu, i, menuString, 256, MF_BYPOSITION);
+			if (strcmp(menuString, "RetroAchievements") == 0) {
+				RemoveMenu(hMainMenu, i, MF_BYPOSITION);
+				break;
+			}
+		}
+	if (hWnd) DrawMenuBar(hWnd);
+	}
+#endif
+}
+
+void Achievements::initRAIntegration()
+{
+#ifdef _WIN32
+		if (raIntegrationAttempted) return;
+		raIntegrationAttempted = true;
+		raStatusMessage = "Loading DLL...";
+
+		HWND hDummy = CreateDummyWindow();
+
+		if (rc_client && hDummy) {
+#ifdef RC_CLIENT_SUPPORTS_RAINTEGRATION
+			rc_client_begin_load_raintegration(rc_client, L".", hDummy, "Flycast", "2.4", raintegrationCallback, this);
+#endif
+		}
+		else {
+			raStatusMessage = "Init Error";
+		}
+#endif
+	}
+
+void Achievements::raintegrationCallback(int result, const char *error_message, rc_client_t *client, void *userdata)
+{
+#ifdef RC_CLIENT_SUPPORTS_RAINTEGRATION
+		Achievements *ach = (Achievements *)userdata;
+		if (result == RC_OK) {
+			rc_client_raintegration_set_write_memory_function(client, RA_WriteMemory);
+			rc_client_raintegration_set_console_id(client, RA_DREAMCAST_ID);
+			rc_client_raintegration_set_get_game_name_function(client, RA_GetGameTitle);
+
+			ach->raIntegrationLoaded = true;
+			ach->raMenuNeedsRebuild = true;
+			ach->raStatusMessage = "Active";
+
+			os_notify(i18n::Ts("RA Integration Loaded").c_str(), 2000);
+	}
+	else {
+		WARN_LOG(COMMON, "Failed to load RA Integration: %s", error_message);
+		ach->raIntegrationLoaded = false;
+		ach->raStatusMessage = "Failed: " + std::string(error_message ? error_message : "Unknown");
+
+		os_notify("RA Integration Failed", 3000, error_message);
+    }
+#endif
+}
+
 bool Achievements::init()
 {
 	if (rc_client == nullptr)
@@ -423,6 +791,11 @@ bool Achievements::init()
 	    //rc_client_set_spectator_mode_enabled(rc_client, 0);
 	    loadCache();
 
+		manualIntegrationEnabled = config::EnableRAIntegration.get();
+
+		if (manualIntegrationEnabled) {
+			initRAIntegration();
+		}
 	    if (!config::AchievementsUserName.get().empty() && !config::AchievementsToken.get().empty())
 	    {
 	    	INFO_LOG(COMMON, "RA: Attempting login with user '%s'...", config::AchievementsUserName.get().c_str());
@@ -539,9 +912,21 @@ void Achievements::term()
 	unloadGame();
 	stopThreads();
 
+		if (raIntegrationLoaded) {
+			uninstallRAMenu();
+#ifdef RC_CLIENT_SUPPORTS_RAINTEGRATION
+			rc_client_unload_raintegration(rc_client);
+#endif
+			raIntegrationLoaded = false;
+#ifdef _WIN32
+			DestroyDummyWindow();
+#endif
+	}
+
 	rc_client_destroy(rc_client);
 	rc_client = nullptr;
 	loggedOn = false;
+	raIntegrationAttempted = false;
 
 #if defined(USE_SDL)
 	if (audioDevice > 0) {
@@ -568,12 +953,15 @@ void Achievements::authenticationSuccess(const rc_client_user_t *user)
 		});
 	}
 	loggedOn = true;
-	if (!settings.content.fileName.empty()) // TODO better test?
+	if (raIntegrationLoaded) {
+		raMenuNeedsRebuild = true;
+	}
+	if (!settings.content.fileName.empty())
 		loadGame();
 }
 
 void Achievements::clientLoginWithTokenCallback(int result, const char *error_message, rc_client_t *client,
-                                                void *userdata)
+void *userdata)
 {
 	Achievements *achievements = (Achievements *)rc_client_get_userdata(client);
 	if (result != RC_OK)
@@ -635,6 +1023,10 @@ void Achievements::logout()
 	config::AchievementsToken = "";
 	SaveSettings();
 	loggedOn = false;
+
+	if (raIntegrationLoaded) {
+		raMenuNeedsRebuild = true;
+	}
 }
 
 void Achievements::clientMessageCallback(const char* message, const rc_client_t* client)
@@ -648,28 +1040,24 @@ void Achievements::clientMessageCallback(const char* message, const rc_client_t*
 
 u32 Achievements::clientReadMemory(u32 address, u8* buffer, u32 num_bytes, rc_client_t* client)
 {
-	if (address + num_bytes > RAM_SIZE)
-		return 0;
-	address += 0x0C000000;
-	switch (num_bytes)
-	{
-	case 1:
-    	*buffer = ReadMem8_nommu(address);
-    	break;
-	case 2:
-		*(u16 *)buffer = ReadMem16_nommu(address);
-		break;
-	case 4:
-		*(u32 *)buffer = ReadMem32_nommu(address);
-		break;
-	default:
-		return 0;
+	if (!achievements::isActive()) {
+		memset(buffer, 0, num_bytes);
+		return num_bytes;
+	}
+
+	if (address + num_bytes > RAM_SIZE) return 0;
+
+	u32 baseAddress = 0x0C000000;
+	u32 physAddress = baseAddress + address;
+
+	for (u32 i = 0; i < num_bytes; ++i) {
+		buffer[i] = ReadMem8_nommu(physAddress + i);
 	}
 	return num_bytes;
 }
 
 void Achievements::clientServerCall(const rc_api_request_t *request, rc_client_server_callback_t callback,
-                                    void *callback_data, rc_client_t *client)
+void *callback_data, rc_client_t *client)
 {
 	Achievements *achievements = (Achievements *)rc_client_get_userdata(client);
 	std::string url {request->url};
@@ -677,8 +1065,13 @@ void Achievements::clientServerCall(const rc_api_request_t *request, rc_client_s
 	if (request->post_data != nullptr)
 		payload = request->post_data;
 	std::string contentType;
-	if (request->content_type != nullptr)
+	if (request->content_type != nullptr){
 		contentType = request->content_type;
+	}
+		else if (!payload.empty()) {
+			contentType = "application/x-www-form-urlencoded";
+		}
+
 	achievements->asyncTask([url, contentType, payload, callback, callback_data]() {
 		int rc;
 		std::vector<u8> reply;
@@ -686,11 +1079,36 @@ void Achievements::clientServerCall(const rc_api_request_t *request, rc_client_s
 			rc = http::post(url, payload.c_str(), contentType.empty() ? nullptr : contentType.c_str(), reply);
 		else
 			rc = http::get(url, reply);
+#ifdef _WIN32
+			if (g_hDummyWnd) {
+				ServerCallbackData *cbData = new ServerCallbackData();
+				cbData->callback = callback;
+				cbData->callback_data = callback_data;
+				cbData->http_status_code = rc;
+				if (!reply.empty()) {
+					cbData->body.assign(reply.begin(), reply.end());
+				}
+
+			if (!PostMessage(g_hDummyWnd, WM_RA_SERVER_CALLBACK, 0, (LPARAM)cbData)) {
+				delete cbData;
+			}
+		}
+		else {
 		rc_api_server_response_t rr;
+		memset(&rr, 0, sizeof(rr));
+		rr.http_status_code = rc;
+		rr.body_length = reply.size();
+		rr.body = (const char *)reply.data();
+		callback(&rr, callback_data);
+	}
+#else
+		rc_api_server_response_t rr;
+		memset(&rr, 0, sizeof(rr));
 		rr.http_status_code = rc;	// TODO RC_API_SERVER_RESPONSE_RETRYABLE_CLIENT_ERROR if connection fails?
 		rr.body_length = reply.size();
 		rr.body = (const char *)reply.data();
 		callback(&rr, callback_data);
+#endif
 	});
 }
 
@@ -781,9 +1199,12 @@ void Achievements::clientEventHandler(const rc_client_event_t* event, rc_client_
 
 void Achievements::handleResetEvent(const rc_client_event_t *event)
 {
-	// This never seems to be called, probably because hardcore mode is enabled before starting the game.
-	INFO_LOG(COMMON, "RA: Resetting runtime due to reset event");
-	rc_client_reset(rc_client);
+bool hardcore = (bool)rc_client_get_hardcore_enabled(rc_client);
+	settings.raHardcoreMode = hardcore;
+	config::AchievementsHardcoreMode = hardcore;
+	SaveSettings();
+	INFO_LOG(COMMON, "RA: Resetting emulator due to reset event (scheduled)");
+	resetPending = true;
 }
 
 void Achievements::handleUnlockEvent(const rc_client_event_t *event)
@@ -964,10 +1385,7 @@ static void *cdreader_open_track(const char* path, u32 track)
 static size_t cdreader_read_sector(void* track_handle, u32 sector, void* buffer, size_t requested_bytes)
 {
 	if (requested_bytes == 2048)
-		// add 150 sectors to FAD corresponding to files
-		// FIXME get rid of this
 		add150 = true;
-	//DEBUG_LOG(COMMON, "RA: cdreader_read_sector track %p sec %d+%d num %zd", track_handle, sector, add150 ? 150 : 0, requested_bytes);
 	if (add150)
 		sector += 150;
 	u8 locbuf[2048];
@@ -995,7 +1413,6 @@ std::string Achievements::getGameHash()
 	{
 		if (!gdr::isLoaded())
 			return {};
-		// Reopen the disk locally to avoid threading issues (CHD)
 		try {
 			hashDisk = OpenDisc(settings.content.path);
 		} catch (const FlycastException& e) {
@@ -1077,14 +1494,12 @@ void Achievements::emuEventCallback(Event event, void *arg)
 	}
 }
 
-void Achievements::loadGame()
+void Achievements::loadGame(bool force)
 {
-	if (loadingGame.exchange(true))
-		// already loading
+	if (!force && loadingGame.exchange(true))
 		return;
 	if (active)
 	{
-		// already loaded
 		loadingGame = false;
 		return;
 	}
@@ -1097,7 +1512,6 @@ void Achievements::loadGame()
 	std::string gameHash = getGameHash();
 	if (!gameHash.empty())
 	{
-		// settings.raHardcoreMode is set before enabling cheats and loading the initial savestate
 		rc_client_set_hardcore_enabled(rc_client, settings.raHardcoreMode);
 		rc_client_begin_load_game(rc_client, gameHash.c_str(), [](int result, const char *error_message, rc_client_t *client, void *userdata) {
 				((Achievements *)userdata)->gameLoaded(result, error_message);
@@ -1114,13 +1528,26 @@ void Achievements::gameLoaded(int result, const char *errorMessage)
 {
 	if (result != RC_OK)
 	{
-		if (result == RC_NO_GAME_LOADED)
-			// Unknown game.
-			INFO_LOG(COMMON, "RA: Unknown game, disabling achievements.");
-		else if (result == RC_LOGIN_REQUIRED) {
-			// We would've asked to re-authenticate, so leave HC on for now.
-			// Once we've done so, we'll reload the game.
+	if (result == RC_LOGIN_REQUIRED) {
+			if (!config::AchievementsUserName.get().empty() && !config::AchievementsToken.get().empty()) {
+				auto onRelogin = [](int res, const char *msg, rc_client_t *c, void *u) {
+					if (res == RC_OK) {
+						Achievements::Instance().pendingGameLoadRetryFrames = 60;
+					}
+					else {
+						WARN_LOG(COMMON, "RA: Relogin failed: %s", msg);
+						Achievements::Instance().loadingGame = false;
+					}
+					};
+				rc_client_begin_login_with_token(rc_client,
+					config::AchievementsUserName.get().c_str(),
+					config::AchievementsToken.get().c_str(),
+					onRelogin, nullptr);
+				return;
+			}
 		}
+		else if (result == RC_NO_GAME_LOADED)
+			INFO_LOG(COMMON, "RA: Unknown game, disabling achievements.");
 		else
 			WARN_LOG(COMMON, "RA Loading game failed: %s", errorMessage);
 		settings.raHardcoreMode = false;
@@ -1141,6 +1568,10 @@ void Achievements::gameLoaded(int result, const char *errorMessage)
 
 	active = true;
 	loadingGame = false;
+	if (raIntegrationLoaded) {
+		raMenuNeedsRebuild = true;
+	}
+
 	EventManager::listen(Event::VBlank, emuEventCallback, this);
 	NOTICE_LOG(COMMON, "RA: game %d loaded: %s, achievements %d leaderboards %d rich presence %d", info->id, info->title,
 			rc_client_has_achievements(rc_client), rc_client_has_leaderboards(rc_client), rc_client_has_rich_presence(rc_client));
@@ -1175,16 +1606,17 @@ void Achievements::unloadGame()
 	active = false;
 	paused = false;
 	EventManager::unlisten(Event::VBlank, emuEventCallback, this);
-	// wait for all async tasks before unloading the game
 	stopThreads();
-	rc_client_unload_game(rc_client);
+
+	if (rc_client) {
+		rc_client_unload_game(rc_client);
+	}
 	settings.raHardcoreMode = false;
 }
 
 void Achievements::diskChange()
 {
 	if (!active || settings.content.path.empty())
-		// Don't unload the game when the lid is open while swapping disks
 		return;
 	std::string hash = getGameHash();
 	if (hash == "") {
@@ -1313,6 +1745,30 @@ void Achievements::deserialize(Deserializer& deser)
 		else {
 			rc_client_deserialize_progress(rc_client, nullptr);
 		}
+	}
+}
+
+static void RC_CCONV RA_WriteMemory(uint32_t address, uint8_t *buffer, uint32_t num_bytes, rc_client_t *client)
+{
+	if (!achievements::isActive()) return;
+
+	uint32_t baseAddress = 0x0C000000;
+
+	if (address >= 0x1000000) return;
+
+	for (uint32_t i = 0; i < num_bytes; ++i) {
+		WriteMem8(baseAddress + address + i, buffer[i]);
+	}
+}
+
+static void RC_CCONV RA_GetGameTitle(char *buffer, uint32_t buffer_size, rc_client_t *client)
+{
+	achievements::Game game = achievements::getCurrentGame();
+	if (!game.title.empty()) {
+		snprintf(buffer, buffer_size, "%s", game.title.c_str());
+	}
+	else {
+		snprintf(buffer, buffer_size, "Flycast");
 	}
 }
 

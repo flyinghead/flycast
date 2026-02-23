@@ -1003,7 +1003,6 @@ endif()
 
 if(NOT LIBRETRO)
 	target_sources(${PROJECT_NAME} PRIVATE
-			core/deps/rcheevos/src/rc_client_raintegration.c
 			core/deps/rcheevos/src/rc_client.c
 			core/deps/rcheevos/src/rc_compat.c
 			core/deps/rcheevos/src/rc_util.c
@@ -1034,6 +1033,11 @@ if(NOT LIBRETRO)
 			core/deps/rcheevos/src/rurl/url.c)
 	target_include_directories(${PROJECT_NAME} PRIVATE core/deps/rcheevos/include)
 	target_compile_definitions(${PROJECT_NAME} PRIVATE USE_RACHIEVEMENTS RC_DISABLE_LUA)
+
+	if(WIN32 AND NOT WINDOWS_STORE)
+		target_compile_definitions(${PROJECT_NAME} PRIVATE RC_CLIENT_SUPPORTS_RAINTEGRATION RC_CLIENT_SUPPORTS_EXTERNAL)
+		target_sources(${PROJECT_NAME} PRIVATE core/deps/rcheevos/src/rc_client_raintegration.c)
+	endif()
 endif()
 
 if(USE_OPENGL)
@@ -1336,7 +1340,7 @@ endif()
 
 if((USE_OPENGL OR USE_GLES2 OR USE_GLES) AND NOT LIBRETRO)
 	add_library(glad STATIC core/deps/glad/src/gl.c)
-	if(NOT APPLE AND NOT WIN32 AND NOT SDL2_FOUND)
+	if(ANDROID OR (NOT APPLE AND NOT WIN32 AND NOT SDL2_FOUND))
 		# When SDL2 is not found, we can use EGL with ANativeWindow (Android) or X11
 		target_sources(glad PRIVATE core/deps/glad/src/egl.c)
 	endif()

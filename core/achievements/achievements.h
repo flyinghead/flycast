@@ -18,6 +18,12 @@
 #include "types.h"
 #include <future>
 #include <vector>
+#include <mutex>
+#include <atomic>
+
+#ifndef RA_DREAMCAST_ID
+#define RA_DREAMCAST_ID 40
+#endif
 
 namespace achievements
 {
@@ -54,6 +60,14 @@ bool isActive();
 Game getCurrentGame();
 std::vector<Achievement> getAchievementList();
 bool canPause();
+bool IsRAIntegrationLoaded();
+void RA_InvokeDialog(int id);
+
+void enableRAIntegration(bool enable);
+bool isRAIntegrationEnabled();
+const char *getRAIntegrationStatus();
+
+void RA_UpdateFrame();
 
 #else
 
@@ -63,6 +77,12 @@ static inline bool isActive() {
 static inline bool canPause() {
 	return true;
 }
+static inline bool IsRAIntegrationLoaded() { return false; }
+static inline void RA_InvokeDialog(int id) {}
+static inline void enableRAIntegration(bool enable) {}
+static inline bool isRAIntegrationEnabled() { return false; }
+static inline const char *getRAIntegrationStatus() { return ""; }
+static inline void RA_UpdateFrame() {}
 
 #endif
 
