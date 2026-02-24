@@ -1764,16 +1764,9 @@ void gui_saveState(bool stopRestart, bool inRam)
 				emu.stop();
 			
 			if (inRam)
-			{
-				int oldSavestateSlot = config::SavestateSlot; // backup
-				config::SavestateSlot = -2;  // special slot used for inRam states
-				savestate();
-				config::SavestateSlot = oldSavestateSlot; // restore
-			}
+				dc_savestate(-2);
 			else
-			{
 				savestate();
-			}
 
 			if (stopRestart)
 				emu.start();
