@@ -27,6 +27,22 @@
 static std::string lastStateFile;
 static time_t lastStateTime;
 
+#if defined(__ANDROID__)
+    #include <android/api-level.h>
+    // fmemopen was added in Marshmallow (API 23)
+    #if __ANDROID_API__ >= 23
+        #define HAS_FMEMOPEN
+    #endif
+#elif defined(__linux__) || defined(__APPLE__) || defined(__FreeBSD__) || defined(__GLIBC__)
+    // Standard POSIX platforms usually have fmemopen
+    #define HAS_FMEMOPEN
+#endif
+
+#ifdef HAS_FMEMOPEN
+const u32 QUICKSAVE_DEFAULT_SIZE = 32 * 1024 * 1024; // 32 MB
+static u8 quicksave_buf[QUICKSAVE_DEFAULT_SIZE] = {0};
+#endif
+
 struct SavestateHeader
 {
 	void init()
@@ -182,8 +198,23 @@ void dc_savestate(int index, const u8 *pngData, u32 pngSize)
 	ser = Serializer(data, ser.size());
 	dc_serialize(ser);
 
-	std::string filename = hostfs::getSavestatePath(index, true);
-	FILE *f = nowide::fopen(filename.c_str(), "wb");
+	FILE *f = nullptr;
+	std::string filename = "";
+#ifdef HAS_FMEMOPEN
+	if (index == -2)
+	{
+		// in-ram savestate
+		filename = "RAM";
+		f = fmemopen(quicksave_buf, QUICKSAVE_DEFAULT_SIZE, "wb");
+	}
+	else
+#endif
+	{
+		// regular file savestate
+		filename = hostfs::getSavestatePath(index, true);
+		f = nowide::fopen(filename.c_str(), "wb");
+	}
+	
 	if (f == nullptr)
 	{
 		WARN_LOG(SAVESTATE, "Failed to save state - could not open %s for writing", filename.c_str());
@@ -235,8 +266,23 @@ void dc_loadstate(int index)
 		return;
 	u32 total_size = 0;
 
-	std::string filename = hostfs::getSavestatePath(index, false);
-	FILE *f = hostfs::storage().openFile(filename, "rb");
+	FILE *f = nullptr;
+	std::string filename = "";
+#ifdef HAS_FMEMOPEN
+	if (index == -2)
+	{
+		// in-ram savestate
+		filename = "RAM";
+		f = fmemopen(quicksave_buf, QUICKSAVE_DEFAULT_SIZE, "rb");
+	}
+	else
+#endif
+	{
+		// regular file savestate
+		filename = hostfs::getSavestatePath(index, false);
+		f = hostfs::storage().openFile(filename, "rb");
+	}
+	
 	if (f == nullptr)
 	{
 		WARN_LOG(SAVESTATE, "Failed to load state - could not open %s for reading", filename.c_str());
