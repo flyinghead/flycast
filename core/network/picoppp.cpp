@@ -57,6 +57,25 @@ extern "C" {
 #include <mutex>
 #include <future>
 
+#ifdef __vita__
+#include <functional>
+namespace asio::placeholders
+{
+	static inline constexpr auto& error
+		= std::placeholders::_1;
+	static inline constexpr auto& bytes_transferred
+		= std::placeholders::_2;
+	static inline constexpr auto& iterator
+		= std::placeholders::_2;
+	static inline constexpr auto& results
+		= std::placeholders::_2;
+	static inline constexpr auto& endpoint
+		= std::placeholders::_2;
+	static inline constexpr auto& signal_number
+		= std::placeholders::_2;
+}
+#endif
+
 #define RESOLVER1_OPENDNS_COM "208.67.222.222"
 #define AFO_ORIG_IP 0x83f2fb3f		// 63.251.242.131 in network order
 #define IGP_ORIG_IP 0xef2bd2cc		// 204.210.43.239 in network order

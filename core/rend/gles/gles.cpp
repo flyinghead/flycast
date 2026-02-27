@@ -34,7 +34,284 @@
 #endif
 
 //Fragment and vertex shaders code
+#ifdef __vita__
+const char* ShaderCompatSource = R"(
+#define GLES2 0
+#define GLES3 1
+#define GL2 2
+#define GL3 3
+#define FOG_CHANNEL a
+)";
 
+const char *VertexCompatShader = R"(
+)";
+
+const char *PixelCompatShader = R"(
+)";
+
+const char* GouraudSource = R"(
+	#define INTERPOLATION
+)";
+
+static const char* VertexShaderSource = R"(
+/* Vertex constants*/
+uniform float4 depth_scale;
+uniform float4x4 ndcMat;
+uniform float sp_FOG_DENSITY;
+
+void main(
+	float4 in_pos,
+	float4 in_base,
+	float4 in_offs,
+	float2 in_uv,
+	float4 out vtx_base : TEXCOORD0,
+	float4 out vtx_offs : TEXCOORD1,
+	float3 out vtx_uv : TEXCOORD2,
+	float4 out gl_Position : POSITION
+) {
+	float4 vpos = mul(in_pos, ndcMat);
+	vtx_base = in_base;
+	vtx_offs = in_offs;
+#if USE_GLES2 == 1
+	vtx_uv = float3(in_uv, vpos.z * sp_FOG_DENSITY);
+	vpos.w = 1.0 / vpos.z;
+	vpos.z = depth_scale.x + depth_scale.y * vpos.w;
+	vpos.xy *= vpos.w;
+#else
+#if DIV_POS_Z == 1
+	vpos /= vpos.z;
+	vpos.z = vpos.w;
+#endif
+#if pp_Gouraud == 1 && DIV_POS_Z != 1
+	vtx_base *= vpos.z;
+	vtx_offs *= vpos.z;
+#endif
+	vtx_uv = float3(in_uv, vpos.z);
+#if DIV_POS_Z != 1
+	vtx_uv.xy *= vpos.z;
+	vpos.w = 1.0;
+	vpos.z = 0.0;
+#endif
+#endif
+	gl_Position = vpos;
+}
+)";
+
+const char* PixelPipelineShader = R"(
+#define PI 3.1415926
+
+/* Shader program params*/
+/* gles has no alpha test stage, so its emulated on the shader */
+uniform float cp_AlphaTestValue;
+uniform float4 pp_ClipTest;
+uniform float3 sp_FOG_COL_RAM,sp_FOG_COL_VERT;
+uniform float sp_FOG_DENSITY;
+uniform sampler2D tex,fog_table;
+uniform float trilinear_alpha;
+uniform float4 fog_clamp_min;
+uniform float4 fog_clamp_max;
+#if pp_Palette == 1
+uniform sampler2D palette;
+uniform short palette_index;
+#endif
+#if DITHERING == 1
+uniform lowp vec4 ditherColorMax;
+#endif
+
+float fog_mode2(float w, float3 vtx_uv)
+{
+	float z = clamp(
+#if USE_GLES2 == 1
+		vtx_uv.z
+#else
+#if DIV_POS_Z == 1
+		sp_FOG_DENSITY / w
+#else
+		sp_FOG_DENSITY * w
+#endif
+#endif
+	, 1.0, 255.9999);
+	float _exp = floor(log2(z));
+	float m = z * 16.0 / pow(2.0, _exp) - 16.0;
+	float idx = floor(m) + _exp * 16.0 + 0.5;
+	float4 fog_coef = tex2D(fog_table, float2(idx / 128.0, 0.75 - (m - floor(m)) / 2.0));
+	return fog_coef.FOG_CHANNEL;
+}
+
+float4 fog_clamp(float4 col)
+{
+#if FogClamping == 1
+	return clamp(col, fog_clamp_min, fog_clamp_max);
+#else
+	return col;
+#endif
+}
+
+#if pp_Palette == 1
+
+float4 palettePixel(float3 coords)
+{
+	short color_idx = short(floor(tex2D(tex, coords.xy).FOG_CHANNEL * 255.0 + 0.5)) + palette_index;
+	float2 c = float2((fmod(float(color_idx), 32.0) * 2.0 + 1.0) / 64.0, (float(color_idx / 32) * 2.0 + 1.0) / 64.0);
+	return tex2D(palette, c);
+}
+
+#endif
+
+#if USE_GLES2 == 1
+#define depth gl_FragCoord.w
+#else
+#define depth vtx_uv.z
+#endif
+
+void main(
+	float4 vtx_base : TEXCOORD0,
+	float4 vtx_offs : TEXCOORD1,
+	float3 vtx_uv : TEXCOORD2,
+	float4 gl_FragCoord : WPOS,
+#if USE_GLES2 == 0
+	float out gl_FragDepth : DEPTH,
+#endif
+	float4 out gl_FragColor : COLOR
+) {
+	// Clip inside the box
+	#if pp_ClipInside == 1
+		if (gl_FragCoord.x >= pp_ClipTest.x && gl_FragCoord.x <= pp_ClipTest.z
+				&& gl_FragCoord.y >= pp_ClipTest.y && gl_FragCoord.y <= pp_ClipTest.w)
+			discard;
+	#endif
+
+	float4 color = vtx_base;
+	float4 offset = vtx_offs;
+	#if pp_Gouraud == 1 && DIV_POS_Z != 1 && USE_GLES2 == 0
+		color /= vtx_uv.z;
+		offset /= vtx_uv.z;
+	#endif
+	#if pp_UseAlpha==0
+		color.a=1.0;
+	#endif
+	#if pp_FogCtrl==3
+		color = float4(sp_FOG_COL_RAM.rgb, fog_mode2(depth, vtx_uv));
+	#endif
+	#if pp_Texture==1
+	{
+		#if pp_Palette == 0
+		  #if USE_GLES2 == 1 || DIV_POS_Z == 1
+			float4 texcol = tex2D(tex, vtx_uv.xy);
+		  #else
+			float4 texcol = tex2Dproj(tex, vtx_uv);
+		  #endif
+		#else
+			float4 texcol = palettePixel(vtx_uv);
+		#endif
+
+		#if pp_BumpMap == 1
+			float s = PI / 2.0 * (texcol.a * 15.0 * 16.0 + texcol.r * 15.0) / 255.0;
+			float r = 2.0 * PI * (texcol.g * 15.0 * 16.0 + texcol.b * 15.0) / 255.0;
+			texcol.a = clamp(offset.a + offset.r * sin(s) + offset.g * cos(s) * cos(r - 2.0 * PI * offset.b), 0.0, 1.0);
+			texcol.rgb = float3(1.0, 1.0, 1.0);
+		#else
+			#if pp_IgnoreTexA==1
+				texcol.a=1.0;
+			#endif
+
+			#if cp_AlphaTest == 1
+				if (cp_AlphaTestValue > texcol.a)
+					discard;
+				texcol.a = 1.0;
+			#endif
+		#endif
+		#if pp_ShadInstr==0
+		{
+			color=texcol;
+		}
+		#endif
+		#if pp_ShadInstr==1
+		{
+			color.rgb*=texcol.rgb;
+			color.a=texcol.a;
+		}
+		#endif
+		#if pp_ShadInstr==2
+		{
+			color.rgb=lerp(color.rgb,texcol.rgb,texcol.a);
+		}
+		#endif
+		#if  pp_ShadInstr==3
+		{
+			color*=texcol;
+		}
+		#endif
+
+		#if pp_Offset==1 && pp_BumpMap == 0
+			color.rgb += offset.rgb;
+		#endif
+	}
+	#endif
+
+	color = fog_clamp(color);
+
+	#if pp_FogCtrl == 0
+		color.rgb = lerp(color.rgb, sp_FOG_COL_RAM.rgb, fog_mode2(depth, vtx_uv));
+	#endif
+	#if pp_FogCtrl == 1 && pp_Offset==1 && pp_BumpMap == 0
+		color.rgb = lerp(color.rgb, sp_FOG_COL_VERT.rgb, offset.a);
+	#endif
+
+	#if pp_TriLinear == 1
+	color *= trilinear_alpha;
+	#endif
+
+	//color.rgb = float3(vtx_uv.z * sp_FOG_DENSITY / 128.0);
+#if USE_GLES2 == 0
+#if DIV_POS_Z == 1
+	float w = 100000.0 / vtx_uv.z;
+#else
+	float w = 100000.0 * vtx_uv.z;
+#endif
+	gl_FragDepth = log2(1.0 + w) / 34.0;
+
+#if DITHERING == 1
+	mediump float ditherTable[16] = float[](
+		 0.9375,  0.1875,  0.75,  0.,
+		 0.4375,  0.6875,  0.25,  0.5,
+		 0.8125,  0.0625,  0.875, 0.125,
+		 0.3125,  0.5625,  0.375, 0.625
+	);
+	mediump float r = ditherTable[int(mod(gl_FragCoord.y, 4.)) * 4 + int(mod(gl_FragCoord.x, 4.))];
+	// 31 for 5-bit color, 63 for 6 bits, 15 for 4 bits
+	color += r / ditherColorMax;
+	// avoid rounding
+	color = floor(color * 255.) / 255.;
+#endif
+#endif
+	gl_FragColor = color;
+}
+)";
+
+static const char* ModifierVolumeShader = R"(
+uniform float sp_ShaderColor;
+
+
+void main(
+#if USE_GLES2 == 0
+	float3 vtx_uv : TEXCOORD2,
+	float out gl_FragDepth : DEPTH,
+#endif
+	float4 out gl_FragColor : COLOR
+) {
+#if USE_GLES2 == 0
+#if DIV_POS_Z == 1
+	float w = 100000.0 / vtx_uv.z;
+#else
+	float w = 100000.0 * vtx_uv.z;
+#endif
+	gl_FragDepth = log2(1.0 + w) / 34.0;
+#endif
+	gl_FragColor = float4(0.0, 0.0, 0.0, sp_ShaderColor);
+}
+)";
+#else
 const char* ShaderCompatSource = R"(
 #define GLES2 0 							
 #define GLES3 1 							
@@ -394,7 +671,7 @@ void main()
 	gl_FragColor=vec4(0.0, 0.0, 0.0, sp_ShaderColor);
 }
 )";
-
+#endif
 void os_VideoRoutingTermGL();
 
 GLCache glcache;
@@ -431,7 +708,9 @@ void do_swap_automation()
 		u8* img = new u8[bytesz];
 		
 		framebuffer->bind(GL_READ_FRAMEBUFFER);
+#ifndef __vita__
 		glPixelStorei(GL_PACK_ALIGNMENT, 1);
+#endif
 		glReadPixels(0, 0, framebuffer->getWidth(), framebuffer->getHeight(), GL_RGB, GL_UNSIGNED_BYTE, img);
 		dump_screenshot(img, framebuffer->getWidth(), framebuffer->getHeight());
 		delete[] img;
@@ -542,7 +821,9 @@ void findGLVersion()
 			INFO_LOG(RENDERER, "Packed depth/stencil not supported: no modifier volumes when rendering to a texture");
 		GLint ranges[2];
 		GLint precision;
+#ifndef __vita__
 		glGetShaderPrecisionFormat(GL_FRAGMENT_SHADER, GL_HIGH_FLOAT, ranges, &precision);
+#endif
 		gl.highp_float_supported = (ranges[0] != 0 || ranges[1] != 0) && precision != 0;
 		if (!gl.border_clamp_supported)
 			gl.border_clamp_supported = strstr(extensions, "GL_EXT_texture_border_clamp") != nullptr;
@@ -600,6 +881,9 @@ void findGLVersion()
 		if (anisotropicExtension)
 			glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY, &gl.max_anisotropy);
 	}
+#endif
+#ifdef __vita__
+	gl.glsl_version_header = "";
 #endif
 	const char *vendor = (const char *)glGetString(GL_VENDOR);
 	const char *renderer = (const char *)glGetString(GL_RENDERER);
@@ -703,8 +987,10 @@ GLuint gl_CompileAndLink(const char *vertexShader, const char *fragmentShader)
 		throw RendererException(i18n::T("OpenGL shader compilation failed"));
 		// FIXME MINIDUMP-8A1, MINIDUMP-8A2, MINIDUMP-7YE
 	}
+#ifndef __vita__
 	glDetachShader(program, vs);
 	glDetachShader(program, ps);
+#endif
 	glDeleteShader(vs);
 	glDeleteShader(ps);
 
@@ -768,6 +1054,9 @@ public:
 	VertexSource(bool gouraud, bool divPosZ) : OpenGlSource() {
 		addConstant("pp_Gouraud", gouraud);
 		addConstant("DIV_POS_Z", divPosZ);
+#ifdef __vita__
+		addConstant("USE_GLES2", config::UseSimpleShaders);
+#endif
 
 		addSource(VertexCompatShader);
 		addSource(GouraudSource);
@@ -795,6 +1084,9 @@ public:
 		addConstant("pp_Palette", s->palette);
 		addConstant("DIV_POS_Z", s->divPosZ);
 		addConstant("DITHERING", s->dithering);
+#ifdef __vita__
+		addConstant("USE_GLES2", config::UseSimpleShaders);
+#endif
 
 		addSource(PixelCompatShader);
 		addSource(GouraudSource);
@@ -883,6 +1175,9 @@ static void create_modvol_shader()
 	OpenGlSource fragmentShader;
 	fragmentShader.addConstant("pp_Gouraud", 0)
 			.addConstant("DIV_POS_Z", config::NativeDepthInterpolation)
+#ifdef __vita__
+			.addConstant("USE_GLES2", config::UseSimpleShaders)
+#endif
 			.addSource(PixelCompatShader)
 			.addSource(GouraudSource)
 			.addSource(ModifierVolumeShader);
@@ -976,7 +1271,7 @@ bool OpenGLRenderer::Init()
 	glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
 #endif
 
-#if defined(GL_GENERATE_MIPMAP_HINT) && !defined(__SWITCH__)
+#if defined(GL_GENERATE_MIPMAP_HINT) && !defined(__SWITCH__) && !defined(__vita__)
 	if (gl.is_gles)
 		glHint(GL_GENERATE_MIPMAP_HINT, GL_FASTEST);
 #endif
@@ -1015,7 +1310,9 @@ static void updateFogTexture(u8 *fog_table, GLenum texture_slot, GLint fog_image
 	u8 temp_tex_buffer[256];
 	MakeFogTexture(temp_tex_buffer);
 
+#ifndef __vita__
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+#endif
 	GLint internalformat;
 	if (gl.is_gles && fog_image_format == GL_RED)
 		internalformat = GL_R8;
@@ -1043,7 +1340,9 @@ static void updatePaletteTexture(GLenum texture_slot)
 		glcache.BindTexture(GL_TEXTURE_2D, paletteTextureId);
 	}
 
+#ifndef __vita__
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+#endif
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 32, 32, 0, GL_RGBA, GL_UNSIGNED_BYTE, palette32_ram);
 	glCheck();
 

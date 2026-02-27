@@ -548,7 +548,11 @@ bool BaseTextureCacheData::Update()
 		need_32bit_buffer = false;
 	// TODO avoid upscaling/depost. textures that change too often
 
+#ifdef __vita__
+	bool mipmapped = false;
+#else
 	bool mipmapped = IsMipmapped() && !config::DumpTextures;
+#endif
 
 	if (texconv32 != NULL && need_32bit_buffer)
 	{

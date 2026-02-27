@@ -228,7 +228,9 @@ void ReadRTTBuffer()
 			VramLockedWriteOffset(page);
 #endif
 
+#ifndef __vita__
 		glPixelStorei(GL_PACK_ALIGNMENT, 1);
+#endif
 
 		u16 *dst = (u16 *)&vram[tex_addr];
 
