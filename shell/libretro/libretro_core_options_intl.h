@@ -76,7 +76,7 @@ extern "C" {
 #define OPTION_VAL_USA_AR NULL
 #define OPTION_VAL_EUROPE_AR NULL
 #define OPTION_VAL_DEFAULT_AR NULL
-#define CORE_OPTION_NAME_LANGUAGE_LABEL_AR "اللّغة"
+#define CORE_OPTION_NAME_LANGUAGE_LABEL_AR "اللغة"
 #define CORE_OPTION_NAME_LANGUAGE_INFO_0_AR NULL
 #define OPTION_VAL_JAPANESE_AR "Japanese - 日本語"
 #define OPTION_VAL_ENGLISH_AR NULL
@@ -37502,8 +37502,8 @@ struct retro_core_options_v2 options_fr = {
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_GA "Fuaimeanna Aonaid/Córais Cuimhne Amhairc (VMU)"
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_GA "Fuaimeanna VMU"
 #define CORE_OPTION_NAME_VMU_SOUND_INFO_0_GA "Nuair a bhíonn sé cumasaithe, seinntear bípeanna VMU."
-#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_GA NULL
-#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_GA NULL
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_GA "Stóráil DreamPotato VMU"
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_GA "Cumasaigh stóráil sonraí VMU ar an aithriseoir DreamPotato ceangailte. Nuair a bhíonn sé cumasaithe, ní úsáidtear an comhad sábhála VMU áitiúil."
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_GA "Taispeáin Socruithe Taispeána Aonaid/Córais Cuimhne Amhairc (VMU)"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_GA "Taispeáin Socruithe Taispeána VMU"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_GA "Cumasaigh cumraíocht infheictheachta, méide, suíomh agus datha scáileáin LCD VMU aithrisithe. TABHAIR FAOI DEARA: B’fhéidir go mbeidh ort an Roghchlár Tapa a athrú chun an socrú seo a chur i bhfeidhm."
@@ -49806,12 +49806,12 @@ struct retro_core_options_v2 options_id = {
 #define OPTION_VAL_500_IT NULL
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_IT "Carica Texture Personalizzate"
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_INFO_0_IT "Carica texture personalizzate nella cartella 'system/dc/textures/<game-id>/'."
-#define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_LABEL_IT NULL
-#define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_INFO_0_IT NULL
+#define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_LABEL_IT "Precarica texture personalizzate"
+#define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_INFO_0_IT "Precarica texture personalizzate all'avvio del gioco. Può migliorare le prestazioni, ma aumenta l'utilizzo della memoria."
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_IT "Scarica Texture"
 #define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_IT "Ogni volta che un nuovo texture viene utilizzato dal gioco, verrà salvato come file .png nella cartella 'system/dc/texdump/<game-id>/'."
-#define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_IT NULL
-#define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_INFO_0_IT NULL
+#define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_IT "Scarica Texture sostituite"
+#define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_INFO_0_IT "Scarica sempre le texture che sono già sostituite da texture personalizzate."
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_IT "Zona morta dello sticl analogico"
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_INFO_0_IT "Seleziona fino a che punto devi spingere la levetta analogica prima che inizi ad essere elaborata."
 #define OPTION_VAL_0_IT NULL
@@ -49892,8 +49892,8 @@ struct retro_core_options_v2 options_id = {
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_IT "Suoni Delle Unità Di Memoria Visiva/Sistemi (VMU)"
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_IT "Suoni VMU"
 #define CORE_OPTION_NAME_VMU_SOUND_INFO_0_IT "Se abilitato, vengono riprodotti i segnali acustici VMU."
-#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_IT NULL
-#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_IT NULL
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_IT "Capienza DreamPotato VMU"
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_IT "Abilita l'archiviazione dei dati VMU sull'emulatore DreamPotato connesso. Quando abilitato, il file di salvataggio VMU locale non viene utilizzato."
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_IT "Mostra Le Impostazioni Di Visualizzazione della Visual Memory Unit/System (VMU)"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_IT "Mostra Impostazioni Di Visualizzazione VMU"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_IT "Abilita la configurazione dello schermo LCD VMU emulato, la dimensione, la posizione e il colore. NOTA: potrebbe essere necessario attivare il menu rapido affinché questa impostazione abbia effetto."
