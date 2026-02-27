@@ -680,7 +680,7 @@ bool BaseTextureCacheData::Update()
 	protectVRam();
 
 	UploadToGPU(upscaled_w, upscaled_h, (const u8 *)temp_tex_buffer, IsMipmapped(), mipmapped);
-	if (config::DumpTextures)
+	if (config::DumpTextures && tcw.PixelFmt != PixelYUV)
 	{
 		ComputeHash();
 		custom_texture.dumpTexture(this, upscaled_w, upscaled_h, temp_tex_buffer);
