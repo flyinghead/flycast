@@ -196,16 +196,75 @@ static ImGuiKey keycodeToImGuiKey(u8 keycode)
 	}
 }
 
-static bool addFont(const char *path, float size, ImFontConfig& fontConfig, const ImWchar *glyphRanges) {
-	ImFont *font = ImGui::GetIO().Fonts->AddFontFromFileTTF(path, size, &fontConfig, glyphRanges);
-	return font != nullptr;
+struct FontEntry
+{
+	const char* lang;      // "ja", "ko", "zh", "cjk" or nullptr for "generic"
+	std::string path;
+	float size;
+	int fontNo;
+	
+	FontEntry(const char* l, std::string p, float s, int fn) : lang(l), path(std::move(p)), size(s), fontNo(fn) {}
+};
+
+static void registerFont(std::vector<FontEntry>& target, const char* lang, const std::string& path, float size, int fontNo = 0)
+{
+	static std::string locale = i18n::getCurrentLocale();
+	
+	auto bucketRank = [&](const char* l) -> int
+	{
+		if (!l) return 3;                      // generic last
+		if (strcmp(l, "cjk") == 0) return 0;   // cjk first
+		if (locale.rfind(l, 0) == 0) return 1; // user locale
+		return 2;                              // remaining langs
+	};
+	
+	const int rank = bucketRank(lang);
+	auto it = target.begin();
+	for (; it != target.end(); ++it)
+	{
+		if (bucketRank(it->lang) > rank)
+			break;
+	}
+	target.emplace(it, lang, path, size, fontNo);
 }
 
-static void addFont(const char *path[], float size, ImFontConfig& fontConfig, const ImWchar *glyphRanges)
+static void loadFonts(const std::vector<FontEntry>& entries, ImFontConfig& cfg)
 {
-	while (*path != nullptr)
-		if (addFont(*path++, size, fontConfig, glyphRanges))
-			break;
+	std::unordered_set<std::string> satisfiedLangs;
+	satisfiedLangs.reserve(8);
+	
+	bool cjkLoaded = false;
+	
+	for (const FontEntry& e : entries)
+	{
+		const char* lang = e.lang ? e.lang : "generic";
+		
+		// Skip specific CJK langs if a generic CJK font already loaded
+		if (cjkLoaded && (!strcmp(lang, "ja") || !strcmp(lang, "ko") || !strcmp(lang, "zh")))
+			continue;
+		
+		// Break-per-langTag
+		if (satisfiedLangs.count(lang))
+			continue;
+		
+		cfg.FontNo = e.fontNo;
+		ImFont* font = ImGui::GetIO().Fonts->AddFontFromFileTTF(e.path.c_str(), e.size, &cfg, nullptr);
+		
+		if (!font)
+			continue;
+		
+		// Mark this lang as satisfied
+		satisfiedLangs.emplace(lang);
+		
+		// Special rule: cjk satisfies all CJK languages
+		if (strcmp(lang, "cjk") == 0)
+		{
+			cjkLoaded = true;
+			satisfiedLangs.emplace("ja");
+			satisfiedLangs.emplace("ko");
+			satisfiedLangs.emplace("zh");
+		}
+	}
 }
 
 void gui_initFonts()
@@ -276,182 +335,90 @@ void gui_initFonts()
 	largeFontConfig.MergeMode = true;
 	largeFontConfig.DstFont = largeFont;
 
+	std::vector<FontEntry> fonts;
+	std::vector<FontEntry> largeFonts;
+	fontConfig.Flags |= ImFontFlags_NoLoadError;
+	largeFontConfig.Flags |= ImFontFlags_NoLoadError;
+	
 #ifdef _WIN32
-    u32 cp = GetACP();
-    std::string fontDir = std::string(nowide::getenv("SYSTEMROOT")) + "\\Fonts\\";
-    switch (cp)
-    {
-    case 932:	// Japanese
-		{
-			fontConfig.FontNo = 2;	// UIGothic
-			largeFontConfig.FontNo = 2;
-			ImFont* font = io.Fonts->AddFontFromFileTTF((fontDir + "msgothic.ttc").c_str(), fontSize, &fontConfig, io.Fonts->GetGlyphRangesJapanese());
-			io.Fonts->AddFontFromFileTTF((fontDir + "msgothic.ttc").c_str(), largeFontSize, &largeFontConfig, io.Fonts->GetGlyphRangesJapanese());
-			fontConfig.FontNo = 2;	// Meiryo UI
-			largeFontConfig.FontNo = 2;
-			if (font == nullptr) {
-				io.Fonts->AddFontFromFileTTF((fontDir + "Meiryo.ttc").c_str(), fontSize, &fontConfig, io.Fonts->GetGlyphRangesJapanese());
-				io.Fonts->AddFontFromFileTTF((fontDir + "Meiryo.ttc").c_str(), largeFontSize, &largeFontConfig, io.Fonts->GetGlyphRangesJapanese());
-			}
-		}
-		break;
-    case 949:	// Korean
-		{
-			ImFont* font = io.Fonts->AddFontFromFileTTF((fontDir + "Malgun.ttf").c_str(), fontSize, &fontConfig, io.Fonts->GetGlyphRangesKorean());
-			io.Fonts->AddFontFromFileTTF((fontDir + "Malgun.ttf").c_str(), largeFontSize, &largeFontConfig, io.Fonts->GetGlyphRangesKorean());
-			if (font == nullptr)
-			{
-				fontConfig.FontNo = 2;	// Dotum
-				io.Fonts->AddFontFromFileTTF((fontDir + "Gulim.ttc").c_str(), fontSize, &fontConfig, io.Fonts->GetGlyphRangesKorean());
-				largeFontConfig.FontNo = 2;	// Dotum
-				io.Fonts->AddFontFromFileTTF((fontDir + "Gulim.ttc").c_str(), largeFontSize, &largeFontConfig, io.Fonts->GetGlyphRangesKorean());
-			}
-		}
-    	break;
-    case 950:	// Traditional Chinese
-		{
-			fontConfig.FontNo = 1; // Microsoft JhengHei UI Regular
-			ImFont* font = io.Fonts->AddFontFromFileTTF((fontDir + "Msjh.ttc").c_str(), fontSize, &fontConfig, GetGlyphRangesChineseTraditionalOfficial());
-			largeFontConfig.FontNo = 1;
-			io.Fonts->AddFontFromFileTTF((fontDir + "Msjh.ttc").c_str(), largeFontSize, &largeFontConfig, GetGlyphRangesChineseTraditionalOfficial());
-			if (font == nullptr)
-			{
-				fontConfig.FontNo = 0;
-				io.Fonts->AddFontFromFileTTF((fontDir + "MSJH.ttf").c_str(), fontSize, &fontConfig, GetGlyphRangesChineseTraditionalOfficial());
-				largeFontConfig.FontNo = 0;
-				io.Fonts->AddFontFromFileTTF((fontDir + "MSJH.ttf").c_str(), largeFontSize, &largeFontConfig, GetGlyphRangesChineseTraditionalOfficial());
-			}
-		}
-    	break;
-    case 936:	// Simplified Chinese
-		io.Fonts->AddFontFromFileTTF((fontDir + "Simsun.ttc").c_str(), fontSize, &fontConfig, GetGlyphRangesChineseSimplifiedOfficial());
-		io.Fonts->AddFontFromFileTTF((fontDir + "Simsun.ttc").c_str(), largeFontSize, &largeFontConfig, GetGlyphRangesChineseSimplifiedOfficial());
-    	break;
-    default:
-    	break;
-    }
+	std::string fontDir = std::string(nowide::getenv("SYSTEMROOT")) + "\\Fonts\\";
+	// Japanese
+	registerFont(fonts,      "ja", fontDir + "msgothic.ttc", fontSize * 0.9f, 2);
+	registerFont(fonts,      "ja", fontDir + "Meiryo.ttc", fontSize * 0.9f, 2);
+	registerFont(largeFonts, "ja", fontDir + "msgothic.ttc", largeFontSize * 0.9f, 2);
+	registerFont(largeFonts, "ja", fontDir + "Meiryo.ttc", largeFontSize * 0.9f, 2);
+	// Korean
+	registerFont(fonts,      "ko", fontDir + "Malgun.ttf", fontSize);
+	registerFont(fonts,      "ko", fontDir + "Gulim.ttc", fontSize);
+	registerFont(largeFonts, "ko", fontDir + "Malgun.ttf", largeFontSize, 2);
+	registerFont(largeFonts, "ko", fontDir + "Gulim.ttc", largeFontSize, 2);
+	// Chinese
+	registerFont(fonts,      "zh", fontDir + "Msjh.ttc", fontSize * 1.1f, 1);
+	registerFont(fonts,      "zh", fontDir + "MSJH.ttf", fontSize * 1.1f);
+	registerFont(fonts,      "zh", fontDir + "Simsun.ttc", fontSize * 0.9f);
+	registerFont(largeFonts, "zh", fontDir + "Msjh.ttc", largeFontSize * 1.1f, 1);
+	registerFont(largeFonts, "zh", fontDir + "MSJH.ttf", largeFontSize * 1.1f);
+	registerFont(largeFonts, "zh", fontDir + "Simsun.ttc", largeFontSize * 0.9f);
+	
 #elif defined(__APPLE__) && !defined(TARGET_IPHONE)
-    std::string fontDir = std::string("/System/Library/Fonts/");
-    std::string locale = i18n::getCurrentLocale();
-
-    if (locale.find("ja") == 0)             // Japanese
-    {
-        io.Fonts->AddFontFromFileTTF((fontDir + "ヒラギノ角ゴシック W4.ttc").c_str(), fontSize, &fontConfig, io.Fonts->GetGlyphRangesJapanese());
-        io.Fonts->AddFontFromFileTTF((fontDir + "ヒラギノ角ゴシック W4.ttc").c_str(), largeFontSize, &largeFontConfig, io.Fonts->GetGlyphRangesJapanese());
-    }
-    else if (locale.find("ko") == 0)       // Korean
-    {
-        io.Fonts->AddFontFromFileTTF((fontDir + "AppleSDGothicNeo.ttc").c_str(), fontSize, &fontConfig, io.Fonts->GetGlyphRangesKorean());
-        io.Fonts->AddFontFromFileTTF((fontDir + "AppleSDGothicNeo.ttc").c_str(), largeFontSize, &largeFontConfig, io.Fonts->GetGlyphRangesKorean());
-    }
-    else if (locale.find("zh-Hant") == 0)  // Traditional Chinese
-    {
-        io.Fonts->AddFontFromFileTTF((fontDir + "PingFang.ttc").c_str(), fontSize, &fontConfig, GetGlyphRangesChineseTraditionalOfficial());
-        io.Fonts->AddFontFromFileTTF((fontDir + "PingFang.ttc").c_str(), largeFontSize, &largeFontConfig, GetGlyphRangesChineseTraditionalOfficial());
-    }
-    else if (locale.find("zh-Hans") == 0)  // Simplified Chinese
-    {
-        io.Fonts->AddFontFromFileTTF((fontDir + "PingFang.ttc").c_str(), fontSize, &fontConfig, GetGlyphRangesChineseSimplifiedOfficial());
-        io.Fonts->AddFontFromFileTTF((fontDir + "PingFang.ttc").c_str(), largeFontSize, &largeFontConfig, GetGlyphRangesChineseSimplifiedOfficial());
-    }
+	// Japanese
+	registerFont(fonts,      "ja", "/System/Library/Fonts/ヒラギノ角ゴシック W4.ttc", fontSize * 0.8f);
+	registerFont(largeFonts, "ja", "/System/Library/Fonts/ヒラギノ角ゴシック W4.ttc", largeFontSize * 0.8f);
+	// Korean
+	registerFont(fonts,      "ko", "/System/Library/Fonts/AppleSDGothicNeo.ttc", fontSize);
+	registerFont(largeFonts, "ko", "/System/Library/Fonts/AppleSDGothicNeo.ttc", largeFontSize);
+	// Chinese
+	registerFont(fonts,      "zh", "/System/Library/Fonts/PingFang.ttc", fontSize * 1.15f);
+	registerFont(largeFonts, "zh", "/System/Library/Fonts/PingFang.ttc", largeFontSize * 1.15f);
+	
 #elif defined(__ANDROID__)
-    {
-    	const ImWchar *glyphRanges = nullptr;
-        std::string locale = i18n::getCurrentLocale();
-        if (locale.find("ja") == 0)				// Japanese
-        	glyphRanges = io.Fonts->GetGlyphRangesJapanese();
-        else if (locale.find("ko") == 0)		// Korean
-        	glyphRanges = io.Fonts->GetGlyphRangesKorean();
-        else if (locale.find("zh_TW") == 0
-        		|| locale.find("zh_HK") == 0)	// Traditional Chinese
-        	glyphRanges = GetGlyphRangesChineseTraditionalOfficial();
-        else if (locale.find("zh_CN") == 0)		// Simplified Chinese
-        	glyphRanges = GetGlyphRangesChineseSimplifiedOfficial();
-
-        if (glyphRanges != nullptr) {
-        	io.Fonts->AddFontFromFileTTF("/system/fonts/NotoSansCJK-Regular.ttc", fontSize, &fontConfig, glyphRanges);
-        	io.Fonts->AddFontFromFileTTF("/system/fonts/NotoSansCJK-Regular.ttc", largeFontSize, &largeFontConfig, glyphRanges);
-        }
-    }
-
+	registerFont(fonts,      "cjk", "/system/fonts/NotoSansCJK-Regular.ttc", fontSize);
+	registerFont(largeFonts, "cjk", "/system/fonts/NotoSansCJK-Regular.ttc", largeFontSize);
+	
 #elif defined(__linux__)
-	std::string locale = i18n::getCurrentLocale();
-	if (locale.find("ja_") == 0)			// Japanese
-	{
-		const char *fonts[] = {
-				"/usr/share/fonts/opentype/ipafont-gothic/ipagp.ttf",
-				"/usr/share/fonts/ipa-pgothic-fonts/ipagp.ttf",	// redhat
-				"/usr/share/fonts/truetype/takao-gothic/TakaoPGothic.ttf",
-				"/usr/share/fonts/truetype/droid/DroidSansFallbackFull.ttf",
-				"/usr/share/fonts/adobe-source-han-sans-jp-fonts/SourceHanSansJP-Regular.otf", // redhat
-				"/usr/share/fonts/vl-gothic-fonts/VL-Gothic-Regular.ttf", // redhat
-				"/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",
-				"/usr/share/fonts/google-noto-cjk/NotoSansCJK-Regular.ttc", // redhat
-				nullptr
-		};
-		const char *largeFonts[] = {
-				"/usr/share/fonts/opentype/ipafont-gothic/ipagp.ttf",
-				"/usr/share/fonts/ipa-pgothic-fonts/ipagp.ttf",	// redhat
-				"/usr/share/fonts/truetype/takao-gothic/TakaoPGothic.ttf",
-				"/usr/share/fonts/truetype/droid/DroidSansFallbackFull.ttf",
-				"/usr/share/fonts/adobe-source-han-sans-jp-fonts/SourceHanSansJP-Bold.otf", // redhat
-				"/usr/share/fonts/vl-gothic-fonts/VL-Gothic-Regular.ttf", // redhat
-				"/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc",
-				"/usr/share/fonts/google-noto-cjk/NotoSansCJK-Bold.ttc", // redhat
-				nullptr
-		};
-		addFont(fonts, fontSize, fontConfig, io.Fonts->GetGlyphRangesJapanese());
-		addFont(largeFonts, largeFontSize, largeFontConfig, io.Fonts->GetGlyphRangesJapanese());
-	}
-	else if (locale.find("ko_") == 0)		// Korean
-	{
-		const char *fonts[] = {
-				"/usr/share/fonts/truetype/unfonts-core/UnDotum.ttf",
-				"/usr/share/fonts-droid-fallback/truetype/DroidSansFallback.ttf",
-				"/usr/share/fonts/baekmuk-dotum-fonts/dotum.ttf", // redhat
-				"/usr/share/fonts/adobe-source-han-sans-kr-fonts/SourceHanSansKR-Regular.otf", // redhat
-				"/usr/share/fonts/naver-nanum-gothic-coding-fonts/NanumGothic_Coding.ttf", // redhat
-				"/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",
-				"/usr/share/fonts/google-noto-cjk/NotoSansCJK-Regular.ttc", // redhat
-				nullptr
-		};
-		const char *largeFonts[] = {
-				"/usr/share/fonts/truetype/unfonts-core/UnDotumBold.ttf",
-				"/usr/share/fonts-droid-fallback/truetype/DroidSansFallback.ttf",
-				"/usr/share/fonts/adobe-source-han-sans-kr-fonts/SourceHanSansKR-Bold.otf", // redhat
-				"/usr/share/fonts/naver-nanum-gothic-coding-fonts/NanumGothic_Coding_Bold.ttf", // redhat
-				"/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc",
-				"/usr/share/fonts/google-noto-cjk/NotoSansCJK-Bold.ttc", // redhat
-				nullptr
-		};
-		addFont(fonts, fontSize, fontConfig, io.Fonts->GetGlyphRangesKorean());
-		addFont(largeFonts, largeFontSize, largeFontConfig, io.Fonts->GetGlyphRangesKorean());
-	}
-	else if (locale.find("zh_") == 0)		// Chinese
-	{
-		const ImWchar *glyphRanges = GetGlyphRangesChineseSimplifiedOfficial();
-		if (locale.find("zh_TW") == 0 || locale.find("zh_HK") == 0)
-			glyphRanges = GetGlyphRangesChineseTraditionalOfficial();
-		const char *fonts[] = {
-				"/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc",
-				"/usr/share/fonts/wqy-zenhei-fonts/wqy-zenhei.ttc", // redhat
-				"/usr/share/fonts/truetype/droid/DroidSansFallbackFull.ttf",
-				"/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",
-				"/usr/share/fonts/google-noto-cjk/NotoSansCJK-Regular.ttc", // redhat
-		};
-		const char *largeFonts[] = {
-				"/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc",
-				"/usr/share/fonts/wqy-zenhei-fonts/wqy-zenhei.ttc", // redhat
-				"/usr/share/fonts/truetype/droid/DroidSansFallbackFull.ttf",
-				"/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc",
-				"/usr/share/fonts/google-noto-cjk/NotoSansCJK-Bold.ttc", // redhat
-		};
-		addFont(fonts, fontSize, fontConfig, glyphRanges);
-		addFont(largeFonts, largeFontSize, largeFontConfig, glyphRanges);
-	}
+	
+	// Japanese
+	registerFont(fonts,      "ja", "/usr/share/fonts/opentype/ipafont-gothic/ipagp.ttf", fontSize);
+	registerFont(fonts,      "ja", "/usr/share/fonts/ipa-pgothic-fonts/ipagp.ttf", fontSize); // redhat
+	registerFont(fonts,      "ja", "/usr/share/fonts/truetype/takao-gothic/TakaoPGothic.ttf", fontSize);
+	registerFont(fonts,      "ja", "/usr/share/fonts/adobe-source-han-sans-jp-fonts/SourceHanSansJP-Regular.otf", fontSize);
+	registerFont(fonts,      "ja", "/usr/share/fonts/vl-gothic-fonts/VL-Gothic-Regular.ttf", fontSize); // redhat
+	registerFont(largeFonts, "ja", "/usr/share/fonts/opentype/ipafont-gothic/ipagp.ttf", largeFontSize);
+	registerFont(largeFonts, "ja", "/usr/share/fonts/ipa-pgothic-fonts/ipagp.ttf", largeFontSize); // redhat
+	registerFont(largeFonts, "ja", "/usr/share/fonts/truetype/takao-gothic/TakaoPGothic.ttf", largeFontSize);
+	registerFont(largeFonts, "ja", "/usr/share/fonts/adobe-source-han-sans-jp-fonts/SourceHanSansJP-Bold.otf", largeFontSize);
+	registerFont(largeFonts, "ja", "/usr/share/fonts/vl-gothic-fonts/VL-Gothic-Regular.ttf", largeFontSize); // redhat
+	
+	// Korean
+	registerFont(fonts,      "ko", "/usr/share/fonts/truetype/unfonts-core/UnDotum.ttf", fontSize);
+	registerFont(fonts,      "ko", "/usr/share/fonts/baekmuk-dotum-fonts/dotum.ttf", fontSize); // redhat
+	registerFont(fonts,      "ko", "/usr/share/fonts/adobe-source-han-sans-kr-fonts/SourceHanSansKR-Regular.otf", fontSize); // redhat
+	registerFont(fonts,      "ko", "/usr/share/fonts/naver-nanum-gothic-coding-fonts/NanumGothic_Coding.ttf", fontSize); // redhat
+	registerFont(largeFonts, "ko", "/usr/share/fonts/truetype/unfonts-core/UnDotumBold.ttf", largeFontSize);
+	registerFont(largeFonts, "ko", "/usr/share/fonts/baekmuk-dotum-fonts/dotum.ttf", largeFontSize); // redhat
+	registerFont(largeFonts, "ko", "/usr/share/fonts/adobe-source-han-sans-kr-fonts/SourceHanSansKR-Bold.otf", largeFontSize); // redhat
+	registerFont(largeFonts, "ko", "/usr/share/fonts/naver-nanum-gothic-coding-fonts/NanumGothic_Coding_Bold.ttf", largeFontSize); // redhat
+	
+	// Chinese
+	registerFont(fonts,      "zh", "/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc", fontSize);
+	registerFont(fonts,      "zh", "/usr/share/fonts/wqy-zenhei-fonts/wqy-zenhei.ttc", fontSize); // redhat
+	registerFont(largeFonts, "zh", "/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc", largeFontSize);
+	registerFont(largeFonts, "zh", "/usr/share/fonts/wqy-zenhei-fonts/wqy-zenhei.ttc", largeFontSize); // redhat
+	
+	// CJK
+	registerFont(fonts,      "cjk", "/usr/share/fonts/truetype/droid/DroidSansFallbackFull.ttf", fontSize);
+	registerFont(fonts,      "cjk", "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc", fontSize);
+	registerFont(fonts,      "cjk", "/usr/share/fonts/google-noto-cjk/NotoSansCJK-Regular.ttc", fontSize); // redhat
+	registerFont(largeFonts, "cjk", "/usr/share/fonts/truetype/droid/DroidSansFallbackFull.ttf", largeFontSize);
+	registerFont(largeFonts, "cjk", "/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc", largeFontSize);
+	registerFont(largeFonts, "cjk", "/usr/share/fonts/google-noto-cjk/NotoSansCJK-Bold.ttc", largeFontSize); // redhat
 
 	// TODO BSD, iOS, ...
 #endif
+	
+	loadFonts(fonts, fontConfig);
+	loadFonts(largeFonts, largeFontConfig);
+	
     NOTICE_LOG(RENDERER, "Screen DPI is %.0f, size %d x %d. Scaling by %.2f", settings.display.dpi, settings.display.width, settings.display.height, settings.display.uiScale);
 	vgamepad::applyUiScale();
 }
