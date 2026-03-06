@@ -75,7 +75,7 @@ extern "C" {
 #define OPTION_VAL_JAPAN_AR NULL
 #define OPTION_VAL_USA_AR NULL
 #define OPTION_VAL_EUROPE_AR NULL
-#define OPTION_VAL_DEFAULT_AR NULL
+#define OPTION_VAL_DEFAULT_AR "الافتراضي"
 #define CORE_OPTION_NAME_LANGUAGE_LABEL_AR "اللغة"
 #define CORE_OPTION_NAME_LANGUAGE_INFO_0_AR NULL
 #define OPTION_VAL_JAPANESE_AR "Japanese - 日本語"
@@ -68202,7 +68202,7 @@ struct retro_core_options_v2 options_pt_pt = {
 
 /* RETRO_LANGUAGE_RU */
 
-#define CATEGORY_SYSTEM_LABEL_RU "Системные"
+#define CATEGORY_SYSTEM_LABEL_RU "Система"
 #define CATEGORY_SYSTEM_INFO_0_RU "Настройка региона, языка, BIOS и основных параметров оборудования."
 #define CATEGORY_VIDEO_LABEL_RU "Видео"
 #define CATEGORY_VIDEO_INFO_0_RU "Настройки разрешения, порядко-независимой прозрачности и визуальных эффектов."
@@ -68392,7 +68392,7 @@ struct retro_core_options_v2 options_pt_pt = {
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_RU "Загружать внешние текстуры"
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_INFO_0_RU "Загружать пользовательские текстуры из папки 'system/dc/textures/<game-id>/'."
 #define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_LABEL_RU "Предзагрузка кастомных текстур"
-#define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_INFO_0_RU "Загружать пользовательские текстуры при запуске игры. Может улучшить производительность, но увеличивает расход памяти."
+#define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_INFO_0_RU "Использовать предзагрузку кастомных текстур при запуске игры. Может улучшить производительность, но увеличивает расход памяти."
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_RU "Дамп текстур"
 #define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_RU "При каждом использовании игрой новой текстуры она будет сохраняться в файл .png в папке 'system/dc/texdump/<game-id>/'."
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_RU "Выгружать заменяемые текстуры"
