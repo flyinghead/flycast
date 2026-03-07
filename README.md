@@ -12,7 +12,7 @@
 
 Information about configuration and supported features can be found on [**TheArcadeStriker's flycast wiki**](https://github.com/TheArcadeStriker/flycast-wiki/wiki).
 
-Join us on our [**Discord server**](https://discord.gg/X8YWP8w) for a chat. 
+Join us on our [**Discord server**](https://discord.gg/X8YWP8w) for a chat.
 
 ## Install
 
@@ -60,3 +60,7 @@ $ mkdir build && cd build
 $ cmake ..
 $ make
 ```
+
+## Packaging status
+
+[![Packaging status](https://repology.org/badge/vertical-allrepos/flycast.svg)](https://repology.org/project/flycast/versions)
