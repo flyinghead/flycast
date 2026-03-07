@@ -12,7 +12,9 @@ android {
     namespace = "com.flycast.emulator"
     ndkVersion = "29.0.14206865"
     compileSdk {
-        version = release(36)
+        version = release(36) {
+            minorApiLevel = 1
+        }
     }
 
     defaultConfig {
