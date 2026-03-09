@@ -25,6 +25,11 @@
 #include "achievements/achievements.h"
 #include "imgui_stdlib.h"
 
+#ifdef __vita__
+extern bool folder_reset;
+extern bool subfolders_read;
+#endif
+
 static std::vector<std::string>* g_currentPathList = nullptr;
 static void managePathListCallback(std::string selection)
 {
@@ -41,7 +46,7 @@ static void manageSinglePath(const char* label, const char *popupName, config::O
     size.x = 0.0f;
     size.y = ImGui::GetTextLineHeightWithSpacing() + ImGui::GetStyle().FramePadding.y * 2.f;
     bool openPopup = false;
-    
+
     ImVec2 childSize;
     if (beginFrame(label, size, &childSize))
     {
@@ -66,7 +71,7 @@ static void manageSinglePath(const char* label, const char *popupName, config::O
     }
     ImGui::SameLine();
     ShowHelpMarker(helpText);
-    
+
     static std::string *pCurrentPath;
     pCurrentPath = &pathOption.get();
     select_file_popup(popupName, [](bool cancelled, std::string selection) {
@@ -158,7 +163,52 @@ static void addContentPathCallback(const std::string& path)
 
 void addContentPath(bool start)
 {
-    const char *title = T("Select a Content Folder");
+#ifdef __vita__
+	if (ImGui::Button(T("Add from ux0:"))) {
+		folder_reset = true;
+		subfolders_read = false;
+		ImGui::OpenPopup(T("Select Directory 1"));
+	}
+	select_file_popup(T("Select Directory 1"), [](bool cancelled, std::string selection) {
+		if (!cancelled)
+			addContentPathCallback(selection);
+		return true;
+	}, false, "", "ux0:/");
+	ImGui::SameLine();
+	if (ImGui::Button(T("Add from uma0:"))) {
+		folder_reset = true;
+		subfolders_read = false;
+		ImGui::OpenPopup(T("Select Directory 2"));
+	}
+	select_file_popup(T("Select Directory 2"), [](bool cancelled, std::string selection) {
+		if (!cancelled)
+			addContentPathCallback(selection);
+		return true;
+	}, false, "", "uma0:/");
+	ImGui::SameLine();
+	if (ImGui::Button(T("Add from imc0:"))) {
+		folder_reset = true;
+		subfolders_read = false;
+		ImGui::OpenPopup(T("Select Directory 3"));
+	}
+	select_file_popup(T("Select Directory 3"), [](bool cancelled, std::string selection) {
+		if (!cancelled)
+			addContentPathCallback(selection);
+		return true;
+	}, false, "", "imc0:/");
+	ImGui::SameLine();
+	if (ImGui::Button(T("Add from xmc0:"))) {
+		folder_reset = true;
+		subfolders_read = false;
+		ImGui::OpenPopup(T("Select Directory 4"));
+	}
+	select_file_popup(T("Select Directory 4"), [](bool cancelled, std::string selection) {
+		if (!cancelled)
+			addContentPathCallback(selection);
+		return true;
+	}, false, "", "xmc0:/");
+#else
+	const char *title = T("Select a Content Folder");
     select_file_popup(title, [](bool cancelled, std::string selection) {
 		if (!cancelled)
 			addContentPathCallback(selection);
@@ -177,6 +227,7 @@ void addContentPath(bool start)
 #else
     if (start)
     	ImGui::OpenPopup(title);
+#endif
 #endif
 }
 
@@ -247,7 +298,11 @@ void gui_settings_general()
         }
 
         ImguiStyleVar _(ImGuiStyleVar_FramePadding, ScaledVec2(24, 3));
+#ifdef __vita__
+    	const bool addContent = false;
+#else
         const bool addContent = ImGui::Button((T("Add") + std::string("##") + "ContentLocation").c_str());
+#endif
         addContentPath(addContent);
         ImGui::SameLine();
 
@@ -446,7 +501,7 @@ void gui_settings_general()
     manageSinglePath(T("Texture Dump Folder"), T("Select the texture dump folder"), config::TextureDumpPath,
     		T("Folder where texture dumps are saved. Game-specific subfolders will be created automatically"));
     ImGui::Spacing();
-    
+
     manageSinglePath(T("Box Art Folder"), T("Select the box art folder"), config::BoxartPath,
     		T("Folder containing box art images (png/jpg). If empty, Flycast will use the default Home Folder/boxart for downloads and generated art"));
     ImGui::Spacing();

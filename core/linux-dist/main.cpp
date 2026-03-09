@@ -3,7 +3,7 @@
 #endif
 #include "types.h"
 
-#if defined(__unix__) || defined(__HAIKU__)
+#if defined(__unix__) || defined(__HAIKU__) || defined(__vita__)
 #include "log/LogManager.h"
 #include "emulator.h"
 #include "ui/mainui.h"
@@ -17,6 +17,42 @@
 #include <unistd.h>
 #include <vector>
 #include <exception>
+
+#ifdef __vita__
+#include <vitasdk.h>
+#include <vitaGL.h>
+#include <xxhash.h>
+int _newlib_heap_size_user = 246 * 1024 * 1024;
+unsigned int sceUserMainThreadStackSize = 1 * 1024 * 1024;
+bool is_standalone = false;
+
+extern "C" {
+void *__wrap_calloc(uint32_t nmember, uint32_t size) { return vglCalloc(nmember, size); }
+void __wrap_free(void *addr) { vglFree(addr); };
+void *__wrap_malloc(uint32_t size) { return vglMalloc(size); };
+void *__wrap_memalign(uint32_t alignment, uint32_t size) { return vglMemalign(alignment, size); };
+void *__wrap_realloc(void *ptr, uint32_t size) { return vglRealloc(ptr, size); };
+void *__wrap_memcpy (void *dst, const void *src, size_t num) { return sceClibMemcpy(dst, src, num); };
+void *__wrap_memset (void *ptr, int value, size_t num) { return sceClibMemset(ptr, value, num); };
+}
+
+void early_fatal_error(const char *msg) {
+	vglInit(0);
+	SceMsgDialogUserMessageParam msg_param;
+	sceClibMemset(&msg_param, 0, sizeof(SceMsgDialogUserMessageParam));
+	msg_param.buttonType = SCE_MSG_DIALOG_BUTTON_TYPE_OK;
+	msg_param.msg = (const SceChar8*)msg;
+	SceMsgDialogParam param;
+	sceMsgDialogParamInit(&param);
+	param.mode = SCE_MSG_DIALOG_MODE_USER_MSG;
+	param.userMsgParam = &msg_param;
+	sceMsgDialogInit(&param);
+	while (sceMsgDialogGetStatus() != SCE_COMMON_DIALOG_STATUS_FINISHED) {
+		vglSwapBuffers(GL_TRUE);
+	}
+	sceKernelExitProcess(0);
+}
+#endif
 
 #if defined(SUPPORT_X11)
 	#include "x11.h"
@@ -44,6 +80,10 @@ void common_linux_setup();
 // $HOME/.config/flycast on linux
 static std::string find_user_config_dir()
 {
+#ifdef __vita__
+	flycast::mkdir("ux0:data/flycast", 0777);
+	return "ux0:data/flycast/";
+#else
 	std::string xdg_home;
 	if (nowide::getenv("XDG_CONFIG_HOME") != nullptr)
 		// If XDG_CONFIG_HOME is set explicitly, we'll use that instead of $HOME/.config
@@ -67,12 +107,17 @@ static std::string find_user_config_dir()
 	}
 	// Unable to detect config dir, use the current folder
 	return ".";
+#endif
 }
 
 // Find the user data directory.
 // $HOME/.local/share/flycast on linux
 static std::string find_user_data_dir()
 {
+#ifdef __vita__
+	flycast::mkdir("ux0:data/flycast/data", 0777);
+	return "ux0:data/flycast/data/";
+#else
 	std::string xdg_home;
 	if (nowide::getenv("XDG_DATA_HOME") != nullptr)
 		// If XDG_DATA_HOME is set explicitly, we'll use that instead of $HOME/.local/share
@@ -96,8 +141,10 @@ static std::string find_user_data_dir()
 	}
 	// Unable to detect data dir, use the current folder
 	return ".";
+#endif
 }
 
+#ifndef __vita__
 static void addDirectoriesFromPath(std::vector<std::string>& dirs, const std::string& path, const std::string& suffix)
 {
 	std::string::size_type pos = 0;
@@ -113,6 +160,7 @@ static void addDirectoriesFromPath(std::vector<std::string>& dirs, const std::st
 	if (pos < path.length())
 		dirs.push_back(path.substr(pos) + suffix);
 }
+#endif
 
 // Find a file in the user and system config directories.
 // The following folders are checked in this order:
@@ -127,6 +175,9 @@ static std::vector<std::string> find_system_config_dirs()
 {
 	std::vector<std::string> dirs;
 
+#ifdef __vita__
+	dirs.push_back("ux0:data/flycast/");
+#else
 	std::string xdg_home;
 	if (nowide::getenv("XDG_CONFIG_HOME") != nullptr)
 		// If XDG_CONFIG_HOME is set explicitly, we'll use that instead of $HOME/.config
@@ -151,6 +202,7 @@ static std::vector<std::string> find_system_config_dirs()
 		dirs.push_back("/etc/flycast/"); // This isn't part of the XDG spec, but much more common than /etc/xdg/
 		dirs.push_back("/etc/xdg/flycast/");
 	}
+#endif
 	dirs.push_back("./");
 
 	return dirs;
@@ -171,6 +223,9 @@ static std::vector<std::string> find_system_data_dirs()
 {
 	std::vector<std::string> dirs;
 
+#ifdef __vita__
+	dirs.push_back("ux0:data/flycast/data/");
+#else
 	std::string xdg_home;
 	if (nowide::getenv("XDG_DATA_HOME") != nullptr)
 		// If XDG_DATA_HOME is set explicitly, we'll use that instead of $HOME/.local/share
@@ -200,6 +255,7 @@ static std::vector<std::string> find_system_data_dirs()
 		std::string path = (std::string)nowide::getenv("FLYCAST_BIOS_PATH");
 		addDirectoriesFromPath(dirs, path, "/");
 	}
+#endif
 	dirs.push_back("./");
 	dirs.push_back("data/");
 
@@ -210,6 +266,7 @@ static const char *selfPath;
 
 void os_RunInstance(int argc, const char *argv[])
 {
+#ifndef __vita__
 	if (fork() == 0)
 	{
 		std::vector<char *> localArgs;
@@ -219,6 +276,7 @@ void os_RunInstance(int argc, const char *argv[])
 		localArgs.push_back(nullptr);
 		execv(selfPath, &localArgs[0]);
 	}
+#endif
 }
 
 #if defined(USE_BREAKPAD)
@@ -252,6 +310,54 @@ int main(int argc, char* argv[])
 	INFO_LOG(BOOT, "Config dir is: %s", get_writable_config_path("").c_str());
 	INFO_LOG(BOOT, "Data dir is:   %s", get_writable_data_path("").c_str());
 
+#ifdef __vita__
+	SceIoStat st1, st2;
+	// Checking for libshacccg.suprx existence
+	if (!(sceIoGetstat("ur0:/data/libshacccg.suprx", &st1) >= 0 || sceIoGetstat("ur0:/data/external/libshacccg.suprx", &st2) >= 0))
+		early_fatal_error("Error: Runtime shader compiler (libshacccg.suprx) is not installed.");
+
+	// Checking for kubridge existence
+	if (!(sceIoGetstat("ux0:/tai/kubridge.skprx", &st1) >= 0 || sceIoGetstat("ur0:/tai/kubridge.skprx", &st2) >= 0))
+		early_fatal_error("Error: kubridge.skprx is not installed.");
+
+	// Checking for kubridge version
+	FILE *f = fopen("ux0:/tai/kubridge.skprx", "rb");
+	if (!f)
+		f = fopen("ur0:/tai/kubridge.skprx", "rb");
+	fseek(f, 0, SEEK_END);
+	long size = ftell(f);
+	fseek(f, 0, SEEK_SET);
+	void *buf = vglMalloc(size);
+	fread(buf, 1, size, f);
+	fclose(f);
+	uint32_t kubridge_hash = XXH32(buf, size, 7);
+	vglFree(buf);
+	if (kubridge_hash == 0xFDAE199B)
+		early_fatal_error("Error: kubridge.skprx is outdated.");
+
+	char boot_params[1024];
+	char *launch_argv[2];
+	argc = 0;
+
+	// Check if we launched flycast from a custom bubble
+	sceAppMgrGetAppParam(boot_params);
+	if (strstr(boot_params,"psgm:play") && strstr(boot_params, "&param=")) {
+		argc = 2;
+		launch_argv[1] = strstr(boot_params, "&param=") + 7;
+		is_standalone = true;
+	}
+	argv = launch_argv;
+
+	scePowerSetArmClockFrequency(444);
+	scePowerSetBusClockFrequency(222);
+	scePowerSetGpuClockFrequency(222);
+	scePowerSetGpuXbarClockFrequency(166);
+	SDL_setenv("VITA_DISABLE_TOUCH_BACK", "1", 1); // Disabling rearpad
+	vglSetParamBufferSize(8 * 1024 * 1024);
+	vglUseCachedMem(GL_TRUE);
+	vglInitWithCustomThreshold(0, 960, 544, 256 * 1024 * 1024, 0, 0, 0, SCE_GXM_MULTISAMPLE_4X);
+#endif
+
 #if defined(USE_SDL)
 	// init video now: on rpi3 it installs a sigsegv handler(?)
 	if (SDL_Init(SDL_INIT_VIDEO) != 0)
@@ -283,10 +389,12 @@ int main(int argc, char* argv[])
 	return 0;
 }
 
+#ifndef __vita__
 [[noreturn]] void os_DebugBreak()
 {
 	raise(SIGTRAP);
 	std::abort();
 }
+#endif
 
-#endif // __unix__
+#endif // __unix__ || __vita__
