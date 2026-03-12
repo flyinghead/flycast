@@ -382,6 +382,12 @@ static void loadSpecialSettings()
 			NOTICE_LOG(BOOT, "Forcing %d transparent layers", layers);
 			config::PerPixelLayers.override(layers);
 		}
+		if (prod_id == "HDR-0113"			// Power Smash
+				|| prod_id == "HDR-0091")	// Pro Yakyuu Team de Asobou Net!
+		{
+			NOTICE_LOG(BOOT, "Forcing DCNet use");
+			config::UseDCNet.override(true);
+		}
 	}
 	else if (settings.platform.isArcade())
 	{
