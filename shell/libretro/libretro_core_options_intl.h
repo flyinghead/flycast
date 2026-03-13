@@ -14787,8 +14787,8 @@ struct retro_core_options_v2 options_cht = {
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_CS "Vizuální paměťové jednotky/systémy (VMU) Zvuky"
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_CS "Zvuky VMU"
 #define CORE_OPTION_NAME_VMU_SOUND_INFO_0_CS "Pokud je tato funkce povolena, přehrávají se zvukové signály VMU."
-#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_CS NULL
-#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_CS NULL
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_CS "Úložiště DreamPotato VMU"
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_CS "Povolí ukládání dat VMU na připojený emulátor DreamPotato. Pokud je tato funkce povolena, místní soubor VMU se nepoužívá."
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CS "Zobrazit Nastavení Displeje Vizuální Paměťové Jednotky/Systému (VMU)"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_CS "Zobrazit Nastavení VMU Displeje"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_CS "Umožňuje konfiguraci viditelnosti, velikosti, polohy a barvy obrazovky LCD emulovaného VMU. POZNÁMKA: Může být nutné přepnout Rychlé Menu, aby se toto nastavení projevilo."
@@ -37363,8 +37363,8 @@ struct retro_core_options_v2 options_fr = {
 #define OPTION_VAL_MORE_GA "Uasmhéid"
 #define CORE_OPTION_NAME_FRAME_SKIPPING_LABEL_GA "Scipeáil Fráma"
 #define CORE_OPTION_NAME_FRAME_SKIPPING_INFO_0_GA "Socraíonn sé líon na bhfrámaí le léim idir gach fráma a thaispeántar."
-#define CORE_OPTION_NAME_WIDESCREEN_CHEATS_LABEL_GA "Cleasanna Leathan-Scáileáin (Atosú Riachtanach)"
-#define CORE_OPTION_NAME_WIDESCREEN_CHEATS_INFO_0_GA "Gníomhaíonn sé cleasanna a ligeann do chluichí áirithe a thaispeáint i bhformáid scáileáin leathan."
+#define CORE_OPTION_NAME_WIDESCREEN_CHEATS_LABEL_GA "Aicearra Leathan-Scáileáin (Atosú Riachtanach)"
+#define CORE_OPTION_NAME_WIDESCREEN_CHEATS_INFO_0_GA "Gníomhaíonn sé aicearraí a ligeann do chluichí áirithe a thaispeáint i bhformáid scáileáin leathan."
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_LABEL_GA "Haic Leathan-Scáileáin"
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_GA "Tarraing geoiméadracht lasmuigh den ghnáthchóimheas gné 4:3. D’fhéadfadh sé go mbeadh fabhtanna grafacha sna ceantair nochta."
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_GA "Luchtú Tapa GD-ROM (míchruinn)"
