@@ -106,10 +106,12 @@ static void gui_settings_advanced()
 					T("Enables 32MB RAM Mod for Dreamcast. May affect compatibility"));
 		}
         OptionCheckbox(T("Dump Textures"), config::DumpTextures,
-        		T("Dump all textures into data/texdump/<game id>"));
+        		T("Dump all textures not located within the currently activated texture pack, dumps textures into data/texdump/<game id>"));
 		ImGui::Indent();
 		{
 			DisabledScope scope(!config::DumpTextures.get());
+			OptionCheckbox(T("Disable YUV Texture Dumping"), config::DisableYuvTextureDumping,
+					T("Disables Dumping of YUV textures, which are mostly found in FMVs, most of the time."));			
 			OptionCheckbox(T("Dump Replaced Textures"), config::DumpReplacedTextures,
 					T("Always dump textures that are already replaced by custom textures"));
 		}
