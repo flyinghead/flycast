@@ -32,21 +32,20 @@ IMGUI_IMPL_API void     ImGui_ImplDX11_Shutdown();
 IMGUI_IMPL_API void     ImGui_ImplDX11_NewFrame();
 IMGUI_IMPL_API void     ImGui_ImplDX11_RenderDrawData(ImDrawData* draw_data);
 
-// Use if you want to reset your rendering device without losing Dear ImGui state.
+// Use if you want to reset your rendering state without using ImGui_ImplDX11_RenderDrawData.
 IMGUI_IMPL_API bool     ImGui_ImplDX11_CreateDeviceObjects();
 IMGUI_IMPL_API void     ImGui_ImplDX11_InvalidateDeviceObjects();
 
 // (Advanced) Use e.g. if you need to precisely control the timing of texture updates (e.g. for staged rendering), by setting ImDrawData::Textures = NULL to handle this manually.
 IMGUI_IMPL_API void     ImGui_ImplDX11_UpdateTexture(ImTextureData* tex);
 
-// [BETA] Selected render state data shared with callbacks.
-// This is temporarily stored in GetPlatformIO().Renderer_RenderState during the ImGui_ImplDX11_RenderDrawData() call.
-// (Please open an issue if you feel you need access to more data)
+// Selected render state exposed to applications and callbacks.
 struct ImGui_ImplDX11_RenderState
 {
     ID3D11Device*           Device;
     ID3D11DeviceContext*    DeviceContext;
-    ID3D11SamplerState*     SamplerDefault;
+    ID3D11SamplerState*     SamplerLinear;
+    ID3D11SamplerState*     SamplerNearest;
     ID3D11Buffer*           VertexConstantBuffer;
 };
 
