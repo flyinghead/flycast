@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-22 12:49+0100\n"
-"PO-Revision-Date: 2026-03-17 19:17\n"
+"PO-Revision-Date: 2026-03-17 22:24\n"
 "Last-Translator: \n"
 "Language: ja_JP\n"
 "MIME-Version: 1.0\n"
@@ -2473,7 +2473,7 @@ msgstr "マスターとして実行"
 
 #: core/ui/settings_network.cpp:190
 msgid "Only used for Maximum Speed. One of the peer must be master."
-msgstr "最大速度にのみ使用されます。ピアのひとつがマスターである必要があります。"
+msgstr "Maximum Speed (Atomiswave) 専用です。ピアのひとつがマスターである必要があります。"
 
 #: core/ui/settings_network.cpp:194
 msgid "Network Options"
