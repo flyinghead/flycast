@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-22 12:49+0100\n"
-"PO-Revision-Date: 2026-03-17 22:24\n"
+"PO-Revision-Date: 2026-03-17 23:50\n"
 "Last-Translator: \n"
 "Language: ja_JP\n"
 "MIME-Version: 1.0\n"
@@ -1588,19 +1588,19 @@ msgstr "セーブステート"
 
 #: core/ui/settings_controls.cpp:224 core/ui/settings_controls.cpp:282
 msgid "Load State in RAM"
-msgstr ""
+msgstr "RAMにステートをロード"
 
 #: core/ui/settings_controls.cpp:225 core/ui/settings_controls.cpp:283
 msgid "Save State in RAM"
-msgstr ""
+msgstr "RAMにステートをセーブ"
 
 #: core/ui/settings_controls.cpp:226 core/ui/settings_controls.cpp:284
 msgid "Next Save State Slot"
-msgstr ""
+msgstr "次のセーブステートスロット"
 
 #: core/ui/settings_controls.cpp:227 core/ui/settings_controls.cpp:285
 msgid "Previous Save State Slot"
-msgstr ""
+msgstr "前のセーブステートスロット"
 
 #: core/ui/settings_controls.cpp:228 core/ui/settings_controls.cpp:286
 msgid "Bypass Emulated Keyboard"
@@ -2068,7 +2068,7 @@ msgstr "準備中…"
 #: core/ui/gui.cpp:1788
 #, c-format
 msgid "Save state slot %d"
-msgstr ""
+msgstr "セーブステートスロット %d"
 
 #: core/ui/gui.cpp:1830
 msgid "No screenshot available"
@@ -2360,7 +2360,7 @@ msgstr "左アナログスティック："
 
 #: core/ui/settings_network.cpp:87
 msgid "Left thumbstick not used"
-msgstr "左のアナログスティックは使用されていません"
+msgstr "左アナログスティックは使用しません"
 
 #: core/ui/settings_network.cpp:89
 msgid "Horizontal"
@@ -2400,7 +2400,7 @@ msgstr "チャットウィンドウのタイムアウト(秒)"
 
 #: core/ui/settings_network.cpp:103
 msgid "Sets duration that chat window stays open after new message is received."
-msgstr "新しいメッセージを受信した後にチャットウィンドウを開いたままにする期間を設定します。"
+msgstr "新しいメッセージを受信した後にチャットウィンドウを開いたままにする時間を設定します。"
 
 #: core/ui/settings_network.cpp:107 core/ui/settings_network.cpp:167
 msgid "Network Statistics"
