@@ -3,10 +3,12 @@
 #include "maple_if.h"
 #include "hw/naomi/naomi_cart.h"
 #include "hw/naomi/card_reader.h"
+#include "hw/sh4/modules/modules.h"
 #include "cfg/option.h"
 #include "stdclass.h"
 #include "serialize.h"
 #include "input/maplelink.h"
+#include "input/mouse.h"
 
 MapleInputState mapleInputState[4];
 extern bool maple_ddt_pending_reset;
@@ -324,6 +326,55 @@ static void createAtomiswaveDevices()
 	}
 }
 
+// Touch screen of Fish Life series
+class HKS0100TouchScreen : public SCIFSerialPort::Pipe
+{
+	bool button;
+	int x;
+	int y;
+	std::deque<u8> buffer;
+
+	void update()
+	{
+		if (((mo_buttons[0] & 4) == 0) != button || mo_x_abs[0] != x || mo_y_abs[0] != y)
+		{
+			button = (mo_buttons[0] & 4) == 0;
+			x = mo_x_abs[0];
+			y = mo_y_abs[0];
+			buffer.push_back(0x40 | button);
+			buffer.push_back((x * 3000 / 640) & 0x3f);
+			buffer.push_back(((x * 3000 / 640) >> 6) & 0x3f);
+			buffer.push_back((y * 2294 / 480) & 0x3f);
+			buffer.push_back(((y * 2294 / 480) >> 6) & 0x3f);
+			buffer.push_back(0);
+			buffer.push_back(0);
+		}
+	}
+
+public:
+	void reset()
+	{
+		button = false;
+		x = 0;
+		y = 0;
+		buffer.clear();
+	}
+
+	int available() override {
+		update();
+		return buffer.size();
+	}
+
+	u8 read() override
+	{
+		if (buffer.empty())
+			return 0;
+		u8 b = buffer.front();
+		buffer.pop_front();
+		return b;
+	}
+};
+
 static void createDreamcastDevices()
 {
 	for (int bus = 0; bus < MAPLE_PORTS; ++bus)
@@ -368,6 +419,15 @@ static void createDreamcastDevices()
 		default:
 			WARN_LOG(MAPLE, "Invalid device type %d for port %d", (MapleDeviceType)config::MapleMainDevices[bus], bus);
 			break;
+		}
+	}
+	if (settings.content.gameId == "HDR-0094")
+	{
+		// Fish Life
+		static HKS0100TouchScreen hks0100TouchScreen;
+		if (SCIFSerialPort::Instance().getPipe() != &hks0100TouchScreen) {
+			hks0100TouchScreen.reset();
+			SCIFSerialPort::Instance().setPipe(&hks0100TouchScreen);
 		}
 	}
 }

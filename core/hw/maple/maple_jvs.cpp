@@ -566,7 +566,7 @@ private:
 	s16 lastRel[2]{};
 };
 
-// Sega Marine Fishing, 18 Wheeler (TODO)
+// Sega Marine Fishing
 class jvs_837_13844 : public jvs_io_board
 {
 public:
