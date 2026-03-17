@@ -80,3 +80,11 @@ void GLGraphicsContext::resetUIDriver()
 	imguiDriver = std::unique_ptr<ImGuiDriver>(new OpenGLDriver());
 #endif
 }
+
+void GLGraphicsContext::setSwapInterval(int interval)
+{
+	if (interval <= 0 || interval == gameSwapInterval)
+		return;
+	gameSwapInterval = interval;
+	gameSwapIntervalChanged = true;
+}

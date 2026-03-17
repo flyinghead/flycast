@@ -324,6 +324,8 @@ void DX11Renderer::Process(TA_context* ctx)
 		resetTextureCache = false;
 	}
 	texCache.Cleanup();
+	if (!ctx->rend.isRTT && ctx->rend.swapInterval > 0)
+		theDX11Context.setSwapInterval(ctx->rend.swapInterval);
 
 	ta_parse(ctx, true);
 }

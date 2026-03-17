@@ -31,9 +31,11 @@ public:
 	void swap();
 
 private:
+	void changeGLSwapInterval();
+
 	SDL_GLContext glcontext = nullptr;
 	bool swapOnVSync = false;
-	int swapInterval = 1;
+	int displaySwapInterval = 1;
 };
 
 extern SDLGLGraphicsContext theGLContext;

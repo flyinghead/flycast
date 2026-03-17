@@ -8,6 +8,7 @@
 #include "hw/holly/holly_intc.h"
 #include "hw/sh4/sh4_if.h"
 #include "hw/sh4/sh4_core.h"
+#include "hw/sh4/sh4_sched.h"
 #include "profiler/fc_profiler.h"
 #include "network/ggpo.h"
 
@@ -273,6 +274,106 @@ bool rend_single_frame(const bool& enabled)
 	return true;
 }
 
+class SwapIntervalDetector
+{
+public:
+	SwapIntervalDetector() {
+		EventManager::listen(Event::LoadState, eventHandler, this);
+		reset();
+	}
+	~SwapIntervalDetector() {
+		EventManager::unlisten(Event::LoadState, eventHandler, this);
+	}
+
+	void render()
+	{
+		u64 now = sh4_sched_now64();
+		if (lastRender != 0)
+			renderInterval = now - lastRender;
+		lastRender = now;
+		renders++;
+	}
+
+	void vblank()
+	{
+		avgRenderInterval = 0.1f * renderInterval + 0.9f * avgRenderInterval;
+
+		// Force transition to 60 FPS if the game swap interval is 1 for 3 consecutive frames.
+		// Displaying a 60 FPS game at 30 FPS makes the game run in slo-mo and breaks audio.
+		if (renders != 0)
+		{
+			renders = 0;
+			rendersFullSpeed++;
+			if (rendersFullSpeed >= 3)
+			{
+				// force 60/50 FPS now
+				lastInterval = 1;
+				stability = std::max(stability, 10);
+				return;
+			}
+		}
+		else {
+			rendersFullSpeed = 0;
+		}
+
+		const float refreshRate = SPG_CONTROL.isPAL() ? 20_sh4ms : 16667_sh4us;
+		int interval = std::round(avgRenderInterval / refreshRate);
+		float frac = std::abs(avgRenderInterval / refreshRate - interval);
+
+		if (frac <= .05f || (interval == 1 && frac <= .2f))
+		{
+			if (lastInterval == (int)interval) {
+				stability++;
+			}
+			else {
+				stability = 0;
+				lastInterval = interval;
+			}
+		}
+		else {
+			stability = 0;
+		}
+	}
+
+	int swapInterval()
+	{
+		if (stability < 10)
+			return -1;
+		else
+			return std::min(lastInterval, 2);
+	}
+
+	void reset()
+	{
+		lastInterval = 1;
+		stability = 0;
+
+		lastRender = 0;
+		renderInterval = 0;
+		avgRenderInterval = 0.f;
+		renders = 0;
+		rendersFullSpeed = 0;
+	}
+
+private:
+	static void eventHandler(Event event, void *arg) {
+		SwapIntervalDetector *self = (SwapIntervalDetector *)arg;
+		self->lastRender = 0;
+		self->lastInterval = 1;
+	}
+
+	int lastInterval;
+	int stability;
+
+	u64 lastRender;
+	u64 renderInterval;
+	float avgRenderInterval;
+	int renders;
+	int rendersFullSpeed;
+};
+static SwapIntervalDetector swapIntervalDetector;
+
+
 Renderer* rend_GLES2();
 Renderer* rend_GL4();
 Renderer* rend_norend();
@@ -360,6 +461,7 @@ void rend_reset()
 	rendererEnabled = true;
 	fbAddrHistory[0] = 1;
 	fbAddrHistory[1] = 1;
+	swapIntervalDetector.reset();
 }
 
 void rend_start_render()
@@ -423,6 +525,11 @@ void rend_start_render()
 			ctx->rend.clearFramebuffer = false;
 		}
 		ggpo::endOfFrame();
+		swapIntervalDetector.render();
+		if (!config::EmulateFramebuffer)
+			ctx->rend.swapInterval = swapIntervalDetector.swapInterval();
+		else
+			ctx->rend.swapInterval = 1;
 	}
 
 	if (QueueRender(ctx))
@@ -474,6 +581,7 @@ void rend_vblank()
 	render_called = false;
 	check_framebuffer_write();
 	emu.vblank();
+	swapIntervalDetector.vblank();
 }
 
 void check_framebuffer_write()

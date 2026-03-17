@@ -35,6 +35,8 @@ public:
 	virtual std::string getDriverVersion() = 0;
 	virtual bool isAMD() = 0;
 	virtual bool hasPerPixel() { return false; }
+	// Set the game swap interval: 1 for 60 FPS, 2 for 30 FPS
+	virtual void setSwapInterval(int interval) {}
 
 	void setWindow(void *window, void *display = nullptr) {
 		this->window = window;

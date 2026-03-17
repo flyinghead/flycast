@@ -35,12 +35,14 @@ public:
 
 private:
 	bool makeCurrent();
-	void setSwapInterval();
+	void changeSwapInterval();
 
 	EGLDisplay display = EGL_NO_DISPLAY;
 	EGLSurface surface = EGL_NO_SURFACE;
 	EGLContext context = EGL_NO_CONTEXT;
 	bool swapOnVSync = false;
+	int maxSwapInterval = 1;
+	int currentSwapInterval = 1;
 };
 
 extern EGLGraphicsContext theGLContext;

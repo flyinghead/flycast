@@ -324,6 +324,8 @@ void D3DRenderer::Process(TA_context* ctx)
 		resetTextureCache = false;
 	}
 	texCache.Cleanup();
+	if (!ctx->rend.isRTT && ctx->rend.swapInterval > 0)
+		theDXContext.setSwapInterval(ctx->rend.swapInterval);
 
 	ta_parse(ctx, false);
 }

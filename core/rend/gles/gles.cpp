@@ -1077,6 +1077,8 @@ void OpenGLRenderer::Process(TA_context* ctx)
 		updatePaletteTexture(getPaletteTextureSlot());
 		updatePalette = false;
 	}
+	if (!ctx->rend.isRTT && ctx->rend.swapInterval > 0)
+		theGLContext.setSwapInterval(ctx->rend.swapInterval);
 	ta_parse(ctx, gl.prim_restart_fixed_supported || gl.prim_restart_supported);
 }
 

@@ -35,6 +35,7 @@ public:
 	void EndImGuiFrame();
 	void Present();
 	void resize() override;
+	void setSwapInterval(int interval) override;
 
 	const ComPtr<IDirect3D9>& getD3D() const {
 		return pD3D;
@@ -76,6 +77,8 @@ private:
 	std::string driverVersion;
 	bool amd = false;
 	bool deviceReady = false;
+	int gameSwapInterval = 1;
+	bool gameSwapIntervalChanged = false;
 };
 extern DXContext theDXContext;
 #endif

@@ -62,9 +62,10 @@ bool DXContext::init(bool keepCurrentWindow)
 	d3dpp.BackBufferFormat = D3DFMT_UNKNOWN;
 	d3dpp.EnableAutoDepthStencil = FALSE;						// No need for depth/stencil buffer for the backbuffer
 	swapOnVSync = !settings.input.fastForwardMode && config::VSync;
+	gameSwapIntervalChanged = false;
 	if (swapOnVSync)
 	{
-		switch ((int)(settings.display.refreshRate / 60))
+		switch ((int)(settings.display.refreshRate / 60) * gameSwapInterval)
 		{
 		case 0:
 		case 1:
@@ -82,8 +83,9 @@ bool DXContext::init(bool keepCurrentWindow)
 			break;
 		}
 	}
-	else
+	else {
 		d3dpp.PresentationInterval = D3DPRESENT_INTERVAL_IMMEDIATE;
+	}
 	// TODO should be 0 in windowed mode
 	//d3dpp.FullScreen_RefreshRateInHz = swapOnVSync ? 60 : 0;
 	HRESULT hr = pD3D->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, (HWND)window,
@@ -146,7 +148,7 @@ void DXContext::Present()
 	else
 	{
 		frameRendered = false;
-		if (swapOnVSync != (!settings.input.fastForwardMode && config::VSync))
+		if (swapOnVSync != (!settings.input.fastForwardMode && config::VSync) || gameSwapIntervalChanged)
 		{
 			DEBUG_LOG(RENDERER, "Switch vsync %d", !swapOnVSync);
 			if (renderer != nullptr)
@@ -229,4 +231,12 @@ void DXContext::resetDevice()
     overlay.init(pDevice);
 	if (dxrenderer != nullptr)
 		dxrenderer->postReset();
+}
+
+void DXContext::setSwapInterval(int interval)
+{
+	if (interval == gameSwapInterval)
+		return;
+	gameSwapInterval = interval;
+	gameSwapIntervalChanged = true;
 }

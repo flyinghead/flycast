@@ -243,6 +243,7 @@ struct rend_context
 	FB_W_CTRL_type fb_W_CTRL;
 	u32 framebufferWidth;
 	u32 framebufferHeight;
+	int swapInterval;
 	
 	RGBAColor fog_clamp_min;
 	RGBAColor fog_clamp_max;

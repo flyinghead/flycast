@@ -59,6 +59,9 @@ public:
 	bool isAMD() override {
 		return vendorId == VENDOR_ATI || vendorId == VENDOR_AMD;
 	}
+	void setSwapInterval(int interval) override {
+		gameSwapInterval = interval;
+	}
 
 	void setFrameRendered() {
 		frameRendered = true;
@@ -100,6 +103,7 @@ private:
 	bool supportedTexFormats[5] {}; // indexed by TextureType enum
 	WinLibLoader d3dcompilerLib;
 	pD3DCompile d3dcompiler = nullptr;
+	int gameSwapInterval = 1;
 
 	static constexpr UINT VENDOR_INTEL = 0x8086;
 	static constexpr UINT VENDOR_ATI = 0x1002;

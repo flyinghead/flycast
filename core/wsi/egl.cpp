@@ -142,6 +142,7 @@ bool EGLGraphicsContext::init()
 			if (!gladLoadGLES2((GLADloadfunc) eglGetProcAddress))
 				ERROR_LOG(RENDERER, "gladLoadGLES2() failed");
 		}
+		eglGetConfigAttrib(display, config, EGL_MAX_SWAP_INTERVAL, &maxSwapInterval);
 	}
 
 	if (!makeCurrent())
@@ -150,7 +151,7 @@ bool EGLGraphicsContext::init()
 		return false;
 	}
 
-	EGLint w,h;
+	EGLint w, h;
 	eglQuerySurface(display, surface, EGL_WIDTH, &w);
 	eglQuerySurface(display, surface, EGL_HEIGHT, &h);
 	NOTICE_LOG(RENDERER, "eglQuerySurface: %d - %d", w, h);
@@ -158,7 +159,7 @@ bool EGLGraphicsContext::init()
 	settings.display.width = w;
 	settings.display.height = h;
 
-	setSwapInterval();
+	changeSwapInterval();
 
 	postInit();
 
@@ -191,20 +192,26 @@ void EGLGraphicsContext::term()
 void EGLGraphicsContext::swap()
 {
 	do_swap_automation();
-	if (swapOnVSync == (settings.input.fastForwardMode || !config::VSync))
-		setSwapInterval();
+	changeSwapInterval();
 	eglSwapBuffers(display, surface);
 }
 
-void EGLGraphicsContext::setSwapInterval()
+void EGLGraphicsContext::changeSwapInterval()
 {
+	if (!gameSwapIntervalChanged && swapOnVSync == (!settings.input.fastForwardMode && config::VSync))
+		return;
 	swapOnVSync = (!settings.input.fastForwardMode && config::VSync);
-	int swapInterval;
-	if (settings.display.refreshRate > 60.f)
-		swapInterval = settings.display.refreshRate / 60.f;
-	else
-		swapInterval = 1;
-
-	eglSwapInterval(display, swapOnVSync ? swapInterval : 0);
+	gameSwapIntervalChanged = false;
+	currentSwapInterval = 0;
+	if (swapOnVSync)
+	{
+		if (settings.display.refreshRate > 60.f)
+			currentSwapInterval = settings.display.refreshRate / 60.f;
+		else
+			currentSwapInterval = 1;
+		currentSwapInterval *= gameSwapInterval;
+		INFO_LOG(RENDERER, "Swap interval changed to %d (max %d)", currentSwapInterval, maxSwapInterval);
+	}
+	eglSwapInterval(display, std::min(currentSwapInterval, maxSwapInterval));
 }
 #endif // USE_EGL

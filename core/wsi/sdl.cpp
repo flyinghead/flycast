@@ -92,11 +92,11 @@ bool SDLGLGraphicsContext::init()
 	// Swap at vsync
 	swapOnVSync = config::VSync;
 	if (settings.display.refreshRate > 60.f)
-		swapInterval = settings.display.refreshRate / 60.f;
+		displaySwapInterval = settings.display.refreshRate / 60.f;
 	else
-		swapInterval = 1;
+		displaySwapInterval = 1;
 
-	SDL_GL_SetSwapInterval(swapOnVSync ? swapInterval : 0);
+	SDL_GL_SetSwapInterval(swapOnVSync ? displaySwapInterval : 0);
 
 #ifdef GLES
 	if (gladLoadGLES2((GLADloadfunc)SDL_GL_GetProcAddress) == 0)
@@ -119,15 +119,7 @@ bool SDLGLGraphicsContext::init()
 void SDLGLGraphicsContext::swap()
 {
 	do_swap_automation();
-	if (swapOnVSync == (settings.input.fastForwardMode || !config::VSync))
-	{
-		swapOnVSync = (!settings.input.fastForwardMode && config::VSync);
-		if (settings.display.refreshRate > 60.f)
-			swapInterval = settings.display.refreshRate / 60.f;
-		else
-			swapInterval = 1;
-		SDL_GL_SetSwapInterval(swapOnVSync ? swapInterval : 0);
-	}
+	changeGLSwapInterval();
 	SDL_GL_SwapWindow((SDL_Window *)window);
 
 	// Check if drawable has been resized
@@ -142,6 +134,29 @@ void SDLGLGraphicsContext::swap()
 	}
 #endif
 }
+
+void SDLGLGraphicsContext::changeGLSwapInterval()
+{
+	if (!gameSwapIntervalChanged && swapOnVSync == (!settings.input.fastForwardMode && config::VSync))
+		return;
+	swapOnVSync = (!settings.input.fastForwardMode && config::VSync);
+	gameSwapIntervalChanged = false;
+	int swapInterval;
+	if (!swapOnVSync) {
+		swapInterval = 0;
+	}
+	else
+	{
+		if (settings.display.refreshRate > 60.f)
+			displaySwapInterval = settings.display.refreshRate / 60.f;
+		else
+			displaySwapInterval = 1;
+		swapInterval = displaySwapInterval * gameSwapInterval;
+		INFO_LOG(RENDERER, "Swap interval changed to %d", swapInterval);
+	}
+	SDL_GL_SetSwapInterval(swapInterval);
+}
+
 
 void SDLGLGraphicsContext::term()
 {

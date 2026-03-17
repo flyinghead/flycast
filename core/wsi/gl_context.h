@@ -61,11 +61,15 @@ public:
 				? majorVersion > 3 || (majorVersion == 3 && minorVersion >= 2)	// GL ES 3.2
 				: majorVersion > 4 || (majorVersion == 4 && minorVersion >= 3); // GL 4.3
 	}
+	void setSwapInterval(int interval) override;
 
 protected:
 	void postInit();
 	void preTerm();
 	void findGLVersion();
+
+	int gameSwapInterval = 1;
+	bool gameSwapIntervalChanged = false;
 
 private:
 	int majorVersion = 0;
