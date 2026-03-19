@@ -55,6 +55,14 @@
 #include "oslib/i18n.h"
 using namespace i18n;
 
+#ifdef TARGET_UWP
+#include <winrt/Windows.UI.ViewManagement.h>
+#include <winrt/Windows.Storage.Pickers.h>
+#include <winrt/Windows.Storage.h>
+#include <winrt/Windows.Foundation.h>
+#include <winrt/Windows.Foundation.Collections.h>
+#endif
+
 #ifdef _WIN32
 #include <windows.h>
 #else
@@ -147,12 +155,11 @@ void gui_init()
 	{
 		// Detect when the on-screen keyboard is hidden and clear the text input widget id to validate the edit.
 		// Otherwise the user will cancel the edit if he presses B, and must press A in the case of multi-line inputs.
-		using namespace Windows::UI::ViewManagement;
-		InputPane^ inputPane = InputPane::GetForCurrentView();
+		using namespace winrt::Windows::UI::ViewManagement;
+		InputPane inputPane = InputPane::GetForCurrentView();
 		if (inputPane)
 		{
-			inputPane->Hiding += ref new Windows::Foundation::TypedEventHandler<InputPane^, InputPaneVisibilityEventArgs^>(
-				[](InputPane^, InputPaneVisibilityEventArgs^)
+			inputPane.Hiding([](InputPane const&, InputPaneVisibilityEventArgs const&)
 				{
 					clearActiveIdNextFrame = true;
 				});
@@ -1022,38 +1029,41 @@ static bool gameImageButton(ImguiTexture& texture, const std::string& tooltip, I
 }
 
 #ifdef TARGET_UWP
-void gui_load_game()
+winrt::fire_and_forget gui_load_game_async()
 {
-	using namespace Windows::Storage;
-	using namespace Concurrency;
+	using namespace winrt::Windows::Storage;
+	
+	Pickers::FileOpenPicker picker;
+	picker.ViewMode(Pickers::PickerViewMode::List);
 
-	auto picker = ref new Pickers::FileOpenPicker();
-	picker->ViewMode = Pickers::PickerViewMode::List;
-
-	picker->FileTypeFilter->Append(".chd");
-	picker->FileTypeFilter->Append(".gdi");
-	picker->FileTypeFilter->Append(".cue");
-	picker->FileTypeFilter->Append(".cdi");
-	picker->FileTypeFilter->Append(".zip");
-	picker->FileTypeFilter->Append(".7z");
-	picker->FileTypeFilter->Append(".elf");
+	picker.FileTypeFilter().Append(L".chd");
+	picker.FileTypeFilter().Append(L".gdi");
+	picker.FileTypeFilter().Append(L".cue");
+	picker.FileTypeFilter().Append(L".cdi");
+	picker.FileTypeFilter().Append(L".zip");
+	picker.FileTypeFilter().Append(L".7z");
+	picker.FileTypeFilter().Append(L".elf");
 	if (!config::HideLegacyNaomiRoms)
 	{
-		picker->FileTypeFilter->Append(".bin");
-		picker->FileTypeFilter->Append(".lst");
-		picker->FileTypeFilter->Append(".dat");
+		picker.FileTypeFilter().Append(L".bin");
+		picker.FileTypeFilter().Append(L".lst");
+		picker.FileTypeFilter().Append(L".dat");
 	}
-	picker->SuggestedStartLocation = Pickers::PickerLocationId::DocumentsLibrary;
+	picker.SuggestedStartLocation(Pickers::PickerLocationId::DocumentsLibrary);
 
-	create_task(picker->PickSingleFileAsync()).then([](StorageFile ^file) {
-		if (file)
-		{
-			NOTICE_LOG(COMMON, "Picked file: %S", file->Path->Data());
-			nowide::stackstring path;
-			if (path.convert(file->Path->Data()))
-				gui_start_game(path.get());
-		}
-	});
+	StorageFile file = co_await picker.PickSingleFileAsync();
+	if (file)
+	{
+		NOTICE_LOG(COMMON, "Picked file: %ls", file.Path().c_str());
+		nowide::stackstring path;
+		if (path.convert(file.Path().c_str()))
+			gui_start_game(path.get());
+	}
+}
+
+void gui_load_game()
+{
+	gui_load_game_async();
 }
 #endif
 
