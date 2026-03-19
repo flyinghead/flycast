@@ -168,7 +168,7 @@ void gui_settings_network()
 							T("Display network statistics on screen"));
 					ImGui::EndTabItem();
 				}
-				if (ImGui::BeginTabItem("Manual"))
+				if (ImGui::BeginTabItem(T("Manual")))
 				{
 #endif
 					InputText(T("Peer"), &config::NetworkServer.get(), ImGuiInputTextFlags_CharsNoBlank | ImGuiInputTextFlags_CallbackCharFilter, dnsCharFilter);
@@ -217,7 +217,7 @@ void gui_settings_network()
 			DisabledScope scope(config::UseDCNet);
 			InputText("DNS", &config::DNS.get(), ImGuiInputTextFlags_CharsNoBlank | ImGuiInputTextFlags_CallbackCharFilter, dnsCharFilter);
 			ImGui::SameLine();
-			ShowHelpMarker("DNS server name or IP address");
+			ShowHelpMarker(T("DNS server name or IP address"));
 		}
 #endif
 	}
