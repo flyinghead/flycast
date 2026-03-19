@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-22 12:49+0100\n"
-"PO-Revision-Date: 2026-03-17 23:50\n"
+"PO-Revision-Date: 2026-03-19 19:36\n"
 "Last-Translator: \n"
 "Language: ja_JP\n"
 "MIME-Version: 1.0\n"
@@ -2463,6 +2463,10 @@ msgstr "ゲームを準備中…"
 msgid "Playing %s (%s)"
 msgstr "プレイ中 %s (%s)"
 
+#: core/ui/settings_network.cpp:171
+msgid "Manual"
+msgstr ""
+
 #: core/ui/settings_network.cpp:176
 msgid "The peer to connect to. Leave blank to find a player automatically on the default port"
 msgstr "接続先のピア。空白にすると、デフォルトのポートで自動的にプレイヤーが検索されます"
@@ -2518,6 +2522,10 @@ msgstr "ISPユーザー名"
 #: core/ui/settings_network.cpp:214
 msgid "The ISP user name stored in the console Flash RAM. Used by some online games as the player name. Leave blank to keep the current Flash RAM value."
 msgstr "コンソールのフラッシュRAMに格納されているISPユーザー名。 一部のオンラインゲームでプレイヤー名として使用されます。現在のフラッシュRAMの値を維持するには空白のままにしてください。"
+
+#: core/ui/settings_network.cpp:220
+msgid "DNS server name or IP address"
+msgstr ""
 
 #: core/ui/settings_network.cpp:226
 msgid "Multiboard Screens"
