@@ -1142,13 +1142,15 @@ static void gui_display_content()
 						continue;
 				}
 				std::string gameName = game.name;
+				bool passFilter = filter.PassFilter(gameName.c_str());
 				GameBoxart art;
 				if (config::BoxartDisplayMode && !game.device)
 				{
 					art = boxart.getBoxartAndLoad(game);
 					gameName = art.name;
+					passFilter = passFilter || filter.PassFilter(gameName.c_str());
 				}
-				if (filter.PassFilter(gameName.c_str()))
+				if (passFilter)
 				{
 					ImguiID _(game.path.empty() ? "bios" : game.path);
 					bool pressed = false;
