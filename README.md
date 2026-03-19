@@ -52,6 +52,16 @@ Get fresh builds for your system [**on the builds page**](https://flyinghead.git
 
 **New:** Now automated test results are available as well. 
 
+### Build requirements (Linux):
+
+- **C/C++ compiler toolchain** (e.g. `gcc`/`g++`)
+- **CMake**
+- **make**
+- **libcurl** (development headers)
+- **libudev** (development headers)
+- **SDL2** (development headers)
+- **Graphics API**: Vulcan, OpenGL
+
 ### Build instructions:
 ```
 $ git clone --recursive https://github.com/flyinghead/flycast.git
