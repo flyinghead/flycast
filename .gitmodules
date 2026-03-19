@@ -55,7 +55,7 @@
 	url = https://github.com/zaphoyd/websocketpp.git
 [submodule "core/deps/DreamPicoPort-API"]
 	path = core/deps/DreamPicoPort-API
-	url = https://github.com/OrangeFox86/DreamPicoPort-API.git
+	url = https://github.com/vkedwardli/DreamPicoPort-API.git
 [submodule "core/deps/tinygettext"]
 	path = core/deps/tinygettext
 	url = https://github.com/flyinghead/tinygettext
