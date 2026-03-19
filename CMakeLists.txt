@@ -451,6 +451,10 @@ set(XXHASH_BUILD_XXHSUM OFF CACHE BOOL "Build the xxhsum binary")
 add_subdirectory(core/deps/xxHash/cmake_unofficial)
 target_link_libraries(${PROJECT_NAME} PRIVATE xxHash::xxhash)
 
+set(FMT_INSTALL OFF CACHE BOOL "" FORCE)
+add_subdirectory(core/deps/fmt EXCLUDE_FROM_ALL)
+target_link_libraries(${PROJECT_NAME} PRIVATE fmt::fmt)
+
 option(BUILD_SHARED_LIBS "Build shared library" OFF)
 add_subdirectory(core/deps/glm)
 target_link_libraries(${PROJECT_NAME} PRIVATE glm::glm)
