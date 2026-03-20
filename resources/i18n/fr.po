@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-22 12:49+0100\n"
-"PO-Revision-Date: 2026-03-19 19:36\n"
+"PO-Revision-Date: 2026-03-20 13:34\n"
 "Last-Translator: \n"
 "Language: fr_FR\n"
 "MIME-Version: 1.0\n"
@@ -1588,19 +1588,19 @@ msgstr "Sauver État"
 
 #: core/ui/settings_controls.cpp:224 core/ui/settings_controls.cpp:282
 msgid "Load State in RAM"
-msgstr ""
+msgstr "Charger État en Mémoire"
 
 #: core/ui/settings_controls.cpp:225 core/ui/settings_controls.cpp:283
 msgid "Save State in RAM"
-msgstr ""
+msgstr "Sauver État en Mémoire"
 
 #: core/ui/settings_controls.cpp:226 core/ui/settings_controls.cpp:284
 msgid "Next Save State Slot"
-msgstr ""
+msgstr "Emplacement d'État Suivant"
 
 #: core/ui/settings_controls.cpp:227 core/ui/settings_controls.cpp:285
 msgid "Previous Save State Slot"
-msgstr ""
+msgstr "Emplacement d'État Précédent"
 
 #: core/ui/settings_controls.cpp:228 core/ui/settings_controls.cpp:286
 msgid "Bypass Emulated Keyboard"
@@ -2068,7 +2068,7 @@ msgstr "Préparation..."
 #: core/ui/gui.cpp:1788
 #, c-format
 msgid "Save state slot %d"
-msgstr ""
+msgstr "Emplacement d'état N° %d"
 
 #: core/ui/gui.cpp:1830
 msgid "No screenshot available"
@@ -2465,7 +2465,7 @@ msgstr "Jeu %s (%s)"
 
 #: core/ui/settings_network.cpp:171
 msgid "Manual"
-msgstr ""
+msgstr "Manuel"
 
 #: core/ui/settings_network.cpp:176
 msgid "The peer to connect to. Leave blank to find a player automatically on the default port"
@@ -2525,7 +2525,7 @@ msgstr "Le nom d'utilisateur FAI stocké dans la mémoire flash de la console. U
 
 #: core/ui/settings_network.cpp:220
 msgid "DNS server name or IP address"
-msgstr ""
+msgstr "Nom ou adresse du serveur DNS"
 
 #: core/ui/settings_network.cpp:226
 msgid "Multiboard Screens"
