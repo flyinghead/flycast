@@ -41,7 +41,7 @@ namespace jni
 extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_emu_JNIdc_screenCharacteristics(JNIEnv *env, jobject obj, jfloat screenDpi, jfloat refreshRate)
 {
 	settings.display.dpi = screenDpi;
-	settings.display.refreshRate = refreshRate;
+	settings.display.refreshRate = std::max(std::round(refreshRate), 60.f);
 }
 
 static bool game_started;

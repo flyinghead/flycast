@@ -228,7 +228,7 @@ void DX11Context::Present()
 		hr = DXGI_ERROR_DEVICE_RESET;
 	}
 	else if (swapOnVSync) {
-		int swapInterval = std::clamp((int)(settings.display.refreshRate / 60) * gameSwapInterval, 1, 4);
+		int swapInterval = std::clamp((int)(settings.display.refreshRate / 60.f * gameSwapInterval), 1, 4);
 		hr = swapchain->Present(swapInterval, 0);
 	}
 	else {

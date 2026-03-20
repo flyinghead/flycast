@@ -35,7 +35,6 @@ private:
 
 	SDL_GLContext glcontext = nullptr;
 	bool swapOnVSync = false;
-	int displaySwapInterval = 1;
 };
 
 extern SDLGLGraphicsContext theGLContext;

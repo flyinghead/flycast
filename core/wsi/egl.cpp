@@ -206,10 +206,9 @@ void EGLGraphicsContext::changeSwapInterval()
 	if (swapOnVSync)
 	{
 		if (settings.display.refreshRate > 60.f)
-			currentSwapInterval = settings.display.refreshRate / 60.f;
+			currentSwapInterval = settings.display.refreshRate / 60.f * gameSwapInterval;
 		else
-			currentSwapInterval = 1;
-		currentSwapInterval *= gameSwapInterval;
+			currentSwapInterval = gameSwapInterval;
 		INFO_LOG(RENDERER, "Swap interval changed to %d (max %d)", currentSwapInterval, maxSwapInterval);
 	}
 	eglSwapInterval(display, std::min(currentSwapInterval, maxSwapInterval));
