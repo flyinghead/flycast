@@ -774,7 +774,6 @@ bool sdl_recreate_window(u32 flags)
 		SDL_DisplayMode mode{};
 		if (SDL_GetDesktopDisplayMode(displayIndex, &mode) == 0)
 		{
-			mode.refresh_rate = 59;
 			NOTICE_LOG(RENDERER, "Monitor refresh rate: %d Hz (%d x %d)", mode.refresh_rate, mode.w, mode.h);
 			if (mode.refresh_rate < 60)
 				settings.display.refreshRate = 60.f;
