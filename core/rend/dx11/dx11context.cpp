@@ -30,6 +30,7 @@
 #ifdef TARGET_UWP
 #include <windows.h>
 #include <gamingdeviceinformation.h>
+#include <winrt/Windows.Graphics.Display.Core.h>
 #endif
 
 #include "nowide/stackstring.hpp"
@@ -49,12 +50,19 @@ bool DX11Context::init(bool keepCurrentWindow)
 	GetGamingDeviceModelInformation(&info);
 	if (info.vendorId == GAMING_DEVICE_VENDOR_ID_MICROSOFT && info.deviceId != GAMING_DEVICE_DEVICE_ID_NONE)
 	{
-		Windows::Graphics::Display::Core::HdmiDisplayInformation^ dispInfo = Windows::Graphics::Display::Core::HdmiDisplayInformation::GetForCurrentView();
-		Windows::Graphics::Display::Core::HdmiDisplayMode^ displayMode = dispInfo->GetCurrentDisplayMode();
-		NOTICE_LOG(RENDERER, "HDMI resolution: %d x %d", displayMode->ResolutionWidthInRawPixels, displayMode->ResolutionHeightInRawPixels);
-		settings.display.width = displayMode->ResolutionWidthInRawPixels;
-		settings.display.height = displayMode->ResolutionHeightInRawPixels;
-		settings.display.uiScale = settings.display.width / 1920.0f * 1.4f;
+		using namespace winrt::Windows::Graphics::Display::Core;
+		HdmiDisplayInformation dispInfo = HdmiDisplayInformation::GetForCurrentView();
+		if (dispInfo)
+		{
+			HdmiDisplayMode displayMode = dispInfo.GetCurrentDisplayMode();
+			if (displayMode)
+			{
+				NOTICE_LOG(RENDERER, "HDMI resolution: %d x %d", displayMode.ResolutionWidthInRawPixels(), displayMode.ResolutionHeightInRawPixels());
+				settings.display.width = displayMode.ResolutionWidthInRawPixels();
+				settings.display.height = displayMode.ResolutionHeightInRawPixels();
+				settings.display.uiScale = settings.display.width / 1920.0f * 1.4f;
+			}
+		}
 	}
 #endif
 

@@ -19,24 +19,28 @@
 #include "oslib/http_client.h"
 #include "stdclass.h"
 #include <windows.h>
+#include <winrt/Windows.Web.Http.h>
+#include <winrt/Windows.Web.Http.Headers.h>
+#include <winrt/Windows.Storage.Streams.h>
+#include <winrt/Windows.Foundation.h>
 
 namespace http {
 
-using namespace Platform;
-using namespace Windows::Foundation;
-using namespace Windows::Storage::Streams;
-using namespace Windows::Web::Http;
-using namespace Windows::Web::Http::Headers;
+using namespace winrt;
+using namespace winrt::Windows::Foundation;
+using namespace winrt::Windows::Storage::Streams;
+using namespace winrt::Windows::Web::Http;
+using namespace winrt::Windows::Web::Http::Headers;
 
-static HttpClient^ httpClient;
+static HttpClient httpClient{ nullptr };
 
 void init()
 {
 	nowide::wstackstring wagent;
 	wagent.convert(getUserAgent().c_str());
 
-	httpClient = ref new HttpClient();
-	httpClient->DefaultRequestHeaders->UserAgent->ParseAdd(ref new String(wagent.get()));
+	httpClient = HttpClient();
+	httpClient.DefaultRequestHeaders().UserAgent().ParseAdd(wagent.get());
 }
 
 void term() {
@@ -50,46 +54,33 @@ int get(const std::string& url, std::vector<u8>& content, std::string& contentTy
 		return 500;
 	try
 	{
-		Uri^ uri = ref new Uri(ref new String(wurl.get()));
-		IAsyncOperationWithProgress<HttpResponseMessage^, HttpProgress>^ op = httpClient->GetAsync(uri);
-		cResetEvent asyncEvent;
-		op->Completed = ref new AsyncOperationWithProgressCompletedHandler<HttpResponseMessage^, HttpProgress>(
-				[&asyncEvent](IAsyncOperationWithProgress<HttpResponseMessage^, HttpProgress>^, AsyncStatus) {
-					asyncEvent.Set();
-		        });
-		asyncEvent.Wait();
-		HttpResponseMessage^ resp = op->GetResults();
+		Uri uri(wurl.get());
+		HttpResponseMessage resp = httpClient.GetAsync(uri).get();
 
-		if (resp->IsSuccessStatusCode)
+		if (resp.IsSuccessStatusCode())
 		{
-			IHttpContent^ httpContent = resp->Content;
-			contentType.clear();
-			HttpMediaTypeHeaderValue^ contentTypeHeader = httpContent->Headers->ContentType;
-			if (contentTypeHeader != nullptr && contentTypeHeader->MediaType != nullptr)
+			IHttpContent httpContent = resp.Content();
+			HttpMediaTypeHeaderValue contentTypeHeader = httpContent.Headers().ContentType();
+			if (contentTypeHeader != nullptr)
 			{
-				String^ mediaType = contentTypeHeader->MediaType;
-				nowide::stackstring nwstring;
-				nwstring.convert(mediaType->Data());
-				contentType = nwstring.get();
+				winrt::hstring mediaType = contentTypeHeader.MediaType();
+				nowide::stackstring mtype;
+				mtype.convert(mediaType.c_str());
+				contentType = mtype.get();
 			}
-			IAsyncOperationWithProgress<IBuffer^, uint64_t>^ readOp = httpContent->ReadAsBufferAsync();
-			asyncEvent.Reset();
-			readOp->Completed = ref new AsyncOperationWithProgressCompletedHandler<IBuffer^, uint64_t>(
-				[&asyncEvent](IAsyncOperationWithProgress<IBuffer^, uint64_t>^, AsyncStatus) {
-					asyncEvent.Set();
-				});
-			asyncEvent.Wait();
-			IBuffer^ buffer = readOp->GetResults();
 
-			Array<u8>^ array = ref new Array<u8>(buffer->Length);
-			DataReader::FromBuffer(buffer)->ReadBytes(array);
-			content = std::vector<u8>(array->begin(), array->end());
+			IBuffer buffer = httpContent.ReadAsBufferAsync().get();
+			content.resize(buffer.Length());
+			if (buffer.Length() > 0)
+			{
+				std::memcpy(content.data(), buffer.data(), buffer.Length());
+			}
 		}
-		return (int)resp->StatusCode;
+		return (int)resp.StatusCode();
 	}
-	catch (Exception^ e)
+	catch (hresult_error const& e)
 	{
-		WARN_LOG(COMMON, "http::get error %.*S", e->Message->Length(), e->Message->Data());
+		WARN_LOG(COMMON, "http::get error %ls", e.message().c_str());
 		return 500;
 	}
 }
@@ -107,42 +98,29 @@ int post(const std::string& url, const char *payload, const char *contentType, s
 		return 500;
 	try
 	{
-		Uri^ uri = ref new Uri(ref new String(wurl.get()));
-		HttpStringContent^ content = ref new HttpStringContent(ref new String(wpayload.get()));
-		content->Headers->ContentLength = ref new Box<UINT64>(strlen(payload));
+		Uri uri(wurl.get());
+		HttpStringContent contentStr(wpayload.get());
+		contentStr.Headers().ContentLength(strlen(payload));
 		if (contentType != nullptr)
-			content->Headers->ContentType = ref new HttpMediaTypeHeaderValue(ref new String(wcontentType.get()));
+			contentStr.Headers().ContentType(HttpMediaTypeHeaderValue(wcontentType.get()));
 
-		IAsyncOperationWithProgress<HttpResponseMessage^, HttpProgress>^ op = httpClient->PostAsync(uri, content);
-		cResetEvent asyncEvent;
-		op->Completed = ref new AsyncOperationWithProgressCompletedHandler<HttpResponseMessage^, HttpProgress>(
-			[&asyncEvent](IAsyncOperationWithProgress<HttpResponseMessage^, HttpProgress>^, AsyncStatus) {
-				asyncEvent.Set();
-			});
-		asyncEvent.Wait();
-		HttpResponseMessage^ resp = op->GetResults();
+		HttpResponseMessage resp = httpClient.PostAsync(uri, contentStr).get();
 
-		if (resp->IsSuccessStatusCode)
+		if (resp.IsSuccessStatusCode())
 		{
-			IHttpContent^ httpContent = resp->Content;
-			IAsyncOperationWithProgress<IBuffer^, uint64_t>^ readOp = httpContent->ReadAsBufferAsync();
-			asyncEvent.Reset();
-			readOp->Completed = ref new AsyncOperationWithProgressCompletedHandler<IBuffer^, uint64_t>(
-				[&asyncEvent](IAsyncOperationWithProgress<IBuffer^, uint64_t>^, AsyncStatus) {
-					asyncEvent.Set();
-				});
-			asyncEvent.Wait();
-			IBuffer^ buffer = readOp->GetResults();
-
-			Array<u8>^ array = ref new Array<u8>(buffer->Length);
-			DataReader::FromBuffer(buffer)->ReadBytes(array);
-			reply = std::vector<u8>(array->begin(), array->end());
+			IHttpContent httpContent = resp.Content();
+			IBuffer buffer = httpContent.ReadAsBufferAsync().get();
+			reply.resize(buffer.Length());
+			if (buffer.Length() > 0)
+			{
+				std::memcpy(reply.data(), buffer.data(), buffer.Length());
+			}
 		}
-		return (int)resp->StatusCode;
+		return (int)resp.StatusCode();
 	}
-	catch (Exception^ e)
+	catch (hresult_error const& e)
 	{
-		WARN_LOG(COMMON, "http::post error %.*S", e->Message->Length(), e->Message->Data());
+		WARN_LOG(COMMON, "http::post error %ls", e.message().c_str());
 		return 500;
 	}
 }
@@ -152,4 +130,4 @@ int post(const std::string & url, const std::vector<PostField>&fields) {
 	return 500;
 }
 
-}
+} // namespace http
