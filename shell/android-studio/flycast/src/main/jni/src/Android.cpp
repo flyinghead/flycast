@@ -369,6 +369,38 @@ extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_emu_JNIdc_guiSetInse
 	gui_set_insets(left, right, top, bottom);
 }
 
+extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_emu_JNIdc_postRestore(JNIEnv *env, jobject obj, jobject jfilesPath)
+{
+    if (g_jvm == NULL)
+        env->GetJavaVM(&g_jvm);
+
+	std::string filesPath = jni::String(jfilesPath, false).to_string();
+	if (get_readonly_config_path("emu.cfg") == "emu.cfg") {
+		std::string filesPath = jni::String(jfilesPath, false).to_string();
+		set_user_config_dir(filesPath);
+	}
+	if (config::open())
+	{
+		// Remove all cheats not pointing to a file in /data
+		std::string base = filesPath + "/data/";
+		config::setAutoSave(false);
+		for (const std::string& cheat : config::getEntries("cheats"))
+		{
+			std::string path = config::loadStr("cheats", cheat, "");
+			if (path.substr(0, base.size()) != base)
+				config::deleteEntry("cheats", cheat);
+		}
+		config::setAutoSave(true);
+		config::Settings::instance().reset();
+		config::Settings::instance().load(false);
+		// Clear all paths since we need to ask permission again
+		config::ContentPath.get().clear();
+		config::BiosPath.get().clear();
+		config::TexturePath.get().clear();
+		config::Settings::instance().save();
+	}
+}
+
 // Audio Stuff
 class AndroidAudioBackend : AudioBackend
 {

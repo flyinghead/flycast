@@ -1,5 +1,7 @@
 #pragma once
-#include "types.h"
+#include <stdint.h>
+#include <string>
+#include <vector>
 
 namespace config
 {
@@ -25,4 +27,5 @@ bool hasSection(const std::string& section);
 void deleteSection(const std::string& section);
 void deleteEntry(const std::string& section, const std::string& key);
 
+std::vector<std::string> getEntries(const std::string& section);
 }

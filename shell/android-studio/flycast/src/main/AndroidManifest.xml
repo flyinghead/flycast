@@ -47,7 +47,9 @@
         android:appCategory="game"
         android:isGame="true"
 		android:requestLegacyExternalStorage="true"
-		android:allowBackup="false">
+		android:allowBackup="true"
+		android:backupAgent="com.flycast.emulator.FlycastBackupAgent"
+		android:restoreAnyVersion="true">
 
         <meta-data android:name="android.max_aspect" android:value="2.1" />
         <activity

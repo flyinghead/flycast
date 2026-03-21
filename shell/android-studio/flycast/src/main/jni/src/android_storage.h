@@ -283,8 +283,10 @@ extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_AndroidStorage_reloa
 	if (config::open())
 	{
 		const RenderType render = config::RendererType;
+		config::Settings::instance().reset();
 		config::Settings::instance().load(false);
 		// Make sure the renderer type doesn't change mid-flight
 		config::RendererType = render;
+		config::Settings::instance().save();
 	}
 }

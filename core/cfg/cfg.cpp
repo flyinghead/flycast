@@ -128,4 +128,8 @@ float loadFloat(const std::string& section, const std::string& key, float def) {
 	return cfgdb.getFloat(section, key, def);
 }
 
+std::vector<std::string> getEntries(const std::string& section) {
+	return cfgdb.getEntryNames(section);
+}
+
 }	// namespace config

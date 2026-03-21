@@ -28,6 +28,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FilenameFilter;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
@@ -166,7 +167,7 @@ public class HomeMover {
                 }
             }
 
-            private void copyDir(String from, String toParent, String name)
+            private void copyDir(String from, String toParent, String name, FilenameFilter filter)
             {
                 //Log.d("flycast", "Copying folder " + from + " to " + toParent + " / " + name);
                 if (!wrapper.exists(from))
@@ -183,9 +184,13 @@ public class HomeMover {
                         if (migrationThreadCancelled)
                             break;
                         if (!file.isDirectory())
-                            copyFile(file.path, file.name, to);
-                        else
-                            copyDir(file.path, to, file.getName());
+                        {
+                            if (filter == null || filter.accept(null, file.name))
+                                copyFile(file.path, file.name, to);
+                        }
+                        else {
+                            copyDir(file.path, to, file.getName(), filter);
+                        }
                         incrementProgress(1);
                     }
                 } catch (Exception e) {
@@ -203,13 +208,18 @@ public class HomeMover {
                 incrementProgress(1);
 
                 String srcMappings = wrapper.getSubPath(source, "mappings");
-                copyDir(srcMappings, dest, "mappings");
+                copyDir(srcMappings, dest, "mappings", null);
                 if (migrationThreadCancelled)
                     return;
                 incrementProgress(1);
 
                 String srcData = wrapper.getSubPath(source, "data");
-                copyDir(srcData, dest, "data");
+                copyDir(srcData, dest, "data", new FilenameFilter() {
+                    @Override
+                    public boolean accept(File file, String s) {
+                        return !s.equals("vulkan_pipeline.cache");
+                    }
+                });
                 incrementProgress(1);
             }
 

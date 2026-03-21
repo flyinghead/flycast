@@ -26,5 +26,5 @@ public final class JNIdc
 	public static native boolean guiIsOpen();
 	public static native boolean guiIsContentBrowser();
 	public static native void guiSetInsets(int left, int right, int top, int bottom);
-
+	public static native void postRestore(String filesDir);
 }
