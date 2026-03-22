@@ -8,6 +8,7 @@
 #include <cstdarg>
 #include <cstring>
 #include <string>
+#include <locale>
 
 #include "log/Log.h"
 #include "log/BitSet.h"
