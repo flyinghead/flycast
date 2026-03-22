@@ -77,8 +77,26 @@ jobs:
           fetch-depth: 0
           submodules: recursive
 
-      - name: Compile a universal OpenMP (macOS)
-        run: HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=1 HOMEBREW_DEVELOPER=1 brew reinstall --build-from-source --formula ./shell/apple/libomp.rb
+      - name: Compile universal dependencies (macOS)
+        run: |
+          for formula in ./shell/apple/libomp.rb ./shell/apple/libpng-flycast.rb; do
+            libname=$(basename "$formula" .rb)
+            HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=1 HOMEBREW_DEVELOPER=1 brew install --build-from-source --formula "$formula" || \
+            HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=1 HOMEBREW_DEVELOPER=1 brew reinstall --build-from-source --formula "$formula"
+            
+            prefix=$(brew --prefix $libname)
+            # Find and verify the static library
+            libfile=$(find "$prefix/lib" -name "*.a" | head -n1)
+            lipo -info "$libfile"
+            
+            # Export prefix for subsequent CMake steps
+            if [ -z "$CMAKE_PREFIX_PATH" ]; then
+              CMAKE_PREFIX_PATH="$prefix"
+            else
+              CMAKE_PREFIX_PATH="$CMAKE_PREFIX_PATH:$prefix"
+            fi
+          done
+          echo "CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH" >> $GITHUB_ENV
         if: matrix.config.name == 'apple-darwin'
 
       - uses: actions/cache@v5
