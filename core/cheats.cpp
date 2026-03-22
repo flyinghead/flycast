@@ -450,7 +450,7 @@ void CheatManager::reset(const std::string& gameId)
 		this->gameId = gameId;
 
 #ifndef LIBRETRO
-		if (!settings.raHardcoreMode)
+		if (!settings.raHardcoreMode && !gameId.empty())
 		{
 			std::string cheatFile = config::loadStr("cheats", gameId);
 			if (!cheatFile.empty())
