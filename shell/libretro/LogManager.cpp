@@ -100,33 +100,39 @@ LogManager::~LogManager()
 void LogManager::LogWithFullPath(LogTypes::LOG_LEVELS level, LogTypes::LOG_TYPE type,
 		const char* file_, int line, const char* format, va_list args)
 {
-   const char *file =  file_ + m_path_cutoff_point;
-	char temp[MAX_MSGLEN];
-	CharArrayFromFormatV(temp, MAX_MSGLEN, format, args);
-	std::string msg =
-			StringFromFormat("%s:%u %c[%s]: %s\n", file,
-					line, LogTypes::LOG_LEVEL_TO_CHAR[(int)level], GetShortName(type), temp);
-   retro_log_level retro_level;
-   const char *text = msg.c_str();
-   switch (level)
-   {
-      case LogTypes::LNOTICE:
-      case LogTypes::LINFO:
-         retro_level = RETRO_LOG_INFO;
-         break;
-      case LogTypes::LERROR:
-         retro_level = RETRO_LOG_ERROR;
-         break;
-      case LogTypes::LWARNING:
-         retro_level = RETRO_LOG_WARN;
-         break;
-      case LogTypes::LDEBUG:
-         retro_level = RETRO_LOG_DEBUG;
-         break;
+	const char *file =  file_ + m_path_cutoff_point;
+	char text[MAX_MSGLEN + 128];
+	{
+		UseCLocale _;
 
-   }
-   if (retro_printf != nullptr)
-      retro_printf(retro_level, "%s", text);
+		int index = snprintf(text, 128, "%s:%u %c[%s]: ", file,
+						line, LogTypes::LOG_LEVEL_TO_CHAR[(int)level], GetShortName(type));
+		index = std::min(index, 128);
+		int n = vsnprintf(text + index, sizeof(text) - index - 1, format, args);
+		index += std::min(n, (int)sizeof(text) - index - 2);
+		strcpy(text + index, "\n");
+	}
+
+	retro_log_level retro_level;
+	switch (level)
+	{
+	case LogTypes::LNOTICE:
+	case LogTypes::LINFO:
+	default:
+		retro_level = RETRO_LOG_INFO;
+		break;
+	case LogTypes::LERROR:
+		retro_level = RETRO_LOG_ERROR;
+		break;
+	case LogTypes::LWARNING:
+		retro_level = RETRO_LOG_WARN;
+		break;
+	case LogTypes::LDEBUG:
+		retro_level = RETRO_LOG_DEBUG;
+		break;
+	}
+	if (retro_printf != nullptr)
+		retro_printf(retro_level, "%s", text);
 }
 
 void LogManager::SetLogLevel(LogTypes::LOG_LEVELS level)

@@ -36,15 +36,21 @@ public:
 	void Log(LogTypes::LOG_LEVELS, const char* msg) override
 	{
 		std::lock_guard<std::mutex> lock(mutex);
-		lines.emplace_back(msg);
-		if (lines.size() > MaxLines)
-			lines.pop_front();
+		strncpy(lines[linesIndex], msg, MAX_MSGLEN - 1);
+		linesIndex = (linesIndex + 1) % MaxLines;
 	}
 
 	std::vector<std::string> getLog()
 	{
+		std::vector<std::string> v;
+		v.reserve(MaxLines);
 		std::lock_guard<std::mutex> lock(mutex);
-		std::vector<std::string> v(lines.begin(), lines.end());
+		int i = linesIndex;
+		do {
+			if (lines[i][0] != '\0')
+				v.push_back(lines[i]);
+			i = (i + 1) % MaxLines;
+		} while (i != linesIndex);
 
 		return v;
 	}
@@ -54,9 +60,11 @@ public:
 	}
 
 private:
-	std::mutex mutex;
-	std::deque<std::string> lines;
-
 	static constexpr int MaxLines = 20;
+
+	std::mutex mutex;
+	std::array<char[MAX_MSGLEN], MaxLines> lines {};
+	int linesIndex = 0;
+
 	static InMemoryListener *instance;
 };

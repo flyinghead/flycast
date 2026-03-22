@@ -11,6 +11,8 @@
 #include "BitSet.h"
 #include "Log.h"
 
+constexpr size_t MAX_MSGLEN = 1024;
+
 // pure virtual interface
 class LogListener
 {

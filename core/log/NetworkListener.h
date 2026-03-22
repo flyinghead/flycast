@@ -57,29 +57,34 @@ public:
 	{
 		if (!socket.is_open())
 			return;
-		const char *reset_attr = "\x1b[0m";
-		std::string color_attr;
+		const char *reset_attr = "";
+		const char *color_attr = "";
 
 		switch (level)
 		{
 		case LogTypes::LOG_LEVELS::LNOTICE:
 			// light green
 			color_attr = "\x1b[92m";
+			reset_attr = "\x1b[0m";
 			break;
 		case LogTypes::LOG_LEVELS::LERROR:
 			// light red
 			color_attr = "\x1b[91m";
+			reset_attr = "\x1b[0m";
 			break;
 		case LogTypes::LOG_LEVELS::LWARNING:
 			// light yellow
 			color_attr = "\x1b[93m";
+			reset_attr = "\x1b[0m";
 			break;
 		default:
 			break;
 		}
-		std::string str = color_attr + msg + reset_attr;
+		char temp[MAX_MSGLEN];
+		snprintf(temp, sizeof(temp) - 1, "%s%s%s", color_attr, msg, reset_attr);
+		temp[sizeof(temp) - 1] = '\0';
 		asio::error_code ec;
-		socket.send(asio::buffer(str), 0, ec);
+		socket.send(asio::buffer(temp, strlen(temp)), 0, ec);
 	}
 
 private:
