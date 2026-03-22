@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="OK">OK</string>
-    <string name="storage_error">Storage Error</string>
-    <string name="folder_permissions">Can\'t get permissions to access this folder.\nPlease select a different one.</string>
-    <string name="file_manager_not_found">File Manager not found</string>
-    <string name="no_file_manager_android10">No appropriate file manager was found on your device.\nPlease install a Storage Access Framework compatible file manager</string>
-    <string name="no_file_manager_android9">No appropriate file manager was found on your device.\nPlease install a file manager or try to disable \'Use SAF File Picker\' in the general settings</string>
-    <string name="select_an_export_folder">Select an export folder</string>
-    <string name="exporting_home_folder">Exporting home folder</string>
-    <string name="select_an_import_folder">Select an import folder</string>
-    <string name="importing_home_folder">Importing home folder</string>
-    <string name="flycast_error">Flycast Error</string>
-    <string name="init_failed_message">Initialization failed. Please try again or reinstall.\n\nError: </string>
-    <string name="exit">Exit</string>
-    <string name="copying">Copying</string>
+    <string name="OK">Tamam</string>
+    <string name="storage_error">Depolama Hatası</string>
+    <string name="folder_permissions">Bu klasöre erişim sağlanamıyor.\n Lütfen başka bir tane deneyin.</string>
+    <string name="file_manager_not_found">Dosya Yöneticisi bulunamadı</string>
+    <string name="no_file_manager_android10">Cihazınızda uygun bir dosya yöneticisi bulunamadı.\nLütfen Depolama Erişim Çerçevesi ile uyumlu bir dosya yöneticisi yükleyin</string>
+    <string name="no_file_manager_android9">Cihazınızda uygun bir dosya yöneticisi bulunamadı.\nLütfen bir dosya yöneticisi yükleyin veya genel ayarlarda \'SAF Dosya Seçiciyi Kullan\' seçeneğini devre dışı bırakmayı deneyin</string>
+    <string name="select_an_export_folder">Bir dışa aktarma klasörü seçin</string>
+    <string name="exporting_home_folder">Ev klasörü dışa aktarılıyor</string>
+    <string name="select_an_import_folder">Bir içe aktarma klasörü seçin</string>
+    <string name="importing_home_folder">Ev klasörü içe aktarılıyor</string>
+    <string name="flycast_error">Flycast Hatası</string>
+    <string name="init_failed_message">Başlatma başarısız oldu. Lütfen tekrar deneyin veya yeniden yükleyin.\n\nHata: </string>
+    <string name="exit">Çıkış</string>
+    <string name="copying">Kopyalanıyor</string>
 </resources>
