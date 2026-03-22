@@ -888,7 +888,17 @@ if(NOT LIBRETRO)
 		core/deps/imgui/imgui_cjk.cpp
 		core/deps/imgui/imgui_stdlib.cpp
 		core/deps/imgui/imgui_tables.cpp
-		core/deps/imgui/imgui_widgets.cpp)
+		core/deps/imgui/imgui_widgets.cpp
+		core/deps/imgui/misc/freetype/imgui_freetype.cpp)
+
+	set(FT_DISABLE_BZIP2 ON CACHE BOOL "" FORCE)
+	set(FT_DISABLE_HARFBUZZ ON CACHE BOOL "" FORCE)
+	set(FT_DISABLE_BROTLI ON CACHE BOOL "" FORCE)
+	add_subdirectory(core/deps/freetype EXCLUDE_FROM_ALL)
+	if(WINDOWS_STORE)
+		target_compile_definitions(freetype PRIVATE _WINRT_DLL)
+	endif()
+	target_link_libraries(${PROJECT_NAME} PRIVATE freetype)
 
 	if(ENABLE_FC_PROFILER)
 		target_include_directories(${PROJECT_NAME} PRIVATE core/deps/implot)
