@@ -21,10 +21,11 @@ package com.flycast.emulator.emu;
 import android.util.Log;
 
 import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.client5.http.entity.mime.MultipartEntityBuilder;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
-import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
 import org.apache.hc.core5.http.ContentType;
 import org.apache.hc.core5.http.HttpEntity;
 import org.apache.hc.core5.http.io.entity.StringEntity;
@@ -37,6 +38,11 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 public class HttpClient {
     private CloseableHttpClient httpClient;
@@ -49,14 +55,37 @@ public class HttpClient {
         this.userAgent = userAgent;
     }
 
-    public int openUrl(String url_string, byte[][] content, String[] contentType)
+    public int openUrl(String url_string, byte[][] content, String[] reqHeaderNames, String[] reqHeaderValues,
+                       String[][] respHeaderNames, String[][] respHeaderValues)
     {
         try {
             URL url = new URL(url_string);
             HttpURLConnection conn = (HttpURLConnection)url.openConnection();
+            conn.setConnectTimeout(30 * 1000); // 30 s
             conn.setRequestProperty("User-Agent", userAgent);
+            if (reqHeaderNames != null) {
+                for (int i = 0; i < reqHeaderNames.length; i++)
+                    conn.setRequestProperty(reqHeaderNames[i], reqHeaderValues[i]);
+            }
             conn.connect();
             if (conn.getResponseCode() >= 200 && conn.getResponseCode() < 300) {
+                if (respHeaderNames != null)
+                {
+                    List<String> keys = new ArrayList<>();
+                    List<String> values = new ArrayList<>();
+                    Map<String, List<String>> headers = conn.getHeaderFields();
+                    for (String key : headers.keySet()) {
+                        if (key == null)
+                            continue;
+                        String lkey = key.toLowerCase(Locale.ROOT);
+                        for (String value : headers.get(key)) {
+                            keys.add(lkey);
+                            values.add(value);
+                        }
+                    }
+                    respHeaderNames[0] = keys.toArray(new String[keys.size()]);
+                    respHeaderValues[0] = values.toArray(new String[values.size()]);
+                }
                 InputStream is = conn.getInputStream();
 
                 byte[] buffer = new byte[1024];
@@ -69,8 +98,6 @@ public class HttpClient {
                 is.close();
                 baos.close();
                 content[0] = baos.toByteArray();
-                if (contentType != null)
-                    contentType[0] = conn.getContentType();
             }
 
             return conn.getResponseCode();
@@ -86,14 +113,27 @@ public class HttpClient {
         return 500;
     }
 
+    private CloseableHttpClient getHttpClient()
+    {
+        if (httpClient == null)
+        {
+            RequestConfig.Builder requestBuilder = RequestConfig.custom();
+            requestBuilder.setConnectTimeout(30, TimeUnit.SECONDS);
+            requestBuilder.setConnectionRequestTimeout(30, TimeUnit.SECONDS);
+
+            HttpClientBuilder builder = HttpClientBuilder.create();
+            builder.setDefaultRequestConfig(requestBuilder.build());
+            httpClient = builder.build();
+        }
+        return httpClient;
+    }
+
     public int post(String urlString, String payload, String contentType, byte[][] reply) {
         try {
-            if (httpClient == null)
-                httpClient = HttpClients.createDefault();
             HttpPost httpPost = new HttpPost(urlString);
             httpPost.setEntity(new StringEntity(payload, contentType != null ? ContentType.create(contentType) : ContentType.APPLICATION_FORM_URLENCODED));
             httpPost.setHeader("User-Agent", userAgent);
-            CloseableHttpResponse response = httpClient.execute(httpPost);
+            CloseableHttpResponse response = getHttpClient().execute(httpPost);
             InputStream is = response.getEntity().getContent();
 
             byte[] buffer = new byte[1024];
@@ -122,8 +162,6 @@ public class HttpClient {
     public int post(String urlString, String[] fieldNames, String[] fieldValues, String[] contentTypes)
     {
         try {
-            if (httpClient == null)
-                httpClient = HttpClients.createDefault();
             HttpPost httpPost = new HttpPost(urlString);
             MultipartEntityBuilder builder = MultipartEntityBuilder.create();
             builder.setCharset(Charset.forName("UTF-8"));
@@ -139,7 +177,7 @@ public class HttpClient {
             HttpEntity multipart = builder.build();
             httpPost.setEntity(multipart);
             httpPost.setHeader("User-Agent", userAgent);
-            CloseableHttpResponse response = httpClient.execute(httpPost);
+            CloseableHttpResponse response = getHttpClient().execute(httpPost);
 
             return response.getCode();
         } catch (MalformedURLException e) {

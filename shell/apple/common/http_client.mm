@@ -18,10 +18,11 @@
 */
 #import <Foundation/Foundation.h>
 #include "oslib/http_client.h"
+#include "stdclass.h"
 
 namespace http {
 
-int get(const std::string& url, std::vector<u8>& content, std::string& contentType)
+int get(const std::string& url, std::vector<u8>& content, const Headers *reqHeaders, Headers *respHeaders)
 {
 	NSString *nsurl = [NSString stringWithCString:url.c_str() 
                                          encoding:[NSString defaultCStringEncoding]];
@@ -29,6 +30,19 @@ int get(const std::string& url, std::vector<u8>& content, std::string& contentTy
                                              encoding:[NSString defaultCStringEncoding]];
 	NSMutableURLRequest *urlRequest = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:nsurl]];
 	[urlRequest setValue:userAgent forHTTPHeaderField:@"User-Agent"];
+    if (reqHeaders != nullptr)
+    {
+        for (const auto& [ name, value ] : *reqHeaders)
+        {
+            NSString *nsname = [NSString stringWithCString:name.c_str()
+                                                  encoding:[NSString defaultCStringEncoding]];
+            NSString *nsvalue = [NSString stringWithCString:value.c_str()
+                                                   encoding:[NSString defaultCStringEncoding]];
+            [urlRequest setValue:nsvalue forHTTPHeaderField:nsname];
+        }
+    }
+    // TODO can't set a connection timeout apparently. Need to switch to asynchronous API
+    // but default timeout might be close to 30 s...
 	NSURLResponse *response = nil;
 	NSError *error = nil;
 	NSData *data = [NSURLConnection sendSynchronousRequest:urlRequest
@@ -37,11 +51,20 @@ int get(const std::string& url, std::vector<u8>& content, std::string& contentTy
 	if (error != nil)
 		return 500;
 
-	NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *)response; 
-	if (httpResponse.MIMEType != nil)
-		contentType = std::string([httpResponse.MIMEType UTF8String]);
-	else
-		contentType.clear();
+	NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *)response;
+	if (respHeaders != nullptr)
+	{
+		NSDictionary *headers = httpResponse.allHeaderFields;
+		NSEnumerator *enumerator = [headers keyEnumerator];
+		id key;
+		while ((key = [enumerator nextObject]))
+		{
+			std::string strkey([key UTF8String]);
+			string_tolower(strkey);
+			std::string strvalue([[headers objectForKey:key] UTF8String]);
+			respHeaders->emplace_back(strkey, strvalue);
+		}
+	}
 		
 	content.clear();
 	content.insert(content.begin(), (const u8 *)[data bytes], (const u8 *)[data bytes] + [data length]);

@@ -24,6 +24,7 @@ namespace http {
 
 using namespace Platform;
 using namespace Windows::Foundation;
+using namespace Windows::Foundation::Collections;
 using namespace Windows::Storage::Streams;
 using namespace Windows::Web::Http;
 using namespace Windows::Web::Http::Headers;
@@ -43,7 +44,25 @@ void term() {
 	httpClient = nullptr;
 }
 
-int get(const std::string& url, std::vector<u8>& content, std::string& contentType)
+static void getHeaders(IIterator<IKeyValuePair<String^, String^>^>^ it, Headers& headers)
+{
+	while (it->HasCurrent)
+	{
+		String^ key = it->Current->Key;
+		String^ value = it->Current->Value;
+		nowide::stackstring nwkey;
+		nowide::stackstring nwvalue;
+		if (nwkey.convert(key->Data()) && nwvalue.convert(value->Data()))
+		{
+			std::string strkey(nwkey.get());
+			string_tolower(strkey);
+			headers.emplace_back(strkey, nwvalue.get());
+		}
+		it->MoveNext();
+	}
+}
+
+int get(const std::string& url, std::vector<u8>& content, const Headers *reqHeaders, Headers *respHeaders)
 {
 	nowide::wstackstring wurl;
 	if (!wurl.convert(url.c_str()))
@@ -51,31 +70,42 @@ int get(const std::string& url, std::vector<u8>& content, std::string& contentTy
 	try
 	{
 		Uri^ uri = ref new Uri(ref new String(wurl.get()));
-		IAsyncOperationWithProgress<HttpResponseMessage^, HttpProgress>^ op = httpClient->GetAsync(uri);
+		HttpRequestMessage^ request = ref new HttpRequestMessage(HttpMethod::Get, uri);
+
+		if (reqHeaders != nullptr)
+		{
+			for (const auto& [ name, value ] : *reqHeaders)
+			{
+				nowide::wstackstring wname;
+				nowide::wstackstring wvalue;
+				if (wname.convert(name.c_str()) && wvalue.convert(value.c_str()))
+					request->Headers->Insert(ref new String(wname.get()), ref new String(wvalue.get()));
+			}
+		}
+
+		IAsyncOperationWithProgress<HttpResponseMessage^, HttpProgress>^ op = httpClient->SendRequestAsync(request);
 		cResetEvent asyncEvent;
 		op->Completed = ref new AsyncOperationWithProgressCompletedHandler<HttpResponseMessage^, HttpProgress>(
-				[&asyncEvent](IAsyncOperationWithProgress<HttpResponseMessage^, HttpProgress>^, AsyncStatus) {
+				[&asyncEvent](IAsyncOperationWithProgress<HttpResponseMessage^, HttpProgress>^, Windows::Foundation::AsyncStatus) {
 					asyncEvent.Set();
 		        });
-		asyncEvent.Wait();
+		if (!asyncEvent.Wait(30000))
+			return 408;
 		HttpResponseMessage^ resp = op->GetResults();
 
 		if (resp->IsSuccessStatusCode)
 		{
 			IHttpContent^ httpContent = resp->Content;
-			contentType.clear();
-			HttpMediaTypeHeaderValue^ contentTypeHeader = httpContent->Headers->ContentType;
-			if (contentTypeHeader != nullptr && contentTypeHeader->MediaType != nullptr)
-			{
-				String^ mediaType = contentTypeHeader->MediaType;
-				nowide::stackstring nwstring;
-				nwstring.convert(mediaType->Data());
-				contentType = nwstring.get();
+
+			if (respHeaders != nullptr) {
+				getHeaders(resp->Headers->First(), *respHeaders);
+				getHeaders(httpContent->Headers->First(), *respHeaders);
 			}
+
 			IAsyncOperationWithProgress<IBuffer^, uint64_t>^ readOp = httpContent->ReadAsBufferAsync();
 			asyncEvent.Reset();
 			readOp->Completed = ref new AsyncOperationWithProgressCompletedHandler<IBuffer^, uint64_t>(
-				[&asyncEvent](IAsyncOperationWithProgress<IBuffer^, uint64_t>^, AsyncStatus) {
+				[&asyncEvent](IAsyncOperationWithProgress<IBuffer^, uint64_t>^, Windows::Foundation::AsyncStatus) {
 					asyncEvent.Set();
 				});
 			asyncEvent.Wait();
@@ -116,10 +146,11 @@ int post(const std::string& url, const char *payload, const char *contentType, s
 		IAsyncOperationWithProgress<HttpResponseMessage^, HttpProgress>^ op = httpClient->PostAsync(uri, content);
 		cResetEvent asyncEvent;
 		op->Completed = ref new AsyncOperationWithProgressCompletedHandler<HttpResponseMessage^, HttpProgress>(
-			[&asyncEvent](IAsyncOperationWithProgress<HttpResponseMessage^, HttpProgress>^, AsyncStatus) {
+			[&asyncEvent](IAsyncOperationWithProgress<HttpResponseMessage^, HttpProgress>^, Windows::Foundation::AsyncStatus) {
 				asyncEvent.Set();
 			});
-		asyncEvent.Wait();
+		if (!asyncEvent.Wait(30000))
+			return 408;
 		HttpResponseMessage^ resp = op->GetResults();
 
 		if (resp->IsSuccessStatusCode)
@@ -128,7 +159,7 @@ int post(const std::string& url, const char *payload, const char *contentType, s
 			IAsyncOperationWithProgress<IBuffer^, uint64_t>^ readOp = httpContent->ReadAsBufferAsync();
 			asyncEvent.Reset();
 			readOp->Completed = ref new AsyncOperationWithProgressCompletedHandler<IBuffer^, uint64_t>(
-				[&asyncEvent](IAsyncOperationWithProgress<IBuffer^, uint64_t>^, AsyncStatus) {
+				[&asyncEvent](IAsyncOperationWithProgress<IBuffer^, uint64_t>^, Windows::Foundation::AsyncStatus) {
 					asyncEvent.Set();
 				});
 			asyncEvent.Wait();
@@ -148,7 +179,7 @@ int post(const std::string& url, const char *payload, const char *contentType, s
 }
 
 int post(const std::string & url, const std::vector<PostField>&fields) {
-	// not implemented
+	// not implemented (used by sentry minidump upload)
 	return 500;
 }
 

@@ -17,8 +17,29 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
  */
 #include "build.h"
-#if !defined(__ANDROID__) && !defined(__APPLE__)
 #include "http_client.h"
+#include "stdclass.h"
+
+namespace http
+{
+
+int get(const std::string& url, std::vector<u8>& content, std::string& contentType)
+{
+	Headers headers;
+	int code = get(url, content, nullptr, &headers);
+	for (const auto& [ key, value ] : headers)
+	{
+		if (key == "content-type") {
+			contentType = value;
+			break;
+		}
+	}
+	return code;
+}
+
+}
+
+#if !defined(__ANDROID__) && !defined(__APPLE__)
 
 #ifdef _WIN32
 #ifndef TARGET_UWP
@@ -33,45 +54,17 @@ static HINTERNET hInet;
 void init()
 {
 	if (hInet == NULL)
+	{
 		hInet = InternetOpen(getUserAgent().c_str(), INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, 0);
+		DWORD timeout = 30 * 1000; // 30 s
+		InternetSetOption(hInet, INTERNET_OPTION_CONNECT_TIMEOUT, &timeout, sizeof(timeout));
+	}
 }
 
-int get(const std::string& url, std::vector<u8>& content, std::string& contentType)
+static bool crackUrl(const std::string& url, URL_COMPONENTS& components)
 {
-	HINTERNET hUrl = InternetOpenUrl(hInet, url.c_str(), NULL, 0, INTERNET_FLAG_EXISTING_CONNECT | INTERNET_FLAG_NO_AUTH | INTERNET_FLAG_NO_UI, 0);
-	if (hUrl == NULL)
-	{
-		WARN_LOG(NETWORK, "Open URL failed: %lx", GetLastError());
-		return 500;
-	}
-
-	u8 buffer[4096];
-	DWORD bytesRead = sizeof(buffer);
-	if (HttpQueryInfo(hUrl, HTTP_QUERY_CONTENT_TYPE, buffer, &bytesRead, 0))
-		contentType = (const char *)buffer;
-
-	content.clear();
-	while (true)
-	{
-		if (!InternetReadFile(hUrl, buffer, sizeof(buffer), &bytesRead))
-		{
-			WARN_LOG(NETWORK, "InternetReadFile failed: %lx", GetLastError());
-			InternetCloseHandle(hUrl);
-			return 500;
-		}
-		if (bytesRead == 0)
-			break;
-		content.insert(content.end(), buffer, buffer + bytesRead);
-	}
-	InternetCloseHandle(hUrl);
-
-	return 200;
-}
-
-static int post(const std::string& url, const char *headers, const u8 *payload, u32 payloadSize, std::vector<u8>& reply)
-{
-	char scheme[16], host[256], path[256];
-	URL_COMPONENTS components{};
+	static char scheme[16], host[256], path[256];
+	components = {};
 	components.dwStructSize = sizeof(components);
 	components.lpszScheme = scheme;
 	components.dwSchemeLength = sizeof(scheme) / sizeof(scheme[0]);
@@ -80,17 +73,113 @@ static int post(const std::string& url, const char *headers, const u8 *payload, 
 	components.lpszUrlPath = path;
 	components.dwUrlPathLength = sizeof(path) / sizeof(path[0]);
 
-	if (!InternetCrackUrlA(url.c_str(), url.length(), 0, &components))
+	return InternetCrackUrlA(url.c_str(), url.length(), 0, &components);
+}
+
+static HINTERNET connect(const URL_COMPONENTS& comp) {
+	return InternetConnect(hInet, comp.lpszHostName, comp.nPort, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0);
+}
+
+int get(const std::string& url, std::vector<u8>& content, const Headers *reqHeaders, Headers *respHeaders)
+{
+	URL_COMPONENTS components;
+	if (!crackUrl(url, components))
 		return 500;
 
-	bool https = !strcmp(scheme, "https");
+	bool https = !strcmp(components.lpszScheme, "https");
 
 	int rc = 500;
-	HINTERNET ic = InternetConnect(hInet, host, components.nPort, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0);
+	HINTERNET ic = connect(components);
 	if (ic == NULL)
 		return rc;
 
-	HINTERNET hreq = HttpOpenRequest(ic, "POST", path, NULL, NULL, NULL, https ? INTERNET_FLAG_SECURE : 0, 0);
+	HINTERNET hreq = HttpOpenRequest(ic, "GET", components.lpszUrlPath, NULL, NULL, NULL, https ? INTERNET_FLAG_SECURE : 0, 0);
+	if (hreq == NULL) {
+		InternetCloseHandle(ic);
+		WARN_LOG(NETWORK, "Open URL failed: %lx", GetLastError());
+		return 500;
+	}
+	std::string headers;
+	if (reqHeaders != nullptr)
+	{
+		for (const auto& [ name, value ] : *reqHeaders)
+			headers += name + ": " + value + "\r\n";
+		HttpAddRequestHeaders(hreq, headers.c_str(), headers.length(), HTTP_ADDREQ_FLAG_ADD | HTTP_ADDREQ_FLAG_REPLACE);
+	}
+	if (!HttpSendRequest(hreq, nullptr, -1, nullptr, 0)) {
+		WARN_LOG(NETWORK, "HttpSendRequest Error %d", GetLastError());
+	}
+	else
+	{
+		if (respHeaders != nullptr)
+		{
+			std::string headers(4096, '\0');
+			DWORD size = headers.size();
+			DWORD index = 0;
+			if (!HttpQueryInfo(hreq, HTTP_QUERY_RAW_HEADERS, headers.data(), &size, &index)) {
+				WARN_LOG(NETWORK, "HttpQueryInfo Error %d", GetLastError());
+			}
+			else
+			{
+				headers.resize(size);
+				size_t pos = 0;
+				while (pos < headers.size())
+				{
+					size_t nulpos = headers.find('\0', pos);
+					if (nulpos == headers.npos)
+						break;
+					std::string line = headers.substr(pos, nulpos - pos);
+					if (line.empty())
+						break;
+					pos = nulpos + 1;
+					size_t colon = line.find(':');
+					if (colon == line.npos)
+						continue;
+					std::string name = trim_ws(line.substr(0, colon));
+					string_tolower(name);
+					std::string value = trim_ws(line.substr(colon + 1));
+					respHeaders->emplace_back(name, value);
+				}
+			}
+		}
+		u8 buffer[4096];
+		DWORD bytesRead = sizeof(buffer);
+
+		content.clear();
+		while (true)
+		{
+			if (!InternetReadFile(hreq, buffer, sizeof(buffer), &bytesRead))
+			{
+				WARN_LOG(NETWORK, "InternetReadFile failed: %lx", GetLastError());
+				InternetCloseHandle(hreq);
+				InternetCloseHandle(ic);
+				return 500;
+			}
+			if (bytesRead == 0)
+				break;
+			content.insert(content.end(), buffer, buffer + bytesRead);
+		}
+	}
+	InternetCloseHandle(hreq);
+	InternetCloseHandle(ic);
+
+	return 200;
+}
+
+static int post(const std::string& url, const char *headers, const u8 *payload, u32 payloadSize, std::vector<u8>& reply)
+{
+	URL_COMPONENTS components;
+	if (!crackUrl(url, components))
+		return 500;
+
+	bool https = !strcmp(components.lpszScheme, "https");
+
+	int rc = 500;
+	HINTERNET ic = connect(components);
+	if (ic == NULL)
+		return rc;
+
+	HINTERNET hreq = HttpOpenRequest(ic, "POST", components.lpszUrlPath, NULL, NULL, NULL, https ? INTERNET_FLAG_SECURE : 0, 0);
 	if (hreq == NULL) {
 		InternetCloseHandle(ic);
 		return rc;
@@ -235,12 +324,26 @@ static size_t receiveData(void *buffer, size_t size, size_t nmemb, std::vector<u
 	return nmemb * size;
 }
 
+static size_t receiveHeader(const char *buffer, size_t size, size_t nitems, Headers *headers)
+{
+	const char *sep = strchr(buffer, ':');
+	if (sep != nullptr)
+	{
+		std::string name = trim_ws(std::string(buffer, sep), " \t\r\n");
+		string_tolower(name);
+		std::string value = trim_ws(std::string(sep + 1, buffer + nitems), " \t\r\n");
+		headers->emplace_back(name, value);
+	}
+	return nitems;
+}
+
 static CURL *makeCurlEasy(const std::string& url)
 {
 	CURL *curl = curl_easy_init();
 	curl_easy_setopt(curl, CURLOPT_USERAGENT, getUserAgent().c_str());
 	curl_easy_setopt(curl, CURLOPT_AUTOREFERER, 1);
 	curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1);
+	curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 30);	// default is 300 s so 5 min
 
 	curl_easy_setopt(curl, CURLOPT_COOKIEFILE, "");
 
@@ -249,26 +352,32 @@ static CURL *makeCurlEasy(const std::string& url)
 	return curl;
 }
 
-int get(const std::string& url, std::vector<u8>& content, std::string& contentType)
+int get(const std::string& url, std::vector<u8>& content, const Headers *reqHeaders, Headers *respHeaders)
 {
 	CURL *curl = makeCurlEasy(url);
 
+	curl_slist *headers = nullptr;
+	if (reqHeaders != nullptr)
+	{
+		for (const auto& [ key, value ] : *reqHeaders)
+			headers = curl_slist_append(headers, (key + ": " + value).c_str());
+		curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+	}
 	std::vector<u8> recvBuffer;
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, receiveData);
 	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &recvBuffer);
+	if (respHeaders != nullptr) {
+		curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, receiveHeader);
+		curl_easy_setopt(curl, CURLOPT_HEADERDATA, respHeaders);
+	}
 	CURLcode res = curl_easy_perform(curl);
 	long httpCode = 500;
 	if (res == CURLE_OK)
 	{
 		curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &httpCode);
-		char *ct = nullptr;
-		curl_easy_getinfo(curl, CURLINFO_CONTENT_TYPE, &ct);
-		if (ct != nullptr)
-			contentType = ct;
-		else
-			contentType.clear();
 		content = recvBuffer;
 	}
+	curl_slist_free_all(headers);
 	curl_easy_cleanup(curl);
 
 	return (int)httpCode;
@@ -305,6 +414,10 @@ int post(const std::string& url, const char *payload, const char *contentType, s
 	return (int)httpCode;
 }
 
+static size_t nullCallback(char *ptr, size_t size, size_t nmemb, void *userdata) {
+	return size * nmemb;
+}
+
 int post(const std::string& url, const std::vector<PostField>& fields)
 {
 	CURL *curl = makeCurlEasy(url);
@@ -325,12 +438,14 @@ int post(const std::string& url, const std::vector<PostField>& fields)
 	}
 
 	curl_easy_setopt(curl, CURLOPT_MIMEPOST, mime);
+	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, nullCallback);
 
 	CURLcode res = curl_easy_perform(curl);
 
 	long httpCode = 500;
 	if (res == CURLE_OK)
 		curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &httpCode);
+	curl_mime_free(mime);
 	curl_easy_cleanup(curl);
 
 	return (int)httpCode;

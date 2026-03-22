@@ -33,19 +33,46 @@ namespace http {
     	jni::env()->CallVoidMethod(HttpClient, initMid, static_cast<jstring>(juserAgent));
     }
 
-    int get(const std::string &url, std::vector<u8> &content, std::string &contentType)
+    int get(const std::string &url, std::vector<u8> &content, const Headers *reqHeaders, Headers *respHeaders)
     {
         jni::String jurl(url);
         jni::ObjectArray<jni::ByteArray> contentOut(1);
-        jni::ObjectArray<jni::String> contentTypeOut(1);
+        jni::ObjectArray<jni::String> reqHeaderKeys;
+        jni::ObjectArray<jni::String> reqHeaderValues;
+        jni::ObjectArray<jni::ObjectArray<jni::String>> respHeaderKeys;
+        jni::ObjectArray<jni::ObjectArray<jni::String>> respHeaderValues;
+        if (reqHeaders != nullptr)
+        {
+            reqHeaderKeys = jni::ObjectArray<jni::String>(reqHeaders->size());
+            reqHeaderValues = jni::ObjectArray<jni::String>(reqHeaders->size());
+            for (size_t i = 0; i < reqHeaders->size(); i++) {
+            	reqHeaderKeys.setAt(i, jni::String(reqHeaders->at(i).first));
+            	reqHeaderValues.setAt(i, jni::String(reqHeaders->at(i).second));
+            }
+        }
+        if (respHeaders != nullptr)
+        {
+        	jni::ObjectArray<jni::String> tmp(1);
+        	respHeaderKeys = jni::ObjectArray<jni::ObjectArray<jni::String>>(1, tmp.getClass());
+        	respHeaderValues = jni::ObjectArray<jni::ObjectArray<jni::String>>(1, tmp.getClass());
+        }
 
         int httpStatus = jni::env()->CallIntMethod(HttpClient, openUrlMid,
         		static_cast<jstring>(jurl),
 				static_cast<jobjectArray>(contentOut),
-        		static_cast<jobjectArray>(contentTypeOut));
+        		static_cast<jobjectArray>(reqHeaderKeys),
+                static_cast<jobjectArray>(reqHeaderValues),
+                static_cast<jobjectArray>(respHeaderKeys),
+                static_cast<jobjectArray>(respHeaderValues));
 
         content = contentOut[0];
-        contentType = contentTypeOut[0];
+        if (respHeaders != nullptr)
+        {
+        	jni::ObjectArray<jni::String> keys = respHeaderKeys[0];
+        	jni::ObjectArray<jni::String> values = respHeaderValues[0];
+        	for (size_t i = 0; i < keys.size(); i++)
+        		respHeaders->emplace_back(keys[i], values[i]);
+        }
 
         return httpStatus;
     }
@@ -99,7 +126,13 @@ extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_emu_HttpClient_nativ
 {
     http::HttpClient = env->NewGlobalRef(obj);
     http::initMid = env->GetMethodID(env->GetObjectClass(obj), "init", "(Ljava/lang/String;)V");
-    http::openUrlMid = env->GetMethodID(env->GetObjectClass(obj), "openUrl", "(Ljava/lang/String;[[B[Ljava/lang/String;)I");
+    http::openUrlMid = env->GetMethodID(env->GetObjectClass(obj), "openUrl", "(Ljava/lang/String;"	// url
+    																		"[[B"					// content (out)
+    																		"[Ljava/lang/String;"	// req header names
+    																		"[Ljava/lang/String;"	// req header values
+    																		"[[Ljava/lang/String;"	// resp header names (out)
+    																		"[[Ljava/lang/String;"	// resp header values (out)
+    																		")I");
     http::postMid = env->GetMethodID(env->GetObjectClass(obj), "post", "(Ljava/lang/String;[Ljava/lang/String;[Ljava/lang/String;[Ljava/lang/String;)I");
     http::postRawMid = env->GetMethodID(env->GetObjectClass(obj), "post", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;[[B)I");
 }

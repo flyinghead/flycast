@@ -31,12 +31,12 @@ namespace http {
 void init();
 void term();
 
-int get(const std::string& url, std::vector<u8>& content, std::string& content_type);
+using Headers = std::vector<std::pair<std::string, std::string>>;
 
-static inline int get(const std::string& url, std::vector<u8>& content) {
-	 std::string contentType;
-	 return get(url, content, contentType);
-}
+int get(const std::string& url, std::vector<u8>& content,
+		const Headers *reqHeaders = nullptr, Headers *respHeaders = nullptr);
+
+int get(const std::string& url, std::vector<u8>& content, std::string& contentType);
 
 struct PostField
 {
