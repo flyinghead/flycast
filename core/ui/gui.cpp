@@ -40,6 +40,7 @@
 #include "oslib/resources.h"
 #include "achievements/achievements.h"
 #include "gui_achievements.h"
+#include "imgui/misc/freetype/imgui_freetype.h"
 #include "IconsFontAwesome6.h"
 #include <stb_image_write.h>
 #include "hw/pvr/Renderer_if.h"
@@ -199,19 +200,37 @@ static ImGuiKey keycodeToImGuiKey(u8 keycode)
 	}
 }
 
-struct FontEntry
+namespace FontFace
 {
-	const char* lang;      // "ja", "ko", "zh", "cjk" or nullptr for "generic"
-	std::string path;
-	float size;
-	int fontNo;
-	
-	FontEntry(const char* l, std::string p, float s, int fn) : lang(l), path(std::move(p)), size(s), fontNo(fn) {}
+	enum class Noto : ImU32 { Thin = 0x0, Light = 0x20000, DemiLight = 0x30000, Regular = 0x40000, Medium = 0x50000, Bold = 0x60000, Black = 0x70000 };
+	enum class PingFang : ImU32 { Ultralight = 15, Thin = 12, Light = 9, Regular = 0, Medium = 3, Semibold = 6 };
+	enum class GothicNeo : ImU32 { UltraLight = 12, Thin = 10, Light = 8, Regular = 0, Medium = 2, SemiBold = 4, ExtraBold = 14, Heavy = 16 };
+	enum class Gulim : ImU32 { Round = 0, RoundMono = 1, Sharp = 2, SharpMono = 3 };
+	enum class MSHei : ImU32 { Legacy = 0, UI = 1};
 };
 
-static void registerFont(std::vector<FontEntry>& target, const char* lang, const std::string& path, float size, int fontNo = 0)
+struct FontNo {
+	ImU32 value = 0;
+	
+	constexpr FontNo() = default;
+	constexpr FontNo(ImU32 v) : value(v) {}
+	
+	template <typename E, typename = std::enable_if_t<std::is_enum<E>::value>>
+	constexpr FontNo(E e) : value(static_cast<ImU32>(e)) {}
+};
+
+struct FontEntry {
+	const char* lang;		// "ja", "ko", "zh", "zh_HK", "zh_TW", "zh_CN", "cjk" or nullptr for "generic"
+	std::vector<std::string> paths;
+	FontNo fontNo{};
+	float size = 1.0f;
+	float offsetY = 0.0f;
+};
+
+static void registerFont(std::vector<FontEntry>& target, const FontEntry& entry)
 {
 	std::string locale = i18n::getCurrentLocale();
+
 	auto bucketRank = [&](const char* l) -> int
 	{
 		if (!l) return 3;                      // generic last
@@ -219,18 +238,24 @@ static void registerFont(std::vector<FontEntry>& target, const char* lang, const
 		if (locale.rfind(l, 0) == 0) return 1; // user locale
 		return 2;                              // remaining langs
 	};
-	
-	const int rank = bucketRank(lang);
+
+	const int rank = bucketRank(entry.lang);
 	auto it = target.begin();
 	for (; it != target.end(); ++it)
 	{
 		if (bucketRank(it->lang) > rank)
 			break;
 	}
-	target.emplace(it, lang, path, size, fontNo);
+	target.insert(it, entry);
 }
 
-static void loadFonts(const std::vector<FontEntry>& entries, ImFontConfig& cfg)
+static void registerFont(std::initializer_list<std::vector<FontEntry>*> targets, const FontEntry& entry)
+{
+	for (auto* target : targets)
+		registerFont(*target, entry);
+}
+
+static void loadFonts(const std::vector<FontEntry>& entries, const ImFontConfig& cfg)
 {
 	std::unordered_set<std::string> satisfiedLangs;
 	satisfiedLangs.reserve(8);
@@ -242,22 +267,52 @@ static void loadFonts(const std::vector<FontEntry>& entries, ImFontConfig& cfg)
 		const char* lang = e.lang ? e.lang : "generic";
 		
 		// Skip specific CJK langs if a generic CJK font already loaded
-		if (cjkLoaded && (!strcmp(lang, "ja") || !strcmp(lang, "ko") || !strcmp(lang, "zh")))
+		if (cjkLoaded && (!strcmp(lang, "ja") || !strcmp(lang, "ko") || !strncmp(lang, "zh", 2)))
 			continue;
 		
 		// Break-per-langTag
 		if (satisfiedLangs.count(lang))
 			continue;
 		
-		cfg.FontNo = e.fontNo;
-		ImFont* font = ImGui::GetIO().Fonts->AddFontFromFileTTF(e.path.c_str(), e.size, &cfg, nullptr);
+		bool loaded = false;
 		
-		if (!font)
+		for (const std::string& path : e.paths)
+		{
+			ImFontConfig entryCfg = cfg;
+			entryCfg.FontNo = e.fontNo.value;
+			entryCfg.GlyphOffset.y = e.size * e.offsetY;
+			static ImWchar faRanges[] = { ICON_MIN_FA, ICON_MAX_FA, 0 };
+			entryCfg.GlyphExcludeRanges = faRanges;
+			
+			ImFont* font = ImGui::GetIO().Fonts->AddFontFromFileTTF(path.c_str(), e.size, &entryCfg, nullptr);
+			if (font)
+			{
+				loaded = true;
+				break;
+			}
+		}
+		
+		if (!loaded)
 			continue;
 		
 		// Mark this lang as satisfied
 		satisfiedLangs.emplace(lang);
 		
+		// Traditional Chinese group: TW and HK satisfy each other
+		if (strcmp(lang, "zh_HK") == 0 || strcmp(lang, "zh_TW") == 0)
+		{
+			satisfiedLangs.emplace("zh_HK");
+			satisfiedLangs.emplace("zh_TW");
+		}
+
+		// Umbrella rule: zh satisfies all specific Chinese locales
+		if (strcmp(lang, "zh") == 0)
+		{
+			satisfiedLangs.emplace("zh_HK");
+			satisfiedLangs.emplace("zh_TW");
+			satisfiedLangs.emplace("zh_CN");
+		}
+
 		// Special rule: cjk satisfies all CJK languages
 		if (strcmp(lang, "cjk") == 0)
 		{
@@ -265,6 +320,9 @@ static void loadFonts(const std::vector<FontEntry>& entries, ImFontConfig& cfg)
 			satisfiedLangs.emplace("ja");
 			satisfiedLangs.emplace("ko");
 			satisfiedLangs.emplace("zh");
+			satisfiedLangs.emplace("zh_HK");
+			satisfiedLangs.emplace("zh_TW");
+			satisfiedLangs.emplace("zh_CN");
 		}
 	}
 }
@@ -303,123 +361,355 @@ void gui_initFonts()
 	if (settings.display.uiScale > 1)
 		ImGui::GetStyle().ScaleAllSizes(settings.display.uiScale);
 
-    static const ImWchar ranges[] =
-    {
-    	0x0020, 0xFFFF, // All chars
-        0,
-    };
-
 	ImGuiIO& io = ImGui::GetIO();
 	io.Fonts->Clear();
-
+	io.Fonts->SetFontLoader(ImGuiFreeType::GetFontLoader());
+	
 	// Regular font
+	ImGuiStyle& style = ImGui::GetStyle();
 	const float fontSize = uiScaled(17.f);
+	style.FontSizeBase = fontSize;
+	
 	size_t dataSize;
 	std::unique_ptr<u8[]> data = resource::load("fonts/Roboto-Medium.ttf", dataSize);
 	verify(data != nullptr);
-	ImFont *regularFont = io.Fonts->AddFontFromMemoryTTF(data.release(), dataSize, fontSize, nullptr, ranges);
-    ImFontConfig fontConfig;
-    fontConfig.MergeMode = true;
-    fontConfig.DstFont = regularFont;
-	// Font Awesome symbols (added to default font)
-	data = resource::load("fonts/" FONT_ICON_FILE_NAME_FAS, dataSize);
+	ImFont *regularFont = io.Fonts->AddFontFromMemoryTTF(data.release(), (int)dataSize, fontSize, nullptr, nullptr);
+	ImFontConfig fontConfig;
+	fontConfig.MergeMode = true;
+	fontConfig.DstFont = regularFont;
+	
+	// Bold font
+	data = resource::load("fonts/Roboto-Bold.ttf", dataSize);
 	verify(data != nullptr);
-    fontConfig.FontNo = 0;
-	static ImWchar faRanges[] = { ICON_MIN_FA, ICON_MAX_FA, 0 };
-	io.Fonts->AddFontFromMemoryTTF(data.release(), dataSize, fontSize, &fontConfig, faRanges);
-
-	// Large font
-    const float largeFontSize = uiScaled(21.f);
-	data = resource::load("fonts/Roboto-Medium.ttf", dataSize);
-	verify(data != nullptr);
-	largeFont = io.Fonts->AddFontFromMemoryTTF(data.release(), dataSize, largeFontSize, nullptr, ranges);
-	ImFontConfig largeFontConfig;
-	largeFontConfig.MergeMode = true;
-	largeFontConfig.DstFont = largeFont;
-
+	largeFont = io.Fonts->AddFontFromMemoryTTF(data.release(), (int)dataSize, fontSize, nullptr, nullptr);
+	ImFontConfig boldFontConfig;
+	boldFontConfig.MergeMode = true;
+	boldFontConfig.DstFont = largeFont;
+	
 	std::vector<FontEntry> fonts;
-	std::vector<FontEntry> largeFonts;
+	std::vector<FontEntry> boldFonts;
 	fontConfig.Flags |= ImFontFlags_NoLoadError;
-	largeFontConfig.Flags |= ImFontFlags_NoLoadError;
+	boldFontConfig.Flags |= ImFontFlags_NoLoadError;
+	
+	ImFontConfig emojiConfig = fontConfig;
+	emojiConfig.FontLoaderFlags |= ImGuiFreeTypeLoaderFlags_LoadColor | ImGuiFreeTypeBuilderFlags_Bitmap;
+	ImFontConfig emojiBoldConfig = boldFontConfig;
+	emojiBoldConfig.FontLoaderFlags |= ImGuiFreeTypeLoaderFlags_LoadColor | ImGuiFreeTypeBuilderFlags_Bitmap;
 	
 #ifdef _WIN32
+	// Windows
 	std::string fontDir = std::string(nowide::getenv("SYSTEMROOT")) + "\\Fonts\\";
-	// Japanese
-	registerFont(fonts,      "ja", fontDir + "msgothic.ttc", fontSize * 0.9f, 2);
-	registerFont(fonts,      "ja", fontDir + "Meiryo.ttc", fontSize * 0.9f, 2);
-	registerFont(largeFonts, "ja", fontDir + "msgothic.ttc", largeFontSize * 0.9f, 2);
-	registerFont(largeFonts, "ja", fontDir + "Meiryo.ttc", largeFontSize * 0.9f, 2);
-	// Korean
-	registerFont(fonts,      "ko", fontDir + "Malgun.ttf", fontSize);
-	registerFont(fonts,      "ko", fontDir + "Gulim.ttc", fontSize);
-	registerFont(largeFonts, "ko", fontDir + "Malgun.ttf", largeFontSize, 2);
-	registerFont(largeFonts, "ko", fontDir + "Gulim.ttc", largeFontSize, 2);
-	// Chinese
-	registerFont(fonts,      "zh", fontDir + "Msjh.ttc", fontSize * 1.1f, 1);
-	registerFont(fonts,      "zh", fontDir + "MSJH.ttf", fontSize * 1.1f);
-	registerFont(fonts,      "zh", fontDir + "Simsun.ttc", fontSize * 0.9f);
-	registerFont(largeFonts, "zh", fontDir + "Msjh.ttc", largeFontSize * 1.1f, 1);
-	registerFont(largeFonts, "zh", fontDir + "MSJH.ttf", largeFontSize * 1.1f);
-	registerFont(largeFonts, "zh", fontDir + "Simsun.ttc", largeFontSize * 0.9f);
 	
-#elif defined(__APPLE__) && !defined(TARGET_IPHONE)
-	// Japanese
-	registerFont(fonts,      "ja", "/System/Library/Fonts/ヒラギノ角ゴシック W5.ttc", fontSize * 0.85f);
-	registerFont(largeFonts, "ja", "/System/Library/Fonts/ヒラギノ角ゴシック W5.ttc", largeFontSize * 0.85f);
-	// Korean
-	registerFont(fonts,      "ko", "/System/Library/Fonts/AppleSDGothicNeo.ttc", fontSize, 4); // SemiBold
-	registerFont(largeFonts, "ko", "/System/Library/Fonts/AppleSDGothicNeo.ttc", largeFontSize, 4); // SemiBold
-	// Chinese
-	registerFont(fonts,      "zh", "/System/Library/Fonts/PingFang.ttc", fontSize * 1.18f, 3); // Medium
-	registerFont(largeFonts, "zh", "/System/Library/Fonts/PingFang.ttc", largeFontSize * 1.18f, 3); // Medium
+	ImGui::GetIO().Fonts->AddFontFromFileTTF((fontDir + "seguiemj.ttf").c_str(), fontSize, &emojiConfig);
+	ImGui::GetIO().Fonts->AddFontFromFileTTF((fontDir + "seguiemj.ttf").c_str(), fontSize, &emojiBoldConfig);
+
+	registerFont(fonts,     { .lang="ja", .paths={fontDir + "NotoSansJP-VF.ttf"}, .fontNo=FontFace::Noto::Medium, .size=fontSize * 1.05f });
+	registerFont(boldFonts, { .lang="ja", .paths={fontDir + "NotoSansJP-VF.ttf"}, .fontNo=FontFace::Noto::Bold,   .size=fontSize * 1.05f });
+	registerFont({&fonts, &boldFonts}, { .lang="ja", .paths={fontDir + "BIZ-UDGothicB.ttc"}, .size=fontSize * 0.85f });
+
+	registerFont(fonts,     { .lang="ko", .paths={fontDir + "NotoSansKR-VF.ttf"}, .fontNo=FontFace::Noto::Medium, .size=fontSize * 1.05f });
+	registerFont(boldFonts, { .lang="ko", .paths={fontDir + "NotoSansKR-VF.ttf"}, .fontNo=FontFace::Noto::Bold,   .size=fontSize * 1.05f });
+	registerFont({&fonts, &boldFonts}, { .lang="ko", .paths={fontDir + "malgunbd.ttf"}, .size=fontSize * 1.124891f });
+	registerFont({&fonts, &boldFonts}, { .lang="ko", .paths={fontDir + "Gulim.ttc"}, .fontNo=FontFace::Gulim::Sharp, .size=fontSize * 0.9f });
+
+	registerFont(fonts,     { .lang="zh_HK", .paths={fontDir + "NotoSansHK-VF.ttf"}, .fontNo=FontFace::Noto::Medium, .size=fontSize * 1.05f });
+	registerFont(boldFonts, { .lang="zh_HK", .paths={fontDir + "NotoSansHK-VF.ttf"}, .fontNo=FontFace::Noto::Bold,   .size=fontSize * 1.05f });
+	registerFont(fonts,     { .lang="zh_TW", .paths={fontDir + "NotoSansTC-VF.ttf"}, .fontNo=FontFace::Noto::Medium, .size=fontSize * 1.05f });
+	registerFont(boldFonts, { .lang="zh_TW", .paths={fontDir + "NotoSansTC-VF.ttf"}, .fontNo=FontFace::Noto::Bold,   .size=fontSize * 1.05f });
+	registerFont(fonts,     { .lang="zh_CN", .paths={fontDir + "NotoSansSC-VF.ttf"}, .fontNo=FontFace::Noto::Medium, .size=fontSize * 1.05f });
+	registerFont(boldFonts, { .lang="zh_CN", .paths={fontDir + "NotoSansSC-VF.ttf"}, .fontNo=FontFace::Noto::Bold,   .size=fontSize * 1.05f });
+
+	registerFont({&fonts, &boldFonts}, { .lang="zh_HK", .paths={fontDir + "msjhbd.ttc"}, .fontNo=FontFace::MSHei::UI, .size=fontSize * 1.13000f, .offsetY=0.015f });
+	registerFont({&fonts, &boldFonts}, { .lang="zh_TW", .paths={fontDir + "msjhbd.ttc"}, .fontNo=FontFace::MSHei::UI, .size=fontSize * 1.13000f, .offsetY=0.015f });
+	registerFont({&fonts, &boldFonts}, { .lang="zh_CN", .paths={fontDir + "msyhbd.ttc"}, .fontNo=FontFace::MSHei::UI, .size=fontSize * 1.13000f, .offsetY=0.015f });
+
+	// Windows 7
+	registerFont({&fonts, &boldFonts}, { .lang="zh_HK", .paths={fontDir + "msjhbd.ttf"}, .size=fontSize * 1.13000f, .offsetY=0.015f });
+	registerFont({&fonts, &boldFonts}, { .lang="zh_TW", .paths={fontDir + "msjhbd.ttf"}, .size=fontSize * 1.13000f, .offsetY=0.015f });
+	registerFont({&fonts, &boldFonts}, { .lang="zh_CN", .paths={fontDir + "msyhbd.ttf"}, .size=fontSize * 1.13000f, .offsetY=0.015f });
+	
+#elif defined(TARGET_OS_MAC)
+	emojiConfig.GlyphOffset = { 0.0f, fontSize * (0.2f) };
+	emojiBoldConfig.GlyphOffset = emojiConfig.GlyphOffset;
+	ImGui::GetIO().Fonts->AddFontFromFileTTF("/System/Library/Fonts/Apple Color Emoji.ttc", fontSize, &emojiConfig);
+	ImGui::GetIO().Fonts->AddFontFromFileTTF("/System/Library/Fonts/Apple Color Emoji.ttc", fontSize, &emojiBoldConfig);
+
+	registerFont(fonts,		{ .lang = "ja", .paths = { "/System/Library/Fonts/ヒラギノ角ゴシック W5.ttc" }, .size=fontSize * 0.85f } );
+	registerFont(boldFonts,	{ .lang = "ja", .paths = { "/System/Library/Fonts/ヒラギノ角ゴシック W7.ttc" }, .size=fontSize * 0.85f } );
+
+	registerFont({&fonts, &boldFonts}, { .lang="ko", .paths = { "/System/Library/Fonts/AppleSDGothicNeo.ttc" }, .fontNo=FontFace::GothicNeo::SemiBold, .size=fontSize * 1.05f });
+
+	registerFont(fonts,		{ .lang="zh", .paths = { "/System/Library/Fonts/PingFang.ttc" }, .fontNo=FontFace::PingFang::Medium, .size=fontSize * 1.185f, .offsetY=-0.03f });
+	registerFont(boldFonts,	{ .lang="zh", .paths = { "/System/Library/Fonts/PingFang.ttc" }, .fontNo=FontFace::PingFang::Semibold, .size=fontSize * 1.185f, .offsetY=-0.03f });
 	
 #elif defined(__ANDROID__)
-	registerFont(fonts,      "cjk", "/system/fonts/NotoSansCJK-Medium.ttc", fontSize);
-	registerFont(largeFonts, "cjk", "/system/fonts/NotoSansCJK-Medium.ttc", largeFontSize);
+	ImGui::GetIO().Fonts->AddFontFromFileTTF("/system/fonts/NotoColorEmoji.ttf", fontSize, &emojiConfig);
+	ImGui::GetIO().Fonts->AddFontFromFileTTF("/system/fonts/NotoColorEmoji.ttf", fontSize, &emojiBoldConfig);
+
+	registerFont(fonts,     { .lang="cjk", .paths={ "/system/fonts/NotoSansCJK-Medium.ttc" }, .size=fontSize * 1.05f });
+	registerFont(boldFonts, { .lang="cjk", .paths={ "/system/fonts/NotoSansCJK-Bold.ttc" }, .size=fontSize * 1.05f });
 	
 #elif defined(__linux__)
+	for (const char* path : {
+		"/usr/share/fonts/truetype/noto/NotoColorEmoji.ttf",
+		"/usr/share/fonts/noto/NotoColorEmoji.ttf",
+		"/usr/share/fonts/google-noto-emoji/NotoColorEmoji.ttf",
+		"/usr/local/share/fonts/NotoColorEmoji.ttf",
+		"/usr/share/fonts/noto-emoji/NotoColorEmoji.ttf",
+		"/usr/share/fonts/TTF/NotoColorEmoji.ttf"
+	}) {
+		if (ImGui::GetIO().Fonts->AddFontFromFileTTF(path, fontSize, &emojiConfig))
+		{
+			ImGui::GetIO().Fonts->AddFontFromFileTTF(path, fontSize, &emojiBoldConfig);
+			break;
+		}
+	}
+	registerFont(fonts, { .lang="cjk", .paths={
+		"/usr/share/fonts/opentype/noto/NotoSansCJK-Medium.ttc",
+		"/usr/share/fonts/noto-cjk/NotoSansCJK-Medium.ttc",
+		"/usr/share/fonts/truetype/noto/NotoSansCJK-Medium.ttc",
+		"/usr/share/fonts/google-noto-cjk/NotoSansCJK-Medium.ttc",
+		"/usr/share/fonts/TTF/NotoSansCJK-Medium.ttc",
+		"/usr/local/share/fonts/NotoSansCJK-Medium.ttc",
+		"/usr/local/share/fonts/noto/NotoSansCJK-Medium.ttc",
+		"/usr/local/share/fonts/noto-cjk/NotoSansCJK-Medium.ttc",
+		"/usr/share/fonts/opentype/noto-cjk/NotoSansCJK-Medium.ttc"
+	}, .size=fontSize * 1.05f });
+	registerFont(boldFonts, { .lang="cjk", .paths={
+		"/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc",
+		"/usr/share/fonts/noto-cjk/NotoSansCJK-Bold.ttc",
+		"/usr/share/fonts/truetype/noto/NotoSansCJK-Bold.ttc",
+		"/usr/share/fonts/google-noto-cjk/NotoSansCJK-Bold.ttc",
+		"/usr/share/fonts/TTF/NotoSansCJK-Bold.ttc",
+		"/usr/local/share/fonts/NotoSansCJK-Bold.ttc",
+		"/usr/local/share/fonts/noto/NotoSansCJK-Bold.ttc",
+		"/usr/local/share/fonts/noto-cjk/NotoSansCJK-Bold.ttc",
+		"/usr/share/fonts/opentype/noto-cjk/NotoSansCJK-Bold.ttc"
+	}, .size=fontSize * 1.05f });
+	registerFont({&fonts, &boldFonts}, { .lang="cjk", .paths={
+		"/usr/share/fonts/truetype/droid/DroidSansFallbackFull.ttf",
+		"/usr/share/fonts/droid/DroidSansFallbackFull.ttf",
+		"/usr/share/fonts/truetype/DroidSansFallbackFull.ttf",
+		"/usr/share/fonts/TTF/DroidSansFallbackFull.ttf",
+		"/usr/local/share/fonts/DroidSansFallbackFull.ttf",
+		"/usr/local/share/fonts/droid/DroidSansFallbackFull.ttf"
+	}, .size=fontSize * 1.2f });
 	
-	// Japanese
-	registerFont(fonts,      "ja", "/usr/share/fonts/opentype/ipafont-gothic/ipagp.ttf", fontSize);
-	registerFont(fonts,      "ja", "/usr/share/fonts/ipa-pgothic-fonts/ipagp.ttf", fontSize); // redhat
-	registerFont(fonts,      "ja", "/usr/share/fonts/truetype/takao-gothic/TakaoPGothic.ttf", fontSize);
-	registerFont(fonts,      "ja", "/usr/share/fonts/adobe-source-han-sans-jp-fonts/SourceHanSansJP-Regular.otf", fontSize);
-	registerFont(fonts,      "ja", "/usr/share/fonts/vl-gothic-fonts/VL-Gothic-Regular.ttf", fontSize); // redhat
-	registerFont(largeFonts, "ja", "/usr/share/fonts/opentype/ipafont-gothic/ipagp.ttf", largeFontSize);
-	registerFont(largeFonts, "ja", "/usr/share/fonts/ipa-pgothic-fonts/ipagp.ttf", largeFontSize); // redhat
-	registerFont(largeFonts, "ja", "/usr/share/fonts/truetype/takao-gothic/TakaoPGothic.ttf", largeFontSize);
-	registerFont(largeFonts, "ja", "/usr/share/fonts/adobe-source-han-sans-jp-fonts/SourceHanSansJP-Bold.otf", largeFontSize);
-	registerFont(largeFonts, "ja", "/usr/share/fonts/vl-gothic-fonts/VL-Gothic-Regular.ttf", largeFontSize); // redhat
+	registerFont(fonts, { .lang="ja", .paths={
+		"/usr/share/fonts/opentype/adobe-source-han-sans-jp/SourceHanSansJP-Medium.otf",
+		"/usr/share/fonts/adobe-source-han-sans-jp-fonts/SourceHanSansJP-Medium.otf",
+		"/usr/share/fonts/opentype/source-han-sans-jp/SourceHanSansJP-Medium.otf",
+		"/usr/share/fonts/source-han-sans-jp/SourceHanSansJP-Medium.otf",
+		"/usr/share/fonts/opentype/adobe-source-han-sans/SourceHanSansJP-Medium.otf",
+		"/usr/share/fonts/adobe-source-han-sans/SourceHanSansJP-Medium.otf",
+		"/usr/local/share/fonts/SourceHanSansJP-Medium.otf",
+		"/usr/local/share/fonts/adobe-source-han-sans-jp/SourceHanSansJP-Medium.otf",
+		"/usr/local/share/fonts/source-han-sans-jp/SourceHanSansJP-Medium.otf"
+	}, .size=fontSize * 1.05f });
+	registerFont(boldFonts, { .lang="ja", .paths={
+		"/usr/share/fonts/opentype/adobe-source-han-sans-jp/SourceHanSansJP-Bold.otf",
+		"/usr/share/fonts/adobe-source-han-sans-jp-fonts/SourceHanSansJP-Bold.otf",
+		"/usr/share/fonts/opentype/source-han-sans-jp/SourceHanSansJP-Bold.otf",
+		"/usr/share/fonts/source-han-sans-jp/SourceHanSansJP-Bold.otf",
+		"/usr/share/fonts/opentype/adobe-source-han-sans/SourceHanSansJP-Bold.otf",
+		"/usr/share/fonts/adobe-source-han-sans/SourceHanSansJP-Bold.otf",
+		"/usr/local/share/fonts/SourceHanSansJP-Bold.otf",
+		"/usr/local/share/fonts/adobe-source-han-sans-jp/SourceHanSansJP-Bold.otf",
+		"/usr/local/share/fonts/source-han-sans-jp/SourceHanSansJP-Bold.otf"
+	}, .size=fontSize * 1.05f });
+	registerFont({&fonts, &boldFonts}, { .lang="ja", .paths={
+		"/usr/share/fonts/opentype/ipafont-gothic/ipagp.ttf",
+		"/usr/share/fonts/ipa-pgothic-fonts/ipagp.ttf",
+		"/usr/share/fonts/truetype/ipafont-gothic/ipagp.ttf",
+		"/usr/share/fonts/truetype/ipa-pgothic/ipagp.ttf",
+		"/usr/share/fonts/TTF/ipagp.ttf",
+		"/usr/local/share/fonts/ipagp.ttf",
+		"/usr/local/share/fonts/ipafont-gothic/ipagp.ttf",
+		"/usr/local/share/fonts/ipa-pgothic/ipagp.ttf"
+	}, .size=fontSize * 0.9f });
+	registerFont({&fonts, &boldFonts}, { .lang="ja", .paths={
+		"/usr/share/fonts/vl-gothic-fonts/VL-Gothic-Regular.ttf",
+		"/usr/share/fonts/truetype/vlgothic/VL-Gothic-Regular.ttf",
+		"/usr/share/fonts/vlgothic/VL-Gothic-Regular.ttf",
+		"/usr/share/fonts/truetype/vl-gothic/VL-Gothic-Regular.ttf",
+		"/usr/share/fonts/TTF/VL-Gothic-Regular.ttf",
+		"/usr/local/share/fonts/VL-Gothic-Regular.ttf",
+		"/usr/local/share/fonts/vl-gothic/VL-Gothic-Regular.ttf",
+		"/usr/local/share/fonts/vlgothic/VL-Gothic-Regular.ttf"
+	}, .size=fontSize * 1.15f });
+	registerFont({&fonts, &boldFonts}, { .lang="ja", .paths={
+		"/usr/share/fonts/truetype/takao-gothic/TakaoPGothic.ttf",
+		"/usr/share/fonts/takao-gothic/TakaoPGothic.ttf",
+		"/usr/share/fonts/truetype/takao/TakaoPGothic.ttf",
+		"/usr/share/fonts/TTF/TakaoPGothic.ttf",
+		"/usr/local/share/fonts/TakaoPGothic.ttf",
+		"/usr/local/share/fonts/takao-gothic/TakaoPGothic.ttf",
+		"/usr/local/share/fonts/takao/TakaoPGothic.ttf"
+	}, .size=fontSize });
 	
-	// Korean
-	registerFont(fonts,      "ko", "/usr/share/fonts/truetype/unfonts-core/UnDotum.ttf", fontSize);
-	registerFont(fonts,      "ko", "/usr/share/fonts/baekmuk-dotum-fonts/dotum.ttf", fontSize); // redhat
-	registerFont(fonts,      "ko", "/usr/share/fonts/adobe-source-han-sans-kr-fonts/SourceHanSansKR-Regular.otf", fontSize); // redhat
-	registerFont(fonts,      "ko", "/usr/share/fonts/naver-nanum-gothic-coding-fonts/NanumGothic_Coding.ttf", fontSize); // redhat
-	registerFont(largeFonts, "ko", "/usr/share/fonts/truetype/unfonts-core/UnDotumBold.ttf", largeFontSize);
-	registerFont(largeFonts, "ko", "/usr/share/fonts/baekmuk-dotum-fonts/dotum.ttf", largeFontSize); // redhat
-	registerFont(largeFonts, "ko", "/usr/share/fonts/adobe-source-han-sans-kr-fonts/SourceHanSansKR-Bold.otf", largeFontSize); // redhat
-	registerFont(largeFonts, "ko", "/usr/share/fonts/naver-nanum-gothic-coding-fonts/NanumGothic_Coding_Bold.ttf", largeFontSize); // redhat
+	registerFont(fonts, { .lang="ko", .paths={
+		"/usr/share/fonts/opentype/adobe-source-han-sans-kr/SourceHanSansKR-Medium.otf",
+		"/usr/share/fonts/adobe-source-han-sans-kr-fonts/SourceHanSansKR-Medium.otf",
+		"/usr/share/fonts/opentype/source-han-sans-kr/SourceHanSansKR-Medium.otf",
+		"/usr/share/fonts/source-han-sans-kr/SourceHanSansKR-Medium.otf",
+		"/usr/share/fonts/opentype/adobe-source-han-sans/SourceHanSansKR-Medium.otf",
+		"/usr/share/fonts/adobe-source-han-sans/SourceHanSansKR-Medium.otf",
+		"/usr/local/share/fonts/SourceHanSansKR-Medium.otf",
+		"/usr/local/share/fonts/adobe-source-han-sans-kr/SourceHanSansKR-Medium.otf",
+		"/usr/local/share/fonts/source-han-sans-kr/SourceHanSansKR-Medium.otf"
+	}, .size=fontSize * 1.05f });
+	registerFont(boldFonts, { .lang="ko", .paths={
+		"/usr/share/fonts/opentype/adobe-source-han-sans-kr/SourceHanSansKR-Bold.otf",
+		"/usr/share/fonts/adobe-source-han-sans-kr-fonts/SourceHanSansKR-Bold.otf",
+		"/usr/share/fonts/opentype/source-han-sans-kr/SourceHanSansKR-Bold.otf",
+		"/usr/share/fonts/source-han-sans-kr/SourceHanSansKR-Bold.otf",
+		"/usr/share/fonts/opentype/adobe-source-han-sans/SourceHanSansKR-Bold.otf",
+		"/usr/share/fonts/adobe-source-han-sans/SourceHanSansKR-Bold.otf",
+		"/usr/local/share/fonts/SourceHanSansKR-Bold.otf",
+		"/usr/local/share/fonts/adobe-source-han-sans-kr/SourceHanSansKR-Bold.otf",
+		"/usr/local/share/fonts/source-han-sans-kr/SourceHanSansKR-Bold.otf"
+	}, .size=fontSize * 1.05f });
 	
-	// Chinese
-	registerFont(fonts,      "zh", "/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc", fontSize);
-	registerFont(fonts,      "zh", "/usr/share/fonts/wqy-zenhei-fonts/wqy-zenhei.ttc", fontSize); // redhat
-	registerFont(largeFonts, "zh", "/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc", largeFontSize);
-	registerFont(largeFonts, "zh", "/usr/share/fonts/wqy-zenhei-fonts/wqy-zenhei.ttc", largeFontSize); // redhat
+	registerFont(fonts, { .lang="ko", .paths={
+		"/usr/share/fonts/truetype/nanum/NanumGothicBold.ttf",
+		"/usr/share/fonts/nanum/NanumGothicBold.ttf",
+		"/usr/share/fonts/truetype/nanum-gothic/NanumGothicBold.ttf",
+		"/usr/share/fonts/opentype/nanum/NanumGothicBold.ttf",
+		"/usr/share/fonts/TTF/NanumGothicBold.ttf",
+		"/usr/local/share/fonts/NanumGothicBold.ttf",
+		"/usr/local/share/fonts/nanum/NanumGothicBold.ttf",
+		"/usr/local/share/fonts/nanum-gothic/NanumGothicBold.ttf"
+	}, .size=fontSize * 0.8f });
+	registerFont(boldFonts, { .lang="ko", .paths={
+		"/usr/share/fonts/truetype/nanum/NanumGothicExtraBold.ttf",
+		"/usr/share/fonts/nanum/NanumGothicExtraBold.ttf",
+		"/usr/share/fonts/truetype/nanum-gothic/NanumGothicExtraBold.ttf",
+		"/usr/share/fonts/opentype/nanum/NanumGothicExtraBold.ttf",
+		"/usr/share/fonts/TTF/NanumGothicExtraBold.ttf",
+		"/usr/local/share/fonts/NanumGothicExtraBold.ttf",
+		"/usr/local/share/fonts/nanum/NanumGothicExtraBold.ttf",
+		"/usr/local/share/fonts/nanum-gothic/NanumGothicExtraBold.ttf"
+	}, .size=fontSize * 0.8f });
+	registerFont({&fonts, &boldFonts}, { .lang="ko", .paths={
+		"/usr/share/fonts/naver-nanum-gothic-coding-fonts/NanumGothic_Coding_Bold.ttf",
+		"/usr/share/fonts/truetype/nanum/NanumGothicCoding-Bold.ttf",
+		"/usr/share/fonts/nanum/NanumGothicCoding-Bold.ttf",
+		"/usr/share/fonts/truetype/nanum-coding/NanumGothicCoding-Bold.ttf",
+		"/usr/share/fonts/TTF/NanumGothicCoding-Bold.ttf",
+		"/usr/local/share/fonts/NanumGothicCoding-Bold.ttf",
+		"/usr/local/share/fonts/nanum/NanumGothicCoding-Bold.ttf",
+		"/usr/local/share/fonts/nanum-coding/NanumGothicCoding-Bold.ttf"
+	}, .size=fontSize * 0.8f  });
+	registerFont({&fonts, &boldFonts}, { .lang="ko", .paths={
+		"/usr/share/fonts/truetype/unfonts-core/UnDotumBold.ttf",
+		"/usr/share/fonts/unfonts-core/UnDotumBold.ttf",
+		"/usr/share/fonts/truetype/unfonts/UnDotumBold.ttf",
+		"/usr/share/fonts/TTF/UnDotumBold.ttf",
+		"/usr/local/share/fonts/UnDotumBold.ttf",
+		"/usr/local/share/fonts/unfonts-core/UnDotumBold.ttf",
+		"/usr/local/share/fonts/unfonts/UnDotumBold.ttf"
+	}, .size=fontSize, .offsetY=-0.1f });
+	registerFont({&fonts, &boldFonts}, { .lang="ko", .paths={
+		"/usr/share/fonts/baekmuk-dotum-fonts/dotum.ttf",
+		"/usr/share/fonts/truetype/baekmuk/dotum.ttf",
+		"/usr/share/fonts/baekmuk/dotum.ttf",
+		"/usr/share/fonts/truetype/dotum/dotum.ttf",
+		"/usr/share/fonts/TTF/dotum.ttf",
+		"/usr/local/share/fonts/dotum.ttf",
+		"/usr/local/share/fonts/baekmuk/dotum.ttf",
+		"/usr/local/share/fonts/baekmuk-dotum-fonts/dotum.ttf"
+	}, .size=fontSize * 1.18f, .offsetY=-0.02f });
 	
-	// CJK
-	registerFont(fonts,      "cjk", "/usr/share/fonts/truetype/droid/DroidSansFallbackFull.ttf", fontSize);
-	registerFont(fonts,      "cjk", "/usr/share/fonts/opentype/noto/NotoSansCJK-Medium.ttc", fontSize);
-	registerFont(fonts,      "cjk", "/usr/share/fonts/google-noto-cjk/NotoSansCJK-Medium.ttc", fontSize); // redhat
-	registerFont(largeFonts, "cjk", "/usr/share/fonts/truetype/droid/DroidSansFallbackFull.ttf", largeFontSize);
-	registerFont(largeFonts, "cjk", "/usr/share/fonts/opentype/noto/NotoSansCJK-Medium.ttc", largeFontSize);
-	registerFont(largeFonts, "cjk", "/usr/share/fonts/google-noto-cjk/NotoSansCJK-Medium.ttc", largeFontSize); // redhat
+	registerFont(fonts, { .lang="zh_HK", .paths={
+		"/usr/share/fonts/opentype/adobe-source-han-sans-hk/SourceHanSansHK-Medium.otf",
+		"/usr/share/fonts/adobe-source-han-sans-hk-fonts/SourceHanSansHK-Medium.otf",
+		"/usr/share/fonts/opentype/source-han-sans-hk/SourceHanSansHK-Medium.otf",
+		"/usr/share/fonts/source-han-sans-hk/SourceHanSansHK-Medium.otf",
+		"/usr/share/fonts/opentype/adobe-source-han-sans/SourceHanSansHK-Medium.otf",
+		"/usr/share/fonts/adobe-source-han-sans/SourceHanSansHK-Medium.otf",
+		"/usr/local/share/fonts/SourceHanSansHK-Medium.otf",
+		"/usr/local/share/fonts/adobe-source-han-sans-hk/SourceHanSansHK-Medium.otf",
+		"/usr/local/share/fonts/source-han-sans-hk/SourceHanSansHK-Medium.otf"
+	}, .size=fontSize * 1.05f });
+	registerFont(boldFonts, { .lang="zh_HK", .paths={
+		"/usr/share/fonts/opentype/adobe-source-han-sans-hk/SourceHanSansHK-Bold.otf",
+		"/usr/share/fonts/adobe-source-han-sans-hk-fonts/SourceHanSansHK-Bold.otf",
+		"/usr/share/fonts/opentype/source-han-sans-hk/SourceHanSansHK-Bold.otf",
+		"/usr/share/fonts/source-han-sans-hk/SourceHanSansHK-Bold.otf",
+		"/usr/share/fonts/opentype/adobe-source-han-sans/SourceHanSansHK-Bold.otf",
+		"/usr/share/fonts/adobe-source-han-sans/SourceHanSansHK-Bold.otf",
+		"/usr/local/share/fonts/SourceHanSansHK-Bold.otf",
+		"/usr/local/share/fonts/adobe-source-han-sans-hk/SourceHanSansHK-Bold.otf",
+		"/usr/local/share/fonts/source-han-sans-hk/SourceHanSansHK-Bold.otf"
+	}, .size=fontSize * 1.05f });
+	registerFont(fonts, { .lang="zh_TW", .paths={
+		"/usr/share/fonts/opentype/adobe-source-han-sans-tw/SourceHanSansTW-Medium.otf",
+		"/usr/share/fonts/adobe-source-han-sans-tw-fonts/SourceHanSansTW-Medium.otf",
+		"/usr/share/fonts/opentype/source-han-sans-tw/SourceHanSansTW-Medium.otf",
+		"/usr/share/fonts/source-han-sans-tw/SourceHanSansTW-Medium.otf",
+		"/usr/share/fonts/opentype/adobe-source-han-sans/SourceHanSansTW-Medium.otf",
+		"/usr/share/fonts/adobe-source-han-sans/SourceHanSansTW-Medium.otf",
+		"/usr/local/share/fonts/SourceHanSansTW-Medium.otf",
+		"/usr/local/share/fonts/adobe-source-han-sans-tw/SourceHanSansTW-Medium.otf",
+		"/usr/local/share/fonts/source-han-sans-tw/SourceHanSansTW-Medium.otf"
+	}, .size=fontSize * 1.05f });
+	registerFont(boldFonts, { .lang="zh_TW", .paths={
+		"/usr/share/fonts/opentype/adobe-source-han-sans-tw/SourceHanSansTW-Bold.otf",
+		"/usr/share/fonts/adobe-source-han-sans-tw-fonts/SourceHanSansTW-Bold.otf",
+		"/usr/share/fonts/opentype/source-han-sans-tw/SourceHanSansTW-Bold.otf",
+		"/usr/share/fonts/source-han-sans-tw/SourceHanSansTW-Bold.otf",
+		"/usr/share/fonts/opentype/adobe-source-han-sans/SourceHanSansTW-Bold.otf",
+		"/usr/share/fonts/adobe-source-han-sans/SourceHanSansTW-Bold.otf",
+		"/usr/local/share/fonts/SourceHanSansTW-Bold.otf",
+		"/usr/local/share/fonts/adobe-source-han-sans-tw/SourceHanSansTW-Bold.otf",
+		"/usr/local/share/fonts/source-han-sans-tw/SourceHanSansTW-Bold.otf"
+	}, .size=fontSize * 1.05f });
+	registerFont(fonts, { .lang="zh_CN", .paths={
+		"/usr/share/fonts/opentype/adobe-source-han-sans-sc/SourceHanSansSC-Medium.otf",
+		"/usr/share/fonts/adobe-source-han-sans-sc-fonts/SourceHanSansSC-Medium.otf",
+		"/usr/share/fonts/opentype/source-han-sans-sc/SourceHanSansSC-Medium.otf",
+		"/usr/share/fonts/source-han-sans-sc/SourceHanSansSC-Medium.otf",
+		"/usr/share/fonts/opentype/adobe-source-han-sans/SourceHanSansSC-Medium.otf",
+		"/usr/share/fonts/adobe-source-han-sans/SourceHanSansSC-Medium.otf",
+		"/usr/local/share/fonts/SourceHanSansSC-Medium.otf",
+		"/usr/local/share/fonts/adobe-source-han-sans-sc/SourceHanSansSC-Medium.otf",
+		"/usr/local/share/fonts/source-han-sans-sc/SourceHanSansSC-Medium.otf"
+	}, .size=fontSize * 1.05f });
+	registerFont(boldFonts, { .lang="zh_CN", .paths={
+		"/usr/share/fonts/opentype/adobe-source-han-sans-sc/SourceHanSansSC-Bold.otf",
+		"/usr/share/fonts/adobe-source-han-sans-sc-fonts/SourceHanSansSC-Bold.otf",
+		"/usr/share/fonts/opentype/source-han-sans-sc/SourceHanSansSC-Bold.otf",
+		"/usr/share/fonts/source-han-sans-sc/SourceHanSansSC-Bold.otf",
+		"/usr/share/fonts/opentype/adobe-source-han-sans/SourceHanSansSC-Bold.otf",
+		"/usr/share/fonts/adobe-source-han-sans/SourceHanSansSC-Bold.otf",
+		"/usr/local/share/fonts/SourceHanSansSC-Bold.otf",
+		"/usr/local/share/fonts/adobe-source-han-sans-sc/SourceHanSansSC-Bold.otf",
+		"/usr/local/share/fonts/source-han-sans-sc/SourceHanSansSC-Bold.otf"
+	}, .size=fontSize * 1.05f });
+	registerFont({&fonts, &boldFonts}, { .lang="zh", .paths={
+		"/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc",
+		"/usr/share/fonts/wqy-zenhei-fonts/wqy-zenhei.ttc",
+		"/usr/share/fonts/wqy/wqy-zenhei.ttc",
+		"/usr/share/fonts/TTF/wqy-zenhei.ttc",
+		"/usr/local/share/fonts/wqy-zenhei.ttc",
+		"/usr/local/share/fonts/wqy/wqy-zenhei.ttc"
+	}, .size=fontSize, .offsetY=-0.05f });
 
 	// TODO BSD, iOS, ...
 #endif
 	
 	loadFonts(fonts, fontConfig);
-	loadFonts(largeFonts, largeFontConfig);
+	loadFonts(boldFonts, boldFontConfig);
+	
+	// Font Awesome symbols
+	data = resource::load("fonts/" FONT_ICON_FILE_NAME_FAS, dataSize);
+	verify(data != nullptr);
+	
+	ImFontConfig faFontConfig = fontConfig;
+	faFontConfig.FontDataOwnedByAtlas = false;
+	io.Fonts->AddFontFromMemoryTTF(data.get(), (int)dataSize, fontSize, &faFontConfig);
+	boldFontConfig.FontDataOwnedByAtlas = true;
+	io.Fonts->AddFontFromMemoryTTF(data.release(), (int)dataSize, fontSize, &boldFontConfig);
 	
     NOTICE_LOG(RENDERER, "Screen DPI is %.0f, size %d x %d. Scaling by %.2f", settings.display.dpi, settings.display.width, settings.display.height, settings.display.uiScale);
 	vgamepad::applyUiScale();
