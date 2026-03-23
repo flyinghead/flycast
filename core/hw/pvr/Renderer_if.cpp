@@ -17,6 +17,11 @@
 #ifdef LIBRETRO
 void retro_rend_present();
 void retro_resize_renderer(int w, int h, float aspectRatio);
+
+// In libretro non-threaded mode, DelayFrameSwapping can make Present() happen
+// before the frame pacing point we want to stop the SH4 executor on. Defer the
+// stop until vblank so delayed presents do not hurt pacing.
+static bool lr_pending_stop_after_present = false;
 #endif
 
 u32 FrameCount=1;
@@ -246,7 +251,14 @@ private:
 		{
 			presented = true;
 			if (!config::ThreadedRendering && !ggpo::active())
-				emu.getSh4Executor()->Stop();
+			{
+#ifdef LIBRETRO
+				if (config::DelayFrameSwapping)
+					lr_pending_stop_after_present = true;
+				else
+#endif
+					emu.getSh4Executor()->Stop();
+			}
 #ifdef LIBRETRO
 			retro_rend_present();
 #endif
@@ -358,6 +370,9 @@ void rend_reset()
 	fb_w_cur = 1;
 	pvrQueue.reset();
 	rendererEnabled = true;
+#ifdef LIBRETRO
+	lr_pending_stop_after_present = false;
+#endif
 	fbAddrHistory[0] = 1;
 	fbAddrHistory[1] = 1;
 }
@@ -474,6 +489,13 @@ void rend_vblank()
 	render_called = false;
 	check_framebuffer_write();
 	emu.vblank();
+#ifdef LIBRETRO
+	if (lr_pending_stop_after_present && !config::ThreadedRendering && !ggpo::active())
+	{
+		lr_pending_stop_after_present = false;
+		emu.getSh4Executor()->Stop();
+	}
+#endif
 }
 
 void check_framebuffer_write()
@@ -554,6 +576,9 @@ void rend_deserialize(Deserializer& deser)
 		deser >> fb_watch_addr_end;
 	}
 	pend_rend = false;
+#ifdef LIBRETRO
+	lr_pending_stop_after_present = false;
+#endif
 	fbAddrHistory[0] = 1;
 	fbAddrHistory[1] = 1;
 }
