@@ -18,6 +18,7 @@
  */
 #include "i18n.h"
 #include "resources.h"
+#include "cfg/option.h"
 #include "tinygettext/tinygettext.hpp"
 #include "tinygettext/file_system.hpp"
 #include "tinygettext/log.hpp"
@@ -130,7 +131,10 @@ void init()
 		if (!msg.empty())
 			ERROR_LOG(COMMON, "%s", msg.substr(0, msg.length() - 1).c_str());
 	});
+}
 
+void reload_language()
+{
 	std::string locale = getCurrentLocale();
 	std::string language, country, variant;
 	parseLocale(locale, language, country, variant);
@@ -143,6 +147,8 @@ void init()
 
 static const std::string& translate(const std::string& msg) {
 	init();
+	if (dictionary == nullptr)
+		reload_language();
 	return dictionary->translate(msg);
 }
 
@@ -196,9 +202,14 @@ const char *translatePlural(const char *msg, const char *msgPlural, int num) {
 		return tr.c_str();
 }
 
-#if defined(_WIN32) && !defined(LIBRETRO)
+
+#if !defined(LIBRETRO) && !defined(__ANDROID__) && !defined(__SWITCH__)
 std::string getCurrentLocale()
 {
+	std::string locale = config::UILanguage;
+	if (!locale.empty())
+		return locale;
+#if defined(_WIN32)
 	wchar_t wname[128];
 	if (GetLocaleInfoEx(LOCALE_NAME_USER_DEFAULT, LOCALE_SNAME, wname, std::size(wname)) == 0) {
 		ERROR_LOG(COMMON, "GetLocaleEx failed: %x", GetLastError());
@@ -209,6 +220,10 @@ std::string getCurrentLocale()
 		return name.get();
 	else
 		return "en";
+#else
+	return setlocale(LC_MESSAGES, nullptr);
+#endif
 }
 #endif
+
 }

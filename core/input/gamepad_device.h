@@ -43,6 +43,9 @@ public:
 	virtual bool gamepad_axis_input(u32 code, int value);
 	virtual ~GamepadDevice() = default;
 
+	virtual void refreshName() {}
+	static void RefreshAllNames();
+
 	void detectInput(bool combo, input_detected_cb input_changed);
 	void cancel_detect_input() {
 		_input_detected = nullptr;

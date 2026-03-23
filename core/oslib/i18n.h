@@ -38,17 +38,7 @@ using std::locale;
 
 void init();
 
-#if !defined(LIBRETRO) && !defined(__SWITCH__) && !defined(_WIN32)
-
-static inline std::string getCurrentLocale() {
-	return setlocale(LC_MESSAGES, nullptr);
-}
-
-#else
-
 std::string getCurrentLocale();
-
-#endif
 
 static inline std::string formatShortDateTime(time_t time)
 {
@@ -70,7 +60,7 @@ static inline std::string formatShortDateTime(time_t time)
 }
 
 #endif	// !ANDROID
-
+void reload_language();
 std::string Ts(const std::string& msg);
 const char *T(const char *msg);
 

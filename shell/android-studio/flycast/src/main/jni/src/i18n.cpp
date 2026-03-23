@@ -18,6 +18,7 @@
  */
 #include "oslib/i18n.h"
 #include "jni_util.h"
+#include "cfg/option.h"
 #include <string>
 #include <vector>
 #include <locale>
@@ -51,6 +52,9 @@ std::string formatShortDateTime(time_t t) {
 }
 
 std::string getCurrentLocale() {
+	std::string locale = config::UILanguage;
+	if (!locale.empty())
+		return locale;
 	jni::String str(jni::env()->CallStaticObjectMethod(clazz, getCurrentLocaleID));
 	return str.to_string();
 }

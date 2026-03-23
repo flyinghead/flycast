@@ -57,6 +57,10 @@ protected:
 		this->_name = i18n::Ts("Mouse");
 	}
 
+	void refreshName() override {
+		this->_name = i18n::Ts("Mouse");
+	}
+
 	std::shared_ptr<InputMapping> getDefaultMapping() override {
 		return std::make_shared<MouseInputMapping>();
 	}
@@ -118,6 +122,10 @@ public:
 		_name = i18n::Ts("Touch Mouse");
 		_unique_id = "touch_mouse";
 		loadMapping();
+	}
+
+	void refreshName() override {
+		_name = i18n::Ts("Touch Mouse");
 	}
 };
 

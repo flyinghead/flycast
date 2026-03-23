@@ -27,13 +27,17 @@ public:
 	VirtualGamepad(const char *api_name, int maple_port = 0)
 		: GamepadDevice(maple_port, api_name, false)
 	{
-		_name = i18n::Ts("Virtual Gamepad");
+		refreshName();
 		_unique_id = "virtual_gamepad_uid";
 		input_mapper = std::make_shared<IdentityInputMapping>();
 		// hasAnalogStick = true; // TODO has an analog stick but input mapping isn't persisted
 
 		input_mapper->addTrigger(DC_AXIS_LT, false);
 		input_mapper->addTrigger(DC_AXIS_RT, false);
+	}
+
+	void refreshName() override {
+		_name = i18n::Ts("Virtual Gamepad");
 	}
 
 	bool is_virtual_gamepad() override {

@@ -100,6 +100,7 @@ int flycast_init(int argc, char* argv[])
 			LogManager::Init();
 			config::Settings::instance().load(false);
 		}
+		i18n::reload_language();
 		gui_init();
 		os_CreateWindow();
 		os_SetupInput();
