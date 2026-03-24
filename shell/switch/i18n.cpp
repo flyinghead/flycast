@@ -23,7 +23,7 @@ namespace i18n
 {
 static std::string systemLanguage;
 
-std::string getCurrentLocale()
+std::string getSystemLocale()
 {
 	if (systemLanguage.empty())
 	{

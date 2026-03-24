@@ -878,6 +878,13 @@ void GamepadDevice::rampAnalog()
 	}
 }
 
+void GamepadDevice::refreshAllNames()
+{
+	Lock _(_gamepads_mutex);
+	for (auto& gamepad : _gamepads)
+		gamepad->refreshName();
+}
+
 void GamepadDevice::RampAnalog()
 {
 	Lock _(_gamepads_mutex);
