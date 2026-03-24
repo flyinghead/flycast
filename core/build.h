@@ -47,6 +47,9 @@
 #endif
 #endif
 
+#include <fmt/core.h>
+#include <fmt/format.h>
+
 #if defined(TARGET_NO_REC)
 #define FEAT_SHREC DYNAREC_NONE
 #define FEAT_AREC DYNAREC_NONE
