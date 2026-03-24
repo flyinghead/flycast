@@ -18,7 +18,6 @@
 #if defined(USE_SDL)
 #include "sdl/sdl.h"
 #endif
-#include "stdclass.h"
 #include "oslib/oslib.h"
 #include "oslib/i18n.h"
 #include "emulator.h"

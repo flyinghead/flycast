@@ -44,6 +44,12 @@
 #include "input/dreampotato.h"
 #include "i18n.h"
 
+#ifdef TARGET_UWP
+#include <winrt/Windows.Storage.h>
+#include <winrt/Windows.Storage.Streams.h>
+#include <winrt/Windows.Foundation.h>
+#endif
+
 namespace hostfs
 {
 
@@ -341,37 +347,26 @@ static std::string getScreenshotsPath()
 
 #elif defined(TARGET_UWP)
 //TODO move to shell/uwp?
-using namespace Platform;
-using namespace Windows::Foundation;
-using namespace Windows::Storage;
+using namespace winrt;
+using namespace winrt::Windows::Foundation;
+using namespace winrt::Windows::Storage;
 
 void saveScreenshot(const std::string& name, const std::vector<u8>& data)
 {
 	try {
-		StorageFolder^ folder = KnownFolders::PicturesLibrary;	// or SavedPictures?
+		StorageFolder folder = KnownFolders::PicturesLibrary();	// or SavedPictures?
 		if (folder == nullptr) {
 			INFO_LOG(COMMON, "KnownFolders::PicturesLibrary is null");
 			throw FlycastException(i18n::Ts("Can't find Pictures library"));
 		}
 		nowide::wstackstring wstr;
 		wchar_t *wname = wstr.convert(name.c_str());
-		String^ msname = ref new String(wname);
-		ArrayReference<u8> arrayRef(const_cast<u8*>(&data[0]), data.size());
 
-		IAsyncOperation<StorageFile^>^ op = folder->CreateFileAsync(msname, CreationCollisionOption::FailIfExists);
-		cResetEvent asyncEvent;
-		op->Completed = ref new AsyncOperationCompletedHandler<StorageFile^>(
-			[&asyncEvent, &arrayRef](IAsyncOperation<StorageFile^>^ op, AsyncStatus) {
-				IAsyncAction^ action = FileIO::WriteBytesAsync(op->GetResults(), arrayRef);
-				action->Completed = ref new AsyncActionCompletedHandler(
-					[&asyncEvent](IAsyncAction^, AsyncStatus){
-						asyncEvent.Set();
-					});
-			});
-		asyncEvent.Wait();
+		StorageFile file = folder.CreateFileAsync(wname, CreationCollisionOption::FailIfExists).get();
+		FileIO::WriteBytesAsync(file, data).get();
 	}
-	catch (COMException^ e) {
-		WARN_LOG(COMMON, "Save screenshot failed: %S", e->Message->Data());
+	catch (hresult_error const& e) {
+		WARN_LOG(COMMON, "Save screenshot failed: %ls", e.message().c_str());
 		throw FlycastException("");
 	}
 }

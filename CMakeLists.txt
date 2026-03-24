@@ -268,23 +268,30 @@ else()
 endif()
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
-		CMAKE_CXX_STANDARD 20
-		CMAKE_CXX_STANDARD_REQUIRED ON)
+		CXX_STANDARD 20
+		CXX_STANDARD_REQUIRED ON)
 
 if(WINDOWS_STORE)
 	set(USE_OPENGL OFF)
 	set(USE_VULKAN OFF)
+	# SDL bootstrap requires C++/CX and is incompatible with C++20
+	set_source_files_properties(core/deps/SDL/src/main/winrt/SDL_winrt_main_NonXAML.cpp PROPERTIES COMPILE_FLAGS "/ZW /std:c++17")
+endif()
+
+# websocketpp is not C++20 compatible due to template-id destructors, waiting for v0.9 or we can switch to dev branch
+if(MSVC)
+	set_source_files_properties(core/network/ice.cpp PROPERTIES COMPILE_FLAGS "/std:c++17")
+else()
+	set_source_files_properties(core/network/ice.cpp PROPERTIES COMPILE_FLAGS "-std=c++17")
 endif()
 
 set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS_RELEASE -s)
 if(MSVC)
-	target_compile_options(${PROJECT_NAME} PRIVATE /GR /GS-)
-	if(WINDOWS_STORE)
-		target_compile_options(${PROJECT_NAME} PRIVATE /ZW)
-	endif()
+	target_compile_options(${PROJECT_NAME} PRIVATE /GR /GS- /utf-8 "/Zc:char8_t-" "/Zc:__cplusplus")
 else()
 	target_compile_options(${PROJECT_NAME} PRIVATE
 		$<$<COMPILE_LANGUAGE:CXX>:-fno-strict-aliasing>
+		$<$<COMPILE_LANGUAGE:CXX>:-fno-char8_t>
 		$<$<COMPILE_LANGUAGE:CXX>:-Wall>)
 endif()
 
@@ -512,6 +519,7 @@ if(NOT LIBRETRO)
 			# DreamPicoPort-API
 			option(DREAMPICOPORT_ADD_LIBUSB "Add internal libusb library" OFF) # Already included above, when applicable
 			add_subdirectory(core/deps/DreamPicoPort-API EXCLUDE_FROM_ALL)
+			set_target_properties(dream_pico_port_api PROPERTIES CXX_STANDARD 20 CXX_STANDARD_REQUIRED ON)
 			target_link_libraries(${PROJECT_NAME} PRIVATE dream_pico_port_api)
 		endif()
 
@@ -532,6 +540,12 @@ if(NOT LIBRETRO)
 
 		if((APPLE OR WIN32) AND TARGET SDL2::SDL2-static)
 			target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2-static)
+			if(MSVC AND WINDOWS_STORE)
+				# SDL2 (C++/CX) is incompatible with C++20. /WHOLEARCHIVE prevents the linker from
+				# stripping WinRT metadata, avoiding LNK4264 and "Class not registered" errors.
+				# Transitional fix until we move to SDL3.
+				target_link_options(${PROJECT_NAME} PRIVATE "/WHOLEARCHIVE:SDL2-static")
+			endif()
 		elseif(TARGET SDL2::SDL2)
 			target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2)
 		else()
@@ -1241,9 +1255,6 @@ if(ENABLE_GDB_SERVER)
 endif()
 
 if("arm" IN_LIST ARCHITECTURE AND NOT APPLE)
-	if(MSVC)
-		target_compile_options(${PROJECT_NAME} PRIVATE "/Zc:__cplusplus")
-	endif()
 	target_include_directories(${PROJECT_NAME} PRIVATE core/deps/vixl)
 	target_sources(${PROJECT_NAME} PRIVATE
 		core/rec-ARM/rec_arm.cpp
@@ -1277,9 +1288,6 @@ if("arm" IN_LIST ARCHITECTURE AND NOT APPLE)
 		core/deps/vixl/utils-vixl.h)
 endif()
 if("arm64" IN_LIST ARCHITECTURE)
-	if(MSVC)
-		target_compile_options(${PROJECT_NAME} PRIVATE "/Zc:__cplusplus")
-	endif()
 	target_include_directories(${PROJECT_NAME} PRIVATE core/deps/vixl)
 	target_sources(${PROJECT_NAME} PRIVATE
 		core/deps/vixl/aarch64/abi-aarch64.h
