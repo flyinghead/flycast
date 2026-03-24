@@ -54,6 +54,11 @@ class Mouse : public GamepadDevice
 {
 protected:
 	Mouse(const char *apiName, int maplePort = 0) : GamepadDevice(maplePort, apiName) {
+		refreshName();
+	}
+
+	void refreshName() override
+	{
 		this->_name = i18n::Ts("Mouse");
 	}
 
@@ -115,9 +120,14 @@ class TouchMouse : public SystemMouse
 public:
 	TouchMouse() : SystemMouse("Flycast", -1, true)
 	{
-		_name = i18n::Ts("Touch Mouse");
+		refreshName();
 		_unique_id = "touch_mouse";
 		loadMapping();
+	}
+
+	void refreshName() override
+	{
+		_name = i18n::Ts("Touch Mouse");
 	}
 };
 

@@ -74,6 +74,11 @@ class KeyboardDevice : public GamepadDevice
 protected:
 	KeyboardDevice(int maple_port, const char* apiName, bool remappable = true)
 		: GamepadDevice(maple_port, apiName, remappable) {
+		refreshName();
+	}
+
+	void refreshName() override
+	{
 		_name = i18n::Ts("Keyboard");
 	}
 

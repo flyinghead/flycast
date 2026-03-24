@@ -30,6 +30,7 @@ namespace i18n
 #if defined(__ANDROID__) && !defined(LIBRETRO)
 
 std::string getCurrentLocale();
+std::string getSystemLocale();
 std::string formatShortDateTime(time_t time);
 
 #else
@@ -38,17 +39,8 @@ using std::locale;
 
 void init();
 
-#if !defined(LIBRETRO) && !defined(__SWITCH__) && !defined(_WIN32) && !defined(TARGET_MAC)
-
-static inline std::string getCurrentLocale() {
-	return setlocale(LC_MESSAGES, nullptr);
-}
-
-#else
-
 std::string getCurrentLocale();
-
-#endif
+std::string getSystemLocale();
 
 static inline std::string formatShortDateTime(time_t time)
 {
@@ -71,6 +63,7 @@ static inline std::string formatShortDateTime(time_t time)
 
 #endif	// !ANDROID
 
+void reloadLanguage();
 std::string Ts(const std::string& msg);
 const char *T(const char *msg);
 

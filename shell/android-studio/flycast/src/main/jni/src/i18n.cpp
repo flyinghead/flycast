@@ -50,7 +50,7 @@ std::string formatShortDateTime(time_t t) {
 	return str.to_string();
 }
 
-std::string getCurrentLocale() {
+std::string getSystemLocale() {
 	jni::String str(jni::env()->CallStaticObjectMethod(clazz, getCurrentLocaleID));
 	return str.to_string();
 }
