@@ -140,6 +140,7 @@ private:
 	u8 txSeqNum = 0;
 	u8 rxSeqNum = 0;
 	u8 txSeqAck = 0;
+	bool receiverReady = true;
 	unsigned txMaxSize = 128;
 	int txWindow = 15;
 	std::unordered_map<int, std::vector<u8>> sentIFrames;

@@ -339,11 +339,17 @@ void V42Protocol::handleFrame()
 	switch (rxFrame[1] & 0xef)
 	{
 	case 0x01:	// RR
+		if (!receiverReady)
+			NOTICE_LOG(MODEM, "Received RR");
+		receiverReady = true;
 		break;
 	case 0x05:	// RNR
-		WARN_LOG(MODEM, "Received RNR");
+		if (receiverReady)
+			WARN_LOG(MODEM, "Received RNR");
+		receiverReady = false;
 		break;
 	case 0x09:	// REJECT
+		receiverReady = true;
 		handleReject(rxFrame[2]);
 		break;
 	case 0x0d:	// SREJ
@@ -361,6 +367,7 @@ void V42Protocol::handleFrame()
 		handleDisc(rxFrame[0]);
 		break;
 	case 0x63:	// UA
+		receiverReady = true;
 		break;
 	case 0x87:	// FRMR
 		WARN_LOG(MODEM, "Received FRMR");
@@ -399,6 +406,7 @@ void V42Protocol::handleSabme(u8 address, u8 control)
 	txSeqNum = 0;
 	rxSeqNum = 0;
 	txSeqAck = 0;
+	receiverReady = true;
 }
 
 void V42Protocol::handleDisc(u8 address)
@@ -658,7 +666,7 @@ void V42Protocol::handleReject(u8 control2)
 
 void V42Protocol::sendIFrame()
 {
-	if (inputStream.available() == 0)
+	if (!receiverReady || inputStream.available() == 0)
 		return;
 	// check that tx window isn't reached
 	int window = txSeqNum - txSeqAck;
@@ -820,6 +828,7 @@ void V42Protocol::reset()
 	txSeqNum = 0;
 	rxSeqNum = 0;
 	txSeqAck = 0;
+	receiverReady = true;
 	txMaxSize = 128;
 	txWindow = 15;
 	sentIFrames.clear();
