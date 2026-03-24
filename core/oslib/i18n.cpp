@@ -196,19 +196,30 @@ const char *translatePlural(const char *msg, const char *msgPlural, int num) {
 		return tr.c_str();
 }
 
-#if defined(_WIN32) && !defined(LIBRETRO)
+#if !defined(LIBRETRO) && defined(_WIN32)
 std::string getCurrentLocale()
 {
-	wchar_t wname[128];
-	if (GetLocaleInfoEx(LOCALE_NAME_USER_DEFAULT, LOCALE_SNAME, wname, std::size(wname)) == 0) {
-		ERROR_LOG(COMMON, "GetLocaleEx failed: %x", GetLastError());
+	ULONG numLanguages = 0;
+	ULONG bufferSize = 0;
+	if (!GetUserPreferredUILanguages(MUI_LANGUAGE_NAME, &numLanguages, nullptr, &bufferSize) || bufferSize == 0)
+	{
+		ERROR_LOG(COMMON, "GetUserPreferredUILanguages(size) failed: %lx", GetLastError());
 		return "en";
 	}
-	nowide::stackstring name;
-	if (name.convert(wname))
-		return name.get();
-	else
+
+	std::vector<wchar_t> buffer(bufferSize);
+	if (!GetUserPreferredUILanguages(MUI_LANGUAGE_NAME, &numLanguages, buffer.data(), &bufferSize))
+	{
+		ERROR_LOG(COMMON, "GetUserPreferredUILanguages(data) failed: %lx", GetLastError());
 		return "en";
+	}
+
+	nowide::stackstring name;
+	if (name.convert(buffer.data()))
+		return name.get();
+
+	ERROR_LOG(COMMON, "UTF-16 to UTF-8 conversion failed");
+	return "en";
 }
 #endif
 }

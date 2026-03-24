@@ -75,8 +75,8 @@ extern "C" {
 #define OPTION_VAL_JAPAN_AR NULL
 #define OPTION_VAL_USA_AR NULL
 #define OPTION_VAL_EUROPE_AR NULL
-#define OPTION_VAL_DEFAULT_AR NULL
-#define CORE_OPTION_NAME_LANGUAGE_LABEL_AR "اللّغة"
+#define OPTION_VAL_DEFAULT_AR "الافتراضي"
+#define CORE_OPTION_NAME_LANGUAGE_LABEL_AR "اللغة"
 #define CORE_OPTION_NAME_LANGUAGE_INFO_0_AR NULL
 #define OPTION_VAL_JAPANESE_AR "Japanese - 日本語"
 #define OPTION_VAL_ENGLISH_AR NULL
@@ -14787,8 +14787,8 @@ struct retro_core_options_v2 options_cht = {
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_CS "Vizuální paměťové jednotky/systémy (VMU) Zvuky"
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_CS "Zvuky VMU"
 #define CORE_OPTION_NAME_VMU_SOUND_INFO_0_CS "Pokud je tato funkce povolena, přehrávají se zvukové signály VMU."
-#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_CS NULL
-#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_CS NULL
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_CS "Úložiště DreamPotato VMU"
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_CS "Povolí ukládání dat VMU na připojený emulátor DreamPotato. Pokud je tato funkce povolena, místní soubor VMU se nepoužívá."
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CS "Zobrazit Nastavení Displeje Vizuální Paměťové Jednotky/Systému (VMU)"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_CS "Zobrazit Nastavení VMU Displeje"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_CS "Umožňuje konfiguraci viditelnosti, velikosti, polohy a barvy obrazovky LCD emulovaného VMU. POZNÁMKA: Může být nutné přepnout Rychlé Menu, aby se toto nastavení projevilo."
@@ -37363,8 +37363,8 @@ struct retro_core_options_v2 options_fr = {
 #define OPTION_VAL_MORE_GA "Uasmhéid"
 #define CORE_OPTION_NAME_FRAME_SKIPPING_LABEL_GA "Scipeáil Fráma"
 #define CORE_OPTION_NAME_FRAME_SKIPPING_INFO_0_GA "Socraíonn sé líon na bhfrámaí le léim idir gach fráma a thaispeántar."
-#define CORE_OPTION_NAME_WIDESCREEN_CHEATS_LABEL_GA "Cleasanna Leathan-Scáileáin (Atosú Riachtanach)"
-#define CORE_OPTION_NAME_WIDESCREEN_CHEATS_INFO_0_GA "Gníomhaíonn sé cleasanna a ligeann do chluichí áirithe a thaispeáint i bhformáid scáileáin leathan."
+#define CORE_OPTION_NAME_WIDESCREEN_CHEATS_LABEL_GA "Aicearra Leathan-Scáileáin (Atosú Riachtanach)"
+#define CORE_OPTION_NAME_WIDESCREEN_CHEATS_INFO_0_GA "Gníomhaíonn sé aicearraí a ligeann do chluichí áirithe a thaispeáint i bhformáid scáileáin leathan."
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_LABEL_GA "Haic Leathan-Scáileáin"
 #define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_GA "Tarraing geoiméadracht lasmuigh den ghnáthchóimheas gné 4:3. D’fhéadfadh sé go mbeadh fabhtanna grafacha sna ceantair nochta."
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_GA "Luchtú Tapa GD-ROM (míchruinn)"
@@ -37502,8 +37502,8 @@ struct retro_core_options_v2 options_fr = {
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_GA "Fuaimeanna Aonaid/Córais Cuimhne Amhairc (VMU)"
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_GA "Fuaimeanna VMU"
 #define CORE_OPTION_NAME_VMU_SOUND_INFO_0_GA "Nuair a bhíonn sé cumasaithe, seinntear bípeanna VMU."
-#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_GA NULL
-#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_GA NULL
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_GA "Stóráil DreamPotato VMU"
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_GA "Cumasaigh stóráil sonraí VMU ar an aithriseoir DreamPotato ceangailte. Nuair a bhíonn sé cumasaithe, ní úsáidtear an comhad sábhála VMU áitiúil."
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_GA "Taispeáin Socruithe Taispeána Aonaid/Córais Cuimhne Amhairc (VMU)"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_GA "Taispeáin Socruithe Taispeána VMU"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_GA "Cumasaigh cumraíocht infheictheachta, méide, suíomh agus datha scáileáin LCD VMU aithrisithe. TABHAIR FAOI DEARA: B’fhéidir go mbeidh ort an Roghchlár Tapa a athrú chun an socrú seo a chur i bhfeidhm."
@@ -49806,12 +49806,12 @@ struct retro_core_options_v2 options_id = {
 #define OPTION_VAL_500_IT NULL
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_IT "Carica Texture Personalizzate"
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_INFO_0_IT "Carica texture personalizzate nella cartella 'system/dc/textures/<game-id>/'."
-#define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_LABEL_IT NULL
-#define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_INFO_0_IT NULL
+#define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_LABEL_IT "Precarica texture personalizzate"
+#define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_INFO_0_IT "Precarica texture personalizzate all'avvio del gioco. Può migliorare le prestazioni, ma aumenta l'utilizzo della memoria."
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_IT "Scarica Texture"
 #define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_IT "Ogni volta che un nuovo texture viene utilizzato dal gioco, verrà salvato come file .png nella cartella 'system/dc/texdump/<game-id>/'."
-#define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_IT NULL
-#define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_INFO_0_IT NULL
+#define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_IT "Scarica Texture sostituite"
+#define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_INFO_0_IT "Scarica sempre le texture che sono già sostituite da texture personalizzate."
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_IT "Zona morta dello sticl analogico"
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_INFO_0_IT "Seleziona fino a che punto devi spingere la levetta analogica prima che inizi ad essere elaborata."
 #define OPTION_VAL_0_IT NULL
@@ -49892,8 +49892,8 @@ struct retro_core_options_v2 options_id = {
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_IT "Suoni Delle Unità Di Memoria Visiva/Sistemi (VMU)"
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_IT "Suoni VMU"
 #define CORE_OPTION_NAME_VMU_SOUND_INFO_0_IT "Se abilitato, vengono riprodotti i segnali acustici VMU."
-#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_IT NULL
-#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_IT NULL
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_IT "Capienza DreamPotato VMU"
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_IT "Abilita l'archiviazione dei dati VMU sull'emulatore DreamPotato connesso. Quando abilitato, il file di salvataggio VMU locale non viene utilizzato."
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_IT "Mostra Le Impostazioni Di Visualizzazione della Visual Memory Unit/System (VMU)"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_IT "Mostra Impostazioni Di Visualizzazione VMU"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_IT "Abilita la configurazione dello schermo LCD VMU emulato, la dimensione, la posizione e il colore. NOTA: potrebbe essere necessario attivare il menu rapido affinché questa impostazione abbia effetto."
@@ -68202,7 +68202,7 @@ struct retro_core_options_v2 options_pt_pt = {
 
 /* RETRO_LANGUAGE_RU */
 
-#define CATEGORY_SYSTEM_LABEL_RU "Системные"
+#define CATEGORY_SYSTEM_LABEL_RU "Система"
 #define CATEGORY_SYSTEM_INFO_0_RU "Настройка региона, языка, BIOS и основных параметров оборудования."
 #define CATEGORY_VIDEO_LABEL_RU "Видео"
 #define CATEGORY_VIDEO_INFO_0_RU "Настройки разрешения, порядко-независимой прозрачности и визуальных эффектов."
@@ -68392,7 +68392,7 @@ struct retro_core_options_v2 options_pt_pt = {
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_RU "Загружать внешние текстуры"
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_INFO_0_RU "Загружать пользовательские текстуры из папки 'system/dc/textures/<game-id>/'."
 #define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_LABEL_RU "Предзагрузка кастомных текстур"
-#define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_INFO_0_RU "Загружать пользовательские текстуры при запуске игры. Может улучшить производительность, но увеличивает расход памяти."
+#define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_INFO_0_RU "Использовать предзагрузку кастомных текстур при запуске игры. Может улучшить производительность, но увеличивает расход памяти."
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_RU "Дамп текстур"
 #define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_RU "При каждом использовании игрой новой текстуры она будет сохраняться в файл .png в папке 'system/dc/texdump/<game-id>/'."
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_RU "Выгружать заменяемые текстуры"

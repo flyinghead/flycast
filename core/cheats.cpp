@@ -575,6 +575,10 @@ found_cheats:
 			cheats.emplace_back(Cheat::Type::runNextIfEq, "bypass auth check ifeq", true, 32, 0x0a2d3c, 0xed048900, true);
 			cheats.emplace_back(Cheat::Type::setValue, "bypass dricas auth check",  true, 32, 0x0a2d3c, 0xed048b00, true); // BT -> BF
 		}
+		else if (gameId == "MK-51140") {	// Ooga Booga
+			cheats.emplace_back(Cheat::Type::runNextIfEq, "disable net check ifeq", true, 16, 0x00085d2c, 0x3630, true);
+			cheats.emplace_back(Cheat::Type::setValue, "disable net sync check",    true, 16, 0x00085d2c, 0x3330, true);
+		}
 
 		if (cheats.size() > cheatCount)
 			setActive(true);
