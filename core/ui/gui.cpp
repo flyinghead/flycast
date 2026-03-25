@@ -605,7 +605,7 @@ void gui_initFonts()
 	vgamepad::applyUiScale();
 }
 
-void gui_keyboard_input(u16 wc)
+void gui_keyboard_input(u32 wc)
 {
 	ImGuiIO& io = ImGui::GetIO();
 	if (io.WantCaptureKeyboard)
