@@ -31,6 +31,9 @@
 #include <windows.h>
 #include <gamingdeviceinformation.h>
 #include <winrt/Windows.Graphics.Display.Core.h>
+#include <winrt/Windows.Graphics.Display.h>
+#include <winrt/Windows.UI.ViewManagement.h>
+#include <winrt/Windows.Foundation.h>
 #endif
 
 #include "nowide/stackstring.hpp"
@@ -48,7 +51,8 @@ bool DX11Context::init(bool keepCurrentWindow)
 #ifdef TARGET_UWP
 	GAMING_DEVICE_MODEL_INFORMATION info {};
 	GetGamingDeviceModelInformation(&info);
-	if (info.vendorId == GAMING_DEVICE_VENDOR_ID_MICROSOFT && info.deviceId != GAMING_DEVICE_DEVICE_ID_NONE)
+	bool isXbox = info.vendorId == GAMING_DEVICE_VENDOR_ID_MICROSOFT && info.deviceId != GAMING_DEVICE_DEVICE_ID_NONE;
+	if (isXbox)
 	{
 		using namespace winrt::Windows::Graphics::Display::Core;
 		HdmiDisplayInformation dispInfo = HdmiDisplayInformation::GetForCurrentView();
@@ -63,6 +67,19 @@ bool DX11Context::init(bool keepCurrentWindow)
 				settings.display.uiScale = settings.display.width / 1920.0f * 1.4f;
 			}
 		}
+	}
+	if (!isXbox || (settings.display.width == 640 && settings.display.height == 480))
+	{
+		using namespace winrt::Windows::Graphics::Display;
+		using namespace winrt::Windows::UI::ViewManagement;
+		auto displayInfo = DisplayInformation::GetForCurrentView();
+		settings.display.dpi = displayInfo.LogicalDpi();
+		auto view = ApplicationView::GetForCurrentView();
+		auto bounds = view.VisibleBounds();
+		double scale = (double)displayInfo.RawPixelsPerViewPixel();
+		settings.display.width = (int)(bounds.Width * scale);
+		settings.display.height = (int)(bounds.Height * scale);
+		settings.display.uiScale = (float)scale;
 	}
 #endif
 
