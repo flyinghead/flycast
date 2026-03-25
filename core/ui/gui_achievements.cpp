@@ -29,7 +29,7 @@
 #include <sstream>
 using namespace i18n;
 
-extern ImFont *largeFont;
+extern ImFont *boldFont;
 extern int insetLeft;
 
 namespace achievements
@@ -224,8 +224,9 @@ bool Notification::draw()
 		{
 			if (text[i].empty())
 				continue;
-			ImFont *font = i == 0 ? largeFont : regularFont;
-			textSize[i] = font->CalcTextSizeA(font->LegacySize, FLT_MAX, maxW, text[i].c_str());
+			ImFont *font = i == 0 ? boldFont : regularFont;
+			float fontSize = i == 0 ? uiLargeFontSize() : regularFont->LegacySize;
+			textSize[i] = ImGui::GetFont()->CalcTextSizeA(fontSize, FLT_MAX, maxW, text[i].c_str());
 			totalSize.x = std::max(totalSize.x, textSize[i].x);
 			totalSize.y += textSize[i].y;
 		}
@@ -264,9 +265,10 @@ bool Notification::draw()
 		{
 			if (text[i].empty())
 				continue;
-			ImFont *font = i == 0 ? largeFont : regularFont;
+			ImFont *font = i == 0 ? boldFont : regularFont;
+			float fontSize = i == 0 ? uiLargeFontSize() : regularFont->LegacySize;
 			const ImU32 col = alphaOverride(i == 0 ? 0xffffff : 0x00ffff, alpha);
-			dl->AddText(font, font->LegacySize, pos, col, &text[i].front(), &text[i].back() + 1, maxW);
+			dl->AddText(font, fontSize, pos, col, &text[i].front(), &text[i].back() + 1, maxW);
 			pos.y += textSize[i].y + vspacing;
 		}
 	}
@@ -290,7 +292,7 @@ void achievementList()
 		tex.draw(ScaledVec2(80.f, 80.f));
 		ImGui::SameLine();
 		ImGui::BeginChild("game_info", ImVec2(w, uiScaled(80.f)), ImGuiChildFlags_None, ImGuiWindowFlags_None);
-		ImGui::PushFont(largeFont);
+		ImGui::PushFont(NULL, uiLargeFontSize());
 		ImGui::Text("%s", game.title.c_str());
 		ImGui::PopFont();
 		std::string str = strprintf(T("You have unlocked %d of %d achievements and %d of %d points."),
@@ -326,7 +328,7 @@ void achievementList()
 				else if (category == Tnop("Unlocked") || category == Tnop("Recently Unlocked"))
 					ImGui::Text(ICON_FA_LOCK_OPEN);
 				ImGui::SameLine();
-				ImGui::PushFont(largeFont);
+				ImGui::PushFont(NULL, uiLargeFontSize());
 				ImGui::Text("%s", T(category.c_str()));
 				ImGui::PopFont();
 				ImGui::Unindent(uiScaled(10));
@@ -336,7 +338,7 @@ void achievementList()
 			tex.draw(ScaledVec2(80.f, 80.f));
 			ImGui::SameLine();
 			ImGui::BeginChild(ImGui::GetID("ach_item"), ImVec2(0, 0), ImGuiChildFlags_AutoResizeY, ImGuiWindowFlags_None);
-			ImGui::PushFont(largeFont);
+			ImGui::PushFont(NULL, uiLargeFontSize());
 			ImGui::Text("%s", ach.title.c_str());
 			ImGui::PopFont();
 

@@ -94,7 +94,7 @@ static Chat chat;
 static std::recursive_mutex guiMutex;
 using LockGuard = std::lock_guard<std::recursive_mutex>;
 
-ImFont *largeFont;
+ImFont *boldFont;
 static Toast toast;
 static ThreadRunner uiThreadRunner;
 
@@ -475,10 +475,10 @@ void gui_initFonts()
 	// Bold font
 	data = resource::load("fonts/Roboto-Bold.ttf", dataSize);
 	verify(data != nullptr);
-	largeFont = io.Fonts->AddFontFromMemoryTTF(data.release(), (int)dataSize, fontSize, nullptr, nullptr);
+	boldFont = io.Fonts->AddFontFromMemoryTTF(data.release(), (int)dataSize, fontSize, nullptr, nullptr);
 	ImFontConfig boldFontConfig;
 	boldFontConfig.MergeMode = true;
-	boldFontConfig.DstFont = largeFont;
+	boldFontConfig.DstFont = boldFont;
 	
 	std::vector<FontEntry> fonts;
 	std::vector<FontEntry> boldFonts;
@@ -910,7 +910,7 @@ static void gui_display_commands()
 		if (!lowHeight)
 		{
 			ImGui::BeginChild("game_info", ScaledVec2(0, 100.f), ImGuiChildFlags_Borders, ImGuiWindowFlags_None);
-			ImGui::PushFont(largeFont);
+			ImGui::PushFont(NULL, uiLargeFontSize());
 			ImGui::Text("%s", art.name.c_str());
 			ImGui::PopFont();
 			{
@@ -1352,11 +1352,11 @@ static void gui_display_content()
 		{
 			const char *label = T("Your game list is empty");
 			// center horizontally
-			const float w = largeFont->CalcTextSizeA(largeFont->LegacySize, FLT_MAX, -1.f, label).x + ImGui::GetStyle().FramePadding.x * 2;
+			const float w = ImGui::GetFont()->CalcTextSizeA(uiLargeFontSize(), FLT_MAX, -1.f, label).x + ImGui::GetStyle().FramePadding.x * 2;
 			ImGui::SameLine((ImGui::GetContentRegionMax().x - w) / 2);
 			if (ImGui::BeginChild("empty", ImVec2(0, 0), ImGuiChildFlags_AutoResizeX | ImGuiChildFlags_AutoResizeY | ImGuiChildFlags_NavFlattened))
 			{
-				ImGui::PushFont(largeFont);
+				ImGui::PushFont(NULL, uiLargeFontSize());
 				ImGui::NewLine();
 				ImGui::Text("%s", label);
 				ImguiStyleVar _(ImGuiStyleVar_FramePadding, ScaledVec2(20, 8));
@@ -1767,7 +1767,7 @@ void gui_draw_osd()
 				const float maxW = uiScaled(640.f);
 				ImDrawList *dl = ImGui::GetForegroundDrawList();
 				const ScaledVec2 padding(5.f, 5.f);
-				const ImVec2 size = largeFont->CalcTextSizeA(largeFont->LegacySize, FLT_MAX, maxW, &message.front(), &message.back() + 1)
+				const ImVec2 size = ImGui::GetFont()->CalcTextSizeA(uiLargeFontSize(), FLT_MAX, maxW, &message.front(), &message.back() + 1)
 						+ padding * 2.f;
 				ImVec2 pos(insetLeft, ImGui::GetIO().DisplaySize.y - size.y);
 				constexpr float alpha = 0.7f;
@@ -1775,7 +1775,7 @@ void gui_draw_osd()
 				dl->AddRectFilled(pos, pos + size, bg_col, 0.f);
 				pos += padding;
 				const ImU32 col = alphaOverride(0x0000FFFF, alpha);
-				dl->AddText(largeFont, largeFont->LegacySize, pos, col, &message.front(), &message.back() + 1, maxW);
+				dl->AddText(NULL, uiLargeFontSize(), pos, col, &message.front(), &message.back() + 1, maxW);
 			}
 		}
 

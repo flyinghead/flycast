@@ -45,7 +45,7 @@ static std::vector<hostfs::FileInfo> folderFiles;
 bool subfolders_read;
 
 extern int insetLeft, insetRight, insetTop, insetBottom;
-extern ImFont *largeFont;
+extern ImFont *boldFont;
 void error_popup();
 
 namespace hostfs
@@ -109,7 +109,7 @@ void select_file_popup(const char *prompt, StringCallback callback,
 			ImguiStyleVar _(ImGuiStyleVar_ButtonTextAlign, ImVec2(0.f, 0.5f)); // Left
 			ImguiStyleVar _1(ImGuiStyleVar_DisabledAlpha, 1.0f);
 			ImGui::BeginDisabled();
-			ImGui::PushFont(largeFont);
+			ImGui::PushFont(NULL, uiLargeFontSize());
 			ImGui::ButtonEx(prompt, ImVec2(-1, 0));
 			ImGui::PopFont();
 			ImGui::EndDisabled();
@@ -700,7 +700,7 @@ bool Toast::draw()
 	const float maxW = std::min(uiScaled(640.f), displaySize.x);
 	ImFont *regularFont = ImGui::GetFont();
 	const ImVec2 titleSize = title.empty() ? ImVec2()
-			: largeFont->CalcTextSizeA(largeFont->LegacySize, FLT_MAX, maxW, &title.front(), &title.back() + 1);
+			: ImGui::GetFont()->CalcTextSizeA(uiLargeFontSize(), FLT_MAX, maxW, &title.front(), &title.back() + 1);
 	const ImVec2 msgSize = message.empty() ? ImVec2()
 			: regularFont->CalcTextSizeA(regularFont->LegacySize, FLT_MAX, maxW, &message.front(), &message.back() + 1);
 	const ScaledVec2 padding(5.f, 4.f);
@@ -722,7 +722,7 @@ bool Toast::draw()
 	if (!title.empty())
 	{
 		const ImU32 col = alphaOverride(ImGui::GetColorU32(ImGuiCol_Text), alpha);
-		dl->AddText(largeFont, largeFont->LegacySize, pos, col, &title.front(), &title.back() + 1, maxW);
+		dl->AddText(NULL, uiLargeFontSize(), pos, col, &title.front(), &title.back() + 1, maxW);
 		pos.y += spacing.y + titleSize.y;
 	}
 	if (!message.empty())
