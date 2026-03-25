@@ -38,7 +38,7 @@ static float calcComboWidth(const char *labels[], size_t size)
 	return w + ImGui::GetStyle().FramePadding.x * 2.0f + ImGui::GetFrameHeight();
 }
 
-static char *maple_device_types[] =
+static constexpr const char *maple_device_types_src[] =
 {
 	Tnop("None"),
 	Tnop("Sega Controller"),
@@ -56,10 +56,11 @@ static char *maple_device_types[] =
 	Tnop("DreamParaPara Controller"),
 //	Tnop("Dreameye"),
 };
+static const char *maple_device_types[std::size(maple_device_types_src)];
 
 constexpr int MDT_DreamPotato = 100;
 
-static char *maple_expansion_device_types[] =
+static constexpr const char *maple_expansion_device_types_src[] =
 {
 	Tnop("None"),
 	Tnop("Sega VMU"),
@@ -67,6 +68,7 @@ static char *maple_expansion_device_types[] =
 	Tnop("Microphone"),
 	Tnop("DreamPotato"),
 };
+static const char *maple_expansion_device_types[std::size(maple_expansion_device_types_src)];
 
 static const char *maple_device_name(MapleDeviceType type)
 {
@@ -162,14 +164,15 @@ static const char *maple_expansion_device_name(MapleDeviceType type)
 	}
 }
 
-static const char *maple_ports[] = { Tnop("None"), "A", "B", "C", "D", Tnop("All") };
+static constexpr const char *maple_ports_src[] = { Tnop("None"), "A", "B", "C", "D", Tnop("All") };
+static const char *maple_ports[std::size(maple_ports_src)];
 
 struct Mapping {
 	DreamcastKey key;
 	const char *name;
 };
 
-static Mapping dcButtons[] = {
+static constexpr Mapping dcButtons_src[] = {
 	{ EMU_BTN_NONE, Tnop("Directions") },
 	{ DC_DPAD_UP, Tnop("Up") },
 	{ DC_DPAD_DOWN, Tnop("Down") },
@@ -230,8 +233,9 @@ static Mapping dcButtons[] = {
 
 	{ EMU_BTN_NONE, nullptr }
 };
+static Mapping dcButtons[std::size(dcButtons_src)];
 
-static Mapping arcadeButtons[] = {
+static constexpr Mapping arcadeButtons_src[] = {
 	{ EMU_BTN_NONE, Tnop("Directions") },
 	{ DC_DPAD_UP, Tnop("Up") },
 	{ DC_DPAD_DOWN, Tnop("Down") },
@@ -288,24 +292,52 @@ static Mapping arcadeButtons[] = {
 
 	{ EMU_BTN_NONE, nullptr }
 };
+static Mapping arcadeButtons[std::size(arcadeButtons_src)];
 
-static void staticInit()
+namespace {
+
+class UILanguageChangeHandler
 {
-	static bool inited;
+public:
+	UILanguageChangeHandler() {
+		EventManager::listen(Event::LocaleChange, emuEvent);
+		init();
+	}
+	~UILanguageChangeHandler() {
+		EventManager::unlisten(Event::LocaleChange, emuEvent);
+	}
 
-	if (inited)
-		return;
-	inited = true;
-	for (auto& label : maple_device_types)
-		label = (char *)T(label);
-	for (auto& label : maple_expansion_device_types)
-		label = (char *)T(label);
-	maple_ports[0] = (char *)T(maple_ports[0]);
-	maple_ports[5] = (char *)T(maple_ports[5]);
-	for (auto&  button : dcButtons)
-		button.name = (char *)T(button.name);
-	for (auto&  button : arcadeButtons)
-		button.name = (char *)T(button.name);
+	static void init(bool force = false)
+	{
+		static bool inited;
+
+		if (inited && !force)
+			return;
+		inited = true;
+		memcpy(maple_device_types, maple_device_types_src, sizeof(maple_device_types));
+		for (auto& label : maple_device_types)
+			label = (char *)T(label);
+		memcpy(maple_expansion_device_types, maple_expansion_device_types_src, sizeof(maple_expansion_device_types));
+		for (auto& label : maple_expansion_device_types)
+			label = (char *)T(label);
+		memcpy(maple_ports, maple_ports_src, sizeof(maple_ports));
+		maple_ports[0] = (char *)T(maple_ports[0]);
+		maple_ports[5] = (char *)T(maple_ports[5]);
+		memcpy(dcButtons, dcButtons_src, sizeof(dcButtons));
+		for (auto&  button : dcButtons)
+			button.name = (char *)T(button.name);
+		memcpy(arcadeButtons, arcadeButtons_src, sizeof(arcadeButtons));
+		for (auto&  button : arcadeButtons)
+			button.name = (char *)T(button.name);
+	}
+
+private:
+	static void emuEvent(Event event, void *arg) {
+		init(true);
+	}
+};
+static UILanguageChangeHandler uiLanguageHandler;
+
 }
 
 static MapleDeviceType maple_expansion_device_type_from_index(int idx)
@@ -964,7 +996,7 @@ static void gamepadSettingsPopup(const std::shared_ptr<GamepadDevice>& gamepad)
 
 void gui_settings_controls(std::array<bool, 4>& mapleDevicesChanges, std::array<std::array<bool, 2>, 4>& expDevicesChanges)
 {
-	staticInit();
+	uiLanguageHandler.init();
 
 	header(T("Physical Devices"));
     {

@@ -78,6 +78,9 @@ static void emuEventCallback(Event event, void *)
 		case Event::DiskChange:
 			key = "diskChange";
 			break;
+		case Event::LocaleChange:
+			key = "localeChange";
+			break;
 		}
 		if (v[key].isFunction())
 			v[key]();
