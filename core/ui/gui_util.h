@@ -117,6 +117,11 @@ static inline float uiScaled(float f) {
 	return f * settings.display.uiScale;
 }
 
+static inline float uiLargeFontSize()
+{
+	return uiScaled(22.f);
+}
+
 struct ScaledVec2 : public ImVec2
 {
 	ScaledVec2()
