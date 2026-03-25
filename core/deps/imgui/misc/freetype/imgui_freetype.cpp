@@ -48,6 +48,8 @@
 #include FT_GLYPH_H             // <freetype/ftglyph.h>
 #include FT_SIZES_H             // <freetype/ftsizes.h>
 #include FT_SYNTHESIS_H         // <freetype/ftsynth.h>
+#include FT_TRUETYPE_TABLES_H   // <freetype/tttables.h>
+#include FT_TRUETYPE_TAGS_H     // <freetype/tttags.h>
 
 // Handle LunaSVG and PlutoSVG
 #if defined(IMGUI_ENABLE_FREETYPE_LUNASVG) && defined(IMGUI_ENABLE_FREETYPE_PLUTOSVG)
@@ -177,6 +179,28 @@ bool ImGui_ImplFreeType_FontSrcData::InitFont(FT_Library ft_library, const ImFon
 	FT_Error error = FT_New_Memory_Face(ft_library, (const FT_Byte*)src->FontData, (FT_Long)src->FontDataSize, (FT_Long)src->FontNo, &FtFace);
 	if (error != 0)
 		return false;
+	
+	// Reject COLRv1 fonts as they require a dedicated rendering engine (not supported)
+	if (FT_IS_SFNT(FtFace))
+	{
+		FT_ULong len = 0;
+		if (FT_Load_Sfnt_Table(FtFace, TTAG_COLR, 0, nullptr, &len) == 0 && len >= 2)
+		{
+			FT_Byte header[2];
+			FT_ULong headerLen = sizeof(header);
+			if (FT_Load_Sfnt_Table(FtFace, TTAG_COLR, 0, header, &headerLen) == 0 && headerLen >= 2)
+			{
+				int version = (header[0] << 8) | header[1];
+				if (version == 1)
+				{
+					FT_Done_Face(FtFace);
+					FtFace = nullptr;
+					return false;
+				}
+			}
+		}
+	}
+	
 	error = FT_Select_Charmap(FtFace, FT_ENCODING_UNICODE);
 	if (error != 0)
 		return false;
