@@ -27,10 +27,11 @@
 
 namespace i18n
 {
-#if defined(__ANDROID__) && !defined(LIBRETRO)
-
 std::string getCurrentLocale();
 std::string getSystemLocale();
+
+#if defined(__ANDROID__) && !defined(LIBRETRO)
+
 std::string formatShortDateTime(time_t time);
 
 #else
@@ -38,9 +39,6 @@ std::string formatShortDateTime(time_t time);
 using std::locale;
 
 void init();
-
-std::string getCurrentLocale();
-std::string getSystemLocale();
 
 static inline std::string formatShortDateTime(time_t time)
 {
@@ -61,7 +59,7 @@ static inline std::string formatShortDateTime(time_t time)
 	return s;
 }
 
-#endif	// !ANDROID
+#endif	// !ANDROID || LIBRETRO
 
 void reloadLanguage();
 std::string Ts(const std::string& msg);

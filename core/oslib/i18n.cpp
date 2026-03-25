@@ -23,6 +23,7 @@
 #include "tinygettext/file_system.hpp"
 #include "tinygettext/log.hpp"
 #include "log/Log.h"
+#include "emulator.h"
 #ifdef _WIN32
 #include <windows.h>
 #include <nowide/stackstring.hpp>
@@ -155,6 +156,7 @@ void reloadLanguage()
 	}
 	dictMgr->set_language(Language::from_spec(language, country, variant));
 	dictionary = &dictMgr->get_dictionary();
+	EventManager::event(Event::LocaleChange);
 }
 
 static const std::string& translate(const std::string& msg) {

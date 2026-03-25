@@ -51,7 +51,8 @@ enum class Event {
 	VBlank,
 	Network,
 	DiskChange,
-	max = DiskChange
+	LocaleChange,
+	max = LocaleChange
 };
 
 class EventManager

@@ -56,6 +56,23 @@ std::mutex GamepadDevice::_gamepads_mutex;
 static FILE *record_input;
 #endif
 
+GamepadDevice::GamepadDevice(int maple_port, const char *api_name, bool remappable)
+	: _api_name(api_name), _maple_port(maple_port), _remappable(remappable),
+	  digitalToAnalogState{}
+{
+	EventManager::listen(Event::LocaleChange, emuEvent, this);
+	// Initialize pressedButtons sets
+	currentInputs.clear();
+}
+
+GamepadDevice::~GamepadDevice() {
+	EventManager::unlisten(Event::LocaleChange, emuEvent, this);
+}
+
+void GamepadDevice::emuEvent(Event event, void *arg) {
+	((GamepadDevice *)arg)->refreshName();
+}
+
 bool GamepadDevice::handleButtonInput(int port, DreamcastKey key, bool pressed)
 {
 	if (key == EMU_BTN_NONE)
@@ -876,13 +893,6 @@ void GamepadDevice::rampAnalog()
 			}
 		}
 	}
-}
-
-void GamepadDevice::refreshAllNames()
-{
-	Lock _(_gamepads_mutex);
-	for (auto& gamepad : _gamepads)
-		gamepad->refreshName();
 }
 
 void GamepadDevice::RampAnalog()

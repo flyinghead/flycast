@@ -24,7 +24,6 @@
 #include "stdclass.h"
 #include "achievements/achievements.h"
 #include "imgui_stdlib.h"
-#include "input/gamepad_device.h"
 
 static std::vector<std::string>* g_currentPathList = nullptr;
 static void managePathListCallback(std::string selection)
@@ -183,58 +182,52 @@ void addContentPath(bool start)
 
 void gui_settings_general()
 {
+	struct
+	{
+		const char* label;
+		const char* value;
+	}
+	UILanguages[] = {
+		{ T("System Default"), "" },
+		{ "English", "en" },
+		{ "Français", "fr" },
+		{ "Magyar", "hu" },
+//		{ "日本語", "ja" }, // FIXME: Use this when we have dynamic font loading
+		{ "Japanese", "ja" },
+		{ "Português (Brasil)", "pt_BR" },
+		{ "Svenska", "sv" },
+	};
+
+	// Determine the preview text
+	const std::string currentLanguage = config::UILanguage.get();
+	std::string preview;
+	for (const auto& it : UILanguages)
+	{
+		if (currentLanguage == it.value) {
+			preview = it.label;
+			break;
+		}
+	}
+
+	if (ImGui::BeginCombo(T("UI Language"), preview.c_str()))
+	{
+		for (const auto& lang : UILanguages)
+		{
+			const bool selected = (currentLanguage == lang.value);
+
+			if (ImGui::Selectable(lang.label, selected)) {
+				config::UILanguage = lang.value;
+				i18n::reloadLanguage();
+			}
+			if (selected)
+				ImGui::SetItemDefaultFocus();
+		}
+
+		ImGui::EndCombo();
+	}
+
 	{
 		DisabledScope scope(settings.platform.isArcade());
-
-		struct LangItem
-		{
-			const char* label;
-			const char* value;
-		};
-		static constexpr LangItem kLanguages[] = {
-			{ "English", "en" },
-			{ "Français", "fr" },
-			{ "Magyar", "hu" },
-//			{ "日本語", "ja" }, // FIXME: Use this when we have dynamic font loading
-			{ "Japanese", "ja" },
-			{ "Português (Brasil)", "pt_BR" },
-			{ "Svenska", "sv" },
-		};
-
-		// Determine the preview text
-		std::string currentLanguage = config::UILanguage.get();
-		std::string preview = T("System Default");
-		for (const auto& it : kLanguages)
-		{
-			if (currentLanguage == it.value)
-			{
-				preview = it.label;
-				break;
-			}
-		}
-
-		if (ImGui::BeginCombo(T("UI Language"), preview.c_str()))
-		{
-			for (int i = -1; i < (int)std::size(kLanguages); i++)
-			{
-				const char* label = (i == -1) ? T("System Default") : kLanguages[i].label;
-				const char* value = (i == -1) ? "" : kLanguages[i].value;
-				bool selected = (currentLanguage == value);
-
-				ImGui::PushID(i);
-				if (ImGui::Selectable(label, selected))
-				{
-					config::UILanguage = value;
-					i18n::reloadLanguage();
-					GamepadDevice::refreshAllNames();
-				}
-				if (selected)
-					ImGui::SetItemDefaultFocus();
-				ImGui::PopID();
-			}
-
-			ImGui::EndCombo();
-		}
 
 		const char *languages[] = { T("Japanese"), T("English"), T("German"), T("French"), T("Spanish"), T("Italian"), T("Default") };
 		OptionComboBox(T("Dreamcast Language"), config::Language, languages, std::size(languages),
