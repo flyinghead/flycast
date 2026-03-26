@@ -3,6 +3,7 @@
 #include "rend/texconv.h"
 #include "rend/transform_matrix.h"
 #include "cfg/option.h"
+
 #include "emulator.h"
 #include "serialize.h"
 #include "hw/holly/holly_intc.h"
@@ -221,6 +222,19 @@ private:
 			renderEnd.Set();
 		else if (config::DelayFrameSwapping && fb_w_cur == FB_R_SOF1)
 			present();
+
+#ifdef LIBRETRO
+		// In Libretro, do the synchronous emulated-framebuffer present only in
+		// non-threaded mode. In threaded mode, keep the vblank-driven path to avoid
+		// presenting the framebuffer out of phase with the frame boundary.
+		if (config::EmulateFramebuffer && !taContext->rend.isRTT && !config::ThreadedRendering)
+		{
+			FramebufferInfo fbInfo;
+			fbInfo.update();
+			renderFramebuffer(fbInfo);
+			present();
+		}
+#endif
 
 		//clear up & free data ..
 		FinishRender(taContext);
@@ -449,7 +463,11 @@ int rend_end_render(int tag, int cycles, int jitter, void *arg)
 		asic_RaiseInterrupt(holly_RENDER_DONE_isp);
 		asic_RaiseInterrupt(holly_RENDER_DONE_vd);
 	}
-	if (pend_rend && config::ThreadedRendering)
+	if (pend_rend && config::ThreadedRendering
+#ifdef LIBRETRO
+			&& !config::EmulateFramebuffer
+#endif
+			)
 		renderEnd.Wait();
 
 	return 0;
@@ -457,8 +475,25 @@ int rend_end_render(int tag, int cycles, int jitter, void *arg)
 
 void rend_vblank()
 {
-	if (config::EmulateFramebuffer
-			|| (!render_called && fb_dirty && FB_R_CTRL.fb_enable))
+	if (config::EmulateFramebuffer)
+	{
+#ifdef LIBRETRO
+		// renderFramebuffer() is called synchronously in render() for 60fps games.
+		// Only re-trigger here for 30fps games (repeated frames where render()
+		// didn't fire this vblank).
+		if (rend_is_enabled() && !render_called)
+#else
+		if (rend_is_enabled())
+#endif
+		{
+			FramebufferInfo fbInfo;
+			fbInfo.update();
+			pvrQueue.enqueue(PvrMessageQueue::RenderFramebuffer, fbInfo);
+			pvrQueue.enqueue(PvrMessageQueue::Present);
+		}
+		fb_dirty = false;
+	}
+	else if (!render_called && fb_dirty && FB_R_CTRL.fb_enable)
 	{
 		if (rend_is_enabled())
 		{
@@ -466,8 +501,7 @@ void rend_vblank()
 			fbInfo.update();
 			pvrQueue.enqueue(PvrMessageQueue::RenderFramebuffer, fbInfo);
 			pvrQueue.enqueue(PvrMessageQueue::Present);
-			if (!config::EmulateFramebuffer)
-				DEBUG_LOG(PVR, "Direct framebuffer write detected");
+			DEBUG_LOG(PVR, "Direct framebuffer write detected");
 		}
 		fb_dirty = false;
 	}
