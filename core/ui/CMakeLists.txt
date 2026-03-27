@@ -5,6 +5,8 @@ if(NOT LIBRETRO)
             imgui_driver.h
             gui.cpp
             gui.h
+            gui_font.cpp
+            gui_font.h
             gui_achievements.cpp
             vgamepad.cpp
             vgamepad.h
