@@ -144,6 +144,7 @@ void init()
 
 void reloadLanguage()
 {
+	init();
 	std::string locale = getCurrentLocale();
 	std::string language, country, variant;
 	parseLocale(locale, language, country, variant);

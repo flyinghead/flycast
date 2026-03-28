@@ -301,17 +301,14 @@ class UILanguageChangeHandler
 public:
 	UILanguageChangeHandler() {
 		EventManager::listen(Event::LocaleChange, emuEvent);
-		init();
 	}
 	~UILanguageChangeHandler() {
 		EventManager::unlisten(Event::LocaleChange, emuEvent);
 	}
 
-	static void init(bool force = false)
+	static void init()
 	{
-		static bool inited;
-
-		if (inited && !force)
+		if (inited)
 			return;
 		inited = true;
 		memcpy(maple_device_types, maple_device_types_src, sizeof(maple_device_types));
@@ -332,10 +329,16 @@ public:
 	}
 
 private:
-	static void emuEvent(Event event, void *arg) {
-		init(true);
+	static void emuEvent(Event event, void *arg)
+	{
+		if (inited) {
+			inited = false;
+			init();
+		}
 	}
+	static bool inited;
 };
+bool UILanguageChangeHandler::inited;
 static UILanguageChangeHandler uiLanguageHandler;
 
 }
