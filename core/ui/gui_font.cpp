@@ -292,7 +292,6 @@ void gui_loadFonts()
 	ImGui::GetIO().Fonts->AddFontFromFileTTF((fontDir + "seguiemj.ttf").c_str(), fontSize, &emojiConfig);
 	ImGui::GetIO().Fonts->AddFontFromFileTTF((fontDir + "seguiemj.ttf").c_str(), fontSize, &emojiBoldConfig);
 	
-	/*
 	registerFont(fonts,     { .lang="ja", .paths={fontDir + "NotoSansJP-VF.ttf"}, .fontNo=FontFace::Noto::Medium, .size=fontSize * 1.05f });
 	registerFont(boldFonts, { .lang="ja", .paths={fontDir + "NotoSansJP-VF.ttf"}, .fontNo=FontFace::Noto::Bold,   .size=fontSize * 1.05f });
 	registerFont({&fonts, &boldFonts}, { .lang="ja", .paths={fontDir + "BIZ-UDGothicB.ttc"}, .size=fontSize * 0.85f });
@@ -317,88 +316,6 @@ void gui_loadFonts()
 	registerFont({&fonts, &boldFonts}, { .lang="zh_HK", .paths={fontDir + "msjhbd.ttf"}, .size=fontSize * 1.13000f, .offsetY=0.015f });
 	registerFont({&fonts, &boldFonts}, { .lang="zh_TW", .paths={fontDir + "msjhbd.ttf"}, .size=fontSize * 1.13000f, .offsetY=0.015f });
 	registerFont({&fonts, &boldFonts}, { .lang="zh_CN", .paths={fontDir + "msyhbd.ttf"}, .size=fontSize * 1.13000f, .offsetY=0.015f });
-	 */
-	{
-		FontEntry entry; entry.lang = "ja"; entry.paths = { fontDir + "NotoSansJP-VF.ttf" }; entry.fontNo = FontFace::Noto::Medium; entry.size = fontSize * 1.05f;
-		registerFont(fonts, entry);
-	}
-	{
-		FontEntry entry; entry.lang = "ja"; entry.paths = { fontDir + "NotoSansJP-VF.ttf" }; entry.fontNo = FontFace::Noto::Bold; entry.size = fontSize * 1.05f;
-		registerFont(boldFonts, entry);
-	}
-	{
-		FontEntry entry; entry.lang = "ja"; entry.paths = { fontDir + "BIZ-UDGothicB.ttc" }; entry.size = fontSize * 0.85f;
-		registerFont({ &fonts, &boldFonts }, entry);
-	}
-
-	{
-		FontEntry entry; entry.lang = "ko"; entry.paths = { fontDir + "NotoSansKR-VF.ttf" }; entry.fontNo = FontFace::Noto::Medium; entry.size = fontSize * 1.05f;
-		registerFont(fonts, entry);
-	}
-	{
-		FontEntry entry; entry.lang = "ko"; entry.paths = { fontDir + "NotoSansKR-VF.ttf" }; entry.fontNo = FontFace::Noto::Bold; entry.size = fontSize * 1.05f;
-		registerFont(boldFonts, entry);
-	}
-	{
-		FontEntry entry; entry.lang = "ko"; entry.paths = { fontDir + "malgunbd.ttf" }; entry.size = fontSize * 1.124891f;
-		registerFont({ &fonts, &boldFonts }, entry);
-	}
-	{
-		FontEntry entry; entry.lang = "ko"; entry.paths = { fontDir + "Gulim.ttc" }; entry.fontNo = FontFace::Gulim::Sharp; entry.size = fontSize * 0.9f;
-		registerFont({ &fonts, &boldFonts }, entry);
-	}
-
-	{
-		FontEntry entry; entry.lang = "zh_HK"; entry.paths = { fontDir + "NotoSansHK-VF.ttf" }; entry.fontNo = FontFace::Noto::Medium; entry.size = fontSize * 1.05f;
-		registerFont(fonts, entry);
-	}
-	{
-		FontEntry entry; entry.lang = "zh_HK"; entry.paths = { fontDir + "NotoSansHK-VF.ttf" }; entry.fontNo = FontFace::Noto::Bold; entry.size = fontSize * 1.05f;
-		registerFont(boldFonts, entry);
-	}
-	{
-		FontEntry entry; entry.lang = "zh_TW"; entry.paths = { fontDir + "NotoSansTC-VF.ttf" }; entry.fontNo = FontFace::Noto::Medium; entry.size = fontSize * 1.05f;
-		registerFont(fonts, entry);
-	}
-	{
-		FontEntry entry; entry.lang = "zh_TW"; entry.paths = { fontDir + "NotoSansTC-VF.ttf" }; entry.fontNo = FontFace::Noto::Bold; entry.size = fontSize * 1.05f;
-		registerFont(boldFonts, entry);
-	}
-	{
-		FontEntry entry; entry.lang = "zh_CN"; entry.paths = { fontDir + "NotoSansSC-VF.ttf" }; entry.fontNo = FontFace::Noto::Medium; entry.size = fontSize * 1.05f;
-		registerFont(fonts, entry);
-	}
-	{
-		FontEntry entry; entry.lang = "zh_CN"; entry.paths = { fontDir + "NotoSansSC-VF.ttf" }; entry.fontNo = FontFace::Noto::Bold; entry.size = fontSize * 1.05f;
-		registerFont(boldFonts, entry);
-	}
-
-	{
-		FontEntry entry; entry.lang = "zh_HK"; entry.paths = { fontDir + "msjhbd.ttc" }; entry.fontNo = FontFace::MSHei::UI; entry.size = fontSize * 1.13000f; entry.offsetY = 0.015f;
-		registerFont({ &fonts, &boldFonts }, entry);
-	}
-	{
-		FontEntry entry; entry.lang = "zh_TW"; entry.paths = { fontDir + "msjhbd.ttc" }; entry.fontNo = FontFace::MSHei::UI; entry.size = fontSize * 1.13000f; entry.offsetY = 0.015f;
-		registerFont({ &fonts, &boldFonts }, entry);
-	}
-	{
-		FontEntry entry; entry.lang = "zh_CN"; entry.paths = { fontDir + "msyhbd.ttc" }; entry.fontNo = FontFace::MSHei::UI; entry.size = fontSize * 1.13000f; entry.offsetY = 0.015f;
-		registerFont({ &fonts, &boldFonts }, entry);
-	}
-
-	// Windows 7
-	{
-		FontEntry entry; entry.lang = "zh_HK"; entry.paths = { fontDir + "msjhbd.ttf" }; entry.size = fontSize * 1.13000f; entry.offsetY = 0.015f;
-		registerFont({ &fonts, &boldFonts }, entry);
-	}
-	{
-		FontEntry entry; entry.lang = "zh_TW"; entry.paths = { fontDir + "msjhbd.ttf" }; entry.size = fontSize * 1.13000f; entry.offsetY = 0.015f;
-		registerFont({ &fonts, &boldFonts }, entry);
-	}
-	{
-		FontEntry entry; entry.lang = "zh_CN"; entry.paths = { fontDir + "msyhbd.ttf" }; entry.size = fontSize * 1.13000f; entry.offsetY = 0.015f;
-		registerFont({ &fonts, &boldFonts }, entry);
-	}
 	
 #elif defined(TARGET_OS_MAC)
 	emojiConfig.GlyphOffset = { 0.0f, fontSize * (0.2f) };
