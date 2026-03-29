@@ -347,7 +347,8 @@ void SetNaomiNetworkConfig(int node)
 	else if (gameId == "VIRTUAL-ON ORATORIO TANGRAM")
 	{
 		write_naomi_eeprom(0x45, node == -1 ? 3
-				: node == 0 ? 0 : 1);
+				: node == 0 ? 0 
+					: node == 1 ? 1 : 2 );
 	}
 	else if (gameId == "WAVE RUNNER GP")
 	{
