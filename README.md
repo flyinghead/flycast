@@ -10,6 +10,8 @@
 
 **Flycast** is a multi-platform Sega Dreamcast, Naomi, Naomi 2, and Atomiswave emulator derived from [**reicast**](https://github.com/skmp/reicast-emulator).
 
+This is a fork created by Framed_Niner for testing stuff.
+
 Information about configuration and supported features can be found on [**TheArcadeStriker's flycast wiki**](https://github.com/TheArcadeStriker/flycast-wiki/wiki).
 
 Join us on our [**Discord server**](https://discord.gg/X8YWP8w) for a chat. 
