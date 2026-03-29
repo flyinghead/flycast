@@ -27,7 +27,7 @@ class ImGuiDriver
 {
 public:
 	ImGuiDriver() {
-		gui_initFonts();
+		gui_updateStyle();
 	}
 	virtual ~ImGuiDriver() = default;
 

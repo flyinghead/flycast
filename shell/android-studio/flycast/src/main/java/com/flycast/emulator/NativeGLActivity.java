@@ -199,13 +199,14 @@ class DummyEdit extends View implements View.OnKeyListener {
         @Override
         public boolean commitText(CharSequence text, int newCursorPosition) {
             InputDeviceManager devManager = InputDeviceManager.getInstance();
-            for (int i = 0; i < text.length(); i++) {
-                char c = text.charAt(i);
-                if (c == '\n') {
+            for (int i = 0; i < text.length(); ) {
+                int cp = Character.codePointAt(text, i);
+                if (cp == '\n') {
                     activity.hideTextInput();
                     return true;
                 }
-                devManager.keyboardText(c);
+                devManager.keyboardText(cp);
+                i += Character.charCount(cp);
             }
             return super.commitText(text, newCursorPosition);
         }
@@ -254,7 +255,7 @@ class DummyEdit extends View implements View.OnKeyListener {
         InputDeviceManager devManager = InputDeviceManager.getInstance();
         if (event.getAction() == KeyEvent.ACTION_DOWN) {
             if (!event.isCtrlPressed() && (event.isPrintingKey() || event.getKeyCode() == KeyEvent.KEYCODE_SPACE))
-                ic.commitText(String.valueOf((char) event.getUnicodeChar()), 1);
+                ic.commitText(new String(Character.toChars(event.getUnicodeChar())), 1);
             else
                 devManager.keyboardEvent(event.getKeyCode(), true);
             return true;

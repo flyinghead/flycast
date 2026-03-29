@@ -189,7 +189,7 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_flycast_emulator_periph_InputDevi
 
 extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_periph_InputDeviceManager_keyboardText(JNIEnv *env, jobject obj,
 		jint c) {
-	gui_keyboard_input((u16)c);
+	gui_keyboard_input((u32)c);
 }
 
 static std::map<std::pair<jint, jint>, jint> previous_axis_values;
