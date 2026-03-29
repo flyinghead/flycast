@@ -18,16 +18,19 @@
  */
 #include "i18n.h"
 #include "resources.h"
+#include "cfg/option.h"
 #include "tinygettext/tinygettext.hpp"
 #include "tinygettext/file_system.hpp"
 #include "tinygettext/log.hpp"
 #include "log/Log.h"
+#include "emulator.h"
 #ifdef _WIN32
 #include <windows.h>
 #include <nowide/stackstring.hpp>
 #endif
 #include <vector>
 #include <sstream>
+#include <algorithm>
 #include <unordered_set>
 
 using namespace tinygettext;
@@ -54,6 +57,13 @@ class ResourceFileSystem : public FileSystem
 };
 
 static Dictionary *dictionary;
+
+static Dictionary& getDictionary()
+{
+	if (dictionary == nullptr)
+		reloadLanguage();
+	return *dictionary;
+}
 
 static std::string getUnixLocaleVariant(const std::string& locale)
 {
@@ -130,20 +140,28 @@ void init()
 		if (!msg.empty())
 			ERROR_LOG(COMMON, "%s", msg.substr(0, msg.length() - 1).c_str());
 	});
+}
 
+void reloadLanguage()
+{
+	init();
 	std::string locale = getCurrentLocale();
 	std::string language, country, variant;
 	parseLocale(locale, language, country, variant);
 
-	static DictionaryManager dictMgr(std::make_unique<ResourceFileSystem>());
-	dictMgr.set_language(Language::from_spec(language, country, variant));
-	dictMgr.add_directory("i18n");
-	dictionary = &dictMgr.get_dictionary();
+	static std::unique_ptr<DictionaryManager> dictMgr;
+	if (!dictMgr)
+	{
+		dictMgr = std::make_unique<DictionaryManager>(std::make_unique<ResourceFileSystem>());
+		dictMgr->add_directory("i18n");
+	}
+	dictMgr->set_language(Language::from_spec(language, country, variant));
+	dictionary = &dictMgr->get_dictionary();
+	EventManager::event(Event::LocaleChange);
 }
 
 static const std::string& translate(const std::string& msg) {
-	init();
-	return dictionary->translate(msg);
+	return getDictionary().translate(msg);
 }
 
 std::string Ts(const std::string& msg) {
@@ -163,7 +181,7 @@ const char *T(const char *msg)
 }
 
 std::string translateCtx_s(const std::string& context, const std::string& msg) {
-	return dictionary->translate_ctxt(context, msg);
+	return getDictionary().translate_ctxt(context, msg);
 }
 
 const char *translateCtx(const std::string& context, const char *msg)
@@ -171,7 +189,7 @@ const char *translateCtx(const std::string& context, const char *msg)
 	if (msg == nullptr)
 		return nullptr;
 	std::string smsg(msg);
-	const std::string& tr = dictionary->translate_ctxt(context, smsg);
+	const std::string& tr = getDictionary().translate_ctxt(context, smsg);
 	if (&tr == &smsg)
 		return msg;
 	else
@@ -179,7 +197,7 @@ const char *translateCtx(const std::string& context, const char *msg)
 }
 
 std::string translatePlural_s(const std::string& msg, const std::string& msgPlural, int num) {
-	return dictionary->translate_plural(msg, msgPlural, num);
+	return getDictionary().translate_plural(msg, msgPlural, num);
 }
 
 const char *translatePlural(const char *msg, const char *msgPlural, int num) {
@@ -187,7 +205,7 @@ const char *translatePlural(const char *msg, const char *msgPlural, int num) {
 		return nullptr;
 	std::string smsg(msg);
 	std::string smsgPlural(msgPlural);
-	const std::string& tr = dictionary->translate_plural(smsg, smsgPlural, num);
+	const std::string& tr = getDictionary().translate_plural(smsg, smsgPlural, num);
 	if (&tr == &smsg)
 		return msg;
 	else if (&tr == &smsgPlural)
@@ -196,9 +214,10 @@ const char *translatePlural(const char *msg, const char *msgPlural, int num) {
 		return tr.c_str();
 }
 
-#if !defined(LIBRETRO) && defined(_WIN32)
-std::string getCurrentLocale()
+#if !defined(__ANDROID__) && !defined(__SWITCH__) && !defined(LIBRETRO) && !defined(TARGET_MAC)
+std::string getSystemLocale()
 {
+#if defined(_WIN32)
 	ULONG numLanguages = 0;
 	ULONG bufferSize = 0;
 	if (!GetUserPreferredUILanguages(MUI_LANGUAGE_NAME, &numLanguages, nullptr, &bufferSize) || bufferSize == 0)
@@ -220,6 +239,21 @@ std::string getCurrentLocale()
 
 	ERROR_LOG(COMMON, "UTF-16 to UTF-8 conversion failed");
 	return "en";
+#else
+	const char* locale = setlocale(LC_MESSAGES, nullptr);
+	return locale ? locale : "en";
+#endif
 }
 #endif
+
+#ifndef LIBRETRO
+std::string getCurrentLocale()
+{
+	std::string locale = config::UILanguage;
+	if (!locale.empty())
+		return locale;
+	return getSystemLocale();
+}
+#endif
+
 }

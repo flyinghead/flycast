@@ -284,7 +284,7 @@ std::string getScreenshotsPath()
 namespace i18n
 {
 
-std::string getCurrentLocale()
+std::string getSystemLocale()
 {
 	return [[[NSLocale preferredLanguages] objectAtIndex:0] UTF8String];
 }

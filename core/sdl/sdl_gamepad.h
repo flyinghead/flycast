@@ -116,4 +116,8 @@ class SDLMouse : public Mouse
 public:
 	SDLMouse(u32 mouseId);
 	void setAbsPos(int x, int y);
+	void refreshName() override;
+
+private:
+	u32 mouseId;
 };

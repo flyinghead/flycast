@@ -182,11 +182,55 @@ void addContentPath(bool start)
 
 void gui_settings_general()
 {
+	struct
+	{
+		const char* label;
+		const char* value;
+	}
+	UILanguages[] = {
+		{ T("System Default"), "" },
+		{ "English", "en" },
+		{ "Français", "fr" },
+		{ "Magyar", "hu" },
+//		{ "日本語", "ja" }, // FIXME: Use this when we have dynamic font loading
+		{ "Japanese", "ja" },
+		{ "Português (Brasil)", "pt_BR" },
+		{ "Svenska", "sv" },
+	};
+
+	// Determine the preview text
+	const std::string currentLanguage = config::UILanguage.get();
+	std::string preview;
+	for (const auto& it : UILanguages)
+	{
+		if (currentLanguage == it.value) {
+			preview = it.label;
+			break;
+		}
+	}
+
+	if (ImGui::BeginCombo(T("UI Language"), preview.c_str()))
+	{
+		for (const auto& lang : UILanguages)
+		{
+			const bool selected = (currentLanguage == lang.value);
+
+			if (ImGui::Selectable(lang.label, selected)) {
+				config::UILanguage = lang.value;
+				i18n::reloadLanguage();
+			}
+			if (selected)
+				ImGui::SetItemDefaultFocus();
+		}
+
+		ImGui::EndCombo();
+	}
+
 	{
 		DisabledScope scope(settings.platform.isArcade());
 
 		const char *languages[] = { T("Japanese"), T("English"), T("German"), T("French"), T("Spanish"), T("Italian"), T("Default") };
-		OptionComboBox(T("Language"), config::Language, languages, std::size(languages),
+		OptionComboBox(T("Dreamcast Language"), config::Language, languages, std::size(languages),
 				T("The language as configured in the Dreamcast BIOS"));
 
 		const char *broadcast[] = { "NTSC", "PAL", "PAL/M", "PAL/N", T("Default") };
