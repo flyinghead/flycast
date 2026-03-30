@@ -350,6 +350,7 @@ public:
 	}
 	vk::Pipeline GetTrModifierVolumePipeline(ModVolMode mode, int cullMode, bool naomi2)
 	{
+		checkMaxLayers();
 		u32 pipehash = hash(mode, cullMode, naomi2);
 		const auto &pipeline = trModVolPipelines.find(pipehash);
 		if (pipeline != trModVolPipelines.end())
@@ -360,15 +361,9 @@ public:
 	}
 	vk::Pipeline GetFinalPipeline(bool dithering)
 	{
-		if (!finalPipelines[dithering] || maxLayers != config::PerPixelLayers)
-		{
-			if (maxLayers != config::PerPixelLayers) {
-				finalPipelines[0].reset();
-				finalPipelines[1].reset();
-				maxLayers = config::PerPixelLayers;
-			}
+		checkMaxLayers();
+		if (!finalPipelines[dithering])
 			CreateFinalPipeline(dithering);
-		}
 		return *finalPipelines[dithering];
 	}
 	vk::Pipeline GetClearPipeline()
@@ -467,6 +462,7 @@ private:
 	void CreatePipeline(u32 listType, bool autosort, const PolyParam& pp, Pass pass, int gpuPalette);
 	void CreateFinalPipeline(bool dithering);
 	void CreateClearPipeline();
+	void checkMaxLayers();
 
 	std::map<u64, vk::UniquePipeline> pipelines;
 	std::map<u32, vk::UniquePipeline> modVolPipelines;
