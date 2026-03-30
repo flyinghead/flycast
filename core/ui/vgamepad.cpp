@@ -68,7 +68,7 @@ void displayCommands()
 	draw();
     centerNextWindow();
 
-    ImGui::Begin("##vgamepad", NULL, ImGuiWindowFlags_NoDecoration);
+    ImGui::Begin("##vgamepad", nullptr, ImGuiWindowFlags_NoDecoration);
 
 	if (ImGui::Button(i18n::T("Save"), ScaledVec2(150, 50)))
 	{

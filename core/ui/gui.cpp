@@ -40,7 +40,6 @@
 #include "oslib/resources.h"
 #include "achievements/achievements.h"
 #include "gui_achievements.h"
-#include "imgui/misc/freetype/imgui_freetype.h"
 #include "IconsFontAwesome6.h"
 #include <stb_image_write.h>
 #include "hw/pvr/Renderer_if.h"
@@ -134,7 +133,7 @@ void gui_init()
 	ImGuiIO& io = ImGui::GetIO();
 	io.BackendFlags |= ImGuiBackendFlags_HasGamepad;
 
-	io.IniFilename = NULL;
+	io.IniFilename = nullptr;
 
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;  // Enable Keyboard Controls
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;   // Enable Gamepad Controls
@@ -516,7 +515,7 @@ static void gui_display_commands()
 	ImGui::SetNextWindowBgAlpha(0.8f);
 	ImguiStyleVar _{ImGuiStyleVar_WindowBorderSize, 0};
 
-	ImGui::Begin("##commands", NULL, ImGuiWindowFlags_NoDecoration);
+	ImGui::Begin("##commands", nullptr, ImGuiWindowFlags_NoDecoration);
 	{
 		ImguiStyleVar _{ImGuiStyleVar_ButtonTextAlign, ImVec2(0.f, 0.5f)};	// left aligned
 
@@ -545,7 +544,7 @@ static void gui_display_commands()
 		if (!lowHeight)
 		{
 			ImGui::BeginChild("game_info", ScaledVec2(0, 100.f), ImGuiChildFlags_Borders, ImGuiWindowFlags_None);
-			ImGui::PushFont(NULL, uiLargeFontSize());
+			ImGui::PushFont(nullptr, uiLargeFontSize());
 			ImGui::Text("%s", art.name.c_str());
 			ImGui::PopFont();
 			{
@@ -680,7 +679,7 @@ void error_popup()
 		ImguiStyleVar _(ImGuiStyleVar_WindowPadding, padding);
 		ImguiStyleVar _1(ImGuiStyleVar_ItemSpacing, padding);
 		ImGui::OpenPopup("Error");
-		if (ImGui::BeginPopupModal("Error", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar))
+		if (ImGui::BeginPopupModal("Error", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar))
 		{
 			ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + uiScaled(400.f));
 			ImGui::TextWrapped("%s", error_msg.c_str());
@@ -709,7 +708,7 @@ static void contentpath_warning_popup()
     if (scanner.content_path_looks_incorrect)
     {
         ImGui::OpenPopup(T("Incorrect Content Location?"));
-        if (ImGui::BeginPopupModal(T("Incorrect Content Location?"), NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
+        if (ImGui::BeginPopupModal(T("Incorrect Content Location?"), nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
         {
             ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + uiScaled(400.f));
             ImGui::TextWrapped((std::string("  ") + T("Scanned %d folders but no game can be found!") + std::string("  ")).c_str(), scanner.empty_folders_scanned);
@@ -844,7 +843,7 @@ static void gui_display_content()
 	ImguiStyleVar _(ImGuiStyleVar_WindowRounding, 0);
 	ImguiStyleVar _1(ImGuiStyleVar_WindowBorderSize, 0);
 
-    ImGui::Begin("##main", NULL, ImGuiWindowFlags_NoDecoration);
+    ImGui::Begin("##main", nullptr, ImGuiWindowFlags_NoDecoration);
 
     ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ScaledVec2(20, 8));
     ImGui::AlignTextToFramePadding();
@@ -991,7 +990,7 @@ static void gui_display_content()
 			ImGui::SameLine((ImGui::GetContentRegionMax().x - w) / 2);
 			if (ImGui::BeginChild("empty", ImVec2(0, 0), ImGuiChildFlags_AutoResizeX | ImGuiChildFlags_AutoResizeY | ImGuiChildFlags_NavFlattened))
 			{
-				ImGui::PushFont(NULL, uiLargeFontSize());
+				ImGui::PushFont(nullptr, uiLargeFontSize());
 				ImGui::NewLine();
 				ImGui::Text("%s", label);
 				ImguiStyleVar _(ImGuiStyleVar_FramePadding, ScaledVec2(20, 8));
@@ -1092,7 +1091,7 @@ static void gui_network_start()
 	ImGui::SetNextWindowBgAlpha(0.8f);
 	ImguiStyleVar _1(ImGuiStyleVar_WindowPadding, ScaledVec2(20, 20));
 
-	if (ImGui::Begin("##network", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_AlwaysAutoResize))
+	if (ImGui::Begin("##network", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_AlwaysAutoResize))
 	{
 		ImguiStyleVar _(ImGuiStyleVar_FramePadding, ScaledVec2(20, 10));
 		ImGui::AlignTextToFramePadding();
@@ -1199,7 +1198,7 @@ static void gui_display_loadscreen()
 	ImGui::SetNextWindowBgAlpha(0.8f);
 	ImguiStyleVar _(ImGuiStyleVar_WindowPadding, ScaledVec2(20, 20));
 
-    if (ImGui::Begin("##loading", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_AlwaysAutoResize))
+    if (ImGui::Begin("##loading", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_AlwaysAutoResize))
     {
 		ImguiStyleVar _(ImGuiStyleVar_FramePadding, ScaledVec2(20, 10));
 		ImGui::AlignTextToFramePadding();
@@ -1410,7 +1409,7 @@ void gui_draw_osd()
 				dl->AddRectFilled(pos, pos + size, bg_col, 0.f);
 				pos += padding;
 				const ImU32 col = alphaOverride(0x0000FFFF, alpha);
-				dl->AddText(NULL, uiLargeFontSize(), pos, col, &message.front(), &message.back() + 1, maxW);
+				dl->AddText(nullptr, uiLargeFontSize(), pos, col, &message.front(), &message.back() + 1, maxW);
 			}
 		}
 
@@ -1441,7 +1440,7 @@ void gui_display_profiler()
 	gui_newFrame();
 	ImGui::NewFrame();
 
-	ImGui::Begin("Profiler", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoBackground);
+	ImGui::Begin("Profiler", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoBackground);
 
 	{
 		ImguiStyleColor _(ImGuiCol_Text, ImVec4(0.8f, 0.8f, 0.8f, 1.0f));

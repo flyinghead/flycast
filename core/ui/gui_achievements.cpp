@@ -224,7 +224,6 @@ bool Notification::draw()
 		{
 			if (text[i].empty())
 				continue;
-			ImFont *font = i == 0 ? boldFont : regularFont;
 			float fontSize = i == 0 ? uiLargeFontSize() : regularFont->LegacySize;
 			textSize[i] = ImGui::GetFont()->CalcTextSizeA(fontSize, FLT_MAX, maxW, text[i].c_str());
 			totalSize.x = std::max(totalSize.x, textSize[i].x);
@@ -292,7 +291,7 @@ void achievementList()
 		tex.draw(ScaledVec2(80.f, 80.f));
 		ImGui::SameLine();
 		ImGui::BeginChild("game_info", ImVec2(w, uiScaled(80.f)), ImGuiChildFlags_None, ImGuiWindowFlags_None);
-		ImGui::PushFont(NULL, uiLargeFontSize());
+		ImGui::PushFont(nullptr, uiLargeFontSize());
 		ImGui::Text("%s", game.title.c_str());
 		ImGui::PopFont();
 		std::string str = strprintf(T("You have unlocked %d of %d achievements and %d of %d points."),
@@ -328,7 +327,7 @@ void achievementList()
 				else if (category == Tnop("Unlocked") || category == Tnop("Recently Unlocked"))
 					ImGui::Text(ICON_FA_LOCK_OPEN);
 				ImGui::SameLine();
-				ImGui::PushFont(NULL, uiLargeFontSize());
+				ImGui::PushFont(nullptr, uiLargeFontSize());
 				ImGui::Text("%s", T(category.c_str()));
 				ImGui::PopFont();
 				ImGui::Unindent(uiScaled(10));
@@ -338,7 +337,7 @@ void achievementList()
 			tex.draw(ScaledVec2(80.f, 80.f));
 			ImGui::SameLine();
 			ImGui::BeginChild(ImGui::GetID("ach_item"), ImVec2(0, 0), ImGuiChildFlags_AutoResizeY, ImGuiWindowFlags_None);
-			ImGui::PushFont(NULL, uiLargeFontSize());
+			ImGui::PushFont(nullptr, uiLargeFontSize());
 			ImGui::Text("%s", ach.title.c_str());
 			ImGui::PopFont();
 
