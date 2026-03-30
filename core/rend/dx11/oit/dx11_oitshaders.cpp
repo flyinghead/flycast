@@ -961,7 +961,7 @@ const ComPtr<ID3D11PixelShader>& DX11OITShaders::getFinalShader(bool dithering)
 	checkMaxLayers();
 	if (!finalShaders[dithering])
 	{
-		const std::string maxLayers{ std::to_string(maxLayers) };
+		const std::string maxLayers{ std::to_string(this->maxLayers) };
 		D3D_SHADER_MACRO macros[]
 		{
 			{ "MAX_PIXELS_PER_FRAGMENT", maxLayers.c_str() },
@@ -988,7 +988,7 @@ const ComPtr<ID3D11PixelShader>& DX11OITShaders::getTrModVolShader(int type)
 	ComPtr<ID3D11PixelShader>& shader = trModVolShaders[type | ((int)divPosZ << 3)];
 	if (!shader)
 	{
-		const std::string maxLayers{ std::to_string(maxLayers) };
+		const std::string maxLayers{ std::to_string(this->maxLayers) };
 		D3D_SHADER_MACRO macros[]
 		{
 			{ "MV_MODE", MacroValues[type] },
