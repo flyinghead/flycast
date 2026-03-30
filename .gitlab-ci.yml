@@ -124,6 +124,13 @@ libretro-build-linux-i686:
     - .core-defs-linux
   image: $CI_SERVER_HOST:5050/libretro-infrastructure/libretro-build-i386-ubuntu:backports
 
+# Linux 64-bit (ARM)
+libretro-build-linux-aarch64:
+  extends:
+    - .libretro-linux-cmake-aarch64
+    - .core-defs-linux
+
+
 # MacOS 64-bit
 libretro-build-osx-x64:
   extends:
