@@ -164,7 +164,11 @@ ROM board internal layouts:
 #include "awave_regs.h"
 #include "serialize.h"
 
-u32 AWCartridge::ReadMem(u32 address, u32 size) {
+enum { EPR, MPR_RECORD, MPR_FILE };
+
+
+u32 AWCartridge::ReadMem(u32 address, u32 size)
+{
 	verify(size != 1);
 	switch (address)
 	{
@@ -244,7 +248,7 @@ These subfields could be differing from the "real" ones in the following ways:
 */
 
 
-const u8 AWCartridge::permutation_table[4][16] =
+const u8 permutation_table[4][16] =
 {
 	{14,1,11,15,7,3,8,13,0,4,2,12,6,10,5,9},
 	{8,10,1,3,7,4,11,2,5,15,6,0,12,13,9,14},
@@ -252,7 +256,14 @@ const u8 AWCartridge::permutation_table[4][16] =
 	{12,7,11,2,0,5,15,6,1,8,14,4,9,13,3,10}
 };
 
-const AWCartridge::sbox_set AWCartridge::sboxes_table[4] =
+struct sbox_set {
+	u8 S0[32];
+	u8 S1[16];
+	u8 S2[16];
+	u8 S3[8];
+};
+
+const sbox_set sboxes_table[4] =
 {
 	{
 		{11,8,6,25,2,7,23,28,5,10,21,20,1,26,17,19,14,27,22,30,15,4,9,24,31,3,16,12,0,18,29,13},
@@ -280,7 +291,7 @@ const AWCartridge::sbox_set AWCartridge::sboxes_table[4] =
 	}
 };
 
-const int AWCartridge::xor_table[16] =  // -1 = unknown/unused
+const int xor_table[16] =  // -1 = unknown/unused
 {
 	0x0000, -1, 0x97CF, 0x4BE3, 0x2255, 0x8DD6, -1, 0xC6A2,	0xA1E8, 0xB3BF, 0x3B1A, 0x547A, -1, 0x935F, -1, -1
 };
@@ -294,7 +305,7 @@ static u16 bitswap16(u16 in, const u8* vec)
   return ret;
 }
 
-u16 AWCartridge::decrypt(u16 cipherText, u32 address, const u8 key)
+static u16 decrypt(u16 cipherText, u32 address, const u8 key)
 {
 	u8 b0,b1,b2,b3;
 	u16 aux;
@@ -321,6 +332,9 @@ u16 AWCartridge::decrypt(u16 cipherText, u32 address, const u8 key)
 	return ((b3<<13)|(b2<<9)|(b1<<5)|b0)^xor_table[key&0xf];
 }
 
+u16 AWCartridge::decrypt16(u32 address) {
+	return decrypt(((u16 *)RomPtr)[address % (RomSize / 2)], address, rombd_key);
+}
 
 void AWCartridge::Init(LoadProgress *progress, std::vector<u8> *digest)
 {

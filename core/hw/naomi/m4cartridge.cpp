@@ -29,7 +29,7 @@
 // the algorithm is a 32-bits key stored in the PIC16C621A. The hardware auto-reset the feed value
 // to the cart-based IV every 16 blocks (32 bytes); that reset is not address-based, but index-based.
 
-const u8 M4Cartridge::k_sboxes[4][16] = {
+const u8 k_sboxes[4][16] = {
 	{9,8,2,11,1,14,5,15,12,6,0,3,7,13,10,4},
 	{2,10,0,15,14,1,11,3,7,12,13,8,4,9,5,6},
 	{4,11,3,8,7,2,15,13,1,5,14,9,6,12,0,10},

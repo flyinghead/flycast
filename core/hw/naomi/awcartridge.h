@@ -30,8 +30,8 @@ public:
 
 private:
 	void device_reset();
-
-	enum { EPR, MPR_RECORD, MPR_FILE };
+	u16 decrypt16(u32 address);
+	void recalc_dma_offset(int mode);
 
 	u32 rombd_key;
 	u32 mpr_offset, mpr_bank;
@@ -40,19 +40,4 @@ private:
 	u16 decrypted_buf[16];
 
 	u32 dma_offset, dma_limit;
-
-	struct sbox_set {
-		u8 S0[32];
-		u8 S1[16];
-		u8 S2[16];
-		u8 S3[8];
-	};
-
-	static const u8 permutation_table[4][16];
-	static const sbox_set sboxes_table[4];
-	static const int xor_table[16];
-	static u16 decrypt(u16 cipherText, u32 address, u8 key);
-	u16 decrypt16(u32 address) { return decrypt(((u16 *)RomPtr)[address % (RomSize / 2)], address, rombd_key); }
-
-	void recalc_dma_offset(int mode);
 };

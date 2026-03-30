@@ -61,8 +61,6 @@ private:
 	void device_start();
 	void device_reset();
 
-	static const u8 k_sboxes[4][16];
-
 	u16 m4id;
 	u8 *m_key_data = nullptr;			// 2048 bytes
 	u16 subkey1 = 0;
