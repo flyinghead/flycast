@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-22 12:49+0100\n"
-"PO-Revision-Date: 2026-03-30 18:56\n"
+"PO-Revision-Date: 2026-03-30 22:03\n"
 "Last-Translator: \n"
 "Language: ja_JP\n"
 "MIME-Version: 1.0\n"
@@ -974,11 +974,11 @@ msgstr "コンテンツフォルダーを選択"
 
 #: core/ui/settings_general.cpp:191
 msgid "System Default"
-msgstr ""
+msgstr "システム言語"
 
 #: core/ui/settings_general.cpp:212
 msgid "UI Language"
-msgstr ""
+msgstr "UI言語"
 
 #: core/ui/settings_general.cpp:232
 msgid "Japanese"
@@ -1006,7 +1006,7 @@ msgstr "イタリア語"
 
 #: core/ui/settings_general.cpp:233
 msgid "Dreamcast Language"
-msgstr ""
+msgstr "ドリームキャストの言語"
 
 #: core/ui/settings_general.cpp:234
 msgid "The language as configured in the Dreamcast BIOS"
