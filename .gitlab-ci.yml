@@ -87,6 +87,11 @@ include:
   - project: 'libretro-infrastructure/ci-templates'
     file: '/tvos-cmake.yml'
 
+ #################################### MISC ##################################
+  # webOS 32-bit (LGTV)
+  - project: 'libretro-infrastructure/ci-templates'
+    file: '/webos-cmake.yml
+
 # Stages for building
 stages:
   - build-prepare
@@ -188,3 +193,9 @@ libretro-build-tvos-arm64:
     - .libretro-tvos-cmake-arm64
     - .core-defs-ios-arm64
 
+#################################### MISC ##################################
+# webOS 32-bit
+libretro-build-webos-armv7a:
+  extends:
+    - .libretro-webos-armv7a-cmake
+    - .core-defs
