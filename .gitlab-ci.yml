@@ -90,7 +90,7 @@ include:
  #################################### MISC ##################################
   # webOS 32-bit (LGTV)
   - project: 'libretro-infrastructure/ci-templates'
-    file: '/webos-cmake.yml
+    file: '/webos-cmake.yml'
 
 # Stages for building
 stages:
