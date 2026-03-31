@@ -257,4 +257,6 @@ private:
 	const std::string& root;
 };
 
+CustomStorage& customStorage();
+
 }	// namespace hostfs

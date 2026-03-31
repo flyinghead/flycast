@@ -251,7 +251,7 @@ private:
 	void (*addStorageCallback)(bool cancelled, std::string selectedPath);
 };
 
-Storage& customStorage()
+CustomStorage& customStorage()
 {
 	static std::unique_ptr<AndroidStorage> androidStorage;
 	if (!androidStorage)

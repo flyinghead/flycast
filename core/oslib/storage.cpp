@@ -28,9 +28,7 @@ std::string os_PrecomposedString(std::string string);
 namespace hostfs
 {
 
-CustomStorage& customStorage();
-
-#if !defined(__ANDROID__) || defined(LIBRETRO)
+#if !defined(__ANDROID__) && !defined(LIBRETRO)
 CustomStorage& customStorage()
 {
 	class NullStorage : public CustomStorage

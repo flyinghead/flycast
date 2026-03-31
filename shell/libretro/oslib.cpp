@@ -42,7 +42,7 @@ std::string getVmuPath(const std::string& port, bool save)
 	if ((per_content_vmus == 1 && port == "A1")
 			|| per_content_vmus == 2)
 	{
-		std::string vmuDir = vmu_dir_no_slash + std::string(path_default_slash());
+		std::string vmuDir = vmu_dir_no_slash + std::string(PATH_DEFAULT_SLASH());
 		if (settings.platform.isConsole() && !settings.content.gameId.empty())
 		{
 			constexpr std::string_view INVALID_CHARS { " /\\:*?|<>" };
@@ -64,7 +64,7 @@ std::string getVmuPath(const std::string& port, bool save)
 		return vmuDir + std::string(content_name) + "." + port + ".bin";
 	}
 	else {
-		return std::string(game_dir_no_slash) + std::string(path_default_slash()) + "vmu_save_" + port + ".bin";
+		return std::string(game_dir_no_slash) + std::string(PATH_DEFAULT_SLASH()) + "vmu_save_" + port + ".bin";
 	}
 }
 
@@ -112,13 +112,13 @@ std::string getFlashSavePath(const std::string& prefix, const std::string& name)
 {
    std::string root(game_dir_no_slash);
 
-	return root + path_default_slash() + prefix + name;
+	return root + PATH_DEFAULT_SLASH() + prefix + name;
 }
 
 std::string findNaomiBios(const std::string& name)
 {
 	std::string basepath(game_dir_no_slash);
-	basepath += path_default_slash() + name;
+	basepath += PATH_DEFAULT_SLASH() + name;
 	if (!file_exists(basepath))
 	{
 		// File not found in system dir, try game dir instead
@@ -137,19 +137,19 @@ std::string getSavestatePath(int index, bool writable)
 
 std::string getShaderCachePath(const std::string& filename)
 {
-	return std::string(game_dir_no_slash) + std::string(path_default_slash()) + filename;
+	return std::string(game_dir_no_slash) + std::string(PATH_DEFAULT_SLASH()) + filename;
 }
 
 std::string getTextureLoadPath(const std::string& gameId)
 {
 	return std::string(retro_get_system_directory()) + "/dc/textures/"
-						+ gameId + path_default_slash();
+						+ gameId + PATH_DEFAULT_SLASH();
 }
 
 std::string getTextureDumpPath()
 {
-	return std::string(game_dir_no_slash) + std::string(path_default_slash())
-			+ "texdump" + std::string(path_default_slash());
+	return std::string(game_dir_no_slash) + std::string(PATH_DEFAULT_SLASH())
+			+ "texdump" + std::string(PATH_DEFAULT_SLASH());
 }
 
 std::string getScreenshotsPath()
