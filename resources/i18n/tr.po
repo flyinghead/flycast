@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-22 12:49+0100\n"
-"PO-Revision-Date: 2026-03-19 19:36\n"
+"PO-Revision-Date: 2026-03-30 18:56\n"
 "Last-Translator: \n"
 "Language: tr_TR\n"
 "MIME-Version: 1.0\n"
@@ -20,28 +20,28 @@ msgstr ""
 #: core/achievements/achievements.cpp:347
 #, c-format
 msgid "User %s authenticated"
-msgstr ""
+msgstr "Kullanıcı %s kimliği doğrulandı"
 
 #: core/achievements/achievements.cpp:363
 msgid "RetroAchievements authentication failed"
-msgstr ""
+msgstr "RetroAchievements kimlik doğrulaması başarısız oldu"
 
 #: core/achievements/achievements.cpp:398
 msgid "No user token returned"
-msgstr ""
+msgstr "Kullanıcı tokenı döndürülmedi"
 
 #: core/achievements/achievements.cpp:550
 msgid "RetroAchievements disconnected"
-msgstr ""
+msgstr "RetroAchievements bağlantısı kesildi"
 
 #: core/achievements/achievements.cpp:554
 msgid "RetroAchievements reconnected"
-msgstr ""
+msgstr "RetroAchievements yeniden bağlantı kurdu"
 
 #: core/achievements/achievements.cpp:584
 #, c-format
 msgid "Achievement %s unlocked!"
-msgstr ""
+msgstr "Başarım %s kilidi açıldı!"
 
 #: core/achievements/achievements.cpp:624
 #, c-format
@@ -82,8 +82,8 @@ msgstr ""
 msgid "This game has no achievements."
 msgstr ""
 
-#: core/achievements/achievements.cpp:919 core/ui/settings_general.cpp:370
-#: core/ui/gui_achievements.cpp:303
+#: core/achievements/achievements.cpp:919 core/ui/settings_general.cpp:414
+#: core/ui/gui_achievements.cpp:305
 msgid "Hardcore Mode"
 msgstr ""
 
@@ -104,19 +104,19 @@ msgstr ""
 msgid "WARNING: DreamConn disconnected from port %c"
 msgstr ""
 
-#: core/sdl/dreampicoport.cpp:1613 core/ui/settings_controls.cpp:194
+#: core/sdl/dreampicoport.cpp:1613 core/ui/settings_controls.cpp:197
 msgid "DPad2 Up"
 msgstr ""
 
-#: core/sdl/dreampicoport.cpp:1614 core/ui/settings_controls.cpp:195
+#: core/sdl/dreampicoport.cpp:1614 core/ui/settings_controls.cpp:198
 msgid "DPad2 Down"
 msgstr ""
 
-#: core/sdl/dreampicoport.cpp:1615 core/ui/settings_controls.cpp:196
+#: core/sdl/dreampicoport.cpp:1615 core/ui/settings_controls.cpp:199
 msgid "DPad2 Left"
 msgstr ""
 
-#: core/sdl/dreampicoport.cpp:1616 core/ui/settings_controls.cpp:197
+#: core/sdl/dreampicoport.cpp:1616 core/ui/settings_controls.cpp:200
 msgid "DPad2 Right"
 msgstr ""
 
@@ -161,8 +161,8 @@ msgstr ""
 msgid "Guide"
 msgstr ""
 
-#: core/sdl/sdl_gamepad.cpp:551 core/ui/settings_controls.cpp:215
-#: core/ui/settings_controls.cpp:269
+#: core/sdl/sdl_gamepad.cpp:551 core/ui/settings_controls.cpp:218
+#: core/ui/settings_controls.cpp:273
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:170
 msgid "Start"
 msgstr ""
@@ -240,16 +240,16 @@ msgstr ""
 msgid "Right Stick Y"
 msgstr ""
 
-#: core/sdl/sdl_gamepad.cpp:696
+#: core/sdl/sdl_gamepad.cpp:706
 msgid "Default Mouse"
 msgstr ""
 
-#: core/sdl/sdl_gamepad.cpp:700
+#: core/sdl/sdl_gamepad.cpp:708
 #, c-format
 msgid "Mouse %d"
 msgstr ""
 
-#: core/sdl/sdl.cpp:841 core/windows/winmain.cpp:370
+#: core/sdl/sdl.cpp:848 core/windows/winmain.cpp:370
 msgid "Flycast Error"
 msgstr ""
 
@@ -294,7 +294,7 @@ msgstr ""
 msgid "Unknown disk format"
 msgstr ""
 
-#: core/imgread/common.cpp:370 core/emulator.cpp:612
+#: core/imgread/common.cpp:370 core/emulator.cpp:618
 msgid "This media cannot be loaded"
 msgstr ""
 
@@ -536,47 +536,47 @@ msgstr ""
 msgid "Invalid cart size"
 msgstr ""
 
-#: core/cheats.cpp:758 core/cheats.cpp:763
+#: core/cheats.cpp:762 core/cheats.cpp:767
 msgid "Invalid cheat code"
 msgstr ""
 
-#: core/cheats.cpp:845 core/cheats.cpp:884 core/cheats.cpp:897
+#: core/cheats.cpp:849 core/cheats.cpp:888 core/cheats.cpp:901
 msgid "Missing value"
 msgstr ""
 
-#: core/cheats.cpp:863
+#: core/cheats.cpp:867
 msgid "Missing values"
 msgstr ""
 
-#: core/cheats.cpp:910
+#: core/cheats.cpp:914
 msgid "Missing address or value"
 msgstr ""
 
-#: core/cheats.cpp:919 core/cheats.cpp:1023
+#: core/cheats.cpp:923 core/cheats.cpp:1027
 msgid "Unsupported cheat type"
 msgstr ""
 
-#: core/cheats.cpp:927
+#: core/cheats.cpp:931
 msgid "Missing count or value"
 msgstr ""
 
-#: core/cheats.cpp:941 core/cheats.cpp:965
+#: core/cheats.cpp:945 core/cheats.cpp:969
 msgid "Missing count or destination address"
 msgstr ""
 
-#: core/cheats.cpp:953
+#: core/cheats.cpp:957
 msgid "Master codes aren't supported"
 msgstr ""
 
-#: core/cheats.cpp:983 core/cheats.cpp:1012
+#: core/cheats.cpp:987 core/cheats.cpp:1016
 msgid "Unsupported conditional code"
 msgstr ""
 
-#: core/cheats.cpp:993
+#: core/cheats.cpp:997
 msgid "Missing test address"
 msgstr ""
 
-#: core/cheats.cpp:1094
+#: core/cheats.cpp:1098
 msgid "Can't save cheat file"
 msgstr ""
 
@@ -887,8 +887,8 @@ msgstr ""
 msgid "Texture Filtering:"
 msgstr ""
 
-#: core/ui/settings_video.cpp:379 core/ui/settings_general.cpp:188
-#: core/ui/settings_general.cpp:192 core/ui/settings_general.cpp:197
+#: core/ui/settings_video.cpp:379 core/ui/settings_general.cpp:232
+#: core/ui/settings_general.cpp:236 core/ui/settings_general.cpp:241
 msgid "Default"
 msgstr ""
 
@@ -961,403 +961,411 @@ msgstr ""
 msgid "Set"
 msgstr ""
 
-#: core/ui/settings_general.cpp:108 core/ui/settings_general.cpp:250
+#: core/ui/settings_general.cpp:108 core/ui/settings_general.cpp:294
 #: core/ui/gui_cheats.cpp:102
 msgid "Add"
 msgstr ""
 
-#: core/ui/settings_general.cpp:161 core/ui/gui.cpp:963
+#: core/ui/settings_general.cpp:161 core/ui/gui.cpp:744
 msgid "Select a Content Folder"
 msgstr ""
 
-#: core/ui/settings_general.cpp:188
+#: core/ui/settings_general.cpp:191
+msgid "System Default"
+msgstr ""
+
+#: core/ui/settings_general.cpp:212
+msgid "UI Language"
+msgstr ""
+
+#: core/ui/settings_general.cpp:232
 msgid "Japanese"
 msgstr ""
 
-#: core/ui/settings_general.cpp:188
+#: core/ui/settings_general.cpp:232
 msgid "English"
 msgstr ""
 
-#: core/ui/settings_general.cpp:188
+#: core/ui/settings_general.cpp:232
 msgid "German"
 msgstr ""
 
-#: core/ui/settings_general.cpp:188
+#: core/ui/settings_general.cpp:232
 msgid "French"
 msgstr ""
 
-#: core/ui/settings_general.cpp:188
+#: core/ui/settings_general.cpp:232
 msgid "Spanish"
 msgstr ""
 
-#: core/ui/settings_general.cpp:188
+#: core/ui/settings_general.cpp:232
 msgid "Italian"
 msgstr ""
 
-#: core/ui/settings_general.cpp:189
-msgid "Language"
+#: core/ui/settings_general.cpp:233
+msgid "Dreamcast Language"
 msgstr ""
 
-#: core/ui/settings_general.cpp:190
+#: core/ui/settings_general.cpp:234
 msgid "The language as configured in the Dreamcast BIOS"
 msgstr ""
 
-#: core/ui/settings_general.cpp:193
+#: core/ui/settings_general.cpp:237
 msgid "Broadcast"
 msgstr ""
 
-#: core/ui/settings_general.cpp:194
+#: core/ui/settings_general.cpp:238
 msgid "TV broadcasting standard for non-VGA modes"
 msgstr ""
 
-#: core/ui/settings_general.cpp:197 core/ui/settings_general.cpp:198
+#: core/ui/settings_general.cpp:241 core/ui/settings_general.cpp:242
 msgid "Japan"
 msgstr ""
 
-#: core/ui/settings_general.cpp:197 core/ui/settings_general.cpp:198
+#: core/ui/settings_general.cpp:241 core/ui/settings_general.cpp:242
 msgid "USA"
 msgstr ""
 
-#: core/ui/settings_general.cpp:197
+#: core/ui/settings_general.cpp:241
 msgid "Europe"
 msgstr ""
 
-#: core/ui/settings_general.cpp:198
+#: core/ui/settings_general.cpp:242
 msgctxt "region"
 msgid "Export"
 msgstr ""
 
-#: core/ui/settings_general.cpp:198
+#: core/ui/settings_general.cpp:242
 msgid "Korea"
 msgstr ""
 
-#: core/ui/settings_general.cpp:200
+#: core/ui/settings_general.cpp:244
 msgid "Region"
 msgstr ""
 
-#: core/ui/settings_general.cpp:201
+#: core/ui/settings_general.cpp:245
 msgid "BIOS region"
 msgstr ""
 
-#: core/ui/settings_general.cpp:203
+#: core/ui/settings_general.cpp:247
 msgid "VGA"
 msgstr ""
 
-#: core/ui/settings_general.cpp:203
+#: core/ui/settings_general.cpp:247
 msgid "RGB Component"
 msgstr ""
 
-#: core/ui/settings_general.cpp:203
+#: core/ui/settings_general.cpp:247
 msgid "TV Composite"
 msgstr ""
 
-#: core/ui/settings_general.cpp:210
+#: core/ui/settings_general.cpp:254
 msgid "Cable"
 msgstr ""
 
-#: core/ui/settings_general.cpp:223
+#: core/ui/settings_general.cpp:267
 msgid "Video connection type"
 msgstr ""
 
-#: core/ui/settings_general.cpp:233
+#: core/ui/settings_general.cpp:277
 msgid "Content Location"
 msgstr ""
 
-#: core/ui/settings_general.cpp:254 core/ui/settings_general.cpp:318
+#: core/ui/settings_general.cpp:298 core/ui/settings_general.cpp:362
 msgid "Rescan Content"
 msgstr ""
 
-#: core/ui/settings_general.cpp:266
+#: core/ui/settings_general.cpp:310
 msgid "The folders where your games are stored"
 msgstr ""
 
-#: core/ui/settings_general.cpp:272
+#: core/ui/settings_general.cpp:316
 msgid "Data Folder"
 msgstr ""
 
-#: core/ui/settings_general.cpp:280
+#: core/ui/settings_general.cpp:324
 msgid "The folder containing BIOS files, as well as saved VMUs and states"
 msgstr ""
 
-#: core/ui/settings_general.cpp:285
+#: core/ui/settings_general.cpp:329
 msgid "Home Folder"
 msgstr ""
 
-#: core/ui/settings_general.cpp:294
+#: core/ui/settings_general.cpp:338
 msgctxt "action"
 msgid "Import"
 msgstr ""
 
-#: core/ui/settings_general.cpp:297
+#: core/ui/settings_general.cpp:341
 msgctxt "action"
 msgid "Export"
 msgstr ""
 
-#: core/ui/settings_general.cpp:302
+#: core/ui/settings_general.cpp:346
 msgid "Reveal in Finder"
 msgstr ""
 
-#: core/ui/settings_general.cpp:312
+#: core/ui/settings_general.cpp:356
 msgid "The folder where Flycast saves configuration files and VMUs. BIOS files should be in a subfolder named \"data\""
 msgstr ""
 
-#: core/ui/settings_general.cpp:323
+#: core/ui/settings_general.cpp:367
 msgid "Box Art Game List"
 msgstr ""
 
-#: core/ui/settings_general.cpp:324
+#: core/ui/settings_general.cpp:368
 msgid "Display game cover art in the game list."
 msgstr ""
 
-#: core/ui/settings_general.cpp:325
+#: core/ui/settings_general.cpp:369
 msgid "Fetch Box Art"
 msgstr ""
 
-#: core/ui/settings_general.cpp:326
+#: core/ui/settings_general.cpp:370
 msgid "Fetch cover images from TheGamesDB.net."
 msgstr ""
 
-#: core/ui/settings_general.cpp:327
+#: core/ui/settings_general.cpp:371
 msgid "UI Scaling"
 msgstr ""
 
-#: core/ui/settings_general.cpp:327
+#: core/ui/settings_general.cpp:371
 msgid "Adjust the size of UI elements and fonts."
 msgstr ""
 
-#: core/ui/settings_general.cpp:332
+#: core/ui/settings_general.cpp:376
 msgid "Apply"
 msgstr ""
 
-#: core/ui/settings_general.cpp:338
+#: core/ui/settings_general.cpp:382
 msgid "Dark"
 msgstr ""
 
-#: core/ui/settings_general.cpp:338
+#: core/ui/settings_general.cpp:382
 msgid "Light"
 msgstr ""
 
-#: core/ui/settings_general.cpp:338
+#: core/ui/settings_general.cpp:382
 msgid "Dreamcast"
 msgstr ""
 
-#: core/ui/settings_general.cpp:338
+#: core/ui/settings_general.cpp:382
 msgid "High Contrast"
 msgstr ""
 
-#: core/ui/settings_general.cpp:338
+#: core/ui/settings_general.cpp:382
 msgid "Nintendo"
 msgstr ""
 
-#: core/ui/settings_general.cpp:338
+#: core/ui/settings_general.cpp:382
 msgid "Aqua Chill"
 msgstr ""
 
-#: core/ui/settings_general.cpp:340
+#: core/ui/settings_general.cpp:384
 msgid "UI Theme"
 msgstr ""
 
-#: core/ui/settings_general.cpp:341
+#: core/ui/settings_general.cpp:385
 msgid "Select the UI color theme."
 msgstr ""
 
-#: core/ui/settings_general.cpp:347
+#: core/ui/settings_general.cpp:391
 msgid "Hide Legacy Naomi Roms"
 msgstr ""
 
-#: core/ui/settings_general.cpp:348
+#: core/ui/settings_general.cpp:392
 msgid "Hide .bin, .dat and .lst files from the content browser"
 msgstr ""
 
-#: core/ui/settings_general.cpp:351
+#: core/ui/settings_general.cpp:395
 msgid "Use SAF File Picker"
 msgstr ""
 
-#: core/ui/settings_general.cpp:352
+#: core/ui/settings_general.cpp:396
 msgid "Use Android Storage Access Framework file picker to select folders and files. Ignored on Android 10 and later."
 msgstr ""
 
-#: core/ui/settings_general.cpp:355
+#: core/ui/settings_general.cpp:399
 msgid "Automatic State:"
 msgstr ""
 
-#: core/ui/settings_general.cpp:356 core/ui/gui_cheats.cpp:104
+#: core/ui/settings_general.cpp:400 core/ui/gui_cheats.cpp:104
 msgid "Load"
 msgstr ""
 
-#: core/ui/settings_general.cpp:357
+#: core/ui/settings_general.cpp:401
 msgid "Load the last saved state of the game when starting"
 msgstr ""
 
-#: core/ui/settings_general.cpp:359 core/ui/vgamepad.cpp:73
+#: core/ui/settings_general.cpp:403 core/ui/vgamepad.cpp:73
 msgid "Save"
 msgstr ""
 
-#: core/ui/settings_general.cpp:360
+#: core/ui/settings_general.cpp:404
 msgid "Save the state of the game when stopping"
 msgstr ""
 
-#: core/ui/settings_general.cpp:361
+#: core/ui/settings_general.cpp:405
 msgid "Naomi Free Play"
 msgstr ""
 
-#: core/ui/settings_general.cpp:361
+#: core/ui/settings_general.cpp:405
 msgid "Configure Naomi games in Free Play mode."
 msgstr ""
 
-#: core/ui/settings_general.cpp:363
+#: core/ui/settings_general.cpp:407
 msgid "Discord Presence"
 msgstr ""
 
-#: core/ui/settings_general.cpp:363
+#: core/ui/settings_general.cpp:407
 msgid "Show which game you are playing on Discord"
 msgstr ""
 
-#: core/ui/settings_general.cpp:366
+#: core/ui/settings_general.cpp:410
 msgid "Enable RetroAchievements"
 msgstr ""
 
-#: core/ui/settings_general.cpp:366
+#: core/ui/settings_general.cpp:410
 msgid "Track your game achievements using RetroAchievements.org"
 msgstr ""
 
-#: core/ui/settings_general.cpp:371
+#: core/ui/settings_general.cpp:415
 msgid "Enable RetroAchievements hardcore mode. Using cheats and loading a state are not allowed in this mode."
 msgstr ""
 
-#: core/ui/settings_general.cpp:372
+#: core/ui/settings_general.cpp:416
 msgid "Username"
 msgstr ""
 
-#: core/ui/settings_general.cpp:380
+#: core/ui/settings_general.cpp:424
 msgid "Authentication successful"
 msgstr ""
 
-#: core/ui/settings_general.cpp:383
+#: core/ui/settings_general.cpp:427
 msgid "Logout"
 msgstr ""
 
-#: core/ui/settings_general.cpp:389
+#: core/ui/settings_general.cpp:433
 msgid "Password"
 msgstr ""
 
-#: core/ui/settings_general.cpp:393
+#: core/ui/settings_general.cpp:437
 msgid "Authenticating..."
 msgstr ""
 
-#: core/ui/settings_general.cpp:406
+#: core/ui/settings_general.cpp:450
 msgid "Login"
 msgstr ""
 
-#: core/ui/settings_general.cpp:421
+#: core/ui/settings_general.cpp:465
 msgid "Custom Paths"
 msgstr ""
 
-#: core/ui/settings_general.cpp:423
+#: core/ui/settings_general.cpp:467
 msgid "BIOS Folders"
 msgstr ""
 
-#: core/ui/settings_general.cpp:423
+#: core/ui/settings_general.cpp:467
 msgid "Select a BIOS folder"
 msgstr ""
 
-#: core/ui/settings_general.cpp:424
+#: core/ui/settings_general.cpp:468
 msgid "Folders containing BIOS files (e.g. dc_boot.bin or dc_bios.bin) and arcade BIOS"
 msgstr ""
 
-#: core/ui/settings_general.cpp:428
+#: core/ui/settings_general.cpp:472
 msgid "VMU Folder"
 msgstr ""
 
-#: core/ui/settings_general.cpp:428
+#: core/ui/settings_general.cpp:472
 msgid "Select the VMU folder"
 msgstr ""
 
-#: core/ui/settings_general.cpp:429
+#: core/ui/settings_general.cpp:473
 msgid "Folder where VMU (.bin) saves are stored"
 msgstr ""
 
-#: core/ui/settings_general.cpp:432
+#: core/ui/settings_general.cpp:476
 msgid "Savestate Folders"
 msgstr ""
 
-#: core/ui/settings_general.cpp:432
+#: core/ui/settings_general.cpp:476
 msgid "Select a savestate folder"
 msgstr ""
 
-#: core/ui/settings_general.cpp:433
+#: core/ui/settings_general.cpp:477
 msgid "Folders for save states. First path is used for new states; all are searched when loading"
 msgstr ""
 
-#: core/ui/settings_general.cpp:436
+#: core/ui/settings_general.cpp:480
 msgid "Game Save Folder"
 msgstr ""
 
-#: core/ui/settings_general.cpp:436
+#: core/ui/settings_general.cpp:480
 msgid "Select the game save folder"
 msgstr ""
 
-#: core/ui/settings_general.cpp:437
+#: core/ui/settings_general.cpp:481
 msgid "Folder for game save data (e.g. arcade NVRAM)"
 msgstr ""
 
-#: core/ui/settings_general.cpp:441
+#: core/ui/settings_general.cpp:485
 msgid "Texture Pack Folders"
 msgstr ""
 
-#: core/ui/settings_general.cpp:441
+#: core/ui/settings_general.cpp:485
 msgid "Select a texture pack folder"
 msgstr ""
 
-#: core/ui/settings_general.cpp:442
+#: core/ui/settings_general.cpp:486
 msgid "Folders containing textures/<gameId> or <gameId> under a textures subfolder"
 msgstr ""
 
-#: core/ui/settings_general.cpp:446
+#: core/ui/settings_general.cpp:490
 msgid "Texture Dump Folder"
 msgstr ""
 
-#: core/ui/settings_general.cpp:446
+#: core/ui/settings_general.cpp:490
 msgid "Select the texture dump folder"
 msgstr ""
 
-#: core/ui/settings_general.cpp:447
+#: core/ui/settings_general.cpp:491
 msgid "Folder where texture dumps are saved. Game-specific subfolders will be created automatically"
 msgstr ""
 
-#: core/ui/settings_general.cpp:450
+#: core/ui/settings_general.cpp:494
 msgid "Box Art Folder"
 msgstr ""
 
-#: core/ui/settings_general.cpp:450
+#: core/ui/settings_general.cpp:494
 msgid "Select the box art folder"
 msgstr ""
 
-#: core/ui/settings_general.cpp:451
+#: core/ui/settings_general.cpp:495
 msgid "Folder containing box art images (png/jpg). If empty, Flycast will use the default Home Folder/boxart for downloads and generated art"
 msgstr ""
 
-#: core/ui/settings_general.cpp:454
+#: core/ui/settings_general.cpp:498
 msgid "Controller Mapping Folders"
 msgstr ""
 
-#: core/ui/settings_general.cpp:454
+#: core/ui/settings_general.cpp:498
 msgid "Select a controller mapping folder"
 msgstr ""
 
-#: core/ui/settings_general.cpp:455
+#: core/ui/settings_general.cpp:499
 msgid "Folders containing controller mapping files (.cfg). The emulator also looks in Home Folder/mappings. Per-game mappings are suffixed with _<gameId>.cfg"
 msgstr ""
 
-#: core/ui/settings_general.cpp:458
+#: core/ui/settings_general.cpp:502
 msgid "Cheat Folders"
 msgstr ""
 
-#: core/ui/settings_general.cpp:458
+#: core/ui/settings_general.cpp:502
 msgid "Select a cheat folder"
 msgstr ""
 
-#: core/ui/settings_general.cpp:459
+#: core/ui/settings_general.cpp:503
 msgid "Folders containing cheat files (.cht/.txt) named with the game ID. Flycast will auto-load matching files if present"
 msgstr ""
 
@@ -1373,8 +1381,8 @@ msgstr ""
 msgid "Dreamcast BIOS"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:43 core/ui/settings_controls.cpp:64
-#: core/ui/settings_controls.cpp:165
+#: core/ui/settings_controls.cpp:43 core/ui/settings_controls.cpp:65
+#: core/ui/settings_controls.cpp:167
 msgid "None"
 msgstr ""
 
@@ -1386,11 +1394,11 @@ msgstr ""
 msgid "Light Gun"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:46 core/input/keyboard_device.h:77
+#: core/ui/settings_controls.cpp:46 core/input/keyboard_device.h:82
 msgid "Keyboard"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:47 core/input/mouse.h:57
+#: core/ui/settings_controls.cpp:47 core/input/mouse.h:62
 msgid "Mouse"
 msgstr ""
 
@@ -1430,505 +1438,505 @@ msgstr ""
 msgid "DreamParaPara Controller"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:65
+#: core/ui/settings_controls.cpp:66
 msgid "Sega VMU"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:66
+#: core/ui/settings_controls.cpp:67
 msgid "Vibration Pack"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:67
+#: core/ui/settings_controls.cpp:68
 msgid "Microphone"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:68
+#: core/ui/settings_controls.cpp:69
 msgid "DreamPotato"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:165
+#: core/ui/settings_controls.cpp:167
 msgid "All"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:173 core/ui/settings_controls.cpp:235
+#: core/ui/settings_controls.cpp:176 core/ui/settings_controls.cpp:239
 msgid "Directions"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:174 core/ui/settings_controls.cpp:236
+#: core/ui/settings_controls.cpp:177 core/ui/settings_controls.cpp:240
 msgid "Up"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:175 core/ui/settings_controls.cpp:237
+#: core/ui/settings_controls.cpp:178 core/ui/settings_controls.cpp:241
 msgid "Down"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:176 core/ui/settings_controls.cpp:238
+#: core/ui/settings_controls.cpp:179 core/ui/settings_controls.cpp:242
 msgid "Left"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:177 core/ui/settings_controls.cpp:239
+#: core/ui/settings_controls.cpp:180 core/ui/settings_controls.cpp:243
 msgid "Right"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:179 core/ui/settings_controls.cpp:241
+#: core/ui/settings_controls.cpp:182 core/ui/settings_controls.cpp:245
 msgid "Thumbstick Up"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:180 core/ui/settings_controls.cpp:242
+#: core/ui/settings_controls.cpp:183 core/ui/settings_controls.cpp:246
 msgid "Thumbstick Down"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:181 core/ui/settings_controls.cpp:243
+#: core/ui/settings_controls.cpp:184 core/ui/settings_controls.cpp:247
 msgid "Thumbstick Left"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:182 core/ui/settings_controls.cpp:244
+#: core/ui/settings_controls.cpp:185 core/ui/settings_controls.cpp:248
 msgid "Thumbstick Right"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:184 core/ui/settings_controls.cpp:246
+#: core/ui/settings_controls.cpp:187 core/ui/settings_controls.cpp:250
 msgid "R.Thumbstick Up"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:185 core/ui/settings_controls.cpp:247
+#: core/ui/settings_controls.cpp:188 core/ui/settings_controls.cpp:251
 msgid "R.Thumbstick Down"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:186 core/ui/settings_controls.cpp:248
+#: core/ui/settings_controls.cpp:189 core/ui/settings_controls.cpp:252
 msgid "R.Thumbstick Left"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:187 core/ui/settings_controls.cpp:249
+#: core/ui/settings_controls.cpp:190 core/ui/settings_controls.cpp:253
 msgid "R.Thumbstick Right"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:189
+#: core/ui/settings_controls.cpp:192
 msgid "Axis 3 Up"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:190
+#: core/ui/settings_controls.cpp:193
 msgid "Axis 3 Down"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:191
+#: core/ui/settings_controls.cpp:194
 msgid "Axis 3 Left"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:192
+#: core/ui/settings_controls.cpp:195
 msgid "Axis 3 Right"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:199 core/ui/settings_controls.cpp:251
+#: core/ui/settings_controls.cpp:202 core/ui/settings_controls.cpp:255
 msgid "Buttons"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:208 core/ui/settings_controls.cpp:262
+#: core/ui/settings_controls.cpp:211 core/ui/settings_controls.cpp:266
 msgid "Triggers"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:209 core/ui/settings_controls.cpp:263
+#: core/ui/settings_controls.cpp:212 core/ui/settings_controls.cpp:267
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:198
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:369
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:401
 msgid "Left Trigger"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:210 core/ui/settings_controls.cpp:264
+#: core/ui/settings_controls.cpp:213 core/ui/settings_controls.cpp:268
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:200
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:371
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:403
 msgid "Right Trigger"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:211 core/ui/settings_controls.cpp:265
+#: core/ui/settings_controls.cpp:214 core/ui/settings_controls.cpp:269
 msgid "Left Trigger 2"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:212 core/ui/settings_controls.cpp:266
+#: core/ui/settings_controls.cpp:215 core/ui/settings_controls.cpp:270
 msgid "Right Trigger 2"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:214 core/ui/settings_controls.cpp:268
+#: core/ui/settings_controls.cpp:217 core/ui/settings_controls.cpp:272
 msgid "System Buttons"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:216 core/ui/settings_controls.cpp:270
+#: core/ui/settings_controls.cpp:219 core/ui/settings_controls.cpp:274
 msgid "Reload"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:218 core/ui/settings_controls.cpp:276
+#: core/ui/settings_controls.cpp:221 core/ui/settings_controls.cpp:280
 msgid "Emulator"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:219 core/ui/settings_controls.cpp:277
+#: core/ui/settings_controls.cpp:222 core/ui/settings_controls.cpp:281
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:359
 msgid "Menu"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:220 core/ui/settings_controls.cpp:278
-#: core/ui/gui.cpp:843 core/ui/gui.cpp:1090
+#: core/ui/settings_controls.cpp:223 core/ui/settings_controls.cpp:282
+#: core/ui/gui.cpp:624 core/ui/gui.cpp:871
 msgid "Exit"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:221 core/ui/settings_controls.cpp:279
+#: core/ui/settings_controls.cpp:224 core/ui/settings_controls.cpp:283
 msgid "Fast-forward"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:222 core/ui/settings_controls.cpp:280
-#: core/ui/gui.cpp:855
+#: core/ui/settings_controls.cpp:225 core/ui/settings_controls.cpp:284
+#: core/ui/gui.cpp:636
 msgid "Load State"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:223 core/ui/settings_controls.cpp:281
-#: core/ui/gui.cpp:863
+#: core/ui/settings_controls.cpp:226 core/ui/settings_controls.cpp:285
+#: core/ui/gui.cpp:644
 msgid "Save State"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:224 core/ui/settings_controls.cpp:282
+#: core/ui/settings_controls.cpp:227 core/ui/settings_controls.cpp:286
 msgid "Load State in RAM"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:225 core/ui/settings_controls.cpp:283
+#: core/ui/settings_controls.cpp:228 core/ui/settings_controls.cpp:287
 msgid "Save State in RAM"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:226 core/ui/settings_controls.cpp:284
+#: core/ui/settings_controls.cpp:229 core/ui/settings_controls.cpp:288
 msgid "Next Save State Slot"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:227 core/ui/settings_controls.cpp:285
+#: core/ui/settings_controls.cpp:230 core/ui/settings_controls.cpp:289
 msgid "Previous Save State Slot"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:228 core/ui/settings_controls.cpp:286
+#: core/ui/settings_controls.cpp:231 core/ui/settings_controls.cpp:290
 msgid "Bypass Emulated Keyboard"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:229 core/ui/settings_controls.cpp:287
+#: core/ui/settings_controls.cpp:232 core/ui/settings_controls.cpp:291
 msgid "Save Screenshot"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:252
+#: core/ui/settings_controls.cpp:256
 msgid "Button 1"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:253
+#: core/ui/settings_controls.cpp:257
 msgid "Button 2"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:254
+#: core/ui/settings_controls.cpp:258
 msgid "Button 3"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:255 core/input/mouse.h:84
+#: core/ui/settings_controls.cpp:259 core/input/mouse.h:89
 msgid "Button 4"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:256 core/input/mouse.h:86
+#: core/ui/settings_controls.cpp:260 core/input/mouse.h:91
 msgid "Button 5"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:257
+#: core/ui/settings_controls.cpp:261
 msgid "Button 6"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:258
+#: core/ui/settings_controls.cpp:262
 msgid "Button 7"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:259
+#: core/ui/settings_controls.cpp:263
 msgid "Button 8"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:271
+#: core/ui/settings_controls.cpp:275
 msgid "Coin"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:272
+#: core/ui/settings_controls.cpp:276
 msgid "Service"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:273
+#: core/ui/settings_controls.cpp:277
 msgid "Test"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:274
+#: core/ui/settings_controls.cpp:278
 msgid "Insert Card"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:405 core/ui/settings_controls.cpp:810
+#: core/ui/settings_controls.cpp:440 core/ui/settings_controls.cpp:845
 msgid "Map Control"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:407
+#: core/ui/settings_controls.cpp:442
 #, c-format
 msgid "Waiting for control '%s'..."
 msgstr ""
 
-#: core/ui/settings_controls.cpp:423
+#: core/ui/settings_controls.cpp:458
 #, c-format
 msgid "Time out in %d s"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:428
+#: core/ui/settings_controls.cpp:463
 msgid "Current inputs:"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:452
+#: core/ui/settings_controls.cpp:487
 msgid "Confirm"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:534
+#: core/ui/settings_controls.cpp:569
 msgid "Sequential"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:539
+#: core/ui/settings_controls.cpp:574
 msgid "When checked, this combo will only activate when all keys are pressed in the given sequence.\n"
 "When not checked, the combo will activate when all keys are pressed in any order."
 msgstr ""
 
-#: core/ui/settings_controls.cpp:596 core/ui/settings_controls.cpp:1036
+#: core/ui/settings_controls.cpp:631 core/ui/settings_controls.cpp:1071
 msgid "Controller Mapping"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:598 core/ui/settings_controls.cpp:1033
+#: core/ui/settings_controls.cpp:633 core/ui/settings_controls.cpp:1068
 msgid "Map"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:599
+#: core/ui/settings_controls.cpp:634
 msgid "Unmap"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:615 core/ui/settings_controls.cpp:858
+#: core/ui/settings_controls.cpp:650 core/ui/settings_controls.cpp:893
 #: core/ui/settings.cpp:215
 msgid "Done"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:635 core/ui/settings_controls.cpp:647
-#: core/ui/settings_controls.cpp:976 core/ui/settings_controls.cpp:990
+#: core/ui/settings_controls.cpp:670 core/ui/settings_controls.cpp:682
+#: core/ui/settings_controls.cpp:1011 core/ui/settings_controls.cpp:1025
 msgid "Port"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:649 core/ui/settings_controls.cpp:713
+#: core/ui/settings_controls.cpp:684 core/ui/settings_controls.cpp:748
 msgid "Dreamcast Controls"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:652 core/ui/settings_controls.cpp:661
+#: core/ui/settings_controls.cpp:687 core/ui/settings_controls.cpp:696
 #: core/ui/settings.cpp:257
 msgid "Delete Game Config"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:652 core/ui/settings_controls.cpp:670
+#: core/ui/settings_controls.cpp:687 core/ui/settings_controls.cpp:705
 #: core/ui/settings.cpp:266
 msgid "Make Game Config"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:675
+#: core/ui/settings_controls.cpp:710
 msgid "Reset..."
 msgstr ""
 
-#: core/ui/settings_controls.cpp:676 core/ui/settings_controls.cpp:680
+#: core/ui/settings_controls.cpp:711 core/ui/settings_controls.cpp:715
 msgid "Confirm Reset"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:682
+#: core/ui/settings_controls.cpp:717
 msgid "Are you sure you want to reset the mappings to default?"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:686
+#: core/ui/settings_controls.cpp:721
 msgid "Controller Type:"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:687
+#: core/ui/settings_controls.cpp:722
 msgid "Gamepad"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:690
+#: core/ui/settings_controls.cpp:725
 msgid "Arcade / Hit Box"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:697 core/ui/settings_about.cpp:149
+#: core/ui/settings_controls.cpp:732 core/ui/settings_about.cpp:149
 msgid "Yes"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:704 core/ui/settings_about.cpp:155
+#: core/ui/settings_controls.cpp:739 core/ui/settings_about.cpp:155
 msgid "No"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:713
+#: core/ui/settings_controls.cpp:748
 msgid "Arcade Controls"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:856 core/ui/settings_controls.cpp:1056
+#: core/ui/settings_controls.cpp:891 core/ui/settings_controls.cpp:1091
 msgid "Gamepad Settings"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:900
+#: core/ui/settings_controls.cpp:935
 msgid "Haptic"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:901 core/ui/settings_controls.cpp:937
+#: core/ui/settings_controls.cpp:936 core/ui/settings_controls.cpp:972
 msgid "Power"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:901
+#: core/ui/settings_controls.cpp:936
 msgid "Haptic feedback power"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:903
+#: core/ui/settings_controls.cpp:938
 msgid "View"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:904
+#: core/ui/settings_controls.cpp:939
 msgid "Transparency"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:904
+#: core/ui/settings_controls.cpp:939
 msgid "Virtual gamepad buttons transparency"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:910
+#: core/ui/settings_controls.cpp:945
 msgid "Select a PNG file"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:911
+#: core/ui/settings_controls.cpp:946
 msgid "Choose Image..."
 msgstr ""
 
-#: core/ui/settings_controls.cpp:923
+#: core/ui/settings_controls.cpp:958
 msgid "Use Default"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:934
+#: core/ui/settings_controls.cpp:969
 msgid "Rumble"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:940
+#: core/ui/settings_controls.cpp:975
 msgid "Rumble power"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:944
+#: core/ui/settings_controls.cpp:979
 msgid "Thumbsticks"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:947
+#: core/ui/settings_controls.cpp:982
 msgid "Dead zone"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:950
+#: core/ui/settings_controls.cpp:985
 msgid "Minimum deflection to register as input"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:953
+#: core/ui/settings_controls.cpp:988
 msgid "Saturation"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:956
+#: core/ui/settings_controls.cpp:991
 msgid "Value sent to the game at 100% thumbstick deflection. Values greater than 100% will saturate before full deflection of the thumbstick."
 msgstr ""
 
-#: core/ui/settings_controls.cpp:969
+#: core/ui/settings_controls.cpp:1004
 msgid "Physical Devices"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:973 core/ui/settings_controls.cpp:984
+#: core/ui/settings_controls.cpp:1008 core/ui/settings_controls.cpp:1019
 msgid "System"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:974 core/ui/settings_controls.cpp:987
+#: core/ui/settings_controls.cpp:1009 core/ui/settings_controls.cpp:1022
 #: core/ui/gui_cheats.cpp:71
 msgid "Name"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:1008
+#: core/ui/settings_controls.cpp:1043
 #, c-format
 msgid "DreamLink: %s"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:1044
+#: core/ui/settings_controls.cpp:1079
 msgid "Edit Layout"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:1055 core/ui/gui.cpp:839 core/ui/gui.cpp:1075
+#: core/ui/settings_controls.cpp:1090 core/ui/gui.cpp:620 core/ui/gui.cpp:856
 #: core/ui/settings.cpp:211
 msgid "Settings"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:1065
+#: core/ui/settings_controls.cpp:1100
 msgid "Mouse sensitivity"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:1067
+#: core/ui/settings_controls.cpp:1102
 msgid "Use Raw Input"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:1067
+#: core/ui/settings_controls.cpp:1102
 msgid "Supports multiple pointing devices (mice, light guns) and keyboards"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:1071
+#: core/ui/settings_controls.cpp:1106
 msgid "Dreamcast Devices"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:1084
+#: core/ui/settings_controls.cpp:1119
 #, c-format
 msgid "Port %c"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:1153
+#: core/ui/settings_controls.cpp:1188
 msgid "Crosshair color"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:1157
+#: core/ui/settings_controls.cpp:1192
 msgid "Crosshair"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:1180
+#: core/ui/settings_controls.cpp:1215
 msgid "Per Game VMU A1"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:1180
+#: core/ui/settings_controls.cpp:1215
 msgid "When enabled, each game has its own VMU on port 1 of controller A."
 msgstr ""
 
-#: core/ui/settings_controls.cpp:1183
+#: core/ui/settings_controls.cpp:1218
 msgid "Use Physical VMU Storage"
 msgstr ""
 
-#: core/ui/settings_controls.cpp:1184
+#: core/ui/settings_controls.cpp:1219
 msgid "Enables read and write access to physical VMU storage via DreamPicoPort or DreamPotato. This is not compatible with load state events."
 msgstr ""
 
-#: core/ui/settings_controls.cpp:1189
+#: core/ui/settings_controls.cpp:1224
 msgid "Crosshair Size"
 msgstr ""
 
-#: core/ui/gui_achievements.cpp:285 core/ui/gui_cheats.cpp:103
+#: core/ui/gui_achievements.cpp:287 core/ui/gui_cheats.cpp:103
 msgid "Close"
 msgstr ""
 
-#: core/ui/gui_achievements.cpp:296
+#: core/ui/gui_achievements.cpp:298
 #, c-format
 msgid "You have unlocked %d of %d achievements and %d of %d points."
 msgstr ""
 
-#: core/ui/gui_achievements.cpp:324
+#: core/ui/gui_achievements.cpp:326
 msgid "Locked"
 msgstr ""
 
-#: core/ui/gui_achievements.cpp:324
+#: core/ui/gui_achievements.cpp:326
 msgid "Active Challenges"
 msgstr ""
 
-#: core/ui/gui_achievements.cpp:324
+#: core/ui/gui_achievements.cpp:326
 msgid "Almost There"
 msgstr ""
 
-#: core/ui/gui_achievements.cpp:326
+#: core/ui/gui_achievements.cpp:328
 msgid "Unlocked"
 msgstr ""
 
-#: core/ui/gui_achievements.cpp:326
+#: core/ui/gui_achievements.cpp:328
 msgid "Recently Unlocked"
 msgstr ""
 
@@ -1945,136 +1953,136 @@ msgid "Renderer initialization failed.\n"
 "Please select a different graphics API"
 msgstr ""
 
-#: core/ui/gui.cpp:687
+#: core/ui/gui.cpp:468
 msgid "Flycast has stopped."
 msgstr ""
 
-#: core/ui/gui.cpp:794
+#: core/ui/gui.cpp:575
 msgid "Resume"
 msgstr ""
 
-#: core/ui/gui.cpp:803
+#: core/ui/gui.cpp:584
 msgid "Cheats"
 msgstr ""
 
-#: core/ui/gui.cpp:810
+#: core/ui/gui.cpp:591
 msgid "Achievements"
 msgstr ""
 
-#: core/ui/gui.cpp:816
+#: core/ui/gui.cpp:597
 msgid "Barcode Card"
 msgstr ""
 
-#: core/ui/gui.cpp:827
+#: core/ui/gui.cpp:608
 msgid "Insert Disk"
 msgstr ""
 
-#: core/ui/gui.cpp:827
+#: core/ui/gui.cpp:608
 msgid "Eject Disk"
 msgstr ""
 
-#: core/ui/gui.cpp:843
+#: core/ui/gui.cpp:624
 msgid "Close Game"
 msgstr ""
 
-#: core/ui/gui.cpp:872
+#: core/ui/gui.cpp:653
 #, c-format
 msgid "Slot %d"
 msgstr ""
 
-#: core/ui/gui.cpp:882
+#: core/ui/gui.cpp:663
 msgid "Empty"
 msgstr ""
 
-#: core/ui/gui.cpp:930 core/ui/gui.cpp:931
+#: core/ui/gui.cpp:711 core/ui/gui.cpp:712
 msgid "Incorrect Content Location?"
 msgstr ""
 
-#: core/ui/gui.cpp:934
+#: core/ui/gui.cpp:715
 #, c-format
 msgid "Scanned %d folders but no game can be found!"
 msgstr ""
 
-#: core/ui/gui.cpp:939
+#: core/ui/gui.cpp:720
 msgid "Reselect"
 msgstr ""
 
-#: core/ui/gui.cpp:948 core/ui/gui.cpp:1104 core/ui/gui.cpp:1340
-#: core/ui/gui.cpp:1483 core/ui/gui_cheats.cpp:47 core/ui/gui_util.cpp:181
+#: core/ui/gui.cpp:729 core/ui/gui.cpp:885 core/ui/gui.cpp:1123
+#: core/ui/gui.cpp:1266 core/ui/gui_cheats.cpp:47 core/ui/gui_util.cpp:181
 #: core/ui/vgamepad.cpp:87
 msgid "Cancel"
 msgstr ""
 
-#: core/ui/gui.cpp:1071
+#: core/ui/gui.cpp:852
 msgid "GAMES"
 msgstr ""
 
-#: core/ui/gui.cpp:1078 core/ui/gui.cpp:1079
+#: core/ui/gui.cpp:859 core/ui/gui.cpp:860
 msgid "Filter"
 msgstr ""
 
-#: core/ui/gui.cpp:1085 core/ui/gui.cpp:1086
+#: core/ui/gui.cpp:866 core/ui/gui.cpp:867
 msgid "Load..."
 msgstr ""
 
-#: core/ui/gui.cpp:1205
+#: core/ui/gui.cpp:988
 msgid "Your game list is empty"
 msgstr ""
 
-#: core/ui/gui.cpp:1215
+#: core/ui/gui.cpp:998
 msgid "Add Game Folder"
 msgstr ""
 
-#: core/ui/gui.cpp:1247 core/ui/gui.cpp:1258
+#: core/ui/gui.cpp:1030 core/ui/gui.cpp:1041
 msgid "Invalid selection:"
 msgstr ""
 
-#: core/ui/gui.cpp:1247 core/ui/gui.cpp:1258
+#: core/ui/gui.cpp:1030 core/ui/gui.cpp:1041
 msgid "Flycast cannot write to this folder."
 msgstr ""
 
-#: core/ui/gui.cpp:1286
+#: core/ui/gui.cpp:1069
 msgid "Select Flycast Home Folder"
 msgstr ""
 
-#: core/ui/gui.cpp:1320 core/ui/gui.cpp:1429 core/emulator.cpp:681
+#: core/ui/gui.cpp:1103 core/ui/gui.cpp:1212 core/emulator.cpp:687
 msgid "Starting..."
 msgstr ""
 
-#: core/ui/gui.cpp:1332
+#: core/ui/gui.cpp:1115
 msgid "Starting Network..."
 msgstr ""
 
-#: core/ui/gui.cpp:1334
+#: core/ui/gui.cpp:1117
 msgid "Press Start to start the game now."
 msgstr ""
 
-#: core/ui/gui.cpp:1431
+#: core/ui/gui.cpp:1214
 msgid "Loading..."
 msgstr ""
 
-#: core/ui/gui.cpp:1467
+#: core/ui/gui.cpp:1250
 msgid "Preloading custom textures"
 msgstr ""
 
-#: core/ui/gui.cpp:1470
+#: core/ui/gui.cpp:1253
 msgid "Preparing..."
 msgstr ""
 
-#: core/ui/gui.cpp:1788
+#: core/ui/gui.cpp:1571
 #, c-format
 msgid "Save state slot %d"
 msgstr ""
 
-#: core/ui/gui.cpp:1830
+#: core/ui/gui.cpp:1613
 msgid "No screenshot available"
 msgstr ""
 
-#: core/ui/gui.cpp:1836
+#: core/ui/gui.cpp:1619
 msgid "Screenshot saved"
 msgstr ""
 
-#: core/ui/gui.cpp:1838
+#: core/ui/gui.cpp:1621
 msgid "Error saving screenshot"
 msgstr ""
 
@@ -2294,7 +2302,7 @@ msgstr ""
 msgid "Select Current Folder"
 msgstr ""
 
-#: core/ui/gui_util.cpp:479
+#: core/ui/gui_util.cpp:230
 msgid "(?)"
 msgstr ""
 
@@ -2615,35 +2623,35 @@ msgstr ""
 msgid "Do you want to reset Vulkan to use new driver?"
 msgstr ""
 
-#: core/nullDC.cpp:194
+#: core/nullDC.cpp:195
 msgid "Save state failed - memory full"
 msgstr ""
 
-#: core/nullDC.cpp:221
+#: core/nullDC.cpp:222
 msgid "Cannot open save file"
 msgstr ""
 
-#: core/nullDC.cpp:249
+#: core/nullDC.cpp:250
 msgid "State saved"
 msgstr ""
 
-#: core/nullDC.cpp:254
+#: core/nullDC.cpp:255
 msgid "Error saving state"
 msgstr ""
 
-#: core/nullDC.cpp:289
+#: core/nullDC.cpp:290
 msgid "Save state not found"
 msgstr ""
 
-#: core/nullDC.cpp:329 core/nullDC.cpp:351 core/nullDC.cpp:365
+#: core/nullDC.cpp:330 core/nullDC.cpp:352 core/nullDC.cpp:366
 msgid "Failed to load state"
 msgstr ""
 
-#: core/nullDC.cpp:329
+#: core/nullDC.cpp:330
 msgid "Not enough memory"
 msgstr ""
 
-#: core/nullDC.cpp:351
+#: core/nullDC.cpp:352
 msgid "I/O error"
 msgstr ""
 
@@ -2783,36 +2791,36 @@ msgstr ""
 msgid "OpenGL ES 3.0+ required for Naomi 2"
 msgstr ""
 
-#: core/emulator.cpp:588
+#: core/emulator.cpp:594
 #, c-format
 msgid "No BIOS file found in %s"
 msgstr ""
 
-#: core/emulator.cpp:604
+#: core/emulator.cpp:610
 msgid "This game requires a real BIOS"
 msgstr ""
 
-#: core/emulator.cpp:656
+#: core/emulator.cpp:662
 msgid "Widescreen cheat activated"
 msgstr ""
 
-#: core/input/virtual_gamepad.h:30
+#: core/input/virtual_gamepad.h:41
 msgid "Virtual Gamepad"
 msgstr ""
 
-#: core/input/mouse.h:78
+#: core/input/mouse.h:83
 msgid "Left Button"
 msgstr ""
 
-#: core/input/mouse.h:80
+#: core/input/mouse.h:85
 msgid "Right Button"
 msgstr ""
 
-#: core/input/mouse.h:82
+#: core/input/mouse.h:87
 msgid "Middle Button"
 msgstr ""
 
-#: core/input/mouse.h:118
+#: core/input/mouse.h:130
 msgid "Touch Mouse"
 msgstr ""
 
