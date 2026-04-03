@@ -45,7 +45,6 @@ static std::vector<hostfs::FileInfo> folderFiles;
 bool subfolders_read;
 
 extern int insetLeft, insetRight, insetTop, insetBottom;
-extern ImFont *boldFont;
 void error_popup();
 
 namespace hostfs
