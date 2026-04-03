@@ -249,6 +249,7 @@ public:
 	{
 		pipelines.clear();
 		modVolPipelines.clear();
+		depthPassPipelines.clear();
 	}
 
 	vk::PipelineLayout GetPipelineLayout() const { return *pipelineLayout; }
@@ -274,16 +275,21 @@ private:
 		hash |= (u64)(!settings.platform.isNaomi2() && config::NativeDepthInterpolation) << 30;
 		hash |= (u64)(pp->tcw.PixelFmt == PixelBumpMap) << 31;
 		hash |= (u64)dithering << 32;
+		hash |= (u64)GetContext()->useReversedDepth() << 33;
 
 		return hash;
 	}
 	u32 hash(ModVolMode mode, int cullMode, bool naomi2) const
 	{
-		return ((int)mode << 2) | cullMode | ((int)naomi2 << 5) | ((int)(!settings.platform.isNaomi2() && config::NativeDepthInterpolation) << 6);
+		return ((int)mode << 2) | cullMode | ((int)naomi2 << 5)
+				| ((int)(!settings.platform.isNaomi2() && config::NativeDepthInterpolation) << 6)
+				| ((u32)GetContext()->useReversedDepth() << 7);
 	}
 	u32 hash(int cullMode, bool naomi2) const
 	{
-		return cullMode | ((int)naomi2 << 2) | ((int)(!settings.platform.isNaomi2() && config::NativeDepthInterpolation) << 3);
+		return cullMode | ((int)naomi2 << 2)
+				| ((int)(!settings.platform.isNaomi2() && config::NativeDepthInterpolation) << 3)
+				| ((u32)GetContext()->useReversedDepth() << 4);
 	}
 
 	vk::PipelineVertexInputStateCreateInfo GetMainVertexInputStateCreateInfo(bool full = true, bool naomi2 = false) const

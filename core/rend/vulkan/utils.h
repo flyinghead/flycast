@@ -37,6 +37,23 @@ static const vk::CompareOp depthOps[] =
 	vk::CompareOp::eAlways,         //7 Always
 };
 
+static inline vk::CompareOp reverseDepthCompareOp(vk::CompareOp op)
+{
+	switch (op)
+	{
+	case vk::CompareOp::eLess:
+		return vk::CompareOp::eGreater;
+	case vk::CompareOp::eLessOrEqual:
+		return vk::CompareOp::eGreaterOrEqual;
+	case vk::CompareOp::eGreater:
+		return vk::CompareOp::eLess;
+	case vk::CompareOp::eGreaterOrEqual:
+		return vk::CompareOp::eLessOrEqual;
+	default:
+		return op;
+	}
+}
+
 static inline vk::BlendFactor getBlendFactor(u32 instr, bool src)
 {
 	switch (instr) {

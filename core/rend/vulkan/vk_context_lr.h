@@ -93,6 +93,9 @@ public:
 	bool SupportsDedicatedAllocation() const { return dedicatedAllocationSupported; }
 	bool hasPerPixel() override { return fragmentStoresAndAtomics; }
 	bool hasProvokingVertex() { return provokingVertexSupported; }
+	bool useReversedDepth() const;
+	float getDepthClearValue() const;
+	vk::Viewport makeViewport(float x, float y, float width, float height) const;
 	const VMAllocator& GetAllocator() const { return allocator; }
 	vk::DeviceSize GetMaxMemoryAllocationSize() const { return maxMemoryAllocationSize; }
 	f32 GetMaxSamplerAnisotropy() const { return samplerAnisotropy ? maxSamplerAnisotropy : 1.f; }

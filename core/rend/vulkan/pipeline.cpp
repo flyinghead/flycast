@@ -93,7 +93,7 @@ void PipelineManager::CreateModVolPipeline(ModVolMode mode, int cullMode, bool n
 	  vk::PipelineDepthStencilStateCreateFlags(), // flags
 	  mode == ModVolMode::Xor || mode == ModVolMode::Or, // depthTestEnable
 	  false,                                      // depthWriteEnable
-	  vk::CompareOp::eGreater,                    // depthCompareOp
+	  GetContext()->useReversedDepth() ? vk::CompareOp::eGreater : vk::CompareOp::eLess, // depthCompareOp
 	  false,                                      // depthBoundTestEnable
 	  true,                                       // stencilTestEnable
 	  stencilOpState,                             // front
@@ -129,7 +129,8 @@ void PipelineManager::CreateModVolPipeline(ModVolMode mode, int cullMode, bool n
 
 	ModVolShaderParams shaderParams { naomi2, !settings.platform.isNaomi2() && config::NativeDepthInterpolation };
 	vk::ShaderModule vertex_module = shaderManager->GetModVolVertexShader(shaderParams);
-	vk::ShaderModule fragment_module = shaderManager->GetModVolShader(!settings.platform.isNaomi2() && config::NativeDepthInterpolation);
+	vk::ShaderModule fragment_module = shaderManager->GetModVolShader(!settings.platform.isNaomi2() && config::NativeDepthInterpolation,
+			GetContext()->useReversedDepth());
 
 	std::array<vk::PipelineShaderStageCreateInfo, 2> stages = {
 			vk::PipelineShaderStageCreateInfo(vk::PipelineShaderStageCreateFlags(), vk::ShaderStageFlagBits::eVertex, vertex_module, "main"),
@@ -208,7 +209,7 @@ void PipelineManager::CreateDepthPassPipeline(int cullMode, bool naomi2)
 	  vk::PipelineDepthStencilStateCreateFlags(), // flags
 	  true,                                       // depthTestEnable
 	  true,                                       // depthWriteEnable
-	  vk::CompareOp::eGreaterOrEqual,             // depthCompareOp
+	  GetContext()->useReversedDepth() ? vk::CompareOp::eGreaterOrEqual : vk::CompareOp::eLessOrEqual, // depthCompareOp
 	  false,                                      // depthBoundTestEnable
 	  false,                                      // stencilTestEnable
 	  stencilOpState,                             // front
@@ -242,7 +243,8 @@ void PipelineManager::CreateDepthPassPipeline(int cullMode, bool naomi2)
 
 	ModVolShaderParams shaderParams { naomi2, !settings.platform.isNaomi2() && config::NativeDepthInterpolation };
 	vk::ShaderModule vertex_module = shaderManager->GetModVolVertexShader(shaderParams);
-	vk::ShaderModule fragment_module = shaderManager->GetModVolShader(!settings.platform.isNaomi2() && config::NativeDepthInterpolation);
+	vk::ShaderModule fragment_module = shaderManager->GetModVolShader(!settings.platform.isNaomi2() && config::NativeDepthInterpolation,
+			GetContext()->useReversedDepth());
 
 	std::array<vk::PipelineShaderStageCreateInfo, 2> stages = {
 			vk::PipelineShaderStageCreateInfo(vk::PipelineShaderStageCreateFlags(), vk::ShaderStageFlagBits::eVertex, vertex_module, "main"),
@@ -324,6 +326,8 @@ void PipelineManager::CreatePipeline(u32 listType, bool sortTriangles, const Pol
 		depthOp = vk::CompareOp::eGreaterOrEqual;
 	else
 		depthOp = depthOps[pp.isp.DepthMode];
+	if (!GetContext()->useReversedDepth())
+		depthOp = reverseDepthCompareOp(depthOp);
 	bool depthWriteEnable;
 	if (sortTriangles /* && !config::PerStripSorting */)
 		// FIXME temporary work-around for intel driver bug
@@ -409,6 +413,7 @@ void PipelineManager::CreatePipeline(u32 listType, bool sortTriangles, const Pol
 	params.palette = gpuPalette;
 	params.divPosZ = divPosZ;
 	params.dithering = dithering;
+	params.reversedDepth = GetContext()->useReversedDepth();
 	vk::ShaderModule fragment_module = shaderManager->GetFragmentShader(params);
 
 	std::array<vk::PipelineShaderStageCreateInfo, 2> stages = {

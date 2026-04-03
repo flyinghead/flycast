@@ -52,6 +52,7 @@ struct FragmentShaderParams
 	int palette;
 	bool divPosZ;
 	bool dithering;
+	bool reversedDepth;
 
 	u32 hash()
 	{
@@ -59,7 +60,8 @@ struct FragmentShaderParams
 			| ((u32)texture << 3) | ((u32)ignoreTexAlpha << 4) | (shaderInstr << 5)
 			| ((u32)offset << 7) | ((u32)fog << 8) | ((u32)gouraud << 10)
 			| ((u32)bumpmap << 11) | ((u32)clamping << 12) | ((u32)trilinear << 13)
-			| ((u32)palette << 14) | ((u32)divPosZ << 16) | ((u32)dithering << 17);
+			| ((u32)palette << 14) | ((u32)divPosZ << 16) | ((u32)dithering << 17)
+			| ((u32)reversedDepth << 18);
 	}
 };
 
@@ -110,11 +112,11 @@ public:
 	vk::ShaderModule GetFragmentShader(const FragmentShaderParams& params) { return getShader(fragmentShaders, params); }
 	vk::ShaderModule GetModVolVertexShader(const ModVolShaderParams& params) { return getShader(modVolVertexShaders, params); }
 
-	vk::ShaderModule GetModVolShader(bool divPosZ)
+	vk::ShaderModule GetModVolShader(bool divPosZ, bool reversedDepth)
 	{
-		auto& modVolShader = modVolShaders[divPosZ];
+		auto& modVolShader = modVolShaders[divPosZ][reversedDepth];
 		if (!modVolShader)
-			modVolShader = compileModVolFragmentShader(divPosZ);
+			modVolShader = compileModVolFragmentShader(divPosZ, reversedDepth);
 		return *modVolShader;
 	}
 	vk::ShaderModule GetQuadVertexShader(bool rotate = false)
@@ -153,8 +155,10 @@ public:
 		vertexShaders.clear();
 		fragmentShaders.clear();
 		modVolVertexShaders.clear();
-		modVolShaders[0].reset();
-		modVolShaders[1].reset();
+		modVolShaders[0][0].reset();
+		modVolShaders[0][1].reset();
+		modVolShaders[1][0].reset();
+		modVolShaders[1][1].reset();
 		quadVertexShader.reset();
 		quadRotateVertexShader.reset();
 		quadFragmentShader.reset();
@@ -175,14 +179,14 @@ private:
 	vk::UniqueShaderModule compileShader(const VertexShaderParams& params);
 	vk::UniqueShaderModule compileShader(const FragmentShaderParams& params);
 	vk::UniqueShaderModule compileShader(const ModVolShaderParams& params);
-	vk::UniqueShaderModule compileModVolFragmentShader(bool divPosZ);
+	vk::UniqueShaderModule compileModVolFragmentShader(bool divPosZ, bool reversedDepth);
 	vk::UniqueShaderModule compileQuadVertexShader(bool rotate);
 	vk::UniqueShaderModule compileQuadFragmentShader(bool ignoreTexAlpha);
 
 	std::map<u32, vk::UniqueShaderModule> vertexShaders;
 	std::map<u32, vk::UniqueShaderModule> fragmentShaders;
 	std::map<u32, vk::UniqueShaderModule> modVolVertexShaders;
-	vk::UniqueShaderModule modVolShaders[2];
+	vk::UniqueShaderModule modVolShaders[2][2];
 	vk::UniqueShaderModule quadVertexShader;
 	vk::UniqueShaderModule quadRotateVertexShader;
 	vk::UniqueShaderModule quadFragmentShader;

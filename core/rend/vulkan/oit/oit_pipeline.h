@@ -142,14 +142,18 @@ public:
 		getContext()->GetDevice().updateDescriptorSets(writeDescriptorSets, nullptr);
 	}
 
-	void updateColorInputDescSet(int index, vk::ImageView colorImageView)
+	void updateColorInputDescSet(int index, vk::ImageView colorImageView, vk::ImageView depthImageView)
 	{
 		colorInputDescSets[index] = colorInputAlloc.alloc();
 
 		vk::DescriptorImageInfo colorImageInfo(vk::Sampler(), colorImageView, vk::ImageLayout::eShaderReadOnlyOptimal);
-		vk::WriteDescriptorSet writeDescriptorSet(colorInputDescSets[index], 0, 0, vk::DescriptorType::eInputAttachment, colorImageInfo);
+		vk::DescriptorImageInfo depthImageInfo(vk::Sampler(), depthImageView, vk::ImageLayout::eDepthStencilReadOnlyOptimal);
+		std::array<vk::WriteDescriptorSet, 2> writeDescriptorSets = {
+			vk::WriteDescriptorSet(colorInputDescSets[index], 0, 0, vk::DescriptorType::eInputAttachment, colorImageInfo),
+			vk::WriteDescriptorSet(colorInputDescSets[index], 1, 0, vk::DescriptorType::eInputAttachment, depthImageInfo),
+		};
 
-		getContext()->GetDevice().updateDescriptorSets(writeDescriptorSet, nullptr);
+		getContext()->GetDevice().updateDescriptorSets(writeDescriptorSets, nullptr);
 	}
 
 	void bindPerPolyDescriptorSets(vk::CommandBuffer cmdBuffer, const PolyParam& poly, int polyNumber, vk::Buffer buffer,
@@ -295,9 +299,12 @@ public:
 			perFrameLayout = device.createDescriptorSetLayoutUnique(
 					vk::DescriptorSetLayoutCreateInfo(vk::DescriptorSetLayoutCreateFlags(), perFrameBindings));
 
-			vk::DescriptorSetLayoutBinding colorInputBinding(0, vk::DescriptorType::eInputAttachment, 1, vk::ShaderStageFlagBits::eFragment);		// color input attachment
+			std::array<vk::DescriptorSetLayoutBinding, 2> colorInputBindings = {
+				vk::DescriptorSetLayoutBinding(0, vk::DescriptorType::eInputAttachment, 1, vk::ShaderStageFlagBits::eFragment),		// color input attachment
+				vk::DescriptorSetLayoutBinding(1, vk::DescriptorType::eInputAttachment, 1, vk::ShaderStageFlagBits::eFragment),		// depth input attachment
+			};
 			colorInputLayout = device.createDescriptorSetLayoutUnique(
-					vk::DescriptorSetLayoutCreateInfo(vk::DescriptorSetLayoutCreateFlags(), colorInputBinding));
+					vk::DescriptorSetLayoutCreateInfo(vk::DescriptorSetLayoutCreateFlags(), colorInputBindings));
 
 			std::array<vk::DescriptorSetLayoutBinding, 4> perPolyBindings = {
 					vk::DescriptorSetLayoutBinding(0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment),	// texture 0
@@ -321,9 +328,12 @@ public:
 		pipelines.clear();
 		modVolPipelines.clear();
 		trModVolPipelines.clear();
-		finalPipelines[0].reset();
-		finalPipelines[1].reset();
-		clearPipeline.reset();
+		finalPipelines[0][0].reset();
+		finalPipelines[0][1].reset();
+		finalPipelines[1][0].reset();
+		finalPipelines[1][1].reset();
+		clearPipelines[0].reset();
+		clearPipelines[1].reset();
 	}
 
 	vk::Pipeline GetPipeline(u32 listType, bool autosort, const PolyParam& pp, Pass pass, int gpuPalette)
@@ -362,15 +372,17 @@ public:
 	vk::Pipeline GetFinalPipeline(bool dithering)
 	{
 		checkMaxLayers();
-		if (!finalPipelines[dithering])
+		bool reversedDepth = GetContext()->useReversedDepth();
+		if (!finalPipelines[dithering][reversedDepth])
 			CreateFinalPipeline(dithering);
-		return *finalPipelines[dithering];
+		return *finalPipelines[dithering][reversedDepth];
 	}
 	vk::Pipeline GetClearPipeline()
 	{
-		if (!clearPipeline)
+		bool reversedDepth = GetContext()->useReversedDepth();
+		if (!clearPipelines[reversedDepth])
 			CreateClearPipeline();
-		return *clearPipeline;
+		return *clearPipelines[reversedDepth];
 	}
 	vk::PipelineLayout GetPipelineLayout() const { return *pipelineLayout; }
 	vk::DescriptorSetLayout GetPerFrameDSLayout() const { return *perFrameLayout; }
@@ -404,12 +416,15 @@ private:
 		hash |= ((u64)gpuPalette << 26) | ((u64)pass << 28) | ((u64)pp->isNaomi2() << 30);
 		hash |= (u64)(!settings.platform.isNaomi2() && config::NativeDepthInterpolation) << 31;
 		hash |= (u64)(pp->tcw.PixelFmt == PixelBumpMap) << 32;
+		hash |= (u64)GetContext()->useReversedDepth() << 34;
 
 		return hash;
 	}
 	u32 hash(ModVolMode mode, int cullMode, bool naomi2) const
 	{
-		return ((int)mode << 2) | cullMode | ((u32)naomi2 << 5) | ((u32)(!settings.platform.isNaomi2() && config::NativeDepthInterpolation) << 6);
+		return ((int)mode << 2) | cullMode | ((u32)naomi2 << 5)
+				| ((u32)(!settings.platform.isNaomi2() && config::NativeDepthInterpolation) << 6)
+				| ((u32)GetContext()->useReversedDepth() << 7);
 	}
 
 	vk::PipelineVertexInputStateCreateInfo GetMainVertexInputStateCreateInfo(bool full = true, bool naomi2 = false) const
@@ -467,8 +482,8 @@ private:
 	std::map<u64, vk::UniquePipeline> pipelines;
 	std::map<u32, vk::UniquePipeline> modVolPipelines;
 	std::map<u32, vk::UniquePipeline> trModVolPipelines;
-	vk::UniquePipeline finalPipelines[2];
-	vk::UniquePipeline clearPipeline;
+	vk::UniquePipeline finalPipelines[2][2];
+	vk::UniquePipeline clearPipelines[2];
 
 	vk::UniquePipelineLayout pipelineLayout;
 	vk::UniqueDescriptorSetLayout perFrameLayout;

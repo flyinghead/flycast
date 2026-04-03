@@ -168,6 +168,9 @@ public:
 	}
 	bool hasPerPixel() override { return fragmentStoresAndAtomics; }
 	bool hasProvokingVertex() { return provokingVertexSupported; }
+	bool useReversedDepth() const;
+	float getDepthClearValue() const;
+	vk::Viewport makeViewport(float x, float y, float width, float height) const;
 	bool recreateSwapChainIfNeeded();
 	void addToFlight(Deletable *object) override {
 		inFlightObjects[GetCurrentImageIndex()].emplace_back(object);

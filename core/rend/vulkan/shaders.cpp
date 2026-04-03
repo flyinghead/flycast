@@ -22,6 +22,7 @@
 #include "shaders.h"
 #include "compiler.h"
 #include "utils.h"
+#include "vulkan_context.h"
 
 static const char VertexShaderSource[] = R"(
 layout (std140, set = 0, binding = 0) uniform VertexShaderUniforms
@@ -290,7 +291,12 @@ void main()
 #else
 	highp float w = 100000.0 * vtx_uv.z;
 #endif
-	gl_FragDepth = log2(1.0 + max(w, -0.999999)) / 34.0;
+	highp float depth = log2(1.0 + max(w, -0.999999)) / 34.0;
+#if REVERSED_DEPTH == 1
+	gl_FragDepth = depth;
+#else
+	gl_FragDepth = 1.0 - depth;
+#endif
 
 #if DITHERING == 1
 	float ditherTable[16] = float[](
@@ -348,7 +354,12 @@ void main()
 #else
 	highp float w = 100000.0 * depth;
 #endif
-	gl_FragDepth = log2(1.0 + max(w, -0.999999)) / 34.0;
+	highp float fragDepth = log2(1.0 + max(w, -0.999999)) / 34.0;
+#if REVERSED_DEPTH == 1
+	gl_FragDepth = fragDepth;
+#else
+	gl_FragDepth = 1.0 - fragDepth;
+#endif
 	FragColor = vec4(0.0, 0.0, 0.0, pushConstants.sp_ShaderColor);
 }
 )";
@@ -761,6 +772,7 @@ vk::UniqueShaderModule ShaderManager::compileShader(const FragmentShaderParams& 
 		.addConstant("pp_Palette", params.palette)
 		.addConstant("DIV_POS_Z", (int)params.divPosZ)
 		.addConstant("DITHERING", (int)params.dithering)
+		.addConstant("REVERSED_DEPTH", (int)params.reversedDepth)
 		.addSource(GouraudSource)
 		.addSource(FragmentShaderTop)
 		.addSource(FragmentShaderCommon)
@@ -775,10 +787,11 @@ vk::UniqueShaderModule ShaderManager::compileShader(const ModVolShaderParams& pa
 				.addSource(params.naomi2 ? N2ModVolVertexShaderSource : ModVolVertexShaderSource).generate());
 }
 
-vk::UniqueShaderModule ShaderManager::compileModVolFragmentShader(bool divPosZ)
+vk::UniqueShaderModule ShaderManager::compileModVolFragmentShader(bool divPosZ, bool reversedDepth)
 {
 	return ShaderCompiler::Compile(vk::ShaderStageFlagBits::eFragment,
 			VulkanSource().addConstant("DIV_POS_Z", (int)divPosZ)
+				.addConstant("REVERSED_DEPTH", (int)reversedDepth)
 				.addSource(ModVolFragmentShaderSource).generate());
 }
 

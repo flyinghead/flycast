@@ -330,6 +330,9 @@ void gui_settings_video()
     			T("Helps with texture bleeding case when upscaling. Disabling it can help if pixels are warping when upscaling in 2D games (MVC2, CVS, KOF, etc.)"));
     	OptionCheckbox(T("Native Depth Interpolation"), config::NativeDepthInterpolation,
     			T("Helps with texture corruption and depth issues on AMD GPUs. Can also help Intel GPUs in some cases."));
+		if (isVulkan(config::RendererType))
+			OptionCheckbox(T("Non Reversed Depth"), config::NonReversedDepth,
+					T("Use the alternate Vulkan depth path instead of the default reversed-Z path.\nHelps with render corruption and depth issues on macOS with AMD GPU."));
     	OptionCheckbox(T("Copy Rendered Textures to VRAM"), config::RenderToTextureBuffer,
     			T("Copy rendered-to textures back to VRAM. Slower but accurate"));
 		const std::array<int, 5> aniso{ 1, 2, 4, 8, 16 };
