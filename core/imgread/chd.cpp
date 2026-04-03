@@ -2,7 +2,7 @@
 #include "stdclass.h"
 #include "oslib/storage.h"
 #include "oslib/i18n.h"
-#include <libchdr/chd.h>
+#include "chd.h"
 
 struct CHDDisc : Disc
 {
@@ -12,7 +12,6 @@ struct CHDDisc : Disc
 	static constexpr u32 SESSION_GAP = 11400;
 
 	chd_file *chd = nullptr;
-	FILE *fp = nullptr;
 	u8* hunk_mem = nullptr;
 	u32 old_hunk = 0;
 
@@ -27,8 +26,6 @@ struct CHDDisc : Disc
 
 		if (chd)
 			chd_close(chd);
-		if (fp)
-			std::fclose(fp);
 	}
 };
 
@@ -111,17 +108,20 @@ static u32 getSectorSize(const std::string& type)
 
 void CHDDisc::tryOpen(const char* file)
 {
-	fp = hostfs::storage().openFile(file, "rb");
+	FILE *fp = hostfs::storage().openFile(file, "rb");
 	if (fp == nullptr)
 	{
 		WARN_LOG(COMMON, "Cannot open file '%s' errno %d", file, errno);
 		throw FlycastException(strprintf(i18n::T("Cannot open CHD file %s"), file));
 	}
 
-	chd_error err = chd_open_file(fp, CHD_OPEN_READ, 0, &chd);
+	chd_error err = chd_open_file(fp, CHD_OPEN_READ, nullptr, &chd);
 
 	if (err != CHDERR_NONE)
+	{
+		std::fclose(fp);
 		throw FlycastException(strprintf(i18n::T("Invalid CHD file %s"), file));
+	}
 
 	INFO_LOG(GDROM, "chd: parsing file %s", file);
 

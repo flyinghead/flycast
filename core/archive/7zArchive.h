@@ -22,7 +22,6 @@
 
 #include "archive.h"
 #include "lzma/7z.h"
-#include "lzma/7zFile.h"
 
 #include <algorithm>
 #include <cstring>
@@ -43,11 +42,20 @@ protected:
 	bool Open(FILE *file) override;
 
 private:
+	struct ArchiveStream
+	{
+		static SRes Read(const ISeekInStream *p, void *buf, size_t *size);
+		static SRes Seek(const ISeekInStream *p, Int64 *pos, ESzSeek origin);
+
+		ISeekInStream vt;
+		FILE *file;
+	};
+
 	CSzArEx szarchive;
 	UInt32 block_idx;				/* it can have any value before first call (if outBuffer = 0) */
 	Byte *out_buffer;				/* it must be 0 before first call for each new archive. */
 	size_t out_buffer_size;			/* it can have any value before first call (if outBuffer = 0) */
-	CFileInStream archiveStream;
+	ArchiveStream archiveStream;
 	CLookToRead2 lookStream;
 
 };

@@ -35,7 +35,7 @@
 #include "hw/naomi/naomi_cart.h"
 #include "hw/naomi/card_reader.h"
 #include "hw/maple/maple_devs.h"
-#include <stb_image.h>
+#include "stbi.h"
 
 namespace vgamepad
 {
@@ -109,7 +109,7 @@ static bool loadOSDButtons(const std::string& path)
 		return false;
 
 	stbi_set_flip_vertically_on_load(1);
-    int width, height, n;
+	int width, height, n;
 	u8 *image_data = stbi_load_from_file(file, &width, &height, &n, STBI_rgb_alpha);
 	std::fclose(file);
 	if (image_data == nullptr)
