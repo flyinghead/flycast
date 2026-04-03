@@ -1925,7 +1925,7 @@ SystemSpCart::~SystemSpCart()
 
 chd_file *SystemSpCart::openChd(const std::string path)
 {
-	FILE *chdFile = hostfs::storage().openFile(path, "rb");
+	hostfs::File *chdFile = hostfs::storage().openFile(path, "rb");
 	if (chdFile == nullptr)
 	{
 		WARN_LOG(NAOMI, "Cannot open file '%s' errno %d", path.c_str(), errno);
@@ -1938,7 +1938,7 @@ chd_file *SystemSpCart::openChd(const std::string path)
 	if (err != CHDERR_NONE)
 	{
 		WARN_LOG(NAOMI, "Invalid CHD file %s", path.c_str());
-		fclose(chdFile);
+		delete chdFile;
 		return nullptr;
 	}
 	INFO_LOG(NAOMI, "compact flash: parsing file %s", path.c_str());

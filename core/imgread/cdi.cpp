@@ -9,7 +9,7 @@ Disc* cdi_parse(const char* file, std::vector<u8> *digest)
 	if (get_file_extension(file) != "cdi")
 		return nullptr;
 
-	FILE *fsource = hostfs::storage().openFile(file, "rb");
+	hostfs::File *fsource = hostfs::storage().openFile(file, "rb");
 
 	if (fsource == nullptr)
 	{
@@ -49,7 +49,7 @@ Disc* cdi_parse(const char* file, std::vector<u8> *digest)
 				throw FlycastException(i18n::Ts("Invalid CDI image"));
 			}
 
-			image.header_position = std::ftell(fsource);
+			image.header_position = fsource->tell();
 
 			if (image.tracks == 0)
 				INFO_LOG(GDROM, "Open session");
@@ -78,7 +78,7 @@ Disc* cdi_parse(const char* file, std::vector<u8> *digest)
 						throw FlycastException(i18n::Ts("Invalid CDI sector size"));
 					}
 
-					image.header_position = std::ftell(fsource);
+					image.header_position = fsource->tell();
 
 					// Show info
 #if 0
@@ -120,7 +120,7 @@ Disc* cdi_parse(const char* file, std::vector<u8> *digest)
 					t.CTRL=track.mode==0?0:4;
 					t.StartFAD=track.start_lba+track.pregap_length;
 					t.EndFAD=t.StartFAD+track.length-1;
-					FILE *trackFile = hostfs::storage().openFile(file, "rb");
+					hostfs::File *trackFile = hostfs::storage().openFile(file, "rb");
 					if (trackFile == nullptr) {
 						WARN_LOG(GDROM, "Cannot re-open file '%s' errno %d", file, errno);
 						throw FlycastException(i18n::Ts("Cannot re-open CDI file"));
@@ -132,21 +132,21 @@ Disc* cdi_parse(const char* file, std::vector<u8> *digest)
 					if (track.length < 0)
 						WARN_LOG(GDROM, "Negative track size found. You must extract image with /pregap option");
 
-					std::fseek(fsource, track.position, SEEK_SET);
+					fsource->seek(track.position, SEEK_SET);
 					if (track.total_length < track.length + track.pregap_length)
 					{
 						WARN_LOG(GDROM, "This track seems truncated. Skipping...");
 						// FIXME that can't be right
-						std::fseek(fsource, track.total_length, SEEK_CUR);
+						fsource->seek(track.total_length, SEEK_CUR);
 					}
 					else
 					{
-						std::fseek(fsource, track.total_length * track.sector_size, SEEK_CUR);
+						fsource->seek(track.total_length * track.sector_size, SEEK_CUR);
 						rv->EndFAD = track.start_lba + track.total_length - 1;
 					}
-					track.position = std::ftell(fsource);
+					track.position = fsource->tell();
 
-					std::fseek(fsource, image.header_position, SEEK_SET);
+					fsource->seek(image.header_position, SEEK_SET);
 
 					image.remaining_tracks--;
 				}
@@ -158,7 +158,7 @@ Disc* cdi_parse(const char* file, std::vector<u8> *digest)
 		}
 		if (digest != nullptr)
 			*digest = MD5Sum().add(fsource).getDigest();
-		std::fclose(fsource);
+		delete fsource;
 
 		rv->type=GuessDiscType(CD_M1,CD_M2,CD_DA);
 
@@ -168,7 +168,7 @@ Disc* cdi_parse(const char* file, std::vector<u8> *digest)
 
 		return rv.release();
 	} catch (...) {
-		std::fclose(fsource);
+		delete fsource;
 		throw;
 	}
 }

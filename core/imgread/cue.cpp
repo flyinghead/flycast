@@ -49,7 +49,7 @@ Disc* cue_parse(const char* file, std::vector<u8> *digest)
 	if (get_file_extension(file) != "cue")
 		return nullptr;
 
-	FILE *fsource = hostfs::storage().openFile(file, "rb");
+	hostfs::File *fsource = hostfs::storage().openFile(file, "rb");
 
 	if (fsource == nullptr)
 	{
@@ -64,13 +64,13 @@ Disc* cue_parse(const char* file, std::vector<u8> *digest)
 
 	if (cue_len >= sizeof(cue_data))
 	{
-		std::fclose(fsource);
+		delete fsource;
 		throw FlycastException(i18n::Ts("CUE parse error: CUE file too big"));
 	}
 
-	if (std::fread(cue_data, 1, cue_len, fsource) != cue_len)
+	if (fsource->read(cue_data, 1, cue_len) != cue_len)
 		WARN_LOG(GDROM, "Failed or truncated read of cue file '%s'", file);
-	std::fclose(fsource);
+	delete fsource;
 
 	std::istringstream istream(cue_data);
 	istream.imbue(std::locale::classic());
@@ -179,12 +179,12 @@ Disc* cue_parse(const char* file, std::vector<u8> *digest)
 				throw FlycastException(i18n::T("Invalid CUE file"));
 			}
 			track_filename = hostfs::storage().getSubPath(basepath, track_filename);
-			FILE *track_file = hostfs::storage().openFile(track_filename, "rb");
+			hostfs::File *track_file = hostfs::storage().openFile(track_filename, "rb");
 			if (track_file == nullptr)
 				throw FlycastException(strprintf(i18n::T("CUE file: cannot open track %s"), track_filename.c_str()));
 			if (digest != nullptr)
 				md5.add(track_file);
-			std::fclose(track_file);
+			delete track_file;
 			fileInfo = hostfs::storage().getFileInfo(track_filename);
 			fileStartFAD = currentFAD;
 			// Clear track context
@@ -234,7 +234,7 @@ Disc* cue_parse(const char* file, std::vector<u8> *digest)
 				t.isrc = track_isrc;
 				DEBUG_LOG(GDROM, "file[%zd] \"%s\": session %d type %s FAD:%d -> %d %s", disc->tracks.size() + 1, track_filename.c_str(),
 						session_number, track_type.c_str(), t.StartFAD, t.EndFAD, t.isrc.empty() ? "" : ("ISRC " + t.isrc).c_str());
-				FILE *track_file = hostfs::storage().openFile(track_filename, "rb");
+				hostfs::File *track_file = hostfs::storage().openFile(track_filename, "rb");
 				t.file = new RawTrackFile(track_file, indexFAD * track_secsize, t.StartFAD, track_secsize);
 				disc->tracks.push_back(t);
 				if (disc->tracks.size() >= 2) {

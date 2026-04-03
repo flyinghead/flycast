@@ -39,7 +39,7 @@ public:
 	ArchiveFile *OpenFileByCrc(u32 crc) override;
 
 protected:
-	bool Open(FILE *file) override;
+	bool Open(hostfs::File *file) override;
 
 private:
 	struct ArchiveStream
@@ -48,7 +48,7 @@ private:
 		static SRes Seek(const ISeekInStream *p, Int64 *pos, ESzSeek origin);
 
 		ISeekInStream vt;
-		FILE *file;
+		hostfs::File *file;
 	};
 
 	CSzArEx szarchive;

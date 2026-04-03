@@ -31,7 +31,7 @@ static zip_int64_t ZipSourceCallback(void *userdata, void *data, zip_uint64_t le
 {
 	using Error = std::array<int, 2>;
 	static Error error = {ZIP_ER_OK, 0};
-	auto file = static_cast<FILE*>(userdata);
+	auto file = static_cast<hostfs::File*>(userdata);
 
 	switch (cmd)
 	{
@@ -40,11 +40,11 @@ static zip_int64_t ZipSourceCallback(void *userdata, void *data, zip_uint64_t le
 
 		case ZIP_SOURCE_READ:
 		{
-			const auto bytes_read = std::fread(data, 1, len, file);
+			const auto bytes_read = file->read(data, 1, len);
 
-			if (ferror(file))
+			if (file->error())
 			{
-				error = {ZIP_ER_READ, errno};
+				error = {ZIP_ER_INTERNAL, 0};
 				return -1;
 			}
 
@@ -56,16 +56,11 @@ static zip_int64_t ZipSourceCallback(void *userdata, void *data, zip_uint64_t le
 
 		case ZIP_SOURCE_STAT:
 		{
-			// Obtain file size.
-			std::fpos_t position;
-			std::fgetpos(file, &position);
-			std::fseek(file, 0, SEEK_END);
-			auto size = std::ftell(file);
-			std::fsetpos(file, &position);
+			auto size = file->size();
 
 			if (size == -1)
 			{
-				error = {ZIP_ER_TELL, errno};
+				error = {ZIP_ER_INTERNAL, 0};
 				return -1;
 			}
 
@@ -86,12 +81,7 @@ static zip_int64_t ZipSourceCallback(void *userdata, void *data, zip_uint64_t le
 		}
 
 		case ZIP_SOURCE_FREE:
-			if (std::fclose(file) != 0)
-			{
-				error = {ZIP_ER_CLOSE, errno};
-				return -1;
-			}
-
+			delete file;
 			return 0;
 
 		case ZIP_SOURCE_SEEK:
@@ -105,9 +95,9 @@ static zip_int64_t ZipSourceCallback(void *userdata, void *data, zip_uint64_t le
 				return -1;
 			}
 
-			if (std::fseek(file, seek_info->offset, seek_info->whence) != 0)
+			if (file->seek(seek_info->offset, seek_info->whence) != 0)
 			{
-				error = {ZIP_ER_SEEK, errno};
+				error = {ZIP_ER_INTERNAL, 0};
 				return -1;
 			}
 
@@ -116,11 +106,11 @@ static zip_int64_t ZipSourceCallback(void *userdata, void *data, zip_uint64_t le
 
 		case ZIP_SOURCE_TELL:
 		{
-			const auto position = std::ftell(file);
+			const auto position = file->tell();
 
 			if (position == -1)
 			{
-				error = {ZIP_ER_TELL, errno};
+				error = {ZIP_ER_INTERNAL, 0};
 				return -1;
 			}
 
@@ -150,13 +140,13 @@ static zip_int64_t ZipSourceCallback(void *userdata, void *data, zip_uint64_t le
 	return -1;
 }
 
-bool ZipArchive::Open(FILE *file)
+bool ZipArchive::Open(hostfs::File *file)
 {
 	zip_error_t error;
 	zip_source_t *source = zip_source_function_create(ZipSourceCallback, file, &error);
 	if (source == nullptr)
 	{
-		std::fclose(file);
+		delete file;
 		return false;
 	}
 	zip = zip_open_from_source(source, 0, nullptr);

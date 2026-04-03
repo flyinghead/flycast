@@ -21,11 +21,11 @@
 
 bool MemChip::Load(const std::string& file)
 {
-	FILE *f = hostfs::storage().openFile(file, "rb");
+	hostfs::File *f = hostfs::storage().openFile(file, "rb");
 	if (f)
 	{
-		bool rv = std::fread(data + write_protect_size, 1, size - write_protect_size, f) == size - write_protect_size;
-		std::fclose(f);
+		bool rv = f->read(data + write_protect_size, 1, size - write_protect_size) == size - write_protect_size;
+		delete f;
 		if (rv)
 			this->load_filename = file;
 

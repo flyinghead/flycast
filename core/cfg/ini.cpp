@@ -236,13 +236,13 @@ void IniFile::load(const std::string& data, bool cEscape)
 	}
 }
 
-void IniFile::load(FILE *file, bool cEscape)
+void IniFile::load(hostfs::File *file, bool cEscape)
 {
 	std::string data;
 	for (;;)
 	{
 		char buffer[4096];
-		int n = fread(buffer, 1, sizeof(buffer), file);
+		int n = file->read(buffer, 1, sizeof(buffer));
 		if (n <= 0)
 			break;
 		data += std::string(buffer, buffer + n);
@@ -272,11 +272,11 @@ void IniFile::save(std::string& data) const
 	data = ss.str();
 }
 
-void IniFile::save(FILE *file) const
+void IniFile::save(hostfs::File *file) const
 {
 	std::string data;
 	save(data);
-	fwrite(data.c_str(), 1, data.length(), file);
+	file->write(data.c_str(), 1, data.length());
 }
 
 bool IniFile::hasSection(const std::string& section) const {

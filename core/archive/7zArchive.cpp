@@ -32,22 +32,22 @@ static bool crc_tables_generated;
 SRes SzArchive::ArchiveStream::Read(const ISeekInStream *p, void *buf, size_t *size)
 {
 	auto file_archive = CONTAINER_FROM_VTBL(p, ArchiveStream, vt);
-	*size = std::fread(buf, 1, *size, file_archive->file);
-	return std::ferror(file_archive->file) ? SZ_ERROR_READ : SZ_OK;
+	*size = file_archive->file->read(buf, 1, *size);
+	return file_archive->file->error() ? SZ_ERROR_READ : SZ_OK;
 }
 
 SRes SzArchive::ArchiveStream::Seek(const ISeekInStream *p, Int64 *pos, ESzSeek origin)
 {
 	auto file_archive = CONTAINER_FROM_VTBL(p, ArchiveStream, vt);
-	return std::fseek(file_archive->file, *pos, origin) != 0 ? SZ_ERROR_FAIL : SZ_OK;
+	return file_archive->file->seek(*pos, origin) != 0 ? SZ_ERROR_FAIL : SZ_OK;
 }
 
-bool SzArchive::Open(FILE *file)
+bool SzArchive::Open(hostfs::File *file)
 {
 	SzArEx_Init(&szarchive);
 
 	if (archiveStream.file != nullptr)
-		std::fclose(archiveStream.file);
+		delete archiveStream.file;
 	archiveStream.vt.Read = ArchiveStream::Read;
 	archiveStream.vt.Seek = ArchiveStream::Seek;
 	archiveStream.file = file;
@@ -56,7 +56,7 @@ bool SzArchive::Open(FILE *file)
 	lookStream.buf = (Byte *)ISzAlloc_Alloc(&g_Alloc, kInputBufSize);
 	if (lookStream.buf == NULL)
 	{
-		std::fclose(archiveStream.file);
+		delete archiveStream.file;
 		return false;
 	}
 	lookStream.bufSize = kInputBufSize;
@@ -129,7 +129,7 @@ SzArchive::~SzArchive()
 {
 	if (lookStream.buf != NULL)
 	{
-		std::fclose(archiveStream.file);
+		delete archiveStream.file;
 		ISzAlloc_Free(&g_Alloc, lookStream.buf);
 		if (out_buffer != NULL)
 			ISzAlloc_Free(&g_Alloc, out_buffer);

@@ -108,7 +108,7 @@ static u32 getSectorSize(const std::string& type)
 
 void CHDDisc::tryOpen(const char* file)
 {
-	FILE *fp = hostfs::storage().openFile(file, "rb");
+	hostfs::File *fp = hostfs::storage().openFile(file, "rb");
 	if (fp == nullptr)
 	{
 		WARN_LOG(COMMON, "Cannot open file '%s' errno %d", file, errno);
@@ -119,7 +119,7 @@ void CHDDisc::tryOpen(const char* file)
 
 	if (err != CHDERR_NONE)
 	{
-		std::fclose(fp);
+		delete fp;
 		throw FlycastException(strprintf(i18n::T("Invalid CHD file %s"), file));
 	}
 

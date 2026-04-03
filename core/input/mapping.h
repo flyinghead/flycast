@@ -20,6 +20,7 @@
 
 #include "types.h"
 #include "gamepad.h"
+#include "oslib/storage.h"
 
 #include <map>
 #include <memory>
@@ -249,7 +250,7 @@ public:
 		return triggers;
 	}
 
-	void load(FILE* fp);
+	void load(hostfs::File* fp);
 	bool save(const std::string& name);
 
 	void set_dirty();

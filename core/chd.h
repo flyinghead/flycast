@@ -1,9 +1,10 @@
 #pragma once
 
-#include <cstdio>
 #include <utility>
 
 #include <libchdr/chd.h>
+
+#include "oslib/storage.h"
 
 namespace CHD
 {
@@ -12,34 +13,34 @@ namespace CHD
 		// Moved out here to avoid being duplicated by the template.
 		inline uint64_t fsize(struct chd_core_file *core_file)
 		{
-			auto file = static_cast<std::FILE*>(core_file->argp);
-			std::fseek(file, 0, SEEK_END);
-			return std::ftell(file);
+			auto file = static_cast<hostfs::File*>(core_file->argp);
+			return file->size();
 		}
 
 		inline size_t fread(void* buffer, size_t size, size_t count, struct chd_core_file *core_file)
 		{
-			auto file = static_cast<std::FILE*>(core_file->argp);
-			return std::fread(buffer, size, count, file);
+			auto file = static_cast<hostfs::File*>(core_file->argp);
+			return file->read(buffer, size, count);
 		}
 
 		inline int fclose(struct chd_core_file *core_file)
 		{
-			auto file = static_cast<std::FILE*>(core_file->argp);
+			auto file = static_cast<hostfs::File*>(core_file->argp);
+			delete file;
 			delete core_file;
-			return std::fclose(file);
+			return 0;
 		}
 
 		inline int fseek(struct chd_core_file *core_file, int64_t offset, int whence)
 		{
-			auto file = static_cast<std::FILE*>(core_file->argp);
-			return std::fseek(file, offset, whence);
+			auto file = static_cast<hostfs::File*>(core_file->argp);
+			return file->seek(offset, whence);
 		}
 	}
 }
 
 template<typename... Ts>
-inline auto chd_open_file(std::FILE *file, Ts &&...args)
+inline auto chd_open_file(hostfs::File *file, Ts &&...args)
 {
 	auto core_file = new struct chd_core_file();
 

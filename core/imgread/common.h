@@ -4,6 +4,7 @@
 
 #include "emulator.h"
 #include "hw/gdrom/gdrom_if.h"
+#include "oslib/storage.h"
 
 /*
 Mode2 Subheader:
@@ -214,11 +215,11 @@ Disc* OpenDisc(const std::string& path, std::vector<u8> *digest = nullptr);
 
 struct RawTrackFile : TrackFile
 {
-	FILE *file;
+	hostfs::File *file;
 	s32 offset;
 	u32 fmt;
 
-	RawTrackFile(FILE *file, u32 file_offs, u32 first_fad, u32 secfmt)
+	RawTrackFile(hostfs::File *file, u32 file_offs, u32 first_fad, u32 secfmt)
 	{
 		verify(file != nullptr);
 		this->file = file;
@@ -243,8 +244,8 @@ struct RawTrackFile : TrackFile
 			return false;
 		}
 
-		std::fseek(file, offset + FAD * fmt, SEEK_SET);
-		if (std::fread(dst, 1, fmt, file) != fmt)
+		file->seek(offset + FAD * fmt, SEEK_SET);
+		if (file->read(dst, 1, fmt) != fmt)
 		{
 			WARN_LOG(GDROM, "Failed or truncated GD-Rom read");
 			return false;
@@ -254,7 +255,7 @@ struct RawTrackFile : TrackFile
 
 	~RawTrackFile() override
 	{
-		std::fclose(file);
+		delete file;
 	}
 };
 

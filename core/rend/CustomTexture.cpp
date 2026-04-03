@@ -122,13 +122,13 @@ u8* CustomTextureSource::loadCustomTexture(u32 hash, int& width, int& height)
 	if (it == texture_map.end())
 		return nullptr;
 
-	FILE *file = hostfs::storage().openFile(it->second, "rb");
+	hostfs::File *file = hostfs::storage().openFile(it->second, "rb");
 	if (file == nullptr)
 		return nullptr;
 	int n;
 	stbi_set_flip_vertically_on_load(1);
 	u8 *imgData = stbi_load_from_file(file, &width, &height, &n, STBI_rgb_alpha);
-	std::fclose(file);
+	delete file;
 	return imgData;
 }
 
