@@ -22,12 +22,17 @@
 #include <string>
 #include <functional>
 
+enum class OsdDisplayMode {
+	OverlayOnly,
+	PausedIdle,
+};
+
 void gui_init();
 void gui_updateStyle();
 void gui_open_settings();
 void gui_display_ui();
 void gui_draw_osd();
-void gui_display_osd();
+void gui_display_osd(OsdDisplayMode mode = OsdDisplayMode::OverlayOnly);
 void gui_display_profiler();
 void gui_open_onboarding();
 void gui_term();
@@ -49,8 +54,11 @@ void gui_start_game(const std::string& path);
 void gui_error(const std::string& what);
 void gui_setOnScreenKeyboardCallback(void (*callback)(bool show));
 void gui_loadState(bool inRam = false);
+void gui_scheduleAutoPauseAfterLoadState();
+void gui_onGameFramePresented();
 void gui_saveState(bool stopRestart = true, bool inRam = false);
 void gui_cycleSaveStateSlot(int step);
+void gui_togglePause();
 std::string gui_getCurGameBoxartUrl();
 void gui_takeScreenshot();
 void gui_runOnUiThread(std::function<void()> function);

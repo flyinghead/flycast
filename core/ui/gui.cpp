@@ -28,6 +28,7 @@
 #include "imgread/common.h"
 #include "emulator.h"
 #include "mainui.h"
+#include "pause_flow.h"
 #include "lua/lua.h"
 #include "gui_chat.h"
 #include "imgui_driver.h"
@@ -369,6 +370,12 @@ static void gui_endFrame(bool gui_open) {
     delayedKeysUp();
 }
 
+static void resumeEmulationIfNeeded()
+{
+	if (!emu.paused())
+		emu.start();
+}
+
 void gui_setOnScreenKeyboardCallback(void (*callback)(bool show)) {
 	showOnScreenKeyboard = callback;
 }
@@ -434,9 +441,16 @@ void gui_open_settings()
 	}
 	else if (gui_state == GuiState::Commands)
 	{
-		gui_setState(GuiState::Closed);
-		GamepadDevice::load_system_mappings();
-		emu.start();
+		try {
+			gui_setState(GuiState::Closed);
+			GamepadDevice::load_system_mappings();
+			if (pause_flow::onMenuClosed(emu.paused())
+					== pause_flow::MenuCloseAction::UnpauseForMissingLastFrame)
+				emu.setPaused(false);
+			resumeEmulationIfNeeded();
+		} catch (const FlycastException& e) {
+			gui_stop_game(e.what());
+		}
 	}
 }
 
@@ -635,7 +649,7 @@ static void gui_display_commands()
 				if (IconButton(ICON_FA_CLOCK_ROTATE_LEFT, T("Load State"), ScaledVec2(buttonWidth, 50)).realize() && dc_savestateAllowed())
 				{
 					gui_setState(GuiState::Closed);
-					dc_loadstate(config::SavestateSlot);
+					gui_loadState();
 				}
 			}
 
@@ -1358,7 +1372,7 @@ void gui_display_ui()
 	ImguiFileTexture::resetLoadCount();
 
 	if (gui_state == GuiState::Closed)
-		emu.start();
+		resumeEmulationIfNeeded();
 }
 
 static u64 LastFPSTime;
@@ -1429,9 +1443,19 @@ void gui_draw_osd()
 	uiThreadRunner.execTasks();
 }
 
-void gui_display_osd() {
+void gui_display_osd(OsdDisplayMode mode)
+{
 	gui_draw_osd();
-	gui_endFrame(gui_is_open());
+	if (mode == OsdDisplayMode::PausedIdle)
+	{
+		ImDrawData *drawData = ImGui::GetDrawData();
+		const bool hasDrawData = drawData != nullptr && drawData->CmdListsCount > 0;
+		gui_endFrame(pause_flow::shouldRedrawPausedOsd(hasDrawData));
+	}
+	else
+	{
+		gui_endFrame(gui_is_open());
+	}
 }
 
 void gui_display_profiler()
@@ -1527,15 +1551,43 @@ void gui_loadState(bool inRam)
 	if (gui_state == GuiState::Closed && dc_savestateAllowed())
 	{
 		try {
-			emu.stop();
+			if (emu.running())
+				emu.stop();
 			if (inRam)
 				dc_loadstate(-2);  // special slot used for inRam states
 			else
 				dc_loadstate(config::SavestateSlot);
-			emu.start();
+			gui_scheduleAutoPauseAfterLoadState();
+			if (emu.paused())
+				emu.setPaused(false);
+			else
+				resumeEmulationIfNeeded();
 		} catch (const FlycastException& e) {
+			pause_flow::cancelPauseAfterLoadState();
 			gui_stop_game(e.what());
 		}
+	}
+}
+
+void gui_scheduleAutoPauseAfterLoadState()
+{
+	pause_flow::schedulePauseAfterLoadState();
+}
+
+void gui_onGameFramePresented()
+{
+	const LockGuard lock(guiMutex);
+	const bool pauseAfterLoadState = pause_flow::consumePauseAfterLoadState();
+	if (!pauseAfterLoadState)
+		return;
+	if (gui_state != GuiState::Closed || !emu.running() || settings.network.online || settings.naomi.multiboard)
+		return;
+
+	try {
+		emu.setPaused(true);
+		os_notify(T("Auto-paused after loading state"), 2000);
+	} catch (const FlycastException& e) {
+		gui_stop_game(e.what());
 	}
 }
 
@@ -1544,8 +1596,9 @@ void gui_saveState(bool stopRestart, bool inRam)
 	const LockGuard lock(guiMutex);
 	if ((gui_state == GuiState::Closed || !stopRestart) && dc_savestateAllowed())
 	{
+		const bool wasRunning = stopRestart && emu.running();
 		try {
-			if (stopRestart)
+			if (wasRunning)
 				emu.stop();
 			
 			if (inRam)
@@ -1553,8 +1606,8 @@ void gui_saveState(bool stopRestart, bool inRam)
 			else
 				savestate();
 
-			if (stopRestart)
-				emu.start();
+			if (wasRunning)
+				resumeEmulationIfNeeded();
 		} catch (const FlycastException& e) {
 			if (stopRestart)
 				gui_stop_game(e.what());
@@ -1568,6 +1621,21 @@ void gui_cycleSaveStateSlot(int step)
 {
 	cycleSaveStateSlot(step);
 	os_notify(strprintf(T("Save state slot %d"), config::SavestateSlot + 1).c_str(), 2000);
+}
+
+void gui_togglePause()
+{
+	const LockGuard lock(guiMutex);
+	if (gui_state != GuiState::Closed || settings.network.online || settings.naomi.multiboard)
+		return;
+	if (!emu.paused() && !achievements::canPause())
+		return;
+
+	try {
+		emu.setPaused(!emu.paused());
+	} catch (const FlycastException& e) {
+		gui_stop_game(e.what());
+	}
 }
 
 void gui_setState(GuiState newState)

@@ -114,6 +114,8 @@ static void gui_settings_advanced()
 					T("Always dump textures that are already replaced by custom textures"));
 		}
 		ImGui::Unindent();
+        OptionCheckbox(T("Auto-Pause after Load State"), config::AutoPauseAfterLoadState,
+				T("Automatically pause after loading a state. Useful for texture modding."));
         bool logToFile = config::loadBool("log", "LogToFile", false);
 		if (ImGui::Checkbox(T("Log to File"), &logToFile))
 			config::saveBool("log", "LogToFile", logToFile);

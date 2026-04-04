@@ -5,6 +5,8 @@ if(NOT LIBRETRO)
             imgui_driver.h
             gui.cpp
             gui.h
+            pause_flow.cpp
+            pause_flow.h
             gui_font.cpp
             gui_font.h
             gui_achievements.cpp

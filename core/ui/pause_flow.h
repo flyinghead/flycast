@@ -1,5 +1,5 @@
 /*
-	Copyright 2020 flyinghead
+	Copyright 2026 flyinghead
 
 	This file is part of Flycast.
 
@@ -17,20 +17,23 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #pragma once
-#include "types.h"
 
-extern u32 MainFrameCount;
+#include "gui.h"
 
-enum class FrameResult {
-	None,
-	UiFrame,
-	GameFrame,
+namespace pause_flow {
+
+enum class MenuCloseAction {
+	ResumeNormally,
+	RefreshPausedFrame,
+	UnpauseForMissingLastFrame,
 };
 
-FrameResult mainui_rend_frame();
-void mainui_init();
-void mainui_term();
-void mainui_loop(bool forceStart = true);
-void mainui_start();
-void mainui_stop();
-void mainui_reinit();
+MenuCloseAction onMenuClosed(bool paused);
+
+void schedulePauseAfterLoadState();
+void cancelPauseAfterLoadState();
+bool consumePauseAfterLoadState();
+
+bool shouldRedrawPausedOsd(bool hasDrawData);
+
+}

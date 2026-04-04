@@ -35,7 +35,7 @@ static bool mainui_enabled;
 u32 MainFrameCount;
 static bool forceReinit;
 
-bool mainui_rend_frame()
+FrameResult mainui_rend_frame()
 {
 	FC_PROFILE_SCOPE;
 
@@ -49,35 +49,45 @@ bool mainui_rend_frame()
 		} catch (const FlycastException& e) {
 			// Assume this is a graphics API issue
 			forceReinit = true;
-			return false;
+			return FrameResult::None;
 		}
 #ifndef TARGET_IPHONE
 		std::this_thread::sleep_for(std::chrono::milliseconds(16));
 #endif
+		MainFrameCount++;
+		return FrameResult::UiFrame;
 	}
-	else
-	{
-		try {
-			if (!emu.render())
-				return false;
-			if (config::ProfilerEnabled && config::ProfilerDrawToGUI)
-				gui_display_profiler();
-		} catch (const RendererException& e) {
-			gui_error(i18n::Ts("Renderer error:") + "\n" + e.what() + "\n\n"
-					+ i18n::Ts("The game has been paused but it is recommended to restart Flycast"));
-			rend_term_renderer();
-			if (!rend_init_renderer())
-				ERROR_LOG(RENDERER, "Renderer re-initialization failed");
-			gui_open_settings();
-			return false;
-		} catch (const FlycastException& e) {
-			gui_stop_game(e.what());
-			return false;
+
+	try {
+		const bool renderedFrame = emu.render();
+		if (!renderedFrame)
+		{
+			if (!emu.paused())
+				return FrameResult::None;
+			gui_display_osd(OsdDisplayMode::PausedIdle);
+#ifndef TARGET_IPHONE
+			std::this_thread::sleep_for(std::chrono::milliseconds(16));
+#endif
+			MainFrameCount++;
+			return FrameResult::UiFrame;
 		}
+		if (config::ProfilerEnabled && config::ProfilerDrawToGUI)
+			gui_display_profiler();
+	} catch (const RendererException& e) {
+		gui_error(i18n::Ts("Renderer error:") + "\n" + e.what() + "\n\n"
+				+ i18n::Ts("The game has been paused but it is recommended to restart Flycast"));
+		rend_term_renderer();
+		if (!rend_init_renderer())
+			ERROR_LOG(RENDERER, "Renderer re-initialization failed");
+		gui_open_settings();
+		return FrameResult::None;
+	} catch (const FlycastException& e) {
+		gui_stop_game(e.what());
+		return FrameResult::None;
 	}
 	MainFrameCount++;
 
-	return true;
+	return FrameResult::GameFrame;
 }
 
 void mainui_init()
@@ -105,10 +115,13 @@ void mainui_loop(bool forceStart)
 	{
 		fc_profiler::startThread("main");
 
-		if (mainui_rend_frame() && imguiDriver != nullptr)
+		const auto frameResult = mainui_rend_frame();
+		if (frameResult != FrameResult::None && imguiDriver != nullptr)
 		{
 			try {
 				imguiDriver->present();
+				if (frameResult == FrameResult::GameFrame)
+					gui_onGameFramePresented();
 			} catch (const FlycastException& e) {
 				forceReinit = true;
 			}

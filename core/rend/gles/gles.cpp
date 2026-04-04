@@ -1376,6 +1376,7 @@ bool OpenGLRenderer::Render()
 	if (!config::EmulateFramebuffer)
 	{
 		frameRendered = true;
+		frameRenderedOnce = true;
 		clearLastFrame = false;
 		drawOSD();
 		renderVideoRouting();

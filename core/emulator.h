@@ -152,6 +152,9 @@ public:
 	bool running() const {
 		return state == Running;
 	}
+	bool paused() const {
+		return pausedState;
+	}
 	/**
 	 * Wait for the next frame and render it. If in single-thread mode, it will run the emulator until a frame is rendered.
 	 */
@@ -173,6 +176,7 @@ public:
 	 * Returns true if the cpu was started
 	 */
 	bool restartCpu();
+	void setPaused(bool paused);
 	/*
 	 * Load the machine state from the passed deserializer
 	 */
@@ -216,6 +220,7 @@ private:
 	u32 stepRangeFrom = 0;
 	u32 stepRangeTo = 0;
 	bool stopRequested = false;
+	bool pausedState = false;
 	std::mutex mutex;
 	Sh4Executor *interpreter = nullptr;
 	Sh4Executor *recompiler = nullptr;

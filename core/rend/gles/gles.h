@@ -502,9 +502,14 @@ struct OpenGLRenderer : Renderer
 
 	void RenderFramebuffer(const FramebufferInfo& info) override;
 
+	bool HasLastFrame() const override
+	{
+		return frameRenderedOnce && !clearLastFrame;
+	}
+
 	bool RenderLastFrame() override
 	{
-		if (clearLastFrame)
+		if (!frameRenderedOnce || clearLastFrame)
 			return false;
 		saveCurrentFramebuffer();
 		bool ret = renderLastFrame();
@@ -556,6 +561,7 @@ private:
 
 protected:
 	bool frameRendered = false;
+	bool frameRenderedOnce = false;
 	int width = 640;
 	int height = 480;
 	void initVideoRoutingFrameBuffer();

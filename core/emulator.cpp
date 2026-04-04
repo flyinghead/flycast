@@ -673,7 +673,10 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 			if (config::GGPOEnable)
 				dc_loadstate(-1);
 			else if (config::AutoLoadState && !NaomiNetworkSupported() && !settings.naomi.multiboard)
+			{
 				dc_loadstate(config::SavestateSlot);
+				gui_scheduleAutoPauseAfterLoadState();
+			}
 #endif
 		}
 
@@ -687,6 +690,7 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 				progress->label = i18n::T("Starting...");
 		}
 
+		pausedState = false;
 		state = Loaded;
 	} catch (...) {
 		state = Error;
@@ -760,6 +764,7 @@ void Emulator::unloadGame()
 		settings.content.title.clear();
 		settings.platform.system = DC_PLATFORM_DREAMCAST;
 		custom_texture.terminate();
+		pausedState = false;
 		state = Init;
 		EventManager::event(Event::Terminate);
 	}
@@ -984,6 +989,7 @@ void Emulator::start()
 		return;
 	}
 	state = Running;
+	pausedState = false;
 	SetMemoryHandlers();
 	if (config::GGPOEnable && config::ThreadedRendering)
 		// Not supported with GGPO
@@ -1025,6 +1031,25 @@ void Emulator::start()
 	}
 
 	EventManager::event(Event::Resume);
+}
+
+void Emulator::setPaused(bool paused)
+{
+	if (paused == pausedState)
+		return;
+
+	if (paused)
+	{
+		if (state == Running)
+			stop();
+		pausedState = true;
+	}
+	else
+	{
+		pausedState = false;
+		if (state == Loaded)
+			start();
+	}
 }
 
 bool Emulator::checkStatus(bool wait)

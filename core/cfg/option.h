@@ -362,6 +362,7 @@ extern Option<int> Broadcast;	// 0 -> NTSC, 1 -> PAL, 2 -> PAL/M, 3 -> PAL/N, 4 
 extern Option<int> Language;	// 0 -> JP, 1 -> EN, 2 -> DE, 3 -> FR, 4 -> SP, 5 -> IT, 6 -> default
 extern OptionString UILanguage;
 extern Option<bool> AutoLoadState;
+extern Option<bool> AutoPauseAfterLoadState;
 extern Option<bool> AutoSaveState;
 extern Option<int, false> SavestateSlot;
 extern Option<bool> ForceFreePlay;

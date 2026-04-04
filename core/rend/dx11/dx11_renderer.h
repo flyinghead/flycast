@@ -40,6 +40,10 @@ struct DX11Renderer : public Renderer
 	void Process(TA_context* ctx) override;
 	bool Render() override;
 	void RenderFramebuffer(const FramebufferInfo& info) override;
+	bool HasLastFrame() const override
+	{
+		return frameRenderedOnce && !clearLastFrame;
+	}
 
 	bool Present() override
 	{

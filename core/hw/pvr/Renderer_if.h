@@ -67,6 +67,7 @@ struct Renderer
 	virtual void Process(TA_context *ctx) = 0;
 	virtual bool Render() = 0;
 	virtual void RenderFramebuffer(const FramebufferInfo& info) = 0;
+	virtual bool HasLastFrame() const { return false; }
 	virtual bool RenderLastFrame() { return false; }
 	// Get the last rendered frame pixel data in RGB format
 	// The returned image is rotated and scaled (upward orientation and square pixels)

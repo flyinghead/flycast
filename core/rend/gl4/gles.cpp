@@ -708,6 +708,7 @@ struct OpenGL4Renderer : OpenGLRenderer
 		if (!config::EmulateFramebuffer)
 		{
 			frameRendered = true;
+			frameRenderedOnce = true;
 			clearLastFrame = false;
 			drawOSD();
 			renderVideoRouting();

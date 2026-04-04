@@ -107,6 +107,7 @@ public:
 	u32 GetGraphicsQueueFamilyIndex() const { return graphicsQueueIndex; }
 	void resize() override { resized = true; }
 	bool IsValid() { return width != 0 && height != 0; }
+	bool HasLastFrame() { return lastFrameView && IsValid(); }
 	void NewFrame();
 	void BeginRenderPass();
 	void EndFrame(vk::CommandBuffer cmdBuffer = vk::CommandBuffer());

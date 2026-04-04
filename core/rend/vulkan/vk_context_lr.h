@@ -44,6 +44,7 @@ public:
 
 	u32 GetGraphicsQueueFamilyIndex() const { return retro_render_if->queue_index; }
 	void PresentFrame(vk::Image image, vk::ImageView imageView, const vk::Extent2D& extent, float aspectRatio);
+	bool HasLastFrame() { return false; }
 	bool GetLastFrame(std::vector<u8>& data, int& width, int& height) { return false; }
 
 	vk::PhysicalDevice GetPhysicalDevice() const { return physicalDevice; }
