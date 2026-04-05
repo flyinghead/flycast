@@ -51,6 +51,7 @@ struct DX11OITRenderer : public DX11Renderer
 		int blend_mode1[2];
 		float paletteIndex;
 		float trilinearAlpha;
+		float textureHighlight;
 
 		// two volume mode
 		int shading_instr0;
@@ -167,7 +168,7 @@ struct DX11OITRenderer : public DX11Renderer
 		ComPtr<ID3D11VertexShader> vertexShader = shaders.getVertexShader(gp->pcw.Gouraud, gp->isNaomi2(), false, pass != DX11OITShaders::Depth);
 		deviceContext->VSSetShader(vertexShader, nullptr, 0);
 
-		PixelPolyConstants constants;
+		PixelPolyConstants constants {};
 		if (gp->pcw.Texture && gp->tsp.FilterMode > 1 && Type != ListType_Punch_Through && gp->tcw.MipMapped == 1)
 		{
 			constants.trilinearAlpha = 0.25f * (gp->tsp.MipMapD & 0x3);
@@ -189,6 +190,7 @@ struct DX11OITRenderer : public DX11Renderer
 			else if (config::TextureFiltering == 2)
 				gpuPalette = 2; // force linear
 		}
+		constants.textureHighlight = ShouldHighlightOriginalTexture(gp->texture) ? 1.f : 0.f;
 
 		// Two volumes mode only supported for OP and PT
 		bool two_volumes_mode = (gp->tsp1.full != (u32)-1) && Type != ListType_Translucent;

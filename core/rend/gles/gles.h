@@ -57,6 +57,7 @@ struct PipelineShader
 	GLint sp_FOG_COL_VERT;
 	GLint sp_FOG_DENSITY;
 	GLint trilinear_alpha;
+	GLint texture_highlight;
 	GLint fog_clamp_min, fog_clamp_max;
 	GLint ndcMat;
 	GLint palette_index;

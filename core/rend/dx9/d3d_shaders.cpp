@@ -19,6 +19,7 @@
 #include "d3d_shaders.h"
 #include "cfg/option.h"
 #include "hw/pvr/Renderer_if.h"
+#include "rend/TexCache.h"
 
 #define SHADER_DEBUG 0 // D3DXSHADER_DEBUG|D3DXSHADER_SKIPOPTIMIZATION
 
@@ -97,6 +98,11 @@ float4 colorClampMin : register(c6);
 float4 colorClampMax : register(c7);
 float4 ditherDivisor : register(c8);
 float4 textureSize : register(c9);
+float4 textureHighlight : register(c10);
+
+static const float kTextureHighlightDarken = )" TEXTURE_STRINGIFY(TEXTURE_HIGHLIGHT_DARKEN) R"(f;
+static const float kTextureHighlightBlend = )" TEXTURE_STRINGIFY(TEXTURE_HIGHLIGHT_BLEND) R"(f;
+static const float3 kTextureHighlightColor = float3()" TEXTURE_STRINGIFY(TEXTURE_HIGHLIGHT_R) R"(f, )" TEXTURE_STRINGIFY(TEXTURE_HIGHLIGHT_G) R"(f, )" TEXTURE_STRINGIFY(TEXTURE_HIGHLIGHT_B) R"(f);
 
 float fog_mode2(float w)
 {
@@ -230,6 +236,7 @@ PSO main(in pixel inpix)
 			#if pp_IgnoreTexA == 1
 				texcol.a = 1.0f;
 			#endif
+			texcol.rgb = lerp(texcol.rgb, lerp(texcol.rgb * kTextureHighlightDarken, kTextureHighlightColor, kTextureHighlightBlend), textureHighlight.x);
 		#endif
 		#if pp_ShadInstr == 0
 			color = texcol;

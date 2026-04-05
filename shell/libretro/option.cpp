@@ -65,6 +65,7 @@ IntOption MaxFilteredTextureSize(CORE_OPTION_NAME "_texupscale_max_filtered_text
 Option<float> ExtraDepthScale("", 1.f);
 Option<bool> CustomTextures(CORE_OPTION_NAME "_custom_textures");
 Option<bool> PreloadCustomTextures(CORE_OPTION_NAME "_preload_custom_textures");
+Option<bool> HighlightOriginalTextures(CORE_OPTION_NAME "_highlight_original_textures");
 Option<bool> DumpTextures(CORE_OPTION_NAME "_dump_textures");
 Option<bool> DumpReplacedTextures(CORE_OPTION_NAME "_dump_replaced_textures");
 Option<int> ScreenStretching("", 100);

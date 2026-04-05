@@ -169,6 +169,8 @@ void SetGPState(const PolyParam* gp,u32 cflip=0)
 	glcache.UseProgram(CurrentShader->program);
 	if (CurrentShader->trilinear_alpha != -1)
 		glUniform1f(CurrentShader->trilinear_alpha, trilinear_alpha);
+	if (CurrentShader->texture_highlight != -1)
+		glUniform1f(CurrentShader->texture_highlight, ShouldHighlightOriginalTexture(texture) ? 1.f : 0.f);
 	if (gpuPalette != 0)
 	{
 		int paletteIndex;

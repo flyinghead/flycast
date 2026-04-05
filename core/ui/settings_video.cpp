@@ -224,12 +224,19 @@ void gui_settings_video()
 			DisabledScope scope(game_started);
 			OptionCheckbox(T("Load Custom Textures"), config::CustomTextures,
 					T("Load custom/high-res textures from data/textures/<game id>"));
+			
+			DisabledScope preloadScope(!config::CustomTextures.get());
 			ImGui::Indent();
-			{
-				DisabledScope scope(!config::CustomTextures.get());
-				OptionCheckbox(T("Preload Custom Textures"), config::PreloadCustomTextures,
-						T("Preload custom textures at game start. May improve performance but increases memory usage"));
-			}
+			OptionCheckbox(T("Preload Custom Textures"), config::PreloadCustomTextures,
+						   T("Preload custom textures at game start. May improve performance but increases memory usage"));
+			ImGui::Unindent();
+			
+		}
+		{
+			DisabledScope scope(!config::CustomTextures.get());
+			ImGui::Indent();
+			OptionCheckbox(T("Highlight Original Textures"), config::HighlightOriginalTextures,
+						   T("Highlight textures that are still using the original game texture instead of a custom replacement."));
 			ImGui::Unindent();
 		}
     }

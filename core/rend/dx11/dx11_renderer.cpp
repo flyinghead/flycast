@@ -43,6 +43,7 @@ const D3D11_INPUT_ELEMENT_DESC ModVolLayout[]
 bool DX11Renderer::Init()
 {
 	NOTICE_LOG(RENDERER, "DX11 renderer initializing");
+	lastTextureHighlight = -1.f;
 	device = theDX11Context.getDevice();
 	deviceContext = theDX11Context.getDeviceContext();
 	if (!device || !deviceContext)
@@ -173,6 +174,7 @@ bool DX11Renderer::Init()
 void DX11Renderer::Term()
 {
 	NOTICE_LOG(RENDERER, "DX11 renderer terminating");
+	lastTextureHighlight = -1.f;
 #ifdef VIDEO_ROUTING
 	os_VideoRoutingTermDX();
 #endif
@@ -332,6 +334,7 @@ void DX11Renderer::Process(TA_context* ctx)
 
 void DX11Renderer::resetContextState()
 {
+	lastTextureHighlight = -1.f;
 	// Reset device context state. Very much needed for libretro where current state is unknown.
 	deviceContext->OMSetRenderTargetsAndUnorderedAccessViews(0, nullptr, nullptr, 0, 0, nullptr, nullptr);
 	deviceContext->PSSetShader(nullptr, nullptr, 0);
@@ -622,7 +625,7 @@ TileClipping DX11Renderer::setTileClip(u32 tileclip, int clip_rect[4])
 template <u32 Type, bool SortingEnabled>
 void DX11Renderer::setRenderState(const PolyParam *gp)
 {
-	PixelPolyConstants constants;
+	PixelPolyConstants constants {};
 	if (gp->pcw.Texture && gp->tsp.FilterMode > 1 && Type != ListType_Punch_Through && gp->tcw.MipMapped == 1)
 	{
 		constants.trilinearAlpha = 0.25f * (gp->tsp.MipMapD & 0x3);
@@ -675,6 +678,7 @@ void DX11Renderer::setRenderState(const PolyParam *gp)
 		else
 			constants.paletteIndex = (float)((gp->tcw.PalSelect >> 4) << 8);
 	}
+	constants.textureHighlight = ShouldHighlightOriginalTexture(texture) ? 1.f : 0.f;
 
 	if (clipmode == TileClipping::Inside)
 	{
@@ -683,12 +687,14 @@ void DX11Renderer::setRenderState(const PolyParam *gp)
 		constants.clipTest[2] = (float)(clip_rect[0] + clip_rect[2]);
 		constants.clipTest[3] = (float)(clip_rect[1] + clip_rect[3]);
 	}
-	if (constants.trilinearAlpha != 1.f || gpuPalette != 0 || clipmode == TileClipping::Inside)
+	if (constants.trilinearAlpha != 1.f || gpuPalette != 0 || clipmode == TileClipping::Inside
+			|| constants.textureHighlight != lastTextureHighlight)
 	{
 		D3D11_MAPPED_SUBRESOURCE mappedSubres;
 		deviceContext->Map(pxlPolyConstants, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubres);
 		memcpy(mappedSubres.pData, &constants, sizeof(constants));
 		deviceContext->Unmap(pxlPolyConstants, 0);
+		lastTextureHighlight = constants.textureHighlight;
 	}
 
 	if (texture != nullptr)

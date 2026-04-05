@@ -67,6 +67,7 @@ struct gl4PipelineShader
 	GLint shading_instr;
 	GLint fog_control;
 	GLint trilinear_alpha;
+	GLint texture_highlight;
 	GLint fog_clamp_min, fog_clamp_max;
 	GLint ndcMat;
 	GLint palette_index;
@@ -243,6 +244,7 @@ extern struct gl4ShaderUniforms_t
 	float ps_FOG_COL_VERT[3];
 	int poly_number;
 	float trilinear_alpha;
+	float texture_highlight;
 	TSP tsp0;
 	TSP tsp1;
 	TCW tcw0;
@@ -285,6 +287,7 @@ extern struct gl4ShaderUniforms_t
 		setUniformArray(s->fog_control, tsp0.FogCtrl, tsp1.FogCtrl);
 		glUniform1i(s->pp_Number, poly_number);
 		glUniform1f(s->trilinear_alpha, trilinear_alpha);
+		glUniform1f(s->texture_highlight, texture_highlight);
 		glUniform4fv(s->fog_clamp_min, 1, fog_clamp_min);
 		glUniform4fv(s->fog_clamp_max, 1, fog_clamp_max);
 		glUniformMatrix4fv(s->ndcMat, 1, GL_FALSE, &ndcMat[0][0]);

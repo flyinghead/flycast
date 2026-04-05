@@ -152,12 +152,17 @@ layout(binding = 5) uniform sampler2D fog_table;
 uniform highp usampler2D shadow_stencil;
 uniform sampler2D DepthTex;
 uniform float trilinear_alpha;
+uniform float texture_highlight;
 uniform vec4 fog_clamp_min;
 uniform vec4 fog_clamp_max;
 #if pp_Palette != 0
 uniform sampler2D palette;
 uniform int palette_index;
 #endif
+
+const float kTextureHighlightDarken = )" TEXTURE_STRINGIFY(TEXTURE_HIGHLIGHT_DARKEN) R"(;
+const float kTextureHighlightBlend = )" TEXTURE_STRINGIFY(TEXTURE_HIGHLIGHT_BLEND) R"(;
+const vec3 kTextureHighlightColor = vec3()" TEXTURE_STRINGIFY(TEXTURE_HIGHLIGHT_R) R"(, )" TEXTURE_STRINGIFY(TEXTURE_HIGHLIGHT_G) R"(, )" TEXTURE_STRINGIFY(TEXTURE_HIGHLIGHT_B) R"();
 
 uniform ivec2 blend_mode[2];
 #if pp_TwoVolumes == 1
@@ -357,6 +362,7 @@ void main()
 				IF(cur_ignore_tex_alpha)
 					texcol.a=1.0;	
 			#endif
+			texcol.rgb = mix(texcol.rgb, mix(texcol.rgb * kTextureHighlightDarken, kTextureHighlightColor, kTextureHighlightBlend), texture_highlight);
 		#endif
 		#if pp_ShadInstr==0 || pp_TwoVolumes == 1 // DECAL
 		IF(cur_shading_instr == 0)
@@ -552,6 +558,7 @@ bool gl4CompilePipelineShader(gl4PipelineShader* s, const char *fragment_source 
 		glUniform1i(gu, 2);		// GL_TEXTURE2
 
 	s->trilinear_alpha = glGetUniformLocation(s->program, "trilinear_alpha");
+	s->texture_highlight = glGetUniformLocation(s->program, "texture_highlight");
 	
 	if (s->fog_clamping)
 	{

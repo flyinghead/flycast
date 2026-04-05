@@ -48,6 +48,7 @@ void OITDrawer::DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool 
 	int gpuPalette = poly.texture == nullptr || !poly.texture->gpuPalette ? 0
 			: poly.tsp.FilterMode + 1;
 	float palette_index = 0.f;
+	float textureHighlight = ShouldHighlightOriginalTexture(poly.texture) ? 1.f : 0.f;
 	if (gpuPalette != 0)
 	{
 		if (config::TextureFiltering == 1)
@@ -70,6 +71,7 @@ void OITDrawer::DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool 
 			{ poly.tsp.SrcInstr, poly.tsp.DstInstr, 0, 0 },
 			trilinearAlpha,
 			palette_index,
+			textureHighlight,
 	};
 	if (twoVolumes)
 	{

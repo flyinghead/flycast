@@ -22,6 +22,7 @@
 #include "shaders.h"
 #include "compiler.h"
 #include "utils.h"
+#include "rend/TexCache.h"
 
 static const char VertexShaderSource[] = R"(
 layout (std140, set = 0, binding = 0) uniform VertexShaderUniforms
@@ -82,7 +83,12 @@ layout (push_constant) uniform pushBlock
 	vec4 clipTest;
 	float trilinearAlpha;
 	float palette_index;
+	float textureHighlight;
 } pushConstants;
+
+const float kTextureHighlightDarken = )" TEXTURE_STRINGIFY(TEXTURE_HIGHLIGHT_DARKEN) R"(;
+const float kTextureHighlightBlend = )" TEXTURE_STRINGIFY(TEXTURE_HIGHLIGHT_BLEND) R"(;
+const vec3 kTextureHighlightColor = vec3()" TEXTURE_STRINGIFY(TEXTURE_HIGHLIGHT_R) R"(, )" TEXTURE_STRINGIFY(TEXTURE_HIGHLIGHT_G) R"(, )" TEXTURE_STRINGIFY(TEXTURE_HIGHLIGHT_B) R"();
 
 #if pp_Texture == 1
 layout (set = 1, binding = 0) uniform sampler2D tex;
@@ -228,6 +234,7 @@ void main()
 			#if pp_IgnoreTexA == 1
 				texcol.a = 1.0;
 			#endif
+			texcol.rgb = mix(texcol.rgb, mix(texcol.rgb * kTextureHighlightDarken, kTextureHighlightColor, kTextureHighlightBlend), pushConstants.textureHighlight);
 		#endif
 		#if pp_ShadInstr == 0
 		{

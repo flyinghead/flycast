@@ -20,6 +20,7 @@
 #include "dx11context.h"
 #include "stdclass.h"
 #include "dx11_naomi2.h"
+#include "rend/TexCache.h"
 #include <xxhash.h>
 
 const char * const VertexShader = R"(
@@ -233,7 +234,12 @@ cbuffer polyConstantBuffer : register(b1)
 	float4 clipTest;
 	float paletteIndex;
 	float trilinearAlpha;
+	float textureHighlight;
 };
+
+static const float kTextureHighlightDarken = )" TEXTURE_STRINGIFY(TEXTURE_HIGHLIGHT_DARKEN) R"(f;
+static const float kTextureHighlightBlend = )" TEXTURE_STRINGIFY(TEXTURE_HIGHLIGHT_BLEND) R"(f;
+static const float3 kTextureHighlightColor = float3()" TEXTURE_STRINGIFY(TEXTURE_HIGHLIGHT_R) R"(f, )" TEXTURE_STRINGIFY(TEXTURE_HIGHLIGHT_G) R"(f, )" TEXTURE_STRINGIFY(TEXTURE_HIGHLIGHT_B) R"(f);
 
 #include "pixel_common.hlsl"
 
@@ -298,6 +304,7 @@ PSO main(in Pixel inpix)
 			#if pp_IgnoreTexA == 1
 				texcol.a = 1.0f;
 			#endif
+			texcol.rgb = lerp(texcol.rgb, lerp(texcol.rgb * kTextureHighlightDarken, kTextureHighlightColor, kTextureHighlightBlend), textureHighlight);
 		#endif
 		#if pp_ShadInstr == 0
 			color = texcol;

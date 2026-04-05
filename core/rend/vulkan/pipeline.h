@@ -199,7 +199,7 @@ public:
 			perPolyLayout = GetContext()->GetDevice().createDescriptorSetLayoutUnique(
 					vk::DescriptorSetLayoutCreateInfo(vk::DescriptorSetLayoutCreateFlags(), perPolyBindings));
 			std::array<vk::DescriptorSetLayout, 2> layouts = { *perFrameLayout, *perPolyLayout };
-			vk::PushConstantRange pushConstant(vk::ShaderStageFlagBits::eFragment, 0, 24);
+			vk::PushConstantRange pushConstant(vk::ShaderStageFlagBits::eFragment, 0, 28);
 			pipelineLayout = GetContext()->GetDevice().createPipelineLayoutUnique(
 					vk::PipelineLayoutCreateInfo(vk::PipelineLayoutCreateFlags(), layouts, pushConstant));
 		}

@@ -59,7 +59,8 @@ public:
 		glm::ivec4 blend_mode0;	// Only using 2 elements but easier for std140
 		float trilinearAlpha;
 		float palette_index;
-		int _pad[2];
+		float textureHighlight;
+		int _pad[1];
 
 		// two volume mode
 		glm::ivec4 blend_mode1;	// Only using 2 elements but easier for std140

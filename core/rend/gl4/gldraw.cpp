@@ -112,6 +112,8 @@ static void SetGPState(const PolyParam* gp)
 	else
 		gl4ShaderUniforms.trilinear_alpha = 1.0;
 
+	gl4ShaderUniforms.texture_highlight = ShouldHighlightOriginalTexture((TextureCacheData *)gp->texture) ? 1.f : 0.f;
+
 	int clip_rect[4] = {};
 	TileClipping clipmode = GetTileClip(gp->tileclip, ViewportMatrix, clip_rect, *gl.rendContext);
 	int gpuPalette = gp->texture == nullptr || !gp->texture->gpuPalette ? 0

@@ -177,6 +177,20 @@ public:
 	static void SetDirectXColorOrder(bool enabled);
 };
 
+inline bool ShouldHighlightOriginalTexture(const BaseTextureCacheData *texture)
+{
+	return config::CustomTextures && config::HighlightOriginalTextures && texture != nullptr && !texture->is_custom_replaced;
+}
+
+#define TEXTURE_HIGHLIGHT_DARKEN 0.25
+#define TEXTURE_HIGHLIGHT_BLEND 0.85
+#define TEXTURE_HIGHLIGHT_R 1.0
+#define TEXTURE_HIGHLIGHT_G 0.15
+#define TEXTURE_HIGHLIGHT_B 0.0
+
+#define TEXTURE_STRINGIFY_DETAIL(x) #x
+#define TEXTURE_STRINGIFY(x) TEXTURE_STRINGIFY_DETAIL(x)
+
 template<typename Texture>
 class BaseTextureCache
 {

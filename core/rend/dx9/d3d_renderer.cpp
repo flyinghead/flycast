@@ -410,6 +410,11 @@ void D3DRenderer::setGPState(const PolyParam *gp)
 		float f[4] { trilinear_alpha, 0, 0, 0 };
 		device->SetPixelShaderConstantF(5, f, 1);
 	}
+	if (gp->pcw.Texture)
+	{
+		float f[4] { ShouldHighlightOriginalTexture(texture) ? 1.f : 0.f, 0, 0, 0 };
+		device->SetPixelShaderConstantF(10, f, 1);
+	}
 	if (gpuPalette != 0)
 	{
 		float textureSize[4] { (float)texture->width, (float)texture->height };

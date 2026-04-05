@@ -791,6 +791,20 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_highlight_original_textures",
+      "Highlight Original Textures",
+      NULL,
+      "Highlight textures that are still using the original game texture instead of a custom replacement.",
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       CORE_OPTION_NAME "_dump_textures",
       "Dump Textures",
       NULL,

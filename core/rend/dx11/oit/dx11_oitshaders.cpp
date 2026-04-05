@@ -19,6 +19,7 @@
 #include "dx11_oitshaders.h"
 #include "../dx11context.h"
 #include "../dx11_naomi2.h"
+#include "rend/TexCache.h"
 
 extern const char * const PixelShaderCommon;
 
@@ -304,6 +305,7 @@ cbuffer polyConstantBuffer : register(b1)
 	int2 blend_mode1;
 	float paletteIndex;
 	float trilinearAlpha;
+	float textureHighlight;
 
 	// two volume mode
 	int shading_instr0;
@@ -315,6 +317,10 @@ cbuffer polyConstantBuffer : register(b1)
 	int ignore_tex_alpha0;
 	int ignore_tex_alpha1;
 };
+
+static const float kTextureHighlightDarken = )" TEXTURE_STRINGIFY(TEXTURE_HIGHLIGHT_DARKEN) R"(f;
+static const float kTextureHighlightBlend = )" TEXTURE_STRINGIFY(TEXTURE_HIGHLIGHT_BLEND) R"(f;
+static const float3 kTextureHighlightColor = float3()" TEXTURE_STRINGIFY(TEXTURE_HIGHLIGHT_R) R"(f, )" TEXTURE_STRINGIFY(TEXTURE_HIGHLIGHT_G) R"(f, )" TEXTURE_STRINGIFY(TEXTURE_HIGHLIGHT_B) R"(f);
 
 #include "pixel_common.hlsl"
 
@@ -425,6 +431,7 @@ PSO main(in VertexIn inpix)
 				IF(cur_ignore_tex_alpha)
 					texcol.a = 1.0f;
 			#endif
+			texcol.rgb = lerp(texcol.rgb, lerp(texcol.rgb * kTextureHighlightDarken, kTextureHighlightColor, kTextureHighlightBlend), textureHighlight);
 		#endif
 		#if pp_ShadInstr == 0 || pp_TwoVolumes == 1 // DECAL
 		IF(cur_shading_instr == 0)

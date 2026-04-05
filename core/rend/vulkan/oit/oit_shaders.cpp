@@ -22,6 +22,7 @@
 #include "../compiler.h"
 #include "rend/gl4/glsl.h"
 #include "cfg/option.h"
+#include "rend/TexCache.h"
 
 extern const char *FragmentShaderCommon;
 
@@ -155,6 +156,7 @@ layout (push_constant) uniform pushBlock
 	ivec4 blend_mode0;
 	float trilinearAlpha;
 	float palette_index;
+	float textureHighlight;
 
 	// two volume mode
 	ivec4 blend_mode1;
@@ -167,6 +169,10 @@ layout (push_constant) uniform pushBlock
 	int ignore_tex_alpha0;
 	int ignore_tex_alpha1;
 } pushConstants;
+
+const float kTextureHighlightDarken = )" TEXTURE_STRINGIFY(TEXTURE_HIGHLIGHT_DARKEN) R"(;
+const float kTextureHighlightBlend = )" TEXTURE_STRINGIFY(TEXTURE_HIGHLIGHT_BLEND) R"(;
+const vec3 kTextureHighlightColor = vec3()" TEXTURE_STRINGIFY(TEXTURE_HIGHLIGHT_R) R"(, )" TEXTURE_STRINGIFY(TEXTURE_HIGHLIGHT_G) R"(, )" TEXTURE_STRINGIFY(TEXTURE_HIGHLIGHT_B) R"();
 
 #if pp_Texture == 1
 layout (set = 1, binding = 0) uniform sampler2D tex0;
@@ -288,6 +294,7 @@ void main()
 				IF(cur_ignore_tex_alpha)
 					texcol.a = 1.0;	
 			#endif
+			texcol.rgb = mix(texcol.rgb, mix(texcol.rgb * kTextureHighlightDarken, kTextureHighlightColor, kTextureHighlightBlend), pushConstants.textureHighlight);
 		#endif
 		#if pp_ShadInstr == 0 || pp_TwoVolumes == 1 // DECAL
 		IF(cur_shading_instr == 0)

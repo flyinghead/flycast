@@ -138,6 +138,7 @@ uniform lowp vec3 sp_FOG_COL_RAM,sp_FOG_COL_VERT;
 uniform highp float sp_FOG_DENSITY;
 uniform sampler2D tex,fog_table;
 uniform lowp float trilinear_alpha;
+uniform lowp float texture_highlight;
 uniform lowp vec4 fog_clamp_min;
 uniform lowp vec4 fog_clamp_max;
 #if pp_Palette != 0
@@ -150,6 +151,10 @@ uniform lowp vec2 texSize;
 #if DITHERING == 1
 uniform lowp vec4 ditherDivisor;
 #endif
+
+const lowp float kTextureHighlightDarken = )" TEXTURE_STRINGIFY(TEXTURE_HIGHLIGHT_DARKEN) R"(;
+const lowp float kTextureHighlightBlend = )" TEXTURE_STRINGIFY(TEXTURE_HIGHLIGHT_BLEND) R"(;
+const lowp vec3 kTextureHighlightColor = vec3()" TEXTURE_STRINGIFY(TEXTURE_HIGHLIGHT_R) R"(, )" TEXTURE_STRINGIFY(TEXTURE_HIGHLIGHT_G) R"(, )" TEXTURE_STRINGIFY(TEXTURE_HIGHLIGHT_B) R"();
 
 /* Vertex input*/
 INTERPOLATION in highp vec4 vtx_base;
@@ -301,6 +306,7 @@ void main()
 			#if pp_IgnoreTexA==1
 				texcol.a=1.0;	
 			#endif
+			texcol.rgb = mix(texcol.rgb, mix(texcol.rgb * kTextureHighlightDarken, kTextureHighlightColor, kTextureHighlightBlend), texture_highlight);
 		#endif
 		#if pp_ShadInstr==0
 		{
@@ -851,6 +857,7 @@ bool CompilePipelineShader(PipelineShader* s)
 	s->palette_index = glGetUniformLocation(s->program, "palette_index");
 
 	s->trilinear_alpha = glGetUniformLocation(s->program, "trilinear_alpha");
+	s->texture_highlight = glGetUniformLocation(s->program, "texture_highlight");
 	
 	if (s->fog_clamping)
 	{

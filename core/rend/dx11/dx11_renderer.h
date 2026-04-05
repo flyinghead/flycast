@@ -85,6 +85,7 @@ protected:
 		float clipTest[4];
 		float paletteIndex;
 		float trilinearAlpha;
+		float textureHighlight;
 	};
 
 	virtual void resize(int w, int h);
@@ -177,4 +178,5 @@ private:
 	ComPtr<ID3D11Buffer> vtxConstants;
 	ComPtr<ID3D11Buffer> pxlConstants;
 	bool scissorEnable = false;
+	float lastTextureHighlight = -1.f;
 };

@@ -186,6 +186,7 @@ void Drawer::DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sor
 	int gpuPalette = poly.texture == nullptr || !poly.texture->gpuPalette ? 0
 			: poly.tsp.FilterMode + 1;
 	float palette_index = 0.f;
+	float textureHighlight = ShouldHighlightOriginalTexture(poly.texture) ? 1.f : 0.f;
 	if (gpuPalette != 0)
 	{
 		if (config::TextureFiltering == 1)
@@ -198,15 +199,16 @@ void Drawer::DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sor
 			palette_index = float((poly.tcw.PalSelect >> 4) << 8) / 1023.f;
 	}
 
-	if (tileClip == TileClipping::Inside || trilinearAlpha != 1.f || gpuPalette != 0)
+	if (tileClip == TileClipping::Inside || trilinearAlpha != 1.f || gpuPalette != 0 || poly.pcw.Texture)
 	{
-		const std::array<float, 6> pushConstants = {
+		const std::array<float, 7> pushConstants = {
 				(float)scissorRect.offset.x,
 				(float)scissorRect.offset.y,
 				(float)scissorRect.offset.x + (float)scissorRect.extent.width,
 				(float)scissorRect.offset.y + (float)scissorRect.extent.height,
 				trilinearAlpha,
-				palette_index
+				palette_index,
+				textureHighlight
 		};
 		cmdBuffer.pushConstants<float>(pipelineManager->GetPipelineLayout(), vk::ShaderStageFlagBits::eFragment, 0, pushConstants);
 	}
