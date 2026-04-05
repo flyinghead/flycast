@@ -363,6 +363,7 @@ extern Option<int> Language;	// 0 -> JP, 1 -> EN, 2 -> DE, 3 -> FR, 4 -> SP, 5 -
 extern OptionString UILanguage;
 extern Option<bool> AutoLoadState;
 extern Option<bool> AutoPauseAfterLoadState;
+extern Option<int> AutoPauseFrameDelay;
 extern Option<bool> AutoSaveState;
 extern Option<int, false> SavestateSlot;
 extern Option<bool> ForceFreePlay;

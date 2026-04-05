@@ -116,6 +116,13 @@ static void gui_settings_advanced()
 		ImGui::Unindent();
         OptionCheckbox(T("Auto-Pause after Load State"), config::AutoPauseAfterLoadState,
 				T("Automatically pause after loading a state. Useful for texture modding."));
+		if (config::AutoPauseAfterLoadState)
+		{
+			ImGui::Indent();
+			OptionSlider(T("Auto-Pause Frame Delay"), config::AutoPauseFrameDelay, 1, 10,
+					T("Number of extra game frames to advance before auto-pausing after load state. Useful for waiting for texture popping so the paused image includes replaced textures."));
+			ImGui::Unindent();
+		}
         bool logToFile = config::loadBool("log", "LogToFile", false);
 		if (ImGui::Checkbox(T("Log to File"), &logToFile))
 			config::saveBool("log", "LogToFile", logToFile);

@@ -21,11 +21,12 @@
 #include "cfg/option.h"
 #include "hw/pvr/Renderer_if.h"
 
+#include <algorithm>
 #include <atomic>
 
 namespace pause_flow {
 
-static std::atomic<bool> pendingPauseAfterLoadState { false };
+static std::atomic<int> pendingPauseAfterLoadStateFrames { 0 };
 static std::atomic<bool> pendingPausedRedraw { false };
 static bool hadPausedOverlayDrawData = false;
 
@@ -41,17 +42,25 @@ MenuCloseAction onMenuClosed(bool paused)
 
 void schedulePauseAfterLoadState()
 {
-	pendingPauseAfterLoadState = config::AutoPauseAfterLoadState;
+	pendingPauseAfterLoadStateFrames = config::AutoPauseAfterLoadState
+			? std::max(config::AutoPauseFrameDelay.get(), 0) + 1
+			: 0;
 }
 
 void cancelPauseAfterLoadState()
 {
-	pendingPauseAfterLoadState = false;
+	pendingPauseAfterLoadStateFrames = 0;
 }
 
 bool consumePauseAfterLoadState()
 {
-	return pendingPauseAfterLoadState.exchange(false);
+	int remainingFrames = pendingPauseAfterLoadStateFrames.load();
+	while (remainingFrames > 0)
+	{
+		if (pendingPauseAfterLoadStateFrames.compare_exchange_weak(remainingFrames, remainingFrames - 1))
+			return remainingFrames == 1;
+	}
+	return false;
 }
 
 bool shouldRedrawPausedOsd(bool hasDrawData)
