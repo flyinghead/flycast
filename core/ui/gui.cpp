@@ -86,6 +86,7 @@ static void (*showOnScreenKeyboard)(bool show);
 static bool keysUpNextFrame[512];
 bool uiUserScaleUpdated;
 static bool clearActiveIdNextFrame;
+static bool pauseWithoutMenu;
 
 GameScanner scanner;
 static BackgroundGameLoader gameLoader;
@@ -438,13 +439,20 @@ void gui_open_settings()
 		GamepadDevice::load_system_mappings();
 		emu.start();
 	}
+	else if (gui_state == GuiState::Pause)
+	{
+		pauseWithoutMenu = false;
+		gui_setState(GuiState::Commands);
+	}
 }
 
 void gui_start_game(const std::string& path)
 {
 	const LockGuard lock(guiMutex);
-	if (gui_state != GuiState::Main && gui_state != GuiState::Closed && gui_state != GuiState::Commands)
+	if (gui_state != GuiState::Main && gui_state != GuiState::Closed && gui_state != GuiState::Commands
+			&& gui_state != GuiState::Pause)
 		return;
+	pauseWithoutMenu = false;
 	emu.unloadGame();
 	reset_vmus();
     chat.reset();
@@ -457,6 +465,7 @@ void gui_start_game(const std::string& path)
 void gui_stop_game(const std::string& message)
 {
 	const LockGuard lock(guiMutex);
+	pauseWithoutMenu = false;
 	if (!commandLineStart)
 	{
 		// Exit to main menu
@@ -573,6 +582,7 @@ static void gui_display_commands()
 		// Resume
 		if (IconButton(ICON_FA_PLAY, T("Resume"), ScaledVec2(buttonWidth, 50)).realize())
 		{
+			pauseWithoutMenu = false;
 			GamepadDevice::load_system_mappings();
 			gui_setState(GuiState::Closed);
 		}
@@ -758,7 +768,7 @@ static void contentpath_warning_popup()
 
 void os_notify(const char *msg, int durationMs, const char *details)
 {
-	if (gui_state != GuiState::Closed)
+	if (gui_state != GuiState::Closed && gui_state != GuiState::Pause)
 	{
 		std::lock_guard<std::mutex> _{osd_message_mutex};
 		osd_message = msg;
@@ -1315,6 +1325,9 @@ void gui_display_ui()
 	case GuiState::Commands:
 		gui_display_commands();
 		break;
+	case GuiState::Pause:
+		toast.draw();
+		break;
 	case GuiState::Main:
 		//gui_display_demo();
 		gui_display_content();
@@ -1527,7 +1540,8 @@ void gui_loadState(bool inRam)
 	if (gui_state == GuiState::Closed && dc_savestateAllowed())
 	{
 		try {
-			emu.stop();
+			if (emu.running())
+				emu.stop();
 			if (inRam)
 				dc_loadstate(-2);  // special slot used for inRam states
 			else
@@ -1544,8 +1558,9 @@ void gui_saveState(bool stopRestart, bool inRam)
 	const LockGuard lock(guiMutex);
 	if ((gui_state == GuiState::Closed || !stopRestart) && dc_savestateAllowed())
 	{
+		const bool wasRunning = stopRestart && emu.running();
 		try {
-			if (stopRestart)
+			if (wasRunning)
 				emu.stop();
 			
 			if (inRam)
@@ -1553,7 +1568,7 @@ void gui_saveState(bool stopRestart, bool inRam)
 			else
 				savestate();
 
-			if (stopRestart)
+			if (wasRunning)
 				emu.start();
 		} catch (const FlycastException& e) {
 			if (stopRestart)
@@ -1568,6 +1583,34 @@ void gui_cycleSaveStateSlot(int step)
 {
 	cycleSaveStateSlot(step);
 	os_notify(strprintf(T("Save state slot %d"), config::SavestateSlot + 1).c_str(), 2000);
+}
+
+void gui_togglePause()
+{
+	const LockGuard lock(guiMutex);
+	if (settings.network.online || settings.naomi.multiboard)
+		return;
+
+	try {
+		if (gui_state == GuiState::Closed)
+		{
+			if (!achievements::canPause())
+				return;
+			vgamepad::hide();
+			emu.stop();
+			pauseWithoutMenu = true;
+			gui_setState(GuiState::Pause);
+		}
+		else if (pauseWithoutMenu)
+		{
+			pauseWithoutMenu = false;
+			GamepadDevice::load_system_mappings();
+			gui_setState(GuiState::Closed);
+			emu.start();
+		}
+	} catch (const FlycastException& e) {
+		gui_stop_game(e.what());
+	}
 }
 
 void gui_setState(GuiState newState)

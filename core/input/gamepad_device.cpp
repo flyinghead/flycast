@@ -99,13 +99,17 @@ bool GamepadDevice::handleButtonInput(int port, DreamcastKey key, bool pressed)
 	{
 		switch (key)
 		{
+		case EMU_BTN_MENU:
+			if (pressed)
+				gui_open_settings();
+			break;
 		case EMU_BTN_ESCAPE:
 			if (pressed)
 				dc_exit();
 			break;
-		case EMU_BTN_MENU:
+		case EMU_BTN_PAUSE:
 			if (pressed)
-				gui_open_settings();
+				gui_togglePause();
 			break;
 		case EMU_BTN_FFORWARD:
 			if (pressed && !gui_is_open())
