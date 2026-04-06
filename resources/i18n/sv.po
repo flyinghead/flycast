@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-22 12:49+0100\n"
-"PO-Revision-Date: 2026-03-30 18:56\n"
+"PO-Revision-Date: 2026-04-06 18:17\n"
 "Last-Translator: \n"
 "Language: sv_SE\n"
 "MIME-Version: 1.0\n"
@@ -974,11 +974,11 @@ msgstr "Välj en innehållsmapp"
 
 #: core/ui/settings_general.cpp:191
 msgid "System Default"
-msgstr ""
+msgstr "Systemets standard"
 
 #: core/ui/settings_general.cpp:212
 msgid "UI Language"
-msgstr ""
+msgstr "Gränssnittsspråk"
 
 #: core/ui/settings_general.cpp:232
 msgid "Japanese"
@@ -1006,7 +1006,7 @@ msgstr "Italienska"
 
 #: core/ui/settings_general.cpp:233
 msgid "Dreamcast Language"
-msgstr ""
+msgstr "Språk för Dreamcast"
 
 #: core/ui/settings_general.cpp:234
 msgid "The language as configured in the Dreamcast BIOS"
@@ -1596,19 +1596,19 @@ msgstr "Spara tillstånd"
 
 #: core/ui/settings_controls.cpp:227 core/ui/settings_controls.cpp:286
 msgid "Load State in RAM"
-msgstr ""
+msgstr "Läs in tillstånd i RAM"
 
 #: core/ui/settings_controls.cpp:228 core/ui/settings_controls.cpp:287
 msgid "Save State in RAM"
-msgstr ""
+msgstr "Spara tillstånd i RAM"
 
 #: core/ui/settings_controls.cpp:229 core/ui/settings_controls.cpp:288
 msgid "Next Save State Slot"
-msgstr ""
+msgstr "Nästa plats för sparat tillstånd"
 
 #: core/ui/settings_controls.cpp:230 core/ui/settings_controls.cpp:289
 msgid "Previous Save State Slot"
-msgstr ""
+msgstr "Föregående plats för sparat tillstånd"
 
 #: core/ui/settings_controls.cpp:231 core/ui/settings_controls.cpp:290
 msgid "Bypass Emulated Keyboard"
@@ -2076,7 +2076,7 @@ msgstr "Förbereder..."
 #: core/ui/gui.cpp:1571
 #, c-format
 msgid "Save state slot %d"
-msgstr ""
+msgstr "Plats för sparat tillstånd %d"
 
 #: core/ui/gui.cpp:1613
 msgid "No screenshot available"
@@ -2473,7 +2473,7 @@ msgstr "Spelar %s (%s)"
 
 #: core/ui/settings_network.cpp:171
 msgid "Manual"
-msgstr ""
+msgstr "Manuellt"
 
 #: core/ui/settings_network.cpp:176
 msgid "The peer to connect to. Leave blank to find a player automatically on the default port"
@@ -2533,7 +2533,7 @@ msgstr "ISP-användarnamn som lagras i konsolens Flash RAM-minne. Används av vi
 
 #: core/ui/settings_network.cpp:220
 msgid "DNS server name or IP address"
-msgstr ""
+msgstr "DNS-servernamn eller IP-adress"
 
 #: core/ui/settings_network.cpp:226
 msgid "Multiboard Screens"
