@@ -231,6 +231,7 @@ bool BaseVulkanRenderer::presentFramebuffer()
 		return false;
 	GetContext()->PresentFrame(fbTexture->GetImage(), fbTexture->GetImageView(), fbTexture->getSize(),
 			getDCFramebufferAspectRatio());
+	framebufferRendered = false;
 	return true;
 }
 
