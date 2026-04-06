@@ -211,7 +211,6 @@ private:
 	bool resetRequested = false;
 	bool singleStep = false;
 	u64 startTime = 0;
-	bool renderTimeout = false;
 	u32 stepRangeFrom = 0;
 	u32 stepRangeTo = 0;
 	bool stopRequested = false;
