@@ -556,10 +556,6 @@ found_cheats:
 			cheats.emplace_back(Cheat::Type::runNextIfEq, "bypass auth ifeq", true, 32, 0x0013f150, 0x2fd62fe6, true);
 			cheats.emplace_back(Cheat::Type::setValue, "bypass dricas auth", true, 32, 0x0013f150, 0xe000000b, true);
 		}
-		else if (gameId == "HDR-0124") {	// Hundred Swords
-			cheats.emplace_back(Cheat::Type::runNextIfEq, "bypass auth ifeq", true, 32, 0x006558ac, 0x1f414f22, true);
-			cheats.emplace_back(Cheat::Type::setValue, "bypass dricas auth", true, 32, 0x006558ac, 0xe000000b, true);
-		}
 		else if (gameId == "T43903M") {		// Culdcept II
 			cheats.emplace_back(Cheat::Type::runNextIfEq, "bypass auth ifeq", true, 32, 0x00800524, 0x2fd62fe6, true);
 			cheats.emplace_back(Cheat::Type::setValue, "bypass dricas auth", true, 32, 0x00800524, 0xe000000b, true);
@@ -574,11 +570,6 @@ found_cheats:
 			cheats.emplace_back(Cheat::Type::setValue, "bypass dricas auth",  true, 32, 0x0ba980, 0xe000000b, true);
 			cheats.emplace_back(Cheat::Type::runNextIfEq, "bypass auth check ifeq", true, 32, 0x0a2d3c, 0xed048900, true);
 			cheats.emplace_back(Cheat::Type::setValue, "bypass dricas auth check",  true, 32, 0x0a2d3c, 0xed048b00, true); // BT -> BF
-		}
-		else if (gameId == "T14304M")		// Rune Jade
-		{
-			cheats.emplace_back(Cheat::Type::runNextIfEq, "bypass auth ifeq", true, 32, 0x00cb4878, 0x1f414f22, true);
-			cheats.emplace_back(Cheat::Type::setValue, "bypass dricas auth", true, 32, 0x00cb4878, 0xe000000b, true);
 		}
 		else if (gameId == "MK-51140") {	// Ooga Booga
 			cheats.emplace_back(Cheat::Type::runNextIfEq, "disable net check ifeq", true, 16, 0x00085d2c, 0x3630, true);
