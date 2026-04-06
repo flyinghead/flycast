@@ -787,6 +787,28 @@ static std::string get_notification()
 	return osd_message;
 }
 
+static void drawPauseIcon()
+{
+	const char *icon = ICON_FA_PAUSE;
+	ImFont *font = ImGui::GetFont();
+	const float fontSize = uiScaled(52.f);
+	const ScaledVec2 padding(14.f, 6.f);
+	const ScaledVec2 margin(12.f, 12.f);
+	const ImVec2 size =  ImVec2(fontSize * 0.7, fontSize) + padding * 2;
+	const ImVec2 displaySize = ImGui::GetIO().DisplaySize;
+	ImVec2 pos(displaySize.x - insetRight - margin.x - size.x, insetTop + margin.y);
+	ImDrawList *dl = ImGui::GetForegroundDrawList();
+	const ImU32 bgCol = alphaOverride(ImGui::GetColorU32(ImGuiCol_WindowBg), 0.45f);
+	const ImU32 shadowCol = alphaOverride(0, 0.65f);
+	const ImU32 textCol = alphaOverride(ImGui::GetColorU32(ImGuiCol_Text), 0.95f);
+
+	dl->AddRectFilled(pos, pos + size, bgCol, uiScaled(6.f));
+
+	ImVec2 iconPos = pos + padding + ScaledVec2(2.5f, 2.5f);
+	dl->AddText(font, fontSize, iconPos + ScaledVec2(2.5f, 2.5f), shadowCol, icon);
+	dl->AddText(font, fontSize, iconPos, textCol, icon);
+}
+
 inline static void gui_display_demo() {
 	ImGui::ShowDemoWindow();
 }
@@ -1327,6 +1349,7 @@ void gui_display_ui()
 		break;
 	case GuiState::Pause:
 		toast.draw();
+		drawPauseIcon();
 		break;
 	case GuiState::Main:
 		//gui_display_demo();
