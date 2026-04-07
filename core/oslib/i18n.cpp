@@ -29,6 +29,7 @@
 #include <vector>
 #include <sstream>
 #include <unordered_set>
+#include <mutex>
 
 using namespace tinygettext;
 
@@ -115,12 +116,20 @@ void init()
 #endif
 	Log::set_log_info_callback([](const std::string& msg)
 	{
+#if !defined(NDEBUG) || defined(DEBUGFAST)
+		static std::mutex mutex;
 		static std::unordered_set<std::string> msgFilter;
-		if (!msg.empty() && msgFilter.count(msg) == 0)
+
+		if (msg.empty())
+			return;
 		{
-			INFO_LOG(COMMON, "%s", msg.substr(0, msg.length() - 1).c_str());
+			std::lock_guard<std::mutex> _(mutex);
+			if (msgFilter.count(msg) != 0)
+				return;
 			msgFilter.insert(msg);
 		}
+		INFO_LOG(COMMON, "%s", msg.substr(0, msg.length() - 1).c_str());
+#endif
 	});
 	Log::set_log_warning_callback([](const std::string& msg) {
 		if (!msg.empty())
