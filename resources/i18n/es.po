@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-22 12:49+0100\n"
-"PO-Revision-Date: 2026-03-30 18:56\n"
+"PO-Revision-Date: 2026-04-04 21:51\n"
 "Last-Translator: \n"
 "Language: es_ES\n"
 "MIME-Version: 1.0\n"
@@ -20,11 +20,11 @@ msgstr ""
 #: core/achievements/achievements.cpp:347
 #, c-format
 msgid "User %s authenticated"
-msgstr ""
+msgstr "Usuario %s auntenticado"
 
 #: core/achievements/achievements.cpp:363
 msgid "RetroAchievements authentication failed"
-msgstr ""
+msgstr "RetroArchievements fallo a auntenticar"
 
 #: core/achievements/achievements.cpp:398
 msgid "No user token returned"
@@ -32,16 +32,17 @@ msgstr ""
 
 #: core/achievements/achievements.cpp:550
 msgid "RetroAchievements disconnected"
-msgstr ""
+msgstr "RetroArchivements desconectado"
 
 #: core/achievements/achievements.cpp:554
 msgid "RetroAchievements reconnected"
-msgstr ""
+msgstr "RetroAchievements \n"
+"conectado"
 
 #: core/achievements/achievements.cpp:584
 #, c-format
 msgid "Achievement %s unlocked!"
-msgstr ""
+msgstr "Logro desbloqueado"
 
 #: core/achievements/achievements.cpp:624
 #, c-format
@@ -80,7 +81,7 @@ msgstr ""
 
 #: core/achievements/achievements.cpp:914
 msgid "This game has no achievements."
-msgstr ""
+msgstr "Este juego no tiene logros"
 
 #: core/achievements/achievements.cpp:919 core/ui/settings_general.cpp:414
 #: core/ui/gui_achievements.cpp:305
@@ -146,7 +147,7 @@ msgstr ""
 
 #: core/sdl/dreamlink.cpp:87
 msgid "Connected"
-msgstr ""
+msgstr "Conectado"
 
 #: core/sdl/dreamlink.cpp:87
 msgid "Disconnected"
