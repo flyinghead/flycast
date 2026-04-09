@@ -86,7 +86,6 @@ static void (*showOnScreenKeyboard)(bool show);
 static bool keysUpNextFrame[512];
 bool uiUserScaleUpdated;
 static bool clearActiveIdNextFrame;
-static bool pauseWithoutMenu;
 
 GameScanner scanner;
 static BackgroundGameLoader gameLoader;
@@ -441,7 +440,6 @@ void gui_open_settings()
 	}
 	else if (gui_state == GuiState::Pause)
 	{
-		pauseWithoutMenu = false;
 		gui_setState(GuiState::Commands);
 	}
 }
@@ -452,7 +450,6 @@ void gui_start_game(const std::string& path)
 	if (gui_state != GuiState::Main && gui_state != GuiState::Closed && gui_state != GuiState::Commands
 			&& gui_state != GuiState::Pause)
 		return;
-	pauseWithoutMenu = false;
 	emu.unloadGame();
 	reset_vmus();
     chat.reset();
@@ -465,7 +462,6 @@ void gui_start_game(const std::string& path)
 void gui_stop_game(const std::string& message)
 {
 	const LockGuard lock(guiMutex);
-	pauseWithoutMenu = false;
 	if (!commandLineStart)
 	{
 		// Exit to main menu
@@ -582,7 +578,6 @@ static void gui_display_commands()
 		// Resume
 		if (IconButton(ICON_FA_PLAY, T("Resume"), ScaledVec2(buttonWidth, 50)).realize())
 		{
-			pauseWithoutMenu = false;
 			GamepadDevice::load_system_mappings();
 			gui_setState(GuiState::Closed);
 		}
@@ -1563,8 +1558,7 @@ void gui_loadState(bool inRam)
 	if (gui_state == GuiState::Closed && dc_savestateAllowed())
 	{
 		try {
-			if (emu.running())
-				emu.stop();
+			emu.stop();
 			if (inRam)
 				dc_loadstate(-2);  // special slot used for inRam states
 			else
@@ -1581,9 +1575,8 @@ void gui_saveState(bool stopRestart, bool inRam)
 	const LockGuard lock(guiMutex);
 	if ((gui_state == GuiState::Closed || !stopRestart) && dc_savestateAllowed())
 	{
-		const bool wasRunning = stopRestart && emu.running();
 		try {
-			if (wasRunning)
+			if (stopRestart)
 				emu.stop();
 			
 			if (inRam)
@@ -1591,7 +1584,7 @@ void gui_saveState(bool stopRestart, bool inRam)
 			else
 				savestate();
 
-			if (wasRunning)
+			if (stopRestart)
 				emu.start();
 		} catch (const FlycastException& e) {
 			if (stopRestart)
@@ -1621,12 +1614,10 @@ void gui_togglePause()
 				return;
 			vgamepad::hide();
 			emu.stop();
-			pauseWithoutMenu = true;
 			gui_setState(GuiState::Pause);
 		}
-		else if (pauseWithoutMenu)
+		else if (gui_state == GuiState::Pause)
 		{
-			pauseWithoutMenu = false;
 			GamepadDevice::load_system_mappings();
 			gui_setState(GuiState::Closed);
 			emu.start();
