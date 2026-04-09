@@ -2185,7 +2185,7 @@ static bool set_dx11_hw_render()
 {
 #ifdef HAVE_D3D11
 	retro_hw_render_callback hw_render_{};
-	hw_render_.context_type = RETRO_HW_CONTEXT_DIRECT3D;
+	hw_render_.context_type = RETRO_HW_CONTEXT_D3D11;
 	hw_render_.version_major = 11;
 	hw_render_.version_minor = 0;
 	hw_render_.context_reset = dx11_context_reset;
@@ -2206,12 +2206,23 @@ static bool set_dx11_hw_render()
 bool retro_load_game(const struct retro_game_info *game)
 {
 #if defined(IOS)
-	bool can_jit;
-	if (environ_cb(RETRO_ENVIRONMENT_GET_JIT_CAPABLE, &can_jit) && !can_jit) {
-		// jit is required both for performance and for audio. trying to run
-		// without the jit will cause a crash.
-		os_notify(i18n::T("Cannot run without JIT"), 5000);
-		return false;
+	{
+		bool can_jit = false;
+		struct retro_exec_mem_alloc probe = {};
+		probe.version = 1;
+		probe.size = 0;
+		if (environ_cb(RETRO_ENVIRONMENT_EXEC_MEM_ALLOC, &probe))
+		{
+			if (probe.mode != RETRO_EXEC_MEM_MODE_UNAVAILABLE)
+				can_jit = true;
+		}
+		else if (!environ_cb(RETRO_ENVIRONMENT_GET_JIT_CAPABLE, &can_jit))
+			can_jit = false;
+		if (!can_jit)
+		{
+			os_notify(i18n::T("Cannot run without JIT"), 5000);
+			return false;
+		}
 	}
 #endif
 
@@ -2360,7 +2371,7 @@ bool retro_load_game(const struct retro_game_info *game)
 	{
 		foundRenderApi = set_vulkan_hw_render();
 	}
-	else if (preferred == RETRO_HW_CONTEXT_DIRECT3D)
+	else if (preferred == RETRO_HW_CONTEXT_D3D11)
 	{
 		foundRenderApi = set_dx11_hw_render();
 	}
