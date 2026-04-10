@@ -4,7 +4,7 @@
 #include <locale.h>
 #endif
 
-#if !defined(_WIN32) && !defined(__ANDROID__) && !defined(__HAIKU__) && !defined(__OpenBSD__) && !defined(__NetBSD__) && !defined(__SWITCH__)
+#if !defined(_WIN32) && !defined(__ANDROID__) && !defined(__HAIKU__) && !defined(__OpenBSD__) && !defined(__NetBSD__) && !defined(__SWITCH__) && !defined(__vita__)
 #define DO_SWITCH_LOCALE
 #endif
 

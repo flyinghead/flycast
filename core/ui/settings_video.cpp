@@ -148,6 +148,9 @@ void gui_settings_video()
     		break;
     	}
     }
+#ifdef __vita__
+	OptionCheckbox(T("Fast Sorting"), config::FastSorting, T("Use a more unsafe but faster algorithm for transparency sorting"));
+#endif
 	ImGui::Spacing();
 
     header(T("Rendering Options"));
@@ -332,6 +335,7 @@ void gui_settings_video()
     			T("Helps with texture corruption and depth issues on AMD GPUs. Can also help Intel GPUs in some cases."));
     	OptionCheckbox(T("Copy Rendered Textures to VRAM"), config::RenderToTextureBuffer,
     			T("Copy rendered-to textures back to VRAM. Slower but accurate"));
+#ifndef __vita__
 		const std::array<int, 5> aniso{ 1, 2, 4, 8, 16 };
         const std::array<std::string, 5> anisoText{ T("Disabled"), "2x", "4x", "8x", "16x" };
         u32 afSelected = 0;
@@ -373,6 +377,7 @@ void gui_settings_video()
         ImGui::Text("%s", T("Anisotropic Filtering"));
         ImGui::SameLine();
         ShowHelpMarker(T("Higher values make textures viewed at oblique angles look sharper, but are more demanding on the GPU. This option only has a visible impact on mipmapped textures."));
+#endif
 
     	ImGui::Text("%s", T("Texture Filtering:"));
     	ImGui::Columns(3, "textureFiltering", false);
@@ -382,6 +387,11 @@ void gui_settings_video()
     	ImGui::NextColumn();
     	OptionRadioButton(T("Force Linear"), config::TextureFiltering, 2, T("Force linear filtering for all textures. Smoother appearance, but may cause various rendering issues. This option usually does not affect performance."));
     	ImGui::Columns(1, nullptr, false);
+
+#ifdef __vita__
+		OptionCheckbox(T("Use Mipmaps"), config::UseMipmaps, T("Enables the generation and use of texture mipmaps"));
+		OptionCheckbox(T("Use Simple Shaders"), config::UseSimpleShaders, T("Enables usage of simplified shaders"));
+#endif
 
     	OptionCheckbox(T("Show FPS Counter"), config::ShowFPS, T("Show on-screen frame/sec counter"));
     }
