@@ -687,7 +687,7 @@ if(PKG_CONFIG_FOUND AND NOT ANDROID AND NOT APPLE AND NOT LIBRETRO)
 endif()
 
 if(VITA)
-	target_link_libraries(${PROJECT_NAME} PRIVATE vitaGL vitashark SceShaccCg_stub SceShaccCgExt taihen_stub mathneon ssl crypto)
+	target_link_libraries(${PROJECT_NAME} PRIVATE vitaGL vitashark SceShaccCg_stub SceShaccCgExt taihen_stub mathneon)
 endif()
 
 if(UNIX AND NOT APPLE AND NOT ANDROID)

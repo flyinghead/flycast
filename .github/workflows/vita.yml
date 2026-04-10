@@ -6,11 +6,13 @@ on:
       - 'l10n_**'
   pull_request:
 
+env:
+  VITASDK: /usr/local/vitasdk
+
 jobs:
   build:
     name: Vita ${{ matrix.config.name }}
     runs-on: ubuntu-latest
-    container: vitasdk/vitasdk:latest
 
     strategy:
       matrix:
@@ -20,8 +22,15 @@ jobs:
     steps:
       - name: Set up build environment
         run: |
-          apk add --no-cache ccache git ninja
-          vdpm curl-mbedtls kubridge libpng libzip mbedtls SceShaccCgExt vitaShaRK taihen zlib
+          sudo apt-get update
+          sudo apt-get -y install ccache
+          git clone --depth=1 https://github.com/vitasdk/vdpm.git
+          bash vdpm/bootstrap-vitasdk.sh
+          echo "$VITASDK/bin" >> "$GITHUB_PATH"
+
+      - name: Set up dependencies
+        run: |
+          vdpm asio bzip2 curl-mbedtls kubridge libmathneon libpng libzip mbedtls openssl SceShaccCgExt vitaShaRK taihen zlib zstd xz
           git clone --depth 1 https://github.com/Rinnegatamante/vitaGL.git
           make -C vitaGL CIRCULAR_VERTEX_POOL=2 DEPTH_STENCIL_HACK=1 HAVE_SHADER_CACHE=1 HAVE_WRAPPED_ALLOCATORS=1 NO_DEBUG=1 -j4 install
           git clone -b vitagl --depth 1 https://github.com/Northfear/SDL.git
@@ -33,9 +42,6 @@ jobs:
         with:
           fetch-depth: 0
           submodules: recursive
-
-      - name: Mark git repository as safe
-        run: git config --global --add safe.directory $PWD
 
       - uses: actions/cache@v5
         with:
