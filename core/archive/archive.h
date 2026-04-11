@@ -21,6 +21,7 @@
 #pragma once
 
 #include "types.h"
+#include "oslib/storage.h"
 
 class ArchiveFile
 {
@@ -39,7 +40,7 @@ public:
 	virtual ArchiveFile *OpenFileByCrc(u32 crc) = 0;
 
 protected:
-	virtual bool Open(FILE *file) = 0;
+	virtual bool Open(hostfs::File *file) = 0;
 
 private:
 	bool Open(const char *name);

@@ -24,15 +24,16 @@
 #include <vector>
 #include <locale>
 #include <sstream>
+#include "../oslib/storage.h"
 
 namespace config {
 
 class IniFile
 {
 public:
-	void load(FILE *file, bool cEscape = false);
+	void load(hostfs::File *file, bool cEscape = false);
 	void load(const std::string& data, bool cEscape = false);
-	void save(FILE *file) const;
+	void save(hostfs::File *file) const;
 	void save(std::string& data) const;
 	bool hasSection(const std::string& section) const;
 	bool hasEntry(const std::string& section, const std::string& name) const;

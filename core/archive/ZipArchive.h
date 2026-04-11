@@ -31,7 +31,7 @@ public:
 	ArchiveFile* OpenFile(const char* name) override;
 	ArchiveFile* OpenFileByCrc(u32 crc) override;
 
-	bool Open(FILE *file) override;
+	bool Open(hostfs::File *file) override;
 	bool Open(const void *data, size_t size);
 
 	ArchiveFile *OpenFirstFile();

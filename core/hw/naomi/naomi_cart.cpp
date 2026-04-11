@@ -495,16 +495,16 @@ static void loadDecryptedRom(const std::string& path, const std::string& fileNam
 	if (extension == "lst")
 	{
 		// LST file
-		FILE *fl = hostfs::storage().openFile(path, "r");
+		hostfs::File *fl = hostfs::storage().openFile(path, "r");
 		if (!fl)
 			throw FlycastException(strprintf(T("Error: can't open %s"), path.c_str()));
 		folder = hostfs::storage().getParentPath(path);
 
 		char t[512];
-		char* line = std::fgets(t, sizeof(t), fl);
+		char* line = fl->gets(t, sizeof(t));
 		if (!line)
 		{
-			std::fclose(fl);
+			delete fl;
 			throw FlycastException(Ts("Error: Invalid LST file"));
 		}
 
@@ -517,10 +517,10 @@ static void loadDecryptedRom(const std::string& path, const std::string& fileNam
 			DEBUG_LOG(NAOMI, "+Loading naomi rom : %s", line);
 		}
 
-		line = std::fgets(t, sizeof(t), fl);
+		line = fl->gets(t, sizeof(t));
 		if (!line)
 		{
-			std::fclose(fl);
+			delete fl;
 			throw FlycastException(Ts("Error: Invalid LST file"));
 		}
 
@@ -538,20 +538,20 @@ static void loadDecryptedRom(const std::string& path, const std::string& fileNam
 			else if (line[0] != 0 && line[0] != '\n' && line[0] != '\r')
 				WARN_LOG(NAOMI, "Warning: invalid line in .lst file: %s", line);
 
-			line = std::fgets(t, sizeof(t), fl);
+			line = fl->gets(t, sizeof(t));
 		}
-		std::fclose(fl);
+		delete fl;
 	}
 	else
 	{
 		// BIN loading
-		FILE* fp = hostfs::storage().openFile(path, "rb");
+		hostfs::File* fp = hostfs::storage().openFile(path, "rb");
 		if (fp == nullptr)
 			throw FlycastException(strprintf(T("Error: can't open %s"), path.c_str()));
 
-		std::fseek(fp, 0, SEEK_END);
-		u32 file_size = (u32)std::ftell(fp);
-		std::fclose(fp);
+		fp->seek(0, SEEK_END);
+		u32 file_size = (u32)fp->tell();
+		delete fp;
 		files.emplace_back(path);
 		fstart.push_back(0);
 		fsize.push_back(file_size);
@@ -573,7 +573,7 @@ static void loadDecryptedRom(const std::string& path, const std::string& fileNam
 
 	for (size_t i = 0; i<files.size(); i++)
 	{
-		FILE *fp = nullptr;
+		hostfs::File *fp = nullptr;
 
 		if (files[i] != "null")
 		{
@@ -601,10 +601,10 @@ static void loadDecryptedRom(const std::string& path, const std::string& fileNam
 		else
 		{
 			//printf("-Mapping \"%s\" at 0x%08X, size 0x%08X\n", files[i].c_str(), fstart[i], fsize[i]);
-			bool mapped = fread(romDest, 1, fsize[i], fp) == fsize[i];
+			bool mapped = fp->read(romDest, 1, fsize[i]) == fsize[i];
 			if (config::GGPOEnable)
 				md5.add(fp);
-			fclose(fp);
+			delete fp;
 			if (!mapped)
 			{
 				ERROR_LOG(NAOMI, "Unable to read file %s @ %08x size %x", files[i].c_str(),

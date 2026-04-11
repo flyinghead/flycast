@@ -12,13 +12,13 @@ static IniFile cfgdb;
 
 static void saveFile()
 {
-	FILE* cfgfile = nowide::fopen(cfgPath.c_str(), "wt");
+	hostfs::File* cfgfile = hostfs::storage().openFile(cfgPath.c_str(), "wt");
 	if (!cfgfile) {
 		WARN_LOG(COMMON, "Error: Unable to open file '%s' for saving", cfgPath.c_str());
 	}
 	else {
 		cfgdb.save(cfgfile);
-		std::fclose(cfgfile);
+		delete cfgfile;
 	}
 }
 
@@ -37,10 +37,10 @@ bool open()
 	std::string config_path_read = get_readonly_config_path(filename);
 	cfgPath = get_writable_config_path(filename);
 
-	FILE* cfgfile = nowide::fopen(config_path_read.c_str(), "rt");
+	hostfs::File* cfgfile = hostfs::storage().openFile(config_path_read.c_str(), "rt");
 	if (cfgfile != nullptr) {
 		cfgdb.load(cfgfile);
-		std::fclose(cfgfile);
+		delete cfgfile;
 	}
 	else
 	{

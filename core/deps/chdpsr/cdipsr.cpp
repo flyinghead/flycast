@@ -11,26 +11,26 @@ unsigned long temp_value;
 
 /////////////////////////////////////////////////////////////////////////////
 
-unsigned long ask_type(FILE *fsource, long header_position)
+unsigned long ask_type(hostfs::File *fsource, long header_position)
 {
 
 unsigned char filename_length;
 unsigned long track_mode;
 
-    fseek(fsource, header_position, SEEK_SET);
-    fread(&temp_value, 4, 1, fsource);
+    fsource->seek(header_position, SEEK_SET);
+    fsource->read(&temp_value, 4, 1);
     if (temp_value != 0)
-       fseek(fsource, 8, SEEK_CUR); // extra data (DJ 3.00.780 and up)
-    fseek(fsource, 24, SEEK_CUR);
-    fread(&filename_length, 1, 1, fsource);
-    fseek(fsource, filename_length, SEEK_CUR);
-    fseek(fsource, 19, SEEK_CUR);
-    fread(&temp_value, 4, 1, fsource);
+       fsource->seek(8, SEEK_CUR); // extra data (DJ 3.00.780 and up)
+    fsource->seek(24, SEEK_CUR);
+    fsource->read(&filename_length, 1, 1);
+    fsource->seek(filename_length, SEEK_CUR);
+    fsource->seek(19, SEEK_CUR);
+    fsource->read(&temp_value, 4, 1);
        if (temp_value == 0x80000000)
-          fseek(fsource, 8, SEEK_CUR); // DJ4
-    fseek(fsource, 16, SEEK_CUR);
-    fread(&track_mode, 4, 1, fsource);
-    fseek(fsource, header_position, SEEK_SET);
+          fsource->seek(8, SEEK_CUR); // DJ4
+    fsource->seek(16, SEEK_CUR);
+    fsource->read(&track_mode, 4, 1);
+    fsource->seek(header_position, SEEK_SET);
     return (track_mode);
 }
 
@@ -38,47 +38,47 @@ unsigned long track_mode;
 /////////////////////////////////////////////////////////////////////////////
 
 
-bool CDI_read_track (FILE *fsource, image_s *image, track_s *track)
+bool CDI_read_track (hostfs::File *fsource, image_s *image, track_s *track)
 {
 
      unsigned char TRACK_START_MARK[10] = { 0, 0, 0x01, 0, 0, 0, 0xFF, 0xFF, 0xFF, 0xFF };
      unsigned char current_start_mark[10];
 
-         fread(&temp_value, 4, 1, fsource);
+         fsource->read(&temp_value, 4, 1);
          if (temp_value != 0)
-            fseek(fsource, 8, SEEK_CUR); // extra data (DJ 3.00.780 and up)
+            fsource->seek(8, SEEK_CUR); // extra data (DJ 3.00.780 and up)
 
-         fread(&current_start_mark, 10, 1, fsource);
+         fsource->read(&current_start_mark, 10, 1);
          if (memcmp(TRACK_START_MARK, current_start_mark, 10)) {
         	 printf("CDI_read_track: Unsupported format: Could not find the track start mark\n");
         	 return false;
          }
 
-         fread(&current_start_mark, 10, 1, fsource);
+         fsource->read(&current_start_mark, 10, 1);
          if (memcmp(TRACK_START_MARK, current_start_mark, 10)) {
         	 printf("CDI_read_track: Unsupported format: Could not find the track start mark\n");
         	 return false;
          }
 
-         fseek(fsource, 4, SEEK_CUR);
-         fread(&track->filename_length, 1, 1, fsource);
-         fseek(fsource, track->filename_length, SEEK_CUR);
-         fseek(fsource, 11, SEEK_CUR);
-         fseek(fsource, 4, SEEK_CUR);
-         fseek(fsource, 4, SEEK_CUR);
-         fread(&temp_value, 4, 1, fsource);
+         fsource->seek(4, SEEK_CUR);
+         fsource->read(&track->filename_length, 1, 1);
+         fsource->seek(track->filename_length, SEEK_CUR);
+         fsource->seek(11, SEEK_CUR);
+         fsource->seek(4, SEEK_CUR);
+         fsource->seek(4, SEEK_CUR);
+         fsource->read(&temp_value, 4, 1);
             if (temp_value == 0x80000000)
-               fseek(fsource, 8, SEEK_CUR); // DJ4
-         fseek(fsource, 2, SEEK_CUR);
-         fread(&track->pregap_length, 4, 1, fsource);
-         fread(&track->length, 4, 1, fsource);
-         fseek(fsource, 6, SEEK_CUR);
-         fread(&track->mode, 4, 1, fsource);
-         fseek(fsource, 12, SEEK_CUR);
-         fread(&track->start_lba, 4, 1, fsource);
-         fread(&track->total_length, 4, 1, fsource);
-         fseek(fsource, 16, SEEK_CUR);
-         fread(&track->sector_size_value, 4, 1, fsource);
+               fsource->seek(8, SEEK_CUR); // DJ4
+         fsource->seek(2, SEEK_CUR);
+         fsource->read(&track->pregap_length, 4, 1);
+         fsource->read(&track->length, 4, 1);
+         fsource->seek(6, SEEK_CUR);
+         fsource->read(&track->mode, 4, 1);
+         fsource->seek(12, SEEK_CUR);
+         fsource->read(&track->start_lba, 4, 1);
+         fsource->read(&track->total_length, 4, 1);
+         fsource->seek(16, SEEK_CUR);
+         fsource->read(&track->sector_size_value, 4, 1);
 
          switch(track->sector_size_value)
                {
@@ -96,34 +96,34 @@ bool CDI_read_track (FILE *fsource, image_s *image, track_s *track)
         	 return false;
          }
 
-         fseek(fsource, 29, SEEK_CUR);
+         fsource->seek(29, SEEK_CUR);
          if (image->version != CDI_V2)
          {
-            fseek(fsource, 5, SEEK_CUR);
-            fread(&temp_value, 4, 1, fsource);
+            fsource->seek(5, SEEK_CUR);
+            fsource->read(&temp_value, 4, 1);
             if (temp_value == 0xffffffff)
-                fseek(fsource, 78, SEEK_CUR); // extra data (DJ 3.00.780 and up)
+                fsource->seek(78, SEEK_CUR); // extra data (DJ 3.00.780 and up)
          }
          return true;
 }
 
 
-void CDI_skip_next_session (FILE *fsource, image_s *image)
+void CDI_skip_next_session (hostfs::File *fsource, image_s *image)
 {
-     fseek(fsource, 4, SEEK_CUR);
-     fseek(fsource, 8, SEEK_CUR);
-     if (image->version != CDI_V2) fseek(fsource, 1, SEEK_CUR);
+     fsource->seek(4, SEEK_CUR);
+     fsource->seek(8, SEEK_CUR);
+     if (image->version != CDI_V2) fsource->seek(1, SEEK_CUR);
 }
 
-bool CDI_get_tracks (FILE *fsource, image_s *image)
+bool CDI_get_tracks (hostfs::File *fsource, image_s *image)
 {
-     return fread(&image->tracks, 2, 1, fsource) == 1;
+     return fsource->read(&image->tracks, 2, 1) == 1;
 }
 
-bool CDI_init (FILE *fsource, image_s *image, const char *fsourcename)
+bool CDI_init (hostfs::File *fsource, image_s *image, const char *fsourcename)
 {
-	fseek(fsource, 0, SEEK_END);
-	image->length = ftell(fsource);
+	fsource->seek(0, SEEK_END);
+	image->length = fsource->tell();
 
 	if (image->length < 8)
 	{
@@ -131,9 +131,9 @@ bool CDI_init (FILE *fsource, image_s *image, const char *fsourcename)
 		return false;
 	}
 
-	fseek(fsource, image->length-8, SEEK_SET);
-	if (fread(&image->version, 4, 1, fsource) != 1
-			|| fread(&image->header_offset, 4, 1, fsource) != 1)
+	fsource->seek(image->length-8, SEEK_SET);
+	if (fsource->read(&image->version, 4, 1) != 1
+			|| fsource->read(&image->header_offset, 4, 1) != 1)
 		return false;
 
 	if ((image->version != CDI_V2 && image->version != CDI_V3 && image->version != CDI_V35)
@@ -145,17 +145,17 @@ bool CDI_init (FILE *fsource, image_s *image, const char *fsourcename)
 	return true;
 }
 
-bool CDI_get_sessions (FILE *fsource, image_s *image)
+bool CDI_get_sessions (hostfs::File *fsource, image_s *image)
 {
 #ifndef DEBUG_CDI
      if (image->version == CDI_V35)
-        fseek(fsource, (image->length - image->header_offset), SEEK_SET);
+        fsource->seek((image->length - image->header_offset), SEEK_SET);
      else
-        fseek(fsource, image->header_offset, SEEK_SET);
+        fsource->seek(image->header_offset, SEEK_SET);
 
 #else
-     fseek(fsource, 0L, SEEK_SET);
+     fsource->seek(0L, SEEK_SET);
 #endif
-     return fread(&image->sessions, 2, 1, fsource) == 1;
+     return fsource->read(&image->sessions, 2, 1) == 1;
 }
 

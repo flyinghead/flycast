@@ -26,7 +26,7 @@
 
 Archive *OpenArchive(const std::string& path)
 {
-	FILE *file = nullptr;
+	hostfs::File *file = nullptr;
 	hostfs::FileInfo fileInfo;
 	try {
 		fileInfo = hostfs::storage().getFileInfo(path);
@@ -74,7 +74,7 @@ Archive *OpenArchive(const std::string& path)
 
 bool Archive::Open(const char* path)
 {
-	FILE *file = nowide::fopen(path, "rb");
+	hostfs::File *file = hostfs::storage().openFile(path, "rb");
 	if (file == nullptr)
 		return false;
 	return Open(file);

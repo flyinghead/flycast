@@ -435,16 +435,16 @@ struct maple_sega_vmu: maple_base
 
         // Load existing vmu file if found
         std::string rpath = hostfs::getVmuPath(logical_port, false);
-		// this might be a storage url
-		FILE *rfile = hostfs::storage().openFile(rpath, "rb");
+        // this might be a storage url
+        hostfs::File *rfile = hostfs::storage().openFile(rpath, "rb");
         if (rfile == nullptr) {
             INFO_LOG(MAPLE, "Unable to open VMU file \"%s\", creating new file", rpath.c_str());
         }
         else
         {
-            if (std::fread(flash_data, sizeof(flash_data), 1, rfile) != 1)
+            if (rfile->read(flash_data, sizeof(flash_data), 1) != 1)
                 WARN_LOG(MAPLE, "Failed to read the VMU file \"%s\" from disk", rpath.c_str());
-            std::fclose(rfile);
+            delete rfile;
         }
         // Open or create the vmu file to save to
         std::string wpath = hostfs::getVmuPath(logical_port, true);

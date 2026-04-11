@@ -18,6 +18,7 @@
  */
 #pragma once
 #include "types.h"
+#include "chd.h"
 #include "emulator.h"
 #include "hw/hwreg.h"
 #include "hw/naomi/m4cartridge.h"
@@ -25,7 +26,6 @@
 #include "serialize.h"
 #include "network/net_platform.h"
 #include <memory>
-#include <libchdr/chd.h>
 
 namespace systemsp
 {
@@ -210,7 +210,6 @@ private:
 	int schedId;
 	const char *mediaName = nullptr;
 	const char *parentName = nullptr;
-	FILE *chdFile = nullptr;
 	chd_file *chd = nullptr;
 	u32 hunkbytes = 0;
 	std::unique_ptr<u8[]> hunkmem;

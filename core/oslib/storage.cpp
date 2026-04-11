@@ -28,9 +28,7 @@ std::string os_PrecomposedString(std::string string);
 namespace hostfs
 {
 
-CustomStorage& customStorage();
-
-#if !defined(__ANDROID__) || defined(LIBRETRO)
+#if !defined(__ANDROID__) && !defined(LIBRETRO)
 CustomStorage& customStorage()
 {
 	class NullStorage : public CustomStorage
@@ -38,7 +36,7 @@ CustomStorage& customStorage()
 	public:
 		bool isKnownPath(const std::string& path) override { return false; }
 		std::vector<FileInfo> listContent(const std::string& path) override { return std::vector<FileInfo>(); }
-		FILE *openFile(const std::string& path, const std::string& mode) override { die("Not implemented"); }
+		File *openFile(const std::string& path, const std::string& mode) override { die("Not implemented"); }
 		std::string getParentPath(const std::string& path) override { die("Not implemented"); }
 		std::string getSubPath(const std::string& reference, const std::string& relative) override { die("Not implemented"); }
 		FileInfo getFileInfo(const std::string& path) override { die("Not implemented"); }
@@ -156,9 +154,14 @@ public:
 		return entries;
 	}
 
-	FILE *openFile(const std::string& path, const std::string& mode) override
+	File *openFile(const std::string& path, const std::string& mode) override
 	{
-		return nowide::fopen(path.c_str(), mode.c_str());
+		FILE *file = nowide::fopen(path.c_str(), mode.c_str());
+
+		if (file == nullptr)
+			return nullptr;
+
+		return new StdFile(file);
 	}
 
 	std::string getParentPath(const std::string& path) override
@@ -357,7 +360,7 @@ std::vector<FileInfo> AllStorage::listContent(const std::string& path)
 		return stdStorage.listContent(path);
 }
 
-FILE *AllStorage::openFile(const std::string& path, const std::string& mode)
+File *AllStorage::openFile(const std::string& path, const std::string& mode)
 {
 	if (customStorage().isKnownPath(path))
 		return customStorage().openFile(path, mode);

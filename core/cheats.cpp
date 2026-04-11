@@ -391,7 +391,7 @@ void CheatManager::loadCheatFile(const std::string& filename)
 		return;
 	}
 
-	FILE* cheatfile = hostfs::storage().openFile(filename, "r");
+	hostfs::File* cheatfile = hostfs::storage().openFile(filename, "r");
 	if (cheatfile == nullptr)
 	{
 		WARN_LOG(COMMON, "Cannot open cheat file '%s'", filename.c_str());
@@ -399,7 +399,7 @@ void CheatManager::loadCheatFile(const std::string& filename)
 	}
 	config::IniFile cfg;
 	cfg.load(cheatfile);
-	fclose(cheatfile);
+	delete cheatfile;
 
 	int count = cfg.getInt("", "cheats", 0);
 	cheats.clear();
@@ -1089,10 +1089,10 @@ void CheatManager::saveCheatFile(const std::string& filename)
 		i++;
 	}
 	cfg.set("", "cheats", i);
-	FILE *fp = hostfs::storage().openFile(filename.c_str(), "w");
+	hostfs::File *fp = hostfs::storage().openFile(filename.c_str(), "w");
 	if (fp == nullptr)
 		throw FlycastException(Ts("Can't save cheat file"));
 	cfg.save(fp);
-	fclose(fp);
+	delete fp;
 #endif
 }

@@ -260,14 +260,14 @@ void OfflineScraper::scrape(GameBoxart& item)
 		std::string extension = get_file_extension(item.fileName);
 		if (extension != "zip" && extension != "7z" && extension != "lst")
 		{
-			FILE *file = hostfs::storage().openFile(item.gamePath, "rb");
+			hostfs::File *file = hostfs::storage().openFile(item.gamePath, "rb");
 			if (file != nullptr)
 			{
-				fseek(file, 0x30, SEEK_SET);
+				file->seek(0x30, SEEK_SET);
 				u8 buf[0x20];
-				if (fread(buf, 1, sizeof(buf), file) == sizeof(buf))
+				if (file->read(buf, 1, sizeof(buf)) == sizeof(buf))
 					item.uniqueId = trim_trailing_ws(std::string(&buf[0], &buf[0x20]));
-				fclose(file);
+				delete file;
 			}
 		}
 	}

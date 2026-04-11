@@ -149,7 +149,7 @@ bool getCustomGpuDriverInfo(std::string& name, std::string& description, std::st
 
 void uploadCustomGpuDriver(const std::string& zipPath)
 {
-	FILE *zipf = hostfs::storage().openFile(zipPath, "r");
+	hostfs::File *zipf = hostfs::storage().openFile(zipPath, "r");
 	if (zipf == nullptr)
 		throw FlycastException(i18n::Ts("Can't open zip file"));
 	ZipArchive archive;

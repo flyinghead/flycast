@@ -442,7 +442,7 @@ static DreamcastKey getKeyId(const std::string& name)
 	return EMU_BTN_NONE;
 }
 
-void InputMapping::load(FILE* fp)
+void InputMapping::load(hostfs::File* fp)
 {
 	IniFile mf;
 	mf.load(fp);
@@ -834,7 +834,7 @@ std::shared_ptr<InputMapping> InputMapping::LoadMapping(const std::string& name)
 		return it->second;
 
 	std::string path;
-	FILE *fp = nullptr;
+	hostfs::File *fp = nullptr;
 	// Try user-defined mapping folders first
 	for (const auto& base : config::MappingsPath.get())
 	{
@@ -858,37 +858,37 @@ std::shared_ptr<InputMapping> InputMapping::LoadMapping(const std::string& name)
 	if (fp == nullptr)
 	{
 		path = get_readonly_config_path(std::string("mappings/") + name);
-		fp = nowide::fopen(path.c_str(), "r");
+		fp = hostfs::storage().openFile(path.c_str(), "r");
 		if (fp == NULL)
 			return NULL;
 	}
 	std::shared_ptr<InputMapping> mapping = std::make_shared<InputMapping>();
 	mapping->load(fp);
-	std::fclose(fp);
+	delete fp;
 	loaded_mappings[name] = mapping;
 
 	if (mapping->is_dirty())
 	{
 		// Make a backup of the current mapping file
-		FILE *out = nowide::fopen((path + ".save").c_str(), "w");
+		hostfs::File *out = hostfs::storage().openFile((path + ".save").c_str(), "w");
 		if (out == nullptr)
 			WARN_LOG(INPUT, "Can't backup controller mapping file %s", path.c_str());
 		else
 		{
-			fp = nowide::fopen(path.c_str(), "r");
+			fp = hostfs::storage().openFile(path.c_str(), "r");
 			if (fp != nullptr)
 			{
 				u8 buf[4096];
 				while (true)
 				{
-					size_t n = fread(buf, 1, sizeof(buf), fp);
+					size_t n = fp->read(buf, 1, sizeof(buf));
 					if (n <= 0)
 						break;
-					fwrite(buf, 1, n, out);
+					fp->write(buf, 1, n);
 				}
-				std::fclose(fp);
+				delete fp;
 			}
-			std::fclose(out);
+			delete out;
 		}
 	}
 
@@ -932,7 +932,7 @@ bool InputMapping::save(const std::string& name)
 		make_directory(base);
 		path = get_writable_config_path(std::string("mappings/") + name);
 	}
-	FILE *fp = nowide::fopen(path.c_str(), "w");
+	hostfs::File *fp = hostfs::storage().openFile(path.c_str(), "w");
 	if (fp == NULL)
 	{
 		WARN_LOG(INPUT, "Cannot save controller mappings into %s", path.c_str());
@@ -1030,7 +1030,7 @@ bool InputMapping::save(const std::string& name)
 	mf.set("emulator", "triggers", triggerString);
 	mf.save(fp);
 	dirty = false;
-	std::fclose(fp);
+	delete fp;
 
 	return true;
 }
