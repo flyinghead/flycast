@@ -299,7 +299,8 @@ static void loadSpecialSettings()
 			|| prod_id == "T7014D  50"		// Super Runabout (EU)
 			|| prod_id == "T10001D 50"		// MTV Sport - Skateboarding (PAL)
 			|| prod_id == "MK-5101050"		// Snow Surfers
-			|| prod_id == "12502D-50")		// Caesar's Palace (PAL)
+			|| prod_id == "12502D-50"		// Caesar's Palace (PAL)
+			|| prod_id == "T46605D 80")		// Evil Twin - Cyprien's Chronicles
 		{
 			NOTICE_LOG(BOOT, "Forcing PAL broadcasting");
 			config::Broadcast.override(1);
