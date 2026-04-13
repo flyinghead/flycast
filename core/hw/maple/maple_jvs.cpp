@@ -998,6 +998,28 @@ private:
 	bool transitionWait = false;
 };
 
+// Samba de amigo
+class jvs_837_13844_samba : public jvs_837_13844
+{
+public:
+	jvs_837_13844_samba(u8 node_id, MIEImpl *parent, int first_player = 0)
+		: jvs_837_13844(node_id, parent, first_player)
+	{}
+
+	u16 read_analog_axis(int player_num, int player_axis, bool inverted) override
+	{
+		u16 v = jvs_837_13844::read_analog_axis(player_num, player_axis, inverted);
+		// round and clamp
+		v = std::min<u16>(v & ~0xff, 0xf000);
+		// add negative bias to left X and positive bias to right X
+		if (player_axis == 0)		// left X
+			v = std::max((int)v - 0x2000, 0);
+		else if (player_axis == 2)	// right X
+			v = std::min((int)v + 0x2000, 0xf000);
+		return v;
+	}
+};
+
 // Ninja assault
 class jvs_namco_jyu : public jvs_io_board
 {
@@ -1559,6 +1581,10 @@ MIEImpl::MIEImpl()
 		else if (gameId == "ANPANMAN POPCORN KOUJOU 2")
 		{
 			io_boards.push_back(std::make_unique<jvs_837_13844>(1, this));
+		}
+		else if (gameId == "SAMBA DE AMIGO")
+		{
+			io_boards.push_back(std::make_unique<jvs_837_13844_samba>(1, this));
 		}
 		else
 		{
