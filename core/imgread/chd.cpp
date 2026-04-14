@@ -118,10 +118,8 @@ void CHDDisc::tryOpen(const char* file)
 	chd_error err = chd_open_file(fp, CHD_OPEN_READ, nullptr, &chd);
 
 	if (err != CHDERR_NONE)
-	{
-		delete fp;
+		// libchdr closes the file even in case of error (well, except in one case)
 		throw FlycastException(strprintf(i18n::T("Invalid CHD file %s"), file));
-	}
 
 	INFO_LOG(GDROM, "chd: parsing file %s", file);
 
