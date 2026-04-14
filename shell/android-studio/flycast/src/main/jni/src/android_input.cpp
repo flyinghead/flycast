@@ -22,14 +22,16 @@
 #include "cfg/option.h"
 #include "hw/maple/maple_if.h"
 
-std::shared_ptr<AndroidMouse> mouse;
-std::shared_ptr<TouchMouse> touchMouse;
-std::shared_ptr<AndroidKeyboard> keyboard;
-std::shared_ptr<AndroidVirtualGamepad> virtualGamepad;
+static std::shared_ptr<AndroidMouse> mouse;
+static std::shared_ptr<TouchMouse> touchMouse;
+static std::shared_ptr<AndroidKeyboard> keyboard;
+static std::shared_ptr<AndroidVirtualGamepad> virtualGamepad;
 
 extern jobject g_activity;
 jmethodID showScreenKeyboardMid;
 jmethodID setVGamepadEditModeMid;
+jobject inputDeviceManager;
+jmethodID inputDeviceManager_rumble;
 
 //
 // VGamepad
@@ -95,8 +97,8 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_flycast_emulator_periph_InputDevi
 
 extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_periph_InputDeviceManager_init(JNIEnv *env, jobject obj)
 {
-	input_device_manager = env->NewGlobalRef(obj);
-	input_device_manager_rumble = env->GetMethodID(env->GetObjectClass(obj), "rumble", "(IFFI)Z");
+	inputDeviceManager = env->NewGlobalRef(obj);
+	inputDeviceManager_rumble = env->GetMethodID(env->GetObjectClass(obj), "rumble", "(IFFI)Z");
 	gui_setOnScreenKeyboardCallback([](bool show) {
 		if (g_activity != nullptr)
 			jni::env()->CallVoidMethod(g_activity, showScreenKeyboardMid, show);
@@ -238,4 +240,17 @@ extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_periph_InputDeviceMa
 	touchMouse->setButton(Mouse::LEFT_BUTTON, (buttons & 1) != 0);
 	touchMouse->setButton(Mouse::RIGHT_BUTTON, (buttons & 2) != 0);
 	touchMouse->setButton(Mouse::MIDDLE_BUTTON, (buttons & 4) != 0);
+}
+
+void input_term()
+{
+	GamepadDevice::Unregister(mouse);
+	mouse.reset();
+	GamepadDevice::Unregister(touchMouse);
+	touchMouse.reset();
+	GamepadDevice::Unregister(keyboard);
+	keyboard.reset();
+	GamepadDevice::Unregister(virtualGamepad);
+	virtualGamepad.reset();
+	AndroidGamepadDevice::RemoveAll();
 }

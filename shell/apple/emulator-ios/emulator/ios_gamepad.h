@@ -479,6 +479,13 @@ public:
 		return !controllers.empty();
 	}
 
+	static void removeAll()
+	{
+		for (auto [ctlr, gamepad] : controllers)
+			GamepadDevice::Unregister(gamepad);
+		controllers.clear();
+	}
+
 private:
 	GCController * __weak gcController = nullptr;
 	CHHapticEngine *hapticEngine = nullptr;

@@ -285,6 +285,11 @@ void input_sdl_quit()
 	EventManager::unlisten(Event::Pause, emuEventCallback);
 	EventManager::unlisten(Event::Resume, emuEventCallback);
 	SDLGamepad::closeAllGamepads();
+	for (auto [id, mouse] : sdl_mice)
+		GamepadDevice::Unregister(mouse);
+	sdl_mice.clear();
+	GamepadDevice::Unregister(sdl_keyboard);
+	sdl_keyboard.reset();
 	SDL_QuitSubSystem(SDL_INIT_JOYSTICK | SDL_INIT_HAPTIC);
 }
 

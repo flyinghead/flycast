@@ -295,11 +295,14 @@ extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_emu_JNIdc_resume(JNI
     }
 }
 
+void input_term();
+
 extern "C" JNIEXPORT void JNICALL Java_com_flycast_emulator_emu_JNIdc_stop(JNIEnv *env,jobject obj)
 {
 	stopEmu();
 	savestateThread.WaitToEnd();
 	gui_stop_game();
+	input_term();
 }
 
 static void *render_thread_func(void *)
