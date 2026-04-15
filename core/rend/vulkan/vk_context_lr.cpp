@@ -48,7 +48,7 @@ bool VkCreateDevice(retro_vulkan_context* context, VkInstance instance, VkPhysic
 {
 #if VULKAN_HPP_DISPATCH_LOADER_DYNAMIC == 1
 	VULKAN_HPP_DEFAULT_DISPATCHER.init(get_instance_proc_addr);
-	VULKAN_HPP_DEFAULT_DISPATCHER.init(instance);
+	VULKAN_HPP_DEFAULT_DISPATCHER.init(vk::Instance(instance));
 #endif
 
 	vk::PhysicalDevice physicalDevice(gpu);
@@ -232,7 +232,7 @@ bool VkCreateDevice(retro_vulkan_context* context, VkInstance instance, VkPhysic
 
 	context->device = (VkDevice)newDevice;
 #if VULKAN_HPP_DISPATCH_LOADER_DYNAMIC == 1
-	VULKAN_HPP_DEFAULT_DISPATCHER.init(context->device);
+	VULKAN_HPP_DEFAULT_DISPATCHER.init(vk::Device(context->device));
 #endif
 
 	// Queues

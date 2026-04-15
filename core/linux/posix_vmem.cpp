@@ -255,12 +255,11 @@ bool prepare_jit_block(void *code_area, size_t size, void **code_area_rwx)
         *code_area_rwx = code_area;
         return true;
     }
-#ifndef TARGET_ARM_MAC
+#ifndef TARGET_MAC
     void *ret_ptr = MAP_FAILED;
     if (code_area != nullptr)
     {
 		// Well it failed, use another approach, unmap the memory area and remap it back.
-		// Seems it works well on Darwin according to reicast code :P
         munmap(code_area, size);
         ret_ptr = mmap(code_area, size, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_FIXED | MAP_PRIVATE | MAP_ANON, 0, 0);
     }
@@ -272,7 +271,7 @@ bool prepare_jit_block(void *code_area, size_t size, void **code_area_rwx)
             return false;
     }
 #else
-    // MAP_JIT and toggleable write protection is required on Apple Silicon
+    // MAP_JIT and toggleable write protection is required on modern macOS.
     // Cannot use MAP_FIXED with MAP_JIT
     void *ret_ptr = mmap(NULL, size, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE | MAP_ANON | MAP_JIT, -1, 0);
     if ( ret_ptr == MAP_FAILED )

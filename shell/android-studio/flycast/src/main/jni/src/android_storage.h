@@ -50,7 +50,7 @@ public:
 		return path.substr(0, 10) == "content://";
 	}
 
-	FILE *openFile(const std::string& uri, const std::string& mode) override
+	File *openFile(const std::string& uri, const std::string& mode) override
 	{
 		jni::String juri(uri);
 		const char *amode;
@@ -75,7 +75,13 @@ public:
 			WARN_LOG(COMMON, "openFile failed: %s", e.what());
 			return nullptr;
 		}
-		return fdopen(fd, mode.c_str());
+
+		FILE *file = fdopen(fd, mode.c_str());
+
+		if (file == nullptr)
+			return nullptr;
+
+		return new StdFile(file);
 	}
 
 	std::vector<FileInfo> listContent(const std::string& uri) override
@@ -245,7 +251,7 @@ private:
 	void (*addStorageCallback)(bool cancelled, std::string selectedPath);
 };
 
-Storage& customStorage()
+CustomStorage& customStorage()
 {
 	static std::unique_ptr<AndroidStorage> androidStorage;
 	if (!androidStorage)

@@ -1919,28 +1919,26 @@ SystemSpCart::~SystemSpCart()
 	EventManager::unlisten(Event::Pause, handleEvent, this);
 	if (chd != nullptr)
 		chd_close(chd);
-	if (chdFile != nullptr)
-		fclose(chdFile);
 	sh4_sched_unregister(schedId);
 	Instance = nullptr;
 }
 
 chd_file *SystemSpCart::openChd(const std::string path)
 {
-	chdFile = hostfs::storage().openFile(path, "rb");
+	hostfs::File *chdFile = hostfs::storage().openFile(path, "rb");
 	if (chdFile == nullptr)
 	{
 		WARN_LOG(NAOMI, "Cannot open file '%s' errno %d", path.c_str(), errno);
 		return nullptr;
 	}
+
 	chd_file *chd;
-	chd_error err = chd_open_file(chdFile, CHD_OPEN_READ, 0, &chd);
+	chd_error err = chd_open_file(chdFile, CHD_OPEN_READ, nullptr, &chd);
 
 	if (err != CHDERR_NONE)
 	{
 		WARN_LOG(NAOMI, "Invalid CHD file %s", path.c_str());
-		fclose(chdFile);
-		chdFile = nullptr;
+		delete chdFile;
 		return nullptr;
 	}
 	INFO_LOG(NAOMI, "compact flash: parsing file %s", path.c_str());

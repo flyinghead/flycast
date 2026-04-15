@@ -1,6 +1,7 @@
 #include "gtest/gtest.h"
 #include "cfg/ini.h"
 #include "types.h"
+#include "oslib/storage.h"
 #include <locale>
 using namespace config;
 
@@ -160,13 +161,13 @@ TEST_F(IniFileTest, loadSaveFile)
 	file.set("s1", "e1", "e1");
 	file.set("s1", "e2", true);
 	file.set("s1", "e3", 3.14f);
-	FILE *f = fopen("test.cfg", "wb");
+	auto *f = new hostfs::StdFile(fopen("test.cfg", "wb"));
 	file.save(f);
-	fclose(f);
+	delete f;
 	file = {};
-	f = fopen("test.cfg", "rb");
+	f = new hostfs::StdFile(fopen("test.cfg", "rb"));
 	file.load(f);
-	fclose(f);
+	delete f;
 	ASSERT_EQ(42, file.getInt("", "root"));
 	ASSERT_EQ("e1", file.get("s1", "e1"));
 	ASSERT_TRUE(file.getBool("s1", "e2"));

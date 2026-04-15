@@ -769,7 +769,7 @@ vk::UniqueShaderModule OITShaderManager::compileShader(const FragmentShaderParam
 vk::UniqueShaderModule OITShaderManager::compileFinalShader(bool dithering)
 {
 	VulkanSource src;
-	src.addConstant("MAX_PIXELS_PER_FRAGMENT", config::PerPixelLayers)
+	src.addConstant("MAX_PIXELS_PER_FRAGMENT", maxLayers)
 		.addConstant("DITHERING", dithering)
 		.addSource(OITShaderHeader)
 		.addSource(OITFinalShaderSource);
@@ -810,10 +810,22 @@ vk::UniqueShaderModule OITShaderManager::compileModVolFragmentShader(bool divPos
 vk::UniqueShaderModule OITShaderManager::compileShader(const TrModVolShaderParams& params)
 {
 	VulkanSource src;
-	src.addConstant("MAX_PIXELS_PER_FRAGMENT", config::PerPixelLayers)
+	src.addConstant("MAX_PIXELS_PER_FRAGMENT", maxLayers)
 		.addConstant("MV_MODE", (int)params.mode)
 		.addConstant("DIV_POS_Z", (int)params.divPosZ)
 		.addSource(OITShaderHeader)
 		.addSource(OITTranslucentModvolShaderSource);
 	return ShaderCompiler::Compile(vk::ShaderStageFlagBits::eFragment, src.generate());
+}
+
+void OITShaderManager::checkMaxLayers()
+{
+	int layers = std::clamp<int>(config::PerPixelLayers, 1, 256);
+	if (maxLayers != layers)
+	{
+		maxLayers = layers;
+		trModVolShaders.clear();
+		finalFragmentShaders[0].reset();
+		finalFragmentShaders[1].reset();
+	}
 }

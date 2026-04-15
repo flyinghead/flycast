@@ -6,7 +6,7 @@
 
 static Disc* load_gdi(const char* file, std::vector<u8> *digest)
 {
-	FILE *t = hostfs::storage().openFile(file, "rb");
+	hostfs::File *t = hostfs::storage().openFile(file, "rb");
 	if (t == nullptr)
 	{
 		WARN_LOG(COMMON, "Cannot open file '%s' errno %d", file, errno);
@@ -20,13 +20,13 @@ static Disc* load_gdi(const char* file, std::vector<u8> *digest)
 
 	if (gdi_len >= sizeof(gdi_data))
 	{
-		std::fclose(t);
+		delete t;
 		throw FlycastException(i18n::Ts("GDI file too big"));
 	}
 
-	if (std::fread(gdi_data, 1, gdi_len, t) != gdi_len)
+	if (t->read(gdi_data, 1, gdi_len) != gdi_len)
 		WARN_LOG(GDROM, "Failed or truncated read of gdi file '%s'", file);
-	std::fclose(t);
+	delete t;
 
 	std::istringstream gdi(gdi_data);
 	gdi.imbue(std::locale::classic());
@@ -127,7 +127,7 @@ static Disc* load_gdi(const char* file, std::vector<u8> *digest)
 		t.CTRL = CTRL;
 
 		std::string path = hostfs::storage().getSubPath(basepath, track_filename);
-		FILE *file = hostfs::storage().openFile(path, "rb");
+		hostfs::File *file = hostfs::storage().openFile(path, "rb");
 		if (file == nullptr)
 			throw FlycastException(strprintf(i18n::T("GDI file: Cannot open track %s"), path.c_str()));
 		if (digest != nullptr)

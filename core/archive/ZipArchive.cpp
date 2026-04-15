@@ -20,18 +20,133 @@
  */
 #include "ZipArchive.h"
 
+#include <array>
+
 ZipArchive::~ZipArchive()
 {
 	zip_close(zip);
 }
 
-bool ZipArchive::Open(FILE *file)
+static zip_int64_t ZipSourceCallback(void *userdata, void *data, zip_uint64_t len, zip_source_cmd_t cmd)
+{
+	using Error = std::array<int, 2>;
+	static Error error = {ZIP_ER_OK, 0};
+	auto file = static_cast<hostfs::File*>(userdata);
+
+	switch (cmd)
+	{
+		case ZIP_SOURCE_OPEN:
+			return 0;
+
+		case ZIP_SOURCE_READ:
+		{
+			const auto bytes_read = file->read(data, 1, len);
+
+			if (file->error())
+			{
+				error = {ZIP_ER_INTERNAL, 0};
+				return -1;
+			}
+
+			return bytes_read;
+		}
+
+		case ZIP_SOURCE_CLOSE:
+			return 0;
+
+		case ZIP_SOURCE_STAT:
+		{
+			auto size = file->size();
+
+			if (size == -1)
+			{
+				error = {ZIP_ER_INTERNAL, 0};
+				return -1;
+			}
+
+			auto stat = static_cast<zip_stat_t*>(data);
+			zip_stat_init(stat);
+
+			stat->valid |= ZIP_STAT_SIZE;
+			stat->size = size;
+
+			return sizeof(*stat);
+		}
+
+		case ZIP_SOURCE_ERROR:
+		{
+			auto error_out = static_cast<std::array<int, 2>*>(data);
+			*error_out = error;
+			return sizeof(*error_out);
+		}
+
+		case ZIP_SOURCE_FREE:
+			delete file;
+			return 0;
+
+		case ZIP_SOURCE_SEEK:
+		{
+			zip_error_t error;
+			auto seek_info = ZIP_SOURCE_GET_ARGS(zip_source_args_seek, data, len, &error);
+
+			if (seek_info == nullptr)
+			{
+				error = {ZIP_ER_INTERNAL, 0};
+				return -1;
+			}
+
+			if (file->seek(seek_info->offset, seek_info->whence) != 0)
+			{
+				error = {ZIP_ER_INTERNAL, 0};
+				return -1;
+			}
+
+			return 0;
+		}
+
+		case ZIP_SOURCE_TELL:
+		{
+			const auto position = file->tell();
+
+			if (position == -1)
+			{
+				error = {ZIP_ER_INTERNAL, 0};
+				return -1;
+			}
+
+			return position;
+		}
+
+		case  ZIP_SOURCE_SUPPORTS:
+			return zip_source_make_command_bitmap(
+				ZIP_SOURCE_OPEN,
+				ZIP_SOURCE_READ,
+				ZIP_SOURCE_CLOSE,
+				ZIP_SOURCE_STAT,
+				ZIP_SOURCE_ERROR,
+				ZIP_SOURCE_FREE,
+				ZIP_SOURCE_SEEK,
+				ZIP_SOURCE_TELL,
+				ZIP_SOURCE_SUPPORTS,
+				-1
+			);
+
+		default:
+			break;
+	}
+
+	// Unsupported command.
+	error = {ZIP_ER_OPNOTSUPP, 0};
+	return -1;
+}
+
+bool ZipArchive::Open(hostfs::File *file)
 {
 	zip_error_t error;
-	zip_source_t *source = zip_source_filep_create(file, 0, -1, &error);
+	zip_source_t *source = zip_source_function_create(ZipSourceCallback, file, &error);
 	if (source == nullptr)
 	{
-		std::fclose(file);
+		delete file;
 		return false;
 	}
 	zip = zip_open_from_source(source, 0, nullptr);

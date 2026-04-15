@@ -40,7 +40,6 @@
 #include "oslib/resources.h"
 #include "achievements/achievements.h"
 #include "gui_achievements.h"
-#include "imgui/misc/freetype/imgui_freetype.h"
 #include "IconsFontAwesome6.h"
 #include <stb_image_write.h>
 #include "hw/pvr/Renderer_if.h"
@@ -142,7 +141,7 @@ void gui_init()
 	ImGuiIO& io = ImGui::GetIO();
 	io.BackendFlags |= ImGuiBackendFlags_HasGamepad;
 
-	io.IniFilename = NULL;
+	io.IniFilename = nullptr;
 
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;  // Enable Keyboard Controls
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;   // Enable Gamepad Controls
@@ -446,12 +445,17 @@ void gui_open_settings()
 		GamepadDevice::load_system_mappings();
 		emu.start();
 	}
+	else if (gui_state == GuiState::Pause)
+	{
+		gui_setState(GuiState::Commands);
+	}
 }
 
 void gui_start_game(const std::string& path)
 {
 	const LockGuard lock(guiMutex);
-	if (gui_state != GuiState::Main && gui_state != GuiState::Closed && gui_state != GuiState::Commands)
+	if (gui_state != GuiState::Main && gui_state != GuiState::Closed && gui_state != GuiState::Commands
+			&& gui_state != GuiState::Pause)
 		return;
 	emu.unloadGame();
 	reset_vmus();
@@ -523,7 +527,7 @@ static void gui_display_commands()
 	ImGui::SetNextWindowBgAlpha(0.8f);
 	ImguiStyleVar _{ImGuiStyleVar_WindowBorderSize, 0};
 
-	ImGui::Begin("##commands", NULL, ImGuiWindowFlags_NoDecoration);
+	ImGui::Begin("##commands", nullptr, ImGuiWindowFlags_NoDecoration);
 	{
 		ImguiStyleVar _{ImGuiStyleVar_ButtonTextAlign, ImVec2(0.f, 0.5f)};	// left aligned
 
@@ -552,7 +556,7 @@ static void gui_display_commands()
 		if (!lowHeight)
 		{
 			ImGui::BeginChild("game_info", ScaledVec2(0, 100.f), ImGuiChildFlags_Borders, ImGuiWindowFlags_None);
-			ImGui::PushFont(NULL, uiLargeFontSize());
+			ImGui::PushFont(nullptr, uiLargeFontSize());
 			ImGui::Text("%s", art.name.c_str());
 			ImGui::PopFont();
 			{
@@ -687,7 +691,7 @@ void error_popup()
 		ImguiStyleVar _(ImGuiStyleVar_WindowPadding, padding);
 		ImguiStyleVar _1(ImGuiStyleVar_ItemSpacing, padding);
 		ImGui::OpenPopup("Error");
-		if (ImGui::BeginPopupModal("Error", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar))
+		if (ImGui::BeginPopupModal("Error", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar))
 		{
 			ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + uiScaled(400.f));
 			ImGui::TextWrapped("%s", error_msg.c_str());
@@ -716,7 +720,7 @@ static void contentpath_warning_popup()
     if (scanner.content_path_looks_incorrect)
     {
         ImGui::OpenPopup(T("Incorrect Content Location?"));
-        if (ImGui::BeginPopupModal(T("Incorrect Content Location?"), NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
+        if (ImGui::BeginPopupModal(T("Incorrect Content Location?"), nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
         {
             ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + uiScaled(400.f));
             ImGui::TextWrapped((std::string("  ") + T("Scanned %d folders but no game can be found!") + std::string("  ")).c_str(), scanner.empty_folders_scanned);
@@ -766,7 +770,7 @@ static void contentpath_warning_popup()
 
 void os_notify(const char *msg, int durationMs, const char *details)
 {
-	if (gui_state != GuiState::Closed)
+	if (gui_state != GuiState::Closed && gui_state != GuiState::Pause)
 	{
 		std::lock_guard<std::mutex> _{osd_message_mutex};
 		osd_message = msg;
@@ -783,6 +787,28 @@ static std::string get_notification()
 	if (!osd_message.empty() && getTimeMs() >= osd_message_end)
 		osd_message.clear();
 	return osd_message;
+}
+
+static void drawPauseIcon()
+{
+	const char *icon = ICON_FA_PAUSE;
+	ImFont *font = ImGui::GetFont();
+	const float fontSize = uiScaled(52.f);
+	const ScaledVec2 padding(14.f, 6.f);
+	const ScaledVec2 margin(12.f, 12.f);
+	const ImVec2 size =  ImVec2(fontSize * 0.7, fontSize) + padding * 2;
+	const ImVec2 displaySize = ImGui::GetIO().DisplaySize;
+	ImVec2 pos(displaySize.x - insetRight - margin.x - size.x, insetTop + margin.y);
+	ImDrawList *dl = ImGui::GetForegroundDrawList();
+	const ImU32 bgCol = alphaOverride(ImGui::GetColorU32(ImGuiCol_WindowBg), 0.45f);
+	const ImU32 shadowCol = alphaOverride(0, 0.65f);
+	const ImU32 textCol = alphaOverride(ImGui::GetColorU32(ImGuiCol_Text), 0.95f);
+
+	dl->AddRectFilled(pos, pos + size, bgCol, uiScaled(6.f));
+
+	ImVec2 iconPos = pos + padding + ScaledVec2(2.5f, 2.5f);
+	dl->AddText(font, fontSize, iconPos + ScaledVec2(2.5f, 2.5f), shadowCol, icon);
+	dl->AddText(font, fontSize, iconPos, textCol, icon);
 }
 
 inline static void gui_display_demo() {
@@ -861,7 +887,7 @@ static void gui_display_content()
 	ImguiStyleVar _(ImGuiStyleVar_WindowRounding, 0);
 	ImguiStyleVar _1(ImGuiStyleVar_WindowBorderSize, 0);
 
-    ImGui::Begin("##main", NULL, ImGuiWindowFlags_NoDecoration);
+    ImGui::Begin("##main", nullptr, ImGuiWindowFlags_NoDecoration);
 
     ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ScaledVec2(20, 8));
     ImGui::AlignTextToFramePadding();
@@ -1008,7 +1034,7 @@ static void gui_display_content()
 			ImGui::SameLine((ImGui::GetContentRegionMax().x - w) / 2);
 			if (ImGui::BeginChild("empty", ImVec2(0, 0), ImGuiChildFlags_AutoResizeX | ImGuiChildFlags_AutoResizeY | ImGuiChildFlags_NavFlattened))
 			{
-				ImGui::PushFont(NULL, uiLargeFontSize());
+				ImGui::PushFont(nullptr, uiLargeFontSize());
 				ImGui::NewLine();
 				ImGui::Text("%s", label);
 				ImguiStyleVar _(ImGuiStyleVar_FramePadding, ScaledVec2(20, 8));
@@ -1109,7 +1135,7 @@ static void gui_network_start()
 	ImGui::SetNextWindowBgAlpha(0.8f);
 	ImguiStyleVar _1(ImGuiStyleVar_WindowPadding, ScaledVec2(20, 20));
 
-	if (ImGui::Begin("##network", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_AlwaysAutoResize))
+	if (ImGui::Begin("##network", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_AlwaysAutoResize))
 	{
 		ImguiStyleVar _(ImGuiStyleVar_FramePadding, ScaledVec2(20, 10));
 		ImGui::AlignTextToFramePadding();
@@ -1216,7 +1242,7 @@ static void gui_display_loadscreen()
 	ImGui::SetNextWindowBgAlpha(0.8f);
 	ImguiStyleVar _(ImGuiStyleVar_WindowPadding, ScaledVec2(20, 20));
 
-    if (ImGui::Begin("##loading", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_AlwaysAutoResize))
+    if (ImGui::Begin("##loading", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_AlwaysAutoResize))
     {
 		ImguiStyleVar _(ImGuiStyleVar_FramePadding, ScaledVec2(20, 10));
 		ImGui::AlignTextToFramePadding();
@@ -1333,6 +1359,10 @@ void gui_display_ui()
 	case GuiState::Commands:
 		gui_display_commands();
 		break;
+	case GuiState::Pause:
+		toast.draw();
+		drawPauseIcon();
+		break;
 	case GuiState::Main:
 		//gui_display_demo();
 		gui_display_content();
@@ -1427,7 +1457,7 @@ void gui_draw_osd()
 				dl->AddRectFilled(pos, pos + size, bg_col, 0.f);
 				pos += padding;
 				const ImU32 col = alphaOverride(0x0000FFFF, alpha);
-				dl->AddText(NULL, uiLargeFontSize(), pos, col, &message.front(), &message.back() + 1, maxW);
+				dl->AddText(nullptr, uiLargeFontSize(), pos, col, &message.front(), &message.back() + 1, maxW);
 			}
 		}
 
@@ -1458,7 +1488,7 @@ void gui_display_profiler()
 	gui_newFrame();
 	ImGui::NewFrame();
 
-	ImGui::Begin("Profiler", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoBackground);
+	ImGui::Begin("Profiler", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoBackground);
 
 	{
 		ImguiStyleColor _(ImGuiCol_Text, ImVec4(0.8f, 0.8f, 0.8f, 1.0f));
@@ -1586,6 +1616,32 @@ void gui_cycleSaveStateSlot(int step)
 {
 	cycleSaveStateSlot(step);
 	os_notify(strprintf(T("Save state slot %d"), config::SavestateSlot + 1).c_str(), 2000);
+}
+
+void gui_togglePause()
+{
+	const LockGuard lock(guiMutex);
+	if (settings.network.online || settings.naomi.multiboard)
+		return;
+
+	try {
+		if (gui_state == GuiState::Closed)
+		{
+			if (!achievements::canPause())
+				return;
+			vgamepad::hide();
+			emu.stop();
+			gui_setState(GuiState::Pause);
+		}
+		else if (gui_state == GuiState::Pause)
+		{
+			GamepadDevice::load_system_mappings();
+			gui_setState(GuiState::Closed);
+			emu.start();
+		}
+	} catch (const FlycastException& e) {
+		gui_stop_game(e.what());
+	}
 }
 
 void gui_setState(GuiState newState)

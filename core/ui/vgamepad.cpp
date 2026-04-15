@@ -35,7 +35,7 @@
 #include "hw/naomi/naomi_cart.h"
 #include "hw/naomi/card_reader.h"
 #include "hw/maple/maple_devs.h"
-#include <stb_image.h>
+#include "stbi.h"
 
 namespace vgamepad
 {
@@ -68,7 +68,7 @@ void displayCommands()
 	draw();
     centerNextWindow();
 
-    ImGui::Begin("##vgamepad", NULL, ImGuiWindowFlags_NoDecoration);
+    ImGui::Begin("##vgamepad", nullptr, ImGuiWindowFlags_NoDecoration);
 
 	if (ImGui::Button(i18n::T("Save"), ScaledVec2(150, 50)))
 	{
@@ -104,14 +104,14 @@ static bool loadOSDButtons(const std::string& path)
 {
 	if (path.empty())
 		return false;
-	FILE *file = hostfs::storage().openFile(path, "rb");
+	hostfs::File *file = hostfs::storage().openFile(path, "rb");
 	if (file == nullptr)
 		return false;
 
 	stbi_set_flip_vertically_on_load(1);
-    int width, height, n;
+	int width, height, n;
 	u8 *image_data = stbi_load_from_file(file, &width, &height, &n, STBI_rgb_alpha);
-	std::fclose(file);
+	delete file;
 	if (image_data == nullptr)
 		return false;
     try {

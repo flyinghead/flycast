@@ -362,7 +362,13 @@ void SetNaomiNetworkConfig(int node)
 	}
 	else if (gameId == "CLUB KART IN JAPAN" && settings.content.fileName.substr(0, 6) != "clubkp")
 	{
-		write_naomi_eeprom(0x34, node + 1); // also 03 = satellite
+		write_naomi_eeprom(0x34, node == -1 ? 0 : node == 0 ? 1 : 2); // also 03 = satellite
+		if (node != -1)
+		{
+			// car #
+			u8 b = read_naomi_eeprom(0x3d) & 0xc7;
+			write_naomi_eeprom(0x3d, b | (node << 3));
+		}
 	}
 	else if (gameId == "INITIAL D"
 			|| gameId == "INITIAL D Ver.2"

@@ -23,27 +23,27 @@
 
 const u8 RZipHeader[8] = { '#', 'R', 'Z', 'I', 'P', 'v', 1, '#' };
 
-bool RZipFile::Open(FILE *file, bool write)
+bool RZipFile::Open(hostfs::File *file, bool write)
 {
 	verify(this->file == nullptr);
 	verify(file != nullptr);
-	startOffset = std::ftell(file);
+	startOffset = file->tell();
 	if (!write)
 	{
 		u8 header[sizeof(RZipHeader)];
-		if (std::fread(header, sizeof(header), 1, file) != 1
+		if (file->read(header, sizeof(header), 1) != 1
 			|| memcmp(header, RZipHeader, sizeof(header))
-			|| std::fread(&maxChunkSize, sizeof(maxChunkSize), 1, file) != 1
-			|| std::fread(&size, sizeof(size), 1, file) != 1)
+			|| file->read(&maxChunkSize, sizeof(maxChunkSize), 1) != 1
+			|| file->read(&size, sizeof(size), 1) != 1)
 		{
-			std::fseek(file, startOffset, SEEK_SET);
+			file->seek(startOffset, SEEK_SET);
 			return false;
 		}
 		// savestates created on 32-bit platforms used to have a 32-bit size
 		if (size >> 32 != 0)
 		{
 			size &= 0xffffffff;
-			std::fseek(file, -4, SEEK_CUR);
+			file->seek(-4, SEEK_CUR);
 		}
 		chunk = new u8[maxChunkSize];
 		chunkIndex = 0;
@@ -52,11 +52,11 @@ bool RZipFile::Open(FILE *file, bool write)
 	else
 	{
 		maxChunkSize = 1_MB;
-		if (std::fwrite(RZipHeader, sizeof(RZipHeader), 1, file) != 1
-			|| std::fwrite(&maxChunkSize, sizeof(maxChunkSize), 1, file) != 1
-			|| std::fwrite(&size, sizeof(size), 1, file) != 1)
+		if (file->write(RZipHeader, sizeof(RZipHeader), 1) != 1
+			|| file->write(&maxChunkSize, sizeof(maxChunkSize), 1) != 1
+			|| file->write(&size, sizeof(size), 1) != 1)
 		{
-			std::fseek(file, startOffset, SEEK_SET);
+			file->seek(startOffset, SEEK_SET);
 			return false;
 		}
 	}
@@ -67,7 +67,7 @@ bool RZipFile::Open(FILE *file, bool write)
 
 bool RZipFile::Open(const std::string& path, bool write)
 {
-	FILE *f = nowide::fopen(path.c_str(), write ? "wb" : "rb");
+	hostfs::File *f = hostfs::storage().openFile(path.c_str(), write ? "wb" : "rb");
 	if (f == nullptr)
 		return false;
 	if (!Open(f, write)) {
@@ -83,10 +83,10 @@ void RZipFile::Close()
 	{
 		if (write)
 		{
-			std::fseek(file, startOffset + sizeof(RZipHeader) + sizeof(maxChunkSize), SEEK_SET);
-			std::fwrite(&size, sizeof(size), 1, file);
+			file->seek(startOffset + sizeof(RZipHeader) + sizeof(maxChunkSize), SEEK_SET);
+			file->write(&size, sizeof(size), 1);
 		}
-		std::fclose(file);
+		delete file;
 		file = nullptr;
 		if (chunk != nullptr)
 		{
@@ -110,12 +110,12 @@ size_t RZipFile::Read(void *data, size_t length)
 			chunkSize = 0;
 			chunkIndex = 0;
 			u32 zippedSize;
-			if (std::fread(&zippedSize, sizeof(zippedSize), 1, file) != 1)
+			if (file->read(&zippedSize, sizeof(zippedSize), 1) != 1)
 				break;
 			if (zippedSize == 0)
 				continue;
 			u8 *zipped = new u8[zippedSize];
-			if (std::fread(zipped, zippedSize, 1, file) != 1)
+			if (file->read(zipped, zippedSize, 1) != 1)
 			{
 				delete [] zipped;
 				break;
@@ -161,8 +161,8 @@ size_t RZipFile::Write(const void *data, size_t length)
 			break;
 		}
 		u32 sz = (u32)zippedSize;
-		if (std::fwrite(&sz, sizeof(sz), 1, file) != 1
-			|| std::fwrite(zipped, zippedSize, 1, file) != 1)
+		if (file->write(&sz, sizeof(sz), 1) != 1
+			|| file->write(zipped, zippedSize, 1) != 1)
 		{
 			rv = 0;
 			break;

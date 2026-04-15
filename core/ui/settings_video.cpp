@@ -132,7 +132,7 @@ void gui_settings_video()
         	ImGui::SameLine();
         	ShowHelpMarker(T("Sort transparent polygons per pixel. Slower but accurate"));
         }
-    	ImGui::Columns(1, NULL, false);
+    	ImGui::Columns(1, nullptr, false);
     	switch (renderer)
     	{
     	case 0:

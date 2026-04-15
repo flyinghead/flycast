@@ -550,3 +550,15 @@ void OITPipelineManager::CreateTrModVolPipeline(ModVolMode mode, int cullMode, b
 			GetContext()->GetDevice().createGraphicsPipelineUnique(GetContext()->GetPipelineCache(),
 					graphicsPipelineCreateInfo).value;
 }
+
+void OITPipelineManager::checkMaxLayers()
+{
+	int layers = std::clamp<int>(config::PerPixelLayers, 1, 256);
+	if (maxLayers != layers)
+	{
+		maxLayers = layers;
+		trModVolPipelines.clear();
+		finalPipelines[0].reset();
+		finalPipelines[1].reset();
+	}
+}

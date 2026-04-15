@@ -45,7 +45,6 @@ static std::vector<hostfs::FileInfo> folderFiles;
 bool subfolders_read;
 
 extern int insetLeft, insetRight, insetTop, insetBottom;
-extern ImFont *boldFont;
 void error_popup();
 
 namespace hostfs
@@ -109,7 +108,7 @@ void select_file_popup(const char *prompt, StringCallback callback,
 			ImguiStyleVar _(ImGuiStyleVar_ButtonTextAlign, ImVec2(0.f, 0.5f)); // Left
 			ImguiStyleVar _1(ImGuiStyleVar_DisabledAlpha, 1.0f);
 			ImGui::BeginDisabled();
-			ImGui::PushFont(NULL, uiLargeFontSize());
+			ImGui::PushFont(nullptr, uiLargeFontSize());
 			ImGui::ButtonEx(prompt, ImVec2(-1, 0));
 			ImGui::PopFont();
 			ImGui::EndDisabled();
@@ -383,28 +382,28 @@ void fullScreenWindow(bool modal)
 		{
 			ImGui::SetNextWindowPos(ImVec2(0, 0));
 			ImGui::SetNextWindowSize(ImVec2(insetLeft, ImGui::GetIO().DisplaySize.y));
-			ImGui::Begin("##insetLeft", NULL, ImGuiWindowFlags_NoDecoration);
+			ImGui::Begin("##insetLeft", nullptr, ImGuiWindowFlags_NoDecoration);
 			ImGui::End();
 		}
 		if (insetRight > 0)
 		{
 			ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x - insetRight, 0));
 			ImGui::SetNextWindowSize(ImVec2(insetRight, ImGui::GetIO().DisplaySize.y));
-			ImGui::Begin("##insetRight", NULL, ImGuiWindowFlags_NoDecoration);
+			ImGui::Begin("##insetRight", nullptr, ImGuiWindowFlags_NoDecoration);
 			ImGui::End();
 		}
 		if (insetTop > 0)
 		{
 			ImGui::SetNextWindowPos(ImVec2(0, 0));
 			ImGui::SetNextWindowSize(ImVec2(ImGui::GetIO().DisplaySize.x, insetTop));
-			ImGui::Begin("##insetTop", NULL, ImGuiWindowFlags_NoDecoration);
+			ImGui::Begin("##insetTop", nullptr, ImGuiWindowFlags_NoDecoration);
 			ImGui::End();
 		}
 		if (insetBottom > 0)
 		{
 			ImGui::SetNextWindowPos(ImVec2(0, ImGui::GetIO().DisplaySize.y - insetBottom));
 			ImGui::SetNextWindowSize(ImVec2(ImGui::GetIO().DisplaySize.x, insetBottom));
-			ImGui::Begin("##insetBottom", NULL, ImGuiWindowFlags_NoDecoration);
+			ImGui::Begin("##insetBottom", nullptr, ImGuiWindowFlags_NoDecoration);
 			ImGui::End();
 		}
 	}
@@ -722,7 +721,7 @@ bool Toast::draw()
 	if (!title.empty())
 	{
 		const ImU32 col = alphaOverride(ImGui::GetColorU32(ImGuiCol_Text), alpha);
-		dl->AddText(NULL, uiLargeFontSize(), pos, col, &title.front(), &title.back() + 1, maxW);
+		dl->AddText(nullptr, uiLargeFontSize(), pos, col, &title.front(), &title.back() + 1, maxW);
 		pos.y += spacing.y + titleSize.y;
 	}
 	if (!message.empty())
@@ -770,7 +769,7 @@ bool beginFrame(const char *label, const ImVec2& size_arg, ImVec2 *out_size)
     if (window->SkipItems)
         return false;
     const ImGuiStyle& style = g.Style;
-	const ImVec2 label_size = CalcTextSize(label, NULL, true);
+	const ImVec2 label_size = CalcTextSize(label, nullptr, true);
     ImVec2 size = ImTrunc(CalcItemSize(size_arg, CalcItemWidth(), GetTextLineHeightWithSpacing() * 7.25f + style.FramePadding.y * 2.0f));
     ImVec2 frame_size = ImVec2(size.x, ImMax(size.y, label_size.y));
     ImRect frame_bb(window->DC.CursorPos, window->DC.CursorPos + frame_size);

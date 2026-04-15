@@ -140,7 +140,7 @@ void gui_settings_about()
 			}
 
 			ImguiStyleVar _1(ImGuiStyleVar_WindowPadding, ScaledVec2(20, 20));
-			if (ImGui::BeginPopupModal(T("Reset Vulkan"), NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar))
+			if (ImGui::BeginPopupModal(T("Reset Vulkan"), nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar))
 			{
 				ImGui::Text("%s", T("Do you want to reset Vulkan to use new driver?"));
 				ImGui::NewLine();

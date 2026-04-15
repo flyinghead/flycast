@@ -71,25 +71,10 @@ protected:
 	int schedId;
 
 private:
-	static constexpr int FILENAME_LENGTH = 24;
-
 	const char *gdrom_name = nullptr;
 	const char *gdrom_parent_name = nullptr;
 
 	u32 dimm_cur_address = 0;
-
-	static const u32 DES_LEFTSWAP[];
-	static const u32 DES_RIGHTSWAP[];
-	static const u32 DES_SBOX1[];
-	static const u32 DES_SBOX2[];
-	static const u32 DES_SBOX3[];
-	static const u32 DES_SBOX4[];
-	static const u32 DES_SBOX5[];
-	static const u32 DES_SBOX6[];
-	static const u32 DES_SBOX7[];
-	static const u32 DES_SBOX8[];
-	static const u32 DES_MASK_TABLE[];
-	static const u8 DES_ROTATE_TABLE[16];
 
 	std::vector<bool> loadedSegments;
 	static constexpr u32 SEGMENT_SIZE = 16_KB;
@@ -99,13 +84,7 @@ private:
 
 	void device_start(LoadProgress *progress, std::vector<u8> *digest);
 	void device_reset();
-	void find_file(const char *name, const u8 *dir_sector, u32 &file_start, u32 &file_size);
 
-	inline void permutate(u32 &a, u32 &b, u32 m, int shift);
-	void des_generate_subkeys(u64 key, u32 *subkeys);
-	template<bool decrypt>
-	u64 des_encrypt_decrypt(u64 src, const u32 *des_subkeys);
-	u64 rev64(u64 src);
 	void read_gdrom(Disc *gdrom, u32 sector, u8* dst, u32 count = 1, LoadProgress *progress = nullptr);
 	void loadSegments(u32 offset, u32 size);
 	void systemCmd(int cmd);

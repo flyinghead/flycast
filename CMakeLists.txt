@@ -954,12 +954,15 @@ if(LIBRETRO)
 	target_sources(${PROJECT_NAME} PRIVATE
 		core/deps/libretro-common/memmap/memalign.c
 		core/deps/libretro-common/file/file_path.c
+		core/deps/libretro-common/file/file_path_io.c
 		core/deps/libretro-common/vfs/vfs_implementation.c
 		core/deps/libretro-common/encodings/encoding_utf.c
 		core/deps/libretro-common/compat/compat_strl.c
 		core/deps/libretro-common/compat/fopen_utf8.c
 		core/deps/libretro-common/compat/compat_strcasestr.c
 		core/deps/libretro-common/file/retro_dirent.c
+		core/deps/libretro-common/streams/file_stream.c
+		core/deps/libretro-common/time/rtime.c
 		core/deps/libretro-common/string/stdstring.c)
 	if(USE_OPENGL)
 		target_sources(${PROJECT_NAME} PRIVATE
@@ -984,6 +987,7 @@ if(LIBRETRO)
 		shell/libretro/LogManager.h
 		shell/libretro/option.cpp
 		shell/libretro/oslib.cpp
+		shell/libretro/storage.cpp
 		shell/libretro/vmu_xhair.cpp)
 	if(APPLE)
 		target_sources(${PROJECT_NAME} PRIVATE shell/libretro/oslib_apple.mm)
@@ -1109,12 +1113,14 @@ endif()
 
 target_sources(${PROJECT_NAME} PRIVATE
 		core/build.h
+		core/chd.h
 		core/cheats.cpp
 		core/cheats.h
 		core/emulator.h
 		core/nullDC.cpp
 		core/serialize.cpp
 		core/serialize.h
+		core/stbi.h
 		core/stdclass.cpp
 		core/stdclass.h
 		core/types.h

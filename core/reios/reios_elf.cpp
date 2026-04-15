@@ -33,7 +33,10 @@ bool reios_loadElf(const std::string& elf) {
 		return false;
 	}
 
-	bool phys = false;
+	Elf32_Ehdr const *header = (const Elf32_Ehdr *)elfFile.elfFile;
+	if (header->e_machine != EM_SH)
+		WARN_LOG(REIOS, "Elf file is not for Hitachi SH: machine %d", header->e_machine);
+
 	for (size_t i = 0; i < elf_getNumProgramHeaders(&elfFile); i++)
 	{
 		uint32_t type = elf_getProgramHeaderType(&elfFile, i);
@@ -41,24 +44,26 @@ bool reios_loadElf(const std::string& elf) {
 			DEBUG_LOG(REIOS, "Ignoring section %d type %d", (int)i, type);
 			continue;
 		}
-		// Load that section
-		uint64_t dest;
-		if (phys)
-			dest = elf_getProgramHeaderPaddr(&elfFile, i);
-		else
-			dest = elf_getProgramHeaderVaddr(&elfFile, i);
+		// Load/initialize that section
+		uint64_t dest = elf_getProgramHeaderVaddr(&elfFile, i);
 		size_t len = elf_getProgramHeaderFileSize(&elfFile, i);
 		void *src = (u8 *)(elfFile.elfFile) + elf_getProgramHeaderOffset(&elfFile, i);
-		u8* ptr = GetMemPtr(dest, len);
-		if (ptr == NULL)
-		{
-			WARN_LOG(REIOS, "Invalid load address for section %d: %08lx", (int)i, (long)dest);
+		size_t memsize = elf_getProgramHeaderMemorySize(&elfFile, i);
+		if (memsize < len) {
+			WARN_LOG(REIOS, "Invalid memory size for section %d: %lx", (int)i, (long)memsize);
 			continue;
 		}
-		DEBUG_LOG(REIOS, "Loading section %d to %08lx - %08lx", (int)i, (long)dest, (long)(dest + len - 1));
+		if (memsize == 0)
+			continue;
+		u8* ptr = GetMemPtr(dest, memsize);
+		if (ptr == nullptr)
+		{
+			WARN_LOG(REIOS, "Invalid load address or size for section %d: %08lx size %lx", (int)i, (long)dest, (long)memsize);
+			continue;
+		}
+		DEBUG_LOG(REIOS, "Loading section %d to %08lx - %08lx", (int)i, (long)dest, (long)(dest + memsize - 1));
 		memcpy(ptr, src, len);
-		ptr += len;
-		memset(ptr, 0, elf_getProgramHeaderMemorySize(&elfFile, i) - len);
+		memset(ptr + len, 0, memsize - len);
 	}
 	free(elfF);
 

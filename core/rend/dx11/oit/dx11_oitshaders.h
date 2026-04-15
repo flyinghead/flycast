@@ -67,6 +67,7 @@ private:
 	ComPtr<ID3DBlob> compileShader(const char *source, const char* function, const char* profile, const D3D_SHADER_MACRO *pDefines);
 	ComPtr<ID3D11VertexShader> compileVS(const char *source, const char* function, const D3D_SHADER_MACRO *pDefines);
 	ComPtr<ID3D11PixelShader> compilePS(const char *source, const char* function, const D3D_SHADER_MACRO *pDefines);
+	void checkMaxLayers();
 
 	ComPtr<ID3D11Device> device;
 	std::unordered_map<u32, ComPtr<ID3D11PixelShader>> shaders;

@@ -377,6 +377,13 @@ strip_end:
 		return data+SZ32;
 	}
 
+	static Ta_Dma* TACALL ta_poly_B_Invalid(Ta_Dma* data, Ta_Dma* data_end)
+	{
+		WARN_LOG(PVR, "ta_poly_B_Invalid");
+		TaCmd = ta_main;
+		return data + SZ32;
+	}
+
 	static Ta_Dma* TACALL ta_main(Ta_Dma* data, Ta_Dma* data_end)
 	{
 		while (data < data_end)
@@ -625,6 +632,10 @@ private:
 
 		poly_float_color(FaceBaseColor, FaceColor0);
 		poly_float_color(FaceBaseColor1, FaceColor1);
+	}
+
+	static void TACALL AppendPolyParamInvalid(void* vpp) {
+		WARN_LOG(PVR, "AppendPolyParamInvalid");
 	}
 
 	//Poly Strip handling

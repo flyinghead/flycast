@@ -41,6 +41,82 @@ struct FileInfo
 	u64 updateTime = 0;
 };
 
+class File
+{
+public:
+	virtual ~File() {}
+
+	virtual size_t read(void* buffer, size_t size, size_t count) = 0;
+	virtual size_t write(const void* buffer, size_t size, size_t count) = 0;
+	virtual s64 tell() = 0;
+	virtual int seek(s64 offset, int whence) = 0;
+	virtual char* gets(char* str, int count) = 0;
+	virtual s64 size() = 0;
+	virtual int eof() = 0;
+	virtual int error() = 0;
+};
+
+class StdFile : public File
+{
+protected:
+	FILE* const file;
+
+public:
+	StdFile(FILE* file)
+		: file(file)
+	{}
+
+	~StdFile() override
+	{
+		std::fclose(file);
+	}
+
+	size_t read(void* buffer, size_t size, size_t count) override
+	{
+		return std::fread(buffer, size, count, file);
+	}
+
+	size_t write(const void* buffer, size_t size, size_t count) override
+	{
+		return std::fwrite(buffer, size, count, file);
+	}
+
+	s64 tell() override
+	{
+		return std::ftell(file);
+	}
+
+	int seek(s64 offset, int whence) override
+	{
+		return std::fseek(file, offset, whence);
+	}
+
+	char* gets(char* str, int count) override
+	{
+		return std::fgets(str, count, file);
+	}
+
+	s64 size() override
+	{
+		std::fpos_t position;
+		std::fgetpos(file, &position);
+		std::fseek(file, 0, SEEK_END);
+		s64 size = tell();
+		std::fsetpos(file, &position);
+		return size;
+	}
+
+	int eof() override
+	{
+		return std::feof(file);
+	}
+
+	int error() override
+	{
+		return std::ferror(file);
+	}
+};
+
 class StorageException : public FlycastException
 {
 public:
@@ -52,7 +128,7 @@ class Storage
 public:
 	virtual bool isKnownPath(const std::string& path) = 0;
 	virtual std::vector<FileInfo> listContent(const std::string& path) = 0;
-	virtual FILE *openFile(const std::string& path, const std::string& mode) = 0;
+	virtual File *openFile(const std::string& path, const std::string& mode) = 0;
 	virtual std::string getParentPath(const std::string& path) = 0;
 	virtual std::string getSubPath(const std::string& reference, const std::string& subpath) = 0;
 	virtual FileInfo getFileInfo(const std::string& path) = 0;
@@ -74,7 +150,7 @@ public:
 	bool isKnownPath(const std::string& path) override { return true; }
 
 	std::vector<FileInfo> listContent(const std::string& path) override;
-	FILE *openFile(const std::string& path, const std::string& mode) override;
+	File *openFile(const std::string& path, const std::string& mode) override;
 	std::string getParentPath(const std::string& path) override;
 	std::string getSubPath(const std::string& reference, const std::string& subpath) override;
 	FileInfo getFileInfo(const std::string& path) override;
@@ -180,5 +256,7 @@ public:
 private:
 	const std::string& root;
 };
+
+CustomStorage& customStorage();
 
 }	// namespace hostfs

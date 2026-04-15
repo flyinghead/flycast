@@ -40,7 +40,7 @@ static void gui_settings_advanced()
 		ImGui::NextColumn();
 		OptionRadioButton(T("Interpreter"), config::DynarecEnabled, false,
 				T("Use the interpreter. Very slow but may help in case of a dynarec problem"));
-		ImGui::Columns(1, NULL, false);
+		ImGui::Columns(1, nullptr, false);
 
 		OptionSlider(T("SH4 Clock"), config::Sh4Clock, 100, 300,
 				T("Over/Underclock the main SH4 CPU. Default is 200 MHz. Other values may crash, freeze or trigger unexpected nuclear reactions."),
@@ -208,7 +208,7 @@ void gui_display_settings()
 	fullScreenWindow(false);
 	ImguiStyleVar _(ImGuiStyleVar_WindowRounding, 0);
 
-    ImGui::Begin(T("Settings"), NULL, ImGuiWindowFlags_DragScrolling | ImGuiWindowFlags_NoResize
+    ImGui::Begin(T("Settings"), nullptr, ImGuiWindowFlags_DragScrolling | ImGuiWindowFlags_NoResize
     		| ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
 	ImVec2 normal_padding = ImGui::GetStyle().FramePadding;
 

@@ -943,19 +943,25 @@ const ComPtr<ID3D11PixelShader>& DX11OITShaders::getModVolShader()
 	return modVolShader;
 }
 
-const ComPtr<ID3D11PixelShader>& DX11OITShaders::getFinalShader(bool dithering)
+void DX11OITShaders::checkMaxLayers()
 {
-	if (maxLayers != config::PerPixelLayers)
+	int layers = std::clamp<int>(config::PerPixelLayers, 1, 256);
+	if (maxLayers != layers)
 	{
 		for (auto& shader : finalShaders)
 			shader.reset();
 		for (auto& shader : trModVolShaders)
 			shader.reset();
-		maxLayers = config::PerPixelLayers;
+		maxLayers = layers;
 	}
+}
+
+const ComPtr<ID3D11PixelShader>& DX11OITShaders::getFinalShader(bool dithering)
+{
+	checkMaxLayers();
 	if (!finalShaders[dithering])
 	{
-		const std::string maxLayers{ std::to_string(config::PerPixelLayers) };
+		const std::string maxLayers{ std::to_string(this->maxLayers) };
 		D3D_SHADER_MACRO macros[]
 		{
 			{ "MAX_PIXELS_PER_FRAGMENT", maxLayers.c_str() },
@@ -977,19 +983,12 @@ const ComPtr<ID3D11VertexShader>& DX11OITShaders::getFinalVertexShader()
 
 const ComPtr<ID3D11PixelShader>& DX11OITShaders::getTrModVolShader(int type)
 {
-	if (maxLayers != config::PerPixelLayers)
-	{
-		for (auto& shader : finalShaders)
-			shader.reset();
-		for (auto& shader : trModVolShaders)
-			shader.reset();
-		maxLayers = config::PerPixelLayers;
-	}
+	checkMaxLayers();
 	bool divPosZ = !settings.platform.isNaomi2() && config::NativeDepthInterpolation;
 	ComPtr<ID3D11PixelShader>& shader = trModVolShaders[type | ((int)divPosZ << 3)];
 	if (!shader)
 	{
-		const std::string maxLayers{ std::to_string(config::PerPixelLayers) };
+		const std::string maxLayers{ std::to_string(this->maxLayers) };
 		D3D_SHADER_MACRO macros[]
 		{
 			{ "MV_MODE", MacroValues[type] },

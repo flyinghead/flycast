@@ -21,6 +21,7 @@
 
 #pragma once
 #include "types.h"
+#include "oslib/storage.h"
 
 class RZipFile
 {
@@ -28,15 +29,15 @@ public:
 	~RZipFile() { Close(); }
 
 	bool Open(const std::string& path, bool write);
-	bool Open(FILE *file, bool write);
+	bool Open(hostfs::File *file, bool write);
 	void Close();
 	size_t Size() const { return size; }
 	size_t Read(void *data, size_t length);
 	size_t Write(const void *data, size_t length);
-	FILE *rawFile() const { return file; }
+	hostfs::File *rawFile() const { return file; }
 
 private:
-	FILE *file = nullptr;
+	hostfs::File *file = nullptr;
 	u64 size = 0;
 	u32 maxChunkSize = 0;
 	u8 *chunk = nullptr;
