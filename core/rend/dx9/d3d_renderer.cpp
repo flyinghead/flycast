@@ -22,6 +22,7 @@
 #include "ui/gui.h"
 #include "rend/sorter.h"
 #include "oslib/i18n.h"
+#include <glm/gtx/transform.hpp>
 
 const u32 DstBlendGL[]
 {
