@@ -225,8 +225,7 @@ static void setupWindowMenu(void)
     [menuItem release];
     
     menuItem = [[NSMenuItem alloc] initWithTitle:@"Enter Full Screen" action:@selector(toggleFullScreen:) keyEquivalent:@"f"];
-    /* Hides Globe key from keyboard shortcuts, only prints it when user is holding the Globe key */
-    [menuItem setKeyEquivalentModifierMask:NSEventModifierFlagHelp];
+    [menuItem setKeyEquivalentModifierMask:NSEventModifierFlagFunction];
     [windowMenu addItem:menuItem];
     [menuItem release];
     

@@ -538,7 +538,7 @@ static u8 *loadImage(const std::string& path, int& width, int& height)
 		return nullptr;
 
 	int channels;
-	stbi_set_flip_vertically_on_load(0);
+	stbi_set_flip_vertically_on_load_thread(0);
 	u8 *imgData = stbi_load_from_file(file, &width, &height, &channels, STBI_rgb_alpha);
 	std::fclose(file);
 	return imgData;
@@ -608,7 +608,7 @@ ImTextureID ImguiStateTexture::getId()
 			return loadedPic;
 
 		int channels;
-		stbi_set_flip_vertically_on_load(0);
+		stbi_set_flip_vertically_on_load_thread(0);
 		loadedPic.data = stbi_load_from_memory(&pngData[0], pngData.size(), &loadedPic.width, &loadedPic.height, &channels, STBI_rgb_alpha);
 
 		return loadedPic;

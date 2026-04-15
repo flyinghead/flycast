@@ -39567,8 +39567,8 @@ struct retro_core_options_v2 options_ga = {
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_GL "Sons de sistemas/unidades de memoria visual (VMU)"
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_GL "Sons VMU"
 #define CORE_OPTION_NAME_VMU_SOUND_INFO_0_GL "Cando está activado, reprodúcense os pitidos VMU."
-#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_GL NULL
-#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_GL NULL
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_GL "Almacenamento de VMU de DreamPotato"
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_GL "Activa o almacenamento dos datos da VMU no emulador DreamPotato conectado. Cando está activado, non se utiliza o ficheiro local de gardado da VMU."
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_GL "Amosa as opcións de pantalla da Unidade/Sistema de Memoria visual (VMU)"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_GL "Amosa as opcións de pantalla da VMU"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_GL "Activa a configuración da visibilidade, tamaño, posición e cor da pantalla LCD VMU emulada. NOTA: É posible que teña que cambiar o menú rápido para que esta configuración teña efecto."
@@ -76458,6 +76458,2071 @@ struct retro_core_option_v2_definition option_defs_sv[] = {
 struct retro_core_options_v2 options_sv = {
    option_cats_sv,
    option_defs_sv
+};
+
+/* RETRO_LANGUAGE_TH */
+
+#define CATEGORY_SYSTEM_LABEL_TH NULL
+#define CATEGORY_SYSTEM_INFO_0_TH NULL
+#define CATEGORY_VIDEO_LABEL_TH "วิดีโอ"
+#define CATEGORY_VIDEO_INFO_0_TH NULL
+#define CATEGORY_PERFORMANCE_LABEL_TH NULL
+#define CATEGORY_PERFORMANCE_INFO_0_TH NULL
+#define CATEGORY_HACKS_LABEL_TH NULL
+#define CATEGORY_HACKS_INFO_0_TH NULL
+#define CATEGORY_INPUT_LABEL_TH "การควบคุม"
+#define CATEGORY_INPUT_INFO_0_TH NULL
+#define CATEGORY_EXPANSIONS_LABEL_TH NULL
+#define CATEGORY_EXPANSIONS_INFO_0_TH NULL
+#define CATEGORY_VMU_LABEL_TH NULL
+#define CATEGORY_VMU_INFO_0_TH NULL
+#define CORE_OPTION_NAME_REGION_LABEL_TH NULL
+#define OPTION_VAL_JAPAN_TH NULL
+#define OPTION_VAL_USA_TH NULL
+#define OPTION_VAL_EUROPE_TH NULL
+#define OPTION_VAL_DEFAULT_TH NULL
+#define CORE_OPTION_NAME_LANGUAGE_LABEL_TH NULL
+#define CORE_OPTION_NAME_LANGUAGE_INFO_0_TH NULL
+#define OPTION_VAL_JAPANESE_TH NULL
+#define OPTION_VAL_ENGLISH_TH NULL
+#define OPTION_VAL_GERMAN_TH NULL
+#define OPTION_VAL_FRENCH_TH NULL
+#define OPTION_VAL_SPANISH_TH NULL
+#define OPTION_VAL_ITALIAN_TH NULL
+#define CORE_OPTION_NAME_HLE_BIOS_LABEL_TH NULL
+#define CORE_OPTION_NAME_HLE_BIOS_INFO_0_TH NULL
+#define CORE_OPTION_NAME_ENABLE_DSP_LABEL_TH NULL
+#define CORE_OPTION_NAME_ENABLE_DSP_INFO_0_TH NULL
+#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_TH NULL
+#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_TH NULL
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_TH NULL
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_TH NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_TH NULL
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_TH NULL
+#define CORE_OPTION_NAME_UPNP_LABEL_TH NULL
+#define CORE_OPTION_NAME_UPNP_INFO_0_TH NULL
+#define CORE_OPTION_NAME_DCNET_LABEL_TH NULL
+#define CORE_OPTION_NAME_DCNET_INFO_0_TH NULL
+#define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_TH NULL
+#define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_TH NULL
+#define OPTION_VAL_320X240_TH NULL
+#define OPTION_VAL_640X480_TH NULL
+#define OPTION_VAL_800X600_TH NULL
+#define OPTION_VAL_960X720_TH NULL
+#define OPTION_VAL_1024X768_TH NULL
+#define OPTION_VAL_1280X960_TH NULL
+#define OPTION_VAL_1440X1080_TH NULL
+#define OPTION_VAL_1600X1200_TH NULL
+#define OPTION_VAL_1920X1440_TH NULL
+#define OPTION_VAL_2560X1920_TH NULL
+#define OPTION_VAL_2880X2160_TH NULL
+#define OPTION_VAL_3200X2400_TH NULL
+#define OPTION_VAL_3840X2880_TH NULL
+#define OPTION_VAL_4480X3360_TH NULL
+#define OPTION_VAL_5120X3840_TH NULL
+#define OPTION_VAL_5760X4320_TH NULL
+#define OPTION_VAL_6400X4800_TH NULL
+#define OPTION_VAL_7040X5280_TH NULL
+#define OPTION_VAL_7680X5760_TH NULL
+#define OPTION_VAL_8320X6240_TH NULL
+#define OPTION_VAL_8960X6720_TH NULL
+#define OPTION_VAL_9600X7200_TH NULL
+#define OPTION_VAL_10240X7680_TH NULL
+#define OPTION_VAL_10880X8160_TH NULL
+#define OPTION_VAL_11520X8640_TH NULL
+#define OPTION_VAL_12160X9120_TH NULL
+#define OPTION_VAL_12800X9600_TH NULL
+#define CORE_OPTION_NAME_CABLE_TYPE_LABEL_TH NULL
+#define CORE_OPTION_NAME_CABLE_TYPE_INFO_0_TH NULL
+#define OPTION_VAL_VGA_TH NULL
+#define OPTION_VAL_TV_RGB_TH NULL
+#define OPTION_VAL_TV_COMPOSITE_TH NULL
+#define CORE_OPTION_NAME_BROADCAST_LABEL_TH NULL
+#define OPTION_VAL_NTSC_TH NULL
+#define OPTION_VAL_PAL_TH NULL
+#define OPTION_VAL_PAL_N_TH NULL
+#define OPTION_VAL_PAL_M_TH NULL
+#define CORE_OPTION_NAME_SCREEN_ROTATION_LABEL_TH "การจัดวางหน้าจอ"
+#define OPTION_VAL_HORIZONTAL_TH NULL
+#define OPTION_VAL_VERTICAL_TH NULL
+#define CORE_OPTION_NAME_ALPHA_SORTING_LABEL_TH NULL
+#define CORE_OPTION_NAME_ALPHA_SORTING_INFO_0_TH NULL
+#define OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_TH NULL
+#define OPTION_VAL_PER_TRIANGLE_NORMAL_TH NULL
+#define OPTION_VAL_PER_PIXEL_ACCURATE_TH NULL
+#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_TH NULL
+#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_INFO_0_TH NULL
+#define OPTION_VAL_512MB_TH NULL
+#define OPTION_VAL_1GB_TH NULL
+#define OPTION_VAL_2GB_TH NULL
+#define OPTION_VAL_4GB_TH NULL
+#define CORE_OPTION_NAME_OIT_LAYERS_LABEL_TH NULL
+#define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_TH NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_TH NULL
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_TH NULL
+#define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_TH NULL
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_TH NULL
+#define CORE_OPTION_NAME_MIPMAPPING_LABEL_TH NULL
+#define CORE_OPTION_NAME_MIPMAPPING_INFO_0_TH NULL
+#define CORE_OPTION_NAME_FOG_LABEL_TH NULL
+#define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_TH NULL
+#define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_TH NULL
+#define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_LABEL_TH NULL
+#define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_TH NULL
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_TH NULL
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_TH NULL
+#define OPTION_VAL_1_TH NULL
+#define OPTION_VAL_2_TH NULL
+#define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_TH NULL
+#define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_TH NULL
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_TH NULL
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_TH NULL
+#define CORE_OPTION_NAME_PVR2_FILTERING_LABEL_TH NULL
+#define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_TH NULL
+#define CORE_OPTION_NAME_TEXUPSCALE_LABEL_TH NULL
+#define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_TH NULL
+#define OPTION_VAL_2_O26_TH NULL
+#define OPTION_VAL_4_TH NULL
+#define OPTION_VAL_6_TH NULL
+#define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_TH NULL
+#define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_INFO_0_TH NULL
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_TH NULL
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_TH NULL
+#define CORE_OPTION_NAME_FIX_UPSCALE_BLEEDING_EDGE_LABEL_TH NULL
+#define CORE_OPTION_NAME_FIX_UPSCALE_BLEEDING_EDGE_INFO_0_TH NULL
+#define CORE_OPTION_NAME_THREADED_RENDERING_LABEL_TH NULL
+#define CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_TH NULL
+#define CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_TH NULL
+#define CORE_OPTION_NAME_AUTO_SKIP_FRAME_INFO_0_TH NULL
+#define OPTION_VAL_SOME_TH NULL
+#define OPTION_VAL_MORE_TH NULL
+#define CORE_OPTION_NAME_FRAME_SKIPPING_LABEL_TH NULL
+#define CORE_OPTION_NAME_FRAME_SKIPPING_INFO_0_TH NULL
+#define CORE_OPTION_NAME_WIDESCREEN_CHEATS_LABEL_TH NULL
+#define CORE_OPTION_NAME_WIDESCREEN_CHEATS_INFO_0_TH NULL
+#define CORE_OPTION_NAME_WIDESCREEN_HACK_LABEL_TH NULL
+#define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_TH NULL
+#define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_TH NULL
+#define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_TH NULL
+#define CORE_OPTION_NAME_DC_32MB_MOD_LABEL_TH NULL
+#define CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_TH NULL
+#define CORE_OPTION_NAME_SH4CLOCK_LABEL_TH NULL
+#define CORE_OPTION_NAME_SH4CLOCK_INFO_0_TH NULL
+#define OPTION_VAL_100_TH NULL
+#define OPTION_VAL_110_TH NULL
+#define OPTION_VAL_120_TH NULL
+#define OPTION_VAL_130_TH NULL
+#define OPTION_VAL_140_TH NULL
+#define OPTION_VAL_150_TH NULL
+#define OPTION_VAL_160_TH NULL
+#define OPTION_VAL_170_TH NULL
+#define OPTION_VAL_180_TH NULL
+#define OPTION_VAL_190_TH NULL
+#define OPTION_VAL_200_TH NULL
+#define OPTION_VAL_210_TH NULL
+#define OPTION_VAL_220_TH NULL
+#define OPTION_VAL_230_TH NULL
+#define OPTION_VAL_240_TH NULL
+#define OPTION_VAL_250_TH NULL
+#define OPTION_VAL_260_TH NULL
+#define OPTION_VAL_270_TH NULL
+#define OPTION_VAL_280_TH NULL
+#define OPTION_VAL_290_TH NULL
+#define OPTION_VAL_300_TH NULL
+#define OPTION_VAL_310_TH NULL
+#define OPTION_VAL_320_TH NULL
+#define OPTION_VAL_330_TH NULL
+#define OPTION_VAL_340_TH NULL
+#define OPTION_VAL_350_TH NULL
+#define OPTION_VAL_360_TH NULL
+#define OPTION_VAL_370_TH NULL
+#define OPTION_VAL_380_TH NULL
+#define OPTION_VAL_390_TH NULL
+#define OPTION_VAL_400_TH NULL
+#define OPTION_VAL_410_TH NULL
+#define OPTION_VAL_420_TH NULL
+#define OPTION_VAL_430_TH NULL
+#define OPTION_VAL_440_TH NULL
+#define OPTION_VAL_450_TH NULL
+#define OPTION_VAL_460_TH NULL
+#define OPTION_VAL_470_TH NULL
+#define OPTION_VAL_480_TH NULL
+#define OPTION_VAL_490_TH NULL
+#define OPTION_VAL_500_TH NULL
+#define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_TH NULL
+#define CORE_OPTION_NAME_CUSTOM_TEXTURES_INFO_0_TH NULL
+#define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_LABEL_TH NULL
+#define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_INFO_0_TH NULL
+#define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_TH NULL
+#define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_TH NULL
+#define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_TH NULL
+#define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_INFO_0_TH NULL
+#define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_TH NULL
+#define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_INFO_0_TH NULL
+#define OPTION_VAL_0_TH NULL
+#define OPTION_VAL_5_TH NULL
+#define OPTION_VAL_10_TH NULL
+#define OPTION_VAL_15_TH NULL
+#define OPTION_VAL_20_TH NULL
+#define OPTION_VAL_25_TH NULL
+#define OPTION_VAL_30_TH NULL
+#define CORE_OPTION_NAME_TRIGGER_DEADZONE_LABEL_TH NULL
+#define CORE_OPTION_NAME_TRIGGER_DEADZONE_INFO_0_TH NULL
+#define CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_TH NULL
+#define CORE_OPTION_NAME_DIGITAL_TRIGGERS_INFO_0_TH NULL
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_TH NULL
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_TH NULL
+#define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_TH NULL
+#define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_TH NULL
+#define CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_TH NULL
+#define OPTION_VAL_50_TH NULL
+#define OPTION_VAL_60_TH NULL
+#define OPTION_VAL_70_TH NULL
+#define OPTION_VAL_80_TH NULL
+#define OPTION_VAL_90_TH NULL
+#define OPTION_VAL_100_O47_TH NULL
+#define OPTION_VAL_110_O47_TH NULL
+#define OPTION_VAL_120_O47_TH NULL
+#define OPTION_VAL_130_O47_TH NULL
+#define OPTION_VAL_140_O47_TH NULL
+#define OPTION_VAL_150_O47_TH NULL
+#define OPTION_VAL_160_O47_TH NULL
+#define OPTION_VAL_170_O47_TH NULL
+#define OPTION_VAL_180_O47_TH NULL
+#define OPTION_VAL_190_O47_TH NULL
+#define OPTION_VAL_200_O47_TH NULL
+#define OPTION_VAL_210_O47_TH NULL
+#define OPTION_VAL_220_O47_TH NULL
+#define OPTION_VAL_230_O47_TH NULL
+#define OPTION_VAL_240_O47_TH NULL
+#define OPTION_VAL_250_O47_TH NULL
+#define OPTION_VAL_260_O47_TH NULL
+#define OPTION_VAL_270_O47_TH NULL
+#define OPTION_VAL_280_O47_TH NULL
+#define OPTION_VAL_290_O47_TH NULL
+#define OPTION_VAL_300_O47_TH NULL
+#define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_TH NULL
+#define OPTION_VAL_WHITE_TH NULL
+#define OPTION_VAL_RED_TH NULL
+#define OPTION_VAL_GREEN_TH "เขียว"
+#define OPTION_VAL_BLUE_TH "น้ำเงิน"
+#define CORE_OPTION_NAME_LIGHTGUN2_CROSSHAIR_LABEL_TH NULL
+#define CORE_OPTION_NAME_LIGHTGUN3_CROSSHAIR_LABEL_TH NULL
+#define CORE_OPTION_NAME_LIGHTGUN4_CROSSHAIR_LABEL_TH NULL
+#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_LABEL_TH NULL
+#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_INFO_0_TH NULL
+#define OPTION_VAL_VMU_TH NULL
+#define OPTION_VAL_PURUPURU_TH NULL
+#define OPTION_VAL_DREAMPOTATO_TH NULL
+#define OPTION_VAL_NONE_TH NULL
+#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_LABEL_TH NULL
+#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_INFO_0_TH NULL
+#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT1_LABEL_TH NULL
+#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT1_INFO_0_TH NULL
+#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT2_LABEL_TH NULL
+#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT2_INFO_0_TH NULL
+#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT1_LABEL_TH NULL
+#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT1_INFO_0_TH NULL
+#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT2_LABEL_TH NULL
+#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT2_INFO_0_TH NULL
+#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT1_LABEL_TH NULL
+#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT1_INFO_0_TH NULL
+#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_LABEL_TH NULL
+#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_INFO_0_TH NULL
+#define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_TH NULL
+#define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CAT_TH NULL
+#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_TH NULL
+#define OPTION_VAL_VMU_A1_TH NULL
+#define OPTION_VAL_ALL_VMUS_TH NULL
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_TH NULL
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_TH NULL
+#define CORE_OPTION_NAME_VMU_SOUND_INFO_0_TH NULL
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_TH NULL
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_TH NULL
+#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_TH NULL
+#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_TH NULL
+#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_TH NULL
+#define CORE_OPTION_NAME_VMU1_SCREEN_DISPLAY_LABEL_TH NULL
+#define CORE_OPTION_NAME_VMU1_SCREEN_POSITION_LABEL_TH NULL
+#define OPTION_VAL_UPPER_LEFT_TH NULL
+#define OPTION_VAL_UPPER_RIGHT_TH NULL
+#define OPTION_VAL_LOWER_LEFT_TH NULL
+#define OPTION_VAL_LOWER_RIGHT_TH NULL
+#define CORE_OPTION_NAME_VMU1_SCREEN_SIZE_MULT_LABEL_TH NULL
+#define OPTION_VAL_1X_TH NULL
+#define OPTION_VAL_3X_TH NULL
+#define OPTION_VAL_5X_TH NULL
+#define CORE_OPTION_NAME_VMU1_PIXEL_ON_COLOR_LABEL_TH NULL
+#define OPTION_VAL_DEFAULT_ON_00_TH NULL
+#define OPTION_VAL_DEFAULT_OFF_01_TH NULL
+#define OPTION_VAL_BLACK_02_TH NULL
+#define OPTION_VAL_LIGHT_BLUE_04_TH NULL
+#define OPTION_VAL_CYAN_06_TH NULL
+#define OPTION_VAL_CYAN_BLUE_07_TH NULL
+#define OPTION_VAL_LIGHT_GREEN_08_TH NULL
+#define OPTION_VAL_CYAN_GREEN_09_TH NULL
+#define OPTION_VAL_LIGHT_CYAN_10_TH NULL
+#define OPTION_VAL_PURPLE_12_TH NULL
+#define OPTION_VAL_LIGHT_PURPLE_13_TH NULL
+#define OPTION_VAL_YELLOW_14_TH NULL
+#define OPTION_VAL_GRAY_15_TH NULL
+#define OPTION_VAL_LIGHT_PURPLE_2_16_TH NULL
+#define OPTION_VAL_LIGHT_GREEN_2_17_TH NULL
+#define OPTION_VAL_LIGHT_GREEN_3_18_TH NULL
+#define OPTION_VAL_LIGHT_CYAN_2_19_TH NULL
+#define OPTION_VAL_LIGHT_RED_2_20_TH NULL
+#define OPTION_VAL_MAGENTA_21_TH NULL
+#define OPTION_VAL_LIGHT_PURPLE_3_22_TH NULL
+#define OPTION_VAL_LIGHT_ORANGE_23_TH NULL
+#define OPTION_VAL_ORANGE_24_TH NULL
+#define OPTION_VAL_LIGHT_PURPLE_4_25_TH NULL
+#define OPTION_VAL_LIGHT_YELLOW_26_TH NULL
+#define OPTION_VAL_LIGHT_YELLOW_2_27_TH NULL
+#define CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_TH NULL
+#define CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_TH NULL
+#define OPTION_VAL_40_TH NULL
+#define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_TH NULL
+#define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_TH NULL
+#define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_TH NULL
+#define CORE_OPTION_NAME_VMU2_PIXEL_ON_COLOR_LABEL_TH NULL
+#define CORE_OPTION_NAME_VMU2_PIXEL_OFF_COLOR_LABEL_TH NULL
+#define CORE_OPTION_NAME_VMU2_SCREEN_OPACITY_LABEL_TH NULL
+#define CORE_OPTION_NAME_VMU3_SCREEN_DISPLAY_LABEL_TH NULL
+#define CORE_OPTION_NAME_VMU3_SCREEN_POSITION_LABEL_TH NULL
+#define CORE_OPTION_NAME_VMU3_SCREEN_SIZE_MULT_LABEL_TH NULL
+#define CORE_OPTION_NAME_VMU3_PIXEL_ON_COLOR_LABEL_TH NULL
+#define CORE_OPTION_NAME_VMU3_PIXEL_OFF_COLOR_LABEL_TH NULL
+#define CORE_OPTION_NAME_VMU3_SCREEN_OPACITY_LABEL_TH NULL
+#define CORE_OPTION_NAME_VMU4_SCREEN_DISPLAY_LABEL_TH NULL
+#define CORE_OPTION_NAME_VMU4_SCREEN_POSITION_LABEL_TH NULL
+#define CORE_OPTION_NAME_VMU4_SCREEN_SIZE_MULT_LABEL_TH NULL
+#define CORE_OPTION_NAME_VMU4_PIXEL_ON_COLOR_LABEL_TH NULL
+#define CORE_OPTION_NAME_VMU4_PIXEL_OFF_COLOR_LABEL_TH NULL
+#define CORE_OPTION_NAME_VMU4_SCREEN_OPACITY_LABEL_TH NULL
+
+struct retro_core_option_v2_category option_cats_th[] = {
+   {
+      "system",
+      CATEGORY_SYSTEM_LABEL_TH,
+      CATEGORY_SYSTEM_INFO_0_TH
+   },
+   {
+      "video",
+      CATEGORY_VIDEO_LABEL_TH,
+      CATEGORY_VIDEO_INFO_0_TH
+   },
+   {
+      "performance",
+      CATEGORY_PERFORMANCE_LABEL_TH,
+      CATEGORY_PERFORMANCE_INFO_0_TH
+   },
+   {
+      "hacks",
+      CATEGORY_HACKS_LABEL_TH,
+      CATEGORY_HACKS_INFO_0_TH
+   },
+   {
+      "input",
+      CATEGORY_INPUT_LABEL_TH,
+      CATEGORY_INPUT_INFO_0_TH
+   },
+   {
+      "expansions",
+      CATEGORY_EXPANSIONS_LABEL_TH,
+      CATEGORY_EXPANSIONS_INFO_0_TH
+   },
+   {
+      "vmu",
+      CATEGORY_VMU_LABEL_TH,
+      CATEGORY_VMU_INFO_0_TH
+   },
+   { NULL, NULL, NULL },
+};
+struct retro_core_option_v2_definition option_defs_th[] = {
+   {
+      CORE_OPTION_NAME "_region",
+      CORE_OPTION_NAME_REGION_LABEL_TH,
+      NULL,
+      "",
+      NULL,
+      "system",
+      {
+         { "Japan",   OPTION_VAL_JAPAN_TH },
+         { "USA",     OPTION_VAL_USA_TH },
+         { "Europe",  OPTION_VAL_EUROPE_TH },
+         { "Default", OPTION_VAL_DEFAULT_TH },
+         { NULL, NULL },
+      },
+      "USA",
+   },
+   {
+      CORE_OPTION_NAME "_language",
+      CORE_OPTION_NAME_LANGUAGE_LABEL_TH,
+      NULL,
+      CORE_OPTION_NAME_LANGUAGE_INFO_0_TH,
+      NULL,
+      "system",
+      {
+         { "Japanese", OPTION_VAL_JAPANESE_TH },
+         { "English",  OPTION_VAL_ENGLISH_TH },
+         { "German",   OPTION_VAL_GERMAN_TH },
+         { "French",   OPTION_VAL_FRENCH_TH },
+         { "Spanish",  OPTION_VAL_SPANISH_TH },
+         { "Italian",  OPTION_VAL_ITALIAN_TH },
+         { "Default",  OPTION_VAL_DEFAULT_TH },
+         { NULL, NULL },
+      },
+      "English",
+   },
+   {
+      CORE_OPTION_NAME "_hle_bios",
+      CORE_OPTION_NAME_HLE_BIOS_LABEL_TH,
+      NULL,
+      CORE_OPTION_NAME_HLE_BIOS_INFO_0_TH,
+      NULL,
+      "system",
+      {
+         { "disabled",  NULL },
+         { "enabled",  NULL },
+         { NULL, NULL},
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_enable_dsp",
+      CORE_OPTION_NAME_ENABLE_DSP_LABEL_TH,
+      NULL,
+      CORE_OPTION_NAME_ENABLE_DSP_INFO_0_TH,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+#ifdef LOW_END
+      "disabled",
+#else
+      "enabled",
+#endif
+   },
+   {
+      CORE_OPTION_NAME "_allow_service_buttons",
+      CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_TH,
+      NULL,
+      CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_TH,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_force_freeplay",
+      CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_TH,
+      NULL,
+      CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_TH,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+   {
+      CORE_OPTION_NAME "_emulate_bba",
+      CORE_OPTION_NAME_EMULATE_BBA_LABEL_TH,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_BBA_INFO_0_TH,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_upnp",
+      CORE_OPTION_NAME_UPNP_LABEL_TH,
+      NULL,
+      CORE_OPTION_NAME_UPNP_INFO_0_TH,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+   {
+      CORE_OPTION_NAME "_dcnet",
+      CORE_OPTION_NAME_DCNET_LABEL_TH,
+      NULL,
+      CORE_OPTION_NAME_DCNET_INFO_0_TH,
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+
+   {
+      CORE_OPTION_NAME "_internal_resolution",
+      CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_TH,
+      NULL,
+      CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_TH,
+      NULL,
+      "video",
+      {
+         { "320x240",    OPTION_VAL_320X240_TH },
+         { "640x480",    OPTION_VAL_640X480_TH },
+         { "800x600",    OPTION_VAL_800X600_TH },
+         { "960x720",    OPTION_VAL_960X720_TH },
+         { "1024x768",   OPTION_VAL_1024X768_TH },
+         { "1280x960",   OPTION_VAL_1280X960_TH },
+         { "1440x1080",  OPTION_VAL_1440X1080_TH },
+         { "1600x1200",  OPTION_VAL_1600X1200_TH },
+         { "1920x1440",  OPTION_VAL_1920X1440_TH },
+         { "2560x1920",  OPTION_VAL_2560X1920_TH },
+         { "2880x2160",  OPTION_VAL_2880X2160_TH },
+         { "3200x2400",  OPTION_VAL_3200X2400_TH },
+         { "3840x2880",  OPTION_VAL_3840X2880_TH },
+         { "4480x3360",  OPTION_VAL_4480X3360_TH },
+         { "5120x3840",  OPTION_VAL_5120X3840_TH },
+         { "5760x4320",  OPTION_VAL_5760X4320_TH },
+         { "6400x4800",  OPTION_VAL_6400X4800_TH },
+         { "7040x5280",  OPTION_VAL_7040X5280_TH },
+         { "7680x5760",  OPTION_VAL_7680X5760_TH },
+         { "8320x6240",  OPTION_VAL_8320X6240_TH },
+         { "8960x6720",  OPTION_VAL_8960X6720_TH },
+         { "9600x7200",  OPTION_VAL_9600X7200_TH },
+         { "10240x7680", OPTION_VAL_10240X7680_TH },
+         { "10880x8160", OPTION_VAL_10880X8160_TH },
+         { "11520x8640", OPTION_VAL_11520X8640_TH },
+         { "12160x9120", OPTION_VAL_12160X9120_TH },
+         { "12800x9600", OPTION_VAL_12800X9600_TH },
+         { NULL, NULL },
+      },
+#ifdef LOW_RES
+      "320x240",
+#else
+      "640x480",
+#endif
+   },
+   {
+      CORE_OPTION_NAME "_cable_type",
+      CORE_OPTION_NAME_CABLE_TYPE_LABEL_TH,
+      NULL,
+      CORE_OPTION_NAME_CABLE_TYPE_INFO_0_TH,
+      NULL,
+      "video",
+      {
+         { "VGA",	    	 OPTION_VAL_VGA_TH },
+         { "TV (RGB)",       OPTION_VAL_TV_RGB_TH },
+         { "TV (Composite)", OPTION_VAL_TV_COMPOSITE_TH },
+         { NULL, NULL },
+      },
+      "TV (Composite)",
+   },
+   {
+      CORE_OPTION_NAME "_broadcast",
+      CORE_OPTION_NAME_BROADCAST_LABEL_TH,
+      NULL,
+      "",
+      NULL,
+      "video",
+      {
+         { "NTSC",    OPTION_VAL_NTSC_TH },
+         { "PAL",     OPTION_VAL_PAL_TH },
+         { "PAL_N",   OPTION_VAL_PAL_N_TH },
+         { "PAL_M",   OPTION_VAL_PAL_M_TH },
+         { "Default", OPTION_VAL_DEFAULT_TH },
+         { NULL, NULL },
+      },
+      "NTSC",
+   },
+   {
+      CORE_OPTION_NAME "_screen_rotation",
+      CORE_OPTION_NAME_SCREEN_ROTATION_LABEL_TH,
+      NULL,
+      "",
+      NULL,
+      "video",
+      {
+         { "horizontal", OPTION_VAL_HORIZONTAL_TH },
+         { "vertical",   OPTION_VAL_VERTICAL_TH },
+         { NULL, NULL },
+      },
+      "horizontal",
+   },
+   {/* TODO: needs better explanation? */
+      CORE_OPTION_NAME "_alpha_sorting",
+      CORE_OPTION_NAME_ALPHA_SORTING_LABEL_TH,
+      NULL,
+      CORE_OPTION_NAME_ALPHA_SORTING_INFO_0_TH,
+      NULL,
+      "video",
+      {
+         { "per-strip (fast, least accurate)", OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_TH },
+         { "per-triangle (normal)",            OPTION_VAL_PER_TRIANGLE_NORMAL_TH },
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
+         { "per-pixel (accurate)",             OPTION_VAL_PER_PIXEL_ACCURATE_TH },
+#endif
+         { NULL, NULL },
+      },
+#if defined(LOW_END)
+      "per-strip (fast, least accurate)",
+#else
+      "per-triangle (normal)",
+#endif
+   },
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
+   {
+      CORE_OPTION_NAME "_oit_abuffer_size",
+      CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_TH,
+      NULL,
+      CORE_OPTION_NAME_OIT_ABUFFER_SIZE_INFO_0_TH,
+      NULL,
+      "video",
+      {
+         { "512MB", OPTION_VAL_512MB_TH },
+         { "1GB",   OPTION_VAL_1GB_TH },
+         { "2GB",   OPTION_VAL_2GB_TH },
+         { "4GB",   OPTION_VAL_4GB_TH },
+         { NULL, NULL },
+      },
+      "512MB",
+   },
+   {
+      CORE_OPTION_NAME "_oit_layers",
+      CORE_OPTION_NAME_OIT_LAYERS_LABEL_TH,
+      NULL,
+      CORE_OPTION_NAME_OIT_LAYERS_INFO_0_TH,
+      NULL,
+      "video",
+      {
+         { "8", NULL },
+         { "16",   NULL },
+         { "32",   NULL },
+         { "64",   NULL },
+         { "96",   NULL },
+         { "128",   NULL },
+         { NULL, NULL },
+      },
+      "32",
+   },
+#endif
+   {
+      CORE_OPTION_NAME "_emulate_framebuffer",
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_TH,
+      NULL,
+      CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_TH,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {/* TODO: needs explanation */
+      CORE_OPTION_NAME "_enable_rttb",
+      CORE_OPTION_NAME_ENABLE_RTTB_LABEL_TH,
+      NULL,
+      CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_TH,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_mipmapping",
+      CORE_OPTION_NAME_MIPMAPPING_LABEL_TH,
+      NULL,
+      CORE_OPTION_NAME_MIPMAPPING_INFO_0_TH,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+   {
+      CORE_OPTION_NAME "_fog",
+      CORE_OPTION_NAME_FOG_LABEL_TH,
+      NULL,
+      "",
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+   {
+      CORE_OPTION_NAME "_volume_modifier_enable",
+      CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_TH,
+      NULL,
+      CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_TH,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+   {
+      CORE_OPTION_NAME "_anisotropic_filtering",
+      CORE_OPTION_NAME_ANISOTROPIC_FILTERING_LABEL_TH,
+      NULL,
+      CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_TH,
+      NULL,
+      "video",
+      {
+         { "off", "disabled" },
+         { "2",  NULL },
+         { "4",  NULL },
+         { "8",  NULL },
+         { "16",  NULL },
+         { NULL, NULL },
+      },
+      "4",
+   },
+   {
+      CORE_OPTION_NAME "_texture_filtering",
+      CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_TH,
+      NULL,
+      CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_TH,
+      NULL,
+      "video",
+      {
+         { "0", OPTION_VAL_DEFAULT_TH },
+         { "1",  OPTION_VAL_1_TH },
+         { "2",  OPTION_VAL_2_TH },
+         { NULL, NULL },
+      },
+      "0",
+   },
+   {
+      CORE_OPTION_NAME "_delay_frame_swapping",
+      CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_TH,
+      NULL,
+      CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_TH,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+   {
+      CORE_OPTION_NAME "_detect_vsync_swap_interval",
+      CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_TH,
+      NULL,
+      CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_TH,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_pvr2_filtering",
+      CORE_OPTION_NAME_PVR2_FILTERING_LABEL_TH,
+      NULL,
+      CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_TH,
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+#ifdef _OPENMP
+   {
+      CORE_OPTION_NAME "_texupscale",
+      CORE_OPTION_NAME_TEXUPSCALE_LABEL_TH,
+      NULL,
+      CORE_OPTION_NAME_TEXUPSCALE_INFO_0_TH,
+      NULL,
+      "video",
+      {
+         { "1", "disabled" },
+         { "2",  OPTION_VAL_2_O26_TH },
+         { "4",  OPTION_VAL_4_TH },
+         { "6",  OPTION_VAL_6_TH },
+         { NULL, NULL },
+      },
+      "1",
+   },
+   {
+      CORE_OPTION_NAME "_texupscale_max_filtered_texture_size",
+      CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_TH,
+      NULL,
+      CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_INFO_0_TH,
+      NULL,
+      "video",
+      {
+         { "256",  NULL },
+         { "512",  NULL },
+         { "1024", NULL },
+         { NULL, NULL },
+      },
+      "256",
+   },
+#endif
+   {
+      CORE_OPTION_NAME "_native_depth_interpolation",
+	  CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_TH,
+	  NULL,
+	  CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_TH,
+	  NULL,
+	  "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_fix_upscale_bleeding_edge",
+	  CORE_OPTION_NAME_FIX_UPSCALE_BLEEDING_EDGE_LABEL_TH,
+	  NULL,
+	  CORE_OPTION_NAME_FIX_UPSCALE_BLEEDING_EDGE_INFO_0_TH,
+	  NULL,
+	  "video",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+   {
+      CORE_OPTION_NAME "_threaded_rendering",
+      CORE_OPTION_NAME_THREADED_RENDERING_LABEL_TH,
+      NULL,
+      CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_TH,
+      NULL,
+      "performance",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+   {
+      CORE_OPTION_NAME "_auto_skip_frame",
+      CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_TH,
+      NULL,
+      CORE_OPTION_NAME_AUTO_SKIP_FRAME_INFO_0_TH,
+      NULL,
+      "performance",
+      {
+         { "disabled", NULL },
+         { "some", OPTION_VAL_SOME_TH },
+         { "more", OPTION_VAL_MORE_TH },
+         { NULL, NULL },
+      },
+#ifdef LOW_END
+      "some",
+#else
+      "disabled",
+#endif
+   },
+   {
+      CORE_OPTION_NAME "_frame_skipping",
+      CORE_OPTION_NAME_FRAME_SKIPPING_LABEL_TH,
+      NULL,
+      CORE_OPTION_NAME_FRAME_SKIPPING_INFO_0_TH,
+      NULL,
+      "performance",
+      {
+         { "disabled",  NULL },
+         { "1",         NULL },
+         { "2",         NULL },
+         { "3",         NULL },
+         { "4",         NULL },
+         { "5",         NULL },
+         { "6",         NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_widescreen_cheats",
+      CORE_OPTION_NAME_WIDESCREEN_CHEATS_LABEL_TH,
+      NULL,
+      CORE_OPTION_NAME_WIDESCREEN_CHEATS_INFO_0_TH,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_widescreen_hack",
+      CORE_OPTION_NAME_WIDESCREEN_HACK_LABEL_TH,
+      NULL,
+      CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_TH,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_gdrom_fast_loading",
+      CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_TH,
+      NULL,
+      CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_TH,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+#ifdef LOW_END
+      "enabled",
+#else
+      "disabled",
+#endif
+   },
+   {
+      CORE_OPTION_NAME "_dc_32mb_mod",
+      CORE_OPTION_NAME_DC_32MB_MOD_LABEL_TH,
+      NULL,
+      CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_TH,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled", NULL },
+         {  NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_sh4clock",
+      CORE_OPTION_NAME_SH4CLOCK_LABEL_TH,
+      NULL,
+      CORE_OPTION_NAME_SH4CLOCK_INFO_0_TH,
+      NULL,
+      "hacks",
+      {
+         { "100", OPTION_VAL_100_TH },
+         { "110", OPTION_VAL_110_TH },
+         { "120", OPTION_VAL_120_TH },
+         { "130", OPTION_VAL_130_TH },
+         { "140", OPTION_VAL_140_TH },
+         { "150", OPTION_VAL_150_TH },
+         { "160", OPTION_VAL_160_TH },
+         { "170", OPTION_VAL_170_TH },
+         { "180", OPTION_VAL_180_TH },
+         { "190", OPTION_VAL_190_TH },
+         { "200", OPTION_VAL_200_TH },
+         { "210", OPTION_VAL_210_TH },
+         { "220", OPTION_VAL_220_TH },
+         { "230", OPTION_VAL_230_TH },
+         { "240", OPTION_VAL_240_TH },
+         { "250", OPTION_VAL_250_TH },
+         { "260", OPTION_VAL_260_TH },
+         { "270", OPTION_VAL_270_TH },
+         { "280", OPTION_VAL_280_TH },
+         { "290", OPTION_VAL_290_TH },
+         { "300", OPTION_VAL_300_TH },
+         { "310", OPTION_VAL_310_TH },
+         { "320", OPTION_VAL_320_TH },
+         { "330", OPTION_VAL_330_TH },
+         { "340", OPTION_VAL_340_TH },
+         { "350", OPTION_VAL_350_TH },
+         { "360", OPTION_VAL_360_TH },
+         { "370", OPTION_VAL_370_TH },
+         { "380", OPTION_VAL_380_TH },
+         { "390", OPTION_VAL_390_TH },
+         { "400", OPTION_VAL_400_TH },
+         { "410", OPTION_VAL_410_TH },
+         { "420", OPTION_VAL_420_TH },
+         { "430", OPTION_VAL_430_TH },
+         { "440", OPTION_VAL_440_TH },
+         { "450", OPTION_VAL_450_TH },
+         { "460", OPTION_VAL_460_TH },
+         { "470", OPTION_VAL_470_TH },
+         { "480", OPTION_VAL_480_TH },
+         { "490", OPTION_VAL_490_TH },
+         { "500", OPTION_VAL_500_TH },
+         { NULL, NULL },
+      },
+      "200",
+   },
+   {
+      CORE_OPTION_NAME "_custom_textures",
+      CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_TH,
+      NULL,
+      CORE_OPTION_NAME_CUSTOM_TEXTURES_INFO_0_TH,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_preload_custom_textures",
+      CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_LABEL_TH,
+      NULL,
+      CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_INFO_0_TH,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_dump_textures",
+      CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_TH,
+      NULL,
+      CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_TH,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_dump_replaced_textures",
+      CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_TH,
+      NULL,
+      CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_INFO_0_TH,
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_analog_stick_deadzone",
+      CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_TH,
+      NULL,
+      CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_INFO_0_TH,
+      NULL,
+      "input",
+      {
+         { "0%",  OPTION_VAL_0_TH },
+         { "5%",  OPTION_VAL_5_TH },
+         { "10%", OPTION_VAL_10_TH },
+         { "15%", OPTION_VAL_15_TH },
+         { "20%", OPTION_VAL_20_TH },
+         { "25%", OPTION_VAL_25_TH },
+         { "30%", OPTION_VAL_30_TH },
+         { NULL, NULL },
+      },
+      "15%",
+   },
+   {
+      CORE_OPTION_NAME "_trigger_deadzone",
+      CORE_OPTION_NAME_TRIGGER_DEADZONE_LABEL_TH,
+      NULL,
+      CORE_OPTION_NAME_TRIGGER_DEADZONE_INFO_0_TH,
+      NULL,
+      "input",
+      {
+         { "0%",  OPTION_VAL_0_TH },
+         { "5%",  OPTION_VAL_5_TH },
+         { "10%", OPTION_VAL_10_TH },
+         { "15%", OPTION_VAL_15_TH },
+         { "20%", OPTION_VAL_20_TH },
+         { "25%", OPTION_VAL_25_TH },
+         { "30%", OPTION_VAL_30_TH },
+         { NULL, NULL },
+      },
+      "0%",
+   },
+   {
+      CORE_OPTION_NAME "_digital_triggers",
+      CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_TH,
+      NULL,
+      CORE_OPTION_NAME_DIGITAL_TRIGGERS_INFO_0_TH,
+      NULL,
+      "input",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+	  CORE_OPTION_NAME "_network_output",
+      CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_TH,
+      NULL,
+      CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_TH,
+      NULL,
+      "input",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_show_lightgun_settings",
+      CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_TH,
+      NULL,
+      CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_TH,
+      NULL,
+      "input",
+      {
+         { "enabled",  NULL },
+         { "disabled", NULL },
+         { NULL, NULL},
+      },
+      "disabled"
+   },
+   {
+      CORE_OPTION_NAME "_lightgun_crosshair_size_scaling",
+      CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_TH,
+      NULL,
+      "",
+      NULL,
+      "input",
+      {
+         { "50%",  OPTION_VAL_50_TH },
+         { "60%",  OPTION_VAL_60_TH },
+         { "70%",  OPTION_VAL_70_TH },
+         { "80%",  OPTION_VAL_80_TH },
+         { "90%",  OPTION_VAL_90_TH },
+         { "100%", OPTION_VAL_100_O47_TH },
+         { "110%", OPTION_VAL_110_O47_TH },
+         { "120%", OPTION_VAL_120_O47_TH },
+         { "130%", OPTION_VAL_130_O47_TH },
+         { "140%", OPTION_VAL_140_O47_TH },
+         { "150%", OPTION_VAL_150_O47_TH },
+         { "160%", OPTION_VAL_160_O47_TH },
+         { "170%", OPTION_VAL_170_O47_TH },
+         { "180%", OPTION_VAL_180_O47_TH },
+         { "190%", OPTION_VAL_190_O47_TH },
+         { "200%", OPTION_VAL_200_O47_TH },
+         { "210%", OPTION_VAL_210_O47_TH },
+         { "220%", OPTION_VAL_220_O47_TH },
+         { "230%", OPTION_VAL_230_O47_TH },
+         { "240%", OPTION_VAL_240_O47_TH },
+         { "250%", OPTION_VAL_250_O47_TH },
+         { "260%", OPTION_VAL_260_O47_TH },
+         { "270%", OPTION_VAL_270_O47_TH },
+         { "280%", OPTION_VAL_280_O47_TH },
+         { "290%", OPTION_VAL_290_O47_TH },
+         { "300%", OPTION_VAL_300_O47_TH },
+         { NULL,   NULL },
+      },
+      "100%",
+   },
+   {
+      CORE_OPTION_NAME "_lightgun1_crosshair",
+      CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_TH,
+      NULL,
+      "",
+      NULL,
+      "input",
+      {
+         { "disabled", NULL },
+         { "White",    OPTION_VAL_WHITE_TH },
+         { "Red",      OPTION_VAL_RED_TH },
+         { "Green",    OPTION_VAL_GREEN_TH },
+         { "Blue",     OPTION_VAL_BLUE_TH },
+         { NULL,       NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_lightgun2_crosshair",
+      CORE_OPTION_NAME_LIGHTGUN2_CROSSHAIR_LABEL_TH,
+      NULL,
+      "",
+      NULL,
+      "input",
+      {
+         { "disabled", NULL },
+         { "White",    OPTION_VAL_WHITE_TH },
+         { "Red",      OPTION_VAL_RED_TH },
+         { "Green",    OPTION_VAL_GREEN_TH },
+         { "Blue",     OPTION_VAL_BLUE_TH },
+         { NULL,       NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_lightgun3_crosshair",
+      CORE_OPTION_NAME_LIGHTGUN3_CROSSHAIR_LABEL_TH,
+      NULL,
+      "",
+      NULL,
+      "input",
+      {
+         { "disabled", NULL },
+         { "White",    OPTION_VAL_WHITE_TH },
+         { "Red",      OPTION_VAL_RED_TH },
+         { "Green",    OPTION_VAL_GREEN_TH },
+         { "Blue",     OPTION_VAL_BLUE_TH },
+         { NULL,       NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_lightgun4_crosshair",
+      CORE_OPTION_NAME_LIGHTGUN4_CROSSHAIR_LABEL_TH,
+      NULL,
+      "",
+      NULL,
+      "input",
+      {
+         { "disabled", NULL },
+         { "White",    OPTION_VAL_WHITE_TH },
+         { "Red",      OPTION_VAL_RED_TH },
+         { "Green",    OPTION_VAL_GREEN_TH },
+         { "Blue",     OPTION_VAL_BLUE_TH },
+         { NULL,       NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_device_port1_slot1",
+      CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_LABEL_TH,
+      NULL,
+      CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_INFO_0_TH,
+      NULL,
+      "expansions",
+      {
+         { "VMU",      OPTION_VAL_VMU_TH },
+         { "Purupuru", OPTION_VAL_PURUPURU_TH },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_TH },
+         { "None",     OPTION_VAL_NONE_TH },
+         { NULL, NULL },
+      },
+      "VMU",
+   },
+   {
+      CORE_OPTION_NAME "_device_port1_slot2",
+      CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_LABEL_TH,
+      NULL,
+      CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_INFO_0_TH,
+      NULL,
+      "expansions",
+      {
+         { "VMU",      OPTION_VAL_VMU_TH },
+         { "Purupuru", OPTION_VAL_PURUPURU_TH },
+         { "None",     OPTION_VAL_NONE_TH },
+         { NULL, NULL },
+      },
+      "Purupuru",
+   },
+   {
+      CORE_OPTION_NAME "_device_port2_slot1",
+      CORE_OPTION_NAME_DEVICE_PORT2_SLOT1_LABEL_TH,
+      NULL,
+      CORE_OPTION_NAME_DEVICE_PORT2_SLOT1_INFO_0_TH,
+      NULL,
+      "expansions",
+      {
+         { "VMU",      OPTION_VAL_VMU_TH },
+         { "Purupuru", OPTION_VAL_PURUPURU_TH },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_TH },
+         { "None",     OPTION_VAL_NONE_TH },
+         { NULL, NULL },
+      },
+      "VMU",
+   },
+   {
+      CORE_OPTION_NAME "_device_port2_slot2",
+      CORE_OPTION_NAME_DEVICE_PORT2_SLOT2_LABEL_TH,
+      NULL,
+      CORE_OPTION_NAME_DEVICE_PORT2_SLOT2_INFO_0_TH,
+      NULL,
+      "expansions",
+      {
+         { "VMU",      OPTION_VAL_VMU_TH },
+         { "Purupuru", OPTION_VAL_PURUPURU_TH },
+         { "None",     OPTION_VAL_NONE_TH },
+         { NULL, NULL },
+      },
+      "Purupuru",
+   },
+   {
+      CORE_OPTION_NAME "_device_port3_slot1",
+      CORE_OPTION_NAME_DEVICE_PORT3_SLOT1_LABEL_TH,
+      NULL,
+      CORE_OPTION_NAME_DEVICE_PORT3_SLOT1_INFO_0_TH,
+      NULL,
+      "expansions",
+      {
+         { "VMU",      OPTION_VAL_VMU_TH },
+         { "Purupuru", OPTION_VAL_PURUPURU_TH },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_TH },
+         { "None",     OPTION_VAL_NONE_TH },
+         { NULL, NULL },
+      },
+      "VMU",
+   },
+   {
+      CORE_OPTION_NAME "_device_port3_slot2",
+      CORE_OPTION_NAME_DEVICE_PORT3_SLOT2_LABEL_TH,
+      NULL,
+      CORE_OPTION_NAME_DEVICE_PORT3_SLOT2_INFO_0_TH,
+      NULL,
+      "expansions",
+      {
+         { "VMU",      OPTION_VAL_VMU_TH },
+         { "Purupuru", OPTION_VAL_PURUPURU_TH },
+         { "None",     OPTION_VAL_NONE_TH },
+         { NULL, NULL },
+      },
+      "Purupuru",
+   },
+   {
+      CORE_OPTION_NAME "_device_port4_slot1",
+      CORE_OPTION_NAME_DEVICE_PORT4_SLOT1_LABEL_TH,
+      NULL,
+      CORE_OPTION_NAME_DEVICE_PORT4_SLOT1_INFO_0_TH,
+      NULL,
+      "expansions",
+      {
+         { "VMU",      OPTION_VAL_VMU_TH },
+         { "Purupuru", OPTION_VAL_PURUPURU_TH },
+         { "DreamPotato", OPTION_VAL_DREAMPOTATO_TH },
+         { "None",     OPTION_VAL_NONE_TH },
+         { NULL, NULL },
+      },
+      "VMU",
+   },
+   {
+      CORE_OPTION_NAME "_device_port4_slot2",
+      CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_LABEL_TH,
+      NULL,
+      CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_INFO_0_TH,
+      NULL,
+      "expansions",
+      {
+         { "VMU",      OPTION_VAL_VMU_TH },
+         { "Purupuru", OPTION_VAL_PURUPURU_TH },
+         { "None",     OPTION_VAL_NONE_TH },
+         { NULL, NULL },
+      },
+      "Purupuru",
+   },
+   {
+      CORE_OPTION_NAME "_per_content_vmus",
+      CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_TH,
+      CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CAT_TH,
+      CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_TH,
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "VMU A1",   OPTION_VAL_VMU_A1_TH },
+         { "All VMUs", OPTION_VAL_ALL_VMUS_TH },
+         { NULL, NULL},
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_vmu_sound",
+      CORE_OPTION_NAME_VMU_SOUND_LABEL_TH,
+      CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_TH,
+      CORE_OPTION_NAME_VMU_SOUND_INFO_0_TH,
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",   NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_linked_vmu_storage",
+      CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_TH,
+      NULL,
+      CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_TH,
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",   NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_show_vmu_screen_settings",
+      CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_TH,
+      CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_TH,
+      CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_TH,
+      NULL,
+      "vmu",
+      {
+         { "enabled",  NULL },
+         { "disabled", NULL },
+         { NULL, NULL},
+      },
+      "disabled"
+   },
+   {
+      CORE_OPTION_NAME "_vmu1_screen_display",
+      CORE_OPTION_NAME_VMU1_SCREEN_DISPLAY_LABEL_TH,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_vmu1_screen_position",
+      CORE_OPTION_NAME_VMU1_SCREEN_POSITION_LABEL_TH,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "Upper Left",  OPTION_VAL_UPPER_LEFT_TH },
+         { "Upper Right", OPTION_VAL_UPPER_RIGHT_TH },
+         { "Lower Left",  OPTION_VAL_LOWER_LEFT_TH },
+         { "Lower Right", OPTION_VAL_LOWER_RIGHT_TH },
+         { NULL, NULL },
+      },
+      "Upper Left",
+   },
+   {
+      CORE_OPTION_NAME "_vmu1_screen_size_mult",
+      CORE_OPTION_NAME_VMU1_SCREEN_SIZE_MULT_LABEL_TH,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "1x", OPTION_VAL_1X_TH },
+         { "2x", OPTION_VAL_2_O26_TH },
+         { "3x", OPTION_VAL_3X_TH },
+         { "4x", OPTION_VAL_4_TH },
+         { "5x", OPTION_VAL_5X_TH },
+         { NULL, NULL },
+      },
+      "1x",
+   },
+   {
+      CORE_OPTION_NAME "_vmu1_pixel_on_color",
+      CORE_OPTION_NAME_VMU1_PIXEL_ON_COLOR_LABEL_TH,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "DEFAULT_ON 00",  OPTION_VAL_DEFAULT_ON_00_TH },
+         { "DEFAULT_OFF 01", OPTION_VAL_DEFAULT_OFF_01_TH },
+         { "BLACK 02",          OPTION_VAL_BLACK_02_TH },
+         { "BLUE 03",           OPTION_VAL_BLUE_TH },
+         { "LIGHT_BLUE 04",     OPTION_VAL_LIGHT_BLUE_04_TH },
+         { "GREEN 05",          OPTION_VAL_GREEN_TH },
+         { "CYAN 06",           OPTION_VAL_CYAN_06_TH },
+         { "CYAN_BLUE 07",      OPTION_VAL_CYAN_BLUE_07_TH },
+         { "LIGHT_GREEN 08",    OPTION_VAL_LIGHT_GREEN_08_TH },
+         { "CYAN_GREEN 09",     OPTION_VAL_CYAN_GREEN_09_TH },
+         { "LIGHT_CYAN 10",     OPTION_VAL_LIGHT_CYAN_10_TH },
+         { "RED 11",            OPTION_VAL_RED_TH },
+         { "PURPLE 12",         OPTION_VAL_PURPLE_12_TH },
+         { "LIGHT_PURPLE 13",   OPTION_VAL_LIGHT_PURPLE_13_TH },
+         { "YELLOW 14",         OPTION_VAL_YELLOW_14_TH },
+         { "GRAY 15",           OPTION_VAL_GRAY_15_TH },
+         { "LIGHT_PURPLE_2 16", OPTION_VAL_LIGHT_PURPLE_2_16_TH },
+         { "LIGHT_GREEN_2 17",  OPTION_VAL_LIGHT_GREEN_2_17_TH },
+         { "LIGHT_GREEN_3 18",  OPTION_VAL_LIGHT_GREEN_3_18_TH },
+         { "LIGHT_CYAN_2 19",   OPTION_VAL_LIGHT_CYAN_2_19_TH },
+         { "LIGHT_RED_2 20",    OPTION_VAL_LIGHT_RED_2_20_TH },
+         { "MAGENTA 21",        OPTION_VAL_MAGENTA_21_TH },
+         { "LIGHT_PURPLE_3 22",   OPTION_VAL_LIGHT_PURPLE_3_22_TH },
+         { "LIGHT_ORANGE 23",   OPTION_VAL_LIGHT_ORANGE_23_TH },
+         { "ORANGE 24",         OPTION_VAL_ORANGE_24_TH },
+         { "LIGHT_PURPLE_4 25", OPTION_VAL_LIGHT_PURPLE_4_25_TH },
+         { "LIGHT_YELLOW 26",   OPTION_VAL_LIGHT_YELLOW_26_TH },
+         { "LIGHT_YELLOW_2 27", OPTION_VAL_LIGHT_YELLOW_2_27_TH },
+         { "WHITE 28",          OPTION_VAL_WHITE_TH },
+         { NULL, NULL },
+      },
+      "DEFAULT_ON 00",
+   },
+   {
+      CORE_OPTION_NAME "_vmu1_pixel_off_color",
+      CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_TH,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "DEFAULT_OFF 01", OPTION_VAL_DEFAULT_OFF_01_TH },
+         { "DEFAULT_ON 00",  OPTION_VAL_DEFAULT_ON_00_TH },
+         { "BLACK 02",          OPTION_VAL_BLACK_02_TH },
+         { "BLUE 03",           OPTION_VAL_BLUE_TH },
+         { "LIGHT_BLUE 04",     OPTION_VAL_LIGHT_BLUE_04_TH },
+         { "GREEN 05",          OPTION_VAL_GREEN_TH },
+         { "CYAN 06",           OPTION_VAL_CYAN_06_TH },
+         { "CYAN_BLUE 07",      OPTION_VAL_CYAN_BLUE_07_TH },
+         { "LIGHT_GREEN 08",    OPTION_VAL_LIGHT_GREEN_08_TH },
+         { "CYAN_GREEN 09",     OPTION_VAL_CYAN_GREEN_09_TH },
+         { "LIGHT_CYAN 10",     OPTION_VAL_LIGHT_CYAN_10_TH },
+         { "RED 11",            OPTION_VAL_RED_TH },
+         { "PURPLE 12",         OPTION_VAL_PURPLE_12_TH },
+         { "LIGHT_PURPLE 13",   OPTION_VAL_LIGHT_PURPLE_13_TH },
+         { "YELLOW 14",         OPTION_VAL_YELLOW_14_TH },
+         { "GRAY 15",           OPTION_VAL_GRAY_15_TH },
+         { "LIGHT_PURPLE_2 16", OPTION_VAL_LIGHT_PURPLE_2_16_TH },
+         { "LIGHT_GREEN_2 17",  OPTION_VAL_LIGHT_GREEN_2_17_TH },
+         { "LIGHT_GREEN_3 18",  OPTION_VAL_LIGHT_GREEN_3_18_TH },
+         { "LIGHT_CYAN_2 19",   OPTION_VAL_LIGHT_CYAN_2_19_TH },
+         { "LIGHT_RED_2 20",    OPTION_VAL_LIGHT_RED_2_20_TH },
+         { "MAGENTA 21",        OPTION_VAL_MAGENTA_21_TH },
+         { "LIGHT_PURPLE_3 22",   OPTION_VAL_LIGHT_PURPLE_3_22_TH },
+         { "LIGHT_ORANGE 23",   OPTION_VAL_LIGHT_ORANGE_23_TH },
+         { "ORANGE 24",         OPTION_VAL_ORANGE_24_TH },
+         { "LIGHT_PURPLE_4 25", OPTION_VAL_LIGHT_PURPLE_4_25_TH },
+         { "LIGHT_YELLOW 26",   OPTION_VAL_LIGHT_YELLOW_26_TH },
+         { "LIGHT_YELLOW_2 27", OPTION_VAL_LIGHT_YELLOW_2_27_TH },
+         { "WHITE 28",          OPTION_VAL_WHITE_TH },
+         { NULL, NULL },
+      },
+      "DEFAULT_OFF 01",
+   },
+   {
+      CORE_OPTION_NAME "_vmu1_screen_opacity",
+      CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_TH,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "10%",  OPTION_VAL_10_TH },
+         { "20%",  OPTION_VAL_20_TH },
+         { "30%",  OPTION_VAL_30_TH },
+         { "40%",  OPTION_VAL_40_TH },
+         { "50%",  OPTION_VAL_50_TH },
+         { "60%",  OPTION_VAL_60_TH },
+         { "70%",  OPTION_VAL_70_TH },
+         { "80%",  OPTION_VAL_80_TH },
+         { "90%",  OPTION_VAL_90_TH },
+         { "100%", OPTION_VAL_100_O47_TH },
+         { NULL,   NULL },
+      },
+      "100%",
+   },
+   {
+      CORE_OPTION_NAME "_vmu2_screen_display",
+      CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_TH,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_vmu2_screen_position",
+      CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_TH,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "Upper Left",  OPTION_VAL_UPPER_LEFT_TH },
+         { "Upper Right", OPTION_VAL_UPPER_RIGHT_TH },
+         { "Lower Left",  OPTION_VAL_LOWER_LEFT_TH },
+         { "Lower Right", OPTION_VAL_LOWER_RIGHT_TH },
+         { NULL, NULL },
+      },
+      "Upper Right",
+   },
+   {
+      CORE_OPTION_NAME "_vmu2_screen_size_mult",
+      CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_TH,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "1x", OPTION_VAL_1X_TH },
+         { "2x", OPTION_VAL_2_O26_TH },
+         { "3x", OPTION_VAL_3X_TH },
+         { "4x", OPTION_VAL_4_TH },
+         { "5x", OPTION_VAL_5X_TH },
+         { NULL, NULL },
+      },
+      "1x",
+   },
+   {
+      CORE_OPTION_NAME "_vmu2_pixel_on_color",
+      CORE_OPTION_NAME_VMU2_PIXEL_ON_COLOR_LABEL_TH,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "DEFAULT_ON 00",  OPTION_VAL_DEFAULT_ON_00_TH },
+         { "DEFAULT_OFF 01", OPTION_VAL_DEFAULT_OFF_01_TH },
+         { "BLACK 02",          OPTION_VAL_BLACK_02_TH },
+         { "BLUE 03",           OPTION_VAL_BLUE_TH },
+         { "LIGHT_BLUE 04",     OPTION_VAL_LIGHT_BLUE_04_TH },
+         { "GREEN 05",          OPTION_VAL_GREEN_TH },
+         { "CYAN 06",           OPTION_VAL_CYAN_06_TH },
+         { "CYAN_BLUE 07",      OPTION_VAL_CYAN_BLUE_07_TH },
+         { "LIGHT_GREEN 08",    OPTION_VAL_LIGHT_GREEN_08_TH },
+         { "CYAN_GREEN 09",     OPTION_VAL_CYAN_GREEN_09_TH },
+         { "LIGHT_CYAN 10",     OPTION_VAL_LIGHT_CYAN_10_TH },
+         { "RED 11",            OPTION_VAL_RED_TH },
+         { "PURPLE 12",         OPTION_VAL_PURPLE_12_TH },
+         { "LIGHT_PURPLE 13",   OPTION_VAL_LIGHT_PURPLE_13_TH },
+         { "YELLOW 14",         OPTION_VAL_YELLOW_14_TH },
+         { "GRAY 15",           OPTION_VAL_GRAY_15_TH },
+         { "LIGHT_PURPLE_2 16", OPTION_VAL_LIGHT_PURPLE_2_16_TH },
+         { "LIGHT_GREEN_2 17",  OPTION_VAL_LIGHT_GREEN_2_17_TH },
+         { "LIGHT_GREEN_3 18",  OPTION_VAL_LIGHT_GREEN_3_18_TH },
+         { "LIGHT_CYAN_2 19",   OPTION_VAL_LIGHT_CYAN_2_19_TH },
+         { "LIGHT_RED_2 20",    OPTION_VAL_LIGHT_RED_2_20_TH },
+         { "MAGENTA 21",        OPTION_VAL_MAGENTA_21_TH },
+         { "LIGHT_PURPLE_3 22",   OPTION_VAL_LIGHT_PURPLE_3_22_TH },
+         { "LIGHT_ORANGE 23",   OPTION_VAL_LIGHT_ORANGE_23_TH },
+         { "ORANGE 24",         OPTION_VAL_ORANGE_24_TH },
+         { "LIGHT_PURPLE_4 25", OPTION_VAL_LIGHT_PURPLE_4_25_TH },
+         { "LIGHT_YELLOW 26",   OPTION_VAL_LIGHT_YELLOW_26_TH },
+         { "LIGHT_YELLOW_2 27", OPTION_VAL_LIGHT_YELLOW_2_27_TH },
+         { "WHITE 28",          OPTION_VAL_WHITE_TH },
+         { NULL, NULL },
+      },
+      "DEFAULT_ON 00",
+   },
+   {
+      CORE_OPTION_NAME "_vmu2_pixel_off_color",
+      CORE_OPTION_NAME_VMU2_PIXEL_OFF_COLOR_LABEL_TH,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "DEFAULT_OFF 01", OPTION_VAL_DEFAULT_OFF_01_TH },
+         { "DEFAULT_ON 00",  OPTION_VAL_DEFAULT_ON_00_TH },
+         { "BLACK 02",          OPTION_VAL_BLACK_02_TH },
+         { "BLUE 03",           OPTION_VAL_BLUE_TH },
+         { "LIGHT_BLUE 04",     OPTION_VAL_LIGHT_BLUE_04_TH },
+         { "GREEN 05",          OPTION_VAL_GREEN_TH },
+         { "CYAN 06",           OPTION_VAL_CYAN_06_TH },
+         { "CYAN_BLUE 07",      OPTION_VAL_CYAN_BLUE_07_TH },
+         { "LIGHT_GREEN 08",    OPTION_VAL_LIGHT_GREEN_08_TH },
+         { "CYAN_GREEN 09",     OPTION_VAL_CYAN_GREEN_09_TH },
+         { "LIGHT_CYAN 10",     OPTION_VAL_LIGHT_CYAN_10_TH },
+         { "RED 11",            OPTION_VAL_RED_TH },
+         { "PURPLE 12",         OPTION_VAL_PURPLE_12_TH },
+         { "LIGHT_PURPLE 13",   OPTION_VAL_LIGHT_PURPLE_13_TH },
+         { "YELLOW 14",         OPTION_VAL_YELLOW_14_TH },
+         { "GRAY 15",           OPTION_VAL_GRAY_15_TH },
+         { "LIGHT_PURPLE_2 16", OPTION_VAL_LIGHT_PURPLE_2_16_TH },
+         { "LIGHT_GREEN_2 17",  OPTION_VAL_LIGHT_GREEN_2_17_TH },
+         { "LIGHT_GREEN_3 18",  OPTION_VAL_LIGHT_GREEN_3_18_TH },
+         { "LIGHT_CYAN_2 19",   OPTION_VAL_LIGHT_CYAN_2_19_TH },
+         { "LIGHT_RED_2 20",    OPTION_VAL_LIGHT_RED_2_20_TH },
+         { "MAGENTA 21",        OPTION_VAL_MAGENTA_21_TH },
+         { "LIGHT_PURPLE_3 22",   OPTION_VAL_LIGHT_PURPLE_3_22_TH },
+         { "LIGHT_ORANGE 23",   OPTION_VAL_LIGHT_ORANGE_23_TH },
+         { "ORANGE 24",         OPTION_VAL_ORANGE_24_TH },
+         { "LIGHT_PURPLE_4 25", OPTION_VAL_LIGHT_PURPLE_4_25_TH },
+         { "LIGHT_YELLOW 26",   OPTION_VAL_LIGHT_YELLOW_26_TH },
+         { "LIGHT_YELLOW_2 27", OPTION_VAL_LIGHT_YELLOW_2_27_TH },
+         { "WHITE 28",          OPTION_VAL_WHITE_TH },
+         { NULL, NULL },
+      },
+      "DEFAULT_OFF 01",
+   },
+   {
+      CORE_OPTION_NAME "_vmu2_screen_opacity",
+      CORE_OPTION_NAME_VMU2_SCREEN_OPACITY_LABEL_TH,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "10%",  OPTION_VAL_10_TH },
+         { "20%",  OPTION_VAL_20_TH },
+         { "30%",  OPTION_VAL_30_TH },
+         { "40%",  OPTION_VAL_40_TH },
+         { "50%",  OPTION_VAL_50_TH },
+         { "60%",  OPTION_VAL_60_TH },
+         { "70%",  OPTION_VAL_70_TH },
+         { "80%",  OPTION_VAL_80_TH },
+         { "90%",  OPTION_VAL_90_TH },
+         { "100%", OPTION_VAL_100_O47_TH },
+         { NULL,   NULL },
+      },
+      "100%",
+   },
+   {
+      CORE_OPTION_NAME "_vmu3_screen_display",
+      CORE_OPTION_NAME_VMU3_SCREEN_DISPLAY_LABEL_TH,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_vmu3_screen_position",
+      CORE_OPTION_NAME_VMU3_SCREEN_POSITION_LABEL_TH,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "Upper Left",  OPTION_VAL_UPPER_LEFT_TH },
+         { "Upper Right", OPTION_VAL_UPPER_RIGHT_TH },
+         { "Lower Left",  OPTION_VAL_LOWER_LEFT_TH },
+         { "Lower Right", OPTION_VAL_LOWER_RIGHT_TH },
+         { NULL, NULL },
+      },
+      "Lower Left",
+   },
+   {
+      CORE_OPTION_NAME "_vmu3_screen_size_mult",
+      CORE_OPTION_NAME_VMU3_SCREEN_SIZE_MULT_LABEL_TH,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "1x", OPTION_VAL_1X_TH },
+         { "2x", OPTION_VAL_2_O26_TH },
+         { "3x", OPTION_VAL_3X_TH },
+         { "4x", OPTION_VAL_4_TH },
+         { "5x", OPTION_VAL_5X_TH },
+         { NULL, NULL },
+      },
+      "1x",
+   },
+   {
+      CORE_OPTION_NAME "_vmu3_pixel_on_color",
+      CORE_OPTION_NAME_VMU3_PIXEL_ON_COLOR_LABEL_TH,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "DEFAULT_ON 00",  OPTION_VAL_DEFAULT_ON_00_TH },
+         { "DEFAULT_OFF 01", OPTION_VAL_DEFAULT_OFF_01_TH },
+         { "BLACK 02",          OPTION_VAL_BLACK_02_TH },
+         { "BLUE 03",           OPTION_VAL_BLUE_TH },
+         { "LIGHT_BLUE 04",     OPTION_VAL_LIGHT_BLUE_04_TH },
+         { "GREEN 05",          OPTION_VAL_GREEN_TH },
+         { "CYAN 06",           OPTION_VAL_CYAN_06_TH },
+         { "CYAN_BLUE 07",      OPTION_VAL_CYAN_BLUE_07_TH },
+         { "LIGHT_GREEN 08",    OPTION_VAL_LIGHT_GREEN_08_TH },
+         { "CYAN_GREEN 09",     OPTION_VAL_CYAN_GREEN_09_TH },
+         { "LIGHT_CYAN 10",     OPTION_VAL_LIGHT_CYAN_10_TH },
+         { "RED 11",            OPTION_VAL_RED_TH },
+         { "PURPLE 12",         OPTION_VAL_PURPLE_12_TH },
+         { "LIGHT_PURPLE 13",   OPTION_VAL_LIGHT_PURPLE_13_TH },
+         { "YELLOW 14",         OPTION_VAL_YELLOW_14_TH },
+         { "GRAY 15",           OPTION_VAL_GRAY_15_TH },
+         { "LIGHT_PURPLE_2 16", OPTION_VAL_LIGHT_PURPLE_2_16_TH },
+         { "LIGHT_GREEN_2 17",  OPTION_VAL_LIGHT_GREEN_2_17_TH },
+         { "LIGHT_GREEN_3 18",  OPTION_VAL_LIGHT_GREEN_3_18_TH },
+         { "LIGHT_CYAN_2 19",   OPTION_VAL_LIGHT_CYAN_2_19_TH },
+         { "LIGHT_RED_2 20",    OPTION_VAL_LIGHT_RED_2_20_TH },
+         { "MAGENTA 21",        OPTION_VAL_MAGENTA_21_TH },
+         { "LIGHT_PURPLE_3 22",   OPTION_VAL_LIGHT_PURPLE_3_22_TH },
+         { "LIGHT_ORANGE 23",   OPTION_VAL_LIGHT_ORANGE_23_TH },
+         { "ORANGE 24",         OPTION_VAL_ORANGE_24_TH },
+         { "LIGHT_PURPLE_4 25", OPTION_VAL_LIGHT_PURPLE_4_25_TH },
+         { "LIGHT_YELLOW 26",   OPTION_VAL_LIGHT_YELLOW_26_TH },
+         { "LIGHT_YELLOW_2 27", OPTION_VAL_LIGHT_YELLOW_2_27_TH },
+         { "WHITE 28",          OPTION_VAL_WHITE_TH },
+         { NULL, NULL },
+      },
+      "DEFAULT_ON 00",
+   },
+   {
+      CORE_OPTION_NAME "_vmu3_pixel_off_color",
+      CORE_OPTION_NAME_VMU3_PIXEL_OFF_COLOR_LABEL_TH,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "DEFAULT_OFF 01", OPTION_VAL_DEFAULT_OFF_01_TH },
+         { "DEFAULT_ON 00",  OPTION_VAL_DEFAULT_ON_00_TH },
+         { "BLACK 02",          OPTION_VAL_BLACK_02_TH },
+         { "BLUE 03",           OPTION_VAL_BLUE_TH },
+         { "LIGHT_BLUE 04",     OPTION_VAL_LIGHT_BLUE_04_TH },
+         { "GREEN 05",          OPTION_VAL_GREEN_TH },
+         { "CYAN 06",           OPTION_VAL_CYAN_06_TH },
+         { "CYAN_BLUE 07",      OPTION_VAL_CYAN_BLUE_07_TH },
+         { "LIGHT_GREEN 08",    OPTION_VAL_LIGHT_GREEN_08_TH },
+         { "CYAN_GREEN 09",     OPTION_VAL_CYAN_GREEN_09_TH },
+         { "LIGHT_CYAN 10",     OPTION_VAL_LIGHT_CYAN_10_TH },
+         { "RED 11",            OPTION_VAL_RED_TH },
+         { "PURPLE 12",         OPTION_VAL_PURPLE_12_TH },
+         { "LIGHT_PURPLE 13",   OPTION_VAL_LIGHT_PURPLE_13_TH },
+         { "YELLOW 14",         OPTION_VAL_YELLOW_14_TH },
+         { "GRAY 15",           OPTION_VAL_GRAY_15_TH },
+         { "LIGHT_PURPLE_2 16", OPTION_VAL_LIGHT_PURPLE_2_16_TH },
+         { "LIGHT_GREEN_2 17",  OPTION_VAL_LIGHT_GREEN_2_17_TH },
+         { "LIGHT_GREEN_3 18",  OPTION_VAL_LIGHT_GREEN_3_18_TH },
+         { "LIGHT_CYAN_2 19",   OPTION_VAL_LIGHT_CYAN_2_19_TH },
+         { "LIGHT_RED_2 20",    OPTION_VAL_LIGHT_RED_2_20_TH },
+         { "MAGENTA 21",        OPTION_VAL_MAGENTA_21_TH },
+         { "LIGHT_PURPLE_3 22",   OPTION_VAL_LIGHT_PURPLE_3_22_TH },
+         { "LIGHT_ORANGE 23",   OPTION_VAL_LIGHT_ORANGE_23_TH },
+         { "ORANGE 24",         OPTION_VAL_ORANGE_24_TH },
+         { "LIGHT_PURPLE_4 25", OPTION_VAL_LIGHT_PURPLE_4_25_TH },
+         { "LIGHT_YELLOW 26",   OPTION_VAL_LIGHT_YELLOW_26_TH },
+         { "LIGHT_YELLOW_2 27", OPTION_VAL_LIGHT_YELLOW_2_27_TH },
+         { "WHITE 28",          OPTION_VAL_WHITE_TH },
+         { NULL, NULL },
+      },
+      "DEFAULT_OFF 01",
+   },
+   {
+      CORE_OPTION_NAME "_vmu3_screen_opacity",
+      CORE_OPTION_NAME_VMU3_SCREEN_OPACITY_LABEL_TH,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "10%",  OPTION_VAL_10_TH },
+         { "20%",  OPTION_VAL_20_TH },
+         { "30%",  OPTION_VAL_30_TH },
+         { "40%",  OPTION_VAL_40_TH },
+         { "50%",  OPTION_VAL_50_TH },
+         { "60%",  OPTION_VAL_60_TH },
+         { "70%",  OPTION_VAL_70_TH },
+         { "80%",  OPTION_VAL_80_TH },
+         { "90%",  OPTION_VAL_90_TH },
+         { "100%", OPTION_VAL_100_O47_TH },
+         { NULL,   NULL },
+      },
+      "100%",
+   },
+   {
+      CORE_OPTION_NAME "_vmu4_screen_display",
+      CORE_OPTION_NAME_VMU4_SCREEN_DISPLAY_LABEL_TH,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_vmu4_screen_position",
+      CORE_OPTION_NAME_VMU4_SCREEN_POSITION_LABEL_TH,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "Upper Left",  OPTION_VAL_UPPER_LEFT_TH },
+         { "Upper Right", OPTION_VAL_UPPER_RIGHT_TH },
+         { "Lower Left",  OPTION_VAL_LOWER_LEFT_TH },
+         { "Lower Right", OPTION_VAL_LOWER_RIGHT_TH },
+         { NULL, NULL },
+      },
+      "Lower Right",
+   },
+   {
+      CORE_OPTION_NAME "_vmu4_screen_size_mult",
+      CORE_OPTION_NAME_VMU4_SCREEN_SIZE_MULT_LABEL_TH,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "1x", OPTION_VAL_1X_TH },
+         { "2x", OPTION_VAL_2_O26_TH },
+         { "3x", OPTION_VAL_3X_TH },
+         { "4x", OPTION_VAL_4_TH },
+         { "5x", OPTION_VAL_5X_TH },
+         { NULL, NULL },
+      },
+      "1x",
+   },
+   {
+      CORE_OPTION_NAME "_vmu4_pixel_on_color",
+      CORE_OPTION_NAME_VMU4_PIXEL_ON_COLOR_LABEL_TH,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "DEFAULT_ON 00",  OPTION_VAL_DEFAULT_ON_00_TH },
+         { "DEFAULT_OFF 01", OPTION_VAL_DEFAULT_OFF_01_TH },
+         { "BLACK 02",          OPTION_VAL_BLACK_02_TH },
+         { "BLUE 03",           OPTION_VAL_BLUE_TH },
+         { "LIGHT_BLUE 04",     OPTION_VAL_LIGHT_BLUE_04_TH },
+         { "GREEN 05",          OPTION_VAL_GREEN_TH },
+         { "CYAN 06",           OPTION_VAL_CYAN_06_TH },
+         { "CYAN_BLUE 07",      OPTION_VAL_CYAN_BLUE_07_TH },
+         { "LIGHT_GREEN 08",    OPTION_VAL_LIGHT_GREEN_08_TH },
+         { "CYAN_GREEN 09",     OPTION_VAL_CYAN_GREEN_09_TH },
+         { "LIGHT_CYAN 10",     OPTION_VAL_LIGHT_CYAN_10_TH },
+         { "RED 11",            OPTION_VAL_RED_TH },
+         { "PURPLE 12",         OPTION_VAL_PURPLE_12_TH },
+         { "LIGHT_PURPLE 13",   OPTION_VAL_LIGHT_PURPLE_13_TH },
+         { "YELLOW 14",         OPTION_VAL_YELLOW_14_TH },
+         { "GRAY 15",           OPTION_VAL_GRAY_15_TH },
+         { "LIGHT_PURPLE_2 16", OPTION_VAL_LIGHT_PURPLE_2_16_TH },
+         { "LIGHT_GREEN_2 17",  OPTION_VAL_LIGHT_GREEN_2_17_TH },
+         { "LIGHT_GREEN_3 18",  OPTION_VAL_LIGHT_GREEN_3_18_TH },
+         { "LIGHT_CYAN_2 19",   OPTION_VAL_LIGHT_CYAN_2_19_TH },
+         { "LIGHT_RED_2 20",    OPTION_VAL_LIGHT_RED_2_20_TH },
+         { "MAGENTA 21",        OPTION_VAL_MAGENTA_21_TH },
+         { "LIGHT_PURPLE_3 22",   OPTION_VAL_LIGHT_PURPLE_3_22_TH },
+         { "LIGHT_ORANGE 23",   OPTION_VAL_LIGHT_ORANGE_23_TH },
+         { "ORANGE 24",         OPTION_VAL_ORANGE_24_TH },
+         { "LIGHT_PURPLE_4 25", OPTION_VAL_LIGHT_PURPLE_4_25_TH },
+         { "LIGHT_YELLOW 26",   OPTION_VAL_LIGHT_YELLOW_26_TH },
+         { "LIGHT_YELLOW_2 27", OPTION_VAL_LIGHT_YELLOW_2_27_TH },
+         { "WHITE 28",          OPTION_VAL_WHITE_TH },
+         { NULL, NULL },
+      },
+      "DEFAULT_ON 00",
+   },
+   {
+      CORE_OPTION_NAME "_vmu4_pixel_off_color",
+      CORE_OPTION_NAME_VMU4_PIXEL_OFF_COLOR_LABEL_TH,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "DEFAULT_OFF 01", OPTION_VAL_DEFAULT_OFF_01_TH },
+         { "DEFAULT_ON 00",  OPTION_VAL_DEFAULT_ON_00_TH },
+         { "BLACK 02",          OPTION_VAL_BLACK_02_TH },
+         { "BLUE 03",           OPTION_VAL_BLUE_TH },
+         { "LIGHT_BLUE 04",     OPTION_VAL_LIGHT_BLUE_04_TH },
+         { "GREEN 05",          OPTION_VAL_GREEN_TH },
+         { "CYAN 06",           OPTION_VAL_CYAN_06_TH },
+         { "CYAN_BLUE 07",      OPTION_VAL_CYAN_BLUE_07_TH },
+         { "LIGHT_GREEN 08",    OPTION_VAL_LIGHT_GREEN_08_TH },
+         { "CYAN_GREEN 09",     OPTION_VAL_CYAN_GREEN_09_TH },
+         { "LIGHT_CYAN 10",     OPTION_VAL_LIGHT_CYAN_10_TH },
+         { "RED 11",            OPTION_VAL_RED_TH },
+         { "PURPLE 12",         OPTION_VAL_PURPLE_12_TH },
+         { "LIGHT_PURPLE 13",   OPTION_VAL_LIGHT_PURPLE_13_TH },
+         { "YELLOW 14",         OPTION_VAL_YELLOW_14_TH },
+         { "GRAY 15",           OPTION_VAL_GRAY_15_TH },
+         { "LIGHT_PURPLE_2 16", OPTION_VAL_LIGHT_PURPLE_2_16_TH },
+         { "LIGHT_GREEN_2 17",  OPTION_VAL_LIGHT_GREEN_2_17_TH },
+         { "LIGHT_GREEN_3 18",  OPTION_VAL_LIGHT_GREEN_3_18_TH },
+         { "LIGHT_CYAN_2 19",   OPTION_VAL_LIGHT_CYAN_2_19_TH },
+         { "LIGHT_RED_2 20",    OPTION_VAL_LIGHT_RED_2_20_TH },
+         { "MAGENTA 21",        OPTION_VAL_MAGENTA_21_TH },
+         { "LIGHT_PURPLE_3 22",   OPTION_VAL_LIGHT_PURPLE_3_22_TH },
+         { "LIGHT_ORANGE 23",   OPTION_VAL_LIGHT_ORANGE_23_TH },
+         { "ORANGE 24",         OPTION_VAL_ORANGE_24_TH },
+         { "LIGHT_PURPLE_4 25", OPTION_VAL_LIGHT_PURPLE_4_25_TH },
+         { "LIGHT_YELLOW 26",   OPTION_VAL_LIGHT_YELLOW_26_TH },
+         { "LIGHT_YELLOW_2 27", OPTION_VAL_LIGHT_YELLOW_2_27_TH },
+         { "WHITE 28",          OPTION_VAL_WHITE_TH },
+         { NULL, NULL },
+      },
+      "DEFAULT_OFF 01",
+   },
+   {
+      CORE_OPTION_NAME "_vmu4_screen_opacity",
+      CORE_OPTION_NAME_VMU4_SCREEN_OPACITY_LABEL_TH,
+      NULL,
+      "",
+      NULL,
+      "vmu",
+      {
+         { "10%",  OPTION_VAL_10_TH },
+         { "20%",  OPTION_VAL_20_TH },
+         { "30%",  OPTION_VAL_30_TH },
+         { "40%",  OPTION_VAL_40_TH },
+         { "50%",  OPTION_VAL_50_TH },
+         { "60%",  OPTION_VAL_60_TH },
+         { "70%",  OPTION_VAL_70_TH },
+         { "80%",  OPTION_VAL_80_TH },
+         { "90%",  OPTION_VAL_90_TH },
+         { "100%", OPTION_VAL_100_O47_TH },
+         { NULL,   NULL },
+      },
+      "100%",
+   },
+   { NULL, NULL, NULL, NULL, NULL, NULL, {{0}}, NULL },
+};
+struct retro_core_options_v2 options_th = {
+   option_cats_th,
+   option_defs_th
 };
 
 /* RETRO_LANGUAGE_TR */
