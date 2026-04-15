@@ -147,6 +147,10 @@ void TransformMatrix<System>::GetScissorScaling(float& scale_x, float& scale_y) 
 	}
 }
 
+template class TransformMatrix<COORD_OPENGL>;
+template class TransformMatrix<COORD_VULKAN>;
+template class TransformMatrix<COORD_DIRECTX>;
+
 void getScaledFramebufferSize(const rend_context& rendCtx, int& width, int& height)
 {
 	getPvrFramebufferSize(rendCtx, width, height);

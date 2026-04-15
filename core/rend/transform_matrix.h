@@ -76,9 +76,6 @@ private:
 	glm::vec2 renderViewport;
 	float sidebarWidth = 0;
 };
-template class TransformMatrix<COORD_OPENGL>;
-template class TransformMatrix<COORD_VULKAN>;
-template class TransformMatrix<COORD_DIRECTX>;
 
 void getScaledFramebufferSize(const rend_context& rendCtx, int& width, int& height);
 float getOutputFramebufferAspectRatio();
