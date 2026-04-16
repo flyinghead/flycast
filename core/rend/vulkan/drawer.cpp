@@ -24,14 +24,14 @@
 
 TileClipping BaseDrawer::SetTileClip(vk::CommandBuffer cmdBuffer, u32 val, vk::Rect2D& clipRect)
 {
-	int rect[4] = {};
-	TileClipping clipmode = ::GetTileClip(val, matrices.GetViewportMatrix(), rect, *rendContext);
+	Rect rect;
+	TileClipping clipmode = ::getTileClip(val, matrices.GetViewportMatrix(), rect, *rendContext);
 	if (clipmode != TileClipping::Off)
 	{
-		clipRect.offset.x = rect[0];
-		clipRect.offset.y = rect[1];
-		clipRect.extent.width = rect[2];
-		clipRect.extent.height = rect[3];
+		clipRect.offset.x = rect.origin.x;
+		clipRect.offset.y = rect.origin.y;
+		clipRect.extent.width = rect.size.x;
+		clipRect.extent.height = rect.size.y;
 	}
 	if (clipmode == TileClipping::Outside)
 		SetScissor(cmdBuffer, clipRect);
@@ -51,11 +51,21 @@ void BaseDrawer::SetBaseScissor(const vk::Extent2D& viewport)
 		float height;
 		float min_x;
 		float min_y;
-		glm::vec4 clip_min(rendContext->fb_X_CLIP.min, rendContext->fb_Y_CLIP.min, 0, 1);
-		glm::vec4 clip_dim(rendContext->fb_X_CLIP.max - rendContext->fb_X_CLIP.min + 1,
-		rendContext->fb_Y_CLIP.max - rendContext->fb_Y_CLIP.min + 1, 0, 0);
-		clip_min = matrices.GetScissorMatrix() * clip_min;
-		clip_dim = matrices.GetScissorMatrix() * clip_dim;
+		glm::vec4 clip_min;
+		glm::vec4 clip_dim;
+		if (config::EmulateFramebuffer) {
+			// Region tile clipping only
+			clip_min = glm::vec4(rendContext->tileClip.origin, 0, 1);
+			clip_dim = glm::vec4(rendContext->tileClip.size, 0, 0);
+		}
+		else
+		{
+			Rect rect = matrices.intersectTileAndFBScissor();
+			clip_min = glm::vec4(rect.origin, 0, 1);
+			clip_dim = glm::vec4(rect.size, 0, 0);
+		}
+		clip_min = matrices.GetViewportMatrix() * clip_min;
+		clip_dim = matrices.GetViewportMatrix() * clip_dim;
 
 		min_x = clip_min[0];
 		min_y = clip_min[1];
@@ -89,8 +99,8 @@ void BaseDrawer::scaleAndWriteFramebuffer(vk::CommandBuffer commandBuffer, Frame
 	static const float scopeColor[4] = { 0.25f, 0.25f, 0.25f, 0.25f };
 	CommandBufferDebugScope _(commandBuffer, "scaleAndWriteFramebuffer", scopeColor);
 
-	u32 width = (rendContext->ta_GLOB_TILE_CLIP.tile_x_num + 1) * 32;
-	u32 height = (rendContext->ta_GLOB_TILE_CLIP.tile_y_num + 1) * 32;
+	u32 width = rendContext->globClip.x;
+	u32 height = rendContext->globClip.y;
 
 	float xscale = rendContext->scaler_ctl.hscale == 1 ? 0.5f : 1.f;
 	float yscale = 1024.f / rendContext->scaler_ctl.vscalefactor;
@@ -98,8 +108,6 @@ void BaseDrawer::scaleAndWriteFramebuffer(vk::CommandBuffer commandBuffer, Frame
 		yscale = 1.f;
 
 	FramebufferAttachment *scaledFB = nullptr;
-	FB_X_CLIP_type xClip = rendContext->fb_X_CLIP;
-	FB_Y_CLIP_type yClip = rendContext->fb_Y_CLIP;
 
 	if (xscale != 1.f || yscale != 1.f)
 	{
@@ -127,11 +135,6 @@ void BaseDrawer::scaleAndWriteFramebuffer(vk::CommandBuffer commandBuffer, Frame
 		finalFB = scaledFB;
 		width = scaledW;
 		height = scaledH;
-		// FB_Y_CLIP is applied before vscalefactor if > 1, so it must be scaled here
-		if (yscale > 1) {
-			yClip.min = std::round(yClip.min * yscale);
-			yClip.max = std::round(yClip.max * yscale);
-		}
 	}
 
 	vk::BufferImageCopy copyRegion(0, width, height, vk::ImageSubresourceLayers(vk::ImageAspectFlagBits::eColor, 0, 0, 1), vk::Offset3D(0, 0, 0),
@@ -157,12 +160,8 @@ void BaseDrawer::scaleAndWriteFramebuffer(vk::CommandBuffer commandBuffer, Frame
 	tmpBuf.init(width, height);
 	finalFB->GetBufferData()->download(width * height * 4, tmpBuf.data());
 
-	xClip.min = std::min(xClip.min, width - 1);
-	xClip.max = std::min(xClip.max, width - 1);
-	yClip.min = std::min(yClip.min, height - 1);
-	yClip.max = std::min(yClip.max, height - 1);
 	WriteFramebuffer(width, height, (u8 *)tmpBuf.data(), rendContext->fb_W_SOF1 & VRAM_MASK,
-			rendContext->fb_W_CTRL, rendContext->fb_W_LINESTRIDE * 8, xClip, yClip);
+			rendContext->fb_W_CTRL, rendContext->fb_W_LINESTRIDE * 8, rendContext->fbClip);
 
 	delete scaledFB;
 }
@@ -472,7 +471,7 @@ void TextureDrawer::Init(SamplerManager *samplerManager, ShaderManager *shaderMa
 vk::CommandBuffer TextureDrawer::BeginRenderPass()
 {
 	DEBUG_LOG(RENDERER, "RenderToTexture packmode=%d stride=%d - %d x %d @ %06x", rendContext->fb_W_CTRL.fb_packmode, rendContext->fb_W_LINESTRIDE * 8,
-			rendContext->fb_X_CLIP.max + 1, rendContext->fb_Y_CLIP.max + 1, rendContext->fb_W_SOF1 & VRAM_MASK);
+			rendContext->fbClip.size.x, rendContext->fbClip.size.y, rendContext->fb_W_SOF1 & VRAM_MASK);
 	matrices.CalcMatrices(rendContext);
 
 	textureAddr = rendContext->fb_W_SOF1 & VRAM_MASK;
@@ -572,7 +571,6 @@ vk::CommandBuffer TextureDrawer::BeginRenderPass()
 	commandBuffer.setViewport(0, vk::Viewport(0.0f, 0.0f, (float)upscaledWidth, (float)upscaledHeight, 1.0f, 0.0f));
 	u32 minX = rendContext->getFramebufferMinX() * upscaledWidth / origWidth;
 	u32 minY = rendContext->getFramebufferMinY() * upscaledHeight / origHeight;
-	getRenderToTextureDimensions(minX, minY, widthPow2, heightPow2);
 	baseScissor = vk::Rect2D(vk::Offset2D(minX, minY), vk::Extent2D(upscaledWidth, upscaledHeight));
 	commandBuffer.setScissor(0, baseScissor);
 	currentCommandBuffer = commandBuffer;

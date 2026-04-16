@@ -23,6 +23,14 @@
 #include "hw/pvr/ta_ctx.h"
 #include "cfg/option.h"
 
+static inline Rect intersect(const Rect& l, const Rect& r)
+{
+	Rect rect;
+	rect.origin = glm::max(l.origin, r.origin);
+	rect.size = glm::max(glm::min(l.bottomRight(), r.bottomRight()) - rect.origin + glm::ivec2(1, 1), glm::ivec2(0, 0));
+	return rect;
+}
+
 enum class TileClipping {
 	Inside,			// Render stuff outside the region
 	Off,    		// Always passes
@@ -30,7 +38,7 @@ enum class TileClipping {
 };
 
 // clip_rect[] will contain x, y, width, height
-static inline TileClipping GetTileClip(u32 val, const glm::mat4& viewport, int *clip_rect, const rend_context& ctx)
+static inline TileClipping getTileClip(u32 val, const glm::mat4& viewport, Rect& clipRect, const rend_context& ctx)
 {
 	if (!config::Clipping)
 		return TileClipping::Off;
@@ -54,18 +62,18 @@ static inline TileClipping GetTileClip(u32 val, const glm::mat4& viewport, int *
 	csy = csy * 32;
 	cey = (cey + 1) * 32;
 
-	if (csx == 0 && csy == 0 && cex >= 640 && cey >= 480)
+	if (csx == 0 && csy == 0 && cex >= ctx.globClip.x && cey >= ctx.globClip.y)
 		return TileClipping::Off;
 
 	if (!ctx.isRTT)
 	{
 		if (tileClippingMode == TileClipping::Outside && !config::EmulateFramebuffer)
 		{
-			// Intersect with framebuffer clipping
-			csx = std::max<float>(csx, ctx.fb_X_CLIP.min);
-			csy = std::max<float>(csy, ctx.fb_Y_CLIP.min);
-			cex = std::min<float>(cex, ctx.fb_X_CLIP.max + 1);
-			cey = std::min<float>(cey, ctx.fb_Y_CLIP.max + 1);
+			// Intersect with tile/fb clipping
+			csx = std::max<float>(csx, ctx.fbClip.origin.x);
+			csy = std::max<float>(csy, ctx.fbClip.origin.y);
+			cex = std::min<float>(cex, ctx.fbClip.origin.x + ctx.fbClip.size.x);
+			cey = std::min<float>(cey, ctx.fbClip.origin.y + ctx.fbClip.size.y);
 		}
 		glm::vec4 clip_start(csx, csy, 0, 1);
 		glm::vec4 clip_end(cex, cey, 0, 1);
@@ -85,10 +93,9 @@ static inline TileClipping GetTileClip(u32 val, const glm::mat4& viewport, int *
 		cex *= scale;
 		cey *= scale;
 	}
-	clip_rect[0] = std::max(0, (int)lroundf(csx));
-	clip_rect[1] = std::max(0, (int)lroundf(std::min(csy, cey)));
-	clip_rect[2] = std::max(0, (int)lroundf(cex - csx));
-	clip_rect[3] = std::max(0, (int)lroundf(std::abs(cey - csy)));
-
+	clipRect = {
+		glm::ivec2(std::max(0, (int)std::round(csx)), std::max(0, (int)std::round(std::min(csy, cey)))),
+		glm::ivec2(std::max(0, (int)std::round(cex - csx)), std::max(0, (int)std::round(std::abs(cey - csy))))
+	};
 	return tileClippingMode;
 }

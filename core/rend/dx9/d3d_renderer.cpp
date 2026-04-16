@@ -342,13 +342,13 @@ inline void D3DRenderer::setTexMode(D3DSAMPLERSTATETYPE state, u32 clamp, u32 mi
 	}
 }
 
-TileClipping D3DRenderer::setTileClip(u32 tileclip, int clip_rect[4])
+TileClipping D3DRenderer::setTileClip(u32 tileclip, Rect& clip_rect)
 {
-	TileClipping clipmode = GetTileClip(tileclip, matrices.GetViewportMatrix(), clip_rect, *rendContext);
+	TileClipping clipmode = getTileClip(tileclip, matrices.GetViewportMatrix(), clip_rect, *rendContext);
 	if (clipmode == TileClipping::Outside)
 	{
 		devCache.SetRenderState(D3DRS_SCISSORTESTENABLE, TRUE);
-		RECT rect { clip_rect[0], clip_rect[1], clip_rect[0] + clip_rect[2], clip_rect[1] + clip_rect[3] };
+		RECT rect { clip_rect.origin.x, clip_rect.origin.y, clip_rect.bottomRight().x, clip_rect.bottomRight().y };
 		// TODO cache
 		device->SetScissorRect(&rect);
 	}
@@ -378,7 +378,7 @@ void D3DRenderer::setGPState(const PolyParam *gp)
 	bool color_clamp = gp->tsp.ColorClamp && (rendContext->fog_clamp_min.full != 0 || rendContext->fog_clamp_max.full != 0xffffffff);
 	int fog_ctrl = config::Fog ? gp->tsp.FogCtrl : 2;
 
-	int clip_rect[4] = {};
+	Rect clip_rect;
 	TileClipping clipmode = setTileClip(gp->tileclip, clip_rect);
 	D3DTexture *texture = (D3DTexture *)gp->texture;
 	int gpuPalette = texture == nullptr || !texture->gpuPalette ? 0
@@ -427,7 +427,7 @@ void D3DRenderer::setGPState(const PolyParam *gp)
 
 	if (clipmode == TileClipping::Inside)
 	{
-		float f[] = { (float)clip_rect[0], (float)clip_rect[1], (float)(clip_rect[0] + clip_rect[2]), (float)(clip_rect[1] + clip_rect[3]) };
+		float f[] = { (float)clip_rect.origin.x, (float)clip_rect.origin.y, (float)clip_rect.bottomRight().x, (float)clip_rect.bottomRight().y };
 		device->SetPixelShaderConstantF(4, f, 1);
 	}
 
@@ -701,7 +701,7 @@ void D3DRenderer::drawModVols(int first, int count)
 	devCache.SetRenderState(D3DRS_COLORWRITEENABLE, 0);
 
 	int mod_base = -1;
-	int clip_rect[4] = {};
+	Rect clip_rect;
 
 	for (int cmv = 0; cmv < count; cmv++)
 	{
@@ -838,11 +838,22 @@ void D3DRenderer::setBaseScissor()
 		float min_y;
 		if (!rendContext->isRTT)
 		{
-			glm::vec4 clip_min(rendContext->fb_X_CLIP.min, rendContext->fb_Y_CLIP.min, 0, 1);
-			glm::vec4 clip_dim(rendContext->fb_X_CLIP.max - rendContext->fb_X_CLIP.min + 1,
-							   rendContext->fb_Y_CLIP.max - rendContext->fb_Y_CLIP.min + 1, 0, 0);
-			clip_min = matrices.GetScissorMatrix() * clip_min;
-			clip_dim = matrices.GetScissorMatrix() * clip_dim;
+			glm::vec4 clip_min;
+			glm::vec4 clip_dim;
+			if (config::EmulateFramebuffer) {
+				// Region tile clipping only
+				clip_min = glm::vec4(rendContext->tileClip.origin, 0, 1);
+				clip_dim = glm::vec4(rendContext->tileClip.size, 0, 0);
+			}
+			else
+			{
+				// Intersect tile clipping and framebuffer clipping
+				Rect rect = matrices.intersectTileAndFBScissor();
+				clip_min = glm::vec4(rect.origin, 0, 1);
+				clip_dim = glm::vec4(rect.size, 0, 0);
+			}
+			clip_min = matrices.GetViewportMatrix() * clip_min;
+			clip_dim = matrices.GetViewportMatrix() * clip_dim;
 
 			min_x = clip_min[0];
 			min_y = clip_min[1];
@@ -886,10 +897,10 @@ void D3DRenderer::setBaseScissor()
 			}
 		}
 		scissorEnable = true;
-		scissorRect.left = lroundf(min_x);
-		scissorRect.top = lroundf(min_y);
-		scissorRect.right = scissorRect.left + lroundf(fWidth);
-		scissorRect.bottom = scissorRect.top + lroundf(fHeight);
+		scissorRect.left = std::round(min_x);
+		scissorRect.top = std::round(min_y);
+		scissorRect.right = scissorRect.left + std::round(fWidth);
+		scissorRect.bottom = scissorRect.top + std::round(fHeight);
 		device->SetScissorRect(&scissorRect);
 		devCache.SetRenderState(D3DRS_SCISSORTESTENABLE, TRUE);
 	}
@@ -1351,8 +1362,8 @@ void D3DRenderer::drawOSD()
 
 void D3DRenderer::writeFramebufferToVRAM()
 {
-	u32 width = (rendContext->ta_GLOB_TILE_CLIP.tile_x_num + 1) * 32;
-	u32 height = (rendContext->ta_GLOB_TILE_CLIP.tile_y_num + 1) * 32;
+	u32 width = rendContext->globClip.x;
+	u32 height = rendContext->globClip.y;
 
 	float xscale = rendContext->scaler_ctl.hscale == 1 ? 0.5f : 1.f;
 	float yscale = 1024.f / rendContext->scaler_ctl.vscalefactor;
@@ -1360,8 +1371,6 @@ void D3DRenderer::writeFramebufferToVRAM()
 		yscale = 1.f;
 
 	ComPtr<IDirect3DSurface9> fbSurface = framebufferSurface;
-	FB_X_CLIP_type xClip = rendContext->fb_X_CLIP;
-	FB_Y_CLIP_type yClip = rendContext->fb_Y_CLIP;
 
 	if (xscale != 1.f || yscale != 1.f)
 	{
@@ -1388,11 +1397,6 @@ void D3DRenderer::writeFramebufferToVRAM()
 		width = scaledW;
 		height = scaledH;
 		fbSurface = fbScaledSurface;
-		// FB_Y_CLIP is applied before vscalefactor if > 1, so it must be scaled here
-		if (yscale > 1) {
-			yClip.min = std::round(yClip.min * yscale);
-			yClip.max = std::round(yClip.max * yscale);
-		}
 	}
 	u32 texAddress = rendContext->fb_W_SOF1 & VRAM_MASK; // TODO SCALER_CTL.interlace, SCALER_CTL.fieldselect
 	u32 linestride = rendContext->fb_W_LINESTRIDE * 8;
@@ -1426,11 +1430,7 @@ void D3DRenderer::writeFramebufferToVRAM()
 	rc = SUCCEEDED(offscreenSurface->UnlockRect());
 	verify(rc);
 
-	xClip.min = std::min(xClip.min, width - 1);
-	xClip.max = std::min(xClip.max, width - 1);
-	yClip.min = std::min(yClip.min, height - 1);
-	yClip.max = std::min(yClip.max, height - 1);
-	WriteFramebuffer<2, 1, 0, 3>(width, height, (u8 *)tmp_buf.data(), texAddress, rendContext->fb_W_CTRL, linestride, xClip, yClip);
+	WriteFramebuffer<2, 1, 0, 3>(width, height, (u8 *)tmp_buf.data(), texAddress, rendContext->fb_W_CTRL, linestride, rendContext->fbClip);
 }
 
 bool D3DRenderer::GetLastFrame(std::vector<u8>& data, int& width, int& height)

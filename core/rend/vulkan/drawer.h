@@ -210,7 +210,7 @@ protected:
 
 	vk::Rect2D baseScissor;
 	vk::Rect2D currentScissor;
-	TransformMatrix<COORD_VULKAN> matrices;
+	TransformMatrix matrices;
 	CommandPool *commandPool = nullptr;
 	std::vector<std::unique_ptr<BufferData>> mainBuffers;
 	rend_context *rendContext = nullptr;

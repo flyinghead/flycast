@@ -112,8 +112,8 @@ static void SetGPState(const PolyParam* gp)
 	else
 		gl4ShaderUniforms.trilinear_alpha = 1.0;
 
-	int clip_rect[4] = {};
-	TileClipping clipmode = GetTileClip(gp->tileclip, ViewportMatrix, clip_rect, *gl.rendContext);
+	Rect clip_rect;
+	TileClipping clipmode = getTileClip(gp->tileclip, ViewportMatrix, clip_rect, *gl.rendContext);
 	int gpuPalette = gp->texture == nullptr || !gp->texture->gpuPalette ? 0
 			: gp->tsp.FilterMode + 1;
 	if (gpuPalette != 0)
@@ -183,24 +183,24 @@ static void SetGPState(const PolyParam* gp)
 	gl4ShaderUniforms.tcw1 = gp->tcw1;
 	gl4ShaderUniforms.Set(CurrentShader);
 
-	if (pass == Pass::Color)
-	{
+	if (pass == Pass::Color) {
 		glcache.Enable(GL_BLEND);
 		glcache.BlendFunc(SrcBlendGL[gp->tsp.SrcInstr], DstBlendGL[gp->tsp.DstInstr]);
 	}
-	else
+	else {
 		glcache.Disable(GL_BLEND);
+	}
 
 	if (clipmode == TileClipping::Inside)
-		glUniform4f(CurrentShader->pp_ClipTest, (float)clip_rect[0], (float)clip_rect[1],
-				(float)(clip_rect[0] + clip_rect[2]), (float)(clip_rect[1] + clip_rect[3]));
-	if (clipmode == TileClipping::Outside)
-	{
+		glUniform4f(CurrentShader->pp_ClipTest, (float)clip_rect.origin.x, (float)clip_rect.origin.y,
+				(float)clip_rect.bottomRight().x, (float)clip_rect.bottomRight().y);
+	if (clipmode == TileClipping::Outside) {
 		glcache.Enable(GL_SCISSOR_TEST);
-		glcache.Scissor(clip_rect[0], clip_rect[1], clip_rect[2], clip_rect[3]);
+		glcache.Scissor(clip_rect.origin.x, clip_rect.origin.y, clip_rect.size.x, clip_rect.size.y);
 	}
-	else
+	else {
 		SetBaseClipping();
+	}
 
 	// This bit controls which pixels are affected by modvols
 	const u32 stencil = gp->pcw.Shadow != 0 ? 0x80 : 0x0;

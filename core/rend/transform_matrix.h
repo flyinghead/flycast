@@ -27,19 +27,20 @@
 // Dreamcast:
 // +Y is down
 // OpenGL:
-// +Y is up in clip, NDC and framebuffer coordinates
+// +Y is up in clip, NDC and framebuffer coordinates. BUT we invert the Y coordinate in the renderer.
 // Vulkan:
 // +Y is down in clip, NDC and framebuffer coordinates
 // DirectX9:
 // +Y is up in clip and NDC coordinates, but down in framebuffer coordinates
 // Y must also be flipped for render-to-texture so that the top of the texture comes first
-enum CoordSystem { COORD_OPENGL, COORD_VULKAN, COORD_DIRECTX };
-template<CoordSystem System>
 class TransformMatrix
 {
 public:
-	TransformMatrix() = default;
-	TransformMatrix(const rend_context& renderingContext, int width, int height)
+	TransformMatrix(bool directx = false)
+		: directx(directx)
+	{}
+	TransformMatrix(const rend_context& renderingContext, int width, int height, bool directx = false)
+		: directx(directx)
 	{
 		CalcMatrices(&renderingContext, width, height);
 	}
@@ -48,9 +49,6 @@ public:
 
 	const glm::mat4& GetNormalMatrix() const {
 		return normalMatrix;
-	}
-	const glm::mat4& GetScissorMatrix() const {
-		return scissorMatrix;
 	}
 	const glm::mat4& GetViewportMatrix() const {
 		return viewportMatrix;
@@ -63,17 +61,16 @@ public:
 	}
 
 	void CalcMatrices(const rend_context *renderingContext, int width = 0, int height = 0);
+	Rect intersectTileAndFBScissor() const;
 
 private:
-	void GetScissorScaling(float& scale_x, float& scale_y) const;
+	void getScissorScaling(float& scale_x, float& scale_y) const;
 
 	const rend_context *renderingContext = nullptr;
+	const bool directx;
 
 	glm::mat4 normalMatrix;
-	glm::mat4 scissorMatrix;
 	glm::mat4 viewportMatrix;
-	glm::vec2 dcViewport;
-	glm::vec2 renderViewport;
 	float sidebarWidth = 0;
 };
 
@@ -81,8 +78,7 @@ void getScaledFramebufferSize(const rend_context& rendCtx, int& width, int& heig
 float getOutputFramebufferAspectRatio();
 void getDCFramebufferReadSize(const FramebufferInfo& info, int& width, int& height);
 
-inline static float getDCFramebufferAspectRatio()
-{
+inline static float getDCFramebufferAspectRatio() {
 	float aspectRatio = config::Rotate90 ? 3.f / 4.f : 4.f / 3.f;
 	return aspectRatio * config::ScreenStretching / 100.f;
 }

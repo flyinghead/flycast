@@ -557,7 +557,7 @@ void OITScreenDrawer::MakeFramebuffers(const vk::Extent2D& viewport)
 vk::CommandBuffer OITTextureDrawer::NewFrame()
 {
 	DEBUG_LOG(RENDERER, "RenderToTexture packmode=%d stride=%d - %d x %d @ %06x", rendContext->fb_W_CTRL.fb_packmode, rendContext->fb_W_LINESTRIDE * 8,
-			rendContext->fb_X_CLIP.max + 1, rendContext->fb_Y_CLIP.max + 1, rendContext->fb_W_SOF1 & VRAM_MASK);
+			rendContext->fbClip.size.x, rendContext->fbClip.size.y, rendContext->fb_W_SOF1 & VRAM_MASK);
 	NewImage();
 
 	matrices.CalcMatrices(rendContext);
@@ -651,7 +651,6 @@ vk::CommandBuffer OITTextureDrawer::NewFrame()
 	commandBuffer.setViewport(0, vk::Viewport(0.0f, 0.0f, (float)upscaledWidth, (float)upscaledHeight, 1.0f, 0.0f));
 	u32 minX = rendContext->getFramebufferMinX() * upscaledWidth / origWidth;
 	u32 minY = rendContext->getFramebufferMinY() * upscaledHeight / origHeight;
-	getRenderToTextureDimensions(minX, minY, widthPow2, heightPow2);
 	baseScissor = vk::Rect2D(vk::Offset2D(minX, minY), vk::Extent2D(upscaledWidth, upscaledHeight));
 	commandBuffer.setScissor(0, baseScissor);
 	currentCommandBuffer = commandBuffer;

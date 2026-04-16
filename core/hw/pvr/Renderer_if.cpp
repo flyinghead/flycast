@@ -504,10 +504,13 @@ void rend_start_render()
 	ctx->rend.fb_W_SOF1 = FB_W_SOF1;
 	ctx->rend.fb_W_CTRL.full = FB_W_CTRL.full;
 
-	ctx->rend.ta_GLOB_TILE_CLIP = TA_GLOB_TILE_CLIP;
+	ctx->rend.globClip.x = (TA_GLOB_TILE_CLIP.tile_x_num + 1) * 32;
+	ctx->rend.globClip.y = (TA_GLOB_TILE_CLIP.tile_y_num + 1) * 32;
 	ctx->rend.scaler_ctl = SCALER_CTL;
-	ctx->rend.fb_X_CLIP = FB_X_CLIP;
-	ctx->rend.fb_Y_CLIP = FB_Y_CLIP;
+	ctx->rend.fbClip.origin.x = FB_X_CLIP.min;
+	ctx->rend.fbClip.origin.y = FB_Y_CLIP.min;
+	ctx->rend.fbClip.size.x = FB_X_CLIP.max - FB_X_CLIP.min + 1;
+	ctx->rend.fbClip.size.y = FB_Y_CLIP.max - FB_Y_CLIP.min + 1;
 	ctx->rend.fb_W_LINESTRIDE = FB_W_LINESTRIDE.stride;
 
 	ctx->rend.fog_clamp_min = FOG_CLAMP_MIN;

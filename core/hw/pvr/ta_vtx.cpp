@@ -1207,6 +1207,14 @@ static void parseRenderPass(RenderPass& pass, const RenderPass& previousPass, re
 	}
 }
 
+static void setTileClipping(rend_context& ctx)
+{
+	u32 xmax, ymax;
+	getRegionTileClipping((u32&)ctx.tileClip.origin.x, xmax, (u32&)ctx.tileClip.origin.y, ymax);
+	ctx.tileClip.size.x = xmax + 32 - ctx.tileClip.origin.x;
+	ctx.tileClip.size.y = ymax + 32 - ctx.tileClip.origin.y;
+}
+
 static void ta_parse_vdrc(TA_context* ctx, bool primRestart)
 {
 	verify(vd_ctx == nullptr);
@@ -1266,13 +1274,7 @@ static void ta_parse_vdrc(TA_context* ctx, bool primRestart)
 		pass++;
 	}
 
-	u32 xmin, xmax, ymin, ymax;
-	getRegionTileClipping(xmin, xmax, ymin, ymax);
-	vd_rc.fb_X_CLIP.min = std::max(vd_rc.fb_X_CLIP.min, xmin);
-	vd_rc.fb_X_CLIP.max = std::min(vd_rc.fb_X_CLIP.max, xmax + 31);
-	vd_rc.fb_Y_CLIP.min = std::max(vd_rc.fb_Y_CLIP.min, ymin);
-	vd_rc.fb_Y_CLIP.max = std::min(vd_rc.fb_Y_CLIP.max, ymax + 31);
-
+	setTileClipping(ctx->rend);
 	vd_ctx = nullptr;
 }
 
@@ -1317,12 +1319,7 @@ static void ta_parse_naomi2(TA_context* ctx, bool primRestart)
 		previousPass = pass;
 	}
 
-	u32 xmin, xmax, ymin, ymax;
-	getRegionTileClipping(xmin, xmax, ymin, ymax);
-	ctx->rend.fb_X_CLIP.min = std::max(ctx->rend.fb_X_CLIP.min, xmin);
-	ctx->rend.fb_X_CLIP.max = std::min(ctx->rend.fb_X_CLIP.max, xmax + 31);
-	ctx->rend.fb_Y_CLIP.min = std::max(ctx->rend.fb_Y_CLIP.min, ymin);
-	ctx->rend.fb_Y_CLIP.max = std::min(ctx->rend.fb_Y_CLIP.max, ymax + 31);
+	setTileClipping(ctx->rend);
 }
 
 void ta_parse(TA_context *ctx, bool primRestart)

@@ -3,6 +3,7 @@
 #include "ta_structs.h"
 #include "pvr_regs.h"
 #include "oslib/oslib.h"
+#include <glm/glm.hpp>
 
 #include <algorithm>
 #include <vector>
@@ -43,7 +44,6 @@ struct PolyParam
 	ISP_TSP isp;
 	float zvZ;
 	u32 tileclip;
-	//float zMin,zMax;
 	TSP tsp1;
 	TCW tcw1;
 	BaseTextureCacheData *texture1;
@@ -227,6 +227,21 @@ struct SortedTriangle
 	u32 count;
 };
 
+struct Rect
+{
+	Rect() = default;
+	Rect(const glm::ivec2& origin, const glm::ivec2& size)
+		: origin(origin), size(size)
+	{}
+
+	glm::ivec2 origin;
+	glm::ivec2 size;
+
+	glm::ivec2 bottomRight() const {
+		return origin + size - glm::ivec2(1, 1);
+	}
+};
+
 struct rend_context
 {
 	f32 fZ_max;
@@ -234,10 +249,10 @@ struct rend_context
 	bool isRTT;
 	bool clearFramebuffer;
 	
-	TA_GLOB_TILE_CLIP_type ta_GLOB_TILE_CLIP;
+	glm::ivec2 globClip;
 	SCALER_CTL_type scaler_ctl;
-	FB_X_CLIP_type fb_X_CLIP;
-	FB_Y_CLIP_type fb_Y_CLIP;
+	Rect fbClip;
+	Rect tileClip;
 	u32 fb_W_LINESTRIDE;
 	u32 fb_W_SOF1;
 	FB_W_CTRL_type fb_W_CTRL;
@@ -291,29 +306,20 @@ struct rend_context
 	// For RTT TODO merge with framebufferWidth/Height
 	u32 getFramebufferWidth() const
 	{
-		u32 w = fb_X_CLIP.max + 1;
+		u32 w = fbClip.size.x;
 		if (fb_W_LINESTRIDE != 0)
 			// Happens for Flag to Flag, Virtua Tennis?
 			w = std::min(fb_W_LINESTRIDE * 4, w);
 		return w;
 	}
-	u32 getFramebufferHeight() const
-	{
-		u32 h = fb_Y_CLIP.max + 1;
-		if (scaler_ctl.vscalefactor < 0x400)
-			h = h * 1024 / scaler_ctl.vscalefactor;
-		return h;
+	u32 getFramebufferHeight() const {
+		return fbClip.size.y;
 	}
-	u32 getFramebufferMinX() const
-	{
-		return fb_X_CLIP.min;
+	u32 getFramebufferMinX() const {
+		return fbClip.origin.x;
 	}
-	u32 getFramebufferMinY() const
-	{
-		u32 y = fb_Y_CLIP.min;
-		if (scaler_ctl.vscalefactor < 0x400)
-			y = y * 1024 / scaler_ctl.vscalefactor;
-		return y;
+	u32 getFramebufferMinY() const {
+		return fbClip.origin.y;
 	}
 };
 

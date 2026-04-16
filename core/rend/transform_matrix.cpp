@@ -17,12 +17,12 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #include "transform_matrix.h"
+#include "tileclip.h"
 #include <glm/gtx/transform.hpp>
 
-inline static void getTAViewport(const rend_context& rendCtx, int& width, int& height)
-{
-	width = (rendCtx.ta_GLOB_TILE_CLIP.tile_x_num + 1) * 32;
-	height = (rendCtx.ta_GLOB_TILE_CLIP.tile_y_num + 1) * 32;
+inline static void getTAViewport(const rend_context& rendCtx, int& width, int& height) {
+	width = rendCtx.globClip.x;
+	height = rendCtx.globClip.y;
 }
 
 inline static void getPvrFramebufferSize(const rend_context& rendCtx, int& width, int& height)
@@ -31,6 +31,10 @@ inline static void getPvrFramebufferSize(const rend_context& rendCtx, int& width
 	if (!config::EmulateFramebuffer)
 	{
 		int maxHeight = FB_R_CTRL.vclk_div == 0 && SPG_CONTROL.interlace == 0 ? 240 : 480;
+		// we ignore vscalefactor when interlaced because it's used for Stretched PAL (factor in ]1, 1.3]),
+		// or Flicker-free interlace mode B (factor [0.5, 0.6]), which are only emulated in Full FB emu.
+		// In 240p, some games (Cho - Hatsumei Boy Kanipan) use a 1/2 factor from rendering at 480 to a 240-line framebuffer.
+		// So we render at 480 in that case.
 		if (rendCtx.scaler_ctl.vscalefactor != 0
 				&& (rendCtx.scaler_ctl.vscalefactor > 1025 || rendCtx.scaler_ctl.vscalefactor < 1024)
 				&& SPG_CONTROL.interlace == 0)
@@ -42,34 +46,34 @@ inline static void getPvrFramebufferSize(const rend_context& rendCtx, int& width
 	}
 }
 
-template<CoordSystem System>
-bool TransformMatrix<System>::IsClipped() const
+bool TransformMatrix::IsClipped() const
 {
 	int width, height;
 	getTAViewport(*renderingContext, width, height);
-	float sx, sy;
-	GetScissorScaling(sx,  sy);
-	return renderingContext->fb_X_CLIP.min != 0
-			|| lroundf((renderingContext->fb_X_CLIP.max + 1) / sx) != width;
+	Rect clip = intersectTileAndFBScissor();
+	return clip.origin.x > 0
+			|| clip.bottomRight().x < width - 1;
 }
 
-template<CoordSystem System>
-void TransformMatrix<System>::CalcMatrices(const rend_context *renderingContext, int width, int height)
+void TransformMatrix::CalcMatrices(const rend_context *renderingContext, int width, int height)
 {
-	constexpr int flipY = System == COORD_DIRECTX ? -1 : 1;
+	const int flipY = directx ? -1 : 1;
 
-	renderViewport = { width == 0 ? settings.display.width : width, height == 0 ? settings.display.height : height };
+	glm::vec2 renderViewport = { width == 0 ? settings.display.width : width, height == 0 ? settings.display.height : height };
+	glm::vec2 dcViewport;
 	this->renderingContext = renderingContext;
 
 	if (renderingContext->isRTT)
 	{
-		dcViewport.x = (float)(renderingContext->fb_X_CLIP.max - renderingContext->fb_X_CLIP.min + 1);
+		// TODO unscale fbClip values
+		const Rect globClip(glm::ivec2(0, 0), renderingContext->globClip);
+		const Rect clip = intersect(globClip, renderingContext->fbClip);
+		dcViewport.x = (float)clip.size.x;
 		if (renderingContext->scaler_ctl.hscale)
 			dcViewport.x *= 2;
-		dcViewport.y = (float)(renderingContext->fb_Y_CLIP.max - renderingContext->fb_Y_CLIP.min + 1);
+		dcViewport.y = (float)clip.size.y;
 		normalMatrix = glm::translate(glm::vec3(-1, -flipY, 0))
 			* glm::scale(glm::vec3(2.0f / dcViewport.x, 2.0f / dcViewport.y * flipY, 1.f));
-		scissorMatrix = normalMatrix;
 		sidebarWidth = 0;
 	}
 	else
@@ -79,9 +83,6 @@ void TransformMatrix<System>::CalcMatrices(const rend_context *renderingContext,
 		dcViewport.x = w;
 		dcViewport.y = h;
 
-		float scissoring_scale_x, scissoring_scale_y;
-		GetScissorScaling(scissoring_scale_x, scissoring_scale_y);
-
 		if (config::Widescreen && !config::Rotate90 && !config::EmulateFramebuffer)
 		{
 			sidebarWidth = (1 - dcViewport.x / dcViewport.y * renderViewport.y / renderViewport.x) / 2;
@@ -90,66 +91,57 @@ void TransformMatrix<System>::CalcMatrices(const rend_context *renderingContext,
 			else
 				dcViewport.x *= 4.f / 3.f;
 		}
-		else
+		else {
 			sidebarWidth = 0;
+		}
+		glm::mat4 trans = glm::translate(glm::vec3(-1 + 2 * sidebarWidth, -flipY, 0));
 		float x_coef = 2.0f / dcViewport.x;
 		float y_coef = 2.0f / dcViewport.y * flipY;
-
-		glm::mat4 trans = glm::translate(glm::vec3(-1 + 2 * sidebarWidth, -flipY, 0));
-
-		normalMatrix = trans
-			* glm::scale(glm::vec3(x_coef, y_coef, 1.f));
-		scissorMatrix = trans
-			* glm::scale(glm::vec3(x_coef * scissoring_scale_x, y_coef * scissoring_scale_y, 1.f));
+		normalMatrix = trans * glm::scale(glm::vec3(x_coef, y_coef, 1.f));
 	}
-	normalMatrix = glm::scale(glm::vec3(1, 1, 1 / config::ExtraDepthScale))
-			* normalMatrix;
+	normalMatrix = glm::scale(glm::vec3(1, 1, 1 / config::ExtraDepthScale)) * normalMatrix;
 
 	glm::mat4 vp_trans = glm::translate(glm::vec3(1, flipY, 0));
-	if (renderingContext->isRTT)
-	{
+	if (renderingContext->isRTT) {
 		vp_trans = glm::scale(glm::vec3(dcViewport.x / 2, dcViewport.y / 2 * flipY, 1.f))
 			* vp_trans;
 	}
-	else
-	{
+	else {
 		vp_trans = glm::scale(glm::vec3(renderViewport.x / 2, renderViewport.y / 2 * flipY, 1.f))
 			* vp_trans;
 	}
 	viewportMatrix = vp_trans * normalMatrix;
-	scissorMatrix = vp_trans * scissorMatrix;
 }
 
-template<CoordSystem System>
-void TransformMatrix<System>::GetScissorScaling(float& scale_x, float& scale_y) const
+Rect TransformMatrix::intersectTileAndFBScissor() const
+{
+	// Framebuffer clipping is applied after scaling (SCALER_CTL).
+	// Since we want to apply it before, we need to "unscale" the clipping rectangle.
+	glm::ivec2 botRight = renderingContext->fbClip.origin + renderingContext->fbClip.size;
+	float xscale, yscale;
+	getScissorScaling(xscale, yscale);
+	Rect rect;
+	rect.origin = glm::max(glm::ivec2(std::round(renderingContext->fbClip.origin.x * xscale), std::round(renderingContext->fbClip.origin.y * yscale)),
+			renderingContext->tileClip.origin);
+	botRight = glm::min(glm::ivec2(std::round(botRight.x * xscale), std::round(botRight.y * yscale)),
+			renderingContext->tileClip.origin + renderingContext->tileClip.size);
+	rect.size = glm::max(botRight - rect.origin, glm::ivec2(0, 0));
+	return rect;
+}
+
+void TransformMatrix::getScissorScaling(float& scale_x, float& scale_y) const
 {
 	scale_x = 1.f;
 	scale_y = 1.f;
 
-	if (!renderingContext->isRTT && !config::EmulateFramebuffer)
+	if (!config::EmulateFramebuffer)
 	{
-		if (renderingContext->scaler_ctl.vscalefactor > 0x400)
-			scale_y *= std::round(renderingContext->scaler_ctl.vscalefactor / 1024.f);
-		if (renderingContext->scaler_ctl.hscale)
+		if (renderingContext->scaler_ctl.vscalefactor < 1024 || renderingContext->scaler_ctl.vscalefactor > 1025)
+			scale_y *= renderingContext->scaler_ctl.vscalefactor / 1024.f;
+		if (renderingContext->scaler_ctl.hscale == 1)
 			scale_x *= 2.f;
-	}
-	else if (config::EmulateFramebuffer)
-	{
-		if (renderingContext->scaler_ctl.hscale)
-			scale_x *= 2.f;
-		// vscalefactor is applied after scissoring if > 1
-		if (renderingContext->scaler_ctl.vscalefactor > 0x401 || renderingContext->scaler_ctl.vscalefactor < 0x400)
-		{
-			float vscalefactor = 1024.f / renderingContext->scaler_ctl.vscalefactor;
-			if (vscalefactor < 1)
-				scale_y /= vscalefactor;
-		}
 	}
 }
-
-template class TransformMatrix<COORD_OPENGL>;
-template class TransformMatrix<COORD_VULKAN>;
-template class TransformMatrix<COORD_DIRECTX>;
 
 void getScaledFramebufferSize(const rend_context& rendCtx, int& width, int& height)
 {

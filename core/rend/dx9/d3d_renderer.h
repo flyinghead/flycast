@@ -142,7 +142,7 @@ private:
 	void readRttRenderTarget(u32 texAddress);
 	void writeFramebufferToVRAM();
 	void drawOSD();
-	TileClipping setTileClip(u32 tileclip, int rect[4]);
+	TileClipping setTileClip(u32 tileclip, Rect& rect);
 
 	RenderStateCache devCache;
 	ComPtr<IDirect3DDevice9> device;
@@ -170,7 +170,7 @@ private:
 
 	u32 width = 0;
 	u32 height = 0;
-	TransformMatrix<COORD_DIRECTX> matrices;
+	TransformMatrix matrices{ true };
 	D3DTextureCache texCache;
 	D3DShaders shaders;
 	RECT scissorRect{};
