@@ -49,5 +49,9 @@ jobs:
           environment_variables: CCACHE_DIR
           run: |
             ${{ matrix.pkginstall }}
+            if [ -x /usr/pkg/bin/clang ] && [ -x /usr/pkg/bin/clang++ ]; then
+              export CC=/usr/pkg/bin/clang
+              export CXX=/usr/pkg/bin/clang++
+            fi
             cmake -B build -DUSE_LIBCDIO=ON -DCMAKE_BUILD_TYPE=Release -G Ninja -DLIBRETRO=${{ matrix.libretro }}
             cmake --build build --config Release
