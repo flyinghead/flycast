@@ -17,6 +17,7 @@
 #pragma once
 #include "oslib/oslib.h"
 #include "hw/pvr/Renderer_if.h"
+#include "hw/pvr/ta_ctx.h"
 #include "cfg/option.h"
 #include "texconv.h"
 #include "CustomTexture.h"
@@ -287,7 +288,7 @@ void ReadFramebuffer(const FramebufferInfo& info, PixelBuffer<u32>& pb, int& wid
 
 // width and height in pixels. linestride in bytes
 template<int Red = 0, int Green = 1, int Blue = 2, int Alpha = 3>
-void WriteFramebuffer(u32 width, u32 height, const u8 *data, u32 dstAddr, FB_W_CTRL_type fb_w_ctrl, u32 linestride, FB_X_CLIP_type xclip, FB_Y_CLIP_type yclip);
+void WriteFramebuffer(u32 width, u32 height, const u8 *data, u32 dstAddr, FB_W_CTRL_type fb_w_ctrl, u32 linestride, const Rect& clip);
 
 // width and height in pixels. linestride in bytes
 template<int Red = 0, int Green = 1, int Blue = 2, int Alpha = 3>

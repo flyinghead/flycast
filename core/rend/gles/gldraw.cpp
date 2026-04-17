@@ -106,13 +106,13 @@ static void SetBaseClipping()
 		glcache.Disable(GL_SCISSOR_TEST);
 }
 
-static TileClipping setTileClip(u32 tileclip, int clip_rect[4])
+static TileClipping setTileClip(u32 tileclip, Rect& rect)
 {
-	TileClipping clipmode = GetTileClip(tileclip, ViewportMatrix, clip_rect, *gl.rendContext);
+	TileClipping clipmode = getTileClip(tileclip, ViewportMatrix, rect, *gl.rendContext);
 	if (clipmode == TileClipping::Outside)
 	{
 		glcache.Enable(GL_SCISSOR_TEST);
-		glcache.Scissor(clip_rect[0], clip_rect[1], clip_rect[2], clip_rect[3]);
+		glcache.Scissor(rect.origin.x, rect.origin.y, rect.size.x, rect.size.y);
 	}
 	else {
 		SetBaseClipping();
@@ -137,7 +137,7 @@ void SetGPState(const PolyParam* gp,u32 cflip=0)
 	bool color_clamp = gp->tsp.ColorClamp && (gl.rendContext->fog_clamp_min.full != 0 || gl.rendContext->fog_clamp_max.full != 0xffffffff);
 	int fog_ctrl = config::Fog ? gp->tsp.FogCtrl : 2;
 
-	int clip_rect[4] = {};
+	Rect clip_rect;
 	TileClipping clipmode = setTileClip(gp->tileclip, clip_rect);
 	TextureCacheData *texture = (TextureCacheData *)gp->texture;
 	int gpuPalette = texture == nullptr || !texture->gpuPalette ? 0
@@ -185,8 +185,8 @@ void SetGPState(const PolyParam* gp,u32 cflip=0)
 	}
 
 	if (clipmode == TileClipping::Inside)
-		glUniform4f(CurrentShader->pp_ClipTest, (float)clip_rect[0], (float)clip_rect[1],
-				(float)(clip_rect[0] + clip_rect[2]), (float)(clip_rect[1] + clip_rect[3]));
+		glUniform4f(CurrentShader->pp_ClipTest, (float)clip_rect.origin.x, (float)clip_rect.origin.y,
+				(float)clip_rect.bottomRight().x, (float)clip_rect.bottomRight().y);
 
 	if (config::ModifierVolumes)
 	{
@@ -542,7 +542,7 @@ void DrawModVols(int first, int count)
 		{
 			glcache.UseProgram(gl.modvol_shader.program);
 		}
-		int clip_rect[4];
+		Rect clip_rect;
 		setTileClip(param.tileclip, clip_rect);
 		// TODO inside clipping
 
@@ -697,15 +697,13 @@ void OpenGLRenderer::RenderFramebuffer(const FramebufferInfo& info)
 
 void writeFramebufferToVRAM()
 {
-	u32 width = (gl.rendContext->ta_GLOB_TILE_CLIP.tile_x_num + 1) * 32;
-	u32 height = (gl.rendContext->ta_GLOB_TILE_CLIP.tile_y_num + 1) * 32;
+	u32 width = gl.rendContext->globClip.x;
+	u32 height = gl.rendContext->globClip.y;
 
 	float xscale = gl.rendContext->scaler_ctl.hscale == 1 ? 0.5f : 1.f;
 	float yscale = 1024.f / gl.rendContext->scaler_ctl.vscalefactor;
 	if (std::abs(yscale - 1.f) < 0.01)
 		yscale = 1.f;
-	FB_X_CLIP_type xClip = gl.rendContext->fb_X_CLIP;
-	FB_Y_CLIP_type yClip = gl.rendContext->fb_Y_CLIP;
 
 	if (xscale != 1.f || yscale != 1.f)
 	{
@@ -746,11 +744,6 @@ void writeFramebufferToVRAM()
 
 		width = scaledW;
 		height = scaledH;
-		// FB_Y_CLIP is applied before vscalefactor if > 1, so it must be scaled here
-		if (yscale > 1) {
-			yClip.min = std::round(yClip.min * yscale);
-			yClip.max = std::round(yClip.max * yscale);
-		}
 	}
 	u32 tex_addr = gl.rendContext->fb_W_SOF1 & VRAM_MASK; // TODO SCALER_CTL.interlace, SCALER_CTL.fieldselect
 
@@ -763,11 +756,7 @@ void writeFramebufferToVRAM()
 	u8 *p = (u8 *)tmp_buf.data();
 	glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, p);
 
-	xClip.min = std::min(xClip.min, width - 1);
-	xClip.max = std::min(xClip.max, width - 1);
-	yClip.min = std::min(yClip.min, height - 1);
-	yClip.max = std::min(yClip.max, height - 1);
-	WriteFramebuffer(width, height, p, tex_addr, gl.rendContext->fb_W_CTRL, linestride, xClip, yClip);
+	WriteFramebuffer(width, height, p, tex_addr, gl.rendContext->fb_W_CTRL, linestride, gl.rendContext->fbClip);
 
 	glBindFramebuffer(GL_FRAMEBUFFER, gl.ofbo.origFbo);
 	glCheck();

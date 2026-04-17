@@ -1,6 +1,7 @@
 #pragma once
 
 void input_x11_init();
+void input_x11_term();
 void event_x11_handle();
 void input_x11_handle();
 void x11_window_create();

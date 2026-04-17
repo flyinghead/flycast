@@ -1162,7 +1162,7 @@ template void WriteTextureToVRam<0, 1, 2, 3>(u32 width, u32 height, const u8 *da
 template void WriteTextureToVRam<2, 1, 0, 3>(u32 width, u32 height, const u8 *data, u16 *dst, FB_W_CTRL_type fb_w_ctrl, u32 linestride);
 
 template<typename FBLineWriter>
-static void writeFramebufferLW(u32 width, u32 height, const u8 *data, u32 dstAddr, FB_W_CTRL_type fb_w_ctrl, u32 linestride, FB_X_CLIP_type xclip, FB_Y_CLIP_type yclip)
+static void writeFramebufferLW(u32 width, u32 height, const u8 *data, u32 dstAddr, FB_W_CTRL_type fb_w_ctrl, u32 linestride, const Rect& clip)
 {
 	int bpp = FBLineWriter::BytesPerPixel;
 
@@ -1172,52 +1172,57 @@ static void writeFramebufferLW(u32 width, u32 height, const u8 *data, u32 dstAdd
 	else
 		padding = 0;
 
-	const u8 *p = data + 4 * yclip.min * width;
-	dstAddr += bpp * yclip.min * (width + padding / bpp);
+	const u8 *p = data + 4 * clip.origin.y * width;
+	dstAddr += bpp * clip.origin.y * (width + padding / bpp);
 
-	const u32 clipWidth = std::min(width, xclip.max + 1u);
-	height = std::min(height, yclip.max + 1u);
+	const u32 clipWidth = std::min<u32>(width, clip.origin.x + clip.size.x);
+	height = std::min<u32>(height, clip.origin.y + clip.size.y);
 
 	FBPixelWriter pixWriter(dstAddr);
 	FBLineWriter lineWriter(fb_w_ctrl, pixWriter);
 
-	for (u32 l = yclip.min; l < height; l++)
+	const unsigned dp1 = 4 * clip.origin.x;
+	const unsigned adv1 = bpp * clip.origin.x;
+	const unsigned adv2 = padding + (width - clipWidth) * bpp;
+	const unsigned dp2 = (width - clipWidth) * 4;
+
+	for (u32 l = clip.origin.y; l < height; l++)
 	{
-		p += 4 * xclip.min;
-		pixWriter.advance(bpp * xclip.min);
+		p += dp1;
+		pixWriter.advance(adv1);
 
-		lineWriter.write(xclip.min, clipWidth, p, l);
+		lineWriter.write(clip.origin.x, clipWidth, p, l);
 
-		pixWriter.advance(padding + (width - xclip.max - 1) * bpp);
-		p += (width - xclip.max - 1) * 4;
+		pixWriter.advance(adv2);
+		p += dp2;
 	}
 }
 
 template<int Red, int Green, int Blue, int Alpha>
-void WriteFramebuffer(u32 width, u32 height, const u8 *data, u32 dstAddr, FB_W_CTRL_type fb_w_ctrl, u32 linestride, FB_X_CLIP_type xclip, FB_Y_CLIP_type yclip)
+void WriteFramebuffer(u32 width, u32 height, const u8 *data, u32 dstAddr, FB_W_CTRL_type fb_w_ctrl, u32 linestride, const Rect& clip)
 {
 	switch (fb_w_ctrl.fb_packmode)
 	{
 	case 0: // 0555 KRGB 16 bit
-		writeFramebufferLW<FBLineWriter0555<Red, Green, Blue, Alpha, FBPixelWriter>>(width, height, data, dstAddr, fb_w_ctrl, linestride, xclip, yclip);
+		writeFramebufferLW<FBLineWriter0555<Red, Green, Blue, Alpha, FBPixelWriter>>(width, height, data, dstAddr, fb_w_ctrl, linestride, clip);
 		break;
 	case 1: // 565 RGB 16 bit
-		writeFramebufferLW<FBLineWriter565<Red, Green, Blue, Alpha, FBPixelWriter>>(width, height, data, dstAddr, fb_w_ctrl, linestride, xclip, yclip);
+		writeFramebufferLW<FBLineWriter565<Red, Green, Blue, Alpha, FBPixelWriter>>(width, height, data, dstAddr, fb_w_ctrl, linestride, clip);
 		break;
 	case 2: // 4444 ARGB 16 bit
-		writeFramebufferLW<FBLineWriter4444<Red, Green, Blue, Alpha, FBPixelWriter>>(width, height, data, dstAddr, fb_w_ctrl, linestride, xclip, yclip);
+		writeFramebufferLW<FBLineWriter4444<Red, Green, Blue, Alpha, FBPixelWriter>>(width, height, data, dstAddr, fb_w_ctrl, linestride, clip);
 		break;
 	case 3: // 1555 ARGB 16 bit
-		writeFramebufferLW<FBLineWriter1555<Red, Green, Blue, Alpha, FBPixelWriter>>(width, height, data, dstAddr, fb_w_ctrl, linestride, xclip, yclip);
+		writeFramebufferLW<FBLineWriter1555<Red, Green, Blue, Alpha, FBPixelWriter>>(width, height, data, dstAddr, fb_w_ctrl, linestride, clip);
 		break;
 	case 4: // 888 RGB 24 bit packed
-		writeFramebufferLW<FBLineWriter888<Red, Green, Blue, Alpha, FBPixelWriter>>(width, height, data, dstAddr, fb_w_ctrl, linestride, xclip, yclip);
+		writeFramebufferLW<FBLineWriter888<Red, Green, Blue, Alpha, FBPixelWriter>>(width, height, data, dstAddr, fb_w_ctrl, linestride, clip);
 		break;
 	case 5: // 0888 KRGB 32 bit
-		writeFramebufferLW<FBLineWriter0888<Red, Green, Blue, Alpha, FBPixelWriter>>(width, height, data, dstAddr, fb_w_ctrl, linestride, xclip, yclip);
+		writeFramebufferLW<FBLineWriter0888<Red, Green, Blue, Alpha, FBPixelWriter>>(width, height, data, dstAddr, fb_w_ctrl, linestride, clip);
 		break;
 	case 6: // 8888 ARGB 32 bit
-		writeFramebufferLW<FBLineWriter8888<Red, Green, Blue, Alpha, FBPixelWriter>>(width, height, data, dstAddr, fb_w_ctrl, linestride, xclip, yclip);
+		writeFramebufferLW<FBLineWriter8888<Red, Green, Blue, Alpha, FBPixelWriter>>(width, height, data, dstAddr, fb_w_ctrl, linestride, clip);
 		break;
 	default:
 		die("Invalid framebuffer format");
@@ -1225,9 +1230,9 @@ void WriteFramebuffer(u32 width, u32 height, const u8 *data, u32 dstAddr, FB_W_C
 	}
 }
 template void WriteFramebuffer<0, 1, 2, 3>(u32 width, u32 height, const u8 *data, u32 dstAddr, FB_W_CTRL_type fb_w_ctrl,
-		u32 linestride, FB_X_CLIP_type xclip, FB_Y_CLIP_type yclip);
+		u32 linestride, const Rect& clip);
 template void WriteFramebuffer<2, 1, 0, 3>(u32 width, u32 height, const u8 *data, u32 dstAddr, FB_W_CTRL_type fb_w_ctrl,
-		u32 linestride, FB_X_CLIP_type xclip, FB_Y_CLIP_type yclip);
+		u32 linestride, const Rect& clip);
 
 void BaseTextureCacheData::invalidate()
 {

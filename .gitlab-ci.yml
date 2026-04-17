@@ -87,6 +87,11 @@ include:
   - project: 'libretro-infrastructure/ci-templates'
     file: '/tvos-cmake.yml'
 
+ #################################### MISC ##################################
+  # webOS 32-bit (LGTV)
+  - project: 'libretro-infrastructure/ci-templates'
+    file: '/webos-cmake.yml'
+
 # Stages for building
 stages:
   - build-prepare
@@ -123,6 +128,13 @@ libretro-build-linux-i686:
     - .libretro-linux-cmake-x86
     - .core-defs-linux
   image: $CI_SERVER_HOST:5050/libretro-infrastructure/libretro-build-i386-ubuntu:backports
+
+# Linux 64-bit (ARM)
+libretro-build-linux-aarch64:
+  extends:
+    - .libretro-linux-cmake-aarch64
+    - .core-defs-linux
+
 
 # MacOS 64-bit
 libretro-build-osx-x64:
@@ -181,3 +193,9 @@ libretro-build-tvos-arm64:
     - .libretro-tvos-cmake-arm64
     - .core-defs-ios-arm64
 
+#################################### MISC ##################################
+# webOS 32-bit
+libretro-build-webos-armv7a:
+  extends:
+    - .libretro-webos-armv7a-cmake
+    - .core-defs

@@ -260,6 +260,14 @@ void input_x11_init()
 	GamepadDevice::Register(x11Mouse);
 }
 
+void input_x11_term()
+{
+	GamepadDevice::Unregister(x11Keyboard);
+	x11Keyboard.reset();
+	GamepadDevice::Unregister(x11Mouse);
+	x11Mouse.reset();
+}
+
 void x11_window_create()
 {
 	if (config::loadInt("pvr", "nox11") == 0)

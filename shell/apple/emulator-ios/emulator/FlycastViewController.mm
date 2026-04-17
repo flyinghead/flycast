@@ -366,6 +366,7 @@ static void updateAudioSession(Event event, void *)
 - (void)dealloc
 {
 	[self deinitKeyboard];
+	IOSGamepad::removeAll();
 	EventManager::unlisten(Event::Resume, updatePointerLock);
 	EventManager::unlisten(Event::Pause, updatePointerLock);
 	EventManager::unlisten(Event::Terminate, updatePointerLock);

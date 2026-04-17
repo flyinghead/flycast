@@ -606,11 +606,11 @@ void DX11Renderer::setCullMode(int mode)
 	deviceContext->RSSetState(rasterizer);
 }
 
-TileClipping DX11Renderer::setTileClip(u32 tileclip, int clip_rect[4])
+TileClipping DX11Renderer::setTileClip(u32 tileclip, Rect& clip_rect)
 {
-	TileClipping clipmode = GetTileClip(tileclip, matrices.GetViewportMatrix(), clip_rect, *rendContext);
+	TileClipping clipmode = getTileClip(tileclip, matrices.GetViewportMatrix(), clip_rect, *rendContext);
 	if (clipmode == TileClipping::Outside) {
-		RECT rect { clip_rect[0], clip_rect[1], clip_rect[0] + clip_rect[2], clip_rect[1] + clip_rect[3] };
+		RECT rect { clip_rect.origin.x, clip_rect.origin.y, clip_rect.bottomRight().x, clip_rect.bottomRight().y };
 		deviceContext->RSSetScissorRects(1, &rect);
 	}
 	else {
@@ -636,7 +636,7 @@ void DX11Renderer::setRenderState(const PolyParam *gp)
 	bool color_clamp = gp->tsp.ColorClamp && (rendContext->fog_clamp_min.full != 0 || rendContext->fog_clamp_max.full != 0xffffffff);
 	int fog_ctrl = config::Fog ? gp->tsp.FogCtrl : 2;
 
-	int clip_rect[4] = {};
+	Rect clip_rect;
 	TileClipping clipmode = setTileClip(gp->tileclip, clip_rect);
 	DX11Texture *texture = (DX11Texture *)gp->texture;
 	int gpuPalette = texture == nullptr || !texture->gpuPalette ? 0
@@ -678,10 +678,10 @@ void DX11Renderer::setRenderState(const PolyParam *gp)
 
 	if (clipmode == TileClipping::Inside)
 	{
-		constants.clipTest[0] = (float)clip_rect[0];
-		constants.clipTest[1] = (float)clip_rect[1];
-		constants.clipTest[2] = (float)(clip_rect[0] + clip_rect[2]);
-		constants.clipTest[3] = (float)(clip_rect[1] + clip_rect[3]);
+		constants.clipTest[0] = (float)clip_rect.origin.x;
+		constants.clipTest[1] = (float)clip_rect.origin.y;
+		constants.clipTest[2] = (float)clip_rect.bottomRight().x;
+		constants.clipTest[3] = (float)clip_rect.bottomRight().y;
 	}
 	if (constants.trilinearAlpha != 1.f || gpuPalette != 0 || clipmode == TileClipping::Inside)
 	{
@@ -863,7 +863,7 @@ void DX11Renderer::drawModVols(int first, int count)
 			// XOR'ing (closed volume)
 			deviceContext->OMSetDepthStencilState(depthStencilStates.getMVState(DepthStencilStates::Xor), 0);
 
-		int clip_rect[4] = {};
+		Rect clip_rect;
 		setTileClip(param.tileclip, clip_rect);
 		// TODO inside clipping
 
@@ -1057,11 +1057,22 @@ void DX11Renderer::setBaseScissor()
 		float min_y;
 		if (!rendContext->isRTT)
 		{
-			glm::vec4 clip_min(rendContext->fb_X_CLIP.min, rendContext->fb_Y_CLIP.min, 0, 1);
-			glm::vec4 clip_dim(rendContext->fb_X_CLIP.max - rendContext->fb_X_CLIP.min + 1,
-							   rendContext->fb_Y_CLIP.max - rendContext->fb_Y_CLIP.min + 1, 0, 0);
-			clip_min = matrices.GetScissorMatrix() * clip_min;
-			clip_dim = matrices.GetScissorMatrix() * clip_dim;
+			glm::vec4 clip_min;
+			glm::vec4 clip_dim;
+			if (config::EmulateFramebuffer) {
+				// Region tile clipping only
+				clip_min = glm::vec4(rendContext->tileClip.origin, 0, 1);
+				clip_dim = glm::vec4(rendContext->tileClip.size, 0, 0);
+			}
+			else
+			{
+				// Intersect tile clipping and framebuffer clipping
+				Rect rect = matrices.intersectTileAndFBScissor();
+				clip_min = glm::vec4(rect.origin, 0, 1);
+				clip_dim = glm::vec4(rect.size, 0, 0);
+			}
+			clip_min = matrices.GetViewportMatrix() * clip_min;
+			clip_dim = matrices.GetViewportMatrix() * clip_dim;
 
 			min_x = clip_min[0];
 			min_y = clip_min[1];
@@ -1112,10 +1123,10 @@ void DX11Renderer::setBaseScissor()
 			}
 		}
 		scissorEnable = true;
-		scissorRect.left = lroundf(min_x);
-		scissorRect.top = lroundf(min_y);
-		scissorRect.right = scissorRect.left + lroundf(fWidth);
-		scissorRect.bottom = scissorRect.top + lroundf(fHeight);
+		scissorRect.left = std::round(min_x);
+		scissorRect.top = std::round(min_y);
+		scissorRect.right = scissorRect.left + std::round(fWidth);
+		scissorRect.bottom = scissorRect.top + std::round(fHeight);
 	}
 	else
 	{
@@ -1263,8 +1274,8 @@ void DX11Renderer::drawOSD()
 
 void DX11Renderer::writeFramebufferToVRAM()
 {
-	u32 width = (rendContext->ta_GLOB_TILE_CLIP.tile_x_num + 1) * 32;
-	u32 height = (rendContext->ta_GLOB_TILE_CLIP.tile_y_num + 1) * 32;
+	u32 width = rendContext->globClip.x;
+	u32 height = rendContext->globClip.y;
 
 	float xscale = rendContext->scaler_ctl.hscale == 1 ? 0.5f : 1.f;
 	float yscale = 1024.f / rendContext->scaler_ctl.vscalefactor;
@@ -1272,8 +1283,6 @@ void DX11Renderer::writeFramebufferToVRAM()
 		yscale = 1.f;
 
 	ComPtr<ID3D11Texture2D> fbTexture = fbTex;
-	FB_X_CLIP_type xClip = rendContext->fb_X_CLIP;
-	FB_Y_CLIP_type yClip = rendContext->fb_Y_CLIP;
 
 	if (xscale != 1.f || yscale != 1.f)
 	{
@@ -1314,11 +1323,6 @@ void DX11Renderer::writeFramebufferToVRAM()
 		width = scaledW;
 		height = scaledH;
 		fbTexture = fbScaledTexture;
-		// FB_Y_CLIP is applied before vscalefactor if > 1, so it must be scaled here
-		if (yscale > 1) {
-			yClip.min = std::round(yClip.min * yscale);
-			yClip.max = std::round(yClip.max * yscale);
-		}
 	}
 	u32 texAddress = rendContext->fb_W_SOF1 & VRAM_MASK; // TODO SCALER_CTL.interlace, SCALER_CTL.fieldselect
 	u32 linestride = rendContext->fb_W_LINESTRIDE * 8;
@@ -1364,11 +1368,7 @@ void DX11Renderer::writeFramebufferToVRAM()
 	}
 	deviceContext->Unmap(stagingTex, 0);
 
-	xClip.min = std::min(xClip.min, width - 1);
-	xClip.max = std::min(xClip.max, width - 1);
-	yClip.min = std::min(yClip.min, height - 1);
-	yClip.max = std::min(yClip.max, height - 1);
-	WriteFramebuffer<2, 1, 0, 3>(width, height, (u8 *)tmp_buf.data(), texAddress, rendContext->fb_W_CTRL, linestride, xClip, yClip);
+	WriteFramebuffer<2, 1, 0, 3>(width, height, (u8 *)tmp_buf.data(), texAddress, rendContext->fb_W_CTRL, linestride, rendContext->fbClip);
 }
 
 bool DX11Renderer::GetLastFrame(std::vector<u8>& data, int& width, int& height)

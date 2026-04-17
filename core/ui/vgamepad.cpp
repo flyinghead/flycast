@@ -108,8 +108,8 @@ static bool loadOSDButtons(const std::string& path)
 	if (file == nullptr)
 		return false;
 
-	stbi_set_flip_vertically_on_load(1);
-	int width, height, n;
+	stbi_set_flip_vertically_on_load_thread(1);
+    int width, height, n;
 	u8 *image_data = stbi_load_from_file(file, &width, &height, &n, STBI_rgb_alpha);
 	delete file;
 	if (image_data == nullptr)
@@ -143,7 +143,7 @@ static ImTextureID loadOSDButtons()
 	// default in resource
 	size_t size;
 	std::unique_ptr<u8[]> data = resource::load(getButtonsResPath(), size);
-	stbi_set_flip_vertically_on_load(1);
+	stbi_set_flip_vertically_on_load_thread(1);
 	int width, height, n;
 	u8 *image_data = stbi_load_from_memory(data.get(), (int)size, &width, &height, &n, STBI_rgb_alpha);
     if (image_data != nullptr)

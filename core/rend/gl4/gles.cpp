@@ -803,10 +803,9 @@ bool OpenGL4Renderer::renderFrame(int width, int height)
 	
 	const bool is_rtt = gl.rendContext->isRTT;
 
-	TransformMatrix<COORD_OPENGL> matrices(*gl.rendContext, is_rtt ? gl.rendContext->getFramebufferWidth() : width,
+	TransformMatrix matrices(*gl.rendContext, is_rtt ? gl.rendContext->getFramebufferWidth() : width,
 			is_rtt ? gl.rendContext->getFramebufferHeight() : height);
 	gl4ShaderUniforms.ndcMat = matrices.GetNormalMatrix();
-	const glm::mat4& scissor_mat = matrices.GetScissorMatrix();
 	ViewportMatrix = matrices.GetViewportMatrix();
 	
 	/*
@@ -917,11 +916,21 @@ bool OpenGL4Renderer::renderFrame(int width, int height)
 		float min_y;
 		if (!is_rtt)
 		{
-			glm::vec4 clip_min(gl.rendContext->fb_X_CLIP.min, gl.rendContext->fb_Y_CLIP.min, 0, 1);
-			glm::vec4 clip_dim(gl.rendContext->fb_X_CLIP.max - gl.rendContext->fb_X_CLIP.min + 1,
-							   gl.rendContext->fb_Y_CLIP.max - gl.rendContext->fb_Y_CLIP.min + 1, 0, 0);
-			clip_min = scissor_mat * clip_min;
-			clip_dim = scissor_mat * clip_dim;
+			glm::vec4 clip_min;
+			glm::vec4 clip_dim;
+			if (config::EmulateFramebuffer) {
+				// Region tile clipping only
+				clip_min = glm::vec4(gl.rendContext->tileClip.origin, 0, 1);
+				clip_dim = glm::vec4(gl.rendContext->tileClip.size, 0, 0);
+			}
+			else
+			{
+				Rect rect = matrices.intersectTileAndFBScissor();
+				clip_min = glm::vec4(rect.origin, 0, 1);
+				clip_dim = glm::vec4(rect.size, 0, 0);
+			}
+			clip_min = ViewportMatrix * clip_min;
+			clip_dim = ViewportMatrix * clip_dim;
 
 			min_x = clip_min[0];
 			min_y = clip_min[1];

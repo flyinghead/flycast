@@ -467,6 +467,9 @@ void os_TermInput()
 #if defined(USE_SDL)
 	input_sdl_quit();
 #else
+	#if defined(SUPPORT_X11)
+		input_x11_term();
+	#endif
 	#if defined(USE_EVDEV)
 		input_evdev_close();
 	#endif

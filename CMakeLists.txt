@@ -1138,6 +1138,8 @@ target_sources(${PROJECT_NAME} PRIVATE
 		core/rend/TexCache.h
 		core/rend/texconv.cpp
 		core/rend/texconv.h
+		core/rend/transform_matrix.cpp
+		core/rend/transform_matrix.h
 		core/rend/norend/norend.cpp)
 
 if(USE_VULKAN)
