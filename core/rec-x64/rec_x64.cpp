@@ -702,6 +702,14 @@ public:
 		mov(call_regs[0], dword[rax]);
 		call(bm_GetCodeByVAddr);
 		call(rax);
+
+		// Check CpuRunning between translated blocks so Stop() is observed
+		// promptly in single-threaded delayed frame-swap paths on Win64.
+		// This matches the x86 dynarec behavior more closely.
+		mov(rax, (size_t)&sh4ctx.CpuRunning);
+		cmp(dword[rax], 0);
+		je(end_run_loop);
+
 		mov(rax, (uintptr_t)&sh4ctx.cycle_counter);
 		mov(ecx, dword[rax]);
 		test(ecx, ecx);
