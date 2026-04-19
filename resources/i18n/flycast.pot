@@ -2314,6 +2314,14 @@ msgstr ""
 msgid "Always dump textures that are already replaced by custom textures"
 msgstr ""
 
+#: core/ui/settings.cpp:115
+msgid "Discard Video and Animated Textures"
+msgstr ""
+
+#: core/ui/settings.cpp:116
+msgid "Skip dumping video (YUV) and already updated textures"
+msgstr ""
+
 #: core/ui/settings.cpp:118
 msgid "Log to File"
 msgstr ""

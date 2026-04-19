@@ -112,6 +112,8 @@ static void gui_settings_advanced()
 			DisabledScope scope(!config::DumpTextures.get());
 			OptionCheckbox(T("Dump Replaced Textures"), config::DumpReplacedTextures,
 					T("Always dump textures that are already replaced by custom textures"));
+			OptionCheckbox(T("Discard Video and Animated Textures"), config::DumpUniqueTextures,
+					T("Skip dumping video (YUV) and already updated textures"));
 		}
 		ImGui::Unindent();
         bool logToFile = config::loadBool("log", "LogToFile", false);
