@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-22 12:49+0100\n"
-"PO-Revision-Date: 2026-04-20 11:57\n"
+"PO-Revision-Date: 2026-04-20 15:07\n"
 "Last-Translator: \n"
 "Language: ja_JP\n"
 "MIME-Version: 1.0\n"
@@ -2244,11 +2244,11 @@ msgstr "既にカスタムテクスチャーに置き換えられたテクスチ
 
 #: core/ui/settings.cpp:115
 msgid "Discard Video and Animated Textures"
-msgstr ""
+msgstr "ビデオおよびアニメーションテクスチャを破棄する"
 
 #: core/ui/settings.cpp:116
 msgid "Skip dumping video (YUV) and already updated textures"
-msgstr ""
+msgstr "ビデオ(YUV)および更新済みテクスチャのダンプをスキップします"
 
 #: core/ui/settings.cpp:118
 msgid "Log to File"
