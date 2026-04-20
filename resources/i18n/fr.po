@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-22 12:49+0100\n"
-"PO-Revision-Date: 2026-03-30 20:19\n"
+"PO-Revision-Date: 2026-04-20 11:57\n"
 "Last-Translator: \n"
 "Language: fr_FR\n"
 "MIME-Version: 1.0\n"
@@ -2244,11 +2244,11 @@ msgstr "Toujours sauvegarder les textures déjà remplacées"
 
 #: core/ui/settings.cpp:115
 msgid "Discard Video and Animated Textures"
-msgstr "Ignorer vidéos et textures animées"
+msgstr ""
 
 #: core/ui/settings.cpp:116
 msgid "Skip dumping video (YUV) and already updated textures"
-msgstr "Ignorer les vidéos (YUV) et les textures déjà mises à jour"
+msgstr ""
 
 #: core/ui/settings.cpp:118
 msgid "Log to File"
