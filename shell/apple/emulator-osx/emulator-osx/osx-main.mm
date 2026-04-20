@@ -218,9 +218,7 @@ void os_RunInstance(int argc, const char *argv[])
 
 #import <Syphon/Syphon.h>
 #import <cfg/cfg.h>
-#include "rend/vulkan/vulkan.h"
 static SyphonOpenGLServer* syphonGLServer;
-static SyphonMetalServer* syphonMtlServer;
 
 void os_VideoRoutingPublishFrameTexture(GLuint texID, GLuint texTarget, float w, float h)
 {
@@ -240,6 +238,11 @@ void os_VideoRoutingTermGL()
 	[syphonGLServer release];
 	syphonGLServer = NULL;
 }
+
+#ifdef USE_VULKAN
+#include "rend/vulkan/vulkan.h"
+
+static SyphonMetalServer* syphonMtlServer;
 
 void os_VideoRoutingPublishFrameTexture(const vk::Device& device, const vk::Image& image, const vk::Queue& queue, float x, float y, float w, float h)
 {
@@ -270,6 +273,7 @@ void os_VideoRoutingTermVk()
 	[syphonMtlServer release];
 	syphonMtlServer = NULL;
 }
+#endif
 
 namespace hostfs
 {
