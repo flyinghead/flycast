@@ -320,6 +320,12 @@ void CustomTexture::loadCustomTextureAsync(BaseTextureCacheData *texture_data)
 
 void CustomTexture::dumpTexture(BaseTextureCacheData* texture, int w, int h, void *src_buffer)
 {
+	if (!config::DumpTextures)
+		return;
+
+	if (config::DumpUniqueTextures && (texture->Updates > 1 || texture->tcw.PixelFmt == PixelYUV))
+		return;
+
 	if (!config::DumpReplacedTextures.get() && isTextureReplaced(texture))
 		return;
 
