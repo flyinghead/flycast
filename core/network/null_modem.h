@@ -89,13 +89,6 @@ public:
 
 	bool init()
 	{
-#ifdef _WIN32
-		WSADATA wsaData;
-		if (WSAStartup(MAKEWORD(2, 0), &wsaData) != 0) {
-			ERROR_LOG(NETWORK, "WSAStartup failed. errno=%d", get_last_error());
-			throw Exception("WSAStartup failed");
-		}
-#endif
 		if (config::EnableUPnP) {
 			miniupnp.Init();
 			miniupnp.AddPortMapping(config::LocalPort, true);

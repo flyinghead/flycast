@@ -51,6 +51,7 @@
 
 #include <windows.h>
 #include <windowsx.h>
+#include <winsock2.h>
 
 static void setupPath()
 {
@@ -313,6 +314,11 @@ int main(int argc, char* argv[])
 {
 	nowide::args _(argc, argv);
 
+	WSADATA wsaData;
+	int ret = WSAStartup(MAKEWORD(2, 0), &wsaData);
+	if (ret != 0)
+		fprintf(stderr, "WSAStartup failed. error %x", ret);
+
 #ifdef USE_BREAKPAD
 	wchar_t tempDir[MAX_PATH + 1];
 	GetTempPathW(MAX_PATH + 1, tempDir);
@@ -375,6 +381,7 @@ int main(int argc, char* argv[])
 
 	flycast_term();
 	os_UninstallFaultHandler();
+	WSACleanup();
 
 	return 0;
 }
