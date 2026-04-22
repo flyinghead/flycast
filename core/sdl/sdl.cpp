@@ -32,6 +32,8 @@
 #include "dreamlink.h"
 #include "oslib/i18n.h"
 #include <unordered_map>
+#include <cstdlib>
+#include <cstdio>
 
 static SDL_Window* window = NULL;
 static u32 windowFlags;
@@ -646,6 +648,53 @@ bool sdl_recreate_window(u32 flags)
             }
         }
         SDL_UnloadObject(shcoreDLL);
+    }
+#elif defined(__linux__)
+    // Enable HiDPI mode on Linux (GNOME, Wayland, etc.)
+    // First, try to get GNOME scale factor from environment variable or GSettings
+    hdpiScaling = 1.f;
+
+    // Check GDK_SCALE environment variable (used by GTK/GNOME applications)
+    const char* gdkScale = getenv("GDK_SCALE");
+    if (gdkScale != nullptr) {
+        char* endptr;
+        float scale = strtof(gdkScale, &endptr);
+        if (scale > 0 && endptr != gdkScale) {
+            hdpiScaling = scale;
+            NOTICE_LOG(COMMON, "Using GDK_SCALE: %.2f", hdpiScaling);
+        }
+    }
+
+    // If GDK_SCALE not set, try to detect GNOME scale factor
+    if (hdpiScaling == 1.f) {
+        // Try using GSettings to read org.gnome.desktop.interface scale-factor
+        // This requires gsettings or dconf
+        FILE* fp = popen("gsettings get org.gnome.desktop.interface scaling-factor 2>/dev/null", "r");
+        if (fp != nullptr) {
+            char buffer[32];
+            if (fgets(buffer, sizeof(buffer), fp) != nullptr) {
+                // Output format: "uint32 2" for scale factor 2
+                int scale = 0;
+                if (sscanf(buffer, "uint32 %d", &scale) == 1 && scale > 0) {
+                    hdpiScaling = static_cast<float>(scale);
+                    NOTICE_LOG(COMMON, "Using GNOME scale factor: %.2f", hdpiScaling);
+                }
+            }
+            pclose(fp);
+        }
+    }
+
+    // Fallback: use SDL's DPI detection
+    if (hdpiScaling == 1.f) {
+        float dpi;
+        if (SDL_GetDisplayDPI(0, &dpi, nullptr, nullptr) == 0 && dpi > 0) {
+            // Standard DPI is 96, so scale factor is DPI/96
+            hdpiScaling = dpi / 96.f;
+            if (hdpiScaling > 1.1f)  // Only apply if noticeably different
+                NOTICE_LOG(COMMON, "Using SDL detected DPI: %.2f (scale %.2f)", dpi, hdpiScaling);
+            else
+                hdpiScaling = 1.f;  // Don't apply tiny scaling differences
+        }
     }
 #endif
 
