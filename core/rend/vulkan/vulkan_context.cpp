@@ -44,6 +44,8 @@ VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 #include <memory>
 #include <set>
 #include <vulkan/vulkan_format_traits.hpp>
+#include <algorithm>
+#include <cstring>
 
 void ReInitOSD();
 
@@ -190,11 +192,29 @@ bool VulkanContext::InitInstance(const char** extensions, uint32_t extensions_co
 	&& (defined(VK_USE_PLATFORM_METAL_EXT) || defined(__APPLE__))
 		// MoltenVK is a portability driver. Vulkan loaders >= 1.3.216
 		// will not enumerate portability ICDs unless the application
-		// opts in via VK_KHR_portability_enumeration. Without this
-		// instance creation fails with VK_ERROR_INCOMPATIBLE_DRIVER
-		// on macOS / iOS where MoltenVK is the only available ICD.
-		vext.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
-		instanceFlags |= vk::InstanceCreateFlagBits::eEnumeratePortabilityKHR;
+		// opts in via VK_KHR_portability_enumeration. Without this,
+		// instance creation fails with VK_ERROR_INCOMPATIBLE_DRIVER on
+		// macOS / iOS where MoltenVK is the only available ICD.
+		// Only opt in if the loader actually advertises the extension:
+		// older loaders that predate it would otherwise reject the
+		// instance with VK_ERROR_EXTENSION_NOT_PRESENT.
+		{
+			bool portabilityEnumSupported = false;
+			for (const auto& ext : vk::enumerateInstanceExtensionProperties())
+				if (strcmp(ext.extensionName, VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME) == 0) {
+					portabilityEnumSupported = true;
+					break;
+				}
+			if (portabilityEnumSupported) {
+				const bool alreadyRequested = std::any_of(vext.begin(), vext.end(),
+					[](const char *name) {
+						return strcmp(name, VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME) == 0;
+					});
+				if (!alreadyRequested)
+					vext.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
+				instanceFlags |= vk::InstanceCreateFlagBits::eEnumeratePortabilityKHR;
+			}
+		}
 #endif
 		vk::InstanceCreateInfo instanceCreateInfo(instanceFlags, &applicationInfo, layer_names, vext);
 		// create a UniqueInstance
