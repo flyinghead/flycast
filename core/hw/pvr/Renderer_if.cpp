@@ -74,6 +74,29 @@ public:
 							break;
 						}
 					if (!dupe || type == Present) {
+						// Bound the queue to keep the emu-thread producer and
+						// the renderer-thread consumer from drifting apart.
+						// Render/RenderFramebuffer/Stop are already deduplicated
+						// above, but Present is intentionally allowed to repeat
+						// and can stack up indefinitely if the consumer stalls
+						// (notably under libretro frontends, which drive the
+						// swap from their own video callback). Unbounded growth
+						// here is the producer side of progressive audio/video
+						// drift in long sessions: the SH4 keeps running ahead
+						// while pending Presents pile up. Drop the oldest
+						// pending Present to keep latency bounded.
+						constexpr size_t MAX_QUEUE_DEPTH = 4;
+						if (queue.size() >= MAX_QUEUE_DEPTH)
+						{
+							for (auto it = queue.begin(); it != queue.end(); ++it)
+							{
+								if (it->type == Present)
+								{
+									queue.erase(it);
+									break;
+								}
+							}
+						}
 						queue.push_back(msg);
 						dupe = false;
 					}
