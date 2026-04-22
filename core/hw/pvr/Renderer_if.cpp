@@ -364,6 +364,16 @@ bool rend_init_renderer()
 
 void rend_term_renderer()
 {
+	// Drain and stop the queue first so that any in-flight Render/Present
+	// messages cannot be dispatched against a renderer that is about to be
+	// destroyed. This is called from many libretro entry points (context
+	// reset/destroy, deinit, content load, renderer switch) where the emu
+	// thread may still be holding queued work; without cancelling first
+	// we can race the consumer thread into a null renderer dereference and
+	// also leave the producer side wedged, which manifests as audio/video
+	// drift after a renderer switch.
+	rend_cancel_emu_wait();
+
 	if (renderer != nullptr)
 	{
 		renderer->Term();
