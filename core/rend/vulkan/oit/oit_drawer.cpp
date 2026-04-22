@@ -355,8 +355,8 @@ bool OITDrawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 			(u32)offsets.polyParamsSize, depthAttachments[0]->GetStencilView(),
 			depthAttachments[0]->GetImageView(), paletteTexture->GetImageView(), oitBuffers);
 	descriptorSets.bindPerFrameDescriptorSets(cmdBuffer);
-	descriptorSets.updateColorInputDescSet(0, colorAttachments[0]->GetImageView());
-	descriptorSets.updateColorInputDescSet(1, colorAttachments[1]->GetImageView());
+	descriptorSets.updateColorInputDescSet(0, colorAttachments[0]->GetImageView(), depthAttachments[0]->GetImageView());
+	descriptorSets.updateColorInputDescSet(1, colorAttachments[1]->GetImageView(), depthAttachments[1]->GetImageView());
 
 	// Bind vertex and index buffers
 	cmdBuffer.bindVertexBuffers(0, curMainBuffer, {0});
@@ -372,8 +372,8 @@ bool OITDrawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 	const std::array<vk::ClearValue, 4> clear_colors = {
 			rendContext->isRTT ? vk::ClearColorValue(std::array<float, 4>{0.f, 0.f, 0.f, 1.f}) : getBorderColor(),
 			rendContext->isRTT ? vk::ClearColorValue(std::array<float, 4>{0.f, 0.f, 0.f, 1.f}) : getBorderColor(),
-			vk::ClearDepthStencilValue{ 0.f, 0 },
-			vk::ClearDepthStencilValue{ 0.f, 0 },
+			vk::ClearDepthStencilValue{ GetContext()->getDepthClearValue(), 0 },
+			vk::ClearDepthStencilValue{ GetContext()->getDepthClearValue(), 0 },
 	};
 
 	RenderPass previous_pass = {};
@@ -405,7 +405,8 @@ bool OITDrawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 		DrawList(cmdBuffer, ListType_Opaque, false, Pass::Depth, rendContext->global_param_op, previous_pass.op_count, current_pass.op_count);
 		DrawList(cmdBuffer, ListType_Punch_Through, false, Pass::Depth, rendContext->global_param_pt, previous_pass.pt_count, current_pass.pt_count);
 
-		DrawModifierVolumes<false>(cmdBuffer, previous_pass.mvo_count, current_pass.mvo_count - previous_pass.mvo_count, rendContext->global_param_mvo.data());
+		if (GetContext()->useReversedDepth())
+			DrawModifierVolumes<false>(cmdBuffer, previous_pass.mvo_count, current_pass.mvo_count - previous_pass.mvo_count, rendContext->global_param_mvo.data());
 
 		// Color subpass
 		cmdBuffer.nextSubpass(vk::SubpassContents::eInline);
@@ -447,7 +448,7 @@ bool OITDrawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 		}
 
 		// Tr modifier volumes
-		if (GetContext()->GetVendorID() != VulkanContext::VENDOR_QUALCOMM)	// Adreno bug
+		if (GetContext()->useReversedDepth() && GetContext()->GetVendorID() != VulkanContext::VENDOR_QUALCOMM)	// Adreno bug
 		{
 			if (current_pass.mv_op_tr_shared)
 				DrawModifierVolumes<true>(cmdBuffer, previous_pass.mvo_count, current_pass.mvo_count - previous_pass.mvo_count, rendContext->global_param_mvo.data());
@@ -648,7 +649,7 @@ vk::CommandBuffer OITTextureDrawer::NewFrame()
 	framebuffer = device.createFramebufferUnique(vk::FramebufferCreateInfo(vk::FramebufferCreateFlags(),
 			rttPipelineManager->GetRenderPass(true, true), imageViews, widthPow2, heightPow2, 1));
 
-	commandBuffer.setViewport(0, vk::Viewport(0.0f, 0.0f, (float)upscaledWidth, (float)upscaledHeight, 1.0f, 0.0f));
+	commandBuffer.setViewport(0, GetContext()->makeViewport(0.0f, 0.0f, (float)upscaledWidth, (float)upscaledHeight));
 	u32 minX = rendContext->getFramebufferMinX() * upscaledWidth / origWidth;
 	u32 minY = rendContext->getFramebufferMinY() * upscaledHeight / origHeight;
 	baseScissor = vk::Rect2D(vk::Offset2D(minX, minY), vk::Extent2D(upscaledWidth, upscaledHeight));
@@ -723,7 +724,8 @@ vk::CommandBuffer OITScreenDrawer::NewFrame()
 	SetBaseScissor(viewport.extent);
 
 	currentCommandBuffer.setScissor(0, baseScissor);
-	currentCommandBuffer.setViewport(0, vk::Viewport((float)viewport.offset.x, (float)viewport.offset.y, (float)viewport.extent.width, (float)viewport.extent.height, 1.0f, 0.0f));
+	currentCommandBuffer.setViewport(0, GetContext()->makeViewport((float)viewport.offset.x, (float)viewport.offset.y,
+			(float)viewport.extent.width, (float)viewport.extent.height));
 
 	return currentCommandBuffer;
 }

@@ -565,10 +565,10 @@ vk::CommandBuffer TextureDrawer::BeginRenderPass()
 	framebuffers[GetCurrentImage()] = device.createFramebufferUnique(vk::FramebufferCreateInfo(vk::FramebufferCreateFlags(),
 			rttPipelineManager->GetRenderPass(), imageViews, widthPow2, heightPow2, 1));
 
-	const std::array<vk::ClearValue, 2> clear_colors = { vk::ClearColorValue(std::array<float, 4> { 0.f, 0.f, 0.f, 1.f }), vk::ClearDepthStencilValue { 0.f, 0 } };
+	const std::array<vk::ClearValue, 2> clear_colors = { vk::ClearColorValue(std::array<float, 4> { 0.f, 0.f, 0.f, 1.f }), vk::ClearDepthStencilValue { GetContext()->getDepthClearValue(), 0 } };
 	commandBuffer.beginRenderPass(vk::RenderPassBeginInfo(rttPipelineManager->GetRenderPass(),	*framebuffers[GetCurrentImage()],
 			vk::Rect2D( { 0, 0 }, { width, height }), clear_colors), vk::SubpassContents::eInline);
-	commandBuffer.setViewport(0, vk::Viewport(0.0f, 0.0f, (float)upscaledWidth, (float)upscaledHeight, 1.0f, 0.0f));
+	commandBuffer.setViewport(0, GetContext()->makeViewport(0.0f, 0.0f, (float)upscaledWidth, (float)upscaledHeight));
 	u32 minX = rendContext->getFramebufferMinX() * upscaledWidth / origWidth;
 	u32 minY = rendContext->getFramebufferMinY() * upscaledHeight / origHeight;
 	baseScissor = vk::Rect2D(vk::Offset2D(minX, minY), vk::Extent2D(upscaledWidth, upscaledHeight));
@@ -754,13 +754,13 @@ vk::CommandBuffer ScreenDrawer::BeginRenderPass()
 
 		vk::RenderPass renderPass = clearNeeded[GetCurrentImage()] || rendContext->clearFramebuffer ? *renderPassClear : *renderPassLoad;
 		clearNeeded[GetCurrentImage()] = false;
-		const std::array<vk::ClearValue, 2> clear_colors = { vk::ClearColorValue(std::array<float, 4> { 0.f, 0.f, 0.f, 1.f }), vk::ClearDepthStencilValue { 0.f, 0 } };
+		const std::array<vk::ClearValue, 2> clear_colors = { vk::ClearColorValue(std::array<float, 4> { 0.f, 0.f, 0.f, 1.f }), vk::ClearDepthStencilValue { GetContext()->getDepthClearValue(), 0 } };
 		commandBuffer.beginRenderPass(vk::RenderPassBeginInfo(renderPass, *framebuffers[GetCurrentImage()],
 				vk::Rect2D( { 0, 0 }, viewport), clear_colors), vk::SubpassContents::eInline);
 		currentCommandBuffer = commandBuffer;
 		renderPassStarted = true;
 	}
-	currentCommandBuffer.setViewport(0, vk::Viewport(0.0f, 0.0f, (float)viewport.width, (float)viewport.height, 1.0f, 0.0f));
+	currentCommandBuffer.setViewport(0, GetContext()->makeViewport(0.0f, 0.0f, (float)viewport.width, (float)viewport.height));
 
 	matrices.CalcMatrices(rendContext, viewport.width, viewport.height);
 

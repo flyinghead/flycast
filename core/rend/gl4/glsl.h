@@ -38,14 +38,24 @@ struct Pixel { \n\
 #define DST_ALPHA			6 \n\
 #define INVERSE_DST_ALPHA	7 \n\
  \n\
-void setFragDepth(float z) \n\
+float computeFragDepth(float z) \n\
 { \n\
 #if DIV_POS_Z == 1 \n\
 	float w = 100000.0 / z; \n\
 #else \n\
 	float w = 100000.0 * z; \n\
 #endif \n\
-	gl_FragDepth = log2(1.0 + max(w, -0.999999)) / 34.0; \n\
+	float depth = log2(1.0 + max(w, -0.999999)) / 34.0; \n\
+#if REVERSED_DEPTH == 1 \n\
+	return depth; \n\
+#else \n\
+	return 1.0 - depth; \n\
+#endif \n\
+} \n\
+\n\
+void setFragDepth(float z) \n\
+{ \n\
+	gl_FragDepth = computeFragDepth(z); \n\
 } \n\
 \n\
 struct PolyParam { \n\

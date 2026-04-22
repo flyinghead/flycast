@@ -68,6 +68,8 @@ void OITPipelineManager::CreatePipeline(u32 listType, bool autosort, const PolyP
 		depthOp = vk::CompareOp::eGreaterOrEqual;
 	else
 		depthOp = depthOps[pp.isp.DepthMode];
+	if (!GetContext()->useReversedDepth())
+		depthOp = reverseDepthCompareOp(depthOp);
 	bool depthWriteEnable;
 	// Z Write Disable seems to be ignored for punch-through.
 	// Fixes Worms World Party, Bust-a-Move 4 and Re-Volt
@@ -87,10 +89,18 @@ void OITPipelineManager::CreatePipeline(u32 listType, bool autosort, const PolyP
 	}
 	else
 		stencilOpState = vk::StencilOpState(vk::StencilOp::eKeep, vk::StencilOp::eKeep, vk::StencilOp::eKeep, vk::CompareOp::eNever);
+	bool depthTestEnable = true;
+	if (!GetContext()->useReversedDepth())
+	{
+		depthTestEnable = pass == Pass::Depth
+				|| (pass == Pass::Color && listType != ListType_Translucent && listType != ListType_Punch_Through);
+		if (pass == Pass::OIT)
+			depthTestEnable = false;
+	}
 	vk::PipelineDepthStencilStateCreateInfo pipelineDepthStencilStateCreateInfo
 	(
 	  vk::PipelineDepthStencilStateCreateFlags(), // flags
-	  true,                                       // depthTestEnable
+	  depthTestEnable,                            // depthTestEnable
 	  depthWriteEnable,                           // depthWriteEnable
 	  depthOp,                                    // depthCompareOp
 	  false,                                      // depthBoundTestEnable
@@ -121,19 +131,40 @@ void OITPipelineManager::CreatePipeline(u32 listType, bool autosort, const PolyP
 	}
 	else
 	{
-		if (pass == Pass::Depth || pass == Pass::OIT)
-			colorComponentFlags = vk::ColorComponentFlags();
-		pipelineColorBlendAttachmentState =
+		if (GetContext()->useReversedDepth())
 		{
-		  false,                      // blendEnable
-		  vk::BlendFactor::eZero,     // srcColorBlendFactor
-		  vk::BlendFactor::eZero,     // dstColorBlendFactor
-		  vk::BlendOp::eAdd,          // colorBlendOp
-		  vk::BlendFactor::eZero,     // srcAlphaBlendFactor
-		  vk::BlendFactor::eZero,     // dstAlphaBlendFactor
-		  vk::BlendOp::eAdd,          // alphaBlendOp
-		  colorComponentFlags		  // colorWriteMask
-		};
+			if (pass == Pass::Depth || pass == Pass::OIT)
+				colorComponentFlags = vk::ColorComponentFlags();
+			pipelineColorBlendAttachmentState =
+			{
+			  false,                      // blendEnable
+			  vk::BlendFactor::eZero,     // srcColorBlendFactor
+			  vk::BlendFactor::eZero,     // dstColorBlendFactor
+			  vk::BlendOp::eAdd,          // colorBlendOp
+			  vk::BlendFactor::eZero,     // srcAlphaBlendFactor
+			  vk::BlendFactor::eZero,     // dstAlphaBlendFactor
+			  vk::BlendOp::eAdd,          // alphaBlendOp
+			  colorComponentFlags		  // colorWriteMask
+			};
+		}
+		else
+		{
+			if (pass == Pass::Depth)
+				colorComponentFlags = vk::ColorComponentFlags();
+			pipelineColorBlendAttachmentState =
+			{
+			  pass == Pass::OIT,                              // blendEnable
+			  vk::BlendFactor::eZero,                         // srcColorBlendFactor
+			  pass == Pass::OIT ? vk::BlendFactor::eOne
+							   : vk::BlendFactor::eZero,      // dstColorBlendFactor
+			  vk::BlendOp::eAdd,                              // colorBlendOp
+			  vk::BlendFactor::eZero,                         // srcAlphaBlendFactor
+			  pass == Pass::OIT ? vk::BlendFactor::eOne
+							   : vk::BlendFactor::eZero,      // dstAlphaBlendFactor
+			  vk::BlendOp::eAdd,                              // alphaBlendOp
+			  colorComponentFlags		                      // colorWriteMask
+			};
+		}
 	}
 
 	vk::PipelineColorBlendStateCreateInfo pipelineColorBlendStateCreateInfo
@@ -168,6 +199,7 @@ void OITPipelineManager::CreatePipeline(u32 listType, bool autosort, const PolyP
 	params.twoVolume = twoVolume;
 	params.palette = gpuPalette;
 	params.divPosZ = divPosZ;
+	params.reversedDepth = GetContext()->useReversedDepth();
 	vk::ShaderModule fragment_module = shaderManager->GetFragmentShader(params);
 
 	std::array<vk::PipelineShaderStageCreateInfo, 2> stages = {
@@ -253,7 +285,7 @@ void OITPipelineManager::CreateFinalPipeline(bool dithering)
 	vk::PipelineDynamicStateCreateInfo pipelineDynamicStateCreateInfo(vk::PipelineDynamicStateCreateFlags(), dynamicStates);
 
 	vk::ShaderModule vertex_module = shaderManager->GetFinalVertexShader();
-	vk::ShaderModule fragment_module = shaderManager->GetFinalShader(dithering);
+	vk::ShaderModule fragment_module = shaderManager->GetFinalShader(dithering, GetContext()->useReversedDepth());
 
 	std::array<vk::PipelineShaderStageCreateInfo, 2> stages = {
 			vk::PipelineShaderStageCreateInfo(vk::PipelineShaderStageCreateFlags(), vk::ShaderStageFlagBits::eVertex, vertex_module, "main"),
@@ -277,7 +309,8 @@ void OITPipelineManager::CreateFinalPipeline(bool dithering)
 	  2                                           // subpass
 	);
 
-	finalPipelines[dithering] = GetContext()->GetDevice().createGraphicsPipelineUnique(GetContext()->GetPipelineCache(), graphicsPipelineCreateInfo).value;
+	finalPipelines[dithering][GetContext()->useReversedDepth()] =
+			GetContext()->GetDevice().createGraphicsPipelineUnique(GetContext()->GetPipelineCache(), graphicsPipelineCreateInfo).value;
 }
 
 void OITPipelineManager::CreateClearPipeline()
@@ -326,7 +359,7 @@ void OITPipelineManager::CreateClearPipeline()
 	vk::PipelineDynamicStateCreateInfo pipelineDynamicStateCreateInfo(vk::PipelineDynamicStateCreateFlags(), dynamicStates);
 
 	vk::ShaderModule vertex_module = shaderManager->GetFinalVertexShader();
-	vk::ShaderModule fragment_module = shaderManager->GetClearShader();
+	vk::ShaderModule fragment_module = shaderManager->GetClearShader(GetContext()->useReversedDepth());
 
 	std::array<vk::PipelineShaderStageCreateInfo, 2> stages = {
 			vk::PipelineShaderStageCreateInfo(vk::PipelineShaderStageCreateFlags(), vk::ShaderStageFlagBits::eVertex, vertex_module, "main"),
@@ -350,7 +383,8 @@ void OITPipelineManager::CreateClearPipeline()
 	  1                                           // subpass
 	);
 
-	clearPipeline = GetContext()->GetDevice().createGraphicsPipelineUnique(GetContext()->GetPipelineCache(), graphicsPipelineCreateInfo).value;
+	clearPipelines[GetContext()->useReversedDepth()] =
+			GetContext()->GetDevice().createGraphicsPipelineUnique(GetContext()->GetPipelineCache(), graphicsPipelineCreateInfo).value;
 }
 
 void OITPipelineManager::CreateModVolPipeline(ModVolMode mode, int cullMode, bool naomi2)
@@ -414,7 +448,7 @@ void OITPipelineManager::CreateModVolPipeline(ModVolMode mode, int cullMode, boo
 	  vk::PipelineDepthStencilStateCreateFlags(), // flags
 	  mode == ModVolMode::Xor || mode == ModVolMode::Or, // depthTestEnable
 	  false,                                      // depthWriteEnable
-	  vk::CompareOp::eGreater,                    // depthCompareOp
+	  GetContext()->useReversedDepth() ? vk::CompareOp::eGreater : vk::CompareOp::eLess, // depthCompareOp
 	  false,                                      // depthBoundTestEnable
 	  true,                                       // stencilTestEnable
 	  stencilOpState,                             // front
@@ -437,7 +471,8 @@ void OITPipelineManager::CreateModVolPipeline(ModVolMode mode, int cullMode, boo
 	vk::PipelineDynamicStateCreateInfo pipelineDynamicStateCreateInfo(vk::PipelineDynamicStateCreateFlags(), dynamicStates);
 
 	vk::ShaderModule vertex_module = shaderManager->GetModVolVertexShader(OITShaderManager::ModVolShaderParams{ naomi2, !settings.platform.isNaomi2() && config::NativeDepthInterpolation });
-	vk::ShaderModule fragment_module = shaderManager->GetModVolShader(!settings.platform.isNaomi2() && config::NativeDepthInterpolation);
+	vk::ShaderModule fragment_module = shaderManager->GetModVolShader(!settings.platform.isNaomi2() && config::NativeDepthInterpolation,
+			GetContext()->useReversedDepth());
 
 	std::array<vk::PipelineShaderStageCreateInfo, 2> stages = {
 			vk::PipelineShaderStageCreateInfo(vk::PipelineShaderStageCreateFlags(), vk::ShaderStageFlagBits::eVertex, vertex_module, "main"),
@@ -522,7 +557,8 @@ void OITPipelineManager::CreateTrModVolPipeline(ModVolMode mode, int cullMode, b
 
 	bool divPosZ = !settings.platform.isNaomi2() && config::NativeDepthInterpolation;
 	vk::ShaderModule vertex_module = shaderManager->GetModVolVertexShader(OITShaderManager::ModVolShaderParams{ naomi2, divPosZ });
-	vk::ShaderModule fragment_module = shaderManager->GetTrModVolShader(OITShaderManager::TrModVolShaderParams{ mode, divPosZ });
+	vk::ShaderModule fragment_module = shaderManager->GetTrModVolShader(
+			OITShaderManager::TrModVolShaderParams{ mode, divPosZ, GetContext()->useReversedDepth() });
 
 	std::array<vk::PipelineShaderStageCreateInfo, 2> stages = {
 			vk::PipelineShaderStageCreateInfo(vk::PipelineShaderStageCreateFlags(), vk::ShaderStageFlagBits::eVertex, vertex_module, "main"),
@@ -558,7 +594,9 @@ void OITPipelineManager::checkMaxLayers()
 	{
 		maxLayers = layers;
 		trModVolPipelines.clear();
-		finalPipelines[0].reset();
-		finalPipelines[1].reset();
+		finalPipelines[0][0].reset();
+		finalPipelines[0][1].reset();
+		finalPipelines[1][0].reset();
+		finalPipelines[1][1].reset();
 	}
 }

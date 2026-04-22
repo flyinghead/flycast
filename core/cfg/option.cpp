@@ -117,6 +117,7 @@ Option<bool> NativeDepthInterpolation("rend.NativeDepthInterpolation", true);
 #else
 Option<bool> NativeDepthInterpolation("rend.NativeDepthInterpolation", false);
 #endif
+Option<bool> NonReversedDepth("rend.NonReversedDepth", false);
 Option<bool> EmulateFramebuffer("rend.EmulateFramebuffer", false);
 Option<bool> FixUpscaleBleedingEdge("rend.FixUpscaleBleedingEdge", true);
 Option<bool> CustomGpuDriver("rend.CustomGpuDriver", false);

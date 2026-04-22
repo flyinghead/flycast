@@ -60,6 +60,7 @@ public:
 		bool twoVolume;
 		int palette;
 		bool divPosZ;
+		bool reversedDepth;
 		Pass pass;
 
 		u32 hash()
@@ -68,7 +69,8 @@ public:
 				| ((u32)texture << 3) | ((u32)ignoreTexAlpha << 4) | (shaderInstr << 5)
 				| ((u32)offset << 7) | ((u32)fog << 8) | ((u32)gouraud << 10)
 				| ((u32)bumpmap << 11) | ((u32)clamping << 12) | ((u32)twoVolume << 13)
-				| ((u32)palette << 14) | ((int)pass << 16) | ((u32)divPosZ << 18);
+				| ((u32)palette << 14) | ((int)pass << 16) | ((u32)divPosZ << 18)
+				| ((u32)reversedDepth << 19);
 		}
 	};
 
@@ -84,19 +86,20 @@ public:
 	{
 		ModVolMode mode;
 		bool divPosZ;
+		bool reversedDepth;
 
-		u32 hash() { return (u32)mode | ((u32)divPosZ << 3); }
+		u32 hash() { return (u32)mode | ((u32)divPosZ << 3) | ((u32)reversedDepth << 4); }
 	};
 
 	vk::ShaderModule GetVertexShader(const VertexShaderParams& params) { return getShader(vertexShaders, params); }
 	vk::ShaderModule GetFragmentShader(const FragmentShaderParams& params) { return getShader(fragmentShaders, params); }
 	vk::ShaderModule GetModVolVertexShader(const ModVolShaderParams& params) { return getShader(modVolVertexShaders, params); }
 
-	vk::ShaderModule GetModVolShader(bool divPosZ)
+	vk::ShaderModule GetModVolShader(bool divPosZ, bool reversedDepth)
 	{
-		auto& modVolShader = modVolShaders[divPosZ];
+		auto& modVolShader = modVolShaders[divPosZ][reversedDepth];
 		if (!modVolShader)
-			modVolShader = compileModVolFragmentShader(divPosZ);
+			modVolShader = compileModVolFragmentShader(divPosZ, reversedDepth);
 		return *modVolShader;
 	}
 
@@ -105,12 +108,12 @@ public:
 		return getShader(trModVolShaders, params);
 	}
 
-	vk::ShaderModule GetFinalShader(bool dithering)
+	vk::ShaderModule GetFinalShader(bool dithering, bool reversedDepth)
 	{
 		checkMaxLayers();
-		if (!finalFragmentShaders[dithering])
-			finalFragmentShaders[dithering] = compileFinalShader(dithering);
-		return *finalFragmentShaders[dithering];
+		if (!finalFragmentShaders[dithering][reversedDepth])
+			finalFragmentShaders[dithering][reversedDepth] = compileFinalShader(dithering, reversedDepth);
+		return *finalFragmentShaders[dithering][reversedDepth];
 	}
 
 	vk::ShaderModule GetFinalVertexShader()
@@ -119,11 +122,11 @@ public:
 			finalVertexShader = compileFinalVertexShader();
 		return *finalVertexShader;
 	}
-	vk::ShaderModule GetClearShader()
+	vk::ShaderModule GetClearShader(bool reversedDepth)
 	{
-		if (!clearShader)
-			clearShader = compileClearShader();
-		return *clearShader;
+		if (!clearShaders[reversedDepth])
+			clearShaders[reversedDepth] = compileClearShader(reversedDepth);
+		return *clearShaders[reversedDepth];
 	}
 
 	void term()
@@ -131,14 +134,19 @@ public:
 		vertexShaders.clear();
 		fragmentShaders.clear();
 		modVolVertexShaders.clear();
-		modVolShaders[0].reset();
-		modVolShaders[1].reset();
+		modVolShaders[0][0].reset();
+		modVolShaders[0][1].reset();
+		modVolShaders[1][0].reset();
+		modVolShaders[1][1].reset();
 		trModVolShaders.clear();
 
 		finalVertexShader.reset();
-		finalFragmentShaders[0].reset();
-		finalFragmentShaders[1].reset();
-		clearShader.reset();
+		finalFragmentShaders[0][0].reset();
+		finalFragmentShaders[0][1].reset();
+		finalFragmentShaders[1][0].reset();
+		finalFragmentShaders[1][1].reset();
+		clearShaders[0].reset();
+		clearShaders[1].reset();
 	}
 
 private:
@@ -155,22 +163,22 @@ private:
 	vk::UniqueShaderModule compileShader(const VertexShaderParams& params);
 	vk::UniqueShaderModule compileShader(const FragmentShaderParams& params);
 	vk::UniqueShaderModule compileShader(const ModVolShaderParams& params);
-	vk::UniqueShaderModule compileModVolFragmentShader(bool divPosZ);
+	vk::UniqueShaderModule compileModVolFragmentShader(bool divPosZ, bool reversedDepth);
 	vk::UniqueShaderModule compileShader(const TrModVolShaderParams& params);
-	vk::UniqueShaderModule compileFinalShader(bool dithering);
+	vk::UniqueShaderModule compileFinalShader(bool dithering, bool reversedDepth);
 	vk::UniqueShaderModule compileFinalVertexShader();
-	vk::UniqueShaderModule compileClearShader();
+	vk::UniqueShaderModule compileClearShader(bool reversedDepth);
 	void checkMaxLayers();
 
 	std::map<u32, vk::UniqueShaderModule> vertexShaders;
 	std::map<u32, vk::UniqueShaderModule> fragmentShaders;
 	std::map<u32, vk::UniqueShaderModule> modVolVertexShaders;
-	vk::UniqueShaderModule modVolShaders[2];
+	vk::UniqueShaderModule modVolShaders[2][2];
 	std::map<u32, vk::UniqueShaderModule> trModVolShaders;
 
 	vk::UniqueShaderModule finalVertexShader;
-	vk::UniqueShaderModule finalFragmentShaders[2];
-	vk::UniqueShaderModule clearShader;
+	vk::UniqueShaderModule finalFragmentShaders[2][2];
+	vk::UniqueShaderModule clearShaders[2];
 	int maxLayers = 0;
 };
 

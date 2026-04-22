@@ -51,7 +51,10 @@ vk::UniqueRenderPass RenderPasses::MakeRenderPass(bool initial, bool last, bool 
 
     vk::AttachmentReference depthReadOnlyRef(2, vk::ImageLayout::eDepthStencilReadOnlyOptimal);
     vk::AttachmentReference depthReference2(3, vk::ImageLayout::eDepthStencilAttachmentOptimal);
-    vk::AttachmentReference colorInput(1, vk::ImageLayout::eShaderReadOnlyOptimal);
+    std::array<vk::AttachmentReference, 2> finalInputs = {
+		vk::AttachmentReference(1, vk::ImageLayout::eShaderReadOnlyOptimal),
+		vk::AttachmentReference(3, vk::ImageLayout::eDepthStencilReadOnlyOptimal),
+    };
 
     std::array<vk::SubpassDescription, 3> subpasses = {
     	// Depth and modvol pass	FIXME subpass 0 shouldn't reference the color attachment
@@ -68,7 +71,7 @@ vk::UniqueRenderPass RenderPasses::MakeRenderPass(bool initial, bool last, bool 
 				&depthReference2),
     	// Final pass
     	vk::SubpassDescription(vk::SubpassDescriptionFlags(), vk::PipelineBindPoint::eGraphics,
-    			colorInput,
+			finalInputs,
 				swapChainReference,
 				nullptr,
 				&depthReference),	// depth-only Tr pass when continuation
@@ -82,6 +85,10 @@ vk::UniqueRenderPass RenderPasses::MakeRenderPass(bool initial, bool last, bool 
 			vk::AccessFlagBits::eInputAttachmentRead | vk::AccessFlagBits::eShaderRead, vk::DependencyFlagBits::eByRegion);
     dependencies.emplace_back(1, 2, vk::PipelineStageFlagBits::eColorAttachmentOutput, vk::PipelineStageFlagBits::eFragmentShader,
     		vk::AccessFlagBits::eColorAttachmentWrite, vk::AccessFlagBits::eInputAttachmentRead, vk::DependencyFlagBits::eByRegion);
+    dependencies.emplace_back(1, 2, vk::PipelineStageFlagBits::eLateFragmentTests, vk::PipelineStageFlagBits::eFragmentShader,
+			vk::AccessFlagBits::eDepthStencilAttachmentWrite,
+			vk::AccessFlagBits::eInputAttachmentRead | vk::AccessFlagBits::eShaderRead,
+			vk::DependencyFlagBits::eByRegion);
     // This dependency is only needed if the render pass isn't the last: it's needed for the depth-only Tr pass
     // Unfortunately we want all render passes to be compatible, and that means all attachments must be identical
     dependencies.emplace_back(1, 2, vk::PipelineStageFlagBits::eFragmentShader,

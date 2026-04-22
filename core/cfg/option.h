@@ -473,6 +473,7 @@ extern Option<int> TextureFiltering; // 0: default, 1: force nearest, 2: force l
 extern Option<bool> ThreadedRendering;
 extern Option<bool> DupeFrames;
 extern Option<bool> NativeDepthInterpolation;
+extern Option<bool> NonReversedDepth;
 extern Option<bool> EmulateFramebuffer;
 extern Option<bool> FixUpscaleBleedingEdge;
 extern Option<bool> CustomGpuDriver;

@@ -20,6 +20,7 @@
 */
 #include "oit_shaders.h"
 #include "../compiler.h"
+#include "../vulkan_context.h"
 #include "rend/gl4/glsl.h"
 #include "cfg/option.h"
 
@@ -120,9 +121,11 @@ uint getNextPixelIndex()
 	// we should be able to simply use PixelBuffer.pixels.length()
 	// but a regression in the adreno 600 driver (v502) forces us
 	// to use a uniform.
+#if REVERSED_DEPTH == 1
 	if (index >= uniformBuffer.pixelBufferSize)
 		// Buffer overflow
 		discard;
+#endif
 	
 	return index;
 }
@@ -138,7 +141,7 @@ static const char OITFragmentShaderTop[] = R"(
 #define PASS_COLOR 1
 #define PASS_OIT 2
 
-#if PASS == PASS_DEPTH || PASS == PASS_COLOR
+#if PASS == PASS_DEPTH || PASS == PASS_COLOR || (PASS == PASS_OIT && REVERSED_DEPTH == 0)
 layout (location = 0) out vec4 FragColor;
 #define gl_FragColor FragColor
 #endif
@@ -181,7 +184,7 @@ layout (set = 0, binding = 6) uniform sampler2D palette;
 #if PASS == PASS_COLOR
 layout (input_attachment_index = 0, set = 0, binding = 4) uniform usubpassInput shadow_stencil;
 #endif
-#if PASS == PASS_OIT
+#if PASS == PASS_OIT && REVERSED_DEPTH == 1
 layout (input_attachment_index = 0, set = 0, binding = 5) uniform subpassInput DepthTex;
 #endif
 
@@ -202,9 +205,12 @@ layout (set = 0, binding = 2) uniform sampler2D fog_table;
 static const char OITFragmentShaderMain[] = R"(
 void main()
 {
+#if PASS != PASS_OIT || REVERSED_DEPTH == 1
 	setFragDepth(vtx_uv.z);
+#endif
+	float oitDepth = computeFragDepth(vtx_uv.z);
 
-	#if PASS == PASS_OIT
+	#if PASS == PASS_OIT && REVERSED_DEPTH == 1
 		// Manual depth testing
 		float frontDepth = subpassLoad(DepthTex).r;
 		if (gl_FragDepth < frontDepth)
@@ -360,12 +366,25 @@ void main()
 		ivec2 coords = ivec2(gl_FragCoord.xy);
 		uint idx =  getNextPixelIndex();
 		
+#if REVERSED_DEPTH == 1
 		Pixel pixel;
 		pixel.color = packColors(clamp(color, vec4(0.0), vec4(1.0)));
 		pixel.depth = gl_FragDepth;
 		pixel.seq_num = vtx_index;
 		pixel.next = atomicExchange(abufferPointer.pointers[coords.x + coords.y * uniformBuffer.viewportWidth], idx);
 		PixelBuffer.pixels[idx] = pixel;
+#else
+		if (idx < uniformBuffer.pixelBufferSize)
+		{
+			Pixel pixel;
+			pixel.color = packColors(clamp(color, vec4(0.0), vec4(1.0)));
+			pixel.depth = oitDepth;
+			pixel.seq_num = vtx_index;
+			pixel.next = atomicExchange(abufferPointer.pointers[coords.x + coords.y * uniformBuffer.viewportWidth], idx);
+			PixelBuffer.pixels[idx] = pixel;
+		}
+		FragColor = vec4(0.0);
+#endif
 		
 	#endif
 }
@@ -382,6 +401,9 @@ void main()
 
 static const char OITFinalShaderSource[] = R"(
 layout (input_attachment_index = 0, set = 2, binding = 0) uniform subpassInput tex;
+#if REVERSED_DEPTH == 0
+layout (input_attachment_index = 1, set = 2, binding = 1) uniform subpassInput DepthTex;
+#endif
 
 layout (location = 0) out vec4 FragColor;
 
@@ -390,6 +412,9 @@ uint pixel_list[MAX_PIXELS_PER_FRAGMENT];
 
 int fillAndSortFragmentArray(ivec2 coords)
 {
+#if REVERSED_DEPTH == 0
+	const float depthTieEpsilon = 2e-6;
+#endif
 	// Load fragments into a local memory array for sorting
 	uint idx = abufferPointer.pointers[coords.x + coords.y * uniformBuffer.viewportWidth];
 	if (idx == EOL)
@@ -405,8 +430,13 @@ int fillAndSortFragmentArray(ivec2 coords)
 		float jdepth = PixelBuffer.pixels[pixel_list[j]].depth;
 		uint jindex = getPolyIndex(PixelBuffer.pixels[pixel_list[j]]);
 		while (j >= 0
-			   && (jdepth > depth
-				   || (jdepth == depth && jindex > index)))
+			   && (
+#if REVERSED_DEPTH == 1
+				   jdepth > depth || (jdepth == depth && jindex > index)
+#else
+				   jdepth > depth + depthTieEpsilon || (abs(jdepth - depth) <= depthTieEpsilon && jindex < index)
+#endif
+			   ))
 		{
 			pixel_list[j + 1] = pixel_list[j];
 			j--;
@@ -429,11 +459,23 @@ vec4 resolveAlphaBlend(ivec2 coords) {
 	int num_frag = fillAndSortFragmentArray(coords);
 	
 	vec4 finalColor = subpassLoad(tex);
+#if REVERSED_DEPTH == 0
+	const float frontDepthEpsilon = 2e-6;
+	float frontDepth = subpassLoad(DepthTex).r;
+#endif
 	vec4 secondaryBuffer = vec4(0.0); // Secondary accumulation buffer
 	
+#if REVERSED_DEPTH == 1
 	for (int i = 0; i < num_frag; i++)
+#else
+	for (int i = num_frag - 1; i >= 0; i--)
+#endif
 	{
 		const Pixel pixel = PixelBuffer.pixels[pixel_list[i]];
+#if REVERSED_DEPTH == 0
+		if (pixel.depth > frontDepth + frontDepthEpsilon)
+			continue;
+#endif
 		const PolyParam pp = TrPolyParam.tr_poly_params[getPolyNumber(pixel)];
 		bool area1 = false;
 		bool shadowed = false;
@@ -757,6 +799,7 @@ vk::UniqueShaderModule OITShaderManager::compileShader(const FragmentShaderParam
 		.addConstant("ColorClamping", (int)params.clamping)
 		.addConstant("pp_Palette", params.palette)
 		.addConstant("DIV_POS_Z", (int)params.divPosZ)
+		.addConstant("REVERSED_DEPTH", (int)params.reversedDepth)
 		.addConstant("PASS", (int)params.pass)
 		.addSource(GouraudSource)
 		.addSource(OITShaderHeader)
@@ -766,11 +809,12 @@ vk::UniqueShaderModule OITShaderManager::compileShader(const FragmentShaderParam
 	return ShaderCompiler::Compile(vk::ShaderStageFlagBits::eFragment, src.generate());
 }
 
-vk::UniqueShaderModule OITShaderManager::compileFinalShader(bool dithering)
+vk::UniqueShaderModule OITShaderManager::compileFinalShader(bool dithering, bool reversedDepth)
 {
 	VulkanSource src;
 	src.addConstant("MAX_PIXELS_PER_FRAGMENT", maxLayers)
 		.addConstant("DITHERING", dithering)
+		.addConstant("REVERSED_DEPTH", (int)reversedDepth)
 		.addSource(OITShaderHeader)
 		.addSource(OITFinalShaderSource);
 
@@ -781,10 +825,11 @@ vk::UniqueShaderModule OITShaderManager::compileFinalVertexShader()
 	return ShaderCompiler::Compile(vk::ShaderStageFlagBits::eVertex, VulkanSource().addSource(OITFinalVertexShaderSource).generate());
 }
 
-vk::UniqueShaderModule OITShaderManager::compileClearShader()
+vk::UniqueShaderModule OITShaderManager::compileClearShader(bool reversedDepth)
 {
 	VulkanSource src;
-	src.addSource(OITShaderHeader)
+	src.addConstant("REVERSED_DEPTH", (int)reversedDepth)
+		.addSource(OITShaderHeader)
 		.addSource(OITClearShaderSource);
 	return ShaderCompiler::Compile(vk::ShaderStageFlagBits::eFragment, src.generate());
 }
@@ -799,10 +844,11 @@ vk::UniqueShaderModule OITShaderManager::compileShader(const ModVolShaderParams&
 			.addSource(ModVolVertexShaderSource);
 	return ShaderCompiler::Compile(vk::ShaderStageFlagBits::eVertex, src.generate());
 }
-vk::UniqueShaderModule OITShaderManager::compileModVolFragmentShader(bool divPosZ)
+vk::UniqueShaderModule OITShaderManager::compileModVolFragmentShader(bool divPosZ, bool reversedDepth)
 {
 	VulkanSource src;
 	src.addConstant("DIV_POS_Z", (int)divPosZ)
+		.addConstant("REVERSED_DEPTH", (int)reversedDepth)
 		.addSource(OITShaderHeader)
 		.addSource(OITModifierVolumeShader);
 	return ShaderCompiler::Compile(vk::ShaderStageFlagBits::eFragment, src.generate());
@@ -813,6 +859,7 @@ vk::UniqueShaderModule OITShaderManager::compileShader(const TrModVolShaderParam
 	src.addConstant("MAX_PIXELS_PER_FRAGMENT", maxLayers)
 		.addConstant("MV_MODE", (int)params.mode)
 		.addConstant("DIV_POS_Z", (int)params.divPosZ)
+		.addConstant("REVERSED_DEPTH", (int)params.reversedDepth)
 		.addSource(OITShaderHeader)
 		.addSource(OITTranslucentModvolShaderSource);
 	return ShaderCompiler::Compile(vk::ShaderStageFlagBits::eFragment, src.generate());
@@ -825,7 +872,9 @@ void OITShaderManager::checkMaxLayers()
 	{
 		maxLayers = layers;
 		trModVolShaders.clear();
-		finalFragmentShaders[0].reset();
-		finalFragmentShaders[1].reset();
+		finalFragmentShaders[0][0].reset();
+		finalFragmentShaders[0][1].reset();
+		finalFragmentShaders[1][0].reset();
+		finalFragmentShaders[1][1].reset();
 	}
 }

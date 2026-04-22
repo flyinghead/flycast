@@ -30,6 +30,7 @@
 #include "compiler.h"
 #include "utils.h"
 #include "emulator.h"
+#include "cfg/option.h"
 #include "oslib/oslib.h"
 #include "vulkan_driver.h"
 #include "rend/transform_matrix.h"
@@ -942,7 +943,7 @@ void VulkanContext::BeginRenderPass()
 {
 	if (!IsValid())
 		return;
-	const std::array<vk::ClearValue, 2> clear_colors = { getBorderColor(), vk::ClearDepthStencilValue{ 0.f, 0 } };
+	const std::array<vk::ClearValue, 2> clear_colors = { getBorderColor(), vk::ClearDepthStencilValue{ getDepthClearValue(), 0 } };
 	vk::CommandBuffer commandBuffer = *commandBuffers[currentImage];
 	commandBuffer.beginRenderPass(vk::RenderPassBeginInfo(*renderPass, *framebuffers[currentImage], vk::Rect2D({0, 0}, {width, height}), clear_colors),
 			vk::SubpassContents::eInline);
@@ -1035,13 +1036,30 @@ void VulkanContext::DrawFrame(vk::ImageView imageView, const vk::Extent2D& exten
 	int dy = 0;
 	getWindowboxDimensions(width, height, aspectRatio, dx, dy, config::Rotate90);
 	
-	vk::Viewport viewport(dx, dy, width - dx * 2, height - dy * 2);
+	vk::Viewport viewport = makeViewport(dx, dy, width - dx * 2, height - dy * 2);
 	commandBuffer.setViewport(0, viewport);
 	commandBuffer.setScissor(0, vk::Rect2D(vk::Offset2D(dx, dy), vk::Extent2D(width - dx * 2, height - dy * 2)));
 	if (config::Rotate90)
 		quadRotateDrawer->Draw(commandBuffer, imageView, vtx, !config::LinearInterpolation);
 	else
 		quadDrawer->Draw(commandBuffer, imageView, vtx, !config::LinearInterpolation);
+}
+
+bool VulkanContext::useReversedDepth() const
+{
+	return !config::NonReversedDepth;
+}
+
+float VulkanContext::getDepthClearValue() const
+{
+	return useReversedDepth() ? 0.f : 1.f;
+}
+
+vk::Viewport VulkanContext::makeViewport(float x, float y, float viewportWidth, float viewportHeight) const
+{
+	return vk::Viewport(x, y, viewportWidth, viewportHeight,
+			useReversedDepth() ? 1.0f : 0.0f,
+			useReversedDepth() ? 0.0f : 1.0f);
 }
 
 void VulkanContext::WaitIdle() const

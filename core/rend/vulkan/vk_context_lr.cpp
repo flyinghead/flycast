@@ -21,6 +21,7 @@
 #include "vulkan_context.h"
 #include "hw/pvr/Renderer_if.h"
 #include "compiler.h"
+#include "cfg/option.h"
 #include "oslib/oslib.h"
 #include "rend/transform_matrix.h"
 #include "texture.h"
@@ -31,6 +32,23 @@ VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 #endif
 
 VulkanContext *VulkanContext::contextInstance;
+
+bool VulkanContext::useReversedDepth() const
+{
+	return !config::NonReversedDepth;
+}
+
+float VulkanContext::getDepthClearValue() const
+{
+	return useReversedDepth() ? 0.f : 1.f;
+}
+
+vk::Viewport VulkanContext::makeViewport(float x, float y, float viewportWidth, float viewportHeight) const
+{
+	return vk::Viewport(x, y, viewportWidth, viewportHeight,
+			useReversedDepth() ? 1.0f : 0.0f,
+			useReversedDepth() ? 0.0f : 1.0f);
+}
 
 const VkApplicationInfo* VkGetApplicationInfo()
 {
