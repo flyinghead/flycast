@@ -185,7 +185,18 @@ bool VulkanContext::InitInstance(const char** extensions, uint32_t extensions_co
 		layer_names.push_back("VK_LAYER_GOOGLE_unique_objects");
 #endif
 #endif
-		vk::InstanceCreateInfo instanceCreateInfo({}, &applicationInfo, layer_names, vext);
+		vk::InstanceCreateFlags instanceFlags{};
+#if defined(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME) \
+	&& (defined(VK_USE_PLATFORM_METAL_EXT) || defined(__APPLE__))
+		// MoltenVK is a portability driver. Vulkan loaders >= 1.3.216
+		// will not enumerate portability ICDs unless the application
+		// opts in via VK_KHR_portability_enumeration. Without this
+		// instance creation fails with VK_ERROR_INCOMPATIBLE_DRIVER
+		// on macOS / iOS where MoltenVK is the only available ICD.
+		vext.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
+		instanceFlags |= vk::InstanceCreateFlagBits::eEnumeratePortabilityKHR;
+#endif
+		vk::InstanceCreateInfo instanceCreateInfo(instanceFlags, &applicationInfo, layer_names, vext);
 		// create a UniqueInstance
 		instance = vk::createInstanceUnique(instanceCreateInfo);
 
