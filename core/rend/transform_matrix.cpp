@@ -16,37 +16,65 @@
     You should have received a copy of the GNU General Public License
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
+#define GLM_FORCE_SWIZZLE 1
 #include "transform_matrix.h"
-#include "tileclip.h"
 #include <glm/gtx/transform.hpp>
 
-inline static void getTAViewport(const rend_context& rendCtx, int& width, int& height) {
+static void getTAViewport(const rend_context& rendCtx, int& width, int& height) {
 	width = rendCtx.globClip.x;
 	height = rendCtx.globClip.y;
 }
 
-inline static void getPvrFramebufferSize(const rend_context& rendCtx, int& width, int& height)
+static void makePowerOf2Size(int width, int height, int& wpo2, int& hpo2)
 {
-	getTAViewport(rendCtx, width, height);
-	if (!config::EmulateFramebuffer)
+	wpo2 = 8;
+	hpo2 = 8;
+	for (int v = 0; v < 8; v++)
 	{
-		int maxHeight = FB_R_CTRL.vclk_div == 0 && SPG_CONTROL.interlace == 0 ? 240 : 480;
-		// we ignore vscalefactor when interlaced because it's used for Stretched PAL (factor in ]1, 1.3]),
-		// or Flicker-free interlace mode B (factor [0.5, 0.6]), which are only emulated in Full FB emu.
-		// In 240p, some games (Cho - Hatsumei Boy Kanipan) use a 1/2 factor from rendering at 480 to a 240-line framebuffer.
-		// So we render at 480 in that case.
-		if (rendCtx.scaler_ctl.vscalefactor != 0
-				&& (rendCtx.scaler_ctl.vscalefactor > 1025 || rendCtx.scaler_ctl.vscalefactor < 1024)
-				&& SPG_CONTROL.interlace == 0)
-			maxHeight /= 1024.f / rendCtx.scaler_ctl.vscalefactor;
-		if (FB_R_CTRL.fb_line_double)
-			maxHeight /= 2;
-		height = std::min(maxHeight, height);
-		// TODO Use FB_R_SIZE too?
+		if (wpo2 < width)
+			wpo2 *= 2;
+		if (hpo2 < height)
+			hpo2 *= 2;
 	}
 }
 
-bool TransformMatrix::IsClipped() const
+void getPvrFramebufferSize(const rend_context& rendCtx, int& width, int& height)
+{
+	if (!rendCtx.isRTT)
+	{
+		// Render to screen
+		getTAViewport(rendCtx, width, height);
+		if (!config::EmulateFramebuffer)
+		{
+			int maxHeight = FB_R_CTRL.vclk_div == 0 && SPG_CONTROL.interlace == 0 ? 240 : 480;
+			// we ignore vscalefactor when interlaced because it's used for Stretched PAL (factor in ]1, 1.3]),
+			// or Flicker-free interlace mode B (factor [0.5, 0.6]), which are only emulated in Full FB emu.
+			// In 240p, some games (Cho - Hatsumei Boy Kanipan) use a 1/2 factor from rendering at 480 to a 240-line framebuffer.
+			// So we render at 480 in that case.
+			if (rendCtx.scaler_ctl.vscalefactor != 0
+					&& (rendCtx.scaler_ctl.vscalefactor > 1025 || rendCtx.scaler_ctl.vscalefactor < 1024)
+					&& SPG_CONTROL.interlace == 0)
+				maxHeight /= 1024.f / rendCtx.scaler_ctl.vscalefactor;
+			if (FB_R_CTRL.fb_line_double)
+				maxHeight /= 2;
+			height = std::min(maxHeight, height);
+		}
+	}
+	else
+	{
+		// Render to texture
+		if (config::RenderToTextureBuffer) {
+			width = rendCtx.tileClip.bottomRight().x + 1;
+			height = rendCtx.tileClip.bottomRight().y + 1;
+		}
+		else {
+			Rect clip = intersect(rendCtx.tileClip, rendCtx.fbClip);
+			makePowerOf2Size(clip.bottomRight().x + 1, clip.bottomRight().y + 1, width, height);
+		}
+	}
+}
+
+bool TransformMatrix::isClipped() const
 {
 	int width, height;
 	getTAViewport(*renderingContext, width, height);
@@ -63,38 +91,30 @@ void TransformMatrix::CalcMatrices(const rend_context *renderingContext, int wid
 	glm::vec2 dcViewport;
 	this->renderingContext = renderingContext;
 
-	if (renderingContext->isRTT)
-	{
-		// TODO unscale fbClip values
-		const Rect globClip(glm::ivec2(0, 0), renderingContext->globClip);
-		const Rect clip = intersect(globClip, renderingContext->fbClip);
-		dcViewport.x = (float)clip.size.x;
-		if (renderingContext->scaler_ctl.hscale)
-			dcViewport.x *= 2;
-		dcViewport.y = (float)clip.size.y;
+	int w, h;
+	getPvrFramebufferSize(*renderingContext, w, h);
+	dcViewport.x = (float)w;
+	dcViewport.y = (float)h;
+
+	if (renderingContext->isRTT) {
 		normalMatrix = glm::translate(glm::vec3(-1, -flipY, 0))
 			* glm::scale(glm::vec3(2.0f / dcViewport.x, 2.0f / dcViewport.y * flipY, 1.f));
-		sidebarWidth = 0;
 	}
 	else
 	{
-		int w, h;
-		getPvrFramebufferSize(*renderingContext, w, h);
-		dcViewport.x = w;
-		dcViewport.y = h;
-
+		float widescreenShift;
 		if (config::Widescreen && !config::Rotate90 && !config::EmulateFramebuffer)
 		{
-			sidebarWidth = (1 - dcViewport.x / dcViewport.y * renderViewport.y / renderViewport.x) / 2;
+			widescreenShift = 1.f - dcViewport.x / dcViewport.y * renderViewport.y / renderViewport.x;
 			if (config::SuperWidescreen)
 				dcViewport.x *= (float)settings.display.width / settings.display.height / 4.f * 3.f;
 			else
 				dcViewport.x *= 4.f / 3.f;
 		}
 		else {
-			sidebarWidth = 0;
+			widescreenShift = 0;
 		}
-		glm::mat4 trans = glm::translate(glm::vec3(-1 + 2 * sidebarWidth, -flipY, 0));
+		glm::mat4 trans = glm::translate(glm::vec3(-1 + widescreenShift, -flipY, 0));
 		float x_coef = 2.0f / dcViewport.x;
 		float y_coef = 2.0f / dcViewport.y * flipY;
 		normalMatrix = trans * glm::scale(glm::vec3(x_coef, y_coef, 1.f));
@@ -102,14 +122,8 @@ void TransformMatrix::CalcMatrices(const rend_context *renderingContext, int wid
 	normalMatrix = glm::scale(glm::vec3(1, 1, 1 / config::ExtraDepthScale)) * normalMatrix;
 
 	glm::mat4 vp_trans = glm::translate(glm::vec3(1, flipY, 0));
-	if (renderingContext->isRTT) {
-		vp_trans = glm::scale(glm::vec3(dcViewport.x / 2, dcViewport.y / 2 * flipY, 1.f))
-			* vp_trans;
-	}
-	else {
-		vp_trans = glm::scale(glm::vec3(renderViewport.x / 2, renderViewport.y / 2 * flipY, 1.f))
-			* vp_trans;
-	}
+	vp_trans = glm::scale(glm::vec3(renderViewport.x / 2, renderViewport.y / 2 * flipY, 1.f))
+		* vp_trans;
 	viewportMatrix = vp_trans * normalMatrix;
 }
 
@@ -129,12 +143,58 @@ Rect TransformMatrix::intersectTileAndFBScissor() const
 	return rect;
 }
 
+Rect TransformMatrix::getBaseScissor() const
+{
+	const bool widescreen = !renderingContext->isRTT && config::Widescreen
+			&& !isClipped() && !config::Rotate90 && !config::EmulateFramebuffer;
+	if (widescreen)
+	{
+		return Rect{
+			glm::ivec2(0, 0),
+			glm::ivec2(renderingContext->framebufferWidth, renderingContext->framebufferHeight)
+		};
+	}
+
+	glm::vec4 origin;
+	glm::vec4 size;
+	if ((!renderingContext->isRTT && config::EmulateFramebuffer)
+			|| (renderingContext->isRTT && config::RenderToTextureBuffer))
+	{
+		// Region tile clipping only
+		origin = glm::vec4(renderingContext->tileClip.origin, 0, 1);
+		size = glm::vec4(renderingContext->tileClip.size, 0, 0);
+	}
+	else
+	{
+		Rect rect = intersectTileAndFBScissor();
+		origin = glm::vec4(rect.origin, 0, 1);
+		size = glm::vec4(rect.size, 0, 0);
+	}
+	origin = viewportMatrix * origin;
+	size = viewportMatrix * size;
+
+	if (size.x < 0) {
+		origin.x += size.x;
+		size.x = -size.x;
+	}
+	if (size.y < 0) {
+		origin.y += size.y;
+		size.y = -size.y;
+	}
+
+	return Rect{
+		glm::ivec2(glm::max(glm::round(origin.xy()), glm::vec2(0, 0))),
+		glm::ivec2(glm::max(glm::round(size.xy()), glm::vec2(0, 0)))
+	};
+}
+
 void TransformMatrix::getScissorScaling(float& scale_x, float& scale_y) const
 {
 	scale_x = 1.f;
 	scale_y = 1.f;
 
-	if (!config::EmulateFramebuffer)
+	if ((!renderingContext->isRTT && !config::EmulateFramebuffer)
+			|| (renderingContext->isRTT && !config::RenderToTextureBuffer))
 	{
 		if (renderingContext->scaler_ctl.vscalefactor < 1024 || renderingContext->scaler_ctl.vscalefactor > 1025)
 			scale_y *= renderingContext->scaler_ctl.vscalefactor / 1024.f;
@@ -143,26 +203,103 @@ void TransformMatrix::getScissorScaling(float& scale_x, float& scale_y) const
 	}
 }
 
+TileClipping TransformMatrix::getTileClip(u32 val, Rect& clipRect)
+{
+	if (!config::Clipping)
+		return TileClipping::Off;
+
+	u32 clipmode = val >> 28;
+	if (clipmode < 2)
+		return TileClipping::Off;	//always passes
+
+	TileClipping tileClippingMode;
+	if (clipmode & 1)
+		tileClippingMode = TileClipping::Inside;   //render stuff outside the region
+	else
+		tileClippingMode = TileClipping::Outside;  //render stuff inside the region
+
+	float csx = (float)(val & 63);
+	float cex = (float)((val >> 6) & 63);
+	float csy = (float)((val >> 12) & 31);
+	float cey = (float)((val >> 17) & 31);
+	csx = csx * 32;
+	cex = (cex + 1) * 32;
+	csy = csy * 32;
+	cey = (cey + 1) * 32;
+
+	if (csx == 0 && csy == 0 && cex >= renderingContext->globClip.x && cey >= renderingContext->globClip.y)
+		return TileClipping::Off;
+
+	glm::vec4 clip_start(csx, csy, 0, 1);
+	glm::vec4 clip_end(cex, cey, 0, 1);
+	clip_start = viewportMatrix * clip_start;
+	clip_end = viewportMatrix * clip_end;
+	clipRect = { clip_start.xy(), clip_end.xy() - clip_start.xy() };
+	clipRect.size.x++;
+	clipRect.size.y = std::abs(clipRect.size.y) + 1;
+	if (tileClippingMode == TileClipping::Outside)
+	{
+		Rect base = getBaseScissor();
+		clipRect = intersect(clipRect, base);
+	}
+	csx = clip_start[0];
+	csy = clip_start[1];
+	cey = clip_end[1];
+	cex = clip_end[0];
+	clipRect = {
+		glm::ivec2(std::max(0, (int)std::round(csx)), std::max(0, (int)std::round(std::min(csy, cey)))),
+		glm::ivec2(std::max(0, (int)std::round(cex - csx)), std::max(0, (int)std::round(std::abs(cey - csy))))
+	};
+	return tileClippingMode;
+}
+
 void getScaledFramebufferSize(const rend_context& rendCtx, int& width, int& height)
 {
 	getPvrFramebufferSize(rendCtx, width, height);
-	if (!config::EmulateFramebuffer)
+	if (!rendCtx.isRTT)
 	{
-		float upscaling = config::RenderResolution / 480.f;
-		float w = width * upscaling;
-		float h = height * upscaling;
-		if (config::Widescreen && !config::Rotate90)
+		// Render to screen
+		if (!config::EmulateFramebuffer)
 		{
-			if (config::SuperWidescreen)
-				w *= (float)settings.display.width / settings.display.height / 4.f * 3.f;
-			else
-				w *= 4.f / 3.f;
+			float upscaling = config::RenderResolution / 480.f;
+			float w = width * upscaling;
+			float h = height * upscaling;
+			if (config::Widescreen && !config::Rotate90)
+			{
+				if (config::SuperWidescreen)
+					w *= (float)settings.display.width / settings.display.height / 4.f * 3.f;
+				else
+					w *= 4.f / 3.f;
+			}
+			if (!config::Rotate90)
+				w = std::round(w / 2.f) * 2.f;
+			h = std::round(h);
+			width = w;
+			height = h;
 		}
-		if (!config::Rotate90)
-			w = std::round(w / 2.f) * 2.f;
-		h = std::round(h);
-		width = w;
-		height = h;
+	}
+	else
+	{
+		// Render to texture
+		if (!config::RenderToTextureBuffer)
+		{
+			if (!config::EmulateFramebuffer)
+			{
+				float upscaling = config::RenderResolution / 480.f;
+				float w = width * upscaling;
+				float h = height * upscaling;
+				width = std::round(w);
+				height = std::round(h);
+			}
+		}
+		else
+		{
+			// We currently ignore vert and horiz scaling so we need to increase the framebuffer size accordingly
+			if (rendCtx.scaler_ctl.vscalefactor < 1024 || rendCtx.scaler_ctl.vscalefactor > 1025)
+				height = height * 1024 / rendCtx.scaler_ctl.vscalefactor;
+			if (rendCtx.scaler_ctl.hscale == 1)
+				width /= 2;
+		}
 	}
 }
 
@@ -314,4 +451,21 @@ void getVideoShift(float& x, float& y)
 		y *= config::RenderResolution / 480.f;
 	}
 	x *= config::ScreenStretching / 100.f;
+}
+
+void getWriteFBToVramParams(const rend_context& ctx, glm::ivec2& scaledSize, Rect& finalClip)
+{
+	glm::vec2 scale;
+	scale.x = ctx.scaler_ctl.hscale == 1 ? 0.5f : 1.f;
+	if (ctx.scaler_ctl.vscalefactor != 0
+			&& ctx.scaler_ctl.vscalefactor != 1024 && ctx.scaler_ctl.vscalefactor != 1025)
+		scale.y = 1024.f / ctx.scaler_ctl.vscalefactor;
+	else
+		scale.y = 1;
+
+	scaledSize.x = ctx.globClip.x * scale.x;
+	scaledSize.y = ctx.globClip.y * scale.y;
+	finalClip.origin = glm::vec2(ctx.tileClip.origin) * scale;
+	finalClip.size = glm::vec2(ctx.tileClip.size) * scale;
+	finalClip = intersect(finalClip, ctx.fbClip);
 }

@@ -1109,57 +1109,69 @@ private:
 };
 
 template<typename FBLineWriter>
-static void writeTexture(u32 width, u32 height, const u8 *data, u16 *dst, FB_W_CTRL_type fb_w_ctrl, u32 linestride)
+static void writeTexture(u32 width, u32 height, const u8 *data, u16 *dst, FB_W_CTRL_type fb_w_ctrl, u32 linestride, const Rect& clip)
 {
-	u32 padding = linestride;
-	if (padding > width * 2)
-		padding = padding - width * 2;
+	int srcPadding = 0;
+	int destPadding = 0;
+	if (linestride == 0)
+		linestride = width * 2;
+	else if (linestride > width * 2u)
+		destPadding = linestride - width * 2;
 	else
-		padding = 0;
+		srcPadding = (width * 2 - linestride) * 2;
+	height = std::min<u32>(height, clip.bottomRight().y + 1);
 
-	TexPixelWriter pixWriter(dst);
+	const int xmin = clip.origin.x;
+	int xmax = std::min<int>(clip.bottomRight().x + 1, width);
+	xmax = std::min<int>(xmax, linestride / 2);
+	TexPixelWriter pixWriter(dst + clip.origin.y * (width + destPadding / 2) + xmin);
+	data += clip.origin.y * (width * 2 + srcPadding) + xmin * 2;
+	const int deltaPix = xmin + std::min(linestride / 2, width) - xmax;
+	destPadding += deltaPix * 2;
+	srcPadding += deltaPix * 4;
 	FBLineWriter lineWriter(fb_w_ctrl, pixWriter);
-
-	for (u32 l = 0; l < height; l++) {
-		lineWriter.write(0, width, data, l);
-		pixWriter.advance(padding);
+	for (u32 l = clip.origin.y; l < height; l++)
+	{
+		lineWriter.write(xmin, xmax, data, l);
+		pixWriter.advance(destPadding);
+		data += srcPadding;
 	}
 }
 
 template<int Red, int Green, int Blue, int Alpha>
-void WriteTextureToVRam(u32 width, u32 height, const u8 *data, u16 *dst, FB_W_CTRL_type fb_w_ctrl, u32 linestride)
+void WriteTextureToVRam(u32 width, u32 height, const u8 *data, u16 *dst, FB_W_CTRL_type fb_w_ctrl, u32 linestride, const Rect& clip)
 {
 	bool dither = fb_w_ctrl.fb_dither && config::EmulateFramebuffer;
 	switch (fb_w_ctrl.fb_packmode)
 	{
 	case 0: // 0555 KRGB 16 bit  (default)
 		if (dither)
-			writeTexture<FBLineWriter0555<Red, Green, Blue, Alpha, TexPixelWriter, false>>(width, height, data, dst, fb_w_ctrl, linestride);
+			writeTexture<FBLineWriter0555<Red, Green, Blue, Alpha, TexPixelWriter, false>>(width, height, data, dst, fb_w_ctrl, linestride, clip);
 		else
-			writeTexture<FBLineWriter0555<Red, Green, Blue, Alpha, TexPixelWriter, true>>(width, height, data, dst, fb_w_ctrl, linestride);
+			writeTexture<FBLineWriter0555<Red, Green, Blue, Alpha, TexPixelWriter, true>>(width, height, data, dst, fb_w_ctrl, linestride, clip);
 		break;
 	case 1: // 565 RGB 16 bit
 		if (dither)
-			writeTexture<FBLineWriter565<Red, Green, Blue, Alpha, TexPixelWriter, false>>(width, height, data, dst, fb_w_ctrl, linestride);
+			writeTexture<FBLineWriter565<Red, Green, Blue, Alpha, TexPixelWriter, false>>(width, height, data, dst, fb_w_ctrl, linestride, clip);
 		else
-			writeTexture<FBLineWriter565<Red, Green, Blue, Alpha, TexPixelWriter, true>>(width, height, data, dst, fb_w_ctrl, linestride);
+			writeTexture<FBLineWriter565<Red, Green, Blue, Alpha, TexPixelWriter, true>>(width, height, data, dst, fb_w_ctrl, linestride, clip);
 		break;
 	case 2: // 4444 ARGB 16 bit
 		if (dither)
-			writeTexture<FBLineWriter4444<Red, Green, Blue, Alpha, TexPixelWriter, false>>(width, height, data, dst, fb_w_ctrl, linestride);
+			writeTexture<FBLineWriter4444<Red, Green, Blue, Alpha, TexPixelWriter, false>>(width, height, data, dst, fb_w_ctrl, linestride, clip);
 		else
-			writeTexture<FBLineWriter4444<Red, Green, Blue, Alpha, TexPixelWriter, true>>(width, height, data, dst, fb_w_ctrl, linestride);
+			writeTexture<FBLineWriter4444<Red, Green, Blue, Alpha, TexPixelWriter, true>>(width, height, data, dst, fb_w_ctrl, linestride, clip);
 		break;
 	case 3: // 1555 ARGB 16 bit
 		if (dither)
-			writeTexture<FBLineWriter1555<Red, Green, Blue, Alpha, TexPixelWriter, false>>(width, height, data, dst, fb_w_ctrl, linestride);
+			writeTexture<FBLineWriter1555<Red, Green, Blue, Alpha, TexPixelWriter, false>>(width, height, data, dst, fb_w_ctrl, linestride, clip);
 		else
-			writeTexture<FBLineWriter1555<Red, Green, Blue, Alpha, TexPixelWriter, true>>(width, height, data, dst, fb_w_ctrl, linestride);
+			writeTexture<FBLineWriter1555<Red, Green, Blue, Alpha, TexPixelWriter, true>>(width, height, data, dst, fb_w_ctrl, linestride, clip);
 		break;
 	}
 }
-template void WriteTextureToVRam<0, 1, 2, 3>(u32 width, u32 height, const u8 *data, u16 *dst, FB_W_CTRL_type fb_w_ctrl, u32 linestride);
-template void WriteTextureToVRam<2, 1, 0, 3>(u32 width, u32 height, const u8 *data, u16 *dst, FB_W_CTRL_type fb_w_ctrl, u32 linestride);
+template void WriteTextureToVRam<0, 1, 2, 3>(u32 width, u32 height, const u8 *data, u16 *dst, FB_W_CTRL_type fb_w_ctrl, u32 linestride, const Rect& clip);
+template void WriteTextureToVRam<2, 1, 0, 3>(u32 width, u32 height, const u8 *data, u16 *dst, FB_W_CTRL_type fb_w_ctrl, u32 linestride, const Rect& clip);
 
 template<typename FBLineWriter>
 static void writeFramebufferLW(u32 width, u32 height, const u8 *data, u32 dstAddr, FB_W_CTRL_type fb_w_ctrl, u32 linestride, const Rect& clip)
@@ -1240,24 +1252,6 @@ void BaseTextureCacheData::invalidate()
 
 	libCore_vramlock_Unlock_block_wb(lock_block);
 	lock_block = nullptr;
-}
-
-void getRenderToTextureDimensions(u32& width, u32& height, u32& pow2Width, u32& pow2Height)
-{
-	pow2Width = 8;
-	while (pow2Width < width)
-		pow2Width *= 2;
-	pow2Height = 8;
-	while (pow2Height < height)
-		pow2Height *= 2;
-	if (!config::RenderToTextureBuffer)
-	{
-		float upscale = config::RenderResolution / 480.f;
-		width *= upscale;
-		height *= upscale;
-		pow2Width *= upscale;
-		pow2Height *= upscale;
-	}
 }
 
 #ifdef TEST_AUTOMATION

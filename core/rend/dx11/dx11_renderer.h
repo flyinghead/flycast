@@ -28,7 +28,6 @@
 #include "dx11_shaders.h"
 #include "dx11_renderstate.h"
 #include "dx11_naomi2.h"
-#include "rend/tileclip.h"
 #ifndef LIBRETRO
 #include "dx11_driver.h"
 #endif

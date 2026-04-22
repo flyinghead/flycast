@@ -796,35 +796,21 @@ static void resize(int w, int h)
 	}
 }
 
-bool OpenGL4Renderer::renderFrame(int width, int height)
+bool OpenGL4Renderer::renderFrame(int rendering_width, int rendering_height)
 {
 	if (!config::EmulateFramebuffer)
 		initVideoRoutingFrameBuffer();
 	
 	const bool is_rtt = gl.rendContext->isRTT;
 
-	TransformMatrix matrices(*gl.rendContext, is_rtt ? gl.rendContext->getFramebufferWidth() : width,
-			is_rtt ? gl.rendContext->getFramebufferHeight() : height);
-	gl4ShaderUniforms.ndcMat = matrices.GetNormalMatrix();
-	ViewportMatrix = matrices.GetViewportMatrix();
+	gl.matrices.CalcMatrices(gl.rendContext, rendering_width, rendering_height);
+	gl4ShaderUniforms.ndcMat = gl.matrices.GetNormalMatrix();
 	
 	/*
 		Handle Dc to screen scaling
 	*/
-	int rendering_width;
-	int rendering_height;
-	if (is_rtt)
-	{
-		float scaling = config::RenderToTextureBuffer ? 1.f : config::RenderResolution / 480.f;
-		rendering_width = gl.rendContext->getFramebufferWidth() * scaling; // FIXME hscale?
-		rendering_height = gl.rendContext->getFramebufferHeight() * scaling;
-	}
-	else
-	{
-		rendering_width = width;
-		rendering_height = height;
+	if (!is_rtt)
 		getVideoShift(gl.ofbo.shiftX, gl.ofbo.shiftY);
-	}
 	resize(rendering_width, rendering_height);
 	
 	//VERT and RAM fog color constants
@@ -858,14 +844,14 @@ bool OpenGL4Renderer::renderFrame(int width, int height)
 		output_fbo = BindRTT(false);
 	else
 	{
-		this->width = width;
-		this->height = height;
+		this->width = rendering_width;
+		this->height = rendering_height;
 #ifdef LIBRETRO
 		if (config::EmulateFramebuffer)
-			output_fbo = init_output_framebuffer(width, height);
+			output_fbo = init_output_framebuffer(rendering_width, rendering_height);
 		else
-			output_fbo = postProcessor.getFramebuffer(width, height);
-		glViewport(0, 0, width, height);
+			output_fbo = postProcessor.getFramebuffer(rendering_width, rendering_height);
+		glViewport(0, 0, rendering_width, rendering_height);
 #else
 		output_fbo = init_output_framebuffer(rendering_width, rendering_height);
 #endif
@@ -908,82 +894,29 @@ bool OpenGL4Renderer::renderFrame(int width, int height)
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, gl4.vbo.getPolyParamBuffer()->getName());
 	glCheck();
 
-	if (is_rtt || !config::Widescreen || matrices.IsClipped() || config::Rotate90 || config::EmulateFramebuffer)
-	{
-		float fWidth;
-		float fHeight;
-		float min_x;
-		float min_y;
-		if (!is_rtt)
-		{
-			glm::vec4 clip_min;
-			glm::vec4 clip_dim;
-			if (config::EmulateFramebuffer) {
-				// Region tile clipping only
-				clip_min = glm::vec4(gl.rendContext->tileClip.origin, 0, 1);
-				clip_dim = glm::vec4(gl.rendContext->tileClip.size, 0, 0);
-			}
-			else
-			{
-				Rect rect = matrices.intersectTileAndFBScissor();
-				clip_min = glm::vec4(rect.origin, 0, 1);
-				clip_dim = glm::vec4(rect.size, 0, 0);
-			}
-			clip_min = ViewportMatrix * clip_min;
-			clip_dim = ViewportMatrix * clip_dim;
-
-			min_x = clip_min[0];
-			min_y = clip_min[1];
-			fWidth = clip_dim[0];
-			fHeight = clip_dim[1];
-			if (fWidth < 0)
-			{
-				min_x += fWidth;
-				fWidth = -fWidth;
-			}
-			if (fHeight < 0)
-			{
-				min_y += fHeight;
-				fHeight = -fHeight;
-			}
-			if (matrices.GetSidebarWidth() > 0)
-			{
-				float scaled_offs_x = matrices.GetSidebarWidth();
-
-				glcache.Enable(GL_SCISSOR_TEST);
-				glcache.Scissor(0, 0, (GLsizei)lroundf(scaled_offs_x), rendering_height);
-				glClear(GL_COLOR_BUFFER_BIT);
-				glcache.Scissor((GLint)lroundf(rendering_width - scaled_offs_x), 0, (GLsizei)lroundf(scaled_offs_x) + 1, rendering_height);
-				glClear(GL_COLOR_BUFFER_BIT);
-			}
-		}
-		else
-		{
-			min_x = (float)gl.rendContext->getFramebufferMinX();
-			min_y = (float)gl.rendContext->getFramebufferMinY();
-			fWidth = (float)gl.rendContext->getFramebufferWidth() - min_x;
-			fHeight = (float)gl.rendContext->getFramebufferHeight() - min_y;
-			if (config::RenderResolution > 480 && !config::RenderToTextureBuffer)
-			{
-				float scale = config::RenderResolution / 480.f;
-				min_x *= scale;
-				min_y *= scale;
-				fWidth *= scale;
-				fHeight *= scale;
-			}
-		}
+	Rect scissor = gl.matrices.getBaseScissor();
+	gl4ShaderUniforms.base_clipping.x = scissor.origin.x;
+	gl4ShaderUniforms.base_clipping.y = scissor.origin.y;
+	gl4ShaderUniforms.base_clipping.width = scissor.size.x;
+	gl4ShaderUniforms.base_clipping.height = scissor.size.y;
+	if (is_rtt) {
+		// Render to texture
 		gl4ShaderUniforms.base_clipping.enabled = true;
-		gl4ShaderUniforms.base_clipping.x = (int)lroundf(min_x);
-		gl4ShaderUniforms.base_clipping.y = (int)lroundf(min_y);
-		gl4ShaderUniforms.base_clipping.width = (int)lroundf(fWidth);
-		gl4ShaderUniforms.base_clipping.height = (int)lroundf(fHeight);
-		glcache.Scissor(gl4ShaderUniforms.base_clipping.x, gl4ShaderUniforms.base_clipping.y,
-				gl4ShaderUniforms.base_clipping.width, gl4ShaderUniforms.base_clipping.height);
-		glcache.Enable(GL_SCISSOR_TEST);
 	}
 	else
 	{
-		gl4ShaderUniforms.base_clipping.enabled = false;
+		// Render to screen
+		if (scissor.origin.x != 0 || scissor.origin.y != 0
+				|| scissor.size.x < (int)gl.rendContext->framebufferWidth
+				|| scissor.size.y < (int)gl.rendContext->framebufferHeight)
+			gl4ShaderUniforms.base_clipping.enabled = true;
+		else
+			gl4ShaderUniforms.base_clipping.enabled = false;
+	}
+	if (gl4ShaderUniforms.base_clipping.enabled) {
+		glcache.Scissor(gl4ShaderUniforms.base_clipping.x, gl4ShaderUniforms.base_clipping.y,
+				gl4ShaderUniforms.base_clipping.width, gl4ShaderUniforms.base_clipping.height);
+		glcache.Enable(GL_SCISSOR_TEST);
 	}
 
 	gl4DrawStrips(output_fbo, rendering_width, rendering_height);

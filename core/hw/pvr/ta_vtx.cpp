@@ -1211,8 +1211,11 @@ static void setTileClipping(rend_context& ctx)
 {
 	u32 xmax, ymax;
 	getRegionTileClipping((u32&)ctx.tileClip.origin.x, xmax, (u32&)ctx.tileClip.origin.y, ymax);
-	ctx.tileClip.size.x = xmax + 32 - ctx.tileClip.origin.x;
-	ctx.tileClip.size.y = ymax + 32 - ctx.tileClip.origin.y;
+	// intersect with TA global clipping
+	xmax = std::min<u32>(xmax + 32, ctx.globClip.x);
+	ymax = std::min<u32>(ymax + 32, ctx.globClip.y);
+	ctx.tileClip.size.x = xmax - ctx.tileClip.origin.x;
+	ctx.tileClip.size.y = ymax - ctx.tileClip.origin.y;
 }
 
 static void ta_parse_vdrc(TA_context* ctx, bool primRestart)

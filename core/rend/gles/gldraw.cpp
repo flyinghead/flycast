@@ -1,10 +1,8 @@
 #include "glcache.h"
 #include "gles.h"
 #include "quad.h"
-#include "rend/tileclip.h"
 #include "rend/osd.h"
 #include "naomi2.h"
-#include "rend/transform_matrix.h"
 #ifdef LIBRETRO
 #include "postprocess.h"
 #include "vmu_xhair.h"
@@ -108,7 +106,7 @@ static void SetBaseClipping()
 
 static TileClipping setTileClip(u32 tileclip, Rect& rect)
 {
-	TileClipping clipmode = getTileClip(tileclip, ViewportMatrix, rect, *gl.rendContext);
+	TileClipping clipmode = gl.matrices.getTileClip(tileclip, rect);
 	if (clipmode == TileClipping::Outside)
 	{
 		glcache.Enable(GL_SCISSOR_TEST);
@@ -699,16 +697,14 @@ void writeFramebufferToVRAM()
 {
 	u32 width = gl.rendContext->globClip.x;
 	u32 height = gl.rendContext->globClip.y;
+	glm::ivec2 scaledSize;
+	Rect finalClip;
+	getWriteFBToVramParams(*gl.rendContext, scaledSize, finalClip);
 
-	float xscale = gl.rendContext->scaler_ctl.hscale == 1 ? 0.5f : 1.f;
-	float yscale = 1024.f / gl.rendContext->scaler_ctl.vscalefactor;
-	if (std::abs(yscale - 1.f) < 0.01)
-		yscale = 1.f;
-
-	if (xscale != 1.f || yscale != 1.f)
+	if (scaledSize.x != (int)width || scaledSize.y != (int)height)
 	{
-		u32 scaledW = width * xscale;
-		u32 scaledH = height * yscale;
+		const u32 scaledW = scaledSize.x;
+		const u32 scaledH = scaledSize.y;
 
 		if (gl.fbscaling.framebuffer != nullptr
 				&& (gl.fbscaling.framebuffer->getWidth() != (int)scaledW || gl.fbscaling.framebuffer->getHeight() != (int)scaledH))
@@ -756,7 +752,7 @@ void writeFramebufferToVRAM()
 	u8 *p = (u8 *)tmp_buf.data();
 	glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, p);
 
-	WriteFramebuffer(width, height, p, tex_addr, gl.rendContext->fb_W_CTRL, linestride, gl.rendContext->fbClip);
+	WriteFramebuffer(width, height, p, tex_addr, gl.rendContext->fb_W_CTRL, linestride, finalClip);
 
 	glBindFramebuffer(GL_FRAMEBUFFER, gl.ofbo.origFbo);
 	glCheck();

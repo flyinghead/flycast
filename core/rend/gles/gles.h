@@ -6,6 +6,7 @@
 #include "wsi/gl_context.h"
 #include "glcache.h"
 #include "rend/shader_util.h"
+#include "rend/transform_matrix.h"
 #ifndef LIBRETRO
 #include "ui/imgui_driver.h"
 #endif
@@ -41,8 +42,6 @@
 #define VERTEX_UV1_ARRAY 6
 // Naomi2
 #define VERTEX_NORM_ARRAY 7
-
-extern glm::mat4 ViewportMatrix;
 
 void DrawStrips();
 
@@ -314,6 +313,7 @@ struct gl_ctx
 	bool prim_restart_fixed_supported;
 	bool bogusBlitFramebuffer;
 	rend_context *rendContext = nullptr;
+	TransformMatrix matrices;
 
 	size_t get_index_size() { return index_type == GL_UNSIGNED_INT ? sizeof(u32) : sizeof(u16); }
 };

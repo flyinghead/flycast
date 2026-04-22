@@ -177,13 +177,10 @@ private:
 		if (taContext == nullptr)
 			return;
 
-		if (!taContext->rend.isRTT)
-		{
-			int width, height;
-			getScaledFramebufferSize(taContext->rend, width, height);
-			taContext->rend.framebufferWidth = width;
-			taContext->rend.framebufferHeight = height;
-		}
+		int width, height;
+		getScaledFramebufferSize(taContext->rend, width, height);
+		taContext->rend.framebufferWidth = width;
+		taContext->rend.framebufferHeight = height;
 		bool renderToScreen = !taContext->rend.isRTT && !config::EmulateFramebuffer;
 #ifdef LIBRETRO
 		if (renderToScreen)

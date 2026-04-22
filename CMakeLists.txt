@@ -1106,7 +1106,6 @@ target_sources(${PROJECT_NAME} PRIVATE
 		core/rend/osd.h
 		core/rend/sorter.cpp
 		core/rend/sorter.h
-		core/rend/tileclip.h
 		core/rend/TexCache.cpp
 		core/rend/TexCache.h
 		core/rend/texconv.cpp

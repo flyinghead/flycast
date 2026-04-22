@@ -302,25 +302,6 @@ struct rend_context
 	}
 
 	void newRenderPass();
-
-	// For RTT TODO merge with framebufferWidth/Height
-	u32 getFramebufferWidth() const
-	{
-		u32 w = fbClip.size.x;
-		if (fb_W_LINESTRIDE != 0)
-			// Happens for Flag to Flag, Virtua Tennis?
-			w = std::min(fb_W_LINESTRIDE * 4, w);
-		return w;
-	}
-	u32 getFramebufferHeight() const {
-		return fbClip.size.y;
-	}
-	u32 getFramebufferMinX() const {
-		return fbClip.origin.x;
-	}
-	u32 getFramebufferMinY() const {
-		return fbClip.origin.y;
-	}
 };
 
 #define TA_DATA_SIZE 8_MB

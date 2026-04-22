@@ -344,7 +344,7 @@ inline void D3DRenderer::setTexMode(D3DSAMPLERSTATETYPE state, u32 clamp, u32 mi
 
 TileClipping D3DRenderer::setTileClip(u32 tileclip, Rect& clip_rect)
 {
-	TileClipping clipmode = getTileClip(tileclip, matrices.GetViewportMatrix(), clip_rect, *rendContext);
+	TileClipping clipmode = matrices.getTileClip(tileclip, clip_rect);
 	if (clipmode == TileClipping::Outside)
 	{
 		devCache.SetRenderState(D3DRS_SCISSORTESTENABLE, TRUE);
@@ -828,118 +828,58 @@ void D3DRenderer::drawStrips()
 
 void D3DRenderer::setBaseScissor()
 {
-	bool wide_screen_on = !rendContext->isRTT && config::Widescreen && !matrices.IsClipped()
-			&& !config::Rotate90 && !config::EmulateFramebuffer;
-	if (!wide_screen_on)
-	{
-		float fWidth;
-		float fHeight;
-		float min_x;
-		float min_y;
-		if (!rendContext->isRTT)
-		{
-			glm::vec4 clip_min;
-			glm::vec4 clip_dim;
-			if (config::EmulateFramebuffer) {
-				// Region tile clipping only
-				clip_min = glm::vec4(rendContext->tileClip.origin, 0, 1);
-				clip_dim = glm::vec4(rendContext->tileClip.size, 0, 0);
-			}
-			else
-			{
-				// Intersect tile clipping and framebuffer clipping
-				Rect rect = matrices.intersectTileAndFBScissor();
-				clip_min = glm::vec4(rect.origin, 0, 1);
-				clip_dim = glm::vec4(rect.size, 0, 0);
-			}
-			clip_min = matrices.GetViewportMatrix() * clip_min;
-			clip_dim = matrices.GetViewportMatrix() * clip_dim;
-
-			min_x = clip_min[0];
-			min_y = clip_min[1];
-			fWidth = clip_dim[0];
-			fHeight = clip_dim[1];
-			if (fWidth < 0)
-			{
-				min_x += fWidth;
-				fWidth = -fWidth;
-			}
-			if (fHeight < 0)
-			{
-				min_y += fHeight;
-				fHeight = -fHeight;
-			}
-			if (matrices.GetSidebarWidth() > 0)
-			{
-				float scaled_offs_x = matrices.GetSidebarWidth();
-
-				D3DCOLOR borderColor = D3DCOLOR_COLORVALUE(VO_BORDER_COL.red(), VO_BORDER_COL.green(), VO_BORDER_COL.blue(), 1.f);
-				devCache.SetRenderState(D3DRS_SCISSORTESTENABLE, FALSE);
-				D3DRECT rects[] {
-						{ 0, 0, lroundf(scaled_offs_x), (long)height },
-						{ (long)(width - scaled_offs_x), 0, (long)(width + 1), (long)height },
-				};
-				device->Clear(2, rects, D3DCLEAR_TARGET, borderColor, 0.f, 0);
-			}
-		}
-		else
-		{
-			min_x = (float)rendContext->getFramebufferMinX();
-			min_y = (float)rendContext->getFramebufferMinY();
-			fWidth = (float)rendContext->getFramebufferWidth() - min_x;
-			fHeight = (float)rendContext->getFramebufferHeight() - min_y;
-			if (config::RenderResolution > 480 && !config::RenderToTextureBuffer)
-			{
-				min_x *= config::RenderResolution / 480.f;
-				min_y *= config::RenderResolution / 480.f;
-				fWidth *= config::RenderResolution / 480.f;
-				fHeight *= config::RenderResolution / 480.f;
-			}
-		}
+	Rect scissor = matrices.getBaseScissor();
+	scissorRect.left = scissor.origin.x;
+	scissorRect.top = scissor.origin.y;
+	scissorRect.right = scissor.bottomRight().x;
+	scissorRect.bottom = scissor.bottomRight().y;
+	if (rendContext->isRTT) {
 		scissorEnable = true;
-		scissorRect.left = std::round(min_x);
-		scissorRect.top = std::round(min_y);
-		scissorRect.right = scissorRect.left + std::round(fWidth);
-		scissorRect.bottom = scissorRect.top + std::round(fHeight);
-		device->SetScissorRect(&scissorRect);
-		devCache.SetRenderState(D3DRS_SCISSORTESTENABLE, TRUE);
 	}
 	else
 	{
+		if (scissor.origin.x != 0 || scissor.origin.y != 0
+				|| scissor.size.x != (int)rendContext->framebufferWidth
+				|| scissor.size.y != (int)rendContext->framebufferHeight)
+			scissorEnable = true;
+		else
+			scissorEnable = false;
+	}
+	if (scissorEnable) {
+		device->SetScissorRect(&scissorRect);
+		devCache.SetRenderState(D3DRS_SCISSORTESTENABLE, TRUE);
+	}
+	else {
 		devCache.SetRenderState(D3DRS_SCISSORTESTENABLE, FALSE);
-		scissorEnable = false;
 	}
 }
 
 void D3DRenderer::prepareRttRenderTarget(u32 texAddress, int& vpWidth, int& vpHeight)
 {
-	u32 fbw = rendContext->getFramebufferWidth();
-	u32 fbh = rendContext->getFramebufferHeight();
+	u32 fbw = rendContext->framebufferWidth;
+	u32 fbh = rendContext->framebufferHeight;
 	DEBUG_LOG(RENDERER, "RTT packmode=%d stride=%d - %d x %d @ %06x",
 			rendContext->fb_W_CTRL.fb_packmode, rendContext->fb_W_LINESTRIDE * 8, fbw, fbh, texAddress);
-	u32 fbw2;
-	u32 fbh2;
-	getRenderToTextureDimensions(fbw, fbh, fbw2, fbh2);
 
 	rttTexture.reset();
-	device->CreateTexture(fbw2, fbh2, 1, D3DUSAGE_RENDERTARGET, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &rttTexture.get(), NULL);
+	device->CreateTexture(fbw, fbh, 1, D3DUSAGE_RENDERTARGET, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &rttTexture.get(), NULL);
 
 	rttSurface.reset();
 	rttTexture->GetSurfaceLevel(0, &rttSurface.get());
 	device->SetRenderTarget(0, rttSurface);
 
-	if (fbw2 > width || fbh2 > height || !depthSurface)
+	if (fbw > width || fbh > height || !depthSurface)
 	{
 		if (depthSurface)
 		{
 			D3DSURFACE_DESC desc;
 			depthSurface->GetDesc(&desc);
-			if (fbw2 > desc.Width || fbh2 > desc.Height)
+			if (fbw > desc.Width || fbh > desc.Height)
 				depthSurface.reset();
 		}
 		if (!depthSurface)
 		{
-			HRESULT rc = SUCCEEDED(device->CreateDepthStencilSurface(std::max(fbw2, width), std::max(fbh2, height), D3DFMT_D24S8, D3DMULTISAMPLE_NONE, 0, TRUE, &depthSurface.get(), nullptr));
+			HRESULT rc = SUCCEEDED(device->CreateDepthStencilSurface(std::max(fbw, width), std::max(fbh, height), D3DFMT_D24S8, D3DMULTISAMPLE_NONE, 0, TRUE, &depthSurface.get(), nullptr));
 			verify(rc);
 		}
 	}
@@ -957,8 +897,8 @@ void D3DRenderer::prepareRttRenderTarget(u32 texAddress, int& vpWidth, int& vpHe
 
 void D3DRenderer::readRttRenderTarget(u32 texAddress)
 {
-	u32 w = rendContext->getFramebufferWidth();
-	u32 h = rendContext->getFramebufferHeight();
+	u32 w = rendContext->framebufferWidth;
+	u32 h = rendContext->framebufferHeight;
 	if (config::RenderToTextureBuffer)
 	{
 		D3DSURFACE_DESC rttDesc;
@@ -977,8 +917,9 @@ void D3DRenderer::readRttRenderTarget(u32 texAddress)
 		RECT lockRect { 0, 0, (long)w, (long)h };
 		rc = SUCCEEDED(offscreenSurface->LockRect(&rect, &lockRect, D3DLOCK_READONLY));
 		verify(rc);
-		if ((u32)rect.Pitch == w * sizeof(u32))
+		if ((u32)rect.Pitch == w * sizeof(u32)) {
 			memcpy(p, rect.pBits, w * h * sizeof(u32));
+		}
 		else
 		{
 			u8 *src = (u8 *)rect.pBits;
@@ -993,14 +934,16 @@ void D3DRenderer::readRttRenderTarget(u32 texAddress)
 		verify(rc);
 
 		u16 *dst = (u16 *)&vram[texAddress];
-		WriteTextureToVRam<2, 1, 0, 3>(w, h, (u8 *)tmp_buf.data(), dst, rendContext->fb_W_CTRL, rendContext->fb_W_LINESTRIDE * 8);
+		WriteTextureToVRam<2, 1, 0, 3>(w, h, (u8 *)tmp_buf.data(), dst, rendContext->fb_W_CTRL, rendContext->fb_W_LINESTRIDE * 8, rendContext->fbClip);
 	}
 	else
 	{
 		//memset(&vram[gl.rtt.texAddress], 0, size);
-		if (w <= 1024 && h <= 1024)
+		int wpo2, hpo2;
+		getPvrFramebufferSize(*rendContext, wpo2, hpo2);
+		if (wpo2 <= 1024 && hpo2 <= 1024)
 		{
-			D3DTexture* texture = texCache.getRTTexture(texAddress, rendContext->fb_W_CTRL.fb_packmode, w, h);
+			D3DTexture* texture = texCache.getRTTexture(texAddress, rendContext->fb_W_CTRL.fb_packmode, wpo2, hpo2);
 			texture->texture = rttTexture;
 			texture->dirty = 0;
 			texture->unprotectVRam();
@@ -1044,7 +987,7 @@ bool D3DRenderer::Render()
 	}
 	rc = SUCCEEDED(device->SetDepthStencilSurface(depthSurface));
 	verify(rc);
-	matrices.CalcMatrices(rendContext, width, height);
+	matrices.CalcMatrices(rendContext, rendContext->framebufferWidth, rendContext->framebufferHeight);
 	// infamous DX9 half-pixel viewport shift
 	// https://docs.microsoft.com/en-us/windows/win32/direct3d9/directly-mapping-texels-to-pixels
 	glm::mat4 normalMat = glm::translate(glm::vec3(-1.f / vpWidth, 1.f / vpHeight, 0)) * matrices.GetNormalMatrix();
@@ -1364,18 +1307,16 @@ void D3DRenderer::writeFramebufferToVRAM()
 {
 	u32 width = rendContext->globClip.x;
 	u32 height = rendContext->globClip.y;
-
-	float xscale = rendContext->scaler_ctl.hscale == 1 ? 0.5f : 1.f;
-	float yscale = 1024.f / rendContext->scaler_ctl.vscalefactor;
-	if (std::abs(yscale - 1.f) < 0.01)
-		yscale = 1.f;
+	glm::ivec2 scaledSize;
+	Rect finalClip;
+	getWriteFBToVramParams(*rendContext, scaledSize, finalClip);
 
 	ComPtr<IDirect3DSurface9> fbSurface = framebufferSurface;
 
-	if (xscale != 1.f || yscale != 1.f)
+	if (scaledSize.x != (int)width || scaledSize.y != (int)height)
 	{
-		u32 scaledW = width * xscale;
-		u32 scaledH = height * yscale;
+		const u32 scaledW = scaledSize.x;
+		const u32 scaledH = scaledSize.y;
 
 		if (fbScaledTexture)
 		{
@@ -1430,7 +1371,7 @@ void D3DRenderer::writeFramebufferToVRAM()
 	rc = SUCCEEDED(offscreenSurface->UnlockRect());
 	verify(rc);
 
-	WriteFramebuffer<2, 1, 0, 3>(width, height, (u8 *)tmp_buf.data(), texAddress, rendContext->fb_W_CTRL, linestride, rendContext->fbClip);
+	WriteFramebuffer<2, 1, 0, 3>(width, height, (u8 *)tmp_buf.data(), texAddress, rendContext->fb_W_CTRL, linestride, finalClip);
 }
 
 bool D3DRenderer::GetLastFrame(std::vector<u8>& data, int& width, int& height)

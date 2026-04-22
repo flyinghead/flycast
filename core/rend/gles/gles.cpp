@@ -8,7 +8,6 @@
 #include "rend/gles/postprocess.h"
 #include "vmu_xhair.h"
 #endif
-#include "rend/transform_matrix.h"
 #include "wsi/gl_context.h"
 #include "emulator.h"
 #include "naomi2.h"
@@ -402,8 +401,6 @@ gl_ctx gl;
 
 GLuint fogTextureId;
 GLuint paletteTextureId;
-
-glm::mat4 ViewportMatrix;
 
 #ifdef TEST_AUTOMATION
 void do_swap_automation()
@@ -1115,10 +1112,8 @@ bool OpenGLRenderer::renderFrame(int width, int height)
 	//add some extra range to avoid clipping border cases
 	vtx_max_fZ *= 1.001f;
 
-	TransformMatrix matrices(*gl.rendContext, is_rtt ? gl.rendContext->getFramebufferWidth() : width,
-			is_rtt ? gl.rendContext->getFramebufferHeight() : height);
-	ShaderUniforms.ndcMat = matrices.GetNormalMatrix();
-	ViewportMatrix = matrices.GetViewportMatrix();
+	gl.matrices.CalcMatrices(gl.rendContext, width, height);
+	ShaderUniforms.ndcMat = gl.matrices.GetNormalMatrix();
 
 	ShaderUniforms.depth_coefs[0] = 2.f / vtx_max_fZ;
 	ShaderUniforms.depth_coefs[1] = -1.f;
@@ -1223,9 +1218,6 @@ bool OpenGLRenderer::renderFrame(int width, int height)
 #endif
 	}
 
-	bool wide_screen_on = !is_rtt && config::Widescreen && !matrices.IsClipped()
-			&& !config::Rotate90 && !config::EmulateFramebuffer;
-
 	//Color is cleared by the background plane
 
 	glcache.Disable(GL_SCISSOR_TEST);
@@ -1252,81 +1244,29 @@ bool OpenGLRenderer::renderFrame(int width, int height)
 	if (!gl.rendContext->modtrig.empty())
 		gl.vbo.modvols->update(&gl.rendContext->modtrig[0], gl.rendContext->modtrig.size() * sizeof(decltype(gl.rendContext->modtrig[0])));
 
-	if (!wide_screen_on)
-	{
-		float fWidth;
-		float fHeight;
-		float min_x;
-		float min_y;
-		if (!is_rtt)
-		{
-			glm::vec4 clip_min;
-			glm::vec4 clip_dim;
-			if (config::EmulateFramebuffer) {
-				// Region tile clipping only
-				clip_min = glm::vec4(gl.rendContext->tileClip.origin, 0, 1);
-				clip_dim = glm::vec4(gl.rendContext->tileClip.size, 0, 0);
-			}
-			else
-			{
-				Rect rect = matrices.intersectTileAndFBScissor();
-				clip_min = glm::vec4(rect.origin, 0, 1);
-				clip_dim = glm::vec4(rect.size, 0, 0);
-			}
-			clip_min = ViewportMatrix * clip_min;
-			clip_dim = ViewportMatrix * clip_dim;
-
-			min_x = clip_min[0];
-			min_y = clip_min[1];
-			fWidth = clip_dim[0];
-			fHeight = clip_dim[1];
-			if (fWidth < 0)
-			{
-				min_x += fWidth;
-				fWidth = -fWidth;
-			}
-			if (fHeight < 0)
-			{
-				min_y += fHeight;
-				fHeight = -fHeight;
-			}
-			if (matrices.GetSidebarWidth() > 0)
-			{
-				float scaled_offs_x = matrices.GetSidebarWidth();
-
-				glcache.Enable(GL_SCISSOR_TEST);
-				glcache.Scissor(0, 0, (GLsizei)lroundf(scaled_offs_x), (GLsizei)height);
-				glClear(GL_COLOR_BUFFER_BIT);
-				glcache.Scissor(width - scaled_offs_x, 0, (GLsizei)lroundf(scaled_offs_x + 1.f), (GLsizei)height);
-				glClear(GL_COLOR_BUFFER_BIT);
-			}
-		}
-		else
-		{
-			min_x = (float)gl.rendContext->getFramebufferMinX();
-			min_y = (float)gl.rendContext->getFramebufferMinY();
-			fWidth = (float)gl.rendContext->getFramebufferWidth() - min_x;
-			fHeight = (float)gl.rendContext->getFramebufferHeight() - min_y;
-			if (config::RenderResolution > 480 && !config::RenderToTextureBuffer)
-			{
-				float scale = config::RenderResolution / 480.f;
-				min_x *= scale;
-				min_y *= scale;
-				fWidth *= scale;
-				fHeight *= scale;
-			}
-		}
+	Rect scissor = gl.matrices.getBaseScissor();
+	ShaderUniforms.base_clipping.x = scissor.origin.x;
+	ShaderUniforms.base_clipping.y = scissor.origin.y;
+	ShaderUniforms.base_clipping.width = scissor.size.x;
+	ShaderUniforms.base_clipping.height = scissor.size.y;
+	if (is_rtt) {
+		// Render to texture
 		ShaderUniforms.base_clipping.enabled = true;
-		ShaderUniforms.base_clipping.x = (int)lroundf(min_x);
-		ShaderUniforms.base_clipping.y = (int)lroundf(min_y);
-		ShaderUniforms.base_clipping.width = (int)lroundf(fWidth);
-		ShaderUniforms.base_clipping.height = (int)lroundf(fHeight);
-		glcache.Scissor(ShaderUniforms.base_clipping.x, ShaderUniforms.base_clipping.y, ShaderUniforms.base_clipping.width, ShaderUniforms.base_clipping.height);
-		glcache.Enable(GL_SCISSOR_TEST);
 	}
 	else
 	{
-		ShaderUniforms.base_clipping.enabled = false;
+		// Render to screen
+		if (scissor.origin.x != 0 || scissor.origin.y != 0
+				|| scissor.size.x < (int)gl.rendContext->framebufferWidth
+				|| scissor.size.y < (int)gl.rendContext->framebufferHeight)
+			ShaderUniforms.base_clipping.enabled = true;
+		else
+			ShaderUniforms.base_clipping.enabled = false;
+	}
+	if (ShaderUniforms.base_clipping.enabled) {
+		glcache.Scissor(ShaderUniforms.base_clipping.x, ShaderUniforms.base_clipping.y,
+				ShaderUniforms.base_clipping.width, ShaderUniforms.base_clipping.height);
+		glcache.Enable(GL_SCISSOR_TEST);
 	}
 
 	DrawStrips();
