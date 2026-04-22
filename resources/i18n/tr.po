@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-22 12:49+0100\n"
-"PO-Revision-Date: 2026-03-30 18:56\n"
+"PO-Revision-Date: 2026-04-20 11:57\n"
 "Last-Translator: \n"
 "Language: tr_TR\n"
 "MIME-Version: 1.0\n"
@@ -2236,6 +2236,14 @@ msgstr ""
 
 #: core/ui/settings.cpp:114
 msgid "Always dump textures that are already replaced by custom textures"
+msgstr ""
+
+#: core/ui/settings.cpp:115
+msgid "Discard Video and Animated Textures"
+msgstr ""
+
+#: core/ui/settings.cpp:116
+msgid "Skip dumping video (YUV) and already updated textures"
 msgstr ""
 
 #: core/ui/settings.cpp:118
