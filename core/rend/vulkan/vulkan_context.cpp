@@ -990,9 +990,15 @@ void VulkanContext::Present() noexcept
 				{
 					PresentFrame(vk::Image(), lastFrameView, lastFrameExtent, lastFrameAR);
 					res = presentQueue.presentKHR(vk::PresentInfoKHR(1, &(*renderCompleteSemaphores[currentSemaphore]), 1, &(*swapChain), &currentImage));
-					if (res == vk::Result::eSuboptimalKHR)
-						resized = true;
 					currentSemaphore = (currentSemaphore + 1) % renderCompleteSemaphores.size();
+					if (res == vk::Result::eSuboptimalKHR)
+					{
+						// Stop queuing additional dupe presents into a swap
+						// chain that we are about to tear down: the extra
+						// in-flight semaphores would just delay waitIdle().
+						resized = true;
+						break;
+					}
 				}
 		} catch (const vk::SystemError& e) {
 			// Happens when resizing the window
