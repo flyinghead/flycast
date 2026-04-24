@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-22 12:49+0100\n"
-"PO-Revision-Date: 2026-04-24 17:30\n"
+"PO-Revision-Date: 2026-04-24 18:40\n"
 "Last-Translator: \n"
 "Language: tr_TR\n"
 "MIME-Version: 1.0\n"
@@ -508,205 +508,205 @@ msgstr ""
 #: core/hw/naomi/gdcartridge.cpp:524
 #, c-format
 msgid "Naomi GDROM: Cannot open %s.chd"
-msgstr ""
+msgstr "Naomi GDROM: %s.chd açılamıyor"
 
 #: core/hw/naomi/gdcartridge.cpp:609
 msgid "Naomi GDROM: Could not find the file to decrypt."
-msgstr ""
+msgstr "Naomi GDROM: Şifresi çözülecek dosya bulunamadı."
 
 #: core/reios/reios.cpp:366 core/reios/reios.cpp:369
 msgid "Reboot to BIOS"
-msgstr ""
+msgstr "BIOS'a yeniden başlat"
 
 #: core/reios/reios.cpp:662
 #, c-format
 msgid "Failed to open ELF %s"
-msgstr ""
+msgstr "ELF %s açılamadı"
 
 #: core/reios/reios.cpp:671
 #, c-format
 msgid "Failed to locate bootfile %s"
-msgstr ""
+msgstr "Önyükleme dosyası %s bulunamadı"
 
 #: core/reios/reios.cpp:684
 msgid "Naomi boot failure"
-msgstr ""
+msgstr "Naomi önyükleme hatası"
 
 #: core/reios/reios.cpp:690
 msgid "Invalid cart size"
-msgstr ""
+msgstr "Geçersiz kart boyutu"
 
 #: core/cheats.cpp:762 core/cheats.cpp:767
 msgid "Invalid cheat code"
-msgstr ""
+msgstr "Geçersiz hile kodu"
 
 #: core/cheats.cpp:849 core/cheats.cpp:888 core/cheats.cpp:901
 msgid "Missing value"
-msgstr ""
+msgstr "Eksik değer"
 
 #: core/cheats.cpp:867
 msgid "Missing values"
-msgstr ""
+msgstr "Eksik değerler"
 
 #: core/cheats.cpp:914
 msgid "Missing address or value"
-msgstr ""
+msgstr "Adres veya değer eksik"
 
 #: core/cheats.cpp:923 core/cheats.cpp:1027
 msgid "Unsupported cheat type"
-msgstr ""
+msgstr "Desteklenmeyen hile türü"
 
 #: core/cheats.cpp:931
 msgid "Missing count or value"
-msgstr ""
+msgstr "Eksik sayı veya değer"
 
 #: core/cheats.cpp:945 core/cheats.cpp:969
 msgid "Missing count or destination address"
-msgstr ""
+msgstr "Eksik sayım veya hedef adres"
 
 #: core/cheats.cpp:957
 msgid "Master codes aren't supported"
-msgstr ""
+msgstr "Ana kodlar desteklenmiyor"
 
 #: core/cheats.cpp:987 core/cheats.cpp:1016
 msgid "Unsupported conditional code"
-msgstr ""
+msgstr "Desteklenmeyen koşullu kod"
 
 #: core/cheats.cpp:997
 msgid "Missing test address"
-msgstr ""
+msgstr "Eksik test adresi"
 
 #: core/cheats.cpp:1098
 msgid "Can't save cheat file"
-msgstr ""
+msgstr "Hile dosyası kaydedilemiyor"
 
 #: core/ui/settings_video.cpp:85
 msgid "Graphics API"
-msgstr ""
+msgstr "Grafik API'si"
 
 #: core/ui/settings_video.cpp:96
 msgid "MoltenVK: An implementation of Vulkan that runs on Apple's Metal graphics framework"
-msgstr ""
+msgstr "MoltenVK: Apple'ın Metal grafik çerçevesi üzerinde çalışan bir Vulkan uygulaması"
 
 #: core/ui/settings_video.cpp:116
 msgid "Transparent Sorting"
-msgstr ""
+msgstr "Şeffaf Sıralama"
 
 #: core/ui/settings_video.cpp:121
 msgid "Per Triangle"
-msgstr ""
+msgstr "Üçgen Başına"
 
 #: core/ui/settings_video.cpp:123
 msgid "Sort transparent polygons per triangle. Fast but may produce graphical glitches"
-msgstr ""
+msgstr "Üçgen başına saydam çokgenleri sıralayın. Hızlıdır ancak grafiksel hatalara neden olabilir"
 
 #: core/ui/settings_video.cpp:125
 msgid "Per Strip"
-msgstr ""
+msgstr "Şerit Başına"
 
 #: core/ui/settings_video.cpp:127
 msgid "Sort transparent polygons per strip. Faster but may produce graphical glitches"
-msgstr ""
+msgstr "Şeffaf çokgenleri şerit başına sıralayın. Daha hızlıdır ancak grafiksel hatalara neden olabilir"
 
 #: core/ui/settings_video.cpp:131
 msgid "Per Pixel"
-msgstr ""
+msgstr "Piksel Başına"
 
 #: core/ui/settings_video.cpp:133
 msgid "Sort transparent polygons per pixel. Slower but accurate"
-msgstr ""
+msgstr "Şeffaf çokgenleri piksele göre sıralayın. Daha yavaş ama daha doğru"
 
 #: core/ui/settings_video.cpp:153
 msgid "Rendering Options"
-msgstr ""
+msgstr "Görüntüleme Seçenekleri"
 
 #: core/ui/settings_video.cpp:156
 msgid "Half"
-msgstr ""
+msgstr "Yarım"
 
 #: core/ui/settings_video.cpp:156
 msgid "Native"
-msgstr ""
+msgstr "Yerel"
 
 #: core/ui/settings_video.cpp:201
 msgid "Internal Resolution"
-msgstr ""
+msgstr "Dahili Çözünürlük"
 
 #: core/ui/settings_video.cpp:203
 msgid "Internal render resolution. Higher is better, but more demanding on the GPU. Values higher than your display resolution (but no more than double your display resolution) can be used for supersampling, which provides high-quality antialiasing without reducing sharpness."
-msgstr ""
+msgstr "Dahili işleme çözünürlüğü. Daha yüksek değer daha iyidir, ancak GPU'ya daha fazla yük bindirir. Ekran çözünürlüğünüzden daha yüksek (ancak ekran çözünürlüğünüzün iki katından fazla olmayan) değerler, keskinliği azaltmadan yüksek kaliteli kenar yumuşatma sağlayan süper örnekleme için kullanılabilir."
 
 #: core/ui/settings_video.cpp:204
 msgid "Integer Scaling"
-msgstr ""
+msgstr "Tamsayı Ölçeklendirme"
 
 #: core/ui/settings_video.cpp:204
 msgid "Scales the output by the maximum integer multiple allowed by the display resolution."
-msgstr ""
+msgstr "Görüntüyü, ekran çözünürlüğünün izin verdiği maksimum tam sayı katıyla ölçeklendirir."
 
 #: core/ui/settings_video.cpp:205
 msgid "Linear Interpolation"
-msgstr ""
+msgstr "Doğrusal Enterpolasyon"
 
 #: core/ui/settings_video.cpp:205
 msgid "Scales the output with linear interpolation. Will use nearest neighbor interpolation otherwise. Disable with integer scaling."
-msgstr ""
+msgstr "Çıktıyı doğrusal enterpolasyonla ölçeklendirir. Aksi takdirde en yakın komşu enterpolasyonunu kullanır. Tam sayı ölçeklendirme ile devre dışı bırakın."
 
 #: core/ui/settings_video.cpp:207
 msgid "VSync"
-msgstr ""
+msgstr "VSync"
 
 #: core/ui/settings_video.cpp:207
 msgid "Synchronizes the frame rate with the screen refresh rate. Recommended"
-msgstr ""
+msgstr "Kare hızını ekran yenileme hızıyla senkronize eder. Tavsiye edilir"
 
 #: core/ui/settings_video.cpp:214
 msgid "Duplicate frames"
-msgstr ""
+msgstr "Çift kareler"
 
 #: core/ui/settings_video.cpp:214
 msgid "Duplicate frames on high refresh rate monitors (120 Hz and higher)"
-msgstr ""
+msgstr "Yüksek yenileme hızına sahip monitörlerde (120 Hz ve üzeri) kareler tekrarlanır"
 
 #: core/ui/settings_video.cpp:219
 msgid "Show VMU In-game"
-msgstr ""
+msgstr "Oyunda VMU'yu göster"
 
 #: core/ui/settings_video.cpp:219
 msgid "Show the VMU LCD screens while in-game"
-msgstr ""
+msgstr "Oyun içindeyken VMU LCD ekranlarını göster"
 
 #: core/ui/settings_video.cpp:220
 msgid "Full Framebuffer Emulation"
-msgstr ""
+msgstr "Tam Çerçeve Tamponu Emülasyonu"
 
 #: core/ui/settings_video.cpp:221
 msgid "Fully accurate VRAM framebuffer emulation. Helps games that directly access the framebuffer for special effects. Very slow and incompatible with upscaling and wide screen."
-msgstr ""
+msgstr "Tamamen doğru VRAM çerçeve arabelleği öykünmesi. Özel efektler için çerçeve arabelleğine doğrudan erişen oyunlara yardımcı olur. Çok yavaştır, yükseltme ve geniş ekranla uyumlu değil."
 
 #: core/ui/settings_video.cpp:225
 msgid "Load Custom Textures"
-msgstr ""
+msgstr "Özel Dokular Yükle"
 
 #: core/ui/settings_video.cpp:226
 msgid "Load custom/high-res textures from data/textures/<game id>"
-msgstr ""
+msgstr "data/textures/<game id> konumundan özel/yüksek çözünürlüklü dokular yükle"
 
 #: core/ui/settings_video.cpp:230
 msgid "Preload Custom Textures"
-msgstr ""
+msgstr "Özel Dokuları Önceden Yükle"
 
 #: core/ui/settings_video.cpp:231
 msgid "Preload custom textures at game start. May improve performance but increases memory usage"
-msgstr ""
+msgstr "Oyun başlangıcında özel dokuları önceden yükleyin. Bu, performansı artırabilir ancak bellek kullanımını da yükseltir"
 
 #: core/ui/settings_video.cpp:237
 msgid "Aspect Ratio"
-msgstr ""
+msgstr "En Boy Oranı"
 
 #: core/ui/settings_video.cpp:239
 msgid "Widescreen"
-msgstr ""
+msgstr "Geniş Ekran"
 
 #: core/ui/settings_video.cpp:240
 msgid "Draw geometry outside of the normal 4:3 aspect ratio. May produce graphical glitches in the revealed areas.\n"
@@ -914,208 +914,208 @@ msgstr ""
 
 #: core/ui/settings_video.cpp:386
 msgid "Show FPS Counter"
-msgstr ""
+msgstr "FPS sayacını göster"
 
 #: core/ui/settings_video.cpp:386
 msgid "Show on-screen frame/sec counter"
-msgstr ""
+msgstr "Ekranda kare/saniye sayacını göster"
 
 #: core/ui/settings_video.cpp:391
 msgid "Video Routing (Syphon)"
-msgstr ""
+msgstr "Video Yönlendirme (Syphon)"
 
 #: core/ui/settings_video.cpp:394
 msgid "Video Routing (Spout)"
-msgstr ""
+msgstr "Video Yönlendirme (Spout)"
 
 #: core/ui/settings_video.cpp:396
 msgid "Video Routing (Only available with OpenGL or DirectX 11)"
-msgstr ""
+msgstr "Video Yönlendirme (Yalnızca OpenGL veya DirectX 11 ile kullanılabilir)"
 
 #: core/ui/settings_video.cpp:402
 msgid "Send video content to another program"
-msgstr ""
+msgstr "Video içeriğini başka bir programa gönder"
 
 #: core/ui/settings_video.cpp:403
 msgid "e.g. Route GPU texture to OBS Studio directly instead of using CPU intensive Display/Window Capture"
-msgstr ""
+msgstr "Örneğin, işlemciyi yoğun kullanan Ekran/Pencere Yakalama yöntemini kullanmak yerine, GPU dokusunu doğrudan OBS Studio'ya yönlendir"
 
 #: core/ui/settings_video.cpp:407
 msgid "Scale down before sending"
-msgstr ""
+msgstr "Göndermeden önce ölçeği küçült"
 
 #: core/ui/settings_video.cpp:407
 msgid "Could increase performance when sharing a smaller texture, YMMV"
-msgstr ""
+msgstr "Daha küçük bir dokuyu paylaşırken performansı artırabilir, sonuçlar kişiden kişiye değişebilir"
 
 #: core/ui/settings_video.cpp:411
 msgid "Output vertical resolution"
-msgstr ""
+msgstr "Çıkış dikey çözünürlüğü"
 
 #: core/ui/settings_video.cpp:416
 #, c-format
 msgid "Output texture size: %d x %d"
-msgstr ""
+msgstr "Çıktı doku boyutu: %d x %d"
 
 #: core/ui/settings_general.cpp:51
 msgid "Set"
-msgstr ""
+msgstr "Ayarla"
 
 #: core/ui/settings_general.cpp:108 core/ui/settings_general.cpp:294
 #: core/ui/gui_cheats.cpp:102
 msgid "Add"
-msgstr ""
+msgstr "Ekle"
 
 #: core/ui/settings_general.cpp:161 core/ui/gui.cpp:744
 msgid "Select a Content Folder"
-msgstr ""
+msgstr "Bir İçerik Klasörü Seç"
 
 #: core/ui/settings_general.cpp:191
 msgid "System Default"
-msgstr ""
+msgstr "Sistem Varsayılanı"
 
 #: core/ui/settings_general.cpp:212
 msgid "UI Language"
-msgstr ""
+msgstr "Kullanıcı Arayüzü Dili"
 
 #: core/ui/settings_general.cpp:232
 msgid "Japanese"
-msgstr ""
+msgstr "Japonca"
 
 #: core/ui/settings_general.cpp:232
 msgid "English"
-msgstr ""
+msgstr "İngilizce"
 
 #: core/ui/settings_general.cpp:232
 msgid "German"
-msgstr ""
+msgstr "Almanca"
 
 #: core/ui/settings_general.cpp:232
 msgid "French"
-msgstr ""
+msgstr "Fransızca"
 
 #: core/ui/settings_general.cpp:232
 msgid "Spanish"
-msgstr ""
+msgstr "İspanyolca"
 
 #: core/ui/settings_general.cpp:232
 msgid "Italian"
-msgstr ""
+msgstr "İtalyanca"
 
 #: core/ui/settings_general.cpp:233
 msgid "Dreamcast Language"
-msgstr ""
+msgstr "Dreamcast Dili"
 
 #: core/ui/settings_general.cpp:234
 msgid "The language as configured in the Dreamcast BIOS"
-msgstr ""
+msgstr "Dreamcast BIOS'unda yapılandırılan dil"
 
 #: core/ui/settings_general.cpp:237
 msgid "Broadcast"
-msgstr ""
+msgstr "Yayın"
 
 #: core/ui/settings_general.cpp:238
 msgid "TV broadcasting standard for non-VGA modes"
-msgstr ""
+msgstr "VGA olmayan modlar için TV yayın standardı"
 
 #: core/ui/settings_general.cpp:241 core/ui/settings_general.cpp:242
 msgid "Japan"
-msgstr ""
+msgstr "Japonya"
 
 #: core/ui/settings_general.cpp:241 core/ui/settings_general.cpp:242
 msgid "USA"
-msgstr ""
+msgstr "ABD"
 
 #: core/ui/settings_general.cpp:241
 msgid "Europe"
-msgstr ""
+msgstr "Avrupa"
 
 #: core/ui/settings_general.cpp:242
 msgctxt "region"
 msgid "Export"
-msgstr ""
+msgstr "Dışa Aktar"
 
 #: core/ui/settings_general.cpp:242
 msgid "Korea"
-msgstr ""
+msgstr "Kore"
 
 #: core/ui/settings_general.cpp:244
 msgid "Region"
-msgstr ""
+msgstr "Bölge"
 
 #: core/ui/settings_general.cpp:245
 msgid "BIOS region"
-msgstr ""
+msgstr "BIOS bölgesi"
 
 #: core/ui/settings_general.cpp:247
 msgid "VGA"
-msgstr ""
+msgstr "VGA"
 
 #: core/ui/settings_general.cpp:247
 msgid "RGB Component"
-msgstr ""
+msgstr "RGB Komponent"
 
 #: core/ui/settings_general.cpp:247
 msgid "TV Composite"
-msgstr ""
+msgstr "TV Kompoziti"
 
 #: core/ui/settings_general.cpp:254
 msgid "Cable"
-msgstr ""
+msgstr "Kablo"
 
 #: core/ui/settings_general.cpp:267
 msgid "Video connection type"
-msgstr ""
+msgstr "Video bağlantı türü"
 
 #: core/ui/settings_general.cpp:277
 msgid "Content Location"
-msgstr ""
+msgstr "İçerik Konumu"
 
 #: core/ui/settings_general.cpp:298 core/ui/settings_general.cpp:362
 msgid "Rescan Content"
-msgstr ""
+msgstr "İçeriği Yeniden Tara"
 
 #: core/ui/settings_general.cpp:310
 msgid "The folders where your games are stored"
-msgstr ""
+msgstr "Oyunlarınızın saklandığı klasörler"
 
 #: core/ui/settings_general.cpp:316
 msgid "Data Folder"
-msgstr ""
+msgstr "Veri Klasörü"
 
 #: core/ui/settings_general.cpp:324
 msgid "The folder containing BIOS files, as well as saved VMUs and states"
-msgstr ""
+msgstr "BIOS dosyalarının yanı sıra kaydedilmiş VMU'ları ve durumlarını içeren klasör"
 
 #: core/ui/settings_general.cpp:329
 msgid "Home Folder"
-msgstr ""
+msgstr "Ana Klasör"
 
 #: core/ui/settings_general.cpp:338
 msgctxt "action"
 msgid "Import"
-msgstr ""
+msgstr "İçe Aktar"
 
 #: core/ui/settings_general.cpp:341
 msgctxt "action"
 msgid "Export"
-msgstr ""
+msgstr "Dışa Aktar"
 
 #: core/ui/settings_general.cpp:346
 msgid "Reveal in Finder"
-msgstr ""
+msgstr "Finder'da Göster"
 
 #: core/ui/settings_general.cpp:356
 msgid "The folder where Flycast saves configuration files and VMUs. BIOS files should be in a subfolder named \"data\""
-msgstr ""
+msgstr "Flycast'in yapılandırma dosyalarını ve VMU'ları kaydettiği klasör. BIOS dosyaları \"data\" adlı bir alt klasörde bulunmalıdır"
 
 #: core/ui/settings_general.cpp:367
 msgid "Box Art Game List"
-msgstr ""
+msgstr "Box Art Oyun Listesi"
 
 #: core/ui/settings_general.cpp:368
 msgid "Display game cover art in the game list."
-msgstr ""
+msgstr "Oyun listesinde oyun kapak resmini göster."
 
 #: core/ui/settings_general.cpp:369
 msgid "Fetch Box Art"
@@ -1319,389 +1319,390 @@ msgstr ""
 
 #: core/ui/settings_general.cpp:486
 msgid "Folders containing textures/<gameId> or <gameId> under a textures subfolder"
-msgstr ""
+msgstr "textures/<gameId> veya textures alt klasöründeki <gameId> içeren klasörler"
 
 #: core/ui/settings_general.cpp:490
 msgid "Texture Dump Folder"
-msgstr ""
+msgstr "Doku Dökümü Klasörü"
 
 #: core/ui/settings_general.cpp:490
 msgid "Select the texture dump folder"
-msgstr ""
+msgstr "Doku dökümü klasörü seç"
 
 #: core/ui/settings_general.cpp:491
 msgid "Folder where texture dumps are saved. Game-specific subfolders will be created automatically"
-msgstr ""
+msgstr "Doku dökümlerinin kaydedildiği klasör. Oyuna özgü alt klasörler otomatik olarak oluşturulacaktır"
 
 #: core/ui/settings_general.cpp:494
 msgid "Box Art Folder"
-msgstr ""
+msgstr "Kutu Resmi Klasörü"
 
 #: core/ui/settings_general.cpp:494
 msgid "Select the box art folder"
-msgstr ""
+msgstr "Kutu resmi klasörünü seçin"
 
 #: core/ui/settings_general.cpp:495
 msgid "Folder containing box art images (png/jpg). If empty, Flycast will use the default Home Folder/boxart for downloads and generated art"
-msgstr ""
+msgstr "Kutu kapağı resimlerini (png/jpg) içeren klasör. Boş bırakılırsa, Flycast indirmeler ve oluşturulan resimler için varsayılan Ana Klasör/boxart klasörünü kullanacaktır"
 
 #: core/ui/settings_general.cpp:498
 msgid "Controller Mapping Folders"
-msgstr ""
+msgstr "Kontrolcü Eşleme Klasörleri"
 
 #: core/ui/settings_general.cpp:498
 msgid "Select a controller mapping folder"
-msgstr ""
+msgstr "Bir kontrolcü eşleme klasörü seç"
 
 #: core/ui/settings_general.cpp:499
 msgid "Folders containing controller mapping files (.cfg). The emulator also looks in Home Folder/mappings. Per-game mappings are suffixed with _<gameId>.cfg"
-msgstr ""
+msgstr "Kontrolcü eşleme dosyalarını (.cfg) içeren klasörler. Emülatör ayrıca Ana Klasör/mappings klasörüne de bakar. Oyun başına eşlemeler _<gameId>.cfg uzantısıyla belirtilir"
 
 #: core/ui/settings_general.cpp:502
 msgid "Cheat Folders"
-msgstr ""
+msgstr "Hile Klasörleri"
 
 #: core/ui/settings_general.cpp:502
 msgid "Select a cheat folder"
-msgstr ""
+msgstr "Bir hile klasörü seç"
 
 #: core/ui/settings_general.cpp:503
 msgid "Folders containing cheat files (.cht/.txt) named with the game ID. Flycast will auto-load matching files if present"
-msgstr ""
+msgstr "Oyun kimliğiyle adlandırılmış hile dosyalarını (.cht/.txt) içeren klasörler. Flycast, mevcutsa eşleşen dosyaları otomatik olarak yükleyecektir"
 
 #: core/ui/gui_chat.h:46 core/ui/gui_chat.h:48
 msgid "P2"
-msgstr ""
+msgstr "P2"
 
 #: core/ui/gui_chat.h:46 core/ui/gui_chat.h:48
 msgid "P1"
-msgstr ""
+msgstr "P1"
 
 #: core/ui/game_scanner.cpp:167
 msgid "Dreamcast BIOS"
-msgstr ""
+msgstr "Dreamcast BIOS'u"
 
 #: core/ui/settings_controls.cpp:43 core/ui/settings_controls.cpp:65
 #: core/ui/settings_controls.cpp:167
 msgid "None"
-msgstr ""
+msgstr "Hiçbiri"
 
 #: core/ui/settings_controls.cpp:44
 msgid "Sega Controller"
-msgstr ""
+msgstr "Sega Kontrolcüsü"
 
 #: core/ui/settings_controls.cpp:45
 msgid "Light Gun"
-msgstr ""
+msgstr "Light Gun"
 
 #: core/ui/settings_controls.cpp:46 core/input/keyboard_device.h:82
 msgid "Keyboard"
-msgstr ""
+msgstr "Klavye"
 
 #: core/ui/settings_controls.cpp:47 core/input/mouse.h:62
 msgid "Mouse"
-msgstr ""
+msgstr "Fare"
 
 #: core/ui/settings_controls.cpp:48
 msgid "Twin Stick"
-msgstr ""
+msgstr "İkiz Çubuk"
 
 #: core/ui/settings_controls.cpp:49
 msgid "Arcade/Ascii Stick"
-msgstr ""
+msgstr "Atari/ASCII Çubuğu"
 
 #: core/ui/settings_controls.cpp:50
 msgid "Maracas Controller"
-msgstr ""
+msgstr "Marakas Kontrolcüsü"
 
 #: core/ui/settings_controls.cpp:51
 msgid "Fishing Controller"
-msgstr ""
+msgstr "Balıkçılık Kontrolcüsü"
 
 #: core/ui/settings_controls.cpp:52
 msgid "Pop'n Music controller"
-msgstr ""
+msgstr "Pop'n Music kontrolcüsü"
 
 #: core/ui/settings_controls.cpp:53
 msgid "Racing Controller"
-msgstr ""
+msgstr "Yarış Kontrolcüsü"
 
 #: core/ui/settings_controls.cpp:54
 msgid "Densha de Go! Controller"
-msgstr ""
+msgstr "Densha de Go! Kontrolcüsü"
 
 #: core/ui/settings_controls.cpp:55
 msgid "Panther DC/Full Controller"
-msgstr ""
+msgstr "Panther DC/Tam Kontolcüsü"
 
 #: core/ui/settings_controls.cpp:56
 msgid "DreamParaPara Controller"
-msgstr ""
+msgstr "DreamParaPara Kontrolcüsü"
 
 #: core/ui/settings_controls.cpp:66
 msgid "Sega VMU"
-msgstr ""
+msgstr "Sega VMU"
 
 #: core/ui/settings_controls.cpp:67
 msgid "Vibration Pack"
-msgstr ""
+msgstr "Titreşim Paketi"
 
 #: core/ui/settings_controls.cpp:68
 msgid "Microphone"
-msgstr ""
+msgstr "Mikrofon"
 
 #: core/ui/settings_controls.cpp:69
 msgid "DreamPotato"
-msgstr ""
+msgstr "DreamPotato"
 
 #: core/ui/settings_controls.cpp:167
 msgid "All"
-msgstr ""
+msgstr "Hepsi"
 
 #: core/ui/settings_controls.cpp:176 core/ui/settings_controls.cpp:239
 msgid "Directions"
-msgstr ""
+msgstr "Yönler"
 
 #: core/ui/settings_controls.cpp:177 core/ui/settings_controls.cpp:240
 msgid "Up"
-msgstr ""
+msgstr "Yukarı"
 
 #: core/ui/settings_controls.cpp:178 core/ui/settings_controls.cpp:241
 msgid "Down"
-msgstr ""
+msgstr "Aşağı"
 
 #: core/ui/settings_controls.cpp:179 core/ui/settings_controls.cpp:242
 msgid "Left"
-msgstr ""
+msgstr "Sol"
 
 #: core/ui/settings_controls.cpp:180 core/ui/settings_controls.cpp:243
 msgid "Right"
-msgstr ""
+msgstr "Sağ"
 
 #: core/ui/settings_controls.cpp:182 core/ui/settings_controls.cpp:245
 msgid "Thumbstick Up"
-msgstr ""
+msgstr "Başparmak Çubuğu Yukarı"
 
 #: core/ui/settings_controls.cpp:183 core/ui/settings_controls.cpp:246
 msgid "Thumbstick Down"
-msgstr ""
+msgstr "Başparmak Çubuğu Aşağı"
 
 #: core/ui/settings_controls.cpp:184 core/ui/settings_controls.cpp:247
 msgid "Thumbstick Left"
-msgstr ""
+msgstr "Başparmak Çubuğu Sol"
 
 #: core/ui/settings_controls.cpp:185 core/ui/settings_controls.cpp:248
 msgid "Thumbstick Right"
-msgstr ""
+msgstr "Başparmak Çubuğu Sağ"
 
 #: core/ui/settings_controls.cpp:187 core/ui/settings_controls.cpp:250
 msgid "R.Thumbstick Up"
-msgstr ""
+msgstr "Sağ Başparmak Çubuğu Yukarı"
 
 #: core/ui/settings_controls.cpp:188 core/ui/settings_controls.cpp:251
 msgid "R.Thumbstick Down"
-msgstr ""
+msgstr "Sağ Başparmak Çubuğu Aşağı"
 
 #: core/ui/settings_controls.cpp:189 core/ui/settings_controls.cpp:252
 msgid "R.Thumbstick Left"
-msgstr ""
+msgstr "Sağ Başparmak Çubuğu Sol"
 
 #: core/ui/settings_controls.cpp:190 core/ui/settings_controls.cpp:253
 msgid "R.Thumbstick Right"
-msgstr ""
+msgstr "Sağ Başparmak Çubuğu Sağ"
 
 #: core/ui/settings_controls.cpp:192
 msgid "Axis 3 Up"
-msgstr ""
+msgstr "Eksen 3 Yukarı"
 
 #: core/ui/settings_controls.cpp:193
 msgid "Axis 3 Down"
-msgstr ""
+msgstr "Eksen 3 Aşağı"
 
 #: core/ui/settings_controls.cpp:194
 msgid "Axis 3 Left"
-msgstr ""
+msgstr "Eksen 3 Sol"
 
 #: core/ui/settings_controls.cpp:195
 msgid "Axis 3 Right"
-msgstr ""
+msgstr "Eksen 3 Sağ"
 
 #: core/ui/settings_controls.cpp:202 core/ui/settings_controls.cpp:255
 msgid "Buttons"
-msgstr ""
+msgstr "Butonlar"
 
 #: core/ui/settings_controls.cpp:211 core/ui/settings_controls.cpp:266
 msgid "Triggers"
-msgstr ""
+msgstr "Tetikleyiciler"
 
 #: core/ui/settings_controls.cpp:212 core/ui/settings_controls.cpp:267
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:198
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:369
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:401
 msgid "Left Trigger"
-msgstr ""
+msgstr "Sol Tetik"
 
 #: core/ui/settings_controls.cpp:213 core/ui/settings_controls.cpp:268
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:200
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:371
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:403
 msgid "Right Trigger"
-msgstr ""
+msgstr "Sağ Tetik"
 
 #: core/ui/settings_controls.cpp:214 core/ui/settings_controls.cpp:269
 msgid "Left Trigger 2"
-msgstr ""
+msgstr "Sol Tetik 2"
 
 #: core/ui/settings_controls.cpp:215 core/ui/settings_controls.cpp:270
 msgid "Right Trigger 2"
-msgstr ""
+msgstr "Sağ Tetik 2"
 
 #: core/ui/settings_controls.cpp:217 core/ui/settings_controls.cpp:272
 msgid "System Buttons"
-msgstr ""
+msgstr "Sistem Butonları"
 
 #: core/ui/settings_controls.cpp:219 core/ui/settings_controls.cpp:274
 msgid "Reload"
-msgstr ""
+msgstr "Yeniden yükle"
 
 #: core/ui/settings_controls.cpp:221 core/ui/settings_controls.cpp:280
 msgid "Emulator"
-msgstr ""
+msgstr "Emülator"
 
 #: core/ui/settings_controls.cpp:222 core/ui/settings_controls.cpp:281
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:359
 msgid "Menu"
-msgstr ""
+msgstr "Menü"
 
 #: core/ui/settings_controls.cpp:223 core/ui/settings_controls.cpp:282
 #: core/ui/gui.cpp:624 core/ui/gui.cpp:871
 msgid "Exit"
-msgstr ""
+msgstr "Çıkış"
 
 #: core/ui/settings_controls.cpp:224 core/ui/settings_controls.cpp:283
 msgid "Fast-forward"
-msgstr ""
+msgstr "Hızlı İleri Sar"
 
 #: core/ui/settings_controls.cpp:225 core/ui/settings_controls.cpp:284
 #: core/ui/gui.cpp:636
 msgid "Load State"
-msgstr ""
+msgstr "Durum Yükle"
 
 #: core/ui/settings_controls.cpp:226 core/ui/settings_controls.cpp:285
 #: core/ui/gui.cpp:644
 msgid "Save State"
-msgstr ""
+msgstr "Durum Kaydet"
 
 #: core/ui/settings_controls.cpp:227 core/ui/settings_controls.cpp:286
 msgid "Load State in RAM"
-msgstr ""
+msgstr "RAM'den Durum Yükle"
 
 #: core/ui/settings_controls.cpp:228 core/ui/settings_controls.cpp:287
 msgid "Save State in RAM"
-msgstr ""
+msgstr "RAM'e durum kaydet"
 
 #: core/ui/settings_controls.cpp:229 core/ui/settings_controls.cpp:288
 msgid "Next Save State Slot"
-msgstr ""
+msgstr "Sonraki Kayıt Durumu Yuvası"
 
 #: core/ui/settings_controls.cpp:230 core/ui/settings_controls.cpp:289
 msgid "Previous Save State Slot"
-msgstr ""
+msgstr "Önceki Kayıt Durumu Yuvası"
 
 #: core/ui/settings_controls.cpp:231 core/ui/settings_controls.cpp:290
 msgid "Bypass Emulated Keyboard"
-msgstr ""
+msgstr "Bypass Emüle Edilmiş Klavye"
 
 #: core/ui/settings_controls.cpp:232 core/ui/settings_controls.cpp:291
 msgid "Save Screenshot"
-msgstr ""
+msgstr "Ekran görüntüsü kaydet"
 
 #: core/ui/settings_controls.cpp:256
 msgid "Button 1"
-msgstr ""
+msgstr "Buton 1"
 
 #: core/ui/settings_controls.cpp:257
 msgid "Button 2"
-msgstr ""
+msgstr "Buton 2"
 
 #: core/ui/settings_controls.cpp:258
 msgid "Button 3"
-msgstr ""
+msgstr "Buton 3"
 
 #: core/ui/settings_controls.cpp:259 core/input/mouse.h:89
 msgid "Button 4"
-msgstr ""
+msgstr "Buton 4"
 
 #: core/ui/settings_controls.cpp:260 core/input/mouse.h:91
 msgid "Button 5"
-msgstr ""
+msgstr "Buton 5"
 
 #: core/ui/settings_controls.cpp:261
 msgid "Button 6"
-msgstr ""
+msgstr "Buton 6"
 
 #: core/ui/settings_controls.cpp:262
 msgid "Button 7"
-msgstr ""
+msgstr "Buton 7"
 
 #: core/ui/settings_controls.cpp:263
 msgid "Button 8"
-msgstr ""
+msgstr "Buton 8"
 
 #: core/ui/settings_controls.cpp:275
 msgid "Coin"
-msgstr ""
+msgstr "Para"
 
 #: core/ui/settings_controls.cpp:276
 msgid "Service"
-msgstr ""
+msgstr "Servis"
 
 #: core/ui/settings_controls.cpp:277
 msgid "Test"
-msgstr ""
+msgstr "Test"
 
 #: core/ui/settings_controls.cpp:278
 msgid "Insert Card"
-msgstr ""
+msgstr "Kart Tak"
 
 #: core/ui/settings_controls.cpp:440 core/ui/settings_controls.cpp:845
 msgid "Map Control"
-msgstr ""
+msgstr "Harita Kontrolü"
 
 #: core/ui/settings_controls.cpp:442
 #, c-format
 msgid "Waiting for control '%s'..."
-msgstr ""
+msgstr "'%s' kontrolü bekleniyor..."
 
 #: core/ui/settings_controls.cpp:458
 #, c-format
 msgid "Time out in %d s"
-msgstr ""
+msgstr "Zaman aşımı %d s"
 
 #: core/ui/settings_controls.cpp:463
 msgid "Current inputs:"
-msgstr ""
+msgstr "Mevcut girişler:"
 
 #: core/ui/settings_controls.cpp:487
 msgid "Confirm"
-msgstr ""
+msgstr "Onayla"
 
 #: core/ui/settings_controls.cpp:569
 msgid "Sequential"
-msgstr ""
+msgstr "Sıralı"
 
 #: core/ui/settings_controls.cpp:574
 msgid "When checked, this combo will only activate when all keys are pressed in the given sequence.\n"
 "When not checked, the combo will activate when all keys are pressed in any order."
-msgstr ""
+msgstr "İşaretlendiğinde, bu kombinasyon yalnızca tüm tuşlar belirtilen sırayla basıldığında etkinleşir.\n"
+"İşaretlenmediğinde, kombinasyon tüm tuşlar herhangi bir sırayla basıldığında etkinleşir."
 
 #: core/ui/settings_controls.cpp:631 core/ui/settings_controls.cpp:1071
 msgid "Controller Mapping"
-msgstr ""
+msgstr "Kontrolcü Eşlemesi"
 
 #: core/ui/settings_controls.cpp:633 core/ui/settings_controls.cpp:1068
 msgid "Map"
-msgstr ""
+msgstr "Harita"
 
 #: core/ui/settings_controls.cpp:634
 msgid "Unmap"
@@ -1913,210 +1914,211 @@ msgstr ""
 
 #: core/ui/gui_achievements.cpp:287 core/ui/gui_cheats.cpp:103
 msgid "Close"
-msgstr ""
+msgstr "Kapalı"
 
 #: core/ui/gui_achievements.cpp:298
 #, c-format
 msgid "You have unlocked %d of %d achievements and %d of %d points."
-msgstr ""
+msgstr "%d başarıdan %d'ini ve %d puandan %d'ini açtınız."
 
 #: core/ui/gui_achievements.cpp:326
 msgid "Locked"
-msgstr ""
+msgstr "Kilitli"
 
 #: core/ui/gui_achievements.cpp:326
 msgid "Active Challenges"
-msgstr ""
+msgstr "Aktif Zorluklar"
 
 #: core/ui/gui_achievements.cpp:326
 msgid "Almost There"
-msgstr ""
+msgstr "Neredeyse orada"
 
 #: core/ui/gui_achievements.cpp:328
 msgid "Unlocked"
-msgstr ""
+msgstr "Kilit Açıldı"
 
 #: core/ui/gui_achievements.cpp:328
 msgid "Recently Unlocked"
-msgstr ""
+msgstr "Son Açılan"
 
 #: core/ui/mainui.cpp:66
 msgid "Renderer error:"
-msgstr ""
+msgstr "Oluşturucu hatası:"
 
 #: core/ui/mainui.cpp:67
 msgid "The game has been paused but it is recommended to restart Flycast"
-msgstr ""
+msgstr "Oyun duraklatıldı ancak Flycast'i yeniden başlatmanız önerilir"
 
 #: core/ui/mainui.cpp:87
 msgid "Renderer initialization failed.\n"
 "Please select a different graphics API"
-msgstr ""
+msgstr "Oluşturucu başlatma başarısız oldu.\n"
+"Lütfen farklı bir grafik API'si seçin"
 
 #: core/ui/gui.cpp:468
 msgid "Flycast has stopped."
-msgstr ""
+msgstr "Flycast durduruldu."
 
 #: core/ui/gui.cpp:575
 msgid "Resume"
-msgstr ""
+msgstr "Sürdür"
 
 #: core/ui/gui.cpp:584
 msgid "Cheats"
-msgstr ""
+msgstr "Hileler"
 
 #: core/ui/gui.cpp:591
 msgid "Achievements"
-msgstr ""
+msgstr "Başarımlar"
 
 #: core/ui/gui.cpp:597
 msgid "Barcode Card"
-msgstr ""
+msgstr "Barkod Kartı"
 
 #: core/ui/gui.cpp:608
 msgid "Insert Disk"
-msgstr ""
+msgstr "Disk Tak"
 
 #: core/ui/gui.cpp:608
 msgid "Eject Disk"
-msgstr ""
+msgstr "Disk Çıkart"
 
 #: core/ui/gui.cpp:624
 msgid "Close Game"
-msgstr ""
+msgstr "Oyun Kapat"
 
 #: core/ui/gui.cpp:653
 #, c-format
 msgid "Slot %d"
-msgstr ""
+msgstr "Yuva %d"
 
 #: core/ui/gui.cpp:663
 msgid "Empty"
-msgstr ""
+msgstr "Boş"
 
 #: core/ui/gui.cpp:711 core/ui/gui.cpp:712
 msgid "Incorrect Content Location?"
-msgstr ""
+msgstr "İçerik Konumu Yanlış?"
 
 #: core/ui/gui.cpp:715
 #, c-format
 msgid "Scanned %d folders but no game can be found!"
-msgstr ""
+msgstr "%d klasör tarandı ancak oyun bulunamadı!"
 
 #: core/ui/gui.cpp:720
 msgid "Reselect"
-msgstr ""
+msgstr "Yeniden seç"
 
 #: core/ui/gui.cpp:729 core/ui/gui.cpp:885 core/ui/gui.cpp:1123
 #: core/ui/gui.cpp:1266 core/ui/gui_cheats.cpp:47 core/ui/gui_util.cpp:181
 #: core/ui/vgamepad.cpp:87
 msgid "Cancel"
-msgstr ""
+msgstr "İptal et"
 
 #: core/ui/gui.cpp:852
 msgid "GAMES"
-msgstr ""
+msgstr "OYUNLAR"
 
 #: core/ui/gui.cpp:859 core/ui/gui.cpp:860
 msgid "Filter"
-msgstr ""
+msgstr "Filtrele"
 
 #: core/ui/gui.cpp:866 core/ui/gui.cpp:867
 msgid "Load..."
-msgstr ""
+msgstr "Yükle..."
 
 #: core/ui/gui.cpp:988
 msgid "Your game list is empty"
-msgstr ""
+msgstr "Oyun listen boş"
 
 #: core/ui/gui.cpp:998
 msgid "Add Game Folder"
-msgstr ""
+msgstr "Oyun Klasörü Ekle"
 
 #: core/ui/gui.cpp:1030 core/ui/gui.cpp:1041
 msgid "Invalid selection:"
-msgstr ""
+msgstr "Geçersiz seçim:"
 
 #: core/ui/gui.cpp:1030 core/ui/gui.cpp:1041
 msgid "Flycast cannot write to this folder."
-msgstr ""
+msgstr "Flycast bu klasöre yazamıyor."
 
 #: core/ui/gui.cpp:1069
 msgid "Select Flycast Home Folder"
-msgstr ""
+msgstr "Flycast Ana Klasörü Seç"
 
 #: core/ui/gui.cpp:1103 core/ui/gui.cpp:1212 core/emulator.cpp:687
 msgid "Starting..."
-msgstr ""
+msgstr "Başlatılıyor..."
 
 #: core/ui/gui.cpp:1115
 msgid "Starting Network..."
-msgstr ""
+msgstr "Ağ başlatılıyor..."
 
 #: core/ui/gui.cpp:1117
 msgid "Press Start to start the game now."
-msgstr ""
+msgstr "Oyunu başlatmak için Başlat'a basın."
 
 #: core/ui/gui.cpp:1214
 msgid "Loading..."
-msgstr ""
+msgstr "Yükleniyor..."
 
 #: core/ui/gui.cpp:1250
 msgid "Preloading custom textures"
-msgstr ""
+msgstr "Özel dokular ön yükleniyor"
 
 #: core/ui/gui.cpp:1253
 msgid "Preparing..."
-msgstr ""
+msgstr "Hazırlanıyor..."
 
 #: core/ui/gui.cpp:1571
 #, c-format
 msgid "Save state slot %d"
-msgstr ""
+msgstr "Kayıt durumu yuvası %d"
 
 #: core/ui/gui.cpp:1613
 msgid "No screenshot available"
-msgstr ""
+msgstr "Ekran görüntüsü mevcut değil"
 
 #: core/ui/gui.cpp:1619
 msgid "Screenshot saved"
-msgstr ""
+msgstr "Ekran görüntüsü kaydedildi"
 
 #: core/ui/gui.cpp:1621
 msgid "Error saving screenshot"
-msgstr ""
+msgstr "Ekran görüntüsü kaydedilirken hata oluştu"
 
 #: core/ui/settings_audio.cpp:25
 msgid "Enable DSP"
-msgstr ""
+msgstr "DSP'yi etkinleştir"
 
 #: core/ui/settings_audio.cpp:26
 msgid "Enable the Dreamcast Digital Sound Processor. Only recommended on fast platforms"
-msgstr ""
+msgstr "Dreamcast Dijital Ses İşlemcisini etkinleştirin. Yalnızca hızlı platformlarda önerilir"
 
 #: core/ui/settings_audio.cpp:27
 msgid "Enable VMU Sounds"
-msgstr ""
+msgstr "VMU Seslerini Etkinleştir"
 
 #: core/ui/settings_audio.cpp:27
 msgid "Play VMU beeps when enabled."
-msgstr ""
+msgstr "Etkinleştirildiğinde VMU bip seslerini çal."
 
 #: core/ui/settings_audio.cpp:29
 msgid "Volume Level"
-msgstr ""
+msgstr "Ses Seviyesi"
 
 #: core/ui/settings_audio.cpp:29
 msgid "Adjust the emulator's audio level"
-msgstr ""
+msgstr "Emülatörün ses seviyesini ayarlayın"
 
 #: core/ui/settings_audio.cpp:35
 msgid "Automatic Latency"
-msgstr ""
+msgstr "Otomatik Gecikme"
 
 #: core/ui/settings_audio.cpp:36
 msgid "Automatically set audio latency. Recommended"
-msgstr ""
+msgstr "Ses gecikmesini otomatik olarak ayarlayın. Tavsiye edilir"
 
 #: core/ui/settings_audio.cpp:42
 msgid "Latency"
