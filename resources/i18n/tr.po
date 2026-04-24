@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-22 12:49+0100\n"
-"PO-Revision-Date: 2026-04-20 11:57\n"
+"PO-Revision-Date: 2026-04-24 17:30\n"
 "Last-Translator: \n"
 "Language: tr_TR\n"
 "MIME-Version: 1.0\n"
@@ -46,234 +46,234 @@ msgstr "Başarım %s kilidi açıldı!"
 #: core/achievements/achievements.cpp:624
 #, c-format
 msgid "Leaderboard %s started"
-msgstr ""
+msgstr "Liderlik tablosu %s başladı"
 
 #: core/achievements/achievements.cpp:631
 #, c-format
 msgid "Leaderboard %s failed"
-msgstr ""
+msgstr "Liderlik tablosu %s başarısız oldu"
 
 #: core/achievements/achievements.cpp:638
 #, c-format
 msgid "Leaderboard %s submitted"
-msgstr ""
+msgstr "Liderlik tablosu %s gönderildi"
 
 #: core/achievements/achievements.cpp:663
 #, c-format
 msgid "Mastered %s"
-msgstr ""
+msgstr "Ustalaşıldı %s"
 
 #: core/achievements/achievements.cpp:663
 #, c-format
 msgid "Completed %s"
-msgstr ""
+msgstr "Tamamlandı %s"
 
 #: core/achievements/achievements.cpp:666
 #, c-format
 msgid "%d achievements, %d points"
-msgstr ""
+msgstr "%d başarm, %d puan"
 
 #: core/achievements/achievements.cpp:912
 #, c-format
 msgid "You have %d of %d achievements unlocked."
-msgstr ""
+msgstr "Şu anda %d adet başarımdan %d adet kilidini açtınız."
 
 #: core/achievements/achievements.cpp:914
 msgid "This game has no achievements."
-msgstr ""
+msgstr "Bu oyunda başarımlar bulunmuyor."
 
 #: core/achievements/achievements.cpp:919 core/ui/settings_general.cpp:414
 #: core/ui/gui_achievements.cpp:305
 msgid "Hardcore Mode"
-msgstr ""
+msgstr "Zorlu Mod"
 
 #: core/achievements/achievements.cpp:950
 msgid "Hardcore mode disabled"
-msgstr ""
+msgstr "Zorlu mod devre dışı bırakıldı"
 
 #: core/achievements/achievements.cpp:950
 msgid "Unrecognized media inserted"
-msgstr ""
+msgstr "Tanınmayan medya eklendi"
 
 #: core/achievements/achievements.cpp:957
 msgid "Media change failed"
-msgstr ""
+msgstr "Medya değişikliği başarısız oldu"
 
 #: core/sdl/dreamconn.cpp:160
 #, c-format
 msgid "WARNING: DreamConn disconnected from port %c"
-msgstr ""
+msgstr "UYARI: DreamConn %c portundan bağlantı kesildi"
 
 #: core/sdl/dreampicoport.cpp:1613 core/ui/settings_controls.cpp:197
 msgid "DPad2 Up"
-msgstr ""
+msgstr "DPad2 Yukarı"
 
 #: core/sdl/dreampicoport.cpp:1614 core/ui/settings_controls.cpp:198
 msgid "DPad2 Down"
-msgstr ""
+msgstr "DPad2 Aşağı"
 
 #: core/sdl/dreampicoport.cpp:1615 core/ui/settings_controls.cpp:199
 msgid "DPad2 Left"
-msgstr ""
+msgstr "DPad2 Sol"
 
 #: core/sdl/dreampicoport.cpp:1616 core/ui/settings_controls.cpp:200
 msgid "DPad2 Right"
-msgstr ""
+msgstr "DPad2 Sağ"
 
 #: core/sdl/dreampicoport.cpp:1619
 msgid "VMU1 A"
-msgstr ""
+msgstr "VMU1 A"
 
 #: core/sdl/dreampicoport.cpp:1620
 msgid "VMU1 B"
-msgstr ""
+msgstr "VMU1 B"
 
 #: core/sdl/dreampicoport.cpp:1621
 msgid "VMU1 Up"
-msgstr ""
+msgstr "VMU1 Yukarı"
 
 #: core/sdl/dreampicoport.cpp:1622
 msgid "VMU1 Down"
-msgstr ""
+msgstr "VMU1 Aşağı"
 
 #: core/sdl/dreampicoport.cpp:1623
 msgid "VMU1 Left"
-msgstr ""
+msgstr "VMU1 Sol"
 
 #: core/sdl/dreampicoport.cpp:1624
 msgid "VMU1 Right"
-msgstr ""
+msgstr "VMU1 Sağ"
 
 #: core/sdl/dreamlink.cpp:87
 msgid "Connected"
-msgstr ""
+msgstr "Bağlandı"
 
 #: core/sdl/dreamlink.cpp:87
 msgid "Disconnected"
-msgstr ""
+msgstr "Bağlantı kesildi"
 
 #: core/sdl/sdl_gamepad.cpp:549
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:134
 msgid "Back"
-msgstr ""
+msgstr "Geri"
 
 #: core/sdl/sdl_gamepad.cpp:550
 msgid "Guide"
-msgstr ""
+msgstr "Rehber"
 
 #: core/sdl/sdl_gamepad.cpp:551 core/ui/settings_controls.cpp:218
 #: core/ui/settings_controls.cpp:273
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:170
 msgid "Start"
-msgstr ""
+msgstr "Başlat"
 
 #: core/sdl/sdl_gamepad.cpp:556 core/sdl/sdl_gamepad.cpp:589
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:136
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:351
 msgid "DPad Up"
-msgstr ""
+msgstr "DPad Yukarı"
 
 #: core/sdl/sdl_gamepad.cpp:557 core/sdl/sdl_gamepad.cpp:593
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:138
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:353
 msgid "DPad Down"
-msgstr ""
+msgstr "DPad Aşağı"
 
 #: core/sdl/sdl_gamepad.cpp:558 core/sdl/sdl_gamepad.cpp:597
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:140
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:355
 msgid "DPad Left"
-msgstr ""
+msgstr "DPad Sol"
 
 #: core/sdl/sdl_gamepad.cpp:559 core/sdl/sdl_gamepad.cpp:601
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:142
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:357
 msgid "DPad Right"
-msgstr ""
+msgstr "DPad Sağ"
 
 #: core/sdl/sdl_gamepad.cpp:560
 msgid "Misc"
-msgstr ""
+msgstr "Çeşitli"
 
 #: core/sdl/sdl_gamepad.cpp:561
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:379
 msgid "Paddle 1"
-msgstr ""
+msgstr "Kol 1"
 
 #: core/sdl/sdl_gamepad.cpp:562
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:381
 msgid "Paddle 2"
-msgstr ""
+msgstr "Kol 2"
 
 #: core/sdl/sdl_gamepad.cpp:563
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:383
 msgid "Paddle 3"
-msgstr ""
+msgstr "Kol 3"
 
 #: core/sdl/sdl_gamepad.cpp:564
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:385
 msgid "Paddle 4"
-msgstr ""
+msgstr "Kol 4"
 
 #: core/sdl/sdl_gamepad.cpp:565
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:387
 msgid "Touchpad"
-msgstr ""
+msgstr "Dokunmatik yüzey"
 
 #: core/sdl/sdl_gamepad.cpp:624
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:405
 msgid "Left Stick X"
-msgstr ""
+msgstr "Sol Çubuk X"
 
 #: core/sdl/sdl_gamepad.cpp:625
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:407
 msgid "Left Stick Y"
-msgstr ""
+msgstr "Sol Çubuk Y"
 
 #: core/sdl/sdl_gamepad.cpp:626
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:409
 msgid "Right Stick X"
-msgstr ""
+msgstr "Sağ Çubuk X"
 
 #: core/sdl/sdl_gamepad.cpp:627
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:411
 msgid "Right Stick Y"
-msgstr ""
+msgstr "Sağ Çubuk Y"
 
 #: core/sdl/sdl_gamepad.cpp:706
 msgid "Default Mouse"
-msgstr ""
+msgstr "Varsayılan Fare"
 
 #: core/sdl/sdl_gamepad.cpp:708
 #, c-format
 msgid "Mouse %d"
-msgstr ""
+msgstr "Fare %d"
 
 #: core/sdl/sdl.cpp:848 core/windows/winmain.cpp:370
 msgid "Flycast Error"
-msgstr ""
+msgstr "Flycast Hatası"
 
 #: core/audio/audiobackend_null.cpp:12
 msgid "No Audio"
-msgstr ""
+msgstr "Ses yok"
 
 #: core/audio/audiobackend_oboe.cpp:81
 msgid "Automatic AAudio / OpenSL selection"
-msgstr ""
+msgstr "Otomatik AAudio / OpenSL seçimi"
 
 #: core/oslib/oslib.cpp:354
 msgid "Can't find Pictures library"
-msgstr ""
+msgstr "Resimler kütüphanesi bulunamıyor"
 
 #: core/oslib/storage.cpp:81
 #, c-format
 msgid "Can't read directory %s"
-msgstr ""
+msgstr "%s dizini okunamıyor"
 
 #: core/oslib/storage.cpp:210
 #, c-format
 msgid "Cannot stat %s"
-msgstr ""
+msgstr "İstatistik %s olarak kaydedilemiyor"
 
 #: core/oslib/storage.cpp:231
 #, c-format
