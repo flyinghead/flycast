@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-22 12:49+0100\n"
-"PO-Revision-Date: 2026-04-25 15:17\n"
+"PO-Revision-Date: 2026-04-25 16:29\n"
 "Last-Translator: \n"
 "Language: ja_JP\n"
 "MIME-Version: 1.0\n"
@@ -1582,7 +1582,7 @@ msgstr "終了"
 
 #: core/ui/settings_controls.cpp:224 core/ui/settings_controls.cpp:284
 msgid "Pause"
-msgstr ""
+msgstr "一時停止"
 
 #: core/ui/settings_controls.cpp:225 core/ui/settings_controls.cpp:285
 msgid "Fast-forward"
@@ -2004,7 +2004,7 @@ msgstr "空"
 
 #: core/ui/gui.cpp:695 core/ui/gui_cheats.cpp:48
 msgid "OK"
-msgstr ""
+msgstr "OK"
 
 #: core/ui/gui.cpp:715 core/ui/gui.cpp:716
 msgid "Incorrect Content Location?"
@@ -2244,11 +2244,11 @@ msgstr "すべてのテクスチャを data/texdump/<game id> にダンプしま
 
 #: core/ui/settings.cpp:113
 msgid "Dump Replaced Textures"
-msgstr "置き換えられたテクスチャーをダンプする"
+msgstr "置き換えられたテクスチャをダンプする"
 
 #: core/ui/settings.cpp:114
 msgid "Always dump textures that are already replaced by custom textures"
-msgstr "既にカスタムテクスチャーに置き換えられたテクスチャーを常にダンプします"
+msgstr "既にカスタムテクスチャに置き換えられたテクスチャを常にダンプします"
 
 #: core/ui/settings.cpp:115
 msgid "Discard Video and Animated Textures"
