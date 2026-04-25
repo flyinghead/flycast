@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-22 12:49+0100\n"
-"PO-Revision-Date: 2026-04-25 15:16\n"
+"PO-Revision-Date: 2026-04-25 16:29\n"
 "Last-Translator: \n"
 "Language: fr_FR\n"
 "MIME-Version: 1.0\n"
@@ -1582,7 +1582,7 @@ msgstr "Quitter"
 
 #: core/ui/settings_controls.cpp:224 core/ui/settings_controls.cpp:284
 msgid "Pause"
-msgstr ""
+msgstr "Pause"
 
 #: core/ui/settings_controls.cpp:225 core/ui/settings_controls.cpp:285
 msgid "Fast-forward"
@@ -2004,7 +2004,7 @@ msgstr "Vide"
 
 #: core/ui/gui.cpp:695 core/ui/gui_cheats.cpp:48
 msgid "OK"
-msgstr ""
+msgstr "OK"
 
 #: core/ui/gui.cpp:715 core/ui/gui.cpp:716
 msgid "Incorrect Content Location?"
