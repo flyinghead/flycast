@@ -822,7 +822,7 @@ void gdrom_hle_op()
 							status = GD_STAT_PLAY;
 						else
 							status = GD_STAT_PAUSE;
-						if (memcmp(ip_meta.disk_type, "GD-ROM", sizeof(ip_meta.disk_type)) == 0)
+						if (ip_meta.isGDROM())
 							discType = GdRom;
 						break;
 					}
