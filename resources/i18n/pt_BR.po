@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-22 12:49+0100\n"
-"PO-Revision-Date: 2026-04-25 17:50\n"
+"PO-Revision-Date: 2026-04-25 19:04\n"
 "Last-Translator: \n"
 "Language: pt_BR\n"
 "MIME-Version: 1.0\n"
@@ -634,7 +634,7 @@ msgstr "Resolução Interna"
 
 #: core/ui/settings_video.cpp:203
 msgid "Internal render resolution. Higher is better, but more demanding on the GPU. Values higher than your display resolution (but no more than double your display resolution) can be used for supersampling, which provides high-quality antialiasing without reducing sharpness."
-msgstr "Resolução de renderização Interna. Maior é melhor, mas demanda mais GPU. Valores mais alto que a resolução da sua tela  (mas não mais do que o dobro da sua resolução) pode ser usada para superamostragem, que fornece alta qualidade de antialising sem reduzir a nitidez."
+msgstr "Resolução de renderização interna. Maior é melhor, mas mais exigente com a GPU. Valores maiores do que a resolução de exibição (mas não mais do dobro da resolução de exibição) pode ser usada para superamostragem, que fornece antialiasing de alta qualidade sem reduzir a nitidez."
 
 #: core/ui/settings_video.cpp:204
 msgid "Integer Scaling"
@@ -773,7 +773,7 @@ msgstr "Tamanho do Buffer de Pixel"
 
 #: core/ui/settings_video.cpp:301
 msgid "The size of the pixel buffer. May need to be increased when upscaling by a large factor."
-msgstr "Tamanho do buffer de pixels. Aumente ao usar upscaling alto."
+msgstr "Tamanho do buffer de píxeis"
 
 #: core/ui/settings_video.cpp:303
 msgid "Maximum Layers"
@@ -973,11 +973,11 @@ msgstr "Selecionar uma pasta de conteúdo"
 
 #: core/ui/settings_general.cpp:191
 msgid "System Default"
-msgstr ""
+msgstr "Padrão do sistema"
 
 #: core/ui/settings_general.cpp:212
 msgid "UI Language"
-msgstr ""
+msgstr "Idioma da “interface”"
 
 #: core/ui/settings_general.cpp:232
 msgid "Japanese"
@@ -1005,7 +1005,7 @@ msgstr "Italiano"
 
 #: core/ui/settings_general.cpp:233
 msgid "Dreamcast Language"
-msgstr ""
+msgstr "Linguagem Dreamcast"
 
 #: core/ui/settings_general.cpp:234
 msgid "The language as configured in the Dreamcast BIOS"
@@ -1176,7 +1176,7 @@ msgstr "Esconder Roms Legadas da Naomi"
 
 #: core/ui/settings_general.cpp:392
 msgid "Hide .bin, .dat and .lst files from the content browser"
-msgstr "Ocultar arquivos .bin, dat e lst do navegador de conteúdo."
+msgstr "Ocultar arquivos .bin, dat e lst do navegador de conteúdo"
 
 #: core/ui/settings_general.cpp:395
 msgid "Use SAF File Picker"
@@ -1344,7 +1344,7 @@ msgstr "Selecionar pasta de Capas"
 
 #: core/ui/settings_general.cpp:495
 msgid "Folder containing box art images (png/jpg). If empty, Flycast will use the default Home Folder/boxart for downloads and generated art"
-msgstr "Pasta que contém imagens de capa (png/jpg). Se estiver vazia, o Flycast usará a pasta padrão Home Folder/boxart para downloads e capas geradas"
+msgstr "Pasta que contém imagens de capa (png/jpg). Se estiver vazia, o Flycast usará a pasta padrão Home Folder/boxart para transferências"
 
 #: core/ui/settings_general.cpp:498
 msgid "Controller Mapping Folders"
@@ -1356,8 +1356,7 @@ msgstr "Selecionar Pasta de Mapeamento de Controles"
 
 #: core/ui/settings_general.cpp:499
 msgid "Folders containing controller mapping files (.cfg). The emulator also looks in Home Folder/mappings. Per-game mappings are suffixed with _<gameId>.cfg"
-msgstr "Pastas contendo arquivos de mapeamento de controle (.cfg). O emulador também procura em Home Folder/mappings.\n"
-"Mapeamentos por jogos usam o sufixo  _<gameId>.cfg"
+msgstr "Pastas contendo arquivos de mapeamento do controlador (.cfg). O emulador também procura em home folder/mappings. Mapeamentos por jogo usam sufixos com _<gameId>.cfg"
 
 #: core/ui/settings_general.cpp:502
 msgid "Cheat Folders"
@@ -1438,7 +1437,7 @@ msgstr "Controle Panther DC"
 
 #: core/ui/settings_controls.cpp:56
 msgid "DreamParaPara Controller"
-msgstr ""
+msgstr "Controlador DreamParaPara"
 
 #: core/ui/settings_controls.cpp:66
 msgid "Sega VMU"
@@ -1454,7 +1453,7 @@ msgstr "Microfone"
 
 #: core/ui/settings_controls.cpp:69
 msgid "DreamPotato"
-msgstr ""
+msgstr "DreamPotato"
 
 #: core/ui/settings_controls.cpp:167
 msgid "All"
@@ -1582,7 +1581,7 @@ msgstr "Sair"
 
 #: core/ui/settings_controls.cpp:224 core/ui/settings_controls.cpp:284
 msgid "Pause"
-msgstr ""
+msgstr "Pausar"
 
 #: core/ui/settings_controls.cpp:225 core/ui/settings_controls.cpp:285
 msgid "Fast-forward"
@@ -1600,19 +1599,19 @@ msgstr "Salvar Estado"
 
 #: core/ui/settings_controls.cpp:228 core/ui/settings_controls.cpp:288
 msgid "Load State in RAM"
-msgstr ""
+msgstr "Carregar Estado na RAM"
 
 #: core/ui/settings_controls.cpp:229 core/ui/settings_controls.cpp:289
 msgid "Save State in RAM"
-msgstr ""
+msgstr "Salvar estado na RAM"
 
 #: core/ui/settings_controls.cpp:230 core/ui/settings_controls.cpp:290
 msgid "Next Save State Slot"
-msgstr ""
+msgstr "Próximo Slot de Estado para Salvar"
 
 #: core/ui/settings_controls.cpp:231 core/ui/settings_controls.cpp:291
 msgid "Previous Save State Slot"
-msgstr ""
+msgstr "Slot Anterior de Estado para Salvar"
 
 #: core/ui/settings_controls.cpp:232 core/ui/settings_controls.cpp:292
 msgid "Bypass Emulated Keyboard"
@@ -1858,7 +1857,7 @@ msgstr "Nome"
 #: core/ui/settings_controls.cpp:1045
 #, c-format
 msgid "DreamLink: %s"
-msgstr ""
+msgstr "DreamLink: %s"
 
 #: core/ui/settings_controls.cpp:1081
 msgid "Edit Layout"
@@ -1908,11 +1907,11 @@ msgstr "Quando ativado, cada jogo tem sua própria VMU na porta 1 do controle A.
 
 #: core/ui/settings_controls.cpp:1220
 msgid "Use Physical VMU Storage"
-msgstr ""
+msgstr "Usar o armazenamento físico VMU"
 
 #: core/ui/settings_controls.cpp:1221
 msgid "Enables read and write access to physical VMU storage via DreamPicoPort or DreamPotato. This is not compatible with load state events."
-msgstr ""
+msgstr "Permitir o acesso de leitura e gravação ao armazenamento físico VMU via DreamPicoPort ou DreamPotato. Isso não é compatível com eventos de estado de carregamento."
 
 #: core/ui/settings_controls.cpp:1226
 msgid "Crosshair Size"
@@ -1949,11 +1948,11 @@ msgstr "Desbloqueado recentemente"
 
 #: core/ui/mainui.cpp:66
 msgid "Renderer error:"
-msgstr ""
+msgstr "Erro na renderização"
 
 #: core/ui/mainui.cpp:67
 msgid "The game has been paused but it is recommended to restart Flycast"
-msgstr ""
+msgstr "O jogo foi pausado, mas é recomendado reiniciar o Flycast"
 
 #: core/ui/mainui.cpp:87
 msgid "Renderer initialization failed.\n"
@@ -2004,7 +2003,7 @@ msgstr "Vazio"
 
 #: core/ui/gui.cpp:695 core/ui/gui_cheats.cpp:48
 msgid "OK"
-msgstr ""
+msgstr "OK"
 
 #: core/ui/gui.cpp:715 core/ui/gui.cpp:716
 msgid "Incorrect Content Location?"
@@ -2084,7 +2083,7 @@ msgstr "Preparando..."
 #: core/ui/gui.cpp:1601
 #, c-format
 msgid "Save state slot %d"
-msgstr ""
+msgstr "Salvar Slot de estado"
 
 #: core/ui/gui.cpp:1669
 msgid "No screenshot available"
@@ -2228,11 +2227,11 @@ msgstr "Despejar o serial do console Dreamcast para stdout"
 
 #: core/ui/settings.cpp:105
 msgid "Dreamcast 32MB RAM Mod"
-msgstr "Dreamcast modificação de 32 MB de RAM"
+msgstr "Dreamcast modificação de 32MB de RAM"
 
 #: core/ui/settings.cpp:106
 msgid "Enables 32MB RAM Mod for Dreamcast. May affect compatibility"
-msgstr "Ativa a modificação de 32 MB de RAM para o Dreamcast.\\nOBSERVAÇÃO: pode afetar compatibilidade."
+msgstr "Ativa a modificação de 32MB de RAM para o Dreamcast.\\nOBSERVAÇÃO: pode afetar compatibilidade."
 
 #: core/ui/settings.cpp:108
 msgid "Dump Textures"
@@ -2252,15 +2251,15 @@ msgstr "Sempre despeje texturas que já foram substituídas por texturas persona
 
 #: core/ui/settings.cpp:115
 msgid "Discard Video and Animated Textures"
-msgstr ""
+msgstr "Descartar Vídeos e Texturas Animadas"
 
 #: core/ui/settings.cpp:116
 msgid "Skip dumping video (YUV) and already updated textures"
-msgstr ""
+msgstr "Pular despejo de vídeo (YUV) e texturas já atualizadas."
 
 #: core/ui/settings.cpp:120
 msgid "Log to File"
-msgstr "Log para  o Arquivo"
+msgstr "Log para o Arquivo"
 
 #: core/ui/settings.cpp:123
 msgid "Log debug information to flycast.log"
@@ -2332,7 +2331,7 @@ msgstr "Reiniciar"
 
 #: core/ui/settings_network.cpp:28
 msgid "Network Type"
-msgstr "Tipo de rede"
+msgstr "Tipo de Rede"
 
 #: core/ui/settings_network.cpp:44
 msgid "Enable networking using GGPO"
@@ -2476,7 +2475,7 @@ msgstr "Desconectar"
 
 #: core/ui/settings_network.cpp:155
 msgid "Waiting at meeting point..."
-msgstr "Aguardando no ponto de encontro…"
+msgstr "Aguardando no ponto de encontro..."
 
 #: core/ui/settings_network.cpp:158
 msgid "Preparing game..."
@@ -2489,7 +2488,7 @@ msgstr "Jogando %s (%s)"
 
 #: core/ui/settings_network.cpp:171
 msgid "Manual"
-msgstr ""
+msgstr "Manual"
 
 #: core/ui/settings_network.cpp:176
 msgid "The peer to connect to. Leave blank to find a player automatically on the default port"
@@ -2549,7 +2548,7 @@ msgstr "O nome de usuário do provedor armazenado na memória Flash do console. 
 
 #: core/ui/settings_network.cpp:220
 msgid "DNS server name or IP address"
-msgstr ""
+msgstr "Nome do servidor DNS ou Endereço IP"
 
 #: core/ui/settings_network.cpp:226
 msgid "Multiboard Screens"
@@ -2579,7 +2578,7 @@ msgstr "Versão: %s"
 #: core/ui/settings_about.cpp:54
 #, c-format
 msgid "Git Hash: %s"
-msgstr "Hash do Gil"
+msgstr "Hash do Git: %s"
 
 #: core/ui/settings_about.cpp:55
 #, c-format
@@ -2805,7 +2804,7 @@ msgstr "Não foi possível ler zip"
 
 #: core/rend/gles/gles.cpp:700
 msgid "OpenGL shader compilation failed"
-msgstr ""
+msgstr "A compilação de aderar"
 
 #: core/rend/gles/gles.cpp:1061
 msgid "OpenGL ES 3.0+ required for Naomi 2"
