@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-22 12:49+0100\n"
-"PO-Revision-Date: 2026-04-25 15:17\n"
+"PO-Revision-Date: 2026-04-25 17:50\n"
 "Last-Translator: \n"
 "Language: pt_BR\n"
 "MIME-Version: 1.0\n"
@@ -102,7 +102,7 @@ msgstr "Mudança de mídia falhou"
 #: core/sdl/dreamconn.cpp:160
 #, c-format
 msgid "WARNING: DreamConn disconnected from port %c"
-msgstr ""
+msgstr "AVISO: DreamConn desconectado da porta %c"
 
 #: core/sdl/dreampicoport.cpp:1613 core/ui/settings_controls.cpp:197
 msgid "DPad2 Up"
