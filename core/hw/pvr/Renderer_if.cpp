@@ -74,6 +74,29 @@ public:
 							break;
 						}
 					if (!dupe || type == Present) {
+						// Bound the queue to keep the emu-thread producer and
+						// the renderer-thread consumer from drifting apart.
+						// Render/RenderFramebuffer/Stop are already deduplicated
+						// above, but Present is intentionally allowed to repeat
+						// and can stack up indefinitely if the consumer stalls
+						// (notably under libretro frontends, which drive the
+						// swap from their own video callback). Unbounded growth
+						// here is the producer side of progressive audio/video
+						// drift in long sessions: the SH4 keeps running ahead
+						// while pending Presents pile up. Drop the oldest
+						// pending Present to keep latency bounded.
+						constexpr size_t MAX_QUEUE_DEPTH = 4;
+						if (queue.size() >= MAX_QUEUE_DEPTH)
+						{
+							for (auto it = queue.begin(); it != queue.end(); ++it)
+							{
+								if (it->type == Present)
+								{
+									queue.erase(it);
+									break;
+								}
+							}
+						}
 						queue.push_back(msg);
 						dupe = false;
 					}
@@ -341,6 +364,16 @@ bool rend_init_renderer()
 
 void rend_term_renderer()
 {
+	// Drain and stop the queue first so that any in-flight Render/Present
+	// messages cannot be dispatched against a renderer that is about to be
+	// destroyed. This is called from many libretro entry points (context
+	// reset/destroy, deinit, content load, renderer switch) where the emu
+	// thread may still be holding queued work; without cancelling first
+	// we can race the consumer thread into a null renderer dereference and
+	// also leave the producer side wedged, which manifests as audio/video
+	// drift after a renderer switch.
+	rend_cancel_emu_wait();
+
 	if (renderer != nullptr)
 	{
 		renderer->Term();
