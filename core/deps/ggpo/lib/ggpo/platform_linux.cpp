@@ -4,7 +4,7 @@
  * Use of this software is governed by the MIT license that can be found
  * in the LICENSE file.
  */
-#if defined(__unix__) || defined(__APPLE__) || defined(__SWITCH__) || defined(__HAIKU__)
+#if defined(__unix__) || defined(__APPLE__) || defined(__SWITCH__) || defined(__HAIKU__) || defined(__vita__)
 
 #include "platform_linux.h"
 #include <time.h>
