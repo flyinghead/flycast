@@ -77,17 +77,17 @@ static void setupPath()
 	set_user_data_dir(data_path);
 	flycast::mkdir(data_path.c_str(), 0755);
 #else
-	using namespace Windows::Storage;
-	StorageFolder^ localFolder = Windows::Storage::ApplicationData::Current->LocalFolder;
+	using namespace winrt::Windows::Storage;
+	StorageFolder localFolder = ApplicationData::Current().LocalFolder();
 	nowide::stackstring path;
-	path.convert(localFolder->Path->Data());
+	path.convert(localFolder.Path().c_str());
 	std::string homePath(path.get());
 	homePath += '\\';
 	set_user_config_dir(homePath);
 	homePath += "data\\";
 	set_user_data_dir(homePath);
 	flycast::mkdir(homePath.c_str(), 0755);
-	SetEnvironmentVariable(L"HOMEPATH", localFolder->Path->Data());
+	SetEnvironmentVariable(L"HOMEPATH", localFolder.Path().c_str());
 	SetEnvironmentVariable(L"HOMEDRIVE", nullptr);
 #endif
 }

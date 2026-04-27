@@ -98,6 +98,7 @@ option(USE_LUA "Build with Lua support" ON)
 option(ENABLE_GDB_SERVER "Build with GDB debugging support" OFF)
 option(ENABLE_DC_PROFILER "Build with support for target machine (SH4) profiler" OFF)
 option(ENABLE_FC_PROFILER "Build with support for host app (Flycast) profiler" OFF)
+option(ENABLE_NO_STD_FORMAT_CHECK "Check changed core files for forbidden <format> includes" ON)
 option(USE_DISCORD "Use Discord Presence API" OFF)
 option(USE_LIBCDIO "Use libcdio for CDROM access" OFF)
 
@@ -268,23 +269,38 @@ else()
 endif()
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
-		CMAKE_CXX_STANDARD 20
-		CMAKE_CXX_STANDARD_REQUIRED ON)
+		CXX_STANDARD 20
+		CXX_STANDARD_REQUIRED ON)
+
+if(ENABLE_NO_STD_FORMAT_CHECK)
+	add_custom_target(check_no_std_format
+		COMMAND ${CMAKE_COMMAND} -DSOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/shell/cmake/CheckNoStdFormat.cmake
+		VERBATIM
+	)
+	add_dependencies(${PROJECT_NAME} check_no_std_format)
+endif()
 
 if(WINDOWS_STORE)
 	set(USE_OPENGL OFF)
 	set(USE_VULKAN OFF)
+	# SDL bootstrap requires C++/CX and is incompatible with C++20
+	set_source_files_properties(core/deps/SDL/src/main/winrt/SDL_winrt_main_NonXAML.cpp PROPERTIES COMPILE_FLAGS "/ZW /std:c++17")
+endif()
+
+# websocketpp is not C++20 compatible due to template-id destructors, waiting for v0.9 or we can switch to dev branch
+if(MSVC)
+	set_source_files_properties(core/network/ice.cpp PROPERTIES COMPILE_FLAGS "/std:c++17")
+else()
+	set_source_files_properties(core/network/ice.cpp PROPERTIES COMPILE_FLAGS "-std=c++17")
 endif()
 
 set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS_RELEASE -s)
 if(MSVC)
-	target_compile_options(${PROJECT_NAME} PRIVATE /GR /GS- /utf-8)
-	if(WINDOWS_STORE)
-		target_compile_options(${PROJECT_NAME} PRIVATE /ZW)
-	endif()
+	target_compile_options(${PROJECT_NAME} PRIVATE /GR /GS- /utf-8 "/Zc:char8_t-" "/Zc:__cplusplus")
 else()
 	target_compile_options(${PROJECT_NAME} PRIVATE
 		$<$<COMPILE_LANGUAGE:CXX>:-fno-strict-aliasing>
+		$<$<COMPILE_LANGUAGE:CXX>:-fno-char8_t>
 		$<$<COMPILE_LANGUAGE:CXX>:-Wall>)
 endif()
 
@@ -444,6 +460,10 @@ set(XXHASH_BUILD_XXHSUM OFF CACHE BOOL "Build the xxhsum binary")
 add_subdirectory(core/deps/xxHash/cmake_unofficial)
 target_link_libraries(${PROJECT_NAME} PRIVATE xxHash::xxhash)
 
+set(FMT_INSTALL OFF CACHE BOOL "" FORCE)
+add_subdirectory(core/deps/fmt EXCLUDE_FROM_ALL)
+target_link_libraries(${PROJECT_NAME} PRIVATE fmt::fmt)
+
 option(BUILD_SHARED_LIBS "Build shared library" OFF)
 add_subdirectory(core/deps/glm)
 target_link_libraries(${PROJECT_NAME} PRIVATE glm::glm)
@@ -512,6 +532,7 @@ if(NOT LIBRETRO)
 			# DreamPicoPort-API
 			option(DREAMPICOPORT_ADD_LIBUSB "Add internal libusb library" OFF) # Already included above, when applicable
 			add_subdirectory(core/deps/DreamPicoPort-API EXCLUDE_FROM_ALL)
+			set_target_properties(dream_pico_port_api PROPERTIES CXX_STANDARD 20 CXX_STANDARD_REQUIRED ON)
 			target_link_libraries(${PROJECT_NAME} PRIVATE dream_pico_port_api)
 		endif()
 
@@ -532,6 +553,12 @@ if(NOT LIBRETRO)
 
 		if((APPLE OR WIN32) AND TARGET SDL2::SDL2-static)
 			target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2-static)
+			if(MSVC AND WINDOWS_STORE)
+				# SDL2 (C++/CX) is incompatible with C++20. /WHOLEARCHIVE prevents the linker from
+				# stripping WinRT metadata, avoiding LNK4264 and "Class not registered" errors.
+				# Transitional fix until we move to SDL3.
+				target_link_options(${PROJECT_NAME} PRIVATE "/WHOLEARCHIVE:SDL2-static")
+			endif()
 		elseif(TARGET SDL2::SDL2)
 			target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2)
 		else()
@@ -1116,6 +1143,7 @@ target_sources(${PROJECT_NAME} PRIVATE
 
 if(USE_VULKAN)
 	target_compile_definitions(${PROJECT_NAME} PUBLIC VK_ENABLE_BETA_EXTENSIONS VK_NO_PROTOTYPES)
+	target_compile_definitions(${PROJECT_NAME} PRIVATE VULKAN_HPP_NO_SPACESHIP_OPERATOR)
 	if(ANDROID)
 		target_compile_definitions(${PROJECT_NAME} PUBLIC VK_USE_PLATFORM_ANDROID_KHR)
 	elseif(X11_FOUND)
@@ -1258,9 +1286,6 @@ if(ENABLE_GDB_SERVER)
 endif()
 
 if("arm" IN_LIST ARCHITECTURE AND NOT APPLE)
-	if(MSVC)
-		target_compile_options(${PROJECT_NAME} PRIVATE "/Zc:__cplusplus")
-	endif()
 	target_include_directories(${PROJECT_NAME} PRIVATE core/deps/vixl)
 	target_sources(${PROJECT_NAME} PRIVATE
 		core/rec-ARM/rec_arm.cpp
@@ -1294,9 +1319,6 @@ if("arm" IN_LIST ARCHITECTURE AND NOT APPLE)
 		core/deps/vixl/utils-vixl.h)
 endif()
 if("arm64" IN_LIST ARCHITECTURE)
-	if(MSVC)
-		target_compile_options(${PROJECT_NAME} PRIVATE "/Zc:__cplusplus")
-	endif()
 	target_include_directories(${PROJECT_NAME} PRIVATE core/deps/vixl)
 	target_sources(${PROJECT_NAME} PRIVATE
 		core/deps/vixl/aarch64/abi-aarch64.h

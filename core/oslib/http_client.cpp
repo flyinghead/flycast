@@ -43,7 +43,6 @@ int get(const std::string& url, std::vector<u8>& content, std::string& contentTy
 
 #ifdef _WIN32
 #ifndef TARGET_UWP
-#include "stdclass.h"
 #include <windows.h>
 #include <wininet.h>
 

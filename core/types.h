@@ -270,3 +270,13 @@ constexpr unsigned operator""_sh4ms(unsigned long long t) {
 constexpr unsigned operator""_sh4us(unsigned long long t) {
 	return SH4_MAIN_CLOCK / 1'000'000 * t;
 }
+
+#if defined(TARGET_MAC)
+	// Do not use std::format in Flycast code.
+	// Use #include <fmt/format.h> and fmt::format(...) instead.
+	// std::to_chars for floating point requires macOS 13.3+
+	// Disable std::format support to avoid link errors on older targets.
+	#ifdef __cpp_lib_format
+		#undef __cpp_lib_format
+	#endif
+#endif
