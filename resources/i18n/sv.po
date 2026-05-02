@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-22 12:49+0100\n"
-"PO-Revision-Date: 2026-04-25 15:16\n"
+"PO-Revision-Date: 2026-05-02 08:04\n"
 "Last-Translator: \n"
 "Language: sv_SE\n"
 "MIME-Version: 1.0\n"
@@ -1582,7 +1582,7 @@ msgstr "Avsluta"
 
 #: core/ui/settings_controls.cpp:224 core/ui/settings_controls.cpp:284
 msgid "Pause"
-msgstr ""
+msgstr "Pausa"
 
 #: core/ui/settings_controls.cpp:225 core/ui/settings_controls.cpp:285
 msgid "Fast-forward"
@@ -2004,7 +2004,7 @@ msgstr "Tom"
 
 #: core/ui/gui.cpp:695 core/ui/gui_cheats.cpp:48
 msgid "OK"
-msgstr ""
+msgstr "OK"
 
 #: core/ui/gui.cpp:715 core/ui/gui.cpp:716
 msgid "Incorrect Content Location?"
@@ -2252,11 +2252,11 @@ msgstr "Dumpa alltid texturer som redan har ersatts av anpassade texturer"
 
 #: core/ui/settings.cpp:115
 msgid "Discard Video and Animated Textures"
-msgstr ""
+msgstr "Förkasta video- och animerade texturer"
 
 #: core/ui/settings.cpp:116
 msgid "Skip dumping video (YUV) and already updated textures"
-msgstr ""
+msgstr "Hoppa över videodumpning (YUV) och redan uppdaterade texturer"
 
 #: core/ui/settings.cpp:120
 msgid "Log to File"
