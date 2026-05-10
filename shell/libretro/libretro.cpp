@@ -33,6 +33,7 @@
 
 #include <sys/stat.h>
 #include <file/file_path.h>
+#include <streams/file_stream.h>
 
 #include <libretro.h>
 
@@ -69,7 +70,8 @@
 #include "input/dreampotato.h"
 #include "storage.h"
 
-constexpr char slash = PATH_DEFAULT_SLASH_C();
+// SMB support does not work when the path contains a back-slash, so just stick to using the portable forward-slash instead.
+constexpr char slash = '/';
 
 #define RETRO_DEVICE_TWINSTICK				RETRO_DEVICE_SUBCLASS( RETRO_DEVICE_JOYPAD, 1 )
 #define RETRO_DEVICE_TWINSTICK_SATURN		RETRO_DEVICE_SUBCLASS( RETRO_DEVICE_JOYPAD, 2 )
@@ -3777,7 +3779,7 @@ static bool read_m3u(const char *file)
 {
 	char line[PATH_MAX];
 	char name[PATH_MAX];
-	FILE *f = fopen(file, "r");
+	RFILE *f = filestream_open(file, RETRO_VFS_FILE_ACCESS_READ, RETRO_VFS_FILE_ACCESS_HINT_NONE);
 
 	if (!f)
 	{
@@ -3785,7 +3787,7 @@ static bool read_m3u(const char *file)
 		return false;
 	}
 
-	while (fgets(line, sizeof(line), f) && disk_index <= disk_paths.size())
+	while (filestream_gets(f, line, sizeof(line)) && disk_index <= disk_paths.size())
 	{
 		if (line[0] == '#')
 			continue;
@@ -3823,7 +3825,7 @@ static bool read_m3u(const char *file)
 		}
 	}
 
-	fclose(f);
+	filestream_close(f);
 	return disk_index != 0;
 }
 
