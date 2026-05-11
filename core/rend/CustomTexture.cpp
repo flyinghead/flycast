@@ -44,15 +44,9 @@ public:
 		textures_path = hostfs::getTextureLoadPath(game_id);
 		if (!textures_path.empty())
 		{
-			try {
-				hostfs::FileInfo fileInfo = hostfs::storage().getFileInfo(textures_path);
-				if (fileInfo.isDirectory)
-				{
-					NOTICE_LOG(RENDERER, "Found custom textures directory: %s", textures_path.c_str());
-					custom_textures_available = true;
-				}
-			} catch (const FlycastException& e) {
-			}
+			custom_textures_available = hostfs::storage().exists(textures_path);
+			if (custom_textures_available)
+				NOTICE_LOG(RENDERER, "Found custom textures directory: %s", textures_path.c_str());
 		}
 	}
 	bool shouldReplace() const override { return config::CustomTextures && custom_textures_available; }
