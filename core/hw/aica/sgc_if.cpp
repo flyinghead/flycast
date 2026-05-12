@@ -147,6 +147,21 @@ static void VolumePan(SampleType value, u32 vol, u32 pan, SampleType& outl, Samp
 	}
 }
 
+static s16 readAicaRamS16(u32 addr)
+{
+	return *(s16 *)&aica_ram[addr & (ARAM_MASK - 1)];
+}
+
+static s8 readAicaRamS8(u32 addr)
+{
+	return *(s8 *)&aica_ram[addr & ARAM_MASK];
+}
+
+static u8 readAicaRamU8(u32 addr)
+{
+	return aica_ram[addr & ARAM_MASK];
+}
+
 class VmuBeep
 {
 public:
@@ -1081,26 +1096,26 @@ void ChannelEx::StepDecodeSample(u32 CA)
 
 	case PCM16:
 		{
-			const s16 *sptr16 = (const s16 *)SA;
-			s0 = sptr16[CA];
-			s1 = sptr16[next_addr];
+			const u32 sa = (u32)(SA - &aica_ram[0]);
+			s0 = readAicaRamS16(sa + CA * 2);
+			s1 = readAicaRamS16(sa + next_addr * 2);
 			break;
 		}
 
 	case PCM8:
 		{
-			const s8 *sptr8 = (const s8 *)SA;
-			s0 = sptr8[CA] << 8;
-			s1 = sptr8[next_addr] << 8;
+			const u32 sa = (u32)(SA - &aica_ram[0]);
+			s0 = readAicaRamS8(sa + CA) << 8;
+			s1 = readAicaRamS8(sa + next_addr) << 8;
 			break;
 		}
 
 	case ADPCM:
 	case ADPCM_STREAM:
 		{
-			const u8 *uptr8 = (const u8 *)SA;
-			u8 ad1 = uptr8[CA >> 1];
-			u8 ad2 = uptr8[next_addr >> 1];
+			const u32 sa = (u32)(SA - &aica_ram[0]);
+			u8 ad1 = readAicaRamU8(sa + (CA >> 1));
+			u8 ad2 = readAicaRamU8(sa + (next_addr >> 1));
 
 			ad1 >>= (CA & 1) * 4;
 			ad2 >>= (next_addr & 1) * 4;
