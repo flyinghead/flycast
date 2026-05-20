@@ -36,8 +36,13 @@
 
 typedef bool (*StringCallback)(bool cancelled, std::string selection);
 
+#ifdef __vita__
+void select_file_popup(const char *prompt, StringCallback callback,
+		bool selectFile = false, const std::string& extension = "", std::string startDir = "ux0:/");
+#else
 void select_file_popup(const char *prompt, StringCallback callback,
 		bool selectFile = false, const std::string& extension = "");
+#endif
 
 void scrollWhenDraggingOnVoid(ImGuiMouseButton mouse_button = ImGuiMouseButton_Left);
 

@@ -1956,7 +1956,11 @@ void Arm32Assembler::compileOp(RuntimeBlockInfo* block, shil_opcode* op, bool op
 				}
 				if (!rd.Is(rs1))
 					Vmov(rd, rs1);
+#ifdef __ARM_FEATURE_FMA
 				Vfma(rd, rs2, rs3);
+#else
+				Vmla(rd, rs2, rs3);
+#endif
 			}
 			break;
 
@@ -2168,6 +2172,9 @@ void Arm32Assembler::compile(RuntimeBlockInfo* block, bool force_checks, bool op
 		reg.OpBegin(&block->oplist[0], 0);
 
 	// block checks
+#ifdef __vita__
+	if (config::DynarecSmcChecks) {
+#endif
 	if (mmu_enabled())
 	{
 		Mov(r0, block->vaddr);
@@ -2179,7 +2186,11 @@ void Arm32Assembler::compile(RuntimeBlockInfo* block, bool force_checks, bool op
 		u32 addr = block->addr;
 		Mov(r0, addr);
 
+#ifdef __vita__
+		s32 sz = config::DynarecSmcChecks == 1 ? 4 : block->sh4_code_size;
+#else
 		s32 sz = block->sh4_code_size;
+#endif
 		while (sz > 0)
 		{
 			if (sz > 2)
@@ -2214,6 +2225,9 @@ void Arm32Assembler::compile(RuntimeBlockInfo* block, bool force_checks, bool op
 			}
 		}
 	}
+#ifdef __vita__
+	}
+#endif
 	if (mmu_enabled() && block->has_fpu_op)
 	{
 		Mov(r0, block->vaddr);

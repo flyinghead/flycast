@@ -1,6 +1,6 @@
 #include "types.h"
 
-#if defined(__unix__) || defined(__APPLE__) || defined(__SWITCH__) || defined(__HAIKU__)
+#if defined(__unix__) || defined(__APPLE__) || defined(__SWITCH__) || defined(__HAIKU__) || defined(__vita__)
 #if defined(__APPLE__)
 	#define _XOPEN_SOURCE 1
 	#define __USE_GNU 1
@@ -30,6 +30,7 @@ extern "C" char __start__;
 #define siginfo_t switch_siginfo_t
 #endif // __SWITCH__
 
+#ifndef __vita__
 void context_from_segfault(host_context_t* hctx, void* segfault_ctx);
 void context_to_segfault(host_context_t* hctx, void* segfault_ctx);
 
@@ -110,6 +111,7 @@ void os_UninstallFaultHandler()
 	sigaction(SIGBUS, &next_bus_handler, nullptr);
 #endif
 }
+#endif
 
 #if !defined(__unix__) && !defined(LIBRETRO) && !defined(__SWITCH__) && !defined(__HAIKU__)
 [[noreturn]] void os_DebugBreak()
@@ -170,9 +172,11 @@ void common_linux_setup()
 	// exit cleanly on ^C
 	signal(SIGINT, sigintHandler);
 #endif
-	
+
+#ifndef __vita__
 	DEBUG_LOG(BOOT, "Linux paging: sysconf %ld PAGE_SIZE %ld PAGE_MASK %lX", sysconf(_SC_PAGESIZE), (unsigned long)PAGE_SIZE, (long)PAGE_MASK);
 	verify(PAGE_MASK==(sysconf(_SC_PAGESIZE)-1));
+#endif
 }
 
 #ifndef __APPLE__

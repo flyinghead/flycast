@@ -25,6 +25,139 @@
 
 PostProcessor postProcessor;
 
+#ifdef __vita__
+static const char* VertexShaderSource = R"(
+void main(
+	float3 in_pos,
+	float4 out gl_Position : POSITION
+) {
+	gl_Position = float4(in_pos, 1.0);
+}
+)";
+
+static const char* FragmentShaderSource = R"(
+#define LUMBOOST 0
+
+uniform int FrameCount;
+uniform sampler2D Texture;
+
+// compatibility #defines
+#define Source Texture
+#define TextureSize tex2Dsize(Texture, 0)
+#define vTexCoord (gl_FragCoord.xy / float2(tex2Dsize(Texture, 0)))
+
+static float dithertable[16] = float[](
+	16.,4.,13.,1.,   
+	8.,12.,5.,9.,
+	14.,2.,15.,3.,
+	6.,10.,7.,11.		
+);
+
+//#pragma parameter INTERLACED "PVR - Interlace smoothing" 1.00 0.00 1.00 1.0
+//#pragma parameter VGASIGNAL "PVR - VGA signal loss" 0.00 0.00 1.00 1.0
+//#pragma parameter LUMBOOST "PVR - Luminance gain" 0.35 0.00 1.00 0.01
+
+#define LUM_R (76.0/255.0)
+#define LUM_G (150.0/255.0)
+#define LUM_B (28.0/255.0)
+
+float4 main(
+	float4 gl_FragCoord : WPOS
+) {
+	float2 texcoord = vTexCoord;
+	float2 texcoord2 = vTexCoord;
+	texcoord2.x *= float(TextureSize.x);
+	texcoord2.y *= float(TextureSize.y);
+	float4 color = tex2D(Source, texcoord);
+	float fc = fmod(float(FrameCount), 2.0);
+
+#if INTERLACED == 1
+	// Blend vertically for composite mode
+	int taps = int(3);
+	float tap = (2.666f/float(taps)) / float(min(TextureSize.y, 720));
+	float2 texcoord4  = vTexCoord;
+	texcoord4.y -= tap * 2.f;
+	int bl;
+	float4 ble;
+
+	for (bl=0;bl<taps;bl++)
+	{
+		texcoord4.y += tap;
+		ble.rgb += (tex2D(Source, texcoord4).rgb / float(taps+1));
+	}
+	color.rgb = (color.rgb / float(taps+1)) + ( ble.rgb );
+#endif
+
+#if LUMBOOST == 1
+	// Some games use a luminance boost (JSR etc)
+	color.rgb += (((color.r * LUM_R) + (color.g * LUM_G) + (color.b * LUM_B)) * LUMBOOST);
+#endif
+
+#if DITHERING == 1
+	// Dither
+	int ditdex = 	int(fmod(texcoord2.x, 4.0)) * 4 + int(fmod(texcoord2.y, 4.0)); 	
+	int yeh = 0;
+	float ohyes;
+	float4 how;
+
+	for (yeh=ditdex; yeh<(ditdex+16); yeh++) 	ohyes =  ((((dithertable[yeh-15]) - 1.f) * 0.1));
+	color.rb -= (ohyes / 128.);
+	color.g -= (ohyes / 128.);
+	{
+		float4 reduct;		// 16 bits per pixel (5-6-5)
+		reduct.r = 32.;
+		reduct.g = 64.;	
+		reduct.b = 32.;
+		how = color;
+  		how = pow(how, float4(1.0, 1.0, 1.0, 1.0));  	how *= reduct;  	how = floor(how);	how = how / reduct;  	how = pow(how, float4(1.0, 1.0, 1.0, 1.0));
+	}
+
+	color.rb = how.rb;
+	color.g = how.g;
+#endif
+
+#if VGASIGNAL == 1
+	// There's a bit of a precision drop involved in the RGB565ening for VGA
+	// I'm not sure why that is. it's exhibited on PVR1 and PVR3 hardware too
+	if (fmod(color.r*32, 2.0)>0) color.r -= 0.023;
+	if (fmod(color.g*64, 2.0)>0) color.g -= 0.01;
+	if (fmod(color.b*32, 2.0)>0) color.b -= 0.023;
+#endif
+
+	// RGB565 clamp
+
+	color.rb = floor(color.rb * 32. + 0.5)/32.;
+	color.g = floor(color.g * 64. + 0.5)/64.;
+
+#if VGASIGNAL == 1
+	// VGA Signal Loss, which probably is very wrong but i tried my best
+	int taps = 32;
+	float tap = 12.0/taps;
+	float2 texcoord4  = vTexCoord;
+	texcoord4.x = texcoord4.x + (2.0/640.0);
+	texcoord4.y = texcoord4.y;
+	float4 blur1 = tex2D(Source, texcoord4);
+	int bl;
+	float4 ble;
+	for (bl=0;bl<taps;bl++)
+	{
+		float e = 1;
+		if (bl>=3)
+		e=0.35;
+		texcoord4.x -= (tap  / 640);
+		ble.rgb += (tex2D(Source, texcoord4).rgb * e) / (taps/(bl+1));
+	}
+
+	color.rgb += ble.rgb * 0.015;
+
+	//color.rb += (4.0/255.0);
+	color.g += (9.0/255.0);
+#endif
+
+	return float4(color);
+} 
+)";
+#else
 static const char* VertexShaderSource = R"(
 in vec3 in_pos;
 
@@ -164,6 +297,7 @@ void main()
 	FragColor = vec4(color);
 } 
 )";
+#endif
 
 class PostProcessShader
 {

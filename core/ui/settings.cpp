@@ -89,6 +89,22 @@ static void gui_settings_advanced()
 		ShowHelpMarker("Default port is 3263");
 	}
 #endif
+#ifdef __vita__
+	if (config::DynarecEnabled)
+	{
+		ImGui::Spacing();
+		header(T("Dynarec Options"));
+		ImGui::Text("Self-Modifying Code Checks:");
+		ImGui::Columns(3, "DynarecSmcChecks", false);
+		OptionRadioButton(T("Off"), config::DynarecSmcChecks, 0, T("Disables checks for self-modifying code"));
+		ImGui::NextColumn();
+		OptionRadioButton(T("Reduced"), config::DynarecSmcChecks, 1, T("Performs a simplified check for self-modifying code"));
+		ImGui::NextColumn();
+		OptionRadioButton(T("Full"), config::DynarecSmcChecks, 2, T("Checks the whole code block for self-modifying code"));
+		ImGui::Columns(1, nullptr, false);
+		ImGui::Spacing();
+	}
+#endif
 	ImGui::Spacing();
 #endif
     header(T("Other"));
@@ -96,6 +112,9 @@ static void gui_settings_advanced()
     	OptionCheckbox(T("HLE BIOS"), config::UseReios, T("Force high-level BIOS emulation"));
         OptionCheckbox(T("Multi-threaded emulation"), config::ThreadedRendering,
         		T("Run the emulated CPU and GPU on different threads"));
+#ifdef __vita__
+    	OptionCheckbox(T("Fast GDRom Load"), config::FastGDRomLoad, T("Enables fast GDRom loading for smaller loading times."));
+#endif
 #if !defined(__ANDROID) && !defined(GDB_SERVER)
         OptionCheckbox(T("Serial Console"), config::SerialConsole,
         		T("Dump the Dreamcast serial console to stdout"));
