@@ -777,7 +777,7 @@ void naomi_cart_ConfigureEEPROM()
 	if (CurrentCartridge->GetBootId(&bootId)
 			&& (!memcmp(bootId.boardName, "NAOMI", 5) || !memcmp(bootId.boardName, "Naomi2", 6)))
 		configure_naomi_eeprom(&bootId);
-	else
+	else if (!settings.naomi.slave)
 		WARN_LOG(NAOMI, "Can't read ROM boot ID");
 }
 
@@ -861,7 +861,7 @@ bool Cartridge::Read(u32 offset, u32 size, void* dst)
 		static u32 ones = 0xffffffff;
 
 		// Makes Outtrigger boot
-		INFO_LOG(NAOMI, "offset %x > %x", offset, RomSize);
+		DEBUG_LOG(NAOMI, "Cartridge::Read: overrun: offset %x > rom size %x", offset, RomSize);
 		memcpy(dst, &ones, size);
 	}
 	else
