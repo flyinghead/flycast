@@ -638,8 +638,10 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 		{
 			nvmem::loadFiles();
 			naomi_cart_LoadRom(settings.content.path, settings.content.fileName, progress);
+#ifndef LIBRETRO
 			if (settings.content.gameId.empty() && settings.naomi.slave)
 				settings.content.gameId = config::loadStr("naomi", "gameId", "");
+#endif
 			loadGameSpecificSettings();
 			// Reload the BIOS in case a game-specific region is set
 			naomi_cart_LoadBios(path);
