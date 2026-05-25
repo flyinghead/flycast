@@ -106,7 +106,7 @@ int flycast_init(int argc, char* argv[])
 		os_SetupInput();
 
 		if(config::GDB)
-			debugger::init(config::GDBPort);
+			debugger::init(config::GDBPort + config::loadInt("naomi", "BoardId"));
 		lua::init();
 
 		if(config::ProfilerEnabled)

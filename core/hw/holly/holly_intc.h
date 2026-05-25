@@ -59,9 +59,9 @@ enum HollyInterruptID
 		holly_MAPLE_OVERRUN = holly_err | 0x09,  //bit 9 = MAPLE : DMA over run
 		holly_MAPLE_FIFO = holly_err | 0x0a,     //bit 10 = MAPLE : Write FIFO overflow
 		holly_MAPLE_ILLCMD = holly_err | 0x0b,   //bit 11 = MAPLE : Illegal command
-		//bit 12 = G1 : Illegal Address set
-		//bit 13 = G1 : GD-DMA over run
-		//bit 14 = G1 : ROM/FLASH access at GD-DMA
+		holly_G1_ILLADDR = holly_err | 0x0c,     //bit 12 = G1 : Illegal Address set
+		holly_G1_OVERRUN = holly_err | 0x0d,     //bit 13 = G1 : GD-DMA over run
+		holly_G1_ACCESS = holly_err | 0x0e,      //bit 14 = G1 : ROM/FLASH access at GD-DMA
 		holly_AICA_ILLADDR = holly_err | 0x0f,   //bit 15 = G2 : AICA-DMA Illegal Address set
 		holly_EXT1_ILLADDR = holly_err | 0x10,   //bit 16 = G2 : Ext-DMA1 Illegal Address set
 		holly_EXT2_ILLADDR = holly_err | 0x11,   //bit 17 = G2 : Ext-DMA2 Illegal Address set

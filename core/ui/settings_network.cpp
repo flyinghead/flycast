@@ -225,10 +225,10 @@ void gui_settings_network()
 	ImGui::Spacing();
 	header(T("Multiboard Screens"));
 	{
-		//OptionRadioButton<int>(T("Disabled##multiboard"), config::MultiboardSlaves, 0, T("Multiboard disabled (when optional)"));
-		OptionRadioButton<int>(T("1 (Twin)"), config::MultiboardSlaves, 1, T("One screen configuration (F355 Twin)"));
+		OptionRadioButton<int>(T("1 (Twin, Satellite)"), config::MultiboardSlaves, 1, T("One screen configuration (F355 Twin, Derby Owners Club satellite)"));
 		ImGui::SameLine();
-		OptionRadioButton<int>(T("3 (Deluxe)"), config::MultiboardSlaves, 2, T("Three screens configuration"));
+		OptionRadioButton<int>(T("2+ (Deluxe, Main screen)"), config::MultiboardSlaves, 2,
+				T("Two or three screens configuration (Airline Pilot, Derby Owners Club main screen, F355 Deluxe, Sega Strike Fighter)"));
 	}
 #endif
 }
