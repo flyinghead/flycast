@@ -21,6 +21,11 @@
 #include <memory>
 
 #ifdef NAOMI_MULTIBOARD
+#ifdef _WIN32
+#include <winsock2.h>
+#include <windows.h>
+#endif
+
 struct SharedMemory;
 
 class Multiboard
