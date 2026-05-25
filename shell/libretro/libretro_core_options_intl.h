@@ -68478,7 +68478,7 @@ struct retro_core_options_v2 options_pt_pt = {
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_RU "Сигналы VMU"
 #define CORE_OPTION_NAME_VMU_SOUND_INFO_0_RU "Включает воспроизведение сигналов VMU."
 #define CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_RU "Хранилище VMU DreamPotato"
-#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_RU "Включить хранение данных VMU на подключенном эмуляторе DreamPotato. Когда включено, не используется локальный файл сохранения VMU."
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_RU "Хранить данные VMU на подключенном эмуляторе DreamPotato. При включении опции локальный файл сохранения VMU не используется."
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_RU "Показывать настройки отображения визуальных карт памяти (VMU)"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_RU "Показывать настройки отображения VMU"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_RU "Включает конфигурацию размера, положения, цвета и видимости эмулируемого ЖК-экрана VMU. Для применения настройки требуется переключить быстрое меню."

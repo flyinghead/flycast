@@ -78,6 +78,7 @@ const WidescreenCheat CheatManager::widescreen_cheats[] =
 		{ "MK-51136",   nullptr,    { 0x2BDDD0 }, { 0x43700000 } },		// Crazy Taxi 2 (USA)
 //		{ "HDR-0159",   nullptr,    { 0x2FBBD0 }, { 0x43700000 } },		// Crazy Taxi 2 (JP) not working
 		{ "T13004N",    nullptr,    { 0x016D94 }, { 0x44234E73 } },		// Cyber Troopers - Virtual On - Oratorio Tangram (USA)
+		{ "HDR-0040",   nullptr,    { 0x016D94 }, { 0x44234E73 } },		// Cyber Troopers - Virtual On - Oratorio Tangram (JP)
 		// D2 (USA)
 		{ "MK-51036",   nullptr,    { 0x4B5CF4, 0x4B5CC4, 0x3E92A0, 0x3E92A8, 0x3E92C0, 0x3E92C8 },
 				{ 0x3F400000, 0x43F00000, 0, 0, 0, 0 } },
