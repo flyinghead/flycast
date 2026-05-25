@@ -638,6 +638,8 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 		{
 			nvmem::loadFiles();
 			naomi_cart_LoadRom(settings.content.path, settings.content.fileName, progress);
+			if (settings.content.gameId.empty() && settings.naomi.slave)
+				settings.content.gameId = config::loadStr("naomi", "gameId", "");
 			loadGameSpecificSettings();
 			// Reload the BIOS in case a game-specific region is set
 			naomi_cart_LoadBios(path);
@@ -754,10 +756,7 @@ void Emulator::unloadGame()
 		mcfg_DestroyDevices(true);
 		config::Settings::instance().reset();
 		config::Settings::instance().load(false);
-		settings.content.path.clear();
-		settings.content.gameId.clear();
-		settings.content.fileName.clear();
-		settings.content.title.clear();
+		settings.content.reset();
 		settings.platform.system = DC_PLATFORM_DREAMCAST;
 		custom_texture.terminate();
 		state = Init;
@@ -1128,8 +1127,7 @@ void Emulator::diskChange()
 	}
 	else
 	{
-		settings.content.fileName.clear();
-		settings.content.gameId.clear();
+		settings.content.reset();
 		settings.content.title = BIOS_TITLE;
 	}
 	cheatManager.reset(settings.content.gameId);

@@ -175,6 +175,14 @@ struct settings_t
 		std::string gameId;
 		std::string fileName;
 		std::string title;
+
+		void reset()
+		{
+			path.clear();
+			gameId.clear();
+			fileName.clear();
+			title.clear();
+		}
 	} content;
 
 	struct {

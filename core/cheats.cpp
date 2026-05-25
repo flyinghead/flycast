@@ -580,6 +580,19 @@ found_cheats:
 			cheats.emplace_back(Cheat::Type::runNextIfEq, "bypass auth ifeq", true, 32, 0x0d5fbc, 0x2fd62fe6, true);
 			cheats.emplace_back(Cheat::Type::setValue, "bypass dricas auth",  true, 32, 0x0d5fbc, 0xe000000b, true);
 		}
+		else if (gameId == "SEGA STRIKE FIGHTER IN JPN-SLAVE")
+		{
+			// hack the slave sync procedure
+			cheats.emplace_back(Cheat::Type::runNextIfEq, "easy sync ifeq", true, 32, 0x08b66c, 0x40600000, true);
+			cheats.emplace_back(Cheat::Type::setValue,    "easy sync",      true, 32, 0x08b66c, 0x4cbebc20, true); // 3.5 -> 100000000
+		}
+		else if (gameId == "AIRLINE PILOTS IN JAPAN-SLAVE")
+		{
+			// hack the slave sync procedure
+			cheats.emplace_back(Cheat::Type::runNextIfEq, "easy sync ifeq", true, 32, 0x052ee0, 0x40200000, true);
+			cheats.emplace_back(Cheat::Type::setValue,    "easy sync",      true, 32, 0x052ee0, 0x4cbebc20, true); // 2.5 -> 100000000
+		}
+
 
 		if (cheats.size() > cheatCount)
 			setActive(true);
