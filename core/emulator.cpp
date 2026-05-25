@@ -642,14 +642,12 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 			// Reload the BIOS in case a game-specific region is set
 			naomi_cart_LoadBios(path);
 		}
-		if (!settings.naomi.slave)
-		{
-			mcfg_DestroyDevices();
-			mcfg_CreateDevices();
-			if (settings.platform.isNaomi())
-				// Must be done after the maple devices are created and EEPROM is accessible
-				naomi_cart_ConfigureEEPROM();
-		}
+		mcfg_DestroyDevices();
+		mcfg_CreateDevices();
+		if (settings.platform.isNaomi())
+			// Must be done after the maple devices are created and EEPROM is accessible
+			naomi_cart_ConfigureEEPROM();
+
 #ifdef USE_RACHIEVEMENTS
 		// RA probably isn't expecting to travel back in the past so disable it
 		if (config::GGPOEnable)

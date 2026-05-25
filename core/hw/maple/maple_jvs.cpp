@@ -1610,10 +1610,12 @@ MIEImpl::MIEImpl()
 	else if (naomi_default_eeprom != NULL)
 	{
 		DEBUG_LOG(MAPLE, "Using default EEPROM file");
-		memcpy(eeprom, naomi_default_eeprom, 0x80);
+		memcpy(eeprom, naomi_default_eeprom, sizeof(eeprom));
 	}
-	else
+	else {
 		DEBUG_LOG(MAPLE, "EEPROM file not found at %s and no default found", eeprom_file.c_str());
+		memset(eeprom, 0, sizeof(eeprom));
+	}
 	if (config::GGPOEnable)
 		MD5Sum().add(eeprom, sizeof(eeprom))
 				.getDigest(settings.network.md5.eeprom);
@@ -1874,16 +1876,20 @@ void MIEImpl::handle_86_subcommand()
 			size = std::min((int)sizeof(eeprom) - address, size);
 			memcpy(eeprom + address, dma_buffer_in + 4, size);
 
-			std::string eeprom_file = hostfs::getArcadeFlashPath() + ".eeprom";
-			FILE* f = nowide::fopen(eeprom_file.c_str(), "wb");
-			if (f)
+			if (!settings.naomi.slave)
 			{
-				std::fwrite(eeprom, 1, sizeof(eeprom), f);
-				std::fclose(f);
-				INFO_LOG(MAPLE, "Saved EEPROM to %s", eeprom_file.c_str());
+				std::string eeprom_file = hostfs::getArcadeFlashPath() + ".eeprom";
+				FILE* f = nowide::fopen(eeprom_file.c_str(), "wb");
+				if (f)
+				{
+					std::fwrite(eeprom, 1, sizeof(eeprom), f);
+					std::fclose(f);
+					INFO_LOG(MAPLE, "Saved EEPROM to %s", eeprom_file.c_str());
+				}
+				else {
+					WARN_LOG(MAPLE, "EEPROM SAVE FAILED to %s", eeprom_file.c_str());
+				}
 			}
-			else
-				WARN_LOG(MAPLE, "EEPROM SAVE FAILED to %s", eeprom_file.c_str());
 
 			reply(MDRS_JVSReply, 1);
 			memcpy(dma_buffer_out, eeprom, 4);
