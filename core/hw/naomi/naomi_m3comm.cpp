@@ -69,6 +69,16 @@ void NaomiM3Comm::closeNetwork()
 {
 	EventManager::unlisten(Event::VBlank, vblankCallback, this);
 	naomiNetwork.shutdown();
+
+	comm_ctrl = 0xC000;
+	comm_offset = 0;
+	comm_status0 = 0;
+	comm_status1 = 0;
+	memset(m68k_ram, 0, 128_KB);
+	memset(comm_ram, 0, 128_KB);
+	packet_number = 0;
+	slot_count = 0;
+	slot_id = 0;
 }
 
 void NaomiM3Comm::connectNetwork()
