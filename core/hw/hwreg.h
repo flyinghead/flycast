@@ -283,13 +283,13 @@ public:
 template<typename T>
 T ReadMemArr(const u8 *array, u32 addr)
 {
-	return *(const T *)&array[addr];
+	return *(const T *)&array[addr & ~(sizeof(T) - 1)];
 }
 
 template<typename T>
 void WriteMemArr(u8 *array, u32 addr, T data)
 {
-	*(T *)&array[addr] = data;
+	*(T *)&array[addr & ~(sizeof(T) - 1)] = data;
 }
 
 class SerialPort
