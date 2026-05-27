@@ -35,32 +35,135 @@ static void usage(const char *exe)
 
 static void parseConfigOption(const std::string& str)
 {
-	size_t pos = 0;
-	while (pos < str.length())
+	char inQuote = '\0';
+	std::string section, key, value;
+	int step = 0; // section, key, value
+	for (char c : str)
 	{
-		size_t comma = str.find(',', pos);
-		if (comma == str.npos)
-			comma = str.length();
-		std::string option = str.substr(pos, comma - pos);
-		size_t colpos = option.find(':');
-		size_t eqpos = option.npos;
-		if (colpos != option.npos)
+		if (inQuote != '\0' && c == inQuote)
 		{
-			std::string section = option.substr(0, colpos);
-			eqpos = option.find('=', colpos);
-			if (eqpos != option.npos)
+			inQuote = false;
+			step = 0;
+			setTransient(section, key, value);
+			DEBUG_LOG(COMMON, "-config [%s] %s = %s", section.c_str(), key.c_str(), value.c_str());
+			section.clear();
+			key.clear();
+			value.clear();
+			continue;
+		}
+		switch (c)
+		{
+		case ':':
+			switch (step)
 			{
-				std::string key = option.substr(colpos + 1, eqpos - (colpos + 1));
-				std::string value = option.substr(eqpos + 1);
-				setTransient(section, key, value);
-				DEBUG_LOG(COMMON, "-config [%s] %s = %s", section.c_str(), key.c_str(), value.c_str());
+			case 0:
+				if (section.empty()) {
+					WARN_LOG(COMMON, "Invalid -config option '%s'. Format is: -config section:key=value,...", str.c_str());
+					return;
+				}
+				step = 1;
+				break;
+			case 1:
+				key += c;
+				break;
+			case 2:
+				value += c;
+				break;
+			}
+			break;
+		case '=':
+			switch (step)
+			{
+			case 0:
+				WARN_LOG(COMMON, "Invalid -config option '%s'. Format is: -config section:key=value,...", str.c_str());
+				return;
+			case 1:
+				if (key.empty()) {
+					WARN_LOG(COMMON, "Invalid -config option '%s'. Format is: -config section:key=value,...", str.c_str());
+					return;
+				}
+				step = 2;
+				break;
+			case 2:
+				value += c;
+				break;
+			}
+			break;
+		case '\'':
+		case '"':
+			switch (step)
+			{
+			case 0:
+				section += c;
+				break;
+			case 1:
+				key += c;
+				break;
+			case 2:
+				if (inQuote == '\0') {
+					inQuote = c;
+					value.clear();
+				}
+				else
+					value += c;
+				break;
+			}
+			break;
+		case ',':
+			switch (step)
+			{
+			case 0:
+				// ignore consecutive commas
+				break;
+			case 1:
+				key += c;
+				break;
+			case 2:
+				if (inQuote != '\0') {
+					value += c;
+				}
+				else
+				{
+					step = 0;
+					setTransient(section, key, value);
+					DEBUG_LOG(COMMON, "-config [%s] %s = %s", section.c_str(), key.c_str(), value.c_str());
+					section.clear();
+					key.clear();
+					value.clear();
+				}
+				break;
+			}
+			break;
+		case ' ':
+			switch (step)
+			{
+			case 0:
+			case 1:
+				// Ignore
+				break;
+			case 2:
+				value += c;
+				break;
+			}
+			break;
+		default:
+			switch (step)
+			{
+			case 0:
+				section += c;
+				break;
+			case 1:
+				key += c;
+				break;
+			case 2:
+				value += c;
+				break;
 			}
 		}
-		if (colpos == option.npos || eqpos == option.npos) {
-			WARN_LOG(COMMON, "Invalid -config option '%s'. Format is: -config section:key=value,...", str.c_str());
-			return;
-		}
-		pos = comma + 1;
+	}
+	if (step == 2) {
+		setTransient(section, key, value);
+		DEBUG_LOG(COMMON, "-config [%s] %s = %s", section.c_str(), key.c_str(), value.c_str());
 	}
 }
 
