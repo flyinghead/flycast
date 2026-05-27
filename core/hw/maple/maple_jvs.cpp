@@ -1599,8 +1599,10 @@ MIEImpl::MIEImpl()
 	}
 
 	std::string eeprom_file = hostfs::getArcadeFlashPath() + ".eeprom";
-	FILE* f = nowide::fopen(eeprom_file.c_str(), "rb");
-	if (f)
+	FILE* f = nullptr;
+	if (!settings.naomi.slave)
+		f = nowide::fopen(eeprom_file.c_str(), "rb");
+	if (f != nullptr)
 	{
 		if (std::fread(eeprom, 1, 0x80, f) != 0x80)
 			WARN_LOG(MAPLE, "Failed or truncated read of EEPROM '%s'", eeprom_file.c_str());
