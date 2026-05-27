@@ -24,7 +24,7 @@ TEST_F(ConfigTest, parseCommandLine)
 	ASSERT_TRUE(loadBool("config", "bios.UseReios"));
 
 	argv[1] = "-config";
-	argv[2] = "s:empty=,s:entry=value,s:space=a b c";
+	argv[2] = "s:empty=,s:entry=value,s:space=a b c, sect : key = \"quoted text with , and '\" , sect:key2='quoted too with \" and ,'";
 	argv[3] = "rom.zip";
 	parseCommandLine(4, argv);
 	ASSERT_EQ("rom.zip", settings.content.path);
@@ -34,6 +34,10 @@ TEST_F(ConfigTest, parseCommandLine)
 	ASSERT_EQ("value", loadStr("s", "entry"));
 	ASSERT_TRUE(isTransient("s", "space"));
 	ASSERT_EQ("a b c", loadStr("s", "space"));
+	ASSERT_TRUE(isTransient("sect", "key"));
+	ASSERT_EQ("quoted text with , and '", loadStr("sect", "key"));
+	ASSERT_TRUE(isTransient("sect", "key2"));
+	ASSERT_EQ("quoted too with \" and ,", loadStr("sect", "key2"));
 
 	argv[2] = "";
 	parseCommandLine(3, argv);
