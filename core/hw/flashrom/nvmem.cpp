@@ -242,14 +242,25 @@ static void loadDefaultAWBiosFlash()
 		sys_rom->Load(buffer.get(), size);
 }
 
+static std::string getArcadeFlashPath()
+{
+	std::string suffix;
+	if (settings.content.gameId.substr(0, 6) == " DERBY" && config::MultiboardSlaves >= 2)
+		suffix = "-main.nvmem";
+	else
+		suffix = ".nvmem";
+	return hostfs::getArcadeFlashPath() + suffix;
+}
+
 static bool loadFlash()
 {
 	bool rc = true;
-	if (settings.platform.isConsole())
+	if (settings.platform.isConsole()) {
 		rc = sys_nvmem->Load(getRomPrefix(), "%nvmem.bin", "nvram");
+	}
 	else if (!settings.naomi.slave)
 	{
-		rc = sys_nvmem->Load(hostfs::getArcadeFlashPath() + ".nvmem");
+		rc = sys_nvmem->Load(getArcadeFlashPath());
 		if (!rc)
 		{
 			std::string flashName = get_file_basename(settings.content.fileName) + ".nvmem";
@@ -307,7 +318,7 @@ void saveFiles()
 	if (settings.platform.isConsole())
 		sys_nvmem->Save(getRomPrefix(), "nvmem.bin", "nvmem");
 	else
-		sys_nvmem->Save(hostfs::getArcadeFlashPath() + ".nvmem");
+		sys_nvmem->Save(getArcadeFlashPath());
 	if (settings.platform.isAtomiswave())
 		((WritableChip *)sys_rom)->Save(hostfs::getArcadeFlashPath() + ".nvmem2");
 }
