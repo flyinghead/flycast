@@ -64,7 +64,7 @@ public:
 void NetworkHandshake::init()
 {
 	if (settings.platform.isArcade())
-		SetNaomiNetworkConfig(-1);
+		SetNaomiNetworkConfig(-1, 0);
 
 	if (config::GGPOEnable) {
 		instance = new GGPONetworkHandshake();

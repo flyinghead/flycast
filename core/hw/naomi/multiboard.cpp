@@ -35,9 +35,13 @@
 #include "hw/sh4/sh4_sched.h"
 #include "hw/holly/holly_intc.h"
 #include "hw/holly/sb.h"
+#include "ui/gui.h"
+#include "oslib/i18n.h"
 #include <atomic>
 
-constexpr int SyncCycles = 836208;	// 4 times per frame
+using namespace i18n;
+
+constexpr int BaseSyncCycles = 836208;	// 4 times per frame
 constexpr u32 G1_BASE = 0x05F7080;
 constexpr u32 G2_BASE = 0x1010000;
 
@@ -279,6 +283,7 @@ struct SharedMemory
 	std::atomic<bool> boardSynced[4];
 	std::atomic<bool> exit;
 	u16 data[MEM_SIZE];
+	PipeData<std::pair<u16, bool>, 16> keyboardEvents;
 };
 
 template<typename T, size_t SIZE>
@@ -300,10 +305,9 @@ struct Pipe
 
 	T read()
 	{
-		if (readIndex == writeIndex) {
-			// TODO log underflow
+		if (readIndex == writeIndex)
+			// underflow
 			return {};
-		}
 		T v = localData[readIndex];
 		readIndex = (readIndex + 1) % SIZE;
 		return v;
@@ -327,13 +331,19 @@ struct Pipe
 	u32 readIndex = 0;
 };
 
-static int schedCallback(int tag, int cycles, int jitter, void *arg) {
-	((Multiboard *)arg)->syncWait();
-	return SyncCycles;
-}
+using KeyboardEvent = std::pair<u16, bool>;
+struct MultiKeyboard : public Pipe<KeyboardEvent, 16>
+{
+	MultiKeyboard(PipeData<KeyboardEvent, 16>& data)
+		: Pipe<KeyboardEvent, 16>(data)
+	 {}
+};
+
+Multiboard *Multiboard::Instance;
 
 Multiboard::Multiboard()
 {
+	Instance = this;
 	sharedMem = nullptr;
 
 	boardId = config::loadInt("naomi", "BoardId");
@@ -395,8 +405,20 @@ Multiboard::Multiboard()
 		sharedMem->boardReady[1] = sharedMem->boardReady[2] = sharedMem->boardReady[3] = true;
 		sharedMem->boardSynced[1] = sharedMem->boardSynced[2] = sharedMem->boardSynced[3] = true;
 	}
+	if (settings.content.gameId.substr(0, 4) == "F355")
+		syncCycles = BaseSyncCycles / 2;
+	else
+		syncCycles = BaseSyncCycles;
 	schedId = sh4_sched_register(0, schedCallback, this);
-	sh4_sched_request(schedId, SyncCycles);
+	sh4_sched_request(schedId, syncCycles);
+	keyboard = std::make_unique<MultiKeyboard>(sharedMem->keyboardEvents);
+}
+
+int Multiboard::schedCallback(int tag, int cycles, int jitter, void *arg)
+{
+	Multiboard *multiboard = (Multiboard *)arg;
+	multiboard->syncWait();
+	return multiboard->syncCycles;
 }
 
 void Multiboard::startSlave()
@@ -412,40 +434,75 @@ void Multiboard::startSlave()
 	for (int i = 0; i < boardCount; i++)
 		sharedMem->boardReady[i] = false;
 
+	bool derby = settings.content.gameId.substr(0, 6) == " DERBY";
 	int x = config::loadInt("window", "left", (1920 - 640) / 2);
 	int y = config::loadInt("window", "top", (1080 - 480) / 2);
 	int width = config::loadInt("window", "width", 640);
-	std::string biosFile = CurrentCartridge->game->bios == nullptr ? "naomi" : CurrentCartridge->game->bios;
-	std::string biosPath = hostfs::findNaomiBios(biosFile + ".zip");
-	if (biosPath.empty())
-		biosPath = hostfs::findNaomiBios(biosFile + ".7z");
+	std::string romPath;
+	if (derby)
+		// DOC slaves have the same cart as master
+		romPath = settings.content.path;
+	else
+		romPath = CurrentCartridge->game->bios == nullptr ? "naomi" : CurrentCartridge->game->bios;
 
 	for (int i = 0; i < slaves; i++)
 	{
 		std::string region = "config:Dreamcast.Region=" + std::to_string(config::Region);
 		std::string board = "naomi:BoardId=" + std::to_string(i + 1);
 		int slaveX = x;
-		if (settings.content.gameId.substr(0, 6) == " DERBY")
+		const char *location;
+		if (derby) {
 			slaveX = x + width;
+			location = T("Right");
+		}
 		else if (slaves == 2)
-			slaveX = i == 0 ? x - width : x + width;
+		{
+			if (i == 0) {
+				slaveX = x - width;
+				location = T("Left");
+			}
+			else {
+				slaveX = x + width;
+				location = T("Right");
+			}
+		}
 		else if (slaves == 3)
-			slaveX = i == 1 ? x - width : i == 2 ? x + width : x;
+		{
+			switch (i)
+			{
+			case 0:
+				slaveX = x;
+				location = T("Center");
+				break;
+			case 1:
+				slaveX = x - width;
+				location = T("Left");
+				break;
+			case 2:
+				slaveX = x + width;
+				location = T("Right");
+				break;
+			}
+		}
 		std::string left = "window:left=" + std::to_string(slaveX);
 		std::string top = "window:top=" + std::to_string(y);
-		std::string gameId = "naomi:gameId=" + settings.content.gameId + "-SLAVE";
+		std::string title = "window:title=\"" + std::string(location) + " - " + settings.content.title + '"';
+		std::string gameId = "naomi:gameId=\"" + settings.content.gameId + "-SLAVE\"";
 		const char *args[] = {
 			"-config", board.c_str(),
 			"-config", region.c_str(),
 			"-config", left.c_str(),
 			"-config", top.c_str(),
 			"-config", gameId.c_str(),
-			biosPath.c_str()
+			"-config", title.c_str(),
+			romPath.c_str()
 		};
 		os_RunInstance(std::size(args), args);
 	}
 	slaveStarted = true;
 }
+
+void sdlReceiveSlaveKeyboardEvent(u16 scancode, bool pressed);
 
 void Multiboard::syncWait()
 {
@@ -508,14 +565,31 @@ void Multiboard::syncWait()
 				}
 			}
 		} while (true);
+		// Receive keyboard events and pipe them back to SDL. Must be done on the main/ui thread
+		if (keyboard != nullptr)
+		{
+			while (keyboard->available())
+			{
+				auto pair = keyboard->read();
+				if (!pair.second)
+					// Ignore key up events: we always send them in pair
+					continue;
+				gui_runOnUiThread([pair]() {
+					sdlReceiveSlaveKeyboardEvent(pair.first, true);
+					sdlReceiveSlaveKeyboardEvent(pair.first, false);
+				});
+			}
+		}
 	}
 	else
 	{
 		const u16 newStatus = sharedMem->status;
 		if ((newStatus ^ g2status) & 1) {
 			// Bank switch
-			if ((1 << boardId) & newStatus)
+			if ((1 << boardId) & newStatus) {
+				DEBUG_LOG(NAOMI, "[%d] Slave gdrom interrupt", boardId);
 				asic_RaiseInterrupt(holly_GDROM_CMD);
+			}
 		}
 		g2status = newStatus;
 	}
@@ -523,6 +597,7 @@ void Multiboard::syncWait()
 
 Multiboard::~Multiboard()
 {
+	Instance = nullptr;
 	if (schedId != -1)
 		sh4_sched_unregister(schedId);
 
@@ -779,7 +854,7 @@ void Multiboard::writeG2Ext(u32 addr, u32 size, u32 data)
 
 bool Multiboard::dmaStart()
 {
-	if (isMaster())
+	if (isMaster() || (CurrentCartridge != nullptr && CurrentCartridge->getSize() > 0))
 		return false;
 
 	DEBUG_LOG(NAOMI, "Multiboard DMA start offset %x addr %08X len %d", dmaOffset, SB_GDSTAR, SB_GDLEN);
@@ -800,6 +875,11 @@ void Multiboard::reset()
 {
 	if (isSlave())
 		sharedMem->status.fetch_and(~(0x10 << boardId));
+}
+
+void Multiboard::keyboardEvent(u16 code, bool pressed) {
+	if (Instance != nullptr && Instance->keyboard != nullptr)
+		Instance->keyboard->write(std::make_pair(code, pressed));
 }
 
 #endif // NAOMI_MULTIBOARD

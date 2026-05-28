@@ -27,6 +27,7 @@
 #endif
 
 struct SharedMemory;
+struct MultiKeyboard;
 
 class Multiboard
 {
@@ -43,11 +44,13 @@ public:
 	bool dmaStart();
 	void reset();
 	void syncWait();
+	static void keyboardEvent(u16 code, bool pressed);
 
 private:
 	bool isMaster() const { return boardId == 0; }
 	bool isSlave() const { return boardId != 0; }
 	void startSlave();
+	static int schedCallback(int tag, int cycles, int jitter, void *arg);
 
 	int boardId = 0;
 	u32 offset = 0;
@@ -61,8 +64,11 @@ private:
 	int boardCount = 0;
 	bool slaveStarted = false;
 	int schedId;
+	int syncCycles;
 	u16 g2status = 0;
 	u16 dmaOffset = 0;
+	std::unique_ptr<struct MultiKeyboard> keyboard;
+	static Multiboard *Instance;
 };
 
 #else // !NAOMI_MULTIBOARD
@@ -86,6 +92,8 @@ public:
 	void reset() { }
 
 	void syncWait() { }
+
+	static void keyboardEvent(u16 code, bool pressed) { }
 };
 
 #endif // !NAOMI_MULTIBOARD

@@ -70,6 +70,7 @@ public:
 	virtual void SetKey(u32 key) { }
 	virtual void SetKeyData(u8 *key_data) { }
 	virtual bool GetBootId(RomBootID *bootId) = 0;
+	u32 getSize() const { return RomSize; }
 
 	const Game *game = nullptr;
 
