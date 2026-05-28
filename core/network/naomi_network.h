@@ -222,5 +222,5 @@ public:
 };
 extern NaomiNetwork naomiNetwork;
 
-void SetNaomiNetworkConfig(int node);
+void SetNaomiNetworkConfig(int node, int nodeCount);
 bool NaomiNetworkSupported();

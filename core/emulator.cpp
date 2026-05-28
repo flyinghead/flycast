@@ -562,15 +562,16 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 		if (path != nullptr && strlen(path) > 0)
 		{
 			settings.content.path = path;
-			if (settings.naomi.slave) {
-				settings.content.fileName = path;
-			}
-			else
-			{
+			try {
 				hostfs::FileInfo info = hostfs::storage().getFileInfo(settings.content.path);
 				settings.content.fileName = info.name;
 				if (settings.content.title.empty())
 					settings.content.title = get_file_basename(info.name);
+			} catch (const hostfs::StorageException& e) {
+				if (settings.naomi.slave)
+					settings.content.fileName = path;
+				else
+					throw;
 			}
 		}
 		else
@@ -638,10 +639,6 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 		{
 			nvmem::loadFiles();
 			naomi_cart_LoadRom(settings.content.path, settings.content.fileName, progress);
-#ifndef LIBRETRO
-			if (settings.content.gameId.empty() && settings.naomi.slave)
-				settings.content.gameId = config::loadStr("naomi", "gameId", "");
-#endif
 			loadGameSpecificSettings();
 			// Reload the BIOS in case a game-specific region is set
 			naomi_cart_LoadBios(path);

@@ -109,7 +109,7 @@ bool NaomiNetwork::startNetwork()
 
 			poll();
 
-			if (slaves.size() == 3 || (_startNow && !slaves.empty()))
+			if (slaves.size() == 4 || (_startNow && !slaves.empty()))	// FIXME need 8 for DOC
 				break;
 			std::this_thread::sleep_for(milliseconds(20));
 		}
@@ -127,7 +127,7 @@ bool NaomiNetwork::startNetwork()
 			nextPeer = slaves[0].addr;
 
 			os_notify(T("Starting game"), 2000);
-			SetNaomiNetworkConfig(0);
+			SetNaomiNetworkConfig(0, slotCount);
 
 			return true;
 		}
@@ -184,7 +184,7 @@ bool NaomiNetwork::startNetwork()
 		}
 		if (!networkStopping && _startNow)
 		{
-			SetNaomiNetworkConfig(slotId);
+			SetNaomiNetworkConfig(slotId, slotCount);
 			return true;
 		}
 	}
@@ -292,7 +292,7 @@ bool NaomiNetwork::receive(const sockaddr_in *addr, const Packet *packet, u32 si
 // Sets the game network config using MIE eeprom or bbsram:
 // Node -1 disables network
 // Node 0 is master, nodes 1+ are slave
-void SetNaomiNetworkConfig(int node)
+void SetNaomiNetworkConfig(int node, int nodeCount)
 {
 	const std::string& gameId = settings.content.gameId;
 	if (gameId == "ALIEN FRONT")
@@ -390,6 +390,42 @@ void SetNaomiNetworkConfig(int node)
 	else if (gameId == "SEGA TETRIS") {
 		write_naomi_eeprom(0x50, node + 1);
 	}
+	else if (gameId.substr(0, 6) == " DERBY")
+	{
+		if (read_naomi_eeprom(3) == 'B' && read_naomi_eeprom(4) == 'D' && read_naomi_eeprom(5) == 'Y')
+		{
+			// derbyoc2: DOC 2 v2.1
+			if (node == -1 && config::MultiboardSlaves <= 1)
+				// no link (satellite)
+				write_naomi_eeprom(0x30, read_naomi_eeprom(0x30) | 1);
+			else
+				write_naomi_eeprom(0x30, read_naomi_eeprom(0x30) & 0xfe);
+		}
+		else
+		{
+			// DOC (BAX0)
+			// DOC 2000 (BBX0)
+			// DOC WE (BEF0)
+			if (config::MultiboardSlaves <= 1)
+			{
+				if (node == -1)
+					// no link
+					write_naomi_eeprom(0x45, (read_naomi_eeprom(0x45) & 0xfc) | 3);
+				else
+					// satellite
+					write_naomi_eeprom(0x45, (read_naomi_eeprom(0x45) & 0xfc) | 2);
+			}
+			else {
+				// Can't disable the network on the main screen
+				// For some reason, it is crucial to set the "node id" of the
+				// derbyocw mutiboard slave eeprom to 1.
+				write_naomi_eeprom(0x45, (read_naomi_eeprom(0x45) & 0xfc) | (settings.naomi.slave ? 1 : 0));
+			}
+			if (node != -1 && nodeCount < 5)
+				WARN_LOG(NETWORK,"Derby Owners Club doesn't support less than 4 satellites");
+			write_naomi_eeprom(0x4e, (read_naomi_eeprom(0x4e) & 0xf8) | std::max(nodeCount - 2, 3));
+		}
+	}
 }
 
 bool NaomiNetworkSupported()
@@ -399,12 +435,12 @@ bool NaomiNetworkSupported()
 		"HEAVY METAL JAPAN", "OUTTRIGGER     JAPAN", "SLASHOUT JAPAN VERSION", "SPAWN JAPAN",
 		"SPIKERS BATTLE JAPAN VERSION", "VIRTUAL-ON ORATORIO TANGRAM", "WAVE RUNNER GP", "WORLD KICKS",
 		"F355 CHALLENGE JAPAN", "SEGA TETRIS", " DERBY OWNERS CLUB WE ---------", " DERBY OWNERS CLUB ------------",
-		" DERBY OWNERS CLUB II-----------"
+		" DERBY OWNERS CLUB II-----------",
 		// Naomi 2
 		"CLUB KART IN JAPAN", "INITIAL D", "INITIAL D Ver.2", "INITIAL D Ver.3", "THE KING OF ROUTE66",
 		"SEGA DRIVING SIMULATOR"
 	};
-	if (!config::NetworkEnable)
+	if (!config::NetworkEnable || settings.naomi.slave)
 		return false;
 	if (settings.content.fileName.substr(0, 6) == "clubkp" || settings.content.fileName == "f355")
 		// Club Kart Prize and F355 (vanilla) don't support networking

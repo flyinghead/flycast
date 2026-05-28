@@ -19,6 +19,7 @@
 #include "stdclass.h"
 #include "imgui.h"
 #include "hw/naomi/card_reader.h"
+#include "hw/naomi/multiboard.h"
 #if !defined(_WIN32) && !defined(__APPLE__) && !defined(__SWITCH__)
 #include "linux-dist/icon.h"
 #endif
@@ -105,10 +106,15 @@ static void sdl_close_joystick(SDL_JoystickID instance)
 
 static void setWindowTitleGame()
 {
-	if (settings.naomi.slave)
-		SDL_SetWindowTitle(window, ("Flycast - Multiboard Slave " + config::loadStr("naomi", "BoardId")).c_str());
-	else
-		SDL_SetWindowTitle(window, ("Flycast - " + settings.content.title).c_str());
+	std::string title = config::loadStr("window", "title");
+	if (title.empty())
+	{
+		if (settings.naomi.slave)
+			title = "Multiboard Slave " + config::loadStr("naomi", "BoardId");
+		else
+			title = settings.content.title;
+	}
+	SDL_SetWindowTitle(window, ("Flycast - " + title).c_str());
 }
 
 static void captureMouse(bool capture)
@@ -330,6 +336,10 @@ void input_sdl_handle()
 				checkRawInput();
 				if (event.key.repeat == 0)
 				{
+					if (settings.naomi.slave) {
+						Multiboard::keyboardEvent(event.key.keysym.scancode, event.type == SDL_KEYDOWN);
+						break;
+					}
 					auto is_key_mapped = [](u32 code) -> bool {
 						const InputMapping::InputSet inputSet{InputMapping::InputDef::from_button(code)};
 #if defined(_WIN32) && !defined(TARGET_UWP)
@@ -593,6 +603,22 @@ void input_sdl_handle()
 					mouse->setButton(Mouse::LEFT_BUTTON, false);
 				}
 				break;
+		}
+	}
+}
+
+void sdlReceiveSlaveKeyboardEvent(u16 scancode, bool pressed)
+{
+	sdl_keyboard->input((SDL_Scancode)scancode, pressed);
+	if (pressed)
+	{
+		u32 flags = SDL_GetWindowFlags(window);
+		if ((flags & SDL_WINDOW_INPUT_FOCUS) == 0)
+		{
+			SDL_SetWindowInputFocus(window);
+			// Doesn't raise the window on linux but shows a popup "Flycast is ready"
+			// Likely to be the same on other platforms for security reasons.
+			SDL_RaiseWindow(window);
 		}
 	}
 }

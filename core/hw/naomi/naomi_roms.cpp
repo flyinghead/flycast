@@ -1446,7 +1446,7 @@ const Game Games[] =
         },
 		nullptr,
 		nullptr,
-		nullptr,
+		derbyo2k_eeprom_dump,
 		1,
     },
     // Derby Owners Club (JPN, USA, EXP, KOR, AUS) (Rev B)
@@ -1478,7 +1478,7 @@ const Game Games[] =
         },
 		nullptr,
 		nullptr,
-		nullptr,
+		derbyoc_eeprom_dump,
 		1,
     },
     // Derby Owners Club II (JPN, USA, EXP, KOR, AUS) (Rev B)
@@ -1507,7 +1507,7 @@ const Game Games[] =
         },
 		nullptr,
 		nullptr,
-		nullptr,
+		derbyoc2_eeprom_dump,
 		1,
     },
     // Derby Owners Club World Edition (JPN, USA, EXP, KOR, AUS) (Rev D)
@@ -1532,7 +1532,7 @@ const Game Games[] =
         },
 		nullptr,
 		nullptr,
-		nullptr,
+		derbyocw_eeprom_dump,
 		1,
     },
     // Derby Owners Club World Edition (Rev A)
@@ -1557,7 +1557,7 @@ const Game Games[] =
         },
 		nullptr,
 		nullptr,
-		nullptr,
+		drbyocwc_eeprom_dump,
 		1,
     },
     // Derby Owners Club World Edition (Rev B)
@@ -1582,7 +1582,7 @@ const Game Games[] =
         },
 		nullptr,
 		nullptr,
-		nullptr,
+		drbyocwc_eeprom_dump,
 		1,
     },
     // Derby Owners Club World Edition (Rev C)
@@ -1607,7 +1607,7 @@ const Game Games[] =
         },
 		nullptr,
 		nullptr,
-		nullptr,
+		drbyocwc_eeprom_dump,
 		1,
     },
     // Derby Owners Club World Edition (Rev T)
@@ -1632,7 +1632,7 @@ const Game Games[] =
         },
 		nullptr,
 		nullptr,
-		nullptr,
+		drbyocwc_eeprom_dump,
 		1,
     },
     // Dead or Alive 2 (JPN, USA, EXP, KOR, AUS)
@@ -1837,7 +1837,7 @@ const Game Games[] =
     {
         "f355",
 		nullptr,
-        "Ferrari F355 Challenge (deluxe, no link)",
+        "Ferrari F355 Challenge (deluxe)",
         0x0b000000,
         0x280e8f84,
         "f355dlx",
@@ -1881,7 +1881,7 @@ const Game Games[] =
     {
         "f355twin",
 		nullptr,
-        "Ferrari F355 Challenge (twin/deluxe)",
+        "Ferrari F355 Challenge (twin)",
         0x0b000000,
         0x2806efd4,
         "f355bios",
@@ -1920,7 +1920,7 @@ const Game Games[] =
     {
         "f355twinp",
         "f355twin",
-        "Ferrari F355 Challenge (twin/deluxe, preview)",
+        "Ferrari F355 Challenge (twin, preview)",
         0x0b000000,
         0x2806efd4,
         "f355bios",
@@ -1959,7 +1959,7 @@ const Game Games[] =
     {
         "f355twn2",
 		nullptr,
-        "Ferrari F355 Challenge 2 - International Course Edition (twin/deluxe)",
+        "Ferrari F355 Challenge 2",
         0xb000000,
         0x281666c6,
         "f355bios",
