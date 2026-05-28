@@ -97,7 +97,7 @@ private:
 
 	VmaAllocator allocator = VK_NULL_HANDLE;
 	VmaAllocation allocation = VK_NULL_HANDLE;
-	VmaAllocationInfo allocInfo;
+	VmaAllocationInfo allocInfo {};
 
 	friend class VMAllocator;
 };
