@@ -450,7 +450,7 @@ void Multiboard::startSlave()
 		std::string region = "config:Dreamcast.Region=" + std::to_string(config::Region);
 		std::string board = "naomi:BoardId=" + std::to_string(i + 1);
 		int slaveX = x;
-		const char *location;
+		const char *location = "";
 		if (derby) {
 			slaveX = x + width;
 			location = T("Right");
@@ -620,12 +620,12 @@ Multiboard::~Multiboard()
 #endif
 }
 
-u32 Multiboard::readG1(u32 addr, u32 size)
+std::pair<u32, bool> Multiboard::readG1(u32 addr, u32 size)
 {
 	switch (addr)
 	{
 	case NAOMI_MBOARD_OFFSET_addr:
-		return offset;
+		return std::make_pair(offset, true);
 
 	case NAOMI_MBOARD_DATA_addr:
 		{
@@ -643,48 +643,47 @@ u32 Multiboard::readG1(u32 addr, u32 size)
 			u16 data = sharedMem->data[addr & (MEM_SIZE - 1)];
 			//DEBUG_LOG(NAOMI, "[%d] read MBOARD_DATA[%x]: %x (pc = %x)", boardId, addr, data, p_sh4rcb->cntx.pc);
 			offset++;
-			return data;
+			return std::make_pair(data, true);
 		}
 
 	case NOAMI_MBOARD_DMA_OFFSET_addr:
 		DEBUG_LOG(NAOMI, "[%d] MBOARD_DMA_OFFSET read: %x", boardId, dmaOffset);
-		return dmaOffset;
+		return std::make_pair(dmaOffset, true);
 
 	case NAOMI_MBOARD_BOARD_ID_addr:
 		DEBUG_LOG(NAOMI, "[%d] MBOARD_BOARD_ID read", boardId);
 		 // b3: link transport mode (0=multiboard uart, 1=sh4 scif)
 		 // b4: link speed (0=38400, 1=115200)
-		return boardId | 0x10;
+		return std::make_pair(boardId | 0x10, true);
 
 	case G1_BASE + 0x08:
 		DEBUG_LOG(NAOMI, "[%d] 5F7088 read", boardId);
-		return 0x80;    // loops until bit 7 is set
+		return std::make_pair(0x80, true);    // loops until bit 7 is set
 
 	case G1_BASE + 0x10:
 		DEBUG_LOG(NAOMI, "[%d] 5F7090 read", boardId);
-		return 0x60;       // ? or 0x61 or 0x62
+		return std::make_pair(0x60, true);       // ? or 0x61 or 0x62
 
 	case G1_BASE + 0x14:
 		DEBUG_LOG(NAOMI, "[%d] 5F7094 read", boardId);
-		return 0x43;    // set to 43 before
+		return std::make_pair(0x43, true);    // set to 43 before
 
 	case NAOMI_MBOARD_CONFIG_SLOT_addr:
 		DEBUG_LOG(NAOMI, "[%d] Multiboard config slot read", boardId);
-		return boardId;
+		return std::make_pair(boardId, true);
 
 	default:
-		DEBUG_LOG(NAOMI, "[%d] Unknown G1 register read<%d>: %x (pc = %x)", boardId, size, addr, p_sh4rcb->cntx.pc);
-		return 0xFFFF;
+		return std::make_pair(0, false);
 	}
 }
 
-void Multiboard::writeG1(u32 addr, u32 size, u32 data)
+bool Multiboard::writeG1(u32 addr, u32 data, u32 size)
 {
 	switch (addr)
 	{
 	case NAOMI_MBOARD_OFFSET_addr:
 		offset = data;
-		break;
+		return true;
 
 	case NAOMI_MBOARD_DATA_addr:
 		{
@@ -703,7 +702,7 @@ void Multiboard::writeG1(u32 addr, u32 size, u32 data)
 			sharedMem->data[addr & (MEM_SIZE - 1)] = data;
 			offset++;
 		}
-		break;
+		return true;
 
 	// The multiboard includes a 16550 UART.
 	// It is accessed on the G1 bus through an index register at 5F7070 (to select the 16550 register [0-7])
@@ -714,7 +713,7 @@ void Multiboard::writeG1(u32 addr, u32 size, u32 data)
 	case NOAMI_MBOARD_DMA_OFFSET_addr:
 		DEBUG_LOG(NAOMI, "[%d] MBOARD_DMA_OFFSET written: %x", boardId, data);
 		dmaOffset = data;
-		break;
+		return true;
 
 	case NAOMI_MBOARD_STATUS_addr:
 		if (isSlave())
@@ -732,15 +731,14 @@ void Multiboard::writeG1(u32 addr, u32 size, u32 data)
 				break;
 			}
 		}
-		break;
+		return true;
 
 	case NAOMI_MBOARD_CONFIG_SLOT_addr:
 		DEBUG_LOG(NAOMI, "[%d] Multiboard config slot set to %d", boardId, data);
-		break;
+		return true;
 
 	default:
-		DEBUG_LOG(NAOMI, "[%d] Unknown G1 register written<%d>: %x = %x (pc = %x)", boardId, size, addr, data, p_sh4rcb->cntx.pc);
-		break;
+		return false;
 	}
 }
 
@@ -793,7 +791,7 @@ u32 Multiboard::readG2Ext(u32 addr, u32 size)
 	return 0;
 }
 
-void Multiboard::writeG2Ext(u32 addr, u32 size, u32 data)
+void Multiboard::writeG2Ext(u32 addr, u32 data, u32 size)
 {
 	//DEBUG_LOG(NAOMI, "g2ext_writeMem<%d> %x = %x", size, addr, data);
 	switch (addr)
