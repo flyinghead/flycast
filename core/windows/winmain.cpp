@@ -429,10 +429,10 @@ void os_RunInstance(int argc, const char *argv[])
 		cmdLine += L" \"";
 		for (wchar_t *p = wname.get(); *p != L'\0'; p++)
 		{
-			cmdLine += *p;
 			if (*p == L'"')
 				// escape double quote
-				cmdLine += L'"';
+				cmdLine += L'\\';
+			cmdLine += *p;
 		}
 		cmdLine += L'"';
 	}
