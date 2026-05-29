@@ -76,10 +76,10 @@ private:
 class Multiboard
 {
 public:
-	u32 readG1(u32 addr, u32 size) {
-		return 0;
+	std::pair<u32, bool> readG1(u32 addr, u32 size) {
+		return std::make_pair(0, false);
 	}
-	void writeG1(u32 addr, u32 data, u32 size) { }
+	bool writeG1(u32 addr, u32 data, u32 size) { return false; }
 
 	u32 readG2Ext(u32 addr, u32 size) {
 		return 0;
