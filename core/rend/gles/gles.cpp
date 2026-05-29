@@ -461,7 +461,7 @@ void termGLCommon()
 #ifdef VIDEO_ROUTING
 	os_VideoRoutingTermGL();
 #endif
-	gl.quad.reset();
+	gl.quadDrawer.reset();
 
 	// palette, fog
 	glcache.DeleteTextures(1, &fogTextureId);
@@ -921,7 +921,7 @@ static void gl_create_resources()
 	gl.vbo.modvols = std::make_unique<GlBuffer>(GL_ARRAY_BUFFER);
 	gl.vbo.idxs = std::make_unique<GlBuffer>(GL_ELEMENT_ARRAY_BUFFER);
 
-	gl.quad = std::make_unique<GlQuadDrawer>();
+	gl.quadDrawer = std::make_unique<GlQuadDrawer>();
 }
 
 GLuint gl_CompileShader(const char* shader,GLuint type);
