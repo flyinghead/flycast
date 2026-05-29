@@ -35,11 +35,11 @@ public:
 	Multiboard();
 	~Multiboard();
 
-	u32 readG1(u32 addr, u32 size);
-	void writeG1(u32 addr, u32 size, u32 data);
+	std::pair<u32, bool> readG1(u32 addr, u32 size);
+	bool writeG1(u32 addr, u32 data, u32 size);
 
 	u32 readG2Ext(u32 addr, u32 size);
-	void writeG2Ext(u32 addr, u32 size, u32 data);
+	void writeG2Ext(u32 addr, u32 data, u32 size);
 
 	bool dmaStart();
 	void reset();
@@ -79,12 +79,12 @@ public:
 	u32 readG1(u32 addr, u32 size) {
 		return 0;
 	}
-	void writeG1(u32 addr, u32 size, u32 data) { }
+	void writeG1(u32 addr, u32 data, u32 size) { }
 
 	u32 readG2Ext(u32 addr, u32 size) {
 		return 0;
 	}
-	void writeG2Ext(u32 addr, u32 size, u32 data) { }
+	void writeG2Ext(u32 addr, u32 data, u32 size) { }
 
 	bool dmaStart() {
 		return false;

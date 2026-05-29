@@ -976,8 +976,6 @@ u32 NaomiCartridge::ReadMem(u32 address, u32 size)
 	default:
 		break;
 	}
-	if (multiboard != nullptr)
-		return multiboard->readG1(address, size);
 
 	if (address == NAOMI_MBOARD_DATA_addr || address == NAOMI_MBOARD_OFFSET_addr)
 		return 1;
@@ -1061,9 +1059,7 @@ void NaomiCartridge::WriteMem(u32 address, u32 data, u32 size)
 	default:
 		break;
 	}
-	if (multiboard != nullptr)
-		multiboard->writeG1(address, size, data);
-	else if (address != NAOMI_MBOARD_DATA_addr
+	if (address != NAOMI_MBOARD_DATA_addr
 			&& address != NAOMI_MBOARD_OFFSET_addr
 			&& address != NAOMI_MBOARD_STATUS_addr)
 		DEBUG_LOG(NAOMI, "naomiCart::WriteMem<%d>: unknown %08x <= %x", size, address, data);
