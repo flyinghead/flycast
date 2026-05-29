@@ -39489,8 +39489,8 @@ struct retro_core_options_v2 options_ga = {
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_INFO_0_GL "Exporta sempre as texturas que xa foron substituídas por texturas personalizadas."
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_GL "Zona morta panca analóxica"
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_INFO_0_GL "Selecciona ata onde tes que empuxar o stick analóxico antes de que comece a procesarse."
-#define OPTION_VAL_0_GL NULL
-#define OPTION_VAL_5_GL NULL
+#define OPTION_VAL_0_GL "0 %"
+#define OPTION_VAL_5_GL "5 %"
 #define OPTION_VAL_10_GL NULL
 #define OPTION_VAL_15_GL NULL
 #define OPTION_VAL_20_GL NULL
