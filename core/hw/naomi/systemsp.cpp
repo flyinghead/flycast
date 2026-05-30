@@ -36,6 +36,7 @@
 #include "stdclass.h"
 #include "hw/mem/addrspace.h"
 #include "oslib/i18n.h"
+#include "dinokich.h"
 #include <cerrno>
 #include <deque>
 
@@ -2222,8 +2223,11 @@ void SystemSpCart::Init(LoadProgress *progress, std::vector<u8> *digest)
 	if (!eeprom.Load(getEepromPath()) && naomi_default_eeprom != nullptr)
 		memcpy(eeprom.data, naomi_default_eeprom, 128);
 
-	// dinoki4 doesn't use rfid chips. dinokich uses a different reader/writer protocol
-	if ((!strncmp(game->name, "dinoki", 6) && strcmp(game->name, "dinoki4") != 0 && strcmp(game->name, "dinokich") != 0)
+	// dinoki4 doesn't use rfid chips. dinokich and loveber3cn use a different reader/writer protocol
+	if (!strncmp(game->name, "dinokich", 8) || !strncmp(game->name, "loveber3cn", 10)) {
+		new DinokichCardReader(&uart1, 1, game->name);
+	}
+	else if ((!strncmp(game->name, "dinoki", 6) && strcmp(game->name, "dinoki4") != 0)
 			|| !strncmp(game->name, "loveber", 7))
 	{
 		new RfidReaderWriter(&uart1, 1, game->name);

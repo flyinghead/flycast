@@ -6,6 +6,10 @@ target_sources(${PROJECT_NAME} PRIVATE
         awcartridge.h
         decrypt.cpp
         decrypt.h
+        dinokich.cpp
+        dinokich.h
+        dinokich_card.cpp
+        dinokich_card.h
         gdcartridge.cpp
         gdcartridge.h
         m1cartridge.cpp
