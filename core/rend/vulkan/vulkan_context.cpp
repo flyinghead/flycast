@@ -975,7 +975,14 @@ void VulkanContext::Present() noexcept
 		try {
 			DoSwapAutomation();
 			vk::Result res = presentQueue.presentKHR(vk::PresentInfoKHR(1, &(*renderCompleteSemaphores[currentSemaphore]), 1, &(*swapChain), &currentImage));
-			(void)res;
+			// presentKHR lists eSuboptimalKHR as a success code so it is
+			// returned rather than thrown. Treat it as a request to
+			// recreate the swapchain on the next frame; otherwise the
+			// surface can stay stuck in a sub-optimal configuration
+			// (notably across DPI / window-resize / display-mode changes
+			// and with MoltenVK on Apple platforms).
+			if (res == vk::Result::eSuboptimalKHR)
+				resized = true;
 			currentSemaphore = (currentSemaphore + 1) % renderCompleteSemaphores.size();
 
 			if (lastFrameView && IsValid() && !gui_is_open())
@@ -984,6 +991,14 @@ void VulkanContext::Present() noexcept
 					PresentFrame(vk::Image(), lastFrameView, lastFrameExtent, lastFrameAR);
 					res = presentQueue.presentKHR(vk::PresentInfoKHR(1, &(*renderCompleteSemaphores[currentSemaphore]), 1, &(*swapChain), &currentImage));
 					currentSemaphore = (currentSemaphore + 1) % renderCompleteSemaphores.size();
+					if (res == vk::Result::eSuboptimalKHR)
+					{
+						// Stop queuing additional dupe presents into a swap
+						// chain that we are about to tear down: the extra
+						// in-flight semaphores would just delay waitIdle().
+						resized = true;
+						break;
+					}
 				}
 		} catch (const vk::SystemError& e) {
 			// Happens when resizing the window
