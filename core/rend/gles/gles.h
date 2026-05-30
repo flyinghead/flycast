@@ -294,7 +294,7 @@ struct gl_ctx
 		std::unique_ptr<GlFramebuffer> framebuffer;
 	} videorouting;
 
-	std::unique_ptr<GlQuadDrawer> quad;
+	std::unique_ptr<GlQuadDrawer> quadDrawer;
 	const char *gl_version;
 	const char *glsl_version_header;
 	int gl_major;
