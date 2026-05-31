@@ -24,8 +24,8 @@ jobs:
             version: '10.1'
             pkginstall: sudo pkgin update && sudo pkgin -y install alsa-lib ccache clang cmake git libao libcdio libusb1-1.0.29 libzip lua54 miniupnpc ninja-build pkgconf pulseaudio SDL2
           - operating_system: openbsd
-            version: '7.8'
-            pkginstall: sudo pkg_add -u && sudo pkg_add ccache cmake git libao libcdio libusb1-1.0.29 libzip lua-5.4.7 miniupnpc ninja pulseaudio sdl2
+            version: '7.9'
+            pkginstall: sudo pkg_add -u && sudo pkg_add ccache cmake git libao libcdio libusb1-1.0.29 libzip lua-5.4.8p0 miniupnpc ninja pulseaudio sdl2
         exclude:
           - architecture: arm64
 
@@ -41,13 +41,20 @@ jobs:
           key: ccache-${{ matrix.operating_system }}-${{ matrix.architecture }}-${{ github.sha }}
           restore-keys: ccache-${{ matrix.operating_system }}-${{ matrix.architecture }}-
 
-      - uses: cross-platform-actions/action@v0.32.0
+      - name: Start VM
+        uses: cross-platform-actions/action@v1
         with:
           operating_system: ${{ matrix.operating_system }}
           architecture: ${{ matrix.architecture }}
           version: ${{ matrix.version }}
           environment_variables: CCACHE_DIR
-          run: |
-            ${{ matrix.pkginstall }}
-            cmake -B build -DUSE_LIBCDIO=ON -DCMAKE_BUILD_TYPE=Release -G Ninja -DLIBRETRO=${{ matrix.libretro }}
-            cmake --build build --config Release
+
+      - name: Set up build environment
+        run: ${{ matrix.pkginstall }}
+        shell: cpa.sh {0}
+
+      - name: CMake
+        run: |
+          cmake -B build -DUSE_LIBCDIO=ON -DCMAKE_BUILD_TYPE=Release -G Ninja -DLIBRETRO=${{ matrix.libretro }}
+          cmake --build build --config Release
+        shell: cpa.sh {0}
