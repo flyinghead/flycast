@@ -38,7 +38,6 @@
 {
 	GamepadDevice::Unregister(mouse);
 	mouse.reset();
-	[super dealloc];
 }
 
 - (void)touchLocation:(UITouch*)touch;
