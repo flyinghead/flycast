@@ -49,7 +49,6 @@
 {
 	GamepadDevice::Unregister(virtualGamepad);
 	virtualGamepad.reset();
-	[super dealloc];
 }
 
 - (void)showController:(UIView *)parentView
