@@ -144,9 +144,6 @@ static bool loadBios(const char *biosName, Archive *child_archive, Archive *pare
 		}
 	}
 
-	// Reload the writeable portion of the FlashROM
-	if (found_region)
-		nvmem::reloadAWBios();
 	if (config::GGPOEnable)
 		md5.getDigest(settings.network.md5.bios);
 

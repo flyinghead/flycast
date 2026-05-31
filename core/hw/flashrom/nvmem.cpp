@@ -150,81 +150,78 @@ static void add_isp_to_nvmem(DCFlashChip *flash, const char *username)
 
 static void fixUpDCFlash()
 {
-	if (settings.platform.isConsole())
+	static_cast<DCFlashChip*>(sys_nvmem)->Validate();
+
+	// overwrite factory flash settings
+	if (config::Region <= 2)
 	{
-		static_cast<DCFlashChip*>(sys_nvmem)->Validate();
-
-		// overwrite factory flash settings
-		if (config::Region <= 2)
-		{
-			sys_nvmem->data[0x1a002] = '0' + config::Region;
-			sys_nvmem->data[0x1a0a2] = '0' + config::Region;
-		}
-		if (config::Language <= 5)
-		{
-			sys_nvmem->data[0x1a003] = '0' + config::Language;
-			sys_nvmem->data[0x1a0a3] = '0' + config::Language;
-		}
-		if (config::Broadcast <= 3)
-		{
-			sys_nvmem->data[0x1a004] = '0' + config::Broadcast;
-			sys_nvmem->data[0x1a0a4] = '0' + config::Broadcast;
-		}
-
-		// overwrite user settings
-		struct flash_syscfg_block syscfg;
-		int res = static_cast<DCFlashChip*>(sys_nvmem)->ReadBlock(FLASH_PT_USER, FLASH_USER_SYSCFG, &syscfg);
-
-		if (!res)
-		{
-			// write out default settings
-			memset(&syscfg, 0xff, sizeof(syscfg));
-			syscfg.time_lo = 0;
-			syscfg.time_hi = 0;
-			syscfg.time_zone = 0;
-			syscfg.lang = 0;
-			syscfg.mono = 0;
-			syscfg.autostart = 1;
-		}
-		u32 now = aica::GetRTC_now();
-		syscfg.time_lo = now & 0xffff;
-		syscfg.time_hi = now >> 16;
-		if (config::Language <= 5)
-			syscfg.lang = config::Language;
-
-		if (static_cast<DCFlashChip*>(sys_nvmem)->WriteBlock(FLASH_PT_USER, FLASH_USER_SYSCFG, &syscfg) != 1)
-			WARN_LOG(FLASHROM, "Failed to save time and language to flash RAM");
-
-		add_isp_to_nvmem(static_cast<DCFlashChip*>(sys_nvmem), config::ISPUsername.get().c_str());
-
-     	// Check the console ID used by some network games (chuchu rocket)
-     	u8 *console_id = &sys_nvmem->data[0x1A058];
-     	if (!memcmp(console_id, "\377\377\377\377\377\377", 6))
-     	{
-     		srand(now);
-     		u8 sum = 0;
-     		for (int i = 0; i < 6; i++)
-     		{
-     			console_id[i] = rand();
-     			console_id[i + 0xA0] = console_id[i];	// copy at 1A0F8
-     			sum += console_id[i];
-     		}
-     		console_id[-1] = console_id[0xA0 - 1] = sum;
-     		console_id[-2] = console_id[0xA0 - 2] = ~sum;
-     	}
-     	else
-     	{
-     		// Fix checksum
-     		u8 sum = 0;
-     		for (int i = 0; i < 6; i++)
-     			sum += console_id[i];
-     		console_id[-1] = console_id[0xA0 - 1] = sum;
-     		console_id[-2] = console_id[0xA0 - 2] = ~sum;
-     	}
- 		// machine_version: ff - VA0, fe - VA1, fd - VA2
-     	// must be != 0xff
- 		console_id[7] = console_id[0xA0 + 7] = 0xfe;
+		sys_nvmem->data[0x1a002] = '0' + config::Region;
+		sys_nvmem->data[0x1a0a2] = '0' + config::Region;
 	}
+	if (config::Language <= 5)
+	{
+		sys_nvmem->data[0x1a003] = '0' + config::Language;
+		sys_nvmem->data[0x1a0a3] = '0' + config::Language;
+	}
+	if (config::Broadcast <= 3)
+	{
+		sys_nvmem->data[0x1a004] = '0' + config::Broadcast;
+		sys_nvmem->data[0x1a0a4] = '0' + config::Broadcast;
+	}
+
+	// overwrite user settings
+	struct flash_syscfg_block syscfg;
+	int res = static_cast<DCFlashChip*>(sys_nvmem)->ReadBlock(FLASH_PT_USER, FLASH_USER_SYSCFG, &syscfg);
+
+	if (!res)
+	{
+		// write out default settings
+		memset(&syscfg, 0xff, sizeof(syscfg));
+		syscfg.time_lo = 0;
+		syscfg.time_hi = 0;
+		syscfg.time_zone = 0;
+		syscfg.lang = 0;
+		syscfg.mono = 0;
+		syscfg.autostart = 1;
+	}
+	u32 now = aica::GetRTC_now();
+	syscfg.time_lo = now & 0xffff;
+	syscfg.time_hi = now >> 16;
+	if (config::Language <= 5)
+		syscfg.lang = config::Language;
+
+	if (static_cast<DCFlashChip*>(sys_nvmem)->WriteBlock(FLASH_PT_USER, FLASH_USER_SYSCFG, &syscfg) != 1)
+		WARN_LOG(FLASHROM, "Failed to save time and language to flash RAM");
+
+	add_isp_to_nvmem(static_cast<DCFlashChip*>(sys_nvmem), config::ISPUsername.get().c_str());
+
+	// Check the console ID used by some network games (chuchu rocket)
+	u8 *console_id = &sys_nvmem->data[0x1A058];
+	if (!memcmp(console_id, "\377\377\377\377\377\377", 6))
+	{
+		srand(now);
+		u8 sum = 0;
+		for (int i = 0; i < 6; i++)
+		{
+			console_id[i] = rand();
+			console_id[i + 0xA0] = console_id[i];	// copy at 1A0F8
+			sum += console_id[i];
+		}
+		console_id[-1] = console_id[0xA0 - 1] = sum;
+		console_id[-2] = console_id[0xA0 - 2] = ~sum;
+	}
+	else
+	{
+		// Fix checksum
+		u8 sum = 0;
+		for (int i = 0; i < 6; i++)
+			sum += console_id[i];
+		console_id[-1] = console_id[0xA0 - 1] = sum;
+		console_id[-2] = console_id[0xA0 - 2] = ~sum;
+	}
+	// machine_version: ff - VA0, fe - VA1, fd - VA2
+	// must be != 0xff
+	console_id[7] = console_id[0xA0 + 7] = 0xfe;
 }
 
 static std::unique_ptr<u8[]> loadFlashResource(const std::string& name, size_t& size)
@@ -257,10 +254,12 @@ static bool loadFlash()
 	bool rc = true;
 	if (settings.platform.isConsole()) {
 		rc = sys_nvmem->Load(getRomPrefix(), "%nvmem.bin", "nvram");
+		fixUpDCFlash();
 	}
 	else if (!settings.naomi.slave)
 	{
-		rc = sys_nvmem->Load(getArcadeFlashPath());
+		const std::string path = getArcadeFlashPath();
+		rc = sys_nvmem->Load(path);
 		if (!rc)
 		{
 			std::string flashName = get_file_basename(settings.content.fileName) + ".nvmem";
@@ -270,13 +269,16 @@ static bool loadFlash()
 			if (buffer)
 			{
 				sys_nvmem->Load(buffer.get(), size);
+				INFO_LOG(FLASHROM, "flash/nvmem loaded from resource %s", flashName.c_str());
 				rc = true;
 			}
+		}
+		else {
+			INFO_LOG(FLASHROM, "flash/nvmem loaded from file %s", path.c_str());
 		}
 	}
 	if (!rc)
 		INFO_LOG(FLASHROM, "flash/nvmem is missing, will create new file...");
-	fixUpDCFlash();
 	if (config::GGPOEnable)
 		sys_nvmem->digest(settings.network.md5.nvmem);
 
@@ -296,19 +298,20 @@ static bool loadFlash()
 bool loadFiles()
 {
 	loadFlash();
-	if (!settings.platform.isAtomiswave())
-	{
-		if (sys_rom->Load(getRomPrefix(), "%boot.bin;%boot.bin.bin;%bios.bin;%bios.bin.bin", "bootrom"))
-		{
-			if (config::GGPOEnable)
-				sys_rom->digest(settings.network.md5.bios);
-			bios_loaded = true;
-		}
-		else if (settings.platform.isConsole())
-			return false;
-	}
+	if (!settings.platform.isConsole())
+		return true;
 
-	return true;
+	if (sys_rom->Load(getRomPrefix(), "%boot.bin;%bios.bin", "bootrom"))
+	{
+		if (config::GGPOEnable)
+			sys_rom->digest(settings.network.md5.bios);
+		bios_loaded = true;
+		return true;
+	}
+	else {
+		// Use HLE BIOS
+		return false;
+	}
 }
 
 void saveFiles()
@@ -357,15 +360,6 @@ void writeAWBios(u32 addr, u32 data, u32 sz)
 u8 *getBiosData()
 {
 	return sys_rom->data;
-}
-
-void reloadAWBios()
-{
-	if (!settings.platform.isAtomiswave())
-		return;
-	if (sys_rom->Reload())
-		return;
-	loadDefaultAWBiosFlash();
 }
 
 void init()

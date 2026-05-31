@@ -36,7 +36,6 @@ u8 *getFlashData();
 u32 readBios(u32 addr, u32 sz);
 void writeAWBios(u32 addr, u32 data, u32 sz);
 u8 *getBiosData();
-void reloadAWBios();
 
 bool loadFiles();
 void saveFiles();
