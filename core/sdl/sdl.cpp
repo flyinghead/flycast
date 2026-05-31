@@ -721,7 +721,7 @@ bool sdl_recreate_window(u32 flags)
         if (SDL_GetDisplayDPI(0, &dpi, nullptr, nullptr) == 0 && dpi > 0) {
             // Standard DPI is 96, so scale factor is DPI/96
             hdpiScaling = dpi / 96.f;
-            if (hdpiScaling > 1.1f)  // Only apply if noticeably different
+            if (hdpiScaling > 1.2f)  // Only apply if noticeably different
                 NOTICE_LOG(COMMON, "Using SDL detected DPI: %.2f (scale %.2f)", dpi, hdpiScaling);
             else
                 hdpiScaling = 1.f;  // Don't apply tiny scaling differences
