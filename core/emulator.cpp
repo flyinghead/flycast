@@ -637,8 +637,8 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 		}
 		else if (settings.platform.isArcade())
 		{
-			nvmem::loadFiles();
 			naomi_cart_LoadRom(settings.content.path, settings.content.fileName, progress);
+			nvmem::loadFiles();
 			loadGameSpecificSettings();
 			// Reload the BIOS in case a game-specific region is set
 			naomi_cart_LoadBios(path);
