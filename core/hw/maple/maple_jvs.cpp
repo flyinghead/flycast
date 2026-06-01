@@ -1342,7 +1342,7 @@ u32 BaseMIE::RawDma(const u32 *buffer_in, u32 buffer_in_len, u32 *buffer_out)
 				{
 					snprintf(filename, sizeof(filename), "z80_fw_%d.bin", i);
 					fw_dump = fopen(filename, "r");
-					if (fw_dump == NULL)
+					if (fw_dump == nullptr)
 					{
 						fw_dump = fopen(filename, "w");
 						INFO_LOG(JVS, "Saving JVS firmware to %s", filename);
@@ -1435,6 +1435,16 @@ void BaseMIE::handle_86_subcommand()
 {
 	INFO_LOG(JVS, "BaseMIE: Unhandled JVS command (0x86) subcode %x", dma_buffer_in[0]);
 	reply(MDRE_UnknownCmd);
+}
+
+static std::string getEepromPath()
+{
+	if (settings.naomi.slave)
+		return "";
+	if (config::MultiboardSlaves >= 2)
+		return hostfs::getArcadeFlashPath() + "-main.eeprom";
+	else
+		return hostfs::getArcadeFlashPath() + ".eeprom";
 }
 
 MIEImpl::MIEImpl()
@@ -1598,9 +1608,9 @@ MIEImpl::MIEImpl()
 		}
 	}
 
-	std::string eeprom_file = hostfs::getArcadeFlashPath() + ".eeprom";
+	std::string eeprom_file = getEepromPath();
 	FILE* f = nullptr;
-	if (!settings.naomi.slave)
+	if (!eeprom_file.empty())
 		f = nowide::fopen(eeprom_file.c_str(), "rb");
 	if (f != nullptr)
 	{
@@ -1609,7 +1619,7 @@ MIEImpl::MIEImpl()
 		std::fclose(f);
 		DEBUG_LOG(MAPLE, "Loaded EEPROM from %s", eeprom_file.c_str());
 	}
-	else if (naomi_default_eeprom != NULL)
+	else if (naomi_default_eeprom != nullptr)
 	{
 		DEBUG_LOG(MAPLE, "Using default EEPROM file");
 		memcpy(eeprom, naomi_default_eeprom, sizeof(eeprom));
@@ -1751,7 +1761,7 @@ void MIEImpl::handle_86_subcommand()
 		}
 	}
 	u8 node_id = 0;
-	const u8 *cmd = NULL;
+	const u8 *cmd = nullptr;
 	u32 len = 0;
 	u8 channel = 0;
 	if (dma_count_in >= 3)
@@ -1878,9 +1888,9 @@ void MIEImpl::handle_86_subcommand()
 			size = std::min((int)sizeof(eeprom) - address, size);
 			memcpy(eeprom + address, dma_buffer_in + 4, size);
 
-			if (!settings.naomi.slave)
+			std::string eeprom_file = getEepromPath();
+			if (!eeprom_file.empty())
 			{
-				std::string eeprom_file = hostfs::getArcadeFlashPath() + ".eeprom";
 				FILE* f = nowide::fopen(eeprom_file.c_str(), "wb");
 				if (f)
 				{
@@ -2291,10 +2301,10 @@ u32 jvs_io_board::handle_jvs_message(const u8 *buffer_in, u32 length_in, u8 *buf
 						for (; axis < buffer_in[cmdi + 1]; axis++, player_axis++)
 						{
 							u16 axis_value;
-							if (NaomiGameInputs != NULL)
+							if (NaomiGameInputs != nullptr)
 							{
 								if (player_axis >= std::size(NaomiGameInputs->axes)
-										|| NaomiGameInputs->axes[player_axis].name == NULL)
+										|| NaomiGameInputs->axes[player_axis].name == nullptr)
 								{
 									// Next player
 									player_num++;

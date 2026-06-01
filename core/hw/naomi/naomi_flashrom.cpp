@@ -264,7 +264,7 @@ void configure_naomi_eeprom(const RomBootID *bootId)
 		naomi_cart_LoadBios(settings.content.fileName.c_str());
 	}
 	// Coin settings
-	if (config::ForceFreePlay)
+	if (config::ForceFreePlay && !settings.naomi.slave)
 		write_naomi_eeprom(9, 27 - 1);
 }
 

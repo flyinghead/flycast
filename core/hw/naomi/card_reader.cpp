@@ -663,10 +663,10 @@ void initdInit() {
 void derbyInit()
 {
 	term();
-	if (settings.content.gameId == " DERBY OWNERS CLUB WE ---------")
-		cardReader = std::make_unique<DerbyBRCardReader>();
-	else
+	if (settings.content.gameId == " DERBY OWNERS CLUB ------------")
 		cardReader = std::make_unique<DerbyLRCardReader>();
+	else
+		cardReader = std::make_unique<DerbyBRCardReader>();
 }
 
 void clubkInit() {

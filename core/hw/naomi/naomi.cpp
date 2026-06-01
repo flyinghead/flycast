@@ -88,7 +88,7 @@ u32 ReadMem_naomi(u32 address, u32 size)
 		INFO_LOG(NAOMI, "called without cartridge");
 		return 0xFFFF;
 	}
-	if (m3comm != nullptr && address >= NAOMI_COMM_CTRL_addr && address <= NAOMI_COMM_STATUS2_addr)
+	if (!settings.naomi.slave && m3comm != nullptr && address >= NAOMI_COMM_CTRL_addr && address <= NAOMI_COMM_STATUS2_addr)
 		return m3comm->ReadMem(address, size);
 	if (multiboard != nullptr)
 	{
@@ -106,7 +106,7 @@ void WriteMem_naomi(u32 address, u32 data, u32 size)
 		INFO_LOG(NAOMI, "called without cartridge");
 		return;
 	}
-	if (m3comm != nullptr && address >= NAOMI_COMM_CTRL_addr && address <= NAOMI_COMM_STATUS2_addr) {
+	if (!settings.naomi.slave && m3comm != nullptr && address >= NAOMI_COMM_CTRL_addr && address <= NAOMI_COMM_STATUS2_addr) {
 		m3comm->WriteMem(address, data, size);
 		return;
 	}

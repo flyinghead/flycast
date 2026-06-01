@@ -395,7 +395,7 @@ void SetNaomiNetworkConfig(int node, int nodeCount)
 		if (read_naomi_eeprom(3) == 'B' && read_naomi_eeprom(4) == 'D' && read_naomi_eeprom(5) == 'Y')
 		{
 			// derbyoc2: DOC 2 v2.1
-			if (node == -1 && config::MultiboardSlaves <= 1)
+			if (node == -1 && config::MultiboardSlaves <= 1 && !settings.naomi.slave)
 				// no link (satellite)
 				write_naomi_eeprom(0x30, read_naomi_eeprom(0x30) | 1);
 			else
@@ -406,7 +406,7 @@ void SetNaomiNetworkConfig(int node, int nodeCount)
 			// DOC (BAX0)
 			// DOC 2000 (BBX0)
 			// DOC WE (BEF0)
-			if (config::MultiboardSlaves <= 1)
+			if (config::MultiboardSlaves <= 1 && !settings.naomi.slave)
 			{
 				if (node == -1)
 					// no link
@@ -417,9 +417,7 @@ void SetNaomiNetworkConfig(int node, int nodeCount)
 			}
 			else {
 				// Can't disable the network on the main screen
-				// For some reason, it is crucial to set the "node id" of the
-				// derbyocw mutiboard slave eeprom to 1.
-				write_naomi_eeprom(0x45, (read_naomi_eeprom(0x45) & 0xfc) | (settings.naomi.slave ? 1 : 0));
+				write_naomi_eeprom(0x45, (read_naomi_eeprom(0x45) & 0xfc));
 			}
 			if (node != -1 && nodeCount < 5)
 				WARN_LOG(NETWORK,"Derby Owners Club doesn't support less than 4 satellites");
