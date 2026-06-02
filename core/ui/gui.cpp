@@ -1114,7 +1114,7 @@ static void gui_network_start()
 {
 	drawBoxartBackground();
 	centerNextWindow();
-	ImGui::SetNextWindowSize(ScaledVec2(330, 0));
+	ImGui::SetNextWindowSize(ScaledVec2(360, 0));
 	ImGui::SetNextWindowBgAlpha(0.8f);
 	ImguiStyleVar _1(ImGuiStyleVar_WindowPadding, ScaledVec2(20, 20));
 
@@ -1145,8 +1145,20 @@ static void gui_network_start()
 		ImGui::Text("%s", get_notification().c_str());
 
 		float currentwidth = ImGui::GetContentRegionAvail().x;
-		ImGui::SetCursorPosX((currentwidth - uiScaled(100.f)) / 2.f + ImGui::GetStyle().WindowPadding.x);
-		if (ImGui::Button(T("Cancel"), ScaledVec2(100.f, 0)) && NetworkHandshake::instance != nullptr)
+		float buttonWidth = ImGui::CalcTextSize(T("Cancel")).x + ImGui::GetStyle().FramePadding.x * 2;
+		if (NetworkHandshake::instance != nullptr && NetworkHandshake::instance->canStartNow() && gui_state != GuiState::Closed)
+		{
+			float startWidth = ImGui::CalcTextSize(T("Start Now")).x + ImGui::GetStyle().FramePadding.x * 2;
+			buttonWidth = std::max(buttonWidth, startWidth);
+			ImGui::SetCursorPosX((currentwidth - buttonWidth * 2 - ImGui::GetStyle().ItemSpacing.x) / 2.f + ImGui::GetStyle().WindowPadding.x);
+			if (ImGui::Button(T("Start Now"), ScaledVec2(buttonWidth, 0)) && NetworkHandshake::instance != nullptr)
+				NetworkHandshake::instance->startNow();
+			ImGui::SameLine();
+		}
+		else {
+			ImGui::SetCursorPosX((currentwidth - buttonWidth) / 2.f + ImGui::GetStyle().WindowPadding.x);
+		}
+		if (ImGui::Button(T("Cancel"), ScaledVec2(buttonWidth, 0)) && NetworkHandshake::instance != nullptr)
 		{
 			NetworkHandshake::instance->stop();
 			try {

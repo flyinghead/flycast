@@ -151,6 +151,7 @@ struct MIEImpl : public MIE
 	std::vector<std::unique_ptr<jvs_io_board>> io_boards;
 	bool crazy_mode = false;
 	bool hotd2p = false;
+	bool derby = false;
 
 	u8 jvs_repeat_request[32][256];
 	u8 jvs_receive_buffer[32][258];
@@ -185,6 +186,7 @@ struct MIEImpl : public MIE
 		serialPipe = pipe;
 	}
 	void updateStatus() override {}
+	std::string getEepromPath();
 
 	Pipe *serialPipe = nullptr;
 };
@@ -1437,11 +1439,11 @@ void BaseMIE::handle_86_subcommand()
 	reply(MDRE_UnknownCmd);
 }
 
-static std::string getEepromPath()
+std::string MIEImpl::getEepromPath()
 {
 	if (settings.naomi.slave)
 		return "";
-	if (config::MultiboardSlaves >= 2)
+	if (derby)
 		return hostfs::getArcadeFlashPath() + "-main.eeprom";
 	else
 		return hostfs::getArcadeFlashPath() + ".eeprom";
@@ -1606,6 +1608,8 @@ MIEImpl::MIEImpl()
 			// Default JVS I/O board
 			io_boards.push_back(std::make_unique<jvs_837_13551>(1, this));
 		}
+
+		derby = gameId.substr(0, 6) == " DERBY" && config::MultiboardSlaves >= 2;
 	}
 
 	std::string eeprom_file = getEepromPath();

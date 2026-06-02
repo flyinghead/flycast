@@ -115,6 +115,7 @@ Option<bool> RamMod32MB(CORE_OPTION_NAME "_dc_32mb_mod", false);
 
 Option<bool> NetworkEnable("", false);
 Option<bool> ActAsServer("", false);
+Option<bool> NaomiSatellite("", false);
 OptionString DNS("", "dns.flyca.st");
 OptionString NetworkServer("", "");
 Option<int> LocalPort("", 0);
