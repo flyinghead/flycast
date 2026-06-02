@@ -17,7 +17,7 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #include "option.h"
-#include "network/naomi_network.h"
+#include "network/net_handshake.h"
 #include "debug/gdb_server.h"
 
 namespace config {
@@ -167,9 +167,10 @@ Option<float> ProfilerFrameWarningTime("Profiler.FrameWarningTime", 1.0f / 55.0f
 
 Option<bool> NetworkEnable("Enable", false, "network");
 Option<bool> ActAsServer("ActAsServer", false, "network");
+Option<bool> NaomiSatellite("NaomiSatellite", false, "network");
 OptionString DNS("DNS", "dns.flyca.st", "network");
 OptionString NetworkServer("server", "", "network");
-Option<int> LocalPort("LocalPort", NaomiNetwork::SERVER_PORT, "network");
+Option<int> LocalPort("LocalPort", defaultNaomiServerPort(), "network");
 Option<bool> EmulateBBA("EmulateBBA", false, "network");
 Option<bool> EnableUPnP("EnableUPnP", true, "network");
 Option<bool> GGPOEnable("GGPO", false, "network");

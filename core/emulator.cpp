@@ -38,7 +38,6 @@
 #include "network/ice.h"
 #include "hw/mem/mem_watch.h"
 #include "network/net_handshake.h"
-#include "network/naomi_network.h"
 #include "serialize.h"
 #include "hw/pvr/pvr.h"
 #include "profiler/fc_profiler.h"
@@ -655,7 +654,7 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 			config::EnableAchievements.override(false);
 		// Hardcore mode disables all cheats, under/overclocking, load state, lua and forces dynarec on
 		settings.raHardcoreMode = config::EnableAchievements && config::AchievementsHardcoreMode
-			&& !NaomiNetworkSupported();
+			&& !naomiNetworkSupported();
 #endif
 		cheatManager.reset(settings.content.gameId);
 		if (cheatManager.isWidescreen())
@@ -673,7 +672,7 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 #ifndef LIBRETRO
 			if (config::GGPOEnable)
 				dc_loadstate(-1);
-			else if (config::AutoLoadState && !NaomiNetworkSupported() && !settings.naomi.multiboard)
+			else if (config::AutoLoadState && !naomiNetworkSupported() && !settings.naomi.multiboard)
 				dc_loadstate(config::SavestateSlot);
 #endif
 		}
@@ -743,7 +742,7 @@ void Emulator::unloadGame()
 	{
 #ifndef LIBRETRO
 		if (state == Loaded && config::AutoSaveState && !settings.content.path.empty()
-				&& !settings.naomi.multiboard && !config::GGPOEnable && !NaomiNetworkSupported())
+				&& !settings.naomi.multiboard && !config::GGPOEnable && !naomiNetworkSupported())
 			gui_saveState(false);
 #endif
 		try {

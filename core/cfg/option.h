@@ -523,6 +523,7 @@ extern Option<float> ProfilerFrameWarningTime;
 
 extern Option<bool> NetworkEnable;
 extern Option<bool> ActAsServer;
+extern Option<bool> NaomiSatellite;
 extern OptionString DNS;
 extern OptionString NetworkServer;
 extern Option<int> LocalPort;

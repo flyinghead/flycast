@@ -109,8 +109,25 @@ void gui_settings_network()
 		}
 		else if (config::NetworkEnable)
 		{
-			OptionCheckbox(T("Act as Server"), config::ActAsServer,
-					T("Create a local server for Naomi network games"));
+			// Naomi networking
+			ImGui::Text("%s", T("Network Role"));
+			int role = 0;
+			if (!config::ActAsServer)
+				role = config::NaomiSatellite ? 2 : 1;
+			ImGui::Columns(3, "networkRole", false);
+			ImGui::RadioButton(T("Master"), &role, 0);
+			ImGui::SameLine(0, style.ItemInnerSpacing.x);
+			ShowHelpMarker(T("Create a local server for Naomi network games"));
+			ImGui::NextColumn();
+			ImGui::RadioButton(T("Slave"), &role, 1);
+			ImGui::SameLine(0, style.ItemInnerSpacing.x);
+			ShowHelpMarker(T("Connect to the master server"));
+			ImGui::NextColumn();
+			ImGui::RadioButton(T("Satellite"), &role, 2);
+			ImGui::SameLine(0, style.ItemInnerSpacing.x);
+			ShowHelpMarker(T("Live monitor for games that support it (Virtual-On Oratorio Tangram and Club Kart)"));
+			ImGui::Columns(1, nullptr, false);
+
 			if (!config::ActAsServer)
 			{
 				InputText(T("Server"), &config::NetworkServer.get(), ImGuiInputTextFlags_CharsNoBlank | ImGuiInputTextFlags_CallbackCharFilter, dnsCharFilter);
@@ -123,6 +140,21 @@ void gui_settings_network()
 			ImGui::SameLine();
 			ShowHelpMarker(T("The local UDP port to use"));
 			config::LocalPort.set(atoi(localPort));
+
+			switch (role) {
+			case 0:
+				config::ActAsServer = true;
+				config::NaomiSatellite = false;
+				break;
+			case 1:
+				config::ActAsServer = false;
+				config::NaomiSatellite = false;
+				break;
+			case 2:
+				config::ActAsServer = false;
+				config::NaomiSatellite = true;
+				break;
+			}
 		}
 		else if (config::BattleCableEnable)
 		{
