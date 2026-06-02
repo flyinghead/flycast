@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-22 12:49+0100\n"
-"PO-Revision-Date: 2026-06-02 14:34\n"
+"PO-Revision-Date: 2026-06-02 16:07\n"
 "Last-Translator: \n"
 "Language: fr_FR\n"
 "MIME-Version: 1.0\n"
@@ -528,7 +528,7 @@ msgstr "GDROM Naomi : impossible de trouver le fichier à décrypter"
 
 #: core/hw/naomi/multiboard.cpp:475
 msgid "Center"
-msgstr ""
+msgstr "Centre"
 
 #: core/reios/reios.cpp:366 core/reios/reios.cpp:369
 msgid "Reboot to BIOS"
@@ -2079,7 +2079,7 @@ msgstr "Appuyer sur Démarrer pour démarrer le jeu maintenant."
 
 #: core/ui/gui.cpp:1151 core/ui/gui.cpp:1154
 msgid "Start Now"
-msgstr ""
+msgstr "Démarrer Maintenant"
 
 #: core/ui/gui.cpp:1252
 msgid "Loading..."
@@ -2448,11 +2448,11 @@ msgstr "Affiche des statistiques réseau en temps réel"
 
 #: core/ui/settings_network.cpp:113
 msgid "Network Role"
-msgstr ""
+msgstr "Rôle Réseau"
 
 #: core/ui/settings_network.cpp:118
 msgid "Master"
-msgstr ""
+msgstr "Maître"
 
 #: core/ui/settings_network.cpp:120
 msgid "Create a local server for Naomi network games"
@@ -2460,19 +2460,19 @@ msgstr "Créer un serveur local pour les jeux réseau Naomi"
 
 #: core/ui/settings_network.cpp:122
 msgid "Slave"
-msgstr ""
+msgstr "Esclave"
 
 #: core/ui/settings_network.cpp:124
 msgid "Connect to the master server"
-msgstr ""
+msgstr "Se connecter au serveur maître"
 
 #: core/ui/settings_network.cpp:126
 msgid "Satellite"
-msgstr ""
+msgstr "Satellite"
 
 #: core/ui/settings_network.cpp:128
 msgid "Live monitor for games that support it (Virtual-On Oratorio Tangram and Club Kart)"
-msgstr ""
+msgstr "Moniteur temps réel pour les jeux qui le supportent (Virtual-On Oratorio Tangram et Club Kart)"
 
 #: core/ui/settings_network.cpp:133
 msgid "Server"
@@ -2589,19 +2589,19 @@ msgstr "Écrans Multi-cartes"
 
 #: core/ui/settings_network.cpp:260
 msgid "1 (Twin, Satellite)"
-msgstr ""
+msgstr "1 (Twin, Satellite)"
 
 #: core/ui/settings_network.cpp:260
 msgid "One screen configuration (F355 Twin, Derby Owners Club satellite)"
-msgstr ""
+msgstr "Configuration à un écran (F355 Twin et satellite Derby Owners Club)"
 
 #: core/ui/settings_network.cpp:262
 msgid "2+ (Deluxe, Main screen)"
-msgstr ""
+msgstr "2+ (Deluxe, Écran principal)"
 
 #: core/ui/settings_network.cpp:263
 msgid "Two or three screens configuration (Airline Pilot, Derby Owners Club main screen, F355 Deluxe, Sega Strike Fighter)"
-msgstr ""
+msgstr "Configuration à deux ou trois écrans (Airline Pilot, écran principal Derby Owners Club, F355 Deluxe, Sega Strike Fighter)"
 
 #: core/ui/settings_about.cpp:53 core/ui/settings_about.cpp:107
 #, c-format
