@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-22 12:49+0100\n"
-"PO-Revision-Date: 2026-04-25 15:17\n"
+"PO-Revision-Date: 2026-06-02 14:34\n"
 "Last-Translator: \n"
 "Language: pt_PT\n"
 "MIME-Version: 1.0\n"
@@ -82,7 +82,7 @@ msgstr ""
 msgid "This game has no achievements."
 msgstr ""
 
-#: core/achievements/achievements.cpp:919 core/ui/settings_general.cpp:414
+#: core/achievements/achievements.cpp:919 core/ui/settings_general.cpp:413
 #: core/ui/gui_achievements.cpp:304
 msgid "Hardcore Mode"
 msgstr ""
@@ -249,7 +249,7 @@ msgstr ""
 msgid "Mouse %d"
 msgstr ""
 
-#: core/sdl/sdl.cpp:853 core/windows/winmain.cpp:376
+#: core/sdl/sdl.cpp:928 core/windows/winmain.cpp:376
 msgid "Flycast Error"
 msgstr ""
 
@@ -294,7 +294,7 @@ msgstr ""
 msgid "Unknown disk format"
 msgstr ""
 
-#: core/imgread/common.cpp:370 core/emulator.cpp:620
+#: core/imgread/common.cpp:372 core/emulator.cpp:620
 msgid "This media cannot be loaded"
 msgstr ""
 
@@ -411,11 +411,11 @@ msgid "Cannot re-open CDI file"
 msgstr ""
 
 #: core/hw/naomi/card_reader.cpp:291 core/hw/naomi/card_reader.cpp:585
-#: core/hw/maple/maple_jvs.cpp:2639
+#: core/hw/maple/maple_jvs.cpp:2661
 msgid "Card ejected"
 msgstr ""
 
-#: core/hw/naomi/naomi.cpp:350
+#: core/hw/naomi/naomi.cpp:359
 #, c-format
 msgid "Speed: %3d"
 msgstr ""
@@ -424,77 +424,89 @@ msgstr ""
 msgid "Print out saved"
 msgstr ""
 
-#: core/hw/naomi/systemsp.cpp:2186
+#: core/hw/naomi/systemsp.cpp:2187
 #, c-format
 msgid "SystemSP: Cannot open CompactFlash file %s"
 msgstr ""
 
-#: core/hw/naomi/naomi_m3comm.cpp:76
+#: core/hw/naomi/naomi_m3comm.cpp:86
 msgid "Network started"
 msgstr ""
 
-#: core/hw/naomi/naomi_cart.cpp:148 core/hw/naomi/naomi_cart.cpp:386
-#: core/hw/naomi/naomi_cart.cpp:406 core/hw/naomi/naomi_cart.cpp:432
-#: core/hw/naomi/naomi_cart.cpp:844 core/hw/naomi/gdcartridge.cpp:599
+#: core/hw/naomi/naomi_cart.cpp:131 core/hw/naomi/naomi_cart.cpp:367
+#: core/hw/naomi/naomi_cart.cpp:387 core/hw/naomi/naomi_cart.cpp:413
+#: core/hw/naomi/naomi_cart.cpp:837 core/hw/naomi/gdcartridge.cpp:599
 msgid "Memory allocation failed"
 msgstr ""
 
-#: core/hw/naomi/naomi_cart.cpp:192 core/hw/naomi/naomi_cart.cpp:224
+#: core/hw/naomi/naomi_cart.cpp:175 core/hw/naomi/naomi_cart.cpp:205
 #, c-format
 msgid "Error: cannot load BIOS %s"
 msgstr ""
 
-#: core/hw/naomi/naomi_cart.cpp:236
+#: core/hw/naomi/naomi_cart.cpp:217
 msgid "Unknown game"
 msgstr ""
 
-#: core/hw/naomi/naomi_cart.cpp:262
+#: core/hw/naomi/naomi_cart.cpp:243
 #, c-format
 msgid "Cannot open %s or %s"
 msgstr ""
 
-#: core/hw/naomi/naomi_cart.cpp:264
+#: core/hw/naomi/naomi_cart.cpp:245
 #, c-format
 msgid "Cannot open %s"
 msgstr ""
 
-#: core/hw/naomi/naomi_cart.cpp:343
+#: core/hw/naomi/naomi_cart.cpp:324
 msgid "Invalid ROM"
 msgstr ""
 
-#: core/hw/naomi/naomi_cart.cpp:364
+#: core/hw/naomi/naomi_cart.cpp:345
 #, c-format
 msgid "Cannot find %s"
 msgstr ""
 
-#: core/hw/naomi/naomi_cart.cpp:374 core/hw/naomi/naomi_cart.cpp:391
+#: core/hw/naomi/naomi_cart.cpp:355 core/hw/naomi/naomi_cart.cpp:372
 #, c-format
 msgid "Invalid ROM: truncated %s"
 msgstr ""
 
-#: core/hw/naomi/naomi_cart.cpp:484
+#: core/hw/naomi/naomi_cart.cpp:465
 msgid "Error: cannot load BIOS from naomi.zip"
 msgstr ""
 
-#: core/hw/naomi/naomi_cart.cpp:500 core/hw/naomi/naomi_cart.cpp:550
+#: core/hw/naomi/naomi_cart.cpp:481 core/hw/naomi/naomi_cart.cpp:531
 #, c-format
 msgid "Error: can't open %s"
 msgstr ""
 
-#: core/hw/naomi/naomi_cart.cpp:508 core/hw/naomi/naomi_cart.cpp:524
+#: core/hw/naomi/naomi_cart.cpp:489 core/hw/naomi/naomi_cart.cpp:505
 msgid "Error: Invalid LST file"
 msgstr ""
 
-#: core/hw/naomi/naomi_cart.cpp:563
+#: core/hw/naomi/naomi_cart.cpp:544
 msgid "Invalid empty ROM"
 msgstr ""
 
-#: core/hw/naomi/naomi_cart.cpp:570
+#: core/hw/naomi/naomi_cart.cpp:551
 msgid "Out of memory"
 msgstr ""
 
-#: core/hw/naomi/naomi_cart.cpp:621
+#: core/hw/naomi/naomi_cart.cpp:602
 msgid "Error: Failed to load BIN/DAT file"
+msgstr ""
+
+#: core/hw/naomi/naomi_cart.cpp:743 core/hw/naomi/multiboard.cpp:462
+#: core/hw/naomi/multiboard.cpp:479 core/ui/settings_controls.cpp:179
+#: core/ui/settings_controls.cpp:243
+msgid "Left"
+msgstr ""
+
+#: core/hw/naomi/naomi_cart.cpp:743 core/hw/naomi/multiboard.cpp:456
+#: core/hw/naomi/multiboard.cpp:466 core/hw/naomi/multiboard.cpp:483
+#: core/ui/settings_controls.cpp:180 core/ui/settings_controls.cpp:244
+msgid "Right"
 msgstr ""
 
 #: core/hw/naomi/midiffb.cpp:76
@@ -512,6 +524,10 @@ msgstr ""
 
 #: core/hw/naomi/gdcartridge.cpp:611
 msgid "Naomi GDROM: Could not find the file to decrypt."
+msgstr ""
+
+#: core/hw/naomi/multiboard.cpp:475
+msgid "Center"
 msgstr ""
 
 #: core/reios/reios.cpp:366 core/reios/reios.cpp:369
@@ -536,47 +552,47 @@ msgstr ""
 msgid "Invalid cart size"
 msgstr ""
 
-#: core/cheats.cpp:758 core/cheats.cpp:763
+#: core/cheats.cpp:776 core/cheats.cpp:781
 msgid "Invalid cheat code"
 msgstr ""
 
-#: core/cheats.cpp:845 core/cheats.cpp:884 core/cheats.cpp:897
+#: core/cheats.cpp:863 core/cheats.cpp:902 core/cheats.cpp:915
 msgid "Missing value"
 msgstr ""
 
-#: core/cheats.cpp:863
+#: core/cheats.cpp:881
 msgid "Missing values"
 msgstr ""
 
-#: core/cheats.cpp:910
+#: core/cheats.cpp:928
 msgid "Missing address or value"
 msgstr ""
 
-#: core/cheats.cpp:919 core/cheats.cpp:1023
+#: core/cheats.cpp:937 core/cheats.cpp:1041
 msgid "Unsupported cheat type"
 msgstr ""
 
-#: core/cheats.cpp:927
+#: core/cheats.cpp:945
 msgid "Missing count or value"
 msgstr ""
 
-#: core/cheats.cpp:941 core/cheats.cpp:965
+#: core/cheats.cpp:959 core/cheats.cpp:983
 msgid "Missing count or destination address"
 msgstr ""
 
-#: core/cheats.cpp:953
+#: core/cheats.cpp:971
 msgid "Master codes aren't supported"
 msgstr ""
 
-#: core/cheats.cpp:983 core/cheats.cpp:1012
+#: core/cheats.cpp:1001 core/cheats.cpp:1030
 msgid "Unsupported conditional code"
 msgstr ""
 
-#: core/cheats.cpp:993
+#: core/cheats.cpp:1011
 msgid "Missing test address"
 msgstr ""
 
-#: core/cheats.cpp:1094
+#: core/cheats.cpp:1112
 msgid "Can't save cheat file"
 msgstr ""
 
@@ -887,8 +903,8 @@ msgstr ""
 msgid "Texture Filtering:"
 msgstr ""
 
-#: core/ui/settings_video.cpp:379 core/ui/settings_general.cpp:232
-#: core/ui/settings_general.cpp:236 core/ui/settings_general.cpp:241
+#: core/ui/settings_video.cpp:379 core/ui/settings_general.cpp:231
+#: core/ui/settings_general.cpp:235 core/ui/settings_general.cpp:240
 msgid "Default"
 msgstr ""
 
@@ -961,7 +977,7 @@ msgstr ""
 msgid "Set"
 msgstr ""
 
-#: core/ui/settings_general.cpp:108 core/ui/settings_general.cpp:294
+#: core/ui/settings_general.cpp:108 core/ui/settings_general.cpp:293
 #: core/ui/gui_cheats.cpp:102
 msgid "Add"
 msgstr ""
@@ -974,398 +990,398 @@ msgstr ""
 msgid "System Default"
 msgstr ""
 
-#: core/ui/settings_general.cpp:212
+#: core/ui/settings_general.cpp:211
 msgid "UI Language"
 msgstr ""
 
-#: core/ui/settings_general.cpp:232
+#: core/ui/settings_general.cpp:231
 msgid "Japanese"
 msgstr ""
 
-#: core/ui/settings_general.cpp:232
+#: core/ui/settings_general.cpp:231
 msgid "English"
 msgstr ""
 
-#: core/ui/settings_general.cpp:232
+#: core/ui/settings_general.cpp:231
 msgid "German"
 msgstr ""
 
-#: core/ui/settings_general.cpp:232
+#: core/ui/settings_general.cpp:231
 msgid "French"
 msgstr ""
 
-#: core/ui/settings_general.cpp:232
+#: core/ui/settings_general.cpp:231
 msgid "Spanish"
 msgstr ""
 
-#: core/ui/settings_general.cpp:232
+#: core/ui/settings_general.cpp:231
 msgid "Italian"
 msgstr ""
 
-#: core/ui/settings_general.cpp:233
+#: core/ui/settings_general.cpp:232
 msgid "Dreamcast Language"
 msgstr ""
 
-#: core/ui/settings_general.cpp:234
+#: core/ui/settings_general.cpp:233
 msgid "The language as configured in the Dreamcast BIOS"
 msgstr ""
 
-#: core/ui/settings_general.cpp:237
+#: core/ui/settings_general.cpp:236
 msgid "Broadcast"
 msgstr ""
 
-#: core/ui/settings_general.cpp:238
+#: core/ui/settings_general.cpp:237
 msgid "TV broadcasting standard for non-VGA modes"
 msgstr ""
 
-#: core/ui/settings_general.cpp:241 core/ui/settings_general.cpp:242
+#: core/ui/settings_general.cpp:240 core/ui/settings_general.cpp:241
 msgid "Japan"
 msgstr ""
 
-#: core/ui/settings_general.cpp:241 core/ui/settings_general.cpp:242
+#: core/ui/settings_general.cpp:240 core/ui/settings_general.cpp:241
 msgid "USA"
 msgstr ""
 
-#: core/ui/settings_general.cpp:241
+#: core/ui/settings_general.cpp:240
 msgid "Europe"
 msgstr ""
 
-#: core/ui/settings_general.cpp:242
+#: core/ui/settings_general.cpp:241
 msgctxt "region"
 msgid "Export"
 msgstr ""
 
-#: core/ui/settings_general.cpp:242
+#: core/ui/settings_general.cpp:241
 msgid "Korea"
 msgstr ""
 
-#: core/ui/settings_general.cpp:244
+#: core/ui/settings_general.cpp:243
 msgid "Region"
 msgstr ""
 
-#: core/ui/settings_general.cpp:245
+#: core/ui/settings_general.cpp:244
 msgid "BIOS region"
 msgstr ""
 
-#: core/ui/settings_general.cpp:247
+#: core/ui/settings_general.cpp:246
 msgid "VGA"
 msgstr ""
 
-#: core/ui/settings_general.cpp:247
+#: core/ui/settings_general.cpp:246
 msgid "RGB Component"
 msgstr ""
 
-#: core/ui/settings_general.cpp:247
+#: core/ui/settings_general.cpp:246
 msgid "TV Composite"
 msgstr ""
 
-#: core/ui/settings_general.cpp:254
+#: core/ui/settings_general.cpp:253
 msgid "Cable"
 msgstr ""
 
-#: core/ui/settings_general.cpp:267
+#: core/ui/settings_general.cpp:266
 msgid "Video connection type"
 msgstr ""
 
-#: core/ui/settings_general.cpp:277
+#: core/ui/settings_general.cpp:276
 msgid "Content Location"
 msgstr ""
 
-#: core/ui/settings_general.cpp:298 core/ui/settings_general.cpp:362
+#: core/ui/settings_general.cpp:297 core/ui/settings_general.cpp:361
 msgid "Rescan Content"
 msgstr ""
 
-#: core/ui/settings_general.cpp:310
+#: core/ui/settings_general.cpp:309
 msgid "The folders where your games are stored"
 msgstr ""
 
-#: core/ui/settings_general.cpp:316
+#: core/ui/settings_general.cpp:315
 msgid "Data Folder"
 msgstr ""
 
-#: core/ui/settings_general.cpp:324
+#: core/ui/settings_general.cpp:323
 msgid "The folder containing BIOS files, as well as saved VMUs and states"
 msgstr ""
 
-#: core/ui/settings_general.cpp:329
+#: core/ui/settings_general.cpp:328
 msgid "Home Folder"
 msgstr ""
 
-#: core/ui/settings_general.cpp:338
+#: core/ui/settings_general.cpp:337
 msgctxt "action"
 msgid "Import"
 msgstr ""
 
-#: core/ui/settings_general.cpp:341
+#: core/ui/settings_general.cpp:340
 msgctxt "action"
 msgid "Export"
 msgstr ""
 
-#: core/ui/settings_general.cpp:346
+#: core/ui/settings_general.cpp:345
 msgid "Reveal in Finder"
 msgstr ""
 
-#: core/ui/settings_general.cpp:356
+#: core/ui/settings_general.cpp:355
 msgid "The folder where Flycast saves configuration files and VMUs. BIOS files should be in a subfolder named \"data\""
 msgstr ""
 
-#: core/ui/settings_general.cpp:367
+#: core/ui/settings_general.cpp:366
 msgid "Box Art Game List"
 msgstr ""
 
-#: core/ui/settings_general.cpp:368
+#: core/ui/settings_general.cpp:367
 msgid "Display game cover art in the game list."
 msgstr ""
 
-#: core/ui/settings_general.cpp:369
+#: core/ui/settings_general.cpp:368
 msgid "Fetch Box Art"
 msgstr ""
 
-#: core/ui/settings_general.cpp:370
+#: core/ui/settings_general.cpp:369
 msgid "Fetch cover images from TheGamesDB.net."
 msgstr ""
 
-#: core/ui/settings_general.cpp:371
+#: core/ui/settings_general.cpp:370
 msgid "UI Scaling"
 msgstr ""
 
-#: core/ui/settings_general.cpp:371
+#: core/ui/settings_general.cpp:370
 msgid "Adjust the size of UI elements and fonts."
 msgstr ""
 
-#: core/ui/settings_general.cpp:376
+#: core/ui/settings_general.cpp:375
 msgid "Apply"
 msgstr ""
 
-#: core/ui/settings_general.cpp:382
+#: core/ui/settings_general.cpp:381
 msgid "Dark"
 msgstr ""
 
-#: core/ui/settings_general.cpp:382
+#: core/ui/settings_general.cpp:381
 msgid "Light"
 msgstr ""
 
-#: core/ui/settings_general.cpp:382
+#: core/ui/settings_general.cpp:381
 msgid "Dreamcast"
 msgstr ""
 
-#: core/ui/settings_general.cpp:382
+#: core/ui/settings_general.cpp:381
 msgid "High Contrast"
 msgstr ""
 
-#: core/ui/settings_general.cpp:382
+#: core/ui/settings_general.cpp:381
 msgid "Nintendo"
 msgstr ""
 
-#: core/ui/settings_general.cpp:382
+#: core/ui/settings_general.cpp:381
 msgid "Aqua Chill"
 msgstr ""
 
-#: core/ui/settings_general.cpp:384
+#: core/ui/settings_general.cpp:383
 msgid "UI Theme"
 msgstr ""
 
-#: core/ui/settings_general.cpp:385
+#: core/ui/settings_general.cpp:384
 msgid "Select the UI color theme."
 msgstr ""
 
-#: core/ui/settings_general.cpp:391
+#: core/ui/settings_general.cpp:390
 msgid "Hide Legacy Naomi Roms"
 msgstr ""
 
-#: core/ui/settings_general.cpp:392
+#: core/ui/settings_general.cpp:391
 msgid "Hide .bin, .dat and .lst files from the content browser"
 msgstr ""
 
-#: core/ui/settings_general.cpp:395
+#: core/ui/settings_general.cpp:394
 msgid "Use SAF File Picker"
 msgstr ""
 
-#: core/ui/settings_general.cpp:396
+#: core/ui/settings_general.cpp:395
 msgid "Use Android Storage Access Framework file picker to select folders and files. Ignored on Android 10 and later."
 msgstr ""
 
-#: core/ui/settings_general.cpp:399
+#: core/ui/settings_general.cpp:398
 msgid "Automatic State:"
 msgstr ""
 
-#: core/ui/settings_general.cpp:400 core/ui/gui_cheats.cpp:104
+#: core/ui/settings_general.cpp:399 core/ui/gui_cheats.cpp:104
 msgid "Load"
 msgstr ""
 
-#: core/ui/settings_general.cpp:401
+#: core/ui/settings_general.cpp:400
 msgid "Load the last saved state of the game when starting"
 msgstr ""
 
-#: core/ui/settings_general.cpp:403 core/ui/vgamepad.cpp:73
+#: core/ui/settings_general.cpp:402 core/ui/vgamepad.cpp:73
 msgid "Save"
 msgstr ""
 
-#: core/ui/settings_general.cpp:404
+#: core/ui/settings_general.cpp:403
 msgid "Save the state of the game when stopping"
 msgstr ""
 
-#: core/ui/settings_general.cpp:405
+#: core/ui/settings_general.cpp:404
 msgid "Naomi Free Play"
 msgstr ""
 
-#: core/ui/settings_general.cpp:405
+#: core/ui/settings_general.cpp:404
 msgid "Configure Naomi games in Free Play mode."
 msgstr ""
 
-#: core/ui/settings_general.cpp:407
+#: core/ui/settings_general.cpp:406
 msgid "Discord Presence"
 msgstr ""
 
-#: core/ui/settings_general.cpp:407
+#: core/ui/settings_general.cpp:406
 msgid "Show which game you are playing on Discord"
 msgstr ""
 
-#: core/ui/settings_general.cpp:410
+#: core/ui/settings_general.cpp:409
 msgid "Enable RetroAchievements"
 msgstr ""
 
-#: core/ui/settings_general.cpp:410
+#: core/ui/settings_general.cpp:409
 msgid "Track your game achievements using RetroAchievements.org"
 msgstr ""
 
-#: core/ui/settings_general.cpp:415
+#: core/ui/settings_general.cpp:414
 msgid "Enable RetroAchievements hardcore mode. Using cheats and loading a state are not allowed in this mode."
 msgstr ""
 
-#: core/ui/settings_general.cpp:416
+#: core/ui/settings_general.cpp:415
 msgid "Username"
 msgstr ""
 
-#: core/ui/settings_general.cpp:424
+#: core/ui/settings_general.cpp:423
 msgid "Authentication successful"
 msgstr ""
 
-#: core/ui/settings_general.cpp:427
+#: core/ui/settings_general.cpp:426
 msgid "Logout"
 msgstr ""
 
-#: core/ui/settings_general.cpp:433
+#: core/ui/settings_general.cpp:432
 msgid "Password"
 msgstr ""
 
-#: core/ui/settings_general.cpp:437
+#: core/ui/settings_general.cpp:436
 msgid "Authenticating..."
 msgstr ""
 
-#: core/ui/settings_general.cpp:450
+#: core/ui/settings_general.cpp:449
 msgid "Login"
 msgstr ""
 
-#: core/ui/settings_general.cpp:465
+#: core/ui/settings_general.cpp:464
 msgid "Custom Paths"
 msgstr ""
 
-#: core/ui/settings_general.cpp:467
+#: core/ui/settings_general.cpp:466
 msgid "BIOS Folders"
 msgstr ""
 
-#: core/ui/settings_general.cpp:467
+#: core/ui/settings_general.cpp:466
 msgid "Select a BIOS folder"
 msgstr ""
 
-#: core/ui/settings_general.cpp:468
+#: core/ui/settings_general.cpp:467
 msgid "Folders containing BIOS files (e.g. dc_boot.bin or dc_bios.bin) and arcade BIOS"
 msgstr ""
 
-#: core/ui/settings_general.cpp:472
+#: core/ui/settings_general.cpp:471
 msgid "VMU Folder"
 msgstr ""
 
-#: core/ui/settings_general.cpp:472
+#: core/ui/settings_general.cpp:471
 msgid "Select the VMU folder"
 msgstr ""
 
-#: core/ui/settings_general.cpp:473
+#: core/ui/settings_general.cpp:472
 msgid "Folder where VMU (.bin) saves are stored"
 msgstr ""
 
-#: core/ui/settings_general.cpp:476
+#: core/ui/settings_general.cpp:475
 msgid "Savestate Folders"
 msgstr ""
 
-#: core/ui/settings_general.cpp:476
+#: core/ui/settings_general.cpp:475
 msgid "Select a savestate folder"
 msgstr ""
 
-#: core/ui/settings_general.cpp:477
+#: core/ui/settings_general.cpp:476
 msgid "Folders for save states. First path is used for new states; all are searched when loading"
 msgstr ""
 
-#: core/ui/settings_general.cpp:480
+#: core/ui/settings_general.cpp:479
 msgid "Game Save Folder"
 msgstr ""
 
-#: core/ui/settings_general.cpp:480
+#: core/ui/settings_general.cpp:479
 msgid "Select the game save folder"
 msgstr ""
 
-#: core/ui/settings_general.cpp:481
+#: core/ui/settings_general.cpp:480
 msgid "Folder for game save data (e.g. arcade NVRAM)"
 msgstr ""
 
-#: core/ui/settings_general.cpp:485
+#: core/ui/settings_general.cpp:484
 msgid "Texture Pack Folders"
 msgstr ""
 
-#: core/ui/settings_general.cpp:485
+#: core/ui/settings_general.cpp:484
 msgid "Select a texture pack folder"
 msgstr ""
 
-#: core/ui/settings_general.cpp:486
+#: core/ui/settings_general.cpp:485
 msgid "Folders containing textures/<gameId> or <gameId> under a textures subfolder"
 msgstr ""
 
-#: core/ui/settings_general.cpp:490
+#: core/ui/settings_general.cpp:489
 msgid "Texture Dump Folder"
 msgstr ""
 
-#: core/ui/settings_general.cpp:490
+#: core/ui/settings_general.cpp:489
 msgid "Select the texture dump folder"
 msgstr ""
 
-#: core/ui/settings_general.cpp:491
+#: core/ui/settings_general.cpp:490
 msgid "Folder where texture dumps are saved. Game-specific subfolders will be created automatically"
 msgstr ""
 
-#: core/ui/settings_general.cpp:494
+#: core/ui/settings_general.cpp:493
 msgid "Box Art Folder"
 msgstr ""
 
-#: core/ui/settings_general.cpp:494
+#: core/ui/settings_general.cpp:493
 msgid "Select the box art folder"
 msgstr ""
 
-#: core/ui/settings_general.cpp:495
+#: core/ui/settings_general.cpp:494
 msgid "Folder containing box art images (png/jpg). If empty, Flycast will use the default Home Folder/boxart for downloads and generated art"
 msgstr ""
 
-#: core/ui/settings_general.cpp:498
+#: core/ui/settings_general.cpp:497
 msgid "Controller Mapping Folders"
 msgstr ""
 
-#: core/ui/settings_general.cpp:498
+#: core/ui/settings_general.cpp:497
 msgid "Select a controller mapping folder"
 msgstr ""
 
-#: core/ui/settings_general.cpp:499
+#: core/ui/settings_general.cpp:498
 msgid "Folders containing controller mapping files (.cfg). The emulator also looks in Home Folder/mappings. Per-game mappings are suffixed with _<gameId>.cfg"
 msgstr ""
 
-#: core/ui/settings_general.cpp:502
+#: core/ui/settings_general.cpp:501
 msgid "Cheat Folders"
 msgstr ""
 
-#: core/ui/settings_general.cpp:502
+#: core/ui/settings_general.cpp:501
 msgid "Select a cheat folder"
 msgstr ""
 
-#: core/ui/settings_general.cpp:503
+#: core/ui/settings_general.cpp:502
 msgid "Folders containing cheat files (.cht/.txt) named with the game ID. Flycast will auto-load matching files if present"
 msgstr ""
 
@@ -1468,14 +1484,6 @@ msgstr ""
 
 #: core/ui/settings_controls.cpp:178 core/ui/settings_controls.cpp:242
 msgid "Down"
-msgstr ""
-
-#: core/ui/settings_controls.cpp:179 core/ui/settings_controls.cpp:243
-msgid "Left"
-msgstr ""
-
-#: core/ui/settings_controls.cpp:180 core/ui/settings_controls.cpp:244
-msgid "Right"
 msgstr ""
 
 #: core/ui/settings_controls.cpp:182 core/ui/settings_controls.cpp:246
@@ -2015,9 +2023,9 @@ msgstr ""
 msgid "Reselect"
 msgstr ""
 
-#: core/ui/gui.cpp:733 core/ui/gui.cpp:911 core/ui/gui.cpp:1149
-#: core/ui/gui.cpp:1292 core/ui/gui_cheats.cpp:47 core/ui/gui_util.cpp:180
-#: core/ui/vgamepad.cpp:87
+#: core/ui/gui.cpp:733 core/ui/gui.cpp:911 core/ui/gui.cpp:1148
+#: core/ui/gui.cpp:1161 core/ui/gui.cpp:1304 core/ui/gui_cheats.cpp:47
+#: core/ui/gui_util.cpp:180 core/ui/vgamepad.cpp:87
 msgid "Cancel"
 msgstr ""
 
@@ -2053,7 +2061,7 @@ msgstr ""
 msgid "Select Flycast Home Folder"
 msgstr ""
 
-#: core/ui/gui.cpp:1129 core/ui/gui.cpp:1238 core/emulator.cpp:689
+#: core/ui/gui.cpp:1129 core/ui/gui.cpp:1250 core/emulator.cpp:687
 msgid "Starting..."
 msgstr ""
 
@@ -2065,32 +2073,36 @@ msgstr ""
 msgid "Press Start to start the game now."
 msgstr ""
 
-#: core/ui/gui.cpp:1240
+#: core/ui/gui.cpp:1151 core/ui/gui.cpp:1154
+msgid "Start Now"
+msgstr ""
+
+#: core/ui/gui.cpp:1252
 msgid "Loading..."
 msgstr ""
 
-#: core/ui/gui.cpp:1276
+#: core/ui/gui.cpp:1288
 msgid "Preloading custom textures"
 msgstr ""
 
-#: core/ui/gui.cpp:1279
+#: core/ui/gui.cpp:1291
 msgid "Preparing..."
 msgstr ""
 
-#: core/ui/gui.cpp:1601
+#: core/ui/gui.cpp:1613
 #, c-format
 msgid "Save state slot %d"
 msgstr ""
 
-#: core/ui/gui.cpp:1669
+#: core/ui/gui.cpp:1681
 msgid "No screenshot available"
 msgstr ""
 
-#: core/ui/gui.cpp:1675
+#: core/ui/gui.cpp:1687
 msgid "Screenshot saved"
 msgstr ""
 
-#: core/ui/gui.cpp:1677
+#: core/ui/gui.cpp:1689
 msgid "Error saving screenshot"
 msgstr ""
 
@@ -2150,7 +2162,7 @@ msgstr ""
 msgid "ADD CHEAT"
 msgstr ""
 
-#: core/ui/gui_cheats.cpp:72 core/ui/settings_network.cpp:137
+#: core/ui/gui_cheats.cpp:72 core/ui/settings_network.cpp:169
 msgid "Code"
 msgstr ""
 
@@ -2358,7 +2370,7 @@ msgstr ""
 msgid "Deselect to play as player 2"
 msgstr ""
 
-#: core/ui/settings_network.cpp:80 core/ui/settings_network.cpp:174
+#: core/ui/settings_network.cpp:80 core/ui/settings_network.cpp:206
 msgid "Peer"
 msgstr ""
 
@@ -2422,149 +2434,169 @@ msgstr ""
 msgid "Sets duration that chat window stays open after new message is received."
 msgstr ""
 
-#: core/ui/settings_network.cpp:107 core/ui/settings_network.cpp:167
+#: core/ui/settings_network.cpp:107 core/ui/settings_network.cpp:199
 msgid "Network Statistics"
 msgstr ""
 
-#: core/ui/settings_network.cpp:108 core/ui/settings_network.cpp:168
+#: core/ui/settings_network.cpp:108 core/ui/settings_network.cpp:200
 msgid "Display network statistics on screen"
 msgstr ""
 
-#: core/ui/settings_network.cpp:112
-msgid "Act as Server"
-msgstr ""
-
 #: core/ui/settings_network.cpp:113
-msgid "Create a local server for Naomi network games"
-msgstr ""
-
-#: core/ui/settings_network.cpp:116
-msgid "Server"
+msgid "Network Role"
 msgstr ""
 
 #: core/ui/settings_network.cpp:118
+msgid "Master"
+msgstr ""
+
+#: core/ui/settings_network.cpp:120
+msgid "Create a local server for Naomi network games"
+msgstr ""
+
+#: core/ui/settings_network.cpp:122
+msgid "Slave"
+msgstr ""
+
+#: core/ui/settings_network.cpp:124
+msgid "Connect to the master server"
+msgstr ""
+
+#: core/ui/settings_network.cpp:126
+msgid "Satellite"
+msgstr ""
+
+#: core/ui/settings_network.cpp:128
+msgid "Live monitor for games that support it (Virtual-On Oratorio Tangram and Club Kart)"
+msgstr ""
+
+#: core/ui/settings_network.cpp:133
+msgid "Server"
+msgstr ""
+
+#: core/ui/settings_network.cpp:135
 msgid "The server to connect to. Leave blank to find a server automatically on the default port"
 msgstr ""
 
-#: core/ui/settings_network.cpp:122 core/ui/settings_network.cpp:179
+#: core/ui/settings_network.cpp:139 core/ui/settings_network.cpp:211
 msgid "Local Port"
 msgstr ""
 
-#: core/ui/settings_network.cpp:124 core/ui/settings_network.cpp:181
+#: core/ui/settings_network.cpp:141 core/ui/settings_network.cpp:213
 msgid "The local UDP port to use"
 msgstr ""
 
-#: core/ui/settings_network.cpp:132
+#: core/ui/settings_network.cpp:164
 msgid "Match Code"
 msgstr ""
 
-#: core/ui/settings_network.cpp:139
+#: core/ui/settings_network.cpp:171
 msgid "Choose a unique word or number and share it with your opponent."
 msgstr ""
 
-#: core/ui/settings_network.cpp:141
+#: core/ui/settings_network.cpp:173
 msgid "Connect"
 msgstr ""
 
-#: core/ui/settings_network.cpp:145
+#: core/ui/settings_network.cpp:177
 msgid "Disconnect"
 msgstr ""
 
-#: core/ui/settings_network.cpp:155
+#: core/ui/settings_network.cpp:187
 msgid "Waiting at meeting point..."
 msgstr ""
 
-#: core/ui/settings_network.cpp:158
+#: core/ui/settings_network.cpp:190
 msgid "Preparing game..."
 msgstr ""
 
-#: core/ui/settings_network.cpp:161
+#: core/ui/settings_network.cpp:193
 #, c-format
 msgid "Playing %s (%s)"
 msgstr ""
 
-#: core/ui/settings_network.cpp:171
+#: core/ui/settings_network.cpp:203
 msgid "Manual"
 msgstr ""
 
-#: core/ui/settings_network.cpp:176
+#: core/ui/settings_network.cpp:208
 msgid "The peer to connect to. Leave blank to find a player automatically on the default port"
 msgstr ""
 
-#: core/ui/settings_network.cpp:189
+#: core/ui/settings_network.cpp:221
 msgid "Act as Master"
 msgstr ""
 
-#: core/ui/settings_network.cpp:190
+#: core/ui/settings_network.cpp:222
 msgid "Only used for Maximum Speed. One of the peer must be master."
 msgstr ""
 
-#: core/ui/settings_network.cpp:194
+#: core/ui/settings_network.cpp:226
 msgid "Network Options"
 msgstr ""
 
-#: core/ui/settings_network.cpp:196
+#: core/ui/settings_network.cpp:228
 msgid "Enable UPnP"
 msgstr ""
 
-#: core/ui/settings_network.cpp:196
+#: core/ui/settings_network.cpp:228
 msgid "Automatically configure your network router for netplay"
 msgstr ""
 
-#: core/ui/settings_network.cpp:197
+#: core/ui/settings_network.cpp:229
 msgid "Broadcast Digital Outputs"
 msgstr ""
 
-#: core/ui/settings_network.cpp:197
+#: core/ui/settings_network.cpp:229
 msgid "Broadcast digital outputs and force-feedback state on TCP port 8000. Compatible with the \"-output network\" MAME option. Arcade games only."
 msgstr ""
 
-#: core/ui/settings_network.cpp:202
+#: core/ui/settings_network.cpp:234
 msgid "Broadband Adapter Emulation"
 msgstr ""
 
-#: core/ui/settings_network.cpp:203
+#: core/ui/settings_network.cpp:235
 msgid "Emulate the Ethernet Broadband Adapter (BBA) instead of the Modem"
 msgstr ""
 
-#: core/ui/settings_network.cpp:205
+#: core/ui/settings_network.cpp:237
 msgid "Use DCNet"
 msgstr ""
 
-#: core/ui/settings_network.cpp:205
+#: core/ui/settings_network.cpp:237
 msgid "Use the DCNet cloud service for Dreamcast Internet access."
 msgstr ""
 
-#: core/ui/settings_network.cpp:208
+#: core/ui/settings_network.cpp:240
 msgid "ISP User Name"
 msgstr ""
 
-#: core/ui/settings_network.cpp:214
+#: core/ui/settings_network.cpp:246
 msgid "The ISP user name stored in the console Flash RAM. Used by some online games as the player name. Leave blank to keep the current Flash RAM value."
 msgstr ""
 
-#: core/ui/settings_network.cpp:220
+#: core/ui/settings_network.cpp:252
 msgid "DNS server name or IP address"
 msgstr ""
 
-#: core/ui/settings_network.cpp:226
+#: core/ui/settings_network.cpp:258
 msgid "Multiboard Screens"
 msgstr ""
 
-#: core/ui/settings_network.cpp:229
-msgid "1 (Twin)"
+#: core/ui/settings_network.cpp:260
+msgid "1 (Twin, Satellite)"
 msgstr ""
 
-#: core/ui/settings_network.cpp:229
-msgid "One screen configuration (F355 Twin)"
+#: core/ui/settings_network.cpp:260
+msgid "One screen configuration (F355 Twin, Derby Owners Club satellite)"
 msgstr ""
 
-#: core/ui/settings_network.cpp:231
-msgid "3 (Deluxe)"
+#: core/ui/settings_network.cpp:262
+msgid "2+ (Deluxe, Main screen)"
 msgstr ""
 
-#: core/ui/settings_network.cpp:231
-msgid "Three screens configuration"
+#: core/ui/settings_network.cpp:263
+msgid "Two or three screens configuration (Airline Pilot, Derby Owners Club main screen, F355 Deluxe, Sega Strike Fighter)"
 msgstr ""
 
 #: core/ui/settings_about.cpp:53 core/ui/settings_about.cpp:107
@@ -2683,11 +2715,11 @@ msgstr ""
 msgid "DCNet disconnected"
 msgstr ""
 
-#: core/network/dcnet.cpp:753
+#: core/network/dcnet.cpp:754
 msgid "Host not found"
 msgstr ""
 
-#: core/network/dcnet.cpp:797
+#: core/network/dcnet.cpp:798
 msgid "Can't connect to DCNet"
 msgstr ""
 
@@ -2719,7 +2751,7 @@ msgstr ""
 msgid "Connection resumed"
 msgstr ""
 
-#: core/network/null_modem.h:174
+#: core/network/null_modem.h:173
 msgid "Network connected"
 msgstr ""
 
@@ -2751,30 +2783,30 @@ msgstr ""
 msgid "Connection lost"
 msgstr ""
 
-#: core/network/naomi_network.cpp:102
+#: core/network/naomi_network.cpp:103
 msgid "Waiting for players..."
 msgstr ""
 
-#: core/network/naomi_network.cpp:105
+#: core/network/naomi_network.cpp:106
 #, c-format
 msgid "%d player connected. Waiting..."
 msgid_plural "%d players connected. Waiting..."
 msgstr[0] ""
 msgstr[1] ""
 
-#: core/network/naomi_network.cpp:129
+#: core/network/naomi_network.cpp:131
 msgid "Starting game"
 msgstr ""
 
-#: core/network/naomi_network.cpp:134
+#: core/network/naomi_network.cpp:136
 msgid "No player connected"
 msgstr ""
 
-#: core/network/naomi_network.cpp:168
+#: core/network/naomi_network.cpp:170
 msgid "Connecting to server"
 msgstr ""
 
-#: core/network/naomi_network.cpp:252
+#: core/network/naomi_network.cpp:254
 #, c-format
 msgid "Connected as slot %d"
 msgstr ""
@@ -2816,7 +2848,7 @@ msgstr ""
 msgid "This game requires a real BIOS"
 msgstr ""
 
-#: core/emulator.cpp:664
+#: core/emulator.cpp:662
 msgid "Widescreen cheat activated"
 msgstr ""
 
@@ -2844,7 +2876,7 @@ msgstr ""
 msgid "Cannot initialize the graphics API"
 msgstr ""
 
-#: shell/libretro/libretro.cpp:2141
+#: shell/libretro/libretro.cpp:2143
 msgid "Cannot run without JIT"
 msgstr ""
 
@@ -2892,7 +2924,7 @@ msgstr ""
 msgid "Memory initialization failed"
 msgstr ""
 
-#: shell/android-studio/flycast/src/main/jni/src/android_storage.h:192
+#: shell/android-studio/flycast/src/main/jni/src/android_storage.h:198
 #, c-format
 msgid "Storage access failed: %s"
 msgstr ""
@@ -2913,7 +2945,7 @@ msgstr ""
 msgid "Share"
 msgstr ""
 
-#: shell/switch/switch_main.cpp:76
+#: shell/switch/switch_main.cpp:86
 msgid "Not supported on Switch"
 msgstr ""
 
