@@ -701,11 +701,11 @@ static void setGameGeometry(retro_game_geometry& geometry)
 bool setAVInfo(retro_system_av_info& avinfo)
 {
 	double sample_rate = 44100.0;
-	double fps = SPG_CONTROL.isPAL() ? 50.0 : 60.0;
+	double fps = SPG_CONTROL.isPAL() ? 50.0 : 59.94;
 
 	// 240p NTSC rate
 	if (framebufferHeight == 240 && !SPG_CONTROL.isNTSC() && !SPG_CONTROL.isPAL())
-		fps = 60.0;
+		fps = 59.82366;
 
 	setGameGeometry(avinfo.geometry);
 	avinfo.timing.sample_rate = sample_rate;
