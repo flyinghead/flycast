@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-22 12:49+0100\n"
-"PO-Revision-Date: 2026-04-25 15:17\n"
+"PO-Revision-Date: 2026-06-02 14:34\n"
 "Last-Translator: \n"
 "Language: hu_HU\n"
 "MIME-Version: 1.0\n"
@@ -82,7 +82,7 @@ msgstr ""
 msgid "This game has no achievements."
 msgstr "Ez a játék nem tartalmaz trófeákat."
 
-#: core/achievements/achievements.cpp:919 core/ui/settings_general.cpp:414
+#: core/achievements/achievements.cpp:919 core/ui/settings_general.cpp:413
 #: core/ui/gui_achievements.cpp:304
 msgid "Hardcore Mode"
 msgstr "Hardcore mód"
@@ -249,7 +249,7 @@ msgstr "Alapértelmezett egér"
 msgid "Mouse %d"
 msgstr "Egér %d"
 
-#: core/sdl/sdl.cpp:853 core/windows/winmain.cpp:376
+#: core/sdl/sdl.cpp:928 core/windows/winmain.cpp:376
 msgid "Flycast Error"
 msgstr "Flycast hiba"
 
@@ -294,7 +294,7 @@ msgstr "Érvénytelen fájlnév %s"
 msgid "Unknown disk format"
 msgstr "Ismeretlen lemezformátum"
 
-#: core/imgread/common.cpp:370 core/emulator.cpp:620
+#: core/imgread/common.cpp:372 core/emulator.cpp:620
 msgid "This media cannot be loaded"
 msgstr "Ez a média nem tölthető be"
 
@@ -411,11 +411,11 @@ msgid "Cannot re-open CDI file"
 msgstr "A CDI fájl nem nyitható meg újra"
 
 #: core/hw/naomi/card_reader.cpp:291 core/hw/naomi/card_reader.cpp:585
-#: core/hw/maple/maple_jvs.cpp:2639
+#: core/hw/maple/maple_jvs.cpp:2661
 msgid "Card ejected"
 msgstr "Kártya kilökve"
 
-#: core/hw/naomi/naomi.cpp:350
+#: core/hw/naomi/naomi.cpp:359
 #, c-format
 msgid "Speed: %3d"
 msgstr "Sebesség: %3d"
@@ -424,78 +424,90 @@ msgstr "Sebesség: %3d"
 msgid "Print out saved"
 msgstr ""
 
-#: core/hw/naomi/systemsp.cpp:2186
+#: core/hw/naomi/systemsp.cpp:2187
 #, c-format
 msgid "SystemSP: Cannot open CompactFlash file %s"
 msgstr "SystemSP: Nem lehet megnyitni a CompactFlash fájlt %s"
 
-#: core/hw/naomi/naomi_m3comm.cpp:76
+#: core/hw/naomi/naomi_m3comm.cpp:86
 msgid "Network started"
 msgstr "Hálózat elindítva"
 
-#: core/hw/naomi/naomi_cart.cpp:148 core/hw/naomi/naomi_cart.cpp:386
-#: core/hw/naomi/naomi_cart.cpp:406 core/hw/naomi/naomi_cart.cpp:432
-#: core/hw/naomi/naomi_cart.cpp:844 core/hw/naomi/gdcartridge.cpp:599
+#: core/hw/naomi/naomi_cart.cpp:131 core/hw/naomi/naomi_cart.cpp:367
+#: core/hw/naomi/naomi_cart.cpp:387 core/hw/naomi/naomi_cart.cpp:413
+#: core/hw/naomi/naomi_cart.cpp:837 core/hw/naomi/gdcartridge.cpp:599
 msgid "Memory allocation failed"
 msgstr "Memóriaallokáció sikertelen"
 
-#: core/hw/naomi/naomi_cart.cpp:192 core/hw/naomi/naomi_cart.cpp:224
+#: core/hw/naomi/naomi_cart.cpp:175 core/hw/naomi/naomi_cart.cpp:205
 #, c-format
 msgid "Error: cannot load BIOS %s"
 msgstr "Hiba: nem lehet betölteni a BIOS-t %s"
 
-#: core/hw/naomi/naomi_cart.cpp:236
+#: core/hw/naomi/naomi_cart.cpp:217
 msgid "Unknown game"
 msgstr "Ismeretlen játék"
 
-#: core/hw/naomi/naomi_cart.cpp:262
+#: core/hw/naomi/naomi_cart.cpp:243
 #, c-format
 msgid "Cannot open %s or %s"
 msgstr "Cannot open %s / %s"
 
-#: core/hw/naomi/naomi_cart.cpp:264
+#: core/hw/naomi/naomi_cart.cpp:245
 #, c-format
 msgid "Cannot open %s"
 msgstr "Nem lehet megnyitni %s"
 
-#: core/hw/naomi/naomi_cart.cpp:343
+#: core/hw/naomi/naomi_cart.cpp:324
 msgid "Invalid ROM"
 msgstr "Érvénytelen ROM"
 
-#: core/hw/naomi/naomi_cart.cpp:364
+#: core/hw/naomi/naomi_cart.cpp:345
 #, c-format
 msgid "Cannot find %s"
 msgstr ""
 
-#: core/hw/naomi/naomi_cart.cpp:374 core/hw/naomi/naomi_cart.cpp:391
+#: core/hw/naomi/naomi_cart.cpp:355 core/hw/naomi/naomi_cart.cpp:372
 #, c-format
 msgid "Invalid ROM: truncated %s"
 msgstr ""
 
-#: core/hw/naomi/naomi_cart.cpp:484
+#: core/hw/naomi/naomi_cart.cpp:465
 msgid "Error: cannot load BIOS from naomi.zip"
 msgstr ""
 
-#: core/hw/naomi/naomi_cart.cpp:500 core/hw/naomi/naomi_cart.cpp:550
+#: core/hw/naomi/naomi_cart.cpp:481 core/hw/naomi/naomi_cart.cpp:531
 #, c-format
 msgid "Error: can't open %s"
 msgstr ""
 
-#: core/hw/naomi/naomi_cart.cpp:508 core/hw/naomi/naomi_cart.cpp:524
+#: core/hw/naomi/naomi_cart.cpp:489 core/hw/naomi/naomi_cart.cpp:505
 msgid "Error: Invalid LST file"
 msgstr "Hiba: Érvénytelen LST fájl"
 
-#: core/hw/naomi/naomi_cart.cpp:563
+#: core/hw/naomi/naomi_cart.cpp:544
 msgid "Invalid empty ROM"
 msgstr "Érvénytelen üres ROM"
 
-#: core/hw/naomi/naomi_cart.cpp:570
+#: core/hw/naomi/naomi_cart.cpp:551
 msgid "Out of memory"
 msgstr "Elfogyott a memória"
 
-#: core/hw/naomi/naomi_cart.cpp:621
+#: core/hw/naomi/naomi_cart.cpp:602
 msgid "Error: Failed to load BIN/DAT file"
 msgstr "Hiba: A BIN/DAT fájl betöltése sikertelen"
+
+#: core/hw/naomi/naomi_cart.cpp:743 core/hw/naomi/multiboard.cpp:462
+#: core/hw/naomi/multiboard.cpp:479 core/ui/settings_controls.cpp:179
+#: core/ui/settings_controls.cpp:243
+msgid "Left"
+msgstr "Balra"
+
+#: core/hw/naomi/naomi_cart.cpp:743 core/hw/naomi/multiboard.cpp:456
+#: core/hw/naomi/multiboard.cpp:466 core/hw/naomi/multiboard.cpp:483
+#: core/ui/settings_controls.cpp:180 core/ui/settings_controls.cpp:244
+msgid "Right"
+msgstr "Jobbra"
 
 #: core/hw/naomi/midiffb.cpp:76
 msgid "Calibration done"
@@ -513,6 +525,10 @@ msgstr "Naomi GDROM: Nem lehet megnyitni a %s.chd fájlt"
 #: core/hw/naomi/gdcartridge.cpp:611
 msgid "Naomi GDROM: Could not find the file to decrypt."
 msgstr "Naomi GDROM: Nem sikerült megtalálni a visszafejtendő fájlt."
+
+#: core/hw/naomi/multiboard.cpp:475
+msgid "Center"
+msgstr ""
 
 #: core/reios/reios.cpp:366 core/reios/reios.cpp:369
 msgid "Reboot to BIOS"
@@ -536,47 +552,47 @@ msgstr "Naomi rendszerindítási hiba"
 msgid "Invalid cart size"
 msgstr "Érvénytelen kártyaméret"
 
-#: core/cheats.cpp:758 core/cheats.cpp:763
+#: core/cheats.cpp:776 core/cheats.cpp:781
 msgid "Invalid cheat code"
 msgstr "Érvénytelen csalókód"
 
-#: core/cheats.cpp:845 core/cheats.cpp:884 core/cheats.cpp:897
+#: core/cheats.cpp:863 core/cheats.cpp:902 core/cheats.cpp:915
 msgid "Missing value"
 msgstr "Hiányzó érték"
 
-#: core/cheats.cpp:863
+#: core/cheats.cpp:881
 msgid "Missing values"
 msgstr "Hiányzó értékek"
 
-#: core/cheats.cpp:910
+#: core/cheats.cpp:928
 msgid "Missing address or value"
 msgstr "Hiányzó cím vagy érték"
 
-#: core/cheats.cpp:919 core/cheats.cpp:1023
+#: core/cheats.cpp:937 core/cheats.cpp:1041
 msgid "Unsupported cheat type"
 msgstr "Nem támogatott csalási típus"
 
-#: core/cheats.cpp:927
+#: core/cheats.cpp:945
 msgid "Missing count or value"
 msgstr "Hiányzó számláló vagy érték"
 
-#: core/cheats.cpp:941 core/cheats.cpp:965
+#: core/cheats.cpp:959 core/cheats.cpp:983
 msgid "Missing count or destination address"
 msgstr "Hiányzó számláló vagy célcím"
 
-#: core/cheats.cpp:953
+#: core/cheats.cpp:971
 msgid "Master codes aren't supported"
 msgstr "A mester kódok nem támogatottak"
 
-#: core/cheats.cpp:983 core/cheats.cpp:1012
+#: core/cheats.cpp:1001 core/cheats.cpp:1030
 msgid "Unsupported conditional code"
 msgstr "Nem támogatott feltételes kód"
 
-#: core/cheats.cpp:993
+#: core/cheats.cpp:1011
 msgid "Missing test address"
 msgstr "Hiányzó tesztcím"
 
-#: core/cheats.cpp:1094
+#: core/cheats.cpp:1112
 msgid "Can't save cheat file"
 msgstr "Nem lehet menteni a csaló fájlt"
 
@@ -888,8 +904,8 @@ msgstr "A magasabb értékek a ferde szögből nézett textúrákat élesebbé t
 msgid "Texture Filtering:"
 msgstr ""
 
-#: core/ui/settings_video.cpp:379 core/ui/settings_general.cpp:232
-#: core/ui/settings_general.cpp:236 core/ui/settings_general.cpp:241
+#: core/ui/settings_video.cpp:379 core/ui/settings_general.cpp:231
+#: core/ui/settings_general.cpp:235 core/ui/settings_general.cpp:240
 msgid "Default"
 msgstr "Alapértelmezett"
 
@@ -962,7 +978,7 @@ msgstr ""
 msgid "Set"
 msgstr "Beállítás"
 
-#: core/ui/settings_general.cpp:108 core/ui/settings_general.cpp:294
+#: core/ui/settings_general.cpp:108 core/ui/settings_general.cpp:293
 #: core/ui/gui_cheats.cpp:102
 msgid "Add"
 msgstr "Hozzáadás"
@@ -975,398 +991,398 @@ msgstr ""
 msgid "System Default"
 msgstr ""
 
-#: core/ui/settings_general.cpp:212
+#: core/ui/settings_general.cpp:211
 msgid "UI Language"
 msgstr ""
 
-#: core/ui/settings_general.cpp:232
+#: core/ui/settings_general.cpp:231
 msgid "Japanese"
 msgstr "Japán"
 
-#: core/ui/settings_general.cpp:232
+#: core/ui/settings_general.cpp:231
 msgid "English"
 msgstr "Angol"
 
-#: core/ui/settings_general.cpp:232
+#: core/ui/settings_general.cpp:231
 msgid "German"
 msgstr "Német"
 
-#: core/ui/settings_general.cpp:232
+#: core/ui/settings_general.cpp:231
 msgid "French"
 msgstr "Francia"
 
-#: core/ui/settings_general.cpp:232
+#: core/ui/settings_general.cpp:231
 msgid "Spanish"
 msgstr "Spanyol"
 
-#: core/ui/settings_general.cpp:232
+#: core/ui/settings_general.cpp:231
 msgid "Italian"
 msgstr "Olasz"
 
-#: core/ui/settings_general.cpp:233
+#: core/ui/settings_general.cpp:232
 msgid "Dreamcast Language"
 msgstr ""
 
-#: core/ui/settings_general.cpp:234
+#: core/ui/settings_general.cpp:233
 msgid "The language as configured in the Dreamcast BIOS"
 msgstr ""
 
-#: core/ui/settings_general.cpp:237
+#: core/ui/settings_general.cpp:236
 msgid "Broadcast"
 msgstr "Közvetítés"
 
-#: core/ui/settings_general.cpp:238
+#: core/ui/settings_general.cpp:237
 msgid "TV broadcasting standard for non-VGA modes"
 msgstr ""
 
-#: core/ui/settings_general.cpp:241 core/ui/settings_general.cpp:242
+#: core/ui/settings_general.cpp:240 core/ui/settings_general.cpp:241
 msgid "Japan"
 msgstr "Japán"
 
-#: core/ui/settings_general.cpp:241 core/ui/settings_general.cpp:242
+#: core/ui/settings_general.cpp:240 core/ui/settings_general.cpp:241
 msgid "USA"
 msgstr "Egyesült Államok"
 
-#: core/ui/settings_general.cpp:241
+#: core/ui/settings_general.cpp:240
 msgid "Europe"
 msgstr "Európa"
 
-#: core/ui/settings_general.cpp:242
+#: core/ui/settings_general.cpp:241
 msgctxt "region"
 msgid "Export"
 msgstr "Exportálás"
 
-#: core/ui/settings_general.cpp:242
+#: core/ui/settings_general.cpp:241
 msgid "Korea"
 msgstr "Korea"
 
-#: core/ui/settings_general.cpp:244
+#: core/ui/settings_general.cpp:243
 msgid "Region"
 msgstr "Régió"
 
-#: core/ui/settings_general.cpp:245
+#: core/ui/settings_general.cpp:244
 msgid "BIOS region"
 msgstr "BIOS régió"
 
-#: core/ui/settings_general.cpp:247
+#: core/ui/settings_general.cpp:246
 msgid "VGA"
 msgstr "VGA"
 
-#: core/ui/settings_general.cpp:247
+#: core/ui/settings_general.cpp:246
 msgid "RGB Component"
 msgstr ""
 
-#: core/ui/settings_general.cpp:247
+#: core/ui/settings_general.cpp:246
 msgid "TV Composite"
 msgstr ""
 
-#: core/ui/settings_general.cpp:254
+#: core/ui/settings_general.cpp:253
 msgid "Cable"
 msgstr "Kábel"
 
-#: core/ui/settings_general.cpp:267
+#: core/ui/settings_general.cpp:266
 msgid "Video connection type"
 msgstr ""
 
-#: core/ui/settings_general.cpp:277
+#: core/ui/settings_general.cpp:276
 msgid "Content Location"
 msgstr ""
 
-#: core/ui/settings_general.cpp:298 core/ui/settings_general.cpp:362
+#: core/ui/settings_general.cpp:297 core/ui/settings_general.cpp:361
 msgid "Rescan Content"
 msgstr "Tartalom újbóli beolvasása"
 
-#: core/ui/settings_general.cpp:310
+#: core/ui/settings_general.cpp:309
 msgid "The folders where your games are stored"
 msgstr ""
 
-#: core/ui/settings_general.cpp:316
+#: core/ui/settings_general.cpp:315
 msgid "Data Folder"
 msgstr "Adatmappa"
 
-#: core/ui/settings_general.cpp:324
+#: core/ui/settings_general.cpp:323
 msgid "The folder containing BIOS files, as well as saved VMUs and states"
 msgstr "A BIOS fájlokat, valamint a mentett VMU-kat és állapotokat tartalmazó mappa"
 
-#: core/ui/settings_general.cpp:329
+#: core/ui/settings_general.cpp:328
 msgid "Home Folder"
 msgstr "Kezdőmappa"
 
-#: core/ui/settings_general.cpp:338
+#: core/ui/settings_general.cpp:337
 msgctxt "action"
 msgid "Import"
 msgstr "Importálás"
 
-#: core/ui/settings_general.cpp:341
+#: core/ui/settings_general.cpp:340
 msgctxt "action"
 msgid "Export"
 msgstr "Exportálás"
 
-#: core/ui/settings_general.cpp:346
+#: core/ui/settings_general.cpp:345
 msgid "Reveal in Finder"
 msgstr "Megjelenítés a Finderben"
 
-#: core/ui/settings_general.cpp:356
+#: core/ui/settings_general.cpp:355
 msgid "The folder where Flycast saves configuration files and VMUs. BIOS files should be in a subfolder named \"data\""
 msgstr "A mappa, amelyben a Flycast a konfigurációs fájlokat és a VMU-kat tárolja. A BIOS-fájloknak a „data” nevű almappában kell lenniük"
 
-#: core/ui/settings_general.cpp:367
+#: core/ui/settings_general.cpp:366
 msgid "Box Art Game List"
 msgstr "Borítóképes lista"
 
-#: core/ui/settings_general.cpp:368
+#: core/ui/settings_general.cpp:367
 msgid "Display game cover art in the game list."
 msgstr "A játékborító megjelenítése a játéklistán."
 
-#: core/ui/settings_general.cpp:369
+#: core/ui/settings_general.cpp:368
 msgid "Fetch Box Art"
 msgstr "Borítóképek letöltése"
 
-#: core/ui/settings_general.cpp:370
+#: core/ui/settings_general.cpp:369
 msgid "Fetch cover images from TheGamesDB.net."
 msgstr "Borítóképek letöltése a TheGamesDB.net webhelyről."
 
-#: core/ui/settings_general.cpp:371
+#: core/ui/settings_general.cpp:370
 msgid "UI Scaling"
 msgstr "UI méretezés"
 
-#: core/ui/settings_general.cpp:371
+#: core/ui/settings_general.cpp:370
 msgid "Adjust the size of UI elements and fonts."
 msgstr "Az UI elemek és betűtípusok méretének beállítása."
 
-#: core/ui/settings_general.cpp:376
+#: core/ui/settings_general.cpp:375
 msgid "Apply"
 msgstr "Alkalmazás"
 
-#: core/ui/settings_general.cpp:382
+#: core/ui/settings_general.cpp:381
 msgid "Dark"
 msgstr "Sötét"
 
-#: core/ui/settings_general.cpp:382
+#: core/ui/settings_general.cpp:381
 msgid "Light"
 msgstr "Világos"
 
-#: core/ui/settings_general.cpp:382
+#: core/ui/settings_general.cpp:381
 msgid "Dreamcast"
 msgstr "Dreamcast"
 
-#: core/ui/settings_general.cpp:382
+#: core/ui/settings_general.cpp:381
 msgid "High Contrast"
 msgstr "Magas kontraszt"
 
-#: core/ui/settings_general.cpp:382
+#: core/ui/settings_general.cpp:381
 msgid "Nintendo"
 msgstr "Nintendo"
 
-#: core/ui/settings_general.cpp:382
+#: core/ui/settings_general.cpp:381
 msgid "Aqua Chill"
 msgstr ""
 
-#: core/ui/settings_general.cpp:384
+#: core/ui/settings_general.cpp:383
 msgid "UI Theme"
 msgstr "UI téma"
 
-#: core/ui/settings_general.cpp:385
+#: core/ui/settings_general.cpp:384
 msgid "Select the UI color theme."
 msgstr ""
 
-#: core/ui/settings_general.cpp:391
+#: core/ui/settings_general.cpp:390
 msgid "Hide Legacy Naomi Roms"
 msgstr "Legacy Naomi ROM-ok elrejtése"
 
-#: core/ui/settings_general.cpp:392
+#: core/ui/settings_general.cpp:391
 msgid "Hide .bin, .dat and .lst files from the content browser"
 msgstr "A .bin, .dat és .lst fájlok elrejtése a tartalom böngészőből"
 
-#: core/ui/settings_general.cpp:395
+#: core/ui/settings_general.cpp:394
 msgid "Use SAF File Picker"
 msgstr "SAF fájlválasztó használata"
 
-#: core/ui/settings_general.cpp:396
+#: core/ui/settings_general.cpp:395
 msgid "Use Android Storage Access Framework file picker to select folders and files. Ignored on Android 10 and later."
 msgstr "Az Android Storage Access Framework fájlválasztóját használja a mappák és fájlok kiválasztásához. Android 10 és újabb verziókban figyelmen kívül hagyva."
 
-#: core/ui/settings_general.cpp:399
+#: core/ui/settings_general.cpp:398
 msgid "Automatic State:"
 msgstr "Automatikus állapot:"
 
-#: core/ui/settings_general.cpp:400 core/ui/gui_cheats.cpp:104
+#: core/ui/settings_general.cpp:399 core/ui/gui_cheats.cpp:104
 msgid "Load"
 msgstr "Betöltés"
 
-#: core/ui/settings_general.cpp:401
+#: core/ui/settings_general.cpp:400
 msgid "Load the last saved state of the game when starting"
 msgstr "A játék indításakor betölti a legutóbb mentett állapotot"
 
-#: core/ui/settings_general.cpp:403 core/ui/vgamepad.cpp:73
+#: core/ui/settings_general.cpp:402 core/ui/vgamepad.cpp:73
 msgid "Save"
 msgstr "Mentés"
 
-#: core/ui/settings_general.cpp:404
+#: core/ui/settings_general.cpp:403
 msgid "Save the state of the game when stopping"
 msgstr "Játékállapot mentése leállításkor"
 
-#: core/ui/settings_general.cpp:405
+#: core/ui/settings_general.cpp:404
 msgid "Naomi Free Play"
 msgstr "Naomi Ingyenes játék"
 
-#: core/ui/settings_general.cpp:405
+#: core/ui/settings_general.cpp:404
 msgid "Configure Naomi games in Free Play mode."
 msgstr "Beállítja a Naomi játékokat szabad játék módba."
 
-#: core/ui/settings_general.cpp:407
+#: core/ui/settings_general.cpp:406
 msgid "Discord Presence"
 msgstr "Discord jelenlét"
 
-#: core/ui/settings_general.cpp:407
+#: core/ui/settings_general.cpp:406
 msgid "Show which game you are playing on Discord"
 msgstr "Mutatja Discordon, melyik játékot játszod"
 
-#: core/ui/settings_general.cpp:410
+#: core/ui/settings_general.cpp:409
 msgid "Enable RetroAchievements"
 msgstr "RetroAchievements engedélyezése"
 
-#: core/ui/settings_general.cpp:410
+#: core/ui/settings_general.cpp:409
 msgid "Track your game achievements using RetroAchievements.org"
 msgstr "Nyomon követi a játékbeli eredményeket a RetroAchievements.org segítségével"
 
-#: core/ui/settings_general.cpp:415
+#: core/ui/settings_general.cpp:414
 msgid "Enable RetroAchievements hardcore mode. Using cheats and loading a state are not allowed in this mode."
 msgstr "Engedélyezi a RetroAchievements hardcore módot. Ebben a módban nem engedélyezett a csalás és az állapot betöltés."
 
-#: core/ui/settings_general.cpp:416
+#: core/ui/settings_general.cpp:415
 msgid "Username"
 msgstr "Felhasználónév"
 
-#: core/ui/settings_general.cpp:424
+#: core/ui/settings_general.cpp:423
 msgid "Authentication successful"
 msgstr "Sikeres hitelesítés"
 
-#: core/ui/settings_general.cpp:427
+#: core/ui/settings_general.cpp:426
 msgid "Logout"
 msgstr "Kijelentkezés"
 
-#: core/ui/settings_general.cpp:433
+#: core/ui/settings_general.cpp:432
 msgid "Password"
 msgstr "Jelszó"
 
-#: core/ui/settings_general.cpp:437
+#: core/ui/settings_general.cpp:436
 msgid "Authenticating..."
 msgstr "Hitelesítés..."
 
-#: core/ui/settings_general.cpp:450
+#: core/ui/settings_general.cpp:449
 msgid "Login"
 msgstr "Bejelentkezés"
 
-#: core/ui/settings_general.cpp:465
+#: core/ui/settings_general.cpp:464
 msgid "Custom Paths"
 msgstr "Egyedi útvonalak"
 
-#: core/ui/settings_general.cpp:467
+#: core/ui/settings_general.cpp:466
 msgid "BIOS Folders"
 msgstr "BIOS mappák"
 
-#: core/ui/settings_general.cpp:467
+#: core/ui/settings_general.cpp:466
 msgid "Select a BIOS folder"
 msgstr "BIOS mappa kiválasztása"
 
-#: core/ui/settings_general.cpp:468
+#: core/ui/settings_general.cpp:467
 msgid "Folders containing BIOS files (e.g. dc_boot.bin or dc_bios.bin) and arcade BIOS"
 msgstr "A BIOS fájlokat (pl. dc_boot.bin vagy dc_bios.bin) és az arcade BIOS-t tartalmazó mappák"
 
-#: core/ui/settings_general.cpp:472
+#: core/ui/settings_general.cpp:471
 msgid "VMU Folder"
 msgstr "VMU mappa"
 
-#: core/ui/settings_general.cpp:472
+#: core/ui/settings_general.cpp:471
 msgid "Select the VMU folder"
 msgstr "Válassza ki a VMU mappát"
 
-#: core/ui/settings_general.cpp:473
+#: core/ui/settings_general.cpp:472
 msgid "Folder where VMU (.bin) saves are stored"
 msgstr "A VMU (.bin) mentések tárolási helye"
 
-#: core/ui/settings_general.cpp:476
+#: core/ui/settings_general.cpp:475
 msgid "Savestate Folders"
 msgstr ""
 
-#: core/ui/settings_general.cpp:476
+#: core/ui/settings_general.cpp:475
 msgid "Select a savestate folder"
 msgstr ""
 
-#: core/ui/settings_general.cpp:477
+#: core/ui/settings_general.cpp:476
 msgid "Folders for save states. First path is used for new states; all are searched when loading"
 msgstr ""
 
-#: core/ui/settings_general.cpp:480
+#: core/ui/settings_general.cpp:479
 msgid "Game Save Folder"
 msgstr "Játék mentési mappa"
 
-#: core/ui/settings_general.cpp:480
+#: core/ui/settings_general.cpp:479
 msgid "Select the game save folder"
 msgstr "Válassza ki a játék mentési mappáját"
 
-#: core/ui/settings_general.cpp:481
+#: core/ui/settings_general.cpp:480
 msgid "Folder for game save data (e.g. arcade NVRAM)"
 msgstr "Mappa a játék mentési adataihoz (pl. arcade NVRAM)"
 
-#: core/ui/settings_general.cpp:485
+#: core/ui/settings_general.cpp:484
 msgid "Texture Pack Folders"
 msgstr "Textúra csomag mappák"
 
-#: core/ui/settings_general.cpp:485
+#: core/ui/settings_general.cpp:484
 msgid "Select a texture pack folder"
 msgstr "Válasszon ki egy textúracsomag mappát"
 
-#: core/ui/settings_general.cpp:486
+#: core/ui/settings_general.cpp:485
 msgid "Folders containing textures/<gameId> or <gameId> under a textures subfolder"
 msgstr ""
 
-#: core/ui/settings_general.cpp:490
+#: core/ui/settings_general.cpp:489
 msgid "Texture Dump Folder"
 msgstr ""
 
-#: core/ui/settings_general.cpp:490
+#: core/ui/settings_general.cpp:489
 msgid "Select the texture dump folder"
 msgstr ""
 
-#: core/ui/settings_general.cpp:491
+#: core/ui/settings_general.cpp:490
 msgid "Folder where texture dumps are saved. Game-specific subfolders will be created automatically"
 msgstr ""
 
-#: core/ui/settings_general.cpp:494
+#: core/ui/settings_general.cpp:493
 msgid "Box Art Folder"
 msgstr "Borító mappa"
 
-#: core/ui/settings_general.cpp:494
+#: core/ui/settings_general.cpp:493
 msgid "Select the box art folder"
 msgstr "Válassza ki a borító mappát"
 
-#: core/ui/settings_general.cpp:495
+#: core/ui/settings_general.cpp:494
 msgid "Folder containing box art images (png/jpg). If empty, Flycast will use the default Home Folder/boxart for downloads and generated art"
 msgstr "A borító képeket (png/jpg) tartalmazó mappa. Ha üres, a Flycast az alapértelmezett Saját mappát/borítót használja a letöltésekhez és a generált képekhez"
 
-#: core/ui/settings_general.cpp:498
+#: core/ui/settings_general.cpp:497
 msgid "Controller Mapping Folders"
 msgstr ""
 
-#: core/ui/settings_general.cpp:498
+#: core/ui/settings_general.cpp:497
 msgid "Select a controller mapping folder"
 msgstr ""
 
-#: core/ui/settings_general.cpp:499
+#: core/ui/settings_general.cpp:498
 msgid "Folders containing controller mapping files (.cfg). The emulator also looks in Home Folder/mappings. Per-game mappings are suffixed with _<gameId>.cfg"
 msgstr ""
 
-#: core/ui/settings_general.cpp:502
+#: core/ui/settings_general.cpp:501
 msgid "Cheat Folders"
 msgstr "Csalás mappák"
 
-#: core/ui/settings_general.cpp:502
+#: core/ui/settings_general.cpp:501
 msgid "Select a cheat folder"
 msgstr "Válasszon ki egy csalás mappát"
 
-#: core/ui/settings_general.cpp:503
+#: core/ui/settings_general.cpp:502
 msgid "Folders containing cheat files (.cht/.txt) named with the game ID. Flycast will auto-load matching files if present"
 msgstr "A játék azonosítójával elnevezett csaló fájlokat (.cht/.txt) tartalmazó mappák. A Flycast automatikusan betölti a megfelelő fájlokat, ha azok léteznek"
 
@@ -1470,14 +1486,6 @@ msgstr "Fel"
 #: core/ui/settings_controls.cpp:178 core/ui/settings_controls.cpp:242
 msgid "Down"
 msgstr "Le"
-
-#: core/ui/settings_controls.cpp:179 core/ui/settings_controls.cpp:243
-msgid "Left"
-msgstr "Balra"
-
-#: core/ui/settings_controls.cpp:180 core/ui/settings_controls.cpp:244
-msgid "Right"
-msgstr "Jobbra"
 
 #: core/ui/settings_controls.cpp:182 core/ui/settings_controls.cpp:246
 msgid "Thumbstick Up"
@@ -2016,9 +2024,9 @@ msgstr ""
 msgid "Reselect"
 msgstr ""
 
-#: core/ui/gui.cpp:733 core/ui/gui.cpp:911 core/ui/gui.cpp:1149
-#: core/ui/gui.cpp:1292 core/ui/gui_cheats.cpp:47 core/ui/gui_util.cpp:180
-#: core/ui/vgamepad.cpp:87
+#: core/ui/gui.cpp:733 core/ui/gui.cpp:911 core/ui/gui.cpp:1148
+#: core/ui/gui.cpp:1161 core/ui/gui.cpp:1304 core/ui/gui_cheats.cpp:47
+#: core/ui/gui_util.cpp:180 core/ui/vgamepad.cpp:87
 msgid "Cancel"
 msgstr "Mégsem"
 
@@ -2054,7 +2062,7 @@ msgstr "A Flycast nem tud ebbe a mappába írni."
 msgid "Select Flycast Home Folder"
 msgstr "Válassza ki a Flycast Sajátmappát"
 
-#: core/ui/gui.cpp:1129 core/ui/gui.cpp:1238 core/emulator.cpp:689
+#: core/ui/gui.cpp:1129 core/ui/gui.cpp:1250 core/emulator.cpp:687
 msgid "Starting..."
 msgstr "Indítás..."
 
@@ -2066,32 +2074,36 @@ msgstr "Hálózat indítása..."
 msgid "Press Start to start the game now."
 msgstr "Nyomja meg a Start gombot a játék elindításához."
 
-#: core/ui/gui.cpp:1240
+#: core/ui/gui.cpp:1151 core/ui/gui.cpp:1154
+msgid "Start Now"
+msgstr ""
+
+#: core/ui/gui.cpp:1252
 msgid "Loading..."
 msgstr "Betöltés..."
 
-#: core/ui/gui.cpp:1276
+#: core/ui/gui.cpp:1288
 msgid "Preloading custom textures"
 msgstr ""
 
-#: core/ui/gui.cpp:1279
+#: core/ui/gui.cpp:1291
 msgid "Preparing..."
 msgstr "Előkészítés..."
 
-#: core/ui/gui.cpp:1601
+#: core/ui/gui.cpp:1613
 #, c-format
 msgid "Save state slot %d"
 msgstr ""
 
-#: core/ui/gui.cpp:1669
+#: core/ui/gui.cpp:1681
 msgid "No screenshot available"
 msgstr "Nincs elérhető képernyőkép"
 
-#: core/ui/gui.cpp:1675
+#: core/ui/gui.cpp:1687
 msgid "Screenshot saved"
 msgstr "Képernyőkép mentve"
 
-#: core/ui/gui.cpp:1677
+#: core/ui/gui.cpp:1689
 msgid "Error saving screenshot"
 msgstr ""
 
@@ -2151,7 +2163,7 @@ msgstr ""
 msgid "ADD CHEAT"
 msgstr "CSALÁS HOZZÁADÁSA"
 
-#: core/ui/gui_cheats.cpp:72 core/ui/settings_network.cpp:137
+#: core/ui/gui_cheats.cpp:72 core/ui/settings_network.cpp:169
 msgid "Code"
 msgstr "Kód"
 
@@ -2359,7 +2371,7 @@ msgstr ""
 msgid "Deselect to play as player 2"
 msgstr ""
 
-#: core/ui/settings_network.cpp:80 core/ui/settings_network.cpp:174
+#: core/ui/settings_network.cpp:80 core/ui/settings_network.cpp:206
 msgid "Peer"
 msgstr ""
 
@@ -2423,149 +2435,169 @@ msgstr ""
 msgid "Sets duration that chat window stays open after new message is received."
 msgstr ""
 
-#: core/ui/settings_network.cpp:107 core/ui/settings_network.cpp:167
+#: core/ui/settings_network.cpp:107 core/ui/settings_network.cpp:199
 msgid "Network Statistics"
 msgstr "Hálózati statisztika"
 
-#: core/ui/settings_network.cpp:108 core/ui/settings_network.cpp:168
+#: core/ui/settings_network.cpp:108 core/ui/settings_network.cpp:200
 msgid "Display network statistics on screen"
 msgstr ""
 
-#: core/ui/settings_network.cpp:112
-msgid "Act as Server"
+#: core/ui/settings_network.cpp:113
+msgid "Network Role"
 msgstr ""
 
-#: core/ui/settings_network.cpp:113
+#: core/ui/settings_network.cpp:118
+msgid "Master"
+msgstr ""
+
+#: core/ui/settings_network.cpp:120
 msgid "Create a local server for Naomi network games"
 msgstr ""
 
-#: core/ui/settings_network.cpp:116
+#: core/ui/settings_network.cpp:122
+msgid "Slave"
+msgstr ""
+
+#: core/ui/settings_network.cpp:124
+msgid "Connect to the master server"
+msgstr ""
+
+#: core/ui/settings_network.cpp:126
+msgid "Satellite"
+msgstr ""
+
+#: core/ui/settings_network.cpp:128
+msgid "Live monitor for games that support it (Virtual-On Oratorio Tangram and Club Kart)"
+msgstr ""
+
+#: core/ui/settings_network.cpp:133
 msgid "Server"
 msgstr "Szerver"
 
-#: core/ui/settings_network.cpp:118
+#: core/ui/settings_network.cpp:135
 msgid "The server to connect to. Leave blank to find a server automatically on the default port"
 msgstr ""
 
-#: core/ui/settings_network.cpp:122 core/ui/settings_network.cpp:179
+#: core/ui/settings_network.cpp:139 core/ui/settings_network.cpp:211
 msgid "Local Port"
 msgstr "Helyi port"
 
-#: core/ui/settings_network.cpp:124 core/ui/settings_network.cpp:181
+#: core/ui/settings_network.cpp:141 core/ui/settings_network.cpp:213
 msgid "The local UDP port to use"
 msgstr ""
 
-#: core/ui/settings_network.cpp:132
+#: core/ui/settings_network.cpp:164
 msgid "Match Code"
 msgstr ""
 
-#: core/ui/settings_network.cpp:139
+#: core/ui/settings_network.cpp:171
 msgid "Choose a unique word or number and share it with your opponent."
 msgstr ""
 
-#: core/ui/settings_network.cpp:141
+#: core/ui/settings_network.cpp:173
 msgid "Connect"
 msgstr "Csatlakozás"
 
-#: core/ui/settings_network.cpp:145
+#: core/ui/settings_network.cpp:177
 msgid "Disconnect"
 msgstr "Kapcsolat bontása"
 
-#: core/ui/settings_network.cpp:155
+#: core/ui/settings_network.cpp:187
 msgid "Waiting at meeting point..."
 msgstr ""
 
-#: core/ui/settings_network.cpp:158
+#: core/ui/settings_network.cpp:190
 msgid "Preparing game..."
 msgstr ""
 
-#: core/ui/settings_network.cpp:161
+#: core/ui/settings_network.cpp:193
 #, c-format
 msgid "Playing %s (%s)"
 msgstr ""
 
-#: core/ui/settings_network.cpp:171
+#: core/ui/settings_network.cpp:203
 msgid "Manual"
 msgstr ""
 
-#: core/ui/settings_network.cpp:176
+#: core/ui/settings_network.cpp:208
 msgid "The peer to connect to. Leave blank to find a player automatically on the default port"
 msgstr ""
 
-#: core/ui/settings_network.cpp:189
+#: core/ui/settings_network.cpp:221
 msgid "Act as Master"
 msgstr ""
 
-#: core/ui/settings_network.cpp:190
+#: core/ui/settings_network.cpp:222
 msgid "Only used for Maximum Speed. One of the peer must be master."
 msgstr ""
 
-#: core/ui/settings_network.cpp:194
+#: core/ui/settings_network.cpp:226
 msgid "Network Options"
 msgstr "Hálózati beállítások"
 
-#: core/ui/settings_network.cpp:196
+#: core/ui/settings_network.cpp:228
 msgid "Enable UPnP"
 msgstr "UPnP engedélyezése"
 
-#: core/ui/settings_network.cpp:196
+#: core/ui/settings_network.cpp:228
 msgid "Automatically configure your network router for netplay"
 msgstr ""
 
-#: core/ui/settings_network.cpp:197
+#: core/ui/settings_network.cpp:229
 msgid "Broadcast Digital Outputs"
 msgstr ""
 
-#: core/ui/settings_network.cpp:197
+#: core/ui/settings_network.cpp:229
 msgid "Broadcast digital outputs and force-feedback state on TCP port 8000. Compatible with the \"-output network\" MAME option. Arcade games only."
 msgstr ""
 
-#: core/ui/settings_network.cpp:202
+#: core/ui/settings_network.cpp:234
 msgid "Broadband Adapter Emulation"
 msgstr ""
 
-#: core/ui/settings_network.cpp:203
+#: core/ui/settings_network.cpp:235
 msgid "Emulate the Ethernet Broadband Adapter (BBA) instead of the Modem"
 msgstr ""
 
-#: core/ui/settings_network.cpp:205
+#: core/ui/settings_network.cpp:237
 msgid "Use DCNet"
 msgstr "DCNet használata"
 
-#: core/ui/settings_network.cpp:205
+#: core/ui/settings_network.cpp:237
 msgid "Use the DCNet cloud service for Dreamcast Internet access."
 msgstr ""
 
-#: core/ui/settings_network.cpp:208
+#: core/ui/settings_network.cpp:240
 msgid "ISP User Name"
 msgstr ""
 
-#: core/ui/settings_network.cpp:214
+#: core/ui/settings_network.cpp:246
 msgid "The ISP user name stored in the console Flash RAM. Used by some online games as the player name. Leave blank to keep the current Flash RAM value."
 msgstr ""
 
-#: core/ui/settings_network.cpp:220
+#: core/ui/settings_network.cpp:252
 msgid "DNS server name or IP address"
 msgstr ""
 
-#: core/ui/settings_network.cpp:226
+#: core/ui/settings_network.cpp:258
 msgid "Multiboard Screens"
 msgstr ""
 
-#: core/ui/settings_network.cpp:229
-msgid "1 (Twin)"
+#: core/ui/settings_network.cpp:260
+msgid "1 (Twin, Satellite)"
 msgstr ""
 
-#: core/ui/settings_network.cpp:229
-msgid "One screen configuration (F355 Twin)"
+#: core/ui/settings_network.cpp:260
+msgid "One screen configuration (F355 Twin, Derby Owners Club satellite)"
 msgstr ""
 
-#: core/ui/settings_network.cpp:231
-msgid "3 (Deluxe)"
+#: core/ui/settings_network.cpp:262
+msgid "2+ (Deluxe, Main screen)"
 msgstr ""
 
-#: core/ui/settings_network.cpp:231
-msgid "Three screens configuration"
+#: core/ui/settings_network.cpp:263
+msgid "Two or three screens configuration (Airline Pilot, Derby Owners Club main screen, F355 Deluxe, Sega Strike Fighter)"
 msgstr ""
 
 #: core/ui/settings_about.cpp:53 core/ui/settings_about.cpp:107
@@ -2684,11 +2716,11 @@ msgstr ""
 msgid "DCNet disconnected"
 msgstr ""
 
-#: core/network/dcnet.cpp:753
+#: core/network/dcnet.cpp:754
 msgid "Host not found"
 msgstr ""
 
-#: core/network/dcnet.cpp:797
+#: core/network/dcnet.cpp:798
 msgid "Can't connect to DCNet"
 msgstr ""
 
@@ -2720,7 +2752,7 @@ msgstr ""
 msgid "Connection resumed"
 msgstr ""
 
-#: core/network/null_modem.h:174
+#: core/network/null_modem.h:173
 msgid "Network connected"
 msgstr "Hálózat csatlakoztatva"
 
@@ -2752,30 +2784,30 @@ msgstr "NAT"
 msgid "Connection lost"
 msgstr ""
 
-#: core/network/naomi_network.cpp:102
+#: core/network/naomi_network.cpp:103
 msgid "Waiting for players..."
 msgstr "Várakozás a játékosokra..."
 
-#: core/network/naomi_network.cpp:105
+#: core/network/naomi_network.cpp:106
 #, c-format
 msgid "%d player connected. Waiting..."
 msgid_plural "%d players connected. Waiting..."
 msgstr[0] "%d játékos csatlakozott. Várakozás..."
 msgstr[1] "%d játékos csatlakozott. Várakozás..."
 
-#: core/network/naomi_network.cpp:129
+#: core/network/naomi_network.cpp:131
 msgid "Starting game"
 msgstr "Játék elinditása"
 
-#: core/network/naomi_network.cpp:134
+#: core/network/naomi_network.cpp:136
 msgid "No player connected"
 msgstr "Nincs csatlakozott játékos"
 
-#: core/network/naomi_network.cpp:168
+#: core/network/naomi_network.cpp:170
 msgid "Connecting to server"
 msgstr "Csatlakozás a szerverhez"
 
-#: core/network/naomi_network.cpp:252
+#: core/network/naomi_network.cpp:254
 #, c-format
 msgid "Connected as slot %d"
 msgstr ""
@@ -2817,7 +2849,7 @@ msgstr ""
 msgid "This game requires a real BIOS"
 msgstr "Ehhez a játékhoz valódi BIOS szükséges"
 
-#: core/emulator.cpp:664
+#: core/emulator.cpp:662
 msgid "Widescreen cheat activated"
 msgstr "Széles képernyős csalás aktiválva"
 
@@ -2845,7 +2877,7 @@ msgstr ""
 msgid "Cannot initialize the graphics API"
 msgstr ""
 
-#: shell/libretro/libretro.cpp:2141
+#: shell/libretro/libretro.cpp:2143
 msgid "Cannot run without JIT"
 msgstr ""
 
@@ -2893,7 +2925,7 @@ msgstr ""
 msgid "Memory initialization failed"
 msgstr ""
 
-#: shell/android-studio/flycast/src/main/jni/src/android_storage.h:192
+#: shell/android-studio/flycast/src/main/jni/src/android_storage.h:198
 #, c-format
 msgid "Storage access failed: %s"
 msgstr ""
@@ -2914,7 +2946,7 @@ msgstr "Kezdőlap"
 msgid "Share"
 msgstr "Megosztás"
 
-#: shell/switch/switch_main.cpp:76
+#: shell/switch/switch_main.cpp:86
 msgid "Not supported on Switch"
 msgstr ""
 
