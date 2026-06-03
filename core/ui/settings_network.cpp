@@ -37,7 +37,9 @@ void gui_settings_network()
 		else if (config::BattleCableEnable)
 			netType = 3;
 		ImGui::Columns(4, "networkType", false);
-		ImGui::RadioButton((Ts("Disabled") + "##network").c_str(), &netType, 0);
+		ImGui::RadioButton(T("Native"), &netType, 0);
+		ImGui::SameLine(0, style.ItemInnerSpacing.x);
+		ShowHelpMarker(T("Use native Dreamcast online features using the modem or Broadband Adapter"));
 		ImGui::NextColumn();
 		ImGui::RadioButton("GGPO", &netType, 1);
 		ImGui::SameLine(0, style.ItemInnerSpacing.x);
