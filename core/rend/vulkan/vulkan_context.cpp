@@ -1006,14 +1006,18 @@ void VulkanContext::Present() noexcept
 		try {
 			DoSwapAutomation();
 			vk::Result res = presentQueue.presentKHR(vk::PresentInfoKHR(1, &(*renderCompleteSemaphores[currentSemaphore]), 1, &(*swapChain), &currentImage));
+#if defined(VK_USE_PLATFORM_METAL_EXT) || defined(__APPLE__)
 			// presentKHR lists eSuboptimalKHR as a success code so it is
 			// returned rather than thrown. Treat it as a request to
 			// recreate the swapchain on the next frame; otherwise the
 			// surface can stay stuck in a sub-optimal configuration
 			// (notably across DPI / window-resize / display-mode changes
 			// and with MoltenVK on Apple platforms).
+			// Restricted to Apple platforms since this is common on Android unless we use the identity
+			// resolution of the screen (which is often vertical so we don't).
 			if (res == vk::Result::eSuboptimalKHR)
 				resized = true;
+#endif
 			currentSemaphore = (currentSemaphore + 1) % renderCompleteSemaphores.size();
 
 			if (lastFrameView && IsValid() && !gui_is_open())
