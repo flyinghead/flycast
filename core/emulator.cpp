@@ -419,6 +419,9 @@ static void loadSpecialSettings()
 			INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s", prod_id.c_str());
 			config::ExtraDepthScale.override(10000.f);
 		}
+		if (prod_id == "SEGA STRIKE FIGHTER IN JPN-SLAVE")
+			// slave 1 left channel is connected to a bass shaker, which produces an annoying buzzing sound on regular speakers
+			settings.aica.muteAudio = true;
 	}
 }
 
