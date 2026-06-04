@@ -55830,7 +55830,7 @@ struct retro_core_options_v2 options_ko = {
 #define OPTION_VAL_JAPAN_NL NULL
 #define OPTION_VAL_USA_NL NULL
 #define OPTION_VAL_EUROPE_NL NULL
-#define OPTION_VAL_DEFAULT_NL NULL
+#define OPTION_VAL_DEFAULT_NL "Standaard"
 #define CORE_OPTION_NAME_LANGUAGE_LABEL_NL "Taal"
 #define CORE_OPTION_NAME_LANGUAGE_INFO_0_NL NULL
 #define OPTION_VAL_JAPANESE_NL "Japans"
@@ -62198,7 +62198,7 @@ struct retro_core_options_v2 options_or = {
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_INFO_0_PL NULL
 #define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_LABEL_PL NULL
 #define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_INFO_0_PL NULL
-#define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_PL NULL
+#define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_PL "Zgraj tekstury"
 #define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_PL NULL
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_PL NULL
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_INFO_0_PL NULL
@@ -68477,8 +68477,8 @@ struct retro_core_options_v2 options_pt_pt = {
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_RU "Звуковые сигналы визуальных карт памяти (VMU)"
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_RU "Сигналы VMU"
 #define CORE_OPTION_NAME_VMU_SOUND_INFO_0_RU "Включает воспроизведение сигналов VMU."
-#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_RU NULL
-#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_RU NULL
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_RU "Хранилище VMU DreamPotato"
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_RU "Хранить данные VMU на подключенном эмуляторе DreamPotato. При включении опции локальный файл сохранения VMU не используется."
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_RU "Показывать настройки отображения визуальных карт памяти (VMU)"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_RU "Показывать настройки отображения VMU"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_RU "Включает конфигурацию размера, положения, цвета и видимости эмулируемого ЖК-экрана VMU. Для применения настройки требуется переключить быстрое меню."
@@ -70268,50 +70268,50 @@ struct retro_core_options_v2 options_ru = {
 /* RETRO_LANGUAGE_SK */
 
 #define CATEGORY_SYSTEM_LABEL_SK "Systém"
-#define CATEGORY_SYSTEM_INFO_0_SK NULL
+#define CATEGORY_SYSTEM_INFO_0_SK "Nakonfigurujte nastavenia oblasti, jazyka, BIOS-u a základného hardvéru."
 #define CATEGORY_VIDEO_LABEL_SK NULL
-#define CATEGORY_VIDEO_INFO_0_SK NULL
+#define CATEGORY_VIDEO_INFO_0_SK "Nakonfigurujte nastavenia rozlíšenia, na poradí nezávislej priehľadnosti a vizuálnych efektov."
 #define CATEGORY_PERFORMANCE_LABEL_SK "Výkon"
-#define CATEGORY_PERFORMANCE_INFO_0_SK NULL
+#define CATEGORY_PERFORMANCE_INFO_0_SK "Nakonfigurujte nastavenia viacvláknového vykresľovania a preskakovania snímok."
 #define CATEGORY_HACKS_LABEL_SK "Emulačné hacky"
-#define CATEGORY_HACKS_INFO_0_SK NULL
+#define CATEGORY_HACKS_INFO_0_SK "Nakonfigurujte nastavenia prepísaní širokouhlého režimu, rýchlosti načítavania GD-ROM a nahrádzania textúr."
 #define CATEGORY_INPUT_LABEL_SK "Vstup"
-#define CATEGORY_INPUT_INFO_0_SK NULL
-#define CATEGORY_EXPANSIONS_LABEL_SK NULL
-#define CATEGORY_EXPANSIONS_INFO_0_SK NULL
+#define CATEGORY_INPUT_INFO_0_SK "Nakonfigurujte nastavenia gamepadu a svetelnej pištole."
+#define CATEGORY_EXPANSIONS_LABEL_SK "Rozširujúce sloty ovládača"
+#define CATEGORY_EXPANSIONS_INFO_0_SK "Vyberte zariadenie (VMU, vibračné zariadenie) pripojené v každom rozširujúcom slote ovládača."
 #define CATEGORY_VMU_LABEL_SK NULL
-#define CATEGORY_VMU_INFO_0_SK NULL
+#define CATEGORY_VMU_INFO_0_SK "Nakonfigurujte nastavenia uložení VMU pre každú hru a viditeľnosti VMU na obrazovke."
 #define CORE_OPTION_NAME_REGION_LABEL_SK "Región"
 #define OPTION_VAL_JAPAN_SK "Japonsko"
 #define OPTION_VAL_USA_SK NULL
 #define OPTION_VAL_EUROPE_SK "Európa"
 #define OPTION_VAL_DEFAULT_SK "Predvolené"
 #define CORE_OPTION_NAME_LANGUAGE_LABEL_SK "Jazyk"
-#define CORE_OPTION_NAME_LANGUAGE_INFO_0_SK NULL
+#define CORE_OPTION_NAME_LANGUAGE_INFO_0_SK "Zmení jazyk používaný BIOS-om a hrami, ktoré obsahujú viacero jazykov."
 #define OPTION_VAL_JAPANESE_SK "Japončina"
 #define OPTION_VAL_ENGLISH_SK "Angličtina"
 #define OPTION_VAL_GERMAN_SK "Nemčina"
 #define OPTION_VAL_FRENCH_SK "Francúzština"
 #define OPTION_VAL_SPANISH_SK "Španielčina"
 #define OPTION_VAL_ITALIAN_SK "Taliančina"
-#define CORE_OPTION_NAME_HLE_BIOS_LABEL_SK NULL
-#define CORE_OPTION_NAME_HLE_BIOS_INFO_0_SK NULL
+#define CORE_OPTION_NAME_HLE_BIOS_LABEL_SK "HLE BIOS (vyžaduje reštart)"
+#define CORE_OPTION_NAME_HLE_BIOS_INFO_0_SK "Vynútiť použitie BIOS-u s vysokoúrovňovou emuláciou."
 #define CORE_OPTION_NAME_ENABLE_DSP_LABEL_SK "Povoliť DSP"
-#define CORE_OPTION_NAME_ENABLE_DSP_INFO_0_SK NULL
-#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_SK NULL
-#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_SK NULL
-#define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_SK NULL
-#define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_SK NULL
-#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_SK NULL
-#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_SK NULL
-#define CORE_OPTION_NAME_UPNP_LABEL_SK NULL
-#define CORE_OPTION_NAME_UPNP_INFO_0_SK NULL
-#define CORE_OPTION_NAME_DCNET_LABEL_SK NULL
-#define CORE_OPTION_NAME_DCNET_INFO_0_SK NULL
+#define CORE_OPTION_NAME_ENABLE_DSP_INFO_0_SK "Zapne emuláciu audio DSP Dreamcastu (digital signal processor). Zlepšuje presnosť generovaného zvuku, ale zvyšuje nároky na výkon."
+#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_SK "Povoliť servisné tlačidlá arkády"
+#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_SK "Povolí tlačidlo SERVICE pre arkádové hry na vstup do nastavení skrinky."
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_SK "Nastaviť hry NAOMI na voľné hranie"
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_SK "Upraví nastavenia mincí hry na voľné hranie."
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_SK "Emulácia širokopásmového adaptéra"
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_SK "Emulovať širokopásmový Ethernet adaptér namiesto modemu. (vyžaduje reštart)"
+#define CORE_OPTION_NAME_UPNP_LABEL_SK "Povoliť UPnP"
+#define CORE_OPTION_NAME_UPNP_INFO_0_SK "Použiť UPnP na automatické nakonfigurovanie internetového routeru pre online hry."
+#define CORE_OPTION_NAME_DCNET_LABEL_SK "Použiť DCNet"
+#define CORE_OPTION_NAME_DCNET_INFO_0_SK "Použiť cloudovú službu DCNet pre prístup Dreamcastu na Internet."
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_SK "Vnútorné rozlíšenie"
-#define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_SK NULL
-#define OPTION_VAL_320X240_SK NULL
-#define OPTION_VAL_640X480_SK NULL
+#define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_SK "Upraviť rozlíšenie renderingu."
+#define OPTION_VAL_320X240_SK "320x240 (polovičné)"
+#define OPTION_VAL_640X480_SK "640x480 (natívne)"
 #define OPTION_VAL_800X600_SK NULL
 #define OPTION_VAL_960X720_SK NULL
 #define OPTION_VAL_1024X768_SK NULL
@@ -70338,7 +70338,7 @@ struct retro_core_options_v2 options_ru = {
 #define OPTION_VAL_12160X9120_SK NULL
 #define OPTION_VAL_12800X9600_SK NULL
 #define CORE_OPTION_NAME_CABLE_TYPE_LABEL_SK "Typ kábla"
-#define CORE_OPTION_NAME_CABLE_TYPE_INFO_0_SK NULL
+#define CORE_OPTION_NAME_CABLE_TYPE_INFO_0_SK "Typ výstupného signálu. 'TV (Composite)' je najviac podporovaný."
 #define OPTION_VAL_VGA_SK NULL
 #define OPTION_VAL_TV_RGB_SK NULL
 #define OPTION_VAL_TV_COMPOSITE_SK "TV (composite)"
@@ -70350,69 +70350,69 @@ struct retro_core_options_v2 options_ru = {
 #define CORE_OPTION_NAME_SCREEN_ROTATION_LABEL_SK "Orientácia Obrazovky"
 #define OPTION_VAL_HORIZONTAL_SK "Vodorovne"
 #define OPTION_VAL_VERTICAL_SK "Zvislo"
-#define CORE_OPTION_NAME_ALPHA_SORTING_LABEL_SK NULL
-#define CORE_OPTION_NAME_ALPHA_SORTING_INFO_0_SK NULL
-#define OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_SK NULL
-#define OPTION_VAL_PER_TRIANGLE_NORMAL_SK NULL
-#define OPTION_VAL_PER_PIXEL_ACCURATE_SK NULL
-#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_SK NULL
-#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_INFO_0_SK NULL
+#define CORE_OPTION_NAME_ALPHA_SORTING_LABEL_SK "Alfa triedenie"
+#define CORE_OPTION_NAME_ALPHA_SORTING_INFO_0_SK "Vyberte, ako sa zoraďujú priehľadné polygóny."
+#define OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_SK "Per-Strip (rýchle, najmenej presné)"
+#define OPTION_VAL_PER_TRIANGLE_NORMAL_SK "Per-Triangle (normálne)"
+#define OPTION_VAL_PER_PIXEL_ACCURATE_SK "Per-Pixel (presné, ale najpomalšie)"
+#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_SK "Veľkosť akumulačného pixelového bufferu"
+#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_INFO_0_SK "Vyššie hodnoty môžu byť potrebné pre vyššie rozlíšenia, aby sa správne zobrazovali."
 #define OPTION_VAL_512MB_SK "512 MB"
 #define OPTION_VAL_1GB_SK NULL
 #define OPTION_VAL_2GB_SK NULL
 #define OPTION_VAL_4GB_SK NULL
-#define CORE_OPTION_NAME_OIT_LAYERS_LABEL_SK NULL
-#define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_SK NULL
-#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_SK NULL
-#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_SK NULL
-#define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_SK NULL
-#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_SK NULL
+#define CORE_OPTION_NAME_OIT_LAYERS_LABEL_SK "Maximálny počet priehľadných vrstiev"
+#define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_SK "Pri zložitých scénach môžu byť potrebné vyššie hodnoty."
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_SK "Plná emulácia framebufferu"
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_SK "Povolí plnú emuláciu framebufferu vo VRAM. Užitočné pre hry, ktoré priamo čítajú alebo zapisujú framebuffer vo VRAM. Po povolení sa interné rozlíšenie vynúti na 640x480 a výkon môže byť výrazne ovplyvnený."
+#define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_SK "Zapnúť buffer RTT (Render To Texture)"
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_SK "Kopíruje vykreslené textúry späť z GPU do VRAM. Táto voľba je zvyčajne povolená pre hry, ktoré ju vyžadujú. Po povolení sa zvýšenie rozlíšenia textúr deaktivuje a výkon môže byť ovplyvnený."
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_SK NULL
-#define CORE_OPTION_NAME_MIPMAPPING_INFO_0_SK NULL
+#define CORE_OPTION_NAME_MIPMAPPING_INFO_0_SK "Po povolení textúry použijú menšiu verziu seba samých, keď sú ďalej. Môže to zvýšiť výkon a obmedziť mihanie."
 #define CORE_OPTION_NAME_FOG_LABEL_SK "Efekty hmly"
-#define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_SK NULL
-#define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_SK NULL
+#define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_SK "Modifikátor objemu"
+#define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_SK "Funkcia Dreamcast GPU, ktorá sa typicky používa v hrách na vykreslenie tieňov objektov. Mala by byť normálne zapnutá – dopad na výkon je zvyčajne minimálny až zanedbateľný."
 #define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_LABEL_SK "Anizotropné filtrovanie"
-#define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_SK NULL
+#define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_SK "Vylepší kvalitu textúr na povrchoch, ktoré sú voči kamere v šikmom uhle pohľadu. Vyššie hodnoty viac zaťažujú GPU. Zmeny tohto nastavenia sa prejavia až po reštarte."
 #define CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_SK "Filtrovanie textúr"
-#define CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_SK NULL
-#define OPTION_VAL_1_SK NULL
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_SK "Režim filtrovania textúr, ktorý sa má použiť. Možno použiť na vynútenie určitého režimu filtrovania textúr na všetky textúry, aby sa dosiahol ostrejší (alebo hladší) vzhľad ako Predvolený. Iné hodnoty než Predvolené môžu spôsobiť rôzne problémy s vykresľovaním. Zmeny tohto nastavenia sa prejavia až po reštarte."
+#define OPTION_VAL_1_SK "Vynútiť Nearest-Neighbor"
 #define OPTION_VAL_2_SK "Vynútiť lineárne"
-#define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_SK NULL
-#define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_SK NULL
-#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_SK NULL
-#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_SK NULL
-#define CORE_OPTION_NAME_PVR2_FILTERING_LABEL_SK NULL
-#define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_SK NULL
-#define CORE_OPTION_NAME_TEXUPSCALE_LABEL_SK NULL
-#define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_SK NULL
+#define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_SK "Oneskoriť výmenu snímok"
+#define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_SK "Užitočné na zabránenie blikajúcim obrazovkám alebo chybnému videu. Neodporúča sa na pomalých platformách."
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_SK "Detekovať zmeny snímkovej frekvencie"
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_SK "Upozorní frontend, keď sa interná snímková frekvencia zmení (napr. z 60 fps na 30 fps). Zlepší rovnomernosť snímok v hrách, ktoré bežia s pevnou rýchlosťou 30 fps alebo 20 fps, ale malo by byť zakázané pre hry s neuzamknutou (nestabilnou) snímkovou frekvenciou (napr. Ecco the Dolphin, Unreal Tournament). Poznámka: Nedostupné, keď je povolená možnosť 'Auto Skip Frame'."
+#define CORE_OPTION_NAME_PVR2_FILTERING_LABEL_SK "Post-procesný filter PowerVR2"
+#define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_SK "Post-procesovanie vyrenderovaného obrazu na simuláciu efektov špecifických pre PowerVR2 GPU a analógové video signály."
+#define CORE_OPTION_NAME_TEXUPSCALE_LABEL_SK "Zväčšenie textúr (xBRZ)"
+#define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_SK "Zlepšiť ručne kreslenú 2D pixel art grafiku. Malo by sa používať len s 2D pixelovanými hrami."
 #define OPTION_VAL_2_O26_SK NULL
 #define OPTION_VAL_4_SK NULL
 #define OPTION_VAL_6_SK NULL
-#define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_SK NULL
-#define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_INFO_0_SK NULL
-#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_SK NULL
-#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_SK NULL
-#define CORE_OPTION_NAME_FIX_UPSCALE_BLEEDING_EDGE_LABEL_SK NULL
-#define CORE_OPTION_NAME_FIX_UPSCALE_BLEEDING_EDGE_INFO_0_SK NULL
-#define CORE_OPTION_NAME_THREADED_RENDERING_LABEL_SK NULL
-#define CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_SK NULL
-#define CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_SK NULL
-#define CORE_OPTION_NAME_AUTO_SKIP_FRAME_INFO_0_SK NULL
+#define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_SK "Max. filtrovaná veľkosť pri zväčšení textúr"
+#define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_INFO_0_SK "Vyberte maximálnu veľkosť textúry, ktorá sa má zväčšiť. Ak je veľkosť textúry vyššia než vybraná hodnota, nebude zväčšená."
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_SK "Natívna interpolácia hĺbky"
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_SK "Pomáha s poškodením textúr a problémami hĺbky na AMD GPU. Môže pomôcť aj na Intel GPU v niektorých prípadoch."
+#define CORE_OPTION_NAME_FIX_UPSCALE_BLEEDING_EDGE_LABEL_SK "Oprava presakujúceho okraja pri zväčšení"
+#define CORE_OPTION_NAME_FIX_UPSCALE_BLEEDING_EDGE_INFO_0_SK "Pomáha s presakovaním textúr pri zväčšení. Zakázanie môže pomôcť, ak sa pixely deformujú pri zväčšení v 2D hrách (MVC2, CVS, KOF atď.)"
+#define CORE_OPTION_NAME_THREADED_RENDERING_LABEL_SK "Viacvláknové vykresľovanie"
+#define CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_SK "Spúšťa GPU a CPU v rôznych vláknach. Veľmi odporúčané."
+#define CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_SK "Automatické preskakovanie snímok"
+#define CORE_OPTION_NAME_AUTO_SKIP_FRAME_INFO_0_SK "Automaticky preskakuje snímky, keď emulátor beží pomaly. Poznámka: Toto nastavenie sa použije, len keď je povolené 'Viacvláknové vykresľovanie'."
 #define OPTION_VAL_SOME_SK "Normálne"
 #define OPTION_VAL_MORE_SK "Maximálne"
 #define CORE_OPTION_NAME_FRAME_SKIPPING_LABEL_SK "Preskakovanie snímkov"
-#define CORE_OPTION_NAME_FRAME_SKIPPING_INFO_0_SK NULL
-#define CORE_OPTION_NAME_WIDESCREEN_CHEATS_LABEL_SK NULL
-#define CORE_OPTION_NAME_WIDESCREEN_CHEATS_INFO_0_SK NULL
-#define CORE_OPTION_NAME_WIDESCREEN_HACK_LABEL_SK NULL
-#define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_SK NULL
-#define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_SK NULL
-#define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_SK NULL
-#define CORE_OPTION_NAME_DC_32MB_MOD_LABEL_SK NULL
-#define CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_SK NULL
-#define CORE_OPTION_NAME_SH4CLOCK_LABEL_SK NULL
-#define CORE_OPTION_NAME_SH4CLOCK_INFO_0_SK NULL
+#define CORE_OPTION_NAME_FRAME_SKIPPING_INFO_0_SK "Nastaví počet snímok, ktoré sa preskočia medzi každou zobrazenou snímkou."
+#define CORE_OPTION_NAME_WIDESCREEN_CHEATS_LABEL_SK "Cheaty pre širokouhlé zobrazenie (vyžaduje reštart)"
+#define CORE_OPTION_NAME_WIDESCREEN_CHEATS_INFO_0_SK "Aktivuje cheaty, ktoré umožňujú zobrazenie niektorých hier vo formáte širokouhlého obrazu."
+#define CORE_OPTION_NAME_WIDESCREEN_HACK_LABEL_SK "Hack širokouhlého režimu"
+#define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_SK "Vykreslí geometriu mimo bežného pomeru strán 4:3. Môže spôsobiť grafické chyby v odhalených oblastiach."
+#define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_SK "Rýchle načítanie GD-ROM (nepresné)"
+#define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_SK "Zrýchli načítanie GD-ROM."
+#define CORE_OPTION_NAME_DC_32MB_MOD_LABEL_SK "Mod 32MB RAM pre Dreamcast"
+#define CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_SK "Povolí mod 32MB RAM pre Dreamcast. Môže ovplyvniť kompatibilitu"
+#define CORE_OPTION_NAME_SH4CLOCK_LABEL_SK "SH4 CPU pretaktovanie/podtaktovanie"
+#define CORE_OPTION_NAME_SH4CLOCK_INFO_0_SK "Zmení frekvenciu hlavného CPU SH4 z predvolených 200 MHz. Podtaktovanie môže pomôcť pomalým platformám. Pretaktovanie môže zvýšiť snímkovú frekvenciu v niektorých hrách. Používajte s opatrnosťou."
 #define OPTION_VAL_100_SK NULL
 #define OPTION_VAL_110_SK NULL
 #define OPTION_VAL_120_SK NULL
@@ -70454,16 +70454,16 @@ struct retro_core_options_v2 options_ru = {
 #define OPTION_VAL_480_SK "480 Hz"
 #define OPTION_VAL_490_SK "490 Hz"
 #define OPTION_VAL_500_SK NULL
-#define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_SK NULL
-#define CORE_OPTION_NAME_CUSTOM_TEXTURES_INFO_0_SK NULL
-#define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_LABEL_SK NULL
-#define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_INFO_0_SK NULL
-#define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_SK NULL
-#define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_SK NULL
-#define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_SK NULL
-#define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_INFO_0_SK NULL
-#define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_SK NULL
-#define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_INFO_0_SK NULL
+#define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_SK "Načítať vlastné textúry"
+#define CORE_OPTION_NAME_CUSTOM_TEXTURES_INFO_0_SK "Načítať vlastné textúry umiestnené v priečinku 'system/dc/textures/<game-id>/'."
+#define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_LABEL_SK "Predčítať vlastné textúry"
+#define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_INFO_0_SK "Predčíta vlastné textúry pri spustení hry. Môže zlepšiť výkon, ale zvyšuje využitie pamäte."
+#define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_SK "Dumpovať textúry"
+#define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_SK "Vždy, keď hra použije novú textúru, sa uloží ako súbor .png v priečinku 'system/dc/texdump/<game-id>/'."
+#define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_SK "Dumpovať nahradené textúry"
+#define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_INFO_0_SK "Vždy dumpovať textúry, ktoré sú už nahradené vlastnými textúrami."
+#define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_SK "Mŕtva zóna analógovej páčky"
+#define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_INFO_0_SK "Vyberte, ako ďaleko musíte zatlačiť analógovú páčku predtým, ako sa začne spracúvať."
 #define OPTION_VAL_0_SK NULL
 #define OPTION_VAL_5_SK NULL
 #define OPTION_VAL_10_SK NULL
@@ -70471,15 +70471,15 @@ struct retro_core_options_v2 options_ru = {
 #define OPTION_VAL_20_SK NULL
 #define OPTION_VAL_25_SK NULL
 #define OPTION_VAL_30_SK NULL
-#define CORE_OPTION_NAME_TRIGGER_DEADZONE_LABEL_SK NULL
-#define CORE_OPTION_NAME_TRIGGER_DEADZONE_INFO_0_SK NULL
-#define CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_SK NULL
-#define CORE_OPTION_NAME_DIGITAL_TRIGGERS_INFO_0_SK NULL
-#define CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_SK NULL
-#define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_SK NULL
-#define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_SK NULL
-#define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_SK NULL
-#define CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_SK NULL
+#define CORE_OPTION_NAME_TRIGGER_DEADZONE_LABEL_SK "Mŕtva zóna triggera"
+#define CORE_OPTION_NAME_TRIGGER_DEADZONE_INFO_0_SK "Vyberte, ako veľmi musíte stlačiť trigger predtým, ako sa začne spracúvať."
+#define CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_SK "Digitálne triggery"
+#define CORE_OPTION_NAME_DIGITAL_TRIGGERS_INFO_0_SK "Po povolení budú triggery fungovať ako bežné tlačidlá, čo znamená, že sa budú spracúvať buď ako úplne stlačené alebo vôbec nestlačené, bez medzistavu."
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_SK "Vysielať digitálne výstupy"
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_SK "Vysielať digitálne výstupy a stav force-feedbacku na TCP porte 8000. Kompatibilné s voľbou MAME \"-output network\"."
+#define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_SK "Zobraziť nastavenia svetelnej pištole"
+#define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_SK "Povolí konfiguráciu zobrazovacích možností zameriavača svetelnej pištole. POZNÁMKA: Možno bude potrebné prepnúť Quick Menu, aby sa nastavenie prejavilo."
+#define CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_SK "Škálovanie veľkosti zameriavača pištole"
 #define OPTION_VAL_50_SK NULL
 #define OPTION_VAL_60_SK NULL
 #define OPTION_VAL_70_SK NULL
@@ -70506,58 +70506,58 @@ struct retro_core_options_v2 options_ru = {
 #define OPTION_VAL_280_O47_SK NULL
 #define OPTION_VAL_290_O47_SK NULL
 #define OPTION_VAL_300_O47_SK NULL
-#define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_SK NULL
+#define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_SK "Displej zameriavača pištole 1"
 #define OPTION_VAL_WHITE_SK "Biela"
 #define OPTION_VAL_RED_SK "Červená"
 #define OPTION_VAL_GREEN_SK "Zelená"
 #define OPTION_VAL_BLUE_SK "Modrá"
-#define CORE_OPTION_NAME_LIGHTGUN2_CROSSHAIR_LABEL_SK NULL
-#define CORE_OPTION_NAME_LIGHTGUN3_CROSSHAIR_LABEL_SK NULL
-#define CORE_OPTION_NAME_LIGHTGUN4_CROSSHAIR_LABEL_SK NULL
-#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_LABEL_SK NULL
-#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_INFO_0_SK NULL
+#define CORE_OPTION_NAME_LIGHTGUN2_CROSSHAIR_LABEL_SK "Displej zameriavača pištole 2"
+#define CORE_OPTION_NAME_LIGHTGUN3_CROSSHAIR_LABEL_SK "Displej zameriavača pištole 3"
+#define CORE_OPTION_NAME_LIGHTGUN4_CROSSHAIR_LABEL_SK "Displej zameriavača pištole 4"
+#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_LABEL_SK "Zariadenie v rozširujúcom slote A1"
+#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_INFO_0_SK "Vyberte zariadenie pripojené v rozširujúcom slote A1 (port A slot 1)."
 #define OPTION_VAL_VMU_SK NULL
-#define OPTION_VAL_PURUPURU_SK NULL
+#define OPTION_VAL_PURUPURU_SK "Vibračný balík"
 #define OPTION_VAL_DREAMPOTATO_SK NULL
 #define OPTION_VAL_NONE_SK "Žiadne"
-#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_LABEL_SK NULL
-#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_INFO_0_SK NULL
-#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT1_LABEL_SK NULL
-#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT1_INFO_0_SK NULL
-#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT2_LABEL_SK NULL
-#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT2_INFO_0_SK NULL
-#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT1_LABEL_SK NULL
-#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT1_INFO_0_SK NULL
-#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT2_LABEL_SK NULL
-#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT2_INFO_0_SK NULL
-#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT1_LABEL_SK NULL
-#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT1_INFO_0_SK NULL
-#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_LABEL_SK NULL
-#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_INFO_0_SK NULL
-#define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_SK NULL
-#define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CAT_SK NULL
-#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_SK NULL
+#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_LABEL_SK "Zariadenie v rozširujúcom slote A2"
+#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_INFO_0_SK "Vyberte zariadenie pripojené v rozširujúcom slote A2 (port A slot 2)."
+#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT1_LABEL_SK "Zariadenie v rozširujúcom slote B1"
+#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT1_INFO_0_SK "Vyberte zariadenie pripojené v rozširujúcom slote B1 (port B slot 1)."
+#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT2_LABEL_SK "Zariadenie v rozširujúcom slote B2"
+#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT2_INFO_0_SK "Vyberte zariadenie pripojené v rozširujúcom slote B2 (port B slot 2)."
+#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT1_LABEL_SK "Zariadenie v rozširujúcom slote C1"
+#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT1_INFO_0_SK "Vyberte zariadenie pripojené v rozširujúcom slote C1 (port C slot 1)."
+#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT2_LABEL_SK "Zariadenie v rozširujúcom slote C2"
+#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT2_INFO_0_SK "Vyberte zariadenie pripojené v rozširujúcom slote C2 (port C slot 2)."
+#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT1_LABEL_SK "Zariadenie v rozširujúcom slote D1"
+#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT1_INFO_0_SK "Vyberte zariadenie pripojené v rozširujúcom slote D1 (port D slot 1)."
+#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_LABEL_SK "Zariadenie v rozširujúcom slote D2"
+#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_INFO_0_SK "Vyberte zariadenie pripojené v rozširujúcom slote D2 (port D slot 2)."
+#define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_SK "Visual Memory Units/Systems (VMU) pre každú hru"
+#define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CAT_SK "VMU pre každú hru"
+#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_SK "Po zakázaní zdieľajú všetky hry až 8 uložení VMU (A1/A2/B1/B2/C1/C2/D1/D2) umiestnených v systémovom priečinku RetroArchu.\nNastavenie 'VMU A1' vytvorí unikátny VMU súbor 'A1' v priečinku uložení RetroArchu pre každú spustenú hru.\nNastavenie 'All VMUs' vytvorí až 8 unikátnych VMU súborov (A1/A2/B1/B2/C1/C2/D1/D2) pre každú spustenú hru."
 #define OPTION_VAL_VMU_A1_SK NULL
 #define OPTION_VAL_ALL_VMUS_SK "Všetky VMU"
-#define CORE_OPTION_NAME_VMU_SOUND_LABEL_SK NULL
-#define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_SK NULL
-#define CORE_OPTION_NAME_VMU_SOUND_INFO_0_SK NULL
-#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_SK NULL
-#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_SK NULL
-#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_SK NULL
-#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_SK NULL
-#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_SK NULL
-#define CORE_OPTION_NAME_VMU1_SCREEN_DISPLAY_LABEL_SK NULL
-#define CORE_OPTION_NAME_VMU1_SCREEN_POSITION_LABEL_SK NULL
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_SK "Zvuky Visual Memory Units/Systems (VMU)"
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_SK "Zvuky VMU"
+#define CORE_OPTION_NAME_VMU_SOUND_INFO_0_SK "Po povolení sa prehráva pípanie VMU."
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_SK "Úložisko VMU DreamPotato"
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_SK "Povolí ukladanie údajov VMU na pripojenom emulátore DreamPotato. Po povolení sa lokálny súbor uložení VMU nepoužije."
+#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_SK "Zobraziť nastavenia displeja Visual Memory Unit/System (VMU)"
+#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_SK "Zobraziť nastavenia displeja VMU"
+#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_SK "Povolí konfiguráciu viditeľnosti, veľkosti, polohy a farby emulovanej obrazovky LCD VMU. POZNÁMKA: Možno bude potrebné prepnúť Quick Menu, aby sa nastavenie prejavilo."
+#define CORE_OPTION_NAME_VMU1_SCREEN_DISPLAY_LABEL_SK "Displej obrazovky VMU 1"
+#define CORE_OPTION_NAME_VMU1_SCREEN_POSITION_LABEL_SK "Poloha obrazovky VMU 1"
 #define OPTION_VAL_UPPER_LEFT_SK "Hore vľavo"
 #define OPTION_VAL_UPPER_RIGHT_SK "Hore vpravo"
 #define OPTION_VAL_LOWER_LEFT_SK "Vľavo dolu"
 #define OPTION_VAL_LOWER_RIGHT_SK "Vpravo dolu"
-#define CORE_OPTION_NAME_VMU1_SCREEN_SIZE_MULT_LABEL_SK NULL
+#define CORE_OPTION_NAME_VMU1_SCREEN_SIZE_MULT_LABEL_SK "Veľkosť obrazovky VMU 1"
 #define OPTION_VAL_1X_SK NULL
 #define OPTION_VAL_3X_SK NULL
 #define OPTION_VAL_5X_SK NULL
-#define CORE_OPTION_NAME_VMU1_PIXEL_ON_COLOR_LABEL_SK NULL
+#define CORE_OPTION_NAME_VMU1_PIXEL_ON_COLOR_LABEL_SK "Farba zapnutého pixelu obrazovky VMU 1"
 #define OPTION_VAL_DEFAULT_ON_00_SK "Predvolene zapnuté"
 #define OPTION_VAL_DEFAULT_OFF_01_SK "Predvolene vypnuté"
 #define OPTION_VAL_BLACK_02_SK "Čierna"
@@ -70583,27 +70583,27 @@ struct retro_core_options_v2 options_ru = {
 #define OPTION_VAL_LIGHT_PURPLE_4_25_SK "Svetlofialová (4)"
 #define OPTION_VAL_LIGHT_YELLOW_26_SK "Svetložltá"
 #define OPTION_VAL_LIGHT_YELLOW_2_27_SK "Svetložltá (2)"
-#define CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_SK NULL
-#define CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_SK NULL
+#define CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_SK "Farba vypnutého pixelu obrazovky VMU 1"
+#define CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_SK "Priehľadnosť obrazovky VMU 1"
 #define OPTION_VAL_40_SK NULL
-#define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_SK NULL
-#define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_SK NULL
-#define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_SK NULL
-#define CORE_OPTION_NAME_VMU2_PIXEL_ON_COLOR_LABEL_SK NULL
-#define CORE_OPTION_NAME_VMU2_PIXEL_OFF_COLOR_LABEL_SK NULL
-#define CORE_OPTION_NAME_VMU2_SCREEN_OPACITY_LABEL_SK NULL
-#define CORE_OPTION_NAME_VMU3_SCREEN_DISPLAY_LABEL_SK NULL
-#define CORE_OPTION_NAME_VMU3_SCREEN_POSITION_LABEL_SK NULL
-#define CORE_OPTION_NAME_VMU3_SCREEN_SIZE_MULT_LABEL_SK NULL
-#define CORE_OPTION_NAME_VMU3_PIXEL_ON_COLOR_LABEL_SK NULL
-#define CORE_OPTION_NAME_VMU3_PIXEL_OFF_COLOR_LABEL_SK NULL
-#define CORE_OPTION_NAME_VMU3_SCREEN_OPACITY_LABEL_SK NULL
-#define CORE_OPTION_NAME_VMU4_SCREEN_DISPLAY_LABEL_SK NULL
-#define CORE_OPTION_NAME_VMU4_SCREEN_POSITION_LABEL_SK NULL
-#define CORE_OPTION_NAME_VMU4_SCREEN_SIZE_MULT_LABEL_SK NULL
-#define CORE_OPTION_NAME_VMU4_PIXEL_ON_COLOR_LABEL_SK NULL
-#define CORE_OPTION_NAME_VMU4_PIXEL_OFF_COLOR_LABEL_SK NULL
-#define CORE_OPTION_NAME_VMU4_SCREEN_OPACITY_LABEL_SK NULL
+#define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_SK "Displej obrazovky VMU 2"
+#define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_SK "Poloha obrazovky VMU 2"
+#define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_SK "Veľkosť obrazovky VMU 2"
+#define CORE_OPTION_NAME_VMU2_PIXEL_ON_COLOR_LABEL_SK "Farba zapnutého pixelu obrazovky VMU 2"
+#define CORE_OPTION_NAME_VMU2_PIXEL_OFF_COLOR_LABEL_SK "Farba vypnutého pixelu obrazovky VMU 2"
+#define CORE_OPTION_NAME_VMU2_SCREEN_OPACITY_LABEL_SK "Priehľadnosť obrazovky VMU 2"
+#define CORE_OPTION_NAME_VMU3_SCREEN_DISPLAY_LABEL_SK "Displej obrazovky VMU 3"
+#define CORE_OPTION_NAME_VMU3_SCREEN_POSITION_LABEL_SK "Poloha obrazovky VMU 3"
+#define CORE_OPTION_NAME_VMU3_SCREEN_SIZE_MULT_LABEL_SK "Veľkosť obrazovky VMU 3"
+#define CORE_OPTION_NAME_VMU3_PIXEL_ON_COLOR_LABEL_SK "Farba zapnutého pixelu obrazovky VMU 3"
+#define CORE_OPTION_NAME_VMU3_PIXEL_OFF_COLOR_LABEL_SK "Farba vypnutého pixelu obrazovky VMU 3"
+#define CORE_OPTION_NAME_VMU3_SCREEN_OPACITY_LABEL_SK "Priehľadnosť obrazovky VMU 3"
+#define CORE_OPTION_NAME_VMU4_SCREEN_DISPLAY_LABEL_SK "Displej obrazovky VMU 4"
+#define CORE_OPTION_NAME_VMU4_SCREEN_POSITION_LABEL_SK "Poloha obrazovky VMU 4"
+#define CORE_OPTION_NAME_VMU4_SCREEN_SIZE_MULT_LABEL_SK "Veľkosť obrazovky VMU 4"
+#define CORE_OPTION_NAME_VMU4_PIXEL_ON_COLOR_LABEL_SK "Farba zapnutého pixelu obrazovky VMU 4"
+#define CORE_OPTION_NAME_VMU4_PIXEL_OFF_COLOR_LABEL_SK "Farba vypnutého pixelu obrazovky VMU 4"
+#define CORE_OPTION_NAME_VMU4_SCREEN_OPACITY_LABEL_SK "Priehľadnosť obrazovky VMU 4"
 
 struct retro_core_option_v2_category option_cats_sk[] = {
    {
@@ -76462,49 +76462,49 @@ struct retro_core_options_v2 options_sv = {
 
 /* RETRO_LANGUAGE_TH */
 
-#define CATEGORY_SYSTEM_LABEL_TH NULL
-#define CATEGORY_SYSTEM_INFO_0_TH NULL
+#define CATEGORY_SYSTEM_LABEL_TH "ระบบ"
+#define CATEGORY_SYSTEM_INFO_0_TH "ตั้งค่าภูมิภาค, ภาษา, BIOS และการตั้งค่าฮาร์ดแวร์พื้นฐาน"
 #define CATEGORY_VIDEO_LABEL_TH "วิดีโอ"
-#define CATEGORY_VIDEO_INFO_0_TH NULL
-#define CATEGORY_PERFORMANCE_LABEL_TH NULL
-#define CATEGORY_PERFORMANCE_INFO_0_TH NULL
+#define CATEGORY_VIDEO_INFO_0_TH "ตั้งค่าความละเอียด, การประมวลผลความโปร่งใส และการแสดงผลเอฟเฟกต์ภาพต่างๆ"
+#define CATEGORY_PERFORMANCE_LABEL_TH "ประสิทธิภาพ"
+#define CATEGORY_PERFORMANCE_INFO_0_TH "ตั้งค่าการประมวลผลแบบเธรด และการข้ามเฟรม"
 #define CATEGORY_HACKS_LABEL_TH NULL
-#define CATEGORY_HACKS_INFO_0_TH NULL
+#define CATEGORY_HACKS_INFO_0_TH "ตั้งค่าการเขียนทับหน้าจอกว้าง, ความเร็วในการโหลด GD-ROM และการแทนที่พื้นผิว"
 #define CATEGORY_INPUT_LABEL_TH "การควบคุม"
-#define CATEGORY_INPUT_INFO_0_TH NULL
-#define CATEGORY_EXPANSIONS_LABEL_TH NULL
-#define CATEGORY_EXPANSIONS_INFO_0_TH NULL
-#define CATEGORY_VMU_LABEL_TH NULL
-#define CATEGORY_VMU_INFO_0_TH NULL
-#define CORE_OPTION_NAME_REGION_LABEL_TH NULL
-#define OPTION_VAL_JAPAN_TH NULL
+#define CATEGORY_INPUT_INFO_0_TH "ตั้งค่าจอยเกมและปืนแสง"
+#define CATEGORY_EXPANSIONS_LABEL_TH "ช่องเสียบส่วนขยายของคอนโทรลเลอร์"
+#define CATEGORY_EXPANSIONS_INFO_0_TH "เลือกอุปกรณ์ (VMU, อุปกรณ์สั่น) ที่เสียบอยู่ในแต่ละช่องเสียบส่วนขยายของคอนโทรลเลอร์"
+#define CATEGORY_VMU_LABEL_TH "หน่วยความจำจำลอง (VMU)"
+#define CATEGORY_VMU_INFO_0_TH "ตั้งค่าการแยกไฟล์เซฟ VMU รายเกม และการแสดงผลหน้าจอ VMU บนหน้าจอหลัก"
+#define CORE_OPTION_NAME_REGION_LABEL_TH "ภูมิภาค"
+#define OPTION_VAL_JAPAN_TH "ญี่ปุ่น"
 #define OPTION_VAL_USA_TH NULL
-#define OPTION_VAL_EUROPE_TH NULL
-#define OPTION_VAL_DEFAULT_TH NULL
-#define CORE_OPTION_NAME_LANGUAGE_LABEL_TH NULL
-#define CORE_OPTION_NAME_LANGUAGE_INFO_0_TH NULL
-#define OPTION_VAL_JAPANESE_TH NULL
-#define OPTION_VAL_ENGLISH_TH NULL
-#define OPTION_VAL_GERMAN_TH NULL
-#define OPTION_VAL_FRENCH_TH NULL
-#define OPTION_VAL_SPANISH_TH NULL
-#define OPTION_VAL_ITALIAN_TH NULL
-#define CORE_OPTION_NAME_HLE_BIOS_LABEL_TH NULL
-#define CORE_OPTION_NAME_HLE_BIOS_INFO_0_TH NULL
-#define CORE_OPTION_NAME_ENABLE_DSP_LABEL_TH NULL
-#define CORE_OPTION_NAME_ENABLE_DSP_INFO_0_TH NULL
-#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_TH NULL
-#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_TH NULL
-#define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_TH NULL
-#define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_TH NULL
-#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_TH NULL
-#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_TH NULL
-#define CORE_OPTION_NAME_UPNP_LABEL_TH NULL
-#define CORE_OPTION_NAME_UPNP_INFO_0_TH NULL
-#define CORE_OPTION_NAME_DCNET_LABEL_TH NULL
-#define CORE_OPTION_NAME_DCNET_INFO_0_TH NULL
-#define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_TH NULL
-#define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_TH NULL
+#define OPTION_VAL_EUROPE_TH "ยุโรป"
+#define OPTION_VAL_DEFAULT_TH "ค่าเริ่มต้น"
+#define CORE_OPTION_NAME_LANGUAGE_LABEL_TH "ภาษา"
+#define CORE_OPTION_NAME_LANGUAGE_INFO_0_TH "เปลี่ยนภาษาที่ใช้โดย BIOS และเกมที่มีหลายภาษาในตัวเลือก"
+#define OPTION_VAL_JAPANESE_TH "ญี่ปุ่น"
+#define OPTION_VAL_ENGLISH_TH "อังกฤษ"
+#define OPTION_VAL_GERMAN_TH "เยอรมัน"
+#define OPTION_VAL_FRENCH_TH "ฝรั่งเศส"
+#define OPTION_VAL_SPANISH_TH "สเปน"
+#define OPTION_VAL_ITALIAN_TH "อิตาลี"
+#define CORE_OPTION_NAME_HLE_BIOS_LABEL_TH "จำลอง BIOS (HLE) (ต้องรีสตาร์ท)"
+#define CORE_OPTION_NAME_HLE_BIOS_INFO_0_TH "ใช้งาน BIOS จำลอง (HLE) (ต้องรีสตาร์ท)"
+#define CORE_OPTION_NAME_ENABLE_DSP_LABEL_TH "เปิดใช้ DSP"
+#define CORE_OPTION_NAME_ENABLE_DSP_INFO_0_TH "เปิดใช้งานการจำลองระบบประมวลผลสัญญาณเสียงดิจิทัล (DSP) ของ Dreamcast ช่วยให้เสียงที่ออกมามีความแม่นยำสูงขึ้น แต่จะใช้ทรัพยากรเครื่องมากขึ้นตามไปด้วย"
+#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_TH "อนุญาตให้ใช้งานปุ่ม Arcade Service"
+#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_TH "เปิดใช้งานปุ่ม SERVICE สำหรับเกมตู้ Arcade เพื่อเข้าสู่การตั้งค่าภายในของตัวเครื่อง"
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_TH "ตั้งค่าเกม NAOMI ให้เป็น Free Play"
+#define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_TH "ปรับเปลี่ยนการตั้งค่าการหยอดเหรียญของเกมให้เป็นแบบเล่นฟรี"
+#define CORE_OPTION_NAME_EMULATE_BBA_LABEL_TH "การจำลองอแดปเตอร์บรอดแบนด์"
+#define CORE_OPTION_NAME_EMULATE_BBA_INFO_0_TH "จำลองอแดปเตอร์บรอดแบนด์อีเธอร์เน็ตแทนโมเด็ม (ต้องรีสตาร์ท)"
+#define CORE_OPTION_NAME_UPNP_LABEL_TH "เปิดการใช้ UPnP"
+#define CORE_OPTION_NAME_UPNP_INFO_0_TH "ใช้ UPnP เพื่อกำหนดค่าเราเตอร์อินเทอร์เน็ตโดยอัตโนมัติสำหรับการเล่นเกมออนไลน์"
+#define CORE_OPTION_NAME_DCNET_LABEL_TH "ใช้ DCNet"
+#define CORE_OPTION_NAME_DCNET_INFO_0_TH "ใช้บริการคลาวด์ DCNet เพื่อเข้าถึงอินเทอร์เน็ตของ Dreamcast"
+#define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_TH "ความละเอียดภายใน"
+#define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_TH "ปรับเปลี่ยนความละเอียดในการแสดงผล"
 #define OPTION_VAL_320X240_TH NULL
 #define OPTION_VAL_640X480_TH NULL
 #define OPTION_VAL_800X600_TH NULL
@@ -76532,82 +76532,82 @@ struct retro_core_options_v2 options_sv = {
 #define OPTION_VAL_11520X8640_TH NULL
 #define OPTION_VAL_12160X9120_TH NULL
 #define OPTION_VAL_12800X9600_TH NULL
-#define CORE_OPTION_NAME_CABLE_TYPE_LABEL_TH NULL
-#define CORE_OPTION_NAME_CABLE_TYPE_INFO_0_TH NULL
+#define CORE_OPTION_NAME_CABLE_TYPE_LABEL_TH "ประเภทสายสัญญาณ"
+#define CORE_OPTION_NAME_CABLE_TYPE_INFO_0_TH "ประเภทสัญญาณเอาต์พุต 'TV (คอมโพสิต)' ได้รับการรองรับกว้างขวางที่สุด"
 #define OPTION_VAL_VGA_TH NULL
 #define OPTION_VAL_TV_RGB_TH NULL
 #define OPTION_VAL_TV_COMPOSITE_TH NULL
-#define CORE_OPTION_NAME_BROADCAST_LABEL_TH NULL
+#define CORE_OPTION_NAME_BROADCAST_LABEL_TH "มาตรฐานการแพร่ภาพ"
 #define OPTION_VAL_NTSC_TH NULL
-#define OPTION_VAL_PAL_TH NULL
+#define OPTION_VAL_PAL_TH "PAL (ทั่วโลก)"
 #define OPTION_VAL_PAL_N_TH NULL
 #define OPTION_VAL_PAL_M_TH NULL
 #define CORE_OPTION_NAME_SCREEN_ROTATION_LABEL_TH "การจัดวางหน้าจอ"
-#define OPTION_VAL_HORIZONTAL_TH NULL
-#define OPTION_VAL_VERTICAL_TH NULL
-#define CORE_OPTION_NAME_ALPHA_SORTING_LABEL_TH NULL
-#define CORE_OPTION_NAME_ALPHA_SORTING_INFO_0_TH NULL
-#define OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_TH NULL
-#define OPTION_VAL_PER_TRIANGLE_NORMAL_TH NULL
-#define OPTION_VAL_PER_PIXEL_ACCURATE_TH NULL
-#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_TH NULL
-#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_INFO_0_TH NULL
+#define OPTION_VAL_HORIZONTAL_TH "แนวนอน"
+#define OPTION_VAL_VERTICAL_TH "แนวตั้ง"
+#define CORE_OPTION_NAME_ALPHA_SORTING_LABEL_TH "การเรียงลำดับอัลฟา"
+#define CORE_OPTION_NAME_ALPHA_SORTING_INFO_0_TH "เลือกวิธีเรียงลำดับรูปหลายเหลี่ยมโปร่งใส"
+#define OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_TH "แบบต่อแถบ (เร็ว, แม่นยำน้อยที่สุด)"
+#define OPTION_VAL_PER_TRIANGLE_NORMAL_TH "แบบต่อรูปสามเหลี่ยม (ปกติ)"
+#define OPTION_VAL_PER_PIXEL_ACCURATE_TH "แบบต่อพิกเซล (แม่นยำ แต่ช้าที่สุด)"
+#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_TH "ขนาดบัฟเฟอร์สะสมพิกเซล"
+#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_INFO_0_TH "ค่าที่สูงกว่าอาจจำเป็นสำหรับความละเอียดที่สูงขึ้นเพื่อให้แสดงผลได้อย่างถูกต้อง"
 #define OPTION_VAL_512MB_TH NULL
 #define OPTION_VAL_1GB_TH NULL
 #define OPTION_VAL_2GB_TH NULL
 #define OPTION_VAL_4GB_TH NULL
-#define CORE_OPTION_NAME_OIT_LAYERS_LABEL_TH NULL
-#define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_TH NULL
-#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_TH NULL
-#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_TH NULL
-#define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_TH NULL
-#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_TH NULL
+#define CORE_OPTION_NAME_OIT_LAYERS_LABEL_TH "จำนวนชั้นความโปร่งใสสูงสุด"
+#define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_TH "ค่าที่สูงกว่าอาจจำเป็นสำหรับฉากที่มีความซับซ้อนสูง"
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_TH "การจำลองเฟรมบัฟเฟอร์แบบเต็มรูปแบบ"
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_TH "เปิดใช้งานการจำลองเฟรมบัฟเฟอร์ แบบเต็มรูปแบบใน VRAM ซึ่งมีประโยชน์สำหรับเกมที่มีการอ่านหรือเขียนข้อมูลเฟรมบัฟเฟอร์ใน VRAM โดยตรง เมื่อเปิดใช้งาน ความละเอียดภายในจะถูกบังคับไว้ที่ 640x480 และอาจส่งผลกระทบต่อประสิทธิภาพการทำงานอย่างรุนแรง"
+#define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_TH "เปิดใช้งานบัฟเฟอร์ RTT (Render To Texture)"
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_TH "คัดลอกพื้นผิวที่เรนเดอร์แล้วจาก GPU กลับไปยัง VRAM โดยปกติจะเปิดใช้งานตัวเลือกนี้สำหรับเกมที่จำเป็นต้องใช้ เมื่อเปิดใช้งาน จะไม่สามารถขยายความละเอียดของพื้นผิวได้ และอาจส่งผลกระทบต่อประสิทธิภาพการทำงาน"
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_TH NULL
-#define CORE_OPTION_NAME_MIPMAPPING_INFO_0_TH NULL
-#define CORE_OPTION_NAME_FOG_LABEL_TH NULL
-#define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_TH NULL
-#define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_TH NULL
-#define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_LABEL_TH NULL
-#define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_TH NULL
-#define CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_TH NULL
-#define CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_TH NULL
-#define OPTION_VAL_1_TH NULL
-#define OPTION_VAL_2_TH NULL
-#define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_TH NULL
-#define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_TH NULL
-#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_TH NULL
-#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_TH NULL
-#define CORE_OPTION_NAME_PVR2_FILTERING_LABEL_TH NULL
-#define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_TH NULL
+#define CORE_OPTION_NAME_MIPMAPPING_INFO_0_TH "เมื่อเปิดใช้งาน พื้นผิว จะใช้รูปภาพขนาดที่เล็กลงเมื่อวัตถุนั้นปรากฏอยู่ไกลออกไป ซึ่งจะช่วยเพิ่มประสิทธิภาพการทำงานและลดอาการภาพระยิบระยับลงได้"
+#define CORE_OPTION_NAME_FOG_LABEL_TH "เอฟเฟกต์หมอก"
+#define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_LABEL_TH "ตัวปรับแต่งระดับเสียง"
+#define CORE_OPTION_NAME_VOLUME_MODIFIER_ENABLE_INFO_0_TH "คุณลักษณะของ GPU ในเครื่อง Dreamcast ที่โดยปกติแล้วเกมต่างๆ จะใช้เพื่อ วาดเงาของวัตถุ แนะนำให้เปิดใช้งานไว้เป็นปกติ เนื่องจากส่งผลกระทบต่อประสิทธิภาพการทำงานน้อยมากจนแทบไม่รู้สึก"
+#define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_LABEL_TH "ตัวกรอง Anisotropic"
+#define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_TH "ปรับปรุงคุณภาพของพื้นผิวบนวัตถุ ที่ทำมุมเอียงหรืออยู่ในระนาบแนวลึกเมื่อมองจากมุมกล้อง ค่าที่สูงขึ้นจะใช้ทรัพยากร GPU มากขึ้น และการเปลี่ยนแปลงค่านี้จะมีผลหลังจากรีสตาร์ทแอปพลิเคชันหรือเกมใหม่เท่านั้น"
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_TH "การกรองพื้นผิว"
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_TH "โหมดการกรองพื้นผิว ที่ต้องการใช้งาน ตัวเลือกนี้สามารถใช้เพื่อ บังคับ รูปแบบการกรองพื้นผิวในทุกๆ ส่วนของเกม เพื่อให้ได้ภาพที่ดูคมชัดขึ้น หรือดูเนียนตาขึ้นกว่าค่าเริ่มต้น"
+#define OPTION_VAL_1_TH "บังคับใช้ Nearest-Neighbor"
+#define OPTION_VAL_2_TH "บังคับใช้ Linear"
+#define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_TH "หน่วงเวลาการสลับเฟรม"
+#define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_TH "ช่วยลดอาการหน้าจอกระพริบหรือวิดีโอที่แสดงผลผิดปกติ แต่ไม่แนะนำให้ใช้กับเครื่องที่มีสเปกต่ำหรือทำงานช้า"
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_TH "ตรวจหาการเปลี่ยนแปลงของเฟรมเรต"
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_TH "แจ้งเตือนไปยัง Frontend เมื่อเฟรมเรตภายในมีการเปลี่ยนแปลง (เช่น จาก 60 fps เป็น 30 fps) ช่วยให้การจัดจังหวะเฟรม (Frame Pacing) ดีขึ้นในเกมที่ล็อกเฟรมเรตไว้ที่ 30 fps หรือ 20 fps แต่ควรปิดการใช้งานสำหรับเกมที่มีเฟรมเรตแบบปลดล็อก (ไม่คงที่) (เช่น Ecco the Dolphin, Unreal Tournament)"
+#define CORE_OPTION_NAME_PVR2_FILTERING_LABEL_TH "ตัวกรองประมวลผลภายหลังของ PowerVR2"
+#define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_TH "ประมวลผลภาพที่เรนเดอร์แล้ว เพื่อจำลองเอฟเฟกต์เฉพาะของ GPU PowerVR2 และสัญญาณวิดีโอแบบอนาล็อก"
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_TH NULL
-#define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_TH NULL
+#define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_TH "ปรับปรุงกราฟิกภาพพิกเซล แบบ 2D ที่วาดด้วยมือให้มีความคมชัดยิ่งขึ้น ควรใช้เฉพาะกับเกมที่เป็นภาพพิกเซล 2D เท่านั้น"
 #define OPTION_VAL_2_O26_TH NULL
 #define OPTION_VAL_4_TH NULL
 #define OPTION_VAL_6_TH NULL
 #define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_TH NULL
-#define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_INFO_0_TH NULL
+#define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_INFO_0_TH "เลือกค่าขนาดสูงสุดของพื้นผิวที่จะทำการขยาย (Upscale) หากพื้นผิวมีขนาดใหญ่กว่าค่าที่เลือกไว้ พื้นผิวนั้นจะไม่ถูกนำไปขยายขนาด"
 #define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_TH NULL
-#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_TH NULL
-#define CORE_OPTION_NAME_FIX_UPSCALE_BLEEDING_EDGE_LABEL_TH NULL
-#define CORE_OPTION_NAME_FIX_UPSCALE_BLEEDING_EDGE_INFO_0_TH NULL
-#define CORE_OPTION_NAME_THREADED_RENDERING_LABEL_TH NULL
-#define CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_TH NULL
-#define CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_TH NULL
-#define CORE_OPTION_NAME_AUTO_SKIP_FRAME_INFO_0_TH NULL
-#define OPTION_VAL_SOME_TH NULL
-#define OPTION_VAL_MORE_TH NULL
-#define CORE_OPTION_NAME_FRAME_SKIPPING_LABEL_TH NULL
-#define CORE_OPTION_NAME_FRAME_SKIPPING_INFO_0_TH NULL
-#define CORE_OPTION_NAME_WIDESCREEN_CHEATS_LABEL_TH NULL
-#define CORE_OPTION_NAME_WIDESCREEN_CHEATS_INFO_0_TH NULL
-#define CORE_OPTION_NAME_WIDESCREEN_HACK_LABEL_TH NULL
-#define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_TH NULL
-#define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_TH NULL
-#define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_TH NULL
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_TH "ช่วยแก้ไขปัญหาพื้นผิวผิดเพี้ยน และปัญหาด้านมิติความลึก สำหรับการ์ดจอ AMD และแก้ปัญหาในบางกรณีสำหรับการ์ดจอ Intel ได้ด้วย"
+#define CORE_OPTION_NAME_FIX_UPSCALE_BLEEDING_EDGE_LABEL_TH "แก้ไขขอบภาพเบลอจากการขยายขนาด"
+#define CORE_OPTION_NAME_FIX_UPSCALE_BLEEDING_EDGE_INFO_0_TH "ช่วยแก้ปัญหาขอบสีพื้นผิวเหลือบหรือกลืนกัน (Bleeding) เมื่อมีการขยายขนาด (Upscaling) การปิดฟังก์ชันนี้อาจช่วยได้หากพบอาการพิกเซลบิดเบี้ยวในขณะขยายขนาดภาพในเกม 2D (เช่น MVC2, CVS, KOF ฯลฯ)"
+#define CORE_OPTION_NAME_THREADED_RENDERING_LABEL_TH "การเรนเดอร์แบบแยกเธรด"
+#define CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_TH "ประมวลผล GPU และ CPU แยกเธรดกัน แนะนำให้เปิดใช้งานเป็นอย่างยิ่ง"
+#define CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_TH "ข้ามเฟรมอัตโนมัติ"
+#define CORE_OPTION_NAME_AUTO_SKIP_FRAME_INFO_0_TH "ข้ามเฟรมโดยอัตโนมัติเมื่ออีมูเลเตอร์ทำงานช้าลง หมายเหตุ: การตั้งค่านี้จะมีผลเมื่อเปิดใช้งาน 'การเรนเดอร์แบบแยกเธรด' เท่านั้น"
+#define OPTION_VAL_SOME_TH "ปกติ"
+#define OPTION_VAL_MORE_TH "สูงสุด"
+#define CORE_OPTION_NAME_FRAME_SKIPPING_LABEL_TH "การข้ามเฟรม"
+#define CORE_OPTION_NAME_FRAME_SKIPPING_INFO_0_TH "กำหนดจำนวนเฟรมที่จะข้ามในระหว่างแต่ละเฟรมที่แสดงผล"
+#define CORE_OPTION_NAME_WIDESCREEN_CHEATS_LABEL_TH "สูตรจอกว้าง (จำเป็นต้องเริ่มใหม่)"
+#define CORE_OPTION_NAME_WIDESCREEN_CHEATS_INFO_0_TH "เปิดใช้งานสูตรที่ช่วยให้บางเกมแสดงผลในรูปแบบจอกว้าง"
+#define CORE_OPTION_NAME_WIDESCREEN_HACK_LABEL_TH "การแฮ็กโหมดจอกว้าง"
+#define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_TH "วาดเรขาคณิตนอกอัตราส่วนภาพ 4:3 ปกติ อาจทำให้เกิดกราฟิกผิดเพี้ยนในพื้นที่ที่แสดงเพิ่มขึ้น"
+#define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_TH "GD-ROM โหลดเร็ว (ไม่แม่นยำ)"
+#define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_TH "เร่งความเร็วการโหลด GD-ROM"
 #define CORE_OPTION_NAME_DC_32MB_MOD_LABEL_TH NULL
-#define CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_TH NULL
-#define CORE_OPTION_NAME_SH4CLOCK_LABEL_TH NULL
-#define CORE_OPTION_NAME_SH4CLOCK_INFO_0_TH NULL
+#define CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_TH "เปิดใช้งานมอด RAM 32MB สำหรับ Dreamcast อาจส่งผลต่อความเข้ากันได้"
+#define CORE_OPTION_NAME_SH4CLOCK_LABEL_TH "SH4 CPU ลด/เพิ่มความเร็วสัญญาณนาฬิกา"
+#define CORE_OPTION_NAME_SH4CLOCK_INFO_0_TH "เปลี่ยนความเร็วสัญญาณนาฬิกาของ CPU หลัก SH4 จากค่าเริ่มต้น 200 MHz การลดความเร็วอาจช่วยแพลตฟอร์มที่ช้า การเพิ่มความเร็วอาจช่วยเพิ่มอัตราเฟรมสำหรับบางเกม ควรใช้ด้วยความระมัดระวัง"
 #define OPTION_VAL_100_TH NULL
 #define OPTION_VAL_110_TH NULL
 #define OPTION_VAL_120_TH NULL
@@ -76649,16 +76649,16 @@ struct retro_core_options_v2 options_sv = {
 #define OPTION_VAL_480_TH NULL
 #define OPTION_VAL_490_TH NULL
 #define OPTION_VAL_500_TH NULL
-#define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_TH NULL
-#define CORE_OPTION_NAME_CUSTOM_TEXTURES_INFO_0_TH NULL
-#define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_LABEL_TH NULL
-#define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_INFO_0_TH NULL
+#define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_TH "โหลดพื้นผิวแบบกำหนดเอง"
+#define CORE_OPTION_NAME_CUSTOM_TEXTURES_INFO_0_TH "โหลดพื้นผิวแบบกำหนดเองที่อยู่ในโฟลเดอร์ 'system/dc/textures/<game-id>/'"
+#define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_LABEL_TH "โหลดพื้นผิวแบบกำหนดเองล่วงหน้า"
+#define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_INFO_0_TH "โหลดพื้นผิวแบบกำหนดเองล่วงหน้า เมื่อเริ่มเกม อาจช่วยปรับปรุงประสิทธิภาพให้ดีขึ้น แต่จะใช้ RAM เพิ่มมากขึ้น"
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_TH NULL
-#define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_TH NULL
-#define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_TH NULL
-#define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_INFO_0_TH NULL
-#define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_TH NULL
-#define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_INFO_0_TH NULL
+#define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_TH "ทุกครั้งที่มีการใช้งานพื้นผิวใหม่ในเกม ไฟล์นั้นจะถูกบันทึกเป็นไฟล์ .png ไว้ในโฟลเดอร์ 'system/dc/texdump/<game-id>/'"
+#define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_TH "ดัมป์พื้นผิวที่ถูกแทนที่"
+#define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_INFO_0_TH "ดัมป์พื้นผิวที่ถูกแทนที่ด้วยพื้นผิวแบบกำหนดเองเสมอ"
+#define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_TH "ระยะหยุดการทำงานของก้านอะนาล็อก"
+#define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_INFO_0_TH "เลือกตั้งค่าระยะที่คุณต้องขยับก้านอะนาล็อก ก่อนที่ระบบจะเริ่มประมวลผลการเคลื่อนที่ (Deadzone)"
 #define OPTION_VAL_0_TH NULL
 #define OPTION_VAL_5_TH NULL
 #define OPTION_VAL_10_TH NULL
@@ -76667,14 +76667,14 @@ struct retro_core_options_v2 options_sv = {
 #define OPTION_VAL_25_TH NULL
 #define OPTION_VAL_30_TH NULL
 #define CORE_OPTION_NAME_TRIGGER_DEADZONE_LABEL_TH NULL
-#define CORE_OPTION_NAME_TRIGGER_DEADZONE_INFO_0_TH NULL
+#define CORE_OPTION_NAME_TRIGGER_DEADZONE_INFO_0_TH "เลือกตั้งค่าระยะที่คุณต้องกดปุ่มทริกเกอร์ ก่อนที่ระบบจะเริ่มประมวลผล"
 #define CORE_OPTION_NAME_DIGITAL_TRIGGERS_LABEL_TH NULL
-#define CORE_OPTION_NAME_DIGITAL_TRIGGERS_INFO_0_TH NULL
+#define CORE_OPTION_NAME_DIGITAL_TRIGGERS_INFO_0_TH "เมื่อเปิดใช้งาน ปุ่มทริกเกอร์จะทำงานเหมือนปุ่มกดทั่วไป ซึ่งจะถูกประมวลผลเป็นแบบกดจนสุดหรือไม่ได้กดเลย โดยจะไม่มีค่าความหนักเบาระหว่างกลาง (Analog)"
 #define CORE_OPTION_NAME_NETWORK_OUTPUT_LABEL_TH NULL
-#define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_TH NULL
-#define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_TH NULL
-#define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_TH NULL
-#define CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_TH NULL
+#define CORE_OPTION_NAME_NETWORK_OUTPUT_INFO_0_TH "กระจายสัญญาณเอาต์พุตดิจิทัลและสถานะการตอบสนองแบบสั่น (Force-feedback) ผ่านพอร์ต TCP 8000 ซึ่งสามารถใช้งานร่วมกับตัวเลือก \"-output network\" ของ MAME ได้"
+#define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_LABEL_TH "แสดงการตั้งปืนแสง"
+#define CORE_OPTION_NAME_SHOW_LIGHTGUN_SETTINGS_INFO_0_TH "เปิดใช้งานการกำหนดค่าตัวเลือกการแสดงผลเป้าเล็งของปืนแสง หมายเหตุ: อาจจำเป็นต้องเปิด-ปิดเมนูทางลัดใหม่ เพื่อให้การตั้งค่านี้มีผลในทันที"
+#define CORE_OPTION_NAME_LIGHTGUN_CROSSHAIR_SIZE_SCALING_LABEL_TH "การปรับขนาดเป้าเล็งของปืน"
 #define OPTION_VAL_50_TH NULL
 #define OPTION_VAL_60_TH NULL
 #define OPTION_VAL_70_TH NULL
@@ -76701,104 +76701,104 @@ struct retro_core_options_v2 options_sv = {
 #define OPTION_VAL_280_O47_TH NULL
 #define OPTION_VAL_290_O47_TH NULL
 #define OPTION_VAL_300_O47_TH NULL
-#define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_TH NULL
-#define OPTION_VAL_WHITE_TH NULL
+#define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_TH "การแสดงผลเป้าเล็งของปืน 1"
+#define OPTION_VAL_WHITE_TH "ขาว"
 #define OPTION_VAL_RED_TH NULL
 #define OPTION_VAL_GREEN_TH "เขียว"
 #define OPTION_VAL_BLUE_TH "น้ำเงิน"
-#define CORE_OPTION_NAME_LIGHTGUN2_CROSSHAIR_LABEL_TH NULL
-#define CORE_OPTION_NAME_LIGHTGUN3_CROSSHAIR_LABEL_TH NULL
-#define CORE_OPTION_NAME_LIGHTGUN4_CROSSHAIR_LABEL_TH NULL
-#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_LABEL_TH NULL
-#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_INFO_0_TH NULL
+#define CORE_OPTION_NAME_LIGHTGUN2_CROSSHAIR_LABEL_TH "การแสดงผลเป้าเล็งของปืน 2"
+#define CORE_OPTION_NAME_LIGHTGUN3_CROSSHAIR_LABEL_TH "การแสดงผลเป้าเล็งของปืน 3"
+#define CORE_OPTION_NAME_LIGHTGUN4_CROSSHAIR_LABEL_TH "การแสดงผลเป้าเล็งของปืน 4"
+#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_LABEL_TH "อุปกรณ์ในช่องเสียบขยาย A1"
+#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT1_INFO_0_TH "เลือกอุปกรณ์ที่เสียบอยู่ในช่องเสียบขยาย A1 (จอยพอร์ต A ช่องที่ 1)"
 #define OPTION_VAL_VMU_TH NULL
-#define OPTION_VAL_PURUPURU_TH NULL
+#define OPTION_VAL_PURUPURU_TH "ชุดสั่น"
 #define OPTION_VAL_DREAMPOTATO_TH NULL
-#define OPTION_VAL_NONE_TH NULL
-#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_LABEL_TH NULL
-#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_INFO_0_TH NULL
-#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT1_LABEL_TH NULL
-#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT1_INFO_0_TH NULL
-#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT2_LABEL_TH NULL
-#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT2_INFO_0_TH NULL
-#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT1_LABEL_TH NULL
-#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT1_INFO_0_TH NULL
-#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT2_LABEL_TH NULL
-#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT2_INFO_0_TH NULL
-#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT1_LABEL_TH NULL
-#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT1_INFO_0_TH NULL
-#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_LABEL_TH NULL
-#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_INFO_0_TH NULL
-#define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_TH NULL
-#define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CAT_TH NULL
-#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_TH NULL
+#define OPTION_VAL_NONE_TH "ไม่แชร์อินพุต"
+#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_LABEL_TH "อุปกรณ์ในช่องเสียบขยาย A2"
+#define CORE_OPTION_NAME_DEVICE_PORT1_SLOT2_INFO_0_TH "เลือกอุปกรณ์ที่เสียบอยู่ในช่องเสียบขยาย A2 (จอยพอร์ต A ช่องที่ 2)"
+#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT1_LABEL_TH "อุปกรณ์ในช่องเสียบขยาย B1"
+#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT1_INFO_0_TH "เลือกอุปกรณ์ที่เสียบอยู่ในช่องเสียบขยาย B1 (พอร์ต B ช่องที่ 1)"
+#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT2_LABEL_TH "อุปกรณ์ในช่องเสียบขยาย B2"
+#define CORE_OPTION_NAME_DEVICE_PORT2_SLOT2_INFO_0_TH "เลือกอุปกรณ์ที่เสียบอยู่ในช่องเสียบขยาย B2 (พอร์ต B ช่องที่ 2)"
+#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT1_LABEL_TH "อุปกรณ์ในช่องเสียบขยาย C1"
+#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT1_INFO_0_TH "เลือกอุปกรณ์ที่เสียบอยู่ในช่องเสียบขยาย C1 (พอร์ต C ช่องที่ 1)"
+#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT2_LABEL_TH "อุปกรณ์ในช่องเสียบขยาย C2"
+#define CORE_OPTION_NAME_DEVICE_PORT3_SLOT2_INFO_0_TH "เลือกอุปกรณ์ที่เสียบอยู่ในช่องเสียบขยาย C2 (พอร์ต C ช่องที่ 2)"
+#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT1_LABEL_TH "อุปกรณ์ในช่องเสียบขยาย D1"
+#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT1_INFO_0_TH "เลือกอุปกรณ์ที่เสียบอยู่ในช่องเสียบขยาย D1 (พอร์ต D ช่องที่ 1)"
+#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_LABEL_TH "อุปกรณ์ในช่องเสียบขยาย D2"
+#define CORE_OPTION_NAME_DEVICE_PORT4_SLOT2_INFO_0_TH "เลือกอุปกรณ์ที่เสียบอยู่ในช่องเสียบขยาย D2 (พอร์ต D ช่องที่ 2)"
+#define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_TH "หน่วยความจำจำลอง (VMU) แยกตามรายเกม"
+#define CORE_OPTION_NAME_PER_CONTENT_VMUS_LABEL_CAT_TH "VMU แยกตามเกม"
+#define CORE_OPTION_NAME_PER_CONTENT_VMUS_INFO_0_TH "เมื่อปิดใช้งาน ทุกเกมจะใช้ไฟล์เซฟ VMUร่วมกันสูงสุด 8 ไฟล์ (A1/A2/B1/B2/C1/C2/D1/D2) ซึ่งจัดเก็บอยู่ในโฟลเดอร์ ระบบ ของ RetroArch\nการตั้งค่า 'VMU A1' จะสร้างไฟล์ VMU 'A1' เฉพาะตัวในโฟลเดอร์ บันทึกสถานะ ของ RetroArch สำหรับแต่ละเนื้อหาที่เริ่มใช้งาน\nการตั้งค่า 'All VMUs' จะสร้างไฟล์ VMU เฉพาะตัวสูงสุด 8 ไฟล์ (A1/A2/B1/B2/C1/C2/D1/D2) สำหรับแต่ละเนื้อหาที่เริ่มใช้งาน"
 #define OPTION_VAL_VMU_A1_TH NULL
-#define OPTION_VAL_ALL_VMUS_TH NULL
-#define CORE_OPTION_NAME_VMU_SOUND_LABEL_TH NULL
-#define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_TH NULL
-#define CORE_OPTION_NAME_VMU_SOUND_INFO_0_TH NULL
-#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_TH NULL
-#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_TH NULL
-#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_TH NULL
-#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_TH NULL
-#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_TH NULL
-#define CORE_OPTION_NAME_VMU1_SCREEN_DISPLAY_LABEL_TH NULL
-#define CORE_OPTION_NAME_VMU1_SCREEN_POSITION_LABEL_TH NULL
-#define OPTION_VAL_UPPER_LEFT_TH NULL
-#define OPTION_VAL_UPPER_RIGHT_TH NULL
-#define OPTION_VAL_LOWER_LEFT_TH NULL
-#define OPTION_VAL_LOWER_RIGHT_TH NULL
-#define CORE_OPTION_NAME_VMU1_SCREEN_SIZE_MULT_LABEL_TH NULL
+#define OPTION_VAL_ALL_VMUS_TH "VMU ทั้งหมด"
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_TH "เสียงของระบบหน่วยความจำจำลอง (VMU)"
+#define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_TH "เสียงของ VMU"
+#define CORE_OPTION_NAME_VMU_SOUND_INFO_0_TH "เมื่อเปิดใช้งาน เสียงบี๊บของ VMU จะถูกเล่น"
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_TH "ที่เก็บข้อมูล VMU ของ DreamPotato"
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_TH "เปิดใช้งานการจัดเก็บข้อมูล VMU บนตัวจำลอง DreamPotato ที่เชื่อมต่ออยู่ เมื่อเปิดใช้งาน จะไม่มีการใช้ไฟล์บันทึกสถานะ VMU ในเครื่อง"
+#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_TH "แสดงการตั้งค่างานภาพหน้าจอหน่วยความจำจำลอง (VMU)"
+#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_TH "แสดงการตั้งค่าหน้าจอ VMU"
+#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_TH "เปิดใช้งานการกำหนดค่าการแสดงผล ขนาด ตำแหน่ง และสีของหน้าจอ LCD ของ VMU ที่จำลองขึ้น หมายเหตุ: อาจต้อง เปิด-ปิด เมนูทางลัดเพื่อให้การตั้งค่านี้มีผล"
+#define CORE_OPTION_NAME_VMU1_SCREEN_DISPLAY_LABEL_TH "การแสดงผลหน้าจอ VMU 1"
+#define CORE_OPTION_NAME_VMU1_SCREEN_POSITION_LABEL_TH "ตำแหน่งหน้าจอ VMU 1"
+#define OPTION_VAL_UPPER_LEFT_TH "บนซ้าย"
+#define OPTION_VAL_UPPER_RIGHT_TH "บนขวา"
+#define OPTION_VAL_LOWER_LEFT_TH "ล่างซ้าย"
+#define OPTION_VAL_LOWER_RIGHT_TH "ล่างขวา"
+#define CORE_OPTION_NAME_VMU1_SCREEN_SIZE_MULT_LABEL_TH "ขนาดหน้าจอ VMU 1"
 #define OPTION_VAL_1X_TH NULL
 #define OPTION_VAL_3X_TH NULL
 #define OPTION_VAL_5X_TH NULL
-#define CORE_OPTION_NAME_VMU1_PIXEL_ON_COLOR_LABEL_TH NULL
-#define OPTION_VAL_DEFAULT_ON_00_TH NULL
-#define OPTION_VAL_DEFAULT_OFF_01_TH NULL
-#define OPTION_VAL_BLACK_02_TH NULL
-#define OPTION_VAL_LIGHT_BLUE_04_TH NULL
-#define OPTION_VAL_CYAN_06_TH NULL
-#define OPTION_VAL_CYAN_BLUE_07_TH NULL
-#define OPTION_VAL_LIGHT_GREEN_08_TH NULL
-#define OPTION_VAL_CYAN_GREEN_09_TH NULL
-#define OPTION_VAL_LIGHT_CYAN_10_TH NULL
-#define OPTION_VAL_PURPLE_12_TH NULL
-#define OPTION_VAL_LIGHT_PURPLE_13_TH NULL
+#define CORE_OPTION_NAME_VMU1_PIXEL_ON_COLOR_LABEL_TH "สีพิกเซลที่แสดงผลบนหน้าจอ VMU 1"
+#define OPTION_VAL_DEFAULT_ON_00_TH "เปิดเป็นค่าเริ่มต้น"
+#define OPTION_VAL_DEFAULT_OFF_01_TH "ปิดเป็นค่าเริ่มต้น"
+#define OPTION_VAL_BLACK_02_TH "ดำ"
+#define OPTION_VAL_LIGHT_BLUE_04_TH "ฟ้าอ่อน"
+#define OPTION_VAL_CYAN_06_TH "ฟ้าอมเขียว"
+#define OPTION_VAL_CYAN_BLUE_07_TH "สีฟ้า"
+#define OPTION_VAL_LIGHT_GREEN_08_TH "เขียวอ่อน"
+#define OPTION_VAL_CYAN_GREEN_09_TH "เขียวอมฟ้า"
+#define OPTION_VAL_LIGHT_CYAN_10_TH "ฟ้าสว่าง"
+#define OPTION_VAL_PURPLE_12_TH "ม่วง"
+#define OPTION_VAL_LIGHT_PURPLE_13_TH "ม่วงอ่อน"
 #define OPTION_VAL_YELLOW_14_TH NULL
-#define OPTION_VAL_GRAY_15_TH NULL
-#define OPTION_VAL_LIGHT_PURPLE_2_16_TH NULL
-#define OPTION_VAL_LIGHT_GREEN_2_17_TH NULL
-#define OPTION_VAL_LIGHT_GREEN_3_18_TH NULL
-#define OPTION_VAL_LIGHT_CYAN_2_19_TH NULL
-#define OPTION_VAL_LIGHT_RED_2_20_TH NULL
-#define OPTION_VAL_MAGENTA_21_TH NULL
-#define OPTION_VAL_LIGHT_PURPLE_3_22_TH NULL
-#define OPTION_VAL_LIGHT_ORANGE_23_TH NULL
-#define OPTION_VAL_ORANGE_24_TH NULL
-#define OPTION_VAL_LIGHT_PURPLE_4_25_TH NULL
-#define OPTION_VAL_LIGHT_YELLOW_26_TH NULL
-#define OPTION_VAL_LIGHT_YELLOW_2_27_TH NULL
-#define CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_TH NULL
-#define CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_TH NULL
+#define OPTION_VAL_GRAY_15_TH "เทา"
+#define OPTION_VAL_LIGHT_PURPLE_2_16_TH "ม่วงอ่อน (2)"
+#define OPTION_VAL_LIGHT_GREEN_2_17_TH "เขียวอ่อน (2)"
+#define OPTION_VAL_LIGHT_GREEN_3_18_TH "เขียวอ่อน (3)"
+#define OPTION_VAL_LIGHT_CYAN_2_19_TH "ฟ้าสว่าง (2)"
+#define OPTION_VAL_LIGHT_RED_2_20_TH "แดงสว่าง (2)"
+#define OPTION_VAL_MAGENTA_21_TH "ม่วงอมแดง"
+#define OPTION_VAL_LIGHT_PURPLE_3_22_TH "ม่วงสว่าง (3)"
+#define OPTION_VAL_LIGHT_ORANGE_23_TH "ส้มสว่าง"
+#define OPTION_VAL_ORANGE_24_TH "ส้ม"
+#define OPTION_VAL_LIGHT_PURPLE_4_25_TH "ม่วงสว่าง (4)"
+#define OPTION_VAL_LIGHT_YELLOW_26_TH "เหลืองสว่าง"
+#define OPTION_VAL_LIGHT_YELLOW_2_27_TH "เหลืองสว่าง (2)"
+#define CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_TH "สีพิกเซลขณะปิดของหน้าจอ VMU 1"
+#define CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_TH "ความโปร่งใสของหน้าจอ VMU 1"
 #define OPTION_VAL_40_TH NULL
-#define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_TH NULL
-#define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_TH NULL
-#define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_TH NULL
-#define CORE_OPTION_NAME_VMU2_PIXEL_ON_COLOR_LABEL_TH NULL
-#define CORE_OPTION_NAME_VMU2_PIXEL_OFF_COLOR_LABEL_TH NULL
-#define CORE_OPTION_NAME_VMU2_SCREEN_OPACITY_LABEL_TH NULL
-#define CORE_OPTION_NAME_VMU3_SCREEN_DISPLAY_LABEL_TH NULL
-#define CORE_OPTION_NAME_VMU3_SCREEN_POSITION_LABEL_TH NULL
-#define CORE_OPTION_NAME_VMU3_SCREEN_SIZE_MULT_LABEL_TH NULL
-#define CORE_OPTION_NAME_VMU3_PIXEL_ON_COLOR_LABEL_TH NULL
-#define CORE_OPTION_NAME_VMU3_PIXEL_OFF_COLOR_LABEL_TH NULL
-#define CORE_OPTION_NAME_VMU3_SCREEN_OPACITY_LABEL_TH NULL
-#define CORE_OPTION_NAME_VMU4_SCREEN_DISPLAY_LABEL_TH NULL
-#define CORE_OPTION_NAME_VMU4_SCREEN_POSITION_LABEL_TH NULL
-#define CORE_OPTION_NAME_VMU4_SCREEN_SIZE_MULT_LABEL_TH NULL
-#define CORE_OPTION_NAME_VMU4_PIXEL_ON_COLOR_LABEL_TH NULL
-#define CORE_OPTION_NAME_VMU4_PIXEL_OFF_COLOR_LABEL_TH NULL
-#define CORE_OPTION_NAME_VMU4_SCREEN_OPACITY_LABEL_TH NULL
+#define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_TH "การแสดงผลหน้าจอ VMU 2"
+#define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_TH "ตำแหน่งหน้าจอ VMU 2"
+#define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_TH "ขนาดหน้าจอ VMU 2"
+#define CORE_OPTION_NAME_VMU2_PIXEL_ON_COLOR_LABEL_TH "สีพิกเซลเปิดของหน้าจอ VMU 2"
+#define CORE_OPTION_NAME_VMU2_PIXEL_OFF_COLOR_LABEL_TH "สีพิกเซลขณะปิดของหน้าจอ VMU 2"
+#define CORE_OPTION_NAME_VMU2_SCREEN_OPACITY_LABEL_TH "ความโปร่งใสหน้าจอ VMU 2"
+#define CORE_OPTION_NAME_VMU3_SCREEN_DISPLAY_LABEL_TH "การแสดงผลหน้าจอ VMU 3"
+#define CORE_OPTION_NAME_VMU3_SCREEN_POSITION_LABEL_TH "ตำแหน่งหน้าจอ VMU 3"
+#define CORE_OPTION_NAME_VMU3_SCREEN_SIZE_MULT_LABEL_TH "ขนาดหน้าจอ VMU 3"
+#define CORE_OPTION_NAME_VMU3_PIXEL_ON_COLOR_LABEL_TH "สีพิกเซลเปิดของหน้าจอ VMU 3"
+#define CORE_OPTION_NAME_VMU3_PIXEL_OFF_COLOR_LABEL_TH "สีพิกเซลขณะปิดของหน้าจอ VMU 3"
+#define CORE_OPTION_NAME_VMU3_SCREEN_OPACITY_LABEL_TH "ความโปร่งใสหน้าจอ VMU 3"
+#define CORE_OPTION_NAME_VMU4_SCREEN_DISPLAY_LABEL_TH "การแสดงผลหน้าจอ VMU 4"
+#define CORE_OPTION_NAME_VMU4_SCREEN_POSITION_LABEL_TH "ตำแหน่งหน้าจอ VMU 4"
+#define CORE_OPTION_NAME_VMU4_SCREEN_SIZE_MULT_LABEL_TH "ขนาดหน้าจอ VMU 4"
+#define CORE_OPTION_NAME_VMU4_PIXEL_ON_COLOR_LABEL_TH "สีพิกเซลเปิดของหน้าจอ VMU 4"
+#define CORE_OPTION_NAME_VMU4_PIXEL_OFF_COLOR_LABEL_TH "สีพิกเซลขณะปิดของหน้าจอ VMU 4"
+#define CORE_OPTION_NAME_VMU4_SCREEN_OPACITY_LABEL_TH "ความโปร่งใสหน้าจอ VMU 4"
 
 struct retro_core_option_v2_category option_cats_th[] = {
    {
@@ -78716,8 +78716,8 @@ struct retro_core_options_v2 options_th = {
 #define OPTION_VAL_500_TR NULL
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_LABEL_TR "Özel Dokular Yükle"
 #define CORE_OPTION_NAME_CUSTOM_TEXTURES_INFO_0_TR "'system/dc/textures/<game-id>/' klasöründe bulunan özel dokuları yükleyin."
-#define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_LABEL_TR NULL
-#define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_INFO_0_TR NULL
+#define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_LABEL_TR "Özel Dokuları Önceden Yükle"
+#define CORE_OPTION_NAME_PRELOAD_CUSTOM_TEXTURES_INFO_0_TR "Oyun başlangıcında özel dokuları önceden yükleyin. Bu, performansı artırabilir ancak bellek kullanımını yükseltir."
 #define CORE_OPTION_NAME_DUMP_TEXTURES_LABEL_TR "Dokuları Sakla"
 #define CORE_OPTION_NAME_DUMP_TEXTURES_INFO_0_TR "Oyun tarafından her yeni doku kullanıldığında, 'system/dc/texdump/<game-id>/' klasörüne .png dosyası olarak kaydedilecektir."
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_LABEL_TR NULL

@@ -90,6 +90,6 @@ dependencies {
     implementation(fileTree("libs") { include("*.aar", "*.jar") })
     implementation(libs.documentfile)
     testImplementation(libs.junit)
-    androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
+    androidTestImplementation(libs.ext.junit)
 }

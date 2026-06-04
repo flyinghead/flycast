@@ -192,8 +192,7 @@ void gui_settings_general()
 		{ "English", "en" },
 		{ "Français", "fr" },
 		{ "Magyar", "hu" },
-//		{ "日本語", "ja" }, // FIXME: Use this when we have dynamic font loading
-		{ "Japanese", "ja" },
+		{ "日本語", "ja" },
 		{ "Português (Brasil)", "pt_BR" },
 		{ "Svenska", "sv" },
 	};

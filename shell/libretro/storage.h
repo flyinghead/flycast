@@ -17,7 +17,7 @@
 #pragma once
 
 #include <streams/file_stream.h>
-#include "../../core/oslib/storage.h"
+#include "oslib/storage.h"
 
 namespace hostfs {
 

@@ -236,6 +236,8 @@ void libGDR_GetToc(u32* to, DiskArea area)
 	else if (disc->type == GdRom)
 		last_track = 2;
 
+	if (first_track - 1 >= disc->tracks.size() || last_track - 1 >= disc->tracks.size())
+		return;
 	//Generate the TOC info
 
 	//-1 for 1..99 0 ..98

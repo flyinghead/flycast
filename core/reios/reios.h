@@ -38,6 +38,8 @@ struct ip_meta_t
 
 	bool isWindowsCE() { return wince == '1' || memcmp("0WINCEOS.BIN", boot_filename, 12) == 0; }
 	bool supportsVGA() { return vga == '1'; }
+	bool isGDROM() const { return memcmp("GD-ROM", disk_type, 6) == 0; }
+	bool isMILCD() const { return memcmp("MIL CD", disk_type, 6) == 0; }
 };
 extern ip_meta_t ip_meta;
 

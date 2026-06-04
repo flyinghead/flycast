@@ -58,42 +58,25 @@ u8 *naomi_default_eeprom;
 
 bool atomiswaveForceFeedback;
 
-static bool loadBios(const char *filename, Archive *child_archive, Archive *parent_archive, int region)
+static bool loadBios(const char *biosName, Archive *child_archive, Archive *parent_archive, int region)
 {
-	std::string path;
-	std::string biosName;
-	if (settings.naomi.slave)
-	{
-		// extract basename of bios
-		biosName = get_file_basename(filename);
-		size_t idx = get_last_slash_pos(biosName);
-		if (idx != std::string::npos)
-			biosName = biosName.substr(idx + 1);
-		path = filename;
-	}
-	else
-	{
-		biosName = filename;
-	}
 	int biosid = 0;
 	for (; BIOS[biosid].name != nullptr; biosid++)
-		if (!stricmp(BIOS[biosid].name, biosName.c_str()))
+		if (!stricmp(BIOS[biosid].name, biosName))
 			break;
 	if (BIOS[biosid].name == nullptr)
 	{
-		WARN_LOG(NAOMI, "Unknown BIOS %s", biosName.c_str());
+		WARN_LOG(NAOMI, "Unknown BIOS %s", biosName);
 		return false;
 	}
 
 	const BIOS_t *bios = &BIOS[biosid];
 
+	std::string arch_name(bios->filename != nullptr ? bios->filename : biosName);
+	std::string path = hostfs::findNaomiBios(arch_name + ".zip");
 	if (path.empty())
-	{
-		std::string arch_name(bios->filename != nullptr ? bios->filename : filename);
-		path = hostfs::findNaomiBios(arch_name + ".zip");
-		if (path.empty())
-			path = hostfs::findNaomiBios(arch_name + ".7z");
-	}
+		path = hostfs::findNaomiBios(arch_name + ".7z");
+
 	DEBUG_LOG(NAOMI, "Loading BIOS from %s", path.c_str());
 	std::unique_ptr<Archive> bios_archive(OpenArchive(path));
 
@@ -122,7 +105,7 @@ static bool loadBios(const char *filename, Archive *child_archive, Archive *pare
 		if (!file && bios_archive != nullptr)
 			file.reset(bios_archive->OpenFile(bios->blobs[romid].filename));
 		if (!file) {
-			WARN_LOG(NAOMI, "%s: Cannot open %s", filename, bios->blobs[romid].filename);
+			WARN_LOG(NAOMI, "%s: Cannot open %s", biosName, bios->blobs[romid].filename);
 			continue;
 		}
 		switch (bios->blobs[romid].blob_type)
@@ -161,9 +144,6 @@ static bool loadBios(const char *filename, Archive *child_archive, Archive *pare
 		}
 	}
 
-	// Reload the writeable portion of the FlashROM
-	if (found_region)
-		nvmem::reloadAWBios();
 	if (config::GGPOEnable)
 		md5.getDigest(settings.network.md5.bios);
 
@@ -186,16 +166,17 @@ static const Game *FindGame(const char *filename)
 
 void naomi_cart_LoadBios(const char *filename)
 {
-	if (settings.naomi.slave)
-	{
-		if (!loadBios(filename, nullptr, nullptr, config::Region))
-			throw NaomiCartException(strprintf(T("Error: cannot load BIOS %s"), filename));
-		bios_loaded = true;
-		return;
-	}
 	const Game *game = FindGame(filename);
 	if (game == nullptr)
+	{
+		if (settings.naomi.slave)
+		{
+			if (!loadBios(filename, nullptr, nullptr, config::Region))
+				throw NaomiCartException(strprintf(T("Error: cannot load BIOS %s"), filename));
+			bios_loaded = true;
+		}
 		return;
+	}
 
 	// Open archive and parent archive if any
 	std::unique_ptr<Archive> archive(OpenArchive(filename));
@@ -634,8 +615,16 @@ void naomi_cart_LoadRom(const std::string& path, const std::string& fileName, Lo
 
 	if (settings.naomi.slave)
 	{
-		CurrentCartridge = new NaomiCartridge(0);
-		return;
+		// Normal slaves only get the BIOS name, while derby gets the rom path, which has a .zip or .7z extension.
+		// Not a very robust test though
+		if (path.find('.') == path.npos)
+		{
+			CurrentCartridge = new NaomiCartridge(0);
+#ifndef LIBRETRO
+			settings.content.gameId = config::loadStr("naomi", "gameId", "");
+#endif
+			return;
+		}
 	}
 	std::string extension = get_file_extension(fileName);
 
@@ -750,10 +739,14 @@ void naomi_cart_LoadRom(const std::string& path, const std::string& fileName, Lo
 				{
 					std::string slaveNum = "naomi:DrivingSimSlave=" + std::to_string(i + 1);
 					std::string left = "window:left=" + std::to_string(i == 1 ? x - w : x + w);
+					std::string title = "window:title=\""
+							+ (i == 1 ? Ts("Left") : Ts("Right"))
+							+ " - " + settings.content.title + '"';
 					const char *args[] = {
 						"-config", slaveNum.c_str(),
 						"-config", region.c_str(),
 						"-config", left.c_str(),
+						"-config", title.c_str(),
 						settings.content.path.c_str()
 					};
 					os_RunInstance(std::size(args), args);
@@ -777,7 +770,7 @@ void naomi_cart_ConfigureEEPROM()
 	if (CurrentCartridge->GetBootId(&bootId)
 			&& (!memcmp(bootId.boardName, "NAOMI", 5) || !memcmp(bootId.boardName, "Naomi2", 6)))
 		configure_naomi_eeprom(&bootId);
-	else
+	else if (!settings.naomi.slave)
 		WARN_LOG(NAOMI, "Can't read ROM boot ID");
 }
 
@@ -861,7 +854,7 @@ bool Cartridge::Read(u32 offset, u32 size, void* dst)
 		static u32 ones = 0xffffffff;
 
 		// Makes Outtrigger boot
-		INFO_LOG(NAOMI, "offset %x > %x", offset, RomSize);
+		DEBUG_LOG(NAOMI, "Cartridge::Read: overrun: offset %x > rom size %x", offset, RomSize);
 		memcpy(dst, &ones, size);
 	}
 	else
@@ -980,8 +973,6 @@ u32 NaomiCartridge::ReadMem(u32 address, u32 size)
 	default:
 		break;
 	}
-	if (multiboard != nullptr)
-		return multiboard->readG1(address, size);
 
 	if (address == NAOMI_MBOARD_DATA_addr || address == NAOMI_MBOARD_OFFSET_addr)
 		return 1;
@@ -1065,9 +1056,7 @@ void NaomiCartridge::WriteMem(u32 address, u32 data, u32 size)
 	default:
 		break;
 	}
-	if (multiboard != nullptr)
-		multiboard->writeG1(address, size, data);
-	else if (address != NAOMI_MBOARD_DATA_addr
+	if (address != NAOMI_MBOARD_DATA_addr
 			&& address != NAOMI_MBOARD_OFFSET_addr
 			&& address != NAOMI_MBOARD_STATUS_addr)
 		DEBUG_LOG(NAOMI, "naomiCart::WriteMem<%d>: unknown %08x <= %x", size, address, data);

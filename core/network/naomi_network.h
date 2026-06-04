@@ -92,6 +92,10 @@ public:
 		if (config::ActAsServer)
 			_startNow = true;
 	}
+	void setMaxSlots(int maxSlots, bool satelliteSupported) {
+		this->maxSlots = maxSlots;
+		this->satelliteSupported = satelliteSupported;
+	}
 
 private:
 	enum PacketType : u16 {
@@ -205,6 +209,8 @@ private:
 	std::vector<u8> receivedData;
 	u16 packetNumber = 0;
 	bool _startNow = false;
+	int maxSlots = 0;
+	bool satelliteSupported = false;
 
 	// Server stuff
 	struct Slave
@@ -222,5 +228,5 @@ public:
 };
 extern NaomiNetwork naomiNetwork;
 
-void SetNaomiNetworkConfig(int node);
-bool NaomiNetworkSupported();
+void setNaomiNetworkConfig(int node, int nodeCount, bool satellite = false);
+std::pair<int, bool> naomiNetworkMaxNodes();

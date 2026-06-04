@@ -25,6 +25,7 @@
 #include "naomi_cart.h"
 #include "naomi_regs.h"
 #include "naomi_m3comm.h"
+#include "multiboard.h"
 #include "serialize.h"
 #include "network/output.h"
 #include "hw/sh4/modules/modules.h"
@@ -35,10 +36,11 @@
 #include "atomiswave.h"
 #include "oslib/i18n.h"
 
+#include <memory>
 #include <algorithm>
 
-static NaomiM3Comm m3comm;
-Multiboard *multiboard;
+static std::unique_ptr<NaomiM3Comm> m3comm;
+static std::unique_ptr<Multiboard> multiboard;
 
 static X76F100SerialFlash mainSerialId;
 static X76F100SerialFlash romSerialId;
@@ -81,16 +83,20 @@ u16 NaomiGameIDRead()
 
 u32 ReadMem_naomi(u32 address, u32 size)
 {
-//	verify(size != 1);
 	if (unlikely(CurrentCartridge == NULL))
 	{
 		INFO_LOG(NAOMI, "called without cartridge");
 		return 0xFFFF;
 	}
-	if (address >= NAOMI_COMM2_CTRL_addr && address <= NAOMI_COMM2_STATUS1_addr)
-		return m3comm.ReadMem(address, size);
-	else
-		return CurrentCartridge->ReadMem(address, size);
+	if (!settings.naomi.slave && m3comm != nullptr && address >= NAOMI_COMM_CTRL_addr && address <= NAOMI_COMM_STATUS2_addr)
+		return m3comm->ReadMem(address, size);
+	if (multiboard != nullptr)
+	{
+		auto ret = multiboard->readG1(address, size);
+		if (ret.second)
+			return ret.first;
+	}
+	return CurrentCartridge->ReadMem(address, size);
 }
 
 void WriteMem_naomi(u32 address, u32 data, u32 size)
@@ -100,11 +106,13 @@ void WriteMem_naomi(u32 address, u32 data, u32 size)
 		INFO_LOG(NAOMI, "called without cartridge");
 		return;
 	}
-	if (address >= NAOMI_COMM2_CTRL_addr && address <= NAOMI_COMM2_STATUS1_addr
-			&& settings.platform.isNaomi())
-		m3comm.WriteMem(address, data, size);
-	else
-		CurrentCartridge->WriteMem(address, data, size);
+	if (!settings.naomi.slave && m3comm != nullptr && address >= NAOMI_COMM_CTRL_addr && address <= NAOMI_COMM_STATUS2_addr) {
+		m3comm->WriteMem(address, data, size);
+		return;
+	}
+	if (multiboard != nullptr && multiboard->writeG1(address, data, size))
+		return;
+	CurrentCartridge->WriteMem(address, data, size);
 }
 
 static int naomiDmaSched(int tag, int sch_cycl, int jitter, void *arg)
@@ -154,7 +162,7 @@ static void Naomi_DmaStart(u32 addr, u32 data)
 	if (multiboard != nullptr && multiboard->dmaStart())
 	{
 	}
-	else if (!m3comm.DmaStart(addr, data) && CurrentCartridge != nullptr)
+	else if ((m3comm == nullptr || !m3comm->DmaStart(addr, data)) && CurrentCartridge != nullptr)
 	{
 		DEBUG_LOG(NAOMI, "NAOMI-DMA start addr %08X len %x", SB_GDSTAR, SB_GDLEN);
 		verify(1 == SB_GDDIR);
@@ -228,10 +236,8 @@ const u8 *getGameSerialId()
 
 void naomi_reg_Term()
 {
-	if (multiboard != nullptr)
-		delete multiboard;
-	multiboard = nullptr;
-	m3comm.closeNetwork();
+	multiboard.reset();
+	m3comm.reset();
 	networkOutput.term();
 	if (dmaSchedId != -1)
 		sh4_sched_unregister(dmaSchedId);
@@ -249,23 +255,26 @@ void naomi_reg_Reset(bool hard)
 
 	atomiswave::reset();
 
-	m3comm.closeNetwork();
 	if (hard)
 	{
 		naomi_cart_Close();
-		if (multiboard != nullptr)
-		{
-			delete multiboard;
-			multiboard = nullptr;
-		}
+		multiboard.reset();
+		m3comm.reset();
+		if (settings.platform.isNaomi())
+			m3comm = std::make_unique<NaomiM3Comm>();
 		if (settings.naomi.multiboard)
-			multiboard = new Multiboard();
+			multiboard = std::make_unique<Multiboard>();
 		networkOutput.reset();
 		mainSerialId.reset();
 		romSerialId.reset();
 	}
-	else if (multiboard != nullptr)
-		multiboard->reset();
+	else
+	{
+		if (multiboard != nullptr)
+			multiboard->reset();
+		if (m3comm != nullptr)
+			m3comm->closeNetwork();
+	}
 	midiffb::reset();
 }
 
@@ -379,7 +388,20 @@ void initDriveSimSerialPipe()
 	SCIFSerialPort::Instance().setPipe(&pipe);
 }
 
-G2PrinterConnection g2PrinterConnection;
+class G2PrinterConnection
+{
+public:
+	u32 read(u32 addr, u32 size);
+	void write(u32 addr, u32 size, u32 data);
+
+	static constexpr u32 STATUS_REG_ADDR = 0x1018000;
+	static constexpr u32 DATA_REG_ADDR = 0x1010000;
+
+private:
+	u32 printerStat = 0xf;
+};
+
+static G2PrinterConnection g2PrinterConnection;
 
 u32 G2PrinterConnection::read(u32 addr, u32 size)
 {
@@ -417,3 +439,24 @@ void G2PrinterConnection::write(u32 addr, u32 size, u32 data)
 	}
 }
 
+//Area 0 , 0x01000000- 0x01FFFFFF      [G2 Ext. Device]
+u32 g2ext_readMem(u32 addr, u32 size)
+{
+	if (addr == G2PrinterConnection::STATUS_REG_ADDR || addr == G2PrinterConnection::DATA_REG_ADDR)
+		return g2PrinterConnection.read(addr, size);
+	if (multiboard != nullptr)
+		return multiboard->readG2Ext(addr, size);
+
+	DEBUG_LOG(NAOMI, "Unhandled G2 Ext read<%d> at %x", size, addr);
+	return 0;
+}
+
+void g2ext_writeMem(u32 addr, u32 data, u32 size)
+{
+	if (addr == G2PrinterConnection::STATUS_REG_ADDR || addr == G2PrinterConnection::DATA_REG_ADDR)
+		g2PrinterConnection.write(addr, size, data);
+	else if (multiboard != nullptr)
+		multiboard->writeG2Ext(addr, data, size);
+	else
+		DEBUG_LOG(NAOMI, "Unhandled G2 Ext write<%d> at %x: %x", size, addr, data);
+}

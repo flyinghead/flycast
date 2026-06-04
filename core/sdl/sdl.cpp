@@ -19,6 +19,7 @@
 #include "stdclass.h"
 #include "imgui.h"
 #include "hw/naomi/card_reader.h"
+#include "hw/naomi/multiboard.h"
 #if !defined(_WIN32) && !defined(__APPLE__) && !defined(__SWITCH__)
 #include "linux-dist/icon.h"
 #endif
@@ -32,6 +33,8 @@
 #include "dreamlink.h"
 #include "oslib/i18n.h"
 #include <unordered_map>
+#include <cstdlib>
+#include <cstdio>
 
 static SDL_Window* window = NULL;
 static u32 windowFlags;
@@ -105,10 +108,15 @@ static void sdl_close_joystick(SDL_JoystickID instance)
 
 static void setWindowTitleGame()
 {
-	if (settings.naomi.slave)
-		SDL_SetWindowTitle(window, ("Flycast - Multiboard Slave " + config::loadStr("naomi", "BoardId")).c_str());
-	else
-		SDL_SetWindowTitle(window, ("Flycast - " + settings.content.title).c_str());
+	std::string title = config::loadStr("window", "title");
+	if (title.empty())
+	{
+		if (settings.naomi.slave)
+			title = "Multiboard Slave " + config::loadStr("naomi", "BoardId");
+		else
+			title = settings.content.title;
+	}
+	SDL_SetWindowTitle(window, ("Flycast - " + title).c_str());
 }
 
 static void captureMouse(bool capture)
@@ -330,6 +338,10 @@ void input_sdl_handle()
 				checkRawInput();
 				if (event.key.repeat == 0)
 				{
+					if (settings.naomi.slave) {
+						Multiboard::keyboardEvent(event.key.keysym.scancode, event.type == SDL_KEYDOWN);
+						break;
+					}
 					auto is_key_mapped = [](u32 code) -> bool {
 						const InputMapping::InputSet inputSet{InputMapping::InputDef::from_button(code)};
 #if defined(_WIN32) && !defined(TARGET_UWP)
@@ -597,6 +609,22 @@ void input_sdl_handle()
 	}
 }
 
+void sdlReceiveSlaveKeyboardEvent(u16 scancode, bool pressed)
+{
+	sdl_keyboard->input((SDL_Scancode)scancode, pressed);
+	if (pressed)
+	{
+		u32 flags = SDL_GetWindowFlags(window);
+		if ((flags & SDL_WINDOW_INPUT_FOCUS) == 0)
+		{
+			SDL_SetWindowInputFocus(window);
+			// Doesn't raise the window on linux but shows a popup "Flycast is ready"
+			// Likely to be the same on other platforms for security reasons.
+			SDL_RaiseWindow(window);
+		}
+	}
+}
+
 static float hdpiScaling = 1.f;
 
 static inline void get_window_state()
@@ -651,6 +679,53 @@ bool sdl_recreate_window(u32 flags)
             }
         }
         SDL_UnloadObject(shcoreDLL);
+    }
+#elif defined(__linux__)
+    // Enable HiDPI mode on Linux (GNOME, Wayland, etc.)
+    // First, try to get GNOME scale factor from environment variable or GSettings
+    hdpiScaling = 1.f;
+
+    // Check GDK_SCALE environment variable (used by GTK/GNOME applications)
+    const char* gdkScale = getenv("GDK_SCALE");
+    if (gdkScale != nullptr) {
+        char* endptr;
+        float scale = strtof(gdkScale, &endptr);
+        if (scale > 0 && endptr != gdkScale) {
+            hdpiScaling = scale;
+            NOTICE_LOG(COMMON, "Using GDK_SCALE: %.2f", hdpiScaling);
+        }
+    }
+
+    // If GDK_SCALE not set, try to detect GNOME scale factor
+    if (hdpiScaling == 1.f) {
+        // Try using GSettings to read org.gnome.desktop.interface scale-factor
+        // This requires gsettings or dconf
+        FILE* fp = popen("gsettings get org.gnome.desktop.interface scaling-factor 2>/dev/null", "r");
+        if (fp != nullptr) {
+            char buffer[32];
+            if (fgets(buffer, sizeof(buffer), fp) != nullptr) {
+                // Output format: "uint32 2" for scale factor 2
+                int scale = 0;
+                if (sscanf(buffer, "uint32 %d", &scale) == 1 && scale > 0) {
+                    hdpiScaling = static_cast<float>(scale);
+                    NOTICE_LOG(COMMON, "Using GNOME scale factor: %.2f", hdpiScaling);
+                }
+            }
+            pclose(fp);
+        }
+    }
+
+    // Fallback: use SDL's DPI detection
+    if (hdpiScaling == 1.f) {
+        float dpi;
+        if (SDL_GetDisplayDPI(0, &dpi, nullptr, nullptr) == 0 && dpi > 0) {
+            // Standard DPI is 96, so scale factor is DPI/96
+            hdpiScaling = dpi / 96.f;
+            if (hdpiScaling > 1.2f)  // Only apply if noticeably different
+                NOTICE_LOG(COMMON, "Using SDL detected DPI: %.2f (scale %.2f)", dpi, hdpiScaling);
+            else
+                hdpiScaling = 1.f;  // Don't apply tiny scaling differences
+        }
     }
 #endif
 

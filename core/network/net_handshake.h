@@ -17,6 +17,7 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
  */
 #pragma once
+#include "types.h"
 #include <future>
 
 class NetworkHandshake
@@ -34,3 +35,6 @@ public:
 
 	static NetworkHandshake *instance;
 };
+
+bool naomiNetworkSupported();
+u16 defaultNaomiServerPort();

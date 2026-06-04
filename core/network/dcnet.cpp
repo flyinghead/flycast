@@ -94,7 +94,7 @@ protected:
 			{
 				if (ec || len == 0)
 				{
-					if (ec)
+					if (ec && ec != asio::error::eof)
 						ERROR_LOG(NETWORK, "Receive error: %s", ec.message().c_str());
 					close();
 					return;
@@ -729,7 +729,8 @@ void DCNetService::receiveEthFrame(u8 const *frame, unsigned int len)
 void DCNetThread::connect(const asio::ip::address& address, const std::string& apname)
 {
 	const bool powerSmash = settings.content.gameId == "HDR-0113"	// Power Smash
-			|| settings.content.gameId == "HDR-0091";				// Pro Yakyuu Team de Asobou Net!
+			|| settings.content.gameId == "HDR-0091"				// Pro Yakyuu Team de Asobou Net!
+			|| settings.content.gameId == "HDR-0040";				// Virtual-On Oratorio Tangram
 	asio::ip::tcp::endpoint endpoint;
 	if (address.is_unspecified())
 	{
@@ -779,7 +780,7 @@ void DCNetThread::run()
 #ifndef LIBRETRO
 		hostname = config::loadStr("network", "DCNetServer");
 		if (!hostname.empty())
-			connect();
+			connect({}, hostname);
 #endif
 		AccessPointFinder finder(*io_context);
 		if (hostname.empty())

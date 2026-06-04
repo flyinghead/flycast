@@ -183,24 +183,20 @@ GLuint BindRTT(bool withDepthBuffer)
 		WARN_LOG(RENDERER, "Invalid framebuffer format: 7");
 		return 0;
 	}
-	u32 fbw = gl.rendContext->getFramebufferWidth();
-	u32 fbh = gl.rendContext->getFramebufferHeight();
+	u32 fbw = gl.rendContext->framebufferWidth;
+	u32 fbh = gl.rendContext->framebufferHeight;
 	u32 texAddress = gl.rendContext->fb_W_SOF1 & VRAM_MASK;
 	DEBUG_LOG(RENDERER, "RTT packmode=%d stride=%d - %d x %d @ %06x", gl.rendContext->fb_W_CTRL.fb_packmode, gl.rendContext->fb_W_LINESTRIDE * 8,
 			fbw, fbh, texAddress);
 
 	gl.rtt.framebuffer.reset();
 
-	u32 fbw2;
-	u32 fbh2;
-	getRenderToTextureDimensions(fbw, fbh, fbw2, fbh2);
-
 	// Create a texture for rendering to
 	GLuint texture = glcache.GenTexture();
 	glcache.BindTexture(GL_TEXTURE_2D, texture);
-	glTexImage2D(GL_TEXTURE_2D, 0, channels, fbw2, fbh2, 0, channels, format, 0);
+	glTexImage2D(GL_TEXTURE_2D, 0, channels, fbw, fbh, 0, channels, format, 0);
 
-	gl.rtt.framebuffer = std::make_unique<GlFramebuffer>((int)fbw2, (int)fbh2, withDepthBuffer, texture);
+	gl.rtt.framebuffer = std::make_unique<GlFramebuffer>((int)fbw, (int)fbh, withDepthBuffer, texture);
 
 	glViewport(0, 0, fbw, fbh);
 
@@ -209,8 +205,8 @@ GLuint BindRTT(bool withDepthBuffer)
 
 void ReadRTTBuffer()
 {
-	u32 w = gl.rendContext->getFramebufferWidth();
-	u32 h = gl.rendContext->getFramebufferHeight();
+	u32 w = gl.rendContext->framebufferWidth;
+	u32 h = gl.rendContext->framebufferHeight;
 
 	const u8 fb_packmode = gl.rendContext->fb_W_CTRL.fb_packmode;
 	const u32 tex_addr = gl.rendContext->fb_W_SOF1 & VRAM_MASK;
@@ -240,7 +236,14 @@ void ReadRTTBuffer()
 		glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_FORMAT, &color_fmt);
 		glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_TYPE, &color_type);
 
-		if (fb_packmode == 1 && linestride == w * 2 && color_fmt == GL_RGB && color_type == GL_UNSIGNED_SHORT_5_6_5)
+		if (fb_packmode == 1
+				&& linestride == w * 2
+				&& color_fmt == GL_RGB
+				&& color_type == GL_UNSIGNED_SHORT_5_6_5
+				&& gl.rendContext->fbClip.origin.x == 0
+				&& gl.rendContext->fbClip.origin.y == 0
+				&& gl.rendContext->fbClip.size.x >= (int)w
+				&& gl.rendContext->fbClip.size.y >= (int)h)
 		{
 			glReadPixels(0, 0, w, h, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, dst);
 		}
@@ -252,16 +255,18 @@ void ReadRTTBuffer()
 			u8 *p = (u8 *)tmp_buf.data();
 			glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, p);
 
-			WriteTextureToVRam(w, h, p, dst, gl.rendContext->fb_W_CTRL, linestride);
+			WriteTextureToVRam(w, h, p, dst, gl.rendContext->fb_W_CTRL, linestride, gl.rendContext->fbClip);
 		}
 		glCheck();
 	}
 	else
 	{
 		//memset(&vram[tex_addr], 0, size);
-		if (w <= 1024 && h <= 1024)
+		int wpo2, hpo2;
+		getPvrFramebufferSize(*gl.rendContext, wpo2, hpo2);
+		if (wpo2 <= 1024 && hpo2 <= 1024)
 		{
-			TextureCacheData *texture_data = TexCache.getRTTexture(tex_addr, fb_packmode, w, h);
+			TextureCacheData *texture_data = TexCache.getRTTexture(tex_addr, fb_packmode, wpo2, hpo2);
 			glcache.DeleteTextures(1, &texture_data->texID);
 			texture_data->texID = gl.rtt.framebuffer->detachTexture();
 			texture_data->dirty = 0;

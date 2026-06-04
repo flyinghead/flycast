@@ -78,6 +78,7 @@ const WidescreenCheat CheatManager::widescreen_cheats[] =
 		{ "MK-51136",   nullptr,    { 0x2BDDD0 }, { 0x43700000 } },		// Crazy Taxi 2 (USA)
 //		{ "HDR-0159",   nullptr,    { 0x2FBBD0 }, { 0x43700000 } },		// Crazy Taxi 2 (JP) not working
 		{ "T13004N",    nullptr,    { 0x016D94 }, { 0x44234E73 } },		// Cyber Troopers - Virtual On - Oratorio Tangram (USA)
+		{ "HDR-0040",   nullptr,    { 0x016D94 }, { 0x44234E73 } },		// Cyber Troopers - Virtual On - Oratorio Tangram (JP)
 		// D2 (USA)
 		{ "MK-51036",   nullptr,    { 0x4B5CF4, 0x4B5CC4, 0x3E92A0, 0x3E92A8, 0x3E92C0, 0x3E92C8 },
 				{ 0x3F400000, 0x43F00000, 0, 0, 0, 0 } },
@@ -575,6 +576,23 @@ found_cheats:
 			cheats.emplace_back(Cheat::Type::runNextIfEq, "disable net check ifeq", true, 16, 0x00085d2c, 0x3630, true);
 			cheats.emplace_back(Cheat::Type::setValue, "disable net sync check",    true, 16, 0x00085d2c, 0x3330, true);
 		}
+		else if (gameId == "HDR-0006") {	// Nettou Golf
+			cheats.emplace_back(Cheat::Type::runNextIfEq, "bypass auth ifeq", true, 32, 0x0d5fbc, 0x2fd62fe6, true);
+			cheats.emplace_back(Cheat::Type::setValue, "bypass dricas auth",  true, 32, 0x0d5fbc, 0xe000000b, true);
+		}
+		else if (gameId == "SEGA STRIKE FIGHTER IN JPN-SLAVE")
+		{
+			// hack the slave sync procedure
+			cheats.emplace_back(Cheat::Type::runNextIfEq, "easy sync ifeq", true, 32, 0x08b66c, 0x40600000, true);
+			cheats.emplace_back(Cheat::Type::setValue,    "easy sync",      true, 32, 0x08b66c, 0x4cbebc20, true); // 3.5 -> 100000000
+		}
+		else if (gameId == "AIRLINE PILOTS IN JAPAN-SLAVE")
+		{
+			// hack the slave sync procedure
+			cheats.emplace_back(Cheat::Type::runNextIfEq, "easy sync ifeq", true, 32, 0x052ee0, 0x40200000, true);
+			cheats.emplace_back(Cheat::Type::setValue,    "easy sync",      true, 32, 0x052ee0, 0x4cbebc20, true); // 2.5 -> 100000000
+		}
+
 
 		if (cheats.size() > cheatCount)
 			setActive(true);

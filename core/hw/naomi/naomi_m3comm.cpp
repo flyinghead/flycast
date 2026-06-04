@@ -69,6 +69,16 @@ void NaomiM3Comm::closeNetwork()
 {
 	EventManager::unlisten(Event::VBlank, vblankCallback, this);
 	naomiNetwork.shutdown();
+
+	comm_ctrl = 0xC000;
+	comm_offset = 0;
+	comm_status1 = 0;
+	comm_status2 = 0;
+	memset(m68k_ram, 0, 128_KB);
+	memset(comm_ram, 0, 128_KB);
+	packet_number = 0;
+	slot_count = 0;
+	slot_id = 0;
 }
 
 void NaomiM3Comm::connectNetwork()
@@ -112,15 +122,15 @@ u32 NaomiM3Comm::ReadMem(u32 address, u32 size)
 {
 	switch (address)
 	{
-	case NAOMI_COMM2_CTRL_addr:
-		//DEBUG_LOG(NAOMI, "NAOMI_COMM2_CTRL read");
+	case NAOMI_COMM_CTRL_addr:
+		//DEBUG_LOG(NAOMI, "NAOMI_COMM_CTRL read");
 		return comm_ctrl;
 
-	case NAOMI_COMM2_OFFSET_addr:
-		//DEBUG_LOG(NAOMI, "NAOMI_COMM2_OFFSET read");
+	case NAOMI_COMM_OFFSET_addr:
+		//DEBUG_LOG(NAOMI, "NAOMI_COMM_OFFSET read");
 		return comm_offset;
 
-	case NAOMI_COMM2_DATA_addr:
+	case NAOMI_COMM_DATA_addr:
 	{
 		u16 value;
 		if (comm_ctrl & COMM_CTRL_CPU_RAM)
@@ -129,18 +139,18 @@ u32 NaomiM3Comm::ReadMem(u32 address, u32 size)
 			// TODO u16 *commram = (u16*)membank("comm_ram")->base();
 			value = *(u16*)&comm_ram[comm_offset];
 		value = swap16(value);
-		DEBUG_LOG(NAOMI, "NAOMI_COMM2_DATA %s read @ %04x: %x", (comm_ctrl & COMM_CTRL_CPU_RAM) ? "m68k ram" : "comm ram", comm_offset, value);
+		DEBUG_LOG(NAOMI, "COMM_DATA %s read @ %04x: %x", (comm_ctrl & COMM_CTRL_CPU_RAM) ? "m68k ram" : "comm ram", comm_offset, value);
 		comm_offset += 2;
 		return value;
 	}
 
-	case NAOMI_COMM2_STATUS0_addr:
-		DEBUG_LOG(NAOMI, "NAOMI_COMM2_STATUS0 read %x", comm_status0);
-		return comm_status0;
-
-	case NAOMI_COMM2_STATUS1_addr:
-		DEBUG_LOG(NAOMI, "NAOMI_COMM2_STATUS1 read %x", comm_status1);
+	case NAOMI_COMM_STATUS1_addr:
+		DEBUG_LOG(NAOMI, "COMM_STATUS1 read %x", comm_status1);
 		return comm_status1;
+
+	case NAOMI_COMM_STATUS2_addr:
+		DEBUG_LOG(NAOMI, "COMM_STATUS2 read %x", comm_status2);
+		return comm_status2;
 
 	default:
 		DEBUG_LOG(NAOMI, "NaomiM3Comm::ReadMem unmapped: %08x sz %d", address, size);
@@ -158,10 +168,15 @@ void NaomiM3Comm::connectedState()
 
 	u32 slot_size = swap16(*(u16*)&m68k_ram[0x204]);
 
+	int slotCount = slot_count;
+	if (settings.content.gameId == " DERBY OWNERS CLUB WE ---------"
+			|| settings.content.gameId == " DERBY OWNERS CLUB ------------")
+		// DOC [WE] adds 1 to the slot count in its code, so it needs the number of slaves instead
+		slotCount--;
 	CommBoardStat& stat = *(CommBoardStat *)&comm_ram[0];
 	memset(&stat, 0, sizeof(stat));
 	stat.transmode = swap16(slot_id == 0 ? 0 : 1);
-	stat.totalnode = slot_count | (slot_count << 8);
+	stat.totalnode = slotCount | (slotCount << 8);
 	stat.nodeID = slot_id | (slot_id << 8);
 	stat.cts = swap16(slot_id == 0 ? 0x7830 : 0x73a2);
 	stat.dma_rx_addr = swap16(0x100 + slot_size);
@@ -169,57 +184,60 @@ void NaomiM3Comm::connectedState()
 	stat.dma_tx_addr = swap16(0x100);
 	stat.dma_tx_size = swap16(slot_size * slot_count);
 
-	comm_status0 = 0xff01;	// But 1 at connect time before f000 is read
-	comm_status1 = (slot_count << 8) | slot_id;
+	comm_status1 = 0xff01;	// But 1 at connect time before f000 is read
+	comm_status2 = (slotCount << 8) | slot_id;
 }
 
 void NaomiM3Comm::WriteMem(u32 address, u32 data, u32 size)
 {
 	switch (address)
 	{
-	case NAOMI_COMM2_CTRL_addr:
+	case NAOMI_COMM_CTRL_addr:
 		// bit 0: access RAM is 0 - communication RAM / 1 - M68K RAM
 		// bit 1: comm RAM bank (seems R/O for SH4)
 		// bit 5: M68K Reset
 		// bit 6: ???
-		// bit 7: might be M68K IRQ 5 or 2 - set to 0 by nlCbIntr()
+		// bit 7: might be M68K IRQ 5 or 2 - set to 0 by nlCbIntr() (on vblank)
 		// bit 14: G1 DMA bus master 0 - active / 1 - disabled
 		// bit 15: 0 - enable / 1 - disable this device ???
 		if ((comm_ctrl & COMM_CTRL_RESET) == 0 && (data & COMM_CTRL_RESET) != 0)
 		{
-			DEBUG_LOG(NAOMI, "NAOMI_COMM2_CTRL m68k reset");
+			DEBUG_LOG(NAOMI, "COMM_CTRL m68k reset");
 			memset(&comm_ram[0], 0, 32);
-			comm_status0 = 0; // varies...
-			comm_status1 = 0;
+			comm_status1 = 0; // varies...
+			comm_status2 = 0;
 			connectNetwork();
 		}
 		comm_ctrl = (u16)data;
-		DEBUG_LOG(NAOMI, "NAOMI_COMM2_CTRL = %x", comm_ctrl);
+		DEBUG_LOG(NAOMI, "COMM_CTRL = %x", comm_ctrl);
 		return;
 
-	case NAOMI_COMM2_OFFSET_addr:
+	case NAOMI_COMM_OFFSET_addr:
 		comm_offset = (u16)data;
-		//DEBUG_LOG(NAOMI, "NAOMI_COMM2_OFFSET set to %x", comm_offset);
+		//DEBUG_LOG(NAOMI, "NAOMI_COMM_OFFSET set to %x", comm_offset);
 		return;
 
-	case NAOMI_COMM2_DATA_addr:
-		DEBUG_LOG(NAOMI, "NAOMI_COMM2_DATA written @ %04x %04x", comm_offset, (u16)data);
+	case NAOMI_COMM_DATA_addr:
 		data = swap16(data);
-		if (comm_ctrl & COMM_CTRL_CPU_RAM)
+		if (comm_ctrl & COMM_CTRL_CPU_RAM) {
 			*(u16*)&m68k_ram[comm_offset] = (u16)data;
-		else
+			DEBUG_LOG(NAOMI, "COMM_DATA (cpu) written @ %04x %04x", comm_offset, (u16)data);
+		}
+		else {
 			*(u16*)&comm_ram[comm_offset] = (u16)data;
+			DEBUG_LOG(NAOMI, "COMM_DATA (comm) written @ %04x %04x", comm_offset, (u16)data);
+		}
 		comm_offset += 2;
 		return;
 
-	case NAOMI_COMM2_STATUS0_addr:
-		comm_status0 = (u16)data;
-		//DEBUG_LOG(NAOMI, "NAOMI_COMM2_STATUS0 set to %x", comm_status0);
+	case NAOMI_COMM_STATUS1_addr:
+		comm_status1 = (u16)data;
+		//DEBUG_LOG(NAOMI, "COMM_STATUS1 set to %x", comm_status0);
 		return;
 
-	case NAOMI_COMM2_STATUS1_addr:
-		comm_status1 = (u16)data;
-		//DEBUG_LOG(NAOMI, "NAOMI_COMM2_STATUS1 set to %x", comm_status1);
+	case NAOMI_COMM_STATUS2_addr:
+		comm_status2 = (u16)data;
+		//DEBUG_LOG(NAOMI, "COMM_STATUS2 set to %x", comm_status1);
 		return;
 
 	default:
@@ -265,7 +283,7 @@ bool NaomiM3Comm::DmaStart(u32 addr, u32 data)
 
 void NaomiM3Comm::vblank()
 {
-	if ((comm_ctrl & COMM_CTRL_RESET) == 0 || comm_status1 == 0)
+	if ((comm_ctrl & COMM_CTRL_RESET) == 0 || comm_status2 == 0)
 		return;
 
 	using the_clock = std::chrono::high_resolution_clock;
@@ -279,7 +297,7 @@ void NaomiM3Comm::vblank()
 			INFO_LOG(NETWORK, "No data received");
 		sendNetwork();
 	} catch (const FlycastException& e) {
-		comm_status0 = 0;
 		comm_status1 = 0;
+		comm_status2 = 0;
 	}
 }

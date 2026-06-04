@@ -17,6 +17,7 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #pragma once
+#include "oslib/storage.h"
 #include <cstdio>
 #include <map>
 #include <string>
@@ -24,7 +25,6 @@
 #include <vector>
 #include <locale>
 #include <sstream>
-#include "../oslib/storage.h"
 
 namespace config {
 

@@ -560,16 +560,10 @@ vk::CommandBuffer OITTextureDrawer::NewFrame()
 			rendContext->fbClip.size.x, rendContext->fbClip.size.y, rendContext->fb_W_SOF1 & VRAM_MASK);
 	NewImage();
 
-	matrices.CalcMatrices(rendContext);
-
 	textureAddr = rendContext->fb_W_SOF1 & VRAM_MASK;
-	u32 origWidth = rendContext->getFramebufferWidth();
-	u32 origHeight = rendContext->getFramebufferHeight();
-	u32 upscaledWidth = origWidth;
-	u32 upscaledHeight = origHeight;
-	u32 widthPow2;
-	u32 heightPow2;
-	getRenderToTextureDimensions(upscaledWidth, upscaledHeight, widthPow2, heightPow2);
+	u32 width = rendContext->framebufferWidth;
+	u32 height = rendContext->framebufferHeight;
+	matrices.CalcMatrices(rendContext, width, height);
 
 	rttPipelineManager->CheckSettingsChange();
 	VulkanContext *context = GetContext();
@@ -578,14 +572,16 @@ vk::CommandBuffer OITTextureDrawer::NewFrame()
 	vk::CommandBuffer commandBuffer = commandPool->Allocate(true);
 	commandBuffer.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
 
-	MakeBuffers(widthPow2, heightPow2, config::RenderToTextureBuffer ? vk::ImageUsageFlagBits::eTransferSrc : vk::ImageUsageFlagBits::eSampled);
+	MakeBuffers(width, height, config::RenderToTextureBuffer ? vk::ImageUsageFlagBits::eTransferSrc : vk::ImageUsageFlagBits::eSampled);
 
 	vk::ImageView colorImageView;
 	vk::ImageLayout colorImageCurrentLayout;
 
 	if (!config::RenderToTextureBuffer)
 	{
-		texture = textureCache->getRTTexture(textureAddr, rendContext->fb_W_CTRL.fb_packmode, origWidth, origHeight);
+		int wpo2, hpo2;
+		getPvrFramebufferSize(*rendContext, wpo2, hpo2);
+		texture = textureCache->getRTTexture(textureAddr, rendContext->fb_W_CTRL.fb_packmode, wpo2, hpo2);
 		if (textureCache->IsInFlight(texture, false))
 		{
 			texture->readOnlyImageView = *texture->imageView;
@@ -595,10 +591,10 @@ vk::CommandBuffer OITTextureDrawer::NewFrame()
 
 		constexpr vk::ImageUsageFlags imageUsage = vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled;
 		if (!texture->image || texture->format != vk::Format::eR8G8B8A8Unorm
-				|| texture->extent.width != widthPow2 || texture->extent.height != heightPow2
+				|| texture->extent.width != width || texture->extent.height != height
 				|| (texture->usageFlags & imageUsage) != imageUsage)
 		{
-			texture->extent = vk::Extent2D(widthPow2, heightPow2);
+			texture->extent = vk::Extent2D(width, height);
 			texture->format = vk::Format::eR8G8B8A8Unorm;
 			texture->needsStaging = true;
 			texture->CreateImage(vk::ImageTiling::eOptimal, imageUsage,
@@ -614,13 +610,13 @@ vk::CommandBuffer OITTextureDrawer::NewFrame()
 	}
 	else
 	{
-		if (!colorAttachment || widthPow2 > colorAttachment->getExtent().width || heightPow2 > colorAttachment->getExtent().height)
+		if (!colorAttachment || width > colorAttachment->getExtent().width || height > colorAttachment->getExtent().height)
 		{
 			if (!colorAttachment)
 				colorAttachment = std::make_unique<FramebufferAttachment>(context->GetPhysicalDevice(), device);
 			else
 				GetContext()->WaitIdle();
-			colorAttachment->Init(widthPow2, heightPow2, vk::Format::eR8G8B8A8Unorm,
+			colorAttachment->Init(width, height, vk::Format::eR8G8B8A8Unorm,
 					vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eTransferSrc,
 					"RTT COLOR ATTACHMENT");
 			colorImageCurrentLayout = vk::ImageLayout::eUndefined;
@@ -632,8 +628,8 @@ vk::CommandBuffer OITTextureDrawer::NewFrame()
 	}
 	viewport.offset.x = 0;
 	viewport.offset.y = 0;
-	viewport.extent.width = widthPow2;
-	viewport.extent.height = heightPow2;
+	viewport.extent.width = width;
+	viewport.extent.height = height;
 
 	setImageLayout(commandBuffer, colorImage, vk::Format::eR8G8B8A8Unorm, 1, colorImageCurrentLayout, vk::ImageLayout::eColorAttachmentOptimal);
 
@@ -646,12 +642,11 @@ vk::CommandBuffer OITTextureDrawer::NewFrame()
 	if (framebuffer)
 		commandPool->addToFlight(new Deleter(std::move(framebuffer)));
 	framebuffer = device.createFramebufferUnique(vk::FramebufferCreateInfo(vk::FramebufferCreateFlags(),
-			rttPipelineManager->GetRenderPass(true, true), imageViews, widthPow2, heightPow2, 1));
+			rttPipelineManager->GetRenderPass(true, true), imageViews, width, height, 1));
 
-	commandBuffer.setViewport(0, vk::Viewport(0.0f, 0.0f, (float)upscaledWidth, (float)upscaledHeight, 1.0f, 0.0f));
-	u32 minX = rendContext->getFramebufferMinX() * upscaledWidth / origWidth;
-	u32 minY = rendContext->getFramebufferMinY() * upscaledHeight / origHeight;
-	baseScissor = vk::Rect2D(vk::Offset2D(minX, minY), vk::Extent2D(upscaledWidth, upscaledHeight));
+	commandBuffer.setViewport(0, vk::Viewport(0.0f, 0.0f, (float)width, (float)height, 1.0f, 0.0f));
+	Rect scissor = matrices.getBaseScissor();
+	baseScissor = vk::Rect2D(vk::Offset2D(scissor.origin.x, scissor.origin.y), vk::Extent2D(scissor.size.x, scissor.size.y));
 	commandBuffer.setScissor(0, baseScissor);
 	currentCommandBuffer = commandBuffer;
 
@@ -660,14 +655,14 @@ vk::CommandBuffer OITTextureDrawer::NewFrame()
 
 void OITTextureDrawer::EndFrame()
 {
-	u32 clippedWidth = rendContext->getFramebufferWidth();
-	u32 clippedHeight = rendContext->getFramebufferHeight();
+	u32 fbw = rendContext->framebufferWidth;
+	u32 fbh = rendContext->framebufferHeight;
 
 	if (config::RenderToTextureBuffer)
 	{
-		vk::BufferImageCopy copyRegion(0, clippedWidth, clippedHeight,
+		vk::BufferImageCopy copyRegion(0, fbw, fbh,
 				vk::ImageSubresourceLayers(vk::ImageAspectFlagBits::eColor, 0, 0, 1), vk::Offset3D(0, 0, 0),
-				vk::Extent3D(clippedWidth, clippedHeight, 1));
+				vk::Extent3D(fbw, fbh, 1));
 		currentCommandBuffer.copyImageToBuffer(colorAttachment->GetImage(), vk::ImageLayout::eTransferSrcOptimal,
 				*colorAttachment->GetBufferData()->buffer, copyRegion);
 
@@ -694,9 +689,9 @@ void OITTextureDrawer::EndFrame()
 		u16 *dst = (u16 *)&vram[textureAddr];
 
 		PixelBuffer<u32> tmpBuf;
-		tmpBuf.init(clippedWidth, clippedHeight);
-		colorAttachment->GetBufferData()->download(clippedWidth * clippedHeight * 4, tmpBuf.data());
-		WriteTextureToVRam(clippedWidth, clippedHeight, (u8 *)tmpBuf.data(), dst, rendContext->fb_W_CTRL, rendContext->fb_W_LINESTRIDE * 8);
+		tmpBuf.init(fbw, fbh);
+		colorAttachment->GetBufferData()->download(fbw * fbh * 4, tmpBuf.data());
+		WriteTextureToVRam(fbw, fbh, (u8 *)tmpBuf.data(), dst, rendContext->fb_W_CTRL, rendContext->fb_W_LINESTRIDE * 8, rendContext->fbClip);
 	}
 	else
 	{

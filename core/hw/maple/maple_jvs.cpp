@@ -151,6 +151,7 @@ struct MIEImpl : public MIE
 	std::vector<std::unique_ptr<jvs_io_board>> io_boards;
 	bool crazy_mode = false;
 	bool hotd2p = false;
+	bool derby = false;
 
 	u8 jvs_repeat_request[32][256];
 	u8 jvs_receive_buffer[32][258];
@@ -185,6 +186,7 @@ struct MIEImpl : public MIE
 		serialPipe = pipe;
 	}
 	void updateStatus() override {}
+	std::string getEepromPath();
 
 	Pipe *serialPipe = nullptr;
 };
@@ -1342,7 +1344,7 @@ u32 BaseMIE::RawDma(const u32 *buffer_in, u32 buffer_in_len, u32 *buffer_out)
 				{
 					snprintf(filename, sizeof(filename), "z80_fw_%d.bin", i);
 					fw_dump = fopen(filename, "r");
-					if (fw_dump == NULL)
+					if (fw_dump == nullptr)
 					{
 						fw_dump = fopen(filename, "w");
 						INFO_LOG(JVS, "Saving JVS firmware to %s", filename);
@@ -1435,6 +1437,16 @@ void BaseMIE::handle_86_subcommand()
 {
 	INFO_LOG(JVS, "BaseMIE: Unhandled JVS command (0x86) subcode %x", dma_buffer_in[0]);
 	reply(MDRE_UnknownCmd);
+}
+
+std::string MIEImpl::getEepromPath()
+{
+	if (settings.naomi.slave)
+		return "";
+	if (derby)
+		return hostfs::getArcadeFlashPath() + "-main.eeprom";
+	else
+		return hostfs::getArcadeFlashPath() + ".eeprom";
 }
 
 MIEImpl::MIEImpl()
@@ -1596,24 +1608,30 @@ MIEImpl::MIEImpl()
 			// Default JVS I/O board
 			io_boards.push_back(std::make_unique<jvs_837_13551>(1, this));
 		}
+
+		derby = gameId.substr(0, 6) == " DERBY" && config::MultiboardSlaves >= 2;
 	}
 
-	std::string eeprom_file = hostfs::getArcadeFlashPath() + ".eeprom";
-	FILE* f = nowide::fopen(eeprom_file.c_str(), "rb");
-	if (f)
+	std::string eeprom_file = getEepromPath();
+	FILE* f = nullptr;
+	if (!eeprom_file.empty())
+		f = nowide::fopen(eeprom_file.c_str(), "rb");
+	if (f != nullptr)
 	{
 		if (std::fread(eeprom, 1, 0x80, f) != 0x80)
 			WARN_LOG(MAPLE, "Failed or truncated read of EEPROM '%s'", eeprom_file.c_str());
 		std::fclose(f);
 		DEBUG_LOG(MAPLE, "Loaded EEPROM from %s", eeprom_file.c_str());
 	}
-	else if (naomi_default_eeprom != NULL)
+	else if (naomi_default_eeprom != nullptr)
 	{
 		DEBUG_LOG(MAPLE, "Using default EEPROM file");
-		memcpy(eeprom, naomi_default_eeprom, 0x80);
+		memcpy(eeprom, naomi_default_eeprom, sizeof(eeprom));
 	}
-	else
+	else {
 		DEBUG_LOG(MAPLE, "EEPROM file not found at %s and no default found", eeprom_file.c_str());
+		memset(eeprom, 0, sizeof(eeprom));
+	}
 	if (config::GGPOEnable)
 		MD5Sum().add(eeprom, sizeof(eeprom))
 				.getDigest(settings.network.md5.eeprom);
@@ -1747,7 +1765,7 @@ void MIEImpl::handle_86_subcommand()
 		}
 	}
 	u8 node_id = 0;
-	const u8 *cmd = NULL;
+	const u8 *cmd = nullptr;
 	u32 len = 0;
 	u8 channel = 0;
 	if (dma_count_in >= 3)
@@ -1874,16 +1892,20 @@ void MIEImpl::handle_86_subcommand()
 			size = std::min((int)sizeof(eeprom) - address, size);
 			memcpy(eeprom + address, dma_buffer_in + 4, size);
 
-			std::string eeprom_file = hostfs::getArcadeFlashPath() + ".eeprom";
-			FILE* f = nowide::fopen(eeprom_file.c_str(), "wb");
-			if (f)
+			std::string eeprom_file = getEepromPath();
+			if (!eeprom_file.empty())
 			{
-				std::fwrite(eeprom, 1, sizeof(eeprom), f);
-				std::fclose(f);
-				INFO_LOG(MAPLE, "Saved EEPROM to %s", eeprom_file.c_str());
+				FILE* f = nowide::fopen(eeprom_file.c_str(), "wb");
+				if (f)
+				{
+					std::fwrite(eeprom, 1, sizeof(eeprom), f);
+					std::fclose(f);
+					INFO_LOG(MAPLE, "Saved EEPROM to %s", eeprom_file.c_str());
+				}
+				else {
+					WARN_LOG(MAPLE, "EEPROM SAVE FAILED to %s", eeprom_file.c_str());
+				}
 			}
-			else
-				WARN_LOG(MAPLE, "EEPROM SAVE FAILED to %s", eeprom_file.c_str());
 
 			reply(MDRS_JVSReply, 1);
 			memcpy(dma_buffer_out, eeprom, 4);
@@ -2283,10 +2305,10 @@ u32 jvs_io_board::handle_jvs_message(const u8 *buffer_in, u32 length_in, u8 *buf
 						for (; axis < buffer_in[cmdi + 1]; axis++, player_axis++)
 						{
 							u16 axis_value;
-							if (NaomiGameInputs != NULL)
+							if (NaomiGameInputs != nullptr)
 							{
 								if (player_axis >= std::size(NaomiGameInputs->axes)
-										|| NaomiGameInputs->axes[player_axis].name == NULL)
+										|| NaomiGameInputs->axes[player_axis].name == nullptr)
 								{
 									// Next player
 									player_num++;

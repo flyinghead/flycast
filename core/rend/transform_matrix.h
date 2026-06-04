@@ -24,6 +24,20 @@
 #include "cfg/option.h"
 #include <glm/glm.hpp>
 
+static inline Rect intersect(const Rect& l, const Rect& r)
+{
+	Rect rect;
+	rect.origin = glm::max(l.origin, r.origin);
+	rect.size = glm::max(glm::min(l.bottomRight(), r.bottomRight()) - rect.origin + glm::ivec2(1, 1), glm::ivec2(0, 0));
+	return rect;
+}
+
+enum class TileClipping {
+	Inside,			// Render stuff outside the region
+	Off,    		// Always passes
+	Outside    		// Render stuff inside the region
+};
+
 // Dreamcast:
 // +Y is down
 // OpenGL:
@@ -45,8 +59,6 @@ public:
 		CalcMatrices(&renderingContext, width, height);
 	}
 
-	bool IsClipped() const;
-
 	const glm::mat4& GetNormalMatrix() const {
 		return normalMatrix;
 	}
@@ -54,29 +66,27 @@ public:
 		return viewportMatrix;
 	}
 
-	// Return the width of the black bars when the screen is wider than 4:3. Returns a negative number when the screen is taller than 4:3,
-	// whose inverse is the height of the top and bottom bars.
-	float GetSidebarWidth() const {
-		return sidebarWidth;
-	}
-
 	void CalcMatrices(const rend_context *renderingContext, int width = 0, int height = 0);
-	Rect intersectTileAndFBScissor() const;
+	Rect getBaseScissor() const;
+	TileClipping getTileClip(u32 val, Rect& clipRect);
 
 private:
+	bool isClipped() const;
 	void getScissorScaling(float& scale_x, float& scale_y) const;
+	Rect intersectTileAndFBScissor() const;
 
 	const rend_context *renderingContext = nullptr;
 	const bool directx;
 
 	glm::mat4 normalMatrix;
 	glm::mat4 viewportMatrix;
-	float sidebarWidth = 0;
 };
 
+void getPvrFramebufferSize(const rend_context& rendCtx, int& width, int& height);
 void getScaledFramebufferSize(const rend_context& rendCtx, int& width, int& height);
 float getOutputFramebufferAspectRatio();
 void getDCFramebufferReadSize(const FramebufferInfo& info, int& width, int& height);
+void getWriteFBToVramParams(const rend_context& ctx, glm::ivec2& scaledSize, Rect& finalClip);
 
 inline static float getDCFramebufferAspectRatio() {
 	float aspectRatio = config::Rotate90 ? 3.f / 4.f : 4.f / 3.f;

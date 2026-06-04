@@ -27,7 +27,6 @@
 #include "../dx11_renderstate.h"
 #include "dx11_oitbuffers.h"
 #include "dx11_oitshaders.h"
-#include "rend/tileclip.h"
 
 const D3D11_INPUT_ELEMENT_DESC MainLayout[]
 {

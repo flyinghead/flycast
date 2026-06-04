@@ -14,7 +14,8 @@ _input_queues(NULL),
    _framecount = 0;
    _last_confirmed_frame = -1;
    _max_prediction_frames = 0;
-   memset(&_savedstate, 0, sizeof(_savedstate));
+   _savedstate = {};
+   _rollingback = false;
 }
 
 Sync::~Sync()

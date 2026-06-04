@@ -37,7 +37,9 @@ void gui_settings_network()
 		else if (config::BattleCableEnable)
 			netType = 3;
 		ImGui::Columns(4, "networkType", false);
-		ImGui::RadioButton((Ts("Disabled") + "##network").c_str(), &netType, 0);
+		ImGui::RadioButton(T("Native"), &netType, 0);
+		ImGui::SameLine(0, style.ItemInnerSpacing.x);
+		ShowHelpMarker(T("Use native Dreamcast online features using the modem or Broadband Adapter"));
 		ImGui::NextColumn();
 		ImGui::RadioButton("GGPO", &netType, 1);
 		ImGui::SameLine(0, style.ItemInnerSpacing.x);
@@ -109,8 +111,25 @@ void gui_settings_network()
 		}
 		else if (config::NetworkEnable)
 		{
-			OptionCheckbox(T("Act as Server"), config::ActAsServer,
-					T("Create a local server for Naomi network games"));
+			// Naomi networking
+			ImGui::Text("%s", T("Network Role"));
+			int role = 0;
+			if (!config::ActAsServer)
+				role = config::NaomiSatellite ? 2 : 1;
+			ImGui::Columns(3, "networkRole", false);
+			ImGui::RadioButton(T("Master"), &role, 0);
+			ImGui::SameLine(0, style.ItemInnerSpacing.x);
+			ShowHelpMarker(T("Create a local server for Naomi network games"));
+			ImGui::NextColumn();
+			ImGui::RadioButton(T("Slave"), &role, 1);
+			ImGui::SameLine(0, style.ItemInnerSpacing.x);
+			ShowHelpMarker(T("Connect to the master server"));
+			ImGui::NextColumn();
+			ImGui::RadioButton(T("Satellite"), &role, 2);
+			ImGui::SameLine(0, style.ItemInnerSpacing.x);
+			ShowHelpMarker(T("Live monitor for games that support it (Virtual-On Oratorio Tangram and Club Kart)"));
+			ImGui::Columns(1, nullptr, false);
+
 			if (!config::ActAsServer)
 			{
 				InputText(T("Server"), &config::NetworkServer.get(), ImGuiInputTextFlags_CharsNoBlank | ImGuiInputTextFlags_CallbackCharFilter, dnsCharFilter);
@@ -123,6 +142,21 @@ void gui_settings_network()
 			ImGui::SameLine();
 			ShowHelpMarker(T("The local UDP port to use"));
 			config::LocalPort.set(atoi(localPort));
+
+			switch (role) {
+			case 0:
+				config::ActAsServer = true;
+				config::NaomiSatellite = false;
+				break;
+			case 1:
+				config::ActAsServer = false;
+				config::NaomiSatellite = false;
+				break;
+			case 2:
+				config::ActAsServer = false;
+				config::NaomiSatellite = true;
+				break;
+			}
 		}
 		else if (config::BattleCableEnable)
 		{
@@ -225,10 +259,10 @@ void gui_settings_network()
 	ImGui::Spacing();
 	header(T("Multiboard Screens"));
 	{
-		//OptionRadioButton<int>(T("Disabled##multiboard"), config::MultiboardSlaves, 0, T("Multiboard disabled (when optional)"));
-		OptionRadioButton<int>(T("1 (Twin)"), config::MultiboardSlaves, 1, T("One screen configuration (F355 Twin)"));
+		OptionRadioButton<int>(T("1 (Twin, Satellite)"), config::MultiboardSlaves, 1, T("One screen configuration (F355 Twin, Derby Owners Club satellite)"));
 		ImGui::SameLine();
-		OptionRadioButton<int>(T("3 (Deluxe)"), config::MultiboardSlaves, 2, T("Three screens configuration"));
+		OptionRadioButton<int>(T("2+ (Deluxe, Main screen)"), config::MultiboardSlaves, 2,
+				T("Two or three screens configuration (Airline Pilot, Derby Owners Club main screen, F355 Deluxe, Sega Strike Fighter)"));
 	}
 #endif
 }

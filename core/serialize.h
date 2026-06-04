@@ -75,7 +75,8 @@ public:
 		V56,
 		V57,
 		V58,
-		Current = V58,
+		V59,
+		Current = V59,
 
 		Next = Current + 1,
 	};

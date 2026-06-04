@@ -27,7 +27,6 @@
 #include "d3d_texture.h"
 #include "d3d_shaders.h"
 #include "ui/imgui_driver.h"
-#include "rend/tileclip.h"
 
 class RenderStateCache
 {

@@ -44,6 +44,8 @@ VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 #include <memory>
 #include <set>
 #include <vulkan/vulkan_format_traits.hpp>
+#include <algorithm>
+#include <cstring>
 
 void ReInitOSD();
 
@@ -185,7 +187,36 @@ bool VulkanContext::InitInstance(const char** extensions, uint32_t extensions_co
 		layer_names.push_back("VK_LAYER_GOOGLE_unique_objects");
 #endif
 #endif
-		vk::InstanceCreateInfo instanceCreateInfo({}, &applicationInfo, layer_names, vext);
+		vk::InstanceCreateFlags instanceFlags{};
+#if defined(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME) \
+	&& (defined(VK_USE_PLATFORM_METAL_EXT) || defined(__APPLE__))
+		// MoltenVK is a portability driver. Vulkan loaders >= 1.3.216
+		// will not enumerate portability ICDs unless the application
+		// opts in via VK_KHR_portability_enumeration. Without this,
+		// instance creation fails with VK_ERROR_INCOMPATIBLE_DRIVER on
+		// macOS / iOS where MoltenVK is the only available ICD.
+		// Only opt in if the loader actually advertises the extension:
+		// older loaders that predate it would otherwise reject the
+		// instance with VK_ERROR_EXTENSION_NOT_PRESENT.
+		{
+			bool portabilityEnumSupported = false;
+			for (const auto& ext : vk::enumerateInstanceExtensionProperties())
+				if (strcmp(ext.extensionName, VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME) == 0) {
+					portabilityEnumSupported = true;
+					break;
+				}
+			if (portabilityEnumSupported) {
+				const bool alreadyRequested = std::any_of(vext.begin(), vext.end(),
+					[](const char *name) {
+						return strcmp(name, VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME) == 0;
+					});
+				if (!alreadyRequested)
+					vext.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
+				instanceFlags |= vk::InstanceCreateFlagBits::eEnumeratePortabilityKHR;
+			}
+		}
+#endif
+		vk::InstanceCreateInfo instanceCreateInfo(instanceFlags, &applicationInfo, layer_names, vext);
 		// create a UniqueInstance
 		instance = vk::createInstanceUnique(instanceCreateInfo);
 
@@ -975,7 +1006,18 @@ void VulkanContext::Present() noexcept
 		try {
 			DoSwapAutomation();
 			vk::Result res = presentQueue.presentKHR(vk::PresentInfoKHR(1, &(*renderCompleteSemaphores[currentSemaphore]), 1, &(*swapChain), &currentImage));
-			(void)res;
+#if defined(VK_USE_PLATFORM_METAL_EXT) || defined(__APPLE__)
+			// presentKHR lists eSuboptimalKHR as a success code so it is
+			// returned rather than thrown. Treat it as a request to
+			// recreate the swapchain on the next frame; otherwise the
+			// surface can stay stuck in a sub-optimal configuration
+			// (notably across DPI / window-resize / display-mode changes
+			// and with MoltenVK on Apple platforms).
+			// Restricted to Apple platforms since this is common on Android unless we use the identity
+			// resolution of the screen (which is often vertical so we don't).
+			if (res == vk::Result::eSuboptimalKHR)
+				resized = true;
+#endif
 			currentSemaphore = (currentSemaphore + 1) % renderCompleteSemaphores.size();
 
 			if (lastFrameView && IsValid() && !gui_is_open())
@@ -984,6 +1026,14 @@ void VulkanContext::Present() noexcept
 					PresentFrame(vk::Image(), lastFrameView, lastFrameExtent, lastFrameAR);
 					res = presentQueue.presentKHR(vk::PresentInfoKHR(1, &(*renderCompleteSemaphores[currentSemaphore]), 1, &(*swapChain), &currentImage));
 					currentSemaphore = (currentSemaphore + 1) % renderCompleteSemaphores.size();
+					if (res == vk::Result::eSuboptimalKHR)
+					{
+						// Stop queuing additional dupe presents into a swap
+						// chain that we are about to tear down: the extra
+						// in-flight semaphores would just delay waitIdle().
+						resized = true;
+						break;
+					}
 				}
 		} catch (const vk::SystemError& e) {
 			// Happens when resizing the window

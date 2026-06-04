@@ -280,7 +280,7 @@ protected:
 			// 4: mode ('0': read 0x45 bytes, '1': variable length read 1-47 bytes, '2': card capture, pull in card?)
 			// 5: parity ('0': 7-bit parity, '1': 8-bit no parity)
 			// 6: track (see below)
-			INFO_LOG(NAOMI, "Card read mode %c parity %c track %c", rxCommand[4], rxCommand[5], rxCommand[6]);
+			DEBUG_LOG(NAOMI, "Card read mode %c parity %c track %c", rxCommand[4], rxCommand[5], rxCommand[6]);
 			if (!cardInserted || doorOpen)
 				status3 = cardInserted ? '0' : '4';
 			break;
@@ -663,10 +663,10 @@ void initdInit() {
 void derbyInit()
 {
 	term();
-	if (settings.content.gameId == " DERBY OWNERS CLUB WE ---------")
-		cardReader = std::make_unique<DerbyBRCardReader>();
-	else
+	if (settings.content.gameId == " DERBY OWNERS CLUB ------------")
 		cardReader = std::make_unique<DerbyLRCardReader>();
+	else
+		cardReader = std::make_unique<DerbyBRCardReader>();
 }
 
 void clubkInit() {

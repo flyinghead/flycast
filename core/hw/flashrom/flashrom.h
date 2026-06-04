@@ -61,7 +61,6 @@ public:
 	}
 
 	bool Load(const std::string& file);
-	virtual bool Reload() { return true; }
 	bool Load(const std::string &prefix, const std::string &names_ro,
 			const std::string &title);
 	void Load(const u8 *data, size_t size);
@@ -80,13 +79,6 @@ protected:
 
 public:
 	virtual void Write(u32 addr, u32 data, u32 size) = 0;
-
-	bool Reload() override
-	{
-		if (load_filename.empty())
-			return false;
-		return Load(this->load_filename);
-	}
 	void Save(const std::string& file);
 	void Save(const std::string &prefix, const std::string &name_ro,
 			const std::string &title);

@@ -420,7 +420,7 @@ struct ChannelEx
 
 	ChannelCommonData* ccd;
 
-	const u8 *SA;
+	u32 SA;
 	u32 CA;
 	fp_22_10 step;
 	u32 update_rate;
@@ -766,7 +766,7 @@ struct ChannelEx
 				ChannelNumber, stream_names[ccd->PCMS], (44100.0 * update_rate) / 1024, ccd->LPCTL,
 				ccd->AR, ccd->D1R, ccd->DL << 5, ccd->D2R, ccd->RR,
 				ccd->KRS, ccd->OCT, ccd->FNS,
-				(int)(SA - &aica_ram[0]), ccd->LSA, ccd->LEA);
+				SA, ccd->LSA, ccd->LEA);
 	}
 
 	void KEY_OFF()
@@ -791,11 +791,9 @@ struct ChannelEx
 	//SA,PCMS
 	void UpdateSA()
 	{
-		u32 addr = (ccd->SA_hi << 16) | ccd->SA_low;
+		SA = (ccd->SA_hi << 16) | ccd->SA_low;
 		if (ccd->PCMS == PCM16)
-			addr &= ~1; //0: 16 bit
-		
-		SA = &aica_ram[addr & ARAM_MASK];
+			SA &= ~1; //0: 16 bit
 	}
 	//LSA,LEA
 	void UpdateLoop()
@@ -1056,13 +1054,17 @@ static SampleType DecodeADPCM(u32 sample, s32 prev, s32& quant)
 	return std::clamp(rv, -32768, 32767);
 }
 
+template<typename T>
+static T readAicaRam(u32 addr) {
+	return *(const T *)&aica_ram[addr & ARAM_MASK & ~(sizeof(T) - 1)];
+}
+
 template<PCMSType PCMS, bool Last>
 void ChannelEx::StepDecodeSample(u32 CA)
 {
 	if constexpr (!Last && (PCMS == PCM16 || PCMS == PCM8 || PCMS == NOISE))
 		return;
 
-	// TODO bound checking of sample addresses
 	u32 next_addr = CA + 1;
 	if (next_addr >= loop.LEA && loop.LEA > loop.LSA)
 		next_addr = loop.LSA;
@@ -1074,33 +1076,26 @@ void ChannelEx::StepDecodeSample(u32 CA)
 		noise_state = noise_state * RAND_FACTOR + RAND_TERM;
 		s0 = noise_state;
 		s0 >>= 16;
-		
-		s1 = noise_state * RAND_FACTOR + RAND_TERM;
+		noise_state = noise_state * RAND_FACTOR + RAND_TERM;
+		s1 = noise_state;
 		s1 >>= 16;
 		break;
 
 	case PCM16:
-		{
-			const s16 *sptr16 = (const s16 *)SA;
-			s0 = sptr16[CA];
-			s1 = sptr16[next_addr];
-			break;
-		}
+		s0 = readAicaRam<s16>(SA + CA * 2);
+		s1 = readAicaRam<s16>(SA + next_addr * 2);
+		break;
 
 	case PCM8:
-		{
-			const s8 *sptr8 = (const s8 *)SA;
-			s0 = sptr8[CA] << 8;
-			s1 = sptr8[next_addr] << 8;
-			break;
-		}
+		s0 = readAicaRam<s8>(SA + CA) << 8;
+		s1 = readAicaRam<s8>(SA + next_addr) << 8;
+		break;
 
 	case ADPCM:
 	case ADPCM_STREAM:
 		{
-			const u8 *uptr8 = (const u8 *)SA;
-			u8 ad1 = uptr8[CA >> 1];
-			u8 ad2 = uptr8[next_addr >> 1];
+			u8 ad1 = readAicaRam<u8>(SA + (CA >> 1));
+			u8 ad2 = readAicaRam<u8>(SA + (next_addr >> 1));
 
 			ad1 >>= (CA & 1) * 4;
 			ad2 >>= (next_addr & 1) * 4;
@@ -1642,9 +1637,7 @@ void serialize(Serializer& ser)
 {
 	for (const ChannelEx& channel : Chans)
 	{
-		u32 addr = channel.SA - &aica_ram[0];
-		ser << addr;
-
+		ser << channel.SA;
 		ser << channel.CA;
 		ser << channel.step;
 		ser << channel.s0;
@@ -1681,10 +1674,7 @@ void deserialize(Deserializer& deser)
 	for (ChannelEx& channel : Chans)
 	{
 		channel.quiet = true;
-		u32 addr;
-		deser >> addr;
-		channel.SA = addr + &aica_ram[0];
-
+		deser >> channel.SA;
 		deser >> channel.CA;
 		deser >> channel.step;
 		channel.UpdatePitch();

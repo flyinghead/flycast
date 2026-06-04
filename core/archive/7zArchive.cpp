@@ -39,7 +39,13 @@ SRes SzArchive::ArchiveStream::Read(const ISeekInStream *p, void *buf, size_t *s
 SRes SzArchive::ArchiveStream::Seek(const ISeekInStream *p, Int64 *pos, ESzSeek origin)
 {
 	auto file_archive = CONTAINER_FROM_VTBL(p, ArchiveStream, vt);
-	return file_archive->file->seek(*pos, origin) != 0 ? SZ_ERROR_FAIL : SZ_OK;
+	if (file_archive->file->seek(*pos, origin) == 0) {
+		*pos = file_archive->file->tell();
+		return SZ_OK;
+	}
+	else {
+		return SZ_ERROR_FAIL;
+	}
 }
 
 bool SzArchive::Open(hostfs::File *file)

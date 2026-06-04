@@ -22,7 +22,6 @@
 #include "cfg/option.h"
 #include "miniupnp.h"
 #include "hw/sh4/sh4_sched.h"
-#include "naomi_network.h"
 #include "net_handshake.h"
 #include "ice.h"
 #include "oslib/i18n.h"
@@ -89,13 +88,6 @@ public:
 
 	bool init()
 	{
-#ifdef _WIN32
-		WSADATA wsaData;
-		if (WSAStartup(MAKEWORD(2, 0), &wsaData) != 0) {
-			ERROR_LOG(NETWORK, "WSAStartup failed. errno=%d", get_last_error());
-			throw Exception("WSAStartup failed");
-		}
-#endif
 		if (config::EnableUPnP) {
 			miniupnp.Init();
 			miniupnp.AddPortMapping(config::LocalPort, true);
@@ -222,7 +214,7 @@ private:
 
 	    peerAddress.sin_family = AF_INET;
 	    peerAddress.sin_addr.s_addr = INADDR_BROADCAST;
-	    peerAddress.sin_port = htons(NaomiNetwork::SERVER_PORT);
+	    peerAddress.sin_port = htons(defaultNaomiServerPort());
 		if (!config::NetworkServer.get().empty()
 				// ignore server name if acting as server (maxspeed)
 				&& (!config::ActAsServer || settings.platform.isConsole()))

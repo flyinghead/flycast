@@ -19,7 +19,6 @@
 #include "gl4.h"
 #include "rend/gles/glcache.h"
 #include "rend/gles/naomi2.h"
-#include "rend/tileclip.h"
 
 #include <memory>
 
@@ -113,7 +112,7 @@ static void SetGPState(const PolyParam* gp)
 		gl4ShaderUniforms.trilinear_alpha = 1.0;
 
 	Rect clip_rect;
-	TileClipping clipmode = getTileClip(gp->tileclip, ViewportMatrix, clip_rect, *gl.rendContext);
+	TileClipping clipmode = gl.matrices.getTileClip(gp->tileclip, clip_rect);
 	int gpuPalette = gp->texture == nullptr || !gp->texture->gpuPalette ? 0
 			: gp->tsp.FilterMode + 1;
 	if (gpuPalette != 0)

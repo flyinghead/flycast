@@ -169,8 +169,7 @@ else
         install_vulkan_sdk
         echo "Using Vulkan SDK from $VULKAN_SDK"
     else
-        echo 'Vulkan SDK is required to generate the Apple Xcode project' >&2
-        exit 1
+        echo 'Vulkan will be disabled' >&2
     fi
 fi
 
@@ -188,7 +187,12 @@ if [ "${x:-1}" = "2" ]; then
     echo 'Building iOS xcodeproj for debugging'
     echo 'Remove CODE_SIGNING_ALLOWED=NO in Build Settings if you are using your Apple Developer Certificate for signing'
 else
-    option="-DCMAKE_OSX_ARCHITECTURES=$(uname -m)"
+    option="-DCMAKE_OSX_ARCHITECTURES=$(uname -m) -DUSE_VULKAN="
+    if [[ -n "${VULKAN_SDK:-}" ]]; then
+        option+="ON"
+    else
+        option+="OFF"
+    fi
     lldbinitfolder="emulator-osx"
     echo 'Building macOS xcodeproj for debugging'
 fi
