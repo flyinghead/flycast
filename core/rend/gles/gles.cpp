@@ -913,7 +913,11 @@ static void gl_create_resources()
 #ifndef LIBRETRO
 	if (gl.gl_major >= 3)
 		// will be used later. Better fail fast
-		verify(glGenVertexArrays != nullptr);
+		if (glGenVertexArrays == nullptr) {
+			ERROR_LOG(RENDERER, "glGenVertexArrays function is null");
+			throw RendererException("OpenGL initialization failed");
+		}
+
 #endif
 
 	//create vbos

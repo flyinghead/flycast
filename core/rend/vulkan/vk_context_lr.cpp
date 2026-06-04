@@ -55,7 +55,7 @@ bool VkCreateDevice(retro_vulkan_context* context, VkInstance instance, VkPhysic
 	if (gpu == VK_NULL_HANDLE)
 	{
 		// Choose a discrete gpu if there's one, otherwise just pick the first one
-		verify(instance != VK_NULL_HANDLE);
+		assert(instance != VK_NULL_HANDLE);
 		vk::Instance vkinstance(instance);
 		const auto devices = vkinstance.enumeratePhysicalDevices();
 		for (const auto& phyDev : devices)
@@ -82,7 +82,7 @@ bool VkCreateDevice(retro_vulkan_context* context, VkInstance instance, VkPhysic
 			std::find_if(queueFamilyProperties.begin(), queueFamilyProperties.end(),
 					[](vk::QueueFamilyProperties const& qfp) { return (qfp.queueFlags & (vk::QueueFlagBits::eGraphics | vk::QueueFlagBits::eCompute))
 							== (vk::QueueFlagBits::eGraphics | vk::QueueFlagBits::eCompute); }));
-	verify(context->queue_family_index < queueFamilyProperties.size());
+	assert(context->queue_family_index < queueFamilyProperties.size());
 
 	if (surface != VK_NULL_HANDLE)
 	{
@@ -546,12 +546,12 @@ void VulkanContext::term()
 
 VulkanContext::VulkanContext()
 {
-	verify(contextInstance == nullptr);
+	assert(contextInstance == nullptr);
 	contextInstance = this;
 }
 
 VulkanContext::~VulkanContext()
 {
-	verify(contextInstance == this);
+	assert(contextInstance == this);
 	contextInstance = nullptr;
 }

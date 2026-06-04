@@ -840,7 +840,10 @@ bool OpenGLRenderer::GetLastFrame(std::vector<u8>& data, int& width, int& height
 
 	glViewport(0, 0, width, height);
 	glcache.Disable(GL_BLEND);
-	verify(framebuffer->getTexture() != 0);
+	if (framebuffer->getTexture() == 0) {
+		WARN_LOG(RENDERER, "GetLastFrame: framebuffer->texture is 0");
+		return false;
+	}
 	const float *vertices = nullptr;
 	if (config::Rotate90)
 	{
