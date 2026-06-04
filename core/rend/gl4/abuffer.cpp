@@ -516,7 +516,10 @@ void DrawTranslucentModVols(int first, int count, bool useOpaqueGeom)
 
 		u32 mv_mode = param.isp.DepthMode;
 
-		verify(param.first >= 0 && param.first + param.count <= (u32)gl.rendContext->modtrig.size());
+		if (param.first + param.count > (u32)gl.rendContext->modtrig.size()) {
+			ERROR_LOG(RENDERER, "Corrupted translucent poly[%d]: first %d end %d", cmv, param.first, param.first + param.count);
+			continue;
+		}
 
 		if (mod_base == -1)
 			mod_base = param.first;

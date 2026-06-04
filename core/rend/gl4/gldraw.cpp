@@ -476,7 +476,10 @@ void gl4CreateTextures(int width, int height)
 		glCheck();
 
 		GLuint uStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-		verify(uStatus == GL_FRAMEBUFFER_COMPLETE);
+		if (uStatus != GL_FRAMEBUFFER_COMPLETE) {
+			ERROR_LOG(RENDERER, "Framebuffer creation failed: %x", uStatus);
+			throw RendererException("OpenGL framebuffer creation failed");
+		}
 	}
 }
 
