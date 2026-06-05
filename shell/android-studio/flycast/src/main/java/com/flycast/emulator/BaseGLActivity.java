@@ -21,6 +21,7 @@ import android.view.MotionEvent;
 import android.view.ViewConfiguration;
 import android.view.Window;
 import android.view.WindowManager;
+import android.window.OnBackInvokedDispatcher;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -136,6 +137,14 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
         audioBackend = new AudioBackend();
 
         onConfigurationChanged(getResources().getConfiguration());
+
+        // Ignore the Back button on Android 13+.
+        // This is apparently required on Android 16 since returning true from onKeyDown() is ignored.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            getOnBackInvokedDispatcher().registerOnBackInvokedCallback(OnBackInvokedDispatcher.PRIORITY_DEFAULT, () -> {
+                // Ignore the Back button. It is handled in onKeyDown()
+            });
+        }
 
         // When viewing a resource, pass its URI to the native code for opening
         Intent intent = getIntent();
