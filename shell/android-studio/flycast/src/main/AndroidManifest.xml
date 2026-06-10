@@ -166,6 +166,15 @@
 					android:scheme="file" />
 			</intent-filter>
         </activity-alias>
+        <receiver
+            android:name="com.flycast.emulator.RetroAchievementsHostOverrideReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.flycast.emulator.action.SET_RETROACHIEVEMENTS_HOST_OVERRIDE" />
+                <action android:name="com.flycast.emulator.action.CLEAR_RETROACHIEVEMENTS_HOST_OVERRIDE" />
+            </intent-filter>
+        </receiver>
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.provider"

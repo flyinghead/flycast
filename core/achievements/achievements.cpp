@@ -63,6 +63,7 @@ public:
 	void deserialize(Deserializer& deser);
 
 	static Achievements& Instance();
+	void setHostOverride(const std::string& host);
 
 private:
 	bool createClient();
@@ -105,6 +106,7 @@ private:
 
 	rc_client_t *rc_client = nullptr;
 	bool loggedOn = false;
+	bool hostOverrideActive = false;
 	std::atomic_bool loadingGame {};
 	bool active = false;
 	bool paused = false;
@@ -154,6 +156,10 @@ std::vector<Achievement> getAchievementList() {
 
 bool canPause() {
 	return Achievements::Instance().canPause();
+}
+
+void setHostOverride(const std::string& host) {
+	Achievements::Instance().setHostOverride(host);
 }
 
 void serialize(Serializer& ser) {
@@ -243,7 +249,33 @@ bool Achievements::createClient()
 
 	rc_client_set_userdata(rc_client, this);
 
+	if (!config::AchievementsHostUrl.get().empty()) {
+		rc_client_set_host(rc_client, config::AchievementsHostUrl.get().c_str());
+		hostOverrideActive = true;
+	}
+
 	return true;
+}
+
+void Achievements::setHostOverride(const std::string& host)
+{
+	config::AchievementsHostUrl.set(host);
+	hostOverrideActive = !host.empty();
+	// rc_client_set_host sets the global URL even when rc_client is null
+	rc_client_set_host(rc_client, host.empty() ? nullptr : host.c_str());
+	if (rc_client != nullptr)
+	{
+		if (!host.empty())
+		{
+			rc_client_set_hardcore_enabled(rc_client, 0);
+		}
+		else
+		{
+			bool restoredHardcore = config::AchievementsHardcoreMode.get();
+			rc_client_set_hardcore_enabled(rc_client, (int)restoredHardcore);
+			settings.raHardcoreMode = restoredHardcore;
+		}
+	}
 }
 
 void Achievements::loadCache()
@@ -855,7 +887,9 @@ void Achievements::loadGame()
 	if (!gameHash.empty())
 	{
 		// settings.raHardcoreMode is set before enabling cheats and loading the initial savestate
-		rc_client_set_hardcore_enabled(rc_client, settings.raHardcoreMode);
+		// Hardcore is disabled when routing through a custom host (e.g. RAOfflineProxy).
+		bool effectiveHardcore = settings.raHardcoreMode && !hostOverrideActive;
+		rc_client_set_hardcore_enabled(rc_client, effectiveHardcore);
 		rc_client_begin_load_game(rc_client, gameHash.c_str(), [](int result, const char *error_message, rc_client_t *client, void *userdata) {
 				((Achievements *)userdata)->gameLoaded(result, error_message);
 			}, this);
