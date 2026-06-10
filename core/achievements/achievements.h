@@ -54,6 +54,7 @@ bool isActive();
 Game getCurrentGame();
 std::vector<Achievement> getAchievementList();
 bool canPause();
+void setHostOverride(const std::string& host);
 
 #else
 

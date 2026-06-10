@@ -18,6 +18,7 @@
 #include "jni_util.h"
 #include "android_storage.h"
 #include "http_client.h"
+#include "achievements/achievements.h"
 #include "android_locale.h"
 
 #include <android/log.h>
@@ -553,4 +554,13 @@ void dc_exit()
 		jmethodID finishAffinity = env->GetMethodID(env->GetObjectClass(g_activity), "finishAffinity", "()V");
 		jni::env()->CallVoidMethod(g_activity, finishAffinity);
 	}
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_flycast_emulator_RetroAchievementsHostOverrideReceiver_nativeSetHostOverride(JNIEnv* env, jclass, jstring jhost)
+{
+	const char* host = jhost ? env->GetStringUTFChars(jhost, nullptr) : nullptr;
+	achievements::setHostOverride(host ? std::string(host) : std::string());
+	if (host)
+		env->ReleaseStringUTFChars(jhost, host);
 }
