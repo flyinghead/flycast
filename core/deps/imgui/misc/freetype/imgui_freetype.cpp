@@ -42,11 +42,6 @@
 #include "imgui_freetype.h"
 #include "imgui_internal.h"     // ImMin,ImMax,ImFontAtlasBuild*,
 #include <stdint.h>
-#ifdef _MSC_VER
-#pragma push_macro("generic")
-#undef generic
-#define generic __generic
-#endif
 #include <ft2build.h>
 #include FT_FREETYPE_H          // <freetype/freetype.h>
 #include FT_MODULE_H            // <freetype/ftmodapi.h>
@@ -55,9 +50,6 @@
 #include FT_SYNTHESIS_H         // <freetype/ftsynth.h>
 #include FT_TRUETYPE_TABLES_H   // <freetype/tttables.h>
 #include FT_TRUETYPE_TAGS_H     // <freetype/tttags.h>
-#ifdef _MSC_VER
-#pragma pop_macro("generic")
-#endif
 
 // Handle LunaSVG and PlutoSVG
 #if defined(IMGUI_ENABLE_FREETYPE_LUNASVG) && defined(IMGUI_ENABLE_FREETYPE_PLUTOSVG)

@@ -30,7 +30,7 @@ class WorkerThread
 public:
 	using Function = std::function<void()>;
 
-	WorkerThread(const char *name) : name(name) {
+	WorkerThread(const char *threadName) : name(threadName) {
 	}
 	~WorkerThread() {
 		stop();
@@ -53,9 +53,9 @@ public:
 	}
 
 	template<class F, class... Args>
-	auto runFuture(F&& f, Args&&... args) -> std::future<typename std::result_of<F(Args...)>::type>
+	auto runFuture(F&& f, Args&&... args) -> std::future<std::invoke_result_t<F, Args...>>
 	{
-		using return_type = typename std::result_of<F(Args...)>::type;
+		using return_type = std::invoke_result_t<F, Args...>;
 		auto task = std::make_shared<std::packaged_task<return_type()>>(
 				std::bind(std::forward<F>(f), std::forward<Args>(args)...));
 

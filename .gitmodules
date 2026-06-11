@@ -62,3 +62,6 @@
 [submodule "core/deps/freetype"]
 	path = core/deps/freetype
 	url = https://gitlab.freedesktop.org/freetype/freetype.git
+[submodule "core/deps/fmt"]
+	path = core/deps/fmt
+	url = https://github.com/fmtlib/fmt.git

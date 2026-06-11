@@ -49,9 +49,11 @@
 #include <dirent.h>
 #endif
 
-#if defined(_WIN32) && !defined(TARGET_UWP)
+#if defined(_WIN32)
 #include <windows.h>
+#ifndef TARGET_UWP
 #include <setupapi.h>
+#endif
 #endif
 
 //! Interface class for different DreamPicoPort communications interface
