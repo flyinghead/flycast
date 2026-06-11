@@ -168,6 +168,7 @@ public:
 	}
 	bool hasPerPixel() override { return fragmentStoresAndAtomics; }
 	bool hasProvokingVertex() { return provokingVertexSupported; }
+	bool hasExternalMemoryHost() { return externalMemoryHostSupported; }
 	bool recreateSwapChainIfNeeded();
 	void addToFlight(Deletable *object) override {
 		inFlightObjects[GetCurrentImageIndex()].emplace_back(object);
@@ -231,6 +232,7 @@ private:
 	float maxSamplerAnisotropy = 0.f;
 	bool dedicatedAllocationSupported = false;
 	bool provokingVertexSupported = false;
+	bool externalMemoryHostSupported = false;
 	u32 vendorID = 0;
 	int swapInterval = 1;
 	vk::UniqueDevice device;
