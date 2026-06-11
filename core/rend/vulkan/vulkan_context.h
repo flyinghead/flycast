@@ -97,11 +97,8 @@ struct ImDrawData;
 class VulkanContext : public GraphicsContext, public FlightManager
 {
 public:
-	VulkanContext();
+	static void Create(void *window, void *display);
 	~VulkanContext() override;
-
-	bool init();
-	void term() override;
 
 	VkInstance GetInstance() const { return static_cast<VkInstance>(instance.get()); }
 	u32 GetGraphicsQueueFamilyIndex() const { return graphicsQueueIndex; }
@@ -153,7 +150,7 @@ public:
 		return vendorID == VENDOR_ATI || vendorID == VENDOR_AMD;
 	}
 	vk::Format GetDepthFormat() const { return depthFormat; }
-	static VulkanContext *Instance() { return contextInstance; }
+	static VulkanContext *Instance() { return static_cast<VulkanContext *>(GraphicsContext::Instance()); }
 	bool SupportsSamplerAnisotropy() const { return samplerAnisotropy; }
 	float GetMaxSamplerAnisotropy() const { return samplerAnisotropy ? maxSamplerAnisotropy : 1.f; }
 	bool SupportsDedicatedAllocation() const { return dedicatedAllocationSupported; }
@@ -197,6 +194,9 @@ public:
 	constexpr static int VENDOR_MESA = 0x10005;
 
 private:
+	VulkanContext(void *window, void *display);
+	bool init();
+	void term();
 	void CreateSwapChain();
 	bool InitDevice();
 	bool InitInstance(const char** extensions, uint32_t extensions_count);
@@ -286,7 +286,6 @@ private:
 	vk::UniqueDebugReportCallbackEXT debugReportCallback;
 #endif
 #endif
-	static VulkanContext *contextInstance;
 };
 #endif // !LIBRETRO
 

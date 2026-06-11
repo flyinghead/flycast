@@ -166,10 +166,10 @@ bool    ImGui_ImplOpenGL3_Init(const char* glsl_version)
     io.BackendRendererName = "imgui_impl_opengl3";
     io.BackendFlags |= ImGuiBackendFlags_RendererHasTextures;
 
-    // Flycast: Detect version using theGLContext
+    // Flycast: Detect version using GL context
     if (glsl_version == nullptr)
     {
-        if (theGLContext.isGLES())
+        if (GLGraphicsContext::Instance()->isGLES())
             glsl_version = "#version 100";      // OpenGL ES 2.0
         else
 #if defined(__APPLE__)
@@ -183,10 +183,18 @@ bool    ImGui_ImplOpenGL3_Init(const char* glsl_version)
     strcat(bd->GlslVersionString, "\n");
 
     // Detect extensions we support
-    bd->HasPolygonMode = !theGLContext.isGLES();
-    bd->HasBindSampler = (theGLContext.getMajorVersion() >= 3 && !theGLContext.isGLES()) || (theGLContext.isGLES() && theGLContext.getMajorVersion() >= 3);
+    const bool isGLES = GLGraphicsContext::Instance()->isGLES();
+    const int majorVer = GLGraphicsContext::Instance()->getMajorVersion();
+    bd->HasPolygonMode = !isGLES;
+    if (isGLES)
+    	// GLES 3.0+
+    	bd->HasBindSampler = majorVer >= 3;
+    else
+    	// OpenGL 3.3+
+    	bd->HasBindSampler = majorVer > 3
+			|| (majorVer == 3 && GLGraphicsContext::Instance()->getMinorVersion() >= 3);
 #ifdef GL_CLIP_ORIGIN
-    bd->HasClipOrigin = (theGLContext.getMajorVersion() >= 4 && glClipControl != NULL);
+    bd->HasClipOrigin = (majorVer >= 4 && glClipControl != NULL);
 #endif
 
     return true;
@@ -272,7 +280,7 @@ static void ImGui_ImplOpenGL3_SetupRenderState(ImDrawData* draw_data, int fb_wid
 #endif
     vertex_array_object = 0;
 #ifndef GLES2
-    if (theGLContext.getMajorVersion() >= 3)
+    if (GLGraphicsContext::Instance()->getMajorVersion() >= 3)
     {
 		// Recreate the VAO every time
 		// (This is to easily allow multiple GL contexts. VAO are not shared among GL contexts, and we don't track creation/deletion of windows so we don't have an obvious key to use to cache them.)
@@ -390,7 +398,7 @@ void ImGui_ImplOpenGL3_UpdateTexture(ImTextureData* tex)
 
     if (tex->Status == ImTextureStatus_WantCreate || tex->Status == ImTextureStatus_WantUpdates)
     {
-        if (theGLContext.getMajorVersion() >= 3)
+        if (GLGraphicsContext::Instance()->getMajorVersion() >= 3)
             glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
     }
 
@@ -410,7 +418,7 @@ void ImGui_ImplOpenGL3_UpdateTexture(ImTextureData* tex)
     {
         GLuint gl_tex_id = (GLuint)(intptr_t)tex->TexID;
         glcache.BindTexture(GL_TEXTURE_2D, gl_tex_id);
-        if (theGLContext.getMajorVersion() >= 3)
+        if (GLGraphicsContext::Instance()->getMajorVersion() >= 3)
         {
              glPixelStorei(GL_UNPACK_ROW_LENGTH, tex->Width);
              for (auto& r : tex->Updates)

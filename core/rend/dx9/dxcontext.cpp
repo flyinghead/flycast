@@ -27,12 +27,24 @@
 #include "dx9_driver.h"
 #include "imgui_impl_dx9.h"
 
-DXContext theDXContext;
+void DXContext::Create(void *window, void *display) {
+	new DXContext(window, display);
+}
+
+DXContext::DXContext(void *window, void *display)
+	: GraphicsContext(window, display)
+{
+	if (!init())
+		throw FlycastException("DX9 initialization failed");
+}
+
+DXContext::~DXContext() {
+	term();
+}
 
 bool DXContext::init(bool keepCurrentWindow)
 {
 	NOTICE_LOG(RENDERER, "DX9 Context initializing");
-	GraphicsContext::instance = this;
 #ifdef USE_SDL
 	if (!keepCurrentWindow && !sdl_recreate_window(0)) {
 		term();
@@ -93,7 +105,6 @@ bool DXContext::init(bool keepCurrentWindow)
 void DXContext::term()
 {
 	NOTICE_LOG(RENDERER, "DX9 Context terminating");
-	GraphicsContext::instance = nullptr;
 	overlay.term();
 	imguiDriver.reset();
 	pDevice.reset();

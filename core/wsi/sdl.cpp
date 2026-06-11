@@ -19,7 +19,7 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #if defined(USE_SDL)
-#include "gl_context.h"
+#include "sdl.h"
 #include "ui/gui.h"
 #include "sdl/sdl.h"
 #include "cfg/option.h"
@@ -27,11 +27,19 @@
 #include <algorithm>
 #include <cmath>
 
-SDLGLGraphicsContext theGLContext;
+SDLGLGraphicsContext::SDLGLGraphicsContext(void *window, void *display)
+	: GLGraphicsContext(window, display)
+{
+	if (!init())
+		throw FlycastException("OpenGL initialization failed");
+}
+
+SDLGLGraphicsContext::~SDLGLGraphicsContext() {
+	term();
+}
 
 bool SDLGLGraphicsContext::init()
 {
-	instance = this;
 #ifdef GLES
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
@@ -165,6 +173,10 @@ void SDLGLGraphicsContext::term()
 		SDL_GL_DeleteContext(glcontext);
 		glcontext = nullptr;
 	}
+}
+
+void SDLGLGraphicsContext::Create(void *window, void *display) {
+	new SDLGLGraphicsContext(window, display);
 }
 
 #endif

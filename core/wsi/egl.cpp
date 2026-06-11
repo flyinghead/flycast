@@ -18,7 +18,7 @@
     You should have received a copy of the GNU General Public License
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
-#include "gl_context.h"
+#include "egl.h"
 
 #ifdef USE_EGL
 #include "types.h"
@@ -28,7 +28,19 @@
 #include <android/native_window.h> // requires ndk r5 or newer
 #endif
 
-EGLGraphicsContext theGLContext;
+#ifndef SWAPPY
+void EGLGraphicsContext::Create(void *window, void *display)
+{
+	new EGLGraphicsContext(window, display);
+}
+#endif
+
+EGLGraphicsContext::EGLGraphicsContext(void *window, void *display)
+	: GLGraphicsContext(window, display)
+{
+	if (!init())
+		throw FlycastException("OpenGL initialization failed");
+}
 
 bool EGLGraphicsContext::makeCurrent()
 {

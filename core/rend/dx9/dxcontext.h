@@ -30,8 +30,9 @@
 class DXContext : public GraphicsContext
 {
 public:
-	bool init(bool keepCurrentWindow = false);
-	void term() override;
+	static void Create(void *window, void *display);
+	static DXContext *Instance() { return static_cast<DXContext *>(GraphicsContext::Instance()); }
+	~DXContext();
 	void EndImGuiFrame();
 	void Present();
 	void resize() override;
@@ -62,6 +63,9 @@ public:
 	}
 
 private:
+	DXContext(void *window, void *display);
+	bool init(bool keepCurrentWindow = false);
+	void term();
 	void resetDevice();
 
 	WinLibLoader d3d9Library{ "D3D9.DLL" };
@@ -77,5 +81,4 @@ private:
 	bool amd = false;
 	bool deviceReady = false;
 };
-extern DXContext theDXContext;
 #endif

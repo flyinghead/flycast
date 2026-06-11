@@ -50,8 +50,6 @@ VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 
 void ReInitOSD();
 
-VulkanContext *VulkanContext::contextInstance;
-
 #ifdef VK_DEBUG
 #ifndef __ANDROID__
 VKAPI_ATTR static VkBool32 VKAPI_CALL debugUtilsMessengerCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageTypes,
@@ -370,7 +368,7 @@ void VulkanContext::InitImgui()
 
 #if VULKAN_HPP_DISPATCH_LOADER_DYNAMIC == 1
 	ImGui_ImplVulkan_LoadFunctions(0, [](const char *function_name, void *) {
-		return VULKAN_HPP_DEFAULT_DISPATCHER.vkGetInstanceProcAddr((VkInstance) *contextInstance->instance, function_name);
+		return VULKAN_HPP_DEFAULT_DISPATCHER.vkGetInstanceProcAddr((VkInstance) *Instance()->instance, function_name);
 	});
 #endif
 
@@ -875,8 +873,6 @@ void VulkanContext::CreateSwapChain()
 
 bool VulkanContext::init()
 {
-	GraphicsContext::instance = this;
-
 	std::vector<const char *> extensions;
 	extensions.push_back(VK_KHR_SURFACE_EXTENSION_NAME);
 #if defined(USE_SDL)
@@ -1183,7 +1179,6 @@ void VulkanContext::PresentLastFrame()
 
 void VulkanContext::term()
 {
-	GraphicsContext::instance = nullptr;
 	lastFrameView = nullptr;
 	if (device && graphicsQueue)
 		WaitIdle();
@@ -1415,16 +1410,19 @@ void VulkanContext::SetWindowSize(u32 width, u32 height)
 	}
 }
 
-VulkanContext::VulkanContext()
-{
-	assert(contextInstance == nullptr);
-	contextInstance = this;
+void VulkanContext::Create(void *window, void *display) {
+	new VulkanContext(window, display);
 }
 
-VulkanContext::~VulkanContext()
+VulkanContext::VulkanContext(void *window, void *display)
+	: GraphicsContext(window, display)
 {
-	assert(contextInstance == this);
-	contextInstance = nullptr;
+	if (!init())
+		throw FlycastException("Vulkan initialization failed");
+}
+
+VulkanContext::~VulkanContext() {
+	term();
 }
 
 bool VulkanContext::GetLastFrame(std::vector<u8>& data, int& width, int& height)

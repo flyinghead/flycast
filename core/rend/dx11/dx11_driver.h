@@ -39,14 +39,14 @@ public:
 	}
 
 	void renderDrawData(ImDrawData *drawData, bool gui_open) override {
-		theDX11Context.EndImGuiFrame();
+		DX11Context::Instance()->EndImGuiFrame();
 		if (gui_open)
 			frameRendered = true;
 	}
 
 	void present() override {
 		if (frameRendered)
-			theDX11Context.Present();
+			DX11Context::Instance()->Present();
 		frameRendered = false;
 	}
 
@@ -77,15 +77,15 @@ public:
 		desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
 		desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 		desc.MipLevels = 1;
-		theDX11Context.getDevice()->CreateTexture2D(&desc, nullptr, &texture.texture.get());
+		DX11Context::Instance()->getDevice()->CreateTexture2D(&desc, nullptr, &texture.texture.get());
 
 		D3D11_SHADER_RESOURCE_VIEW_DESC viewDesc{};
 		viewDesc.Format = desc.Format;
 		viewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
 		viewDesc.Texture2D.MipLevels = desc.MipLevels;
-		theDX11Context.getDevice()->CreateShaderResourceView(texture.texture, &viewDesc, &texture.textureView.get());
+		DX11Context::Instance()->getDevice()->CreateShaderResourceView(texture.texture, &viewDesc, &texture.textureView.get());
 
-		theDX11Context.getDeviceContext()->UpdateSubresource(texture.texture, 0, nullptr, data, width * 4, width * 4 * height);
+		DX11Context::Instance()->getDeviceContext()->UpdateSubresource(texture.texture, 0, nullptr, data, width * 4, width * 4 * height);
 		texture.imTexture.shaderResourceView = texture.textureView.get();
 		texture.imTexture.pointSampling = nearestSampling;
 

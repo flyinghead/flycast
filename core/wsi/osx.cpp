@@ -19,12 +19,23 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #if defined(TARGET_IPHONE) && !defined(LIBRETRO)
-#include "gl_context.h"
+#include "osx.h"
 
-OSXGraphicsContext theGLContext;
+void OSXGraphicsContext::Create(void *window, void *display) {
+	new OSXGraphicsContext();
+}
 
-void OSXGraphicsContext::swap()
+OSXGraphicsContext::OSXGraphicsContext()
+	: GLGraphicsContext(nullptr, nullptr)
 {
+	postInit();
+}
+
+OSXGraphicsContext::~OSXGraphicsContext() {
+	preTerm();
+}
+
+void OSXGraphicsContext::swap() {
 	do_swap_automation();
 }
 

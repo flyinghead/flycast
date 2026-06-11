@@ -716,7 +716,7 @@ void DX11Shaders::init(const ComPtr<ID3D11Device>& device, pD3DCompile D3DCompil
 {
 	this->device = device;
 	this->D3DCompile = D3DCompile;
-	enableCache(!theDX11Context.hasShaderCache());
+	enableCache(!DX11Context::Instance()->hasShaderCache());
 	loadCache(CacheFile);
 }
 

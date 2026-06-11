@@ -38,14 +38,14 @@ public:
 	}
 
 	void renderDrawData(ImDrawData *drawData, bool gui_open) override {
-		theDXContext.EndImGuiFrame();
+		DXContext::Instance()->EndImGuiFrame();
 		if (gui_open)
 			frameRendered = true;
 	}
 
 	void present() override {
 		if (frameRendered)
-			theDXContext.Present();
+			DXContext::Instance()->Present();
 		frameRendered = false;
 	}
 
@@ -66,7 +66,7 @@ public:
 	{
 		Texture& texture = textures[name];
 		texture.tex.reset();
-		HRESULT hr = theDXContext.getDevice()->CreateTexture(width, height, 1, 0, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, &texture.tex.get(), 0);
+		HRESULT hr = DXContext::Instance()->getDevice()->CreateTexture(width, height, 1, 0, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, &texture.tex.get(), 0);
 		if (FAILED(hr) || !texture.tex)
 		{
 			WARN_LOG(RENDERER, "CreateTexture failed (%d x %d): error %x", width, height, hr);

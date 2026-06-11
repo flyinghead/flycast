@@ -1,6 +1,6 @@
 target_sources(${PROJECT_NAME} PRIVATE
+        context.cpp
         context.h
-        libretro.cpp
         libretro.h
         switcher.cpp)
 

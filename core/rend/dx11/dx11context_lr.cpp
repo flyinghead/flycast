@@ -22,7 +22,19 @@
 #include "rend/osd.h"
 #include "rend/transform_matrix.h"
 
-DX11Context theDX11Context;
+void DX11Context::Create(ID3D11Device *device, ID3D11DeviceContext *deviceContext, pD3DCompile D3DCompile, D3D_FEATURE_LEVEL featureLevel) {
+	new DX11Context(device, deviceContext, D3DCompile, featureLevel);
+}
+
+DX11Context::DX11Context(ID3D11Device *device, ID3D11DeviceContext *deviceContext, pD3DCompile D3DCompile, D3D_FEATURE_LEVEL featureLevel)
+{
+	if (!init(device, deviceContext, D3DCompile, featureLevel))
+		throw FlycastException("DX11 initialization failed");
+}
+
+DX11Context::~DX11Context() {
+	term();
+}
 
 bool DX11Context::init(ID3D11Device *device, ID3D11DeviceContext *deviceContext, pD3DCompile D3DCompile, D3D_FEATURE_LEVEL featureLevel)
 {
@@ -33,7 +45,6 @@ bool DX11Context::init(ID3D11Device *device, ID3D11DeviceContext *deviceContext,
 	pDeviceContext.reset(deviceContext);
 	this->D3DCompile = D3DCompile;
 	this->featureLevel = featureLevel;
-	GraphicsContext::instance = this;
 
 	ComPtr<IDXGIDevice2> dxgiDevice;
 	pDevice.as(dxgiDevice);
@@ -66,7 +77,6 @@ bool DX11Context::init(ID3D11Device *device, ID3D11DeviceContext *deviceContext,
 void DX11Context::term()
 {
 	NOTICE_LOG(RENDERER, "DX11 Context terminating");
-	GraphicsContext::instance = nullptr;
 	blendStates.term();
 	quad.reset();
 	textureView.reset();

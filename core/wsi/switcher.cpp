@@ -28,54 +28,59 @@
 #include "rend/dx11/dx11context.h"
 #ifdef USE_VULKAN
 #include "rend/vulkan/vulkan_context.h"
-
-VulkanContext theVulkanContext;
 #endif
-
-GraphicsContext *GraphicsContext::instance;
 
 void initRenderApi(void *window, void *display)
 {
 #ifdef USE_VULKAN
 	if (isVulkan(config::RendererType))
 	{
-		theVulkanContext.setWindow(window, display);
-		if (theVulkanContext.init())
+		try {
+			VulkanContext::Create(window, display);
 			return;
-		// Fall back to OpenGL
-		WARN_LOG(RENDERER, "Vulkan init failed. Falling back to OpenGL.");
-		config::RendererType = RenderType::OpenGL;
+		} catch (const std::exception& e) {
+			// Fall back to OpenGL
+			WARN_LOG(RENDERER, "Vulkan init failed. Falling back to OpenGL (%s)", e.what());
+			config::RendererType = RenderType::OpenGL;
+		}
 	}
 #endif
 #ifdef USE_DX11
 	bool dx11Failed = false;
 	if (config::RendererType == RenderType::DirectX11 || config::RendererType == RenderType::DirectX11_OIT)
 	{
-		theDX11Context.setWindow(window, display);
-		if (theDX11Context.init())
+		try {
+			DX11Context::Create(window, display);
 			return;
-		dx11Failed = true;
-		WARN_LOG(RENDERER, "DirectX 11 init failed. Falling back to DirectX 9.");
-		config::RendererType = RenderType::DirectX9;
+		} catch (const std::exception& e) {
+			dx11Failed = true;
+			WARN_LOG(RENDERER, "DirectX 11 init failed. Falling back to DirectX 9 (%s)", e.what());
+			config::RendererType = RenderType::DirectX9;
+		}
 	}
 #endif
 #ifdef USE_DX9
 	if (config::RendererType == RenderType::DirectX9)
 	{
-		theDXContext.setWindow(window, display);
-		if (theDXContext.init())
+		try {
+			DXContext::Create(window, display);
 			return;
-		// Fall back to OpenGL
-		WARN_LOG(RENDERER, "DirectX 9 init failed. Falling back to OpenGL.");
-		config::RendererType = RenderType::OpenGL;
+		} catch (const std::exception& e) {
+			// Fall back to OpenGL
+			WARN_LOG(RENDERER, "DirectX 9 init failed. Falling back to OpenGL (%s)", e.what());
+			config::RendererType = RenderType::OpenGL;
+		}
 	}
 #endif
 #ifdef USE_OPENGL
 	if (!isOpenGL(config::RendererType))
 		config::RendererType = RenderType::OpenGL;
-	theGLContext.setWindow(window, display);
-	if (theGLContext.init())
+	try {
+		GLGraphicsContext::Create(window, display);
 		return;
+	} catch (const std::exception& e) {
+		WARN_LOG(RENDERER, "OpenGL init failed: %s", e.what());
+	}
 #endif
 #ifdef USE_DX11
 	if (!dx11Failed)
@@ -83,19 +88,18 @@ void initRenderApi(void *window, void *display)
 		// Try dx11 as a last resort if it hasn't been tried before
 		WARN_LOG(RENDERER, "OpenGL init failed. Trying DirectX 11.");
 		config::RendererType = RenderType::DirectX11;
-		theDX11Context.setWindow(window, display);
-		if (theDX11Context.init())
+		try {
+			DX11Context::Create(window, display);
 			return;
+		} catch (const std::exception& e) {
+		}
 	}
 #endif
 	throw FlycastException(i18n::T("Cannot initialize the graphics API"));
 }
 
-void termRenderApi()
-{
-	if (GraphicsContext::Instance() != nullptr)
-		GraphicsContext::Instance()->term();
-	verify(GraphicsContext::Instance() == nullptr);
+void termRenderApi() {
+	GraphicsContext::Term();
 }
 
 void switchRenderApi()

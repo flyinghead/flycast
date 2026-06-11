@@ -21,16 +21,15 @@
 #pragma once
 #if defined(TARGET_IPHONE)
 #include "gl_context.h"
-#include <OpenGLES/ES3/gl.h>
-#include <OpenGLES/ES3/glext.h>
 
 class OSXGraphicsContext : public GLGraphicsContext
 {
 public:
-	bool init() { postInit(); return true; }
-	void term() override { preTerm(); }
-	void swap();
-};
+	~OSXGraphicsContext();
+	void swap() override;
+	static void Create(void *window = nullptr, void *display = nullptr);
 
-extern OSXGraphicsContext theGLContext;
+private:
+	OSXGraphicsContext();
+};
 #endif

@@ -33,8 +33,9 @@
 class DX11Context : public GraphicsContext
 {
 public:
-	bool init(ID3D11Device *device, ID3D11DeviceContext *deviceContext, pD3DCompile D3DCompile, D3D_FEATURE_LEVEL featureLevel);
-	void term() override;
+	static void Create(ID3D11Device *device, ID3D11DeviceContext *deviceContext, pD3DCompile D3DCompile, D3D_FEATURE_LEVEL featureLevel);
+	static DX11Context *Instance() { return static_cast<DX11Context *>(GraphicsContext::Instance()); }
+	~DX11Context();
 	void present();
 
 	const ComPtr<ID3D11Device>& getDevice() const { return pDevice; }
@@ -71,6 +72,9 @@ public:
 	}
 
 private:
+	DX11Context(ID3D11Device *device, ID3D11DeviceContext *deviceContext, pD3DCompile D3DCompile, D3D_FEATURE_LEVEL featureLevel);
+	bool init(ID3D11Device *device, ID3D11DeviceContext *deviceContext, pD3DCompile D3DCompile, D3D_FEATURE_LEVEL featureLevel);
+	void term();
 	bool checkTextureSupport();
 	ComPtr<ID3D11RenderTargetView>& getRenderTarget(int width, int height);
 
@@ -97,5 +101,4 @@ private:
 	static constexpr UINT VENDOR_ATI = 0x1002;
 	static constexpr UINT VENDOR_AMD = 0x1022;
 };
-extern DX11Context theDX11Context;
 #endif

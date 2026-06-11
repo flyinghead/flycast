@@ -36,11 +36,8 @@ class FramebufferAttachment;
 class VulkanContext : public GraphicsContext, public FlightManager
 {
 public:
-	VulkanContext();
-	~VulkanContext() override;
-
-	bool init(retro_hw_render_interface_vulkan *render_if);
-	void term() override;
+	~VulkanContext();
+	static void Create(retro_hw_render_interface_vulkan *render_if);
 
 	u32 GetGraphicsQueueFamilyIndex() const { return retro_render_if->queue_index; }
 	void PresentFrame(vk::Image image, vk::ImageView imageView, const vk::Extent2D& extent, float aspectRatio);
@@ -88,7 +85,7 @@ public:
 		return vendorID == VENDOR_ATI || vendorID == VENDOR_AMD;
 	}
 	vk::Format GetDepthFormat() const { return depthFormat; }
-	static VulkanContext *Instance() { return contextInstance; }
+	static VulkanContext *Instance() { return static_cast<VulkanContext *>(GraphicsContext::Instance()); }
 	bool SupportsSamplerAnisotropy() const { return samplerAnisotropy; }
 	bool SupportsDedicatedAllocation() const { return dedicatedAllocationSupported; }
 	bool hasPerPixel() override { return fragmentStoresAndAtomics; }
@@ -117,6 +114,9 @@ public:
 	constexpr static int VENDOR_MESA = 0x10005;
 
 private:
+	VulkanContext(retro_hw_render_interface_vulkan *render_if);
+	bool init(retro_hw_render_interface_vulkan *render_if);
+	void term();
 	void beginFrame(vk::Extent2D extent, vk::Image barrierImage);
 	void endFrame(vk::Image barrierImage);
 
@@ -130,11 +130,11 @@ private:
 	bool optimalTilingSupported1555 = false;
 	bool optimalTilingSupported4444 = false;
 public:
-	bool fragmentStoresAndAtomics = false;
-	bool samplerAnisotropy = false;
+	static bool fragmentStoresAndAtomics;
+	static bool samplerAnisotropy;
 	f32 maxSamplerAnisotropy = 0.f;
-	bool dedicatedAllocationSupported = false;
-	bool provokingVertexSupported = false;
+	static bool dedicatedAllocationSupported;
+	static bool provokingVertexSupported;
 private:
 	u32 vendorID = 0;
 
@@ -162,8 +162,6 @@ private:
 	std::unique_ptr<VulkanOverlay> overlay;
 
 	retro_vulkan_image retro_image;
-
-	static VulkanContext *contextInstance;
 };
 
 const VkApplicationInfo* VkGetApplicationInfo();
