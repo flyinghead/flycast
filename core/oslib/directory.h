@@ -18,6 +18,7 @@
 */
 #pragma once
 #include "nowide/config.hpp"
+#include <stdio.h>
 #include <dirent.h>
 #include <sys/stat.h>
 
@@ -38,6 +39,8 @@ namespace flycast {
     using ::stat;
     using ::access;
     using ::mkdir;
+    using ::rename;
+    using ::unlink;
 #else
     DIR *opendir(char const *dirname);
     dirent *readdir(DIR *dirstream);
@@ -45,5 +48,7 @@ namespace flycast {
     int stat(const char *filename, struct stat *buf);
     int access(const char *filename, int how);
     int mkdir(const char *path, mode_t mode);
+    int rename(const char *oldpath, const char *newpath);
+    int unlink(const char *filename);
 #endif
 }

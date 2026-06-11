@@ -266,13 +266,34 @@ int access(const char *filename, int how)
 #endif
 }
 
-int mkdir(const char *path, mode_t mode) {
+int mkdir(const char *path, mode_t mode)
+{
 	nowide::wstackstring wpath;
     if (!wpath.convert(path)) {
     	errno = EINVAL;
     	return -1;
     }
     return ::_wmkdir(wpath.get());
+}
+
+int rename(const char *oldpath, const char *newpath)
+{
+	nowide::wstackstring woldpath, wnewpath;
+    if (!woldpath.convert(oldpath) || !wnewpath.convert(newpath)) {
+    	errno = EINVAL;
+    	return -1;
+    }
+	return ::_wrename(woldpath.get(), wnewpath.get());
+}
+
+int unlink(const char *path)
+{
+	nowide::wstackstring wpath;
+    if (!wpath.convert(path)) {
+    	errno = EINVAL;
+    	return -1;
+    }
+    return ::_wunlink(wpath.get());
 }
 
 }	// namespace flycast
