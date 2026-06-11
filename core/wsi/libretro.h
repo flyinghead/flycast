@@ -18,49 +18,26 @@
 */
 #pragma once
 #if defined(LIBRETRO) && (defined(HAVE_OPENGL) || defined(HAVE_OPENGLES))
-#if defined(TARGET_IPHONE) //apple-specific ogles3 headers
-#include <OpenGLES/ES3/gl.h>
-#include <OpenGLES/ES3/glext.h>
-#endif
 #include "gl_context.h"
-#include <libretro.h>
-#include <glsm/glsm.h>
-#include <glsm/glsmsym.h>
-
-#ifndef GL_MAJOR_VERSION
-#define GL_MAJOR_VERSION                  0x821B
-#endif
-#ifndef GL_MINOR_VERSION
-#define GL_MINOR_VERSION                  0x821C
-#endif
-
-#ifndef GL_DEBUG_SEVERITY_NOTIFICATION
-#define GL_DEBUG_SEVERITY_NOTIFICATION    0x826B
-#endif
-#ifndef GL_DEBUG_SEVERITY_HIGH
-#define GL_DEBUG_SEVERITY_HIGH            0x9146
-#endif
-#ifndef GL_DEBUG_SEVERITY_MEDIUM
-#define GL_DEBUG_SEVERITY_MEDIUM          0x9147
-#endif
-#ifndef GL_DEBUG_SEVERITY_LOW
-#define GL_DEBUG_SEVERITY_LOW             0x9148
-#endif
 
 class LibretroGraphicsContext : public GLGraphicsContext
 {
 public:
-	bool init() {
-		postInit();
-		return true;
-	}
-
-	void term() override {
+	~LibretroGraphicsContext() {
 		preTerm();
 	}
 
-	void swap() {}
-};
+	void swap() override {}
 
-extern LibretroGraphicsContext theGLContext;
+	static void Create(void *window, void *display) {
+		new LibretroGraphicsContext(window, display);
+	}
+
+private:
+	LibretroGraphicsContext(void *window, void *display)
+		: GLGraphicsContext(window, display)
+	{
+		postInit();
+	}
+};
 #endif

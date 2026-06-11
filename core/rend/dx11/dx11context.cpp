@@ -34,12 +34,24 @@
 
 #include "nowide/stackstring.hpp"
 
-DX11Context theDX11Context;
+void DX11Context::Create(void *window, void *display) {
+	new DX11Context(window, display);
+}
+
+DX11Context::DX11Context(void *window, void *display)
+	: GraphicsContext(window, display)
+{
+	if (!init())
+		throw FlycastException("DX11 initialization failed");
+}
+
+DX11Context::~DX11Context() {
+	term();
+}
 
 bool DX11Context::init(bool keepCurrentWindow)
 {
 	NOTICE_LOG(RENDERER, "DX11 Context initializing");
-	GraphicsContext::instance = this;
 #ifdef USE_SDL
 	if (!keepCurrentWindow && !sdl_recreate_window(0))
 		return false;
@@ -199,7 +211,6 @@ bool DX11Context::init(bool keepCurrentWindow)
 void DX11Context::term()
 {
 	NOTICE_LOG(RENDERER, "DX11 Context terminating");
-	GraphicsContext::instance = nullptr;
 	overlay.term();
 	samplers.term();
 	shaders.term();

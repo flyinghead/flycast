@@ -21,19 +21,22 @@
 #pragma once
 #include "gl_context.h"
 
+#if !defined(USE_SDL) && !defined(LIBRETRO) && (defined(__ANDROID__) || defined(SUPPORT_X11))
 #define USE_EGL
 #include <glad/egl.h>
 
 class EGLGraphicsContext : public GLGraphicsContext
 {
 public:
-	~EGLGraphicsContext() override { term(); }
+	~EGLGraphicsContext() { term(); }
 
+	void swap() override;
+	static void Create(void *window, void *display);
+
+protected:
+	EGLGraphicsContext(void *window, void *display);
 	bool init();
-	void term() override;
-	void swap();
-
-private:
+	void term();
 	bool makeCurrent();
 	void changeSwapInterval();
 
@@ -44,5 +47,4 @@ private:
 	int maxSwapInterval = 1;
 	int currentSwapInterval = 1;
 };
-
-extern EGLGraphicsContext theGLContext;
+#endif

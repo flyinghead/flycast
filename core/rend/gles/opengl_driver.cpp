@@ -72,7 +72,7 @@ void OpenGLDriver::renderDrawData(ImDrawData* drawData, bool gui_open)
 void OpenGLDriver::present()
 {
 	if (frameRendered)
-		theGLContext.swap();
+		GLGraphicsContext::Instance()->swap();
 	frameRendered = false;
 }
 

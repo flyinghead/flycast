@@ -505,9 +505,9 @@ bool testBlitFramebuffer();
 void findGLVersion()
 {
 	gl.index_type = GL_UNSIGNED_INT;
-	gl.gl_major = theGLContext.getMajorVersion();
-	gl.gl_minor = theGLContext.getMinorVersion();
-	gl.is_gles = theGLContext.isGLES();
+	gl.gl_major = GLGraphicsContext::Instance()->getMajorVersion();
+	gl.gl_minor = GLGraphicsContext::Instance()->getMinorVersion();
+	gl.is_gles = GLGraphicsContext::Instance()->isGLES();
 	if (gl.is_gles)
 	{
 		gl.border_clamp_supported = false;
@@ -1079,7 +1079,7 @@ void OpenGLRenderer::Process(TA_context* ctx)
 		updatePalette = false;
 	}
 	if (!ctx->rend.isRTT && ctx->rend.swapInterval > 0)
-		theGLContext.setSwapInterval(ctx->rend.swapInterval);
+		GraphicsContext::Instance()->setSwapInterval(ctx->rend.swapInterval);
 	ta_parse(ctx, gl.prim_restart_fixed_supported || gl.prim_restart_supported);
 }
 

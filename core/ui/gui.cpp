@@ -51,7 +51,6 @@
 #endif
 #include "vgamepad.h"
 #include "settings.h"
-#include "wsi/context.h"
 #include "oslib/i18n.h"
 #include "gui_font.h"
 using namespace i18n;
@@ -111,8 +110,6 @@ static void emuEventCallback(Event event, void *)
 	case Event::Terminate:
 		GamepadDevice::load_system_mappings();
 		game_started = false;
-		if (GraphicsContext::Instance() != nullptr)
-			GraphicsContext::Instance()->setSwapInterval(1);
 		break;
 	default:
 		break;

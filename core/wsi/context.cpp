@@ -1,7 +1,7 @@
 /*
-    Copyright 2021 flyinghead
+	Copyright 2026 flyinghead
 
-    This file is part of Flycast.
+	This file is part of Flycast.
 
     Flycast is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -15,16 +15,26 @@
 
     You should have received a copy of the GNU General Public License
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
- */
-#include "libretro.h"
-
-#ifdef LIBRETRO
-
-#if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES)
-LibretroGraphicsContext theGLContext;
-#endif
-
+*/
 #include "context.h"
 
 GraphicsContext *GraphicsContext::instance;
-#endif
+
+GraphicsContext::GraphicsContext(void *window, void *display)
+	: window(window), display(display)
+{
+	instance = this;
+	EventManager::listen(Event::Pause, GraphicsContext::onEvent, this);
+	EventManager::listen(Event::Terminate, GraphicsContext::onEvent, this);
+}
+
+GraphicsContext::~GraphicsContext() {
+	EventManager::unlisten(Event::Pause, GraphicsContext::onEvent, this);
+	EventManager::unlisten(Event::Terminate, GraphicsContext::onEvent, this);
+	instance = nullptr;
+}
+
+void GraphicsContext::onEvent(Event event, void *arg) {
+	GraphicsContext *self = (GraphicsContext *)arg;
+	self->setSwapInterval(1);
+}

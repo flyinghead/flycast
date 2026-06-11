@@ -68,7 +68,7 @@ void D3DTexture::UploadToGPU(int width, int height, const u8* temp_tex_buffer, b
 				levels = 0;
 				usage = D3DUSAGE_AUTOGENMIPMAP;
 			}
-			theDXContext.getDevice()->CreateTexture(width, height, levels, usage, d3dFormat, D3DPOOL_MANAGED, &texture.get(), 0); // TODO the managed pool persists between device resets
+			DXContext::Instance()->getDevice()->CreateTexture(width, height, levels, usage, d3dFormat, D3DPOOL_MANAGED, &texture.get(), 0); // TODO the managed pool persists between device resets
 			verify(texture != nullptr);
 		}
 		if (SUCCEEDED(texture->LockRect(mipmapLevels - 1, &rect, nullptr, 0)))

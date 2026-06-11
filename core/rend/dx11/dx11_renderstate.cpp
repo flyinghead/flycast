@@ -21,10 +21,10 @@
 
 HRESULT DepthStencilStates::createDepthStencilState(const D3D11_DEPTH_STENCIL_DESC *desc, ID3D11DepthStencilState **state)
 {
-	return theDX11Context.getDevice()->CreateDepthStencilState(desc, state);
+	return DX11Context::Instance()->getDevice()->CreateDepthStencilState(desc, state);
 }
 
 HRESULT BlendStates::createBlendState(const D3D11_BLEND_DESC *desc, ID3D11BlendState **state)
 {
-	return theDX11Context.getDevice()->CreateBlendState(desc, state);
+	return DX11Context::Instance()->getDevice()->CreateBlendState(desc, state);
 }

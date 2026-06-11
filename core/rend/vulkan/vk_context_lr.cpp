@@ -30,7 +30,10 @@
 VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 #endif
 
-VulkanContext *VulkanContext::contextInstance;
+bool VulkanContext::fragmentStoresAndAtomics = false;
+bool VulkanContext::samplerAnisotropy = false;
+bool VulkanContext::dedicatedAllocationSupported = false;
+bool VulkanContext::provokingVertexSupported = false;
 
 const VkApplicationInfo* VkGetApplicationInfo()
 {
@@ -156,18 +159,15 @@ bool VkCreateDevice(retro_vulkan_context* context, VkInstance instance, VkPhysic
 	tryAddDeviceExtension(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
 
 	// Enable VK_KHR_dedicated_allocation if available
-	if (physicalDeviceProperties.apiVersion >= VK_API_VERSION_1_1)
-	{
+	if (physicalDeviceProperties.apiVersion >= VK_API_VERSION_1_1) {
 		// Core in Vulkan 1.1
-		VulkanContext::Instance()->dedicatedAllocationSupported = true;
+		VulkanContext::dedicatedAllocationSupported = true;
 	}
 	else
 	{
 		const bool getMemReq2Supported = tryAddDeviceExtension(VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME);
 		if (getMemReq2Supported)
-		{
-			VulkanContext::Instance()->dedicatedAllocationSupported = tryAddDeviceExtension(VK_KHR_DEDICATED_ALLOCATION_EXTENSION_NAME);
-		}
+			VulkanContext::dedicatedAllocationSupported = tryAddDeviceExtension(VK_KHR_DEDICATED_ALLOCATION_EXTENSION_NAME);
 	}
 
 	// Check for VK_KHR_get_physical_device_properties2
@@ -177,10 +177,8 @@ bool VkCreateDevice(retro_vulkan_context* context, VkInstance instance, VkPhysic
 		? true : tryAddDeviceExtension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
 
 	if (getPhysicalDeviceProperties2Supported)
-	{
 		// Enable VK_EXT_provoking_vertex if available
-		VulkanContext::Instance()->provokingVertexSupported = tryAddDeviceExtension(VK_EXT_PROVOKING_VERTEX_EXTENSION_NAME);
-	}
+		VulkanContext::provokingVertexSupported = tryAddDeviceExtension(VK_EXT_PROVOKING_VERTEX_EXTENSION_NAME);
 
 	// Get device features
 
@@ -188,28 +186,20 @@ bool VkCreateDevice(retro_vulkan_context* context, VkInstance instance, VkPhysic
 	vk::PhysicalDeviceFeatures& features = featuresChain.features;
 
 	vk::PhysicalDeviceProvokingVertexFeaturesEXT provokingVertexFeatures{};
-	if (VulkanContext::Instance()->provokingVertexSupported)
-	{
+	if (VulkanContext::provokingVertexSupported)
 		featuresChain.pNext = &provokingVertexFeatures;
-	}
 
 	// Get the physical device's features
 	if (getPhysicalDeviceProperties2Supported && featuresChain.pNext)
-	{
 		physicalDevice.getFeatures2(&featuresChain);
-	}
 	else
-	{
 		physicalDevice.getFeatures(&features);
-	}
 
-	if (VulkanContext::Instance()->provokingVertexSupported)
-	{
-		VulkanContext::Instance()->provokingVertexSupported &= provokingVertexFeatures.provokingVertexLast;
-	}
+	if (VulkanContext::provokingVertexSupported)
+		VulkanContext::provokingVertexSupported &= provokingVertexFeatures.provokingVertexLast;
 
-	VulkanContext::Instance()->samplerAnisotropy = features.samplerAnisotropy;
-	VulkanContext::Instance()->fragmentStoresAndAtomics = features.fragmentStoresAndAtomics;
+	VulkanContext::samplerAnisotropy = features.samplerAnisotropy;
+	VulkanContext::fragmentStoresAndAtomics = features.fragmentStoresAndAtomics;
 
 	// create a Device
 	float queuePriority = 1.0f;
@@ -248,7 +238,6 @@ bool VulkanContext::init(retro_hw_render_interface_vulkan *retro_render_if)
 			|| retro_render_if->interface_version != RETRO_HW_RENDER_INTERFACE_VULKAN_VERSION)
 		return false;
 	this->retro_render_if = retro_render_if;
-	GraphicsContext::instance = this;
 
 	instance = vk::Instance(retro_render_if->instance);
 	physicalDevice = vk::PhysicalDevice(retro_render_if->gpu);
@@ -510,7 +499,6 @@ void VulkanContext::endFrame(vk::Image barrierImage)
 
 void VulkanContext::term()
 {
-	GraphicsContext::instance = nullptr;
 	if (device)
 	{
 		device.waitIdle();
@@ -544,14 +532,17 @@ void VulkanContext::term()
 	pipelineCache.reset();
 }
 
-VulkanContext::VulkanContext()
-{
-	assert(contextInstance == nullptr);
-	contextInstance = this;
+void VulkanContext::Create(retro_hw_render_interface_vulkan *render_if) {
+	new VulkanContext(render_if);
 }
 
-VulkanContext::~VulkanContext()
+VulkanContext::VulkanContext(retro_hw_render_interface_vulkan *render_if)
+	: GraphicsContext(nullptr, nullptr)
 {
-	assert(contextInstance == this);
-	contextInstance = nullptr;
+	if (!init(render_if))
+		throw FlycastException("Vulkan initialization failed");
+}
+
+VulkanContext::~VulkanContext() {
+	term();
 }

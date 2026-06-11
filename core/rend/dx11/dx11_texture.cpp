@@ -86,13 +86,13 @@ void DX11Texture::UploadToGPU(int width, int height, const u8* temp_tex_buffer, 
 			desc.BindFlags |= D3D11_BIND_RENDER_TARGET;
 			mipmapLevels = 1;
 		}
-		if (SUCCEEDED(theDX11Context.getDevice()->CreateTexture2D(&desc, nullptr, &texture.get())))
+		if (SUCCEEDED(DX11Context::Instance()->getDevice()->CreateTexture2D(&desc, nullptr, &texture.get())))
 		{
 			D3D11_SHADER_RESOURCE_VIEW_DESC viewDesc{};
 			viewDesc.Format = desc.Format;
 			viewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
 			viewDesc.Texture2D.MipLevels = desc.MipLevels == 0 ? -1 : desc.MipLevels;
-			theDX11Context.getDevice()->CreateShaderResourceView(texture, &viewDesc, &textureView.get());
+			DX11Context::Instance()->getDevice()->CreateShaderResourceView(texture, &viewDesc, &textureView.get());
 		}
 		else
 		{
@@ -106,17 +106,17 @@ void DX11Texture::UploadToGPU(int width, int height, const u8* temp_tex_buffer, 
 	{
 		u32 w = mipmapLevels == 1 ? width : 1 << i;
 		u32 h = mipmapLevels == 1 ? height : 1 << i;
-		theDX11Context.getDeviceContext()->UpdateSubresource(texture, mipmapLevels - i - 1, nullptr, temp_tex_buffer, w * bpp, w * bpp * h);
+		DX11Context::Instance()->getDeviceContext()->UpdateSubresource(texture, mipmapLevels - i - 1, nullptr, temp_tex_buffer, w * bpp, w * bpp * h);
 		temp_tex_buffer += (1 << (2 * i)) * bpp;
 	}
 	if (mipmapped && !mipmapsIncluded)
-		theDX11Context.getDeviceContext()->GenerateMips(textureView);
+		DX11Context::Instance()->getDeviceContext()->GenerateMips(textureView);
 }
 
 #ifndef TARGET_UWP
 bool DX11Texture::Force32BitTexture(TextureType type) const
 {
-	if (!theDX11Context.textureFormatSupported(type))
+	if (!DX11Context::Instance()->textureFormatSupported(type))
 		return true;
 	if (IsWindows8OrGreater())
 		return false;
@@ -151,5 +151,5 @@ void DX11Texture::loadCustomTexture()
 
 HRESULT Samplers::createSampler(const D3D11_SAMPLER_DESC *desc, ID3D11SamplerState **sampler)
 {
-	return theDX11Context.getDevice()->CreateSamplerState(desc, sampler);
+	return DX11Context::Instance()->getDevice()->CreateSamplerState(desc, sampler);
 }

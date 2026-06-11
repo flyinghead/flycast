@@ -75,7 +75,7 @@ struct DX11OITRenderer : public DX11Renderer
 		desc.ByteWidth = (((desc.ByteWidth - 1) >> 4) + 1) << 4;
 		bool success = SUCCEEDED(device->CreateBuffer(&desc, nullptr, &pxlPolyConstants.get()));
 
-		shaders.init(device, theDX11Context.getCompiler());
+		shaders.init(device, DX11Context::Instance()->getCompiler());
 		buffers.init(device, deviceContext);
 		pixelBufferSize = config::PixelBufferSize;
 		ComPtr<ID3DBlob> blob = shaders.getVertexShaderBlob();
@@ -579,7 +579,7 @@ struct DX11OITRenderer : public DX11Renderer
 				drawList<ListType_Translucent, true, DX11OITShaders::OIT>(rendContext->global_param_tr, previous_pass.tr_count, tr_count);
 				// unbind depth tex
 			    deviceContext->PSSetShaderResources(4, 1, &nullView);
-			    if (!theDX11Context.isIntel())
+			    if (!DX11Context::Instance()->isIntel())
 			    {
 			    	// Intel Iris Plus 640 just crashes
 			    	if (current_pass.mv_op_tr_shared)
@@ -681,15 +681,15 @@ struct DX11OITRenderer : public DX11Renderer
 		{
 			aspectRatio = getOutputFramebufferAspectRatio();
 #ifndef LIBRETRO
-			deviceContext->OMSetRenderTargets(1, &theDX11Context.getRenderTarget().get(), nullptr);
+			deviceContext->OMSetRenderTargets(1, &DX11Context::Instance()->getRenderTarget().get(), nullptr);
 			displayFramebuffer();
 			drawOSD();
 			renderVideoRouting();
-			theDX11Context.setFrameRendered();
+			DX11Context::Instance()->setFrameRendered();
 #else
 			ID3D11RenderTargetView *nullView = nullptr;
 			deviceContext->OMSetRenderTargets(1, &nullView, nullptr);
-			theDX11Context.presentFrame(fbTextureView, width, height);
+			DX11Context::Instance()->presentFrame(fbTextureView, width, height);
 #endif
 			frameRendered = true;
 			frameRenderedOnce = true;
