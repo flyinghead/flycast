@@ -31,6 +31,7 @@
 #include "utils.h"
 #include "emulator.h"
 #include "oslib/oslib.h"
+#include "oslib/directory.h"
 #include "vulkan_driver.h"
 #include "rend/transform_matrix.h"
 #if defined(__ANDROID__) && HOST_CPU == CPU_ARM64
@@ -396,7 +397,6 @@ bool VulkanContext::InitDevice()
 		graphicsQueueIndex = (u32)std::distance(queueFamilyProperties.begin(),
 				std::find_if(queueFamilyProperties.begin(), queueFamilyProperties.end(),
 						[](vk::QueueFamilyProperties const& qfp) { return qfp.queueFlags & vk::QueueFlagBits::eGraphics; }));
-		verify(graphicsQueueIndex < queueFamilyProperties.size());
 
 		// determine a queueFamilyIndex that supports present
 		// first check if the graphicsQueueFamilyIndex is good enough
@@ -574,8 +574,15 @@ bool VulkanContext::InitDevice()
 	    descriptorPool = device->createDescriptorPoolUnique(vk::DescriptorPoolCreateInfo(vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet,
 	    		40000, pool_sizes));
 
+	    constexpr const char *PipelineSection = "validate";
+	    constexpr const char *PipelineKey = "vkPipelineCache";
 
 	    std::string cachePath = hostfs::getShaderCachePath("vulkan_pipeline.cache");
+	    bool pipelineCacheCorrupted = config::loadBool(PipelineSection, PipelineKey, false);
+	    if (pipelineCacheCorrupted) {
+	    	flycast::unlink(cachePath.c_str());
+	    	config::saveBool(PipelineSection, PipelineKey, false);
+	    }
 	    FILE *f = nowide::fopen(cachePath.c_str(), "rb");
 	    if (f == nullptr)
 	    	pipelineCache = device->createPipelineCacheUnique(vk::PipelineCacheCreateInfo());
@@ -588,6 +595,8 @@ bool VulkanContext::InitDevice()
 	    	if (std::fread(cacheData, 1, cacheSize, f) != cacheSize)
 	    		cacheSize = 0;
 	    	std::fclose(f);
+    		// if this is still true in the next init, it means the cache file is corrupted
+    		config::saveBool(PipelineSection, PipelineKey, true);
 	    	try {
 	    		pipelineCache = device->createPipelineCacheUnique(vk::PipelineCacheCreateInfo(vk::PipelineCacheCreateFlags(), cacheSize, cacheData));
 	    		INFO_LOG(RENDERER, "Vulkan pipeline cache loaded from %s: %zd bytes", cachePath.c_str(), cacheSize);
@@ -595,8 +604,10 @@ bool VulkanContext::InitDevice()
 	    	catch (const vk::SystemError& err) {
 	    		WARN_LOG(RENDERER, "Error loading pipeline cache: %s", err.what());
 	    		pipelineCache = device->createPipelineCacheUnique(vk::PipelineCacheCreateInfo());
+	    		flycast::unlink(cachePath.c_str());
 	    	}
     		delete [] cacheData;
+    		config::saveBool(PipelineSection, PipelineKey, false);
 	    }
 	    allocator.Init(physicalDevice, *device, *instance);
 
@@ -965,7 +976,7 @@ void VulkanContext::NewFrame()
 	inFlightObjects[currentImage].clear();
 	vk::CommandBuffer commandBuffer = *commandBuffers[currentImage];
 	commandBuffer.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
-	verify(!rendering);
+	assert(!rendering);
 	rendering = true;
 }
 
@@ -994,7 +1005,7 @@ void VulkanContext::EndFrame(vk::CommandBuffer overlayCmdBuffer)
 	vk::SubmitInfo submitInfo(*imageAcquiredSemaphores[currentSemaphore], wait_stage, allCmdBuffers, *renderCompleteSemaphores[currentSemaphore]);
 	device->resetFences(*drawFences[currentImage]);
 	graphicsQueue.submit(submitInfo, *drawFences[currentImage]);
-	verify(rendering);
+	assert(rendering);
 	rendering = false;
 	renderDone = true;
 }
@@ -1406,13 +1417,13 @@ void VulkanContext::SetWindowSize(u32 width, u32 height)
 
 VulkanContext::VulkanContext()
 {
-	verify(contextInstance == nullptr);
+	assert(contextInstance == nullptr);
 	contextInstance = this;
 }
 
 VulkanContext::~VulkanContext()
 {
-	verify(contextInstance == this);
+	assert(contextInstance == this);
 	contextInstance = nullptr;
 }
 
