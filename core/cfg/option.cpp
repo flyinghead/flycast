@@ -120,6 +120,7 @@ Option<bool> NativeDepthInterpolation("rend.NativeDepthInterpolation", false);
 Option<bool> EmulateFramebuffer("rend.EmulateFramebuffer", false);
 Option<bool> FixUpscaleBleedingEdge("rend.FixUpscaleBleedingEdge", true);
 Option<bool> CustomGpuDriver("rend.CustomGpuDriver", false);
+Option<bool> FramePacing("rend.FramePacing", true);
 #ifdef VIDEO_ROUTING
 Option<bool, false> VideoRouting("rend.VideoRouting", false);
 Option<bool, false> VideoRoutingScale("rend.VideoRoutingScale", false);

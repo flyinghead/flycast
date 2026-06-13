@@ -62,3 +62,6 @@
 [submodule "core/deps/freetype"]
 	path = core/deps/freetype
 	url = https://gitlab.freedesktop.org/freetype/freetype.git
+[submodule "core/deps/gamesdk"]
+	path = core/deps/gamesdk
+	url = https://github.com/flyinghead/gamesdk.git

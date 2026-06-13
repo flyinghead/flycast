@@ -1253,6 +1253,15 @@ if(NOT LIBRETRO)
 		add_subdirectory(shell/android-studio/flycast/src/main/jni/src)
 		target_link_libraries(${PROJECT_NAME} PRIVATE android log)
 
+		set(GAMESDK_THREAD_CHECKS 0)
+		add_subdirectory(core/deps/gamesdk/games-frame-pacing EXCLUDE_FROM_ALL)
+		target_compile_options(swappy_static PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-Wno-vla-cxx-extension>)
+		target_compile_definitions(swappy_static PRIVATE ANDROIDGAMESDK_NO_BINARY_DEX_LINKAGE)
+	
+		target_include_directories(${PROJECT_NAME} PRIVATE core/deps/gamesdk/games-frame-pacing/include)
+		target_link_libraries(${PROJECT_NAME} PRIVATE swappy_static)
+		target_compile_definitions(${PROJECT_NAME} PRIVATE SWAPPY)
+
 	elseif(APPLE)
 		string(TIMESTAMP YEAR "%Y")
 		string(REGEX MATCH "^[^-]+" TAG_VERSION ${GIT_VERSION})
