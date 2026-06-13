@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-22 12:49+0100\n"
-"PO-Revision-Date: 2026-06-13 13:06\n"
+"PO-Revision-Date: 2026-06-13 17:11\n"
 "Last-Translator: \n"
 "Language: ja_JP\n"
 "MIME-Version: 1.0\n"
@@ -678,11 +678,11 @@ msgstr "フレームレートを画面のリフレッシュレートと同期し
 
 #: core/ui/settings_video.cpp:212
 msgid "Frame Pacing (Experimental)"
-msgstr ""
+msgstr "フレームペーシング(実験的)"
 
 #: core/ui/settings_video.cpp:213
 msgid "Provide the GPU with presentation timing for each frame to replicate original frame pacing."
-msgstr ""
+msgstr "オリジナルのフレームペースを複製するための各フレームのプレゼンテーションタイミングをGPUに提供します。"
 
 #: core/ui/settings_video.cpp:216
 msgid "Duplicate frames"
@@ -2356,7 +2356,7 @@ msgstr "ネットワークタイプ"
 
 #: core/ui/settings_network.cpp:42
 msgid "Use native Dreamcast online features using the modem or Broadband Adapter"
-msgstr ""
+msgstr "モデムまたはブロードバンドアダプターを使用してDreamcast 標準装備のオンライン機能を使用する"
 
 #: core/ui/settings_network.cpp:46
 msgid "Enable networking using GGPO"
