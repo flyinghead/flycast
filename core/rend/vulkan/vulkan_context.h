@@ -149,6 +149,7 @@ public:
 	bool isAMD() override {
 		return vendorID == VENDOR_ATI || vendorID == VENDOR_AMD;
 	}
+	void setSwapInterval(int interval) override;
 	vk::Format GetDepthFormat() const { return depthFormat; }
 	static VulkanContext *Instance() { return static_cast<VulkanContext *>(GraphicsContext::Instance()); }
 	bool SupportsSamplerAnisotropy() const { return samplerAnisotropy; }
@@ -278,7 +279,7 @@ private:
 
 	std::string driverName;
 	std::string driverVersion;
-
+	int gameSwapInterval = 1;
 #ifdef VK_DEBUG
 #ifndef __ANDROID__
 	vk::UniqueDebugUtilsMessengerEXT debugUtilsMessenger;

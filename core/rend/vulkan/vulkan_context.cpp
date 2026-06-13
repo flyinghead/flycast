@@ -34,6 +34,7 @@
 #include "oslib/directory.h"
 #include "vulkan_driver.h"
 #include "rend/transform_matrix.h"
+#include "swappyvk.h"
 #if defined(__ANDROID__) && HOST_CPU == CPU_ARM64
 #include "adreno.h"
 #endif
@@ -497,7 +498,13 @@ bool VulkanContext::InitDevice()
 			// Enable VK_EXT_provoking_vertex if available
 			provokingVertexSupported = tryAddDeviceExtension(VK_EXT_PROVOKING_VERTEX_EXTENSION_NAME);
 		}
-		
+		bool googleTimingSupported = false;
+#if defined(SWAPPY)
+		googleTimingSupported = tryAddDeviceExtension(vk::GOOGLEDisplayTimingExtensionName);
+		if (googleTimingSupported)
+			NOTICE_LOG(RENDERER, "VK_GOOGLE_display_timing supported");
+#endif
+
 		// Get device features
 
 		vk::PhysicalDeviceFeatures2 featuresChain{};
@@ -553,6 +560,7 @@ bool VulkanContext::InitDevice()
 	    // Queues
 	    graphicsQueue = device->getQueue(graphicsQueueIndex, 0);
 	    presentQueue = device->getQueue(presentQueueIndex, 0);
+	    swappyvk::setQueueFamilyIndex(googleTimingSupported, device.get(), presentQueue, presentQueueIndex);
 
 	    // Descriptor pool
         std::array<vk::DescriptorPoolSize, 11> pool_sizes =
@@ -751,14 +759,22 @@ void VulkanContext::CreateSwapChain()
 				INFO_LOG(RENDERER, "Using mailbox present mode");
 				swapchainPresentMode = vk::PresentModeKHR::eMailbox;
 			}
+#ifndef SWAPPY
 			if (swapOnVSync && config::DupeFrames && settings.display.refreshRate > 60.f)
 				swapInterval = settings.display.refreshRate / 60.f;
 			else
+#endif
 				swapInterval = 1;
 
 			vk::SurfaceTransformFlagBitsKHR preTransform = (surfaceCapabilities.supportedTransforms & vk::SurfaceTransformFlagBitsKHR::eIdentity) ? vk::SurfaceTransformFlagBitsKHR::eIdentity : surfaceCapabilities.currentTransform;
-
-			u32 imageCount = std::max(3u * swapInterval, surfaceCapabilities.minImageCount);
+			INFO_LOG(RENDERER, "Surface capabilities: minImageCount %d maxImageCount %d swapInterval %d", surfaceCapabilities.minImageCount, surfaceCapabilities.maxImageCount, swapInterval);
+#ifdef SWAPPY
+			// No need to dupe frames
+			u32 imageCount = 3;
+#else
+			u32 imageCount = 4;
+#endif
+			imageCount = std::max(imageCount * swapInterval, surfaceCapabilities.minImageCount);
 			if (surfaceCapabilities.maxImageCount != 0)
 				imageCount = std::min(imageCount, surfaceCapabilities.maxImageCount);
 			vk::ImageUsageFlags usage = vk::ImageUsageFlagBits::eColorAttachment;
@@ -779,6 +795,7 @@ void VulkanContext::CreateSwapChain()
 				swapChainCreateInfo.pQueueFamilyIndices = queueFamilyIndices;
 			}
 
+			swappyvk::detachSwapchain();
 			swapChain.reset();
 			try {
 				swapChain = device->createSwapchainKHRUnique(swapChainCreateInfo);
@@ -791,6 +808,8 @@ void VulkanContext::CreateSwapChain()
 			}
 		}
 		while (!swapChain);
+
+		swappyvk::init(physicalDevice, *device, *swapChain);
 
 		std::vector<vk::Image> swapChainImages = device->getSwapchainImagesKHR(*swapChain);
 
@@ -1012,7 +1031,7 @@ void VulkanContext::Present() noexcept
 	{
 		try {
 			DoSwapAutomation();
-			vk::Result res = presentQueue.presentKHR(vk::PresentInfoKHR(1, &(*renderCompleteSemaphores[currentSemaphore]), 1, &(*swapChain), &currentImage));
+			vk::Result res = swappyvk::present(presentQueue, vk::PresentInfoKHR(1, &(*renderCompleteSemaphores[currentSemaphore]), 1, &(*swapChain), &currentImage));
 #if defined(VK_USE_PLATFORM_METAL_EXT) || defined(__APPLE__)
 			// presentKHR lists eSuboptimalKHR as a success code so it is
 			// returned rather than thrown. Treat it as a request to
@@ -1026,9 +1045,12 @@ void VulkanContext::Present() noexcept
 				resized = true;
 #endif
 			currentSemaphore = (currentSemaphore + 1) % renderCompleteSemaphores.size();
-
-			if (lastFrameView && IsValid() && !gui_is_open())
-				for (int i = 1; i < swapInterval; i++)
+#ifndef SWAPPY
+			if (lastFrameView && IsValid() && !gui_is_open()
+					&& swapOnVSync && config::DupeFrames)
+			{
+				const int interval = swapInterval * gameSwapInterval;
+				for (int i = 1; i < interval; i++)
 				{
 					PresentFrame(vk::Image(), lastFrameView, lastFrameExtent, lastFrameAR);
 					res = presentQueue.presentKHR(vk::PresentInfoKHR(1, &(*renderCompleteSemaphores[currentSemaphore]), 1, &(*swapChain), &currentImage));
@@ -1042,6 +1064,8 @@ void VulkanContext::Present() noexcept
 						break;
 					}
 				}
+			}
+#endif
 		} catch (const vk::SystemError& e) {
 			// Happens when resizing the window
 			INFO_LOG(RENDERER, "vk::SystemError %s", e.what());
@@ -1234,6 +1258,7 @@ void VulkanContext::term()
 		instance->destroySurfaceKHR(surface.release());
 #endif
 	pipelineCache.reset();
+	swappyvk::detachDevice();
 	device.reset();
 #ifdef VK_DEBUG
 #ifndef __ANDROID__
@@ -1573,4 +1598,14 @@ bool VulkanContext::GetLastFrame(std::vector<u8>& data, int& width, int& height)
 	attachment.GetBufferData()->UnmapMemory();
 
 	return true;
+}
+
+void VulkanContext::setSwapInterval(int interval)
+{
+	interval = std::min(interval, 2);
+	if (gameSwapInterval != interval) {
+		NOTICE_LOG(RENDERER, "Swap interval changed to %d", swapOnVSync ? swapInterval * interval : 0);
+		swappyvk::setSwapInterval(interval);
+	}
+	gameSwapInterval = interval;
 }

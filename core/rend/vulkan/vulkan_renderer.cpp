@@ -104,6 +104,9 @@ void BaseVulkanRenderer::Process(TA_context* ctx)
 	texCommandBuffer = texCommandPool.Allocate();
 	texCommandBuffer.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
 
+	if (!ctx->rend.isRTT && ctx->rend.swapInterval > 0)
+		GetContext()->setSwapInterval(ctx->rend.swapInterval);
+
 	ta_parse(ctx, true);
 
 	// TODO can't update fog or palette twice in multi render

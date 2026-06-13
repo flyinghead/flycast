@@ -8,4 +8,6 @@ target_sources(${PROJECT_NAME} PRIVATE
 			Android.cpp
 			http_client.h
 			i18n.cpp
-			jni_util.h)
+			jni_util.h
+			swappygl.cpp
+			swappyvk.cpp)
