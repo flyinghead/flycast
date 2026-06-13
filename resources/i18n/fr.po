@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-22 12:49+0100\n"
-"PO-Revision-Date: 2026-06-13 13:06\n"
+"PO-Revision-Date: 2026-06-13 14:53\n"
 "Last-Translator: \n"
 "Language: fr_FR\n"
 "MIME-Version: 1.0\n"
@@ -678,11 +678,11 @@ msgstr "Synchronise la production d'image avec la fréquence de rafraîchissemen
 
 #: core/ui/settings_video.cpp:212
 msgid "Frame Pacing (Experimental)"
-msgstr ""
+msgstr "Synchronisation de Trame (Expérimental)"
 
 #: core/ui/settings_video.cpp:213
 msgid "Provide the GPU with presentation timing for each frame to replicate original frame pacing."
-msgstr ""
+msgstr "Fournit au GPU des informations temporelles pour chaque trame afin de répliquer la cadence originale."
 
 #: core/ui/settings_video.cpp:216
 msgid "Duplicate frames"
@@ -2356,7 +2356,7 @@ msgstr "Type de Réseau"
 
 #: core/ui/settings_network.cpp:42
 msgid "Use native Dreamcast online features using the modem or Broadband Adapter"
-msgstr ""
+msgstr "Utilisation des fonctionnalités réseau natives de la Dreamcast avec le modem ou l'adaptateur haut débit"
 
 #: core/ui/settings_network.cpp:46
 msgid "Enable networking using GGPO"
