@@ -95,11 +95,11 @@ void BaseDrawer::scaleAndWriteFramebuffer(vk::CommandBuffer commandBuffer, Frame
 	vk::BufferMemoryBarrier bufferMemoryBarrier(
 			vk::AccessFlagBits::eTransferWrite,
 			vk::AccessFlagBits::eHostRead,
-			VK_QUEUE_FAMILY_IGNORED,
-			VK_QUEUE_FAMILY_IGNORED,
+			vk::QueueFamilyIgnored,
+			vk::QueueFamilyIgnored,
 			*finalFB->GetBufferData()->buffer,
 			0,
-			VK_WHOLE_SIZE);
+			vk::WholeSize);
 	commandBuffer.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer,
 					vk::PipelineStageFlagBits::eHost, {}, nullptr, bufferMemoryBarrier, nullptr);
 
@@ -542,11 +542,11 @@ void TextureDrawer::EndRenderPass()
 		vk::BufferMemoryBarrier bufferMemoryBarrier(
 				vk::AccessFlagBits::eTransferWrite,
 				vk::AccessFlagBits::eHostRead,
-				VK_QUEUE_FAMILY_IGNORED,
-				VK_QUEUE_FAMILY_IGNORED,
+				vk::QueueFamilyIgnored,
+				vk::QueueFamilyIgnored,
 				*colorAttachment->GetBufferData()->buffer,
 				0,
-				VK_WHOLE_SIZE);
+				vk::WholeSize);
 		currentCommandBuffer.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer,
 						vk::PipelineStageFlagBits::eHost, {}, nullptr, bufferMemoryBarrier, nullptr);
 	}
@@ -627,7 +627,7 @@ void ScreenDrawer::Init(SamplerManager *samplerManager, ShaderManager *shaderMan
 						nullptr,
 						&depthReference);
 
-		vk::SubpassDependency dependency(0, VK_SUBPASS_EXTERNAL, vk::PipelineStageFlagBits::eColorAttachmentOutput, vk::PipelineStageFlagBits::eFragmentShader,
+		vk::SubpassDependency dependency(0, vk::SubpassExternal, vk::PipelineStageFlagBits::eColorAttachmentOutput, vk::PipelineStageFlagBits::eFragmentShader,
 				vk::AccessFlagBits::eColorAttachmentWrite, vk::AccessFlagBits::eShaderRead,vk::DependencyFlagBits::eByRegion);
 
 		renderPassLoad = GetContext()->GetDevice().createRenderPassUnique(vk::RenderPassCreateInfo(vk::RenderPassCreateFlags(),

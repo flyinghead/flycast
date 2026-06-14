@@ -60,13 +60,13 @@ public:
 
 	void updateDescriptorSet(vk::DescriptorSet descSet, std::vector<vk::WriteDescriptorSet>& writeDescSets)
 	{
-		static vk::DescriptorBufferInfo pixelBufferInfo({}, 0, VK_WHOLE_SIZE);
+		static vk::DescriptorBufferInfo pixelBufferInfo({}, 0, vk::WholeSize);
 		pixelBufferInfo.buffer = *pixelBuffer->buffer;
 		writeDescSets.emplace_back(descSet, 7, 0, vk::DescriptorType::eStorageBuffer, nullptr, pixelBufferInfo);
 		static vk::DescriptorBufferInfo pixelCounterBufferInfo({}, 0, 4);
 		pixelCounterBufferInfo.buffer = *pixelCounter->buffer;
 		writeDescSets.emplace_back(descSet, 8, 0, vk::DescriptorType::eStorageBuffer, nullptr, pixelCounterBufferInfo);
-		static vk::DescriptorBufferInfo abufferPointerInfo({}, 0, VK_WHOLE_SIZE);
+		static vk::DescriptorBufferInfo abufferPointerInfo({}, 0, vk::WholeSize);
 		abufferPointerInfo.buffer = *abufferPointer->buffer;
 		writeDescSets.emplace_back(descSet, 9, 0, vk::DescriptorType::eStorageBuffer, nullptr, abufferPointerInfo);
 	}
