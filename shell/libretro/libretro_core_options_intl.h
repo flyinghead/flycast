@@ -26982,7 +26982,7 @@ struct retro_core_options_v2 options_en = {
 #define OPTION_VAL_PAL_EO NULL
 #define OPTION_VAL_PAL_N_EO NULL
 #define OPTION_VAL_PAL_M_EO NULL
-#define CORE_OPTION_NAME_SCREEN_ROTATION_LABEL_EO NULL
+#define CORE_OPTION_NAME_SCREEN_ROTATION_LABEL_EO "Ekrana orientigo"
 #define OPTION_VAL_HORIZONTAL_EO NULL
 #define OPTION_VAL_VERTICAL_EO NULL
 #define CORE_OPTION_NAME_ALPHA_SORTING_LABEL_EO NULL
@@ -39489,8 +39489,8 @@ struct retro_core_options_v2 options_ga = {
 #define CORE_OPTION_NAME_DUMP_REPLACED_TEXTURES_INFO_0_GL "Exporta sempre as texturas que xa foron substituídas por texturas personalizadas."
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_LABEL_GL "Zona morta panca analóxica"
 #define CORE_OPTION_NAME_ANALOG_STICK_DEADZONE_INFO_0_GL "Selecciona ata onde tes que empuxar o stick analóxico antes de que comece a procesarse."
-#define OPTION_VAL_0_GL NULL
-#define OPTION_VAL_5_GL NULL
+#define OPTION_VAL_0_GL "0 %"
+#define OPTION_VAL_5_GL "5 %"
 #define OPTION_VAL_10_GL NULL
 #define OPTION_VAL_15_GL NULL
 #define OPTION_VAL_20_GL NULL
@@ -43422,11 +43422,11 @@ struct retro_core_options_v2 options_he = {
 
 /* RETRO_LANGUAGE_HR */
 
-#define CATEGORY_SYSTEM_LABEL_HR NULL
+#define CATEGORY_SYSTEM_LABEL_HR "Sustav"
 #define CATEGORY_SYSTEM_INFO_0_HR NULL
 #define CATEGORY_VIDEO_LABEL_HR NULL
 #define CATEGORY_VIDEO_INFO_0_HR NULL
-#define CATEGORY_PERFORMANCE_LABEL_HR NULL
+#define CATEGORY_PERFORMANCE_LABEL_HR "Performanse"
 #define CATEGORY_PERFORMANCE_INFO_0_HR NULL
 #define CATEGORY_HACKS_LABEL_HR NULL
 #define CATEGORY_HACKS_INFO_0_HR NULL

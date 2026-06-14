@@ -189,3 +189,39 @@ version = 4)";
     EXPECT_EQ(inputMapping->rumblePower, 98);
     EXPECT_NEAR(inputMapping->saturation, 0.50, 1e-3);
 }
+
+// This doesn't really belong here but too lazy to make a new test
+TEST_F(InputMappingConfigFileTest, clear_makes_dirty)
+{
+    const std::string fileData = R"([analog]
+bind0 = 1+:btn_trigger_left
+bind1 = 2+:btn_trigger_right
+bind2 = 3-:btn_analog_down
+bind3 = 3+:btn_analog_up
+
+[combo]
+bind0 = 321,789+,1-:btn_quick_save:0
+bind1 = 987+,123,191-:btn_jump_state:1
+bind2 = 191-,123,987+:btn_menu:1
+
+[digital]
+bind0 = 100:btn_a
+bind1 = 200:btn_b
+
+[emulator]
+dead_zone = 33
+mapping_name = clear test case
+rumble_power = 98
+saturation = 50
+version = 4)";
+
+    writeConfigFile(fileData);
+    std::shared_ptr<InputMapping> inputMapping = InputMapping::LoadMapping(CONFIG_FILE_NAME);
+    inputMapping->clear_button(0, DreamcastKey::DC_BTN_A);
+    EXPECT_TRUE(inputMapping->is_dirty());
+
+    InputMapping::ClearMappings();
+    inputMapping = InputMapping::LoadMapping(CONFIG_FILE_NAME);
+    inputMapping->clear_axis(0, DreamcastKey::DC_AXIS_UP);
+    EXPECT_TRUE(inputMapping->is_dirty());
+}

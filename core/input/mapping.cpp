@@ -743,6 +743,7 @@ void InputMapping::clear_button(u32 port, DreamcastKey id)
 	{
 		inputMap.erase(existing->second);
 		existing = revInputMap.erase(existing);
+		dirty = true;
 	}
 }
 

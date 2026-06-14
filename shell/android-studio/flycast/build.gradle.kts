@@ -20,7 +20,7 @@ android {
     defaultConfig {
         applicationId = "com.flycast.emulator"
         minSdk = 21
-        targetSdk = 36
+        targetSdk = 35
         versionCode = 8
         versionName = gitVersionName()
         vectorDrawables.useSupportLibrary = true

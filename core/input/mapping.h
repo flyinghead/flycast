@@ -260,7 +260,7 @@ public:
 	static void SaveMapping(const std::string& name, const std::shared_ptr<InputMapping>& mapping);
 	static void DeleteMapping(const std::string& name);
 
-	void ClearMappings();
+	static void ClearMappings();
 
 protected:
 	bool dirty = false;
