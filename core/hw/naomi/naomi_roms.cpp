@@ -3174,6 +3174,8 @@ const Game Games[] =
         }
     },
     // Star Horse (satellite)
+	// All star horse require 837-13785 ARCNET&IO BD
+	// (not JVS, many DIP switches and connections for coin hopper, outputs and other I/O)
     {
         "shorse",
 		nullptr,
@@ -7311,7 +7313,7 @@ const Game Games[] =
         },
 		nullptr,
 		&clubkart_inputs,
-		nullptr,
+		clubkrt_eeprom_dump,
     },
 	{
     	"clubkrta",
@@ -7338,7 +7340,7 @@ const Game Games[] =
         },
 		nullptr,
 		&clubkart_inputs,
-		nullptr,
+		clubkrt_eeprom_dump,
     },
     {
     	"clubkrtc",
@@ -7365,7 +7367,7 @@ const Game Games[] =
         },
 		nullptr,
 		&clubkart_inputs,
-		nullptr,
+		clubkrt_eeprom_dump,
     },
     {
     	"clubkrt",
@@ -7392,7 +7394,7 @@ const Game Games[] =
         },
 		nullptr,
 		&clubkart_inputs,
-		nullptr,
+		clubkrt_eeprom_dump,
     },
     {
     	"clubkprz",

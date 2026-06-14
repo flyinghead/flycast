@@ -574,10 +574,12 @@ void Multiboard::syncWait()
 				if (!pair.second)
 					// Ignore key up events: we always send them in pair
 					continue;
+#ifdef USE_SDL
 				gui_runOnUiThread([pair]() {
 					sdlReceiveSlaveKeyboardEvent(pair.first, true);
 					sdlReceiveSlaveKeyboardEvent(pair.first, false);
 				});
+#endif
 			}
 		}
 	}
