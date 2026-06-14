@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-22 12:49+0100\n"
-"PO-Revision-Date: 2026-06-02 17:06\n"
+"PO-Revision-Date: 2026-06-13 17:11\n"
 "Last-Translator: \n"
 "Language: ja_JP\n"
 "MIME-Version: 1.0\n"
@@ -17,85 +17,85 @@ msgstr ""
 "X-Crowdin-File-ID: 13\n"
 "Language-Team: Japanese\n"
 
-#: core/achievements/achievements.cpp:347
+#: core/achievements/achievements.cpp:379
 #, c-format
 msgid "User %s authenticated"
 msgstr "ユーザー %s が認証されました"
 
-#: core/achievements/achievements.cpp:363
+#: core/achievements/achievements.cpp:395
 msgid "RetroAchievements authentication failed"
 msgstr "レトロアチーブメントの認証に失敗しました"
 
-#: core/achievements/achievements.cpp:398
+#: core/achievements/achievements.cpp:430
 msgid "No user token returned"
 msgstr "ユーザートークンが返されていません"
 
-#: core/achievements/achievements.cpp:550
+#: core/achievements/achievements.cpp:582
 msgid "RetroAchievements disconnected"
 msgstr "レトロアチーブメントが切断されました"
 
-#: core/achievements/achievements.cpp:554
+#: core/achievements/achievements.cpp:586
 msgid "RetroAchievements reconnected"
 msgstr "レトロアチーブメントが再接続されました"
 
-#: core/achievements/achievements.cpp:584
+#: core/achievements/achievements.cpp:616
 #, c-format
 msgid "Achievement %s unlocked!"
 msgstr "実績 %s が解除されました！"
 
-#: core/achievements/achievements.cpp:624
+#: core/achievements/achievements.cpp:656
 #, c-format
 msgid "Leaderboard %s started"
 msgstr "リーダーボード %s が開始されました"
 
-#: core/achievements/achievements.cpp:631
+#: core/achievements/achievements.cpp:663
 #, c-format
 msgid "Leaderboard %s failed"
 msgstr "リーダーボード %s が失敗しました"
 
-#: core/achievements/achievements.cpp:638
+#: core/achievements/achievements.cpp:670
 #, c-format
 msgid "Leaderboard %s submitted"
 msgstr "リーダーボード %s を送信しました"
 
-#: core/achievements/achievements.cpp:663
+#: core/achievements/achievements.cpp:695
 #, c-format
 msgid "Mastered %s"
 msgstr "%s をマスターしました"
 
-#: core/achievements/achievements.cpp:663
+#: core/achievements/achievements.cpp:695
 #, c-format
 msgid "Completed %s"
 msgstr "%s をコンプリートしました"
 
-#: core/achievements/achievements.cpp:666
+#: core/achievements/achievements.cpp:698
 #, c-format
 msgid "%d achievements, %d points"
 msgstr "%d 実績、 %d ポイント"
 
-#: core/achievements/achievements.cpp:912
+#: core/achievements/achievements.cpp:946
 #, c-format
 msgid "You have %d of %d achievements unlocked."
 msgstr "%d / %d の実績が解除されています。"
 
-#: core/achievements/achievements.cpp:914
+#: core/achievements/achievements.cpp:948
 msgid "This game has no achievements."
 msgstr "このゲームには実績がありません。"
 
-#: core/achievements/achievements.cpp:919 core/ui/settings_general.cpp:413
+#: core/achievements/achievements.cpp:953 core/ui/settings_general.cpp:413
 #: core/ui/gui_achievements.cpp:304
 msgid "Hardcore Mode"
 msgstr "ハードコアモード"
 
-#: core/achievements/achievements.cpp:950
+#: core/achievements/achievements.cpp:984
 msgid "Hardcore mode disabled"
 msgstr "ハードコアモードは無効です"
 
-#: core/achievements/achievements.cpp:950
+#: core/achievements/achievements.cpp:984
 msgid "Unrecognized media inserted"
 msgstr "認識できないメディアが挿入されました"
 
-#: core/achievements/achievements.cpp:957
+#: core/achievements/achievements.cpp:991
 msgid "Media change failed"
 msgstr "メディアの変更に失敗しました"
 
@@ -294,7 +294,7 @@ msgstr "無効なファイル名 %s"
 msgid "Unknown disk format"
 msgstr "不明なディスクフォーマット"
 
-#: core/imgread/common.cpp:372 core/emulator.cpp:620
+#: core/imgread/common.cpp:372 core/emulator.cpp:623
 msgid "This media cannot be loaded"
 msgstr "このメディアを読み込むことができません"
 
@@ -640,7 +640,7 @@ msgstr "レンダリングオプション"
 msgid "Half"
 msgstr "ハーフ"
 
-#: core/ui/settings_video.cpp:156
+#: core/ui/settings_video.cpp:156 core/ui/settings_network.cpp:40
 msgid "Native"
 msgstr "ネイティブ"
 
@@ -676,301 +676,309 @@ msgstr "垂直同期"
 msgid "Synchronizes the frame rate with the screen refresh rate. Recommended"
 msgstr "フレームレートを画面のリフレッシュレートと同期します。推奨"
 
-#: core/ui/settings_video.cpp:214
+#: core/ui/settings_video.cpp:212
+msgid "Frame Pacing (Experimental)"
+msgstr "フレームペーシング(実験的)"
+
+#: core/ui/settings_video.cpp:213
+msgid "Provide the GPU with presentation timing for each frame to replicate original frame pacing."
+msgstr "オリジナルのフレームペースを複製するための各フレームのプレゼンテーションタイミングをGPUに提供します。"
+
+#: core/ui/settings_video.cpp:216
 msgid "Duplicate frames"
 msgstr "重複フレーム"
 
-#: core/ui/settings_video.cpp:214
+#: core/ui/settings_video.cpp:216
 msgid "Duplicate frames on high refresh rate monitors (120 Hz and higher)"
 msgstr "高リフレッシュレートモニター上でフレームを複製(120 Hz以上)"
 
-#: core/ui/settings_video.cpp:219
+#: core/ui/settings_video.cpp:221
 msgid "Show VMU In-game"
 msgstr "ゲーム内でVMUを表示する"
 
-#: core/ui/settings_video.cpp:219
+#: core/ui/settings_video.cpp:221
 msgid "Show the VMU LCD screens while in-game"
 msgstr "ゲーム中にVMUのLCD画面を表示する"
 
-#: core/ui/settings_video.cpp:220
+#: core/ui/settings_video.cpp:222
 msgid "Full Framebuffer Emulation"
 msgstr "フルフレームバッファエミュレーション"
 
-#: core/ui/settings_video.cpp:221
+#: core/ui/settings_video.cpp:223
 msgid "Fully accurate VRAM framebuffer emulation. Helps games that directly access the framebuffer for special effects. Very slow and incompatible with upscaling and wide screen."
 msgstr "VRAMのフレームバッファを完全に再現します。特殊効果のためにフレームバッファに直接アクセスするゲームに役立ちます。非常に遅く、アップスケーリングやワイドスクリーンには対応していません。"
 
-#: core/ui/settings_video.cpp:225
+#: core/ui/settings_video.cpp:227
 msgid "Load Custom Textures"
 msgstr "カスタムテクスチャをロード"
 
-#: core/ui/settings_video.cpp:226
+#: core/ui/settings_video.cpp:228
 msgid "Load custom/high-res textures from data/textures/<game id>"
 msgstr "data/textures/<game id> からカスタム/高解像度テクスチャをロードします"
 
-#: core/ui/settings_video.cpp:230
+#: core/ui/settings_video.cpp:232
 msgid "Preload Custom Textures"
 msgstr "カスタムテクスチャをプリロード"
 
-#: core/ui/settings_video.cpp:231
+#: core/ui/settings_video.cpp:233
 msgid "Preload custom textures at game start. May improve performance but increases memory usage"
 msgstr "ゲーム開始時にカスタムテクスチャをプリロードします。パフォーマンスが向上するかもしれませんが、メモリ使用量が増加します"
 
-#: core/ui/settings_video.cpp:237
+#: core/ui/settings_video.cpp:239
 msgid "Aspect Ratio"
 msgstr "アスペクト比"
 
-#: core/ui/settings_video.cpp:239
+#: core/ui/settings_video.cpp:241
 msgid "Widescreen"
 msgstr "ワイドスクリーン"
 
-#: core/ui/settings_video.cpp:240
+#: core/ui/settings_video.cpp:242
 msgid "Draw geometry outside of the normal 4:3 aspect ratio. May produce graphical glitches in the revealed areas.\n"
 "Aspect Fit and shows the full 16:9 content."
 msgstr "通常の4:3アスペクト比の外側にあるジオメトリを描画します。表示されている領域にグラフィックの不具合が発生する可能性があります。\n"
 "アスペクト比を維持して、16:9のコンテンツを全て表示します。"
 
-#: core/ui/settings_video.cpp:245
+#: core/ui/settings_video.cpp:247
 msgid "Super Widescreen"
 msgstr "スーパーワイドスクリーン"
 
-#: core/ui/settings_video.cpp:246
+#: core/ui/settings_video.cpp:248
 msgid "Use the full width of the screen or window when its aspect ratio is greater than 16:9.\n"
 "Aspect Fill and remove black bars. Not compatible with integer scaling."
 msgstr "アスペクト比が16:9より大きい場合は、画面またはウィンドウの最大幅を使用します。\n"
 "アスペクト比を維持して画面を満たし黒帯を除去します。整数のスケーリングと互換性がありません。"
 
-#: core/ui/settings_video.cpp:249
+#: core/ui/settings_video.cpp:251
 msgid "Widescreen Game Cheats"
 msgstr "ワイドスクリーンゲームチート"
 
-#: core/ui/settings_video.cpp:250
+#: core/ui/settings_video.cpp:252
 msgid "Modify the game so that it displays in 16:9 anamorphic format and use horizontal screen stretching. Only some games are supported."
 msgstr "16:9 アナモルフィック形式で表示されるようにゲームを変更し、水平スクリーンストレッチを使用します。一部のゲームのみサポートされています。"
 
-#: core/ui/settings_video.cpp:251
+#: core/ui/settings_video.cpp:253
 msgid "Horizontal Stretching"
 msgstr "水平方向のストレッチ"
 
-#: core/ui/settings_video.cpp:252
+#: core/ui/settings_video.cpp:254
 msgid "Stretch the screen horizontally"
 msgstr "画面を水平方向に伸ばします"
 
-#: core/ui/settings_video.cpp:253
+#: core/ui/settings_video.cpp:255
 msgid "Rotate Screen 90°"
 msgstr "画面を 90°回転"
 
-#: core/ui/settings_video.cpp:253
+#: core/ui/settings_video.cpp:255
 msgid "Rotate the screen 90° counterclockwise"
 msgstr "画面を反時計回りに 90°回転します"
 
-#: core/ui/settings_video.cpp:258
+#: core/ui/settings_video.cpp:260
 msgid "Per Pixel Settings"
 msgstr "ピクセル単位の設定"
 
-#: core/ui/settings_video.cpp:261
+#: core/ui/settings_video.cpp:263
 msgid "512 MB"
 msgstr "512 MB"
 
-#: core/ui/settings_video.cpp:261
+#: core/ui/settings_video.cpp:263
 msgid "1 GB"
 msgstr "1 GB"
 
-#: core/ui/settings_video.cpp:261
+#: core/ui/settings_video.cpp:263
 msgid "2 GB"
 msgstr "2 GB"
 
-#: core/ui/settings_video.cpp:261
+#: core/ui/settings_video.cpp:263
 msgid "4 GB"
 msgstr "4 GB"
 
-#: core/ui/settings_video.cpp:299
+#: core/ui/settings_video.cpp:301
 msgid "Pixel Buffer Size"
 msgstr "ピクセルバッファサイズ"
 
-#: core/ui/settings_video.cpp:301
+#: core/ui/settings_video.cpp:303
 msgid "The size of the pixel buffer. May need to be increased when upscaling by a large factor."
 msgstr "ピクセルバッファのサイズ。大きな係数でアップスケールする場合は、サイズを大きくする必要がある場合があります。"
 
-#: core/ui/settings_video.cpp:303
+#: core/ui/settings_video.cpp:305
 msgid "Maximum Layers"
 msgstr "最大レイヤー数"
 
-#: core/ui/settings_video.cpp:304
+#: core/ui/settings_video.cpp:306
 msgid "Maximum number of transparent layers. May need to be increased for some complex scenes. Decreasing it may improve performance."
 msgstr "透明レイヤーの最大数。複雑なシーンでは、この値を増やす必要がある場合があります。この値を減らすとパフォーマンスが向上する場合があります。"
 
-#: core/ui/settings_video.cpp:307
+#: core/ui/settings_video.cpp:309
 msgid "Performance"
 msgstr "パフォーマンス"
 
-#: core/ui/settings_video.cpp:309
+#: core/ui/settings_video.cpp:311
 msgid "Automatic Frame Skipping:"
 msgstr "自動フレームスキップ："
 
-#: core/ui/settings_video.cpp:311 core/ui/settings_video.cpp:336
-#: core/ui/settings_network.cpp:40 core/ui/settings_network.cpp:87
+#: core/ui/settings_video.cpp:313 core/ui/settings_video.cpp:338
+#: core/ui/settings_network.cpp:89
 msgid "Disabled"
 msgstr "無効"
 
-#: core/ui/settings_video.cpp:311
+#: core/ui/settings_video.cpp:313
 msgid "No frame skipping"
 msgstr "フレームスキップなし"
 
-#: core/ui/settings_video.cpp:313
+#: core/ui/settings_video.cpp:315
 msgid "Normal"
 msgstr "通常"
 
-#: core/ui/settings_video.cpp:313
+#: core/ui/settings_video.cpp:315
 msgid "Skip a frame when the GPU and CPU are both running slow"
 msgstr "GPUとCPUの両方が遅い場合はフレームをスキップする"
 
-#: core/ui/settings_video.cpp:315
+#: core/ui/settings_video.cpp:317
 msgid "Maximum"
 msgstr "最大"
 
-#: core/ui/settings_video.cpp:315
+#: core/ui/settings_video.cpp:317
 msgid "Skip a frame when the GPU is running slow"
 msgstr "GPUが遅いときはフレームをスキップします"
 
-#: core/ui/settings_video.cpp:318
+#: core/ui/settings_video.cpp:320
 msgid "Frame Skipping"
 msgstr "フレームスキップ"
 
-#: core/ui/settings_video.cpp:319
+#: core/ui/settings_video.cpp:321
 msgid "Number of frames to skip between two actually rendered frames"
 msgstr "実際にレンダリングされた2つのフレーム間をスキップするフレーム数"
 
-#: core/ui/settings_video.cpp:320
+#: core/ui/settings_video.cpp:322
 msgid "Shadows"
 msgstr "シャドウ"
 
-#: core/ui/settings_video.cpp:321
+#: core/ui/settings_video.cpp:323
 msgid "Enable modifier volumes, usually used for shadows"
 msgstr "通常は影に使用されるモディファイアボリュームを有効にします"
 
-#: core/ui/settings_video.cpp:322
+#: core/ui/settings_video.cpp:324
 msgid "Fog"
 msgstr "フォグ"
 
-#: core/ui/settings_video.cpp:322
+#: core/ui/settings_video.cpp:324
 msgid "Enable fog effects"
 msgstr "霧の効果を有効にする"
 
-#: core/ui/settings_video.cpp:325 core/ui/settings.cpp:311
+#: core/ui/settings_video.cpp:327 core/ui/settings.cpp:311
 msgid "Advanced"
 msgstr "高度な設定"
 
-#: core/ui/settings_video.cpp:327
+#: core/ui/settings_video.cpp:329
 msgid "Delay Frame Swapping"
 msgstr "遅延フレームスワッピング"
 
-#: core/ui/settings_video.cpp:328
+#: core/ui/settings_video.cpp:330
 msgid "Useful to avoid flashing screen or glitchy videos. Not recommended on slow platforms"
 msgstr "画面の点滅や動画の不具合を防ぐのに役立ちます。ただし、低速なプラットフォームでは推奨されません"
 
-#: core/ui/settings_video.cpp:329
+#: core/ui/settings_video.cpp:331
 msgid "Fix Upscale Bleeding Edge"
 msgstr "アップスケーリング滲み修正"
 
-#: core/ui/settings_video.cpp:330
+#: core/ui/settings_video.cpp:332
 msgid "Helps with texture bleeding case when upscaling. Disabling it can help if pixels are warping when upscaling in 2D games (MVC2, CVS, KOF, etc.)"
 msgstr "アップスケーリング時のテクスチャの滲みを軽減します。2Dゲーム(MVC2、CVS、KOFなど)でアップスケーリング時にピクセルが歪む場合は、無効にすることで改善される可能性があります"
 
-#: core/ui/settings_video.cpp:331
+#: core/ui/settings_video.cpp:333
 msgid "Native Depth Interpolation"
 msgstr "ネイティブ深度補間"
 
-#: core/ui/settings_video.cpp:332
+#: core/ui/settings_video.cpp:334
 msgid "Helps with texture corruption and depth issues on AMD GPUs. Can also help Intel GPUs in some cases."
 msgstr "AMD GPUのテクスチャ破損や深度の問題の解決に役立ちます。場合によってはIntel GPUでも効果があります。"
 
-#: core/ui/settings_video.cpp:333
+#: core/ui/settings_video.cpp:335
 msgid "Copy Rendered Textures to VRAM"
 msgstr "レンダリングされたテクスチャをVRAMにコピーする"
 
-#: core/ui/settings_video.cpp:334
+#: core/ui/settings_video.cpp:336
 msgid "Copy rendered-to textures back to VRAM. Slower but accurate"
 msgstr "レンダリングされたテクスチャをVRAMにコピーします。遅いですが正確です"
 
-#: core/ui/settings_video.cpp:373
+#: core/ui/settings_video.cpp:375
 msgid "Anisotropic Filtering"
 msgstr "異方性フィルタリング"
 
-#: core/ui/settings_video.cpp:375
+#: core/ui/settings_video.cpp:377
 msgid "Higher values make textures viewed at oblique angles look sharper, but are more demanding on the GPU. This option only has a visible impact on mipmapped textures."
 msgstr "値を大きくすると、斜めから見たテクスチャがより鮮明に見えますが、GPUへの負荷が高くなります。このオプションは、ミップマップテクスチャにのみ目に見える影響を与えます。"
 
-#: core/ui/settings_video.cpp:377
+#: core/ui/settings_video.cpp:379
 msgid "Texture Filtering:"
 msgstr "テクスチャフィルタリング："
 
-#: core/ui/settings_video.cpp:379 core/ui/settings_general.cpp:231
+#: core/ui/settings_video.cpp:381 core/ui/settings_general.cpp:231
 #: core/ui/settings_general.cpp:235 core/ui/settings_general.cpp:240
 msgid "Default"
 msgstr "デフォルト"
 
-#: core/ui/settings_video.cpp:379
+#: core/ui/settings_video.cpp:381
 msgid "Use the game's default texture filtering"
 msgstr "ゲームのデフォルトのテクスチャフィルタリングを使用する"
 
-#: core/ui/settings_video.cpp:381
+#: core/ui/settings_video.cpp:383
 msgid "Force Nearest-Neighbor"
 msgstr "最近傍法を強制"
 
-#: core/ui/settings_video.cpp:381
+#: core/ui/settings_video.cpp:383
 msgid "Force nearest-neighbor filtering for all textures. Crisper appearance, but may cause various rendering issues. This option usually does not affect performance."
 msgstr "すべてのテクスチャに最近傍補間フィルタリングを強制的に適用します。見た目は鮮明になりますが、レンダリングに様々な問題が発生する可能性があります。このオプションは通常、パフォーマンスに影響を与えません。"
 
-#: core/ui/settings_video.cpp:383
+#: core/ui/settings_video.cpp:385
 msgid "Force Linear"
 msgstr "線形法を強制"
 
-#: core/ui/settings_video.cpp:383
+#: core/ui/settings_video.cpp:385
 msgid "Force linear filtering for all textures. Smoother appearance, but may cause various rendering issues. This option usually does not affect performance."
 msgstr "すべてのテクスチャに線形フィルタリングを強制します。見た目は滑らかになりますが、レンダリングに様々な問題が発生する可能性があります。このオプションは通常、パフォーマンスに影響を与えません。"
 
-#: core/ui/settings_video.cpp:386
+#: core/ui/settings_video.cpp:388
 msgid "Show FPS Counter"
 msgstr "FPSカウンターを表示"
 
-#: core/ui/settings_video.cpp:386
+#: core/ui/settings_video.cpp:388
 msgid "Show on-screen frame/sec counter"
 msgstr "フレームレート(秒間フレーム数)を画面に表示します"
 
-#: core/ui/settings_video.cpp:391
+#: core/ui/settings_video.cpp:393
 msgid "Video Routing (Syphon)"
 msgstr "ビデオルーティング(Syphon)"
 
-#: core/ui/settings_video.cpp:394
+#: core/ui/settings_video.cpp:396
 msgid "Video Routing (Spout)"
 msgstr "ビデオルーティング(Spout)"
 
-#: core/ui/settings_video.cpp:396
+#: core/ui/settings_video.cpp:398
 msgid "Video Routing (Only available with OpenGL or DirectX 11)"
 msgstr "ビデオルーティング(OpenGLまたはDirectX 11でのみ利用可能)"
 
-#: core/ui/settings_video.cpp:402
+#: core/ui/settings_video.cpp:404
 msgid "Send video content to another program"
 msgstr "ビデオコンテンツを別のプログラムに送信する"
 
-#: core/ui/settings_video.cpp:403
+#: core/ui/settings_video.cpp:405
 msgid "e.g. Route GPU texture to OBS Studio directly instead of using CPU intensive Display/Window Capture"
 msgstr "例えば、CPUを集中的に使用するディスプレイ/ウィンドウキャプチャを使用する代わりに、GPUテクスチャをOBS Studioに直接ルーティングする"
 
-#: core/ui/settings_video.cpp:407
+#: core/ui/settings_video.cpp:409
 msgid "Scale down before sending"
 msgstr "送信する前にスケールダウン"
 
-#: core/ui/settings_video.cpp:407
+#: core/ui/settings_video.cpp:409
 msgid "Could increase performance when sharing a smaller texture, YMMV"
 msgstr "小さなテクスチャを共有するとパフォーマンスが向上する可能性がありますが、状況によって異なる場合があります"
 
-#: core/ui/settings_video.cpp:411
+#: core/ui/settings_video.cpp:413
 msgid "Output vertical resolution"
 msgstr "出力垂直解像度"
 
-#: core/ui/settings_video.cpp:416
+#: core/ui/settings_video.cpp:418
 #, c-format
 msgid "Output texture size: %d x %d"
 msgstr "出力テクスチャのサイズ: %d x %d"
@@ -984,7 +992,7 @@ msgstr "セット"
 msgid "Add"
 msgstr "追加"
 
-#: core/ui/settings_general.cpp:161 core/ui/gui.cpp:748
+#: core/ui/settings_general.cpp:161 core/ui/gui.cpp:745
 msgid "Select a Content Folder"
 msgstr "コンテンツフォルダーを選択"
 
@@ -1584,7 +1592,7 @@ msgid "Menu"
 msgstr "メニュー"
 
 #: core/ui/settings_controls.cpp:223 core/ui/settings_controls.cpp:283
-#: core/ui/gui.cpp:628 core/ui/gui.cpp:897
+#: core/ui/gui.cpp:625 core/ui/gui.cpp:894
 msgid "Exit"
 msgstr "終了"
 
@@ -1597,12 +1605,12 @@ msgid "Fast-forward"
 msgstr "早送り"
 
 #: core/ui/settings_controls.cpp:226 core/ui/settings_controls.cpp:286
-#: core/ui/gui.cpp:640
+#: core/ui/gui.cpp:637
 msgid "Load State"
 msgstr "ロードステート"
 
 #: core/ui/settings_controls.cpp:227 core/ui/settings_controls.cpp:287
-#: core/ui/gui.cpp:648
+#: core/ui/gui.cpp:645
 msgid "Save State"
 msgstr "セーブステート"
 
@@ -1872,7 +1880,7 @@ msgstr "DreamLink: %s"
 msgid "Edit Layout"
 msgstr "レイアウトを編集"
 
-#: core/ui/settings_controls.cpp:1092 core/ui/gui.cpp:624 core/ui/gui.cpp:882
+#: core/ui/settings_controls.cpp:1092 core/ui/gui.cpp:621 core/ui/gui.cpp:879
 #: core/ui/settings.cpp:213
 msgid "Settings"
 msgstr "設定"
@@ -1969,144 +1977,144 @@ msgid "Renderer initialization failed.\n"
 msgstr "レンダラーの初期化に失敗しました。\n"
 "別のグラフィックAPIを選択してください"
 
-#: core/ui/gui.cpp:472
+#: core/ui/gui.cpp:469
 msgid "Flycast has stopped."
 msgstr "Flycast は停止しました。"
 
-#: core/ui/gui.cpp:579
+#: core/ui/gui.cpp:576
 msgid "Resume"
 msgstr "再開"
 
-#: core/ui/gui.cpp:588
+#: core/ui/gui.cpp:585
 msgid "Cheats"
 msgstr "チート"
 
-#: core/ui/gui.cpp:595
+#: core/ui/gui.cpp:592
 msgid "Achievements"
 msgstr "アチーブメント"
 
-#: core/ui/gui.cpp:601
+#: core/ui/gui.cpp:598
 msgid "Barcode Card"
 msgstr "バーコードカード"
 
-#: core/ui/gui.cpp:612
+#: core/ui/gui.cpp:609
 msgid "Insert Disk"
 msgstr "ディスクを挿入"
 
-#: core/ui/gui.cpp:612
+#: core/ui/gui.cpp:609
 msgid "Eject Disk"
 msgstr "ディスクの取り出し"
 
-#: core/ui/gui.cpp:628
+#: core/ui/gui.cpp:625
 msgid "Close Game"
 msgstr "ゲームを終了"
 
-#: core/ui/gui.cpp:657
+#: core/ui/gui.cpp:654
 #, c-format
 msgid "Slot %d"
 msgstr "スロット %d"
 
-#: core/ui/gui.cpp:667
+#: core/ui/gui.cpp:664
 msgid "Empty"
 msgstr "空"
 
-#: core/ui/gui.cpp:695 core/ui/gui_cheats.cpp:48
+#: core/ui/gui.cpp:692 core/ui/gui_cheats.cpp:48
 msgid "OK"
 msgstr "OK"
 
-#: core/ui/gui.cpp:715 core/ui/gui.cpp:716
+#: core/ui/gui.cpp:712 core/ui/gui.cpp:713
 msgid "Incorrect Content Location?"
 msgstr "コンテンツの場所が間違っていませんか？"
 
-#: core/ui/gui.cpp:719
+#: core/ui/gui.cpp:716
 #, c-format
 msgid "Scanned %d folders but no game can be found!"
 msgstr "%d フォルダーをスキャンしましたが、ゲームが見つかりません！"
 
-#: core/ui/gui.cpp:724
+#: core/ui/gui.cpp:721
 msgid "Reselect"
 msgstr "再選択"
 
-#: core/ui/gui.cpp:733 core/ui/gui.cpp:911 core/ui/gui.cpp:1148
-#: core/ui/gui.cpp:1161 core/ui/gui.cpp:1304 core/ui/gui_cheats.cpp:47
+#: core/ui/gui.cpp:730 core/ui/gui.cpp:908 core/ui/gui.cpp:1145
+#: core/ui/gui.cpp:1158 core/ui/gui.cpp:1301 core/ui/gui_cheats.cpp:47
 #: core/ui/gui_util.cpp:180 core/ui/vgamepad.cpp:87
 msgid "Cancel"
 msgstr "キャンセル"
 
-#: core/ui/gui.cpp:878
+#: core/ui/gui.cpp:875
 msgid "GAMES"
 msgstr "ゲーム"
 
-#: core/ui/gui.cpp:885 core/ui/gui.cpp:886
+#: core/ui/gui.cpp:882 core/ui/gui.cpp:883
 msgid "Filter"
 msgstr "フィルター"
 
-#: core/ui/gui.cpp:892 core/ui/gui.cpp:893
+#: core/ui/gui.cpp:889 core/ui/gui.cpp:890
 msgid "Load..."
 msgstr "ロード…"
 
-#: core/ui/gui.cpp:1014
+#: core/ui/gui.cpp:1011
 msgid "Your game list is empty"
 msgstr "ゲームリストがありません"
 
-#: core/ui/gui.cpp:1024
+#: core/ui/gui.cpp:1021
 msgid "Add Game Folder"
 msgstr "ゲームフォルダーを追加"
 
-#: core/ui/gui.cpp:1056 core/ui/gui.cpp:1067
+#: core/ui/gui.cpp:1053 core/ui/gui.cpp:1064
 msgid "Invalid selection:"
 msgstr "無効な選択："
 
-#: core/ui/gui.cpp:1056 core/ui/gui.cpp:1067
+#: core/ui/gui.cpp:1053 core/ui/gui.cpp:1064
 msgid "Flycast cannot write to this folder."
 msgstr "Flycastはこのフォルダーへの書き込みができません。"
 
-#: core/ui/gui.cpp:1095
+#: core/ui/gui.cpp:1092
 msgid "Select Flycast Home Folder"
 msgstr "Flycastホームフォルダーを選択"
 
-#: core/ui/gui.cpp:1129 core/ui/gui.cpp:1250 core/emulator.cpp:687
+#: core/ui/gui.cpp:1126 core/ui/gui.cpp:1247 core/emulator.cpp:690
 msgid "Starting..."
 msgstr "起動中…"
 
-#: core/ui/gui.cpp:1141
+#: core/ui/gui.cpp:1138
 msgid "Starting Network..."
 msgstr "ネットワークを開始しています…"
 
-#: core/ui/gui.cpp:1143
+#: core/ui/gui.cpp:1140
 msgid "Press Start to start the game now."
 msgstr "今すぐゲームを開始するには、スタートを押します。"
 
-#: core/ui/gui.cpp:1151 core/ui/gui.cpp:1154
+#: core/ui/gui.cpp:1148 core/ui/gui.cpp:1151
 msgid "Start Now"
 msgstr "今すぐ始める"
 
-#: core/ui/gui.cpp:1252
+#: core/ui/gui.cpp:1249
 msgid "Loading..."
 msgstr "ロード中…"
 
-#: core/ui/gui.cpp:1288
+#: core/ui/gui.cpp:1285
 msgid "Preloading custom textures"
 msgstr "カスタムテクスチャーのプリロード"
 
-#: core/ui/gui.cpp:1291
+#: core/ui/gui.cpp:1288
 msgid "Preparing..."
 msgstr "準備中…"
 
-#: core/ui/gui.cpp:1613
+#: core/ui/gui.cpp:1610
 #, c-format
 msgid "Save state slot %d"
 msgstr "セーブステートスロット %d"
 
-#: core/ui/gui.cpp:1681
+#: core/ui/gui.cpp:1678
 msgid "No screenshot available"
 msgstr "スクリーンショットがありません"
 
-#: core/ui/gui.cpp:1687
+#: core/ui/gui.cpp:1684
 msgid "Screenshot saved"
 msgstr "スクリーンショットを保存しました"
 
-#: core/ui/gui.cpp:1689
+#: core/ui/gui.cpp:1686
 msgid "Error saving screenshot"
 msgstr "スクリーンショット保存中にエラー"
 
@@ -2166,7 +2174,7 @@ msgstr "使用するオーディオドライバー"
 msgid "ADD CHEAT"
 msgstr "チートを追加"
 
-#: core/ui/gui_cheats.cpp:72 core/ui/settings_network.cpp:169
+#: core/ui/gui_cheats.cpp:72 core/ui/settings_network.cpp:171
 msgid "Code"
 msgstr "コード"
 
@@ -2346,260 +2354,264 @@ msgstr "リセット"
 msgid "Network Type"
 msgstr "ネットワークタイプ"
 
-#: core/ui/settings_network.cpp:44
+#: core/ui/settings_network.cpp:42
+msgid "Use native Dreamcast online features using the modem or Broadband Adapter"
+msgstr "モデムまたはブロードバンドアダプターを使用してDreamcast 標準装備のオンライン機能を使用する"
+
+#: core/ui/settings_network.cpp:46
 msgid "Enable networking using GGPO"
 msgstr "GGPOを使用してネットワークを有効にする"
 
-#: core/ui/settings_network.cpp:48
+#: core/ui/settings_network.cpp:50
 msgid "Enable networking for supported Naomi and Atomiswave games"
 msgstr "サポートされているNaomiとAtomiwaveゲームのネットワークを有効にする"
 
-#: core/ui/settings_network.cpp:50
+#: core/ui/settings_network.cpp:52
 msgid "Battle Cable"
 msgstr "バトルケーブル"
 
-#: core/ui/settings_network.cpp:52
+#: core/ui/settings_network.cpp:54
 msgid "Emulate the Taisen (Battle) null modem cable for games that support it"
 msgstr "対戦(バトル)ヌルモデムケーブルをサポートするゲームでエミュレートします"
 
-#: core/ui/settings_network.cpp:72
+#: core/ui/settings_network.cpp:74
 msgid "Configuration"
 msgstr "構成"
 
-#: core/ui/settings_network.cpp:78
+#: core/ui/settings_network.cpp:80
 msgid "Play as Player 1"
 msgstr "プレイヤー1としてプレイ"
 
-#: core/ui/settings_network.cpp:79
+#: core/ui/settings_network.cpp:81
 msgid "Deselect to play as player 2"
 msgstr "プレイヤー2としてプレイするには選択を解除してください"
 
-#: core/ui/settings_network.cpp:80 core/ui/settings_network.cpp:206
+#: core/ui/settings_network.cpp:82 core/ui/settings_network.cpp:208
 msgid "Peer"
 msgstr "ピア"
 
-#: core/ui/settings_network.cpp:82
+#: core/ui/settings_network.cpp:84
 msgid "Your peer IP address and optional port"
 msgstr "あなたのピアIPアドレスとオプションのポート"
 
-#: core/ui/settings_network.cpp:83
+#: core/ui/settings_network.cpp:85
 msgid "Frame Delay"
 msgstr "フレーム遅延"
 
-#: core/ui/settings_network.cpp:84
+#: core/ui/settings_network.cpp:86
 msgid "Sets Frame Delay, advisable for sessions with ping >100 ms"
 msgstr "フレーム遅延を設定します。pingが100ミリ秒を超えるセッションに推奨されます"
 
-#: core/ui/settings_network.cpp:86
+#: core/ui/settings_network.cpp:88
 msgid "Left Thumbstick:"
 msgstr "左アナログスティック："
 
-#: core/ui/settings_network.cpp:87
+#: core/ui/settings_network.cpp:89
 msgid "Left thumbstick not used"
 msgstr "左アナログスティックは使用しません"
 
-#: core/ui/settings_network.cpp:89
+#: core/ui/settings_network.cpp:91
 msgid "Horizontal"
 msgstr "水平"
 
-#: core/ui/settings_network.cpp:89
+#: core/ui/settings_network.cpp:91
 msgid "Use the left thumbstick horizontal axis only"
 msgstr "左スティックの水平軸のみを使用する"
 
-#: core/ui/settings_network.cpp:91
+#: core/ui/settings_network.cpp:93
 msgid "Full"
 msgstr "フル"
 
-#: core/ui/settings_network.cpp:91
+#: core/ui/settings_network.cpp:93
 msgid "Use the left thumbstick horizontal and vertical axes"
 msgstr "左スティックの水平軸と垂直軸を使用する"
 
-#: core/ui/settings_network.cpp:93
+#: core/ui/settings_network.cpp:95
 msgid "Enable Chat"
 msgstr "チャットを有効にする"
 
-#: core/ui/settings_network.cpp:93
+#: core/ui/settings_network.cpp:95
 msgid "Open the chat window when a chat message is received"
 msgstr "チャットメッセージを受信したときにチャットウィンドウを開く"
 
-#: core/ui/settings_network.cpp:96
+#: core/ui/settings_network.cpp:98
 msgid "Enable Chat Window Timeout"
 msgstr "チャットウィンドウのタイムアウトを有効にする"
 
-#: core/ui/settings_network.cpp:96
+#: core/ui/settings_network.cpp:98
 msgid "Automatically close chat window after 20 seconds"
 msgstr "20秒後にチャットウィンドウを自動的に閉じます"
 
-#: core/ui/settings_network.cpp:101
+#: core/ui/settings_network.cpp:103
 msgid "Chat Window Timeout (seconds)"
 msgstr "チャットウィンドウのタイムアウト(秒)"
 
-#: core/ui/settings_network.cpp:103
+#: core/ui/settings_network.cpp:105
 msgid "Sets duration that chat window stays open after new message is received."
 msgstr "新しいメッセージを受信した後にチャットウィンドウを開いたままにする時間を設定します。"
 
-#: core/ui/settings_network.cpp:107 core/ui/settings_network.cpp:199
+#: core/ui/settings_network.cpp:109 core/ui/settings_network.cpp:201
 msgid "Network Statistics"
 msgstr "ネットワーク統計"
 
-#: core/ui/settings_network.cpp:108 core/ui/settings_network.cpp:200
+#: core/ui/settings_network.cpp:110 core/ui/settings_network.cpp:202
 msgid "Display network statistics on screen"
 msgstr "ネットワーク統計を画面に表示する"
 
-#: core/ui/settings_network.cpp:113
+#: core/ui/settings_network.cpp:115
 msgid "Network Role"
 msgstr "ネットワークの役割"
 
-#: core/ui/settings_network.cpp:118
+#: core/ui/settings_network.cpp:120
 msgid "Master"
 msgstr "マスター"
 
-#: core/ui/settings_network.cpp:120
+#: core/ui/settings_network.cpp:122
 msgid "Create a local server for Naomi network games"
 msgstr "Naomiネットワークゲーム用のローカルサーバーを作成する"
 
-#: core/ui/settings_network.cpp:122
+#: core/ui/settings_network.cpp:124
 msgid "Slave"
 msgstr "スレーブ"
 
-#: core/ui/settings_network.cpp:124
+#: core/ui/settings_network.cpp:126
 msgid "Connect to the master server"
 msgstr "マスターサーバーに接続します"
 
-#: core/ui/settings_network.cpp:126
+#: core/ui/settings_network.cpp:128
 msgid "Satellite"
 msgstr "サテライト"
 
-#: core/ui/settings_network.cpp:128
+#: core/ui/settings_network.cpp:130
 msgid "Live monitor for games that support it (Virtual-On Oratorio Tangram and Club Kart)"
 msgstr "サポートするゲームのライブモニター (Virtual-On Oratorio TangramとClub Kart)"
 
-#: core/ui/settings_network.cpp:133
+#: core/ui/settings_network.cpp:135
 msgid "Server"
 msgstr "サーバー"
 
-#: core/ui/settings_network.cpp:135
+#: core/ui/settings_network.cpp:137
 msgid "The server to connect to. Leave blank to find a server automatically on the default port"
 msgstr "接続先のサーバー。空白のままにすると自動的にデフォルトのポートでサーバーを検索します"
 
-#: core/ui/settings_network.cpp:139 core/ui/settings_network.cpp:211
+#: core/ui/settings_network.cpp:141 core/ui/settings_network.cpp:213
 msgid "Local Port"
 msgstr "ローカルポート"
 
-#: core/ui/settings_network.cpp:141 core/ui/settings_network.cpp:213
+#: core/ui/settings_network.cpp:143 core/ui/settings_network.cpp:215
 msgid "The local UDP port to use"
 msgstr "使用するローカルUDPポート"
 
-#: core/ui/settings_network.cpp:164
+#: core/ui/settings_network.cpp:166
 msgid "Match Code"
 msgstr "マッチコード"
 
-#: core/ui/settings_network.cpp:171
+#: core/ui/settings_network.cpp:173
 msgid "Choose a unique word or number and share it with your opponent."
 msgstr "ユニークな単語または番号を選択し、相手と共有します。"
 
-#: core/ui/settings_network.cpp:173
+#: core/ui/settings_network.cpp:175
 msgid "Connect"
 msgstr "接続"
 
-#: core/ui/settings_network.cpp:177
+#: core/ui/settings_network.cpp:179
 msgid "Disconnect"
 msgstr "切断"
 
-#: core/ui/settings_network.cpp:187
+#: core/ui/settings_network.cpp:189
 msgid "Waiting at meeting point..."
 msgstr "ミーティングポイントで待機中…"
 
-#: core/ui/settings_network.cpp:190
+#: core/ui/settings_network.cpp:192
 msgid "Preparing game..."
 msgstr "ゲームを準備中…"
 
-#: core/ui/settings_network.cpp:193
+#: core/ui/settings_network.cpp:195
 #, c-format
 msgid "Playing %s (%s)"
 msgstr "プレイ中 %s (%s)"
 
-#: core/ui/settings_network.cpp:203
+#: core/ui/settings_network.cpp:205
 msgid "Manual"
 msgstr "手動"
 
-#: core/ui/settings_network.cpp:208
+#: core/ui/settings_network.cpp:210
 msgid "The peer to connect to. Leave blank to find a player automatically on the default port"
 msgstr "接続先のピア。空白にすると、デフォルトのポートで自動的にプレイヤーが検索されます"
 
-#: core/ui/settings_network.cpp:221
+#: core/ui/settings_network.cpp:223
 msgid "Act as Master"
 msgstr "マスターとして実行"
 
-#: core/ui/settings_network.cpp:222
+#: core/ui/settings_network.cpp:224
 msgid "Only used for Maximum Speed. One of the peer must be master."
 msgstr "Maximum Speed (Atomiswave) 専用です。ピアのひとつがマスターである必要があります。"
 
-#: core/ui/settings_network.cpp:226
+#: core/ui/settings_network.cpp:228
 msgid "Network Options"
 msgstr "ネットワークオプション"
 
-#: core/ui/settings_network.cpp:228
+#: core/ui/settings_network.cpp:230
 msgid "Enable UPnP"
 msgstr "UPnPを有効にする"
 
-#: core/ui/settings_network.cpp:228
+#: core/ui/settings_network.cpp:230
 msgid "Automatically configure your network router for netplay"
 msgstr "ネットプレイ用にネットワークルーターを自動的に構成する"
 
-#: core/ui/settings_network.cpp:229
+#: core/ui/settings_network.cpp:231
 msgid "Broadcast Digital Outputs"
 msgstr "ブロードキャストデジタル出力"
 
-#: core/ui/settings_network.cpp:229
+#: core/ui/settings_network.cpp:231
 msgid "Broadcast digital outputs and force-feedback state on TCP port 8000. Compatible with the \"-output network\" MAME option. Arcade games only."
 msgstr "TCPポート8000でデジタル出力とフォースフィードバックの状態をブロードキャストします。MAMEオプションの -output network と互換性があります。アーケードゲームのみ。"
 
-#: core/ui/settings_network.cpp:234
+#: core/ui/settings_network.cpp:236
 msgid "Broadband Adapter Emulation"
 msgstr "ブロードバンドアダプターエミュレーション"
 
-#: core/ui/settings_network.cpp:235
+#: core/ui/settings_network.cpp:237
 msgid "Emulate the Ethernet Broadband Adapter (BBA) instead of the Modem"
 msgstr "モデムの代わりにイーサネットブロードバンドアダプター(BBA)をエミュレートします"
 
-#: core/ui/settings_network.cpp:237
+#: core/ui/settings_network.cpp:239
 msgid "Use DCNet"
 msgstr "DCNetを使用する"
 
-#: core/ui/settings_network.cpp:237
+#: core/ui/settings_network.cpp:239
 msgid "Use the DCNet cloud service for Dreamcast Internet access."
 msgstr "DreamcastインターネットへのアクセスにはDCNetクラウドサービスを使用します。"
 
-#: core/ui/settings_network.cpp:240
+#: core/ui/settings_network.cpp:242
 msgid "ISP User Name"
 msgstr "ISPユーザー名"
 
-#: core/ui/settings_network.cpp:246
+#: core/ui/settings_network.cpp:248
 msgid "The ISP user name stored in the console Flash RAM. Used by some online games as the player name. Leave blank to keep the current Flash RAM value."
 msgstr "コンソールのフラッシュRAMに格納されているISPユーザー名。 一部のオンラインゲームでプレイヤー名として使用されます。現在のフラッシュRAMの値を維持するには空白のままにしてください。"
 
-#: core/ui/settings_network.cpp:252
+#: core/ui/settings_network.cpp:254
 msgid "DNS server name or IP address"
 msgstr "DNSサーバー名またはIPアドレス"
 
-#: core/ui/settings_network.cpp:258
+#: core/ui/settings_network.cpp:260
 msgid "Multiboard Screens"
 msgstr "マルチボードスクリーン"
 
-#: core/ui/settings_network.cpp:260
+#: core/ui/settings_network.cpp:262
 msgid "1 (Twin, Satellite)"
 msgstr "1(Twin、サテライト)"
 
-#: core/ui/settings_network.cpp:260
+#: core/ui/settings_network.cpp:262
 msgid "One screen configuration (F355 Twin, Derby Owners Club satellite)"
 msgstr "1画面構成 (F355 Twin, Derby Owners Club サテライト)"
 
-#: core/ui/settings_network.cpp:262
+#: core/ui/settings_network.cpp:264
 msgid "2+ (Deluxe, Main screen)"
 msgstr "2+ (Deluxe、メイン画面)"
 
-#: core/ui/settings_network.cpp:263
+#: core/ui/settings_network.cpp:265
 msgid "Two or three screens configuration (Airline Pilot, Derby Owners Club main screen, F355 Deluxe, Sega Strike Fighter)"
 msgstr "2または3画面構成（Airline Pilot, Derby Owners Club メイン画面, F355 Deluxe, Sega Strike Fighter）"
 
@@ -2838,20 +2850,20 @@ msgstr "zipを読み込めません"
 msgid "OpenGL shader compilation failed"
 msgstr "OpenGLシェーダのコンパイルに失敗しました"
 
-#: core/rend/gles/gles.cpp:1061
+#: core/rend/gles/gles.cpp:1065
 msgid "OpenGL ES 3.0+ required for Naomi 2"
 msgstr "Naomi2にはOpenGL ES 3.0+ が必要です"
 
-#: core/emulator.cpp:596
+#: core/emulator.cpp:599
 #, c-format
 msgid "No BIOS file found in %s"
 msgstr "%s にBIOSファイルが見つかりません"
 
-#: core/emulator.cpp:612
+#: core/emulator.cpp:615
 msgid "This game requires a real BIOS"
 msgstr "このゲームには実際のBIOSが必要です"
 
-#: core/emulator.cpp:662
+#: core/emulator.cpp:665
 msgid "Widescreen cheat activated"
 msgstr "ワイドスクリーンチートが有効になりました"
 
@@ -2875,11 +2887,11 @@ msgstr "中央ボタン"
 msgid "Touch Mouse"
 msgstr "タッチマウス"
 
-#: core/wsi/switcher.cpp:91
+#: core/wsi/switcher.cpp:98
 msgid "Cannot initialize the graphics API"
 msgstr "グラフィックAPIを初期化できません"
 
-#: shell/libretro/libretro.cpp:2143
+#: shell/libretro/libretro.cpp:2157
 msgid "Cannot run without JIT"
 msgstr "JITなしでは実行できません"
 
@@ -2923,7 +2935,7 @@ msgstr "ホイール"
 msgid "Throttle"
 msgstr "スロットル"
 
-#: shell/android-studio/flycast/src/main/jni/src/Android.cpp:172
+#: shell/android-studio/flycast/src/main/jni/src/Android.cpp:173
 msgid "Memory initialization failed"
 msgstr "メモリの初期化に失敗しました"
 
