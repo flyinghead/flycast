@@ -384,11 +384,18 @@ void setNaomiNetworkConfig(int node, int nodeCount, bool satellite)
 			break;
 		}
 		write_naomi_eeprom(0x34, v);
-		if (node != -1 && !satellite)
+		if (node != -1)
 		{
 			// car #
-			u8 b = read_naomi_eeprom(0x3d) & 0xc7;
-			write_naomi_eeprom(0x3d, b | (node << 3));
+			if (settings.content.fileName.substr(0, 7) == "clubkrt") {
+				u8 b = read_naomi_eeprom(0x4a) & 0xf8;
+				write_naomi_eeprom(0x4a, b | node);
+			}
+			else {
+				// clubk2k3
+				u8 b = read_naomi_eeprom(0x3d) & 0xc7;
+				write_naomi_eeprom(0x3d, b | (node << 3));
+			}
 		}
 	}
 	else if (gameId == "INITIAL D"
