@@ -268,6 +268,16 @@ void Achievements::setHostOverride(const std::string& host)
 		if (!host.empty())
 		{
 			rc_client_set_hardcore_enabled(rc_client, 0);
+			if (!loggedOn
+				&& !config::AchievementsUserName.get().empty()
+				&& !config::AchievementsToken.get().empty())
+			{
+				INFO_LOG(COMMON, "RA: Retrying login via proxy host '%s'", host.c_str());
+				rc_client_begin_login_with_token(rc_client,
+					config::AchievementsUserName.get().c_str(),
+					config::AchievementsToken.get().c_str(),
+					clientLoginWithTokenCallback, nullptr);
+			}
 		}
 		else
 		{
