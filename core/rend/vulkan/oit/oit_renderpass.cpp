@@ -75,7 +75,7 @@ vk::UniqueRenderPass RenderPasses::MakeRenderPass(bool initial, bool last, bool 
     };
 
     std::vector<vk::SubpassDependency> dependencies = GetSubpassDependencies();
-    dependencies.emplace_back(VK_SUBPASS_EXTERNAL, 1, vk::PipelineStageFlagBits::eFragmentShader, vk::PipelineStageFlagBits::eColorAttachmentOutput,
+    dependencies.emplace_back(vk::SubpassExternal, 1, vk::PipelineStageFlagBits::eFragmentShader, vk::PipelineStageFlagBits::eColorAttachmentOutput,
     		vk::AccessFlagBits::eInputAttachmentRead, vk::AccessFlagBits::eColorAttachmentWrite, vk::DependencyFlagBits::eByRegion);
     dependencies.emplace_back(0, 1, vk::PipelineStageFlagBits::eLateFragmentTests, vk::PipelineStageFlagBits::eFragmentShader,
     		vk::AccessFlagBits::eDepthStencilAttachmentRead | vk::AccessFlagBits::eDepthStencilAttachmentWrite,
@@ -100,7 +100,7 @@ vk::UniqueRenderPass RenderPasses::MakeRenderPass(bool initial, bool last, bool 
 	if (GetContext()->GetVendorID() == VulkanContext::VENDOR_ARM) {
 		// Avoid glitches in upper left corner with Mali GPUs.
 		// Using eTopOfPipe as destination since eFragmentShader/eInputAttachmentRead|eShaderRead fails to fix the problem, which is odd.
-		dependencies.emplace_back(2, VK_SUBPASS_EXTERNAL, vk::PipelineStageFlagBits::eColorAttachmentOutput, vk::PipelineStageFlagBits::eTopOfPipe,
+		dependencies.emplace_back(2, vk::SubpassExternal, vk::PipelineStageFlagBits::eColorAttachmentOutput, vk::PipelineStageFlagBits::eTopOfPipe,
 				vk::AccessFlagBits::eColorAttachmentWrite, vk::AccessFlagBits::eNone);
 	}
 

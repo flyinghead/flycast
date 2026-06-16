@@ -54,11 +54,11 @@ protected:
 	virtual std::vector<vk::SubpassDependency> GetSubpassDependencies() const
 	{
 		if (config::EmulateFramebuffer)
-			return { { 2, VK_SUBPASS_EXTERNAL,
+			return { { 2, vk::SubpassExternal,
 					vk::PipelineStageFlagBits::eColorAttachmentOutput, vk::PipelineStageFlagBits::eTransfer | vk::PipelineStageFlagBits::eHost,
 					vk::AccessFlagBits::eColorAttachmentWrite, vk::AccessFlagBits::eTransferRead | vk::AccessFlagBits::eHostRead, vk::DependencyFlagBits::eByRegion } };
 		else
-			return { { 2, VK_SUBPASS_EXTERNAL,
+			return { { 2, vk::SubpassExternal,
 					vk::PipelineStageFlagBits::eColorAttachmentOutput, vk::PipelineStageFlagBits::eFragmentShader,
 					vk::AccessFlagBits::eColorAttachmentWrite, vk::AccessFlagBits::eShaderRead, vk::DependencyFlagBits::eByRegion } };
 	}
@@ -82,11 +82,11 @@ protected:
 	std::vector<vk::SubpassDependency> GetSubpassDependencies() const override
 	{
 		if (config::RenderToTextureBuffer)
-			return { { 2, VK_SUBPASS_EXTERNAL,
+			return { { 2, vk::SubpassExternal,
 					vk::PipelineStageFlagBits::eColorAttachmentOutput, vk::PipelineStageFlagBits::eTransfer | vk::PipelineStageFlagBits::eHost,
 					vk::AccessFlagBits::eColorAttachmentWrite, vk::AccessFlagBits::eTransferRead | vk::AccessFlagBits::eHostRead } };
 		else
-			return { { 2, VK_SUBPASS_EXTERNAL, vk::PipelineStageFlagBits::eColorAttachmentOutput, vk::PipelineStageFlagBits::eFragmentShader,
+			return { { 2, vk::SubpassExternal, vk::PipelineStageFlagBits::eColorAttachmentOutput, vk::PipelineStageFlagBits::eFragmentShader,
 					vk::AccessFlagBits::eColorAttachmentWrite, vk::AccessFlagBits::eShaderRead } };
 	}
 };

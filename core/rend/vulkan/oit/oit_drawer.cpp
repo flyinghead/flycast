@@ -669,11 +669,11 @@ void OITTextureDrawer::EndFrame()
 		vk::BufferMemoryBarrier bufferMemoryBarrier(
 				vk::AccessFlagBits::eTransferWrite,
 				vk::AccessFlagBits::eHostRead,
-				VK_QUEUE_FAMILY_IGNORED,
-				VK_QUEUE_FAMILY_IGNORED,
+				vk::QueueFamilyIgnored,
+				vk::QueueFamilyIgnored,
 				*colorAttachment->GetBufferData()->buffer,
 				0,
-				VK_WHOLE_SIZE);
+				vk::WholeSize);
 		currentCommandBuffer.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer,
 						vk::PipelineStageFlagBits::eHost, {}, nullptr, bufferMemoryBarrier, nullptr);
 	}
