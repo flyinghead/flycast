@@ -76,6 +76,7 @@ void Sh4Interpreter::Start()
 void Sh4Interpreter::Stop()
 {
 	ctx->CpuRunning = false;
+	ctx->cycle_counter = 0;
 }
 
 void Sh4Interpreter::Step()
