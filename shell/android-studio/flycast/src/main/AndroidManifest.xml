@@ -44,6 +44,7 @@
         android:banner="@drawable/ic_banner"
         android:logo="@drawable/ic_banner"
         android:hardwareAccelerated="true"
+        android:networkSecurityConfig="@xml/network_security_config"
         android:appCategory="game"
         android:isGame="true"
 		android:requestLegacyExternalStorage="true"
