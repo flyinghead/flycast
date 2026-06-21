@@ -79,8 +79,8 @@ struct GamePortList {
 	uint16_t tcpPorts[10];
 };
 static const GamePortList GamesPorts[] = {
-	{ // Alien Front Online
-		{ "MK-51171" },
+	{ // Alien Front Online, Alien Front (naomi)
+		{ "MK-51171", "ALIEN FRONT" },
 		{ 7980 },
 		{ },
 	},
