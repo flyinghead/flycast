@@ -60,6 +60,7 @@ public:
 		bool twoVolume;
 		int palette;
 		bool divPosZ;
+		bool useBDA;
 		Pass pass;
 
 		u32 hash()
@@ -68,7 +69,8 @@ public:
 				| ((u32)texture << 3) | ((u32)ignoreTexAlpha << 4) | (shaderInstr << 5)
 				| ((u32)offset << 7) | ((u32)fog << 8) | ((u32)gouraud << 10)
 				| ((u32)bumpmap << 11) | ((u32)clamping << 12) | ((u32)twoVolume << 13)
-				| ((u32)palette << 14) | ((int)pass << 16) | ((u32)divPosZ << 18);
+				| ((u32)palette << 14) | ((int)pass << 16) | ((u32)divPosZ << 18)
+				| ((u32)useBDA << 19);
 		}
 	};
 
@@ -84,8 +86,17 @@ public:
 	{
 		ModVolMode mode;
 		bool divPosZ;
+		bool useBDA;
 
-		u32 hash() { return (u32)mode | ((u32)divPosZ << 3); }
+		u32 hash() { return (u32)mode | ((u32)divPosZ << 3) | ((u32)useBDA << 4); }
+	};
+
+	struct FinalShaderParams
+	{
+		bool dithering;
+		bool useBDA;
+
+		u32 hash() { return (u32)dithering | ((u32)useBDA << 1); }
 	};
 
 	vk::ShaderModule GetVertexShader(const VertexShaderParams& params) { return getShader(vertexShaders, params); }
@@ -105,12 +116,10 @@ public:
 		return getShader(trModVolShaders, params);
 	}
 
-	vk::ShaderModule GetFinalShader(bool dithering)
+	vk::ShaderModule GetFinalShader(const FinalShaderParams& params)
 	{
 		checkMaxLayers();
-		if (!finalFragmentShaders[dithering])
-			finalFragmentShaders[dithering] = compileFinalShader(dithering);
-		return *finalFragmentShaders[dithering];
+		return getShader(finalFragmentShaders, params);
 	}
 
 	vk::ShaderModule GetFinalVertexShader()
@@ -136,8 +145,7 @@ public:
 		trModVolShaders.clear();
 
 		finalVertexShader.reset();
-		finalFragmentShaders[0].reset();
-		finalFragmentShaders[1].reset();
+		finalFragmentShaders.clear();
 		clearShader.reset();
 	}
 
@@ -157,7 +165,7 @@ private:
 	vk::UniqueShaderModule compileShader(const ModVolShaderParams& params);
 	vk::UniqueShaderModule compileModVolFragmentShader(bool divPosZ);
 	vk::UniqueShaderModule compileShader(const TrModVolShaderParams& params);
-	vk::UniqueShaderModule compileFinalShader(bool dithering);
+	vk::UniqueShaderModule compileShader(const FinalShaderParams& params);
 	vk::UniqueShaderModule compileFinalVertexShader();
 	vk::UniqueShaderModule compileClearShader();
 	void checkMaxLayers();
@@ -167,9 +175,9 @@ private:
 	std::map<u32, vk::UniqueShaderModule> modVolVertexShaders;
 	vk::UniqueShaderModule modVolShaders[2];
 	std::map<u32, vk::UniqueShaderModule> trModVolShaders;
+	std::map<u32, vk::UniqueShaderModule> finalFragmentShaders;
 
 	vk::UniqueShaderModule finalVertexShader;
-	vk::UniqueShaderModule finalFragmentShaders[2];
 	vk::UniqueShaderModule clearShader;
 	int maxLayers = 0;
 };

@@ -50,7 +50,9 @@ public:
 		float sp_FOG_DENSITY;
 		float shade_scale_factor;	// new for OIT
 		u32 pixelBufferSize;
+		u64 pixelBufferAddress;
 		u32 viewportWidth;
+		u32 _pad;
 	};
 
 	struct PushConstants
@@ -274,6 +276,7 @@ public:
 	virtual void Init(OITShaderManager *shaderManager, OITBuffers *oitBuffers)
 	{
 		this->shaderManager = shaderManager;
+		this->oitBuffers = oitBuffers;
 
 		if (!perFrameLayout)
 		{
@@ -321,26 +324,26 @@ public:
 		pipelines.clear();
 		modVolPipelines.clear();
 		trModVolPipelines.clear();
-		finalPipelines[0].reset();
-		finalPipelines[1].reset();
+		finalPipelines.clear();
 		clearPipeline.reset();
 	}
 
 	vk::Pipeline GetPipeline(u32 listType, bool autosort, const PolyParam& pp, Pass pass, int gpuPalette)
 	{
-		u64 pipehash = hash(listType, autosort, &pp, pass, gpuPalette);
+		const bool useBDA = oitBuffers->getPixelBufferAddress();
+		u64 pipehash = hash(listType, autosort, &pp, pass, gpuPalette, useBDA);
 		const auto &pipeline = pipelines.find(pipehash);
 		if (pipeline != pipelines.end())
 			return pipeline->second.get();
 
-		CreatePipeline(listType, autosort, pp, pass, gpuPalette);
+		CreatePipeline(listType, autosort, pp, pass, gpuPalette, useBDA);
 
 		return *pipelines[pipehash];
 	}
 
 	vk::Pipeline GetModifierVolumePipeline(ModVolMode mode, int cullMode, bool naomi2)
 	{
-		u32 pipehash = hash(mode, cullMode, naomi2);
+		u32 pipehash = hash(mode, cullMode, naomi2, false);
 		const auto &pipeline = modVolPipelines.find(pipehash);
 		if (pipeline != modVolPipelines.end())
 			return pipeline->second.get();
@@ -351,20 +354,26 @@ public:
 	vk::Pipeline GetTrModifierVolumePipeline(ModVolMode mode, int cullMode, bool naomi2)
 	{
 		checkMaxLayers();
-		u32 pipehash = hash(mode, cullMode, naomi2);
+		const bool useBDA = oitBuffers->getPixelBufferAddress();
+		u32 pipehash = hash(mode, cullMode, naomi2, useBDA);
 		const auto &pipeline = trModVolPipelines.find(pipehash);
 		if (pipeline != trModVolPipelines.end())
 			return pipeline->second.get();
-		CreateTrModVolPipeline(mode, cullMode, naomi2);
+		CreateTrModVolPipeline(mode, cullMode, naomi2, useBDA);
 
 		return *trModVolPipelines[pipehash];
 	}
 	vk::Pipeline GetFinalPipeline(bool dithering)
 	{
 		checkMaxLayers();
-		if (!finalPipelines[dithering])
-			CreateFinalPipeline(dithering);
-		return *finalPipelines[dithering];
+		const bool useBDA = oitBuffers->getPixelBufferAddress();
+		u32 pipehash = hash(dithering, useBDA);
+		const auto &pipeline = finalPipelines.find(pipehash);
+		if (pipeline != finalPipelines.end())
+			return pipeline->second.get();
+		CreateFinalPipeline(dithering, useBDA);
+
+		return *finalPipelines[pipehash];
 	}
 	vk::Pipeline GetClearPipeline()
 	{
@@ -381,9 +390,9 @@ public:
 
 private:
 	void CreateModVolPipeline(ModVolMode mode, int cullMode, bool naomi2);
-	void CreateTrModVolPipeline(ModVolMode mode, int cullMode, bool naomi2);
+	void CreateTrModVolPipeline(ModVolMode mode, int cullMode, bool naomi2, bool useBDA);
 
-	u64 hash(u32 listType, bool autosort, const PolyParam *pp, Pass pass, int gpuPalette) const
+	u64 hash(u32 listType, bool autosort, const PolyParam *pp, Pass pass, int gpuPalette, bool useBDA) const
 	{
 		u64 hash = pp->pcw.Gouraud | (pp->pcw.Offset << 1) | (pp->pcw.Texture << 2) | (pp->pcw.Shadow << 3)
 			| (((pp->tileclip >> 28) == 3) << 4);
@@ -404,12 +413,17 @@ private:
 		hash |= ((u64)gpuPalette << 26) | ((u64)pass << 28) | ((u64)pp->isNaomi2() << 30);
 		hash |= (u64)(!settings.platform.isNaomi2() && config::NativeDepthInterpolation) << 31;
 		hash |= (u64)(pp->tcw.PixelFmt == PixelBumpMap) << 32;
+		hash |= (u64)useBDA << 34;
 
 		return hash;
 	}
-	u32 hash(ModVolMode mode, int cullMode, bool naomi2) const
+	u32 hash(ModVolMode mode, int cullMode, bool naomi2, bool useBDA) const
 	{
-		return ((int)mode << 2) | cullMode | ((u32)naomi2 << 5) | ((u32)(!settings.platform.isNaomi2() && config::NativeDepthInterpolation) << 6);
+		return ((int)mode << 2) | cullMode | ((u32)naomi2 << 5) | ((u32)(!settings.platform.isNaomi2() && config::NativeDepthInterpolation) << 6) | ((u32)useBDA << 7);
+	}
+	u32 hash(bool dithering, bool useBDA) const
+	{
+		return (u32)dithering | ((u32)useBDA << 1);
 	}
 
 	vk::PipelineVertexInputStateCreateInfo GetMainVertexInputStateCreateInfo(bool full = true, bool naomi2 = false) const
@@ -459,15 +473,15 @@ private:
 		);
 	}
 
-	void CreatePipeline(u32 listType, bool autosort, const PolyParam& pp, Pass pass, int gpuPalette);
-	void CreateFinalPipeline(bool dithering);
+	void CreatePipeline(u32 listType, bool autosort, const PolyParam& pp, Pass pass, int gpuPalette, bool useBDA);
+	void CreateFinalPipeline(bool dithering, bool useBDA);
 	void CreateClearPipeline();
 	void checkMaxLayers();
 
 	std::map<u64, vk::UniquePipeline> pipelines;
 	std::map<u32, vk::UniquePipeline> modVolPipelines;
 	std::map<u32, vk::UniquePipeline> trModVolPipelines;
-	vk::UniquePipeline finalPipelines[2];
+	std::map<u32, vk::UniquePipeline> finalPipelines;
 	vk::UniquePipeline clearPipeline;
 
 	vk::UniquePipelineLayout pipelineLayout;
@@ -482,6 +496,7 @@ protected:
 
 	RenderPasses *renderPasses;
 	OITShaderManager *shaderManager = nullptr;
+	OITBuffers *oitBuffers = nullptr;
 };
 
 class RttOITPipelineManager : public OITPipelineManager
@@ -490,7 +505,6 @@ public:
 	RttOITPipelineManager() { renderPasses = &rttRenderPasses; }
 	void Init(OITShaderManager *shaderManager, OITBuffers *oitBuffers) override
 	{
-		this->oitBuffers = oitBuffers;
 		OITPipelineManager::Init(shaderManager, oitBuffers);
 
 		renderToTextureBuffer = config::RenderToTextureBuffer;
@@ -507,5 +521,4 @@ public:
 private:
 	bool renderToTextureBuffer = false;
 	RttRenderPasses rttRenderPasses;
-	OITBuffers *oitBuffers = nullptr;
 };
