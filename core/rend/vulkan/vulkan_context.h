@@ -155,8 +155,10 @@ public:
 	bool SupportsSamplerAnisotropy() const { return samplerAnisotropy; }
 	float GetMaxSamplerAnisotropy() const { return samplerAnisotropy ? maxSamplerAnisotropy : 1.f; }
 	bool SupportsDedicatedAllocation() const { return dedicatedAllocationSupported; }
+	bool SupportsBufferDeviceAddress() const { return bufferDeviceAddressSupported; }
 	const VMAllocator& GetAllocator() const { return allocator; }
 	vk::DeviceSize GetMaxMemoryAllocationSize() const { return maxMemoryAllocationSize; }
+	u32 GetMaxStorageBufferRange() const { return maxStorageBufferRange; }
 	u32 GetVendorID() const { return vendorID; }
 	vk::CommandBuffer PrepareOverlay(bool vmu, bool crosshair);
 	void DrawOverlay(float scaling, bool vmu, bool crosshair);
@@ -224,6 +226,7 @@ private:
 	vk::DeviceSize uniformBufferAlignment = 0;
 	vk::DeviceSize storageBufferAlignment = 0;
 	vk::DeviceSize maxMemoryAllocationSize = 0xFFFFFFFFu;
+	u32 maxStorageBufferRange = 0xFFFFFFFFu;
 	bool optimalTilingSupported565 = false;
 	bool optimalTilingSupported1555 = false;
 	bool optimalTilingSupported4444 = false;
@@ -232,6 +235,7 @@ private:
 	float maxSamplerAnisotropy = 0.f;
 	bool dedicatedAllocationSupported = false;
 	bool provokingVertexSupported = false;
+	bool bufferDeviceAddressSupported = false;
 	u32 vendorID = 0;
 	int swapInterval = 1;
 	vk::UniqueDevice device;

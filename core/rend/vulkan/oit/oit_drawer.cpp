@@ -302,10 +302,12 @@ bool OITDrawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 	OITDescriptorSets::VertexShaderUniforms vtxUniforms;
 	vtxUniforms.ndcMat = matrices.GetNormalMatrix();
 
+	const vk::DeviceAddress pixelBufferAddress = oitBuffers->getPixelBufferAddress();
 	OITDescriptorSets::FragmentShaderUniforms fragUniforms = MakeFragmentUniforms<OITDescriptorSets::FragmentShaderUniforms>();
 	fragUniforms.shade_scale_factor = FPU_SHAD_SCALE.scale_factor / 256.f;
 	// sizeof(Pixel) == 16
-	fragUniforms.pixelBufferSize = std::min<u64>(config::PixelBufferSize, GetContext()->GetMaxMemoryAllocationSize()) / 16;
+	fragUniforms.pixelBufferSize = oitBuffers->getPixelBufferSize() / 16;
+	fragUniforms.pixelBufferAddress = pixelBufferAddress;
 	fragUniforms.viewportWidth = maxWidth;
 	dithering = config::EmulateFramebuffer && rendContext->fb_W_CTRL.fb_dither && rendContext->fb_W_CTRL.fb_packmode <= 3;
 	if (dithering)
@@ -381,13 +383,14 @@ bool OITDrawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
     {
         const RenderPass& current_pass = rendContext->render_passes[render_pass];
 
-        DEBUG_LOG(RENDERER, "Render pass %d OP %d PT %d TR %d MV %d TrMV %d autosort %d", render_pass + 1,
+        DEBUG_LOG(RENDERER, "Render pass %d OP %d PT %d TR %d MV %d TrMV %d autosort %d BDA %d", render_pass + 1,
         		current_pass.op_count - previous_pass.op_count,
 				current_pass.pt_count - previous_pass.pt_count,
 				current_pass.tr_count - previous_pass.tr_count,
 				current_pass.mvo_count - previous_pass.mvo_count,
 				current_pass.mv_op_tr_shared ? current_pass.mvo_count - previous_pass.mvo_count : current_pass.mvo_tr_count - previous_pass.mvo_tr_count,
-				current_pass.autosort);
+				current_pass.autosort,
+				!!pixelBufferAddress);
 
         // Reset the pixel counter
     	oitBuffers->ResetPixelCounter(cmdBuffer);

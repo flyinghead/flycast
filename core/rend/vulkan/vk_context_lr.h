@@ -88,10 +88,12 @@ public:
 	static VulkanContext *Instance() { return static_cast<VulkanContext *>(GraphicsContext::Instance()); }
 	bool SupportsSamplerAnisotropy() const { return samplerAnisotropy; }
 	bool SupportsDedicatedAllocation() const { return dedicatedAllocationSupported; }
+	bool SupportsBufferDeviceAddress() const { return bufferDeviceAddressSupported; }
 	bool hasPerPixel() override { return fragmentStoresAndAtomics; }
 	bool hasProvokingVertex() { return provokingVertexSupported; }
 	const VMAllocator& GetAllocator() const { return allocator; }
 	vk::DeviceSize GetMaxMemoryAllocationSize() const { return maxMemoryAllocationSize; }
+	u32 GetMaxStorageBufferRange() const { return maxStorageBufferRange; }
 	f32 GetMaxSamplerAnisotropy() const { return samplerAnisotropy ? maxSamplerAnisotropy : 1.f; }
 	u32 GetVendorID() const { return vendorID; }
 	void addToFlight(Deletable *object) override {
@@ -124,7 +126,7 @@ private:
 
 	vk::DeviceSize uniformBufferAlignment = 0;
 	vk::DeviceSize storageBufferAlignment = 0;
-	u32 maxStorageBufferRange = 0;
+	u32 maxStorageBufferRange = 0xFFFFFFFFu;
 	vk::DeviceSize maxMemoryAllocationSize = 0;
 	bool optimalTilingSupported565 = false;
 	bool optimalTilingSupported1555 = false;
@@ -135,6 +137,7 @@ public:
 	f32 maxSamplerAnisotropy = 0.f;
 	static bool dedicatedAllocationSupported;
 	static bool provokingVertexSupported;
+	static bool bufferDeviceAddressSupported;
 private:
 	u32 vendorID = 0;
 
