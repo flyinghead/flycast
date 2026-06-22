@@ -34,6 +34,7 @@ bool VulkanContext::fragmentStoresAndAtomics = false;
 bool VulkanContext::samplerAnisotropy = false;
 bool VulkanContext::dedicatedAllocationSupported = false;
 bool VulkanContext::provokingVertexSupported = false;
+bool VulkanContext::bufferDeviceAddressSupported = false;
 
 const VkApplicationInfo* VkGetApplicationInfo()
 {
@@ -177,17 +178,30 @@ bool VkCreateDevice(retro_vulkan_context* context, VkInstance instance, VkPhysic
 		? true : tryAddDeviceExtension(vk::KHRGetPhysicalDeviceProperties2ExtensionName);
 
 	if (getPhysicalDeviceProperties2Supported)
+	{
 		// Enable VK_EXT_provoking_vertex if available
 		VulkanContext::provokingVertexSupported = tryAddDeviceExtension(vk::EXTProvokingVertexExtensionName);
+		VulkanContext::bufferDeviceAddressSupported = tryAddDeviceExtension(vk::KHRBufferDeviceAddressExtensionName);
+	}
 
 	// Get device features
 
-	vk::PhysicalDeviceFeatures2 featuresChain{};
+	vk::StructureChain<
+		vk::PhysicalDeviceFeatures2,
+		vk::PhysicalDeviceProvokingVertexFeaturesEXT,
+		vk::PhysicalDeviceBufferDeviceAddressFeaturesKHR
+	> featuresChainHelper;
+
+	vk::PhysicalDeviceFeatures2& featuresChain = featuresChainHelper.get();
 	vk::PhysicalDeviceFeatures& features = featuresChain.features;
 
-	vk::PhysicalDeviceProvokingVertexFeaturesEXT provokingVertexFeatures{};
-	if (VulkanContext::provokingVertexSupported)
-		featuresChain.pNext = &provokingVertexFeatures;
+	auto& provokingVertexFeatures = featuresChainHelper.get<vk::PhysicalDeviceProvokingVertexFeaturesEXT>();
+	if (!VulkanContext::provokingVertexSupported)
+		featuresChainHelper.unlink<vk::PhysicalDeviceProvokingVertexFeaturesEXT>();
+
+	auto& bufferDeviceAddressFeatures = featuresChainHelper.get<vk::PhysicalDeviceBufferDeviceAddressFeaturesKHR>();
+	if (!VulkanContext::bufferDeviceAddressSupported)
+		featuresChainHelper.unlink<vk::PhysicalDeviceBufferDeviceAddressFeaturesKHR>();
 
 	// Get the physical device's features
 	if (getPhysicalDeviceProperties2Supported && featuresChain.pNext)
@@ -196,7 +210,16 @@ bool VkCreateDevice(retro_vulkan_context* context, VkInstance instance, VkPhysic
 		physicalDevice.getFeatures(&features);
 
 	if (VulkanContext::provokingVertexSupported)
+	{
 		VulkanContext::provokingVertexSupported &= provokingVertexFeatures.provokingVertexLast;
+		NOTICE_LOG(RENDERER, "provokingVertexSupported %d", VulkanContext::provokingVertexSupported);
+	}
+
+	if (VulkanContext::bufferDeviceAddressSupported)
+	{
+		VulkanContext::bufferDeviceAddressSupported &= bufferDeviceAddressFeatures.bufferDeviceAddress;
+		NOTICE_LOG(RENDERER, "bufferDeviceAddressSupported %d", VulkanContext::bufferDeviceAddressSupported);
+	}
 
 	VulkanContext::samplerAnisotropy = features.samplerAnisotropy;
 	VulkanContext::fragmentStoresAndAtomics = features.fragmentStoresAndAtomics;
