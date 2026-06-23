@@ -302,6 +302,9 @@ bool OITDrawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 	OITDescriptorSets::VertexShaderUniforms vtxUniforms;
 	vtxUniforms.ndcMat = matrices.GetNormalMatrix();
 
+	bool firstFrameAfterInit = oitBuffers->isFirstFrameAfterInit();
+	oitBuffers->OnNewFrame(cmdBuffer);
+
 	const vk::DeviceAddress pixelBufferAddress = oitBuffers->getPixelBufferAddress();
 	OITDescriptorSets::FragmentShaderUniforms fragUniforms = MakeFragmentUniforms<OITDescriptorSets::FragmentShaderUniforms>();
 	fragUniforms.shade_scale_factor = FPU_SHAD_SCALE.scale_factor / 256.f;
@@ -332,9 +335,6 @@ bool OITDrawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 	}
 
 	currentScissor = vk::Rect2D();
-
-	bool firstFrameAfterInit = oitBuffers->isFirstFrameAfterInit();
-	oitBuffers->OnNewFrame(cmdBuffer);
 
 	if (VulkanContext::Instance()->hasProvokingVertex())
 	{
