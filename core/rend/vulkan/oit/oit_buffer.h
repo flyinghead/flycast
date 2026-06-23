@@ -37,11 +37,6 @@ public:
 		maxWidth = std::max(maxWidth, width);
 		maxHeight = std::max(maxHeight, height);
 
-		if (!pixelBuffer)
-		{
-			pixelBufferSize = config::PixelBufferSize;
-			makePixelBuffer();
-		}
 		if (!pixelCounter)
 		{
 			pixelCounter = std::make_unique<BufferData>(4,
