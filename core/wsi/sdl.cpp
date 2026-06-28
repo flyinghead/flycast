@@ -24,9 +24,6 @@
 #include "sdl/sdl.h"
 #include "cfg/option.h"
 
-#include <algorithm>
-#include <cmath>
-
 SDLGLGraphicsContext::SDLGLGraphicsContext(void *window, void *display)
 	: GLGraphicsContext(window, display)
 {
@@ -83,16 +80,7 @@ bool SDLGLGraphicsContext::init()
 	}
 	SDL_GL_MakeCurrent(sdlWindow, NULL);
 
-	int w, h;
-	SDL_GetWindowSize(sdlWindow, &w, &h);
-	SDL_GL_GetDrawableSize(sdlWindow, &settings.display.width, &settings.display.height);
-	settings.display.pointScale = (float)settings.display.width / w;
-
-	float hdpi, vdpi;
-	if (!SDL_GetDisplayDPI(SDL_GetWindowDisplayIndex(sdlWindow), nullptr, &hdpi, &vdpi))
-		settings.display.dpi = roundf(std::max(hdpi, vdpi));
-	
-	sdl_fix_steamdeck_dpi(sdlWindow);
+	sdl_update_display_metrics(sdlWindow, SDL_WINDOW_OPENGL);
 
 	INFO_LOG(RENDERER, "Created SDL Window and GL Context successfully");
 

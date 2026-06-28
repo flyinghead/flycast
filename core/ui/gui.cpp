@@ -204,7 +204,17 @@ void gui_updateStyle()
 	uiThreadRunner.init();
 
 #if !defined(TARGET_UWP) && !defined(__SWITCH__)
-	settings.display.uiScale = std::max(1.f, settings.display.dpi / 100.f * 0.75f);
+	const float dpiScale = std::max(1.f, settings.display.dpi / 100.f * 0.75f);
+#if defined(__APPLE__) && !defined(TARGET_IPHONE)
+	if (settings.display.pointScale > 1.f)
+		// Match macOS point scaling for HiDPI modes.
+		settings.display.uiScale = std::max(settings.display.pointScale, dpiScale);
+	else
+		// Dense 1x modes get only a small physical-DPI boost.
+		settings.display.uiScale = 1.f + (dpiScale - 1.f) * 0.15f;
+#else
+	settings.display.uiScale = dpiScale;
+#endif
    	// Limit scaling on small low-res screens
     if (settings.display.width <= 640 || settings.display.height <= 480)
     	settings.display.uiScale = std::min(1.2f, settings.display.uiScale);
@@ -227,7 +237,7 @@ void gui_updateStyle()
 #if defined(__ANDROID__) || defined(TARGET_IPHONE) || defined(__SWITCH__)
     ImGui::GetStyle().TouchExtraPadding = ImVec2(1, 1);	// from 0,0
 #endif
-	if (settings.display.uiScale > 1)
+	if (settings.display.uiScale != 1.f)
 		ImGui::GetStyle().ScaleAllSizes(settings.display.uiScale);
 	
 	gui_loadFonts();

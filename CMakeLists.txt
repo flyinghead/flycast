@@ -520,7 +520,7 @@ if(NOT LIBRETRO)
 		endif()
 
 		if(USE_HOST_SDL)
-			find_package(SDL2 2.0.9)
+			find_package(SDL2 2.0.18)
 		endif()
 		if(NOT SDL2_FOUND)
 			set(SDL_TEST_ENABLED_BY_DEFAULT OFF)

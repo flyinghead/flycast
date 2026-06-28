@@ -257,7 +257,6 @@ void gui_loadFonts()
 	// Regular font
 	ImGuiStyle& style = ImGui::GetStyle();
 	const float fontSize = uiScaled(17.f);
-	style.FontSizeBase = fontSize;
 	
 	size_t dataSize;
 	std::unique_ptr<u8[]> data = resource::load("fonts/Roboto-Medium.ttf", dataSize);
@@ -478,4 +477,8 @@ void gui_loadFonts()
 	io.Fonts->AddFontFromMemoryTTF(data.get(), (int)dataSize, fontSize, &faFontConfig);
 	boldFontConfig.FontDataOwnedByAtlas = true;
 	io.Fonts->AddFontFromMemoryTTF(data.release(), (int)dataSize, fontSize, &boldFontConfig);
+
+	// AddFont() may sync the active ImGui font stack using the previous size.
+	// Re-apply the rebuilt atlas size after all fonts have been registered.
+	style.FontSizeBase = fontSize;
 }
