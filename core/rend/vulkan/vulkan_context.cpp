@@ -945,16 +945,8 @@ bool VulkanContext::init()
     	return false;
     }
     this->surface.reset(vk::SurfaceKHR(surface));
-    SDL_Window *sdlWin = (SDL_Window *)window;
-    int w, h;
-    SDL_GetWindowSize(sdlWin, &w, &h);
-    SDL_Vulkan_GetDrawableSize(sdlWin, &settings.display.width, &settings.display.height);
-    settings.display.pointScale = (float)settings.display.width / w;
-	float hdpi, vdpi;
-	if (!SDL_GetDisplayDPI(SDL_GetWindowDisplayIndex(sdlWin), nullptr, &hdpi, &vdpi))
-		settings.display.dpi = roundf(std::max(hdpi, vdpi));
-
-	sdl_fix_steamdeck_dpi(sdlWin);
+	SDL_Window *sdlWin = (SDL_Window *)window;
+	sdl_update_display_metrics(sdlWin, SDL_WINDOW_VULKAN);
 #elif defined(VK_USE_PLATFORM_WIN32_KHR)
 	vk::Win32SurfaceCreateInfoKHR createInfo(vk::Win32SurfaceCreateFlagsKHR(), GetModuleHandle(NULL), (HWND)window);
 	surface = instance->createWin32SurfaceKHRUnique(createInfo);
