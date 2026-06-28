@@ -973,13 +973,14 @@ static void gui_display_content()
 						if (counter % itemsPerLine != 0)
 							ImGui::SameLine();
 						counter++;
-						// Put the image inside a child window so we can detect when it's fully clipped and doesn't need to be loaded
-						if (ImGui::BeginChild("img", ImVec2(0, 0), ImGuiChildFlags_AutoResizeX | ImGuiChildFlags_AutoResizeY | ImGuiChildFlags_NavFlattened))
+						if (ImGui::IsRectVisible(responsiveBoxVec2))
 						{
 							ImguiFileTexture tex(art.boxartPath);
 							pressed = gameImageButton(tex, game.name, responsiveBoxVec2, gameName);
 						}
-						ImGui::EndChild();
+						else {
+							ImGui::Dummy(responsiveBoxVec2);
+						}
 					}
 					else
 					{
