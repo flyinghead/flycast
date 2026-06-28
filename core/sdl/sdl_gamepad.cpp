@@ -234,11 +234,7 @@ SDLGamepad::SDLGamepad(int maple_port, int joystick_idx, SDL_Joystick* sdl_joyst
 	hasAnalogStick = axes > 0;
 	set_maple_port(maple_port);
 
-#if SDL_VERSION_ATLEAST(2, 0, 18)
 	rumbleEnabled = SDL_JoystickHasRumble(sdl_joystick);
-#else
-	rumbleEnabled = (SDL_JoystickRumble(sdl_joystick, 1, 1, 1) != -1);
-#endif
 
 	// Open the haptic interface
 	haptic = SDL_HapticOpenFromJoystick(sdl_joystick);

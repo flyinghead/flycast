@@ -15,6 +15,7 @@
 #include "sdl_keyboard.h"
 #include "sdl_keyboard_mac.h"
 #include "wsi/context.h"
+#include "ui/gui.h"
 #include "emulator.h"
 #include "stdclass.h"
 #include "imgui.h"
@@ -33,6 +34,8 @@
 #include "dreamlink.h"
 #include "oslib/i18n.h"
 #include <unordered_map>
+#include <algorithm>
+#include <cmath>
 #include <cstdlib>
 #include <cstdio>
 
@@ -406,23 +409,18 @@ void input_sdl_handle()
 				break;
 
 			case SDL_WINDOWEVENT:
-				if (event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED
+			{
+				bool displayMetricsEvent = event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED
 						|| event.window.event == SDL_WINDOWEVENT_RESTORED
 						|| event.window.event == SDL_WINDOWEVENT_MINIMIZED
-						|| event.window.event == SDL_WINDOWEVENT_MAXIMIZED)
+						|| event.window.event == SDL_WINDOWEVENT_MAXIMIZED
+						|| event.window.event == SDL_WINDOWEVENT_DISPLAY_CHANGED;
+				if (displayMetricsEvent)
 				{
-#ifdef USE_VULKAN
-					if (windowFlags & SDL_WINDOW_VULKAN)
-						SDL_Vulkan_GetDrawableSize(window, &settings.display.width, &settings.display.height);
-					else
-#endif
-#ifdef USE_OPENGL
-					if (windowFlags & SDL_WINDOW_OPENGL)
-						SDL_GL_GetDrawableSize(window, &settings.display.width, &settings.display.height);
-					else
-#endif
-						SDL_GetWindowSize(window, &settings.display.width, &settings.display.height);
+					bool scaleChanged = sdl_update_display_metrics(window, windowFlags);
 					GraphicsContext::Instance()->resize();
+					if (scaleChanged)
+						gui_updateStyle();
 				}
 				else if (event.window.event == SDL_WINDOWEVENT_FOCUS_GAINED)
 				{
@@ -435,6 +433,7 @@ void input_sdl_handle()
 						SDL_ShowCursor(SDL_ENABLE);
 				}
 				break;
+			}
 
 			case SDL_JOYBUTTONDOWN:
 			case SDL_JOYBUTTONUP:
@@ -626,6 +625,49 @@ void sdlReceiveSlaveKeyboardEvent(u16 scancode, bool pressed)
 }
 
 static float hdpiScaling = 1.f;
+
+bool sdl_update_display_metrics(SDL_Window *window, u32 windowFlags)
+{
+	float oldPointScale = settings.display.pointScale;
+	float oldDpi = settings.display.dpi;
+
+	int windowWidth = 0;
+	int windowHeight = 0;
+	SDL_GetWindowSize(window, &windowWidth, &windowHeight);
+
+#ifdef USE_VULKAN
+	if (windowFlags & SDL_WINDOW_VULKAN)
+		SDL_Vulkan_GetDrawableSize(window, &settings.display.width, &settings.display.height);
+	else
+#endif
+#ifdef USE_OPENGL
+	if (windowFlags & SDL_WINDOW_OPENGL)
+		SDL_GL_GetDrawableSize(window, &settings.display.width, &settings.display.height);
+	else
+#endif
+	{
+		settings.display.width = windowWidth;
+		settings.display.height = windowHeight;
+	}
+
+	if (windowWidth > 0)
+		settings.display.pointScale = (float)settings.display.width / windowWidth;
+
+	int displayIndex = SDL_GetWindowDisplayIndex(window);
+	if (displayIndex >= 0)
+	{
+		float hdpi, vdpi;
+		if (SDL_GetDisplayDPI(displayIndex, nullptr, &hdpi, &vdpi) == 0)
+			settings.display.dpi = roundf(std::max(hdpi, vdpi));
+	}
+	else {
+		WARN_LOG(RENDERER, "Cannot get the window display index: %s", SDL_GetError());
+	}
+
+	sdl_fix_steamdeck_dpi(window);
+
+	return settings.display.pointScale != oldPointScale || settings.display.dpi != oldDpi;
+}
 
 static inline void get_window_state()
 {
@@ -965,10 +1007,13 @@ void sdl_fix_steamdeck_dpi(SDL_Window *window)
 	{
 		int displayIndex = SDL_GetWindowDisplayIndex(window);
 		SDL_DisplayMode mode;
-		SDL_GetDisplayMode(displayIndex, 0, &mode);
+		const char *displayName = nullptr;
+		if (displayIndex < 0 || SDL_GetDisplayMode(displayIndex, 0, &mode) != 0
+				|| (displayName = SDL_GetDisplayName(displayIndex)) == nullptr)
+			return;
 		if (displayIndex == 0
-				&& (strcmp(SDL_GetDisplayName(displayIndex), "ANX7530 U 3\"") == 0
-						|| strcmp(SDL_GetDisplayName(displayIndex), "XWAYLAND0 3\"") == 0)
+				&& (strcmp(displayName, "ANX7530 U 3\"") == 0
+						|| strcmp(displayName, "XWAYLAND0 3\"") == 0)
 				&& mode.w == 1280 && mode.h == 800)
 			settings.display.dpi = 206;
 	}

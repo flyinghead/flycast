@@ -700,8 +700,9 @@ bool Toast::draw()
 	ImFont *regularFont = ImGui::GetFont();
 	const ImVec2 titleSize = title.empty() ? ImVec2()
 			: ImGui::GetFont()->CalcTextSizeA(uiLargeFontSize(), FLT_MAX, maxW, &title.front(), &title.back() + 1);
+	const float regularFontSize = ImGui::GetStyle().FontSizeBase;
 	const ImVec2 msgSize = message.empty() ? ImVec2()
-			: regularFont->CalcTextSizeA(regularFont->LegacySize, FLT_MAX, maxW, &message.front(), &message.back() + 1);
+			: regularFont->CalcTextSizeA(regularFontSize, FLT_MAX, maxW, &message.front(), &message.back() + 1);
 	const ScaledVec2 padding(5.f, 4.f);
 	const ScaledVec2 spacing(0.f, 2.f);
 	ImVec2 totalSize(std::max(titleSize.x, msgSize.x), titleSize.y + msgSize.y);
@@ -727,7 +728,7 @@ bool Toast::draw()
 	if (!message.empty())
 	{
 		const ImU32 col = alphaOverride(0xFF00FFFF, alpha);	// yellow
-		dl->AddText(regularFont, regularFont->LegacySize, pos, col, &message.front(), &message.back() + 1, maxW);
+		dl->AddText(regularFont, regularFontSize, pos, col, &message.front(), &message.back() + 1, maxW);
 	}
 
 	return true;
