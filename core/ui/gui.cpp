@@ -555,13 +555,15 @@ static void gui_display_commands()
 		ImGui::SameLine();
 		if (!lowHeight)
 		{
-			ImGui::BeginChild("game_info", ScaledVec2(0, 100.f), ImGuiChildFlags_Borders, ImGuiWindowFlags_None);
+			ImGui::BeginChild("game_info", ScaledVec2(0, 100.f), ImGuiChildFlags_Borders, ImGuiWindowFlags_NoScrollbar);
 			ImGui::PushFont(nullptr, uiLargeFontSize());
 			ImGui::Text("%s", art.name.c_str());
 			ImGui::PopFont();
 			{
 				ImguiStyleColor _(ImGuiCol_Text, ImVec4(0.75f, 0.75f, 0.75f, 1.f));
 				ImGui::TextWrapped("%s", art.fileName.c_str());
+				if (!art.arcade && !art.uniqueId.empty())
+					ImGui::Text(T("UID: %s"), art.uniqueId.c_str());
 			}
 			ImGui::EndChild();
 		}
