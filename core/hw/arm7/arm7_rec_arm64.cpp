@@ -551,6 +551,7 @@ class Arm7Compiler : public MacroAssembler
 			Mov(w0, op.arg[0].getImmediate());
 		else
 			Mov(w0, regalloc->map(op.arg[0].getReg().armreg));
+		Mov(w1, op.psrMask);
 		if (op.spsr)
 			call((void*)recompiler::MSR_do<1>);
 		else

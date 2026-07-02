@@ -408,6 +408,7 @@ static void emitMSR(const ArmOp& op)
 		ass.Mov(r0, op.arg[0].getImmediate());
 	else
 		ass.Mov(r0, regalloc->map(op.arg[0].getReg().armreg));
+	ass.Mov(r1, op.psrMask);
 
 	if (op.spsr)
 		call((void *)recompiler::MSR_do<1>);
