@@ -101,6 +101,8 @@ struct ArmOp
 	u8 flags = 0;
 	u8 cycles = 6;
 	bool spsr = false;
+	// For MSR
+	u8 psrMask = 0;
 
 	bool isLogicalOp() const
 	{
@@ -428,7 +430,7 @@ void term();
 void flush();
 void compile();
 void *getMemOp(bool load, bool byte);
-template<u32 Pd> void DYNACALL MSR_do(u32 v);
+template<u32 Pd> void DYNACALL MSR_do(u32 v, u32 mask);
 void DYNACALL interpret(u32 opcode);
 
 extern u8* icPtr;
