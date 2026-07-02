@@ -382,13 +382,22 @@ void DYNACALL interpret(u32 opcode)
 }
 
 template<u32 Pd>
-void DYNACALL MSR_do(u32 v)
+void DYNACALL MSR_do(u32 v, u32 mask)
 {
 	if (Pd)
 	{
 		if(armMode > 0x10 && armMode < 0x1f) /* !=0x10 ?*/
 		{
-			reg[RN_SPSR].I = (reg[RN_SPSR].I & 0x00FFFF00) | (v & 0xFF0000FF);
+			u32 newValue = reg[RN_SPSR].I;
+			if (mask & 1)
+				newValue = (newValue & 0xFFFFFF00) | (v & 0x000000FF);
+			if (mask & 2)
+				newValue = (newValue & 0xFFFF00FF) | (v & 0x0000FF00);
+			if (mask & 4)
+				newValue = (newValue & 0xFF00FFFF) | (v & 0x00FF0000);
+			if (mask & 8)
+				newValue = (newValue & 0x00FFFFFF) | (v & 0xFF000000);
+			reg[RN_SPSR].I = newValue;
 		}
 	}
 	else
@@ -398,10 +407,15 @@ void DYNACALL MSR_do(u32 v)
 		u32 newValue = reg[RN_CPSR].I;
 		if(armMode > 0x10)
 		{
-			newValue = (newValue & 0xFFFFFF00) | (v & 0x000000FF);
+			if (mask & 1)
+				newValue = (newValue & 0xFFFFFF00) | (v & 0x000000FF);
+			if (mask & 2)
+				newValue = (newValue & 0xFFFF00FF) | (v & 0x0000FF00);
+			if (mask & 4)
+				newValue = (newValue & 0xFF00FFFF) | (v & 0x00FF0000);
 		}
-
-		newValue = (newValue & 0x00FFFFFF) | (v & 0xFF000000);
+		if (mask & 8)
+			newValue = (newValue & 0x00FFFFFF) | (v & 0xFF000000);
 		newValue |= 0x10;
 		if(armMode > 0x10)
 		{
@@ -411,8 +425,8 @@ void DYNACALL MSR_do(u32 v)
 		CPUUpdateFlags();
 	}
 }
-template void DYNACALL MSR_do<0>(u32 v);
-template void DYNACALL MSR_do<1>(u32 v);
+template void DYNACALL MSR_do<0>(u32 v, u32 mask);
+template void DYNACALL MSR_do<1>(u32 v, u32 mask);
 
 } // namespace recompiler
 #endif	// FEAT_AREC != DYNAREC_NONE

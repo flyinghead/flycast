@@ -780,6 +780,7 @@ class Arm7Compiler : public Xbyak::CodeGenerator
 			mov(call_regs[0], op.arg[0].getImmediate());
 		else
 			mov(call_regs[0], regalloc->map(op.arg[0].getReg().armreg));
+		mov(call_regs[1], op.psrMask);
 		if (op.spsr)
 			call(recompiler::MSR_do<1>);
 		else

@@ -164,15 +164,17 @@ static ArmOp decodeArmOp(u32 opcode, u32 arm_pc)
 				op.rd = ArmOp::Operand((Arm7Reg)bits.rd);
 				verify(bits.rd != 15);
 			}
-			else if ((bits.full & 0x0FBFFFF0) == 0x0129F000)
+			else if ((bits.full & 0x0FB0FFF0) == 0x0120F000)
 			{
 				op.op_type = ArmOp::MSR;
+				op.psrMask = (bits.full >> 16) & 0xF;
 				op.arg[0] = ArmOp::Operand((Arm7Reg)bits.rm);
 				op.cycles++;
 			}
-			else if ((bits.full & 0x0DBFF000) == 0x0128F000)
+			else if ((bits.full & 0x0DB0F000) == 0x0120F000)
 			{
 				op.op_type = ArmOp::MSR;
+				op.psrMask = (bits.full >> 16) & 0xF;
 				if (bits.imm_op == 0)
 				{
 					// source is reg
