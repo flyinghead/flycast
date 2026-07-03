@@ -26,6 +26,7 @@
 #include "aica.h"
 #include "aica_if.h"
 #include "oslib/virtmem.h"
+#include "stdclass.h"
 
 namespace aica::dsp
 {
@@ -403,7 +404,13 @@ void recompile()
 {
 	virtmem::jit_set_exec(pCodeBuffer, CodeBufferSize, false);
 	X64DSPAssembler assembler(pCodeBuffer, CodeBufferSize);
-	assembler.Compile(&state);
+	try {
+		assembler.Compile(&state);
+	} catch (const Xbyak::Error& e) {
+		virtmem::jit_set_exec(pCodeBuffer, CodeBufferSize, true);
+		ERROR_LOG(AICA_ARM, "Xbyak error: %s", e.what());
+		throw FlycastException(strprintf("DSP recompilation error: %s", e.what()));
+	}
 	virtmem::jit_set_exec(pCodeBuffer, CodeBufferSize, true);
 }
 

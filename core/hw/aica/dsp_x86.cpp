@@ -26,14 +26,15 @@
 #include "aica.h"
 #include "aica_if.h"
 #include "oslib/virtmem.h"
+#include "stdclass.h"
 
 namespace aica
 {
 
 namespace dsp
 {
-
-DECLARE_CODE_CACHE(CodeBuffer, 32_KB)
+constexpr size_t CodeBufferSize = 32_KB;
+DECLARE_CODE_CACHE(CodeBuffer, CodeBufferSize)
 static u8 *pCodeBuffer;
 
 class X86DSPAssembler : public Xbyak::CodeGenerator
@@ -367,24 +368,31 @@ private:
 
 void recompile()
 {
-	X86DSPAssembler assembler(pCodeBuffer, sizeof(CodeBuffer));
-	assembler.Compile(&state);
+	X86DSPAssembler assembler(pCodeBuffer, CodeBufferSize);
+	try {
+		assembler.Compile(&state);
+	} catch (const Xbyak::Error& e) {
+		ERROR_LOG(AICA_ARM, "Xbyak error: %s", e.what());
+		throw FlycastException(strprintf("DSP recompilation error: %s", e.what()));
+	}
 }
 
 void recInit()
 {
-	if (!virtmem::prepare_jit_block(CodeBuffer, sizeof(CodeBuffer), (void**)&pCodeBuffer))
+	if (!virtmem::prepare_jit_block(CodeBuffer, CodeBufferSize, (void**)&pCodeBuffer))
 		die("mprotect failed in x86 dsp");
 }
 
 void recTerm()
 {
+	if (pCodeBuffer != nullptr && pCodeBuffer != CodeBuffer)
+		virtmem::release_jit_block(pCodeBuffer, CodeBufferSize);
 	pCodeBuffer = nullptr;
 }
 
 void runStep()
 {
-	((void (*)())&CodeBuffer[0])();
+	((void (*)())&pCodeBuffer[0])();
 }
 
 } // namespace dsp
