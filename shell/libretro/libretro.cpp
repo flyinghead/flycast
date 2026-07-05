@@ -50,6 +50,7 @@
 #include "rend/dx11/dx11context_lr.h"
 #endif
 #include "emulator.h"
+#include "hw/gdrom/gdromv3.h"
 #include "hw/sh4/sh4_mem.h"
 #include "hw/sh4/sh4_sched.h"
 #include "keyboard_map.h"
@@ -229,9 +230,36 @@ static std::vector<std::string> disk_paths;
 static std::vector<std::string> disk_labels;
 static bool disc_tray_open = false;
 
+// Fwd decls
+static void retro_keyboard_event(bool down, unsigned keycode, uint32_t character, uint16_t key_modifiers);
 static bool set_variable_visibility(void);
 
 static bool double_is_equal(double a, double b) { return fabs(a - b) < 1e-5; }
+
+/* LED interface */
+extern GD_StatusT get_gd_status(void);
+static retro_set_led_state_t led_state_cb = NULL;
+static unsigned int retro_led_state[2] = {0};
+static void retro_led_interface(void)
+{
+   /* 0: Power
+    * 1: GD */
+
+   unsigned int led_state[2] = {0};
+   unsigned int l            = 0;
+
+   led_state[0] = (emu.running()) ? 1 : 0;
+   led_state[1] = (get_gd_status().BSY || SecNumber.Status == GD_PLAY) ? 1 : 0;
+
+   for (l = 0; l < sizeof(led_state)/sizeof(led_state[0]); l++)
+   {
+      if (retro_led_state[l] != led_state[l])
+      {
+         retro_led_state[l] = led_state[l];
+         led_state_cb(l, led_state[l]);
+      }
+   }
+}
 
 void retro_set_video_refresh(retro_video_refresh_t cb)
 {
@@ -316,11 +344,15 @@ void retro_set_environment(retro_environment_t cb)
 			{ 0 },
 	};
 	environ_cb(RETRO_ENVIRONMENT_SET_CONTROLLER_INFO, (void*)ports);
+
 	const bool b = true;
 	environ_cb(RETRO_ENVIRONMENT_SET_SUPPORT_NO_GAME, (void *)&b);
-}
 
-static void retro_keyboard_event(bool down, unsigned keycode, uint32_t character, uint16_t key_modifiers);
+	struct retro_led_interface led_interface;
+	if (environ_cb(RETRO_ENVIRONMENT_GET_LED_INTERFACE, &led_interface))
+		if (led_interface.set_led_state && !led_state_cb)
+			led_state_cb = led_interface.set_led_state;
+}
 
 // Now comes the interesting stuff
 void retro_init()
@@ -1272,6 +1304,10 @@ void retro_run()
 	if (isOpenGL(config::RendererType))
 		glsm_ctl(GLSM_CTL_STATE_UNBIND, nullptr);
 #endif
+
+	/* LED interface */
+	if (led_state_cb)
+		retro_led_interface();
 
 	// Unless VGA cable is selected, We need to update
 	// the refresh rate for PAL games with a 60Hz mode
