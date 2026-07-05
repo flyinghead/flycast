@@ -183,6 +183,7 @@ static int maxFramebufferWidth;
 static int maxFramebufferHeight;
 static float framebufferAspectRatio = 4.f / 3.f;
 static double fps_current;
+static double fps_spg;
 
 float libretro_expected_audio_samples_per_run;
 unsigned libretro_vsync_swap_interval = 1;
@@ -229,6 +230,8 @@ static std::vector<std::string> disk_labels;
 static bool disc_tray_open = false;
 
 static bool set_variable_visibility(void);
+
+static bool double_is_equal(double a, double b) { return fabs(a - b) < 1e-5; }
 
 void retro_set_video_refresh(retro_video_refresh_t cb)
 {
@@ -334,7 +337,7 @@ void retro_init()
 	else
 		log_cb = NULL;
 	LogManager::Init((void *)log_cb);
-	NOTICE_LOG(BOOT, "retro_init");
+	INFO_LOG(BOOT, "retro_init");
 
 	if (environ_cb(RETRO_ENVIRONMENT_GET_PERF_INTERFACE, &perf_cb))
 		perf_get_cpu_features_cb = perf_cb.get_cpu_features;
@@ -701,11 +704,7 @@ static void setGameGeometry(retro_game_geometry& geometry)
 bool setAVInfo(retro_system_av_info& avinfo)
 {
 	double sample_rate = 44100.0;
-	double fps = SPG_CONTROL.isPAL() ? 50.0 : 59.94;
-
-	// 240p NTSC rate
-	if (framebufferHeight == 240 && !SPG_CONTROL.isNTSC() && !SPG_CONTROL.isPAL())
-		fps = 59.82366;
+	double fps = (fps_spg) ? fps_spg : SPG_CONTROL.isPAL() ? 50.0 : 59.945300;
 
 	setGameGeometry(avinfo.geometry);
 	avinfo.timing.sample_rate = sample_rate;
@@ -714,19 +713,22 @@ bool setAVInfo(retro_system_av_info& avinfo)
 	libretro_expected_audio_samples_per_run = sample_rate / fps;
 
 	// Avoid video reinit with same timings
-	if (avinfo.timing.fps == fps_current)
+	if (double_is_equal(avinfo.timing.fps, fps_current))
 		return false;
 
 	fps_current = avinfo.timing.fps;
 	return true;
 }
 
-static bool retro_refresh_av_info(void)
+bool retro_refresh_av_info(double fps)
 {
 	retro_system_av_info avinfo;
 
 	if (first_run || game_data.empty())
 		return false;
+
+	if (fps > 0 && fps < 100)
+		fps_spg = fps;
 
 	if (setAVInfo(avinfo))
 	{
@@ -740,6 +742,8 @@ static bool retro_refresh_av_info(void)
 void retro_resize_renderer(int w, int h, float aspectRatio)
 {
 	if (w == framebufferWidth && h == framebufferHeight && aspectRatio == framebufferAspectRatio)
+		return;
+	if (w < 4 || h < 4)
 		return;
 	framebufferWidth = w;
 	framebufferHeight = h;
@@ -757,7 +761,7 @@ void retro_resize_renderer(int w, int h, float aspectRatio)
 	else
 	{
 		// Check if timing change is needed instead
-		if (retro_refresh_av_info())
+		if (retro_refresh_av_info(0))
 			return;
 
 		retro_game_geometry geometry;
@@ -2513,7 +2517,7 @@ void retro_get_system_info(struct retro_system_info *info)
 
 void retro_get_system_av_info(retro_system_av_info *info)
 {
-	NOTICE_LOG(RENDERER, "retro_get_system_av_info: Res=%d", (int)config::RenderResolution);
+	INFO_LOG(RENDERER, "retro_get_system_av_info: Res=%d", (int)config::RenderResolution);
 
 	if (cheatManager.isWidescreen())
 	{
