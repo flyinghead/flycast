@@ -389,6 +389,10 @@ static void loadSpecialSettings()
 			NOTICE_LOG(BOOT, "Forcing DCNet use");
 			config::UseDCNet.override(true);
 		}
+		if ((prod_id == "HDR-0164"			// Shenmue II (JP)
+				|| prod_id == "MK-5118450")	// Shenmue II (EU)
+				&& !memcmp(ip_meta.disk_num, "4/4  ", 5))
+			config::WidescreenGameHacks.override(false);
 	}
 	else if (settings.platform.isArcade())
 	{
