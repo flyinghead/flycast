@@ -261,6 +261,11 @@ static void retro_led_interface(void)
    }
 }
 
+/* Coin limit */
+unsigned coin_inserted = 0;
+unsigned coin_limit    = 0;
+static bool select_pressed[4] = {false};
+
 void retro_set_video_refresh(retro_video_refresh_t cb)
 {
 	video_cb = cb;
@@ -475,6 +480,9 @@ static bool set_variable_visibility(void)
 		environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
 		option_display.visible = settings.platform.isNaomi();
 		option_display.key = CORE_OPTION_NAME "_force_freeplay";
+		environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+		option_display.visible = settings.platform.isArcade();
+		option_display.key = CORE_OPTION_NAME "_coin_limit";
 		environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
 
 		// Show/hide Dreamcast options
@@ -868,6 +876,13 @@ static void update_variables(bool first_startup)
 			config::RenderResolution = strtoul(pch, NULL, 0);
 
 		DEBUG_LOG(COMMON, "Got height: %u", (int)config::RenderResolution);
+	}
+
+	var.key   = CORE_OPTION_NAME "_coin_limit";
+	var.value = NULL;
+	if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+	{
+		coin_limit = atoi(var.value);
 	}
 
 	var.key = CORE_OPTION_NAME "_alpha_sorting";
@@ -1361,6 +1376,7 @@ void retro_reset()
 	environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, &geometry);
 	blankVmus();
 	retro_audio_flush_buffer();
+	coin_inserted = 0;
 
 	emu.start();
 }
@@ -3007,6 +3023,23 @@ static void UpdateInputStateNaomi(u32 port)
 					}
 					else
 						setDeviceButtonStateFromBitmap(ret, port, RETRO_DEVICE_JOYPAD, RETRO_DEVICE_ID_JOYPAD_L);
+					break;
+				case RETRO_DEVICE_ID_JOYPAD_SELECT:
+					if (ret & (1 << id) && !select_pressed[port])
+					{
+						if ((coin_limit && coin_inserted < coin_limit) || !coin_limit)
+						{
+							select_pressed[port] = true;
+							coin_inserted++;
+						}
+
+						if (!select_pressed[port])
+							ret &= ~(1 << id);
+					}
+					else if (!(ret & (1 << id)) && select_pressed[port])
+						select_pressed[port] = false;
+
+					setDeviceButtonStateFromBitmap(ret, port, RETRO_DEVICE_JOYPAD, id);
 					break;
 				default:
 					setDeviceButtonStateFromBitmap(ret, port, RETRO_DEVICE_JOYPAD, id);
