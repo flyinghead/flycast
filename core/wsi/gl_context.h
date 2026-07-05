@@ -25,8 +25,9 @@
 #if defined(TARGET_IPHONE)
 #include <OpenGLES/ES3/gl.h>
 #include <OpenGLES/ES3/glext.h>
+#endif
 
-#elif defined(LIBRETRO)
+#if defined(LIBRETRO)
 #include <libretro.h>
 #include <glsm/glsm.h>
 #include <glsm/glsmsym.h>
@@ -51,7 +52,7 @@
 #define GL_DEBUG_SEVERITY_LOW             0x9148
 #endif
 
-#elif defined(USE_OPENGL)
+#elif defined(USE_OPENGL) && !defined(TARGET_IPHONE)
 #include <glad/gl.h>
 #endif
 
