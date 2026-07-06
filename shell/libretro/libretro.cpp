@@ -3071,6 +3071,7 @@ static void UpdateInputStateNaomi(u32 port)
 
 static int16_t getBitmask(u32 port, int deviceType)
 {
+	deviceType &= RETRO_DEVICE_MASK;
 	int16_t ret = 0;
 	if (libretro_supports_bitmasks)
 		ret = input_cb(port, deviceType, 0, RETRO_DEVICE_ID_JOYPAD_MASK);
