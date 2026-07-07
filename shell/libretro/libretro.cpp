@@ -50,6 +50,7 @@
 #include "rend/dx11/dx11context_lr.h"
 #endif
 #include "emulator.h"
+#include "hw/gdrom/gdromv3.h"
 #include "hw/sh4/sh4_mem.h"
 #include "hw/sh4/sh4_sched.h"
 #include "keyboard_map.h"
@@ -183,6 +184,7 @@ static int maxFramebufferWidth;
 static int maxFramebufferHeight;
 static float framebufferAspectRatio = 4.f / 3.f;
 static double fps_current;
+static double fps_spg;
 
 float libretro_expected_audio_samples_per_run;
 unsigned libretro_vsync_swap_interval = 1;
@@ -228,7 +230,41 @@ static std::vector<std::string> disk_paths;
 static std::vector<std::string> disk_labels;
 static bool disc_tray_open = false;
 
+// Fwd decls
+static void retro_keyboard_event(bool down, unsigned keycode, uint32_t character, uint16_t key_modifiers);
 static bool set_variable_visibility(void);
+
+static bool double_is_equal(double a, double b) { return fabs(a - b) < 1e-5; }
+
+/* LED interface */
+extern GD_StatusT get_gd_status(void);
+static retro_set_led_state_t led_state_cb = NULL;
+static unsigned int retro_led_state[2] = {0};
+static void retro_led_interface(void)
+{
+   /* 0: Power
+    * 1: GD */
+
+   unsigned int led_state[2] = {0};
+   unsigned int l            = 0;
+
+   led_state[0] = (emu.running()) ? 1 : 0;
+   led_state[1] = (get_gd_status().BSY || SecNumber.Status == GD_PLAY) ? 1 : 0;
+
+   for (l = 0; l < sizeof(led_state)/sizeof(led_state[0]); l++)
+   {
+      if (retro_led_state[l] != led_state[l])
+      {
+         retro_led_state[l] = led_state[l];
+         led_state_cb(l, led_state[l]);
+      }
+   }
+}
+
+/* Coin limit */
+unsigned coin_inserted = 0;
+unsigned coin_limit    = 0;
+static bool select_pressed[4] = {false};
 
 void retro_set_video_refresh(retro_video_refresh_t cb)
 {
@@ -313,11 +349,15 @@ void retro_set_environment(retro_environment_t cb)
 			{ 0 },
 	};
 	environ_cb(RETRO_ENVIRONMENT_SET_CONTROLLER_INFO, (void*)ports);
+
 	const bool b = true;
 	environ_cb(RETRO_ENVIRONMENT_SET_SUPPORT_NO_GAME, (void *)&b);
-}
 
-static void retro_keyboard_event(bool down, unsigned keycode, uint32_t character, uint16_t key_modifiers);
+	struct retro_led_interface led_interface;
+	if (environ_cb(RETRO_ENVIRONMENT_GET_LED_INTERFACE, &led_interface))
+		if (led_interface.set_led_state && !led_state_cb)
+			led_state_cb = led_interface.set_led_state;
+}
 
 // Now comes the interesting stuff
 void retro_init()
@@ -334,7 +374,7 @@ void retro_init()
 	else
 		log_cb = NULL;
 	LogManager::Init((void *)log_cb);
-	NOTICE_LOG(BOOT, "retro_init");
+	INFO_LOG(BOOT, "retro_init");
 
 	if (environ_cb(RETRO_ENVIRONMENT_GET_PERF_INTERFACE, &perf_cb))
 		perf_get_cpu_features_cb = perf_cb.get_cpu_features;
@@ -440,6 +480,9 @@ static bool set_variable_visibility(void)
 		environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
 		option_display.visible = settings.platform.isNaomi();
 		option_display.key = CORE_OPTION_NAME "_force_freeplay";
+		environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+		option_display.visible = settings.platform.isArcade();
+		option_display.key = CORE_OPTION_NAME "_coin_limit";
 		environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
 
 		// Show/hide Dreamcast options
@@ -701,11 +744,7 @@ static void setGameGeometry(retro_game_geometry& geometry)
 bool setAVInfo(retro_system_av_info& avinfo)
 {
 	double sample_rate = 44100.0;
-	double fps = SPG_CONTROL.isPAL() ? 50.0 : 59.94;
-
-	// 240p NTSC rate
-	if (framebufferHeight == 240 && !SPG_CONTROL.isNTSC() && !SPG_CONTROL.isPAL())
-		fps = 59.82366;
+	double fps = (fps_spg) ? fps_spg : SPG_CONTROL.isPAL() ? 50.0 : 59.945300;
 
 	setGameGeometry(avinfo.geometry);
 	avinfo.timing.sample_rate = sample_rate;
@@ -714,19 +753,22 @@ bool setAVInfo(retro_system_av_info& avinfo)
 	libretro_expected_audio_samples_per_run = sample_rate / fps;
 
 	// Avoid video reinit with same timings
-	if (avinfo.timing.fps == fps_current)
+	if (double_is_equal(avinfo.timing.fps, fps_current))
 		return false;
 
 	fps_current = avinfo.timing.fps;
 	return true;
 }
 
-static bool retro_refresh_av_info(void)
+bool retro_refresh_av_info(double fps)
 {
 	retro_system_av_info avinfo;
 
 	if (first_run || game_data.empty())
 		return false;
+
+	if (fps > 0 && fps < 100)
+		fps_spg = fps;
 
 	if (setAVInfo(avinfo))
 	{
@@ -740,6 +782,8 @@ static bool retro_refresh_av_info(void)
 void retro_resize_renderer(int w, int h, float aspectRatio)
 {
 	if (w == framebufferWidth && h == framebufferHeight && aspectRatio == framebufferAspectRatio)
+		return;
+	if (w < 4 || h < 4)
 		return;
 	framebufferWidth = w;
 	framebufferHeight = h;
@@ -757,7 +801,7 @@ void retro_resize_renderer(int w, int h, float aspectRatio)
 	else
 	{
 		// Check if timing change is needed instead
-		if (retro_refresh_av_info())
+		if (retro_refresh_av_info(0))
 			return;
 
 		retro_game_geometry geometry;
@@ -832,6 +876,13 @@ static void update_variables(bool first_startup)
 			config::RenderResolution = strtoul(pch, NULL, 0);
 
 		DEBUG_LOG(COMMON, "Got height: %u", (int)config::RenderResolution);
+	}
+
+	var.key   = CORE_OPTION_NAME "_coin_limit";
+	var.value = NULL;
+	if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+	{
+		coin_limit = atoi(var.value);
 	}
 
 	var.key = CORE_OPTION_NAME "_alpha_sorting";
@@ -1269,6 +1320,10 @@ void retro_run()
 		glsm_ctl(GLSM_CTL_STATE_UNBIND, nullptr);
 #endif
 
+	/* LED interface */
+	if (led_state_cb)
+		retro_led_interface();
+
 	// Unless VGA cable is selected, We need to update
 	// the refresh rate for PAL games with a 60Hz mode
 	bool pal_check = SPG_CONTROL.isPAL();
@@ -1321,6 +1376,7 @@ void retro_reset()
 	environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, &geometry);
 	blankVmus();
 	retro_audio_flush_buffer();
+	coin_inserted = 0;
 
 	emu.start();
 }
@@ -2513,7 +2569,7 @@ void retro_get_system_info(struct retro_system_info *info)
 
 void retro_get_system_av_info(retro_system_av_info *info)
 {
-	NOTICE_LOG(RENDERER, "retro_get_system_av_info: Res=%d", (int)config::RenderResolution);
+	INFO_LOG(RENDERER, "retro_get_system_av_info: Res=%d", (int)config::RenderResolution);
 
 	if (cheatManager.isWidescreen())
 	{
@@ -2967,6 +3023,23 @@ static void UpdateInputStateNaomi(u32 port)
 					}
 					else
 						setDeviceButtonStateFromBitmap(ret, port, RETRO_DEVICE_JOYPAD, RETRO_DEVICE_ID_JOYPAD_L);
+					break;
+				case RETRO_DEVICE_ID_JOYPAD_SELECT:
+					if (ret & (1 << id) && !select_pressed[port])
+					{
+						if ((coin_limit && coin_inserted < coin_limit) || !coin_limit)
+						{
+							select_pressed[port] = true;
+							coin_inserted++;
+						}
+
+						if (!select_pressed[port])
+							ret &= ~(1 << id);
+					}
+					else if (!(ret & (1 << id)) && select_pressed[port])
+						select_pressed[port] = false;
+
+					setDeviceButtonStateFromBitmap(ret, port, RETRO_DEVICE_JOYPAD, id);
 					break;
 				default:
 					setDeviceButtonStateFromBitmap(ret, port, RETRO_DEVICE_JOYPAD, id);

@@ -17,6 +17,7 @@ public:
   static void Init(void *log_cb);
   static void Shutdown();
 
+  void Log(LogTypes::LOG_LEVELS level, LogTypes::LOG_TYPE type, const char* fmt, va_list args);
   void LogWithFullPath(LogTypes::LOG_LEVELS level, LogTypes::LOG_TYPE type, const char* file,
         int line, const char* fmt, va_list args);
 
@@ -51,4 +52,5 @@ private:
   std::array<LogContainer, LogTypes::NUMBER_OF_LOGS> m_log{};
   size_t m_path_cutoff_point = 0;
   retro_log_printf_t retro_printf = nullptr;
+  void retro_log(LogTypes::LOG_LEVELS level, const char *text);
 };
