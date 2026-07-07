@@ -84,6 +84,7 @@ option(USE_HOST_SDL "Use host SDL library" ${USE_HOST_SDL_DEFAULT})
 option(USE_HOST_LIBCHDR "Use host libchdr" OFF)
 option(USE_OPENMP "Use OpenMP if available" ON)
 option(USE_VULKAN "Build with Vulkan support" ON)
+set(MOLTENVK_DYLIB "" CACHE FILEPATH "Path to macOS MoltenVK dylib for macOS Vulkan builds")
 option(USE_DX9 "Build with Direct3D 9 support" ON)
 option(USE_DX11 "Build with Direct3D 11 support" ON)
 option(LIBRETRO "Build libretro core" OFF)
@@ -1411,9 +1412,15 @@ if(NOT LIBRETRO)
 				${IOSURFACE_LIBRARY}
 				${MULTITOUCH_SUPPORT_LIBRARY})
 
-			add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-				COMMAND ${CMAKE_COMMAND} -E copy "$ENV{VULKAN_SDK}/lib/libMoltenVK.dylib"
-				$<TARGET_FILE_DIR:flycast>/../Frameworks/libvulkan.dylib)
+			if(USE_VULKAN)
+				set(MOLTENVK_DYLIB_PATH "${MOLTENVK_DYLIB}")
+				if(NOT MOLTENVK_DYLIB_PATH OR NOT EXISTS "${MOLTENVK_DYLIB_PATH}")
+					message(FATAL_ERROR "A macOS MoltenVK dylib is required for macOS Vulkan builds. Run shell/apple/generate_xcode_project.command to download the configured MoltenVK release, or pass -DMOLTENVK_DYLIB=/path/to/libMoltenVK.dylib.")
+				endif()
+				add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+					COMMAND ${CMAKE_COMMAND} -E copy "${MOLTENVK_DYLIB_PATH}"
+					$<TARGET_FILE_DIR:flycast>/../Frameworks/libMoltenVK.dylib)
+			endif()
 		endif()
 	elseif(UNIX)
 		if(NOT BUILD_TESTING)
