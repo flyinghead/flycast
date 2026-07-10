@@ -19,12 +19,12 @@
 #pragma once
 #include "stdclass.h"
 #include "oslib/oslib.h"
+#include "log/Log.h"
 #include <thread>
 #include <atomic>
 #include <mutex>
 #include <stdexcept>
 #include <functional>
-#include "log/Log.h"
 
 class VPeriodicThread
 {

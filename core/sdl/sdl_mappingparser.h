@@ -18,7 +18,7 @@
  */
 #pragma once
 #include <SDL.h>
-#include <stdlib.h>
+#include <cstdlib>
 #include <string>
 
 // Home-made version of SDL_GameControllerGetBindForAxis that returns additional information on axes

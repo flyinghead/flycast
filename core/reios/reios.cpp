@@ -28,6 +28,7 @@
 #include "oslib/resources.h"
 #include "oslib/oslib.h"
 #include "oslib/i18n.h"
+#include "cfg/option.h"
 
 #include <map>
 

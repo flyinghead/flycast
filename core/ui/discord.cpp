@@ -22,7 +22,7 @@
 #include "gui.h"
 #include "discord_rpc.h"
 #include <cstring>
-#include <time.h>
+#include <ctime>
 
 #define FLYCAST_APPID "1212789289851559946"
 

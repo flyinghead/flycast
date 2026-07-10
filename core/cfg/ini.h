@@ -18,10 +18,8 @@
 */
 #pragma once
 #include "oslib/storage.h"
-#include <cstdio>
 #include <map>
 #include <string>
-#include <cstdint>
 #include <vector>
 #include <locale>
 #include <sstream>

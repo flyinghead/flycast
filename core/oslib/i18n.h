@@ -21,9 +21,9 @@
 #include "android_locale.h"
 #endif
 #include <string>
-#include <time.h>
+#include <ctime>
 #include <locale>
-#include <locale.h>
+#include <clocale>
 
 namespace i18n
 {

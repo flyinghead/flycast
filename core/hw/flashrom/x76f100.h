@@ -8,7 +8,7 @@
  */
 #pragma once
 #include "types.h"
-#include <string.h>
+#include <cstring>
 
 class X76F100SerialFlash
 {

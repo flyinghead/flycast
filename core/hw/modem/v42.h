@@ -20,7 +20,6 @@
 #include "types.h"
 #include "internal.h"
 #include "v42bis.h"
-#include "network/netservice.h"
 #include <vector>
 #include <deque>
 #include <unordered_map>

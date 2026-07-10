@@ -29,6 +29,10 @@
 #include "emulator.h"
 #include "oslib/storage.h"
 #include "oslib/i18n.h"
+
+#include <string>
+#include <vector>
+
 using namespace i18n;
 
 const WidescreenCheat CheatManager::widescreen_cheats[] =

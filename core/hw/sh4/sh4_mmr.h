@@ -1,6 +1,5 @@
 #pragma once
 #include "types.h"
-#include "sh4_if.h"
 #include "modules/modules.h"
 #include "modules/ccn.h"
 #include "modules/dmac.h"

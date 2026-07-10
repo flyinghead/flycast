@@ -21,7 +21,6 @@
 #include "gui.h"
 #include <memory>
 #include <unordered_map>
-#include <array>
 
 class ImGuiDriver
 {

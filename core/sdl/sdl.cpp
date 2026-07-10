@@ -38,6 +38,7 @@
 #include <cmath>
 #include <cstdlib>
 #include <cstdio>
+#include <memory>
 
 static SDL_Window* window = NULL;
 static u32 windowFlags;

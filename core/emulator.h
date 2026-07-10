@@ -28,7 +28,7 @@
 #include <mutex>
 #include <utility>
 #include <vector>
-#include <time.h>
+#include <ctime>
 
 void loadGameSpecificSettings();
 void SaveSettings();
