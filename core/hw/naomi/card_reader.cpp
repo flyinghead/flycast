@@ -18,6 +18,7 @@
  */
 #include "card_reader.h"
 #include "oslib/oslib.h"
+#include "oslib/storage.h"
 #include "hw/sh4/modules/modules.h"
 #include "hw/maple/maple_cfg.h"
 #include "hw/maple/maple_devs.h"
@@ -46,14 +47,14 @@ protected:
 	bool loadCard(u8 *cardData, u32 len)
 	{
 		std::string path = hostfs::getArcadeFlashPath() + ".card";
-		FILE *fp = nowide::fopen(path.c_str(), "rb");
+		hostfs::File *fp = hostfs::storage().openFile(path, "rb");
 		if (fp == nullptr)
 			return false;
 
 		INFO_LOG(NAOMI, "Loading card file from %s", path.c_str());
-		if (fread(cardData, 1, len, fp) != len)
+		if (fp->read(cardData, 1, len) != len)
 			WARN_LOG(NAOMI, "Truncated or empty card file: %s" ,path.c_str());
-		fclose(fp);
+		delete fp;
 
 		return true;
 	}
@@ -61,16 +62,16 @@ protected:
 	void saveCard(const u8 *cardData, u32 len)
 	{
 		std::string path = hostfs::getArcadeFlashPath() + ".card";
-		FILE *fp = nowide::fopen(path.c_str(), "wb");
+		hostfs::File *fp = hostfs::storage().openFile(path, "wb");
 		if (fp == nullptr)
 		{
 			WARN_LOG(NAOMI, "Can't create card file %s: errno %d", path.c_str(), errno);
 			return;
 		}
 		INFO_LOG(NAOMI, "Saving card file to %s", path.c_str());
-		if (fwrite(cardData, 1, len, fp) != len)
+		if (fp->write(cardData, 1, len) != len)
 			WARN_LOG(NAOMI, "Truncated write to file: %s", path.c_str());
-		fclose(fp);
+		delete fp;
 	}
 
 	template<typename T>
