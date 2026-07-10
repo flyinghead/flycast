@@ -1,9 +1,9 @@
 #include "gtest/gtest.h"
 #include "util/worker_thread.h"
 #include <atomic>
+#include <chrono>
 #include <future>
-
-#include "test_utils.h"
+#include <thread>
 
 class WorkerThreadTest : public ::testing::Test
 {
@@ -17,14 +17,14 @@ TEST_F(WorkerThreadTest, Basic)
 		done = true;
 	};
 	worker.run(task);
-	usleep(100'000);
+	std::this_thread::sleep_for(std::chrono::milliseconds(100));
 	ASSERT_TRUE(done);
 
 	// test restart
 	worker.stop();
 	done = false;
 	worker.run(task);
-	usleep(100'000);
+	std::this_thread::sleep_for(std::chrono::milliseconds(100));
 	ASSERT_TRUE(done);
 }
 

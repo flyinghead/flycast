@@ -1,9 +1,9 @@
 #include "gtest/gtest.h"
 #include "util/tsqueue.h"
 #include <atomic>
+#include <chrono>
 #include <future>
-
-#include "test_utils.h"
+#include <thread>
 
 class TsQueueTest : public ::testing::Test
 {
@@ -38,7 +38,7 @@ TEST_F(TsQueueTest, MultiThread)
 		gotResult = true;
 		return res;
 	});
-	usleep(500'000);
+	std::this_thread::sleep_for(std::chrono::milliseconds(500));
 	ASSERT_FALSE(gotResult);
 	ASSERT_EQ(std::future_status::timeout, future.wait_for(std::chrono::seconds(0)));
 	queue.push(true);

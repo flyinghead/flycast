@@ -1,8 +1,8 @@
 #include "gtest/gtest.h"
 #include "util/periodic_thread.h"
 #include <atomic>
-
-#include "test_utils.h"
+#include <chrono>
+#include <thread>
 
 class PeriodicThreadTest : public ::testing::Test
 {
@@ -16,13 +16,13 @@ TEST_F(PeriodicThreadTest, Basic)
 	});
 	thread.setPeriod(10);
 	thread.start();
-	usleep(15'000);
+	std::this_thread::sleep_for(std::chrono::milliseconds(15));
 	ASSERT_LT(0, counter);
 	int copy = counter;
-	usleep(15'000);
+	std::this_thread::sleep_for(std::chrono::milliseconds(15));
 	ASSERT_LT(copy, counter);
 	thread.stop();
 	copy = counter;
-	usleep(15'000);
+	std::this_thread::sleep_for(std::chrono::milliseconds(15));
 	ASSERT_EQ(copy, counter);
 }
