@@ -345,8 +345,21 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
         return super.onGenericMotionEvent(event);
     }
 
+    private static int scrubKeyCode(int keyCode, KeyEvent event) {
+        if (keyCode == KeyEvent.KEYCODE_UNKNOWN) {
+            // Android subsystem was not able to translate this event, so use the scan code instead
+            keyCode = event.getScanCode();
+            if (keyCode > 0) {
+                // Scan codes to key code conversion must be negative to avoid stomping on existing codes
+                keyCode = -keyCode;
+            }
+        }
+        return keyCode;
+    }
+
     @Override
     public boolean onKeyUp(int keyCode, KeyEvent event) {
+        keyCode = scrubKeyCode(keyCode, event);
         if (InputDeviceManager.getInstance().buttonEvent(event.getDeviceId(), keyCode, false))
             return true;
         if (hasKeyboard && InputDeviceManager.getInstance().keyboardEvent(keyCode, false))
@@ -356,6 +369,7 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
+        keyCode = scrubKeyCode(keyCode, event);
         if (event.getRepeatCount() == 0) {
             if (keyCode == KeyEvent.KEYCODE_BACK) {
                 if (JNIdc.guiIsContentBrowser()) {
@@ -477,11 +491,11 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
     }
 
     private static native void register(BaseGLActivity activity);
-    
+
 	public String getNativeLibDir() {
         return getApplicationContext().getApplicationInfo().nativeLibraryDir;
     }
-    
+
 	public String getInternalFilesDir() {
         return getFilesDir().getAbsolutePath();
     }
