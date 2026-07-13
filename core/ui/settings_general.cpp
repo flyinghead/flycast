@@ -24,18 +24,524 @@
 #include "stdclass.h"
 #include "achievements/achievements.h"
 #include "imgui_stdlib.h"
+#include <array>
+#include <cstring>
+
+enum class SaveMigrationKind
+{
+	None,
+	Vmu,
+	Savestate,
+	GameSave,
+};
 
 static std::vector<std::string>* g_currentPathList = nullptr;
+static std::string* g_currentSinglePath = nullptr;
+static SaveMigrationKind g_currentMigrationKind = SaveMigrationKind::None;
+
+static void manageSinglePathCallback(std::string selection);
+static void managePathListCallback(std::string selection);
+static void handlePathSelection(SaveMigrationKind kind, std::string selection);
+
+#ifdef __ANDROID__
+struct SaveMigrationFile
+{
+	std::string name;
+	std::string source;
+	std::string destination;
+};
+
+enum class SaveMigrationPhase
+{
+	Idle,
+	Copying,
+	Verifying,
+	Deleting,
+};
+
+struct SaveMigrationState
+{
+	SaveMigrationKind kind = SaveMigrationKind::None;
+	std::string* singlePath = nullptr;
+	std::vector<std::string>* pathList = nullptr;
+	std::string selection;
+	std::vector<SaveMigrationFile> files;
+	std::vector<SaveMigrationFile> conflicts;
+	hostfs::File *sourceFile = nullptr;
+	hostfs::File *destinationFile = nullptr;
+	SaveMigrationPhase phase = SaveMigrationPhase::Idle;
+	size_t currentIndex = 0;
+	s64 currentFileSize = 0;
+	s64 copiedBytes = 0;
+	s64 verifiedBytes = 0;
+	bool moveExisting = false;
+	bool overwriteConflicts = false;
+	bool running = false;
+	bool failed = false;
+	bool openActionPopup = false;
+	bool openConflictPopup = false;
+	bool openProgressPopup = false;
+};
+
+static SaveMigrationState g_saveMigration;
+static constexpr size_t SaveMigrationChunkSize = 128 * 1024;
+
+static void closeSaveMigrationFiles()
+{
+	delete g_saveMigration.destinationFile;
+	g_saveMigration.destinationFile = nullptr;
+	delete g_saveMigration.sourceFile;
+	g_saveMigration.sourceFile = nullptr;
+}
+
+static void resetSaveMigration()
+{
+	closeSaveMigrationFiles();
+	g_currentSinglePath = nullptr;
+	g_currentPathList = nullptr;
+	g_currentMigrationKind = SaveMigrationKind::None;
+	g_saveMigration = {};
+}
+
+static bool endsWith(const std::string& value, const char *suffix)
+{
+	size_t len = strlen(suffix);
+	return value.size() >= len && value.compare(value.size() - len, len, suffix) == 0;
+}
+
+static bool isMigratableSaveFile(SaveMigrationKind kind, std::string name)
+{
+	string_tolower(name);
+	switch (kind)
+	{
+	case SaveMigrationKind::Vmu:
+		return name.find("vmu_save") != std::string::npos && endsWith(name, ".bin");
+	case SaveMigrationKind::Savestate:
+		return endsWith(name, ".state") || endsWith(name, ".state.net") || endsWith(name, ".state.tmp");
+	case SaveMigrationKind::GameSave:
+		return name.find("nvmem") != std::string::npos
+			|| endsWith(name, ".eeprom")
+			|| endsWith(name, ".card")
+			|| endsWith(name, "-hopper.bin");
+	default:
+		return false;
+	}
+}
+
+static void addUniquePath(std::vector<std::string>& paths, const std::string& path)
+{
+	if (!path.empty() && std::find(paths.begin(), paths.end(), path) == paths.end())
+		paths.push_back(path);
+}
+
+static void collectSaveMigrationFiles(SaveMigrationKind kind, const std::vector<std::string>& sourcePaths,
+		const std::string& destinationPath, std::vector<SaveMigrationFile>& files)
+{
+	for (const auto& sourcePath : sourcePaths)
+	{
+		try {
+			for (const hostfs::FileInfo& info : hostfs::storage().listContent(sourcePath))
+			{
+				if (info.isDirectory || !isMigratableSaveFile(kind, info.name))
+					continue;
+
+				std::string destination = hostfs::storage().getSubPath(destinationPath, info.name);
+				if (destination == info.path)
+					continue;
+				files.push_back({ info.name, info.path, destination });
+			}
+		} catch (const FlycastException& e) {
+			WARN_LOG(COMMON, "Save migration: can't scan '%s': %s", sourcePath.c_str(), e.what());
+		}
+	}
+}
+
+static bool openCurrentMigrationFile()
+{
+	const SaveMigrationFile& file = g_saveMigration.files[g_saveMigration.currentIndex];
+	g_saveMigration.currentFileSize = 0;
+	g_saveMigration.copiedBytes = 0;
+	g_saveMigration.verifiedBytes = 0;
+	if (!g_saveMigration.moveExisting
+			|| (!g_saveMigration.overwriteConflicts && hostfs::storage().exists(file.destination)))
+	{
+		g_saveMigration.phase = SaveMigrationPhase::Deleting;
+		return true;
+	}
+
+	g_saveMigration.sourceFile = hostfs::storage().openFile(file.source, "rb");
+	if (g_saveMigration.sourceFile == nullptr)
+	{
+		g_saveMigration.failed = true;
+		g_saveMigration.currentIndex++;
+		return false;
+	}
+	g_saveMigration.destinationFile = hostfs::storage().openFile(file.destination, "wb");
+	if (g_saveMigration.destinationFile == nullptr)
+	{
+		closeSaveMigrationFiles();
+		g_saveMigration.failed = true;
+		g_saveMigration.currentIndex++;
+		return false;
+	}
+	g_saveMigration.currentFileSize = g_saveMigration.sourceFile->size();
+	g_saveMigration.phase = SaveMigrationPhase::Copying;
+	return true;
+}
+
+static void failCurrentMigrationFile(bool removeDestination)
+{
+	const SaveMigrationFile& file = g_saveMigration.files[g_saveMigration.currentIndex];
+	closeSaveMigrationFiles();
+	if (removeDestination)
+		hostfs::storage().remove(file.destination);
+	g_saveMigration.failed = true;
+	g_saveMigration.currentIndex++;
+	g_saveMigration.phase = SaveMigrationPhase::Idle;
+}
+
+static void startCurrentMigrationVerification()
+{
+	const SaveMigrationFile& file = g_saveMigration.files[g_saveMigration.currentIndex];
+	closeSaveMigrationFiles();
+	g_saveMigration.sourceFile = hostfs::storage().openFile(file.source, "rb");
+	g_saveMigration.destinationFile = hostfs::storage().openFile(file.destination, "rb");
+	if (g_saveMigration.sourceFile == nullptr || g_saveMigration.destinationFile == nullptr
+			|| g_saveMigration.sourceFile->size() != g_saveMigration.destinationFile->size())
+	{
+		failCurrentMigrationFile(true);
+		return;
+	}
+	g_saveMigration.currentFileSize = g_saveMigration.sourceFile->size();
+	g_saveMigration.verifiedBytes = 0;
+	g_saveMigration.phase = SaveMigrationPhase::Verifying;
+}
+
+static bool processSaveMigrationStep()
+{
+	static std::array<u8, SaveMigrationChunkSize> sourceBuffer;
+	static std::array<u8, SaveMigrationChunkSize> destinationBuffer;
+
+	if (g_saveMigration.currentIndex >= g_saveMigration.files.size())
+		return true;
+
+	if (g_saveMigration.phase == SaveMigrationPhase::Idle && !openCurrentMigrationFile())
+		return g_saveMigration.currentIndex >= g_saveMigration.files.size();
+
+	const SaveMigrationFile& file = g_saveMigration.files[g_saveMigration.currentIndex];
+	switch (g_saveMigration.phase)
+	{
+	case SaveMigrationPhase::Copying:
+	{
+		size_t read = g_saveMigration.sourceFile->read(sourceBuffer.data(), 1, sourceBuffer.size());
+		if (read > 0)
+		{
+			if (g_saveMigration.destinationFile->write(sourceBuffer.data(), 1, read) != read)
+			{
+				failCurrentMigrationFile(true);
+				return false;
+			}
+			g_saveMigration.copiedBytes += read;
+			return false;
+		}
+		if (g_saveMigration.sourceFile->error() != 0 || g_saveMigration.destinationFile->error() != 0
+				|| g_saveMigration.copiedBytes != g_saveMigration.currentFileSize)
+		{
+			failCurrentMigrationFile(true);
+			return false;
+		}
+		startCurrentMigrationVerification();
+		return false;
+	}
+	case SaveMigrationPhase::Verifying:
+	{
+		size_t sourceRead = g_saveMigration.sourceFile->read(sourceBuffer.data(), 1, sourceBuffer.size());
+		size_t destinationRead = g_saveMigration.destinationFile->read(destinationBuffer.data(), 1, destinationBuffer.size());
+		if (sourceRead != destinationRead || std::memcmp(sourceBuffer.data(), destinationBuffer.data(), sourceRead) != 0)
+		{
+			failCurrentMigrationFile(true);
+			return false;
+		}
+		if (sourceRead > 0)
+		{
+			g_saveMigration.verifiedBytes += sourceRead;
+			return false;
+		}
+		if (g_saveMigration.sourceFile->error() != 0 || g_saveMigration.destinationFile->error() != 0
+				|| g_saveMigration.verifiedBytes != g_saveMigration.currentFileSize)
+		{
+			failCurrentMigrationFile(true);
+			return false;
+		}
+		closeSaveMigrationFiles();
+		g_saveMigration.phase = SaveMigrationPhase::Deleting;
+		return false;
+	}
+	case SaveMigrationPhase::Deleting:
+		if (!hostfs::storage().remove(file.source))
+			g_saveMigration.failed = true;
+		g_saveMigration.currentIndex++;
+		g_saveMigration.phase = SaveMigrationPhase::Idle;
+		return g_saveMigration.currentIndex >= g_saveMigration.files.size();
+	default:
+		return false;
+	}
+}
+
+static void finishSaveMigrationSelection()
+{
+	if (g_saveMigration.singlePath != nullptr)
+		*g_saveMigration.singlePath = g_saveMigration.selection;
+	else if (g_saveMigration.pathList != nullptr)
+	{
+		g_saveMigration.pathList->erase(std::remove(g_saveMigration.pathList->begin(), g_saveMigration.pathList->end(),
+				g_saveMigration.selection), g_saveMigration.pathList->end());
+		if (g_saveMigration.kind == SaveMigrationKind::Savestate)
+			g_saveMigration.pathList->insert(g_saveMigration.pathList->begin(), g_saveMigration.selection);
+		else
+			g_saveMigration.pathList->push_back(g_saveMigration.selection);
+	}
+
+	resetSaveMigration();
+}
+
+static void beginSaveMigrationRun(bool overwriteConflicts)
+{
+	closeSaveMigrationFiles();
+	g_saveMigration.overwriteConflicts = overwriteConflicts;
+	g_saveMigration.currentIndex = 0;
+	g_saveMigration.currentFileSize = 0;
+	g_saveMigration.copiedBytes = 0;
+	g_saveMigration.verifiedBytes = 0;
+	g_saveMigration.phase = SaveMigrationPhase::Idle;
+	g_saveMigration.running = true;
+	g_saveMigration.failed = false;
+	g_saveMigration.openProgressPopup = true;
+}
+
+static void continueSaveMigration(bool moveExisting)
+{
+	g_saveMigration.moveExisting = moveExisting;
+	if (!moveExisting)
+	{
+		beginSaveMigrationRun(false);
+		return;
+	}
+
+	g_saveMigration.conflicts.clear();
+	for (const SaveMigrationFile& file : g_saveMigration.files)
+	{
+		if (hostfs::storage().exists(file.destination))
+			g_saveMigration.conflicts.push_back(file);
+	}
+	if (g_saveMigration.conflicts.empty())
+		beginSaveMigrationRun(false);
+	else
+		g_saveMigration.openConflictPopup = true;
+}
+
+static void startSaveMigration(SaveMigrationKind kind, std::string selection)
+{
+	g_saveMigration.kind = kind;
+	g_saveMigration.singlePath = g_currentSinglePath;
+	g_saveMigration.pathList = g_currentPathList;
+	g_saveMigration.selection = std::move(selection);
+	g_saveMigration.files.clear();
+	g_saveMigration.conflicts.clear();
+
+	std::vector<std::string> sourcePaths;
+	addUniquePath(sourcePaths, get_writable_data_path(""));
+	if (kind == SaveMigrationKind::Vmu)
+	{
+		addUniquePath(sourcePaths, config::VMUPath.get());
+		addUniquePath(sourcePaths, get_writable_config_path(""));
+	}
+	else if (kind == SaveMigrationKind::Savestate)
+	{
+		for (const auto& path : config::SavestatePath.get())
+			addUniquePath(sourcePaths, path);
+	}
+	else if (kind == SaveMigrationKind::GameSave)
+	{
+		addUniquePath(sourcePaths, config::SavePath.get());
+	}
+
+	collectSaveMigrationFiles(kind, sourcePaths, g_saveMigration.selection, g_saveMigration.files);
+	if (g_saveMigration.files.empty())
+		finishSaveMigrationSelection();
+	else
+		g_saveMigration.openActionPopup = true;
+}
+
+static void handlePathSelection(SaveMigrationKind kind, std::string selection)
+{
+	if (kind == SaveMigrationKind::None)
+	{
+		if (g_currentSinglePath != nullptr)
+			manageSinglePathCallback(selection);
+		else
+			managePathListCallback(selection);
+	}
+	else
+		startSaveMigration(kind, std::move(selection));
+}
+
+static void centerNextSaveMigrationPopup()
+{
+	const ImGuiViewport *viewport = ImGui::GetMainViewport();
+	ImGui::SetNextWindowPos(ImVec2(viewport->WorkPos.x + viewport->WorkSize.x * 0.5f,
+			viewport->WorkPos.y + viewport->WorkSize.y * 0.5f),
+			ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+}
+
+static void centerCurrentSaveMigrationPopup()
+{
+	const ImGuiViewport *viewport = ImGui::GetMainViewport();
+	const ImVec2 size = ImGui::GetWindowSize();
+	ImGui::SetWindowPos(ImVec2(
+			viewport->WorkPos.x + (viewport->WorkSize.x - size.x) * 0.5f,
+			viewport->WorkPos.y + (viewport->WorkSize.y - size.y) * 0.5f));
+}
+
+static void drawSaveMigrationPopups()
+{
+	const char *actionPopup = T("Move existing saves?");
+	if (g_saveMigration.openActionPopup)
+	{
+		ImGui::OpenPopup(actionPopup);
+		g_saveMigration.openActionPopup = false;
+	}
+	centerNextSaveMigrationPopup();
+	if (ImGui::BeginPopupModal(actionPopup, nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
+	{
+		centerCurrentSaveMigrationPopup();
+		ImGui::TextWrapped("%s", T("Move existing saves to the selected folder? Choosing Delete removes the originals instead."));
+		ImGui::Spacing();
+		if (ImGui::Button(T("Move"), ScaledVec2(100.f, 0)))
+		{
+			ImGui::CloseCurrentPopup();
+			continueSaveMigration(true);
+		}
+		ImGui::SameLine();
+		if (ImGui::Button(T("Delete"), ScaledVec2(100.f, 0)))
+		{
+			ImGui::CloseCurrentPopup();
+			continueSaveMigration(false);
+		}
+		ImGui::SameLine();
+		if (ImGui::Button(T("Cancel"), ScaledVec2(100.f, 0)))
+		{
+			resetSaveMigration();
+			ImGui::CloseCurrentPopup();
+		}
+		ImGui::EndPopup();
+	}
+
+	const char *conflictPopup = T("Save files already exist");
+	if (g_saveMigration.openConflictPopup)
+	{
+		ImGui::OpenPopup(conflictPopup);
+		g_saveMigration.openConflictPopup = false;
+	}
+	centerNextSaveMigrationPopup();
+	if (ImGui::BeginPopupModal(conflictPopup, nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
+	{
+		centerCurrentSaveMigrationPopup();
+		ImGui::TextWrapped("%s", T("The selected folder already contains save files with the same names. Skip keeps those files and deletes the old originals."));
+		ImGui::Spacing();
+		if (ImGui::Button(T("Overwrite"), ScaledVec2(120.f, 0)))
+		{
+			ImGui::CloseCurrentPopup();
+			beginSaveMigrationRun(true);
+		}
+		ImGui::SameLine();
+		if (ImGui::Button(T("Skip"), ScaledVec2(100.f, 0)))
+		{
+			ImGui::CloseCurrentPopup();
+			beginSaveMigrationRun(false);
+		}
+		ImGui::SameLine();
+		if (ImGui::Button(T("Cancel"), ScaledVec2(100.f, 0)))
+		{
+			resetSaveMigration();
+			ImGui::CloseCurrentPopup();
+		}
+		ImGui::EndPopup();
+	}
+
+	const char *progressPopup = T("Migrating saves");
+	if (g_saveMigration.openProgressPopup)
+	{
+		ImGui::OpenPopup(progressPopup);
+		g_saveMigration.openProgressPopup = false;
+	}
+	centerNextSaveMigrationPopup();
+	if (ImGui::BeginPopupModal(progressPopup, nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
+	{
+		centerCurrentSaveMigrationPopup();
+		size_t totalFiles = g_saveMigration.files.size();
+		size_t currentFileIndex = std::min(g_saveMigration.currentIndex, totalFiles);
+		float fileProgress = 0.f;
+		if (g_saveMigration.currentIndex < totalFiles && g_saveMigration.currentFileSize > 0)
+		{
+			if (g_saveMigration.phase == SaveMigrationPhase::Copying)
+				fileProgress = std::min(1.f, (float)g_saveMigration.copiedBytes / g_saveMigration.currentFileSize);
+			else if (g_saveMigration.phase == SaveMigrationPhase::Verifying)
+				fileProgress = std::min(1.f, (float)g_saveMigration.verifiedBytes / g_saveMigration.currentFileSize);
+			else if (g_saveMigration.phase == SaveMigrationPhase::Deleting)
+				fileProgress = 1.f;
+		}
+		float totalProgress = totalFiles == 0 ? 1.f : (currentFileIndex + fileProgress) / totalFiles;
+		ImGui::Text("%s", T("Migrating save files..."));
+		if (g_saveMigration.currentIndex < totalFiles)
+			ImGui::TextWrapped("%s", g_saveMigration.files[g_saveMigration.currentIndex].name.c_str());
+		ImGui::ProgressBar(totalProgress, ScaledVec2(320.f, 0));
+		ImGui::Text("%zu / %zu", currentFileIndex, totalFiles);
+
+		if (processSaveMigrationStep())
+		{
+			bool failed = g_saveMigration.failed;
+			ImGui::CloseCurrentPopup();
+			if (failed)
+				gui_error(Ts("Some save files could not be migrated or deleted."));
+			finishSaveMigrationSelection();
+		}
+		ImGui::EndPopup();
+	}
+}
+#else
+static void handlePathSelection(SaveMigrationKind kind, std::string selection)
+{
+	(void)kind;
+	if (g_currentSinglePath != nullptr)
+		manageSinglePathCallback(std::move(selection));
+	else
+		managePathListCallback(std::move(selection));
+}
+#endif
+
+static void manageSinglePathCallback(std::string selection)
+{
+    if (g_currentSinglePath != nullptr)
+    {
+        *g_currentSinglePath = selection;
+        g_currentSinglePath = nullptr;
+        g_currentMigrationKind = SaveMigrationKind::None;
+    }
+}
+
 static void managePathListCallback(std::string selection)
 {
     if (g_currentPathList != nullptr)
     {
         g_currentPathList->push_back(selection);
         g_currentPathList = nullptr;
+        g_currentMigrationKind = SaveMigrationKind::None;
     }
 }
 
-static void manageSinglePath(const char* label, const char *popupName, config::Option<std::string, false>& pathOption, const char* helpText)
+static void manageSinglePath(const char* label, const char *popupName, config::Option<std::string, false>& pathOption, const char* helpText,
+		bool writeAccess = false, SaveMigrationKind migrationKind = SaveMigrationKind::None)
 {
     ImVec2 size;
     size.x = 0.0f;
@@ -48,7 +554,7 @@ static void manageSinglePath(const char* label, const char *popupName, config::O
         ImGui::AlignTextToFramePadding();
         if (pathOption.get().empty()) {
             ImguiStyleVar _(ImGuiStyleVar_FramePadding, ScaledVec2(24, 3));
-            std::string buttonLabel = T("Set") + std::string("##") + label;
+            std::string buttonLabel = T("Add") + std::string("##") + label;
             openPopup = ImGui::Button(buttonLabel.c_str());
         }
         else
@@ -67,18 +573,40 @@ static void manageSinglePath(const char* label, const char *popupName, config::O
     ImGui::SameLine();
     ShowHelpMarker(helpText);
     
-    static std::string *pCurrentPath;
-    pCurrentPath = &pathOption.get();
     select_file_popup(popupName, [](bool cancelled, std::string selection) {
-    	if (!cancelled)
-    		*pCurrentPath = selection;
+		if (!cancelled)
+			handlePathSelection(g_currentMigrationKind, std::move(selection));
+		else
+		{
+			g_currentSinglePath = nullptr;
+			g_currentMigrationKind = SaveMigrationKind::None;
+		}
     	return true;
     });
     if (openPopup)
+    {
+        g_currentSinglePath = &pathOption.get();
+        g_currentMigrationKind = migrationKind;
+#ifdef __ANDROID__
+		bool supported = hostfs::addStorage(true, writeAccess, T(popupName), [](bool cancelled, std::string selection) {
+			if (!cancelled)
+				handlePathSelection(g_currentMigrationKind, std::move(selection));
+			else
+			{
+				g_currentSinglePath = nullptr;
+				g_currentMigrationKind = SaveMigrationKind::None;
+			}
+		});
+		if (!supported)
+			ImGui::OpenPopup(T(popupName));
+#else
         ImGui::OpenPopup(T(popupName));
+#endif
+    }
 }
 
-static void managePathList(const char* label, const char *popupName, std::vector<std::string>& paths, const char* helpText)
+static void managePathList(const char* label, const char *popupName, std::vector<std::string>& paths, const char* helpText,
+		bool writeAccess = false, SaveMigrationKind migrationKind = SaveMigrationKind::None)
 {
     ImguiID _(label);
     ImVec2 size;
@@ -120,18 +648,31 @@ static void managePathList(const char* label, const char *popupName, std::vector
 
     // Handle file selection popup (following the same pattern as addContentPath)
     if (openPopup)
+    {
 	    g_currentPathList = &paths;
+	    g_currentMigrationKind = migrationKind;
+    }
     select_file_popup(popupName, [](bool cancelled, std::string selection) {
-    	if (!cancelled)
-    		managePathListCallback(selection);
+		if (!cancelled)
+			handlePathSelection(g_currentMigrationKind, std::move(selection));
+		else
+		{
+			g_currentPathList = nullptr;
+			g_currentMigrationKind = SaveMigrationKind::None;
+		}
     	return true;
     });
 #ifdef __ANDROID__
     if (openPopup)
     {
-		bool supported = hostfs::addStorage(true, false, T(popupName), [](bool cancelled, std::string selection) {
+		bool supported = hostfs::addStorage(true, writeAccess, T(popupName), [](bool cancelled, std::string selection) {
 			if (!cancelled)
-				managePathListCallback(selection);
+				handlePathSelection(g_currentMigrationKind, std::move(selection));
+			else
+			{
+				g_currentPathList = nullptr;
+				g_currentMigrationKind = SaveMigrationKind::None;
+			}
 		});
 		if (!supported)
 			ImGui::OpenPopup(T(popupName));
@@ -182,6 +723,9 @@ void addContentPath(bool start)
 
 void gui_settings_general()
 {
+#ifdef __ANDROID__
+	drawSaveMigrationPopups();
+#endif
 	struct
 	{
 		const char* label;
@@ -467,19 +1011,20 @@ void gui_settings_general()
     		T("Folders containing BIOS files (e.g. dc_boot.bin or dc_bios.bin) and arcade BIOS"));
     ImGui::Spacing();
 
-#if !defined(__ANDROID__)
     manageSinglePath(T("VMU Folder"), T("Select the VMU folder"), config::VMUPath,
-    		T("Folder where VMU (.bin) saves are stored"));
+			T("Folder where VMU (.bin) saves are stored. This can be the same folder as save states and game saves"),
+			true, SaveMigrationKind::Vmu);
     ImGui::Spacing();
 
     managePathList(T("Savestate Folders"), T("Select a savestate folder"), config::SavestatePath.get(),
-    		T("Folders for save states. First path is used for new states; all are searched when loading"));
+			T("Folders for save states. First path is used for new states; all are searched when loading. This can be the same folder as VMUs and game saves"),
+			true, SaveMigrationKind::Savestate);
     ImGui::Spacing();
 
     manageSinglePath(T("Game Save Folder"), T("Select the game save folder"), config::SavePath,
-    		T("Folder for game save data (e.g. arcade NVRAM)"));
+			T("Folder for Dreamcast internal flash and arcade NVRAM/card data. This can be the same folder as VMUs and save states"),
+			true, SaveMigrationKind::GameSave);
     ImGui::Spacing();
-#endif
 
     managePathList(T("Texture Pack Folders"), T("Select a texture pack folder"), config::TexturePath.get(),
     		T("Folders containing textures/<gameId> or <gameId> under a textures subfolder"));

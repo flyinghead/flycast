@@ -128,12 +128,12 @@ public:
 	{
 		port->setPipe(this);
 
-		FILE *f = nowide::fopen(getCardDataPath().c_str(), "rb");
+		hostfs::File *f = hostfs::storage().openFile(getCardDataPath(), "rb");
 		if (f != nullptr)
 		{
-			if (fread(cardData.data(), 1, cardData.size(), f) != cardData.size())
+			if (f->read(cardData.data(), 1, cardData.size()) != cardData.size())
 				WARN_LOG(NAOMI, "Rfid card %d: truncated read", index);
-			fclose(f);
+			delete f;
 		}
 		else {
 			makeNewCard();
@@ -432,13 +432,13 @@ private:
 
 	void saveData()
 	{
-		FILE *f = nowide::fopen(getCardDataPath().c_str(), "wb");
+		hostfs::File *f = hostfs::storage().openFile(getCardDataPath(), "wb");
 		if (f == nullptr) {
 			WARN_LOG(NAOMI, "Can't save RFID card: error %x", errno);
 			return;
 		}
-		fwrite(cardData.data(), 1, cardData.size(), f);
-		fclose(f);
+		f->write(cardData.data(), 1, cardData.size());
+		delete f;
 	}
 
 	u32 dinoShuffle(u32 v) {

@@ -22,6 +22,7 @@
 #include <xxhash.h>
 #include "oslib/oslib.h"
 #include "oslib/i18n.h"
+#include "oslib/storage.h"
 #include "stdclass.h"
 #include "cfg/option.h"
 #include "network/output.h"
@@ -1613,14 +1614,14 @@ MIEImpl::MIEImpl()
 	}
 
 	std::string eeprom_file = getEepromPath();
-	FILE* f = nullptr;
+	hostfs::File* f = nullptr;
 	if (!eeprom_file.empty())
-		f = nowide::fopen(eeprom_file.c_str(), "rb");
+		f = hostfs::storage().openFile(eeprom_file, "rb");
 	if (f != nullptr)
 	{
-		if (std::fread(eeprom, 1, 0x80, f) != 0x80)
+		if (f->read(eeprom, 1, 0x80) != 0x80)
 			WARN_LOG(MAPLE, "Failed or truncated read of EEPROM '%s'", eeprom_file.c_str());
-		std::fclose(f);
+		delete f;
 		DEBUG_LOG(MAPLE, "Loaded EEPROM from %s", eeprom_file.c_str());
 	}
 	else if (naomi_default_eeprom != nullptr)
@@ -1895,11 +1896,11 @@ void MIEImpl::handle_86_subcommand()
 			std::string eeprom_file = getEepromPath();
 			if (!eeprom_file.empty())
 			{
-				FILE* f = nowide::fopen(eeprom_file.c_str(), "wb");
+				hostfs::File* f = hostfs::storage().openFile(eeprom_file, "wb");
 				if (f)
 				{
-					std::fwrite(eeprom, 1, sizeof(eeprom), f);
-					std::fclose(f);
+					f->write(eeprom, 1, sizeof(eeprom));
+					delete f;
 					INFO_LOG(MAPLE, "Saved EEPROM to %s", eeprom_file.c_str());
 				}
 				else {
@@ -2728,7 +2729,7 @@ void RFIDReaderWriterImpl::loadCard()
 	if (transientData)
 		return;
 	std::string path = getCardPath();
-	FILE *fp = nowide::fopen(path.c_str(), "rb");
+	hostfs::File *fp = hostfs::storage().openFile(path, "rb");
 	if (fp == nullptr)
 	{
 		if (settings.content.gameId.substr(0, 8) == "MKG TKOB")
@@ -2792,9 +2793,9 @@ void RFIDReaderWriterImpl::loadCard()
 	else
 	{
 		INFO_LOG(NAOMI, "Loading card file from %s", path.c_str());
-		if (fread(cardData, 1, sizeof(cardData), fp) != sizeof(cardData))
+		if (fp->read(cardData, 1, sizeof(cardData)) != sizeof(cardData))
 			WARN_LOG(NAOMI, "Truncated or empty card file: %s" ,path.c_str());
-		fclose(fp);
+		delete fp;
 	}
 }
 
@@ -2803,16 +2804,16 @@ void RFIDReaderWriterImpl::saveCard() const
 	if (transientData)
 		return;
 	std::string path = getCardPath();
-	FILE *fp = nowide::fopen(path.c_str(), "wb");
+	hostfs::File *fp = hostfs::storage().openFile(path, "wb");
 	if (fp == nullptr)
 	{
 		WARN_LOG(NAOMI, "Can't create card file %s: errno %d", path.c_str(), errno);
 		return;
 	}
 	INFO_LOG(NAOMI, "Saving card file to %s", path.c_str());
-	if (fwrite(cardData, 1, sizeof(cardData), fp) != sizeof(cardData))
+	if (fp->write(cardData, 1, sizeof(cardData)) != sizeof(cardData))
 		WARN_LOG(NAOMI, "Truncated write to file: %s", path.c_str());
-	fclose(fp);
+	delete fp;
 }
 
 void RFIDReaderWriterImpl::serialize(Serializer& ser) const
