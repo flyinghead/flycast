@@ -22,19 +22,10 @@
 #include "dreampicoport.h"
 
 #include "hw/maple/maple_devs.h"
-#include "hw/maple/maple_if.h"
 #include "ui/gui.h"
 #include "oslib/i18n.h"
-#include <cfg/option.h>
 #include <SDL.h>
-#include <iomanip>
-#include <sstream>
-#include <optional>
-#include <thread>
-#include <list>
-#include <mutex>
-#include <condition_variable>
-#include <atomic>
+#include <memory>
 
 #if defined(__linux__) || (defined(__APPLE__) && defined(TARGET_OS_MAC))
 #include <dirent.h>

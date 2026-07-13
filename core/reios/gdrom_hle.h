@@ -1,6 +1,5 @@
 #pragma once
-#include "serialize.h"
-#include "cfg/option.h"
+#include "types.h"
 
 #define SYSCALL_GDROM			0x00
 

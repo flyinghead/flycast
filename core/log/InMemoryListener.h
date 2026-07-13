@@ -19,7 +19,6 @@
 #pragma once
 
 #include "LogManager.h"
-#include <deque>
 #include <mutex>
 #include <vector>
 

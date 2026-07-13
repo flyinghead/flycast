@@ -26,6 +26,7 @@
 #include "serialize.h"
 #include "network/net_platform.h"
 #include <memory>
+#include <vector>
 
 namespace systemsp
 {

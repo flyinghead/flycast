@@ -16,12 +16,12 @@
     You should have received a copy of the GNU General Public License
     along with reicast.  If not, see <https://www.gnu.org/licenses/>.
  */
-#include <cmath>
 #include "mapping.h"
 #include "cfg/ini.h"
 #include "stdclass.h"
 #include "cfg/option.h"
 #include "oslib/storage.h"
+#include <cmath>
 
 static struct
 {

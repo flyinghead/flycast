@@ -18,11 +18,14 @@
 */
 #pragma once
 #include "types.h"
-#include "gui.h"
+#include "cfg/option.h"
 #include "imgui.h"
 #include "network/ggpo.h"
 #include "oslib/i18n.h"
 #include <chrono>
+#include <string>
+#include <utility>
+#include <vector>
 
 class Chat
 {

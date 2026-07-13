@@ -17,16 +17,16 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #pragma once
-#include <string>
-#include <vector>
-#include <array>
-#include <cmath>
-#include <type_traits>
 #include "cfg.h"
 #include "hw/maple/maple_cfg.h"
 #ifdef LIBRETRO
 #include <libretro.h>
 #endif
+#include <array>
+#include <cmath>
+#include <string>
+#include <type_traits>
+#include <vector>
 
 namespace config {
 

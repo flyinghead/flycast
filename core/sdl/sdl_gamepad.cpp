@@ -19,6 +19,8 @@
 #include "sdl_mappingparser.h"
 #include "oslib/i18n.h"
 #include <cmath>
+#include <map>
+#include <string>
 
 std::map<SDL_JoystickID, std::shared_ptr<SDLGamepad>> SDLGamepad::sdl_gamepads;
 

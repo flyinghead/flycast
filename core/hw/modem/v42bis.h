@@ -19,7 +19,6 @@
 #pragma once
 #include "types.h"
 #include "internal.h"
-#include <deque>
 #include <map>
 #include <vector>
 #include <stdexcept>

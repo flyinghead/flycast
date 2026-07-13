@@ -20,12 +20,12 @@
 #include <asio.hpp> // Must be included first to avoid winsock issues on Windows
 #include "dreamconn.h"
 #include "hw/maple/maple_devs.h"
-#include "hw/maple/maple_if.h"
 #include "oslib/oslib.h"
 #include "ui/gui.h"
-#include <cfg/option.h>
+#include "cfg/option.h"
 #include "oslib/i18n.h"
 #include <SDL.h>
+#include <array>
 #include <mutex>
 
 #ifdef USE_DREAMCONN

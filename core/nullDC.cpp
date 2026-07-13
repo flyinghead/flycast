@@ -18,11 +18,14 @@
 #include "serialize.h"
 #include "oslib/i18n.h"
 #include "input/maplelink.h"
-#include <time.h>
 #ifdef TARGET_UWP
 #include <winrt/Windows.System.h>
 #include <winrt/Windows.Foundation.h>
 #endif
+
+#include <cstdlib>
+#include <cstring>
+#include <ctime>
 
 static std::string lastStateFile;
 static time_t lastStateTime;

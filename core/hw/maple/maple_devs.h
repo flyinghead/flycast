@@ -2,13 +2,12 @@
 #include "types.h"
 #include "maple_cfg.h"
 #include "maple_helper.h"
-#include <cmath>
 #include "input/gamepad.h"
 #include "serialize.h"
 #include "hw/hwreg.h"
 
+#include <cmath>
 #include <memory>
-#include <vector>
 
 enum MapleFunctionID
 {

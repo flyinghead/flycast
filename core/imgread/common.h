@@ -1,10 +1,9 @@
 #pragma once
 #include "types.h"
-#include <vector>
-
 #include "emulator.h"
 #include "hw/gdrom/gdrom_if.h"
 #include "oslib/storage.h"
+#include <vector>
 
 /*
 Mode2 Subheader:

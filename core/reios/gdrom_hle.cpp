@@ -4,7 +4,6 @@
 	Bits and pieces from redream (https://github.com/inolen/redream)
 */
 
-#include <cstdio>
 #include "types.h"
 #include "hw/sh4/sh4_mem.h"
 #include "hw/sh4/sh4_sched.h"
@@ -18,6 +17,7 @@
 #include "hw/sh4/modules/mmu.h"
 
 #include <algorithm>
+#include <cstddef>
 
 #define SWAP32(a) ((((a) & 0xff) << 24)  | (((a) & 0xff00) << 8) | (((a) >> 8) & 0xff00) | (((a) >> 24) & 0xff))
 

@@ -17,13 +17,13 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #pragma once
-#include <array>
 #include "types.h"
 #include "sh4_mem.h"
 #include "modules/mmu.h"
 #include "hw/sh4/sh4_if.h"
 #include "serialize.h"
 #include "sh4_cycles.h"
+#include <array>
 
 static bool cachedArea(u32 area)
 {

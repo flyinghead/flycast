@@ -17,7 +17,7 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #pragma once
-#include "build.h"
+#include "types.h"
 
 #ifdef USE_SDL
 void sdl_setTorque(int, float);

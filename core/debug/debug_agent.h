@@ -24,7 +24,7 @@
 #include "hw/sh4/dyna/shil.h"
 #include "cfg/option.h"
 #include <array>
-#include <signal.h>
+#include <csignal>
 #include <map>
 
 #ifndef SIGTRAP

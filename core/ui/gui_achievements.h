@@ -16,11 +16,13 @@
     You should have received a copy of the GNU General Public License
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
+#pragma once
 #include "types.h"
 #include "gui_util.h"
 #include <mutex>
 #include <vector>
 #include <map>
+#include <string>
 
 namespace achievements
 {

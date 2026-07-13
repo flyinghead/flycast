@@ -2,6 +2,7 @@
 #include "types.h"
 #include "ta_ctx.h"
 #include "emulator.h"
+#include <string>
 #include <vector>
 
 extern u32 FrameCount;

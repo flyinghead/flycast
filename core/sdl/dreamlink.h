@@ -28,9 +28,8 @@
 #include "sdl_gamepad.h"
 #include "input/maplelink.h"
 
-#include <functional>
 #include <memory>
-#include <array>
+#include <string>
 
 // Abstract base class for communication with physical controllers
 class DreamLink : public BaseMapleLink

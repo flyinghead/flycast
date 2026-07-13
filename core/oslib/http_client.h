@@ -17,14 +17,15 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
  */
 #pragma once
+#include "types.h"
+#include "version.h"
+
 #include <string>
 #include <vector>
 #include <cctype>
 #include <iomanip>
 #include <sstream>
 #include <locale>
-#include "types.h"
-#include "version.h"
 
 namespace http {
 

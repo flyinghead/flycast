@@ -23,6 +23,9 @@
 #include "cfg/option.h"
 #include "arcade_scraper.h"
 #include <chrono>
+#include <future>
+#include <memory>
+#include <mutex>
 
 GameBoxart Boxart::getBoxart(const GameMedia& media)
 {

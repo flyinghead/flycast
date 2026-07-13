@@ -11,7 +11,7 @@
 #include <vector>
 #include <functional>
 #include <cassert>
-#include <time.h>
+#include <ctime>
 
 #if defined(__ANDROID__)
 #undef PAGE_MASK
