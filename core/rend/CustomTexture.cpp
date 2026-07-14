@@ -508,6 +508,7 @@ CustomTexture::~CustomTexture() {
 void CustomTexture::terminate()
 {
 	stopPreload = true;
+	rend_request_gpu_preloaded_texture_cleanup();
 	gpuPreloadCondition.notify_all();
 	if (loaderThread)
 		loaderThread->stop();

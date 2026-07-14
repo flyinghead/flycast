@@ -1315,7 +1315,21 @@ void OpenGLRenderer::initVideoRoutingFrameBuffer()
 void OpenGLRenderer::Term()
 {
 	TexCache.Clear();
+	clearGpuPreloadedTextures();
 	gles_term();
+}
+
+void OpenGLRenderer::ProcessCustomTexturePreloads()
+{
+	clearGpuPreloadedTexturesIfRequested();
+	custom_texture.processGpuPreloads([this](u32 hash,
+			const PreparedCustomTexture& texture) {
+		GpuPreloadedTexturePtr gpuTexture = TextureCacheData::CreateGpuPreloadedTexture(texture);
+		if (!gpuTexture)
+			return false;
+		addGpuPreloadedTexture(hash, std::move(gpuTexture));
+		return true;
+	});
 }
 
 bool OpenGLRenderer::Render()

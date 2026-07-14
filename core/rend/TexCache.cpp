@@ -289,6 +289,7 @@ bool BaseTextureCacheData::Delete()
 	customRequestId = {};
 	customPayload.reset();
 	gpuPreloadedTexture.reset();
+	usingGpuPreloadedTexture = false;
 	customMipLevels = 0;
 
 	return true;
@@ -314,6 +315,7 @@ BaseTextureCacheData::BaseTextureCacheData(TSP tsp, TCW tcw, int area)
 	customRequestId = {};
 	gpuPalette = false;
 	is_custom_replaced = false;
+	usingGpuPreloadedTexture = false;
 	customMipLevels = 0;
 
 	//decode info from tsp/tcw into the texture struct
@@ -759,6 +761,7 @@ bool BaseTextureCacheData::CheckCustomTexture()
 		tex_type = TextureType::_8888;
 		gpuPalette = false;
 		is_custom_replaced = true;
+		usingGpuPreloadedTexture = true;
 		customMipLevels = gpuPreloadedTexture->mipLevels;
 		return true;
 	}

@@ -2,6 +2,7 @@
 #include "types.h"
 #include "ta_ctx.h"
 #include "emulator.h"
+#include <atomic>
 #include <string>
 #include <memory>
 #include <unordered_map>
@@ -28,6 +29,7 @@ void rend_enable_renderer(bool enabled);
 bool rend_is_enabled();
 void rend_process_custom_texture_preloads();
 bool rend_supports_gpu_texture_preload();
+void rend_request_gpu_preloaded_texture_cleanup();
 void rend_serialize(Serializer& ser);
 void rend_deserialize(Deserializer& deser);
 static void rend_updatePalette();
@@ -88,12 +90,15 @@ struct Renderer
 	virtual BaseTextureCacheData *GetTexture(TSP tsp, TCW tcw, int area = 0) { return nullptr; }
 	std::shared_ptr<GpuPreloadedTexture> findGpuPreloadedTexture(
 			u32 currentHash, u32 oldVqHash, u32 oldHash) const;
+	void requestGpuPreloadedTextureCleanup() { gpuPreloadedTextureCleanupRequested = true; }
 
 protected:
 	void addGpuPreloadedTexture(u32 hash, std::shared_ptr<GpuPreloadedTexture> texture);
 	void clearGpuPreloadedTextures();
+	void clearGpuPreloadedTexturesIfRequested();
 
 	std::unordered_map<u32, std::shared_ptr<GpuPreloadedTexture>> gpuPreloadedTextures;
+	std::atomic<bool> gpuPreloadedTextureCleanupRequested { false };
 	bool resetTextureCache = false;
 	bool clearLastFrame = false;
 	bool updatePalette = true;

@@ -20,8 +20,26 @@
 #include "dx11context.h"
 #include <versionhelpers.h>
 
+namespace
+{
+struct DX11GpuPreloadedTexture final : GpuPreloadedTexture
+{
+	explicit DX11GpuPreloadedTexture(u8 mipLevels) : GpuPreloadedTexture(mipLevels) {}
+
+	ComPtr<ID3D11Texture2D> texture;
+	ComPtr<ID3D11ShaderResourceView> textureView;
+};
+}
+
 void DX11Texture::UploadToGPU(int width, int height, const u8* temp_tex_buffer, bool mipmapped, bool mipmapsIncluded)
 {
+	if (usingGpuPreloadedTexture)
+	{
+		textureView.reset();
+		texture.reset();
+		gpuPreloadedTexture.reset();
+		usingGpuPreloadedTexture = false;
+	}
 	D3D11_TEXTURE2D_DESC desc{};
 	desc.Width = width;
 	desc.Height = height;
@@ -138,6 +156,13 @@ bool DX11Texture::Delete()
 
 bool DX11Texture::UploadCustomTexture(const PreparedCustomTexture& customTexture, bool mipmapped)
 {
+	if (usingGpuPreloadedTexture)
+	{
+		textureView.reset();
+		texture.reset();
+		gpuPreloadedTexture.reset();
+		usingGpuPreloadedTexture = false;
+	}
 	std::string validationError;
 	if (!validatePreparedCustomTexture(customTexture, validationError))
 		return false;
@@ -205,6 +230,31 @@ bool DX11Texture::UploadCustomTexture(const PreparedCustomTexture& customTexture
 	}
 	texture = std::move(newTexture);
 	textureView = std::move(newView);
+	return true;
+}
+
+GpuPreloadedTexturePtr DX11Texture::CreateGpuPreloadedTexture(
+		const PreparedCustomTexture& customTexture)
+{
+	DX11Texture uploadedTexture;
+	if (!uploadedTexture.UploadCustomTexture(customTexture, true))
+		return nullptr;
+	auto texture = std::make_shared<DX11GpuPreloadedTexture>(
+			static_cast<u8>(customTexture.generateMipmaps
+					? mipmapLevelCount(customTexture.width, customTexture.height)
+					: customTexture.levels.size()));
+	texture->texture = std::move(uploadedTexture.texture);
+	texture->textureView = std::move(uploadedTexture.textureView);
+	return texture;
+}
+
+bool DX11Texture::UseGpuPreloadedTexture(const GpuPreloadedTexturePtr& texture)
+{
+	auto dx11Texture = std::dynamic_pointer_cast<DX11GpuPreloadedTexture>(texture);
+	if (!dx11Texture)
+		return false;
+	this->texture = dx11Texture->texture;
+	textureView = dx11Texture->textureView;
 	return true;
 }
 

@@ -461,7 +461,9 @@ public:
 	std::string GetId() override { return std::to_string(texID); }
 	void UploadToGPU(int width, int height, const u8 *temp_tex_buffer, bool mipmapped, bool mipmapsIncluded = false) override;
 	bool UploadCustomTexture(const PreparedCustomTexture& texture, bool mipmapped) override;
+	bool UseGpuPreloadedTexture(const GpuPreloadedTexturePtr& texture) override;
 	bool Delete() override;
+	static GpuPreloadedTexturePtr CreateGpuPreloadedTexture(const PreparedCustomTexture& texture);
 	static CustomTextureCapabilities GetCustomTextureCapabilities();
 
 	static void setUploadToGPUFlavor();
@@ -517,6 +519,8 @@ struct OpenGLRenderer : Renderer
 		return ret;
 	}
 	bool GetLastFrame(std::vector<u8>& data, int& width, int& height) override;
+	void ProcessCustomTexturePreloads() override;
+	bool SupportsGpuTexturePreload() const override { return true; }
 
 	BaseTextureCacheData *GetTexture(TSP tsp, TCW tcw, int area) override;
 

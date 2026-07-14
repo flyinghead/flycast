@@ -23,6 +23,14 @@
 #include <algorithm>
 #include <memory>
 
+class VulkanGpuPreloadedTexture final : public GpuPreloadedTexture
+{
+public:
+	explicit VulkanGpuPreloadedTexture(u8 mipLevels) : GpuPreloadedTexture(mipLevels) {}
+
+	Texture texture;
+};
+
 void setImageLayout(vk::CommandBuffer const& commandBuffer, vk::Image image, vk::Format format, u32 mipmapLevels, vk::ImageLayout oldImageLayout, vk::ImageLayout newImageLayout)
 {
 	static const float scopeColor[4] = { 0.75f, 0.75f, 0.0f, 1.0f };
@@ -149,6 +157,9 @@ void setImageLayout(vk::CommandBuffer const& commandBuffer, vk::Image image, vk:
 
 void Texture::UploadToGPU(int width, int height, const u8 *data, bool mipmapped, bool mipmapsIncluded)
 {
+	vulkanGpuPreloadedTexture = nullptr;
+	gpuPreloadedTexture.reset();
+	usingGpuPreloadedTexture = false;
 	if (customTextureResource && image)
 	{
 		verify(flightManager != nullptr);
@@ -232,6 +243,9 @@ vk::Format customVkFormat(NativeTextureFormat format)
 
 bool Texture::UploadCustomTexture(const PreparedCustomTexture& customTexture, bool mipmapped)
 {
+	vulkanGpuPreloadedTexture = nullptr;
+	gpuPreloadedTexture.reset();
+	usingGpuPreloadedTexture = false;
 	std::string validationError;
 	if (!(bool)commandBuffer || !validatePreparedCustomTexture(customTexture, validationError)
 			|| customTexture.bytes.size() > UINT32_MAX)
@@ -308,6 +322,75 @@ bool Texture::UploadCustomTexture(const PreparedCustomTexture& customTexture, bo
 		WARN_LOG(RENDERER, "Vulkan custom texture upload failed: %s", exception.what());
 		return false;
 	}
+}
+
+GpuPreloadedTexturePtr Texture::CreateGpuPreloadedTexture(
+		const PreparedCustomTexture& customTexture, vk::CommandBuffer commandBuffer)
+{
+	auto texture = std::make_shared<VulkanGpuPreloadedTexture>(
+			static_cast<u8>(customTexture.generateMipmaps
+					? mipmapLevelCount(customTexture.width, customTexture.height)
+					: customTexture.levels.size()));
+	texture->texture.SetCommandBuffer(commandBuffer);
+	if (!texture->texture.UploadCustomTexture(customTexture, true))
+		return nullptr;
+	texture->texture.SetCommandBuffer(vk::CommandBuffer());
+	return texture;
+}
+
+void Texture::ReleaseGpuPreloadStaging(const GpuPreloadedTexturePtr& texture)
+{
+	auto vulkanTexture = std::dynamic_pointer_cast<VulkanGpuPreloadedTexture>(texture);
+	if (vulkanTexture)
+		vulkanTexture->texture.stagingBufferData.reset();
+}
+
+bool Texture::UseGpuPreloadedTexture(const GpuPreloadedTexturePtr& texture)
+{
+	auto vulkanTexture = std::dynamic_pointer_cast<VulkanGpuPreloadedTexture>(texture);
+	if (!vulkanTexture)
+		return false;
+	if (image)
+	{
+		if (flightManager == nullptr)
+			return false;
+		deferDeleteResource(flightManager);
+	}
+	vulkanGpuPreloadedTexture = vulkanTexture.get();
+	format = vulkanTexture->texture.format;
+	extent = vulkanTexture->texture.extent;
+	mipmapLevels = vulkanTexture->texture.mipmapLevels;
+	usageFlags = vulkanTexture->texture.usageFlags;
+	needsStaging = false;
+	readOnlyImageView = vk::ImageView();
+	customTextureResource = false;
+	return true;
+}
+
+bool Texture::Delete()
+{
+	vulkanGpuPreloadedTexture = nullptr;
+	return BaseTextureCacheData::Delete();
+}
+
+vk::ImageView Texture::GetImageView() const
+{
+	if (vulkanGpuPreloadedTexture != nullptr)
+		return vulkanGpuPreloadedTexture->texture.GetImageView();
+	return imageView.get();
+}
+
+vk::Image Texture::GetImage() const
+{
+	return vulkanGpuPreloadedTexture != nullptr
+			? vulkanGpuPreloadedTexture->texture.GetImage() : image.get();
+}
+
+vk::ImageView Texture::GetReadOnlyImageView() const
+{
+	if (vulkanGpuPreloadedTexture != nullptr)
+		return vulkanGpuPreloadedTexture->texture.GetReadOnlyImageView();
+	return readOnlyImageView ? readOnlyImageView : imageView.get();
 }
 
 CustomTextureCapabilities Texture::GetCustomTextureCapabilities()
@@ -569,10 +652,13 @@ void Texture::deferDeleteResource(FlightManager *manager)
 	public:
 		ResourceDeleter(Texture *texture)
 		{
+			const bool ownsImage = static_cast<bool>(texture->image);
 			std::swap(image, texture->image);
 			std::swap(imageView, texture->imageView);
 			std::swap(bufferData, texture->stagingBufferData);
 			std::swap(allocation, texture->allocation);
+			if (!ownsImage)
+				std::swap(gpuPreloadedTexture, texture->gpuPreloadedTexture);
 		}
 
 	private:
@@ -580,6 +666,7 @@ void Texture::deferDeleteResource(FlightManager *manager)
 		vk::UniqueImageView imageView;
 		std::unique_ptr<BufferData> bufferData;
 		Allocation allocation;
+		GpuPreloadedTexturePtr gpuPreloadedTexture;
 	};
 	manager->addToFlight(new ResourceDeleter(this));
 }

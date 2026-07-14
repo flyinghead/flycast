@@ -47,6 +47,7 @@ void BaseVulkanRenderer::Term()
 	framebufferDrawer.reset();
 	quadPipeline.reset();
 	textureCache.Clear();
+	clearGpuPreloadedTextures();
 	fogTexture = nullptr;
 	paletteTexture = nullptr;
 	texCommandPool.Term();
@@ -54,6 +55,25 @@ void BaseVulkanRenderer::Term()
 	framebufferTextures.clear();
 	framebufferTexIndex = 0;
 	shaderManager.term();
+}
+
+void BaseVulkanRenderer::ProcessCustomTexturePreloads()
+{
+	clearGpuPreloadedTexturesIfRequested();
+	custom_texture.processGpuPreloads([this](u32 hash,
+			const PreparedCustomTexture& texture) {
+		texCommandPool.BeginFrame();
+		vk::CommandBuffer commandBuffer = texCommandPool.Allocate();
+		commandBuffer.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
+		GpuPreloadedTexturePtr gpuTexture = Texture::CreateGpuPreloadedTexture(texture, commandBuffer);
+		commandBuffer.end();
+		texCommandPool.EndFrameAndWait();
+		if (!gpuTexture)
+			return false;
+		Texture::ReleaseGpuPreloadStaging(gpuTexture);
+		addGpuPreloadedTexture(hash, std::move(gpuTexture));
+		return true;
+	});
 }
 
 BaseTextureCacheData *BaseVulkanRenderer::GetTexture(TSP tsp, TCW tcw, int area)

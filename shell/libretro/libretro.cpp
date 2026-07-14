@@ -1212,6 +1212,16 @@ void retro_run()
 
 	if (custom_texture.isPreloading())
 	{
+#if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES)
+		if (isOpenGL(config::RendererType))
+			glsm_ctl(GLSM_CTL_STATE_BIND, nullptr);
+#endif
+		rend_process_custom_texture_preloads();
+#if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES)
+		if (isOpenGL(config::RendererType))
+			glsm_ctl(GLSM_CTL_STATE_UNBIND, nullptr);
+#endif
+
 		int texLoaded, texTotal;
 		size_t loaded_size;
 		custom_texture.getPreloadProgress(texLoaded, texTotal, loaded_size);

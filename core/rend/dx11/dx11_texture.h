@@ -38,7 +38,9 @@ public:
 	void UploadToGPU(int width, int height, const u8* temp_tex_buffer, bool mipmapped,
 			bool mipmapsIncluded = false) override;
 	bool UploadCustomTexture(const PreparedCustomTexture& texture, bool mipmapped) override;
+	bool UseGpuPreloadedTexture(const GpuPreloadedTexturePtr& texture) override;
 	bool Delete() override;
+	static GpuPreloadedTexturePtr CreateGpuPreloadedTexture(const PreparedCustomTexture& texture);
 	static CustomTextureCapabilities GetCustomTextureCapabilities();
 #ifndef TARGET_UWP
 	bool Force32BitTexture(TextureType type) const override;

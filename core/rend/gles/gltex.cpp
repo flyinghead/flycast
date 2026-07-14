@@ -6,6 +6,21 @@
 #include <memory>
 #include <string>
 
+namespace
+{
+struct OpenGLGpuPreloadedTexture final : GpuPreloadedTexture
+{
+	explicit OpenGLGpuPreloadedTexture(u8 mipLevels) : GpuPreloadedTexture(mipLevels) {}
+	~OpenGLGpuPreloadedTexture() override
+	{
+		if (texture != 0)
+			glcache.DeleteTextures(1, &texture);
+	}
+
+	GLuint texture = 0;
+};
+}
+
 #ifndef GL_COMPRESSED_RGBA_BPTC_UNORM
 #define GL_COMPRESSED_RGBA_BPTC_UNORM 0x8E8C
 #endif
@@ -190,6 +205,13 @@ void TextureCacheData::UploadToGPUGl4(int width, int height, const u8 *temp_tex_
 
 void TextureCacheData::UploadToGPU(int width, int height, const u8 *temp_tex_buffer, bool mipmapped, bool mipmapsIncluded)
 {
+	if (usingGpuPreloadedTexture)
+	{
+		texID = 0;
+		gpuPreloadedTexture.reset();
+		usingGpuPreloadedTexture = false;
+		customTextureObject = false;
+	}
 	if (customTextureObject && texID != 0)
 	{
 		glcache.DeleteTextures(1, &texID);
@@ -256,6 +278,13 @@ bool hasGlExtension(const char *wanted)
 
 bool TextureCacheData::UploadCustomTexture(const PreparedCustomTexture& customTexture, bool mipmapped)
 {
+	if (usingGpuPreloadedTexture)
+	{
+		texID = 0;
+		gpuPreloadedTexture.reset();
+		usingGpuPreloadedTexture = false;
+		customTextureObject = false;
+	}
 	std::string validationError;
 	if (!validatePreparedCustomTexture(customTexture, validationError))
 		return false;
@@ -313,6 +342,32 @@ bool TextureCacheData::UploadCustomTexture(const PreparedCustomTexture& customTe
 	return true;
 }
 
+GpuPreloadedTexturePtr TextureCacheData::CreateGpuPreloadedTexture(
+		const PreparedCustomTexture& customTexture)
+{
+	auto texture = std::make_shared<OpenGLGpuPreloadedTexture>(
+			static_cast<u8>(customTexture.generateMipmaps
+					? mipmapLevelCount(customTexture.width, customTexture.height)
+					: customTexture.levels.size()));
+	TextureCacheData uploadedTexture({}, {}, 0);
+	if (!uploadedTexture.UploadCustomTexture(customTexture, true))
+		return nullptr;
+	texture->texture = uploadedTexture.texID;
+	uploadedTexture.texID = 0;
+	uploadedTexture.customTextureObject = false;
+	return texture;
+}
+
+bool TextureCacheData::UseGpuPreloadedTexture(const GpuPreloadedTexturePtr& texture)
+{
+	auto openGlTexture = std::dynamic_pointer_cast<OpenGLGpuPreloadedTexture>(texture);
+	if (!openGlTexture)
+		return false;
+	texID = openGlTexture->texture;
+	customTextureObject = false;
+	return true;
+}
+
 CustomTextureCapabilities TextureCacheData::GetCustomTextureCapabilities()
 {
 	GLint maxTextureSize = 0;
@@ -363,10 +418,15 @@ void TextureCacheData::setUploadToGPUFlavor()
 
 bool TextureCacheData::Delete()
 {
+	const bool gpuPreloaded = usingGpuPreloadedTexture;
 	if (!BaseTextureCacheData::Delete())
 		return false;
 
-	if (texID != 0) {
+	if (gpuPreloaded)
+	{
+		texID = 0;
+	}
+	else if (texID != 0) {
 		glcache.DeleteTextures(1, &texID);
 		texID = 0;
 	}
@@ -512,15 +572,19 @@ BaseTextureCacheData *OpenGLRenderer::GetTexture(TSP tsp, TCW tcw, int area)
 	if (tf->NeedsUpdate())
 	{
 		const GLuint oldTexture = tf->texID;
+		const bool oldTextureWasGpuPreloaded = tf->usingGpuPreloadedTexture;
 		if (!tf->Update())
 			tf = nullptr;
-		else if (tf->is_custom_replaced && oldTexture != 0 && oldTexture != tf->texID)
+		else if (tf->is_custom_replaced && !oldTextureWasGpuPreloaded
+				&& oldTexture != 0 && oldTexture != tf->texID)
 			TexCache.DeleteLater(oldTexture);
 	}
 	else if (tf->IsCustomTextureAvailable())
 	{
 		const GLuint oldTexture = tf->texID;
-		if (tf->CheckCustomTexture() && oldTexture != 0 && oldTexture != tf->texID)
+		const bool oldTextureWasGpuPreloaded = tf->usingGpuPreloadedTexture;
+		if (tf->CheckCustomTexture() && !oldTextureWasGpuPreloaded
+				&& oldTexture != 0 && oldTexture != tf->texID)
 			TexCache.DeleteLater(oldTexture);
 	}
 

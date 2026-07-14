@@ -263,6 +263,9 @@ private:
 	{
 		FC_PROFILE_SCOPE;
 
+#ifdef LIBRETRO
+		renderer->ProcessCustomTexturePreloads();
+#endif
 		if (renderer->Present())
 		{
 			presented = true;
@@ -491,6 +494,12 @@ bool rend_supports_gpu_texture_preload()
 	return renderer != nullptr && renderer->SupportsGpuTexturePreload();
 }
 
+void rend_request_gpu_preloaded_texture_cleanup()
+{
+	if (renderer != nullptr)
+		renderer->requestGpuPreloadedTextureCleanup();
+}
+
 std::shared_ptr<GpuPreloadedTexture> Renderer::findGpuPreloadedTexture(
 		u32 currentHash, u32 oldVqHash, u32 oldHash) const
 {
@@ -517,6 +526,13 @@ void Renderer::addGpuPreloadedTexture(u32 hash, std::shared_ptr<GpuPreloadedText
 void Renderer::clearGpuPreloadedTextures()
 {
 	gpuPreloadedTextures.clear();
+	gpuPreloadedTextureCleanupRequested = false;
+}
+
+void Renderer::clearGpuPreloadedTexturesIfRequested()
+{
+	if (gpuPreloadedTextureCleanupRequested.exchange(false))
+		gpuPreloadedTextures.clear();
 }
 
 void rend_reset()

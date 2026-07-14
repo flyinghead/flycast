@@ -54,6 +54,8 @@ struct DX11Renderer : public Renderer
 	}
 
 	bool RenderLastFrame() override;
+	void ProcessCustomTexturePreloads() override;
+	bool SupportsGpuTexturePreload() const override { return true; }
 	BaseTextureCacheData *GetTexture(TSP tsp, TCW tcw, int area) override;
 	bool GetLastFrame(std::vector<u8>& data, int& width, int& height) override;
 

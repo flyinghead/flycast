@@ -174,6 +174,9 @@ bool DX11Renderer::Init()
 void DX11Renderer::Term()
 {
 	NOTICE_LOG(RENDERER, "DX11 renderer terminating");
+	texCache.Clear();
+	texCache.Cleanup();
+	clearGpuPreloadedTextures();
 #ifdef VIDEO_ROUTING
 	os_VideoRoutingTermDX();
 #endif
@@ -193,6 +196,19 @@ void DX11Renderer::Term()
 	vrStagingTextureSRV.reset();
 	vrScaledTexture.reset();
 	vrScaledRenderTarget.reset();
+}
+
+void DX11Renderer::ProcessCustomTexturePreloads()
+{
+	clearGpuPreloadedTexturesIfRequested();
+	custom_texture.processGpuPreloads([this](u32 hash,
+			const PreparedCustomTexture& texture) {
+		GpuPreloadedTexturePtr gpuTexture = DX11Texture::CreateGpuPreloadedTexture(texture);
+		if (!gpuTexture)
+			return false;
+		addGpuPreloadedTexture(hash, std::move(gpuTexture));
+		return true;
+	});
 }
 
 void DX11Renderer::createDepthTexAndView(ComPtr<ID3D11Texture2D>& texture, ComPtr<ID3D11DepthStencilView>& view, int width, int height, DXGI_FORMAT format, UINT bindFlags)

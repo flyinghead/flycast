@@ -77,6 +77,7 @@ public:
 		customRequestId = other.customRequestId;
 		other.customRequestId = {};
 		is_custom_replaced = other.is_custom_replaced;
+		usingGpuPreloadedTexture = other.usingGpuPreloadedTexture;
 		customMipLevels = other.customMipLevels;
 		gpuPalette = other.gpuPalette;
 		area = other.area;
@@ -112,6 +113,7 @@ public:
 	GpuPreloadedTexturePtr gpuPreloadedTexture;
 	CustomTextureRequestId customRequestId;
 	bool is_custom_replaced;	// True if the texture currently on the GPU is the custom replacement
+	bool usingGpuPreloadedTexture = false;
 	u8 customMipLevels = 0;
 	bool gpuPalette;
 	u8 area;
@@ -148,7 +150,8 @@ public:
 
 	bool IsCustomTextureAvailable()
 	{
-		return gpuPreloadedTexture != nullptr || customPayload != nullptr
+		return (gpuPreloadedTexture != nullptr && !usingGpuPreloadedTexture)
+				|| customPayload != nullptr
 				|| custom_texture.isRequestComplete(customRequestId);
 	}
 

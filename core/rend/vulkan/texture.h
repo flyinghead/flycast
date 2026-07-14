@@ -33,6 +33,8 @@
 
 void setImageLayout(vk::CommandBuffer const& commandBuffer, vk::Image image, vk::Format format, u32 mipmapLevels, vk::ImageLayout oldImageLayout, vk::ImageLayout newImageLayout);
 
+class VulkanGpuPreloadedTexture;
+
 class Texture final : public BaseTextureCacheData
 {
 public:
@@ -55,16 +57,22 @@ public:
 		std::swap(physicalDevice, other.physicalDevice);
 		std::swap(device, other.device);
 		std::swap(customTextureResource, other.customTextureResource);
+		std::swap(vulkanGpuPreloadedTexture, other.vulkanGpuPreloadedTexture);
 	}
 
 	void UploadToGPU(int width, int height, const u8 *data, bool mipmapped, bool mipmapsIncluded = false) override;
 	bool UploadCustomTexture(const PreparedCustomTexture& texture, bool mipmapped) override;
+	bool UseGpuPreloadedTexture(const GpuPreloadedTexturePtr& texture) override;
+	bool Delete() override;
+	static GpuPreloadedTexturePtr CreateGpuPreloadedTexture(
+			const PreparedCustomTexture& texture, vk::CommandBuffer commandBuffer);
+	static void ReleaseGpuPreloadStaging(const GpuPreloadedTexturePtr& texture);
 	static CustomTextureCapabilities GetCustomTextureCapabilities();
 	u64 GetIntId() { return (u64)reinterpret_cast<uintptr_t>(this); }
 	std::string GetId() override { char s[20]; snprintf(s, sizeof(s), "%p", this); return s; }
-	vk::ImageView GetImageView() const { return *imageView; }
-	vk::Image GetImage() const { return *image; }
-	vk::ImageView GetReadOnlyImageView() const { return readOnlyImageView ? readOnlyImageView : *imageView; }
+	vk::ImageView GetImageView() const;
+	vk::Image GetImage() const;
+	vk::ImageView GetReadOnlyImageView() const;
 	void SetCommandBuffer(vk::CommandBuffer commandBuffer, FlightManager *manager = nullptr) {
 		this->commandBuffer = commandBuffer;
 		this->flightManager = manager;
@@ -90,6 +98,7 @@ private:
 	vk::CommandBuffer commandBuffer;
 	FlightManager *flightManager = nullptr;
 	bool customTextureResource = false;
+	VulkanGpuPreloadedTexture *vulkanGpuPreloadedTexture = nullptr;
 
 	Allocation allocation;
 	vk::UniqueImage image;
