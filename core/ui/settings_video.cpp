@@ -18,6 +18,7 @@
  */
 #include "settings.h"
 #include "gui.h"
+#include "hw/pvr/Renderer_if.h"
 #include "wsi/context.h"
 
 enum RenderAPI {
@@ -63,6 +64,9 @@ void gui_settings_video()
 		perPixel = true;
 		break;
 	}
+	const bool gpuPreloadLocksRenderer = game_started && config::CustomTextures.get()
+			&& config::customTexturePreloadMode() == config::CustomTexturePreloadMode::VideoMemory
+			&& rend_supports_gpu_texture_preload();
 
 	constexpr int apiCount = 0
 		#ifdef USE_VULKAN
@@ -84,6 +88,7 @@ void gui_settings_video()
 	{
 		header(T("Graphics API"));
 		{
+			DisabledScope rendererScope(gpuPreloadLocksRenderer);
 			ImGui::Columns(apiCount, "renderApi", false);
 #ifdef USE_OPENGL
 			ImGui::RadioButton("OpenGL", &renderApi, OpenGL);
@@ -118,17 +123,26 @@ void gui_settings_video()
 		const bool has_per_pixel = GraphicsContext::Instance()->hasPerPixel();
     	int renderer = perPixel ? 2 : config::PerStripSorting ? 1 : 0;
     	ImGui::Columns(has_per_pixel ? 3 : 2, "renderers", false);
-    	ImGui::RadioButton(T("Per Triangle"), &renderer, 0);
+		{
+			DisabledScope rendererScope(gpuPreloadLocksRenderer && perPixel);
+			ImGui::RadioButton(T("Per Triangle"), &renderer, 0);
+		}
         ImGui::SameLine();
         ShowHelpMarker(T("Sort transparent polygons per triangle. Fast but may produce graphical glitches"));
     	ImGui::NextColumn();
-    	ImGui::RadioButton(T("Per Strip"), &renderer, 1);
+		{
+			DisabledScope rendererScope(gpuPreloadLocksRenderer && perPixel);
+			ImGui::RadioButton(T("Per Strip"), &renderer, 1);
+		}
         ImGui::SameLine();
         ShowHelpMarker(T("Sort transparent polygons per strip. Faster but may produce graphical glitches"));
         if (has_per_pixel)
         {
         	ImGui::NextColumn();
-        	ImGui::RadioButton(T("Per Pixel"), &renderer, 2);
+			{
+				DisabledScope rendererScope(gpuPreloadLocksRenderer);
+				ImGui::RadioButton(T("Per Pixel"), &renderer, 2);
+			}
         	ImGui::SameLine();
         	ShowHelpMarker(T("Sort transparent polygons per pixel. Slower but accurate"));
         }
@@ -229,6 +243,7 @@ void gui_settings_video()
 			ImGui::Indent();
 			{
 				DisabledScope customTexturesScope(!config::CustomTextures.get());
+				const bool gpuPreloadSupported = rend_supports_gpu_texture_preload();
 				const int configuredMode = static_cast<int>(config::customTexturePreloadMode());
 				int selectedMode = configuredMode;
 				{
@@ -243,15 +258,17 @@ void gui_settings_video()
 					ImGui::RadioButton(T("System Memory"), &selectedMode,
 							static_cast<int>(config::CustomTexturePreloadMode::SystemMemory));
 					ImGui::SameLine();
-					ShowHelpMarker(T("Preload custom textures at game start to reduce texture popping. Uses more system memory."));
+					ShowHelpMarker(T("Preload custom textures at game start to prevent texture popping. Consumes system memory for the entire texture pack."));
 					ImGui::NextColumn();
 					{
-						DisabledScope videoMemoryScope(true);
+						DisabledScope videoMemoryScope(!gpuPreloadSupported);
 						ImGui::RadioButton(T("Video Memory"), &selectedMode,
 								static_cast<int>(config::CustomTexturePreloadMode::VideoMemory));
 					}
 					ImGui::SameLine();
-					ShowHelpMarker(T("Preload custom textures directly into video memory at game start. Not available yet."));
+					ShowHelpMarker(gpuPreloadSupported
+							? T("Preload custom textures at game start to prevent texture popping. Consumes video memory for the entire texture pack.")
+							: T("Video-memory custom texture preloading is not supported by the current renderer."));
 					ImGui::Columns(1, nullptr, false);
 				}
 				if (selectedMode != configuredMode)
