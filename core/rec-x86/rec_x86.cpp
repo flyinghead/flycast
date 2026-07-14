@@ -39,8 +39,8 @@ static void (*ngen_LinkBlock_Generic_stub)();
 static void (*ngen_blockcheckfail)();
 void (*X86Compiler::handleException)();
 
-static Xbyak::Operand::Code alloc_regs[] {  Xbyak::Operand::EBX,  Xbyak::Operand::EBP,  Xbyak::Operand::ESI,  Xbyak::Operand::EDI, (Xbyak::Operand::Code)-1 };
-static s8 alloc_fregs[] = { 7, 6, 5, 4, -1 };
+static constexpr std::array<Xbyak::Operand::Code, 4> alloc_regs { Xbyak::Operand::EBX, Xbyak::Operand::EBP, Xbyak::Operand::ESI, Xbyak::Operand::EDI };
+static constexpr std::array<s8, 4> alloc_fregs = { 7, 6, 5, 4 };
 alignas(16) static f32 thaw_regs[4];
 UnwindInfo unwinder;
 
@@ -400,28 +400,20 @@ void X86Compiler::freezeXMM()
 {
 	if (current_opid == (size_t)-1)
 		return;
-	s8 *fpreg = alloc_fregs;
 	f32 *slpc = thaw_regs;
-	while (*fpreg != -1)
-	{
-		if (regalloc.IsMapped(Xbyak::Xmm(*fpreg), current_opid))
-			movss(dword[slpc++], Xbyak::Xmm(*fpreg));
-		fpreg++;
-	}
+	for (auto fpreg : alloc_fregs)
+		if (regalloc.IsMapped(Xbyak::Xmm(fpreg), current_opid))
+			movss(dword[slpc++], Xbyak::Xmm(fpreg));
 }
 
 void X86Compiler::thawXMM()
 {
 	if (current_opid == (size_t)-1)
 		return;
-	s8* fpreg = alloc_fregs;
 	f32* slpc = thaw_regs;
-	while (*fpreg != -1)
-	{
-		if (regalloc.IsMapped(Xbyak::Xmm(*fpreg), current_opid))
-			movss(Xbyak::Xmm(*fpreg), dword[slpc++]);
-		fpreg++;
-	}
+	for (auto fpreg : alloc_fregs)
+		if (regalloc.IsMapped(Xbyak::Xmm(fpreg), current_opid))
+			movss(Xbyak::Xmm(fpreg), dword[slpc++]);
 }
 
 void X86Compiler::genMainloop()

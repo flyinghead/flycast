@@ -18,18 +18,19 @@
  */
 #pragma once
 
-#include <xbyak/xbyak.h>
 #include "hw/sh4/dyna/ssa_regalloc.h"
+#include <xbyak/xbyak.h>
+#include <array>
 
 #ifdef _WIN32
-static Xbyak::Operand::Code alloc_regs[] = { Xbyak::Operand::RBX, Xbyak::Operand::RBP, Xbyak::Operand::RDI, Xbyak::Operand::RSI,
-		Xbyak::Operand::R12, Xbyak::Operand::R13, Xbyak::Operand::R14, Xbyak::Operand::R15, (Xbyak::Operand::Code)-1 };
-static s8 alloc_fregs[] = { 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, -1 };          // XMM6 to XMM15 are callee-saved in Windows
+static constexpr std::array<Xbyak::Operand::Code, 8> alloc_regs = { Xbyak::Operand::RBX, Xbyak::Operand::RBP, Xbyak::Operand::RDI, Xbyak::Operand::RSI,
+		Xbyak::Operand::R12, Xbyak::Operand::R13, Xbyak::Operand::R14, Xbyak::Operand::R15 };
+static constexpr std::array<s8, 10> alloc_fregs = { 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };          // XMM6 to XMM15 are callee-saved in Windows
 #define ALLOC_F64 true
 #else
-static Xbyak::Operand::Code alloc_regs[] = { Xbyak::Operand::RBX, Xbyak::Operand::RBP, Xbyak::Operand::R12, Xbyak::Operand::R13,
-		Xbyak::Operand::R14, Xbyak::Operand::R15, (Xbyak::Operand::Code)-1 };
-static s8 alloc_fregs[] = { 8, 9, 10, 11, -1 };		// XMM8-11
+static constexpr std::array<Xbyak::Operand::Code, 6> alloc_regs = { Xbyak::Operand::RBX, Xbyak::Operand::RBP, Xbyak::Operand::R12, Xbyak::Operand::R13,
+		Xbyak::Operand::R14, Xbyak::Operand::R15 };
+static constexpr std::array<s8, 4> alloc_fregs = { 8, 9, 10, 11 };		// XMM8-11
 // all xmm registers are caller-saved on linux
 #define ALLOC_F64 false
 #endif
