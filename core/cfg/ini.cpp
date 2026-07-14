@@ -20,6 +20,9 @@
 #include "types.h"
 #include "stdclass.h"
 
+#include <algorithm>
+#include <cctype>
+
 namespace config {
 
 const IniFile::Entry *IniFile::getEntry(const std::string& sectionName, const std::string& name) const
@@ -71,7 +74,7 @@ bool IniFile::getBool(const std::string& section, const std::string& entry, bool
 static bool hasHexPrefix(const std::string& s)
 {
 	size_t pos = 0;
-	while (pos < s.length() - 1 && std::isspace((int8_t)s[pos]))
+	while (pos + 1 < s.length() && std::isspace(static_cast<unsigned char>(s[pos])))
 		pos++;
 	if (pos + 1 >= s.length())
 		return false;
@@ -89,9 +92,25 @@ int IniFile::getInt(const std::string& section, const std::string& entry, int de
 		ss.setf(std::ios_base::hex, std::ios_base::basefield);
 	else
 		ss.setf(std::ios_base::dec, std::ios_base::basefield);
-	unsigned value = defaultValue;
+	unsigned value = static_cast<unsigned>(defaultValue);
 	ss >> value;
-	return (int)value;
+	if (ss)
+		return static_cast<int>(value);
+	// Compatibility for options migrated from Option<bool> to Option<int>.
+	std::string token = *pValue;
+	const auto first = token.find_first_not_of(" \t\r\n");
+	const auto last = token.find_last_not_of(" \t\r\n");
+	if (first == std::string::npos)
+		return defaultValue;
+	token = token.substr(first, last - first + 1);
+	std::transform(token.begin(), token.end(), token.begin(), [](unsigned char c) {
+		return static_cast<char>(std::tolower(c));
+	});
+	if (token == "yes" || token == "true" || token == "on")
+		return 1;
+	if (token == "no" || token == "false" || token == "off")
+		return 0;
+	return defaultValue;
 }
 
 int64_t IniFile::getInt64(const std::string& section, const std::string& entry, int64_t defaultValue) const
