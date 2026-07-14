@@ -50,6 +50,7 @@ bool DX11Renderer::Init()
 		WARN_LOG(RENDERER, "Null device or device context. Aborting");
 		return false;
 	}
+	custom_texture.setCapabilities(DX11Texture::GetCustomTextureCapabilities());
 
 	shaders = &DX11Context::Instance()->getShaders();
 	samplers = &DX11Context::Instance()->getSamplers();
@@ -303,15 +304,18 @@ BaseTextureCacheData *DX11Renderer::GetTexture(TSP tsp, TCW tcw, int area)
 	//update if needed
 	if (tf->NeedsUpdate())
 	{
+		ComPtr<ID3D11Texture2D> oldTexture = tf->texture;
 		if (!tf->Update())
 			tf = nullptr;
+		else if (tf->is_custom_replaced && oldTexture
+				&& oldTexture.get() != tf->texture.get())
+			texCache.DeleteLater(std::move(oldTexture));
 	}
 	else if (tf->IsCustomTextureAvailable())
 	{
-		texCache.DeleteLater(tf->texture);
-		tf->texture.reset();
-		// FIXME textureView
-		tf->loadCustomTexture();
+		ComPtr<ID3D11Texture2D> oldTexture = tf->texture;
+		if (tf->CheckCustomTexture() && oldTexture)
+			texCache.DeleteLater(std::move(oldTexture));
 	}
 	return tf;
 }

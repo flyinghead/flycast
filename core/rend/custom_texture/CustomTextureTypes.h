@@ -138,6 +138,8 @@ struct PreparedCustomTexture
 	uint32_t height = 0;
 	bool sourceSrgb = false;
 	bool hasAlpha = true;
+	// Legacy images contain only level 0. Renderers generate the rest when mipmapping is used.
+	bool generateMipmaps = false;
 	std::vector<PreparedMipLevel> levels;
 	std::vector<uint8_t> bytes;
 };
@@ -161,6 +163,7 @@ struct CustomTextureCapabilities
 };
 
 BlockGeometry getBlockGeometry(NativeTextureFormat format);
+uint32_t mipmapLevelCount(uint32_t width, uint32_t height);
 bool computeMipLayout(NativeTextureFormat format, uint32_t width, uint32_t height,
 		uint64_t offset, PreparedMipLevel& level, std::string& error);
 bool validatePreparedCustomTexture(const PreparedCustomTexture& texture, std::string& error);

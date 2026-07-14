@@ -26,6 +26,7 @@
 
 bool BaseVulkanRenderer::BaseInit(vk::RenderPass renderPass, int subpass)
 {
+	custom_texture.setCapabilities(Texture::GetCustomTextureCapabilities());
 	texCommandPool.Init();
 	fbCommandPool.Init();
 	quadPipeline = std::make_unique<QuadPipeline>(false, false);
@@ -65,7 +66,7 @@ BaseTextureCacheData *BaseVulkanRenderer::GetTexture(TSP tsp, TCW tcw, int area)
 		// This kills performance when a frame is skipped and lots of texture updated each frame
 		//if (textureCache.IsInFlight(tf, true))
 		//	textureCache.DestroyLater(tf);
-		tf->SetCommandBuffer(texCommandBuffer);
+		tf->SetCommandBuffer(texCommandBuffer, &texCommandPool);
 		if (!tf->Update())
 		{
 			tf->SetCommandBuffer(nullptr);
@@ -74,11 +75,10 @@ BaseTextureCacheData *BaseVulkanRenderer::GetTexture(TSP tsp, TCW tcw, int area)
 	}
 	else if (tf->IsCustomTextureAvailable())
 	{
-		tf->deferDeleteResource(&texCommandPool);
-		tf->SetCommandBuffer(texCommandBuffer);
+		tf->SetCommandBuffer(texCommandBuffer, &texCommandPool);
 		tf->CheckCustomTexture();
 	}
-	tf->SetCommandBuffer(nullptr);
+	tf->SetCommandBuffer(nullptr, nullptr);
 	textureCache.SetInFlight(tf);
 
 	return tf;

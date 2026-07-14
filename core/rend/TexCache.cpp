@@ -285,12 +285,10 @@ void BaseTextureCacheData::unprotectVRam()
 bool BaseTextureCacheData::Delete()
 {
 	unprotectVRam();
-
-	if (custom_load_in_progress > 0)
-		return false;
-
-	free(custom_image_data);
-	custom_image_data = nullptr;
+	custom_texture.cancelRequest(customRequestId);
+	customRequestId = {};
+	customPayload.reset();
+	customMipLevels = 0;
 
 	return true;
 }
@@ -310,10 +308,11 @@ BaseTextureCacheData::BaseTextureCacheData(TSP tsp, TCW tcw, int area)
 	Updates = 0;
 	dirty = FrameCount;
 	lock_block = nullptr;
-	custom_image_data = nullptr;
-	custom_load_in_progress = 0;
+	customPayload.reset();
+	customRequestId = {};
 	gpuPalette = false;
 	is_custom_replaced = false;
+	customMipLevels = 0;
 
 	//decode info from tsp/tcw into the texture struct
 	tex = &pvrTexInfo[tcw.PixelFmt == PixelReserved ? Pixel1555 : tcw.PixelFmt];	//texture format table entry
@@ -506,6 +505,7 @@ bool BaseTextureCacheData::Update()
 			return false;
 		}
 	}
+	bool dumpReplacedTexture = false;
 	if (custom_texture.enabled())
 	{
 		u32 oldHash = texture_hash;
@@ -523,8 +523,25 @@ bool BaseTextureCacheData::Update()
 			return true;
 		}
 		custom_texture.loadCustomTextureAsync(this);
+		if (customPayload)
+		{
+			dumpReplacedTexture = config::DumpTextures && config::DumpReplacedTextures.get();
+			if (!dumpReplacedTexture)
+			{
+				const TextureType originalTextureType = tex_type;
+				if (CheckCustomTexture())
+				{
+					protectVRam();
+					PrintTextureName();
+					size = originalSize;
+					return true;
+				}
+				tex_type = originalTextureType;
+			}
+		}
 	}
 	is_custom_replaced = false;
+	customMipLevels = 0;
 
 	void *temp_tex_buffer = NULL;
 	u32 upscaled_w = width;
@@ -679,8 +696,20 @@ bool BaseTextureCacheData::Update()
 	//lock the texture to detect changes in it
 	protectVRam();
 
-	UploadToGPU(upscaled_w, upscaled_h, (const u8 *)temp_tex_buffer, IsMipmapped(), mipmapped);
-	if (config::DumpTextures)
+	bool customTextureUploaded = false;
+	if (dumpReplacedTexture)
+	{
+		ComputeHash();
+		custom_texture.dumpTexture(this, upscaled_w, upscaled_h, temp_tex_buffer);
+		NOTICE_LOG(RENDERER, "Dumped texture %x.png. Old hash %x", texture_hash, old_texture_hash);
+		const TextureType originalTextureType = tex_type;
+		customTextureUploaded = CheckCustomTexture();
+		if (!customTextureUploaded)
+			tex_type = originalTextureType;
+	}
+	if (!customTextureUploaded)
+		UploadToGPU(upscaled_w, upscaled_h, (const u8 *)temp_tex_buffer, IsMipmapped(), mipmapped);
+	if (config::DumpTextures && !dumpReplacedTexture)
 	{
 		ComputeHash();
 		custom_texture.dumpTexture(this, upscaled_w, upscaled_h, temp_tex_buffer);
@@ -693,17 +722,55 @@ bool BaseTextureCacheData::Update()
 	return true;
 }
 
-void BaseTextureCacheData::CheckCustomTexture()
+bool BaseTextureCacheData::UploadCustomTexture(const PreparedCustomTexture& texture, bool mipmapped)
 {
-	if (IsCustomTextureAvailable())
+	if (texture.nativeFormat != NativeTextureFormat::Rgba8Unorm || texture.levels.size() != 1)
+		return false;
+	tex_type = TextureType::_8888;
+	UploadToGPU(texture.width, texture.height, texture.bytes.data(),
+			mipmapped && texture.generateMipmaps, false);
+	return true;
+}
+
+bool BaseTextureCacheData::CheckCustomTexture()
+{
+	if (!customPayload && customRequestId)
 	{
-		tex_type = TextureType::_8888;
-		gpuPalette = false;
-		is_custom_replaced = true;
-		UploadToGPU(custom_width, custom_height, custom_image_data, IsMipmapped(), false);
-		free(custom_image_data);
-		custom_image_data = nullptr;
+		bool failed = false;
+		customPayload = custom_texture.takePreparedTexture(customRequestId, failed);
+		if (failed)
+			customRequestId = {};
 	}
+	if (!customPayload)
+		return false;
+	const CustomTextureCapabilities capabilities = custom_texture.getCapabilities();
+	if (!capabilities.canUpload(customPayload->nativeFormat, customPayload->width,
+			customPayload->height, static_cast<u32>(customPayload->levels.size())))
+	{
+		WARN_LOG(RENDERER, "Discarding incompatible prepared custom texture %08x",
+				customPayload->replacementHash);
+		customPayload.reset();
+		customRequestId = {};
+		return false;
+	}
+	const bool mipmapped = tcw.MipMapped != 0 && tcw.ScanOrder == 0 && config::UseMipmaps;
+	if (!UploadCustomTexture(*customPayload, mipmapped))
+	{
+		WARN_LOG(RENDERER, "Custom texture upload failed for %08x (%s)",
+				customPayload->replacementHash, nativeTextureFormatName(customPayload->nativeFormat));
+		customPayload.reset();
+		customRequestId = {};
+		return false;
+	}
+	tex_type = TextureType::_8888;
+	gpuPalette = false;
+	is_custom_replaced = true;
+	customMipLevels = static_cast<u8>(mipmapped && customPayload->generateMipmaps
+			? mipmapLevelCount(customPayload->width, customPayload->height)
+			: customPayload->levels.size());
+	customPayload.reset();
+	customRequestId = {};
+	return true;
 }
 
 void BaseTextureCacheData::SetDirectXColorOrder(bool enabled) {

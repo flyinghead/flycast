@@ -18,36 +18,36 @@
  */
 #pragma once
 #include "texconv.h"
+#include "custom_texture/CustomTextureTypes.h"
 #include <string>
-#include <map>
 #include <memory>
 #include <vector>
 #include <atomic>
 #include <functional>
+#include <mutex>
+#include <unordered_map>
+#include <unordered_set>
 
 class BaseTextureCacheData;
 class WorkerThread;
 
-struct TextureData {
-	std::vector<u8> data;
-	int w = 0;
-	int h = 0;
-};
-
 class BaseCustomTextureSource
 {
 public:
-	using TextureCallback = std::function<void(u32 hash, TextureData&& data)>;
+	using TextureCallback = std::function<void(u32 hash, PreparedCustomTexturePtr texture)>;
+	using CancellationCheck = std::function<bool()>;
 
-	virtual ~BaseCustomTextureSource() { }
+	virtual ~BaseCustomTextureSource() = default;
 	virtual bool shouldReplace() const { return false; }
 	virtual bool shouldPreload() const { return false; }
-	virtual bool loadMap() = 0;
+	virtual bool loadMap(const CustomTextureCapabilities& capabilities) = 0;
 	virtual size_t getTextureCount() const { return 0; }
 	virtual void terminate() { }
-	virtual u8* loadCustomTexture(u32 hash, int& width, int& height) = 0;
-	virtual bool isTextureReplaced(u32 hash) = 0;
-	virtual void preloadTextures(TextureCallback callback, std::atomic<bool>* stopFlag) { }
+	virtual PreparedCustomTexturePtr loadCustomTexture(u32 hash,
+			const CustomTextureCapabilities& capabilities, const CancellationCheck& cancelled) = 0;
+	virtual bool isTextureReplaced(u32 hash) const = 0;
+	virtual void preloadTextures(const CustomTextureCapabilities& capabilities,
+			TextureCallback callback, std::atomic<bool>* stopFlag) {}
 };
 
 class CustomTexture
@@ -55,27 +55,46 @@ class CustomTexture
 public:
 	~CustomTexture();
 	bool init();
-	bool enabled();
-	bool preloaded();
-	bool isPreloading();
+	bool enabled() const;
+	bool preloaded() const;
+	bool isPreloading() const;
 	void addSource(std::unique_ptr<BaseCustomTextureSource> source);
 	void loadCustomTextureAsync(BaseTextureCacheData *textureData);
+	bool isRequestComplete(CustomTextureRequestId requestId) const;
+	PreparedCustomTexturePtr takePreparedTexture(CustomTextureRequestId requestId, bool& failed);
+	void cancelRequest(CustomTextureRequestId requestId);
+	void setCapabilities(const CustomTextureCapabilities& capabilities);
+	CustomTextureCapabilities getCapabilities() const;
 	void dumpTexture(BaseTextureCacheData* texture, int w, int h, void *srcBuffer);
 	void terminate();
 	void getPreloadProgress(int& completed, int& total, size_t& loadedSize) const;
 
 private:
-	u8* loadTexture(u32 hash, int& width, int& height);
-	bool isTextureReplaced(BaseTextureCacheData* texture);
-	void loadTexture(BaseTextureCacheData *texture);
-	std::string getGameId();
+	struct Completion
+	{
+		PreparedCustomTexturePtr texture;
+		bool failed = false;
+	};
+
+	PreparedCustomTexturePtr loadTexture(u32 currentHash, u32 oldVqHash,
+			u32 oldHash, const CustomTextureCapabilities& capabilities,
+			const BaseCustomTextureSource::CancellationCheck& cancelled);
+	PreparedCustomTexturePtr findPreloaded(u32 currentHash, u32 oldVqHash, u32 oldHash) const;
+	bool isTextureReplaced(BaseTextureCacheData* texture) const;
+	std::string getGameId() const;
 	void prepareSource(BaseCustomTextureSource* source);
 	void resetPreloadProgress();
-	
+	bool requestCancelled(CustomTextureRequestId requestId) const;
+
 	bool initialized = false;
 	std::vector<std::unique_ptr<BaseCustomTextureSource>> sources;
 	std::unique_ptr<WorkerThread> loaderThread;
-	std::map<u32, TextureData> preloadedTextures;
+	mutable std::mutex stateMutex;
+	std::unordered_map<u32, PreparedCustomTexturePtr> preloadedTextures;
+	std::unordered_map<u64, Completion> completions;
+	std::unordered_set<u64> activeRequests;
+	CustomTextureCapabilities capabilities = CustomTextureCapabilities::rgbaOnly(CustomTextureBackend::Unknown);
+	std::atomic<u64> nextRequestId { 1 };
 	std::atomic<int> preloadTotal { 0 };
 	std::atomic<int> preloadLoaded { 0 };
 	std::atomic<size_t> preloadLoadedSize { 0 };

@@ -37,8 +37,9 @@ public:
 	std::string GetId() override { return std::to_string((uintptr_t)texture.get()); }
 	void UploadToGPU(int width, int height, const u8* temp_tex_buffer, bool mipmapped,
 			bool mipmapsIncluded = false) override;
+	bool UploadCustomTexture(const PreparedCustomTexture& texture, bool mipmapped) override;
 	bool Delete() override;
-	void loadCustomTexture();
+	static CustomTextureCapabilities GetCustomTextureCapabilities();
 #ifndef TARGET_UWP
 	bool Force32BitTexture(TextureType type) const override;
 #endif

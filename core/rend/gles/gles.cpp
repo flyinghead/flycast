@@ -993,6 +993,7 @@ bool OpenGLRenderer::Init()
 	updateFogTable = true;
 	TextureCacheData::SetDirectXColorOrder(false);
 	TextureCacheData::setUploadToGPUFlavor();
+	custom_texture.setCapabilities(TextureCacheData::GetCustomTextureCapabilities());
 
 	return true;
 }

@@ -198,6 +198,20 @@ BlockGeometry getBlockGeometry(NativeTextureFormat format)
 	return {};
 }
 
+uint32_t mipmapLevelCount(uint32_t width, uint32_t height)
+{
+	if (width == 0 || height == 0)
+		return 0;
+	uint32_t levels = 1;
+	while (width > 1 || height > 1)
+	{
+		width = std::max(1u, width / 2);
+		height = std::max(1u, height / 2);
+		++levels;
+	}
+	return levels;
+}
+
 bool computeMipLayout(NativeTextureFormat format, uint32_t width, uint32_t height,
 		uint64_t offset, PreparedMipLevel& level, std::string& error)
 {
@@ -234,6 +248,12 @@ bool validatePreparedCustomTexture(const PreparedCustomTexture& texture, std::st
 			|| texture.levels.size() > 16 || texture.nativeFormat == NativeTextureFormat::Count)
 	{
 		error = "invalid prepared texture header";
+		return false;
+	}
+	if (texture.generateMipmaps && (texture.nativeFormat != NativeTextureFormat::Rgba8Unorm
+			|| texture.levels.size() != 1))
+	{
+		error = "generated mipmaps require one RGBA source level";
 		return false;
 	}
 	uint64_t expectedOffset = 0;

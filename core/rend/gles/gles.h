@@ -453,12 +453,16 @@ public:
 	}
 	TextureCacheData(TextureCacheData&& other) : BaseTextureCacheData(std::move(other)) {
 		std::swap(texID, other.texID);
+		std::swap(customTextureObject, other.customTextureObject);
 	}
 
 	GLuint texID = 0;   //gl texture
+	bool customTextureObject = false;
 	std::string GetId() override { return std::to_string(texID); }
 	void UploadToGPU(int width, int height, const u8 *temp_tex_buffer, bool mipmapped, bool mipmapsIncluded = false) override;
+	bool UploadCustomTexture(const PreparedCustomTexture& texture, bool mipmapped) override;
 	bool Delete() override;
+	static CustomTextureCapabilities GetCustomTextureCapabilities();
 
 	static void setUploadToGPUFlavor();
 
