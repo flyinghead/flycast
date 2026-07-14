@@ -866,10 +866,10 @@ void loadGameSpecificSettings()
 	loadSpecialSettings();
 
 	config::Settings::instance().setGameId(settings.content.gameId);
-	custom_texture.init();
 
 	// Reload per-game settings
 	config::Settings::instance().load(true);
+	custom_texture.init();
 
 	if (config::GGPOEnable || settings.raHardcoreMode)
 		config::Sh4Clock.override(200);
