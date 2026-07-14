@@ -19,6 +19,7 @@
 #include "CustomTexture.h"
 #include "TexCache.h"
 #include "custom_texture/TextureTranscoder.h"
+#include "hw/pvr/Renderer_if.h"
 #include "oslib/directory.h"
 #include "oslib/storage.h"
 #include "cfg/option.h"
@@ -217,8 +218,10 @@ public:
 	bool shouldReplace() const override { return config::CustomTextures && customTexturesAvailable; }
 	bool shouldPreload() const override
 	{
-		return shouldReplace()
-				&& config::customTexturePreloadMode() == config::CustomTexturePreloadMode::SystemMemory;
+		const config::CustomTexturePreloadMode mode = config::customTexturePreloadMode();
+		return shouldReplace() && (mode == config::CustomTexturePreloadMode::SystemMemory
+				|| (mode == config::CustomTexturePreloadMode::VideoMemory
+						&& rend_supports_gpu_texture_preload()));
 	}
 	bool loadMap(const CustomTextureCapabilities& capabilities) override;
 	size_t getTextureCount() const override;
@@ -444,9 +447,6 @@ bool CustomTexture::init()
 		resetPreloadProgress();
 		pendingPreloads = 0;
 		initialized = true;
-		if (config::customTexturePreloadMode() == config::CustomTexturePreloadMode::VideoMemory)
-			WARN_LOG(RENDERER, "Video-memory custom texture preload is not available in this build; using on-demand loading.");
-
 		std::string gameId = getGameId();
 		if (gameId.length() > 0)
 		{
@@ -508,6 +508,7 @@ CustomTexture::~CustomTexture() {
 void CustomTexture::terminate()
 {
 	stopPreload = true;
+	gpuPreloadCondition.notify_all();
 	if (loaderThread)
 		loaderThread->stop();
 	loaderThread.reset();
@@ -517,6 +518,7 @@ void CustomTexture::terminate()
 	{
 		std::lock_guard<std::mutex> lock(stateMutex);
 		preloadedTextures.clear();
+		pendingGpuPreloads.clear();
 		completions.clear();
 		activeRequests.clear();
 		pendingError = Error::None;
@@ -835,6 +837,8 @@ void CustomTexture::dumpTexture(BaseTextureCacheData* texture, int w, int h, voi
 void CustomTexture::prepareSource(BaseCustomTextureSource* source)
 {
 	bool shouldPreload = source->shouldPreload();
+	const bool preloadToGpu = shouldPreload
+			&& config::customTexturePreloadMode() == config::CustomTexturePreloadMode::VideoMemory;
 	const CustomTextureCapabilities activeCapabilities = getCapabilities();
 
 	if (!stopPreload && source->loadMap(activeCapabilities))
@@ -845,8 +849,16 @@ void CustomTexture::prepareSource(BaseCustomTextureSource* source)
 			if (count > 0)
 			{
 				preloadTotal += count;
-				auto callback = [this](u32 hash, PreparedCustomTexturePtr texture) {
+				auto callback = [this, preloadToGpu](u32 hash, PreparedCustomTexturePtr texture) {
 					size_t size = texture ? texture->bytes.size() : 0;
+					if (preloadToGpu)
+					{
+						if (texture)
+							submitGpuPreload(hash, std::move(texture));
+						else
+							preloadLoaded++;
+						return;
+					}
 					if (texture)
 					{
 						std::lock_guard<std::mutex> lock(stateMutex);
@@ -862,6 +874,41 @@ void CustomTexture::prepareSource(BaseCustomTextureSource* source)
 
 	if (shouldPreload)
 		pendingPreloads--;
+}
+
+void CustomTexture::submitGpuPreload(u32 hash, PreparedCustomTexturePtr texture)
+{
+	std::unique_lock<std::mutex> lock(stateMutex);
+	gpuPreloadCondition.wait(lock, [this] {
+		return pendingGpuPreloads.empty() || stopPreload;
+	});
+	if (stopPreload)
+		return;
+	pendingGpuPreloads.emplace_back(hash, std::move(texture));
+}
+
+void CustomTexture::processGpuPreloads(const GpuTextureUploader& uploader)
+{
+	constexpr int MaxUploadsPerFrame = 8;
+	for (int i = 0; i < MaxUploadsPerFrame; ++i)
+	{
+		std::pair<u32, PreparedCustomTexturePtr> pending;
+		{
+			std::lock_guard<std::mutex> lock(stateMutex);
+			if (pendingGpuPreloads.empty())
+				break;
+			pending = std::move(pendingGpuPreloads.front());
+			pendingGpuPreloads.pop_front();
+		}
+		gpuPreloadCondition.notify_one();
+		const bool uploaded = pending.second && uploader
+				&& uploader(pending.first, *pending.second);
+		if (uploaded)
+			preloadLoadedSize += pending.second->bytes.size();
+		else
+			reportError(Error::Upload);
+		preloadLoaded++;
+	}
 }
 
 void CustomTexture::getPreloadProgress(int& completed, int& total, size_t& loadedSize) const

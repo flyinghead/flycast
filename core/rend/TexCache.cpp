@@ -288,6 +288,7 @@ bool BaseTextureCacheData::Delete()
 	custom_texture.cancelRequest(customRequestId);
 	customRequestId = {};
 	customPayload.reset();
+	gpuPreloadedTexture.reset();
 	customMipLevels = 0;
 
 	return true;
@@ -309,6 +310,7 @@ BaseTextureCacheData::BaseTextureCacheData(TSP tsp, TCW tcw, int area)
 	dirty = FrameCount;
 	lock_block = nullptr;
 	customPayload.reset();
+	gpuPreloadedTexture.reset();
 	customRequestId = {};
 	gpuPalette = false;
 	is_custom_replaced = false;
@@ -522,8 +524,18 @@ bool BaseTextureCacheData::Update()
 			size = originalSize;
 			return true;
 		}
-		custom_texture.loadCustomTextureAsync(this);
-		if (customPayload)
+		gpuPreloadedTexture = renderer == nullptr ? nullptr
+				: renderer->findGpuPreloadedTexture(texture_hash,
+						old_vqtexture_hash, old_texture_hash);
+		if (gpuPreloadedTexture)
+		{
+			custom_texture.cancelRequest(customRequestId);
+			customRequestId = {};
+			customPayload.reset();
+		}
+		else
+			custom_texture.loadCustomTextureAsync(this);
+		if (gpuPreloadedTexture || customPayload)
 		{
 			dumpReplacedTexture = config::DumpTextures && config::DumpReplacedTextures.get();
 			if (!dumpReplacedTexture)
@@ -734,6 +746,22 @@ bool BaseTextureCacheData::UploadCustomTexture(const PreparedCustomTexture& text
 
 bool BaseTextureCacheData::CheckCustomTexture()
 {
+	if (gpuPreloadedTexture)
+	{
+		if (!UseGpuPreloadedTexture(gpuPreloadedTexture))
+		{
+			WARN_LOG(RENDERER, "Could not use GPU-preloaded custom texture");
+			custom_texture.reportError(CustomTexture::Error::Upload);
+			custom_texture.showErrorNotification();
+			gpuPreloadedTexture.reset();
+			return false;
+		}
+		tex_type = TextureType::_8888;
+		gpuPalette = false;
+		is_custom_replaced = true;
+		customMipLevels = gpuPreloadedTexture->mipLevels;
+		return true;
+	}
 	if (!customPayload && customRequestId)
 	{
 		bool failed = false;

@@ -24,12 +24,24 @@
 #include <vector>
 #include <atomic>
 #include <functional>
+#include <condition_variable>
+#include <deque>
 #include <mutex>
 #include <unordered_map>
 #include <unordered_set>
 
 class BaseTextureCacheData;
 class WorkerThread;
+
+struct GpuPreloadedTexture
+{
+	explicit GpuPreloadedTexture(u8 mipLevels) : mipLevels(mipLevels) {}
+	virtual ~GpuPreloadedTexture() = default;
+
+	u8 mipLevels;
+};
+
+using GpuPreloadedTexturePtr = std::shared_ptr<GpuPreloadedTexture>;
 
 class BaseCustomTextureSource
 {
@@ -53,6 +65,8 @@ public:
 class CustomTexture
 {
 public:
+	using GpuTextureUploader = std::function<bool(u32 hash, const PreparedCustomTexture& texture)>;
+
 	enum class Error
 	{
 		None,
@@ -79,6 +93,7 @@ public:
 	void dumpTexture(BaseTextureCacheData* texture, int w, int h, void *srcBuffer);
 	void terminate();
 	void getPreloadProgress(int& completed, int& total, size_t& loadedSize) const;
+	void processGpuPreloads(const GpuTextureUploader& uploader);
 	void reportError(Error error);
 	void showErrorNotification();
 
@@ -96,6 +111,7 @@ private:
 	bool isTextureReplaced(BaseTextureCacheData* texture) const;
 	std::string getGameId() const;
 	void prepareSource(BaseCustomTextureSource* source);
+	void submitGpuPreload(u32 hash, PreparedCustomTexturePtr texture);
 	void resetPreloadProgress();
 	bool requestCancelled(CustomTextureRequestId requestId) const;
 
@@ -104,6 +120,8 @@ private:
 	std::unique_ptr<WorkerThread> loaderThread;
 	mutable std::mutex stateMutex;
 	std::unordered_map<u32, PreparedCustomTexturePtr> preloadedTextures;
+	std::deque<std::pair<u32, PreparedCustomTexturePtr>> pendingGpuPreloads;
+	std::condition_variable gpuPreloadCondition;
 	std::unordered_map<u64, Completion> completions;
 	std::unordered_set<u64> activeRequests;
 	CustomTextureCapabilities capabilities = CustomTextureCapabilities::rgbaOnly(CustomTextureBackend::Unknown);

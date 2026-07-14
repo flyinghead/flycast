@@ -73,6 +73,7 @@ public:
 		old_vqtexture_hash = other.old_vqtexture_hash;
 		old_texture_hash = other.old_texture_hash;
 		std::swap(customPayload, other.customPayload);
+		std::swap(gpuPreloadedTexture, other.gpuPreloadedTexture);
 		customRequestId = other.customRequestId;
 		other.customRequestId = {};
 		is_custom_replaced = other.is_custom_replaced;
@@ -108,6 +109,7 @@ public:
 	u32 old_vqtexture_hash;		// legacy hash for vq textures
 	u32 old_texture_hash;		// legacy hash
 	PreparedCustomTexturePtr customPayload;
+	GpuPreloadedTexturePtr gpuPreloadedTexture;
 	CustomTextureRequestId customRequestId;
 	bool is_custom_replaced;	// True if the texture currently on the GPU is the custom replacement
 	u8 customMipLevels = 0;
@@ -146,13 +148,15 @@ public:
 
 	bool IsCustomTextureAvailable()
 	{
-		return customPayload != nullptr || custom_texture.isRequestComplete(customRequestId);
+		return gpuPreloadedTexture != nullptr || customPayload != nullptr
+				|| custom_texture.isRequestComplete(customRequestId);
 	}
 
 	void ComputeHash();
 	bool Update();
 	virtual void UploadToGPU(int width, int height, const u8 *temp_tex_buffer, bool mipmapped, bool mipmapsIncluded = false) = 0;
 	virtual bool UploadCustomTexture(const PreparedCustomTexture& texture, bool mipmapped);
+	virtual bool UseGpuPreloadedTexture(const GpuPreloadedTexturePtr& texture) { return false; }
 	virtual bool Force32BitTexture(TextureType type) const { return false; }
 	bool CheckCustomTexture();
 	//true if : dirty or paletted texture and hashes don't match

@@ -480,6 +480,45 @@ void rend_term_renderer()
 	}
 }
 
+void rend_process_custom_texture_preloads()
+{
+	if (renderer != nullptr)
+		renderer->ProcessCustomTexturePreloads();
+}
+
+bool rend_supports_gpu_texture_preload()
+{
+	return renderer != nullptr && renderer->SupportsGpuTexturePreload();
+}
+
+std::shared_ptr<GpuPreloadedTexture> Renderer::findGpuPreloadedTexture(
+		u32 currentHash, u32 oldVqHash, u32 oldHash) const
+{
+	const auto find = [this](u32 hash) -> std::shared_ptr<GpuPreloadedTexture> {
+		const auto found = gpuPreloadedTextures.find(hash);
+		return found == gpuPreloadedTextures.end() ? nullptr : found->second;
+	};
+	if (auto texture = find(currentHash))
+		return texture;
+	if (oldVqHash != 0)
+		if (auto texture = find(oldVqHash))
+			return texture;
+	if (oldHash != 0)
+		return find(oldHash);
+	return nullptr;
+}
+
+void Renderer::addGpuPreloadedTexture(u32 hash, std::shared_ptr<GpuPreloadedTexture> texture)
+{
+	if (texture)
+		gpuPreloadedTextures.emplace(hash, std::move(texture));
+}
+
+void Renderer::clearGpuPreloadedTextures()
+{
+	gpuPreloadedTextures.clear();
+}
+
 void rend_reset()
 {
 	FinishRender(DequeueRender());

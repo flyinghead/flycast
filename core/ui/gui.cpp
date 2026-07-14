@@ -1263,6 +1263,8 @@ static void gui_display_loadscreen()
 			}
 			
 			const bool customTexPreloading = custom_texture.isPreloading();
+			if (customTexPreloading)
+				rend_process_custom_texture_preloads();
 
 			if (gameLoader.ready() && !customTexPreloading)
 			{
