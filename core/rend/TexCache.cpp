@@ -749,6 +749,10 @@ bool BaseTextureCacheData::CheckCustomTexture()
 	{
 		WARN_LOG(RENDERER, "Discarding incompatible prepared custom texture %08x",
 				customPayload->replacementHash);
+		custom_texture.reportError(customPayload->width > capabilities.max2DWidth
+				|| customPayload->height > capabilities.max2DHeight
+				? CustomTexture::Error::TextureTooLarge : CustomTexture::Error::Upload);
+		custom_texture.showErrorNotification();
 		customPayload.reset();
 		customRequestId = {};
 		return false;
@@ -758,6 +762,8 @@ bool BaseTextureCacheData::CheckCustomTexture()
 	{
 		WARN_LOG(RENDERER, "Custom texture upload failed for %08x (%s)",
 				customPayload->replacementHash, nativeTextureFormatName(customPayload->nativeFormat));
+		custom_texture.reportError(CustomTexture::Error::Upload);
+		custom_texture.showErrorNotification();
 		customPayload.reset();
 		customRequestId = {};
 		return false;

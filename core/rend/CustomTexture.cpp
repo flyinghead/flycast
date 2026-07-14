@@ -22,6 +22,7 @@
 #include "oslib/directory.h"
 #include "oslib/storage.h"
 #include "cfg/option.h"
+#include "oslib/i18n.h"
 #include "oslib/oslib.h"
 #include "stdclass.h"
 #include "util/worker_thread.h"
@@ -125,29 +126,40 @@ PreparedCustomTexturePtr decodeImageToRGBA(const CustomTextureCandidate& candida
 	if (fileBytes.size() > INT_MAX)
 	{
 		error = "legacy image is too large for stb_image";
+		custom_texture.reportError(CustomTexture::Error::ImageDecode);
 		return nullptr;
 	}
 	int width = 0;
 	int height = 0;
 	int channels = 0;
 	if (!stbi_info_from_memory(fileBytes.data(), static_cast<int>(fileBytes.size()),
-			&width, &height, &channels) || width <= 0 || height <= 0
-			|| !capabilities.canUpload(NativeTextureFormat::Rgba8Unorm,
-					static_cast<u32>(width), static_cast<u32>(height), 1))
+			&width, &height, &channels) || width <= 0 || height <= 0)
+	{
+		error = "legacy image header is invalid";
+		custom_texture.reportError(CustomTexture::Error::ImageDecode);
+		return nullptr;
+	}
+	if (static_cast<u32>(width) > capabilities.max2DWidth
+			|| static_cast<u32>(height) > capabilities.max2DHeight)
 	{
 		error = "legacy image dimensions exceed active renderer limits";
+		custom_texture.reportError(CustomTexture::Error::TextureTooLarge);
 		return nullptr;
 	}
 	PreparedMipLevel level;
 	if (!computeMipLayout(NativeTextureFormat::Rgba8Unorm,
 			static_cast<u32>(width), static_cast<u32>(height), 0, level, error))
+	{
+		custom_texture.reportError(CustomTexture::Error::ImageDecode);
 		return nullptr;
+	}
 	stbi_set_flip_vertically_on_load_thread(1);
 	stbi_uc *decoded = stbi_load_from_memory(fileBytes.data(), static_cast<int>(fileBytes.size()),
 			&width, &height, &channels, STBI_rgb_alpha);
 	if (decoded == nullptr)
 	{
 		error = stbi_failure_reason() ? stbi_failure_reason() : "stb_image decode failed";
+		custom_texture.reportError(CustomTexture::Error::ImageDecode);
 		return nullptr;
 	}
 	std::unique_ptr<stbi_uc, decltype(&stbi_image_free)> decodedOwner(decoded, stbi_image_free);
@@ -159,6 +171,7 @@ PreparedCustomTexturePtr decodeImageToRGBA(const CustomTextureCandidate& candida
 	catch (const std::bad_alloc&)
 	{
 		error = "legacy image descriptor allocation failed";
+		custom_texture.reportError(CustomTexture::Error::ImageDecode);
 		return nullptr;
 	}
 	output->replacementHash = hash;
@@ -178,6 +191,7 @@ PreparedCustomTexturePtr decodeImageToRGBA(const CustomTextureCandidate& candida
 	catch (const std::bad_alloc&)
 	{
 		error = "legacy image payload allocation failed";
+		custom_texture.reportError(CustomTexture::Error::ImageDecode);
 		return nullptr;
 	}
 	return output;
@@ -310,6 +324,16 @@ PreparedCustomTexturePtr CustomTextureSource::loadCustomTexture(u32 hash,
 		return nullptr;
 	if (cancelled && cancelled())
 		return nullptr;
+	const bool legacyImage = candidate.kind == CustomTextureSourceKind::Png
+			|| candidate.kind == CustomTextureSourceKind::Jpeg;
+	if (!legacyImage && capabilities.backend == CustomTextureBackend::Direct3D9)
+	{
+		WARN_LOG(RENDERER, "DDS/KTX2 custom texture %08x is not supported by DirectX 9: %s",
+				hash, candidate.path.c_str());
+		custom_texture.reportError(CustomTexture::Error::DirectX9CompressedSource);
+		markFailed(candidate.path);
+		return nullptr;
+	}
 
 	std::vector<u8> fileBytes;
 	std::string readError;
@@ -317,19 +341,19 @@ PreparedCustomTexturePtr CustomTextureSource::loadCustomTexture(u32 hash,
 	{
 		WARN_LOG(RENDERER, "Custom texture %08x read failed (%s): %s", hash,
 			candidate.path.c_str(), readError.c_str());
+		custom_texture.reportError(CustomTexture::Error::FileRead);
 		markFailed(candidate.path);
 		return nullptr;
 	}
 
-	if (candidate.kind == CustomTextureSourceKind::Png
-			|| candidate.kind == CustomTextureSourceKind::Jpeg)
+	if (legacyImage)
 	{
 		std::string imageError;
 		PreparedCustomTexturePtr texture = decodeImageToRGBA(candidate, hash, fileBytes,
 				capabilities, imageError);
 		if (texture)
 			return texture;
-		WARN_LOG(RENDERER, "Custom texture %08x image decode failed (%s): %s", hash,
+		WARN_LOG(RENDERER, "Custom texture %08x image preparation failed (%s): %s", hash,
 			candidate.path.c_str(), imageError.c_str());
 		markFailed(candidate.path);
 		return nullptr;
@@ -342,6 +366,17 @@ PreparedCustomTexturePtr CustomTextureSource::loadCustomTexture(u32 hash,
 	{
 		WARN_LOG(RENDERER, "Custom texture %08x inspection failed (%s): %s", hash,
 			candidate.path.c_str(), status.message.c_str());
+		custom_texture.reportError(CustomTexture::Error::CompressedSource);
+		markFailed(candidate.path);
+		return nullptr;
+	}
+	if (inspection.width > capabilities.max2DWidth
+			|| inspection.height > capabilities.max2DHeight)
+	{
+		WARN_LOG(RENDERER, "Custom texture %08x dimensions %ux%u exceed renderer limit %ux%u: %s",
+				hash, inspection.width, inspection.height, capabilities.max2DWidth,
+				capabilities.max2DHeight, candidate.path.c_str());
+		custom_texture.reportError(CustomTexture::Error::TextureTooLarge);
 		markFailed(candidate.path);
 		return nullptr;
 	}
@@ -363,8 +398,9 @@ PreparedCustomTexturePtr CustomTextureSource::loadCustomTexture(u32 hash,
 		if (status.category == TextureTranscodeError::Cancelled)
 			return nullptr;
 	}
-	WARN_LOG(RENDERER, "Custom texture %08x has no viable target (%s, %s): %s", hash,
+	WARN_LOG(RENDERER, "Custom texture %08x preparation failed (%s, %s): %s", hash,
 			customTextureCodecName(inspection.codec), candidate.path.c_str(), status.message.c_str());
+	custom_texture.reportError(CustomTexture::Error::CompressedSource);
 	markFailed(candidate.path);
 	return nullptr;
 }
@@ -482,6 +518,8 @@ void CustomTexture::terminate()
 		preloadedTextures.clear();
 		completions.clear();
 		activeRequests.clear();
+		pendingError = Error::None;
+		errorNotificationShown = false;
 	}
 	resetPreloadProgress();
 	initialized = false;
@@ -530,6 +568,7 @@ void CustomTexture::loadCustomTextureAsync(BaseTextureCacheData *textureData)
 {
 	if (!init())
 		return;
+	showErrorNotification();
 	if (textureData->customRequestId)
 		cancelRequest(textureData->customRequestId);
 	textureData->customPayload.reset();
@@ -577,6 +616,7 @@ bool CustomTexture::isRequestComplete(CustomTextureRequestId requestId) const
 
 PreparedCustomTexturePtr CustomTexture::takePreparedTexture(CustomTextureRequestId requestId, bool& failed)
 {
+	showErrorNotification();
 	failed = false;
 	if (!requestId)
 		return nullptr;
@@ -830,6 +870,56 @@ void CustomTexture::getPreloadProgress(int& completed, int& total, size_t& loade
 		total = -1; // Prints Preparing... in UI
 	completed = preloadLoaded;
 	loadedSize = preloadLoadedSize;
+}
+
+void CustomTexture::reportError(Error error)
+{
+	if (error == Error::None)
+		return;
+	// Loader errors may occur during preloading, before the in-game toast is visible.
+	std::lock_guard<std::mutex> lock(stateMutex);
+	if (!errorNotificationShown && pendingError == Error::None)
+		pendingError = error;
+}
+
+void CustomTexture::showErrorNotification()
+{
+	Error error;
+	{
+		std::lock_guard<std::mutex> lock(stateMutex);
+		if (errorNotificationShown || pendingError == Error::None)
+			return;
+		error = pendingError;
+		pendingError = Error::None;
+		errorNotificationShown = true;
+	}
+
+	const char *message = nullptr;
+	switch (error)
+	{
+	case Error::FileRead:
+		message = i18n::T("Custom texture file could not be read");
+		break;
+	case Error::ImageDecode:
+		message = i18n::T("PNG/JPEG custom texture could not be decoded");
+		break;
+	case Error::CompressedSource:
+		message = i18n::T("Compressed custom texture could not be loaded. Supported formats: KTX2/XUBC7, KTX2/XUASTC, and DDS/BC7");
+		break;
+	case Error::TextureTooLarge:
+		message = i18n::T("Custom texture exceeds the renderer's maximum texture dimensions");
+		break;
+	case Error::Upload:
+		message = i18n::T("Custom texture could not be uploaded to the GPU");
+		break;
+	case Error::DirectX9CompressedSource:
+		message = i18n::T("DirectX 9 supports PNG/JPEG custom textures only");
+		break;
+	case Error::None:
+		return;
+	}
+	if (message != nullptr)
+		os_notify(message, 10000);
 }
 
 void CustomTexture::resetPreloadProgress()

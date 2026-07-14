@@ -53,6 +53,17 @@ public:
 class CustomTexture
 {
 public:
+	enum class Error
+	{
+		None,
+		FileRead,
+		ImageDecode,
+		CompressedSource,
+		TextureTooLarge,
+		Upload,
+		DirectX9CompressedSource,
+	};
+
 	~CustomTexture();
 	bool init();
 	bool enabled() const;
@@ -68,6 +79,8 @@ public:
 	void dumpTexture(BaseTextureCacheData* texture, int w, int h, void *srcBuffer);
 	void terminate();
 	void getPreloadProgress(int& completed, int& total, size_t& loadedSize) const;
+	void reportError(Error error);
+	void showErrorNotification();
 
 private:
 	struct Completion
@@ -100,6 +113,8 @@ private:
 	std::atomic<size_t> preloadLoadedSize { 0 };
 	std::atomic<int> pendingPreloads { 0 };
 	std::atomic<bool> stopPreload { false };
+	Error pendingError = Error::None;
+	bool errorNotificationShown = false;
 };
 
 extern CustomTexture custom_texture;
