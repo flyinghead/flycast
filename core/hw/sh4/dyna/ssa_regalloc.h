@@ -24,6 +24,7 @@
 #include "hw/sh4/modules/mmu.h"
 #include "ssa.h"
 
+#include <array>
 #include <deque>
 #include <map>
 #include <vector>
@@ -37,19 +38,18 @@ public:
 	RegAlloc() = default;
 	virtual ~RegAlloc() = default;
 
-	void DoAlloc(RuntimeBlockInfo* block, const nreg_t* regs_avail, const nregf_t* regsf_avail)
+	template<std::size_t N, std::size_t NF>
+	void DoAlloc(RuntimeBlockInfo* block, const std::array<nreg_t, N>& regs_avail, const std::array<nregf_t, NF>& regsf_avail)
 	{
 		this->block = block;
 		SSAOptimizer optim(block);
 		optim.AddVersionPass();
 
 		verify(host_gregs.empty());
-		while (*regs_avail != (nreg_t)-1)
-			host_gregs.push_back(*regs_avail++);
+		host_gregs.insert(host_gregs.end(), regs_avail.begin(), regs_avail.end());
 
 		verify(host_fregs.empty());
-		while (*regsf_avail != (nregf_t)-1)
-			host_fregs.push_back(*regsf_avail++);
+		host_fregs.insert(host_fregs.end(), regsf_avail.begin(), regsf_avail.end());
 	}
 
 	void OpBegin(shil_opcode* op, int opid)

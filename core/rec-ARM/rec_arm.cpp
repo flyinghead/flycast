@@ -2155,11 +2155,14 @@ void Arm32Assembler::compile(RuntimeBlockInfo* block, bool force_checks, bool op
 	block->code = (DynarecCodeEntryPtr)codeBuffer.get();
 
 	//reg alloc
-	static constexpr int alloc_regs[] = { 5, 6, 7, 9, 10, 11, -1 };
-	static constexpr int alloc_regs_mmu[] = { 5, 6, 7, 10, 11, -1 };
-	static constexpr int alloc_fpu[] = { 16, 17, 18, 19, 20, 21, 22, 23,
-					24, 25, 26, 27, 28, 29, 30, 31, -1 };
-	reg.DoAlloc(block, mmu_enabled() ? alloc_regs_mmu : alloc_regs, alloc_fpu);
+	static constexpr std::array<int, 6> alloc_regs = { 5, 6, 7, 9, 10, 11 };
+	static constexpr std::array<int, 5> alloc_regs_mmu = { 5, 6, 7, 10, 11 };
+	static constexpr std::array<int, 16> alloc_fpu = { 16, 17, 18, 19, 20, 21, 22, 23,
+					24, 25, 26, 27, 28, 29, 30, 31 };
+	if (mmu_enabled())
+		reg.DoAlloc(block, alloc_regs_mmu, alloc_fpu);
+	else
+		reg.DoAlloc(block, alloc_regs, alloc_fpu);
 
 	u8* blk_start = GetCursorAddress<u8 *>();
 

@@ -19,6 +19,7 @@
 #pragma once
 #include "hw/sh4/dyna/ssa_regalloc.h"
 #include <aarch64/macro-assembler-aarch64.h>
+#include <array>
 using namespace vixl::aarch64;
 
 #define ALLOC_F64 true
@@ -32,8 +33,8 @@ enum eFReg {
 	S17, S18, S19, S20, S21, S22, S23, S24, S25, S26, S27, S28, S29, S30, S31
 };
 
-static eReg alloc_regs[] = { W19, W20, W21, W22, W23, W24, W25, W26, (eReg)-1 };
-static eFReg alloc_fregs[] = { S8, S9, S10, S11, S12, S13, S14, S15, (eFReg)-1 };
+static constexpr std::array<eReg, 8> alloc_regs = { W19, W20, W21, W22, W23, W24, W25, W26 };
+static constexpr std::array<eFReg, 8> alloc_fregs = { S8, S9, S10, S11, S12, S13, S14, S15 };
 
 class Arm64Assembler;
 
