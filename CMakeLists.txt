@@ -283,6 +283,9 @@ target_compile_features(flycast_basis_transcoder PRIVATE cxx_std_17)
 target_compile_definitions(flycast_basis_transcoder PRIVATE
 		BASISD_SUPPORT_KTX2=1
 		BASISD_SUPPORT_KTX2_ZSTD=1
+		BASISD_SUPPORT_DXT1=1
+		BASISD_SUPPORT_DXT5A=1
+		BASISD_SUPPORT_ETC2_EAC_A8=1
 		BASISD_SUPPORT_XUASTC=1)
 target_include_directories(flycast_basis_transcoder PUBLIC core/deps)
 set_target_properties(flycast_basis_transcoder PROPERTIES POSITION_INDEPENDENT_CODE ON)

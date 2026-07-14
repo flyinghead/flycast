@@ -17,6 +17,7 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
  */
 #include "CustomTextureTypes.h"
+#include "build.h"
 
 #include <algorithm>
 #include <charconv>
@@ -84,6 +85,22 @@ void appendIfSupported(std::vector<NativeTextureFormat>& targets,
 			&& std::find(targets.begin(), targets.end(), format) == targets.end())
 		targets.push_back(format);
 }
+
+bool preferEtcTargets(const CustomTextureCapabilities& capabilities)
+{
+	// This only chooses the order. Every target still has to be reported by the active backend.
+	if (capabilities.backend == CustomTextureBackend::OpenGLES)
+		return true;
+#if defined(TARGET_ARM_MAC) || defined(TARGET_IPHONE)
+	if (capabilities.backend == CustomTextureBackend::Vulkan
+			|| capabilities.backend == CustomTextureBackend::OpenGL)
+		return true;
+#elif defined(__ANDROID__)
+	if (capabilities.backend == CustomTextureBackend::Vulkan)
+		return true;
+#endif
+	return false;
+}
 }
 
 std::optional<ParsedCustomTextureFilename> parseCustomTextureFilename(const std::string& filename)
@@ -100,6 +117,11 @@ std::optional<ParsedCustomTextureFilename> parseCustomTextureFilename(const std:
 	{
 		kind = CustomTextureSourceKind::Ktx2Xuastc;
 		suffixLength = sizeof(".xuastc.ktx2") - 1;
+	}
+	else if (endsWith(lower, ".etc1s.ktx2"))
+	{
+		kind = CustomTextureSourceKind::Ktx2Etc1s;
+		suffixLength = sizeof(".etc1s.ktx2") - 1;
 	}
 	else if (endsWith(lower, ".ktx2"))
 	{
@@ -179,6 +201,8 @@ BlockGeometry getBlockGeometry(NativeTextureFormat format)
 	case NativeTextureFormat::Bc7Srgb:
 	case NativeTextureFormat::Bc3Unorm:
 	case NativeTextureFormat::Etc2Rgba8Unorm: return { 4, 4, 16, true };
+	case NativeTextureFormat::Bc1Unorm:
+	case NativeTextureFormat::Etc2Rgb8Unorm: return { 4, 4, 8, true };
 	case NativeTextureFormat::Astc4x4Unorm: return { 4, 4, 16, true };
 	case NativeTextureFormat::Astc5x4Unorm: return { 5, 4, 16, true };
 	case NativeTextureFormat::Astc5x5Unorm: return { 5, 5, 16, true };
@@ -286,10 +310,38 @@ bool validatePreparedCustomTexture(const PreparedCustomTexture& texture, std::st
 }
 
 std::vector<NativeTextureFormat> selectNativeTextureTargets(const CustomTextureCapabilities& capabilities,
-		CustomTextureCodec codec, uint32_t sourceBlockWidth, uint32_t sourceBlockHeight)
+		CustomTextureCodec codec, uint32_t sourceBlockWidth, uint32_t sourceBlockHeight,
+		bool hasAlpha)
 {
 	std::vector<NativeTextureFormat> targets;
-	if (codec == CustomTextureCodec::XuastcLdr)
+	if (codec == CustomTextureCodec::Etc1s)
+	{
+		const bool preferEtc = preferEtcTargets(capabilities);
+		if (hasAlpha)
+		{
+			appendIfSupported(targets, capabilities, preferEtc
+					? NativeTextureFormat::Etc2Rgba8Unorm : NativeTextureFormat::Bc3Unorm);
+			appendIfSupported(targets, capabilities, preferEtc
+					? NativeTextureFormat::Bc3Unorm : NativeTextureFormat::Etc2Rgba8Unorm);
+		}
+		else
+		{
+			appendIfSupported(targets, capabilities, preferEtc
+					? NativeTextureFormat::Etc2Rgb8Unorm : NativeTextureFormat::Bc1Unorm);
+			appendIfSupported(targets, capabilities, preferEtc
+					? NativeTextureFormat::Bc1Unorm : NativeTextureFormat::Etc2Rgb8Unorm);
+		}
+		appendIfSupported(targets, capabilities, preferEtc
+				? NativeTextureFormat::Astc4x4Unorm : NativeTextureFormat::Bc7Unorm);
+		appendIfSupported(targets, capabilities, preferEtc
+				? NativeTextureFormat::Bc7Unorm : NativeTextureFormat::Astc4x4Unorm);
+		if (!hasAlpha)
+		{
+			appendIfSupported(targets, capabilities, NativeTextureFormat::Etc2Rgba8Unorm);
+			appendIfSupported(targets, capabilities, NativeTextureFormat::Bc3Unorm);
+		}
+	}
+	else if (codec == CustomTextureCodec::XuastcLdr)
 	{
 		if (const auto matchingAstc = astcFormat(sourceBlockWidth, sourceBlockHeight))
 			appendIfSupported(targets, capabilities, *matchingAstc);
@@ -315,6 +367,7 @@ const char *customTextureCodecName(CustomTextureCodec codec)
 	case CustomTextureCodec::LegacyRgba: return "PNG/JPEG";
 	case CustomTextureCodec::Xubc7: return "XUBC7";
 	case CustomTextureCodec::XuastcLdr: return "XUASTC LDR";
+	case CustomTextureCodec::Etc1s: return "ETC1S";
 	case CustomTextureCodec::DdsBc7: return "DDS BC7";
 	}
 	return "unknown";
@@ -327,7 +380,9 @@ const char *nativeTextureFormatName(NativeTextureFormat format)
 	case NativeTextureFormat::Rgba8Unorm: return "RGBA8 UNORM";
 	case NativeTextureFormat::Bc7Unorm: return "BC7 UNORM";
 	case NativeTextureFormat::Bc7Srgb: return "BC7 SRGB";
+	case NativeTextureFormat::Bc1Unorm: return "BC1 UNORM";
 	case NativeTextureFormat::Bc3Unorm: return "BC3 UNORM";
+	case NativeTextureFormat::Etc2Rgb8Unorm: return "ETC2 RGB8 UNORM";
 	case NativeTextureFormat::Etc2Rgba8Unorm: return "ETC2 RGBA8 UNORM";
 	case NativeTextureFormat::Astc4x4Unorm: return "ASTC 4x4 UNORM";
 	case NativeTextureFormat::Astc5x4Unorm: return "ASTC 5x4 UNORM";

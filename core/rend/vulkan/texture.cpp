@@ -206,7 +206,9 @@ vk::Format customVkFormat(NativeTextureFormat format)
 	case NativeTextureFormat::Rgba8Unorm: return vk::Format::eR8G8B8A8Unorm;
 	case NativeTextureFormat::Bc7Unorm: return vk::Format::eBc7UnormBlock;
 	case NativeTextureFormat::Bc7Srgb: return vk::Format::eBc7SrgbBlock;
+	case NativeTextureFormat::Bc1Unorm: return vk::Format::eBc1RgbUnormBlock;
 	case NativeTextureFormat::Bc3Unorm: return vk::Format::eBc3UnormBlock;
+	case NativeTextureFormat::Etc2Rgb8Unorm: return vk::Format::eEtc2R8G8B8UnormBlock;
 	case NativeTextureFormat::Etc2Rgba8Unorm: return vk::Format::eEtc2R8G8B8A8UnormBlock;
 	case NativeTextureFormat::Astc4x4Unorm: return vk::Format::eAstc4x4UnormBlock;
 	case NativeTextureFormat::Astc5x4Unorm: return vk::Format::eAstc5x4UnormBlock;
@@ -321,7 +323,8 @@ CustomTextureCapabilities Texture::GetCustomTextureCapabilities()
 				&& (features & vk::FormatFeatureFlagBits::eTransferDst);
 	};
 	for (NativeTextureFormat format : { NativeTextureFormat::Bc7Unorm, NativeTextureFormat::Bc7Srgb,
-			NativeTextureFormat::Bc3Unorm, NativeTextureFormat::Etc2Rgba8Unorm,
+			NativeTextureFormat::Bc1Unorm, NativeTextureFormat::Bc3Unorm,
+			NativeTextureFormat::Etc2Rgb8Unorm, NativeTextureFormat::Etc2Rgba8Unorm,
 			NativeTextureFormat::Astc4x4Unorm, NativeTextureFormat::Astc5x4Unorm,
 			NativeTextureFormat::Astc5x5Unorm, NativeTextureFormat::Astc6x5Unorm,
 			NativeTextureFormat::Astc6x6Unorm, NativeTextureFormat::Astc8x5Unorm,

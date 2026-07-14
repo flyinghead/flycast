@@ -15,6 +15,12 @@
 #ifndef GL_COMPRESSED_RGBA_S3TC_DXT5_EXT
 #define GL_COMPRESSED_RGBA_S3TC_DXT5_EXT 0x83F3
 #endif
+#ifndef GL_COMPRESSED_RGB_S3TC_DXT1_EXT
+#define GL_COMPRESSED_RGB_S3TC_DXT1_EXT 0x83F0
+#endif
+#ifndef GL_COMPRESSED_RGB8_ETC2
+#define GL_COMPRESSED_RGB8_ETC2 0x9274
+#endif
 #ifndef GL_COMPRESSED_RGBA8_ETC2_EAC
 #define GL_COMPRESSED_RGBA8_ETC2_EAC 0x9278
 #endif
@@ -202,7 +208,9 @@ GLenum customGlFormat(NativeTextureFormat format)
 	{
 	case NativeTextureFormat::Bc7Unorm: return GL_COMPRESSED_RGBA_BPTC_UNORM;
 	case NativeTextureFormat::Bc7Srgb: return GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM;
+	case NativeTextureFormat::Bc1Unorm: return GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
 	case NativeTextureFormat::Bc3Unorm: return GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
+	case NativeTextureFormat::Etc2Rgb8Unorm: return GL_COMPRESSED_RGB8_ETC2;
 	case NativeTextureFormat::Etc2Rgba8Unorm: return GL_COMPRESSED_RGBA8_ETC2_EAC;
 	case NativeTextureFormat::Astc4x4Unorm: return GL_COMPRESSED_RGBA_ASTC_4x4_KHR;
 	case NativeTextureFormat::Astc5x4Unorm: return GL_COMPRESSED_RGBA_ASTC_5x4_KHR;
@@ -320,12 +328,16 @@ CustomTextureCapabilities TextureCacheData::GetCustomTextureCapabilities()
 	const bool etc2 = (gl.is_gles && gl.gl_major >= 3)
 			|| (!gl.is_gles && (gl.gl_major > 4 || (gl.gl_major == 4 && gl.gl_minor >= 3)))
 			|| hasGlExtension("GL_ARB_ES3_compatibility");
-	const bool bc3 = hasGlExtension("GL_EXT_texture_compression_s3tc")
+	const bool s3tc = hasGlExtension("GL_EXT_texture_compression_s3tc");
+	const bool bc1 = s3tc || hasGlExtension("GL_EXT_texture_compression_dxt1");
+	const bool bc3 = s3tc
 			|| hasGlExtension("GL_EXT_texture_compression_dxt5")
 			|| hasGlExtension("GL_ANGLE_texture_compression_dxt5");
 	capabilities.setSupported(NativeTextureFormat::Bc7Unorm, bptc);
 	capabilities.setSupported(NativeTextureFormat::Bc7Srgb, bptc);
+	capabilities.setSupported(NativeTextureFormat::Bc1Unorm, bc1);
 	capabilities.setSupported(NativeTextureFormat::Bc3Unorm, bc3);
+	capabilities.setSupported(NativeTextureFormat::Etc2Rgb8Unorm, etc2);
 	capabilities.setSupported(NativeTextureFormat::Etc2Rgba8Unorm, etc2);
 	for (NativeTextureFormat format : { NativeTextureFormat::Astc4x4Unorm,
 			NativeTextureFormat::Astc5x4Unorm, NativeTextureFormat::Astc5x5Unorm,

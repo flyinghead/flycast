@@ -147,6 +147,7 @@ bool DX11Texture::UploadCustomTexture(const PreparedCustomTexture& customTexture
 	case NativeTextureFormat::Rgba8Unorm: format = DXGI_FORMAT_R8G8B8A8_UNORM; break;
 	case NativeTextureFormat::Bc7Unorm: format = DXGI_FORMAT_BC7_UNORM; break;
 	case NativeTextureFormat::Bc7Srgb: format = DXGI_FORMAT_BC7_UNORM_SRGB; break;
+	case NativeTextureFormat::Bc1Unorm: format = DXGI_FORMAT_BC1_UNORM; break;
 	case NativeTextureFormat::Bc3Unorm: format = DXGI_FORMAT_BC3_UNORM; break;
 	default: return false;
 	}
@@ -220,6 +221,7 @@ CustomTextureCapabilities DX11Texture::GetCustomTextureCapabilities()
 	};
 	capabilities.setSupported(NativeTextureFormat::Bc7Unorm, query(DXGI_FORMAT_BC7_UNORM));
 	capabilities.setSupported(NativeTextureFormat::Bc7Srgb, query(DXGI_FORMAT_BC7_UNORM_SRGB));
+	capabilities.setSupported(NativeTextureFormat::Bc1Unorm, query(DXGI_FORMAT_BC1_UNORM));
 	capabilities.setSupported(NativeTextureFormat::Bc3Unorm, query(DXGI_FORMAT_BC3_UNORM));
 	return capabilities;
 }

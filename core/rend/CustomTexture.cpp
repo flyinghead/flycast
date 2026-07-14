@@ -94,12 +94,13 @@ bool readFile(const CustomTextureCandidate& candidate, std::vector<u8>& bytes, s
 	return true;
 }
 
-std::array<CustomTextureSourceKind, 6> preferredSourceKinds(
+std::array<CustomTextureSourceKind, 7> preferredSourceKinds(
 		const CustomTextureCapabilities& capabilities)
 {
-	std::array<CustomTextureSourceKind, 6> kinds {{
+	std::array<CustomTextureSourceKind, 7> kinds {{
 		CustomTextureSourceKind::Ktx2Xubc7,
 		CustomTextureSourceKind::Ktx2Xuastc,
+		CustomTextureSourceKind::Ktx2Etc1s,
 		CustomTextureSourceKind::Ktx2Generic,
 		CustomTextureSourceKind::DdsBc7,
 		CustomTextureSourceKind::Png,
@@ -381,7 +382,7 @@ PreparedCustomTexturePtr CustomTextureSource::loadCustomTexture(u32 hash,
 		return nullptr;
 	}
 	auto targets = selectNativeTextureTargets(capabilities, inspection.codec,
-			inspection.blockWidth, inspection.blockHeight);
+			inspection.blockWidth, inspection.blockHeight, inspection.hasAlpha);
 	for (NativeTextureFormat target : targets)
 	{
 		if (!capabilities.canUpload(target, inspection.width, inspection.height, inspection.levels))
@@ -904,7 +905,7 @@ void CustomTexture::showErrorNotification()
 		message = i18n::T("PNG/JPEG custom texture could not be decoded");
 		break;
 	case Error::CompressedSource:
-		message = i18n::T("Compressed custom texture could not be loaded. Supported formats: KTX2/XUBC7, KTX2/XUASTC, and DDS/BC7");
+		message = i18n::T("Compressed custom texture could not be loaded.\nSupported formats: KTX2/XUBC7, KTX2/XUASTC, KTX2/ETC1S, and DDS/BC7");
 		break;
 	case Error::TextureTooLarge:
 		message = i18n::T("Custom texture exceeds the renderer's maximum texture dimensions");

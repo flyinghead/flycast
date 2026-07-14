@@ -30,6 +30,7 @@ enum class CustomTextureSourceKind : uint8_t
 {
 	Ktx2Xubc7,
 	Ktx2Xuastc,
+	Ktx2Etc1s,
 	Ktx2Generic,
 	DdsBc7,
 	Png,
@@ -41,6 +42,7 @@ enum class CustomTextureCodec : uint8_t
 	LegacyRgba,
 	Xubc7,
 	XuastcLdr,
+	Etc1s,
 	DdsBc7,
 };
 
@@ -49,7 +51,9 @@ enum class NativeTextureFormat : uint8_t
 	Rgba8Unorm,
 	Bc7Unorm,
 	Bc7Srgb,
+	Bc1Unorm,
 	Bc3Unorm,
+	Etc2Rgb8Unorm,
 	Etc2Rgba8Unorm,
 	Astc4x4Unorm,
 	Astc5x4Unorm,
@@ -168,6 +172,7 @@ bool computeMipLayout(NativeTextureFormat format, uint32_t width, uint32_t heigh
 		uint64_t offset, PreparedMipLevel& level, std::string& error);
 bool validatePreparedCustomTexture(const PreparedCustomTexture& texture, std::string& error);
 std::vector<NativeTextureFormat> selectNativeTextureTargets(const CustomTextureCapabilities& capabilities,
-		CustomTextureCodec codec, uint32_t sourceBlockWidth = 4, uint32_t sourceBlockHeight = 4);
+		CustomTextureCodec codec, uint32_t sourceBlockWidth = 4, uint32_t sourceBlockHeight = 4,
+		bool hasAlpha = true);
 const char *customTextureCodecName(CustomTextureCodec codec);
 const char *nativeTextureFormatName(NativeTextureFormat format);

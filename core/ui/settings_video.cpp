@@ -225,7 +225,7 @@ void gui_settings_video()
 		{
 			DisabledScope scope(game_started);
 			OptionCheckbox(T("Load Custom Textures"), config::CustomTextures,
-					T("Load custom/high-res textures from data/textures/<game id>. Supports KTX2/XUBC7, KTX2/XUASTC, DDS/BC7, PNG, and JPEG."));
+					T("Load custom/high-res textures from data/textures/<game id>. Supports KTX2/XUBC7, KTX2/XUASTC, KTX2/ETC1S, DDS/BC7, PNG, and JPEG."));
 			ImGui::Indent();
 			{
 				DisabledScope customTexturesScope(!config::CustomTextures.get());

@@ -42,7 +42,10 @@ basist::transcoder_texture_format basisTarget(NativeTextureFormat format)
 	case NativeTextureFormat::Rgba8Unorm: return Format::cTFRGBA32;
 	case NativeTextureFormat::Bc7Unorm:
 	case NativeTextureFormat::Bc7Srgb: return Format::cTFBC7_RGBA;
+	case NativeTextureFormat::Bc1Unorm: return Format::cTFBC1_RGB;
 	case NativeTextureFormat::Bc3Unorm: return Format::cTFBC3_RGBA;
+	// ETC1 blocks are valid ETC2 RGB blocks and use the same 8-byte layout.
+	case NativeTextureFormat::Etc2Rgb8Unorm: return Format::cTFETC1_RGB;
 	case NativeTextureFormat::Etc2Rgba8Unorm: return Format::cTFETC2_RGBA;
 	case NativeTextureFormat::Astc4x4Unorm: return Format::cTFASTC_LDR_4x4_RGBA;
 	case NativeTextureFormat::Astc5x4Unorm: return Format::cTFASTC_LDR_5x4_RGBA;
@@ -75,6 +78,14 @@ TranscodePathClass pathClass(CustomTextureCodec codec, NativeTextureFormat targe
 		return TranscodePathClass::FastNativeReconstruction;
 	if (codec == CustomTextureCodec::Xubc7 && target == NativeTextureFormat::Astc4x4Unorm)
 		return TranscodePathClass::LatentToLatent;
+	if (codec == CustomTextureCodec::Etc1s)
+	{
+		if (target == NativeTextureFormat::Bc1Unorm || target == NativeTextureFormat::Bc3Unorm
+				|| target == NativeTextureFormat::Etc2Rgb8Unorm
+				|| target == NativeTextureFormat::Etc2Rgba8Unorm)
+			return TranscodePathClass::FastNativeReconstruction;
+		return TranscodePathClass::DecodeAndReencode;
+	}
 	if (codec == CustomTextureCodec::XuastcLdr)
 	{
 		const BlockGeometry geometry = getBlockGeometry(target);
@@ -210,10 +221,13 @@ TextureTranscodeStatus TextureTranscoder::inspect(CustomTextureSourceKind hinted
 		codec = CustomTextureCodec::Xubc7;
 	else if (transcoder.is_xuastc_ldr())
 		codec = CustomTextureCodec::XuastcLdr;
+	else if (transcoder.is_etc1s())
+		codec = CustomTextureCodec::Etc1s;
 	else
-		return error(TextureTranscodeError::UnsupportedSource, "KTX2 is neither XUBC7 nor XUASTC LDR");
+		return error(TextureTranscodeError::UnsupportedSource, "KTX2 is not XUBC7, XUASTC LDR, or ETC1S");
 	if ((hintedKind == CustomTextureSourceKind::Ktx2Xubc7 && codec != CustomTextureCodec::Xubc7)
-			|| (hintedKind == CustomTextureSourceKind::Ktx2Xuastc && codec != CustomTextureCodec::XuastcLdr))
+			|| (hintedKind == CustomTextureSourceKind::Ktx2Xuastc && codec != CustomTextureCodec::XuastcLdr)
+			|| (hintedKind == CustomTextureSourceKind::Ktx2Etc1s && codec != CustomTextureCodec::Etc1s))
 		return error(TextureTranscodeError::UnsupportedSource, "explicit KTX2 suffix does not match the encoded codec");
 	if (hasUnsupportedOrientation(transcoder))
 		return error(TextureTranscodeError::UnsupportedSource, "KTXorientation must be ru for Flycast replacements");
@@ -248,8 +262,12 @@ TextureTranscodeStatus TextureTranscoder::prepare(const TextureInspection& inspe
 		return status;
 	if (inspection.codec != CustomTextureCodec::Xubc7
 			&& inspection.codec != CustomTextureCodec::XuastcLdr
+			&& inspection.codec != CustomTextureCodec::Etc1s
 			&& inspection.codec != CustomTextureCodec::DdsBc7)
 		return error(TextureTranscodeError::UnsupportedSource, "inspection does not describe a supported compressed texture source");
+	if (inspection.hasAlpha && (target == NativeTextureFormat::Bc1Unorm
+			|| target == NativeTextureFormat::Etc2Rgb8Unorm))
+		return error(TextureTranscodeError::UnsupportedTarget, "opaque target cannot preserve source alpha");
 	const auto basisFormat = basisTarget(target);
 	if (basisFormat == basist::transcoder_texture_format::cTFTotalTextureFormats)
 		return error(TextureTranscodeError::UnsupportedTarget, "invalid native target format");
@@ -285,11 +303,12 @@ TextureTranscodeStatus TextureTranscoder::prepare(const TextureInspection& inspe
 				|| transcoder.is_srgb() != inspection.sourceSrgb
 				|| (transcoder.get_has_alpha() != 0) != inspection.hasAlpha)
 			return error(TextureTranscodeError::MalformedSource, "DDS no longer matches its inspection result");
+		if (!transcoder.is_transcode_format_supported(basisFormat))
+			return error(TextureTranscodeError::UnsupportedTarget, "DDS target is not supported by Basis");
 		if (TextureTranscodeStatus status = allocatePayload(inspection, target, *output); !status)
 			return status;
-		if (!transcoder.is_transcode_format_supported(basisFormat)
-				|| !transcoder.start_transcoding())
-			return error(TextureTranscodeError::UnsupportedTarget, "DDS target is not supported by Basis");
+		if (!transcoder.start_transcoding())
+			return error(TextureTranscodeError::UpstreamFailure, "Basis failed to start DDS transcoding");
 		for (uint32_t levelIndex = 0; levelIndex < inspection.levels; ++levelIndex)
 		{
 			if (cancelled && cancelled())
@@ -307,7 +326,8 @@ TextureTranscodeStatus TextureTranscoder::prepare(const TextureInspection& inspe
 		if (!transcoder.init(fileBytes.data(), static_cast<uint32_t>(fileBytes.size())))
 			return error(TextureTranscodeError::MalformedSource, "Basis rejected the KTX2 container during preparation");
 		const bool codecMatches = (inspection.codec == CustomTextureCodec::Xubc7 && transcoder.is_xubc7())
-				|| (inspection.codec == CustomTextureCodec::XuastcLdr && transcoder.is_xuastc_ldr());
+				|| (inspection.codec == CustomTextureCodec::XuastcLdr && transcoder.is_xuastc_ldr())
+				|| (inspection.codec == CustomTextureCodec::Etc1s && transcoder.is_etc1s());
 		if (!codecMatches || transcoder.get_width() != inspection.width
 				|| transcoder.get_height() != inspection.height
 				|| transcoder.get_levels() != inspection.levels
@@ -316,11 +336,12 @@ TextureTranscodeStatus TextureTranscoder::prepare(const TextureInspection& inspe
 				|| transcoder.is_srgb() != inspection.sourceSrgb
 				|| (transcoder.get_has_alpha() != 0) != inspection.hasAlpha)
 			return error(TextureTranscodeError::MalformedSource, "KTX2 no longer matches its inspection result");
+		if (!basist::basis_is_format_supported(basisFormat, transcoder.get_basis_tex_format()))
+			return error(TextureTranscodeError::UnsupportedTarget, "KTX2 target is not supported by Basis");
 		if (TextureTranscodeStatus status = allocatePayload(inspection, target, *output); !status)
 			return status;
-		if (!basist::basis_is_format_supported(basisFormat, transcoder.get_basis_tex_format())
-				|| !transcoder.start_transcoding())
-			return error(TextureTranscodeError::UnsupportedTarget, "KTX2 target is not supported by Basis");
+		if (!transcoder.start_transcoding())
+			return error(TextureTranscodeError::UpstreamFailure, "Basis failed to start KTX2 transcoding");
 		basist::ktx2_transcoder_state state;
 		state.clear();
 		for (uint32_t levelIndex = 0; levelIndex < inspection.levels; ++levelIndex)
