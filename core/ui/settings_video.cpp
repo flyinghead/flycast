@@ -225,12 +225,37 @@ void gui_settings_video()
 		{
 			DisabledScope scope(game_started);
 			OptionCheckbox(T("Load Custom Textures"), config::CustomTextures,
-					T("Load custom/high-res textures from data/textures/<game id>"));
+					T("Load custom/high-res textures from data/textures/<game id>. Supports PNG, JPEG, DDS/BC7, KTX2/XUASTC, and KTX2/XUBC7."));
 			ImGui::Indent();
 			{
-				DisabledScope scope(!config::CustomTextures.get());
-				OptionCheckbox(T("Preload Custom Textures"), config::PreloadCustomTextures,
-						T("Preload custom textures at game start. May improve performance but increases memory usage"));
+				DisabledScope customTexturesScope(!config::CustomTextures.get());
+				const int configuredMode = static_cast<int>(config::customTexturePreloadMode());
+				int selectedMode = configuredMode;
+				{
+					DisabledScope readOnlyScope(config::PreloadCustomTextures.isReadOnly());
+					ImGui::TextUnformatted(T("Custom Texture Preloading"));
+					ImGui::Columns(3, "custom_texture_preload_modes", false);
+					ImGui::RadioButton(T("Off"), &selectedMode,
+							static_cast<int>(config::CustomTexturePreloadMode::Off));
+					ImGui::SameLine();
+					ShowHelpMarker(T("Load custom textures as needed."));
+					ImGui::NextColumn();
+					ImGui::RadioButton(T("System Memory"), &selectedMode,
+							static_cast<int>(config::CustomTexturePreloadMode::SystemMemory));
+					ImGui::SameLine();
+					ShowHelpMarker(T("Preload custom textures at game start to reduce texture popping. Uses more system memory."));
+					ImGui::NextColumn();
+					{
+						DisabledScope videoMemoryScope(true);
+						ImGui::RadioButton(T("Video Memory"), &selectedMode,
+								static_cast<int>(config::CustomTexturePreloadMode::VideoMemory));
+					}
+					ImGui::SameLine();
+					ShowHelpMarker(T("Preload custom textures directly into video memory at game start. Not available yet."));
+					ImGui::Columns(1, nullptr, false);
+				}
+				if (selectedMode != configuredMode)
+					config::PreloadCustomTextures = selectedMode;
 			}
 			ImGui::Unindent();
 		}
