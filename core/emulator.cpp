@@ -869,7 +869,9 @@ void loadGameSpecificSettings()
 
 	// Reload per-game settings
 	config::Settings::instance().load(true);
+#ifndef LIBRETRO
 	custom_texture.init();
+#endif
 
 	if (config::GGPOEnable || settings.raHardcoreMode)
 		config::Sh4Clock.override(200);

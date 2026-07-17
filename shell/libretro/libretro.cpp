@@ -1210,6 +1210,7 @@ void retro_run()
 	if (devices_need_refresh)
 		refresh_devices(false);
 
+	custom_texture.init();
 	if (custom_texture.isPreloading())
 	{
 #if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES)
@@ -1332,7 +1333,7 @@ void retro_reset()
 	blankVmus();
 	retro_audio_flush_buffer();
 
-	emu.start();
+	first_run = true;
 }
 
 #if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
@@ -3643,6 +3644,7 @@ static bool retro_set_eject_state(bool ejected)
 	{
 		try {
 			emu.insertGdrom(disk_paths[disk_index]);
+			custom_texture.init();
 			return true;
 		} catch (const FlycastException& e) {
 			ERROR_LOG(GDROM, "%s", e.what());
@@ -3676,6 +3678,7 @@ static bool retro_set_image_index(unsigned index)
 			return true;
 
 		emu.insertGdrom(disk_paths[index]);
+		custom_texture.init();
 		return true;
 	} catch (const FlycastException& e) {
 		ERROR_LOG(GDROM, "%s", e.what());
