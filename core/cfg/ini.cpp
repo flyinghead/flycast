@@ -20,7 +20,6 @@
 #include "types.h"
 #include "stdclass.h"
 
-#include <algorithm>
 #include <cctype>
 
 namespace config {
@@ -98,14 +97,7 @@ int IniFile::getInt(const std::string& section, const std::string& entry, int de
 		return static_cast<int>(value);
 	// Compatibility for options migrated from Option<bool> to Option<int>.
 	std::string token = *pValue;
-	const auto first = token.find_first_not_of(" \t\r\n");
-	const auto last = token.find_last_not_of(" \t\r\n");
-	if (first == std::string::npos)
-		return defaultValue;
-	token = token.substr(first, last - first + 1);
-	std::transform(token.begin(), token.end(), token.begin(), [](unsigned char c) {
-		return static_cast<char>(std::tolower(c));
-	});
+	string_tolower(token);
 	if (token == "yes" || token == "true" || token == "on")
 		return 1;
 	if (token == "no" || token == "false" || token == "off")

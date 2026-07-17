@@ -18,10 +18,10 @@
  */
 #include "CustomTextureTypes.h"
 #include "build.h"
+#include "stdclass.h"
 
 #include <algorithm>
 #include <charconv>
-#include <cctype>
 #include <limits>
 
 namespace
@@ -42,21 +42,6 @@ bool checkedMultiply(uint64_t a, uint64_t b, uint64_t& result)
 		return false;
 	result = a * b;
 	return true;
-}
-
-std::string lowerAscii(std::string value)
-{
-	std::transform(value.begin(), value.end(), value.begin(), [](unsigned char c) {
-		return static_cast<char>(std::tolower(c));
-	});
-	return value;
-}
-
-bool endsWith(const std::string& value, const char *suffix)
-{
-	const size_t suffixLength = std::char_traits<char>::length(suffix);
-	return value.size() >= suffixLength
-			&& value.compare(value.size() - suffixLength, suffixLength, suffix) == 0;
 }
 
 std::optional<NativeTextureFormat> astcFormat(uint32_t width, uint32_t height)
@@ -105,53 +90,32 @@ bool preferEtcTargets(const CustomTextureCapabilities& capabilities)
 
 std::optional<ParsedCustomTextureFilename> parseCustomTextureFilename(const std::string& filename)
 {
-	const std::string lower = lowerAscii(filename);
+	const std::string extension = get_file_extension(filename);
+	std::string hashText = get_file_basename(filename);
 	CustomTextureSourceKind kind;
-	size_t suffixLength = 0;
-	if (endsWith(lower, ".xubc7.ktx2"))
+	if (extension == "ktx2")
 	{
-		kind = CustomTextureSourceKind::Ktx2Xubc7;
-		suffixLength = sizeof(".xubc7.ktx2") - 1;
+		const std::string encoding = get_file_extension(hashText);
+		if (encoding == "xubc7")
+			kind = CustomTextureSourceKind::Ktx2Xubc7;
+		else if (encoding == "xuastc")
+			kind = CustomTextureSourceKind::Ktx2Xuastc;
+		else if (encoding == "etc1s")
+			kind = CustomTextureSourceKind::Ktx2Etc1s;
+		else
+			kind = CustomTextureSourceKind::Ktx2Generic;
+		if (kind != CustomTextureSourceKind::Ktx2Generic)
+			hashText = get_file_basename(hashText);
 	}
-	else if (endsWith(lower, ".xuastc.ktx2"))
-	{
-		kind = CustomTextureSourceKind::Ktx2Xuastc;
-		suffixLength = sizeof(".xuastc.ktx2") - 1;
-	}
-	else if (endsWith(lower, ".etc1s.ktx2"))
-	{
-		kind = CustomTextureSourceKind::Ktx2Etc1s;
-		suffixLength = sizeof(".etc1s.ktx2") - 1;
-	}
-	else if (endsWith(lower, ".ktx2"))
-	{
-		kind = CustomTextureSourceKind::Ktx2Generic;
-		suffixLength = sizeof(".ktx2") - 1;
-	}
-	else if (endsWith(lower, ".dds"))
-	{
+	else if (extension == "dds")
 		kind = CustomTextureSourceKind::DdsBc7;
-		suffixLength = sizeof(".dds") - 1;
-	}
-	else if (endsWith(lower, ".png"))
-	{
+	else if (extension == "png")
 		kind = CustomTextureSourceKind::Png;
-		suffixLength = sizeof(".png") - 1;
-	}
-	else if (endsWith(lower, ".jpeg"))
-	{
+	else if (extension == "jpeg" || extension == "jpg")
 		kind = CustomTextureSourceKind::Jpeg;
-		suffixLength = sizeof(".jpeg") - 1;
-	}
-	else if (endsWith(lower, ".jpg"))
-	{
-		kind = CustomTextureSourceKind::Jpeg;
-		suffixLength = sizeof(".jpg") - 1;
-	}
 	else
 		return std::nullopt;
 
-	const std::string hashText = filename.substr(0, filename.size() - suffixLength);
 	if (hashText.empty() || hashText.size() > 8)
 		return std::nullopt;
 	uint32_t hash = 0;
