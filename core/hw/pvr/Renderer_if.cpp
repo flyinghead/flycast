@@ -1,5 +1,6 @@
 #include "Renderer_if.h"
 #include "spg.h"
+#include "rend/CustomTexture.h"
 #include "rend/texconv.h"
 #include "rend/transform_matrix.h"
 #include "cfg/option.h"
@@ -200,6 +201,7 @@ private:
 		TA_context *taContext = DequeueRender();
 		if (taContext == nullptr)
 			return;
+		renderer->processGpuCleanupOperations();
 
 		int width, height;
 		getScaledFramebufferSize(taContext->rend, width, height);
@@ -251,6 +253,7 @@ private:
 	void renderFramebuffer(const FramebufferInfo& config)
 	{
 		FC_PROFILE_SCOPE;
+		renderer->processGpuCleanupOperations();
 
 #ifdef LIBRETRO
 		int w, h;
@@ -264,9 +267,6 @@ private:
 	{
 		FC_PROFILE_SCOPE;
 
-#ifdef LIBRETRO
-		renderer->ProcessCustomTexturePreloads();
-#endif
 		if (renderer->Present())
 		{
 			presented = true;
@@ -478,6 +478,7 @@ void rend_term_renderer()
 
 	if (renderer != nullptr)
 	{
+		custom_texture.invalidateGpuPreloads();
 		renderer->Term();
 		delete renderer;
 		renderer = nullptr;
@@ -487,18 +488,15 @@ void rend_term_renderer()
 void rend_process_custom_texture_preloads()
 {
 	if (renderer != nullptr)
+	{
+		renderer->processGpuCleanupOperations();
 		renderer->processCustomTexturePreloads();
+	}
 }
 
 bool rend_supports_gpu_texture_preload()
 {
 	return renderer != nullptr && renderer->supportsGpuTexturePreload();
-}
-
-void rend_request_gpu_preloaded_texture_cleanup()
-{
-	if (renderer != nullptr)
-		renderer->requestGpuPreloadedTextureCleanup();
 }
 
 std::shared_ptr<GpuPreloadedTexture> Renderer::findGpuPreloadedTexture(
@@ -527,13 +525,12 @@ void Renderer::addGpuPreloadedTexture(u32 hash, std::shared_ptr<GpuPreloadedText
 void Renderer::clearGpuPreloadedTextures()
 {
 	gpuPreloadedTextures.clear();
-	gpuPreloadedTextureCleanupRequested = false;
 }
 
-void Renderer::clearGpuPreloadedTexturesIfRequested()
+void Renderer::processGpuCleanupOperations()
 {
-	if (gpuPreloadedTextureCleanupRequested.exchange(false))
-		gpuPreloadedTextures.clear();
+	if (custom_texture.consumeGpuCleanupOperations())
+		clearGpuPreloadedTextures();
 }
 
 void rend_reset()

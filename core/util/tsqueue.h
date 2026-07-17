@@ -46,6 +46,16 @@ public:
 		queue.pop();
 		return t;
 	}
+	bool tryPop(T& t)
+	{
+		std::lock_guard<std::mutex> _(mutex);
+		if (queue.empty())
+			return false;
+		t = std::move(queue.front());
+		queue.pop();
+		return true;
+	}
+	// TODO Add a timed wait overload if needed.
 
 	size_t size() const {
 		std::lock_guard<std::mutex> _(mutex);
@@ -62,8 +72,6 @@ public:
 		std::lock_guard<std::mutex> _(mutex);
 		std::swap(queue, empty);
 	}
-	// TODO bool tryPop(T& t, std::chrono::duration timeout) ?
-
 private:
 	std::queue<T> queue;
 	mutable std::mutex mutex;

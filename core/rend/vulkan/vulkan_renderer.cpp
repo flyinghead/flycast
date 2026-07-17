@@ -59,7 +59,6 @@ void BaseVulkanRenderer::Term()
 
 void BaseVulkanRenderer::processCustomTexturePreloads()
 {
-	clearGpuPreloadedTexturesIfRequested();
 	custom_texture.processGpuPreloads([this](u32 hash,
 			const PreparedCustomTexture& texture) {
 		GpuPreloadedTexture::Ptr gpuTexture;

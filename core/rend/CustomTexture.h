@@ -19,6 +19,7 @@
 #pragma once
 #include "texconv.h"
 #include "custom_texture/CustomTextureTypes.h"
+#include "util/tsqueue.h"
 #include "types.h"
 #include <string>
 #include <memory>
@@ -32,7 +33,12 @@
 #include <unordered_map>
 
 class BaseTextureCacheData;
+struct Renderer;
 class WorkerThread;
+namespace config
+{
+enum class CustomTexturePreloadMode : int;
+}
 
 class CustomTextureException final : public FlycastException
 {
@@ -92,18 +98,20 @@ public:
 	using GpuTextureUploader = std::function<bool(u32 hash, const PreparedCustomTexture& texture)>;
 
 	~CustomTexture();
-	bool init();
+	void init();
 	bool enabled() const;
-	bool preloaded() const;
 	bool isPreloading() const;
+	bool needsRefresh() const;
 	void addSource(std::unique_ptr<BaseCustomTextureSource> source);
 	void loadCustomTextureAsync(BaseTextureCacheData *textureData);
 	bool isRequestComplete(CustomTextureRequestId requestId) const;
 	PreparedCustomTexture::Ptr takePreparedTexture(CustomTextureRequestId requestId, bool& failed);
 	void cancelRequest(CustomTextureRequestId requestId);
 	void setCapabilities(const CustomTextureCapabilities& capabilities);
+	void invalidateGpuPreloads();
 	CustomTextureCapabilities getCapabilities() const;
 	void dumpTexture(BaseTextureCacheData* texture, int w, int h, void *srcBuffer);
+	void refresh();
 	void terminate();
 	void getPreloadProgress(int& completed, int& total, size_t& loadedSize) const;
 	void processGpuPreloads(const GpuTextureUploader& uploader);
@@ -111,6 +119,15 @@ public:
 	void showErrorNotification();
 
 private:
+	friend struct Renderer;
+	struct GpuCleanupOperation {};
+	enum class State
+	{
+		Stopped,
+		Active,
+		RefreshPending,
+	};
+
 	struct Request
 	{
 		PreparedCustomTexture::Ptr texture;
@@ -124,12 +141,18 @@ private:
 	PreparedCustomTexture::Ptr findPreloaded(u32 currentHash, u32 oldVqHash, u32 oldHash) const;
 	bool isTextureReplaced(BaseTextureCacheData* texture) const;
 	std::string getGameId() const;
+	void startSession(const std::string& gameId);
+	void clearSessionResources();
 	void prepareSource(BaseCustomTextureSource* source, bool shouldPreload);
 	void submitGpuPreload(u32 hash, PreparedCustomTexture::Ptr texture);
+	bool consumeGpuCleanupOperations();
 	void resetPreloadProgress();
 	bool requestCancelled(CustomTextureRequestId requestId) const;
 
-	bool initialized = false;
+	State state = State::Stopped;
+	std::string sessionGameId;
+	bool sessionCustomTextures = false;
+	config::CustomTexturePreloadMode sessionPreloadMode {};
 	std::vector<std::unique_ptr<BaseCustomTextureSource>> sources;
 	std::unique_ptr<WorkerThread> loaderThread;
 	mutable std::mutex stateMutex;
@@ -144,6 +167,7 @@ private:
 	std::atomic<size_t> preloadLoadedSize { 0 };
 	std::atomic<int> pendingPreloads { 0 };
 	std::atomic<bool> stopPreload { false };
+	TsQueue<GpuCleanupOperation> gpuCleanupOperations;
 	std::optional<CustomTextureException::Error> pendingError;
 	bool errorNotificationShown = false;
 };

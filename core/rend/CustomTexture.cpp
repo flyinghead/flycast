@@ -405,32 +405,24 @@ std::string CustomTexture::getGameId() const
    return gameId;
 }
 
-bool CustomTexture::init()
+void CustomTexture::init()
 {
-	if (!initialized)
-	{
-		stopPreload = false;
-		resetPreloadProgress();
-		pendingPreloads = 0;
-		initialized = true;
-		std::string gameId = getGameId();
-		if (gameId.length() > 0)
-		{
-			// The first source added has highest priority.
-			// Add your source after the default `CustomTextureSource`(data/textures/<game id> folder), so end-users can override your textures.
-			addSource(std::make_unique<CustomTextureSource>(gameId));
-		}
-	}
+	if (needsRefresh())
+		return;
 
-	return loaderThread != nullptr;
+	const std::string gameId = getGameId();
+	if (state == State::Active)
+	{
+		// An empty ID during disc eject does not end the current game session.
+		if (gameId.empty() || gameId == sessionGameId)
+			return;
+		clearSessionResources();
+	}
+	startSession(gameId);
 }
 
 bool CustomTexture::enabled() const {
 	return loaderThread != nullptr;
-}
-
-bool CustomTexture::preloaded() const {
-	return preloadTotal > 0;
 }
 
 bool CustomTexture::isPreloading() const {
@@ -445,12 +437,19 @@ bool CustomTexture::isPreloading() const {
 	return (texTotal > 0 && texLoaded < texTotal);
 }
 
+bool CustomTexture::needsRefresh() const {
+	return state == State::RefreshPending
+			|| (state == State::Active
+					&& (sessionCustomTextures != config::CustomTextures.get()
+							|| sessionPreloadMode != config::customTexturePreloadMode()));
+}
+
 void CustomTexture::addSource(std::unique_ptr<BaseCustomTextureSource> source)
 {
 	BaseCustomTextureSource* ptr = source.get();
 	sources.emplace_back(std::move(source));
 	
-	if (initialized)
+	if (state == State::Active)
 	{
 		if (!loaderThread && ptr->shouldReplace())
 		{
@@ -482,10 +481,49 @@ CustomTexture::~CustomTexture() {
 	terminate();
 }
 
+void CustomTexture::refresh()
+{
+	if (state == State::Stopped)
+		return;
+	if (state == State::Active)
+		clearSessionResources();
+
+	std::string gameId = getGameId();
+	if (gameId.empty())
+		gameId = sessionGameId;
+	startSession(gameId);
+}
+
 void CustomTexture::terminate()
 {
+	if (state == State::Active)
+		clearSessionResources();
+	state = State::Stopped;
+	sessionGameId.clear();
+	sessionCustomTextures = false;
+	sessionPreloadMode = {};
+}
+
+void CustomTexture::startSession(const std::string& gameId)
+{
+	stopPreload = false;
+	resetPreloadProgress();
+	pendingPreloads = 0;
+	state = State::Active;
+	sessionGameId = gameId;
+	sessionCustomTextures = config::CustomTextures.get();
+	sessionPreloadMode = config::customTexturePreloadMode();
+	if (!gameId.empty())
+	{
+		// The first source added has highest priority.
+		// Add your source after the default `CustomTextureSource`(data/textures/<game id> folder), so end-users can override your textures.
+		addSource(std::make_unique<CustomTextureSource>(gameId));
+	}
+}
+
+void CustomTexture::clearSessionResources()
+{
 	stopPreload = true;
-	rend_request_gpu_preloaded_texture_cleanup();
 	gpuPreloadCondition.notify_all();
 	if (loaderThread)
 		loaderThread->stop();
@@ -502,7 +540,7 @@ void CustomTexture::terminate()
 		errorNotificationShown = false;
 	}
 	resetPreloadProgress();
-	initialized = false;
+	gpuCleanupOperations.push(GpuCleanupOperation {});
 }
 
 PreparedCustomTexture::Ptr CustomTexture::findPreloaded(u32 currentHash, u32 oldVqHash,
@@ -546,7 +584,7 @@ bool CustomTexture::requestCancelled(CustomTextureRequestId requestId) const
 
 void CustomTexture::loadCustomTextureAsync(BaseTextureCacheData *textureData)
 {
-	if (!init())
+	if (state != State::Active || !loaderThread)
 		return;
 	showErrorNotification();
 	if (textureData->customRequestId)
@@ -673,15 +711,25 @@ void CustomTexture::setCapabilities(const CustomTextureCapabilities& newCapabili
 			return;
 	}
 
-	const bool restart = initialized;
-	if (restart)
-		terminate();
+	if (state == State::Active && enabled())
+	{
+		clearSessionResources();
+		state = State::RefreshPending;
+	}
 	{
 		std::lock_guard<std::mutex> lock(stateMutex);
 		capabilities = normalized;
 	}
-	if (restart)
-		init();
+}
+
+void CustomTexture::invalidateGpuPreloads()
+{
+	if (state == State::Active && enabled()
+			&& config::customTexturePreloadMode() == config::CustomTexturePreloadMode::VideoMemory)
+	{
+		clearSessionResources();
+		state = State::RefreshPending;
+	}
 }
 
 CustomTextureCapabilities CustomTexture::getCapabilities() const
@@ -954,6 +1002,15 @@ void CustomTexture::processGpuPreloads(const GpuTextureUploader& uploader)
 			reportError(CustomTextureException::Error::Upload);
 		preloadLoaded++;
 	}
+}
+
+bool CustomTexture::consumeGpuCleanupOperations()
+{
+	GpuCleanupOperation operation;
+	bool cleanupRequested = false;
+	while (gpuCleanupOperations.tryPop(operation))
+		cleanupRequested = true;
+	return cleanupRequested;
 }
 
 void CustomTexture::getPreloadProgress(int& completed, int& total, size_t& loadedSize) const

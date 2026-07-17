@@ -1210,8 +1210,12 @@ void retro_run()
 	if (devices_need_refresh)
 		refresh_devices(false);
 
-	custom_texture.init();
-	if (custom_texture.isPreloading())
+	if (custom_texture.needsRefresh())
+		custom_texture.refresh();
+	else
+		custom_texture.init();
+	const bool customTexturePreloading = custom_texture.isPreloading();
+	if (customTexturePreloading)
 	{
 #if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES)
 		if (isOpenGL(config::RendererType))
@@ -1222,7 +1226,10 @@ void retro_run()
 		if (isOpenGL(config::RendererType))
 			glsm_ctl(GLSM_CTL_STATE_UNBIND, nullptr);
 #endif
+	}
 
+	if (custom_texture.isPreloading())
+	{
 		int texLoaded, texTotal;
 		size_t loaded_size;
 		custom_texture.getPreloadProgress(texLoaded, texTotal, loaded_size);
@@ -3644,7 +3651,6 @@ static bool retro_set_eject_state(bool ejected)
 	{
 		try {
 			emu.insertGdrom(disk_paths[disk_index]);
-			custom_texture.init();
 			return true;
 		} catch (const FlycastException& e) {
 			ERROR_LOG(GDROM, "%s", e.what());
@@ -3678,7 +3684,6 @@ static bool retro_set_image_index(unsigned index)
 			return true;
 
 		emu.insertGdrom(disk_paths[index]);
-		custom_texture.init();
 		return true;
 	} catch (const FlycastException& e) {
 		ERROR_LOG(GDROM, "%s", e.what());

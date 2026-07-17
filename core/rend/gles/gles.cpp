@@ -1432,7 +1432,6 @@ void OpenGLRenderer::Term()
 
 void OpenGLRenderer::processCustomTexturePreloads()
 {
-	clearGpuPreloadedTexturesIfRequested();
 	custom_texture.processGpuPreloads([this](u32 hash,
 			const PreparedCustomTexture& texture) {
 		GpuPreloadedTexture::Ptr gpuTexture = TextureCacheData::createGpuPreloadedTexture(texture);

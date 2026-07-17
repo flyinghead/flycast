@@ -200,7 +200,6 @@ void DX11Renderer::Term()
 
 void DX11Renderer::processCustomTexturePreloads()
 {
-	clearGpuPreloadedTexturesIfRequested();
 	custom_texture.processGpuPreloads([this](u32 hash,
 			const PreparedCustomTexture& texture) {
 		GpuPreloadedTexture::Ptr gpuTexture = DX11Texture::createGpuPreloadedTexture(texture);
