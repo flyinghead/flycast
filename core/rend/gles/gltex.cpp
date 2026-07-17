@@ -252,28 +252,6 @@ GLenum customGlFormat(NativeTextureFormat format)
 	}
 }
 
-bool hasGlExtension(const char *wanted)
-{
-#if !defined(GLES2)
-	if (!gl.is_gles && gl.gl_major >= 3)
-	{
-		GLint count = 0;
-		glGetIntegerv(GL_NUM_EXTENSIONS, &count);
-		for (GLint i = 0; i < count; ++i)
-		{
-			const char *extension = reinterpret_cast<const char *>(glGetStringi(GL_EXTENSIONS, i));
-			if (extension != nullptr && !strcmp(extension, wanted))
-				return true;
-		}
-		return false;
-	}
-#endif
-	const char *extensions = reinterpret_cast<const char *>(glGetString(GL_EXTENSIONS));
-	if (extensions == nullptr)
-		return false;
-	const std::string allExtensions = std::string(" ") + extensions + " ";
-	return allExtensions.find(std::string(" ") + wanted + " ") != std::string::npos;
-}
 }
 
 bool TextureCacheData::UploadCustomTexture(const PreparedCustomTexture& customTexture, bool mipmapped)
@@ -307,17 +285,34 @@ bool TextureCacheData::UploadCustomTexture(const PreparedCustomTexture& customTe
 				static_cast<GLint>(mipmapLevels - 1));
 	}
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+	const bool immutableStorage = allocateImmutableTextureStorage(
+			static_cast<GLsizei>(customTexture.levels.size()),
+			geometry.compressed ? compressedFormat : GL_RGBA8,
+			customTexture.width, customTexture.height);
 	for (size_t levelIndex = 0; levelIndex < customTexture.levels.size(); ++levelIndex)
 	{
 		const PreparedMipLevel& level = customTexture.levels[levelIndex];
 		const void *data = customTexture.bytes.data() + level.byteOffset;
 		if (geometry.compressed)
-			glCompressedTexImage2D(GL_TEXTURE_2D, static_cast<GLint>(levelIndex), compressedFormat,
-					level.width, level.height, 0, static_cast<GLsizei>(level.byteSize), data);
+		{
+			if (immutableStorage)
+				uploadCompressedTextureSubImage2D(static_cast<GLint>(levelIndex),
+						level.width, level.height, compressedFormat,
+						static_cast<GLsizei>(level.byteSize), data);
+			else
+				glCompressedTexImage2D(GL_TEXTURE_2D, static_cast<GLint>(levelIndex), compressedFormat,
+						level.width, level.height, 0, static_cast<GLsizei>(level.byteSize), data);
+		}
 		else
-			glTexImage2D(GL_TEXTURE_2D, static_cast<GLint>(levelIndex),
-					gl.is_gles && gl.gl_major < 3 ? GL_RGBA : GL_RGBA8,
-					level.width, level.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+		{
+			if (immutableStorage)
+				glTexSubImage2D(GL_TEXTURE_2D, static_cast<GLint>(levelIndex), 0, 0,
+						level.width, level.height, GL_RGBA, GL_UNSIGNED_BYTE, data);
+			else
+				glTexImage2D(GL_TEXTURE_2D, static_cast<GLint>(levelIndex),
+						gl.is_gles && gl.gl_major < 3 ? GL_RGBA : GL_RGBA8,
+						level.width, level.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+		}
 		if (glGetError() != GL_NO_ERROR)
 		{
 			glcache.DeleteTextures(1, &newTexture);
@@ -345,6 +340,8 @@ bool TextureCacheData::UploadCustomTexture(const PreparedCustomTexture& customTe
 GpuPreloadedTexturePtr TextureCacheData::CreateGpuPreloadedTexture(
 		const PreparedCustomTexture& customTexture)
 {
+	if (!gl.textureStorageSupported)
+		return nullptr;
 	auto texture = std::make_shared<OpenGLGpuPreloadedTexture>(
 			static_cast<u8>(customTexture.generateMipmaps
 					? mipmapLevelCount(customTexture.width, customTexture.height)

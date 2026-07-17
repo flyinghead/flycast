@@ -19,6 +19,7 @@
 
 #include <cmath>
 #include <memory>
+#include <string>
 
 #ifdef GLES
 #ifndef GL_RED
@@ -31,6 +32,115 @@
 #define GL_MINOR_VERSION                  0x821C
 #endif
 #endif
+
+namespace
+{
+#if defined(_WIN32)
+using TextureStorage2DProc = void (__stdcall *)(GLenum, GLsizei, GLenum, GLsizei, GLsizei);
+using CompressedTextureSubImage2DProc = void (__stdcall *)(GLenum, GLint, GLint, GLint,
+		GLsizei, GLsizei, GLenum, GLsizei, const void *);
+#else
+using TextureStorage2DProc = void (*)(GLenum, GLsizei, GLenum, GLsizei, GLsizei);
+using CompressedTextureSubImage2DProc = void (*)(GLenum, GLint, GLint, GLint,
+		GLsizei, GLsizei, GLenum, GLsizei, const void *);
+#endif
+
+#if !defined(TARGET_IPHONE)
+TextureStorage2DProc textureStorage2DProc = nullptr;
+CompressedTextureSubImage2DProc compressedTextureSubImage2DProc = nullptr;
+#endif
+}
+
+bool hasGlExtension(const char *wanted)
+{
+#if !defined(GLES2)
+	if (!gl.is_gles && gl.gl_major >= 3)
+	{
+		GLint count = 0;
+		glGetIntegerv(GL_NUM_EXTENSIONS, &count);
+		for (GLint i = 0; i < count; ++i)
+		{
+			const char *extension = reinterpret_cast<const char *>(glGetStringi(GL_EXTENSIONS, i));
+			if (extension != nullptr && !strcmp(extension, wanted))
+				return true;
+		}
+		return false;
+	}
+#endif
+	const char *extensions = reinterpret_cast<const char *>(glGetString(GL_EXTENSIONS));
+	if (extensions == nullptr)
+		return false;
+	const std::string allExtensions = std::string(" ") + extensions + " ";
+	return allExtensions.find(std::string(" ") + wanted + " ") != std::string::npos;
+}
+
+namespace
+{
+void findTextureStorageSupport()
+{
+	gl.textureStorageSupported = false;
+#if !defined(TARGET_IPHONE)
+	textureStorage2DProc = nullptr;
+	compressedTextureSubImage2DProc = nullptr;
+#endif
+	const bool core = gl.is_gles
+			? gl.gl_major >= 3
+			: gl.gl_major > 4 || (gl.gl_major == 4 && gl.gl_minor >= 2);
+	const bool arb = !gl.is_gles && hasGlExtension("GL_ARB_texture_storage");
+	const bool ext = hasGlExtension("GL_EXT_texture_storage");
+	if (!core && !arb && !ext)
+		return;
+
+#if defined(TARGET_IPHONE)
+	gl.textureStorageSupported = core;
+#else
+	const char *procName = core || arb ? "glTexStorage2D" : "glTexStorage2DEXT";
+#if defined(LIBRETRO)
+	glsm_ctx_proc_address_t procAddress{};
+	if (glsm_ctl(GLSM_CTL_PROC_ADDRESS_GET, &procAddress) && procAddress.addr != nullptr)
+	{
+		textureStorage2DProc = reinterpret_cast<TextureStorage2DProc>(procAddress.addr(procName));
+		compressedTextureSubImage2DProc = reinterpret_cast<CompressedTextureSubImage2DProc>(
+				procAddress.addr("glCompressedTexSubImage2D"));
+	}
+#else
+	if (core || arb)
+		textureStorage2DProc = reinterpret_cast<TextureStorage2DProc>(glTexStorage2D);
+	else
+		textureStorage2DProc = reinterpret_cast<TextureStorage2DProc>(glTexStorage2DEXT);
+	compressedTextureSubImage2DProc = reinterpret_cast<CompressedTextureSubImage2DProc>(
+			glCompressedTexSubImage2D);
+#endif
+	gl.textureStorageSupported = textureStorage2DProc != nullptr
+			&& compressedTextureSubImage2DProc != nullptr;
+#endif
+}
+}
+
+bool allocateImmutableTextureStorage(GLsizei levels, GLenum internalFormat,
+		GLsizei width, GLsizei height)
+{
+	if (!gl.textureStorageSupported)
+		return false;
+#if defined(TARGET_IPHONE)
+	glTexStorage2D(GL_TEXTURE_2D, levels, internalFormat, width, height);
+#else
+	textureStorage2DProc(GL_TEXTURE_2D, levels, internalFormat, width, height);
+#endif
+	return true;
+}
+
+void uploadCompressedTextureSubImage2D(GLint level, GLsizei width, GLsizei height,
+		GLenum format, GLsizei imageSize, const void *data)
+{
+#if defined(TARGET_IPHONE)
+	glCompressedTexSubImage2D(GL_TEXTURE_2D, level, 0, 0, width, height,
+			format, imageSize, data);
+#else
+	compressedTextureSubImage2DProc(GL_TEXTURE_2D, level, 0, 0, width, height,
+			format, imageSize, data);
+#endif
+}
 
 //Fragment and vertex shaders code
 
@@ -570,6 +680,7 @@ void findGLVersion()
     	gl.highp_float_supported = true;
     	gl.border_clamp_supported = true;
 	}
+	findTextureStorageSupport();
 	gl.max_anisotropy = 1.f;
 #if !defined(GLES2)
 	if (gl.gl_major >= 3)

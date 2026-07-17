@@ -305,6 +305,7 @@ struct gl_ctx
 	bool GL_OES_packed_depth_stencil_supported;
 	bool GL_OES_depth24_supported;
 	bool highp_float_supported;
+	bool textureStorageSupported;
 	float max_anisotropy;
 	bool mesa_nouveau;
 	bool mali;
@@ -375,6 +376,11 @@ enum ModifierVolumeMode { Xor, Or, Inclusion, Exclusion, ModeCount };
 
 void termGLCommon();
 void findGLVersion();
+bool hasGlExtension(const char *wanted);
+bool allocateImmutableTextureStorage(GLsizei levels, GLenum internalFormat,
+		GLsizei width, GLsizei height);
+void uploadCompressedTextureSubImage2D(GLint level, GLsizei width, GLsizei height,
+		GLenum format, GLsizei imageSize, const void *data);
 
 void SetCull(u32 CullMode);
 void SetMVS_Mode(ModifierVolumeMode mv_mode, ISP_Modvol ispc);
@@ -520,7 +526,7 @@ struct OpenGLRenderer : Renderer
 	}
 	bool GetLastFrame(std::vector<u8>& data, int& width, int& height) override;
 	void ProcessCustomTexturePreloads() override;
-	bool SupportsGpuTexturePreload() const override { return true; }
+	bool SupportsGpuTexturePreload() const override { return gl.textureStorageSupported; }
 
 	BaseTextureCacheData *GetTexture(TSP tsp, TCW tcw, int area) override;
 
