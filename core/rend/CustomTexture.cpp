@@ -48,6 +48,8 @@
 
 namespace
 {
+constexpr size_t MaxPendingGpuPreloads = 8;
+
 std::vector<u32> replacementHashes(u32 currentHash, u32 oldVqHash, u32 oldHash)
 {
 	std::vector<u32> hashes;
@@ -881,7 +883,7 @@ void CustomTexture::submitGpuPreload(u32 hash, PreparedCustomTexturePtr texture)
 {
 	std::unique_lock<std::mutex> lock(stateMutex);
 	gpuPreloadCondition.wait(lock, [this] {
-		return pendingGpuPreloads.empty() || stopPreload;
+		return pendingGpuPreloads.size() < MaxPendingGpuPreloads || stopPreload;
 	});
 	if (stopPreload)
 		return;
