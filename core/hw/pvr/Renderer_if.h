@@ -84,8 +84,8 @@ struct Renderer
 	virtual bool GetLastFrame(std::vector<u8>& data, int& width, int& height) { return false; }
 
 	virtual bool Present() { return true; }
-	virtual void ProcessCustomTexturePreloads() {}
-	virtual bool SupportsGpuTexturePreload() const { return false; }
+	virtual void processCustomTexturePreloads() {}
+	virtual bool supportsGpuTexturePreload() const { return false; }
 
 	virtual BaseTextureCacheData *GetTexture(TSP tsp, TCW tcw, int area = 0) { return nullptr; }
 	std::shared_ptr<GpuPreloadedTexture> findGpuPreloadedTexture(

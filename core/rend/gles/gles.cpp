@@ -1104,7 +1104,7 @@ bool OpenGLRenderer::Init()
 	updateFogTable = true;
 	TextureCacheData::SetDirectXColorOrder(false);
 	TextureCacheData::setUploadToGPUFlavor();
-	custom_texture.setCapabilities(TextureCacheData::GetCustomTextureCapabilities());
+	custom_texture.setCapabilities(TextureCacheData::getCustomTextureCapabilities());
 
 	return true;
 }
@@ -1430,12 +1430,12 @@ void OpenGLRenderer::Term()
 	gles_term();
 }
 
-void OpenGLRenderer::ProcessCustomTexturePreloads()
+void OpenGLRenderer::processCustomTexturePreloads()
 {
 	clearGpuPreloadedTexturesIfRequested();
 	custom_texture.processGpuPreloads([this](u32 hash,
 			const PreparedCustomTexture& texture) {
-		GpuPreloadedTexturePtr gpuTexture = TextureCacheData::CreateGpuPreloadedTexture(texture);
+		GpuPreloadedTexture::Ptr gpuTexture = TextureCacheData::createGpuPreloadedTexture(texture);
 		if (!gpuTexture)
 			return false;
 		addGpuPreloadedTexture(hash, std::move(gpuTexture));

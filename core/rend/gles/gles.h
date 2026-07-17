@@ -466,11 +466,11 @@ public:
 	bool customTextureObject = false;
 	std::string GetId() override { return std::to_string(texID); }
 	void UploadToGPU(int width, int height, const u8 *temp_tex_buffer, bool mipmapped, bool mipmapsIncluded = false) override;
-	bool UploadCustomTexture(const PreparedCustomTexture& texture, bool mipmapped) override;
-	bool UseGpuPreloadedTexture(const GpuPreloadedTexturePtr& texture) override;
+	bool uploadCustomTexture(const PreparedCustomTexture& texture, bool mipmapped) override;
+	bool useGpuPreloadedTexture(const GpuPreloadedTexture::Ptr& texture) override;
 	bool Delete() override;
-	static GpuPreloadedTexturePtr CreateGpuPreloadedTexture(const PreparedCustomTexture& texture);
-	static CustomTextureCapabilities GetCustomTextureCapabilities();
+	static GpuPreloadedTexture::Ptr createGpuPreloadedTexture(const PreparedCustomTexture& texture);
+	static CustomTextureCapabilities getCustomTextureCapabilities();
 
 	static void setUploadToGPUFlavor();
 
@@ -525,8 +525,8 @@ struct OpenGLRenderer : Renderer
 		return ret;
 	}
 	bool GetLastFrame(std::vector<u8>& data, int& width, int& height) override;
-	void ProcessCustomTexturePreloads() override;
-	bool SupportsGpuTexturePreload() const override { return gl.textureStorageSupported; }
+	void processCustomTexturePreloads() override;
+	bool supportsGpuTexturePreload() const override { return gl.textureStorageSupported; }
 
 	BaseTextureCacheData *GetTexture(TSP tsp, TCW tcw, int area) override;
 

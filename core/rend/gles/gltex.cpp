@@ -229,7 +229,6 @@ GLenum customGlFormat(NativeTextureFormat format)
 	switch (format)
 	{
 	case NativeTextureFormat::Bc7Unorm: return GL_COMPRESSED_RGBA_BPTC_UNORM;
-	case NativeTextureFormat::Bc7Srgb: return GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM;
 	case NativeTextureFormat::Bc1Unorm: return GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
 	case NativeTextureFormat::Bc3Unorm: return GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
 	case NativeTextureFormat::Etc2Rgb8Unorm: return GL_COMPRESSED_RGB8_ETC2;
@@ -254,7 +253,7 @@ GLenum customGlFormat(NativeTextureFormat format)
 
 }
 
-bool TextureCacheData::UploadCustomTexture(const PreparedCustomTexture& customTexture, bool mipmapped)
+bool TextureCacheData::uploadCustomTexture(const PreparedCustomTexture& customTexture, bool mipmapped)
 {
 	if (usingGpuPreloadedTexture)
 	{
@@ -263,9 +262,7 @@ bool TextureCacheData::UploadCustomTexture(const PreparedCustomTexture& customTe
 		usingGpuPreloadedTexture = false;
 		customTextureObject = false;
 	}
-	std::string validationError;
-	if (!validatePreparedCustomTexture(customTexture, validationError))
-		return false;
+	validatePreparedCustomTexture(customTexture);
 	const BlockGeometry geometry = getBlockGeometry(customTexture.nativeFormat);
 	const GLenum compressedFormat = customGlFormat(customTexture.nativeFormat);
 	if (geometry.compressed && compressedFormat == 0)
@@ -286,7 +283,7 @@ bool TextureCacheData::UploadCustomTexture(const PreparedCustomTexture& customTe
 	}
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 	const bool immutableStorage = allocateImmutableTextureStorage(
-			static_cast<GLsizei>(customTexture.levels.size()),
+			static_cast<GLsizei>(mipmapLevels),
 			geometry.compressed ? compressedFormat : GL_RGBA8,
 			customTexture.width, customTexture.height);
 	for (size_t levelIndex = 0; levelIndex < customTexture.levels.size(); ++levelIndex)
@@ -337,7 +334,7 @@ bool TextureCacheData::UploadCustomTexture(const PreparedCustomTexture& customTe
 	return true;
 }
 
-GpuPreloadedTexturePtr TextureCacheData::CreateGpuPreloadedTexture(
+GpuPreloadedTexture::Ptr TextureCacheData::createGpuPreloadedTexture(
 		const PreparedCustomTexture& customTexture)
 {
 	if (!gl.textureStorageSupported)
@@ -347,7 +344,7 @@ GpuPreloadedTexturePtr TextureCacheData::CreateGpuPreloadedTexture(
 					? mipmapLevelCount(customTexture.width, customTexture.height)
 					: customTexture.levels.size()));
 	TextureCacheData uploadedTexture({}, {}, 0);
-	if (!uploadedTexture.UploadCustomTexture(customTexture, true))
+	if (!uploadedTexture.uploadCustomTexture(customTexture, true))
 		return nullptr;
 	texture->texture = uploadedTexture.texID;
 	uploadedTexture.texID = 0;
@@ -355,7 +352,7 @@ GpuPreloadedTexturePtr TextureCacheData::CreateGpuPreloadedTexture(
 	return texture;
 }
 
-bool TextureCacheData::UseGpuPreloadedTexture(const GpuPreloadedTexturePtr& texture)
+bool TextureCacheData::useGpuPreloadedTexture(const GpuPreloadedTexture::Ptr& texture)
 {
 	auto openGlTexture = std::dynamic_pointer_cast<OpenGLGpuPreloadedTexture>(texture);
 	if (!openGlTexture)
@@ -365,7 +362,7 @@ bool TextureCacheData::UseGpuPreloadedTexture(const GpuPreloadedTexturePtr& text
 	return true;
 }
 
-CustomTextureCapabilities TextureCacheData::GetCustomTextureCapabilities()
+CustomTextureCapabilities TextureCacheData::getCustomTextureCapabilities()
 {
 	GLint maxTextureSize = 0;
 	glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTextureSize);
@@ -386,7 +383,6 @@ CustomTextureCapabilities TextureCacheData::GetCustomTextureCapabilities()
 			|| hasGlExtension("GL_EXT_texture_compression_dxt5")
 			|| hasGlExtension("GL_ANGLE_texture_compression_dxt5");
 	capabilities.setSupported(NativeTextureFormat::Bc7Unorm, bptc);
-	capabilities.setSupported(NativeTextureFormat::Bc7Srgb, bptc);
 	capabilities.setSupported(NativeTextureFormat::Bc1Unorm, bc1);
 	capabilities.setSupported(NativeTextureFormat::Bc3Unorm, bc3);
 	capabilities.setSupported(NativeTextureFormat::Etc2Rgb8Unorm, etc2);

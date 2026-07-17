@@ -39,7 +39,6 @@ enum class CustomTextureSourceKind : uint8_t
 
 enum class CustomTextureCodec : uint8_t
 {
-	LegacyRgba,
 	Xubc7,
 	XuastcLdr,
 	Etc1s,
@@ -50,7 +49,6 @@ enum class NativeTextureFormat : uint8_t
 {
 	Rgba8Unorm,
 	Bc7Unorm,
-	Bc7Srgb,
 	Bc1Unorm,
 	Bc3Unorm,
 	Etc2Rgb8Unorm,
@@ -80,15 +78,6 @@ enum class CustomTextureBackend : uint8_t
 	Direct3D9,
 	OpenGL,
 	OpenGLES,
-};
-
-enum class TranscodePathClass : uint8_t
-{
-	PassthroughCopy,
-	FastNativeReconstruction,
-	LatentToLatent,
-	DecodeAndReencode,
-	DecodeToRgba,
 };
 
 struct CustomTextureCandidate
@@ -129,26 +118,21 @@ struct CustomTextureRequestId
 	uint64_t value = 0;
 
 	explicit operator bool() const { return value != 0; }
-	bool operator==(const CustomTextureRequestId& other) const { return value == other.value; }
 };
 
 struct PreparedCustomTexture
 {
+	using Ptr = std::shared_ptr<const PreparedCustomTexture>;
+
 	uint32_t replacementHash = 0;
-	CustomTextureCodec sourceCodec = CustomTextureCodec::LegacyRgba;
 	NativeTextureFormat nativeFormat = NativeTextureFormat::Rgba8Unorm;
-	TranscodePathClass pathClass = TranscodePathClass::DecodeToRgba;
 	uint32_t width = 0;
 	uint32_t height = 0;
-	bool sourceSrgb = false;
-	bool hasAlpha = true;
 	// Legacy images contain only level 0. Renderers generate the rest when mipmapping is used.
 	bool generateMipmaps = false;
 	std::vector<PreparedMipLevel> levels;
 	std::vector<uint8_t> bytes;
 };
-
-using PreparedCustomTexturePtr = std::shared_ptr<const PreparedCustomTexture>;
 
 struct CustomTextureCapabilities
 {
@@ -168,9 +152,9 @@ struct CustomTextureCapabilities
 
 BlockGeometry getBlockGeometry(NativeTextureFormat format);
 uint32_t mipmapLevelCount(uint32_t width, uint32_t height);
-bool computeMipLayout(NativeTextureFormat format, uint32_t width, uint32_t height,
-		uint64_t offset, PreparedMipLevel& level, std::string& error);
-bool validatePreparedCustomTexture(const PreparedCustomTexture& texture, std::string& error);
+PreparedMipLevel computeMipLayout(NativeTextureFormat format, uint32_t width, uint32_t height,
+		uint64_t offset);
+void validatePreparedCustomTexture(const PreparedCustomTexture& texture);
 std::vector<NativeTextureFormat> selectNativeTextureTargets(const CustomTextureCapabilities& capabilities,
 		CustomTextureCodec codec, uint32_t sourceBlockWidth = 4, uint32_t sourceBlockHeight = 4,
 		bool hasAlpha = true);

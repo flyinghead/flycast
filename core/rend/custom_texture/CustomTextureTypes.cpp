@@ -19,6 +19,7 @@
 #include "CustomTextureTypes.h"
 #include "build.h"
 #include "stdclass.h"
+#include "types.h"
 
 #include <algorithm>
 #include <charconv>
@@ -162,7 +163,6 @@ BlockGeometry getBlockGeometry(NativeTextureFormat format)
 	{
 	case NativeTextureFormat::Rgba8Unorm: return { 1, 1, 4, false };
 	case NativeTextureFormat::Bc7Unorm:
-	case NativeTextureFormat::Bc7Srgb:
 	case NativeTextureFormat::Bc3Unorm:
 	case NativeTextureFormat::Etc2Rgba8Unorm: return { 4, 4, 16, true };
 	case NativeTextureFormat::Bc1Unorm:
@@ -200,14 +200,11 @@ uint32_t mipmapLevelCount(uint32_t width, uint32_t height)
 	return levels;
 }
 
-bool computeMipLayout(NativeTextureFormat format, uint32_t width, uint32_t height,
-		uint64_t offset, PreparedMipLevel& level, std::string& error)
+PreparedMipLevel computeMipLayout(NativeTextureFormat format, uint32_t width, uint32_t height,
+		uint64_t offset)
 {
 	if (width == 0 || height == 0 || format == NativeTextureFormat::Count)
-	{
-		error = "invalid mip dimensions or format";
-		return false;
-	}
+		throw FlycastException("invalid mip dimensions or format");
 	const BlockGeometry geometry = getBlockGeometry(format);
 	const uint64_t blocksX = (static_cast<uint64_t>(width) + geometry.blockWidth - 1) / geometry.blockWidth;
 	const uint64_t blocksY = (static_cast<uint64_t>(height) + geometry.blockHeight - 1) / geometry.blockHeight;
@@ -221,56 +218,37 @@ bool computeMipLayout(NativeTextureFormat format, uint32_t width, uint32_t heigh
 			|| blocksX > std::numeric_limits<uint32_t>::max()
 			|| blocksY > std::numeric_limits<uint32_t>::max()
 			|| end > MaxPreparedTextureBytes)
-	{
-		error = "mip layout exceeds supported allocation limits";
-		return false;
-	}
-	level = { width, height, static_cast<uint32_t>(blocksX), static_cast<uint32_t>(blocksY),
+		throw FlycastException("mip layout exceeds supported allocation limits");
+	return { width, height, static_cast<uint32_t>(blocksX), static_cast<uint32_t>(blocksY),
 			offset, byteSize, static_cast<uint32_t>(rowPitch) };
-	return true;
 }
 
-bool validatePreparedCustomTexture(const PreparedCustomTexture& texture, std::string& error)
+void validatePreparedCustomTexture(const PreparedCustomTexture& texture)
 {
 	if (texture.width == 0 || texture.height == 0 || texture.levels.empty()
 			|| texture.levels.size() > 16 || texture.nativeFormat == NativeTextureFormat::Count)
-	{
-		error = "invalid prepared texture header";
-		return false;
-	}
+		throw FlycastException("invalid prepared texture header");
 	if (texture.generateMipmaps && (texture.nativeFormat != NativeTextureFormat::Rgba8Unorm
 			|| texture.levels.size() != 1))
-	{
-		error = "generated mipmaps require one RGBA source level";
-		return false;
-	}
+		throw FlycastException("generated mipmaps require one RGBA source level");
 	uint64_t expectedOffset = 0;
 	uint32_t expectedWidth = texture.width;
 	uint32_t expectedHeight = texture.height;
 	for (const PreparedMipLevel& level : texture.levels)
 	{
-		PreparedMipLevel expected;
-		if (!computeMipLayout(texture.nativeFormat, expectedWidth, expectedHeight, expectedOffset,
-				expected, error))
-			return false;
+		const PreparedMipLevel expected = computeMipLayout(texture.nativeFormat,
+				expectedWidth, expectedHeight, expectedOffset);
 		if (level.width != expected.width || level.height != expected.height
 				|| level.blocksX != expected.blocksX || level.blocksY != expected.blocksY
 				|| level.byteOffset != expected.byteOffset || level.byteSize != expected.byteSize
 				|| level.rowPitchBytes != expected.rowPitchBytes)
-		{
-			error = "prepared mip layout is inconsistent";
-			return false;
-		}
+			throw FlycastException("prepared mip layout is inconsistent");
 		expectedOffset += expected.byteSize;
 		expectedWidth = std::max(1u, expectedWidth / 2);
 		expectedHeight = std::max(1u, expectedHeight / 2);
 	}
 	if (expectedOffset != texture.bytes.size())
-	{
-		error = "prepared byte vector does not match mip ranges";
-		return false;
-	}
-	return true;
+		throw FlycastException("prepared byte vector does not match mip ranges");
 }
 
 std::vector<NativeTextureFormat> selectNativeTextureTargets(const CustomTextureCapabilities& capabilities,
@@ -328,7 +306,6 @@ const char *customTextureCodecName(CustomTextureCodec codec)
 {
 	switch (codec)
 	{
-	case CustomTextureCodec::LegacyRgba: return "PNG/JPEG";
 	case CustomTextureCodec::Xubc7: return "XUBC7";
 	case CustomTextureCodec::XuastcLdr: return "XUASTC LDR";
 	case CustomTextureCodec::Etc1s: return "ETC1S";
@@ -343,7 +320,6 @@ const char *nativeTextureFormatName(NativeTextureFormat format)
 	{
 	case NativeTextureFormat::Rgba8Unorm: return "RGBA8 UNORM";
 	case NativeTextureFormat::Bc7Unorm: return "BC7 UNORM";
-	case NativeTextureFormat::Bc7Srgb: return "BC7 SRGB";
 	case NativeTextureFormat::Bc1Unorm: return "BC1 UNORM";
 	case NativeTextureFormat::Bc3Unorm: return "BC3 UNORM";
 	case NativeTextureFormat::Etc2Rgb8Unorm: return "ETC2 RGB8 UNORM";

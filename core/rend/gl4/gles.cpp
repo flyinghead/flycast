@@ -764,7 +764,7 @@ bool OpenGL4Renderer::Init()
 	updateFogTable = true;
 	TextureCacheData::SetDirectXColorOrder(false);
 	TextureCacheData::setUploadToGPUFlavor();
-	custom_texture.setCapabilities(TextureCacheData::GetCustomTextureCapabilities());
+	custom_texture.setCapabilities(TextureCacheData::getCustomTextureCapabilities());
 
 	return true;
 }

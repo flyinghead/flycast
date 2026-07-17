@@ -216,7 +216,6 @@ vk::Format customVkFormat(NativeTextureFormat format)
 	{
 	case NativeTextureFormat::Rgba8Unorm: return vk::Format::eR8G8B8A8Unorm;
 	case NativeTextureFormat::Bc7Unorm: return vk::Format::eBc7UnormBlock;
-	case NativeTextureFormat::Bc7Srgb: return vk::Format::eBc7SrgbBlock;
 	case NativeTextureFormat::Bc1Unorm: return vk::Format::eBc1RgbUnormBlock;
 	case NativeTextureFormat::Bc3Unorm: return vk::Format::eBc3UnormBlock;
 	case NativeTextureFormat::Etc2Rgb8Unorm: return vk::Format::eEtc2R8G8B8UnormBlock;
@@ -241,15 +240,14 @@ vk::Format customVkFormat(NativeTextureFormat format)
 }
 }
 
-bool Texture::UploadCustomTexture(const PreparedCustomTexture& customTexture, bool mipmapped)
+bool Texture::uploadCustomTexture(const PreparedCustomTexture& customTexture, bool mipmapped)
 {
 	vulkanGpuPreloadedTexture = nullptr;
 	gpuPreloadedTexture.reset();
 	usingGpuPreloadedTexture = false;
-	std::string validationError;
-	if (!(bool)commandBuffer || !validatePreparedCustomTexture(customTexture, validationError)
-			|| customTexture.bytes.size() > UINT32_MAX)
+	if (!(bool)commandBuffer || customTexture.bytes.size() > UINT32_MAX)
 		return false;
+	validatePreparedCustomTexture(customTexture);
 	const vk::Format newFormat = customVkFormat(customTexture.nativeFormat);
 	if (newFormat == vk::Format::eUndefined || (image && flightManager == nullptr))
 		return false;
@@ -299,7 +297,7 @@ bool Texture::UploadCustomTexture(const PreparedCustomTexture& customTexture, bo
 		commandBuffer.copyBufferToImage(newStaging->buffer.get(), newImage.get(),
 				vk::ImageLayout::eTransferDstOptimal, regions);
 		if (generateMipmaps)
-			GenerateMipmaps(newImage.get(), newExtent, newMipLevels, true);
+			this->generateMipmaps(newImage.get(), newExtent, newMipLevels, true);
 		else
 			setImageLayout(commandBuffer, newImage.get(), newFormat, newMipLevels,
 					vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eShaderReadOnlyOptimal);
@@ -317,14 +315,14 @@ bool Texture::UploadCustomTexture(const PreparedCustomTexture& customTexture, bo
 		customTextureResource = true;
 		return true;
 	}
-	catch (const std::exception& exception)
+	catch (const vk::SystemError& exception)
 	{
 		WARN_LOG(RENDERER, "Vulkan custom texture upload failed: %s", exception.what());
 		return false;
 	}
 }
 
-GpuPreloadedTexturePtr Texture::CreateGpuPreloadedTexture(
+GpuPreloadedTexture::Ptr Texture::createGpuPreloadedTexture(
 		const PreparedCustomTexture& customTexture, vk::CommandBuffer commandBuffer)
 {
 	auto texture = std::make_shared<VulkanGpuPreloadedTexture>(
@@ -332,20 +330,20 @@ GpuPreloadedTexturePtr Texture::CreateGpuPreloadedTexture(
 					? mipmapLevelCount(customTexture.width, customTexture.height)
 					: customTexture.levels.size()));
 	texture->texture.SetCommandBuffer(commandBuffer);
-	if (!texture->texture.UploadCustomTexture(customTexture, true))
+	if (!texture->texture.uploadCustomTexture(customTexture, true))
 		return nullptr;
 	texture->texture.SetCommandBuffer(vk::CommandBuffer());
 	return texture;
 }
 
-void Texture::ReleaseGpuPreloadStaging(const GpuPreloadedTexturePtr& texture)
+void Texture::releaseGpuPreloadStaging(const GpuPreloadedTexture::Ptr& texture)
 {
 	auto vulkanTexture = std::dynamic_pointer_cast<VulkanGpuPreloadedTexture>(texture);
 	if (vulkanTexture)
 		vulkanTexture->texture.stagingBufferData.reset();
 }
 
-bool Texture::UseGpuPreloadedTexture(const GpuPreloadedTexturePtr& texture)
+bool Texture::useGpuPreloadedTexture(const GpuPreloadedTexture::Ptr& texture)
 {
 	auto vulkanTexture = std::dynamic_pointer_cast<VulkanGpuPreloadedTexture>(texture);
 	if (!vulkanTexture)
@@ -393,7 +391,7 @@ vk::ImageView Texture::GetReadOnlyImageView() const
 	return readOnlyImageView ? readOnlyImageView : imageView.get();
 }
 
-CustomTextureCapabilities Texture::GetCustomTextureCapabilities()
+CustomTextureCapabilities Texture::getCustomTextureCapabilities()
 {
 	VulkanContext *context = VulkanContext::Instance();
 	const vk::PhysicalDevice physicalDevice = context->GetPhysicalDevice();
@@ -405,7 +403,7 @@ CustomTextureCapabilities Texture::GetCustomTextureCapabilities()
 		return (features & vk::FormatFeatureFlagBits::eSampledImage)
 				&& (features & vk::FormatFeatureFlagBits::eTransferDst);
 	};
-	for (NativeTextureFormat format : { NativeTextureFormat::Bc7Unorm, NativeTextureFormat::Bc7Srgb,
+	for (NativeTextureFormat format : { NativeTextureFormat::Bc7Unorm,
 			NativeTextureFormat::Bc1Unorm, NativeTextureFormat::Bc3Unorm,
 			NativeTextureFormat::Etc2Rgb8Unorm, NativeTextureFormat::Etc2Rgba8Unorm,
 			NativeTextureFormat::Astc4x4Unorm, NativeTextureFormat::Astc5x4Unorm,
@@ -570,7 +568,7 @@ void Texture::SetImage(u32 srcSize, const void *srcData, bool isNew, bool genMip
 					vk::Offset3D(0, 0, 0), vk::Extent3D(extent, 1));
 			commandBuffer.copyBufferToImage(stagingBufferData->buffer.get(), image.get(), vk::ImageLayout::eTransferDstOptimal, copyRegion);
 			if (mipmapLevels > 1)
-				GenerateMipmaps(image.get(), extent, mipmapLevels, true);
+				generateMipmaps(image.get(), extent, mipmapLevels, true);
 		}
 		// Set the layout for the texture image from eTransferDstOptimal to SHADER_READ_ONLY
 		if (mipmapLevels <= 1 || !genMipmaps)
@@ -580,7 +578,7 @@ void Texture::SetImage(u32 srcSize, const void *srcData, bool isNew, bool genMip
 	else
 	{
 		if (mipmapLevels > 1)
-			GenerateMipmaps(image.get(), extent, mipmapLevels, false);
+			generateMipmaps(image.get(), extent, mipmapLevels, false);
 		else
 			// If we can use the linear tiled image as a texture, just do it
 			setImageLayout(commandBuffer, image.get(), format, mipmapLevels, isNew ? vk::ImageLayout::ePreinitialized : vk::ImageLayout::eGeneral,
@@ -588,7 +586,7 @@ void Texture::SetImage(u32 srcSize, const void *srcData, bool isNew, bool genMip
 	}
 }
 
-void Texture::GenerateMipmaps(vk::Image image, vk::Extent2D extent, u32 mipmapLevels,
+void Texture::generateMipmaps(vk::Image image, vk::Extent2D extent, u32 mipmapLevels,
 		bool usesStagingBuffer)
 {
 	static const float scopeColor[4] = { 0.75f, 0.75f, 0.0f, 1.0f };
@@ -666,7 +664,7 @@ void Texture::deferDeleteResource(FlightManager *manager)
 		vk::UniqueImageView imageView;
 		std::unique_ptr<BufferData> bufferData;
 		Allocation allocation;
-		GpuPreloadedTexturePtr gpuPreloadedTexture;
+		GpuPreloadedTexture::Ptr gpuPreloadedTexture;
 	};
 	manager->addToFlight(new ResourceDeleter(this));
 }

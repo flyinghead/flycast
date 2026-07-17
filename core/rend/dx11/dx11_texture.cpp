@@ -154,7 +154,7 @@ bool DX11Texture::Delete()
 	return true;
 }
 
-bool DX11Texture::UploadCustomTexture(const PreparedCustomTexture& customTexture, bool mipmapped)
+bool DX11Texture::uploadCustomTexture(const PreparedCustomTexture& customTexture, bool mipmapped)
 {
 	if (usingGpuPreloadedTexture)
 	{
@@ -163,15 +163,12 @@ bool DX11Texture::UploadCustomTexture(const PreparedCustomTexture& customTexture
 		gpuPreloadedTexture.reset();
 		usingGpuPreloadedTexture = false;
 	}
-	std::string validationError;
-	if (!validatePreparedCustomTexture(customTexture, validationError))
-		return false;
+	validatePreparedCustomTexture(customTexture);
 	DXGI_FORMAT format;
 	switch (customTexture.nativeFormat)
 	{
 	case NativeTextureFormat::Rgba8Unorm: format = DXGI_FORMAT_R8G8B8A8_UNORM; break;
 	case NativeTextureFormat::Bc7Unorm: format = DXGI_FORMAT_BC7_UNORM; break;
-	case NativeTextureFormat::Bc7Srgb: format = DXGI_FORMAT_BC7_UNORM_SRGB; break;
 	case NativeTextureFormat::Bc1Unorm: format = DXGI_FORMAT_BC1_UNORM; break;
 	case NativeTextureFormat::Bc3Unorm: format = DXGI_FORMAT_BC3_UNORM; break;
 	default: return false;
@@ -233,11 +230,11 @@ bool DX11Texture::UploadCustomTexture(const PreparedCustomTexture& customTexture
 	return true;
 }
 
-GpuPreloadedTexturePtr DX11Texture::CreateGpuPreloadedTexture(
+GpuPreloadedTexture::Ptr DX11Texture::createGpuPreloadedTexture(
 		const PreparedCustomTexture& customTexture)
 {
 	DX11Texture uploadedTexture;
-	if (!uploadedTexture.UploadCustomTexture(customTexture, true))
+	if (!uploadedTexture.uploadCustomTexture(customTexture, true))
 		return nullptr;
 	auto texture = std::make_shared<DX11GpuPreloadedTexture>(
 			static_cast<u8>(customTexture.generateMipmaps
@@ -248,7 +245,7 @@ GpuPreloadedTexturePtr DX11Texture::CreateGpuPreloadedTexture(
 	return texture;
 }
 
-bool DX11Texture::UseGpuPreloadedTexture(const GpuPreloadedTexturePtr& texture)
+bool DX11Texture::useGpuPreloadedTexture(const GpuPreloadedTexture::Ptr& texture)
 {
 	auto dx11Texture = std::dynamic_pointer_cast<DX11GpuPreloadedTexture>(texture);
 	if (!dx11Texture)
@@ -258,7 +255,7 @@ bool DX11Texture::UseGpuPreloadedTexture(const GpuPreloadedTexturePtr& texture)
 	return true;
 }
 
-CustomTextureCapabilities DX11Texture::GetCustomTextureCapabilities()
+CustomTextureCapabilities DX11Texture::getCustomTextureCapabilities()
 {
 	CustomTextureCapabilities capabilities = CustomTextureCapabilities::rgbaOnly(
 			CustomTextureBackend::Direct3D11, D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION);
@@ -270,7 +267,6 @@ CustomTextureCapabilities DX11Texture::GetCustomTextureCapabilities()
 					== (D3D11_FORMAT_SUPPORT_TEXTURE2D | D3D11_FORMAT_SUPPORT_SHADER_SAMPLE);
 	};
 	capabilities.setSupported(NativeTextureFormat::Bc7Unorm, query(DXGI_FORMAT_BC7_UNORM));
-	capabilities.setSupported(NativeTextureFormat::Bc7Srgb, query(DXGI_FORMAT_BC7_UNORM_SRGB));
 	capabilities.setSupported(NativeTextureFormat::Bc1Unorm, query(DXGI_FORMAT_BC1_UNORM));
 	capabilities.setSupported(NativeTextureFormat::Bc3Unorm, query(DXGI_FORMAT_BC3_UNORM));
 	return capabilities;

@@ -38,8 +38,8 @@ public:
 	void Term() override;
 	BaseTextureCacheData *GetTexture(TSP tsp, TCW tcw, int area) override;
 	void Process(TA_context* ctx) override;
-	void ProcessCustomTexturePreloads() override;
-	bool SupportsGpuTexturePreload() const override { return true; }
+	void processCustomTexturePreloads() override;
+	bool supportsGpuTexturePreload() const override { return true; }
 	void ReInitOSD();
 	void RenderFramebuffer(const FramebufferInfo& info) override;
 	void RenderVideoRouting();

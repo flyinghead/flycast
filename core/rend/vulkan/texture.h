@@ -61,13 +61,13 @@ public:
 	}
 
 	void UploadToGPU(int width, int height, const u8 *data, bool mipmapped, bool mipmapsIncluded = false) override;
-	bool UploadCustomTexture(const PreparedCustomTexture& texture, bool mipmapped) override;
-	bool UseGpuPreloadedTexture(const GpuPreloadedTexturePtr& texture) override;
+	bool uploadCustomTexture(const PreparedCustomTexture& texture, bool mipmapped) override;
+	bool useGpuPreloadedTexture(const GpuPreloadedTexture::Ptr& texture) override;
 	bool Delete() override;
-	static GpuPreloadedTexturePtr CreateGpuPreloadedTexture(
+	static GpuPreloadedTexture::Ptr createGpuPreloadedTexture(
 			const PreparedCustomTexture& texture, vk::CommandBuffer commandBuffer);
-	static void ReleaseGpuPreloadStaging(const GpuPreloadedTexturePtr& texture);
-	static CustomTextureCapabilities GetCustomTextureCapabilities();
+	static void releaseGpuPreloadStaging(const GpuPreloadedTexture::Ptr& texture);
+	static CustomTextureCapabilities getCustomTextureCapabilities();
 	u64 GetIntId() { return (u64)reinterpret_cast<uintptr_t>(this); }
 	std::string GetId() override { char s[20]; snprintf(s, sizeof(s), "%p", this); return s; }
 	vk::ImageView GetImageView() const;
@@ -86,7 +86,7 @@ private:
 	void SetImage(u32 size, const void *data, bool isNew, bool genMipmaps);
 	void CreateImage(vk::ImageTiling tiling, vk::ImageUsageFlags usage, vk::ImageLayout initialLayout,
 			vk::ImageAspectFlags aspectMask);
-	void GenerateMipmaps(vk::Image image, vk::Extent2D extent, u32 mipmapLevels,
+	void generateMipmaps(vk::Image image, vk::Extent2D extent, u32 mipmapLevels,
 			bool usesStagingBuffer);
 
 	vk::Format format = vk::Format::eUndefined;

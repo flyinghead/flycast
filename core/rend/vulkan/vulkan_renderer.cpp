@@ -26,7 +26,7 @@
 
 bool BaseVulkanRenderer::BaseInit(vk::RenderPass renderPass, int subpass)
 {
-	custom_texture.setCapabilities(Texture::GetCustomTextureCapabilities());
+	custom_texture.setCapabilities(Texture::getCustomTextureCapabilities());
 	texCommandPool.Init();
 	fbCommandPool.Init();
 	quadPipeline = std::make_unique<QuadPipeline>(false, false);
@@ -57,20 +57,34 @@ void BaseVulkanRenderer::Term()
 	shaderManager.term();
 }
 
-void BaseVulkanRenderer::ProcessCustomTexturePreloads()
+void BaseVulkanRenderer::processCustomTexturePreloads()
 {
 	clearGpuPreloadedTexturesIfRequested();
 	custom_texture.processGpuPreloads([this](u32 hash,
 			const PreparedCustomTexture& texture) {
-		texCommandPool.BeginFrame();
-		vk::CommandBuffer commandBuffer = texCommandPool.Allocate();
-		commandBuffer.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
-		GpuPreloadedTexturePtr gpuTexture = Texture::CreateGpuPreloadedTexture(texture, commandBuffer);
-		commandBuffer.end();
-		texCommandPool.EndFrameAndWait();
+		GpuPreloadedTexture::Ptr gpuTexture;
+		try
+		{
+			texCommandPool.BeginFrame();
+			vk::CommandBuffer commandBuffer = texCommandPool.Allocate();
+			commandBuffer.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
+			gpuTexture = Texture::createGpuPreloadedTexture(texture, commandBuffer);
+			commandBuffer.end();
+			texCommandPool.EndFrameAndWait();
+		}
+		catch (const vk::SystemError& exception)
+		{
+			texCommandPool.abortFrame();
+			throw FlycastException(exception.what());
+		}
+		catch (...)
+		{
+			texCommandPool.abortFrame();
+			throw;
+		}
 		if (!gpuTexture)
 			return false;
-		Texture::ReleaseGpuPreloadStaging(gpuTexture);
+		Texture::releaseGpuPreloadStaging(gpuTexture);
 		addGpuPreloadedTexture(hash, std::move(gpuTexture));
 		return true;
 	});

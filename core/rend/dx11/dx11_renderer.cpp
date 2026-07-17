@@ -50,7 +50,7 @@ bool DX11Renderer::Init()
 		WARN_LOG(RENDERER, "Null device or device context. Aborting");
 		return false;
 	}
-	custom_texture.setCapabilities(DX11Texture::GetCustomTextureCapabilities());
+	custom_texture.setCapabilities(DX11Texture::getCustomTextureCapabilities());
 
 	shaders = &DX11Context::Instance()->getShaders();
 	samplers = &DX11Context::Instance()->getSamplers();
@@ -198,12 +198,12 @@ void DX11Renderer::Term()
 	vrScaledRenderTarget.reset();
 }
 
-void DX11Renderer::ProcessCustomTexturePreloads()
+void DX11Renderer::processCustomTexturePreloads()
 {
 	clearGpuPreloadedTexturesIfRequested();
 	custom_texture.processGpuPreloads([this](u32 hash,
 			const PreparedCustomTexture& texture) {
-		GpuPreloadedTexturePtr gpuTexture = DX11Texture::CreateGpuPreloadedTexture(texture);
+		GpuPreloadedTexture::Ptr gpuTexture = DX11Texture::createGpuPreloadedTexture(texture);
 		if (!gpuTexture)
 			return false;
 		addGpuPreloadedTexture(hash, std::move(gpuTexture));

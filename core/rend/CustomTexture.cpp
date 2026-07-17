@@ -65,36 +65,19 @@ std::vector<u32> replacementHashes(u32 currentHash, u32 oldVqHash, u32 oldHash)
 	return hashes;
 }
 
-bool readFile(const CustomTextureCandidate& candidate, std::vector<u8>& bytes, std::string& error)
+std::vector<u8> readFile(const CustomTextureCandidate& candidate)
 {
 	std::unique_ptr<hostfs::File> file(hostfs::storage().openFile(candidate.path, "rb"));
 	if (!file)
-	{
-		error = "file open failed";
-		return false;
-	}
+		throw CustomTextureException(CustomTextureException::Error::FileRead, "file open failed");
 	const s64 actualSize = file->size();
 	if (actualSize <= 0 || static_cast<u64>(actualSize) > static_cast<u64>(SIZE_MAX))
-	{
-		error = "file is empty or cannot be addressed on this platform";
-		return false;
-	}
-	try
-	{
-		bytes.resize(static_cast<size_t>(actualSize));
-	}
-	catch (const std::bad_alloc&)
-	{
-		error = "file buffer allocation failed";
-		return false;
-	}
+		throw CustomTextureException(CustomTextureException::Error::FileRead,
+				"file is empty or cannot be addressed on this platform");
+	std::vector<u8> bytes(static_cast<size_t>(actualSize));
 	if (file->read(bytes.data(), 1, bytes.size()) != bytes.size())
-	{
-		error = "short file read";
-		bytes.clear();
-		return false;
-	}
-	return true;
+		throw CustomTextureException(CustomTextureException::Error::FileRead, "short file read");
+	return bytes;
 }
 
 std::array<CustomTextureSourceKind, 7> preferredSourceKinds(
@@ -123,81 +106,40 @@ std::array<CustomTextureSourceKind, 7> preferredSourceKinds(
 	return kinds;
 }
 
-PreparedCustomTexturePtr decodeImageToRGBA(const CustomTextureCandidate& candidate,
-		u32 hash, const std::vector<u8>& fileBytes,
-		const CustomTextureCapabilities& capabilities, std::string& error)
+PreparedCustomTexture::Ptr decodeImageToRGBA(u32 hash, const std::vector<u8>& fileBytes,
+		const CustomTextureCapabilities& capabilities)
 {
 	if (fileBytes.size() > INT_MAX)
-	{
-		error = "legacy image is too large for stb_image";
-		custom_texture.reportError(CustomTexture::Error::ImageDecode);
-		return nullptr;
-	}
+		throw CustomTextureException(CustomTextureException::Error::ImageDecode,
+				"legacy image is too large for stb_image");
 	int width = 0;
 	int height = 0;
 	int channels = 0;
 	if (!stbi_info_from_memory(fileBytes.data(), static_cast<int>(fileBytes.size()),
 			&width, &height, &channels) || width <= 0 || height <= 0)
-	{
-		error = "legacy image header is invalid";
-		custom_texture.reportError(CustomTexture::Error::ImageDecode);
-		return nullptr;
-	}
+		throw CustomTextureException(CustomTextureException::Error::ImageDecode,
+				"legacy image header is invalid");
 	if (static_cast<u32>(width) > capabilities.max2DWidth
 			|| static_cast<u32>(height) > capabilities.max2DHeight)
-	{
-		error = "legacy image dimensions exceed active renderer limits";
-		custom_texture.reportError(CustomTexture::Error::TextureTooLarge);
-		return nullptr;
-	}
-	PreparedMipLevel level;
-	if (!computeMipLayout(NativeTextureFormat::Rgba8Unorm,
-			static_cast<u32>(width), static_cast<u32>(height), 0, level, error))
-	{
-		custom_texture.reportError(CustomTexture::Error::ImageDecode);
-		return nullptr;
-	}
+		throw CustomTextureException(CustomTextureException::Error::TextureTooLarge,
+				"legacy image dimensions exceed active renderer limits");
+	const PreparedMipLevel level = computeMipLayout(NativeTextureFormat::Rgba8Unorm,
+			static_cast<u32>(width), static_cast<u32>(height), 0);
 	stbi_set_flip_vertically_on_load_thread(1);
 	stbi_uc *decoded = stbi_load_from_memory(fileBytes.data(), static_cast<int>(fileBytes.size()),
 			&width, &height, &channels, STBI_rgb_alpha);
 	if (decoded == nullptr)
-	{
-		error = stbi_failure_reason() ? stbi_failure_reason() : "stb_image decode failed";
-		custom_texture.reportError(CustomTexture::Error::ImageDecode);
-		return nullptr;
-	}
+		throw CustomTextureException(CustomTextureException::Error::ImageDecode,
+				stbi_failure_reason() ? stbi_failure_reason() : "stb_image decode failed");
 	std::unique_ptr<stbi_uc, decltype(&stbi_image_free)> decodedOwner(decoded, stbi_image_free);
-	std::shared_ptr<PreparedCustomTexture> output;
-	try
-	{
-		output = std::make_shared<PreparedCustomTexture>();
-	}
-	catch (const std::bad_alloc&)
-	{
-		error = "legacy image descriptor allocation failed";
-		custom_texture.reportError(CustomTexture::Error::ImageDecode);
-		return nullptr;
-	}
+	auto output = std::make_shared<PreparedCustomTexture>();
 	output->replacementHash = hash;
-	output->sourceCodec = CustomTextureCodec::LegacyRgba;
 	output->nativeFormat = NativeTextureFormat::Rgba8Unorm;
-	output->pathClass = TranscodePathClass::DecodeToRgba;
 	output->width = static_cast<u32>(width);
 	output->height = static_cast<u32>(height);
-	output->sourceSrgb = true;
-	output->hasAlpha = true;
 	output->generateMipmaps = true;
-	try
-	{
-		output->levels.push_back(level);
-		output->bytes.assign(decoded, decoded + level.byteSize);
-	}
-	catch (const std::bad_alloc&)
-	{
-		error = "legacy image payload allocation failed";
-		custom_texture.reportError(CustomTexture::Error::ImageDecode);
-		return nullptr;
-	}
+	output->levels.push_back(level);
+	output->bytes.assign(decoded, decoded + level.byteSize);
 	return output;
 }
 }
@@ -229,7 +171,7 @@ public:
 	size_t getTextureCount() const override;
 	void preloadTextures(const CustomTextureCapabilities& capabilities,
 			TextureCallback callback, std::atomic<bool>* stopFlag) override;
-	PreparedCustomTexturePtr loadCustomTexture(u32 hash,
+	PreparedCustomTexture::Ptr loadCustomTexture(u32 hash,
 			const CustomTextureCapabilities& capabilities,
 			const CancellationCheck& cancelled) override;
 	bool isTextureReplaced(u32 hash) const override final;
@@ -309,12 +251,12 @@ void CustomTextureSource::preloadTextures(const CustomTextureCapabilities& capab
 		if (stopFlag != nullptr && *stopFlag)
 			return;
 		auto cancelled = [stopFlag]() { return stopFlag != nullptr && *stopFlag; };
-		PreparedCustomTexturePtr texture = loadCustomTexture(hash, capabilities, cancelled);
+		PreparedCustomTexture::Ptr texture = loadCustomTexture(hash, capabilities, cancelled);
 		callback(hash, std::move(texture));
 	}
 }
 
-PreparedCustomTexturePtr CustomTextureSource::loadCustomTexture(u32 hash,
+PreparedCustomTexture::Ptr CustomTextureSource::loadCustomTexture(u32 hash,
 		const CustomTextureCapabilities& capabilities,
 		const CancellationCheck& cancelled)
 {
@@ -336,43 +278,59 @@ PreparedCustomTexturePtr CustomTextureSource::loadCustomTexture(u32 hash,
 	{
 		WARN_LOG(RENDERER, "DDS/KTX2 custom texture %08x is not supported by DirectX 9: %s",
 				hash, candidate.path.c_str());
-		custom_texture.reportError(CustomTexture::Error::DirectX9CompressedSource);
+		custom_texture.reportError(CustomTextureException::Error::DirectX9CompressedSource);
 		markFailed(candidate.path);
 		return nullptr;
 	}
 
 	std::vector<u8> fileBytes;
-	std::string readError;
-	if (!readFile(candidate, fileBytes, readError))
+	try
+	{
+		fileBytes = readFile(candidate);
+	}
+	catch (const CustomTextureException& exception)
 	{
 		WARN_LOG(RENDERER, "Custom texture %08x read failed (%s): %s", hash,
-			candidate.path.c_str(), readError.c_str());
-		custom_texture.reportError(CustomTexture::Error::FileRead);
+			candidate.path.c_str(), exception.what());
+		custom_texture.reportError(exception.error());
 		markFailed(candidate.path);
 		return nullptr;
 	}
-
 	if (legacyImage)
 	{
-		std::string imageError;
-		PreparedCustomTexturePtr texture = decodeImageToRGBA(candidate, hash, fileBytes,
-				capabilities, imageError);
-		if (texture)
-			return texture;
-		WARN_LOG(RENDERER, "Custom texture %08x image preparation failed (%s): %s", hash,
-			candidate.path.c_str(), imageError.c_str());
-		markFailed(candidate.path);
-		return nullptr;
+		try
+		{
+			return decodeImageToRGBA(hash, fileBytes, capabilities);
+		}
+		catch (const CustomTextureException& exception)
+		{
+			WARN_LOG(RENDERER, "Custom texture %08x image preparation failed (%s): %s", hash,
+				candidate.path.c_str(), exception.what());
+			custom_texture.reportError(exception.error());
+			markFailed(candidate.path);
+			return nullptr;
+		}
+		catch (const FlycastException& exception)
+		{
+			WARN_LOG(RENDERER, "Custom texture %08x image preparation failed (%s): %s", hash,
+				candidate.path.c_str(), exception.what());
+			custom_texture.reportError(CustomTextureException::Error::ImageDecode);
+			markFailed(candidate.path);
+			return nullptr;
+		}
 	}
 
 	TextureTranscoder transcoder;
 	TextureInspection inspection;
-	TextureTranscodeStatus status = transcoder.inspect(candidate.kind, fileBytes, inspection);
-	if (!status)
+	try
+	{
+		inspection = transcoder.inspect(candidate.kind, std::move(fileBytes));
+	}
+	catch (const FlycastException& exception)
 	{
 		WARN_LOG(RENDERER, "Custom texture %08x inspection failed (%s): %s", hash,
-			candidate.path.c_str(), status.message.c_str());
-		custom_texture.reportError(CustomTexture::Error::CompressedSource);
+			candidate.path.c_str(), exception.what());
+		custom_texture.reportError(CustomTextureException::Error::CompressedSource);
 		markFailed(candidate.path);
 		return nullptr;
 	}
@@ -382,31 +340,37 @@ PreparedCustomTexturePtr CustomTextureSource::loadCustomTexture(u32 hash,
 		WARN_LOG(RENDERER, "Custom texture %08x dimensions %ux%u exceed renderer limit %ux%u: %s",
 				hash, inspection.width, inspection.height, capabilities.max2DWidth,
 				capabilities.max2DHeight, candidate.path.c_str());
-		custom_texture.reportError(CustomTexture::Error::TextureTooLarge);
+		custom_texture.reportError(CustomTextureException::Error::TextureTooLarge);
 		markFailed(candidate.path);
 		return nullptr;
 	}
 	auto targets = selectNativeTextureTargets(capabilities, inspection.codec,
 			inspection.blockWidth, inspection.blockHeight, inspection.hasAlpha);
+	std::string preparationError = "no compatible native texture target";
 	for (NativeTextureFormat target : targets)
 	{
 		if (!capabilities.canUpload(target, inspection.width, inspection.height, inspection.levels))
 			continue;
-		PreparedCustomTexturePtr texture;
-		status = transcoder.prepare(inspection, fileBytes, target, hash, cancelled, texture);
-		if (status)
+		try
 		{
+			PreparedCustomTexture::Ptr texture = transcoder.prepare(target, hash, cancelled);
 			DEBUG_LOG(RENDERER, "Prepared custom texture %08x %s -> %s (%zu bytes, %zu mips)",
 				hash, customTextureCodecName(inspection.codec), nativeTextureFormatName(target),
 				texture->bytes.size(), texture->levels.size());
 			return texture;
 		}
-		if (status.category == TextureTranscodeError::Cancelled)
+		catch (const LoadCancelledException&)
+		{
 			return nullptr;
+		}
+		catch (const FlycastException& exception)
+		{
+			preparationError = exception.what();
+		}
 	}
 	WARN_LOG(RENDERER, "Custom texture %08x preparation failed (%s, %s): %s", hash,
-			customTextureCodecName(inspection.codec), candidate.path.c_str(), status.message.c_str());
-	custom_texture.reportError(CustomTexture::Error::CompressedSource);
+			customTextureCodecName(inspection.codec), candidate.path.c_str(), preparationError.c_str());
+	custom_texture.reportError(CustomTextureException::Error::CompressedSource);
 	markFailed(candidate.path);
 	return nullptr;
 }
@@ -494,11 +458,22 @@ void CustomTexture::addSource(std::unique_ptr<BaseCustomTextureSource> source)
 		}
 		if (loaderThread)
 		{
-			if (ptr->shouldPreload())
+			const bool shouldPreload = ptr->shouldPreload();
+			if (shouldPreload)
 				pendingPreloads++;
-			loaderThread->run([this, ptr]() {
-				prepareSource(ptr);
-			});
+			try
+			{
+				loaderThread->run([this, ptr, shouldPreload]() {
+					prepareSource(ptr, shouldPreload);
+				});
+			}
+			catch (const std::bad_alloc& exception)
+			{
+				if (shouldPreload)
+					pendingPreloads--;
+				WARN_LOG(RENDERER, "Custom texture source scheduling failed: %s", exception.what());
+				reportError(CustomTextureException::Error::AllocationFailed);
+			}
 		}
 	}
 }
@@ -522,16 +497,15 @@ void CustomTexture::terminate()
 		std::lock_guard<std::mutex> lock(stateMutex);
 		preloadedTextures.clear();
 		pendingGpuPreloads.clear();
-		completions.clear();
-		activeRequests.clear();
-		pendingError = Error::None;
+		requests.clear();
+		pendingError.reset();
 		errorNotificationShown = false;
 	}
 	resetPreloadProgress();
 	initialized = false;
 }
 
-PreparedCustomTexturePtr CustomTexture::findPreloaded(u32 currentHash, u32 oldVqHash,
+PreparedCustomTexture::Ptr CustomTexture::findPreloaded(u32 currentHash, u32 oldVqHash,
 		u32 oldHash) const
 {
 	std::lock_guard<std::mutex> lock(stateMutex);
@@ -544,7 +518,7 @@ PreparedCustomTexturePtr CustomTexture::findPreloaded(u32 currentHash, u32 oldVq
 	return nullptr;
 }
 
-PreparedCustomTexturePtr CustomTexture::loadTexture(u32 currentHash, u32 oldVqHash,
+PreparedCustomTexture::Ptr CustomTexture::loadTexture(u32 currentHash, u32 oldVqHash,
 		u32 oldHash, const CustomTextureCapabilities& activeCapabilities,
 		const BaseCustomTextureSource::CancellationCheck& cancelled)
 {
@@ -554,7 +528,7 @@ PreparedCustomTexturePtr CustomTexture::loadTexture(u32 currentHash, u32 oldVqHa
 		{
 			if (!source->shouldReplace())
 				continue;
-			if (PreparedCustomTexturePtr texture = source->loadCustomTexture(hash,
+			if (PreparedCustomTexture::Ptr texture = source->loadCustomTexture(hash,
 					activeCapabilities, cancelled))
 				return texture;
 		}
@@ -567,7 +541,7 @@ bool CustomTexture::requestCancelled(CustomTextureRequestId requestId) const
 	if (stopPreload)
 		return true;
 	std::lock_guard<std::mutex> lock(stateMutex);
-	return activeRequests.count(requestId.value) == 0;
+	return requests.count(requestId.value) == 0;
 }
 
 void CustomTexture::loadCustomTextureAsync(BaseTextureCacheData *textureData)
@@ -577,9 +551,10 @@ void CustomTexture::loadCustomTextureAsync(BaseTextureCacheData *textureData)
 	showErrorNotification();
 	if (textureData->customRequestId)
 		cancelRequest(textureData->customRequestId);
+	textureData->customRequestId = {};
 	textureData->customPayload.reset();
 	const CustomTextureCapabilities activeCapabilities = getCapabilities();
-	if (PreparedCustomTexturePtr preloaded = findPreloaded(textureData->texture_hash,
+	if (PreparedCustomTexture::Ptr preloaded = findPreloaded(textureData->texture_hash,
 			textureData->old_vqtexture_hash, textureData->old_texture_hash))
 	{
 		textureData->customPayload = std::move(preloaded);
@@ -591,25 +566,64 @@ void CustomTexture::loadCustomTextureAsync(BaseTextureCacheData *textureData)
 	const u32 currentHash = textureData->texture_hash;
 	const u32 oldVqHash = textureData->old_vqtexture_hash;
 	const u32 oldHash = textureData->old_texture_hash;
-	textureData->customRequestId = requestId;
+	try
 	{
 		std::lock_guard<std::mutex> lock(stateMutex);
-		activeRequests.insert(requestId.value);
+		requests.emplace(requestId.value, Request {});
 	}
-	loaderThread->run([this, requestId, currentHash, oldVqHash, oldHash,
-			activeCapabilities]() {
-		auto cancelled = [this, requestId]() {
-			return requestCancelled(requestId);
-		};
-		PreparedCustomTexturePtr texture = loadTexture(currentHash, oldVqHash, oldHash,
-				activeCapabilities, cancelled);
-		std::lock_guard<std::mutex> lock(stateMutex);
-		if (activeRequests.erase(requestId.value) != 0)
+	catch (const std::bad_alloc& exception)
+	{
+		WARN_LOG(RENDERER, "Custom texture request %08x allocation failed: %s",
+				currentHash, exception.what());
+		reportError(CustomTextureException::Error::AllocationFailed);
+		showErrorNotification();
+		return;
+	}
+	textureData->customRequestId = requestId;
+	try
+	{
+		loaderThread->run([this, requestId, currentHash, oldVqHash, oldHash,
+				activeCapabilities]() {
+			PreparedCustomTexture::Ptr texture;
+			bool failed = false;
+			try
+			{
+				auto cancelled = [this, requestId]() {
+					return requestCancelled(requestId);
+				};
+				texture = loadTexture(currentHash, oldVqHash, oldHash,
+						activeCapabilities, cancelled);
+				failed = texture == nullptr;
+			}
+			catch (const std::bad_alloc& exception)
+			{
+				WARN_LOG(RENDERER, "Custom texture request %08x allocation failed: %s",
+						currentHash, exception.what());
+				reportError(CustomTextureException::Error::AllocationFailed);
+				failed = true;
+			}
+			std::lock_guard<std::mutex> lock(stateMutex);
+			const auto request = requests.find(requestId.value);
+			if (request != requests.end())
+			{
+				request->second.texture = std::move(texture);
+				request->second.failed = failed;
+				request->second.complete = true;
+			}
+		});
+	}
+	catch (const std::bad_alloc& exception)
+	{
 		{
-			const bool failed = texture == nullptr;
-			completions[requestId.value] = { std::move(texture), failed };
+			std::lock_guard<std::mutex> lock(stateMutex);
+			requests.erase(requestId.value);
 		}
-	});
+		textureData->customRequestId = {};
+		WARN_LOG(RENDERER, "Custom texture request %08x scheduling failed: %s",
+				currentHash, exception.what());
+		reportError(CustomTextureException::Error::AllocationFailed);
+		showErrorNotification();
+	}
 }
 
 bool CustomTexture::isRequestComplete(CustomTextureRequestId requestId) const
@@ -617,22 +631,23 @@ bool CustomTexture::isRequestComplete(CustomTextureRequestId requestId) const
 	if (!requestId)
 		return false;
 	std::lock_guard<std::mutex> lock(stateMutex);
-	return completions.count(requestId.value) != 0;
+	const auto request = requests.find(requestId.value);
+	return request != requests.end() && request->second.complete;
 }
 
-PreparedCustomTexturePtr CustomTexture::takePreparedTexture(CustomTextureRequestId requestId, bool& failed)
+PreparedCustomTexture::Ptr CustomTexture::takePreparedTexture(CustomTextureRequestId requestId, bool& failed)
 {
 	showErrorNotification();
 	failed = false;
 	if (!requestId)
 		return nullptr;
 	std::lock_guard<std::mutex> lock(stateMutex);
-	const auto found = completions.find(requestId.value);
-	if (found == completions.end())
+	const auto found = requests.find(requestId.value);
+	if (found == requests.end() || !found->second.complete)
 		return nullptr;
 	failed = found->second.failed;
-	PreparedCustomTexturePtr texture = failed ? nullptr : std::move(found->second.texture);
-	completions.erase(found);
+	PreparedCustomTexture::Ptr texture = failed ? nullptr : std::move(found->second.texture);
+	requests.erase(found);
 	return texture;
 }
 
@@ -641,8 +656,7 @@ void CustomTexture::cancelRequest(CustomTextureRequestId requestId)
 	if (!requestId)
 		return;
 	std::lock_guard<std::mutex> lock(stateMutex);
-	activeRequests.erase(requestId.value);
-	completions.erase(requestId.value);
+	requests.erase(requestId.value);
 }
 
 void CustomTexture::setCapabilities(const CustomTextureCapabilities& newCapabilities)
@@ -837,49 +851,63 @@ void CustomTexture::dumpTexture(BaseTextureCacheData* texture, int w, int h, voi
 	free(dstBuffer);
 }
 
-void CustomTexture::prepareSource(BaseCustomTextureSource* source)
+void CustomTexture::prepareSource(BaseCustomTextureSource* source, bool shouldPreload)
 {
-	bool shouldPreload = source->shouldPreload();
-	const bool preloadToGpu = shouldPreload
-			&& config::customTexturePreloadMode() == config::CustomTexturePreloadMode::VideoMemory;
-	const CustomTextureCapabilities activeCapabilities = getCapabilities();
+	int preloadCount = 0;
+	int processedCount = 0;
 
-	if (!stopPreload && source->loadMap(activeCapabilities))
+	try
 	{
-		if (shouldPreload)
+		const bool preloadToGpu = shouldPreload
+				&& config::customTexturePreloadMode() == config::CustomTexturePreloadMode::VideoMemory;
+		const CustomTextureCapabilities activeCapabilities = getCapabilities();
+		if (!stopPreload && source->loadMap(activeCapabilities))
 		{
-			int count = static_cast<int>(source->getTextureCount());
-			if (count > 0)
+			if (shouldPreload)
 			{
-				preloadTotal += count;
-				auto callback = [this, preloadToGpu](u32 hash, PreparedCustomTexturePtr texture) {
-					size_t size = texture ? texture->bytes.size() : 0;
-					if (preloadToGpu)
-					{
+				preloadCount = static_cast<int>(source->getTextureCount());
+				if (preloadCount > 0)
+				{
+					preloadTotal += preloadCount;
+					auto callback = [this, preloadToGpu, &processedCount](u32 hash,
+							PreparedCustomTexture::Ptr texture) {
+						size_t size = texture ? texture->bytes.size() : 0;
+						if (preloadToGpu)
+						{
+							if (texture)
+								submitGpuPreload(hash, std::move(texture));
+							else
+								preloadLoaded++;
+							processedCount++;
+							return;
+						}
 						if (texture)
-							submitGpuPreload(hash, std::move(texture));
-						else
-							preloadLoaded++;
-						return;
-					}
-					if (texture)
-					{
-						std::lock_guard<std::mutex> lock(stateMutex);
-						preloadedTextures.emplace(hash, std::move(texture));
-					}
-					preloadLoaded++;
-					preloadLoadedSize += size;
-				};
-				source->preloadTextures(activeCapabilities, callback, &stopPreload);
+						{
+							std::lock_guard<std::mutex> lock(stateMutex);
+							preloadedTextures.emplace(hash, std::move(texture));
+						}
+						preloadLoaded++;
+						preloadLoadedSize += size;
+						processedCount++;
+					};
+					source->preloadTextures(activeCapabilities, callback, &stopPreload);
+				}
 			}
 		}
+	}
+	catch (const std::bad_alloc& exception)
+	{
+		WARN_LOG(RENDERER, "Custom texture preload allocation failed: %s", exception.what());
+		reportError(CustomTextureException::Error::AllocationFailed);
+		if (preloadCount > processedCount)
+			preloadLoaded += preloadCount - processedCount;
 	}
 
 	if (shouldPreload)
 		pendingPreloads--;
 }
 
-void CustomTexture::submitGpuPreload(u32 hash, PreparedCustomTexturePtr texture)
+void CustomTexture::submitGpuPreload(u32 hash, PreparedCustomTexture::Ptr texture)
 {
 	std::unique_lock<std::mutex> lock(stateMutex);
 	gpuPreloadCondition.wait(lock, [this] {
@@ -895,7 +923,7 @@ void CustomTexture::processGpuPreloads(const GpuTextureUploader& uploader)
 	constexpr int MaxUploadsPerFrame = 8;
 	for (int i = 0; i < MaxUploadsPerFrame; ++i)
 	{
-		std::pair<u32, PreparedCustomTexturePtr> pending;
+		std::pair<u32, PreparedCustomTexture::Ptr> pending;
 		{
 			std::lock_guard<std::mutex> lock(stateMutex);
 			if (pendingGpuPreloads.empty())
@@ -904,12 +932,26 @@ void CustomTexture::processGpuPreloads(const GpuTextureUploader& uploader)
 			pendingGpuPreloads.pop_front();
 		}
 		gpuPreloadCondition.notify_one();
-		const bool uploaded = pending.second && uploader
-				&& uploader(pending.first, *pending.second);
+		bool uploaded = false;
+		try
+		{
+			uploaded = pending.second && uploader
+					&& uploader(pending.first, *pending.second);
+		}
+		catch (const FlycastException& exception)
+		{
+			WARN_LOG(RENDERER, "GPU custom texture preload %08x failed: %s",
+					pending.first, exception.what());
+		}
+		catch (const std::bad_alloc& exception)
+		{
+			WARN_LOG(RENDERER, "GPU custom texture preload %08x allocation failed: %s",
+					pending.first, exception.what());
+		}
 		if (uploaded)
 			preloadLoadedSize += pending.second->bytes.size();
 		else
-			reportError(Error::Upload);
+			reportError(CustomTextureException::Error::Upload);
 		preloadLoaded++;
 	}
 }
@@ -923,25 +965,24 @@ void CustomTexture::getPreloadProgress(int& completed, int& total, size_t& loade
 	loadedSize = preloadLoadedSize;
 }
 
-void CustomTexture::reportError(Error error)
+void CustomTexture::reportError(CustomTextureException::Error error)
 {
-	if (error == Error::None)
-		return;
 	// Loader errors may occur during preloading, before the in-game toast is visible.
 	std::lock_guard<std::mutex> lock(stateMutex);
-	if (!errorNotificationShown && pendingError == Error::None)
+	if (!errorNotificationShown && !pendingError)
 		pendingError = error;
 }
 
 void CustomTexture::showErrorNotification()
 {
+	using Error = CustomTextureException::Error;
 	Error error;
 	{
 		std::lock_guard<std::mutex> lock(stateMutex);
-		if (errorNotificationShown || pendingError == Error::None)
+		if (errorNotificationShown || !pendingError)
 			return;
-		error = pendingError;
-		pendingError = Error::None;
+		error = *pendingError;
+		pendingError.reset();
 		errorNotificationShown = true;
 	}
 
@@ -963,11 +1004,12 @@ void CustomTexture::showErrorNotification()
 	case Error::Upload:
 		message = i18n::T("Custom texture could not be uploaded to the GPU");
 		break;
+	case Error::AllocationFailed:
+		message = i18n::T("Custom texture memory allocation failed");
+		break;
 	case Error::DirectX9CompressedSource:
 		message = i18n::T("DirectX 9 supports PNG/JPEG custom textures only");
 		break;
-	case Error::None:
-		return;
 	}
 	if (message != nullptr)
 		os_notify(message, 10000);

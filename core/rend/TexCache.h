@@ -109,8 +109,8 @@ public:
 	u32 texture_hash;			// xxhash of texture data, used for custom textures
 	u32 old_vqtexture_hash;		// legacy hash for vq textures
 	u32 old_texture_hash;		// legacy hash
-	PreparedCustomTexturePtr customPayload;
-	GpuPreloadedTexturePtr gpuPreloadedTexture;
+	PreparedCustomTexture::Ptr customPayload;
+	GpuPreloadedTexture::Ptr gpuPreloadedTexture;
 	CustomTextureRequestId customRequestId;
 	bool is_custom_replaced;	// True if the texture currently on the GPU is the custom replacement
 	bool usingGpuPreloadedTexture = false;
@@ -158,8 +158,8 @@ public:
 	void ComputeHash();
 	bool Update();
 	virtual void UploadToGPU(int width, int height, const u8 *temp_tex_buffer, bool mipmapped, bool mipmapsIncluded = false) = 0;
-	virtual bool UploadCustomTexture(const PreparedCustomTexture& texture, bool mipmapped);
-	virtual bool UseGpuPreloadedTexture(const GpuPreloadedTexturePtr& texture) { return false; }
+	virtual bool uploadCustomTexture(const PreparedCustomTexture& texture, bool mipmapped);
+	virtual bool useGpuPreloadedTexture(const GpuPreloadedTexture::Ptr& texture) { return false; }
 	virtual bool Force32BitTexture(TextureType type) const { return false; }
 	bool CheckCustomTexture();
 	//true if : dirty or paletted texture and hashes don't match

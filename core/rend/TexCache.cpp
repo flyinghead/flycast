@@ -20,6 +20,7 @@
 #include "hw/mem/addrspace.h"
 
 #include <mutex>
+#include <new>
 #include <xxhash.h>
 
 #ifdef _OPENMP
@@ -736,7 +737,7 @@ bool BaseTextureCacheData::Update()
 	return true;
 }
 
-bool BaseTextureCacheData::UploadCustomTexture(const PreparedCustomTexture& texture, bool mipmapped)
+bool BaseTextureCacheData::uploadCustomTexture(const PreparedCustomTexture& texture, bool mipmapped)
 {
 	if (texture.nativeFormat != NativeTextureFormat::Rgba8Unorm || texture.levels.size() != 1)
 		return false;
@@ -750,10 +751,10 @@ bool BaseTextureCacheData::CheckCustomTexture()
 {
 	if (gpuPreloadedTexture)
 	{
-		if (!UseGpuPreloadedTexture(gpuPreloadedTexture))
+		if (!useGpuPreloadedTexture(gpuPreloadedTexture))
 		{
 			WARN_LOG(RENDERER, "Could not use GPU-preloaded custom texture");
-			custom_texture.reportError(CustomTexture::Error::Upload);
+			custom_texture.reportError(CustomTextureException::Error::Upload);
 			custom_texture.showErrorNotification();
 			gpuPreloadedTexture.reset();
 			return false;
@@ -782,18 +783,40 @@ bool BaseTextureCacheData::CheckCustomTexture()
 				customPayload->replacementHash);
 		custom_texture.reportError(customPayload->width > capabilities.max2DWidth
 				|| customPayload->height > capabilities.max2DHeight
-				? CustomTexture::Error::TextureTooLarge : CustomTexture::Error::Upload);
+				? CustomTextureException::Error::TextureTooLarge
+				: CustomTextureException::Error::Upload);
 		custom_texture.showErrorNotification();
 		customPayload.reset();
 		customRequestId = {};
 		return false;
 	}
+	bool uploaded = false;
+	bool uploadFailureLogged = false;
 	const bool mipmapped = tcw.MipMapped != 0 && tcw.ScanOrder == 0 && config::UseMipmaps;
-	if (!UploadCustomTexture(*customPayload, mipmapped))
+	try
 	{
-		WARN_LOG(RENDERER, "Custom texture upload failed for %08x (%s)",
-				customPayload->replacementHash, nativeTextureFormatName(customPayload->nativeFormat));
-		custom_texture.reportError(CustomTexture::Error::Upload);
+		uploaded = uploadCustomTexture(*customPayload, mipmapped);
+	}
+	catch (const FlycastException& exception)
+	{
+		WARN_LOG(RENDERER, "Custom texture validation failed for %08x (%s): %s",
+				customPayload->replacementHash,
+				nativeTextureFormatName(customPayload->nativeFormat), exception.what());
+		uploadFailureLogged = true;
+	}
+	catch (const std::bad_alloc& exception)
+	{
+		WARN_LOG(RENDERER, "Custom texture upload allocation failed for %08x (%s): %s",
+				customPayload->replacementHash,
+				nativeTextureFormatName(customPayload->nativeFormat), exception.what());
+		uploadFailureLogged = true;
+	}
+	if (!uploaded)
+	{
+		if (!uploadFailureLogged)
+			WARN_LOG(RENDERER, "Custom texture upload failed for %08x (%s)",
+					customPayload->replacementHash, nativeTextureFormatName(customPayload->nativeFormat));
+		custom_texture.reportError(CustomTextureException::Error::Upload);
 		custom_texture.showErrorNotification();
 		customPayload.reset();
 		customRequestId = {};

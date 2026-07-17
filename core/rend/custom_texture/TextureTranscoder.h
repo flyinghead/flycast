@@ -21,37 +21,23 @@
 #include "CustomTextureTypes.h"
 
 #include <functional>
-#include <string>
+#include <memory>
 #include <vector>
 
-enum class TextureTranscodeError : uint8_t
+namespace basist
 {
-	None,
-	UnsupportedSource,
-	MalformedSource,
-	UnsupportedTarget,
-	Cancelled,
-	AllocationFailure,
-	UpstreamFailure,
-};
-
-struct TextureTranscodeStatus
-{
-	TextureTranscodeError category = TextureTranscodeError::None;
-	std::string message;
-
-	explicit operator bool() const { return category == TextureTranscodeError::None; }
-};
+class dds_transcoder;
+class ktx2_transcoder;
+}
 
 struct TextureInspection
 {
-	CustomTextureCodec codec = CustomTextureCodec::LegacyRgba;
+	CustomTextureCodec codec = CustomTextureCodec::Xubc7;
 	uint32_t width = 0;
 	uint32_t height = 0;
 	uint32_t levels = 0;
 	uint32_t blockWidth = 1;
 	uint32_t blockHeight = 1;
-	bool sourceSrgb = false;
 	bool hasAlpha = true;
 };
 
@@ -60,13 +46,20 @@ class TextureTranscoder
 public:
 	using CancellationCheck = std::function<bool()>;
 
+	TextureTranscoder();
+	~TextureTranscoder();
+
+	TextureInspection inspect(CustomTextureSourceKind hintedKind,
+			std::vector<uint8_t> fileBytes);
+
+	PreparedCustomTexture::Ptr prepare(NativeTextureFormat target,
+			uint32_t replacementHash, const CancellationCheck& cancelled);
+
+private:
 	static void initializeOnce();
 
-	TextureTranscodeStatus inspect(CustomTextureSourceKind hintedKind,
-			const std::vector<uint8_t>& fileBytes, TextureInspection& inspection) const;
-
-	TextureTranscodeStatus prepare(const TextureInspection& inspection,
-			const std::vector<uint8_t>& fileBytes, NativeTextureFormat target,
-			uint32_t replacementHash, const CancellationCheck& cancelled,
-			PreparedCustomTexturePtr& texture) const;
+	std::vector<uint8_t> fileBytes;
+	TextureInspection inspection;
+	std::unique_ptr<basist::dds_transcoder> ddsTranscoder;
+	std::unique_ptr<basist::ktx2_transcoder> ktx2Transcoder;
 };

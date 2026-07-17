@@ -19,8 +19,10 @@
 #pragma once
 #include "texconv.h"
 #include "custom_texture/CustomTextureTypes.h"
+#include "types.h"
 #include <string>
 #include <memory>
+#include <optional>
 #include <vector>
 #include <atomic>
 #include <functional>
@@ -28,25 +30,47 @@
 #include <deque>
 #include <mutex>
 #include <unordered_map>
-#include <unordered_set>
 
 class BaseTextureCacheData;
 class WorkerThread;
 
+class CustomTextureException final : public FlycastException
+{
+public:
+	enum class Error
+	{
+		FileRead,
+		ImageDecode,
+		CompressedSource,
+		TextureTooLarge,
+		Upload,
+		AllocationFailed,
+		DirectX9CompressedSource,
+	};
+
+	CustomTextureException(Error error, const std::string& message)
+		: FlycastException(message), error_(error) {}
+
+	Error error() const { return error_; }
+
+private:
+	Error error_;
+};
+
 struct GpuPreloadedTexture
 {
+	using Ptr = std::shared_ptr<GpuPreloadedTexture>;
+
 	explicit GpuPreloadedTexture(u8 mipLevels) : mipLevels(mipLevels) {}
 	virtual ~GpuPreloadedTexture() = default;
 
 	u8 mipLevels;
 };
 
-using GpuPreloadedTexturePtr = std::shared_ptr<GpuPreloadedTexture>;
-
 class BaseCustomTextureSource
 {
 public:
-	using TextureCallback = std::function<void(u32 hash, PreparedCustomTexturePtr texture)>;
+	using TextureCallback = std::function<void(u32 hash, PreparedCustomTexture::Ptr texture)>;
 	using CancellationCheck = std::function<bool()>;
 
 	virtual ~BaseCustomTextureSource() = default;
@@ -55,7 +79,7 @@ public:
 	virtual bool loadMap(const CustomTextureCapabilities& capabilities) = 0;
 	virtual size_t getTextureCount() const { return 0; }
 	virtual void terminate() { }
-	virtual PreparedCustomTexturePtr loadCustomTexture(u32 hash,
+	virtual PreparedCustomTexture::Ptr loadCustomTexture(u32 hash,
 			const CustomTextureCapabilities& capabilities, const CancellationCheck& cancelled) = 0;
 	virtual bool isTextureReplaced(u32 hash) const = 0;
 	virtual void preloadTextures(const CustomTextureCapabilities& capabilities,
@@ -67,17 +91,6 @@ class CustomTexture
 public:
 	using GpuTextureUploader = std::function<bool(u32 hash, const PreparedCustomTexture& texture)>;
 
-	enum class Error
-	{
-		None,
-		FileRead,
-		ImageDecode,
-		CompressedSource,
-		TextureTooLarge,
-		Upload,
-		DirectX9CompressedSource,
-	};
-
 	~CustomTexture();
 	bool init();
 	bool enabled() const;
@@ -86,7 +99,7 @@ public:
 	void addSource(std::unique_ptr<BaseCustomTextureSource> source);
 	void loadCustomTextureAsync(BaseTextureCacheData *textureData);
 	bool isRequestComplete(CustomTextureRequestId requestId) const;
-	PreparedCustomTexturePtr takePreparedTexture(CustomTextureRequestId requestId, bool& failed);
+	PreparedCustomTexture::Ptr takePreparedTexture(CustomTextureRequestId requestId, bool& failed);
 	void cancelRequest(CustomTextureRequestId requestId);
 	void setCapabilities(const CustomTextureCapabilities& capabilities);
 	CustomTextureCapabilities getCapabilities() const;
@@ -94,24 +107,25 @@ public:
 	void terminate();
 	void getPreloadProgress(int& completed, int& total, size_t& loadedSize) const;
 	void processGpuPreloads(const GpuTextureUploader& uploader);
-	void reportError(Error error);
+	void reportError(CustomTextureException::Error error);
 	void showErrorNotification();
 
 private:
-	struct Completion
+	struct Request
 	{
-		PreparedCustomTexturePtr texture;
+		PreparedCustomTexture::Ptr texture;
+		bool complete = false;
 		bool failed = false;
 	};
 
-	PreparedCustomTexturePtr loadTexture(u32 currentHash, u32 oldVqHash,
+	PreparedCustomTexture::Ptr loadTexture(u32 currentHash, u32 oldVqHash,
 			u32 oldHash, const CustomTextureCapabilities& capabilities,
 			const BaseCustomTextureSource::CancellationCheck& cancelled);
-	PreparedCustomTexturePtr findPreloaded(u32 currentHash, u32 oldVqHash, u32 oldHash) const;
+	PreparedCustomTexture::Ptr findPreloaded(u32 currentHash, u32 oldVqHash, u32 oldHash) const;
 	bool isTextureReplaced(BaseTextureCacheData* texture) const;
 	std::string getGameId() const;
-	void prepareSource(BaseCustomTextureSource* source);
-	void submitGpuPreload(u32 hash, PreparedCustomTexturePtr texture);
+	void prepareSource(BaseCustomTextureSource* source, bool shouldPreload);
+	void submitGpuPreload(u32 hash, PreparedCustomTexture::Ptr texture);
 	void resetPreloadProgress();
 	bool requestCancelled(CustomTextureRequestId requestId) const;
 
@@ -119,11 +133,10 @@ private:
 	std::vector<std::unique_ptr<BaseCustomTextureSource>> sources;
 	std::unique_ptr<WorkerThread> loaderThread;
 	mutable std::mutex stateMutex;
-	std::unordered_map<u32, PreparedCustomTexturePtr> preloadedTextures;
-	std::deque<std::pair<u32, PreparedCustomTexturePtr>> pendingGpuPreloads;
+	std::unordered_map<u32, PreparedCustomTexture::Ptr> preloadedTextures;
+	std::deque<std::pair<u32, PreparedCustomTexture::Ptr>> pendingGpuPreloads;
 	std::condition_variable gpuPreloadCondition;
-	std::unordered_map<u64, Completion> completions;
-	std::unordered_set<u64> activeRequests;
+	std::unordered_map<u64, Request> requests;
 	CustomTextureCapabilities capabilities = CustomTextureCapabilities::rgbaOnly(CustomTextureBackend::Unknown);
 	std::atomic<u64> nextRequestId { 1 };
 	std::atomic<int> preloadTotal { 0 };
@@ -131,7 +144,7 @@ private:
 	std::atomic<size_t> preloadLoadedSize { 0 };
 	std::atomic<int> pendingPreloads { 0 };
 	std::atomic<bool> stopPreload { false };
-	Error pendingError = Error::None;
+	std::optional<CustomTextureException::Error> pendingError;
 	bool errorNotificationShown = false;
 };
 

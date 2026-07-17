@@ -12,6 +12,7 @@
 #include "profiler/fc_profiler.h"
 #include "network/ggpo.h"
 
+#include <cassert>
 #include <mutex>
 #include <deque>
 
@@ -486,12 +487,12 @@ void rend_term_renderer()
 void rend_process_custom_texture_preloads()
 {
 	if (renderer != nullptr)
-		renderer->ProcessCustomTexturePreloads();
+		renderer->processCustomTexturePreloads();
 }
 
 bool rend_supports_gpu_texture_preload()
 {
-	return renderer != nullptr && renderer->SupportsGpuTexturePreload();
+	return renderer != nullptr && renderer->supportsGpuTexturePreload();
 }
 
 void rend_request_gpu_preloaded_texture_cleanup()
@@ -519,8 +520,8 @@ std::shared_ptr<GpuPreloadedTexture> Renderer::findGpuPreloadedTexture(
 
 void Renderer::addGpuPreloadedTexture(u32 hash, std::shared_ptr<GpuPreloadedTexture> texture)
 {
-	if (texture)
-		gpuPreloadedTextures.emplace(hash, std::move(texture));
+	assert(texture);
+	gpuPreloadedTextures.emplace(hash, std::move(texture));
 }
 
 void Renderer::clearGpuPreloadedTextures()
