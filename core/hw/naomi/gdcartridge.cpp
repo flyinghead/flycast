@@ -23,6 +23,7 @@
 #include "naomi.h"
 #include "oslib/i18n.h"
 #include <algorithm>
+#include <zlib.h>
 
 /*
 
@@ -539,26 +540,28 @@ void GDCartridge::device_start(LoadProgress *progress, std::vector<u8> *digest)
 
 		// directory
 		u8 dir_sector[2048];
-		// find data of file
-		u32 file_size;
 
-		if (netpic == 0) {
+		// find data of file
+		if (netpic == 0)
+		{
 			u32 dir = ((buffer[0x2 + 0] << 0) |
 				(buffer[0x2 + 1] << 8) |
 				(buffer[0x2 + 2] << 16) |
 				(buffer[0x2 + 3] << 24));
 
 			read_gdrom(gdrom.get(), dir, dir_sector);
-			find_file(name, dir_sector, file_start, file_size);
+			find_file(name, dir_sector, file_start, fileSize);
 
-			if (file_start && (file_size == 0x100)) {
+			if (file_start && fileSize == 0x100) {
 				// read file
 				read_gdrom(gdrom.get(), file_start, buffer);
 				// get "rom" file name
 				memset(name, '\0', 128);
 				memcpy(name, buffer + 0xc0, FILENAME_LENGTH - 1);
 			}
-		} else {
+		}
+		else
+		{
 			bool found = false;
 			u32 i = 0;
 			while (i < 2048 && buffer[i] != 0)
@@ -583,15 +586,15 @@ void GDCartridge::device_start(LoadProgress *progress, std::vector<u8> *digest)
 			}
 		}
 
-		find_file(name, dir_sector, file_start, file_size);
+		find_file(name, dir_sector, file_start, fileSize);
 		if (file_start == 0)
 			// mj1: filename in the pic is incorrect, probably because the disk isn't supposed to be run like this?
 			// so grab the first .BIN and load it.
-			find_file("*.BIN", dir_sector, file_start, file_size);
+			find_file("*.BIN", dir_sector, file_start, fileSize);
 
 		if (file_start != 0)
 		{
-			u32 file_rounded_size = (file_size + 2047) & ~2048;
+			u32 file_rounded_size = (fileSize + 2047) & ~2048;
 			for (dimm_data_size = 4096; dimm_data_size < file_rounded_size; dimm_data_size <<= 1)
 				;
 			dimm_data = (u8 *)malloc(dimm_data_size);
@@ -605,6 +608,20 @@ void GDCartridge::device_start(LoadProgress *progress, std::vector<u8> *digest)
 					loadedSegments.end(), true);
 
 			des_generate_subkeys(rev64(key), des_subkeys);
+
+			if (fullLoad)
+			{
+				for (unsigned offset = 0; offset < fileSize; offset += SEGMENT_SIZE)
+				{
+					if (progress != nullptr)
+					{
+						if (progress->cancelled)
+							throw LoadCancelledException();
+						progress->progress = (float)offset / fileSize;
+					}
+					loadSegments(offset, SEGMENT_SIZE);
+				}
+			}
 		}
 
 		if (!dimm_data)
@@ -620,13 +637,16 @@ void GDCartridge::loadSegments(u32 offset, u32 size)
 		if (loadedSegments[segment])
 			continue;
 		DEBUG_LOG(NAOMI, "Loading segment %d", segment);
+		const u32 start = segment * SEGMENT_SIZE;
 		// load data
-		read_gdrom(gdrom.get(), file_start + (segment * SEGMENT_SIZE) / 2048,
-				dimm_data + segment * SEGMENT_SIZE,
+		read_gdrom(gdrom.get(), file_start + start / 2048,
+				dimm_data + start,
 				SEGMENT_SIZE / 2048,
 				nullptr);
+		if (start < fileSize)
+			crc = crc32(crc, dimm_data + start, std::min(SEGMENT_SIZE, fileSize - start));
 		// decrypt loaded data
-		u64 *pData = (u64 *)(dimm_data + segment * SEGMENT_SIZE);
+		u64 *pData = (u64 *)(dimm_data + start);
 		for (u32 i = 0; i < SEGMENT_SIZE; i += 8, pData++)
 			*pData = des_encrypt_decrypt<true>(*pData, des_subkeys);
 		loadedSegments[segment] = true;

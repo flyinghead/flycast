@@ -24,6 +24,7 @@ namespace card_reader {
 void initdInit();
 void derbyInit();
 void clubkInit();
+void wccfInit();
 void term();
 
 void barcodeInit();
@@ -33,6 +34,7 @@ std::string barcodeGetCard();
 void barcodeSetCard(const std::string& card);
 
 void insertCard(int playerNum);
+void ejectCard();
 bool readerAvailable();
 
 }

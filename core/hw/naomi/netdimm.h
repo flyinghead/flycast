@@ -19,17 +19,34 @@
 #pragma once
 #include "gdcartridge.h"
 #include "network/net_platform.h"
+#include "util/tsqueue.h"
+#include <memory>
+#include <functional>
+
+class NetDimmServer;
 
 class NetDimm : public GDCartridge
 {
 public:
+	enum ServerMsg { ControlRead, Reboot };
+
 	NetDimm(u32 size);
+	~NetDimm();
 
 	void Init(LoadProgress *progress = nullptr, std::vector<u8> *digest = nullptr) override;
 
 	bool Write(u32 offset, u32 size, u32 data) override;
 
 	void Deserialize(Deserializer &deser) override;
+
+	u32 getDimmSize() const { return dimm_data_size; }
+
+	u8 *getDimmData(u32 offset) {
+		return &dimm_data[offset & (dimm_data_size - 1)];
+	}
+
+	void controlRead(std::function<void(u32)> callback);
+	void reboot();
 
 protected:
 	void process() override;
@@ -62,12 +79,7 @@ private:
 		dimm_parameterh = value >> 16;
 	}
 
-	sock_t getSocket(int idx)
-	{
-		if (idx < 1 || idx > (int)sockets.size())
-			return INVALID_SOCKET;
-		return sockets[idx - 1].fd;
-	}
+	sock_t getSocket(int idx);
 
 	bool isBusy() const
 	{
@@ -96,6 +108,8 @@ private:
 			sendTime = 0;
 			recvTimeout = 0;
 			recvTime = 0;
+			srcAddr = nullptr;
+			addrLen = nullptr;
 			return rc;
 		}
 
@@ -122,6 +136,8 @@ private:
 		u64 recvTimeout = 0;
 		u64 recvTime = 0;
 		int lastError = 0;
+		sockaddr *srcAddr = nullptr;
+		socklen_t *addrLen = nullptr;
 	};
 	std::vector<Socket> sockets;
 	bool dnsInProgress = false;
@@ -129,6 +145,9 @@ private:
 	bool finalTuned = false;
 
 	u32 dimmBufferOffset = 0x0f000000;
+	std::unique_ptr<NetDimmServer> server;
+	std::function<void(u32)> controlReadCallback;
+	TsQueue<ServerMsg> serverQueue;
 
 	static constexpr int POLL_CYCLES = SH4_MAIN_CLOCK / 60;
 };

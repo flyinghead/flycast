@@ -278,7 +278,8 @@ static void loadMameRom(const std::string& path, const std::string& fileName, Lo
 				GDCartridge *gdcart;
 				if (strncmp(game->name, "vf4", 3) == 0
 						|| strcmp(game->name, "mj1") == 0
-						|| strncmp(game->name, "wccf", 4) == 0)
+						|| strncmp(game->name, "wccf", 4) == 0
+						|| strncmp(game->name, "dragntr", 7) == 0)
 					gdcart = new NetDimm(game->size);
 				else
 					gdcart = new GDCartridge(game->size);
@@ -704,6 +705,11 @@ void naomi_cart_LoadRom(const std::string& path, const std::string& fileName, Lo
 		else if (gameId == "ALIEN FRONT")
 		{
 			serialModemInit();
+		}
+		else if ((gameId.substr(0, 4) == "WCCF" && config::MultiboardSlaves <= 1)
+					|| gameId.substr(0, 15) == "DRAGON TREASURE")
+		{
+			card_reader::wccfInit();
 		}
 		if (gameId == " TOUCH DE UNOH -------------"
 			|| gameId == " TOUCH DE UNOH 2 -----------"

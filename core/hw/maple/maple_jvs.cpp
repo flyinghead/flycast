@@ -26,6 +26,7 @@
 #include "cfg/option.h"
 #include "network/output.h"
 #include "hw/naomi/printer.h"
+#include "hw/naomi/card_reader.h"
 #include "input/haptic.h"
 
 #include <algorithm>
@@ -1022,6 +1023,43 @@ public:
 	}
 };
 
+class jvs_837_13844_wccf : public jvs_837_13844
+{
+public:
+	jvs_837_13844_wccf(u8 node_id, MIEImpl *parent, int first_player = 0)
+		: jvs_837_13844(node_id, parent, first_player)
+	{}
+
+	void write_digital_out(int count, const u8 *data) override
+	{
+		jvs_837_13844::write_digital_out(count, data);
+		if (count >= 3)
+		{
+			if (data[2] & 0x80) {
+				// solenoid is on
+				solenoidOn = true;
+				solenoidWait = 0;
+			}
+			else
+			{
+				// solenoid is off
+				if (solenoidOn)
+				{
+					// wait 30 frames before ejecting the card
+					if (++solenoidWait >= 30) {
+						card_reader::ejectCard();
+						solenoidOn = false;
+					}
+				}
+			}
+		}
+	}
+
+private:
+	bool solenoidOn = false;
+	int solenoidWait = 0;
+};
+
 // Ninja assault
 class jvs_namco_jyu : public jvs_io_board
 {
@@ -1597,6 +1635,10 @@ MIEImpl::MIEImpl()
 		else if (gameId == "SAMBA DE AMIGO")
 		{
 			io_boards.push_back(std::make_unique<jvs_837_13844_samba>(1, this));
+		}
+		else if (gameId.substr(0, 4) == "WCCF" && config::MultiboardSlaves <= 1)
+		{
+			io_boards.push_back(std::make_unique<jvs_837_13844_wccf>(1, this));
 		}
 		else
 		{

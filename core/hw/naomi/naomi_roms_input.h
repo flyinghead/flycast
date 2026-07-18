@@ -628,6 +628,33 @@ static InputDescriptors kick4csh_inputs = {
 		NAO_BASE_BTN_DESC
 	}
 };
+
+static InputDescriptors wccf_inputs = {
+	{
+		// UDLR START
+		// NAOMI_BTN0_KEY "ENTER"?
+		// NAOMI_BTN1_KEY "SHOOT"
+		// NAOMI_BTN2_KEY card vendor error
+		// NAOMI_BTN3_KEY card vendor empty
+		// P2:
+		// NAOMI_BTN0_KEY "KEEPER"
+		// NAOMI_BTN1_KEY card vendor standy
+		// NAOMI_BTN2_KEY "DATA"
+		// UP club team card
+		// DOWN SW1
+		// LEFT SW2
+		// RIGHT !card vendor sensor
+		{ NAOMI_BTN0_KEY, "ENTER" },
+		{ NAOMI_BTN1_KEY, "SHOOT" },
+		{ NAOMI_BTN2_KEY, "SW1", 0, NAOMI_DOWN_KEY },
+		{ NAOMI_BTN3_KEY, "KEEPER", 0, NAOMI_BTN0_KEY },
+		{ NAOMI_BTN4_KEY, "DATA", 0, NAOMI_BTN2_KEY },
+		NAO_DPAD_DESC
+		NAO_START_DESC
+		NAO_BASE_BTN_DESC
+	}
+};
+
 //
 // AtomisWave games
 //

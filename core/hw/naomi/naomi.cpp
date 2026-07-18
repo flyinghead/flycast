@@ -126,12 +126,21 @@ static int naomiDmaSched(int tag, int sch_cycl, int jitter, void *arg)
 		void* ptr = CurrentCartridge->GetDmaPtr(block_len);
 		if (block_len == 0)
 		{
-			INFO_LOG(NAOMI, "Aborted DMA transfer. Read past end of cart?");
-			for (u32 i = 0; i < len; i += 8, start += 8)
-				addrspace::write64(start, 0);
+			if (SB_GDDIR == 1)
+			{
+				INFO_LOG(NAOMI, "Aborted DMA transfer. Read past end of cart?");
+				for (u32 i = 0; i < len; i += 8, start += 8)
+					addrspace::write64(start, 0);
+			}
 			break;
 		}
-		WriteMemBlock_nommu_ptr(start, (u32*)ptr, block_len);
+		if (SB_GDDIR == 1) {
+			WriteMemBlock_nommu_ptr(start, (u32*)ptr, block_len);
+		}
+		else {
+			const void *src = GetMemPtr(start, block_len);
+			memcpy(ptr, src, block_len);
+		}
 		CurrentCartridge->AdvancePtr(block_len);
 		len -= block_len;
 		start += block_len;
@@ -165,7 +174,6 @@ static void Naomi_DmaStart(u32 addr, u32 data)
 	else if ((m3comm == nullptr || !m3comm->DmaStart(addr, data)) && CurrentCartridge != nullptr)
 	{
 		DEBUG_LOG(NAOMI, "NAOMI-DMA start addr %08X len %x", SB_GDSTAR, SB_GDLEN);
-		verify(1 == SB_GDDIR);
 		SB_GDST = 1;
 		SB_GDSTARD = SB_GDSTAR & 0x1FFFFFE0;
 		SB_GDLEND = 0;

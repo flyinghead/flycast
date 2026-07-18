@@ -6141,6 +6141,7 @@ const Game Games[] =
             { "317-0329-jpn.pic", 0, 0x4000, 0x097f5f92 },
         },
         "cdp-10001c",
+		&wccf_inputs,
 	},
 	// World Club Champion Football Serie A 2001-2002 DIMM FIRM Ver.3.03 (CDP-10003)
 	{
@@ -6173,6 +6174,7 @@ const Game Games[] =
 	        // SH4-based camera sensor board connected to MAPLE CN7
         },
         "cdv-10002",
+		&wccf_inputs,
 	},
 	// World Club Champion Football Serie A 2002-2003 Ver.2.34 (Japan) (CDV-10008)
 	{
@@ -6188,6 +6190,7 @@ const Game Games[] =
             { "317-0369-jpn.pic", 0, 0x4000, 0xfb3672ba },
         },
         "cdv-10008",
+		&wccf_inputs,
 	},
 	// World Club Champion Football European Clubs 2004-2005 (Asia) (CDV-10013)
 	{
@@ -6203,6 +6206,7 @@ const Game Games[] =
             { "317-0419-jpn.pic", 0, 0x4000, 0x04fae86b },
         },
         "cdv-10013",
+		&wccf_inputs,
 	},
 	// World Club Champion Football European Clubs 2004-2005 Ver.1.1 (Export) (CDV-10015)
 	{
@@ -6218,6 +6222,7 @@ const Game Games[] =
             { "317-0419-exp.pic", 0, 0x4000, 0x3f5e1445 },
         },
         "cdv-10015",
+		&wccf_inputs,
 	},
 	// World Club Champion Football European Clubs 2004-2005 Ver.3.22 (Export) (CDV-10015P)
 	{
@@ -6233,6 +6238,7 @@ const Game Games[] =
             { "317-0419-exp.pic", 0, 0x4000, 0x3f5e1445 },
         },
         "cdv-10015p",
+		&wccf_inputs,
 	},
 	// World Club Champion Football European Clubs 2004-2005 Ver.1.1 (Japan) (CDV-10020)
 	{
@@ -6248,6 +6254,7 @@ const Game Games[] =
 			{ "317-unk-jpn.pic", 0, 0x4000, 0xa4abd76b },
 		},
 		"cdv-10020",
+		&wccf_inputs,
 	},
 	// World Club Champion Football European Clubs 2004-2005 Ver.1.2 (Japan) (CDV-10021)
 	{
@@ -6263,6 +6270,7 @@ const Game Games[] =
 			{ "317-unk-jpn.pic", 0, 0x4000, 0xa4abd76b },
 		},
 		"cdv-10021",
+		&wccf_inputs,
 	},
 	// World Club Champion Football European Clubs 2005-2006 (Japan) (CDV-10025)
 	{
@@ -6278,6 +6286,7 @@ const Game Games[] =
 			{ "317-0456-jpn.pic", 0, 0x4000, 0xcf3bd834 },
 		},
 		"cdv-10025",
+		&wccf_inputs,
 	},
 	// World Club Champion Football European Clubs 2005-2006 (Export) (CDV-10027)
 	{
@@ -6293,6 +6302,7 @@ const Game Games[] =
 			{ "317-0456-exp.pic", 0, 0x4000, 0xfb7dd592 },
 		},
 		"cdv-10027",
+		&wccf_inputs,
 	},
 
     // AtomisWave Roms
