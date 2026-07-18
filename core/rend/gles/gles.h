@@ -542,6 +542,12 @@ struct OpenGLRenderer : Renderer
 	}
 
 protected:
+	void clearTextureCache() override
+	{
+		TexCache.Clear();
+		TexCache.Cleanup();
+	}
+
 	virtual GLenum getFogTextureSlot() const {
 		return GL_TEXTURE1;
 	}

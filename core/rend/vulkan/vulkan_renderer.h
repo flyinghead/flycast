@@ -53,6 +53,7 @@ public:
 
 protected:
 	BaseVulkanRenderer() : viewport(640, 480) {}
+	void clearTextureCache() override { textureCache.Clear(); }
 
 	VulkanContext *GetContext() const { return VulkanContext::Instance(); }
 

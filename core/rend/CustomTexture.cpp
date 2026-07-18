@@ -421,6 +421,10 @@ void CustomTexture::init()
 	startSession(gameId);
 }
 
+bool CustomTexture::isInitialized() const {
+	return state != State::Stopped;
+}
+
 bool CustomTexture::enabled() const {
 	return loaderThread != nullptr;
 }

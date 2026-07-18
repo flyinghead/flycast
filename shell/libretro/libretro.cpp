@@ -1211,8 +1211,10 @@ void retro_run()
 		refresh_devices(false);
 
 	if (custom_texture.needsRefresh())
+	{
 		custom_texture.refresh();
-	else
+	}
+	else if (!custom_texture.isInitialized())
 		custom_texture.init();
 	const bool customTexturePreloading = custom_texture.isPreloading();
 	if (customTexturePreloading)
@@ -3645,12 +3647,14 @@ static bool retro_set_eject_state(bool ejected)
 	if (ejected)
 	{
 		emu.openGdrom();
+		custom_texture.init();
 		return true;
 	}
 	else
 	{
 		try {
 			emu.insertGdrom(disk_paths[disk_index]);
+			custom_texture.init();
 			return true;
 		} catch (const FlycastException& e) {
 			ERROR_LOG(GDROM, "%s", e.what());
@@ -3677,6 +3681,7 @@ static bool retro_set_image_index(unsigned index)
 		{
 			// No disk in drive
 			emu.insertGdrom("");
+			custom_texture.init();
 			return true;
 		}
 
@@ -3684,6 +3689,7 @@ static bool retro_set_image_index(unsigned index)
 			return true;
 
 		emu.insertGdrom(disk_paths[index]);
+		custom_texture.init();
 		return true;
 	} catch (const FlycastException& e) {
 		ERROR_LOG(GDROM, "%s", e.what());

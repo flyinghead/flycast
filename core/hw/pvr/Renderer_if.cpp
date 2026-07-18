@@ -530,7 +530,11 @@ void Renderer::clearGpuPreloadedTextures()
 void Renderer::processGpuCleanupOperations()
 {
 	if (custom_texture.consumeGpuCleanupOperations())
+	{
+		clearTextureCache();
 		clearGpuPreloadedTextures();
+		resetTextureCache = false;
+	}
 }
 
 void rend_reset()

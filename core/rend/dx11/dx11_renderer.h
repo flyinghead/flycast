@@ -60,6 +60,12 @@ struct DX11Renderer : public Renderer
 	bool GetLastFrame(std::vector<u8>& data, int& width, int& height) override;
 
 protected:
+	void clearTextureCache() override
+	{
+		texCache.Clear();
+		texCache.Cleanup();
+	}
+
 	struct VertexConstants
 	{
 	    float transMatrix[4][4];

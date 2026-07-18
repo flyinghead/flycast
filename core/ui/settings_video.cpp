@@ -64,10 +64,6 @@ void gui_settings_video()
 		perPixel = true;
 		break;
 	}
-	const bool gpuPreloadLocksRenderer = game_started && config::CustomTextures.get()
-			&& config::customTexturePreloadMode() == config::CustomTexturePreloadMode::VideoMemory
-			&& rend_supports_gpu_texture_preload();
-
 	constexpr int apiCount = 0
 		#ifdef USE_VULKAN
 			+ 1
@@ -88,7 +84,6 @@ void gui_settings_video()
 	{
 		header(T("Graphics API"));
 		{
-			DisabledScope rendererScope(gpuPreloadLocksRenderer);
 			ImGui::Columns(apiCount, "renderApi", false);
 #ifdef USE_OPENGL
 			ImGui::RadioButton("OpenGL", &renderApi, OpenGL);
@@ -123,26 +118,17 @@ void gui_settings_video()
 		const bool has_per_pixel = GraphicsContext::Instance()->hasPerPixel();
     	int renderer = perPixel ? 2 : config::PerStripSorting ? 1 : 0;
     	ImGui::Columns(has_per_pixel ? 3 : 2, "renderers", false);
-		{
-			DisabledScope rendererScope(gpuPreloadLocksRenderer && perPixel);
-			ImGui::RadioButton(T("Per Triangle"), &renderer, 0);
-		}
+    	ImGui::RadioButton(T("Per Triangle"), &renderer, 0);
         ImGui::SameLine();
         ShowHelpMarker(T("Sort transparent polygons per triangle. Fast but may produce graphical glitches"));
     	ImGui::NextColumn();
-		{
-			DisabledScope rendererScope(gpuPreloadLocksRenderer && perPixel);
-			ImGui::RadioButton(T("Per Strip"), &renderer, 1);
-		}
+    	ImGui::RadioButton(T("Per Strip"), &renderer, 1);
         ImGui::SameLine();
         ShowHelpMarker(T("Sort transparent polygons per strip. Faster but may produce graphical glitches"));
         if (has_per_pixel)
         {
         	ImGui::NextColumn();
-			{
-				DisabledScope rendererScope(gpuPreloadLocksRenderer);
-				ImGui::RadioButton(T("Per Pixel"), &renderer, 2);
-			}
+        	ImGui::RadioButton(T("Per Pixel"), &renderer, 2);
         	ImGui::SameLine();
         	ShowHelpMarker(T("Sort transparent polygons per pixel. Slower but accurate"));
         }
@@ -236,46 +222,43 @@ void gui_settings_video()
     	OptionCheckbox(T("Full Framebuffer Emulation"), config::EmulateFramebuffer,
     			T("Fully accurate VRAM framebuffer emulation. Helps games that directly access the framebuffer for special effects. "
     			"Very slow and incompatible with upscaling and wide screen."));
+		OptionCheckbox(T("Load Custom Textures"), config::CustomTextures,
+				T("Load custom/high-res textures from data/textures/<game id>. Supports KTX2/XUBC7, KTX2/XUASTC, KTX2/ETC1S, DDS/BC7, PNG, and JPEG."));
+		ImGui::Indent();
 		{
-			DisabledScope scope(game_started);
-			OptionCheckbox(T("Load Custom Textures"), config::CustomTextures,
-					T("Load custom/high-res textures from data/textures/<game id>. Supports KTX2/XUBC7, KTX2/XUASTC, KTX2/ETC1S, DDS/BC7, PNG, and JPEG."));
-			ImGui::Indent();
+			DisabledScope customTexturesScope(!config::CustomTextures.get());
+			const bool gpuPreloadSupported = rend_supports_gpu_texture_preload();
+			const int configuredMode = static_cast<int>(config::customTexturePreloadMode());
+			int selectedMode = configuredMode;
 			{
-				DisabledScope customTexturesScope(!config::CustomTextures.get());
-				const bool gpuPreloadSupported = rend_supports_gpu_texture_preload();
-				const int configuredMode = static_cast<int>(config::customTexturePreloadMode());
-				int selectedMode = configuredMode;
+				DisabledScope readOnlyScope(config::PreloadCustomTextures.isReadOnly());
+				ImGui::TextUnformatted(T("Custom Texture Preloading"));
+				ImGui::Columns(3, "custom_texture_preload_modes", false);
+				ImGui::RadioButton(T("Off"), &selectedMode,
+						static_cast<int>(config::CustomTexturePreloadMode::Off));
+				ImGui::SameLine();
+				ShowHelpMarker(T("Load custom textures as needed."));
+				ImGui::NextColumn();
+				ImGui::RadioButton(T("System Memory"), &selectedMode,
+						static_cast<int>(config::CustomTexturePreloadMode::SystemMemory));
+				ImGui::SameLine();
+				ShowHelpMarker(T("Preload custom textures at game start to prevent texture popping. Consumes system memory for the entire texture pack."));
+				ImGui::NextColumn();
 				{
-					DisabledScope readOnlyScope(config::PreloadCustomTextures.isReadOnly());
-					ImGui::TextUnformatted(T("Custom Texture Preloading"));
-					ImGui::Columns(3, "custom_texture_preload_modes", false);
-					ImGui::RadioButton(T("Off"), &selectedMode,
-							static_cast<int>(config::CustomTexturePreloadMode::Off));
-					ImGui::SameLine();
-					ShowHelpMarker(T("Load custom textures as needed."));
-					ImGui::NextColumn();
-					ImGui::RadioButton(T("System Memory"), &selectedMode,
-							static_cast<int>(config::CustomTexturePreloadMode::SystemMemory));
-					ImGui::SameLine();
-					ShowHelpMarker(T("Preload custom textures at game start to prevent texture popping. Consumes system memory for the entire texture pack."));
-					ImGui::NextColumn();
-					{
-						DisabledScope videoMemoryScope(!gpuPreloadSupported);
-						ImGui::RadioButton(T("Video Memory"), &selectedMode,
-								static_cast<int>(config::CustomTexturePreloadMode::VideoMemory));
-					}
-					ImGui::SameLine();
-					ShowHelpMarker(gpuPreloadSupported
-							? T("Preload custom textures at game start to prevent texture popping. Consumes video memory for the entire texture pack.")
-							: T("Video-memory custom texture preloading is not supported by the current renderer."));
-					ImGui::Columns(1, nullptr, false);
+					DisabledScope videoMemoryScope(!gpuPreloadSupported);
+					ImGui::RadioButton(T("Video Memory"), &selectedMode,
+							static_cast<int>(config::CustomTexturePreloadMode::VideoMemory));
 				}
-				if (selectedMode != configuredMode)
-					config::PreloadCustomTextures = selectedMode;
+				ImGui::SameLine();
+				ShowHelpMarker(gpuPreloadSupported
+						? T("Preload custom textures at game start to prevent texture popping. Consumes video memory for the entire texture pack.")
+						: T("Video-memory custom texture preloading is not supported by the current renderer."));
+				ImGui::Columns(1, nullptr, false);
 			}
-			ImGui::Unindent();
+			if (selectedMode != configuredMode)
+				config::PreloadCustomTextures = selectedMode;
 		}
+		ImGui::Unindent();
     }
 	ImGui::Spacing();
     header(T("Aspect Ratio"));

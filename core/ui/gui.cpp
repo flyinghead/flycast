@@ -1269,7 +1269,9 @@ static void gui_display_loadscreen()
 			if (gameReady)
 			{
 				if (custom_texture.needsRefresh())
+				{
 					custom_texture.refresh();
+				}
 				else
 					custom_texture.init();
 			}

@@ -91,6 +91,7 @@ struct Renderer
 	void processGpuCleanupOperations();
 
 protected:
+	virtual void clearTextureCache() {}
 	void addGpuPreloadedTexture(u32 hash, std::shared_ptr<GpuPreloadedTexture> texture);
 	void clearGpuPreloadedTextures();
 

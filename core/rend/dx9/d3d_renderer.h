@@ -119,6 +119,12 @@ struct D3DRenderer : public Renderer
 	bool GetLastFrame(std::vector<u8>& data, int& width, int& height) override;
 
 private:
+	void clearTextureCache() override
+	{
+		texCache.Clear();
+		texCache.Cleanup();
+	}
+
 	enum ModifierVolumeMode { Xor, Or, Inclusion, Exclusion, ModeCount };
 
 	void resize(int w, int h);
@@ -181,4 +187,3 @@ private:
 	bool dithering = false;
 	rend_context *rendContext;
 };
-

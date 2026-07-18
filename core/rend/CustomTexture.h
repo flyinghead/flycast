@@ -99,6 +99,7 @@ public:
 
 	~CustomTexture();
 	void init();
+	bool isInitialized() const;
 	bool enabled() const;
 	bool isPreloading() const;
 	bool needsRefresh() const;
