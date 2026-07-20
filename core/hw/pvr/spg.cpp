@@ -64,7 +64,9 @@ void CalculateSync()
 	sh4_sched_request(vblank_schid, Line_Cycles);
 
 #ifdef LIBRETRO
-	retro_setfps((double)SH4_MAIN_CLOCK / ((double)Line_Cycles * (double)pvr_numscanlines));
+	const double exact_refresh = (double)pixel_clock * (SPG_CONTROL.interlace ? 2.0 : 1.0)
+			/ ((double)(SPG_LOAD.hcount + 1) * (double)pvr_numscanlines);
+	retro_setfps(exact_refresh);
 #endif
 }
 
