@@ -56,6 +56,41 @@ static NSString *getApplicationName(void)
     return appName;
 }
 
+static bool eventIsFKeyWithoutFunction(NSEvent *event)
+{
+    if (event == nil || [event type] != NSEventTypeKeyDown)
+        return false;
+
+    NSString *characters = [event charactersIgnoringModifiers];
+    return [characters length] == 1
+        && [characters caseInsensitiveCompare:@"f"] == NSOrderedSame
+        && ([event modifierFlags] & NSEventModifierFlagFunction) == 0;
+}
+
+static void restoreFunctionFullScreenShortcut(NSMenuItem *menuItem)
+{
+    [menuItem setKeyEquivalent:@"f"];
+    [menuItem setKeyEquivalentModifierMask:NSEventModifierFlagFunction];
+}
+
+static void installFunctionFullScreenShortcutGuard(NSMenuItem *menuItem)
+{
+    static id monitor = nil;
+    if (monitor != nil)
+        return;
+
+    monitor = [[NSEvent addLocalMonitorForEventsMatchingMask:NSEventMaskKeyDown handler:^NSEvent *(NSEvent *event) {
+        if (eventIsFKeyWithoutFunction(event))
+        {
+            [menuItem setKeyEquivalent:@""];
+            dispatch_async(dispatch_get_main_queue(), ^{
+                restoreFunctionFullScreenShortcut(menuItem);
+            });
+        }
+        return event;
+    }] retain];
+}
+
 @interface NSApplication (SDLApplication)
 @end
 
@@ -227,6 +262,7 @@ static void setupWindowMenu(void)
     menuItem = [[NSMenuItem alloc] initWithTitle:@"Enter Full Screen" action:@selector(toggleFullScreen:) keyEquivalent:@"f"];
     [menuItem setKeyEquivalentModifierMask:NSEventModifierFlagFunction];
     [windowMenu addItem:menuItem];
+    installFunctionFullScreenShortcutGuard(menuItem);
     [menuItem release];
     
     /* "Ctrl + Cmd + F" was the standard Full Screen shortcut from OS X 10.7 Lion through macOS 11 Big Sur.

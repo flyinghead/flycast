@@ -89,8 +89,8 @@ const WidescreenCheat CheatManager::widescreen_cheats[] =
 		// D2 (JP)
 		{ "T30006M",    nullptr,    { 0x4CF42C, 0x4CF45C, 0x3E1A36, 0x3E1A34, 0x3E1A3C, 0x3E1A54, 0x3E1A5C },
 				{ 0x43F00000, 0x3F400000, 0x08010000, 0, 0, 0, 0 } },
-		{ "MK-5103750", nullptr,    { 0x1FE270 }, { 0x43700000 } },		// Daytona USA (PAL)
-		// breaks online connection { "MK-51037",   nullptr,    { 0x1FC6D0 }, { 0x43700000 } },		// Daytona USA (USA)
+		{ "MK-5103750", nullptr,    { 0x1FE270 }, { 0x43700000 }, { 0x43a00000 } },		// Daytona USA (PAL)
+		{ "MK-51037",   nullptr,    { 0x1FC6D0 }, { 0x43700000 }, { 0x43a00000 } },		// Daytona USA (USA)
 		{ "T9501N-50",  nullptr,    { 0x9821D4 }, { 0x3F400000 } },		// Deadly Skies (PAL)
 		{ "T8116D  50", nullptr,    { 0x2E5530 }, { 0x43700000 } },		// Dead or Alive 2 (PAL)
 		{ "T3601N",     nullptr,    { 0x2F0670 }, { 0x43700000 } },		// Dead or Alive 2 (USA)
@@ -243,10 +243,10 @@ const WidescreenCheat CheatManager::widescreen_cheats[] =
 		{ "MK-5105950", nullptr,    { 0x231EF8, 0x1EF370 }, { 0x43800000, 0x7C1EF400 } },	// Shenmue (PAL) code 1 reduces clipping
 		{ "MK-51059",   nullptr,    { 0x230250 }, { 0x43800000 }, { 0x43a00000 } },		// Shenmue (USA) Clipping
 		{ "HDR-0016",   nullptr,    { 0x22E8A0, 0x1EBE70 }, { 0x43800000, 0x7C1EBF00 } },	// Shenmue (JP) code 1 reduces clipping
-		{ "MK-5118450", nullptr,    { 0x31186C }, { 0x43800000 } },		// Shenmue II (PAL) 01160FF4 0000E100 for black bars in cutscenes
+		{ "MK-5118450", nullptr,    { 0x31186C }, { 0x43800000 }, { 0x43a00000 } },		// Shenmue II (PAL) 01160FF4 0000E100 for black bars in cutscenes
 		// Shenmue II (PAL) Alternative code without clipping or black bars. Might be demanding on real hardware.
 		// 02311880 C3A00000, 0227E198 35AA359E, 01160FF4 0000E100
-		{ "HDR-0164",   nullptr,    { 0x30D67C }, { 0x43700000 } },		// Shenmue II (JP) Clipping
+		{ "HDR-0164",   nullptr,    { 0x30D67C }, { 0x43700000 }, { 0x43a00000 } },		// Shenmue II (JP) Clipping
 		{ "T9505D",     nullptr,    { 0xD1FB14, 0x096A4C }, { 0x3F400000, 0x3FAAAAAB } },	// Silent Scope (PAL) Choose 60Hz in game options
 		{ "MK-51052",   "  E     ", { 0x502A84 }, { 0x3F400000 } },		// Skies of Arcadia (PAL)
 		{ "MK-51052",   " U      ", { 0x599158 }, { 0x3F400000 } },		// Skies of Arcadia (USA)

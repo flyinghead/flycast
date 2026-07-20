@@ -47,6 +47,11 @@ else()
 	project(flycast)
 endif()
 
+option(FLYCAST_PRESEED_DARWIN_XCODE_CHECKS "Pre-seed stable macOS feature checks for faster Xcode generation" ON)
+if(FLYCAST_PRESEED_DARWIN_XCODE_CHECKS)
+	include(DarwinXcodeProbeCache)
+endif()
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 if(CMAKE_SYSTEM_NAME MATCHES "NetBSD|Haiku" OR NINTENDO_SWITCH)

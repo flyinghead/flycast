@@ -23,9 +23,13 @@ void GenericLog(LogTypes::LOG_LEVELS level, LogTypes::LOG_TYPE type, const char*
 {
 	va_list args;
 	va_start(args, fmt);
-   if (s_log_manager)
-      if (s_log_manager->IsEnabled(type, level))
-         s_log_manager->LogWithFullPath(level, type, file, line, fmt, args);
+	if (s_log_manager && s_log_manager->IsEnabled(type, level))
+	{
+		if (level == LogTypes::LDEBUG)
+			s_log_manager->LogWithFullPath(level, type, file, line, fmt, args);
+		else
+			s_log_manager->Log(level, type, fmt, args);
+	}
 	va_end(args);
 }
 
@@ -74,28 +78,64 @@ LogManager::LogManager(void *log_cb)
 	m_log[LogTypes::SAVESTATE] = {"SAVESTATE", "Save States"};
 	m_log[LogTypes::SH4] = {"SH4", "SH4 Modules"};
 
-   retro_printf  = (retro_log_printf_t)log_cb;
 	// Set up log listeners
 	int verbosity = (int)LogTypes::LDEBUG;
+	retro_printf  = (retro_log_printf_t)log_cb;
 
 	// Ensure the verbosity level is valid
 	if (verbosity < 1)
 		verbosity = 1;
 	if (verbosity > MAX_LOGLEVEL)
 		verbosity = MAX_LOGLEVEL;
-
 	SetLogLevel(static_cast<LogTypes::LOG_LEVELS>(verbosity));
 
 	for (LogContainer& container : m_log)
-	{
 		container.m_enable = true;
-	}
 
 	m_path_cutoff_point = DeterminePathCutOffPoint();
 }
 
 LogManager::~LogManager()
 {
+}
+
+void LogManager::retro_log(LogTypes::LOG_LEVELS level, const char *text)
+{
+	retro_log_level retro_level = RETRO_LOG_INFO;
+	switch (level)
+	{
+		case LogTypes::LNOTICE:
+		case LogTypes::LINFO:
+			retro_level = RETRO_LOG_INFO;
+			break;
+		case LogTypes::LERROR:
+			retro_level = RETRO_LOG_ERROR;
+			break;
+		case LogTypes::LWARNING:
+			retro_level = RETRO_LOG_WARN;
+			break;
+		case LogTypes::LDEBUG:
+			retro_level = RETRO_LOG_DEBUG;
+			break;
+	}
+	if (retro_printf != nullptr)
+		retro_printf(retro_level, "%s", text);
+}
+
+void LogManager::Log(LogTypes::LOG_LEVELS level, LogTypes::LOG_TYPE type,
+		const char* format, va_list args)
+{
+	char text[MAX_MSGLEN + 128];
+	{
+		UseCLocale _;
+
+		int index = snprintf(text, 128, "[%s] ", GetShortName(type));
+		index = std::min(index, 128);
+		int n = vsnprintf(text + index, sizeof(text) - index - 1, format, args);
+		index += std::min(n, (int)sizeof(text) - index - 2);
+		strcpy(text + index, "\n");
+	}
+	retro_log(level, text);
 }
 
 void LogManager::LogWithFullPath(LogTypes::LOG_LEVELS level, LogTypes::LOG_TYPE type,
@@ -113,27 +153,7 @@ void LogManager::LogWithFullPath(LogTypes::LOG_LEVELS level, LogTypes::LOG_TYPE 
 		index += std::min(n, (int)sizeof(text) - index - 2);
 		strcpy(text + index, "\n");
 	}
-
-	retro_log_level retro_level;
-	switch (level)
-	{
-	case LogTypes::LNOTICE:
-	case LogTypes::LINFO:
-	default:
-		retro_level = RETRO_LOG_INFO;
-		break;
-	case LogTypes::LERROR:
-		retro_level = RETRO_LOG_ERROR;
-		break;
-	case LogTypes::LWARNING:
-		retro_level = RETRO_LOG_WARN;
-		break;
-	case LogTypes::LDEBUG:
-		retro_level = RETRO_LOG_DEBUG;
-		break;
-	}
-	if (retro_printf != nullptr)
-		retro_printf(retro_level, "%s", text);
+	retro_log(level, text);
 }
 
 void LogManager::SetLogLevel(LogTypes::LOG_LEVELS level)

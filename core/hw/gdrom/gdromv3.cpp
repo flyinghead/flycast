@@ -51,6 +51,9 @@ static GD_SecCountT SecCount;
 GD_SecNumbT SecNumber;
 	
 static GD_StatusT GDStatus;
+#ifdef LIBRETRO
+GD_StatusT get_gd_status(void) { return GDStatus; }
+#endif
 
 static ByteCount_t ByteCount;
 	
