@@ -28,11 +28,14 @@
 #include "naomi_regs.h"
 #include "oslib/oslib.h"
 #include "util/shared_this.h"
+#ifndef LIBRETRO
+#include "cfg/option.h"
+#endif
 #include <asio.hpp>
 
 //#define HTTP_TRACE
 
-const char *SERVER_NAME = "vfnet.flyca.st";
+const char *VF4_SERVER_NAME = "vfnet.flyca.st";
 
 #ifndef ENOTSUP
 #define ENOTSUP 0
@@ -542,30 +545,49 @@ private:
 	std::unique_ptr<asio::io_context> io_context;
 };
 
-NetDimm::NetDimm(u32 size) : GDCartridge(size)
-{
-	if (serverIp == 0)
-	{
-		hostent *hp = gethostbyname(SERVER_NAME);
-		if (hp != nullptr && hp->h_length > 0) {
-			memcpy(&serverIp, hp->h_addr_list[0], sizeof(serverIp));
-			NOTICE_LOG(NAOMI, "%s IP is %x", SERVER_NAME, serverIp);
-		}
-	}
+NetDimm::NetDimm(u32 size) : GDCartridge(size) {
 }
-NetDimm::~NetDimm()
-{
+
+NetDimm::~NetDimm() {
+	for (Socket& socket : sockets)
+		socket.close();
 }
 
 void NetDimm::Init(LoadProgress *progress, std::vector<u8> *digest)
 {
-	if (strncmp(game->name, "wccf", 4) == 0)
+	if (strncmp(game->name, "wccf", 4) == 0) {
+		wccf = true;
 		fullLoad = true;
+	}
 	GDCartridge::Init(progress, digest);
 	dimmBufferOffset = dimm_data_size - 16_MB;
 	finalTuned = strcmp(game->name, "vf4tuned") == 0;
-	if (strncmp(game->name, "wccf", 4) == 0)
+	if (finalTuned)
+	{
+		if (serverIp == 0)
+		{
+			hostent *hp = gethostbyname(VF4_SERVER_NAME);
+			if (hp != nullptr && hp->h_length > 0) {
+				memcpy(&serverIp, hp->h_addr_list[0], sizeof(serverIp));
+				NOTICE_LOG(NAOMI, "%s IP is %x", VF4_SERVER_NAME, htonl(serverIp));
+			}
+		}
+	}
+	else if (wccf)
+	{
+#ifndef LIBRETRO
+		std::string serverName = config::loadStr("naomi", "WCCFServer");
+		if (!serverName.empty())
+		{
+			hostent *hp = gethostbyname(serverName.c_str());
+			if (hp != nullptr && hp->h_length > 0) {
+				memcpy(&serverIp, hp->h_addr_list[0], sizeof(serverIp));
+				NOTICE_LOG(NAOMI, "WCCF server IP is %x", htonl(serverIp));
+			}
+		}
+#endif
 		server = std::make_unique<NetDimmServer>(*this);
+	}
 }
 
 bool NetDimm::Write(u32 offset, u32 size, u32 data)
@@ -990,6 +1012,13 @@ void NetDimm::netCmd(int cmd)
 				a.sin_family = AF_INET;	// for some reason the family is in network order too. Just ignore it.
 				a.sin_port = addr->sin_port;
 				a.sin_addr.s_addr = addr->sin_addr.s_addr;
+				if (wccf && serverIp != 0
+						&& (a.sin_addr.s_addr == htonl(0xc0a86601) 			// 2001-2002, 2002-2003: 192.168.102.1
+								|| a.sin_addr.s_addr == htonl(0xc0a81a01))) // 2004-2005, 2006-2006: 192.168.26.1
+				{
+					// WCCF server IP
+					a.sin_addr.s_addr = serverIp;
+				}
 				rc = connect(sockfd, (sockaddr *)&a, sizeof(a));
 				if (rc == -1)
 				{
