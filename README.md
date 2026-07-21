@@ -82,7 +82,7 @@ Double-click the bootstrap script:
 - **libcurl** (development headers)
 - **libudev** (development headers)
 - **SDL2** (development headers)
-- **Graphics API**: Vulcan, OpenGL
+- **Graphics API**: Vulkan, OpenGL
 
 #### Build
 
