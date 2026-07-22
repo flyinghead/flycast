@@ -257,6 +257,12 @@ static void createNaomiDevices()
 			insertRfidCard(1);
 		}
 	}
+	else if (gameId.substr(0, 4) == "WCCF")
+	{
+		if (config::MultiboardSlaves <= 1)
+			// CCD cam
+			mcfg_Create(MDT_WccfCamera, 1, 5, 0);
+	}
 	else if (gameId == "THE KING OF ROUTE66")
 	{
 		mcfg_Create(MDT_SegaController, 1, 5);

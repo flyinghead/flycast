@@ -1888,6 +1888,7 @@ std::shared_ptr<maple_device> maple_Create(MapleDeviceType type)
 	case MDT_SegaControllerXL:	return std::make_shared<FullController>();
 	case MDT_DreamParaParaController:	return std::make_shared<maple_dreamparapara_controller>();
 	case MDT_RFIDReaderWriter:	return RFIDReaderWriter::Create();
+	case MDT_WccfCamera:		return WccfCamera::Create();
 
 	default:
 		ERROR_LOG(MAPLE, "Invalid device type %d", type);

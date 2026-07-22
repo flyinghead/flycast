@@ -670,6 +670,7 @@ public:
 	}
 	~SaxaHW210() override {
 		SCIFSerialPort::Instance().setPipe(nullptr);
+		kcode[1] |= DC_DPAD_UP;
 	}
 
 	void write(u8 b) override

@@ -304,6 +304,8 @@ struct BaseMIE : public maple_base
 	u32 dma(u32 cmd) override;
 	void reply(u8 code, u8 sizew = 0);
 
+	virtual u8 getExtDeviceMap() const { return maple_GetAttachedDevices(bus_id); }
+
 	virtual void handle_86_subcommand();
 	virtual void firmwareLoaded(u32 hash) {}
 };
@@ -314,6 +316,11 @@ struct MIE : public BaseMIE, public SerialPort
 };
 
 struct RFIDReaderWriter : public BaseMIE
+{
+	static std::shared_ptr<maple_device> Create();
+};
+
+struct WccfCamera : public BaseMIE
 {
 	static std::shared_ptr<maple_device> Create();
 };

@@ -25,6 +25,7 @@ enum MapleDeviceType
 	MDT_Dreameye                = 17,
 	MDT_SegaControllerXL        = 18,
 	MDT_DreamParaParaController = 19,
+	MDT_WccfCamera				= 20,
 	MDT_Count
 };
 
