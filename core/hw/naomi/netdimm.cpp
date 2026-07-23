@@ -657,6 +657,8 @@ int NetDimm::schedCallback()
 
 		timeval tv {};
 		int rc = select(nfds + 1, &readFds, &writeFds, &exceptFds, &tv);
+		if (rc < 0)
+			WARN_LOG(NAOMI, "select() failed: errno %d", get_last_error());
 
 		for (Socket& socket : sockets)
 		{
@@ -690,11 +692,12 @@ int NetDimm::schedCallback()
 			{
 				if (rc > 0)
 				{
+					int len;
 					if (socket.srcAddr != nullptr)
-						rc = recvfrom(socket.fd, (char *)socket.recvData, socket.recvLen, 0, socket.srcAddr, socket.addrLen);
+						len = recvfrom(socket.fd, (char *)socket.recvData, socket.recvLen, 0, socket.srcAddr, socket.addrLen);
 					else
-						rc = recv(socket.fd, (char *)socket.recvData, socket.recvLen, 0);
-					if (rc == -1)
+					len = recv(socket.fd, (char *)socket.recvData, socket.recvLen, 0);
+					if (len == -1)
 					{
 						const int error = get_last_error();
 						if (error != L_EAGAIN && error != L_EWOULDBLOCK)
@@ -704,18 +707,18 @@ int NetDimm::schedCallback()
 						}
 					}
 #ifdef HTTP_TRACE
-					else if (rc > 0)
+					else if (len > 0)
 					{
-						fwrite(socket.recvData, 1, rc, stdout);
+						fwrite(socket.recvData, 1, len, stdout);
 						fflush(stdout);
 					}
 #endif
-					DEBUG_LOG(NAOMI, "recv(%d, %d) -> %d", (int)(&socket - &sockets[0] + 1), socket.recvLen, rc);
-					if (rc >= 0)
+					DEBUG_LOG(NAOMI, "recv(%d, %d) -> %d", (int)(&socket - &sockets[0] + 1), socket.recvLen, len);
+					if (len >= 0)
 						socket.receiving = false;
 					if (!socket.receiving)
 					{
-						returnToNaomi(rc == -1, &socket - &sockets[0] + 1, rc);
+						returnToNaomi(len == -1, &socket - &sockets[0] + 1, len);
 						break;
 					}
 				}
@@ -732,8 +735,8 @@ int NetDimm::schedCallback()
 			{
 				if (rc > 0)
 				{
-					rc = send(socket.fd, (const char *)socket.sendData, socket.sendLen, 0);
-					if (rc == -1)
+					int len = send(socket.fd, (const char *)socket.sendData, socket.sendLen, 0);
+					if (len == -1)
 					{
 						const int error = get_last_error();
 						if (error != L_EAGAIN && error != L_EWOULDBLOCK)
@@ -743,18 +746,18 @@ int NetDimm::schedCallback()
 						}
 					}
 #ifdef HTTP_TRACE
-					else if (rc > 0)
+					else if (len > 0)
 					{
 						fwrite(socket.sendData, 1, rc, stdout);
 						fflush(stdout);
 					}
 #endif
-					DEBUG_LOG(NAOMI, "send(%d, %d) -> %d", (int)(&socket - &sockets[0] + 1), socket.sendLen, rc);
-					if (rc >= 0)
+					DEBUG_LOG(NAOMI, "send(%d, %d) -> %d", (int)(&socket - &sockets[0] + 1), socket.sendLen, len);
+					if (len >= 0)
 						socket.sending = false;
 					if (!socket.sending)
 					{
-						returnToNaomi(rc == -1, &socket - &sockets[0] + 1, rc);
+						returnToNaomi(len == -1, &socket - &sockets[0] + 1, len);
 						break;
 					}
 				}
@@ -1014,7 +1017,7 @@ void NetDimm::netCmd(int cmd)
 				a.sin_addr.s_addr = addr->sin_addr.s_addr;
 				if (wccf && serverIp != 0
 						&& (a.sin_addr.s_addr == htonl(0xc0a86601) 			// 2001-2002, 2002-2003: 192.168.102.1
-								|| a.sin_addr.s_addr == htonl(0xc0a81a01))) // 2004-2005, 2006-2006: 192.168.26.1
+								|| a.sin_addr.s_addr == htonl(0xc0a81a01))) // 2004-2005, 2005-2006: 192.168.26.1
 				{
 					// WCCF server IP
 					a.sin_addr.s_addr = serverIp;
@@ -1183,6 +1186,10 @@ void NetDimm::netCmd(int cmd)
 				else
 					sockets[i].fd = fd;
 				sockidx = i + 1;
+				this->lastError = 0;
+			}
+			else {
+				this->lastError = get_last_error();
 			}
 			INFO_LOG(NAOMI, "openSocket(%d, %d, %d) %d -> %d", domain, type, protocol, fd, sockidx);
 			returnToNaomi(sockidx == -1, 0, sockidx);
@@ -1193,7 +1200,7 @@ void NetDimm::netCmd(int cmd)
 			const u32 readFds = buffer[2];
 			const u32 writeFds = buffer[3];
 			const u32 exceptFds = buffer[4];
-			const u32 timeoutAddr = buffer[4];
+			const u32 timeoutAddr = buffer[5];
 			int nfds = -1;
 			fd_set read {};
 			fd_set write {};
@@ -1229,7 +1236,35 @@ void NetDimm::netCmd(int cmd)
 				timeout.tv_usec = *(u32 *)&dimm_data[(timeoutAddr + 4) & (dimm_data_size - 1)];
 			}
 			int rc = select(nfds + 1, &read, &write, &except, timeoutAddr == 0 ? nullptr : &timeout);
-			INFO_LOG(NAOMI, "select(%d, %x, %x, %x, %x) -> %d", nfds, readFds, writeFds, exceptFds, timeoutAddr, rc);
+			INFO_LOG(NAOMI, "select(%d, %x, %x, %x, %ld.%ld) -> %d", nfds, readFds, writeFds, exceptFds, timeoutAddr == 0 ? 0 : timeout.tv_sec,
+					timeoutAddr == 0 ? 0 : timeout.tv_usec, rc);
+			if (rc > 0)
+			{
+				const auto& updateFdsets = [this, &rc](u32 fdsOffset, const fd_set *fdset)
+				{
+					if (fdsOffset == 0)
+						return;
+					fd_set fds {};
+					for (Socket& sock : sockets)
+					{
+						if (sock.fd != INVALID_SOCKET && FD_ISSET(sock.fd, fdset))
+						{
+							const int sockidx = &sock - &sockets[0] + 1;
+							FD_SET(sockidx, &fds);
+							rc++;
+						}
+					}
+					memcpy(&dimm_data[fdsOffset & (dimm_data_size - 1)], &fds, std::min<size_t>(sizeof(fds), 32));
+				};
+				rc = 0;
+				updateFdsets(readFds, &read);
+				updateFdsets(writeFds, &write);
+				updateFdsets(exceptFds, &except);
+				this->lastError = 0;
+			}
+			else {
+				this->lastError = get_last_error();
+			}
 			returnToNaomi(rc == -1, 0, rc);
 			break;
 		}
@@ -1335,16 +1370,17 @@ void NetDimm::netCmd(int cmd)
 		}
 	case 17: // geterrno
 		{
-			int sockidx = buffer[1];
-			sock_t sockfd = getSocket(sockidx);
+			const int sockidx = buffer[1];
+			if (sockidx == 0)
+				returnToNaomi(false, 0, this->lastError);
+			const sock_t sockfd = getSocket(sockidx);
 			if (sockfd != INVALID_SOCKET)
 			{
 				int rc = sockets[sockidx - 1].lastError;
 				INFO_LOG(NAOMI, "geterrno(%d) -> %d", sockidx, rc);
 				returnToNaomi(false, sockidx, rc);
 			}
-			else
-			{
+			else {
 				returnToNaomi(true, sockidx, -1);
 			}
 			break;
