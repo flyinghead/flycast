@@ -59,14 +59,16 @@ static Disc* load_gdi(const char* file, std::vector<u8> *digest)
 
 		char last;
 		do {
-			gdi >> last;
-		} while (isspace(last));
+			if (!(gdi >> last))
+				throw FlycastException(i18n::T("Invalid GDI file"));
+		} while (isspace((unsigned char)last));
 		
 		if (last == '"')
 		{
 			gdi >> std::noskipws;
 			for(;;) {
-				gdi >> last;
+				if (!(gdi >> last))
+					throw FlycastException(i18n::T("Invalid GDI file"));
 				if (last == '"')
 					break;
 				track_filename += last;
