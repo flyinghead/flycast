@@ -19,6 +19,7 @@
 #include "isofs.h"
 #include "iso9660.h"
 
+#include <cstddef>
 #include <cstring>
 
 static u32 decode_iso733(iso733_t v)
@@ -87,7 +88,22 @@ IsoFs::Entry *IsoFs::Directory::nextEntry()
 		if (dir->length == 0)
 			return nullptr;
 	}
-	std::string name(dir->filename.str + 1, dir->filename.str[0]);
+	constexpr size_t filenameOffset = offsetof(iso9660_dir_t, filename);
+	if (data.size() - index <= filenameOffset)
+	{
+		WARN_LOG(GDROM, "Invalid ISO9660 directory record");
+		return nullptr;
+	}
+	const size_t recordLength = dir->length;
+	const size_t filenameLength = dir->filename.len;
+	if (recordLength <= filenameOffset
+			|| recordLength > data.size() - index
+			|| filenameLength > recordLength - filenameOffset - 1)
+	{
+		WARN_LOG(GDROM, "Invalid ISO9660 directory record");
+		return nullptr;
+	}
+	std::string name(dir->filename.str + 1, filenameLength);
 
 	u32 startFad = decode_iso733(dir->extent) + 150;
 	u32 len = decode_iso733(dir->size);
