@@ -27,6 +27,7 @@
 #include "network/output.h"
 #include "hw/naomi/printer.h"
 #include "hw/naomi/card_reader.h"
+#include "hw/sh4/sh4_sched.h"
 #include "input/haptic.h"
 
 #include <algorithm>
@@ -1052,12 +1053,38 @@ public:
 					}
 				}
 			}
+			if (data[0] & 1)
+			{
+				// Player card dispenser
+				if (cardDispenser == 0)
+					NOTICE_LOG(JVS, "WCCF player card dispensed");
+				cardDispenser = sh4_sched_now64();
+			}
+		}
+	}
+
+	void read_digital_in(const u32 *buttons, u32 *v) override
+	{
+		jvs_837_13844::read_digital_in(buttons, v);
+		v[1] |= NAOMI_RIGHT_KEY | NAOMI_BTN1_KEY; // card dispenser sensor off, standby on
+		if (cardDispenser != 0)
+		{
+			// idle: wait for owed cards > 0 && standby=on
+			// payout: assert card vendor payout
+			// payoutwait: wait for !sensor on, decrement owed cards
+			// recvwait: wait for !sensor off -> idle
+			u64 now = sh4_sched_now64();
+			if (now - cardDispenser > 1000_sh4ms)
+				cardDispenser = 0;
+			else
+				v[1] &= ~(NAOMI_RIGHT_KEY | NAOMI_BTN1_KEY); // card dispenser sensor on, standby off
 		}
 	}
 
 private:
 	bool solenoidOn = false;
 	int solenoidWait = 0;
+	u64 cardDispenser = 0;
 };
 
 // Ninja assault
@@ -3085,13 +3112,13 @@ MapleDeviceRV WccfCameraImpl::sendDeviceStatus(bool full, u8 dstAP)
 						{
 							if (i < 11)
 							{
-								// field
+								// pitch
 								w16((i % 4) * 120 + 100);	// y
 								w16((i / 4) * 120 + 120);	// x
 							}
 							else
 							{
-								// reserve
+								// bench
 								w16((i - 11) * 80 + 100);
 								w16(0);
 							}
@@ -3170,12 +3197,15 @@ MapleDeviceRV WccfCameraImpl::setConditionA002(u8 dstAP, const u8 mode)
     {
     	if (mode == 0x3c)
     	{
-    		if (status == '3' || status == 0x3b || status == 0x3c) {
+    		if (status == '3' || status == 0x3b || status == 0x3c)
+    		{
+    			/*
     			u8 count = r8();
     			r16();
     			u32 p2 = r32(); // address
     			u32 p3 = r32(); // u32[count]
-    			//WCCFLOG("A002[%x] mode 3c params: %x %x %x...", dstAP, count, p2, p3);
+    			WCCFLOG("A002[%x] mode 3c params: %x %x %x...", dstAP, count, p2, p3);
+    			*/
     		}
     		return MDRS_DeviceReply;
     	}
@@ -3332,7 +3362,7 @@ MapleDeviceRV WccfCameraImpl::setConditionA010(u8 dstAP, const u8 mode)
 			break;
 		case 'J':
 			{
-				u8 b = r8(); // TODO 0, 1, 2, 3 or else...
+				//u8 b = r8(); // TODO 0, 1, 2, 3 or else...
 				this->mode = 'J';
 				break;
 			}

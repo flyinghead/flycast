@@ -709,7 +709,6 @@ public:
 				break;
 			case 0x21: // sz 10 arg 0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00
 				// expects arg=0 or 1
-				//sendCmd(0x21);
 				sendCmd(0x21, 8);
 				// TODO does something when arg==1? (actually not really, not sure if helpful)
 				outBuffer.push_back(0x81);
@@ -727,30 +726,29 @@ public:
 				for (int i = 0; i < 7; i++)
 					outBuffer.push_back(0);
 				break;
-			case 0x24: // sz 8 arg 0: 00 04 00 00 00 00
-				// expects arg=0
-				sendCmd(0x24, 8);
-				if (inBuffer[7] == 4) {
-					for (int i = 0; i < 8; i++)
-						outBuffer.push_back(cardData[i]);
-				}
-				if (inBuffer[7] == 7 && cardData[8] == 0)
+
+			case 0x24: // Read single block
 				{
-					// Blank card
+					// sz 8 arg 0: 00 04 00 00 00 00
+					sendCmd(0x24, 8);
+					u32 offset = inBuffer[7] * 8;
 					for (int i = 0; i < 8; i++)
-						outBuffer.push_back(0);
+					{
+						if (offset + i < sizeof(cardData))
+							outBuffer.push_back(cardData[offset + i]);
+						else
+							outBuffer.push_back(0);
+					}
+					break;
 				}
-				else {
-					// Used card
-					for (int i = 0; i < 8; i++)
-						outBuffer.push_back(0xff);
-				}
-				break;
-			case 0x25: // sz 10 arg 0: 00 00 00 04 95 71 25 76 12 34 56 78 00 00
-				// this is the data we sent in 0x24, prefixed by 4
-				// expects arg=0?, doesn't use the reply TODO test arg!=0
+			case 0x25: // Write single block
+				// sz 10 arg 0: 00 00 00 04 95 71 25 76 12 34 56 78 00 00
+				// Avoid rewriting the card UID
+				if (inBuffer[9] != 4)
+					writeCard(inBuffer[9], 1, &inBuffer[10]);
 				sendCmd(0x25);
 				break;
+
 			case 0x26: // sz 8 arg 800: 00 05 00 01 00 00
 				sendCmd(0x26);
 				break;
@@ -759,7 +757,6 @@ public:
 				break;
 			case 0x33: // sz 8 arg 0: 00 05 00 00 00 00
 				// expects arg=8008 or 0
-				//sendCmd(0x33);
 				sendCmd(0x33, 8);
 				outBuffer.push_back(0xff);
 				outBuffer.push_back(0xff);
@@ -767,10 +764,12 @@ public:
 					outBuffer.push_back(0);
 
 				break;
-			case 0x34: // Read Card: sz 8 arg 0: 00 08 00 1e 00 00
-						//                      offset size (in 8-byte blocks)
+
+			case 0x34: // Read Card
 			{
-				const u32 offset = ((inBuffer[6] << 8) + inBuffer[7] - 8) * 8 + 8;
+				// sz 8 arg 0: 00 08 00 1e 00 00
+				//              offset size (in 8-byte blocks)
+				const u32 offset = ((inBuffer[6] << 8) + inBuffer[7]) * 8;
 				u32 size = ((inBuffer[8] << 8) + inBuffer[9]) * 8;
 				size = std::min(size, (u32)sizeof(cardData) - offset);
 				sendCmd(0x34, size);
@@ -779,18 +778,9 @@ public:
 				break;
 			}
 			case 0x35: // Write card
-			{
-				const u32 offset = ((inBuffer[6] << 8) + inBuffer[7] - 8) * 8 + 8;
-				if (offset < sizeof(cardData))
-				{
-					u32 size = ((inBuffer[8] << 8) + inBuffer[9]) * 8;
-					size = std::min(size, (u32)sizeof(cardData) - offset);
-					memcpy(&cardData[offset], &inBuffer[10], size);
-					saveCard(cardData, sizeof(cardData));
-				}
+				writeCard((inBuffer[6] << 8) + inBuffer[7], (inBuffer[8] << 8) + inBuffer[9], &inBuffer[10]);
 				sendCmd(0x35);
 				break;
-			}
 
 			default:
 				WARN_LOG(NAOMI, "HW210: unhandled command %02x", inBuffer[1]);
@@ -822,13 +812,14 @@ public:
 		NOTICE_LOG(NAOMI, "Card ejected");
 		os_notify(i18n::T("Card ejected"), 2000);
 		cardInserted = false;
-		memset(cardData + 4, 0, sizeof(cardData) - 4);
+		memset(cardData, 0, sizeof(cardData));
 		kcode[1] |= DC_DPAD_UP;
 	}
 
 protected:
 	bool loadCard() override
 	{
+		memset(cardData, 0, sizeof(cardData));
 		bool ret = CardReaderWriter::loadCard(cardData, sizeof(cardData));
 		if (!ret)
 			initCard();
@@ -843,7 +834,8 @@ private:
 		u32 size = (inBuffer[2] << 8) + inBuffer[3];
 		for (u32 i = 2; i < size; i++)
 			payload += strprintf("%02x ", inBuffer[4 + i]);
-		HWLOG("HW210: cmd %02x sz %x arg %x: %s", inBuffer[1], size, (inBuffer[4] << 8) + inBuffer[5], payload.c_str());
+		if (inBuffer[1] != 0x24 || inBuffer[6] != 0 || inBuffer[7] != 0)
+			HWLOG("HW210: cmd %02x sz %x arg %x: %s", inBuffer[1], size, (inBuffer[4] << 8) + inBuffer[5], payload.c_str());
 	}
 
 	void sendCmd(u8 cmd, u16 payloadSz = 0, u16 arg = 0)
@@ -858,22 +850,39 @@ private:
 
 	void initCard()
 	{
+		// Must start with 95 71 25 7x ?? ?? ?? ??
+		// ? can be any digit [0-9]
+		// x must be the sum of all ? digits % 10
+		static constexpr u8 UID[] = { 0x95, 0x71, 0x25, 0x70 };
+		memset(cardData, 0, sizeof(cardData));
+		const u32 offset = 4 * 8;
+		memcpy(&cardData[offset], UID, sizeof(UID));
 		int sum = 0;
 		srand(time(nullptr));
 		for (int i = 0; i < 4; i++)
 		{
 			const u8 n = rand() % 100;
-			cardData[i + 4] = ((n / 10) << 4) | (n % 10);
+			cardData[i + offset + 4] = ((n / 10) << 4) | (n % 10);
 			sum += n / 10 + n % 10;
 		}
-		cardData[3] = (cardData[3] & 0xf0) | (sum % 10);
-		NOTICE_LOG(NAOMI, "WCCF IC card created: %02x %02x %02x %02x %02x", cardData[3], cardData[4], cardData[5], cardData[6], cardData[7]);
+		cardData[offset + 3] = (cardData[offset + 3] & 0xf0) | (sum % 10);
+		NOTICE_LOG(NAOMI, "WCCF IC card created: %02x %02x %02x %02x %02x", cardData[offset + 3],
+				cardData[offset + 4], cardData[offset + 5], cardData[offset + 6], cardData[offset + 7]);
 	}
 
-	// Must start with 95 71 25 7x ?? ?? ?? ??
-	// ? can be any digit [0-9]
-	// x must be the sum of all ? digits % 10
-	u8 cardData[0x238] { 0x95, 0x71, 0x25, 0x76, 0x12, 0x34, 0x56, 0x78 };
+	void writeCard(u32 offset, u32 blocks, const u8 *data)
+	{
+		offset *= 8; // in bytes
+		if (offset < sizeof(cardData))
+		{
+			u32 size = blocks * 8;
+			size = std::min(size, (u32)sizeof(cardData) - offset);
+			memcpy(&cardData[offset], data, size);
+			saveCard(cardData, sizeof(cardData));
+		}
+	}
+
+	u8 cardData[0x270] {};
 };
 
 void initdInit() {
