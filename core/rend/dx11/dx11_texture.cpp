@@ -20,8 +20,26 @@
 #include "dx11context.h"
 #include <versionhelpers.h>
 
+namespace
+{
+struct DX11GpuPreloadedTexture final : GpuPreloadedTexture
+{
+	explicit DX11GpuPreloadedTexture(u8 mipLevels) : GpuPreloadedTexture(mipLevels) {}
+
+	ComPtr<ID3D11Texture2D> texture;
+	ComPtr<ID3D11ShaderResourceView> textureView;
+};
+}
+
 void DX11Texture::UploadToGPU(int width, int height, const u8* temp_tex_buffer, bool mipmapped, bool mipmapsIncluded)
 {
+	if (usingGpuPreloadedTexture)
+	{
+		textureView.reset();
+		texture.reset();
+		gpuPreloadedTexture.reset();
+		usingGpuPreloadedTexture = false;
+	}
 	D3D11_TEXTURE2D_DESC desc{};
 	desc.Width = width;
 	desc.Height = height;
@@ -136,17 +154,122 @@ bool DX11Texture::Delete()
 	return true;
 }
 
-void DX11Texture::loadCustomTexture()
+bool DX11Texture::uploadCustomTexture(const PreparedCustomTexture& customTexture, bool mipmapped)
 {
-	u32 size = custom_width * custom_height;
-	u8 *p = custom_image_data;
-	while (size--)
+	if (usingGpuPreloadedTexture)
 	{
-		// RGBA -> BGRA
-		std::swap(p[0], p[2]);
-		p += 4;
+		textureView.reset();
+		texture.reset();
+		gpuPreloadedTexture.reset();
+		usingGpuPreloadedTexture = false;
 	}
-	CheckCustomTexture();
+	validatePreparedCustomTexture(customTexture);
+	DXGI_FORMAT format;
+	switch (customTexture.nativeFormat)
+	{
+	case NativeTextureFormat::Rgba8Unorm: format = DXGI_FORMAT_R8G8B8A8_UNORM; break;
+	case NativeTextureFormat::Bc7Unorm: format = DXGI_FORMAT_BC7_UNORM; break;
+	case NativeTextureFormat::Bc1Unorm: format = DXGI_FORMAT_BC1_UNORM; break;
+	case NativeTextureFormat::Bc3Unorm: format = DXGI_FORMAT_BC3_UNORM; break;
+	default: return false;
+	}
+	const bool generateMipmaps = mipmapped && customTexture.generateMipmaps;
+
+	D3D11_TEXTURE2D_DESC desc{};
+	desc.Width = customTexture.width;
+	desc.Height = customTexture.height;
+	desc.ArraySize = 1;
+	desc.Format = format;
+	desc.SampleDesc.Count = 1;
+	desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+	ComPtr<ID3D11Texture2D> newTexture;
+	ID3D11Device *device = DX11Context::Instance()->getDevice();
+	if (generateMipmaps)
+	{
+		desc.MipLevels = 0;
+		desc.Usage = D3D11_USAGE_DEFAULT;
+		desc.BindFlags |= D3D11_BIND_RENDER_TARGET;
+		desc.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS;
+		if (FAILED(device->CreateTexture2D(&desc, nullptr, &newTexture.get())))
+			return false;
+	}
+	else
+	{
+		desc.MipLevels = static_cast<UINT>(customTexture.levels.size());
+		desc.Usage = D3D11_USAGE_IMMUTABLE;
+		std::vector<D3D11_SUBRESOURCE_DATA> levels(customTexture.levels.size());
+		for (size_t i = 0; i < customTexture.levels.size(); ++i)
+		{
+			const PreparedMipLevel& level = customTexture.levels[i];
+			if (level.rowPitchBytes > UINT_MAX || level.byteSize > UINT_MAX)
+				return false;
+			levels[i].pSysMem = customTexture.bytes.data() + level.byteOffset;
+			levels[i].SysMemPitch = level.rowPitchBytes;
+			levels[i].SysMemSlicePitch = static_cast<UINT>(level.byteSize);
+		}
+		if (FAILED(device->CreateTexture2D(&desc, levels.data(), &newTexture.get())))
+			return false;
+	}
+	D3D11_SHADER_RESOURCE_VIEW_DESC viewDesc{};
+	viewDesc.Format = format;
+	viewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+	viewDesc.Texture2D.MipLevels = generateMipmaps ? UINT(-1) : desc.MipLevels;
+	ComPtr<ID3D11ShaderResourceView> newView;
+	if (FAILED(device->CreateShaderResourceView(newTexture, &viewDesc, &newView.get())))
+		return false;
+	if (generateMipmaps)
+	{
+		const PreparedMipLevel& level = customTexture.levels.front();
+		ID3D11DeviceContext *context = DX11Context::Instance()->getDeviceContext();
+		context->UpdateSubresource(newTexture.get(), 0, nullptr, customTexture.bytes.data(),
+				level.rowPitchBytes, static_cast<UINT>(level.byteSize));
+		context->GenerateMips(newView.get());
+	}
+	texture = std::move(newTexture);
+	textureView = std::move(newView);
+	return true;
+}
+
+GpuPreloadedTexture::Ptr DX11Texture::createGpuPreloadedTexture(
+		const PreparedCustomTexture& customTexture)
+{
+	DX11Texture uploadedTexture;
+	if (!uploadedTexture.uploadCustomTexture(customTexture, true))
+		return nullptr;
+	auto texture = std::make_shared<DX11GpuPreloadedTexture>(
+			static_cast<u8>(customTexture.generateMipmaps
+					? mipmapLevelCount(customTexture.width, customTexture.height)
+					: customTexture.levels.size()));
+	texture->texture = std::move(uploadedTexture.texture);
+	texture->textureView = std::move(uploadedTexture.textureView);
+	return texture;
+}
+
+bool DX11Texture::useGpuPreloadedTexture(const GpuPreloadedTexture::Ptr& texture)
+{
+	auto dx11Texture = std::dynamic_pointer_cast<DX11GpuPreloadedTexture>(texture);
+	if (!dx11Texture)
+		return false;
+	this->texture = dx11Texture->texture;
+	textureView = dx11Texture->textureView;
+	return true;
+}
+
+CustomTextureCapabilities DX11Texture::getCustomTextureCapabilities()
+{
+	CustomTextureCapabilities capabilities = CustomTextureCapabilities::rgbaOnly(
+			CustomTextureBackend::Direct3D11, D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION);
+	ID3D11Device *device = DX11Context::Instance()->getDevice();
+	const auto query = [device](DXGI_FORMAT format) {
+		UINT support = 0;
+		return SUCCEEDED(device->CheckFormatSupport(format, &support))
+				&& (support & (D3D11_FORMAT_SUPPORT_TEXTURE2D | D3D11_FORMAT_SUPPORT_SHADER_SAMPLE))
+					== (D3D11_FORMAT_SUPPORT_TEXTURE2D | D3D11_FORMAT_SUPPORT_SHADER_SAMPLE);
+	};
+	capabilities.setSupported(NativeTextureFormat::Bc7Unorm, query(DXGI_FORMAT_BC7_UNORM));
+	capabilities.setSupported(NativeTextureFormat::Bc1Unorm, query(DXGI_FORMAT_BC1_UNORM));
+	capabilities.setSupported(NativeTextureFormat::Bc3Unorm, query(DXGI_FORMAT_BC3_UNORM));
+	return capabilities;
 }
 
 HRESULT Samplers::createSampler(const D3D11_SAMPLER_DESC *desc, ID3D11SamplerState **sampler)

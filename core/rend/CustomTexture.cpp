@@ -18,15 +18,27 @@
  */
 #include "CustomTexture.h"
 #include "TexCache.h"
+#include "custom_texture/TextureTranscoder.h"
+#include "hw/pvr/Renderer_if.h"
 #include "oslib/directory.h"
 #include "oslib/storage.h"
 #include "cfg/option.h"
+#include "oslib/i18n.h"
 #include "oslib/oslib.h"
 #include "stdclass.h"
 #include "util/worker_thread.h"
 
 #include <sstream>
 #include <locale>
+#include <algorithm>
+#include <array>
+#include <cerrno>
+#include <climits>
+#include <cstring>
+#include <map>
+#include <new>
+#include <unordered_set>
+
 #define STB_IMAGE_IMPLEMENTATION
 #define STBI_ONLY_JPEG
 #define STBI_ONLY_PNG
@@ -34,178 +46,406 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <stb_image_write.h>
 
+namespace
+{
+constexpr size_t MaxPendingGpuPreloads = 8;
+
+std::vector<u32> replacementHashes(u32 currentHash, u32 oldVqHash, u32 oldHash)
+{
+	std::vector<u32> hashes;
+	hashes.reserve(3);
+	hashes.push_back(currentHash);
+	const auto appendDistinct = [&hashes](u32 hash) {
+		if (std::find(hashes.begin(), hashes.end(), hash) == hashes.end())
+			hashes.push_back(hash);
+	};
+	if (oldVqHash != 0)
+		appendDistinct(oldVqHash);
+	appendDistinct(oldHash);
+	return hashes;
+}
+
+std::vector<u8> readFile(const CustomTextureCandidate& candidate)
+{
+	std::unique_ptr<hostfs::File> file(hostfs::storage().openFile(candidate.path, "rb"));
+	if (!file)
+		throw CustomTextureException(CustomTextureException::Error::FileRead, "file open failed");
+	const s64 actualSize = file->size();
+	if (actualSize <= 0 || static_cast<u64>(actualSize) > static_cast<u64>(SIZE_MAX))
+		throw CustomTextureException(CustomTextureException::Error::FileRead,
+				"file is empty or cannot be addressed on this platform");
+	std::vector<u8> bytes(static_cast<size_t>(actualSize));
+	if (file->read(bytes.data(), 1, bytes.size()) != bytes.size())
+		throw CustomTextureException(CustomTextureException::Error::FileRead, "short file read");
+	return bytes;
+}
+
+std::array<CustomTextureSourceKind, 7> preferredSourceKinds(
+		const CustomTextureCapabilities& capabilities)
+{
+	std::array<CustomTextureSourceKind, 7> kinds {{
+		CustomTextureSourceKind::Ktx2Xubc7,
+		CustomTextureSourceKind::Ktx2Xuastc,
+		CustomTextureSourceKind::Ktx2Etc1s,
+		CustomTextureSourceKind::Ktx2Generic,
+		CustomTextureSourceKind::DdsBc7,
+		CustomTextureSourceKind::Png,
+		CustomTextureSourceKind::Jpeg,
+	}};
+	bool xuastcFirst = false;
+	if (capabilities.supports(NativeTextureFormat::Astc4x4Unorm))
+	{
+#if defined(__APPLE__) || defined(__ANDROID__)
+		xuastcFirst = true;
+#else
+		xuastcFirst = !capabilities.supports(NativeTextureFormat::Bc7Unorm);
+#endif
+	}
+	if (xuastcFirst)
+		std::swap(kinds[0], kinds[1]);
+	return kinds;
+}
+
+PreparedCustomTexture::Ptr decodeImageToRGBA(u32 hash, const std::vector<u8>& fileBytes,
+		const CustomTextureCapabilities& capabilities)
+{
+	if (fileBytes.size() > INT_MAX)
+		throw CustomTextureException(CustomTextureException::Error::ImageDecode,
+				"legacy image is too large for stb_image");
+	int width = 0;
+	int height = 0;
+	int channels = 0;
+	if (!stbi_info_from_memory(fileBytes.data(), static_cast<int>(fileBytes.size()),
+			&width, &height, &channels) || width <= 0 || height <= 0)
+		throw CustomTextureException(CustomTextureException::Error::ImageDecode,
+				"legacy image header is invalid");
+	if (static_cast<u32>(width) > capabilities.max2DWidth
+			|| static_cast<u32>(height) > capabilities.max2DHeight)
+		throw CustomTextureException(CustomTextureException::Error::TextureTooLarge,
+				"legacy image dimensions exceed active renderer limits");
+	const PreparedMipLevel level = computeMipLayout(NativeTextureFormat::Rgba8Unorm,
+			static_cast<u32>(width), static_cast<u32>(height), 0);
+	stbi_set_flip_vertically_on_load_thread(1);
+	stbi_uc *decoded = stbi_load_from_memory(fileBytes.data(), static_cast<int>(fileBytes.size()),
+			&width, &height, &channels, STBI_rgb_alpha);
+	if (decoded == nullptr)
+		throw CustomTextureException(CustomTextureException::Error::ImageDecode,
+				stbi_failure_reason() ? stbi_failure_reason() : "stb_image decode failed");
+	std::unique_ptr<stbi_uc, decltype(&stbi_image_free)> decodedOwner(decoded, stbi_image_free);
+	auto output = std::make_shared<PreparedCustomTexture>();
+	output->replacementHash = hash;
+	output->nativeFormat = NativeTextureFormat::Rgba8Unorm;
+	output->width = static_cast<u32>(width);
+	output->height = static_cast<u32>(height);
+	output->generateMipmaps = true;
+	output->levels.push_back(level);
+	output->bytes.assign(decoded, decoded + level.byteSize);
+	return output;
+}
+}
+
 CustomTexture custom_texture;
 
 class CustomTextureSource : public BaseCustomTextureSource
 {
 public:
-	CustomTextureSource(const std::string game_id)
+	CustomTextureSource(const std::string gameId)
 	{
-		textures_path = hostfs::getTextureLoadPath(game_id);
-		if (!textures_path.empty())
+		texturesPath = hostfs::getTextureLoadPath(gameId);
+		if (!texturesPath.empty())
 		{
-			custom_textures_available = hostfs::storage().exists(textures_path);
-			if (custom_textures_available)
-				NOTICE_LOG(RENDERER, "Found custom textures directory: %s", textures_path.c_str());
+			customTexturesAvailable = hostfs::storage().exists(texturesPath);
+			if (customTexturesAvailable)
+				NOTICE_LOG(RENDERER, "Found custom textures directory: %s", texturesPath.c_str());
 		}
 	}
-	bool shouldReplace() const override { return config::CustomTextures && custom_textures_available; }
-	bool shouldPreload() const override { return shouldReplace() && config::PreloadCustomTextures; }
-	bool loadMap() override;
-	size_t getTextureCount() const override { return texture_map.size(); }
-	void preloadTextures(TextureCallback callback, std::atomic<bool>* stop_flag) override;
-	u8* loadCustomTexture(u32 hash, int& width, int& height) override;
-	bool isTextureReplaced(u32 hash) override final;
-	
-	
+	bool shouldReplace() const override { return config::CustomTextures && customTexturesAvailable; }
+	bool shouldPreload() const override
+	{
+		const config::CustomTexturePreloadMode mode = config::customTexturePreloadMode();
+		return shouldReplace() && (mode == config::CustomTexturePreloadMode::SystemMemory
+				|| (mode == config::CustomTexturePreloadMode::VideoMemory
+						&& rend_supports_gpu_texture_preload()));
+	}
+	bool loadMap(const CustomTextureCapabilities& capabilities) override;
+	size_t getTextureCount() const override;
+	void preloadTextures(const CustomTextureCapabilities& capabilities,
+			TextureCallback callback, std::atomic<bool>* stopFlag) override;
+	PreparedCustomTexture::Ptr loadCustomTexture(u32 hash,
+			const CustomTextureCapabilities& capabilities,
+			const CancellationCheck& cancelled) override;
+	bool isTextureReplaced(u32 hash) const override final;
 
 private:
-	bool custom_textures_available = false;
-	std::string textures_path;
-	std::map<u32, std::string> texture_map;
+	bool isFailed(const std::string& path) const;
+	void markFailed(const std::string& path);
+
+	bool customTexturesAvailable = false;
+	std::string texturesPath;
+	mutable std::mutex catalogMutex;
+	std::map<u32, CustomTextureCandidate> textureCatalog;
+	std::unordered_set<std::string> sessionFailures;
 };
 
-bool CustomTextureSource::loadMap()
+bool CustomTextureSource::loadMap(const CustomTextureCapabilities& capabilities)
 {
-	texture_map.clear();
-	hostfs::DirectoryTree tree(textures_path);
+	std::map<u32, CustomTextureCandidate> newCatalog;
+	const auto preferredKinds = preferredSourceKinds(capabilities);
+	hostfs::DirectoryTree tree(texturesPath);
 	for (const hostfs::FileInfo& item : tree)
 	{
-		std::string extension = get_file_extension(item.name);
-		if (extension != "jpg" && extension != "jpeg" && extension != "png")
+		if (item.isDirectory)
 			continue;
-		std::string::size_type dotpos = item.name.find_last_of('.');
-		std::string basename = item.name.substr(0, dotpos);
-		char *endptr;
-		u32 hash = (u32)strtoll(basename.c_str(), &endptr, 16);
-		if (endptr - basename.c_str() < (ptrdiff_t)basename.length())
+		const auto parsed = parseCustomTextureFilename(item.name);
+		if (!parsed)
+			continue;
+		CustomTextureCandidate candidate { parsed->kind, item.path };
+		auto [catalogEntry, inserted] = newCatalog.emplace(parsed->hash, candidate);
+		if (inserted)
+			continue;
+
+		const auto candidatePriority = std::find(
+				preferredKinds.begin(), preferredKinds.end(), candidate.kind);
+		const auto selectedPriority = std::find(
+				preferredKinds.begin(), preferredKinds.end(), catalogEntry->second.kind);
+		if (candidatePriority < selectedPriority || (candidatePriority == selectedPriority
+				&& candidate.path < catalogEntry->second.path))
 		{
-			INFO_LOG(RENDERER, "Invalid hash %s", basename.c_str());
-			continue;
+			WARN_LOG(RENDERER, "Ignoring custom texture candidate for %08x: %s (using %s)",
+					parsed->hash, catalogEntry->second.path.c_str(), candidate.path.c_str());
+			catalogEntry->second = std::move(candidate);
 		}
-		texture_map[hash] = item.path;
+		else
+		{
+			WARN_LOG(RENDERER, "Ignoring custom texture candidate for %08x: %s (using %s)",
+					parsed->hash, candidate.path.c_str(), catalogEntry->second.path.c_str());
+		}
 	}
-	return !texture_map.empty();
+	{
+		std::lock_guard<std::mutex> lock(catalogMutex);
+		textureCatalog = std::move(newCatalog);
+		sessionFailures.clear();
+	}
+	std::lock_guard<std::mutex> lock(catalogMutex);
+	return !textureCatalog.empty();
 }
 
-void CustomTextureSource::preloadTextures(TextureCallback callback, std::atomic<bool>* stop_flag)
+size_t CustomTextureSource::getTextureCount() const
 {
-	for (auto const& [hash, path] : texture_map)
+	std::lock_guard<std::mutex> lock(catalogMutex);
+	return textureCatalog.size();
+}
+
+void CustomTextureSource::preloadTextures(const CustomTextureCapabilities& capabilities,
+		TextureCallback callback, std::atomic<bool>* stopFlag)
+{
+	std::vector<u32> hashes;
 	{
-		if (stop_flag != nullptr && *stop_flag)
+		std::lock_guard<std::mutex> lock(catalogMutex);
+		hashes.reserve(textureCatalog.size());
+		for (const auto& [hash, unused] : textureCatalog)
+			hashes.push_back(hash);
+	}
+	for (u32 hash : hashes)
+	{
+		if (stopFlag != nullptr && *stopFlag)
 			return;
-		int w, h;
-		u8* data = loadCustomTexture(hash, w, h);
-		if (data != nullptr)
-		{
-			size_t size = (size_t)w * h * 4;
-			TextureData tex;
-			tex.w = w;
-			tex.h = h;
-			tex.data.resize(size);
-			memcpy(tex.data.data(), data, size);
-			stbi_image_free(data);
-			callback(hash, std::move(tex));
-		}
+		auto cancelled = [stopFlag]() { return stopFlag != nullptr && *stopFlag; };
+		PreparedCustomTexture::Ptr texture = loadCustomTexture(hash, capabilities, cancelled);
+		callback(hash, std::move(texture));
 	}
 }
 
-u8* CustomTextureSource::loadCustomTexture(u32 hash, int& width, int& height)
+PreparedCustomTexture::Ptr CustomTextureSource::loadCustomTexture(u32 hash,
+		const CustomTextureCapabilities& capabilities,
+		const CancellationCheck& cancelled)
 {
-	auto it = texture_map.find(hash);
-	if (it == texture_map.end())
-		return nullptr;
-
-	hostfs::File *file = hostfs::storage().openFile(it->second, "rb");
-	if (file == nullptr)
-		return nullptr;
-	int n;
-	stbi_set_flip_vertically_on_load_thread(1);
-	u8 *imgData = stbi_load_from_file(file, &width, &height, &n, STBI_rgb_alpha);
-	delete file;
-	return imgData;
-}
-
-bool CustomTextureSource::isTextureReplaced(u32 hash)
-{
-	return texture_map.count(hash);
-}
-
-void CustomTexture::loadTexture(BaseTextureCacheData *texture)
-{
-	if (texture->custom_image_data != nullptr) {
-		free(texture->custom_image_data);
-		texture->custom_image_data = nullptr;
-	}
-	if (!texture->dirty)
+	CustomTextureCandidate candidate;
 	{
-		int width, height;
-		u8 *image_data = loadTexture(texture->texture_hash, width, height);
-		if (image_data == nullptr && texture->old_vqtexture_hash != 0)
-			image_data = loadTexture(texture->old_vqtexture_hash, width, height);
-		if (image_data == nullptr)
-			image_data = loadTexture(texture->old_texture_hash, width, height);
-		if (image_data != nullptr)
+		std::lock_guard<std::mutex> lock(catalogMutex);
+		const auto found = textureCatalog.find(hash);
+		if (found == textureCatalog.end())
+			return nullptr;
+		candidate = found->second;
+	}
+	if (isFailed(candidate.path))
+		return nullptr;
+	if (cancelled && cancelled())
+		return nullptr;
+	const bool legacyImage = candidate.kind == CustomTextureSourceKind::Png
+			|| candidate.kind == CustomTextureSourceKind::Jpeg;
+	if (!legacyImage && capabilities.backend == CustomTextureBackend::Direct3D9)
+	{
+		WARN_LOG(RENDERER, "DDS/KTX2 custom texture %08x is not supported by DirectX 9: %s",
+				hash, candidate.path.c_str());
+		custom_texture.reportError(CustomTextureException::Error::DirectX9CompressedSource);
+		markFailed(candidate.path);
+		return nullptr;
+	}
+
+	std::vector<u8> fileBytes;
+	try
+	{
+		fileBytes = readFile(candidate);
+	}
+	catch (const CustomTextureException& exception)
+	{
+		WARN_LOG(RENDERER, "Custom texture %08x read failed (%s): %s", hash,
+			candidate.path.c_str(), exception.what());
+		custom_texture.reportError(exception.error());
+		markFailed(candidate.path);
+		return nullptr;
+	}
+	if (legacyImage)
+	{
+		try
 		{
-			texture->custom_width = width;
-			texture->custom_height = height;
-			texture->custom_image_data = image_data;
+			return decodeImageToRGBA(hash, fileBytes, capabilities);
+		}
+		catch (const CustomTextureException& exception)
+		{
+			WARN_LOG(RENDERER, "Custom texture %08x image preparation failed (%s): %s", hash,
+				candidate.path.c_str(), exception.what());
+			custom_texture.reportError(exception.error());
+			markFailed(candidate.path);
+			return nullptr;
+		}
+		catch (const FlycastException& exception)
+		{
+			WARN_LOG(RENDERER, "Custom texture %08x image preparation failed (%s): %s", hash,
+				candidate.path.c_str(), exception.what());
+			custom_texture.reportError(CustomTextureException::Error::ImageDecode);
+			markFailed(candidate.path);
+			return nullptr;
 		}
 	}
-	texture->custom_load_in_progress--;
+
+	TextureTranscoder transcoder;
+	TextureInspection inspection;
+	try
+	{
+		inspection = transcoder.inspect(candidate.kind, std::move(fileBytes));
+	}
+	catch (const FlycastException& exception)
+	{
+		WARN_LOG(RENDERER, "Custom texture %08x inspection failed (%s): %s", hash,
+			candidate.path.c_str(), exception.what());
+		custom_texture.reportError(CustomTextureException::Error::CompressedSource);
+		markFailed(candidate.path);
+		return nullptr;
+	}
+	if (inspection.width > capabilities.max2DWidth
+			|| inspection.height > capabilities.max2DHeight)
+	{
+		WARN_LOG(RENDERER, "Custom texture %08x dimensions %ux%u exceed renderer limit %ux%u: %s",
+				hash, inspection.width, inspection.height, capabilities.max2DWidth,
+				capabilities.max2DHeight, candidate.path.c_str());
+		custom_texture.reportError(CustomTextureException::Error::TextureTooLarge);
+		markFailed(candidate.path);
+		return nullptr;
+	}
+	auto targets = selectNativeTextureTargets(capabilities, inspection.codec,
+			inspection.blockWidth, inspection.blockHeight, inspection.hasAlpha);
+	std::string preparationError = "no compatible native texture target";
+	for (NativeTextureFormat target : targets)
+	{
+		if (!capabilities.canUpload(target, inspection.width, inspection.height, inspection.levels))
+			continue;
+		try
+		{
+			PreparedCustomTexture::Ptr texture = transcoder.prepare(target, hash, cancelled);
+			DEBUG_LOG(RENDERER, "Prepared custom texture %08x %s -> %s (%zu bytes, %zu mips)",
+				hash, customTextureCodecName(inspection.codec), nativeTextureFormatName(target),
+				texture->bytes.size(), texture->levels.size());
+			return texture;
+		}
+		catch (const LoadCancelledException&)
+		{
+			return nullptr;
+		}
+		catch (const FlycastException& exception)
+		{
+			preparationError = exception.what();
+		}
+	}
+	WARN_LOG(RENDERER, "Custom texture %08x preparation failed (%s, %s): %s", hash,
+			customTextureCodecName(inspection.codec), candidate.path.c_str(), preparationError.c_str());
+	custom_texture.reportError(CustomTextureException::Error::CompressedSource);
+	markFailed(candidate.path);
+	return nullptr;
 }
 
-std::string CustomTexture::getGameId()
+bool CustomTextureSource::isTextureReplaced(u32 hash) const
 {
-   std::string game_id(settings.content.gameId);
-   const size_t str_end = game_id.find_last_not_of(' ');
-   if (str_end == std::string::npos)
+	std::lock_guard<std::mutex> lock(catalogMutex);
+	return textureCatalog.count(hash);
+}
+
+bool CustomTextureSource::isFailed(const std::string& path) const
+{
+	std::lock_guard<std::mutex> lock(catalogMutex);
+	return sessionFailures.count(path) != 0;
+}
+
+void CustomTextureSource::markFailed(const std::string& path)
+{
+	std::lock_guard<std::mutex> lock(catalogMutex);
+	sessionFailures.insert(path);
+}
+
+std::string CustomTexture::getGameId() const
+{
+   std::string gameId(settings.content.gameId);
+   const size_t strEnd = gameId.find_last_not_of(' ');
+   if (strEnd == std::string::npos)
 	  return "";
-   game_id = game_id.substr(0, str_end + 1);
-   std::replace(game_id.begin(), game_id.end(), ' ', '_');
+   gameId = gameId.substr(0, strEnd + 1);
+   std::replace(gameId.begin(), gameId.end(), ' ', '_');
 
-   return game_id;
+   return gameId;
 }
 
-bool CustomTexture::init()
+void CustomTexture::init()
 {
-	if (!initialized)
+	if (needsRefresh())
+		return;
+
+	const std::string gameId = getGameId();
+	if (state == State::Active)
 	{
-		stop_preload = false;
-		resetPreloadProgress();
-		pending_preloads = 0;
-		initialized = true;
-
-		std::string game_id = getGameId();
-		if (game_id.length() > 0)
-		{
-			// The first source added has highest priority.
-			// Add your source after the default `CustomTextureSource`(data/textures/<game id> folder), so end-users can override your textures.
-			addSource(std::make_unique<CustomTextureSource>(game_id));
-		}
+		// An empty ID during disc eject does not end the current game session.
+		if (gameId.empty() || gameId == sessionGameId)
+			return;
+		clearSessionResources();
 	}
+	startSession(gameId);
+}
 
+bool CustomTexture::isInitialized() const {
+	return state != State::Stopped;
+}
+
+bool CustomTexture::enabled() const {
 	return loaderThread != nullptr;
 }
 
-bool CustomTexture::enabled() {
-	return loaderThread != nullptr;
-}
-
-bool CustomTexture::preloaded() {
-	return preload_total > 0;
-}
-
-bool CustomTexture::isPreloading() {
-	if (pending_preloads > 0)
+bool CustomTexture::isPreloading() const {
+	if (pendingPreloads > 0)
 		return true;
 
 	int texLoaded = 0;
 	int texTotal = 0;
-	size_t loaded_size_b = 0;
-	getPreloadProgress(texLoaded, texTotal, loaded_size_b);
+	size_t loadedSizeB = 0;
+	getPreloadProgress(texLoaded, texTotal, loadedSizeB);
 	
 	return (texTotal > 0 && texLoaded < texTotal);
+}
+
+bool CustomTexture::needsRefresh() const {
+	return state == State::RefreshPending
+			|| (state == State::Active
+					&& (sessionCustomTextures != config::CustomTextures.get()
+							|| sessionPreloadMode != config::customTexturePreloadMode()));
 }
 
 void CustomTexture::addSource(std::unique_ptr<BaseCustomTextureSource> source)
@@ -213,7 +453,7 @@ void CustomTexture::addSource(std::unique_ptr<BaseCustomTextureSource> source)
 	BaseCustomTextureSource* ptr = source.get();
 	sources.emplace_back(std::move(source));
 	
-	if (initialized)
+	if (state == State::Active)
 	{
 		if (!loaderThread && ptr->shouldReplace())
 		{
@@ -221,11 +461,22 @@ void CustomTexture::addSource(std::unique_ptr<BaseCustomTextureSource> source)
 		}
 		if (loaderThread)
 		{
-			if (ptr->shouldPreload())
-				pending_preloads++;
-			loaderThread->run([this, ptr]() {
-				prepareSource(ptr);
-			});
+			const bool shouldPreload = ptr->shouldPreload();
+			if (shouldPreload)
+				pendingPreloads++;
+			try
+			{
+				loaderThread->run([this, ptr, shouldPreload]() {
+					prepareSource(ptr, shouldPreload);
+				});
+			}
+			catch (const std::bad_alloc& exception)
+			{
+				if (shouldPreload)
+					pendingPreloads--;
+				WARN_LOG(RENDERER, "Custom texture source scheduling failed: %s", exception.what());
+				reportError(CustomTextureException::Error::AllocationFailed);
+			}
 		}
 	}
 }
@@ -234,85 +485,283 @@ CustomTexture::~CustomTexture() {
 	terminate();
 }
 
+void CustomTexture::refresh()
+{
+	if (state == State::Stopped)
+		return;
+	if (state == State::Active)
+		clearSessionResources();
+
+	std::string gameId = getGameId();
+	if (gameId.empty())
+		gameId = sessionGameId;
+	startSession(gameId);
+}
+
 void CustomTexture::terminate()
 {
-	stop_preload = true;
+	if (state == State::Active)
+		clearSessionResources();
+	state = State::Stopped;
+	sessionGameId.clear();
+	sessionCustomTextures = false;
+	sessionPreloadMode = {};
+}
+
+void CustomTexture::startSession(const std::string& gameId)
+{
+	stopPreload = false;
+	resetPreloadProgress();
+	pendingPreloads = 0;
+	state = State::Active;
+	sessionGameId = gameId;
+	sessionCustomTextures = config::CustomTextures.get();
+	sessionPreloadMode = config::customTexturePreloadMode();
+	if (!gameId.empty())
+	{
+		// The first source added has highest priority.
+		// Add your source after the default `CustomTextureSource`(data/textures/<game id> folder), so end-users can override your textures.
+		addSource(std::make_unique<CustomTextureSource>(gameId));
+	}
+}
+
+void CustomTexture::clearSessionResources()
+{
+	stopPreload = true;
+	gpuPreloadCondition.notify_all();
 	if (loaderThread)
 		loaderThread->stop();
 	loaderThread.reset();
 	for (auto& source : sources)
 		source->terminate();
 	sources.clear();
-	preloaded_textures.clear();
+	{
+		std::lock_guard<std::mutex> lock(stateMutex);
+		preloadedTextures.clear();
+		pendingGpuPreloads.clear();
+		requests.clear();
+		pendingError.reset();
+		errorNotificationShown = false;
+	}
 	resetPreloadProgress();
-	initialized = false;
+	gpuCleanupOperations.push(GpuCleanupOperation {});
 }
 
-u8* CustomTexture::loadTexture(u32 hash, int& width, int& height)
+PreparedCustomTexture::Ptr CustomTexture::findPreloaded(u32 currentHash, u32 oldVqHash,
+		u32 oldHash) const
 {
-	auto it = preloaded_textures.find(hash);
-	if (it != preloaded_textures.end())
+	std::lock_guard<std::mutex> lock(stateMutex);
+	for (u32 hash : replacementHashes(currentHash, oldVqHash, oldHash))
 	{
-		width = it->second.w;
-		height = it->second.h;
-		size_t size = (size_t)width * height * 4;
-		u8* buffer = (u8*)malloc(size);
-		if (buffer == nullptr)
-			return nullptr;
-		memcpy(buffer, it->second.data.data(), size);
-		return buffer;
+		const auto found = preloadedTextures.find(hash);
+		if (found != preloadedTextures.end())
+			return found->second;
 	}
+	return nullptr;
+}
 
-	for (auto it = sources.begin(); it != sources.end(); ++it)
+PreparedCustomTexture::Ptr CustomTexture::loadTexture(u32 currentHash, u32 oldVqHash,
+		u32 oldHash, const CustomTextureCapabilities& activeCapabilities,
+		const BaseCustomTextureSource::CancellationCheck& cancelled)
+{
+	for (u32 hash : replacementHashes(currentHash, oldVqHash, oldHash))
 	{
-		auto& source = *it;
-		if (source->shouldReplace())
+		for (const auto& source : sources)
 		{
-			u8* data = source->loadCustomTexture(hash, width, height);
-			if (data != nullptr)
-				return data;
+			if (!source->shouldReplace())
+				continue;
+			if (PreparedCustomTexture::Ptr texture = source->loadCustomTexture(hash,
+					activeCapabilities, cancelled))
+				return texture;
 		}
 	}
 	return nullptr;
 }
 
-bool CustomTexture::isTextureReplaced(BaseTextureCacheData* texture)
+bool CustomTexture::requestCancelled(CustomTextureRequestId requestId) const
 {
-	if (preloaded_textures.count(texture->texture_hash))
+	if (stopPreload)
 		return true;
-	if (texture->old_vqtexture_hash != 0 && preloaded_textures.count(texture->old_vqtexture_hash))
-		return true;
-	if (texture->old_texture_hash != 0 && preloaded_textures.count(texture->old_texture_hash))
-		return true;
+	std::lock_guard<std::mutex> lock(stateMutex);
+	return requests.count(requestId.value) == 0;
+}
 
-	for (auto it = sources.begin(); it != sources.end(); ++it)
+void CustomTexture::loadCustomTextureAsync(BaseTextureCacheData *textureData)
+{
+	if (state != State::Active || !loaderThread)
+		return;
+	showErrorNotification();
+	if (textureData->customRequestId)
+		cancelRequest(textureData->customRequestId);
+	textureData->customRequestId = {};
+	textureData->customPayload.reset();
+	const CustomTextureCapabilities activeCapabilities = getCapabilities();
+	if (PreparedCustomTexture::Ptr preloaded = findPreloaded(textureData->texture_hash,
+			textureData->old_vqtexture_hash, textureData->old_texture_hash))
 	{
-		auto& source = *it;
-		if (source->shouldReplace())
+		textureData->customPayload = std::move(preloaded);
+		textureData->customRequestId = {};
+		return;
+	}
+
+	const CustomTextureRequestId requestId { nextRequestId.fetch_add(1) };
+	const u32 currentHash = textureData->texture_hash;
+	const u32 oldVqHash = textureData->old_vqtexture_hash;
+	const u32 oldHash = textureData->old_texture_hash;
+	try
+	{
+		std::lock_guard<std::mutex> lock(stateMutex);
+		requests.emplace(requestId.value, Request {});
+	}
+	catch (const std::bad_alloc& exception)
+	{
+		WARN_LOG(RENDERER, "Custom texture request %08x allocation failed: %s",
+				currentHash, exception.what());
+		reportError(CustomTextureException::Error::AllocationFailed);
+		showErrorNotification();
+		return;
+	}
+	textureData->customRequestId = requestId;
+	try
+	{
+		loaderThread->run([this, requestId, currentHash, oldVqHash, oldHash,
+				activeCapabilities]() {
+			PreparedCustomTexture::Ptr texture;
+			bool failed = false;
+			try
+			{
+				auto cancelled = [this, requestId]() {
+					return requestCancelled(requestId);
+				};
+				texture = loadTexture(currentHash, oldVqHash, oldHash,
+						activeCapabilities, cancelled);
+				failed = texture == nullptr;
+			}
+			catch (const std::bad_alloc& exception)
+			{
+				WARN_LOG(RENDERER, "Custom texture request %08x allocation failed: %s",
+						currentHash, exception.what());
+				reportError(CustomTextureException::Error::AllocationFailed);
+				failed = true;
+			}
+			std::lock_guard<std::mutex> lock(stateMutex);
+			const auto request = requests.find(requestId.value);
+			if (request != requests.end())
+			{
+				request->second.texture = std::move(texture);
+				request->second.failed = failed;
+				request->second.complete = true;
+			}
+		});
+	}
+	catch (const std::bad_alloc& exception)
+	{
 		{
-			if (source->isTextureReplaced(texture->texture_hash))
-				return true;
-			if (texture->old_vqtexture_hash != 0 && source->isTextureReplaced(texture->old_vqtexture_hash))
-				return true;
-			if (texture->old_texture_hash != 0 && source->isTextureReplaced(texture->old_texture_hash))
+			std::lock_guard<std::mutex> lock(stateMutex);
+			requests.erase(requestId.value);
+		}
+		textureData->customRequestId = {};
+		WARN_LOG(RENDERER, "Custom texture request %08x scheduling failed: %s",
+				currentHash, exception.what());
+		reportError(CustomTextureException::Error::AllocationFailed);
+		showErrorNotification();
+	}
+}
+
+bool CustomTexture::isRequestComplete(CustomTextureRequestId requestId) const
+{
+	if (!requestId)
+		return false;
+	std::lock_guard<std::mutex> lock(stateMutex);
+	const auto request = requests.find(requestId.value);
+	return request != requests.end() && request->second.complete;
+}
+
+PreparedCustomTexture::Ptr CustomTexture::takePreparedTexture(CustomTextureRequestId requestId, bool& failed)
+{
+	showErrorNotification();
+	failed = false;
+	if (!requestId)
+		return nullptr;
+	std::lock_guard<std::mutex> lock(stateMutex);
+	const auto found = requests.find(requestId.value);
+	if (found == requests.end() || !found->second.complete)
+		return nullptr;
+	failed = found->second.failed;
+	PreparedCustomTexture::Ptr texture = failed ? nullptr : std::move(found->second.texture);
+	requests.erase(found);
+	return texture;
+}
+
+void CustomTexture::cancelRequest(CustomTextureRequestId requestId)
+{
+	if (!requestId)
+		return;
+	std::lock_guard<std::mutex> lock(stateMutex);
+	requests.erase(requestId.value);
+}
+
+void CustomTexture::setCapabilities(const CustomTextureCapabilities& newCapabilities)
+{
+	CustomTextureCapabilities normalized = newCapabilities;
+	if (!normalized.supports(NativeTextureFormat::Rgba8Unorm))
+		normalized.setSupported(NativeTextureFormat::Rgba8Unorm);
+	{
+		std::lock_guard<std::mutex> lock(stateMutex);
+		if (capabilities.backend == normalized.backend
+				&& capabilities.max2DWidth == normalized.max2DWidth
+				&& capabilities.max2DHeight == normalized.max2DHeight
+				&& capabilities.sampledFormats == normalized.sampledFormats)
+			return;
+	}
+
+	if (state == State::Active && enabled())
+	{
+		clearSessionResources();
+		state = State::RefreshPending;
+	}
+	{
+		std::lock_guard<std::mutex> lock(stateMutex);
+		capabilities = normalized;
+	}
+}
+
+void CustomTexture::invalidateGpuPreloads()
+{
+	if (state == State::Active && enabled()
+			&& config::customTexturePreloadMode() == config::CustomTexturePreloadMode::VideoMemory)
+	{
+		clearSessionResources();
+		state = State::RefreshPending;
+	}
+}
+
+CustomTextureCapabilities CustomTexture::getCapabilities() const
+{
+	std::lock_guard<std::mutex> lock(stateMutex);
+	return capabilities;
+}
+
+bool CustomTexture::isTextureReplaced(BaseTextureCacheData* texture) const
+{
+	if (findPreloaded(texture->texture_hash, texture->old_vqtexture_hash,
+			texture->old_texture_hash))
+		return true;
+	for (const auto& source : sources)
+	{
+		if (!source->shouldReplace())
+			continue;
+		for (u32 hash : replacementHashes(texture->texture_hash,
+				texture->old_vqtexture_hash, texture->old_texture_hash))
+		{
+			if (source->isTextureReplaced(hash))
 				return true;
 		}
 	}
 	return false;
 }
 
-void CustomTexture::loadCustomTextureAsync(BaseTextureCacheData *texture_data)
-{
-	if (!init())
-		return;
-
-	texture_data->custom_load_in_progress++;
-	loaderThread->run([this, texture_data]() {
-		loadTexture(texture_data);
-	});
-}
-
-void CustomTexture::dumpTexture(BaseTextureCacheData* texture, int w, int h, void *src_buffer)
+void CustomTexture::dumpTexture(BaseTextureCacheData* texture, int w, int h, void *srcBuffer)
 {
 	if (!config::DumpTextures)
 		return;
@@ -323,29 +772,29 @@ void CustomTexture::dumpTexture(BaseTextureCacheData* texture, int w, int h, voi
 	if (!config::DumpReplacedTextures.get() && isTextureReplaced(texture))
 		return;
 
-	std::string base_dump_dir = hostfs::getTextureDumpPath();
-	if (!file_exists(base_dump_dir))
-		make_directory(base_dump_dir);
-	std::string game_id = getGameId();
-	if (game_id.length() == 0)
+	std::string baseDumpDir = hostfs::getTextureDumpPath();
+	if (!file_exists(baseDumpDir))
+		make_directory(baseDumpDir);
+	std::string gameId = getGameId();
+	if (gameId.length() == 0)
 		return;
 
-	base_dump_dir += game_id + "/";
-	if (!file_exists(base_dump_dir))
-		make_directory(base_dump_dir);
+	baseDumpDir += gameId + "/";
+	if (!file_exists(baseDumpDir))
+		make_directory(baseDumpDir);
 
 	std::ostringstream path;
 	path.imbue(std::locale::classic());
-	path << base_dump_dir << std::hex << texture->texture_hash << ".png";
+	path << baseDumpDir << std::hex << texture->texture_hash << ".png";
 
-	u16 *src = (u16 *)src_buffer;
-	u8 *dst_buffer = (u8 *)malloc(w * h * 4);	// 32-bit per pixel
-	if (dst_buffer == nullptr)
+	u16 *src = (u16 *)srcBuffer;
+	u8 *dstBuffer = (u8 *)malloc(w * h * 4);	// 32-bit per pixel
+	if (dstBuffer == nullptr)
 	{
 		ERROR_LOG(RENDERER, "Dump texture: out of memory");
 		return;
 	}
-	u8 *dst = dst_buffer;
+	u8 *dst = dstBuffer;
 
 	for (int y = 0; y < h; y++)
 	{
@@ -388,7 +837,7 @@ void CustomTexture::dumpTexture(BaseTextureCacheData* texture, int w, int h, voi
 				break;
 			default:
 				WARN_LOG(RENDERER, "dumpTexture: unsupported picture format %x", (u32)texture->tex_type);
-				free(dst_buffer);
+				free(dstBuffer);
 				return;
 			}
 		}
@@ -430,7 +879,7 @@ void CustomTexture::dumpTexture(BaseTextureCacheData* texture, int w, int h, voi
 				break;
 			default:
 				WARN_LOG(RENDERER, "dumpTexture: unsupported picture format %x", (u32)texture->tex_type);
-				free(dst_buffer);
+				free(dstBuffer);
 				return;
 			}
 		}
@@ -449,50 +898,187 @@ void CustomTexture::dumpTexture(BaseTextureCacheData* texture, int w, int h, voi
 			fclose(f);
 		}
 	};
-	stbi_write_png_to_func(savefunc, (void *)path.str().c_str(), w, h, STBI_rgb_alpha, dst_buffer, 0);
+	stbi_write_png_to_func(savefunc, (void *)path.str().c_str(), w, h, STBI_rgb_alpha, dstBuffer, 0);
 
-	free(dst_buffer);
+	free(dstBuffer);
 }
 
-void CustomTexture::prepareSource(BaseCustomTextureSource* source)
+void CustomTexture::prepareSource(BaseCustomTextureSource* source, bool shouldPreload)
 {
-	bool should_preload = source->shouldPreload();
+	int preloadCount = 0;
+	int processedCount = 0;
 
-	if (!stop_preload && source->loadMap())
+	try
 	{
-		if (should_preload)
+		const bool preloadToGpu = shouldPreload
+				&& config::customTexturePreloadMode() == config::CustomTexturePreloadMode::VideoMemory;
+		const CustomTextureCapabilities activeCapabilities = getCapabilities();
+		if (!stopPreload && source->loadMap(activeCapabilities))
 		{
-			int count = static_cast<int>(source->getTextureCount());
-			if (count > 0)
+			if (shouldPreload)
 			{
-				preload_total += count;
-				auto callback = [this](u32 hash, TextureData&& data) {
-					size_t size = data.data.size();
-					preloaded_textures[hash] = std::move(data);
-					preload_loaded++;
-					preload_loaded_size += size;
-				};
-				source->preloadTextures(callback, &stop_preload);
+				preloadCount = static_cast<int>(source->getTextureCount());
+				if (preloadCount > 0)
+				{
+					preloadTotal += preloadCount;
+					auto callback = [this, preloadToGpu, &processedCount](u32 hash,
+							PreparedCustomTexture::Ptr texture) {
+						size_t size = texture ? texture->bytes.size() : 0;
+						if (preloadToGpu)
+						{
+							if (texture)
+								submitGpuPreload(hash, std::move(texture));
+							else
+								preloadLoaded++;
+							processedCount++;
+							return;
+						}
+						if (texture)
+						{
+							std::lock_guard<std::mutex> lock(stateMutex);
+							preloadedTextures.emplace(hash, std::move(texture));
+						}
+						preloadLoaded++;
+						preloadLoadedSize += size;
+						processedCount++;
+					};
+					source->preloadTextures(activeCapabilities, callback, &stopPreload);
+				}
 			}
 		}
 	}
+	catch (const std::bad_alloc& exception)
+	{
+		WARN_LOG(RENDERER, "Custom texture preload allocation failed: %s", exception.what());
+		reportError(CustomTextureException::Error::AllocationFailed);
+		if (preloadCount > processedCount)
+			preloadLoaded += preloadCount - processedCount;
+	}
 
-	if (should_preload)
-		pending_preloads--;
+	if (shouldPreload)
+		pendingPreloads--;
 }
 
-void CustomTexture::getPreloadProgress(int& completed, int& total, size_t& loaded_size) const
+void CustomTexture::submitGpuPreload(u32 hash, PreparedCustomTexture::Ptr texture)
 {
-	total = preload_total;
-	if (total == 0 && pending_preloads > 0)
+	std::unique_lock<std::mutex> lock(stateMutex);
+	gpuPreloadCondition.wait(lock, [this] {
+		return pendingGpuPreloads.size() < MaxPendingGpuPreloads || stopPreload;
+	});
+	if (stopPreload)
+		return;
+	pendingGpuPreloads.emplace_back(hash, std::move(texture));
+}
+
+void CustomTexture::processGpuPreloads(const GpuTextureUploader& uploader)
+{
+	constexpr int MaxUploadsPerFrame = 8;
+	for (int i = 0; i < MaxUploadsPerFrame; ++i)
+	{
+		std::pair<u32, PreparedCustomTexture::Ptr> pending;
+		{
+			std::lock_guard<std::mutex> lock(stateMutex);
+			if (pendingGpuPreloads.empty())
+				break;
+			pending = std::move(pendingGpuPreloads.front());
+			pendingGpuPreloads.pop_front();
+		}
+		gpuPreloadCondition.notify_one();
+		bool uploaded = false;
+		try
+		{
+			uploaded = pending.second && uploader
+					&& uploader(pending.first, *pending.second);
+		}
+		catch (const FlycastException& exception)
+		{
+			WARN_LOG(RENDERER, "GPU custom texture preload %08x failed: %s",
+					pending.first, exception.what());
+		}
+		catch (const std::bad_alloc& exception)
+		{
+			WARN_LOG(RENDERER, "GPU custom texture preload %08x allocation failed: %s",
+					pending.first, exception.what());
+		}
+		if (uploaded)
+			preloadLoadedSize += pending.second->bytes.size();
+		else
+			reportError(CustomTextureException::Error::Upload);
+		preloadLoaded++;
+	}
+}
+
+bool CustomTexture::consumeGpuCleanupOperations()
+{
+	GpuCleanupOperation operation;
+	bool cleanupRequested = false;
+	while (gpuCleanupOperations.tryPop(operation))
+		cleanupRequested = true;
+	return cleanupRequested;
+}
+
+void CustomTexture::getPreloadProgress(int& completed, int& total, size_t& loadedSize) const
+{
+	total = preloadTotal;
+	if (total == 0 && pendingPreloads > 0)
 		total = -1; // Prints Preparing... in UI
-	completed = preload_loaded;
-	loaded_size = preload_loaded_size;
+	completed = preloadLoaded;
+	loadedSize = preloadLoadedSize;
+}
+
+void CustomTexture::reportError(CustomTextureException::Error error)
+{
+	// Loader errors may occur during preloading, before the in-game toast is visible.
+	std::lock_guard<std::mutex> lock(stateMutex);
+	if (!errorNotificationShown && !pendingError)
+		pendingError = error;
+}
+
+void CustomTexture::showErrorNotification()
+{
+	using Error = CustomTextureException::Error;
+	Error error;
+	{
+		std::lock_guard<std::mutex> lock(stateMutex);
+		if (errorNotificationShown || !pendingError)
+			return;
+		error = *pendingError;
+		pendingError.reset();
+		errorNotificationShown = true;
+	}
+
+	const char *message = nullptr;
+	switch (error)
+	{
+	case Error::FileRead:
+		message = i18n::T("Custom texture file could not be read");
+		break;
+	case Error::ImageDecode:
+		message = i18n::T("PNG/JPEG custom texture could not be decoded");
+		break;
+	case Error::CompressedSource:
+		message = i18n::T("Compressed custom texture could not be loaded.\nSupported formats: KTX2/XUBC7, KTX2/XUASTC, KTX2/ETC1S, and DDS/BC7");
+		break;
+	case Error::TextureTooLarge:
+		message = i18n::T("Custom texture exceeds the renderer's maximum texture dimensions");
+		break;
+	case Error::Upload:
+		message = i18n::T("Custom texture could not be uploaded to the GPU");
+		break;
+	case Error::AllocationFailed:
+		message = i18n::T("Custom texture memory allocation failed");
+		break;
+	case Error::DirectX9CompressedSource:
+		message = i18n::T("DirectX 9 supports PNG/JPEG custom textures only");
+		break;
+	}
+	if (message != nullptr)
+		os_notify(message, 10000);
 }
 
 void CustomTexture::resetPreloadProgress()
 {
-	preload_total = 0;
-	preload_loaded = 0;
-	preload_loaded_size = 0;
+	preloadTotal = 0;
+	preloadLoaded = 0;
+	preloadLoadedSize = 0;
 }

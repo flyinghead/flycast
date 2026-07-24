@@ -32,6 +32,7 @@ public:
 	void BeginFrame();
 	void EndFrame();
 	void EndFrameAndWait();
+	void abortFrame() { frameStarted = false; }
 	vk::CommandBuffer Allocate(bool submitLast = false);
 
 	int GetIndex() const {
@@ -49,6 +50,7 @@ private:
 	std::vector<bool> lastBuffers;
 	std::vector<vk::UniqueCommandPool> commandPools;
 	std::vector<vk::UniqueFence> fences;
+	std::vector<bool> fencePending;
 	// size should be the same as used by client: 2 for renderer (texCommandPool)
 	size_t chainSize;
 	std::vector<std::vector<std::unique_ptr<Deletable>>> inFlightObjects;

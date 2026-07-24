@@ -53,8 +53,10 @@ public:
 	void WaitIdle() const { queue.waitIdle(); }
 	void SubmitCommandBuffers(const std::vector<vk::CommandBuffer> &buffers, vk::Fence fence) {
 		retro_render_if->lock_queue(retro_render_if->handle);
-		queue.submit(vk::SubmitInfo(nullptr, nullptr, buffers, nullptr), fence);
+		const vk::SubmitInfo submitInfo(nullptr, nullptr, buffers, nullptr);
+		const vk::Result result = queue.submit(1, &submitInfo, fence);
 		retro_render_if->unlock_queue(retro_render_if->handle);
+		vk::detail::resultCheck(result, "vk::Queue::submit");
 	}
 	vk::DeviceSize GetUniformBufferAlignment() const { return uniformBufferAlignment; }
 	vk::DeviceSize GetStorageBufferAlignment() const { return storageBufferAlignment; }

@@ -115,15 +115,26 @@ bool D3DTexture::Delete()
 	return true;
 }
 
-void D3DTexture::loadCustomTexture()
+bool D3DTexture::uploadCustomTexture(const PreparedCustomTexture& customTexture, bool mipmapped)
 {
-	u32 size = custom_width * custom_height;
-	u8 *p = custom_image_data;
-	while (size--)
+	if (customTexture.nativeFormat != NativeTextureFormat::Rgba8Unorm
+			|| customTexture.levels.size() != 1)
+		return false;
+	std::vector<u8> bgra = customTexture.bytes;
+	for (size_t offset = 0; offset < bgra.size(); offset += 4)
 	{
 		// RGBA -> BGRA
-		std::swap(p[0], p[2]);
-		p += 4;
+		std::swap(bgra[offset], bgra[offset + 2]);
 	}
-	CheckCustomTexture();
+	ComPtr<IDirect3DTexture9> oldTexture = texture;
+	texture.reset();
+	tex_type = TextureType::_8888;
+	UploadToGPU(customTexture.width, customTexture.height, bgra.data(),
+			mipmapped && customTexture.generateMipmaps, false);
+	if (!texture)
+	{
+		texture = std::move(oldTexture);
+		return false;
+	}
+	return true;
 }

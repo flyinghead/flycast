@@ -50,6 +50,7 @@ bool DX11Renderer::Init()
 		WARN_LOG(RENDERER, "Null device or device context. Aborting");
 		return false;
 	}
+	custom_texture.setCapabilities(DX11Texture::getCustomTextureCapabilities());
 
 	shaders = &DX11Context::Instance()->getShaders();
 	samplers = &DX11Context::Instance()->getSamplers();
@@ -173,6 +174,9 @@ bool DX11Renderer::Init()
 void DX11Renderer::Term()
 {
 	NOTICE_LOG(RENDERER, "DX11 renderer terminating");
+	texCache.Clear();
+	texCache.Cleanup();
+	clearGpuPreloadedTextures();
 #ifdef VIDEO_ROUTING
 	os_VideoRoutingTermDX();
 #endif
@@ -192,6 +196,18 @@ void DX11Renderer::Term()
 	vrStagingTextureSRV.reset();
 	vrScaledTexture.reset();
 	vrScaledRenderTarget.reset();
+}
+
+void DX11Renderer::processCustomTexturePreloads()
+{
+	custom_texture.processGpuPreloads([this](u32 hash,
+			const PreparedCustomTexture& texture) {
+		GpuPreloadedTexture::Ptr gpuTexture = DX11Texture::createGpuPreloadedTexture(texture);
+		if (!gpuTexture)
+			return false;
+		addGpuPreloadedTexture(hash, std::move(gpuTexture));
+		return true;
+	});
 }
 
 void DX11Renderer::createDepthTexAndView(ComPtr<ID3D11Texture2D>& texture, ComPtr<ID3D11DepthStencilView>& view, int width, int height, DXGI_FORMAT format, UINT bindFlags)
@@ -303,15 +319,18 @@ BaseTextureCacheData *DX11Renderer::GetTexture(TSP tsp, TCW tcw, int area)
 	//update if needed
 	if (tf->NeedsUpdate())
 	{
+		ComPtr<ID3D11Texture2D> oldTexture = tf->texture;
 		if (!tf->Update())
 			tf = nullptr;
+		else if (tf->is_custom_replaced && oldTexture
+				&& oldTexture.get() != tf->texture.get())
+			texCache.DeleteLater(std::move(oldTexture));
 	}
 	else if (tf->IsCustomTextureAvailable())
 	{
-		texCache.DeleteLater(tf->texture);
-		tf->texture.reset();
-		// FIXME textureView
-		tf->loadCustomTexture();
+		ComPtr<ID3D11Texture2D> oldTexture = tf->texture;
+		if (tf->CheckCustomTexture() && oldTexture)
+			texCache.DeleteLater(std::move(oldTexture));
 	}
 	return tf;
 }

@@ -38,6 +38,8 @@ public:
 	void Term() override;
 	BaseTextureCacheData *GetTexture(TSP tsp, TCW tcw, int area) override;
 	void Process(TA_context* ctx) override;
+	void processCustomTexturePreloads() override;
+	bool supportsGpuTexturePreload() const override { return true; }
 	void ReInitOSD();
 	void RenderFramebuffer(const FramebufferInfo& info) override;
 	void RenderVideoRouting();
@@ -51,6 +53,7 @@ public:
 
 protected:
 	BaseVulkanRenderer() : viewport(640, 480) {}
+	void clearTextureCache() override { textureCache.Clear(); }
 
 	VulkanContext *GetContext() const { return VulkanContext::Instance(); }
 

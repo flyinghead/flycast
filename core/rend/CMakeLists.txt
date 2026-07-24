@@ -1,6 +1,10 @@
 target_sources(${PROJECT_NAME} PRIVATE
         CustomTexture.cpp
         CustomTexture.h
+		custom_texture/CustomTextureTypes.cpp
+		custom_texture/CustomTextureTypes.h
+		custom_texture/TextureTranscoder.cpp
+		custom_texture/TextureTranscoder.h
         osd.cpp
         osd.h
         sorter.cpp

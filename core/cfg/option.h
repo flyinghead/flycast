@@ -447,7 +447,14 @@ extern Option<int> PerPixelLayers;
 #endif
 extern Option<float> ExtraDepthScale;
 extern Option<bool> CustomTextures;
-extern Option<bool> PreloadCustomTextures;
+enum class CustomTexturePreloadMode : int
+{
+	Off = 0,
+	SystemMemory = 1,
+	VideoMemory = 2,
+};
+extern Option<int> PreloadCustomTextures;
+CustomTexturePreloadMode customTexturePreloadMode();
 extern Option<bool> DumpTextures;
 extern Option<bool> DumpUniqueTextures;
 extern Option<bool> DumpReplacedTextures;

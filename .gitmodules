@@ -65,3 +65,6 @@
 [submodule "core/deps/gamesdk"]
 	path = core/deps/gamesdk
 	url = https://github.com/flyinghead/gamesdk.git
+[submodule "core/deps/basis_universal"]
+	path = core/deps/basis_universal
+	url = https://github.com/BinomialLLC/basis_universal.git
