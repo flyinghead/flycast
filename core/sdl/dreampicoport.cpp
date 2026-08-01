@@ -1412,7 +1412,11 @@ private:
 		const char* joystick_serial = SDL_JoystickGetSerial(sdl_joystick);
 		if (joystick_serial) {
 			hw_info.serial_number = joystick_serial;
-		} else {
+		}
+
+	// Windows will cache the joystick name, so it's not a good idea to check SDL_JoystickName() on Windows
+#if !defined(_WIN32)
+	if (hw_info.serial_number.empty()) {
 			// Version 1.2.0 and later embeds serial in name as a workaround for MacOS and Linux
 			// Serial is expected between a dash (-) and space ( ) character or until end of string
 			const char* joystick_name = SDL_JoystickName(sdl_joystick);
@@ -1432,6 +1436,7 @@ private:
 				}
 			}
 		}
+#endif
 
 #if defined(_WIN32)
 		// This only works in Windows because the joystick_path is not given in other OSes
