@@ -505,12 +505,12 @@ static void getScreenshot(std::vector<u8>& data, int width = 0)
 	stbi_write_png_to_func(appendVectorData, &data, width, height, 3, &rawData[0], 0);
 }
 
-static void savestate()
+static void savestate(int slotIndex = -1)
 {
 	// TODO save state async: png compression, savestate file compression/write
 	std::vector<u8> pngData;
 	getScreenshot(pngData, 640);
-	dc_savestate(config::SavestateSlot, pngData.empty() ? nullptr : &pngData[0], pngData.size());
+	dc_savestate(slotIndex < 0 ? config::SavestateSlot : slotIndex, pngData.empty() ? nullptr : &pngData[0], pngData.size());
 	ImguiStateTexture savestatePic;
 	savestatePic.invalidate();
 }
@@ -1574,7 +1574,7 @@ void gui_error(const std::string& what) {
 	error_msg = what;
 }
 
-void gui_loadState(bool inRam)
+void gui_loadState(bool inRam, int slotIndex)
 {
 	const LockGuard lock(guiMutex);
 	if (gui_state == GuiState::Closed && dc_savestateAllowed())
@@ -1584,7 +1584,7 @@ void gui_loadState(bool inRam)
 			if (inRam)
 				dc_loadstate(-2);  // special slot used for inRam states
 			else
-				dc_loadstate(config::SavestateSlot);
+				dc_loadstate(slotIndex < 0 ? config::SavestateSlot : slotIndex);
 			emu.start();
 		} catch (const FlycastException& e) {
 			gui_stop_game(e.what());
@@ -1592,7 +1592,7 @@ void gui_loadState(bool inRam)
 	}
 }
 
-void gui_saveState(bool stopRestart, bool inRam)
+void gui_saveState(bool stopRestart, bool inRam, int slotIndex)
 {
 	const LockGuard lock(guiMutex);
 	if ((gui_state == GuiState::Closed || !stopRestart) && dc_savestateAllowed())
@@ -1604,7 +1604,7 @@ void gui_saveState(bool stopRestart, bool inRam)
 			if (inRam)
 				dc_savestate(-2);
 			else
-				savestate();
+				savestate(slotIndex < 0 ? config::SavestateSlot : slotIndex);
 
 			if (stopRestart)
 				emu.start();
