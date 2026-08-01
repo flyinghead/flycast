@@ -889,10 +889,13 @@ static void gui_display_content()
 
     static ImGuiTextFilter filter;
     IconButton settingsBtn(ICON_FA_GEAR, T("Settings"));
+	IconButton exitBtn(ICON_FA_POWER_OFF, T("Exit"));
+	const bool isFullscreenOnPC = sdl_is_fullscreen_on_pc();
 #if !defined(__ANDROID__) && !defined(TARGET_IPHONE) && !defined(TARGET_UWP) && !defined(__SWITCH__)
 	ImGui::SameLine(0, uiScaled(32));
 	filter.Draw(T("Filter"), ImGui::GetContentRegionAvail().x - ImGui::GetStyle().ItemSpacing.x
-			- settingsBtn.width() - ImGui::GetStyle().ItemSpacing.x - ImGui::CalcTextSize(T("Filter")).x);
+		- settingsBtn.width() - ImGui::GetStyle().ItemSpacing.x - ImGui::CalcTextSize(T("Filter")).x
+		- (isFullscreenOnPC ? (ImGui::GetStyle().ItemSpacing.x + exitBtn.width()) : 0));
 #endif
     if (gui_state != GuiState::SelectDisk)
     {
@@ -903,17 +906,32 @@ static void gui_display_content()
 			gui_load_game();
 		ImGui::SameLine();
 #elif defined(__SWITCH__)
-		IconButton exitBtn(ICON_FA_POWER_OFF, T("Exit"));
 		ImGui::SameLine(ImGui::GetContentRegionMax().x - settingsBtn.width()
 				- ImGui::GetStyle().ItemSpacing.x - exitBtn.width());
 		if (exitBtn.realize())
 			dc_exit();
 		ImGui::SameLine();
 #else
-		ImGui::SameLine(ImGui::GetContentRegionMax().x - settingsBtn.width());
+		if (!isFullscreenOnPC)
+		{
+			ImGui::SameLine(ImGui::GetContentRegionMax().x - settingsBtn.width());
+		}
 #endif
-		if (settingsBtn.realize())
-			gui_setState(GuiState::Settings);
+		if (!isFullscreenOnPC)
+		{
+			if (settingsBtn.realize())
+				gui_setState(GuiState::Settings);
+		}
+		else
+		{
+			ImGui::SameLine(ImGui::GetContentRegionMax().x - settingsBtn.width()
+				- ImGui::GetStyle().ItemSpacing.x - exitBtn.width());
+			if (settingsBtn.realize())
+				gui_setState(GuiState::Settings);
+			ImGui::SameLine(ImGui::GetContentRegionMax().x - exitBtn.width());
+			if (exitBtn.realize())
+				dc_exit();
+		}
     }
     else
     {
