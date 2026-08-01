@@ -1438,6 +1438,20 @@ private:
 		}
 #endif
 
+		// The number of buttons gives a clue as to what index the controller is
+		int nbuttons = SDL_JoystickNumButtons(sdl_joystick);
+		if (nbuttons >= 32 || nbuttons <= 27) {
+			// Older version of firmware or single player
+			hw_info.hardware_bus = 0;
+			hw_info.is_hardware_bus_implied = true;
+			hw_info.is_single_device = true;
+		}
+		else {
+			hw_info.hardware_bus = 31 - nbuttons;
+			hw_info.is_hardware_bus_implied = false;
+			hw_info.is_single_device = false;
+		}
+
 #if defined(_WIN32)
 		// This only works in Windows because the joystick_path is not given in other OSes
 		const char* joystick_path = SDL_JoystickPath(sdl_joystick);
@@ -1448,7 +1462,6 @@ private:
 
 			if (!devs->next) {
 				// Only single device found, so this is simple (host-1p firmware used)
-				hw_info.hardware_bus = 0;
 				hw_info.is_hardware_bus_implied = false;
 				hw_info.is_single_device = true;
 				my_dev = devs;
@@ -1481,22 +1494,15 @@ private:
 							it = it->next;
 						}
 
-						if (count == 1) {
-							// Single device of this serial found
-							hw_info.is_single_device = true;
-							hw_info.hardware_bus = 0;
+						hw_info.is_single_device = (count == 1);
+						if (my_dev->release_number < 0x0102) {
+							// Interfaces go in decending order
+							hw_info.hardware_bus = (count - (my_dev->interface_number % 4) - 1);
 							hw_info.is_hardware_bus_implied = false;
 						} else {
-							hw_info.is_single_device = false;
-							if (my_dev->release_number < 0x0102) {
-								// Interfaces go in decending order
-								hw_info.hardware_bus = (count - (my_dev->interface_number % 4) - 1);
-								hw_info.is_hardware_bus_implied = false;
-							} else {
-								// Version 1.02 of interface will make interfaces in ascending order
-								hw_info.hardware_bus = (my_dev->interface_number % 4);
-								hw_info.is_hardware_bus_implied = false;
-							}
+							// Version 1.02 of interface will make interfaces in ascending order
+							hw_info.hardware_bus = (my_dev->interface_number % 4);
+							hw_info.is_hardware_bus_implied = false;
 						}
 					}
 				}
@@ -1518,23 +1524,6 @@ private:
 		}
 
 #endif // #if defined(_WIN32)
-
-		if (hw_info.hardware_bus < 0) {
-			// The number of buttons gives a clue as to what index the controller is
-			int nbuttons = SDL_JoystickNumButtons(sdl_joystick);
-
-			if (nbuttons >= 32 || nbuttons <= 27) {
-				// Older version of firmware or single player
-				hw_info.hardware_bus = 0;
-				hw_info.is_hardware_bus_implied = true;
-				hw_info.is_single_device = true;
-			}
-			else {
-				hw_info.hardware_bus = 31 - nbuttons;
-				hw_info.is_hardware_bus_implied = false;
-				hw_info.is_single_device = false;
-			}
-		}
 
 		hw_info.unique_id.clear();
 		if (!hw_info.is_hardware_bus_implied && !hw_info.serial_number.empty()) {
