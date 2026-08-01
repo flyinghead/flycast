@@ -184,6 +184,11 @@ static constexpr Mapping dcButtons_src[] = {
 	{ DC_AXIS_LEFT, Tnop("L.Thumbstick Left") },
 	{ DC_AXIS_RIGHT, Tnop("L.Thumbstick Right") },
 
+	{ DC_AXIS_UP_EXTRA, Tnop("L.Thumbstick Extra Up") },
+	{ DC_AXIS_DOWN_EXTRA, Tnop("L.Thumbstick Extra Down") },
+	{ DC_AXIS_LEFT_EXTRA, Tnop("L.Thumbstick Extra Left") },
+	{ DC_AXIS_RIGHT_EXTRA, Tnop("L.Thumbstick Extra Right") },
+
 	{ DC_AXIS2_UP, Tnop("R.Thumbstick Up") },
 	{ DC_AXIS2_DOWN, Tnop("R.Thumbstick Down") },
 	{ DC_AXIS2_LEFT, Tnop("R.Thumbstick Left") },
@@ -267,6 +272,11 @@ static constexpr Mapping arcadeButtons_src[] = {
 	{ DC_AXIS_DOWN, Tnop("L.Thumbstick Down") },
 	{ DC_AXIS_LEFT, Tnop("L.Thumbstick Left") },
 	{ DC_AXIS_RIGHT, Tnop("L.Thumbstick Right") },
+
+	{ DC_AXIS_UP_EXTRA, Tnop("L.Thumbstick Extra Up") },
+	{ DC_AXIS_DOWN_EXTRA, Tnop("L.Thumbstick Extra Down") },
+	{ DC_AXIS_LEFT_EXTRA, Tnop("L.Thumbstick Extra Left") },
+	{ DC_AXIS_RIGHT_EXTRA, Tnop("L.Thumbstick Extra Right") },
 
 	{ DC_AXIS2_UP, Tnop("R.Thumbstick Up") },
 	{ DC_AXIS2_DOWN, Tnop("R.Thumbstick Down") },
@@ -461,6 +471,14 @@ static DreamcastKey getOppositeDirectionKey(DreamcastKey key)
 		return DC_AXIS3_RIGHT;
 	case DC_AXIS3_RIGHT:
 		return DC_AXIS3_LEFT;
+	case DC_AXIS_UP_EXTRA:
+		return DC_AXIS_DOWN_EXTRA;
+	case DC_AXIS_DOWN_EXTRA:
+		return DC_AXIS_UP_EXTRA;
+	case DC_AXIS_LEFT_EXTRA:
+		return DC_AXIS_RIGHT_EXTRA;
+	case DC_AXIS_RIGHT_EXTRA:
+		return DC_AXIS_LEFT_EXTRA;
 	default:
 		return EMU_BTN_NONE;
 	}
@@ -633,6 +651,10 @@ static float getAxisValue(const std::shared_ptr<GamepadDevice>& gamepad, Dreamca
 	case DC_AXIS_DOWN: v = joyy[port] / 32767.f; break;
 	case DC_AXIS_LEFT: v = -joyx[port] / 32768.f; break;
 	case DC_AXIS_RIGHT: v = joyx[port] / 32767.f; break;
+	case DC_AXIS_UP_EXTRA: v = -joyy[port] / 32768.f; break;
+	case DC_AXIS_DOWN_EXTRA: v = joyy[port] / 32767.f; break;
+	case DC_AXIS_LEFT_EXTRA: v = -joyx[port] / 32768.f; break;
+	case DC_AXIS_RIGHT_EXTRA: v = joyx[port] / 32767.f; break;
 	case DC_AXIS2_UP: v = -joyry[port] / 32768.f; break;
 	case DC_AXIS2_DOWN: v = joyry[port] / 32767.f; break;
 	case DC_AXIS2_LEFT: v = -joyrx[port] / 32768.f; break;

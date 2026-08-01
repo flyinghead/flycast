@@ -187,6 +187,14 @@ bool GamepadDevice::handleButtonInput(int port, DreamcastKey key, bool pressed)
 		case DC_AXIS_RIGHT:
 			buttonToAnalogInput<DC_AXIS_LEFT, DIGANA_LEFT, DIGANA_RIGHT>(port, key, pressed, joyx[port]);
 			break;
+		case DC_AXIS_UP_EXTRA:
+		case DC_AXIS_DOWN_EXTRA:
+			buttonToAnalogInput<DC_AXIS_UP, DIGANA_UP, DIGANA_DOWN>(port, key, pressed, joyy[port]);
+			break;
+		case DC_AXIS_LEFT_EXTRA:
+		case DC_AXIS_RIGHT_EXTRA:
+			buttonToAnalogInput<DC_AXIS_LEFT, DIGANA_LEFT, DIGANA_RIGHT>(port, key, pressed, joyx[port]);
+			break;
 		case DC_AXIS2_UP:
 		case DC_AXIS2_DOWN:
 			buttonToAnalogInput<DC_AXIS2_UP, DIGANA2_UP, DIGANA2_DOWN>(port, key, pressed, joyry[port]);
@@ -313,6 +321,10 @@ static DreamcastKey getOppositeAxis(DreamcastKey key)
 	case DC_AXIS3_LEFT: return DC_AXIS3_RIGHT;
 	case DC_AXIS3_UP: return DC_AXIS3_DOWN;
 	case DC_AXIS3_DOWN: return DC_AXIS3_UP;
+	case DC_AXIS_RIGHT_EXTRA: return DC_AXIS_LEFT_EXTRA;
+	case DC_AXIS_LEFT_EXTRA: return DC_AXIS_RIGHT_EXTRA;
+	case DC_AXIS_UP_EXTRA: return DC_AXIS_DOWN_EXTRA;
+	case DC_AXIS_DOWN_EXTRA: return DC_AXIS_UP_EXTRA;
 	default: return key;
 	}
 }
@@ -464,6 +476,24 @@ bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 			case DC_AXIS3_UP:
 				this_axis = &joy3y[port];
 				otherAxisValue = lastAxisValue[port][DC_AXIS3_LEFT];
+				break;
+
+			// Left thumbstick extra: same target storage (joyx/joyy) as the main
+			// left thumbstick, so it behaves identically to DC_AXIS_LEFT/RIGHT/UP/DOWN.
+			case DC_AXIS_RIGHT_EXTRA:
+				axisDirection = 1;
+				[[fallthrough]];
+			case DC_AXIS_LEFT_EXTRA:
+				this_axis = &joyx[port];
+				otherAxisValue = lastAxisValue[port][DC_AXIS_UP];
+				break;
+
+			case DC_AXIS_DOWN_EXTRA:
+				axisDirection = 1;
+				[[fallthrough]];
+			case DC_AXIS_UP_EXTRA:
+				this_axis = &joyy[port];
+				otherAxisValue = lastAxisValue[port][DC_AXIS_LEFT];
 				break;
 
 			default:
@@ -735,6 +765,14 @@ void GamepadDevice::clearAxisMapping(u32 port, DreamcastKey key)
 			break;
 		case DC_AXIS_LEFT:
 		case DC_AXIS_RIGHT:
+			joyx[port] = 0;
+			break;
+		case DC_AXIS_UP_EXTRA:
+		case DC_AXIS_DOWN_EXTRA:
+			joyy[port] = 0;
+			break;
+		case DC_AXIS_LEFT_EXTRA:
+		case DC_AXIS_RIGHT_EXTRA:
 			joyx[port] = 0;
 			break;
 		case DC_AXIS2_UP:

@@ -98,6 +98,12 @@ enum DreamcastKey
 	DC_AXIS3_RIGHT,
 	DC_AXIS3_UP,
 	DC_AXIS3_DOWN,
+	// Left thumbstick extra: an independently bindable extra input that drives
+	// the same analog value as DC_AXIS_LEFT/RIGHT/UP/DOWN (main left thumbstick).
+	DC_AXIS_LEFT_EXTRA,
+	DC_AXIS_RIGHT_EXTRA,
+	DC_AXIS_UP_EXTRA,
+	DC_AXIS_DOWN_EXTRA,
 
 	// System axes
 	EMU_AXIS_NONE        = 0,
