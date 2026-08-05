@@ -464,19 +464,9 @@ void CustomTexture::addSource(std::unique_ptr<BaseCustomTextureSource> source)
 			const bool shouldPreload = ptr->shouldPreload();
 			if (shouldPreload)
 				pendingPreloads++;
-			try
-			{
-				loaderThread->run([this, ptr, shouldPreload]() {
-					prepareSource(ptr, shouldPreload);
-				});
-			}
-			catch (const std::bad_alloc& exception)
-			{
-				if (shouldPreload)
-					pendingPreloads--;
-				WARN_LOG(RENDERER, "Custom texture source scheduling failed: %s", exception.what());
-				reportError(CustomTextureException::Error::AllocationFailed);
-			}
+			loaderThread->run([this, ptr, shouldPreload]() {
+				prepareSource(ptr, shouldPreload);
+			});
 		}
 	}
 }
@@ -608,64 +598,40 @@ void CustomTexture::loadCustomTextureAsync(BaseTextureCacheData *textureData)
 	const u32 currentHash = textureData->texture_hash;
 	const u32 oldVqHash = textureData->old_vqtexture_hash;
 	const u32 oldHash = textureData->old_texture_hash;
-	try
 	{
 		std::lock_guard<std::mutex> lock(stateMutex);
 		requests.emplace(requestId.value, Request {});
 	}
-	catch (const std::bad_alloc& exception)
-	{
-		WARN_LOG(RENDERER, "Custom texture request %08x allocation failed: %s",
-				currentHash, exception.what());
-		reportError(CustomTextureException::Error::AllocationFailed);
-		showErrorNotification();
-		return;
-	}
 	textureData->customRequestId = requestId;
-	try
-	{
-		loaderThread->run([this, requestId, currentHash, oldVqHash, oldHash,
-				activeCapabilities]() {
-			PreparedCustomTexture::Ptr texture;
-			bool failed = false;
-			try
-			{
-				auto cancelled = [this, requestId]() {
-					return requestCancelled(requestId);
-				};
-				texture = loadTexture(currentHash, oldVqHash, oldHash,
-						activeCapabilities, cancelled);
-				failed = texture == nullptr;
-			}
-			catch (const std::bad_alloc& exception)
-			{
-				WARN_LOG(RENDERER, "Custom texture request %08x allocation failed: %s",
-						currentHash, exception.what());
-				reportError(CustomTextureException::Error::AllocationFailed);
-				failed = true;
-			}
-			std::lock_guard<std::mutex> lock(stateMutex);
-			const auto request = requests.find(requestId.value);
-			if (request != requests.end())
-			{
-				request->second.texture = std::move(texture);
-				request->second.failed = failed;
-				request->second.complete = true;
-			}
-		});
-	}
-	catch (const std::bad_alloc& exception)
-	{
+	loaderThread->run([this, requestId, currentHash, oldVqHash, oldHash,
+			activeCapabilities]() {
+		PreparedCustomTexture::Ptr texture;
+		bool failed = false;
+		try
 		{
-			std::lock_guard<std::mutex> lock(stateMutex);
-			requests.erase(requestId.value);
+			auto cancelled = [this, requestId]() {
+				return requestCancelled(requestId);
+			};
+			texture = loadTexture(currentHash, oldVqHash, oldHash,
+					activeCapabilities, cancelled);
+			failed = texture == nullptr;
 		}
-		textureData->customRequestId = {};
-		WARN_LOG(RENDERER, "Custom texture request %08x scheduling failed: %s",
-				currentHash, exception.what());
-		reportError(CustomTextureException::Error::AllocationFailed);
-		showErrorNotification();
-	}
+		catch (const std::bad_alloc& exception)
+		{
+			WARN_LOG(RENDERER, "Custom texture request %08x allocation failed: %s",
+					currentHash, exception.what());
+			reportError(CustomTextureException::Error::AllocationFailed);
+			failed = true;
+		}
+		std::lock_guard<std::mutex> lock(stateMutex);
+		const auto request = requests.find(requestId.value);
+		if (request != requests.end())
+		{
+			request->second.texture = std::move(texture);
+			request->second.failed = failed;
+			request->second.complete = true;
+		}
+	});
 }
 
 bool CustomTexture::isRequestComplete(CustomTextureRequestId requestId) const
