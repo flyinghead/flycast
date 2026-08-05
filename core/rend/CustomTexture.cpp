@@ -913,6 +913,13 @@ void CustomTexture::prepareSource(BaseCustomTextureSource* source, bool shouldPr
 			}
 		}
 	}
+	catch (const FlycastException& exception)
+	{
+		WARN_LOG(RENDERER, "Custom texture source preparation failed: %s", exception.what());
+		reportError(CustomTextureException::Error::FileRead);
+		if (preloadCount > processedCount)
+			preloadLoaded += preloadCount - processedCount;
+	}
 	catch (const std::bad_alloc& exception)
 	{
 		WARN_LOG(RENDERER, "Custom texture preload allocation failed: %s", exception.what());
