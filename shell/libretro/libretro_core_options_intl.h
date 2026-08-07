@@ -35855,8 +35855,8 @@ struct retro_core_options_v2 options_fi = {
 #define OPTION_VAL_4GB_FR "4 Go"
 #define CORE_OPTION_NAME_OIT_LAYERS_LABEL_FR "Calques transparents maximum"
 #define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_FR "Des valeurs plus élevées peuvent être requises pour les scènes complexes."
-#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_FR "Émulation complète du framebuffer"
-#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_FR "Active l'émulation complète du framebuffer dans la VRAM. Ceci est utile pour les jeux qui lisent ou écrivent directement le framebuffer dans la VRAM. Lorsque cette option est activée, la résolution interne est forcée à 640x480 et les performances peuvent être sévèrement affectées."
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_FR "Émulation complète du tampon d'image"
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_FR "Active l'émulation complète du tampon d'image dans la VRAM. Ceci est utile pour les jeux qui lisent ou écrivent directement le framebuffer dans la VRAM. Lorsque cette option est activée, la résolution interne est forcée à 640x480 et les performances peuvent être sévèrement affectées."
 #define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_FR "Activer la mémoire tampon du RTT (rendu vers texture)"
 #define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_FR "Copier les textures rendues depuis le processeur graphique vers la VRAM. Cette option est normalement activée pour les jeux qui en ont besoin. Lorsque cette option est activée, la mise à l'échelle du rendu des textures est désactivée et les performances peuvent être impactées."
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_FR NULL
