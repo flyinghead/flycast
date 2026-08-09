@@ -271,6 +271,7 @@ private:
 	bool _is_registered = false;
 	u32 digitalToAnalogState[4];
 	std::unordered_map<DreamcastKey, int> lastAxisValue[4];
+	std::unordered_map<u32, int> lastRawAxisValues;
 	bool perGameMapping = false;
 	bool instanceMapping = false;
 
