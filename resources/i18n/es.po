@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-22 12:49+0100\n"
-"PO-Revision-Date: 2026-08-12 21:57\n"
+"PO-Revision-Date: 2026-08-12 23:08\n"
 "Last-Translator: \n"
 "Language: es_ES\n"
 "MIME-Version: 1.0\n"
@@ -563,11 +563,11 @@ msgstr ""
 
 #: core/cheats.cpp:881
 msgid "Missing values"
-msgstr ""
+msgstr "Valores faltantes"
 
 #: core/cheats.cpp:928
 msgid "Missing address or value"
-msgstr ""
+msgstr "Falta dirección o valor"
 
 #: core/cheats.cpp:937 core/cheats.cpp:1041
 msgid "Unsupported cheat type"
