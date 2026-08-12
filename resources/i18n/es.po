@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-22 12:49+0100\n"
-"PO-Revision-Date: 2026-08-12 20:54\n"
+"PO-Revision-Date: 2026-08-12 21:57\n"
 "Last-Translator: \n"
 "Language: es_ES\n"
 "MIME-Version: 1.0\n"
@@ -98,7 +98,7 @@ msgstr ""
 
 #: core/achievements/achievements.cpp:991
 msgid "Media change failed"
-msgstr ""
+msgstr "Error al cambiar medio"
 
 #: core/sdl/dreamconn.cpp:160
 #, c-format
@@ -386,7 +386,7 @@ msgstr ""
 #: core/imgread/gdi.cpp:132
 #, c-format
 msgid "GDI file: Cannot open track %s"
-msgstr ""
+msgstr "Archivo GDI: No se puede abrir la pista %s"
 
 #: core/imgread/cdi.cpp:17
 #, c-format
