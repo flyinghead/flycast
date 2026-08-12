@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-22 12:49+0100\n"
-"PO-Revision-Date: 2026-06-13 13:06\n"
+"PO-Revision-Date: 2026-08-12 19:49\n"
 "Last-Translator: \n"
 "Language: es_ES\n"
 "MIME-Version: 1.0\n"
@@ -496,13 +496,13 @@ msgstr ""
 
 #: core/hw/naomi/naomi_cart.cpp:602
 msgid "Error: Failed to load BIN/DAT file"
-msgstr ""
+msgstr "Error: fallo a cargar el BIN/ DAT"
 
 #: core/hw/naomi/naomi_cart.cpp:743 core/hw/naomi/multiboard.cpp:462
 #: core/hw/naomi/multiboard.cpp:479 core/ui/settings_controls.cpp:179
 #: core/ui/settings_controls.cpp:243
 msgid "Left"
-msgstr ""
+msgstr "Izquierda"
 
 #: core/hw/naomi/naomi_cart.cpp:743 core/hw/naomi/multiboard.cpp:456
 #: core/hw/naomi/multiboard.cpp:466 core/hw/naomi/multiboard.cpp:483
