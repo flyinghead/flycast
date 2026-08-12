@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-22 12:49+0100\n"
-"PO-Revision-Date: 2026-08-12 19:49\n"
+"PO-Revision-Date: 2026-08-12 20:54\n"
 "Last-Translator: \n"
 "Language: es_ES\n"
 "MIME-Version: 1.0\n"
@@ -62,12 +62,12 @@ msgstr ""
 #: core/achievements/achievements.cpp:695
 #, c-format
 msgid "Mastered %s"
-msgstr ""
+msgstr "Dominado%s"
 
 #: core/achievements/achievements.cpp:695
 #, c-format
 msgid "Completed %s"
-msgstr ""
+msgstr "Completado %s"
 
 #: core/achievements/achievements.cpp:698
 #, c-format
@@ -190,7 +190,7 @@ msgstr ""
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:103
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:357
 msgid "DPad Right"
-msgstr ""
+msgstr "DPad derecho"
 
 #: core/sdl/sdl_gamepad.cpp:560
 msgid "Misc"
@@ -723,7 +723,7 @@ msgstr ""
 
 #: core/ui/settings_video.cpp:233
 msgid "Preload custom textures at game start. May improve performance but increases memory usage"
-msgstr ""
+msgstr "Carga las texturas personalizadas al ejecutar un juego. Podría mejorar el rendimiento, pero aumentará el consumo de memoria"
 
 #: core/ui/settings_video.cpp:239
 msgid "Aspect Ratio"
