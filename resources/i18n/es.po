@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-22 12:49+0100\n"
-"PO-Revision-Date: 2026-08-13 02:20\n"
+"PO-Revision-Date: 2026-08-13 16:12\n"
 "Last-Translator: \n"
 "Language: es_ES\n"
 "MIME-Version: 1.0\n"
@@ -1611,7 +1611,7 @@ msgstr ""
 #: core/ui/settings_controls.cpp:227 core/ui/settings_controls.cpp:287
 #: core/ui/gui.cpp:645
 msgid "Save State"
-msgstr ""
+msgstr "Estado de guardado"
 
 #: core/ui/settings_controls.cpp:228 core/ui/settings_controls.cpp:288
 msgid "Load State in RAM"
