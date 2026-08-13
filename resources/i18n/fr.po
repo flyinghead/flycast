@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-22 12:49+0100\n"
-"PO-Revision-Date: 2026-06-13 14:53\n"
+"PO-Revision-Date: 2026-08-13 20:00\n"
 "Last-Translator: \n"
 "Language: fr_FR\n"
 "MIME-Version: 1.0\n"
@@ -1030,7 +1030,7 @@ msgstr "Italien"
 
 #: core/ui/settings_general.cpp:232
 msgid "Dreamcast Language"
-msgstr "Langage Dreamcast"
+msgstr "Langue de la Dreamcast"
 
 #: core/ui/settings_general.cpp:233
 msgid "The language as configured in the Dreamcast BIOS"
