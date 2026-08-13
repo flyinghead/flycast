@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-22 12:49+0100\n"
-"PO-Revision-Date: 2026-08-13 16:12\n"
+"PO-Revision-Date: 2026-08-13 17:19\n"
 "Last-Translator: \n"
 "Language: es_ES\n"
 "MIME-Version: 1.0\n"
@@ -1822,7 +1822,7 @@ msgstr ""
 
 #: core/ui/settings_controls.cpp:948
 msgid "Choose Image..."
-msgstr ""
+msgstr "Elegir imagen..."
 
 #: core/ui/settings_controls.cpp:960
 msgid "Use Default"
@@ -2030,13 +2030,13 @@ msgstr ""
 
 #: core/ui/gui.cpp:721
 msgid "Reselect"
-msgstr ""
+msgstr "Seleccionar de nuevo"
 
 #: core/ui/gui.cpp:730 core/ui/gui.cpp:908 core/ui/gui.cpp:1145
 #: core/ui/gui.cpp:1158 core/ui/gui.cpp:1301 core/ui/gui_cheats.cpp:47
 #: core/ui/gui_util.cpp:180 core/ui/vgamepad.cpp:87
 msgid "Cancel"
-msgstr ""
+msgstr "Cancelar"
 
 #: core/ui/gui.cpp:875
 msgid "GAMES"
