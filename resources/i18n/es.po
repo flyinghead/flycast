@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-22 12:49+0100\n"
-"PO-Revision-Date: 2026-08-13 20:00\n"
+"PO-Revision-Date: 2026-08-13 21:44\n"
 "Last-Translator: \n"
 "Language: es_ES\n"
 "MIME-Version: 1.0\n"
@@ -366,7 +366,7 @@ msgstr "CHD inválido: menos de 3 pistas"
 
 #: core/imgread/chd.cpp:216
 msgid "Invalid CHD: no track found"
-msgstr ""
+msgstr "CHD no válido: no se encontró pistas"
 
 #: core/imgread/gdi.cpp:13
 #, c-format
@@ -405,7 +405,7 @@ msgstr "Imagen CDI inválido"
 
 #: core/imgread/cdi.cpp:78
 msgid "Invalid CDI sector size"
-msgstr ""
+msgstr "Tamaño del sector CDI no válido"
 
 #: core/imgread/cdi.cpp:126
 msgid "Cannot re-open CDI file"
@@ -547,7 +547,7 @@ msgstr "No se pudo encontrar el archivo de arranque %s"
 
 #: core/reios/reios.cpp:684
 msgid "Naomi boot failure"
-msgstr ""
+msgstr "Fallo de arranque de Naomi"
 
 #: core/reios/reios.cpp:690
 msgid "Invalid cart size"
@@ -675,19 +675,19 @@ msgstr "VSync"
 
 #: core/ui/settings_video.cpp:207
 msgid "Synchronizes the frame rate with the screen refresh rate. Recommended"
-msgstr ""
+msgstr "Sincroniza la frecuencia de fotogramas con la tasa de actualización de pantalla. Recomendado"
 
 #: core/ui/settings_video.cpp:212
 msgid "Frame Pacing (Experimental)"
-msgstr ""
+msgstr "Procesamiento de fotogramas (experimental)"
 
 #: core/ui/settings_video.cpp:213
 msgid "Provide the GPU with presentation timing for each frame to replicate original frame pacing."
-msgstr ""
+msgstr "Proporciona al GPU la temporización de presentación de cada fotograma para replicar el ritmo del fotograma original."
 
 #: core/ui/settings_video.cpp:216
 msgid "Duplicate frames"
-msgstr ""
+msgstr "Duplicar fotogramas"
 
 #: core/ui/settings_video.cpp:216
 msgid "Duplicate frames on high refresh rate monitors (120 Hz and higher)"
@@ -759,15 +759,15 @@ msgstr "Modifica el juego para que se muestre en formato anamórfico 16:9 y util
 
 #: core/ui/settings_video.cpp:253
 msgid "Horizontal Stretching"
-msgstr ""
+msgstr "Estiramiento horizontal"
 
 #: core/ui/settings_video.cpp:254
 msgid "Stretch the screen horizontally"
-msgstr ""
+msgstr "Estira la pantalla horizontalmente"
 
 #: core/ui/settings_video.cpp:255
 msgid "Rotate Screen 90°"
-msgstr ""
+msgstr "Girar pantalla 90°"
 
 #: core/ui/settings_video.cpp:255
 msgid "Rotate the screen 90° counterclockwise"
@@ -973,7 +973,7 @@ msgstr "Reducir la escala antes de enviar"
 
 #: core/ui/settings_video.cpp:409
 msgid "Could increase performance when sharing a smaller texture, YMMV"
-msgstr ""
+msgstr "Podría aumentar el rendimiento al compartir una textura más pequeña, YMV"
 
 #: core/ui/settings_video.cpp:413
 msgid "Output vertical resolution"
@@ -1194,7 +1194,7 @@ msgstr "Tema de interfaz"
 
 #: core/ui/settings_general.cpp:384
 msgid "Select the UI color theme."
-msgstr ""
+msgstr "Seleccione el tema color de la interfaz."
 
 #: core/ui/settings_general.cpp:390
 msgid "Hide Legacy Naomi Roms"
@@ -1399,7 +1399,7 @@ msgstr "Carpetas que contienen archivos de truco (.cht/.txt) con el ID del juego
 
 #: core/ui/gui_chat.h:46 core/ui/gui_chat.h:48
 msgid "P2"
-msgstr ""
+msgstr "Puerto 2"
 
 #: core/ui/gui_chat.h:46 core/ui/gui_chat.h:48
 msgid "P1"
@@ -1837,7 +1837,7 @@ msgstr "Vibración"
 
 #: core/ui/settings_controls.cpp:977
 msgid "Rumble power"
-msgstr ""
+msgstr "Poder de vibración"
 
 #: core/ui/settings_controls.cpp:981
 msgid "Thumbsticks"
@@ -1950,11 +1950,11 @@ msgstr "Bloqueado"
 
 #: core/ui/gui_achievements.cpp:325
 msgid "Active Challenges"
-msgstr ""
+msgstr "Activar retos"
 
 #: core/ui/gui_achievements.cpp:325
 msgid "Almost There"
-msgstr ""
+msgstr "Casi ahí"
 
 #: core/ui/gui_achievements.cpp:327
 msgid "Unlocked"
@@ -2060,7 +2060,7 @@ msgstr "Tu lista de juegos esta vacio"
 
 #: core/ui/gui.cpp:1021
 msgid "Add Game Folder"
-msgstr ""
+msgstr "Añadir carpeta de juegos"
 
 #: core/ui/gui.cpp:1053 core/ui/gui.cpp:1064
 msgid "Invalid selection:"
@@ -2265,7 +2265,7 @@ msgstr "Volcar todas las texturas en data/texdump/<game id>"
 
 #: core/ui/settings.cpp:113
 msgid "Dump Replaced Textures"
-msgstr ""
+msgstr "Volcar texturas ya reemplazadas"
 
 #: core/ui/settings.cpp:114
 msgid "Always dump textures that are already replaced by custom textures"
@@ -2337,11 +2337,11 @@ msgstr "Almacenamiento"
 
 #: core/ui/gui_util.cpp:132
 msgid ".. Up to Parent Folder"
-msgstr ""
+msgstr ".. Hasta la carpeta superior"
 
 #: core/ui/gui_util.cpp:170
 msgid "Select Current Folder"
-msgstr ""
+msgstr "Seleccionar carpeta actual"
 
 #: core/ui/gui_util.cpp:229
 msgid "(?)"
@@ -2469,124 +2469,124 @@ msgstr "Maestro"
 
 #: core/ui/settings_network.cpp:122
 msgid "Create a local server for Naomi network games"
-msgstr ""
+msgstr "Crear un servidor local para juegos de red Naomi"
 
 #: core/ui/settings_network.cpp:124
 msgid "Slave"
-msgstr ""
+msgstr "Esclavo"
 
 #: core/ui/settings_network.cpp:126
 msgid "Connect to the master server"
-msgstr ""
+msgstr "Conectar al servidor maestro"
 
 #: core/ui/settings_network.cpp:128
 msgid "Satellite"
-msgstr ""
+msgstr "Satélite"
 
 #: core/ui/settings_network.cpp:130
 msgid "Live monitor for games that support it (Virtual-On Oratorio Tangram and Club Kart)"
-msgstr ""
+msgstr "Monitor en vivo de juegos que lo soportan (Virtual-On Oratorio Tangram y Club Kart)"
 
 #: core/ui/settings_network.cpp:135
 msgid "Server"
-msgstr ""
+msgstr "Servidor"
 
 #: core/ui/settings_network.cpp:137
 msgid "The server to connect to. Leave blank to find a server automatically on the default port"
-msgstr ""
+msgstr "El servidor a conectar. Dejar en blanco para encontrar un servidor automáticamente en el puerto por defecto"
 
 #: core/ui/settings_network.cpp:141 core/ui/settings_network.cpp:213
 msgid "Local Port"
-msgstr ""
+msgstr "Puerto local"
 
 #: core/ui/settings_network.cpp:143 core/ui/settings_network.cpp:215
 msgid "The local UDP port to use"
-msgstr ""
+msgstr "El puerto UDP local a usar"
 
 #: core/ui/settings_network.cpp:166
 msgid "Match Code"
-msgstr ""
+msgstr "Codigo de partida"
 
 #: core/ui/settings_network.cpp:173
 msgid "Choose a unique word or number and share it with your opponent."
-msgstr ""
+msgstr "Elige una palabra o número único y compártela con tu oponente."
 
 #: core/ui/settings_network.cpp:175
 msgid "Connect"
-msgstr ""
+msgstr "Conectado"
 
 #: core/ui/settings_network.cpp:179
 msgid "Disconnect"
-msgstr ""
+msgstr "Desconectado"
 
 #: core/ui/settings_network.cpp:189
 msgid "Waiting at meeting point..."
-msgstr ""
+msgstr "Esperando en el punto de reunión..."
 
 #: core/ui/settings_network.cpp:192
 msgid "Preparing game..."
-msgstr ""
+msgstr "Preparando juego..."
 
 #: core/ui/settings_network.cpp:195
 #, c-format
 msgid "Playing %s (%s)"
-msgstr ""
+msgstr "Jugando %s (%s)"
 
 #: core/ui/settings_network.cpp:205
 msgid "Manual"
-msgstr ""
+msgstr "Manual"
 
 #: core/ui/settings_network.cpp:210
 msgid "The peer to connect to. Leave blank to find a player automatically on the default port"
-msgstr ""
+msgstr "El par a conectar. Dejar en blanco para encontrar un jugador automáticamente en el puerto por defecto"
 
 #: core/ui/settings_network.cpp:223
 msgid "Act as Master"
-msgstr ""
+msgstr "Actuar como maestro"
 
 #: core/ui/settings_network.cpp:224
 msgid "Only used for Maximum Speed. One of the peer must be master."
-msgstr ""
+msgstr "Sólo se utiliza para Velocidad Máxima. Uno de los pares debe ser maestro."
 
 #: core/ui/settings_network.cpp:228
 msgid "Network Options"
-msgstr ""
+msgstr "Opciones de red"
 
 #: core/ui/settings_network.cpp:230
 msgid "Enable UPnP"
-msgstr ""
+msgstr "Activar UPnP"
 
 #: core/ui/settings_network.cpp:230
 msgid "Automatically configure your network router for netplay"
-msgstr ""
+msgstr "Configurar automáticamente el router de red para la red"
 
 #: core/ui/settings_network.cpp:231
 msgid "Broadcast Digital Outputs"
-msgstr ""
+msgstr "Transmitir salidas digitales"
 
 #: core/ui/settings_network.cpp:231
 msgid "Broadcast digital outputs and force-feedback state on TCP port 8000. Compatible with the \"-output network\" MAME option. Arcade games only."
-msgstr ""
+msgstr "Salidas digitales de Broadcast y estado de retroalimentación forzada en el puerto TCP 8000. Compatible con la opción \"red de salida\" MAME. Arcade juegos solamente."
 
 #: core/ui/settings_network.cpp:236
 msgid "Broadband Adapter Emulation"
-msgstr ""
+msgstr "Emulación del Broadband Adapter (BBA)"
 
 #: core/ui/settings_network.cpp:237
 msgid "Emulate the Ethernet Broadband Adapter (BBA) instead of the Modem"
-msgstr ""
+msgstr "Emular el adaptador de banda de Ethernet (BBA) en lugar del módem"
 
 #: core/ui/settings_network.cpp:239
 msgid "Use DCNet"
-msgstr ""
+msgstr "Usar DCNet"
 
 #: core/ui/settings_network.cpp:239
 msgid "Use the DCNet cloud service for Dreamcast Internet access."
-msgstr ""
+msgstr "Utiliza el servicio en la nube DCNet para conectar la Dreamcast a Internet."
 
 #: core/ui/settings_network.cpp:242
 msgid "ISP User Name"
-msgstr ""
+msgstr "Nombre de usuario ISP"
 
 #: core/ui/settings_network.cpp:248
 msgid "The ISP user name stored in the console Flash RAM. Used by some online games as the player name. Leave blank to keep the current Flash RAM value."
