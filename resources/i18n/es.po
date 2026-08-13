@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-22 12:49+0100\n"
-"PO-Revision-Date: 2026-08-13 01:23\n"
+"PO-Revision-Date: 2026-08-13 02:20\n"
 "Last-Translator: \n"
 "Language: es_ES\n"
 "MIME-Version: 1.0\n"
@@ -1497,7 +1497,7 @@ msgstr ""
 
 #: core/ui/settings_controls.cpp:182 core/ui/settings_controls.cpp:246
 msgid "Thumbstick Up"
-msgstr ""
+msgstr "Tumbstick up"
 
 #: core/ui/settings_controls.cpp:183 core/ui/settings_controls.cpp:247
 msgid "Thumbstick Down"
