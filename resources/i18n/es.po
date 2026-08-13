@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-22 12:49+0100\n"
-"PO-Revision-Date: 2026-08-12 23:08\n"
+"PO-Revision-Date: 2026-08-13 00:14\n"
 "Last-Translator: \n"
 "Language: es_ES\n"
 "MIME-Version: 1.0\n"
@@ -297,7 +297,7 @@ msgstr ""
 
 #: core/imgread/common.cpp:372 core/emulator.cpp:623
 msgid "This media cannot be loaded"
-msgstr ""
+msgstr "No se puede cargar este medio"
 
 #: core/imgread/cue.cpp:57
 #, c-format
@@ -967,7 +967,7 @@ msgstr ""
 
 #: core/ui/settings_video.cpp:409
 msgid "Scale down before sending"
-msgstr ""
+msgstr "Reducir la escala antes de enviar"
 
 #: core/ui/settings_video.cpp:409
 msgid "Could increase performance when sharing a smaller texture, YMMV"
@@ -1094,11 +1094,11 @@ msgstr ""
 
 #: core/ui/settings_general.cpp:276
 msgid "Content Location"
-msgstr ""
+msgstr "Ubicación de contenidos"
 
 #: core/ui/settings_general.cpp:297 core/ui/settings_general.cpp:361
 msgid "Rescan Content"
-msgstr ""
+msgstr "Reescanear contenido"
 
 #: core/ui/settings_general.cpp:309
 msgid "The folders where your games are stored"
@@ -1184,11 +1184,11 @@ msgstr ""
 
 #: core/ui/settings_general.cpp:381
 msgid "Aqua Chill"
-msgstr ""
+msgstr "Agua fria"
 
 #: core/ui/settings_general.cpp:383
 msgid "UI Theme"
-msgstr ""
+msgstr "Tema de interfaz"
 
 #: core/ui/settings_general.cpp:384
 msgid "Select the UI color theme."
