@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-22 12:49+0100\n"
-"PO-Revision-Date: 2026-08-13 00:14\n"
+"PO-Revision-Date: 2026-08-13 01:23\n"
 "Last-Translator: \n"
 "Language: es_ES\n"
 "MIME-Version: 1.0\n"
@@ -1392,7 +1392,7 @@ msgstr ""
 
 #: core/ui/settings_general.cpp:502
 msgid "Folders containing cheat files (.cht/.txt) named with the game ID. Flycast will auto-load matching files if present"
-msgstr ""
+msgstr "Carpetas que contienen archivos de truco (.cht/.txt) con el ID del juego. Flycast cargará automáticamente los archivos coincidentes si están presentes"
 
 #: core/ui/gui_chat.h:46 core/ui/gui_chat.h:48
 msgid "P2"
