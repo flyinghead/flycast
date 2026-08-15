@@ -130,6 +130,8 @@ bool D3DRenderer::Init()
 
 	device = DXContext::Instance()->getDevice();
 	devCache.setDevice(device);
+	custom_texture.setCapabilities(CustomTextureCapabilities::rgbaOnly(
+			CustomTextureBackend::Direct3D9, std::min(caps.MaxTextureWidth, caps.MaxTextureHeight)));
 
 	bool success = ensureVertexBufferSize(vertexBuffer, vertexBufferSize, 4_MB);
 	success &= ensureIndexBufferSize(indexBuffer, indexBufferSize, 120 * 1024 * 4);
@@ -223,14 +225,18 @@ BaseTextureCacheData *D3DRenderer::GetTexture(TSP tsp, TCW tcw, int area)
 	//update if needed
 	if (tf->NeedsUpdate())
 	{
+		ComPtr<IDirect3DTexture9> oldTexture = tf->texture;
 		if (!tf->Update())
 			tf = nullptr;
+		else if (tf->is_custom_replaced && oldTexture
+				&& oldTexture.get() != tf->texture.get())
+			texCache.DeleteLater(std::move(oldTexture));
 	}
 	else if (tf->IsCustomTextureAvailable())
 	{
-		texCache.DeleteLater(tf->texture);
-		tf->texture.reset();
-		tf->loadCustomTexture();
+		ComPtr<IDirect3DTexture9> oldTexture = tf->texture;
+		if (tf->CheckCustomTexture() && oldTexture)
+			texCache.DeleteLater(std::move(oldTexture));
 	}
 	return tf;
 }

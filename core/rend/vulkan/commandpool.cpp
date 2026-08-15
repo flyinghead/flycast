@@ -23,6 +23,7 @@ void CommandPool::Init(size_t chainSize)
 {
 	this->chainSize = chainSize;
 	device = VulkanContext::Instance()->GetDevice();
+	fencePending.resize(chainSize, false);
 	if (commandPools.size() > chainSize)
 	{
 		commandPools.resize(chainSize);
@@ -44,10 +45,15 @@ void CommandPool::Init(size_t chainSize)
 
 void CommandPool::Term()
 {
-	if (!fences.empty())
+	std::vector<vk::Fence> pendingFences;
+	for (size_t i = 0; i < fences.size(); ++i)
 	{
-		std::vector<vk::Fence> allFences = vk::uniqueToRaw(fences);
-		vk::Result res = device.waitForFences(allFences, true, UINT64_MAX);
+		if (fencePending[i])
+			pendingFences.push_back(fences[i].get());
+	}
+	if (!pendingFences.empty())
+	{
+		vk::Result res = device.waitForFences(pendingFences, true, UINT64_MAX);
 		if (res != vk::Result::eSuccess)
 			WARN_LOG(RENDERER, "CommandPool::Term: waitForFences failed %d", (int)res);
 	}
@@ -55,7 +61,9 @@ void CommandPool::Term()
 	freeBuffers.clear();
 	inFlightBuffers.clear();
 	fences.clear();
+	fencePending.clear();
 	commandPools.clear();
+	frameStarted = false;
 }
 
 void CommandPool::BeginFrame()
@@ -64,9 +72,16 @@ void CommandPool::BeginFrame()
 		return;
 	frameStarted = true;
 	index = (index + 1) % chainSize;
-	vk::Result res = device.waitForFences(fences[index].get(), true, UINT64_MAX);
-	if (res != vk::Result::eSuccess)
-		WARN_LOG(RENDERER, "CommandPool::BeginFrame: waitForFences failed %d", (int)res);
+	if (fencePending[index])
+	{
+		vk::Result res = device.waitForFences(fences[index].get(), true, UINT64_MAX);
+		if (res != vk::Result::eSuccess)
+		{
+			WARN_LOG(RENDERER, "CommandPool::BeginFrame: waitForFences failed %d", (int)res);
+			vk::detail::resultCheck(res, "CommandPool::BeginFrame");
+		}
+		fencePending[index] = false;
+	}
 	std::vector<vk::UniqueCommandBuffer>& inFlightBuf = inFlightBuffers[index];
 	std::vector<vk::UniqueCommandBuffer>& freeBuf = freeBuffers[index];
 	std::move(inFlightBuf.begin(), inFlightBuf.end(), std::back_inserter(freeBuf));
@@ -96,8 +111,12 @@ void CommandPool::EndFrame()
 			len--;
 		}
 	}
+	// A failed submission leaves the reset fence unsignaled. Mark it pending
+	// only after the queue accepts the command buffers.
+	fencePending[index] = false;
 	device.resetFences(fences[index].get());
 	VulkanContext::Instance()->SubmitCommandBuffers(commandBuffers, *fences[index]);
+	fencePending[index] = true;
 }
 
 vk::CommandBuffer CommandPool::Allocate(bool submitLast)
@@ -122,6 +141,10 @@ void CommandPool::EndFrameAndWait()
 	EndFrame();
 	vk::Result res = device.waitForFences(fences[index].get(), true, UINT64_MAX);
 	if (res != vk::Result::eSuccess)
+	{
 		WARN_LOG(RENDERER, "CommandPool::waitForCommandCompletion: waitForFences failed %d", (int)res);
+		vk::detail::resultCheck(res, "CommandPool::EndFrameAndWait");
+	}
+	fencePending[index] = false;
 	inFlightObjects[index].clear();
 }

@@ -77,7 +77,7 @@ Option<int> TextureUpscale("rend.TextureUpscale2", 1);
 Option<int> MaxFilteredTextureSize("rend.MaxFilteredTextureSize", 256);
 Option<float> ExtraDepthScale("rend.ExtraDepthScale", 1.f);
 Option<bool> CustomTextures("rend.CustomTextures");
-Option<bool> PreloadCustomTextures("rend.PreloadCustomTextures");
+Option<int> PreloadCustomTextures("rend.PreloadCustomTextures", 0);
 Option<bool> DumpTextures("rend.DumpTextures");
 Option<bool> DumpUniqueTextures("rend.DumpUniqueTextures");
 Option<bool> DumpReplacedTextures("rend.DumpReplacedTextures");
@@ -121,6 +121,20 @@ Option<bool> EmulateFramebuffer("rend.EmulateFramebuffer", false);
 Option<bool> FixUpscaleBleedingEdge("rend.FixUpscaleBleedingEdge", true);
 Option<bool> CustomGpuDriver("rend.CustomGpuDriver", false);
 Option<bool> FramePacing("rend.FramePacing", true);
+
+CustomTexturePreloadMode customTexturePreloadMode()
+{
+	const auto mode = static_cast<CustomTexturePreloadMode>(PreloadCustomTextures.get());
+	switch (mode)
+	{
+	case CustomTexturePreloadMode::Off:
+	case CustomTexturePreloadMode::SystemMemory:
+	case CustomTexturePreloadMode::VideoMemory:
+		return mode;
+	default:
+		return CustomTexturePreloadMode::Off;
+	}
+}
 #ifdef VIDEO_ROUTING
 Option<bool, false> VideoRouting("rend.VideoRouting", false);
 Option<bool, false> VideoRoutingScale("rend.VideoRoutingScale", false);

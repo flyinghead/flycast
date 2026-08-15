@@ -870,7 +870,6 @@ void loadGameSpecificSettings()
 	loadSpecialSettings();
 
 	config::Settings::instance().setGameId(settings.content.gameId);
-	custom_texture.init();
 
 	// Reload per-game settings
 	config::Settings::instance().load(true);
@@ -902,11 +901,8 @@ void Emulator::stepRange(u32 from, u32 to)
 
 void Emulator::loadstate(Deserializer& deser)
 {
-	if (!custom_texture.preloaded())
-	{
-		custom_texture.terminate();
-		custom_texture.init();
-	}
+	if (config::customTexturePreloadMode() == config::CustomTexturePreloadMode::Off)
+		custom_texture.refresh();
 #if FEAT_AREC == DYNAREC_JIT
 	aica::arm::recompiler::flush();
 #endif
@@ -1128,7 +1124,6 @@ void Emulator::diskChange()
 {
 	config::Settings::instance().reset();
 	config::Settings::instance().load(false);
-	custom_texture.terminate();
 	if (!settings.content.path.empty())
 	{
 		hostfs::FileInfo info = hostfs::storage().getFileInfo(settings.content.path);

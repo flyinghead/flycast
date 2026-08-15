@@ -23,6 +23,14 @@
 #include <algorithm>
 #include <memory>
 
+class VulkanGpuPreloadedTexture final : public GpuPreloadedTexture
+{
+public:
+	explicit VulkanGpuPreloadedTexture(u8 mipLevels) : GpuPreloadedTexture(mipLevels) {}
+
+	Texture texture;
+};
+
 void setImageLayout(vk::CommandBuffer const& commandBuffer, vk::Image image, vk::Format format, u32 mipmapLevels, vk::ImageLayout oldImageLayout, vk::ImageLayout newImageLayout)
 {
 	static const float scopeColor[4] = { 0.75f, 0.75f, 0.0f, 1.0f };
@@ -149,6 +157,15 @@ void setImageLayout(vk::CommandBuffer const& commandBuffer, vk::Image image, vk:
 
 void Texture::UploadToGPU(int width, int height, const u8 *data, bool mipmapped, bool mipmapsIncluded)
 {
+	vulkanGpuPreloadedTexture = nullptr;
+	gpuPreloadedTexture.reset();
+	usingGpuPreloadedTexture = false;
+	if (customTextureResource && image)
+	{
+		verify(flightManager != nullptr);
+		deferDeleteResource(flightManager);
+		customTextureResource = false;
+	}
 	vk::Format format = vk::Format::eUndefined;
 	u32 dataSize = width * height * 2;
 	switch (tex_type)
@@ -189,6 +206,215 @@ void Texture::UploadToGPU(int width, int height, const u8 *data, bool mipmapped,
 	else
 		isNew = false;
 	SetImage(dataSize, data, isNew, mipmapped && !mipmapsIncluded);
+}
+
+namespace
+{
+vk::Format customVkFormat(NativeTextureFormat format)
+{
+	switch (format)
+	{
+	case NativeTextureFormat::Rgba8Unorm: return vk::Format::eR8G8B8A8Unorm;
+	case NativeTextureFormat::Bc7Unorm: return vk::Format::eBc7UnormBlock;
+	case NativeTextureFormat::Bc1Unorm: return vk::Format::eBc1RgbUnormBlock;
+	case NativeTextureFormat::Bc3Unorm: return vk::Format::eBc3UnormBlock;
+	case NativeTextureFormat::Etc2Rgb8Unorm: return vk::Format::eEtc2R8G8B8UnormBlock;
+	case NativeTextureFormat::Etc2Rgba8Unorm: return vk::Format::eEtc2R8G8B8A8UnormBlock;
+	case NativeTextureFormat::Astc4x4Unorm: return vk::Format::eAstc4x4UnormBlock;
+	case NativeTextureFormat::Astc5x4Unorm: return vk::Format::eAstc5x4UnormBlock;
+	case NativeTextureFormat::Astc5x5Unorm: return vk::Format::eAstc5x5UnormBlock;
+	case NativeTextureFormat::Astc6x5Unorm: return vk::Format::eAstc6x5UnormBlock;
+	case NativeTextureFormat::Astc6x6Unorm: return vk::Format::eAstc6x6UnormBlock;
+	case NativeTextureFormat::Astc8x5Unorm: return vk::Format::eAstc8x5UnormBlock;
+	case NativeTextureFormat::Astc8x6Unorm: return vk::Format::eAstc8x6UnormBlock;
+	case NativeTextureFormat::Astc10x5Unorm: return vk::Format::eAstc10x5UnormBlock;
+	case NativeTextureFormat::Astc10x6Unorm: return vk::Format::eAstc10x6UnormBlock;
+	case NativeTextureFormat::Astc8x8Unorm: return vk::Format::eAstc8x8UnormBlock;
+	case NativeTextureFormat::Astc10x8Unorm: return vk::Format::eAstc10x8UnormBlock;
+	case NativeTextureFormat::Astc10x10Unorm: return vk::Format::eAstc10x10UnormBlock;
+	case NativeTextureFormat::Astc12x10Unorm: return vk::Format::eAstc12x10UnormBlock;
+	case NativeTextureFormat::Astc12x12Unorm: return vk::Format::eAstc12x12UnormBlock;
+	case NativeTextureFormat::Count: break;
+	}
+	return vk::Format::eUndefined;
+}
+}
+
+bool Texture::uploadCustomTexture(const PreparedCustomTexture& customTexture, bool mipmapped)
+{
+	vulkanGpuPreloadedTexture = nullptr;
+	gpuPreloadedTexture.reset();
+	usingGpuPreloadedTexture = false;
+	if (!(bool)commandBuffer || customTexture.bytes.size() > UINT32_MAX)
+		return false;
+	validatePreparedCustomTexture(customTexture);
+	const vk::Format newFormat = customVkFormat(customTexture.nativeFormat);
+	if (newFormat == vk::Format::eUndefined || (image && flightManager == nullptr))
+		return false;
+	const bool generateMipmaps = mipmapped && customTexture.generateMipmaps;
+	try
+	{
+		auto newStaging = std::make_unique<BufferData>(customTexture.bytes.size(),
+				vk::BufferUsageFlagBits::eTransferSrc);
+		newStaging->upload(static_cast<u32>(customTexture.bytes.size()), customTexture.bytes.data());
+		Allocation newAllocation;
+		const vk::Extent2D newExtent(customTexture.width, customTexture.height);
+		const u32 sourceMipLevels = static_cast<u32>(customTexture.levels.size());
+		const u32 newMipLevels = generateMipmaps
+				? mipmapLevelCount(customTexture.width, customTexture.height)
+				: sourceMipLevels;
+		vk::ImageUsageFlags newUsageFlags = vk::ImageUsageFlagBits::eSampled
+				| vk::ImageUsageFlagBits::eTransferDst;
+		if (generateMipmaps)
+			newUsageFlags |= vk::ImageUsageFlagBits::eTransferSrc;
+		vk::ImageCreateInfo imageInfo(vk::ImageCreateFlags(), vk::ImageType::e2D, newFormat,
+				vk::Extent3D(newExtent, 1), newMipLevels, 1, vk::SampleCountFlagBits::e1,
+				vk::ImageTiling::eOptimal, newUsageFlags,
+				vk::SharingMode::eExclusive, nullptr, vk::ImageLayout::eUndefined);
+		vk::UniqueImage newImage = device.createImageUnique(imageInfo);
+		VmaAllocationCreateInfo allocInfo = { VmaAllocationCreateFlags(), VmaMemoryUsage::VMA_MEMORY_USAGE_GPU_ONLY };
+		newAllocation = VulkanContext::Instance()->GetAllocator().AllocateForImage(*newImage, allocInfo);
+		vk::ImageViewCreateInfo viewInfo(vk::ImageViewCreateFlags(), newImage.get(), vk::ImageViewType::e2D,
+				newFormat, vk::ComponentMapping(),
+				vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eColor, 0, newMipLevels, 0, 1));
+		vk::UniqueImageView newView = device.createImageViewUnique(viewInfo);
+		std::vector<vk::BufferImageCopy> regions;
+		regions.reserve(customTexture.levels.size());
+		for (u32 levelIndex = 0; levelIndex < sourceMipLevels; ++levelIndex)
+		{
+			const PreparedMipLevel& level = customTexture.levels[levelIndex];
+			regions.emplace_back(level.byteOffset, 0, 0,
+					vk::ImageSubresourceLayers(vk::ImageAspectFlagBits::eColor, levelIndex, 0, 1),
+					vk::Offset3D(), vk::Extent3D(level.width, level.height, 1));
+		}
+		// Finish every potentially allocating operation before recording commands
+		// that reference the new resource. The command buffer cannot be rolled back
+		// if an allocation throws after this point.
+		if (image)
+			deferDeleteResource(flightManager);
+		setImageLayout(commandBuffer, newImage.get(), newFormat, newMipLevels,
+				vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal);
+		commandBuffer.copyBufferToImage(newStaging->buffer.get(), newImage.get(),
+				vk::ImageLayout::eTransferDstOptimal, regions);
+		if (generateMipmaps)
+			this->generateMipmaps(newImage.get(), newExtent, newMipLevels, true);
+		else
+			setImageLayout(commandBuffer, newImage.get(), newFormat, newMipLevels,
+					vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eShaderReadOnlyOptimal);
+
+		format = newFormat;
+		extent = newExtent;
+		mipmapLevels = newMipLevels;
+		usageFlags = newUsageFlags;
+		needsStaging = true;
+		stagingBufferData = std::move(newStaging);
+		allocation = std::move(newAllocation);
+		image = std::move(newImage);
+		imageView = std::move(newView);
+		readOnlyImageView = vk::ImageView();
+		customTextureResource = true;
+		return true;
+	}
+	catch (const vk::SystemError& exception)
+	{
+		WARN_LOG(RENDERER, "Vulkan custom texture upload failed: %s", exception.what());
+		return false;
+	}
+}
+
+GpuPreloadedTexture::Ptr Texture::createGpuPreloadedTexture(
+		const PreparedCustomTexture& customTexture, vk::CommandBuffer commandBuffer)
+{
+	auto texture = std::make_shared<VulkanGpuPreloadedTexture>(
+			static_cast<u8>(customTexture.generateMipmaps
+					? mipmapLevelCount(customTexture.width, customTexture.height)
+					: customTexture.levels.size()));
+	texture->texture.SetCommandBuffer(commandBuffer);
+	if (!texture->texture.uploadCustomTexture(customTexture, true))
+		return nullptr;
+	texture->texture.SetCommandBuffer(vk::CommandBuffer());
+	return texture;
+}
+
+void Texture::releaseGpuPreloadStaging(const GpuPreloadedTexture::Ptr& texture)
+{
+	auto vulkanTexture = std::dynamic_pointer_cast<VulkanGpuPreloadedTexture>(texture);
+	if (vulkanTexture)
+		vulkanTexture->texture.stagingBufferData.reset();
+}
+
+bool Texture::useGpuPreloadedTexture(const GpuPreloadedTexture::Ptr& texture)
+{
+	auto vulkanTexture = std::dynamic_pointer_cast<VulkanGpuPreloadedTexture>(texture);
+	if (!vulkanTexture)
+		return false;
+	if (image)
+	{
+		if (flightManager == nullptr)
+			return false;
+		deferDeleteResource(flightManager);
+	}
+	vulkanGpuPreloadedTexture = vulkanTexture.get();
+	format = vulkanTexture->texture.format;
+	extent = vulkanTexture->texture.extent;
+	mipmapLevels = vulkanTexture->texture.mipmapLevels;
+	usageFlags = vulkanTexture->texture.usageFlags;
+	needsStaging = false;
+	readOnlyImageView = vk::ImageView();
+	customTextureResource = false;
+	return true;
+}
+
+bool Texture::Delete()
+{
+	vulkanGpuPreloadedTexture = nullptr;
+	return BaseTextureCacheData::Delete();
+}
+
+vk::ImageView Texture::GetImageView() const
+{
+	if (vulkanGpuPreloadedTexture != nullptr)
+		return vulkanGpuPreloadedTexture->texture.GetImageView();
+	return imageView.get();
+}
+
+vk::Image Texture::GetImage() const
+{
+	return vulkanGpuPreloadedTexture != nullptr
+			? vulkanGpuPreloadedTexture->texture.GetImage() : image.get();
+}
+
+vk::ImageView Texture::GetReadOnlyImageView() const
+{
+	if (vulkanGpuPreloadedTexture != nullptr)
+		return vulkanGpuPreloadedTexture->texture.GetReadOnlyImageView();
+	return readOnlyImageView ? readOnlyImageView : imageView.get();
+}
+
+CustomTextureCapabilities Texture::getCustomTextureCapabilities()
+{
+	VulkanContext *context = VulkanContext::Instance();
+	const vk::PhysicalDevice physicalDevice = context->GetPhysicalDevice();
+	const u32 maxDimension = physicalDevice.getProperties().limits.maxImageDimension2D;
+	CustomTextureCapabilities capabilities = CustomTextureCapabilities::rgbaOnly(
+			CustomTextureBackend::Vulkan, maxDimension);
+	const auto query = [physicalDevice](vk::Format format) {
+		const vk::FormatFeatureFlags features = physicalDevice.getFormatProperties(format).optimalTilingFeatures;
+		return (features & vk::FormatFeatureFlagBits::eSampledImage)
+				&& (features & vk::FormatFeatureFlagBits::eTransferDst);
+	};
+	for (NativeTextureFormat format : { NativeTextureFormat::Bc7Unorm,
+			NativeTextureFormat::Bc1Unorm, NativeTextureFormat::Bc3Unorm,
+			NativeTextureFormat::Etc2Rgb8Unorm, NativeTextureFormat::Etc2Rgba8Unorm,
+			NativeTextureFormat::Astc4x4Unorm, NativeTextureFormat::Astc5x4Unorm,
+			NativeTextureFormat::Astc5x5Unorm, NativeTextureFormat::Astc6x5Unorm,
+			NativeTextureFormat::Astc6x6Unorm, NativeTextureFormat::Astc8x5Unorm,
+			NativeTextureFormat::Astc8x6Unorm, NativeTextureFormat::Astc10x5Unorm,
+			NativeTextureFormat::Astc10x6Unorm, NativeTextureFormat::Astc8x8Unorm,
+			NativeTextureFormat::Astc10x8Unorm, NativeTextureFormat::Astc10x10Unorm,
+			NativeTextureFormat::Astc12x10Unorm, NativeTextureFormat::Astc12x12Unorm })
+		capabilities.setSupported(format, query(customVkFormat(format)));
+	return capabilities;
 }
 
 void Texture::Init(u32 width, u32 height, vk::Format format, u32 dataSize, bool mipmapped, bool mipmapsIncluded)
@@ -342,15 +568,17 @@ void Texture::SetImage(u32 srcSize, const void *srcData, bool isNew, bool genMip
 					vk::Offset3D(0, 0, 0), vk::Extent3D(extent, 1));
 			commandBuffer.copyBufferToImage(stagingBufferData->buffer.get(), image.get(), vk::ImageLayout::eTransferDstOptimal, copyRegion);
 			if (mipmapLevels > 1)
-				GenerateMipmaps();
+				generateMipmaps(image.get(), extent, mipmapLevels, true);
 		}
 		// Set the layout for the texture image from eTransferDstOptimal to SHADER_READ_ONLY
-		setImageLayout(commandBuffer, image.get(), format, mipmapLevels, vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eShaderReadOnlyOptimal);
+		if (mipmapLevels <= 1 || !genMipmaps)
+			setImageLayout(commandBuffer, image.get(), format, mipmapLevels,
+					vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eShaderReadOnlyOptimal);
 	}
 	else
 	{
 		if (mipmapLevels > 1)
-			GenerateMipmaps();
+			generateMipmaps(image.get(), extent, mipmapLevels, false);
 		else
 			// If we can use the linear tiled image as a texture, just do it
 			setImageLayout(commandBuffer, image.get(), format, mipmapLevels, isNew ? vk::ImageLayout::ePreinitialized : vk::ImageLayout::eGeneral,
@@ -358,7 +586,8 @@ void Texture::SetImage(u32 srcSize, const void *srcData, bool isNew, bool genMip
 	}
 }
 
-void Texture::GenerateMipmaps()
+void Texture::generateMipmaps(vk::Image image, vk::Extent2D extent, u32 mipmapLevels,
+		bool usesStagingBuffer)
 {
 	static const float scopeColor[4] = { 0.75f, 0.75f, 0.0f, 1.0f };
 	CommandBufferDebugScope _(commandBuffer, "GenerateMipmaps", scopeColor);
@@ -367,13 +596,13 @@ void Texture::GenerateMipmaps()
 	u32 mipHeight = extent.height;
 	vk::ImageMemoryBarrier barrier(vk::AccessFlagBits::eTransferWrite, vk::AccessFlagBits::eTransferRead,
 			vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eTransferSrcOptimal, vk::QueueFamilyIgnored, vk::QueueFamilyIgnored,
-			*image, vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1));
+			image, vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1));
 
 	for (u32 i = 1; i < mipmapLevels; i++)
 	{
 		// Transition previous mipmap level from dst optimal/preinit to src optimal
 		barrier.subresourceRange.baseMipLevel = i - 1;
-		if (i == 1 && !needsStaging)
+		if (i == 1 && !usesStagingBuffer)
 		{
 			barrier.oldLayout = vk::ImageLayout::ePreinitialized;
 			barrier.srcAccessMask = vk::AccessFlagBits::eHostWrite;
@@ -392,7 +621,8 @@ void Texture::GenerateMipmaps()
 				 { { vk::Offset3D(0, 0, 0), vk::Offset3D(mipWidth, mipHeight, 1) } },
 				 vk::ImageSubresourceLayers(vk::ImageAspectFlagBits::eColor, i, 0, 1),
 				 { { vk::Offset3D(0, 0, 0), vk::Offset3D(std::max(mipWidth / 2, 1u), std::max(mipHeight / 2, 1u), 1) } });
-		commandBuffer.blitImage(*image, vk::ImageLayout::eTransferSrcOptimal, *image, vk::ImageLayout::eTransferDstOptimal, blit, vk::Filter::eLinear);
+		commandBuffer.blitImage(image, vk::ImageLayout::eTransferSrcOptimal,
+				image, vk::ImageLayout::eTransferDstOptimal, blit, vk::Filter::eLinear);
 
 		// Transition previous mipmap level from src optimal to shader read-only optimal
 		barrier.oldLayout = vk::ImageLayout::eTransferSrcOptimal;
@@ -420,10 +650,13 @@ void Texture::deferDeleteResource(FlightManager *manager)
 	public:
 		ResourceDeleter(Texture *texture)
 		{
+			const bool ownsImage = static_cast<bool>(texture->image);
 			std::swap(image, texture->image);
 			std::swap(imageView, texture->imageView);
 			std::swap(bufferData, texture->stagingBufferData);
 			std::swap(allocation, texture->allocation);
+			if (!ownsImage)
+				std::swap(gpuPreloadedTexture, texture->gpuPreloadedTexture);
 		}
 
 	private:
@@ -431,6 +664,7 @@ void Texture::deferDeleteResource(FlightManager *manager)
 		vk::UniqueImageView imageView;
 		std::unique_ptr<BufferData> bufferData;
 		Allocation allocation;
+		GpuPreloadedTexture::Ptr gpuPreloadedTexture;
 	};
 	manager->addToFlight(new ResourceDeleter(this));
 }

@@ -2,7 +2,91 @@
 #include "gles.h"
 #include "hw/pvr/pvr_mem.h"
 
+#include <cstring>
 #include <memory>
+#include <string>
+
+namespace
+{
+struct OpenGLGpuPreloadedTexture final : GpuPreloadedTexture
+{
+	explicit OpenGLGpuPreloadedTexture(u8 mipLevels) : GpuPreloadedTexture(mipLevels) {}
+	~OpenGLGpuPreloadedTexture() override
+	{
+		if (texture != 0)
+			glcache.DeleteTextures(1, &texture);
+	}
+
+	GLuint texture = 0;
+};
+}
+
+#ifndef GL_COMPRESSED_RGBA_BPTC_UNORM
+#define GL_COMPRESSED_RGBA_BPTC_UNORM 0x8E8C
+#endif
+#ifndef GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM
+#define GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM 0x8E8D
+#endif
+#ifndef GL_COMPRESSED_RGBA_S3TC_DXT5_EXT
+#define GL_COMPRESSED_RGBA_S3TC_DXT5_EXT 0x83F3
+#endif
+#ifndef GL_COMPRESSED_RGB_S3TC_DXT1_EXT
+#define GL_COMPRESSED_RGB_S3TC_DXT1_EXT 0x83F0
+#endif
+#ifndef GL_COMPRESSED_RGB8_ETC2
+#define GL_COMPRESSED_RGB8_ETC2 0x9274
+#endif
+#ifndef GL_COMPRESSED_RGBA8_ETC2_EAC
+#define GL_COMPRESSED_RGBA8_ETC2_EAC 0x9278
+#endif
+#ifndef GL_COMPRESSED_RGBA_ASTC_4x4_KHR
+#define GL_COMPRESSED_RGBA_ASTC_4x4_KHR 0x93B0
+#endif
+#ifndef GL_COMPRESSED_RGBA_ASTC_5x4_KHR
+#define GL_COMPRESSED_RGBA_ASTC_5x4_KHR 0x93B1
+#endif
+#ifndef GL_COMPRESSED_RGBA_ASTC_5x5_KHR
+#define GL_COMPRESSED_RGBA_ASTC_5x5_KHR 0x93B2
+#endif
+#ifndef GL_COMPRESSED_RGBA_ASTC_6x5_KHR
+#define GL_COMPRESSED_RGBA_ASTC_6x5_KHR 0x93B3
+#endif
+#ifndef GL_COMPRESSED_RGBA_ASTC_6x6_KHR
+#define GL_COMPRESSED_RGBA_ASTC_6x6_KHR 0x93B4
+#endif
+#ifndef GL_COMPRESSED_RGBA_ASTC_8x5_KHR
+#define GL_COMPRESSED_RGBA_ASTC_8x5_KHR 0x93B5
+#endif
+#ifndef GL_COMPRESSED_RGBA_ASTC_8x6_KHR
+#define GL_COMPRESSED_RGBA_ASTC_8x6_KHR 0x93B6
+#endif
+#ifndef GL_COMPRESSED_RGBA_ASTC_8x8_KHR
+#define GL_COMPRESSED_RGBA_ASTC_8x8_KHR 0x93B7
+#endif
+#ifndef GL_COMPRESSED_RGBA_ASTC_10x5_KHR
+#define GL_COMPRESSED_RGBA_ASTC_10x5_KHR 0x93B8
+#endif
+#ifndef GL_COMPRESSED_RGBA_ASTC_10x6_KHR
+#define GL_COMPRESSED_RGBA_ASTC_10x6_KHR 0x93B9
+#endif
+#ifndef GL_COMPRESSED_RGBA_ASTC_10x8_KHR
+#define GL_COMPRESSED_RGBA_ASTC_10x8_KHR 0x93BA
+#endif
+#ifndef GL_COMPRESSED_RGBA_ASTC_10x10_KHR
+#define GL_COMPRESSED_RGBA_ASTC_10x10_KHR 0x93BB
+#endif
+#ifndef GL_COMPRESSED_RGBA_ASTC_12x10_KHR
+#define GL_COMPRESSED_RGBA_ASTC_12x10_KHR 0x93BC
+#endif
+#ifndef GL_COMPRESSED_RGBA_ASTC_12x12_KHR
+#define GL_COMPRESSED_RGBA_ASTC_12x12_KHR 0x93BD
+#endif
+#ifndef GL_TEXTURE_BASE_LEVEL
+#define GL_TEXTURE_BASE_LEVEL 0x813C
+#endif
+#ifndef GL_TEXTURE_MAX_LEVEL
+#define GL_TEXTURE_MAX_LEVEL 0x813D
+#endif
 
 GlTextureCache TexCache;
 void (TextureCacheData::*TextureCacheData::uploadToGpu)(int, int, const u8 *, bool, bool) = &TextureCacheData::UploadToGPUGl2;
@@ -121,8 +205,198 @@ void TextureCacheData::UploadToGPUGl4(int width, int height, const u8 *temp_tex_
 
 void TextureCacheData::UploadToGPU(int width, int height, const u8 *temp_tex_buffer, bool mipmapped, bool mipmapsIncluded)
 {
+	if (usingGpuPreloadedTexture)
+	{
+		texID = 0;
+		gpuPreloadedTexture.reset();
+		usingGpuPreloadedTexture = false;
+		customTextureObject = false;
+	}
+	if (customTextureObject && texID != 0)
+	{
+		glcache.DeleteTextures(1, &texID);
+		texID = 0;
+		customTextureObject = false;
+	}
 	((*this).*uploadToGpu)(width, height, temp_tex_buffer, mipmapped, mipmapsIncluded);
 	glCheck();
+}
+
+namespace
+{
+GLenum customGlFormat(NativeTextureFormat format)
+{
+	switch (format)
+	{
+	case NativeTextureFormat::Bc7Unorm: return GL_COMPRESSED_RGBA_BPTC_UNORM;
+	case NativeTextureFormat::Bc1Unorm: return GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
+	case NativeTextureFormat::Bc3Unorm: return GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
+	case NativeTextureFormat::Etc2Rgb8Unorm: return GL_COMPRESSED_RGB8_ETC2;
+	case NativeTextureFormat::Etc2Rgba8Unorm: return GL_COMPRESSED_RGBA8_ETC2_EAC;
+	case NativeTextureFormat::Astc4x4Unorm: return GL_COMPRESSED_RGBA_ASTC_4x4_KHR;
+	case NativeTextureFormat::Astc5x4Unorm: return GL_COMPRESSED_RGBA_ASTC_5x4_KHR;
+	case NativeTextureFormat::Astc5x5Unorm: return GL_COMPRESSED_RGBA_ASTC_5x5_KHR;
+	case NativeTextureFormat::Astc6x5Unorm: return GL_COMPRESSED_RGBA_ASTC_6x5_KHR;
+	case NativeTextureFormat::Astc6x6Unorm: return GL_COMPRESSED_RGBA_ASTC_6x6_KHR;
+	case NativeTextureFormat::Astc8x5Unorm: return GL_COMPRESSED_RGBA_ASTC_8x5_KHR;
+	case NativeTextureFormat::Astc8x6Unorm: return GL_COMPRESSED_RGBA_ASTC_8x6_KHR;
+	case NativeTextureFormat::Astc10x5Unorm: return GL_COMPRESSED_RGBA_ASTC_10x5_KHR;
+	case NativeTextureFormat::Astc10x6Unorm: return GL_COMPRESSED_RGBA_ASTC_10x6_KHR;
+	case NativeTextureFormat::Astc8x8Unorm: return GL_COMPRESSED_RGBA_ASTC_8x8_KHR;
+	case NativeTextureFormat::Astc10x8Unorm: return GL_COMPRESSED_RGBA_ASTC_10x8_KHR;
+	case NativeTextureFormat::Astc10x10Unorm: return GL_COMPRESSED_RGBA_ASTC_10x10_KHR;
+	case NativeTextureFormat::Astc12x10Unorm: return GL_COMPRESSED_RGBA_ASTC_12x10_KHR;
+	case NativeTextureFormat::Astc12x12Unorm: return GL_COMPRESSED_RGBA_ASTC_12x12_KHR;
+	default: return 0;
+	}
+}
+
+}
+
+bool TextureCacheData::uploadCustomTexture(const PreparedCustomTexture& customTexture, bool mipmapped)
+{
+	if (usingGpuPreloadedTexture)
+	{
+		texID = 0;
+		gpuPreloadedTexture.reset();
+		usingGpuPreloadedTexture = false;
+		customTextureObject = false;
+	}
+	validatePreparedCustomTexture(customTexture);
+	const BlockGeometry geometry = getBlockGeometry(customTexture.nativeFormat);
+	const GLenum compressedFormat = customGlFormat(customTexture.nativeFormat);
+	if (geometry.compressed && compressedFormat == 0)
+		return false;
+	const bool generateMipmaps = mipmapped && customTexture.generateMipmaps;
+	const u32 mipmapLevels = generateMipmaps
+			? mipmapLevelCount(customTexture.width, customTexture.height)
+			: static_cast<u32>(customTexture.levels.size());
+
+	while (glGetError() != GL_NO_ERROR) {}
+	const GLuint newTexture = glcache.GenTexture();
+	glcache.BindTexture(GL_TEXTURE_2D, newTexture);
+	if (!gl.is_gles || gl.gl_major >= 3)
+	{
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL,
+				static_cast<GLint>(mipmapLevels - 1));
+	}
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+	const bool immutableStorage = allocateImmutableTextureStorage(
+			static_cast<GLsizei>(mipmapLevels),
+			geometry.compressed ? compressedFormat : GL_RGBA8,
+			customTexture.width, customTexture.height);
+	for (size_t levelIndex = 0; levelIndex < customTexture.levels.size(); ++levelIndex)
+	{
+		const PreparedMipLevel& level = customTexture.levels[levelIndex];
+		const void *data = customTexture.bytes.data() + level.byteOffset;
+		if (geometry.compressed)
+		{
+			if (immutableStorage)
+				uploadCompressedTextureSubImage2D(static_cast<GLint>(levelIndex),
+						level.width, level.height, compressedFormat,
+						static_cast<GLsizei>(level.byteSize), data);
+			else
+				glCompressedTexImage2D(GL_TEXTURE_2D, static_cast<GLint>(levelIndex), compressedFormat,
+						level.width, level.height, 0, static_cast<GLsizei>(level.byteSize), data);
+		}
+		else
+		{
+			if (immutableStorage)
+				glTexSubImage2D(GL_TEXTURE_2D, static_cast<GLint>(levelIndex), 0, 0,
+						level.width, level.height, GL_RGBA, GL_UNSIGNED_BYTE, data);
+			else
+				glTexImage2D(GL_TEXTURE_2D, static_cast<GLint>(levelIndex),
+						gl.is_gles && gl.gl_major < 3 ? GL_RGBA : GL_RGBA8,
+						level.width, level.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+		}
+		if (glGetError() != GL_NO_ERROR)
+		{
+			glcache.DeleteTextures(1, &newTexture);
+			if (texID != 0)
+				glcache.BindTexture(GL_TEXTURE_2D, texID);
+			return false;
+		}
+	}
+	if (generateMipmaps)
+	{
+		glGenerateMipmap(GL_TEXTURE_2D);
+		if (glGetError() != GL_NO_ERROR)
+		{
+			glcache.DeleteTextures(1, &newTexture);
+			if (texID != 0)
+				glcache.BindTexture(GL_TEXTURE_2D, texID);
+			return false;
+		}
+	}
+	texID = newTexture;
+	customTextureObject = true;
+	return true;
+}
+
+GpuPreloadedTexture::Ptr TextureCacheData::createGpuPreloadedTexture(
+		const PreparedCustomTexture& customTexture)
+{
+	if (!gl.textureStorageSupported)
+		return nullptr;
+	auto texture = std::make_shared<OpenGLGpuPreloadedTexture>(
+			static_cast<u8>(customTexture.generateMipmaps
+					? mipmapLevelCount(customTexture.width, customTexture.height)
+					: customTexture.levels.size()));
+	TextureCacheData uploadedTexture({}, {}, 0);
+	if (!uploadedTexture.uploadCustomTexture(customTexture, true))
+		return nullptr;
+	texture->texture = uploadedTexture.texID;
+	uploadedTexture.texID = 0;
+	uploadedTexture.customTextureObject = false;
+	return texture;
+}
+
+bool TextureCacheData::useGpuPreloadedTexture(const GpuPreloadedTexture::Ptr& texture)
+{
+	auto openGlTexture = std::dynamic_pointer_cast<OpenGLGpuPreloadedTexture>(texture);
+	if (!openGlTexture)
+		return false;
+	texID = openGlTexture->texture;
+	customTextureObject = false;
+	return true;
+}
+
+CustomTextureCapabilities TextureCacheData::getCustomTextureCapabilities()
+{
+	GLint maxTextureSize = 0;
+	glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTextureSize);
+	CustomTextureCapabilities capabilities = CustomTextureCapabilities::rgbaOnly(
+			gl.is_gles ? CustomTextureBackend::OpenGLES : CustomTextureBackend::OpenGL,
+			maxTextureSize > 0 ? static_cast<u32>(maxTextureSize) : 16384);
+	const bool bptc = !gl.is_gles && ((gl.gl_major > 4 || (gl.gl_major == 4 && gl.gl_minor >= 2))
+			|| hasGlExtension("GL_ARB_texture_compression_bptc")
+			|| hasGlExtension("GL_EXT_texture_compression_bptc"));
+	const bool astc = hasGlExtension("GL_KHR_texture_compression_astc_ldr")
+			|| hasGlExtension("GL_OES_texture_compression_astc");
+	const bool etc2 = (gl.is_gles && gl.gl_major >= 3)
+			|| (!gl.is_gles && (gl.gl_major > 4 || (gl.gl_major == 4 && gl.gl_minor >= 3)))
+			|| hasGlExtension("GL_ARB_ES3_compatibility");
+	const bool s3tc = hasGlExtension("GL_EXT_texture_compression_s3tc");
+	const bool bc1 = s3tc || hasGlExtension("GL_EXT_texture_compression_dxt1");
+	const bool bc3 = s3tc
+			|| hasGlExtension("GL_EXT_texture_compression_dxt5")
+			|| hasGlExtension("GL_ANGLE_texture_compression_dxt5");
+	capabilities.setSupported(NativeTextureFormat::Bc7Unorm, bptc);
+	capabilities.setSupported(NativeTextureFormat::Bc1Unorm, bc1);
+	capabilities.setSupported(NativeTextureFormat::Bc3Unorm, bc3);
+	capabilities.setSupported(NativeTextureFormat::Etc2Rgb8Unorm, etc2);
+	capabilities.setSupported(NativeTextureFormat::Etc2Rgba8Unorm, etc2);
+	for (NativeTextureFormat format : { NativeTextureFormat::Astc4x4Unorm,
+			NativeTextureFormat::Astc5x4Unorm, NativeTextureFormat::Astc5x5Unorm,
+			NativeTextureFormat::Astc6x5Unorm, NativeTextureFormat::Astc6x6Unorm,
+			NativeTextureFormat::Astc8x5Unorm, NativeTextureFormat::Astc8x6Unorm,
+			NativeTextureFormat::Astc10x5Unorm, NativeTextureFormat::Astc10x6Unorm,
+			NativeTextureFormat::Astc8x8Unorm, NativeTextureFormat::Astc10x8Unorm,
+			NativeTextureFormat::Astc10x10Unorm, NativeTextureFormat::Astc12x10Unorm,
+			NativeTextureFormat::Astc12x12Unorm })
+		capabilities.setSupported(format, astc);
+	return capabilities;
 }
 	
 void TextureCacheData::setUploadToGPUFlavor()
@@ -137,13 +411,19 @@ void TextureCacheData::setUploadToGPUFlavor()
 
 bool TextureCacheData::Delete()
 {
+	const bool gpuPreloaded = usingGpuPreloadedTexture;
 	if (!BaseTextureCacheData::Delete())
 		return false;
 
-	if (texID != 0) {
+	if (gpuPreloaded)
+	{
+		texID = 0;
+	}
+	else if (texID != 0) {
 		glcache.DeleteTextures(1, &texID);
 		texID = 0;
 	}
+	customTextureObject = false;
 
 	return true;
 }
@@ -284,14 +564,21 @@ BaseTextureCacheData *OpenGLRenderer::GetTexture(TSP tsp, TCW tcw, int area)
 	//update if needed
 	if (tf->NeedsUpdate())
 	{
+		const GLuint oldTexture = tf->texID;
+		const bool oldTextureWasGpuPreloaded = tf->usingGpuPreloadedTexture;
 		if (!tf->Update())
 			tf = nullptr;
+		else if (tf->is_custom_replaced && !oldTextureWasGpuPreloaded
+				&& oldTexture != 0 && oldTexture != tf->texID)
+			TexCache.DeleteLater(oldTexture);
 	}
 	else if (tf->IsCustomTextureAvailable())
 	{
-		TexCache.DeleteLater(tf->texID);
-		tf->texID = 0;
-		tf->CheckCustomTexture();
+		const GLuint oldTexture = tf->texID;
+		const bool oldTextureWasGpuPreloaded = tf->usingGpuPreloadedTexture;
+		if (tf->CheckCustomTexture() && !oldTextureWasGpuPreloaded
+				&& oldTexture != 0 && oldTexture != tf->texID)
+			TexCache.DeleteLater(oldTexture);
 	}
 
 	return tf;
