@@ -12,19 +12,22 @@ jobs:
     runs-on: ubuntu-latest
     container: devkitpro/devkita64:latest
 
+    env:
+      CCACHE_DIR: ${{ github.workspace }}/.ccache
+
     strategy:
       matrix:
         config:
-          - {name: standalone, destDir: switch}
-          - {name: libretro, cmakeArgs: -DLIBRETRO=ON}
+          - { name: standalone, destDir: switch }
+          - { name: libretro, cmakeArgs: -DLIBRETRO=ON }
 
     steps:
       - name: Set up build environment
         run: |
           sudo apt-get update
-          sudo apt-get -y install ccache cmake
+          sudo apt-get -y install ccache gh
 
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
           submodules: recursive
@@ -32,9 +35,9 @@ jobs:
       - name: Mark git repository as safe
         run: git config --global --add safe.directory $PWD
 
-      - uses: actions/cache@v5
+      - uses: actions/cache@v6
         with:
-          path: ~/.ccache
+          path: ${{ env.CCACHE_DIR }}
           key: ccache-switch-${{ matrix.config.name }}-${{ github.sha }}
           restore-keys: ccache-switch-${{ matrix.config.name }}-
 
@@ -43,7 +46,7 @@ jobs:
           $DEVKITPRO/portlibs/switch/bin/aarch64-none-elf-cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=artifact -G Ninja ${{ matrix.config.cmakeArgs }}
           cmake --build build --config Release --target install
 
-      - uses: actions/upload-artifact@v6
+      - uses: actions/upload-artifact@v7
         with:
           name: flycast-switch-${{ matrix.config.name }}
           path: |
@@ -58,7 +61,6 @@ jobs:
         uses: AnimMouse/setup-rclone@v1
         with:
           rclone_config: ${{ secrets.RCLONE_CONFIG }}
-          version: v1.69.1
 
       - name: Upload to S3
         run: rclone copy artifact/bin scaleway:flycast-builds/${{ matrix.config.destDir }}/${GITHUB_REF#refs/}-$GITHUB_SHA
