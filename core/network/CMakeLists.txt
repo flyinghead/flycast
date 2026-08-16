@@ -21,4 +21,6 @@ target_sources(${PROJECT_NAME} PRIVATE
         dcnet.h
         ice.cpp
         ice.h
-        ifaddrs.c)
+        ifaddrs.c
+        rawmodem.cpp
+        rawmodem.h)

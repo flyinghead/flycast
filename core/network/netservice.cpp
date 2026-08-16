@@ -21,6 +21,7 @@
 #include "dcnet.h"
 #include "emulator.h"
 #include "cfg/option.h"
+#include "rawmodem.h"
 
 namespace net::modbba
 {
@@ -33,7 +34,9 @@ bool start()
 	if (service == nullptr || usingDCNet != config::UseDCNet)
 	{
 		delete service;
-		if (config::UseDCNet)
+		if (settings.content.gameId == "HDR0010")	// Sega Rally 2 (JP)
+			service = new RawModemService();
+		else if (config::UseDCNet)
 			service = new DCNetService();
 		else
 			service = new PicoTcpService();
