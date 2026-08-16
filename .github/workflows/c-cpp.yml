@@ -21,13 +21,13 @@ jobs:
     strategy:
       matrix:
         config:
-          - {name: i686-pc-windows-msvc, os: windows-2022, shell: cmd, arch: x86, cmakeArgs: -G Ninja, buildType: Release}
-          - {name: apple-darwin, os: macos-latest, shell: sh, cmakeArgs: -G Xcode -DUSE_DISCORD=ON -DMOLTENVK_DYLIB=$MOLTENVK_DYLIB, destDir: osx, buildType: RelWithDebInfo}
-          - {name: x86_64-pc-linux-gnu, os: ubuntu-22.04, shell: sh, cmakeArgs: -G Ninja -DUSE_DISCORD=ON -DUSE_LIBCDIO=ON, destDir: linux, buildType: RelWithDebInfo}
-          - {name: x86_64-pc-windows-msvc, os: windows-2022, shell: cmd, arch: x64, cmakeArgs: -G Ninja -DUSE_DISCORD=ON, buildType: Release}
-          - {name: x86_64-w64-mingw32, os: windows-2022, shell: 'msys2 {0}', cmakeArgs: -G Ninja -DUSE_DISCORD=ON -DUSE_LIBCDIO=ON, destDir: win, buildType: RelWithDebInfo}
-          - {name: libretro-x86_64-pc-linux-gnu, os: ubuntu-22.04, shell: sh, cmakeArgs: -DLIBRETRO=ON -DUSE_LIBCDIO=ON -DCMAKE_POSITION_INDEPENDENT_CODE=TRUE -G Ninja, buildType: Release}
-          - {name: libretro-x86_64-w64-mingw32, os: windows-2022, shell: 'msys2 {0}', cmakeArgs: -DLIBRETRO=ON -DUSE_LIBCDIO=ON -G Ninja, buildType: Release}
+          - { name: i686-pc-windows-msvc, os: windows-2022, shell: cmd, arch: x86, cmakeArgs: -G Ninja, buildType: Release }
+          - { name: apple-darwin, os: macos-latest, shell: sh, cmakeArgs: -G Xcode -DUSE_DISCORD=ON -DMOLTENVK_DYLIB=$MOLTENVK_DYLIB, destDir: osx, buildType: RelWithDebInfo }
+          - { name: x86_64-pc-linux-gnu, os: ubuntu-22.04, shell: sh, cmakeArgs: -G Ninja -DUSE_DISCORD=ON -DUSE_LIBCDIO=ON, destDir: linux, buildType: RelWithDebInfo }
+          - { name: x86_64-pc-windows-msvc, os: windows-2022, shell: cmd, arch: x64, cmakeArgs: -G Ninja -DUSE_DISCORD=ON, buildType: Release }
+          - { name: x86_64-w64-mingw32, os: windows-2022, shell: 'msys2 {0}', cmakeArgs: -G Ninja -DUSE_DISCORD=ON -DUSE_LIBCDIO=ON, destDir: win, buildType: RelWithDebInfo }
+          - { name: libretro-x86_64-pc-linux-gnu, os: ubuntu-22.04, shell: sh, cmakeArgs: -DLIBRETRO=ON -DUSE_LIBCDIO=ON -DCMAKE_POSITION_INDEPENDENT_CODE=TRUE -G Ninja, buildType: Release }
+          - { name: libretro-x86_64-w64-mingw32, os: windows-2022, shell: 'msys2 {0}', cmakeArgs: -DLIBRETRO=ON -DUSE_LIBCDIO=ON -G Ninja, buildType: Release }
 
     steps:
       - name: Set up build environment (macOS)
@@ -38,11 +38,11 @@ jobs:
           brew install libao ldid pulseaudio
           brew uninstall --ignore-dependencies zstd
 
-          moltenvk_tag="v1.4.2-pre.973bb08"
+          moltenvk_tag="v1.4.2"
           moltenvk_root="$RUNNER_TEMP/MoltenVK-$moltenvk_tag"
           rm -rf "$moltenvk_root"
           mkdir -p "$moltenvk_root"
-          aria2c "https://github.com/vkedwardli/MoltenVK/releases/download/$moltenvk_tag/MoltenVK-macos.tar" -d "$RUNNER_TEMP" -o "MoltenVK-macos-$moltenvk_tag.tar"
+          aria2c "https://github.com/KhronosGroup/MoltenVK/releases/download/$moltenvk_tag/MoltenVK-macos.tar" -d "$RUNNER_TEMP" -o "MoltenVK-macos-$moltenvk_tag.tar"
           tar -xf "$RUNNER_TEMP/MoltenVK-macos-$moltenvk_tag.tar" -C "$moltenvk_root"
           moltenvk_dylib="$(find "$moltenvk_root" -type f -path '*/macOS/*' -name libMoltenVK.dylib | head -n 1)"
           if [ -z "$moltenvk_dylib" ]; then
@@ -56,7 +56,7 @@ jobs:
         run: |
           sudo add-apt-repository ppa:christianrauch/libdecoration
           sudo apt-get update
-          sudo apt-get -y install ccache libao-dev libasound2-dev libevdev-dev libgl1-mesa-dev liblua5.3-dev libminiupnpc-dev libpulse-dev libsdl2-dev libudev-dev libzip-dev ninja-build libcurl4-openssl-dev libcdio-dev libfuse2 locales
+          sudo apt-get -y install ccache libao-dev libasound2-dev libevdev-dev libgl1-mesa-dev liblua5.3-dev libminiupnpc-dev libpulse-dev libsdl2-dev libudev-dev libzip-dev libcurl4-openssl-dev libcdio-dev libfuse2 locales
           sudo apt-get -y install libwayland-dev libdecor-0-dev libaudio-dev libjack-dev libsndio-dev libsamplerate0-dev libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxfixes-dev libxi-dev libxss-dev libxkbcommon-dev libdrm-dev libgbm-dev libgles2-mesa-dev libegl1-mesa-dev libdbus-1-dev libibus-1.0-dev libudev-dev fcitx-libs-dev
           sudo sed -i 's/# fr_FR.UTF-8 UTF-8/fr_FR.UTF-8 UTF-8/g' /etc/locale.gen
           sudo locale-gen
@@ -66,12 +66,13 @@ jobs:
         uses: msys2/setup-msys2@v2
         with:
           msystem: MINGW64
-          install: git make mingw-w64-x86_64-ccache mingw-w64-x86_64-cmake mingw-w64-x86_64-lua mingw-w64-x86_64-ninja mingw-w64-x86_64-SDL2 mingw-w64-x86_64-toolchain mingw-w64-x86_64-libcdio
+          install: git make
+          pacboy: ccache:p cmake:p libcdio:p lua:p ninja:p SDL2:p toolchain:p
         if: matrix.config.shell == 'msys2 {0}'
 
       - name: Set up build environment (Windows, Visual Studio)
         run: |
-          choco install ccache directx-sdk ninja
+          choco install ccache directx-sdk
           echo DXSDK_DIR=C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)>> %GITHUB_ENV%
         if: matrix.config.shell == 'cmd'
 
@@ -80,7 +81,7 @@ jobs:
           arch: ${{ matrix.config.arch }}
         if: matrix.config.shell == 'cmd'
 
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
           submodules: recursive
@@ -91,12 +92,12 @@ jobs:
             libname=$(basename "$formula" .rb)
             HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=1 HOMEBREW_DEVELOPER=1 brew install --build-from-source --formula "$formula" || \
             HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=1 HOMEBREW_DEVELOPER=1 brew reinstall --build-from-source --formula "$formula"
-            
+          
             prefix=$(brew --prefix $libname)
             # Find and verify the static library
             libfile=$(find "$prefix/lib" -name "*.a" | head -n1)
             lipo -info "$libfile"
-            
+          
             # Export prefix for subsequent CMake steps
             if [ -z "$CMAKE_PREFIX_PATH" ]; then
               CMAKE_PREFIX_PATH="$prefix"
@@ -107,7 +108,7 @@ jobs:
           echo "CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH" >> $GITHUB_ENV
         if: matrix.config.name == 'apple-darwin'
 
-      - uses: actions/cache@v5
+      - uses: actions/cache@v6
         with:
           path: ${{ env.CCACHE_DIR }}
           key: ccache-${{ matrix.config.name }}-${{ github.sha }}
@@ -153,7 +154,7 @@ jobs:
           rm artifact/bin/flycast
         if: matrix.config.name == 'x86_64-pc-linux-gnu'
 
-      - uses: actions/upload-artifact@v6
+      - uses: actions/upload-artifact@v7
         with:
           name: flycast-${{ matrix.config.name }}
           path: |
@@ -193,7 +194,7 @@ jobs:
           project: minidump
           version: 2.21.2
         if: ${{ env.SENTRY_TOKEN != '' }}
-      
+
       - name: Upload symbols to Sentry (Windows, macOS, Linux)
         run: |
           VERSION=$(git describe --tags --always)
@@ -204,4 +205,3 @@ jobs:
         env:
           SENTRY_TOKEN: ${{ secrets.SENTRY_TOKEN }}
         if: ${{ env.SENTRY_TOKEN != '' && (matrix.config.name == 'x86_64-w64-mingw32' || matrix.config.name == 'apple-darwin' || matrix.config.name == 'x86_64-pc-linux-gnu') && github.event_name == 'push' }}
-        

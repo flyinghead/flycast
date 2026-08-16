@@ -18,10 +18,10 @@ jobs:
         libretro: [ OFF, ON ]
         include:
           - operating_system: freebsd
-            version: '15.0'
-            pkginstall: sudo pkg update && sudo pkg install -y alsa-lib ccache cmake evdev-proto git libao libcdio libevdev libudev-devd libzip lua54 miniupnpc ninja pkgconf pulseaudio sdl2
+            version: '15.1'
+            pkginstall: sudo pkg upgrade -y && sudo pkg install -y alsa-lib ccache cmake evdev-proto git libao libcdio libevdev libudev-devd libzip lua54 miniupnpc ninja pkgconf pulseaudio sdl2
           - operating_system: netbsd
-            version: '10.1'
+            version: '11.0'
             pkginstall: sudo pkgin update && sudo pkgin -y install alsa-lib ccache clang cmake git libao libcdio libusb1-1.0.30 libzip lua54 miniupnpc ninja-build pkgconf pulseaudio SDL2
           - operating_system: openbsd
             version: '7.9'
@@ -30,16 +30,16 @@ jobs:
           - architecture: arm64
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
           submodules: recursive
 
-      - uses: actions/cache@v5
+      - uses: actions/cache@v6
         with:
           path: ${{ env.CCACHE_DIR }}
-          key: ccache-${{ matrix.operating_system }}-${{ matrix.architecture }}-${{ github.sha }}
-          restore-keys: ccache-${{ matrix.operating_system }}-${{ matrix.architecture }}-
+          key: ccache-${{ matrix.operating_system }}-${{ matrix.architecture }}-${{ matrix.libretro }}-${{ github.sha }}
+          restore-keys: ccache-${{ matrix.operating_system }}-${{ matrix.architecture }}-${{ matrix.libretro }}-
 
       - name: Start VM
         uses: cross-platform-actions/action@v1
