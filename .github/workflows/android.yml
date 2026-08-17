@@ -90,7 +90,6 @@ jobs:
       - name: Upload symbols to Sentry
         run: |
           VERSION=$(git describe --tags --always)
-          sentry-cli login
           sentry-cli releases new "$VERSION"
           sentry-cli releases set-commits "$VERSION" --auto
           sentry-cli debug-files upload symbols
