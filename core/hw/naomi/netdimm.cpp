@@ -696,7 +696,7 @@ int NetDimm::schedCallback()
 					if (socket.srcAddr != nullptr)
 						len = recvfrom(socket.fd, (char *)socket.recvData, socket.recvLen, 0, socket.srcAddr, socket.addrLen);
 					else
-					len = recv(socket.fd, (char *)socket.recvData, socket.recvLen, 0);
+						len = recv(socket.fd, (char *)socket.recvData, socket.recvLen, 0);
 					if (len == -1)
 					{
 						const int error = get_last_error();
@@ -966,6 +966,10 @@ void NetDimm::netCmd(int cmd)
 				INFO_LOG(NAOMI, "bind(%d) invalid socket", sockidx);
 				rc = -1;
 			}
+			else if (sockets[sockidx - 1].isBusy()) {
+				INFO_LOG(NAOMI, "bind(%d) socket is busy", sockidx);
+				rc = -1;
+			}
 			else
 			{
 				const int option = 1;
@@ -1006,6 +1010,10 @@ void NetDimm::netCmd(int cmd)
 			if (sockfd == INVALID_SOCKET)
 			{
 				WARN_LOG(NAOMI, "connect(%d, %x) invalid socket", sockidx, htonl(addr->sin_addr.s_addr));
+				rc = -1;
+			}
+			else if (sockets[sockidx - 1].isBusy()) {
+				INFO_LOG(NAOMI, "connect(%d) socket is busy", sockidx);
 				rc = -1;
 			}
 			else
@@ -1084,6 +1092,10 @@ void NetDimm::netCmd(int cmd)
 				WARN_LOG(NAOMI, "recv(%d) invalid socket", sockidx);
 				rc = -1;
 			}
+			else if (sockets[sockidx - 1].receiving) {
+				INFO_LOG(NAOMI, "recv(%d) socket is busy", sockidx);
+				rc = -1;
+			}
 			else
 			{
 				u32 len = buffer[3];
@@ -1130,6 +1142,10 @@ void NetDimm::netCmd(int cmd)
 			if (sockfd == INVALID_SOCKET)
 			{
 				INFO_LOG(NAOMI, "send(%d) invalid socket", sockidx);
+				rc = -1;
+			}
+			else if (sockets[sockidx - 1].sending) {
+				INFO_LOG(NAOMI, "send(%d) socket is busy", sockidx);
 				rc = -1;
 			}
 			else
@@ -1281,6 +1297,10 @@ void NetDimm::netCmd(int cmd)
 				INFO_LOG(NAOMI, "setsockopt(%d) invalid socket", sockidx);
 				rc = -1;
 			}
+			else if (sockets[sockidx - 1].isBusy()) {
+				INFO_LOG(NAOMI, "setsockopt(%d) socket is busy", sockidx);
+				rc = -1;
+			}
 			else
 			{
 				int optname = buffer[3];
@@ -1317,6 +1337,10 @@ void NetDimm::netCmd(int cmd)
 			int rc = 0;
 			if (sockfd == INVALID_SOCKET) {
 				INFO_LOG(NAOMI, "getsockopt(%d) invalid socket", sockidx);
+				rc = -1;
+			}
+			else if (sockets[sockidx - 1].isBusy()) {
+				INFO_LOG(NAOMI, "getsockopt(%d) socket is busy", sockidx);
 				rc = -1;
 			}
 			else
@@ -1357,9 +1381,13 @@ void NetDimm::netCmd(int cmd)
 				WARN_LOG(NAOMI, "settimeout(%d) invalid socket", sockidx);
 				rc = -1;
 			}
+			else if (sockets[sockidx - 1].isBusy()) {
+				INFO_LOG(NAOMI, "settimeout(%d) socket is busy", sockidx);
+				rc = -1;
+			}
 			else
 			{
-				sockets[sockidx - 1].connectTimeout = (u64)buffer[2] * SH4_MAIN_CLOCK / 1000;
+				sockets[sockidx - 1].connectTimeout = (u64)buffer[2] * SH4_MAIN_CLOCK / 1000; // TODO ignored by real hw?
 				sockets[sockidx - 1].sendTimeout = (u64)buffer[3] * SH4_MAIN_CLOCK / 1000;
 				sockets[sockidx - 1].recvTimeout = (u64)buffer[4] * SH4_MAIN_CLOCK / 1000;
 				INFO_LOG(NAOMI, "setTimeout(%d, %d, %d, %d)", sockidx, buffer[2], buffer[3], buffer[4]);
@@ -1411,7 +1439,11 @@ void NetDimm::netCmd(int cmd)
 			int rc;
 			if (sockfd == INVALID_SOCKET)
 			{
-				WARN_LOG(NAOMI, "recv(%d) invalid socket", sockidx);
+				WARN_LOG(NAOMI, "recvfrom(%d) invalid socket", sockidx);
+				rc = -1;
+			}
+			else if (sockets[sockidx - 1].receiving) {
+				INFO_LOG(NAOMI, "recvfrom(%d) socket is busy", sockidx);
 				rc = -1;
 			}
 			else
@@ -1451,6 +1483,10 @@ void NetDimm::netCmd(int cmd)
 			int rc;
 			if (sockfd == INVALID_SOCKET) {
 				WARN_LOG(NAOMI, "sendto(%d) invalid socket", sockidx);
+				rc = -1;
+			}
+			else if (sockets[sockidx - 1].sending) {
+				INFO_LOG(NAOMI, "sendto(%d) socket is busy", sockidx);
 				rc = -1;
 			}
 			else

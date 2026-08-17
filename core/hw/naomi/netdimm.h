@@ -96,8 +96,10 @@ private:
 		int close()
 		{
 			int rc = 0;
-			if (fd != INVALID_SOCKET)
+			if (fd != INVALID_SOCKET) {
+				shutdown(fd, SHUT_RDWR);
 				rc = ::closesocket(fd);
+			}
 			fd = INVALID_SOCKET;
 			connecting = false;
 			receiving = false;
@@ -151,5 +153,5 @@ private:
 	std::function<void(u32)> controlReadCallback;
 	TsQueue<ServerMsg> serverQueue;
 
-	static constexpr int POLL_CYCLES = SH4_MAIN_CLOCK / 60;
+	static constexpr int POLL_CYCLES = SH4_MAIN_CLOCK / 240;
 };
