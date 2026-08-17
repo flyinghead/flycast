@@ -90,14 +90,13 @@ jobs:
       - name: Upload symbols to Sentry
         run: |
           VERSION=$(git describe --tags --always)
-          export SENTRY_AUTH_TOKEN=${{ env.SENTRY_TOKEN }}
-          export SENTRY_ORG=flycast
-          export SENTRY_PROJECT=minidump
           sentry-cli login
           sentry-cli releases new "$VERSION"
           sentry-cli releases set-commits "$VERSION" --auto
           sentry-cli debug-files upload symbols
         shell: bash
         env:
-          SENTRY_TOKEN: ${{ secrets.SENTRY_TOKEN }}
-        if: ${{ env.SENTRY_TOKEN != '' && github.event_name == 'push' }}
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_TOKEN }}
+          SENTRY_ORG: flycast
+          SENTRY_PROJECT: minidump
+        if: ${{ env.SENTRY_AUTH_TOKEN != '' && github.event_name == 'push' }}
