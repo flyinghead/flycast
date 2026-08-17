@@ -70,16 +70,23 @@ static inline int get_last_error() { return WSAGetLastError(); }
 #ifndef SHUT_RD
 #define SHUT_RD SD_RECEIVE
 #endif
+#ifndef SHUT_RDWR
+#define SHUT_RDWR SD_BOTH
+#endif
 #endif
 
 bool is_local_address(u32 addr);
 
-static inline void set_non_blocking(sock_t fd)
+static inline void set_non_blocking(sock_t fd, bool enable = true)
 {
 #ifndef _WIN32
-	fcntl(fd, F_SETFL, O_NONBLOCK);
+	const int flags = fcntl(fd, F_GETFL, O_NONBLOCK);
+	if (enable && (flags & O_NONBLOCK) == 0)
+		fcntl(fd, F_SETFL, flags | O_NONBLOCK);
+	else if (!enable && (flags & O_NONBLOCK) != 0)
+		fcntl(fd, F_SETFL, flags & ~O_NONBLOCK);
 #else
-	u_long optl = 1;
+	u_long optl = (u_long)enable;
 	ioctlsocket(fd, FIONBIO, &optl);
 #endif
 }
