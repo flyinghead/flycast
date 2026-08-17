@@ -112,6 +112,7 @@ protected:
 	void resetContextState();
 	void drawOSD();
 	TileClipping setTileClip(u32 val, Rect& rect);
+	void makeSecondAccumFB();
 
 	ComPtr<ID3D11Device> device;
 	ComPtr<ID3D11DeviceContext> deviceContext;
@@ -127,6 +128,10 @@ protected:
 	ComPtr<ID3D11RenderTargetView> rttRenderTarget;
 	ComPtr<ID3D11ShaderResourceView> fbTextureView;
 
+	ComPtr<ID3D11Texture2D> fbSecondAccumTex;
+	ComPtr<ID3D11RenderTargetView> fbSecondAccum;
+	ComPtr<ID3D11ShaderResourceView> fbSecondAccumView;
+
 	BlendStates blendStates;
 	DepthStencilStates depthStencilStates;
 	Samplers *samplers;
@@ -140,6 +145,7 @@ protected:
 	float aspectRatio = 4.f / 3.f;
 	bool dithering = false;
 	rend_context *rendContext;
+	bool renderingToSecAccum = false;
 
 private:
 	void prepareRttRenderTarget(u32 texAddress);

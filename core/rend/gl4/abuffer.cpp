@@ -480,7 +480,7 @@ static void abufferDrawQuad()
 	glCheck();
 }
 
-void DrawTranslucentModVols(int first, int count, bool useOpaqueGeom)
+void OpenGL4Renderer::drawTranslucentModVols(int first, int count, bool useOpaqueGeom)
 {
 	if (count == 0 || gl.rendContext->modtrig.empty())
 		return;
@@ -532,7 +532,7 @@ void DrawTranslucentModVols(int first, int count, bool useOpaqueGeom)
 		glcache.UseProgram(shader->program);
 		gl4ShaderUniforms.Set(shader);
 
-		SetCull(param.isp.CullMode); glCheck();
+		setCull(param.isp.CullMode); glCheck();
 
 		glMemoryBarrier(GL_BUFFER_UPDATE_BARRIER_BIT);
 

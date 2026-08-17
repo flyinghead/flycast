@@ -142,6 +142,10 @@ sampler paletteSampler : register(s1);
 Texture2D fogTexture : register(t2);
 sampler fogSampler : register(s2);
 
+#if SECACCUM == 1
+Texture2D secAccum : register(t6);
+#endif
+
 float fog_mode2(float w)
 {
 	float z = clamp(
@@ -259,6 +263,7 @@ PSO main(in Pixel inpix)
 			&& inpix.pos.y >= clipTest.y && inpix.pos.y <= clipTest.w)
 		discard;
 #endif
+#if SECACCUM == 0
 	float4 color = inpix.col;
 	#if pp_BumpMap == 1 || pp_Offset == 1
 		float4 specular = inpix.spec;
@@ -339,6 +344,10 @@ PSO main(in Pixel inpix)
 		color.a = 1.0f;
 	#endif
 
+#else
+	// SECACCUM == 1
+	float4 color = secAccum[uint2(inpix.pos.xy)];
+#endif
 #if DITHERING == 1
 	static const float ditherTable[16] = {
 		5.0f, 13.0f,  7.0f, 15.0f,
@@ -485,7 +494,8 @@ enum PixelMacroEnum {
 	MacroPalette,
 	MacroAlphaTest,
 	MacroClipInside,
-	MacroDithering
+	MacroDithering,
+	MacroSecAccum,
 };
 
 static D3D_SHADER_MACRO PixelMacros[]
@@ -505,12 +515,14 @@ static D3D_SHADER_MACRO PixelMacros[]
 	{ "cp_AlphaTest", "0" },
 	{ "pp_ClipInside", "0" },
 	{ "DITHERING", "0" },
+	{ "SECACCUM", "0" },
 	{ nullptr, nullptr }
 };
 
 const ComPtr<ID3D11PixelShader>& DX11Shaders::getShader(bool pp_Texture, bool pp_UseAlpha, bool pp_IgnoreTexA, u32 pp_ShadInstr,
 		bool pp_Offset, u32 pp_FogCtrl, bool pp_BumpMap, bool fog_clamping,
-		bool trilinear, int palette, bool gouraud, bool alphaTest, bool clipInside, bool dithering)
+		bool trilinear, int palette, bool gouraud, bool alphaTest, bool clipInside, bool dithering,
+		bool secondAccum)
 {
 	bool divPosZ = !settings.platform.isNaomi2() && config::NativeDepthInterpolation;
 	const u32 hash = (int)pp_Texture
@@ -527,7 +539,8 @@ const ComPtr<ID3D11PixelShader>& DX11Shaders::getShader(bool pp_Texture, bool pp
 			| (alphaTest << 14)
 			| (clipInside << 15)
 			| (divPosZ << 16)
-			| (dithering << 17);
+			| (dithering << 17)
+			| (secondAccum << 18);
 	auto& shader = shaders[hash];
 	if (shader == nullptr)
 	{
@@ -548,6 +561,7 @@ const ComPtr<ID3D11PixelShader>& DX11Shaders::getShader(bool pp_Texture, bool pp
 		PixelMacros[MacroClipInside].Definition = MacroValues[clipInside];
 		PixelMacros[MacroDivPosZ].Definition = MacroValues[divPosZ];
 		PixelMacros[MacroDithering].Definition = MacroValues[dithering];
+		PixelMacros[MacroSecAccum].Definition = MacroValues[secondAccum];
 
 		shader = compilePS(PixelShader, "main", PixelMacros);
 		verify(shader != nullptr);

@@ -86,6 +86,10 @@ struct pixel
 sampler2D samplr : register(s0);
 sampler2D tex_pal : register(s1);
 sampler2D fog_table : register(s2);
+#if SECACCUM == 1
+sampler2D secAccum : register(s3);
+float4 secAccumSize : register(c10);
+#endif
 
 float4 paletteIndex : register(c0);
 float4 FOG_COL_VERT : register(c1);
@@ -191,6 +195,7 @@ PSO main(in pixel inpix)
 		discard;
 #endif
 
+#if SECACCUM == 0
 	float4 color = inpix.col;
 	#if pp_BumpMap == 1 || pp_Offset == 1
 		float4 specular = inpix.spec;
@@ -263,6 +268,10 @@ PSO main(in pixel inpix)
 	#if pp_TriLinear == 1
 	color *= trilinearAlpha;
 	#endif
+#else
+	// SECACCUM == 1
+	float4 color = tex2D(secAccum, (inpix.pos + 0.5f) / secAccumSize.xy);
+#endif
 
 #if DITHERING == 1
 	static const float ditherTable[16] = {
@@ -327,6 +336,7 @@ enum ShaderMacros {
 	MacroTriLinear,
 	MacroClipInside,
 	MacroDithering,
+	MacroSecAccum,
 };
 
 static D3DXMACRO PixelMacros[]
@@ -345,12 +355,13 @@ static D3DXMACRO PixelMacros[]
 	{ "pp_TriLinear", "0" },
 	{ "pp_ClipInside", "0" },
 	{ "DITHERING", "0" },
+	{ "SECACCUM", "0" },
 	{0, 0}
 };
 
 const ComPtr<IDirect3DPixelShader9>& D3DShaders::getShader(bool pp_Texture, bool pp_UseAlpha, bool pp_IgnoreTexA, u32 pp_ShadInstr,
 		bool pp_Offset, u32 pp_FogCtrl, bool pp_BumpMap, bool fog_clamping,
-		bool trilinear, int palette, bool gouraud, bool clipInside, bool dithering)
+		bool trilinear, int palette, bool gouraud, bool clipInside, bool dithering, bool secAccum)
 {
 	u32 hash = (int)pp_Texture
 			| (pp_UseAlpha << 1)
@@ -365,7 +376,8 @@ const ComPtr<IDirect3DPixelShader9>& D3DShaders::getShader(bool pp_Texture, bool
 			| (gouraud << 13)
 			| (clipInside << 14)
 			| ((int)config::NativeDepthInterpolation << 15)
-			| (dithering << 16);
+			| (dithering << 16)
+			| (secAccum << 17);
 	auto it = shaders.find(hash);
 	if (it == shaders.end())
 	{
@@ -385,6 +397,7 @@ const ComPtr<IDirect3DPixelShader9>& D3DShaders::getShader(bool pp_Texture, bool
 		PixelMacros[MacroClipInside].Definition = MacroValues[clipInside];
 		PixelMacros[MacroDivPosZ].Definition = MacroValues[config::NativeDepthInterpolation];
 		PixelMacros[MacroDithering].Definition = MacroValues[dithering];
+		PixelMacros[MacroSecAccum].Definition = MacroValues[secAccum];
 		ComPtr<IDirect3DPixelShader9> shader = compilePS(PixelShader, "main", PixelMacros);
 		verify((bool )shader);
 		it = shaders.insert(std::make_pair(hash, shader)).first;

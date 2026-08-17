@@ -28,7 +28,7 @@ public:
 	void init(const ComPtr<IDirect3DDevice9>& device);
 	const ComPtr<IDirect3DPixelShader9>& getShader(bool pp_Texture, bool pp_UseAlpha, bool pp_IgnoreTexA, u32 pp_ShadInstr,
 			bool pp_Offset, u32 pp_FogCtrl, bool pp_BumpMap, bool fog_clamping, bool trilinear, int palette, bool gouraud,
-			bool clipInside, bool dithering);
+			bool clipInside, bool dithering, bool secAccum);
 	const ComPtr<IDirect3DVertexShader9>& getVertexShader(bool gouraud);
 	const ComPtr<IDirect3DPixelShader9>& getModVolShader();
 	void term();

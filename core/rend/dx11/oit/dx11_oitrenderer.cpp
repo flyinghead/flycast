@@ -174,8 +174,9 @@ struct DX11OITRenderer : public DX11Renderer
 				// Trilinear pass A
 				constants.trilinearAlpha = 1.f - constants.trilinearAlpha;
 		}
-		else
+		else {
 			constants.trilinearAlpha = 1.f;
+		}
 
 		Rect clip_rect;
 		TileClipping clipmode = setTileClip(gp->tileclip, clip_rect);
@@ -188,7 +189,26 @@ struct DX11OITRenderer : public DX11Renderer
 			else if (config::TextureFiltering == 2)
 				gpuPalette = 2; // force linear
 		}
-
+		if constexpr (pass == DX11OITShaders::Color && Type == ListType_Translucent && !SortingEnabled)
+		{
+			if (gp->tsp.DstSelect == 1)
+			{
+				if (!renderingToSecAccum)
+				{
+					renderingToSecAccum = true;
+					makeSecondAccumFB();
+					ID3D11ShaderResourceView * const nullView = nullptr;
+					deviceContext->PSSetShaderResources(6, 1, &nullView);
+					deviceContext->OMSetRenderTargetsAndUnorderedAccessViews(1, &fbSecondAccum.get(), depthTexView, 0, D3D11_KEEP_UNORDERED_ACCESS_VIEWS, nullptr, nullptr);
+				}
+			}
+			else if (renderingToSecAccum)
+			{
+				renderingToSecAccum = false;
+				deviceContext->OMSetRenderTargetsAndUnorderedAccessViews(1, &opaqueRenderTarget.get(), depthTexView, 0, D3D11_KEEP_UNORDERED_ACCESS_VIEWS, nullptr, nullptr);
+				deviceContext->PSSetShaderResources(6, 1, &fbSecondAccumView.get());
+			}
+		}
 		// Two volumes mode only supported for OP and PT
 		bool two_volumes_mode = (gp->tsp1.full != (u32)-1) && Type != ListType_Translucent;
 		bool useTexture;
@@ -211,6 +231,7 @@ struct DX11OITRenderer : public DX11Renderer
 					useTexture,
 					clipmode == TileClipping::Inside,
 					two_volumes_mode,
+					false,
 					pass);
 		}
 		else
@@ -234,6 +255,7 @@ struct DX11OITRenderer : public DX11Renderer
 					Type == ListType_Punch_Through,
 					clipmode == TileClipping::Inside,
 					two_volumes_mode,
+					gp->tsp.SrcSelect == 1 && Type == ListType_Translucent && !SortingEnabled,
 					pass);
 
 		}
@@ -592,6 +614,7 @@ struct DX11OITRenderer : public DX11Renderer
 			{
 				deviceContext->OMSetRenderTargetsAndUnorderedAccessViews(1, &opaqueRenderTarget.get(), depthTexView, 0, D3D11_KEEP_UNORDERED_ACCESS_VIEWS, nullptr, nullptr);
 				drawList<ListType_Translucent, false, DX11OITShaders::Color>(rendContext->global_param_tr, previous_pass.tr_count, tr_count);
+				renderingToSecAccum = false;
 			}
 			if (render_pass < render_pass_count - 1)
 			{

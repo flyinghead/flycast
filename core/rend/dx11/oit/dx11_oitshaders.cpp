@@ -353,6 +353,7 @@ PSO main(in VertexIn inpix)
 			discard;
 	#endif
 
+#if SECACCUM == 0
 	float4 color = inpix.col;
 	float4 specular = inpix.spec;
 	bool area1 = false;
@@ -474,6 +475,10 @@ PSO main(in VertexIn inpix)
 			discard;
 		color.a = 1.0f;
 	#endif
+#else
+	// SECACCUM == 1
+	float4 color = secAccum[uint2(inpix.pos.xy)];
+#endif
 
 	#if PASS == PASS_COLOR 
 		pso.col = color;
@@ -799,7 +804,8 @@ enum PixelMacroEnum {
 	MacroPalette,
 	MacroAlphaTest,
 	MacroClipInside,
-	MacroPass
+	MacroPass,
+	MacroSecAccum,
 };
 
 static D3D_SHADER_MACRO PixelMacros[]
@@ -819,12 +825,14 @@ static D3D_SHADER_MACRO PixelMacros[]
 	{ "cp_AlphaTest", "0" },
 	{ "pp_ClipInside", "0" },
 	{ "PASS", "0" },
+	{ "SECACCUM", "0" },
 	{ nullptr, nullptr }
 };
 
 const ComPtr<ID3D11PixelShader>& DX11OITShaders::getShader(bool pp_Texture, bool pp_UseAlpha, bool pp_IgnoreTexA, u32 pp_ShadInstr,
 		bool pp_Offset, u32 pp_FogCtrl, bool pp_BumpMap, bool fog_clamping,
-		int palette, bool gouraud, bool alphaTest, bool clipInside, bool twoVolumes, Pass pass)
+		int palette, bool gouraud, bool alphaTest, bool clipInside, bool twoVolumes,
+		bool secAccum, Pass pass)
 {
 	bool divPosZ = !settings.platform.isNaomi2() && config::NativeDepthInterpolation;
 	const u32 hash = (int)pp_Texture
@@ -841,7 +849,8 @@ const ComPtr<ID3D11PixelShader>& DX11OITShaders::getShader(bool pp_Texture, bool
 			| ((int)clipInside << 14)
 			| ((int)twoVolumes << 15)
 			| ((int)pass << 16)
-			| ((int)divPosZ << 18);
+			| ((int)divPosZ << 18)
+			| ((int)secAccum << 19);
 	auto& shader = shaders[hash];
 	if (shader == nullptr)
 	{
@@ -863,6 +872,7 @@ const ComPtr<ID3D11PixelShader>& DX11OITShaders::getShader(bool pp_Texture, bool
 		PixelMacros[MacroTwoVolumes].Definition = MacroValues[twoVolumes];
 		PixelMacros[MacroDivPosZ].Definition = MacroValues[divPosZ];
 		PixelMacros[MacroPass].Definition = MacroValues[pass];
+		PixelMacros[MacroSecAccum].Definition = MacroValues[secAccum];
 
 		shader = compilePS(PixelShader, "main", PixelMacros);
 		verify(shader != nullptr);

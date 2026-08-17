@@ -262,7 +262,7 @@ void PostProcessor::term()
 }
 
 
-GLuint PostProcessor::getFramebuffer(int width, int height)
+GlFramebuffer *PostProcessor::getFramebuffer(int width, int height)
 {
 	if (framebuffer != nullptr
 			&& (width != framebuffer->getWidth() || height != framebuffer->getHeight()))
@@ -271,7 +271,7 @@ GLuint PostProcessor::getFramebuffer(int width, int height)
 	if (framebuffer == nullptr)
 		init(width, height);
 
-	return framebuffer->getFramebuffer();
+	return framebuffer.get();
 }
 
 void PostProcessor::render(GLuint output_fbo)

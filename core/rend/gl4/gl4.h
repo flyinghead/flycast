@@ -127,6 +127,7 @@ struct gl4PipelineShader
 	int palette;
 	bool naomi2;
 	bool divPosZ;
+	bool secAccum;
 };
 
 class Gl4MainVertexArray final : public GlVertexArray
@@ -207,13 +208,15 @@ void initABuffer();
 void termABuffer();
 void reshapeABuffer(int width, int height);
 void renderABuffer(bool lastPass);
-void DrawTranslucentModVols(int first, int count, bool useOpaqueGeom);
 void checkOverflowAndReset();
 
-extern GLuint stencilTexId;
-extern GLuint depthTexId;
-extern GLuint opaqueTexId[2];
-extern GLuint geom_fbo[2];
+class OITFramebuffer : public GlFramebuffer
+{
+public:
+	OITFramebuffer(int width, int height, GLuint texId, GLuint depth, GLuint stencil);
+};
+
+extern std::unique_ptr<OITFramebuffer> framebuffers[2];
 extern GLuint texSamplers[2];
 
 extern const char* ShaderHeader;
@@ -294,3 +297,33 @@ extern struct gl4ShaderUniforms_t
 
 } gl4ShaderUniforms;
 
+struct OpenGL4Renderer : OpenGLRenderer
+{
+	bool Init() override;
+	void Term() override;
+	bool Render() override;
+
+	GLenum getFogTextureSlot() const override {
+		return GL_TEXTURE5;
+	}
+	GLenum getPaletteTextureSlot() const override {
+		return GL_TEXTURE6;
+	}
+
+protected:
+	// Return the framebuffer being written to
+	// (only valid for color pass of OP, PT and TR in !autosort mode)
+	GlFramebuffer *getPrimaryFB() override {
+		return framebuffers[1].get();
+	}
+
+private:
+	bool renderFrame(int width, int height);
+	void drawStrips(int width, int height);
+	template <u32 Type, bool SortingEnabled, Pass pass>
+	void drawList(const std::vector<PolyParam>& gply, int first, int count);
+	void drawModVols(int first, int count);
+	template <u32 Type, bool SortingEnabled, Pass pass>
+	void setGPState(const PolyParam *gp);
+	void drawTranslucentModVols(int first, int count, bool useOpaqueGeom);
+};

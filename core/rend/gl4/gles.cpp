@@ -166,6 +166,9 @@ uniform bool ignore_tex_alpha[2];
 uniform int shading_instr[2];
 uniform int fog_control[2];
 #endif
+#if SECACCUM == 1
+uniform sampler2D secAccum;
+#endif
 
 // Input
 INTERPOLATION in vec4 vtx_base;
@@ -286,6 +289,7 @@ void main()
 			discard;
 	#endif
 	
+#if SECACCUM == 0
 	vec4 color = vtx_base;
 	vec4 offset = vtx_offs;
 	bool area1 = false;
@@ -422,7 +426,11 @@ void main()
 	#endif
 
 	//color.rgb=vec3(gl_FragCoord.w * sp_FOG_DENSITY / 128.0);
-	
+#else
+	// SECACCUM == 1
+	vec4 color = texture(secAccum, gl_FragCoord.xy / vec2(textureSize(secAccum, 0)));
+#endif
+
 	#if PASS == PASS_COLOR 
 		FragColor = color;
 	#elif PASS == PASS_OIT
@@ -490,6 +498,7 @@ public:
 		addConstant("NOUVEAU", gl.mesa_nouveau);
 		addConstant("PASS", (int)s->pass);
 		addConstant("DIV_POS_Z", s->divPosZ);
+		addConstant("SECACCUM", s->secAccum);
 
 		addSource(ShaderHeader);
 		addSource(gl4PixelPipelineShader);
@@ -584,6 +593,10 @@ bool gl4CompilePipelineShader(gl4PipelineShader* s, const char *fragment_source 
 	s->palette_index = glGetUniformLocation(s->program, "palette_index");
 	s->ditherDivisor = glGetUniformLocation(s->program, "ditherDivisor");
 
+	gu = glGetUniformLocation(s->program, "secAccum");
+	if (gu != -1)
+		glUniform1i(gu, 7);		// GL_TEXTURE7
+
 	if (s->naomi2)
 		initN2Uniforms(s);
 
@@ -673,60 +686,40 @@ static void gl_create_resources()
 	glCheck();
 }
 
-struct OpenGL4Renderer : OpenGLRenderer
+void OpenGL4Renderer::Term()
 {
-	bool Init() override;
+	termABuffer();
+	framebuffers[0].reset();
+	framebuffers[1].reset();
+	glDeleteSamplers(2, texSamplers);
+	texSamplers[0] = texSamplers[1] = 0;
 
-	void Term() override
-	{
-		termABuffer();
-		glcache.DeleteTextures(1, &stencilTexId);
-		stencilTexId = 0;
-		glcache.DeleteTextures(1, &depthTexId);
-		depthTexId = 0;
-		glcache.DeleteTextures(2, opaqueTexId);
-		opaqueTexId[0] = opaqueTexId[1] = 0;
-		glDeleteFramebuffers(2, geom_fbo);
-		geom_fbo[0] = geom_fbo[1] = 0;
-		glDeleteSamplers(2, texSamplers);
-		texSamplers[0] = texSamplers[1] = 0;
+	TexCache.Clear();
+	clearGpuPreloadedTextures();
+	termGLCommon();
+	gl4_term();
+}
 
-		TexCache.Clear();
-		clearGpuPreloadedTextures();
-		termGLCommon();
-		gl4_term();
-	}
-
-	bool Render() override
-	{
-		saveCurrentFramebuffer();
-		renderFrame(gl.rendContext->framebufferWidth, gl.rendContext->framebufferHeight);
-		if (gl.rendContext->isRTT) {
-			restoreCurrentFramebuffer();
-			return false;
-		}
-
-		if (!config::EmulateFramebuffer)
-		{
-			frameRendered = true;
-			clearLastFrame = false;
-			drawOSD();
-			renderVideoRouting();
-		}
+bool OpenGL4Renderer::Render()
+{
+	saveCurrentFramebuffer();
+	renderFrame(gl.rendContext->framebufferWidth, gl.rendContext->framebufferHeight);
+	if (gl.rendContext->isRTT) {
 		restoreCurrentFramebuffer();
-
-		return true;
+		return false;
 	}
 
-	GLenum getFogTextureSlot() const override {
-		return GL_TEXTURE5;
+	if (!config::EmulateFramebuffer)
+	{
+		frameRendered = true;
+		clearLastFrame = false;
+		drawOSD();
+		renderVideoRouting();
 	}
-	GLenum getPaletteTextureSlot() const override {
-		return GL_TEXTURE6;
-	}
+	restoreCurrentFramebuffer();
 
-	bool renderFrame(int width, int height);
-};
+	return true;
+}
 
 //setup
 void gl_DebugOutput(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length,
@@ -771,28 +764,15 @@ bool OpenGL4Renderer::Init()
 
 static void resize(int w, int h)
 {
-	if (w > max_image_width || h > max_image_height || stencilTexId == 0)
+	if (w > max_image_width || h > max_image_height || framebuffers[0] == nullptr)
 	{
 		if (w > max_image_width)
 			max_image_width = w;
 		if (h > max_image_height)
 			max_image_height = h;
 
-		if (stencilTexId != 0)
-		{
-			glcache.DeleteTextures(1, &stencilTexId);
-			stencilTexId = 0;
-		}
-		if (depthTexId != 0)
-		{
-			glcache.DeleteTextures(1, &depthTexId);
-			depthTexId = 0;
-		}
-		if (opaqueTexId[0] != 0)
-		{
-			glcache.DeleteTextures(2, opaqueTexId);
-			opaqueTexId[0] = 0;
-		}
+		framebuffers[0].reset();
+		framebuffers[1].reset();
 		gl4CreateTextures(max_image_width, max_image_height);
 		reshapeABuffer(max_image_width, max_image_height);
 	}
@@ -840,25 +820,25 @@ bool OpenGL4Renderer::renderFrame(int rendering_width, int rendering_height)
 
 	glEnable(GL_PRIMITIVE_RESTART_FIXED_INDEX);
 
-	GLuint output_fbo;
 	//setup render target first
-	if (is_rtt)
-		output_fbo = BindRTT(false);
+	if (is_rtt) {
+		outputFB = BindRTT(false);
+	}
 	else
 	{
 		this->width = rendering_width;
 		this->height = rendering_height;
 #ifdef LIBRETRO
 		if (config::EmulateFramebuffer)
-			output_fbo = init_output_framebuffer(rendering_width, rendering_height);
+			outputFB = init_output_framebuffer(rendering_width, rendering_height);
 		else
-			output_fbo = postProcessor.getFramebuffer(rendering_width, rendering_height);
+			outputFB = postProcessor.getFramebuffer(rendering_width, rendering_height);
 		glViewport(0, 0, rendering_width, rendering_height);
 #else
-		output_fbo = init_output_framebuffer(rendering_width, rendering_height);
+		outputFB = init_output_framebuffer(rendering_width, rendering_height);
 #endif
 	}
-	if (output_fbo == 0)
+	if (outputFB == nullptr)
 		return false;
 
 	gl4.vbo.nextBuffer();
@@ -921,7 +901,7 @@ bool OpenGL4Renderer::renderFrame(int rendering_width, int rendering_height)
 		glcache.Enable(GL_SCISSOR_TEST);
 	}
 
-	gl4DrawStrips(output_fbo, rendering_width, rendering_height);
+	drawStrips(rendering_width, rendering_height);
 #ifdef LIBRETRO
 	if (!is_rtt && !config::EmulateFramebuffer)
 		postProcessor.render(glsm_get_current_framebuffer());

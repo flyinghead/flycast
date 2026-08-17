@@ -25,7 +25,7 @@ class PostProcessor
 public:
 	void term();
 	void render(GLuint output_fbo);
-	GLuint getFramebuffer(int width, int height);
+	GlFramebuffer *getFramebuffer(int width, int height);
 
 private:
 	void init(int width, int height);
