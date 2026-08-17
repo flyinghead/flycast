@@ -180,15 +180,21 @@ void CHDDisc::tryOpen(const char* file)
 		if (tkid != (int)tracks.size() + 1)
 			throw FlycastException(i18n::Ts("Unexpected track number"));
 
-		if (strcmp(subtype, "NONE") != 0 || pregap != 0 || postgap != 0)
-			throw FlycastException(i18n::Ts("Unsupported subtype or pre/postgap"));
-
+		if (strcmp(subtype, "NONE") != 0 || postgap != 0)
+			throw FlycastException(i18n::Ts("Unsupported subtype or postgap"));
+	
 		DEBUG_LOG(GDROM, "%s", temp);
 		Track t;
 		t.StartFAD = total_frames;
 		total_frames += frames;
 		t.EndFAD = total_frames - 1 - padframes;
 		t.CTRL = strcmp(type,"AUDIO") == 0 ? 0 : 4;
+
+		if (pregap > 0 && pgtype[0] != 'V')
+		{
+			t.StartFAD += pregap;
+			t.EndFAD += pregap;
+		}
 
 		u32 sectorSize = getSectorSize(type);
 		t.file = new CHDTrack(this, Offset - t.StartFAD, sectorSize,

@@ -35873,7 +35873,7 @@ struct retro_core_options_v2 options_fi = {
 #define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_FR "Retarder l'échange d'images"
 #define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_FR "Utile pour éviter les écrans clignotants ou les vidéos buggées. Non recommandé sur les plates-formes lentes."
 #define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_FR "Détecter les changements de fréquence d'images"
-#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_FR "Notifier l'interface frontale lorsque la fréquence d’images interne change (par exemple, de 60 i/s à 30 i/s). Améliore la cadence des images dans les jeux qui fonctionnent à 30 i/s ou 20 i/s, mais devrait être désactivé pour les jeux avec des fréquences d'images (non stables) déverrouillées (Ecco the Dolphin, Unreal Tournament par exemple). Remarque : Indisponible lorsque 'Saut d'images automatique' est activé."
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_FR "Notifier l'interface graphique lorsque la fréquence d’images interne change (par exemple, de 60 i/s à 30 i/s). Améliore la cadence des images dans les jeux qui fonctionnent à 30 i/s ou 20 i/s, mais devrait être désactivé pour les jeux avec des fréquences d'images (non stables) déverrouillées (Ecco the Dolphin, Unreal Tournament par exemple). Remarque : Indisponible lorsque 'Saut d'images automatique' est activé."
 #define CORE_OPTION_NAME_PVR2_FILTERING_LABEL_FR "Filtre de post-traitement PowerVR2"
 #define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_FR "Post-traitement de l'image rendue pour simuler les effets spécifiques au processeur graphique PowerVR2 et aux signaux vidéo analogiques."
 #define CORE_OPTION_NAME_TEXUPSCALE_LABEL_FR "Agrandissement des textures (xBRZ)"
@@ -63299,7 +63299,7 @@ struct retro_core_options_v2 options_or = {
 #define OPTION_VAL_290_O48_PL NULL
 #define OPTION_VAL_300_O48_PL NULL
 #define CORE_OPTION_NAME_LIGHTGUN1_CROSSHAIR_LABEL_PL NULL
-#define OPTION_VAL_WHITE_PL NULL
+#define OPTION_VAL_WHITE_PL "Biały"
 #define OPTION_VAL_RED_PL "Czerwony"
 #define OPTION_VAL_GREEN_PL "Zielony"
 #define OPTION_VAL_BLUE_PL "Niebieski"
@@ -63352,14 +63352,14 @@ struct retro_core_options_v2 options_or = {
 #define CORE_OPTION_NAME_VMU1_PIXEL_ON_COLOR_LABEL_PL NULL
 #define OPTION_VAL_DEFAULT_ON_00_PL NULL
 #define OPTION_VAL_DEFAULT_OFF_01_PL NULL
-#define OPTION_VAL_BLACK_02_PL NULL
+#define OPTION_VAL_BLACK_02_PL "Czarny"
 #define OPTION_VAL_LIGHT_BLUE_04_PL NULL
-#define OPTION_VAL_CYAN_06_PL NULL
+#define OPTION_VAL_CYAN_06_PL "Jasny niebieski"
 #define OPTION_VAL_CYAN_BLUE_07_PL NULL
 #define OPTION_VAL_LIGHT_GREEN_08_PL NULL
 #define OPTION_VAL_CYAN_GREEN_09_PL NULL
 #define OPTION_VAL_LIGHT_CYAN_10_PL NULL
-#define OPTION_VAL_PURPLE_12_PL NULL
+#define OPTION_VAL_PURPLE_12_PL "Fioletowy"
 #define OPTION_VAL_LIGHT_PURPLE_13_PL NULL
 #define OPTION_VAL_YELLOW_14_PL "Żółty"
 #define OPTION_VAL_GRAY_15_PL NULL
@@ -63371,7 +63371,7 @@ struct retro_core_options_v2 options_or = {
 #define OPTION_VAL_MAGENTA_21_PL NULL
 #define OPTION_VAL_LIGHT_PURPLE_3_22_PL NULL
 #define OPTION_VAL_LIGHT_ORANGE_23_PL NULL
-#define OPTION_VAL_ORANGE_24_PL NULL
+#define OPTION_VAL_ORANGE_24_PL "Pomarańczowy"
 #define OPTION_VAL_LIGHT_PURPLE_4_25_PL NULL
 #define OPTION_VAL_LIGHT_YELLOW_26_PL NULL
 #define OPTION_VAL_LIGHT_YELLOW_2_27_PL NULL
