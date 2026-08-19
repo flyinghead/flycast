@@ -154,14 +154,16 @@ Disc* cue_parse(const char* file, std::vector<u8> *digest)
 			track_filename.clear();
 			char last;
 			do {
-				cuesheet >> last;
-			} while (isspace(last));
+				if (!(cuesheet >> last))
+					throw FlycastException(i18n::T("Invalid CUE file"));
+			} while (isspace((unsigned char)last));
 
 			if (last == '"')
 			{
 				cuesheet >> std::noskipws;
 				for (;;) {
-					cuesheet >> last;
+					if (!(cuesheet >> last))
+						throw FlycastException(i18n::T("Invalid CUE file"));
 					if (last == '"')
 						break;
 					track_filename += last;
