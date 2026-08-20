@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-22 12:49+0100\n"
-"PO-Revision-Date: 2026-08-20 12:32\n"
+"PO-Revision-Date: 2026-08-20 13:46\n"
 "Last-Translator: \n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
@@ -20,105 +20,105 @@ msgstr ""
 #: core/achievements/achievements.cpp:379
 #, c-format
 msgid "User %s authenticated"
-msgstr ""
+msgstr "用户%s 登录成功"
 
 #: core/achievements/achievements.cpp:395
 msgid "RetroAchievements authentication failed"
-msgstr ""
+msgstr "RetroAchievements 登录失败"
 
 #: core/achievements/achievements.cpp:430
 msgid "No user token returned"
-msgstr ""
+msgstr "未返回有效令牌"
 
 #: core/achievements/achievements.cpp:582
 msgid "RetroAchievements disconnected"
-msgstr ""
+msgstr "RetroAchievements 已断开连接"
 
 #: core/achievements/achievements.cpp:586
 msgid "RetroAchievements reconnected"
-msgstr ""
+msgstr "RetroAchievements 连接已恢复"
 
 #: core/achievements/achievements.cpp:616
 #, c-format
 msgid "Achievement %s unlocked!"
-msgstr ""
+msgstr "成就%s 已解锁，恭喜！"
 
 #: core/achievements/achievements.cpp:656
 #, c-format
 msgid "Leaderboard %s started"
-msgstr ""
+msgstr "排行榜%s 已启动"
 
 #: core/achievements/achievements.cpp:663
 #, c-format
 msgid "Leaderboard %s failed"
-msgstr ""
+msgstr "排行榜%s 出错"
 
 #: core/achievements/achievements.cpp:670
 #, c-format
 msgid "Leaderboard %s submitted"
-msgstr ""
+msgstr "排行榜 %s 已提交"
 
 #: core/achievements/achievements.cpp:695
 #, c-format
 msgid "Mastered %s"
-msgstr ""
+msgstr "%s全部成就已解锁"
 
 #: core/achievements/achievements.cpp:695
 #, c-format
 msgid "Completed %s"
-msgstr ""
+msgstr "已完成 %s"
 
 #: core/achievements/achievements.cpp:698
 #, c-format
 msgid "%d achievements, %d points"
-msgstr ""
+msgstr "%d 个成就，%d 成就点数"
 
 #: core/achievements/achievements.cpp:946
 #, c-format
 msgid "You have %d of %d achievements unlocked."
-msgstr ""
+msgstr "你已解锁 %d 个成就，总共有 %d 个。"
 
 #: core/achievements/achievements.cpp:948
 msgid "This game has no achievements."
-msgstr ""
+msgstr "这款游戏没有成就。"
 
 #: core/achievements/achievements.cpp:953 core/ui/settings_general.cpp:413
 #: core/ui/gui_achievements.cpp:304
 msgid "Hardcore Mode"
-msgstr ""
+msgstr "硬核模式"
 
 #: core/achievements/achievements.cpp:984
 msgid "Hardcore mode disabled"
-msgstr ""
+msgstr "已禁用硬核模式"
 
 #: core/achievements/achievements.cpp:984
 msgid "Unrecognized media inserted"
-msgstr ""
+msgstr "插入了无法识别的存储介质"
 
 #: core/achievements/achievements.cpp:991
 msgid "Media change failed"
-msgstr ""
+msgstr "介质更换失败"
 
 #: core/sdl/dreamconn.cpp:160
 #, c-format
 msgid "WARNING: DreamConn disconnected from port %c"
-msgstr ""
+msgstr "警告：DreamConn 已从端口 %c 断开连接"
 
 #: core/sdl/dreampicoport.cpp:1613 core/ui/settings_controls.cpp:197
 msgid "DPad2 Up"
-msgstr ""
+msgstr "DPad2上"
 
 #: core/sdl/dreampicoport.cpp:1614 core/ui/settings_controls.cpp:198
 msgid "DPad2 Down"
-msgstr ""
+msgstr "DPad2下"
 
 #: core/sdl/dreampicoport.cpp:1615 core/ui/settings_controls.cpp:199
 msgid "DPad2 Left"
-msgstr ""
+msgstr "DPad2 左"
 
 #: core/sdl/dreampicoport.cpp:1616 core/ui/settings_controls.cpp:200
 msgid "DPad2 Right"
-msgstr ""
+msgstr "DPad2 右"
 
 #: core/sdl/dreampicoport.cpp:1619
 msgid "VMU1 A"
@@ -130,70 +130,70 @@ msgstr ""
 
 #: core/sdl/dreampicoport.cpp:1621
 msgid "VMU1 Up"
-msgstr ""
+msgstr "VMU1上"
 
 #: core/sdl/dreampicoport.cpp:1622
 msgid "VMU1 Down"
-msgstr ""
+msgstr "VMU1下"
 
 #: core/sdl/dreampicoport.cpp:1623
 msgid "VMU1 Left"
-msgstr ""
+msgstr "VMU1 左"
 
 #: core/sdl/dreampicoport.cpp:1624
 msgid "VMU1 Right"
-msgstr ""
+msgstr "VMU1 右"
 
 #: core/sdl/dreamlink.cpp:87
 msgid "Connected"
-msgstr ""
+msgstr "已连接"
 
 #: core/sdl/dreamlink.cpp:87
 msgid "Disconnected"
-msgstr ""
+msgstr "已断开连接"
 
 #: core/sdl/sdl_gamepad.cpp:549
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:95
 msgid "Back"
-msgstr ""
+msgstr "返回"
 
 #: core/sdl/sdl_gamepad.cpp:550
 msgid "Guide"
-msgstr ""
+msgstr "指南"
 
 #: core/sdl/sdl_gamepad.cpp:551 core/ui/settings_controls.cpp:218
 #: core/ui/settings_controls.cpp:274
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:131
 msgid "Start"
-msgstr ""
+msgstr "开始"
 
 #: core/sdl/sdl_gamepad.cpp:556 core/sdl/sdl_gamepad.cpp:589
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:97
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:351
 msgid "DPad Up"
-msgstr ""
+msgstr "方向键上"
 
 #: core/sdl/sdl_gamepad.cpp:557 core/sdl/sdl_gamepad.cpp:593
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:99
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:353
 msgid "DPad Down"
-msgstr ""
+msgstr "方向键下"
 
 #: core/sdl/sdl_gamepad.cpp:558 core/sdl/sdl_gamepad.cpp:597
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:101
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:355
 msgid "DPad Left"
-msgstr ""
+msgstr "方向键左"
 
 #: core/sdl/sdl_gamepad.cpp:559 core/sdl/sdl_gamepad.cpp:601
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:103
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:357
 msgid "DPad Right"
-msgstr ""
+msgstr "方向键右"
 
 #: core/sdl/sdl_gamepad.cpp:560
 msgid "Misc"
-msgstr ""
+msgstr "其他"
 
 #: core/sdl/sdl_gamepad.cpp:561
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:379
@@ -218,31 +218,31 @@ msgstr ""
 #: core/sdl/sdl_gamepad.cpp:565
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:387
 msgid "Touchpad"
-msgstr ""
+msgstr "触控板"
 
 #: core/sdl/sdl_gamepad.cpp:624
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:405
 msgid "Left Stick X"
-msgstr ""
+msgstr "左摇杆 X"
 
 #: core/sdl/sdl_gamepad.cpp:625
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:407
 msgid "Left Stick Y"
-msgstr ""
+msgstr "左摇杆 Y"
 
 #: core/sdl/sdl_gamepad.cpp:626
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:409
 msgid "Right Stick X"
-msgstr ""
+msgstr "右摇杆 X"
 
 #: core/sdl/sdl_gamepad.cpp:627
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:411
 msgid "Right Stick Y"
-msgstr ""
+msgstr "右摇杆 Y"
 
 #: core/sdl/sdl_gamepad.cpp:706
 msgid "Default Mouse"
-msgstr ""
+msgstr "默认鼠标"
 
 #: core/sdl/sdl_gamepad.cpp:708
 #, c-format
@@ -251,15 +251,15 @@ msgstr "鼠标 %d"
 
 #: core/sdl/sdl.cpp:928 core/windows/winmain.cpp:376
 msgid "Flycast Error"
-msgstr ""
+msgstr "Flycast 错误"
 
 #: core/audio/audiobackend_null.cpp:12
 msgid "No Audio"
-msgstr ""
+msgstr "关闭声音"
 
 #: core/audio/audiobackend_oboe.cpp:81
 msgid "Automatic AAudio / OpenSL selection"
-msgstr ""
+msgstr "自动选择 AAudio / OpenSL"
 
 #: core/oslib/oslib.cpp:354
 msgid "Can't find Pictures library"
@@ -268,129 +268,129 @@ msgstr ""
 #: core/oslib/storage.cpp:79
 #, c-format
 msgid "Can't read directory %s"
-msgstr ""
+msgstr "无法读取目录 %s"
 
 #: core/oslib/storage.cpp:213
 #, c-format
 msgid "Cannot stat %s"
-msgstr ""
+msgstr "无法统计 %s"
 
 #: core/oslib/storage.cpp:234
 #, c-format
 msgid "Invalid device %s"
-msgstr ""
+msgstr "无效设备 %s"
 
 #: core/oslib/storage.cpp:258
 #, c-format
 msgid "Cannot get attributes of %s"
-msgstr ""
+msgstr "无法获取 %s 的属性"
 
 #: core/oslib/storage.cpp:265
 #, c-format
 msgid "Invalid file name %s"
-msgstr ""
+msgstr "文件名 %s 无效"
 
 #: core/imgread/common.cpp:97
 msgid "Unknown disk format"
-msgstr ""
+msgstr "磁盘格式未知"
 
 #: core/imgread/common.cpp:372 core/emulator.cpp:623
 msgid "This media cannot be loaded"
-msgstr ""
+msgstr "无法加载此媒体文件"
 
 #: core/imgread/cue.cpp:57
 #, c-format
 msgid "Cannot open CUE file %s"
-msgstr ""
+msgstr "无法打开 CUE 文件 %s"
 
 #: core/imgread/cue.cpp:68
 msgid "CUE parse error: CUE file too big"
-msgstr ""
+msgstr "CUE 解析错误：CUE 文件过大"
 
 #: core/imgread/cue.cpp:179 core/imgread/cue.cpp:202 core/imgread/cue.cpp:206
 #: core/imgread/cue.cpp:247 core/imgread/cue.cpp:263 core/imgread/cue.cpp:275
 #: core/imgread/cue.cpp:279 core/imgread/cue.cpp:283 core/imgread/cue.cpp:287
 msgid "Invalid CUE file"
-msgstr ""
+msgstr "CUE 文件无效"
 
 #: core/imgread/cue.cpp:184
 #, c-format
 msgid "CUE file: cannot open track %s"
-msgstr ""
+msgstr "CUE 文件：无法打开音轨 %s"
 
 #: core/imgread/cue.cpp:211
 #, c-format
 msgid "CUE file: track has unknown sector type: %s"
-msgstr ""
+msgstr "CUE 文件：该曲目包含未知扇区类型：%s"
 
 #: core/imgread/cue.cpp:260
 msgid "CUE parse error: failed to parse or invalid file with 0 tracks"
-msgstr ""
+msgstr "CUE 解析错误：无法解析或文件无效，里面一个轨道都没有"
 
 #: core/imgread/cue.cpp:272
 msgid "CUE parse error: less than 3 tracks"
-msgstr ""
+msgstr "CUE 解析错误：轨道少于 3"
 
 #: core/imgread/chd.cpp:106
 #, c-format
 msgid "chd: track type %s is not supported"
-msgstr ""
+msgstr "chd：不支持 %s 类型的轨道"
 
 #: core/imgread/chd.cpp:115
 #, c-format
 msgid "Cannot open CHD file %s"
-msgstr ""
+msgstr "无法打开 CHD 文件 %s"
 
 #: core/imgread/chd.cpp:122
 #, c-format
 msgid "Invalid CHD file %s"
-msgstr ""
+msgstr "CHD 文件 %s 无效"
 
 #: core/imgread/chd.cpp:135
 #, c-format
 msgid "Invalid hunkbytes for CHD file %s"
-msgstr ""
+msgstr "CHD 文件 %s 中的 hunkbytes 无效"
 
 #: core/imgread/chd.cpp:181
 msgid "Unexpected track number"
-msgstr ""
+msgstr "轨道编号不正确"
 
 #: core/imgread/chd.cpp:184
 msgid "Unsupported subtype or pre/postgap"
-msgstr ""
+msgstr "不支持的子类型或前/后间隔"
 
 #: core/imgread/chd.cpp:210
 msgid "Invalid CHD: less than 3 tracks"
-msgstr ""
+msgstr "CHD无效：音轨少于3首"
 
 #: core/imgread/chd.cpp:216
 msgid "Invalid CHD: no track found"
-msgstr ""
+msgstr "无效的 CHD：里面一个轨道都没有"
 
 #: core/imgread/gdi.cpp:13
 #, c-format
 msgid "Cannot open GDI file %s"
-msgstr ""
+msgstr "无法打开 GDI 文件 %s"
 
 #: core/imgread/gdi.cpp:24
 msgid "GDI file too big"
-msgstr ""
+msgstr "GDI 文件过大"
 
 #: core/imgread/gdi.cpp:38 core/imgread/gdi.cpp:85 core/imgread/gdi.cpp:89
 #: core/imgread/gdi.cpp:96 core/imgread/gdi.cpp:102 core/imgread/gdi.cpp:108
 #: core/imgread/gdi.cpp:112 core/imgread/gdi.cpp:120 core/imgread/gdi.cpp:145
 msgid "Invalid GDI file"
-msgstr ""
+msgstr "GDI 文件无效"
 
 #: core/imgread/gdi.cpp:132
 #, c-format
 msgid "GDI file: Cannot open track %s"
-msgstr ""
+msgstr "GDI 文件：无法打开轨道 %s"
 
 #: core/imgread/cdi.cpp:17
 #, c-format
 msgid "Cannot open CDI file %s"
-msgstr ""
+msgstr "无法打开 CDI 文件 %s"
 
 #: core/imgread/cdi.cpp:23
 #, c-format
