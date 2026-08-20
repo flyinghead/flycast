@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-22 12:49+0100\n"
-"PO-Revision-Date: 2026-08-20 13:46\n"
+"PO-Revision-Date: 2026-08-20 14:44\n"
 "Last-Translator: \n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
@@ -263,7 +263,7 @@ msgstr "自动选择 AAudio / OpenSL"
 
 #: core/oslib/oslib.cpp:354
 msgid "Can't find Pictures library"
-msgstr ""
+msgstr "找不到图片库"
 
 #: core/oslib/storage.cpp:79
 #, c-format
@@ -325,7 +325,7 @@ msgstr "CUE 文件：该曲目包含未知扇区类型：%s"
 
 #: core/imgread/cue.cpp:260
 msgid "CUE parse error: failed to parse or invalid file with 0 tracks"
-msgstr "CUE 解析错误：无法解析或文件无效，里面一个轨道都没有"
+msgstr "CUE 解析错误：无法解析或文件无效，轨道为0"
 
 #: core/imgread/cue.cpp:272
 msgid "CUE parse error: less than 3 tracks"
@@ -395,20 +395,20 @@ msgstr "无法打开 CDI 文件 %s"
 #: core/imgread/cdi.cpp:23
 #, c-format
 msgid "Invalid CDI file %s"
-msgstr ""
+msgstr "CDI 文件 %s 无效"
 
 #: core/imgread/cdi.cpp:27 core/imgread/cdi.cpp:31 core/imgread/cdi.cpp:49
 #: core/imgread/cdi.cpp:60 core/imgread/cdi.cpp:73
 msgid "Invalid CDI image"
-msgstr ""
+msgstr "CDI 映像无效"
 
 #: core/imgread/cdi.cpp:78
 msgid "Invalid CDI sector size"
-msgstr ""
+msgstr "CDI扇区大小无效"
 
 #: core/imgread/cdi.cpp:126
 msgid "Cannot re-open CDI file"
-msgstr ""
+msgstr "无法重新打开 CDI 文件"
 
 #: core/hw/naomi/card_reader.cpp:291 core/hw/naomi/card_reader.cpp:585
 #: core/hw/maple/maple_jvs.cpp:2661
@@ -418,7 +418,7 @@ msgstr ""
 #: core/hw/naomi/naomi.cpp:359
 #, c-format
 msgid "Speed: %3d"
-msgstr ""
+msgstr "速度：%3d"
 
 #: core/hw/naomi/printer.cpp:857
 msgid "Print out saved"
@@ -427,7 +427,7 @@ msgstr ""
 #: core/hw/naomi/systemsp.cpp:2187
 #, c-format
 msgid "SystemSP: Cannot open CompactFlash file %s"
-msgstr ""
+msgstr "SystemSP：无法打开 CompactFlash 文件 %s"
 
 #: core/hw/naomi/naomi_m3comm.cpp:86
 msgid "Network started"
@@ -446,56 +446,56 @@ msgstr ""
 
 #: core/hw/naomi/naomi_cart.cpp:217
 msgid "Unknown game"
-msgstr ""
+msgstr "未知游戏"
 
 #: core/hw/naomi/naomi_cart.cpp:243
 #, c-format
 msgid "Cannot open %s or %s"
-msgstr ""
+msgstr "无法打开 %s 或 %s"
 
 #: core/hw/naomi/naomi_cart.cpp:245
 #, c-format
 msgid "Cannot open %s"
-msgstr ""
+msgstr "无法打开 %s"
 
 #: core/hw/naomi/naomi_cart.cpp:324
 msgid "Invalid ROM"
-msgstr ""
+msgstr "ROM 无效"
 
 #: core/hw/naomi/naomi_cart.cpp:345
 #, c-format
 msgid "Cannot find %s"
-msgstr ""
+msgstr "找不到 %s"
 
 #: core/hw/naomi/naomi_cart.cpp:355 core/hw/naomi/naomi_cart.cpp:372
 #, c-format
 msgid "Invalid ROM: truncated %s"
-msgstr ""
+msgstr "无效的 ROM：%s 被截断"
 
 #: core/hw/naomi/naomi_cart.cpp:465
 msgid "Error: cannot load BIOS from naomi.zip"
-msgstr ""
+msgstr "错误：无法从 naomi.zip 加载 BIOS"
 
 #: core/hw/naomi/naomi_cart.cpp:481 core/hw/naomi/naomi_cart.cpp:531
 #, c-format
 msgid "Error: can't open %s"
-msgstr ""
+msgstr "错误：无法打开 %s"
 
 #: core/hw/naomi/naomi_cart.cpp:489 core/hw/naomi/naomi_cart.cpp:505
 msgid "Error: Invalid LST file"
-msgstr ""
+msgstr "错误：LST 文件无效"
 
 #: core/hw/naomi/naomi_cart.cpp:544
 msgid "Invalid empty ROM"
-msgstr ""
+msgstr "无效的空ROM"
 
 #: core/hw/naomi/naomi_cart.cpp:551
 msgid "Out of memory"
-msgstr ""
+msgstr "内存不足"
 
 #: core/hw/naomi/naomi_cart.cpp:602
 msgid "Error: Failed to load BIN/DAT file"
-msgstr ""
+msgstr "错误：无法加载 BIN/DAT 文件"
 
 #: core/hw/naomi/naomi_cart.cpp:743 core/hw/naomi/multiboard.cpp:462
 #: core/hw/naomi/multiboard.cpp:479 core/ui/settings_controls.cpp:179
