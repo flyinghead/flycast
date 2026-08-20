@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-22 12:49+0100\n"
-"PO-Revision-Date: 2026-08-20 22:32\n"
+"PO-Revision-Date: 2026-08-20 23:35\n"
 "Last-Translator: \n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
@@ -198,22 +198,22 @@ msgstr "其他"
 #: core/sdl/sdl_gamepad.cpp:561
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:379
 msgid "Paddle 1"
-msgstr ""
+msgstr "Paddle 1"
 
 #: core/sdl/sdl_gamepad.cpp:562
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:381
 msgid "Paddle 2"
-msgstr ""
+msgstr "Paddle 2"
 
 #: core/sdl/sdl_gamepad.cpp:563
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:383
 msgid "Paddle 3"
-msgstr ""
+msgstr "Paddle 3"
 
 #: core/sdl/sdl_gamepad.cpp:564
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:385
 msgid "Paddle 4"
-msgstr ""
+msgstr "Paddle 4"
 
 #: core/sdl/sdl_gamepad.cpp:565
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:387
@@ -413,7 +413,7 @@ msgstr "无法重新打开 CDI 文件"
 #: core/hw/naomi/card_reader.cpp:291 core/hw/naomi/card_reader.cpp:585
 #: core/hw/maple/maple_jvs.cpp:2661
 msgid "Card ejected"
-msgstr ""
+msgstr "存储卡已被拔出"
 
 #: core/hw/naomi/naomi.cpp:359
 #, c-format
@@ -431,18 +431,18 @@ msgstr "SystemSP：无法打开 CompactFlash 文件 %s"
 
 #: core/hw/naomi/naomi_m3comm.cpp:86
 msgid "Network started"
-msgstr ""
+msgstr "网络已启动"
 
 #: core/hw/naomi/naomi_cart.cpp:131 core/hw/naomi/naomi_cart.cpp:367
 #: core/hw/naomi/naomi_cart.cpp:387 core/hw/naomi/naomi_cart.cpp:413
 #: core/hw/naomi/naomi_cart.cpp:837 core/hw/naomi/gdcartridge.cpp:599
 msgid "Memory allocation failed"
-msgstr ""
+msgstr "内存分配失败"
 
 #: core/hw/naomi/naomi_cart.cpp:175 core/hw/naomi/naomi_cart.cpp:205
 #, c-format
 msgid "Error: cannot load BIOS %s"
-msgstr ""
+msgstr "错误：无法加载 BIOS %s"
 
 #: core/hw/naomi/naomi_cart.cpp:217
 msgid "Unknown game"
@@ -501,148 +501,148 @@ msgstr "错误：无法加载 BIN/DAT 文件"
 #: core/hw/naomi/multiboard.cpp:479 core/ui/settings_controls.cpp:179
 #: core/ui/settings_controls.cpp:243
 msgid "Left"
-msgstr ""
+msgstr "左"
 
 #: core/hw/naomi/naomi_cart.cpp:743 core/hw/naomi/multiboard.cpp:456
 #: core/hw/naomi/multiboard.cpp:466 core/hw/naomi/multiboard.cpp:483
 #: core/ui/settings_controls.cpp:180 core/ui/settings_controls.cpp:244
 msgid "Right"
-msgstr ""
+msgstr "右"
 
 #: core/hw/naomi/midiffb.cpp:76
 msgid "Calibration done"
-msgstr ""
+msgstr "校准完成"
 
 #: core/hw/naomi/midiffb.cpp:201
 msgid "Calibrating the wheel. Keep it centered."
-msgstr ""
+msgstr "正在校准方向盘，请保证方向盘回正"
 
 #: core/hw/naomi/gdcartridge.cpp:526
 #, c-format
 msgid "Naomi GDROM: Cannot open %s.chd"
-msgstr ""
+msgstr "Naomi GDROM：无法打开 %s.chd"
 
 #: core/hw/naomi/gdcartridge.cpp:611
 msgid "Naomi GDROM: Could not find the file to decrypt."
-msgstr ""
+msgstr "Naomi GDROM：无法找到待解密文件。"
 
 #: core/hw/naomi/multiboard.cpp:475
 msgid "Center"
-msgstr ""
+msgstr "居中"
 
 #: core/reios/reios.cpp:366 core/reios/reios.cpp:369
 msgid "Reboot to BIOS"
-msgstr ""
+msgstr "重启至 BIOS"
 
 #: core/reios/reios.cpp:662
 #, c-format
 msgid "Failed to open ELF %s"
-msgstr ""
+msgstr "无法打开 ELF 文件 %s"
 
 #: core/reios/reios.cpp:671
 #, c-format
 msgid "Failed to locate bootfile %s"
-msgstr ""
+msgstr "无法找到启动文件 %s"
 
 #: core/reios/reios.cpp:684
 msgid "Naomi boot failure"
-msgstr ""
+msgstr "Naomi 启动失败"
 
 #: core/reios/reios.cpp:690
 msgid "Invalid cart size"
-msgstr ""
+msgstr "无效的卡带大小"
 
 #: core/cheats.cpp:776 core/cheats.cpp:781
 msgid "Invalid cheat code"
-msgstr ""
+msgstr "作弊码无效"
 
 #: core/cheats.cpp:863 core/cheats.cpp:902 core/cheats.cpp:915
 msgid "Missing value"
-msgstr ""
+msgstr "缺失配置值"
 
 #: core/cheats.cpp:881
 msgid "Missing values"
-msgstr ""
+msgstr "多个参数缺失数值"
 
 #: core/cheats.cpp:928
 msgid "Missing address or value"
-msgstr ""
+msgstr "缺少地址或数值"
 
 #: core/cheats.cpp:937 core/cheats.cpp:1041
 msgid "Unsupported cheat type"
-msgstr ""
+msgstr "不支持的作弊类型"
 
 #: core/cheats.cpp:945
 msgid "Missing count or value"
-msgstr ""
+msgstr "缺少计数或数值"
 
 #: core/cheats.cpp:959 core/cheats.cpp:983
 msgid "Missing count or destination address"
-msgstr ""
+msgstr "缺少计数或目标地址"
 
 #: core/cheats.cpp:971
 msgid "Master codes aren't supported"
-msgstr ""
+msgstr "不支持主密码"
 
 #: core/cheats.cpp:1001 core/cheats.cpp:1030
 msgid "Unsupported conditional code"
-msgstr ""
+msgstr "不支持的条件代码"
 
 #: core/cheats.cpp:1011
 msgid "Missing test address"
-msgstr ""
+msgstr "缺少测试地址"
 
 #: core/cheats.cpp:1112
 msgid "Can't save cheat file"
-msgstr ""
+msgstr "无法保存作弊文件"
 
 #: core/ui/settings_video.cpp:85
 msgid "Graphics API"
-msgstr ""
+msgstr "图形API"
 
 #: core/ui/settings_video.cpp:96
 msgid "MoltenVK: An implementation of Vulkan that runs on Apple's Metal graphics framework"
-msgstr ""
+msgstr "MoltenVK：一款可在苹果Metal图形框架上运行的Vulkan实现"
 
 #: core/ui/settings_video.cpp:116
 msgid "Transparent Sorting"
-msgstr ""
+msgstr "透明物体顺序渲染"
 
 #: core/ui/settings_video.cpp:121
 msgid "Per Triangle"
-msgstr ""
+msgstr "按三角形计算"
 
 #: core/ui/settings_video.cpp:123
 msgid "Sort transparent polygons per triangle. Fast but may produce graphical glitches"
-msgstr ""
+msgstr "按三角形对透明多边形进行排序。速度快，但可能会导致图形异常"
 
 #: core/ui/settings_video.cpp:125
 msgid "Per Strip"
-msgstr ""
+msgstr "按条带排序"
 
 #: core/ui/settings_video.cpp:127
 msgid "Sort transparent polygons per strip. Faster but may produce graphical glitches"
-msgstr ""
+msgstr "按条带对透明多边形进行排序。速度更快，但可能会产生图形故障"
 
 #: core/ui/settings_video.cpp:131
 msgid "Per Pixel"
-msgstr ""
+msgstr "按像素排序"
 
 #: core/ui/settings_video.cpp:133
 msgid "Sort transparent polygons per pixel. Slower but accurate"
-msgstr ""
+msgstr "按像素对透明多边形进行排序。速度较慢，但准确"
 
 #: core/ui/settings_video.cpp:153
 msgid "Rendering Options"
-msgstr ""
+msgstr "渲染选项"
 
 #: core/ui/settings_video.cpp:156
 msgid "Half"
-msgstr ""
+msgstr "一半分辨率"
 
 #: core/ui/settings_video.cpp:156 core/ui/settings_network.cpp:40
 msgid "Native"
-msgstr ""
+msgstr "原生分辨率"
 
 #: core/ui/settings_video.cpp:201
 msgid "Internal Resolution"
@@ -650,39 +650,39 @@ msgstr ""
 
 #: core/ui/settings_video.cpp:203
 msgid "Internal render resolution. Higher is better, but more demanding on the GPU. Values higher than your display resolution (but no more than double your display resolution) can be used for supersampling, which provides high-quality antialiasing without reducing sharpness."
-msgstr ""
+msgstr "内部渲染分辨率。数值越高，图形质量越好，但对GPU的要求也越高。高于显示器分辨率（但不超过显示器分辨率两倍）的数值可用于超采样，从而在不降低清晰度的前提下提供高质量的抗锯齿效果。"
 
 #: core/ui/settings_video.cpp:204
 msgid "Integer Scaling"
-msgstr ""
+msgstr "整数缩放"
 
 #: core/ui/settings_video.cpp:204
 msgid "Scales the output by the maximum integer multiple allowed by the display resolution."
-msgstr ""
+msgstr "根据显示分辨率允许的最大整数倍对输出进行缩放。"
 
 #: core/ui/settings_video.cpp:205
 msgid "Linear Interpolation"
-msgstr ""
+msgstr "线性插值"
 
 #: core/ui/settings_video.cpp:205
 msgid "Scales the output with linear interpolation. Will use nearest neighbor interpolation otherwise. Disable with integer scaling."
-msgstr ""
+msgstr "使用线性插值对输出进行缩放。否则将使用最近邻插值。启用整数缩放时将禁用此功能。"
 
 #: core/ui/settings_video.cpp:207
 msgid "VSync"
-msgstr ""
+msgstr "垂直同步"
 
 #: core/ui/settings_video.cpp:207
 msgid "Synchronizes the frame rate with the screen refresh rate. Recommended"
-msgstr ""
+msgstr "将帧率与屏幕刷新率同步。建议使用"
 
 #: core/ui/settings_video.cpp:212
 msgid "Frame Pacing (Experimental)"
-msgstr ""
+msgstr "帧速率控制（实验性功能）"
 
 #: core/ui/settings_video.cpp:213
 msgid "Provide the GPU with presentation timing for each frame to replicate original frame pacing."
-msgstr ""
+msgstr "为 GPU 提供每帧的呈现时序，以重现原始帧的节奏。"
 
 #: core/ui/settings_video.cpp:216
 msgid "Duplicate frames"
