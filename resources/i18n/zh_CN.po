@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-22 12:49+0100\n"
-"PO-Revision-Date: 2026-08-20 14:44\n"
+"PO-Revision-Date: 2026-08-20 22:32\n"
 "Last-Translator: \n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
@@ -361,7 +361,7 @@ msgstr "不支持的子类型或前/后间隔"
 
 #: core/imgread/chd.cpp:210
 msgid "Invalid CHD: less than 3 tracks"
-msgstr "CHD无效：音轨少于3首"
+msgstr "CHD无效：轨道少于3"
 
 #: core/imgread/chd.cpp:216
 msgid "Invalid CHD: no track found"
