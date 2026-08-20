@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-22 12:49+0100\n"
-"PO-Revision-Date: 2026-06-13 13:06\n"
+"PO-Revision-Date: 2026-08-20 12:32\n"
 "Last-Translator: \n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
@@ -247,7 +247,7 @@ msgstr ""
 #: core/sdl/sdl_gamepad.cpp:708
 #, c-format
 msgid "Mouse %d"
-msgstr ""
+msgstr "鼠标 %d"
 
 #: core/sdl/sdl.cpp:928 core/windows/winmain.cpp:376
 msgid "Flycast Error"
