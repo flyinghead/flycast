@@ -231,7 +231,7 @@ protected:
 	vk::CommandBuffer NewFrame() override;
 	vk::Framebuffer getFramebuffer(int renderPass, int renderPassCount) override;
 	vk::ImageLayout getAttachmentInitialLayout() override {
-		return config::RenderToTextureBuffer ? vk::ImageLayout::eTransferSrcOptimal : vk::ImageLayout::eShaderReadOnlyOptimal;
+		return vk::ImageLayout::eShaderReadOnlyOptimal;
 	}
 
 private:
