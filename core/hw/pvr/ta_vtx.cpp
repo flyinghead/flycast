@@ -1207,7 +1207,7 @@ static void parseRenderPass(RenderPass& pass, const RenderPass& previousPass, re
 	}
 }
 
-static void setTileClipping(rend_context& ctx)
+void setTileClipping(rend_context& ctx)
 {
 	u32 xmax, ymax;
 	getRegionTileClipping((u32&)ctx.tileClip.origin.x, xmax, (u32&)ctx.tileClip.origin.y, ymax);
@@ -1277,7 +1277,6 @@ static void ta_parse_vdrc(TA_context* ctx, bool primRestart)
 		pass++;
 	}
 
-	setTileClipping(ctx->rend);
 	vd_ctx = nullptr;
 }
 
@@ -1321,8 +1320,6 @@ static void ta_parse_naomi2(TA_context* ctx, bool primRestart)
 		}
 		previousPass = pass;
 	}
-
-	setTileClipping(ctx->rend);
 }
 
 void ta_parse(TA_context *ctx, bool primRestart)

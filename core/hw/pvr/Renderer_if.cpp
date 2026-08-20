@@ -200,6 +200,8 @@ private:
 		if (taContext == nullptr)
 			return;
 
+		// tile clipping is used to calculate framebuffer size in RTT below
+		setTileClipping(taContext->rend);
 		int width, height;
 		getScaledFramebufferSize(taContext->rend, width, height);
 		taContext->rend.framebufferWidth = width;
