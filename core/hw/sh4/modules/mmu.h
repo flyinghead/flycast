@@ -122,6 +122,9 @@ extern u32 mmuAddressLUT[0x100000];
 extern u32 mmuLastPageMask;
 extern bool mmuStrict;
 
+// call wherever the set of matching UTLB entries can change
+void mmuStrictCacheFlush();
+
 static inline void mmuAddressLUTFlush(bool full)
 {
 	if (full)

@@ -46,6 +46,28 @@ u32 mmuLastPageMask = 0xFFFFF000;
 // dispatch, emulation driven by protection faults)
 bool mmuStrict = false;
 
+// Caches what the strict scan found. That scan has to look at all 64 entries,
+// so it dominates runtime. Dropped wherever the match set can change; the ASID
+// is in the tag, so switching it costs nothing.
+struct StrictCacheEntry
+{
+	u32 tag;		// bit 31 = valid | ASID << 22 | va >> 10; zero-init is empty
+	u32 mask;
+	u32 ppnBase;
+	u32 entryIdx;	// into UTLB, or StrictMissIdx for a cached miss
+};
+constexpr u32 StrictMissIdx = ~0u;
+constexpr u32 StrictCacheSize = 4096;
+static StrictCacheEntry strictCache[StrictCacheSize];
+
+void mmuStrictCacheFlush()
+{
+	// the flush sites (LDTLB above all) are hot for guests that never fill it
+	if (!mmuStrict)
+		return;
+	memset(strictCache, 0, sizeof(strictCache));
+}
+
 struct TLB_LinkedEntry {
 	TLB_Entry entry;
 	TLB_LinkedEntry *next_entry;
@@ -187,6 +209,7 @@ int main(int argc, char *argv[])
 
 bool UTLB_Sync(u32 entry)
 {
+	mmuStrictCacheFlush();
 	TLB_Entry& tlb_entry = UTLB[entry];
 	u32 sz = tlb_entry.Data.SZ1 * 2 + tlb_entry.Data.SZ0;
 
@@ -228,7 +251,20 @@ MmuError mmu_full_lookup(u32 va, const TLB_Entry** tlb_entry_ret, u32& rv)
 {
 	if (mmuStrict)
 	{
-		// No LRU, no hash cache, no synthesized entries
+		const u32 asid = CCN_PTEH.ASID;
+		const u32 tag = 0x80000000u | (asid << 22) | (va >> 10);
+		StrictCacheEntry& cached = strictCache[((va >> 10) ^ (asid << 5)) & (StrictCacheSize - 1)];
+		if (cached.tag == tag)
+		{
+			if (cached.entryIdx == StrictMissIdx)
+				return MmuError::TLB_MISS;
+			rv = cached.ppnBase | (va & ~cached.mask);
+			lru_mask = cached.mask;
+			if (tlb_entry_ret != nullptr)
+				*tlb_entry_ret = &UTLB[cached.entryIdx];
+			return MmuError::NONE;
+		}
+
 		const TLB_Entry *match = nullptr;
 		for (const TLB_Entry& tlb_entry : UTLB)
 		{
@@ -242,8 +278,16 @@ MmuError mmu_full_lookup(u32 va, const TLB_Entry** tlb_entry_ret, u32& rv)
 			rv = ((tlb_entry.Data.PPN << 10) & mask) | (va & ~mask);
 			lru_mask = mask;
 		}
+		// with SV == 1 matching depends on sr.MD, which flips on every
+		// exception, so only cache the MD-independent case
 		if (match == nullptr)
+		{
+			if (CCN_MMUCR.SV == 0)
+				cached = { tag, 0, 0, StrictMissIdx };
 			return MmuError::TLB_MISS;
+		}
+		if (CCN_MMUCR.SV == 0)
+			cached = { tag, lru_mask, rv & lru_mask, (u32)(match - &UTLB[0]) };
 		if (tlb_entry_ret != nullptr)
 			*tlb_entry_ret = match;
 		return MmuError::NONE;
@@ -391,5 +435,6 @@ void mmu_flush_table()
 	lru_entry = nullptr;
 	flush_cache();
 	mmuAddressLUTFlush(true);
+	mmuStrictCacheFlush();
 }
 #endif 	// FAST_MMU
