@@ -675,7 +675,7 @@ int NetDimm::schedCallback()
 						INFO_LOG(NAOMI, "connect(%d) completed -> %d", socket.fd, so_error);
 						socket.connecting = false;
 						socket.lastError = convertError(so_error);
-						returnToNaomi(so_error != 0, &socket - &sockets[0] + 1, so_error != 0 ? -1 : 0);
+						returnToNaomi(0x2200, so_error != 0, &socket - &sockets[0] + 1, so_error != 0 ? -1 : 0);
 						break;
 					}
 				}
@@ -684,7 +684,7 @@ int NetDimm::schedCallback()
 					WARN_LOG(NAOMI, "connect(%d) timeout", socket.fd);
 					socket.connecting = false;
 					socket.lastError = convertError(ECONNREFUSED);
-					returnToNaomi(true, &socket - &sockets[0] + 1, -1);
+					returnToNaomi(0x2200, true, &socket - &sockets[0] + 1, -1);
 					break;
 				}
 			}
@@ -718,7 +718,7 @@ int NetDimm::schedCallback()
 						socket.receiving = false;
 					if (!socket.receiving)
 					{
-						returnToNaomi(len == -1, &socket - &sockets[0] + 1, len);
+						returnToNaomi(0x2400, len == -1, &socket - &sockets[0] + 1, len);
 						break;
 					}
 				}
@@ -727,7 +727,7 @@ int NetDimm::schedCallback()
 					WARN_LOG(NAOMI, "recv(%d) timeout", socket.fd);
 					socket.receiving = false;
 					socket.lastError = convertError(ETIMEDOUT);
-					returnToNaomi(true, &socket - &sockets[0] + 1, -1);
+					returnToNaomi(0x2400, true, &socket - &sockets[0] + 1, -1);
 					break;
 				}
 			}
@@ -757,7 +757,7 @@ int NetDimm::schedCallback()
 						socket.sending = false;
 					if (!socket.sending)
 					{
-						returnToNaomi(len == -1, &socket - &sockets[0] + 1, len);
+						returnToNaomi(0x2400, len == -1, &socket - &sockets[0] + 1, len);
 						break;
 					}
 				}
@@ -766,7 +766,7 @@ int NetDimm::schedCallback()
 					WARN_LOG(NAOMI, "send(%d) timeout", socket.fd);
 					socket.sending = false;
 					socket.lastError = convertError(ETIMEDOUT);
-					returnToNaomi(true, &socket - &sockets[0] + 1, -1);
+					returnToNaomi(0x2400, true, &socket - &sockets[0] + 1, -1);
 					break;
 				}
 			}
@@ -945,17 +945,18 @@ void NetDimm::systemCmd(int cmd)
 
 void NetDimm::netCmd(int cmd)
 {
+	const u16 retCmd = 0x2000 | (cmd << 9);
 	u32 *buffer = (u32 *)&dimm_data[dimmBufferOffset + 0x800000 + 0x1000 * (dimm_command & 0xff)];
 	cmd = buffer[0];
 	switch (cmd)
 	{
 	case 0: // returnToNaomiRawCmd
 		WARN_LOG(NAOMI, "netdimm: returnToNaomiRawCmd not implemented");
-		returnToNaomi(true, 0, -1);
+		returnToNaomi(retCmd, true, 0, -1);
 		break;
 	case 1: // accept
 		WARN_LOG(NAOMI, "netdimm: accept not implemented");
-		returnToNaomi(true, buffer[1], -1);
+		returnToNaomi(retCmd, true, buffer[1], -1);
 		break;
 	case 2: // bind
 		{
@@ -982,7 +983,7 @@ void NetDimm::netCmd(int cmd)
 				if (rc == -1)
 					sockets[sockidx - 1].lastError = convertError(get_last_error());
 			}
-			returnToNaomi(rc == -1, buffer[1], rc);
+			returnToNaomi(retCmd, rc == -1, buffer[1], rc);
 			break;
 		}
 	case 3: // close
@@ -998,7 +999,7 @@ void NetDimm::netCmd(int cmd)
 				rc = sockets[sockidx - 1].close();
 				INFO_LOG(NAOMI, "closesocket(%d) %d -> %d", sockidx, sockfd, rc);
 			}
-			returnToNaomi(rc != 0, sockidx, rc);
+			returnToNaomi(retCmd, rc != 0, sockidx, rc);
 			break;
 		}
 	case 4: // connect
@@ -1054,7 +1055,7 @@ void NetDimm::netCmd(int cmd)
 				}
 				INFO_LOG(NAOMI, "connect(%d, %x:%d) -> %d", sockidx, htonl(a.sin_addr.s_addr), htons(a.sin_port), rc);
 			}
-			returnToNaomi(rc != 0, sockidx, rc);
+			returnToNaomi(retCmd, rc != 0, sockidx, rc);
 			break;
 		}
 	case 5: // getIpByDns
@@ -1067,20 +1068,20 @@ void NetDimm::netCmd(int cmd)
 			//int len = buffer[2];
 			//u32 dns1 = buffer[3];
 			//u32 dns2 = buffer[4];
-			returnToNaomi(false, 0, serverIp);
+			returnToNaomi(retCmd, false, 0, serverIp);
 			break;
 		}
 	case 6: // inet_addr
 		WARN_LOG(NAOMI, "netdimm: inet_addr not implemented");
-		returnToNaomi(true, 0, -1);
+		returnToNaomi(retCmd, true, 0, -1);
 		break;
 	case 7: // ioctl
 		WARN_LOG(NAOMI, "netdimm: ioctl not implemented");
-		returnToNaomi(true, buffer[1], -1);
+		returnToNaomi(retCmd, true, buffer[1], -1);
 		break;
 	case 8: // listen
 		WARN_LOG(NAOMI, "netdimm: listen not implemented");
-		returnToNaomi(true, buffer[1], -1);
+		returnToNaomi(retCmd, true, buffer[1], -1);
 		break;
 	case 9: // recv
 		{
@@ -1131,7 +1132,7 @@ void NetDimm::netCmd(int cmd)
 #endif
 				DEBUG_LOG(NAOMI, "recv(%d, %d) -> %d", sockidx, len, rc);
 			}
-			returnToNaomi(rc == -1, sockidx, rc);
+			returnToNaomi(retCmd, rc == -1, sockidx, rc);
 			break;
 		}
 	case 10: // send
@@ -1178,7 +1179,7 @@ void NetDimm::netCmd(int cmd)
 				fflush(stdout);
 #endif
 			}
-			returnToNaomi(rc == -1, sockidx, rc);
+			returnToNaomi(retCmd, rc == -1, sockidx, rc);
 			break;
 		}
 	case 11: // openSocket
@@ -1208,7 +1209,7 @@ void NetDimm::netCmd(int cmd)
 				this->lastError = get_last_error();
 			}
 			INFO_LOG(NAOMI, "openSocket(%d, %d, %d) %d -> %d", domain, type, protocol, fd, sockidx);
-			returnToNaomi(sockidx == -1, 0, sockidx);
+			returnToNaomi(retCmd, sockidx == -1, 0, sockidx);
 			break;
 		}
 	case 12: // netSelect
@@ -1281,12 +1282,12 @@ void NetDimm::netCmd(int cmd)
 			else {
 				this->lastError = get_last_error();
 			}
-			returnToNaomi(rc == -1, 0, rc);
+			returnToNaomi(retCmd, rc == -1, 0, rc);
 			break;
 		}
 	case 13: // shutdown (not implemented on real hardware)
 		WARN_LOG(NAOMI, "netdimm: shutdown not implemented");
-		returnToNaomi(true, buffer[1], -3);
+		returnToNaomi(retCmd, true, buffer[1], -3);
 		break;
 	case 14: // setsockopt
 		{
@@ -1327,7 +1328,7 @@ void NetDimm::netCmd(int cmd)
 						sockets[sockidx - 1].lastError = convertError(get_last_error());
 				}
 			}
-			returnToNaomi(rc == -1, sockidx, rc);
+			returnToNaomi(retCmd, rc == -1, sockidx, rc);
 			break;
 		}
 	case 15: // getsockopt
@@ -1369,7 +1370,7 @@ void NetDimm::netCmd(int cmd)
 						sockets[sockidx - 1].lastError = convertError(get_last_error());
 				}
 			}
-			returnToNaomi(rc == -1, sockidx, rc);
+			returnToNaomi(retCmd, rc == -1, sockidx, rc);
 			break;
 		}
 	case 16: // settimeout
@@ -1393,42 +1394,42 @@ void NetDimm::netCmd(int cmd)
 				INFO_LOG(NAOMI, "setTimeout(%d, %d, %d, %d)", sockidx, buffer[2], buffer[3], buffer[4]);
 				rc = 0;
 			}
-			returnToNaomi(rc != 0, sockidx, 0);
+			returnToNaomi(retCmd, rc != 0, sockidx, 0);
 			break;
 		}
 	case 17: // geterrno
 		{
 			const int sockidx = buffer[1];
 			if (sockidx == 0)
-				returnToNaomi(false, 0, this->lastError);
+				returnToNaomi(retCmd, false, 0, this->lastError);
 			const sock_t sockfd = getSocket(sockidx);
 			if (sockfd != INVALID_SOCKET)
 			{
 				int rc = sockets[sockidx - 1].lastError;
 				INFO_LOG(NAOMI, "geterrno(%d) -> %d", sockidx, rc);
-				returnToNaomi(false, sockidx, rc);
+				returnToNaomi(retCmd, false, sockidx, rc);
 			}
 			else {
-				returnToNaomi(true, sockidx, -1);
+				returnToNaomi(retCmd, true, sockidx, -1);
 			}
 			break;
 		}
 	case 18: // routeAdd
 		WARN_LOG(NAOMI, "netdimm: routeAdd not implemented");
-		returnToNaomi(true, 0, -1);
+		returnToNaomi(retCmd, true, 0, -1);
 		break;
 	case 19: // routeDelete
 		WARN_LOG(NAOMI, "netdimm: routeDelete not implemented");
-		returnToNaomi(true, 0, -1);
+		returnToNaomi(retCmd, true, 0, -1);
 		break;
 
 	case 20: // getParambyDHCP
 		WARN_LOG(NAOMI, "netdimm: getParambyDHCP not implemented");
-		returnToNaomi(false, 0, 0);
+		returnToNaomi(retCmd, false, 0, 0);
 		break;
 	case 21: // modifyMyIPaddr
 		WARN_LOG(NAOMI, "netdimm: modifyMyIPaddr not implemented");
-		returnToNaomi(true, 0, -1);
+		returnToNaomi(retCmd, true, 0, -1);
 		break;
 	case 22: // recvfrom
 		{
@@ -1473,7 +1474,7 @@ void NetDimm::netCmd(int cmd)
 				}
 			}
 			DEBUG_LOG(NAOMI, "recvfrom(%d, %d) -> %x", sockidx, len, rc);
-			returnToNaomi(rc == -1, sockidx, rc);
+			returnToNaomi(retCmd, rc == -1, sockidx, rc);
 			break;
 		}
 	case 23: // sendto
@@ -1500,13 +1501,13 @@ void NetDimm::netCmd(int cmd)
 				if (rc < 0)
 					sockets[sockidx - 1].lastError = convertError(get_last_error());
 			}
-			returnToNaomi(rc < 0, sockidx, rc);
+			returnToNaomi(retCmd, rc < 0, sockidx, rc);
 			break;
 		}
 
 	default:
 		WARN_LOG(NAOMI, "netdimm: Invalid Net command: %d", cmd);
-		returnToNaomi(true, 0, 0);
+		returnToNaomi(retCmd, true, 0, 0);
 		break;
 	}
 }
@@ -1528,7 +1529,7 @@ void NetDimm::process()
 		break;
 	default:
 		WARN_LOG(NAOMI, "Unknown DIMM command group %d cmd %x", cmdGroup, cmd);
-		returnToNaomi(true, 0, -1);
+		returnToNaomi(dimm_command & 0x7e00, true, 0, -1);
 		break;
 	}
 }

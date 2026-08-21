@@ -779,18 +779,18 @@ void GDCartridge::process()
 		break;
 	case 1: // network commands
 		WARN_LOG(NAOMI, "Network command received cmd %x. Need full NetDIMM?", cmd);
-		returnToNaomi(true, 0, -1);
+		returnToNaomi(dimm_command & 0x7e00, true, 0, -1);
 		break;
 	default:
 		WARN_LOG(NAOMI, "Unknown DIMM command group %d cmd %x", cmdGroup, cmd);
-		returnToNaomi(true, 0, -1);
+		returnToNaomi(dimm_command & 0x7e00, true, 0, -1);
 		break;
 	}
 }
 
-void GDCartridge::returnToNaomi(bool failed, u16 offsetl, u32 parameter)
+void GDCartridge::returnToNaomi(u16 cmd, bool failed, u16 offsetl, u32 parameter)
 {
-	dimm_command = ((dimm_command & 0x7e00) + 0x400) | (failed ? 0xff : 0x4);
+	dimm_command = (cmd + 0x400) | (failed ? 0xff : 0x4);
 	dimm_offsetl = offsetl;
 	dimm_parameterh = parameter >> 16;
 	dimm_parameterl = parameter;

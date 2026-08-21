@@ -153,5 +153,5 @@ private:
 	std::function<void(u32)> controlReadCallback;
 	TsQueue<ServerMsg> serverQueue;
 
-	static constexpr int POLL_CYCLES = SH4_MAIN_CLOCK / 240;
+	static constexpr int POLL_CYCLES = SH4_MAIN_CLOCK / 120;
 };

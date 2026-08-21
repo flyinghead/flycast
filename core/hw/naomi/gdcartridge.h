@@ -39,7 +39,7 @@ public:
 protected:
 	virtual void process();
 	virtual int schedCallback();
-	void returnToNaomi(bool failed, u16 offsetl, u32 parameter);
+	void returnToNaomi(u16 cmd, bool failed, u16 offsetl, u32 parameter);
 
 	template<typename T>
 	void peek(u32 address)
