@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-22 12:49+0100\n"
-"PO-Revision-Date: 2026-08-21 01:54\n"
+"PO-Revision-Date: 2026-08-21 03:47\n"
 "Last-Translator: \n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
@@ -1271,370 +1271,370 @@ msgstr "注销"
 
 #: core/ui/settings_general.cpp:432
 msgid "Password"
-msgstr ""
+msgstr "密码"
 
 #: core/ui/settings_general.cpp:436
 msgid "Authenticating..."
-msgstr ""
+msgstr "正在验证..."
 
 #: core/ui/settings_general.cpp:449
 msgid "Login"
-msgstr ""
+msgstr "登录"
 
 #: core/ui/settings_general.cpp:464
 msgid "Custom Paths"
-msgstr ""
+msgstr "自定义路径"
 
 #: core/ui/settings_general.cpp:466
 msgid "BIOS Folders"
-msgstr ""
+msgstr "BIOS 文件夹"
 
 #: core/ui/settings_general.cpp:466
 msgid "Select a BIOS folder"
-msgstr ""
+msgstr "选择一个 BIOS 文件夹"
 
 #: core/ui/settings_general.cpp:467
 msgid "Folders containing BIOS files (e.g. dc_boot.bin or dc_bios.bin) and arcade BIOS"
-msgstr ""
+msgstr "包含BIOS文件（例如dc_boot.bin或dc_bios.bin）和街机BIOS的文件夹"
 
 #: core/ui/settings_general.cpp:471
 msgid "VMU Folder"
-msgstr ""
+msgstr "VMU 文件夹"
 
 #: core/ui/settings_general.cpp:471
 msgid "Select the VMU folder"
-msgstr ""
+msgstr "选择 VMU 文件夹"
 
 #: core/ui/settings_general.cpp:472
 msgid "Folder where VMU (.bin) saves are stored"
-msgstr ""
+msgstr "存储 VMU (.bin) 存档文件的文件夹"
 
 #: core/ui/settings_general.cpp:475
 msgid "Savestate Folders"
-msgstr ""
+msgstr "Savestate 文件夹"
 
 #: core/ui/settings_general.cpp:475
 msgid "Select a savestate folder"
-msgstr ""
+msgstr "选择一个存档文件夹"
 
 #: core/ui/settings_general.cpp:476
 msgid "Folders for save states. First path is used for new states; all are searched when loading"
-msgstr ""
+msgstr "用于保存状态的文件夹。第一个路径用于新状态；加载时会搜索所有路径"
 
 #: core/ui/settings_general.cpp:479
 msgid "Game Save Folder"
-msgstr ""
+msgstr "游戏存档文件夹"
 
 #: core/ui/settings_general.cpp:479
 msgid "Select the game save folder"
-msgstr ""
+msgstr "选择游戏存档文件夹"
 
 #: core/ui/settings_general.cpp:480
 msgid "Folder for game save data (e.g. arcade NVRAM)"
-msgstr ""
+msgstr "游戏存档数据文件夹（例如街机 NVRAM）"
 
 #: core/ui/settings_general.cpp:484
 msgid "Texture Pack Folders"
-msgstr ""
+msgstr "纹理包文件夹"
 
 #: core/ui/settings_general.cpp:484
 msgid "Select a texture pack folder"
-msgstr ""
+msgstr "选择一个纹理包文件夹"
 
 #: core/ui/settings_general.cpp:485
 msgid "Folders containing textures/<gameId> or <gameId> under a textures subfolder"
-msgstr ""
+msgstr "包含 textures/<gameId> 的文件夹，或位于 textures 子文件夹下的 <gameId> 文件夹"
 
 #: core/ui/settings_general.cpp:489
 msgid "Texture Dump Folder"
-msgstr ""
+msgstr "导出纹理文件夹"
 
 #: core/ui/settings_general.cpp:489
 msgid "Select the texture dump folder"
-msgstr ""
+msgstr "选择导出纹理文件夹"
 
 #: core/ui/settings_general.cpp:490
 msgid "Folder where texture dumps are saved. Game-specific subfolders will be created automatically"
-msgstr ""
+msgstr "保存纹理文件的文件夹。系统将自动创建针对各游戏的子文件夹"
 
 #: core/ui/settings_general.cpp:493
 msgid "Box Art Folder"
-msgstr ""
+msgstr "游戏封面文件夹"
 
 #: core/ui/settings_general.cpp:493
 msgid "Select the box art folder"
-msgstr ""
+msgstr "选择存放游戏封面的文件夹"
 
 #: core/ui/settings_general.cpp:494
 msgid "Folder containing box art images (png/jpg). If empty, Flycast will use the default Home Folder/boxart for downloads and generated art"
-msgstr ""
+msgstr "包含盒装封面图片（png/jpg）的文件夹。如果该文件夹为空，Flycast 将使用默认的“主文件夹/boxart”中的图片作为下载和生成的封面图"
 
 #: core/ui/settings_general.cpp:497
 msgid "Controller Mapping Folders"
-msgstr ""
+msgstr "控制器映射文件夹"
 
 #: core/ui/settings_general.cpp:497
 msgid "Select a controller mapping folder"
-msgstr ""
+msgstr "选择一个控制器映射文件夹"
 
 #: core/ui/settings_general.cpp:498
 msgid "Folders containing controller mapping files (.cfg). The emulator also looks in Home Folder/mappings. Per-game mappings are suffixed with _<gameId>.cfg"
-msgstr ""
+msgstr "包含控制器映射文件（.cfg）的文件夹。模拟器还会检查“主文件夹/mappings”目录。各游戏的映射文件后缀为 _<gameId>.cfg"
 
 #: core/ui/settings_general.cpp:501
 msgid "Cheat Folders"
-msgstr ""
+msgstr "金手指文件夹"
 
 #: core/ui/settings_general.cpp:501
 msgid "Select a cheat folder"
-msgstr ""
+msgstr "选择一个金手指文件夹"
 
 #: core/ui/settings_general.cpp:502
 msgid "Folders containing cheat files (.cht/.txt) named with the game ID. Flycast will auto-load matching files if present"
-msgstr ""
+msgstr "包含以游戏ID命名的金手指文件（.cht/.txt）的文件夹。如果存在匹配的文件，Flycast将自动加载这些文件"
 
 #: core/ui/gui_chat.h:46 core/ui/gui_chat.h:48
 msgid "P2"
-msgstr ""
+msgstr "P2"
 
 #: core/ui/gui_chat.h:46 core/ui/gui_chat.h:48
 msgid "P1"
-msgstr ""
+msgstr "P1"
 
 #: core/ui/game_scanner.cpp:167
 msgid "Dreamcast BIOS"
-msgstr ""
+msgstr "Dreamcast BIOS"
 
 #: core/ui/settings_controls.cpp:43 core/ui/settings_controls.cpp:65
 #: core/ui/settings_controls.cpp:167
 msgid "None"
-msgstr ""
+msgstr "无"
 
 #: core/ui/settings_controls.cpp:44
 msgid "Sega Controller"
-msgstr ""
+msgstr "Sega Controller"
 
 #: core/ui/settings_controls.cpp:45
 msgid "Light Gun"
-msgstr ""
+msgstr "光枪"
 
 #: core/ui/settings_controls.cpp:46 core/input/keyboard_device.h:82
 msgid "Keyboard"
-msgstr ""
+msgstr "键盘"
 
 #: core/ui/settings_controls.cpp:47 core/input/mouse.h:62
 msgid "Mouse"
-msgstr ""
+msgstr "鼠标"
 
 #: core/ui/settings_controls.cpp:48
 msgid "Twin Stick"
-msgstr ""
+msgstr "双摇杆"
 
 #: core/ui/settings_controls.cpp:49
 msgid "Arcade/Ascii Stick"
-msgstr ""
+msgstr "街机/ASCII手柄"
 
 #: core/ui/settings_controls.cpp:50
 msgid "Maracas Controller"
-msgstr ""
+msgstr "Maracas Controller"
 
 #: core/ui/settings_controls.cpp:51
 msgid "Fishing Controller"
-msgstr ""
+msgstr "Fishing Controller"
 
 #: core/ui/settings_controls.cpp:52
 msgid "Pop'n Music controller"
-msgstr ""
+msgstr "Pop'n Music controller"
 
 #: core/ui/settings_controls.cpp:53
 msgid "Racing Controller"
-msgstr ""
+msgstr "Racing Controller"
 
 #: core/ui/settings_controls.cpp:54
 msgid "Densha de Go! Controller"
-msgstr ""
+msgstr "Densha de Go! Controller"
 
 #: core/ui/settings_controls.cpp:55
 msgid "Panther DC/Full Controller"
-msgstr ""
+msgstr "Panther DC/Full Controller"
 
 #: core/ui/settings_controls.cpp:56
 msgid "DreamParaPara Controller"
-msgstr ""
+msgstr "DreamParaPara Controller"
 
 #: core/ui/settings_controls.cpp:66
 msgid "Sega VMU"
-msgstr ""
+msgstr "Sega VMU"
 
 #: core/ui/settings_controls.cpp:67
 msgid "Vibration Pack"
-msgstr ""
+msgstr "Vibration Pack"
 
 #: core/ui/settings_controls.cpp:68
 msgid "Microphone"
-msgstr ""
+msgstr "麦克风"
 
 #: core/ui/settings_controls.cpp:69
 msgid "DreamPotato"
-msgstr ""
+msgstr "DreamPotato"
 
 #: core/ui/settings_controls.cpp:167
 msgid "All"
-msgstr ""
+msgstr "All"
 
 #: core/ui/settings_controls.cpp:176 core/ui/settings_controls.cpp:240
 msgid "Directions"
-msgstr ""
+msgstr "下"
 
 #: core/ui/settings_controls.cpp:177 core/ui/settings_controls.cpp:241
 msgid "Up"
-msgstr ""
+msgstr "上"
 
 #: core/ui/settings_controls.cpp:178 core/ui/settings_controls.cpp:242
 msgid "Down"
-msgstr ""
+msgstr "下"
 
 #: core/ui/settings_controls.cpp:182 core/ui/settings_controls.cpp:246
 msgid "Thumbstick Up"
-msgstr ""
+msgstr "Thumbstick上"
 
 #: core/ui/settings_controls.cpp:183 core/ui/settings_controls.cpp:247
 msgid "Thumbstick Down"
-msgstr ""
+msgstr "Thumbstick 下"
 
 #: core/ui/settings_controls.cpp:184 core/ui/settings_controls.cpp:248
 msgid "Thumbstick Left"
-msgstr ""
+msgstr "左摇杆"
 
 #: core/ui/settings_controls.cpp:185 core/ui/settings_controls.cpp:249
 msgid "Thumbstick Right"
-msgstr ""
+msgstr "右摇杆"
 
 #: core/ui/settings_controls.cpp:187 core/ui/settings_controls.cpp:251
 msgid "R.Thumbstick Up"
-msgstr ""
+msgstr "R.Thumbstick上"
 
 #: core/ui/settings_controls.cpp:188 core/ui/settings_controls.cpp:252
 msgid "R.Thumbstick Down"
-msgstr ""
+msgstr "R.Thumbstick下"
 
 #: core/ui/settings_controls.cpp:189 core/ui/settings_controls.cpp:253
 msgid "R.Thumbstick Left"
-msgstr ""
+msgstr "R.Thumbstick 左"
 
 #: core/ui/settings_controls.cpp:190 core/ui/settings_controls.cpp:254
 msgid "R.Thumbstick Right"
-msgstr ""
+msgstr "R.Thumbstick右"
 
 #: core/ui/settings_controls.cpp:192
 msgid "Axis 3 Up"
-msgstr ""
+msgstr "Axis 3上"
 
 #: core/ui/settings_controls.cpp:193
 msgid "Axis 3 Down"
-msgstr ""
+msgstr "Axis 3下"
 
 #: core/ui/settings_controls.cpp:194
 msgid "Axis 3 Left"
-msgstr ""
+msgstr "Axis 3左"
 
 #: core/ui/settings_controls.cpp:195
 msgid "Axis 3 Right"
-msgstr ""
+msgstr "Axis 3右"
 
 #: core/ui/settings_controls.cpp:202 core/ui/settings_controls.cpp:256
 msgid "Buttons"
-msgstr ""
+msgstr "按键"
 
 #: core/ui/settings_controls.cpp:211 core/ui/settings_controls.cpp:267
 msgid "Triggers"
-msgstr ""
+msgstr "扳机"
 
 #: core/ui/settings_controls.cpp:212 core/ui/settings_controls.cpp:268
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:159
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:369
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:401
 msgid "Left Trigger"
-msgstr ""
+msgstr "左扳机"
 
 #: core/ui/settings_controls.cpp:213 core/ui/settings_controls.cpp:269
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:161
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:371
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:403
 msgid "Right Trigger"
-msgstr ""
+msgstr "右扳机"
 
 #: core/ui/settings_controls.cpp:214 core/ui/settings_controls.cpp:270
 msgid "Left Trigger 2"
-msgstr ""
+msgstr "左扳机 2"
 
 #: core/ui/settings_controls.cpp:215 core/ui/settings_controls.cpp:271
 msgid "Right Trigger 2"
-msgstr ""
+msgstr "右扳机 2"
 
 #: core/ui/settings_controls.cpp:217 core/ui/settings_controls.cpp:273
 msgid "System Buttons"
-msgstr ""
+msgstr "System Buttons"
 
 #: core/ui/settings_controls.cpp:219 core/ui/settings_controls.cpp:275
 msgid "Reload"
-msgstr ""
+msgstr "重新加载"
 
 #: core/ui/settings_controls.cpp:221 core/ui/settings_controls.cpp:281
 msgid "Emulator"
-msgstr ""
+msgstr "模拟器"
 
 #: core/ui/settings_controls.cpp:222 core/ui/settings_controls.cpp:282
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:359
 msgid "Menu"
-msgstr ""
+msgstr "菜单"
 
 #: core/ui/settings_controls.cpp:223 core/ui/settings_controls.cpp:283
 #: core/ui/gui.cpp:625 core/ui/gui.cpp:894
 msgid "Exit"
-msgstr ""
+msgstr "退出"
 
 #: core/ui/settings_controls.cpp:224 core/ui/settings_controls.cpp:284
 msgid "Pause"
-msgstr ""
+msgstr "暂停"
 
 #: core/ui/settings_controls.cpp:225 core/ui/settings_controls.cpp:285
 msgid "Fast-forward"
-msgstr ""
+msgstr "快进"
 
 #: core/ui/settings_controls.cpp:226 core/ui/settings_controls.cpp:286
 #: core/ui/gui.cpp:637
 msgid "Load State"
-msgstr ""
+msgstr "即时读档"
 
 #: core/ui/settings_controls.cpp:227 core/ui/settings_controls.cpp:287
 #: core/ui/gui.cpp:645
 msgid "Save State"
-msgstr ""
+msgstr "及时存档"
 
 #: core/ui/settings_controls.cpp:228 core/ui/settings_controls.cpp:288
 msgid "Load State in RAM"
-msgstr ""
+msgstr "将即时存档加载到内存"
 
 #: core/ui/settings_controls.cpp:229 core/ui/settings_controls.cpp:289
 msgid "Save State in RAM"
-msgstr ""
+msgstr "读取内存中的及时存档"
 
 #: core/ui/settings_controls.cpp:230 core/ui/settings_controls.cpp:290
 msgid "Next Save State Slot"
-msgstr ""
+msgstr "下一个存档槽"
 
 #: core/ui/settings_controls.cpp:231 core/ui/settings_controls.cpp:291
 msgid "Previous Save State Slot"
-msgstr ""
+msgstr "上一个存档槽"
 
 #: core/ui/settings_controls.cpp:232 core/ui/settings_controls.cpp:292
 msgid "Bypass Emulated Keyboard"
-msgstr ""
+msgstr "绕过模拟键盘"
 
 #: core/ui/settings_controls.cpp:233 core/ui/settings_controls.cpp:293
 msgid "Save Screenshot"
-msgstr ""
+msgstr "保存截图"
 
 #: core/ui/settings_controls.cpp:257
 msgid "Button 1"
@@ -1670,7 +1670,7 @@ msgstr ""
 
 #: core/ui/settings_controls.cpp:276
 msgid "Coin"
-msgstr ""
+msgstr "投币"
 
 #: core/ui/settings_controls.cpp:277
 msgid "Service"
@@ -1713,7 +1713,8 @@ msgstr ""
 #: core/ui/settings_controls.cpp:576
 msgid "When checked, this combo will only activate when all keys are pressed in the given sequence.\n"
 "When not checked, the combo will activate when all keys are pressed in any order."
-msgstr ""
+msgstr "如果勾选此选项，该组合键仅在按指定顺序按下所有键时才会触发。\n"
+"如果未勾选此选项，只要按任意顺序按下所有键，该组合键就会触发。"
 
 #: core/ui/settings_controls.cpp:633 core/ui/settings_controls.cpp:1073
 msgid "Controller Mapping"
