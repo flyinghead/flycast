@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-22 12:49+0100\n"
-"PO-Revision-Date: 2026-08-21 06:07\n"
+"PO-Revision-Date: 2026-08-21 10:08\n"
 "Last-Translator: \n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
@@ -20,11 +20,11 @@ msgstr ""
 #: core/achievements/achievements.cpp:379
 #, c-format
 msgid "User %s authenticated"
-msgstr "用户%s 登录成功"
+msgstr "用户 %s 已通过身份验证"
 
 #: core/achievements/achievements.cpp:395
 msgid "RetroAchievements authentication failed"
-msgstr "RetroAchievements 登录失败"
+msgstr "RetroAchievements 认证失败"
 
 #: core/achievements/achievements.cpp:430
 msgid "No user token returned"
