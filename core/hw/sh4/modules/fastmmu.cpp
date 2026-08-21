@@ -38,6 +38,10 @@ static TLB_Entry const *lru_entry;
 static u32 lru_mask;
 static u32 lru_address;
 
+// Page mask of the last successful data translation, to keep sub-4K pages
+// out of the 4K-granular mmuAddressLUT.
+u32 mmuLastPageMask = 0xFFFFF000;
+
 struct TLB_LinkedEntry {
 	TLB_Entry entry;
 	TLB_LinkedEntry *next_entry;
@@ -54,8 +58,6 @@ static u16 bucket_index(u32 address, int size, u32 asid)
 
 static void cache_entry(const TLB_Entry &entry)
 {
-	if (entry.Data.SZ0 == 0 && entry.Data.SZ1 == 0)
-		return;
 	if (full_table_size >= std::size(full_table))
 		return;
 
@@ -108,6 +110,9 @@ static bool find_entry(u32 address, const TLB_Entry **ret_entry)
 		return true;
 	// 1m
 	if (find_entry_by_page_size<3>(address, ret_entry))
+		return true;
+	// 1k last, so guests that don't use them don't pay for the probe
+	if (find_entry_by_page_size<0>(address, ret_entry))
 		return true;
 	return false;
 }
@@ -298,6 +303,7 @@ MmuError mmu_data_translation(u32 va, u32& rv)
 	if (fast_reg_lut[va >> 29] != 0)
 	{
 		rv = va;
+		mmuLastPageMask = 0xFFFFF000;
 		return MmuError::NONE;
 	}
 
@@ -305,10 +311,13 @@ MmuError mmu_data_translation(u32 va, u32& rv)
 	{
 		// On-chip RAM area isn't translated
 		rv = va;
+		mmuLastPageMask = 0xFFFFF000;
 		return MmuError::NONE;
 	}
 
 	MmuError lookup = mmu_full_lookup(va, nullptr, rv);
+	if (lookup == MmuError::NONE)
+		mmuLastPageMask = lru_mask;
 	if (lookup == MmuError::NONE && (rv & 0x1C000000) == 0x1C000000)
 		// map 1C000000-1FFFFFFF to P4 memory-mapped registers
 		rv |= 0xF0000000;
