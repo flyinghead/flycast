@@ -386,6 +386,14 @@ MmuError mmu_data_translation(u32 va, u32& rv)
 		return MmuError::NONE;
 	}
 
+	if (CCN_MMUCR.AT == 0)
+	{
+		// handlers stay installed across strict guests' AT-off windows
+		rv = va;
+		mmuLastPageMask = 0xFFFFF000;
+		return MmuError::NONE;
+	}
+
 	const TLB_Entry *entry = nullptr;
 	MmuError lookup = mmu_full_lookup(va, &entry, rv);
 	if (lookup == MmuError::NONE)

@@ -58,9 +58,15 @@ static void CCN_MMUCR_write(u32 addr, u32 value)
 
 	if (mmu_changed_state)
 	{
-		//printf("<*******>MMU Enabled , ONLY SQ remaps work<*******>\n");
-		mmu_set_state();
-		emu.getSh4Executor()->ResetCache();
+		// only non-strict guests need this: strict ones keep their code and
+		// handlers across AT-off windows, where translation goes identity
+#ifdef FAST_MMU
+		if (!mmuStrict || !mmu_enabled())
+#endif
+		{
+			mmu_set_state();
+			emu.getSh4Executor()->ResetCache();
+		}
 	}
 }
 
