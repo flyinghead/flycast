@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-22 12:49+0100\n"
-"PO-Revision-Date: 2026-08-20 23:35\n"
+"PO-Revision-Date: 2026-08-21 00:49\n"
 "Last-Translator: \n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
@@ -122,11 +122,11 @@ msgstr "DPad2 右"
 
 #: core/sdl/dreampicoport.cpp:1619
 msgid "VMU1 A"
-msgstr ""
+msgstr "VMU1 A"
 
 #: core/sdl/dreampicoport.cpp:1620
 msgid "VMU1 B"
-msgstr ""
+msgstr "VMU1 B"
 
 #: core/sdl/dreampicoport.cpp:1621
 msgid "VMU1 Up"
@@ -515,7 +515,7 @@ msgstr "校准完成"
 
 #: core/hw/naomi/midiffb.cpp:201
 msgid "Calibrating the wheel. Keep it centered."
-msgstr "正在校准方向盘，请保证方向盘回正"
+msgstr "正在校准方向盘，请保证方向盘回正。"
 
 #: core/hw/naomi/gdcartridge.cpp:526
 #, c-format
@@ -646,7 +646,7 @@ msgstr "原生分辨率"
 
 #: core/ui/settings_video.cpp:201
 msgid "Internal Resolution"
-msgstr ""
+msgstr "内部渲染分辨率"
 
 #: core/ui/settings_video.cpp:203
 msgid "Internal render resolution. Higher is better, but more demanding on the GPU. Values higher than your display resolution (but no more than double your display resolution) can be used for supersampling, which provides high-quality antialiasing without reducing sharpness."
@@ -686,361 +686,361 @@ msgstr "为 GPU 提供每帧的呈现时序，以重现原始帧的节奏。"
 
 #: core/ui/settings_video.cpp:216
 msgid "Duplicate frames"
-msgstr ""
+msgstr "重复帧"
 
 #: core/ui/settings_video.cpp:216
 msgid "Duplicate frames on high refresh rate monitors (120 Hz and higher)"
-msgstr ""
+msgstr "高刷新率显示器（120 Hz及以上）上的帧重叠现象"
 
 #: core/ui/settings_video.cpp:221
 msgid "Show VMU In-game"
-msgstr ""
+msgstr "在游戏中显示 VMU"
 
 #: core/ui/settings_video.cpp:221
 msgid "Show the VMU LCD screens while in-game"
-msgstr ""
+msgstr "在游戏过程中显示VMU液晶屏"
 
 #: core/ui/settings_video.cpp:222
 msgid "Full Framebuffer Emulation"
-msgstr ""
+msgstr " 全帧缓冲区模拟"
 
 #: core/ui/settings_video.cpp:223
 msgid "Fully accurate VRAM framebuffer emulation. Helps games that directly access the framebuffer for special effects. Very slow and incompatible with upscaling and wide screen."
-msgstr ""
+msgstr "完全精确的 VRAM 帧缓冲区模拟。有助于那些为实现特殊效果而直接访问帧缓冲区的游戏。速度非常慢，且与画面放大及宽屏模式不兼容。"
 
 #: core/ui/settings_video.cpp:227
 msgid "Load Custom Textures"
-msgstr ""
+msgstr "加载自定义纹理"
 
 #: core/ui/settings_video.cpp:228
 msgid "Load custom/high-res textures from data/textures/<game id>"
-msgstr ""
+msgstr "从 data/textures/<game id>加载自定义/高清纹理包"
 
 #: core/ui/settings_video.cpp:232
 msgid "Preload Custom Textures"
-msgstr ""
+msgstr "预加载自定义纹理"
 
 #: core/ui/settings_video.cpp:233
 msgid "Preload custom textures at game start. May improve performance but increases memory usage"
-msgstr ""
+msgstr "在游戏开始时预加载自定义纹理包。这可能会提高性能，但会增加内存占用"
 
 #: core/ui/settings_video.cpp:239
 msgid "Aspect Ratio"
-msgstr ""
+msgstr "宽高比"
 
 #: core/ui/settings_video.cpp:241
 msgid "Widescreen"
-msgstr ""
+msgstr "宽屏"
 
 #: core/ui/settings_video.cpp:242
 msgid "Draw geometry outside of the normal 4:3 aspect ratio. May produce graphical glitches in the revealed areas.\n"
 "Aspect Fit and shows the full 16:9 content."
-msgstr ""
+msgstr "在常规的 4:3 宽高比之外绘制图形。这可能会导致在显示区域内出现图形异常。"
 
 #: core/ui/settings_video.cpp:247
 msgid "Super Widescreen"
-msgstr ""
+msgstr "超宽屏"
 
 #: core/ui/settings_video.cpp:248
 msgid "Use the full width of the screen or window when its aspect ratio is greater than 16:9.\n"
 "Aspect Fill and remove black bars. Not compatible with integer scaling."
-msgstr ""
+msgstr "当屏幕/窗口宽高比大于16:9时，使用其完整宽度。采用等比填充，消除黑边。不支持整数倍缩放。"
 
 #: core/ui/settings_video.cpp:251
 msgid "Widescreen Game Cheats"
-msgstr ""
+msgstr "宽屏补丁"
 
 #: core/ui/settings_video.cpp:252
 msgid "Modify the game so that it displays in 16:9 anamorphic format and use horizontal screen stretching. Only some games are supported."
-msgstr ""
+msgstr "修改游戏，使其以 16:9 变形宽屏格式显示，并采用水平拉伸屏幕的方式。仅支持部分游戏。"
 
 #: core/ui/settings_video.cpp:253
 msgid "Horizontal Stretching"
-msgstr ""
+msgstr "水平拉伸"
 
 #: core/ui/settings_video.cpp:254
 msgid "Stretch the screen horizontally"
-msgstr ""
+msgstr "将屏幕水平拉伸"
 
 #: core/ui/settings_video.cpp:255
 msgid "Rotate Screen 90°"
-msgstr ""
+msgstr "将屏幕旋转 90°"
 
 #: core/ui/settings_video.cpp:255
 msgid "Rotate the screen 90° counterclockwise"
-msgstr ""
+msgstr "将屏幕逆时针旋转90°"
 
 #: core/ui/settings_video.cpp:260
 msgid "Per Pixel Settings"
-msgstr ""
+msgstr "逐像素设置"
 
 #: core/ui/settings_video.cpp:263
 msgid "512 MB"
-msgstr ""
+msgstr "512 MB"
 
 #: core/ui/settings_video.cpp:263
 msgid "1 GB"
-msgstr ""
+msgstr "1 GB"
 
 #: core/ui/settings_video.cpp:263
 msgid "2 GB"
-msgstr ""
+msgstr "2 GB"
 
 #: core/ui/settings_video.cpp:263
 msgid "4 GB"
-msgstr ""
+msgstr "4 GB"
 
 #: core/ui/settings_video.cpp:301
 msgid "Pixel Buffer Size"
-msgstr ""
+msgstr "像素缓冲区大小"
 
 #: core/ui/settings_video.cpp:303
 msgid "The size of the pixel buffer. May need to be increased when upscaling by a large factor."
-msgstr ""
+msgstr "像素缓冲区的大小。进行大倍率放大时，可能需要调大该数值。"
 
 #: core/ui/settings_video.cpp:305
 msgid "Maximum Layers"
-msgstr ""
+msgstr "最大层数"
 
 #: core/ui/settings_video.cpp:306
 msgid "Maximum number of transparent layers. May need to be increased for some complex scenes. Decreasing it may improve performance."
-msgstr ""
+msgstr "透明图层的最大数量。对于某些复杂的场景，可能需要增加此数值。降低此数值可能会提高性能。"
 
 #: core/ui/settings_video.cpp:309
 msgid "Performance"
-msgstr ""
+msgstr "性能"
 
 #: core/ui/settings_video.cpp:311
 msgid "Automatic Frame Skipping:"
-msgstr ""
+msgstr "自动跳帧："
 
 #: core/ui/settings_video.cpp:313 core/ui/settings_video.cpp:338
 #: core/ui/settings_network.cpp:89
 msgid "Disabled"
-msgstr ""
+msgstr "已禁用"
 
 #: core/ui/settings_video.cpp:313
 msgid "No frame skipping"
-msgstr ""
+msgstr "无跳帧"
 
 #: core/ui/settings_video.cpp:315
 msgid "Normal"
-msgstr ""
+msgstr "正常"
 
 #: core/ui/settings_video.cpp:315
 msgid "Skip a frame when the GPU and CPU are both running slow"
-msgstr ""
+msgstr "当 GPU 和 CPU 运行速度都较慢时，跳过一帧"
 
 #: core/ui/settings_video.cpp:317
 msgid "Maximum"
-msgstr ""
+msgstr "最大跳帧数"
 
 #: core/ui/settings_video.cpp:317
 msgid "Skip a frame when the GPU is running slow"
-msgstr ""
+msgstr "当 GPU 运行缓慢时跳过一帧"
 
 #: core/ui/settings_video.cpp:320
 msgid "Frame Skipping"
-msgstr ""
+msgstr "跳帧"
 
 #: core/ui/settings_video.cpp:321
 msgid "Number of frames to skip between two actually rendered frames"
-msgstr ""
+msgstr "渲两帧，跳一帧"
 
 #: core/ui/settings_video.cpp:322
 msgid "Shadows"
-msgstr ""
+msgstr "阴影"
 
 #: core/ui/settings_video.cpp:323
 msgid "Enable modifier volumes, usually used for shadows"
-msgstr ""
+msgstr "启用修改器体积，通常用于阴影"
 
 #: core/ui/settings_video.cpp:324
 msgid "Fog"
-msgstr ""
+msgstr "雾效"
 
 #: core/ui/settings_video.cpp:324
 msgid "Enable fog effects"
-msgstr ""
+msgstr "启用雾效"
 
 #: core/ui/settings_video.cpp:327 core/ui/settings.cpp:311
 msgid "Advanced"
-msgstr ""
+msgstr "高级"
 
 #: core/ui/settings_video.cpp:329
 msgid "Delay Frame Swapping"
-msgstr ""
+msgstr "延迟帧交换"
 
 #: core/ui/settings_video.cpp:330
 msgid "Useful to avoid flashing screen or glitchy videos. Not recommended on slow platforms"
-msgstr ""
+msgstr "有助于避免屏幕闪烁或视频卡顿。不建议在运行缓慢的设备上使用"
 
 #: core/ui/settings_video.cpp:331
 msgid "Fix Upscale Bleeding Edge"
-msgstr ""
+msgstr "修复Upscale Bleeding Edge"
 
 #: core/ui/settings_video.cpp:332
 msgid "Helps with texture bleeding case when upscaling. Disabling it can help if pixels are warping when upscaling in 2D games (MVC2, CVS, KOF, etc.)"
-msgstr ""
+msgstr "有助于解决放大时纹理溢出问题。如果在2D游戏（如《MVC2》、《CVS》、《KOF》等）中放大时出现像素变形，禁用此选项可能会有所帮助。"
 
 #: core/ui/settings_video.cpp:333
 msgid "Native Depth Interpolation"
-msgstr ""
+msgstr "原生深度插值"
 
 #: core/ui/settings_video.cpp:334
 msgid "Helps with texture corruption and depth issues on AMD GPUs. Can also help Intel GPUs in some cases."
-msgstr ""
+msgstr "有助于解决 AMD 显卡上的纹理损坏和深度问题。在某些情况下，对英特尔显卡也有帮助。"
 
 #: core/ui/settings_video.cpp:335
 msgid "Copy Rendered Textures to VRAM"
-msgstr ""
+msgstr "将渲染后的纹理复制到VRAM中"
 
 #: core/ui/settings_video.cpp:336
 msgid "Copy rendered-to textures back to VRAM. Slower but accurate"
-msgstr ""
+msgstr "将渲染后的纹理复制回显存。虽然速度较慢，但更准确"
 
 #: core/ui/settings_video.cpp:375
 msgid "Anisotropic Filtering"
-msgstr ""
+msgstr "各向异性过滤"
 
 #: core/ui/settings_video.cpp:377
 msgid "Higher values make textures viewed at oblique angles look sharper, but are more demanding on the GPU. This option only has a visible impact on mipmapped textures."
-msgstr ""
+msgstr "数值越高，从倾斜角度观察时纹理看起来越清晰，但对 GPU 的要求也越高。此选项仅对采用 MIP 映射的纹理有明显影响。"
 
 #: core/ui/settings_video.cpp:379
 msgid "Texture Filtering:"
-msgstr ""
+msgstr "纹理过滤："
 
 #: core/ui/settings_video.cpp:381 core/ui/settings_general.cpp:231
 #: core/ui/settings_general.cpp:235 core/ui/settings_general.cpp:240
 msgid "Default"
-msgstr ""
+msgstr "默认"
 
 #: core/ui/settings_video.cpp:381
 msgid "Use the game's default texture filtering"
-msgstr ""
+msgstr "使用游戏的默认纹理过滤"
 
 #: core/ui/settings_video.cpp:383
 msgid "Force Nearest-Neighbor"
-msgstr ""
+msgstr "强制使用最近邻采样"
 
 #: core/ui/settings_video.cpp:383
 msgid "Force nearest-neighbor filtering for all textures. Crisper appearance, but may cause various rendering issues. This option usually does not affect performance."
-msgstr ""
+msgstr "对所有纹理强制使用最近邻过滤。画面观感会更锐利，但可能引发各类渲染异常。该选项通常不会影响性能。"
 
 #: core/ui/settings_video.cpp:385
 msgid "Force Linear"
-msgstr ""
+msgstr "强制线性"
 
 #: core/ui/settings_video.cpp:385
 msgid "Force linear filtering for all textures. Smoother appearance, but may cause various rendering issues. This option usually does not affect performance."
-msgstr ""
+msgstr "强制对所有纹理进行线性滤波。外观更平滑，但可能会导致各种渲染问题。此选项通常不会影响性能。"
 
 #: core/ui/settings_video.cpp:388
 msgid "Show FPS Counter"
-msgstr ""
+msgstr "显示帧率"
 
 #: core/ui/settings_video.cpp:388
 msgid "Show on-screen frame/sec counter"
-msgstr ""
+msgstr "在屏幕上显示你的帧率"
 
 #: core/ui/settings_video.cpp:393
 msgid "Video Routing (Syphon)"
-msgstr ""
+msgstr "使用 Syphon 进行视频路由"
 
 #: core/ui/settings_video.cpp:396
 msgid "Video Routing (Spout)"
-msgstr ""
+msgstr "使用 Spout 进行视频路由"
 
 #: core/ui/settings_video.cpp:398
 msgid "Video Routing (Only available with OpenGL or DirectX 11)"
-msgstr ""
+msgstr "视频路由（仅支持 OpenGL 或 DirectX 11）"
 
 #: core/ui/settings_video.cpp:404
 msgid "Send video content to another program"
-msgstr ""
+msgstr "将视频内容发送至另一个程序"
 
 #: core/ui/settings_video.cpp:405
 msgid "e.g. Route GPU texture to OBS Studio directly instead of using CPU intensive Display/Window Capture"
-msgstr ""
+msgstr "例如：将 GPU 纹理直接传输到 OBS Studio，而不是使用会占用大量 CPU 资源的显示/窗口捕获功能"
 
 #: core/ui/settings_video.cpp:409
 msgid "Scale down before sending"
-msgstr ""
+msgstr "发送前压缩尺寸"
 
 #: core/ui/settings_video.cpp:409
 msgid "Could increase performance when sharing a smaller texture, YMMV"
-msgstr ""
+msgstr "在共享较小纹理时可能会提高性能，具体效果因人而异"
 
 #: core/ui/settings_video.cpp:413
 msgid "Output vertical resolution"
-msgstr ""
+msgstr "输出垂直分辨率"
 
 #: core/ui/settings_video.cpp:418
 #, c-format
 msgid "Output texture size: %d x %d"
-msgstr ""
+msgstr " 输出纹理尺寸：%d × %d"
 
 #: core/ui/settings_general.cpp:51
 msgid "Set"
-msgstr ""
+msgstr "集合"
 
 #: core/ui/settings_general.cpp:108 core/ui/settings_general.cpp:293
 #: core/ui/gui_cheats.cpp:102
 msgid "Add"
-msgstr ""
+msgstr "添加"
 
 #: core/ui/settings_general.cpp:161 core/ui/gui.cpp:745
 msgid "Select a Content Folder"
-msgstr ""
+msgstr "选择数据文件夹"
 
 #: core/ui/settings_general.cpp:191
 msgid "System Default"
-msgstr ""
+msgstr "默认"
 
 #: core/ui/settings_general.cpp:211
 msgid "UI Language"
-msgstr ""
+msgstr "软件语言"
 
 #: core/ui/settings_general.cpp:231
 msgid "Japanese"
-msgstr ""
+msgstr "日语"
 
 #: core/ui/settings_general.cpp:231
 msgid "English"
-msgstr ""
+msgstr "英语"
 
 #: core/ui/settings_general.cpp:231
 msgid "German"
-msgstr ""
+msgstr "德语"
 
 #: core/ui/settings_general.cpp:231
 msgid "French"
-msgstr ""
+msgstr "法语"
 
 #: core/ui/settings_general.cpp:231
 msgid "Spanish"
-msgstr ""
+msgstr "西班牙语"
 
 #: core/ui/settings_general.cpp:231
 msgid "Italian"
-msgstr ""
+msgstr "意大利语"
 
 #: core/ui/settings_general.cpp:232
 msgid "Dreamcast Language"
-msgstr ""
+msgstr "Dreamcast 语言"
 
 #: core/ui/settings_general.cpp:233
 msgid "The language as configured in the Dreamcast BIOS"
-msgstr ""
+msgstr "Dreamcast BIOS 中配置的语言"
 
 #: core/ui/settings_general.cpp:236
 msgid "Broadcast"
-msgstr ""
+msgstr "Broadcast"
 
 #: core/ui/settings_general.cpp:237
 msgid "TV broadcasting standard for non-VGA modes"
-msgstr ""
+msgstr "非VGA模式的电视广播标准"
 
 #: core/ui/settings_general.cpp:240 core/ui/settings_general.cpp:241
 msgid "Japan"
@@ -1069,31 +1069,31 @@ msgstr ""
 
 #: core/ui/settings_general.cpp:244
 msgid "BIOS region"
-msgstr ""
+msgstr "BIOS区域"
 
 #: core/ui/settings_general.cpp:246
 msgid "VGA"
-msgstr ""
+msgstr "VGA"
 
 #: core/ui/settings_general.cpp:246
 msgid "RGB Component"
-msgstr ""
+msgstr "RGB Component"
 
 #: core/ui/settings_general.cpp:246
 msgid "TV Composite"
-msgstr ""
+msgstr "TV Composite"
 
 #: core/ui/settings_general.cpp:253
 msgid "Cable"
-msgstr ""
+msgstr "Cable"
 
 #: core/ui/settings_general.cpp:266
 msgid "Video connection type"
-msgstr ""
+msgstr "Video connection type"
 
 #: core/ui/settings_general.cpp:276
 msgid "Content Location"
-msgstr ""
+msgstr "Content Location"
 
 #: core/ui/settings_general.cpp:297 core/ui/settings_general.cpp:361
 msgid "Rescan Content"
