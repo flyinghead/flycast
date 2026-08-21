@@ -437,6 +437,23 @@ retry_ITLB_Match:
 	return MmuError::NONE;
 }
 
+// Some titles load the UTLB with AT still 0 and enable translation last, so
+// UTLB_Sync's on-demand check never fires for them.
+static bool utlbHasRealMapping()
+{
+	for (const TLB_Entry& e : UTLB)
+	{
+		if (e.Data.V == 0)
+			continue;
+		if ((e.Address.VPN & (0xFC000000 >> 10)) == (0xE0000000 >> 10))
+			continue;	// store queue remap
+		if (e.Address.VPN == 0x30040 || e.Address.VPN == 0x30000)
+			continue;	// bogus mappings used by some arcade/VC games, as in UTLB_Sync
+		return true;
+	}
+	return false;
+}
+
 void mmu_set_state()
 {
 	if (CCN_MMUCR.AT == 1)
@@ -449,10 +466,31 @@ void mmu_set_state()
 			mmuOn = true;
 			NOTICE_LOG(SH4, "Enabling Full MMU support");
 		}
+		// WinCE gets here with a loaded UTLB too, after an AT toggle or a
+		// savestate load. Strict mode would only make it slow and raise
+		// faults it never sees, so it has to be ruled out first
+		else if (!mmuOn && utlbHasRealMapping())
+		{
+			mmuOn = true;
+#ifdef FAST_MMU
+			mmuStrict = true;
+#endif
+			static bool logged;
+			if (!logged)
+			{
+				logged = true;
+				NOTICE_LOG(SH4, "Enabling Full MMU support (UTLB loaded before AT, strict TLB)");
+			}
+		}
 	}
 	else
 	{
 		mmuOn = false;
+#ifdef FAST_MMU
+		// strict guests skip this on AT toggles, so we're resetting: don't
+		// let strict mode leak into the next guest
+		mmuStrict = false;
+#endif
 	}
 
 	SetMemoryHandlers();

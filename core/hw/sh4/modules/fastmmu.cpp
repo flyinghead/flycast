@@ -42,6 +42,10 @@ static u32 lru_address;
 // out of the 4K-granular mmuAddressLUT.
 u32 mmuLastPageMask = 0xFFFFF000;
 
+// true for guests the cached path can't serve (sub-4K pages, ASID used as
+// dispatch, emulation driven by protection faults)
+bool mmuStrict = false;
+
 struct TLB_LinkedEntry {
 	TLB_Entry entry;
 	TLB_LinkedEntry *next_entry;
@@ -222,6 +226,29 @@ void ITLB_Sync(u32 entry)
 //Do a full lookup on the UTLB entry's
 MmuError mmu_full_lookup(u32 va, const TLB_Entry** tlb_entry_ret, u32& rv)
 {
+	if (mmuStrict)
+	{
+		// No LRU, no hash cache, no synthesized entries
+		const TLB_Entry *match = nullptr;
+		for (const TLB_Entry& tlb_entry : UTLB)
+		{
+			if (!mmu_match(va, tlb_entry.Address, tlb_entry.Data))
+				continue;
+			if (match != nullptr)
+				return MmuError::TLB_MHIT;
+			match = &tlb_entry;
+			u32 sz = tlb_entry.Data.SZ1 * 2 + tlb_entry.Data.SZ0;
+			u32 mask = mmu_mask[sz];
+			rv = ((tlb_entry.Data.PPN << 10) & mask) | (va & ~mask);
+			lru_mask = mask;
+		}
+		if (match == nullptr)
+			return MmuError::TLB_MISS;
+		if (tlb_entry_ret != nullptr)
+			*tlb_entry_ret = match;
+		return MmuError::NONE;
+	}
+
 	if (lru_entry != NULL)
 	{
 		if (/*lru_entry->Data.V == 1 && */
@@ -315,9 +342,24 @@ MmuError mmu_data_translation(u32 va, u32& rv)
 		return MmuError::NONE;
 	}
 
-	MmuError lookup = mmu_full_lookup(va, nullptr, rv);
+	const TLB_Entry *entry = nullptr;
+	MmuError lookup = mmu_full_lookup(va, &entry, rv);
 	if (lookup == MmuError::NONE)
+	{
 		mmuLastPageMask = lru_mask;
+		if (mmuStrict)
+		{
+			if ((entry->Data.PR >> 1) == 0 && Sh4cntx.sr.MD == 0)
+				return MmuError::PROTECTED;
+			if (translation_type == MMU_TT_DWRITE)
+			{
+				if ((entry->Data.PR & 1) == 0)
+					return MmuError::PROTECTED;
+				else if (entry->Data.D == 0)
+					return MmuError::FIRSTWRITE;
+			}
+		}
+	}
 	if (lookup == MmuError::NONE && (rv & 0x1C000000) == 0x1C000000)
 		// map 1C000000-1FFFFFFF to P4 memory-mapped registers
 		rv |= 0xF0000000;
@@ -339,6 +381,13 @@ template MmuError mmu_data_translation<MMU_TT_DWRITE>(u32 va, u32& rv);
 
 void mmu_flush_table()
 {
+	// TI means the guest is invalidating its own TLB, so the entries have to
+	// go and not just our caches: strict mode matches on the UTLB directly
+	for (TLB_Entry& entry : ITLB)
+		entry.Data.V = 0;
+	for (TLB_Entry& entry : UTLB)
+		entry.Data.V = 0;
+
 	lru_entry = nullptr;
 	flush_cache();
 	mmuAddressLUTFlush(true);
