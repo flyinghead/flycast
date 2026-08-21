@@ -63058,7 +63058,7 @@ struct retro_core_options_v2 options_or = {
 /* RETRO_LANGUAGE_PL */
 
 #define CATEGORY_SYSTEM_LABEL_PL NULL
-#define CATEGORY_SYSTEM_INFO_0_PL "Skonfiguruj ustawienia regionu, języka, BIOS i podstawowego sprzętu."
+#define CATEGORY_SYSTEM_INFO_0_PL "Skonfiguruj ustawienia regionu, języka, BIOS i podstawowe ustawienia sprzętu."
 #define CATEGORY_VIDEO_LABEL_PL "Wideo"
 #define CATEGORY_VIDEO_INFO_0_PL "Skonfiguruj rozdzielczość, przezroczystość niezależną od kolejności i ustawienia efektów wizualnych."
 #define CATEGORY_PERFORMANCE_LABEL_PL "Wydajność"
@@ -63068,8 +63068,8 @@ struct retro_core_options_v2 options_or = {
 #define CATEGORY_INPUT_LABEL_PL "Wejście"
 #define CATEGORY_INPUT_INFO_0_PL "Skonfiguruj ustawienia gamepada i pistoletu świetlnego."
 #define CATEGORY_EXPANSIONS_LABEL_PL "Sloty rozszerzenia kontrolera"
-#define CATEGORY_EXPANSIONS_INFO_0_PL "Wybierz urządzenie (VMU, urządzenie z plotką) podłączone do każdego pola rozszerzenia sterownika."
-#define CATEGORY_VMU_LABEL_PL "Jednostka pamięci wizualnej"
+#define CATEGORY_EXPANSIONS_INFO_0_PL "Wybierz urządzenie (VMU, urządzenie wibracji) podłączone do każdego slotu rozszerzeń kontrolera."
+#define CATEGORY_VMU_LABEL_PL "Karta pamięci (VMU)"
 #define CATEGORY_VMU_INFO_0_PL "Skonfiguruj zapisy VMU według gry i ustawienia widoczności VMU na ekranie."
 #define CORE_OPTION_NAME_REGION_LABEL_PL NULL
 #define OPTION_VAL_JAPAN_PL "Japonia"
@@ -63084,12 +63084,12 @@ struct retro_core_options_v2 options_or = {
 #define OPTION_VAL_FRENCH_PL "francuski"
 #define OPTION_VAL_SPANISH_PL "hiszpański"
 #define OPTION_VAL_ITALIAN_PL "włoski"
-#define CORE_OPTION_NAME_HLE_BIOS_LABEL_PL "HLE BIOS (wymagany restart)"
+#define CORE_OPTION_NAME_HLE_BIOS_LABEL_PL "BIOS HLE (wymagany restart)"
 #define CORE_OPTION_NAME_HLE_BIOS_INFO_0_PL "Wymuś użycie wysokopoziomowej emulacji BIOS."
 #define CORE_OPTION_NAME_ENABLE_DSP_LABEL_PL "Włącz DSP"
 #define CORE_OPTION_NAME_ENABLE_DSP_INFO_0_PL "Włącz emulację DSP audio Dreamcasta (cyfrowy procesor sygnału). Poprawia dokładność generowanego dźwięku, ale zwiększa wymagania wydajności."
-#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_PL "Zezwalaj na przyciski serwisowe Arcade"
-#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_PL "Włącza przycisk SERVICE dla gier arkadowych, aby wprowadzić ustawienia szafy."
+#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_LABEL_PL "Zezwalaj na przyciski serwisowe automatów"
+#define CORE_OPTION_NAME_ALLOW_SERVICE_BUTTONS_INFO_0_PL "Włącza przycisk SERVICE dla gier automatowych, aby wejść do ustawień automatu."
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_LABEL_PL "Ustaw gry NAOMI jako Free Play"
 #define CORE_OPTION_NAME_FORCE_FREEPLAY_INFO_0_PL "Zmień ustawienia gry na monety, aby grać za darmo."
 #define CORE_OPTION_NAME_COIN_LIMIT_LABEL_PL NULL
@@ -63102,7 +63102,7 @@ struct retro_core_options_v2 options_or = {
 #define CORE_OPTION_NAME_DCNET_INFO_0_PL "Użyj usługi DCNet w chmurze dla dostępu do Internetu Dreamcast."
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_LABEL_PL "Rozdzielczość wewnętrzna"
 #define CORE_OPTION_NAME_INTERNAL_RESOLUTION_INFO_0_PL "Modyfikuj rozdzielczość renderowania."
-#define OPTION_VAL_320X240_PL "320x240 (Połowa)"
+#define OPTION_VAL_320X240_PL "320x240 (Pół)"
 #define OPTION_VAL_640X480_PL "640x480 (Natywna)"
 #define OPTION_VAL_800X600_PL NULL
 #define OPTION_VAL_960X720_PL NULL
@@ -63140,25 +63140,25 @@ struct retro_core_options_v2 options_or = {
 #define OPTION_VAL_PAL_N_PL "PAL-N (Argentyna, Paragwaj, Urugwaj)"
 #define OPTION_VAL_PAL_M_PL "PAL-M (Brazylia)"
 #define CORE_OPTION_NAME_SCREEN_ROTATION_LABEL_PL "Orientacja ekranu"
-#define OPTION_VAL_HORIZONTAL_PL NULL
-#define OPTION_VAL_VERTICAL_PL NULL
-#define CORE_OPTION_NAME_ALPHA_SORTING_LABEL_PL NULL
-#define CORE_OPTION_NAME_ALPHA_SORTING_INFO_0_PL NULL
-#define OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_PL NULL
-#define OPTION_VAL_PER_TRIANGLE_NORMAL_PL NULL
-#define OPTION_VAL_PER_PIXEL_ACCURATE_PL NULL
-#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_PL NULL
-#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_INFO_0_PL NULL
+#define OPTION_VAL_HORIZONTAL_PL "Poziomo"
+#define OPTION_VAL_VERTICAL_PL "Pionowo"
+#define CORE_OPTION_NAME_ALPHA_SORTING_LABEL_PL "Sortowanie Alfa"
+#define CORE_OPTION_NAME_ALPHA_SORTING_INFO_0_PL "Wybierz sposób sortowania przezroczystych wielokątów."
+#define OPTION_VAL_PER_STRIP_FAST_LEAST_ACCURATE_PL "Na pasek (szybka, najmniejsza dokładność)"
+#define OPTION_VAL_PER_TRIANGLE_NORMAL_PL "Na trójkąt (normalne)"
+#define OPTION_VAL_PER_PIXEL_ACCURATE_PL "Na piksel (dokładne, ale najwolniejsze)"
+#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_LABEL_PL "Rozmiaru bufora akumulacji pikseli"
+#define CORE_OPTION_NAME_OIT_ABUFFER_SIZE_INFO_0_PL "Wyższe wartości mogą być wymagane dla poprawnego wyjścia wyższych rozdzielczości."
 #define OPTION_VAL_512MB_PL NULL
 #define OPTION_VAL_1GB_PL NULL
 #define OPTION_VAL_2GB_PL NULL
 #define OPTION_VAL_4GB_PL NULL
-#define CORE_OPTION_NAME_OIT_LAYERS_LABEL_PL NULL
-#define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_PL NULL
-#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_PL "Emulacja pełnego bufora ramki"
-#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_PL NULL
-#define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_PL NULL
-#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_PL NULL
+#define CORE_OPTION_NAME_OIT_LAYERS_LABEL_PL "Maksimum przezroczystych warstw"
+#define CORE_OPTION_NAME_OIT_LAYERS_INFO_0_PL "Dla złożonych scen mogą być wymagane wyższe wartości."
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_LABEL_PL "Pełna emulacja framebuffera"
+#define CORE_OPTION_NAME_EMULATE_FRAMEBUFFER_INFO_0_PL "Włącz pełną emulację framebuffera w VRAM. To jest przydatne w grach, które odczytują i zapisują prosto do framebuffera w VRAM. Gdy włączone, wewnętrzna rozdzielczość jest wymuszona na 640x480 i może to mieć poważny wpływ na wydajność."
+#define CORE_OPTION_NAME_ENABLE_RTTB_LABEL_PL "Włącz bufor RTT (Render to Texture)"
+#define CORE_OPTION_NAME_ENABLE_RTTB_INFO_0_PL "Skopiuj wyrenderowane tekstury z powrotem z GPU do VRAM-u. Ta opcja jest normalnie włączona dla gier, które ją wymagają. Gdy włączone, upscaling tekstur jest wyłączony i może to mieć wpływ na wydajność."
 #define CORE_OPTION_NAME_MIPMAPPING_LABEL_PL NULL
 #define CORE_OPTION_NAME_MIPMAPPING_INFO_0_PL "Gdy włączone, tekstury będą używać mniejszej wersji siebie, gdy pojawią się daleko, może to zwiększyć wydajność i zmniejszyć migotanie."
 #define CORE_OPTION_NAME_FOG_LABEL_PL "Efekty mgły"
@@ -63167,44 +63167,44 @@ struct retro_core_options_v2 options_or = {
 #define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_LABEL_PL "Filtrowanie anizotropowe"
 #define CORE_OPTION_NAME_ANISOTROPIC_FILTERING_INFO_0_PL "Zwiększa jakość tekstur na powierzchniach znajdujących się pod skośnymi kątami widoku w odniesieniu do kamery. Wyższe wartości są bardziej obciążać GPU. Zmiany w tym ustawieniu mają zastosowanie tylko po ponownym uruchomieniu."
 #define CORE_OPTION_NAME_TEXTURE_FILTERING_LABEL_PL "Filtrowanie tekstur"
-#define CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_PL NULL
-#define OPTION_VAL_1_PL NULL
-#define OPTION_VAL_2_PL "Wymuś liniowy"
-#define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_PL NULL
-#define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_PL NULL
+#define CORE_OPTION_NAME_TEXTURE_FILTERING_INFO_0_PL "Tryb filtrowania tekstur do użycia. Może to być używane do wymuszenia konkretnego trybu filtrowania na wszystkich tekstura, aby uzyskać ostrzejszy (lub delikatniejszy) wygląd niż Domyślny. Wartości inne niż Domyślna mogą powodować róźne błędy z renderowaniem. Zmiana tego ustawienia ma zastosowanie po restarcie."
+#define OPTION_VAL_1_PL "Wymuś najbliższego sąsiada"
+#define OPTION_VAL_2_PL "Wymuś liniowe"
+#define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_LABEL_PL "Opóźnij podmianę klatki"
+#define CORE_OPTION_NAME_DELAY_FRAME_SWAPPING_INFO_0_PL "Przydatne do unikania migających ekranów lub popsutych filmów. Nie zalecane na wolnych platformach."
 #define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_LABEL_PL "Wykrywanie zmian częstotliwości klatek"
-#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_PL NULL
-#define CORE_OPTION_NAME_PVR2_FILTERING_LABEL_PL NULL
-#define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_PL NULL
-#define CORE_OPTION_NAME_TEXUPSCALE_LABEL_PL NULL
-#define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_PL NULL
+#define CORE_OPTION_NAME_DETECT_VSYNC_SWAP_INTERVAL_INFO_0_PL "Powiadom frontend, gdy wewnętrzna liczba klatek się zmienia (np. z 60 fps na 30 fps). Polepsza tempo klatek w grach, które działają w zablokowanych 30 lub 20 fps, ale powinno być wyłączone dla gier z odblokowana (niestabilną) liczbą klatek (np. Ecco the Dolphin. Unreal Tournament). Uwaga: Niedostępne gdy 'Automatycznie pomijaj klatki' jest włączone."
+#define CORE_OPTION_NAME_PVR2_FILTERING_LABEL_PL "Filtr post-processing PowerVR2"
+#define CORE_OPTION_NAME_PVR2_FILTERING_INFO_0_PL "Przetwarzaj wyrenderowany obraz, aby symulować efekty specyficzne dla GPU PowerVR2 i analogowych sygnałów wideo."
+#define CORE_OPTION_NAME_TEXUPSCALE_LABEL_PL "Upscaling tekstur (xBRZ)"
+#define CORE_OPTION_NAME_TEXUPSCALE_INFO_0_PL "Ulepsz ręcznie rysowaną grafikę pixel art 2D. Powinno być używane tylko z pikselowymi grami 2D."
 #define OPTION_VAL_2_O27_PL NULL
 #define OPTION_VAL_4_PL NULL
 #define OPTION_VAL_6_PL NULL
-#define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_PL NULL
-#define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_INFO_0_PL NULL
-#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_PL NULL
-#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_PL NULL
-#define CORE_OPTION_NAME_FIX_UPSCALE_BLEEDING_EDGE_LABEL_PL NULL
-#define CORE_OPTION_NAME_FIX_UPSCALE_BLEEDING_EDGE_INFO_0_PL NULL
-#define CORE_OPTION_NAME_THREADED_RENDERING_LABEL_PL NULL
-#define CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_PL NULL
+#define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_LABEL_PL "Filtr maksymalnego rozmiaru upscalowanych tekstur"
+#define CORE_OPTION_NAME_TEXUPSCALE_MAX_FILTERED_TEXTURE_SIZE_INFO_0_PL "Wybierz maksymalną wartość rozmiaru tekstur do upscalowania, jeżeli rozmiar tekstury jest większy niż wybrana wartość nie będzie ona upscalowana."
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_LABEL_PL "Natywna interpolacja głębokości"
+#define CORE_OPTION_NAME_NATIVE_DEPTH_INTERPOLATION_INFO_0_PL "Pomaga z uszkadzaniem tekstur i problemami z głębią na kartach graficznych AMD. W niektórych przypadkach może też pomagać na kartach Intela."
+#define CORE_OPTION_NAME_FIX_UPSCALE_BLEEDING_EDGE_LABEL_PL "Napraw rozlewanie się tesktur przy upscalingu"
+#define CORE_OPTION_NAME_FIX_UPSCALE_BLEEDING_EDGE_INFO_0_PL "Pomaga z rozlewaniem się tekstur przy upscalowaniu. Wyłączenie tego może pomóc jeżeli tekstury są powyginane podczas upscalowania gier 2D (MVC2, CVS, KOF, itp.)"
+#define CORE_OPTION_NAME_THREADED_RENDERING_LABEL_PL "Renderowanie wielowątkowe"
+#define CORE_OPTION_NAME_THREADED_RENDERING_INFO_0_PL "Uruchamia GPU i CPU w różnych wątkach. Bardzo zalecane."
 #define CORE_OPTION_NAME_AUTO_SKIP_FRAME_LABEL_PL "Automatycznie pomijaj klatki"
 #define CORE_OPTION_NAME_AUTO_SKIP_FRAME_INFO_0_PL "Automatycznie pomijaj klatki gdy emulator działa powoli. Uwaga: To ustawienie ma zastosowanie tylko wtedy, gdy włączona jest opcja \"Renderowanie wielowątkowe\"."
 #define OPTION_VAL_SOME_PL "Normalny"
 #define OPTION_VAL_MORE_PL "Maksimum"
 #define CORE_OPTION_NAME_FRAME_SKIPPING_LABEL_PL "Pomijanie klatek"
 #define CORE_OPTION_NAME_FRAME_SKIPPING_INFO_0_PL "Ustawia liczbę klatek do pominięcia pomiędzy wyświetlanymi klatkami."
-#define CORE_OPTION_NAME_WIDESCREEN_CHEATS_LABEL_PL NULL
-#define CORE_OPTION_NAME_WIDESCREEN_CHEATS_INFO_0_PL NULL
-#define CORE_OPTION_NAME_WIDESCREEN_HACK_LABEL_PL NULL
-#define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_PL NULL
+#define CORE_OPTION_NAME_WIDESCREEN_CHEATS_LABEL_PL "Kody na szeroki ekran (Wymagany restart)"
+#define CORE_OPTION_NAME_WIDESCREEN_CHEATS_INFO_0_PL "Aktywuje kody, które pozwalają na wyświetlanie niektórych gier w szerokim formacie ekranu."
+#define CORE_OPTION_NAME_WIDESCREEN_HACK_LABEL_PL "Hack trybu szerokiego ekranu"
+#define CORE_OPTION_NAME_WIDESCREEN_HACK_INFO_0_PL "Rysuj geometrię poza normalnymi proporcjami 4:3. Może powodować błędy graficzne w odkrytych obszarach."
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_LABEL_PL "Szybkie ładowanie GD-ROM (niedokładne)"
 #define CORE_OPTION_NAME_GDROM_FAST_LOADING_INFO_0_PL "Przyśpiesza ładowanie GD-ROM."
 #define CORE_OPTION_NAME_DC_32MB_MOD_LABEL_PL NULL
 #define CORE_OPTION_NAME_DC_32MB_MOD_INFO_0_PL "Włącza modyfikację pamięci RAM 32MB dla Dreamcast. Może wpływać na kompatybilność"
 #define CORE_OPTION_NAME_SH4CLOCK_LABEL_PL "Podkręcanie/skręcanie procesora SH4"
-#define CORE_OPTION_NAME_SH4CLOCK_INFO_0_PL "Zmień główny zegar procesora SH4 z domyślnego 200 MHz. Odzwierciedlanie może pomóc spowolnić platformy. Przełączanie może zwiększyć szybkość klatek dla niektórych gier. Używaj ostrożnie."
+#define CORE_OPTION_NAME_SH4CLOCK_INFO_0_PL "Zmień zegar głównego procesora SH4 z domyślnych 200 MHz. Skręcanie może pomóc na powolnych platformach. Podkręcanie może zwiększyć liczbę klatek w niektórych grach. Używać z rozwagą."
 #define OPTION_VAL_100_PL NULL
 #define OPTION_VAL_110_PL NULL
 #define OPTION_VAL_120_PL NULL
@@ -63338,8 +63338,8 @@ struct retro_core_options_v2 options_or = {
 #define CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_PL "Włącz trzymanie danych VMU na podłączonym emulatorze DreamPotato. Gdy włączone, lokalny plik zapisu VMU nie jest używany."
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_PL "Pokaż ustawienia wyświetlacza VMU."
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_PL "Pokaż ustawienia wyświetlacza VMU"
-#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_PL NULL
-#define CORE_OPTION_NAME_VMU1_SCREEN_DISPLAY_LABEL_PL NULL
+#define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_PL "Włącz konfigurowanie widoczności, rozmiaru, pozycji i koloru emulowanych ekranów LCD VMU UWAGA: Szybkie menu może wymagać przełączania, aby to ustawienie zaczęło obowiązywać."
+#define CORE_OPTION_NAME_VMU1_SCREEN_DISPLAY_LABEL_PL "Wyświetlanie 1 ekranu VMU"
 #define CORE_OPTION_NAME_VMU1_SCREEN_POSITION_LABEL_PL "Pozycja 1 ekranu VMU"
 #define OPTION_VAL_UPPER_LEFT_PL "U góry po lewej"
 #define OPTION_VAL_UPPER_RIGHT_PL "U góry po prawej"
@@ -63378,24 +63378,24 @@ struct retro_core_options_v2 options_or = {
 #define CORE_OPTION_NAME_VMU1_PIXEL_OFF_COLOR_LABEL_PL "Kolor wyłączonych pikseli 1 ekranu VMU"
 #define CORE_OPTION_NAME_VMU1_SCREEN_OPACITY_LABEL_PL "Przezroczystość 1 ekranu VMU"
 #define OPTION_VAL_40_PL NULL
-#define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_PL NULL
+#define CORE_OPTION_NAME_VMU2_SCREEN_DISPLAY_LABEL_PL "Wyświetlanie 2 ekranu VMU"
 #define CORE_OPTION_NAME_VMU2_SCREEN_POSITION_LABEL_PL "Pozycja 2 ekranu VMU"
 #define CORE_OPTION_NAME_VMU2_SCREEN_SIZE_MULT_LABEL_PL "Rozmiar 2 ekranu VMU"
 #define CORE_OPTION_NAME_VMU2_PIXEL_ON_COLOR_LABEL_PL "Kolor włączonych pikseli 2 ekranu VMU"
 #define CORE_OPTION_NAME_VMU2_PIXEL_OFF_COLOR_LABEL_PL "Kolor wyłączonych pikseli 2 ekranu VMU"
 #define CORE_OPTION_NAME_VMU2_SCREEN_OPACITY_LABEL_PL "Przezroczystość 2 ekranu VMU"
-#define CORE_OPTION_NAME_VMU3_SCREEN_DISPLAY_LABEL_PL NULL
+#define CORE_OPTION_NAME_VMU3_SCREEN_DISPLAY_LABEL_PL "Wyświetlanie 3 ekranu VMU"
 #define CORE_OPTION_NAME_VMU3_SCREEN_POSITION_LABEL_PL "Pozycja 3 ekranu VMU"
 #define CORE_OPTION_NAME_VMU3_SCREEN_SIZE_MULT_LABEL_PL "Rozmiar 3 ekranu VMU"
 #define CORE_OPTION_NAME_VMU3_PIXEL_ON_COLOR_LABEL_PL "Kolor włączonych pikseli 3 ekranu VMU"
 #define CORE_OPTION_NAME_VMU3_PIXEL_OFF_COLOR_LABEL_PL "Kolor wyłączonych pikseli 3 ekranu VMU"
 #define CORE_OPTION_NAME_VMU3_SCREEN_OPACITY_LABEL_PL "Przezroczystość 3 ekranu VMU"
-#define CORE_OPTION_NAME_VMU4_SCREEN_DISPLAY_LABEL_PL NULL
+#define CORE_OPTION_NAME_VMU4_SCREEN_DISPLAY_LABEL_PL "Wyświetlanie 4 ekranu VMU"
 #define CORE_OPTION_NAME_VMU4_SCREEN_POSITION_LABEL_PL "Pozycja 4 ekranu VMU"
-#define CORE_OPTION_NAME_VMU4_SCREEN_SIZE_MULT_LABEL_PL NULL
-#define CORE_OPTION_NAME_VMU4_PIXEL_ON_COLOR_LABEL_PL NULL
-#define CORE_OPTION_NAME_VMU4_PIXEL_OFF_COLOR_LABEL_PL NULL
-#define CORE_OPTION_NAME_VMU4_SCREEN_OPACITY_LABEL_PL NULL
+#define CORE_OPTION_NAME_VMU4_SCREEN_SIZE_MULT_LABEL_PL "Rozmiar 4 ekranu VMU"
+#define CORE_OPTION_NAME_VMU4_PIXEL_ON_COLOR_LABEL_PL "Kolor włączonych pikseli 4 ekranu VMU"
+#define CORE_OPTION_NAME_VMU4_PIXEL_OFF_COLOR_LABEL_PL "Kolor wyłączonych pikseli 4 ekranu VMU"
+#define CORE_OPTION_NAME_VMU4_SCREEN_OPACITY_LABEL_PL "Przezroczystość 4 ekranu VMU"
 
 struct retro_core_option_v2_category option_cats_pl[] = {
    {
