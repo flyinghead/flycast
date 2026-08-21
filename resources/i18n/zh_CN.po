@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-22 12:49+0100\n"
-"PO-Revision-Date: 2026-08-21 16:00\n"
+"PO-Revision-Date: 2026-08-21 22:33\n"
 "Last-Translator: \n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
@@ -582,7 +582,7 @@ msgstr "缺少计数或目标地址"
 
 #: core/cheats.cpp:971
 msgid "Master codes aren't supported"
-msgstr "不支持主密码"
+msgstr "不支持主代码"
 
 #: core/cheats.cpp:1001 core/cheats.cpp:1030
 msgid "Unsupported conditional code"
@@ -1132,7 +1132,7 @@ msgstr "在访达中显示"
 
 #: core/ui/settings_general.cpp:355
 msgid "The folder where Flycast saves configuration files and VMUs. BIOS files should be in a subfolder named \"data\""
-msgstr "Flycast 用于保存配置文件和 VMU 的文件夹。BIOS 文件应位于名为“data”的子文件夹中。"
+msgstr "Flycast 用于保存配置文件和 VMU 的文件夹。BIOS 文件应位于名为“data”的子文件夹中"
 
 #: core/ui/settings_general.cpp:366
 msgid "Box Art Game List"
@@ -1208,11 +1208,11 @@ msgstr "使用 SAF 文件选择器"
 
 #: core/ui/settings_general.cpp:395
 msgid "Use Android Storage Access Framework file picker to select folders and files. Ignored on Android 10 and later."
-msgstr "使用安卓存储访问框架（SAF）文件选择器选取文件夹和文件。在 Android 10 及以上版本中该设置无效。"
+msgstr "使用安卓存储访问框架（SAF）文件选择器选取文件夹和文件。在 Android 10 及以上版本中该设置无效"
 
 #: core/ui/settings_general.cpp:398
 msgid "Automatic State:"
-msgstr "自动加载及时存档"
+msgstr "自动加载即时存档"
 
 #: core/ui/settings_general.cpp:399 core/ui/gui_cheats.cpp:104
 msgid "Load"
@@ -1433,7 +1433,7 @@ msgstr "双摇杆"
 
 #: core/ui/settings_controls.cpp:49
 msgid "Arcade/Ascii Stick"
-msgstr "街机/ASCII手柄"
+msgstr "Arcade/Ascii Stick"
 
 #: core/ui/settings_controls.cpp:50
 msgid "Maracas Controller"
@@ -1894,7 +1894,7 @@ msgstr "启用底层原始输入"
 
 #: core/ui/settings_controls.cpp:1104
 msgid "Supports multiple pointing devices (mice, light guns) and keyboards"
-msgstr "1首选完整版（空间充足）：支持多种定点设备，包括鼠标、光枪与键盘"
+msgstr "支持多种定点设备，包括鼠标、光枪与键盘"
 
 #: core/ui/settings_controls.cpp:1108
 msgid "Dreamcast Devices"
