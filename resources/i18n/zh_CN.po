@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-22 12:49+0100\n"
-"PO-Revision-Date: 2026-08-21 11:32\n"
+"PO-Revision-Date: 2026-08-21 12:48\n"
 "Last-Translator: \n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
@@ -1855,100 +1855,100 @@ msgstr ""
 
 #: core/ui/settings_controls.cpp:993
 msgid "Value sent to the game at 100% thumbstick deflection. Values greater than 100% will saturate before full deflection of the thumbstick."
-msgstr ""
+msgstr "摇杆推至满行程（100%偏移）时发送给游戏的数值。若该数值大于100%，摇杆还未推到最大位置就会达到输出饱和。"
 
 #: core/ui/settings_controls.cpp:1006
 msgid "Physical Devices"
-msgstr ""
+msgstr "输入设备"
 
 #: core/ui/settings_controls.cpp:1010 core/ui/settings_controls.cpp:1021
 msgid "System"
-msgstr ""
+msgstr "系统"
 
 #: core/ui/settings_controls.cpp:1011 core/ui/settings_controls.cpp:1024
 #: core/ui/gui_cheats.cpp:71
 msgid "Name"
-msgstr ""
+msgstr "设备名称"
 
 #: core/ui/settings_controls.cpp:1045
 #, c-format
 msgid "DreamLink: %s"
-msgstr ""
+msgstr "对战线缆：%s"
 
 #: core/ui/settings_controls.cpp:1081
 msgid "Edit Layout"
-msgstr ""
+msgstr "编辑按键布局"
 
 #: core/ui/settings_controls.cpp:1092 core/ui/gui.cpp:621 core/ui/gui.cpp:879
 #: core/ui/settings.cpp:213
 msgid "Settings"
-msgstr ""
+msgstr "设置"
 
 #: core/ui/settings_controls.cpp:1102
 msgid "Mouse sensitivity"
-msgstr ""
+msgstr "鼠标灵敏度"
 
 #: core/ui/settings_controls.cpp:1104
 msgid "Use Raw Input"
-msgstr ""
+msgstr "启用底层原始输入"
 
 #: core/ui/settings_controls.cpp:1104
 msgid "Supports multiple pointing devices (mice, light guns) and keyboards"
-msgstr ""
+msgstr "1首选完整版（空间充足）：支持多种定点设备，包括鼠标、光枪与键盘"
 
 #: core/ui/settings_controls.cpp:1108
 msgid "Dreamcast Devices"
-msgstr ""
+msgstr "Dreamcast 设备"
 
 #: core/ui/settings_controls.cpp:1121
 #, c-format
 msgid "Port %c"
-msgstr ""
+msgstr "端口 %c"
 
 #: core/ui/settings_controls.cpp:1190
 msgid "Crosshair color"
-msgstr ""
+msgstr "光枪准星颜色"
 
 #: core/ui/settings_controls.cpp:1194
 msgid "Crosshair"
-msgstr ""
+msgstr "十字准星"
 
 #: core/ui/settings_controls.cpp:1217
 msgid "Per Game VMU A1"
-msgstr ""
+msgstr "每个游戏独立A1‑VMU"
 
 #: core/ui/settings_controls.cpp:1217
 msgid "When enabled, each game has its own VMU on port 1 of controller A."
-msgstr ""
+msgstr "启用此功能后，每款游戏都会在控制器A的1号端口上拥有自己的VMU。"
 
 #: core/ui/settings_controls.cpp:1220
 msgid "Use Physical VMU Storage"
-msgstr ""
+msgstr "使用物理 VMU 存储"
 
 #: core/ui/settings_controls.cpp:1221
 msgid "Enables read and write access to physical VMU storage via DreamPicoPort or DreamPotato. This is not compatible with load state events."
-msgstr ""
+msgstr "通过DreamPicoPort或DreamPotato启用对实体VMU记忆卡的读写访问。该功能与即时读档不兼容。"
 
 #: core/ui/settings_controls.cpp:1226
 msgid "Crosshair Size"
-msgstr ""
+msgstr "准星大小"
 
 #: core/ui/gui_achievements.cpp:286 core/ui/gui_cheats.cpp:103
 msgid "Close"
-msgstr ""
+msgstr "关闭"
 
 #: core/ui/gui_achievements.cpp:297
 #, c-format
 msgid "You have unlocked %d of %d achievements and %d of %d points."
-msgstr ""
+msgstr "你已解锁 %d 个（共 %d 个）成就，并获得 %d 分（共 %d 分）。"
 
 #: core/ui/gui_achievements.cpp:325
 msgid "Locked"
-msgstr ""
+msgstr "已锁定"
 
 #: core/ui/gui_achievements.cpp:325
 msgid "Active Challenges"
-msgstr ""
+msgstr "当前挑战"
 
 #: core/ui/gui_achievements.cpp:325
 msgid "Almost There"
@@ -1956,108 +1956,109 @@ msgstr ""
 
 #: core/ui/gui_achievements.cpp:327
 msgid "Unlocked"
-msgstr ""
+msgstr "快到了"
 
 #: core/ui/gui_achievements.cpp:327
 msgid "Recently Unlocked"
-msgstr ""
+msgstr "最近解锁"
 
 #: core/ui/mainui.cpp:66
 msgid "Renderer error:"
-msgstr ""
+msgstr "渲染器错误："
 
 #: core/ui/mainui.cpp:67
 msgid "The game has been paused but it is recommended to restart Flycast"
-msgstr ""
+msgstr "游戏已暂停，但建议重新启动 Flycast"
 
 #: core/ui/mainui.cpp:87
 msgid "Renderer initialization failed.\n"
 "Please select a different graphics API"
-msgstr ""
+msgstr "渲染器初始化失败。\n"
+"请选择其他图形 API"
 
 #: core/ui/gui.cpp:469
 msgid "Flycast has stopped."
-msgstr ""
+msgstr "Flycast 已停止运行。"
 
 #: core/ui/gui.cpp:576
 msgid "Resume"
-msgstr ""
+msgstr "继续游戏"
 
 #: core/ui/gui.cpp:585
 msgid "Cheats"
-msgstr ""
+msgstr "金手指"
 
 #: core/ui/gui.cpp:592
 msgid "Achievements"
-msgstr ""
+msgstr "成就"
 
 #: core/ui/gui.cpp:598
 msgid "Barcode Card"
-msgstr ""
+msgstr "条码读卡卡"
 
 #: core/ui/gui.cpp:609
 msgid "Insert Disk"
-msgstr ""
+msgstr "插入光盘"
 
 #: core/ui/gui.cpp:609
 msgid "Eject Disk"
-msgstr ""
+msgstr "弹出光盘"
 
 #: core/ui/gui.cpp:625
 msgid "Close Game"
-msgstr ""
+msgstr "关闭游戏"
 
 #: core/ui/gui.cpp:654
 #, c-format
 msgid "Slot %d"
-msgstr ""
+msgstr "插槽 %d"
 
 #: core/ui/gui.cpp:664
 msgid "Empty"
-msgstr ""
+msgstr "空"
 
 #: core/ui/gui.cpp:692 core/ui/gui_cheats.cpp:48
 msgid "OK"
-msgstr ""
+msgstr "确定"
 
 #: core/ui/gui.cpp:712 core/ui/gui.cpp:713
 msgid "Incorrect Content Location?"
-msgstr ""
+msgstr "找不到这个游戏，你是不是放错文件夹了？"
 
 #: core/ui/gui.cpp:716
 #, c-format
 msgid "Scanned %d folders but no game can be found!"
-msgstr ""
+msgstr "已扫描 %d 个文件夹，但未找到任何游戏！"
 
 #: core/ui/gui.cpp:721
 msgid "Reselect"
-msgstr ""
+msgstr "重新选择"
 
 #: core/ui/gui.cpp:730 core/ui/gui.cpp:908 core/ui/gui.cpp:1145
 #: core/ui/gui.cpp:1158 core/ui/gui.cpp:1301 core/ui/gui_cheats.cpp:47
 #: core/ui/gui_util.cpp:180 core/ui/vgamepad.cpp:87
 msgid "Cancel"
-msgstr ""
+msgstr "取消"
 
 #: core/ui/gui.cpp:875
 msgid "GAMES"
-msgstr ""
+msgstr "游戏"
 
 #: core/ui/gui.cpp:882 core/ui/gui.cpp:883
 msgid "Filter"
-msgstr ""
+msgstr "筛选"
 
 #: core/ui/gui.cpp:889 core/ui/gui.cpp:890
 msgid "Load..."
-msgstr ""
+msgstr "正在加载..."
 
 #: core/ui/gui.cpp:1011
 msgid "Your game list is empty"
-msgstr ""
+msgstr "你一个游戏都还没添加，快去添加吧"
 
 #: core/ui/gui.cpp:1021
 msgid "Add Game Folder"
-msgstr ""
+msgstr "添加游戏文件夹"
 
 #: core/ui/gui.cpp:1053 core/ui/gui.cpp:1064
 msgid "Invalid selection:"
