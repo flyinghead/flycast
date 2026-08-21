@@ -378,62 +378,33 @@ class Arm7Compiler : public Xbyak::CodeGenerator
 				mov(r10d, (op.arg[1].getImmediate() & 0x80000000) >> 31);
 			}
 		}
-
+// extremely common code-snippets that can't easily be factored out
+#define emit_regimm(name, dst, srcidx) do { \
+	if(arg##srcidx.isNone()) name(dst, op.arg[srcidx].getImmediate()); \
+	else name(dst, arg##srcidx); \
+} while(0)
+#define emit_bitwise(name) do { \
+	if (arg1 == rd) \
+		emit_regimm(name, rd, 0); \
+	else \
+	{ \
+		if (rd != arg0) \
+			emit_regimm(mov, rd, 0); \
+		emit_regimm(name, rd, 1); \
+	} \
+} while(0)
 		switch (op.op_type)
 		{
 		case ArmOp::AND:
-			if (arg1 == rd)
-				and_(rd, arg0);
-			else
-			{
-				if (rd != arg0)
-				{
-					mov(rd, arg0);
-					verify(rd != arg1);
-				}
-				if (!arg1.isNone())
-					and_(rd, arg1);
-				else
-					and_(rd, op.arg[1].getImmediate());
-			}
+			emit_bitwise(and_);
 			save_v_flag = false;
 			break;
 		case ArmOp::ORR:
-			if (arg1 == rd)
-				or_(rd, arg0);
-			else
-			{
-				if (rd != arg0)
-				{
-					// FIXME need static evaluation or this must be duplicated
-					if (arg0.isNone())
-						mov(rd, op.arg[0].getImmediate());
-					else
-						mov(rd, arg0);
-					verify(rd != arg1);
-				}
-				if (!arg1.isNone())
-					or_(rd, arg1);
-				else
-					or_(rd, op.arg[1].getImmediate());
-			}
+			emit_bitwise(or_);
 			save_v_flag = false;
 			break;
 		case ArmOp::EOR:
-			if (arg1 == rd)
-				xor_(rd, arg0);
-			else
-			{
-				if (rd != arg0)
-				{
-					verify(rd != arg1);
-					mov(rd, arg0);
-				}
-				if (!arg1.isNone())
-					xor_(rd, arg1);
-				else
-					xor_(rd, op.arg[1].getImmediate());
-			}
+			emit_bitwise(xor_);
 			save_v_flag = false;
 			break;
 		case ArmOp::BIC:
@@ -458,7 +429,7 @@ class Arm7Compiler : public Xbyak::CodeGenerator
 					if (arg1 != rd)
 						mov(rd, static_cast<Xbyak::Reg32&>(arg1));
 					not_(rd);
-					and_(rd, arg0);
+					emit_regimm(and_, rd, 0);
 				}
 			}
 			save_v_flag = false;
@@ -473,18 +444,18 @@ class Arm7Compiler : public Xbyak::CodeGenerator
 			break;
 		case ArmOp::TEQ:
 			if (arg0 != r8d)
-				mov(r8d, arg0);
-			if (!arg1.isNone())
-				xor_(r8d, arg1);
-			else
-				xor_(r8d, op.arg[1].getImmediate());
+				emit_regimm(mov, r8d, 0);
+			emit_regimm(xor_, r8d, 1);
 			save_v_flag = false;
 			break;
 		case ArmOp::CMP:
-			if (!arg1.isNone())
-				cmp(arg0, arg1);
+			if (arg0.isNone())
+			{
+				emit_regimm(mov, r8d, 0);
+				emit_regimm(cmp, r8d, 1);
+			}
 			else
-				cmp(arg0, op.arg[1].getImmediate());
+				emit_regimm(cmp, arg0, 1);
 			if (set_flags)
 			{
 				setnb(r10b);
@@ -493,11 +464,8 @@ class Arm7Compiler : public Xbyak::CodeGenerator
 			break;
 		case ArmOp::CMN:
 			if (arg0 != r8d)
-				mov(r8d, arg0);
-			if (!arg1.isNone())
-				add(r8d, arg1);
-			else
-				add(r8d, op.arg[1].getImmediate());
+				emit_regimm(mov, r8d, 0);
+			emit_regimm(add, r8d, 1);
 			if (set_flags)
 			{
 				setb(r10b);
@@ -506,10 +474,7 @@ class Arm7Compiler : public Xbyak::CodeGenerator
 			break;
 
 		case ArmOp::MOV:
-			if (arg0.isNone())
-				mov(rd, op.arg[0].getImmediate());
-			else if (arg0 != rd)
-				mov(rd, arg0);
+			emit_regimm(mov, rd, 0);
 			if (set_flags)
 			{
 				test(rd, rd);
@@ -535,18 +500,24 @@ class Arm7Compiler : public Xbyak::CodeGenerator
 		case ArmOp::SUB:
 			if (arg1 == rd)
 			{
-				sub(arg0, arg1);
-				if (rd != arg0)
-					mov(rd, arg0);
+				if (arg0.isNone())
+				{
+					// rd = rn - rd = -rd + rn
+					neg(rd);
+					emit_regimm(add, rd, 0);
+				}
+				else
+				{
+					emit_regimm(sub, arg0, 1);
+					if (rd != arg0)
+						mov(rd, arg0);
+				}
 			}
 			else
 			{
 				if (rd != arg0)
-					mov(rd, arg0);
-				if (arg1.isNone())
-					sub(rd, op.arg[1].getImmediate());
-				else
-					sub(rd, arg1);
+					emit_regimm(mov, rd, 0);
+				emit_regimm(sub, rd, 1);
 			}
 			if (set_flags)
 			{
@@ -556,16 +527,13 @@ class Arm7Compiler : public Xbyak::CodeGenerator
 			break;
 		case ArmOp::RSB:
 			if (arg1 == rd)
-				sub(rd, arg0);
+				emit_regimm(sub, rd, 0);
 			else
 			{
 				if (rd != arg0)
-					mov(rd, arg0);
+					emit_regimm(mov, rd, 0);
 				neg(rd);
-				if (arg1.isNone())
-					add(rd, op.arg[1].getImmediate());
-				else
-					add(rd, arg1);
+				emit_regimm(add, rd, 1);
 			}
 			if (set_flags)
 			{
@@ -575,21 +543,12 @@ class Arm7Compiler : public Xbyak::CodeGenerator
 			break;
 		case ArmOp::ADD:
 			if (arg1 == rd)
-				add(rd, arg0);
+				emit_regimm(add, rd, 0);
 			else
 			{
 				if (rd != arg0)
-				{
-					// FIXME need static evaluation or this must be duplicated
-					if (arg0.isNone())
-						mov(rd, op.arg[0].getImmediate());
-					else
-						mov(rd, arg0);
-				}
-				if (arg1.isNone())
-					add(rd, op.arg[1].getImmediate());
-				else
-					add(rd, arg1);
+					emit_regimm(mov, rd, 0);
+				emit_regimm(add, rd, 1);
 			}
 			if (set_flags)
 			{
@@ -602,15 +561,12 @@ class Arm7Compiler : public Xbyak::CodeGenerator
 			and_(r11d, C_FLAG);
 			neg(r11d);
 			if (arg1 == rd)
-				adc(rd, arg0);
+				emit_regimm(adc, rd, 0);
 			else
 			{
 				if (rd != arg0)
-					mov(rd, arg0);
-				if (arg1.isNone())
-					adc(rd, op.arg[1].getImmediate());
-				else
-					adc(rd, arg1);
+					emit_regimm(mov, rd, 0);
+				emit_regimm(adc, rd, 1);
 			}
 			if (set_flags)
 			{
@@ -626,18 +582,25 @@ class Arm7Compiler : public Xbyak::CodeGenerator
 			cmc();		// on arm, -1 if carry is clear
 			if (arg1 == rd)
 			{
-				sbb(arg0, arg1);
-				if (rd != arg0)
-					mov(rd, arg0);
+				if (arg0.isNone())
+				{
+					// rd = rn - rd - C = -(rm + C) + rn
+					adc(rd, 0);
+					neg(rd);
+					emit_regimm(add, rd, 0);
+				}
+				else
+				{
+					emit_regimm(sbb, arg0, 1);
+					if (rd != arg0)
+						mov(rd, arg0);
+				}
 			}
 			else
 			{
 				if (rd != arg0)
-					mov(rd, arg0);
-				if (arg1.isNone())
-					sbb(rd, op.arg[1].getImmediate());
-				else
-					sbb(rd, arg1);
+					emit_regimm(mov, rd, 0);
+				emit_regimm(sbb, rd, 1);
 			}
 			if (set_flags)
 			{
@@ -652,14 +615,11 @@ class Arm7Compiler : public Xbyak::CodeGenerator
 			neg(r11d);
 			cmc();		// on arm, -1 if carry is clear
 			if (arg1 == rd)
-				sbb(rd, arg0);
+				emit_regimm(sbb, rd, 0);
 			else
 			{
-				if (arg1.isNone())
-					mov(rd, op.arg[1].getImmediate());
-				else if (rd != arg1)
-					mov(rd, arg1);
-				sbb(rd, arg0);
+				emit_regimm(mov, rd, 1);
+				emit_regimm(sbb, rd, 0);
 			}
 			if (set_flags)
 			{
@@ -671,6 +631,9 @@ class Arm7Compiler : public Xbyak::CodeGenerator
 			die("invalid");
 			break;
 		}
+// clean up namespace
+#undef emit_bitwise
+#undef emit_regimm
 
 		return save_v_flag;
 	}
@@ -820,7 +783,6 @@ public:
 		{
 			const ArmOp& op = block_ops[i];
 			DEBUG_LOG(AICA_ARM, "-> %s", op.toString().c_str());
-
 			set_flags = op.flags & ArmOp::OP_SETS_FLAGS;
 			logical_op_set_flags = op.isLogicalOp() && set_flags;
 			set_carry_bit = false;
