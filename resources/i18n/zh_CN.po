@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-22 12:49+0100\n"
-"PO-Revision-Date: 2026-08-21 03:47\n"
+"PO-Revision-Date: 2026-08-21 06:07\n"
 "Last-Translator: \n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
@@ -702,7 +702,7 @@ msgstr "在游戏过程中显示VMU液晶屏"
 
 #: core/ui/settings_video.cpp:222
 msgid "Full Framebuffer Emulation"
-msgstr " 全帧缓冲区模拟"
+msgstr "全帧缓冲区模拟"
 
 #: core/ui/settings_video.cpp:223
 msgid "Fully accurate VRAM framebuffer emulation. Helps games that directly access the framebuffer for special effects. Very slow and incompatible with upscaling and wide screen."
@@ -735,7 +735,8 @@ msgstr "宽屏"
 #: core/ui/settings_video.cpp:242
 msgid "Draw geometry outside of the normal 4:3 aspect ratio. May produce graphical glitches in the revealed areas.\n"
 "Aspect Fit and shows the full 16:9 content."
-msgstr "在常规的 4:3 宽高比之外绘制图形。这可能会导致在显示区域内出现图形异常。"
+msgstr "在常规的 4:3 宽高比之外绘制图形。在显示区域内可能会出现图形异常。\n"
+"“宽高比适配”可显示完整的 16:9 内容。"
 
 #: core/ui/settings_video.cpp:247
 msgid "Super Widescreen"
@@ -881,7 +882,7 @@ msgstr "修复Upscale Bleeding Edge"
 
 #: core/ui/settings_video.cpp:332
 msgid "Helps with texture bleeding case when upscaling. Disabling it can help if pixels are warping when upscaling in 2D games (MVC2, CVS, KOF, etc.)"
-msgstr "有助于解决放大时纹理溢出问题。如果在2D游戏（如《MVC2》、《CVS》、《KOF》等）中放大时出现像素变形，禁用此选项可能会有所帮助。"
+msgstr "有助于解决放大时纹理溢出问题。如果在2D游戏（如《MVC2》、《CVS》、《KOF》等）中放大时出现像素变形，禁用此选项可能会有所帮助"
 
 #: core/ui/settings_video.cpp:333
 msgid "Native Depth Interpolation"
