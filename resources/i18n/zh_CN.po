@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-22 12:49+0100\n"
-"PO-Revision-Date: 2026-08-21 00:49\n"
+"PO-Revision-Date: 2026-08-21 01:54\n"
 "Last-Translator: \n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
@@ -1044,28 +1044,28 @@ msgstr "非VGA模式的电视广播标准"
 
 #: core/ui/settings_general.cpp:240 core/ui/settings_general.cpp:241
 msgid "Japan"
-msgstr ""
+msgstr "Japan"
 
 #: core/ui/settings_general.cpp:240 core/ui/settings_general.cpp:241
 msgid "USA"
-msgstr ""
+msgstr "USA"
 
 #: core/ui/settings_general.cpp:240
 msgid "Europe"
-msgstr ""
+msgstr "Europe"
 
 #: core/ui/settings_general.cpp:241
 msgctxt "region"
 msgid "Export"
-msgstr ""
+msgstr "Export"
 
 #: core/ui/settings_general.cpp:241
 msgid "Korea"
-msgstr ""
+msgstr "Korea"
 
 #: core/ui/settings_general.cpp:243
 msgid "Region"
-msgstr ""
+msgstr "Region"
 
 #: core/ui/settings_general.cpp:244
 msgid "BIOS region"
@@ -1097,177 +1097,177 @@ msgstr "Content Location"
 
 #: core/ui/settings_general.cpp:297 core/ui/settings_general.cpp:361
 msgid "Rescan Content"
-msgstr ""
+msgstr "重新扫描内容"
 
 #: core/ui/settings_general.cpp:309
 msgid "The folders where your games are stored"
-msgstr ""
+msgstr "存储游戏的文件夹"
 
 #: core/ui/settings_general.cpp:315
 msgid "Data Folder"
-msgstr ""
+msgstr "数据文件夹"
 
 #: core/ui/settings_general.cpp:323
 msgid "The folder containing BIOS files, as well as saved VMUs and states"
-msgstr ""
+msgstr "包含BIOS文件以及已保存的VMU和状态的文件夹"
 
 #: core/ui/settings_general.cpp:328
 msgid "Home Folder"
-msgstr ""
+msgstr "主文件夹"
 
 #: core/ui/settings_general.cpp:337
 msgctxt "action"
 msgid "Import"
-msgstr ""
+msgstr "导入"
 
 #: core/ui/settings_general.cpp:340
 msgctxt "action"
 msgid "Export"
-msgstr ""
+msgstr "导出"
 
 #: core/ui/settings_general.cpp:345
 msgid "Reveal in Finder"
-msgstr ""
+msgstr "在访达中显示"
 
 #: core/ui/settings_general.cpp:355
 msgid "The folder where Flycast saves configuration files and VMUs. BIOS files should be in a subfolder named \"data\""
-msgstr ""
+msgstr "Flycast 用于保存配置文件和 VMU 的文件夹。BIOS 文件应位于名为“data”的子文件夹中。"
 
 #: core/ui/settings_general.cpp:366
 msgid "Box Art Game List"
-msgstr ""
+msgstr "游戏封面列表"
 
 #: core/ui/settings_general.cpp:367
 msgid "Display game cover art in the game list."
-msgstr ""
+msgstr "在游戏列表中显示游戏封面图。"
 
 #: core/ui/settings_general.cpp:368
 msgid "Fetch Box Art"
-msgstr ""
+msgstr "获取游戏封面"
 
 #: core/ui/settings_general.cpp:369
 msgid "Fetch cover images from TheGamesDB.net."
-msgstr ""
+msgstr "从 TheGamesDB.net 获取封面图片。"
 
 #: core/ui/settings_general.cpp:370
 msgid "UI Scaling"
-msgstr ""
+msgstr "UI 缩放"
 
 #: core/ui/settings_general.cpp:370
 msgid "Adjust the size of UI elements and fonts."
-msgstr ""
+msgstr "调整 UI 元素和字体的尺寸。"
 
 #: core/ui/settings_general.cpp:375
 msgid "Apply"
-msgstr ""
+msgstr "应用"
 
 #: core/ui/settings_general.cpp:381
 msgid "Dark"
-msgstr ""
+msgstr "深色模式"
 
 #: core/ui/settings_general.cpp:381
 msgid "Light"
-msgstr ""
+msgstr "浅色模式"
 
 #: core/ui/settings_general.cpp:381
 msgid "Dreamcast"
-msgstr ""
+msgstr "Dreamcast"
 
 #: core/ui/settings_general.cpp:381
 msgid "High Contrast"
-msgstr ""
+msgstr "高对比度"
 
 #: core/ui/settings_general.cpp:381
 msgid "Nintendo"
-msgstr ""
+msgstr "任天堂"
 
 #: core/ui/settings_general.cpp:381
 msgid "Aqua Chill"
-msgstr ""
+msgstr "Aqua Chill"
 
 #: core/ui/settings_general.cpp:383
 msgid "UI Theme"
-msgstr ""
+msgstr "界面主题"
 
 #: core/ui/settings_general.cpp:384
 msgid "Select the UI color theme."
-msgstr ""
+msgstr "选择界面颜色主题。"
 
 #: core/ui/settings_general.cpp:390
 msgid "Hide Legacy Naomi Roms"
-msgstr ""
+msgstr "隐藏旧版 Naomi rom"
 
 #: core/ui/settings_general.cpp:391
 msgid "Hide .bin, .dat and .lst files from the content browser"
-msgstr ""
+msgstr "在内容浏览器中隐藏 .bin、.dat 和 .lst 文件"
 
 #: core/ui/settings_general.cpp:394
 msgid "Use SAF File Picker"
-msgstr ""
+msgstr "使用 SAF 文件选择器"
 
 #: core/ui/settings_general.cpp:395
 msgid "Use Android Storage Access Framework file picker to select folders and files. Ignored on Android 10 and later."
-msgstr ""
+msgstr "使用安卓存储访问框架（SAF）文件选择器选取文件夹和文件。在 Android 10 及以上版本中该设置无效。"
 
 #: core/ui/settings_general.cpp:398
 msgid "Automatic State:"
-msgstr ""
+msgstr "自动加载及时存档"
 
 #: core/ui/settings_general.cpp:399 core/ui/gui_cheats.cpp:104
 msgid "Load"
-msgstr ""
+msgstr "加载"
 
 #: core/ui/settings_general.cpp:400
 msgid "Load the last saved state of the game when starting"
-msgstr ""
+msgstr "启动时自动加载上次的即时存档"
 
 #: core/ui/settings_general.cpp:402 core/ui/vgamepad.cpp:73
 msgid "Save"
-msgstr ""
+msgstr "保存"
 
 #: core/ui/settings_general.cpp:403
 msgid "Save the state of the game when stopping"
-msgstr ""
+msgstr "关闭游戏时自动保存一个即时存档"
 
 #: core/ui/settings_general.cpp:404
 msgid "Naomi Free Play"
-msgstr ""
+msgstr "Naomi不投币"
 
 #: core/ui/settings_general.cpp:404
 msgid "Configure Naomi games in Free Play mode."
-msgstr ""
+msgstr "将Naomi游戏设置为不投币游玩模式。"
 
 #: core/ui/settings_general.cpp:406
 msgid "Discord Presence"
-msgstr ""
+msgstr "Discord 在线状态"
 
 #: core/ui/settings_general.cpp:406
 msgid "Show which game you are playing on Discord"
-msgstr ""
+msgstr "在 Discord 上显示你正在玩的游戏"
 
 #: core/ui/settings_general.cpp:409
 msgid "Enable RetroAchievements"
-msgstr ""
+msgstr "启用 RetroAchievements"
 
 #: core/ui/settings_general.cpp:409
 msgid "Track your game achievements using RetroAchievements.org"
-msgstr ""
+msgstr "使用 RetroAchievements.org 追踪您的游戏成就"
 
 #: core/ui/settings_general.cpp:414
 msgid "Enable RetroAchievements hardcore mode. Using cheats and loading a state are not allowed in this mode."
-msgstr ""
+msgstr "启用 RetroAchievements 硬核模式。在此模式下，禁止使用作弊码和加载及时存档。"
 
 #: core/ui/settings_general.cpp:415
 msgid "Username"
-msgstr ""
+msgstr "用户名"
 
 #: core/ui/settings_general.cpp:423
 msgid "Authentication successful"
-msgstr ""
+msgstr "登录成功"
 
 #: core/ui/settings_general.cpp:426
 msgid "Logout"
-msgstr ""
+msgstr "注销"
 
 #: core/ui/settings_general.cpp:432
 msgid "Password"
