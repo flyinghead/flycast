@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-22 12:49+0100\n"
-"PO-Revision-Date: 2026-08-21 10:08\n"
+"PO-Revision-Date: 2026-08-21 11:32\n"
 "Last-Translator: \n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
@@ -422,7 +422,7 @@ msgstr "速度：%3d"
 
 #: core/hw/naomi/printer.cpp:857
 msgid "Print out saved"
-msgstr ""
+msgstr "打印件已保存"
 
 #: core/hw/naomi/systemsp.cpp:2187
 #, c-format
@@ -1639,35 +1639,35 @@ msgstr "保存截图"
 
 #: core/ui/settings_controls.cpp:257
 msgid "Button 1"
-msgstr ""
+msgstr "Button 1"
 
 #: core/ui/settings_controls.cpp:258
 msgid "Button 2"
-msgstr ""
+msgstr "Button 2"
 
 #: core/ui/settings_controls.cpp:259
 msgid "Button 3"
-msgstr ""
+msgstr "Button 3"
 
 #: core/ui/settings_controls.cpp:260 core/input/mouse.h:89
 msgid "Button 4"
-msgstr ""
+msgstr "Button 4"
 
 #: core/ui/settings_controls.cpp:261 core/input/mouse.h:91
 msgid "Button 5"
-msgstr ""
+msgstr "Button 5"
 
 #: core/ui/settings_controls.cpp:262
 msgid "Button 6"
-msgstr ""
+msgstr "Button 6"
 
 #: core/ui/settings_controls.cpp:263
 msgid "Button 7"
-msgstr ""
+msgstr "Button 7"
 
 #: core/ui/settings_controls.cpp:264
 msgid "Button 8"
-msgstr ""
+msgstr "Button 8"
 
 #: core/ui/settings_controls.cpp:276
 msgid "Coin"
@@ -1675,41 +1675,41 @@ msgstr "投币"
 
 #: core/ui/settings_controls.cpp:277
 msgid "Service"
-msgstr ""
+msgstr "维修模式"
 
 #: core/ui/settings_controls.cpp:278
 msgid "Test"
-msgstr ""
+msgstr "测试"
 
 #: core/ui/settings_controls.cpp:279
 msgid "Insert Card"
-msgstr ""
+msgstr "插入记忆卡"
 
 #: core/ui/settings_controls.cpp:442 core/ui/settings_controls.cpp:847
 msgid "Map Control"
-msgstr ""
+msgstr "地图控制"
 
 #: core/ui/settings_controls.cpp:444
 #, c-format
 msgid "Waiting for control '%s'..."
-msgstr ""
+msgstr "正在等待控制项“%s”……"
 
 #: core/ui/settings_controls.cpp:460
 #, c-format
 msgid "Time out in %d s"
-msgstr ""
+msgstr "倒计时：%d 秒"
 
 #: core/ui/settings_controls.cpp:465
 msgid "Current inputs:"
-msgstr ""
+msgstr "当前输入："
 
 #: core/ui/settings_controls.cpp:489
 msgid "Confirm"
-msgstr ""
+msgstr "确认"
 
 #: core/ui/settings_controls.cpp:571
 msgid "Sequential"
-msgstr ""
+msgstr "按序列录入"
 
 #: core/ui/settings_controls.cpp:576
 msgid "When checked, this combo will only activate when all keys are pressed in the given sequence.\n"
@@ -1719,135 +1719,135 @@ msgstr "如果勾选此选项，该组合键仅在按指定顺序按下所有键
 
 #: core/ui/settings_controls.cpp:633 core/ui/settings_controls.cpp:1073
 msgid "Controller Mapping"
-msgstr ""
+msgstr "控制器映射"
 
 #: core/ui/settings_controls.cpp:635 core/ui/settings_controls.cpp:1070
 msgid "Map"
-msgstr ""
+msgstr "按键映射"
 
 #: core/ui/settings_controls.cpp:636
 msgid "Unmap"
-msgstr ""
+msgstr "取消映射"
 
 #: core/ui/settings_controls.cpp:652 core/ui/settings_controls.cpp:895
 #: core/ui/settings.cpp:217
 msgid "Done"
-msgstr ""
+msgstr "完成"
 
 #: core/ui/settings_controls.cpp:672 core/ui/settings_controls.cpp:684
 #: core/ui/settings_controls.cpp:1013 core/ui/settings_controls.cpp:1027
 msgid "Port"
-msgstr ""
+msgstr "端口"
 
 #: core/ui/settings_controls.cpp:686 core/ui/settings_controls.cpp:750
 msgid "Dreamcast Controls"
-msgstr ""
+msgstr "Dreamcast 控制器"
 
 #: core/ui/settings_controls.cpp:689 core/ui/settings_controls.cpp:698
 #: core/ui/settings.cpp:259
 msgid "Delete Game Config"
-msgstr ""
+msgstr "删除游戏独立配置"
 
 #: core/ui/settings_controls.cpp:689 core/ui/settings_controls.cpp:707
 #: core/ui/settings.cpp:268
 msgid "Make Game Config"
-msgstr ""
+msgstr "添加独立游戏配置"
 
 #: core/ui/settings_controls.cpp:712
 msgid "Reset..."
-msgstr ""
+msgstr "重置"
 
 #: core/ui/settings_controls.cpp:713 core/ui/settings_controls.cpp:717
 msgid "Confirm Reset"
-msgstr ""
+msgstr "确认重置"
 
 #: core/ui/settings_controls.cpp:719
 msgid "Are you sure you want to reset the mappings to default?"
-msgstr ""
+msgstr "您确定要将映射重置为默认设置吗？"
 
 #: core/ui/settings_controls.cpp:723
 msgid "Controller Type:"
-msgstr ""
+msgstr "控制器类型："
 
 #: core/ui/settings_controls.cpp:724
 msgid "Gamepad"
-msgstr ""
+msgstr "游戏手柄"
 
 #: core/ui/settings_controls.cpp:727
 msgid "Arcade / Hit Box"
-msgstr ""
+msgstr "街机 / 命中框"
 
 #: core/ui/settings_controls.cpp:734 core/ui/settings_about.cpp:149
 msgid "Yes"
-msgstr ""
+msgstr "确认"
 
 #: core/ui/settings_controls.cpp:741 core/ui/settings_about.cpp:155
 msgid "No"
-msgstr ""
+msgstr "取消"
 
 #: core/ui/settings_controls.cpp:750
 msgid "Arcade Controls"
-msgstr ""
+msgstr "街机控制器设置"
 
 #: core/ui/settings_controls.cpp:893 core/ui/settings_controls.cpp:1093
 msgid "Gamepad Settings"
-msgstr ""
+msgstr "手柄设置"
 
 #: core/ui/settings_controls.cpp:937
 msgid "Haptic"
-msgstr ""
+msgstr "手柄震动"
 
 #: core/ui/settings_controls.cpp:938 core/ui/settings_controls.cpp:974
 msgid "Power"
-msgstr ""
+msgstr "街机电源"
 
 #: core/ui/settings_controls.cpp:938
 msgid "Haptic feedback power"
-msgstr ""
+msgstr "触觉反馈功能"
 
 #: core/ui/settings_controls.cpp:940
 msgid "View"
-msgstr ""
+msgstr "显示VMU屏幕"
 
 #: core/ui/settings_controls.cpp:941
 msgid "Transparency"
-msgstr ""
+msgstr "透明度"
 
 #: core/ui/settings_controls.cpp:941
 msgid "Virtual gamepad buttons transparency"
-msgstr ""
+msgstr "虚拟手柄按钮的透明度"
 
 #: core/ui/settings_controls.cpp:947
 msgid "Select a PNG file"
-msgstr ""
+msgstr "选择一个 PNG 文件"
 
 #: core/ui/settings_controls.cpp:948
 msgid "Choose Image..."
-msgstr ""
+msgstr "选择图片"
 
 #: core/ui/settings_controls.cpp:960
 msgid "Use Default"
-msgstr ""
+msgstr "使用默认设置"
 
 #: core/ui/settings_controls.cpp:971
 msgid "Rumble"
-msgstr ""
+msgstr "震动"
 
 #: core/ui/settings_controls.cpp:977
 msgid "Rumble power"
-msgstr ""
+msgstr "震动强度"
 
 #: core/ui/settings_controls.cpp:981
 msgid "Thumbsticks"
-msgstr ""
+msgstr "摇杆"
 
 #: core/ui/settings_controls.cpp:984
 msgid "Dead zone"
-msgstr ""
+msgstr "死区"
 
 #: core/ui/settings_controls.cpp:987
 msgid "Minimum deflection to register as input"
-msgstr ""
+msgstr "作为输入所需的最小偏转量"
 
 #: core/ui/settings_controls.cpp:990
 msgid "Saturation"
