@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-22 12:49+0100\n"
-"PO-Revision-Date: 2026-08-21 14:14\n"
+"PO-Revision-Date: 2026-08-21 16:00\n"
 "Last-Translator: \n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
@@ -2455,511 +2455,511 @@ msgstr "网络统计"
 
 #: core/ui/settings_network.cpp:110 core/ui/settings_network.cpp:202
 msgid "Display network statistics on screen"
-msgstr ""
+msgstr "在屏幕上显示网络统计数据"
 
 #: core/ui/settings_network.cpp:115
 msgid "Network Role"
-msgstr ""
+msgstr "网络角色"
 
 #: core/ui/settings_network.cpp:120
 msgid "Master"
-msgstr ""
+msgstr "主机（联机服务器服主）"
 
 #: core/ui/settings_network.cpp:122
 msgid "Create a local server for Naomi network games"
-msgstr ""
+msgstr "为Naomi网络游戏创建本地服务器"
 
 #: core/ui/settings_network.cpp:124
 msgid "Slave"
-msgstr ""
+msgstr "访客（服务器的访客）"
 
 #: core/ui/settings_network.cpp:126
 msgid "Connect to the master server"
-msgstr ""
+msgstr "连接到主服务器"
 
 #: core/ui/settings_network.cpp:128
 msgid "Satellite"
-msgstr ""
+msgstr "卫星（仅能用于观战的单位并没有什么用）"
 
 #: core/ui/settings_network.cpp:130
 msgid "Live monitor for games that support it (Virtual-On Oratorio Tangram and Club Kart)"
-msgstr ""
+msgstr "适用于支持该功能游戏的实况监视器（《电脑战机：Oratorio Tangram》与《Club Kart》）"
 
 #: core/ui/settings_network.cpp:135
 msgid "Server"
-msgstr ""
+msgstr "服务器"
 
 #: core/ui/settings_network.cpp:137
 msgid "The server to connect to. Leave blank to find a server automatically on the default port"
-msgstr ""
+msgstr "要连接的服务器。若留空，将自动在默认端口上查找服务器"
 
 #: core/ui/settings_network.cpp:141 core/ui/settings_network.cpp:213
 msgid "Local Port"
-msgstr ""
+msgstr "本地端口"
 
 #: core/ui/settings_network.cpp:143 core/ui/settings_network.cpp:215
 msgid "The local UDP port to use"
-msgstr ""
+msgstr "要使用的本地 UDP 端口"
 
 #: core/ui/settings_network.cpp:166
 msgid "Match Code"
-msgstr ""
+msgstr "匹配码"
 
 #: core/ui/settings_network.cpp:173
 msgid "Choose a unique word or number and share it with your opponent."
-msgstr ""
+msgstr "房间代码"
 
 #: core/ui/settings_network.cpp:175
 msgid "Connect"
-msgstr ""
+msgstr "连接"
 
 #: core/ui/settings_network.cpp:179
 msgid "Disconnect"
-msgstr ""
+msgstr "断开连接"
 
 #: core/ui/settings_network.cpp:189
 msgid "Waiting at meeting point..."
-msgstr ""
+msgstr "正在集合点等候……"
 
 #: core/ui/settings_network.cpp:192
 msgid "Preparing game..."
-msgstr ""
+msgstr "正在加载游戏..."
 
 #: core/ui/settings_network.cpp:195
 #, c-format
 msgid "Playing %s (%s)"
-msgstr ""
+msgstr "Playing %s (%s)"
 
 #: core/ui/settings_network.cpp:205
 msgid "Manual"
-msgstr ""
+msgstr "手动模式"
 
 #: core/ui/settings_network.cpp:210
 msgid "The peer to connect to. Leave blank to find a player automatically on the default port"
-msgstr ""
+msgstr "要连接的对等节点。若留空，系统将自动在默认端口上查找玩家"
 
 #: core/ui/settings_network.cpp:223
 msgid "Act as Master"
-msgstr ""
+msgstr "充当主设备"
 
 #: core/ui/settings_network.cpp:224
 msgid "Only used for Maximum Speed. One of the peer must be master."
-msgstr ""
+msgstr "仅用于最大速度模式。参与联机的双方必须有一台充当主设备。"
 
 #: core/ui/settings_network.cpp:228
 msgid "Network Options"
-msgstr ""
+msgstr "网络选项"
 
 #: core/ui/settings_network.cpp:230
 msgid "Enable UPnP"
-msgstr ""
+msgstr "启用 UPnP"
 
 #: core/ui/settings_network.cpp:230
 msgid "Automatically configure your network router for netplay"
-msgstr ""
+msgstr "自动配置网络路由器以支持网络联机游戏"
 
 #: core/ui/settings_network.cpp:231
 msgid "Broadcast Digital Outputs"
-msgstr ""
+msgstr "数字广播输出"
 
 #: core/ui/settings_network.cpp:231
 msgid "Broadcast digital outputs and force-feedback state on TCP port 8000. Compatible with the \"-output network\" MAME option. Arcade games only."
-msgstr ""
+msgstr "通过TCP 8000端口广播数字输出与力反馈状态。兼容MAME的 ‑output network 命令行选项。仅街机游戏可用。"
 
 #: core/ui/settings_network.cpp:236
 msgid "Broadband Adapter Emulation"
-msgstr ""
+msgstr "模拟宽带适配器"
 
 #: core/ui/settings_network.cpp:237
 msgid "Emulate the Ethernet Broadband Adapter (BBA) instead of the Modem"
-msgstr ""
+msgstr "模拟以太网宽带适配器（BBA）而非调制解调器"
 
 #: core/ui/settings_network.cpp:239
 msgid "Use DCNet"
-msgstr ""
+msgstr "使用 DCNet"
 
 #: core/ui/settings_network.cpp:239
 msgid "Use the DCNet cloud service for Dreamcast Internet access."
-msgstr ""
+msgstr "使用 DCNet 云服务连接 Dreamcast 互联网。"
 
 #: core/ui/settings_network.cpp:242
 msgid "ISP User Name"
-msgstr ""
+msgstr "ISP 用户名"
 
 #: core/ui/settings_network.cpp:248
 msgid "The ISP user name stored in the console Flash RAM. Used by some online games as the player name. Leave blank to keep the current Flash RAM value."
-msgstr ""
+msgstr "存储在控制台闪存中的ISP用户名。某些网络游戏将其用作玩家名称。留空可保留当前闪存中的值。"
 
 #: core/ui/settings_network.cpp:254
 msgid "DNS server name or IP address"
-msgstr ""
+msgstr "DNS 服务器名称或 IP 地址"
 
 #: core/ui/settings_network.cpp:260
 msgid "Multiboard Screens"
-msgstr ""
+msgstr "多板并联"
 
 #: core/ui/settings_network.cpp:262
 msgid "1 (Twin, Satellite)"
-msgstr ""
+msgstr "机柜ID 1；可用于双机对战模式，也可作为卫星机节点。"
 
 #: core/ui/settings_network.cpp:262
 msgid "One screen configuration (F355 Twin, Derby Owners Club satellite)"
-msgstr ""
+msgstr "多板并联硬件的单屏幕布局预设。适用于 F355 双机版、德比所有者俱乐部卫星机柜，仅输出单块屏幕画面，不展开多窗口。"
 
 #: core/ui/settings_network.cpp:264
 msgid "2+ (Deluxe, Main screen)"
-msgstr ""
+msgstr "2+（豪华机柜、主屏幕）"
 
 #: core/ui/settings_network.cpp:265
 msgid "Two or three screens configuration (Airline Pilot, Derby Owners Club main screen, F355 Deluxe, Sega Strike Fighter)"
-msgstr ""
+msgstr "双屏或三屏多板并联布局预设。适用于航空飞行员、德比所有者俱乐部主屏、F355豪华机柜、世嘉打击战斗机，输出对应数量的多屏画面窗口。"
 
 #: core/ui/settings_about.cpp:53 core/ui/settings_about.cpp:107
 #, c-format
 msgid "Version: %s"
-msgstr ""
+msgstr "版本：%s"
 
 #: core/ui/settings_about.cpp:54
 #, c-format
 msgid "Git Hash: %s"
-msgstr ""
+msgstr "Git 哈希值：%s"
 
 #: core/ui/settings_about.cpp:55
 #, c-format
 msgid "Build Date: %s"
-msgstr ""
+msgstr "构建日期：%s"
 
 #: core/ui/settings_about.cpp:58
 msgid "Platform"
-msgstr ""
+msgstr "平台"
 
 #: core/ui/settings_about.cpp:60
 #, c-format
 msgid "CPU: %s"
-msgstr ""
+msgstr "CPU: %s"
 
 #: core/ui/settings_about.cpp:70 core/ui/settings_about.cpp:91
 msgid "Unknown"
-msgstr ""
+msgstr "未知"
 
 #: core/ui/settings_about.cpp:73
 #, c-format
 msgid "Operating System: %s"
-msgstr ""
+msgstr "操作系统：%s"
 
 #: core/ui/settings_about.cpp:85
 msgid "Windows Universal Platform"
-msgstr ""
+msgstr "Windows 通用平台"
 
 #: core/ui/settings_about.cpp:96
 #, c-format
 msgid "JIT Status: %s"
-msgstr ""
+msgstr "JIT 状态：%s"
 
 #: core/ui/settings_about.cpp:106
 #, c-format
 msgid "Driver Name: %s"
-msgstr ""
+msgstr "驱动程序名称%s"
 
 #: core/ui/settings_about.cpp:112
 msgid "Select a custom GPU driver"
-msgstr ""
+msgstr "选择自定义 GPU 驱动程序"
 
 #: core/ui/settings_about.cpp:120
 msgid "Custom Driver:"
-msgstr ""
+msgstr "自定义驱动程序："
 
 #: core/ui/settings_about.cpp:127
 msgid "Use Default Driver"
-msgstr ""
+msgstr "使用默认驱动程序"
 
 #: core/ui/settings_about.cpp:129 core/ui/settings_about.cpp:138
 #: core/ui/settings_about.cpp:143
 msgid "Reset Vulkan"
-msgstr ""
+msgstr "重置 Vulkan"
 
 #: core/ui/settings_about.cpp:132
 msgid "Upload Custom Driver"
-msgstr ""
+msgstr "上传自定义驱动程序"
 
 #: core/ui/settings_about.cpp:145
 msgid "Do you want to reset Vulkan to use new driver?"
-msgstr ""
+msgstr "您是否要重置 Vulkan 以使用新驱动程序？"
 
 #: core/nullDC.cpp:195
 msgid "Save state failed - memory full"
-msgstr ""
+msgstr "保存状态失败——内存已满"
 
 #: core/nullDC.cpp:222
 msgid "Cannot open save file"
-msgstr ""
+msgstr "无法打开存档文件"
 
 #: core/nullDC.cpp:250
 msgid "State saved"
-msgstr ""
+msgstr "即时存档已保存"
 
 #: core/nullDC.cpp:255
 msgid "Error saving state"
-msgstr ""
+msgstr "保存即时存档出错"
 
 #: core/nullDC.cpp:290
 msgid "Save state not found"
-msgstr ""
+msgstr "未找到即时存档"
 
 #: core/nullDC.cpp:330 core/nullDC.cpp:352 core/nullDC.cpp:366
 msgid "Failed to load state"
-msgstr ""
+msgstr "加载即时存档失败"
 
 #: core/nullDC.cpp:330
 msgid "Not enough memory"
-msgstr ""
+msgstr "内存不足"
 
 #: core/nullDC.cpp:352
 msgid "I/O error"
-msgstr ""
+msgstr "I/O 错误"
 
 #: core/network/dcnet.cpp:70
 msgid "Connected to DCNet with modem"
-msgstr ""
+msgstr "通过调制解调器连接到 DCNet"
 
 #: core/network/dcnet.cpp:246
 msgid "Connected to DCNet with Ethernet"
-msgstr ""
+msgstr "通过以太网连接到 DCNet"
 
 #: core/network/dcnet.cpp:628
 msgid "DCNet disconnected"
-msgstr ""
+msgstr "DCNet 已断开连接"
 
 #: core/network/dcnet.cpp:754
 msgid "Host not found"
-msgstr ""
+msgstr "未找到主机"
 
 #: core/network/dcnet.cpp:798
 msgid "Can't connect to DCNet"
-msgstr ""
+msgstr "无法连接到 DCNet"
 
 #: core/network/ggpo.cpp:221
 msgid "Connected to peer"
-msgstr ""
+msgstr "已连接到对等节点"
 
 #: core/network/ggpo.cpp:225
 msgid "Synchronizing with peer"
-msgstr ""
+msgstr "尝试与对等节点同步"
 
 #: core/network/ggpo.cpp:229
 msgid "Synchronized with peer"
-msgstr ""
+msgstr "已与对等方同步"
 
 #: core/network/ggpo.cpp:233
 msgid "Running"
-msgstr ""
+msgstr "跑步"
 
 #: core/network/ggpo.cpp:238
 msgid "Disconnected from peer"
-msgstr ""
+msgstr "与对等节点断开连接"
 
 #: core/network/ggpo.cpp:247
 msgid "Connection interrupted"
-msgstr ""
+msgstr "连接中断"
 
 #: core/network/ggpo.cpp:251
 msgid "Connection resumed"
-msgstr ""
+msgstr "已恢复连接"
 
 #: core/network/null_modem.h:173
 msgid "Network connected"
-msgstr ""
+msgstr "已连接网络"
 
 #: core/network/ice.cpp:121
 msgid "Game not supported"
-msgstr ""
+msgstr "不支持该游戏"
 
 #: core/network/ice.cpp:237
 msgid "Connection to lobby failed:"
-msgstr ""
+msgstr "连接大厅失败："
 
 #: core/network/ice.cpp:444
 msgid "Connection failed"
-msgstr ""
+msgstr "连接失败"
 
 #: core/network/ice.cpp:475
 msgid "Direct peer to peer"
-msgstr ""
+msgstr "直接点对点连接"
 
 #: core/network/ice.cpp:477
 msgid "Using relay"
-msgstr ""
+msgstr "正在使用中继服务器"
 
 #: core/network/ice.cpp:481
 msgid "NAT"
-msgstr ""
+msgstr "NAT"
 
 #: core/network/ice.cpp:490 core/network/ice.cpp:508
 msgid "Connection lost"
-msgstr ""
+msgstr "连接已断开"
 
 #: core/network/naomi_network.cpp:103
 msgid "Waiting for players..."
-msgstr ""
+msgstr "正在等待玩家……"
 
 #: core/network/naomi_network.cpp:106
 #, c-format
 msgid "%d player connected. Waiting..."
 msgid_plural "%d players connected. Waiting..."
-msgstr[0] ""
+msgstr[0] "%d 名玩家已连接。正在等待……"
 
 #: core/network/naomi_network.cpp:131
 msgid "Starting game"
-msgstr ""
+msgstr "开始游戏"
 
 #: core/network/naomi_network.cpp:136
 msgid "No player connected"
-msgstr ""
+msgstr "没有玩家在线"
 
 #: core/network/naomi_network.cpp:170
 msgid "Connecting to server"
-msgstr ""
+msgstr "连接到服务器"
 
 #: core/network/naomi_network.cpp:254
 #, c-format
 msgid "Connected as slot %d"
-msgstr ""
+msgstr "已连接为插槽 %d"
 
 #: core/rend/dx9/d3d_renderer.cpp:320
 msgid "DirectX 9 doesn't support Naomi 2 games. Select a different graphics API"
-msgstr ""
+msgstr "DirectX 9 不支持 Naomi 2 游戏。请选择其他图形 API"
 
 #: core/rend/vulkan/adreno.cpp:154
 msgid "Can't open zip file"
-msgstr ""
+msgstr "无法打开zip文件"
 
 #: core/rend/vulkan/adreno.cpp:157
 msgid "Invalid zip file"
-msgstr ""
+msgstr "无效的压缩文件"
 
 #: core/rend/vulkan/adreno.cpp:185 core/rend/vulkan/adreno.cpp:203
 msgid "Can't save files"
-msgstr ""
+msgstr "无法保存文件"
 
 #: core/rend/vulkan/adreno.cpp:195
 msgid "Can't read zip"
-msgstr ""
+msgstr "无法读取zip文件"
 
 #: core/rend/gles/gles.cpp:700
 msgid "OpenGL shader compilation failed"
-msgstr ""
+msgstr "OpenGL 着色器编译失败"
 
 #: core/rend/gles/gles.cpp:1065
 msgid "OpenGL ES 3.0+ required for Naomi 2"
-msgstr ""
+msgstr "Naomi 2 需要 OpenGL ES 3.0 或更高版本"
 
 #: core/emulator.cpp:599
 #, c-format
 msgid "No BIOS file found in %s"
-msgstr ""
+msgstr "在 %s 中未找到 BIOS 文件"
 
 #: core/emulator.cpp:615
 msgid "This game requires a real BIOS"
-msgstr ""
+msgstr "这款游戏需要真正的BIOS"
 
 #: core/emulator.cpp:665
 msgid "Widescreen cheat activated"
-msgstr ""
+msgstr "已启用宽屏补丁"
 
 #: core/input/virtual_gamepad.h:41
 msgid "Virtual Gamepad"
-msgstr ""
+msgstr "虚拟游戏手柄"
 
 #: core/input/mouse.h:83
 msgid "Left Button"
-msgstr ""
+msgstr "左键"
 
 #: core/input/mouse.h:85
 msgid "Right Button"
-msgstr ""
+msgstr "右键"
 
 #: core/input/mouse.h:87
 msgid "Middle Button"
-msgstr ""
+msgstr "中间按钮"
 
 #: core/input/mouse.h:130
 msgid "Touch Mouse"
-msgstr ""
+msgstr "触控鼠标"
 
 #: core/wsi/switcher.cpp:98
 msgid "Cannot initialize the graphics API"
-msgstr ""
+msgstr "无法初始化图形 API"
 
 #: shell/libretro/libretro.cpp:2157
 msgid "Cannot run without JIT"
-msgstr ""
+msgstr "如果没有 JIT 则无法运行"
 
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:105
 msgid "DPad Center"
-msgstr ""
+msgstr "十字键回中"
 
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:133
 msgid "Select"
-msgstr ""
+msgstr "选择"
 
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:135
 msgid "Mode"
-msgstr ""
+msgstr "模式"
 
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:163
 msgid "Hat X"
-msgstr ""
+msgstr "Hat X"
 
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:165
 msgid "Hat Y"
-msgstr ""
+msgstr "Hat Y"
 
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:167
 msgid "Gas"
-msgstr ""
+msgstr "Gas"
 
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:169
 msgid "Brake"
-msgstr ""
+msgstr "Brake"
 
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:171
 msgid "Rudder"
-msgstr ""
+msgstr "Rudder"
 
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:173
 msgid "Wheel"
-msgstr ""
+msgstr "Wheel"
 
 #: shell/android-studio/flycast/src/main/jni/src/android_gamepad.h:175
 msgid "Throttle"
-msgstr ""
+msgstr "Throttle"
 
 #: shell/android-studio/flycast/src/main/jni/src/Android.cpp:173
 msgid "Memory initialization failed"
-msgstr ""
+msgstr "内存初始化失败"
 
 #: shell/android-studio/flycast/src/main/jni/src/android_storage.h:198
 #, c-format
 msgid "Storage access failed: %s"
-msgstr ""
+msgstr "存储访问失败：%s"
 
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:147
 msgid "MFi Gamepad"
-msgstr ""
+msgstr "MFi Gamepad"
 
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:361
 msgid "Options"
-msgstr ""
+msgstr "选项"
 
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:363
 msgid "Home"
-msgstr ""
+msgstr "首页"
 
 #: shell/apple/emulator-ios/emulator/ios_gamepad.h:377
 msgid "Share"
-msgstr ""
+msgstr "分享"
 
 #: shell/switch/switch_main.cpp:86
 msgid "Not supported on Switch"
-msgstr ""
+msgstr "Switch 不支持此功能"
 
