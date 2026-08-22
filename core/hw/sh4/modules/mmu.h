@@ -76,7 +76,8 @@ MmuError mmu_full_SQ(u32 va, u32& rv);
 #ifdef FAST_MMU
 static inline MmuError mmu_instruction_translation(u32 va, u32& rv)
 {
-	if (fast_reg_lut[va >> 29] != 0)
+	// handlers stay installed while a strict guest has AT off, so check it here
+	if (fast_reg_lut[va >> 29] != 0 || CCN_MMUCR.AT == 0)
 	{
 		rv = va;
 		return MmuError::NONE;
@@ -119,6 +120,11 @@ void mmu_TranslateSQW(u32 adr, u32* out);
 #ifdef FAST_MMU
 // maps 4K virtual page number to physical address
 extern u32 mmuAddressLUT[0x100000];
+extern u32 mmuLastPageMask;
+extern bool mmuStrict;
+
+// call wherever the set of matching UTLB entries can change
+void mmuStrictCacheFlush();
 
 static inline void mmuAddressLUTFlush(bool full)
 {
@@ -153,7 +159,8 @@ static inline u32 DYNACALL mmuDynarecLookup(u32 vaddr, u32 write, u32 pc)
 		return 0;
 	}
 #ifdef FAST_MMU
-	if (vaddr >> 31 == 0)
+	// the LUT is 4K-granular, and strict guests must miss it entirely
+	if (!mmuStrict && vaddr >> 31 == 0 && (mmuLastPageMask & 0xFFF) == 0)
 		mmuAddressLUT[vaddr >> 12] = paddr & ~0xfff;
 #endif
 
