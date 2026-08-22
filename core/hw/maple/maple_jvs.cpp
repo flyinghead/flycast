@@ -22,6 +22,8 @@
 #include <xxhash.h>
 #include "oslib/oslib.h"
 #include "oslib/i18n.h"
+#include "oslib/directory.h"
+#include "oslib/http_server.h"
 #include "stdclass.h"
 #include "cfg/option.h"
 #include "network/output.h"
@@ -29,6 +31,8 @@
 #include "hw/naomi/card_reader.h"
 #include "hw/sh4/sh4_sched.h"
 #include "input/haptic.h"
+#include "hw/sh4/sh4_mem.h"
+#include "json.hpp"
 
 #include <algorithm>
 #include <array>
@@ -2955,10 +2959,28 @@ const u8 *getRfidCardData(int playerNum)
 
 struct WccfCameraImpl : public WccfCamera
 {
+	struct Player
+	{
+		Player() = default;
+		Player(u16 playerId, u32 x, u32 y)
+			: playerId(playerId), x(x), y(y), lastX(x), lastY(y)
+		{}
+
+		u16 playerId = 0xffff;
+		u16 delta = 0;
+		u32 x;
+		u32 y;
+		u32 lastX;
+		u32 lastY;
+		std::string name;
+	};
+
+	~WccfCameraImpl();
 	MapleDeviceType get_device_type() override {
 		return MDT_WccfCamera;
 	}
 
+	void OnSetup() override;
 	u32 dma(u32 command) override;
 	void serialize(Serializer& ser) const override;
 	void deserialize(Deserializer& deser) override;
@@ -2970,10 +2992,25 @@ struct WccfCameraImpl : public WccfCamera
 	MapleDeviceRV setConditionA010(u8 dstAP, const u8 mode);
 	MapleDeviceRV setConditionA014(u8 dstAP, const u8 mode);
 
+	void makeTeamFilePath() {
+		teamFilePath = hostfs::getArcadeFlashPath() + "-team.json";
+	}
+	void checkTeamFile();
+	void saveTeamFile();
+	void findPlayerName(Player& player);
+
+	std::array<Player, 16> players;
+	std::mutex mutex;
+	using Lock = std::lock_guard<std::mutex>;
 	int overlay = 0;
 	char mode = 0;
 	u8 status = '1';
 	int mode0dataSize = 16;
+	std::string teamFilePath;
+	time_t teamFileTime = 0;
+	std::unique_ptr<asio::io_context> io_context;
+	std::unique_ptr<HttpServer> httpServer;
+	std::thread httpThread;
 };
 
 std::shared_ptr<maple_device> WccfCamera::Create() {
@@ -3097,6 +3134,7 @@ MapleDeviceRV WccfCameraImpl::sendDeviceStatus(bool full, u8 dstAP)
 					break;
 				default:
 					{
+						checkTeamFile();
 						w8(mode0dataSize);
 						w8(0);
 						w8(0);
@@ -3110,6 +3148,7 @@ MapleDeviceRV WccfCameraImpl::sendDeviceStatus(bool full, u8 dstAP)
 						w16(400);
 						for (int i = 0; i < mode0dataSize; i++)
 						{
+#if HARDCODED_TEAM
 							if (i < 11)
 							{
 								// pitch
@@ -3126,12 +3165,39 @@ MapleDeviceRV WccfCameraImpl::sendDeviceStatus(bool full, u8 dstAP)
 							// test cards
 							//w16(i);
 							// real cards
+#ifdef __ANDROID__
+							w16(i + 201 + 16);
+#else
 							// card ranges:
 							// 24-130, 201-509, 550-581, 582-595*, 600-887, 888-939*, 940-971, 972-1019*, 1020-1023*
 							// 1100-1323, 1324-1355*, 1356-1367*, 1368*, 1401-1736, 1737-1778*, 1779-1788*
 							// (* indicates the index also has bit 14 set)
 							w16(i + 1401);	// * are special cards? 888 | 0x4000
 											// 1401-1736 -> PlayerTable[1156-...]
+#endif
+#else
+							Lock _(mutex);
+							Player& p = players[i];
+							if (p.delta != 0)
+							{
+								const int r = (rand() & 0xf) - 7;
+								w16(p.y + r);
+								w16(p.x);
+								w16(p.delta);
+							}
+							else {
+								w16(p.y);
+								w16(p.x);
+								w16(0);
+							}
+							//const u16 delta = std::max(std::abs((int)(p.x - p.lastX)), std::abs((int)(p.y - p.lastY)));
+							//if (delta >= 3)
+							//	printf("Player %d delta %d\n", i, delta);
+							//w16(delta); // not used? set by the game to max(abs(deltaX), abs(deltaY))
+							w16(p.playerId);
+							p.lastX = p.x;
+							p.lastY = p.y;
+#endif
 						}
 						break;
 					}
@@ -3210,7 +3276,7 @@ MapleDeviceRV WccfCameraImpl::setConditionA002(u8 dstAP, const u8 mode)
     		return MDRS_DeviceReply;
     	}
     	// also mode 1 and 7 on Ext dev 1 only
-    	ERROR_LOG(NAOMI, "Mode %x [%c] (ext) not handled", mode, mode);
+    	ERROR_LOG(MAPLE, "Mode %x [%c] (ext) not handled", mode, mode);
     }
     else
     {
@@ -3249,7 +3315,7 @@ MapleDeviceRV WccfCameraImpl::setConditionA002(u8 dstAP, const u8 mode)
     		}
     		break;
     	default:
-    		ERROR_LOG(NAOMI, "Mode %x [%c] not handled", mode, mode);
+    		ERROR_LOG(MAPLE, "Mode %x [%c] not handled", mode, mode);
     		return MDRE_UnknownCmd;
     	}
     	return MDRS_DeviceReply;
@@ -3383,7 +3449,7 @@ MapleDeviceRV WccfCameraImpl::setConditionA010(u8 dstAP, const u8 mode)
 				this->mode = 0x81;
 			break;
 		default:
-			ERROR_LOG(NAOMI, "Mode %x [%c] not handled", mode, mode != 0 ? mode : ' ');
+			ERROR_LOG(MAPLE, "Mode %x [%c] not handled", mode, mode != 0 ? mode : ' ');
 			return MDRE_UnknownCmd;
 		}
 	}
@@ -3395,7 +3461,7 @@ MapleDeviceRV WccfCameraImpl::setConditionA014(u8 dstAP, const u8 mode)
 	if (dstAP & 0x1f)
 	{
 		// TODO
-		ERROR_LOG(NAOMI, "Mode %x [%c] (ext) not handled", mode, mode);
+		ERROR_LOG(MAPLE, "Mode %x [%c] (ext) not handled", mode, mode);
 	}
 	else
 	{
@@ -3411,7 +3477,7 @@ MapleDeviceRV WccfCameraImpl::setConditionA014(u8 dstAP, const u8 mode)
 			}
 			break;
 		default:
-    		ERROR_LOG(NAOMI, "Mode %x [%c] not handled", mode, mode);
+    		ERROR_LOG(MAPLE, "Mode %x [%c] not handled", mode, mode);
 			return MDRE_UnknownCmd;
 		}
 		return MDRS_DeviceReply;
@@ -3478,4 +3544,354 @@ void WccfCameraImpl::deserialize(Deserializer& deser)
 	deser >> mode;
 	deser >> status;
 	deser >> mode0dataSize;
+}
+
+static int getPlayerIndex(int playerId)
+{
+	static constexpr int CardRanges420[][3] = {
+		{ 0x18, 0x83, 0 },
+		{ 0xc9, 0x1fe, 0 },
+		{ 0x226, 0x246, 0 },
+		{ 0x246, 0x254, 1 },
+		{ 0x258, 0x378, 0 },
+		{ 0x378, 0x3ac, 1 },
+		{ 0x3ac, 0x3cc, 0 },
+		{ 0x3cc, 0x3fc, 1 },
+		{ 0x3fc, 0x400, 1 },
+		{ 0x44c, 0x52c, 0 },
+		{ 0x52c, 0x54c, 1 },
+		{ 0x54c, 0x558, 1 },
+		{ 0x558, 0x559, 1 },
+		{ 0x579, 0x6c9, 0 },
+		{ 0x6c9, 0x6f3, 1 },
+		{ 0x6f3, 0x6fd, 1 },
+	};
+
+	const int baseIndex = playerId & 0x3fff;
+	int newIdx = 1;
+	unsigned range = 0;
+	while (true)
+	{
+		if (baseIndex >= CardRanges420[range][0]
+				&& baseIndex < CardRanges420[range][1])
+			break;
+		newIdx += CardRanges420[range][1] - CardRanges420[range][0];
+		range++;
+		if (range == std::size(CardRanges420))
+			return -1;
+	}
+	if (((playerId >> 14) & 1) != CardRanges420[range][2])
+		return -1;
+	return newIdx + baseIndex - CardRanges420[range][0];
+}
+
+void WccfCameraImpl::findPlayerName(Player& player)
+{
+	if (player.playerId == 0xffff) {
+		player.name.clear();
+		return;
+	}
+	if (player.playerId <= 15) {
+		player.name = "TEST CARD " + std::to_string(player.playerId + 1);
+		return;
+	}
+	int idx = getPlayerIndex(player.playerId);
+	if (idx <= 0) {
+		INFO_LOG(MAPLE, "Invalid player ID %x", player.playerId);
+		player.name = "PID:" + std::to_string(player.playerId);
+		return;
+	}
+	if (addrspace::read32(0x0c20b448) != 0x0c1ce448)
+		// player table not loaded (yet?)
+		return;
+	u32 addr = 0x0c20b448 + idx * 0x24;
+	u32 nameAddr = addrspace::read32(addr);
+	u8 *name = GetMemPtr(nameAddr, 1);
+	if (name == nullptr) {
+		INFO_LOG(MAPLE, "Can't find name of player ID %x", player.playerId);
+		player.name = "PID:" + std::to_string(player.playerId);
+		return;
+	}
+	player.name.clear();
+	while (*name)
+	{
+		switch (*name)
+		{
+		case 0xA7: player.name += "Á"; break;
+		case 0xA9: player.name += "Á"; break;
+		case 0xAA: player.name += "Ä"; break;
+		case 0xAB: player.name += "Ć"; break;
+		case 0xAC: player.name += "Ç"; break;
+		case 0xAD: player.name += "È"; break;
+		case 0xAE: player.name += "É"; break;
+		case 0xB2: player.name += "Í"; break;
+		case 0xB4: player.name += "Ï"; break;
+		case 0xB6: player.name += "Ñ"; break;
+		case 0xB7: player.name += "Ò"; break;
+		case 0xB8: player.name += "Ó"; break;
+		case 0xBA: player.name += "Õ"; break;
+		case 0xBB: player.name += "Ö"; break;
+		case 0xBC: player.name += "Ø"; break;
+		case 0xBE: player.name += "Ú"; break;
+		case 0xC0: player.name += "Ü"; break;
+		case 0xC1: player.name += "Ñ"; break;
+		case 0xC3: player.name += "á"; break;
+		default:
+			player.name += (char)*name;
+		}
+		name++;
+		if (player.name.length() >= 20)
+			break;
+	}
+}
+
+void WccfCameraImpl::checkTeamFile()
+{
+	makeTeamFilePath();
+	struct stat st;
+	if (flycast::stat(teamFilePath.c_str(), &st)) {
+		DEBUG_LOG(MAPLE, "wccf_team.json file not found");
+		return;
+	}
+	if (teamFileTime == st.st_mtime)
+		return;
+	teamFileTime = st.st_mtime;
+	FILE *tf = nowide::fopen(teamFilePath.c_str(), "rt");
+	if (tf == nullptr) {
+		WARN_LOG(MAPLE, "Can't open %s", teamFilePath.c_str());
+		return;
+	}
+	std::string all_data;
+	char buf[4096];
+	while (true)
+	{
+		int s = fread(buf, 1, sizeof(buf), tf);
+		if (s <= 0)
+			break;
+		all_data.append(buf, s);
+	}
+	fclose(tf);
+	using namespace nlohmann;
+	try {
+		json v = json::parse(all_data);
+		int i = 0;
+		for (const auto& o : v)
+		{
+			u16 pid = 0xffff;
+			try {
+				pid = o.at("pid").get<u16>();
+			} catch (const json::exception& e) {
+			}
+			u32 x = 0;
+			try {
+				x = o.at("x").get<u32>();
+			} catch (const json::exception& e) {
+			}
+			u32 y = 0;
+			try {
+				y = o.at("y").get<u32>();
+			} catch (const json::exception& e) {
+			}
+			std::string name;
+			try {
+				name = o.at("name").get<std::string>();
+			} catch (const json::exception& e) {
+			}
+			Lock _(mutex);
+			players[i].playerId = pid;
+			players[i].x = x;
+			players[i].y = y;
+			players[i].name = name;
+			players[i].delta = 0;
+			players[i].lastX = x;
+			players[i].lastY = y;
+			findPlayerName(players[i]);
+			i++;
+		}
+	} catch (const json::exception& e) {
+		WARN_LOG(MAPLE, "Corrupted team file: %s", e.what());
+	}
+}
+
+void WccfCameraImpl::saveTeamFile()
+{
+	makeTeamFilePath();
+	FILE *tf = nowide::fopen(teamFilePath.c_str(), "wt");
+	if (tf == nullptr) {
+		WARN_LOG(MAPLE, "Can't open %s for saving", teamFilePath.c_str());
+		return;
+	}
+	using namespace nlohmann;
+	json array = json();
+	for (const Player& player : players)
+	{
+		Lock _(mutex);
+		json jp = {
+			{ "pid", player.playerId },
+			{ "x", player.x },
+			{ "y", player.y },
+			{ "name", player.name },
+		};
+		array.push_back(jp);
+	}
+	std::string data = array.dump(-1, ' ', false, json::error_handler_t::replace);
+	fwrite(data.c_str(), 1, data.size(), tf);
+	fclose(tf);
+	struct stat st;
+	if (flycast::stat(teamFilePath.c_str(), &st) == 0)
+		teamFileTime = st.st_mtime;
+}
+
+void WccfCameraImpl::OnSetup()
+{
+	WccfCamera::OnSetup();
+	io_context = std::make_unique<asio::io_context>();
+	httpServer = std::make_unique<HttpServer>(*io_context, "localhost", 17222);
+	httpServer->addUriHandler("/api/team", [this](const Request& req, Reply& rep)
+		{
+			rep.addHeader("Access-Control-Allow-Origin", "*");
+			rep.addHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS, DELETE");
+			rep.addHeader("Access-Control-Allow-Headers", "*");
+			using namespace nlohmann;
+			if (req.method == "GET")
+			{
+				checkTeamFile();
+				// Note: if team file is loaded before the game player table,
+				// player names will not be checked against playerId
+				json array = json();
+				for (const Player& player : players)
+				{
+					Lock _(mutex);
+					json jp = {
+						{ "pid", player.playerId },
+						{ "x", player.x },
+						{ "y", player.y },
+						{ "name", player.name },
+					};
+					array.push_back(jp);
+				}
+				rep.setContent(array.dump(-1, ' ', false, json::error_handler_t::replace),
+						"application/json");
+			}
+			else if (req.method == "POST")
+			{
+				try {
+					json v = json::parse(req.content);
+					for (const auto& o : v)
+					{
+						u16 pid = 0xffff;
+						try {
+							pid = o.at("pid").get<u16>();
+						} catch (const json::exception& e) {
+						}
+						if (pid == 0xffff)
+							continue;
+						u32 x = 0;
+						try {
+							x = o.at("x").get<u32>();
+						} catch (const json::exception& e) {
+						}
+						u32 y = 0;
+						try {
+							y = o.at("y").get<u32>();
+						} catch (const json::exception& e) {
+						}
+						u16 delta = 0;
+						try {
+							delta = o.at("delta").get<u16>();
+						} catch (const json::exception& e) {
+						}
+						{
+							Lock _(mutex);
+							bool found = false;
+							for (Player& player : players)
+							{
+								if (player.playerId == pid)
+								{
+									player.x = x;
+									player.y = y;
+									player.delta = delta;
+									found = true;
+									break;
+								}
+							}
+							if (!found)
+							{
+								for (Player& player : players)
+								{
+									if (player.playerId == 0xffff)
+									{
+										player.playerId = pid;
+										player.x = x;
+										player.y = y;
+										player.delta = delta;
+										findPlayerName(player);
+										break;
+									}
+								}
+							}
+						}
+					}
+					saveTeamFile();
+					rep.status = Reply::ok;
+				} catch (const json::exception& e) {
+					WARN_LOG(MAPLE, "Invalid json request: %s", e.what());
+					rep.status = Reply::internal_server_error;
+				}
+			}
+			else if (req.method == "DELETE")
+			{
+				if (req.uri == "/api/team")
+				{
+					// Delete all players
+					for (Player& player : players)
+					{
+						player.playerId = 0xffff;
+						player.x = 0;
+						player.y = 0;
+						player.name.clear();
+					}
+				}
+				else
+				{
+					// Delete one player
+					auto slash = req.uri.rfind('/');
+					if (slash == std::string::npos) {
+						rep.status = Reply::not_found;
+						return;
+					}
+					int playerId = atoi(req.uri.substr(slash + 1).c_str());
+					if (playerId != 0xffff)
+					{
+						for (Player& player : players)
+						{
+							if (player.playerId == playerId)
+							{
+								player.playerId = 0xffff;
+								player.x = 0;
+								player.y = 0;
+								player.name.clear();
+								break;
+							}
+						}
+					}
+				}
+				saveTeamFile();
+				rep.status = Reply::ok;
+			}
+			else if (req.method == "OPTIONS") {
+				rep.status = Reply::ok;
+			}
+		});
+	httpThread = std::thread([this]() {
+		io_context->run();
+	});
+}
+
+WccfCameraImpl::~WccfCameraImpl()
+{
+	if (httpThread.joinable()) {
+		io_context->stop();
+		httpThread.join();
+	}
 }
