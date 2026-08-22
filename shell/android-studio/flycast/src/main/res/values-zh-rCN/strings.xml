@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="OK">OK</string>
-    <string name="storage_error">Storage Error</string>
-    <string name="folder_permissions">Can\'t get permissions to access this folder.\nPlease select a different one.</string>
-    <string name="file_manager_not_found">File Manager not found</string>
-    <string name="no_file_manager_android10">No appropriate file manager was found on your device.\nPlease install a Storage Access Framework compatible file manager</string>
-    <string name="no_file_manager_android9">No appropriate file manager was found on your device.\nPlease install a file manager or try to disable \'Use SAF File Picker\' in the general settings</string>
-    <string name="select_an_export_folder">Select an export folder</string>
-    <string name="exporting_home_folder">Exporting home folder</string>
-    <string name="select_an_import_folder">Select an import folder</string>
-    <string name="importing_home_folder">Importing home folder</string>
-    <string name="flycast_error">Flycast Error</string>
-    <string name="init_failed_message">Initialization failed. Please try again or reinstall.\n\nError: </string>
-    <string name="exit">Exit</string>
-    <string name="copying">Copying</string>
+    <string name="OK">确定</string>
+    <string name="storage_error">存储错误</string>
+    <string name="folder_permissions">无法获得访问此文件夹的权限。\n请选择另一个文件夹。</string>
+    <string name="file_manager_not_found">未找到文件管理器</string>
+    <string name="no_file_manager_android10">在您的设备上未找到合适的文件管理器。\n请安装一个兼容存储访问框架（SAF）的文件管理器</string>
+    <string name="no_file_manager_android9">在您的设备上未找到合适的文件管理器。\n请安装一个文件管理器，或尝试在“通用设置”中禁用“使用 SAF 文件选择器”选项</string>
+    <string name="select_an_export_folder">选择一个导出文件夹</string>
+    <string name="exporting_home_folder">导出主文件夹</string>
+    <string name="select_an_import_folder">选择一个导入文件夹</string>
+    <string name="importing_home_folder">导入主文件夹</string>
+    <string name="flycast_error">Flycast 错误</string>
+    <string name="init_failed_message">初始化失败。请重试或重新安装。\n\n错误：</string>
+    <string name="exit">退出</string>
+    <string name="copying">复制</string>
 </resources>
