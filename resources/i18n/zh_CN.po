@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-22 12:49+0100\n"
-"PO-Revision-Date: 2026-08-21 22:33\n"
+"PO-Revision-Date: 2026-08-22 00:08\n"
 "Last-Translator: \n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
@@ -1606,12 +1606,12 @@ msgstr "快进"
 #: core/ui/settings_controls.cpp:226 core/ui/settings_controls.cpp:286
 #: core/ui/gui.cpp:637
 msgid "Load State"
-msgstr "即时读档"
+msgstr "加载即时存档"
 
 #: core/ui/settings_controls.cpp:227 core/ui/settings_controls.cpp:287
 #: core/ui/gui.cpp:645
 msgid "Save State"
-msgstr "及时存档"
+msgstr "即时存档"
 
 #: core/ui/settings_controls.cpp:228 core/ui/settings_controls.cpp:288
 msgid "Load State in RAM"
@@ -1619,7 +1619,7 @@ msgstr "将即时存档加载到内存"
 
 #: core/ui/settings_controls.cpp:229 core/ui/settings_controls.cpp:289
 msgid "Save State in RAM"
-msgstr "读取内存中的及时存档"
+msgstr "读取内存中的即时存档"
 
 #: core/ui/settings_controls.cpp:230 core/ui/settings_controls.cpp:290
 msgid "Next Save State Slot"
@@ -1956,7 +1956,7 @@ msgstr "就快好了"
 
 #: core/ui/gui_achievements.cpp:327
 msgid "Unlocked"
-msgstr "快到了"
+msgstr "已解锁"
 
 #: core/ui/gui_achievements.cpp:327
 msgid "Recently Unlocked"
@@ -2207,7 +2207,7 @@ msgstr "使用解释器"
 
 #: core/ui/settings.cpp:42
 msgid "Use the interpreter. Very slow but may help in case of a dynarec problem"
-msgstr "除非 Git 有什么问题，不然绝不推荐用这个"
+msgstr "除非 JIT 有什么问题，不然绝不推荐用这个"
 
 #: core/ui/settings.cpp:45
 msgid "SH4 Clock"
@@ -2371,7 +2371,7 @@ msgstr "Battle Cable"
 
 #: core/ui/settings_network.cpp:54
 msgid "Emulate the Taisen (Battle) null modem cable for games that support it"
-msgstr "Battle Cable：模拟 Taisen (Battle) null modem cable，供支持该功能的游戏使用。"
+msgstr "Battle Cable：模拟 Taisen (Battle) null modem cable，供支持该功能的游戏使用"
 
 #: core/ui/settings_network.cpp:74
 msgid "Configuration"
@@ -2528,7 +2528,7 @@ msgstr "正在加载游戏..."
 #: core/ui/settings_network.cpp:195
 #, c-format
 msgid "Playing %s (%s)"
-msgstr "Playing %s (%s)"
+msgstr "播放 %s (%s)"
 
 #: core/ui/settings_network.cpp:205
 msgid "Manual"
