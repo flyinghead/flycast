@@ -9,6 +9,10 @@
 #include <iostream>
 #include <string.h>
 
+#ifdef _MSC_VER
+#define strcasecmp stricmp
+#endif
+
 namespace status_strings {
 
 const std::string ok =
