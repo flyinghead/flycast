@@ -7,7 +7,7 @@
 #include "http_server.h"
 #include <fstream>
 #include <iostream>
-#include <strings.h>
+#include <string.h>
 
 namespace status_strings {
 
