@@ -341,6 +341,27 @@ void input_sdl_handle()
 				checkRawInput();
 				if (event.key.repeat == 0)
 				{
+					// Alt-Return and F11 toggle full screen
+					if (event.type == SDL_KEYDOWN
+							&& ((event.key.keysym.sym == SDLK_RETURN && (event.key.keysym.mod & KMOD_ALT))
+								|| (event.key.keysym.sym == SDLK_F11 && (event.key.keysym.mod & (KMOD_ALT | KMOD_CTRL | KMOD_SHIFT | KMOD_GUI)) == 0)))
+					{
+						if (window_fullscreen)
+						{
+							SDL_SetWindowFullscreen(window, 0);
+							if (!gameRunning || !mouseCaptured)
+								SDL_ShowCursor(SDL_ENABLE);
+						}
+						else
+						{
+							SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN_DESKTOP);
+							if (gameRunning)
+								SDL_ShowCursor(SDL_DISABLE);
+						}
+						window_fullscreen = !window_fullscreen;
+						break;
+					}
+					// Route other keyboard events to master in multiboard mode
 					if (settings.naomi.slave) {
 						Multiboard::keyboardEvent(event.key.keysym.scancode, event.type == SDL_KEYDOWN);
 						break;
@@ -369,25 +390,6 @@ void input_sdl_handle()
 					};
 					if (event.type == SDL_KEYDOWN)
 					{
-						// Alt-Return and F11 toggle full screen
-						if ((event.key.keysym.sym == SDLK_RETURN && (event.key.keysym.mod & KMOD_ALT))
-								|| (event.key.keysym.sym == SDLK_F11 && (event.key.keysym.mod & (KMOD_ALT | KMOD_CTRL | KMOD_SHIFT | KMOD_GUI)) == 0))
-						{
-							if (window_fullscreen)
-							{
-								SDL_SetWindowFullscreen(window, 0);
-								if (!gameRunning || !mouseCaptured)
-									SDL_ShowCursor(SDL_ENABLE);
-							}
-							else
-							{
-								SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN_DESKTOP);
-								if (gameRunning)
-									SDL_ShowCursor(SDL_DISABLE);
-							}
-							window_fullscreen = !window_fullscreen;
-							break;
-						}
 						// Left-Alt + Left-CTRL toggles mouse capture
 						if ((event.key.keysym.mod & KMOD_LALT) && (event.key.keysym.mod & KMOD_LCTRL)
 								&& !(is_key_mapped(SDL_SCANCODE_LALT) || is_key_mapped(SDL_SCANCODE_LCTRL)))
