@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-22 12:49+0100\n"
-"PO-Revision-Date: 2026-08-22 00:08\n"
+"PO-Revision-Date: 2026-08-24 02:46\n"
 "Last-Translator: \n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
@@ -1078,15 +1078,15 @@ msgstr "VGA"
 
 #: core/ui/settings_general.cpp:246
 msgid "RGB Component"
-msgstr "RGB Component"
+msgstr "RGB色差线"
 
 #: core/ui/settings_general.cpp:246
 msgid "TV Composite"
-msgstr "TV Composite"
+msgstr "复合AV线"
 
 #: core/ui/settings_general.cpp:253
 msgid "Cable"
-msgstr "Cable"
+msgstr "视频线类型"
 
 #: core/ui/settings_general.cpp:266
 msgid "Video connection type"
