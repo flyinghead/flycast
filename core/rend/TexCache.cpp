@@ -447,6 +447,8 @@ bool BaseTextureCacheData::Update()
 	gpuPalette = false;
 	tex_type = tex->type;
 
+	const u8 *vqCodebook = nullptr;
+	u32 paletteIndex = 0;
 	bool has_alpha = false;
 	if (IsPaletted())
 	{
@@ -463,21 +465,20 @@ bool BaseTextureCacheData::Update()
 		}
 
 		// Get the palette hash to check for future updates
-		// TODO get rid of ::palette_index and ::vq_codebook
 		if (tcw.PixelFmt == PixelPal4)
 		{
 			palette_hash = pal_hash_16[tcw.PalSelect];
-			::palette_index = tcw.PalSelect << 4;
+			paletteIndex = tcw.PalSelect << 4;
 		}
 		else
 		{
 			palette_hash = pal_hash_256[tcw.PalSelect >> 4];
-			::palette_index = (tcw.PalSelect >> 4) << 8;
+			paletteIndex = (tcw.PalSelect >> 4) << 8;
 		}
 	}
 
 	if (tcw.VQ_Comp)
-		::vq_codebook = &vram[startAddress];
+		vqCodebook = &vram[startAddress];
 
 	//texture conversion work
 	u32 stride = width;
@@ -558,7 +559,7 @@ bool BaseTextureCacheData::Update()
 	is_custom_replaced = false;
 	customMipLevels = 0;
 
-	void *temp_tex_buffer = NULL;
+	void *temp_tex_buffer = nullptr;
 	u32 upscaled_w = width;
 	u32 upscaled_h = height;
 
@@ -589,6 +590,8 @@ bool BaseTextureCacheData::Update()
 			mipmapped = false;
 		// Force the texture type since that's the only 32-bit one we know
 		tex_type = TextureType::_8888;
+		pb32.setVQCodebook(vqCodebook);
+		pb32.setPaletteIndex(paletteIndex);
 
 		if (mipmapped)
 		{
@@ -604,6 +607,8 @@ bool BaseTextureCacheData::Update()
 					{
 						PixelBuffer<u32> pb0;
 						pb0.init(2, 2 ,false);
+						pb0.setVQCodebook(vqCodebook);
+						pb0.setPaletteIndex(paletteIndex);
 						if (tcw.PixelFmt == PixelYUV)
 							// Use higher LoD mipmap
 							vram_addr = startAddress + VQMipPoint[1];
@@ -646,6 +651,9 @@ bool BaseTextureCacheData::Update()
 	}
 	else if (texconv8 != NULL && tex_type == TextureType::_8)
 	{
+		pb8.setVQCodebook(vqCodebook);
+		pb8.setPaletteIndex(paletteIndex);
+
 		if (mipmapped)
 		{
 			// This shouldn't happen since mipmapped palette textures are converted to rgba
@@ -667,6 +675,9 @@ bool BaseTextureCacheData::Update()
 	}
 	else if (texconv != NULL)
 	{
+		pb16.setVQCodebook(vqCodebook);
+		pb16.setPaletteIndex(paletteIndex);
+
 		if (mipmapped)
 		{
 			pb16.init(width, height, true);
@@ -681,6 +692,8 @@ bool BaseTextureCacheData::Update()
 					{
 						PixelBuffer<u16> pb0;
 						pb0.init(2, 2 ,false);
+						pb0.setVQCodebook(vqCodebook);
+						pb0.setPaletteIndex(paletteIndex);
 						texconv(&pb0, (u8*)&vram[vram_addr], 2, 2);
 						*pb16.data() = *pb0.data(1, 1);
 						continue;

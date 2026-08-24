@@ -7,4 +7,5 @@ target_sources(${PROJECT_NAME} PRIVATE
         maple_helper.h
         maple_if.cpp
         maple_if.h
-        maple_jvs.cpp)
+        maple_jvs.cpp
+        wccf_cam.cpp)

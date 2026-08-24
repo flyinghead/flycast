@@ -77,7 +77,7 @@ static inline bool pvrParse(const u8 *data, u32 len, u32& width, u32& height, st
 		return false;
 	}
 
-	::vq_codebook = p;
+	const u8 *vqCodebook = p;
 	TexConvFP32 texConv;
 	switch (pixelFormat)
 	{
@@ -158,6 +158,7 @@ static inline bool pvrParse(const u8 *data, u32 len, u32& width, u32& height, st
 
 	PixelBuffer<u32> pb;
 	pb.init(width, height);
+	pb.setVQCodebook(vqCodebook);
 	texConv(&pb, p, width, height);
 	out.resize(width * height * 4);
 	memcpy(out.data(), pb.data(), out.size());
