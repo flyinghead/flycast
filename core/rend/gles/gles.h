@@ -277,10 +277,13 @@ struct gl_ctx
 
 	struct
 	{
-		GLuint tex;
-		int width;
-		int height;
+		GLuint tex = 0;
+		int width = 0;
+		int height = 0;
+		int textureWidth = 0;
+		int textureHeight = 0;
 	} dcfb;
+	PixelBuffer<u32> framebufferBuffer;
 
 	struct
 	{

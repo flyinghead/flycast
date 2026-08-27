@@ -529,10 +529,9 @@ void ReadRTTBuffer()
 		}
 		else
 		{
-			PixelBuffer<u32> tmp_buf;
-			tmp_buf.init(w, h);
+			gl.framebufferBuffer.init(w, h);
 
-			u8 *p = (u8 *)tmp_buf.data();
+			u8 *p = (u8 *)gl.framebufferBuffer.data();
 			glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, p);
 
 			WriteTextureToVRam(w, h, p, dst, gl.rendContext->fb_W_CTRL, linestride, gl.rendContext->fbClip);
@@ -586,21 +585,35 @@ BaseTextureCacheData *OpenGLRenderer::GetTexture(TSP tsp, TCW tcw, int area)
 
 void glReadFramebuffer(const FramebufferInfo& info)
 {
-	PixelBuffer<u32> pb;
-	ReadFramebuffer(info, pb, gl.dcfb.width, gl.dcfb.height);
+	ReadFramebuffer(info, gl.framebufferBuffer, gl.dcfb.width, gl.dcfb.height);
+	const bool resize = gl.dcfb.tex == 0
+			|| gl.dcfb.textureWidth != gl.dcfb.width
+			|| gl.dcfb.textureHeight != gl.dcfb.height;
 	
-	if (gl.dcfb.tex == 0)
+	if (resize)
+	{
+		if (gl.dcfb.tex != 0)
+			glcache.DeleteTextures(1, &gl.dcfb.tex);
 		gl.dcfb.tex = glcache.GenTexture();
+		gl.dcfb.textureWidth = gl.dcfb.width;
+		gl.dcfb.textureHeight = gl.dcfb.height;
+	}
 	
 	glcache.BindTexture(GL_TEXTURE_2D, gl.dcfb.tex);
 	
-	//set texture repeat mode
-	glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	if (resize)
+	{
+		// Texture storage is retained until the framebuffer dimensions change.
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, gl.dcfb.width, gl.dcfb.height,
+				0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+	}
 	
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, gl.dcfb.width, gl.dcfb.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pb.data());
+	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, gl.dcfb.width, gl.dcfb.height,
+			GL_RGBA, GL_UNSIGNED_BYTE, gl.framebufferBuffer.data());
 }
 
 GlFramebuffer *init_output_framebuffer(int width, int height)

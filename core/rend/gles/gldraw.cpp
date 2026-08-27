@@ -781,10 +781,9 @@ void writeFramebufferToVRAM()
 	glPixelStorei(GL_PACK_ALIGNMENT, 1);
 	u32 linestride = gl.rendContext->fb_W_LINESTRIDE * 8;
 
-	PixelBuffer<u32> tmp_buf;
-	tmp_buf.init(width, height);
+	gl.framebufferBuffer.init(width, height);
 
-	u8 *p = (u8 *)tmp_buf.data();
+	u8 *p = (u8 *)gl.framebufferBuffer.data();
 	glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, p);
 
 	WriteFramebuffer(width, height, p, tex_addr, gl.rendContext->fb_W_CTRL, linestride, finalClip);
