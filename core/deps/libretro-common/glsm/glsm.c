@@ -3008,7 +3008,10 @@ static bool glsm_state_ctx_init(glsm_ctx_params_t *params)
       return false;
 
 #ifdef HAVE_OPENGLES
-   hw_render.context_type       = RETRO_HW_CONTEXT_OPENGLES2;
+   hw_render.context_type       = params->context_type != RETRO_HW_CONTEXT_NONE
+         ? params->context_type : RETRO_HW_CONTEXT_OPENGLES2;
+   hw_render.version_major      = params->major;
+   hw_render.version_minor      = params->minor;
 #else
    hw_render.context_type       = RETRO_HW_CONTEXT_OPENGL;
    if (params->context_type != RETRO_HW_CONTEXT_NONE)

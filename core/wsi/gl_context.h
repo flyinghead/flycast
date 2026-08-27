@@ -88,9 +88,7 @@ public:
 
 	bool hasPerPixel() override
 	{
-		return isGLES()
-				? majorVersion > 3 || (majorVersion == 3 && minorVersion >= 2)	// GL ES 3.2
-				: majorVersion > 4 || (majorVersion == 4 && minorVersion >= 3); // GL 4.3
+		return perPixelSupported;
 	}
 	void setSwapInterval(int interval) override;
 
@@ -105,6 +103,7 @@ protected:
 	void postInit();
 	void preTerm();
 	void findGLVersion();
+	bool checkPerPixelSupport() const;
 
 	int gameSwapInterval = 1;
 	bool gameSwapIntervalChanged = false;
@@ -113,6 +112,7 @@ private:
 	int majorVersion = 0;
 	int minorVersion = 0;
 	bool _isGLES = false;
+	bool perPixelSupported = false;
 	std::string driverName;
 	std::string driverVersion;
 	bool amd = false;

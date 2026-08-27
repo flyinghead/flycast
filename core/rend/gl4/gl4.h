@@ -45,6 +45,12 @@
 #ifndef GL_BUFFER_UPDATE_BARRIER_BIT
 #define GL_BUFFER_UPDATE_BARRIER_BIT 0x00000200
 #endif
+#ifndef GL_SHADER_STORAGE_BARRIER_BIT
+#define GL_SHADER_STORAGE_BARRIER_BIT 0x00002000
+#endif
+
+// Keep the sole PPLL image within the GLES 3.1 guaranteed image-unit range.
+#define ABUFFER_POINTER_IMAGE_UNIT 0
 
 void gl4DrawStrips(GLuint output_fbo, int width, int height);
 
@@ -224,13 +230,20 @@ extern const char* ShaderHeader;
 class OpenGl4Source : public ShaderSource
 {
 public:
-	OpenGl4Source()
-		: ShaderSource(gl.is_gles ? "#version 320 es" : "#version 430")
+	OpenGl4Source(bool needsImageAtomics = false)
+		: ShaderSource(gl.is_gles
+				? (gl.gl_major > 3 || (gl.gl_major == 3 && gl.gl_minor >= 2)
+						? "#version 320 es" : "#version 310 es")
+				: "#version 430")
 	{
 		if (gl.is_gles)
+		{
+			if (needsImageAtomics && gl.gl_major == 3 && gl.gl_minor < 2)
+				addSource("#extension GL_OES_shader_image_atomic : require");
 			addSource("precision highp float;\n"
 					"precision highp int;\n"
 					"precision highp sampler2D;");
+		}
 	}
 };
 
@@ -296,7 +309,6 @@ extern struct gl4ShaderUniforms_t
 	}
 
 } gl4ShaderUniforms;
-
 struct OpenGL4Renderer : OpenGLRenderer
 {
 	bool Init() override;

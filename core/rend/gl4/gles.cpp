@@ -33,7 +33,7 @@
 //Fragment and vertex shaders code
 
 const char* ShaderHeader = R"(
-layout(r32ui, binding = 4) uniform coherent restrict highp uimage2D abufferPointerImg;
+layout(r32ui, binding = 0) uniform coherent restrict highp uimage2D abufferPointerImg;
 
 layout(binding = 0, offset = 0) uniform atomic_uint buffer_index;
 )"
@@ -480,7 +480,7 @@ public:
 class Fragment4ShaderSource : public OpenGl4Source
 {
 public:
-	Fragment4ShaderSource(const gl4PipelineShader* s) : OpenGl4Source()
+	Fragment4ShaderSource(const gl4PipelineShader* s) : OpenGl4Source(s->pass == Pass::OIT)
 	{
 		addConstant("cp_AlphaTest", s->cp_AlphaTest);
 		addConstant("pp_ClipInside", s->pp_InsideClipping);
@@ -728,10 +728,9 @@ void gl_DebugOutput(GLenum source, GLenum type, GLuint id, GLenum severity, GLsi
 bool OpenGL4Renderer::Init()
 {
 	findGLVersion();
-	if ((!gl.is_gles && (gl.gl_major < 4 || (gl.gl_major == 4 && gl.gl_minor < 3)))
-			|| (gl.is_gles && (gl.gl_major < 3 || (gl.gl_major == 3 && gl.gl_minor < 2))))
+	if (!GLGraphicsContext::Instance()->hasPerPixel())
 	{
-		WARN_LOG(RENDERER, "Warning: OpenGL version doesn't support per-pixel sorting.");
+		WARN_LOG(RENDERER, "OpenGL context doesn't support the resources required for per-pixel sorting.");
 		return false;
 	}
 	INFO_LOG(RENDERER, "Per-pixel sorting enabled");

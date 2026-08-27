@@ -201,8 +201,6 @@ void main(void)
 {
 	ivec2 coords = ivec2(gl_FragCoord.xy);
 	// Compute and output final color for the frame buffer
-	// Visualize the number of layers in use
-	//FragColor = vec4(float(fillAndSortFragmentArray(coords)) / float(MAX_PIXELS_PER_FRAGMENT * 4), 0, 0, 1);
 	FragColor = resolveAlphaBlend(coords);
 
 	// Reset pointers
@@ -361,7 +359,7 @@ void initABuffer()
 		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 		glTexStorage2D(GL_TEXTURE_2D, 1, GL_R32UI, max_image_width, max_image_height);
-		glBindImageTexture(4, pixels_pointers, 0, false, 0,  GL_READ_WRITE, GL_R32UI);
+		glBindImageTexture(ABUFFER_POINTER_IMAGE_UNIT, pixels_pointers, 0, false, 0,  GL_READ_WRITE, GL_R32UI);
 		glCheck();
 	}
 
@@ -503,7 +501,7 @@ void OpenGL4Renderer::drawTranslucentModVols(int first, int count, bool useOpaqu
 
 	ModifierVolumeParam* params = useOpaqueGeom ? &gl.rendContext->global_param_mvo[first] : &gl.rendContext->global_param_mvo_tr[first];
 
-	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_BUFFER_UPDATE_BARRIER_BIT);
+	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_SHADER_STORAGE_BARRIER_BIT);
 
 	int mod_base = -1;
 
@@ -534,7 +532,7 @@ void OpenGL4Renderer::drawTranslucentModVols(int first, int count, bool useOpaqu
 
 		setCull(param.isp.CullMode); glCheck();
 
-		glMemoryBarrier(GL_BUFFER_UPDATE_BARRIER_BIT);
+		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
 		glDrawArrays(GL_TRIANGLES, param.first * 3, param.count * 3); glCheck();
 
@@ -545,7 +543,7 @@ void OpenGL4Renderer::drawTranslucentModVols(int first, int count, bool useOpaqu
 			glcache.UseProgram(shader->program);
 			gl4ShaderUniforms.Set(shader);
 
-			glMemoryBarrier(GL_BUFFER_UPDATE_BARRIER_BIT);
+			glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 			glDrawArrays(GL_TRIANGLES, mod_base * 3, (param.first + param.count - mod_base) * 3); glCheck();
 			mod_base = -1;
 		}
@@ -578,8 +576,8 @@ void checkOverflowAndReset()
 //		}
 //	}
 	// Reset counter
-	max_pixel_index = 0;
- 	glBufferSubData(GL_ATOMIC_COUNTER_BUFFER, 0 , sizeof(GLuint), &max_pixel_index);
+	glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, atomic_buffer);
+	glBufferSubData(GL_ATOMIC_COUNTER_BUFFER, 0 , sizeof(GLuint), &max_pixel_index);
 }
 
 void renderABuffer(bool lastPass)
@@ -616,7 +614,7 @@ void renderABuffer(bool lastPass)
 	glcache.Disable(GL_DEPTH_TEST);
 	glcache.Disable(GL_CULL_FACE);
 	glcache.Disable(GL_SCISSOR_TEST);
-	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_BUFFER_UPDATE_BARRIER_BIT);
+	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_SHADER_STORAGE_BARRIER_BIT);
 	glcache.Disable(GL_BLEND);
 
 	abufferDrawQuad();
