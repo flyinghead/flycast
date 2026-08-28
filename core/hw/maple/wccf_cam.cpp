@@ -26,6 +26,10 @@
 #include "hw/naomi/netdimm.h"
 #include "rend/texconv.h"
 #include <stb_image_write.h>
+#include <algorithm>
+#include <memory>
+#include <mutex>
+#include <thread>
 
 #define WCCFLOG(...) INFO_LOG(MAPLE, __VA_ARGS__)
 
@@ -35,15 +39,12 @@ struct WccfCameraImpl : public WccfCamera
 	{
 		Player() = default;
 		Player(u16 playerId, u32 x, u32 y)
-			: playerId(playerId), x(x), y(y), lastX(x), lastY(y)
+			: playerId(playerId), x(x), y(y)
 		{}
 
-		u16 playerId = 0xffff;
-		u16 delta = 0;
+		u16 playerId;
 		u32 x;
 		u32 y;
-		u32 lastX;
-		u32 lastY;
 		std::string name;
 	};
 
@@ -65,24 +66,28 @@ struct WccfCameraImpl : public WccfCamera
 	MapleDeviceRV setConditionA014(u8 dstAP, const u8 mode);
 
 	void makeTeamFilePath() {
+		Lock _(mutex);
 		teamFilePath = hostfs::getArcadeFlashPath() + "-team.json";
 	}
 	void checkTeamFile();
 	void saveTeamFile();
 	void findPlayerName(Player& player);
 
-	std::array<Player, 16> players;
+	std::vector<Player> players;
 	std::mutex mutex;
 	using Lock = std::lock_guard<std::mutex>;
 	int overlay = 0;
 	char mode = 0;
 	u8 status = '1';
 	int mode0dataSize = 16;
+	int condCounter = 0;
 	std::string teamFilePath;
 	time_t teamFileTime = 0;
 	std::unique_ptr<asio::io_context> io_context;
 	std::unique_ptr<HttpServer> httpServer;
 	std::thread httpThread;
+
+	static constexpr size_t MAX_CARDS = 16;
 };
 
 std::shared_ptr<maple_device> WccfCamera::Create() {
@@ -206,21 +211,21 @@ MapleDeviceRV WccfCameraImpl::sendDeviceStatus(bool full, u8 dstAP)
 					break;
 				default:
 					{
-						checkTeamFile();
-						w8(mode0dataSize);
-						w8(0);
-						w8(0);
-						w16(1);
-						w16(3);
-						w16(53);
-						w16(401);
-						w16(601);
-						w16(2);
-						w16(551);
-						w16(400);
+						Lock _(mutex);
+						w8(players.size());	// card count
+						w8(0);				// constant
+						w8(0xff);
+						w16(42);
+						w16(48);
+						w16(41);
+						w16(469);
+						w16(594);
+						w16(46);
+						w16(596);
+						w16(468);
+#ifdef HARDCODED_TEAM
 						for (int i = 0; i < mode0dataSize; i++)
 						{
-#ifdef HARDCODED_TEAM
 							if (i < 11)
 							{
 								// pitch
@@ -233,43 +238,27 @@ MapleDeviceRV WccfCameraImpl::sendDeviceStatus(bool full, u8 dstAP)
 								w16((i - 11) * 80 + 100);
 								w16(0);
 							}
-							w16(0); // not used? set by the game to max(abs(deltaX), abs(deltaY))
+							w16(0);
 							// test cards
 							//w16(i);
 							// real cards
 							// card ranges:
 							// 24-130, 201-509, 550-581, 582-595*, 600-887, 888-939*, 940-971, 972-1019*, 1020-1023*
-							// 1100-1323, 1324-1355*, 1356-1367*, 1368*,
+							// 1100-1323, 1324-1355*, 1356-1367*,
 							// 2005-2006 edition:
-							// 	1401-1736
-							// 2005-2006 edition special cards:
-							// 	1737-1778*, 1779-1788*
+							// 	 1368*, 1401-1736, 1737-1778*, 1779-1788*
 							// (* indicates the index also has bit 14 set)
 							w16(i + 1401);
-#else
-							Lock _(mutex);
-							Player& p = players[i];
-							if (p.delta != 0)
-							{
-								const int r = (rand() & 0xf) - 7;
-								w16(p.y + r);
-								w16(p.x);
-								w16(p.delta);
-							}
-							else {
-								w16(p.y);
-								w16(p.x);
-								w16(0);
-							}
-							//const u16 delta = std::max(std::abs((int)(p.x - p.lastX)), std::abs((int)(p.y - p.lastY)));
-							//if (delta >= 3)
-							//	printf("Player %d delta %d\n", i, delta);
-							//w16(delta); // not used? set by the game to max(abs(deltaX), abs(deltaY))
-							w16(p.playerId);
-							p.lastX = p.x;
-							p.lastY = p.y;
-#endif
 						}
+#else
+						for (Player& p : players)
+						{
+							w16(p.y);
+							w16(p.x);
+							w16(0); // not used
+							w16(p.playerId);
+						}
+#endif
 						break;
 					}
 				}
@@ -567,15 +556,21 @@ u32 WccfCameraImpl::dma(u32 command)
 		return sendDeviceStatus(command == MDC_AllStatusReq, reci);
 
 	case MDCF_GetCondition:
-		//WCCFLOG("[%d] Cam GetCondition. sz %d reci %x", bus_id, dma_count_in, reci);
 		w32(MFID_0_Input);
 		w8(status);
 		w8(0);
 		w16(0);
 		w32(0);
 		if (mode == 3 && (status == 11 || status == 12))
+		{
 			// alternate between status 11 and 12
-			status ^= 7;
+			if (condCounter % 3 == 0)
+				status = 11;
+			else
+				status = 12;
+			condCounter++;
+			WCCFLOG("[%d] Cam GetCondition. sz %d reci %x mode 3 status %d", bus_id, dma_count_in, reci, status);
+		}
 		return MDRS_DataTransfer;
 
 	case MDCF_SetCondition:
@@ -620,18 +615,22 @@ void WccfCameraImpl::deserialize(Deserializer& deser)
 static int getPlayerIndex(int playerId)
 {
 	static constexpr int CardRanges420[][3] = {
+		// 2001-2002 (462 cards)
 		{ 0x18, 0x83, 0 },
 		{ 0xc9, 0x1fe, 0 },
 		{ 0x226, 0x246, 0 },
 		{ 0x246, 0x254, 1 },
+		// 2002-2003 (340 cards)
 		{ 0x258, 0x378, 0 },
 		{ 0x378, 0x3ac, 1 },
+		// 2004-2005 (352 cards)
 		{ 0x3ac, 0x3cc, 0 },
 		{ 0x3cc, 0x3fc, 1 },
 		{ 0x3fc, 0x400, 1 },
 		{ 0x44c, 0x52c, 0 },
 		{ 0x52c, 0x54c, 1 },
 		{ 0x54c, 0x558, 1 },
+		// 2005-2006 (389 cards)
 		{ 0x558, 0x559, 1 },
 		{ 0x579, 0x6c9, 0 },
 		{ 0x6c9, 0x6f3, 1 },
@@ -672,22 +671,50 @@ void WccfCameraImpl::findPlayerName(Player& player)
 		player.name = "PID:" + std::to_string(player.playerId);
 		return;
 	}
-	// wccf116: 0c186d84 sz 0x18
-	// 		read32(0x0c186d84) != 0x0c14e1bc
-	//	462 player cards
-	//
-	// wccf212e: 0c1e9dcc sz 0x1c
-	// 		read32(0x0c1e9dcc) != 0x0c1b7948
-	//	802 player cards
-	//
-	// wccf322e: (2004-2005)
-	//		read32(0x0c202ecc) != 0x0c1c88ec
-	//	sz 0x24
-	//	1154 player cards
-	if (addrspace::read32(0x0c20b448) != 0x0c1ce448)
-		// player table not loaded (yet?)
+	u32 playerTable, valueCheck, size;
+	switch (settings.content.fileName[4])
+	{
+	case '1': // 2001-2002
+		playerTable = 0x0c186d84;
+		valueCheck = 0x0c14e1bc;
+		size = 0x18;
+		break;
+	case '2': // 2002-2003 TODO 234j
+		playerTable = 0x0c1e9dcc;
+		valueCheck = 0x0c1b7948;
+		size = 0x1c;
+		break;
+	case '3': // 2004-2005 TODO wccf310j, wccf331j, wccf341j
+		if (settings.content.fileName[5] == '2')
+		{
+			// 322e
+			playerTable = 0x0c202ecc;
+			valueCheck = 0x0c1c88ec;
+			size = 0x24;
+		}
+		else if (settings.content.fileName[5] == '3')
+		{
+			// 331e
+			playerTable = 0x0c2039e0;
+			valueCheck = 0x0c1c8ff0;
+			size = 0x24;
+		}
+		else {
+			return;
+		}
+		break;
+	case '4': // 2005-2006 TODO wccf400j
+		playerTable = 0x0c20b448;
+		valueCheck = 0x0c1ce448;
+		size = 0x24;
+		break;
+	default:
 		return;
-	u32 addr = 0x0c20b448 + idx * 0x24;
+	}
+	if (addrspace::read32(playerTable) != valueCheck)
+		// player table not loaded yet or unsupported version
+		return;
+	u32 addr = playerTable + idx * size;
 	u32 nameAddr = addrspace::read32(addr);
 	u8 *name = GetMemPtr(nameAddr, 1);
 	if (name == nullptr)
@@ -724,7 +751,7 @@ void WccfCameraImpl::findPlayerName(Player& player)
 			player.name += (char)*name;
 		}
 		name++;
-		if (player.name.length() >= 20)
+		if (player.name.length() >= 32)
 			break;
 	}
 }
@@ -758,7 +785,8 @@ void WccfCameraImpl::checkTeamFile()
 	using namespace nlohmann;
 	try {
 		json v = json::parse(all_data);
-		int i = 0;
+		Lock _(mutex);
+		players.clear();
 		for (const auto& o : v)
 		{
 			u16 pid = 0xffff;
@@ -781,16 +809,9 @@ void WccfCameraImpl::checkTeamFile()
 				name = o.at("name").get<std::string>();
 			} catch (const json::exception& e) {
 			}
-			Lock _(mutex);
-			players[i].playerId = pid;
-			players[i].x = x;
-			players[i].y = y;
-			players[i].name = name;
-			players[i].delta = 0;
-			players[i].lastX = x;
-			players[i].lastY = y;
-			findPlayerName(players[i]);
-			i++;
+			players.emplace_back(pid, x, y);
+			players.back().name = name;
+			findPlayerName(players.back());
 		}
 	} catch (const json::exception& e) {
 		WARN_LOG(MAPLE, "Corrupted team file: %s", e.what());
@@ -807,16 +828,18 @@ void WccfCameraImpl::saveTeamFile()
 	}
 	using namespace nlohmann;
 	json array = json();
-	for (const Player& player : players)
 	{
 		Lock _(mutex);
-		json jp = {
-			{ "pid", player.playerId },
-			{ "x", player.x },
-			{ "y", player.y },
-			{ "name", player.name },
-		};
-		array.push_back(jp);
+		for (const Player& player : players)
+		{
+			json jp = {
+				{ "pid", player.playerId },
+				{ "x", player.x },
+				{ "y", player.y },
+				{ "name", player.name },
+			};
+			array.push_back(jp);
+		}
 	}
 	std::string data = array.dump(-1, ' ', false, json::error_handler_t::replace);
 	fwrite(data.c_str(), 1, data.size(), tf);
@@ -829,6 +852,8 @@ void WccfCameraImpl::saveTeamFile()
 void WccfCameraImpl::OnSetup()
 {
 	WccfCamera::OnSetup();
+	players.reserve(MAX_CARDS);
+	checkTeamFile();
 	io_context = std::make_unique<asio::io_context>();
 	httpServer = std::make_unique<HttpServer>(*io_context, "localhost", 17222);
 	httpServer->addUriHandler("/api/team", [this](const Request& req, Reply& rep)
@@ -843,16 +868,18 @@ void WccfCameraImpl::OnSetup()
 				// Note: if team file is loaded before the game player table,
 				// player names will not be checked against playerId
 				json array = json();
-				for (const Player& player : players)
 				{
 					Lock _(mutex);
-					json jp = {
-						{ "pid", player.playerId },
-						{ "x", player.x },
-						{ "y", player.y },
-						{ "name", player.name },
-					};
-					array.push_back(jp);
+					for (const Player& player : players)
+					{
+						json jp = {
+							{ "pid", player.playerId },
+							{ "x", player.x },
+							{ "y", player.y },
+							{ "name", player.name },
+						};
+						array.push_back(jp);
+					}
 				}
 				rep.setContent(array.dump(-1, ' ', false, json::error_handler_t::replace),
 						"application/json");
@@ -880,11 +907,6 @@ void WccfCameraImpl::OnSetup()
 							y = o.at("y").get<u32>();
 						} catch (const json::exception& e) {
 						}
-						u16 delta = 0;
-						try {
-							delta = o.at("delta").get<u16>();
-						} catch (const json::exception& e) {
-						}
 						{
 							Lock _(mutex);
 							bool found = false;
@@ -894,25 +916,13 @@ void WccfCameraImpl::OnSetup()
 								{
 									player.x = x;
 									player.y = y;
-									player.delta = delta;
 									found = true;
 									break;
 								}
 							}
-							if (!found)
-							{
-								for (Player& player : players)
-								{
-									if (player.playerId == 0xffff)
-									{
-										player.playerId = pid;
-										player.x = x;
-										player.y = y;
-										player.delta = delta;
-										findPlayerName(player);
-										break;
-									}
-								}
+							if (!found && players.size() < MAX_CARDS) {
+								players.emplace_back(pid, x, y);
+								findPlayerName(players.back());
 							}
 						}
 					}
@@ -925,16 +935,10 @@ void WccfCameraImpl::OnSetup()
 			}
 			else if (req.method == "DELETE")
 			{
-				if (req.uri == "/api/team")
-				{
+				if (req.uri == "/api/team") {
 					// Delete all players
-					for (Player& player : players)
-					{
-						player.playerId = 0xffff;
-						player.x = 0;
-						player.y = 0;
-						player.name.clear();
-					}
+					Lock _(mutex);
+					players.clear();
 				}
 				else
 				{
@@ -945,20 +949,9 @@ void WccfCameraImpl::OnSetup()
 						return;
 					}
 					int playerId = atoi(req.uri.substr(slash + 1).c_str());
-					if (playerId != 0xffff)
-					{
-						for (Player& player : players)
-						{
-							if (player.playerId == playerId)
-							{
-								player.playerId = 0xffff;
-								player.x = 0;
-								player.y = 0;
-								player.name.clear();
-								break;
-							}
-						}
-					}
+					Lock _(mutex);
+					players.erase(std::remove_if(players.begin(), players.end(),
+							[playerId](const Player& p) { return p.playerId == playerId; }), players.end());
 				}
 				saveTeamFile();
 				rep.status = Reply::ok;
@@ -994,50 +987,67 @@ void WccfCameraImpl::OnSetup()
 			}
 
 			/*
-			 * wccf116: (2001-2002)
-			 * Asset file table: 0c180048
-			 * size: 0x14
-			 * 0: file name
-			 * 3: offset?
-			 * file "models/sprite_card_data.bin" offset 4022B00 size? 2C0004
-			 * pic is 0x8000 long?
-			 *
-			 * wccf212e: (2002-2003)
-			 * Asset files table: 0ddf65e8
-			 * elem size: 0x80
-			 * 0x08: offsets
-			 * 0x28: file name
-			 * file "models/sprite_card_data.bin" offset 3386920
-			 * pic is 0x8000 long?
-			 *
+			 * TODO
 			 * wccf234j: (2002-2003)
-			 *
 			 * wccf310j: (2004-2005)
-			 *
-			 * wccf322e: (2004-2005)
-			 * file "data/model/sprite_card_data.bin" offset 34A4A00
-			 * pic is 0x5b00 long?
-			 *
-			 * wccf331e: (2004-2005, v1.1)
-			 *
 			 * wccf331j: (2004-2005, v1.1)
-			 *
 			 * wccf400j: (2005-2006)
-			 *
-			 * wccf420e: (2005-2006)
-			 * Asset files table: 0ddf10e8
-			 * elem size: 0x80
-			 * 0x08: offsets
-			 * 0x28: file name
 			 */
-			// file "data/model/sprite_card_data.bin"
-			const u32 offset = 0x3726480 + idx * 0x1800;
+			u32 offset;
+			switch (settings.content.fileName[4])
+			{
+			case '1':
+				// file "models/sprite_card_data.bin"
+				offset = 0x31AAB00 + idx * 0x8000;
+				break;
+			case '2':
+				// file "models/sprite_card_data.bin"
+				offset = 0x3386920 + idx * 0x8000;
+				break;
+			case '3':
+				// file "data/model/sprite_card_data.bin"
+				// wccf322e and wccf331e have same offset
+				offset = 0x34A4A00 + idx * 0x5b00;
+				break;
+			case '4':
+				// file "data/model/sprite_card_data.bin"
+				offset = 0x3726480 + idx * 0x1800;
+				break;
+			default:
+				rep = Reply::stockReply(Reply::not_found);
+				return;
+			}
 			const u8 *picData = ((NetDimm *)CurrentCartridge)->getDimmData(offset);
 
 			PixelBuffer<u32> pb;
-			pb.setVQCodebook(picData);
 			pb.init(128, 128);
-			opengl::tex565_VQ32(&pb, picData + 256 * 8, 128, 128);
+			switch (settings.content.fileName[4])
+			{
+			case '1':
+			case '2':
+				opengl::tex565_TW32(&pb, picData, 128, 128);
+				break;
+			case '3':
+				{
+					opengl::tex565_PL32(&pb, picData, 128, 128);
+					// Image is rotated left 90° and only 91 px are used to save some space
+					PixelBuffer<u32> pb2;
+					pb2.init(128, 128);
+					for (int y = 0; y < 128; y++) {
+						for (int x = 0; x < 128; x++)
+							*pb2.data(x, y) = *pb.data(127 - y, x);
+					}
+					pb.steal_data(pb2);
+					break;
+				}
+			case '4':
+				pb.setVQCodebook(picData);
+				opengl::tex565_VQ32(&pb, picData + 256 * 8, 128, 128);
+				break;
+			default:
+				rep = Reply::stockReply(Reply::not_found);
+				return;
+			}
 			stbi_flip_vertically_on_write(1);
 			const auto& savefunc = [](void *context, void *data, int size) {
 				std::string *content = (std::string *)context;
@@ -1047,6 +1057,16 @@ void WccfCameraImpl::OnSetup()
 			stbi_write_png_to_func(savefunc, &content, 128, 128, 4, pb.data(), 0);
 			rep.setContent(content, "image/png");
 			rep.addHeader("ETag", settings.content.fileName + "-" + std::to_string(playerId));
+		});
+	httpServer->addUriHandler("/version", [this](const Request& req, Reply& rep)
+		{
+			rep.addHeader("Access-Control-Allow-Origin", "*");
+			rep.addHeader("Access-Control-Allow-Methods", "GET");
+			rep.addHeader("Access-Control-Allow-Headers", "*");
+			auto dot = settings.content.fileName.rfind('.');
+			if (dot == std::string::npos)
+				dot = settings.content.fileName.size();
+			rep.setContent(settings.content.fileName.substr(4, dot - 4), "text/plain");
 		});
 	httpThread = std::thread([this]() {
 		io_context->run();
