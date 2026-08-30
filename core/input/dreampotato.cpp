@@ -207,7 +207,7 @@ void update()
 		auto& potato = Potatoes[bus];
 		if (config::NetworkExpansionDevices[bus][0] == 1
 				&& config::MapleExpansionDevices[bus][0] == MDT_SegaVMU
-				&& maple_getPortCount(config::MapleMainDevices[bus]) >= 1)
+				&& maple_getPortCount(config::MapleMainDevices[bus], MaplePortType::built_in) >= 1)
 		{
 			if (potato == nullptr) {
 				potato = std::make_shared<DreamPotato>(bus);
