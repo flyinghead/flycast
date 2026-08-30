@@ -39,11 +39,11 @@ const BIOS_t BIOS[] =
 		"awbios",
 		{
 			// Sammy version
-			{ 0, "bios0.ic23", 0x000000, 0x020000, 0x719b2b0b },
+			{ 0, "bios0.ic23", 0x000000, 0x010000, 0x719b2b0b },
 			//or
-			//{ 0, "bios1.ic23", 0x000000, 0x020000, 0xd3e80a9f },
+			//{ 0, "bios1.ic23", 0x000000, 0x010000, 0xd3e80a9f },
 			// Sega version
-			//{ 0, "fpr-24363.ic48", 0x000000, 0x020000, 0x82a105f0 },
+			//{ 0, "fpr-24363.ic48", 0x000000, 0x010000, 0x82a105f0 },
 		}
 	},
 	{
