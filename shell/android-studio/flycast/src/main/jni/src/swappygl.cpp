@@ -62,7 +62,7 @@ void SwappyGLGC::activate(bool enable)
 	if (this->enabled == enable)
 		return;
 	this->enabled = enable;
-	if (enable)
+	if (enable && g_activity != nullptr)
 	{
 		SwappyGL_init(jni::env(), g_activity);
 		swappyAvailable = SwappyGL_isEnabled();
