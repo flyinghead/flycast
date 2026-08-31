@@ -166,7 +166,7 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
     }
 
 	// Called from native code
-    private void showAlertDialog(String message)
+    public void showAlertDialog(String message)
     {
         handler.post(new Runnable() {
             @Override
