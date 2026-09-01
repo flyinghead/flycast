@@ -1430,7 +1430,7 @@ static std::string getFPSNotification()
 		}
 		if (fps >= 0.f && fps < 9999.f) {
 			char text[32];
-			snprintf(text, sizeof(text), "F:%4.1f%s", fps, settings.input.fastForwardMode ? " >>" : "");
+			snprintf(text, sizeof(text), "F:%5.2f%s", fps, settings.input.fastForwardMode ? " >>" : "");
 
 			return std::string(text);
 		}
