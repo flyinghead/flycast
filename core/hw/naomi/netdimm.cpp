@@ -401,8 +401,8 @@ private:
 				INFO_LOG(NAOMI, "netdimm server: closing");
 				return;
 			case 0xa: // reboot
-				WARN_LOG(NAOMI, "netdimm server: reboot requested");
-				netdimm.reboot();
+				WARN_LOG(NAOMI, "netdimm server: reboot requested (ignored)");
+				//netdimm.reboot();
 				break;
 			case 0x10: // peek
 			{
@@ -561,8 +561,7 @@ void NetDimm::Init(LoadProgress *progress, std::vector<u8> *digest)
 	}
 	GDCartridge::Init(progress, digest);
 	dimmBufferOffset = dimm_data_size - 16_MB;
-	finalTuned = strcmp(game->name, "vf4tuned") == 0;
-	if (finalTuned)
+	if (strncmp(game->name, "vf4", 3) == 0)
 	{
 		if (serverIp == 0)
 		{
@@ -1048,11 +1047,6 @@ void NetDimm::netCmd(int cmd)
 						sockets[sockidx - 1].lastError = convertError(error);
 					}
 				}
-				else
-				{
-					if (finalTuned)
-						set_non_blocking(sockfd);
-				}
 				INFO_LOG(NAOMI, "connect(%d, %x:%d) -> %d", sockidx, htonl(a.sin_addr.s_addr), htons(a.sin_port), rc);
 			}
 			returnToNaomi(retCmd, rc != 0, sockidx, rc);
@@ -1191,9 +1185,7 @@ void NetDimm::netCmd(int cmd)
 			int sockidx = -1;
 			if (fd != INVALID_SOCKET)
 			{
-				// FIXME async mode still not right with FT
-				if (!finalTuned)
-					set_non_blocking(fd);
+				set_non_blocking(fd);
 				size_t i = 0;
 				for (; i < sockets.size(); i++)
 					if (sockets[i].fd == INVALID_SOCKET)

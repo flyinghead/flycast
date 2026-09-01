@@ -759,6 +759,41 @@ void naomi_cart_LoadRom(const std::string& path, const std::string& fileName, Lo
 				}
 			}
 		}
+		else if (gameId.substr(0, 4) == "WCCF" && config::MultiboardSlaves > 1)
+		{
+			// Main projectors are directly linked by a null-modem cable
+			config::BattleCableEnable.override(true);
+			if (!config::loadBool("naomi", "WCCFSlave"))
+			{
+				config::ActAsServer.override(true);
+				config::NetworkServer.override("localhost:37392");
+				config::LocalPort.override(37391);
+				int x = config::loadInt("window", "left", (1920 - 640) / 2);
+				int w = config::loadInt("window", "width", 640);
+				std::string region = "config:Dreamcast.Region=" + std::to_string(config::Region);
+				std::string left = "window:left=" + std::to_string(x + w);
+				std::string title = "window:title=\"" + Ts("Right")
+						+ " - " + settings.content.title + '"';
+				std::string server = "naomi:WCCFServer=" + config::loadStr("naomi", "WCCFServer");
+
+				const char *args[] = {
+						"-config", "naomi:WCCFSlave=yes",
+						"-config", server.c_str(),
+						"-config", region.c_str(),
+						"-config", left.c_str(),
+						"-config", title.c_str(),
+						"-config", "network:MultiboardSlaves=2",
+						settings.content.path.c_str()
+				};
+				os_RunInstance(std::size(args), args);
+			}
+			else
+			{
+				config::ActAsServer.override(false);
+				config::NetworkServer.override("localhost:37391");
+				config::LocalPort.override(37392);
+			}
+		}
 #endif
 	}
 	else

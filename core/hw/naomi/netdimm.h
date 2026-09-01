@@ -145,7 +145,6 @@ private:
 	int lastError = 0; // for socket() and select()
 	bool dnsInProgress = false;
 	u32 serverIp = 0; //0x0100007f for testing only
-	bool finalTuned = false;
 	bool wccf = false;
 
 	u32 dimmBufferOffset = 0x0f000000;

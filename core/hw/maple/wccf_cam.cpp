@@ -855,222 +855,230 @@ void WccfCameraImpl::OnSetup()
 	players.reserve(MAX_CARDS);
 	checkTeamFile();
 	io_context = std::make_unique<asio::io_context>();
-	httpServer = std::make_unique<HttpServer>(*io_context, "localhost", 17222);
-	httpServer->addUriHandler("/api/team", [this](const Request& req, Reply& rep)
-		{
-			rep.addHeader("Access-Control-Allow-Origin", "*");
-			rep.addHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS, DELETE");
-			rep.addHeader("Access-Control-Allow-Headers", "*");
-			using namespace nlohmann;
-			if (req.method == "GET")
+	try {
+		httpServer = std::make_unique<HttpServer>(*io_context, "localhost", 17222);
+		httpServer->addUriHandler("/api/team", [this](const Request& req, Reply& rep)
 			{
-				checkTeamFile();
-				// Note: if team file is loaded before the game player table,
-				// player names will not be checked against playerId
-				json array = json();
+				rep.addHeader("Access-Control-Allow-Origin", "*");
+				rep.addHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS, DELETE");
+				rep.addHeader("Access-Control-Allow-Headers", "*");
+				using namespace nlohmann;
+				if (req.method == "GET")
 				{
-					Lock _(mutex);
-					for (const Player& player : players)
+					checkTeamFile();
+					// Note: if team file is loaded before the game player table,
+					// player names will not be checked against playerId
+					json array = json();
 					{
-						json jp = {
-							{ "pid", player.playerId },
-							{ "x", player.x },
-							{ "y", player.y },
-							{ "name", player.name },
-						};
-						array.push_back(jp);
-					}
-				}
-				rep.setContent(array.dump(-1, ' ', false, json::error_handler_t::replace),
-						"application/json");
-			}
-			else if (req.method == "POST")
-			{
-				try {
-					json v = json::parse(req.content);
-					for (const auto& o : v)
-					{
-						u16 pid = 0xffff;
-						try {
-							pid = o.at("pid").get<u16>();
-						} catch (const json::exception& e) {
-						}
-						if (pid == 0xffff)
-							continue;
-						u32 x = 0;
-						try {
-							x = o.at("x").get<u32>();
-						} catch (const json::exception& e) {
-						}
-						u32 y = 0;
-						try {
-							y = o.at("y").get<u32>();
-						} catch (const json::exception& e) {
-						}
+						Lock _(mutex);
+						for (const Player& player : players)
 						{
-							Lock _(mutex);
-							bool found = false;
-							for (Player& player : players)
+							json jp = {
+								{ "pid", player.playerId },
+								{ "x", player.x },
+								{ "y", player.y },
+								{ "name", player.name },
+							};
+							array.push_back(jp);
+						}
+					}
+					rep.setContent(array.dump(-1, ' ', false, json::error_handler_t::replace),
+							"application/json");
+				}
+				else if (req.method == "POST")
+				{
+					try {
+						json v = json::parse(req.content);
+						for (const auto& o : v)
+						{
+							u16 pid = 0xffff;
+							try {
+								pid = o.at("pid").get<u16>();
+							} catch (const json::exception& e) {
+							}
+							if (pid == 0xffff)
+								continue;
+							u32 x = 0;
+							try {
+								x = o.at("x").get<u32>();
+							} catch (const json::exception& e) {
+							}
+							u32 y = 0;
+							try {
+								y = o.at("y").get<u32>();
+							} catch (const json::exception& e) {
+							}
 							{
-								if (player.playerId == pid)
+								Lock _(mutex);
+								bool found = false;
+								for (Player& player : players)
 								{
-									player.x = x;
-									player.y = y;
-									found = true;
-									break;
+									if (player.playerId == pid)
+									{
+										player.x = x;
+										player.y = y;
+										found = true;
+										break;
+									}
+								}
+								if (!found && players.size() < MAX_CARDS) {
+									players.emplace_back(pid, x, y);
+									findPlayerName(players.back());
 								}
 							}
-							if (!found && players.size() < MAX_CARDS) {
-								players.emplace_back(pid, x, y);
-								findPlayerName(players.back());
-							}
 						}
+						saveTeamFile();
+						rep.status = Reply::ok;
+					} catch (const json::exception& e) {
+						WARN_LOG(MAPLE, "Invalid json request: %s", e.what());
+						rep.status = Reply::internal_server_error;
+					}
+				}
+				else if (req.method == "DELETE")
+				{
+					if (req.uri == "/api/team") {
+						// Delete all players
+						Lock _(mutex);
+						players.clear();
+					}
+					else
+					{
+						// Delete one player
+						auto slash = req.uri.rfind('/');
+						if (slash == std::string::npos) {
+							rep.status = Reply::not_found;
+							return;
+						}
+						int playerId = atoi(req.uri.substr(slash + 1).c_str());
+						Lock _(mutex);
+						players.erase(std::remove_if(players.begin(), players.end(),
+								[playerId](const Player& p) { return p.playerId == playerId; }), players.end());
 					}
 					saveTeamFile();
 					rep.status = Reply::ok;
-				} catch (const json::exception& e) {
-					WARN_LOG(MAPLE, "Invalid json request: %s", e.what());
-					rep.status = Reply::internal_server_error;
 				}
-			}
-			else if (req.method == "DELETE")
+				else if (req.method == "OPTIONS") {
+					rep.status = Reply::ok;
+				}
+			});
+		httpServer->addUriHandler("/image/", [this](const Request& req, Reply& rep)
 			{
-				if (req.uri == "/api/team") {
-					// Delete all players
-					Lock _(mutex);
-					players.clear();
-				}
-				else
+				for (const Header& header : req.headers)
 				{
-					// Delete one player
-					auto slash = req.uri.rfind('/');
-					if (slash == std::string::npos) {
-						rep.status = Reply::not_found;
+					std::string name = header.name;
+					string_tolower(name);
+					if (name == "if-none-match") {
+						rep.status = Reply::not_modified;
 						return;
 					}
-					int playerId = atoi(req.uri.substr(slash + 1).c_str());
-					Lock _(mutex);
-					players.erase(std::remove_if(players.begin(), players.end(),
-							[playerId](const Player& p) { return p.playerId == playerId; }), players.end());
 				}
-				saveTeamFile();
-				rep.status = Reply::ok;
-			}
-			else if (req.method == "OPTIONS") {
-				rep.status = Reply::ok;
-			}
-		});
-	httpServer->addUriHandler("/image/", [this](const Request& req, Reply& rep)
-		{
-			for (const Header& header : req.headers)
-			{
-				std::string name = header.name;
-				string_tolower(name);
-				if (name == "if-none-match") {
-					rep.status = Reply::not_modified;
+				auto slash = req.uri.rfind('/');
+				if (slash == std::string::npos) {
+					rep = Reply::stockReply(Reply::not_found);
 					return;
 				}
-			}
-			auto slash = req.uri.rfind('/');
-			if (slash == std::string::npos) {
-				rep = Reply::stockReply(Reply::not_found);
-				return;
-			}
-			auto dot = req.uri.find(slash + 1, '.');
-			if (dot == std::string::npos)
-				dot = req.uri.size();
-			int playerId = atoi(req.uri.substr(slash + 1, dot - slash - 1).c_str());
-			int idx = getPlayerIndex(playerId);
-			if (idx <= 0) {
-				rep = Reply::stockReply(Reply::not_found);
-				return;
-			}
-
-			/*
-			 * TODO
-			 * wccf234j: (2002-2003)
-			 * wccf310j: (2004-2005)
-			 * wccf331j: (2004-2005, v1.1)
-			 * wccf400j: (2005-2006)
-			 */
-			u32 offset;
-			switch (settings.content.fileName[4])
-			{
-			case '1':
-				// file "models/sprite_card_data.bin"
-				offset = 0x31AAB00 + idx * 0x8000;
-				break;
-			case '2':
-				// file "models/sprite_card_data.bin"
-				offset = 0x3386920 + idx * 0x8000;
-				break;
-			case '3':
-				// file "data/model/sprite_card_data.bin"
-				// wccf322e and wccf331e have same offset
-				offset = 0x34A4A00 + idx * 0x5b00;
-				break;
-			case '4':
-				// file "data/model/sprite_card_data.bin"
-				offset = 0x3726480 + idx * 0x1800;
-				break;
-			default:
-				rep = Reply::stockReply(Reply::not_found);
-				return;
-			}
-			const u8 *picData = ((NetDimm *)CurrentCartridge)->getDimmData(offset);
-
-			PixelBuffer<u32> pb;
-			pb.init(128, 128);
-			switch (settings.content.fileName[4])
-			{
-			case '1':
-			case '2':
-				opengl::tex565_TW32(&pb, picData, 128, 128);
-				break;
-			case '3':
-				{
-					opengl::tex565_PL32(&pb, picData, 128, 128);
-					// Image is rotated left 90° and only 91 px are used to save some space
-					PixelBuffer<u32> pb2;
-					pb2.init(128, 128);
-					for (int y = 0; y < 128; y++) {
-						for (int x = 0; x < 128; x++)
-							*pb2.data(x, y) = *pb.data(127 - y, x);
-					}
-					pb.steal_data(pb2);
-					break;
+				auto dot = req.uri.find(slash + 1, '.');
+				if (dot == std::string::npos)
+					dot = req.uri.size();
+				int playerId = atoi(req.uri.substr(slash + 1, dot - slash - 1).c_str());
+				int idx = getPlayerIndex(playerId);
+				if (idx <= 0) {
+					rep = Reply::stockReply(Reply::not_found);
+					return;
 				}
-			case '4':
-				pb.setVQCodebook(picData);
-				opengl::tex565_VQ32(&pb, picData + 256 * 8, 128, 128);
-				break;
-			default:
-				rep = Reply::stockReply(Reply::not_found);
-				return;
+
+				/*
+				 * TODO
+				 * wccf234j: (2002-2003)
+				 * wccf310j: (2004-2005)
+				 * wccf331j: (2004-2005, v1.1)
+				 * wccf400j: (2005-2006)
+				 */
+				u32 offset;
+				switch (settings.content.fileName[4])
+				{
+				case '1':
+					// file "models/sprite_card_data.bin"
+					offset = 0x31AAB00 + idx * 0x8000;
+					break;
+				case '2':
+					// file "models/sprite_card_data.bin"
+					offset = 0x3386920 + idx * 0x8000;
+					break;
+				case '3':
+					// file "data/model/sprite_card_data.bin"
+					// wccf322e and wccf331e have same offset
+					offset = 0x34A4A00 + idx * 0x5b00;
+					break;
+				case '4':
+					// file "data/model/sprite_card_data.bin"
+					offset = 0x3726480 + idx * 0x1800;
+					break;
+				default:
+					rep = Reply::stockReply(Reply::not_found);
+					return;
+				}
+				const u8 *picData = ((NetDimm *)CurrentCartridge)->getDimmData(offset);
+
+				PixelBuffer<u32> pb;
+				pb.init(128, 128);
+				switch (settings.content.fileName[4])
+				{
+				case '1':
+				case '2':
+					opengl::tex565_TW32(&pb, picData, 128, 128);
+					break;
+				case '3':
+					{
+						opengl::tex565_PL32(&pb, picData, 128, 128);
+						// Image is rotated left 90° and only 91 px are used to save some space
+						PixelBuffer<u32> pb2;
+						pb2.init(128, 128);
+						for (int y = 0; y < 128; y++) {
+							for (int x = 0; x < 128; x++)
+								*pb2.data(x, y) = *pb.data(127 - y, x);
+						}
+						pb.steal_data(pb2);
+						break;
+					}
+				case '4':
+					pb.setVQCodebook(picData);
+					opengl::tex565_VQ32(&pb, picData + 256 * 8, 128, 128);
+					break;
+				default:
+					rep = Reply::stockReply(Reply::not_found);
+					return;
+				}
+				stbi_flip_vertically_on_write(1);
+				const auto& savefunc = [](void *context, void *data, int size) {
+					std::string *content = (std::string *)context;
+					*content += std::string((char *)data, (char *)data + size);
+				};
+				std::string content;
+				stbi_write_png_to_func(savefunc, &content, 128, 128, 4, pb.data(), 0);
+				rep.setContent(content, "image/png");
+				rep.addHeader("ETag", settings.content.fileName + "-" + std::to_string(playerId));
+			});
+		httpServer->addUriHandler("/version", [this](const Request& req, Reply& rep)
+			{
+				rep.addHeader("Access-Control-Allow-Origin", "*");
+				rep.addHeader("Access-Control-Allow-Methods", "GET");
+				rep.addHeader("Access-Control-Allow-Headers", "*");
+				auto dot = settings.content.fileName.rfind('.');
+				if (dot == std::string::npos)
+					dot = settings.content.fileName.size();
+				rep.setContent(settings.content.fileName.substr(4, dot - 4), "text/plain");
+			});
+		httpThread = std::thread([this]() {
+			try {
+				io_context->run();
+			} catch (const std::exception& e) {
+				ERROR_LOG(MAPLE, "WCCF web server error: %s", e.what());
 			}
-			stbi_flip_vertically_on_write(1);
-			const auto& savefunc = [](void *context, void *data, int size) {
-				std::string *content = (std::string *)context;
-				*content += std::string((char *)data, (char *)data + size);
-			};
-			std::string content;
-			stbi_write_png_to_func(savefunc, &content, 128, 128, 4, pb.data(), 0);
-			rep.setContent(content, "image/png");
-			rep.addHeader("ETag", settings.content.fileName + "-" + std::to_string(playerId));
 		});
-	httpServer->addUriHandler("/version", [this](const Request& req, Reply& rep)
-		{
-			rep.addHeader("Access-Control-Allow-Origin", "*");
-			rep.addHeader("Access-Control-Allow-Methods", "GET");
-			rep.addHeader("Access-Control-Allow-Headers", "*");
-			auto dot = settings.content.fileName.rfind('.');
-			if (dot == std::string::npos)
-				dot = settings.content.fileName.size();
-			rep.setContent(settings.content.fileName.substr(4, dot - 4), "text/plain");
-		});
-	httpThread = std::thread([this]() {
-		io_context->run();
-	});
+	} catch (const std::exception& e) {
+		ERROR_LOG(MAPLE, "Can't start WCCF web server: %s", e.what());
+	}
 }
 
 WccfCameraImpl::~WccfCameraImpl()

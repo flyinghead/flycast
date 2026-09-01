@@ -460,6 +460,26 @@ void setNaomiNetworkConfig(int node, int nodeCount, bool satellite)
 			write_naomi_eeprom(0x4e, (read_naomi_eeprom(0x4e) & 0xf8) | std::max(nodeCount - 2, 3));
 		}
 	}
+	else if (gameId.substr(0, 4) == "WCCF" && node != -1)
+	{
+		// wccf420e:
+		//	offset 34h left proj=0, right proj=1, sat0=a, sat1=b, ...
+		//	offset 36h
+		//		max sat 4: 86 (1 * 4), 46 (2 + 2)
+		//		max sat 6: 84 (4 + 2), 85 (2 * 3)
+		//		max sat 8: 80 (or 00) (2 * 4), 81 (3 + 3 + 2), 82 (3 + 2 + 3), 83 (2 + 3 + 3)
+		//		msb is show numbers on/off
+		write_naomi_eeprom(0x34, node);
+		/* Not really needed
+		if (nodeCount >= 8)
+			nodeCount = 0x80;	// 2 rows * 4 sats
+		else if (nodeCount >= 6)
+			nodeCount = 0x85;	// 2 rows * 3 sats
+		else
+			nodeCount = 0x86;	// 1 row * 4 sats
+		write_naomi_eeprom(0x36, nodeCount);
+		*/
+	}
 }
 
 // Returns a pair (max nodes, satellite supported)
