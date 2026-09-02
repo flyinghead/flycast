@@ -832,7 +832,8 @@ static void gameTooltip(const std::string& tip)
 static bool gameImageButton(ImguiTexture& texture, const std::string& tooltip, ImVec2 size, const std::string& gameName)
 {
 	bool pressed = texture.button("##imagebutton", size, gameName);
-	gameTooltip(tooltip);
+	if (ImGui::IsRectVisible(size))
+		gameTooltip(tooltip);
 
     return pressed;
 }
@@ -975,17 +976,10 @@ static void gui_display_content()
 						if (counter % itemsPerLine != 0)
 							ImGui::SameLine();
 						counter++;
-						if (ImGui::IsRectVisible(responsiveBoxVec2))
-						{
-							ImguiFileTexture tex(art.boxartPath);
-							pressed = gameImageButton(tex, game.name, responsiveBoxVec2, gameName);
-						}
-						else {
-							ImGui::Dummy(responsiveBoxVec2);
-						}
+						ImguiFileTexture tex(art.boxartPath);
+						pressed = gameImageButton(tex, game.name, responsiveBoxVec2, gameName);
 					}
-					else
-					{
+					else {
 						pressed = ImGui::Selectable(gameName.c_str());
 					}
 					if (pressed)

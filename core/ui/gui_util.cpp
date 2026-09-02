@@ -518,17 +518,20 @@ void ImguiTexture::draw(ImDrawList *drawList, const ImVec2& pos, const ImVec2& s
 bool ImguiTexture::button(const char* str_id, const ImVec2& image_size, const std::string& title,
 		const ImVec4& bg_col, const ImVec4& tint_col)
 {
-	ImTextureID id = getId();
-	if (id == ImTextureID{})
-		return ImGui::Button(title.c_str(), image_size);
-	else
+	const std::string label = title + str_id;
+	if (ImGui::IsRectVisible(image_size))
 	{
-		const float ar = imguiDriver->getAspectRatio(id);
-		const ImVec2 size = image_size - ImGui::GetStyle().FramePadding * 2;
-		ImVec2 uv0, uv1;
-		setUV(ar / size.x * size.y, uv0, uv1);
-		return ImGui::ImageButton(str_id, id, size, uv0, uv1, bg_col, tint_col);
+		ImTextureID id = getId();
+		if (id != ImTextureID{})
+		{
+			const float ar = imguiDriver->getAspectRatio(id);
+			const ImVec2 size = image_size - ImGui::GetStyle().FramePadding * 2;
+			ImVec2 uv0, uv1;
+			setUV(ar / size.x * size.y, uv0, uv1);
+			return ImGui::ImageButton(label.c_str(), id, size, uv0, uv1, bg_col, tint_col);
+		}
 	}
+	return ImGui::Button(label.c_str(), image_size);
 }
 
 static u8 *loadImage(const std::string& path, int& width, int& height)
