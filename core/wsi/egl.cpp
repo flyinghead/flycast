@@ -185,6 +185,8 @@ void EGLGraphicsContext::term()
 
 	if (display != EGL_NO_DISPLAY)
 	{
+		glFlush();
+		glFinish();
 		eglMakeCurrent(display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
 
 		if (context != EGL_NO_CONTEXT)

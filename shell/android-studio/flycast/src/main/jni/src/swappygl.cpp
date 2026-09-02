@@ -74,7 +74,9 @@ void SwappyGLGC::activate(bool enable)
 			SwappyGL_setAutoPipelineMode(false);
 		}
 	}
-	else {
+	else
+	{
+		SwappyGL_setWindow(nullptr);
 		SwappyGL_destroy();
 		swappyAvailable = false;
 	}
