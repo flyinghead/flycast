@@ -37,6 +37,7 @@ extern "C" {
 #include <pico_ipv4.h>
 #include <pico_tcp.h>
 #include <pico_dhcp_server.h>
+#include <pico_dns_common.h>
 #ifdef _MSC_VER
 #pragma pack(pop)
 #endif
@@ -1029,6 +1030,7 @@ public:
 		verify(!busy);
 		busy = true;
 		u32 len = makeDnsQueryPacket(buf, host);
+		queryId = ((const pico_dns_packet *)buf)->id;
 		socket.async_send_to(asio::buffer(buf, len), nsEndpoint,
 				std::bind(&DnsResolver::querySent, shared_from_this(),
 						result,
@@ -1049,22 +1051,31 @@ private:
 	void querySent(pico_ip4 *result, const std::error_code& ec, size_t len)
 	{
 		if (!ec)
-		{
-			socket.async_receive_from(asio::mutable_buffer(buf, sizeof(buf)), nsEndpoint,
-					std::bind(&DnsResolver::responseReceived, shared_from_this(),
-						result,
-						asio::placeholders::error,
-						asio::placeholders::bytes_transferred));
-		}
+			receiveResponse(result);
 		else {
 			busy = false;
 		}
+	}
+
+	void receiveResponse(pico_ip4 *result)
+	{
+		socket.async_receive_from(asio::mutable_buffer(buf, sizeof(buf)), responseEndpoint,
+				std::bind(&DnsResolver::responseReceived, shared_from_this(),
+						result,
+						asio::placeholders::error,
+						asio::placeholders::bytes_transferred));
 	}
 
 	void responseReceived(pico_ip4 *result, const std::error_code& ec, size_t len)
 	{
 		if (!ec)
 		{
+			if (responseEndpoint != nsEndpoint || len < sizeof(pico_dns_packet)
+					|| ((const pico_dns_packet *)buf)->id != queryId)
+			{
+				receiveResponse(result);
+				return;
+			}
 			*result = parseDnsResponsePacket(buf, len);
 			DEBUG_LOG(NETWORK, "dns resolved: %s (using %s)",
 					asio::ip::address_v4(*(std::array<u8, 4> *)result).to_string().c_str(),
@@ -1075,8 +1086,10 @@ private:
 
 	asio::io_context& io_context;
 	asio::ip::udp::endpoint nsEndpoint;
+	asio::ip::udp::endpoint responseEndpoint;
 	asio::ip::udp::socket socket;
 	char buf[1024];
+	u16 queryId;
 	bool busy = false;
 	friend super;
 };
@@ -1504,4 +1517,3 @@ void PicoTcpService::receiveEthFrame(const u8 *frame, u32 size) {
 }
 
 }
-
