@@ -176,9 +176,35 @@ int main(int argc, char *argv[])
 }
 #endif
 
-bool UTLB_Sync(u32 entry)
+bool fullMmuNeeded(int index)
+{
+	const unsigned start = index < 0 ? 0 : index;
+	const unsigned end = index < 0 ? std::size(UTLB) : index + 1;
+	for (unsigned i = start; i < end; i++)
+	{
+		const TLB_Entry& entry = UTLB[i];
+		if (entry.Data.V == 1
+				// ignore many arcade and Visual Concepts games presumably bogus mappings
+				&& entry.Address.VPN != 0x30040 && entry.Address.VPN != 0x30000
+				// ignore identity mapping
+				&& entry.Address.VPN != entry.Data.PPN
+				// ignore store queue mapping
+				&& (entry.Address.VPN & (0xFC000000 >> 10)) != (0xE0000000 >> 10))
+		{
+			INFO_LOG(SH4, "fullMmuNeeded[%d]: VPN %x PPN %x ASID %d sz %d", i,
+					entry.Address.VPN << 10, entry.Data.PPN << 10,
+					entry.Address.ASID, entry.Data.SZ1 * 2 + entry.Data.SZ0);
+			return true;
+		}
+	}
+	return false;
+}
+
+void UTLB_Sync(u32 entry)
 {
 	TLB_Entry& tlb_entry = UTLB[entry];
+	if (tlb_entry.Data.V == 0)
+		return;
 	u32 sz = tlb_entry.Data.SZ1 * 2 + tlb_entry.Data.SZ0;
 
 	tlb_entry.Address.VPN &= mmu_mask[sz] >> 10;
@@ -190,6 +216,8 @@ bool UTLB_Sync(u32 entry)
 
 	cache_entry(tlb_entry);
 
+	DEBUG_LOG(SH4, "UTLB_Sync[%d]: VPN %x PPN %x ASID %d sz %d", entry, tlb_entry.Address.VPN << 10, tlb_entry.Data.PPN << 10,
+			tlb_entry.Address.ASID, sz);
 	if (!mmu_enabled())
 	{
 		if ((tlb_entry.Address.VPN & (0xFC000000 >> 10)) == (0xE0000000 >> 10))
@@ -198,20 +226,18 @@ bool UTLB_Sync(u32 entry)
 			u32 vpn_sq = ((tlb_entry.Address.VPN & 0x7FFFF) >> 10) & 0x3F;//upper bits are always known [0xE0/E1/E2/E3]
 			sq_remap[vpn_sq] = tlb_entry.Data.PPN << 10;
 		}
-		else if (CCN_MMUCR.AT == 1 && tlb_entry.Address.VPN != 0x30040 && tlb_entry.Address.VPN != 0x30000 && tlb_entry.Data.V == 1)
+		else if (CCN_MMUCR.AT == 1 && fullMmuNeeded(entry))
 		{
-			// Enable Full MMU if not an expected store queue mapping
-			// VPN checks to ignore many arcade and Visual Concepts games presumably bogus mappings
 			mmuOn = true;
 			NOTICE_LOG(SH4, "Enabling on-demand Full MMU support");
 			mmu_set_state();
 		}
 	}
-	return true;
 }
 
 void ITLB_Sync(u32 entry)
 {
+	DEBUG_LOG(SH4, "ITLB_Sync[%d]", entry);
 }
 
 //Do a full lookup on the UTLB entry's
@@ -249,28 +275,31 @@ MmuError mmu_full_lookup(u32 va, const TLB_Entry** tlb_entry_ret, u32& rv)
 	}
 
 #ifdef USE_WINCE_HACK
-	// WinCE hack
-	TLB_Entry& entry = UTLB[CCN_MMUCR.URC];
-	if (wince_resolve_address(va, entry))
+	if (settings.content.windowsCE)
 	{
-		CCN_PTEL.reg_data = entry.Data.reg_data;
-		CCN_PTEA.reg_data = entry.Assistance.reg_data;
-		CCN_PTEH.reg_data = entry.Address.reg_data;
+		// WinCE hack to avoid calling the page fault handler
+		TLB_Entry& entry = UTLB[CCN_MMUCR.URC];
+		if (wince_resolve_address(va, entry))
+		{
+			CCN_PTEL.reg_data = entry.Data.reg_data;
+			CCN_PTEA.reg_data = entry.Assistance.reg_data;
+			CCN_PTEH.reg_data = entry.Address.reg_data;
 
-		lru_entry = *tlb_entry_ret = &entry;
+			lru_entry = *tlb_entry_ret = &entry;
 
-		u32 sz = entry.Data.SZ1 * 2 + entry.Data.SZ0;
-		lru_mask = mmu_mask[sz];
-		lru_address = va & mmu_mask[sz];
-		entry.Data.PPN &= mmu_mask[sz] >> 10;
+			u32 sz = entry.Data.SZ1 * 2 + entry.Data.SZ0;
+			lru_mask = mmu_mask[sz];
+			lru_address = va & mmu_mask[sz];
+			entry.Data.PPN &= mmu_mask[sz] >> 10;
 
-		rv = (entry.Data.PPN << 10) | (va & ~mmu_mask[sz]);
+			rv = (entry.Data.PPN << 10) | (va & ~mmu_mask[sz]);
 
-		cache_entry(entry);
+			cache_entry(entry);
 
-		p_sh4rcb->cntx.cycle_counter -= 164;
+			p_sh4rcb->cntx.cycle_counter -= 164;
 
-		return MmuError::NONE;
+			return MmuError::NONE;
+		}
 	}
 #endif
 
@@ -333,5 +362,10 @@ void mmu_flush_table()
 	lru_entry = nullptr;
 	flush_cache();
 	mmuAddressLUTFlush(true);
+
+	for (TLB_Entry& entry : ITLB)
+		entry.Data.V = 0;
+	for (TLB_Entry& entry : UTLB)
+		entry.Data.V = 0;
 }
 #endif 	// FAST_MMU

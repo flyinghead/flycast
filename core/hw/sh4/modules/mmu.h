@@ -55,13 +55,14 @@ constexpr u32 mmu_mask[4] =
 	((0xFFFFFFFF) >> 20) << 20	//1 MB page
 };
 
-bool UTLB_Sync(u32 entry);
+void UTLB_Sync(u32 entry);
 void ITLB_Sync(u32 entry);
 
 bool mmu_match(u32 va, CCN_PTEH_type Address, CCN_PTEL_type Data);
 void mmu_set_state();
 void mmu_flush_table();
 [[noreturn]] void mmu_raise_exception(MmuError mmu_error, u32 address, u32 am);
+bool fullMmuNeeded(int index = -1);
 
 static inline bool mmu_enabled()
 {
@@ -122,12 +123,13 @@ extern u32 mmuAddressLUT[0x100000];
 
 static inline void mmuAddressLUTFlush(bool full)
 {
-	if (full)
-		memset(mmuAddressLUT, 0, sizeof(mmuAddressLUT) / 2);	// flush user memory
+	if (full || !settings.content.windowsCE) {
+		memset(mmuAddressLUT, 0, sizeof(mmuAddressLUT) / 2);	// flush user memory (P0)
+	}
 	else
 	{
 		constexpr u32 slotPages = (32 * 1024 * 1024) >> 12;
-		memset(mmuAddressLUT, 0, slotPages * sizeof(u32));		// flush slot 0
+		memset(mmuAddressLUT, 0, slotPages * sizeof(u32));		// flush slot 0 (windows CE)
 	}
 }
 #endif

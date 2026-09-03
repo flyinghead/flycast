@@ -61,82 +61,88 @@ DynarecCodeEntryPtr DYNACALL bm_GetCodeByVAddr(u32 addr)
 
 	if (addr & 1)
 	{
-		switch (addr)
+		if (!settings.content.windowsCE) {
+			Do_Exception(addr, Sh4Ex_AddressErrorRead);
+		}
+		else
 		{
+			switch (addr)
+			{
 #ifdef USE_WINCE_HACK
-		case 0xfffffde7: // GetTickCount
-			// This should make this syscall faster
-			Sh4cntx.r[0] = sh4_sched_now64() * 1000 / SH4_MAIN_CLOCK;
-			Sh4cntx.pc = Sh4cntx.pr;
-			Sh4cntx.cycle_counter -= 100;
-			break;
+			case 0xfffffde7: // GetTickCount
+				// This should make this syscall faster
+				Sh4cntx.r[0] = sh4_sched_now64() * 1000 / SH4_MAIN_CLOCK;
+				Sh4cntx.pc = Sh4cntx.pr;
+				Sh4cntx.cycle_counter -= 100;
+				break;
 
-		case 0xfffffd05: // QueryPerformanceCounter(u64 *)
-			{
-				bool isRam;
-				u64 *ptr;
-				u32 paddr;
-				if (rdv_writeMemImmediate(Sh4cntx.r[4], sizeof(u64), (void*&)ptr, isRam, paddr) && isRam)
+			case 0xfffffd05: // QueryPerformanceCounter(u64 *)
 				{
-					*ptr = sh4_sched_now64() >> 4;
-					Sh4cntx.r[0] = 1;
-					Sh4cntx.pc = Sh4cntx.pr;
-					Sh4cntx.cycle_counter -= 100;
-				}
-				else
-				{
-					Do_Exception(addr, Sh4Ex_AddressErrorRead);
-				}
-			}
-			break;
-		case 0xfffffded: // GetProcAddressW
-			{
-				// Intercept the dricas authentication function and replace it with a stub (Hundred Swords, Rune Jade)
-				static constexpr u16 Function[] = { 'U', 'A', '_', 'Q', 'u', 'e', 'r', 'y', 'D', '\0' };
-				bool success = false;
-				u32 vaddr = Sh4cntx.r[5];
-				if ((vaddr & 0xffff0000) != 0) // not an ordinal
-				{
-					u32 pa = 0;
-					for (unsigned i = 0; ; i++)
+					bool isRam;
+					u64 *ptr;
+					u32 paddr;
+					if (rdv_writeMemImmediate(Sh4cntx.r[4], sizeof(u64), (void*&)ptr, isRam, paddr) && isRam)
 					{
-						if (pa == 0 && mmu_full_lookup(vaddr, nullptr, pa) != MmuError::NONE)
-							break;
-						u16 c = ReadMem16_nommu(pa);
-						if (c != Function[i])
-							break;
-						if (c == 0) {
-							success = true;
-							break;
-						}
-						vaddr += 2;
-						if ((vaddr & 0xfff) == 0)
-							pa = 0;
-						else
-							pa += 2;
+						*ptr = sh4_sched_now64() >> 4;
+						Sh4cntx.r[0] = 1;
+						Sh4cntx.pc = Sh4cntx.pr;
+						Sh4cntx.cycle_counter -= 100;
+					}
+					else
+					{
+						Do_Exception(addr, Sh4Ex_AddressErrorRead);
 					}
 				}
-				if (success)
+				break;
+			case 0xfffffded: // GetProcAddressW
 				{
-					INFO_LOG(DYNAREC, "GetProcAddressW('UA_QueryD') intercepted");
-					Sh4cntx.r[0] = 0xffff0001;
-					Sh4cntx.pc = Sh4cntx.pr;
+					// Intercept the dricas authentication function and replace it with a stub (Hundred Swords, Rune Jade)
+					static constexpr u16 Function[] = { 'U', 'A', '_', 'Q', 'u', 'e', 'r', 'y', 'D', '\0' };
+					bool success = false;
+					u32 vaddr = Sh4cntx.r[5];
+					if ((vaddr & 0xffff0000) != 0) // not an ordinal
+					{
+						u32 pa = 0;
+						for (unsigned i = 0; ; i++)
+						{
+							if (pa == 0 && mmu_full_lookup(vaddr, nullptr, pa) != MmuError::NONE)
+								break;
+							u16 c = ReadMem16_nommu(pa);
+							if (c != Function[i])
+								break;
+							if (c == 0) {
+								success = true;
+								break;
+							}
+							vaddr += 2;
+							if ((vaddr & 0xfff) == 0)
+								pa = 0;
+							else
+								pa += 2;
+						}
+					}
+					if (success)
+					{
+						INFO_LOG(DYNAREC, "GetProcAddressW('UA_QueryD') intercepted");
+						Sh4cntx.r[0] = 0xffff0001;
+						Sh4cntx.pc = Sh4cntx.pr;
+					}
+					else {
+						Do_Exception(addr, Sh4Ex_AddressErrorRead);
+					}
 				}
-				else {
-					Do_Exception(addr, Sh4Ex_AddressErrorRead);
-				}
-			}
-			break;
-		case 0xffff0001:	// UA_QueryD stub
-			DEBUG_LOG(DYNAREC, "UA_QueryD called");
-			Sh4cntx.r[0] = 0;
-			Sh4cntx.pc = Sh4cntx.pr;
-			break;
+				break;
+			case 0xffff0001:	// UA_QueryD stub
+				DEBUG_LOG(DYNAREC, "UA_QueryD called");
+				Sh4cntx.r[0] = 0;
+				Sh4cntx.pc = Sh4cntx.pr;
+				break;
 #endif
 
-		default:
-			Do_Exception(addr, Sh4Ex_AddressErrorRead);
-			break;
+			default:
+				Do_Exception(addr, Sh4Ex_AddressErrorRead);
+				break;
+			}
 		}
 		addr = Sh4cntx.pc;
 	}

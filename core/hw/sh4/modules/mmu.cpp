@@ -55,24 +55,18 @@ constexpr u32 ITLB_LRU_AND[4] =
 
 #ifndef FAST_MMU
 //sync mem mapping to mmu , suspend compiled blocks if needed.entry is a UTLB entry # , -1 is for full sync
-bool UTLB_Sync(u32 entry)
+void UTLB_Sync(u32 entry)
 {
 	printf_mmu("UTLB MEM remap %d : 0x%X to 0x%X : %d asid %d size %d", entry, UTLB[entry].Address.VPN << 10, UTLB[entry].Data.PPN << 10, UTLB[entry].Data.V,
 			UTLB[entry].Address.ASID, UTLB[entry].Data.SZ0 + UTLB[entry].Data.SZ1 * 2);
 	if (UTLB[entry].Data.V == 0)
-		return true;
+		return;
 
 	if ((UTLB[entry].Address.VPN & (0xFC000000 >> 10)) == (0xE0000000 >> 10))
 	{
 		// Used when FullMMU is off
 		u32 vpn_sq = ((UTLB[entry].Address.VPN & 0x7FFFF) >> 10) & 0x3F;//upper bits are always known [0xE0/E1/E2/E3]
 		sq_remap[vpn_sq] = UTLB[entry].Data.PPN << 10;
-
-		return true;
-	}
-	else
-	{
-		return false;
 	}
 }
 //sync mem mapping to mmu , suspend compiled blocks if needed.entry is a ITLB entry # , -1 is for full sync
@@ -441,18 +435,27 @@ void mmu_set_state()
 {
 	if (CCN_MMUCR.AT == 1)
 	{
-		// Detect if we're running Windows CE
-		static const char magic[] = { 'S', 0, 'H', 0, '-', 0, '4', 0, ' ', 0, 'K', 0, 'e', 0, 'r', 0, 'n', 0, 'e', 0, 'l', 0 };
-		if (memcmp(GetMemPtr(0x8c0110a8, 4), magic, sizeof(magic)) == 0
-				|| memcmp(GetMemPtr(0x8c011118, 4), magic, sizeof(magic)) == 0)
+		if (!settings.content.windowsCE)
 		{
-			mmuOn = true;
-			NOTICE_LOG(SH4, "Enabling Full MMU support");
+			// Detect if we're running Windows CE
+			static const char magic[] = { 'S', 0, 'H', 0, '-', 0, '4', 0, ' ', 0, 'K', 0, 'e', 0, 'r', 0, 'n', 0, 'e', 0, 'l', 0 };
+			if (memcmp(GetMemPtr(0x8c0110a8, 4), magic, sizeof(magic)) == 0
+					|| memcmp(GetMemPtr(0x8c011118, 4), magic, sizeof(magic)) == 0)
+			{
+				mmuOn = true;
+				settings.content.windowsCE = true;
+				NOTICE_LOG(SH4, "Enabling Windows CE MMU support");
+			}
+			else if (fullMmuNeeded()) {
+				mmuOn = true;
+				NOTICE_LOG(SH4, "Enabling Full MMU support");
+			}
 		}
 	}
 	else
 	{
 		mmuOn = false;
+		settings.content.windowsCE = false;
 	}
 
 	SetMemoryHandlers();
@@ -593,4 +596,12 @@ void mmu_deserialize(Deserializer& deser)
 
 	deser >> sq_remap;
 	deser.skip(64 * 4, Deserializer::V23); // ITLB_LRU_USE
+
+	if (!settings.content.windowsCE)
+	{
+		for (unsigned i = 0; i < std::size(UTLB); i++)
+			UTLB_Sync(i);
+		for (unsigned i = 0; i < std::size(ITLB); i++)
+			ITLB_Sync(i);
+	}
 }
