@@ -38,6 +38,36 @@ static TLB_Entry const *lru_entry;
 static u32 lru_mask;
 static u32 lru_address;
 
+// Page mask of the last successful data translation, to keep sub-4K pages
+// out of the 4K-granular mmuAddressLUT.
+u32 mmuLastPageMask = 0xFFFFF000;
+
+// true for guests the cached path can't serve (sub-4K pages, ASID used as
+// dispatch, emulation driven by protection faults)
+bool mmuStrict = false;
+
+// Caches what the strict scan found. That scan has to look at all 64 entries,
+// so it dominates runtime. Dropped wherever the match set can change; the ASID
+// is in the tag, so switching it costs nothing.
+struct StrictCacheEntry
+{
+	u32 tag;		// bit 31 = valid | ASID << 22 | va >> 10; zero-init is empty
+	u32 mask;
+	u32 ppnBase;
+	u32 entryIdx;	// into UTLB, or StrictMissIdx for a cached miss
+};
+constexpr u32 StrictMissIdx = ~0u;
+constexpr u32 StrictCacheSize = 4096;
+static StrictCacheEntry strictCache[StrictCacheSize];
+
+void mmuStrictCacheFlush()
+{
+	// the flush sites (LDTLB above all) are hot for guests that never fill it
+	if (!mmuStrict)
+		return;
+	memset(strictCache, 0, sizeof(strictCache));
+}
+
 struct TLB_LinkedEntry {
 	TLB_Entry entry;
 	TLB_LinkedEntry *next_entry;
@@ -54,8 +84,6 @@ static u16 bucket_index(u32 address, int size, u32 asid)
 
 static void cache_entry(const TLB_Entry &entry)
 {
-	if (entry.Data.SZ0 == 0 && entry.Data.SZ1 == 0)
-		return;
 	if (full_table_size >= std::size(full_table))
 		return;
 
@@ -108,6 +136,9 @@ static bool find_entry(u32 address, const TLB_Entry **ret_entry)
 		return true;
 	// 1m
 	if (find_entry_by_page_size<3>(address, ret_entry))
+		return true;
+	// 1k last, so guests that don't use them don't pay for the probe
+	if (find_entry_by_page_size<0>(address, ret_entry))
 		return true;
 	return false;
 }
@@ -178,6 +209,7 @@ int main(int argc, char *argv[])
 
 bool UTLB_Sync(u32 entry)
 {
+	mmuStrictCacheFlush();
 	TLB_Entry& tlb_entry = UTLB[entry];
 	u32 sz = tlb_entry.Data.SZ1 * 2 + tlb_entry.Data.SZ0;
 
@@ -217,6 +249,50 @@ void ITLB_Sync(u32 entry)
 //Do a full lookup on the UTLB entry's
 MmuError mmu_full_lookup(u32 va, const TLB_Entry** tlb_entry_ret, u32& rv)
 {
+	if (mmuStrict)
+	{
+		const u32 asid = CCN_PTEH.ASID;
+		const u32 tag = 0x80000000u | (asid << 22) | (va >> 10);
+		StrictCacheEntry& cached = strictCache[((va >> 10) ^ (asid << 5)) & (StrictCacheSize - 1)];
+		if (cached.tag == tag)
+		{
+			if (cached.entryIdx == StrictMissIdx)
+				return MmuError::TLB_MISS;
+			rv = cached.ppnBase | (va & ~cached.mask);
+			lru_mask = cached.mask;
+			if (tlb_entry_ret != nullptr)
+				*tlb_entry_ret = &UTLB[cached.entryIdx];
+			return MmuError::NONE;
+		}
+
+		const TLB_Entry *match = nullptr;
+		for (const TLB_Entry& tlb_entry : UTLB)
+		{
+			if (!mmu_match(va, tlb_entry.Address, tlb_entry.Data))
+				continue;
+			if (match != nullptr)
+				return MmuError::TLB_MHIT;
+			match = &tlb_entry;
+			u32 sz = tlb_entry.Data.SZ1 * 2 + tlb_entry.Data.SZ0;
+			u32 mask = mmu_mask[sz];
+			rv = ((tlb_entry.Data.PPN << 10) & mask) | (va & ~mask);
+			lru_mask = mask;
+		}
+		// with SV == 1 matching depends on sr.MD, which flips on every
+		// exception, so only cache the MD-independent case
+		if (match == nullptr)
+		{
+			if (CCN_MMUCR.SV == 0)
+				cached = { tag, 0, 0, StrictMissIdx };
+			return MmuError::TLB_MISS;
+		}
+		if (CCN_MMUCR.SV == 0)
+			cached = { tag, lru_mask, rv & lru_mask, (u32)(match - &UTLB[0]) };
+		if (tlb_entry_ret != nullptr)
+			*tlb_entry_ret = match;
+		return MmuError::NONE;
+	}
+
 	if (lru_entry != NULL)
 	{
 		if (/*lru_entry->Data.V == 1 && */
@@ -298,6 +374,7 @@ MmuError mmu_data_translation(u32 va, u32& rv)
 	if (fast_reg_lut[va >> 29] != 0)
 	{
 		rv = va;
+		mmuLastPageMask = 0xFFFFF000;
 		return MmuError::NONE;
 	}
 
@@ -305,10 +382,36 @@ MmuError mmu_data_translation(u32 va, u32& rv)
 	{
 		// On-chip RAM area isn't translated
 		rv = va;
+		mmuLastPageMask = 0xFFFFF000;
 		return MmuError::NONE;
 	}
 
-	MmuError lookup = mmu_full_lookup(va, nullptr, rv);
+	if (CCN_MMUCR.AT == 0)
+	{
+		// handlers stay installed across strict guests' AT-off windows
+		rv = va;
+		mmuLastPageMask = 0xFFFFF000;
+		return MmuError::NONE;
+	}
+
+	const TLB_Entry *entry = nullptr;
+	MmuError lookup = mmu_full_lookup(va, &entry, rv);
+	if (lookup == MmuError::NONE)
+	{
+		mmuLastPageMask = lru_mask;
+		if (mmuStrict)
+		{
+			if ((entry->Data.PR >> 1) == 0 && Sh4cntx.sr.MD == 0)
+				return MmuError::PROTECTED;
+			if (translation_type == MMU_TT_DWRITE)
+			{
+				if ((entry->Data.PR & 1) == 0)
+					return MmuError::PROTECTED;
+				else if (entry->Data.D == 0)
+					return MmuError::FIRSTWRITE;
+			}
+		}
+	}
 	if (lookup == MmuError::NONE && (rv & 0x1C000000) == 0x1C000000)
 		// map 1C000000-1FFFFFFF to P4 memory-mapped registers
 		rv |= 0xF0000000;
@@ -330,8 +433,16 @@ template MmuError mmu_data_translation<MMU_TT_DWRITE>(u32 va, u32& rv);
 
 void mmu_flush_table()
 {
+	// TI means the guest is invalidating its own TLB, so the entries have to
+	// go and not just our caches: strict mode matches on the UTLB directly
+	for (TLB_Entry& entry : ITLB)
+		entry.Data.V = 0;
+	for (TLB_Entry& entry : UTLB)
+		entry.Data.V = 0;
+
 	lru_entry = nullptr;
 	flush_cache();
 	mmuAddressLUTFlush(true);
+	mmuStrictCacheFlush();
 }
 #endif 	// FAST_MMU
