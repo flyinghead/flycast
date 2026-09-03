@@ -24,3 +24,26 @@ template<typename T, bool Internal = false> void DYNACALL pvr_write32p(u32 addr,
 // Area 4 handlers
 template<typename T, bool upper> T DYNACALL pvr_read_area4(u32 addr);
 template<typename T, bool upper> void DYNACALL pvr_write_area4(u32 addr, T data);
+
+class FramebufferWatcher
+{
+	FramebufferWatcher();
+
+	struct Framebuffer {
+		u32 start = 0;
+		u32 end = 0;
+		bool dirty = false;
+	};
+	Framebuffer fbs[2];
+	u32 size = 0;
+
+public:
+	void fbSizeUpdated();
+	void fbSofUpdated(u32 sof);
+	void vramCheck(u32 vramOffset);
+	bool isDirty();
+	void serialize(Serializer& ser);
+	void deserialize(Deserializer& deser);
+
+	static FramebufferWatcher& Instance();
+};

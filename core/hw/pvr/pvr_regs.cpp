@@ -171,11 +171,9 @@ void pvr_WriteReg(u32 paddr,u32 data)
 		return;
 
 	case FB_R_SIZE_addr:
-		if (PvrReg(addr, u32) != data)
-		{
+		if (PvrReg(addr, u32) != data) {
 			PvrReg(addr, u32) = data;
-			fb_dirty = false;
-			check_framebuffer_write();
+			FramebufferWatcher::Instance().fbSizeUpdated();
 		}
 		return;
 
@@ -192,6 +190,8 @@ void pvr_WriteReg(u32 paddr,u32 data)
 	case FB_R_SOF1_addr:
 	case FB_R_SOF2_addr:
 		data &= 0x00fffffc;
+		if (addr == FB_R_SOF1_addr)
+			FramebufferWatcher::Instance().fbSofUpdated(data);
 		rend_swap_frame(data);
 		break;
 
