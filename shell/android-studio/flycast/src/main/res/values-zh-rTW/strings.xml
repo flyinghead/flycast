@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="OK">OK</string>
-    <string name="storage_error">Storage Error</string>
-    <string name="folder_permissions">Can\'t get permissions to access this folder.\nPlease select a different one.</string>
-    <string name="file_manager_not_found">File Manager not found</string>
-    <string name="no_file_manager_android10">No appropriate file manager was found on your device.\nPlease install a Storage Access Framework compatible file manager</string>
-    <string name="no_file_manager_android9">No appropriate file manager was found on your device.\nPlease install a file manager or try to disable \'Use SAF File Picker\' in the general settings</string>
-    <string name="select_an_export_folder">Select an export folder</string>
-    <string name="exporting_home_folder">Exporting home folder</string>
-    <string name="select_an_import_folder">Select an import folder</string>
-    <string name="importing_home_folder">Importing home folder</string>
-    <string name="flycast_error">Flycast Error</string>
-    <string name="init_failed_message">Initialization failed. Please try again or reinstall.\n\nError: </string>
-    <string name="exit">Exit</string>
-    <string name="copying">Copying</string>
+    <string name="OK">確定</string>
+    <string name="storage_error">儲存空間錯誤</string>
+    <string name="folder_permissions">無法取得此資料夾的存取權限。\n請選擇其他資料夾。</string>
+    <string name="file_manager_not_found">找不到檔案管理器</string>
+    <string name="no_file_manager_android10">您的裝置上找不到合適的檔案管理器。\n請安裝與 Storage Access Framework 相容的檔案管理器</string>
+    <string name="no_file_manager_android9">您的裝置上找不到合適的檔案管理器。\n請安裝檔案管理器，或嘗試在一般設定中停用「使用 SAF 檔案選擇器」</string>
+    <string name="select_an_export_folder">選擇匯出資料夾</string>
+    <string name="exporting_home_folder">正在匯出主資料夾</string>
+    <string name="select_an_import_folder">選擇匯入資料夾</string>
+    <string name="importing_home_folder">正在匯入主資料夾</string>
+    <string name="flycast_error">Flycast 錯誤</string>
+    <string name="init_failed_message">初始化失敗。請再試一次或重新安裝。\n\n錯誤： </string>
+    <string name="exit">退出</string>
+    <string name="copying">正在複製</string>
 </resources>
