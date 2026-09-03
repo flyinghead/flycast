@@ -278,15 +278,9 @@ static void ImGui_ImplOpenGL3_SetupRenderState(ImDrawData* draw_data, int fb_wid
     if (bd->HasBindSampler && glBindSampler != NULL)
     	glBindSampler(0, 0); // We use combined texture/sampler state. Applications using GL 3.3 may set that otherwise.
 #endif
-    vertex_array_object = 0;
 #ifndef GLES2
     if (GLGraphicsContext::Instance()->getMajorVersion() >= 3)
-    {
-		// Recreate the VAO every time
-		// (This is to easily allow multiple GL contexts. VAO are not shared among GL contexts, and we don't track creation/deletion of windows so we don't have an obvious key to use to cache them.)
-		glGenVertexArrays(1, &vertex_array_object);
 		glBindVertexArray(vertex_array_object);
-    }
 #endif
     glBindBuffer(GL_ARRAY_BUFFER, bd->VboHandle);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bd->ElementsHandle);
@@ -325,6 +319,10 @@ void    ImGui_ImplOpenGL3_RenderDrawData(ImDrawData* draw_data)
     // Recreate the VAO every time (this is to easily allow multiple GL contexts to be rendered to. VAO are not shared among GL contexts)
     // The renderer would actually work without any VAO bound, but then our VertexAttrib calls would overwrite the default one currently bound.
     GLuint vertex_array_object = 0;
+#ifndef GLES2
+    if (GLGraphicsContext::Instance()->getMajorVersion() >= 3)
+        glGenVertexArrays(1, &vertex_array_object);
+#endif
     ImGui_ImplOpenGL3_SetupRenderState(draw_data, fb_width, fb_height, vertex_array_object);
 
     // Will project scissor/clipping rectangles into framebuffer space
