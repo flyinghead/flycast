@@ -25,6 +25,7 @@
 #include "naomi_cart.h"
 #include "naomi_regs.h"
 #include "naomi_m3comm.h"
+#include "naomi_flashrom.h"
 #include "multiboard.h"
 #include "serialize.h"
 #include "network/output.h"
@@ -223,7 +224,19 @@ void naomi_reg_Init()
 		'0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'
 	};
 	romSerialId.setData(romSerialData);
+#if 0
+	// Generate random main board serial id
+	u8 mainSerialData[sizeof(romSerialData)];
+	memcpy(mainSerialData, romSerialData, sizeof(romSerialData));
+	for (unsigned i = 52; i < 52 + 16; i++)
+		mainSerialData[i] = (rand() % 10) + '0';
+	u16 crc = eeprom_crc(&mainSerialData[22], 46);
+	mainSerialData[20] = crc >> 8;
+	mainSerialData[21] = crc;
+	mainSerialId.setData(mainSerialData);
+#else
 	mainSerialId.setData(romSerialData);
+#endif
 	if (dmaSchedId == -1)
 		dmaSchedId = sh4_sched_register(0, naomiDmaSched);
 }

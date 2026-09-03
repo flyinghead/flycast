@@ -23,8 +23,10 @@
 #include "hw/maple/maple_devs.h"
 #include "cfg/option.h"
 
-static u16 eeprom_crc(const u8 *buf, int size)
+// CRC-16-CCITT variant
+u16 eeprom_crc(const u8 *buf, int size)
 {
+	// custom seed
 	int n = 0xdebdeb00;
 
 	for (int i = 0; i < size; i++)
@@ -40,6 +42,7 @@ static u16 eeprom_crc(const u8 *buf, int size)
 				n <<= 1;
 		}
 	}
+	// extra round with a virtual trailing null byte
 	for (int c = 0; c < 8; c++)
 	{
 		if (n & 0x80000000)

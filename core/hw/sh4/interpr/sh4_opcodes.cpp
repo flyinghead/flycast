@@ -926,7 +926,7 @@ sh4op(i1011_iiii_iiii_iiii)
 // trapa #<imm>
 sh4op(i1100_0011_iiii_iiii)
 {
-	WARN_LOG(INTERPRETER, "TRAP #%X", GetImm8(op));
+	INFO_LOG(INTERPRETER, "TRAP #%X", GetImm8(op));
 	debugger::debugTrap(Sh4Ex_Trap);
 	CCN_TRA = (GetImm8(op) << 2);
 	Do_Exception(ctx->pc, Sh4Ex_Trap);

@@ -28,6 +28,7 @@ using namespace Xbyak::util;
 #include "arm7_rec.h"
 #include "oslib/unwind_info.h"
 #include "oslib/virtmem.h"
+#include "stdclass.h"
 
 namespace aica::arm
 {
@@ -1003,8 +1004,13 @@ void arm7backend_compile(const std::vector<ArmOp>& block_ops, u32 cycles)
 	virtmem::jit_set_exec(protStart, protSize, false);
 
 	Arm7Compiler assembler;
-	assembler.compile(block_ops, cycles);
-
+	try {
+		assembler.compile(block_ops, cycles);
+	} catch (const Xbyak::Error& e) {
+		virtmem::jit_set_exec(protStart, protSize, true);
+		ERROR_LOG(AICA_ARM, "Xbyak error: %s", e.what());
+		throw FlycastException(strprintf("ARM recompilation error: %s", e.what()));
+	}
 	virtmem::jit_set_exec(protStart, protSize, true);
 }
 
@@ -1016,8 +1022,13 @@ void arm7backend_flush()
 	unwinder.clear();
 
 	Arm7Compiler assembler;
-	assembler.generateMainLoop();
-
+	try {
+		assembler.generateMainLoop();
+	} catch (const Xbyak::Error& e) {
+		virtmem::jit_set_exec(protStart, protSize, true);
+		ERROR_LOG(AICA_ARM, "Xbyak error: %s", e.what());
+		throw FlycastException(strprintf("ARM recompilation error: %s", e.what()));
+	}
 	virtmem::jit_set_exec(protStart, protSize, true);
 }
 

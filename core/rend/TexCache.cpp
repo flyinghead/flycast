@@ -1037,7 +1037,7 @@ public:
 		kval_bit = (fb_w_ctrl.fb_kval & 0x80) << 8;
 	}
 
-	void write(int xmin, int xmax, const u8 *& pixel, int y)
+	void write(int xmin, int xmax, const u8 *& pixel)
 	{
 		for (int c = xmin; c < xmax; c++)
 		{
@@ -1073,7 +1073,7 @@ class FBLineWriter565
 public:
 	FBLineWriter565(FB_W_CTRL_type fb_w_ctrl, PixelWriter& pixWriter) : pixWriter(pixWriter) {}
 
-	void write(int xmin, int xmax, const u8 *& pixel, int y)
+	void write(int xmin, int xmax, const u8 *& pixel)
 	{
 		for (int c = xmin; c < xmax; c++)
 		{
@@ -1108,7 +1108,7 @@ class FBLineWriter4444
 public:
 	FBLineWriter4444(FB_W_CTRL_type fb_w_ctrl, PixelWriter& pixWriter) : pixWriter(pixWriter) {}
 
-	void write(int xmin, int xmax, const u8 *& pixel, int y)
+	void write(int xmin, int xmax, const u8 *& pixel)
 	{
 		for (int c = xmin; c < xmax; c++)
 		{
@@ -1147,7 +1147,7 @@ public:
 		fb_alpha_threshold = fb_w_ctrl.fb_alpha_threshold;
 	}
 
-	void write(int xmin, int xmax, const u8 *& pixel, int y)
+	void write(int xmin, int xmax, const u8 *& pixel)
 	{
 		for (int c = xmin; c < xmax; c++)
 		{
@@ -1184,7 +1184,7 @@ class FBLineWriter888
 public:
 	FBLineWriter888(FB_W_CTRL_type fb_w_ctrl, PixelWriter& pixWriter) : pixWriter(pixWriter) {}
 
-	void write(int xmin, int xmax, const u8 *& pixel, int y)
+	void write(int xmin, int xmax, const u8 *& pixel)
 	{
 		for (int c = xmin; c < xmax; c++)
 		{
@@ -1210,7 +1210,7 @@ public:
 		fb_kval = fb_w_ctrl.fb_kval << 24;
 	}
 
-	void write(int xmin, int xmax, const u8 *& pixel, int y)
+	void write(int xmin, int xmax, const u8 *& pixel)
 	{
 		for (int c = xmin; c < xmax; c++)
 		{
@@ -1233,7 +1233,7 @@ class FBLineWriter8888
 public:
 	FBLineWriter8888(FB_W_CTRL_type fb_w_ctrl, PixelWriter& pixWriter) : pixWriter(pixWriter) {}
 
-	void write(int xmin, int xmax, const u8 *& pixel, int y)
+	void write(int xmin, int xmax, const u8 *& pixel)
 	{
 		for (int c = xmin; c < xmax; c++)
 		{
@@ -1272,7 +1272,7 @@ static void writeTexture(u32 width, u32 height, const u8 *data, u16 *dst, FB_W_C
 	FBLineWriter lineWriter(fb_w_ctrl, pixWriter);
 	for (u32 l = clip.origin.y; l < height; l++)
 	{
-		lineWriter.write(xmin, xmax, data, l);
+		lineWriter.write(xmin, xmax, data);
 		pixWriter.advance(destPadding);
 		data += srcPadding;
 	}
@@ -1346,7 +1346,7 @@ static void writeFramebufferLW(u32 width, u32 height, const u8 *data, u32 dstAdd
 		p += dp1;
 		pixWriter.advance(adv1);
 
-		lineWriter.write(clip.origin.x, clipWidth, p, l);
+		lineWriter.write(clip.origin.x, clipWidth, p);
 
 		pixWriter.advance(adv2);
 		p += dp2;

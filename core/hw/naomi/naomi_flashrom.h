@@ -27,3 +27,4 @@ u8 read_naomi_eeprom(u32 offset);
 void write_naomi_eeprom(u32 offset, u8 value);
 void configure_naomi_eeprom(const RomBootID *bootId);
 void configure_maxspeed_flash(bool enableNetwork, bool master);
+u16 eeprom_crc(const u8 *buf, int size);

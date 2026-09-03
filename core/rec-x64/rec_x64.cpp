@@ -1328,6 +1328,10 @@ public:
 			ccCompiler->compile(block, smc_checks, optimise);
 		} catch (const Xbyak::Error& e) {
 			ERROR_LOG(DYNAREC, "Fatal xbyak error: %s", e.what());
+			delete ccCompiler;
+			ccCompiler = nullptr;
+			virtmem::jit_set_exec(protStart, protSize, true);
+			throw FlycastException(strprintf("Recompilation error: %s", e.what()));
 		}
 		delete ccCompiler;
 		ccCompiler = nullptr;
@@ -1408,6 +1412,8 @@ public:
 			compiler.genMainloop();
 		} catch (const Xbyak::Error& e) {
 			ERROR_LOG(DYNAREC, "Fatal xbyak error: %s", e.what());
+			virtmem::jit_set_exec(protStart, protSize, true);
+			throw FlycastException(strprintf("Recompilation error: %s", e.what()));
 		}
 		virtmem::jit_set_exec(protStart, protSize, true);
 	}
