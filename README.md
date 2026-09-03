@@ -42,13 +42,10 @@ Install Flycast from [**Google Play**](https://play.google.com/store/apps/detail
 
 `flatpak run org.flycast.Flycast`
 
-### Homebrew (macOS ![apple logo](https://flyinghead.github.io/flycast-builds/apple.png))
+### macOS ![apple logo](https://flyinghead.github.io/flycast-builds/apple.png)
 
-1. [Set up Homebrew](https://brew.sh).
-
-2. Install Flycast via Homebrew:
-
-`brew install --cask flycast`
+Homebrew doesn't support Flycast anymore. Download the appplication Zip file from
+the [**builds page**](https://flyinghead.github.io/flycast-builds/) or [**GitHub Releases**](https://github.com/flyinghead/flycast/releases).
 
 ### iOS
 
