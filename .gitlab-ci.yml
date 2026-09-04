@@ -37,6 +37,11 @@
     IOS_MINVER: 13.0
     MINVER: 13.0
 
+.core-defs-libnx:
+  extends: .core-defs
+  variables:
+    CORE_ARGS: -DLIBRETRO=ON -DUSE_OPENMP=OFF
+
 .core-defs-android:
   extends: .core-defs
   script:
@@ -80,8 +85,8 @@ include:
 
   ################################## CONSOLES ################################  
   # Nintendo Switch
-#  - project: 'libretro-infrastructure/ci-templates'
-#    file: '/libnx-static.yml'
+  - project: 'libretro-infrastructure/ci-templates'
+    file: '/libnx-static-cmake.yml'
 
   # tvOS arm64
   - project: 'libretro-infrastructure/ci-templates'
@@ -182,10 +187,10 @@ libretro-build-ios-arm64:
 
 ################################### CONSOLES #################################
 # Nintendo Switch
-#libretro-build-libnx-aarch64:
-#  extends:
-#    - .libretro-libnx-static-retroarch-master
-#    - .core-defs
+libretro-build-libnx-aarch64:
+  extends:
+    - .libretro-libnx-static-cmake-retroarch-master
+    - .core-defs-libnx
 
 # tvOS arm64
 libretro-build-tvos-arm64:
