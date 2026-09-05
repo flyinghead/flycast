@@ -860,3 +860,13 @@ bool InputTextMultiline(const char* label, char* buf, size_t buf_size, const ImV
 #endif
 	return ImGui::InputTextMultiline(label, buf, buf_size, size, flags, callback, user_data);
 }
+
+bool TextFilter::Draw(const char* label, float width)
+{
+    if (width != 0.0f)
+        ImGui::SetNextItemWidth(width);
+    bool value_changed = InputText(label, InputBuf, IM_COUNTOF(InputBuf));
+    if (value_changed)
+        Build();
+    return value_changed;
+}
