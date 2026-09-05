@@ -267,7 +267,7 @@ static void loadSpecialSettings()
 				|| prod_id == "T9512N"	 // The Grinch (US)
 				|| prod_id == "51034"	 // Generator Vol.1
 				|| prod_id == "MK-51057" // Generator Vol.2
-				|| prod_id == "T15128N"	 // Coaster Works v1.002
+				|| prod_id == "T15128N"	 // Coaster Works
 				|| prod_id == "T9505N"	 // ESPN-NBA 2 Night
 				|| prod_id == "T-9703N"  // NFL Blitz 2000
 				|| prod_id == "T-8106N"  // Shadow Man
