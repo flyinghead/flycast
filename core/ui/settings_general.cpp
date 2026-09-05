@@ -197,6 +197,7 @@ void gui_settings_general()
 		{ "Svenska", "sv" },
 		{ "Türkçe", "tr" },
 		{ "简体中文", "zh_CN" },
+		{ "繁體中文", "zh_TW" },
 	};
 
 	// Determine the preview text
