@@ -84334,8 +84334,8 @@ struct retro_core_options_v2 options_tt = {
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_UK "Звуки візуальної пам'яті/системи (VMU)"
 #define CORE_OPTION_NAME_VMU_SOUND_LABEL_CAT_UK "Звук VMU"
 #define CORE_OPTION_NAME_VMU_SOUND_INFO_0_UK "Коли увімкнено, відео відтворюються VMU біки."
-#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_UK NULL
-#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_UK NULL
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_LABEL_UK "Збереження DreamPotato VMU"
+#define CORE_OPTION_NAME_LINKED_VMU_STORAGE_INFO_0_UK "Увімкнути збереження даних VMU на підключеному емуляторі DreamPotato. Якщо ця опція увімкнена, локальний файл збереження VMU не використовується."
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_UK "Показати параметри показу юніту/системи (VMU)"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_LABEL_CAT_UK "Показати параметри показу vMU"
 #define CORE_OPTION_NAME_SHOW_VMU_SCREEN_SETTINGS_INFO_0_UK "Увімкніть конфігурацію емуляції видимості екрана VMU LCD, розміру, позиції та кольору. Примітка: Швидке Меню потрібно перемкнути для застосування цього параметру."
