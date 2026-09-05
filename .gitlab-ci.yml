@@ -191,6 +191,20 @@ libretro-build-libnx-aarch64:
   extends:
     - .libretro-libnx-static-cmake-retroarch-master
     - .core-defs-libnx
+  # The template's script, with one word changed. It builds --target
+  # ${CORENAME}_libretro, and on Switch that target is flycast's own objects
+  # and nothing else. `combined` is the target CMakeLists.txt defines for
+  # exactly this case: it folds in xxhash, chdr, zip, elf and the resources,
+  # which is what RetroArch links against afterwards.
+  script:
+    - cmake $CORE_ARGS "$CMAKE_SOURCE_ROOT" -B$BUILD_DIR -DCMAKE_BUILD_TYPE=Release -DLIBRETRO_STATIC=ON -DLIBRETRO_SUFFIX=_libnx -DCMAKE_TOOLCHAIN_FILE=/opt/devkitpro/cmake/Switch.cmake -DNSWITCH=ON -DCFLAGS=-DHAVE_LIBNX=1 -DCXXFLAGS=-DHAVE_LIBNX=1
+    - cmake --build $BUILD_DIR --target combined --config Release -- -j $NUMPROC
+    - mv $BUILD_DIR/$EXTRA_PATH/${CORENAME}_libretro_libnx.a retroarch-precompiled/libretro_libnx.a
+    - cd retroarch-precompiled/
+    - make -f Makefile.libnx -j10
+    - mv retroarch_switch.nro ../${CORENAME}_libretro_libnx.nro
+    - mv retroarch_switch.elf ../${CORENAME}_libretro_libnx.elf
+    - cd ../
 
 # tvOS arm64
 libretro-build-tvos-arm64:
