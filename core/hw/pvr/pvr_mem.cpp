@@ -408,15 +408,11 @@ void FramebufferWatcher::deserialize(Deserializer& deser)
 			deser >> fb.end;
 		}
 	}
-	else if (deser.version() >= Deserializer::V20)
+	else
 	{
 		deser >> fbs[0].dirty;
 		deser >> fbs[0].start;
 		deser >> fbs[0].end;
-		fbs[1] = {};
-	}
-	else {
-		fbs[0] = {};
 		fbs[1] = {};
 	}
 	fbSizeUpdated();

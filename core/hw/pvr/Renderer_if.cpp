@@ -734,8 +734,7 @@ void rend_serialize(Serializer& ser)
 void rend_deserialize(Deserializer& deser)
 {
 	deser >> fb_w_cur;
-	if (deser.version() >= Deserializer::V20)
-		deser >> render_called;
+	deser >> render_called;
 	FramebufferWatcher::Instance().deserialize(deser);
 	pend_rend = false;
 	fbAddrHistory[0] = 1;

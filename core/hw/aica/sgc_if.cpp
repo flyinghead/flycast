@@ -203,12 +203,9 @@ public:
 	{
 		if (deser.version() < Deserializer::V49)
 		{
-			if (deser.version() >= Deserializer::V22)
-			{
-				deser.skip<int>();	// beepOn
-				deser.skip<int>();	// beepPeriod
-				deser.skip<int>();	// beepCounter
-			}
+			deser.skip<int>();	// beepOn
+			deser.skip<int>();	// beepPeriod
+			deser.skip<int>();	// beepCounter
 			init();
 		}
 		else
@@ -1721,16 +1718,13 @@ void deserialize(Deserializer& deser)
 	deser >> cdda_sector;
 	deser >> cdda_index;
 	midiSendBuffer.clear();
-	if (deser.version() >= Deserializer::V28)
+	u32 size;
+	deser >> size;
+	for (u32 i = 0; i < size; i++)
 	{
-		u32 size;
-		deser >> size;
-		for (u32 i = 0; i < size; i++)
-		{
-			u8 b;
-			deser >> b;
-			midiSendBuffer.push_back(b);
-		}
+		u8 b;
+		deser >> b;
+		midiSendBuffer.push_back(b);
 	}
 }
 

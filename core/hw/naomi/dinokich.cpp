@@ -445,12 +445,9 @@ void DinokichCardReader::deserialize(Deserializer& deser)
 			deser.skip<u8>(); // expectedBytes
 			deser >> size;
 			deser.skip(size);
-			if (deser.version() >= Deserializer::V41)
-			{
-				deser.skip<int>(); // state
-				deser.skip<int>(); // rowCounter
-				deser.skip(128); // cardData
-			}
+			deser.skip<int>(); // state
+			deser.skip<int>(); // rowCounter
+			deser.skip(128); // cardData
 		}
 	}
 }

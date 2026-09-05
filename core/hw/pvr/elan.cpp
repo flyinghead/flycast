@@ -514,26 +514,13 @@ struct State
 	void deserialize(Deserializer& deser)
 	{
 		projMatrixIdx = -1;
-		if (deser.version() < Deserializer::V24)
-		{
-			reset();
-			resetProjectionMatrix();
-			return;
-		}
 		ta_parse_reset();
 		u32 listType;
 		deser >> listType;
 		ta_set_list_type(listType);
 		deser >> gmp;
 		deser >> instance;
-		if (deser.version() < Deserializer::V40)
-		{
-			deser.skip<u32>();	// projMatrix address
-			resetProjectionMatrix();
-		}
-		else {
-			deser >> projMatrix;
-		}
+		deser >> projMatrix;
 		u32 tileclip;
 		deser >> tileclip;
 		ta_set_tileclip(tileclip);

@@ -1048,17 +1048,14 @@ void ModemSerialize(Serializer& ser)
 }
 void ModemDeserialize(Deserializer& deser)
 {
-	if (!config::EmulateBBA || deser.version() > Deserializer::V31)
-		sh4_sched_deserialize(deser, modem_sched);
-	if (deser.version() >= Deserializer::V20)
-	{
-		deser >> modem_regs;
-		deser >> dspram;
-		deser >> state;
-		deser >> connect_state;
-		deser >> last_dial_time;
-		deser.skip<bool>(Deserializer::V58);
-	}
+	sh4_sched_deserialize(deser, modem_sched);
+	deser >> modem_regs;
+	deser >> dspram;
+	deser >> state;
+	deser >> connect_state;
+	deser >> last_dial_time;
+	deser.skip<bool>(Deserializer::V58);
+
 	rxFifo.clear();
 	v42Proto.reset();
 	v8bis = false;

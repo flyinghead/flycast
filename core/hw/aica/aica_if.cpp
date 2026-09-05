@@ -559,10 +559,7 @@ void deserialize(Deserializer& deser)
 	deser >> arm::armFiqEnable;
 	deser >> arm::armMode;
 	deser >> arm::Arm7Enabled;
-	if (deser.version() >= Deserializer::V19)
-		deser >> arm::arm7ClockTicks;
-	else
-		arm::arm7ClockTicks = 0;
+	deser >> arm::arm7ClockTicks;
 
 	dsp::state.deserialize(deser);
 
@@ -573,11 +570,7 @@ void deserialize(Deserializer& deser)
 	}
 
 	if (!deser.rollback())
-	{
 		aica_ram.deserialize(deser);
-		if (settings.platform.isAtomiswave())
-			deser.skip(6_MB, Deserializer::V30);
-	}
 	deser >> VREG;
 	deser >> ARMRST;
 	deser >> rtc_EN;

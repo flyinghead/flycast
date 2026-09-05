@@ -269,30 +269,18 @@ void serialize(Serializer& ser)
 
 void deserialize(Deserializer& deser)
 {
-	if (deser.version() >= Deserializer::V27)
-	{
-		if (initialized) {
-			deser >> midiTxBuf;
-			deser >> midiTxBufIndex;
-		}
-		else if (deser.version() < Deserializer::V51) {
-			deser.skip(4);		// midiTxBuf
-			deser.skip<u32>();	// midiTxBufIndex
-		}
+	if (initialized) {
+		deser >> midiTxBuf;
+		deser >> midiTxBufIndex;
 	}
-	else {
-		midiTxBufIndex = 0;
+	else if (deser.version() < Deserializer::V51) {
+		deser.skip(4);		// midiTxBuf
+		deser.skip<u32>();	// midiTxBufIndex
 	}
-	if (deser.version() >= Deserializer::V34)
-	{
-		if (initialized)
-			deser >> calibrating;
-		else if (deser.version() < Deserializer::V51)
-			deser.skip<bool>();	// calibrating
-	}
-	else {
-		calibrating = false;
-	}
+	if (initialized)
+		deser >> calibrating;
+	else if (deser.version() < Deserializer::V51)
+		deser.skip<bool>();	// calibrating
 	if (initialized)
 	{
 		maxSpring = 0x7f;

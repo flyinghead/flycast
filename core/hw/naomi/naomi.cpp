@@ -310,40 +310,8 @@ void naomi_Serialize(Serializer& ser)
 }
 void naomi_Deserialize(Deserializer& deser)
 {
-	if (deser.version() < Deserializer::V40)
-	{
-		deser.skip<u32>();	// GSerialBuffer
-		deser.skip<u32>();	// BSerialBuffer
-		deser.skip<int>();	// GBufPos
-		deser.skip<int>();	// BBufPos
-		deser.skip<int>();	// GState
-		deser.skip<int>();	// BState
-		deser.skip<int>();	// GOldClk
-		deser.skip<int>();	// BOldClk
-		deser.skip<int>();	// BControl
-		deser.skip<int>();	// BCmd
-		deser.skip<int>();	// BLastCmd
-		deser.skip<int>();	// GControl
-		deser.skip<int>();	// GCmd
-		deser.skip<int>();	// GLastCmd
-		deser.skip<int>();	// SerStep
-		deser.skip<int>();	// SerStep2
-		deser.skip(69);		// BSerial
-		deser.skip(69);		// GSerial
-	}
-	else
-	{
-		mainSerialId.deserialize(deser);
-		romSerialId.deserialize(deser);
-	}
-	if (deser.version() < Deserializer::V36)
-	{
-		deser.skip<u32>(); // reg_dimm_command;
-		deser.skip<u32>(); // reg_dimm_offsetl;
-		deser.skip<u32>(); // reg_dimm_parameterl;
-		deser.skip<u32>(); // reg_dimm_parameterh;
-		deser.skip<u32>(); // reg_dimm_status;
-	}
+	mainSerialId.deserialize(deser);
+	romSerialId.deserialize(deser);
 	atomiswave::deserialize(deser);
 	midiffb::deserialize(deser);
 	if (deser.version() >= Deserializer::V45)

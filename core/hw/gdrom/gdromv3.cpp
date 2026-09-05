@@ -1446,13 +1446,7 @@ void deserialize(Deserializer& deser)
 	deser >> packet_cmd;
 	deser >> set_mode_offset;
 	deser >> read_params;
-	if (deser.version() >= Deserializer::V17) {
-		dma_buff.deserialize(deser);
-	}
-	else {
-		deser >> packet_cmd;
-		dma_buff.clear();
-	}
+	dma_buff.deserialize(deser);
 	pio_buff.deserialize(deser);
 	deser.skip<u32>(Deserializer::V44); // set_mode_offset (repeat)
 	deser >> ata_command;

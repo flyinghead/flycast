@@ -41,16 +41,12 @@ struct DSPState
 
 	void deserialize(Deserializer& deser)
 	{
-		deser.skip(4096 * 8, Deserializer::V18);	// DynCode
 		deser >> TEMP;
 		deser >> MEMS;
 		deser >> MIXS;
 		deser >> RBP;
 		deser >> RBL;
-		deser.skip(44, Deserializer::V18);
 		deser >> MDEC_CT;
-		deser.skip(33596 - 4096 * 8 - sizeof(TEMP) - sizeof(MEMS) - sizeof(MIXS) - 4 * 3 - 44,
-				Deserializer::V18);	// other dsp stuff
 		if (!deser.rollback())
 			dirty = true;
 	}

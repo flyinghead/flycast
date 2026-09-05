@@ -532,30 +532,20 @@ void mcfg_DeserializeDevices(Deserializer& deser)
 {
 	if (!deser.rollback())
 		mcfg_DestroyDevices(false);
-	u8 eeprom[128];
-	if (deser.version() < Deserializer::V23)
-	{
-		deser >> eeprom;
-		deser.skip(128);	// Unused eeprom space
-		deser.skip<bool>(); // EEPROM_loaded
-	}
 	deser >> maple_ddt_pending_reset;
 	if (deser.version() >= Deserializer::V47)
 		deser >> SDCKBOccupied;
 	mapleDmaOut.clear();
-	if (deser.version() >= Deserializer::V23)
+	u32 size;
+	deser >> size;
+	for (u32 i = 0; i < size; i++)
 	{
-		u32 size;
-		deser >> size;
-		for (u32 i = 0; i < size; i++)
-		{
-			u32 address;
-			deser >> address;
-			u32 dataSize;
-			deser >> dataSize;
-			mapleDmaOut.emplace_back(address, std::vector<u32>(dataSize));
-			deser.deserialize(mapleDmaOut.back().second.data(), dataSize);
-		}
+		u32 address;
+		deser >> address;
+		u32 dataSize;
+		deser >> dataSize;
+		mapleDmaOut.emplace_back(address, std::vector<u32>(dataSize));
+		deser.deserialize(mapleDmaOut.back().second.data(), dataSize);
 	}
 
 	for (int i = 0; i < MAPLE_PORTS; i++)
@@ -570,8 +560,6 @@ void mcfg_DeserializeDevices(Deserializer& deser)
 				MapleDevices[i][j]->deserialize(deser);
 			}
 		}
-	if (deser.version() < Deserializer::V23 && EEPROM != nullptr)
-		memcpy(EEPROM, eeprom, sizeof(eeprom));
 }
 
 std::shared_ptr<MIE> getMieDevice()

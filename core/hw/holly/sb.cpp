@@ -706,19 +706,5 @@ void sb_serialize(Serializer& ser)
 void sb_deserialize(Deserializer& deser)
 {
 	deser >> sb_regs;
-	if (deser.version() < Deserializer::V33)
-		deser >> SB_ISTNRM;
-	if (deser.version() >= Deserializer::V24)
-		deser >> SB_ISTNRM1;
-	else
-		SB_ISTNRM1 = 0;
-	if (deser.version() < Deserializer::V33)
-	{
-		if (deser.version() < Deserializer::V30)
-		{
-			deser.skip<u32>(); // SB_FFST_rc;
-			deser.skip<u32>(); // SB_FFST;
-		}
-		deser >> SB_ADST;
-	}
+	deser >> SB_ISTNRM1;
 }

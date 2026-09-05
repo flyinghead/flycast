@@ -154,10 +154,8 @@ void serialize(Serializer& ser)
 void deserialize(Deserializer& deser)
 {
 	deser >> aw_maple_devs;
-	if (deser.version() >= Deserializer::V20) {
-		deser >> coin_chute_time;
-		deser >> aw_ram_test_skipped;
-	}
+	deser >> coin_chute_time;
+	deser >> aw_ram_test_skipped;
 }
 
 }	// namespace atomiswave

@@ -589,13 +589,10 @@ void mmu_serialize(Serializer& ser)
 
 void mmu_deserialize(Deserializer& deser)
 {
-	deser.skip(8, Deserializer::V33);	// CCN_QACR_TR
-
 	deser >> UTLB;
 	deser >> ITLB;
 
 	deser >> sq_remap;
-	deser.skip(64 * 4, Deserializer::V23); // ITLB_LRU_USE
 
 	if (!settings.content.windowsCE)
 	{

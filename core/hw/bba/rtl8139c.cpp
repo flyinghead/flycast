@@ -2472,8 +2472,7 @@ bool rtl8139_deserialize(RTL8139State *s, Deserializer& deser)
 	deser >> s->TimerInt;
 	deser >> s->TCTR_base;
 
-	if (deser.version() >= Deserializer::V38)
-		sh4_sched_deserialize(deser, s->schedId);
+	sh4_sched_deserialize(deser, s->schedId);
 
 	return s->bChipCmdState & CmdRxEnb;
 }

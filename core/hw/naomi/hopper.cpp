@@ -323,18 +323,10 @@ private:
 		deser >> maxBet;
 		deser >> minBet;
 		deser >> addBet;
-		if (deser.version() >= Deserializer::V39)
-		{
-			deser >> paidAmount;
-			deser >> wonAmount;
-			deser >> betButton;
-			deser >> curBase;
-		}
-		else
-		{
-			paidAmount = 0;
-			wonAmount = 0;
-		}
+		deser >> paidAmount;
+		deser >> wonAmount;
+		deser >> betButton;
+		deser >> curBase;
 	}
 
 	u32 expectedBytes = 0;

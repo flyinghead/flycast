@@ -97,10 +97,7 @@ void deserialize(Deserializer& deser)
 
 	deser >> ta_fsm[2048];
 	deser >> ta_fsm_cl;
-	if (deser.version() >= Deserializer::V29)
-		deser >> taRenderPass;
-	else
-		taRenderPass = 0;
+	deser >> taRenderPass;
 	DeserializeTAContext(deser);
 
 	if (!deser.rollback())

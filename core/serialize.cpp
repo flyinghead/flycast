@@ -133,7 +133,7 @@ Deserializer::Deserializer(const void *data, size_t limit, bool rollback)
 			throw Exception("Can't find MEM section in RetroArch savestate");
 	}
 	deserialize(_version);
-	if (_version < V16)
+	if (_version < V42)
 		throw Exception("Unsupported version");
 	if (_version > Current)
 		throw Exception("Version too recent");

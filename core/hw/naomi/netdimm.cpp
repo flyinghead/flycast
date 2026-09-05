@@ -675,6 +675,9 @@ int NetDimm::schedCallback()
 						socket.connecting = false;
 						socket.lastError = convertError(so_error);
 						returnToNaomi(0x2200, so_error != 0, &socket - &sockets[0] + 1, so_error != 0 ? -1 : 0);
+#ifdef NET_TRACE
+						socket.openTrace();
+#endif
 						break;
 					}
 				}
@@ -712,6 +715,9 @@ int NetDimm::schedCallback()
 						fflush(stdout);
 					}
 #endif
+#ifdef NET_TRACE
+					socket.traceRecv(socket.recvData, len);
+#endif
 					DEBUG_LOG(NAOMI, "recv(%d, %d) -> %d", (int)(&socket - &sockets[0] + 1), socket.recvLen, len);
 					if (len >= 0)
 						socket.receiving = false;
@@ -744,13 +750,16 @@ int NetDimm::schedCallback()
 							socket.sending = false;
 						}
 					}
-#ifdef HTTP_TRACE
 					else if (len > 0)
 					{
+#ifdef HTTP_TRACE
 						fwrite(socket.sendData, 1, rc, stdout);
 						fflush(stdout);
-					}
 #endif
+#ifdef NET_TRACE
+						socket.traceSend(socket.sendData, len);
+#endif
+					}
 					DEBUG_LOG(NAOMI, "send(%d, %d) -> %d", (int)(&socket - &sockets[0] + 1), socket.sendLen, len);
 					if (len >= 0)
 						socket.sending = false;
@@ -1030,6 +1039,7 @@ void NetDimm::netCmd(int cmd)
 					// WCCF server IP
 					a.sin_addr.s_addr = serverIp;
 				}
+				sockets[sockidx - 1].port = ntohs(addr->sin_port);
 				rc = connect(sockfd, (sockaddr *)&a, sizeof(a));
 				if (rc == -1)
 				{
@@ -1047,6 +1057,11 @@ void NetDimm::netCmd(int cmd)
 						sockets[sockidx - 1].lastError = convertError(error);
 					}
 				}
+#ifdef NET_TRACE
+				else {
+					sockets[sockidx - 1].openTrace();
+				}
+#endif
 				INFO_LOG(NAOMI, "connect(%d, %x:%d) -> %d", sockidx, htonl(a.sin_addr.s_addr), htons(a.sin_port), rc);
 			}
 			returnToNaomi(retCmd, rc != 0, sockidx, rc);
@@ -1117,13 +1132,16 @@ void NetDimm::netCmd(int cmd)
 						sockets[sockidx - 1].lastError = convertError(error);
 					}
 				}
-#ifdef HTTP_TRACE
 				else if (rc > 0)
 				{
+#ifdef HTTP_TRACE
 					fwrite(data, 1, rc, stdout);
 					fflush(stdout);
-				}
 #endif
+#ifdef NET_TRACE
+					sockets[sockidx - 1].traceRecv(data, rc);
+#endif
+				}
 				DEBUG_LOG(NAOMI, "recv(%d, %d) -> %d", sockidx, len, rc);
 			}
 			returnToNaomi(retCmd, rc == -1, sockidx, rc);
@@ -1167,6 +1185,11 @@ void NetDimm::netCmd(int cmd)
 						sockets[sockidx - 1].lastError = convertError(error);
 					}
 				}
+#ifdef NET_TRACE
+				else {
+					sockets[sockidx - 1].traceSend(data, rc);
+				}
+#endif
 				DEBUG_LOG(NAOMI, "send(%d, %d) -> %d", sockidx, len, rc);
 #ifdef HTTP_TRACE
 				fwrite(data, 1, len, stdout);
@@ -1464,6 +1487,11 @@ void NetDimm::netCmd(int cmd)
 						sockets[sockidx - 1].lastError = convertError(error);
 					}
 				}
+#ifdef NET_TRACE
+				else {
+					sockets[sockidx - 1].traceRecv(data, len);
+				}
+#endif
 			}
 			DEBUG_LOG(NAOMI, "recvfrom(%d, %d) -> %x", sockidx, len, rc);
 			returnToNaomi(retCmd, rc == -1, sockidx, rc);
@@ -1492,6 +1520,11 @@ void NetDimm::netCmd(int cmd)
 						sockidx, data, buffer[3], buffer[4], inet_ntoa(dest_addr.sin_addr), buffer[6], rc);
 				if (rc < 0)
 					sockets[sockidx - 1].lastError = convertError(get_last_error());
+#ifdef NET_TRACE
+				else
+					sockets[sockidx - 1].traceSend((const u8 *)data, buffer[3]);
+#endif
+
 			}
 			returnToNaomi(retCmd, rc < 0, sockidx, rc);
 			break;
@@ -1531,7 +1564,7 @@ void NetDimm::Deserialize(Deserializer &deser)
 	GDCartridge::Deserialize(deser);
 	for (Socket& socket : sockets)
 		socket.close();
-	if (deser.version() >= Deserializer::V36 && deser.version() < Deserializer::V53)
+	if (deser.version() < Deserializer::V53)
 	{
 		// moved to parent class in v53
 		deser >> dimm_command;
@@ -1550,3 +1583,101 @@ void NetDimm::controlRead(std::function<void(u32)> callback) {
 void NetDimm::reboot() {
 	serverQueue.push(Reboot);
 }
+
+int NetDimm::Socket::close()
+{
+	int rc = 0;
+	if (fd != INVALID_SOCKET) {
+		shutdown(fd, SHUT_RDWR);
+		rc = ::closesocket(fd);
+	}
+	fd = INVALID_SOCKET;
+	connecting = false;
+	receiving = false;
+	sending = false;
+	connectTimeout = 0;
+	connectTime = 0;
+	sendTimeout = 0;
+	sendTime = 0;
+	recvTimeout = 0;
+	recvTime = 0;
+	srcAddr = nullptr;
+	addrLen = nullptr;
+#ifdef NET_TRACE
+	closeTrace();
+#endif
+	return rc;
+}
+
+#ifdef NET_TRACE
+void NetDimm::Socket::openTrace()
+{
+	static char name[256];
+	sprintf(name, "netwccf-%d.log", port);
+	trcFile = fopen(name, "a");
+}
+
+void NetDimm::Socket::closeTrace()
+{
+	if (trcFile != nullptr) {
+		fclose(trcFile);
+		trcFile = nullptr;
+	}
+}
+
+static char hexToChar(u8 v) {
+	return v <= 9 ? '0' + v : 'a' + v - 10;
+}
+
+static void dumpLine(char *out, const u8 *data, size_t len)
+{
+	len = std::min(len, (size_t)16);
+	char *pbin = out;
+	char *pasc = out + 50;
+	memset(out, ' ', 66);
+	out[67] = 0;
+	for (unsigned i = 0; i < len; i++)
+	{
+		*pbin++ = hexToChar(*data >> 4);
+		*pbin++ = hexToChar(*data & 0xf);
+		pbin++;
+		if (i == 7)
+			pbin++;
+		if ((char)*data >= ' ' && (char)*data <= '~')
+			*pasc++ = *data;
+		else
+			*pasc++ = '.';
+		data++;
+	}
+}
+
+static void dump(FILE *file, const u8 *data, size_t len)
+{
+	static char line[100];
+	while (len != 0)
+	{
+		dumpLine(line, data, len);
+		fprintf(file, "%s\n", line);
+		if (len < 16)
+			break;
+		len -= 16;
+		data += 16;
+	}
+}
+
+void NetDimm::Socket::traceRecv(const u8 *data, size_t len)
+{
+	if (len == 0 || trcFile == nullptr)
+		return;
+	fprintf(trcFile, "Recv: %d\n", (int)len);
+	dump(trcFile, data, len);
+}
+
+void NetDimm::Socket::traceSend(const u8 *data, size_t len)
+{
+	if (len == 0 || trcFile == nullptr)
+		return;
+	fprintf(trcFile, "Send: %d\n", (int)len);
+	dump(trcFile, data, len);
+}
+#endif

@@ -638,10 +638,7 @@ public:
 	}
 	void deserialize(Deserializer& deser) override
 	{
-		if (deser.version() >= Deserializer::V31)
-			deser >> out;
-		else
-			out = 0xff;
+		deser >> out;
 		jvs_837_13844::deserialize(deser);
 	}
 
@@ -759,10 +756,7 @@ public:
 	}
 	void deserialize(Deserializer& deser) override
 	{
-		if (deser.version() >= Deserializer::V31)
-			deser >> testMode;
-		else
-			testMode = false;
+		deser >> testMode;
 		if (deser.version() >= Deserializer::V51)
 		{
 			deser >> damper_high;
@@ -945,8 +939,7 @@ public:
 	}
 	void deserialize(Deserializer& deser) override
 	{
-		if (deser.version() >= Deserializer::V31)
-			deser >> gear;
+		deser >> gear;
 		jvs_837_13844_racing::deserialize(deser);
 	}
 
@@ -2111,18 +2104,13 @@ void MIEImpl::deserialize(Deserializer& deser)
 {
 	maple_base::deserialize(deser);
 	deser >> crazy_mode;
-	if (deser.version() >= Deserializer::V35)
-		deser >> hotd2p;
-	else
-		hotd2p = settings.content.gameId == "hotd2p";
+	deser >> hotd2p;
 	deser >> jvs_repeat_request;
 	deser >> jvs_receive_length;
 	deser >> jvs_receive_buffer;
-	if (deser.version() >= Deserializer::V23)
-		deser >> eeprom;
+	deser >> eeprom;
 	u32 board_count;
 	deser >> board_count;
-	deser.skip(sizeof(size_t) - sizeof(u32), Deserializer::V23);
 	for (u32 i = 0; i < board_count; i++)
 		io_boards[i]->deserialize(deser);
 }

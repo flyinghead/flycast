@@ -713,16 +713,10 @@ void deserialize(Deserializer& deser)
 
 	interrupts_deserialize(deser);
 
-	if (deser.version() <= Deserializer::V31)
-		deser.skip<int>();		// do_sqw index
 	CCN_QACR_write<0>(0, CCN_QACR0.reg_data);
 	CCN_QACR_write<1>(0, CCN_QACR1.reg_data);
 
 	deser >> (*p_sh4rcb).cntx;
-	if (deser.version() >= Deserializer::V19 && deser.version() < Deserializer::V21)
-		deser.skip<u32>(); // sh4InterpCycles
-	if (deser.version() < Deserializer::V21)
-		p_sh4rcb->cntx.cycle_counter = SH4_TIMESLICE;
 
 	sh4_sched_deserialize(deser);
 }
@@ -735,13 +729,6 @@ void serialize2(Serializer& ser)
 
 void deserialize2(Deserializer& deser)
 {
-	if (deser.version() <= Deserializer::V32)
-	{
-		deser >> SCIF_SCFSR2;
-		deser >> SCIF_SCSCR2;
-		deser >> BSC_PDTRA;
-	}
-
 	tmu.deserialize(deser);
 	mmu_deserialize(deser);
 }

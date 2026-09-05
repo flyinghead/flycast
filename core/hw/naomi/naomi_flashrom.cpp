@@ -20,8 +20,9 @@
  */
 #include "naomi_flashrom.h"
 #include "hw/flashrom/nvmem.h"
-#include "hw/maple/maple_devs.h"
 #include "cfg/option.h"
+
+extern u8 *EEPROM;
 
 // CRC-16-CCITT variant
 u16 eeprom_crc(const u8 *buf, int size)
@@ -42,7 +43,7 @@ u16 eeprom_crc(const u8 *buf, int size)
 				n <<= 1;
 		}
 	}
-	// extra round with a virtual trailing null byte
+	// extra round with a virtual null trailing byte
 	for (int c = 0; c < 8; c++)
 	{
 		if (n & 0x80000000)

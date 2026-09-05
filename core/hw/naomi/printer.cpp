@@ -1203,12 +1203,7 @@ void serialize(Serializer& ser)
 void deserialize(Deserializer& deser)
 {
 	if (printer != nullptr)
-	{
-		 if (deser.version() >= Deserializer::V35)
-			 printer->deserialize(deser);
-		 else
-			 init();
-	}
+		 printer->deserialize(deser);
 }
 #endif
 

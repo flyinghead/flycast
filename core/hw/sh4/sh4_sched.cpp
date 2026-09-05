@@ -249,9 +249,6 @@ void sh4_sched_deserialize(Deserializer& deser)
 {
 	deser >> sh4_sched_ffb;
 
-	if (deser.version() >= Deserializer::V19 && deser.version() <= Deserializer::V31)
-		deser.skip<u32>();		// sh4_sched_next_id
-
 	sh4_sched_deserialize(deser, aica::aica_schid);
 	sh4_sched_deserialize(deser, aica::rtc_schid);
 	sh4_sched_deserialize(deser, gdrom_schid);

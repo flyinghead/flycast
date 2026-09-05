@@ -23,6 +23,8 @@
 #include <memory>
 #include <functional>
 
+//#define NET_TRACE
+
 class NetDimmServer;
 
 class NetDimm : public GDCartridge
@@ -93,27 +95,7 @@ private:
 		Socket() = default;
 		Socket(sock_t fd) : fd(fd) {}
 
-		int close()
-		{
-			int rc = 0;
-			if (fd != INVALID_SOCKET) {
-				shutdown(fd, SHUT_RDWR);
-				rc = ::closesocket(fd);
-			}
-			fd = INVALID_SOCKET;
-			connecting = false;
-			receiving = false;
-			sending = false;
-			connectTimeout = 0;
-			connectTime = 0;
-			sendTimeout = 0;
-			sendTime = 0;
-			recvTimeout = 0;
-			recvTime = 0;
-			srcAddr = nullptr;
-			addrLen = nullptr;
-			return rc;
-		}
+		int close();
 
 		bool isClosed() const {
 			return fd == INVALID_SOCKET;
@@ -138,8 +120,17 @@ private:
 		u64 recvTimeout = 0;
 		u64 recvTime = 0;
 		int lastError = 0;
+		int port = 0;
 		sockaddr *srcAddr = nullptr;
 		socklen_t *addrLen = nullptr;
+#ifdef NET_TRACE
+		void openTrace();
+		void closeTrace();
+		void traceRecv(const u8 *data, size_t len);
+		void traceSend(const u8 *data, size_t len);
+
+		FILE *trcFile = nullptr;
+#endif
 	};
 	std::vector<Socket> sockets;
 	int lastError = 0; // for socket() and select()

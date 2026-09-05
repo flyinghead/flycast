@@ -322,8 +322,6 @@ void spg_Serialize(Serializer& ser)
 }
 void spg_Deserialize(Deserializer& deser)
 {
-	if (deser.version() < Deserializer::V30)
-		deser.skip<u32>(); // in_vblank
 	deser >> clc_pvr_scanline;
 	deser >> maple_int_pending;
 	deser >> pvr_numscanlines;
