@@ -1482,12 +1482,15 @@ if(NINTENDO_SWITCH)
 			COMMAND ${CMAKE_AR} -x $<TARGET_FILE:xxHash::xxhash>
 			COMMAND ${CMAKE_AR} -x $<TARGET_FILE:chdr-static>
 			COMMAND ${CMAKE_AR} -x $<TARGET_FILE:zip>
+			COMMAND ${CMAKE_AR} -x $<TARGET_FILE:libzstd_static>
 			COMMAND ${CMAKE_AR} -x $<TARGET_FILE:elf>
+			COMMAND ${CMAKE_AR} -x $<TARGET_FILE:tinygettext::tinygettext>
 			COMMAND ${CMAKE_AR} -x $<TARGET_FILE:flycast::res>
 			COMMAND ${CMAKE_AR} -rs flycast_libretro_libnx.a *.o
 			COMMAND rm *.o
 			WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}
-			DEPENDS xxHash::xxhash chdr-static zip ${PROJECT_NAME})
+			DEPENDS xxHash::xxhash chdr-static zip libzstd_static
+				tinygettext::tinygettext ${PROJECT_NAME})
 	else()
 		nx_generate_nacp(flycast.nacp NAME "Flycast" AUTHOR "flyinghead, M4xw" VERSION "${GIT_VERSION}")
 		nx_create_nro(flycast NACP flycast.nacp ICON "${CMAKE_SOURCE_DIR}/shell/switch/flycast.jpeg")
