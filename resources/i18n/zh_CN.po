@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-22 12:49+0100\n"
-"PO-Revision-Date: 2026-09-06 11:55\n"
+"PO-Revision-Date: 2026-09-06 13:10\n"
 "Last-Translator: \n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
@@ -622,7 +622,7 @@ msgstr "按条带排序"
 
 #: core/ui/settings_video.cpp:127
 msgid "Sort transparent polygons per strip. Faster but may produce graphical glitches"
-msgstr "按条带对透明多边形进行排序。速度更快，但可能会产生图形异常"
+msgstr "按条带对透明多边形进行排序。速度更快，但可能会产生图形故障"
 
 #: core/ui/settings_video.cpp:131
 msgid "Per Pixel"
@@ -1037,7 +1037,7 @@ msgstr "Dreamcast BIOS 中配置的语言"
 
 #: core/ui/settings_general.cpp:236
 msgid "Broadcast"
-msgstr "电视广播制式"
+msgstr "Broadcast"
 
 #: core/ui/settings_general.cpp:237
 msgid "TV broadcasting standard for non-VGA modes"
@@ -1058,7 +1058,7 @@ msgstr "Europe"
 #: core/ui/settings_general.cpp:241
 msgctxt "region"
 msgid "Export"
-msgstr "导出"
+msgstr "Export"
 
 #: core/ui/settings_general.cpp:241
 msgid "Korea"
@@ -1066,7 +1066,7 @@ msgstr "Korea"
 
 #: core/ui/settings_general.cpp:243
 msgid "Region"
-msgstr "地区"
+msgstr "Region"
 
 #: core/ui/settings_general.cpp:244
 msgid "BIOS region"
@@ -1090,11 +1090,11 @@ msgstr "视频线类型"
 
 #: core/ui/settings_general.cpp:266
 msgid "Video connection type"
-msgstr "视频链接线类型"
+msgstr "Video connection type"
 
 #: core/ui/settings_general.cpp:276
 msgid "Content Location"
-msgstr "存放游戏的位置"
+msgstr "Content Location"
 
 #: core/ui/settings_general.cpp:297 core/ui/settings_general.cpp:361
 msgid "Rescan Content"
@@ -1732,7 +1732,7 @@ msgstr "取消映射"
 #: core/ui/settings_controls.cpp:652 core/ui/settings_controls.cpp:895
 #: core/ui/settings.cpp:217
 msgid "Done"
-msgstr "返回"
+msgstr "完成"
 
 #: core/ui/settings_controls.cpp:672 core/ui/settings_controls.cpp:684
 #: core/ui/settings_controls.cpp:1013 core/ui/settings_controls.cpp:1027
