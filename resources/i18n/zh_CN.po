@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-22 12:49+0100\n"
-"PO-Revision-Date: 2026-09-06 10:14\n"
+"PO-Revision-Date: 2026-09-06 11:55\n"
 "Last-Translator: \n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
@@ -622,7 +622,7 @@ msgstr "按条带排序"
 
 #: core/ui/settings_video.cpp:127
 msgid "Sort transparent polygons per strip. Faster but may produce graphical glitches"
-msgstr "按条带对透明多边形进行排序。速度更快，但可能会产生图形故障"
+msgstr "按条带对透明多边形进行排序。速度更快，但可能会产生图形异常"
 
 #: core/ui/settings_video.cpp:131
 msgid "Per Pixel"
@@ -1732,7 +1732,7 @@ msgstr "取消映射"
 #: core/ui/settings_controls.cpp:652 core/ui/settings_controls.cpp:895
 #: core/ui/settings.cpp:217
 msgid "Done"
-msgstr "完成"
+msgstr "返回"
 
 #: core/ui/settings_controls.cpp:672 core/ui/settings_controls.cpp:684
 #: core/ui/settings_controls.cpp:1013 core/ui/settings_controls.cpp:1027
