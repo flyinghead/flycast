@@ -191,6 +191,15 @@ libretro-build-libnx-aarch64:
   extends:
     - .libretro-libnx-static-cmake-retroarch-master
     - .core-defs-libnx
+  # The libnx image ships CMake 3.18.4 and this tree asks for 3.22.1, so the
+  # job stops at configure. Put a newer one in front of it - in /tmp, since
+  # the job does not run as a user who can write /opt.
+  before_script:
+    - !reference [.libretro-libnx-static-cmake, before_script]
+    - |
+      CMAKE_VER=3.31.6
+      curl -sSL "https://github.com/Kitware/CMake/releases/download/v${CMAKE_VER}/cmake-${CMAKE_VER}-linux-x86_64.tar.gz" | tar -xz -C /tmp
+      export PATH="/tmp/cmake-${CMAKE_VER}-linux-x86_64/bin:$PATH"
   # The template's script, with one word changed. It builds --target
   # ${CORENAME}_libretro, and on Switch that target is flycast's own objects
   # and nothing else. `combined` is the target CMakeLists.txt defines for
