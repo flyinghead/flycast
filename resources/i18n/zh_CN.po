@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: flycast\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-22 12:49+0100\n"
-"PO-Revision-Date: 2026-08-24 02:46\n"
+"PO-Revision-Date: 2026-09-06 10:14\n"
 "Last-Translator: \n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
@@ -1037,7 +1037,7 @@ msgstr "Dreamcast BIOS 中配置的语言"
 
 #: core/ui/settings_general.cpp:236
 msgid "Broadcast"
-msgstr "Broadcast"
+msgstr "电视广播制式"
 
 #: core/ui/settings_general.cpp:237
 msgid "TV broadcasting standard for non-VGA modes"
@@ -1058,7 +1058,7 @@ msgstr "Europe"
 #: core/ui/settings_general.cpp:241
 msgctxt "region"
 msgid "Export"
-msgstr "Export"
+msgstr "导出"
 
 #: core/ui/settings_general.cpp:241
 msgid "Korea"
@@ -1066,7 +1066,7 @@ msgstr "Korea"
 
 #: core/ui/settings_general.cpp:243
 msgid "Region"
-msgstr "Region"
+msgstr "地区"
 
 #: core/ui/settings_general.cpp:244
 msgid "BIOS region"
@@ -1090,11 +1090,11 @@ msgstr "视频线类型"
 
 #: core/ui/settings_general.cpp:266
 msgid "Video connection type"
-msgstr "Video connection type"
+msgstr "视频链接线类型"
 
 #: core/ui/settings_general.cpp:276
 msgid "Content Location"
-msgstr "Content Location"
+msgstr "存放游戏的位置"
 
 #: core/ui/settings_general.cpp:297 core/ui/settings_general.cpp:361
 msgid "Rescan Content"
