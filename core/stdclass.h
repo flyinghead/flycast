@@ -103,6 +103,9 @@ public:
 	void zero() {
 		std::memset(data, 0, size);
 	}
+	size_t getSize() const {
+		return size;
+	}
 
 	u8& operator [](size_t i) {
 		return data[i];
