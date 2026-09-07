@@ -65,9 +65,9 @@ protected:
 			mainBuffers.pop_back();
 			if (buffer->bufferSize < size)
 			{
+				u32 newSize = (u32)buffer->bufferSize;
 				// FIXME vf4evob still complains about buffer in use after 2 frames. Due to swap chain size of 3
 				commandPool->addToFlight(new Deleter(buffer));
-				u32 newSize = (u32)buffer->bufferSize;
 				while (newSize < size)
 					newSize *= 2;
 				INFO_LOG(RENDERER, "Increasing main buffer size %zd -> %d", buffer->bufferSize, newSize);
@@ -215,50 +215,61 @@ protected:
 	rend_context *rendContext = nullptr;
 };
 
+class Drawer;
+
+class RenderDelegate
+{
+public:
+	virtual ~RenderDelegate() = default;
+	virtual void init(Drawer *drawer) {
+		this->drawer = drawer;
+	}
+	virtual void term() {}
+	virtual void createAttachments(int index, vk::ImageView imageView, vk::Image image) {}
+	virtual vk::RenderPass getRenderPass(bool load) { return {}; }
+
+	virtual void beginRender(vk::CommandBuffer cmdBuffer, int index) = 0;
+	virtual void endRender(vk::CommandBuffer cmdBuffer) = 0;
+	virtual bool beforeDrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sortTriangles,
+			const PolyParam& poly, u32 first, u32 count) {
+		return true;
+	}
+
+protected:
+	static VulkanContext *vkCtx() { return VulkanContext::Instance(); }
+
+	Drawer *drawer = nullptr;
+};
+
 class Drawer : public BaseDrawer
 {
 public:
 	virtual ~Drawer() = default;
-
-	void Term()
-	{
-		descriptorSets.term();
-		mainBuffers.clear();
-	}
+	void Term();
 
 	bool Draw(const Texture *fogTexture, const Texture *paletteTexture);
 	virtual void EndRenderPass() {
 		renderPassStarted = false;
 	}
 	vk::CommandBuffer GetCurrentCommandBuffer() const { return currentCommandBuffer; }
+	vk::RenderPass GetRenderPass() const { return renderDelegate->getRenderPass(false); }
 
 protected:
 	virtual u32 GetSwapChainSize() { return GetContext()->GetSwapChainSize(); }
 	virtual vk::CommandBuffer BeginRenderPass() = 0;
-	void NewImage()
-	{
-		descriptorSets.nextFrame();
-		imageIndex = (imageIndex + 1) % GetSwapChainSize();
-		if (perStripSorting != config::PerStripSorting)
-		{
-			perStripSorting = config::PerStripSorting;
-			pipelineManager->Reset();
-		}
-	}
-
-	void Init(SamplerManager *samplerManager, PipelineManager *pipelineManager)
-	{
-		this->pipelineManager = pipelineManager;
-		this->samplerManager = samplerManager;
-
-		descriptorSets.init(samplerManager, pipelineManager->GetPipelineLayout(), pipelineManager->GetPerFrameDSLayout(), pipelineManager->GetPerPolyDSLayout());
-	}
+	void NewImage();
+	void Init(SamplerManager *samplerManager, ShaderManager *shaderManager);
 
 	int GetCurrentImage() const { return imageIndex; }
 
+	std::unique_ptr<RenderDelegate> renderDelegate;
 	vk::CommandBuffer currentCommandBuffer;
 	SamplerManager *samplerManager = nullptr;
 	bool renderPassStarted = false;
+	std::vector<std::unique_ptr<FramebufferAttachment>> colorAttachments;
+	std::unique_ptr<FramebufferAttachment> depthAttachment;
+	vk::Extent2D viewport;
+	vk::ImageView secAccumView {};
 
 private:
 	void SortTriangles();
@@ -283,59 +294,33 @@ private:
 	} offsets;
 	DescriptorSets descriptorSets;
 	vk::Buffer curMainBuffer;
-	PipelineManager *pipelineManager = nullptr;
+	std::unique_ptr<PipelineManager> pipelineManager;
 	bool perStripSorting = false;
 	bool dithering = false;
+
+	friend class ClassicRender;
+	friend class DynamicRender;
+	friend class ScreenClassicRender;
+	friend class TextureClassicRender;
+	friend class ScreenDynamicRender;
 };
 
 class ScreenDrawer : public Drawer
 {
 public:
+	ScreenDrawer();
 	void Init(SamplerManager *samplerManager, ShaderManager *shaderManager, const vk::Extent2D& viewport);
 
-	void Term()
-	{
-		screenPipelineManager.reset();
-		renderPassLoad.reset();
-		renderPassClear.reset();
-		framebuffers.clear();
-		colorAttachments.clear();
-		depthAttachment.reset();
-		transitionNeeded.clear();
-		clearNeeded.clear();
-		Drawer::Term();
-	}
-
-	vk::RenderPass GetRenderPass() const { return *renderPassClear; }
 	void EndRenderPass() override;
-	bool PresentFrame()
-	{
-		EndRenderPass();
-		if (!frameRendered)
-			return false;
-		frameRendered = false;
-		GetContext()->PresentFrame(colorAttachments[GetCurrentImage()]->GetImage(),
-				colorAttachments[GetCurrentImage()]->GetImageView(), viewport, aspectRatio);
-
-		return true;
-	}
+	bool PresentFrame();
 
 protected:
 	vk::CommandBuffer BeginRenderPass() override;
 	u32 GetSwapChainSize() override { return 2; }
 
 private:
-	std::unique_ptr<PipelineManager> screenPipelineManager;
+	void createAttachments(vk::CommandBuffer cmdBuffer);
 
-	vk::UniqueRenderPass renderPassLoad;
-	vk::UniqueRenderPass renderPassClear;
-	std::vector<vk::UniqueFramebuffer> framebuffers;
-	std::vector<std::unique_ptr<FramebufferAttachment>> colorAttachments;
-	std::unique_ptr<FramebufferAttachment> depthAttachment;
-	vk::Extent2D viewport;
-	ShaderManager *shaderManager = nullptr;
-	std::vector<bool> transitionNeeded;
-	std::vector<bool> clearNeeded;
 	bool frameRendered = false;
 	float aspectRatio = 0.f;
 	bool emulateFramebuffer = false;
@@ -344,16 +329,8 @@ private:
 class TextureDrawer : public Drawer
 {
 public:
+	TextureDrawer();
 	void Init(SamplerManager *samplerManager, ShaderManager *shaderManager, TextureCache *textureCache);
-
-	void Term()
-	{
-		rttPipelineManager.reset();
-		framebuffers.clear();
-		colorAttachment.reset();
-		depthAttachment.reset();
-		Drawer::Term();
-	}
 
 	void EndRenderPass() override;
 
@@ -361,14 +338,93 @@ protected:
 	vk::CommandBuffer BeginRenderPass() override;
 
 private:
-	u32 width = 0;
-	u32 height = 0;
 	u32 textureAddr = 0;
-	std::unique_ptr<RttPipelineManager> rttPipelineManager;
-
 	Texture *texture = nullptr;
-	std::vector<vk::UniqueFramebuffer> framebuffers;
-	std::unique_ptr<FramebufferAttachment> colorAttachment;
-	std::unique_ptr<FramebufferAttachment> depthAttachment;
 	TextureCache *textureCache = nullptr;
 };
+
+class ClassicRender : public RenderDelegate
+{
+public:
+	void init(Drawer *drawer) override;
+	void term() override;
+	void createAttachments(int index, vk::ImageView imageView, vk::Image image) override;
+
+	void beginRender(vk::CommandBuffer cmdBuffer, int index) override;
+	void endRender(vk::CommandBuffer cmdBuffer) override;
+	bool beforeDrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sortTriangles,
+			const PolyParam& poly, u32 first, u32 count) override;
+
+protected:
+	std::vector<vk::UniqueFramebuffer> framebuffers;
+};
+
+class ScreenClassicRender : public ClassicRender
+{
+public:
+	void init(Drawer *drawer) override;
+	void term() override;
+	vk::RenderPass getRenderPass(bool load) override {
+		return load ? *renderPassLoad : *renderPassClear;
+	}
+
+protected:
+	vk::UniqueRenderPass renderPassLoad;
+	vk::UniqueRenderPass renderPassClear;
+};
+
+class TextureClassicRender : public ClassicRender
+{
+public:
+	void init(Drawer *drawer) override;
+	void term() override;
+	void createAttachments(int index, vk::ImageView imageView, vk::Image image) override;
+	vk::RenderPass getRenderPass(bool load) override {
+		return *rttRenderPass;
+	}
+
+private:
+	bool renderToTextureBuffer = false;
+	vk::UniqueRenderPass rttRenderPass;
+};
+
+class DynamicRender : public RenderDelegate
+{
+public:
+	void term() override;
+	void createAttachments(int index, vk::ImageView imageView, vk::Image image) override;
+
+	void beginRender(vk::CommandBuffer cmdBuffer, int index) override;
+	void endRender(vk::CommandBuffer cmdBuffer) override;
+	bool beforeDrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sortTriangles,
+			const PolyParam& poly, u32 first, u32 count) override;
+
+private:
+	bool writingSecAccum = false;
+	bool lastDstSelect = false;
+	std::unique_ptr<FramebufferAttachment> secAccum;
+	vk::ImageView renderTarget;
+};
+
+class ScreenDynamicRender : public DynamicRender
+{
+public:
+	void init(Drawer *drawer) override;
+	void beginRender(vk::CommandBuffer cmdBuffer, int index) override;
+	void endRender(vk::CommandBuffer cmdBuffer) override;
+
+private:
+	FramebufferAttachment *renderAttachment = nullptr;
+	bool emulateFramebuffer = false;
+};
+
+class TextureDynamicRender : public DynamicRender
+{
+public:
+	void createAttachments(int index, vk::ImageView imageView, vk::Image image) override;
+	void endRender(vk::CommandBuffer cmdBuffer) override;
+
+private:
+	vk::Image renderImage;
+};
+

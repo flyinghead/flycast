@@ -54,6 +54,9 @@ void setImageLayout(vk::CommandBuffer const& commandBuffer, vk::Image image, vk:
 	case vk::ImageLayout::eShaderReadOnlyOptimal:
 		sourceAccessMask = vk::AccessFlagBits::eShaderRead;
 		break;
+	case vk::ImageLayout::eColorAttachmentOptimal:
+		sourceAccessMask = vk::AccessFlagBits::eColorAttachmentWrite;
+		break;
 	default:
 		verify(false);
 		break;
@@ -75,6 +78,9 @@ void setImageLayout(vk::CommandBuffer const& commandBuffer, vk::Image image, vk:
 		break;
 	case vk::ImageLayout::eShaderReadOnlyOptimal:
 		sourceStage = vk::PipelineStageFlagBits::eFragmentShader;
+		break;
+	case vk::ImageLayout::eColorAttachmentOptimal:
+		sourceStage = vk::PipelineStageFlagBits::eColorAttachmentOutput;
 		break;
 	default:
 		verify(false);

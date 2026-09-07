@@ -116,8 +116,42 @@ void BaseDrawer::scaleAndWriteFramebuffer(vk::CommandBuffer commandBuffer, Frame
 	delete scaledFB;
 }
 
+void Drawer::Init(SamplerManager *samplerManager, ShaderManager *shaderManager)
+{
+	this->samplerManager = samplerManager;
+	if (!pipelineManager)
+		pipelineManager = std::make_unique<PipelineManager>();
+	pipelineManager->Init(shaderManager);
+
+	descriptorSets.init(samplerManager, pipelineManager->GetPipelineLayout(), pipelineManager->GetPerFrameDSLayout(), pipelineManager->GetPerPolyDSLayout());
+	renderDelegate->init(this);
+}
+
+void Drawer::Term()
+{
+	renderDelegate->term();
+	colorAttachments.clear();
+	depthAttachment.reset();
+	descriptorSets.term();
+	mainBuffers.clear();
+	pipelineManager.reset();
+}
+
+void Drawer::NewImage()
+{
+	descriptorSets.nextFrame();
+	imageIndex = (imageIndex + 1) % GetSwapChainSize();
+	if (perStripSorting != config::PerStripSorting)
+	{
+		perStripSorting = config::PerStripSorting;
+		pipelineManager->Reset();
+	}
+}
+
 void Drawer::DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sortTriangles, const PolyParam& poly, u32 first, u32 count)
 {
+	if (!renderDelegate->beforeDrawPoly(cmdBuffer, listType, sortTriangles, poly, first, count))
+		return;
 	static const float scopeColor[4] = { 0.25f, 0.50f, 0.25f, 1.0f };
 	CommandBufferDebugScope _(cmdBuffer, "DrawPoly", scopeColor);
 
@@ -125,12 +159,14 @@ void Drawer::DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sor
 	TileClipping tileClip = SetTileClip(cmdBuffer, poly.tileclip, scissorRect);
 
 	float trilinearAlpha = 1.f;
+	bool trilinearAlphaEnabled = false;
 	if (poly.tsp.FilterMode > 1 && poly.pcw.Texture && listType != ListType_Punch_Through && poly.tcw.MipMapped == 1)
 	{
 		trilinearAlpha = 0.25f * (poly.tsp.MipMapD & 0x3);
 		if (poly.tsp.FilterMode == 2)
 			// Trilinear pass A
 			trilinearAlpha = 1.f - trilinearAlpha;
+		trilinearAlphaEnabled = true;
 	}
 	int gpuPalette = poly.texture == nullptr || !poly.texture->gpuPalette ? 0
 			: poly.tsp.FilterMode + 1;
@@ -147,7 +183,7 @@ void Drawer::DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sor
 			palette_index = float((poly.tcw.PalSelect >> 4) << 8) / 1023.f;
 	}
 
-	if (tileClip == TileClipping::Inside || trilinearAlpha != 1.f || gpuPalette != 0)
+	if (tileClip == TileClipping::Inside || trilinearAlphaEnabled || gpuPalette != 0)
 	{
 		const std::array<float, 6> pushConstants = {
 				(float)scissorRect.offset.x,
@@ -213,7 +249,7 @@ void Drawer::DrawSorted(const vk::CommandBuffer& cmdBuffer, const std::vector<So
 			cmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
 			vk::Rect2D scissorRect;
 			SetTileClip(cmdBuffer, polyParam.tileclip, scissorRect);
-			cmdBuffer.drawIndexed(param.count, 1, rendContext->idx.size() + param.first, 0, 0);
+			cmdBuffer.drawIndexed(param.count, 1, param.first, 0, 0);
 		}
 	}
 }
@@ -368,7 +404,7 @@ bool Drawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 
 	// Update per-frame descriptor set and bind it
 	descriptorSets.updateUniforms(curMainBuffer, (u32)offsets.vertexUniformOffset, (u32)offsets.fragmentUniformOffset,
-			fogTexture->GetImageView(), paletteTexture->GetImageView());
+			fogTexture->GetImageView(), paletteTexture->GetImageView(), secAccumView);
 	descriptorSets.bindPerFrameDescriptorSets(cmdBuffer);
 
 	// Bind vertex and index buffers
@@ -408,13 +444,17 @@ bool Drawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 	return !rendContext->isRTT;
 }
 
+TextureDrawer::TextureDrawer()
+{
+	if (GetContext()->supportsDynamicLocalRead())
+		renderDelegate = std::make_unique<TextureDynamicRender>();
+	else
+		renderDelegate = std::make_unique<TextureClassicRender>();
+}
+
 void TextureDrawer::Init(SamplerManager *samplerManager, ShaderManager *shaderManager, TextureCache *textureCache)
 {
-	if (!rttPipelineManager)
-		rttPipelineManager = std::make_unique<RttPipelineManager>();
-	rttPipelineManager->Init(shaderManager);
-	Drawer::Init(samplerManager, rttPipelineManager.get());
-
+	Drawer::Init(samplerManager, shaderManager);
 	this->textureCache = textureCache;
 }
 
@@ -428,7 +468,6 @@ vk::CommandBuffer TextureDrawer::BeginRenderPass()
 	u32 height = rendContext->framebufferHeight;
 	matrices.CalcMatrices(rendContext, width, height);
 
-	rttPipelineManager->CheckSettingsChange();
 	VulkanContext *context = GetContext();
 	vk::Device device = context->GetDevice();
 
@@ -483,39 +522,30 @@ vk::CommandBuffer TextureDrawer::BeginRenderPass()
 	}
 	else
 	{
-		if (!colorAttachment || width > colorAttachment->getExtent().width || height > colorAttachment->getExtent().height)
+		if (colorAttachments.empty() || width > colorAttachments[0]->getExtent().width || height > colorAttachments[0]->getExtent().height)
 		{
-			if (!colorAttachment)
-				colorAttachment = std::make_unique<FramebufferAttachment>(context->GetPhysicalDevice(), device);
+			if (colorAttachments.empty())
+				colorAttachments.push_back(std::make_unique<FramebufferAttachment>(context->GetPhysicalDevice(), device));
 			else
 				GetContext()->WaitIdle();
-			colorAttachment->Init(width, height, vk::Format::eR8G8B8A8Unorm,
+			colorAttachments[0]->Init(width, height, vk::Format::eR8G8B8A8Unorm,
 					vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eTransferSrc,
 					"RTT COLOR ATTACHMENT");
 			colorImageCurrentLayout = vk::ImageLayout::eUndefined;
 		}
-		else
+		else {
 			colorImageCurrentLayout = vk::ImageLayout::eTransferSrcOptimal;
-		colorImage = colorAttachment->GetImage();
-		colorImageView = colorAttachment->GetImageView();
+		}
+		colorImage = colorAttachments[0]->GetImage();
+		colorImageView = colorAttachments[0]->GetImageView();
 	}
-	this->width = width;
-	this->height = height;
+	this->viewport = vk::Extent2D(width, height);
 
 	setImageLayout(commandBuffer, colorImage, vk::Format::eR8G8B8A8Unorm, 1, colorImageCurrentLayout, vk::ImageLayout::eColorAttachmentOptimal);
 
-	std::array<vk::ImageView, 2> imageViews = {
-		colorImageView,
-		depthAttachment->GetImageView(),
-	};
-	framebuffers.resize(GetContext()->GetSwapChainSize());
-	framebuffers[GetCurrentImage()] = device.createFramebufferUnique(vk::FramebufferCreateInfo(vk::FramebufferCreateFlags(),
-			rttPipelineManager->GetRenderPass(), imageViews, width, height, 1));
-
-	const std::array<vk::ClearValue, 2> clear_colors = { vk::ClearColorValue(std::array<float, 4> { 0.f, 0.f, 0.f, 1.f }), vk::ClearDepthStencilValue { 0.f, 0 } };
-	commandBuffer.beginRenderPass(vk::RenderPassBeginInfo(rttPipelineManager->GetRenderPass(),	*framebuffers[GetCurrentImage()],
-			vk::Rect2D( { 0, 0 }, { width, height }), clear_colors), vk::SubpassContents::eInline);
-	commandBuffer.setViewport(0, vk::Viewport(0.0f, 0.0f, (float)width, (float)height, 1.0f, 0.0f));
+	renderDelegate->createAttachments(0, colorImageView, colorImage);
+	renderDelegate->beginRender(commandBuffer, 0);
+	commandBuffer.setViewport(0, vk::Viewport(0.0f, 0.0f, (float)viewport.width, (float)viewport.height, 1.0f, 0.0f));
 	Rect scissor = matrices.getBaseScissor();
 	baseScissor = vk::Rect2D(vk::Offset2D(scissor.origin.x, scissor.origin.y), vk::Extent2D(scissor.size.x, scissor.size.y));
 	commandBuffer.setScissor(0, baseScissor);
@@ -526,7 +556,7 @@ vk::CommandBuffer TextureDrawer::BeginRenderPass()
 
 void TextureDrawer::EndRenderPass()
 {
-	currentCommandBuffer.endRenderPass();
+	renderDelegate->endRender(currentCommandBuffer);
 
 	u32 fbw = rendContext->framebufferWidth;
 	u32 fbh = rendContext->framebufferHeight;
@@ -536,15 +566,15 @@ void TextureDrawer::EndRenderPass()
 		vk::BufferImageCopy copyRegion(0, fbw, fbh,
 				vk::ImageSubresourceLayers(vk::ImageAspectFlagBits::eColor, 0, 0, 1), vk::Offset3D(0, 0, 0),
 				vk::Extent3D(fbw, fbh, 1));
-		currentCommandBuffer.copyImageToBuffer(colorAttachment->GetImage(), vk::ImageLayout::eTransferSrcOptimal,
-				*colorAttachment->GetBufferData()->buffer, copyRegion);
+		currentCommandBuffer.copyImageToBuffer(colorAttachments[0]->GetImage(), vk::ImageLayout::eTransferSrcOptimal,
+				*colorAttachments[0]->GetBufferData()->buffer, copyRegion);
 
 		vk::BufferMemoryBarrier bufferMemoryBarrier(
 				vk::AccessFlagBits::eTransferWrite,
 				vk::AccessFlagBits::eHostRead,
 				vk::QueueFamilyIgnored,
 				vk::QueueFamilyIgnored,
-				*colorAttachment->GetBufferData()->buffer,
+				*colorAttachments[0]->GetBufferData()->buffer,
 				0,
 				vk::WholeSize);
 		currentCommandBuffer.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer,
@@ -562,7 +592,7 @@ void TextureDrawer::EndRenderPass()
 
 		PixelBuffer<u32> tmpBuf;
 		tmpBuf.init(fbw, fbh);
-		colorAttachment->GetBufferData()->download(fbw * fbh * 4, tmpBuf.data());
+		colorAttachments[0]->GetBufferData()->download(fbw * fbh * 4, tmpBuf.data());
 		WriteTextureToVRam(fbw, fbh, (u8 *)tmpBuf.data(), dst, rendContext->fb_W_CTRL, rendContext->fb_W_LINESTRIDE * 8, rendContext->fbClip);
 	}
 	else
@@ -576,24 +606,32 @@ void TextureDrawer::EndRenderPass()
 	Drawer::EndRenderPass();
 }
 
+ScreenDrawer::ScreenDrawer()
+{
+	if (GetContext()->supportsDynamicLocalRead())
+		renderDelegate = std::make_unique<ScreenDynamicRender>();
+	else
+		renderDelegate = std::make_unique<ScreenClassicRender>();
+}
+
 void ScreenDrawer::Init(SamplerManager *samplerManager, ShaderManager *shaderManager, const vk::Extent2D& viewport)
 {
 	emulateFramebuffer = config::EmulateFramebuffer;
-	this->shaderManager = shaderManager;
 	if (this->viewport != viewport)
 	{
-		if (!framebuffers.empty()) {
-			verify(commandPool != nullptr);
-			commandPool->addToFlight(new Deleter(std::move(framebuffers)));
-		}
 		if (!colorAttachments.empty())
 			commandPool->addToFlight(new Deleter(std::move(colorAttachments)));
 		if (depthAttachment)
 			commandPool->addToFlight(new Deleter(depthAttachment.release()));
-		transitionNeeded.clear();
-		clearNeeded.clear();
 	}
 	this->viewport = viewport;
+	frameRendered = false;
+
+	Drawer::Init(samplerManager, shaderManager);
+}
+
+void ScreenDrawer::createAttachments(vk::CommandBuffer cmdBuffer)
+{
 	if (!depthAttachment)
 	{
 		depthAttachment = std::make_unique<FramebufferAttachment>(
@@ -603,83 +641,23 @@ void ScreenDrawer::Init(SamplerManager *samplerManager, ShaderManager *shaderMan
 				"DEPTH ATTACHMENT");
 	}
 
-	if (!renderPassLoad)
+	while (colorAttachments.size() < GetSwapChainSize())
 	{
-		std::array<vk::AttachmentDescription, 2> attachmentDescriptions = {
-				// Color attachment
-				vk::AttachmentDescription(vk::AttachmentDescriptionFlags(), vk::Format::eR8G8B8A8Unorm, vk::SampleCountFlagBits::e1,
-						vk::AttachmentLoadOp::eLoad, vk::AttachmentStoreOp::eStore,
-						vk::AttachmentLoadOp::eDontCare, vk::AttachmentStoreOp::eDontCare,
-						config::EmulateFramebuffer ? vk::ImageLayout::eTransferSrcOptimal : vk::ImageLayout::eShaderReadOnlyOptimal,
-						config::EmulateFramebuffer ? vk::ImageLayout::eTransferSrcOptimal : vk::ImageLayout::eShaderReadOnlyOptimal),
-				// Depth attachment
-				vk::AttachmentDescription(vk::AttachmentDescriptionFlags(), GetContext()->GetDepthFormat(), vk::SampleCountFlagBits::e1,
-						vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eDontCare,
-						vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eDontCare,
-						vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthStencilAttachmentOptimal),
-		};
-		vk::AttachmentReference colorReference(0, vk::ImageLayout::eColorAttachmentOptimal);
-		vk::AttachmentReference depthReference(1, vk::ImageLayout::eDepthStencilAttachmentOptimal);
-
-		vk::SubpassDescription subpass(vk::SubpassDescriptionFlags(), vk::PipelineBindPoint::eGraphics,
-						nullptr,
-						colorReference,
-						nullptr,
-						&depthReference);
-
-		vk::SubpassDependency dependency(0, vk::SubpassExternal, vk::PipelineStageFlagBits::eColorAttachmentOutput, vk::PipelineStageFlagBits::eFragmentShader,
-				vk::AccessFlagBits::eColorAttachmentWrite, vk::AccessFlagBits::eShaderRead,vk::DependencyFlagBits::eByRegion);
-
-		renderPassLoad = GetContext()->GetDevice().createRenderPassUnique(vk::RenderPassCreateInfo(vk::RenderPassCreateFlags(),
-				attachmentDescriptions,
-				subpass,
-				dependency));
-
-		attachmentDescriptions[0].loadOp = vk::AttachmentLoadOp::eClear;
-		renderPassClear = GetContext()->GetDevice().createRenderPassUnique(vk::RenderPassCreateInfo(vk::RenderPassCreateFlags(),
-				attachmentDescriptions,
-				subpass,
-				dependency));
+		colorAttachments.push_back(std::make_unique<FramebufferAttachment>(
+				GetContext()->GetPhysicalDevice(), GetContext()->GetDevice()));
+		vk::ImageUsageFlags usage = vk::ImageUsageFlagBits::eColorAttachment;
+		if (config::EmulateFramebuffer)
+			usage |= vk::ImageUsageFlagBits::eTransferSrc;
+		else
+			usage |= vk::ImageUsageFlagBits::eSampled;
+		colorAttachments.back()->Init(viewport.width, viewport.height, vk::Format::eR8G8B8A8Unorm, usage,
+				"COLOR ATTACHMENT " + std::to_string(colorAttachments.size() - 1));
+		setImageLayout(cmdBuffer, colorAttachments.back()->GetImage(), vk::Format::eR8G8B8A8Unorm,
+				1, vk::ImageLayout::eUndefined,
+				emulateFramebuffer ? vk::ImageLayout::eTransferSrcOptimal : vk::ImageLayout::eShaderReadOnlyOptimal);
 	}
-	size_t size = GetSwapChainSize();
-	if (colorAttachments.size() > size)
-	{
-		colorAttachments.resize(size);
-		framebuffers.resize(size);
-		transitionNeeded.resize(size);
-		clearNeeded.resize(size);
-	}
-	else
-	{
-		std::array<vk::ImageView, 2> attachments = {
-				nullptr,
-				depthAttachment->GetImageView(),
-		};
-		while (colorAttachments.size() < size)
-		{
-			colorAttachments.push_back(std::make_unique<FramebufferAttachment>(
-					GetContext()->GetPhysicalDevice(), GetContext()->GetDevice()));
-			vk::ImageUsageFlags usage = vk::ImageUsageFlagBits::eColorAttachment;
-			if (config::EmulateFramebuffer)
-				usage |= vk::ImageUsageFlagBits::eTransferSrc;
-			else
-				usage |= vk::ImageUsageFlagBits::eSampled;
-			colorAttachments.back()->Init(viewport.width, viewport.height, vk::Format::eR8G8B8A8Unorm, usage,
-					"COLOR ATTACHMENT " + std::to_string(colorAttachments.size() - 1));
-			attachments[0] = colorAttachments.back()->GetImageView();
-			vk::FramebufferCreateInfo createInfo(vk::FramebufferCreateFlags(), *renderPassLoad,
-					attachments, viewport.width, viewport.height, 1);
-			framebuffers.push_back(GetContext()->GetDevice().createFramebufferUnique(createInfo));
-			transitionNeeded.push_back(true);
-			clearNeeded.push_back(true);
-		}
-	}
-	frameRendered = false;
-
-	if (!screenPipelineManager)
-		screenPipelineManager = std::make_unique<PipelineManager>();
-	screenPipelineManager->Init(shaderManager, *renderPassLoad);
-	Drawer::Init(samplerManager, screenPipelineManager.get());
+	renderDelegate->createAttachments(GetCurrentImage(), colorAttachments[GetCurrentImage()]->GetImageView(),
+			colorAttachments[GetCurrentImage()]->GetImage());
 }
 
 vk::CommandBuffer ScreenDrawer::BeginRenderPass()
@@ -690,20 +668,9 @@ vk::CommandBuffer ScreenDrawer::BeginRenderPass()
 		frameRendered = false;
 		vk::CommandBuffer commandBuffer = commandPool->Allocate(true);
 		commandBuffer.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
+		createAttachments(commandBuffer);
 
-		if (transitionNeeded[GetCurrentImage()])
-		{
-			setImageLayout(commandBuffer, colorAttachments[GetCurrentImage()]->GetImage(), vk::Format::eR8G8B8A8Unorm,
-					1, vk::ImageLayout::eUndefined,
-					emulateFramebuffer ? vk::ImageLayout::eTransferSrcOptimal : vk::ImageLayout::eShaderReadOnlyOptimal);
-			transitionNeeded[GetCurrentImage()] = false;
-		}
-
-		vk::RenderPass renderPass = clearNeeded[GetCurrentImage()] || rendContext->clearFramebuffer ? *renderPassClear : *renderPassLoad;
-		clearNeeded[GetCurrentImage()] = false;
-		const std::array<vk::ClearValue, 2> clear_colors = { vk::ClearColorValue(std::array<float, 4> { 0.f, 0.f, 0.f, 1.f }), vk::ClearDepthStencilValue { 0.f, 0 } };
-		commandBuffer.beginRenderPass(vk::RenderPassBeginInfo(renderPass, *framebuffers[GetCurrentImage()],
-				vk::Rect2D( { 0, 0 }, viewport), clear_colors), vk::SubpassContents::eInline);
+		renderDelegate->beginRender(commandBuffer, GetCurrentImage());
 		currentCommandBuffer = commandBuffer;
 		renderPassStarted = true;
 	}
@@ -721,18 +688,365 @@ void ScreenDrawer::EndRenderPass()
 {
 	if (!renderPassStarted)
 		return;
-	currentCommandBuffer.endRenderPass();
-	if (emulateFramebuffer)
+	renderDelegate->endRender(currentCommandBuffer);
+	FramebufferAttachment *colorAttachment = nullptr;
+	if (GetCurrentImage() < (int)colorAttachments.size())
+		colorAttachment = colorAttachments[GetCurrentImage()].get();
+	if (colorAttachment != nullptr)
 	{
-		scaleAndWriteFramebuffer(currentCommandBuffer, colorAttachments[GetCurrentImage()].get());
+		if (emulateFramebuffer)
+		{
+			scaleAndWriteFramebuffer(currentCommandBuffer, colorAttachments[GetCurrentImage()].get());
+		}
+		else
+		{
+			currentCommandBuffer.end();
+			commandPool->EndFrame();
+			aspectRatio = getOutputFramebufferAspectRatio();
+		}
+		frameRendered = true;
 	}
-	else
-	{
+	else {
 		currentCommandBuffer.end();
 		commandPool->EndFrame();
-		aspectRatio = getOutputFramebufferAspectRatio();
 	}
 	currentCommandBuffer = nullptr;
 	Drawer::EndRenderPass();
-	frameRendered = true;
+}
+
+bool ScreenDrawer::PresentFrame()
+{
+	EndRenderPass();
+	if (!frameRendered)
+		return false;
+	frameRendered = false;
+	GetContext()->PresentFrame(colorAttachments[GetCurrentImage()]->GetImage(),
+			colorAttachments[GetCurrentImage()]->GetImageView(), viewport, aspectRatio);
+
+	return true;
+}
+
+void ClassicRender::init(Drawer *drawer)
+{
+	RenderDelegate::init(drawer);
+	if (!framebuffers.empty()) {
+		verify(drawer->commandPool != nullptr);
+		drawer->commandPool->addToFlight(new Deleter(std::move(framebuffers)));
+	}
+}
+
+void ClassicRender::term()
+{
+	framebuffers.clear();
+	RenderDelegate::term();
+}
+
+void ClassicRender::createAttachments(int index, vk::ImageView imageView, vk::Image image)
+{
+	std::array<vk::ImageView, 2> attachments = {
+			imageView,
+			drawer->depthAttachment->GetImageView(),
+	};
+	if ((int)framebuffers.size() < index + 1)
+		framebuffers.resize(index + 1);
+	if (!framebuffers[index])
+	{
+		vk::FramebufferCreateInfo createInfo(vk::FramebufferCreateFlags(), getRenderPass(false),
+				attachments, drawer->viewport.width, drawer->viewport.height, 1);
+		framebuffers[index] = vkCtx()->GetDevice().createFramebufferUnique(createInfo);
+	}
+}
+
+void ClassicRender::beginRender(vk::CommandBuffer cmdBuffer, int index)
+{
+	vk::RenderPass renderPass = getRenderPass(!drawer->rendContext->clearFramebuffer);
+	const std::array<vk::ClearValue, 2> clear_colors = { vk::ClearColorValue(std::array<float, 4> { 0.f, 0.f, 0.f, 1.f }), vk::ClearDepthStencilValue { 0.f, 0 } };
+	cmdBuffer.beginRenderPass(vk::RenderPassBeginInfo(renderPass, *framebuffers[index],
+			vk::Rect2D( { 0, 0 }, drawer->viewport), clear_colors), vk::SubpassContents::eInline);
+}
+
+void ClassicRender::endRender(vk::CommandBuffer cmdBuffer) {
+	cmdBuffer.endRenderPass();
+}
+
+bool ClassicRender::beforeDrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sortTriangles,
+		const PolyParam& poly, u32 first, u32 count)
+{
+	return poly.tsp.DstSelect != 1 && poly.tsp.SrcSelect != 1;
+}
+
+void ScreenClassicRender::init(Drawer *drawer)
+{
+	ClassicRender::init(drawer);
+	std::array<vk::AttachmentDescription, 2> attachmentDescriptions = {
+			// Color attachment
+			vk::AttachmentDescription(vk::AttachmentDescriptionFlags(), vk::Format::eR8G8B8A8Unorm, vk::SampleCountFlagBits::e1,
+					vk::AttachmentLoadOp::eLoad, vk::AttachmentStoreOp::eStore,
+					vk::AttachmentLoadOp::eDontCare, vk::AttachmentStoreOp::eDontCare,
+					config::EmulateFramebuffer ? vk::ImageLayout::eTransferSrcOptimal : vk::ImageLayout::eShaderReadOnlyOptimal,
+					config::EmulateFramebuffer ? vk::ImageLayout::eTransferSrcOptimal : vk::ImageLayout::eShaderReadOnlyOptimal),
+			// Depth attachment
+			vk::AttachmentDescription(vk::AttachmentDescriptionFlags(), vkCtx()->GetDepthFormat(), vk::SampleCountFlagBits::e1,
+					vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eDontCare,
+					vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eDontCare,
+					vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthStencilAttachmentOptimal),
+	};
+	vk::AttachmentReference colorReference(0, vk::ImageLayout::eColorAttachmentOptimal);
+	vk::AttachmentReference depthReference(1, vk::ImageLayout::eDepthStencilAttachmentOptimal);
+
+	vk::SubpassDescription subpass(vk::SubpassDescriptionFlags(), vk::PipelineBindPoint::eGraphics,
+					nullptr,
+					colorReference,
+					nullptr,
+					&depthReference);
+
+	vk::SubpassDependency dependency(0, vk::SubpassExternal, vk::PipelineStageFlagBits::eColorAttachmentOutput, vk::PipelineStageFlagBits::eFragmentShader,
+			vk::AccessFlagBits::eColorAttachmentWrite, vk::AccessFlagBits::eShaderRead,vk::DependencyFlagBits::eByRegion);
+
+	renderPassLoad = vkCtx()->GetDevice().createRenderPassUnique(vk::RenderPassCreateInfo(vk::RenderPassCreateFlags(),
+			attachmentDescriptions,
+			subpass,
+			dependency));
+
+	attachmentDescriptions[0].loadOp = vk::AttachmentLoadOp::eClear;
+	renderPassClear = vkCtx()->GetDevice().createRenderPassUnique(vk::RenderPassCreateInfo(vk::RenderPassCreateFlags(),
+			attachmentDescriptions,
+			subpass,
+			dependency));
+	drawer->pipelineManager->setRenderPass(*renderPassClear);
+}
+
+void ScreenClassicRender::term()
+{
+	renderPassLoad.reset();
+	renderPassClear.reset();
+	ClassicRender::term();
+}
+
+void TextureClassicRender::init(Drawer *drawer)
+{
+	ClassicRender::init(drawer);
+	// RTT render pass
+	renderToTextureBuffer = config::RenderToTextureBuffer;
+	vk::AttachmentDescription attachmentDescriptions[] = {
+			vk::AttachmentDescription(vk::AttachmentDescriptionFlags(), vk::Format::eR8G8B8A8Unorm, vk::SampleCountFlagBits::e1,
+					vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eStore, vk::AttachmentLoadOp::eDontCare, vk::AttachmentStoreOp::eDontCare,
+					vk::ImageLayout::eColorAttachmentOptimal,
+					renderToTextureBuffer ? vk::ImageLayout::eTransferSrcOptimal : vk::ImageLayout::eShaderReadOnlyOptimal),
+			vk::AttachmentDescription(vk::AttachmentDescriptionFlags(), vkCtx()->GetDepthFormat(), vk::SampleCountFlagBits::e1,
+					vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eDontCare, vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eDontCare,
+					vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthStencilAttachmentOptimal),
+	};
+	vk::AttachmentReference colorReference(0, vk::ImageLayout::eColorAttachmentOptimal);
+	vk::AttachmentReference depthReference(1, vk::ImageLayout::eDepthStencilAttachmentOptimal);
+	vk::SubpassDescription subpass(vk::SubpassDescriptionFlags(), vk::PipelineBindPoint::eGraphics, nullptr, colorReference, nullptr, &depthReference);
+	vk::SubpassDependency dependencies[] {
+		vk::SubpassDependency(vk::SubpassExternal, 0, vk::PipelineStageFlagBits::eFragmentShader, vk::PipelineStageFlagBits::eColorAttachmentOutput,
+				vk::AccessFlagBits::eShaderRead, vk::AccessFlagBits::eColorAttachmentWrite),
+		vk::SubpassDependency(0, vk::SubpassExternal, vk::PipelineStageFlagBits::eColorAttachmentOutput, vk::PipelineStageFlagBits::eFragmentShader,
+				vk::AccessFlagBits::eColorAttachmentWrite, vk::AccessFlagBits::eShaderRead),
+	};
+	vk::SubpassDependency vramWriteDeps[] {
+		vk::SubpassDependency(0, vk::SubpassExternal,
+				vk::PipelineStageFlagBits::eColorAttachmentOutput, vk::PipelineStageFlagBits::eTransfer | vk::PipelineStageFlagBits::eHost,
+				vk::AccessFlagBits::eColorAttachmentWrite, vk::AccessFlagBits::eTransferRead | vk::AccessFlagBits::eHostRead),
+	};
+
+	rttRenderPass = vkCtx()->GetDevice().createRenderPassUnique(vk::RenderPassCreateInfo(vk::RenderPassCreateFlags(), 2, attachmentDescriptions,
+			1, &subpass, renderToTextureBuffer ? std::size(vramWriteDeps) : std::size(dependencies), renderToTextureBuffer ? vramWriteDeps : dependencies));
+	drawer->pipelineManager->setRenderPass(*rttRenderPass);
+}
+
+void TextureClassicRender::term() {
+	rttRenderPass.reset();
+	ClassicRender::term();
+}
+
+void TextureClassicRender::createAttachments(int index, vk::ImageView imageView, vk::Image image)
+{
+	if (renderToTextureBuffer != config::RenderToTextureBuffer)
+	{
+		renderToTextureBuffer = config::RenderToTextureBuffer;
+		// Recreate render pass, pipelines and delete framebuffers
+		init(drawer);
+	}
+	else {
+		// delete framebuffers only
+		ClassicRender::init(drawer);
+	}
+	if (framebuffers.size() > (unsigned)index)
+		framebuffers[index].reset();
+	ClassicRender::createAttachments(index, imageView, image);
+}
+
+void DynamicRender::term() {
+	secAccum.reset();
+	RenderDelegate::term();
+}
+
+void DynamicRender::createAttachments(int index, vk::ImageView imageView, vk::Image image) {
+	renderTarget = imageView;
+}
+
+void DynamicRender::beginRender(vk::CommandBuffer cmdBuffer, int index)
+{
+	if (secAccum && (drawer->viewport.width > secAccum->getExtent().width
+			|| drawer->viewport.height > secAccum->getExtent().height)) {
+		drawer->commandPool->addToFlight(new Deleter(secAccum.release()));
+	}
+	if (!secAccum)
+	{
+		secAccum = std::make_unique<FramebufferAttachment>(vkCtx()->GetPhysicalDevice(),
+				vkCtx()->GetDevice());
+		secAccum->Init(drawer->viewport.width, drawer->viewport.height, vk::Format::eR8G8B8A8Unorm,
+				vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eTransientAttachment
+					| vk::ImageUsageFlagBits::eInputAttachment,
+				"2ND ACCUM");
+		drawer->secAccumView = secAccum->GetImageView();
+	}
+	vk::RenderingAttachmentInfoKHR colorAttachments[2] {};
+	colorAttachments[0].imageView = renderTarget;
+	colorAttachments[0].imageLayout = vk::ImageLayout::eColorAttachmentOptimal;
+	if (drawer->rendContext->clearFramebuffer) {
+		colorAttachments[0].loadOp = vk::AttachmentLoadOp::eClear;
+		colorAttachments[0].clearValue = vk::ClearColorValue(std::array<float, 4> { 0.f, 0.f, 0.f, 1.f });
+	}
+	else {
+		colorAttachments[0].loadOp = vk::AttachmentLoadOp::eLoad;
+	}
+	colorAttachments[0].storeOp = vk::AttachmentStoreOp::eStore;
+
+	colorAttachments[1].imageView = this->secAccum->GetImageView();
+	colorAttachments[1].imageLayout = vk::ImageLayout::eRenderingLocalReadKHR;
+	colorAttachments[1].loadOp = vk::AttachmentLoadOp::eClear;
+	colorAttachments[1].storeOp = vk::AttachmentStoreOp::eStore;
+	colorAttachments[1].clearValue.color = vk::ClearColorValue{};
+
+	vk::RenderingAttachmentInfoKHR depthAttachment {};
+	depthAttachment.imageView = drawer->depthAttachment->GetImageView();
+	depthAttachment.imageLayout = vk::ImageLayout::eDepthStencilAttachmentOptimal;
+	depthAttachment.loadOp = vk::AttachmentLoadOp::eClear;
+	depthAttachment.storeOp = vk::AttachmentStoreOp::eDontCare;
+	depthAttachment.clearValue.depthStencil = vk::ClearDepthStencilValue{ 0.f, 0 };
+
+	vk::RenderingInfoKHR renderingInfo {};
+	renderingInfo.renderArea = vk::Rect2D({ 0, 0 }, drawer->viewport);
+	renderingInfo.layerCount = 1;
+	renderingInfo.colorAttachmentCount = 2;
+
+	renderingInfo.pColorAttachments = colorAttachments;
+	renderingInfo.pDepthAttachment = &depthAttachment;
+	renderingInfo.pStencilAttachment = &depthAttachment;
+
+	cmdBuffer.beginRenderingKHR(&renderingInfo);
+
+	const u32 indexes[] { 0, vk::AttachmentUnused };
+	const vk::RenderingAttachmentLocationInfoKHR rali { indexes };
+	cmdBuffer.setRenderingAttachmentLocationsKHR(&rali);
+	const u32 inputIndexes[] { vk::AttachmentUnused, 1 };
+	const vk::RenderingInputAttachmentIndexInfoKHR riai { inputIndexes };
+	cmdBuffer.setRenderingInputAttachmentIndicesKHR(&riai);
+
+	writingSecAccum = false;
+	lastDstSelect = false;
+
+}
+
+void DynamicRender::endRender(vk::CommandBuffer cmdBuffer) {
+	cmdBuffer.endRenderingKHR();
+}
+
+bool DynamicRender::beforeDrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sortTriangles,
+		const PolyParam& poly, u32 first, u32 count)
+{
+	if (poly.tsp.DstSelect == 1)
+	{
+		if (!writingSecAccum)
+		{
+			writingSecAccum = true;
+			const vk::MemoryBarrier memBarrier { vk::AccessFlagBits::eInputAttachmentRead,
+				vk::AccessFlagBits::eColorAttachmentWrite };
+			cmdBuffer.pipelineBarrier(vk::PipelineStageFlagBits::eFragmentShader,
+					vk::PipelineStageFlagBits::eColorAttachmentOutput,
+					vk::DependencyFlagBits::eByRegion, memBarrier, nullptr, nullptr);
+		}
+		if (!lastDstSelect)
+		{
+			const u32 indexes[] { vk::AttachmentUnused, 0 };
+			const vk::RenderingAttachmentLocationInfoKHR rali { indexes };
+			cmdBuffer.setRenderingAttachmentLocationsKHR(&rali);
+			const u32 inputIndexes[] { vk::AttachmentUnused, vk::AttachmentUnused };
+			const vk::RenderingInputAttachmentIndexInfoKHR riai { inputIndexes };
+			cmdBuffer.setRenderingInputAttachmentIndicesKHR(&riai);
+			lastDstSelect = true;
+		}
+	}
+	else
+	{
+		if (poly.tsp.SrcSelect == 1 && writingSecAccum)
+		{
+			writingSecAccum = false;
+			const vk::MemoryBarrier memBarrier { vk::AccessFlagBits::eColorAttachmentWrite,
+				vk::AccessFlagBits::eInputAttachmentRead };
+			cmdBuffer.pipelineBarrier(vk::PipelineStageFlagBits::eColorAttachmentOutput,
+					vk::PipelineStageFlagBits::eFragmentShader,
+					vk::DependencyFlagBits::eByRegion, memBarrier, nullptr, nullptr);
+		}
+		if (lastDstSelect)
+		{
+			const u32 indexes[] { 0, vk::AttachmentUnused };
+			const vk::RenderingAttachmentLocationInfoKHR rali { indexes };
+			cmdBuffer.setRenderingAttachmentLocationsKHR(&rali);
+			const u32 inputIndexes[] { vk::AttachmentUnused, 1 };
+			const vk::RenderingInputAttachmentIndexInfoKHR riai { inputIndexes };
+			cmdBuffer.setRenderingInputAttachmentIndicesKHR(&riai);
+			lastDstSelect = false;
+		}
+	}
+	return true;
+}
+
+void ScreenDynamicRender::init(Drawer *drawer)
+{
+	DynamicRender::init(drawer);
+	emulateFramebuffer = config::EmulateFramebuffer;
+	renderAttachment = nullptr;
+}
+
+void ScreenDynamicRender::beginRender(vk::CommandBuffer cmdBuffer, int index)
+{
+	renderAttachment = drawer->colorAttachments[index].get();
+	setImageLayout(cmdBuffer, renderAttachment->GetImage(), vk::Format::eR8G8B8A8Unorm, 1,
+			emulateFramebuffer ? vk::ImageLayout::eTransferSrcOptimal : vk::ImageLayout::eShaderReadOnlyOptimal,
+			vk::ImageLayout::eColorAttachmentOptimal);
+	DynamicRender::beginRender(cmdBuffer, index);
+}
+
+void ScreenDynamicRender::endRender(vk::CommandBuffer cmdBuffer)
+{
+	DynamicRender::endRender(cmdBuffer);
+	if (renderAttachment == nullptr)
+		return;
+	setImageLayout(cmdBuffer, renderAttachment->GetImage(), vk::Format::eR8G8B8A8Unorm, 1,
+			vk::ImageLayout::eColorAttachmentOptimal,
+			emulateFramebuffer ? vk::ImageLayout::eTransferSrcOptimal : vk::ImageLayout::eShaderReadOnlyOptimal);
+	renderAttachment = nullptr;
+}
+
+void TextureDynamicRender::createAttachments(int index, vk::ImageView imageView, vk::Image image)
+{
+	DynamicRender::createAttachments(index, imageView, image);
+	renderImage = image;
+}
+
+void TextureDynamicRender::endRender(vk::CommandBuffer cmdBuffer)
+{
+	DynamicRender::endRender(cmdBuffer);
+	if (renderImage == nullptr)
+		return;
+	setImageLayout(cmdBuffer, renderImage, vk::Format::eR8G8B8A8Unorm, 1,
+			vk::ImageLayout::eColorAttachmentOptimal,
+			config::RenderToTextureBuffer ? vk::ImageLayout::eTransferSrcOptimal
+					: vk::ImageLayout::eShaderReadOnlyOptimal);
+	renderImage = nullptr;
 }

@@ -32,36 +32,14 @@ public:
 			renderPasses[index] = MakeRenderPass(initial, last, loadClear);
 		return *renderPasses[index];
 	}
-	void Reset()
-	{
-		for (auto& renderPass : renderPasses)
-			renderPass.reset();
-	}
+	void Reset();
 	virtual ~RenderPasses() = default;
 
 protected:
 	VulkanContext *GetContext() const { return VulkanContext::Instance(); }
 	vk::UniqueRenderPass MakeRenderPass(bool initial, bool last, bool loadClear);
-	virtual vk::AttachmentDescription GetAttachment0Description(bool initial, bool last, bool loadClear) const
-	{
-		return vk::AttachmentDescription(vk::AttachmentDescriptionFlags(), vk::Format::eR8G8B8A8Unorm, vk::SampleCountFlagBits::e1,
-				initial && loadClear ? vk::AttachmentLoadOp::eClear : vk::AttachmentLoadOp::eLoad, vk::AttachmentStoreOp::eStore,
-				vk::AttachmentLoadOp::eDontCare, vk::AttachmentStoreOp::eDontCare,
-				config::EmulateFramebuffer && initial ? vk::ImageLayout::eTransferSrcOptimal : vk::ImageLayout::eShaderReadOnlyOptimal,
-				config::EmulateFramebuffer && last ? vk::ImageLayout::eTransferSrcOptimal : vk::ImageLayout::eShaderReadOnlyOptimal);
-	}
-
-	virtual std::vector<vk::SubpassDependency> GetSubpassDependencies() const
-	{
-		if (config::EmulateFramebuffer)
-			return { { 2, vk::SubpassExternal,
-					vk::PipelineStageFlagBits::eColorAttachmentOutput, vk::PipelineStageFlagBits::eTransfer | vk::PipelineStageFlagBits::eHost,
-					vk::AccessFlagBits::eColorAttachmentWrite, vk::AccessFlagBits::eTransferRead | vk::AccessFlagBits::eHostRead, vk::DependencyFlagBits::eByRegion } };
-		else
-			return { { 2, vk::SubpassExternal,
-					vk::PipelineStageFlagBits::eColorAttachmentOutput, vk::PipelineStageFlagBits::eFragmentShader,
-					vk::AccessFlagBits::eColorAttachmentWrite, vk::AccessFlagBits::eShaderRead, vk::DependencyFlagBits::eByRegion } };
-	}
+	virtual vk::AttachmentDescription GetAttachment0Description(bool initial, bool last, bool loadClear) const;
+	virtual std::vector<vk::SubpassDependency> GetSubpassDependencies() const;
 
 private:
 	std::array<vk::UniqueRenderPass, 8> renderPasses;
@@ -70,23 +48,6 @@ private:
 class RttRenderPasses : public RenderPasses
 {
 protected:
-	vk::AttachmentDescription GetAttachment0Description(bool initial, bool last, bool loadClear) const override
-	{
-		return vk::AttachmentDescription(vk::AttachmentDescriptionFlags(), vk::Format::eR8G8B8A8Unorm, vk::SampleCountFlagBits::e1,
-				vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eStore,
-				vk::AttachmentLoadOp::eDontCare, vk::AttachmentStoreOp::eDontCare,
-				vk::ImageLayout::eUndefined,
-				config::RenderToTextureBuffer && last ? vk::ImageLayout::eTransferSrcOptimal : vk::ImageLayout::eShaderReadOnlyOptimal);
-	}
-
-	std::vector<vk::SubpassDependency> GetSubpassDependencies() const override
-	{
-		if (config::RenderToTextureBuffer)
-			return { { 2, vk::SubpassExternal,
-					vk::PipelineStageFlagBits::eColorAttachmentOutput, vk::PipelineStageFlagBits::eTransfer | vk::PipelineStageFlagBits::eHost,
-					vk::AccessFlagBits::eColorAttachmentWrite, vk::AccessFlagBits::eTransferRead | vk::AccessFlagBits::eHostRead } };
-		else
-			return { { 2, vk::SubpassExternal, vk::PipelineStageFlagBits::eColorAttachmentOutput, vk::PipelineStageFlagBits::eFragmentShader,
-					vk::AccessFlagBits::eColorAttachmentWrite, vk::AccessFlagBits::eShaderRead } };
-	}
+	vk::AttachmentDescription GetAttachment0Description(bool initial, bool last, bool loadClear) const override;
+	std::vector<vk::SubpassDependency> GetSubpassDependencies() const override;
 };

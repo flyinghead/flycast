@@ -91,6 +91,7 @@ public:
 	bool SupportsSamplerAnisotropy() const { return samplerAnisotropy; }
 	bool SupportsDedicatedAllocation() const { return dedicatedAllocationSupported; }
 	bool SupportsBufferDeviceAddress() const { return bufferDeviceAddressSupported; }
+	bool supportsDynamicLocalRead() const { return dynamicLocalReadSupported; }
 	bool hasPerPixel() override { return fragmentStoresAndAtomics; }
 	bool hasProvokingVertex() { return provokingVertexSupported; }
 	const VMAllocator& GetAllocator() const { return allocator; }
@@ -140,6 +141,8 @@ public:
 	static bool dedicatedAllocationSupported;
 	static bool provokingVertexSupported;
 	static bool bufferDeviceAddressSupported;
+	static bool dynamicLocalReadSupported;
+
 private:
 	u32 vendorID = 0;
 

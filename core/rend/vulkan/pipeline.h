@@ -28,147 +28,52 @@
 #include <array>
 #include <unordered_map>
 
-class DescriptorSets
+class BaseDescriptorSets
+{
+protected:
+	void init(SamplerManager* samplerManager) {
+		this->samplerManager = samplerManager;
+	}
+	void term();
+
+	VulkanContext *getContext() const { return VulkanContext::Instance(); }
+	const vk::DescriptorImageInfo& getEmptyImageInfo();
+	const vk::DescriptorBufferInfo& getEmptyBufferInfo();
+
+	SamplerManager* samplerManager = nullptr;
+	vk::UniqueImageView dummyImageView;
+	vk::UniqueImage dummyImage;
+	Allocation dummyImageAllocation;
+	vk::UniqueBuffer dummyBuffer;
+	Allocation dummyBufferAllocation;
+	vk::DescriptorImageInfo emptyImageInfo;
+	vk::DescriptorBufferInfo emptyBufferInfo;
+};
+
+class DescriptorSets : BaseDescriptorSets
 {
 public:
-	void init(SamplerManager* samplerManager, vk::PipelineLayout pipelineLayout, vk::DescriptorSetLayout perFrameLayout, vk::DescriptorSetLayout perPolyLayout)
-	{
-		this->samplerManager = samplerManager;
-		this->pipelineLayout = pipelineLayout;
-		perFrameAlloc.setLayout(perFrameLayout);
-		perPolyAlloc.setLayout(perPolyLayout);
+	void init(SamplerManager* samplerManager, vk::PipelineLayout pipelineLayout, vk::DescriptorSetLayout perFrameLayout, vk::DescriptorSetLayout perPolyLayout);
+	void term();
 
-	}
-	void updateUniforms(vk::Buffer buffer, u32 vertexUniformOffset, u32 fragmentUniformOffset, vk::ImageView fogImageView, vk::ImageView paletteImageView)
-	{
-		perFrameDescSet = perFrameAlloc.alloc();
-		perPolyDescSets.clear();
-
-		std::vector<vk::DescriptorBufferInfo> bufferInfos;
-		bufferInfos.emplace_back(buffer, vertexUniformOffset, sizeof(VertexShaderUniforms));
-		bufferInfos.emplace_back(buffer, fragmentUniformOffset, sizeof(FragmentShaderUniforms));
-
-		std::vector<vk::WriteDescriptorSet> writeDescriptorSets;
-		writeDescriptorSets.emplace_back(perFrameDescSet, 0, 0, vk::DescriptorType::eUniformBuffer, nullptr, bufferInfos[0]);
-		writeDescriptorSets.emplace_back(perFrameDescSet, 1, 0, vk::DescriptorType::eUniformBuffer, nullptr, bufferInfos[1]);
-		if (fogImageView)
-		{
-			TSP fogTsp = {};
-			fogTsp.FilterMode = 1;
-			fogTsp.ClampU = 1;
-			fogTsp.ClampV = 1;
-			vk::Sampler fogSampler = samplerManager->GetSampler(fogTsp);
-			static vk::DescriptorImageInfo imageInfo;
-			imageInfo = { fogSampler, fogImageView, vk::ImageLayout::eShaderReadOnlyOptimal };
-			writeDescriptorSets.emplace_back(perFrameDescSet, 2, 0, vk::DescriptorType::eCombinedImageSampler, imageInfo);
-		}
-		if (paletteImageView)
-		{
-			TSP palTsp = {};
-			palTsp.FilterMode = 0;
-			palTsp.ClampU = 1;
-			palTsp.ClampV = 1;
-			vk::Sampler palSampler = samplerManager->GetSampler(palTsp);
-			static vk::DescriptorImageInfo imageInfo;
-			imageInfo = { palSampler, paletteImageView, vk::ImageLayout::eShaderReadOnlyOptimal };
-			writeDescriptorSets.emplace_back(perFrameDescSet, 3, 0, vk::DescriptorType::eCombinedImageSampler, imageInfo);
-		}
-		getContext()->GetDevice().updateDescriptorSets(writeDescriptorSets, nullptr);
-	}
-
+	void nextFrame();
+	void updateUniforms(vk::Buffer buffer, u32 vertexUniformOffset, u32 fragmentUniformOffset,
+			vk::ImageView fogImageView, vk::ImageView paletteImageView, vk::ImageView secAccum = {});
 	void bindPerPolyDescriptorSets(vk::CommandBuffer cmdBuffer, const PolyParam& poly, int polyNumber, vk::Buffer buffer,
-			vk::DeviceSize uniformOffset, vk::DeviceSize lightOffset, bool punchThrough)
-	{
-		vk::DescriptorSet perPolyDescSet;
-		auto it = perPolyDescSets.find(&poly);
-		if (it == perPolyDescSets.end())
-		{
-			perPolyDescSet = perPolyAlloc.alloc();
-			std::vector<vk::WriteDescriptorSet> writeDescriptorSets;
-
-			vk::DescriptorImageInfo imageInfo;
-			if (poly.texture != nullptr)
-			{
-				imageInfo = vk::DescriptorImageInfo(samplerManager->GetSampler(poly, punchThrough),
-						((Texture *)poly.texture)->GetReadOnlyImageView(), vk::ImageLayout::eShaderReadOnlyOptimal);
-				writeDescriptorSets.emplace_back(perPolyDescSet, 0, 0, vk::DescriptorType::eCombinedImageSampler, imageInfo);
-			}
-
-			vk::DescriptorBufferInfo uniBufferInfo;
-			vk::DescriptorBufferInfo lightBufferInfo;
-			if (poly.isNaomi2())
-			{
-				const vk::DeviceSize uniformAlignment = VulkanContext::Instance()->GetUniformBufferAlignment();
-				size_t size = sizeof(N2VertexShaderUniforms) + align(sizeof(N2VertexShaderUniforms), uniformAlignment);
-				uniBufferInfo = vk::DescriptorBufferInfo{ buffer, uniformOffset + polyNumber * size, sizeof(N2VertexShaderUniforms) };
-				writeDescriptorSets.emplace_back(perPolyDescSet, 2, 0, vk::DescriptorType::eUniformBuffer, nullptr, uniBufferInfo);
-
-				size = sizeof(N2LightModel) + align(sizeof(N2LightModel), uniformAlignment);
-				lightBufferInfo = vk::DescriptorBufferInfo{ buffer, lightOffset + poly.lightModel * size, sizeof(N2LightModel) };
-				writeDescriptorSets.emplace_back(perPolyDescSet, 3, 0, vk::DescriptorType::eUniformBuffer, nullptr, lightBufferInfo);
-			}
-
-			getContext()->GetDevice().updateDescriptorSets(writeDescriptorSets, nullptr);
-			perPolyDescSets[&poly] = perPolyDescSet;
-		}
-		else
-			perPolyDescSet = it->second;
-		cmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 1, perPolyDescSet, nullptr);
-	}
-
+			vk::DeviceSize uniformOffset, vk::DeviceSize lightOffset, bool punchThrough);
 	void bindPerPolyDescriptorSets(vk::CommandBuffer cmdBuffer, const ModifierVolumeParam& mvParam, int polyNumber, vk::Buffer buffer,
-			vk::DeviceSize uniformOffset)
-	{
-		if (!mvParam.isNaomi2())
-			return;
-		vk::DescriptorSet perPolyDescSet;
-		auto it = perPolyDescSets.find(&mvParam);
-		if (it == perPolyDescSets.end())
-		{
-			perPolyDescSet = perPolyAlloc.alloc();
+			vk::DeviceSize uniformOffset);
 
-			const vk::DeviceSize uniformAlignment = VulkanContext::Instance()->GetUniformBufferAlignment();
-			size_t size = sizeof(N2VertexShaderUniforms) + align(sizeof(N2VertexShaderUniforms), uniformAlignment);
-			vk::DescriptorBufferInfo uniBufferInfo{ buffer, uniformOffset + polyNumber * size, sizeof(N2VertexShaderUniforms) };
-			vk::WriteDescriptorSet writeDescriptorSet(perPolyDescSet, 2, 0, vk::DescriptorType::eUniformBuffer, nullptr, uniBufferInfo);
-
-			getContext()->GetDevice().updateDescriptorSets(writeDescriptorSet, nullptr);
-			perPolyDescSets[&mvParam] = perPolyDescSet;
-		}
-		else
-			perPolyDescSet = it->second;
-		cmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 1, perPolyDescSet, nullptr);
-	}
-
-	void bindPerFrameDescriptorSets(vk::CommandBuffer cmdBuffer)
-	{
+	void bindPerFrameDescriptorSets(vk::CommandBuffer cmdBuffer) {
 		cmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, perFrameDescSet, nullptr);
 	}
 
-	void nextFrame()
-	{
-		perFrameAlloc.nextFrame();
-		perPolyAlloc.nextFrame();
-		perFrameDescSet = vk::DescriptorSet{};
-		perPolyDescSets.clear();
-	}
-
-	void term()
-	{
-		perFrameAlloc.term();
-		perPolyAlloc.term();
-	}
-
 private:
-	VulkanContext *getContext() const { return VulkanContext::Instance(); }
-
 	vk::PipelineLayout pipelineLayout;
 	DynamicDescSetAlloc perFrameAlloc;
 	DynamicDescSetAlloc perPolyAlloc;
 	vk::DescriptorSet perFrameDescSet = {};
 	std::unordered_map<const void *, vk::DescriptorSet> perPolyDescSets;
-
-	SamplerManager* samplerManager = nullptr;
 };
 
 class PipelineManager
@@ -176,19 +81,22 @@ class PipelineManager
 public:
 	virtual ~PipelineManager() = default;
 
-	void Init(ShaderManager *shaderManager, vk::RenderPass renderPass)
+	void Init(ShaderManager *shaderManager)
 	{
 		this->shaderManager = shaderManager;
 
 		if (!perFrameLayout)
 		{
 			// Descriptor set and pipeline layout
-			std::array<vk::DescriptorSetLayoutBinding, 4> perFrameBindings = {
+			std::vector<vk::DescriptorSetLayoutBinding> perFrameBindings = {
 					vk::DescriptorSetLayoutBinding(0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex),			// vertex uniforms
 					vk::DescriptorSetLayoutBinding(1, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eFragment),		// fragment uniforms
 					vk::DescriptorSetLayoutBinding(2, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment),// fog texture
 					vk::DescriptorSetLayoutBinding(3, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment),// palette texture
 			};
+			if (GetContext()->supportsDynamicLocalRead())
+				// secondary accumulator
+				perFrameBindings.emplace_back(4, vk::DescriptorType::eInputAttachment, 1, vk::ShaderStageFlagBits::eFragment);
 			std::array<vk::DescriptorSetLayoutBinding, 3> perPolyBindings = {
 					vk::DescriptorSetLayoutBinding(0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment),// texture
 					vk::DescriptorSetLayoutBinding(2, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex),			// Naomi2 uniforms
@@ -203,9 +111,11 @@ public:
 			pipelineLayout = GetContext()->GetDevice().createPipelineLayoutUnique(
 					vk::PipelineLayoutCreateInfo(vk::PipelineLayoutCreateFlags(), layouts, pushConstant));
 		}
+	}
 
-		if (this->renderPass != renderPass)
-		{
+	void setRenderPass(vk::RenderPass renderPass)
+	{
+		if (this->renderPass != renderPass) {
 			this->renderPass = renderPass;
 			Reset();
 		}
@@ -274,6 +184,10 @@ private:
 		hash |= (u64)(!settings.platform.isNaomi2() && config::NativeDepthInterpolation) << 30;
 		hash |= (u64)(pp->tcw.PixelFmt == PixelBumpMap) << 31;
 		hash |= (u64)dithering << 32;
+		if (GetContext()->supportsDynamicLocalRead()) {
+			hash |= (u64)(pp->tsp.SrcSelect == 1) << 33;
+			hash |= (u64)(pp->tsp.DstSelect == 1) << 34;
+		}
 
 		return hash;
 	}
@@ -315,17 +229,11 @@ private:
 			attributeDescription = vertexInputAttributeDescriptions;
 
 			if (naomi2)
-			{
 				attributeDescriptionSize = std::size(vertexInputAttributeDescriptions);
-			}
 			else
-			{
 				// naomi2 normal not needed
 				attributeDescriptionSize = std::size(vertexInputAttributeDescriptions) - 1;
-			}
 		}
-		
-
 
 		return vk::PipelineVertexInputStateCreateInfo(
 				vk::PipelineVertexInputStateCreateFlags(),
@@ -349,52 +257,4 @@ protected:
 
 	vk::RenderPass renderPass;
 	ShaderManager *shaderManager = nullptr;
-};
-
-class RttPipelineManager : public PipelineManager
-{
-public:
-	void Init(ShaderManager *shaderManager)
-	{
-		// RTT render pass
-		renderToTextureBuffer = config::RenderToTextureBuffer;
-	    vk::AttachmentDescription attachmentDescriptions[] = {
-	    		vk::AttachmentDescription(vk::AttachmentDescriptionFlags(), vk::Format::eR8G8B8A8Unorm, vk::SampleCountFlagBits::e1,
-	    				vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eStore, vk::AttachmentLoadOp::eDontCare, vk::AttachmentStoreOp::eDontCare,
-						vk::ImageLayout::eColorAttachmentOptimal,
-						renderToTextureBuffer ? vk::ImageLayout::eTransferSrcOptimal : vk::ImageLayout::eShaderReadOnlyOptimal),
-				vk::AttachmentDescription(vk::AttachmentDescriptionFlags(), GetContext()->GetDepthFormat(), vk::SampleCountFlagBits::e1,
-						vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eDontCare, vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eDontCare,
-						vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthStencilAttachmentOptimal),
-	    };
-	    vk::AttachmentReference colorReference(0, vk::ImageLayout::eColorAttachmentOptimal);
-	    vk::AttachmentReference depthReference(1, vk::ImageLayout::eDepthStencilAttachmentOptimal);
-	    vk::SubpassDescription subpass(vk::SubpassDescriptionFlags(), vk::PipelineBindPoint::eGraphics, nullptr, colorReference, nullptr, &depthReference);
-	    vk::SubpassDependency dependencies[] {
-	    	vk::SubpassDependency(vk::SubpassExternal, 0, vk::PipelineStageFlagBits::eFragmentShader, vk::PipelineStageFlagBits::eColorAttachmentOutput,
-	    			vk::AccessFlagBits::eShaderRead, vk::AccessFlagBits::eColorAttachmentWrite),
-			vk::SubpassDependency(0, vk::SubpassExternal, vk::PipelineStageFlagBits::eColorAttachmentOutput, vk::PipelineStageFlagBits::eFragmentShader,
-					vk::AccessFlagBits::eColorAttachmentWrite, vk::AccessFlagBits::eShaderRead),
-	    };
-	    vk::SubpassDependency vramWriteDeps[] {
-			vk::SubpassDependency(0, vk::SubpassExternal,
-					vk::PipelineStageFlagBits::eColorAttachmentOutput, vk::PipelineStageFlagBits::eTransfer | vk::PipelineStageFlagBits::eHost,
-					vk::AccessFlagBits::eColorAttachmentWrite, vk::AccessFlagBits::eTransferRead | vk::AccessFlagBits::eHostRead),
-	    };
-
-	    rttRenderPass = GetContext()->GetDevice().createRenderPassUnique(vk::RenderPassCreateInfo(vk::RenderPassCreateFlags(), 2, attachmentDescriptions,
-	    		1, &subpass, renderToTextureBuffer ? std::size(vramWriteDeps) : std::size(dependencies), renderToTextureBuffer ? vramWriteDeps : dependencies));
-
-		PipelineManager::Init(shaderManager, *rttRenderPass);
-	}
-
-	void CheckSettingsChange()
-	{
-		if (renderToTextureBuffer != config::RenderToTextureBuffer)
-			Init(shaderManager);
-	}
-
-private:
-	vk::UniqueRenderPass rttRenderPass;
-	bool renderToTextureBuffer = false;
 };

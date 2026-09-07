@@ -93,6 +93,9 @@ layout (set = 0, binding = 2) uniform sampler2D fog_table;
 #if pp_Palette != 0
 layout (set = 0, binding = 3) uniform sampler2D palette;
 #endif
+#if SECACCUM == 1
+layout (input_attachment_index = 1, set = 0, binding = 4) uniform subpassInput secAccum;
+#endif
 
 // Vertex input
 layout (location = 0) INTERPOLATION in highp vec4 vtx_base;
@@ -190,7 +193,7 @@ void main()
 				&& gl_FragCoord.y >= pushConstants.clipTest.y && gl_FragCoord.y <= pushConstants.clipTest.w)
 			discard;
 	#endif
-	
+#if SECACCUM == 0
 	highp vec4 color = vtx_base;
 	highp vec4 offset = vtx_offs;
 	#if pp_Gouraud == 1 && DIV_POS_Z != 1
@@ -284,6 +287,10 @@ void main()
 	#endif
 
 	//color.rgb = vec3(gl_FragCoord.w * uniformBuffer.sp_FOG_DENSITY / 128.0);
+#else
+	// SECACCUM == 1
+	highp vec4 color = subpassLoad(secAccum);
+#endif
 
 #if DIV_POS_Z == 1
 	highp float w = 100000.0 / vtx_uv.z;
@@ -761,6 +768,7 @@ vk::UniqueShaderModule ShaderManager::compileShader(const FragmentShaderParams& 
 		.addConstant("pp_Palette", params.palette)
 		.addConstant("DIV_POS_Z", (int)params.divPosZ)
 		.addConstant("DITHERING", (int)params.dithering)
+		.addConstant("SECACCUM", (int)params.secAccum)
 		.addSource(GouraudSource)
 		.addSource(FragmentShaderTop)
 		.addSource(FragmentShaderCommon)

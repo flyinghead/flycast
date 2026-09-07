@@ -35,6 +35,7 @@ bool VulkanContext::samplerAnisotropy = false;
 bool VulkanContext::dedicatedAllocationSupported = false;
 bool VulkanContext::provokingVertexSupported = false;
 bool VulkanContext::bufferDeviceAddressSupported = false;
+bool VulkanContext::dynamicLocalReadSupported = false;
 
 const VkApplicationInfo* VkGetApplicationInfo()
 {
@@ -184,12 +185,19 @@ bool VkCreateDevice(retro_vulkan_context* context, VkInstance instance, VkPhysic
 		VulkanContext::bufferDeviceAddressSupported = tryAddDeviceExtension(vk::KHRBufferDeviceAddressExtensionName);
 	}
 
+	VulkanContext::dynamicLocalReadSupported = tryAddDeviceExtension(vk::KHRCreateRenderpass2ExtensionName)
+						&& tryAddDeviceExtension(vk::KHRDepthStencilResolveExtensionName)
+						&& tryAddDeviceExtension(vk::KHRDynamicRenderingExtensionName)
+						&& tryAddDeviceExtension(vk::KHRDynamicRenderingLocalReadExtensionName);
+
 	// Get device features
 
 	vk::StructureChain<
 		vk::PhysicalDeviceFeatures2,
 		vk::PhysicalDeviceProvokingVertexFeaturesEXT,
-		vk::PhysicalDeviceBufferDeviceAddressFeaturesKHR
+		vk::PhysicalDeviceBufferDeviceAddressFeaturesKHR,
+		vk::PhysicalDeviceDynamicRenderingFeaturesKHR,
+		vk::PhysicalDeviceDynamicRenderingLocalReadFeaturesKHR
 	> featuresChainHelper;
 
 	vk::PhysicalDeviceFeatures2& featuresChain = featuresChainHelper.get();
@@ -202,6 +210,12 @@ bool VkCreateDevice(retro_vulkan_context* context, VkInstance instance, VkPhysic
 	auto& bufferDeviceAddressFeatures = featuresChainHelper.get<vk::PhysicalDeviceBufferDeviceAddressFeaturesKHR>();
 	if (!VulkanContext::bufferDeviceAddressSupported)
 		featuresChainHelper.unlink<vk::PhysicalDeviceBufferDeviceAddressFeaturesKHR>();
+
+	auto& dynaRenderLocalReadFeatures = featuresChainHelper.get<vk::PhysicalDeviceDynamicRenderingLocalReadFeaturesKHR>();
+	if (!VulkanContext::dynamicLocalReadSupported) {
+		featuresChainHelper.unlink<vk::PhysicalDeviceDynamicRenderingFeaturesKHR>();
+		featuresChainHelper.unlink<vk::PhysicalDeviceDynamicRenderingLocalReadFeaturesKHR>();
+	}
 
 	// Get the physical device's features
 	if (getPhysicalDeviceProperties2Supported && featuresChain.pNext)
@@ -219,6 +233,13 @@ bool VkCreateDevice(retro_vulkan_context* context, VkInstance instance, VkPhysic
 	{
 		VulkanContext::bufferDeviceAddressSupported &= bufferDeviceAddressFeatures.bufferDeviceAddress;
 		NOTICE_LOG(RENDERER, "bufferDeviceAddressSupported %d", VulkanContext::bufferDeviceAddressSupported);
+	}
+	if (VulkanContext::dynamicLocalReadSupported)
+	{
+		if (!dynaRenderLocalReadFeatures || !dynaRenderLocalReadFeatures.dynamicRenderingLocalRead)
+			VulkanContext::dynamicLocalReadSupported = false;
+		else
+			NOTICE_LOG(RENDERER, "dynamicLocalReadSupported");
 	}
 
 	VulkanContext::samplerAnisotropy = features.samplerAnisotropy;

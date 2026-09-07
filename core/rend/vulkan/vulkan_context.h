@@ -156,6 +156,7 @@ public:
 	float GetMaxSamplerAnisotropy() const { return samplerAnisotropy ? maxSamplerAnisotropy : 1.f; }
 	bool SupportsDedicatedAllocation() const { return dedicatedAllocationSupported; }
 	bool SupportsBufferDeviceAddress() const { return bufferDeviceAddressSupported; }
+	bool supportsDynamicLocalRead() const { return dynamicLocalReadSupported; }
 	const VMAllocator& GetAllocator() const { return allocator; }
 	vk::DeviceSize GetMaxMemoryAllocationSize() const { return maxMemoryAllocationSize; }
 	u32 GetMaxStorageBufferRange() const { return maxStorageBufferRange; }
@@ -236,6 +237,7 @@ private:
 	bool dedicatedAllocationSupported = false;
 	bool provokingVertexSupported = false;
 	bool bufferDeviceAddressSupported = false;
+	bool dynamicLocalReadSupported = false;
 	u32 vendorID = 0;
 	int swapInterval = 1;
 	vk::UniqueDevice device;

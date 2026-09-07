@@ -509,12 +509,19 @@ bool VulkanContext::InitDevice()
 			NOTICE_LOG(RENDERER, "VK_GOOGLE_display_timing supported");
 #endif
 
+		dynamicLocalReadSupported = tryAddDeviceExtension(vk::KHRCreateRenderpass2ExtensionName)
+				&& tryAddDeviceExtension(vk::KHRDepthStencilResolveExtensionName)
+				&& tryAddDeviceExtension(vk::KHRDynamicRenderingExtensionName)
+				&& tryAddDeviceExtension(vk::KHRDynamicRenderingLocalReadExtensionName);
+
 		// Get device features
 
 		vk::StructureChain<
 			vk::PhysicalDeviceFeatures2,
 			vk::PhysicalDeviceProvokingVertexFeaturesEXT,
-			vk::PhysicalDeviceBufferDeviceAddressFeaturesKHR
+			vk::PhysicalDeviceBufferDeviceAddressFeaturesKHR,
+			vk::PhysicalDeviceDynamicRenderingFeaturesKHR,
+			vk::PhysicalDeviceDynamicRenderingLocalReadFeaturesKHR
 		> featuresChainHelper;
 
 		vk::PhysicalDeviceFeatures2& featuresChain = featuresChainHelper.get();
@@ -532,6 +539,12 @@ bool VulkanContext::InitDevice()
 			featuresChainHelper.unlink<vk::PhysicalDeviceBufferDeviceAddressFeaturesKHR>();
 		}
 		
+		auto& dynaRenderLocalReadFeatures = featuresChainHelper.get<vk::PhysicalDeviceDynamicRenderingLocalReadFeaturesKHR>();
+		if (!dynamicLocalReadSupported) {
+			featuresChainHelper.unlink<vk::PhysicalDeviceDynamicRenderingFeaturesKHR>();
+			featuresChainHelper.unlink<vk::PhysicalDeviceDynamicRenderingLocalReadFeaturesKHR>();
+		}
+
 		// Get the physical device's features
 		if (getPhysicalDeviceProperties2Supported && featuresChain.pNext)
 		{
@@ -552,6 +565,13 @@ bool VulkanContext::InitDevice()
 		{
 			bufferDeviceAddressSupported &= bufferDeviceAddressFeatures.bufferDeviceAddress;
 			NOTICE_LOG(RENDERER, "bufferDeviceAddressSupported %d", bufferDeviceAddressSupported);
+		}
+		if (dynamicLocalReadSupported)
+		{
+			if (!dynaRenderLocalReadFeatures || !dynaRenderLocalReadFeatures.dynamicRenderingLocalRead)
+				dynamicLocalReadSupported = false;
+			else
+				NOTICE_LOG(RENDERER, "dynamicLocalReadSupported");
 		}
 
 		samplerAnisotropy = features.samplerAnisotropy;
@@ -1401,6 +1421,7 @@ void VulkanContext::DoSwapAutomation()
 
 			device->unmapMemory(*deviceMemory);
 		}
+		rend_term_renderer();
 		dc_exit();
 		flycast_term();
 		exit(0);

@@ -135,19 +135,7 @@ public:
 		return *clearShader;
 	}
 
-	void term()
-	{
-		vertexShaders.clear();
-		fragmentShaders.clear();
-		modVolVertexShaders.clear();
-		modVolShaders[0].reset();
-		modVolShaders[1].reset();
-		trModVolShaders.clear();
-
-		finalVertexShader.reset();
-		finalFragmentShaders.clear();
-		clearShader.reset();
-	}
+	void term();
 
 private:
 	template<typename T>

@@ -844,3 +844,17 @@ void OITShaderManager::checkMaxLayers()
 		finalFragmentShaders.clear();
 	}
 }
+
+void OITShaderManager::term()
+{
+	vertexShaders.clear();
+	fragmentShaders.clear();
+	modVolVertexShaders.clear();
+	modVolShaders[0].reset();
+	modVolShaders[1].reset();
+	trModVolShaders.clear();
+
+	finalVertexShader.reset();
+	finalFragmentShaders.clear();
+	clearShader.reset();
+}
