@@ -53,8 +53,8 @@ void ReInitOSD();
 
 #ifdef VK_DEBUG
 #ifndef __ANDROID__
-VKAPI_ATTR static VkBool32 VKAPI_CALL debugUtilsMessengerCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageTypes,
-									 VkDebugUtilsMessengerCallbackDataEXT const * pCallbackData, void * /*pUserData*/)
+static vk::Bool32 debugUtilsMessengerCallback(vk::DebugUtilsMessageSeverityFlagBitsEXT messageSeverity, vk::DebugUtilsMessageTypeFlagsEXT messageTypes,
+									 vk::DebugUtilsMessengerCallbackDataEXT const *pCallbackData, void * /*pUserData*/)
 {
 	std::string msg = vk::to_string(static_cast<vk::DebugUtilsMessageSeverityFlagBitsEXT>(messageSeverity)) + ": "
 			+ vk::to_string(static_cast<vk::DebugUtilsMessageTypeFlagsEXT>(messageTypes)) + ": ";
@@ -179,7 +179,6 @@ bool VulkanContext::InitInstance(const char** extensions, uint32_t extensions_co
 #ifdef VK_DEBUG
 #ifndef __ANDROID__
 		vext.push_back(vk::EXTDebugUtilsExtensionName);
-		vext.push_back(vk::EXTDebugReportExtensionName);
 		layer_names.push_back("VK_LAYER_KHRONOS_validation");
 #else
 		vext.push_back(vk::EXTDebugReportExtensionName);	// NDK <= 19?
