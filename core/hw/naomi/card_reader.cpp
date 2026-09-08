@@ -839,13 +839,16 @@ public:
 		NOTICE_LOG(NAOMI, "Card ejected");
 		os_notify(i18n::T("Card ejected"), 2000);
 		cardInserted = false;
-		memset(cardData, 0, CARD_SZ);
+		cardExpired = false;
+		memset(cardData[0], 0, CARD_SZ);
+		memset(cardData[1], 0, CARD_SZ);
 		kcode[1] |= DC_DPAD_UP;
 	}
 
 protected:
 	bool loadCard() override
 	{
+		memset(cardData[0], 0, CARD_SZ);
 		memset(cardData[1], 0, CARD_SZ);
 		bool ret = CardReaderWriter::loadCard(cardData[1], CARD_SZ);
 		if (!ret) {
