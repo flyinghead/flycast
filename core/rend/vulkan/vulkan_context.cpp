@@ -773,33 +773,27 @@ void VulkanContext::CreateSwapChain()
 
 			// The FIFO present mode is guaranteed by the spec to be supported
 			vk::PresentModeKHR swapchainPresentMode = vk::PresentModeKHR::eFifo;
-			bool mailboxSupported = false;
-			// Use FIFO on mobile, prefer Mailbox on desktop
-			for (auto& presentMode : physicalDevice.getSurfacePresentModesKHR(GetSurface()))
+			// Use FIFO if VSync is enabled, otherwise use Immediate, or Mailbox if Immediate not available
+			if (!swapOnVSync)
 			{
-				if (presentMode == vk::PresentModeKHR::eMailbox)
-					mailboxSupported = true;
-#if HOST_CPU != CPU_ARM && HOST_CPU != CPU_ARM64 && !defined(__ANDROID__)
-				if (swapOnVSync && presentMode == vk::PresentModeKHR::eMailbox
-						&& vendorID != VENDOR_ATI && vendorID != VENDOR_AMD)
+				bool mailboxSupported = false;
+				for (auto& presentMode : physicalDevice.getSurfacePresentModesKHR(GetSurface()))
 				{
+					if (presentMode == vk::PresentModeKHR::eMailbox)
+						mailboxSupported = true;
+					if (presentMode == vk::PresentModeKHR::eImmediate)
+					{
+						INFO_LOG(RENDERER, "Using immediate present mode");
+						swapchainPresentMode = vk::PresentModeKHR::eImmediate;
+						break;
+					}
+				}
+				if (swapchainPresentMode == vk::PresentModeKHR::eFifo && mailboxSupported)
+				{
+					// prefer mailbox over FIFO if immediate isn't available
 					INFO_LOG(RENDERER, "Using mailbox present mode");
 					swapchainPresentMode = vk::PresentModeKHR::eMailbox;
-					break;
 				}
-#endif
-				if (!swapOnVSync && presentMode == vk::PresentModeKHR::eImmediate)
-				{
-					INFO_LOG(RENDERER, "Using immediate present mode");
-					swapchainPresentMode = vk::PresentModeKHR::eImmediate;
-					break;
-				}
-			}
-			if (!swapOnVSync && swapchainPresentMode == vk::PresentModeKHR::eFifo && mailboxSupported)
-			{
-				// prefer mailbox over FIFO if immediate isn't available
-				INFO_LOG(RENDERER, "Using mailbox present mode");
-				swapchainPresentMode = vk::PresentModeKHR::eMailbox;
 			}
 #ifndef SWAPPY
 			if (swapOnVSync && config::DupeFrames && settings.display.refreshRate > 60.f)
