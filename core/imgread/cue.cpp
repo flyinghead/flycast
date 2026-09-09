@@ -83,6 +83,7 @@ Disc* cue_parse(const char* file, std::vector<u8> *digest)
 	u32 currentFAD = 150;
 	// SESSION context
 	u32 session_number = 0;
+	bool firstTrackOfSession = false;
 	// FILE context
 	std::string track_filename;
 	u32 fileStartFAD = 0;
@@ -113,9 +114,11 @@ Disc* cue_parse(const char* file, std::vector<u8> *digest)
 				else if (cur_session != session_number)
 				{
 					session_number = cur_session;
-					if (session_number == 2)
+					if (session_number == 2) {
 						// session 1 lead-out: 01:30:00, session 2 lead-in: 01:00:00, pregap: 00:02:00
-						currentFAD += 11400;
+						currentFAD += 6750 + 4500 + 150;
+						firstTrackOfSession = true;
+					}
 
 					Session ses;
 					ses.FirstTrack = (u8)disc->tracks.size() + 1;
@@ -229,6 +232,14 @@ Disc* cue_parse(const char* file, std::vector<u8> *digest)
 				int min = 0, sec = 0, frame = 0;
 				if (sscanf(token.c_str(), "%d:%d:%d", &min, &sec, &frame) == 3)
 					indexFAD = frame + 75 * (sec + 60 * min);
+				if (firstTrackOfSession && indexFAD > 0) {
+					// The session gap above already includes this track's pregap so don't
+					// count the sectors stored before INDEX 01 twice.
+					const u32 pregap = std::min(indexFAD, 150);
+					fileStartFAD -= pregap;
+					currentFAD -= pregap;
+				}
+				firstTrackOfSession = false;
 				Track t;
 				t.StartFAD = fileStartFAD + indexFAD;
 				t.CTRL = (track_type == "AUDIO" || track_type == "CDG") ? 0 : 4;
