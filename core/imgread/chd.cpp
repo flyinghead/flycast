@@ -8,8 +8,8 @@ struct CHDDisc : Disc
 {
 	// tracks are padded to a multiple of this many frames
 	static constexpr u32 CD_TRACK_PADDING = 4;
-	// lead out, lead in and pregap between 2 sessions of MIL-CDs
-	static constexpr u32 SESSION_GAP = 11400;
+	// lead out (01:30:00), lead in (01:00:00) and pregap (00:02:00) between 2 sessions of MIL-CDs
+	static constexpr u32 SESSION_GAP = 6750 + 4500 + 150;
 
 	chd_file *chd = nullptr;
 	u8* hunk_mem = nullptr;
@@ -143,22 +143,30 @@ void CHDDisc::tryOpen(const char* file)
 	u32 Offset = 0;
 	bool isGdrom = head->version < 5;	// MIL-CDs only supported starting with CHD v5
 	bool needAudioSwap = false;
+	u32 lastPregap = 0;
 
 	for(;;)
 	{
 		char type[16], subtype[16], pgtype[16], pgsub[16];
 		int tkid=-1, frames=0, pregap=0, postgap=0, padframes=0;
+		strcpy(subtype, "NONE");
+		strcpy(pgtype, "NONE");
+		strcpy(pgsub, "NONE");
 
 		err = chd_get_metadata(chd, CDROM_TRACK_METADATA2_TAG, (u32)tracks.size(), temp, sizeof(temp), &temp_len, &tag, &flags);
 		if (err == CHDERR_NONE)
 		{
 			//"TRACK:%d TYPE:%s SUBTYPE:%s FRAMES:%d PREGAP:%d PGTYPE:%s PGSUB:%s POSTGAP:%d"
 			sscanf(temp, CDROM_TRACK_METADATA2_FORMAT, &tkid, type, subtype, &frames, &pregap, pgtype, pgsub, &postgap);
+			// CD-Rom audio tracks are always stored big-endian
+			needAudioSwap = true;
 		}
 		else if (CHDERR_NONE== (err = chd_get_metadata(chd, CDROM_TRACK_METADATA_TAG, (u32)tracks.size(), temp, sizeof(temp), &temp_len, &tag, &flags)) )
 		{
 			//CDROM_TRACK_METADATA_FORMAT	"TRACK:%d TYPE:%s SUBTYPE:%s FRAMES:%d"
 			sscanf(temp, CDROM_TRACK_METADATA_FORMAT, &tkid, type, subtype, &frames);
+			// CD-Rom audio tracks are always stored big-endian
+			needAudioSwap = true;
 		}
 		else
 		{
@@ -180,18 +188,30 @@ void CHDDisc::tryOpen(const char* file)
 		if (tkid != (int)tracks.size() + 1)
 			throw FlycastException(i18n::Ts("Unexpected track number"));
 
-		if (strcmp(subtype, "NONE") != 0 || pregap != 0 || postgap != 0)
-			throw FlycastException(i18n::Ts("Unsupported subtype or pre/postgap"));
+		// Subcode data is stored in the CHD but we don't use it. It doesn't change the sector layout.
+		if (strcmp(subtype, "NONE") != 0)
+			WARN_LOG(GDROM, "chd: track %d has subcode data (%s). Ignoring", tkid, subtype);
+		// Postgap sectors are never stored in the file
+		if (postgap != 0)
+			WARN_LOG(GDROM, "chd: track %d has a %d frame postgap. Ignoring", tkid, postgap);
 
 		DEBUG_LOG(GDROM, "%s", temp);
+		// When PGTYPE is prefixed with 'V', the pregap sectors are included in the track data,
+		// and thus counted in FRAMES. Otherwise they only take up space on the disc.
+		const u32 pregapInFile = pregap > 0 && pgtype[0] == 'V' ? (u32)pregap : 0;
+		if ((int)pregapInFile > frames)
+			throw FlycastException(i18n::Ts("Invalid CHD: pregap is longer than the track"));
+
 		Track t;
-		t.StartFAD = total_frames;
-		total_frames += frames;
+		// StartFAD is the position of INDEX 01, hence after the pregap
+		t.StartFAD = total_frames + pregap;
+		lastPregap = pregap;
+		total_frames = t.StartFAD + frames - pregapInFile;
 		t.EndFAD = total_frames - 1 - padframes;
 		t.CTRL = strcmp(type,"AUDIO") == 0 ? 0 : 4;
 
 		u32 sectorSize = getSectorSize(type);
-		t.file = new CHDTrack(this, Offset - t.StartFAD, sectorSize,
+		t.file = new CHDTrack(this, Offset + pregapInFile - t.StartFAD, sectorSize,
 							  // audio tracks are byteswapped in recent CHDv5+
 							  !t.isDataTrack() && needAudioSwap);
 
@@ -221,25 +241,37 @@ void CHDDisc::tryOpen(const char* file)
 		sessions.push_back(ses);
 		DEBUG_LOG(GDROM, "session 1: FAD %d", ses.StartFAD);
 
-		if (tracks.size() > 1)
+		// MIL-CDs are multisession CD-Roms whose last session holds the bootable data track.
+		// CHD files don't carry any session information so we assume that a multi-track disc
+		// ending with a data track is a MIL-CD, and that its last session has a single track.
+		if (tracks.size() > 1 && tracks.back().isDataTrack())
 		{
 			type = CdRom_XA;
 			ses.FirstTrack = tracks.size();
-			// session 1 lead-out: 01:30:00, session 2 lead-in: 01:00:00, pregap: 00:02:00
-			tracks.back().StartFAD += SESSION_GAP;
-			tracks.back().EndFAD += SESSION_GAP;
-			((CHDTrack *)tracks.back().file)->Offset -= SESSION_GAP;
+			// SESSION_GAP includes the pregap of the first track of the second session.
+			// When these sectors are part of the track data they have already been accounted for.
+			const u32 gap = SESSION_GAP - std::min(lastPregap, 150u);
+			tracks.back().StartFAD += gap;
+			tracks.back().EndFAD += gap;
+			((CHDTrack *)tracks.back().file)->Offset -= gap;
 			ses.StartFAD = tracks.back().StartFAD;
 			sessions.push_back(ses);
 			DEBUG_LOG(GDROM, "session 2: track %d FAD %d", ses.FirstTrack, ses.StartFAD);
 
-			EndFAD = LeadOut.StartFAD = total_frames + SESSION_GAP - 1;
+			EndFAD = LeadOut.StartFAD = total_frames + gap;
 		}
 		else
 		{
-			// Single-track CD-ROMs aren't supported with the exception of naomi mj1/cdp-10002b.chd
+			// Single-session disc: mixed mode or audio CD. Single-track CD-ROMs aren't
+			// supported with the exception of naomi mj1/cdp-10002b.chd
 			type = CdRom;
-			EndFAD = LeadOut.StartFAD = total_frames - 1;
+			if (tracks.size() > 1)
+				for (const Track& track : tracks)
+					if (track.isDataTrack()) {
+						type = CdRom_XA;
+						break;
+					}
+			EndFAD = LeadOut.StartFAD = total_frames;
 		}
 	}
 }
